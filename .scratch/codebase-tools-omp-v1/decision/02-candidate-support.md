@@ -2,7 +2,7 @@
 
 Type: grilling
 Labels: wayfinder:grilling
-Status: open
+Status: claimed
 Interaction: HITL
 Parent: [首版语义扩展框架：codebase-tools 完整迁移与 OMP 适配](../map.md)
 Blocked by:

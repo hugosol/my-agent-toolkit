@@ -29,6 +29,8 @@ Labels: wayfinder:map
 
 <!-- 仅收录已 resolved 决策票的名称、lighthouse Decision 摘要与链接。绘图范围确认在 Notes，不伪造已解决票。 -->
 
+- [确定迁移基线、框架能力契约与行为验收边界](decision/01-migration-baseline.md): 锁定 codebase-tools @34d7c40 为需求 oracle；以 C1–C15 框架能力契约定义“完整迁移”，每项声明必须语义、宿主不满足则显式拒绝而非降级；“启用轮”= 每用户轮一次，init/reminder 为两个独立贡献槽位，State 以 owner 关联替代进程全局；扩展验收与框架能力验证分目录成两套测试。
+
 ## Not yet specified
 
 - 真实宿主执行可能暴露 State 恢复、消息提交及子代理生命周期之间尚未看清的耦合。待运行证据与各契约明确后再判断是否需要额外决策；已能明确提问的事项均进入子票，不在此重复列出。
