@@ -1,8 +1,8 @@
-# Semantic extension framework: deferred research
+# Semantic extension framework backlog
 
-Status: needs-triage
+This is a research backlog, not an implementation-ready specification. Accepted framework scope remains in [ADR-0002](adr/0002-semantic-extension-framework.md); host differences and policies are tracked in [host-support.md](host-support.md).
 
-This is a research backlog, not an implementation-ready specification. Accepted framework scope remains in [ADR-0002](../../docs/adr/0002-semantic-extension-framework.md); host differences and policies are tracked in [host-support.md](../../docs/host-support.md).
+The focused first-release planning effort is tracked in [首版语义扩展框架：codebase-tools 完整迁移与 OMP 适配](../.scratch/codebase-tools-omp-v1/map.md). Its scope and decision tickets live there; this file remains the deferred research backlog, not the first-release specification.
 
 ## Todo list
 
@@ -12,7 +12,7 @@ This is a research backlog, not an implementation-ready specification. Accepted 
 
 ## model-cost migration risk: rendering currently updates business state
 
-Source inspection on 2026-10-04: [`buildWidgetLines`](../../../my-omp-toolkit/extensions/model-cost/index.ts#L247) reads `ctx.sessionManager.getUsageStatistics()` and `ctx.getContextUsage()`, then assigns `state.lastContextTokens`. [`refresh`](../../../my-omp-toolkit/extensions/model-cost/index.ts#L349) installs a widget factory whose `render(width)` calls that function. This is not a presentation-only path. Moving the existing function to an OMP-specific presentation file would preserve the coupling rather than complete the separation.
+Source inspection on 2026-10-04: [`buildWidgetLines`](../../my-omp-toolkit/extensions/model-cost/index.ts#L247) reads `ctx.sessionManager.getUsageStatistics()` and `ctx.getContextUsage()`, then assigns `state.lastContextTokens`. [`refresh`](../../my-omp-toolkit/extensions/model-cost/index.ts#L349) installs a widget factory whose `render(width)` calls that function. This is not a presentation-only path. Moving the existing function to an OMP-specific presentation file would preserve the coupling rather than complete the separation.
 
 During migration, arrange host observations and reconciliation into State independently of renderer execution. Keep shared cost/budget rules in shared extension logic; native rendering should read the reconciled business values and choose layout/colour, not be the operation that makes business State current. Do not change the established business calculations merely to perform this separation.
 
