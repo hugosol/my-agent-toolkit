@@ -30,6 +30,7 @@ Labels: wayfinder:map
 <!-- 仅收录已 resolved 决策票的名称、lighthouse Decision 摘要与链接。绘图范围确认在 Notes，不伪造已解决票。 -->
 
 - [确定迁移基线、框架能力契约与行为验收边界](decision/01-migration-baseline.md): 锁定 codebase-tools @34d7c40 为需求 oracle；以 C1–C15 框架能力契约定义“完整迁移”，每项声明必须语义、宿主不满足则显式拒绝而非降级；“启用轮”= 每用户轮一次，init/reminder 为两个独立贡献槽位，State 以 owner 关联替代进程全局；扩展验收与框架能力验证分目录成两套测试。
+- [选择首版 OMP 候选运行组合与支持准入规则](decision/02-candidate-support.md): 首版只承诺一个精确组合——本地源码基线 `@oh-my-pi/pi-coding-agent@9348320`（=18.5.0，Windows x64 + Bun 1.4.2）；codebase-tools 交互 TUI 验收、框架能力自动化测试；未列版本通知一次后继续但必须语义不满足仍拒绝；探针一律隔离（临时 agent state + explicit-only 扩展根）；代码热重载延后，resume/State 恢复仍属首版。
 
 ## Not yet specified
 
@@ -39,6 +40,7 @@ Labels: wayfinder:map
 
 - 本地图内实施、发布框架或迁移替代扩展；后续由规格与 implementation 票推进。本地图中的临时宿主探针只为解除决策阻塞。
 - pi adapter 的实现与验收，以及广泛覆盖多个宿主、版本或 provider 的兼容承诺。
+- 代码热重载（extension reload）的支持与验收：首版只承诺进程重启后源码变更生效；验证条目由 [框架 backlog](../../docs/semantic-extension-framework-backlog.md) 持有，不在本图验收范围。
 - 修改 agent 源码、维护宿主 fork/补丁、通过绕过扩展接口改变宿主内部行为。
 - 其他扩展迁移，以及 codebase-tools 不需要的文件归档、跨进程共享文件协调、其他控制模式、持续性副作用、codemode 集成。
 - 改写业务提示词、自动探测/启用 MCP 或 LSP、替代子代理调度器、放宽必要消息角色或历史保护要求。

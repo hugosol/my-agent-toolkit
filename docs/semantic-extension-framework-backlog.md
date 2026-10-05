@@ -6,6 +6,8 @@ The focused first-release planning effort is tracked in [首版语义扩展框�
 
 ## Todo list
 
+- [ ] Verify OMP extension code hot reload: whether `/reload-plugins` re-imports edited extension/framework source (or returns cached modules), and whether reload keeps owner-scoped State and contribution registration idempotent and reconstructable from session entries. The first release only promises source changes take effect after a process restart; session resume/State restore is a separate, in-scope contract. Deferred by [decision 02](../.scratch/codebase-tools-omp-v1/lighthouse/02-candidate-support.md).
+
 - [ ] Investigate pi `codemode` and OMP `Code Mode`, their actual semantic differences, and whether either requires framework State inheritance.
 
 - [ ] Plan and verify model-cost's separation of host observation/State updates from native widget rendering during framework migration.
