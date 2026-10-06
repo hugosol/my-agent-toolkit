@@ -2,14 +2,14 @@
 
 Type: grilling
 Labels: wayfinder:grilling
-Status: open
+Status: claimed
 Interaction: HITL
 Parent: [首版语义扩展框架：codebase-tools 完整迁移与 OMP 适配](../map.md)
 Blocked by: 01, 03
 
 ## Question
 
-如何仅使用 OMP extension 可获得的身份和生命周期，建立正确的所属主会话关系，使激活值实时跟随、各会话 init 进度独立、持久化可逆且多主会话互不串扰？
+如何仅使用 OMP extension 可获得的身份和生命周期，建立正确的所属主会话关系，使激活值实时跟随、各会话 init 进度独立、持久化向前兼容且多主会话互不串扰？
 
 必须明确：
 
@@ -20,3 +20,9 @@ Blocked by: 01, 03
 - 在不同 owner 并存、开关 off/on 往返和恢复条件下的可观察不变量；独立 init 进度与指令贡献提交的具体接口交给贡献及接口票对齐。
 
 已确定的范围与持久化原则见 [框架架构决策](../../../docs/adr/0002-semantic-extension-framework.md)；具体旧记录格式只引用 [原状态逻辑](../../../../my-omp-toolkit/extensions/codebase-tools/state.ts)。本票决定契约，不实现 owner 注册表或存储模块。
+
+### 追加约束（来自 [05 贡献契约](../lighthouse/05-contribution-contract.md)，2026-10-06）
+
+- `codebase-tools:state` 只保留 `{on}`；各会话 init 进度不再由 state 字段承载，而由该会话当前 branch 是否已有 `codebase-tools:init` 推导。
+- 恢复契约需支持：主/子会话各自按自身 branch 推导 init 进度；owner 的 on 实时跟随（沿用 01/ADR-0002）；`/tree` 回溯后该 branch 无 init 消息则重新 init。
+- 持久化范围已收窄为旧→新单向（放弃新→旧回退）；owner/session 恢复不得依赖 `initInjected` 字段。

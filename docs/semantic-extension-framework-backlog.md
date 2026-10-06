@@ -10,6 +10,8 @@ The focused first-release planning effort is tracked in [首版语义扩展框�
 
 - [ ] Investigate pi `codemode` and OMP `Code Mode`, their actual semantic differences, and whether either requires framework State inheritance.
 
+- [ ] Decide multiple contribution rules per slot: composition vs explicit precedence, and how conflicts are detected/rejected. The first release supports exactly one rule per slot with an explicit error on multiple matches; deferred by [decision 05](../.scratch/codebase-tools-omp-v1/lighthouse/05-contribution-contract.md).
+
 - [ ] Plan and verify model-cost's separation of host observation/State updates from native widget rendering during framework migration.
 
 ## model-cost migration risk: rendering currently updates business state

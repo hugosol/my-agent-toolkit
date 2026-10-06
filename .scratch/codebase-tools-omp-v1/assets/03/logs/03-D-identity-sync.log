@@ -1,0 +1,9 @@
+{"label":"session_start","kind":"main","id":"Main","name":"main","depth":0,"hasUI":true,"cwd":"E:\\Developer\\myhub\\.wayfinder-probe-03\\work-sub3"}
+{"label":"before_agent_start","kind":"main","id":"Main","name":"main","depth":0,"hasUI":true,"cwd":"E:\\Developer\\myhub\\.wayfinder-probe-03\\work-sub3"}
+{"label":"before_subagent_spawn","kind":"main","id":"Main","name":"main","depth":0,"hasUI":true,"cwd":"E:\\Developer\\myhub\\.wayfinder-probe-03\\work-sub3","extra":{"type":"before_subagent_spawn","agent":"task","invocationKind":"task","patterns":["probe-gateway/probe-model"],"spawnKey":"SpatialParakeet"}}
+{"label":"session_start","kind":"sub","id":"SpatialParakeet","name":"task","depth":1,"parentId":"Main","hasUI":false,"cwd":"E:\\Developer\\myhub\\.wayfinder-probe-03\\work-sub3"}
+{"label":"before_agent_start","kind":"sub","id":"SpatialParakeet","name":"task","depth":1,"parentId":"Main","hasUI":false,"cwd":"E:\\Developer\\myhub\\.wayfinder-probe-03\\work-sub3"}
+{"label":"before_agent_start","kind":"sub","id":"SpatialParakeet","name":"task","depth":1,"parentId":"Main","hasUI":false,"cwd":"E:\\Developer\\myhub\\.wayfinder-probe-03\\work-sub3"}
+{"label":"before_agent_start","kind":"sub","id":"SpatialParakeet","name":"task","depth":1,"parentId":"Main","hasUI":false,"cwd":"E:\\Developer\\myhub\\.wayfinder-probe-03\\work-sub3"}
+{"label":"before_agent_start","kind":"sub","id":"SpatialParakeet","name":"task","depth":1,"parentId":"Main","hasUI":false,"cwd":"E:\\Developer\\myhub\\.wayfinder-probe-03\\work-sub3"}
+{"label":"before_agent_start","kind":"main","id":"Main","name":"main","depth":0,"hasUI":true,"cwd":"E:\\Developer\\myhub\\.wayfinder-probe-03\\work-sub3"}

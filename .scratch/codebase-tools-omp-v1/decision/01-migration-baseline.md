@@ -132,3 +132,4 @@ init 与 reminder 是两个**独立的贡献槽位**，各自有激活条件与�
 ## Comments
 
 - 2026-10-05 backtracer 审计：本票 lighthouse 暴露 3 个缺口——C14 能力缺失/拒绝的显式反馈、C15 能力与选项清单文档、扩展验收与框架能力两套测试结构。经用户判断不新建票，改为显式折入既有未解决票：C14+C15 → 06（公共接口/基础反馈/host assembly 与公开面文档约束）、两套测试结构 → 08（验收矩阵）。缺口信号已被这些票覆盖，未产生新票。
+- 2026-10-06 05 取代：本票 C9 的 developer 必须语义改为 **host-qualified capability**——OMP adapter 按 provider 序列化记录实际角色，codebase-tools 在 OMP 显式接受 `user` 交付，其他宿主待定（见 05 lighthouse、ADR-0002、host-support `context.required-role`）。本票 oracle 第 3 条「首个启用轮写回 `initInjected=true`」被 05 改为 state 只保留 `{on}`、init 进度按 branch 贡献身份推导；持久化双向兼容保留为框架默认，codebase-tools 记显式单向例外（ADR-0002）。本票作为历史记录保留。

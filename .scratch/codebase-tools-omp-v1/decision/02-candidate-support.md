@@ -74,3 +74,4 @@ codebase-tools 的消费者可见行为由用户在**交互 TUI** 亲自验收�
   - Q3 provider 条件：最小代表集（主力 deepseek + 一条异构路径）；只在已证明 C9 角色语义的路径上声明；未证明路径不得静默降级。
   - Q5 准入政策：未列版本/组合 → 显式用户可见通知一次后继续运行（不声明支持）；但若某项**必须语义**（角色/历史保护）被证明无法满足，仍须拒绝，不得因“小版本”而降级承诺。
   - Q4/Q6 用户反问测试版本维护与 reload 延后代价；已核实并在第二轮回答（18.5.0 checkout 可直接源码运行；OMP 已有 `/reload-plugins` 与 `reason: startup|reload`）。
+- 2026-10-06 05 取代：本票「必要角色不满足仍拒绝」中的角色部分改为 **host-qualified**；codebase-tools 在 OMP 不把 developer wire 角色作为准入门槛，只按 provider 路径记录实际角色（deepseek/openai-codex custom message 出站为 `user`）。版本未列与其他必须语义（历史保护等）的拒绝政策不变；其他宿主的角色抽象待定（见 05 lighthouse、ADR-0002、host-support `context.required-role`）。

@@ -16,7 +16,7 @@ Blocked by: 02, 06, 07
 - 将迁移基线中的每项行为映射到共享契约场景、真实 OMP 路径和证据类型；分别覆盖主会话、真实内建子代理、多 owner、恢复/分支、失败/拒绝、off/on、持久化往返、UI 与无 UI 条件。
 - 对实际消息顺序、角色、历史不变性和工具续轮设计出站/存储观察；mock runner 不冒充 provider、task 或 TUI 证明。
 - 测试结构分两套、分目录、分责任：codebase-tools 扩展验收（消费者可见行为，源自 01 的行为 oracle）与框架能力测试（C1–C15 的必须语义），后者同时充当宿主升级回归警报；永久测试只保留能捕获消费者可见回归的断言，不锁定提示词措辞、文件布局、转发实现或测试后门；临时探针与最终回归的责任分开。
-- 新旧实现同时启用被阻止、回退后可继续更新数据，以及共享源真实装载都必须有明确验证场景。
+- 新旧实现同时启用被阻止、旧写→新读写迁移后新实现可持续更新数据，以及共享源真实装载都必须有明确验证场景；新→旧回退已由 [05](../lighthouse/05-contribution-contract.md) 移出范围。
 - 首版支持集由维护者根据证据批准，测试通过不自动认证宿主升级。如何记录尚未验证与已知不支持、如何触发升级回归检查？
 - 能力与选项清单文档存在、可作为人类/agent 的能力入口索引，覆盖框架公开能力入口并指向源码细节。
 - 确认所有接口的行为、错误、顺序、环境前提均已决定；不可实现的必要契约仍是阻碍，不以占位代码或缩小测试掩盖。
@@ -28,3 +28,16 @@ Blocked by: 02, 06, 07
 - 基线固定为本地源码 `@oh-my-pi/pi-coding-agent@9348320`（=18.5.0，Windows x64 + Bun 1.4.2）；provider 代表集为 `deepseek/*`（主）+ `openai-codex/*`（辅）。
 
 本票完成只表示验收与交接计划锁定，不表示替代扩展存在、测试已经通过或发行版已获支持。地图结束后再产出实施规格/implementation 票，不在此把 decision 票改成构建任务。
+
+### 追加约束（来自 [03 探针](../lighthouse/03-extension-path-probes.md)，backtracer 2026-10-06）
+
+- 03 已实测 `deepseek/*` 走的 `openai-completions` 出站线格式（custom 贡献为 user role、位置、持久化与重放）。`openai-codex/*` 走 `openai-codex-responses`，**尚未实测**。
+- 验收矩阵必须明确：在无真实 `openai-codex` 凭据/授权时，如何取得或替代该 transport 的出站证据；若无法取得，如何记为未验证而不是通过。
+- developer-role 的验收证据必须按 provider 路径分别给出，不得用内部角色或 system prompt 代替出站协议证据（与 C9/02 一致）。**已被 [05](../lighthouse/05-contribution-contract.md) 修订：角色按路径记录为事实，不是必须语义或拒绝门槛。**
+
+### 追加约束（来自 [05 贡献契约](../lighthouse/05-contribution-contract.md)，2026-10-06）
+
+- provider wire 角色按路径记录（deepseek 实测 user、openai-codex 未测），记录为事实；`developer` 不再是必须语义或拒绝门槛（修订 01 C9/02 角色条款）。
+- init 进度按当前 branch 是否已有 `codebase-tools:init` 推导：必须覆盖 `/tree` 回溯后重新 init、pre-commit 取消后重试 init、同一轮 `before_agent_start` 重入不重复注入。
+- 同一启用轮至多一条槽位贡献；同一槽位多条规则=显式错误（C14 反馈）。
+- 持久化往返收窄为旧写→新读写；不再要求旧实现读新数据。
