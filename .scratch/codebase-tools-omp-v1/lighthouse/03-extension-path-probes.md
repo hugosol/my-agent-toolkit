@@ -61,3 +61,10 @@ custom 贡献进入 provider 请求时表现为独立 **user role** 消息，位
 - 证据分级：已观察 ≠ 源码推断 ≠ 未验证；未验证不写成兼容或支持。
 - 沿用 Agent 运行时官方术语（State / instruction contribution / subagent State inheritance）。
 - 与 01/02 的候选组合、C 能力清单及“必要语义不满足则拒绝、不静默降级”一致。
+
+---
+
+## Addendum（2026-10-07 traverse 审计）
+
+- 本文件记录的 `codebase-tools:state {on,initInjected}` 与 init 进度写回是探针当次观察的历史事实，不是最终契约。最终契约（04/05/07）：state 只读写 `{enabled}`，init 进度按 branch 是否已有 `codebase-tools:init` 推导，持久化兼容已放弃。
+- 探针其余结论（发现/依赖/命令/恢复/子代理/UI 出站/失败顺序）保持有效。

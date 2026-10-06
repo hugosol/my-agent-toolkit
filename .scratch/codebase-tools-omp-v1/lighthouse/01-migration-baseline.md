@@ -91,3 +91,11 @@ C1–C15（见 ticket 表）；每项声明必须语义，Agent 运行时不能�
 - 持久化双向可逆，同一份存储，无通用 schema/版本迁移。
 - 永久测试只断言消费者可见行为，不 pin 源码文案/模块形状/测试后门。
 - 对齐 ADR-0002 的 `framework/` + `extensions/` + `entrypoints/` 布局与官方术语（State / instruction contribution / subagent State inheritance）。
+
+---
+
+## Addendum（2026-10-07 traverse 审计）
+
+- 持久化兼容（两向）已放弃：本文件 Discussion「持久化来源」、User story 7、Preconditions 与 Invariants 中「双向可逆 / 旧↔新可逆往返 / 旧写→新读写→旧读写→新读」相关表述全部作废。
+- 迁移基线 @34d7c40 仍是行为 oracle，但不含持久化兼容：新实现只读写 `{enabled}`、不读旧 `{on}`、不写 `initInjected`；旧会话 resume 回落 off；init 进度按当前 branch 是否已有槽位贡献身份推导。
+- C1–C15 能力清单与两套测试结构不变；持久化迁移验证移入地图 Out of scope，见 [05 Addendum](05-contribution-contract.md) 与地图 Destination note。

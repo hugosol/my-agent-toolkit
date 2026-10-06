@@ -72,4 +72,14 @@ E1–E8 见 [lighthouse](../lighthouse/04-state-ownership.md)。已知限制：�
 
 ## Decision
 
-只有 owner（最近 main 祖先会话）持有 `{on}` 这一 owner 作用域 State，子代理只读、每轮实时跟随且不可写；State 以 owner 会话 JSONL 的 `codebase-tools:state` 为持久介质（best-effort，扩展不可观测落盘失败）；owner 解析用原生 `parentId` + `pi.pi.AgentRegistry`，框架只维护一个活动 `Map<ownerKey, StateCell>`，在会话边界从目标 branch seed、界内 Map 权威、`/tree` 不刷新 `on`；init 进度按各自 branch 独立推导；首版只支持单 main，多 main 可能解析错误，留待 roadmap。
+只有 owner（最近 main 祖先会话）持有 `{enabled}` 这一 owner 作用域 State，子代理只读、每轮实时跟随且不可写；State 以 owner 会话 JSONL 的 `codebase-tools:state` 为持久介质（best-effort，扩展不可观测落盘失败）；owner 解析用原生 `parentId` + `pi.pi.AgentRegistry`，框架只维护一个活动 `Map<ownerKey, StateCell>`，在会话边界从目标 branch seed、界内 Map 权威、`/tree` 不刷新 `enabled`；init 进度按各自 branch 独立推导；首版只支持单 main，多 main 可能解析错误，留待 roadmap。（2026-10-07 traverse：键由 `{on}` 改 `{enabled}`，并放弃持久化兼容。）
+
+### 追加约束（2026-10-07 traverse 审计）
+
+- 持久化键 `{on}` / `on` 一律改为 **`{enabled}`**；`codebase-tools:state` payload 为 `{enabled: boolean}`。
+- 放弃持久化兼容（两向）：新实现不读旧 `{on}`，旧会话 resume 回落 off。本票正文中「旧→新向前兼容」相关表述作废（见 [05 Addendum](../lighthouse/05-contribution-contract.md)）。
+- owner 不可解析时的「一次提示」为**可选 best-effort**（无 UI 走 stderr），不属于 06 C14 的准入/拒绝触发；降级 off 且不可 toggle 仍是硬契约。
+
+## Comments
+
+- 2026-10-07 traverse：记录本票与 [05](../decision/05-contribution-contract.md) 互为前置——本票带「追加约束（来自 05）」，05 的 Preconditions 又要求本票；实际按 05→04 迭代定稿。两票 header 的 `Blocked by` 只列 01,03，未反映该环；内容已一致，不影响 frontier。

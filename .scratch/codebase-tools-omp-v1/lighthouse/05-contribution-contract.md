@@ -38,7 +38,7 @@ hook 内 `appendEntry` 与 Agent 运行时 commit 落消息无法事务化；Age
 
 ## Decision
 
-贡献契约 = 隐藏（`display:false`）+ 持久化 `custom_message` + 尾部追加；交付角色是 agent-runtime-qualified capability——OMP adapter 按 provider 路径记录实际角色，codebase-tools 显式接受 `user`，其他 Agent 运行时待定，不作框架启用门槛；init 进度以当前 branch 是否已有槽位贡献身份为准，`state` 只保留 `{on}`；首版每个贡献槽位恰好一条规则；持久化保留 ADR-0002 双向默认，codebase-tools 记为显式旧→新单向例外。
+贡献契约 = 隐藏（`display:false`）+ 持久化 `custom_message` + 尾部追加；交付角色是 agent-runtime-qualified capability——OMP adapter 按 provider 路径记录实际角色，codebase-tools 显式接受 `user`，其他 Agent 运行时待定，不作框架启用门槛；init 进度以当前 branch 是否已有槽位贡献身份为准，`state` 只保留 `{enabled}`（2026-10-07 覆盖，见 Addendum；旧 `{on}` 不读）；首版每个贡献槽位恰好一条规则；持久化兼容整体放弃：codebase-tools 不保留 ADR-0002 双向默认的任何一半（其他迁移不受影响）。
 
 ## User stories
 
@@ -56,16 +56,16 @@ hook 内 `appendEntry` 与 Agent 运行时 commit 落消息无法事务化；Age
 - 01 的贡献槽位模型（first-enabled-run / every-enabled-run）与 03 的 hook 事实仍成立。
 - 04 提供 owner 关联与恢复契约：子代理按 owner 的当前 on、各自 branch 推导进度。
 - OMP 候选 18.5.0 的 `before_agent_start` / `custom_message` / provider 映射行为如 03 与源码证据。
-- 用户明确接受：codebase-tools 的新→旧回退不保证；回退旧实现会重复注入一次 init（ADR-0002 框架双向默认不变）。
+- 用户明确接受（2026-10-07 traverse 覆盖）：codebase-tools 的持久化兼容两个方向都不保证；新实现只读写 `{enabled}`、不读旧 `{on}`，旧会话回落 off。
 - 其他 Agent 运行时的贡献角色/权威语义保持未决，首版不承诺。
 
 ## Postconditions
 
-- `codebase-tools:state` 只需 `{on}`；不再写 `initInjected`；init 进度按 branch 消息身份推导。
+- `codebase-tools:state` 只需 `{enabled}`；不写 `initInjected`；init 进度按 branch 消息身份推导。
 - 贡献决策是 State + branch 的纯函数；同一启用轮至多一条槽位贡献；重入/取消/`/tree` 回溯语义明确。
 - 首版每槽位恰好一条规则；多规则/优先级进 framework backlog。
 - provider wire 角色作为 agent-runtime-qualified capability 按路径记录为 08 验收事实，不作框架启用门槛；其他 Agent 运行时待定。
-- ADR-0002 框架默认双向兼容保留；codebase-tools 记显式旧→新单向例外，07/08 验收相应收窄。
+- ADR-0002 框架默认双向兼容仅保留给其他迁移；codebase-tools 记为「无持久化兼容」豁免，07/08 的旧→新迁移验证已移出。
 - ADR-0002、agent-runtime-support `context.required-role`、01/02 Comments 已同步本决策；原仓库 ADR-0001 保持不动。
 
 ## Invariants
@@ -75,5 +75,16 @@ hook 内 `appendEntry` 与 Agent 运行时 commit 落消息无法事务化；Age
 - 贡献尾部追加，system prompt 不改写（沿用 ADR-0001 理由）。
 - 不声称 Agent 运行时事务原语；只约定同一启用轮至多一次注入。
 - 沿用 Agent 运行时官方术语与 01 的槽位命名（first-enabled-run / every-enabled-run）。
-- 旧→新向前兼容：新实现读旧 `{on}` 并以对话内容推导进度。
-- C9 的角色维度重述为 agent-runtime-qualified capability；ADR-0002 双向持久化默认不变、codebase-tools 为例外；ADR-0002/agent-runtime-support 已同步，下游以本 lighthouse 为准。
+- 持久化兼容已放弃：新实现只读写 `{enabled}`，不读旧 `{on}`（2026-10-07 traverse）。
+- C9 的角色维度重述为 agent-runtime-qualified capability；ADR-0002 双向持久化默认不变、codebase-tools 为「无兼容」例外；ADR-0002/agent-runtime-support 已同步，下游以本 lighthouse 为准。
+
+---
+
+## Addendum（2026-10-07 traverse 审计）：放弃持久化兼容
+
+用户显式放弃 codebase-tools 的持久化兼容（旧→新与新→旧都不保证）。本 Addendum 覆盖本文档上方「旧→新单向例外 / 新版只写 `{on}` / 旧 `{on}` 向前兼容」的一切表述：
+
+- State 唯一持久键 = 框架默认字段名 `enabled`；`codebase-tools:state` payload 为 `{enabled: boolean}`，不再使用 `{on}`。
+- 不读取旧 `{on}`/`initInjected`；旧会话 resume 后回落 off，用户需重新 toggle；不提供转换、导入或兼容 shim。
+- 验证范围收窄为新实现自洽：新写 `{enabled}` → 重启/resume 读回 `{enabled}`。
+- ADR-0002 框架默认双向兼容仅保留给其他迁移，codebase-tools 记为「无持久化兼容」豁免。

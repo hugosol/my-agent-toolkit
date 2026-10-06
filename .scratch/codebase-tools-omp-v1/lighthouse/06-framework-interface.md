@@ -63,7 +63,7 @@ prompts: [
 marker: { text: "◈ codeBaseTools" }
 ```
 
-v1 即建统一区：单一 key + placement 由框架拥有；行按扩展 `id` 稳定排序。enabled → 显示；off → 移除；每启用轮重设；区域为空 → 清除；`hasUI:false` 整体 no-op。toggle 的 notify 由框架从 `displayName` 派生 `${displayName} on/off`。不引入通用布局语言；复杂 UI 归 `<ext>/runtimes/omp.ts`。
+v1 即建统一区：单一 key + placement 由框架拥有；行按扩展 `id` 稳定排序。State 字段为 true → 显示；false → 移除；每启用轮重设；区域为空 → 清除；`hasUI:false` 整体 no-op。toggle 的 notify 由框架从 `displayName` 派生 `${displayName} enabled/disabled`（2026-10-07 用户改为 enabled/disabled；原实现为 on/off）。不引入通用布局语言；复杂 UI 归 `<ext>/runtimes/omp.ts`。
 
 ### 5. 准入（C14）
 
@@ -122,13 +122,13 @@ ompAdapter(definition, { supportedVersions: ["18.5.0"] })
 - 01 已 resolved：codebase-tools @34d7c40 为需求 oracle；C1–C15；“启用轮” = 一次 agent-run initiation；init/reminder 为两个独立槽位。
 - 02 已 resolved：唯一精确组合 OMP 18.5.0（源码 @9348320）+ Windows x64 + Bun 1.4.2；准入检查在注册命令与贡献之前；未列 → 一次通知 + 继续；探针隔离。
 - 03 已 resolved：OMP 18.5.0 经扩展接口验证发现/命令/state 持久化/恢复/子代理身份与继承/UI 转发/出站序列化/失败顺序；custom 贡献出站 `user`；子代理 `hasUI:false`。
-- 04 已 resolved：owner 作用域 `{on}`（本票起称 `{enabled}`）；子代理只读 live-follow；持久化为 owner 会话 JSONL；owner 解析用 `parentId` + `pi.pi.AgentRegistry`；界内 Map 权威、`/tree` 不刷新 `on`；首版单 main。
-- 05 已 resolved：隐藏持久化 `custom_message` + 尾部追加；角色 host-qualified、不作门槛；init 进度按 branch 推导、state 只留 `{on}`；一槽位一规则；贡献决策是 State+branch 纯函数。
+- 04 已 resolved：owner 作用域 `{enabled}`；子代理只读 live-follow；持久化为 owner 会话 JSONL；owner 解析用 `parentId` + `pi.pi.AgentRegistry`；界内 Map 权威、`/tree` 不刷新 `enabled`；首版单 main。
+- 05 已 resolved：隐藏持久化 `custom_message` + 尾部追加；角色 host-qualified、不作门槛；init 进度按 branch 推导、state 只留 `{enabled}`（不读旧 `{on}`）；一槽位一规则；贡献决策是 State+branch 纯函数。
 - [ADR-0002](../../../docs/adr/0002-semantic-extension-framework.md) 的 `framework/` + `extensions/` + `entrypoints/` 布局与“宿主无关 shared logic”约束成立；[GLOSSARY.md](../../../GLOSSARY.md) 的 Agent runtime / Injected prompt / State / owner 词条成立。
 
 ## Postconditions
 
-- 公共接口骨架固定：`defineExtension` 键 = `id` / `displayName` / `state` / `commands` / `prompts` / `marker`；`ompAdapter(definition, { supportedVersions })`。
+- 公共接口骨架固定：`defineExtension` 键 = `id` / `displayName` / `state` / `commands` / `prompts` / `marker`；`ompAdapter(definition, { supportedVersions })`。codebase-tools 取值 `id="codebase-tools"`、`displayName="codeBaseTools"`、`state` 用默认 `enabled`（字段名=持久键）。
 - v1 控制面只有 `commandToggle`；`type` 封闭判别联合。
 - prompts 身份 = `${id}:${tag}`；strategy = `first-enabled-run` / `every-enabled-run`；一槽位一规则。
 - marker = 框架统一区、`{ text }`、框架拥有 key/placement/排序(`id`)/生命周期/无 UI。
@@ -147,3 +147,11 @@ ompAdapter(definition, { supportedVersions: ["18.5.0"] })
 - 确定性不依赖宿主注册顺序；marker 按 `id` 排序；冲突显式报错。
 - 术语：Agent runtime（不用 host）、Injected prompt（不用 instruction contribution）、`tag`、`id`/`displayName`。
 - 不宣称沙箱：TS 可见性（`private`/`readonly`/`#private`）不是保护机制。
+
+---
+
+## Addendum（2026-10-07 traverse 审计）
+
+- `id="codebase-tools"`、`displayName="codeBaseTools"`；State 字段名即持久键，codebase-tools 用默认 `enabled`，payload `{enabled: boolean}`（旧 `{on}` 不读）。
+- owner 不可解析等运行期降级 → off、不可 toggle；有通道时的一次提示为可选 best-effort，不是 C14 的第三个触发。
+- toggle notify 文案 = `${displayName} enabled` / `${displayName} disabled`（codebase-tools 即 `codeBaseTools enabled` / `codeBaseTools disabled`）；有意偏离原实现的 on/off（01 oracle 不 pin 文案）。

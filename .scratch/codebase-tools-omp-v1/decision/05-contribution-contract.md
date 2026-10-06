@@ -32,11 +32,11 @@ Lighthouse: [05-contribution-contract](../lighthouse/05-contribution-contract.md
 - **决定**：贡献契约 = 隐藏（`display:false`）+ 持久化 `custom_message` + 尾部追加；交付角色是 agent-runtime-qualified capability，OMP adapter 按 provider 路径记录实际序列化角色给 08 验收，但不作框架启用/拒绝门槛；codebase-tools 在 OMP 接受 deepseek/openai-codex 的 `user` 交付，其他 Agent 运行时待定。
 - **影响**：C9 的角色维度重述为 **agent-runtime-qualified capability**——OMP adapter 按 provider 序列化记录实际角色，codebase-tools 在 OMP 显式接受 `user`，其他 Agent 运行时（如 pi）待定；02 的角色拒绝条款据此改为 agent-runtime-qualified；不引入框架级 `requiredRole` 拒绝机制。ADR-0002/agent-runtime-support 已同步。
 
-### 2. 提交与进度：对话为真相，state 只保留 `{on}`
+### 2. 提交与进度：对话为真相，state 只保留 `{enabled}`（2026-10-07 前为 `{on}`）
 
 - **事实**：hook 内 `appendEntry` 与 Agent 运行时 commit 落消息无法事务化；Agent 运行时在同一轮因 systemPrompt override 变化会重入 `before_agent_start`（最多 3 次，`agent-session.ts:499,7321-7350`）；pre-commit 取消会留下“进度已写、消息未落盘”。
-- **决定**：drop `initInjected`。`codebase-tools:state` 只写/读 `{on}`；init 进度以当前 branch 是否已有槽位贡献身份（`codebase-tools:init`）为准；贡献决策是“持久化 State + branch 内容”的纯函数，hook 内不推进进度。因此同一轮重入天然幂等（branch 事实不变，最终 attempt 提交同一条消息），pre-commit 取消与 `/tree` 回溯都会自然回到 init。
-- **持久化范围变化**：codebase-tools 记为显式单向例外——ADR-0002 的框架默认双向兼容保留给其他迁移；本迁移只要求旧→新（新读旧 `{on}` + 按消息推导进度）；新→旧回退时旧 `parseState` 缺 `initInjected` 回落 `false`，会重复注入一次 init。Destination 与 07/08 的往返验收收窄为“旧写→新读写”。
+- **决定**：drop `initInjected`。`codebase-tools:state` 只写/读 `{enabled}`；init 进度以当前 branch 是否已有槽位贡献身份（`codebase-tools:init`）为准；贡献决策是“持久化 State + branch 内容”的纯函数，hook 内不推进进度。因此同一轮重入天然幂等（branch 事实不变，最终 attempt 提交同一条消息），pre-commit 取消与 `/tree` 回溯都会自然回到 init。
+- **持久化范围变化（2026-10-07 traverse 覆盖）**：用户显式放弃 codebase-tools 的持久化兼容（两个方向均不保证）——ADR-0002 的框架默认双向兼容仍保留给其他迁移；新实现只读写 `{enabled}`，**不读旧 `{on}`**，旧会话 resume 回落 off、需重新 toggle。Destination 与 07/08 的持久化迁移验证已随之移出。本节覆盖原文的「旧→新单向例外」。
 - **不声称**Agent 运行时事务原语；只需保证同一启用轮至多提交一条槽位贡献。
 
 ### 3. 规则数：首版一槽位一规则
@@ -47,7 +47,7 @@ Lighthouse: [05-contribution-contract](../lighthouse/05-contribution-contract.md
 
 - “启用轮” = 一次 agent-run initiation（`before_agent_start`，每用户轮至多一次）；工具续轮与每次 provider 请求不重触发；命令轮等不触达 provider 的轮不计。
 - off → 无贡献；on + 当前 branch 无 init 消息 → init；on + 已有 init 消息 → reminder；子代理按所属 owner 的当前 on + 自身 branch 推导 init 进度。
-- 模型/provider 中途变化不影响 `{on}` 与进度（二者与模型无关）；角色是 agent-runtime-qualified，无按模型重检职责；已落盘消息的角色由当次请求的 provider 映射决定，按路径记录。
+- 模型/provider 中途变化不影响 `{enabled}` 与进度（二者与模型无关）；角色是 agent-runtime-qualified，无按模型重检职责；已落盘消息的角色由当次请求的 provider 映射决定，按路径记录。
 
 ### 5. 被否决的替代
 
@@ -56,3 +56,16 @@ Lighthouse: [05-contribution-contract](../lighthouse/05-contribution-contract.md
 - 框架级删除 `context.required-role` 抽象：会废弃其他 Agent 运行时/扩展可能需要的能力，与 map Notes 冲突。
 - flag 为进度真相 / 恢复期对齐回写：对话内容更接近 init 语义，`/tree` 回溯下更自洽。
 - 首版支持多规则/优先级：过度设计，记 backlog。
+
+### 追加约束（2026-10-07 traverse 审计）：放弃持久化兼容
+
+用户显式放弃 codebase-tools 的持久化兼容（旧→新与新→旧都不保证）。因此：
+
+- State 唯一持久键 = 框架默认字段名 `enabled`；`codebase-tools:state` payload 为 `{enabled: boolean}`，不再使用 `{on}`。
+- **不读取**旧 `{on}`/`initInjected` 数据；旧会话 resume 后回落 off，用户需重新 toggle；不提供转换、导入或兼容 shim。
+- 本票正文与 [lighthouse](../lighthouse/05-contribution-contract.md) 中「旧→新单向例外」「新版只写 `{on}`」「旧 `{on}` 向前兼容」全部被本节覆盖，保留为历史记录。
+- 验证范围收窄为新实现自洽：新写 `{enabled}` → 重启/resume 读回 `{enabled}`；ADR-0002 框架默认双向兼容仅保留给其他迁移，codebase-tools 记为「无持久化兼容」豁免。
+
+## Comments
+
+- 2026-10-07 traverse：记录本票与 [04](04-state-ownership.md) 互为前置；实际按 05→04 迭代定稿。两票 header 的 `Blocked by` 只列 01,03，未反映该环；内容已一致，不影响 frontier。

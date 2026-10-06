@@ -38,7 +38,7 @@
 
 ### 5. 矩阵覆盖与负例
 
-正例矩阵 A（B1–B10）逐条映射 10 条 oracle 行为（默认 off、toggle、init、reminder、交付形态/落盘重放、marker 生命周期、off 语义、恢复/分支、子代理实时跟随、资源独立加载）；矩阵 B（C1–C15）逐项必须语义；负例 N1–N9（未列版本通知、必须语义拒绝、落盘不可断言、owner 不可解析降级 off、非法 state 回落、配置冲突显式错误、初始化失败放弃 binding、双实现互斥、`hasUI:false`）。C14 拒绝路径用可注入测试 adapter 真跑，不只验通道存在。
+正例矩阵 A（B1–B11）逐条映射 10 条 oracle 行为（默认 off、toggle、init、reminder、交付形态/落盘重放、marker 生命周期、off 语义、恢复/分支、子代理实时跟随、资源独立加载）加 B11（同一轮重入/pre-commit 取消后重试）；矩阵 B（C1–C15）逐项必须语义；负例 N1–N10（未列版本通知、必须语义拒绝、落盘不可断言、owner 不可解析降级 off、非法 state 回落、配置冲突显式错误、初始化失败放弃 binding、双实现互斥、`hasUI:false`、同进程多 main 不在支持集）。C14 拒绝路径用可注入测试 adapter 真跑，不只验通道存在。
 
 ### 6. openai-codex 出站证据
 
@@ -90,7 +90,7 @@ C15 落 `docs/framework-capabilities.md`（列全 `defineExtension` / `ompAdapte
 
 ## Postconditions
 
-- `acceptance-plan.md` 固定为验收/交接计划：B1–B10 / C1–C15 / N1–N9、证据方案与执行者分工成立。
+- `acceptance-plan.md` 固定为验收/交接计划：B1–B11 / C1–C15 / N1–N10、证据方案与执行者分工成立。
 - 测试结构固定：`tests/codebase-tools/` + `tests/framework/`。
 - openai-codex 层1/层2 方案固定（含 `gpt-6-luna`、`openaiWebsockets="off"`、`PI_REQ_DEBUG`）；不可得记 unverified。
 - 长期升级标准归 `docs/agent-runtime-support.md`、只覆盖框架能力、按需触发、触及面人工抽查、不自动认证。
@@ -103,7 +103,15 @@ C15 落 `docs/framework-capabilities.md`（列全 `defineExtension` / `ompAdapte
 - 永久测试只断言消费者可见行为/必须语义，不 pin 文案、布局、转发实现、测试后门。
 - 真实 provider 证据不得由 mock 冒充；未测路径标 unverified。
 - 支持声明是精确版本枚举、维护者显式决定；绿灯只作回归警报。
-- 首版单 main；子代理只读实时跟随；state 只写 `{on}`；历史只追加。
+- 首版单 main；子代理只读实时跟随；state 只写 `{enabled}`；历史只追加。
 - 隔离：不碰全局安装、正式配置或运行中 agent。
 - 术语沿用 [GLOSSARY.md](../../../GLOSSARY.md) 与 [ADR-0002](../../../docs/adr/0002-semantic-extension-framework.md)（Agent runtime / Injected prompt / State / owner）。
+
+---
+
+## Addendum（2026-10-07 traverse 审计）
+
+- 持久化兼容（两向）已放弃：矩阵不验证旧写→新读写；只验证新实现自洽（新写 `{enabled}` → 重启/resume 读回 `{enabled}`）；旧 `{on}` 不读、旧会话回落 off。
+- 矩阵新增 B11（同一轮重入 / pre-commit 取消后重试）与 N10（同进程多 main 不在支持集），见 `acceptance-plan.md`。
+- owner 不可解析时的一次提示为可选 best-effort（无 UI 走 stderr），不属 C14 准入/拒绝触发；降级 off 且不可 toggle 为硬契约。
 - 升级标准只覆盖框架能力，具体 extension 能力不入长期标准。

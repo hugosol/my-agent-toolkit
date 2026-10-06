@@ -52,7 +52,7 @@ owner 键 = owner 会话身份 `{kind:"main", sessionId}`（`getSessionFile()` �
 
 ## Decision
 
-只有 owner（最近 main 祖先会话）持有 `{on}` 这一 owner 作用域 State，子代理只读、每轮实时跟随且不可写；State 以 owner 会话 JSONL 的 `codebase-tools:state` 为持久介质（best-effort，扩展不可观测落盘失败）；owner 解析用原生 `parentId` + `pi.pi.AgentRegistry`，框架只维护一个活动 `Map<ownerKey, StateCell>`，在会话边界从目标 branch seed、界内 Map 权威、`/tree` 不刷新 `on`；init 进度按各自 branch 独立推导；首版只支持单 main，多 main 可能解析错误，留待 roadmap。
+只有 owner（最近 main 祖先会话）持有 `{enabled}` 这一 owner 作用域 State，子代理只读、每轮实时跟随且不可写；State 以 owner 会话 JSONL 的 `codebase-tools:state` 为持久介质（best-effort，扩展不可观测落盘失败）；owner 解析用原生 `parentId` + `pi.pi.AgentRegistry`，框架只维护一个活动 `Map<ownerKey, StateCell>`，在会话边界从目标 branch seed、界内 Map 权威、`/tree` 不刷新 `enabled`；init 进度按各自 branch 独立推导；首版只支持单 main，多 main 可能解析错误，留待 roadmap。（2026-10-07 traverse：键由 `{on}` 改 `{enabled}`，并放弃持久化兼容；见 Addendum。）
 
 ## User stories
 
@@ -95,3 +95,11 @@ owner 键 = owner 会话身份 `{kind:"main", sessionId}`（`getSessionFile()` �
 - 旧→新向前兼容：新实现读旧 `{on}`，不依赖 `initInjected`。
 - 单一来源：会话边界 seed 持久值，界内内存 Map 权威。
 - 不修改 Agent 运行时源码；只用扩展接口与 `pi.pi` 注入的 SDK escape hatch（后者限定在 OMP adapter）。
+
+---
+
+## Addendum（2026-10-07 traverse 审计）
+
+- 持久化键 `{on}` / `on` 一律读作 **`{enabled}`**；`codebase-tools:state` payload 为 `{enabled: boolean}`。
+- 持久化兼容（两向）已放弃：新实现不读旧 `{on}`，旧会话 resume 回落 off；本文件「旧→新向前兼容」相关表述作废（见 [05 Addendum](05-contribution-contract.md)）。
+- owner 不可解析 → off、不可 toggle 是硬契约；有通道时的一次提示为可选 best-effort，不属 06 C14 触发。

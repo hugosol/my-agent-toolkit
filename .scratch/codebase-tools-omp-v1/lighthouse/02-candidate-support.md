@@ -107,3 +107,10 @@ codebase-tools 的消费者可见行为（marker、notify、命令切换）由�
 - 测试版本维护沿用「绿灯不认证」：一次通过不会自动批准某个 Agent 运行时版本（ADR-0002 第九范围、agent-runtime-support）。
 - 探针一律走隔离 agent state + `explicit-only` 扩展根，避免旧实现与用户配置串入。
 - 语言与术语沿用 Agent 运行时官方词汇（State / instruction contribution / subagent State inheritance），与 01 的 C1–C15 命名对齐。
+
+---
+
+## Addendum（2026-10-07 traverse 审计）
+
+- Discussion §6 与 User story 9 中「恢复 `{on, initInjected}`」作废：resume/State 恢复仍属首版 C4，但持久键为 `{enabled}`，init 进度按 branch 消息身份推导，不写 `initInjected`、不读旧 `{on}`。
+- 其余候选组合、隔离规则、准入政策与 hot-reload 延后不变。

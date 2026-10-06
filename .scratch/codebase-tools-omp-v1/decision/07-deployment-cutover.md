@@ -1,4 +1,4 @@
-# 确定共享源码装载与旧→新单向迁移切换方案
+# 确定共享源码装载与实现切换方案
 
 Type: grilling
 Labels: wayfinder:grilling
@@ -6,6 +6,7 @@ Status: resolved
 Interaction: HITL
 Parent: [首版语义扩展框架：codebase-tools 完整迁移与 OMP 适配](../map.md)
 Blocked by: 03, 06
+Lighthouse: [07-deployment-cutover](../lighthouse/07-deployment-cutover.md)
 
 ## Question
 
@@ -35,13 +36,13 @@ Blocked by: 03, 06
 
 ### 追加约束（来自 [05 贡献契约](../lighthouse/05-contribution-contract.md)，2026-10-06）
 
-- 持久化契约收窄：`codebase-tools:state` 新写只含 `{on}`，不再写 `initInjected`；旧→新向前兼容（新读旧 `{on}` + 按对话推导进度），新→旧回退不再保证。
-- 切换方案只需保证旧→新不丢业务数据、两实现不同时启用；不要求同一份存储上旧实现继续更新新实现写下的数据。
+- 持久化契约（2026-10-07 traverse 覆盖）：新版只读写 `{enabled}`，不写 `initInjected`、不读旧 `{on}`；旧→新兼容整体放弃，旧会话回落 off。原文的「新写只含 `{on}` / 旧→新向前兼容」作废。
+- 切换方案只需保证两实现不同时启用；持久化数据不迁移、不保证兼容（2026-10-07 traverse 放弃）。
 - 贡献 wire 角色由 provider 历史序列化决定，部署方案无需为角色做门控；08 记录各路径实测角色。
 
 ### 追加约束（来自 [04 State 归属决策](../lighthouse/04-state-ownership.md)，2026-10-06）
 
-- State 装载遵循 04：持久介质 = owner 会话 JSONL 的 `codebase-tools:state`（只 `{on}`）；`/new`、`/resume` 时 Agent 运行时 flush 旧会话、框架退役旧 cell 并从目标 branch seed。
+- State 装载遵循 04：持久介质 = owner 会话 JSONL 的 `codebase-tools:state`（只 `{enabled}`）；`/new`、`/resume` 时 Agent 运行时 flush 旧会话、框架退役旧 cell 并从目标 branch seed。
 - 活动子代理对切换的影响按 04 已知限制：切换后旧子代理的 owner 解析可能失效或取错；不得据此声称支持同进程多 main。
 
 ## Discussion（2026-10-06，grilling + domain-modeling）
@@ -67,14 +68,12 @@ Blocked by: 03, 06
 - 回退 = git 修订 `@34d7c40`；回退不保证新数据兼容（05）。
 - 被否决：整根替换（波及 4 个未迁移扩展）；专用 profile（agent dir 的 auth/model 重建成本）；`disabledExtensions`/名称探测。
 
-### 5. 旧写→新读写验证（Q5）
-- 干净环境前提：temp `PI_CODING_AGENT_DIR` + explicit-only 根 + 受控会话。
-- 步骤：① 从 `@34d7c40` 临时物化旧实现，真实 OMP 18.5.0 跑真实旧会话 → 旧格式存储（`{on,initInjected}` + `codebase-tools:init`）；② 同一份存储不转换，用新 `entrypoints/omp` resume → `on` 恢复、branch 已有 init 走 reminder；新版写出 state 只含 `{on}`；③ 再重启/resume 自洽；④ `/tree` 回溯无 init 分支 → 重新 init、`on` 不变。
-- 观察点：session JSONL 条目序列/形状、resume/TUI（marker/notify/init vs reminder）、provider 出站捕获（custom 贡献 user role、尾部追加；openai-codex 留给 08）。
-- 不做：JSON 外形/备份/一次性导入当迁移证明；新→旧回退（05 移出范围）。
+### 5. 持久化兼容：已放弃（Q5，2026-10-07 traverse 覆盖）
+
+用户显式放弃持久化兼容（旧→新与新→旧都不保证）。原文的「旧写→新读写」四步验证、旧 `{on,initInjected}` 物化与观察点全部作废，保留为历史记录。新版只读写 `{enabled}`、不读旧 `{on}`，旧会话 resume 回落 off；验证收窄为新实现自洽：新写 `{enabled}` → 重启/resume 读回 `{enabled}`。见 [05 Addendum](../lighthouse/05-contribution-contract.md)。
 
 ### 6. 动作分工与 cutover 时机（Q6）
-- Agent（隔离可做）：隔离候选安装、物化旧实现、探针/框架能力测试/旧写→新读写自动化验证、写部署与支持记录。
+- Agent（隔离可做）：隔离候选安装、探针/框架能力测试/新实现自洽恢复验证、写部署与支持记录。
 - 用户：explicit-only 干净 TUI 功能验收；验收通过后执行 cutover（删除 + config + 重启）与 cutover 冒烟；提供 openai-codex 凭据（若需）；最终固定升级版本。
 - **删除推迟到功能验收通过之后**：验收用 explicit-only 无需删除；失败则默认环境与旧实现完好。
 
@@ -85,7 +84,7 @@ Blocked by: 03, 06
 
 ## Decision
 
-首版以本地 checkout `oh-my-pi@9348320` 为修订锚点、隔离精确安装 `@18.5.0` 为运行/验收产物；装载点 = `my-agent-toolkit/entrypoints/omp` 目录，防双注册靠装载来源互斥（开发/验收用 `--no-extensions -e` explicit-only；永久切换 = 验收通过后删除旧 `codebase-tools` + 加新根条目 + 重启）；旧的 `{on,initInjected}` 存储经同一份真实存储的「旧写→新读写」验证向前兼容（新版只写 `{on}`）；支持组合与升级规则记入 `docs/agent-runtime-support.md`——候选版本隔离安装 + 运行期参数跑框架能力测试、绿灯只作回归警报，人工 TUI 验收通过后由维护者显式替换单一支持版本。
+首版以本地 checkout `oh-my-pi@9348320` 为修订锚点、隔离精确安装 `@18.5.0` 为运行/验收产物；装载点 = `my-agent-toolkit/entrypoints/omp` 目录，防双注册靠装载来源互斥（开发/验收用 `--no-extensions -e` explicit-only；永久切换 = 验收通过后删除旧 `codebase-tools` + 加新根条目 + 重启）；不做持久化兼容：新版只读写 `{enabled}`、不读旧 `{on}`，旧会话回落 off（2026-10-07 traverse 覆盖原「旧写→新读写」）；支持组合与升级规则记入 `docs/agent-runtime-support.md`——候选版本隔离安装 + 运行期参数跑框架能力测试、绿灯只作回归警报，人工 TUI 验收通过后由维护者显式替换单一支持版本。
 
 ## Comments
 

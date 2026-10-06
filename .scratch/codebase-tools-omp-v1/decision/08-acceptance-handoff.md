@@ -6,6 +6,7 @@ Status: resolved
 Interaction: HITL
 Parent: [首版语义扩展框架：codebase-tools 完整迁移与 OMP 适配](../map.md)
 Blocked by: 02, 06, 07
+Lighthouse: [08-acceptance-handoff](../lighthouse/08-acceptance-handoff.md)
 
 ## Question
 
@@ -40,20 +41,20 @@ Blocked by: 02, 06, 07
 - provider wire 角色按路径记录（deepseek 实测 user、openai-codex 未测），记录为事实；`developer` 不再是必须语义或拒绝门槛（修订 01 C9/02 角色条款）。
 - init 进度按当前 branch 是否已有 `codebase-tools:init` 推导：必须覆盖 `/tree` 回溯后重新 init、pre-commit 取消后重试 init、同一轮 `before_agent_start` 重入不重复注入。
 - 同一启用轮至多一条槽位贡献；同一槽位多条规则=显式错误（C14 反馈）。
-- 持久化往返收窄为旧写→新读写；不再要求旧实现读新数据。
+- 持久化兼容整体放弃（2026-10-07 traverse）：不验证旧写→新读写，也不验证新→旧；state 唯一键 `{enabled}`。
 
 ### 追加约束（来自 [04 State 归属决策](../lighthouse/04-state-ownership.md)，2026-10-06）
 
 - 首版仅支持单 main：把验收矩阵的「多 owner」理解为「单 owner + 多个子代理」；同进程多 main（ACP/cmux/embedded，或 `/new` 后旧子代理存活）不在支持集，按 04 记录的已知限制判定为「可能解析到错误 owner」，不得作为通过证据。
-- 新增验收项：`/tree` 只重算 init 进度、不改变 `on`；owner 不可解析/单独恢复的子代理降级为 off 且不可 toggle；子代理无 `on` 写权。
-- owner `on` 恢复：会话边界从目标 branch 末条 `codebase-tools:state` seed；`resume` 后等于该 branch 末条值，无则 off。
+- 新增验收项：`/tree` 只重算 init 进度、不改变 `enabled`；owner 不可解析/单独恢复的子代理降级为 off 且不可 toggle（有通道时的提示为可选 best-effort，不属 C14 触发）；子代理无 `enabled` 写权。
+- owner `enabled` 恢复：会话边界从目标 branch 末条 `codebase-tools:state` seed；`resume` 后等于该 branch 末条值，无则 off。
 - 持久化 best-effort：扩展无法观测落盘失败，记为「不可由扩展断言」，不得作为通过证据。
 
 ### 追加约束（来自 [07 部署与切换决策](../lighthouse/07-deployment-cutover.md)，2026-10-06）
 
 - **运行/验收产物**：验收矩阵必须用隔离精确安装 `@oh-my-pi/pi-coding-agent@18.5.0` 作为运行产物；本地 checkout `9348320` 只是修订/源码锚点（开发期假设二者一致）。不得假定 checkout 可直接跑完整会话（natives 未构建、交互 TUI 硬依赖 addon）。
 - **装载与防双注册验证**：开发/验收用 explicit-only `omp --no-extensions -e E:/Developer/myhub/my-agent-toolkit/entrypoints/omp` + 干净会话/temp agent state；永久切换 = 验收通过后用户删除旧 `my-omp-toolkit/extensions/codebase-tools` + `config.yml` 加 `entrypoints/omp` 目录条目 + 重启。矩阵须覆盖「两实现不同时启用」与 cutover 冒烟；不得用扩展名去重/`disabledExtensions` 作为互斥手段（加载层无名称去重）。
-- **旧写→新读写迁移验证**（07 §5，须纳入矩阵）：用 `@34d7c40` 临时物化旧实现产生真实旧存储 → 同一份存储不转换、新实现 resume → `on` 恢复、branch 已有 init 走 reminder、新版只写 `{on}`；再重启自洽；`/tree` 回溯重新 init 且 `on` 不变。观察点 = session JSONL 条目序列/形状 + resume/TUI + provider 出站捕获。不得以 JSON 外形/备份/一次性导入当证明；不验证新→旧回退。
+- **持久化兼容已放弃**（07 §5 覆盖，2026-10-07 traverse）：矩阵不验证旧写→新读写迁移；只验证新实现自洽（新写 `{enabled}` → 重启/resume 读回 `{enabled}`）。旧 `{on}` 不读、旧会话回落 off。
 - **版本升级规则**：候选版本经运行期参数（env `OMP_TEST_VERSION=<v>`）在隔离前缀精确安装并跑整套框架能力测试（C1–C15）=「基本验证」；默认/CI 只跑已固定版本。绿灯只作回归警报、不自动升级支持声明；人工 TUI 验收通过后维护者显式**替换**单一支持版本（`ompAdapter({supportedVersions})` + `docs/agent-runtime-support.md` + 固定记录），restart 生效。矩阵须明确「基本验证」场景清单与未验证/不支持记录方式、升级回归触发条件。
 - **干净环境前提**：旧写与新读都在隔离 temp `PI_CODING_AGENT_DIR` + explicit-only 根 + 受控会话运行；不得改动默认全局安装、正式配置或运行中 agent。
 - **待判断（07 未定，归 08）**：用户日常 `omp` 为 18.6.1（未列版本，按 02 通知一次后继续），而验收产物是 18.5.0。矩阵需明确：日常运行版本与已验收组合的差异如何记录，是否要求把日常运行也固定到 18.5.0，以及升级规则何时用于认证 18.6.1。
@@ -91,7 +92,7 @@ Blocked by: 02, 06, 07
 
 ## Decision
 
-锁定首版验收矩阵与实施交接门槛：两套测试分目录、每项行为映射到真实 OMP 路径与证据；openai-codex 分两层证据（层2 用 `gpt-6-luna` 真凭据、不可得记 unverified）；长期升级标准只覆盖框架能力、按需触发、触及面人工抽查；显式 blocker 经用户判断后交接到规格与 implementation。
+锁定首版验收矩阵与实施交接门槛：两套测试分目录、每项行为映射到真实 OMP 路径与证据；openai-codex 分两层证据（层2 用 `gpt-6-luna` 真凭据、不可得记 unverified）；长期升级标准只覆盖框架能力、按需触发、触及面人工抽查；显式 blocker 经用户判断后交接到规格与 implementation；持久化迁移验证随 2026-10-07 决策移出首版验收。
 
 ## Comments
 

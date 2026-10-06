@@ -59,10 +59,11 @@ Lighthouse: [06-framework-interface](../lighthouse/06-framework-interface.md)
 - 声明用**纯数据对象**（`{ type: "toggle", ... }`），不用 builder。
 - codebase-tools 不创建 `logic.ts`；「共享 TS 逻辑」= framework core/behaviors。
 - 被否决：plan/effect-descriptor 统一原语（过度设计）；raw handler 后门（会退化成原生 API 包装）。
+- 身份固定（2026-10-07 traverse）：`id="codebase-tools"`、`displayName="codeBaseTools"`——保证 `${id}:state`/`${id}:${tag}` 仍为 `codebase-tools:*`、marker key=`codebase-tools`、notify=`codeBaseTools enabled/disabled`。
 
 ### 2. State、命令与写路径
 
-- State 为 owner 作用域（04）；`enabled` 是框架默认 boolean 字段（默认 false，落盘 `${id}:state`），`state` 可整体省略。
+- State 为 owner 作用域（04）；`enabled` 是框架默认 boolean 字段（默认 false，**字段名即持久键**，落盘 `${id}:state`）；codebase-tools 使用该默认字段，故 payload 为 `{enabled: boolean}`，**不读旧 `{on}`**（2026-10-07 traverse）；`state` 可整体省略。
 - 命令声明：
 
   ```ts
@@ -93,8 +94,8 @@ marker: { text: "◈ codeBaseTools" }
 ```
 
 - v1 即建统一区：单一 key + placement 由框架拥有；行按扩展 `id` 稳定排序。
-- enabled → 显示；off → 移除；每启用轮重设；区域为空 → 清除；`hasUI:false` 整体 no-op。
-- toggle 的 notify 由框架从 `displayName` 派生 `${displayName} on/off`。
+- State 字段为 true → 显示；false → 移除；每启用轮重设；区域为空 → 清除；`hasUI:false` 整体 no-op。
+- toggle 的 notify 由框架从 `displayName` 派生 `${displayName} enabled/disabled`（2026-10-07 用户改为 enabled/disabled；原实现为 on/off，01 oracle 不 pin 文案）。
 - 不引入通用布局语言；复杂 UI 归 `<ext>/runtimes/omp.ts`。
 
 ### 5. 准入（C14）
@@ -107,6 +108,7 @@ ompAdapter(definition, { supportedVersions: ["18.5.0"] })
 - `platform` / `runtime` 不检查、不告警；作为已验证环境记录在 [agent-runtime-support.md](../../../docs/agent-runtime-support.md)。
 - 角色（`user`）只记录、不作门槛（05 取代 C9 的角色硬触发）；历史保护仍是框架级必须语义，OMP 已验证，v1 不触发。
 - 文案 v1 用固定英文模板（`displayName` + 实际版本 + 支持集），覆盖留后。
+- owner 不可解析等运行期降级的一次提示为可选 best-effort（无 UI 走 stderr），不属本节的版本准入或必须语义拒绝两个触发（2026-10-07 traverse）。
 
 ### 6. escape hatch 与保护
 
@@ -132,6 +134,11 @@ ompAdapter(definition, { supportedVersions: ["18.5.0"] })
 
 - 未来自定义逻辑 = 受约束纯 TS：框架只给 State `read()` / `update()`（更新经框架写路径）；框架外 I/O（如 HTTP）由扩展自担；宿主原生 API 只进 runtime assembly。**v1 不 ship 此入口。**
 - 延后：其他 control kind（mode-selection / configuration-switch / parameter-setting / command-action）、mixed control、同槽位多规则/优先级、复杂 UI、pi adapter、同进程多 main、配置化持久化后端、required-semantics 声明接口、C15 正文。
+
+### 追加约束（2026-10-07 traverse 审计）
+
+- **F1/F2**：State 字段名即持久键；`codebase-tools` 使用默认字段 `enabled`，故 `codebase-tools:state` payload 为 `{enabled: boolean}`（不读旧 `{on}`）。身份固定 `id="codebase-tools"`、`displayName="codeBaseTools"`，保证 `${id}:state`/`${id}:${tag}` = `codebase-tools:*`、marker key=`codebase-tools`。
+- **F4**：owner 不可解析等运行期降级 → off（不可 toggle）；有通道时的一次提示为可选 best-effort（无 UI 走 stderr），不是 C14 的第三个触发。
 
 ## Comments
 
