@@ -1,10 +1,10 @@
 # Configurable prompt contribution across pi and OMP
 
-Investigated on 2026-10-03 to scope cross-host semantics, before the delivery plan changed from standalone generation to a runtime framework package and subsequently to shared in-repository framework source. These deployment decisions do not add runtime evidence to this investigation. This did not implement or migrate an extension. pi runtime evidence uses the globally installed `@earendil-works/pi-coding-agent` 1.0.0. OMP findings below are source inspection of the local 18.5.0 checkout, not an OMP runtime test.
+Investigated on 2026-10-03 to scope cross-agent-runtime semantics, before the delivery plan changed from standalone generation to a runtime framework package and subsequently to shared in-repository framework source. These deployment decisions do not add runtime evidence to this investigation. This did not implement or migrate an extension. pi runtime evidence uses the globally installed `@earendil-works/pi-coding-agent` 1.0.0. OMP findings below are source inspection of the local 18.5.0 checkout, not an OMP runtime test.
 
 ## Conclusion
 
-Both hosts expose the mechanisms needed for system-prompt contributions, persisted custom messages, and request-context filtering. Mode-dependent frequency and transition rules can live in the runtime framework's shared behavior implementation. This supports binding one semantic definition through host-specific adapters, but does not establish identical message roles, arbitrary insertion positions, or complete extension compatibility.
+Both agent runtimes expose the mechanisms needed for system-prompt contributions, persisted custom messages, and request-context filtering. Mode-dependent frequency and transition rules can live in the runtime framework's shared behavior implementation. This supports binding one semantic definition through agent-runtime-specific adapters, but does not establish identical message roles, arbitrary insertion positions, or complete extension compatibility.
 
 ## What readonly-mode actually implements
 
@@ -27,7 +27,7 @@ Direct execution of the existing mode logic produced:
 
 This verifies existing decision logic, not an implementation of the planned framework.
 
-## Host mechanisms and differences
+## Agent-runtime mechanisms and differences
 
 | Behavior | pi 1.0.0 | OMP local source |
 | --- | --- | --- |
@@ -36,7 +36,7 @@ This verifies existing decision logic, not an implementation of the planned fram
 | Visibility | `display: false` is display metadata, not a model-role selector | Same distinction |
 | Request filtering | `context` modifies a copy used for the request; pi additionally has `context_with_system` | `context` modifies a copy used for the request |
 | Timing | `before_agent_start` is not the hook for every provider request; request context transformation also covers tool continuations | Same distinction; exact prompt/dequeue/re-entry behavior differs |
-| Frequency rules | Extension-owned state can decide first/each/mode-change contributions | Same, rather than a host-provided mode-injection primitive |
+| Frequency rules | Extension-owned state can decide first/each/mode-change contributions | Same, rather than an agent-runtime-provided mode-injection primitive |
 
 Primary source references:
 
@@ -44,7 +44,7 @@ Primary source references:
 - pi [per-request context transform](../../../pi/packages/agent/src/agent-loop.ts#L389). A framework must define its own frequency unit rather than assume an agent run, a turn, and a model request are identical.
 - OMP [before-agent-start composition](../../../oh-my-pi/packages/coding-agent/src/extensibility/extensions/runner.ts#L2072), [context transformation](../../../oh-my-pi/packages/coding-agent/src/extensibility/extensions/runner.ts#L1935), [prompt message ordering](../../../oh-my-pi/packages/coding-agent/src/session/agent-session.ts#L7434), [preparation](../../../oh-my-pi/packages/coding-agent/src/session/agent-session.ts#L7315), [custom-message persistence](../../../oh-my-pi/packages/coding-agent/src/session/agent-session.ts#L3352), [per-call context transform](../../../oh-my-pi/packages/agent/src/agent-loop.ts#L1871).
 
-## Role guarantees require the provider path, not just the host hook
+## Role guarantees require the provider path, not just the agent-runtime hook
 
 pi converts custom messages to `user` in [`convertToLlm`](../../../pi/packages/coding-agent/src/core/messages.ts#L161). This was verified both by invoking the installed converter and by observing an actual local OpenAI-compatible HTTP request.
 
@@ -57,7 +57,7 @@ Therefore hidden visibility, conversation position, and instruction authority ar
 
 ## Actual pi runtime smoke
 
-A temporary extension was loaded by the installed pi CLI in RPC mode with isolated configuration/session directories, no discovered extensions/context files/tools, and offline startup. A loopback OpenAI-compatible capture server returned fixed assistant responses; no real model or account credentials were used. This tests the host request pipeline, not model obedience.
+A temporary extension was loaded by the installed pi CLI in RPC mode with isolated configuration/session directories, no discovered extensions/context files/tools, and offline startup. A loopback OpenAI-compatible capture server returned fixed assistant responses; no real model or account credentials were used. This tests the agent-runtime request pipeline, not model obedience.
 
 Five ordinary prompts exercised:
 
@@ -77,7 +77,7 @@ user:   [MODE:explore]
 
 After filtering, both `sessionManager.getEntries()` and the actual session JSONL still contained the two Explore custom messages and one Build custom message, all with `display: false`. Filtering changed the outgoing context, not persisted history.
 
-The probe emitted one `before_agent_start` observation per ordinary prompt; this smoke did not exercise tools, steering, retry, compaction, branch restoration, or real TUI display. The transition scheduler in this probe was deliberately small and demonstrates host capability, not that a framework scheduler already exists. The original ModeState behavior was exercised separately as described above.
+The probe emitted one `before_agent_start` observation per ordinary prompt; this smoke did not exercise tools, steering, retry, compaction, branch restoration, or real TUI display. The transition scheduler in this probe was deliberately small and demonstrates agent-runtime capability, not that a framework scheduler already exists. The original ModeState behavior was exercised separately as described above.
 
 Temporary processes, the capture server, probe files, isolated configuration, and session records were removed. No production extension code was changed.
 
@@ -85,4 +85,4 @@ Temporary processes, the capture server, probe files, isolated configuration, an
 
 A candidate definition should separate content, activation conditions, contribution timing, destination, repetition, retention, visibility, and role requirements. Request-context projection should be named separately from stored-history deletion. System contribution and conversation contribution may coexist; if multiple rules share a slot, composition/precedence must be explicit rather than silently inherited from readonly-mode's current one-message result shape.
 
-The agreed scope includes configurable prompt contribution and general business history/archival storage. Subsequent design decisions defer request-context filtering from the first release under mandatory history preservation, require rejection of unmet role/insertion requirements, and require a versioned supported-host baseline. Exact field names, counter semantics, enforcement of mandatory history preservation through custom-code interfaces, the detailed failure and State-freshness contract for the now-in-scope shared-file concurrency mechanism, and complete migration of all existing extensions remain unsettled.
+The agreed scope includes configurable prompt contribution and general business history/archival storage. Subsequent design decisions defer request-context filtering from the first release under mandatory history preservation, require rejection of unmet role/insertion requirements, and require a versioned supported agent-runtime baseline. Exact field names, counter semantics, enforcement of mandatory history preservation through custom-code interfaces, the detailed failure and State-freshness contract for the now-in-scope shared-file concurrency mechanism, and complete migration of all existing extensions remain unsettled.

@@ -46,14 +46,14 @@ Lighthouse: [04-state-ownership](../lighthouse/04-state-ownership.md)
 
 ### 3. 持久化介质与失败契约（B 组）
 
-- 介质 = **嵌入 owner 会话 JSONL 的 host-owned、non-LLM `custom` entry**（`codebase-tools:state`，只 `{on}`）；不引入通用存储封装。
-- 失败契约 = **best-effort**：宿主事实为 `appendEntry` sync-void、扩展侧 `ReadonlySessionManager` 不暴露 `flush`/`onPersistenceError`，**扩展无法观测落盘失败**；命令反馈与同进程读取以内存当前值为准；重启后按 branch 尽力恢复，不承诺 durability。
+- 介质 = **嵌入 owner 会话 JSONL 的 agent-runtime-owned、non-LLM `custom` entry**（`codebase-tools:state`，只 `{on}`）；不引入通用存储封装。
+- 失败契约 = **best-effort**：Agent 运行时事实为 `appendEntry` sync-void、扩展侧 `ReadonlySessionManager` 不暴露 `flush`/`onPersistenceError`，**扩展无法观测落盘失败**；命令反馈与同进程读取以内存当前值为准；重启后按 branch 尽力恢复，不承诺 durability。
 - 首版不实现「内存 / 文件 / JSONL」配置化三后端；保留「当前值 vs 持久化映射」seam，该延后项进 roadmap/backlog。
 
 ### 4. owner 身份与解析（C 组）
 
 - owner 键 = owner 会话身份 `{kind:"main", sessionId}`（`getSessionFile()` 作可移植 correlate）；不使用进程级标签 `"Main"`。
-- 解析（首版，单 main 支持）：`ctx.agent.parentId`（宿主原生的直接父链）+ 官方注入的 `pi.pi.AgentRegistry`（`get`/`list`）递归到 `kind==="main"`；框架只保留 `Map<ownerKey, StateCell>` 一个 map。
+- 解析（首版，单 main 支持）：`ctx.agent.parentId`（Agent 运行时原生的直接父链）+ 官方注入的 `pi.pi.AgentRegistry`（`get`/`list`）递归到 `kind==="main"`；框架只保留 `Map<ownerKey, StateCell>` 一个 map。
 - 嵌套子代理逐级上溯，最终跟随 root owner。
 - `/tan`（后台切向 fork，无 `before_subagent_spawn`）：沿用同一 owner-follow 规则；能解析则跟随，否则 off。
 - owner 不可解析/不存在 → off + 有通道时一次提示；不读子会话自身 `{on}`。
@@ -63,7 +63,7 @@ Lighthouse: [04-state-ownership](../lighthouse/04-state-ownership.md)
 - 一个活动 cell per binding；`Map<ownerKey, StateCell>` 只保留活动 owner。
 - **会话边界**（`session_start`；`session_switch` new|resume|fork；`session_branch` 新身份）→ 从目标 branch 末条 `codebase-tools:state` seed `on`（无则 off），退役旧 cell。binding 的 `agent.id` 仍为 `"Main"`、会话身份变了，故必须 refresh。
 - **同一会话存续期** → Map 权威、不重读；`/tree`（同一 sessionId、仅 leaf 变）**不 seed `on`**，只重算 init 进度。
-- 传播：子代理每轮读 owner cell，实时跟随；`/new`、`/resume` 视为旧 owner 关闭（宿主已在 `session_before_switch` 后 flush 旧会话；扩展无 flush 接口、无需自写）。
+- 传播：子代理每轮读 owner cell，实时跟随；`/new`、`/resume` 视为旧 owner 关闭（Agent 运行时已在 `session_before_switch` 后 flush 旧会话；扩展无 flush 接口、无需自写）。
 - 清理：`session_shutdown` 注销 binding/解析，**幂等**；revive 的 `session_start` 重新解析 owner（不在 → off）。
 
 ### 6. 可观察不变量与已知限制（E 组）

@@ -98,38 +98,38 @@ init 与 reminder 是两个**独立的贡献槽位**，各自有激活条件与�
 
 | # | 框架能力 | codebase-tools 触发需求 | 必须语义边界 | 细化票 |
 |---|---|---|---|---|
-| C1 | 扩展定义与宿主装配 | 命令+状态+贡献+标记+宿主集成 | 共享逻辑不 import 宿主类型；一宿主一薄入口 | 06/07 |
+| C1 | 扩展定义与 Agent 运行时装配 | 命令+状态+贡献+标记+Agent 运行时集成 | 共享逻辑不 import Agent 运行时类型；一 Agent 运行时一薄入口 | 06/07 |
 | C2 | State（当前值源） | `on` / `initInjected` | 按扩展、按 owner 作用域；读/更新面分离；默认/类型/恢复 | 04 |
 | C3 | Owner 继承 | 子代理跟随主会话 on，init 独立 | 声明式继承关系；实时跟随非快照；会话私有值不继承 | 04 |
 | C4 | 持久化与恢复 | `codebase-tools:state`、last-wins、start/switch 恢复 | 存储映射保留原契约；双向可逆；不引入通用 schema/版本 | 04/07/08 |
 | C5 | 控制+反馈 | `/codebase-tools` 切换 + notify | 命令切换、状态落盘、反馈由 State 驱动 | 06 |
-| C6 | 语义钩子 | session start/switch、每轮 start | 框架定义语义钩子；宿主 adapter 映射原生事件 | 06/07 |
+| C6 | 语义钩子 | session start/switch、每轮 start | 框架定义语义钩子；Agent 运行时 adapter 映射原生事件 | 06/07 |
 | C7 | 指令贡献（多槽位） | init 槽 + reminder 槽 | 槽位/时机、激活条件、内容、可见性、角色、保留 | 05 |
 | C8 | 提交语义与历史保护 | 追加、不重写历史 | 生成/状态更新/落盘的提交关系；漏注入/重复边界；只追加 | 05 |
 | C9 | 角色/权威保证 | developer-role 要求 | 必须语义不可静默降级；不满足则拒绝 | 05/03 |
-| C10 | 状态反馈呈现 | `◈ codeBaseTools` aboveEditor | 基本反馈由 State 驱动；复杂布局属扩展宿主实现 | 06/07 |
-| C11 | 文本资源 | 两个 `.md` 独立 import | 资源加载能力；与宿主 capability discovery 分离 | 07 |
+| C10 | 状态反馈呈现 | `◈ codeBaseTools` aboveEditor | 基本反馈由 State 驱动；复杂布局属扩展 Agent 运行时实现 | 06/07 |
+| C11 | 文本资源 | 两个 `.md` 独立 import | 资源加载能力；与 Agent 运行时 capability discovery 分离 | 07 |
 | C12 | 部署/发现 | 独立 extension 装载 | 薄入口+共享源码 import+禁双注册 | 07 |
 | C13 | 支持集与升级回归 | 明确的 OMP 候选组合 | 只承诺已验证组合；不满足必要语义则拒绝/报告阻碍 | 02/08 |
-| C14 | 能力缺失/拒绝的显式反馈通道 | 宿主无法满足必须语义时的提示 | 必须走宿主通道显式提示；不得写模型指令或会话历史；传输/去重/触发条件待定 | 新增票（01 后建） |
+| C14 | 能力缺失/拒绝的显式反馈通道 | Agent 运行时无法满足必须语义时的提示 | 必须走 Agent 运行时通道显式提示；不得写模型指令或会话历史；传输/去重/触发条件待定 | 新增票（01 后建） |
 | C15 | 能力与选项清单文档 | 人类/agent 快速理解能力入口 | 交付一份 md 使用说明作为能力入口索引，细节指向源码 | 规格阶段 |
 
 只含 codebase-tools 实际需要的能力，不预埋其他扩展能力。
 
 ### 10. 拒绝而不降级总原则（Q9）
 
-每项能力声明“必须语义”；宿主不能满足时**拒绝或报告阻碍，不静默降级、不用弱语义替代**。C14 的具体提示方式尚未决定：01 只锁“框架必须提供该反馈能力且走非模型通道”，具体设计由新票承接。
+每项能力声明“必须语义”；Agent 运行时不能满足时**拒绝或报告阻碍，不静默降级、不用弱语义替代**。C14 的具体提示方式尚未决定：01 只锁“框架必须提供该反馈能力且走非模型通道”，具体设计由新票承接。
 
 ### 11. 测试结构：两个维度、两个目录（Q10）
 
 原测试**可以搬过来作为 codebase-tools 的验收**，但框架在讨论中确立的约束需要**另一份测试**验证框架能力；两者责任不同，test case 放不同目录：
 
-- **扩展验收测试（codebase-tools 维度）**：验证 codebase-tools 的消费者可见行为（上述 10 条 oracle）。搬移时只适配测试宿主（`globalOn`/`__resetCodebaseToolsForTests` 等旧机制被 owner 关联替代），不修改行为断言；`smoke-omp.ts` 的真 loader 场景价值归 03 探针与 08 验收矩阵，不作为行为单测保留。
-- **框架能力测试（框架维度）**：验证 C1–C15 的必须语义/不变量（owner 继承、贡献提交与历史保护、拒绝/反馈、持久化往返、资源与发现），独立于单个扩展，并作为宿主升级回归警报（ADR-0002 第九范围）。
+- **扩展验收测试（codebase-tools 维度）**：验证 codebase-tools 的消费者可见行为（上述 10 条 oracle）。搬移时只适配测试 Agent 运行时（`globalOn`/`__resetCodebaseToolsForTests` 等旧机制被 owner 关联替代），不修改行为断言；`smoke-omp.ts` 的真 loader 场景价值归 03 探针与 08 验收矩阵，不作为行为单测保留。
+- **框架能力测试（框架维度）**：验证 C1–C15 的必须语义/不变量（owner 继承、贡献提交与历史保护、拒绝/反馈、持久化往返、资源与发现），独立于单个扩展，并作为 Agent 运行时升级回归警报（ADR-0002 第九范围）。
 
 丢弃/重写绑定旧实现的断言：`name === "codeBaseTools"` 源码 pin、依赖 `__resetCodebaseToolsForTests`/模块级 `globalOn` 的机制、widget 精确 `key`/`placement` 字段 pin、测试 harness 内部桩件。永久测试只断言消费者可见行为，不 pin 源码文案/模块形状/测试后门。
 
 ## Comments
 
-- 2026-10-05 backtracer 审计：本票 lighthouse 暴露 3 个缺口——C14 能力缺失/拒绝的显式反馈、C15 能力与选项清单文档、扩展验收与框架能力两套测试结构。经用户判断不新建票，改为显式折入既有未解决票：C14+C15 → 06（公共接口/基础反馈/host assembly 与公开面文档约束）、两套测试结构 → 08（验收矩阵）。缺口信号已被这些票覆盖，未产生新票。
-- 2026-10-06 05 取代：本票 C9 的 developer 必须语义改为 **host-qualified capability**——OMP adapter 按 provider 序列化记录实际角色，codebase-tools 在 OMP 显式接受 `user` 交付，其他宿主待定（见 05 lighthouse、ADR-0002、host-support `context.required-role`）。本票 oracle 第 3 条「首个启用轮写回 `initInjected=true`」被 05 改为 state 只保留 `{on}`、init 进度按 branch 贡献身份推导；持久化双向兼容保留为框架默认，codebase-tools 记显式单向例外（ADR-0002）。本票作为历史记录保留。
+- 2026-10-05 backtracer 审计：本票 lighthouse 暴露 3 个缺口——C14 能力缺失/拒绝的显式反馈、C15 能力与选项清单文档、扩展验收与框架能力两套测试结构。经用户判断不新建票，改为显式折入既有未解决票：C14+C15 → 06（公共接口/基础反馈/agent-runtime assembly 与公开面文档约束）、两套测试结构 → 08（验收矩阵）。缺口信号已被这些票覆盖，未产生新票。
+- 2026-10-06 05 取代：本票 C9 的 developer 必须语义改为 **agent-runtime-qualified capability**——OMP adapter 按 provider 序列化记录实际角色，codebase-tools 在 OMP 显式接受 `user` 交付，其他 Agent 运行时待定（见 05 lighthouse、ADR-0002、agent-runtime-support `context.required-role`）。本票 oracle 第 3 条「首个启用轮写回 `initInjected=true`」被 05 改为 state 只保留 `{on}`、init 进度按 branch 贡献身份推导；持久化双向兼容保留为框架默认，codebase-tools 记显式单向例外（ADR-0002）。本票作为历史记录保留。

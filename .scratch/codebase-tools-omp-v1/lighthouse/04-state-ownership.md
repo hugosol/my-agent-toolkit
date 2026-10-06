@@ -34,15 +34,15 @@
 
 ### 3. 持久化介质与失败契约
 
-介质 = **嵌入 owner 会话 JSONL 的 host-owned、non-LLM `custom` entry**（`codebase-tools:state`，只 `{on}`），保留原持久化契约、不引入通用存储封装。失败契约 = **best-effort**：`appendEntry` 是 sync-void，扩展侧 `ReadonlySessionManager` 不暴露 `flush`/`onPersistenceError`，**扩展无法观测落盘失败**；命令反馈与同进程读取以内存当前值为准，重启后按 branch 尽力恢复，不承诺 durability。「持久化 State + branch 纯函数」是恢复语义，不是运行期同步保证。首版不实现「内存 / 文件 / JSONL」配置化三后端，只保留「当前值 vs 持久化映射」seam；配置化延后进 roadmap。
+介质 = **嵌入 owner 会话 JSONL 的 agent-runtime-owned、non-LLM `custom` entry**（`codebase-tools:state`，只 `{on}`），保留原持久化契约、不引入通用存储封装。失败契约 = **best-effort**：`appendEntry` 是 sync-void，扩展侧 `ReadonlySessionManager` 不暴露 `flush`/`onPersistenceError`，**扩展无法观测落盘失败**；命令反馈与同进程读取以内存当前值为准，重启后按 branch 尽力恢复，不承诺 durability。「持久化 State + branch 纯函数」是恢复语义，不是运行期同步保证。首版不实现「内存 / 文件 / JSONL」配置化三后端，只保留「当前值 vs 持久化映射」seam；配置化延后进 roadmap。
 
 ### 4. owner 身份与解析
 
-owner 键 = owner 会话身份 `{kind:"main", sessionId}`（`getSessionFile()` 作可移植 correlate），不使用进程级标签 `"Main"`。解析用宿主原生 `ctx.agent.parentId` + 官方注入的 `pi.pi.AgentRegistry`（`get`/`list`）递归到 `kind==="main"`；框架只保留一个 `Map<ownerKey, StateCell>`，不另维护 agent→binding 表。嵌套子代理逐级上溯，最终跟随 root owner。`/tan`（后台切向 fork，无 `before_subagent_spawn`）沿用同一 owner-follow 规则，解析得到则跟随、否则 off。owner 不可解析/不存在 → off + 有通道时一次提示；不读子会话自身 `{on}`。
+owner 键 = owner 会话身份 `{kind:"main", sessionId}`（`getSessionFile()` 作可移植 correlate），不使用进程级标签 `"Main"`。解析用 Agent 运行时原生 `ctx.agent.parentId` + 官方注入的 `pi.pi.AgentRegistry`（`get`/`list`）递归到 `kind==="main"`；框架只保留一个 `Map<ownerKey, StateCell>`，不另维护 agent→binding 表。嵌套子代理逐级上溯，最终跟随 root owner。`/tan`（后台切向 fork，无 `before_subagent_spawn`）沿用同一 owner-follow 规则，解析得到则跟随、否则 off。owner 不可解析/不存在 → off + 有通道时一次提示；不读子会话自身 `{on}`。
 
 ### 5. 恢复 / 传播 / 清理
 
-一个活动 cell per binding。**会话边界**（`session_start`；`session_switch` new|resume|fork；`session_branch` 新身份）→ 从目标 branch 末条 `codebase-tools:state` seed `on`（无则 off）、退役旧 cell；binding 的 `agent.id` 仍为 `"Main"`、会话身份已变，故必须 refresh。**同一会话存续期** → Map 权威、不重读；`/tree`（同一 sessionId、仅 leaf 变）**不 seed `on`**，只重算 init 进度。传播靠子代理每轮读取 owner cell，无需推送；`/new`、`/resume` 视为旧 owner 关闭（宿主已在 `session_before_switch` 后 flush 旧会话，扩展无 flush 接口、无需自写）。清理：`session_shutdown` 注销 binding/解析且幂等；revive 的 `session_start` 重新解析 owner（不在 → off）。
+一个活动 cell per binding。**会话边界**（`session_start`；`session_switch` new|resume|fork；`session_branch` 新身份）→ 从目标 branch 末条 `codebase-tools:state` seed `on`（无则 off）、退役旧 cell；binding 的 `agent.id` 仍为 `"Main"`、会话身份已变，故必须 refresh。**同一会话存续期** → Map 权威、不重读；`/tree`（同一 sessionId、仅 leaf 变）**不 seed `on`**，只重算 init 进度。传播靠子代理每轮读取 owner cell，无需推送；`/new`、`/resume` 视为旧 owner 关闭（Agent 运行时已在 `session_before_switch` 后 flush 旧会话，扩展无 flush 接口、无需自写）。清理：`session_shutdown` 注销 binding/解析且幂等；revive 的 `session_start` 重新解析 owner（不在 → off）。
 
 ### 6. 可观察不变量与已知限制
 
@@ -63,13 +63,13 @@ owner 键 = owner 会话身份 `{kind:"main", sessionId}`（`getSessionFile()` �
 5. 作为用户，我想要 `/tree` 导航不改变 `on`、只重算 init 进度，以便 State 表现为会话全局变量而非 branch 内容的投影。
 6. 作为框架维护者，我想要 State 持久化为 owner 会话 JSONL 里的 `codebase-tools:state` custom entry，以便保留原持久化契约、无需数据转换（旧写→新读写）。
 7. 作为框架维护者，我想要 State 在会话边界之间是内存中的单一来源，以便持久化失败不会让读取与当前值不一致。
-8. 作为框架维护者，我想要 owner 解析复用宿主原生的 parent 链/注册表，以便框架只保留一个 Map、不重新实现宿主的 agent 图。
+8. 作为框架维护者，我想要 owner 解析复用 Agent 运行时原生的 parent 链/注册表，以便框架只保留一个 Map、不重新实现 Agent 运行时的 agent 图。
 9. 作为用户，我想要 owner 缺失/不可解析时降级为 off（有通道时提示）而不是臆造或串扰，以便多会话隔离永不泄露另一个 owner 的 State。
 10. 作为框架维护者，我想要首版只支持单 main 并把多 main 限制记录在案，以便未被支持的并发不被静默宣称。
 
 ## Preconditions
 
-- 01 已定 owner 关联替代进程全局 `globalOn`；03 已取得宿主身份/生命周期实测事实。
+- 01 已定 owner 关联替代进程全局 `globalOn`；03 已取得 Agent 运行时身份/生命周期实测事实。
 - 05 已定 `codebase-tools:state` 只含 `{on}`、init 进度按 branch 推导、旧→新单向。
 - ADR-0002 的 live-follow（禁止整份拷贝/创建时快照/共享写）与历史保护已接受。
 - OMP 18.5.0 扩展 API 提供 `ctx.agent.parentId`、`ctx.sessionManager.getBranch()`、`appendEntry`，且 `pi.pi` 暴露 `AgentRegistry`。
@@ -94,4 +94,4 @@ owner 键 = owner 会话身份 `{kind:"main", sessionId}`（`getSessionFile()` �
 - 历史保护：只追加，不清理旧消息、不加取消消息。
 - 旧→新向前兼容：新实现读旧 `{on}`，不依赖 `initInjected`。
 - 单一来源：会话边界 seed 持久值，界内内存 Map 权威。
-- 不修改宿主源码；只用扩展接口与 `pi.pi` 注入的 SDK escape hatch（后者限定在 OMP adapter）。
+- 不修改 Agent 运行时源码；只用扩展接口与 `pi.pi` 注入的 SDK escape hatch（后者限定在 OMP adapter）。
