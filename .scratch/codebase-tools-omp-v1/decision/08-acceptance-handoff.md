@@ -2,7 +2,7 @@
 
 Type: grilling
 Labels: wayfinder:grilling
-Status: open
+Status: resolved
 Interaction: HITL
 Parent: [首版语义扩展框架：codebase-tools 完整迁移与 OMP 适配](../map.md)
 Blocked by: 02, 06, 07
@@ -57,3 +57,46 @@ Blocked by: 02, 06, 07
 - **版本升级规则**：候选版本经运行期参数（env `OMP_TEST_VERSION=<v>`）在隔离前缀精确安装并跑整套框架能力测试（C1–C15）=「基本验证」；默认/CI 只跑已固定版本。绿灯只作回归警报、不自动升级支持声明；人工 TUI 验收通过后维护者显式**替换**单一支持版本（`ompAdapter({supportedVersions})` + `docs/agent-runtime-support.md` + 固定记录），restart 生效。矩阵须明确「基本验证」场景清单与未验证/不支持记录方式、升级回归触发条件。
 - **干净环境前提**：旧写与新读都在隔离 temp `PI_CODING_AGENT_DIR` + explicit-only 根 + 受控会话运行；不得改动默认全局安装、正式配置或运行中 agent。
 - **待判断（07 未定，归 08）**：用户日常 `omp` 为 18.6.1（未列版本，按 02 通知一次后继续），而验收产物是 18.5.0。矩阵需明确：日常运行版本与已验收组合的差异如何记录，是否要求把日常运行也固定到 18.5.0，以及升级规则何时用于认证 18.6.1。
+
+## 讨论结论
+
+### 交付物
+
+本票锁定首版验收矩阵与实施交接门槛，产出 [acceptance-plan.md](../acceptance-plan.md) 作为决策附件；不执行验收、不写框架代码、不认证发行版。
+
+### 已定事项
+
+1. **验收计划产物**：`.scratch/codebase-tools-omp-v1/acceptance-plan.md`；矩阵行 = 10 条 oracle 行为（B1–B10）+ C1–C15 + 负例（N1–N9），列 = 场景/条件、真实路径、证据类型、执行者；本票 body + lighthouse 只记决策，plan 链接自 ticket 并作为 `/to-tickets` 输入。
+2. **两套测试**：`tests/codebase-tools/`（消费者可见行为）+ `tests/framework/`（C1–C15 必须语义，兼升级回归警报）；永久测试不 pin 文案/布局/转发实现/测试后门。
+3. **长期升级标准只管框架能力**：扩展 `docs/agent-runtime-support.md`；具体 extension 能力由扩展 test case + 开发结束用户验收负责。
+4. **升级人工验收边界**：默认自动（框架套件 + 扩展套件）；升级触及扩展可见面（marker 渲染、命令、贡献顺序/角色、恢复）时由维护者追加一次人工 TUI 抽查。
+5. **升级触发**：纯按需，维护者提出候选版本时才 `OMP_TEST_VERSION=<v>` 隔离安装 + 跑框架套件；默认/CI 只跑固定 18.5.0。
+6. **日常 18.6.1**：不固定，作为「未列版本通知一次 + 继续」的真实隔离验收场景；支持声明只写 18.5.0；认证 18.6.1 走升级规则按需触发。
+7. **Provider 模型**：主 `deepseek/deepseek-flash`（openai-completions，已证 custom 出站 user role；裸别名 = DeepSeek-V4.1-Flash）；辅 `openai-codex/gpt-6-luna`（openai-codex-responses）。
+8. **openai-codex 证据两层**：层1 本地 probe（`api=openai-codex-responses`，shape-only）；层2 wizard 在隔离 `PI_CODING_AGENT_DIR` 引导 OAuth/导入（secret 不进上下文）→ 真实 run `gpt-6-luna` + `providers.openaiWebsockets="off"` + `PI_REQ_DEBUG=1`；WS 帧无反向代理时记「未独立观察」；不可得记 unverified；禁止 mock 冒充真实送达。
+9. **C14 拒绝路径**：用可注入测试 adapter 真跑「必须语义缺失 → 拒绝」，不只验通道存在。
+10. **C15 文档**：`docs/framework-capabilities.md`（列全 `defineExtension` / `ompAdapter` 参数含义、指向源码）。
+11. **文档交付**：新建 `README.md` 含文档作用索引 + 升级 runbook（脚本/流程）；实施期产出 `scripts/`。
+12. **未验证/不支持记录**：`docs/agent-runtime-support.md` 用 `verified-supported` / `verified-unlisted` / `unverified` / `unsupported` 四状态。
+13. **交接门槛**：台账逐项列 C1–C15 + 公共接口行为/错误/顺序/环境前提（decided/blocked）；blocker 逐条交用户判断，不阻碍 → 随地图交给实施；阻碍 → 新开决策票、地图保持 open；不要求验收已执行。
+
+### 被否决 / 移出
+
+- 用本地 mock 冒充 openai-codex 真实送达证据。
+- 每次升级都重复完整人工 TUI 验收（改为默认自动、触及面抽查）。
+- 定时/CI 自动跑候选套件（改为按需）。
+- 把日常 omp 固定到 18.5.0，或现在把 18.6.1 纳入支持集。
+- 把长期标准写成同时覆盖具体 extension 能力，或另建第三个长期文档。
+- 只验 C14 通道存在而不真跑拒绝路径。
+
+## Decision
+
+锁定首版验收矩阵与实施交接门槛：两套测试分目录、每项行为映射到真实 OMP 路径与证据；openai-codex 分两层证据（层2 用 `gpt-6-luna` 真凭据、不可得记 unverified）；长期升级标准只覆盖框架能力、按需触发、触及面人工抽查；显式 blocker 经用户判断后交接到规格与 implementation。
+
+## Comments
+
+- 2026-10-07 backtracer 报告：跨全图追踪 8 张 resolved 决策票 + 8 份 lighthouse，无 open ticket。唯一开放判断（C14「必须语义不满足 → 拒绝」的可观察粒度）经用户判定为**已有决策覆盖、无需新票**：
+  - **未列版本分支**已由 [02 lighthouse](../lighthouse/02-candidate-support.md) §4 + [06 lighthouse](../lighthouse/06-framework-interface.md) §5 定案：每个 main 会话一次 `ctx.ui.notify(..., "warning")`（无 UI → stderr 一行）后继续运行、不声明支持。
+  - **必须语义不满足分支**已由 01 C14 + 06 §2 定案：显式拒绝该能力、放弃 binding、不留部分注册、走 C14 通道；OMP 18.5.0 已验证，首版不触发。
+  - 其余 backtracer 发现均为 implementation 阶段产出（README/scripts、`docs/framework-capabilities.md`、两套测试、wizard 凭据），由 [acceptance-plan.md](../acceptance-plan.md) 指定并交 `/to-tickets`。
+  - 结论：无新决策票；地图范围内雾已清空。

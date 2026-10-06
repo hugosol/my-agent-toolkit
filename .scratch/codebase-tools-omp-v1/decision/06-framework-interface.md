@@ -132,3 +132,11 @@ ompAdapter(definition, { supportedVersions: ["18.5.0"] })
 
 - 未来自定义逻辑 = 受约束纯 TS：框架只给 State `read()` / `update()`（更新经框架写路径）；框架外 I/O（如 HTTP）由扩展自担；宿主原生 API 只进 runtime assembly。**v1 不 ship 此入口。**
 - 延后：其他 control kind（mode-selection / configuration-switch / parameter-setting / command-action）、mixed control、同槽位多规则/优先级、复杂 UI、pi adapter、同进程多 main、配置化持久化后端、required-semantics 声明接口、C15 正文。
+
+## Comments
+
+- 2026-10-07 澄清 C14 两个触发的关系（不改变决策，源自 [02 lighthouse](../lighthouse/02-candidate-support.md) 的不变量「版本未列 ≠ 语义可降级」）：
+  - **两个独立轴**：① 版本是否在支持集内（准入政策）；② 必须语义是否满足（框架级契约）。
+  - 未列版本只在 ② 满足时走「每 main 会话一次 warning + 继续运行」；② 不满足时**始终拒绝**，未列身份不豁免。
+  - 「唯一准入检查 = 版本」仅指版本准入轴；拒绝路径优先于「继续运行」，两者判定都在装载/绑定、注册命令与贡献之前。
+  - 角色（`user`）已由 [05 lighthouse](../lighthouse/05-contribution-contract.md) 改为 agent-runtime-qualified、不作门槛；首版剩余的共同必须语义 = 历史保护（OMP 18.5.0 已验证，v1 不触发）。

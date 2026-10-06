@@ -36,10 +36,11 @@ Labels: wayfinder:map
 - [确定 State 归属、会话恢复与子代理实时跟随契约](decision/04-state-ownership.md): 只有 owner（最近 main 祖先会话）持有 `{on}`，子代理只读、每轮实时跟随且不可写；State 以 owner 会话 JSONL 的 `codebase-tools:state` 持久化（best-effort，扩展不可观测落盘失败）；owner 解析用原生 `parentId` + `pi.pi.AgentRegistry`，框架只维护一个活动 `Map<ownerKey, StateCell>`，会话边界从目标 branch seed、界内 Map 权威、`/tree` 不刷新 `on`；init 进度按各自 branch 独立推导；首版仅支持单 main，多 main 限制留 roadmap。
 - [确定扩展定义、行为组合与 OMP 适配接口](decision/06-framework-interface.md): 用声明式 `defineExtension`（v1 仅 `commandToggle`）+ `ompAdapter(definition, {supportedVersions})` 固定公共接口；State owner 单写者、贡献按 `${id}:${tag}`+strategy 纯函数决定、marker 进框架统一区、准入只对版本一次通知后继续；受约束纯 TS 后门与其他 control kind 延后。
 - [确定共享源码装载与旧→新单向迁移切换方案](decision/07-deployment-cutover.md): 修订锚点 = 本地 checkout @9348320，运行/验收产物 = 隔离精确安装 @18.5.0；装载点 = `entrypoints/omp` 目录，防双注册靠装载来源互斥（开发/验收 explicit-only `--no-extensions -e`，永久切换 = 验收通过后删旧 codebase-tools + 加新根目录条目 + 重启）；旧 `{on,initInjected}` 存储经同一份真实存储「旧写→新读写」向前兼容（新版只写 `{on}`）；版本升级 = 隔离安装候选 + 运行期参数跑框架能力测试、绿灯仅回归警报、人工 TUI 验收后显式替换单一支持版本。
+- [确定首版验收矩阵与实施交接门槛](decision/08-acceptance-handoff.md): 锁定首版验收矩阵与实施交接门槛：两套测试分目录（`tests/codebase-tools/`、`tests/framework/`）、每项行为映射到真实 OMP 路径与证据；openai-codex 分两层证据（层1 本地 probe shape-only、层2 `gpt-6-luna` 真凭据、不可得记 unverified）；长期升级标准只覆盖框架能力、按需触发、触及面人工抽查；显式 blocker 经用户判断后交接到规格与 implementation。
 
 ## Not yet specified
 
-<!-- 07 已 resolved：装载/切换/固定与 Agent 运行时版本升级规则锁定。08（验收交接）随 07 解锁成为当前唯一 frontier；07 的约束已追加到 08。未验证项（openai-codex transport、TUI 视觉）作为约束留在 08；本地 natives 可运行方式已由 07 定为「不需要」（隔离精确安装即运行/验收产物）。另记入 08 的待判断项：用户日常 omp 为 18.6.1（未列版本，按 02 通知一次后继续），验收产物为 18.5.0——日常运行版本与已验收组合的差异需在 08 明确。受约束纯 TS 自定义逻辑入口、其余 control kind 与 required-semantics 接口超出本图 destination，见 Out of scope / 框架 backlog；暂无新的在范围雾。 -->
+<!-- 08（验收交接）已 resolved，本图范围内雾已清空：无 live ticket、无待毕业的在范围雾。blocker 台账在实施交接时逐条经用户判断；超出 destination 的条目见 Out of scope。 -->
 
 ## Out of scope
 
