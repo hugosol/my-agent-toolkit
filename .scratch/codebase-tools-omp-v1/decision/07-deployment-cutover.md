@@ -38,3 +38,8 @@ Blocked by: 03, 06
 - 持久化契约收窄：`codebase-tools:state` 新写只含 `{on}`，不再写 `initInjected`；旧→新向前兼容（新读旧 `{on}` + 按对话推导进度），新→旧回退不再保证。
 - 切换方案只需保证旧→新不丢业务数据、两实现不同时启用；不要求同一份存储上旧实现继续更新新实现写下的数据。
 - 贡献 wire 角色由 provider 历史序列化决定，部署方案无需为角色做门控；08 记录各路径实测角色。
+
+### 追加约束（来自 [04 State 归属决策](../lighthouse/04-state-ownership.md)，2026-10-06）
+
+- State 装载遵循 04：持久介质 = owner 会话 JSONL 的 `codebase-tools:state`（只 `{on}`）；`/new`、`/resume` 时宿主 flush 旧会话、框架退役旧 cell 并从目标 branch seed。
+- 活动子代理对切换的影响按 04 已知限制：切换后旧子代理的 owner 解析可能失效或取错；不得据此声称支持同进程多 main。

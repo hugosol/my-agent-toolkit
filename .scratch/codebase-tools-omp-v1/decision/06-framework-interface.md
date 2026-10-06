@@ -31,3 +31,8 @@ Blocked by: 04, 05
 - 未决问题：通知的确切文案、去重键（会话 vs 进程）、无 UI/无头模式下的传输方式，以及“未列版本继续运行”与“必须语义不满足拒绝”在运行时的判定先后。
 
 本票使用 codebase-design、grilling、domain-modeling。允许接口示例作为讨论资产，不提交运行时实现。若需要交互原型才能判断，另建 prototype 决策票，而不把草稿当成已验收实现。
+
+### 追加约束（来自 [04 State 归属决策](../lighthouse/04-state-ownership.md)，2026-10-06）
+
+- 接口须覆盖 owner 解析 seam：宿主原生 `ctx.agent.parentId` + `pi.pi.AgentRegistry` 递归到 main；共享逻辑不得 import 宿主类型，`pi.pi` escape hatch 限定在 OMP host assembly，由本票明确"开放哪些原生 escape hatch"。
+- 接口须覆盖 State 读面：子代理按 owner cell 只读、无写面；会话边界 seed 与界内 Map 权威的分工。

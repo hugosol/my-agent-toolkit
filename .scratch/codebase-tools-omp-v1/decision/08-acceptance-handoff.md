@@ -41,3 +41,10 @@ Blocked by: 02, 06, 07
 - init 进度按当前 branch 是否已有 `codebase-tools:init` 推导：必须覆盖 `/tree` 回溯后重新 init、pre-commit 取消后重试 init、同一轮 `before_agent_start` 重入不重复注入。
 - 同一启用轮至多一条槽位贡献；同一槽位多条规则=显式错误（C14 反馈）。
 - 持久化往返收窄为旧写→新读写；不再要求旧实现读新数据。
+
+### 追加约束（来自 [04 State 归属决策](../lighthouse/04-state-ownership.md)，2026-10-06）
+
+- 首版仅支持单 main：把验收矩阵的「多 owner」理解为「单 owner + 多个子代理」；同进程多 main（ACP/cmux/embedded，或 `/new` 后旧子代理存活）不在支持集，按 04 记录的已知限制判定为「可能解析到错误 owner」，不得作为通过证据。
+- 新增验收项：`/tree` 只重算 init 进度、不改变 `on`；owner 不可解析/单独恢复的子代理降级为 off 且不可 toggle；子代理无 `on` 写权。
+- owner `on` 恢复：会话边界从目标 branch 末条 `codebase-tools:state` seed；`resume` 后等于该 branch 末条值，无则 off。
+- 持久化 best-effort：扩展无法观测落盘失败，记为「不可由扩展断言」，不得作为通过证据。

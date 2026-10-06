@@ -52,6 +52,14 @@ _Avoid_: UI-only variable bag, persistence backend, unscoped global object
 The live following of an owning main session's declared State value by its subagents. Other session-owned values, such as each session's init-injection progress, remain independent.
 _Avoid_: whole-extension state copy, creation-time snapshot, process-global state, extension loading, MCP inheritance
 
+**Owner（所属主会话 / owning main session）**:
+The session that holds an extension's owner-scoped State values; for any session it is the nearest ancestor session that is itself a top-level main session (a main session is its own owner). Subagent sessions follow their owner's values live and are not owners.
+_Avoid_: parent agent, process-global state, current session
+
+**Parent agent（父代理）**:
+The session that directly created a subagent — the immediate spawner. It may itself be a subagent, so it equals the owner only at depth 1.
+_Avoid_: owner, root session, State holder
+
 **Extension storage（扩展存储）**:
 The retention mechanism for extension-owned state and business data, including in-memory values, host-owned session entries, extension-owned files, and archives. It does not by itself determine which session or other owner a value belongs to.
 _Avoid_: session restoration, persistence (when referring only to volatile memory)

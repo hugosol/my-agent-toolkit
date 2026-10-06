@@ -14,6 +14,10 @@ The focused first-release planning effort is tracked in [首版语义扩展框�
 
 - [ ] Plan and verify model-cost's separation of host observation/State updates from native widget rendering during framework migration.
 
+- [ ] Decide owner disambiguation when multiple main sessions coexist in one process (ACP/cmux/embedded, or old subagents outliving `/new`). First release supports a single main only; native `parentId` + `AgentRegistry` can resolve the wrong `"Main"` slot. Candidate approach: parent-side `before_subagent_spawn` `spawnKey → ownerKey` edge. Deferred by [decision 04](../.scratch/codebase-tools-omp-v1/lighthouse/04-state-ownership.md).
+
+- [ ] Decide whether State persistence media become configurable (in-memory / extension-owned file / host session entries). First release implements only the owner-session JSONL mapping that codebase-tools needs, keeping the value-vs-mapping seam. Deferred by [decision 04](../.scratch/codebase-tools-omp-v1/lighthouse/04-state-ownership.md).
+
 ## model-cost migration risk: rendering currently updates business state
 
 Source inspection on 2026-10-04: [`buildWidgetLines`](../../my-omp-toolkit/extensions/model-cost/index.ts#L247) reads `ctx.sessionManager.getUsageStatistics()` and `ctx.getContextUsage()`, then assigns `state.lastContextTokens`. [`refresh`](../../my-omp-toolkit/extensions/model-cost/index.ts#L349) installs a widget factory whose `render(width)` calls that function. This is not a presentation-only path. Moving the existing function to an OMP-specific presentation file would preserve the coupling rather than complete the separation.

@@ -33,10 +33,11 @@ Labels: wayfinder:map
 - [选择首版 OMP 候选运行组合与支持准入规则](decision/02-candidate-support.md): 首版只承诺一个精确组合——本地源码基线 `@oh-my-pi/pi-coding-agent@9348320`（=18.5.0，Windows x64 + Bun 1.4.2）；codebase-tools 交互 TUI 验收、框架能力自动化测试；未列版本通知一次后继续但必须语义不满足仍拒绝；探针一律隔离（临时 agent state + explicit-only 扩展根）；代码热重载延后，resume/State 恢复仍属首版。
 - [取得不修改宿主的 OMP 扩展路径运行证据](decision/03-extension-path-probes.md): OMP 18.5.0 经扩展接口验证了发现/外置源码与依赖、命令与 state 持久化、启动/切换/恢复、子代理身份与继承、UI 反馈转发、出站序列化与失败顺序；custom 贡献出站为 user role；唯一候选运行阻塞是本地源码 checkout 需先构建 natives。
 - [确定指令贡献的时机、提交语义与角色保证](decision/05-contribution-contract.md): 贡献=隐藏持久化 custom_message 尾部追加；交付角色是 host-qualified capability（OMP 按 provider 路径记录实际角色、codebase-tools 显式接受 user、其他宿主待定；C9/02 角色条款据此重述）；init 进度以当前 branch 是否已有槽位贡献身份为准，state 只留 `{on}`；首版一槽位一规则；ADR-0002 双向默认保留，codebase-tools 记显式旧→新单向例外。
+- [确定 State 归属、会话恢复与子代理实时跟随契约](decision/04-state-ownership.md): 只有 owner（最近 main 祖先会话）持有 `{on}`，子代理只读、每轮实时跟随且不可写；State 以 owner 会话 JSONL 的 `codebase-tools:state` 持久化（best-effort，扩展不可观测落盘失败）；owner 解析用原生 `parentId` + `pi.pi.AgentRegistry`，框架只维护一个活动 `Map<ownerKey, StateCell>`，会话边界从目标 branch seed、界内 Map 权威、`/tree` 不刷新 `on`；init 进度按各自 branch 独立推导；首版仅支持单 main，多 main 限制留 roadmap。
 
 ## Not yet specified
 
-<!-- 03 的真实运行证据已把原有“State 恢复/消息提交/子代理生命周期耦合”疑点落成事实；未验证项（本地 natives 可运行方式、openai-codex transport、TUI 视觉）已作为约束落入 07/08。暂无新的在范围雾。 -->
+<!-- 04 已 resolved，State 归属/恢复/子代理跟随契约锁定；06 随 04 解锁，07/08 按阻塞链推进。未验证项（本地 natives 可运行方式、openai-codex transport、TUI 视觉）仍作为约束留在 07/08。暂无新的在范围雾。 -->
 
 ## Out of scope
 
@@ -48,3 +49,5 @@ Labels: wayfinder:map
 - 改写业务提示词、自动探测/启用 MCP 或 LSP、替代子代理调度器、放宽必要消息角色或历史保护要求。
 - 独立 npm 发布、独立扩展生成器、跨宿主会话格式迁移。
 - 新→旧回退持久化兼容（旧实现继续读写新实现写下的数据）：作为 codebase-tools 的显式单向例外放弃；ADR-0002 框架默认双向兼容保留给其他迁移。回退时旧实现会因缺少 `initInjected` 重复注入一次 init；旧写→新读写仍在范围内。见 [05](decision/05-contribution-contract.md)。
+- 同进程多 main（ACP/cmux/embedded，或 `/new` 后旧子代理存活）的 owner 消歧：首版仅支持单 main，该场景 native 解析可能取到错误 owner、读到错误 State，不承诺支持；跟进项见 [框架 backlog](../../docs/semantic-extension-framework-backlog.md)。见 [04](lighthouse/04-state-ownership.md)。
+- 配置化 State 持久化后端（内存 / 扩展自有文件 / host session entries）：首版只实现 codebase-tools 所需的 owner 会话 JSONL 映射，保留「当前值 vs 持久化映射」seam；配置化延后，见 [框架 backlog](../../docs/semantic-extension-framework-backlog.md)。见 [04](lighthouse/04-state-ownership.md)。
