@@ -13,11 +13,11 @@ import { beforeAll, describe, expect, test } from "bun:test";
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
 import { pathToFileURL } from "node:url";
-import { type IsolatedRuntime, REPO_ROOT, ensureIsolatedRuntime, readBaselineRecord, resolveRecordPath } from "../harness/baseline";
+import { type IsolatedRuntime, REPO_ROOT, ensureIsolatedRuntime, readBaselineRecord } from "../harness/baseline";
 import { startCaptureServer } from "../harness/capture-server";
 import { listResolutionOffsets } from "../harness/env";
 import { HARNESS_CAPTURE_BASE_URL_ENV, HARNESS_MODEL_SELECTOR } from "../harness/fixtures/extension-root/provider";
-import { createRunRoot, listRunArtifacts } from "../harness/run-root";
+import { createRunRoot, listRunArtifacts, type RunRoot } from "../harness/run-root";
 import { ControlledSession } from "../harness/session";
 
 /** The OMP discovery root this repository deploys (ADR-0002; decision 07). */
@@ -50,7 +50,6 @@ interface DiscoveryHelpers {
 }
 
 const record = readBaselineRecord();
-const oracleCodebaseToolsRoot = path.join(resolveRecordPath(record.oracle.path), "extensions", "codebase-tools");
 
 let runtime: IsolatedRuntime;
 let loader: ExtensionLoader;
@@ -141,26 +140,49 @@ describe("OMP entrypoint discovery (C12)", () => {
 });
 
 describe("load-source mutual exclusion (N8)", () => {
-	test("the explicit-only OMP root never discovers the original sibling implementation", async () => {
-		// The original implementation the cutover replaces must exist for this to mean anything.
-		expect(existsSync(path.join(oracleCodebaseToolsRoot, "index.ts"))).toBe(true);
+	// The cutover deletes the sibling implementation, so this contract must not depend on
+	// that working tree existing. Each run materializes a stand-in old implementation with
+	// the same extension name, which keeps both halves meaningful before and after cutover.
+	function materializeLegacyImplementation(runRoot: RunRoot): string {
+		const legacyRoot = path.join(runRoot.workDir, "legacy-extensions", "codebase-tools");
+		mkdirSync(legacyRoot, { recursive: true });
+		writeFileSync(path.join(legacyRoot, "index.ts"), "export const legacyCodebaseTools = true;\n");
+		return legacyRoot;
+	}
 
-		const discovered = await discoverConfiguredRoots([OMP_ENTRYPOINT_DIR]);
-		const oracleRoot = path.resolve(oracleCodebaseToolsRoot);
-		expect(discovered.some(file => path.resolve(file).startsWith(oracleRoot))).toBe(false);
-		expect(discovered.map(file => helpers.getExtensionNameFromPath(file))).toEqual(["codebase-tools"]);
+	test("the explicit-only OMP root discovers only this repository's implementation", async () => {
+		const runRoot = createRunRoot("n8-explicit-only");
+		try {
+			const legacyRoot = materializeLegacyImplementation(runRoot);
+			// The old implementation really exists on disk, just outside the configured root.
+			expect(existsSync(path.join(legacyRoot, "index.ts"))).toBe(true);
+
+			const discovered = await discoverConfiguredRoots([OMP_ENTRYPOINT_DIR]);
+			expect(discovered.map(file => helpers.getExtensionNameFromPath(file))).toEqual(["codebase-tools"]);
+			expect(path.resolve(discovered[0])).toBe(path.resolve(CODEBASE_TOOLS_ENTRYPOINT));
+			expect(discovered.some(file => path.resolve(file).startsWith(path.resolve(legacyRoot)))).toBe(false);
+		} finally {
+			runRoot.dispose();
+		}
 	});
 
 	test("the loader does not deduplicate by extension name, so exclusion can only come from the load sources", async () => {
-		// Pointing discovery at both sources returns both: name matching, `disabledExtensions`
-		// and identity probing are not what keeps the two implementations apart.
-		const discovered = await discoverConfiguredRoots([OMP_ENTRYPOINT_DIR, oracleCodebaseToolsRoot]);
+		const runRoot = createRunRoot("n8-both-sources");
+		try {
+			// Pointing discovery at both sources returns both: name matching, `disabledExtensions`
+			// and identity probing are not what keeps the two implementations apart.
+			const legacyRoot = materializeLegacyImplementation(runRoot);
+			const discovered = await discoverConfiguredRoots([OMP_ENTRYPOINT_DIR, legacyRoot]);
 
-		expect(discovered.length).toBe(2);
-		expect(discovered.map(file => helpers.getExtensionNameFromPath(file))).toEqual([
-			"codebase-tools",
-			"codebase-tools",
-		]);
+			expect(discovered.length).toBe(2);
+			expect(discovered.map(file => helpers.getExtensionNameFromPath(file))).toEqual([
+				"codebase-tools",
+				"codebase-tools",
+			]);
+			expect(discovered.map(file => path.resolve(file))).toContain(path.resolve(CODEBASE_TOOLS_ENTRYPOINT));
+		} finally {
+			runRoot.dispose();
+		}
 	});
 });
 
