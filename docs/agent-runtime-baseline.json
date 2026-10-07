@@ -1,0 +1,85 @@
+{
+  "$comment": "Single checkable record of the fixed verification baseline: agent-runtime revision anchor, run/acceptance artifact, and dependency lockfiles. Checked by tests/harness/baseline.test.ts. Support status and admission policy stay in docs/agent-runtime-support.md; this file records only the correspondence between the anchor, the artifact actually run, and the lockfiles.",
+  "recorded": "2026-10-07",
+  "agentRuntime": {
+    "package": "@oh-my-pi/pi-coding-agent",
+    "supportedVersion": "18.5.0",
+    "revisionAnchor": {
+      "kind": "local-source-checkout",
+      "path": "../oh-my-pi",
+      "commit": "9348320cc4a30a7195d36a1f05a6c11bcb701a17",
+      "tag": "v18.5.0",
+      "version": "18.5.0",
+      "role": "source of truth for the supported behavior; never imported by this repository's code or tests"
+    },
+    "acceptanceArtifact": {
+      "kind": "isolated-exact-install",
+      "dependencySpec": "@oh-my-pi/pi-coding-agent@18.5.0",
+      "prefix": ".cache/omp-baseline/18.5.0",
+      "installCommand": "bun install in the prefix directory with an exact dependency entry",
+      "cliEntry": "src/cli.ts",
+      "role": "the only agent runtime that acceptance/verification runs execute; the local checkout cannot run a full session because its native addon is not built",
+      "byteIdentity": {
+        "source": "reused conclusion of decision 03 (.scratch/codebase-tools-omp-v1/decision/03-extension-path-probes.md, probe assets under assets/03): the isolated 18.5.0 install is byte-identical to the checkout for the files that carry the extension, session, model and auth contracts",
+        "method": "sha256",
+        "conclusion": "6/6 identical",
+        "files": [
+          {
+            "path": "extensibility/extensions/loader.ts",
+            "sha256": "6ce3fcecb30caca84738683af80677638a9b6aa51b285709f32f5fad56bcd2c2"
+          },
+          {
+            "path": "extensibility/extensions/runner.ts",
+            "sha256": "2afd58d1e6668262cee01d1be868320c857aed208c3ced890f0c7930bc898ff2"
+          },
+          {
+            "path": "extensibility/extensions/types.ts",
+            "sha256": "589240eaefcd6a0fa48b7492af89bc40cfbc25d235a0aa8e1a25fa6f20caf610"
+          },
+          {
+            "path": "session/session-manager.ts",
+            "sha256": "f4a19f7fdfcdc866437546d2b15ed57dfd3871fb5abb0675d9f07364b9167f6a"
+          },
+          {
+            "path": "config/model-registry.ts",
+            "sha256": "1154820b4fe89fd8f7c7d6514de3b647e49aead5e89c2547a1721efd400a92d6"
+          },
+          {
+            "path": "session/auth-storage.ts",
+            "sha256": "28d794996dfbb4dd06c0210ab4ef001a66d975aa860989cc8b89af31fe7c86ba"
+          }
+        ]
+      }
+    }
+  },
+  "sourceCombination": {
+    "repository": "my-agent-toolkit",
+    "revisionAtRecord": "73a76f6cf9091072c85d1fce3df6237b8330d716",
+    "lockfile": {
+      "path": "bun.lock",
+      "sha256": "f78f4d3c7b82ac5147ed627a165355125d5a4c0e7522a044a2c2ffc971ee0415"
+    }
+  },
+  "oracle": {
+    "repository": "my-omp-toolkit",
+    "path": "../my-omp-toolkit",
+    "revision": "34d7c4061a74a73b478067882cba7956821f3c1d",
+    "role": "codebase-tools behavior oracle (read-only migration baseline)",
+    "lockfile": {
+      "path": "bun.lock",
+      "sha256": "ddf372c50d0c1080b9c66b28e655b2bfe1c694e932ea4b2ae020c704be927225"
+    }
+  },
+  "environment": {
+    "platform": "win32",
+    "arch": "x64",
+    "bun": "1.4.2",
+    "nativesBuilt": false,
+    "checkoutRunsFullSession": false,
+    "conditions": [
+      "Accepted runs execute the isolated exact install under a temporary agent state and isolated capture directories; the default global install, formal configuration and any running agent are never touched.",
+      "No native addon build is part of acceptance: the isolated install ships prebuilt win32-x64 natives.",
+      "The local checkout is a source/revision anchor only; it is not used to run full sessions because packages/natives ships no built addon."
+    ]
+  }
+}

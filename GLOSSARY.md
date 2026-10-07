@@ -72,6 +72,10 @@ _Avoid_: session restoration, persistence (when referring only to volatile memor
 The decision whether and how a restored state should reacquire ongoing effects whose earlier execution may no longer be active. Restoring a stored value alone does not establish that timers or external registrations are running.
 _Avoid_: replaying the last command, automatic side-effect restoration
 
+**Marker area（状态标记区）**:
+The framework's single status region where each bound extension's marker is rendered, with a widget identity, placement and line order the framework owns and an activation-driven life cycle the framework derives from State; an extension contributes only its marker text and can never name or claim the widget.
+_Avoid_: extension-owned widget, per-extension marker key, extension-chosen placement
+
 **Injected prompt（注入提示词）**:
 Extension-provided text made available to the model under declared activation and delivery rules. Its visibility to the user, delivered authority, and retention are distinct properties.
 _Avoid_: instruction contribution (legacy name), hidden developer message (as a synonym for all prompts), raw text insertion, system prompt

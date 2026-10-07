@@ -1,0 +1,24 @@
+$ bun test tests/codebase-tools
+bun test v1.4.2 (744846f84)
+
+tests\codebase-tools\subagent-owner.test.ts:
+220 | 			expect(customEntries(owner.entries, STATE_ENTRY_TYPE).map(entry => entry.data)).toEqual([{ enabled: true }]);
+221 | 			expect(contributed(owner.entries, INIT_IDENTITY)).toHaveLength(1);
+222 | 
+223 | 			// The subagent spawned while the owner was off contributed nothing, and wrote no
+224 | 			// State of its own: a subagent holds no write face.
+225 | 			expect(contributed(childOff.entries, INIT_IDENTITY)).toHaveLength(0);
+                                                              ^
+error: expect(received).toHaveLength(expected)
+
+Expected length: 0
+Received length: 1
+
+      at <anonymous> (E:\Developer\myhub\my-agent-toolkit\tests\codebase-tools\subagent-owner.test.ts:225:57)
+(fail) a real built-in subagent follows the owner's current enabled (B9, C3, P4) > a subagent spawned while the owner is off stays silent; after the owner is enabled, a subagent initialises its own branch [1447.52ms]
+
+ 23 pass
+ 1 fail
+ 306 expect() calls
+Ran 24 tests across 7 files. [35.76s]
+error: script "test:codebase-tools" exited with code 1
