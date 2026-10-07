@@ -53,7 +53,7 @@ A command that alternates between two modes on successive executions.
 _Avoid_: mode selection, idempotent switch
 
 **Directed control（定向开关）**:
-A bound control kind whose command names its target state explicitly — an empty argument activates, `off` deactivates — and which repeats its side effect on every invocation; the framework never deduplicates or short-circuits it, so idempotence is the extension's responsibility.
+A bound control kind whose command names its target state explicitly — an empty argument activates, `off` deactivates, and any other argument is not a directive at all (the framework records and publishes nothing for it, and hands the text to the implementation's own `unrecognized` member) — and which repeats its side effect on every invocation; the framework never deduplicates or short-circuits it, so idempotence is the extension's responsibility.
 _Avoid_: toggle, mode selection, idempotent switch, command action
 
 **Mixed control（混合控制）**:

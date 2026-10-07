@@ -15,26 +15,26 @@
  * This module is agent-runtime-independent: it reads State through the read view and the
  * branch facts an adapter resolved, and names no native API.
  */
-import { BOUND_PROMPT_STRATEGIES, activationField, type ExtensionDefinition } from "../core/definition";
+import { BOUND_PROMPT_STRATEGIES, type ExtensionDefinition } from "../core/definition";
 import type { PromptContribution, RunDelivery } from "../core/protocol";
 import type { StateStore } from "../core/state";
+import { stateValueFor } from "./state-scope";
 
 /**
  * The one contribution this run initiation should carry, or none.
  *
- * A run whose session resolved no owner contributes nothing: there is no activation to
- * follow. Otherwise the owner's current value decides — a subagent reads its owner's
- * value here exactly as the owner's own session does, and its own branch supplies the
- * progress — and an enabled owner contributes the single slot its rules call for: a
- * pending one-shot slot first, otherwise the first declared repeating slot.
+ * A run that reads no active value contributes nothing. Which value a delivery reads is
+ * the per-field inheritance axis ([`stateValueFor`](./state-scope.ts)): the owner's own
+ * session reads the owner's cell, and a subagent reads it only when the field declares
+ * `follow`. The branch supplies the progress either way — a pending one-shot slot first,
+ * otherwise the first declared repeating slot — and nothing is stored for it.
  */
 export function planContribution(
 	definition: ExtensionDefinition,
 	state: StateStore,
 	run: RunDelivery,
 ): PromptContribution | undefined {
-	if (run.owner.kind === "unresolved") return undefined;
-	if (!state.view(run.owner.key).read(activationField(definition))) return undefined;
+	if (!stateValueFor(definition, state, run.owner)) return undefined;
 
 	const contributed = new Set(run.contributionIdentities);
 	const slots = (definition.prompts ?? []).filter(slot => BOUND_PROMPT_STRATEGIES.includes(slot.strategy));

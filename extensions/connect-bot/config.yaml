@@ -1,0 +1,6 @@
+# The omp-bot panel this extension registers sessions with.
+#
+# The file is the machine's single source for the endpoint: the framework reads and validates
+# it before the extension registers anything, and no default or fallback lives in code, so a
+# missing or illegal file refuses the extension instead of letting it run on an invented value.
+endpoint: "http://omp-bot.local:8787"

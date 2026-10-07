@@ -5,8 +5,9 @@
  * owner — the session that holds the extension's values — and its read surface and
  * its write surface are separate: framework-managed readers observe values through a
  * {@link StateView}, which exposes no mutation, while every value change goes through
- * one of the framework's own write paths and nothing else can reach a cell: a command
- * transition ({@link StateStore.applyTransition}) and a session boundary
+ * one of the framework's own write paths and nothing else can reach a cell: a
+ * declared-value write ({@link StateStore.applyTransition}, reached through the seam
+ * every handler delivery carries) and a session boundary
  * ({@link StateStore.seed} / {@link StateStore.retire}). A cell that no write path has
  * touched reads as the declared default, so a clean session starts at `false`.
  *
@@ -14,6 +15,7 @@
  * belongs to and which session stores it, and this module only keeps the current
  * value for that key.
  */
+import { OwnerLives } from "./owner-lives";
 
 /** The State values v1 holds: the declared boolean activation field. */
 export type StateValue = boolean;
@@ -44,6 +46,16 @@ export class StateStore {
 	/** Owner key -> field name -> current value. Only the store's own methods write. */
 	readonly #cells = new Map<string, Map<string, StateValue>>();
 
+	/**
+	 * The lives of the owners whose cells this store holds.
+	 *
+	 * A cell lives for its owner's session, and a capability retained for that owner has to live
+	 * exactly as long, so the two are scoped to the same object: one store serves one extension in
+	 * one process, which is what makes the boundary that retires a cell end that owner's
+	 * capabilities for every binding of the extension rather than for the one that saw it.
+	 */
+	readonly ownerLives = new OwnerLives();
+
 	/** The read view of one owner's current values. */
 	view(ownerKey: string): StateView {
 		return {
@@ -52,11 +64,12 @@ export class StateStore {
 	}
 
 	/**
-	 * The framework's command write path: set one owner's `field` to `value`.
+	 * The framework's declared-value write: set one owner's `field` to `value`.
 	 *
-	 * A control behavior calls this before it persists and before it publishes
-	 * feedback, so the in-memory value is authoritative for every later read in the
-	 * process even when persistence fails.
+	 * The declared-value seam a handler delivery carries calls this before it attempts the
+	 * persistence record and before it republishes the marker area, so the in-memory value
+	 * is authoritative for every later read in the process even when persistence fails, and
+	 * the value the handler wrote is the value State holds.
 	 */
 	applyTransition(ownerKey: string, field: string, value: StateValue): void {
 		let cell = this.#cells.get(ownerKey);

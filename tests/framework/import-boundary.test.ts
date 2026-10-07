@@ -7,6 +7,11 @@
  * depend on which — so this suite reads the source tree instead of running anything.
  * Declaration files are scanned too: declaring a runtime-type dependency in shared
  * source is the same boundary crossing as importing one.
+ *
+ * The check is an alarm, not a proof: it reads specifiers lexically and only from `.ts`
+ * files, so `require(...)`, computed specifiers, aliasing and a non-`.ts` module sit
+ * outside it, and a green run means only that the alarm found nothing. The principle is
+ * what binds — see ADR 0002, "Enforcement of the native boundary".
  */
 import { describe, expect, test } from "bun:test";
 import { readdirSync, readFileSync } from "node:fs";
@@ -16,14 +21,19 @@ import { REPO_ROOT } from "../harness/baseline";
 /** The source trees whose module graph the boundary covers. */
 const SCANNED_ROOTS = ["framework", "extensions", "entrypoints"] as const;
 
-/** Packages the agent-runtime loader resolves for an extension: importing one is an escape hatch. */
+/** Packages the agent-runtime loader resolves for an extension: naming one — by import or by declaration — is an escape hatch. */
 const AGENT_RUNTIME_PACKAGE = /^@(?:oh-my-pi|earendil-works)\//;
 
 /** Where the native surface may be touched: the OMP adapter and extension runtime assemblies. */
 const ESCAPE_HATCH = [/^framework\/adapters\//, /^extensions\/[^/]+\/runtimes\//];
 
-/** Import/export/dynamic-import specifiers. */
-const SPECIFIER = /\bfrom\s*["']([^"']+)["']|\bimport\s*["']([^"']+)["']|\bimport\s*\(\s*["']([^"']+)["']/g;
+/**
+ * Every way this repository writes a module specifier: an import, a re-export, a dynamic
+ * import, and an ambient `declare module`. A declaration names a module exactly as an import
+ * does, so neither may name an agent-runtime package outside the escape hatch.
+ */
+const SPECIFIER =
+	/\bfrom\s*["']([^"']+)["']|\bimport\s*["']([^"']+)["']|\bimport\s*\(\s*["']([^"']+)["']|\bdeclare\s+module\s*["']([^"']+)["']/g;
 
 function sourceFilesUnder(directory: string): string[] {
 	const files: string[] = [];
@@ -39,17 +49,22 @@ function specifiersOf(file: string): string[] {
 	const source = readFileSync(path.join(REPO_ROOT, file), "utf8");
 	const specifiers: string[] = [];
 	for (const match of source.matchAll(SPECIFIER)) {
-		const specifier = match[1] ?? match[2] ?? match[3];
+		const specifier = match[1] ?? match[2] ?? match[3] ?? match[4];
 		if (specifier !== undefined) specifiers.push(specifier);
 	}
 	return specifiers;
 }
 
-/** Shared source: framework core/behaviors/definition entry, and every extension module outside `runtimes/`. */
+/**
+ * Shared source: every scanned module that is neither an escape hatch nor a discovery
+ * entrypoint — the framework tree outside `adapters/`, and every extension module outside its
+ * `runtimes/`. Entrypoints are their own class (reaching the escape hatch is exactly what a
+ * thin entrypoint does), so the entrypoint assertion below governs them instead, and no scanned
+ * module is left unclassified.
+ */
 function isHostIndependent(file: string): boolean {
-	if (/^framework\/(?:core|behaviors)\//.test(file) || file === "framework/public.ts") return true;
-	if (/^extensions\/[^/]+\//.test(file)) return !/^extensions\/[^/]+\/runtimes\//.test(file);
-	return false;
+	if (ESCAPE_HATCH.some(pattern => pattern.test(file))) return false;
+	return !file.startsWith("entrypoints/");
 }
 
 /** The module a relative specifier reaches, so the boundary applies to imports, not just package names. */
@@ -62,7 +77,7 @@ function resolvesInto(file: string, specifier: string, patterns: readonly RegExp
 const sourceFiles = SCANNED_ROOTS.flatMap(root => sourceFilesUnder(root));
 
 describe("shared source imports no agent-runtime types (C1)", () => {
-	test("framework core/behaviors and extension shared source stay host-independent", () => {
+	test("the framework outside adapters and the extension modules outside runtimes stay host-independent", () => {
 		const shared = sourceFiles.filter(isHostIndependent);
 		// The check is only meaningful while it has subjects: both shared framework
 		// layers and the extension's shared source exist.
@@ -85,14 +100,15 @@ describe("shared source imports no agent-runtime types (C1)", () => {
 	});
 
 	test("the native escape hatch appears only in adapters and runtime assemblies", () => {
-		const importers = sourceFiles.filter(file =>
+		const naming = sourceFiles.filter(file =>
 			specifiersOf(file).some(specifier => AGENT_RUNTIME_PACKAGE.test(specifier)),
 		);
 
 		// The escape hatch exists and is exercised: the extension's OMP assembly is where
-		// the loader-provided package is imported.
-		expect(importers.some(file => /^extensions\/[^/]+\/runtimes\//.test(file))).toBe(true);
-		expect(importers.filter(file => !ESCAPE_HATCH.some(pattern => pattern.test(file)))).toEqual([]);
+		// the loader-provided package is imported, and the adapter is where its module shape
+		// is declared. Nowhere else may name it, by import or by declaration.
+		expect(naming.some(file => /^extensions\/[^/]+\/runtimes\//.test(file))).toBe(true);
+		expect(naming.filter(file => !ESCAPE_HATCH.some(pattern => pattern.test(file)))).toEqual([]);
 	});
 
 	test("each discovery entrypoint only re-exports its extension's runtime assembly", () => {

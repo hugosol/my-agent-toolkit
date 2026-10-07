@@ -5,15 +5,25 @@
  * {@link defineExtension} and the exported configuration types, then hand the
  * definition to an agent-runtime adapter (`framework/adapters/omp.ts`) for assembly.
  * No agent-runtime type appears here or in anything the definition can name.
+ *
+ * The configuration one extension declares is part of its definition, so its types are
+ * here; the configuration API the extension's shared logic reads through — `getConfig`,
+ * `readConfig` and the two error classes — lives in `framework/core/config.ts`, which is
+ * host-independent exactly as this entry is.
  */
 export {
 	type CommandDeclaration,
+	type CommandDirectedDeclaration,
 	type CommandToggleDeclaration,
+	type ConfigFieldType,
 	type ControlKind,
+	type ExtensionConfigDeclaration,
 	type ExtensionDefinition,
 	type MarkerDeclaration,
 	type PromptDeclaration,
 	type PromptStrategy,
 	type StateDeclaration,
+	type StateInheritance,
+	type StatePersistence,
 	defineExtension,
 } from "./core/definition";

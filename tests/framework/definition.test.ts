@@ -93,8 +93,10 @@ describe("declarative extension definition (P1)", () => {
 		// State field, one toggle command, two injection slots and the marker text.
 		expect(CODEBASE_TOOLS.id).toBe("codebase-tools");
 		expect(CODEBASE_TOOLS.displayName).toBe("codeBaseTools");
-		// State is omitted on purpose: the framework's default activation field applies.
-		expect(CODEBASE_TOOLS.state).toBeUndefined();
+		// State declares the one axis this extension opts out of the default on: the
+		// framework's `enabled` field and `session-entry` persistence stand, and `follow`
+		// is what keeps the subagent behavior codebase-tools shipped with.
+		expect(CODEBASE_TOOLS.state).toEqual({ inheritance: "follow" });
 		expect(CODEBASE_TOOLS.commands).toEqual([
 			{
 				type: "toggle",
@@ -248,6 +250,33 @@ describe("initialization and binding failures (P17, N7)", () => {
 		expect(failureKinds(result)).toEqual(["initialization"]);
 		expect(diagnostics).toContain("mode-selection");
 		expect(api.labels).toEqual([]);
+	});
+
+	test("a State declaration this version cannot honor is refused, not silently read as a default one", () => {
+		// The persistence and inheritance unions are closed: `disk` and `copy` are future
+		// additive members, and a definition that declares one now must not bind with the
+		// value quietly read as `session-entry` or `none`. Only a non-TypeScript caller can
+		// get here, hence the cast.
+		const withState = (state: unknown): ExtensionDefinition =>
+			({ id: "future-state", displayName: "future-state", state }) as unknown as ExtensionDefinition;
+
+		const unboundPersistence = bind(withState({ persistence: "disk" }));
+		const unboundInheritance = bind(withState({ inheritance: "copy" }));
+		// A declaration that is not a State object at all is refused too, rather than read
+		// as a declaration that declares nothing special.
+		const notADeclaration = bind(withState("memory"));
+
+		expect(failureKinds(unboundPersistence.result)).toEqual(["initialization"]);
+		expect(unboundPersistence.diagnostics).toContain("disk");
+		expect(unboundPersistence.api.labels).toEqual([]);
+
+		expect(failureKinds(unboundInheritance.result)).toEqual(["initialization"]);
+		expect(unboundInheritance.diagnostics).toContain("copy");
+		expect(unboundInheritance.api.labels).toEqual([]);
+
+		expect(failureKinds(notADeclaration.result)).toEqual(["initialization"]);
+		expect(notADeclaration.diagnostics).toContain("not a State declaration");
+		expect(notADeclaration.api.labels).toEqual([]);
 	});
 
 	test("an agent runtime that refuses registration leaves the extension unbound and keeps nothing", () => {

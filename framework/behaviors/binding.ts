@@ -9,26 +9,38 @@
  * Ordering is the contract: every fallible step (configuration rules, initialization,
  * admission) runs before the first registration, so a definition the framework refuses to
  * honor leaves nothing registered. Admission is the runtime-level step and the last one
- * before registration: a required semantic the runtime cannot honor refuses the binding,
- * while an unlisted version only schedules the once-per-main-session notice and lets
- * binding continue. Failures are reported once each and returned as data; the caller's
- * agent runtime keeps running with the extension unbound.
+ * before registration: a semantic the runtime cannot honor refuses the binding when it is
+ * required of it — the framework requires history preservation of every binding, and an
+ * assembly may declare the capability its extension additionally depends on — while an
+ * unlisted version only schedules the once-per-main-session notice and lets binding
+ * continue. Failures are reported once each and returned as data; the caller's agent
+ * runtime keeps running with the extension unbound.
  */
-import { type AdmissionFacts, AdmissionNotices, admit } from "../core/admission";
-import { BOUND_CONTROL_KINDS, activationField, type ExtensionDefinition } from "../core/definition";
+import { type AdmissionFacts, AdmissionNotices, admit, type DeclarableRequiredSemantic } from "../core/admission";
+import {
+	BOUND_CONTROL_KINDS,
+	BOUND_STATE_INHERITANCES,
+	BOUND_STATE_PERSISTENCES,
+	activationField,
+	type ExtensionDefinition,
+} from "../core/definition";
 import {
 	type AgentRuntimePort,
 	type BindingFailure,
 	type BindingResult,
+	type CommandActions,
 	describeBindingFailure,
+	type SemanticEventHandlers,
 } from "../core/protocol";
 import type { StateStore } from "../core/state";
+import { findConfigFailure, type ConfigSource } from "../core/config";
 import { findConfigurationViolations } from "../core/violations";
 import { announceUnlistedVersion } from "./admission";
-import { runCommandToggle } from "./control";
+import { runCommandDirected, runCommandToggle } from "./control";
 import { planContribution } from "./injection";
 import { publishMarkerOnRun, registerMarker } from "./marker";
-import { reconcileSession } from "./session";
+import { dispatchRoundEvent } from "./round-events";
+import { dispatchSessionEvent } from "./session-events";
 
 /**
  * The admission inputs one binding resolves: the versions the extension declares support
@@ -44,6 +56,13 @@ export interface BindingAdmission {
 	 * about an unlisted version exactly once.
 	 */
 	readonly notices: AdmissionNotices;
+	/**
+	 * The semantics this binding's assembly declared the extension depends on, besides the
+	 * ones the framework requires of every binding — the assembly option that turns a gap
+	 * the runtime has into a refusal instead of a capability the extension works around.
+	 * Omitted when the assembly declared none, which is what most extensions do.
+	 */
+	readonly requiredSemantics?: readonly DeclarableRequiredSemantic[];
 }
 
 /**
@@ -51,17 +70,31 @@ export interface BindingAdmission {
  * registers anything. Returns the failure detail, or `undefined` when the definition
  * can be bound.
  */
-function findInitializationFailure(definition: ExtensionDefinition): string | undefined {
+function findInitializationFailure(
+	definition: ExtensionDefinition,
+	actions: CommandActions,
+): string | undefined {
 	if (definition.id.trim().length === 0) return "the definition declares no extension id";
 	if (definition.displayName.trim().length === 0) return "the definition declares no display name";
 
-	// The control kinds are a closed union, and this version binds `toggle` only: a
-	// declaration of any other kind is refused rather than dropped on the floor.
+	// The control kinds are a closed union, and this version binds the ones it implements:
+	// a declaration of any other kind is refused rather than dropped on the floor.
 	const unboundControl = (definition.commands ?? []).find(
 		command => !BOUND_CONTROL_KINDS.includes(command.type),
 	);
 	if (unboundControl !== undefined) {
 		return `command "${unboundControl.name}" declares control kind "${unboundControl.type}", which this framework version does not bind`;
+	}
+
+	// A directed command is a declaration plus an implementation: the definition names the
+	// command and its field, and the assembly injects the implementation. Registering a
+	// declaration whose implementation never arrived would give the user a command that does
+	// nothing, so the incomplete pair is refused before the first registration instead.
+	const unpaired = (definition.commands ?? []).find(
+		command => command.type === "directed" && actions[command.name] === undefined,
+	);
+	if (unpaired !== undefined) {
+		return `command "${unpaired.name}" declares control kind "directed", but no implementation was injected for it`;
 	}
 
 	// v1 owns exactly one State field per extension: a command that transitions any
@@ -72,6 +105,29 @@ function findInitializationFailure(definition: ExtensionDefinition): string | un
 		return `command "${foreignWriter.name}" transitions State field "${foreignWriter.state}", but the extension's State field is "${field}"`;
 	}
 
+	// The State lifecycle axes are closed unions like the control kinds, and this version
+	// honors the members it implements: a value outside them would otherwise be read as the
+	// default one, so the declaration is refused before the first registration instead. A
+	// declaration that is not a State object at all cannot be read as one either, so it is
+	// refused here rather than silently read as the defaults.
+	const declaredState: unknown = definition.state;
+	if (
+		declaredState !== undefined &&
+		(typeof declaredState !== "object" || declaredState === null || Array.isArray(declaredState))
+	) {
+		return `state declares "${String(declaredState)}", which is not a State declaration`;
+	}
+
+	const persistence = definition.state?.persistence;
+	if (persistence !== undefined && !BOUND_STATE_PERSISTENCES.includes(persistence)) {
+		return `state declares persistence "${persistence}", which this framework version does not bind`;
+	}
+
+	const inheritance = definition.state?.inheritance;
+	if (inheritance !== undefined && !BOUND_STATE_INHERITANCES.includes(inheritance)) {
+		return `state declares inheritance "${inheritance}", which this framework version does not bind`;
+	}
+
 	return undefined;
 }
 
@@ -79,29 +135,65 @@ function findInitializationFailure(definition: ExtensionDefinition): string | un
  * Binds a definition to an agent runtime, or refuses to.
  *
  * A refused definition contributes nothing — no label, no commands, no injections,
- * no marker — and reports one diagnostic per declared conflict. Nothing about a
- * *binding* is retained: no process-level registry exists to leak a partial binding
- * into the next session, which is why the same factory can bind every session and
- * subagent independently, and why each refused binding reports its own error.
+ * no marker — and reports one diagnostic per failure: a declared conflict, or a declared
+ * configuration its file cannot satisfy. Nothing about a *binding* is retained: no
+ * process-level registry exists to leak a partial binding into the next session, which is
+ * why the same factory can bind every session and subagent independently, and why each
+ * refused binding reports its own error.
  *
  * `state` is the one thing that outlives a binding: the adapter owns one store per
  * extension per process, so bindings for different sessions share the owner-keyed
  * cells rather than each starting from a private copy. `admission`'s notice ledger
  * outlives a binding for the same reason: one assembly has one per process.
+ *
+ * `actions` is the assembly half of a directed command: its implementations, keyed by
+ * command name. The declaration says which command and which field, and this is what the
+ * command runs; a directed declaration with no entry here is refused with the
+ * initialization failures, so a registered command always has something to run and an
+ * assembly that declares no directed command passes nothing.
+ *
+ * `events` is the assembly half of the semantic lifecycle subscription: the handlers, keyed by
+ * the event each subscribes to. The framework's own session behavior runs for every session
+ * delivery whether or not a handler arrived, and a subscribed session handler runs after it;
+ * the round axis has no framework behavior of its own (three-valued agent state is not framework
+ * State), so its hook is subscribed only when the assembly injected a handler for one of its
+ * edges.
+ *
+ * `configSource` is the seam a declared configuration is read through: the reader and the
+ * parser (this process's own file system and the pure-JS YAML parser by default, and a test's
+ * where a suite drives a failure path without a file), plus the directory a relative declared
+ * path is resolved against — the extension repository root the assembly supplies, since a
+ * binding runs in an arbitrary project directory. It is read only when the definition declared
+ * a configuration, and it is not binding state: the values it validates belong to the extension
+ * for this process — they are what `getConfig` hands its shared logic — not to this binding.
  */
 export function bindExtension(
 	definition: ExtensionDefinition,
 	port: AgentRuntimePort,
 	state: StateStore,
 	admission: BindingAdmission,
+	actions: CommandActions = {},
+	events: SemanticEventHandlers = {},
+	configSource: ConfigSource = {},
 ): BindingResult {
 	const failures: BindingFailure[] = findConfigurationViolations(definition).map(violation => ({
 		kind: "configuration",
 		violation,
 	}));
 
+	// The declared configuration, still before the first registration and on the same
+	// deterministic path as the declaration conflicts above: an extension whose declared
+	// file cannot satisfy its declaration is refused whole, and the extensions that loaded
+	// keep running. A definition that declares no configuration is untouched.
 	if (failures.length === 0) {
-		const detail = findInitializationFailure(definition);
+		const configDetail = findConfigFailure(definition, configSource);
+		if (configDetail !== undefined) {
+			failures.push({ kind: "configuration", violation: { kind: "config", detail: configDetail } });
+		}
+	}
+
+	if (failures.length === 0) {
+		const detail = findInitializationFailure(definition, actions);
 		if (detail !== undefined) failures.push({ kind: "initialization", detail });
 	}
 
@@ -111,9 +203,10 @@ export function bindExtension(
 	}
 
 	// The runtime-level admission step, still before the first registration. A required
-	// semantic the runtime cannot honor refuses the binding outright; an unlisted version
-	// is not a refusal, and its notice is published by the session behavior below.
-	const outcome = admit(admission.supportedVersions, admission.facts);
+	// semantic the runtime cannot honor refuses the binding outright — required meaning the
+	// framework's own semantics plus whatever this assembly declared — while an unlisted
+	// version is not a refusal, and its notice is published by the session behavior below.
+	const outcome = admit(admission.supportedVersions, admission.facts, admission.requiredSemantics ?? []);
 	if (outcome.kind === "required-semantics-missing") {
 		const failure: BindingFailure = { kind: "required-semantics", missing: outcome.missing };
 		port.reportDiagnostic(describeBindingFailure(definition.id, failure));
@@ -132,8 +225,18 @@ export function bindExtension(
 			if (outcome.kind === "unlisted-version") {
 				announceUnlistedVersion(definition, outcome, admission.notices, session);
 			}
-			reconcileSession(definition, state, session);
+			// The framework's own behavior runs before the extension's handler, and a handler
+			// that throws is reported rather than allowed to disturb the framework or another
+			// binding: see `session-events.ts` for the order and the isolation.
+			dispatchSessionEvent(definition, state, session, events, port.reportDiagnostic);
 		});
+		// The round axis is subscribed only when this assembly observes one of its edges. Unlike
+		// the session subscription above there is no framework behavior to run for a round — the
+		// agent's work state is not framework State — so a definition that subscribed to no round
+		// asks the runtime for no round deliveries, and its binding registers no such hook.
+		if (events.round_start !== undefined || events.round_end !== undefined) {
+			port.onRound(round => dispatchRoundEvent(definition, events, round, port.reportDiagnostic));
+		}
 		// The run-initiation hook is subscribed when the definition participates in a run at
 		// all — a slot to contribute or a marker to re-assert; a definition with neither
 		// installs no handler. The behaviors themselves write nothing, so a re-entered
@@ -148,12 +251,29 @@ export function bindExtension(
 		}
 		registerMarker(definition, state);
 		for (const command of definition.commands ?? []) {
-			if (command.type !== "toggle") continue;
-			port.registerCommand({
-				name: command.name,
-				description: command.description,
-				run: invocation => runCommandToggle(definition, command, state, invocation),
-			});
+			switch (command.type) {
+				case "toggle":
+					port.registerCommand({
+						name: command.name,
+						description: command.description,
+						run: invocation => runCommandToggle(definition, command, state, invocation),
+					});
+					break;
+				case "directed": {
+					// The pair was completed at validation, so an implementation is present here;
+					// the check is what makes that reachable for the compiler as well as for plain
+					// JavaScript.
+					const implementation = actions[command.name];
+					if (implementation === undefined) break;
+					port.registerCommand({
+						name: command.name,
+						description: command.description,
+						run: invocation =>
+							runCommandDirected(definition, command, state, invocation, implementation),
+					});
+					break;
+				}
+			}
 		}
 	} catch (error) {
 		const failure: BindingFailure = {

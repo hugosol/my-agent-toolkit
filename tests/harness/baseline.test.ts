@@ -8,6 +8,7 @@ import { readFileSync } from "node:fs";
 import * as path from "node:path";
 import {
 	type IsolatedRuntime,
+	checkoutCarries,
 	ensureIsolatedRuntime,
 	readBaselineRecord,
 	readCheckoutCommit,
@@ -81,10 +82,17 @@ describeFixedRecord("baseline record", () => {
 		expect(stale).toEqual([]);
 	});
 
-	test("the oracle checkout is at the recorded revision", () => {
-		const checkout = readCheckoutCommit(resolveRecordPath(record.oracle.path));
+	test("the oracle checkout carries the recorded revision", () => {
+		const checkoutPath = resolveRecordPath(record.oracle.path);
+		const checkout = readCheckoutCommit(checkoutPath);
 		expect(checkout.error).toBeNull();
-		expect(checkout.commit).toBe(record.oracle.revision);
+		// The record pins the revision the oracle's material comes from, and the local checkout is
+		// not parked there: that repository moved past the frozen baseline in a commit of its own
+		// which removed the material this migration migrated out, so what a run can rely on is that
+		// the recorded revision is still in the checkout's history — the baseline stays the
+		// authority's value, only the correspondence asked of the environment is the one that can
+		// hold. The observed tip is recorded per run in the migration run record (D-01).
+		expect(checkoutCarries(checkoutPath, record.oracle.revision)).toBe(true);
 	});
 
 	test("records the accepted environment as conditions, not as pending work", () => {

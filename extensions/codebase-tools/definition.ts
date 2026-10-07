@@ -7,8 +7,11 @@
  * agent-runtime types, and it lives outside the discovery roots (`extensions/`), so
  * the OMP entrypoint reaches it through the extension's OMP runtime assembly.
  *
- * `state` is deliberately omitted: codebase-tools uses the framework's default
- * activation field, `enabled`, whose name is also its persistence key.
+ * `state` declares only the axis this extension opts out of the framework's default on:
+ * the activation field stays `enabled` and its persistence stays `session-entry` (the
+ * field name is also its persistence key), while `inheritance: "follow"` is what keeps a
+ * subagent reading the owning main session's current activation value. Inheritance is
+ * `none` by default, so the opt-in is declared here rather than implied.
  */
 import { defineExtension } from "../../framework/public";
 import { INIT_PROMPT, REMINDER_PROMPT } from "./prompts";
@@ -16,6 +19,7 @@ import { INIT_PROMPT, REMINDER_PROMPT } from "./prompts";
 export const CODEBASE_TOOLS = defineExtension({
 	id: "codebase-tools",
 	displayName: "codeBaseTools",
+	state: { inheritance: "follow" },
 	commands: [
 		{
 			type: "toggle",

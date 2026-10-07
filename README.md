@@ -43,7 +43,7 @@ configuration and any running agent are untouched. `bun run test` runs all three
 | [`tests/harness/`](tests/harness) | The shared harness (isolated install, controlled session, capture) and its self-test. | You are writing a test that drives a real session. |
 | [`scripts/verify-omp-candidate.ts`](scripts/verify-omp-candidate.ts) | On-demand candidate verification: isolated exact install + framework suite + result record. | You are verifying another agent-runtime version. |
 | [`scripts/capture-codex-outbound.ts`](scripts/capture-codex-outbound.ts) | Prepared layer-2 capture of a real `openai-codex` round trip; needs a human-supplied credential. | You are recording the real-credential role evidence. |
-| [`.scratch/codebase-tools-omp-v1/`](.scratch/codebase-tools-omp-v1) | The design record: spec, contract, acceptance plan, decisions, implementation tickets and ticket assets. | You need the reasoning behind a requirement. |
+| [`.scratch/connect-bot-migration/`](.scratch/connect-bot-migration) | The migration design record: spec, contract, map, decisions, lighthouse documents, implementation tickets and the run record. | You need the reasoning behind a requirement. |
 
 ## Human acceptance and cutover
 
@@ -56,10 +56,11 @@ human runs them:
 | --- | --- | --- |
 | H1 | Interactive TUI acceptance of the extension-visible behavior (marker, notify, the command) | Pending human run |
 | H2 | `openai-codex` layer-2 capture: one real chatgpt.com round trip with a real credential | Pending human run (unverified if no credential) |
-| H3 | Permanent cutover (remove the superseded implementation + add the new discovery root + restart) and a cutover smoke | Pending human run; blocked until H1 passes |
+| H3 | Permanent cutover, once per migrated extension (remove its superseded implementation + make sure the new discovery root is configured + restart) and a cutover smoke | Pending human run; blocked until H1 passes (connect-bot: until its acceptance round is recorded) |
 | H4 | Maintainer explicitly replaces the single supported version and updates the support record | Pending maintainer action |
 
-Run them in order. H3 is blocked until H1 passes; H4 is the same explicit action as step 4 of
+Run them in order. H3 is blocked until H1 passes; it covers both migrated extensions and runs
+per extension (codebase-tools first, then connect-bot). H4 is the same explicit action as step 4 of
 [Upgrading the supported agent runtime](#upgrading-the-supported-agent-runtime).
 
 **Isolation rule for every command below.** Run the isolated exact install
@@ -122,16 +123,24 @@ first release and is never inferred from layer 1.
 ### H3 — permanent cutover and cutover smoke
 
 Precondition: H1 passed, so the default environment and the superseded implementation are still intact.
-The loader does not deduplicate by extension name, so mutual exclusion is by load source: until the
-cutover the old implementation keeps its own discovery entry; the cutover removes it and adds the new
-root before restarting.
+Two extensions are cut over here, each replacing a frozen implementation that lives under the same old
+discovery entry: codebase-tools ([H3a](#h3a--cut-over-codebase-tools)) and connect-bot
+([H3b](#h3b--cut-over-connect-bot)). The loader does not deduplicate by extension name, so mutual
+exclusion is by load source: until its cutover each old implementation keeps its own discovery entry;
+the cutover removes it and makes sure the new root is configured before restarting. Only a whole-process
+restart takes effect — there is no hot reload, and the discovery root is never swapped inside a running
+process. Step 2 and step 3 below are shared: the new root is added once, with the first cutover, and the
+restart is required after any of these changes.
+
+#### H3a — cut over codebase-tools
 
 1. Remove the superseded implementation: delete `my-omp-toolkit/extensions/codebase-tools` (repository
    `my-omp-toolkit` at revision `@34d7c40`). The parent discovery entry
-   `E:/Developer/myhub/my-omp-toolkit/extensions` stays for the four unmigrated extensions.
+   `E:/Developer/myhub/my-omp-toolkit/extensions` stays for the remaining unmigrated extensions.
 2. Add the new discovery root: add an entry for
    `E:/Developer/myhub/my-agent-toolkit/entrypoints/omp` to the `extensions:` list of the formal agent
-   configuration `~/.omp/agent/config.yml`.
+   configuration `~/.omp/agent/config.yml`. That one root carries one thin entrypoint per migrated
+   extension (`codebase-tools.ts`, `connect-bot.ts`), so it is added once for both cutovers.
 3. Restart the agent runtime as a whole process — there is no hot reload and the discovery root is
    never swapped inside a running process.
 4. Smoke once after the cutover: start the runtime normally (no `--no-extensions`) and run
@@ -139,8 +148,65 @@ root before restarting.
    `codebase-tools` implementation loads (no duplicate registration).
 5. Roll back on failure: restore the deleted directory from the original git revision
    (`git -C ../my-omp-toolkit checkout 34d7c4061a74a73b478067882cba7956821f3c1d -- extensions/codebase-tools`),
-   drop the added configuration entry, and restart. Persistence compatibility was deliberately
-   abandoned in both directions, so rollback does not read or migrate the new `{enabled}` data.
+   drop the added configuration entry if no other migrated extension still needs that root, and restart.
+   Persistence compatibility was deliberately abandoned in both directions, so rollback does not read or
+   migrate the new `{enabled}` data.
+
+#### H3b — cut over connect-bot
+
+Precondition: the connect-bot acceptance round has been run and recorded — the M-layer observation
+checklist in
+[lighthouse 06 §6](.scratch/connect-bot-migration/lighthouse/06-acceptance-contract.md) — so the old
+implementation is still the one in use. The cutover is the same load-source swap as H3a (reuse steps 2
+and 3 above); what differs is the configuration file, the panel rows the old implementation leaves
+behind, and the smoke list.
+
+1. Recommended before switching: with the implementation still loaded, disconnect best-effort with
+   `/connect-bot off`. It stops the heartbeat locally, unregisters the session with the panel and
+   removes the row, so the cutover does not leave a row to age out.
+2. Remove the superseded implementation: delete `my-omp-toolkit/extensions/connect-bot` (repository
+   `my-omp-toolkit` at revision `@34d7c40`). The parent discovery entry stays for the remaining
+   unmigrated extensions.
+3. Move the endpoint by hand. The new implementation reads
+   `my-agent-toolkit/extensions/connect-bot/config.yaml`, and the framework reads and validates that
+   file before the extension registers anything: a missing or illegal file refuses the extension instead
+   of letting it connect to an invented address. The committed file carries the same default the old
+   `config.json` does (`http://omp-bot.local:8787`), so only a machine-specific value needs copying from
+   `my-omp-toolkit/extensions/connect-bot/config.json` into it. There is no automatic conversion and no
+   state migration — the new implementation persists only `{enabled}`.
+4. Restart the agent runtime as a whole process (step 3 above).
+5. Expect the old implementation's panel rows to expire without an `unregister`: it is no longer
+   running, so its rows pass the panel's 30s keep-alive (a ≤35s scan, worst case about 45s), turn
+   "offline" and stay until an `unregister` or a panel restart. The new implementation starts
+   unconnected, so no new row appears until a session runs `/connect-bot`.
+6. Smoke once after the cutover: start the runtime normally (no `--no-extensions`) against a running
+   panel whose `listen_addr` matches `config.yaml`'s `endpoint`, and confirm:
+
+   - **接入** — `/connect-bot` registers the current session: the marker `◈ connectBot` appears, the
+     panel shows one row within about 1s (a new session is `空闲`), and the notification reports the
+     online-session count.
+   - **重注册** — `/connect-bot` again reuses and refreshes the same row: one row, no flicker, count
+     unchanged.
+   - **轮次结束** — the row moves `工作中` → `等待用户输入` when a turn ends.
+   - **主动离线** — `/connect-bot off` notifies the disconnect, clears the marker and removes the row.
+   - **失联** — with the panel stopped, the first failed push notifies once, and about 30s (three
+     consecutive failures) later the extension disarms itself with a notice and the marker disappears;
+     it does not reconnect on its own.
+   - **切会话** — a session switch unregisters the old id best-effort, drops the local connection and
+     leaves the new session unconnected, while `/reload`, a same-file `/resume`, `/clear` and `/tree`
+     change nothing.
+   - **多会话隔离** — two instances keep two independent rows, and subagent activity neither adds a row
+     nor changes the parent's state.
+   - **与 codebase-tools 共存** — both markers share the framework's marker area in id order, and both
+     commands work without affecting each other.
+   - and exactly one `connect-bot` implementation loads (no duplicate registration).
+
+7. Roll back on failure: restore the deleted directory from the original git revision
+   (`git -C ../my-omp-toolkit checkout 34d7c4061a74a73b478067882cba7956821f3c1d -- extensions/connect-bot`),
+   which brings the old `config.json` back with it, drop the added configuration entry if no other
+   migrated extension still needs that root, and restart. The rollback is symmetric: the new
+   implementation also sends no `unregister`, so its rows age out the same way, and persistence
+   compatibility was abandoned in both directions.
 
 Automatic contrast: the deployment/mutual-exclusion checks in
 [`tests/framework/deployment.test.ts`](tests/framework/deployment.test.ts) and the mechanism description

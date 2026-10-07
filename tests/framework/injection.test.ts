@@ -18,6 +18,7 @@ import { INIT_PROMPT, REMINDER_PROMPT } from "../../extensions/codebase-tools/pr
 import type {
 	OmpCommandContext,
 	OmpExtensionApi,
+	OmpRoundEventType,
 	OmpRunInitiationHandler,
 	OmpRunInitiationResult,
 	OmpSessionContext,
@@ -99,8 +100,9 @@ function nativeDouble(): NativeDouble {
 		appendEntry(customType: string, data?: unknown): void {
 			appended.push({ customType, data });
 		},
-		on(event: OmpSessionEventType | "before_agent_start", handler: SessionHandler | OmpRunInitiationHandler): void {
-			// This suite is about the run initiation; session reconciliation has its own suite.
+		on(event: OmpSessionEventType | OmpRoundEventType | "before_agent_start", handler: never): void {
+			// This suite is about the run initiation; session reconciliation and the round axis
+			// have their own suites.
 			if (event === "before_agent_start") {
 				hook = handler as OmpRunInitiationHandler;
 			}

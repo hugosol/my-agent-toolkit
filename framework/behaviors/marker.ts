@@ -15,6 +15,7 @@
 import { activationField, type ExtensionDefinition } from "../core/definition";
 import type { MarkerTransport, RunDelivery } from "../core/protocol";
 import type { StateStore } from "../core/state";
+import { stateValueFor } from "./state-scope";
 
 /** One extension's participation in the area: its line and how to read whether it shows. */
 interface MarkerEntry {
@@ -75,9 +76,11 @@ export function registerMarker(definition: ExtensionDefinition, state: StateStor
  * Publishes the area at a run initiation this extension is active in.
  *
  * An `enabled run` re-asserts the whole area, which is what keeps the widget honest if
- * the native surface dropped it between turns. A run this extension is not active in
- * publishes nothing: the transition that turned it off already removed its line, and a
- * session with no owner has no State to project.
+ * the native surface dropped it between turns. Whether this delivery reads an active
+ * value is the per-field inheritance axis, exactly as it is for prompt planning: a
+ * subagent session renders the owner's area only when the field declares `follow`. A run
+ * this extension is not active in publishes nothing: the transition that turned it off
+ * already removed its line, and a session with no owner has no State to project.
  */
 export function publishMarkerOnRun(
 	definition: ExtensionDefinition,
@@ -85,8 +88,9 @@ export function publishMarkerOnRun(
 	run: RunDelivery,
 ): void {
 	if (definition.marker === undefined) return;
+	// An ownerless session has no cell to project, so its area is not re-asserted.
 	if (run.owner.kind === "unresolved") return;
-	if (!state.view(run.owner.key).read(activationField(definition))) return;
+	if (!stateValueFor(definition, state, run.owner)) return;
 
 	run.markers.publishMarkers(markerArea.lines(run.owner.key));
 }

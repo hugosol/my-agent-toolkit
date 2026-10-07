@@ -16,6 +16,7 @@ import { describe, expect, test } from "bun:test";
 import type {
 	OmpCommandContext,
 	OmpExtensionApi,
+	OmpRoundEventType,
 	OmpRunInitiationResult,
 	OmpSessionContext,
 	OmpSessionEntry,
@@ -91,7 +92,7 @@ function nativeDouble(options: { readonly hasUI?: boolean } = {}): NativeDouble 
 		appendEntry(customType: string, data?: unknown): void {
 			appended.push({ customType, data });
 		},
-		on(event: OmpSessionEventType | "before_agent_start", handler: SessionHandler | RunInitiationHandler): void {
+		on(event: OmpSessionEventType | OmpRoundEventType | "before_agent_start", handler: never): void {
 			if (event === "before_agent_start") runHooks.push(handler as RunInitiationHandler);
 		},
 	};

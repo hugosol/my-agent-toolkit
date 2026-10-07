@@ -85,7 +85,15 @@ async function sessionFileOf(session: ControlledSession): Promise<string> {
 	return file;
 }
 
-/** The frames the framework's marker area published for one session, in order. */
+/**
+ * The frames the framework's marker area published for one session, in order.
+ *
+ * The area is one process-wide widget shared by every bound extension, and a session boundary
+ * refreshes it once per extension that declares a marker — this repository's discovery root binds
+ * two — so one boundary contributes one frame per such extension, each carrying the same render.
+ * A frame this extension's own transition or run produces is this extension's alone: exactly one
+ * per transition and per run it is active in.
+ */
 function areaFrames(session: ControlledSession): RpcFrame[] {
 	return session
 		.frames()
@@ -104,38 +112,53 @@ describe("marker area over one command toggle (B2, B6, C10, P13)", () => {
 		try {
 			session = await openSession(run);
 
-			// Default off: a real turn runs and the area stays untouched, so the absences
-			// below are not the emptiness of a session that never ran.
+			// Default off: a real turn runs, and the session boundary has published the
+			// framework's area for the session it opened. That rendering is empty — the
+			// framework clears its widget rather than letting a session start on whatever the
+			// widget showed before it — and the off run adds nothing of its own. Every
+			// marker-declaring extension bound in the process performs that refresh at its own
+			// boundary, so the fact is the render itself, not how many extensions repeated it.
 			const cleanTurn = await session.prompt("codebase-tools marker clean turn");
 			expect(cleanTurn.agentInvoked).toBe(true);
 			expect(cleanTurn.status).toBe("completed");
-			expect(areaFrames(session)).toEqual([]);
+			const opened = areaFrames(session);
+			expect(opened.length).toBeGreaterThanOrEqual(1);
+			for (const frame of opened) {
+				expect(frame.widgetKey).toBe(MARKER_AREA_KEY);
+				expect(frame.widgetLines).toBeUndefined();
+				expect(frame.widgetPlacement).toBe(MARKER_AREA_PLACEMENT);
+			}
 
 			const enable = await session.prompt(`/${COMMAND}`);
 			expect(enable.agentInvoked).toBe(false);
 			expect(enable.status).toBe("completed");
+			// The toggle is this extension's own transition: it publishes the area exactly once,
+			// and that render carries the line.
 			const shown = areaFrames(session);
-			expect(shown.length).toBe(1);
-			expect(shown[0]?.widgetLines).toEqual([MARKER_TEXT]);
-			expect(shown[0]?.widgetPlacement).toBe(MARKER_AREA_PLACEMENT);
+			const lastShown = shown[shown.length - 1];
+			expect(shown.length).toBe(opened.length + 1);
+			expect(lastShown?.widgetLines).toEqual([MARKER_TEXT]);
+			expect(lastShown?.widgetPlacement).toBe(MARKER_AREA_PLACEMENT);
 
 			const enabledTurn = await session.prompt("codebase-tools marker enabled turn");
 			expect(enabledTurn.agentInvoked).toBe(true);
 			expect(enabledTurn.status).toBe("completed");
-			// The enabled run re-asserts the area with the same line.
+			// The enabled run re-asserts the area with the same line: one more render, the line.
 			const reasserted = areaFrames(session);
-			expect(reasserted.length).toBe(2);
-			expect(reasserted[1]?.widgetLines).toEqual([MARKER_TEXT]);
+			expect(reasserted.length).toBe(shown.length + 1);
+			expect(reasserted[reasserted.length - 1]?.widgetLines).toEqual([MARKER_TEXT]);
 
 			const disable = await session.prompt(`/${COMMAND}`);
 			expect(disable.agentInvoked).toBe(false);
 			expect(disable.status).toBe("completed");
 			// Off removes the line, and with the area empty the framework clears the widget
 			// instead of leaving an empty one behind.
-			const cleared = areaFrames(session)[2];
-			expect(cleared?.widgetKey).toBe(MARKER_AREA_KEY);
-			expect(cleared?.widgetLines).toBeUndefined();
-			expect(cleared?.widgetPlacement).toBe(MARKER_AREA_PLACEMENT);
+			const cleared = areaFrames(session);
+			const lastCleared = cleared[cleared.length - 1];
+			expect(cleared.length).toBe(reasserted.length + 1);
+			expect(lastCleared?.widgetKey).toBe(MARKER_AREA_KEY);
+			expect(lastCleared?.widgetLines).toBeUndefined();
+			expect(lastCleared?.widgetPlacement).toBe(MARKER_AREA_PLACEMENT);
 
 			const exit = await session.stop();
 			expect(exit.exitCode).toBe(0);
@@ -147,7 +170,7 @@ describe("marker area over one command toggle (B2, B6, C10, P13)", () => {
 });
 
 describe("a restored activation value (P13, B6)", () => {
-	test("a resumed enabled session renders nothing until its first enabled turn", async () => {
+	test("a resumed enabled session renders the restored line at its boundary and re-asserts it per turn (P13, B6, F9)", async () => {
 		const run = createRun("codebase-tools-marker-resume");
 		let first: ControlledSession | undefined;
 		let resumed: ControlledSession | undefined;
@@ -164,16 +187,18 @@ describe("a restored activation value (P13, B6)", () => {
 			expect(exit.exitCode).toBe(0);
 
 			resumed = await openSession(run, ["--resume", sessionFile]);
-			// The restored value is already true, but a boundary renders nothing: the area is
-			// driven by State at a run, not by the session lifecycle.
-			expect(areaFrames(resumed)).toEqual([]);
-
 			const turn = await resumed.prompt("codebase-tools marker resumed turn");
 			expect(turn.agentInvoked).toBe(true);
 			expect(turn.status).toBe("completed");
+			// The boundary rendered the value this session came back with: the restored line was
+			// on the area from the session's own start, not only from its first enabled run, and
+			// that enabled run then re-asserted the same line. A boundary writes the one area once
+			// per marker-declaring extension bound in the process, so the first render is the
+			// session's own start and the last is the turn's re-assert; both carry the line.
 			const shown = areaFrames(resumed);
-			expect(shown.length).toBe(1);
+			expect(shown.length).toBeGreaterThanOrEqual(2);
 			expect(shown[0]?.widgetLines).toEqual([MARKER_TEXT]);
+			expect(shown[shown.length - 1]?.widgetLines).toEqual([MARKER_TEXT]);
 
 			const resumedExit = await resumed.stop();
 			expect(resumedExit.exitCode).toBe(0);

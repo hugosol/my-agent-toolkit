@@ -1,22 +1,25 @@
 /**
  * The framework's deterministic configuration rules.
  *
- * A definition that breaks one of them is not bound at all: the framework reports
- * the conflict on a non-model channel and abandons the extension rather than
- * silently picking one of the competing declarations. Reporting is per conflict
- * class — one explicit startup error tells the operator what to fix, and the whole
- * declaration is rejected anyway.
+ * A definition that breaks one of them is not bound at all: the framework reports the
+ * failure on a non-model channel and abandons the extension rather than silently choosing
+ * between competing declarations or inventing a value. The rules cover both kinds of
+ * configuration the definition carries — its own declarations, and the file one of them
+ * names — and reporting is per failure class: one explicit startup error tells the
+ * operator what to fix, and the whole definition is rejected anyway.
  */
 import type { ExtensionDefinition } from "./definition";
 
-/** The declaration conflicts the framework refuses to resolve implicitly. */
+/** The configuration rules the framework refuses to resolve implicitly. */
 export type ConfigurationViolationKind =
 	/** Two commands share one name. */
 	| "duplicate-command"
 	/** Two commands declare themselves writers of one State field. */
 	| "duplicate-state-writer"
 	/** One injected-prompt slot (`tag`) carries more than one contribution rule. */
-	| "duplicate-slot-rule";
+	| "duplicate-slot-rule"
+	/** The extension's declared configuration — its declaration or its file — is illegal. */
+	| "config";
 
 export interface ConfigurationViolation {
 	readonly kind: ConfigurationViolationKind;

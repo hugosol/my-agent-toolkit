@@ -1,0 +1,40 @@
+=== typecheck ===
+$ tsc --noEmit
+TYPECHECK=0
+=== gate: bun run test ===
+$ bun test
+bun test v1.4.2 (744846f84)
+
+ 367 pass
+ 0 fail
+ 1560 expect() calls
+Ran 367 tests across 42 files. [50.96s]
+GATE=0
+=== framework ===
+bun test v1.4.2 (744846f84)
+
+ 231 pass
+ 0 fail
+ 782 expect() calls
+Ran 231 tests across 21 files. [7.69s]
+=== connect-bot ===
+bun test v1.4.2 (744846f84)
+
+ 103 pass
+ 0 fail
+ 399 expect() calls
+Ran 103 tests across 12 files. [58.00ms]
+=== codebase-tools ===
+bun test v1.4.2 (744846f84)
+
+ 24 pass
+ 0 fail
+ 330 expect() calls
+Ran 24 tests across 7 files. [40.33s]
+=== harness ===
+bun test v1.4.2 (744846f84)
+
+ 9 pass
+ 0 fail
+ 49 expect() calls
+Ran 9 tests across 2 files. [2.37s]

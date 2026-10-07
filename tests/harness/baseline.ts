@@ -368,6 +368,26 @@ export function verifyLockfile(
 	return { path: lockfile.path, recordedSha256: lockfile.sha256, actualSha256, matches: actualSha256 === lockfile.sha256 };
 }
 
+/**
+ * Whether one checkout's history carries a revision.
+ *
+ * A record pins the revision a repository's material comes from, and the local checkout of that
+ * repository is not guaranteed to be parked there: the frozen baseline an acceptance run is
+ * compared against may be an ancestor of whatever that checkout's tip now is (its own later
+ * commits can remove the material that was migrated out of it). This asks the checkout the fact a
+ * run can rely on — that it descends from the recorded revision — instead of the checkout's tip
+ * equalling it, and it never rewrites the recorded revision: the record and the repository stay
+ * as the authority names them.
+ */
+export function checkoutCarries(checkoutPath: string, revision: string): boolean {
+	if (!existsSync(checkoutPath)) return false;
+	const result = Bun.spawnSync(["git", "-C", checkoutPath, "merge-base", "--is-ancestor", revision, "HEAD"], {
+		stdout: "pipe",
+		stderr: "pipe",
+	});
+	return result.exitCode === 0;
+}
+
 export function readCheckoutCommit(checkoutPath: string): CheckoutCommit {
 	if (!existsSync(checkoutPath)) {
 		return { commit: null, error: `checkout path does not exist: ${checkoutPath}` };
