@@ -117,6 +117,6 @@
 
 ## 修订（2026-10-07，由《配置、装载与新旧实现切换如何保持兼容》触发）
 
-- **P10 配置行为修订**：原「缺文件 → 默认 + 一次告警」改为「缺文件 → error 文案 + 扩展不加载」；原「坏格式 → mount 抛错」改为「框架 config BindingFailure（`kind: "config"`）+ `reportDiagnostic` error + 扩展不加载」。
+- **P10 配置行为修订**：原「缺文件 → 默认 + 一次告警」改为「缺文件 → error 文案 + 扩展不加载」；原「坏格式 → mount 抛错」改为「框架 config BindingFailure（`kind: "configuration"`，violation kind `config`）+ `reportDiagnostic` error + 扩展不加载」；同日 traverse 收口把配置失败顶层 kind 由 `"config"` 统一为 `"configuration"`（`ConfigurationViolationKind` 新增单成员 `"config"`），`ExtensionConfigError` 保持独立。
 - **配置文件格式与名称**：由 `config.json`/JSON 改为 `config.yaml`/YAML；默认 endpoint 值仍为 `http://omp-bot.local:8787`，由扩展目录下提交的 `config.yaml` 承载（无代码级默认值/回退）。
 - 未修改的边界：未知键忽略、无 env/CLI 覆盖、整机唯一一份、改动需整进程重启仍成立；面板与协议不变。

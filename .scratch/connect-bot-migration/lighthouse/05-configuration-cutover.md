@@ -32,8 +32,8 @@
 
 ### 4. 失败语义
 
-- 缺文件、不可读、非法 YAML、顶层非对象、`fields` 键缺失或类型不符：一律 **error 文案 + 该扩展不加载**，其它扩展继续。
-- 框架在 binding、注册任何东西之前读取校验；失败产生 additive `BindingFailure { kind: "config"; detail }`，经 `reportDiagnostic`（非模型通道）报确定性 error 文案。
+- `config` 声明形状非法（`config` 非对象、`fields` 非非 null 对象、类型名超出 `string | non-empty-string | number | boolean`、`path` 非非空字符串），以及缺文件、不可读、非法 YAML、顶层非对象、`fields` 键缺失或类型不符：一律 **error 文案 + 该扩展不加载**，其它扩展继续。
+- 框架在 binding、注册任何东西之前读取校验；**所有加载期配置错误**统一产生 `BindingFailure { kind: "configuration", violation: { kind: "config", detail } }`（additive 给 `ConfigurationViolationKind` 加单个 `"config"` 成员，`detail` 逐类可区分），经 `reportDiagnostic`（非模型通道）报确定性 error 文案。
 - **无代码级默认值/回退**：仓库 `config.yaml` 即默认值；删文件属可接受极端情况。
 - 字段值语义（endpoint 非空字符串）由 `"non-empty-string"` 在框架 config 模块内完成，扩展不再写校验。
 - 未知键忽略；无 env/CLI 覆盖；整机唯一一份；改动需整进程重启。
@@ -42,7 +42,7 @@
 ### 5. 读取 API 与错误统一
 
 - 底层 `readConfig(path)`：框架 config 模块唯一的读/解析/校验/抛错实现，可注入 reader/parser。
-- 上层 `getConfig(definition): Readonly<Record<string, unknown>>`：按声明/约定解析并缓存，供共享 logic 拉取；binding 已保证有效；误用/无已校验值时抛 `ExtensionConfigError`。
+- 上层 `getConfig(definition): Readonly<Record<string, unknown>>`：按声明/约定解析并缓存，供共享 logic 拉取；binding 已保证有效；误用/无已校验值时抛 `ExtensionConfigError`。`ExtensionConfigError` 是已绑定后误用的编程错误逃生口，不并入 `BindingFailure` 的加载期错误。
 - 共享 logic 惰性拉取安全：加载时取齐由框架 binding 的 eager 读取保证，不依赖扩展自觉。
 
 ### 6. 新旧实现切换与回退
@@ -65,7 +65,7 @@
 
 ## Decision
 
-新增框架能力 **Extension configuration（扩展配置）**：按 `extensions/<definition.id>/config.yaml` 约定、用 definition 的 `config.path`/`config.fields` 声明路径覆盖与必填键/类型，在 binding 时以纯 JS `yaml` 包（可注入 parser）读取校验，失败则 `BindingFailure { kind: "config" }` + `reportDiagnostic` error 且该扩展不加载；扩展共享 logic 经 `getConfig(definition)` 拉取已校验值。connect-bot 据此改用 `config.yaml`；新旧切换与回退复用 codebase-tools 的 load-source mutual exclusion（测试只挂新实现，旧实现仅作冻结基线/回退路径），endpoint 值手工搬运、无状态迁移。
+新增框架能力 **Extension configuration（扩展配置）**：按 `extensions/<definition.id>/config.yaml` 约定、用 definition 的 `config.path`/`config.fields` 声明路径覆盖与必填键/类型，在 binding 时以纯 JS `yaml` 包（可注入 parser）读取校验，所有加载期配置错误（`config` 声明形状非法，或缺文件/坏 YAML/顶层非对象/required 缺失/类型不符）则 `BindingFailure { kind: "configuration", violation: { kind: "config", detail } }` + `reportDiagnostic` error 且该扩展不加载；扩展共享 logic 经 `getConfig(definition)` 拉取已校验值。connect-bot 据此改用 `config.yaml`；新旧切换与回退复用 codebase-tools 的 load-source mutual exclusion（测试只挂新实现，旧实现仅作冻结基线/回退路径），endpoint 值手工搬运、无状态迁移。
 
 ## User stories
 
@@ -76,7 +76,7 @@
 5. As a 扩展开发者, I want 共享 logic 通过 `getConfig(definition)` 拉取已校验值, so that OMP 装配层完全不接触配置、共享 logic 保持运行时无关.
 6. As a 框架维护者, I want 读取/解析/校验集中在框架 config 模块且 parser 可注入, so that 所有扩展共享同一错误语义且框架层可单测.
 7. As a 框架维护者, I want 配置文件用 YAML、解析用跨运行时的纯 JS `yaml` 包, so that 人手写配置可写注释且 framework core 不绑 Bun/agent runtime.
-8. As a 框架维护者, I want 新增能力只做 additive 变更（definition.config、BindingFailure kind:"config"、新词汇表、一个零外部依赖的 `yaml` 运行时依赖）, so that 既有扩展与公开接口不被破坏.
+8. As a 框架维护者, I want 新增能力只做 additive 变更（definition.config、ConfigurationViolationKind 新增单个 `"config"` 成员而顶层失败 kind 仍为 `"configuration"`、新词汇表、一个零外部依赖的 `yaml` 运行时依赖）, so that 既有扩展与公开接口不被破坏.
 9. As a 迁移实施者, I want 复用 codebase-tools 的 load-source mutual exclusion, so that 原实现与替换实现永不同载、无需第二套切换机制.
 10. As a 迁移实施者, I want 新实现测试只挂 `my-agent-toolkit/entrypoints/omp`, so that 不必同时加载旧实现即可验证新扩展.
 11. As a 迁移实施者, I want 旧实现保持冻结并作为回退路径, so that 验收失败时可恢复旧实现与旧 `config.json`.
@@ -97,10 +97,10 @@
 
 ## Postconditions
 
-- 框架获得 additive 能力：`definition.config` 声明、binding 时读取/校验 `extensions/<id>/config.yaml`、`BindingFailure { kind: "config" }`、`getConfig(definition)`、`readConfig(path)`、`ExtensionConfigError`；解析新增 `yaml` 运行时依赖（零外部依赖，parser 可注入以便单测）。
+- 框架获得 additive 能力：`definition.config` 声明、binding 时读取/校验 `extensions/<id>/config.yaml`、所有加载期配置错误统一为 `BindingFailure { kind: "configuration", violation: { kind: "config", detail } }`、`getConfig(definition)`、`readConfig(path)`、`ExtensionConfigError`（独立逃生口）；解析新增 `yaml` 运行时依赖（零外部依赖，parser 可注入以便单测）。
 - connect-bot 提交 `extensions/connect-bot/config.yaml`（默认 endpoint）并声明 `fields: { endpoint: "non-empty-string" }`；不再有 `config.json`/扩展自读。
 - 01 lighthouse 登记 P10 修订；GLOSSARY 新增 "Extension configuration"；ADR 0002 增补该能力。
-- 06 验收需覆盖：框架层 config 能力（缺/坏/required/类型、BindingFailure+diagnostic、`yaml` 解析）、扩展层 connect-bot 配置声明与装载期失败、cutover 冒烟。
+- 06 验收需覆盖：框架层 config 能力（声明形状非法、缺/坏/required/类型、统一 `kind:"configuration"` + violation kind `"config"` + diagnostic、`yaml` 解析）、扩展层 connect-bot 配置声明与装载期失败、cutover 冒烟。
 - 切换/回退 runbook 扩展自 H3：删除旧 `connect-bot` 发现入口、加入 `my-agent-toolkit/entrypoints/omp`、整进程重启；endpoint 值手工从 `config.json` 搬到 `config.yaml`；无状态迁移。
 - Configuration switch 语义仍 deferred；本票不实现。
 
@@ -111,6 +111,7 @@
 - definition 保持纯数据；config 声明是纯数据（对齐 02）。
 - 共享 logic 不 import agent-runtime 类型（对齐 `tests/framework/import-boundary.test.ts`）。
 - 无代码级配置默认值/回退；仓库 `config.yaml` 是值的唯一来源。
+- 加载期配置错误统一为 `BindingFailure { kind: "configuration", violation: { kind: "config", detail } }`；`ExtensionConfigError` 只表示已绑定后的误用，不是加载期 binding failure。
 - 未知键忽略、无 env/CLI 覆盖、整机唯一一份、改动需整进程重启（除缺文件/坏格式两条外，沿用 01 P10）。
 - 原实现与替换实现永不进同一进程（对齐 agent-runtime-support 的 load-source mutual exclusion；`disabledExtensions` 不可作互斥）。
 - 面板 HTTP 协议、端点与 30s 过期/行保留语义不变（对齐面板 contract/spec）。
@@ -120,3 +121,10 @@
 ## 修订（2026-10-07）
 
 - parser 落点由「adapter 注入 `Bun.YAML.parse`」改为「framework core 直接使用纯 JS `yaml` 包（零外部依赖、ISC、YAML 1.2）」；理由：Extension configuration 与 agent runtime 无关，首发即用跨运行时实现，不等 pi adapter。parser 仍留可注入 seam 供框架层单测。
+
+## 修订（2026-10-07，traverse 审计收口）
+
+- **失败分类统一**：取消原 additive 顶层 `BindingFailure { kind: "config" }`；所有加载期配置错误（`config` 声明形状非法 + 文件内容非法）统一为 `BindingFailure { kind: "configuration", violation: { kind: "config", detail } }`，即给 `ConfigurationViolationKind` 新增单个 `"config"` 成员、`detail` 逐类可区分。理由：顶层 `"configuration"` 是既有失败类别，operator 文案经 `describeBindingFailure` 自然产出，不新增第二个顶层 kind。
+- **声明级校验**：`config` 必须为对象、`fields` 为非 null 对象且值 ∈ 四种类型名、`path`（如存在）为非空字符串；声明非法与文件非法同一失败路径，不静默忽略。
+- **`ExtensionConfigError` 保持独立**：仅表示已绑定扩展对 `getConfig` 的误用/无已校验值，不并入 `BindingFailure`。
+- **实现期文档同步**：`docs/framework-capabilities.md` 的 `ConfigurationViolationKind` 枚举补 `"config"`；`framework/core/violations.ts` 与 `framework/core/protocol.ts` 中 `ConfigurationViolation`/`"configuration"` 的注释从“竞争性声明”泛化为“配置规则（声明 + 文件）”。

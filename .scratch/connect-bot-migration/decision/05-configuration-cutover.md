@@ -35,7 +35,7 @@ Blocked by: 01
 ### 2. 寻址与声明（Q6-B / Q15-A / Q17-A）
 
 - 路径约定 `extensions/<definition.id>/config.yaml`；`id == 目录名` 是编码规范，路径解析失败显式报错，不静默。
-- definition 增补纯数据声明 `config?: { path?: string; fields: Record<string, "string" | "non-empty-string" | "number" | "boolean"> }`。`path` 可选覆盖默认约定（相对路径以扩展目录为基准，绝对路径/文件 URL 原样）；`fields` 中列出的键**必填**且按类型校验。
+- definition 增补纯数据声明 `config?: { path?: string; fields: Record<string, "string" | "non-empty-string" | "number" | "boolean"> }`。`path` 可选覆盖默认约定（相对路径以扩展目录为基准，绝对路径/文件 URL 原样）；`fields` 中列出的键**必填**且按类型校验。`config` 声明本身的形状也在 binding 时校验：`config` 必须为对象、`fields` 为非 null 对象且值 ∈ 上述四种类型名、`path`（如存在）为非空字符串；声明非法与文件非法走同一失败路径（见 §4）。
 - opt-in：只有声明 `config` 的扩展才读取/校验；codebase-tools 不声明、无需 `config.yaml`、完全无感。
 - connect-bot 声明 `fields: { endpoint: "non-empty-string" }`。
 
@@ -47,8 +47,8 @@ Blocked by: 01
 
 ### 4. 失败语义（Q3 / Q7 / Q8 / Q13 / Q17）
 
-- 缺文件、不可读、非法 YAML、顶层非对象、`fields` 键缺失或类型不符：一律 **error 文案 + 该扩展不加载**；其它扩展继续。
-- 框架在 binding 阶段、注册任何东西之前读取并校验；失败产生 additive 的 `BindingFailure { kind: "config"; detail }`，经 `reportDiagnostic`（非模型通道）出确定性 error 文案。
+- `config` 声明形状非法（`config` 非对象、`fields` 非非 null 对象、类型名超出 `string | non-empty-string | number | boolean`、`path` 非非空字符串），以及缺文件、不可读、非法 YAML、顶层非对象、`fields` 键缺失或类型不符：一律 **error 文案 + 该扩展不加载**；其它扩展继续。
+- 框架在 binding 阶段、注册任何东西之前读取并校验；**所有加载期配置错误**统一产生 `BindingFailure { kind: "configuration", violation: { kind: "config", detail } }`（additive 给 `ConfigurationViolationKind` 加单个 `"config"` 成员，`detail` 逐类可区分），经 `reportDiagnostic`（非模型通道）出确定性 error 文案。
 - **无任何代码级默认值/回退**：仓库里的 `config.yaml` 即默认值；删文件属可接受的极端情况。
 - 字段值语义（`endpoint` 非空字符串）由声明的 `"non-empty-string"` 在框架 config 模块内完成；扩展不再写 config 校验代码，错误处理完全统一到框架 config 模块。
 - 未知键忽略；无 env/CLI 覆盖；整机唯一一份；读取发生在 binding，变更需整进程重启才生效。
@@ -57,7 +57,7 @@ Blocked by: 01
 ### 5. 读取 API 与错误统一（Q11-A / Q12）
 
 - 底层 `readConfig(path)`：框架 config 模块唯一的读/解析/校验/抛错实现；接受路径参数、可注入 reader/parser，供框架层单测。
-- 上层 `getConfig(definition): Readonly<Record<string, unknown>>`：按声明/约定解析并缓存，供扩展共享 logic 运行期拉取；已由 binding 保证有效，正常调用不抛错；无已校验值误用时抛 `ExtensionConfigError`。
+- 上层 `getConfig(definition): Readonly<Record<string, unknown>>`：按声明/约定解析并缓存，供扩展共享 logic 运行期拉取；已由 binding 保证有效，正常调用不抛错；无已校验值误用时抛 `ExtensionConfigError`。`ExtensionConfigError` 是已绑定后误用的编程错误逃生口，不并入 `BindingFailure` 的加载期错误。
 - 共享 logic 惰性拉取是安全的：Q13 的"加载时取齐"由框架 binding 的 eager 读取保证，不依赖扩展自觉。
 
 ### 6. 新旧实现切换与回退（Q4 / Q5）
@@ -82,10 +82,17 @@ Blocked by: 01
 
 ## Decision
 
-新增框架能力 **Extension configuration（扩展配置）**：框架按 `extensions/<definition.id>/config.yaml` 约定（definition 可用 `config.path` 覆盖、用 `config.fields` 声明必填键与 `string | non-empty-string | number | boolean` 类型），在 binding 时读取并用纯 JS `yaml` 包（可注入 parser）解析；缺文件、坏 YAML、顶层非对象、required 缺失或类型不符 → `BindingFailure { kind: "config" }` + `reportDiagnostic` error 文案 → 该扩展不加载，无代码级默认值。扩展共享 logic 经运行时无关的 `getConfig(definition)` 拉取已校验值，OMP 装配层不接触配置。connect-bot 以 `config.yaml`（默认 `endpoint: http://omp-bot.local:8787`，`non-empty-string`）声明配置。新旧切换与回退复用 codebase-tools 的 load-source mutual exclusion（测试只挂新实现，旧实现仅作冻结基线与回退路径）；旧行按面板 30s 过期保留、切换前建议 `/connect-bot off`；endpoint 值由用户一次性从旧 `config.json` 手工搬入新 `config.yaml`，无自动迁移与状态迁移。这是对 01 P10 缺文件/坏格式行为的显式修订。
+新增框架能力 **Extension configuration（扩展配置）**：框架按 `extensions/<definition.id>/config.yaml` 约定（definition 可用 `config.path` 覆盖、用 `config.fields` 声明必填键与 `string | non-empty-string | number | boolean` 类型），在 binding 时读取并用纯 JS `yaml` 包（可注入 parser）解析；所有加载期配置错误（`config` 声明形状非法，或缺文件、坏 YAML、顶层非对象、required 缺失或类型不符）→ `BindingFailure { kind: "configuration", violation: { kind: "config", detail } }` + `reportDiagnostic` error 文案 → 该扩展不加载，无代码级默认值。扩展共享 logic 经运行时无关的 `getConfig(definition)` 拉取已校验值，OMP 装配层不接触配置。connect-bot 以 `config.yaml`（默认 `endpoint: http://omp-bot.local:8787`，`non-empty-string`）声明配置。新旧切换与回退复用 codebase-tools 的 load-source mutual exclusion（测试只挂新实现，旧实现仅作冻结基线与回退路径）；旧行按面板 30s 过期保留、切换前建议 `/connect-bot off`；endpoint 值由用户一次性从旧 `config.json` 手工搬入新 `config.yaml`，无自动迁移与状态迁移。这是对 01 P10 缺文件/坏格式行为的显式修订。
 
 本票据只形成决策，不实施代码。解决时先读取地图与相关已确认 lighthouse，记录讨论结果，经 lighthouse 用户确认后标记 resolved，再运行 backtracer。
 
 ## 修订（2026-10-07）
 
 - parser 落点由「adapter 注入 `Bun.YAML.parse`」改为「framework core 直接使用纯 JS `yaml` 包（零外部依赖、ISC、YAML 1.2）」；理由：Extension configuration 与 agent runtime 无关，首发即用跨运行时实现，不等 pi adapter。parser 仍留可注入 seam 供框架层单测。
+
+### traverse 审计收口（2026-10-07）
+
+- **配置失败分类统一**：取消原计划的顶层 `BindingFailure { kind: "config" }`；所有加载期配置错误（`config` 声明形状非法 + 文件内容非法）统一为 `BindingFailure { kind: "configuration", violation: { kind: "config", detail } }`，即给 `ConfigurationViolationKind` 新增单个 `"config"` 成员、`detail` 逐类可区分。
+- **声明级校验**：`config` 必须为对象、`fields` 为非 null 对象且值 ∈ 四种类型名、`path`（如存在）为非空字符串；与文件级错误同一失败路径，不静默忽略。
+- **`ExtensionConfigError` 保持独立**：仅表示已绑定后对 `getConfig` 的误用/无已校验值，不并入 `BindingFailure`。
+- **实现期文档同步**：`docs/framework-capabilities.md` 的 `ConfigurationViolationKind` 枚举在符号落地时补 `"config"`；`framework/core/violations.ts` 与 `framework/core/protocol.ts` 的注释从“竞争性声明”泛化为“配置规则（声明 + 文件）”。

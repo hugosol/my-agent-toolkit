@@ -23,7 +23,7 @@
 - **（e）03 引入的框架能力**（来源：[03 lighthouse](./03-lifecycle-effects.md)）：验收清单须覆盖语义生命周期模型——`session_start`/`session_end`（含 reason）、`round_start`/`round_end`（quiescence、`round_end` 无 payload）、`canAcceptInput()`、框架优先于扩展 handler 的分发顺序、owner-gate（子代理事件不送达 owner 订阅）、缺语义 `required-semantics` fail-soft、session 边界刷新 marker，以及 adapter 的原生→语义合成契约（OMP quiescence 合成规则）。OMP-qualified 项（managed timer、async job snapshot、agent identity/子代理 gate）须在 `docs/agent-runtime-support.md` 的能力差异表中可见。
 - **（f）04 引入的框架能力**（来源：[04 lighthouse](./04-interaction-native-boundary.md)）：验收清单须覆盖统一 `info | error` 反馈接缝（命令 + 语义事件 handler 都可用、无 UI 落 stderr）、delivery 上的 `hasUI` 事实、所有 handler delivery 的声明值写接缝（auto-disarm 写 `enabled=false`）、`directed` 命令不自动反馈、`runCommandToggle` 反馈走统一通道且 codebase-tools 文案保持 `codeBaseTools enabled/disabled` 不变。
 - **（g）connect-bot 验收项**（来源：同上）：marker 文本 `◈ connectBot`（enabled 才显示、auto-disarm 清除）、文案表 A–J（除 `offline`→`off` 外原文保留）、`selectFeedback` 纯函数全路径（mock）、OMP-qualified allow-list（managed timer + 真实 sessionId/cwd/model）在 `docs/agent-runtime-support.md` 可见。
-- **（h）05 引入的框架能力 Extension configuration**（来源：[05 lighthouse](./05-configuration-cutover.md)）：验收清单须覆盖 `definition.config`（`path`/`fields` 纯数据声明）、binding 时读取 `extensions/<id>/config.yaml`、纯 JS `yaml` 包解析（零外部依赖，parser 可注入；core 不依赖 `Bun.YAML`/agent-runtime 专有 API）、required 与 `string | non-empty-string | number | boolean` 校验、缺文件/坏 YAML/顶层非对象/键缺失/类型不符 → `BindingFailure { kind: "config" }` + `reportDiagnostic` error 且扩展不加载、**无代码级默认值**；`getConfig(definition)` / `readConfig(path)` / `ExtensionConfigError`；connect-bot 的 `config.yaml` 默认 endpoint 与 `non-empty-string` 声明。并覆盖新旧装载互斥与配置切换：endpoint 值从旧 `config.json` 手工搬入 `config.yaml`、无自动迁移；旧行按面板 30s 过期保留、切换前 `/connect-bot off` best-effort 清理。并验证声明级校验与既有控制类别同等：`config.fields` 的类型名超出封闭词汇表、`config.path` 非非空字符串等按 configuration 错误拒绝，而非静默忽略。`docs/framework-capabilities.md` 的公开符号索引与相关能力表在实现时同步（属实现承接，不在本票执行）。
+- **（h）05 引入的框架能力 Extension configuration**（来源：[05 lighthouse](./05-configuration-cutover.md)）：验收清单须覆盖 `definition.config`（`path`/`fields` 纯数据声明）、binding 时读取 `extensions/<id>/config.yaml`、纯 JS `yaml` 包解析（零外部依赖，parser 可注入；core 不依赖 `Bun.YAML`/agent-runtime 专有 API）、required 与 `string | non-empty-string | number | boolean` 校验、声明形状非法（`config` 非对象、`fields` 非非 null 对象、类型名超出四种、`path` 非非空字符串）与缺文件/坏 YAML/顶层非对象/键缺失/类型不符 → `BindingFailure { kind: "configuration", violation: { kind: "config", detail } }` + `reportDiagnostic` error 且扩展不加载、**无代码级默认值**；`getConfig(definition)` / `readConfig(path)` / `ExtensionConfigError`；connect-bot 的 `config.yaml` 默认 endpoint 与 `non-empty-string` 声明。并覆盖新旧装载互斥与配置切换：endpoint 值从旧 `config.json` 手工搬入 `config.yaml`、无自动迁移；旧行按面板 30s 过期保留、切换前 `/connect-bot off` best-effort 清理。并验证声明级校验：`config.fields` 的类型名超出封闭词汇表、`config.path` 非非空字符串等按 `BindingFailure { kind: "configuration", violation: { kind: "config", detail } }` 拒绝（与文件级错误同一路径），而非静默忽略。`docs/framework-capabilities.md` 的公开符号索引与相关能力表在实现时同步（属实现承接，不在本票执行）。
 - **（i）07 引入的框架能力与后台效果回调**（来源：[07 lighthouse](./07-effect-callback-capabilities.md)）：验收清单须覆盖 owner-scoped 可保留能力句柄（声明值写 + 统一反馈；arm 时由 handler delivery 取得、存入扩展自持记录，供 heartbeat/outbox 回调复用）、句柄随 owner retire 失效（迟到回调写 no-op、不重建 State/不重发 marker、反馈丢弃）、session_end 本次投递的一次性反馈口仍可发 G、auto-disarm 经该句柄写 `enabled=false` 并清 marker、E/F 经统一反馈口；以及 `session_end(transferred|disposed)` 以 `owner.key` 给出正在结束的 owner、`previousOwnerKey` 已移除、transferred 先同步停本地再 best-effort unregister 旧真实 sessionId（沿用 1.5s 超时）、disposed 只停本地不通知、owner 未解析 no-op。并确认 codebase-tools 默认（session-entry）持久化行为不回退：session 边界从目标分支 payload seed（branch/fork 携带条目、switch/resume 取目标 session 自己的值）。本结论同时修订 03 的 adapter 原生边界 invariant 与 04 §8b / user story 15。
 
 ## Discussion
@@ -40,7 +40,7 @@
 - 02：`directed` 控制（空参=on、`off`=off、重复动作、无自动反馈）、per-field `persistence:"memory"`、per-field 继承开关默认不继承、handler State 写接缝、每次 `enabled` 写后发 marker；落 `tests/framework/control.test.ts` / `session.test.ts` / `owner-inheritance.test.ts` / `marker.test.ts`。
 - 03：`session_start`/`session_end(reason)`、`round_start`/`round_end`（quiescence、无 payload）、`canAcceptInput()`、框架先于扩展 handler、owner-gate、`required-semantics` fail-soft、session 边界刷 marker、adapter 原生→语义合成；落 `tests/framework/session.test.ts` + 新增 lifecycle 用例。
 - 04：统一 `info | error` 反馈（命令 + 语义事件 handler、无 UI 落 stderr）、delivery `hasUI`、声明值写接缝、`directed` 不自动反馈、`runCommandToggle` 走统一通道且 codebase-tools 文案不变；落 `tests/framework/control.test.ts` / `marker.test.ts` / `admission.test.ts`。
-- 05：Extension configuration（纯数据声明、binding 读 `config.yaml`、纯 JS yaml、必填/类型校验、`BindingFailure{kind:"config"}` + diagnostic + 不加载 + 无默认值、`getConfig`/`readConfig`/`ExtensionConfigError`）；落新增 `tests/framework/config.test.ts`。
+- 05：Extension configuration（纯数据声明、binding 读 `config.yaml`、纯 JS yaml、声明形状 + 必填/类型校验、所有加载期配置错误 → `BindingFailure{kind:"configuration", violation:{kind:"config", detail}}` + diagnostic + 不加载 + 无默认值、`getConfig`/`readConfig`/`ExtensionConfigError`）；落新增 `tests/framework/config.test.ts`。
 - 07：owner-scoped 可保留句柄、retire 后 no-op、`session_end` 以 `owner.key` 给出 owner、`previousOwnerKey` 移除、transferred/disposed 清理；落 `tests/framework/session.test.ts` + 新增 effect 用例。
 - 08：`framework/adapters/**` 与 `extensions/<id>/runtimes/**` 之外无原生类型；`tests/framework/import-boundary.test.ts` 已存在，保持 green。
 - OMP-qualified 项须在 `docs/agent-runtime-support.md` 能力差异表可见；真实运行时测试落地前保持 `source-inspected; not runtime-exercised`，落地后改为已验证。
@@ -101,7 +101,7 @@ P3/P7 的 `offline` 表述按 02/04 词形决策标为失效，统一为 `off`�
 ### 8. 全量回归与旧断言更新规则
 
 - release gate：`bun run test`（framework + codebase-tools + harness）在 pinned baseline 上全绿。
-- 历史约束被有意修改时（连接标识/footer 通知移到框架 marker 区与统一反馈口、`offline`→`off`、缺文件由默认+告警改为 error+不加载），**必须同步修改原有 test case / README / lighthouse 适配**，不允许留旧断言红或弱化断言；已知需适配：原 L3 步骤 17、footer marker 断言、L1 文案断言，并保持 session-entry 持久化断言、新增 memory 字段反例。
+- 历史约束被有意修改时（连接标识/footer 通知移到框架 marker 区与统一反馈口、`offline`→`off`、缺文件由默认+告警改为 error+不加载），**必须同步修改迁移侧/移植后产物的 test case / README / lighthouse 适配**（原仓库 `my-omp-toolkit` 按 01/05 冻结），不允许留旧断言红或弱化断言；已知差异来源（只登记、不改原仓库）：原 L3 步骤 17 → 迁移侧对应步骤、footer marker 断言 → 框架 marker 区、原 L1 文案断言 → `tests/connect-bot/`，并保持 session-entry 持久化断言、新增 memory 字段反例。
 
 ### 9. 文档同步
 
@@ -116,7 +116,7 @@ P3/P7 的 `offline` 表述按 02/04 词形决策标为失效，统一为 `off`�
 
 ## Decision
 
-迁移验收采用三层证据：**F 层** 在 `tests/framework/` 以 in-process `OmpExtensionApi` double 验收全部新引入的框架能力（02 directed/`memory`/默认不继承/写接缝、03 语义生命周期与 owner-gate、04 统一 `info | error` 反馈与 `hasUI`、05 Extension configuration、07 owner-scoped 效果句柄与 `session_end` 清理；08 由既有 `import-boundary.test.ts` 保持 green），不重复测试框架既有能力；**E 层** 在 `tests/connect-bot/` 沿用原 L1 模式（fake ExtensionAPI/ctx + `__setPushClientForTest` + `vi.useFakeTimers()`）验收 connect-bot 专属可隔离行为（marker 文本、A–J 文案与 `selectFeedback`、命令解析/守卫、连接/心跳/队列/状态机、会话切换、配置声明、OMP-qualified allow-list），允许 mock、不连 omp-bot；**M 层** 由用户按可执行观察清单执行真实 OMP × omp-bot 集成（接入/重注册/状态/心跳/失联/切会话/恢复 + 多会话隔离 + codebase-tools 共存 + 新旧装载互斥 + 配置切换），不作自动化门。loader/admission 按 codebase-tools/deployment 先例自动化（原 L2 不再独立人工）；全量 `bun run test` 在记录的源/运行时基线上全绿是 release gate，历史约束被有意修改时同步修改旧 test case 适配；`docs/framework-capabilities.md` 与 `docs/agent-runtime-support.md` 在对应代码 ticket 完成后同步更新。
+迁移验收采用三层证据：**F 层** 在 `tests/framework/` 以 in-process `OmpExtensionApi` double 验收全部新引入的框架能力（02 directed/`memory`/默认不继承/写接缝、03 语义生命周期与 owner-gate、04 统一 `info | error` 反馈与 `hasUI`、05 Extension configuration、07 owner-scoped 效果句柄与 `session_end` 清理；08 由既有 `import-boundary.test.ts` 保持 green），不重复测试框架既有能力；**E 层** 在 `tests/connect-bot/` 沿用原 L1 模式（fake ExtensionAPI/ctx + `__setPushClientForTest` + `vi.useFakeTimers()`）验收 connect-bot 专属可隔离行为（marker 文本、A–J 文案与 `selectFeedback`、命令解析/守卫、连接/心跳/队列/状态机、会话切换、配置声明、OMP-qualified allow-list），允许 mock、不连 omp-bot；**M 层** 由用户按可执行观察清单执行真实 OMP × omp-bot 集成（接入/重注册/状态/心跳/失联/切会话/恢复 + 多会话隔离 + codebase-tools 共存 + 新旧装载互斥 + 配置切换），不作自动化门。loader/admission 按 codebase-tools/deployment 先例自动化（原 L2 不再独立人工）；全量 `bun run test` 在记录的源/运行时基线上全绿是 release gate，历史约束被有意修改时在迁移侧/移植后产物同步断言（原仓库 `my-omp-toolkit` 保持冻结）；`docs/framework-capabilities.md` 与 `docs/agent-runtime-support.md` 在对应代码 ticket 完成后同步更新。
 
 ## User stories
 
@@ -127,7 +127,7 @@ P3/P7 的 `offline` 表述按 02/04 词形决策标为失效，统一为 `off`�
 5. As a 用户, I want 一份含前置/操作/观察点/预期的人工观察清单, so that 我能可重复地报告集成结果。
 6. As a 迁移实施者, I want loader/admission 按 codebase-tools 先例自动化, so that ADR 0002 的真 loader 要求在自动化内满足、原 L2 不再单独人工。
 7. As a 迁移实施者, I want 全量 `bun run test` 在记录的基线上全绿作为 release gate, so that 框架既有行为与 codebase-tools 不回退。
-8. As a 迁移实施者, I want 历史约束被有意修改时同步修改旧 test case, so that 测试描述现状而不是旧行为。
+8. As a 迁移实施者, I want 历史约束被有意修改时在迁移侧/移植后产物同步断言（原仓库冻结）, so that 迁移后测试描述现状、同时回退基线仍描述旧实现。
 9. As a 迁移实施者, I want run record 记录源/运行时/面板/框架基线, so that 每次验收可复现、可追溯。
 10. As a 迁移实施者, I want 两份能力文档在对应代码 ticket 完成后同步更新, so that 公开符号与 OMP-qualified 能力在文档可见。
 11. As a 迁移实施者, I want 非证据清单（mock 自证/源码文本/pty/README 声明）被显式排除, so that 验收不被假信号通过。
@@ -146,7 +146,7 @@ P3/P7 的 `offline` 表述按 02/04 词形决策标为失效，统一为 `off`�
 
 - `/to-spec` 可据本票写 Testing Decisions：F/E 层测试清单 + M 层观察清单 + 基线记录要求。
 - `/to-contract` 可据本票做大方向覆盖；不新增框架既有能力的重复测试。
-- 相关实施票据的 acceptance 含 F/E 测试、旧断言适配、文档同步；M 层作为人工验收项。
+- 相关实施票据的 acceptance 含 F/E 测试、迁移侧/移植后产物的断言适配、文档同步；M 层作为人工验收项。
 - OMP-qualified 行在真实运行时测试落地后由 `source-inspected` 更新为已验证。
 - 本票不产生代码。
 
@@ -155,6 +155,11 @@ P3/P7 的 `offline` 表述按 02/04 词形决策标为失效，统一为 `off`�
 - 不重复测试框架既有能力；只测新框架能力 + 新 extension 能力。
 - 沿用既有测试模式：`tests/framework/` in-process `OmpExtensionApi` double；`tests/connect-bot/` 原 L1（fake api/ctx + `__setPushClientForTest` + `vi.useFakeTimers()`）。
 - 真实 OMP × omp-bot 集成永不进自动化门；不做 pty 脚本。
-- codebase-tools 既有行为（命令文案、session-entry 持久化、子代理继承）不回退；有意变更则同步改旧断言。
+- codebase-tools 既有行为（命令文案、session-entry 持久化、子代理继承）不回退；有意变更则在迁移侧/移植后产物同步断言（原仓库 `my-omp-toolkit` 冻结）。
 - `framework/adapters/**` 与 `extensions/<id>/runtimes/**` 之外不出现原生类型（`import-boundary.test.ts` 机械执行）。
 - 文档在对应代码 ticket 完成后同步，不建机械完整性测试。
+
+## 修订（2026-10-07，traverse 审计收口）
+
+- **F1（配置失败分类）**：05 的配置失败顶层 kind 由 `"config"` 统一为 `"configuration"`；`ConfigurationViolationKind` 新增单个 `"config"` 成员、`detail` 逐类可区分；声明形状非法与文件内容非法同一路径；`ExtensionConfigError` 保持独立。(h) 与 F 层清单据此改写。
+- **F2（冻结基线）**：不修改原仓库 `my-omp-toolkit` 的 README/L1/L3/tests；§8 的“原有 test case / README”改指迁移侧/移植后产物（新 my-agent-toolkit runbook/README 与 `tests/connect-bot/`），原 README L3 步骤 17 只作差异来源登记。
