@@ -14,3 +14,14 @@ Blocked by: 02
 沿用架构已允许原生调用的前提，不另造全量原生 API 包装层。决定接入标记是否使用框架 Marker area、动态反馈需要何种数据，以及扩展专属 UI 与框架区域的边界。明确自定义代码能否以及如何写入框架管理的 State、注册命令、处理事件和持有资源，防止出现第二个当前值或互相覆盖的 UI 所有者。若需要改变 Marker area 等既有契约，必须显式提出变更而非把原生调用视为豁免。无需为不存在的复杂界面预先设计通用 UI。
 
 本票据只形成决策，不实施代码。解决时先读取地图与相关已确认 lighthouse，记录讨论结果，经 lighthouse 用户确认后标记 resolved，再运行 backtracer。
+
+---
+
+## 承接输入（来自《接入命令与会话状态由框架和扩展如何共同管理》讨论，2026-10-07，未定稿）
+
+- **文案/通知约束整体重开**：baseline 01 的「全部提示文案保留」不再成立。本票需逐条确认：arm 成功/失败、offline 成功/失败、首次推送失败、自动 disarm、会话切换、未知参数、no-UI 拒绝，分别保留、改写还是删除。
+- **命令词形**：`offline` → `off`（不保留别名）。本票确认 `/connect-bot off` 的反馈语义（友好文案 vs 原始超时/非 2xx 码）。
+- **持久连接标识**：改用框架统一 marker 区，由 `enabled` 派生。本票决定 marker 文本、与 codebase-tools marker 的共存/排序、发布时机（含 auto-disarm、session-switch 的清除），以及与面板侧 contract P3/P7/边界决定的重新对齐。
+- **P5 的 hasUI=false 门槛**（stderr 拒绝、不改状态、不发请求）：决定由框架在 invocation 暴露原生事实（如 `hasUI`），还是由扩展 `runtimes/omp.ts` 自行守卫。
+- 约束：不得把改动藏进「原生调用豁免」；若改 Marker area 等既有契约必须显式提出。
+- **marker 只对 owner 渲染**：子代理不显示 owner 的连接 marker（框架继承开关默认不继承；来源 [02 lighthouse](../lighthouse/02-command-state-ownership.md)）。
