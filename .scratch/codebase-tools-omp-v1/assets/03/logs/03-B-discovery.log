@@ -1,4 +1,0 @@
-DISCOVERED=["E:\\Developer\\myhub\\.wayfinder-probe-03\\host185\\probe-layout\\entrypoints\\omp\\alpha.ts","E:\\Developer\\myhub\\.wayfinder-probe-03\\host185\\probe-layout\\entrypoints\\omp\\beta.ts"]
-ERRORS=[]
-EXT label=probe-alpha commands=[["alpha-cmd","ALPHA_MD_TOKEN imported as text from outside the discovery root."]]
-EXT label=probe-beta commands=[["beta-cmd","BETA_MD_TOKEN imported as text from outside the discovery root."]]
