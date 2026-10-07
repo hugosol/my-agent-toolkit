@@ -26,7 +26,7 @@ Contract: [contract.md](contract.md)（已批准；Acceptance mode: Rapid iterat
 在 my-agent-toolkit 内交付两部分：
 
 - **框架 additive 能力**（ADR 0002 additive-only）：`directed` 控制类别与 per-field State 生命周期（`session-entry`/`memory` × `follow`/`none`）；运行时无关语义生命周期事件（`session_start`/`session_end`、`round_start`/`round_end`、`canAcceptInput()`）与 owner 作用域；统一 `info | error` **Extension feedback** 接缝与 `hasUI` 事实；所有 handler delivery 的声明值写接缝；owner-scoped 可保留能力句柄；**Extension configuration**（`config.yaml`）。
-- **connect-bot 扩展**：声明式 extension definition + 运行时无关共享逻辑 + OMP runtime assembly。marker 文本 `◈ connectBot`；`extensions/connect-bot/config.yaml` 携带默认 endpoint；心跳 timer、出站队列、失败预算、三值 agent 状态与面板 HTTP 协议仍由扩展承担。
+- **connect-bot 扩展**：声明式 extension definition + 运行时无关共享逻辑 + OMP runtime assembly。marker 文本 `◐ connectBot`；`extensions/connect-bot/config.yaml` 携带默认 endpoint；心跳 timer、出站队列、失败预算、三值 agent 状态与面板 HTTP 协议仍由扩展承担。
 - **薄入口**：OMP 入口只 re-export 该扩展的 OMP assembly。
 - **两层自动验收 + 一层人工**：framework 层验新框架能力，扩展层以 mock + fake timers 验 connect-bot 可隔离行为，真实 OMP × omp-bot 由用户按观察清单手动执行。
 - **文档与 runbook**：两份能力文档随符号落地同步；README §H3 扩写 connect-bot 的新旧切换/回退步骤。
@@ -81,7 +81,7 @@ Contract: [contract.md](contract.md)（已批准；Acceptance mode: Rapid iterat
 37. 作为扩展作者，我想要框架在 invocation/delivery 上暴露忠实的 `hasUI`，以便共享逻辑能执行 `main + hasUI` 门槛并用 mock 测试。
 38. 作为扩展作者，我想要只有扩展的 OMP runtime assembly 能直连原生能力，以便共享逻辑保持运行时无关。
 39. 作为迁移实施者，我想要真实 sessionId/cwd/model 由 OMP assembly 原生读取并作为纯数据传入，以便线上协议不依赖框架的不透明 owner key。
-40. 作为 connect-bot 用户，我想要已接入时 marker 显示 `◈ connectBot`、off 时消失，以便一眼看出连接状态。
+40. 作为 connect-bot 用户，我想要已接入时 marker 显示 `◐ connectBot`、off 时消失，以便一眼看出连接状态。
 41. 作为框架维护者，我想要 marker 的摆放/行序/发布/清除由框架所有，以便多扩展 marker 共存不互相覆盖。
 42. 作为 connect-bot 用户，我想要除 `offline`→`off` 外的全部提示文案保持不变，以便迁移不引入未授权的用户可见变更。
 43. 作为扩展作者，我想要反馈判断树是一个吃既有归一化产物的纯函数，以便全部反馈路径可用 mock 覆盖。
@@ -195,7 +195,8 @@ Contract: [contract.md](contract.md)（已批准；Acceptance mode: Rapid iterat
 
 - 新增运行时无关 **Extension feedback** 通道，每个通知带 `info | error` severity；命令 handler 与语义事件 handler 都可用；适配器在有 UI 时映射为 UI 通知、无 UI 时落 stderr；**永不进入 model context**（不是注入提示词、会话记录或工具输出）。框架内部 admission/session warning 通道不合并。
 - delivery 暴露忠实的 `hasUI: boolean`；`main + hasUI` 门槛由扩展共享逻辑执行，拒绝文案经统一反馈口发出（`!hasUI` 自然落 stderr），不改状态、不发请求；子代理静默拒绝仍归框架 owner 范围。
-- marker 文本 `◈ connectBot`，`enabled=true` 才显示、off 不显示；摆放/行序（按扩展 id）/发布/清除由框架所有，与 codebase-tools 的 marker 同区共存。
+- marker 文本 `◐ connectBot`，`enabled=true` 才显示、off 不显示；摆放、行序（按扩展 id）/发布/清除由框架所有，与 codebase-tools 的 `◈ codeBaseTools` 同区共存。
+  - **2026-10-08 用户授权修订**：connect-bot 图标为 `◐`，codebase-tools 保持 `◈`，以便一眼区分两个扩展；两者同属 Geometric Shapes 且 EAW=A（Unicode `EastAsianWidth.txt`：`25C6..25C8 ; A`、`25CE..25D1 ; A`），终端里同字体同宽、两行对齐。选型经 `☰`/`⌁`（EAW 均为 N，且落不同回退字体）、`◆`/`●` 两轮回退后定稿。contract P36 与 README §H1/H3b 同步。
 - 所有注入 handler（命令 + 语义事件）获得「声明值写接缝」；框架在写后发布 marker。auto-disarm 经它写 `enabled=false`。
 - connect-bot 的 OMP assembly 允许直连 OMP 原生：managed timer（10s 心跳）与真实 `sessionId`/cwd/model（作为纯数据交给共享逻辑）。共享逻辑不 import 原生类型、不注册原生 hook、不直调原生 UI。
 - connect-bot 反馈集中在单一纯函数 `selectFeedback(input) → { level, message } | undefined`：输入 = 现有归一化产物（`readRegisterOutcome` 的 `{onlineCount}|undefined`、off 的 try/catch 结果、`recordFailure` 的 `FailureAction`）加 `trigger`/`enabledBefore`/`hasUI`；树内**不按数字状态码分支**，不新造「语义结果」类型。
@@ -261,7 +262,7 @@ Contract: [contract.md](contract.md)（已批准；Acceptance mode: Rapid iterat
 - 三值状态机：arm 成功按 idle 事实取「空闲/工作中」；`round_start`(main) → 「工作中」；`round_end` → 「等待用户输入」；稳态只在真变化时上报，**arm/re-arm 无条件上报一次**。
 - 会话切换：id 变化 → 对旧 id best-effort unregister、本地断开、通知；新会话保持未接入。同身份导航 no-op。
 - 退出/崩溃：不 hook 原生 `session_shutdown`，由面板过期兜底。
-- marker 文本 `◈ connectBot`；off 与 auto-disarm 清除。
+- marker 文本 `◐ connectBot`；off 与 auto-disarm 清除。
 - 面板侧 P3/P7 的 `offline` 表述在本规格中标为**失效**，统一为 `off`；不改面板代码/协议。
 
 ### 9. 运行时事实/能力注入 seam（已定事实）
@@ -300,7 +301,7 @@ Contract: [contract.md](contract.md)（已批准；Acceptance mode: Rapid iterat
 
 - **测试前例（prior art）**：原 connect-bot 的既有 L1 测试（`my-omp-toolkit`，fake ExtensionAPI/CommandContext + `__setPushClientForTest` + `vi.useFakeTimers()`）与 README 的 L3 手动清单，搬作扩展层验收与人工清单的出发点；只适配新框架语义，不照搬绑定旧文案/实现形状的断言。
 - **F 层覆盖**：`directed` 控制（空参=on、`off`=off、重复动作、无自动反馈）、per-field `memory` 持久化、per-field 继承默认不继承、handler State 写接缝、每次 `enabled` 写后发 marker；语义生命周期事件（`session_start`/`session_end` 含 reason、`round_start`/`round_end` 无 payload、`canAcceptInput()`、框架优先分发、owner-gate、`required-semantics` fail-soft、session 边界刷 marker、adapter 合成）；统一 `info | error` 反馈（命令 + 语义事件、无 UI 落 stderr）、delivery `hasUI`、`runCommandToggle` 走统一通道且 codebase-tools 文案不变；Extension configuration（声明形状 + 必填/类型 + 全部失败路径 → 统一 BindingFailure + diagnostic + 不加载 + 无默认值、`getConfig`/`readConfig`/`ExtensionConfigError`、yaml 解析）；owner-scoped 可保留句柄与 retire 后 no-op、`session_end.owner`、`previousOwnerKey` 移除、transferred/disposed 清理；`import-boundary.test.ts` 保持 green。
-- **E 层覆盖**：marker `◈ connectBot`（enabled 才显示、auto-disarm 清除、框架 marker 区按 id 排序）；文案表 A–J（除 `offline`→`off` 外原文保留）集中为 `selectFeedback` 纯函数并以 mock 覆盖全路径；命令解析与守卫（空参=on、`off`=off、未知参数报错、main + `hasUI` 门槛、no-UI stderr）；连接与心跳（register ≤1s、heartbeat 10s、push/unregister 1.5s、3 次失败 auto-disarm、首次失败通知、成功复位、队列 ≤16 丢最旧 heartbeat、不重试）；三值状态机只在稳态真变化时 push、arm/re-arm 无条件上报一次；会话切换/transferred/disposed；配置声明 `endpoint: non-empty-string`；OMP-qualified allow-list 仅 assembly。
+- **E 层覆盖**：marker `◐ connectBot`（enabled 才显示、auto-disarm 清除、框架 marker 区按 id 排序）；文案表 A–J（除 `offline`→`off` 外原文保留）集中为 `selectFeedback` 纯函数并以 mock 覆盖全路径；命令解析与守卫（空参=on、`off`=off、未知参数报错、main + `hasUI` 门槛、no-UI stderr）；连接与心跳（register ≤1s、heartbeat 10s、push/unregister 1.5s、3 次失败 auto-disarm、首次失败通知、成功复位、队列 ≤16 丢最旧 heartbeat、不重试）；三值状态机只在稳态真变化时 push、arm/re-arm 无条件上报一次；会话切换/transferred/disposed；配置声明 `endpoint: non-empty-string`；OMP-qualified allow-list 仅 assembly。
 - **必须用 `vi.useFakeTimers()` 驱动**，不真等 wall-clock；abort 与无 assistant 终态可在 M 层复现，其余 5 类终态由 E 层的 `agent_end` shape 用例覆盖。
 - **loader/admission 自动化**：沿用既有 `tests/framework/deployment.test.ts`（真实隔离 OMP loader、out-of-dir import）先例 + 新增 connect-bot admission 断言；原 L2 只作 M 层人工前置。
 - **M 层人工观察清单**（真 OMP × 真 omp-bot；不作自动化门、不做 pty）：前置 = 基线冻结记录 + 面板运行中 + `listen_addr` 与 `config.yaml` endpoint 一致 + `bun run test` 全绿 + explicit-only 装载；步骤 A 面板就绪 / B 接入成功 / C 幂等重注册 / D 轮次结束→等待用户输入 / E 兜底终态（abort、无 assistant）/ F 主动离线 / G 杀进程 30–35s 过期 / H 面板失联自动 disarm / I 守卫（no-UI、未知参数）/ J 多会话隔离 / K 与 codebase-tools 共存 / L 新旧装载互斥 / M 配置切换。每一步的操作、观察点与预期见 [06 lighthouse](lighthouse/06-acceptance-contract.md) §6；本规格以该文档为清单来源。

@@ -34,6 +34,6 @@ export const CONNECT_BOT = defineExtension({
 			description: "把当前会话接入 omp-bot 面板；/connect-bot off 断开",
 		},
 	],
-	marker: { text: "◈ connectBot" },
+	marker: { text: "◐ connectBot" },
 	config: { fields: { endpoint: "non-empty-string" } },
 });

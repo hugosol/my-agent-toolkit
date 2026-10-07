@@ -185,7 +185,7 @@ behind, and the smoke list.
 6. Smoke once after the cutover: start the runtime normally (no `--no-extensions`) against a running
    panel whose `listen_addr` covers `config.yaml`'s `endpoint`, and confirm:
 
-   - **接入** — `/connect-bot` registers the current session: the marker `◈ connectBot` appears, the
+   - **接入** — `/connect-bot` registers the current session: the marker `◐ connectBot` appears, the
      panel shows one row within about 1s (a new session is `空闲`), and the notification reports the
      online-session count.
    - **重注册** — `/connect-bot` again reuses and refreshes the same row: one row, no flicker, count

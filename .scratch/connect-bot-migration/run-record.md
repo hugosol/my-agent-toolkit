@@ -190,6 +190,7 @@ PI_CODING_AGENT_DIR=<throwaway-dir> bun \
 | D-05 | `tests/codebase-tools/marker-lifecycle.test.ts` 的 marker 区帧数断言与「同一进程里绑定了几个声明 marker 的扩展」耦合 | connect-bot 落进同一发现根后，会话边界会为每个声明 marker 的扩展刷新一次同一区域，于是边界帧数从 1 变 2（`marker area over one command toggle` 与 `a restored activation value` 两条红）。渲染内容未变（区域是框架自有的一个 widget，内容是其 State 的纯投影） | ticket 21 把断言改为表达**渲染内容 + 该扩展自身发布的精确增量**：边界断言 `≥1` 帧且每帧都是该会话的空渲染，扩展自己的 toggle/启用轮/off 仍逐次 `+1` 帧并断言内容（`on/off` 的行、清除、恢复后的行）；**记录内容与判据不变，改为不再钉内部帧计数**（该计数既非契约承诺，也随绑定扩展数变化）。同时给 `areaFrames` 加了帧来源说明 |
 | D-06 | `.scratch/codebase-tools-omp-v1/**` 资产被删除，13 处引用失效（v1 迁移留下的 link rot） | `git grep codebase-tools-omp-v1` = 15 处（12 个 markdown 链接 + 1 处行内路径 + 2 处非链接提及，见 §5.4） | 只按 19 号票的保守方案改 `docs/agent-runtime-support.md:33` 的计数基线链接指向迁移侧证据（本记录 RR-01）；其余 12 处**不重指不存在的资产**，登记在 §5.4 与 §8 待人工确认项 |
 | D-07 | 首次 `/connect-bot` 接入失败（用户 2026-10-07 M 层现场报告） | 冻结基线与迁移实现的 register 预算都是 ≤1s；`omp-bot.local` 是 mDNS 名，首次解析在本机可长达 ~3s 甚至超时（实测：fresh Bun 进程首次 `fetch` 2945ms、其后同进程/新进程 218ms；稍后 `curl` 报 `Resolving timed out after 2008ms`），超过 1s 即 disarm 并报「无法连接」；面板本身正常（`127.0.0.1`/已解析的 `.local` 下 register 返回 200 `{"outcome":"registered","onlineCount":N}`，0.17ms–0.17s），`omp-bot.toml` 的 `listen_addr = "0.0.0.0:8787"`。该现象在冻结基线同样存在，**非迁移回归** | 用户裁定（2026-10-07）改用 loopback：`extensions/connect-bot/config.yaml` 的默认 `endpoint` 由 `http://omp-bot.local:8787` 改为 `http://127.0.0.1:8787`；register 的 1s 预算与其它协议不变。spec §6 / lighthouse 05 的旧默认值属冻结语料不改写；README §H3b、§3.2、§7 P3 已同步；`tests/connect-bot/{arm,heartbeat,off,state-machine}.test.ts` 的 `ENDPOINT` 常量随文件更新 |
+| D-08 | marker 图标：两个扩展原本都用 `◈`，无法一眼区分（用户 2026-10-08 要求「使用不同的图标」） | 用户可见文本原为 `◈ codeBaseTools` / `◈ connectBot`（contract P36、README §H1/H3b、lighthouse 02/04/06、decision 04、implementation/11）；marker 是本机 widget 文本，omp-bot 面板/协议不读取 | 用户授权（2026-10-08）终选 `◈ codeBaseTools` / `◐ connectBot`：两者同属 Geometric Shapes、EAW 均为 A（Unicode `EastAsianWidth.txt`：`25C6..25C8 ; A`、`25CE..25D1 ; A`），终端同字体同宽、两行对齐；`◈` 即 codebase-tools 原始字形。选型共三轮：① `☰`/`⌁`（EAW 均为 N，trigram 落 CJK 全宽字形 → 实测不齐）已回退；② `◆`/`●` 对齐可用，但用户要求更高辨识度；③ 换为 `◈`/`◐` 定稿。已同步：两个 definition、所有钉真实文本的断言（`tests/codebase-tools/marker-lifecycle.test.ts`、`tests/framework/{definition,declared-value-write,session-events,session,owner-inheritance}.test.ts`、`tests/connect-bot/{arm,failure-budget,off}.test.ts`）、`README.md`、`docs/adr/0002`、`contract.md` P36、`spec.md`；**历史决策记录**（`lighthouse/02,04,06`、`decision/04`、`implementation/11-connect-bot-arm.md`）保留原文只登记，不做静默改写。测试自造的 `◈ <id>` fixture 不属产品文本，不改 |
 
 ### 5.3 未验证项（截至 ticket 21）
 
@@ -236,7 +237,7 @@ lighthouse 06 §8 的三类有意修改**只在迁移侧/移植后产物同步�
 
 | 有意修改 | 迁移侧同步断言（证据） | 原仓库状态（2026-10-07 只读） |
 |---|---|---|
-| 连接标识/通知移入框架 marker 区与统一反馈口 | `tests/connect-bot/arm.test.ts`（框架区域 key `semantic-extensions` / `aboveEditor` / 文本 `◈ connectBot`，通知走 `info\|error` 通道）、`tests/connect-bot/feedback.test.ts`（A–J 文案）、`tests/framework/marker.test.ts` + `declared-value-write.test.ts`（区域框架所有、按 id 排序、无 UI no-op） | 未改：旧实现仍自写 footer/自有通知（`d3648a0:extensions/connect-bot/index.ts`） |
+| 连接标识/通知移入框架 marker 区与统一反馈口 | `tests/connect-bot/arm.test.ts`（框架区域 key `semantic-extensions` / `aboveEditor` / 文本 `◐ connectBot`，通知走 `info\|error` 通道）、`tests/connect-bot/feedback.test.ts`（A–J 文案）、`tests/framework/marker.test.ts` + `declared-value-write.test.ts`（区域框架所有、按 id 排序、无 UI no-op） | 未改：旧实现仍自写 footer/自有通知（`d3648a0:extensions/connect-bot/index.ts`） |
 | `offline` → `off` | `tests/connect-bot/off.test.ts`（`offline` 现在是未识别参数，报用法错且不改状态）、`tests/connect-bot/feedback.test.ts`（用法提示只写 `off`）、`tests/connect-bot/guards.test.ts` | 未改：旧实现把 `offline` 当合法词 |
 | config 缺文件从「默认 + 告警」改为「error + 不加载」 | `tests/framework/config.test.ts`（缺文件/不可读/坏 YAML/顶层非对象/键缺失/类型不符 → `BindingFailure{kind:"configuration", violation:{kind:"config"}}` + `reportDiagnostic` + 不加载、无代码级默认值）、`tests/framework/deployment.test.ts`（真 loader 下 decoy `endpoint: 8787` 不生效，绑定按扩展仓库根的约定文件） | 未改：旧实现有 `config.json` + 代码默认值 |
 
@@ -330,6 +331,12 @@ M 层步骤的 ID、操作、观察点与预期见 §7（清单来源 [lighthous
 
 **Post-fix 重跑（2026-10-07，marker 区进程级单例修复后）**：真机 UI 报告「两扩展同时启用只显示一个 marker」→ 根因 = OMP legacy loader 给扩展图每个相对 import 加 per-load `?mtime=<tag>`，导致 `framework/behaviors/marker.ts` 每扩展各一份、各自只发自己一行、同一 widget key 后写覆盖。修复 = marker 区改为 `globalThis` + `Symbol.for(...)` 进程级单例（`framework/behaviors/marker.ts`），新增 `tests/framework/marker-module-duplication.test.ts`（修复前 3 红，修复后 3 绿）复现模块图重复。重跑 `bun run test` = **370 pass / 0 fail**（43 files，51.65s），`bun run typecheck` exit 0；`docs/agent-runtime-support.md` 计数更新为 framework 234 / codebase-tools 24 / connect-bot 103 / harness 9。受影响的人工验收项：M 层步骤 K（与 codebase-tools 共存）需真机复核两项 marker 同时显示。
 
+**D-08 图标 `◆`/`●` 版本重跑（2026-10-08）**：marker 为 `◆ codeBaseTools` / `● connectBot` 时全量重跑 `bun run test` = **370 pass / 0 fail**（43 files，49.87s），`bun run typecheck` exit 0。
+
+**用户现场观察（2026-10-08，针对 `◆`/`●`）**：`◆ codeBaseTools` 与 `● connectBot` 在真实 OMP marker 区**同时显示且对齐**。这条确认了 marker 区进程级单例修复有效（两扩展不再互相覆盖），并说明该轮图标可用。覆盖范围仅限 M 层步骤 K 的「同区两 marker」观察点；步骤 K 的其余观察点（两命令互不干扰、codebase-tools 文案保持 `codeBaseTools enabled/disabled`）与 M 层其余步骤仍未验证。
+
+**图标定稿 `◈`/`◐` 重跑（2026-10-08）**：用户要求更高辨识度后定稿 `◈ codeBaseTools` / `◐ connectBot`（理由与三轮选型见 §5.2 D-08），全量重跑 `bun run test` = **370 pass / 0 fail**（43 files，49.74s），`bun run typecheck` exit 0；M 层步骤 B/K 的预期文本已按 `◈`/`◐` 同步（§7）。**`◈`/`◐` 的真机对齐尚待用户复核**（此前的现场确认针对 `◆`/`●`）。
+
 ### RR-02：M 层人工观察 A–M（待执行，22 号票）
 
 - 对应票: 22（P46）；清单与前置见 §7
@@ -387,7 +394,7 @@ M 层步骤的 ID、操作、观察点与预期见 §7（清单来源 [lighthous
 | 步骤 | 操作 | 观察点 | 预期 | 结果 | 证据 |
 |---|---|---|---|---|---|
 | A | 不启动 OMP；浏览器打开面板 | 标题、tab、空态 | 标题 `omp-bot`；tab `控制面板`、`会话列表`；空态无卡片 | 留位 | `screenshots/A-1.png` |
-| B | 在 OMP 会话执行 `/connect-bot` | marker 区、UI 通知、面板卡片 | marker 出现 `◈ connectBot`；通知 `已接入 omp-bot 面板（当前 N 个在线会话）`（N 与卡片数一致）；卡片 ≤1s 出现且字段正确（新会话状态 `空闲`） | 留位 | `screenshots/B-1.png`、`logs/B-notification.txt` |
+| B | 在 OMP 会话执行 `/connect-bot` | marker 区、UI 通知、面板卡片 | marker 出现 `◐ connectBot`；通知 `已接入 omp-bot 面板（当前 N 个在线会话）`（N 与卡片数一致）；卡片 ≤1s 出现且字段正确（新会话状态 `空闲`） | 留位 | `screenshots/B-1.png`、`logs/B-notification.txt` |
 | C | 再次执行 `/connect-bot` | 在线数、卡片数、闪烁 | N 不变；仍一张卡片；不闪烁；不新增行 | 留位 | `screenshots/C-1.png` |
 | D | 发一条真的会让 agent 干活的提示 | 卡片状态、tab 圆点、结束提示 | 先 `工作中`；轮次结束转 `等待用户输入`；卡片置顶高亮；tab 圆点；提示 `1 个刚结束轮次` + 「知道了」；点「知道了」清计数、圆点保留；静置 ≥35s 不迁移、不重复提示 | 留位 | `screenshots/D-1.png`、`D-2.png` |
 | E | 在 `工作中` 中断（Esc/abort），使本轮无 assistant 结果 | 兜底终态 | 仍进入 `等待用户输入`，不卡 `工作中` | 留位 | `screenshots/E-1.png` |
@@ -396,14 +403,14 @@ M 层步骤的 ID、操作、观察点与预期见 §7（清单来源 [lighthous
 | H | 停掉 omp-bot 面板进程，在已接入会话静置 ≈35s；随后面板仍停时执行 `/connect-bot off` | 两次通知、marker、是否自动重连 | 首次失败通知 `与 omp-bot 面板连接中断；若持续失败将自动断开`；≈30s 后 `与 omp-bot 连接中断，已断开；重新执行 /connect-bot 可重连`、marker 消失、不自动恢复；面板已停时 `off` → `omp-bot 面板未响应` | 留位 | `logs/H-*.txt`、`screenshots/H-1.png` |
 | I | 以 `--no-ui` 启动 OMP 并执行 `/connect-bot`；另执行 `/connect-bot foo` | stderr、出站请求、状态 | no-UI：stderr 一行 `当前模式无 UI，不支持接入面板` 且不发请求；未知参数：报错 `未知参数「foo」；用法：/connect-bot（接入 omp-bot 面板）或 /connect-bot off（断开）。` 且状态不变 | 留位 | `logs/I-*.txt` |
 | J | 开第二个 OMP 实例（各自 `PI_CODING_AGENT_DIR`）并接入；在该会话里触发一次子代理 | 两行独立性 | 两行各自独立；子代理事件不产生新行、不改父行状态 | 留位 | `screenshots/J-1.png` |
-| K | 在同一会话执行 `/codebase-tools`（两次：开、关） | 同区两 marker、两命令、文案 | 两 marker 在同一区按扩展 id 排序（`◈ codeBaseTools` 在 `◈ connectBot` 之前）；两命令互不干扰；codebase-tools 文案仍 `codeBaseTools enabled` / `codeBaseTools disabled` | 留位 | `screenshots/K-1.png` |
+| K | 在同一会话执行 `/codebase-tools`（两次：开、关） | 同区两 marker、两命令、文案 | 两 marker 在同一区按扩展 id 排序（`◈ codeBaseTools` 在 `◐ connectBot` 之前）；两命令互不干扰；codebase-tools 文案仍 `codeBaseTools enabled` / `codeBaseTools disabled` | 留位 | `screenshots/K-1.png` |
 | L | 观察 explicit-only 装载下旧实现是否被发现；再按回退路径（去新根、留旧根、重启）装载一次 | 新旧互斥 | 旧实现未被发现（无重复 marker/命令）；回退路径可用 | 留位 | `logs/L-*.txt` |
 | M | `/connect-bot off` → 停旧实现 → endpoint 从旧 `config.json` 手工搬入 `config.yaml` → 整进程重启 → 重新 `/connect-bot` | 切换与回退对称 | 重新接入成功、新 marker/卡片正确；旧行 30–35s 过期；回退对称（恢复旧根、移除新根、重启后旧行为可用） | 留位 | `screenshots/M-*.png`、`logs/M-*.txt` |
 
 两条与迁移期有意变更相关的预期，照做时按**现状**（不是旧实现）判读：
 
 - **命令词形**：断开是 `/connect-bot off`；`/connect-bot offline` 现在是未识别参数（报用法错），不是合法形式（P37、§5.5）。
-- **marker 与文案载体**：`◈ connectBot` 由框架 marker 区发布（不是扩展自写 footer），所有面向操作者的文案走框架统一 `info|error` 通道（有 UI 走通知、无 UI 落 stderr）。
+- **marker 与文案载体**：`◐ connectBot` 由框架 marker 区发布（不是扩展自写 footer），所有面向操作者的文案走框架统一 `info|error` 通道（有 UI 走通知、无 UI 落 stderr）。
 
 ---
 
@@ -413,7 +420,7 @@ M 层步骤的 ID、操作、观察点与预期见 §7（清单来源 [lighthous
 |---|---|---|---|
 | 1 | 真实 OMP × omp-bot 集成（lighthouse 06 §6 A–M：接入/重注册/状态/心跳/失联/切会话/恢复 + 多会话隔离 + codebase-tools 共存 + 新旧互斥 + 配置切换） | 用户执行（22 号票 / P46） | §7 可直接照做的清单 + §6 RR-02 结果位；自动化前置已过（RR-01）；M 层结果**未验证**直到用户回报 |
 | 2 | 永久切换/回退（移除旧发现入口 + 加入新根 + 整进程重启；回退对称） | 用户执行（23 号票 / P47） | [README §H3](../../README.md#h3--permanent-cutover-and-cutover-smoke)（H3a codebase-tools / H3b connect-bot）+ §3.2 endpoint 搬运来源 + 旧行 30–35s 过期说明 |
-| 3 | 维护者最终判断（H3：接受/回退/范围） | 维护者（24 号票 / P48） | 全部自动证据（§6 RR-01）+ §5.2 差异 D-01…D-07 + §5.4/§5.5 + H1/H2 结果 |
+| 3 | 维护者最终判断（H3：接受/回退/范围） | 维护者（24 号票 / P48） | 全部自动证据（§6 RR-01）+ §5.2 差异 D-01…D-08 + §5.4/§5.5 + H1/H2 结果 |
 | 4 | D-01/D-03：行为基线锚点是否推进到 `3171df3`（或改以目录树哈希为准） | 维护者裁定 | 记录值与冻结仓库均未改写；`checkoutCarries` 断言已就位；扩展目录树 `5d6340f…` 在 `df2554c`/`34d7c40`/HEAD 三处相同；oracle lockfile `ddf372c5…` 与记录一致 |
 | 5 | D-02：`agent-runtime-baseline.json.sourceCombination.revisionAtRecord` 的刷新 | 维护者（提交时一并刷新） | 本次只刷新 `lockfile.sha256`（D-04，测试 `REFRESH_HINT` 所要求） |
 | 6 | 13 处 v1 link rot（`.scratch/codebase-tools-omp-v1/**`）的最终处置（重指/删除） | 维护者 | §5.4 清单：1 处已改指迁移侧证据，12 处**不重指不存在的资产**、只登记 |

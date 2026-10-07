@@ -44,7 +44,7 @@ Acceptance mode: **Rapid iteration**
 | P33 | 三值状态机：arm 按 idle 事实取「空闲/工作中」；`round_start`(main)→「工作中」；`round_end`→「等待用户输入」；稳态只在真变化 push；arm/re-arm 无条件上报一次 | E12 | story 74,75,76 | S1/S2 |
 | P34 | 会话切换/分支 id 变化 → 旧 id best-effort unregister、本地断开、通知，新会话保持未接入；同身份导航（`/reload`、同文件 `/resume`、`/clear`、`/tree`）no-op | E13 | story 77 | S1 |
 | P35 | 不直接 hook 原生 `session_shutdown`；退出/被杀/失活交面板 30s 过期（行转「已离线」并保留） | E14 | story 78 | S1 |
-| P36 | marker 文本 `◈ connectBot`（enabled 才显示；off/auto-disarm 清除） | E15 | story 40 | S1 |
+| P36 | marker 文本 `◐ connectBot`（enabled 才显示；off/auto-disarm 清除）；**2026-10-08 用户授权修订**：connect-bot 用 `◐`，codebase-tools 保持 `◈`（选型经 `☰`/`⌁`、`◆`/`●` 两轮回退后定稿；两者同属 Geometric Shapes 且 EAW=A），以区分两个扩展 | E15 | story 40 | S1 |
 | P37 | 文案 A–J 除未知参数 `offline`→`off` 外原文保留，集中在 `selectFeedback` 纯函数，不按数字状态码分支 | E16 | story 42,43,69 | S1 |
 | P38 | 面板协议不变：固定事件路径 + `{proxy:false}` + `{sessionId,kind,data}` 信封；404/非 2xx 计为推送失败 | E17 | story 79 | S1 |
 | P39 | connect-bot 的 OMP assembly 原生读取 managed timer + 真实 sessionId/cwd/model，作为纯数据/能力注入共享逻辑；共享逻辑不 import 原生类型 | E18,F18 | story 38,39,61 | S1/S2 |
