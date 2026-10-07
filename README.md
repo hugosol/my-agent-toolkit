@@ -170,17 +170,20 @@ behind, and the smoke list.
 3. Move the endpoint by hand. The new implementation reads
    `my-agent-toolkit/extensions/connect-bot/config.yaml`, and the framework reads and validates that
    file before the extension registers anything: a missing or illegal file refuses the extension instead
-   of letting it connect to an invented address. The committed file carries the same default the old
-   `config.json` does (`http://omp-bot.local:8787`), so only a machine-specific value needs copying from
-   `my-omp-toolkit/extensions/connect-bot/config.json` into it. There is no automatic conversion and no
-   state migration — the new implementation persists only `{enabled}`.
+   of letting it connect to an invented address. The committed file points at the panel on the same
+   host (`http://127.0.0.1:8787`) instead of the old `config.json`'s `http://omp-bot.local:8787`: the
+   panel listens on `0.0.0.0:8787`, a loopback address answers in milliseconds, and resolving the mDNS
+   name can take longer than the register's 1s budget on first use (which reads as a failed arm). Copy
+   the old value only when the panel runs on another host; then write the address this machine can
+   reach. There is no automatic conversion and no state migration — the new implementation persists
+   only `{enabled}`.
 4. Restart the agent runtime as a whole process (step 3 above).
 5. Expect the old implementation's panel rows to expire without an `unregister`: it is no longer
    running, so its rows pass the panel's 30s keep-alive (a ≤35s scan, worst case about 45s), turn
    "offline" and stay until an `unregister` or a panel restart. The new implementation starts
    unconnected, so no new row appears until a session runs `/connect-bot`.
 6. Smoke once after the cutover: start the runtime normally (no `--no-extensions`) against a running
-   panel whose `listen_addr` matches `config.yaml`'s `endpoint`, and confirm:
+   panel whose `listen_addr` covers `config.yaml`'s `endpoint`, and confirm:
 
    - **接入** — `/connect-bot` registers the current session: the marker `◈ connectBot` appears, the
      panel shows one row within about 1s (a new session is `空闲`), and the notification reports the

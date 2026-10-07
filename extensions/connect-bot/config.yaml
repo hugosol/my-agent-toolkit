@@ -3,4 +3,9 @@
 # The file is the machine's single source for the endpoint: the framework reads and validates
 # it before the extension registers anything, and no default or fallback lives in code, so a
 # missing or illegal file refuses the extension instead of letting it run on an invented value.
-endpoint: "http://omp-bot.local:8787"
+#
+# Same host, so loopback: the panel listens on 0.0.0.0:8787 and a loopback address answers in
+# milliseconds. The panel's mDNS name (omp-bot.local) is for browsers and LAN devices; resolving
+# it can take longer than the register's 1s budget on first use, which reads as a failed arm.
+# Point this at another host only when the panel really runs there.
+endpoint: "http://127.0.0.1:8787"

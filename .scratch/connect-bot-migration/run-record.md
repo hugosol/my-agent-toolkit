@@ -115,7 +115,7 @@ Delivers: P41（[contract.md](contract.md)）；本票补 P43、P45（§6 RR-01�
 | 项 | 值 |
 |---|---|
 | 路径约定 | `extensions/<definition.id>/config.yaml`（`config.path` 可覆盖）→ connect-bot: `extensions/connect-bot/config.yaml` |
-| 文件内容 | 见下方原文（`sha256:447546d1c028af2d6bcf72e7445fb8a588c445a6a6ac7834e86ea2239eeaa4e4`）；`endpoint` 与原仓库 `extensions/connect-bot/config.json` 的值一致 = `http://omp-bot.local:8787`（无代码级默认值/回退） |
+| 文件内容 | 见下方原文（`sha256:829f88c2886adb725052eb98d9298ccc8cfe7ff799c921eb2726a077e59843a6`）；`endpoint` = `http://127.0.0.1:8787`（面板同主机、loopback；**不再**等于原仓库 `extensions/connect-bot/config.json` 的 `http://omp-bot.local:8787`，见 §5.2 D-07）；无代码级默认值/回退 |
 | definition 声明 | `fields: { endpoint: "non-empty-string" }`（P21） |
 | 现状核对（2026-10-07，本票） | `extensions/connect-bot/config.yaml` 与 `entrypoints/omp/connect-bot.ts`（`sha256:ae7dfdec16d68964b6f8ee0a17dd52f3ff9cc45c1346bfc67f0880edc5a5b10c`）均存在；`extensions/connect-bot/` 与 `entrypoints/omp/` 各含 codebase-tools + connect-bot |
 | 来源 | contract P19–P21；spec §6、§8；lighthouse 05/06 (h) |
@@ -126,7 +126,12 @@ Delivers: P41（[contract.md](contract.md)）；本票补 P43、P45（§6 RR-01�
 # The file is the machine's single source for the endpoint: the framework reads and validates
 # it before the extension registers anything, and no default or fallback lives in code, so a
 # missing or illegal file refuses the extension instead of letting it run on an invented value.
-endpoint: "http://omp-bot.local:8787"
+#
+# Same host, so loopback: the panel listens on 0.0.0.0:8787 and a loopback address answers in
+# milliseconds. The panel's mDNS name (omp-bot.local) is for browsers and LAN devices; resolving
+# it can take longer than the register's 1s budget on first use, which reads as a failed arm.
+# Point this at another host only when the panel really runs there.
+endpoint: "http://127.0.0.1:8787"
 ```
 
 ---
@@ -184,6 +189,7 @@ PI_CODING_AGENT_DIR=<throwaway-dir> bun \
 | D-04 | `docs/agent-runtime-baseline.json.sourceCombination.lockfile.sha256` 记录的 `f78f4d3c…` ≠ 工作区 `bun.lock` 的 `9e9f4833…` | configuration 票把 `yaml@^2.9.1` 写进 `package.json`/`bun.lock`（`package.json` diff: +dependencies; `bun.lock`: +5 行），记录未随之刷新 → `baseline record > records the lockfiles…` 与 `controlled session > …` 两条红 | ticket 21 按该测试自己的 `REFRESH_HINT`（"a deliberate dependency change"）刷新记录值；**无断言被放宽或删除**：两条测试恢复为真检查工作区 lockfile 与记录一致 |
 | D-05 | `tests/codebase-tools/marker-lifecycle.test.ts` 的 marker 区帧数断言与「同一进程里绑定了几个声明 marker 的扩展」耦合 | connect-bot 落进同一发现根后，会话边界会为每个声明 marker 的扩展刷新一次同一区域，于是边界帧数从 1 变 2（`marker area over one command toggle` 与 `a restored activation value` 两条红）。渲染内容未变（区域是框架自有的一个 widget，内容是其 State 的纯投影） | ticket 21 把断言改为表达**渲染内容 + 该扩展自身发布的精确增量**：边界断言 `≥1` 帧且每帧都是该会话的空渲染，扩展自己的 toggle/启用轮/off 仍逐次 `+1` 帧并断言内容（`on/off` 的行、清除、恢复后的行）；**记录内容与判据不变，改为不再钉内部帧计数**（该计数既非契约承诺，也随绑定扩展数变化）。同时给 `areaFrames` 加了帧来源说明 |
 | D-06 | `.scratch/codebase-tools-omp-v1/**` 资产被删除，13 处引用失效（v1 迁移留下的 link rot） | `git grep codebase-tools-omp-v1` = 15 处（12 个 markdown 链接 + 1 处行内路径 + 2 处非链接提及，见 §5.4） | 只按 19 号票的保守方案改 `docs/agent-runtime-support.md:33` 的计数基线链接指向迁移侧证据（本记录 RR-01）；其余 12 处**不重指不存在的资产**，登记在 §5.4 与 §8 待人工确认项 |
+| D-07 | 首次 `/connect-bot` 接入失败（用户 2026-10-07 M 层现场报告） | 冻结基线与迁移实现的 register 预算都是 ≤1s；`omp-bot.local` 是 mDNS 名，首次解析在本机可长达 ~3s 甚至超时（实测：fresh Bun 进程首次 `fetch` 2945ms、其后同进程/新进程 218ms；稍后 `curl` 报 `Resolving timed out after 2008ms`），超过 1s 即 disarm 并报「无法连接」；面板本身正常（`127.0.0.1`/已解析的 `.local` 下 register 返回 200 `{"outcome":"registered","onlineCount":N}`，0.17ms–0.17s），`omp-bot.toml` 的 `listen_addr = "0.0.0.0:8787"`。该现象在冻结基线同样存在，**非迁移回归** | 用户裁定（2026-10-07）改用 loopback：`extensions/connect-bot/config.yaml` 的默认 `endpoint` 由 `http://omp-bot.local:8787` 改为 `http://127.0.0.1:8787`；register 的 1s 预算与其它协议不变。spec §6 / lighthouse 05 的旧默认值属冻结语料不改写；README §H3b、§3.2、§7 P3 已同步；`tests/connect-bot/{arm,heartbeat,off,state-machine}.test.ts` 的 `ENDPOINT` 常量随文件更新 |
 
 ### 5.3 未验证项（截至 ticket 21）
 
@@ -193,7 +199,7 @@ PI_CODING_AGENT_DIR=<throwaway-dir> bun \
 | `extensions/connect-bot/config.yaml` 与 `entrypoints/omp/connect-bot.ts` 是否存在且内容正确 | 已验证（存在 + 内容） | §3.2（原文 + sha256）；两者的**真实运行效果**属 M 层（A–M），未开始 |
 | M 层真实 OMP × omp-bot 集成（lighthouse 06 §6 A–M） | 未开始（人工） | P46（22 号票）；清单与证据位已备（§7），每步结果按 §6 RR-02 追加 |
 | 永久切换/回退（H2） | 未开始（人工） | P47（23 号票）；步骤与回退修订在 [README §H3](../../README.md#h3--permanent-cutover-and-cutover-smoke) |
-| 维护者最终判断（H3：接受/回退/范围） | 未开始（人工） | P48（24 号票）；输入 = 全部自动证据 + H1/H2 结果 + §5.2 的 D-01…D-06 |
+| 维护者最终判断（H3：接受/回退/范围） | 未开始（人工） | P48（24 号票）；输入 = 全部自动证据 + H1/H2 结果 + §5.2 的 D-01…D-07 |
 | 13 处 v1 link rot（`.scratch/codebase-tools-omp-v1/**`） | 登记，未修（只修 1 处） | §5.4；保守方案只改 `docs/agent-runtime-support.md:33`，其余不重指不存在的资产 |
 | 各票回报的偏离项（register body 不再发 `pid`/`sessionFile`；心跳 `reason` 用语义名） | 登记（代码可核对） | §8 待人工确认项 |
 
@@ -367,7 +373,7 @@ M 层步骤的 ID、操作、观察点与预期见 §7（清单来源 [lighthous
 |---|---|---|
 | P1 | 源基线冻结：`../my-omp-toolkit` = `master@34d7c40…`（扩展唯一提交 `d3648a0`），只读 | §1.1；`git -C ../my-omp-toolkit status --porcelain` 为空 |
 | P2 | 自动化前置（release gate）已过：`bun run test` 全绿 + `bun run typecheck` 通过 | §6 RR-01 |
-| P3 | 面板 `../omp-bot@d50e35c…` 运行中；其监听地址与 `extensions/connect-bot/config.yaml` 的 `endpoint`（`http://omp-bot.local:8787`）一致；浏览器已打开 | §1.2、§3.2 |
+| P3 | 面板 `../omp-bot@d50e35c…` 运行中；其 `listen_addr`（`0.0.0.0:8787`）覆盖 `extensions/connect-bot/config.yaml` 的 `endpoint`（`http://127.0.0.1:8787`，loopback）；浏览器已打开 | §1.2、§3.2、§5.2 D-07 |
 | P4 | 隔离精确安装 `.cache/omp-baseline/18.5.0`；Bun `1.4.2`；win32/x64 | §2.1；`bun test tests/harness`（幂等物化） |
 | P5 | 一次性 agent state：`PI_CODING_AGENT_DIR=<throwaway>`（如 `.cache/tui-accept/agent-state`）；需要时先在该目录登录要跑的模型 | §4 |
 | P6 | 装载：`--no-extensions -e <repo>/entrypoints/omp`（旧实现在此模式下不被发现） | §4 第 4 步的命令 |
@@ -405,9 +411,10 @@ M 层步骤的 ID、操作、观察点与预期见 §7（清单来源 [lighthous
 |---|---|---|---|
 | 1 | 真实 OMP × omp-bot 集成（lighthouse 06 §6 A–M：接入/重注册/状态/心跳/失联/切会话/恢复 + 多会话隔离 + codebase-tools 共存 + 新旧互斥 + 配置切换） | 用户执行（22 号票 / P46） | §7 可直接照做的清单 + §6 RR-02 结果位；自动化前置已过（RR-01）；M 层结果**未验证**直到用户回报 |
 | 2 | 永久切换/回退（移除旧发现入口 + 加入新根 + 整进程重启；回退对称） | 用户执行（23 号票 / P47） | [README §H3](../../README.md#h3--permanent-cutover-and-cutover-smoke)（H3a codebase-tools / H3b connect-bot）+ §3.2 endpoint 搬运来源 + 旧行 30–35s 过期说明 |
-| 3 | 维护者最终判断（H3：接受/回退/范围） | 维护者（24 号票 / P48） | 全部自动证据（§6 RR-01）+ §5.2 差异 D-01…D-06 + §5.4/§5.5 + H1/H2 结果 |
+| 3 | 维护者最终判断（H3：接受/回退/范围） | 维护者（24 号票 / P48） | 全部自动证据（§6 RR-01）+ §5.2 差异 D-01…D-07 + §5.4/§5.5 + H1/H2 结果 |
 | 4 | D-01/D-03：行为基线锚点是否推进到 `3171df3`（或改以目录树哈希为准） | 维护者裁定 | 记录值与冻结仓库均未改写；`checkoutCarries` 断言已就位；扩展目录树 `5d6340f…` 在 `df2554c`/`34d7c40`/HEAD 三处相同；oracle lockfile `ddf372c5…` 与记录一致 |
 | 5 | D-02：`agent-runtime-baseline.json.sourceCombination.revisionAtRecord` 的刷新 | 维护者（提交时一并刷新） | 本次只刷新 `lockfile.sha256`（D-04，测试 `REFRESH_HINT` 所要求） |
 | 6 | 13 处 v1 link rot（`.scratch/codebase-tools-omp-v1/**`）的最终处置（重指/删除） | 维护者 | §5.4 清单：1 处已改指迁移侧证据，12 处**不重指不存在的资产**、只登记 |
 | 7 | 各票回报的偏离项 | 维护者核对 | register body 现在是 `{cwd, sessionName?, model?}`，不再发 `sessionFile` 与 `pid`（旧实现：`d3648a0:extensions/connect-bot/index.ts` `registerData`，含 `cwd/sessionName?/sessionFile?/model?` + `data.pid = process.pid`）；心跳/状态 `reason` 用语义名 `register\|round_start\|round_end`（`extensions/connect-bot/state-machine.ts`），旧实现用原生事件名（`agent_start\|agent_end\|session_stop`；同旧文件 `pushState` 调用处） |
 | 8 | 三类有意修改是否只落在迁移侧（P43） | ticket 21 已核对，交维护者复核 | §5.5（每条都指向迁移侧断言；原仓库工作区为空、目录树哈希未变） |
+| 9 | D-07：默认 `endpoint` 改为 `http://127.0.0.1:8787`（用户 2026-10-07 裁定） | 用户：**整进程重启** agent 后复测首次 `/connect-bot`（配置每进程只读一次） | §5.2 D-07（根因与实测）；`extensions/connect-bot/config.yaml`（sha256 `829f88c2…`）；M 层步骤 B 应一次成功，不再需要手动重试 |
