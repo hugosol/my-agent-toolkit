@@ -100,3 +100,9 @@
 - 框架公开接口只做 additive 变更（ADR 0002）。
 - 新增控制类别与 State 策略沿用框架现有模式：纯数据声明 + adapter binding + 行为模块不命名原生 API（对齐 `framework/behaviors/control.ts` 与 `framework/core/state.ts`）。
 - **控制类别 × 持久化 × 继承是 per-field 的正交轴**：`toggle`/`directed` 决定命令如何改 State；`session-entry`/`memory` 决定值是否持久化/恢复；`follow`/`none` 决定子代理是否跟随。三者可自由组合（codebase-tools = toggle+session-entry+follow；connect-bot = directed+memory+none）。框架的控制行为（`runCommandToggle`/directed）与会话行为（`reconcileSession`）都必须按字段策略分支：只持久化/只 seed `session-entry` 字段，memory 字段不写 session entry、不从分支 seed、owner 被替换才归 default。持久化的值 ≠ 效果仍在运行（恢复需 reconciliation，归 03；对齐 ADR 0002 §State and recovery seam）。
+
+## 修订（2026-10-07，backtracer 收口）
+
+- 术语登记：`Control kind` / `Directed control` / `State persistence` / `Subagent State inheritance` 已进 GLOSSARY；`Owner` 措辞与 per-field、默认不继承对齐。
+- 来源：backtracer 对 02 的 Layer gap 与 peer asymmetry，经 06 收口后的 Gap follow-up「grill now」解决；与 ADR 0002 §Directed control and per-field State lifecycle 一致。
+- 决策与 invariants 不变，仅补齐术语与措辞。

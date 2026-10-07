@@ -83,3 +83,9 @@ Blocked by: 01
 ## Decision
 
 为 connect-bot 新增框架控制类别「定向开关」：写死「空参=on、`off`=off」，重复执行重复动作（幂等由扩展保证）；命令绑定 in-memory、默认不继承的 State 字段 `enabled`，其值由扩展 handler 的动作结果决定，handler 在 State 写入前运行并拥有写；连接状态的持久标识由框架 marker 区从 `enabled` 派生；子代理不继承该字段；agent 工作状态与 HTTP/协议/心跳等业务留在扩展；文案/通知集合与 hasUI 门槛另由《自定义交互和原生能力可以越过哪些边界》决定。
+
+## 修订（2026-10-07，backtracer 收口）
+
+- 术语登记：GLOSSARY 增加/更新——`Control kind（控制类别）`（toggle | directed）、`Directed control（定向开关）`、`State persistence（State 持久化）`（session-entry | memory）、`Subagent State inheritance（子代理 State 继承）`（follow | none，默认 none）；`Owner` 措辞改为「子代理不是 owner；是否 live-follow 由 per-field opt-in 决定」。
+- 来源：backtracer 对 02 的 Layer gap 与 peer asymmetry（`directed` 缺词条；GLOSSARY 的继承/Owner 表述与 02「默认不继承」漂移），经 06 收口后的 Gap follow-up「grill now」解决；与 ADR 0002 §Directed control and per-field State lifecycle（含 default-off 表述）对齐。
+- 决策内容不变，只补齐术语与措辞。

@@ -24,17 +24,37 @@ _Avoid_: shared-source framework consumer, synchronized source
 A framework-defined lifecycle position where one agent-runtime-independent extension function can run across supported agent runtimes. The agent-runtime adapter identifies the corresponding native trigger and supplies the framework's semantic inputs.
 _Avoid_: native event name, template text slot
 
+**Semantic lifecycle event（语义生命周期事件）**:
+A framework-defined, agent-runtime-independent lifecycle transition that an agent-runtime adapter synthesizes from that runtime's native events. The framework owns its meaning, ordering, payload and owner scope; native event names, shapes and per-runtime facts are not part of it.
+_Avoid_: native event name, raw runtime hook, phase state
+
+**Round（轮次）**:
+One period of agent activity, from the agent starting work on input until quiescence — no automatic work remains and it is waiting for the user. A round may contain several model-response turns and several low-level agent runs.
+_Avoid_: run (a low-level execution unit), turn (one model-response cycle)
+
 **Configuration switch（配置式开关）**:
 An activation choice read at initialization whose changes do not take effect during the current run; applying a changed choice requires a restart.
 _Avoid_: runtime toggle, mode command
+
+**Extension configuration（扩展配置）**:
+An extension's own `config.yaml` in its source directory, read and validated by the framework at binding and exposed to the extension's shared logic; a change requires a restart. Its entries are plain configuration values and, in a future release, configuration switches.
+_Avoid_: agent-runtime settings, environment override, State, defaults embedded in code
 
 **Mode selection（模式设置）**:
 An explicit request for a named mode. Selecting an already active mode leaves it active without repeating mode-transition side effects.
 _Avoid_: toggle, inversion
 
+**Control kind（控制类别）**:
+The per-field axis deciding how a bound command drives its State field: `toggle` alternates between two values on successive executions; `directed` names its target value explicitly and repeats its side effect on every execution.
+_Avoid_: control category, mode, command type
+
 **Command toggle（命令切换）**:
 A command that alternates between two modes on successive executions.
 _Avoid_: mode selection, idempotent switch
+
+**Directed control（定向开关）**:
+A bound control kind whose command names its target state explicitly — an empty argument activates, `off` deactivates — and which repeats its side effect on every invocation; the framework never deduplicates or short-circuits it, so idempotence is the extension's responsibility.
+_Avoid_: toggle, mode selection, idempotent switch, command action
 
 **Mixed control（混合控制）**:
 A control scheme combining explicit mode selection and command toggling over the same mode state.
@@ -52,12 +72,16 @@ _Avoid_: mode selection, command action
 The framework's single current-value source for an extension, including framework-defined and extension-defined values. Persistence media and external providers can supply observations, but framework-managed behaviors read current values from State.
 _Avoid_: UI-only variable bag, persistence backend, unscoped global object
 
+**State persistence（State 持久化）**:
+The per-field axis deciding whether a declared State value is written to the owner's persistence medium and seeded from the target branch at session boundaries (`session-entry`, the default) or kept only in memory and never seeded (`memory`, the choice for a value whose live external effect must not be assumed from a restored value).
+_Avoid_: extension storage, concrete persistence backend, UI state
+
 **Subagent State inheritance（子代理 State 继承）**:
-The live following of an owning main session's declared State value by its subagents. Other session-owned values, such as each session's init-injection progress, remain independent.
-_Avoid_: whole-extension state copy, creation-time snapshot, process-global state, extension loading, MCP inheritance
+The per-field axis deciding how a subagent relates to its owner's declared State value: `follow` — the subagent reads the owner's current value live; `none` (the default) — the subagent reads the field's declared default. Other session-owned values, such as each session's init-injection progress, remain independent.
+_Avoid_: whole-extension state copy, creation-time snapshot, process-global state, extension loading, MCP inheritance, default inheritance
 
 **Owner（所属主会话 / owning main session）**:
-The session that holds an extension's owner-scoped State values; for any session it is the nearest ancestor session that is itself a top-level main session (a main session is its own owner). Subagent sessions follow their owner's values live and are not owners.
+The session that holds an extension's owner-scoped State values; for any session it is the nearest ancestor session that is itself a top-level main session (a main session is its own owner). Subagent sessions are not owners; whether they follow their owner's values live is per-field and opt-in.
 _Avoid_: parent agent, process-global state, current session
 
 **Parent agent（父代理）**:
@@ -75,6 +99,10 @@ _Avoid_: replaying the last command, automatic side-effect restoration
 **Marker area（状态标记区）**:
 The framework's single status region where each bound extension's marker is rendered, with a widget identity, placement and line order the framework owns and an activation-driven life cycle the framework derives from State; an extension contributes only its marker text and can never name or claim the widget.
 _Avoid_: extension-owned widget, per-extension marker key, extension-chosen placement
+
+**Extension feedback（扩展反馈）**:
+The framework's single runtime-independent channel through which an extension publishes operator-facing notices, each carrying an `info` or `error` severity; the framework maps it to a UI notification when the session has one and to stderr when it does not, and it never enters model context.
+_Avoid_: raw native notify, tool output, injected prompt, extension-owned widget
 
 **Injected prompt（注入提示词）**:
 Extension-provided text made available to the model under declared activation and delivery rules. Its visibility to the user, delivered authority, and retention are distinct properties.

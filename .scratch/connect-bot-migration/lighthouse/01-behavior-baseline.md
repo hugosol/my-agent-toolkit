@@ -108,3 +108,15 @@
 - 「全部提示文案保留」条款重开：文案/通知集合由《自定义交互和原生能力可以越过哪些边界》逐条重新确认。
 - 上述三项是本 lighthouse 的显式修改；其余 Decision、User stories、Preconditions、Postconditions、Invariants 不变。待 02 收口后由 backtracer 复核与面板侧 P3/P7/contract 边界决定的一致性。
 - 未修改的边界：`my-omp-toolkit` 仍冻结（其 README/测试描述旧实现）；面板侧归档保留历史表述，差异在迁移侧记录。
+
+## 修订（2026-10-07，由《生命周期映射与持续上报由哪一层负责》触发）
+
+- **退出/会话结束语义**：原表述「扩展刻意不 hook `session_shutdown`」修订为——**框架**新增 `session_end` 语义事件（adapter 从 OMP `session_switch`/`session_branch`/`session_shutdown` 合成），扩展订阅它以停止本地效果；扩展仍**不直接 hook 原生 `session_shutdown`**。
+- **离线时机不变**：停心跳后仍由面板 30s 过期承担；扩展侧不实现过期逻辑。
+- 其余 Decision、User stories、Preconditions、Postconditions、Invariants 不变。
+
+## 修订（2026-10-07，由《配置、装载与新旧实现切换如何保持兼容》触发）
+
+- **P10 配置行为修订**：原「缺文件 → 默认 + 一次告警」改为「缺文件 → error 文案 + 扩展不加载」；原「坏格式 → mount 抛错」改为「框架 config BindingFailure（`kind: "config"`）+ `reportDiagnostic` error + 扩展不加载」。
+- **配置文件格式与名称**：由 `config.json`/JSON 改为 `config.yaml`/YAML；默认 endpoint 值仍为 `http://omp-bot.local:8787`，由扩展目录下提交的 `config.yaml` 承载（无代码级默认值/回退）。
+- 未修改的边界：未知键忽略、无 env/CLI 覆盖、整机唯一一份、改动需整进程重启仍成立；面板与协议不变。

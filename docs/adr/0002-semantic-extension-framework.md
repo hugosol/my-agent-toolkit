@@ -92,6 +92,14 @@ Keep framework source in `framework/`, with semantic core, reusable behaviors, a
 
 Extensions cross the framework's small public interfaces even though the code lives in the same repository. The framework must not depend on individual extension implementations, and shared logic must not import native agent-runtime types merely because both are locally available. Agent-runtime-specific code may use native capabilities directly. One source tree does not imply one runtime instance or shared in-memory State between agent-runtime processes. This records the target layout, not a completed migration or a reason to create empty directories before implementation. The framework's small public interfaces are a stable contract surface and evolve additively; a non-additive change requires a new explicit decision in this document.
 
+### Enforcement of the native boundary
+
+The shared/native split above is enforced mechanically by [`tests/framework/import-boundary.test.ts`](../../tests/framework/import-boundary.test.ts). The test scans every `.ts` under `framework/`, `extensions/` and `entrypoints/`; a module is **shared source** unless it lives in `framework/adapters/**` or `extensions/<id>/runtimes/**`; and shared source must neither import an agent-runtime package (`@oh-my-pi/*`, `@earendil-works/*`) nor reach an escape-hatch module by relative import. Each discovery entrypoint is likewise constrained to a single re-export of its extension's runtime assembly.
+
+The native escape hatch is therefore exactly two locations: `framework/adapters/**` and `extensions/<id>/runtimes/**`. The check reads import specifiers lexically rather than through an AST: it is an alarm for the ordinary crossing, and the principle above is what binds — `require(...)`, computed specifiers and aliasing can evade it.
+
+Widening the escape hatch, adding an equivalent bypass, or moving native access outside these two locations is a non-additive architecture change and requires an explicit decision in this document, not an implementation detail. The connect-bot migration fixed the extension-side allow-list ([decision 04](../../.scratch/connect-bot-migration/decision/04-interaction-native-boundary.md), [lighthouse](../../.scratch/connect-bot-migration/lighthouse/04-interaction-native-boundary.md)) and restated the invariant in these terms ([decision 07](../../.scratch/connect-bot-migration/decision/07-effect-callback-capabilities.md), [lighthouse](../../.scratch/connect-bot-migration/lighthouse/07-effect-callback-capabilities.md)).
+
 ### Responsibility test for agent-runtime differences
 
 Different native implementations do not by themselves justify moving behavior out of the framework. Decide ownership by the semantic contract being upheld, not by whether the code contains agent-runtime-specific calls.
@@ -112,6 +120,22 @@ The discussion covers nine areas: (1) extension definition/configuration and sha
 ## Initial control scope
 
 The control vocabulary covers configuration switches applied after restart, idempotent selection of a named mode, and command toggles alternating between two modes, but the first release implements only **command toggle**. Configuration switches, mode selection, mixed control such as the current Build/Explore/Debug interaction, and the remaining control kinds are explicitly deferred rather than implicitly implemented through the initial pattern.
+
+### Extension configuration (additive; connect-bot migration, decision 05)
+
+The connect-bot migration adds an additive capability for an extension's own configuration **values**, distinct from the deferred configuration-switch control kind: the framework reads a fixed `config.yaml` from the extension's source directory (`extensions/<definition.id>/config.yaml`, overridable by a declared `path`), parses it with the pure-JS `yaml` package (zero external dependencies, ISC) in the framework's runtime-independent config module behind an injectable seam, and validates the required keys and primitive types the extension declares as plain data in its definition (`config.fields`). Missing, unreadable, malformed, non-object, missing-required, or wrong-type content refuses the binding — the extension is not loaded and a `config` binding failure is reported on the non-model diagnostic channel; there is no code-level default fallback, the shipped file is the default. Values reach the extension's shared logic through a runtime-independent `getConfig(definition)` read, so no agent-runtime assembly handles configuration; `readConfig(path)` and `ExtensionConfigError` are the config module's single read/parse/validate/throw surface. This is additive: configuration switches, mode selection, mixed control and the remaining control kinds stay deferred, and the same file is their intended future carrier.
+
+### Directed control and per-field State lifecycle (additive; connect-bot migration, decision 02)
+
+The connect-bot migration adds a second bound control kind, **directed** ([decision 02](../../.scratch/connect-bot-migration/decision/02-command-state-ownership.md), [lighthouse](../../.scratch/connect-bot-migration/lighthouse/02-command-state-ownership.md)): a command that names its target state explicitly (`/connect-bot` = on, `/connect-bot off` = off), repeats its side effect on every invocation, and is never deduplicated or short-circuited by the framework — idempotence is the extension's responsibility. It is distinct from the deferred mode-selection, mixed-control and command-action kinds.
+
+It also makes the State lifecycle **per field**, on three orthogonal axes:
+
+- **Control kind** — `toggle` (existing) or `directed` (new).
+- **Persistence** — `session-entry` (default: written to the owner's persistence medium, seeded from the target branch at session boundaries) or `memory` (never written and never seeded; an owner-identity change drops the value to the declared default, while navigation that keeps the identity preserves it).
+- **Inheritance** — `follow` or `none` (default `none`: a subagent reads the declared default unless the field declares `follow`).
+
+The framework's write authority is unchanged: the extension's handler runs before the framework records the value and owns the write, so a command can read the pre-invocation value. `memory` is the choice for a value that declares a live external effect, because a restored value does not prove the effect is running (see [State and recovery seam](#state-and-recovery-seam)).
 
 ## Shared behavior scope
 
@@ -141,6 +165,27 @@ Existing model-cost tests exercise multiple tracker instances sharing a file but
 
 The framework should offer extension-owned code injection at meaningful agent lifecycle points as well as declarative behaviors. Examples such as agent start and message completion are candidate concepts, not yet a published event inventory or a claim of equivalent timing across pi and OMP. The first release fixes one semantic hook mapping (agent-run initiation, at most once per user turn); the broader hook set, its payloads and ordering still belong to detailed design against existing extensions and both agent runtimes. An extension supplies one shared TypeScript implementation for each chosen semantic hook; agent-runtime adapters bind that same implementation at the corresponding agent runtime lifecycle point and expose agent-runtime-independent inputs and framework capabilities. Thin pi/OMP entrypoints must not require maintaining two copies of the feature logic. Treat source-code text splicing into agent-runtime-specific templates as a different, fragile approach, not the intended meaning of "injection." Do not confuse message completion with an entire agent run settling.
 
+## Semantic lifecycle model
+
+The framework owns one runtime-independent lifecycle vocabulary for extensions; each agent-runtime adapter synthesizes it from that runtime's native events. The connect-bot migration fixed the first model ([decision](../../.scratch/connect-bot-migration/decision/03-lifecycle-effects.md), [lighthouse](../../.scratch/connect-bot-migration/lighthouse/03-lifecycle-effects.md)):
+
+- **Session axis.** `session_start` (a session became the current owner; reason `initial`, `new`, `resume` or `fork`) and `session_end` (the current owner ceased; reason `transferred` or `disposed`) form a symmetric pair. A switch, branch or fork is `session_end(transferred)` followed by `session_start`; navigation that keeps the same owner emits neither. The framework seeds and retires State and refreshes the marker area on these boundaries; an extension may subscribe, and the migrating extension uses `session_end` to stop its own effect.
+- **Round axis.** A **Round** is one period of agent activity, from starting work to quiescence — no automatic work remains and it is waiting for the user. A round may contain several model-response turns and several low-level agent runs. `round_start` and `round_end` are edge-triggered transitions; `round_end` has no payload and fires only at quiescence (automatic continuations stay inside the round, while error and abort still reach it).
+- **Idle is a query, not an event.** `canAcceptInput()` exposes the runtime's idle fact independently of the events and supplies the initial value at activation.
+- **Ownership and dispatch.** The framework owns the event semantics and owner scope; adapters own the native mapping, and a missing required semantic is refused fail-soft rather than silently weakened. An owner-facing subscription receives only its owner session's events — a subagent's events never reach it. Framework behaviors run before extension handlers.
+- **Effects stay with the extension.** Ongoing work such as timers, outbound queues, retry/failure budgets and network protocol remains the extension's business; the framework emits semantic events and does not add a continuous-task contract.
+
+This fixes the first-release lifecycle vocabulary and refines the "Semantic hooks at the scope level" note above; the remaining hook inventory (for example model-response turns, provider and tool events) stays deferred until a concrete extension needs it.
+
+## Owner-scoped effect capabilities (additive; connect-bot migration, decision 07)
+
+An extension-owned background effect (for example a heartbeat timer or an outbound flusher) runs outside any handler delivery, so it cannot rely on delivery-scoped seams alone ([decision 07](../../.scratch/connect-bot-migration/decision/07-effect-callback-capabilities.md), [lighthouse](../../.scratch/connect-bot-migration/lighthouse/07-effect-callback-capabilities.md)):
+
+- A handler delivery exposes an **owner-scoped capability** (declared-value write plus the feedback channel) that the extension may retain in its own owner-keyed effect record and reuse from that background callback.
+- The capability is valid only while its owner is live. On `session_end` the framework retires the owner before the extension handler runs, so a retained capability becomes inert: writes are no-ops that neither recreate State nor republish a marker, and feedback is dropped. The `session_end` delivery itself carries a fresh, dispatch-scoped feedback channel, so the extension can still emit its session-switched notice while stopping local effects.
+- `session_end` names the **ending** owner in its `owner` field; the earlier `previousOwnerKey` is redundant once a switch is expressed as `session_end` + `session_start`, and is removed from the semantic delivery. No `hasUI` is carried on the retained capability.
+- The extension stops its local resources synchronously before any await; the framework does not wait for the extension's best-effort remote unregister.
+
 ## State and recovery seam
 
 Treat state value, ownership, storage medium, restore policy, and lifecycle effects as related but distinct aspects of a behavior definition. A resumed session can restore state without replaying an earlier command or assuming its external effects are still active; reacquiring timers or remote registrations needs an explicit reconciliation policy. Persisted business values such as model-cost's holiday flag and quota estimate/baseline are not automatically modes or state-machine states. For the first release, reconciliation semantics are decided (seed from the target branch at session boundaries, in-session current value authoritative, and navigation that does not change session identity does not refresh activation) and the initial declarative state model is the single boolean activation value used by codebase-tools; broader values and reconciliation remain open.
@@ -149,7 +194,7 @@ Treat state value, ownership, storage medium, restore policy, and lifecycle effe
 
 Expose small interfaces for framework-defined capabilities such as State; do not duplicate the agent runtime's native extension interface. Extensions may call native capabilities directly. Agent-runtime adapters own the differences needed to uphold framework contracts, including State relationships across supported subagent execution paths; this does not require the framework to introduce a subagent scheduler or an MCP implementation. Native calls that affect conversation history remain subject to the history-preservation discussion; access to native interfaces is not a sandbox guarantee.
 
-Initially implement only the inheritance behavior demonstrated by codebase-tools: subagents follow the owning main session's current activation value, while each session keeps its own init-injection progress. This is live following, not a one-time copy at child creation or wholesale inheritance of extension State. Do not introduce a menu of snapshot, shared-write, or other inheritance strategies before concrete extensions need them. The existing module-level `globalOn` is evidence of the desired behavior, not a framework ownership mechanism: the framework must associate values with the correct owning session rather than assume every binding in a process belongs to one owner.
+Initially implement only the inheritance behavior demonstrated by codebase-tools: subagents follow the owning main session's current activation value, while each session keeps its own init-injection progress. This is live following, not a one-time copy at child creation or wholesale inheritance of extension State. Do not introduce a menu of snapshot, shared-write, or other inheritance strategies before concrete extensions need them. The connect-bot migration made this per-field and default-off, with codebase-tools explicitly opting in; see the directed-control and per-field State lifecycle note under Initial control scope. The existing module-level `globalOn` is evidence of the desired behavior, not a framework ownership mechanism: the framework must associate values with the correct owning session rather than assume every binding in a process belongs to one owner.
 
 Bind inheritance support to an explicitly integrated subagent execution path. The first-release implementation target is OMP's built-in path; the first release ships no pi adapter, so pi subagent State inheritance is not merely unsupported but unimplemented. Do not choose or implement a pi subagent runner merely to claim parity. This is a planned agent-runtime-qualified framework capability, not an implemented or runtime-certified feature. Extension loading, State inheritance, and MCP availability are separate conditions; inheritance does not imply that a child loads an extension or gains access to MCP.
 
@@ -162,6 +207,16 @@ Call the unified per-extension current-value source **State**, borrowing React's
 ## Behavior orchestration around State
 
 Treat State as the shared current-value source connecting control, commands, agent-runtime events, persistence, instruction contribution, feedback, and ongoing lifecycle effects. Ongoing effects depend on both State and their owning scope: entering an active condition may start work, leaving it or losing the scope must stop work, and restoring State alone does not prove earlier effects are still active. One-shot command actions remain distinct from ongoing effects; neither every State update nor every restore automatically replays side effects. Framework-managed model-context behavior observes the same State but is additionally bound by the mandatory history-preservation contract.
+
+## Extension feedback, marker, and declared-value writes (additive; connect-bot migration, decision 04)
+
+The connect-bot migration fixes the user-visible feedback and status surface ([decision 04](../../.scratch/connect-bot-migration/decision/04-interaction-native-boundary.md), [lighthouse](../../.scratch/connect-bot-migration/lighthouse/04-interaction-native-boundary.md)):
+
+- **One feedback channel.** Extensions publish operator-facing notices through a single runtime-independent channel with an `info | error` severity, available on command and semantic-event handlers; the adapter maps it to a UI notification, or to a stderr line when the session has no UI. It is never model-visible — not an injected prompt, a conversation entry, or tool output — and the framework's internal admission/session warnings are not merged into it.
+- **`hasUI` on deliveries.** A delivery states whether the session has a UI, so the extension's shared logic enforces its own main-session + UI gate rather than the framework silently refusing on its behalf. Subagent refusals remain the framework's owner-scope concern.
+- **Marker ownership.** The unified marker area stays framework-owned (placement, line order, publication, clearing); an extension contributes only its text. The first migrated marker is `◈ connectBot`, published only while its activation value is true.
+- **Declared-value write seam.** Every injected handler delivery carries a write seam limited to the extension's declared fields, and the framework publishes the marker after each write. Auto-disarm uses it to write its activation field `false`.
+- **Native allow-list.** The extension's direct native use is limited to its `runtimes/omp.ts` assembly (managed timer, real session id/cwd/model as plain data); shared logic imports no native types and registers no native hooks.
 
 ## History preservation and execution frequency
 
