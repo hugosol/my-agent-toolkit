@@ -328,6 +328,8 @@ M 层步骤的 ID、操作、观察点与预期见 §7（清单来源 [lighthous
 
 - 结论: **通过**（3 条与 gate 相关的登记差异 D-03/D-04/D-05 已处置；D-01/D-02/D-06 为既有/人工项）
 
+**Post-fix 重跑（2026-10-07，marker 区进程级单例修复后）**：真机 UI 报告「两扩展同时启用只显示一个 marker」→ 根因 = OMP legacy loader 给扩展图每个相对 import 加 per-load `?mtime=<tag>`，导致 `framework/behaviors/marker.ts` 每扩展各一份、各自只发自己一行、同一 widget key 后写覆盖。修复 = marker 区改为 `globalThis` + `Symbol.for(...)` 进程级单例（`framework/behaviors/marker.ts`），新增 `tests/framework/marker-module-duplication.test.ts`（修复前 3 红，修复后 3 绿）复现模块图重复。重跑 `bun run test` = **370 pass / 0 fail**（43 files，51.65s），`bun run typecheck` exit 0；`docs/agent-runtime-support.md` 计数更新为 framework 234 / codebase-tools 24 / connect-bot 103 / harness 9。受影响的人工验收项：M 层步骤 K（与 codebase-tools 共存）需真机复核两项 marker 同时显示。
+
 ### RR-02：M 层人工观察 A–M（待执行，22 号票）
 
 - 对应票: 22（P46）；清单与前置见 §7

@@ -7,7 +7,10 @@
  * What the area shows for one owner is a read-only projection of that owner's State —
  * the marker texts of the extensions whose activation value is true, ordered by
  * extension id — so an extension can neither claim the widget nor decide where it
- * appears, and two extensions rendering in one session never overwrite each other.
+ * appears, and two extensions rendering in one session never overwrite each other. The one
+ * area belongs to the process rather than to this module instance, so it is resolved from
+ * the process global ({@link MARKER_AREA_KEY}): an agent runtime that evaluates a copy of
+ * this module per extension still binds every extension to the one native widget.
  *
  * This module is agent-runtime-independent: it reads State through the read view and
  * publishes through a transport an adapter supplied, and names no native API.
@@ -51,8 +54,36 @@ class MarkerArea {
 	}
 }
 
+/**
+ * The process-global key the one area is registered under.
+ *
+ * The area belongs to the process, not to a module instance. The OMP legacy loader rewrites
+ * every relative import of an extension's graph to `specifier?mtime=<per-load tag>` — the
+ * relative-import branch at `legacy-pi-compat.ts:1182-1184`, the entry import at `:2645` — with
+ * a fresh tag per extension load, so two extensions that import this framework by relative path
+ * evaluate their own copy of this module. A module-scoped area would then be one area per
+ * extension, each publishing only its own line under the framework's one widget key, and the
+ * later write would win: only one of two enabled extensions would show. Registering the area on
+ * the process global under a well-known symbol gives the copies one area, and `Symbol.for` is
+ * what lets them agree on the key by name while holding no shared module identity.
+ */
+const MARKER_AREA_KEY: unique symbol = Symbol.for("my-agent-toolkit.semantic-extensions.marker-area");
+
+/** The process global, narrowed to the one entry this module reads and writes. */
+interface MarkerAreaScope {
+	[MARKER_AREA_KEY]?: MarkerArea;
+}
+
 /** The process-wide area: one native widget shared by every extension bound in it. */
-const markerArea = new MarkerArea();
+function markerArea(): MarkerArea {
+	const scope = globalThis as MarkerAreaScope;
+	const registered = scope[MARKER_AREA_KEY];
+	if (registered !== undefined) return registered;
+
+	const area = new MarkerArea();
+	scope[MARKER_AREA_KEY] = area;
+	return area;
+}
 
 /**
  * Registers a definition's marker in the area, reading its activation value from the
@@ -66,7 +97,7 @@ export function registerMarker(definition: ExtensionDefinition, state: StateStor
 	if (marker === undefined) return;
 
 	const field = activationField(definition);
-	markerArea.register(definition.id, {
+	markerArea().register(definition.id, {
 		text: marker.text,
 		active: ownerKey => state.view(ownerKey).read(field),
 	});
@@ -92,7 +123,7 @@ export function publishMarkerOnRun(
 	if (run.owner.kind === "unresolved") return;
 	if (!stateValueFor(definition, state, run.owner)) return;
 
-	run.markers.publishMarkers(markerArea.lines(run.owner.key));
+	run.markers.publishMarkers(markerArea().lines(run.owner.key));
 }
 
 /**
@@ -109,5 +140,5 @@ export function publishMarkerOnTransition(
 ): void {
 	if (definition.marker === undefined) return;
 
-	transport.publishMarkers(markerArea.lines(ownerKey));
+	transport.publishMarkers(markerArea().lines(ownerKey));
 }

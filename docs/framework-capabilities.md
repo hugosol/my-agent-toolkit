@@ -155,7 +155,10 @@ and are not parameters.
 ### `marker?: MarkerDeclaration`
 
 The extension's status-marker text ([`definition.ts#L175`](../framework/core/definition.ts#L175)). Placement,
-ordering and lifecycle are framework-owned; the extension supplies only the text.
+ordering and lifecycle are framework-owned; the extension supplies only the text. The area is one per
+process rather than one per module instance: it is registered on the process global under a well-known
+symbol, so it stays single even when the adapter layer's loader evaluates its own copy of the framework
+module graph for each extension.
 
 | Parameter | Type | Meaning |
 | --- | --- | --- |

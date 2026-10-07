@@ -97,7 +97,7 @@ The decision whether and how a restored state should reacquire ongoing effects w
 _Avoid_: replaying the last command, automatic side-effect restoration
 
 **Marker area（状态标记区）**:
-The framework's single status region where each bound extension's marker is rendered, with a widget identity, placement and line order the framework owns and an activation-driven life cycle the framework derives from State; an extension contributes only its marker text and can never name or claim the widget.
+The framework's single status region where each bound extension's marker is rendered, with a widget identity, placement and line order the framework owns and an activation-driven life cycle the framework derives from State; an extension contributes only its marker text and can never name or claim the widget. It is one per process, registered on the process global under a well-known symbol so that duplicated framework module graphs still share the one region.
 _Avoid_: extension-owned widget, per-extension marker key, extension-chosen placement
 
 **Extension feedback（扩展反馈）**:
