@@ -2,11 +2,11 @@
 
 ### Issue tracker
 
-Issues and specs live as markdown files under `.scratch/<feature>/` in this repo. See `docs/agents/issue-tracker.md`.
+Issues and specs live as markdown files under `.scratch/<feature>/` in this repo; decision tickets use the `open`/`claimed`/`resolved` lifecycle. See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 
-Decision tickets use `open`/`claimed`/`resolved`; implementation tickets use `ready-for-agent`/`ready-for-human`/`in-progress`/`closed`. See `docs/agents/triage-labels.md`.
+Implementation tickets use `needs-triage`/`needs-info`/`ready-for-agent`/`ready-for-human`/`wontfix`, with `in-progress`/`closed` tracking execution. See `docs/agents/triage-labels.md`.
 
 ### Domain docs
 
