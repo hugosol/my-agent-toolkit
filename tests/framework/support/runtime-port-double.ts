@@ -12,13 +12,15 @@
  * double instead; this harness covers the runtime-independent half.
  *
  * One double is one assembly: one State store shared by every binding it makes, exactly
- * as an extension's assembly has one. The framework's own notice record is not part of an
+ * as an extension's assembly has one. Its declaration rules are resolved from the
+ * definition the assembly's first binding names — the store cannot exist before the
+ * extension it serves is known. The framework's own notice record is not part of an
  * assembly at all — one process holds it per Owner, whichever extension published for it.
  */
 import { bindExtension } from "../../../framework/behaviors/binding";
 import type { DeclarableRequiredSemantic, RequiredSemantic } from "../../../framework/core/admission";
 import type { ConfigSource } from "../../../framework/core/config";
-import type { ExtensionDefinition } from "../../../framework/core/definition";
+import { activationField, statePersistence, type ExtensionDefinition } from "../../../framework/core/definition";
 import type {
 	AgentRuntimePort,
 	BindingResult,
@@ -130,6 +132,10 @@ export interface PortBindingOptions {
 
 /** The recorded port of one assembly, and the driver a suite observes behavior through. */
 export interface PortDouble {
+	/**
+	 * The assembly's State store, whose declaration rules the first binding resolves from
+	 * the definition it names; a suite reads it after a bind, refused or admitted.
+	 */
 	readonly state: StateStore;
 	/** Labels the framework set, in call order. */
 	readonly labels: readonly string[];
@@ -186,7 +192,16 @@ export interface PortDouble {
 }
 
 export function portDouble(): PortDouble {
-	const state = new StateStore();
+	// One assembly serves one extension, so one store with one set of declaration rules —
+	// the ones the definition its first binding names resolves to.
+	let state: StateStore | undefined;
+	const stateOf = (definition: ExtensionDefinition): StateStore => {
+		state ??= new StateStore({
+			field: activationField(definition),
+			persistence: statePersistence(definition),
+		});
+		return state;
+	};
 	const labels: string[] = [];
 	const diagnostics: string[] = [];
 	const registrations: string[] = [];
@@ -246,7 +261,12 @@ export function portDouble(): PortDouble {
 	};
 
 	return {
-		state,
+		get state(): StateStore {
+			if (state === undefined) {
+				throw new Error("portDouble: State rules are resolved by the first binding");
+			}
+			return state;
+		},
 		labels,
 		diagnostics,
 		registrations,
@@ -256,7 +276,7 @@ export function portDouble(): PortDouble {
 			return bindExtension(
 				definition,
 				port,
-				state,
+				stateOf(definition),
 				{
 					facts: {
 						version: options.version === "unreported" ? undefined : (options.version ?? "18.5.0"),

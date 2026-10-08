@@ -18,7 +18,7 @@
  */
 import { describe, expect, test } from "bun:test";
 import type * as MarkerBehavior from "../../framework/behaviors/marker";
-import { activationField, type ExtensionDefinition, defineExtension } from "../../framework/core/definition";
+import { activationField, statePersistence, type ExtensionDefinition, defineExtension } from "../../framework/core/definition";
 import type { MarkerTransport } from "../../framework/core/protocol";
 import { StateStore } from "../../framework/core/state";
 
@@ -47,6 +47,11 @@ function markerExtension(id: string, text: string): ExtensionDefinition {
 /** Declared out of id order on purpose: only a sort by id can put alpha's line first. */
 const OMEGA = markerExtension("graph-omega-extension", "◈ omega");
 const ALPHA = markerExtension("graph-alpha-extension", "◈ alpha");
+
+/** Writes one copy's activation value through its own store's declared-value write path. */
+function writeActivation(store: StateStore, ownerKey: string, value: boolean): void {
+	store.writer({ ownerKey, persist: () => {}, publishMarker: () => {} }).write(value);
+}
 
 /** Publishes one copy's area after a State transition, and returns the lines that copy wrote. */
 function linesPublishedBy(
@@ -104,8 +109,9 @@ async function twoDuplicatedGraphs(): Promise<{
 	// import would give both extensions one module and hide the defect this file exists for.
 	expect(alpha.registerMarker).not.toBe(omega.registerMarker);
 
-	const alphaState = new StateStore();
-	const omegaState = new StateStore();
+	// Each copy's store carries its own extension's declaration rules, as its assembly resolves them.
+	const alphaState = new StateStore({ field: activationField(ALPHA), persistence: statePersistence(ALPHA) });
+	const omegaState = new StateStore({ field: activationField(OMEGA), persistence: statePersistence(OMEGA) });
 	alpha.registerMarker(ALPHA, alphaState);
 	omega.registerMarker(OMEGA, omegaState);
 
@@ -117,8 +123,8 @@ describe("one area across duplicated module instances (P13, C10)", () => {
 		const { alpha, omega, alphaState, omegaState } = await twoDuplicatedGraphs();
 		const ownerKey = "duplicated-graph-owner";
 
-		alphaState.applyTransition(ownerKey, activationField(ALPHA), true);
-		omegaState.applyTransition(ownerKey, activationField(OMEGA), true);
+		writeActivation(alphaState, ownerKey, true);
+		writeActivation(omegaState, ownerKey, true);
 
 		// Each copy reads the one area the process holds, whichever extension registered where.
 		expect(linesPublishedBy(alpha, ALPHA, ownerKey)).toEqual(["◈ alpha", "◈ omega"]);
@@ -129,8 +135,8 @@ describe("one area across duplicated module instances (P13, C10)", () => {
 		const { alpha, omega, alphaState, omegaState } = await twoDuplicatedGraphs();
 		const ownerKey = "duplicated-graph-run-owner";
 
-		alphaState.applyTransition(ownerKey, activationField(ALPHA), true);
-		omegaState.applyTransition(ownerKey, activationField(OMEGA), true);
+		writeActivation(alphaState, ownerKey, true);
+		writeActivation(omegaState, ownerKey, true);
 
 		expect(linesPublishedOnRun(alpha, ALPHA, alphaState, ownerKey)).toEqual(["◈ alpha", "◈ omega"]);
 		expect(linesPublishedOnRun(omega, OMEGA, omegaState, ownerKey)).toEqual(["◈ alpha", "◈ omega"]);
@@ -143,19 +149,19 @@ describe("coexistence across duplicated copies: alone, together, one off (P13, B
 		const ownerKey = "duplicated-graph-coexistence";
 
 		// Only alpha is enabled: the one extension that is on renders, and nothing else.
-		alphaState.applyTransition(ownerKey, activationField(ALPHA), true);
+		writeActivation(alphaState, ownerKey, true);
 		expect(linesPublishedBy(alpha, ALPHA, ownerKey)).toEqual(["◈ alpha"]);
 
 		// Both are enabled: the second extension's line joins the same area.
-		omegaState.applyTransition(ownerKey, activationField(OMEGA), true);
+		writeActivation(omegaState, ownerKey, true);
 		expect(linesPublishedBy(omega, OMEGA, ownerKey)).toEqual(["◈ alpha", "◈ omega"]);
 
 		// Omega is turned off: only its line goes, published from the other copy.
-		omegaState.applyTransition(ownerKey, activationField(OMEGA), false);
+		writeActivation(omegaState, ownerKey, false);
 		expect(linesPublishedBy(alpha, ALPHA, ownerKey)).toEqual(["◈ alpha"]);
 
 		// Alpha is turned off last: the area is empty, so the transport is told to clear it.
-		alphaState.applyTransition(ownerKey, activationField(ALPHA), false);
+		writeActivation(alphaState, ownerKey, false);
 		expect(linesPublishedBy(alpha, ALPHA, ownerKey)).toEqual([]);
 	});
 });

@@ -205,6 +205,8 @@ describe("the boundary that ends an owner ends the capability it handed out (F13
 		retained[0]!.state.write(false);
 
 		expect(double.state.view(owner.key).read("enabled")).toBe(true);
+		// The old life lost write authority, not observation of the owner's current value.
+		expect(retained[0]!.state.read()).toBe(true);
 	});
 });
 

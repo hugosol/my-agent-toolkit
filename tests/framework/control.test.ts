@@ -12,6 +12,7 @@
 import { describe, expect, test } from "bun:test";
 import type { OmpCommandContext, OmpExtensionApi } from "../../framework/adapters/omp";
 import * as frameworkOmp from "../../framework/adapters/omp";
+import type { StateValues } from "../../framework/core/protocol";
 import { StateStore } from "../../framework/core/state";
 import { CODEBASE_TOOLS } from "../../extensions/codebase-tools/definition";
 
@@ -210,22 +211,30 @@ describe("owner-scoped State (C2)", () => {
 });
 
 describe("State read and write surfaces (C2)", () => {
-	test("the read view exposes no mutation and reads the declared default until written", () => {
-		const store = new StateStore();
-		const view = store.view("owner");
+	test("a write through the declared-value seam updates the owner it names and leaves other owners at the default", () => {
+		const store = new StateStore({ field: "enabled", persistence: "session-entry" });
 
-		// The read surface is read-only: whatever a reader holds, the only way a value
-		// changes is the framework's write path.
-		expect(Object.keys(view)).toEqual(["read"]);
-		expect(view.read("enabled")).toBe(false);
-	});
-
-	test("a transition updates the owner it names and leaves other owners at the default", () => {
-		const store = new StateStore();
-
-		store.applyTransition("owner", "enabled", true);
+		store.writer({ ownerKey: "owner", persist: () => {}, publishMarker: () => {} }).write(true);
 
 		expect(store.view("owner").read("enabled")).toBe(true);
 		expect(store.view("other").read("enabled")).toBe(false);
+	});
+
+	test("a marker publication that fails does not roll back the value or its record", () => {
+		const store = new StateStore({ field: "enabled", persistence: "session-entry" });
+		const persisted: StateValues[] = [];
+		const seam = store.writer({
+			ownerKey: "owner",
+			persist: values => persisted.push(values),
+			publishMarker: () => {
+				throw new Error("the area transport failed");
+			},
+		});
+
+		// The write path records before it publishes, so a failed publication surfaces to the
+		// caller while the value and the record the write already made stay in place.
+		expect(() => seam.write(true)).toThrow("the area transport failed");
+		expect(store.view("owner").read("enabled")).toBe(true);
+		expect(persisted).toEqual([{ enabled: true }]);
 	});
 });

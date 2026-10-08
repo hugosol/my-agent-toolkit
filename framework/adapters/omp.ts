@@ -11,7 +11,7 @@
  */
 import { bindExtension } from "../behaviors/binding";
 import { type DeclarableRequiredSemantic, type RequiredSemantic } from "../core/admission";
-import type { ExtensionDefinition } from "../core/definition";
+import { activationField, type ExtensionDefinition, statePersistence } from "../core/definition";
 import type {
 	AgentRuntimePort,
 	BindingResult,
@@ -846,7 +846,10 @@ function ompPort(pi: OmpExtensionApi, definition: ExtensionDefinition): AgentRun
  * (`configBaseDir`). An extension that needs none of them assembles with no options at all.
  */
 export function ompAdapter(definition: ExtensionDefinition, options: OmpAdapterOptions = {}): OmpExtensionFactory {
-	const state = new StateStore();
+	const state = new StateStore({
+		field: activationField(definition),
+		persistence: statePersistence(definition),
+	});
 	return (pi: OmpExtensionApi): BindingResult =>
 		bindExtension(
 			definition,

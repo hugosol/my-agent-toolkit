@@ -15,44 +15,20 @@
  * This module is agent-runtime-independent: it reads and writes State and calls the
  * adapter-supplied effect transports, and names no native API.
  */
-import type { CommandDirectedDeclaration, CommandToggleDeclaration, ExtensionDefinition } from "../core/definition";
+import type { ExtensionDefinition } from "../core/definition";
 import type {
 	CommandDelivery,
 	CommandInvocation,
-	DeclaredValueSeam,
 	DirectedCommandImplementation,
 	DirectedDirective,
 	StateValues,
 } from "../core/protocol";
 import type { StateStore } from "../core/state";
-import { retainedCapability } from "./capability";
-import { declaredValueSeam } from "./declared-value";
+import { publishMarkerOnTransition } from "./marker";
 
 /** The feedback text for one activation value, derived from the extension's display name. */
 export function activationFeedback(definition: ExtensionDefinition, value: boolean): string {
 	return `${definition.displayName} ${value ? "enabled" : "disabled"}`;
-}
-
-/**
- * The declared-value seam of one command invocation, bound to the field the command declared.
- *
- * Both control kinds reach State this way and no other: the write authority sits in one
- * implementation, whether the writer is the framework's own toggle or an assembly-injected
- * directed implementation. The owner key arrives resolved, so only a delivery that is itself
- * the owner ever gets a seam.
- */
-function seamFor(
-	definition: ExtensionDefinition,
-	state: StateStore,
-	field: string,
-	ownerKey: string,
-	invocation: CommandInvocation,
-): DeclaredValueSeam {
-	return declaredValueSeam(definition, state, field, {
-		ownerKey,
-		markers: invocation.markers,
-		persist: values => invocation.persist(values),
-	});
 }
 
 /**
@@ -72,13 +48,17 @@ function seamFor(
  */
 export function runCommandToggle(
 	definition: ExtensionDefinition,
-	command: CommandToggleDeclaration,
 	state: StateStore,
 	invocation: CommandInvocation,
 ): void {
 	if (invocation.owner.kind !== "owner") return;
 
-	const seam = seamFor(definition, state, command.state, invocation.owner.key, invocation);
+	const ownerKey = invocation.owner.key;
+	const seam = state.writer({
+		ownerKey,
+		persist: values => invocation.persist(values),
+		publishMarker: () => publishMarkerOnTransition(definition, ownerKey, invocation.markers),
+	});
 	const next = !seam.read();
 
 	seam.write(next);
@@ -129,7 +109,6 @@ export function parseDirectedArgument(argument: string | undefined): DirectedDir
  */
 export function runCommandDirected(
 	definition: ExtensionDefinition,
-	command: CommandDirectedDeclaration,
 	state: StateStore,
 	invocation: CommandInvocation,
 	implementation: DirectedCommandImplementation,
@@ -143,15 +122,15 @@ export function runCommandDirected(
 	// so a later write is indistinguishable from one made inside the delivery.
 	const target = {
 		ownerKey,
-		markers: invocation.markers,
+		publishMarker: () => publishMarkerOnTransition(definition, ownerKey, invocation.markers),
 		persist: (values: StateValues) => invocation.persist(values),
 		feedback: invocation.feedback,
 	};
 
 	const delivery: CommandDelivery = {
 		...invocation,
-		state: declaredValueSeam(definition, state, command.state, target),
-		capability: retainedCapability(definition, state, command.state, target),
+		state: state.writer(target),
+		capability: state.capability(target),
 	};
 
 	const directive = parseDirectedArgument(invocation.args);

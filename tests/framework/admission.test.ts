@@ -33,6 +33,7 @@ import * as frameworkOmp from "../../framework/adapters/omp";
 import { bindExtension } from "../../framework/behaviors/binding";
 import { type DeclarableRequiredSemantic, type RequiredSemantic } from "../../framework/core/admission";
 import { getConfig } from "../../framework/core/config";
+import { activationField, statePersistence } from "../../framework/core/definition";
 import type {
 	AgentRuntimePort,
 	BindingResult,
@@ -124,13 +125,19 @@ function testAdapter(): TestAdapter {
 			registrations.push(`command:${command.name}`);
 		},
 	};
-	const state = new StateStore();
+	// This adapter is one assembly: the store takes the declaration rules of the definition
+	// its first binding names, resolved the way a deployed assembly resolves them.
+	let state: StateStore | undefined;
 
 	return {
 		registrations,
 		diagnostics,
 		feedback,
 		bind(definition, facts) {
+			state ??= new StateStore({
+				field: activationField(definition),
+				persistence: statePersistence(definition),
+			});
 			return bindExtension(definition, port, state, {
 				facts: {
 					version: facts.version,

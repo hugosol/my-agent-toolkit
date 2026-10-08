@@ -20,14 +20,13 @@
  * above is unaffected: it runs for every delivery the adapter resolves and already owns nothing
  * in a session that is not its own owner.
  *
- * This module is agent-runtime-independent: it reads and writes State through the session
- * behavior and calls the transports an adapter supplied, and names no native API.
+ * This module is agent-runtime-independent: State owns reconciliation and capabilities,
+ * while this module owns handler dispatch and its feedback lifetime.
  */
-import { activationField, type ExtensionDefinition } from "../core/definition";
+import type { ExtensionDefinition } from "../core/definition";
 import type { SessionDelivery, SessionEventDelivery, SessionEventHandlers } from "../core/protocol";
 import type { StateStore } from "../core/state";
-import { retainedCapability } from "./capability";
-import { reconcileSession } from "./session";
+import { publishMarkerOnTransition } from "./marker";
 
 /**
  * Applies one semantic session event: the framework's behavior, then the subscribed handler.
@@ -49,7 +48,12 @@ export function dispatchSessionEvent(
 	handlers: SessionEventHandlers,
 	reportFailure: (message: string) => void,
 ): void {
-	reconcileSession(definition, state, session);
+	state.reconcile({
+		owner: session.owner,
+		event: session.event,
+		statePayloads: session.statePayloads,
+		publishMarker: ownerKey => publishMarkerOnTransition(definition, ownerKey, session.markers),
+	});
 
 	// Owner scope gates the subscription, and only the subscription: the framework's behavior
 	// above ran for this delivery whatever the session is. A session that is not its own owner
@@ -60,6 +64,7 @@ export function dispatchSessionEvent(
 	const handler = handlers[session.event.kind];
 	if (handler === undefined) return;
 
+	const ownerKey = session.owner.key;
 	let dispatched = true;
 	const delivery: SessionEventDelivery = {
 		event: session.event,
@@ -70,9 +75,9 @@ export function dispatchSessionEvent(
 				if (dispatched) session.feedback.notify(level, message);
 			},
 		},
-		capability: retainedCapability(definition, state, activationField(definition), {
-			ownerKey: session.owner.key,
-			markers: session.markers,
+		capability: state.capability({
+			ownerKey,
+			publishMarker: () => publishMarkerOnTransition(definition, ownerKey, session.markers),
 			persist: values => session.persist(values),
 			feedback: session.feedback,
 		}),

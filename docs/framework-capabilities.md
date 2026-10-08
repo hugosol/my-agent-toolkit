@@ -433,7 +433,7 @@ to one stderr line when the session has no UI ([`omp.ts#L546`](../framework/adap
 | `CommandInvocation` | [`protocol.ts#L511`](../framework/core/protocol.ts#L511) | One command invocation's facts: the argument text, the owner, whether the session has a UI (`hasUI`), the idle query (`canAcceptInput`), and the feedback, persistence and marker transports. |
 | `CommandDelivery` | [`protocol.ts#L566`](../framework/core/protocol.ts#L566) | The invocation a handler receives: those facts plus the declared-value seam it writes through and the owner-scoped capability it may retain. |
 | `SessionDelivery` | [`protocol.ts#L126`](../framework/core/protocol.ts#L126) | The facts one semantic session event carries: the event itself, the owner the event concerns (the session being entered on a start, the one being left on an end), the target branch's persisted payloads, the persistence medium a retained capability records through, the same `hasUI` fact and feedback transport a command delivery carries, the framework's own notice transport, and the transport the boundary's marker-area update is published through. |
-| `DeclaredValueSeam` | [`protocol.ts#L398`](../framework/core/protocol.ts#L398) | `{ read(): boolean; write(value: boolean): void }` — the extension's declared value for one owner. A handler owns the write: the framework writes nothing on its behalf, records each write best-effort where the field persists there (a `memory` field is never recorded), and republishes the framework-owned marker area after every write (so `false` clears the extension's line). |
+| `DeclaredValueSeam` | [`protocol.ts#L398`](../framework/core/protocol.ts#L398) | `{ read(): boolean; write(value: boolean): void }` — the extension's declared value for one owner. A handler owns the write: the framework writes nothing on its behalf, records each write best-effort where the field persists there (a `memory` field is never recorded), and republishes the framework-owned marker area after every write (so `false` clears the extension's line). Writes are not deduplicated — a repeated write of the same value records and republishes again — and the seam and a retained capability reach that one write implementation through `StateStore.writer` ([`framework/core/state.ts`](../framework/core/state.ts); see [State module](#state-module)). |
 
 ## Owner-scoped effect capabilities
 
@@ -448,12 +448,13 @@ authorized it.
 
 | Member | Source | Meaning |
 | --- | --- | --- |
-| `OwnerCapabilityHandle.state` | [`protocol.ts#L432`](../framework/core/protocol.ts#L432), [`#L398`](../framework/core/protocol.ts#L398) | The owner's declared-value seam: `read()` observes the value the owner's cell holds, `write(value)` is the one write path (`DeclaredValueSeam`) — the new value becomes current, is recorded best-effort in the owner's medium where the field persists there, and the marker area is republished. |
+| `OwnerCapabilityHandle.state` | [`protocol.ts#L432`](../framework/core/protocol.ts#L432), [`#L398`](../framework/core/protocol.ts#L398) | The owner's declared-value seam: `read()` is ungated — a handle kept past its owner's life still observes the current value, never a frozen copy — while `write(value)` is the one write path (`DeclaredValueSeam`) and works only while that life is open: the new value becomes current, is recorded best-effort in the owner's medium where the field persists there, and the marker area is republished. |
 | `OwnerCapabilityHandle.feedback` | [`protocol.ts#L432`](../framework/core/protocol.ts#L432), [`#L111`](../framework/core/protocol.ts#L111) | The owner's unified extension feedback channel (`FeedbackTransport`), so a failure the background effect observes still reaches the operator at the severity the extension chose. |
 
 **The capability is valid for its owner's life and no longer.** The framework's own behavior runs before any
 handler sees a session event, so the boundary that ends an owner has already retired that owner's cell by the
-time a handler observes it: a capability retained earlier is inert from then on. A write is dropped before it
+time a handler observes it: a capability retained earlier is inert from then on (a later start opens the
+owner's life again for newly minted handles only — it never revives an old one). A write is dropped before it
 can record a value, attempt persistence or republish the marker area — a late callback can never recreate the
 retired cell — and feedback is dropped before it reaches the operator, so a session that is gone is not spoken
 for. A capability retained by a `session_end` delivery is inert from birth, because that owner ended before the
@@ -467,6 +468,24 @@ the dispatch ends — a timer that kept that channel instead of the capability i
 are not interchangeable: the channel reports this boundary, the capability acts for the owner that retained it.
 Both are exercised at the adapter contract in `tests/framework/owner-capability.test.ts`, and the additive
 architecture decision is [ADR 0002](adr/0002-semantic-extension-framework.md#owner-scoped-effect-capabilities-additive-connect-bot-migration-decision-07).
+
+## State module
+
+Every State value, owner life, declared-value write and session-boundary restoration is implemented by
+one framework-internal module, [`framework/core/state.ts`](../framework/core/state.ts) — the separately
+named declared-value, capability and session behaviors are its implementation detail, not modules of
+their own. An extension never names it: the authoring surface is unchanged. The decision that shaped it,
+with the behavior it must preserve, is
+[ADR 0002](adr/0002-semantic-extension-framework.md#one-state-module-for-value-life-writes-and-restoration-constrained-refactor).
+
+| Member | Meaning |
+| --- | --- |
+| `StateRules` | The State one store serves: `{ field, persistence }`, exactly the pair an assembly resolves from the definition through `activationField` ([`definition.ts#L255`](../framework/core/definition.ts#L255)) and `statePersistence` ([`definition.ts#L260`](../framework/core/definition.ts#L260)). The constructor requires it: a store knows its field and persistence and holds no definition. |
+| `new StateStore(rules)` | One store per `ompAdapter` factory call ([`omp.ts#L848`](../framework/adapters/omp.ts#L848)), shared by every session binding of that extension — not a process-global registry keyed by definition id. |
+| `view(ownerKey)` | The read surface, unchanged: `read(field)` is the owner's current value, or the declared default when unset. |
+| `writer(target)` | The declared-value seam of one delivery (`StateWriteTarget`: `ownerKey`, `persist(values)`, `publishMarker()`), ungated: the value is set first, then recorded best-effort where the field persists (`memory` is never recorded), then the marker area is published. A repeated write of the same value is not deduplicated. |
+| `capability(target)` | The owner-scoped handle (`StateCapabilityTarget` adds `feedback`): `read` is ungated — a handle kept from an earlier life still reads the current value — while `write` and `feedback` work only while its owner's life is open. A handle minted after that life ended is inert from birth; a later start opens a life for newly minted handles and never revives an old one. |
+| `reconcile(change)` | One session boundary (`StateSessionChange`: `owner`, `event`, `statePayloads`, `publishMarker(ownerKey)`): a delivery that is not its own owner is ignored; an end drops the cell then revokes capabilities, publishing only for `disposed`; a start opens the life, seeds a `session-entry` field from the last payload when it declares the field as a boolean (otherwise the declared default) and never seeds `memory`, then publishes. |
 
 ## Maintaining this index
 

@@ -258,7 +258,7 @@ export function bindExtension(
 					port.registerCommand({
 						name: command.name,
 						description: command.description,
-						run: invocation => runCommandToggle(definition, command, state, invocation),
+						run: invocation => runCommandToggle(definition, state, invocation),
 					});
 					break;
 				case "directed": {
@@ -271,7 +271,7 @@ export function bindExtension(
 						name: command.name,
 						description: command.description,
 						run: invocation =>
-							runCommandDirected(definition, command, state, invocation, implementation),
+							runCommandDirected(definition, state, invocation, implementation),
 					});
 					break;
 				}

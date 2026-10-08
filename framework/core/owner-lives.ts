@@ -12,10 +12,11 @@
  * Ending a life is also what makes the gap that follows it meaningful. A `session_end` delivery
  * mints a capability for an owner the framework has already retired, and a capability that
  * reported itself live there would be a way to recreate the very cell the session that could own
- * it has just lost; so a capability retained while no life is open is inert from birth, and only
- * the start that enters the owner again opens one that works.
+ * it has just lost; so a capability retained after that life ended is inert from birth, and
+ * only the start that enters the owner again opens one that works. An owner not yet seen by
+ * a session event can retain a capability, preserving commands delivered before the first start.
  *
- * This module is agent-runtime-independent: it names no native API.
+ * This is StateStore's private composition: no caller pairs its operations with cell writes.
  */
 
 export class OwnerLives {
