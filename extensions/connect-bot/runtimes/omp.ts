@@ -33,7 +33,7 @@ import {
 import { createConnectBotCommand } from "../command";
 import { CONNECT_BOT } from "../definition";
 import type { ManagedTimers } from "../managed-timer";
-import { endSession } from "../session-end";
+import { PanelRegistrations } from "../registration";
 import type { SessionFacts } from "../session";
 import { applyRoundEdge } from "../state-machine";
 
@@ -180,6 +180,9 @@ function observeSessionContext(pi: OmpExtensionApi): {
 export default function connectBot(pi: OmpExtensionApi): void {
 	installPushTransport(platformTransport);
 	const observed = observeSessionContext(pi);
+	// One registration lifecycle per binding: the command path and the session-end path must see
+	// the same attempts, or a boundary could stop effects an in-flight register is about to create.
+	const registrations = new PanelRegistrations();
 	ompAdapter(CONNECT_BOT, {
 		// Where the framework resolves the definition's relative configuration path: the
 		// repository this assembly's own module lives in, so the extension's declared
@@ -198,15 +201,18 @@ export default function connectBot(pi: OmpExtensionApi): void {
 		events: {
 			// The session leaving: the one boundary this extension acts on. A start needs no handler —
 			// the session taking over starts unarmed, which is what "not armed" already means.
-			session_end: endSession,
+			session_end: delivery => registrations.ownerEnded(delivery),
 			round_start: delivery => applyRoundEdge(delivery.owner, "round_start"),
 			round_end: delivery => applyRoundEdge(delivery.owner, "round_end"),
 		},
 		actions: {
-			"connect-bot": createConnectBotCommand({
-				sessionFacts: () => sessionFactsOf(observed.current()),
-				managedTimers: () => managedTimersOf(observed.current()),
-			}),
+			"connect-bot": createConnectBotCommand(
+				{
+					sessionFacts: () => sessionFactsOf(observed.current()),
+					managedTimers: () => managedTimersOf(observed.current()),
+				},
+				registrations,
+			),
 		},
 	})(observed.api);
 }

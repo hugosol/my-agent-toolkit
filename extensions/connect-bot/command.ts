@@ -20,11 +20,10 @@
  * this module names no agent runtime and reaches no native API.
  */
 import type { CommandDelivery, DirectedCommandImplementation, RecognizedDirective } from "../../framework/core/protocol";
-import { arm } from "./arm";
 import { publishFeedback } from "./feedback";
 import { commandGate } from "./guard";
-import { off } from "./off";
 import type { ManagedTimers } from "./managed-timer";
+import type { PanelRegistrations } from "./registration";
 import type { SessionFacts } from "./session";
 
 /** What this command needs from the runtime assembly that assembled it. */
@@ -65,7 +64,10 @@ export interface ConnectBotRuntime {
  * operator reads: no state is written, no request is sent and no record is touched, so a
  * mistyped argument can never disturb a connection that is already in place.
  */
-export function createConnectBotCommand(runtime: ConnectBotRuntime): DirectedCommandImplementation {
+export function createConnectBotCommand(
+	runtime: ConnectBotRuntime,
+	registrations: PanelRegistrations,
+): DirectedCommandImplementation {
 	return {
 		run(directive: RecognizedDirective, delivery: CommandDelivery): void {
 			const gate = commandGate(delivery);
@@ -80,12 +82,14 @@ export function createConnectBotCommand(runtime: ConnectBotRuntime): DirectedCom
 			}
 
 			if (directive.kind === "deactivate") {
-				void off(delivery, gate.ownerKey);
+				registrations.deactivate(delivery, gate.ownerKey);
 				return;
 			}
 			// Both runtime facts are read here, inside the invocation: the timer surface belongs to
-			// the context this run is driving, and the arm effect schedules the heartbeat on it.
-			void arm(delivery, gate.ownerKey, runtime.sessionFacts(), runtime.managedTimers());
+			// the context this run is driving, and the register attempt schedules the heartbeat on
+			// it. Reading them here also keeps them tied to the command the operator issued, even
+			// when the attempt waits behind another one for the same owner.
+			registrations.activate(delivery, gate.ownerKey, runtime.sessionFacts(), runtime.managedTimers());
 		},
 		unrecognized(argument: string, delivery: CommandDelivery): void {
 			const gate = commandGate(delivery);

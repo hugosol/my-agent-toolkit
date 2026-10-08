@@ -64,7 +64,7 @@ const extensionFiles = sourceFilesUnder(EXTENSION_ROOT);
 describe("the extension registers no native session hook of its own (E14, P35)", () => {
 	test("the extension has source to check", () => {
 		// The scan is only meaningful while it has subjects: the extension's own modules are here.
-		expect(extensionFiles).toContain(`${EXTENSION_ROOT}/session-end.ts`);
+		expect(extensionFiles).toContain(`${EXTENSION_ROOT}/registration.ts`);
 		expect(extensionFiles).toContain(`${EXTENSION_ROOT}/runtimes/omp.ts`);
 		expect(extensionFiles.length).toBeGreaterThan(5);
 	});
@@ -82,8 +82,8 @@ describe("the extension registers no native session hook of its own (E14, P35)",
 	test("the semantic axis really is what this extension reacts to, so the scan has a subject", () => {
 		const assembly = codeOf(`${EXTENSION_ROOT}/runtimes/omp.ts`);
 		// The session the boundary ends, subscribed by its framework kind: the session this extension
-		// armed, wound down when another identity takes its place.
-		expect(assembly).toMatch(/session_end:\s*endSession\b/);
+		// armed, wound down through the registration module when another identity takes its place.
+		expect(assembly).toMatch(/session_end:\s*delivery\s*=>\s*registrations\.ownerEnded\b/);
 		expect(assembly).toMatch(/"session-lifecycle-events"/);
 	});
 

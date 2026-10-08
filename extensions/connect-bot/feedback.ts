@@ -46,6 +46,7 @@ export interface ExtensionFeedback {
 export type FeedbackInput =
 	| { readonly trigger: "arm"; readonly register: { readonly onlineCount: number } | undefined }
 	| { readonly trigger: "off"; readonly enabledBefore: boolean; readonly panelAnswered: boolean }
+	| { readonly trigger: "disconnecting" }
 	| {
 			readonly trigger: "session-end";
 			readonly reason: SessionEndReason;
@@ -80,6 +81,11 @@ export function selectFeedback(input: FeedbackInput): ExtensionFeedback | undefi
 			return input.panelAnswered
 				? { level: "info", message: "已断开 omp-bot 面板" }
 				: { level: "error", message: "omp-bot 面板未响应" };
+
+		case "disconnecting":
+			// K: a new activation arrived while the unregister the operator asked for is still on
+			// the wire. It is not queued; the operator can run the command again once it settles.
+			return { level: "error", message: "正在断开 omp-bot 面板，请稍后重试" };
 
 		case "session-end":
 			// G: another identity took this session's place, so the connection it held is gone and a

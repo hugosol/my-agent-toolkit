@@ -101,6 +101,14 @@ const ROWS: readonly Row[] = [
 		input: { trigger: "subagent" },
 		says: undefined,
 	},
+	{
+		// The one row the registration deepening adds: an activation refused while the unregister
+		// the operator asked for is still on the wire. It is a refusal with words and no state.
+		letter: "K",
+		label: "a new activation while the requested unregister is still in flight",
+		input: { trigger: "disconnecting" },
+		says: { level: "error", message: "正在断开 omp-bot 面板，请稍后重试" },
+	},
 ];
 
 /** The inputs the table answers with nothing, and why each of them is silent. */
