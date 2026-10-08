@@ -42,15 +42,27 @@ my-agent-toolkit/
 
   extensions/                   # Independent extension implementations
     codebase-tools/
-      definition.ts
-      logic.ts
-      prompts.ts
+      definition.ts             # The declaration shared by every agent-runtime assembly
+      shared-logic/             # Agent-runtime-independent shared logic (everything outside runtimes/)
+        prompts.ts
+        prompts/
+          init.md
+          reminder.md
       runtimes/
         pi.ts                   # Agent-runtime assembly and agent-runtime-specific implementation
         omp.ts
+    connect-bot/
+      definition.ts
+      config.yaml
+      shared-logic/             # Grouped by concept: panel/, session/, command/ (plus shared seams)
+        panel/
+        session/
+        command/
+      runtimes/
+        omp.ts
     model-cost/
       definition.ts
-      logic.ts
+      shared-logic/
       runtimes/
         pi.ts
         omp.ts
@@ -66,7 +78,7 @@ my-agent-toolkit/
   package.json                  # Shared third-party dependency declarations
 ```
 
-The named extensions illustrate the layout, not completed migrations or certified agent-runtime support. Split agent-runtime-specific files into subdirectories when their implementation needs it; do not create unused files merely to match the diagram. In the first release only codebase-tools is migrated, only its OMP assembly is implemented, its shared logic lives in the framework core/behaviors rather than a separate extension logic file, and the pi adapter and the model-cost migration are deferred.
+The named extensions illustrate the layout, not completed migrations or certified agent-runtime support. An extension's agent-runtime-independent code lives under `shared-logic/`, grouped by concept when it is large enough to need it; `runtimes/` holds the agent-runtime assemblies and is the only native access; `definition.ts`, `config.yaml` and the extension's own docs stay at its root. Do not create unused files merely to match the diagram. In the first release only codebase-tools and connect-bot are migrated, only their OMP assemblies are implemented, codebase-tools' behavior is declared in its definition rather than a large logic file, and the pi adapter and the model-cost migration are deferred.
 
 ### Agent-runtime loading and source dependencies
 
@@ -98,7 +110,7 @@ The shared/native split above is enforced mechanically by [`tests/framework/impo
 
 - **Escape hatch** — `framework/adapters/**` and `extensions/<id>/runtimes/**`. Native access is permitted here and nowhere else.
 - **Discovery entrypoint** — every module under `entrypoints/`. Each is a single re-export of its extension's runtime assembly and nothing else, so reaching the escape hatch is what it is for, and the entrypoint assertion governs it.
-- **Shared source** — everything else: the framework tree outside `adapters/`, and every extension module outside its `runtimes/`.
+- **Shared source** — everything else: the framework tree outside `adapters/`, and every extension module outside its `runtimes/` (conventionally under the extension's `shared-logic/`).
 
 No module outside the escape hatch may **name** an agent-runtime package (`@oh-my-pi/*`, `@earendil-works/*`) — an import, a dynamic import and an ambient `declare module` alike — and shared source may in addition not reach an escape-hatch module by relative import. The agent-runtime package's ambient declaration therefore sits with the adapter (`framework/adapters/modules.d.ts`), beside the code allowed to import it.
 

@@ -22,10 +22,10 @@ import {
 	type PushTransport,
 	EVENTS_PATH,
 	setPushTransportForTest,
-} from "../../extensions/connect-bot/client";
+} from "../../extensions/connect-bot/shared-logic/panel/client";
 import { CONNECT_BOT } from "../../extensions/connect-bot/definition";
 import connectBot from "../../extensions/connect-bot/runtimes/omp";
-import { botSessions } from "../../extensions/connect-bot/session";
+import { botSessions } from "../../extensions/connect-bot/shared-logic/session/session";
 import { type OmpDouble, ompDouble } from "./support/omp-double";
 
 /** The endpoint the extension's own `config.yaml` ships; the file is the only source. */

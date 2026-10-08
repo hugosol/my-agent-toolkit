@@ -17,7 +17,7 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import * as path from "node:path";
-import { type FeedbackInput, selectFeedback } from "../../extensions/connect-bot/feedback";
+import { type FeedbackInput, selectFeedback } from "../../extensions/connect-bot/shared-logic/feedback";
 import { REPO_ROOT } from "../harness/baseline";
 
 /** What one trigger says: a text at a severity, or nothing at all. */
@@ -157,7 +157,7 @@ describe("no status code decides a sentence (P37)", () => {
 		// reachable at all, whether it registered this session, what the budget made of a push. A
 		// number appearing here would be a second vocabulary for the same outcome, and the wire
 		// client's own reading of `200`/`404` would have leaked into wording.
-		const code = readFileSync(path.join(REPO_ROOT, "extensions/connect-bot/feedback.ts"), "utf8")
+		const code = readFileSync(path.join(REPO_ROOT, "extensions/connect-bot/shared-logic/feedback.ts"), "utf8")
 			.replace(/\/\*[\s\S]*?\*\//g, "")
 			.replace(/^\s*\/\/.*$/gm, "");
 		expect(code).not.toMatch(/\bstatus\b/);

@@ -12,11 +12,11 @@
  * The facts themselves are read natively by the extension's runtime assembly and injected here
  * as plain data: this module names no agent runtime and reaches no native API.
  */
-import type { OwnerCapabilityHandle } from "../../framework/core/protocol";
+import type { OwnerCapabilityHandle } from "../../../../framework/core/protocol";
 import type { AgentState } from "./agent-state";
-import type { ConnectionHealth } from "./failure-budget";
-import type { TimerCancel } from "./managed-timer";
-import type { OutboxFlusher } from "./outbox";
+import type { ConnectionHealth } from "../panel/failure-budget";
+import type { TimerCancel } from "../managed-timer";
+import type { OutboxFlusher } from "../panel/outbox";
 
 /**
  * The facts of the session being served, as the runtime assembly reads them natively.

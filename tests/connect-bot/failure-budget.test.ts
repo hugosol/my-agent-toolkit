@@ -26,9 +26,9 @@ import {
 	type PushHttpResponse,
 	type PushTransport,
 	setPushTransportForTest,
-} from "../../extensions/connect-bot/client";
+} from "../../extensions/connect-bot/shared-logic/panel/client";
 import { CONNECT_BOT } from "../../extensions/connect-bot/definition";
-import { botSessions } from "../../extensions/connect-bot/session";
+import { botSessions } from "../../extensions/connect-bot/shared-logic/session/session";
 import connectBot from "../../extensions/connect-bot/runtimes/omp";
 import { readConfig } from "../../framework/core/config";
 import { REPO_ROOT } from "../harness/baseline";

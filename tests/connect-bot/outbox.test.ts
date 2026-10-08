@@ -9,8 +9,8 @@
  * queue is observed at the extension seam in `heartbeat.test.ts`.
  */
 import { describe, expect, test } from "bun:test";
-import type { PushEnvelope, PushOutcome } from "../../extensions/connect-bot/client";
-import { OUTBOX_LIMIT, Outbox, OutboxFlusher } from "../../extensions/connect-bot/outbox";
+import type { PushEnvelope, PushOutcome } from "../../extensions/connect-bot/shared-logic/panel/client";
+import { OUTBOX_LIMIT, Outbox, OutboxFlusher } from "../../extensions/connect-bot/shared-logic/panel/outbox";
 
 /** The queue's bound, as the contract fixes it. */
 const LIMIT = 16;

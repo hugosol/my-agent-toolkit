@@ -19,9 +19,9 @@ import {
 	type PushTransport,
 	EVENTS_PATH,
 	setPushTransportForTest,
-} from "../../extensions/connect-bot/client";
-import { connectBotConfig } from "../../extensions/connect-bot/config";
-import { botSessions } from "../../extensions/connect-bot/session";
+} from "../../extensions/connect-bot/shared-logic/panel/client";
+import { connectBotConfig } from "../../extensions/connect-bot/shared-logic/panel/config";
+import { botSessions } from "../../extensions/connect-bot/shared-logic/session/session";
 import connectBot from "../../extensions/connect-bot/runtimes/omp";
 import { type OmpDouble, ompDouble } from "./support/omp-double";
 

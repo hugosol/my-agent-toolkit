@@ -48,7 +48,7 @@ const sharedFiles = sourceFiles.filter(file => !file.startsWith(RUNTIME_DIRECTOR
 
 describe("only the OMP assembly reaches the native timer (P39)", () => {
 	test("the extension has both a shared source and an assembly to tell apart", () => {
-		expect(sharedFiles).toContain(`${EXTENSION_ROOT}/heartbeat.ts`);
+		expect(sharedFiles).toContain(`${EXTENSION_ROOT}/shared-logic/panel/heartbeat.ts`);
 		expect(sourceFiles).toContain(`${EXTENSION_ROOT}/runtimes/omp.ts`);
 	});
 

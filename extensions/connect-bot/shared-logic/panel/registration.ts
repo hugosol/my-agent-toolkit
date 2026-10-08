@@ -25,17 +25,17 @@ import type {
 	FeedbackTransport,
 	OwnerCapabilityHandle,
 	SessionEventDelivery,
-} from "../../framework/core/protocol";
+} from "../../../../framework/core/protocol";
 import { pushEvent, readRegisterOutcome, type PushEnvelope } from "./client";
 import { connectBotConfig } from "./config";
 import { disarmLocally } from "./disarm";
 import { initialHealth, pushResultObserver, resetHealth } from "./failure-budget";
-import { publishFeedback } from "./feedback";
+import { publishFeedback } from "../feedback";
 import { startHeartbeat } from "./heartbeat";
-import type { ManagedTimers } from "./managed-timer";
+import type { ManagedTimers } from "../managed-timer";
 import { Outbox, OutboxFlusher } from "./outbox";
-import { botSessions, type SessionFacts, stopLocalEffects } from "./session";
-import { reportState } from "./state-machine";
+import { botSessions, type SessionFacts, stopLocalEffects } from "../session/session";
+import { reportState } from "../session/state-machine";
 
 /**
  * The register body: the session facts the panel's session view renders beyond the envelope's

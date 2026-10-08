@@ -64,7 +64,7 @@ const extensionFiles = sourceFilesUnder(EXTENSION_ROOT);
 describe("the extension registers no native session hook of its own (E14, P35)", () => {
 	test("the extension has source to check", () => {
 		// The scan is only meaningful while it has subjects: the extension's own modules are here.
-		expect(extensionFiles).toContain(`${EXTENSION_ROOT}/registration.ts`);
+		expect(extensionFiles).toContain(`${EXTENSION_ROOT}/shared-logic/panel/registration.ts`);
 		expect(extensionFiles).toContain(`${EXTENSION_ROOT}/runtimes/omp.ts`);
 		expect(extensionFiles.length).toBeGreaterThan(5);
 	});

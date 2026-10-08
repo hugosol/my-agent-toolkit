@@ -19,8 +19,8 @@
  * that callback retained. Both are the same declared-value write path, so what ends a connection
  * is one function either way.
  */
-import type { DeclaredValueSeam } from "../../framework/core/protocol";
-import { stopLocalEffects } from "./session";
+import type { DeclaredValueSeam } from "../../../../framework/core/protocol";
+import { stopLocalEffects } from "../session/session";
 
 /**
  * End one owner's connection locally: stop this extension's effects for it, then clear the

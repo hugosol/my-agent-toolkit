@@ -29,13 +29,13 @@ import {
 	type PushHttpResponse,
 	type PushTransport,
 	installPushTransport,
-} from "../client";
-import { createConnectBotCommand } from "../command";
+} from "../shared-logic/panel/client";
+import { createConnectBotCommand } from "../shared-logic/command/command";
 import { CONNECT_BOT } from "../definition";
-import type { ManagedTimers } from "../managed-timer";
-import { PanelRegistrations } from "../registration";
-import type { SessionFacts } from "../session";
-import { applyRoundEdge } from "../state-machine";
+import type { ManagedTimers } from "../shared-logic/managed-timer";
+import { PanelRegistrations } from "../shared-logic/panel/registration";
+import type { SessionFacts } from "../shared-logic/session/session";
+import { applyRoundEdge } from "../shared-logic/session/state-machine";
 
 /**
  * The extension repository this assembly belongs to: `runtimes/omp.ts` -> `runtimes` -> the

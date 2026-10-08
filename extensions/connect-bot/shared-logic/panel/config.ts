@@ -6,8 +6,8 @@
  * default and no fallback here. Asking before a binding validated the file is a misuse of the
  * extension, and the framework's own configuration error says so.
  */
-import { getConfig } from "../../framework/core/config";
-import { CONNECT_BOT } from "./definition";
+import { getConfig } from "../../../../framework/core/config";
+import { CONNECT_BOT } from "../../definition";
 
 /** The configuration connect-bot's protocol is driven by. */
 export interface ConnectBotConfig {

@@ -24,8 +24,8 @@ import {
 	type PushTransport,
 	EVENTS_PATH,
 	setPushTransportForTest,
-} from "../../extensions/connect-bot/client";
-import { connectBotConfig } from "../../extensions/connect-bot/config";
+} from "../../extensions/connect-bot/shared-logic/panel/client";
+import { connectBotConfig } from "../../extensions/connect-bot/shared-logic/panel/config";
 import { CONNECT_BOT } from "../../extensions/connect-bot/definition";
 import connectBot from "../../entrypoints/omp/connect-bot";
 import { getConfig, readConfig } from "../../framework/core/config";

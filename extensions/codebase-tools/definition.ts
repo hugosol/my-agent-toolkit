@@ -14,7 +14,7 @@
  * `none` by default, so the opt-in is declared here rather than implied.
  */
 import { defineExtension } from "../../framework/public";
-import { INIT_PROMPT, REMINDER_PROMPT } from "./prompts";
+import { INIT_PROMPT, REMINDER_PROMPT } from "./shared-logic/prompts";
 
 export const CODEBASE_TOOLS = defineExtension({
 	id: "codebase-tools",

@@ -22,11 +22,11 @@
  * baseline counted — while the notice and the stop around it are the extension's own effects.
  * This module names no agent runtime and reaches no native API.
  */
-import type { OwnerCapabilityHandle } from "../../framework/core/protocol";
+import type { OwnerCapabilityHandle } from "../../../../framework/core/protocol";
 import { disarmLocally } from "./disarm";
-import { publishFeedback } from "./feedback";
+import { publishFeedback } from "../feedback";
 import type { PushResultObserver, SettledPush } from "./outbox";
-import { botSessions } from "./session";
+import { botSessions } from "../session/session";
 
 /** Consecutive failures that end a connection: three beats, ≈30s of silence from the panel. */
 export const MAX_CONSECUTIVE_FAILURES = 3;

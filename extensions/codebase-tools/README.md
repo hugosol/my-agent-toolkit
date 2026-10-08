@@ -1,8 +1,8 @@
 # codeBaseTools
 
 Routes the agent's code exploration toward the codebase-memory-mcp graph and LSP, controlled by
-`/codebase-tools`. The declaration is [`definition.ts`](definition.ts), its shared prompts are in
-[`prompts.ts`](prompts.ts), and its OMP assembly is [`runtimes/omp.ts`](runtimes/omp.ts).
+`/codebase-tools`. The declaration is [`definition.ts`](definition.ts), its shared prompts are
+under [`shared-logic/`](shared-logic), and its OMP assembly is [`runtimes/omp.ts`](runtimes/omp.ts).
 
 ## H1 — interactive TUI acceptance (visual)
 

@@ -19,12 +19,12 @@
  * The session facts it sends are read by the runtime assembly and injected as plain data, so
  * this module names no agent runtime and reaches no native API.
  */
-import type { CommandDelivery, DirectedCommandImplementation, RecognizedDirective } from "../../framework/core/protocol";
-import { publishFeedback } from "./feedback";
+import type { CommandDelivery, DirectedCommandImplementation, RecognizedDirective } from "../../../../framework/core/protocol";
+import { publishFeedback } from "../feedback";
 import { commandGate } from "./guard";
-import type { ManagedTimers } from "./managed-timer";
-import type { PanelRegistrations } from "./registration";
-import type { SessionFacts } from "./session";
+import type { ManagedTimers } from "../managed-timer";
+import type { PanelRegistrations } from "../panel/registration";
+import type { SessionFacts } from "../session/session";
 
 /** What this command needs from the runtime assembly that assembled it. */
 export interface ConnectBotRuntime {

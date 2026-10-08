@@ -48,7 +48,7 @@ const sourceFiles = sourceFilesUnder(EXTENSION_ROOT);
 describe("the extension carries no panel-side expiry (P30)", () => {
 	test("the extension has source to check", () => {
 		// The scan is only meaningful while it has subjects: the extension's own modules are here.
-		expect(sourceFiles).toContain(`${EXTENSION_ROOT}/heartbeat.ts`);
+		expect(sourceFiles).toContain(`${EXTENSION_ROOT}/shared-logic/panel/heartbeat.ts`);
 		expect(sourceFiles.length).toBeGreaterThan(5);
 	});
 

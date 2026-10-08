@@ -29,7 +29,7 @@ import { ControlledSession } from "../harness/session";
 const OMP_ENTRYPOINT_DIR = path.join(REPO_ROOT, "entrypoints", "omp");
 /** The init slot's text: the resource is the injected content, not a paraphrase of it. */
 const INIT_PROMPT = readFileSync(
-	path.join(REPO_ROOT, "extensions", "codebase-tools", "prompts", "init.md"),
+	path.join(REPO_ROOT, "extensions", "codebase-tools", "shared-logic", "prompts", "init.md"),
 	"utf8",
 );
 const COMMAND = "codebase-tools";

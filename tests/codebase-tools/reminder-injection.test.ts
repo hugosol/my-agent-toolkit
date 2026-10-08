@@ -12,7 +12,7 @@
 import { beforeAll, describe, expect, test } from "bun:test";
 import { writeFileSync } from "node:fs";
 import * as path from "node:path";
-import { INIT_PROMPT, REMINDER_PROMPT } from "../../extensions/codebase-tools/prompts";
+import { INIT_PROMPT, REMINDER_PROMPT } from "../../extensions/codebase-tools/shared-logic/prompts";
 import { type IsolatedRuntime, REPO_ROOT, ensureIsolatedRuntime, readBaselineRecord } from "../harness/baseline";
 import { type CaptureServer, type CapturedRequest, startCaptureServer } from "../harness/capture-server";
 import { FIXTURE_TREE_COMMAND, FIXTURE_TREE_ENTRY_TYPE } from "../harness/fixtures/extension-root/entrypoint";

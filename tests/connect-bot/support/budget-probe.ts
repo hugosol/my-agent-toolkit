@@ -32,14 +32,14 @@ import { writeFileSync } from "node:fs";
 import { ompAdapter } from "../../../framework/adapters/omp";
 import type { ExtensionDefinition } from "../../../framework/core/definition";
 import { CONNECT_BOT } from "../../../extensions/connect-bot/definition";
-import { connectBotConfig } from "../../../extensions/connect-bot/config";
+import { connectBotConfig } from "../../../extensions/connect-bot/shared-logic/panel/config";
 import {
 	type PushFetchInit,
 	type PushHttpResponse,
 	installPushTransport,
-} from "../../../extensions/connect-bot/client";
+} from "../../../extensions/connect-bot/shared-logic/panel/client";
 import connectBot from "../../../extensions/connect-bot/runtimes/omp";
-import { botSessions } from "../../../extensions/connect-bot/session";
+import { botSessions } from "../../../extensions/connect-bot/shared-logic/session/session";
 import type { OmpCommandContext } from "../../../framework/adapters/omp";
 import { ControlledClock } from "./controlled-clock";
 import { ompDouble, type ContextOptions, type TimerMode } from "./omp-double";

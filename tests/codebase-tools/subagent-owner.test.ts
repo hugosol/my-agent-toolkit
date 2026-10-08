@@ -16,7 +16,7 @@
 import { beforeAll, describe, expect, test } from "bun:test";
 import { writeFileSync } from "node:fs";
 import * as path from "node:path";
-import { INIT_PROMPT, REMINDER_PROMPT } from "../../extensions/codebase-tools/prompts";
+import { INIT_PROMPT, REMINDER_PROMPT } from "../../extensions/codebase-tools/shared-logic/prompts";
 import { type IsolatedRuntime, REPO_ROOT, ensureIsolatedRuntime, readBaselineRecord } from "../harness/baseline";
 import { type CaptureServer, type CaptureStep, type CapturedRequest, startCaptureServer } from "../harness/capture-server";
 import { HARNESS_CAPTURE_BASE_URL_ENV, HARNESS_MODEL_SELECTOR } from "../harness/fixtures/extension-root/provider";

@@ -12,8 +12,8 @@ import {
 	type PushFetchInit,
 	type PushTransport,
 	setPushTransportForTest,
-} from "../../extensions/connect-bot/client";
-import { botSessions } from "../../extensions/connect-bot/session";
+} from "../../extensions/connect-bot/shared-logic/panel/client";
+import { botSessions } from "../../extensions/connect-bot/shared-logic/session/session";
 import connectBot from "../../extensions/connect-bot/runtimes/omp";
 import { type OmpDouble, ompDouble } from "./support/omp-double";
 

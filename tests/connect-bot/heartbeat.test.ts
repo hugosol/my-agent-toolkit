@@ -22,11 +22,11 @@ import {
 	type PushTransport,
 	EVENTS_PATH,
 	setPushTransportForTest,
-} from "../../extensions/connect-bot/client";
+} from "../../extensions/connect-bot/shared-logic/panel/client";
 import { CONNECT_BOT } from "../../extensions/connect-bot/definition";
 import { readConfig } from "../../framework/core/config";
-import { OUTBOX_LIMIT } from "../../extensions/connect-bot/outbox";
-import { botSessions } from "../../extensions/connect-bot/session";
+import { OUTBOX_LIMIT } from "../../extensions/connect-bot/shared-logic/panel/outbox";
+import { botSessions } from "../../extensions/connect-bot/shared-logic/session/session";
 import connectBot from "../../extensions/connect-bot/runtimes/omp";
 import { REPO_ROOT } from "../harness/baseline";
 import { type OmpDouble, ompDouble } from "./support/omp-double";

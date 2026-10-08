@@ -1,8 +1,8 @@
 # connect-bot
 
 Joins an agent session to the omp-bot panel; `/connect-bot` registers the current session,
-`/connect-bot off` disconnects it. The declaration is [`definition.ts`](definition.ts), its shared
-logic lives in the extension's own modules, and its OMP assembly is
+`/connect-bot off` disconnects it. The declaration is [`definition.ts`](definition.ts), its
+agent-runtime-independent logic is under [`shared-logic/`](shared-logic), and its OMP assembly is
 [`runtimes/omp.ts`](runtimes/omp.ts).
 
 ## Configuration

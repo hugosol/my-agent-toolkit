@@ -24,8 +24,8 @@
  * the severity chosen here when the session has a UI, one stderr line when it has not, and never
  * model context. This module owns the wording alone.
  */
-import type { FeedbackLevel, FeedbackTransport, SessionEndReason } from "../../framework/core/protocol";
-import type { FailureAction } from "./failure-budget";
+import type { FeedbackLevel, FeedbackTransport, SessionEndReason } from "../../../framework/core/protocol";
+import type { FailureAction } from "./panel/failure-budget";
 
 /** One text this extension publishes, at the severity the outcome carries. */
 export interface ExtensionFeedback {

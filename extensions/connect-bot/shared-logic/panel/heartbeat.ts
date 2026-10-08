@@ -16,8 +16,8 @@
  * no record and says nothing at all.
  */
 import type { PushEnvelope } from "./client";
-import type { ManagedTimers, TimerCancel } from "./managed-timer";
-import { botSessions } from "./session";
+import type { ManagedTimers, TimerCancel } from "../managed-timer";
+import { botSessions } from "../session/session";
 
 /** The heartbeat period; the panel expires a session it has not heard from for three of them. */
 export const HEARTBEAT_INTERVAL_MS = 10_000;

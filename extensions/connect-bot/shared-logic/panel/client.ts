@@ -8,7 +8,7 @@
  * logic names no platform API, and a suite replaces the transport with a fake to observe the
  * production URL, request init and response parsing without touching `globalThis`.
  */
-import { CONNECT_BOT } from "./definition";
+import { CONNECT_BOT } from "../../definition";
 
 /** Closed kind enum of the wire contract; each kind carries its own `data` shape. */
 export type PushKind = "register" | "heartbeat" | "state" | "unregister";

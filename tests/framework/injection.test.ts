@@ -14,7 +14,7 @@ import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import * as path from "node:path";
 import { CODEBASE_TOOLS } from "../../extensions/codebase-tools/definition";
-import { INIT_PROMPT, REMINDER_PROMPT } from "../../extensions/codebase-tools/prompts";
+import { INIT_PROMPT, REMINDER_PROMPT } from "../../extensions/codebase-tools/shared-logic/prompts";
 import type {
 	OmpCommandContext,
 	OmpExtensionApi,
@@ -68,7 +68,7 @@ function persistedContribution(customType: string): OmpSessionEntry {
 
 /** One slot's Markdown resource, read from its own file as the loader's text import does. */
 function resourceText(name: "init" | "reminder"): string {
-	return readFileSync(path.join(REPO_ROOT, "extensions", "codebase-tools", "prompts", `${name}.md`), "utf8");
+	return readFileSync(path.join(REPO_ROOT, "extensions", "codebase-tools", "shared-logic", "prompts", `${name}.md`), "utf8");
 }
 
 /** Records the run hook and the effects; the loader context the double builds matches the runner. */

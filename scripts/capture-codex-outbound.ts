@@ -33,7 +33,7 @@ import {
 const MODEL = "openai-codex/gpt-6-luna";
 const COMMAND = "codebase-tools";
 const TURN_TEXT = "codex layer2 turn";
-const INIT_PROMPT = readFileSync(path.join(REPO_ROOT, "extensions", "codebase-tools", "prompts", "init.md"), "utf8");
+const INIT_PROMPT = readFileSync(path.join(REPO_ROOT, "extensions", "codebase-tools", "shared-logic", "prompts", "init.md"), "utf8");
 const OMP_ENTRYPOINT_DIR = path.join(REPO_ROOT, "entrypoints", "omp");
 const DEFAULT_ROOT = path.join(REPO_ROOT, ".cache", "codex-layer2");
 

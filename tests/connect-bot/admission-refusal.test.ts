@@ -24,7 +24,7 @@ import {
 	type PushTransport,
 	EVENTS_PATH,
 	setPushTransportForTest,
-} from "../../extensions/connect-bot/client";
+} from "../../extensions/connect-bot/shared-logic/panel/client";
 import type { OmpExtensionApi } from "../../framework/adapters/omp";
 import connectBot from "../../entrypoints/omp/connect-bot";
 import { ompDouble } from "./support/omp-double";
