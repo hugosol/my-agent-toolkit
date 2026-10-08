@@ -1,7 +1,7 @@
 /**
  * Isolated agent-state configuration files for controlled sessions.
  *
- * Two runtime behaviours cannot be reached from a session's command line, so a test
+ * Two harness behaviours cannot be reached from a session's command line, so a test
  * that needs them writes them into the run's temporary agent state instead:
  *
  * - **A provider transport override** (`models.yml` → `providers.<name>.baseUrl`).
@@ -9,7 +9,7 @@
  *   booting, before extensions load, so an extension's `registerProvider` override
  *   never reaches the model the session runs. The models file is read while the model
  *   registry is constructed, so an override written there does.
- * - **Runtime settings** (`config.yml`), such as the Codex websocket policy.
+ * - **Harness settings** (`config.yml`), such as the Codex websocket policy.
  *
  * Both files are written under the run's own `PI_CODING_AGENT_DIR`; the default agent
  * state, formal configuration and any running agent are never touched.
@@ -17,13 +17,13 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
 
-/** The transport fields this harness overrides for one built-in provider. */
+/** The transport fields this dock overrides for one built-in provider. */
 export interface IsolatedProviderOverride {
 	/** Endpoint the provider's models are redirected to. */
 	readonly baseUrl: string;
 	/**
 	 * Credential the provider resolves. Required for providers whose normal
-	 * credential comes from a login flow: without it the runtime refuses the model
+	 * credential comes from a login flow: without it the harness refuses the model
 	 * before any request is built.
 	 */
 	readonly apiKey?: string;
@@ -52,7 +52,7 @@ export function writeProviderOverride(
 
 /**
  * Write `config.yml` in the isolated agent state from flat settings whose keys are the
- * runtime's dotted setting ids (for example `providers.openaiWebsockets`).
+ * harness's dotted setting ids (for example `providers.openaiWebsockets`).
  */
 export function writeAgentSettings(
 	agentDir: string,

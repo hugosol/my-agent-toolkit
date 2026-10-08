@@ -20,7 +20,7 @@
  * above is unaffected: it runs for every delivery the adapter resolves and already owns nothing
  * in a session that is not its own owner.
  *
- * This module is agent-runtime-independent: State owns reconciliation and capabilities,
+ * This module is harness-independent: State owns reconciliation and capabilities,
  * while this module owns handler dispatch and its feedback lifetime.
  */
 import type { ExtensionDefinition } from "../core/definition";

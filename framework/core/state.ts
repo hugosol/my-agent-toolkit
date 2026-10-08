@@ -4,7 +4,7 @@
  * Callers observe values, request a delivery's writer or retained capability, and apply
  * semantic session changes. They never pair storage changes with capability revocation.
  * State accepts only its resolved declaration rules; each delivery supplies its own effects.
- * No agent-runtime context, extension definition or Marker area layout lives here.
+ * No harness context, extension definition or Marker area layout lives here.
  */
 import type { StatePersistence } from "./definition";
 import { OwnerLives } from "./owner-lives";

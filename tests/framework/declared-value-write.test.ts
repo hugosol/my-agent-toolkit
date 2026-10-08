@@ -1,8 +1,8 @@
 /**
  * Declared-value writes at the framework's adapter contract (S2; F4, ticket 03).
  *
- * The seam is the runtime-neutral one: definitions bound through `bindExtension` to the
- * port an agent runtime provides, driven by the shared port double. Everything this
+ * The seam is the harness-neutral one: definitions bound through `bindExtension` to the
+ * port a harness provides, driven by the shared port double. Everything this
  * ticket fixes is observed there — the handler runs before any write and owns the write
  * (a handler that writes nothing changes nothing, and the value State holds is the one
  * the handler wrote rather than the one the directive named), every declared-value write
@@ -19,7 +19,7 @@ import { describe, expect, test } from "bun:test";
 import { CODEBASE_TOOLS } from "../../extensions/codebase-tools/definition";
 import type { CommandActions, CommandDelivery } from "../../framework/core/protocol";
 import { type ExtensionDefinition, defineExtension } from "../../framework/public";
-import { type PortDouble, portDouble } from "./support/runtime-port-double";
+import { type PortDouble, portDouble } from "./support/harness-port-double";
 
 /** A directed extension whose whole behavior is one command plus the marker it drives. */
 function directedExtension(id: string, options: { readonly marker?: boolean } = {}): ExtensionDefinition {

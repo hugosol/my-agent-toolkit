@@ -1,5 +1,5 @@
 /**
- * codebase-tools OMP runtime assembly.
+ * codebase-tools OMP harness assembly.
  *
  * The only codebase-tools module that touches the OMP-native surface; the thin
  * entrypoint at `entrypoints/omp/codebase-tools.ts` re-exports this file's default
@@ -23,6 +23,6 @@ export default function codebaseTools(pi: OmpExtensionApi): void {
 	// channel, and this session simply runs without the extension.
 	if (!bindCodebaseTools(pi).bound) return;
 
-	// Deployment diagnostic: records which source the agent runtime actually loaded.
+	// Deployment diagnostic: records which source the harness actually loaded.
 	logger.debug("codebase-tools: OMP assembly bound", { id: CODEBASE_TOOLS.id, assembly: import.meta.url });
 }

@@ -1,32 +1,32 @@
 # Semantic Extension Framework
 
-The planned cross-agent-runtime framework: my-agent-toolkit maintains one in-repository framework source tree for replacement extensions containing semantic behaviors and pi/oh-my-pi adapters. A standalone extension generator is a possible later distribution feature, not part of the initial framework.
+The planned cross-harness framework: my-agent-toolkit maintains one in-repository framework source tree for replacement extensions containing semantic behaviors and pi/oh-my-pi adapters. A standalone extension generator is a possible later distribution feature, not part of the initial framework.
 
 ## Language
 
 **Semantic extension framework（语义扩展框架）**:
-The shared runtime foundation that owns extension behavior contracts and their mappings to supported agent runtimes.
+The shared harness foundation that owns extension behavior contracts and their mappings to supported harnesses.
 _Avoid_: standalone generated extension, copy-pasted template, native API wrapper
 
-**Agent runtime（Agent 运行时）**:
-The program that discovers and runs extensions and exposes the native capability surface they adapt to; the supported agent runtimes are `pi` and `oh-my-pi`. An agent runtime is distinct from an agent session (`ctx.agent`) and its subagents.
-_Avoid_: host (ambiguous with OS/process host), agent, platform
+**Harness（宿主）**:
+The program that discovers and runs extensions and exposes the native capability surface they adapt to; the supported harnesses are `pi` and `oh-my-pi`. A harness is distinct from an agent session (`ctx.agent`) and its subagents.
+_Avoid_: agent runtime (legacy name), host (ambiguous with OS/process host), agent, platform
 
 **Extension definition（扩展定义）**:
-The configuration and optional shared TypeScript logic describing an extension independently of a particular agent runtime.
-_Avoid_: agent-runtime-specific entrypoint, generated extension
+The configuration and optional shared TypeScript logic describing an extension independently of a particular harness.
+_Avoid_: harness-specific entrypoint, generated extension
 
 **Generated extension（生成扩展）**:
-An agent-runtime-targeted standalone extension produced from an extension definition by a potential future distribution tool, not an extension using the initial shared-source framework. A manually customized copy would be maintained independently of that definition.
+A harness-targeted standalone extension produced from an extension definition by a potential future distribution tool, not an extension using the initial shared-source framework. A manually customized copy would be maintained independently of that definition.
 _Avoid_: shared-source framework consumer, synchronized source
 
 **Semantic hook（语义钩子）**:
-A framework-defined lifecycle position where one agent-runtime-independent extension function can run across supported agent runtimes. The agent-runtime adapter identifies the corresponding native trigger and supplies the framework's semantic inputs.
+A framework-defined lifecycle position where one harness-independent extension function can run across supported harnesses. The harness adapter identifies the corresponding native trigger and supplies the framework's semantic inputs.
 _Avoid_: native event name, template text slot
 
 **Semantic lifecycle event（语义生命周期事件）**:
-A framework-defined, agent-runtime-independent lifecycle transition that an agent-runtime adapter synthesizes from that runtime's native events. The framework owns its meaning, ordering, payload and owner scope; native event names, shapes and per-runtime facts are not part of it.
-_Avoid_: native event name, raw runtime hook, phase state
+A framework-defined, harness-independent lifecycle transition that a harness adapter synthesizes from that harness's native events. The framework owns its meaning, ordering, payload and owner scope; native event names, shapes and per-harness facts are not part of it.
+_Avoid_: native event name, raw harness hook, phase state
 
 **Round（轮次）**:
 One period of agent activity, from the agent starting work on input until quiescence — no automatic work remains and it is waiting for the user. A round may contain several model-response turns and several low-level agent runs.
@@ -34,11 +34,11 @@ _Avoid_: run (a low-level execution unit), turn (one model-response cycle)
 
 **Configuration switch（配置式开关）**:
 An activation choice read at initialization whose changes do not take effect during the current run; applying a changed choice requires a restart.
-_Avoid_: runtime toggle, mode command
+_Avoid_: harness toggle, mode command
 
 **Extension configuration（扩展配置）**:
 An extension's own `config.yaml` in its source directory, read and validated by the framework at binding and exposed to the extension's shared logic; a change requires a restart. Its entries are plain configuration values and, in a future release, configuration switches.
-_Avoid_: agent-runtime settings, environment override, State, defaults embedded in code
+_Avoid_: harness settings, environment override, State, defaults embedded in code
 
 **Mode selection（模式设置）**:
 An explicit request for a named mode. Selecting an already active mode leaves it active without repeating mode-transition side effects.
@@ -89,7 +89,7 @@ The session that directly created a subagent — the immediate spawner. It may i
 _Avoid_: owner, root session, State holder
 
 **Extension storage（扩展存储）**:
-The retention mechanism for extension-owned state and business data, including in-memory values, agent-runtime-owned session entries, extension-owned files, and archives. It does not by itself determine which session or other owner a value belongs to.
+The retention mechanism for extension-owned state and business data, including in-memory values, harness-owned session entries, extension-owned files, and archives. It does not by itself determine which session or other owner a value belongs to.
 _Avoid_: session restoration, persistence (when referring only to volatile memory)
 
 **Recovery reconciliation（恢复后对齐）**:
@@ -101,7 +101,7 @@ The framework's single status region where each bound extension's marker is rend
 _Avoid_: extension-owned widget, per-extension marker key, extension-chosen placement
 
 **Extension feedback（扩展反馈）**:
-The framework's single runtime-independent channel through which an extension publishes operator-facing notices, each carrying an `info` or `error` severity; the framework maps it to a UI notification when the session has one and to stderr when it does not, and it never enters model context.
+The framework's single harness-independent channel through which an extension publishes operator-facing notices, each carrying an `info` or `error` severity; the framework maps it to a UI notification when the session has one and to stderr when it does not, and it never enters model context.
 _Avoid_: raw native notify, tool output, injected prompt, extension-owned widget
 
 **Injected prompt（注入提示词）**:
@@ -113,17 +113,23 @@ A policy under which framework-managed behavior preserves existing conversation 
 _Avoid_: identical-to-history request, cache-hit guarantee, immutable business storage
 
 **Request-only prompt（请求级临时提示词）**:
-Extension-provided content included in a model request without being added to the agent runtime's conversation history. Its placement and recurrence are separate from its non-persisted lifetime.
+Extension-provided content included in a model request without being added to the harness's conversation history. Its placement and recurrence are separate from its non-persisted lifetime.
 _Avoid_: request-only contribution (legacy name), persisted hidden message, history entry
 
-**Supported agent-runtime baseline（Agent 运行时支持基线）**:
-The declared agent-runtime versions and applicable conditions against which shared extension behaviors are supported, together with their verification status. An inspected version is not automatically a supported or runtime-verified target.
+**Supported harness baseline（Harness 支持基线）**:
+The declared harness versions and applicable conditions against which shared extension behaviors are supported, together with their verification status. An inspected version is not automatically a supported or runtime-verified target.
 _Avoid_: latest versions, universal compatibility, source version alone
 
 **Behavior library（行为库）**:
-Reusable agent-runtime-independent extension behaviors that an extension definition selects and configures.
-_Avoid_: agent-runtime API wrappers, feature-specific business logic
+Reusable harness-independent extension behaviors that an extension definition selects and configures.
+_Avoid_: harness API wrappers, feature-specific business logic
 
 **Feature template（功能模板）**:
 A reusable combination of behaviors and feature-specific logic that can produce an extension from supplied configuration.
 _Avoid_: semantic core, generated extension
+
+## Verification
+
+**Harness dock（对接坞，short `dock`）**:
+Repository-owned test infrastructure that verifies a harness. It materialises an isolated exact install of one harness version, drives it as a child process in RPC mode under an explicit-only extension set, and reads back that run's session JSONL, captured outbound requests and stderr. It is not itself a harness.
+_Avoid_: test runtime, test harness, fixture

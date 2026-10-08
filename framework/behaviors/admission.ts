@@ -14,7 +14,7 @@
  * the version decision does, and `Symbol.for` is what lets the copies agree on the key by name while
  * holding no shared module identity.
  *
- * This module is agent-runtime-independent: it decides *whether* the notice is published and *what*
+ * This module is harness-independent: it decides *whether* the notice is published and *what*
  * it says, and the adapter's notice transport decides *where*.
  */
 import type { UnlistedVersionAdmission } from "../core/admission";
@@ -57,14 +57,14 @@ function notifiedOwners(): Set<string> {
 }
 
 /**
- * The notice text for an unlisted version: the framework's warning, naming the version the runtime
- * reported and the versions the framework's Supported agent-runtime baseline lists.
+ * The notice text for an unlisted version: the framework's warning, naming the version the harness
+ * reported and the versions the framework's Supported harness baseline lists.
  *
  * The wording is the framework's, and the facts it carries are the ones the operator needs to decide
  * whether to upgrade or to keep running.
  */
 function describeUnlistedVersion(outcome: UnlistedVersionAdmission): string {
-	return `${FRAMEWORK_NOTICE_SOURCE}: agent runtime version ${outcome.version} is not in the supported set (${outcome.supportedVersions.join(", ")}); continuing without a support claim`;
+	return `${FRAMEWORK_NOTICE_SOURCE}: harness version ${outcome.version} is not in the supported set (${outcome.supportedVersions.join(", ")}); continuing without a support claim`;
 }
 
 /**

@@ -25,7 +25,7 @@ import {
 } from "../../extensions/connect-bot/shared-logic/panel/client";
 import { connectBotConfig } from "../../extensions/connect-bot/shared-logic/panel/config";
 import { botSessions } from "../../extensions/connect-bot/shared-logic/session/session";
-import connectBot from "../../extensions/connect-bot/runtimes/omp";
+import connectBot from "../../extensions/connect-bot/harnesses/omp";
 import { type OmpDouble, ompDouble } from "./support/omp-double";
 
 /** The framework's one marker-area widget, as the OMP adapter owns it. */

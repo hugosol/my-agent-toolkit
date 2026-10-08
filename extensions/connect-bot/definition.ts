@@ -1,8 +1,8 @@
 /**
- * The connect-bot extension definition, shared by every agent-runtime assembly.
+ * The connect-bot extension definition, shared by every harness assembly.
  *
  * This is plain data: the framework supplies the behavior behind each declaration, so this
- * module names no agent runtime and holds no logic. The arm effect, the panel protocol and
+ * module names no harness and holds no logic. The arm effect, the panel protocol and
  * the session facts live in the extension's shared modules; the native reads that produce
  * those facts live in its OMP assembly.
  *

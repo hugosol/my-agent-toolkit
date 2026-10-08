@@ -2,8 +2,8 @@
  * The unified extension feedback channel and the `hasUI` fact at the framework's adapter
  * contract (S2; F10, F11, F14; contract P16, P17).
  *
- * The seam is the runtime-neutral one: a definition bound through `bindExtension` to the
- * port an agent runtime provides, driven by the shared port double. What the framework owes
+ * The seam is the harness-neutral one: a definition bound through `bindExtension` to the
+ * port a harness provides, driven by the shared port double. What the framework owes
  * there is observed end to end — a toggle announces its activation on the delivery's
  * feedback channel at `info`, an assembly-injected implementation's notices keep the
  * severity they chose and the order they were made in, a delivery carries the adapter's
@@ -11,14 +11,14 @@
  * and no notice ever reaches model context.
  *
  * How a level becomes a UI notification or a stderr line is the adapter's mapping; the OMP
- * side of it is observed in `feedback-runtime.test.ts`, together with the framework's own
+ * side of it is observed in `feedback-harness.test.ts`, together with the framework's own
  * warning-level notice, which is not extension feedback.
  */
 import { describe, expect, test } from "bun:test";
 import { CODEBASE_TOOLS } from "../../extensions/codebase-tools/definition";
 import type { CommandActions, CommandDelivery, FeedbackLevel } from "../../framework/core/protocol";
 import { type ExtensionDefinition, defineExtension } from "../../framework/public";
-import { DEFAULT_OWNER_KEY, portDouble } from "./support/runtime-port-double";
+import { DEFAULT_OWNER_KEY, portDouble } from "./support/harness-port-double";
 
 /** The owner a run acts on; the double resolves one main session per key. */
 const OWNER = { kind: "owner", key: DEFAULT_OWNER_KEY } as const;
@@ -89,8 +89,8 @@ describe("a handler's own notices keep the severity they chose (F10)", () => {
 	});
 });
 
-describe("the hasUI fact is the runtime's, carried unchanged (F11)", () => {
-	test("a command delivery reports whether the session has a UI, in both runtime states", () => {
+describe("the hasUI fact is the harness's, carried unchanged (F11)", () => {
+	test("a command delivery reports whether the session has a UI, in both harness states", () => {
 		const double = portDouble();
 		const seenHasUI: boolean[] = [];
 		double.bind(feedbackDefinition("directed-hasui"), {
@@ -108,7 +108,7 @@ describe("the hasUI fact is the runtime's, carried unchanged (F11)", () => {
 		expect(seenHasUI).toEqual([true, false]);
 	});
 
-	test("a session delivery reports whether the session has a UI, in both runtime states", () => {
+	test("a session delivery reports whether the session has a UI, in both harness states", () => {
 		const double = portDouble();
 		double.bind(feedbackDefinition("directed-session-hasui"), {
 			actions: publishingActions("directed-session-hasui", [], []),

@@ -14,22 +14,22 @@
  *   bun scripts/verify-omp-candidate.ts --install-only      # isolate-install only, do not run the suite
  *
  * Isolation: the only writes are under the isolated prefix (`.cache/omp-baseline/<version>`,
- * gitignored) and OS temp directories the harness manages. The default global install, formal
+ * gitignored) and OS temp directories the dock manages. The default global install, formal
  * configuration and any running agent are never touched, and the candidate version never enters
- * the baseline record (`framework/docs/agent-runtime-baseline.json` keeps declaring 18.5.0 until a
+ * the baseline record (`framework/docs/harness-baseline.json` keeps declaring 18.5.0 until a
  * maintainer replaces it explicitly).
  */
 import { writeFileSync } from "node:fs";
 import * as path from "node:path";
 import {
-	type IsolatedRuntime,
-	type IsolatedRuntimeLayout,
+	type IsolatedHarness,
+	type IsolatedHarnessLayout,
 	REPO_ROOT,
 	ensureIsolatedVersion,
-	isolatedRuntimeLayout,
+	isolatedHarnessLayout,
 	readBaselineRecord,
-	selectRuntimeVersion,
-} from "../tests/harness/index";
+	selectHarnessVersion,
+} from "../tests/harness-dock/index";
 
 const RECORD_NAME = "candidate-verification.json";
 const FRAMEWORK_SUITE = ["bun", "test", "tests/framework"] as const;
@@ -46,14 +46,14 @@ interface CandidateVerification {
 	readonly dependencySpec: string;
 	readonly prefix: string;
 	readonly installedVersion: string | null;
-	readonly prebuiltNatives: IsolatedRuntime["prebuiltNatives"];
+	readonly prebuiltNatives: IsolatedHarness["prebuiltNatives"];
 	readonly isolation: {
 		readonly isolatedBase: string;
 		readonly prefixUnderIsolatedBase: boolean;
 		readonly defaultGlobalInstallTouched: false;
 		readonly formalConfigurationTouched: false;
 		readonly runningAgentTouched: false;
-		readonly agentState: "temporary directory per run (harness)";
+		readonly agentState: "temporary directory per run (dock)";
 	};
 	readonly install: { readonly command: string; readonly exitCode: number | null; readonly error: string | null };
 	readonly frameworkSuite: null | {
@@ -101,25 +101,25 @@ const dryRun = argv.includes("--dry-run");
 const installOnly = argv.includes("--install-only");
 
 const record = readBaselineRecord();
-const selection = selectRuntimeVersion(record);
+const selection = selectHarnessVersion(record);
 
-let layout: IsolatedRuntimeLayout;
+let layout: IsolatedHarnessLayout;
 try {
-	layout = isolatedRuntimeLayout(record, REPO_ROOT, selection.version);
+	layout = isolatedHarnessLayout(record, REPO_ROOT, selection.version);
 } catch (error) {
 	console.error(`[upgrade] refusing to run: ${error instanceof Error ? error.message : String(error)}`);
 	process.exit(2);
 }
 
 const recordPath = path.join(layout.prefix, RECORD_NAME);
-const isolatedBase = path.dirname(path.resolve(REPO_ROOT, record.agentRuntime.acceptanceArtifact.prefix));
+const isolatedBase = path.dirname(path.resolve(REPO_ROOT, record.harness.acceptanceArtifact.prefix));
 const relativeToBase = path.relative(isolatedBase, layout.prefix);
 const prefixUnderIsolatedBase =
 	relativeToBase.length > 0 && !relativeToBase.startsWith("..") && !path.isAbsolute(relativeToBase);
-const dependencySpec = `${record.agentRuntime.package}@${selection.version}`;
+const dependencySpec = `${record.harness.package}@${selection.version}`;
 
 console.log(`[upgrade] version under test:  ${selection.version} (${selection.source})`);
-console.log(`[upgrade] recorded supported:  ${record.agentRuntime.supportedVersion}`);
+console.log(`[upgrade] recorded supported:  ${record.harness.supportedVersion}`);
 console.log(`[upgrade] install spec:        ${dependencySpec}`);
 console.log(`[upgrade] isolated prefix:     ${layout.prefix}`);
 console.log(`[upgrade] framework suite:     ${FRAMEWORK_SUITE.join(" ")} (C1–C15 regression alarm)`);
@@ -141,17 +141,17 @@ if (dryRun) {
 }
 
 let installedVersion: string | null = null;
-let prebuiltNatives: IsolatedRuntime["prebuiltNatives"] = { packages: [], binaries: [] };
+let prebuiltNatives: IsolatedHarness["prebuiltNatives"] = { packages: [], binaries: [] };
 let installExitCode: number | null = null;
 let installError: string | null = null;
 let frameworkSuite: CandidateVerification["frameworkSuite"] = null;
 
 try {
-	const runtime = await ensureIsolatedVersion(record, selection.version);
-	installedVersion = runtime.version;
-	prebuiltNatives = runtime.prebuiltNatives;
+	const harness = await ensureIsolatedVersion(record, selection.version);
+	installedVersion = harness.version;
+	prebuiltNatives = harness.prebuiltNatives;
 	installExitCode = 0;
-	console.log(`[upgrade] installed version:   ${runtime.version} at ${runtime.packageRoot}`);
+	console.log(`[upgrade] installed version:   ${harness.version} at ${harness.packageRoot}`);
 } catch (error) {
 	installError = error instanceof Error ? error.message : String(error);
 	console.error(`[upgrade] isolated install failed: ${installError}`);
@@ -200,7 +200,7 @@ const verification: CandidateVerification = {
 	runtimeParameter: "OMP_TEST_VERSION",
 	requestedVersion: selection.version,
 	selectionSource: selection.source,
-	recordedSupportedVersion: record.agentRuntime.supportedVersion,
+	recordedSupportedVersion: record.harness.supportedVersion,
 	isRecordedSupportedVersion: selection.recordedSupported,
 	dependencySpec,
 	prefix: path.relative(REPO_ROOT, layout.prefix).replace(/\\/g, "/"),
@@ -212,13 +212,13 @@ const verification: CandidateVerification = {
 		defaultGlobalInstallTouched: false,
 		formalConfigurationTouched: false,
 		runningAgentTouched: false,
-		agentState: "temporary directory per run (harness)",
+		agentState: "temporary directory per run (dock)",
 	},
 	install: { command: "bun install in the isolated prefix", exitCode: installExitCode, error: installError },
 	frameworkSuite,
 	regressionAlarm,
 	certification:
-		"none: a green framework suite is a regression alarm only. Replacing the supported version is an explicit maintainer action (edit SUPPORTED_AGENT_RUNTIME_VERSIONS in framework/core/baseline.ts, update framework/docs/agent-runtime-support.md, restart), and an upgrade that touches an extension-visible surface additionally needs one human TUI spot check.",
+		"none: a green framework suite is a regression alarm only. Replacing the supported version is an explicit maintainer action (edit SUPPORTED_HARNESS_VERSIONS in framework/core/baseline.ts, update framework/docs/harness-support.md, restart), and an upgrade that touches an extension-visible surface additionally needs one human TUI spot check.",
 };
 
 writeFileSync(recordPath, `${JSON.stringify(verification, null, "\t")}\n`);

@@ -2,7 +2,7 @@
  * The round axis's native synthesis at the public adapter seam (S2; F6; contract P8, P9).
  *
  * A round is the whole active period — from the agent taking up input until quiescence — and it
- * may contain several model-response turns and several low-level runs. The agent runtime's
+ * may contain several model-response turns and several low-level runs. The harness's
  * vocabulary is about those runs: `agent_start` fires when an agent loop starts, once per user
  * prompt, and `agent_end` when one ends, carrying whether the session has already scheduled its
  * next piece of work. Neither is a round edge on its own, so what this suite observes is the
@@ -17,7 +17,7 @@
  * that kept showing "working" after an error would be describing a run that will never resume.
  *
  * The idle query the arm path asks is the same synthesis's input, and it is observed here the
- * same way: the adapter answers the session's own fact, and answers nothing at all for a runtime
+ * same way: the adapter answers the session's own fact, and answers nothing at all for a harness
  * whose context reports none.
  */
 import { describe, expect, test } from "bun:test";
@@ -56,12 +56,12 @@ function withCapturedStderr<T>(run: () => T): { readonly diagnostics: string[]; 
 	}
 }
 
-/** One session as the agent runtime holds it, and the idle facts its context reports. */
+/** One session as the harness holds it, and the idle facts its context reports. */
 interface SessionFacts {
 	readonly sessionId: string;
 	readonly hasUI?: boolean;
 	/**
-	 * Whether the context reports the agent as idle. Absent models a runtime whose context
+	 * Whether the context reports the agent as idle. Absent models a harness whose context
 	 * reports no idle fact at all — a surface the adapter must not answer for.
 	 */
 	readonly idle?: boolean;
@@ -292,7 +292,7 @@ describe("an abrupt terminal state closes the round too (F6, P8)", () => {
 
 		surface.fail(QUIESCENT);
 
-		// How the round ended is the runtime's vocabulary, not the framework's: a subscriber that
+		// How the round ended is the harness's vocabulary, not the framework's: a subscriber that
 		// needs the agent's state asks the idle query rather than reading it off this edge.
 		expect(surface.observed).toEqual([{ kind: "round_start" }, { kind: "round_end" }]);
 		expect(Object.keys(surface.observed[1] ?? {})).toEqual(["kind"]);
@@ -322,7 +322,7 @@ describe("the round edge's facts come from its own session (F6, P8)", () => {
 		});
 
 		// Quiescence cannot be established, and an unestablished quiescence is not one: the round
-		// stays open rather than being closed on a guess about a runtime that said nothing.
+		// stays open rather than being closed on a guess about a harness that said nothing.
 		expect(surface.observed).toEqual([{ kind: "round_start" }]);
 		// Reported, not silent — and once per binding, not once per settle.
 		expect(diagnostics).toHaveLength(1);
@@ -349,7 +349,7 @@ describe("the idle query at the native seam (F6, P9)", () => {
 			surface.runCommand(surface.commandContext(bare));
 		});
 
-		// The adapter does not answer for a runtime that reported nothing, and the operator is
+		// The adapter does not answer for a harness that reported nothing, and the operator is
 		// told that once rather than on every arm.
 		expect(surface.answers).toEqual([undefined, undefined]);
 		expect(diagnostics).toHaveLength(1);

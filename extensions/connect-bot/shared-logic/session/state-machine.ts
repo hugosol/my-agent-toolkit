@@ -3,7 +3,7 @@
  * report a real move makes.
  *
  * The vocabulary is `./agent-state`'s. What lives here is when the value moves. Two edges move
- * it, and they are the framework's own semantic round axis rather than any runtime's event:
+ * it, and they are the framework's own semantic round axis rather than any harness's event:
  * `round_start` is the agent taking up a prompt, `round_end` is that round reaching quiescence —
  * whether it ended on an ordinary answer, an error or an abort. `idle` is not a destination of
  * any edge: it is the fact a session is armed with, asked once of `canAcceptInput()` by the arm
@@ -21,7 +21,7 @@
  * armed, or one that has already stopped — has nothing to report, which is what keeps an
  * unarmed session silent without any caller having to ask whether it is armed.
  *
- * Nothing here names an agent runtime or a native event: an edge arrives as the framework's
+ * Nothing here names a harness or a native event: an edge arrives as the framework's
  * semantic kind, and the two facts a report needs — the real session id and the queue — are read
  * from the extension's own record.
  */
@@ -37,7 +37,7 @@ export type RoundEdge = "round_start" | "round_end";
  *
  * `register` is the arm path's own reason — arm and re-arm report unconditionally once, and that
  * report is not a move. The two edges are the framework's semantic round kinds, so the trace
- * names what actually happened rather than a runtime's event for it. The panel renders
+ * names what actually happened rather than a harness's event for it. The panel renders
  * `data.value` alone and reads no reason; this is diagnostic only.
  */
 export type StateReason = "register" | RoundEdge;

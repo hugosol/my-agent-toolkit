@@ -22,7 +22,7 @@
  * extension's — and nothing about that delivery is left half-applied, because a round has no
  * framework behavior to apply in the first place.
  *
- * This module is agent-runtime-independent: it reads and writes no State and names no native
+ * This module is harness-independent: it reads and writes no State and names no native
  * API.
  */
 import type { ExtensionDefinition } from "../core/definition";

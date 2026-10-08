@@ -4,7 +4,7 @@
  *
  * The decision under test is `planContribution`: which slot, if any, one agent-run
  * initiation contributes, from the owner's current State and the current branch alone.
- * The agent-runtime side of the seam is the narrow native surface the loader hands the
+ * The harness side of the seam is the narrow native surface the loader hands the
  * factory, so a test double stands in for the loader: it records the run-initiation hook
  * binding subscribed, delivers run initiations with the session context the runner would
  * build (identity plus the branch the behavior reads), and reports the native payload
@@ -28,7 +28,7 @@ import type {
 } from "../../framework/adapters/omp";
 import * as frameworkOmp from "../../framework/adapters/omp";
 import { type ExtensionDefinition, defineExtension } from "../../framework/public";
-import { REPO_ROOT } from "../harness/baseline";
+import { REPO_ROOT } from "../harness-dock/baseline";
 
 /** The identities the migration fixes: one State entry and both slots' custom types. */
 const STATE_ENTRY_TYPE = "codebase-tools:state";
@@ -61,7 +61,7 @@ function enabledState(): OmpSessionEntry {
 	return { type: "custom", customType: STATE_ENTRY_TYPE, data: { enabled: true } };
 }
 
-/** A persisted contribution the branch already carries, as the runtime recorded it. */
+/** A persisted contribution the branch already carries, as the harness recorded it. */
 function persistedContribution(customType: string): OmpSessionEntry {
 	return { type: "custom_message", customType, content: INIT_PROMPT, display: false, attribution: "agent" };
 }
@@ -253,7 +253,7 @@ describe("the repeating slot contributes on every enabled run (P18, P20, C7)", (
 
 		// A repeating slot is not spent by an earlier run: every delivery hands back the one
 		// contribution its facts call for, and the hook itself records no progress. A
-		// re-entered delivery of one run looks the same to this decision — the runtime
+		// re-entered delivery of one run looks the same to this decision — the harness
 		// commits only the attempt that wins, so the run still ends with one reminder.
 		expect(first?.message.customType).toBe(REMINDER_IDENTITY);
 		expect(second).toEqual(first);

@@ -2,8 +2,8 @@
  * The owner-scoped capability handle and its owner-life at the framework's adapter contract
  * (S2; F13; contract P12, P13).
  *
- * The seam is the runtime-neutral one: a definition bound through `bindExtension` to the port
- * an agent runtime provides, driven by the shared port double. An extension-owned background
+ * The seam is the harness-neutral one: a definition bound through `bindExtension` to the port
+ * a harness provides, driven by the shared port double. An extension-owned background
  * effect — a heartbeat timer, an outbound flusher — runs outside any handler delivery, so the
  * capability that effect needs is obtained while a delivery is running and then retained: what
  * is observed here is that the handle a handler receives is the same declared-value write and
@@ -24,7 +24,7 @@ import type {
 	OwnerCapabilityHandle,
 } from "../../framework/core/protocol";
 import { type ExtensionDefinition, defineExtension } from "../../framework/public";
-import { type PortDouble, portDouble } from "./support/runtime-port-double";
+import { type PortDouble, portDouble } from "./support/harness-port-double";
 
 /** A directed extension whose whole behavior is one command plus the marker it drives. */
 function directedExtension(id: string, command: string = id): ExtensionDefinition {

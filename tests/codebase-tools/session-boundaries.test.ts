@@ -1,8 +1,8 @@
 /**
- * Session boundaries, restore and `/tree` on the real OMP runtime (B8, C4, N5; P5, P7, P10).
+ * Session boundaries, restore and `/tree` on the real OMP harness (B8, C4, N5; P5, P7, P10).
  *
  * The observable seam is the OMP extension seam: the real loader discovers
- * `entrypoints/omp` and the harness fixture, a real session runs in the isolated install,
+ * `entrypoints/omp` and the dock fixture, a real session runs in the isolated install,
  * and the session JSONL is read back. `/codebase-tools` is the probe for the value a
  * session holds: a toggle records the *opposite* of the current State, so the record it
  * leaves behind reports the value the session had before the toggle — which is how a
@@ -11,27 +11,27 @@
 import { beforeAll, describe, expect, test } from "bun:test";
 import { readFileSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
-import { type IsolatedRuntime, REPO_ROOT, ensureIsolatedRuntime, readBaselineRecord } from "../harness/baseline";
-import { type CaptureServer, startCaptureServer } from "../harness/capture-server";
-import { FIXTURE_TREE_COMMAND, FIXTURE_TREE_ENTRY_TYPE } from "../harness/fixtures/extension-root/entrypoint";
-import { HARNESS_CAPTURE_BASE_URL_ENV, HARNESS_MODEL_SELECTOR } from "../harness/fixtures/extension-root/provider";
-import { type RunRoot, createRunRoot } from "../harness/run-root";
-import { ControlledSession } from "../harness/session";
-import { type SessionEntry, customEntries } from "../harness/session-log";
+import { type IsolatedHarness, REPO_ROOT, ensureIsolatedHarness, readBaselineRecord } from "../harness-dock/baseline";
+import { type CaptureServer, startCaptureServer } from "../harness-dock/capture-server";
+import { FIXTURE_TREE_COMMAND, FIXTURE_TREE_ENTRY_TYPE } from "../harness-dock/fixtures/extension-root/entrypoint";
+import { DOCK_CAPTURE_BASE_URL_ENV, DOCK_MODEL_SELECTOR } from "../harness-dock/fixtures/extension-root/provider";
+import { type RunRoot, createRunRoot } from "../harness-dock/run-root";
+import { ControlledSession } from "../harness-dock/session";
+import { type SessionEntry, customEntries } from "../harness-dock/session-log";
 
-/** The OMP discovery root this repository deploys, and the fixtures the harness adds. */
+/** The OMP discovery root this repository deploys, and the fixtures the dock adds. */
 const OMP_ENTRYPOINT_DIR = path.join(REPO_ROOT, "entrypoints", "omp");
-const FIXTURE_EXTENSION_ROOT = path.join(REPO_ROOT, "tests", "harness", "fixtures", "extension-root");
+const FIXTURE_EXTENSION_ROOT = path.join(REPO_ROOT, "tests", "harness-dock", "fixtures", "extension-root");
 const PROVIDER_FIXTURE = path.join(FIXTURE_EXTENSION_ROOT, "provider.ts");
 
 /** The State entry the extension persists, and the command that flips it. */
 const STATE_ENTRY_TYPE = "codebase-tools:state";
 const COMMAND = "codebase-tools";
 
-let runtime: IsolatedRuntime;
+let harness: IsolatedHarness;
 
 beforeAll(async () => {
-	runtime = await ensureIsolatedRuntime(readBaselineRecord());
+	harness = await ensureIsolatedHarness(readBaselineRecord());
 }, 300_000);
 
 interface Run {
@@ -47,11 +47,11 @@ function createRun(label: string): Run {
 /** Start one session in an existing run: the same session directory, a fresh process. */
 function openSession(run: Run, extraArgs: readonly string[] = []): Promise<ControlledSession> {
 	return ControlledSession.start({
-		runtime,
+		harness,
 		runRoot: run.runRoot,
 		extensions: [PROVIDER_FIXTURE, FIXTURE_EXTENSION_ROOT, OMP_ENTRYPOINT_DIR],
-		model: HARNESS_MODEL_SELECTOR,
-		env: { [HARNESS_CAPTURE_BASE_URL_ENV]: run.capture.baseUrl },
+		model: DOCK_MODEL_SELECTOR,
+		env: { [DOCK_CAPTURE_BASE_URL_ENV]: run.capture.baseUrl },
 		extraArgs,
 	});
 }
@@ -69,15 +69,15 @@ function notifications(session: ControlledSession): string[] {
 		.map(frame => String(frame.message));
 }
 
-/** The session file the runtime reports for the session it currently runs. */
+/** The session file the harness reports for the session it currently runs. */
 async function sessionFileOf(session: ControlledSession): Promise<string> {
 	const frame = await session.request({ type: "get_state" });
 	const file = (frame.data as { sessionFile?: string } | undefined)?.sessionFile;
-	if (file === undefined) throw new Error(`the runtime reported no session file: ${JSON.stringify(frame)}`);
+	if (file === undefined) throw new Error(`the harness reported no session file: ${JSON.stringify(frame)}`);
 	return file;
 }
 
-/** The user-message entries the runtime reports for the current session, in journal order. */
+/** The user-message entries the harness reports for the current session, in journal order. */
 async function userMessagesOf(session: ControlledSession): Promise<readonly SessionEntry[]> {
 	const frame = await session.request({ type: "get_entries" });
 	const entries = (frame.data as { entries?: readonly SessionEntry[] } | undefined)?.entries ?? [];

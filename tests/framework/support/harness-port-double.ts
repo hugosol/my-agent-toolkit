@@ -1,15 +1,15 @@
 /**
- * The runtime-neutral port double: the framework suite's shared binding harness.
+ * The harness-neutral port double: the framework suite's shared binding double.
  *
- * The framework's contract with an agent runtime is a definition plus the
- * `AgentRuntimePort` that runtime provides, and its behaviors are observable there —
+ * The framework's contract with a harness is a definition plus the
+ * `HarnessPort` that harness provides, and its behaviors are observable there —
  * as registrations the port receives and as effects the framework publishes through
  * the transports the port hands it. This double is that port: it records every
- * registration, and it drives those registrations the way a runtime would, so a suite
- * can bind a definition and run its commands without naming any agent-runtime-native
+ * registration, and it drives those registrations the way a harness would, so a suite
+ * can bind a definition and run its commands without naming any harness-native
  * type. Suites that must observe a *native* mapping (the OMP adapter's synthesis of
  * events, entries or widgets) keep driving `ompAdapter` with an `OmpExtensionApi`
- * double instead; this harness covers the runtime-independent half.
+ * double instead; this double covers the harness-independent half.
  *
  * One double is one assembly: one State store shared by every binding it makes, exactly
  * as an extension's assembly has one. Its declaration rules are resolved from the
@@ -22,7 +22,7 @@ import type { DeclarableRequiredSemantic, RequiredSemantic } from "../../../fram
 import type { ConfigSource } from "../../../framework/core/config";
 import { activationField, statePersistence, type ExtensionDefinition } from "../../../framework/core/definition";
 import type {
-	AgentRuntimePort,
+	HarnessPort,
 	BindingResult,
 	BoundCommand,
 	CommandActions,
@@ -60,7 +60,7 @@ export interface CommandRun {
 	readonly persisted: readonly StateValues[];
 	/**
 	 * The idle fact the invocation's query answered: the session's own fact as the double
-	 * modelled it, or `undefined` when it modelled a runtime that reports none.
+	 * modelled it, or `undefined` when it modelled a harness that reports none.
 	 */
 	readonly canAcceptInput: boolean | undefined;
 	/** The extension feedback the framework published, in call order, with its severity. */
@@ -110,12 +110,12 @@ export interface PortBindingOptions {
 	/** The assembly's handlers for the definition's semantic lifecycle events, by event kind. */
 	readonly events?: SemanticEventHandlers;
 	/**
-	 * The version the runtime reports; omitted models this repository's recorded baseline version,
-	 * and `"unreported"` models a runtime surface that reports no version at all — which is not the
+	 * The version the harness reports; omitted models this repository's recorded baseline version,
+	 * and `"unreported"` models a harness surface that reports no version at all — which is not the
 	 * same as one that reports a version the baseline does not list.
 	 */
 	readonly version?: string | "unreported";
-	/** The semantics the runtime cannot honor. */
+	/** The semantics the harness cannot honor. */
 	readonly missingRequiredSemantics?: readonly RequiredSemantic[];
 	/**
 	 * The semantics this binding's assembly declared it depends on, besides the ones the
@@ -164,7 +164,7 @@ export interface PortDouble {
 			readonly hasUI?: boolean;
 			/**
 			 * The idle fact the session reports through the invocation's query: `"idle"` and
-			 * `"busy"` for a runtime that answers, `"unreported"` for one that reports none.
+			 * `"busy"` for a harness that answers, `"unreported"` for one that reports none.
 			 * Omitted means idle, the state a session at a command prompt is in.
 			 */
 			readonly idle?: "idle" | "busy" | "unreported";
@@ -208,7 +208,7 @@ export function portDouble(): PortDouble {
 	const commands: BoundCommand[] = [];
 	const sessionHandlers: Array<(session: SessionDelivery) => void> = [];
 	const roundHandlers: Array<(round: RoundDelivery) => void> = [];
-	const runHandlers: Array<Parameters<AgentRuntimePort["onRunInitiation"]>[0]> = [];
+	const runHandlers: Array<Parameters<HarnessPort["onRunInitiation"]>[0]> = [];
 	const markerUpdates: string[][] = [];
 
 	const commandUnder = (name: string): BoundCommand => {
@@ -234,7 +234,7 @@ export function portDouble(): PortDouble {
 		},
 	});
 
-	const port: AgentRuntimePort = {
+	const port: HarnessPort = {
 		setLabel: label => {
 			labels.push(label);
 			registrations.push(`label:${label}`);
@@ -296,7 +296,7 @@ export function portDouble(): PortDouble {
 			const markers: string[][] = [];
 			const effects: string[] = [];
 			const hasUI = options.hasUI ?? true;
-			// The idle fact the session reports through the invocation's query: a runtime that
+			// The idle fact the session reports through the invocation's query: a harness that
 			// answers reports the modelled state, and one that reports none answers nothing.
 			const idle = options.idle ?? "idle";
 			const canAcceptInput = (): boolean | undefined =>

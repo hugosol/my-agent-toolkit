@@ -1,15 +1,15 @@
 /**
- * Baseline record: the single checkable correspondence between the agent-runtime
+ * Baseline record: the single checkable correspondence between the harness
  * revision anchor, the artifact that actually runs during acceptance, and the
  * dependency lockfiles of this repository and of the behavior oracle.
  *
- * The record itself is data (`framework/docs/agent-runtime-baseline.json`); this module only
+ * The record itself is data (`framework/docs/harness-baseline.json`); this module only
  * reads it, materialises the isolated install it names, and re-checks the claimed
  * correspondences. It never re-derives the byte-identity *reasoning* of decision 03,
  * it re-checks the same file set.
  *
  * Default and CI always select the recorded supported version. The candidate path is
- * opt-in through the runtime parameter `OMP_TEST_VERSION=<v>` (`selectRuntimeVersion`):
+ * opt-in through the runtime parameter `OMP_TEST_VERSION=<v>` (`selectHarnessVersion`):
  * it materialises that exact version into its own isolated prefix and is a regression
  * alarm, never a support claim.
  */
@@ -53,7 +53,7 @@ export interface AcceptanceArtifactRecord {
 
 export interface BaselineRecord {
 	readonly recorded: string;
-	readonly agentRuntime: {
+	readonly harness: {
 		readonly package: string;
 		readonly supportedVersion: string;
 		readonly revisionAnchor: RevisionAnchorRecord;
@@ -81,13 +81,13 @@ export interface BaselineRecord {
 	};
 }
 
-export interface IsolatedRuntimeLayout {
+export interface IsolatedHarnessLayout {
 	readonly prefix: string;
 	readonly packageRoot: string;
 	readonly cliPath: string;
 }
 
-export interface IsolatedRuntime {
+export interface IsolatedHarness {
 	readonly version: string;
 	readonly prefix: string;
 	readonly packageRoot: string;
@@ -117,10 +117,10 @@ export interface CheckoutCommit {
 	readonly error: string | null;
 }
 
-/** `tests/harness` -> repository root. */
-export const HARNESS_DIR = import.meta.dir;
-export const REPO_ROOT = path.resolve(HARNESS_DIR, "..", "..");
-export const BASELINE_RECORD_PATH = path.join(REPO_ROOT, "framework", "docs", "agent-runtime-baseline.json");
+/** `tests/harness-dock` -> repository root. */
+export const DOCK_DIR = import.meta.dir;
+export const REPO_ROOT = path.resolve(DOCK_DIR, "..", "..");
+export const BASELINE_RECORD_PATH = path.join(REPO_ROOT, "framework", "docs", "harness-baseline.json");
 
 /**
  * Resolve a path recorded in the baseline. Cross-repository paths are recorded
@@ -140,13 +140,13 @@ export function readBaselineRecord(file: string = BASELINE_RECORD_PATH): Baselin
 
 /**
  * The runtime parameter that selects the version under test (decision 07/08). It is the
- * only way to move the harness off the recorded baseline, and it never changes what the
+ * only way to move the dock off the recorded baseline, and it never changes what the
  * record declares as supported.
  */
 export const OMP_TEST_VERSION_ENV = "OMP_TEST_VERSION";
 
 export interface VersionSelection {
-	/** The version the harness materialises and every controlled run executes. */
+	/** The version the dock materialises and every controlled run executes. */
 	readonly version: string;
 	/** Where the selection came from. */
 	readonly source: "runtime-parameter" | "recorded-baseline";
@@ -159,7 +159,7 @@ export interface VersionSelection {
  * normal suite run always exercises the fixed baseline. A candidate is opt-in through the
  * runtime parameter `OMP_TEST_VERSION=<v>` and is a regression alarm, never a support claim.
  */
-export function selectRuntimeVersion(
+export function selectHarnessVersion(
 	record: BaselineRecord,
 	env: Record<string, string | undefined> = process.env,
 ): VersionSelection {
@@ -168,11 +168,11 @@ export function selectRuntimeVersion(
 		return {
 			version: requested,
 			source: "runtime-parameter",
-			recordedSupported: requested === record.agentRuntime.supportedVersion,
+			recordedSupported: requested === record.harness.supportedVersion,
 		};
 	}
 	return {
-		version: record.agentRuntime.supportedVersion,
+		version: record.harness.supportedVersion,
 		source: "recorded-baseline",
 		recordedSupported: true,
 	};
@@ -185,7 +185,7 @@ const INSTALL_VERSION_PATTERN = /^[0-9A-Za-z][0-9A-Za-z._+-]*$/;
  * The isolated prefix for one version: the recorded prefix's parent directory plus the
  * version, so a candidate never reuses or overwrites the fixed baseline's install.
  */
-export function isolatedRuntimePrefix(
+export function isolatedHarnessPrefix(
 	record: BaselineRecord,
 	version: string,
 	repoRoot: string = REPO_ROOT,
@@ -195,23 +195,23 @@ export function isolatedRuntimePrefix(
 			`refusing to use ${JSON.stringify(version)} as an isolated install directory name; an install version must be a single plain path segment`,
 		);
 	}
-	const base = path.dirname(path.resolve(repoRoot, record.agentRuntime.acceptanceArtifact.prefix));
+	const base = path.dirname(path.resolve(repoRoot, record.harness.acceptanceArtifact.prefix));
 	return path.join(base, version);
 }
 
 /**
  * Directory layout for one version, resolved against a repository root. The default version
- * is what `selectRuntimeVersion` resolves, so callers that drive a session follow the
+ * is what `selectHarnessVersion` resolves, so callers that drive a session follow the
  * runtime parameter automatically.
  */
-export function isolatedRuntimeLayout(
+export function isolatedHarnessLayout(
 	record: BaselineRecord,
 	repoRoot: string = REPO_ROOT,
-	version: string = selectRuntimeVersion(record).version,
-): IsolatedRuntimeLayout {
-	const prefix = isolatedRuntimePrefix(record, version, repoRoot);
-	const packageRoot = path.join(prefix, "node_modules", record.agentRuntime.package);
-	return { prefix, packageRoot, cliPath: path.join(packageRoot, record.agentRuntime.acceptanceArtifact.cliEntry) };
+	version: string = selectHarnessVersion(record).version,
+): IsolatedHarnessLayout {
+	const prefix = isolatedHarnessPrefix(record, version, repoRoot);
+	const packageRoot = path.join(prefix, "node_modules", record.harness.package);
+	return { prefix, packageRoot, cliPath: path.join(packageRoot, record.harness.acceptanceArtifact.cliEntry) };
 }
 
 export function sha256File(file: string): string {
@@ -225,7 +225,7 @@ function installedVersion(packageRoot: string): string | null {
 	return parsed.version ?? null;
 }
 
-function detectPrebuiltNatives(prefix: string): IsolatedRuntime["prebuiltNatives"] {
+function detectPrebuiltNatives(prefix: string): IsolatedHarness["prebuiltNatives"] {
 	const scope = path.join(prefix, "node_modules", "@oh-my-pi");
 	if (!existsSync(scope)) return { packages: [], binaries: [] };
 	const packages = readdirSync(scope).filter(name => name.startsWith("pi-natives"));
@@ -240,14 +240,14 @@ function detectPrebuiltNatives(prefix: string): IsolatedRuntime["prebuiltNatives
 	return { packages, binaries };
 }
 
-function describeRuntime(
+function describeHarness(
 	record: BaselineRecord,
-	layout: IsolatedRuntimeLayout,
-): IsolatedRuntime {
+	layout: IsolatedHarnessLayout,
+): IsolatedHarness {
 	const version = installedVersion(layout.packageRoot);
 	if (version === null) {
 		throw new Error(
-			`isolated runtime is not installed at ${layout.packageRoot}; call ensureIsolatedRuntime() first`,
+			`isolated harness is not installed at ${layout.packageRoot}; call ensureIsolatedHarness() first`,
 		);
 	}
 	return {
@@ -260,18 +260,18 @@ function describeRuntime(
 }
 
 /**
- * Materialise the isolated exact install of the version under test (`selectRuntimeVersion`:
+ * Materialise the isolated exact install of the version under test (`selectHarnessVersion`:
  * the recorded supported version by default, the `OMP_TEST_VERSION` candidate when set).
  * Idempotent: an existing install of that exact version is reused, otherwise the dependency
  * is installed into a sibling staging directory that is renamed into place, so concurrent
  * callers cannot observe a half-written prefix. Everything lands under the isolated prefix;
  * the default global install, formal configuration and any running agent are never touched.
  */
-export async function ensureIsolatedRuntime(
+export async function ensureIsolatedHarness(
 	record: BaselineRecord = readBaselineRecord(),
 	repoRoot: string = REPO_ROOT,
-): Promise<IsolatedRuntime> {
-	return ensureIsolatedVersion(record, selectRuntimeVersion(record).version, repoRoot);
+): Promise<IsolatedHarness> {
+	return ensureIsolatedVersion(record, selectHarnessVersion(record).version, repoRoot);
 }
 
 /** The same materialisation for an explicitly named version. */
@@ -279,11 +279,11 @@ export async function ensureIsolatedVersion(
 	record: BaselineRecord,
 	version: string,
 	repoRoot: string = REPO_ROOT,
-): Promise<IsolatedRuntime> {
-	const { prefix, packageRoot, cliPath } = isolatedRuntimeLayout(record, repoRoot, version);
+): Promise<IsolatedHarness> {
+	const { prefix, packageRoot, cliPath } = isolatedHarnessLayout(record, repoRoot, version);
 	const layout = { prefix, packageRoot, cliPath };
 	if (installedVersion(packageRoot) === version) {
-		return describeRuntime(record, layout);
+		return describeHarness(record, layout);
 	}
 
 	const staging = `${prefix}.staging-${process.pid}-${Date.now()}`;
@@ -294,7 +294,7 @@ export async function ensureIsolatedVersion(
 			{
 				name: "omp-baseline-prefix",
 				private: true,
-				dependencies: { [record.agentRuntime.package]: version },
+				dependencies: { [record.harness.package]: version },
 			},
 			null,
 			"\t",
@@ -315,7 +315,7 @@ export async function ensureIsolatedVersion(
 	if (exitCode !== 0) {
 		rmSync(staging, { recursive: true, force: true });
 		throw new Error(
-			`isolated install of ${record.agentRuntime.package}@${version} failed (exit ${exitCode})\n${stdout}\n${stderr}`,
+			`isolated install of ${record.harness.package}@${version} failed (exit ${exitCode})\n${stdout}\n${stderr}`,
 		);
 	}
 
@@ -333,7 +333,7 @@ export async function ensureIsolatedVersion(
 			`isolated install at ${packageRoot} reports version ${installed ?? "<missing>"}, expected ${version}`,
 		);
 	}
-	return describeRuntime(record, layout);
+	return describeHarness(record, layout);
 }
 
 /** Re-check the anchor<->artifact file identity claimed by the record. */
@@ -343,9 +343,9 @@ export function verifyArtifactByteIdentity(
 ): ByteIdentityComparison[] {
 	// Always the recorded artifact: the byte-identity claim is about the fixed baseline
 	// install, independent of any candidate the runtime parameter names.
-	const { packageRoot } = isolatedRuntimeLayout(record, repoRoot, record.agentRuntime.supportedVersion);
-	const anchorRoot = path.join(resolveRecordPath(record.agentRuntime.revisionAnchor.path, repoRoot), "packages", "coding-agent", "src");
-	return record.agentRuntime.acceptanceArtifact.byteIdentity.files.map(file => {
+	const { packageRoot } = isolatedHarnessLayout(record, repoRoot, record.harness.supportedVersion);
+	const anchorRoot = path.join(resolveRecordPath(record.harness.revisionAnchor.path, repoRoot), "packages", "coding-agent", "src");
+	return record.harness.acceptanceArtifact.byteIdentity.files.map(file => {
 		const anchorFile = path.join(anchorRoot, file.path);
 		const artifactFile = path.join(packageRoot, "src", file.path);
 		const anchorSha256 = existsSync(anchorFile) ? sha256File(anchorFile) : null;

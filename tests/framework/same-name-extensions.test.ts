@@ -6,7 +6,7 @@
  * deployment.test.ts (it returns both candidates when both roots are configured); this
  * suite shows the framework side with a plain recording double — two assemblies of one
  * definition, bound into the same process, both register and neither displaces the other.
- * Nothing here touches an agent runtime, the isolated install, the filesystem or a
+ * Nothing here touches a harness, the isolated install, the filesystem or a
  * sibling checkout, so the same-name contract stays checkable in any checkout.
  *
  * The other half — the deployed configuration scans one root and yields exactly one
@@ -19,7 +19,7 @@ import { defineExtension } from "../../framework/public";
 const SHARED_ID = "codebase-tools";
 const SHARED_COMMAND = "codebase-tools";
 
-/** A recording double for the native surface: no runtime, no I/O, no files. */
+/** A recording double for the native surface: no harness, no I/O, no files. */
 function recordingApi() {
 	const labels: string[] = [];
 	const commands: string[] = [];

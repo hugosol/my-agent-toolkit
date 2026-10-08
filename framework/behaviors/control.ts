@@ -12,7 +12,7 @@
  * command's outcome, and what makes both the area and the notification always describe the
  * value that now holds.
  *
- * This module is agent-runtime-independent: it reads and writes State and calls the
+ * This module is harness-independent: it reads and writes State and calls the
  * adapter-supplied effect transports, and names no native API.
  */
 import type { ExtensionDefinition } from "../core/definition";

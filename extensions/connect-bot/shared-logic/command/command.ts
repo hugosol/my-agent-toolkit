@@ -1,5 +1,5 @@
 /**
- * `/connect-bot`, implemented for the runtime this extension is assembled onto.
+ * `/connect-bot`, implemented for the harness this extension is assembled onto.
  *
  * The command is declared as `directed`, so the framework owns the argument vocabulary — an empty
  * argument names `on` and `off` names `off`, and any other text is not a directive at all — and
@@ -16,8 +16,8 @@
  * as this command's own decision), and a session with no UI is refused for that reason, with the
  * table's refusal — which the unified feedback channel turns into a single stderr line.
  *
- * The session facts it sends are read by the runtime assembly and injected as plain data, so
- * this module names no agent runtime and reaches no native API.
+ * The session facts it sends are read by the harness assembly and injected as plain data, so
+ * this module names no harness and reaches no native API.
  */
 import type { CommandDelivery, DirectedCommandImplementation, RecognizedDirective } from "../../../../framework/core/protocol";
 import { publishFeedback } from "../feedback";
@@ -26,10 +26,10 @@ import type { ManagedTimers } from "../managed-timer";
 import type { PanelRegistrations } from "../panel/registration";
 import type { SessionFacts } from "../session/session";
 
-/** What this command needs from the runtime assembly that assembled it. */
-export interface ConnectBotRuntime {
+/** What this command needs from the harness assembly that assembled it. */
+export interface ConnectBotHarness {
 	/**
-	 * The facts of the session this invocation runs in, as the runtime read them natively.
+	 * The facts of the session this invocation runs in, as the harness read them natively.
 	 *
 	 * They are read per invocation rather than captured once: a session's directory and model
 	 * are facts of the session being served now, and the delivery the implementation receives
@@ -37,10 +37,10 @@ export interface ConnectBotRuntime {
 	 */
 	readonly sessionFacts: () => SessionFacts;
 	/**
-	 * The managed timer surface of this invocation, as the runtime provides it.
+	 * The managed timer surface of this invocation, as the harness provides it.
 	 *
 	 * Like the session facts it is read per invocation, and for the same reason: the timer surface
-	 * belongs to the runtime context this invocation runs in, so the heartbeat the arm path starts
+	 * belongs to the harness context this invocation runs in, so the heartbeat the arm path starts
 	 * is scheduled against the session it arms — and no native timer type reaches shared logic.
 	 */
 	readonly managedTimers: () => ManagedTimers;
@@ -65,7 +65,7 @@ export interface ConnectBotRuntime {
  * mistyped argument can never disturb a connection that is already in place.
  */
 export function createConnectBotCommand(
-	runtime: ConnectBotRuntime,
+	harness: ConnectBotHarness,
 	registrations: PanelRegistrations,
 ): DirectedCommandImplementation {
 	return {
@@ -85,11 +85,11 @@ export function createConnectBotCommand(
 				registrations.deactivate(delivery, gate.ownerKey);
 				return;
 			}
-			// Both runtime facts are read here, inside the invocation: the timer surface belongs to
+			// Both harness facts are read here, inside the invocation: the timer surface belongs to
 			// the context this run is driving, and the register attempt schedules the heartbeat on
 			// it. Reading them here also keeps them tied to the command the operator issued, even
 			// when the attempt waits behind another one for the same owner.
-			registrations.activate(delivery, gate.ownerKey, runtime.sessionFacts(), runtime.managedTimers());
+			registrations.activate(delivery, gate.ownerKey, harness.sessionFacts(), harness.managedTimers());
 		},
 		unrecognized(argument: string, delivery: CommandDelivery): void {
 			const gate = commandGate(delivery);

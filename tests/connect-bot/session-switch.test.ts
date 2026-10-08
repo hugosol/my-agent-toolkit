@@ -2,7 +2,7 @@
  * The session boundary's cleanup at the OMP extension seam (E13, E14; P34, P35, P15, P40).
  *
  * The extension is driven exactly as the loader drives it: its own OMP assembly binds the
- * definition against the double, the native session lifecycle events the runtime delivers are
+ * definition against the double, the native session lifecycle events the harness delivers are
  * handed to that same binding, and the command the framework registered arms a session. The panel
  * is a fake transport injected through the extension's own seam, so the `unregister` a boundary
  * sends is observed without a network.
@@ -24,7 +24,7 @@ import {
 } from "../../extensions/connect-bot/shared-logic/panel/client";
 import { connectBotConfig } from "../../extensions/connect-bot/shared-logic/panel/config";
 import { botSessions } from "../../extensions/connect-bot/shared-logic/session/session";
-import connectBot from "../../extensions/connect-bot/runtimes/omp";
+import connectBot from "../../extensions/connect-bot/harnesses/omp";
 import { type OmpDouble, ompDouble } from "./support/omp-double";
 
 /** The owner key the framework resolves for one main session. */
@@ -114,7 +114,7 @@ async function settleAll(): Promise<void> {
 }
 
 /**
- * Arms one session the way a real run reaches an armed session: the runtime loads it first (the
+ * Arms one session the way a real run reaches an armed session: the harness loads it first (the
  * native `session_start`), and the command arms it.
  *
  * The framework never awaits an injected command implementation, so the arm's own notice is what
@@ -251,7 +251,7 @@ describe("another identity takes the session's place (E13, P34, P15)", () => {
 		await settleAll();
 		const widgetsAtTheBoundary = double.widgets.length;
 
-		// The record a beat reads at beat time is gone, so a callback the runtime still delivers —
+		// The record a beat reads at beat time is gone, so a callback the harness still delivers —
 		// a cancelled timer's, or one already in flight — finds nothing to report.
 		beat.callback();
 		await settleAll();
@@ -344,7 +344,7 @@ describe("a navigation that keeps the session's identity is not a boundary (E13,
 		const record = botSessions.get(ownerKey("navigate-1"));
 		const beat = double.timers[0]!;
 
-		// The navigations that keep this session's identity, each delivered the way the runtime
+		// The navigations that keep this session's identity, each delivered the way the harness
 		// delivers it: a jump inside the tree (`/tree`), the startup signal for the session this
 		// binding already serves (`/reload`), an in-place context reset (`/clear`), a same-file resume
 		// and a TUI branch.

@@ -17,7 +17,7 @@
  *
  * The effects themselves stay where they were: the heartbeat, the outbound queue and the failure
  * budget remain their own modules, and a successful attempt is what hands them a record to read.
- * This module is agent-runtime-independent — it names no native session event, timer or transport
+ * This module is harness-independent — it names no native session event, timer or transport
  * and reaches the panel only through the wire client's injected seam.
  */
 import type {
@@ -256,7 +256,7 @@ export class PanelRegistrations {
 		// this extension reports; then the record the heartbeat and the outbound queue read; then
 		// what the operator is told happened.
 		attempt.capability.state.write(true);
-		// What the panel is told about this session from the next beat on: the runtime's idle fact,
+		// What the panel is told about this session from the next beat on: the harness's idle fact,
 		// read once — a session that arms while the agent is working reports 工作中 rather than a
 		// 空闲 it never was.
 		const state = attempt.canAcceptInput() === true ? "idle" : "working";

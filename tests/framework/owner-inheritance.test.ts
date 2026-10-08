@@ -11,7 +11,7 @@
  * that declares nothing.
  *
  * The same-process multi-main limitation (N10) is a recorded conclusion, not an
- * assertion: it lives in `framework/docs/agent-runtime-support.md` ("First-release limitation:
+ * assertion: it lives in `framework/docs/harness-support.md` ("First-release limitation:
  * one main session per process") and in the framework backlog, and no test here claims
  * behaviour for a process holding two main sessions. What this suite does exercise is
  * the neighbouring case the contract does fix — a parent chain that leaves the process
@@ -20,7 +20,7 @@
  * The seam is `ompAdapter` plus the narrow native surface the OMP loader hands a
  * factory: one factory per extension per process, called once per session — the main
  * session and every subagent session it spawns — over one shared State store. The
- * agent-runtime side is a test double: it holds the native agent graph (the official
+ * harness side is a test double: it holds the native agent graph (the official
  * registry the adapter walks), delivers each session's lifecycle events, and drives
  * the run-initiation hook and a toggle command with the context the runner builds.
  *
@@ -78,7 +78,7 @@ const MEMORY_TOOLS: ExtensionDefinition = defineExtension({
 });
 
 /**
- * One session as the native runtime holds it: the agent identity the extension context
+ * One session as the native harness holds it: the agent identity the extension context
  * carries, the registry link that places it in the agent graph, and the branch it reads.
  */
 interface SessionFacts {
@@ -105,7 +105,7 @@ interface SessionFacts {
  * served the session it moved away from.
  */
 interface SessionBinding {
-	/** `session_start`: the runtime loads this session and the bound extension reconciles. */
+	/** `session_start`: the harness loads this session and the bound extension reconciles. */
 	start(facts?: SessionFacts): void;
 	/** `session_switch`: the binding's current session identity is replaced. */
 	switchSession(facts: SessionFacts, reason: "new" | "resume" | "fork"): void;
@@ -133,7 +133,7 @@ type RunInitiationHandler = (event: unknown, ctx: OmpSessionContext) => OmpRunIn
 /** The State record a session's branch carries after the toggle enabled the extension. */
 const ENABLED: OmpSessionEntry = { type: "custom", customType: STATE_ENTRY_TYPE, data: { enabled: true } };
 
-/** A persisted contribution the branch already carries, as the runtime recorded it. */
+/** A persisted contribution the branch already carries, as the harness recorded it. */
 function contribution(identity: string): OmpSessionEntry {
 	return { type: "custom_message", customType: identity, content: "…", display: false, attribution: "agent" };
 }

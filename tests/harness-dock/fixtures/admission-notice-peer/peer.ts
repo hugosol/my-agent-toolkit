@@ -1,5 +1,5 @@
 /**
- * Harness fixture extension: a second consumer of the framework in one session's process.
+ * Dock fixture extension: a second consumer of the framework in one session's process.
  *
  * The OMP legacy loader rewrites every relative import of an extension's graph to
  * `specifier?mtime=<per-load tag>`, with a fresh tag per extension load, so this fixture and the

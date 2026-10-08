@@ -1,13 +1,13 @@
 /**
  * The delivered role, order and position of codebase-tools' injected prompt, recorded
- * per provider path from the runtime's own outbound request (C9, B3, P23).
+ * per provider path from the harness's own outbound request (C9, B3, P23).
  *
  * Both paths run the real deployed extension through the isolated OMP 18.5.0 install with
  * a local capture endpoint standing in for the provider, and the assertions read only what
- * the runtime serialized. The `openai-completions` path (`deepseek/deepseek-flash`) is the
+ * the harness serialized. The `openai-completions` path (`deepseek/deepseek-flash`) is the
  * main path: its api adapter is the one the real provider would receive. The
  * `openai-codex-responses` path (`openai-codex/gpt-6-luna`) is a **shape-only** capture: it
- * shows what the runtime serializes, and says nothing about whether chatgpt.com would
+ * shows what the harness serializes, and says nothing about whether chatgpt.com would
  * accept it — the real round trip needs credentials and is recorded outside this suite.
  *
  * The delivered role is a recorded fact, not an activation gate: nothing here (or in the
@@ -19,11 +19,11 @@
 import { beforeAll, describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import * as path from "node:path";
-import { type IsolatedRuntime, REPO_ROOT, ensureIsolatedRuntime, readBaselineRecord } from "../harness/baseline";
-import { writeAgentSettings, writeProviderOverride } from "../harness/agent-config";
-import { type CaptureProtocol, type CapturedRequest, type CaptureServer, startCaptureServer } from "../harness/capture-server";
-import { type RunRoot, createRunRoot } from "../harness/run-root";
-import { ControlledSession } from "../harness/session";
+import { type IsolatedHarness, REPO_ROOT, ensureIsolatedHarness, readBaselineRecord } from "../harness-dock/baseline";
+import { writeAgentSettings, writeProviderOverride } from "../harness-dock/agent-config";
+import { type CaptureProtocol, type CapturedRequest, type CaptureServer, startCaptureServer } from "../harness-dock/capture-server";
+import { type RunRoot, createRunRoot } from "../harness-dock/run-root";
+import { ControlledSession } from "../harness-dock/session";
 
 /** The OMP discovery root this repository deploys. */
 const OMP_ENTRYPOINT_DIR = path.join(REPO_ROOT, "entrypoints", "omp");
@@ -36,10 +36,10 @@ const COMMAND = "codebase-tools";
 /** The text of the user turn that triggers the injection, unique inside one request. */
 const TURN_TEXT = "codebase-tools role turn";
 
-let runtime: IsolatedRuntime;
+let harness: IsolatedHarness;
 
 beforeAll(async () => {
-	runtime = await ensureIsolatedRuntime(readBaselineRecord());
+	harness = await ensureIsolatedHarness(readBaselineRecord());
 }, 300_000);
 
 /**
@@ -69,7 +69,7 @@ interface RoleRunOptions {
 	readonly model: string;
 	readonly apiKey: string;
 	readonly protocol: CaptureProtocol;
-	/** Runtime settings the path needs to be observable (Codex prefers websockets). */
+	/** Harness settings the path needs to be observable (Codex prefers websockets). */
 	readonly settings?: Record<string, string>;
 }
 
@@ -87,7 +87,7 @@ const DEEPSEEK_PATH: RoleRunOptions = {
 	label: "role-deepseek",
 	provider: "deepseek",
 	model: "deepseek/deepseek-flash",
-	apiKey: "harness-deepseek-key",
+	apiKey: "dock-deepseek-key",
 	protocol: "openai-completions",
 };
 
@@ -104,7 +104,7 @@ const CODEX_PATH: RoleRunOptions = {
 
 async function openSession(run: RoleRun, model: string): Promise<ControlledSession> {
 	return ControlledSession.start({
-		runtime,
+		harness,
 		runRoot: run.runRoot,
 		extensions: [OMP_ENTRYPOINT_DIR],
 		model,
@@ -120,7 +120,7 @@ async function stopQuietly(session: ControlledSession | undefined): Promise<void
 	}
 }
 
-/** The parsed shape of one captured request body: this runtime's own serialized JSON. */
+/** The parsed shape of one captured request body: this harness's own serialized JSON. */
 interface CapturedBody {
 	readonly messages?: ReadonlyArray<{ readonly role?: string; readonly content?: unknown }>;
 	readonly input?: ReadonlyArray<{ readonly role?: string; readonly content?: unknown }>;
@@ -184,7 +184,7 @@ describe("the injected init is delivered as its own message (C9, deepseek path)"
 		const messages = conversationItems(request);
 		expect(messages.length).toBeGreaterThanOrEqual(3);
 
-		// The system prompt stayed the runtime's own: the injected text is not part of it.
+		// The system prompt stayed the harness's own: the injected text is not part of it.
 		const system = messages[0];
 		expect(system?.role).toBe("system");
 		expect(messageText(system?.content)).not.toContain(INIT_PROMPT);
@@ -219,7 +219,7 @@ describe("the openai-codex path serializes the same injection (C9, shape-only la
 		expect(carrying).toHaveLength(1);
 		expect(messageText(carrying[0]?.content).trim()).toBe(INIT_PROMPT.trim());
 		// Recorded fact for this path: the Codex serializer keeps the developer slot the
-		// runtime's LLM view gives a persisted custom message (unlike the shared Responses
+		// harness's LLM view gives a persisted custom message (unlike the shared Responses
 		// conversion, which folds user/developer into `user`).
 		expect(carrying[0]?.role).toBe("developer");
 

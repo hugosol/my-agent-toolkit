@@ -1,7 +1,7 @@
 /**
  * The semantic round axis at the framework's adapter contract (S2; F6; contract P8, P9).
  *
- * The seam is `bindExtension` plus the port an agent runtime provides, driven by the shared
+ * The seam is `bindExtension` plus the port a harness provides, driven by the shared
  * port double: one semantic round edge, and the handler an assembly injected for it. What the
  * framework owes there is observed directly — a `round_start` reaches the handler subscribed to
  * `round_start` and nothing else, the edge carries no payload beyond the fact that it happened,
@@ -17,7 +17,7 @@ import { describe, expect, test } from "bun:test";
 import { CODEBASE_TOOLS } from "../../extensions/codebase-tools/definition";
 import type { CommandActions, CommandDelivery, OwnerReference } from "../../framework/core/protocol";
 import { type ExtensionDefinition, defineExtension } from "../../framework/public";
-import { portDouble } from "./support/runtime-port-double";
+import { portDouble } from "./support/harness-port-double";
 
 /** The owner a delivery acts on unless one is named. */
 const OWNER: OwnerReference = { kind: "owner", key: "main:round-events" };
@@ -149,7 +149,7 @@ describe("a round edge reaches the handler subscribed to it (F6, P8)", () => {
 });
 
 describe("a definition that observes no round injects no round hook (F6)", () => {
-	test("no round subscription means the runtime is asked for no round deliveries", () => {
+	test("no round subscription means the harness is asked for no round deliveries", () => {
 		const double = portDouble();
 
 		double.bind(CODEBASE_TOOLS);
@@ -191,7 +191,7 @@ describe("the idle query is the arm path's own fact (F6, P9)", () => {
 		expect(busy.canAcceptInput).toBe(false);
 	});
 
-	test("a runtime that reports no idle fact answers nothing instead of a fabricated value", () => {
+	test("a harness that reports no idle fact answers nothing instead of a fabricated value", () => {
 		const double = portDouble();
 		const { actions, answers } = queryingActions("unreported-probe");
 		double.bind(probeDefinition("unreported-probe"), { actions });
@@ -200,7 +200,7 @@ describe("the idle query is the arm path's own fact (F6, P9)", () => {
 
 		// The session's surface reports no idle fact at all, so the query answers nothing: a
 		// caller that needs the fact decides what to do about its absence, and no caller can read
-		// a value the runtime never reported as the idle truth.
+		// a value the harness never reported as the idle truth.
 		expect(answers).toEqual([undefined]);
 		expect(run.canAcceptInput).toBeUndefined();
 	});

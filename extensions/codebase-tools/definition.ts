@@ -1,11 +1,11 @@
 /**
- * The codebase-tools extension definition, shared by every agent-runtime assembly.
+ * The codebase-tools extension definition, shared by every harness assembly.
  *
  * This is plain data: the whole behavior the extension has — its identity, its
  * activation State, its toggle command, its two injected-prompt slots and its status
  * marker — is declared here, and the framework supplies the behavior. It imports no
- * agent-runtime types, and it lives outside the discovery roots (`extensions/`), so
- * the OMP entrypoint reaches it through the extension's OMP runtime assembly.
+ * harness types, and it lives outside the discovery roots (`extensions/`), so
+ * the OMP entrypoint reaches it through the extension's OMP harness assembly.
  *
  * `state` declares only the axis this extension opts out of the framework's default on:
  * the activation field stays `enabled` and its persistence stays `session-entry` (the

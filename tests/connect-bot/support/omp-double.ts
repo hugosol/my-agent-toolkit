@@ -1,7 +1,7 @@
 /**
  * The OMP double for the connect-bot extension suite.
  *
- * The extension's seam is the OMP runtime it is assembled onto: the extension's own
+ * The extension's seam is the OMP harness it is assembled onto: the extension's own
  * assembly binds the definition through `ompAdapter` against the narrow native surface a
  * loader hands a factory, and the command it registers runs with a native context. This
  * double stands in for the loader — it records every registration and every effect, and
@@ -11,7 +11,7 @@
  * It is deliberately shaped like the framework suite's own loader double, so a test here
  * observes the same native surface the framework's adapter does.
  *
- * It stands in for the runtime's lifecycle events too: {@link OmpDouble.startSession},
+ * It stands in for the harness's lifecycle events too: {@link OmpDouble.startSession},
  * {@link OmpDouble.switchSession}, {@link OmpDouble.branchSession}, {@link OmpDouble.navigateTree}
  * and {@link OmpDouble.shutdown} hand a native session event and a session's context to the
  * subscriptions the binding made, exactly as {@link OmpDouble.startRun} and
@@ -51,11 +51,11 @@ export interface WidgetWrite {
  *
  * How it runs is the double's timer mode (see {@link TimerMode}): by default the double schedules
  * nothing and a test fires {@link ManagedTimer.callback} itself, while a cadence run has the mode
- * schedule the interval for real — on the runtime's own clock or on a {@link ControlledClock} — so
+ * schedule the interval for real — on the harness's own clock or on a {@link ControlledClock} — so
  * the period the extension asked for is what makes a beat appear, not the test's own call.
  */
 export interface ManagedTimer {
-	/** The callback the extension handed the runtime. */
+	/** The callback the extension handed the harness. */
 	readonly callback: () => void;
 	/** The period the extension asked for, in milliseconds. */
 	readonly ms: number | undefined;
@@ -68,8 +68,8 @@ export interface ManagedTimer {
  *
  * - `manual` (the default): nothing is scheduled. A test drives the periodic effect itself by
  *   firing the recorded callback, which observes one beat's content without any cadence at all.
- * - `real`: the runtime's own global interval, so a beat really fires once per period and a run
- *   can record the wall-clock cadence the extension asked the runtime for.
+ * - `real`: the harness's own global interval, so a beat really fires once per period and a run
+ *   can record the wall-clock cadence the extension asked the harness for.
  * - `controlled`: a {@link ControlledClock} the caller advances by exact virtual milliseconds, so
  *   a beat appears at its period's virtual instant without a wall wait and a cancelled interval
  *   fires nothing.
@@ -101,7 +101,7 @@ export interface ContextOptions {
 	 * edge from a subagent records the parent chain in {@link OmpDouble.agents} as well.
 	 */
 	readonly parentId?: string;
-	/** Whether the runtime reports this session as idle (the fact behind `canAcceptInput`). */
+	/** Whether the harness reports this session as idle (the fact behind `canAcceptInput`). */
 	readonly idle?: boolean;
 }
 
@@ -126,7 +126,7 @@ export interface OmpDouble {
 	/** Every managed timer the extension scheduled through the session's context. */
 	readonly timers: ManagedTimer[];
 	/**
-	 * The runtime's process-wide agent registry, as the adapter walks it to resolve which session
+	 * The harness's process-wide agent registry, as the adapter walks it to resolve which session
 	 * owns a delivery: a test records the parent chain of a subagent here, so an edge delivered
 	 * from that session resolves the owner it follows rather than nothing at all.
 	 */
@@ -136,12 +136,12 @@ export interface OmpDouble {
 	/** Runs one registered command with the given argument text and context. */
 	run(name: string, args: string, ctx: OmpCommandContext): void;
 	/**
-	 * Delivers the native session-start event, as the runtime does when it loads a session: the
+	 * Delivers the native session-start event, as the harness does when it loads a session: the
 	 * session this binding first serves in this process.
 	 */
 	startSession(ctx: OmpCommandContext): void;
 	/**
-	 * Delivers the native session-switch event: the runtime moved to another session identity, and
+	 * Delivers the native session-switch event: the harness moved to another session identity, and
 	 * the reason it names is the switch's own (`new`/`resume`/`fork`).
 	 */
 	switchSession(ctx: OmpCommandContext, reason: "new" | "resume" | "fork"): void;
@@ -156,12 +156,12 @@ export interface OmpDouble {
 	/** Delivers the native session-shutdown event: the process this session lives in is going away. */
 	shutdown(ctx: OmpCommandContext): void;
 	/**
-	 * Delivers the native run-start event, as the runtime does when an agent loop takes up a
+	 * Delivers the native run-start event, as the harness does when an agent loop takes up a
 	 * prompt. The framework synthesizes `round_start` from it, so this is how a test opens a round.
 	 */
 	startRun(ctx: OmpCommandContext): void;
 	/**
-	 * Delivers the native run-end event, as the runtime does when a run settles. Whether that
+	 * Delivers the native run-end event, as the harness does when a run settles. Whether that
 	 * settle closes the round is the adapter's synthesis, not this double's: it hands over the
 	 * native event and the context, and the edge (if any) follows from them.
 	 */
@@ -194,7 +194,7 @@ export function ompDouble(options: OmpDoubleOptions = {}): OmpDouble {
 	const agents = new Map<string, OmpAgentRef>();
 	// The native lifecycle subscriptions this binding made. The double registers nothing
 	// itself: a test hands the native event and a context to the delivery methods below, exactly
-	// as the runtime would, and the framework's synthesis decides whether a semantic event (or no
+	// as the harness would, and the framework's synthesis decides whether a semantic event (or no
 	// event at all) follows.
 	const roundHandlers: Record<OmpRoundEventType, Array<(event: unknown, ctx: OmpSessionContext) => void>> = {
 		agent_start: [],
@@ -296,9 +296,9 @@ export function ompDouble(options: OmpDoubleOptions = {}): OmpDouble {
 				setInterval: (callback: () => void, ms?: number) => {
 					const timer: ManagedTimer = { callback, ms, cancelled: false };
 					timers.push(timer);
-					// The handle the runtime hands back is what cancels this timer and no other. What
+					// The handle the harness hands back is what cancels this timer and no other. What
 					// the handle does besides that is the mode: a manual run's recorded callback is
-					// fired by the test, a real run's fires on the runtime's own clock, and a
+					// fired by the test, a real run's fires on the harness's own clock, and a
 					// controlled run's fires when the caller advances its virtual clock to the period.
 					const period = ms ?? 0;
 					if (timerMode.kind === "real") {

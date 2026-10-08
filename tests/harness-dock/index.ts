@@ -1,5 +1,5 @@
 /**
- * Verification harness for the fixed agent-runtime baseline.
+ * Verification dock for the fixed harness baseline.
  *
  * Consumers (the framework and extension suites, the upgrade script) import from this
  * entry point only: baseline record + isolated install, isolated environment, controlled

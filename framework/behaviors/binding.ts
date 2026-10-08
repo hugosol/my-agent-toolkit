@@ -1,20 +1,20 @@
 /**
- * Binding a declarative extension definition to an agent runtime — the reusable,
- * agent-runtime-independent half of the framework.
+ * Binding a declarative extension definition to a harness — the reusable,
+ * harness-independent half of the framework.
  *
  * This module is adapter-facing, not an author entry: extension authors declare with
- * `framework/public.ts`, and an agent-runtime adapter (for OMP, `framework/adapters/omp.ts`)
+ * `framework/public.ts`, and a harness adapter (for OMP, `framework/adapters/omp.ts`)
  * calls into this.
  *
  * Ordering is the contract: every fallible step (configuration rules, initialization,
  * admission) runs before the first registration, so a definition the framework refuses to
- * honor leaves nothing registered. Admission is the runtime-level step and the last one
- * before registration: a semantic the runtime cannot honor refuses the binding when it is
+ * honor leaves nothing registered. Admission is the harness-level step and the last one
+ * before registration: a semantic the harness cannot honor refuses the binding when it is
  * required of it — the framework requires history preservation of every binding, and an
  * assembly may declare the capability its extension additionally depends on — while an
  * unlisted version only makes the session's once-per-Owner notice due and lets binding
  * continue. Failures are reported once each and returned as data; the caller's agent
- * runtime keeps running with the extension unbound.
+ * harness keeps running with the extension unbound.
  */
 import { type AdmissionFacts, admit, type DeclarableRequiredSemantic } from "../core/admission";
 import {
@@ -25,7 +25,7 @@ import {
 	type ExtensionDefinition,
 } from "../core/definition";
 import {
-	type AgentRuntimePort,
+	type HarnessPort,
 	type BindingFailure,
 	type BindingResult,
 	type CommandActions,
@@ -43,11 +43,11 @@ import { dispatchRoundEvent } from "./round-events";
 import { dispatchSessionEvent } from "./session-events";
 
 /**
- * The admission inputs one binding resolves: the agent-runtime facts the adapter observed and the
+ * The admission inputs one binding resolves: the harness facts the adapter observed and the
  * semantics this binding's assembly declared its extension depends on.
  *
  * The supported-version set is deliberately not here: version membership is decided against the
- * framework's own Supported agent-runtime baseline, so no assembly supplies, widens or replaces
+ * framework's own Supported harness baseline, so no assembly supplies, widens or replaces
  * it ({@link admit}). Neither is a notice ledger: the unlisted-version notice is the framework's
  * and it is published per Owner for the whole process, so no assembly carries a record of it
  * (`framework/behaviors/admission.ts`).
@@ -57,7 +57,7 @@ export interface BindingAdmission {
 	/**
 	 * The semantics this binding's assembly declared the extension depends on, besides the
 	 * ones the framework requires of every binding — the assembly option that turns a gap
-	 * the runtime has into a refusal instead of a capability the extension works around.
+	 * the harness has into a refusal instead of a capability the extension works around.
 	 * Omitted when the assembly declared none, which is what most extensions do.
 	 */
 	readonly requiredSemantics?: readonly DeclarableRequiredSemantic[];
@@ -130,7 +130,7 @@ function findInitializationFailure(
 }
 
 /**
- * Binds a definition to an agent runtime, or refuses to.
+ * Binds a definition to a harness, or refuses to.
  *
  * A refused definition contributes nothing — no label, no commands, no injections,
  * no marker — and reports one diagnostic per failure: a declared conflict, or a declared
@@ -169,7 +169,7 @@ function findInitializationFailure(
  */
 export function bindExtension(
 	definition: ExtensionDefinition,
-	port: AgentRuntimePort,
+	port: HarnessPort,
 	state: StateStore,
 	admission: BindingAdmission,
 	actions: CommandActions = {},
@@ -202,11 +202,11 @@ export function bindExtension(
 		return { bound: false, failures };
 	}
 
-	// The runtime-level admission step, still before the first registration. A required
-	// semantic the runtime cannot honor refuses the binding outright — required meaning the
+	// The harness-level admission step, still before the first registration. A required
+	// semantic the harness cannot honor refuses the binding outright — required meaning the
 	// framework's own semantics plus whatever this assembly declared — while an unlisted
 	// version is not a refusal, and its notice is published by the session behavior below.
-	// The version axis is decided against the framework's own Supported agent-runtime baseline:
+	// The version axis is decided against the framework's own Supported harness baseline:
 	// this assembly declared no version list and cannot.
 	const outcome = admit(admission.facts, admission.requiredSemantics ?? []);
 	if (outcome.kind === "required-semantics-missing") {
@@ -219,7 +219,7 @@ export function bindExtension(
 	// State reconciles at every session boundary this binding observes, its injection slots
 	// are planned at every run initiation, its marker joins the framework's unified area,
 	// and, in declaration order, its commands are registered against the same store.
-	// Anything the agent runtime refuses here leaves the extension reported as unbound;
+	// Anything the harness refuses here leaves the extension reported as unbound;
 	// the framework itself keeps nothing on either outcome.
 	try {
 		port.setLabel(definition.displayName);
@@ -235,7 +235,7 @@ export function bindExtension(
 		// The round axis is subscribed only when this assembly observes one of its edges. Unlike
 		// the session subscription above there is no framework behavior to run for a round — the
 		// agent's work state is not framework State — so a definition that subscribed to no round
-		// asks the runtime for no round deliveries, and its binding registers no such hook.
+		// asks the harness for no round deliveries, and its binding registers no such hook.
 		if (events.round_start !== undefined || events.round_end !== undefined) {
 			port.onRound(round => dispatchRoundEvent(definition, events, round, port.reportDiagnostic));
 		}

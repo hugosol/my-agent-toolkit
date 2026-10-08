@@ -1,20 +1,20 @@
 /**
- * The controlled-session harness must be able to: start the isolated agent runtime
+ * The controlled-session dock must be able to: start the isolated harness
  * with a temporary agent state, execute an extension command, run a real turn, read
  * the session JSONL back, read the captured outbound request JSON back, exit
  * normally, and explain itself when a run fails.
  *
  * Each test owns its run (temporary agent state, session directory, capture directory).
- * The agent runtime materialises its session file lazily, so read-back happens after a
+ * The harness materialises its session file lazily, so read-back happens after a
  * turn and a graceful exit, which is when the file is complete.
  */
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import * as path from "node:path";
-import { type IsolatedRuntime, ensureIsolatedRuntime, readBaselineRecord, verifyLockfile } from "./baseline";
+import { type IsolatedHarness, ensureIsolatedHarness, readBaselineRecord, verifyLockfile } from "./baseline";
 import { type CaptureServer, startCaptureServer } from "./capture-server";
 import { listResolutionOffsets } from "./env";
-import { HARNESS_CAPTURE_BASE_URL_ENV, HARNESS_MODEL_SELECTOR } from "./fixtures/extension-root/provider";
+import { DOCK_CAPTURE_BASE_URL_ENV, DOCK_MODEL_SELECTOR } from "./fixtures/extension-root/provider";
 import {
 	FIXTURE_COMMAND,
 	FIXTURE_COMMAND_ENTRY_TYPE,
@@ -22,30 +22,30 @@ import {
 	FIXTURE_INJECTION_TYPE,
 } from "./fixtures/extension-root/entrypoint";
 import { type RunRoot, createRunRoot, listRunArtifacts } from "./run-root";
-import { ControlledSession, HarnessSessionError } from "./session";
+import { ControlledSession, DockSessionError } from "./session";
 import { customEntries, customMessages } from "./session-log";
 
 const record = readBaselineRecord();
 const FIXTURE_EXTENSION_ROOT = path.join(import.meta.dir, "fixtures", "extension-root");
 
-let runtime: IsolatedRuntime;
+let harness: IsolatedHarness;
 
-interface HarnessRun {
+interface DockRun {
 	readonly session: ControlledSession;
 	readonly capture: CaptureServer;
 	readonly runRoot: RunRoot;
 }
 
-async function startRun(label: string): Promise<HarnessRun> {
+async function startRun(label: string): Promise<DockRun> {
 	const runRoot = createRunRoot(label);
 	const capture = startCaptureServer({ dir: runRoot.captureDir });
 	try {
 		const session = await ControlledSession.start({
-			runtime,
+			harness,
 			runRoot,
 			extensions: [FIXTURE_EXTENSION_ROOT],
-			model: HARNESS_MODEL_SELECTOR,
-			env: { [HARNESS_CAPTURE_BASE_URL_ENV]: capture.baseUrl },
+			model: DOCK_MODEL_SELECTOR,
+			env: { [DOCK_CAPTURE_BASE_URL_ENV]: capture.baseUrl },
 		});
 		return { session, capture, runRoot };
 	} catch (error) {
@@ -56,7 +56,7 @@ async function startRun(label: string): Promise<HarnessRun> {
 }
 
 /** Drop the run's processes and directories; safe to call after an explicit stop. */
-async function disposeRun(run: HarnessRun): Promise<void> {
+async function disposeRun(run: DockRun): Promise<void> {
 	try {
 		await run.session.stop({ timeoutMs: 5_000 });
 	} catch {
@@ -68,15 +68,15 @@ async function disposeRun(run: HarnessRun): Promise<void> {
 
 describe("controlled session", () => {
 	test("starts the isolated artifact under a temporary agent state, not the default environment", async () => {
-		runtime = await ensureIsolatedRuntime(record);
+		harness = await ensureIsolatedHarness(record);
 		const run = await startRun("isolation");
 		try {
 			// Exactly one resolution offset survives: the temporary agent state directory.
 			expect(listResolutionOffsets(run.session.env)).toEqual(["PI_CODING_AGENT_DIR"]);
 			expect(run.session.env.PI_CODING_AGENT_DIR).toBe(run.runRoot.agentDir);
 			// The process that runs is the isolated install, invoked explicit-only.
-			expect(run.session.argv[1]).toBe(runtime.cliPath);
-			expect(run.session.argv[1]?.startsWith(runtime.prefix)).toBe(true);
+			expect(run.session.argv[1]).toBe(harness.cliPath);
+			expect(run.session.argv[1]?.startsWith(harness.prefix)).toBe(true);
 			expect(run.session.argv).toContain("--no-extensions");
 			expect(run.session.argv).toContain(FIXTURE_EXTENSION_ROOT);
 
@@ -101,7 +101,7 @@ describe("controlled session", () => {
 			expect(command.agentInvoked).toBe(false);
 			expect(command.status).toBe("completed");
 
-			const turn = await run.session.prompt("harness fixture turn");
+			const turn = await run.session.prompt("dock fixture turn");
 			expect(turn.agentInvoked).toBe(true);
 			expect(turn.status).toBe("completed");
 
@@ -110,7 +110,7 @@ describe("controlled session", () => {
 
 			const log = run.session.sessionLog();
 			expect(log.unparsed).toEqual([]);
-			// The command's non-LLM entry and the runtime's normal-exit record are persisted.
+			// The command's non-LLM entry and the harness's normal-exit record are persisted.
 			expect(customEntries(log.entries, FIXTURE_COMMAND_ENTRY_TYPE).length).toBeGreaterThan(0);
 			const exitEntries = customEntries(log.entries, "session_exit");
 			expect(exitEntries.length).toBeGreaterThan(0);
@@ -128,14 +128,14 @@ describe("controlled session", () => {
 				),
 			).toBe(true);
 
-			// The harness also read back the full outbound request the turn produced.
+			// The dock also read back the full outbound request the turn produced.
 			const requests = run.capture.requests();
 			expect(requests.length).toBeGreaterThan(0);
 			const latest = requests[requests.length - 1];
 			if (!latest) throw new Error("capture did not record the outbound request");
 			expect(readFileSync(latest.file, "utf8")).toBe(latest.raw);
 			const body = latest.json as { model?: string; messages?: unknown[] } | null;
-			expect(body?.model).toBe("harness-model");
+			expect(body?.model).toBe("dock-model");
 			expect(Array.isArray(body?.messages)).toBe(true);
 			expect(latest.raw.includes(FIXTURE_INJECTION_TEXT)).toBe(true);
 		} finally {
@@ -150,21 +150,21 @@ describe("controlled session", () => {
 			let caught: unknown;
 			try {
 				await ControlledSession.start({
-					runtime: { cliPath: path.join(runRoot.workDir, "missing-cli.ts") },
+					harness: { cliPath: path.join(runRoot.workDir, "missing-cli.ts") },
 					runRoot,
 					extensions: [FIXTURE_EXTENSION_ROOT],
-					model: HARNESS_MODEL_SELECTOR,
-					env: { [HARNESS_CAPTURE_BASE_URL_ENV]: capture.baseUrl },
+					model: DOCK_MODEL_SELECTOR,
+					env: { [DOCK_CAPTURE_BASE_URL_ENV]: capture.baseUrl },
 					readyTimeoutMs: 5_000,
 				});
 			} catch (error) {
 				caught = error;
 			}
-			expect(caught).toBeInstanceOf(HarnessSessionError);
-			const harnessError = caught as HarnessSessionError;
-			expect(harnessError.diagnostics).toContain(runRoot.path);
-			expect(harnessError.diagnostics).toContain("stderr:");
-			expect(harnessError.diagnostics).toContain("missing-cli.ts");
+			expect(caught).toBeInstanceOf(DockSessionError);
+			const dockError = caught as DockSessionError;
+			expect(dockError.diagnostics).toContain(runRoot.path);
+			expect(dockError.diagnostics).toContain("stderr:");
+			expect(dockError.diagnostics).toContain("missing-cli.ts");
 		} finally {
 			capture.stop();
 			runRoot.dispose();

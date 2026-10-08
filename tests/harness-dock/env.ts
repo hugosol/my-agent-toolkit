@@ -2,12 +2,12 @@
  * Environment isolation for controlled sessions.
  *
  * A controlled session must not inherit resolution offsets from the shell that
- * launched the harness (a profile name, an XDG data home, an external auth-broker,
+ * launched the dock (a profile name, an XDG data home, an external auth-broker,
  * a formal config overlay). Everything else — PATH, TEMP, proxies, locale — stays,
- * because the agent runtime needs it and it does not move resolution.
+ * because the harness needs it and it does not move resolution.
  */
 
-/** Exact environment names that redirect agent-runtime resolution. */
+/** Exact environment names that redirect harness resolution. */
 const OFFSET_EXACT: Record<string, true> = {
 	OMP_PROFILE: true,
 	PI_PROFILE: true,
@@ -20,7 +20,7 @@ const OFFSET_EXACT: Record<string, true> = {
 	PI_CODING_AGENT_DIR: true,
 };
 
-/** Namespaces whose members always redirect agent-runtime resolution. */
+/** Namespaces whose members always redirect harness resolution. */
 const OFFSET_PREFIXES = ["OMP_AUTH_BROKER_"] as const;
 
 export function isResolutionOffset(name: string): boolean {

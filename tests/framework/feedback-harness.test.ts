@@ -188,7 +188,7 @@ describe("both severities on a session without a UI (F10)", () => {
 });
 
 describe("the hasUI fact the delivery carries (F11)", () => {
-	test("a command delivery reports the session's own fact in both runtime states", () => {
+	test("a command delivery reports the session's own fact in both harness states", () => {
 		const double = nativeDouble();
 		const seenHasUI: boolean[] = [];
 		bindProbe(double, seenHasUI);

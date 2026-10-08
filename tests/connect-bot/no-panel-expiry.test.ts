@@ -15,7 +15,7 @@
 import { describe, expect, test } from "bun:test";
 import { readdirSync, readFileSync } from "node:fs";
 import * as path from "node:path";
-import { REPO_ROOT } from "../harness/baseline";
+import { REPO_ROOT } from "../harness-dock/baseline";
 
 /** The extension whose source the panel's half must never appear in. */
 const EXTENSION_ROOT = "extensions/connect-bot";

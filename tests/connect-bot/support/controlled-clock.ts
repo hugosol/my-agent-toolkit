@@ -1,7 +1,7 @@
 /**
  * The controlled clock a cadence run advances by hand (P21).
  *
- * The extension's periodic effect runs on a timer the agent runtime owns, and what shared logic
+ * The extension's periodic effect runs on a timer the harness owns, and what shared logic
  * asks for is one interval of a period — the cadence is that period and nothing else. A suite that
  * waited for real ten-second periods would be slow and would time nothing; a suite that fired the
  * recorded callback by hand would never exercise the period at all. This clock is the middle

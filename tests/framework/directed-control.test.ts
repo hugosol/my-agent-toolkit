@@ -1,8 +1,8 @@
 /**
  * Directed control at the framework's adapter contract (S2; F1, ticket 02).
  *
- * The seam is the runtime-neutral one: a definition bound through `bindExtension` to
- * the port an agent runtime provides, driven by the shared port double. Everything the
+ * The seam is the harness-neutral one: a definition bound through `bindExtension` to
+ * the port a harness provides, driven by the shared port double. Everything the
  * ticket fixes is observed there — an empty argument and `off` each run the
  * assembly-injected implementation, a repeated invocation runs it again, the framework
  * publishes no feedback of its own, an unrecognized argument reaches the implementation's
@@ -12,13 +12,13 @@
  *
  * The declaration names the target value, but the implementation owns the write: it
  * records the value through the declared-value seam its delivery carries (ticket 03), so
- * a harness implementation applies its directive the way an extension's own handler does,
+ * a dock implementation applies its directive the way an extension's own handler does,
  * and a value the framework "would have" derived from the argument is never recorded.
  */
 import { describe, expect, test } from "bun:test";
 import type { CommandActions, CommandDelivery, RecognizedDirective } from "../../framework/core/protocol";
 import { type ExtensionDefinition, defineExtension } from "../../framework/public";
-import { type PortDouble, portDouble } from "./support/runtime-port-double";
+import { type PortDouble, portDouble } from "./support/harness-port-double";
 
 /** One implementation call, as the injected implementation saw it. */
 interface ActionCall {

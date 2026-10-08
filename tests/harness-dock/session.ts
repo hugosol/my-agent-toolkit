@@ -1,5 +1,5 @@
 /**
- * Controlled session: drive the isolated agent runtime in RPC mode with an
+ * Controlled session: drive the isolated harness in RPC mode with an
  * explicit-only extension set, a temporary agent state directory and a temporary
  * session directory.
  *
@@ -20,17 +20,17 @@ export interface RpcFrame {
 }
 
 export interface SessionOptions {
-	/** Isolated agent runtime to execute (see baseline.ensureIsolatedRuntime). */
-	readonly runtime: { readonly cliPath: string };
+	/** Isolated harness to execute (see baseline.ensureIsolatedHarness). */
+	readonly harness: { readonly cliPath: string };
 	readonly runRoot: RunRoot;
 	/** Explicit extension paths (`-e`), each a module file or a discovery directory. */
 	readonly extensions: readonly string[];
-	/** Model selector to run, e.g. `harness-gateway/harness-model`. */
+	/** Model selector to run, e.g. `dock-gateway/dock-model`. */
 	readonly model: string;
 	/** Extra child environment (applied after isolation). */
 	readonly env?: Record<string, string | undefined>;
 	readonly extraArgs?: readonly string[];
-	/** How long to wait for the runtime's `ready` frame. */
+	/** How long to wait for the harness's `ready` frame. */
 	readonly readyTimeoutMs?: number;
 	/** How long to wait for a prompt to reach its outcome. */
 	readonly promptTimeoutMs?: number;
@@ -46,7 +46,7 @@ export interface PromptOutcome {
 export interface ExitOutcome {
 	readonly exitCode: number | null;
 	readonly stderr: string;
-	/** True when the runtime had to be killed after the graceful-exit timeout. */
+	/** True when the harness had to be killed after the graceful-exit timeout. */
 	readonly timedOut: boolean;
 }
 
@@ -56,12 +56,12 @@ interface FrameWaiter {
 	readonly timer: ReturnType<typeof setTimeout>;
 }
 
-export class HarnessSessionError extends Error {
+export class DockSessionError extends Error {
 	readonly diagnostics: string;
 
 	constructor(message: string, diagnostics: string) {
 		super(`${message}\n--- session diagnostics ---\n${diagnostics}`);
-		this.name = "HarnessSessionError";
+		this.name = "DockSessionError";
 		this.diagnostics = diagnostics;
 	}
 }
@@ -117,7 +117,7 @@ export class ControlledSession {
 		const agentDir = options.runRoot.agentDir;
 		const argv = [
 			"bun",
-			options.runtime.cliPath,
+			options.harness.cliPath,
 			"--mode",
 			"rpc",
 			"--no-extensions",
@@ -204,7 +204,7 @@ export class ControlledSession {
 	 *
 	 * The reverse direction of {@link prompt}: a command whose outcome is not a prompt
 	 * (switching sessions, reading entries) is answered with a correlated response, and a
-	 * refused command surfaces as a harness error instead of a silent no-op.
+	 * refused command surfaces as a dock error instead of a silent no-op.
 	 */
 	async request(command: { readonly type: string; readonly [key: string]: unknown }): Promise<RpcFrame> {
 		const id = `c${++this.#commandCounter}`;
@@ -216,15 +216,15 @@ export class ControlledSession {
 		this.#send({ ...command, id });
 		const frame = await answer;
 		if (frame.success !== true) {
-			throw new HarnessSessionError(
-				`agent runtime refused ${command.type}: ${JSON.stringify(frame)}`,
+			throw new DockSessionError(
+				`harness refused ${command.type}: ${JSON.stringify(frame)}`,
 				this.diagnostics(),
 			);
 		}
 		return frame;
 	}
 
-	/** Close stdin and wait for a graceful exit; kill only if the runtime hangs. */
+	/** Close stdin and wait for a graceful exit; kill only if the harness hangs. */
 	async stop(options?: { timeoutMs?: number }): Promise<ExitOutcome> {
 		if (this.#exit) return this.#exit;
 		const timeoutMs = options?.timeoutMs ?? DEFAULT_STOP_TIMEOUT_MS;
@@ -258,7 +258,7 @@ export class ControlledSession {
 				timer: setTimeout(() => {
 					const index = this.#waiters.indexOf(waiter);
 					if (index >= 0) this.#waiters.splice(index, 1);
-					reject(new HarnessSessionError(`timed out after ${timeoutMs}ms waiting for ${label}`, this.diagnostics()));
+					reject(new DockSessionError(`timed out after ${timeoutMs}ms waiting for ${label}`, this.diagnostics()));
 				}, timeoutMs),
 			};
 			this.#waiters.push(waiter);
@@ -287,8 +287,8 @@ export class ControlledSession {
 		const outcome = await Promise.race([ready.then(frame => ({ kind: "ready" as const, frame })), exited]);
 		if (outcome.kind === "exit") {
 			this.#exit = { exitCode: outcome.code, stderr: this.#stderrText, timedOut: false };
-			throw new HarnessSessionError(
-				`agent runtime exited with code ${String(outcome.code)} before the ready frame`,
+			throw new DockSessionError(
+				`harness exited with code ${String(outcome.code)} before the ready frame`,
 				this.diagnostics(),
 			);
 		}

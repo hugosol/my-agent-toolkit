@@ -5,7 +5,7 @@
  * control commands, its injected-prompt slots and its status marker, and the
  * framework supplies the behavior behind each declaration. There is no builder, no
  * plugin bus and no raw handler — everything an extension asks the framework to do
- * is expressed here, and nothing in this module names an agent runtime.
+ * is expressed here, and nothing in this module names a harness.
  */
 
 /**
@@ -88,7 +88,7 @@ export interface CommandToggleDeclaration {
 	readonly name: string;
 	/** The State field this command transitions. */
 	readonly state: string;
-	/** Human-readable description, shown wherever the agent runtime lists commands. */
+	/** Human-readable description, shown wherever the harness lists commands. */
 	readonly description?: string;
 }
 
@@ -98,7 +98,7 @@ export interface CommandToggleDeclaration {
  *
  * The argument names the target: an empty argument names `on` and `off` names `off`,
  * which the framework normalizes into a directive. The declaration is plain data like
- * every other field — the action the command runs is injected by an agent-runtime
+ * every other field — the action the command runs is injected by a harness
  * assembly at binding, and the framework refuses a directed declaration whose action
  * was not injected rather than registering a command that does nothing.
  *
@@ -117,7 +117,7 @@ export interface CommandDirectedDeclaration {
 	readonly name: string;
 	/** The State field this command's implementation writes through its delivery's seam. */
 	readonly state: string;
-	/** Human-readable description, shown wherever the agent runtime lists commands. */
+	/** Human-readable description, shown wherever the harness lists commands. */
 	readonly description?: string;
 }
 
@@ -136,7 +136,7 @@ export type ControlKind = CommandDeclaration["type"];
 /**
  * The control kinds this framework version can honor.
  *
- * A definition may only reach runtime with a declarable kind, but a definition can
+ * A definition may only reach harness with a declarable kind, but a definition can
  * also arrive from plain JavaScript, so binding refuses a kind outside this list
  * instead of silently dropping the declaration. `directed` carries one requirement
  * beyond the declaration itself — an injected action for the command — and binding
@@ -185,7 +185,7 @@ export interface MarkerDeclaration {
  * which the empty string is not a value declares it and writes no check of its own.
  *
  * A `milliseconds` is the framework's own refinement of `number` for a wait budget: a whole
- * number of milliseconds this runtime's timer schedules — from 1 through 2^31-1, the longest
+ * number of milliseconds this harness's timer schedules — from 1 through 2^31-1, the longest
  * delay it waits for before clamping a value to 1ms. An extension that configures a timeout
  * declares it and writes no check of its own, and a value outside the range refuses the
  * binding rather than letting the extension run on a budget it would not be given.
@@ -245,7 +245,7 @@ export interface ExtensionDefinition {
  *
  * The argument is plain data and the returned value is that same data, typed; nothing
  * is validated or copied here. Declared conflicts are reported when an adapter binds
- * the definition to a running agent runtime, not at declaration time.
+ * the definition to a running harness, not at declaration time.
  */
 export function defineExtension(definition: ExtensionDefinition): ExtensionDefinition {
 	return definition;

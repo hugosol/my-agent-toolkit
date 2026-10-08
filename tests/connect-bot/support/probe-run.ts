@@ -14,7 +14,7 @@
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
-import { REPO_ROOT } from "../../harness/baseline";
+import { REPO_ROOT } from "../../harness-dock/baseline";
 
 /** One outbound request a probe run made, as the transport that performed it reported it. */
 export interface SentRequest {

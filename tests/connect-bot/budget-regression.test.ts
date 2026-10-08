@@ -10,7 +10,7 @@
  *
  * Two kinds of evidence are kept apart, because they answer different questions. The controlled
  * runs (`support/budget-probe.ts`) drive the extension as the loader does in a process of its own
- * — a budget other than the shipped one can only be observed there — with the runtime's timer
+ * — a budget other than the shipped one can only be observed there — with the harness's timer
  * standing on a {@link ControlledClock} the run advances by exact virtual milliseconds, so a beat's
  * *period* is what produces it and a cancelled interval produces nothing; the panel behind them is
  * a real local HTTP service whose own receipt record and answer bodies are read off the wire. The
@@ -32,7 +32,7 @@ import { afterEach, describe, expect, test } from "bun:test";
 import * as path from "node:path";
 import { CONNECT_BOT } from "../../extensions/connect-bot/definition";
 import { readConfig } from "../../framework/core/config";
-import { REPO_ROOT } from "../harness/baseline";
+import { REPO_ROOT } from "../harness-dock/baseline";
 import { isUpsertData, type OmpBotPanel, publishedViews, startOmpBot } from "./support/omp-bot";
 import { createRunRoot, type ProbeReport, type SentRequest, runProbe } from "./support/probe-run";
 
@@ -102,7 +102,7 @@ function envelopeOf(body: string): WireEnvelope {
  * The local panel a controlled run talks to: a real HTTP service with scripted answers.
  *
  * A delay here is real wall-clock time on purpose: the request budget under test is realized by the
- * runtime's own `AbortSignal` over a genuine socket in the probe's process, so a deterministic
+ * harness's own `AbortSignal` over a genuine socket in the probe's process, so a deterministic
  * clock in this suite could not produce the late answer the failure scenarios need. The delay is
  * short (below a couple of hundred milliseconds), the panel is local, and the client abandons the
  * request at its own budget without waiting for it — so the wall time a case costs is its budget,
@@ -404,7 +404,7 @@ describe("the protocol the actual omp-bot panel receives is the frozen one (P23)
 			expect(report.sent.map(request => request.headers)).toEqual(report.sent.map(() => ({ "content-type": "application/json" })));
 			expect(report.sent.map(request => request.proxy)).toEqual(report.sent.map(() => false));
 
-			// The envelopes: the register carrying the session facts the runtime read, the arm's own
+			// The envelopes: the register carrying the session facts the harness read, the arm's own
 			// state report, two beats carrying the state in force, the two round edges' reports and the
 			// unregister that names the row.
 			expect(envelopesOf(report)).toEqual([
@@ -447,7 +447,7 @@ describe("the protocol the actual omp-bot panel receives is the frozen one (P23)
 			expect(views.map(view => view.state)).toEqual([undefined, "idle", "working", "awaiting-input"]);
 			expect(panel.frames[panel.frames.length - 1]?.data).toEqual({ sessionId: "budget-interop" });
 
-			// The cadence in wall-clock time, from the runtime's own interval: the two beats the real
+			// The cadence in wall-clock time, from the harness's own interval: the two beats the real
 			// panel received are one period apart. This is the record the controlled runs' virtual
 			// clock is mapped against — the same period, timed by the wall clock instead.
 			const beats = ofKind(report, "heartbeat");

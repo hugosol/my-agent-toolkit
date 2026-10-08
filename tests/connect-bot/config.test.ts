@@ -4,7 +4,7 @@
  *
  * The seams under test are the extension's own: the file the repository ships, read and
  * validated through the framework's configuration interface; the binding of the extension's
- * declared fields against a document supplied in memory, observed through the runtime-neutral
+ * declared fields against a document supplied in memory, observed through the harness-neutral
  * port double, which is where a missing or illegal value must come out as one `configuration`
  * failure with a non-model report and nothing registered; and the extension's own
  * `connectBotConfig()` read, which is how its shared logic gets the validated values.
@@ -31,8 +31,8 @@ import connectBot from "../../entrypoints/omp/connect-bot";
 import { getConfig, readConfig } from "../../framework/core/config";
 import type { ExtensionDefinition } from "../../framework/core/definition";
 import type { BindingResult } from "../../framework/core/protocol";
-import { portDouble } from "../framework/support/runtime-port-double";
-import { REPO_ROOT } from "../harness/baseline";
+import { portDouble } from "../framework/support/harness-port-double";
+import { REPO_ROOT } from "../harness-dock/baseline";
 import { ompDouble } from "./support/omp-double";
 
 /** The endpoint the extension's own `config.yaml` ships; the file is the only source. */
@@ -173,7 +173,7 @@ describe("a missing or illegal request budget refuses the extension (P14)", () =
 			document: `endpoint: "${ENDPOINT}"\n${REQUEST_TIMEOUT_FIELD}: .inf\n`,
 		},
 		{
-			name: "a value beyond the range the runtime schedules",
+			name: "a value beyond the range the harness schedules",
 			document: `endpoint: "${ENDPOINT}"\n${REQUEST_TIMEOUT_FIELD}: 2147483648\n`,
 		},
 	];
@@ -206,7 +206,7 @@ describe("a missing or illegal request budget refuses the extension (P14)", () =
 
 	test("a legal whole millisecond budget binds, and the value is what the extension's declaration reads", () => {
 		// The control for the cases above: the same declaration, the same document shape, and a
-		// budget that is a non-default whole number of milliseconds the runtime schedules.
+		// budget that is a non-default whole number of milliseconds the harness schedules.
 		const definition = requiringConnectBotFields("budget-legal-2000");
 
 		const { result, diagnostics, registrations } = bindDocument(

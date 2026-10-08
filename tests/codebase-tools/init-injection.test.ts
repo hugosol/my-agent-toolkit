@@ -1,5 +1,5 @@
 /**
- * The init injected-prompt slot, end to end on the real OMP runtime (B3, B5, B10, C6,
+ * The init injected-prompt slot, end to end on the real OMP harness (B3, B5, B10, C6,
  * C7, C8; P18, P19, P21, P22, P37).
  *
  * The observable seam is the OMP extension seam: the real loader discovers
@@ -11,26 +11,26 @@ import { beforeAll, describe, expect, test } from "bun:test";
 import { writeFileSync } from "node:fs";
 import * as path from "node:path";
 import { INIT_PROMPT, REMINDER_PROMPT } from "../../extensions/codebase-tools/shared-logic/prompts";
-import { type IsolatedRuntime, REPO_ROOT, ensureIsolatedRuntime, readBaselineRecord } from "../harness/baseline";
-import { type CaptureServer, type CapturedRequest, startCaptureServer } from "../harness/capture-server";
-import { HARNESS_CAPTURE_BASE_URL_ENV, HARNESS_MODEL_SELECTOR } from "../harness/fixtures/extension-root/provider";
-import { type RunRoot, createRunRoot } from "../harness/run-root";
-import { ControlledSession } from "../harness/session";
-import { type SessionEntry, customEntries, customMessages } from "../harness/session-log";
+import { type IsolatedHarness, REPO_ROOT, ensureIsolatedHarness, readBaselineRecord } from "../harness-dock/baseline";
+import { type CaptureServer, type CapturedRequest, startCaptureServer } from "../harness-dock/capture-server";
+import { DOCK_CAPTURE_BASE_URL_ENV, DOCK_MODEL_SELECTOR } from "../harness-dock/fixtures/extension-root/provider";
+import { type RunRoot, createRunRoot } from "../harness-dock/run-root";
+import { ControlledSession } from "../harness-dock/session";
+import { type SessionEntry, customEntries, customMessages } from "../harness-dock/session-log";
 
 /** The OMP discovery root this repository deploys, and the credential-free provider fixture. */
 const OMP_ENTRYPOINT_DIR = path.join(REPO_ROOT, "entrypoints", "omp");
-const PROVIDER_FIXTURE = path.join(REPO_ROOT, "tests", "harness", "fixtures", "extension-root", "provider.ts");
+const PROVIDER_FIXTURE = path.join(REPO_ROOT, "tests", "harness-dock", "fixtures", "extension-root", "provider.ts");
 
 /** The identities the migration fixes: the init slot and the State record. */
 const INIT_IDENTITY = "codebase-tools:init";
 const STATE_ENTRY_TYPE = "codebase-tools:state";
 const COMMAND = "codebase-tools";
 
-let runtime: IsolatedRuntime;
+let harness: IsolatedHarness;
 
 beforeAll(async () => {
-	runtime = await ensureIsolatedRuntime(readBaselineRecord());
+	harness = await ensureIsolatedHarness(readBaselineRecord());
 }, 300_000);
 
 interface Run {
@@ -46,11 +46,11 @@ function createRun(label: string): Run {
 /** Start one session in a run: a fresh process over the run's session directory. */
 function openSession(run: Run, extraArgs: readonly string[] = []): Promise<ControlledSession> {
 	return ControlledSession.start({
-		runtime,
+		harness,
 		runRoot: run.runRoot,
 		extensions: [PROVIDER_FIXTURE, OMP_ENTRYPOINT_DIR],
-		model: HARNESS_MODEL_SELECTOR,
-		env: { [HARNESS_CAPTURE_BASE_URL_ENV]: run.capture.baseUrl },
+		model: DOCK_MODEL_SELECTOR,
+		env: { [DOCK_CAPTURE_BASE_URL_ENV]: run.capture.baseUrl },
 		extraArgs,
 	});
 }
@@ -70,15 +70,15 @@ async function stopQuietly(session: ControlledSession | undefined): Promise<void
 	}
 }
 
-/** The session file the runtime reports for the session it currently runs. */
+/** The session file the harness reports for the session it currently runs. */
 async function sessionFileOf(session: ControlledSession): Promise<string> {
 	const frame = await session.request({ type: "get_state" });
 	const file = (frame.data as { sessionFile?: string } | undefined)?.sessionFile;
-	if (file === undefined) throw new Error(`the runtime reported no session file: ${JSON.stringify(frame)}`);
+	if (file === undefined) throw new Error(`the harness reported no session file: ${JSON.stringify(frame)}`);
 	return file;
 }
 
-/** The parsed shape of one captured request body: this runtime's own serialized JSON. */
+/** The parsed shape of one captured request body: this harness's own serialized JSON. */
 interface CapturedBody {
 	readonly messages?: ReadonlyArray<{ readonly content?: unknown }>;
 	readonly tools?: ReadonlyArray<{ readonly function?: { readonly name?: string } }>;
@@ -149,7 +149,7 @@ describe("first enabled run injects one init (B3, C6, C7, P19, P21)", () => {
 		// before the capture endpoint is built, because the call's arguments name it.
 		const runRoot = createRunRoot("init-first-turn");
 		const readTarget = path.join(runRoot.workDir, "init-probe-target.txt");
-		writeFileSync(readTarget, "harness read target\n");
+		writeFileSync(readTarget, "dock read target\n");
 		const run: Run = {
 			runRoot,
 			capture: startCaptureServer({
@@ -276,7 +276,7 @@ describe("enabling injects a prompt and nothing else (B10, C11, P37)", () => {
 
 			const requests = run.capture.requests();
 			expect(requests).toHaveLength(2);
-			// The extension contributes text only: the request's tools are the runtime's own,
+			// The extension contributes text only: the request's tools are the harness's own,
 			// identical before and after enabling (nothing discovered, enabled or trimmed).
 			expect(toolNames(requests[1] as CapturedRequest)).toEqual(toolNames(requests[0] as CapturedRequest));
 			// The off turn carried no contribution; the on turn carried exactly the init.

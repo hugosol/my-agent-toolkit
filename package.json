@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "test": "bun test",
-    "test:harness": "bun test tests/harness",
+    "test:dock": "bun test tests/harness-dock",
     "test:framework": "bun test tests/framework",
     "test:codebase-tools": "bun test tests/codebase-tools",
     "verify:omp-candidate": "bun scripts/verify-omp-candidate.ts",

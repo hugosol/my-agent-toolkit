@@ -16,8 +16,8 @@ the architecture decision is [ADR 0002](../../docs/adr/0002-semantic-extension-f
 | --- | --- | --- |
 | `defineExtension(definition)` | [`framework/public.ts`](../public.ts), defined at [`framework/core/definition.ts#L250`](../core/definition.ts#L250) | Declares an extension. Returns its argument typed; nothing is validated or copied here. |
 | `ExtensionDefinition` and its member types (`StateDeclaration`, `StatePersistence`, `StateInheritance`, `CommandDeclaration`, `CommandToggleDeclaration`, `CommandDirectedDeclaration`, `ControlKind`, `PromptDeclaration`, `PromptStrategy`, `MarkerDeclaration`, `ExtensionConfigDeclaration`, `ConfigFieldType`) | [`framework/core/definition.ts#L230`](../core/definition.ts#L230) | The definition shape and its configuration types. |
-| `ompAdapter(definition, options?)` | [`framework/adapters/omp.ts#L848`](../adapters/omp.ts#L848) | Assembles a definition for the `omp` agent runtime; returns an `OmpExtensionFactory`. |
-| `OmpAdapterOptions` | [`framework/adapters/omp.ts#L293`](../adapters/omp.ts#L293) | The assembly options, every member optional (`actions`, `events`, `requiredSemantics`, `configBaseDir`). Agent-runtime version support is deliberately not one of them: the Supported agent-runtime baseline belongs to the framework ([`framework/core/baseline.ts#L22`](../core/baseline.ts#L22)). |
+| `ompAdapter(definition, options?)` | [`framework/adapters/omp.ts#L848`](../adapters/omp.ts#L848) | Assembles a definition for the `omp` harness; returns an `OmpExtensionFactory`. |
+| `OmpAdapterOptions` | [`framework/adapters/omp.ts#L293`](../adapters/omp.ts#L293) | The assembly options, every member optional (`actions`, `events`, `requiredSemantics`, `configBaseDir`). Harness version support is deliberately not one of them: the Supported harness baseline belongs to the framework ([`framework/core/baseline.ts#L22`](../core/baseline.ts#L22)). |
 | `BindingResult`, `BindingFailure` | [`framework/core/protocol.ts#L665`](../core/protocol.ts#L665) | What a binding concluded, and why it was refused. |
 | `CommandActions`, `DirectedCommandImplementation`, `CommandDelivery`, `DeclaredValueSeam` | [`protocol.ts#L484`](../core/protocol.ts#L484), [`#L447`](../core/protocol.ts#L447), [`#L566`](../core/protocol.ts#L566), [`#L398`](../core/protocol.ts#L398) | The implementations an assembly injects for a definition's directed commands, keyed by command name — each with a `run` member and an optional `unrecognized` member for an argument that parsed to no directive — and the delivery and declared-value seam each one writes through. |
 | `RecognizedDirective`, `DirectedDirective` | [`framework/core/protocol.ts#L367`](../core/protocol.ts#L367) | The directive the framework normalizes a directed command's argument into, and the two members it acts on. |
@@ -30,11 +30,11 @@ the architecture decision is [ADR 0002](../../docs/adr/0002-semantic-extension-f
 | `ConfigurationViolation` | [`framework/core/violations.ts`](../core/violations.ts) | The report of one broken configuration rule, carried by a `configuration` binding failure: a `ConfigurationViolationKind` and the deterministic `detail`. |
 | `ExtensionConfigDeclaration`, `ConfigFieldType`, `BOUND_CONFIG_FIELD_TYPES` | [`framework/core/definition.ts#L218`](../core/definition.ts#L218) | The configuration an extension requires of its own `config.yaml`: the file's path, and the keys the file must carry with the type each must match. See [Extension configuration](#extension-configuration-declaration--file). |
 | `readConfig`, `getConfig`, `ConfigSource`, `ConfigReadOptions`, `ConfigReader`, `ConfigParser`, `ConfigLoadError`, `ExtensionConfigError` | [`framework/core/config.ts`](../core/config.ts) | The one reading, parsing and validating implementation, the values shared logic reads, the injectable seam it runs through, and the two error classes that keep a loading-time failure apart from a misuse. See [Extension configuration](#extension-configuration-declaration--file). |
-| Adapter-facing delivery types (`OwnerReference`, `NoticeTransport`, `FeedbackLevel`, `FeedbackTransport`, `MarkerTransport`, `StateValues`) | [`framework/core/protocol.ts#L15`](../core/protocol.ts#L15) | The facts and transports an agent-runtime adapter resolves; not authored by an extension. |
+| Adapter-facing delivery types (`OwnerReference`, `NoticeTransport`, `FeedbackLevel`, `FeedbackTransport`, `MarkerTransport`, `StateValues`) | [`framework/core/protocol.ts#L15`](../core/protocol.ts#L15) | The facts and transports a harness adapter resolves; not authored by an extension. |
 
 A real, minimal consumer is the codebase-tools extension: the shared declaration is
 [`extensions/codebase-tools/definition.ts`](../../extensions/codebase-tools/definition.ts), its OMP assembly is
-[`extensions/codebase-tools/runtimes/omp.ts`](../../extensions/codebase-tools/runtimes/omp.ts), and the discovery
+[`extensions/codebase-tools/harnesses/omp.ts`](../../extensions/codebase-tools/harnesses/omp.ts), and the discovery
 entrypoint that re-exports it is [`entrypoints/omp/codebase-tools.ts`](../../entrypoints/omp/codebase-tools.ts).
 
 ## `defineExtension(definition)`
@@ -83,7 +83,7 @@ The extension's control commands. `CommandDeclaration` is the closed union of th
 | `type` | `"toggle"` \| `"directed"` | The control kind; see the two kinds below. |
 | `name` | `string` | Command name, without the leading slash. |
 | `state` | `string` | The State field this command drives. |
-| `description?` | `string` | Human-readable description, shown wherever the agent runtime lists commands. |
+| `description?` | `string` | Human-readable description, shown wherever the harness lists commands. |
 
 | `type` | Behavior | Source |
 | --- | --- | --- |
@@ -173,7 +173,7 @@ means the extension reads no configuration at all and the capability is invisibl
 | Parameter | Type | Meaning |
 | --- | --- | --- |
 | `path?` | `string` | The file's path, relative to the **configuration base directory** the assembly supplies (`OmpAdapterOptions.configBaseDir`); the convention `extensions/<definition.id>/config.yaml` when omitted. An absolute path is used as declared, and with no base directory a relative path resolves against the process's working directory. |
-| `fields` | `Readonly<Record<string, ConfigFieldType>>` | Every key the file must declare, with the type it must match: `"string"`, `"non-empty-string"`, `"number"`, `"boolean"` or `"milliseconds"` (`BOUND_CONFIG_FIELD_TYPES`, [`definition.ts#L193`](../core/definition.ts#L193)). A `milliseconds` field is a whole number of milliseconds this runtime's timer schedules — 1 through 2^31-1, the longest delay it waits for before clamping a value to 1ms — so a wait budget is never read as a delay the extension would not be given. |
+| `fields` | `Readonly<Record<string, ConfigFieldType>>` | Every key the file must declare, with the type it must match: `"string"`, `"non-empty-string"`, `"number"`, `"boolean"` or `"milliseconds"` (`BOUND_CONFIG_FIELD_TYPES`, [`definition.ts#L193`](../core/definition.ts#L193)). A `milliseconds` field is a whole number of milliseconds this harness's timer schedules — 1 through 2^31-1, the longest delay it waits for before clamping a value to 1ms — so a wait budget is never read as a delay the extension would not be given. |
 
 The declaration is plain data and stays that way: nothing is read or validated at declaration time, and the file
 it names is what `getConfig` hands the extension's shared logic. See
@@ -181,7 +181,7 @@ it names is what `getConfig` hands the extension's shared logic. See
 
 ## `ompAdapter(definition, options)`
 
-Assembles an `ExtensionDefinition` for the `omp` agent runtime
+Assembles an `ExtensionDefinition` for the `omp` harness
 ([`framework/adapters/omp.ts#L848`](../adapters/omp.ts#L848)). It returns an `OmpExtensionFactory`
 ([`omp.ts#L355`](../adapters/omp.ts#L355)) — `(api) => BindingResult` — which each thin entrypoint
 re-exports as its default factory and the loader calls once per binding.
@@ -198,16 +198,16 @@ are reported and admission is decided; declaration itself validates nothing
 | --- | --- | --- |
 | `actions?` | `CommandActions` | The assembly's implementations of the definition's directed commands, keyed by command name ([`omp.ts#L305`](../adapters/omp.ts#L305)). Each implementation writes the declared value through the delivery's seam ([`protocol.ts#L398`](../core/protocol.ts#L398)) and publishes its own operator-facing text through the delivery's feedback channel; the framework writes nothing on its behalf. Omitted when the definition declares none; a directed declaration without its implementation is refused at binding. |
 | `events?` | `SemanticEventHandlers` | The assembly's handlers for the definition's semantic lifecycle events, keyed by the event each subscribes to ([`omp.ts#L324`](../adapters/omp.ts#L324)): the session axis (`session_start`/`session_end`) and the round axis (`round_start`/`round_end`). This is where shared logic reacts to a boundary; see below. Omitted when the extension observes none. |
-| `requiredSemantics?` | `readonly DeclarableRequiredSemantic[]` | The semantics this extension depends on **beyond** the ones every binding already requires ([`omp.ts#L337`](../adapters/omp.ts#L337)): `"session-lifecycle-events"`, `"round-lifecycle-events"`. Declaring one is what turns a runtime that cannot honor it from a gap the extension works around into a `required-semantics` refusal. Omitted when the extension depends on nothing beyond the framework's own requirements — the case for an extension that observes no lifecycle event. See [Admission and required-semantics reporting shape](#admission-and-required-semantics-reporting-shape). |
+| `requiredSemantics?` | `readonly DeclarableRequiredSemantic[]` | The semantics this extension depends on **beyond** the ones every binding already requires ([`omp.ts#L337`](../adapters/omp.ts#L337)): `"session-lifecycle-events"`, `"round-lifecycle-events"`. Declaring one is what turns a harness that cannot honor it from a gap the extension works around into a `required-semantics` refusal. Omitted when the extension depends on nothing beyond the framework's own requirements — the case for an extension that observes no lifecycle event. See [Admission and required-semantics reporting shape](#admission-and-required-semantics-reporting-shape). |
 | `configBaseDir?` | `string` | The directory the definition's relative configuration paths are resolved against, as plain data ([`omp.ts#L351`](../adapters/omp.ts#L351)): the extension repository root, from which the convention `extensions/<definition.id>/config.yaml` is relative. An assembly is the one party that knows it — its own module lives in that repository and the loader discovers the extension by an absolute path while the process runs in an arbitrary project directory — so connect-bot's assembly derives it from `import.meta.url`. Omitted when the definition declares no configuration, and omitted by an assembly that names none: a relative path then resolves against the process's working directory, and an absolute `path` is unaffected either way. See [Extension configuration](#extension-configuration-declaration--file). |
 
-**There is no supported-version option.** Agent-runtime version support is the framework's
-Supported agent-runtime baseline ([`framework/core/baseline.ts`](../core/baseline.ts)),
+**There is no supported-version option.** Harness version support is the framework's
+Supported harness baseline ([`framework/core/baseline.ts`](../core/baseline.ts)),
 not an extension's or an assembly's declaration: an assembly describes only the capabilities its
-extension needs, and admission compares the version a runtime reports against that one list — no
+extension needs, and admission compares the version a harness reports against that one list — no
 assembly supplies, widens or replaces it. An extension that needs none of the options above
 assembles with no options at all, which is the canonical form in this repository
-([`extensions/codebase-tools/runtimes/omp.ts`](../../extensions/codebase-tools/runtimes/omp.ts)).
+([`extensions/codebase-tools/harnesses/omp.ts`](../../extensions/codebase-tools/harnesses/omp.ts)).
 
 **The semantic lifecycle subscription pairs a definition with injected handlers.** The framework's session
 axis is the symmetric pair `session_start` ([`protocol.ts#L67`](../core/protocol.ts#L67)) and
@@ -221,7 +221,7 @@ context reset — is not a transition and produces no event at all.
 The run axis is the edge-triggered pair `round_start` and `round_end`
 ([`protocol.ts#L241`](../core/protocol.ts#L241)), where a `Round` is one period of agent activity
 from the agent taking up input to quiescence. Both edges are payload-free by design: how a round ended is a
-fact the agent runtimes disagree about, and the agent's *current* state is the idle query below rather than a
+fact the harnesses disagree about, and the agent's *current* state is the idle query below rather than a
 field of a past transition. An edge is delivered only when the session really crosses it — a repeated or
 nested start inside an open round is not a second `round_start`, a settle that already scheduled its
 continuation (an automatic retry, an empty-stop recovery, a compaction or stop-hook turn, a pending
@@ -230,7 +230,7 @@ settle while no round is open closes nothing. Error and abort terminals end the 
 answer does. The framework applies no behavior of its own to a round: three-value agent state is not framework
 State, so a round edge is a subscription and nothing else, and the adapter is what synthesizes it (the `omp`
 mapping reads the native run start, the native run end and its continuation flag, and the session's own idle,
-pending-message and asynchronous-job facts — see [agent-runtime-support.md](agent-runtime-support.md)).
+pending-message and asynchronous-job facts — see [harness-support.md](harness-support.md)).
 
 An assembly subscribes through `options.events`, and the delivery each handler receives
 ([`protocol.ts#L183`](../core/protocol.ts#L183)) carries the event, the owner scope it concerns, the
@@ -258,8 +258,8 @@ gated: it runs for every delivery the adapter resolves and already owns nothing 
 owner (an `inherited` or `unresolved` delivery seeds no cell, retires none and renders no area). The rule is the
 framework's, expressed in `dispatchSessionEvent`/`dispatchRoundEvent` and observable at the adapter contract
 (`tests/framework/owner-gate.test.ts`); the *resolution* is the adapter's, and on `omp` it reads the session's
-agent identity and the runtime's agent registry (see
-[agent-runtime-support.md](agent-runtime-support.md#capability-difference-register)).
+agent identity and the harness's agent registry (see
+[harness-support.md](harness-support.md#capability-difference-register)).
 
 ## Extension configuration (declaration + file)
 
@@ -292,7 +292,7 @@ the non-model channel exactly once. The extension does not load; the extensions 
 | a declared key is missing, or its value has the wrong type | the file, the key, the value it declares, and the type the declaration requires |
 
 `readConfig(path, options)` ([`framework/core/config.ts#L228`](../core/config.ts#L228)) is the one
-reading, parsing and validating implementation, and it is runtime-neutral: the text is read through `node:fs`
+reading, parsing and validating implementation, and it is harness-neutral: the text is read through `node:fs`
 and parsed as YAML by the pure-JS `yaml` package, and the reader, the parser and the base directory a relative
 path is resolved against are all injectable through `ConfigSource`, so the framework's own suite covers every
 failure path without a file. Every file-side failure is a `ConfigLoadError`
@@ -326,8 +326,8 @@ An unbound result carries its `BindingFailure[]`. `BindingFailure`
 | `kind` | Payload | Meaning |
 | --- | --- | --- |
 | `"configuration"` | `violation: ConfigurationViolation` | The definition breaks one of the framework's configuration rules: it declares competing declarations, or its declared configuration — the `config` declaration or the file it names — is illegal. |
-| `"initialization"` | `detail: string` | The definition cannot be initialized against this agent runtime: no id or display name, a command declaring a control kind or a State field this version does not bind, a `state` declaration that is not a State object or that names a `persistence`/`inheritance` value outside the bound set, a directed command whose implementation was not injected, or a registration the runtime refused. |
-| `"required-semantics"` | `missing: readonly RequiredSemantic[]` | The agent runtime cannot honor a semantic required of this binding: the framework's own, or one the extension's assembly declared through `OmpAdapterOptions.requiredSemantics`. |
+| `"initialization"` | `detail: string` | The definition cannot be initialized against this harness: no id or display name, a command declaring a control kind or a State field this version does not bind, a `state` declaration that is not a State object or that names a `persistence`/`inheritance` value outside the bound set, a directed command whose implementation was not injected, or a registration the harness refused. |
+| `"required-semantics"` | `missing: readonly RequiredSemantic[]` | The harness cannot honor a semantic required of this binding: the framework's own, or one the extension's assembly declared through `OmpAdapterOptions.requiredSemantics`. |
 
 `ConfigurationViolation` ([`violations.ts#L24`](../core/violations.ts#L24)) is
 `{ kind: ConfigurationViolationKind; detail: string }`, where `ConfigurationViolationKind`
@@ -343,20 +343,20 @@ the deterministic text of one failure, independent of where it is reported.
 
 ## Admission and required-semantics reporting shape
 
-Admission is the one pre-registration check that decides whether the observed agent runtime is one the
-framework's Supported agent-runtime baseline lists
+Admission is the one pre-registration check that decides whether the observed harness is one the
+framework's Supported harness baseline lists
 ([`framework/core/admission.ts`](../core/admission.ts)). Which versions are supported is the
 framework's own declaration, not an assembly's: an adapter resolves the facts and calls
 `admit(facts, requiredSemantics?)`. Its fact/verdict shape is:
 
 | Symbol | Source | Shape and meaning |
 | --- | --- | --- |
-| `SUPPORTED_AGENT_RUNTIME_VERSIONS` | [`framework/core/baseline.ts#L22`](../core/baseline.ts#L22) | The framework-owned Supported agent-runtime baseline: `readonly [string, ...string[]]`, exactly `["18.5.0"]` today. Membership is exact — no range matching, no partial comparison — and this list is the only decision source admission consults for the version axis. Replacing the supported version is one explicit maintainer action that edits this list together with the support record and [`agent-runtime-baseline.json`](agent-runtime-baseline.json) (see [agent-runtime-support.md](agent-runtime-support.md)). |
+| `SUPPORTED_HARNESS_VERSIONS` | [`framework/core/baseline.ts#L22`](../core/baseline.ts#L22) | The framework-owned Supported harness baseline: `readonly [string, ...string[]]`, exactly `["18.5.0"]` today. Membership is exact — no range matching, no partial comparison — and this list is the only decision source admission consults for the version axis. Replacing the supported version is one explicit maintainer action that edits this list together with the support record and [`harness-baseline.json`](harness-baseline.json) (see [harness-support.md](harness-support.md)). |
 | `RequiredSemantic` | [`admission.ts#L48`](../core/admission.ts#L48) | Closed union of three members: `"history-preservation"` (existing conversation entries and their history-derived request content are preserved; new material is appended), `"session-lifecycle-events"` and `"round-lifecycle-events"` (the two semantic lifecycle axes of this release). |
 | `FRAMEWORK_REQUIRED_SEMANTICS` | [`admission.ts#L57`](../core/admission.ts#L57) | The semantics required of every binding whatever its assembly declares: `["history-preservation"]`. Not declarable — `DeclarableRequiredSemantic` excludes it. |
 | `DeclarableRequiredSemantic` | [`admission.ts#L66`](../core/admission.ts#L66) | The members an extension's assembly **may** declare it depends on: `Exclude<RequiredSemantic, (typeof FRAMEWORK_REQUIRED_SEMANTICS)[number]>` — today the two lifecycle axes. This is the type of `OmpAdapterOptions.requiredSemantics`. |
-| `VerifiedEnvironment` | [`admission.ts#L74`](../core/admission.ts#L74) | `{ platform: string; runtime: string }` (e.g. `win32-x64`, `omp`). Recorded only; not gated. |
-| `AdmissionFacts` | [`admission.ts#L82`](../core/admission.ts#L82) | `{ version?: string; missingRequiredSemantics?: readonly RequiredSemantic[]; environment?: VerifiedEnvironment }`. The facts one binding resolved, as the adapter observed them. `missingRequiredSemantics` is a fact about the *runtime*, not a verdict about a binding: which of them refuses *this* binding is admission's rule. |
+| `VerifiedEnvironment` | [`admission.ts#L74`](../core/admission.ts#L74) | `{ platform: string; harness: string }` (e.g. `win32-x64`, `omp`). Recorded only; not gated. |
+| `AdmissionFacts` | [`admission.ts#L82`](../core/admission.ts#L82) | `{ version?: string; missingRequiredSemantics?: readonly RequiredSemantic[]; environment?: VerifiedEnvironment }`. The facts one binding resolved, as the adapter observed them. `missingRequiredSemantics` is a fact about the *harness*, not a verdict about a binding: which of them refuses *this* binding is admission's rule. |
 | `AdmissionOutcome` | [`admission.ts#L98`](../core/admission.ts#L98) | `{ kind: "admitted" }` \| `{ kind: "unlisted-version"; version: string; supportedVersions: readonly string[] }` \| `{ kind: "required-semantics-missing"; missing: readonly RequiredSemantic[] }`. The `supportedVersions` an outcome echoes are the framework baseline's. |
 
 Required-semantics reporting is what ticket 10 added to this seam: a missing required semantic is a
@@ -368,20 +368,20 @@ distinct from `"unlisted-version"`, which is not a refusal.
 [`admission.ts#L140`](../core/admission.ts#L140)). The framework requires history preservation of
 every binding, so that one is never optional. On top of it, the extension's assembly may declare the
 capability it is built on through `OmpAdapterOptions.requiredSemantics`, which reaches admission as
-`BindingAdmission.requiredSemantics`. A runtime that cannot honor a semantic nobody declared is therefore a
-fact and nothing more — an extension that observes no lifecycle event keeps binding and running on a runtime
+`BindingAdmission.requiredSemantics`. A harness that cannot honor a semantic nobody declared is therefore a
+fact and nothing more — an extension that observes no lifecycle event keeps binding and running on a harness
 that delivers none — while a declared one refuses that binding, with nothing registered and one
 `reportDiagnostic` line naming the extension and the semantic.
 
 **The version axis is the framework's, and it warns rather than refuses.** A reported version outside
-`SUPPORTED_AGENT_RUNTIME_VERSIONS` is an `"unlisted-version"` outcome: the binding continues, the extension
-registers normally, and the main session is told once. A runtime that reports no version leaves nothing to
+`SUPPORTED_HARNESS_VERSIONS` is an `"unlisted-version"` outcome: the binding continues, the extension
+registers normally, and the main session is told once. A harness that reports no version leaves nothing to
 compare, so admission adds no verdict — it neither refuses nor invents a version.
 
 **The notice is the framework's, and it is scoped to the Owner.** One process tells one main session once,
 whatever published it: several extensions, an assembly bound again, a re-entry of that session, a boundary
 of it, or the separately loaded copy of the notice behavior the OMP loader evaluates per extension graph.
-The notice carries the framework's own attribution — the version the runtime reported and the support set it
+The notice carries the framework's own attribution — the version the harness reported and the support set it
 was judged against, never an extension's display name — and a delivery whose session is not its own owner (a
 subagent) publishes nothing and claims nothing, so the session it follows is still told when its own delivery
 comes. It travels the framework's notice channel and not extension feedback
@@ -392,12 +392,12 @@ comes. It travels the framework's notice channel and not extension feedback
 that one outcome instead of deciding again — the next session of the same extension, another extension, and
 the separately loaded framework module copy the OMP loader evaluates per extension graph, which is why the
 record lives on the process global (keyed by version, as the marker area is keyed by its own name). Leaving
-the version out is not a judgement: nothing is recorded for a runtime that reports none, so the first version
+the version out is not a judgement: nothing is recorded for a harness that reports none, so the first version
 actually reported is decided for real. The required-semantics judgement is the opposite case — it is read
 per binding, because what it reads is the interface this binding was handed, not a property of the version.
 
 **Two kinds of absence, and they are not the same absence.** A `RequiredSemantic` is a capability judged once,
-before registration: either the runtime's surface has what the framework's contract rests on, or the binding
+before registration: either the harness's surface has what the framework's contract rests on, or the binding
 is abandoned in full. The facts a *delivery* needs — the session's idle fact behind `canAcceptInput()`
 ([`protocol.ts#L500`](../core/protocol.ts#L500)), and the pending-message and asynchronous-job facts
 behind the quiescence gate ([`protocol.ts#L241`](../core/protocol.ts#L241)) — are per-context facts
@@ -405,8 +405,8 @@ that no binding-time judgement can see, so they are reported on the non-model ch
 one missing and no value is fabricated in its place (the round simply stays open; the query answers
 `undefined`). Declaring `round-lifecycle-events` is therefore not a second refusal of the quiescence facts:
 it asks for the round axis to exist, and what a session reports about itself is answered per delivery either
-way. See [agent-runtime-support.md](agent-runtime-support.md#capability-difference-register) for
-which runtime reports which of these facts.
+way. See [harness-support.md](harness-support.md#capability-difference-register) for
+which harness reports which of these facts.
 
 | Symbol | Source | Meaning |
 | --- | --- | --- |
@@ -415,9 +415,9 @@ which runtime reports which of these facts.
 
 ## Notices, marker and owner scope (adapter-facing shapes)
 
-These are resolved by an agent-runtime adapter, not authored by an extension, and are cited here so the
+These are resolved by a harness adapter, not authored by an extension, and are cited here so the
 option/feedback surface is complete. Both feedback channels travel the session's own UI channel on the `omp`
-runtime — the framework's notice as a `warning`, an extension's feedback at the level it chose — and fall back
+harness — the framework's notice as a `warning`, an extension's feedback at the level it chose — and fall back
 to one stderr line when the session has no UI ([`omp.ts#L546`](../adapters/omp.ts#L546)).
 
 | Symbol | Source | Shape and meaning |
@@ -425,11 +425,11 @@ to one stderr line when the session has no UI ([`omp.ts#L546`](../adapters/omp.t
 | `OwnerReference` | [`protocol.ts#L31`](../core/protocol.ts#L31) | `{ kind: "owner"; key }` \| `{ kind: "inherited"; key }` \| `{ kind: "unresolved" }` — the owner a framework effect acts on. An `inherited` session owns no cell: it never writes one and reads its owner's value only when the declared field opts in with `follow` (see `state.inheritance`), and neither it nor an `unresolved` session reaches an extension's subscription (see the owner scope above). |
 | `NoticeTransport` | [`protocol.ts#L78`](../core/protocol.ts#L78) | `{ warn(message): void }` — the framework's own notice channel (admission and session warnings), outside model context (a UI notification, or a stderr line when the session has no UI). It is **not** extension feedback and is never merged into it. |
 | `FeedbackLevel` | [`protocol.ts#L92`](../core/protocol.ts#L92) | `"info"` \| `"error"` — the severity one extension notice carries. `info` reports an effect that happened, `error` one that did not; the level names how serious a notice is, not which channel carries it. |
-| `FeedbackTransport` | [`protocol.ts#L111`](../core/protocol.ts#L111) | `{ notify(level, message): void }` — the single runtime-independent channel through which an extension tells the operator about an effect, carried by every handler delivery. Outside model context, never filtered or reordered by the framework: a UI notification at the notice's own severity when the session has a UI, and one stderr line when it does not. |
+| `FeedbackTransport` | [`protocol.ts#L111`](../core/protocol.ts#L111) | `{ notify(level, message): void }` — the single harness-independent channel through which an extension tells the operator about an effect, carried by every handler delivery. Outside model context, never filtered or reordered by the framework: a UI notification at the notice's own severity when the session has a UI, and one stderr line when it does not. |
 | `MarkerTransport` | [`protocol.ts#L324`](../core/protocol.ts#L324) | `{ publishMarkers(lines: readonly string[]): void }` — the transport for the unified marker area. |
 | `StateValues` | [`protocol.ts#L15`](../core/protocol.ts#L15) | `Readonly<Record<string, boolean>>` — the State values one write path records, by field name. |
-| `AgentRuntimePort` | [`protocol.ts#L590`](../core/protocol.ts#L590) | The registration and feedback surface an adapter provides (`setLabel`, `reportDiagnostic`, `onSession`, `onRound`, `onRunInitiation`, `registerCommand`). `onRound` is subscribed only when the assembly injected a round handler: the framework has no behavior of its own to apply to a round. |
-| `CanAcceptInput` | [`protocol.ts#L500`](../core/protocol.ts#L500) | `() => boolean \| undefined` — the framework's idle query: `true` when the agent can take input now, `false` when it is working, and `undefined` when the runtime reports no idle fact at all (surfaced, never fabricated). It is a query and not a payload, carried by command invocations so the arm path can read the state it starts from without waiting for any event. |
+| `HarnessPort` | [`protocol.ts#L590`](../core/protocol.ts#L590) | The registration and feedback surface an adapter provides (`setLabel`, `reportDiagnostic`, `onSession`, `onRound`, `onRunInitiation`, `registerCommand`). `onRound` is subscribed only when the assembly injected a round handler: the framework has no behavior of its own to apply to a round. |
+| `CanAcceptInput` | [`protocol.ts#L500`](../core/protocol.ts#L500) | `() => boolean \| undefined` — the framework's idle query: `true` when the agent can take input now, `false` when it is working, and `undefined` when the harness reports no idle fact at all (surfaced, never fabricated). It is a query and not a payload, carried by command invocations so the arm path can read the state it starts from without waiting for any event. |
 | `CommandInvocation` | [`protocol.ts#L511`](../core/protocol.ts#L511) | One command invocation's facts: the argument text, the owner, whether the session has a UI (`hasUI`), the idle query (`canAcceptInput`), and the feedback, persistence and marker transports. |
 | `CommandDelivery` | [`protocol.ts#L566`](../core/protocol.ts#L566) | The invocation a handler receives: those facts plus the declared-value seam it writes through and the owner-scoped capability it may retain. |
 | `SessionDelivery` | [`protocol.ts#L126`](../core/protocol.ts#L126) | The facts one semantic session event carries: the event itself, the owner the event concerns (the session being entered on a start, the one being left on an end), the target branch's persisted payloads, the persistence medium a retained capability records through, the same `hasUI` fact and feedback transport a command delivery carries, the framework's own notice transport, and the transport the boundary's marker-area update is published through. |

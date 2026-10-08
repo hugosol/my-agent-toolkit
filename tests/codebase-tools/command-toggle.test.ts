@@ -1,5 +1,5 @@
 /**
- * codebase-tools command toggle, end to end on the real OMP runtime (B1, B2; P6,
+ * codebase-tools command toggle, end to end on the real OMP harness (B1, B2; P6,
  * P11, P12, P36).
  *
  * The observable seam is the OMP extension seam: what the real loader discovers in
@@ -9,45 +9,45 @@
  */
 import { beforeAll, describe, expect, test } from "bun:test";
 import * as path from "node:path";
-import { type IsolatedRuntime, REPO_ROOT, ensureIsolatedRuntime, readBaselineRecord } from "../harness/baseline";
-import { type CaptureServer, startCaptureServer } from "../harness/capture-server";
-import { HARNESS_CAPTURE_BASE_URL_ENV, HARNESS_MODEL_SELECTOR } from "../harness/fixtures/extension-root/provider";
-import { type RunRoot, createRunRoot } from "../harness/run-root";
-import { ControlledSession } from "../harness/session";
-import { customEntries } from "../harness/session-log";
+import { type IsolatedHarness, REPO_ROOT, ensureIsolatedHarness, readBaselineRecord } from "../harness-dock/baseline";
+import { type CaptureServer, startCaptureServer } from "../harness-dock/capture-server";
+import { DOCK_CAPTURE_BASE_URL_ENV, DOCK_MODEL_SELECTOR } from "../harness-dock/fixtures/extension-root/provider";
+import { type RunRoot, createRunRoot } from "../harness-dock/run-root";
+import { ControlledSession } from "../harness-dock/session";
+import { customEntries } from "../harness-dock/session-log";
 
 /** The OMP discovery root this repository deploys. */
 const OMP_ENTRYPOINT_DIR = path.join(REPO_ROOT, "entrypoints", "omp");
 /** The credential-free provider fixture; it keeps the turn off the network. */
-const PROVIDER_FIXTURE = path.join(REPO_ROOT, "tests", "harness", "fixtures", "extension-root", "provider.ts");
+const PROVIDER_FIXTURE = path.join(REPO_ROOT, "tests", "harness-dock", "fixtures", "extension-root", "provider.ts");
 
 /** The State entry the extension persists, and the command that flips it. */
 const STATE_ENTRY_TYPE = "codebase-tools:state";
 const COMMAND = "codebase-tools";
 
-let runtime: IsolatedRuntime;
+let harness: IsolatedHarness;
 
 beforeAll(async () => {
-	runtime = await ensureIsolatedRuntime(readBaselineRecord());
+	harness = await ensureIsolatedHarness(readBaselineRecord());
 }, 300_000);
 
-interface HarnessRun {
+interface DockRun {
 	readonly session: ControlledSession;
 	readonly capture: CaptureServer;
 	readonly runRoot: RunRoot;
 }
 
-/** Start one isolated session with the harness provider fixture and the real OMP root. */
-async function startRun(label: string): Promise<HarnessRun> {
+/** Start one isolated session with the dock provider fixture and the real OMP root. */
+async function startRun(label: string): Promise<DockRun> {
 	const runRoot = createRunRoot(label);
 	const capture = startCaptureServer({ dir: runRoot.captureDir });
 	try {
 		const session = await ControlledSession.start({
-			runtime,
+			harness,
 			runRoot,
 			extensions: [PROVIDER_FIXTURE, OMP_ENTRYPOINT_DIR],
-			model: HARNESS_MODEL_SELECTOR,
-			env: { [HARNESS_CAPTURE_BASE_URL_ENV]: capture.baseUrl },
+			model: DOCK_MODEL_SELECTOR,
+			env: { [DOCK_CAPTURE_BASE_URL_ENV]: capture.baseUrl },
 		});
 		return { session, capture, runRoot };
 	} catch (error) {
@@ -58,7 +58,7 @@ async function startRun(label: string): Promise<HarnessRun> {
 }
 
 /** Drop the run's processes and directories; safe to call after an explicit stop. */
-async function disposeRun(run: HarnessRun): Promise<void> {
+async function disposeRun(run: DockRun): Promise<void> {
 	try {
 		await run.session.stop({ timeoutMs: 5_000 });
 	} catch {

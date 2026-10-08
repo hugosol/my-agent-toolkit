@@ -23,7 +23,7 @@
 import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
-import { REPO_ROOT } from "../../harness/baseline";
+import { REPO_ROOT } from "../../harness-dock/baseline";
 
 /** The environment name that overrides where the omp-bot binary is taken from. */
 const OMP_BOT_BINARY_ENV = "OMP_BOT_BINARY";

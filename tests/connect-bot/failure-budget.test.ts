@@ -8,7 +8,7 @@
  * every request is observed without a network, and each test's session id is its own so nothing
  * about one case can leak into the next.
  *
- * The beats are fired through the managed timer the runtime recorded, as the runtime would, and
+ * The beats are fired through the managed timer the harness recorded, as the harness would, and
  * what a beat settles to is decided by the panel: an answer, a non-2xx answer, or a request that
  * never completes. All three are what the budget counts, so all three are driven here — the one
  * that never completes through bun's fake timers, whose whole point is that the configured request
@@ -29,9 +29,9 @@ import {
 } from "../../extensions/connect-bot/shared-logic/panel/client";
 import { CONNECT_BOT } from "../../extensions/connect-bot/definition";
 import { botSessions } from "../../extensions/connect-bot/shared-logic/session/session";
-import connectBot from "../../extensions/connect-bot/runtimes/omp";
+import connectBot from "../../extensions/connect-bot/harnesses/omp";
 import { readConfig } from "../../framework/core/config";
-import { REPO_ROOT } from "../harness/baseline";
+import { REPO_ROOT } from "../harness-dock/baseline";
 import { type OmpDouble, ompDouble } from "./support/omp-double";
 
 /**
@@ -198,7 +198,7 @@ async function armed(transport: PushTransport, sessionId: string): Promise<OmpDo
 	return double;
 }
 
-/** Fires the callback the runtime recorded for the nth managed timer, as the runtime would. */
+/** Fires the callback the harness recorded for the nth managed timer, as the harness would. */
 function fireTimer(double: OmpDouble, index = 0): void {
 	double.timers[index]?.callback();
 }

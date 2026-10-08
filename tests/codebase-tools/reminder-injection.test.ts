@@ -1,6 +1,6 @@
 /**
  * The reminder injected-prompt slot and contribution idempotency, end to end on the real
- * OMP runtime (B4, B7, B11; P18, P20).
+ * OMP harness (B4, B7, B11; P18, P20).
  *
  * The observable seam is the OMP extension seam: the real loader discovers
  * `entrypoints/omp`, a real isolated session runs, and the session JSONL and the
@@ -13,17 +13,17 @@ import { beforeAll, describe, expect, test } from "bun:test";
 import { writeFileSync } from "node:fs";
 import * as path from "node:path";
 import { INIT_PROMPT, REMINDER_PROMPT } from "../../extensions/codebase-tools/shared-logic/prompts";
-import { type IsolatedRuntime, REPO_ROOT, ensureIsolatedRuntime, readBaselineRecord } from "../harness/baseline";
-import { type CaptureServer, type CapturedRequest, startCaptureServer } from "../harness/capture-server";
-import { FIXTURE_TREE_COMMAND, FIXTURE_TREE_ENTRY_TYPE } from "../harness/fixtures/extension-root/entrypoint";
-import { HARNESS_CAPTURE_BASE_URL_ENV, HARNESS_MODEL_SELECTOR } from "../harness/fixtures/extension-root/provider";
-import { type RunRoot, createRunRoot } from "../harness/run-root";
-import { ControlledSession } from "../harness/session";
-import { type SessionEntry, type SessionLog, customEntries } from "../harness/session-log";
+import { type IsolatedHarness, REPO_ROOT, ensureIsolatedHarness, readBaselineRecord } from "../harness-dock/baseline";
+import { type CaptureServer, type CapturedRequest, startCaptureServer } from "../harness-dock/capture-server";
+import { FIXTURE_TREE_COMMAND, FIXTURE_TREE_ENTRY_TYPE } from "../harness-dock/fixtures/extension-root/entrypoint";
+import { DOCK_CAPTURE_BASE_URL_ENV, DOCK_MODEL_SELECTOR } from "../harness-dock/fixtures/extension-root/provider";
+import { type RunRoot, createRunRoot } from "../harness-dock/run-root";
+import { ControlledSession } from "../harness-dock/session";
+import { type SessionEntry, type SessionLog, customEntries } from "../harness-dock/session-log";
 
-/** The OMP discovery root this repository deploys, and the harness provider fixture. */
+/** The OMP discovery root this repository deploys, and the dock provider fixture. */
 const OMP_ENTRYPOINT_DIR = path.join(REPO_ROOT, "entrypoints", "omp");
-const FIXTURE_EXTENSION_ROOT = path.join(REPO_ROOT, "tests", "harness", "fixtures", "extension-root");
+const FIXTURE_EXTENSION_ROOT = path.join(REPO_ROOT, "tests", "harness-dock", "fixtures", "extension-root");
 const PROVIDER_FIXTURE = path.join(FIXTURE_EXTENSION_ROOT, "provider.ts");
 
 /** The identities the migration fixes: the State record and both slots' custom types. */
@@ -32,10 +32,10 @@ const INIT_IDENTITY = "codebase-tools:init";
 const REMINDER_IDENTITY = "codebase-tools:reminder";
 const COMMAND = "codebase-tools";
 
-let runtime: IsolatedRuntime;
+let harness: IsolatedHarness;
 
 beforeAll(async () => {
-	runtime = await ensureIsolatedRuntime(readBaselineRecord());
+	harness = await ensureIsolatedHarness(readBaselineRecord());
 }, 300_000);
 
 interface Run {
@@ -54,15 +54,15 @@ function openSession(
 	options: { readonly withTreeFixture?: boolean; readonly resume?: string } = {},
 ): Promise<ControlledSession> {
 	return ControlledSession.start({
-		runtime,
+		harness,
 		runRoot: run.runRoot,
 		extensions: [
 			PROVIDER_FIXTURE,
 			...(options.withTreeFixture === true ? [FIXTURE_EXTENSION_ROOT] : []),
 			OMP_ENTRYPOINT_DIR,
 		],
-		model: HARNESS_MODEL_SELECTOR,
-		env: { [HARNESS_CAPTURE_BASE_URL_ENV]: run.capture.baseUrl },
+		model: DOCK_MODEL_SELECTOR,
+		env: { [DOCK_CAPTURE_BASE_URL_ENV]: run.capture.baseUrl },
 		extraArgs: options.resume === undefined ? [] : ["--resume", options.resume],
 	});
 }
@@ -82,15 +82,15 @@ async function stopQuietly(session: ControlledSession | undefined): Promise<void
 	}
 }
 
-/** The session file the runtime reports for the session it currently runs. */
+/** The session file the harness reports for the session it currently runs. */
 async function sessionFileOf(session: ControlledSession): Promise<string> {
 	const frame = await session.request({ type: "get_state" });
 	const file = (frame.data as { sessionFile?: string } | undefined)?.sessionFile;
-	if (file === undefined) throw new Error(`the runtime reported no session file: ${JSON.stringify(frame)}`);
+	if (file === undefined) throw new Error(`the harness reported no session file: ${JSON.stringify(frame)}`);
 	return file;
 }
 
-/** The user-message entries the runtime reports for the current session, in journal order. */
+/** The user-message entries the harness reports for the current session, in journal order. */
 async function userMessagesOf(session: ControlledSession): Promise<readonly SessionEntry[]> {
 	const frame = await session.request({ type: "get_entries" });
 	const entries = (frame.data as { entries?: readonly SessionEntry[] } | undefined)?.entries ?? [];
@@ -127,7 +127,7 @@ function isSlotEntry(entry: SessionEntry): boolean {
 	);
 }
 
-/** The parsed shape of one captured request body: this runtime's own serialized JSON. */
+/** The parsed shape of one captured request body: this harness's own serialized JSON. */
 interface CapturedBody {
 	readonly messages?: ReadonlyArray<{ readonly content?: unknown }>;
 }
@@ -354,7 +354,7 @@ describe("one enabled run injects one reminder however many requests it makes (B
 	test("a tool continuation inside the run leaves the reminder count at one", async () => {
 		const run = createRun("reminder-tool-continuation");
 		const readTarget = path.join(run.runRoot.workDir, "reminder-probe-target.txt");
-		writeFileSync(readTarget, "harness read target\n");
+		writeFileSync(readTarget, "dock read target\n");
 		let first: ControlledSession | undefined;
 		let second: ControlledSession | undefined;
 		try {

@@ -2,7 +2,7 @@
 
 Routes the agent's code exploration toward the codebase-memory-mcp graph and LSP, controlled by
 `/codebase-tools`. The declaration is [`definition.ts`](definition.ts), its shared prompts are
-under [`shared-logic/`](shared-logic), and its OMP assembly is [`runtimes/omp.ts`](runtimes/omp.ts).
+under [`shared-logic/`](shared-logic), and its OMP assembly is [`harnesses/omp.ts`](harnesses/omp.ts).
 
 ## H1 — interactive TUI acceptance (visual)
 
@@ -33,13 +33,13 @@ The ticket-12 evidence record itself lists H1 as human-led
 ## H3a — cut over codebase-tools
 
 Precondition: H1 passed. The two shared cutover steps (add the discovery root once, restart the agent
-runtime) are in [H3 — permanent cutover and cutover smoke](../../framework/README.md#h3--permanent-cutover-and-cutover-smoke);
+harness) are in [H3 — permanent cutover and cutover smoke](../../framework/README.md#h3--permanent-cutover-and-cutover-smoke);
 the codebase-tools-specific steps are:
 
 1. Remove the superseded implementation: delete `my-omp-toolkit/extensions/codebase-tools` (repository
    `my-omp-toolkit` at revision `@34d7c40`). The parent discovery entry
    `E:/Developer/myhub/my-omp-toolkit/extensions` stays for the remaining unmigrated extensions.
-2. Smoke once after the cutover: start the runtime normally (no `--no-extensions`) and run
+2. Smoke once after the cutover: start the harness normally (no `--no-extensions`) and run
    `/codebase-tools` on→off, confirming the marker and both notifications, and that exactly one
    `codebase-tools` implementation loads (no duplicate registration).
 3. Roll back on failure: restore the deleted directory from the original git revision

@@ -12,7 +12,7 @@ export interface RunRoot {
 	readonly path: string;
 	/** Temporary agent state (`PI_CODING_AGENT_DIR`). */
 	readonly agentDir: string;
-	/** `--session-dir`: where the agent runtime persists session JSONL. */
+	/** `--session-dir`: where the harness persists session JSONL. */
 	readonly sessionDir: string;
 	/** `--cwd`: the session working directory. */
 	readonly workDir: string;
@@ -21,7 +21,7 @@ export interface RunRoot {
 	dispose(): void;
 }
 
-const RUN_ROOT_PREFIX = "omp-harness-";
+const RUN_ROOT_PREFIX = "omp-dock-";
 
 export function createRunRoot(label: string): RunRoot {
 	const safeLabel = label.replace(/[^a-zA-Z0-9-]+/g, "-").replace(/^-+|-+$/g, "") || "run";

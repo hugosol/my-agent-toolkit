@@ -20,7 +20,7 @@
  *
  * Reading, parsing and validation live here and nowhere else, and the seam they run
  * through is injectable: the default reader is this process's file system and the default
- * parser is the pure-JS `yaml` package, so the framework depends on no agent runtime (and
+ * parser is the pure-JS `yaml` package, so the framework depends on no harness (and
  * on no Bun-specific API) while its own suite drives every failure path without a file.
  */
 import { readFileSync } from "node:fs";
@@ -126,7 +126,7 @@ function describeValue(value: unknown): string {
  * The milliseconds a declared `milliseconds` value may name.
  *
  * `1` is the shortest wait that is a wait at all, and `2 ** 31 - 1` is the longest delay this
- * runtime's timer schedules: a longer value is not waited for, it is clamped to 1ms and warned
+ * harness's timer schedules: a longer value is not waited for, it is clamped to 1ms and warned
  * about, so a budget above it would not be the wait it names.
  */
 const MILLISECOND_RANGE = { least: 1, most: 2 ** 31 - 1 } as const;

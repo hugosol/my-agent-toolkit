@@ -4,7 +4,7 @@
  *
  * The protocol is frozen and never configuration: one route, one envelope shape, one request
  * shape. The platform call that performs a request is *installed* rather than imported — the
- * extension's runtime assembly supplies it (bun's `fetch`, with `proxy: false`) — so shared
+ * extension's harness assembly supplies it (bun's `fetch`, with `proxy: false`) — so shared
  * logic names no platform API, and a suite replaces the transport with a fake to observe the
  * production URL, request init and response parsing without touching `globalThis`.
  */
@@ -45,25 +45,25 @@ export interface PushFetchInit {
 /** The one outbound dependency: perform a single request. */
 export type PushTransport = (url: string, init: PushFetchInit) => Promise<PushHttpResponse>;
 
-/** The transport the runtime assembly installed: the platform's own outbound call. */
+/** The transport the harness assembly installed: the platform's own outbound call. */
 let installedTransport: PushTransport | undefined;
 
 /** The replacement a suite injected, when it injected one. */
 let replacementTransport: PushTransport | undefined;
 
 /**
- * Installs the transport the extension's runtime assembly provides.
+ * Installs the transport the extension's harness assembly provides.
  *
  * Shared logic never reaches the platform's network API itself, so until a binding has
  * installed one there is nothing to send through — which is a misuse of the extension, not a
- * runtime condition, and {@link pushEvent} says so rather than silently sending nothing.
+ * harness condition, and {@link pushEvent} says so rather than silently sending nothing.
  */
 export function installPushTransport(next: PushTransport): void {
 	installedTransport = next;
 }
 
 /**
- * Test seam: the transport a suite wants in effect instead of the runtime's own; `null` puts
+ * Test seam: the transport a suite wants in effect instead of the harness's own; `null` puts
  * the installed one back.
  */
 export function setPushTransportForTest(next: PushTransport | null): void {

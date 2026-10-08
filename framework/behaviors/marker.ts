@@ -9,10 +9,10 @@
  * extension id — so an extension can neither claim the widget nor decide where it
  * appears, and two extensions rendering in one session never overwrite each other. The one
  * area belongs to the process rather than to this module instance, so it is resolved from
- * the process global ({@link MARKER_AREA_KEY}): an agent runtime that evaluates a copy of
+ * the process global ({@link MARKER_AREA_KEY}): a harness that evaluates a copy of
  * this module per extension still binds every extension to the one native widget.
  *
- * This module is agent-runtime-independent: it reads State through the read view and
+ * This module is harness-independent: it reads State through the read view and
  * publishes through a transport an adapter supplied, and names no native API.
  */
 import { activationField, type ExtensionDefinition } from "../core/definition";

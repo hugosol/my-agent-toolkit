@@ -4,7 +4,7 @@
  *
  * A session boundary reconciles the owner's State with the value its target branch
  * persisted; a navigation that keeps the session's identity — a `/tree` jump, a same-file
- * `/resume`, a TUI branch, a reload — is not a boundary at all. The agent-runtime side of
+ * `/resume`, a TUI branch, a reload — is not a boundary at all. The harness side of
  * the seam is the narrow native surface the OMP loader hands the factory, so a test double
  * stands in for the loader: it records registrations and appended entries, delivers the
  * native session lifecycle events, and the extension's own session subscription records what
@@ -42,7 +42,7 @@ const MEMORY_TOOLS: ExtensionDefinition = defineExtension({
 	commands: [{ type: "toggle", name: "memory-tools", state: "enabled" }],
 });
 
-/** One session as the agent runtime holds it: an identity and the branch under it. */
+/** One session as the harness holds it: an identity and the branch under it. */
 interface SessionFacts {
 	readonly sessionId: string;
 	/** The State payloads persisted on this session's branch, oldest first. */
@@ -246,7 +246,7 @@ describe("session boundary seeding (F5, P7)", () => {
 });
 
 describe("the semantic events one native transition produces (F5, P7)", () => {
-	test("the runtime's startup signal opens the session the binding first serves", () => {
+	test("the harness's startup signal opens the session the binding first serves", () => {
 		const surface = boundSurface(CODEBASE_TOOLS);
 
 		surface.startSession({ sessionId: "session-1", statePayloads: [] });
@@ -340,7 +340,7 @@ describe("the semantic events one native transition produces (F5, P7)", () => {
 		}
 	});
 
-	test("the runtime's shutdown disposes the owner this binding serves", () => {
+	test("the harness's shutdown disposes the owner this binding serves", () => {
 		const surface = boundSurface(CODEBASE_TOOLS);
 		const session: SessionFacts = { sessionId: "session-1", statePayloads: [{ enabled: true }] };
 		surface.startSession(session);

@@ -3,7 +3,7 @@
  * names — and the ten frozen texts it chooses between.
  *
  * The table is what every path that speaks to the operator goes through, so it is also where the
- * texts themselves can be checked without a runtime, a panel or a session: each row below pairs a
+ * texts themselves can be checked without a harness, a panel or a session: each row below pairs a
  * normalized input with the words the behavior baseline fixed for it, and the expectations are the
  * baseline's own texts — the source of truth is the frozen table, never this function's output.
  *
@@ -18,7 +18,7 @@ import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import * as path from "node:path";
 import { type FeedbackInput, selectFeedback } from "../../extensions/connect-bot/shared-logic/feedback";
-import { REPO_ROOT } from "../harness/baseline";
+import { REPO_ROOT } from "../harness-dock/baseline";
 
 /** What one trigger says: a text at a severity, or nothing at all. */
 type Answer = { readonly level: "info" | "error"; readonly message: string } | undefined;

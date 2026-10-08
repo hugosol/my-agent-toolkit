@@ -1,5 +1,5 @@
 /**
- * The shared half of the admission probes: two harness fixture extensions that each load this
+ * The shared half of the admission probes: two dock fixture extensions that each load this
  * module — and the framework's decision module it imports — in their own module graph, and report
  * what their graph's version decision was.
  *

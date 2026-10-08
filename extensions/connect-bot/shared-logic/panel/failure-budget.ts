@@ -20,7 +20,7 @@
  *
  * The counting itself is pure — a number, a flag and the action they imply, exactly as the frozen
  * baseline counted — while the notice and the stop around it are the extension's own effects.
- * This module names no agent runtime and reaches no native API.
+ * This module names no harness and reaches no native API.
  */
 import type { OwnerCapabilityHandle } from "../../../../framework/core/protocol";
 import { disarmLocally } from "./disarm";

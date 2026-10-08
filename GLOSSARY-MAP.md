@@ -2,7 +2,7 @@
 
 ## Contexts
 
-- [Semantic Extension Framework](./framework/GLOSSARY.md): the shared runtime foundation that owns extension behavior contracts and their mappings to supported agent runtimes.
+- [Semantic Extension Framework](./framework/GLOSSARY.md): the shared harness foundation that owns extension behavior contracts and their mappings to supported harnesses.
 - [connect-bot](./extensions/connect-bot/GLOSSARY.md): joins an agent session to the omp-bot panel; `/connect-bot` registers the current session, `/connect-bot off` disconnects it.
 - [codeBaseTools](./extensions/codebase-tools/GLOSSARY.md): routes the agent's code exploration toward the codebase-memory-mcp graph and LSP, controlled by `/codebase-tools`.
 

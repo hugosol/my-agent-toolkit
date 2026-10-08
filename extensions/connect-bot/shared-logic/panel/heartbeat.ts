@@ -9,7 +9,7 @@
  * next beat says again whatever the previous one said. That is also why the state is read here
  * instead of being derived: the beat reports what the extension holds, never a second opinion.
  *
- * The beat is scheduled on the runtime's managed timer, injected by the assembly (see
+ * The beat is scheduled on the harness's managed timer, injected by the assembly (see
  * `./managed-timer`), and it reads the owner's record at beat time rather than at arm time: a beat
  * therefore reports whatever the owner's session id and state are now, and a beat that is already
  * running when the owner stops — the timer is cancelled, but the callback may be in flight — finds

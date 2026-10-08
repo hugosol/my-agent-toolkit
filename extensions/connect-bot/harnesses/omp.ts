@@ -1,5 +1,5 @@
 /**
- * connect-bot's OMP runtime assembly.
+ * connect-bot's OMP harness assembly.
  *
  * This is the extension's only module that touches the OMP-native surface, and the thin
  * entrypoint at `entrypoints/omp/connect-bot.ts` re-exports nothing but this file's default
@@ -9,7 +9,7 @@
  * timer the heartbeat is scheduled on (`ctx.setInterval`, cancelled with `ctx.clearTimer`).
  *
  * The facts are why this assembly observes a registration: the framework's port hands an
- * injected command implementation runtime-neutral facts only, and the owner key it resolves is
+ * injected command implementation harness-neutral facts only, and the owner key it resolves is
  * an opaque derivation the framework never interprets, so the real session identity can only be
  * read where OMP itself provides it. OMP provides the context to a command handler, so this
  * assembly hands the framework's adapter a surface whose command registration observes that
@@ -38,7 +38,7 @@ import type { SessionFacts } from "../shared-logic/session/session";
 import { applyRoundEdge } from "../shared-logic/session/state-machine";
 
 /**
- * The extension repository this assembly belongs to: `runtimes/omp.ts` -> `runtimes` -> the
+ * The extension repository this assembly belongs to: `harnesses/omp.ts` -> `harnesses` -> the
  * extension -> `extensions` -> the repository root, from this module's own location.
  *
  * The framework resolves the definition's relative configuration path — the convention
@@ -46,7 +46,7 @@ import { applyRoundEdge } from "../shared-logic/session/state-machine";
  * the loader discovers an extension by an absolute path while the process runs in an arbitrary
  * project directory. This module is the only place that knows the repository from its own
  * location: `entrypoints/omp/connect-bot.ts` is a thin re-export, and the extension's shared
- * source is runtime-neutral and holds no path of its own.
+ * source is harness-neutral and holds no path of its own.
  */
 export const EXTENSION_REPOSITORY_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
 
@@ -74,7 +74,7 @@ interface ConnectBotSessionContext {
 	/** The session's current model, or `undefined` when none is set. */
 	readonly model?: { readonly name?: string };
 	/**
-	 * The runtime's managed interval: a timer the runtime owns, unref'd and cleared with the
+	 * The harness's managed interval: a timer the harness owns, unref'd and cleared with the
 	 * session, returning the handle {@link ConnectBotSessionContext.clearTimer} takes back.
 	 */
 	setInterval(callback: () => void, ms: number): unknown;
@@ -84,10 +84,10 @@ interface ConnectBotSessionContext {
 
 /**
  * The managed-timer capability of one invocation, as this extension's heartbeat uses it: the
- * runtime's own interval, cancelled with the runtime's own handle and with nothing else.
+ * harness's own interval, cancelled with the harness's own handle and with nothing else.
  *
  * Handing shared logic this surface instead of the context is what keeps the heartbeat a
- * runtime-neutral effect: the cadence and the beat belong to `./heartbeat`, and the only timer the
+ * harness-neutral effect: the cadence and the beat belong to `./heartbeat`, and the only timer the
  * extension can ever touch is the one this function handed out.
  */
 function managedTimersOf(ctx: ConnectBotSessionContext): ManagedTimers {
@@ -113,7 +113,7 @@ function sessionFactsOf(ctx: ConnectBotSessionContext): SessionFacts {
  * The loader's api with its one command registration observed.
  *
  * The observed surface delegates every other member to the loader's own api — OMP binds each of
- * its methods to the runtime instance, so nothing is lost by reaching them through it — and it
+ * its methods to the harness instance, so nothing is lost by reaching them through it — and it
  * overrides only `registerCommand`, where the native context appears: the context is remembered
  * for the duration of the call the framework makes to it (and restored afterwards, so nothing
  * about it outlives the invocation) and the call itself is passed through untouched.
@@ -172,9 +172,9 @@ function observeSessionContext(pi: OmpExtensionApi): {
  * session's identity produces no boundary at all — are the adapter's business, and this assembly
  * names none of them: there is no native shutdown hook of the extension's own anywhere in its code.
  *
- * The supported runtime version is not this assembly's to declare: version support belongs to
- * the framework's own Supported agent-runtime baseline, and this assembly describes only the
- * capabilities its extension needs. A binding the agent runtime refuses has already reported why
+ * The supported harness version is not this assembly's to declare: version support belongs to
+ * the framework's own Supported harness baseline, and this assembly describes only the
+ * capabilities its extension needs. A binding the harness refuses has already reported why
  * on the non-model channel, and this session then simply runs without the extension.
  */
 export default function connectBot(pi: OmpExtensionApi): void {
@@ -190,11 +190,11 @@ export default function connectBot(pi: OmpExtensionApi): void {
 		configBaseDir: EXTENSION_REPOSITORY_ROOT,
 		// This extension's panel state is driven by the round axis: without those edges the value
 		// it reports could never move off what the arm read, so the axis is declared as a
-		// dependency and a runtime that cannot deliver it refuses this binding rather than
+		// dependency and a harness that cannot deliver it refuses this binding rather than
 		// leaving a session that looks connected and reports a frozen state.
 		//
 		// The session axis is declared for the same reason: a session this extension armed must be
-		// wound down when another identity takes its place, and a runtime that delivered no boundary
+		// wound down when another identity takes its place, and a harness that delivered no boundary
 		// would leave a heartbeat beating for a session that is no longer current — with no way for
 		// the extension to learn that it should stop.
 		requiredSemantics: ["session-lifecycle-events", "round-lifecycle-events"],

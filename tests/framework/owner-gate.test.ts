@@ -8,7 +8,7 @@
  * behavior still runs for every delivery and is a no-op for a session that owns no cell —
  * which is why it is observed here at the framework's adapter contract through the port
  * double, and at the OMP seam through the narrow native surface the loader hands the factory
- * (a subagent session resolves an owner through the runtime's agent registry and still
+ * (a subagent session resolves an owner through the harness's agent registry and still
  * reaches no handler).
  */
 import { describe, expect, test } from "bun:test";
@@ -19,7 +19,7 @@ import {
 	ompAdapter,
 } from "../../framework/adapters/omp";
 import type { OwnerReference } from "../../framework/core/protocol";
-import { portDouble } from "./support/runtime-port-double";
+import { portDouble } from "./support/harness-port-double";
 
 /** The owner a delivery acts on unless one is named. */
 const OWNER: OwnerReference = { kind: "owner", key: "main:owner-gate" };
@@ -207,7 +207,7 @@ function gateSurface(): GateSurface {
 				roundHandlers[event].push(handler as (event: unknown, ctx: OmpSessionContext) => void);
 			}
 		},
-		// The runtime's own agent graph: it holds the spawning main session, and nothing else.
+		// The harness's own agent graph: it holds the spawning main session, and nothing else.
 		pi: {
 			AgentRegistry: {
 				global: () => ({
@@ -259,7 +259,7 @@ describe("the owner gate at the OMP seam (F8, P11)", () => {
 
 	test("a subagent's native session and round events reach the extension's subscription never", () => {
 		const surface = gateSurface();
-		// The subagent's owner resolves through the runtime's registry: this is not the
+		// The subagent's owner resolves through the harness's registry: this is not the
 		// ownerless case below, it is a session that follows a main session it is not.
 		const subagent: NativeSession = { kind: "sub", sessionId: "sub-session", parentId: "Main" };
 

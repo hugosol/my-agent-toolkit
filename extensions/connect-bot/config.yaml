@@ -14,7 +14,7 @@ endpoint: "http://127.0.0.1:8787"
 
 # The wait budget of one request, in milliseconds: every request this extension makes waits at
 # most this long — register, unregister and the background heartbeat/state pushes share it, and
-# no path keeps a budget of its own. A whole number of milliseconds the runtime's timer
+# no path keeps a budget of its own. A whole number of milliseconds the harness's timer
 # schedules, from 1 to 2147483647; the framework refuses the extension at binding for anything
 # else.
 #

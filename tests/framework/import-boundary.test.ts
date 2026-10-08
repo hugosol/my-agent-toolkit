@@ -1,11 +1,11 @@
 /**
- * The framework's import boundary (C1): the shared, agent-runtime-independent source
- * never imports agent-runtime types, the native escape hatch appears only where it is
+ * The framework's import boundary (C1): the shared, harness-independent source
+ * never imports harness types, the native escape hatch appears only where it is
  * declared, and each discovery entrypoint stays a re-export.
  *
  * The evidence is the module graph itself — the criterion is about which modules may
  * depend on which — so this suite reads the source tree instead of running anything.
- * Declaration files are scanned too: declaring a runtime-type dependency in shared
+ * Declaration files are scanned too: declaring a harness-type dependency in shared
  * source is the same boundary crossing as importing one.
  *
  * The check is an alarm, not a proof: it reads specifiers lexically and only from `.ts`
@@ -16,21 +16,21 @@
 import { describe, expect, test } from "bun:test";
 import { readdirSync, readFileSync } from "node:fs";
 import * as path from "node:path";
-import { REPO_ROOT } from "../harness/baseline";
+import { REPO_ROOT } from "../harness-dock/baseline";
 
 /** The source trees whose module graph the boundary covers. */
 const SCANNED_ROOTS = ["framework", "extensions", "entrypoints"] as const;
 
-/** Packages the agent-runtime loader resolves for an extension: naming one — by import or by declaration — is an escape hatch. */
-const AGENT_RUNTIME_PACKAGE = /^@(?:oh-my-pi|earendil-works)\//;
+/** Packages the harness loader resolves for an extension: naming one — by import or by declaration — is an escape hatch. */
+const HARNESS_PACKAGE = /^@(?:oh-my-pi|earendil-works)\//;
 
-/** Where the native surface may be touched: the OMP adapter and extension runtime assemblies. */
-const ESCAPE_HATCH = [/^framework\/adapters\//, /^extensions\/[^/]+\/runtimes\//];
+/** Where the native surface may be touched: the OMP adapter and extension harness assemblies. */
+const ESCAPE_HATCH = [/^framework\/adapters\//, /^extensions\/[^/]+\/harnesses\//];
 
 /**
  * Every way this repository writes a module specifier: an import, a re-export, a dynamic
  * import, and an ambient `declare module`. A declaration names a module exactly as an import
- * does, so neither may name an agent-runtime package outside the escape hatch.
+ * does, so neither may name a harness package outside the escape hatch.
  */
 const SPECIFIER =
 	/\bfrom\s*["']([^"']+)["']|\bimport\s*["']([^"']+)["']|\bimport\s*\(\s*["']([^"']+)["']|\bdeclare\s+module\s*["']([^"']+)["']/g;
@@ -58,7 +58,7 @@ function specifiersOf(file: string): string[] {
 /**
  * Shared source: every scanned module that is neither an escape hatch nor a discovery
  * entrypoint — the framework tree outside `adapters/`, and every extension module outside its
- * `runtimes/`. Entrypoints are their own class (reaching the escape hatch is exactly what a
+ * `harnesses/`. Entrypoints are their own class (reaching the escape hatch is exactly what a
  * thin entrypoint does), so the entrypoint assertion below governs them instead, and no scanned
  * module is left unclassified.
  */
@@ -76,8 +76,8 @@ function resolvesInto(file: string, specifier: string, patterns: readonly RegExp
 
 const sourceFiles = SCANNED_ROOTS.flatMap(root => sourceFilesUnder(root));
 
-describe("shared source imports no agent-runtime types (C1)", () => {
-	test("the framework outside adapters and the extension modules outside runtimes stay host-independent", () => {
+describe("shared source imports no harness types (C1)", () => {
+	test("the framework outside adapters and the extension modules outside harnesses stay host-independent", () => {
 		const shared = sourceFiles.filter(isHostIndependent);
 		// The check is only meaningful while it has subjects: both shared framework
 		// layers and the extension's shared source exist.
@@ -89,8 +89,8 @@ describe("shared source imports no agent-runtime types (C1)", () => {
 		const crossings: string[] = [];
 		for (const file of shared) {
 			for (const specifier of specifiersOf(file)) {
-				if (AGENT_RUNTIME_PACKAGE.test(specifier)) {
-					crossings.push(`${file} imports the agent-runtime package "${specifier}"`);
+				if (HARNESS_PACKAGE.test(specifier)) {
+					crossings.push(`${file} imports the harness package "${specifier}"`);
 				} else if (resolvesInto(file, specifier, ESCAPE_HATCH)) {
 					crossings.push(`${file} imports the native escape hatch through "${specifier}"`);
 				}
@@ -99,19 +99,19 @@ describe("shared source imports no agent-runtime types (C1)", () => {
 		expect(crossings).toEqual([]);
 	});
 
-	test("the native escape hatch appears only in adapters and runtime assemblies", () => {
+	test("the native escape hatch appears only in adapters and harness assemblies", () => {
 		const naming = sourceFiles.filter(file =>
-			specifiersOf(file).some(specifier => AGENT_RUNTIME_PACKAGE.test(specifier)),
+			specifiersOf(file).some(specifier => HARNESS_PACKAGE.test(specifier)),
 		);
 
 		// The escape hatch exists and is exercised: the extension's OMP assembly is where
 		// the loader-provided package is imported, and the adapter is where its module shape
 		// is declared. Nowhere else may name it, by import or by declaration.
-		expect(naming.some(file => /^extensions\/[^/]+\/runtimes\//.test(file))).toBe(true);
+		expect(naming.some(file => /^extensions\/[^/]+\/harnesses\//.test(file))).toBe(true);
 		expect(naming.filter(file => !ESCAPE_HATCH.some(pattern => pattern.test(file)))).toEqual([]);
 	});
 
-	test("each discovery entrypoint only re-exports its extension's runtime assembly", () => {
+	test("each discovery entrypoint only re-exports its extension's harness assembly", () => {
 		const entrypoints = sourceFiles.filter(file => file.startsWith("entrypoints/"));
 		expect(entrypoints.length).toBeGreaterThan(0);
 
@@ -128,7 +128,7 @@ describe("shared source imports no agent-runtime types (C1)", () => {
 
 			const [specifier] = specifiersOf(entrypoint);
 			expect(specifier).toBeDefined();
-			expect(resolvesInto(entrypoint, specifier ?? "", [/^extensions\/[^/]+\/runtimes\//])).toBe(true);
+			expect(resolvesInto(entrypoint, specifier ?? "", [/^extensions\/[^/]+\/harnesses\//])).toBe(true);
 		}
 	});
 });

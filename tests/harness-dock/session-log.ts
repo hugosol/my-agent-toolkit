@@ -1,5 +1,5 @@
 /**
- * Read-back of the session JSONL the agent runtime persists under `--session-dir`.
+ * Read-back of the session JSONL the harness persists under `--session-dir`.
  * This is the persistence surface a later suite asserts against, so it stays a thin
  * reader: locate the session file, parse each entry, keep unparsable lines visible
  * instead of hiding them.
@@ -30,10 +30,10 @@ export function listSessionFiles(sessionDir: string): string[] {
 }
 
 /**
- * The session files the runtime persisted for the sessions one session spawned.
+ * The session files the harness persisted for the sessions one session spawned.
  *
  * A spawned session is stored beside its spawner rather than at the session root: the
- * runtime nests `<agentId>.jsonl` under a directory named after the spawning session's
+ * harness nests `<agentId>.jsonl` under a directory named after the spawning session's
  * file, level by level, so a nested subagent appears under its own spawner. The result
  * is direct children first, each level in creation order; the given session's own file is
  * not part of it.
@@ -59,7 +59,7 @@ export function spawnedSessionFiles(sessionFile: string): string[] {
  * The spawned session file whose journal carries `marker`.
  *
  * Depth is a reliable identity — a grandchild sits one level below its spawner — but the
- * order of two siblings at the same level is not: the runtime may flush a turn's spawned
+ * order of two siblings at the same level is not: the harness may flush a turn's spawned
  * sessions together, so their modification times can be a millisecond apart or equal. A
  * suite that drives more than one subagent at one level therefore picks each by a fact
  * that subagent's own session recorded (the turn text it ran) rather than by position.
@@ -102,7 +102,7 @@ export function customEntries(entries: readonly SessionEntry[], customType: stri
 
 /**
  * Persisted custom messages of one `customType`: the hidden contributions the agent
- * runtime records as conversation entries (`type: "custom_message"`, carrying
+ * harness records as conversation entries (`type: "custom_message"`, carrying
  * `content`, `display` and `attribution`).
  */
 export function customMessages(

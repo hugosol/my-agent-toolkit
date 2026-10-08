@@ -2,7 +2,7 @@
  * Local capture endpoint for the two provider wire protocols the first release records.
  *
  * Records every inbound request body verbatim (the full outbound JSON the agent
- * runtime produced) into the run's capture directory, then answers with a scripted
+ * harness produced) into the run's capture directory, then answers with a scripted
  * assistant turn so a controlled session can complete a real round trip without
  * credentials. It proves the serialization/request path only: it is not a provider,
  * not a model, and not evidence about a real service. A captured
@@ -44,7 +44,7 @@ export interface CaptureStep {
  *
  * `openai-completions` streams `chat.completion.chunk` frames; `openai-codex-responses`
  * streams Responses events for the Codex endpoint (`<baseUrl>/codex/responses`). The
- * recorded request body is the runtime's own JSON either way; the protocol only decides
+ * recorded request body is the harness's own JSON either way; the protocol only decides
  * which scripted answer lets the turn complete.
  */
 export type CaptureProtocol = "openai-completions" | "openai-codex-responses";
@@ -63,9 +63,9 @@ export interface CaptureServerOptions {
 	 */
 	readonly toolCall?: { readonly name: string; readonly arguments: string; readonly times?: number };
 	/**
-	 * Per-request script, chosen from the request the runtime actually sent.
+	 * Per-request script, chosen from the request the harness actually sent.
 	 *
-	 * The scripted responder is this fixture's model: it reads what the runtime
+	 * The scripted responder is this fixture's model: it reads what the harness
 	 * serialized — which session's turn this is, by the messages that turn carries — and
 	 * answers that request. A multi-turn test that must switch behaviour between turns
 	 * (or that must make one session delegate to a subagent) needs that, and it replaces
@@ -77,12 +77,12 @@ export interface CaptureServerOptions {
 	readonly failureStatus?: number;
 }
 
-export const DEFAULT_CAPTURE_REPLY_TEXT = "harness-capture-reply";
-const CAPTURE_MODEL = "harness-model";
+export const DEFAULT_CAPTURE_REPLY_TEXT = "dock-capture-reply";
+const CAPTURE_MODEL = "dock-model";
 
 function sseChunk(delta: Record<string, unknown>, finishReason: string | null): string {
 	return `data: ${JSON.stringify({
-		id: "chatcmpl-harness",
+		id: "chatcmpl-dock",
 		object: "chat.completion.chunk",
 		created: Math.floor(Date.now() / 1000),
 		model: CAPTURE_MODEL,
@@ -95,15 +95,15 @@ function sseChunk(delta: Record<string, unknown>, finishReason: string | null): 
  *
  * The Codex transport reads Responses events, not chat-completion chunks, so a
  * controlled turn on that path needs this shape to complete. It is the minimum the
- * runtime accepts: create the response, start the message and its text part, stream
+ * harness accepts: create the response, start the message and its text part, stream
  * the delta, finish the item, then terminate the response.
  */
 function codexResponsesSse(text: string): string {
 	const events = [
-		{ type: "response.created", response: { id: "resp_harness" } },
+		{ type: "response.created", response: { id: "resp_dock" } },
 		{
 			type: "response.output_item.added",
-			item: { type: "message", id: "msg_harness", role: "assistant", status: "in_progress", content: [] },
+			item: { type: "message", id: "msg_dock", role: "assistant", status: "in_progress", content: [] },
 		},
 		{ type: "response.content_part.added", part: { type: "output_text", text: "" } },
 		{ type: "response.output_text.delta", delta: text },
@@ -111,7 +111,7 @@ function codexResponsesSse(text: string): string {
 			type: "response.output_item.done",
 			item: {
 				type: "message",
-				id: "msg_harness",
+				id: "msg_dock",
 				role: "assistant",
 				status: "completed",
 				content: [{ type: "output_text", text }],
@@ -120,7 +120,7 @@ function codexResponsesSse(text: string): string {
 		{
 			type: "response.completed",
 			response: {
-				id: "resp_harness",
+				id: "resp_dock",
 				status: "completed",
 				usage: {
 					input_tokens: 1,
@@ -175,7 +175,7 @@ export function startCaptureServer(options: CaptureServerOptions): CaptureServer
 
 			if (options.failureStatus !== undefined && options.failureStatus !== 200) {
 				return Response.json(
-					{ error: { message: "harness-injected provider failure", type: "harness_error" } },
+					{ error: { message: "dock-injected provider failure", type: "dock_error" } },
 					{ status: options.failureStatus },
 				);
 			}
@@ -213,7 +213,7 @@ export function startCaptureServer(options: CaptureServerOptions): CaptureServer
 										tool_calls: [
 											{
 												index: 0,
-												id: "call_harness_1",
+												id: "call_dock_1",
 												type: "function",
 												function: { name: scriptedToolCall.name, arguments: scriptedToolCall.arguments },
 											},

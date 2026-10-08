@@ -7,54 +7,54 @@ import { beforeAll, describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import * as path from "node:path";
 import {
-	type IsolatedRuntime,
+	type IsolatedHarness,
 	checkoutCarries,
-	ensureIsolatedRuntime,
+	ensureIsolatedHarness,
 	readBaselineRecord,
 	readCheckoutCommit,
 	resolveRecordPath,
-	selectRuntimeVersion,
+	selectHarnessVersion,
 	verifyArtifactByteIdentity,
 	verifyLockfile,
 } from "./baseline";
 
 const record = readBaselineRecord();
 const REFRESH_HINT =
-	"refresh framework/docs/agent-runtime-baseline.json (sourceCombination/oracle lockfile sha256) after a deliberate dependency change";
+	"refresh framework/docs/harness-baseline.json (sourceCombination/oracle lockfile sha256) after a deliberate dependency change";
 
-// These tests check the fixed record itself, so they only apply while the harness runs the
+// These tests check the fixed record itself, so they only apply while the dock runs the
 // recorded version. With `OMP_TEST_VERSION` set, the install is deliberately a candidate and
 // the run belongs to the upgrade script's own result record, not to the baseline record.
-const selection = selectRuntimeVersion(record);
+const selection = selectHarnessVersion(record);
 const describeFixedRecord = selection.source === "recorded-baseline" ? describe : describe.skip;
 
-let runtime: IsolatedRuntime;
+let harness: IsolatedHarness;
 
 beforeAll(async () => {
-	runtime = await ensureIsolatedRuntime(record);
+	harness = await ensureIsolatedHarness(record);
 }, 300_000);
 
 describeFixedRecord("baseline record", () => {
 	test("the isolated install provides exactly the recorded supported version", () => {
-		expect(runtime.version).toBe(record.agentRuntime.supportedVersion);
-		expect(runtime.version).toBe(record.agentRuntime.revisionAnchor.version);
-		expect(runtime.cliPath.startsWith(runtime.prefix)).toBe(true);
+		expect(harness.version).toBe(record.harness.supportedVersion);
+		expect(harness.version).toBe(record.harness.revisionAnchor.version);
+		expect(harness.cliPath.startsWith(harness.prefix)).toBe(true);
 	});
 
 	test("the checkout is at the recorded revision anchor", () => {
-		const anchorPath = resolveRecordPath(record.agentRuntime.revisionAnchor.path);
+		const anchorPath = resolveRecordPath(record.harness.revisionAnchor.path);
 		const checkout = readCheckoutCommit(anchorPath);
 		expect(checkout.error).toBeNull();
-		expect(checkout.commit).toBe(record.agentRuntime.revisionAnchor.commit);
+		expect(checkout.commit).toBe(record.harness.revisionAnchor.commit);
 
 		const manifest = JSON.parse(
 			readFileSync(path.join(anchorPath, "packages", "coding-agent", "package.json"), "utf8"),
 		) as { version?: string };
-		expect(manifest.version).toBe(record.agentRuntime.revisionAnchor.version);
+		expect(manifest.version).toBe(record.harness.revisionAnchor.version);
 	});
 
 	test("the run artifact stays byte-identical to the anchor for the recorded contract files", () => {
-		const recorded = record.agentRuntime.acceptanceArtifact.byteIdentity.files;
+		const recorded = record.harness.acceptanceArtifact.byteIdentity.files;
 		const comparisons = verifyArtifactByteIdentity(record);
 
 		expect(comparisons.map(comparison => comparison.path)).toEqual(recorded.map(file => file.path));
@@ -103,6 +103,6 @@ describeFixedRecord("baseline record", () => {
 		expect(record.environment.checkoutRunsFullSession).toBe(false);
 		expect(record.environment.conditions.length).toBeGreaterThan(0);
 		// "no natives build" holds because the isolated install ships prebuilt binaries.
-		expect(runtime.prebuiltNatives.binaries.length).toBeGreaterThan(0);
+		expect(harness.prebuiltNatives.binaries.length).toBeGreaterThan(0);
 	});
 });

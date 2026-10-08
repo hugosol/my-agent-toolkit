@@ -1,32 +1,32 @@
 /**
- * Owner inheritance on the real OMP runtime (B9, C3, P3, P4, P8; and the single-main
+ * Owner inheritance on the real OMP harness (B9, C3, P3, P4, P8; and the single-main
  * limitation N10, which is recorded in the design notes rather than asserted here).
  *
  * The observable seam is the OMP extension seam: the real loader discovers
  * `entrypoints/omp`, a real session runs in the isolated install, and every subagent is
- * the runtime's own built-in one — the scripted provider answers a turn with a `task`
- * tool call, so the runtime spawns a real subagent session of its own. Spawning is made
+ * the harness's own built-in one — the scripted provider answers a turn with a `task`
+ * tool call, so the harness spawns a real subagent session of its own. Spawning is made
  * blocking (async execution off in a one-shot config overlay) so a turn's requests and
  * its subagent's requests arrive in a deterministic order.
  *
  * Evidence is read where a consumer sees it: each session's own JSONL (the persisting
- * session's contributions and State records) and the outbound requests the runtime
+ * session's contributions and State records) and the outbound requests the harness
  * serialized for each session, split by the assignment text that session's turn carries.
  */
 import { beforeAll, describe, expect, test } from "bun:test";
 import { writeFileSync } from "node:fs";
 import * as path from "node:path";
 import { INIT_PROMPT, REMINDER_PROMPT } from "../../extensions/codebase-tools/shared-logic/prompts";
-import { type IsolatedRuntime, REPO_ROOT, ensureIsolatedRuntime, readBaselineRecord } from "../harness/baseline";
-import { type CaptureServer, type CaptureStep, type CapturedRequest, startCaptureServer } from "../harness/capture-server";
-import { HARNESS_CAPTURE_BASE_URL_ENV, HARNESS_MODEL_SELECTOR } from "../harness/fixtures/extension-root/provider";
-import { type RunRoot, createRunRoot } from "../harness/run-root";
-import { ControlledSession } from "../harness/session";
-import { type SessionEntry, customEntries, customMessages, spawnedSessionFileCarrying, spawnedSessionFiles } from "../harness/session-log";
+import { type IsolatedHarness, REPO_ROOT, ensureIsolatedHarness, readBaselineRecord } from "../harness-dock/baseline";
+import { type CaptureServer, type CaptureStep, type CapturedRequest, startCaptureServer } from "../harness-dock/capture-server";
+import { DOCK_CAPTURE_BASE_URL_ENV, DOCK_MODEL_SELECTOR } from "../harness-dock/fixtures/extension-root/provider";
+import { type RunRoot, createRunRoot } from "../harness-dock/run-root";
+import { ControlledSession } from "../harness-dock/session";
+import { type SessionEntry, customEntries, customMessages, spawnedSessionFileCarrying, spawnedSessionFiles } from "../harness-dock/session-log";
 
 /** The OMP discovery root this repository deploys, and the credential-free provider fixture. */
 const OMP_ENTRYPOINT_DIR = path.join(REPO_ROOT, "entrypoints", "omp");
-const PROVIDER_FIXTURE = path.join(REPO_ROOT, "tests", "harness", "fixtures", "extension-root", "provider.ts");
+const PROVIDER_FIXTURE = path.join(REPO_ROOT, "tests", "harness-dock", "fixtures", "extension-root", "provider.ts");
 
 /** The identities the migration fixes: the two slots and the State record. */
 const INIT_IDENTITY = "codebase-tools:init";
@@ -48,10 +48,10 @@ const CHILD_OFF_ASSIGNMENT = "child assigned while the owner was off";
 const CHILD_ON_ASSIGNMENT = "child assigned while the owner was on";
 const GRANDCHILD_ASSIGNMENT = "grandchild assigned by the child";
 
-let runtime: IsolatedRuntime;
+let harness: IsolatedHarness;
 
 beforeAll(async () => {
-	runtime = await ensureIsolatedRuntime(readBaselineRecord());
+	harness = await ensureIsolatedHarness(readBaselineRecord());
 }, 300_000);
 
 /** One delegation the scripted model performs: the marker it reads, the spawn it answers. */
@@ -68,7 +68,7 @@ interface Delegation {
  * request is answered with plain text.
  *
  * A real subagent is what this drives — the delegation is the model's own decision, and
- * the runtime's `task` tool spawns its built-in subagent from it.
+ * the harness's `task` tool spawns its built-in subagent from it.
  */
 function delegatingResponder(delegations: readonly Delegation[]): (request: CapturedRequest) => CaptureStep | undefined {
 	const delegated = new Set<string>();
@@ -96,13 +96,13 @@ interface Run {
 function createRun(label: string, respond: (request: CapturedRequest) => CaptureStep | undefined): Run {
 	const runRoot = createRunRoot(label);
 	// The overlay lives in the run root, so the default agent environment and the
-	// repository are untouched; the runtime reads it for this process only.
+	// repository are untouched; the harness reads it for this process only.
 	const overlay = path.join(runRoot.path, "overlay.yml");
 	writeFileSync(overlay, BLOCKING_SPAWN_OVERLAY, "utf8");
 	return { runRoot, capture: startCaptureServer({ dir: runRoot.captureDir, respond }) };
 }
 
-/** The serialized request shape this suite reads: the roles and texts the runtime sent. */
+/** The serialized request shape this suite reads: the roles and texts the harness sent. */
 interface CapturedBody {
 	readonly messages?: ReadonlyArray<{ readonly role?: unknown; readonly content?: unknown }>;
 }
@@ -149,11 +149,11 @@ function requestsCarrying(run: Run, marker: string): CapturedRequest[] {
 function openSession(run: Run): Promise<ControlledSession> {
 	const overlay = path.join(run.runRoot.path, "overlay.yml");
 	return ControlledSession.start({
-		runtime,
+		harness,
 		runRoot: run.runRoot,
 		extensions: [PROVIDER_FIXTURE, OMP_ENTRYPOINT_DIR],
-		model: HARNESS_MODEL_SELECTOR,
-		env: { [HARNESS_CAPTURE_BASE_URL_ENV]: run.capture.baseUrl },
+		model: DOCK_MODEL_SELECTOR,
+		env: { [DOCK_CAPTURE_BASE_URL_ENV]: run.capture.baseUrl },
 		extraArgs: ["--config", overlay],
 	});
 }
@@ -168,11 +168,11 @@ async function disposeRun(run: Run, session: ControlledSession | undefined): Pro
 	run.runRoot.dispose();
 }
 
-/** The session file the runtime reports for the session it currently runs. */
+/** The session file the harness reports for the session it currently runs. */
 async function sessionFileOf(session: ControlledSession): Promise<string> {
 	const frame = await session.request({ type: "get_state" });
 	const file = (frame.data as { sessionFile?: string } | undefined)?.sessionFile;
-	if (file === undefined) throw new Error(`the runtime reported no session file: ${JSON.stringify(frame)}`);
+	if (file === undefined) throw new Error(`the harness reported no session file: ${JSON.stringify(frame)}`);
 	return file;
 }
 
@@ -209,7 +209,7 @@ describe("a real built-in subagent follows the owner's current enabled (B9, C3, 
 			const spawned = spawnedSessionFiles(sessionFile);
 			expect(spawned).toHaveLength(2);
 			// Which sibling is which is read from what each session recorded — the turn it
-			// ran — never from flush order: the runtime may flush both spawned sessions
+			// ran — never from flush order: the harness may flush both spawned sessions
 			// together, so their modification times can be a millisecond apart or equal.
 			const childOffFile = spawnedSessionFileCarrying(sessionFile, CHILD_OFF_ASSIGNMENT);
 			const childOnFile = spawnedSessionFileCarrying(sessionFile, CHILD_ON_ASSIGNMENT);

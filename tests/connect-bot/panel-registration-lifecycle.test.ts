@@ -33,7 +33,7 @@ import { afterEach, describe, expect, test } from "bun:test";
 import * as path from "node:path";
 import { CONNECT_BOT } from "../../extensions/connect-bot/definition";
 import { readConfig } from "../../framework/core/config";
-import { REPO_ROOT } from "../harness/baseline";
+import { REPO_ROOT } from "../harness-dock/baseline";
 import { isUpsertData, type OmpBotFrame, type OmpBotPanel, startOmpBot } from "./support/omp-bot";
 import { createRunRoot, type ProbeReport, runProbe } from "./support/probe-run";
 import {

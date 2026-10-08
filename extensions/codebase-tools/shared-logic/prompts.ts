@@ -3,7 +3,7 @@
  *
  * Each resource is its own file, imported independently: the routing text is a
  * compile-time constant with no runtime IO, and loading it here keeps it separate
- * from the agent runtime's own prompt/capability discovery.
+ * from the harness's own prompt/capability discovery.
  */
 import init from "./prompts/init.md" with { type: "text" };
 import reminder from "./prompts/reminder.md" with { type: "text" };

@@ -1,13 +1,13 @@
 /**
- * A connect-bot binding the agent runtime refuses, and what binding itself is (P11, P12; contract
+ * A connect-bot binding the harness refuses, and what binding itself is (P11, P12; contract
  * S1; stories 12–14).
  *
  * The extension is driven exactly as the loader drives it: its own OMP assembly binds the
  * definition against the double, and the panel is a fake transport injected through the
  * extension's own seam, so every request is observed without a network. Withholding one member of
  * the injected surface is the one way a binding can be refused at this level — which version a
- * runtime reports and which entries its api has are facts of the runtime itself, which no install
- * can be asked to vary — and the double models a runtime whose extension api exposes no lifecycle
+ * harness reports and which entries its api has are facts of the harness itself, which no install
+ * can be asked to vary — and the double models a harness whose extension api exposes no lifecycle
  * subscription, so the two axes this extension declares and the framework's own history
  * preservation are all unavailable.
  *
@@ -70,7 +70,7 @@ function withCapturedStderr<T>(run: () => T): { readonly stderr: string; readonl
 	}
 }
 
-/** The loader's api with one member withheld: what a runtime whose surface lacks that entry looks like. */
+/** The loader's api with one member withheld: what a harness whose surface lacks that entry looks like. */
 function withoutLifecycleSubscription(api: OmpExtensionApi): OmpExtensionApi {
 	return { ...api, on: undefined } as unknown as OmpExtensionApi;
 }
@@ -133,7 +133,7 @@ describe("binding connect-bot is not a behavioral self-test (P12)", () => {
 
 		// The binding is real — the extension is labeled and its command is registered — and that
 		// registration is the whole of what it did. What a load-time compatibility self-test would
-		// have to reach to observe anything about the runtime is each of these channels, so each is
+		// have to reach to observe anything about the harness is each of these channels, so each is
 		// still empty: no panel request, no background interval, no session entry, no area, nothing
 		// said to the operator.
 		expect(double.labels).toEqual(["connectBot"]);

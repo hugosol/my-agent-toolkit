@@ -2,7 +2,7 @@
  * The request budget connect-bot's own configuration gives every request (P13, P15–P19).
  *
  * The seam under test is the extension as the loader drives it: its own OMP assembly binds the
- * definition, the command the framework registered runs, the native session events the runtime
+ * definition, the command the framework registered runs, the native session events the harness
  * delivers are handed to that binding, and what the operator reads is the extension's own notice.
  * The outbound dependency is a real local HTTP service — the panel below — that receives every
  * request and answers the one under test only after a fixed 1200ms delay, so a request's wait and
@@ -25,7 +25,7 @@ import { tmpdir } from "node:os";
 import * as path from "node:path";
 import { CONNECT_BOT } from "../../extensions/connect-bot/definition";
 import { readConfig } from "../../framework/core/config";
-import { REPO_ROOT } from "../harness/baseline";
+import { REPO_ROOT } from "../harness-dock/baseline";
 
 /** The fixed response delay the scenario names, in milliseconds. */
 const PANEL_DELAY_MS = 1200;
@@ -105,7 +105,7 @@ interface DelayedPanel {
  * and the one kind under test answered only after {@link PANEL_DELAY_MS}.
  *
  * The delay is real wall-clock time on purpose: what this suite establishes is how a request's own
- * budget behaves against a panel that answers late, and the budget is realized by the runtime's
+ * budget behaves against a panel that answers late, and the budget is realized by the harness's
  * `AbortSignal.timeout` over a genuine socket — deterministic fake timers could not produce the
  * request's actual arrival and answer times, which are the evidence. Each case therefore keeps
  * both facts the delay separates: the panel's record of what it received and answered, and the
@@ -393,7 +393,7 @@ describe("a background push waits the same budget, not one of its own (P19)", ()
 		const report = await runProbe(root.configFile, "heartbeat");
 
 		// The push left the loaded extension's own background path: the arm's two requests, then the
-		// beat the managed interval it asked the runtime for produced.
+		// beat the managed interval it asked the harness for produced.
 		expect(report.configuration.requestTimeoutMs).toBe(SHIPPED_BUDGET_MS);
 		expect(report.sent.map(request => request.kind)).toEqual(["register", "state", "heartbeat"]);
 		const beat = report.sent[2];

@@ -1,11 +1,11 @@
 /**
- * The protocol between the framework's agent-runtime-independent behavior and an
- * agent-runtime adapter.
+ * The protocol between the framework's harness-independent behavior and an
+ * harness adapter.
  *
  * Adapters translate native capabilities into this port and translate framework
  * outcomes back into native effects; the behavior itself never sees a native API.
  * Failures travel as data, so an adapter can report them on whatever non-model
- * channel its agent runtime offers without deciding what counts as a conflict.
+ * channel its harness offers without deciding what counts as a conflict.
  */
 import type { RequiredSemantic } from "./admission";
 import type { ExtensionDefinition } from "./definition";
@@ -37,7 +37,7 @@ export type OwnerReference =
  * Why a session became the current owner.
  *
  * `initial` — the session this binding first served in this process, which is the session
- * the agent runtime loaded at startup and which carries no transition reason of its own.
+ * the harness loaded at startup and which carries no transition reason of its own.
  * `new` — a session stood up from nothing. `resume` — an existing session restored.
  * `fork` — a session derived from another one's branch or transcript.
  */
@@ -94,7 +94,7 @@ export type FeedbackLevel = "info" | "error";
 /**
  * The transport one delivery's extension feedback is published through.
  *
- * This is the single runtime-independent channel through which an extension tells the
+ * This is the single harness-independent channel through which an extension tells the
  * operator about an effect, and every handler delivery carries it: a command's outcome and
  * — through the same seam — an effect a semantic-event handler observed.
  *
@@ -114,13 +114,13 @@ export interface FeedbackTransport {
 }
 
 /**
- * The facts an agent-runtime adapter resolves for one semantic session event.
+ * The facts a harness adapter resolves for one semantic session event.
  *
  * The adapter answers *which* session the event is about, what that session's branch
  * persisted, and whether the event is the session's own startup or a transition it
  * observed; whether a persisted payload declares a usable value is the framework's own
  * validation rule, so payloads cross the seam unread. Synthesizing these events from the
- * agent runtime's native lifecycle is the adapter's job alone: shared behavior names no
+ * harness's native lifecycle is the adapter's job alone: shared behavior names no
  * native event and decides nothing about which native trigger means what.
  */
 export interface SessionDelivery {
@@ -226,7 +226,7 @@ export type SessionEventHandlers = Readonly<Partial<Record<SessionEvent["kind"],
  *
  * Both members are transitions, and neither carries a payload. An edge says only that the
  * period began or that it ended with nothing left to do; how it ended is deliberately not
- * part of the model, because the agent runtimes disagree about that vocabulary (a round that
+ * part of the model, because the harnesses disagree about that vocabulary (a round that
  * finishes on an ordinary answer, on an error and on an abort ends the same way here) and
  * because the agent's *current* state is a query ({@link CanAcceptInput}) rather than a field
  * of a past transition.
@@ -326,7 +326,7 @@ export interface MarkerTransport {
 }
 
 /**
- * The facts an agent-runtime adapter resolves for one agent-run initiation.
+ * The facts a harness adapter resolves for one agent-run initiation.
  *
  * A run initiation is the semantic clock of injected-prompt contribution: the adapter
  * answers which owner governs the run and what the current branch already persists, and
@@ -353,7 +353,7 @@ export interface RunDelivery {
  *
  * Visibility, delivery position and retention are framework-owned and not parameters:
  * a contribution is hidden, attributed to the agent, and appended at the end of the
- * conversation, where the agent runtime persists it with the rest of the turn.
+ * conversation, where the harness persists it with the rest of the turn.
  */
 export interface PromptContribution {
 	/** The slot's framework identity, also the custom type its persisted entry carries. */
@@ -437,7 +437,7 @@ export interface OwnerCapabilityHandle {
 }
 
 /**
- * The implementation an agent-runtime assembly injects for one declared directed
+ * The implementation a harness assembly injects for one declared directed
  * command.
  *
  * The value is an object rather than a bare function because this is assembly-surface
@@ -487,9 +487,9 @@ export type CommandActions = Readonly<Record<string, DirectedCommandImplementati
  * The framework's idle query: whether the agent can take input now.
  *
  * `true` — the agent is idle and can accept input; `false` — it is working and cannot;
- * `undefined` — this agent runtime reports no idle fact at all, which is surfaced rather than
- * answered with a value the runtime never gave. The three-valued answer is the honest one: a
- * runtime whose session context exposes no idle fact cannot be read as either state, and an
+ * `undefined` — this harness reports no idle fact at all, which is surfaced rather than
+ * answered with a value the harness never gave. The three-valued answer is the honest one: a
+ * harness whose session context exposes no idle fact cannot be read as either state, and an
  * extension that needs the fact decides for itself what an unreported one means (the framework
  * does not decide it for the extension by inventing `false`).
  *
@@ -500,11 +500,11 @@ export type CommandActions = Readonly<Record<string, DirectedCommandImplementati
 export type CanAcceptInput = () => boolean | undefined;
 
 /**
- * The facts an agent-runtime adapter supplies for one command invocation.
+ * The facts a harness adapter supplies for one command invocation.
  *
  * A command is registered natively at binding time, before any session fact exists;
  * the adapter resolves the argument, the owner, whether the session has a UI, its idle fact,
- * and the two effect transports only when the agent runtime runs it. Both effects belong to the
+ * and the two effect transports only when the harness runs it. Both effects belong to the
  * adapter — the behavior and its handlers decide what to record and what to say, at which
  * severity, and in which order, but never how.
  */
@@ -582,12 +582,12 @@ export interface CommandDelivery extends CommandInvocation {
 export interface BoundCommand {
 	readonly name: string;
 	readonly description?: string;
-	/** Runs when the agent runtime invokes the command, supplied with its invocation facts. */
+	/** Runs when the harness invokes the command, supplied with its invocation facts. */
 	run(invocation: CommandInvocation): void;
 }
 
-/** The registration and feedback surface an agent-runtime adapter must provide. */
-export interface AgentRuntimePort {
+/** The registration and feedback surface a harness adapter must provide. */
+export interface HarnessPort {
 	/** Sets the extension's display label for this binding. */
 	setLabel(label: string): void;
 	/**
@@ -627,7 +627,7 @@ export interface AgentRuntimePort {
 	 * contribution instead of advancing anything.
 	 */
 	onRunInitiation(handler: (run: RunDelivery) => PromptContribution | undefined): void;
-	/** Registers one bound command with the agent runtime's command surface. */
+	/** Registers one bound command with the harness's command surface. */
 	registerCommand(command: BoundCommand): void;
 }
 
@@ -643,13 +643,13 @@ export type BindingFailure =
 			readonly violation: ConfigurationViolation;
 	  }
 	| {
-			/** The definition cannot be initialized against this agent runtime. */
+			/** The definition cannot be initialized against this harness. */
 			readonly kind: "initialization";
 			readonly detail: string;
 	  }
 	| {
 			/**
-			 * The agent runtime cannot honor a required framework semantic; see
+			 * The harness cannot honor a required framework semantic; see
 			 * {@link RequiredSemantic}.
 			 */
 			readonly kind: "required-semantics";
@@ -657,10 +657,10 @@ export type BindingFailure =
 	  };
 
 /**
- * What binding a definition to an agent runtime concluded.
+ * What binding a definition to a harness concluded.
  *
  * An unbound result carries the reported failures; the extension contributes nothing
- * — no commands, no injections, no marker — and the agent runtime keeps running.
+ * — no commands, no injections, no marker — and the harness keeps running.
  */
 export type BindingResult =
 	| { readonly bound: true; readonly definition: ExtensionDefinition }

@@ -1,7 +1,7 @@
 # Semantic Extension Framework
 
-The shared runtime foundation that owns extension behavior contracts and their mappings to the
-supported agent runtimes (`pi` and `oh-my-pi`). Extensions import this source directly (see
+The shared harness foundation that owns extension behavior contracts and their mappings to the
+supported harnesses (`pi` and `oh-my-pi`). Extensions import this source directly (see
 [ADR 0002](../docs/adr/0002-semantic-extension-framework.md)); the framework must never depend on an
 individual extension.
 
@@ -9,9 +9,9 @@ individual extension.
 
 | Layer | What lives there |
 | --- | --- |
-| `core/` | The semantic contracts and the runtime-independent engines: `protocol.ts` (the delivery and capability types), `definition.ts` (the declaration shape and its closed sets), `state.ts`, `config.ts`, `admission.ts`, `baseline.ts`, `owner-lives.ts`, `violations.ts`. |
+| `core/` | The semantic contracts and the harness-independent engines: `protocol.ts` (the delivery and capability types), `definition.ts` (the declaration shape and its closed sets), `state.ts`, `config.ts`, `admission.ts`, `baseline.ts`, `owner-lives.ts`, `violations.ts`. |
 | `behaviors/` | The semantic behaviors built over those contracts: `admission.ts`, `binding.ts`, `control.ts`, `injection.ts`, `marker.ts`, `round-events.ts`, `session-events.ts`, `state-scope.ts`. |
-| `adapters/` | The only native surface: `omp.ts` (the OMP port and assembly) and `modules.d.ts` (the agent-runtime package declarations). Native access is permitted here and nowhere else in the framework. |
+| `adapters/` | The only native surface: `omp.ts` (the OMP port and assembly) and `modules.d.ts` (the harness package declarations). Native access is permitted here and nowhere else in the framework. |
 | `public.ts` | The single authoring door: `defineExtension` and the definition/configuration types an extension may name. |
 
 [`docs/framework-capabilities.md`](docs/framework-capabilities.md) is the symbol → meaning → source
@@ -32,7 +32,7 @@ The suites are described in the [root README](../README.md#quick-start).
 
 The automated suites (`bun test`) prove the consumer-visible behavior at seams that do not need a
 person. Four things are human-only, and this repository does **not** claim any of them yet — they are
-recorded as `unverified` in [`docs/agent-runtime-support.md`](docs/agent-runtime-support.md) until a
+recorded as `unverified` in [`docs/harness-support.md`](docs/harness-support.md) until a
 human runs them:
 
 | ID | Human action | Status |
@@ -44,7 +44,7 @@ human runs them:
 
 Run them in order. H3 is blocked until H1 passes; it covers both migrated extensions and runs
 per extension (codebase-tools first, then connect-bot). H4 is the same explicit action as step 4 of
-[Upgrading the supported agent runtime](#upgrading-the-supported-agent-runtime).
+[Upgrading the supported harness](#upgrading-the-supported-harness).
 
 **Isolation rule for every command below.** Run the isolated exact install
 (`.cache/omp-baseline/18.5.0`, materialised by the first suite run), keep the agent state in a
@@ -53,7 +53,7 @@ throwaway directory via `PI_CODING_AGENT_DIR`, and pass `--no-extensions -e <rep
 agent). The isolated agent state starts empty, so give it a credential for the model you intend to
 run — `PI_CODING_AGENT_DIR=<state> bun <cli> login <provider>`, `--api-key`, or the provider's API-key
 environment variable. The `--no-extensions -e` pair is the explicit-only root described in
-[load-source mutual exclusion](docs/agent-runtime-support.md#load-source-mutual-exclusion).
+[load-source mutual exclusion](docs/harness-support.md#load-source-mutual-exclusion).
 
 The per-extension runbooks that carry H1 and H3 are:
 
@@ -77,7 +77,7 @@ under which role. Compare with layer 1 — the shape-only capture
 [`.scratch/codebase-tools-omp-v1/assets/11/captures/codex/`](../.scratch/codebase-tools-omp-v1/assets/11/captures/codex)
 and [`tests/codebase-tools/outbound-role.test.ts`](../tests/codebase-tools/outbound-role.test.ts) — and
 with the provider-path role table in
-[`docs/agent-runtime-support.md`](docs/agent-runtime-support.md#provider-path-role-evidence-recorded-facts-not-a-gate).
+[`docs/harness-support.md`](docs/harness-support.md#provider-path-role-evidence-recorded-facts-not-a-gate).
 When no credential or capture is available, record the path as `unverified`; it does not block the
 first release and is never inferred from layer 1.
 
@@ -97,7 +97,7 @@ repeat the restart after any of these changes:
    `E:/Developer/myhub/my-agent-toolkit/entrypoints/omp` to the `extensions:` list of the formal agent
    configuration `~/.omp/agent/config.yml`. That one root carries one thin entrypoint per migrated
    extension (`codebase-tools.ts`, `connect-bot.ts`), so it is added once for both cutovers.
-2. Restart the agent runtime as a whole process — there is no hot reload and the discovery root is
+2. Restart the harness as a whole process — there is no hot reload and the discovery root is
    never swapped inside a running process.
 
 The per-extension runbooks are
@@ -106,24 +106,24 @@ and [H3b — cut over connect-bot](../extensions/connect-bot/README.md#h3b--cut-
 
 Automatic contrast: the deployment/mutual-exclusion checks in
 [`tests/framework/deployment.test.ts`](../tests/framework/deployment.test.ts) and the mechanism
-description in [load-source mutual exclusion](docs/agent-runtime-support.md#load-source-mutual-exclusion);
+description in [load-source mutual exclusion](docs/harness-support.md#load-source-mutual-exclusion);
 they prove the loader behavior, not the human cutover.
 
 ### H4 — replace the supported version
 
 This is the explicit maintainer action in step 4 of
-[Upgrading the supported agent runtime](#upgrading-the-supported-agent-runtime): change
-`SUPPORTED_AGENT_RUNTIME_VERSIONS` in [`core/baseline.ts`](core/baseline.ts) — the framework-owned
+[Upgrading the supported harness](#upgrading-the-supported-harness): change
+`SUPPORTED_HARNESS_VERSIONS` in [`core/baseline.ts`](core/baseline.ts) — the framework-owned
 baseline, since version support belongs to the framework and an extension assembly declares no version
 list — update the four-state support record in
-[`docs/agent-runtime-support.md`](docs/agent-runtime-support.md), refresh
-[`docs/agent-runtime-baseline.json`](docs/agent-runtime-baseline.json) (re-checked by
-[`tests/harness/baseline.test.ts`](../tests/harness/baseline.test.ts)), then restart. The candidate
+[`docs/harness-support.md`](docs/harness-support.md), refresh
+[`docs/harness-baseline.json`](docs/harness-baseline.json) (re-checked by
+[`tests/harness-dock/baseline.test.ts`](../tests/harness-dock/baseline.test.ts)), then restart. The candidate
 result record from [`scripts/verify-omp-candidate.ts`](../scripts/verify-omp-candidate.ts)
 (`.cache/omp-baseline/<version>/candidate-verification.json`) is input to that decision, never the
 decision itself.
 
-## Upgrading the supported agent runtime
+## Upgrading the supported harness
 
 The upgrade standard covers **framework capabilities only** (C1–C15, `tests/framework`).
 Extension capabilities are covered by `tests/codebase-tools` (permanent, on the fixed version)
@@ -172,17 +172,17 @@ are mechanical and can be run by a human or an agent; steps 3–4 are human/main
 4. **Replace the supported version — an explicit maintainer action.**
    Only after reviewing the candidate result (and the spot check where step 3 applied):
 
-   - change `SUPPORTED_AGENT_RUNTIME_VERSIONS` in
+   - change `SUPPORTED_HARNESS_VERSIONS` in
      [`core/baseline.ts`](core/baseline.ts)
      from `["18.5.0"]` to the new exact version — this list is the framework-owned Supported
-     agent-runtime baseline, and no extension assembly carries one;
+     harness baseline, and no extension assembly carries one;
    - update the four-state support record and the upgrade standard in
-     [`docs/agent-runtime-support.md`](docs/agent-runtime-support.md) with the new combination,
+     [`docs/harness-support.md`](docs/harness-support.md) with the new combination,
      evidence and conditions;
-   - refresh [`docs/agent-runtime-baseline.json`](docs/agent-runtime-baseline.json) (revision
-     anchor, acceptance artifact, lockfiles) so `bun run test:harness` checks the new
+   - refresh [`docs/harness-baseline.json`](docs/harness-baseline.json) (revision
+     anchor, acceptance artifact, lockfiles) so `bun run test:dock` checks the new
      combination instead of the old one;
-   - restart the agent runtime. A whole-process restart is required: there is no hot reload and
+   - restart the harness. A whole-process restart is required: there is no hot reload and
      the discovery root is never swapped inside a running process.
 
 Until that action is taken, the framework's baseline stays exactly `["18.5.0"]` and an installed

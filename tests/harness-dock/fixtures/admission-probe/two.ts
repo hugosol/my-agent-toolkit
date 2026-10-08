@@ -1,5 +1,5 @@
 /**
- * Harness fixture extension: the second of the two admission probes (see `./core`).
+ * Dock fixture extension: the second of the two admission probes (see `./core`).
  *
  * Same shape as `./one`, loaded beside it in one session's process. Two extensions, two module
  * graphs: this is the pair whose reports say whether the framework judged the reported version
@@ -7,7 +7,7 @@
  */
 import { reportVersionDecision } from "./core";
 
-/** The one native fact this probe reads: the version the runtime's SDK namespace reports. */
+/** The one native fact this probe reads: the version the harness's SDK namespace reports. */
 interface AdmissionProbeApi {
 	readonly pi?: { readonly VERSION?: string };
 }

@@ -2,8 +2,8 @@
 
 Joins an agent session to the omp-bot panel; `/connect-bot` registers the current session,
 `/connect-bot off` disconnects it. The declaration is [`definition.ts`](definition.ts), its
-agent-runtime-independent logic is under [`shared-logic/`](shared-logic), and its OMP assembly is
-[`runtimes/omp.ts`](runtimes/omp.ts).
+harness-independent logic is under [`shared-logic/`](shared-logic), and its OMP assembly is
+[`harnesses/omp.ts`](harnesses/omp.ts).
 
 ## Configuration
 
@@ -23,7 +23,7 @@ binding instead of letting it run on an invented one.
 the explicit `unregister` (`/connect-bot off`), the session-end/switch `unregister`, and the
 background heartbeat/state pushes — with no per-operation timeout left; the repository ships `1000`.
 A validated configuration is read once per extension per process, so **a changed value takes effect
-only after restarting the agent runtime**, never inside the running process
+only after restarting the harness**, never inside the running process
 ([`tests/connect-bot/request-timeout.test.ts`](../../tests/connect-bot/request-timeout.test.ts)). The
 behaviour is the same field the framework's `milliseconds` type and its "read once per process, no
 environment or command-line override" rule describe
@@ -45,7 +45,7 @@ Precondition: H1 passed and the connect-bot acceptance round has been run and re
 observation checklist in
 [lighthouse 06 §6](../../.scratch/connect-bot-migration/lighthouse/06-acceptance-contract.md) — so the
 old implementation is still the one in use. The two shared cutover steps (add the discovery root once,
-restart the agent runtime) are in
+restart the harness) are in
 [H3 — permanent cutover and cutover smoke](../../framework/README.md#h3--permanent-cutover-and-cutover-smoke);
 what differs here is the configuration file, the panel rows the old implementation leaves behind, and
 the smoke list.
@@ -70,7 +70,7 @@ the smoke list.
    running, so its rows pass the panel's 30s keep-alive (a ≤35s scan, worst case about 45s), turn
    "offline" and stay until an `unregister` or a panel restart. The new implementation starts
    unconnected, so no new row appears until a session runs `/connect-bot`.
-5. Smoke once after the cutover: start the runtime normally (no `--no-extensions`) against a running
+5. Smoke once after the cutover: start the harness normally (no `--no-extensions`) against a running
    panel whose `listen_addr` covers `config.yaml`'s `endpoint`, and confirm:
 
    - **接入** — `/connect-bot` registers the current session: the marker `◐ connectBot` appears, the

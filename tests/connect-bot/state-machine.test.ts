@@ -4,12 +4,12 @@
  *
  * The extension is driven exactly as the loader drives it: its OMP assembly binds the definition
  * against the double, the command the framework registered arms a session, and the native run
- * events the runtime would deliver are handed to the same binding. Nothing here calls the machine
+ * events the harness would deliver are handed to the same binding. Nothing here calls the machine
  * directly — what the panel receives is the whole of what a test observes, so the edge synthesis,
  * the owner scope and the state machine are exercised together, at the seam they compose at.
  *
  * What the file deliberately does not claim: an `abort` and a turn interrupted before it produced
- * any assistant message are reproduced in the M-layer acceptance round against a real runtime, so
+ * any assistant message are reproduced in the M-layer acceptance round against a real harness, so
  * this suite drives neither of them. The four shapes it does drive all arrive at this seam as the
  * one settle shape they share — no continuation scheduled, the session quiescent — and the
  * subagent session is the seventh shape, guarded below.
@@ -24,7 +24,7 @@ import {
 	setPushTransportForTest,
 } from "../../extensions/connect-bot/shared-logic/panel/client";
 import { CONNECT_BOT } from "../../extensions/connect-bot/definition";
-import connectBot from "../../extensions/connect-bot/runtimes/omp";
+import connectBot from "../../extensions/connect-bot/harnesses/omp";
 import { botSessions } from "../../extensions/connect-bot/shared-logic/session/session";
 import { type OmpDouble, ompDouble } from "./support/omp-double";
 
@@ -265,7 +265,7 @@ describe("the round edges move the state (E12, P33, story 74)", () => {
 		double.startRun(ctx);
 		await settleAll();
 
-		// The session still reports itself busy when the run settles — a fact this runtime states per
+		// The session still reports itself busy when the run settles — a fact this harness states per
 		// delivery. An unestablished quiescence closes no round, so no edge arrives and nothing here
 		// invents a 等待用户输入 the session did not reach.
 		double.settleRun(double.context({ sessionId: "state-busy-settle", cwd: "E:/work/state", idle: false }));
@@ -283,7 +283,7 @@ describe("the terminal shapes that never see an ordinary settle (E12)", () => {
 	 * The four terminal shapes this seam can isolate. Each one reaches the extension as the same
 	 * observable settle — no continuation scheduled, the session quiescent — so the value each
 	 * leaves behind is the same and none of them may strand the card in 工作中. `abort` and a turn
-	 * interrupted before any assistant message are reproduced on a real runtime in the M-layer
+	 * interrupted before any assistant message are reproduced on a real harness in the M-layer
 	 * acceptance round; a subagent session is the seventh shape and is guarded below.
 	 */
 	const terminalShapes = [

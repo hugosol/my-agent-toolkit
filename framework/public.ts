@@ -3,8 +3,8 @@
  *
  * This is the whole authoring surface: declare an extension with
  * {@link defineExtension} and the exported configuration types, then hand the
- * definition to an agent-runtime adapter (`framework/adapters/omp.ts`) for assembly.
- * No agent-runtime type appears here or in anything the definition can name.
+ * definition to a harness adapter (`framework/adapters/omp.ts`) for assembly.
+ * No harness type appears here or in anything the definition can name.
  *
  * The configuration one extension declares is part of its definition, so its types are
  * here; the configuration API the extension's shared logic reads through — `getConfig`,

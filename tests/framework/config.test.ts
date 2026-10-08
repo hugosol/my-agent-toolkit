@@ -6,7 +6,7 @@
  * The seams under test are the framework's own: the configuration API
  * (`readConfig`, `getConfig`, `ConfigLoadError`, `ExtensionConfigError` in
  * `framework/core/config.ts`) and the binding seam it feeds — `bindExtension` driven
- * through the runtime-neutral port double, which is where an illegal declaration and an
+ * through the harness-neutral port double, which is where an illegal declaration and an
  * illegal file must both come out as one `configuration` failure carrying a `config`
  * violation. The reader and the parser are injectable, so the failure paths are covered
  * without depending on a real file system; the default parser is the pure-JS `yaml`
@@ -26,8 +26,8 @@ import {
 	readConfig,
 } from "../../framework/core/config";
 import { type ExtensionDefinition, defineExtension } from "../../framework/public";
-import { portDouble } from "./support/runtime-port-double";
-import { REPO_ROOT } from "../harness/baseline";
+import { portDouble } from "./support/harness-port-double";
+import { REPO_ROOT } from "../harness-dock/baseline";
 
 /**
  * A definition that declares the configuration under test.
@@ -327,14 +327,14 @@ describe("an illegal configuration file refuses the extension (P20)", () => {
 
 /**
  * A declared `milliseconds` field (P14): a wait budget is a whole number of milliseconds the
- * runtime's own timer schedules, so a value the timer would not wait for is refused as a
+ * harness's own timer schedules, so a value the timer would not wait for is refused as a
  * configuration failure rather than read as a budget it is not.
  *
- * The range is stated here as an independent runtime fact — the largest delay a millisecond
+ * The range is stated here as an independent harness fact — the largest delay a millisecond
  * timer schedules before it clamps the value to 1ms (2^31-1) — rather than re-read from the
  * framework's own matcher, and the expected report text is built from it.
  */
-describe("a declared milliseconds field is a whole millisecond budget this runtime schedules (P14)", () => {
+describe("a declared milliseconds field is a whole millisecond budget this harness schedules (P14)", () => {
 	/** The largest delay a millisecond timer schedules; a longer value is clamped, not waited for. */
 	const MAX_MILLISECONDS = 2 ** 31 - 1;
 	/** What the declaration requires, as the framework's report states it. */
@@ -354,7 +354,7 @@ describe("a declared milliseconds field is a whole millisecond budget this runti
 
 	/**
 	 * Every value a wait budget must refuse, with the deterministic detail binding reports: the
-	 * wait the file names is not one this runtime schedules.
+	 * wait the file names is not one this harness schedules.
 	 */
 	const refused: readonly {
 		readonly name: string;
@@ -405,13 +405,13 @@ describe("a declared milliseconds field is a whole millisecond budget this runti
 			carries: `declares "requestTimeoutMs" as a non-finite number, but the extension requires ${requires}`,
 		},
 		{
-			name: "the first value the runtime does not schedule",
+			name: "the first value the harness does not schedule",
 			id: "wait-overflow",
 			document: `requestTimeoutMs: ${MAX_MILLISECONDS + 1}\n`,
 			carries: `declares "requestTimeoutMs" as a number, but the extension requires ${requires}`,
 		},
 		{
-			name: "a value beyond any millisecond this runtime counts",
+			name: "a value beyond any millisecond this harness counts",
 			id: "wait-huge",
 			document: `requestTimeoutMs: ${2 ** 53}\n`,
 			carries: `declares "requestTimeoutMs" as a number, but the extension requires ${requires}`,
@@ -548,8 +548,8 @@ describe("readConfig is the one reading, parsing and validating implementation (
 		);
 	});
 
-	test("the shared source reaches no Bun API, no agent-runtime package and no environment value", () => {
-		// The capability is agent-runtime-independent and the file is the only source of the
+	test("the shared source reaches no Bun API, no harness package and no environment value", () => {
+		// The capability is harness-independent and the file is the only source of the
 		// values: this module parses with the pure-JS `yaml` package and reads through
 		// `node:fs`, and it consults neither a Bun API nor the environment. Like the import
 		// boundary suite, this check is lexical and a best-effort alarm, not a proof.

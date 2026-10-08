@@ -9,8 +9,8 @@
  * own working data, keyed by the owner key the framework resolved. A rule about an effect
  * therefore never has to be expressed as a second authoritative value.
  *
- * The facts themselves are read natively by the extension's runtime assembly and injected here
- * as plain data: this module names no agent runtime and reaches no native API.
+ * The facts themselves are read natively by the extension's harness assembly and injected here
+ * as plain data: this module names no harness and reaches no native API.
  */
 import type { OwnerCapabilityHandle } from "../../../../framework/core/protocol";
 import type { AgentState } from "./agent-state";
@@ -19,7 +19,7 @@ import type { TimerCancel } from "../managed-timer";
 import type { OutboxFlusher } from "../panel/outbox";
 
 /**
- * The facts of the session being served, as the runtime assembly reads them natively.
+ * The facts of the session being served, as the harness assembly reads them natively.
  *
  * They exist because the framework's owner key is an opaque derivation it never interprets, so
  * a wire protocol that has to name the real session — and to describe it the way the panel's

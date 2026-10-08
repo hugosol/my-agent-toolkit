@@ -1,7 +1,7 @@
 /**
  * Layer-2 Codex delivery capture: the real chatgpt.com round trip, run by a human who can
  * supply credentials (ticket 15). Layer 1 (`tests/codebase-tools/outbound-role.test.ts`,
- * shape-only probe) records what the runtime serializes; this records whether a real
+ * shape-only probe) records what the harness serializes; this records whether a real
  * provider accepts it and what role/order reaches the wire.
  *
  * Nothing here is executed by the test suites, and no credential is read into the context:
@@ -25,10 +25,10 @@ import * as path from "node:path";
 import {
 	ControlledSession,
 	REPO_ROOT,
-	ensureIsolatedRuntime,
+	ensureIsolatedHarness,
 	readBaselineRecord,
 	writeAgentSettings,
-} from "../tests/harness/index";
+} from "../tests/harness-dock/index";
 
 const MODEL = "openai-codex/gpt-6-luna";
 const COMMAND = "codebase-tools";
@@ -65,7 +65,7 @@ const options = parseOptions(process.argv.slice(2));
  *
  * A login executed with an unset `PI_CODING_AGENT_DIR` writes the credential into the real
  * global agent state, which this flow must never touch; the printed steps therefore name the
- * variable explicitly and clear the resolution offsets the harness also clears. The login
+ * variable explicitly and clear the resolution offsets the dock also clears. The login
  * uses the same isolated install the run does, so the credential is created by the version
  * under test rather than by whatever `omp` is on PATH.
  */
@@ -80,7 +80,7 @@ function wizardSteps(cliPath: string): string {
 	].join("\n");
 }
 
-const runtime = await ensureIsolatedRuntime(readBaselineRecord());
+const harness = await ensureIsolatedHarness(readBaselineRecord());
 
 if (options.action === "prepare") {
 	mkdirSync(options.agentDir, { recursive: true });
@@ -90,8 +90,8 @@ if (options.action === "prepare") {
 	console.log(`[layer2] isolated agent state: ${options.agentDir}`);
 	console.log(`[layer2] capture directory:    ${options.captures}`);
 	console.log(`[layer2] wrote ${path.join(options.agentDir, "config.yml")} (providers.openaiWebsockets: "off")`);
-	console.log(`[layer2] isolated runtime:     ${runtime.cliPath}`);
-	console.log(`[layer2] wizard steps:\n${wizardSteps(runtime.cliPath)}`);
+	console.log(`[layer2] isolated harness:     ${harness.cliPath}`);
+	console.log(`[layer2] wizard steps:\n${wizardSteps(harness.cliPath)}`);
 	process.exit(0);
 }
 
@@ -99,7 +99,7 @@ const credentialFile = path.join(options.agentDir, "agent.db");
 if (!existsSync(credentialFile)) {
 	console.error(`[layer2] no credential at ${credentialFile}.`);
 	console.error(`[layer2] run the wizard first (credentials are supplied by a human, never by this script):`);
-	console.error(wizardSteps(runtime.cliPath));
+	console.error(wizardSteps(harness.cliPath));
 	console.error(
 		`[layer2] the credential must live in this isolated agent state: the run clears OMP_AUTH_BROKER_*/XDG_* offsets, so an externally held credential is outside this flow.`,
 	);
@@ -166,7 +166,7 @@ const before = new Set(readdirSync(options.captures));
 let session: ControlledSession | undefined;
 try {
 	session = await ControlledSession.start({
-		runtime,
+		harness,
 		runRoot,
 		extensions: [OMP_ENTRYPOINT_DIR],
 		model: MODEL,

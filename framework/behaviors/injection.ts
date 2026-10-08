@@ -12,7 +12,7 @@
  * a slot that contributes once is never starved by a slot that repeats, and among slots
  * of the same rule declaration order decides.
  *
- * This module is agent-runtime-independent: it reads State through the read view and the
+ * This module is harness-independent: it reads State through the read view and the
  * branch facts an adapter resolved, and names no native API.
  */
 import { BOUND_PROMPT_STRATEGIES, type ExtensionDefinition } from "../core/definition";

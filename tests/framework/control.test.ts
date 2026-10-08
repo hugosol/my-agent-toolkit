@@ -4,7 +4,7 @@
  * A declarative toggle command is bound through `ompAdapter`, and the write path it
  * must uphold is observed end to end: the command transitions the owner's State, the
  * new value is recorded best-effort, and feedback derived from that value is
- * published. The agent-runtime side of the seam is the narrow native surface the
+ * published. The harness side of the seam is the narrow native surface the
  * loader hands the factory, so a test double stands in for the loader — it records the
  * registrations and effects — and each test drives the registered command with a
  * double command context, exactly as the runner would.

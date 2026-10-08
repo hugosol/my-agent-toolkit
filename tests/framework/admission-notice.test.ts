@@ -1,51 +1,51 @@
 /**
- * The unlisted-version notice on the real agent runtime (P6, P7, P8, P9; C13, C14).
+ * The unlisted-version notice on the real harness (P6, P7, P8, P9; C13, C14).
  *
- * The unlisted condition is the runtime's own: version support belongs to the framework's
- * Supported agent-runtime baseline and an extension assembly declares no support set, so what
- * makes this run unlisted is running an agent-runtime version the baseline does not list. The
+ * The unlisted condition is the harness's own: version support belongs to the framework's
+ * Supported harness baseline and an extension assembly declares no support set, so what
+ * makes this run unlisted is running a harness version the baseline does not list. The
  * notice is the framework's and it belongs to the Owner — the main session — so one process tells
  * one main session once, whatever number of extensions share it: this run loads the repository's
- * own extension *and* a second framework consumer, and the runtime gives each its own module graph
+ * own extension *and* a second framework consumer, and the harness gives each its own module graph
  * and therefore its own copy of the framework's notice record.
  *
  * The observables are the ones the acceptance procedure uses: the RPC session's frames and stderr,
- * the session JSONL the runtime persists, and the outbound requests the capture endpoint recorded.
- * Nothing here reaches into framework internals, and nothing modifies the agent runtime, its
+ * the session JSONL the harness persists, and the outbound requests the capture endpoint recorded.
+ * Nothing here reaches into framework internals, and nothing modifies the harness, its
  * install or any host configuration.
  */
 import { beforeAll, describe, expect, test } from "bun:test";
 import { writeFileSync } from "node:fs";
 import * as path from "node:path";
 import { CODEBASE_TOOLS } from "../../extensions/codebase-tools/definition";
-import { type IsolatedRuntime, REPO_ROOT, ensureIsolatedVersion, readBaselineRecord } from "../harness/baseline";
+import { type IsolatedHarness, REPO_ROOT, ensureIsolatedVersion, readBaselineRecord } from "../harness-dock/baseline";
 import {
 	type CaptureServer,
 	type CaptureStep,
 	type CapturedRequest,
 	startCaptureServer,
-} from "../harness/capture-server";
-import { NOTICE_PEER_DISPLAY_NAME } from "../harness/fixtures/admission-notice-peer/peer";
-import { HARNESS_CAPTURE_BASE_URL_ENV, HARNESS_MODEL_SELECTOR } from "../harness/fixtures/extension-root/provider";
-import { type RunRoot, createRunRoot } from "../harness/run-root";
-import { ControlledSession, type RpcFrame } from "../harness/session";
-import { spawnedSessionFileCarrying } from "../harness/session-log";
+} from "../harness-dock/capture-server";
+import { NOTICE_PEER_DISPLAY_NAME } from "../harness-dock/fixtures/admission-notice-peer/peer";
+import { DOCK_CAPTURE_BASE_URL_ENV, DOCK_MODEL_SELECTOR } from "../harness-dock/fixtures/extension-root/provider";
+import { type RunRoot, createRunRoot } from "../harness-dock/run-root";
+import { ControlledSession, type RpcFrame } from "../harness-dock/session";
+import { spawnedSessionFileCarrying } from "../harness-dock/session-log";
 
 /** The repository's own extension entrypoint: the real assembly, which declares no version list. */
 const EXTENSION_ENTRYPOINT = path.join(REPO_ROOT, "entrypoints", "omp", "codebase-tools.ts");
 /** A second framework consumer in the same process, loaded the way every extension is. */
-const PEER_ENTRYPOINT = path.join(REPO_ROOT, "tests", "harness", "fixtures", "admission-notice-peer", "peer.ts");
+const PEER_ENTRYPOINT = path.join(REPO_ROOT, "tests", "harness-dock", "fixtures", "admission-notice-peer", "peer.ts");
 /** The credential-free provider fixture; it keeps the turn off the network. */
-const PROVIDER_FIXTURE = path.join(REPO_ROOT, "tests", "harness", "fixtures", "extension-root", "provider.ts");
+const PROVIDER_FIXTURE = path.join(REPO_ROOT, "tests", "harness-dock", "fixtures", "extension-root", "provider.ts");
 /** The name the framework's own notices are attributed to, as the framework writes it. */
 const FRAMEWORK_NOTICE_SOURCE = "my-agent-toolkit";
 /** The version the framework's support record lists. */
-const SUPPORTED_BASELINE = readBaselineRecord().agentRuntime.supportedVersion;
+const SUPPORTED_BASELINE = readBaselineRecord().harness.supportedVersion;
 /** A version independently specified to be outside that baseline: this repository's candidate. */
-const UNLISTED_RUNTIME_VERSION = "18.6.1";
+const UNLISTED_HARNESS_VERSION = "18.6.1";
 /** The phrase every unlisted-version notice carries, whichever channel it uses. */
 const NOTICE_MARKER = "is not in the supported set";
-/** The turn whose request delegates: the runtime's own built-in subagent runs the assignment. */
+/** The turn whose request delegates: the harness's own built-in subagent runs the assignment. */
 const SUBAGENT_TURN = "admission unlisted turn";
 const SUBAGENT_ASSIGNMENT = "admission notice subagent assignment";
 /**
@@ -54,15 +54,15 @@ const SUBAGENT_ASSIGNMENT = "admission notice subagent assignment";
  */
 const BLOCKING_SPAWN_OVERLAY = "async:\n  enabled: false\n";
 
-let runtime: IsolatedRuntime;
+let harness: IsolatedHarness;
 
 beforeAll(async () => {
-	// The runtime whose version the baseline does not list: that is what makes the run unlisted
+	// The harness whose version the baseline does not list: that is what makes the run unlisted
 	// now that no assembly declares a support set of its own.
-	runtime = await ensureIsolatedVersion(readBaselineRecord(), UNLISTED_RUNTIME_VERSION);
+	harness = await ensureIsolatedVersion(readBaselineRecord(), UNLISTED_HARNESS_VERSION);
 }, 300_000);
 
-interface HarnessRun {
+interface DockRun {
 	readonly session: ControlledSession;
 	readonly capture: CaptureServer;
 	readonly runRoot: RunRoot;
@@ -70,10 +70,10 @@ interface HarnessRun {
 
 /**
  * The scripted model: the marked turn is answered with the `task` tool call that spawns the
- * runtime's own built-in subagent, once, and every other request with plain text.
+ * harness's own built-in subagent, once, and every other request with plain text.
  *
  * A real subagent is what this drives — the delegation is the model's decision and the spawn is
- * the runtime's — which is what gives the notice suite a genuine owner relationship to observe.
+ * the harness's — which is what gives the notice suite a genuine owner relationship to observe.
  */
 function delegatingResponder(): (request: CapturedRequest) => CaptureStep | undefined {
 	let delegated = false;
@@ -93,11 +93,11 @@ function delegatingResponder(): (request: CapturedRequest) => CaptureStep | unde
 	};
 }
 
-/** Start one isolated session with the harness provider, the repository's assembly and the peer. */
+/** Start one isolated session with the dock provider, the repository's assembly and the peer. */
 async function startRun(
 	label: string,
 	options: { readonly extraArgs?: readonly string[]; readonly respond?: (request: CapturedRequest) => CaptureStep | undefined } = {},
-): Promise<HarnessRun> {
+): Promise<DockRun> {
 	const runRoot = createRunRoot(label);
 	// The overlay lives in the run root, so the default agent environment is untouched. It is
 	// written for every run: a turn that spawns nothing is unaffected by it.
@@ -106,11 +106,11 @@ async function startRun(
 	const capture = startCaptureServer({ dir: runRoot.captureDir, respond: options.respond });
 	try {
 		const session = await ControlledSession.start({
-			runtime,
+			harness,
 			runRoot,
 			extensions: [PROVIDER_FIXTURE, EXTENSION_ENTRYPOINT, PEER_ENTRYPOINT],
-			model: HARNESS_MODEL_SELECTOR,
-			env: { [HARNESS_CAPTURE_BASE_URL_ENV]: capture.baseUrl },
+			model: DOCK_MODEL_SELECTOR,
+			env: { [DOCK_CAPTURE_BASE_URL_ENV]: capture.baseUrl },
 			extraArgs: ["--config", overlay, ...(options.extraArgs ?? [])],
 		});
 		return { session, capture, runRoot };
@@ -121,7 +121,7 @@ async function startRun(
 	}
 }
 
-async function disposeRun(run: HarnessRun): Promise<void> {
+async function disposeRun(run: DockRun): Promise<void> {
 	try {
 		await run.session.stop({ timeoutMs: 5_000 });
 	} catch {
@@ -141,11 +141,11 @@ function warningNotices(session: ControlledSession): RpcFrame[] {
 		);
 }
 
-describe("an unlisted version on the real runtime (P6, P7, P8, P9)", () => {
+describe("an unlisted version on the real harness (P6, P7, P8, P9)", () => {
 	test("two extensions, a real subagent and two main sessions: one framework notice per Owner", async () => {
 		const run = await startRun("admission-unlisted-ui", { respond: delegatingResponder() });
 		try {
-			// A real turn runs normally — it delegates, so the runtime spawns its own built-in
+			// A real turn runs normally — it delegates, so the harness spawns its own built-in
 			// subagent inside it — and the unlisted version does not stop the extension.
 			const turn = await run.session.prompt(SUBAGENT_TURN);
 			expect(turn.agentInvoked).toBe(true);
@@ -164,10 +164,10 @@ describe("an unlisted version on the real runtime (P6, P7, P8, P9)", () => {
 			expect(message).toContain(FRAMEWORK_NOTICE_SOURCE);
 			expect(message).not.toContain(CODEBASE_TOOLS.displayName);
 			expect(message).not.toContain(NOTICE_PEER_DISPLAY_NAME);
-			// The version the runtime reports is the version this run installed — a version the
+			// The version the harness reports is the version this run installed — a version the
 			// framework's baseline does not list, which is the whole point of running it.
-			expect(runtime.version).toBe(UNLISTED_RUNTIME_VERSION);
-			expect(message).toContain(runtime.version);
+			expect(harness.version).toBe(UNLISTED_HARNESS_VERSION);
+			expect(message).toContain(harness.version);
 			expect(message).toContain(SUPPORTED_BASELINE);
 
 			// Continue: the extension's command is still registered and still works, and the
@@ -196,7 +196,7 @@ describe("an unlisted version on the real runtime (P6, P7, P8, P9)", () => {
 			expect(exit.exitCode).toBe(0);
 			expect(warningNotices(run.session)).toHaveLength(2);
 
-			// The subagent really ran: the turn's delegation spawned a session of the runtime's
+			// The subagent really ran: the turn's delegation spawned a session of the harness's
 			// own, nested under the first session — and neither it nor the second main session
 			// added a third notice, so no session that is not an Owner is ever told.
 			expect(spawnedSessionFileCarrying(firstSessionFile ?? "", SUBAGENT_ASSIGNMENT)).toBeDefined();
@@ -233,7 +233,7 @@ describe("an unlisted version on the real runtime (P6, P7, P8, P9)", () => {
 			expect(noticeLines[0]).toContain(FRAMEWORK_NOTICE_SOURCE);
 			expect(noticeLines[0]).not.toContain(CODEBASE_TOOLS.displayName);
 			expect(noticeLines[0]).not.toContain(NOTICE_PEER_DISPLAY_NAME);
-			expect(noticeLines[0]).toContain(runtime.version);
+			expect(noticeLines[0]).toContain(harness.version);
 			expect(noticeLines[0]).toContain(SUPPORTED_BASELINE);
 			// The stderr line is operator output, not history: nothing persisted carries it.
 			const persisted = run.session.sessionFiles().flatMap(file => run.session.sessionLog(file).entries);

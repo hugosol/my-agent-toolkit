@@ -7,7 +7,7 @@
  * and by `tests/connect-bot/budget-regression.test.ts` for the cadence, follow-up and interop
  * ones — once per scenario — and it drives the extension exactly as the loader does: the
  * extension's own OMP assembly binds the definition, the command the framework registered runs,
- * the native session events the runtime delivers are handed to that binding, and the outbound
+ * the native session events the harness delivers are handed to that binding, and the outbound
  * dependency is the platform's own call to the real panel the run was given.
  *
  * Nothing here reaches inside the extension: the budget under test is the one the configuration
@@ -18,9 +18,9 @@
  * A scenario that needs controlled time (`cadence`, the `*-follow-up` ones, `beat-*`) has the
  * double schedule the extension's interval on a {@link ControlledClock} this run advances by exact
  * virtual milliseconds, and reports each request's virtual send time beside its real one. The
- * `interop` scenario is the one run that uses the runtime's own interval: it arms against the
+ * `interop` scenario is the one run that uses the harness's own interval: it arms against the
  * actual omp-bot panel the suite started and lets two real beats go, so the period this extension
- * asks the runtime for is recorded in wall-clock time as well.
+ * asks the harness for is recorded in wall-clock time as well.
  *
  * Usage: `bun budget-probe.ts <configFile> <scenario> [rewrite-to-ms]`
  *   scenarios: `register`, `register-after-rewrite`, `register-timeout-follow-up`, `off`,
@@ -38,7 +38,7 @@ import {
 	type PushHttpResponse,
 	installPushTransport,
 } from "../../../extensions/connect-bot/shared-logic/panel/client";
-import connectBot from "../../../extensions/connect-bot/runtimes/omp";
+import connectBot from "../../../extensions/connect-bot/harnesses/omp";
 import { botSessions } from "../../../extensions/connect-bot/shared-logic/session/session";
 import type { OmpCommandContext } from "../../../framework/adapters/omp";
 import { ControlledClock } from "./controlled-clock";
@@ -169,7 +169,7 @@ const clock = new ControlledClock();
 
 /** The timer mode this scenario drives the extension's interval with. */
 function timerModeFor(scenarioName: string): TimerMode {
-	// The one scenario that must record a cadence in wall-clock time runs on the runtime's own
+	// The one scenario that must record a cadence in wall-clock time runs on the harness's own
 	// interval; every other scenario keeps the double's own pacing, or advances a virtual clock.
 	if (scenarioName === "interop") return { kind: "real" };
 	return CONTROLLED_SCENARIOS.has(scenarioName) ? { kind: "controlled", clock } : { kind: "manual" };
@@ -324,8 +324,8 @@ async function runScenario(): Promise<void> {
 		}
 		case "heartbeat": {
 			await arm(sessionId);
-			// The loaded extension's own periodic effect, fired as the runtime fires it: the managed
-			// interval the arm path asked the runtime for, one period in. The beat then leaves through
+			// The loaded extension's own periodic effect, fired as the harness fires it: the managed
+			// interval the arm path asked the harness for, one period in. The beat then leaves through
 			// the ordinary background path — no internal client is called here, and how long it waits
 			// is decided by the budget this run's configuration carries.
 			const beat = double.timers.find(timer => !timer.cancelled);
@@ -413,7 +413,7 @@ async function runScenario(): Promise<void> {
 		case "interop": {
 			const ctx = await arm(sessionId, { cwd: "E:/work/interop", model: "interop-model", sessionName: "interop" });
 			// The actual omp-bot panel the suite started, reached by the platform transport the
-			// assembly itself installed: two real beats from the runtime's own interval, then one round
+			// assembly itself installed: two real beats from the harness's own interval, then one round
 			// edge pair, then the disconnect the panel answers. Nothing awaits the disconnect's own
 			// notice — a session that was never armed publishes none, and this report has to describe
 			// whatever really happened rather than wait for a word that may never come.

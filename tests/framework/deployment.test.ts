@@ -4,23 +4,23 @@
  * that directory resolve, whether each extension binds there (connect-bot's binding
  * included, which reads the configuration file its declaration requires), and how an
  * extension's original and replacement implementations are kept out of one process
- * (C11/C12/N8, P29/P30/P31/P42; see framework/docs/agent-runtime-support.md, "Shared-source
+ * (C11/C12/N8, P29/P30/P31/P42; see framework/docs/harness-support.md, "Shared-source
  * deployment prerequisite").
  *
  * Each test runs the isolated 18.5.0 install's own loader module against the real
- * repository layout. Nothing here modifies agent-runtime source, the default global
+ * repository layout. Nothing here modifies harness source, the default global
  * install, formal configuration, or a running agent.
  */
 import { beforeAll, describe, expect, test } from "bun:test";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
 import { pathToFileURL } from "node:url";
-import { type IsolatedRuntime, REPO_ROOT, ensureIsolatedRuntime, readBaselineRecord } from "../harness/baseline";
-import { startCaptureServer } from "../harness/capture-server";
-import { listResolutionOffsets } from "../harness/env";
-import { HARNESS_CAPTURE_BASE_URL_ENV, HARNESS_MODEL_SELECTOR } from "../harness/fixtures/extension-root/provider";
-import { createRunRoot, listRunArtifacts, type RunRoot } from "../harness/run-root";
-import { ControlledSession } from "../harness/session";
+import { type IsolatedHarness, REPO_ROOT, ensureIsolatedHarness, readBaselineRecord } from "../harness-dock/baseline";
+import { startCaptureServer } from "../harness-dock/capture-server";
+import { listResolutionOffsets } from "../harness-dock/env";
+import { DOCK_CAPTURE_BASE_URL_ENV, DOCK_MODEL_SELECTOR } from "../harness-dock/fixtures/extension-root/provider";
+import { createRunRoot, listRunArtifacts, type RunRoot } from "../harness-dock/run-root";
+import { ControlledSession } from "../harness-dock/session";
 import { withCapturedStderrAsync } from "./support/captured-stderr";
 import { inWorkingDirectory } from "./support/working-directory";
 
@@ -30,7 +30,7 @@ const CODEBASE_TOOLS_ENTRYPOINT = path.join(OMP_ENTRYPOINT_DIR, "codebase-tools.
 const CONNECT_BOT_ENTRYPOINT = path.join(OMP_ENTRYPOINT_DIR, "connect-bot.ts");
 
 /** The credential-free provider fixture; it keeps a controlled turn off the network. */
-const PROVIDER_FIXTURE = path.join(REPO_ROOT, "tests", "harness", "fixtures", "extension-root", "provider.ts");
+const PROVIDER_FIXTURE = path.join(REPO_ROOT, "tests", "harness-dock", "fixtures", "extension-root", "provider.ts");
 
 /** The explicit-only set a deployment run configures: the provider fixture and the OMP root. */
 const DEPLOYED_ROOT_SET = [PROVIDER_FIXTURE, OMP_ENTRYPOINT_DIR] as const;
@@ -52,7 +52,7 @@ interface LoadExtensionsResult {
 	readonly errors: ReadonlyArray<{ readonly path: string; readonly error: string }>;
 }
 
-/** The slice of the agent runtime's loader this suite drives. */
+/** The slice of the harness's loader this suite drives. */
 interface ExtensionLoader {
 	discoverExtensionPaths(
 		configuredPaths: readonly string[],
@@ -69,7 +69,7 @@ interface DiscoveryHelpers {
 
 const record = readBaselineRecord();
 
-let runtime: IsolatedRuntime;
+let harness: IsolatedHarness;
 let loader: ExtensionLoader;
 let helpers: DiscoveryHelpers;
 
@@ -100,11 +100,11 @@ function diagnosticsFor(extensionId: string, session: ControlledSession): string
 }
 
 beforeAll(async () => {
-	runtime = await ensureIsolatedRuntime(record);
-	// Dynamic import is required: the agent runtime is an isolated exact install whose
-	// prefix is runtime-selected, so no static specifier can name its loader.
-	const loaderUrl = pathToFileURL(path.join(runtime.packageRoot, "src", "extensibility", "extensions", "loader.ts")).href;
-	const helpersUrl = pathToFileURL(path.join(runtime.packageRoot, "src", "discovery", "helpers.ts")).href;
+	harness = await ensureIsolatedHarness(record);
+	// Dynamic import is required: the harness is an isolated exact install whose
+	// prefix is harness-selected, so no static specifier can name its loader.
+	const loaderUrl = pathToFileURL(path.join(harness.packageRoot, "src", "extensibility", "extensions", "loader.ts")).href;
+	const helpersUrl = pathToFileURL(path.join(harness.packageRoot, "src", "discovery", "helpers.ts")).href;
 	// Unchecked cast: the isolated install owns these module types, and only the surface
 	// asserted below is used.
 	loader = (await import(loaderUrl)) as ExtensionLoader;
@@ -156,7 +156,7 @@ describe("OMP entrypoint discovery (C12)", () => {
 		// An unresolvable import anywhere in an entrypoint's graph surfaces here, so an
 		// empty error list is the resolution evidence: shared TypeScript under
 		// extensions/, the Markdown prompt resources imported as text, and the
-		// agent-runtime-provided bare package all resolved and both factories bound.
+		// harness-provided bare package all resolved and both factories bound.
 		expect(result.errors).toEqual([]);
 		expect(result.extensions.length).toBe(2);
 		const labelOf = (entrypoint: string) =>
@@ -377,13 +377,13 @@ describe("explicit-only isolated run (P31)", () => {
 		const capture = startCaptureServer({ dir: runRoot.captureDir });
 		try {
 			const session = await ControlledSession.start({
-				runtime,
+				harness,
 				runRoot,
 				// The provider fixture keeps the turn credential-free; the discovery root
 				// under test is the repository's OMP entrypoint directory.
 				extensions: [...DEPLOYED_ROOT_SET],
-				model: HARNESS_MODEL_SELECTOR,
-				env: { [HARNESS_CAPTURE_BASE_URL_ENV]: capture.baseUrl },
+				model: DOCK_MODEL_SELECTOR,
+				env: { [DOCK_CAPTURE_BASE_URL_ENV]: capture.baseUrl },
 			});
 			try {
 				// Explicit-only: ambient discovery is off and only the configured root is added.
@@ -412,7 +412,7 @@ describe("explicit-only isolated run (P31)", () => {
 });
 
 /**
- * connect-bot's binding on the real runtime (P42).
+ * connect-bot's binding on the real harness (P42).
  *
  * The loader tests above observe a binding in this process; these runs observe it in the
  * deployment's own shape: the real CLI of the isolated install, the repository's OMP root as
@@ -423,7 +423,7 @@ describe("explicit-only isolated run (P31)", () => {
  * these runs — which is what a real session does — bind the extension with no configuration file
  * in their working directory at all.
  */
-describe("connect-bot on the real runtime (P42)", () => {
+describe("connect-bot on the real harness (P42)", () => {
 	test("the run's working directory carries no configuration file, and the extension's command runs", async () => {
 		const runRoot = createRunRoot("connect-bot-bound");
 		const capture = startCaptureServer({ dir: runRoot.captureDir });
@@ -433,11 +433,11 @@ describe("connect-bot on the real runtime (P42)", () => {
 			expect(existsSync(path.join(runRoot.workDir, CONNECT_BOT_CONFIG_FILE))).toBe(false);
 
 			const session = await ControlledSession.start({
-				runtime,
+				harness,
 				runRoot,
 				extensions: [...DEPLOYED_ROOT_SET],
-				model: HARNESS_MODEL_SELECTOR,
-				env: { [HARNESS_CAPTURE_BASE_URL_ENV]: capture.baseUrl },
+				model: DOCK_MODEL_SELECTOR,
+				env: { [DOCK_CAPTURE_BASE_URL_ENV]: capture.baseUrl },
 			});
 			try {
 				// The extension's command is registered — which happens only past the framework's
@@ -483,11 +483,11 @@ describe("connect-bot on the real runtime (P42)", () => {
 			expect(readFileSync(decoy, "utf8")).toBe("endpoint: 8787\n");
 
 			const session = await ControlledSession.start({
-				runtime,
+				harness,
 				runRoot,
 				extensions: [...DEPLOYED_ROOT_SET],
-				model: HARNESS_MODEL_SELECTOR,
-				env: { [HARNESS_CAPTURE_BASE_URL_ENV]: capture.baseUrl },
+				model: DOCK_MODEL_SELECTOR,
+				env: { [DOCK_CAPTURE_BASE_URL_ENV]: capture.baseUrl },
 			});
 			try {
 				// The command is registered all the same: what the binding read is the file under

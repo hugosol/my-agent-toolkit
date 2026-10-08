@@ -7,9 +7,9 @@
  * session context. The panel is a fake transport injected through the extension's own seam, so
  * every request is observed without a network.
  *
- * The beat itself is observed at the seam it really has: the extension asks the runtime for a
+ * The beat itself is observed at the seam it really has: the extension asks the harness for a
  * managed interval, so the period it asked for is the whole of its cadence, and the test fires the
- * callback the runtime recorded instead of waiting ten wall-clock seconds for it. What the beat
+ * callback the harness recorded instead of waiting ten wall-clock seconds for it. What the beat
  * does — one `heartbeat` carrying the state the owner holds — is then read off the wire, as is
  * what the queue does while a push is in flight, what `off` does to both, and how long a push is
  * allowed to take before the flusher drops it.
@@ -27,8 +27,8 @@ import { CONNECT_BOT } from "../../extensions/connect-bot/definition";
 import { readConfig } from "../../framework/core/config";
 import { OUTBOX_LIMIT } from "../../extensions/connect-bot/shared-logic/panel/outbox";
 import { botSessions } from "../../extensions/connect-bot/shared-logic/session/session";
-import connectBot from "../../extensions/connect-bot/runtimes/omp";
-import { REPO_ROOT } from "../harness/baseline";
+import connectBot from "../../extensions/connect-bot/harnesses/omp";
+import { REPO_ROOT } from "../harness-dock/baseline";
 import { type OmpDouble, ompDouble } from "./support/omp-double";
 
 /** The endpoint the extension's own `config.yaml` ships; the file is the only source. */
@@ -171,7 +171,7 @@ async function armed(transport: PushTransport, sessionId: string, idle?: boolean
 	return double;
 }
 
-/** Fires the callback the runtime recorded for the nth managed timer, as the runtime would. */
+/** Fires the callback the harness recorded for the nth managed timer, as the harness would. */
 function fireTimer(double: OmpDouble, index = 0): void {
 	double.timers[index]?.callback();
 }
@@ -193,7 +193,7 @@ describe("an armed session beats on its one managed interval with the state it h
 
 		// The one periodic effect of this owner: a managed interval, and nothing else scheduled at
 		// all. Its period is what the cadence run advances time by — `budget-regression.test.ts`
-		// proves one beat per period of controlled time, and the runtime's own 10s per beat against
+		// proves one beat per period of controlled time, and the harness's own 10s per beat against
 		// the actual panel — so this file observes the one interval and its cancellation, not a value.
 		expect(double.timers).toHaveLength(1);
 		expect(double.timers[0]?.cancelled).toBe(false);
@@ -226,7 +226,7 @@ describe("an armed session beats on its one managed interval with the state it h
 		expect(double.timers).toHaveLength(1);
 	});
 
-	test("a session the runtime reports as working beats 工作中, not a fabricated 空闲", async () => {
+	test("a session the harness reports as working beats 工作中, not a fabricated 空闲", async () => {
 		const { requests, transport } = reachablePanel();
 		const double = await armed(transport, "beat-working", false);
 

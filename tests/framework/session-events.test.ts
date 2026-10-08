@@ -2,7 +2,7 @@
  * The semantic session axis at the framework's adapter contract (S2; F5, F7, F9; contract
  * P7, P10, P14).
  *
- * The seam is `bindExtension` plus the port an agent runtime provides, driven by the shared
+ * The seam is `bindExtension` plus the port a harness provides, driven by the shared
  * port double: one semantic session event, the framework's own behavior for it, and the
  * handler an assembly injected for it. What the framework owes there is observed directly —
  * a start seeds the owner from the branch the event names and renders that owner's area, an
@@ -18,7 +18,7 @@ import { describe, expect, test } from "bun:test";
 import { CODEBASE_TOOLS } from "../../extensions/codebase-tools/definition";
 import type { OwnerReference, SessionEvent } from "../../framework/core/protocol";
 import { type ExtensionDefinition, defineExtension } from "../../framework/public";
-import { portDouble } from "./support/runtime-port-double";
+import { portDouble } from "./support/harness-port-double";
 
 /** The owner a delivery acts on unless one is named. */
 const OWNER: OwnerReference = { kind: "owner", key: "main:session-events" };

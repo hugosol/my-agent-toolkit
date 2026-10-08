@@ -3,7 +3,7 @@
  * C13, C14, N1, N2).
  *
  * The seam is the framework's adapter contract: a definition, the facts an adapter
- * resolved about its agent runtime, and the port the framework registers and reports
+ * resolved about its harness, and the port the framework registers and reports
  * through. Two adapters satisfy it here. The OMP adapter is driven through the narrow
  * native surface the loader hands its factory, so the version and capability facts it
  * resolves are the ones that adapter really reads. A test adapter supplies admission
@@ -17,7 +17,7 @@ import { tmpdir } from "node:os";
 import * as path from "node:path";
 import connectBot from "../../entrypoints/omp/connect-bot";
 import { CONNECT_BOT } from "../../extensions/connect-bot/definition";
-import { EXTENSION_REPOSITORY_ROOT } from "../../extensions/connect-bot/runtimes/omp";
+import { EXTENSION_REPOSITORY_ROOT } from "../../extensions/connect-bot/harnesses/omp";
 import { CODEBASE_TOOLS } from "../../extensions/codebase-tools/definition";
 import type {
 	OmpExtensionApi,
@@ -35,7 +35,7 @@ import { type DeclarableRequiredSemantic, type RequiredSemantic } from "../../fr
 import { getConfig } from "../../framework/core/config";
 import { activationField, statePersistence } from "../../framework/core/definition";
 import type {
-	AgentRuntimePort,
+	HarnessPort,
 	BindingResult,
 	OwnerReference,
 	SessionDelivery,
@@ -43,9 +43,9 @@ import type {
 } from "../../framework/core/protocol";
 import { StateStore } from "../../framework/core/state";
 import type { ExtensionDefinition } from "../../framework/public";
-import { REPO_ROOT, readBaselineRecord } from "../harness/baseline";
+import { REPO_ROOT, readBaselineRecord } from "../harness-dock/baseline";
 import { withCapturedStderr } from "./support/captured-stderr";
-import { portDouble } from "./support/runtime-port-double";
+import { portDouble } from "./support/harness-port-double";
 
 /** The framework's one required semantic, as the definition under test relies on it. */
 const HISTORY_PRESERVATION: RequiredSemantic = "history-preservation";
@@ -59,23 +59,23 @@ const ROUND_EVENTS: DeclarableRequiredSemantic = "round-lifecycle-events";
  * *listed* version is read from that record — an independent source — and never from the
  * framework's own decision.
  */
-const RECORDED_SUPPORTED_VERSION = readBaselineRecord().agentRuntime.supportedVersion;
+const RECORDED_SUPPORTED_VERSION = readBaselineRecord().harness.supportedVersion;
 
 /**
  * A version independently specified to be outside the framework's baseline: the candidate this
  * repository already uses as the "not the recorded one" input, chosen here so the unlisted
  * expectation does not come from the framework's membership decision either.
  */
-const UNLISTED_RUNTIME_VERSION = "18.6.1";
+const UNLISTED_HARNESS_VERSION = "18.6.1";
 
-/** The admission facts one test-adapter binding declares about its agent runtime. */
+/** The admission facts one test-adapter binding declares about its harness. */
 interface AdapterFacts {
-	/** The version the runtime reports; omitted models a runtime that reports none. */
+	/** The version the harness reports; omitted models a harness that reports none. */
 	readonly version?: string;
 	readonly missingRequiredSemantics?: readonly RequiredSemantic[];
 	/** The semantics this binding's assembly declared it depends on. */
 	readonly requiredSemantics?: readonly DeclarableRequiredSemantic[];
-	readonly environment?: { readonly platform: string; readonly runtime: string };
+	readonly environment?: { readonly platform: string; readonly harness: string };
 }
 
 /**
@@ -104,7 +104,7 @@ function testAdapter(): TestAdapter {
 	const diagnostics: string[] = [];
 	const feedback: Array<{ level: string; message: string }> = [];
 	const sessionHandlers: Array<(session: SessionDelivery) => void> = [];
-	const port: AgentRuntimePort = {
+	const port: HarnessPort = {
 		setLabel: label => {
 			registrations.push(`label:${label}`);
 		},
@@ -180,7 +180,7 @@ function testAdapter(): TestAdapter {
 	};
 }
 
-describe("required semantics the runtime cannot honor (P26, C14, N2)", () => {
+describe("required semantics the harness cannot honor (P26, C14, N2)", () => {
 	test("a missing required semantic refuses the binding and registers nothing", () => {
 		const adapter = testAdapter();
 
@@ -212,7 +212,7 @@ describe("required semantics the runtime cannot honor (P26, C14, N2)", () => {
 		expect(result.bound ? [] : result.failures.map(failure => failure.kind)).toEqual(["required-semantics"]);
 		expect(adapter.registrations).toEqual([]);
 		// The unlisted version is not reported alongside the refusal: the version axis is
-		// never consulted for a runtime that cannot honor a required semantic.
+		// never consulted for a harness that cannot honor a required semantic.
 		expect(adapter.diagnostics).toHaveLength(1);
 		expect(adapter.diagnostics[0]).not.toContain("18.6.1");
 		expect(adapter.diagnostics[0]).not.toContain("supported set");
@@ -221,17 +221,17 @@ describe("required semantics the runtime cannot honor (P26, C14, N2)", () => {
 });
 
 /**
- * A semantic an assembly declared it depends on, against a runtime that cannot honor it (F8;
+ * A semantic an assembly declared it depends on, against a harness that cannot honor it (F8;
  * contract P11; story 26).
  *
  * The declaration is the assembly's, not the definition's: `requiredSemantics` arrives the way
  * a directed command's implementation does, and the framework's rule reads the declared set
- * together with the facts the adapter resolved. A semantic the runtime cannot honor refuses
+ * together with the facts the adapter resolved. A semantic the harness cannot honor refuses
  * only the binding that declared it — an extension that declared nothing keeps running on the
- * very same runtime — and the refusal leaves nothing registered, no cell seeded and no area
+ * very same harness — and the refusal leaves nothing registered, no cell seeded and no area
  * rendered.
  */
-describe("a declared semantic the runtime cannot honor (P26, F8)", () => {
+describe("a declared semantic the harness cannot honor (P26, F8)", () => {
 	test("the declared semantic refuses the binding and names itself in the readable failure", () => {
 		const adapter = testAdapter();
 
@@ -255,13 +255,13 @@ describe("a declared semantic the runtime cannot honor (P26, F8)", () => {
 		expect(adapter.diagnostics[0]).not.toContain(HISTORY_PRESERVATION);
 	});
 
-	test("the same runtime leaves an assembly that declared nothing running", () => {
+	test("the same harness leaves an assembly that declared nothing running", () => {
 		const adapter = testAdapter();
 
 		const result = adapter.bind(CODEBASE_TOOLS, { missingRequiredSemantics: [ROUND_EVENTS] });
 
-		// The runtime cannot honor the round axis, and this assembly never asked for it: what
-		// the framework refuses is the declared dependency, never the runtime's shape.
+		// The harness cannot honor the round axis, and this assembly never asked for it: what
+		// the framework refuses is the declared dependency, never the harness's shape.
 		expect(result.bound).toBe(true);
 		expect(adapter.diagnostics).toEqual([]);
 		expect(adapter.registrations).toEqual([
@@ -272,7 +272,7 @@ describe("a declared semantic the runtime cannot honor (P26, F8)", () => {
 		]);
 	});
 
-	test("a semantic the runtime can honor is no refusal, declared or not", () => {
+	test("a semantic the harness can honor is no refusal, declared or not", () => {
 		const adapter = testAdapter();
 
 		const result = adapter.bind(CODEBASE_TOOLS, { requiredSemantics: [SESSION_EVENTS, ROUND_EVENTS] });
@@ -336,7 +336,7 @@ describe("a declared semantic the runtime cannot honor (P26, F8)", () => {
  * facts, before which of them refuses it is read against the semantics the framework requires of
  * every binding plus the ones this assembly declared. So a version a complete binding of this
  * process has already admitted can never stand in for an entry the next surface lacks, and a
- * refusal is a verdict about one binding rather than about the runtime: it is not recorded
+ * refusal is a verdict about one binding rather than about the harness: it is not recorded
  * anywhere a later binding could read it back.
  *
  * Both extensions are this repository's own, driven in one process: codebase-tools declares
@@ -394,7 +394,7 @@ describe("the required-entry check belongs to each binding (P10)", () => {
  * What a refusal leaves behind, and what binding itself is (P11, P12; contract S1; stories 12–14).
  *
  * A refused binding is fail-soft: it registers nothing — no label, no session behavior, no command,
- * no area entry — reports exactly one diagnostic on the non-model channel, and the agent runtime
+ * no area entry — reports exactly one diagnostic on the non-model channel, and the harness
  * keeps running, with the bindings this process already admitted still serving. And binding is not a
  * compatibility self-test: the registration it performs is the whole of it, so no command
  * implementation runs, no session entry is written and no area is rendered until a command or a
@@ -436,7 +436,7 @@ describe("what a refusal leaves behind, and what binding itself is (P11, P12)", 
 		expect(() => refused.run(declared)).toThrow();
 		expect(refused.markerUpdates).toEqual([]);
 
-		// The Agent runtime keeps running: the binding this process admitted before the refusal
+		// The Harness keeps running: the binding this process admitted before the refusal
 		// still has its command and its session behavior, and a boundary it observes still
 		// renders the framework's own area for the value that boundary carried.
 		const boundary = serving.deliverSession(
@@ -496,7 +496,7 @@ describe("an unlisted version (P25, N1, C13)", () => {
 
 		const noticed = adapter.deliver({ kind: "owner", key: "main:notice-binding-continues" });
 		expect(noticed).toHaveLength(1);
-		// The notice is the framework's: it names the framework, the version the runtime reported and
+		// The notice is the framework's: it names the framework, the version the harness reported and
 		// the support set, and never an extension that shares the process.
 		expect(noticed[0]).toContain("my-agent-toolkit");
 		expect(noticed[0]).not.toContain(CODEBASE_TOOLS.displayName);
@@ -550,7 +550,7 @@ describe("an unlisted version (P25, N1, C13)", () => {
 		expect(adapter.deliver({ kind: "owner", key: "main:notice-listed-version" })).toEqual([]);
 	});
 
-	test("a runtime that reports no version is not an unlisted version", () => {
+	test("a harness that reports no version is not an unlisted version", () => {
 		const adapter = testAdapter();
 
 		const result = adapter.bind(CODEBASE_TOOLS, {});
@@ -563,7 +563,7 @@ describe("an unlisted version (P25, N1, C13)", () => {
 	});
 
 	test("the verified environment is recorded and never gates admission", () => {
-		const foreign = { platform: "linux-arm64", runtime: "some-other-runtime" };
+		const foreign = { platform: "linux-arm64", harness: "some-other-harness" };
 
 		const listed = testAdapter();
 		expect(listed.bind(CODEBASE_TOOLS, { version: "18.5.0", environment: foreign }).bound).toBe(true);
@@ -576,15 +576,15 @@ describe("an unlisted version (P25, N1, C13)", () => {
 		// notice, and it neither admits nor refuses a binding.
 		expect(noticed).toHaveLength(1);
 		expect(noticed[0]).not.toContain(foreign.platform);
-		expect(noticed[0]).not.toContain(foreign.runtime);
+		expect(noticed[0]).not.toContain(foreign.harness);
 	});
 });
 
 /**
- * The framework's own Supported agent-runtime baseline (P1, P4, P5; contract S1).
+ * The framework's own Supported harness baseline (P1, P4, P5; contract S1).
  *
  * Version support belongs to the framework: an assembly declares the capabilities its extension
- * needs and nothing about agent-runtime versions, so the caller that used to hand over its own
+ * needs and nothing about harness versions, so the caller that used to hand over its own
  * list now assembles with no options at all. The listed version comes from the repository's
  * support record — an independent source of truth rather than the framework's decision re-read —
  * and the unlisted one is a version independently specified to be outside that baseline.
@@ -621,7 +621,7 @@ describe("the framework owns the supported-version baseline (P1, P4, P5)", () =>
 			return bound;
 		});
 
-		// Not a second decision source: the framework's baseline decides, so the listed runtime
+		// Not a second decision source: the framework's baseline decides, so the listed harness
 		// stays listed whatever a caller hands over.
 		expect(result.bound).toBe(true);
 		expect(double.notifications).toEqual([]);
@@ -629,7 +629,7 @@ describe("the framework owns the supported-version baseline (P1, P4, P5)", () =>
 	});
 
 	test("a version outside the baseline warns and keeps the extension running", () => {
-		const double = nativeDouble({ version: UNLISTED_RUNTIME_VERSION });
+		const double = nativeDouble({ version: UNLISTED_HARNESS_VERSION });
 
 		const { stderr, value: result } = withCapturedStderr(() => {
 			const bound = frameworkOmp.ompAdapter(CODEBASE_TOOLS)(double.api);
@@ -646,7 +646,7 @@ describe("the framework owns the supported-version baseline (P1, P4, P5)", () =>
 		expect(double.commands).toEqual(["codebase-tools"]);
 		const warnings = double.notifications.filter(notice => notice.type === "warning");
 		expect(warnings).toHaveLength(1);
-		expect(warnings[0]?.message).toContain(UNLISTED_RUNTIME_VERSION);
+		expect(warnings[0]?.message).toContain(UNLISTED_HARNESS_VERSION);
 		expect(warnings[0]?.message).toContain("my-agent-toolkit");
 		expect(warnings[0]?.message).not.toContain(CODEBASE_TOOLS.displayName);
 		expect(JSON.stringify(contribution ?? null)).not.toContain("supported set");
@@ -654,7 +654,7 @@ describe("the framework owns the supported-version baseline (P1, P4, P5)", () =>
 		expect(stderr).toBe("");
 	});
 
-	test("a runtime that reports no version keeps its existing handling", () => {
+	test("a harness that reports no version keeps its existing handling", () => {
 		const double = nativeDouble();
 
 		const { stderr, value: result } = withCapturedStderr(() => {
@@ -812,7 +812,7 @@ function nativeDouble(options: NativeOptions = {}): NativeDouble {
 }
 
 describe("admission on the OMP adapter (P24, P27, C13)", () => {
-	test("the version the runtime reports, listed, produces no admission feedback at all", () => {
+	test("the version the harness reports, listed, produces no admission feedback at all", () => {
 		const double = nativeDouble({ version: "18.5.0" });
 
 		const { stderr, value: result } = withCapturedStderr(() => {
@@ -885,7 +885,7 @@ describe("admission on the OMP adapter (P24, P27, C13)", () => {
 
 		withCapturedStderr(() => {
 			double.bind(CODEBASE_TOOLS);
-			// The subagent's own delivery comes first, and the owner it resolves — by the runtime's
+			// The subagent's own delivery comes first, and the owner it resolves — by the harness's
 			// own registry — is the main session that spawned it.
 			double.deliverSubagent();
 		});
@@ -973,7 +973,7 @@ describe("the declared semantic dependencies on the OMP adapter (P26, F8)", () =
 		});
 
 		expect(result.bound).toBe(false);
-		// Every lifecycle subscription on this runtime travels through the one `on` surface, so
+		// Every lifecycle subscription on this harness travels through the one `on` surface, so
 		// a surface without it can honor neither axis: the declared semantics are reported
 		// missing alongside the framework's own, and each one the binding declared is named.
 		expect(result.bound ? [] : result.failures).toEqual([
@@ -1015,7 +1015,7 @@ describe("the declared semantic dependencies on the OMP adapter (P26, F8)", () =
 		});
 
 		// The declaration is not a claim to be judged on its own: what refuses a binding is a
-		// semantic the runtime cannot honor, and this one can honor both axes.
+		// semantic the harness cannot honor, and this one can honor both axes.
 		expect(result.bound).toBe(true);
 		expect(double.labels).toEqual(["codeBaseTools"]);
 		expect(double.commands).toEqual(["codebase-tools"]);
@@ -1066,9 +1066,9 @@ describe("the OMP assembly's configuration base directory (P19, P42)", () => {
  *
  * Everything above drives the adapter from a definition this suite holds; this block drives the
  * deployed assembly instead — the factory `entrypoints/omp/connect-bot.ts` re-exports — so the
- * version and semantics under test are the ones a real session on a recorded runtime meets.
- * The native surface stays the double above: which version a runtime reports and whether it
- * subscribes lifecycle events are facts of the runtime itself, and no real install can be asked
+ * version and semantics under test are the ones a real session on a recorded harness meets.
+ * The native surface stays the double above: which version a harness reports and whether it
+ * subscribes lifecycle events are facts of the harness itself, and no real install can be asked
  * to vary them. What the extension depends on it still declares — its configuration and its two
  * semantic axes — while version support is the framework's baseline, not this assembly's.
  *
@@ -1080,7 +1080,7 @@ describe("the OMP assembly's configuration base directory (P19, P42)", () => {
  * bind this entrypoint from a working directory outside this repository.
  */
 describe("connect-bot's deployed assembly at admission (P42)", () => {
-	test("the runtime this repository records is admitted, so the extension registers", () => {
+	test("the harness this repository records is admitted, so the extension registers", () => {
 		const double = nativeDouble({ version: "18.5.0" });
 
 		const { stderr } = withCapturedStderr(() => {
@@ -1097,8 +1097,8 @@ describe("connect-bot's deployed assembly at admission (P42)", () => {
 
 	test("the extension's declared file is the one under the repository root this assembly derives", () => {
 		// The assembly derives its repository root from its own module location, which is the one
-		// thing about the configuration a load's working directory cannot tell it. The harness
-		// computes that same root by a different route (`import.meta.dir` under tests/harness),
+		// thing about the configuration a load's working directory cannot tell it. The dock
+		// computes that same root by a different route (`import.meta.dir` under tests/harness-dock),
 		// so this is the derivation checked against an independent computation, and the file the
 		// convention path names is really the one the extension ships.
 		//
@@ -1127,7 +1127,7 @@ describe("connect-bot's deployed assembly at admission (P42)", () => {
 		expect(double.notifications).toHaveLength(1);
 		expect(double.notifications[0]?.type).toBe("warning");
 		const notice = double.notifications[0]?.message ?? "";
-		// The notice is the framework's: it names the framework, the version the runtime reported
+		// The notice is the framework's: it names the framework, the version the harness reported
 		// and the set the framework's baseline holds — and no extension of this process.
 		expect(notice).toContain("my-agent-toolkit");
 		expect(notice).not.toContain("connectBot");
@@ -1137,7 +1137,7 @@ describe("connect-bot's deployed assembly at admission (P42)", () => {
 		expect(stderr).toBe("");
 	});
 
-	test("a runtime without the lifecycle subscription refuses the binding, and names the axes it declared", () => {
+	test("a harness without the lifecycle subscription refuses the binding, and names the axes it declared", () => {
 		const double = nativeDouble({ version: "18.5.0", withoutLifecycleSubscription: true });
 
 		const { stderr } = withCapturedStderr(() => {

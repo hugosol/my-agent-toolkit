@@ -1,11 +1,11 @@
 /**
- * The OMP adapter: the only framework module that touches the agent runtime's native
+ * The OMP adapter: the only framework module that touches the harness's native
  * surface, and therefore the only place a native escape hatch (`pi.*`) may appear.
  *
  * It translates the native API into the framework's port before any behavior runs and
  * translates framework outcomes back into native effects. It carries no extension
  * semantics: what to register comes from the definition, whether it may be registered
- * is decided by the agent-runtime-independent behavior, and what a command does is the
+ * is decided by the harness-independent behavior, and what a command does is the
  * framework's control behavior — this file only resolves the native facts that
  * behavior needs.
  */
@@ -13,7 +13,7 @@ import { bindExtension } from "../behaviors/binding";
 import { type DeclarableRequiredSemantic, type RequiredSemantic } from "../core/admission";
 import { activationField, type ExtensionDefinition, statePersistence } from "../core/definition";
 import type {
-	AgentRuntimePort,
+	HarnessPort,
 	BindingResult,
 	CanAcceptInput,
 	CommandActions,
@@ -130,11 +130,11 @@ export interface OmpSessionContext {
 	/** The session's UI channel, the surface both feedback and the marker area use. */
 	readonly ui: OmpUiContext;
 	/**
-	 * Whether the agent is idle — not working on a run — as the runtime's own context reports it.
+	 * Whether the agent is idle — not working on a run — as the harness's own context reports it.
 	 *
 	 * This is the idle fact behind the framework's `canAcceptInput()` query and behind the
 	 * quiescence gate that closes a round. It is optional because it is the one fact the adapter
-	 * cannot observe at binding time: it exists on the context the runtime builds per delivery, so
+	 * cannot observe at binding time: it exists on the context the harness builds per delivery, so
 	 * a surface that reports no idle fact is answered with nothing rather than with a value
 	 * fabricated on its behalf.
 	 */
@@ -145,7 +145,7 @@ export interface OmpSessionContext {
 	 */
 	hasPendingMessages?(): boolean;
 	/**
-	 * The session's asynchronous jobs, as the runtime reports them; `running` names the ones still
+	 * The session's asynchronous jobs, as the harness reports them; `running` names the ones still
 	 * going. A job still running is work the agent has not finished, so it too keeps a round open.
 	 */
 	getAsyncJobSnapshot?(): { readonly running: readonly unknown[] } | null;
@@ -155,8 +155,8 @@ export interface OmpSessionContext {
  * The native session lifecycle events this adapter maps to the framework's semantic session
  * events.
  *
- * The runtime's vocabulary is richer than the framework's model: `session_start` is the
- * runtime's own startup signal, which carries no reason (the framework's `initial`),
+ * The harness's vocabulary is richer than the framework's model: `session_start` is the
+ * harness's own startup signal, which carries no reason (the framework's `initial`),
  * `session_switch` and `session_branch` each carry the transition's reason, and
  * `session_shutdown` is the process going away (the framework's `disposed`). `session_tree`
  * is navigation inside one session — the same owner, a different leaf — so it maps to no
@@ -171,7 +171,7 @@ export type OmpSessionEventType =
 	| "session_tree"
 	| "session_shutdown";
 
-/** Why the agent runtime changed sessions, as its event carries it. */
+/** Why the harness changed sessions, as its event carries it. */
 export type OmpSessionReason = "new" | "resume" | "fork" | "branch" | "btw";
 
 /** A native session lifecycle event, as the runner delivers it. */
@@ -191,7 +191,7 @@ export type OmpCommandContext = OmpSessionContext;
 /**
  * The native run-lifecycle event names this adapter subscribes to for the round axis.
  *
- * The runtime's vocabulary is about *runs*: an agent loop starts and an agent loop ends. Neither
+ * The harness's vocabulary is about *runs*: an agent loop starts and an agent loop ends. Neither
  * is itself a round edge — a round is the whole active period and may contain several runs — so
  * the adapter reads these two as the raw material of the synthesis, not as the edges.
  */
@@ -210,7 +210,7 @@ export interface OmpAgentStartEvent {
  * pending asynchronous wake. Such a settle is a pause inside the round rather than the end of
  * it, which is why the flag is read before any other fact.
  *
- * `messages` is carried by the runtime and is deliberately not named here: the framework's round
+ * `messages` is carried by the harness and is deliberately not named here: the framework's round
  * model has no outcome, and an extension that needs to know how the run ended reads it from its
  * own business data rather than from a round edge.
  */
@@ -256,7 +256,7 @@ export interface OmpExtensionApi {
 	 * The injected SDK surface (`pi.pi`).
 	 *
 	 * Optional because only owner resolution needs it: a top-level main session is its own
-	 * owner, so an extension loaded by a runtime that injects no SDK surface still runs for
+	 * owner, so an extension loaded by a harness that injects no SDK surface still runs for
 	 * main sessions. Without it, no subagent's owner resolves, and a subagent therefore
 	 * follows no activation instead of guessing one.
 	 */
@@ -287,7 +287,7 @@ export type OmpRunInitiationHandler = (
  * Assembly options fixed by the public interface.
  *
  * Every member is optional, so an assembly declares only what its extension needs. Version
- * support is deliberately not among them: the Supported agent-runtime baseline belongs to the
+ * support is deliberately not among them: the Supported harness baseline belongs to the
  * framework (`framework/core/baseline.ts`), and no assembly may supply or widen it.
  */
 export interface OmpAdapterOptions {
@@ -327,8 +327,8 @@ export interface OmpAdapterOptions {
 	 * requires, as the extension's own assembly declares them.
 	 *
 	 * Some extensions are built on a capability the framework cannot promise on every agent
-	 * runtime: one that drives effects from the session axis and the round axis needs those
-	 * events to exist at all. Declaring the dependency is what makes a runtime that cannot honor
+	 * harness: one that drives effects from the session axis and the round axis needs those
+	 * events to exist at all. Declaring the dependency is what makes a harness that cannot honor
 	 * it refuse the binding with a `required-semantics` failure — explicitly, with nothing
 	 * registered — instead of letting the extension run with the half of its capability that
 	 * happens to work. Omitted when the extension depends on nothing beyond the framework's own
@@ -355,7 +355,7 @@ export interface OmpAdapterOptions {
 export type OmpExtensionFactory = (pi: OmpExtensionApi) => BindingResult;
 
 /**
- * One agent as the runtime's official registry holds it: the identity and the parent link
+ * One agent as the harness's official registry holds it: the identity and the parent link
  * the registry itself publishes, plus the live session a resolvable owner is read from.
  */
 export interface OmpAgentRef {
@@ -370,7 +370,7 @@ export interface OmpAgentRef {
 	} | null;
 }
 
-/** The runtime's process-wide agent registry: the official graph of who spawned whom. */
+/** The harness's process-wide agent registry: the official graph of who spawned whom. */
 export interface OmpAgentRegistry {
 	get(id: string): OmpAgentRef | undefined;
 }
@@ -379,16 +379,16 @@ export interface OmpAgentRegistry {
  * The injected SDK surface the loader attaches to the extension API (`pi.pi`).
  *
  * This is the adapter's escape hatch, and the only one it uses: resolving an owner needs
- * the runtime's own agent graph rather than a framework-side copy of it. Nothing outside
+ * the harness's own agent graph rather than a framework-side copy of it. Nothing outside
  * `framework/adapters/` may name this surface.
  */
 export interface OmpSdkSurface {
 	readonly AgentRegistry?: { global(): OmpAgentRegistry };
 	/**
-	 * The version the agent runtime reports through its own SDK namespace.
+	 * The version the harness reports through its own SDK namespace.
 	 *
 	 * This is the only version surface the extension interface exposes, so it is what
-	 * version admission compares against the framework's Supported agent-runtime baseline.
+	 * version admission compares against the framework's Supported harness baseline.
 	 * A surface without it reports no version, and admission then has nothing to compare.
 	 */
 	readonly VERSION?: string;
@@ -407,11 +407,11 @@ function mainOwnerKey(sessionId: string): string {
 }
 
 /**
- * The version the agent runtime reports, when its extension surface reports one.
+ * The version the harness reports, when its extension surface reports one.
  *
- * The injected SDK namespace carries the runtime's own version constant; a surface that
+ * The injected SDK namespace carries the harness's own version constant; a surface that
  * carries none reports no version, and admission then has nothing to compare against the
- * framework's Supported agent-runtime baseline.
+ * framework's Supported harness baseline.
  */
 function reportedVersion(pi: OmpExtensionApi): string | undefined {
 	const version = pi.pi?.VERSION;
@@ -419,18 +419,18 @@ function reportedVersion(pi: OmpExtensionApi): string | undefined {
 }
 
 /**
- * The framework semantics this runtime cannot honor, as this adapter can observe them.
+ * The framework semantics this harness cannot honor, as this adapter can observe them.
  *
  * History preservation rests on the two native paths this adapter uses: a contribution is
- * committed by returning it from the run-initiation hook for the runtime to append to the
+ * committed by returning it from the run-initiation hook for the harness to append to the
  * conversation, and State is written only by appending a session entry. A surface missing
  * either path cannot carry that append-only contract, so the adapter reports the semantic as
  * missing and binding refuses instead of degrading the contract.
  *
- * The two semantic lifecycle axes rest on the runtime's event subscription: every session
+ * The two semantic lifecycle axes rest on the harness's event subscription: every session
  * boundary and every round edge the framework synthesizes is subscribed through the one
  * `on(event, handler)` surface OMP exposes, so a surface without it can deliver neither axis
- * and the adapter reports both. This is a fact about the runtime — which of the two refuses a
+ * and the adapter reports both. This is a fact about the harness — which of the two refuses a
  * binding is decided by what that binding's assembly declared, not here.
  *
  * What the adapter cannot observe, it does not claim: whether a surface that subscribes at
@@ -451,8 +451,8 @@ function missingRequiredSemantics(pi: OmpExtensionApi): readonly RequiredSemanti
  * The owner a session's State belongs to: the nearest ancestor session that is itself a
  * top-level main session (a main session is its own owner).
  *
- * The walk uses the runtime's own facts — `ctx.agent.parentId` and the official agent
- * registry the runtime injects — and never a nesting depth or a process-level label, so a
+ * The walk uses the harness's own facts — `ctx.agent.parentId` and the official agent
+ * registry the harness injects — and never a nesting depth or a process-level label, so a
  * nested subagent resolves level by level to the same root owner and a background fork
  * that carries a parent link follows the same rule. A chain that leaves the process (an
  * ancestor the registry does not hold, a link that loops, an owner whose session is gone)
@@ -524,7 +524,7 @@ const START_REASON_BY_NATIVE: Record<OmpSessionReason, SessionStartReason> = {
 /**
  * The semantic start reason one native transition carries.
  *
- * The native vocabulary is the runtime's own — `new`/`resume`/`fork` on a switch,
+ * The native vocabulary is the harness's own — `new`/`resume`/`fork` on a switch,
  * `branch`/`fork`/`btw` on a branch — and the framework's is what the framework's readers
  * understand. A switch names what it did to the session directly; a branch stands a new
  * session up from the current one's entries. `initial` never comes from here: it is the
@@ -557,7 +557,7 @@ function publishNotice(
 /**
  * The framework's port onto OMP, bound to one session and the extension's State key.
  */
-function ompPort(pi: OmpExtensionApi, definition: ExtensionDefinition): AgentRuntimePort {
+function ompPort(pi: OmpExtensionApi, definition: ExtensionDefinition): HarnessPort {
 	const stateEntryType = `${definition.id}:state`;
 	// The owner key this binding currently serves — the session it started and has not ended.
 	// It is the whole identity criterion: a native session event that leaves this key alone is
@@ -626,13 +626,13 @@ function ompPort(pi: OmpExtensionApi, definition: ExtensionDefinition): AgentRun
 	};
 
 	// At most one report per native fact, per binding: the first delivery that finds a fact this
-	// runtime does not report says so on the non-model channel, and every later one stays quiet.
+	// harness does not report says so on the non-model channel, and every later one stays quiet.
 	const reportedMissingFacts = new Set<string>();
 	const reportMissingFact = (fact: string): undefined => {
 		if (!reportedMissingFacts.has(fact)) {
 			reportedMissingFacts.add(fact);
 			reportDiagnostic(
-				`${definition.id}: this agent runtime reports no ${fact}; the framework answers nothing rather than inventing one`,
+				`${definition.id}: this harness reports no ${fact}; the framework answers nothing rather than inventing one`,
 			);
 		}
 		return undefined;
@@ -649,9 +649,9 @@ function ompPort(pi: OmpExtensionApi, definition: ExtensionDefinition): AgentRun
 	 * asynchronous job still running.
 	 *
 	 * The settle's own continuation flag is read before this, so a run that already scheduled its
-	 * next piece of work is a pause inside the round whatever these facts say. When the runtime
+	 * next piece of work is a pause inside the round whatever these facts say. When the harness
 	 * reports none of them, quiescence cannot be established — and an unestablished quiescence is
-	 * not one, so the round stays open rather than being closed on a guess about a runtime that
+	 * not one, so the round stays open rather than being closed on a guess about a harness that
 	 * said nothing.
 	 */
 	const quiescent = (ctx: OmpSessionContext): boolean => {
@@ -733,7 +733,7 @@ function ompPort(pi: OmpExtensionApi, definition: ExtensionDefinition): AgentRun
 			// this hook: a per-turn run initiation is a separate semantic hook, so a run can
 			// never arrive here and reseed the session's State.
 			pi.on("session_start", (_event, ctx) => {
-				// The runtime's startup signal carries no reason: this is the session the
+				// The harness's startup signal carries no reason: this is the session the
 				// binding first serves in this process.
 				startOf("initial", ctx);
 			});
@@ -835,12 +835,12 @@ function ompPort(pi: OmpExtensionApi, definition: ExtensionDefinition): AgentRun
  * Assembles a definition for OMP.
  *
  * The returned factory binds the definition to whichever session calls it; a refused
- * definition reports its conflicts and contributes nothing, and the agent runtime
+ * definition reports its conflicts and contributes nothing, and the harness
  * continues. The State store is created once here — at module load, so once per
  * extension per process — and shared by every session binding, which is what lets
  * bindings agree on one current value per owner.
  *
- * Version support is not an assembly option: the framework owns the Supported agent-runtime
+ * Version support is not an assembly option: the framework owns the Supported harness
  * baseline, so an assembly describes only the capabilities its extension needs (`actions`,
  * `events`, `requiredSemantics`) and where its declared configuration is resolved from
  * (`configBaseDir`). An extension that needs none of them assembles with no options at all.
@@ -861,7 +861,7 @@ export function ompAdapter(definition: ExtensionDefinition, options: OmpAdapterO
 					missingRequiredSemantics: missingRequiredSemantics(pi),
 					// Recorded, never judged: the verified environment is a fact of the support
 					// record, and admission consults no field of it.
-					environment: { platform: `${process.platform}-${process.arch}`, runtime: "omp" },
+					environment: { platform: `${process.platform}-${process.arch}`, harness: "omp" },
 				},
 				requiredSemantics: options.requiredSemantics,
 			},

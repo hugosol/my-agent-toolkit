@@ -4,7 +4,7 @@
  *
  * The seam under test is the interface an extension author uses — `defineExtension`
  * with the configuration types, plus `ompAdapter(definition, options)`.
- * The agent-runtime side of that seam is the narrow native surface the loader hands
+ * The harness side of that seam is the narrow native surface the loader hands
  * the factory, so a test double stands in for the loader while the definitions under
  * test are built through the same public entry an extension uses.
  */
@@ -57,7 +57,7 @@ function withCapturedStderr<T>(run: () => T): { readonly diagnostics: string; re
 	}
 }
 
-/** Binds a definition through the public adapter, recording diagnostics and agent-runtime effects. */
+/** Binds a definition through the public adapter, recording diagnostics and harness effects. */
 function bind(definition: ExtensionDefinition): {
 	readonly result: BindingResult;
 	readonly diagnostics: string;
@@ -201,7 +201,7 @@ describe("configuration conflicts (P16, N6)", () => {
 		expect(api.labels).toEqual([]);
 	});
 
-	test("a refused definition does not interrupt the runtime: the next binding still succeeds", () => {
+	test("a refused definition does not interrupt the harness: the next binding still succeeds", () => {
 		const conflicting = frameworkDefinition.defineExtension({
 			id: "conflicted",
 			displayName: "conflicted",
@@ -231,7 +231,7 @@ describe("initialization and binding failures (P17, N7)", () => {
 
 		expect(result.bound).toBe(false);
 		expect(failureKinds(result)).toEqual(["initialization"]);
-		// Exactly one error on the non-model channel, and no agent-runtime effect: the
+		// Exactly one error on the non-model channel, and no harness effect: the
 		// refused extension cannot leave a partial registration behind because
 		// registration is the step that never ran.
 		expect(diagnostics.split("\n").filter(line => line.includes("uninitializable"))).toHaveLength(1);
@@ -279,12 +279,12 @@ describe("initialization and binding failures (P17, N7)", () => {
 		expect(notADeclaration.api.labels).toEqual([]);
 	});
 
-	test("an agent runtime that refuses registration leaves the extension unbound and keeps nothing", () => {
+	test("a harness that refuses registration leaves the extension unbound and keeps nothing", () => {
 		const refused: string[] = [];
 		const refusingApi: OmpExtensionApi = {
 			setLabel(label: string): void {
 				refused.push(label);
-				throw new Error("agent runtime refused the label");
+				throw new Error("harness refused the label");
 			},
 			registerCommand(): void {},
 			appendEntry(): void {},
@@ -298,14 +298,14 @@ describe("initialization and binding failures (P17, N7)", () => {
 		expect(result.bound).toBe(false);
 		expect(failureKinds(result)).toEqual(["initialization"]);
 		expect(diagnostics.split("\n").filter(line => line.includes("codebase-tools"))).toHaveLength(1);
-		expect(diagnostics).toContain("agent runtime refused the label");
+		expect(diagnostics).toContain("harness refused the label");
 	});
 
 	test("binding keeps no process-level state: one session's failure does not reach the next", () => {
 		const factory = frameworkOmp.ompAdapter(CODEBASE_TOOLS);
 		const refusingApi: OmpExtensionApi = {
 			setLabel(): void {
-				throw new Error("agent runtime refused the label");
+				throw new Error("harness refused the label");
 			},
 			registerCommand(): void {},
 			appendEntry(): void {},

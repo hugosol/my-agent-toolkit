@@ -10,7 +10,7 @@
  * every framework-managed reader — injected-prompt planning and the marker area today —
  * agrees on what a subagent's value is instead of each deciding for itself.
  *
- * This module is agent-runtime-independent: it reads State through the read view and names
+ * This module is harness-independent: it reads State through the read view and names
  * no native API.
  */
 import { activationField, stateInheritance, type ExtensionDefinition } from "../core/definition";

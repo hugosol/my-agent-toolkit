@@ -1,5 +1,5 @@
 /**
- * The marker life cycle on the real OMP runtime (B2, B6, B1/P36; P13, P14, C10, N9).
+ * The marker life cycle on the real OMP harness (B2, B6, B1/P36; P13, P14, C10, N9).
  *
  * The observable seam is the OMP extension seam: the isolated RPC session the acceptance
  * procedure uses emits the framework's UI requests, and those frames are the automated
@@ -13,16 +13,16 @@
  */
 import { beforeAll, describe, expect, test } from "bun:test";
 import * as path from "node:path";
-import { type IsolatedRuntime, REPO_ROOT, ensureIsolatedRuntime, readBaselineRecord } from "../harness/baseline";
-import { type CaptureServer, startCaptureServer } from "../harness/capture-server";
-import { HARNESS_CAPTURE_BASE_URL_ENV, HARNESS_MODEL_SELECTOR } from "../harness/fixtures/extension-root/provider";
-import { type RunRoot, createRunRoot } from "../harness/run-root";
-import { ControlledSession, type RpcFrame } from "../harness/session";
+import { type IsolatedHarness, REPO_ROOT, ensureIsolatedHarness, readBaselineRecord } from "../harness-dock/baseline";
+import { type CaptureServer, startCaptureServer } from "../harness-dock/capture-server";
+import { DOCK_CAPTURE_BASE_URL_ENV, DOCK_MODEL_SELECTOR } from "../harness-dock/fixtures/extension-root/provider";
+import { type RunRoot, createRunRoot } from "../harness-dock/run-root";
+import { ControlledSession, type RpcFrame } from "../harness-dock/session";
 
 /** The OMP discovery root this repository deploys. */
 const OMP_ENTRYPOINT_DIR = path.join(REPO_ROOT, "entrypoints", "omp");
 /** The credential-free provider fixture; it keeps each turn off the network. */
-const PROVIDER_FIXTURE = path.join(REPO_ROOT, "tests", "harness", "fixtures", "extension-root", "provider.ts");
+const PROVIDER_FIXTURE = path.join(REPO_ROOT, "tests", "harness-dock", "fixtures", "extension-root", "provider.ts");
 
 /**
  * The framework's area and the extension's migrated marker text. Both are consumer-visible:
@@ -33,10 +33,10 @@ const MARKER_AREA_PLACEMENT = "aboveEditor";
 const MARKER_TEXT = "◈ codeBaseTools";
 const COMMAND = "codebase-tools";
 
-let runtime: IsolatedRuntime;
+let harness: IsolatedHarness;
 
 beforeAll(async () => {
-	runtime = await ensureIsolatedRuntime(readBaselineRecord());
+	harness = await ensureIsolatedHarness(readBaselineRecord());
 }, 300_000);
 
 interface Run {
@@ -52,11 +52,11 @@ function createRun(label: string): Run {
 /** Start one session in a run: the same session directory, a fresh process. */
 function openSession(run: Run, extraArgs: readonly string[] = []): Promise<ControlledSession> {
 	return ControlledSession.start({
-		runtime,
+		harness,
 		runRoot: run.runRoot,
 		extensions: [PROVIDER_FIXTURE, OMP_ENTRYPOINT_DIR],
-		model: HARNESS_MODEL_SELECTOR,
-		env: { [HARNESS_CAPTURE_BASE_URL_ENV]: run.capture.baseUrl },
+		model: DOCK_MODEL_SELECTOR,
+		env: { [DOCK_CAPTURE_BASE_URL_ENV]: run.capture.baseUrl },
 		extraArgs,
 	});
 }
@@ -77,11 +77,11 @@ function disposeRun(run: Run): void {
 	run.runRoot.dispose();
 }
 
-/** The session file the runtime reports for the session it currently runs. */
+/** The session file the harness reports for the session it currently runs. */
 async function sessionFileOf(session: ControlledSession): Promise<string> {
 	const frame = await session.request({ type: "get_state" });
 	const file = (frame.data as { sessionFile?: string } | undefined)?.sessionFile;
-	if (file === undefined) throw new Error(`the runtime reported no session file: ${JSON.stringify(frame)}`);
+	if (file === undefined) throw new Error(`the harness reported no session file: ${JSON.stringify(frame)}`);
 	return file;
 }
 

@@ -1,7 +1,7 @@
 {
-  "$comment": "Single checkable record of the fixed verification baseline: agent-runtime revision anchor, run/acceptance artifact, and dependency lockfiles. Checked by tests/harness/baseline.test.ts. Support status and admission policy stay in framework/docs/agent-runtime-support.md; this file records only the correspondence between the anchor, the artifact actually run, and the lockfiles.",
+  "$comment": "Single checkable record of the fixed verification baseline: harness revision anchor, run/acceptance artifact, and dependency lockfiles. Checked by tests/harness-dock/baseline.test.ts. Support status and admission policy stay in framework/docs/harness-support.md; this file records only the correspondence between the anchor, the artifact actually run, and the lockfiles.",
   "recorded": "2026-10-07",
-  "agentRuntime": {
+  "harness": {
     "package": "@oh-my-pi/pi-coding-agent",
     "supportedVersion": "18.5.0",
     "revisionAnchor": {
@@ -18,7 +18,7 @@
       "prefix": ".cache/omp-baseline/18.5.0",
       "installCommand": "bun install in the prefix directory with an exact dependency entry",
       "cliEntry": "src/cli.ts",
-      "role": "the only agent runtime that acceptance/verification runs execute; the local checkout cannot run a full session because its native addon is not built",
+      "role": "the only harness that acceptance/verification runs execute; the local checkout cannot run a full session because its native addon is not built",
       "byteIdentity": {
         "source": "reused conclusion of decision 03 (.scratch/codebase-tools-omp-v1/decision/03-extension-path-probes.md, probe assets under assets/03): the isolated 18.5.0 install is byte-identical to the checkout for the files that carry the extension, session, model and auth contracts",
         "method": "sha256",

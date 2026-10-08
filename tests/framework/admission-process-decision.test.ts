@@ -1,15 +1,15 @@
 /**
  * One version decision per process, shared by every consumer in it (P2, P3; contract S1).
  *
- * The judgement of whether the reported agent-runtime version is in the framework's Supported
- * agent-runtime baseline belongs to the process, not to a module instance and not to a binding.
+ * The judgement of whether the reported harness version is in the framework's Supported
+ * harness baseline belongs to the process, not to a module instance and not to a binding.
  * The OMP legacy loader rewrites every relative import of an extension's graph to
  * `specifier?mtime=<per-load tag>` — a fresh tag per extension load — so two extensions that use
  * this framework hold two copies of `framework/core/admission.ts`; a copy-scoped record would judge
  * the version once per copy, and a binding-scoped one once per binding.
  *
  * What this file drives is the consuming interface: two extensions assembled through the
- * framework's binding harness, their sessions delivered, re-bound (the loader binds every session
+ * framework's binding dock, their sessions delivered, re-bound (the loader binds every session
  * again) and followed into a subagent session — plus a copy of the decision module loaded the way
  * the loader loads it, by importing it under its own tag (the repro
  * `marker-module-duplication.test.ts` uses for the same loader behavior). What the fixture reads is
@@ -27,11 +27,11 @@ import { describe, expect, test } from "bun:test";
 import type * as Admission from "../../framework/core/admission";
 import { defineExtension } from "../../framework/public";
 import { CODEBASE_TOOLS } from "../../extensions/codebase-tools/definition";
-import { readBaselineRecord } from "../harness/baseline";
-import { portDouble } from "./support/runtime-port-double";
+import { readBaselineRecord } from "../harness-dock/baseline";
+import { portDouble } from "./support/harness-port-double";
 
 /** The version the repository's support record lists — an independent source, not the decision re-read. */
-const LISTED_VERSION = readBaselineRecord().agentRuntime.supportedVersion;
+const LISTED_VERSION = readBaselineRecord().harness.supportedVersion;
 
 /** A version independently specified to be outside that baseline: this repository's candidate. */
 const UNLISTED_VERSION = "18.6.1";
@@ -150,14 +150,14 @@ describe("a binding that reports no version (P3)", () => {
 			duplicatedAdmissionModule("no-report-second"),
 		]);
 
-		// Phase one: the runtime reports no version at all. The binding runs and warns nobody, on
+		// Phase one: the harness reports no version at all. The binding runs and warns nobody, on
 		// either channel: there is nothing to compare, so there is no verdict to report.
 		const quiet = portDouble();
 		expect(quiet.bind(PEER_EXTENSION, { version: "unreported" }).bound).toBe(true);
 		expect(quiet.deliverSession({ kind: "owner", key: "main:no-report" }).notices).toEqual([]);
 		expect(quiet.diagnostics).toEqual([]);
 
-		// Phase two, same process: a binding whose runtime reports a version the baseline does not
+		// Phase two, same process: a binding whose harness reports a version the baseline does not
 		// list. The absent report was no conclusion — had it been recorded as one, this report would
 		// have been answered from it instead of being judged — so this is a real decision: the session
 		// is warned about the version, and the extension keeps running.
@@ -202,7 +202,7 @@ describe("one framework notice per Owner across the process (P6, P7, P8)", () =>
 
 		// Two extensions with an assembly each, as the loader assembles every extension it discovers.
 		// These two share this process's one copy of the framework; the separately loaded copy the
-		// runtime evaluates per extension graph is the real run's observation
+		// harness evaluates per extension graph is the real run's observation
 		// (`admission-notice.test.ts`), which a suite inside one module instance cannot make.
 		const codebaseTools = portDouble();
 		const peer = portDouble();

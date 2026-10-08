@@ -14,7 +14,7 @@ import {
 	setPushTransportForTest,
 } from "../../extensions/connect-bot/shared-logic/panel/client";
 import { botSessions } from "../../extensions/connect-bot/shared-logic/session/session";
-import connectBot from "../../extensions/connect-bot/runtimes/omp";
+import connectBot from "../../extensions/connect-bot/harnesses/omp";
 import { type OmpDouble, ompDouble } from "./support/omp-double";
 
 /** The refusal a session without a UI gets, verbatim. */
