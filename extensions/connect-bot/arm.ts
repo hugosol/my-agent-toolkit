@@ -37,7 +37,7 @@
  */
 import type { CommandDelivery } from "../../framework/core/protocol";
 import type { AgentState } from "./agent-state";
-import { PUSH_TIMEOUT_MS, REGISTER_TIMEOUT_MS, pushEvent, readRegisterOutcome, type PushEnvelope } from "./client";
+import { pushEvent, readRegisterOutcome, type PushEnvelope } from "./client";
 import { connectBotConfig } from "./config";
 import { disarmLocally } from "./disarm";
 import { initialHealth, pushResultObserver, resetHealth } from "./failure-budget";
@@ -87,7 +87,10 @@ export async function arm(
 		kind: "register",
 		data: registerData(facts),
 	};
-	const outcome = await pushEvent(connectBotConfig().endpoint, envelope, REGISTER_TIMEOUT_MS).catch(() => undefined);
+	// The wait of the one request that arms a session: the extension's own configured budget, read
+	// from the file the framework validated at binding — never a constant of its own.
+	const { endpoint, requestTimeoutMs } = connectBotConfig();
+	const outcome = await pushEvent(endpoint, envelope, requestTimeoutMs).catch(() => undefined);
 	const receipt = outcome === undefined ? undefined : readRegisterOutcome(outcome);
 	if (receipt === undefined) {
 		// Nothing was armed — and a re-arm that failed leaves this session unarmed too.
@@ -106,11 +109,12 @@ export async function arm(
 	const state: AgentState = delivery.canAcceptInput() === true ? "idle" : "working";
 	const armed = botSessions.get(ownerKey);
 	if (armed === undefined) {
-		// The owner's outbound queue: one flusher, the wire client's push budget, and every settled
-		// push accounted to the failure budget of this owner's own record.
+		// The owner's outbound queue: one flusher, the same configured request budget every other
+		// request this extension makes waits, and every settled push accounted to the failure
+		// budget of this owner's own record.
 		const outbox = new OutboxFlusher(
 			new Outbox(),
-			queued => pushEvent(connectBotConfig().endpoint, queued, PUSH_TIMEOUT_MS),
+			queued => pushEvent(endpoint, queued, requestTimeoutMs),
 			pushResultObserver(ownerKey),
 		);
 		botSessions.record(ownerKey, {

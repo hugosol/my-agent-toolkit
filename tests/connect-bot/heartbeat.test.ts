@@ -15,22 +15,32 @@
  * allowed to take before the flusher drops it.
  */
 import { afterEach, describe, expect, jest, test } from "bun:test";
+import * as path from "node:path";
 import {
 	type PushFetchInit,
 	type PushHttpResponse,
 	type PushTransport,
 	EVENTS_PATH,
-	PUSH_TIMEOUT_MS,
 	setPushTransportForTest,
 } from "../../extensions/connect-bot/client";
-import { HEARTBEAT_INTERVAL_MS } from "../../extensions/connect-bot/heartbeat";
+import { CONNECT_BOT } from "../../extensions/connect-bot/definition";
+import { readConfig } from "../../framework/core/config";
 import { OUTBOX_LIMIT } from "../../extensions/connect-bot/outbox";
 import { botSessions } from "../../extensions/connect-bot/session";
 import connectBot from "../../extensions/connect-bot/runtimes/omp";
+import { REPO_ROOT } from "../harness/baseline";
 import { type OmpDouble, ompDouble } from "./support/omp-double";
 
 /** The endpoint the extension's own `config.yaml` ships; the file is the only source. */
 const ENDPOINT = "http://127.0.0.1:8787";
+/**
+ * The wait budget the repository's own `config.yaml` gives every request — a background push
+ * included — as the framework's read of that file reports it. Read from the file rather than
+ * repeated as a literal, because the file is the only source of the value.
+ */
+const REQUEST_TIMEOUT_MS = readConfig(path.join(REPO_ROOT, "extensions", "connect-bot", "config.yaml"), {
+	fields: CONNECT_BOT.config?.fields,
+}).requestTimeoutMs as number;
 /** The owner key the framework resolves for one main session. */
 const ownerKey = (sessionId: string) => `main:${sessionId}`;
 
@@ -176,16 +186,16 @@ afterEach(() => {
 	jest.useRealTimers();
 });
 
-describe("an armed session beats every 10s with the state it holds (E9, P30)", () => {
-	test("the empty argument schedules one 10s heartbeat carrying the state the panel is owed", async () => {
+describe("an armed session beats on its one managed interval with the state it holds (E9, P30)", () => {
+	test("the empty argument schedules one heartbeat carrying the state the panel is owed", async () => {
 		const { requests, transport } = reachablePanel();
 		const double = await armed(transport, "beat-1");
 
-		// The one periodic effect of this owner: a managed interval of the period the contract
-		// fixes, and nothing else scheduled at all.
-		expect(HEARTBEAT_INTERVAL_MS).toBe(10_000);
+		// The one periodic effect of this owner: a managed interval, and nothing else scheduled at
+		// all. Its period is what the cadence run advances time by — `budget-regression.test.ts`
+		// proves one beat per period of controlled time, and the runtime's own 10s per beat against
+		// the actual panel — so this file observes the one interval and its cancellation, not a value.
 		expect(double.timers).toHaveLength(1);
-		expect(double.timers[0]?.ms).toBe(HEARTBEAT_INTERVAL_MS);
 		expect(double.timers[0]?.cancelled).toBe(false);
 		// Arming asked the panel and told it the state it holds: the beat is what follows.
 		expect(requests.map(envelopeOf).map(envelope => envelope.kind)).toEqual(["register", "state"]);
@@ -203,8 +213,9 @@ describe("an armed session beats every 10s with the state it holds (E9, P30)", (
 		expect(requests[2]?.init.method).toBe("POST");
 		expect(requests[2]?.init.headers).toEqual({ "content-type": "application/json" });
 		expect(requests[2]?.init.proxy).toBe(false);
-		// A queued push owns the wire client's own budget, never the register's or an endless one.
-		expect(PUSH_TIMEOUT_MS).toBe(1500);
+		// A queued push waits the extension's own configured budget under its own abort signal —
+		// never the register's, and never an endless one. How long that wait really is, against a
+		// panel that answers late, is what `request-timeout.test.ts` establishes (P19).
 		expect(requests[2]?.init.signal).toBeInstanceOf(AbortSignal);
 		expect(requests[2]?.init.signal.aborted).toBe(false);
 
@@ -297,7 +308,7 @@ describe("a repeat is the same connection asked again (E3)", () => {
 	});
 });
 
-describe("a queued push owns a ≤1.5s budget and is never retried (E11, P32)", () => {
+describe("a queued push waits the configured budget and is never retried (E11, P32)", () => {
 	test("a heartbeat the panel never answers is aborted at its budget, and the next beat still goes", async () => {
 		jest.useFakeTimers();
 		const requests: Request[] = [];
@@ -323,7 +334,7 @@ describe("a queued push owns a ≤1.5s budget and is never retried (E11, P32)", 
 		expect(requests).toHaveLength(3);
 		expect(requests[2]?.init.signal.aborted).toBe(false);
 
-		jest.advanceTimersByTime(PUSH_TIMEOUT_MS);
+		jest.advanceTimersByTime(REQUEST_TIMEOUT_MS);
 		await sawAbort;
 		await settleAll();
 

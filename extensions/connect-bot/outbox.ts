@@ -3,7 +3,8 @@
  *
  * Every background push this extension makes — today the heartbeat — leaves through this queue
  * instead of awaiting the panel: an enqueue returns at once, and the single flusher sends what is
- * queued in order, one event at a time, within the wire client's push budget. A push that fails is
+ * queued in order, one event at a time, within the request budget the sender applies — the same
+ * configured wait every other request this extension makes uses. A push that fails is
  * dropped rather than retried (the next heartbeat heals it), so the queue never grows without end
  * and a slow panel can never reorder — or replay — this session's events.
  *

@@ -122,12 +122,22 @@ function describeValue(value: unknown): string {
 	}
 }
 
+/**
+ * The milliseconds a declared `milliseconds` value may name.
+ *
+ * `1` is the shortest wait that is a wait at all, and `2 ** 31 - 1` is the longest delay this
+ * runtime's timer schedules: a longer value is not waited for, it is clamped to 1ms and warned
+ * about, so a budget above it would not be the wait it names.
+ */
+const MILLISECOND_RANGE = { least: 1, most: 2 ** 31 - 1 } as const;
+
 /** How one field requirement is named in failure text. */
 const FIELD_TYPE_TEXT: Readonly<Record<ConfigFieldType, string>> = {
 	string: "a string",
 	"non-empty-string": "a non-empty-string",
 	number: "a number",
 	boolean: "a boolean",
+	milliseconds: `a whole number of milliseconds between ${MILLISECOND_RANGE.least} and ${MILLISECOND_RANGE.most}`,
 };
 
 /** Whether one file value matches the type its declaration requires. */
@@ -136,6 +146,11 @@ const FIELD_TYPE_MATCHES: Readonly<Record<ConfigFieldType, (value: unknown) => b
 	"non-empty-string": value => typeof value === "string" && value.length > 0,
 	number: value => typeof value === "number" && Number.isFinite(value),
 	boolean: value => typeof value === "boolean",
+	milliseconds: value =>
+		typeof value === "number" &&
+		Number.isInteger(value) &&
+		value >= MILLISECOND_RANGE.least &&
+		value <= MILLISECOND_RANGE.most,
 };
 
 /** Throws when one field mapping names a type this framework version does not bind. */

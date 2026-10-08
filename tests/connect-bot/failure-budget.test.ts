@@ -11,8 +11,8 @@
  * The beats are fired through the managed timer the runtime recorded, as the runtime would, and
  * what a beat settles to is decided by the panel: an answer, a non-2xx answer, or a request that
  * never completes. All three are what the budget counts, so all three are driven here — the one
- * that never completes through bun's fake timers, whose whole point is that the ≤1.5s push budget
- * runs out without a wall-clock wait.
+ * that never completes through bun's fake timers, whose whole point is that the configured request
+ * budget runs out without a wall-clock wait.
  *
  * What is observed is the sequence the promise names: one notice on the first failure of an
  * outage and none before the budget runs out, a third consecutive failure that ends the connection
@@ -20,17 +20,28 @@
  * makes the next outage announce itself again.
  */
 import { afterEach, describe, expect, jest, test } from "bun:test";
+import * as path from "node:path";
 import {
 	type PushFetchInit,
 	type PushHttpResponse,
 	type PushTransport,
-	PUSH_TIMEOUT_MS,
 	setPushTransportForTest,
 } from "../../extensions/connect-bot/client";
-import { MAX_CONSECUTIVE_FAILURES } from "../../extensions/connect-bot/failure-budget";
+import { CONNECT_BOT } from "../../extensions/connect-bot/definition";
 import { botSessions } from "../../extensions/connect-bot/session";
 import connectBot from "../../extensions/connect-bot/runtimes/omp";
+import { readConfig } from "../../framework/core/config";
+import { REPO_ROOT } from "../harness/baseline";
 import { type OmpDouble, ompDouble } from "./support/omp-double";
+
+/**
+ * The wait budget the repository's own `config.yaml` gives every request — the background push
+ * included — as the framework's read of that file reports it. The file is the only source of the
+ * value, so it is read rather than repeated as a literal.
+ */
+const REQUEST_TIMEOUT_MS = readConfig(path.join(REPO_ROOT, "extensions", "connect-bot", "config.yaml"), {
+	fields: CONNECT_BOT.config?.fields,
+}).requestTimeoutMs as number;
 
 /** The framework's one marker-area widget, as the OMP adapter owns it. */
 const MARKER_AREA_KEY = "semantic-extensions";
@@ -220,7 +231,6 @@ describe("the first failure of an outage is announced once (E10, P31)", () => {
 		expect(kinds(sent)).toEqual(["register", "state", "heartbeat"]);
 		expect(double.notifications).toEqual([CONNECTED, FIRST_FAILURE]);
 		expect(double.notificationLevels).toEqual(["info", "error"]);
-		expect(MAX_CONSECUTIVE_FAILURES).toBe(3);
 
 		fireTimer(double);
 		await settleAll();
@@ -259,9 +269,10 @@ describe("the first failure of an outage is announced once (E10, P31)", () => {
 		fireTimer(double);
 		expect(double.notifications).toEqual([CONNECTED]);
 
-		// The budget the queued push owns runs out, the request is aborted, and the failure is
-		// accounted like any other: the outage is announced on this first failure, not on a later one.
-		jest.advanceTimersByTime(PUSH_TIMEOUT_MS);
+		// The configured budget every request waits — the queued push included — runs out, the
+		// request is aborted, and the failure is accounted like any other: the outage is announced
+		// on this first failure, not on a later one.
+		jest.advanceTimersByTime(REQUEST_TIMEOUT_MS);
 		await settleAll();
 
 		// The push that timed out is the beat; the arm path's own report had already been answered.

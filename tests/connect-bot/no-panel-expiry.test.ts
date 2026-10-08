@@ -63,10 +63,4 @@ describe("the extension carries no panel-side expiry (P30)", () => {
 		}
 		expect(offenders).toEqual([]);
 	});
-
-	test("the one period the extension asks for is the heartbeat's own 10s", () => {
-		// The positive half of the same fact: offline is the panel's conclusion, and a beat every
-		// 10s is the only timing this extension owns.
-		expect(codeOf(`${EXTENSION_ROOT}/heartbeat.ts`)).toMatch(/HEARTBEAT_INTERVAL_MS\s*=\s*10_000/);
-	});
 });

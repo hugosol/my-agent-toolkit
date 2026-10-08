@@ -11,11 +11,12 @@
  * events, entries or widgets) keep driving `ompAdapter` with an `OmpExtensionApi`
  * double instead; this harness covers the runtime-independent half.
  *
- * One double is one assembly: one State store and one admission-notice ledger shared
- * by every binding it makes, exactly as an extension's assembly has one of each.
+ * One double is one assembly: one State store shared by every binding it makes, exactly
+ * as an extension's assembly has one. The framework's own notice record is not part of an
+ * assembly at all — one process holds it per Owner, whichever extension published for it.
  */
 import { bindExtension } from "../../../framework/behaviors/binding";
-import { AdmissionNotices, type DeclarableRequiredSemantic, type RequiredSemantic } from "../../../framework/core/admission";
+import type { DeclarableRequiredSemantic, RequiredSemantic } from "../../../framework/core/admission";
 import type { ConfigSource } from "../../../framework/core/config";
 import type { ExtensionDefinition } from "../../../framework/core/definition";
 import type {
@@ -106,10 +107,12 @@ export interface PortBindingOptions {
 	readonly actions?: CommandActions;
 	/** The assembly's handlers for the definition's semantic lifecycle events, by event kind. */
 	readonly events?: SemanticEventHandlers;
-	/** The versions the extension declares support for; one listed version by default. */
-	readonly supportedVersions?: readonly string[];
-	/** The version the runtime reports; `undefined` models a runtime that reports none. */
-	readonly version?: string;
+	/**
+	 * The version the runtime reports; omitted models this repository's recorded baseline version,
+	 * and `"unreported"` models a runtime surface that reports no version at all — which is not the
+	 * same as one that reports a version the baseline does not list.
+	 */
+	readonly version?: string | "unreported";
 	/** The semantics the runtime cannot honor. */
 	readonly missingRequiredSemantics?: readonly RequiredSemantic[];
 	/**
@@ -184,8 +187,6 @@ export interface PortDouble {
 
 export function portDouble(): PortDouble {
 	const state = new StateStore();
-	// One ledger per assembly, as one binding of one assembly shares a process.
-	const notices = new AdmissionNotices();
 	const labels: string[] = [];
 	const diagnostics: string[] = [];
 	const registrations: string[] = [];
@@ -257,13 +258,11 @@ export function portDouble(): PortDouble {
 				port,
 				state,
 				{
-					supportedVersions: options.supportedVersions ?? ["18.5.0"],
 					facts: {
-						version: options.version ?? "18.5.0",
+						version: options.version === "unreported" ? undefined : (options.version ?? "18.5.0"),
 						missingRequiredSemantics: options.missingRequiredSemantics,
 					},
 					requiredSemantics: options.requiredSemantics,
-					notices,
 				},
 				options.actions,
 				options.events,

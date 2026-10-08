@@ -16,6 +16,7 @@ import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:
 import { tmpdir } from "node:os";
 import * as path from "node:path";
 import connectBot from "../../entrypoints/omp/connect-bot";
+import { CONNECT_BOT } from "../../extensions/connect-bot/definition";
 import { EXTENSION_REPOSITORY_ROOT } from "../../extensions/connect-bot/runtimes/omp";
 import { CODEBASE_TOOLS } from "../../extensions/codebase-tools/definition";
 import type {
@@ -30,11 +31,7 @@ import type {
 } from "../../framework/adapters/omp";
 import * as frameworkOmp from "../../framework/adapters/omp";
 import { bindExtension } from "../../framework/behaviors/binding";
-import {
-	AdmissionNotices,
-	type DeclarableRequiredSemantic,
-	type RequiredSemantic,
-} from "../../framework/core/admission";
+import { type DeclarableRequiredSemantic, type RequiredSemantic } from "../../framework/core/admission";
 import { getConfig } from "../../framework/core/config";
 import type {
 	AgentRuntimePort,
@@ -45,7 +42,7 @@ import type {
 } from "../../framework/core/protocol";
 import { StateStore } from "../../framework/core/state";
 import type { ExtensionDefinition } from "../../framework/public";
-import { REPO_ROOT } from "../harness/baseline";
+import { REPO_ROOT, readBaselineRecord } from "../harness/baseline";
 import { withCapturedStderr } from "./support/captured-stderr";
 import { portDouble } from "./support/runtime-port-double";
 
@@ -56,6 +53,20 @@ const HISTORY_PRESERVATION: RequiredSemantic = "history-preservation";
 const SESSION_EVENTS: DeclarableRequiredSemantic = "session-lifecycle-events";
 const ROUND_EVENTS: DeclarableRequiredSemantic = "round-lifecycle-events";
 
+/**
+ * The version the repository's support record lists as the one acceptance runs. The expected
+ * *listed* version is read from that record — an independent source — and never from the
+ * framework's own decision.
+ */
+const RECORDED_SUPPORTED_VERSION = readBaselineRecord().agentRuntime.supportedVersion;
+
+/**
+ * A version independently specified to be outside the framework's baseline: the candidate this
+ * repository already uses as the "not the recorded one" input, chosen here so the unlisted
+ * expectation does not come from the framework's membership decision either.
+ */
+const UNLISTED_RUNTIME_VERSION = "18.6.1";
+
 /** The admission facts one test-adapter binding declares about its agent runtime. */
 interface AdapterFacts {
 	/** The version the runtime reports; omitted models a runtime that reports none. */
@@ -64,7 +75,6 @@ interface AdapterFacts {
 	/** The semantics this binding's assembly declared it depends on. */
 	readonly requiredSemantics?: readonly DeclarableRequiredSemantic[];
 	readonly environment?: { readonly platform: string; readonly runtime: string };
-	readonly supportedVersions?: readonly string[];
 }
 
 /**
@@ -115,9 +125,6 @@ function testAdapter(): TestAdapter {
 		},
 	};
 	const state = new StateStore();
-	// One ledger per adapter, as one assembly has one per process: a re-binding of the
-	// same definition must not repeat a notice the session was already given.
-	const notices = new AdmissionNotices();
 
 	return {
 		registrations,
@@ -125,14 +132,12 @@ function testAdapter(): TestAdapter {
 		feedback,
 		bind(definition, facts) {
 			return bindExtension(definition, port, state, {
-				supportedVersions: facts.supportedVersions ?? ["18.5.0"],
 				facts: {
 					version: facts.version,
 					missingRequiredSemantics: facts.missingRequiredSemantics,
 					environment: facts.environment,
 				},
 				requiredSemantics: facts.requiredSemantics,
-				notices,
 			});
 		},
 		deliver(owner, event = { kind: "session_start", reason: "initial" }) {
@@ -315,6 +320,156 @@ describe("a declared semantic the runtime cannot honor (P26, F8)", () => {
 	});
 });
 
+/**
+ * The required-entry check belongs to each binding (P10; contract S1; stories 11–12).
+ *
+ * The version decision is the process's — made once per reported version and shared by every
+ * binding in it — while which entries the injected interface has is a fact about the one surface
+ * *this* binding was handed. The check runs on every binding, from that binding's own observed
+ * facts, before which of them refuses it is read against the semantics the framework requires of
+ * every binding plus the ones this assembly declared. So a version a complete binding of this
+ * process has already admitted can never stand in for an entry the next surface lacks, and a
+ * refusal is a verdict about one binding rather than about the runtime: it is not recorded
+ * anywhere a later binding could read it back.
+ *
+ * Both extensions are this repository's own, driven in one process: codebase-tools declares
+ * nothing beyond the semantics every binding requires, and connect-bot's deployed assembly
+ * declares the two lifecycle axes. What each refusal names is therefore that extension's real
+ * declaration, observed through the binding interface rather than by calling a check of the
+ * framework's own.
+ */
+describe("the required-entry check belongs to each binding (P10)", () => {
+	test("a version this process already admitted does not stand in for the entry the next surface lacks", () => {
+		// The process's first binding: a complete surface reporting the version the support
+		// record lists. Admission admits it, and this process now holds that version's decision.
+		const complete = nativeDouble({ version: RECORDED_SUPPORTED_VERSION });
+		expect(complete.bind(CODEBASE_TOOLS).bound).toBe(true);
+		expect(complete.commands).toEqual(["codebase-tools"]);
+
+		// The next binding of the same process reports the same version, and the surface it was
+		// handed has no lifecycle subscription. Availability is this binding's own fact, so each
+		// extension is refused for what it actually requires: codebase-tools for the framework's
+		// own semantic, connect-bot for its two declared axes as well.
+		const incomplete = nativeDouble({
+			version: RECORDED_SUPPORTED_VERSION,
+			withoutLifecycleSubscription: true,
+		});
+		const { stderr, value: tools } = withCapturedStderr(() => {
+			const refused = incomplete.bind(CODEBASE_TOOLS);
+			connectBot(incomplete.api);
+			return refused;
+		});
+
+		expect(tools.bound ? [] : tools.failures).toEqual([
+			{ kind: "required-semantics", missing: [HISTORY_PRESERVATION] },
+		]);
+		const reported = stderr.split("\n").filter(line => line.includes("required semantics"));
+		expect(reported).toHaveLength(2);
+		expect(reported[0]).toContain(CODEBASE_TOOLS.id);
+		expect(reported[0]).toContain(HISTORY_PRESERVATION);
+		expect(reported[1]).toContain(CONNECT_BOT.id);
+		expect(reported[1]).toContain(HISTORY_PRESERVATION);
+		expect(reported[1]).toContain(SESSION_EVENTS);
+		expect(reported[1]).toContain(ROUND_EVENTS);
+		// Two different declarations, two different refusals — and neither one registered.
+		expect(incomplete.labels).toEqual([]);
+		expect(incomplete.commands).toEqual([]);
+
+		// A refusal is not a process-wide verdict either: the next binding of a complete surface
+		// is admitted and registers exactly as the first one did.
+		const afterRefusals = nativeDouble({ version: RECORDED_SUPPORTED_VERSION });
+		expect(afterRefusals.bind(CODEBASE_TOOLS).bound).toBe(true);
+		expect(afterRefusals.commands).toEqual(["codebase-tools"]);
+	});
+});
+
+/**
+ * What a refusal leaves behind, and what binding itself is (P11, P12; contract S1; stories 12–14).
+ *
+ * A refused binding is fail-soft: it registers nothing — no label, no session behavior, no command,
+ * no area entry — reports exactly one diagnostic on the non-model channel, and the agent runtime
+ * keeps running, with the bindings this process already admitted still serving. And binding is not a
+ * compatibility self-test: the registration it performs is the whole of it, so no command
+ * implementation runs, no session entry is written and no area is rendered until a command or a
+ * lifecycle delivery asks for one. Entry availability is not a proof of semantic compatibility, and
+ * a green run is a regression alarm rather than an approval of a new supported version.
+ */
+describe("what a refusal leaves behind, and what binding itself is (P11, P12)", () => {
+	test("a refusal registers nothing and reports once, while an admitted binding of the process keeps serving", () => {
+		// An admitted binding of this process, taken before the refusal.
+		const serving = portDouble();
+		expect(serving.bind(CODEBASE_TOOLS).bound).toBe(true);
+
+		const refused = portDouble();
+		const declared = CONNECT_BOT.commands?.[0]?.name ?? "";
+		expect(declared.length).toBeGreaterThan(0);
+		const result = refused.bind(CONNECT_BOT, {
+			missingRequiredSemantics: [SESSION_EVENTS, ROUND_EVENTS],
+			requiredSemantics: [SESSION_EVENTS, ROUND_EVENTS],
+			// The assembly's half of connect-bot's directed command, injected as the deployed
+			// assembly injects it: the refusal observed below is the required-entry one, not the
+			// initialization refusal of a declaration whose implementation never arrived.
+			actions: { [declared]: { run: () => {} } },
+		});
+
+		// Fail-soft and whole: one explicit diagnostic on the adapter's non-model channel, and
+		// nothing of the extension registered — no label, no session behavior, no command.
+		expect(result.bound).toBe(false);
+		expect(result.bound ? [] : result.failures).toEqual([
+			{ kind: "required-semantics", missing: [SESSION_EVENTS, ROUND_EVENTS] },
+		]);
+		expect(refused.registrations).toEqual([]);
+		expect(refused.labels).toEqual([]);
+		expect(refused.commands).toEqual([]);
+		expect(refused.diagnostics).toEqual([
+			`${CONNECT_BOT.id}: required semantics missing (${SESSION_EVENTS}, ${ROUND_EVENTS}), extension not bound`,
+		]);
+		// Nothing of the refused binding can be used: its command was never registered, so there
+		// is nothing for a user to run and no area entry to render.
+		expect(() => refused.run(declared)).toThrow();
+		expect(refused.markerUpdates).toEqual([]);
+
+		// The Agent runtime keeps running: the binding this process admitted before the refusal
+		// still has its command and its session behavior, and a boundary it observes still
+		// renders the framework's own area for the value that boundary carried.
+		const boundary = serving.deliverSession(
+			{ kind: "owner", key: "main:keeps-serving" },
+			{ statePayloads: [{ enabled: true }] },
+		);
+		expect(boundary.markers.flat()).toContain("◈ codeBaseTools");
+		expect(serving.run("codebase-tools").effects).toContain("persist");
+	});
+
+	test("binding only registers: no command ran, no session entry was written and no area was rendered", () => {
+		const double = portDouble();
+		const result = double.bind(CODEBASE_TOOLS);
+
+		// The binding is real, and its registrations are the whole of what it did.
+		expect(result.bound).toBe(true);
+		expect(double.registrations).toEqual([
+			"label:codeBaseTools",
+			"onSession",
+			"onRunInitiation",
+			"command:codebase-tools",
+		]);
+		// No behavioral self-test ran: the extension's own effects — a persisted value, a
+		// rendered area, published feedback — happen only when a command or a lifecycle
+		// delivery asks for them, and neither has happened yet.
+		expect(double.markerUpdates).toEqual([]);
+		expect(double.diagnostics).toEqual([]);
+		expect(double.state.view("main:registration-only").read("enabled")).toBe(false);
+
+		// The records are real rather than silent: the same double records the framework's own
+		// render as soon as a boundary carries the activation value, which is a lifecycle event
+		// binding must not have produced by itself.
+		const boundary = double.deliverSession(
+			{ kind: "owner", key: "main:registration-only" },
+			{ statePayloads: [{ enabled: true }] },
+		);
+		expect(boundary.markers.flat()).toContain("◈ codeBaseTools");
+	});
+});
+
 describe("an unlisted version (P25, N1, C13)", () => {
 	test("binding continues, and the main session is warned once through the notice channel", () => {
 		const adapter = testAdapter();
@@ -332,10 +487,12 @@ describe("an unlisted version (P25, N1, C13)", () => {
 		// The notice is session feedback, not a load-time diagnostic.
 		expect(adapter.diagnostics).toEqual([]);
 
-		const noticed = adapter.deliver({ kind: "owner", key: "main:session-1" });
+		const noticed = adapter.deliver({ kind: "owner", key: "main:notice-binding-continues" });
 		expect(noticed).toHaveLength(1);
-		// The notice names the extension, the version the runtime reported and the support set.
-		expect(noticed[0]).toContain("codeBaseTools");
+		// The notice is the framework's: it names the framework, the version the runtime reported and
+		// the support set, and never an extension that shares the process.
+		expect(noticed[0]).toContain("my-agent-toolkit");
+		expect(noticed[0]).not.toContain(CODEBASE_TOOLS.displayName);
 		expect(noticed[0]).toContain("18.6.1");
 		expect(noticed[0]).toContain("18.5.0");
 	});
@@ -344,7 +501,7 @@ describe("an unlisted version (P25, N1, C13)", () => {
 		const adapter = testAdapter();
 		adapter.bind(CODEBASE_TOOLS, { version: "18.6.1" });
 
-		const owner: OwnerReference = { kind: "owner", key: "main:session-1" };
+		const owner: OwnerReference = { kind: "owner", key: "main:notice-repeat" };
 		expect(adapter.deliver(owner)).toHaveLength(1);
 		// Later deliveries for that same session — a resume boundary, the end of the session —
 		// add nothing: the notice belongs to the session, not to one delivery of it.
@@ -353,24 +510,27 @@ describe("an unlisted version (P25, N1, C13)", () => {
 		// Re-binding the same definition (the loader binds every session) is not a new session.
 		expect(adapter.bind(CODEBASE_TOOLS, { version: "18.6.1" }).bound).toBe(true);
 		expect(adapter.deliver(owner)).toEqual([]);
-		// A subagent delivery follows its owner: the owner is the one that is told.
-		expect(adapter.deliver({ kind: "inherited", key: "main:session-1" })).toEqual([]);
-		// Another main session is a different session, and gets its own single notice.
-		expect(adapter.deliver({ kind: "owner", key: "main:session-2" })).toHaveLength(1);
+		// A subagent delivery follows its owner: the owner is the one that is told, and the subagent
+		// neither publishes a notice of its own nor counts as one.
+		const followed = "main:notice-repeat-followed";
+		expect(adapter.deliver({ kind: "inherited", key: followed })).toEqual([]);
+		expect(adapter.deliver({ kind: "owner", key: followed })).toHaveLength(1);
+		// Another main session is a different Owner, and gets its own single notice.
+		expect(adapter.deliver({ kind: "owner", key: "main:notice-repeat-other" })).toHaveLength(1);
 	});
 
-	test("the support set is an exact enumeration, not a range", () => {
+	test("the framework's baseline is an exact enumeration, not a range", () => {
 		const adapter = testAdapter();
 
-		// A range declaration matches no version literally, so a version inside its
-		// arithmetic range is still unlisted: support is exactly the listed versions.
-		const result = adapter.bind(CODEBASE_TOOLS, { version: "18.5.1", supportedVersions: ["^18.5.0"] });
+		// A version inside the listed version's arithmetic range is still unlisted: support is
+		// exactly the versions the baseline lists, and none of them is matched by range.
+		const result = adapter.bind(CODEBASE_TOOLS, { version: "18.5.1" });
 
 		expect(result.bound).toBe(true);
-		const noticed = adapter.deliver({ kind: "owner", key: "main:session-1" });
+		const noticed = adapter.deliver({ kind: "owner", key: "main:notice-exact-enumeration" });
 		expect(noticed).toHaveLength(1);
 		expect(noticed[0]).toContain("18.5.1");
-		expect(noticed[0]).toContain("^18.5.0");
+		expect(noticed[0]).toContain(RECORDED_SUPPORTED_VERSION);
 	});
 
 	test("a listed version produces no admission feedback at all", () => {
@@ -380,7 +540,7 @@ describe("an unlisted version (P25, N1, C13)", () => {
 
 		expect(result.bound).toBe(true);
 		expect(adapter.diagnostics).toEqual([]);
-		expect(adapter.deliver({ kind: "owner", key: "main:session-1" })).toEqual([]);
+		expect(adapter.deliver({ kind: "owner", key: "main:notice-listed-version" })).toEqual([]);
 	});
 
 	test("a runtime that reports no version is not an unlisted version", () => {
@@ -392,7 +552,7 @@ describe("an unlisted version (P25, N1, C13)", () => {
 		// rather than inventing a verdict from absence.
 		expect(result.bound).toBe(true);
 		expect(adapter.diagnostics).toEqual([]);
-		expect(adapter.deliver({ kind: "owner", key: "main:session-1" })).toEqual([]);
+		expect(adapter.deliver({ kind: "owner", key: "main:notice-unreported-version" })).toEqual([]);
 	});
 
 	test("the verified environment is recorded and never gates admission", () => {
@@ -400,16 +560,107 @@ describe("an unlisted version (P25, N1, C13)", () => {
 
 		const listed = testAdapter();
 		expect(listed.bind(CODEBASE_TOOLS, { version: "18.5.0", environment: foreign }).bound).toBe(true);
-		expect(listed.deliver({ kind: "owner", key: "main:session-1" })).toEqual([]);
+		expect(listed.deliver({ kind: "owner", key: "main:notice-environment-listed" })).toEqual([]);
 
 		const unlisted = testAdapter();
 		expect(unlisted.bind(CODEBASE_TOOLS, { version: "18.6.1", environment: foreign }).bound).toBe(true);
-		const noticed = unlisted.deliver({ kind: "owner", key: "main:session-1" });
+		const noticed = unlisted.deliver({ kind: "owner", key: "main:notice-environment-unlisted" });
 		// The only admission feedback is about the version: the environment appears in no
 		// notice, and it neither admits nor refuses a binding.
 		expect(noticed).toHaveLength(1);
 		expect(noticed[0]).not.toContain(foreign.platform);
 		expect(noticed[0]).not.toContain(foreign.runtime);
+	});
+});
+
+/**
+ * The framework's own Supported agent-runtime baseline (P1, P4, P5; contract S1).
+ *
+ * Version support belongs to the framework: an assembly declares the capabilities its extension
+ * needs and nothing about agent-runtime versions, so the caller that used to hand over its own
+ * list now assembles with no options at all. The listed version comes from the repository's
+ * support record — an independent source of truth rather than the framework's decision re-read —
+ * and the unlisted one is a version independently specified to be outside that baseline.
+ */
+describe("the framework owns the supported-version baseline (P1, P4, P5)", () => {
+	test("an assembly binds with no supported-version list, and the recorded version warns nobody", () => {
+		const double = nativeDouble({ version: RECORDED_SUPPORTED_VERSION });
+
+		const { stderr, value: result } = withCapturedStderr(() => {
+			const bound = frameworkOmp.ompAdapter(CODEBASE_TOOLS)(double.api);
+			double.deliverMain("session-1");
+			return bound;
+		});
+
+		// Bound, registered and usable: the exact version the support record lists needs no
+		// declaration from the assembly, and produces no notice on any channel.
+		expect(result.bound).toBe(true);
+		expect(double.labels).toEqual(["codeBaseTools"]);
+		expect(double.commands).toEqual(["codebase-tools"]);
+		expect(double.notifications).toEqual([]);
+		expect(stderr).toBe("");
+	});
+
+	test("the removed per-assembly list is neither accepted nor consulted", () => {
+		// The assembly interface carries no supported-version list any more; this stray value
+		// models a caller that still passes one and reaches nothing.
+		// @ts-expect-error the assembly interface has no supported-version list
+		const factory = frameworkOmp.ompAdapter(CODEBASE_TOOLS, { supportedVersions: ["0.0.0-unlisted"] });
+		const double = nativeDouble({ version: RECORDED_SUPPORTED_VERSION });
+
+		const { stderr, value: result } = withCapturedStderr(() => {
+			const bound = factory(double.api);
+			double.deliverMain("session-1");
+			return bound;
+		});
+
+		// Not a second decision source: the framework's baseline decides, so the listed runtime
+		// stays listed whatever a caller hands over.
+		expect(result.bound).toBe(true);
+		expect(double.notifications).toEqual([]);
+		expect(stderr).toBe("");
+	});
+
+	test("a version outside the baseline warns and keeps the extension running", () => {
+		const double = nativeDouble({ version: UNLISTED_RUNTIME_VERSION });
+
+		const { stderr, value: result } = withCapturedStderr(() => {
+			const bound = frameworkOmp.ompAdapter(CODEBASE_TOOLS)(double.api);
+			double.deliverMain("notice-native-unlisted");
+			return bound;
+		});
+		// The run the extension participates in still happens, and the warning is not model
+		// context: what the run hook contributes carries none of it.
+		const contribution = double.deliverRun("notice-native-unlisted");
+
+		// Warned about and not refused: the extension is labeled and its command is registered.
+		expect(result.bound).toBe(true);
+		expect(double.labels).toEqual(["codeBaseTools"]);
+		expect(double.commands).toEqual(["codebase-tools"]);
+		const warnings = double.notifications.filter(notice => notice.type === "warning");
+		expect(warnings).toHaveLength(1);
+		expect(warnings[0]?.message).toContain(UNLISTED_RUNTIME_VERSION);
+		expect(warnings[0]?.message).toContain("my-agent-toolkit");
+		expect(warnings[0]?.message).not.toContain(CODEBASE_TOOLS.displayName);
+		expect(JSON.stringify(contribution ?? null)).not.toContain("supported set");
+		// With a UI the notice travels that channel, never stderr as well.
+		expect(stderr).toBe("");
+	});
+
+	test("a runtime that reports no version keeps its existing handling", () => {
+		const double = nativeDouble();
+
+		const { stderr, value: result } = withCapturedStderr(() => {
+			const bound = frameworkOmp.ompAdapter(CODEBASE_TOOLS)(double.api);
+			double.deliverMain("session-1");
+			return bound;
+		});
+
+		// Nothing to compare: no refusal, no inferred version and no notice.
+		expect(result.bound).toBe(true);
+		expect(double.labels).toEqual(["codeBaseTools"]);
+		expect(double.notifications).toEqual([]);
+		expect(stderr).toBe("");
 	});
 });
 
@@ -435,11 +686,7 @@ interface NativeDouble {
 	/** Appended session entries: an admission notice must never write one. */
 	readonly appended: ReadonlyArray<{ readonly customType: string; readonly data: unknown }>;
 	/** Binds a definition through one factory per double, as one process binds one assembly. */
-	bind(
-		definition: ExtensionDefinition,
-		supportedVersions?: readonly [string, ...string[]],
-		requiredSemantics?: readonly DeclarableRequiredSemantic[],
-	): BindingResult;
+	bind(definition: ExtensionDefinition, requiredSemantics?: readonly DeclarableRequiredSemantic[]): BindingResult;
 	/** Delivers one main-session boundary for `sessionId`. */
 	deliverMain(sessionId: string, event?: OmpSessionEventType): void;
 	/** Delivers one subagent boundary, whose owning main session the registry resolves. */
@@ -525,17 +772,17 @@ function nativeDouble(options: NativeOptions = {}): NativeDouble {
 		commands,
 		notifications,
 		appended,
-		bind(definition, supportedVersions = ["18.5.0"], requiredSemantics) {
-			// One factory per assembly: the supported versions and the declared semantics are
-			// that assembly's own options, so two bindings that differ in either are two
-			// assemblies rather than one factory reused.
-			const key = `${definition.id}|${supportedVersions.join(",")}|${(requiredSemantics ?? []).join(",")}`;
+		bind(definition, requiredSemantics) {
+			// One factory per assembly: the declared semantics are that assembly's own options, so
+			// two bindings that differ in them are two assemblies rather than one factory reused.
+			// The supported-version baseline is not an assembly option: the framework owns it.
+			const key = `${definition.id}|${(requiredSemantics ?? []).join(",")}`;
 			let factory = factories.get(key);
 			if (factory === undefined) {
-				factory = frameworkOmp.ompAdapter(definition, {
-					supportedVersions,
-					...(requiredSemantics === undefined ? {} : { requiredSemantics }),
-				});
+				factory = frameworkOmp.ompAdapter(
+					definition,
+					requiredSemantics === undefined ? {} : { requiredSemantics },
+				);
 				factories.set(key, factory);
 			}
 			return factory(api);
@@ -580,8 +827,8 @@ describe("admission on the OMP adapter (P24, P27, C13)", () => {
 
 		const { stderr, value: result } = withCapturedStderr(() => {
 			const bound = double.bind(CODEBASE_TOOLS);
-			double.deliverMain("session-1");
-			double.deliverMain("session-1", "session_switch");
+			double.deliverMain("notice-ui-session");
+			double.deliverMain("notice-ui-session", "session_switch");
 			double.deliverSubagent();
 			return bound;
 		});
@@ -591,7 +838,10 @@ describe("admission on the OMP adapter (P24, P27, C13)", () => {
 		expect(double.commands).toEqual(["codebase-tools"]);
 		expect(double.notifications).toHaveLength(1);
 		expect(double.notifications[0]?.type).toBe("warning");
-		expect(double.notifications[0]?.message).toContain("codeBaseTools");
+		// The notice is the framework's own warning: it names the framework and the version, never
+		// the extension whose binding produced it.
+		expect(double.notifications[0]?.message).toContain("my-agent-toolkit");
+		expect(double.notifications[0]?.message).not.toContain(CODEBASE_TOOLS.displayName);
 		expect(double.notifications[0]?.message).toContain("18.6.1");
 		expect(double.notifications[0]?.message).toContain("18.5.0");
 		// With a UI the notice is a UI notification, never a stderr write as well.
@@ -599,7 +849,7 @@ describe("admission on the OMP adapter (P24, P27, C13)", () => {
 		// The notice is feedback, not model context: it writes no session entry and adds
 		// nothing to a run's contribution.
 		expect(double.appended).toEqual([]);
-		const contribution = double.deliverRun("session-1");
+		const contribution = double.deliverRun("notice-ui-session");
 		expect(JSON.stringify(contribution ?? null)).not.toContain("supported set");
 	});
 
@@ -608,8 +858,8 @@ describe("admission on the OMP adapter (P24, P27, C13)", () => {
 
 		const { stderr, value: result } = withCapturedStderr(() => {
 			const bound = double.bind(CODEBASE_TOOLS);
-			double.deliverMain("session-1");
-			double.deliverMain("session-1", "session_switch");
+			double.deliverMain("notice-headless-session");
+			double.deliverMain("notice-headless-session", "session_switch");
 			return bound;
 		});
 
@@ -617,9 +867,51 @@ describe("admission on the OMP adapter (P24, P27, C13)", () => {
 		expect(double.notifications).toEqual([]);
 		const noticeLines = stderr.split("\n").filter(line => line.includes("supported set"));
 		expect(noticeLines).toHaveLength(1);
-		expect(noticeLines[0]).toContain("codeBaseTools");
+		expect(noticeLines[0]).toContain("my-agent-toolkit");
+		expect(noticeLines[0]).not.toContain(CODEBASE_TOOLS.displayName);
 		expect(noticeLines[0]).toContain("18.6.1");
 		expect(noticeLines[0]).toContain("18.5.0");
+	});
+
+	test("a subagent's delivery neither publishes the notice nor counts as the session it follows", () => {
+		const double = nativeDouble({ version: "18.6.1" });
+
+		withCapturedStderr(() => {
+			double.bind(CODEBASE_TOOLS);
+			// The subagent's own delivery comes first, and the owner it resolves — by the runtime's
+			// own registry — is the main session that spawned it.
+			double.deliverSubagent();
+		});
+
+		// Nothing is published for a session that is not its own owner.
+		expect(double.notifications).toEqual([]);
+
+		withCapturedStderr(() => {
+			// The owner's own delivery is still the first delivery *of that owner*: a subagent that
+			// was resolved to it does not stand in for it, so the notice is published here.
+			double.deliverMain("owner-session");
+			// And the subagent's further deliveries publish nothing either.
+			double.deliverSubagent();
+		});
+
+		expect(double.notifications).toHaveLength(1);
+		expect(double.notifications[0]?.message).toContain("18.6.1");
+	});
+
+	test("two main sessions of one process are two Owners, each warned once of its own", () => {
+		const double = nativeDouble({ version: "18.6.1" });
+
+		withCapturedStderr(() => {
+			double.bind(CODEBASE_TOOLS);
+			double.deliverMain("notice-owner-a");
+			double.deliverMain("notice-owner-a", "session_switch");
+			double.deliverMain("notice-owner-b");
+		});
+
+		// Per Owner, not per process: the version decision is shared, the notice is not.
+		expect(double.notifications).toHaveLength(2);
+		expect(double.notifications[0]?.message).toBe(double.notifications[1]?.message);
+		expect(double.notifications[0]?.message).toContain("18.6.1");
 	});
 
 	test("a native surface without the framework's append-only paths is refused, not degraded", () => {
@@ -652,11 +944,11 @@ describe("admission on the OMP adapter (P24, P27, C13)", () => {
 
 		withCapturedStderr(() => {
 			double.bind(CODEBASE_TOOLS);
-			double.deliverMain("session-1");
+			double.deliverMain("notice-rebound-session");
 			// The loader binds the same assembly again for another session (or re-entry);
-			// the ledger of that assembly already told this main session.
+			// the notice this process already published for this Owner is not published again.
 			double.bind(CODEBASE_TOOLS);
-			double.deliverMain("session-1");
+			double.deliverMain("notice-rebound-session");
 		});
 
 		expect(double.notifications).toHaveLength(1);
@@ -668,7 +960,7 @@ describe("the declared semantic dependencies on the OMP adapter (P26, F8)", () =
 		const double = nativeDouble({ version: "18.5.0", withoutLifecycleSubscription: true });
 
 		const { stderr, value: result } = withCapturedStderr(() => {
-			const bound = double.bind(CODEBASE_TOOLS, ["18.5.0"], [SESSION_EVENTS, ROUND_EVENTS]);
+			const bound = double.bind(CODEBASE_TOOLS, [SESSION_EVENTS, ROUND_EVENTS]);
 			double.deliverMain("session-1");
 			return bound;
 		});
@@ -710,7 +1002,7 @@ describe("the declared semantic dependencies on the OMP adapter (P26, F8)", () =
 		const double = nativeDouble({ version: "18.5.0" });
 
 		const { stderr, value: result } = withCapturedStderr(() => {
-			const bound = double.bind(CODEBASE_TOOLS, ["18.5.0"], [SESSION_EVENTS, ROUND_EVENTS]);
+			const bound = double.bind(CODEBASE_TOOLS, [SESSION_EVENTS, ROUND_EVENTS]);
 			double.deliverMain("session-1");
 			return bound;
 		});
@@ -751,10 +1043,7 @@ describe("the OMP assembly's configuration base directory (P19, P42)", () => {
 			// The definition's convention path exists under the supplied directory and does not
 			// exist under this process's own working directory, so the file is found only if the
 			// adapter handed the directory to the binding.
-			const result = frameworkOmp.ompAdapter(definition, {
-				supportedVersions: ["18.5.0"],
-				configBaseDir: repository,
-			})(double.api);
+			const result = frameworkOmp.ompAdapter(definition, { configBaseDir: repository })(double.api);
 
 			expect(result.bound).toBe(true);
 			expect(double.labels).toEqual(["based-assembly"]);
@@ -766,14 +1055,15 @@ describe("the OMP assembly's configuration base directory (P19, P42)", () => {
 });
 
 /**
- * What connect-bot's own assembly declares to admission (P42).
+ * What connect-bot's own deployed assembly meets at admission (P42).
  *
  * Everything above drives the adapter from a definition this suite holds; this block drives the
  * deployed assembly instead — the factory `entrypoints/omp/connect-bot.ts` re-exports — so the
- * versions and semantics under test are the ones a real session on a recorded runtime meets.
+ * version and semantics under test are the ones a real session on a recorded runtime meets.
  * The native surface stays the double above: which version a runtime reports and whether it
  * subscribes lifecycle events are facts of the runtime itself, and no real install can be asked
- * to vary them.
+ * to vary them. What the extension depends on it still declares — its configuration and its two
+ * semantic axes — while version support is the framework's baseline, not this assembly's.
  *
  * The extension declares a configuration, and this block fixes where its file is read from: the
  * assembly supplies the repository root it derives from its own module location, so the binding
@@ -782,7 +1072,7 @@ describe("the OMP assembly's configuration base directory (P19, P42)", () => {
  * observed where a load really reads — the loader and session tests in deployment.test.ts, which
  * bind this entrypoint from a working directory outside this repository.
  */
-describe("connect-bot's declared support and semantics (P42)", () => {
+describe("connect-bot's deployed assembly at admission (P42)", () => {
 	test("the runtime this repository records is admitted, so the extension registers", () => {
 		const double = nativeDouble({ version: "18.5.0" });
 
@@ -820,9 +1110,9 @@ describe("connect-bot's declared support and semantics (P42)", () => {
 
 		const { stderr } = withCapturedStderr(() => {
 			connectBot(double.api);
-			double.deliverMain("session-1");
+			double.deliverMain("notice-connect-bot-session");
 			// A later boundary of the same session is not a second session.
-			double.deliverMain("session-1", "session_switch");
+			double.deliverMain("notice-connect-bot-session", "session_switch");
 		});
 
 		// Continue: the command the extension owns is registered either way.
@@ -830,9 +1120,10 @@ describe("connect-bot's declared support and semantics (P42)", () => {
 		expect(double.notifications).toHaveLength(1);
 		expect(double.notifications[0]?.type).toBe("warning");
 		const notice = double.notifications[0]?.message ?? "";
-		// The notice names the extension, the version the runtime reported and the set this
-		// assembly declares — the recorded support version and nothing wider.
-		expect(notice).toContain("connectBot");
+		// The notice is the framework's: it names the framework, the version the runtime reported
+		// and the set the framework's baseline holds — and no extension of this process.
+		expect(notice).toContain("my-agent-toolkit");
+		expect(notice).not.toContain("connectBot");
 		expect(notice).toContain("18.6.1");
 		expect(notice).toContain("18.5.0");
 		// The notice is session feedback, not a load-time diagnostic.

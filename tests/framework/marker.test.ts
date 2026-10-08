@@ -102,7 +102,7 @@ function nativeDouble(options: { readonly hasUI?: boolean } = {}): NativeDouble 
 		widgets,
 		appended,
 		bind(definition) {
-			const factory = frameworkOmp.ompAdapter(definition, { supportedVersions: ["18.5.0"] });
+			const factory = frameworkOmp.ompAdapter(definition);
 			if (!factory(api).bound) throw new Error(`definition "${definition.id}" did not bind`);
 		},
 		toggle(sessionId, command) {

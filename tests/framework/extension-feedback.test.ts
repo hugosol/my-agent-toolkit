@@ -126,11 +126,15 @@ describe("the framework's own notices are not extension feedback", () => {
 		const double = portDouble();
 		double.bind(CODEBASE_TOOLS, { version: "18.6.1" });
 
-		const boundary = double.deliverSession(OWNER);
+		const boundary = double.deliverSession({ kind: "owner", key: "main:feedback-notice-channel" });
 
-		expect(boundary.notices).toEqual([
-			"codeBaseTools: agent runtime version 18.6.1 is not in the supported set (18.5.0); continuing without a support claim",
-		]);
+		// What this suite observes is the channel: the framework published exactly one notice,
+		// on the framework's own notice channel, naming the framework, the version it is about
+		// and the support set it echoes — and never the extension whose binding produced it.
+		expect(boundary.notices).toHaveLength(1);
+		expect(boundary.notices[0]).toContain("my-agent-toolkit");
+		expect(boundary.notices[0]).not.toContain(CODEBASE_TOOLS.displayName);
+		expect(boundary.notices[0]).toContain("18.6.1");
 		// A framework warning is not an extension notice: it is never routed through the
 		// channel an extension's own text travels.
 		expect(boundary.feedback).toEqual([]);

@@ -15,9 +15,10 @@
  * framework retired its cell before this handler ran and the capability such a delivery hands out
  * is inert from birth — and it is decided by the one table every other notice is decided by. Only
  * then, with the local half already complete, is the row that session left on the panel removed:
- * one `unregister` naming the real session id the record held, best-effort and within the wire
- * contract's budget, neither retried nor reported if the panel does not answer. The session taking
- * its place is left exactly as it is found — not armed, with no record of its own and no beat.
+ * one `unregister` naming the real session id the record held, best-effort and within the
+ * extension's own configured request budget, neither retried nor reported if the panel does not
+ * answer. The session taking its place is left exactly as it is found — not armed, with no record
+ * of its own and no beat.
  *
  * A `disposed` boundary — the process itself going away — stops the same local effects and says
  * nothing at all. There is no operator left to tell and no row this extension could still name on
@@ -34,7 +35,7 @@
  * API.
  */
 import type { SessionEventDelivery } from "../../framework/core/protocol";
-import { UNREGISTER_TIMEOUT_MS, pushEvent, type PushEnvelope } from "./client";
+import { pushEvent, type PushEnvelope } from "./client";
 import { connectBotConfig } from "./config";
 import { publishFeedback } from "./feedback";
 import { botSessions, stopLocalEffects } from "./session";
@@ -69,8 +70,8 @@ export function endSession(delivery: SessionEventDelivery): void {
 }
 
 /**
- * Asks the panel to remove the row one ended session left, within the wire contract's best-effort
- * budget.
+ * Asks the panel to remove the row one ended session left, within the extension's own configured
+ * request budget.
  *
  * Its answer is nobody's business here: the connection it described is gone either way, so a reject,
  * a timeout and a reachable panel are the same outcome — the row disappears now, or the panel's own
@@ -79,8 +80,11 @@ export function endSession(delivery: SessionEventDelivery): void {
  */
 async function releaseRow(sessionId: string): Promise<void> {
 	const envelope: PushEnvelope = { sessionId, kind: "unregister" };
+	// The one unified wait: the extension's own configured budget, the same value the register and
+	// an explicit `off` use — nothing on this path has a budget of its own.
+	const { endpoint, requestTimeoutMs } = connectBotConfig();
 	try {
-		await pushEvent(connectBotConfig().endpoint, envelope, UNREGISTER_TIMEOUT_MS);
+		await pushEvent(endpoint, envelope, requestTimeoutMs);
 	} catch {
 		// Best-effort: a panel that does not answer leaves the row to its own expiry.
 	}

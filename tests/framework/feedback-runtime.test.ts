@@ -126,13 +126,13 @@ function bindProbe(double: NativeDouble, seenHasUI: boolean[]): void {
 			},
 		},
 	};
-	const factory = frameworkOmp.ompAdapter(PROBE, { supportedVersions: ["18.5.0"], actions });
+	const factory = frameworkOmp.ompAdapter(PROBE, { actions });
 	if (!factory(double.api).bound) throw new Error("the feedback probe definition did not bind");
 }
 
 /** Binds the codebase-tools definition, whose toggle announces its activation. */
 function bindCodebaseTools(double: NativeDouble): void {
-	const factory = frameworkOmp.ompAdapter(CODEBASE_TOOLS, { supportedVersions: ["18.5.0"] });
+	const factory = frameworkOmp.ompAdapter(CODEBASE_TOOLS);
 	if (!factory(double.api).bound) throw new Error("the codebase-tools definition did not bind");
 }
 

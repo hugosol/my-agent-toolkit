@@ -218,7 +218,7 @@ const verification: CandidateVerification = {
 	frameworkSuite,
 	regressionAlarm,
 	certification:
-		"none: a green framework suite is a regression alarm only. Replacing the supported version is an explicit maintainer action (edit supportedVersions, update docs/agent-runtime-support.md, restart), and an upgrade that touches an extension-visible surface additionally needs one human TUI spot check.",
+		"none: a green framework suite is a regression alarm only. Replacing the supported version is an explicit maintainer action (edit SUPPORTED_AGENT_RUNTIME_VERSIONS in framework/core/baseline.ts, update docs/agent-runtime-support.md, restart), and an upgrade that touches an extension-visible surface additionally needs one human TUI spot check.",
 };
 
 writeFileSync(recordPath, `${JSON.stringify(verification, null, "\t")}\n`);

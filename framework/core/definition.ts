@@ -183,8 +183,14 @@ export interface MarkerDeclaration {
  * does not implement is refused at binding rather than read as a looser one. A
  * `non-empty-string` is the framework's own refinement of `string` — an extension for
  * which the empty string is not a value declares it and writes no check of its own.
+ *
+ * A `milliseconds` is the framework's own refinement of `number` for a wait budget: a whole
+ * number of milliseconds this runtime's timer schedules — from 1 through 2^31-1, the longest
+ * delay it waits for before clamping a value to 1ms. An extension that configures a timeout
+ * declares it and writes no check of its own, and a value outside the range refuses the
+ * binding rather than letting the extension run on a budget it would not be given.
  */
-export type ConfigFieldType = "string" | "non-empty-string" | "number" | "boolean";
+export type ConfigFieldType = "string" | "non-empty-string" | "number" | "boolean" | "milliseconds";
 
 /** The configuration value types this framework version validates. */
 export const BOUND_CONFIG_FIELD_TYPES: readonly ConfigFieldType[] = [
@@ -192,6 +198,7 @@ export const BOUND_CONFIG_FIELD_TYPES: readonly ConfigFieldType[] = [
 	"non-empty-string",
 	"number",
 	"boolean",
+	"milliseconds",
 ];
 
 /**

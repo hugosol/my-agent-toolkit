@@ -20,9 +20,9 @@ import {
 	type PushFetchInit,
 	type PushHttpResponse,
 	type PushTransport,
-	UNREGISTER_TIMEOUT_MS,
 	setPushTransportForTest,
 } from "../../extensions/connect-bot/client";
+import { connectBotConfig } from "../../extensions/connect-bot/config";
 import { botSessions } from "../../extensions/connect-bot/session";
 import connectBot from "../../extensions/connect-bot/runtimes/omp";
 import { type OmpDouble, ompDouble } from "./support/omp-double";
@@ -175,14 +175,13 @@ describe("another identity takes the session's place (E13, P34, P15)", () => {
 		expect(double.notificationLevels).toEqual(["info", "info"]);
 
 		// The row removed is the real session id the old record held — the identity the panel keys
-		// by, and the one the new session does not have — within the wire contract's best-effort
+		// by, and the one the new session does not have — within the extension's configured request
 		// budget, and with no body of its own.
 		expect(requests.map(request => envelopeOf(request).kind)).toEqual(["register", "state", "unregister"]);
 		const removal = envelopeOf(requests[2]!);
 		expect(removal.sessionId).toBe("switch-old");
 		expect(removal.kind).toBe("unregister");
 		expect(removal.data).toBeUndefined();
-		expect(UNREGISTER_TIMEOUT_MS).toBe(1500);
 		expect(requests[2]?.init.body).toBe(JSON.stringify({ sessionId: "switch-old", kind: "unregister" }));
 		// The local half was already complete when the request went out: nothing this extension runs
 		// for that session outlived it, and no answer the panel might give can change that.
@@ -230,7 +229,8 @@ describe("another identity takes the session's place (E13, P34, P15)", () => {
 		double.switchSession(double.context({ sessionId: "switch-silent-new", cwd: "E:/work/switch" }), "new");
 		expect(requests.map(request => envelopeOf(request).kind)).toEqual(["register", "state", "unregister"]);
 
-		jest.advanceTimersByTime(UNREGISTER_TIMEOUT_MS);
+		// The request's own budget: the extension's configured value, advanced to rather than waited out.
+		jest.advanceTimersByTime(connectBotConfig().requestTimeoutMs);
 		await settleAll();
 
 		expect(requests[2]?.init.signal.aborted).toBe(true);
@@ -332,7 +332,7 @@ describe("the session is disposed rather than transferred (E14, P35)", () => {
 		// The panel judges 在线/离线 from its own window (P30, E9); this extension never implements a
 		// second copy of it, so the disposal leaves one timer in total and it is the cancelled beat.
 		expect(double.timers).toHaveLength(1);
-		expect(double.timers[0]?.ms).toBe(10_000);
+		expect(double.timers[0]?.cancelled).toBe(true);
 	});
 });
 

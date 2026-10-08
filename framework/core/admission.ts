@@ -3,19 +3,33 @@
  *
  * Admission runs while an extension is being bound and before it registers anything, and
  * it reaches exactly one judgement — whether the agent runtime this binding runs on is one
- * the extension declares support for. Two things are deliberately not that judgement. A
- * runtime version outside the declared set is *not* a refusal: the binding continues, the
- * session is told once and no support is claimed. A required framework semantic the
- * runtime cannot honor *is* a refusal — where "required" is the framework's own semantics
- * plus the ones the extension's assembly declared, so a gap nobody asked for refuses
- * nobody — and the binding is abandoned with nothing registered, because a missing
- * semantic cannot be traded for an unrecognized version. The refusal therefore wins over
- * the unlisted version, and the two are never reported as one.
+ * the framework's Supported agent-runtime baseline ({@link SUPPORTED_AGENT_RUNTIME_VERSIONS})
+ * lists. Two things are deliberately not that judgement. A runtime version outside that
+ * baseline is *not* a refusal: the binding continues, the session is told once — one framework
+ * notice per Owner for the whole process, published by the notice behavior
+ * (`framework/behaviors/admission.ts`) — and no
+ * support is claimed. A required framework semantic the runtime cannot honor *is* a refusal —
+ * where "required" is the framework's own semantics plus the ones the extension's assembly
+ * declared, so a gap nobody asked for refuses nobody — and the binding is abandoned with
+ * nothing registered, because a missing semantic cannot be traded for an unrecognized
+ * version. The refusal therefore wins over the unlisted version, and the two are never
+ * reported as one.
  *
  * The adapter resolves the facts; this module owns the rule. It names no agent runtime:
  * a version is the string the runtime reports, and a missing semantic is the adapter's
- * observation that a native path the framework's contract rests on is not there.
+ * observation that a native path the framework's contract rests on is not there. Which
+ * versions are supported is likewise not the adapter's or an assembly's to say: the baseline
+ * is declared here, and no calling surface accepts a version list of its own.
+ *
+ * The version decision is process-scoped, not module- or binding-scoped: one judgement per
+ * reported version is recorded on the process global and shared by every consumer in the
+ * process, including the copies of this module an agent runtime that evaluates each
+ * extension's graph separately holds ({@link VERSION_DECISIONS_KEY}). Whether the runtime
+ * honors a required semantic is the opposite: that fact is re-read per binding, because it is
+ * the interface this binding was handed, not a property of the version.
  */
+
+import { SUPPORTED_AGENT_RUNTIME_VERSIONS } from "./baseline";
 
 /**
  * A semantic the framework must be able to honor before it binds an extension.
@@ -92,23 +106,40 @@ export type AdmissionOutcome =
 export type UnlistedVersionAdmission = Extract<AdmissionOutcome, { readonly kind: "unlisted-version" }>;
 
 /**
- * Decides one binding's admission from the declared support set, the observed facts, and the
- * semantics the extension's assembly declared it depends on.
+ * The version axis's half of {@link AdmissionOutcome}: what one reported version was judged to be.
+ *
+ * A required-semantics refusal is not part of it — whether *this* binding loses a semantic is this
+ * binding's own judgement, from the semantics required of it — so this is exactly what the process
+ * records per version.
+ */
+type VersionDecision = Extract<AdmissionOutcome, { readonly kind: "admitted" } | { readonly kind: "unlisted-version" }>;
+
+/**
+ * Decides one binding's admission from the observed facts and the semantics the extension's
+ * assembly declared it depends on.
+ *
+ * The support set is not an input: version membership is decided against the framework's own
+ * {@link SUPPORTED_AGENT_RUNTIME_VERSIONS}, so an assembly cannot supply, widen or replace it.
  *
  * A missing required semantic refuses first, so the version axis is never consulted for a
  * runtime that cannot honor one of the framework's contracts — or one the extension asked
  * for. "Required" is the union of two things: the framework's own semantics, which every
  * binding requires, and what the assembly declared. A semantic no one declared is a fact
  * about the runtime and nothing more, so it refuses nothing. Otherwise an observed version
- * outside the support set is an unlisted version — warned about once per main session, after
+ * outside the baseline is an unlisted version — warned about once per Owner, the main session, after
  * which binding continues. A runtime that reports no version leaves nothing to compare, so
  * admission adds nothing rather than inventing a verdict from absence.
+ *
+ * The version judgement itself is the process's, made once per reported version
+ * ({@link decideVersion}): the first binding to report a version decides it, and every later
+ * binding — in this module's copy or in another one the agent runtime loaded — reads that
+ * decision instead of making a second one. A report of no version decides nothing, so what a
+ * process records is always a decision about a version it was actually told.
  *
  * The declared semantics default to none, which is what an assembly with no capability
  * dependency passes.
  */
 export function admit(
-	supportedVersions: readonly string[],
 	facts: AdmissionFacts,
 	requiredSemantics: readonly DeclarableRequiredSemantic[] = [],
 ): AdmissionOutcome {
@@ -117,36 +148,61 @@ export function admit(
 	if (missing.length > 0) return { kind: "required-semantics-missing", missing };
 
 	const { version } = facts;
-	if (version === undefined || supportedVersions.includes(version)) return { kind: "admitted" };
-	return { kind: "unlisted-version", version, supportedVersions: [...supportedVersions] };
+	return version === undefined ? { kind: "admitted" } : decideVersion(version);
 }
 
 /**
- * The once-per-main-session record of admission notices.
+ * The process-global record of the version decision: one entry per version the runtime reported.
  *
- * One instance belongs to an assembly — a definition plus the adapter that binds it — so
- * every binding of that assembly in one process shares it. The notice for a main session
- * is published on the first delivery that session is the owner of, and no later re-entry,
- * re-binding or navigation of the same session repeats it.
+ * The decision belongs to the process, not to a module instance. The OMP legacy loader rewrites
+ * every relative import of an extension's graph to `specifier?mtime=<per-load tag>`, with a fresh
+ * tag per extension load, so two extensions that use this framework evaluate their own copy of
+ * this module — the precedent for the one shared marker area is in
+ * `framework/behaviors/marker.ts` — and a record kept in this module would judge the reported
+ * version once per copy. Holding the record on the process global under a well-known symbol gives
+ * the copies one record, and `Symbol.for` is what lets them agree on the key by name while holding
+ * no shared module identity.
+ *
+ * The version is the key, so what a process holds is one decision per version rather than one
+ * process-wide verdict: two reported versions are two decisions, and the first report of a version
+ * is the only one that judges it.
  */
-export class AdmissionNotices {
-	readonly #notifiedOwners = new Set<string>();
+const VERSION_DECISIONS_KEY: unique symbol = Symbol.for("my-agent-toolkit.semantic-extensions.version-decisions");
 
-	/** Claims the notice for one owner: true the first time, false on every later claim. */
-	claim(ownerKey: string): boolean {
-		if (this.#notifiedOwners.has(ownerKey)) return false;
-		this.#notifiedOwners.add(ownerKey);
-		return true;
-	}
+/** The process global, narrowed to the one entry this module reads and writes. */
+interface VersionDecisionScope {
+	[VERSION_DECISIONS_KEY]?: Map<string, VersionDecision>;
+}
+
+/** The process-wide record: one decision per reported version, shared by every copy and binding. */
+function versionDecisions(): Map<string, VersionDecision> {
+	const scope = globalThis as VersionDecisionScope;
+	const registered = scope[VERSION_DECISIONS_KEY];
+	if (registered !== undefined) return registered;
+
+	const decisions = new Map<string, VersionDecision>();
+	scope[VERSION_DECISIONS_KEY] = decisions;
+	return decisions;
 }
 
 /**
- * The notice text for an unlisted version.
+ * The decision one reported version is judged to, made once per process and shared by every
+ * consumer of it: whether the version is in the baseline, and — when it is not — the version and
+ * the set it was judged against.
  *
- * One line naming the extension, the version the runtime reported and the versions the
- * extension declares; the wording is the framework's, and the facts it carries are the
- * ones the operator needs to decide whether to upgrade or to keep running.
+ * The reported version is the whole input, so the decision is reusable as it stands: the first
+ * binding to report a version computes it, and every later one, in any copy of this module, reads
+ * that very value rather than a second one that would say the same thing. Nothing is recorded
+ * under any other key: an unreported version reaches no further than the caller's own binding.
  */
-export function describeUnlistedVersion(displayName: string, outcome: UnlistedVersionAdmission): string {
-	return `${displayName}: agent runtime version ${outcome.version} is not in the supported set (${outcome.supportedVersions.join(", ")}); continuing without a support claim`;
+function decideVersion(version: string): VersionDecision {
+	const decisions = versionDecisions();
+	const decided = decisions.get(version);
+	if (decided !== undefined) return decided;
+
+	const decision: VersionDecision = SUPPORTED_AGENT_RUNTIME_VERSIONS.includes(version)
+		? { kind: "admitted" }
+		: { kind: "unlisted-version", version, supportedVersions: [...SUPPORTED_AGENT_RUNTIME_VERSIONS] };
+	decisions.set(version, decision);
+	return decision;
 }

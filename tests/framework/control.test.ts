@@ -100,7 +100,7 @@ function nativeDouble(options: { readonly failAppend?: boolean } = {}): NativeDo
 
 /** Binds the codebase-tools definition to the double. */
 function bindCodebaseTools(double: NativeDouble): void {
-	const factory = frameworkOmp.ompAdapter(CODEBASE_TOOLS, { supportedVersions: ["18.5.0"] });
+	const factory = frameworkOmp.ompAdapter(CODEBASE_TOOLS);
 	const result = factory(double.api);
 	if (!result.bound) throw new Error("the codebase-tools definition did not bind");
 }

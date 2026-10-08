@@ -39,13 +39,11 @@ const sameNameDefinition = defineExtension({
 	commands: [{ type: "toggle", name: SHARED_COMMAND, state: "enabled" }],
 });
 
-const supportedVersions = ["18.5.0"] as const;
-
 describe("same-name extensions in one process (N8, P30)", () => {
 	test("two assemblies of one identity both register: the framework does not dedupe by name", () => {
 		const surface = recordingApi();
-		const first = ompAdapter(sameNameDefinition, { supportedVersions });
-		const second = ompAdapter(sameNameDefinition, { supportedVersions });
+		const first = ompAdapter(sameNameDefinition);
+		const second = ompAdapter(sameNameDefinition);
 
 		expect(first(surface.api).bound).toBe(true);
 		expect(second(surface.api).bound).toBe(true);
@@ -55,7 +53,7 @@ describe("same-name extensions in one process (N8, P30)", () => {
 
 	test("one assembly registers once, so the double is not inflating the count", () => {
 		const surface = recordingApi();
-		expect(ompAdapter(sameNameDefinition, { supportedVersions })(surface.api).bound).toBe(true);
+		expect(ompAdapter(sameNameDefinition)(surface.api).bound).toBe(true);
 		expect(surface.labels).toEqual(["codeBaseTools"]);
 		expect(surface.commands).toEqual([SHARED_COMMAND]);
 	});

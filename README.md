@@ -45,6 +45,40 @@ configuration and any running agent are untouched. `bun run test` runs all three
 | [`scripts/capture-codex-outbound.ts`](scripts/capture-codex-outbound.ts) | Prepared layer-2 capture of a real `openai-codex` round trip; needs a human-supplied credential. | You are recording the real-credential role evidence. |
 | [`.scratch/connect-bot-migration/`](.scratch/connect-bot-migration) | The migration design record: spec, contract, map, decisions, lighthouse documents, implementation tickets and the run record. | You need the reasoning behind a requirement. |
 
+## connect-bot configuration
+
+connect-bot's panel endpoint and its request budget are plain values in one file the framework reads
+and validates at binding: [`extensions/connect-bot/config.yaml`](extensions/connect-bot/config.yaml)
+(the convention `extensions/<id>/config.yaml`, overridable through `config.path`). That file is the
+**only** source — the committed file *is* the repository's default, and there is no code default, no
+environment override and no hot-reload entry — so a missing or illegal value refuses the extension at
+binding instead of letting it run on an invented one.
+
+| Key | Meaning |
+| --- | --- |
+| `endpoint` | The panel base URL. |
+| `requestTimeoutMs` | The wait budget of **one** HTTP request, in **milliseconds** (a whole number, 1–2147483647). |
+
+`requestTimeoutMs` is one budget for every request the extension makes — `register` (`/connect-bot`),
+the explicit `unregister` (`/connect-bot off`), the session-end/switch `unregister`, and the
+background heartbeat/state pushes — with no per-operation timeout left; the repository ships `1000`.
+A validated configuration is read once per extension per process, so **a changed value takes effect
+only after restarting the agent runtime**, never inside the running process
+([`tests/connect-bot/request-timeout.test.ts`](tests/connect-bot/request-timeout.test.ts)). The
+behaviour is the same field the framework's `milliseconds` type and its "read once per process, no
+environment or command-line override" rule describe
+([framework capabilities](docs/framework-capabilities.md#extension-configuration-declaration--file)).
+
+Two facts this budget does not decide, and which the smoke list below must not confuse: a client that
+has stopped waiting is **not** evidence that the panel did not receive or apply a request — a request
+can be received, processed and applied while its answer is still on its way — and Panel session
+registration (the panel's row) is a different thing from Panel session online status (the panel's own
+judgement that a row has been heard from recently enough). The panel's online window (30s) and scan
+cadence (5s) are server-side numbers derived from nothing this extension sends, so adjusting
+`requestTimeoutMs` requires **no change to omp-bot**
+([`tests/connect-bot/panel-registration-lifecycle.test.ts`](tests/connect-bot/panel-registration-lifecycle.test.ts)).
+Both terms are the project's vocabulary in [GLOSSARY.md](GLOSSARY.md).
+
 ## Human acceptance and cutover
 
 The automated suites (`bun test`) prove the consumer-visible behavior at seams that do not need a
@@ -173,10 +207,10 @@ behind, and the smoke list.
    of letting it connect to an invented address. The committed file points at the panel on the same
    host (`http://127.0.0.1:8787`) instead of the old `config.json`'s `http://omp-bot.local:8787`: the
    panel listens on `0.0.0.0:8787`, a loopback address answers in milliseconds, and resolving the mDNS
-   name can take longer than the register's 1s budget on first use (which reads as a failed arm). Copy
-   the old value only when the panel runs on another host; then write the address this machine can
-   reach. There is no automatic conversion and no state migration — the new implementation persists
-   only `{enabled}`.
+   name can take longer than the configured request budget on first use (1000ms as shipped, which reads
+   as a failed arm). Copy the old value only when the panel runs on another host; then write the address
+   this machine can reach. There is no automatic conversion and no state migration — the new
+   implementation persists only `{enabled}`.
 4. Restart the agent runtime as a whole process (step 3 above).
 5. Expect the old implementation's panel rows to expire without an `unregister`: it is no longer
    running, so its rows pass the panel's 30s keep-alive (a ≤35s scan, worst case about 45s), turn
@@ -186,8 +220,8 @@ behind, and the smoke list.
    panel whose `listen_addr` covers `config.yaml`'s `endpoint`, and confirm:
 
    - **接入** — `/connect-bot` registers the current session: the marker `◐ connectBot` appears, the
-     panel shows one row within about 1s (a new session is `空闲`), and the notification reports the
-     online-session count.
+     panel shows one row within the configured request budget (about 1s as shipped; a new session is
+     `空闲`), and the notification reports the online-session count.
    - **重注册** — `/connect-bot` again reuses and refreshes the same row: one row, no flicker, count
      unchanged.
    - **轮次结束** — the row moves `工作中` → `等待用户输入` when a turn ends.
@@ -220,8 +254,9 @@ the loader behavior, not the human cutover.
 
 This is the explicit maintainer action in step 4 of
 [Upgrading the supported agent runtime](#upgrading-the-supported-agent-runtime): change
-`supportedVersions` in [`extensions/codebase-tools/runtimes/omp.ts`](extensions/codebase-tools/runtimes/omp.ts),
-update the four-state support record in [`docs/agent-runtime-support.md`](docs/agent-runtime-support.md),
+`SUPPORTED_AGENT_RUNTIME_VERSIONS` in [`framework/core/baseline.ts`](framework/core/baseline.ts) — the
+framework-owned baseline, since version support belongs to the framework and an extension assembly declares
+no version list — update the four-state support record in [`docs/agent-runtime-support.md`](docs/agent-runtime-support.md),
 refresh [`docs/agent-runtime-baseline.json`](docs/agent-runtime-baseline.json) (re-checked by
 [`tests/harness/baseline.test.ts`](tests/harness/baseline.test.ts)), then restart. The candidate result
 record from [`scripts/verify-omp-candidate.ts`](scripts/verify-omp-candidate.ts)
@@ -276,9 +311,10 @@ are mechanical and can be run by a human or an agent; steps 3–4 are human/main
 4. **Replace the supported version — an explicit maintainer action.**
    Only after reviewing the candidate result (and the spot check where step 3 applied):
 
-   - change `supportedVersions` in
-     [`extensions/codebase-tools/runtimes/omp.ts`](extensions/codebase-tools/runtimes/omp.ts)
-     from `["18.5.0"]` to the new exact version;
+   - change `SUPPORTED_AGENT_RUNTIME_VERSIONS` in
+     [`framework/core/baseline.ts`](framework/core/baseline.ts)
+     from `["18.5.0"]` to the new exact version — this list is the framework-owned Supported
+     agent-runtime baseline, and no extension assembly carries one;
    - update the four-state support record and the upgrade standard in
      [`docs/agent-runtime-support.md`](docs/agent-runtime-support.md) with the new combination,
      evidence and conditions;
@@ -288,6 +324,6 @@ are mechanical and can be run by a human or an agent; steps 3–4 are human/main
    - restart the agent runtime. A whole-process restart is required: there is no hot reload and
      the discovery root is never swapped inside a running process.
 
-Until that action is taken, `supportedVersions` stays exactly `["18.5.0"]` and an installed
+Until that action is taken, the framework's baseline stays exactly `["18.5.0"]` and an installed
 version outside it is warned about once per main session and then continues without a support
 claim — that warning is expected behaviour, not a failure.

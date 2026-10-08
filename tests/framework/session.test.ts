@@ -171,7 +171,7 @@ function boundSurface(definition: ExtensionDefinition): NativeSurface {
 	};
 
 	// The loader binds the extension for the session it is loading: one factory call.
-	const factory = frameworkOmp.ompAdapter(definition, { supportedVersions: ["18.5.0"], events });
+	const factory = frameworkOmp.ompAdapter(definition, { events });
 	if (!factory(api).bound) throw new Error(`the "${definition.id}" definition did not bind`);
 
 	return {

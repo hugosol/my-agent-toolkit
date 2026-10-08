@@ -16,7 +16,7 @@ import { CODEBASE_TOOLS } from "../definition";
 import { type OmpExtensionApi, ompAdapter } from "../../../framework/adapters/omp";
 
 /** The framework's OMP binding for the codebase-tools definition. */
-const bindCodebaseTools = ompAdapter(CODEBASE_TOOLS, { supportedVersions: ["18.5.0"] });
+const bindCodebaseTools = ompAdapter(CODEBASE_TOOLS);
 
 export default function codebaseTools(pi: OmpExtensionApi): void {
 	// A refused binding has already reported its configuration error on the non-model

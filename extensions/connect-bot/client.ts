@@ -26,19 +26,6 @@ export interface PushEnvelope {
 /** The single session-event route. Protocol constant, never configuration. */
 export const EVENTS_PATH = "/api/sessions/events";
 
-/** `register` answers fast or not at all: arming either connects or reports failure. */
-export const REGISTER_TIMEOUT_MS = 1000;
-
-/** `unregister` is best-effort and must not hold the command for long. */
-export const UNREGISTER_TIMEOUT_MS = 1500;
-
-/**
- * A queued background push — today the heartbeat — gets the same best-effort budget: it may not
- * hold the flusher for long, because the next beat is the retry this protocol deliberately does
- * not make.
- */
-export const PUSH_TIMEOUT_MS = 1500;
-
 /** Minimal response surface used here; the toolkit tsconfig carries no DOM fetch types. */
 export interface PushHttpResponse {
 	readonly status: number;

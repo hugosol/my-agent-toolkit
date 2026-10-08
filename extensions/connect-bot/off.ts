@@ -5,9 +5,9 @@
  * The order is what the operator's command promises. Everything local stops synchronously first
  * (see {@link disarmLocally}): the extension's own record is dropped and the declared value goes
  * false, so the marker line leaves the area and no later effect of this extension has anything to
- * act on. Only then is the `unregister` awaited, with the ≤1.5s budget the wire contract fixes for
- * it, outside any queue: its failure is reported on its own and never counts toward the failure
- * budget a push path would keep.
+ * act on. Only then is the `unregister` awaited, with the extension's own configured request
+ * budget (the same `requestTimeoutMs` the register uses), outside any queue: its failure is
+ * reported on its own and never counts toward the failure budget a push path would keep.
  *
  * The panel's answer splits the two words the operator may read, and nothing else. Any HTTP answer
  * means the panel is reachable and the row is gone — a 2xx is the ordinary case, and a `404` is
@@ -24,7 +24,7 @@
  * request, writes no value and says nothing, and no row is invented to remove.
  */
 import type { CommandDelivery } from "../../framework/core/protocol";
-import { UNREGISTER_TIMEOUT_MS, pushEvent, type PushEnvelope } from "./client";
+import { pushEvent, type PushEnvelope } from "./client";
 import { connectBotConfig } from "./config";
 import { disarmLocally } from "./disarm";
 import { publishFeedback } from "./feedback";
@@ -52,9 +52,12 @@ export async function off(delivery: CommandDelivery, ownerKey: string): Promise<
 	disarmLocally(delivery.state, ownerKey);
 
 	const envelope: PushEnvelope = { sessionId: record.sessionId, kind: "unregister" };
+	// The same unified wait every request this extension makes uses: the configured budget, read
+	// after the local half is already done, so the network wait still never holds up the command.
+	const { endpoint, requestTimeoutMs } = connectBotConfig();
 	let panelAnswered = false;
 	try {
-		await pushEvent(connectBotConfig().endpoint, envelope, UNREGISTER_TIMEOUT_MS);
+		await pushEvent(endpoint, envelope, requestTimeoutMs);
 		// Any HTTP answer means the panel is reachable: the row is gone even for a non-2xx answer
 		// such as `404` after an omp-bot restart, so what the caller hands the table is that fact and
 		// never a status code.

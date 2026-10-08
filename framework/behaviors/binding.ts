@@ -12,11 +12,11 @@
  * before registration: a semantic the runtime cannot honor refuses the binding when it is
  * required of it — the framework requires history preservation of every binding, and an
  * assembly may declare the capability its extension additionally depends on — while an
- * unlisted version only schedules the once-per-main-session notice and lets binding
+ * unlisted version only makes the session's once-per-Owner notice due and lets binding
  * continue. Failures are reported once each and returned as data; the caller's agent
  * runtime keeps running with the extension unbound.
  */
-import { type AdmissionFacts, AdmissionNotices, admit, type DeclarableRequiredSemantic } from "../core/admission";
+import { type AdmissionFacts, admit, type DeclarableRequiredSemantic } from "../core/admission";
 import {
 	BOUND_CONTROL_KINDS,
 	BOUND_STATE_INHERITANCES,
@@ -43,19 +43,17 @@ import { dispatchRoundEvent } from "./round-events";
 import { dispatchSessionEvent } from "./session-events";
 
 /**
- * The admission inputs one binding resolves: the versions the extension declares support
- * for, the agent-runtime facts the adapter observed, and the notice ledger of the
- * assembly this binding belongs to.
+ * The admission inputs one binding resolves: the agent-runtime facts the adapter observed and the
+ * semantics this binding's assembly declared its extension depends on.
+ *
+ * The supported-version set is deliberately not here: version membership is decided against the
+ * framework's own Supported agent-runtime baseline, so no assembly supplies, widens or replaces
+ * it ({@link admit}). Neither is a notice ledger: the unlisted-version notice is the framework's
+ * and it is published per Owner for the whole process, so no assembly carries a record of it
+ * (`framework/behaviors/admission.ts`).
  */
 export interface BindingAdmission {
-	readonly supportedVersions: readonly string[];
 	readonly facts: AdmissionFacts;
-	/**
-	 * The once-per-main-session notice ledger, shared by every binding of one assembly:
-	 * the loader binds an assembly once per session, and the session must still be told
-	 * about an unlisted version exactly once.
-	 */
-	readonly notices: AdmissionNotices;
 	/**
 	 * The semantics this binding's assembly declared the extension depends on, besides the
 	 * ones the framework requires of every binding — the assembly option that turns a gap
@@ -141,10 +139,12 @@ function findInitializationFailure(
  * why the same factory can bind every session and subagent independently, and why each
  * refused binding reports its own error.
  *
- * `state` is the one thing that outlives a binding: the adapter owns one store per
- * extension per process, so bindings for different sessions share the owner-keyed
- * cells rather than each starting from a private copy. `admission`'s notice ledger
- * outlives a binding for the same reason: one assembly has one per process.
+ * `state` is the one thing the adapter owns that outlives a binding: the adapter owns one
+ * store per extension per process, so bindings for different sessions share the owner-keyed
+ * cells rather than each starting from a private copy. The framework's own notice record
+ * outlives a binding differently — it is not an assembly's at all: one process holds it per
+ * Owner, so every extension's bindings publish for that Owner through the same record
+ * (`framework/behaviors/admission.ts`).
  *
  * `actions` is the assembly half of a directed command: its implementations, keyed by
  * command name. The declaration says which command and which field, and this is what the
@@ -206,7 +206,9 @@ export function bindExtension(
 	// semantic the runtime cannot honor refuses the binding outright — required meaning the
 	// framework's own semantics plus whatever this assembly declared — while an unlisted
 	// version is not a refusal, and its notice is published by the session behavior below.
-	const outcome = admit(admission.supportedVersions, admission.facts, admission.requiredSemantics ?? []);
+	// The version axis is decided against the framework's own Supported agent-runtime baseline:
+	// this assembly declared no version list and cannot.
+	const outcome = admit(admission.facts, admission.requiredSemantics ?? []);
 	if (outcome.kind === "required-semantics-missing") {
 		const failure: BindingFailure = { kind: "required-semantics", missing: outcome.missing };
 		port.reportDiagnostic(describeBindingFailure(definition.id, failure));
@@ -223,7 +225,7 @@ export function bindExtension(
 		port.setLabel(definition.displayName);
 		port.onSession(session => {
 			if (outcome.kind === "unlisted-version") {
-				announceUnlistedVersion(definition, outcome, admission.notices, session);
+				announceUnlistedVersion(outcome, session);
 			}
 			// The framework's own behavior runs before the extension's handler, and a handler
 			// that throws is reported rather than allowed to disturb the framework or another

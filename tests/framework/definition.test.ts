@@ -3,7 +3,7 @@
  * OMP adapter that binds it.
  *
  * The seam under test is the interface an extension author uses — `defineExtension`
- * with the configuration types, plus `ompAdapter(definition, { supportedVersions })`.
+ * with the configuration types, plus `ompAdapter(definition, options)`.
  * The agent-runtime side of that seam is the narrow native surface the loader hands
  * the factory, so a test double stands in for the loader while the definitions under
  * test are built through the same public entry an extension uses.
@@ -65,7 +65,7 @@ function bind(definition: ExtensionDefinition): {
 } {
 	const api = recordingApi();
 	const { diagnostics, value } = withCapturedStderr(() =>
-		frameworkOmp.ompAdapter(definition, { supportedVersions: ["18.5.0"] })(api),
+		frameworkOmp.ompAdapter(definition)(api),
 	);
 	return { result: value, diagnostics, api };
 }
@@ -290,7 +290,7 @@ describe("initialization and binding failures (P17, N7)", () => {
 			appendEntry(): void {},
 			on(): void {},
 		};
-		const factory = frameworkOmp.ompAdapter(CODEBASE_TOOLS, { supportedVersions: ["18.5.0"] });
+		const factory = frameworkOmp.ompAdapter(CODEBASE_TOOLS);
 
 		const { diagnostics, value: result } = withCapturedStderr(() => factory(refusingApi));
 
@@ -302,7 +302,7 @@ describe("initialization and binding failures (P17, N7)", () => {
 	});
 
 	test("binding keeps no process-level state: one session's failure does not reach the next", () => {
-		const factory = frameworkOmp.ompAdapter(CODEBASE_TOOLS, { supportedVersions: ["18.5.0"] });
+		const factory = frameworkOmp.ompAdapter(CODEBASE_TOOLS);
 		const refusingApi: OmpExtensionApi = {
 			setLabel(): void {
 				throw new Error("agent runtime refused the label");

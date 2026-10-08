@@ -21,7 +21,6 @@ import {
 	type PushHttpResponse,
 	type PushTransport,
 	EVENTS_PATH,
-	PUSH_TIMEOUT_MS,
 	setPushTransportForTest,
 } from "../../extensions/connect-bot/client";
 import { CONNECT_BOT } from "../../extensions/connect-bot/definition";
@@ -164,8 +163,8 @@ describe("arming reports the state the idle fact answers (E12, P33, story 74)", 
 		expect(requests[1]?.url).toBe(`${ENDPOINT}${EVENTS_PATH}`);
 		expect(requests[1]?.init.method).toBe("POST");
 		expect(requests[1]?.init.proxy).toBe(false);
-		// A queued push owns the wire client's own budget, never the register's or an endless one.
-		expect(PUSH_TIMEOUT_MS).toBe(1500);
+		// A queued push waits the extension's own configured budget under its own abort signal —
+		// never an endless one; the wait's real length is established in `request-timeout.test.ts`.
 		expect(requests[1]?.init.signal).toBeInstanceOf(AbortSignal);
 		expect(JSON.parse(requests[1]?.init.body ?? "")).toEqual({
 			sessionId: "state-idle",

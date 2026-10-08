@@ -168,7 +168,7 @@ function boundSurface(): NativeSurface {
 		},
 	};
 
-	const factory = frameworkOmp.ompAdapter(PROBE, { supportedVersions: ["18.5.0"], events, actions });
+	const factory = frameworkOmp.ompAdapter(PROBE, { events, actions });
 	if (!factory(api).bound) throw new Error("the round probe definition did not bind");
 
 	const deliverRound = (event: OmpAgentStartEvent | OmpAgentEndEvent, facts: SessionFacts): void => {

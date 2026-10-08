@@ -172,15 +172,15 @@ function observeSessionContext(pi: OmpExtensionApi): {
  * session's identity produces no boundary at all — are the adapter's business, and this assembly
  * names none of them: there is no native shutdown hook of the extension's own anywhere in its code.
  *
- * The supported version is declared exactly as the support record does. A binding OMP refuses
- * has already reported why on the non-model channel, and this session then simply runs without
- * the extension.
+ * The supported runtime version is not this assembly's to declare: version support belongs to
+ * the framework's own Supported agent-runtime baseline, and this assembly describes only the
+ * capabilities its extension needs. A binding the agent runtime refuses has already reported why
+ * on the non-model channel, and this session then simply runs without the extension.
  */
 export default function connectBot(pi: OmpExtensionApi): void {
 	installPushTransport(platformTransport);
 	const observed = observeSessionContext(pi);
 	ompAdapter(CONNECT_BOT, {
-		supportedVersions: ["18.5.0"],
 		// Where the framework resolves the definition's relative configuration path: the
 		// repository this assembly's own module lives in, so the extension's declared
 		// `extensions/connect-bot/config.yaml` is read wherever the process was started.

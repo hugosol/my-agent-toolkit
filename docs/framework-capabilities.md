@@ -14,10 +14,10 @@ the architecture decision is [ADR 0002](adr/0002-semantic-extension-framework.md
 
 | Entry point | Source | Role |
 | --- | --- | --- |
-| `defineExtension(definition)` | [`framework/public.ts`](../framework/public.ts), defined at [`framework/core/definition.ts#L243`](../framework/core/definition.ts#L243) | Declares an extension. Returns its argument typed; nothing is validated or copied here. |
-| `ExtensionDefinition` and its member types (`StateDeclaration`, `StatePersistence`, `StateInheritance`, `CommandDeclaration`, `CommandToggleDeclaration`, `CommandDirectedDeclaration`, `ControlKind`, `PromptDeclaration`, `PromptStrategy`, `MarkerDeclaration`, `ExtensionConfigDeclaration`, `ConfigFieldType`) | [`framework/core/definition.ts#L223`](../framework/core/definition.ts#L223) | The definition shape and its configuration types. |
-| `ompAdapter(definition, options)` | [`framework/adapters/omp.ts#L845`](../framework/adapters/omp.ts#L845) | Assembles a definition for the `omp` agent runtime; returns an `OmpExtensionFactory`. |
-| `OmpAdapterOptions` | [`framework/adapters/omp.ts#L287`](../framework/adapters/omp.ts#L287) | The assembly options (`supportedVersions`, `actions`, `events`, `requiredSemantics`, `configBaseDir`). |
+| `defineExtension(definition)` | [`framework/public.ts`](../framework/public.ts), defined at [`framework/core/definition.ts#L250`](../framework/core/definition.ts#L250) | Declares an extension. Returns its argument typed; nothing is validated or copied here. |
+| `ExtensionDefinition` and its member types (`StateDeclaration`, `StatePersistence`, `StateInheritance`, `CommandDeclaration`, `CommandToggleDeclaration`, `CommandDirectedDeclaration`, `ControlKind`, `PromptDeclaration`, `PromptStrategy`, `MarkerDeclaration`, `ExtensionConfigDeclaration`, `ConfigFieldType`) | [`framework/core/definition.ts#L230`](../framework/core/definition.ts#L230) | The definition shape and its configuration types. |
+| `ompAdapter(definition, options?)` | [`framework/adapters/omp.ts#L848`](../framework/adapters/omp.ts#L848) | Assembles a definition for the `omp` agent runtime; returns an `OmpExtensionFactory`. |
+| `OmpAdapterOptions` | [`framework/adapters/omp.ts#L293`](../framework/adapters/omp.ts#L293) | The assembly options, every member optional (`actions`, `events`, `requiredSemantics`, `configBaseDir`). Agent-runtime version support is deliberately not one of them: the Supported agent-runtime baseline belongs to the framework ([`framework/core/baseline.ts#L22`](../framework/core/baseline.ts#L22)). |
 | `BindingResult`, `BindingFailure` | [`framework/core/protocol.ts#L665`](../framework/core/protocol.ts#L665) | What a binding concluded, and why it was refused. |
 | `CommandActions`, `DirectedCommandImplementation`, `CommandDelivery`, `DeclaredValueSeam` | [`protocol.ts#L484`](../framework/core/protocol.ts#L484), [`#L447`](../framework/core/protocol.ts#L447), [`#L566`](../framework/core/protocol.ts#L566), [`#L398`](../framework/core/protocol.ts#L398) | The implementations an assembly injects for a definition's directed commands, keyed by command name — each with a `run` member and an optional `unrecognized` member for an argument that parsed to no directive — and the delivery and declared-value seam each one writes through. |
 | `RecognizedDirective`, `DirectedDirective` | [`framework/core/protocol.ts#L367`](../framework/core/protocol.ts#L367) | The directive the framework normalizes a directed command's argument into, and the two members it acts on. |
@@ -28,7 +28,7 @@ the architecture decision is [ADR 0002](adr/0002-semantic-extension-framework.md
 | `SessionEventHandlers`, `SessionEventHandler`, `SessionEventDelivery`, `RoundEventHandlers`, `RoundEventHandler` | [`protocol.ts#L221`](../framework/core/protocol.ts#L221), [`#L210`](../framework/core/protocol.ts#L210), [`#L183`](../framework/core/protocol.ts#L183), [`#L273`](../framework/core/protocol.ts#L273), [`#L264`](../framework/core/protocol.ts#L264) | The per-axis handler aliases, keyed by event, and the delivery each one receives. All are re-exported by [`framework/adapters/omp.ts#L45`](../framework/adapters/omp.ts#L45) so an assembly's subscription needs no core import. |
 | Admission types (`RequiredSemantic`, `DeclarableRequiredSemantic`, `FRAMEWORK_REQUIRED_SEMANTICS`, `AdmissionFacts`, `AdmissionOutcome`, `VerifiedEnvironment`) | [`framework/core/admission.ts`](../framework/core/admission.ts) | The version and required-semantics admission facts, the semantics an assembly may declare, and the verdict shape. |
 | `ConfigurationViolation` | [`framework/core/violations.ts`](../framework/core/violations.ts) | The report of one broken configuration rule, carried by a `configuration` binding failure: a `ConfigurationViolationKind` and the deterministic `detail`. |
-| `ExtensionConfigDeclaration`, `ConfigFieldType`, `BOUND_CONFIG_FIELD_TYPES` | [`framework/core/definition.ts#L211`](../framework/core/definition.ts#L211) | The configuration an extension requires of its own `config.yaml`: the file's path, and the keys the file must carry with the type each must match. See [Extension configuration](#extension-configuration-declaration--file). |
+| `ExtensionConfigDeclaration`, `ConfigFieldType`, `BOUND_CONFIG_FIELD_TYPES` | [`framework/core/definition.ts#L218`](../framework/core/definition.ts#L218) | The configuration an extension requires of its own `config.yaml`: the file's path, and the keys the file must carry with the type each must match. See [Extension configuration](#extension-configuration-declaration--file). |
 | `readConfig`, `getConfig`, `ConfigSource`, `ConfigReadOptions`, `ConfigReader`, `ConfigParser`, `ConfigLoadError`, `ExtensionConfigError` | [`framework/core/config.ts`](../framework/core/config.ts) | The one reading, parsing and validating implementation, the values shared logic reads, the injectable seam it runs through, and the two error classes that keep a loading-time failure apart from a misuse. See [Extension configuration](#extension-configuration-declaration--file). |
 | Adapter-facing delivery types (`OwnerReference`, `NoticeTransport`, `FeedbackLevel`, `FeedbackTransport`, `MarkerTransport`, `StateValues`) | [`framework/core/protocol.ts#L15`](../framework/core/protocol.ts#L15) | The facts and transports an agent-runtime adapter resolves; not authored by an extension. |
 
@@ -39,7 +39,7 @@ entrypoint that re-exports it is [`entrypoints/omp/codebase-tools.ts`](../entryp
 
 ## `defineExtension(definition)`
 
-`definition` is an `ExtensionDefinition` ([`definition.ts#L223`](../framework/core/definition.ts#L223)): plain data,
+`definition` is an `ExtensionDefinition` ([`definition.ts#L230`](../framework/core/definition.ts#L230)): plain data,
 no builder and no handler. All fields are described below. `state`, `commands`, `prompts`, `marker` and `config`
 are optional; `id` and `displayName` are required.
 
@@ -63,9 +63,9 @@ decides whether a subagent reads the owner's current value or the field's declar
 
 | Parameter | Type | Meaning |
 | --- | --- | --- |
-| `field?` | `string` | The activation field name. Defaults to `DEFAULT_ACTIVATION_FIELD` = `"enabled"` when `state` is omitted ([`definition.ts#L81`](../framework/core/definition.ts#L81), resolved by `activationField` at [`definition.ts#L248`](../framework/core/definition.ts#L248)). |
-| `persistence?` | `"session-entry"` \| `"memory"` | Whether the value is recorded in the owner's persistence medium and seeded from the target branch at a session boundary (`session-entry`, the default, [`definition.ts#L58`](../framework/core/definition.ts#L58)) or kept in memory only (`memory`: never recorded, never seeded; a boundary that replaces the owner drops it to the declared default, while navigation that keeps the owner keeps the value). Resolved by `statePersistence` ([`definition.ts#L253`](../framework/core/definition.ts#L253)). |
-| `inheritance?` | `"follow"` \| `"none"` | How a subagent session reads the value: `none` (the default, [`definition.ts#L61`](../framework/core/definition.ts#L61)) reads the field's declared default, `follow` reads the owner's current value live. Resolved by `stateInheritance` ([`definition.ts#L258`](../framework/core/definition.ts#L258)); codebase-tools declares `follow` ([`extensions/codebase-tools/definition.ts`](../extensions/codebase-tools/definition.ts)). |
+| `field?` | `string` | The activation field name. Defaults to `DEFAULT_ACTIVATION_FIELD` = `"enabled"` when `state` is omitted ([`definition.ts#L81`](../framework/core/definition.ts#L81), resolved by `activationField` at [`definition.ts#L255`](../framework/core/definition.ts#L255)). |
+| `persistence?` | `"session-entry"` \| `"memory"` | Whether the value is recorded in the owner's persistence medium and seeded from the target branch at a session boundary (`session-entry`, the default, [`definition.ts#L58`](../framework/core/definition.ts#L58)) or kept in memory only (`memory`: never recorded, never seeded; a boundary that replaces the owner drops it to the declared default, while navigation that keeps the owner keeps the value). Resolved by `statePersistence` ([`definition.ts#L260`](../framework/core/definition.ts#L260)). |
+| `inheritance?` | `"follow"` \| `"none"` | How a subagent session reads the value: `none` (the default, [`definition.ts#L61`](../framework/core/definition.ts#L61)) reads the field's declared default, `follow` reads the owner's current value live. Resolved by `stateInheritance` ([`definition.ts#L265`](../framework/core/definition.ts#L265)); codebase-tools declares `follow` ([`extensions/codebase-tools/definition.ts`](../extensions/codebase-tools/definition.ts)). |
 
 **Bound set.** `BOUND_STATE_PERSISTENCES = ["session-entry", "memory"]`
 ([`definition.ts#L70`](../framework/core/definition.ts#L70)) and `BOUND_STATE_INHERITANCES = ["follow", "none"]`
@@ -98,7 +98,7 @@ binding, not silently dropped. (One extension, one command name, one declared wr
 
 **Directed commands pair a declaration with an injected implementation.** The definition names the command
 and its field; the implementation is injected by the extension's assembly through `OmpAdapterOptions.actions`
-([`omp.ts#L307`](../framework/adapters/omp.ts#L307)). Binding refuses a directed declaration whose
+([`omp.ts#L305`](../framework/adapters/omp.ts#L305)). Binding refuses a directed declaration whose
 implementation was not injected — an `initialization` failure, with nothing registered — so a command the user
 can run always has something to run.
 
@@ -167,13 +167,13 @@ module graph for each extension.
 ### `config?: ExtensionConfigDeclaration`
 
 The configuration the extension requires of its own file
-([`definition.ts#L211`](../framework/core/definition.ts#L211)). Omitted — the case for every extension so far —
+([`definition.ts#L218`](../framework/core/definition.ts#L218)). Omitted — the case for every extension so far —
 means the extension reads no configuration at all and the capability is invisible to it.
 
 | Parameter | Type | Meaning |
 | --- | --- | --- |
 | `path?` | `string` | The file's path, relative to the **configuration base directory** the assembly supplies (`OmpAdapterOptions.configBaseDir`); the convention `extensions/<definition.id>/config.yaml` when omitted. An absolute path is used as declared, and with no base directory a relative path resolves against the process's working directory. |
-| `fields` | `Readonly<Record<string, ConfigFieldType>>` | Every key the file must declare, with the type it must match: `"string"`, `"non-empty-string"`, `"number"` or `"boolean"` (`BOUND_CONFIG_FIELD_TYPES`, [`definition.ts#L190`](../framework/core/definition.ts#L190)). |
+| `fields` | `Readonly<Record<string, ConfigFieldType>>` | Every key the file must declare, with the type it must match: `"string"`, `"non-empty-string"`, `"number"`, `"boolean"` or `"milliseconds"` (`BOUND_CONFIG_FIELD_TYPES`, [`definition.ts#L193`](../framework/core/definition.ts#L193)). A `milliseconds` field is a whole number of milliseconds this runtime's timer schedules — 1 through 2^31-1, the longest delay it waits for before clamping a value to 1ms — so a wait budget is never read as a delay the extension would not be given. |
 
 The declaration is plain data and stays that way: nothing is read or validated at declaration time, and the file
 it names is what `getConfig` hands the extension's shared logic. See
@@ -182,27 +182,31 @@ it names is what `getConfig` hands the extension's shared logic. See
 ## `ompAdapter(definition, options)`
 
 Assembles an `ExtensionDefinition` for the `omp` agent runtime
-([`framework/adapters/omp.ts#L845`](../framework/adapters/omp.ts#L845)). It returns an `OmpExtensionFactory`
-([`omp.ts#L357`](../framework/adapters/omp.ts#L357)) — `(api) => BindingResult` — which each thin entrypoint
+([`framework/adapters/omp.ts#L848`](../framework/adapters/omp.ts#L848)). It returns an `OmpExtensionFactory`
+([`omp.ts#L355`](../framework/adapters/omp.ts#L355)) — `(api) => BindingResult` — which each thin entrypoint
 re-exports as its default factory and the loader calls once per binding.
 
 ### `definition: ExtensionDefinition`
 
 The same plain definition `defineExtension` returns. The adapter is the point at which declared conflicts
 are reported and admission is decided; declaration itself validates nothing
-([`definition.ts#L243`](../framework/core/definition.ts#L243)).
+([`definition.ts#L250`](../framework/core/definition.ts#L250)).
 
 ### `options: OmpAdapterOptions`
 
 | Parameter | Type | Meaning |
 | --- | --- | --- |
-| `supportedVersions` | `readonly [string, ...string[]]` | The exact agent-runtime versions this extension is supported on ([`omp.ts#L295`](../framework/adapters/omp.ts#L295)). The non-empty tuple type keeps the declaration from claiming support for nothing. Admission reads this set; see below. |
-| `actions?` | `CommandActions` | The assembly's implementations of the definition's directed commands, keyed by command name ([`omp.ts#L307`](../framework/adapters/omp.ts#L307)). Each implementation writes the declared value through the delivery's seam ([`protocol.ts#L398`](../framework/core/protocol.ts#L398)) and publishes its own operator-facing text through the delivery's feedback channel; the framework writes nothing on its behalf. Omitted when the definition declares none; a directed declaration without its implementation is refused at binding. |
-| `events?` | `SemanticEventHandlers` | The assembly's handlers for the definition's semantic lifecycle events, keyed by the event each subscribes to ([`omp.ts#L326`](../framework/adapters/omp.ts#L326)): the session axis (`session_start`/`session_end`) and the round axis (`round_start`/`round_end`). This is where shared logic reacts to a boundary; see below. Omitted when the extension observes none. |
-| `requiredSemantics?` | `readonly DeclarableRequiredSemantic[]` | The semantics this extension depends on **beyond** the ones every binding already requires ([`omp.ts#L339`](../framework/adapters/omp.ts#L339)): `"session-lifecycle-events"`, `"round-lifecycle-events"`. Declaring one is what turns a runtime that cannot honor it from a gap the extension works around into a `required-semantics` refusal. Omitted when the extension depends on nothing beyond the framework's own requirements — the case for an extension that observes no lifecycle event. See [Admission and required-semantics reporting shape](#admission-and-required-semantics-reporting-shape). |
-| `configBaseDir?` | `string` | The directory the definition's relative configuration paths are resolved against, as plain data ([`omp.ts#L353`](../framework/adapters/omp.ts#L353)): the extension repository root, from which the convention `extensions/<definition.id>/config.yaml` is relative. An assembly is the one party that knows it — its own module lives in that repository and the loader discovers the extension by an absolute path while the process runs in an arbitrary project directory — so connect-bot's assembly derives it from `import.meta.url`. Omitted when the definition declares no configuration, and omitted by an assembly that names none: a relative path then resolves against the process's working directory, and an absolute `path` is unaffected either way. See [Extension configuration](#extension-configuration-declaration--file). |
+| `actions?` | `CommandActions` | The assembly's implementations of the definition's directed commands, keyed by command name ([`omp.ts#L305`](../framework/adapters/omp.ts#L305)). Each implementation writes the declared value through the delivery's seam ([`protocol.ts#L398`](../framework/core/protocol.ts#L398)) and publishes its own operator-facing text through the delivery's feedback channel; the framework writes nothing on its behalf. Omitted when the definition declares none; a directed declaration without its implementation is refused at binding. |
+| `events?` | `SemanticEventHandlers` | The assembly's handlers for the definition's semantic lifecycle events, keyed by the event each subscribes to ([`omp.ts#L324`](../framework/adapters/omp.ts#L324)): the session axis (`session_start`/`session_end`) and the round axis (`round_start`/`round_end`). This is where shared logic reacts to a boundary; see below. Omitted when the extension observes none. |
+| `requiredSemantics?` | `readonly DeclarableRequiredSemantic[]` | The semantics this extension depends on **beyond** the ones every binding already requires ([`omp.ts#L337`](../framework/adapters/omp.ts#L337)): `"session-lifecycle-events"`, `"round-lifecycle-events"`. Declaring one is what turns a runtime that cannot honor it from a gap the extension works around into a `required-semantics` refusal. Omitted when the extension depends on nothing beyond the framework's own requirements — the case for an extension that observes no lifecycle event. See [Admission and required-semantics reporting shape](#admission-and-required-semantics-reporting-shape). |
+| `configBaseDir?` | `string` | The directory the definition's relative configuration paths are resolved against, as plain data ([`omp.ts#L351`](../framework/adapters/omp.ts#L351)): the extension repository root, from which the convention `extensions/<definition.id>/config.yaml` is relative. An assembly is the one party that knows it — its own module lives in that repository and the loader discovers the extension by an absolute path while the process runs in an arbitrary project directory — so connect-bot's assembly derives it from `import.meta.url`. Omitted when the definition declares no configuration, and omitted by an assembly that names none: a relative path then resolves against the process's working directory, and an absolute `path` is unaffected either way. See [Extension configuration](#extension-configuration-declaration--file). |
 
-The canonical value in this repository is `{ supportedVersions: ["18.5.0"] }`
+**There is no supported-version option.** Agent-runtime version support is the framework's
+Supported agent-runtime baseline ([`framework/core/baseline.ts`](../framework/core/baseline.ts)),
+not an extension's or an assembly's declaration: an assembly describes only the capabilities its
+extension needs, and admission compares the version a runtime reports against that one list — no
+assembly supplies, widens or replaces it. An extension that needs none of the options above
+assembles with no options at all, which is the canonical form in this repository
 ([`extensions/codebase-tools/runtimes/omp.ts`](../extensions/codebase-tools/runtimes/omp.ts)).
 
 **The semantic lifecycle subscription pairs a definition with injected handlers.** The framework's session
@@ -340,31 +344,57 @@ the deterministic text of one failure, independent of where it is reported.
 ## Admission and required-semantics reporting shape
 
 Admission is the one pre-registration check that decides whether the observed agent runtime is one the
-extension declares support for ([`framework/core/admission.ts`](../framework/core/admission.ts)). Its
-fact/verdict shape is:
+framework's Supported agent-runtime baseline lists
+([`framework/core/admission.ts`](../framework/core/admission.ts)). Which versions are supported is the
+framework's own declaration, not an assembly's: an adapter resolves the facts and calls
+`admit(facts, requiredSemantics?)`. Its fact/verdict shape is:
 
 | Symbol | Source | Shape and meaning |
 | --- | --- | --- |
-| `RequiredSemantic` | [`admission.ts#L36`](../framework/core/admission.ts#L36) | Closed union of three members: `"history-preservation"` (existing conversation entries and their history-derived request content are preserved; new material is appended), `"session-lifecycle-events"` and `"round-lifecycle-events"` (the two semantic lifecycle axes of this release). |
-| `FRAMEWORK_REQUIRED_SEMANTICS` | [`admission.ts#L45`](../framework/core/admission.ts#L45) | The semantics required of every binding whatever its assembly declares: `["history-preservation"]`. Not declarable — `DeclarableRequiredSemantic` excludes it. |
-| `DeclarableRequiredSemantic` | [`admission.ts#L54`](../framework/core/admission.ts#L54) | The members an extension's assembly **may** declare it depends on: `Exclude<RequiredSemantic, (typeof FRAMEWORK_REQUIRED_SEMANTICS)[number]>` — today the two lifecycle axes. This is the type of `OmpAdapterOptions.requiredSemantics`. |
-| `VerifiedEnvironment` | [`admission.ts#L62`](../framework/core/admission.ts#L62) | `{ platform: string; runtime: string }` (e.g. `win32-x64`, `omp`). Recorded only; not gated. |
-| `AdmissionFacts` | [`admission.ts#L70`](../framework/core/admission.ts#L70) | `{ version?: string; missingRequiredSemantics?: readonly RequiredSemantic[]; environment?: VerifiedEnvironment }`. The facts one binding resolved, as the adapter observed them. `missingRequiredSemantics` is a fact about the *runtime*, not a verdict about a binding: which of them refuses *this* binding is admission's rule. |
-| `AdmissionOutcome` | [`admission.ts#L86`](../framework/core/admission.ts#L86) | `{ kind: "admitted" }` \| `{ kind: "unlisted-version"; version: string; supportedVersions: readonly string[] }` \| `{ kind: "required-semantics-missing"; missing: readonly RequiredSemantic[] }`. |
+| `SUPPORTED_AGENT_RUNTIME_VERSIONS` | [`framework/core/baseline.ts#L22`](../framework/core/baseline.ts#L22) | The framework-owned Supported agent-runtime baseline: `readonly [string, ...string[]]`, exactly `["18.5.0"]` today. Membership is exact — no range matching, no partial comparison — and this list is the only decision source admission consults for the version axis. Replacing the supported version is one explicit maintainer action that edits this list together with the support record and [`agent-runtime-baseline.json`](agent-runtime-baseline.json) (see [agent-runtime-support.md](agent-runtime-support.md)). |
+| `RequiredSemantic` | [`admission.ts#L48`](../framework/core/admission.ts#L48) | Closed union of three members: `"history-preservation"` (existing conversation entries and their history-derived request content are preserved; new material is appended), `"session-lifecycle-events"` and `"round-lifecycle-events"` (the two semantic lifecycle axes of this release). |
+| `FRAMEWORK_REQUIRED_SEMANTICS` | [`admission.ts#L57`](../framework/core/admission.ts#L57) | The semantics required of every binding whatever its assembly declares: `["history-preservation"]`. Not declarable — `DeclarableRequiredSemantic` excludes it. |
+| `DeclarableRequiredSemantic` | [`admission.ts#L66`](../framework/core/admission.ts#L66) | The members an extension's assembly **may** declare it depends on: `Exclude<RequiredSemantic, (typeof FRAMEWORK_REQUIRED_SEMANTICS)[number]>` — today the two lifecycle axes. This is the type of `OmpAdapterOptions.requiredSemantics`. |
+| `VerifiedEnvironment` | [`admission.ts#L74`](../framework/core/admission.ts#L74) | `{ platform: string; runtime: string }` (e.g. `win32-x64`, `omp`). Recorded only; not gated. |
+| `AdmissionFacts` | [`admission.ts#L82`](../framework/core/admission.ts#L82) | `{ version?: string; missingRequiredSemantics?: readonly RequiredSemantic[]; environment?: VerifiedEnvironment }`. The facts one binding resolved, as the adapter observed them. `missingRequiredSemantics` is a fact about the *runtime*, not a verdict about a binding: which of them refuses *this* binding is admission's rule. |
+| `AdmissionOutcome` | [`admission.ts#L98`](../framework/core/admission.ts#L98) | `{ kind: "admitted" }` \| `{ kind: "unlisted-version"; version: string; supportedVersions: readonly string[] }` \| `{ kind: "required-semantics-missing"; missing: readonly RequiredSemantic[] }`. The `supportedVersions` an outcome echoes are the framework baseline's. |
 
 Required-semantics reporting is what ticket 10 added to this seam: a missing required semantic is a
 `required-semantics-missing` admission outcome, carried as a `BindingFailure` of kind `"required-semantics"`
 with the offending `RequiredSemantic[]` — an explicit refusal that binds nothing, never a downgrade. It is
 distinct from `"unlisted-version"`, which is not a refusal.
 
-**Which semantics are required is now the union of two things** (`admit`,
-[`admission.ts#L110`](../framework/core/admission.ts#L110)). The framework requires history preservation of
+**Which semantics are required is the union of two things** (`admit`,
+[`admission.ts#L140`](../framework/core/admission.ts#L140)). The framework requires history preservation of
 every binding, so that one is never optional. On top of it, the extension's assembly may declare the
 capability it is built on through `OmpAdapterOptions.requiredSemantics`, which reaches admission as
 `BindingAdmission.requiredSemantics`. A runtime that cannot honor a semantic nobody declared is therefore a
 fact and nothing more — an extension that observes no lifecycle event keeps binding and running on a runtime
 that delivers none — while a declared one refuses that binding, with nothing registered and one
 `reportDiagnostic` line naming the extension and the semantic.
+
+**The version axis is the framework's, and it warns rather than refuses.** A reported version outside
+`SUPPORTED_AGENT_RUNTIME_VERSIONS` is an `"unlisted-version"` outcome: the binding continues, the extension
+registers normally, and the main session is told once. A runtime that reports no version leaves nothing to
+compare, so admission adds no verdict — it neither refuses nor invents a version.
+
+**The notice is the framework's, and it is scoped to the Owner.** One process tells one main session once,
+whatever published it: several extensions, an assembly bound again, a re-entry of that session, a boundary
+of it, or the separately loaded copy of the notice behavior the OMP loader evaluates per extension graph.
+The notice carries the framework's own attribution — the version the runtime reported and the support set it
+was judged against, never an extension's display name — and a delivery whose session is not its own owner (a
+subagent) publishes nothing and claims nothing, so the session it follows is still told when its own delivery
+comes. It travels the framework's notice channel and not extension feedback
+([`behaviors/admission.ts`](../framework/behaviors/admission.ts)).
+
+**The version judgement is process-scoped.** A reported version is judged once per version per process
+(`decideVersion`, [`admission.ts#L196`](../framework/core/admission.ts#L196)), and every later binding reads
+that one outcome instead of deciding again — the next session of the same extension, another extension, and
+the separately loaded framework module copy the OMP loader evaluates per extension graph, which is why the
+record lives on the process global (keyed by version, as the marker area is keyed by its own name). Leaving
+the version out is not a judgement: nothing is recorded for a runtime that reports none, so the first version
+actually reported is decided for real. The required-semantics judgement is the opposite case — it is read
+per binding, because what it reads is the interface this binding was handed, not a property of the version.
 
 **Two kinds of absence, and they are not the same absence.** A `RequiredSemantic` is a capability judged once,
 before registration: either the runtime's surface has what the framework's contract rests on, or the binding
@@ -380,16 +410,15 @@ which runtime reports which of these facts.
 
 | Symbol | Source | Meaning |
 | --- | --- | --- |
-| `UnlistedVersionAdmission` | [`admission.ts#L92`](../framework/core/admission.ts#L92) | The `unlisted-version` outcome, as the notice behavior consumes it. |
-| `AdmissionNotices` | [`admission.ts#L132`](../framework/core/admission.ts#L132) | The once-per-main-session record used to deduplicate admission notices. |
-| `describeUnlistedVersion(displayName, outcome)` | [`admission.ts#L150`](../framework/core/admission.ts#L150) | The notice text for an unlisted version. |
+| `UnlistedVersionAdmission` | [`admission.ts#L106`](../framework/core/admission.ts#L106) | The `unlisted-version` outcome, as the notice behavior consumes it. |
+| `announceUnlistedVersion(outcome, session)` | [`behaviors/admission.ts`](../framework/behaviors/admission.ts) | Publishes the framework's unlisted-version notice once per Owner for the whole process, through the session's `NoticeTransport`. The record is the process's — the separately loaded module copies share it — a subagent delivery neither publishes nor claims, and the text names the framework rather than the extension whose binding produced it. |
 
 ## Notices, marker and owner scope (adapter-facing shapes)
 
 These are resolved by an agent-runtime adapter, not authored by an extension, and are cited here so the
 option/feedback surface is complete. Both feedback channels travel the session's own UI channel on the `omp`
 runtime — the framework's notice as a `warning`, an extension's feedback at the level it chose — and fall back
-to one stderr line when the session has no UI ([`omp.ts#L550`](../framework/adapters/omp.ts#L550)).
+to one stderr line when the session has no UI ([`omp.ts#L546`](../framework/adapters/omp.ts#L546)).
 
 | Symbol | Source | Shape and meaning |
 | --- | --- | --- |

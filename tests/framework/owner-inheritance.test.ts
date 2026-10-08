@@ -219,7 +219,7 @@ function nativeDouble(): NativeDouble {
 
 			let factory = factories.get(definition.id);
 			if (factory === undefined) {
-				factory = frameworkOmp.ompAdapter(definition, { supportedVersions: ["18.5.0"] });
+				factory = frameworkOmp.ompAdapter(definition);
 				factories.set(definition.id, factory);
 			}
 			if (!factory(api).bound) throw new Error(`the "${definition.id}" definition did not bind`);

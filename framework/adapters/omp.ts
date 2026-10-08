@@ -10,7 +10,7 @@
  * behavior needs.
  */
 import { bindExtension } from "../behaviors/binding";
-import { AdmissionNotices, type DeclarableRequiredSemantic, type RequiredSemantic } from "../core/admission";
+import { type DeclarableRequiredSemantic, type RequiredSemantic } from "../core/admission";
 import type { ExtensionDefinition } from "../core/definition";
 import type {
 	AgentRuntimePort,
@@ -283,16 +283,14 @@ export type OmpRunInitiationHandler = (
 	ctx: OmpSessionContext,
 ) => OmpRunInitiationResult | undefined | void;
 
-/** Assembly options fixed by the public interface. */
+/**
+ * Assembly options fixed by the public interface.
+ *
+ * Every member is optional, so an assembly declares only what its extension needs. Version
+ * support is deliberately not among them: the Supported agent-runtime baseline belongs to the
+ * framework (`framework/core/baseline.ts`), and no assembly may supply or widen it.
+ */
 export interface OmpAdapterOptions {
-	/**
-	 * The exact agent-runtime versions this extension is supported on.
-	 *
-	 * Version admission (an unlisted runtime notifies once per main session and then
-	 * keeps running, per the admission behavior) reads this set; the type keeps the
-	 * declaration non-empty so an extension cannot claim support for nothing.
-	 */
-	readonly supportedVersions: readonly [string, ...string[]];
 	/**
 	 * Implementations of the definition's directed commands, keyed by command name.
 	 *
@@ -390,8 +388,8 @@ export interface OmpSdkSurface {
 	 * The version the agent runtime reports through its own SDK namespace.
 	 *
 	 * This is the only version surface the extension interface exposes, so it is what
-	 * version admission compares against the declared support set. A surface without it
-	 * reports no version, and admission then has nothing to compare.
+	 * version admission compares against the framework's Supported agent-runtime baseline.
+	 * A surface without it reports no version, and admission then has nothing to compare.
 	 */
 	readonly VERSION?: string;
 }
@@ -413,7 +411,7 @@ function mainOwnerKey(sessionId: string): string {
  *
  * The injected SDK namespace carries the runtime's own version constant; a surface that
  * carries none reports no version, and admission then has nothing to compare against the
- * declared support set.
+ * framework's Supported agent-runtime baseline.
  */
 function reportedVersion(pi: OmpExtensionApi): string | undefined {
 	const version = pi.pi?.VERSION;
@@ -841,20 +839,20 @@ function ompPort(pi: OmpExtensionApi, definition: ExtensionDefinition): AgentRun
  * continues. The State store is created once here — at module load, so once per
  * extension per process — and shared by every session binding, which is what lets
  * bindings agree on one current value per owner.
+ *
+ * Version support is not an assembly option: the framework owns the Supported agent-runtime
+ * baseline, so an assembly describes only the capabilities its extension needs (`actions`,
+ * `events`, `requiredSemantics`) and where its declared configuration is resolved from
+ * (`configBaseDir`). An extension that needs none of them assembles with no options at all.
  */
-export function ompAdapter(definition: ExtensionDefinition, options: OmpAdapterOptions): OmpExtensionFactory {
+export function ompAdapter(definition: ExtensionDefinition, options: OmpAdapterOptions = {}): OmpExtensionFactory {
 	const state = new StateStore();
-	// One notice ledger per assembly, as the State store is: every binding this factory
-	// makes in one process shares it, so a main session is told about an unlisted version
-	// exactly once however often the loader re-binds the session.
-	const notices = new AdmissionNotices();
 	return (pi: OmpExtensionApi): BindingResult =>
 		bindExtension(
 			definition,
 			ompPort(pi, definition),
 			state,
 			{
-				supportedVersions: options.supportedVersions,
 				facts: {
 					version: reportedVersion(pi),
 					missingRequiredSemantics: missingRequiredSemantics(pi),
@@ -863,7 +861,6 @@ export function ompAdapter(definition: ExtensionDefinition, options: OmpAdapterO
 					environment: { platform: `${process.platform}-${process.arch}`, runtime: "omp" },
 				},
 				requiredSemantics: options.requiredSemantics,
-				notices,
 			},
 			options.actions,
 			options.events,

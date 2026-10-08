@@ -126,7 +126,7 @@ function nativeDouble(): NativeDouble {
 
 /** Binds any definition to the double through the public adapter. */
 function bindDefinition(double: NativeDouble, definition: ExtensionDefinition): void {
-	const factory = frameworkOmp.ompAdapter(definition, { supportedVersions: ["18.5.0"] });
+	const factory = frameworkOmp.ompAdapter(definition);
 	if (!factory(double.api).bound) throw new Error("the definition did not bind");
 }
 
@@ -358,7 +358,7 @@ describe("off, re-entry and branch rewinds keep the contribution honest (P20, B7
 	});
 
 	test("two bindings of one extension decide from State and branch, not from which delivered first", () => {
-		const factory = frameworkOmp.ompAdapter(CODEBASE_TOOLS, { supportedVersions: ["18.5.0"] });
+		const factory = frameworkOmp.ompAdapter(CODEBASE_TOOLS);
 		const first = nativeDouble();
 		const second = nativeDouble();
 		expect(factory(first.api).bound).toBe(true);

@@ -227,7 +227,6 @@ function gateSurface(): GateSurface {
 	};
 
 	const factory = ompAdapter(CODEBASE_TOOLS, {
-		supportedVersions: ["18.5.0"],
 		events: {
 			session_start: delivery => observed.push(`${delivery.event.kind} ${ownerLabelOf(delivery.owner)}`),
 			session_end: delivery => observed.push(`${delivery.event.kind} ${ownerLabelOf(delivery.owner)}`),

@@ -28,6 +28,7 @@ import type {
 	OmpSessionEvent,
 	OmpSessionEventType,
 } from "../../../framework/adapters/omp";
+import type { ControlledClock } from "./controlled-clock";
 
 /** One session lifecycle handler as the loader registers it. */
 type SessionHandler = (event: OmpSessionEvent, ctx: OmpSessionContext) => void;
@@ -48,9 +49,10 @@ export interface WidgetWrite {
 /**
  * One managed timer the extension scheduled through a session's context.
  *
- * The double schedules nothing: a test fires {@link ManagedTimer.callback} itself, so a periodic
- * effect is observed at its own pace instead of the suite's wall-clock time, and asserts the period
- * the extension asked the runtime for — which is the whole of a managed cadence.
+ * How it runs is the double's timer mode (see {@link TimerMode}): by default the double schedules
+ * nothing and a test fires {@link ManagedTimer.callback} itself, while a cadence run has the mode
+ * schedule the interval for real — on the runtime's own clock or on a {@link ControlledClock} — so
+ * the period the extension asked for is what makes a beat appear, not the test's own call.
  */
 export interface ManagedTimer {
 	/** The callback the extension handed the runtime. */
@@ -59,6 +61,27 @@ export interface ManagedTimer {
 	readonly ms: number | undefined;
 	/** Whether the extension cancelled exactly this timer through the context's `clearTimer`. */
 	cancelled: boolean;
+}
+
+/**
+ * How the doubled session context runs the intervals the extension schedules on it.
+ *
+ * - `manual` (the default): nothing is scheduled. A test drives the periodic effect itself by
+ *   firing the recorded callback, which observes one beat's content without any cadence at all.
+ * - `real`: the runtime's own global interval, so a beat really fires once per period and a run
+ *   can record the wall-clock cadence the extension asked the runtime for.
+ * - `controlled`: a {@link ControlledClock} the caller advances by exact virtual milliseconds, so
+ *   a beat appears at its period's virtual instant without a wall wait and a cancelled interval
+ *   fires nothing.
+ */
+export type TimerMode =
+	| { readonly kind: "manual" }
+	| { readonly kind: "real" }
+	| { readonly kind: "controlled"; readonly clock: ControlledClock };
+
+/** What one double was built with; the timer mode is the only choice so far. */
+export interface OmpDoubleOptions {
+	readonly timers?: TimerMode;
 }
 
 /** The facts one doubled session context reports; everything else is fixed by the double. */
@@ -151,7 +174,8 @@ export interface OmpDouble {
 	nextNotification(): Promise<string>;
 }
 
-export function ompDouble(): OmpDouble {
+export function ompDouble(options: OmpDoubleOptions = {}): OmpDouble {
+	const timerMode = options.timers ?? { kind: "manual" };
 	const labels: string[] = [];
 	const registrations = new Map<string, Registration>();
 	const appended: Array<{ customType: string; data: unknown }> = [];
@@ -159,6 +183,13 @@ export function ompDouble(): OmpDouble {
 	const notificationLevels: string[] = [];
 	const widgets: WidgetWrite[] = [];
 	const timers: ManagedTimer[] = [];
+	/**
+	 * How to stop each scheduled timer, for the modes that really schedule one: `clearTimer` marks
+	 * the record cancelled and then cancels whatever the mode started, so a cancelled beat fires
+	 * nothing in any mode. The map is keyed by the record a test already observes, which is why the
+	 * records keep exactly the shape {@link ManagedTimer} declares.
+	 */
+	const timerStops = new Map<ManagedTimer, () => void>();
 	const waiting: Array<(message: string) => void> = [];
 	const agents = new Map<string, OmpAgentRef>();
 	// The native lifecycle subscriptions this binding made. The double registers nothing
@@ -265,13 +296,27 @@ export function ompDouble(): OmpDouble {
 				setInterval: (callback: () => void, ms?: number) => {
 					const timer: ManagedTimer = { callback, ms, cancelled: false };
 					timers.push(timer);
-					// The handle the runtime hands back is what cancels this timer and no other.
+					// The handle the runtime hands back is what cancels this timer and no other. What
+					// the handle does besides that is the mode: a manual run's recorded callback is
+					// fired by the test, a real run's fires on the runtime's own clock, and a
+					// controlled run's fires when the caller advances its virtual clock to the period.
+					const period = ms ?? 0;
+					if (timerMode.kind === "real") {
+						const handle = setInterval(callback, period);
+						timerStops.set(timer, () => clearInterval(handle));
+					} else if (timerMode.kind === "controlled") {
+						const interval = timerMode.clock.every(period, callback);
+						timerStops.set(timer, () => interval.cancel());
+					}
 					return timer;
 				},
 				clearTimer: (timer: unknown) => {
-					if (timer !== null && typeof timer === "object" && "cancelled" in timer) {
-						(timer as ManagedTimer).cancelled = true;
-					}
+					if (timer === null || typeof timer !== "object" || !("cancelled" in timer)) return;
+					const record = timer as ManagedTimer;
+					if (record.cancelled) return;
+					record.cancelled = true;
+					timerStops.get(record)?.();
+					timerStops.delete(record);
 				},
 			} as unknown as OmpCommandContext;
 		},

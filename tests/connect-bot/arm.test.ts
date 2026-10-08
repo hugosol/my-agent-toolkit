@@ -18,9 +18,9 @@ import {
 	type PushHttpResponse,
 	type PushTransport,
 	EVENTS_PATH,
-	REGISTER_TIMEOUT_MS,
 	setPushTransportForTest,
 } from "../../extensions/connect-bot/client";
+import { connectBotConfig } from "../../extensions/connect-bot/config";
 import { botSessions } from "../../extensions/connect-bot/session";
 import connectBot from "../../extensions/connect-bot/runtimes/omp";
 import { type OmpDouble, ompDouble } from "./support/omp-double";
@@ -153,8 +153,8 @@ describe("an empty argument arms this session (E2, E17, E18)", () => {
 		expect(requests[0]?.init.method).toBe("POST");
 		expect(requests[0]?.init.headers).toEqual({ "content-type": "application/json" });
 		expect(requests[0]?.init.proxy).toBe(false);
-		// `register` answers fast or not at all: the request carries the ≤1s budget.
-		expect(REGISTER_TIMEOUT_MS).toBe(1000);
+		// The wait this request carries is the extension's own configured budget rather than a
+		// constant here — `request-timeout.test.ts` observes it against a real panel.
 		expect(requests[0]?.init.signal).toBeInstanceOf(AbortSignal);
 		// The real session facts the adapter's opaque owner key deliberately does not carry.
 		expect(JSON.parse(requests[0]?.init.body ?? "")).toEqual({
@@ -401,7 +401,7 @@ describe("an arm that fails leaves nothing behind and can be retried (E4, story 
 		expect(double.notifications).toEqual([ARM_FAILED]);
 	});
 
-	test("a register the panel never answers fails within its ≤1s budget and aborts the request", async () => {
+	test("a register the panel never answers fails within its configured budget and aborts the request", async () => {
 		jest.useFakeTimers();
 		const attempts: Request[] = [];
 		const double = bound(
@@ -421,7 +421,8 @@ describe("an arm that fails leaves nothing behind and can be retried (E4, story 
 		expect(attempts.length).toBe(1);
 		expect(double.notifications).toEqual([]);
 
-		jest.advanceTimersByTime(REGISTER_TIMEOUT_MS);
+		// The request's own budget: the extension's configured value, advanced to rather than waited out.
+		jest.advanceTimersByTime(connectBotConfig().requestTimeoutMs);
 		await announced;
 
 		// A timeout is the same outcome as a reject: the request is aborted, the operator is told

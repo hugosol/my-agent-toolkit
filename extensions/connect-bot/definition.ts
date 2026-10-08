@@ -19,8 +19,9 @@ import { defineExtension } from "../../framework/public";
  * fixes (an empty argument arms this session, `off` disarms it), plus the marker the framework
  * publishes while the declared value holds.
  *
- * The endpoint appears here only as a requirement on the extension's own `config.yaml`; the
- * file is the single source of its value, and no default or fallback lives in code.
+ * The endpoint and the request budget appear here only as requirements on the extension's own
+ * `config.yaml`; the file is the single source of their values, and no default or fallback lives
+ * in code.
  */
 export const CONNECT_BOT = defineExtension({
 	id: "connect-bot",
@@ -35,5 +36,5 @@ export const CONNECT_BOT = defineExtension({
 		},
 	],
 	marker: { text: "◐ connectBot" },
-	config: { fields: { endpoint: "non-empty-string" } },
+	config: { fields: { endpoint: "non-empty-string", requestTimeoutMs: "milliseconds" } },
 });

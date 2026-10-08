@@ -9,7 +9,7 @@
  * is observed rather than assumed: the local switch and the marker are already gone while the
  * `unregister` is still in flight, and only then does the panel's answer decide which of the two
  * words the operator reads. A request the panel never answers is driven with bun's fake timers,
- * so the ≤1.5s budget is established by advancing time rather than by waiting.
+ * so the request's configured budget is established by advancing time rather than by waiting.
  *
  * A word that is no longer a form (`offline`) and a word that never was one are the same thing to
  * this extension: an unknown argument, reported with the extension's own usage error, changing
@@ -21,9 +21,9 @@ import {
 	type PushHttpResponse,
 	type PushTransport,
 	EVENTS_PATH,
-	UNREGISTER_TIMEOUT_MS,
 	setPushTransportForTest,
 } from "../../extensions/connect-bot/client";
+import { connectBotConfig } from "../../extensions/connect-bot/config";
 import { botSessions } from "../../extensions/connect-bot/session";
 import connectBot from "../../extensions/connect-bot/runtimes/omp";
 import { type OmpDouble, ompDouble } from "./support/omp-double";
@@ -197,12 +197,11 @@ describe("`off` drops the local switch first and removes the panel row best-effo
 		});
 
 		// The request is the panel protocol's `unregister`: the fixed route, no `data` member, and
-		// the ≤1.5s best-effort budget.
+		// the extension's own configured best-effort budget.
 		expect(requests[2]?.url).toBe(`${ENDPOINT}${EVENTS_PATH}`);
 		expect(requests[2]?.init.method).toBe("POST");
 		expect(requests[2]?.init.headers).toEqual({ "content-type": "application/json" });
 		expect(requests[2]?.init.proxy).toBe(false);
-		expect(UNREGISTER_TIMEOUT_MS).toBe(1500);
 		expect(requests[2]?.init.signal).toBeInstanceOf(AbortSignal);
 		expect(requests[2]?.init.body).toBe(JSON.stringify({ sessionId, kind: "unregister" }));
 
@@ -271,7 +270,7 @@ describe("`off` drops the local switch first and removes the panel row best-effo
 		expect(double.widgets[double.widgets.length - 1]?.lines).toBeUndefined();
 	});
 
-	test("an unregister the panel never answers aborts within its ≤1.5s budget", async () => {
+	test("an unregister the panel never answers aborts within its configured budget", async () => {
 		jest.useFakeTimers();
 		const requests: Request[] = [];
 		const double = bound((url, init) => {
@@ -298,7 +297,8 @@ describe("`off` drops the local switch first and removes the panel row best-effo
 		expect(requests.map(request => envelopeOf(request).kind)).toEqual(["register", "state", "unregister"]);
 		expect(double.notifications).toEqual([CONNECTED]);
 
-		jest.advanceTimersByTime(UNREGISTER_TIMEOUT_MS);
+		// The request's own budget: the extension's configured value, advanced to rather than waited out.
+		jest.advanceTimersByTime(connectBotConfig().requestTimeoutMs);
 		await announced;
 
 		expect(requests[2]?.init.signal.aborted).toBe(true);

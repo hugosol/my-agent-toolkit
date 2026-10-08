@@ -131,7 +131,7 @@ describe("an illegal configuration declaration refuses the extension (P19, P20)"
 			name: "a field names an unbound type",
 			config: { fields: { endpoint: "integer" } },
 			detail:
-				'config declares field "endpoint" with type "integer", which this framework version does not bind (bound types: string, non-empty-string, number, boolean)',
+				'config declares field "endpoint" with type "integer", which this framework version does not bind (bound types: string, non-empty-string, number, boolean, milliseconds)',
 		},
 		{
 			name: "the path is an empty string",
@@ -160,7 +160,7 @@ describe("an illegal configuration declaration refuses the extension (P19, P20)"
 });
 
 describe("the configuration declaration is pure data (P19)", () => {
-	test("a declaration that names the four bound types is accepted as declared", () => {
+	test("a declaration that names the bound types is accepted as declared", () => {
 		// `defineExtension` copies nothing and validates nothing: the declaration reaches
 		// binding as the extension wrote it.
 		const definition = defineExtension({
@@ -168,13 +168,25 @@ describe("the configuration declaration is pure data (P19)", () => {
 			displayName: "pure-data",
 			config: {
 				path: "extensions/pure-data/config.yaml",
-				fields: { endpoint: "non-empty-string", port: "number", enabled: "boolean", label: "string" },
+				fields: {
+					endpoint: "non-empty-string",
+					port: "number",
+					enabled: "boolean",
+					label: "string",
+					requestTimeoutMs: "milliseconds",
+				},
 			},
 		});
 
 		expect(definition.config).toEqual({
 			path: "extensions/pure-data/config.yaml",
-			fields: { endpoint: "non-empty-string", port: "number", enabled: "boolean", label: "string" },
+			fields: {
+				endpoint: "non-empty-string",
+				port: "number",
+				enabled: "boolean",
+				label: "string",
+				requestTimeoutMs: "milliseconds",
+			},
 		});
 	});
 });
@@ -311,6 +323,115 @@ describe("an illegal configuration file refuses the extension (P20)", () => {
 		expect(diagnostics[0]!.startsWith('bad-yaml: configuration error (config): the configuration file "')).toBe(true);
 		expect(registrations).toEqual([]);
 	});
+});
+
+/**
+ * A declared `milliseconds` field (P14): a wait budget is a whole number of milliseconds the
+ * runtime's own timer schedules, so a value the timer would not wait for is refused as a
+ * configuration failure rather than read as a budget it is not.
+ *
+ * The range is stated here as an independent runtime fact — the largest delay a millisecond
+ * timer schedules before it clamps the value to 1ms (2^31-1) — rather than re-read from the
+ * framework's own matcher, and the expected report text is built from it.
+ */
+describe("a declared milliseconds field is a whole millisecond budget this runtime schedules (P14)", () => {
+	/** The largest delay a millisecond timer schedules; a longer value is clamped, not waited for. */
+	const MAX_MILLISECONDS = 2 ** 31 - 1;
+	/** What the declaration requires, as the framework's report states it. */
+	const requires = `a whole number of milliseconds between 1 and ${MAX_MILLISECONDS}`;
+	/** The field under test, under the name a wait budget would carry. */
+	const wait = { requestTimeoutMs: "milliseconds" };
+
+	test("whole millisecond budgets bind, and the value recorded is the file's", () => {
+		for (const value of [1, 2000, MAX_MILLISECONDS]) {
+			const definition = declaringConfig(`wait-${value}`, { fields: wait });
+			const bound = portDouble().bind(definition, { config: reading(`requestTimeoutMs: ${value}\n`) });
+
+			expect(bound.bound).toBe(true);
+			expect(getConfig(definition)).toEqual({ requestTimeoutMs: value });
+		}
+	});
+
+	/**
+	 * Every value a wait budget must refuse, with the deterministic detail binding reports: the
+	 * wait the file names is not one this runtime schedules.
+	 */
+	const refused: readonly {
+		readonly name: string;
+		readonly id: string;
+		readonly document: string;
+		readonly carries: string;
+	}[] = [
+		{
+			name: "the field is missing",
+			id: "wait-missing",
+			document: "other: value\n",
+			carries: `declares no "requestTimeoutMs", which the extension requires as ${requires}`,
+		},
+		{
+			name: "zero",
+			id: "wait-zero",
+			document: "requestTimeoutMs: 0\n",
+			carries: `declares "requestTimeoutMs" as a number, but the extension requires ${requires}`,
+		},
+		{
+			name: "a negative value",
+			id: "wait-negative",
+			document: "requestTimeoutMs: -1\n",
+			carries: `declares "requestTimeoutMs" as a number, but the extension requires ${requires}`,
+		},
+		{
+			name: "a fraction",
+			id: "wait-fraction",
+			document: "requestTimeoutMs: 1.5\n",
+			carries: `declares "requestTimeoutMs" as a number, but the extension requires ${requires}`,
+		},
+		{
+			name: "text that is not a number",
+			id: "wait-text",
+			document: 'requestTimeoutMs: "1000"\n',
+			carries: `declares "requestTimeoutMs" as "1000", but the extension requires ${requires}`,
+		},
+		{
+			name: "a non-finite value",
+			id: "wait-infinite",
+			document: "requestTimeoutMs: .inf\n",
+			carries: `declares "requestTimeoutMs" as a non-finite number, but the extension requires ${requires}`,
+		},
+		{
+			name: "not-a-number",
+			id: "wait-nan",
+			document: "requestTimeoutMs: .nan\n",
+			carries: `declares "requestTimeoutMs" as a non-finite number, but the extension requires ${requires}`,
+		},
+		{
+			name: "the first value the runtime does not schedule",
+			id: "wait-overflow",
+			document: `requestTimeoutMs: ${MAX_MILLISECONDS + 1}\n`,
+			carries: `declares "requestTimeoutMs" as a number, but the extension requires ${requires}`,
+		},
+		{
+			name: "a value beyond any millisecond this runtime counts",
+			id: "wait-huge",
+			document: `requestTimeoutMs: ${2 ** 53}\n`,
+			carries: `declares "requestTimeoutMs" as a number, but the extension requires ${requires}`,
+		},
+	];
+
+	for (const { name, id, document, carries } of refused) {
+		test(`${name}: refused at binding, reported once, nothing registered`, () => {
+			const { result, diagnostics, registrations } = bindFailure(
+				declaringConfig(id, { fields: wait }),
+				reading(document),
+			);
+
+			const detail = `${at(id)} ${carries}`;
+			expect(failureKinds(result)).toEqual(["configuration"]);
+			expect(configViolations(result)).toEqual([{ kind: "config", detail }]);
+			expect(diagnostics).toEqual([`${id}: configuration error (config): ${detail}`]);
+			expect(registrations).toEqual([]);
+		});
+	}
 });
 
 /**
