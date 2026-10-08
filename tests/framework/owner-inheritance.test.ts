@@ -11,7 +11,7 @@
  * that declares nothing.
  *
  * The same-process multi-main limitation (N10) is a recorded conclusion, not an
- * assertion: it lives in `docs/agent-runtime-support.md` ("First-release limitation:
+ * assertion: it lives in `framework/docs/agent-runtime-support.md` ("First-release limitation:
  * one main session per process") and in the framework backlog, and no test here claims
  * behaviour for a process holding two main sessions. What this suite does exercise is
  * the neighbouring case the contract does fix — a parent chain that leaves the process

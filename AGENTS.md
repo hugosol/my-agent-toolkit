@@ -10,4 +10,4 @@ Decision tickets use `open`/`claimed`/`resolved`; implementation tickets use `re
 
 ### Domain docs
 
-Single-context: one `GLOSSARY.md` plus `docs/adr/` at the repo root. See `docs/agents/domain.md`.
+Multi-context: `GLOSSARY-MAP.md` at the repo root points at one `GLOSSARY.md` per context (`framework/`, `extensions/<id>/`); `docs/adr/` and `docs/agents/` stay at the repo root. See `docs/agents/domain.md`.

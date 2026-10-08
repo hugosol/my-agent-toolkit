@@ -16,7 +16,7 @@
  * Isolation: the only writes are under the isolated prefix (`.cache/omp-baseline/<version>`,
  * gitignored) and OS temp directories the harness manages. The default global install, formal
  * configuration and any running agent are never touched, and the candidate version never enters
- * the baseline record (`docs/agent-runtime-baseline.json` keeps declaring 18.5.0 until a
+ * the baseline record (`framework/docs/agent-runtime-baseline.json` keeps declaring 18.5.0 until a
  * maintainer replaces it explicitly).
  */
 import { writeFileSync } from "node:fs";
@@ -218,7 +218,7 @@ const verification: CandidateVerification = {
 	frameworkSuite,
 	regressionAlarm,
 	certification:
-		"none: a green framework suite is a regression alarm only. Replacing the supported version is an explicit maintainer action (edit SUPPORTED_AGENT_RUNTIME_VERSIONS in framework/core/baseline.ts, update docs/agent-runtime-support.md, restart), and an upgrade that touches an extension-visible surface additionally needs one human TUI spot check.",
+		"none: a green framework suite is a regression alarm only. Replacing the supported version is an explicit maintainer action (edit SUPPORTED_AGENT_RUNTIME_VERSIONS in framework/core/baseline.ts, update framework/docs/agent-runtime-support.md, restart), and an upgrade that touches an extension-visible surface additionally needs one human TUI spot check.",
 };
 
 writeFileSync(recordPath, `${JSON.stringify(verification, null, "\t")}\n`);

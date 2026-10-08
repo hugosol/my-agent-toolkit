@@ -4,7 +4,7 @@
  * that directory resolve, whether each extension binds there (connect-bot's binding
  * included, which reads the configuration file its declaration requires), and how an
  * extension's original and replacement implementations are kept out of one process
- * (C11/C12/N8, P29/P30/P31/P42; see docs/agent-runtime-support.md, "Shared-source
+ * (C11/C12/N8, P29/P30/P31/P42; see framework/docs/agent-runtime-support.md, "Shared-source
  * deployment prerequisite").
  *
  * Each test runs the isolated 18.5.0 install's own loader module against the real

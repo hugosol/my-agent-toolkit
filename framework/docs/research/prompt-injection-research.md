@@ -8,12 +8,12 @@ Both agent runtimes expose the mechanisms needed for system-prompt contributions
 
 ## What readonly-mode actually implements
 
-- [`InjectionConfig`](../../../my-omp-toolkit/extensions/readonly-mode/mode.ts#L32) declares `systemPrompt`, `everyTurnMessage`, and `transitionMessage.reinjectAfter` slots.
-- The current [mode table](../../../my-omp-toolkit/extensions/readonly-mode/mode.ts#L62) selects transition messages for Build and repeated messages for Explore/Debug. No mode enables the system slot.
-- More importantly, [`buildPrompt`](../../../my-omp-toolkit/extensions/readonly-mode/mode.ts#L124) provides only transition/every-turn content, never `systemPrompt` content. Merely enabling the system flag is insufficient. A direct run of `ModeState` with that flag enabled still returned no system contribution.
-- [`ModeState.buildInjection`](../../../my-omp-toolkit/extensions/readonly-mode/mode.ts#L190) makes the first evaluation count as a change; selects transition content on change or the configured counter threshold; and gives transition content priority when both message rules qualify. Its counter advances when this method is invoked, not on an independently defined model-request or tool-turn clock.
-- [`before_agent_start`](../../../my-omp-toolkit/extensions/readonly-mode/index.ts#L146) appends system content to the OMP array and returns a hidden custom message. Mode switches themselves do not immediately insert that message; the next hook evaluation makes the decision.
-- Optional [`context` filtering](../../../my-omp-toolkit/extensions/readonly-mode/index.ts#L163) removes custom messages belonging to other known modes from the request context. [`CLEANUP_HISTORY`](../../../my-omp-toolkit/extensions/readonly-mode/prompts.ts#L3) is currently false. This hook does not erase stored history; the flag's name should not define the framework's terminology.
+- [`InjectionConfig`](../../../../my-omp-toolkit/extensions/readonly-mode/mode.ts#L32) declares `systemPrompt`, `everyTurnMessage`, and `transitionMessage.reinjectAfter` slots.
+- The current [mode table](../../../../my-omp-toolkit/extensions/readonly-mode/mode.ts#L62) selects transition messages for Build and repeated messages for Explore/Debug. No mode enables the system slot.
+- More importantly, [`buildPrompt`](../../../../my-omp-toolkit/extensions/readonly-mode/mode.ts#L124) provides only transition/every-turn content, never `systemPrompt` content. Merely enabling the system flag is insufficient. A direct run of `ModeState` with that flag enabled still returned no system contribution.
+- [`ModeState.buildInjection`](../../../../my-omp-toolkit/extensions/readonly-mode/mode.ts#L190) makes the first evaluation count as a change; selects transition content on change or the configured counter threshold; and gives transition content priority when both message rules qualify. Its counter advances when this method is invoked, not on an independently defined model-request or tool-turn clock.
+- [`before_agent_start`](../../../../my-omp-toolkit/extensions/readonly-mode/index.ts#L146) appends system content to the OMP array and returns a hidden custom message. Mode switches themselves do not immediately insert that message; the next hook evaluation makes the decision.
+- Optional [`context` filtering](../../../../my-omp-toolkit/extensions/readonly-mode/index.ts#L163) removes custom messages belonging to other known modes from the request context. [`CLEANUP_HISTORY`](../../../../my-omp-toolkit/extensions/readonly-mode/prompts.ts#L3) is currently false. This hook does not erase stored history; the flag's name should not define the framework's terminology.
 - The configuration comment says the repeated message is before the user prompt. Actual pi runtime ordering and OMP source ordering put these returned custom messages after the current user message.
 
 Direct execution of the existing mode logic produced:
@@ -40,18 +40,18 @@ This verifies existing decision logic, not an implementation of the planned fram
 
 Primary source references:
 
-- pi [before-agent-start composition](../../../pi/packages/coding-agent/src/core/extensions/runner.ts#L1411), [context transformation](../../../pi/packages/coding-agent/src/core/extensions/runner.ts#L1289), [prompt message ordering](../../../pi/packages/coding-agent/src/core/agent-session.ts#L2015), [custom-message persistence](../../../pi/packages/coding-agent/src/core/agent-session.ts#L1119), [system-prompt construction](../../../pi/packages/coding-agent/src/core/system-prompt.ts#L180).
-- pi [per-request context transform](../../../pi/packages/agent/src/agent-loop.ts#L389). A framework must define its own frequency unit rather than assume an agent run, a turn, and a model request are identical.
-- OMP [before-agent-start composition](../../../oh-my-pi/packages/coding-agent/src/extensibility/extensions/runner.ts#L2072), [context transformation](../../../oh-my-pi/packages/coding-agent/src/extensibility/extensions/runner.ts#L1935), [prompt message ordering](../../../oh-my-pi/packages/coding-agent/src/session/agent-session.ts#L7434), [preparation](../../../oh-my-pi/packages/coding-agent/src/session/agent-session.ts#L7315), [custom-message persistence](../../../oh-my-pi/packages/coding-agent/src/session/agent-session.ts#L3352), [per-call context transform](../../../oh-my-pi/packages/agent/src/agent-loop.ts#L1871).
+- pi [before-agent-start composition](../../../../pi/packages/coding-agent/src/core/extensions/runner.ts#L1411), [context transformation](../../../../pi/packages/coding-agent/src/core/extensions/runner.ts#L1289), [prompt message ordering](../../../../pi/packages/coding-agent/src/core/agent-session.ts#L2015), [custom-message persistence](../../../../pi/packages/coding-agent/src/core/agent-session.ts#L1119), [system-prompt construction](../../../../pi/packages/coding-agent/src/core/system-prompt.ts#L180).
+- pi [per-request context transform](../../../../pi/packages/agent/src/agent-loop.ts#L389). A framework must define its own frequency unit rather than assume an agent run, a turn, and a model request are identical.
+- OMP [before-agent-start composition](../../../../oh-my-pi/packages/coding-agent/src/extensibility/extensions/runner.ts#L2072), [context transformation](../../../../oh-my-pi/packages/coding-agent/src/extensibility/extensions/runner.ts#L1935), [prompt message ordering](../../../../oh-my-pi/packages/coding-agent/src/session/agent-session.ts#L7434), [preparation](../../../../oh-my-pi/packages/coding-agent/src/session/agent-session.ts#L7315), [custom-message persistence](../../../../oh-my-pi/packages/coding-agent/src/session/agent-session.ts#L3352), [per-call context transform](../../../../oh-my-pi/packages/agent/src/agent-loop.ts#L1871).
 
 ## Role guarantees require the provider path, not just the agent-runtime hook
 
-pi converts custom messages to `user` in [`convertToLlm`](../../../pi/packages/coding-agent/src/core/messages.ts#L161). This was verified both by invoking the installed converter and by observing an actual local OpenAI-compatible HTTP request.
+pi converts custom messages to `user` in [`convertToLlm`](../../../../pi/packages/coding-agent/src/core/messages.ts#L161). This was verified both by invoking the installed converter and by observing an actual local OpenAI-compatible HTTP request.
 
-OMP's core [custom-message conversion](../../../oh-my-pi/packages/agent/src/compaction/messages.ts#L216) produces `developer`, but this is not a universal wire-role guarantee:
+OMP's core [custom-message conversion](../../../../oh-my-pi/packages/agent/src/compaction/messages.ts#L216) produces `developer`, but this is not a universal wire-role guarantee:
 
-- [OpenAI Chat Completions](../../../oh-my-pi/packages/ai/src/providers/openai-completions.ts#L2384) chooses developer versus user according to `supportsDeveloperRole`.
-- [OpenAI Responses](../../../oh-my-pi/packages/ai/src/providers/openai-shared.ts#L2086) emits ordinary converted user/developer history as user messages on the inspected path.
+- [OpenAI Chat Completions](../../../../oh-my-pi/packages/ai/src/providers/openai-completions.ts#L2384) chooses developer versus user according to `supportsDeveloperRole`.
+- [OpenAI Responses](../../../../oh-my-pi/packages/ai/src/providers/openai-shared.ts#L2086) emits ordinary converted user/developer history as user messages on the inspected path.
 
 Therefore hidden visibility, conversation position, and instruction authority are separate semantic dimensions. Neither matching hook names nor matching intermediate message roles prove provider-level equivalence. The existing codebase-tools ADR's developer-role requirement remains a requirement, not proof that every OMP provider preserves that role.
 

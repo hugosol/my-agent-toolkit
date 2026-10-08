@@ -16,7 +16,7 @@
  *   resolves the host package scope to its own copy, so the extension assembly
  *   needs no local install; only the surface this repository uses is declared.
  *
- * See docs/agent-runtime-support.md for the deployment rule and the fixed baseline.
+ * See framework/docs/agent-runtime-support.md for the deployment rule and the fixed baseline.
  */
 
 declare module "*.md" {

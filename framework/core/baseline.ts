@@ -15,8 +15,8 @@
  *
  * Replacing the supported version is an explicit maintainer action, and this list is what
  * carries it: edit it together with the support record
- * (`docs/agent-runtime-support.md`) and the baseline record's `agentRuntime.supportedVersion`
- * (`docs/agent-runtime-baseline.json`), then restart the agent runtime. A green candidate run is
+ * (`framework/docs/agent-runtime-support.md`) and the baseline record's `agentRuntime.supportedVersion`
+ * (`framework/docs/agent-runtime-baseline.json`), then restart the agent runtime. A green candidate run is
  * a regression alarm, never a support claim.
  */
 export const SUPPORTED_AGENT_RUNTIME_VERSIONS: readonly [string, ...string[]] = ["18.5.0"];

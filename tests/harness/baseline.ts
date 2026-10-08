@@ -3,7 +3,7 @@
  * revision anchor, the artifact that actually runs during acceptance, and the
  * dependency lockfiles of this repository and of the behavior oracle.
  *
- * The record itself is data (`docs/agent-runtime-baseline.json`); this module only
+ * The record itself is data (`framework/docs/agent-runtime-baseline.json`); this module only
  * reads it, materialises the isolated install it names, and re-checks the claimed
  * correspondences. It never re-derives the byte-identity *reasoning* of decision 03,
  * it re-checks the same file set.
@@ -120,7 +120,7 @@ export interface CheckoutCommit {
 /** `tests/harness` -> repository root. */
 export const HARNESS_DIR = import.meta.dir;
 export const REPO_ROOT = path.resolve(HARNESS_DIR, "..", "..");
-export const BASELINE_RECORD_PATH = path.join(REPO_ROOT, "docs", "agent-runtime-baseline.json");
+export const BASELINE_RECORD_PATH = path.join(REPO_ROOT, "framework", "docs", "agent-runtime-baseline.json");
 
 /**
  * Resolve a path recorded in the baseline. Cross-repository paths are recorded

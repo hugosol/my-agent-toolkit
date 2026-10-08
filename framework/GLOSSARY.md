@@ -96,18 +96,6 @@ _Avoid_: session restoration, persistence (when referring only to volatile memor
 The decision whether and how a restored state should reacquire ongoing effects whose earlier execution may no longer be active. Restoring a stored value alone does not establish that timers or external registrations are running.
 _Avoid_: replaying the last command, automatic side-effect restoration
 
-**Panel session registration（面板会话登记）**:
-The presence of a connect-bot session record in the panel. Unregistering removes that record; an offline session can remain registered.
-_Avoid_: online status, heartbeat, local activation
-
-**Panel registration attempt（面板登记尝试）**:
-An owner-scoped request to establish or renew a panel session registration, distinct from the registration already present in the panel. An attempt invalidated by an explicit stop or the end of its Owner’s life never becomes valid again, even if that Owner later returns.
-_Avoid_: panel session registration, local activation, online status
-
-**Panel session online status（面板会话在线状态）**:
-The panel-owned assessment of whether a registered session has been heard from recently enough to count as online. Becoming offline does not itself remove the session registration.
-_Avoid_: registration, unregister, client failure count
-
 **Marker area（状态标记区）**:
 The framework's single status region where each bound extension's marker is rendered, with a widget identity, placement and line order the framework owns and an activation-driven life cycle the framework derives from State; an extension contributes only its marker text and can never name or claim the widget. It is one per process, registered on the process global under a well-known symbol so that duplicated framework module graphs still share the one region.
 _Avoid_: extension-owned widget, per-extension marker key, extension-chosen placement

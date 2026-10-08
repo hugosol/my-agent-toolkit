@@ -20,7 +20,7 @@ import {
 
 const record = readBaselineRecord();
 const REFRESH_HINT =
-	"refresh docs/agent-runtime-baseline.json (sourceCombination/oracle lockfile sha256) after a deliberate dependency change";
+	"refresh framework/docs/agent-runtime-baseline.json (sourceCombination/oracle lockfile sha256) after a deliberate dependency change";
 
 // These tests check the fixed record itself, so they only apply while the harness runs the
 // recorded version. With `OMP_TEST_VERSION` set, the install is deliberately a candidate and
