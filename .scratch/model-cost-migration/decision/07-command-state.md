@@ -17,3 +17,10 @@ Parent: [model-cost 完整迁移：通用能力分层与 OMP 适配](../map.md)
 
 [完整保留哪些业务行为，统计单位如何命名？](01-behavior-contract.md) 的 Q10 将数字／K／0、detail、holiday、clear 及命令反馈确认为需求基线，而非冻结实现。本票逐项决定完整语法、模式适用范围、状态寿命、反馈及失败边界；clear 默认仍是 DeepSeek 归档／新周期／清 holiday，不清 Codex estimate。任何偏离基线的取舍必须显式记录并经用户确认。
 
+## Handoff from accounting-ownership
+
+来源：[消费归属决议](../lighthouse/02-accounting-ownership.md)。用户已确认业务约束；以下接口、机制与展示问题仍待本票决策，本交接不代表它们已解决。
+
+- 已确认约束：Session 已发生消费不因 tree、改消息或 fork 回滚；账户金额只累计计费渠道，额度消费和无统计口径不属于金额清零后可当免费的一组记录。
+- 待决定：clear 的当前账户选择、归档／新周期与会话历史账本怎样区分？多会话并发、正在执行或迟到请求、账户切换与 clear 交错时，操作影响哪一周期与哪些视图？保留已确认的 clear 不清 Codex estimate 基线，任何改变需显式确认。
+
