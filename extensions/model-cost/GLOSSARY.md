@@ -1,6 +1,6 @@
 # model-cost
 
-Model usage and cost accounting, together with provider balance and allowance tracking. Request, Assistant response, Turn, Round and Agent activity state use the definitions in [the framework glossary](../../framework/GLOSSARY.md).
+Model usage and cost accounting, together with provider balance and allowance tracking. Request, Assistant response, Turn, Round, Agent activity state, Unknown, No measurement policy, Known zero and Metric completeness use the definitions in [the framework glossary](../../framework/GLOSSARY.md); the terms below specialize that vocabulary for consumption accounting.
 
 ## Language
 
@@ -12,13 +12,17 @@ _Avoid_: round end, tool completion, final response of a round
 The reported model usage and corresponding request-priced cost attributable to one Turn's assistant response. Tool results used as input to a later model request are included in that later request's reported usage, not separately charged when the tool returns.
 _Avoid_: round totals, legacy Turn
 
+**Accounting period（账户统计周期）**:
+The scope of active consumption accounting for one provider account, bounded by explicit resets and distinct from the lifetime of an agent session or Round. Different accounts have independent periods.
+_Avoid_: session lifetime, Round, calendar day, process lifetime
+
 **Round totals（轮次累计）**:
-The aggregate usage and cost attributed to one framework-defined Round, distinct from a single Turn's usage and from session totals.
-_Avoid_: legacy Turn, session totals
+The aggregate usage and cost attributed to one framework-defined Round within the applicable account accounting period. It is distinct from the sum of all Rounds in a session and from a single Turn's usage.
+_Avoid_: legacy Turn, session totals, whole-period totals
 
 **Session totals（会话累计）**:
-The aggregate usage and cost attributed to one agent session, distinct from the totals of one Round.
-_Avoid_: round totals, provider account balance
+The aggregate usage and cost attributed to one agent session within the applicable account accounting period, spanning its Rounds in that period. It is distinct from the session's lifetime consumption across periods.
+_Avoid_: round totals, provider account balance, lifetime session totals
 
 **Direct session totals（会话自身累计）**:
 The usage and cost of requests issued directly by one agent session, excluding requests issued by its subagents.
@@ -53,19 +57,31 @@ The indication that an accounting scope contains allowance-based consumption, wh
 _Avoid_: free request, unknown usage
 
 **No accounting policy（无统计口径）**:
-The category of recorded consumption for which this extension has no applicable consumption-amount accounting policy; it covers token-only and hidden modes. It is distinct from missing information under an applicable policy, allowance consumption and confirmed zero cost.
+The consumption-amount specialization of the framework’s [No measurement policy](../../framework/GLOSSARY.md#facts-and-measurement-semantics): this extension has no applicable monetary accounting policy for token-only and hidden modes. It is distinct from unknown amounts, allowance consumption and confirmed zero cost.
 _Avoid_: unknown usage, allowance consumption, free request
 
+**Unknown usage（未知用量）**:
+Model usage for which reliable reported quantities are unavailable. An absent report is distinct from confirmed zero usage and from whether a monetary accounting policy applies.
+_Avoid_: zero usage, no accounting policy, request failure
+
+**Unknown amount（未知金额）**:
+A consumption amount that cannot be determined because information required by an applicable monetary accounting policy is unavailable. Usage may be known while the amount is unknown.
+_Avoid_: no accounting policy, allowance consumption, confirmed zero cost
+
+**Confirmed zero cost（确认零费用）**:
+A zero consumption amount established by sufficient information under an applicable monetary accounting policy. It is distinct from unknown amounts and from channels excluded from monetary totals.
+_Avoid_: missing price, unknown amount, allowance consumption, no accounting policy
+
 **Known subtotal（已知小计）**:
-The sum of known contributions within the applicable accounting scope and policy. For consumption amounts, allowance consumption, no accounting policy and unknown amounts contribute zero numerically but retain their distinct meanings; a known subtotal is not necessarily a complete total.
+The consumption-accounting specialization of the framework’s [Known subtotal](../../framework/GLOSSARY.md#facts-and-measurement-semantics), summing only known monetary contributions under the applicable policy. Unknown amounts, allowance consumption and no accounting policy add no monetary amount, but none means a confirmed free request or establishes a complete total.
 _Avoid_: complete total, zero cost for unknown usage
 
 **Accounting completeness（消费统计完整性）**:
-Whether the usage or cost metric has all required accounting information for the requests in its scope. Usage completeness and cost completeness are distinct; an unknown contribution is not a confirmed zero.
+The consumption-accounting specialization of the framework’s [Metric completeness](../../framework/GLOSSARY.md#facts-and-measurement-semantics), evaluated independently for usage and cost within the accounting scope. Known usage does not by itself establish a known amount or confirmed zero cost.
 _Avoid_: request success, zero consumption
 
 **Selected Round totals（选定轮次累计）**:
-The full recorded totals of the Round selected by the current conversation-tree position, rather than a subtotal up to the selected Turn. Selecting a historical Round does not roll back session consumption.
+The totals attributable to the Round identified by a conversation-tree position, when that Round can be identified and its measurements are available. This historical-selection concept is distinct from current or most-recent Round totals; navigation alone does not establish data availability or change session consumption.
 _Avoid_: session totals, branch-path subtotal
 
 **Legacy Turn（旧的 Turn）**:

@@ -15,3 +15,11 @@ _Avoid_: panel session registration, local activation, online status
 **Panel session online status（面板会话在线状态）**:
 The panel-owned assessment of whether a registered session has been heard from recently enough to count as online. Becoming offline does not itself remove the session registration.
 _Avoid_: registration, unregister, client failure count
+
+**Panel agent state（面板代理状态）**:
+The panel-facing classification of a registered agent as working, idle before a Round end has been observed since connection, or awaiting input after an observed Round end. It combines the framework’s current activity condition with connection-local completion evidence, and is distinct from online status.
+_Avoid_: framework Agent activity state, panel online status, extension activation
+
+**Panel Round completion observation（面板轮次结束观测）**:
+Evidence that a Round has ended since the current panel connection began, distinct from the agent merely being idle when it connects. This observation does not assert completion of the user’s overall goal; truncating a round because of recovery or reloading is not such completion evidence.
+_Avoid_: current idleness, task success, online status

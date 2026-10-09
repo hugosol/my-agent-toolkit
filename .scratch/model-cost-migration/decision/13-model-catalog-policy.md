@@ -7,6 +7,11 @@ Blocked by: 01, 02
 Prerequisites: [完整保留哪些业务行为，统计单位如何命名？](01-behavior-contract.md)；[用量与费用属于哪个会话、账户和请求，如何避免漏算与重复？](02-accounting-ownership.md)
 Parent: [model-cost 完整迁移：通用能力分层与 OMP 适配](../map.md)
 
+## Trace handoff from data Lighthouse
+
+- [数据归属与账户周期决议](../lighthouse/12-state-data-contract.md)已收窄缺价实现：计费 usage 有而适用价格缺失时仍累计 token，只跳过费用并提示，无补算状态；Codex 参考缺价不影响 token／额度，token-only／hidden 没有金额口径不因缺价报错。
+- 领域概念未知／确认零／无统计口径继续保留；不据此要求运行时完整性枚举。模型／价格名单及维护来源仍由本票决定，不能用后来价格改写已锚价历史。
+
 ## Question
 
 依据[行为契约决议](../lighthouse/01-behavior-contract.md)，provider 的 Codex／官方 DeepSeek／token-only／hidden 分层已确认，具体 model ID 未冻结。确定迁移覆盖的官方人民币价格表、token-only 名单、别名匹配、未知模型行为及 Codex model.cost 缺失时的参考费用展示（不改变额度渠道分类）；区分 provider 身份与 URL 鉴别，不擅自扩大官方分类。
@@ -19,4 +24,4 @@ Parent: [model-cost 完整迁移：通用能力分层与 OMP 适配](../map.md)
 
 - 已确认约束：DeepSeek 为当前计费渠道，已知费用参与金额累计；Codex 为额度渠道，美元计价只作参考、不进消费金额累计；token-only／hidden 归“无统计口径”。“未知”是缺失适用统计所需信息，不能与额度消费／无统计口径／确认零混同。
 - 待决定：具体 provider／模型／别名如何映射以上口径，已知价格缺失与无口径如何判别，配置／catalog 资料怎样更新而不追溯改写已锚定的历史费用？Codex 缺 model.cost 只影响参考费用，不能因此改变额度渠道性质。
-- 展示模式与消费采集分离：只要有源头数据就保留；hidden 不授权丢弃请求事实。保持原 provider 分层需求，但不把“全部已知美元”混入消费金额汇总。
+- 展示模式与消费采集分离：只要有源头数据就保留；hidden 不授权按当前主模型过滤其他已取得且应累计的响应；缺 usage／价格按正式数据决议提示／跳过，不要求持久化逐请求事实或补算记录。保持原 provider 分层需求，但不把“全部已知美元”混入消费金额汇总。

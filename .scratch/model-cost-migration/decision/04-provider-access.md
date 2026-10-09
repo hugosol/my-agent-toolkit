@@ -7,6 +7,11 @@ Blocked by: 01, 02
 Prerequisites: [完整保留哪些业务行为，统计单位如何命名？](01-behavior-contract.md)；[用量与费用属于哪个会话、账户和请求，如何避免漏算与重复？](02-accounting-ownership.md)
 Parent: [model-cost 完整迁移：通用能力分层与 OMP 适配](../map.md)
 
+## Trace handoff from data Lighthouse
+
+- [数据归属与账户周期决议](../lighthouse/12-state-data-contract.md)将累计、测量缓存、holiday、estimate 与 clear 作用域都绑定真实账户，clear 仅重置目标账户。主／子不同账户时，需要明确实际请求身份与目标账户选择；不得将未知账户并进公共默认账户。
+- 会话或模型切换不重解释旧归属；各账户有独立周期。clear 后重新建立运行期关系仍需可靠宿主事实，不用 Owner／agent 名称猜账户。
+
 ## Question
 
 确定 framework adapter 提供哪些通用 provider／账户事实和 credential resolution，model-cost 保留哪些 DeepSeek balance／Codex usage endpoint、窗口选择及 parser？旧实现访问 OMP OAuth storage、usage provider、header parser 和 request-scoped proxy，不能直接移入 shared logic。

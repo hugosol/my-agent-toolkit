@@ -29,7 +29,7 @@ A framework-defined, harness-independent lifecycle transition that a harness ada
 _Avoid_: native event name, raw harness hook, phase state
 
 **Request（模型请求）**:
-One request sent to a model provider, distinct from the resulting assistant response and its tool activity.
+One observable model-provider invocation, distinct from its resulting assistant response and tool activity; transport retries hidden within that invocation are not separate observable Requests.
 _Avoid_: turn, round, assistant response
 
 **Assistant response（助手响应）**:
@@ -37,20 +37,56 @@ One model response, including a response that only initiates tool calls; tool re
 _Avoid_: tool result, turn, round
 
 **Turn（模型请求／响应周期）**:
-One LLM request and its corresponding assistant response, excluding execution of any requested tools. Tool-call instructions may be part of its response, and prior tool results may be part of its request; neither makes tool execution part of the Turn.
+One observable model request/response cycle that begins with the request and may complete, fail or be cancelled without a complete assistant response; hidden transport retries remain within the cycle, and execution of requested tools is outside it. Tool-call instructions may be part of its response, and prior tool results may be part of its request; neither makes tool execution part of the Turn.
 _Avoid_: round, run, response plus tool execution
+
+**Turn identity（Turn 身份）**:
+The identity of one model request/response cycle, distinct from a provider-issued request identifier and from the identity of its containing Round or session.
+_Avoid_: provider request ID, round ID, message ID
 
 **Tool execution（工具执行）**:
 The agent's execution of a tool-call instruction and production of a tool result, distinct from an LLM request/response Turn. It is work within a Round; its result may become input to a later Turn.
 _Avoid_: turn, model response, separately billed model request
 
 **Round（轮次）**:
-One period of agent activity, from the agent starting work on input until quiescence — no automatic work remains and it is waiting for the user. A round may contain several model-response turns, including automatic continuation before quiescence.
-_Avoid_: run, turn (one model-response cycle)
+One per-session period of agent activity, from starting execution until it has no pending automatic continuation and awaits new input, or its activity terminates by explicit cancellation or terminal failure. It may contain multiple model-response turns, tool executions, retries, queued-input consumption and dedicated approval interactions; known automatic continuations remain in the same round, while a newly observed execution start may truncate an unfinished prior round when its ending or continuation evidence is missing. Recovery or reloading may truncate an unfinished round and begin a new one for observed ongoing activity; truncation does not establish that the activity itself has completed.
+_Avoid_: native agent run, turn (one model-response cycle), per-message interaction, whole task, semantically inferred task boundary
 
 **Agent activity state（代理活动状态）**:
-The agent's current activity condition, distinct from a request, turn or round as a unit or period of work. Working describes ongoing agent work, not only streamed model output; reaching quiescence means no automatic work remains and the agent is waiting for user input.
-_Avoid_: run, execution unit, panel online status, extension State
+The agent's per-session current activity condition: working while continuous activity remains ongoing, or idle when no current activity or pending automatic continuation remains and it awaits new input. Dedicated approval/interaction waits remain working; this axis does not assert semantic completion of the user's overall task or whether a Round end has been observed since a panel connection began.
+_Avoid_: run, execution unit, panel online status, panel completion history, extension State
+
+**Working（工作中）**:
+The agent activity state in which a continuous period of work remains ongoing, including model responses, tool execution, automatic retries/continuations and dedicated approval interactions. It includes awaiting a delegated result that will continue the session’s activity, and does not mean that model text is currently streaming.
+_Avoid_: streaming, native agent run, waiting for new input
+
+**Idle（空闲）**:
+The agent activity state in which no current activity or pending automatic continuation remains and the agent awaits new input. It does not establish that any particular Round end has been observed, and unavailable observations do not establish idleness.
+_Avoid_: completed user goal, observed Round completion, offline, unknown
+
+### Facts and measurement semantics
+
+**Unknown（未知）**:
+A fact or metric value that cannot be reliably determined from the available evidence. It is distinct from a known zero, an inapplicable measurement policy, and failure of the activity being observed.
+_Avoid_: zero, false, idle, no measurement policy
+
+**No measurement policy（无统计口径）**:
+The absence of an applicable rule for interpreting or calculating a metric within a stated scope. It is distinct from an unknown value caused by missing evidence under an applicable rule.
+_Avoid_: unknown, missing observation, known zero
+
+**Known zero（确认零）**:
+A metric value established as zero by sufficient evidence under an applicable measurement policy. An absent observation or an inapplicable policy does not establish known zero.
+_Avoid_: unknown, no measurement policy, skipped contribution
+
+**Metric completeness（指标完整性）**:
+Whether a particular metric has the evidence required by its measurement policy across its stated scope. Completeness is metric-specific; activity success alone does not establish it.
+_Avoid_: activity success, availability of another metric, known subtotal
+
+**Known subtotal（已知小计）**:
+The sum of known, applicable contributions within a stated metric scope. Omitting unknown or inapplicable contributions does not establish a complete total or assign zero to those contributions.
+_Avoid_: complete total, known zero for unknown contributions
+
+### Extension controls and ownership
 
 **Configuration switch（配置式开关）**:
 An activation choice read at initialization whose changes do not take effect during the current run; applying a changed choice requires a restart.
@@ -107,6 +143,14 @@ _Avoid_: parent agent, process-global state, current session
 **Parent agent（父代理）**:
 The session that directly created a subagent — the immediate spawner. It may itself be a subagent, so it equals the owner only at depth 1.
 _Avoid_: owner, root session, State holder
+
+**Subagent spawn relationship（子代理启动关系）**:
+The relationship between one subagent execution and the actual session and Round that directly initiated it. It is distinct from State ownership and from the parent’s current Round when a result arrives.
+_Avoid_: Owner relationship, result-arrival relationship, agent-name hierarchy
+
+**Session ancestry（会话祖先链）**:
+The chain of direct parent-session relationships connecting a session to its ancestors. A direct parent and a top-level owning session are distinct positions in this chain.
+_Avoid_: State inheritance, agent-name prefix, flattened Owner relationship
 
 **Extension storage（扩展存储）**:
 The retention mechanism for extension-owned state and business data, including in-memory values, harness-owned session entries, extension-owned files, and archives. It does not by itself determine which session or other owner a value belongs to.
