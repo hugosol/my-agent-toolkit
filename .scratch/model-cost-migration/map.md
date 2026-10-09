@@ -20,7 +20,7 @@ Labels: wayfinder:map
 
 ## Decisions so far
 
-<!-- 当前只有已确认的 effort charter（见 Notes）；尚无已解决决策票。每个决策的细节只放在对应票的 lighthouse 文档。 -->
+- [完整保留哪些业务行为，统计单位如何命名？](lighthouse/01-behavior-contract.md)：以现有功能为基线，统一 Turn／工具执行／Round，逐响应入账与生命周期分离；Codex 功能完整保留，其他取舍交由具名票确认。
 
 ## Not yet specified
 

@@ -28,9 +28,29 @@ _Avoid_: native event name, template text slot
 A framework-defined, harness-independent lifecycle transition that a harness adapter synthesizes from that harness's native events. The framework owns its meaning, ordering, payload and owner scope; native event names, shapes and per-harness facts are not part of it.
 _Avoid_: native event name, raw harness hook, phase state
 
+**Request（模型请求）**:
+One request sent to a model provider, distinct from the resulting assistant response and its tool activity.
+_Avoid_: turn, round, assistant response
+
+**Assistant response（助手响应）**:
+One model response, including a response that only initiates tool calls; tool results are not assistant responses.
+_Avoid_: tool result, turn, round
+
+**Turn（模型请求／响应周期）**:
+One LLM request and its corresponding assistant response, excluding execution of any requested tools. Tool-call instructions may be part of its response, and prior tool results may be part of its request; neither makes tool execution part of the Turn.
+_Avoid_: round, run, response plus tool execution
+
+**Tool execution（工具执行）**:
+The agent's execution of a tool-call instruction and production of a tool result, distinct from an LLM request/response Turn. It is work within a Round; its result may become input to a later Turn.
+_Avoid_: turn, model response, separately billed model request
+
 **Round（轮次）**:
-One period of agent activity, from the agent starting work on input until quiescence — no automatic work remains and it is waiting for the user. A round may contain several model-response turns and several low-level agent runs.
-_Avoid_: run (a low-level execution unit), turn (one model-response cycle)
+One period of agent activity, from the agent starting work on input until quiescence — no automatic work remains and it is waiting for the user. A round may contain several model-response turns, including automatic continuation before quiescence.
+_Avoid_: run, turn (one model-response cycle)
+
+**Agent activity state（代理活动状态）**:
+The agent's current activity condition, distinct from a request, turn or round as a unit or period of work. Working describes ongoing agent work, not only streamed model output; reaching quiescence means no automatic work remains and the agent is waiting for user input.
+_Avoid_: run, execution unit, panel online status, extension State
 
 **Configuration switch（配置式开关）**:
 An activation choice read at initialization whose changes do not take effect during the current run; applying a changed choice requires a restart.
