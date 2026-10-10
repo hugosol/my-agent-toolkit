@@ -1,8 +1,8 @@
 # framework 如何提供独立存储、原子更新与跨进程协调？
 
 Type: grilling
-Status: claimed
-Assignee: hugos (本会话 agent 协助讨论)
+Status: open
+Assignee:
 Lighthouse: [存储组织与唯一消费源局部决议](../lighthouse/06-local-storage.md)
 Blocked by: 01, 02, 12
 Prerequisites: [完整保留哪些业务行为，统计单位如何命名？](01-behavior-contract.md)；[用量与费用属于哪个会话、账户和请求，如何避免漏算与重复？](02-accounting-ownership.md)；[model-cost 的哪些数据进入 framework State，如何声明与读取？](12-state-data-contract.md)
@@ -33,6 +33,51 @@ Parent: [model-cost 完整迁移：通用能力分层与 OMP 适配](../map.md)
 Session／Round 累计限于适用账户当前周期；resume 只恢复已保存活动聚合，不扫描历史消息重估或合并旧归档，不维护跨周期 Session 总数。归档／reset／关闭 holiday 的一致成功／失败、跨进程旧缓存不复活、混账户关系保留与运行条件仍待决定；单一 DeepSeek 活动会话仅是讨论假设，不取消多会话支持。旧范围／交接文字见[同步前历史快照](../assets/contract-history-before-sync.md)，不再作为当前要求。
 
 ## Comments
+
+### 本次暂停交接：下次从 Q16 存储目录与共享范围继续
+
+- 暂停原因：用户要求暂停 grilling，下一次在新对话继续。本次不结案、不实施、不替用户回答未决问题；此交接优先于下方所有旧恢复点。
+- 当前确认结果唯一权威：[存储组织与安全更新局部决议](../lighthouse/06-local-storage.md)（本轮 Q6–Q15）；[数据归属与账户周期决议](../lighthouse/12-state-data-contract.md)、[消费归属决议](../lighthouse/02-accounting-ownership.md)、[行为契约决议](../lighthouse/01-behavior-contract.md)仍约束正常统计。已修订输入／失败条款见原 Lighthouse 当前正文与来源指针，不以旧评论恢复旧要求。
+- 本轮重点：普通保存失败已由“保留未保存内存”改为“丢弃未保存部分，从磁盘有效完整快照初始化”；无有效基线则暂停本实例消费统计／保存至下一次正常会话初始化，不阻断模型或自动停用独立余额／额度。clear 仅归档锁内最新已保存活动数据，先归档再提交活动重置，失败终止，不收集进程内存、不强制排空／补账；允许未落盘消费（包括已完成响应）丢失。详规只在上述 Lighthouse，不在本交接重建第二份权威。
+- 用户理由／背景：极端故障不值得复杂恢复，愿接受少量消费丢失；clear 尤其要求简单。此前主要单 DeepSeek 账户／少多账户的背景保留，但不取消正常多会话／跨进程安全更新、去重、其他账户隔离或独立 estimate。
+- 已替代／未采纳：Q6／Q11 旧保留内存与不回滚政策已明确修订，原文留本票历史；不做复杂自动重试／修复／补账／后台恢复、跨进程内存收集或强制排空；不因少计取舍取消 framework 通用安全发布。不重问 Q5 的提前提交＋handler 返回前 join、唯一聚合／最近轮或完整明细账。只有真实需求／证据和用户确认才带理由讨论修订，不自行恢复旧候选。
+
+#### Q16 尚未回答：新持久化路径与跨项目共享范围
+
+- 最后一轮的 agent 推荐是 `~/.my-agent-toolkit/data/model-cost/`，同一操作系统用户的不同项目／终端共享同一存储，内部按真实账户／实际会话隔离，活动 JSON／归档／estimate 分开；不读改删旧 `~/.omp/cost-archive/`，不绑定 OMP 专属目录或仓库。备选为每项目存储，但会拆开同账户累计和 clear 范围。用户在回答前要求暂停，路径、共享范围、文件名和配置／覆盖方式都未确认，没有创建目录。
+- 调查：framework/core/config.ts 的 resolveDeclaredFile 只解决配置文件相对声明 baseDir 的解析，不能当现成数据根。framework 文件清单／路径字面检索未见已定义通用持久化根；旧目录事实见[旧存储现状](../assets/current-state.md#存储现状)。Bun 路径算式探针只把用户目录下候选路径算成绝对路径，未创建目录、未改配置、未验证生产读写。
+- 其他调查与限制：本票已有纯 Promise FIFO 探针证明基础顺序／失败后继续／不同键独立／清理，以及失败初始化算式探针（120→丢弃未保存 10→新消费 5 得 125）。它们不是原生 handler／实际文件／跨进程／平台锁／性能验证；旧费用重复提交算式不是正常路径必然双计证据。证据与历史索引在本票旧 Comments 及[现状调查](../assets/current-state.md)，按具体歧义再 zoom，不重复探索已定取舍。
+
+#### Trace Report: framework 如何提供独立存储、原子更新与跨进程协调？（本次暂停）
+
+##### Intent gaps
+- 无新增无主缺口。唯一自身聚合／恢复／最近轮由数据、观察、展示、验收承接；本轮失败丢弃与无基线暂停由观察／展示／装配／验收承接，独立余额／额度继续由刷新票覆盖；简化 clear／已保存输入由命令、装配、验收承接。原票已保存相应交接，不重建重复票。
+
+##### Layer gaps
+- 已读取地图、十三张子票实际状态／问题／交接和四份当前 Lighthouse，补读本票末尾现行 Question／依赖。路径／锁／平台／schema／interface、读缓存新鲜度／跨进程周期可见性／单执行者／混账户关系／迟到子发布都仍由本票及已具名前置承担；这些未决票是归属位置，不是能力已完成。无新增无主前置。
+
+##### Layer violations
+- 无新增。消费 schema／失败丢弃／clear／暂停归 extension shared logic；底层非阻塞 IO／串行／锁／原子发布归 framework，宿主事实归 adapter，不增加通用业务账本或后台恢复。
+
+##### Peer asymmetry
+- 无新增。独立 estimate 保持、不随 clear 删除；其他 extension 可采用自己的业务模型，不因本次故障取舍被绑到 model-cost 的保存政策。
+
+##### Conflicts
+- 本暂停没有新的用户选择。Q6／Q11 旧失败保留内存政策、clear 旧“全部已知／已取得”输入已在原 Lighthouse 当前正文同步新批准范围，源票历史保留；消费者观察／展示／命令／刷新／装配／验收已有交接。不要从历史提议复活被替代承诺。
+- Q16 的 `~/.my-agent-toolkit/data/model-cost/` 与用户级跨项目共享仍仅为提议，不在 Lighthouse／地图 Decisions 中；目录没有创建，配置没有改变。pause 不表示认可这一路径，也不表示 clear 可任意牺牲正常并发正确性。
+- 尚未满足的正常 clear 后新请求周期接入、同 Session 单执行者、关系保留等已在本票／观察／账户／命令／验收记录；不因简单失败政策自行取消，不在暂停中追加采访或生产实现。
+
+##### Gap follow-up / 最终交接
+- 无剩余无主 follow-up 或需新票的批次，不新增重复票、不解除整体依赖、不改变其他会话认领。既有 Lighthouse 与地图 gist 保留，无暂停新决定。
+- 最终恢复点：新对话先核对状态与最新交接，按 tracker 认领后继续 Q16 的新目录／用户级跨项目共享范围；Q16 未回答。之后再按答案推进正常存储路径／协调契约，不重问 Q6–Q15 已定取舍或复杂 clear 恢复分支。
+- 本次交接与追踪写入完成后释放本票 claim（Status: open，Assignee 清空）；整票未 resolved，地图仍规划中，无生产迁移。
+
+#### 新对话恢复顺序
+
+1. 读取地图、本节与当前相关 Lighthouse，比较介入结果／认领状态；先按 tracker 认领本票，再继续讨论。
+2. 只继续 Q16 的目录与共享范围，不把候选路径当已批准；之后依答案收口文件命名／必要路径覆盖、平台与锁／协调键、具体 schema／interface。
+3. 尚待本票的正常路径问题包括读缓存新鲜度、跨进程 clear 后新请求如何取得新周期、同 Session 单执行者与版本、混账户父子关系保留、迟到子消费发布。保持简单实现取向，不重开复杂 clear 故障恢复树；若输入属于其他票，交给该票而非在本 claim 下代决。
+4. 本轮没有新的暂停时选择，Lighthouse 与地图 gist 保持现有确认范围；暂停 trace 完成后保存最终追踪结果，再将本票 open／清空 Assignee。
 
 ### Q15 已确认：clear 只归档已保存数据，转向正常存储路径
 
