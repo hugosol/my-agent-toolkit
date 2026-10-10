@@ -30,7 +30,7 @@ Labels: wayfinder:map
 
 - [model-cost 的哪些数据进入 framework State，如何声明与读取？](lighthouse/12-state-data-contract.md)：扩展自有逐响应聚合与最近 Round 快照、有限内存去重；累计限于账户当前周期，账户级 clear 归档重置并关闭 holiday，resume 不重算历史或合并旧归档。
 
-- [framework 如何提供独立存储、原子更新与跨进程协调？](lighthouse/06-local-storage.md)：单活动 JSON／独立归档与 estimate、唯一聚合／最近轮；提前异步保存并在 handler 返回前等待，轻量 FIFO／跨进程互斥、周期／版本校验、默认协调等待 15 秒；普通消费保存失败丢弃未保存部分、从磁盘有效快照初始化，不重试补账并接受少量损失；clear 只归档已保存数据、不排空内存，先归档后提交、失败终止；无有效基线暂停统计至下一次初始化；跨进程运行态／路径／锁／schema 等仍未决。
+- [framework 如何提供独立存储、原子更新与跨进程协调？](lighthouse/06-local-storage.md)：单活动 JSON／独立归档与 estimate、唯一聚合／最近轮；提前异步保存并在 handler 返回前等待，轻量 FIFO／跨进程互斥、周期／版本校验、默认协调等待 15 秒；普通消费保存失败丢弃未保存部分、从磁盘有效快照初始化，不重试补账并接受少量损失；clear 只归档已保存数据、不排空内存，先归档后提交、失败终止；无有效基线暂停统计至下一次初始化；用户级共享、storageDir 可配置，~/ 特指用户 .omp 主目录，初始 ~/cost-archive 复用旧目录，由用户切换前手动备份清空、修改重启；固定 consumption.json、独立 codex-usage-estimate.json 与 archives/；本机本地文件系统同机跨进程共享已确认，不承诺网络盘／云同步跨机器写入；具体锁／跨进程运行态／读新鲜度／schema 等仍未决。
 
 ## Not yet specified
 
@@ -38,6 +38,8 @@ Labels: wayfinder:map
 - 本次新增通用能力对 connect-bot 等既有消费者的复用或收口影响，需在接口定型后判断哪些是本次调用方迁移义务，避免制造第二套机制或扩大业务范围。
 
 ## Out of scope
+
+- 多台机器通过网络共享盘／云同步共同写入统计的正确性保证、分布式锁或同步冲突合并；[本地协调范围决议](lighthouse/06-local-storage.md)限定本机本地文件系统，不取消同机多进程安全共享。
 
 - 实现或认证 pi adapter；只考虑契约是否把 OMP 原生细节泄漏给共享代码，不宣称 pi 能力对等。
 - 导入旧统计、继续旧基线或要求新旧统计文档双向兼容；用户允许从空统计开始，旧数据保留。

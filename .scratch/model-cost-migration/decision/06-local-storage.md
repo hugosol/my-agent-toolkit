@@ -8,33 +8,167 @@ Blocked by: 01, 02, 12
 Prerequisites: [完整保留哪些业务行为，统计单位如何命名？](01-behavior-contract.md)；[用量与费用属于哪个会话、账户和请求，如何避免漏算与重复？](02-accounting-ownership.md)；[model-cost 的哪些数据进入 framework State，如何声明与读取？](12-state-data-contract.md)
 Parent: [model-cost 完整迁移：通用能力分层与 OMP 适配](../map.md)
 
-## Trace handoff from data Lighthouse
+## Handoff
 
-- 数据布局已由[数据归属与账户周期决议](../lighthouse/12-state-data-contract.md)收口；本票不再等待数据票，也不恢复旧逐 Turn 账本／历史 Round／补账要求。
-- 设计实际会话 × 账户 × 模型自身聚合、父子启动关系、最近 Round 快照、账户周期／归档、holiday 与 quota estimate 的物理组织；runtime 请求去重标记不落盘。最近快照同 round_end 聚合发布；迟到子消费发布时机仍待决定。
-- 账户 clear 归档目标账户全部会话已成功保存聚合、重置活动累计、关闭 holiday；无消费也可关闭 holiday。既有归档、其他账户、Codex estimate、入口 detail 保留。普通 resume 仅加载活动周期，不扫描消息／合并归档。
-- 需确定归档／重置／关闭 holiday 的一致完成／失败条件，旧缓存／排队保存／其他进程不复活已清数据的最小代际／原子机制，以及混账户父子关系中其他账户查询所需关系如何保留；这些是本票未决机制，不是新批准 schema。
-- round_end 保存完成／等待／失败、发布幂等及同账户多会话不丢不重仍需收口；未落盘强杀损失已接受，不借此增加退出排空／崩溃恢复系统。
+- 暂停原因：用户明确要求“我想暂停grilling”。本票未结案、未实施；保存本次已确认结果及未回答问题，暂停交接与追踪已完成，当前暂停且认领已释放。前置行为／消费归属／数据票仍已 resolved，暂停不改变任何依赖。
+- 确认结果：[存储组织与安全更新局部决议](../lighthouse/06-local-storage.md)为本票唯一权威，已确认至 Q22，包括 Q16–Q20 共享可配置根／字段局部 ~/／用户手动切换、Q21 固定文件组织与 Q22 本机本地文件系统范围；详细规则只在 Lighthouse。地图结果索引与装配／验收当前交接已同步。[数据归属与账户周期决议](../lighthouse/12-state-data-contract.md)继续提供布局与周期边界。无暂停新选择，不重问已定 Q5–Q22，不恢复旧保留内存／完整账本／补账要求。
+- 唯一恢复点：Q23 尚未回答——是否在每次可观察新模型请求开始前异步读取最新 consumption.json，先取得当前账户周期／holiday，再固定本请求的账户周期、归属与计价锚点？推荐仅为候选，用户暂停不是同意。
+- Q23 候选边界：同周期保留本实例尚未保存的累计，不以磁盘旧快照覆盖；周期变更沿已批准 clear 规则丢弃旧周期未保存部分，新请求进入新周期；关联固定后才发生 clear 的请求仍属旧周期，不重绑定。renderer 只读内存，不增加定时轮询。代价是每个新请求前一次本地异步读与解析，没有新路径时延测量或零开销承诺。读取失败、空闲窗口何时刷新、读取／clear 交错精确边界与开放 Round 跨周期快照还未决定，不由此默套 Q14；原生异步派发 interface 归观察票。
+- 其余未决：平台与跨进程锁／协调键、schema 与安全文件 interface、读缓存新鲜度、跨进程 clear 后新请求取得新周期、同 Session 单执行者与版本、混账户父子关系保留、迟到子消费发布；输入属于观察／账户等其他票时交其决定，不在本认领下代决。
+- 理由与拒绝分支：用户希望接近旧 JSON 方案、低复杂度，接受极端失败的少量消费损失，但不取消正常多会话／跨进程安全更新与账户隔离。消费活动一个 JSON、归档与 estimate 独立；不建数据库、完整明细账、后台恢复／自动补账或 clear 内存收集／强制排空。Q6／Q11 历史失败保留内存已被替代，以 Lighthouse 当前正文为准。
+- 证据限制：旧 archiveDirectory／archiveDocumentPath 的只读 Bun 探针返回用户 .omp/cost-archive 及旧文件名，没有创建目录或改统计；文档链接／结构检查通过，不是生产路径能力。已有 FIFO／失败初始化算式探针也不是原生 handler／实际文件／跨进程锁／性能验证。最新本地 OMP checkout 的请求前派发源码逐个 await handler；[exact 18.5.0 请求观测探针](../assets/omp-request-observation-smoke.md)仅证明已运行的正常／工具／重试／取消形状，不证明新读取路径延迟或 framework 异步契约已落地。旧存储与历史证据见[现状调查](../assets/current-state.md#存储现状)及下方 Comments，具体歧义才 zoom。
+- 追踪交接：本次暂停 Backtracer 已完成，最新报告见下方 Comments；已确认结果与装配／验收当前交接一致，无新结果，现有 Lighthouse 与地图索引保留。Q23 未回答，其读取失败、IO／clear 交错、空闲刷新及开放 Round 后果按既有责任票收口，无剩余无主 follow-up 或代理任务。恢复先认领本票，不重问已定 Q5–Q22；当前已释放本票 claim，保留 open／空 Assignee；整票没有 resolved。
 
-## Handoff from latest state-data discussion
+## Question
 
-- [数据讨论的当前有效决定与新对话交接](12-state-data-contract.md)优先于下方历史交接：采用扩展自有聚合，round_end 保存累计与最近 Round 快照，不建立历史 Round／Turn 列表；接受异常退出未落盘损失，缺 usage／价格只提示并跳过对应指标，不维护缺失计数或补算记录。不能沿历史交接重新要求完整账本或缺失恢复系统。
-- 会话／账户隔离、正常有 usage 消费去重、逐代理自身／含后代汇总、同账户多会话不丢失／重复／覆盖仍保留。最新余额／额度读数仅内存，holiday／quota estimate／归档保留既定持久化要求。
-- 数据布局已由正式 Lighthouse 收口；本票可继续讨论保存完成／失败、有限幂等发布、迟到子消费时机及跨进程协调。不泛问整个 callback 同步／异步，不预建正常离开的额外保存钩子。
+新统计允许从空开始；存储根与路径配置已按存储 Lighthouse Q17–Q20 确认，复用用户 .omp/cost-archive，由用户切换前手动备份清空，程序不自动清理或兼容旧统计。文件组织已由 Q21 确认；继续确定扩展／账户／provider namespace 与物理 schema，本机本地文件系统的协调范围已由 Q22 确认，继续确定具体锁／平台运行契约。哪些通用文件能力进入 framework，哪些 JSON schema、合并／归档规则留在 model-cost？Codex estimate 保持独立文件并复用安全写入，本票不展开其业务采纳算法。
+
+确定读缓存新鲜度、锁内重读／update、原子发布、跨进程锁、等待／取消／错误与损坏不覆盖契约，并讨论平台条件。旧 OMP native file-lock 不能作为 harness-independent implementation 偷渡进共享代码。保留当前已确认的账户周期聚合／归档／holiday 与 quota estimate 业务能力；不照搬旧完整账本或补齐要求。从空起步不等于取消本周期持久化、已保存值恢复或正常并发安全。
 
 ## Discussion approach
 
-以数据／State 票给出的具体记录和读写路径为前提，先比较实际存储方案及调用方式，再决定操作级的同步／异步、锁与恢复。不泛问“整个回调等待不等待”，不把存储实现推迟到观察接口已冻结之后。至少走通一次正常消费写入和一次多会话同账户更新，说明当前内存值、持久化确认、故障后恢复各依赖什么。
-
-## Handoff from clear reset decision
-
-来源：[数据归属与账户周期决议](../lighthouse/12-state-data-contract.md)。只保留账户级 clear：归档目标账户全部会话的已成功保存活动聚合，重置累计并关闭该账户 holiday；空消费也可结束 holiday。不提供会话树级 clear，不清其他账户、旧归档、Codex estimate 或入口 detail。clear 前在途消费丢弃，之后旧子新请求正常统计；不取消真实执行或改 framework 生命周期。
-
-Session／Round 累计限于适用账户当前周期；resume 只恢复已保存活动聚合，不扫描历史消息重估或合并旧归档，不维护跨周期 Session 总数。归档／reset／关闭 holiday 的一致成功／失败、跨进程旧缓存不复活、混账户关系保留与运行条件仍待决定；单一 DeepSeek 活动会话仅是讨论假设，不取消多会话支持。旧范围／交接文字见[同步前历史快照](../assets/contract-history-before-sync.md)，不再作为当前要求。
+以既定数据记录与读写路径为前提，先看实际组织及调用方式，再决定操作级等待、锁与恢复；保持规划模式，不泛问整个 callback 同步／异步，不预建正常离开的额外保存钩子。
 
 ## Comments
 
-### 本次暂停交接：下次从 Q16 存储目录与共享范围继续
+### Trace Report: framework 如何提供独立存储、原子更新与跨进程协调？（本次暂停）
+
+#### Intent gaps
+- 无新增无主缺口。已确认 Q16–Q22 的共享可配置根、手动切换、固定文件布局与同机并发由装配／验收当前 Handoff 覆盖；账户 clear／holiday 与独立 estimate 分别仍归命令／刷新，未取消正常多会话安全、账户隔离或原有业务能力。
+
+#### Layer gaps
+- 地图、十三张决策票实际状态／当前问题／交接及四份现行 Lighthouse 已读取。请求前源事实、原生异步 handler 映射归观察票；真实账户与模型价格归账户／模型票；本地读新鲜度、锁、协调键、schema、单执行者与跨周期运行态归存储及具名前置；只读 UI 与空闲刷新后果归展示／刷新票。既有未决票是责任位置，不是能力已实现；无新增无主前置。
+
+#### Layer violations
+- 无新增。field-local ~/ 是 model-cost 配置约定，不改 framework 其他路径字段；文件协调／非阻塞 IO 归 framework，schema／周期／计价与失败取舍归 extension，宿主派发归 adapter；本暂停不设计第二套配置或生产账本。
+
+#### Peer asymmetry
+- 无新增。消费活动／归档与独立 estimate 保留，clear 不误清其他账户／归档／estimate；其他 extension 不被绑到 model-cost schema、故障取舍或局部 ~ 语义。
+
+#### Conflicts
+- 本暂停无新用户选择，现有 Lighthouse 和地图结果索引保持已确认 Q22 的范围，不写新的 Lighthouse 决议。Q23 每请求前读最新消费文件、等待时机与代价仍是未回答推荐，不因暂停批准。已有 Q14 无基线暂停不能自动扩展成新请求前读取失败政策。
+- 旧源码目录探针与 checkout await handler 源码只提供各自事实；exact 18.5.0 观测证据不认证新 IO 性能或公开异步接口。读取／clear 交错、空闲展示／查询与开放 Round 跨周期仍由源票及观察／展示责任票收口，不能凭 Q23 候选绕过它们。
+- 早期新 toolkit 根、标准 home-~ 候选、文件名未定、网络盘支持未定与旧失败保留内存只作历史；现行 Q16–Q22 及存储 Lighthouse 不重开。本次未产生需要改消费者现行结论或处分既有票的新冲突。
+
+#### Gap follow-up
+- 无剩余无主 follow-up、代理任务或待新票批次，不新增票、不解除整体依赖、不改变其他会话认领。装配／验收现行 Handoff 已覆盖已确认结果，不重复追加恢复点。
+- 唯一恢复点：先核对本票状态、当前 Handoff 与相关现行 Lighthouse，认领后续聊尚未回答 Q23。不能将每请求读取或相应开销／失败政策当已批准；保存后释放本票 claim，整票仍未 resolved。
+
+
+### Trace Report: framework 如何提供独立存储、原子更新与跨进程协调？（本地协调范围）
+
+#### Intent gaps
+- 无新增无主缺口。同机多终端正常并发可靠／低复杂度由装配和验收现有范围承接，已在其唯一当前 Handoff 合并 Q22；不把不保证跨机器写入误作取消同机并发。
+
+#### Layer gaps
+- 地图、十三票与四份现行 Lighthouse 已读取。具体本地文件锁、规范化路径／协调键、读新鲜度／跨 clear 新请求、单执行者仍由存储及观察／账户前置承担，验证条件由验收收口；覆盖位置不是能力已完成。无新增无主前置。
+
+#### Layer violations
+- 无新增。framework 通用本地协调不拥有 model-cost schema／周期；请求前宿主派发映射归观察票，不从本轮源码 await 事实冻结其公开 interface。
+
+#### Peer asymmetry
+- 无新增。其他 extension 可复用通用本地文件能力，不绑定消费保存规则或字段局部 ~ 语义；独立 estimate 保留。
+
+#### Conflicts
+- Q22 从未决运行条件收口为本机本地文件系统；现有消费归属多进程支持继续有效，不存在已批准跨机器协调的相反义务。地图 Out of scope 记录跨机器网络盘／云同步共同写入保证及分布式机制，无需处分任何既有票，未删除其正常并发前置。
+- 支持 baseline 与当前 checkout 源码证据分开；不凭源码 await 推定 exact install 新读取路径或其他 OS 已验证。Q23 请求前读取方案仍为候选，不将其写为 Lighthouse 决议。
+
+#### Gap follow-up
+- 无剩余无主批次，不增票、不解除依赖，消费者实际状态／claim 保持。下一轮 Q23 读新鲜度；其后读失败、空闲展示／查询、跨周期快照、路径别名／锁／schema 仍未决，不重开复杂恢复树。
+
+
+### Q22 已确认：本机本地文件系统
+
+用户明确同意 Q22。最终范围见[存储局部决议](../lighthouse/06-local-storage.md)：本机本地磁盘同目录多进程安全共享，不承诺网络盘／云同步跨机器共同写入，不新增分布式协调。已有 Windows x64／Bun 基线保留，不宣称其他平台已认证。本次未实施锁或生产 IO。
+
+### 下一轮读取候选与证据限制
+
+- Q23 候选：每次可观察请求开始异步读最新 consumption.json 的当前账户周期／holiday，再固定请求身份与价格，renderer 不读盘、不做定时轮询；同周期保留本实例未保存累计，检测换周期按既定 clear 边界丢弃旧未保存消费，不将旧请求重新绑定新周期。该读取机制／等待开销尚未批准；新的读失败策略与空闲展示新鲜度待后续，不默套 Q14。
+- 原生事实：已有[请求观测探针](../assets/omp-request-observation-smoke.md)在隔离 18.5.0 观察到 before_provider_request；本轮本地 OMP checkout 的 ExtensionRunner.emitBeforeProviderRequest 源码逐个 await handler，但这不是 exact install 的新 IO 时延或 framework 异步契约验证。正式请求前派发／异步 handler 映射仍归观察票，不把源码可 await 当性能证明。
+
+
+### Trace Report: framework 如何提供独立存储、原子更新与跨进程协调？（固定文件组织）
+
+#### Intent gaps
+- 无新增无主缺口。单根配置／固定文件组织由装配票覆盖，消费 clear 不清独立 estimate／已有归档由命令及验收覆盖；已合并装配／验收当前 Handoff，与源 Lighthouse 链接一致。
+
+#### Layer gaps
+- 地图、十三票及四份现行 Lighthouse 已加载；固定消费／估计／归档文件是本票输出，账户事实、父子事实与估计业务分别由账户／观察／刷新票提供。schema／唯一归档标识具体生成／锁／读新鲜度／跨周期接续仍在本票，覆盖不代表实现已完成；无无主前置。
+
+#### Layer violations
+- 无新增。文件名与业务 schema 归 model-cost，framework 提供通用协调与安全发布，不增加通用 Session 账本。
+
+#### Peer asymmetry
+- 无新增。旧活动／归档分离与独立 estimate 保留，多账户活动文件更名 consumption.json 不删功能，不要求其他 extension 跟随该布局。
+
+#### Conflicts
+- 原“文件组织／名称未决”被用户 Q21 的明确同意替代，源 Lighthouse 当前正文、源票 Question／Handoff、地图与装配／验收当前交接已同步。旧 deepseek-cost.json 仅是历史文件名，不要求兼容；用户手动备份清空前置不变。
+- 归档文件存在不代表 clear 成功，Q13 失败备份不自动恢复／合并仍有效；不将固定布局当多文件事务或锁已批准。
+
+#### Gap follow-up
+- 无剩余无主批次，不增票、不解除依赖，不改变消费者状态或 claim。下一 ready 问题是 Q22 本机本地文件系统的协调运行条件；候选未获批准，现有 Windows x64／Bun 1.4.2 支持声明不是网络盘／其他 OS 文件协调认证。
+
+
+### Q21 已确认：固定文件组织
+
+用户对 consumption.json、独立 codex-usage-estimate.json 与 archives/<本次归档唯一标识>.json 的完整提议回答“同意”。只配置根目录、固定内部文件名，不另配三个路径；活动文件更名因覆盖多账户／多模型，不另建累计源。JSON 字段、版本、归档标识与锁机制尚未决定。唯一规则来源：[存储局部决议 Q21](../lighthouse/06-local-storage.md)。没有创建业务文件或修改正式配置。
+
+
+### Trace Report: framework 如何提供独立存储、原子更新与跨进程协调？（路径与手动切换）
+
+#### Intent gaps
+- 无新增无主缺口。复用旧目录／手动备份清空／重启与可配置共享由装配、验收现有范围承担；已合并其当前 Handoff，不增票。
+
+#### Layer gaps
+- 十三票与四份现行 Lighthouse、地图已读取。用户 .omp 根的字段局部解析由本票规格与装配提供，不把现成 resolveDeclaredFile 当已实现该语义；切换动作归验收。文件名／schema／锁／读新鲜度／单执行者／跨周期与混账户关系／迟到发布仍由既有票承担，未决不是能力已完成。
+
+#### Layer violations
+- 无新增。model-cost 配置入口处理字段例外，framework 通用文件协调接收解析后路径，adapter 仍拥有宿主事实，不全局改变 ~ 或绑定其他 extension。
+
+#### Peer asymmetry
+- 无新增。沿旧共享活动／归档／独立 estimate 组织，保留其他 extension 路径语义。
+
+#### Conflicts
+- 已确认 old→new：原不复用旧目录候选／地址未定被复用用户 .omp/cost-archive 替代；手动备份清空是用户动作，程序仍不自动清理／兼容。Q20 对“~/ 指用户 .omp 主目录、仅此字段、绝对路径直接使用、修改重启”的解释明确同意，非程序安装目录。源 Lighthouse 当前正文、map gist、源票 Question／Handoff 与装配／验收当前交接已同步；早期候选保留历史。
+- 无剩余相反已批准政策。旧统计保护仍指程序不得自动改写旧格式／删除，不禁止用户在切换时手动备份清空；加载互斥、回退及实际备份未执行由验收收口。
+
+#### Gap follow-up
+- 无剩余无主批次，不增票、不解除依赖、不改变消费者状态或认领；接续 Q21 文件组织，平台与实际协调证据仍未决定。本票保持 claimed，非结案。
+
+
+### Q17–Q20 已确认：复用旧目录，~/ 特指用户 .omp 主目录
+
+用户手动备份清空后复用旧统计目录；最后明确同意 storageDir: "~/cost-archive" → 用户主目录/.omp/cost-archive，局部语义仅此字段、绝对路径直接使用、修改后重启，其他 Q18 约定保持。最终规则唯一来源：[存储局部决议](../lighthouse/06-local-storage.md)。早期新 toolkit 目录候选及“地址未定”恢复点仅为历史。没有清空目录、修改正式配置或交付生产路径解析。
+
+
+### Q16 已确认：共享目录且可配置
+
+- 用户原话：“同意共享目录，另外目录地址请参考旧的extension，我需要文件目录可由配置指定”。已记录[存储局部决议 Q16](../lighthouse/06-local-storage.md#q16用户级共享目录目录由配置指定)；不把此前候选地址当最终确认。
+- 旧源码 archiveDirectory 写死 ~/.omp/cost-archive，目录没有配置参数；只读 Bun 探针实际返回旧用户目录及 deepseek-cost.json／codex-usage-estimate.json 路径，没有创建目录或读写统计。现有 connect-bot 的 config.yaml 与 framework 配置读取为参考，不能假定现成配置路径解析支持 ~ 或数据路径语义。
+- 下一候选（未批准）：配置 storageDir，示例 ~/.my-agent-toolkit/cost-archive；一个根覆盖活动／归档／estimate，相对路径按扩展配置文件所在目录解析、支持 ~/ 主目录、启动读取不热切换。地址与细节交下一轮，不执行生产修改。
+
+### Trace Report: framework 如何提供独立存储、原子更新与跨进程协调？（共享可配置目录）
+
+#### Intent gaps
+- 无新增无主缺口。跨项目账户共享与选择文件位置由装配规格的配置／注入及验收票的正式配置／并发／旧文件保护范围覆盖；未决机制仍在本票，不将现有配置能力当数据路径实现。
+
+#### Layer gaps
+- 地图、十三票及四份现行 Lighthouse 已读取；源事实仍由观察／账户票提供，物理根／路径解析／协调键由本票，配置装配由装配票，验收由验收票承担。无新增前置票；整体依赖不解除。
+
+#### Layer violations
+- 无新增。业务目录选择／文件 schema 留 extension，通用路径与安全文件协调归 framework；不把 OMP .omp 地址作为通用宿主事实，不建立第二套配置体系。
+
+#### Peer asymmetry
+- 无新增。参考旧活动／归档／estimate 同根组织；仍保留独立 estimate，不默认其他 extension 必须使用相同业务目录。
+
+#### Conflicts
+- 旧实现硬编码目录与新可配置要求是确认的演化，不是旧配置已存在。共享范围已批准，但具体地址未批准；旧 .omp/cost-archive 不得被新统计覆盖，重用旧地址不是自动获批结论。
+
+#### Gap follow-up
+- 没有剩余无主批次，不新增重复票。已在 Lighthouse Postconditions 记录装配／验收责任与来源；地址、配置解析、不同配置指向不同根的隔离及协调键仍由本票后续收口。仅记录规划，本票仍 claimed。
+
+
+### 历史暂停记录：从 Q16 存储目录与共享范围恢复（当前以 Handoff 为准）
 
 - 暂停原因：用户要求暂停 grilling，下一次在新对话继续。本次不结案、不实施、不替用户回答未决问题；此交接优先于下方所有旧恢复点。
 - 当前确认结果唯一权威：[存储组织与安全更新局部决议](../lighthouse/06-local-storage.md)（本轮 Q6–Q15）；[数据归属与账户周期决议](../lighthouse/12-state-data-contract.md)、[消费归属决议](../lighthouse/02-accounting-ownership.md)、[行为契约决议](../lighthouse/01-behavior-contract.md)仍约束正常统计。已修订输入／失败条款见原 Lighthouse 当前正文与来源指针，不以旧评论恢复旧要求。
@@ -401,17 +535,11 @@ Session／Round 累计限于适用账户当前周期；resume 只恢复已保存
 #### Follow-up and resume point
 - Q5 已确认，下一轮决定保存失败策略与同文件更新排序；随后决定旧提交／clear、读缓存、路径与平台，不再重问立即 await 或退出后后台保存。装配／验收消费本票局部结果，但整体依赖不解除。票保持 claimed，不是暂停或结案。
 
-## Question
-
-新统计允许从空开始；确定新存储根目录、扩展／账户／provider namespace 与路径配置，且不删除或改写旧 ~/.omp/cost-archive。哪些通用文件能力进入 framework，哪些 JSON schema、合并／归档规则留在 model-cost？Codex estimate 保持独立文件并复用安全写入，本票不展开其业务采纳算法。
-
-确定读缓存新鲜度、锁内重读／update、原子发布、跨进程锁、等待／取消／错误与损坏不覆盖契约，并讨论平台条件。旧 OMP native file-lock 不能作为 harness-independent implementation 偷渡进共享代码。保留当前已确认的账户周期聚合／归档／holiday 与 quota estimate 业务能力；不照搬旧完整账本或补齐要求。从空起步不等于取消本周期持久化、已保存值恢复或正常并发安全。
-
-## Handoff from behavior-contract
+### 历史输入：行为契约交接
 
 [完整保留哪些业务行为，统计单位如何命名？](01-behavior-contract.md) 的 Q10 确认现有累计与归档作为需求基线：账户周期、会话自身聚合、归档／reset／关闭 holiday 的业务边界已由数据 Lighthouse 明确；本票承接物理组织、原子发布、恢复确认与失败／协调机制，不重复决定旧业务范围。最新余额／窗口读数只存内存，不取消累计与 quota estimate 持久化。任何业务删改均需说明差异、理由并由用户确认，不得以实现取舍默删。
 
-## Handoff from accounting-ownership
+### 历史输入：消费归属交接
 
 来源：[消费归属决议](../lighthouse/02-accounting-ownership.md)。用户已确认业务约束；以下接口、机制与展示问题仍待本票决策，本交接不代表它们已解决。
 
