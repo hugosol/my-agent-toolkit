@@ -14,6 +14,14 @@ Parent: [model-cost 完整迁移：通用能力分层与 OMP 适配](../map.md)
 - 缺 usage／价格只提示／跳过相应指标，不保持缺失计数或持续完整性标记；有 usage 缺价仍累计 token，失败／取消有可靠 usage 仍累计。提示位置、headless 可观察性仍由本票决定。
 - 固定 DeepSeek 450K／Codex 272K 预算显示／告警保留，修改入口移除；入口 detail 切会话／tree 保留、重载 brief。renderer 不维护第二套权威累计或副作用。
 
+## Handoff from storage Q6
+
+[存储局部决议](../lighthouse/06-local-storage.md#q6普通-round_end-保存失败不打断主流程)已确认普通 round_end 保存失败报告而不阻断主流程、不回滚内存、不假报成功；本票决定 UI／headless 反馈承载，不将该策略扩展到 clear 或 estimate。
+
+## Handoff from storage Q10 / Q12
+
+[存储局部决议](../lighthouse/06-local-storage.md)Q12 确认同版本不同内容须报告明确冲突、不假报保存成功；普通 round_end 不因此中止主流程。超时失败沿 Q6 承载，Q10 不是中止代理或文件更新总耗时保证。
+
 ## Question
 
 明确动态多行进度条、窗口节奏、费用／余额告警色、Effort 着色、分段条与宽度降级归 extension harness presentation，还是本次抽出 framework 通用展示 capability？现有 marker area 只是框架统一的单行激活标记，不应强塞复杂 widget。

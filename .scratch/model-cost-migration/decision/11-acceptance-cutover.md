@@ -15,6 +15,34 @@ Parent: [model-cost 完整迁移：通用能力分层与 OMP 适配](../map.md)
 - 覆盖账户 clear 归档／reset／关闭 holiday（空消费也关闭）、之后 resume 不读回旧归档、clear 前在途丢弃／之后旧子新请求正常统计；其他账户／已有归档／Codex estimate／detail 不误清；旧排队保存不能复活已清数据。具体并发／失败验收依赖存储及命令机制，不宣称已通过。
 - 覆盖预算修改移除与固定显示／告警保留、入口 detail 的切换／tree 保留与重载 brief、只读 renderer；新统计从空开始、旧文件不删除和 OMP 正式基线继续约束。
 
+## Handoff from partial storage decision
+
+[存储组织与唯一消费源局部决议](../lighthouse/06-local-storage.md)确认消费单活动 JSON、独立归档和独立 Codex estimate；Session 自身累计与最近轮快照来自同一聚合，round_end 同次保存。聚合／schema／保存模型属于 model-cost，framework 文件 module 仅提供安全更新，其他 extension 可采用不同模型。具体 schema、协调、保存完成／失败、clear 一致性仍待存储票，不把该局部结论视为整个依赖已满足或生产能力已实现。
+
+## Handoff from storage Q5
+
+[存储局部决议](../lighthouse/06-local-storage.md)确认提前提交非阻塞保存、独立逻辑继续、handler 完成前等待结果。验收覆盖稳定快照不被后续内存修改、正常及异常返回无脱离保存任务、保存拒绝有接收；不将 Promise 包同步 I/O 当作非阻塞证明，不承诺未测量的重叠耗时收益。失败反馈与同文件协调仍待存储票。
+
+## Handoff from storage Q6
+
+[存储局部决议](../lighthouse/06-local-storage.md)Q6 已确认：普通 round_end 保存失败需有反馈但不阻断代理、不回滚内存、不假报保存成功；下一次正常保存提交最新累计／最近轮，若之前退出可损失未保存值。不默增定时重试／后台补写；结合随后决定的旧周期校验验证不复活 clear 前数据。纯 Promise 顺序探针不是文件／原生／跨进程验收。
+
+## Handoff from storage Q7
+
+[存储局部决议](../lighthouse/06-local-storage.md)Q7 已确认：验收同进程同文件按提交顺序更新、一次失败不阻断后续、不同文件不统一排队、空闲协调记录释放及跨进程互斥下重读／合并／原子发布；不要求全局 FIFO。现有纯 Promise 探针仅说明轻量机制，不取代实际文件／多进程／平台证据。
+
+## Handoff from storage Q8 / Q9
+
+[存储局部决议](../lighthouse/06-local-storage.md)Q8／Q9 确认：并发保存保留其他会话／账户，旧周期／旧版本不能覆盖，同版本同快照重复不追加；等待超时或取消后即使锁后来释放也不能写入，读改写开始后不表面超时脱离实际结果。resume 版本、同版本内容冲突、单执行者、预算值及 clear 多文件一致性仍待后续决定，尚无生产验证。
+
+## Handoff from storage Q10 / Q12
+
+[存储局部决议](../lighthouse/06-local-storage.md)Q10／Q12 确认默认排队＋取锁合计 15 秒、可覆盖、超时不迟到写入；同版本异内容保留磁盘并报告冲突，不相加／最后覆盖／取最大值。不是文件操作硬超时；Q11 恢复语义待澄清，不当成已满足契约。
+
+## Handoff from storage Q11 confirmed
+
+[存储局部决议](../lighthouse/06-local-storage.md)Q11 已确认；覆盖磁盘版本 8／累计 1.20 恢复后新消费生成版本 9／累计 1.30，运行中保存失败保留较新内存，重复提交保持快照版本。跨周期拒绝、缺必要字段异常与单执行者不能被版本择新掩盖，具体 schema／故障及 clear 接续仍未决。
+
 ## Question
 
 定义完整迁移的可观察验收：真实宿主请求／响应／多 Turn／工具执行／Round 事件关联、计价边界、模型切换、各模式命令、headless 更新、renderer 无业务副作用、跨进程存储、安全失败、真实余额／Codex 额度与视觉 TUI。

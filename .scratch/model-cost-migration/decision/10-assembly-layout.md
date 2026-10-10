@@ -17,6 +17,30 @@ Parent: [model-cost 完整迁移：通用能力分层与 OMP 适配](../map.md)
 
 本票的最终组织／装配规格仍在相关契约收口后决定；但旧源码到新模块的数据流与装配草图必须提前作为数据／State、存储和观察讨论的输入，不要求讨论者仅凭抽象接口选择方案。早期草图不是本票已结案或生产实施授权。
 
+## Handoff from partial storage decision
+
+[存储组织与唯一消费源局部决议](../lighthouse/06-local-storage.md)确认消费单活动 JSON、独立归档和独立 Codex estimate；Session 自身累计与最近轮快照来自同一聚合，round_end 同次保存。聚合／schema／保存模型属于 model-cost，framework 文件 module 仅提供安全更新，其他 extension 可采用不同模型。具体 schema、协调、保存完成／失败、clear 一致性仍待存储票，不把该局部结论视为整个依赖已满足或生产能力已实现。
+
+## Handoff from storage Q6
+
+[存储局部决议](../lighthouse/06-local-storage.md)Q6 已确认普通 round_end 保存失败报告而不阻断主流程，保留内存累计，下次正常保存提交最新快照，不新增定时重试或后台补写。装配保持 Q5 handler 完成前收口，不把失败转成未接收的 Promise；旧周期有效性、同文件排序与 clear 失败仍未决。
+
+## Handoff from storage Q7
+
+[存储局部决议](../lighthouse/06-local-storage.md)Q7 确认 framework 内部同文件轻量 Promise 尾链实现进程内提交顺序，失败后继续、空闲键清理、不同文件独立；跨进程互斥但不承诺全局 FIFO。不得复制到每个 extension，不引入持久任务队列或后台重试；具体锁、路径协调键、等待／取消及旧快照／周期校验仍由存储票决定。
+
+## Handoff from storage Q8 / Q9
+
+[存储局部决议](../lighthouse/06-local-storage.md)Q8／Q9 确认按负责的会话记录合并、账户周期／保存版本校验；framework 提供协调权限内最新文档和安全更新，extension 拥有业务有效性规则。排队／取锁有限等待预算合计，等待超时或取消后无迟到写入，更新开始后等待真实结果；具体预算、resume 版本、单执行者与 clear 一致性仍未决。
+
+## Handoff from storage Q10 / Q12
+
+[存储局部决议](../lighthouse/06-local-storage.md)确认 Q10 默认从提交起排队＋取锁合计 15 秒，调用方可覆盖，model-cost 暂用默认不增 YAML 项；Q12 同版本不同内容冲突拒绝并报告，不猜合并。Q11 用户提出理解核对，恢复版本接续仍待澄清，不因“同意”自行批准缺版本文档兼容或双执行者恢复。
+
+## Handoff from storage Q11 confirmed
+
+[存储局部决议](../lighthouse/06-local-storage.md)Q11 已在澄清后确认：普通 resume 恢复同周期完整已保存快照（累计／最近轮／版本）并接续版本；运行中保存失败不读旧磁盘回滚较新内存。旧周期不能按更大版本跨周期覆盖，不批准缺版本兼容或双执行者恢复。单执行者与 clear 后运行态仍待存储票。
+
 ## Question
 
 将已确认契约映射到现有 framework core／behaviors／adapters 和 extensions/model-cost 的 definition／shared-logic／harnesses／entrypoint。是否需要新的通用能力目录或公共 authoring exports，如何保持原生 import 只在 adapter／extension harnesses？不得建立第二套能力声明、配置或框架。

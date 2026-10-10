@@ -19,6 +19,10 @@ Parent: [model-cost 完整迁移：通用能力分层与 OMP 适配](../map.md)
 
 Session／Round 累计限于适用账户当前周期；resume 只恢复已保存活动聚合，不扫描历史消息重估或合并旧归档，不维护跨周期 Session 总数。归档／reset／关闭 holiday 的一致成功／失败、跨进程旧缓存不复活、混账户关系保留与运行条件仍待决定；单一 DeepSeek 活动会话仅是讨论假设，不取消多会话支持。旧范围／交接文字见[同步前历史快照](../assets/contract-history-before-sync.md)，不再作为当前要求。
 
+## Handoff from storage Q8 / Q9
+
+[存储局部决议](../lighthouse/06-local-storage.md)Q8 确认周期标识拒绝 clear 前旧提交，Q9 确认取权限前有限等待／可取消、更新开始后等待实际结果；本票据此决定命令反馈，不把普通 round_end 的 Q6 失败策略直接套给 clear／holiday。归档、重置、关闭 holiday 的一致成功与恢复仍待存储票。
+
 ## Question
 
 用户已在[数据讨论](12-state-data-contract.md)明确移除修改预算功能，不再迁移数字／K／0 参数。确定保留的 detail、holiday、clear 的完整命令操作、命令名、模式限制、失败反馈和存活范围；不因保留旧 /budget 名称而恢复已移除的数字设置。框架当前仅 toggle/directed 与一个 boolean activation 字段，不能借 unrecognized 回调伪装完整 action 接口。

@@ -7,6 +7,18 @@ Blocked by: 01, 02, 12, 06
 Prerequisites: [完整保留哪些业务行为，统计单位如何命名？](01-behavior-contract.md)；[用量与费用属于哪个会话、账户和请求，如何避免漏算与重复？](02-accounting-ownership.md)；[model-cost 的哪些数据进入 framework State，如何声明与读取？](12-state-data-contract.md)；[framework 如何提供独立存储、原子更新与跨进程协调？](06-local-storage.md)
 Parent: [model-cost 完整迁移：通用能力分层与 OMP 适配](../map.md)
 
+## Handoff from storage Q5
+
+[存储局部决议](../lighthouse/06-local-storage.md)已确认：model-cost 的 round_end handler 捕获稳定快照后提交非阻塞安全更新，继续不依赖保存结果且不写同一文件的独立逻辑，完成前 await 收口保存任务，包括提前返回／异常路径；不是 fire-and-forget。本票需核对实际派发／异步 handler 的完成映射，不由此决定全部生命周期 callback 必须等待所有远端刷新。存储错误与协调仍未决，整票依赖尚未解除。
+
+## Handoff from storage Q6
+
+[存储局部决议](../lighthouse/06-local-storage.md)Q6 已确认普通 round_end 保存失败不因此中止代理主流程；Q5 的 handler 返回前收口仍成立，不因允许失败而 fire-and-forget。反馈承载交展示票，独立业务错误与保存错误同时发生仍待存储票，不据 Q6 吞掉非保存错误。
+
+## Handoff from storage Q8 / Q9
+
+Q8／Q9 的确认来源为[存储局部决议](../lighthouse/06-local-storage.md)：旧周期提交不能重绑定到新周期；等待取协调权限时可取消，取消后不迟到写入，更新开始后等待实际结果。本票决定实际实例／生命周期的取消信号映射，不因统计拒绝取消真实模型执行或伪造 Round 结束。
+
 ## Question
 
 设计 framework 拥有且由 OMP adapter 映射的观测契约：请求开始时刻与身份、HTTP 响应 headers/metadata、assistant 完成的 token usage、响应计费事实、工具执行、Round 边缘分别何时派发、如何关联？模型／provider／catalog cost、实际 Effort、上下文 tokens、会话累计／orchestration 统计与会话身份以什么小接口提供？
