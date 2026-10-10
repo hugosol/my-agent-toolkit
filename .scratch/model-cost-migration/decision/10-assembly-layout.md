@@ -23,7 +23,7 @@ Parent: [model-cost 完整迁移：通用能力分层与 OMP 适配](../map.md)
 
 ## Handoff from storage Q6
 
-[存储局部决议](../lighthouse/06-local-storage.md)Q6 已确认普通 round_end 保存失败报告而不阻断主流程，保留内存累计，下次正常保存提交最新快照，不新增定时重试或后台补写。装配保持 Q5 handler 完成前收口，不把失败转成未接收的 Promise；旧周期有效性、同文件排序与 clear 失败仍未决。
+当前有效失败策略以[存储局部决议](../lighthouse/06-local-storage.md)修订 Q6／Q11 为准：用户已接受所有普通消费保存失败后丢弃未保存部分、从磁盘有效完整快照初始化，不自动重试／修复／补账；读不到有效磁盘则报告并停止这次保存，不猜零覆盖。此交接替代本票旧“保留内存／不回滚／下次带上未保存消费”措辞，不改变正常并发／账户隔离／去重，clear 与 estimate 失败仍分别未决。
 
 ## Handoff from storage Q7
 
@@ -39,7 +39,19 @@ Parent: [model-cost 完整迁移：通用能力分层与 OMP 适配](../map.md)
 
 ## Handoff from storage Q11 confirmed
 
-[存储局部决议](../lighthouse/06-local-storage.md)Q11 已在澄清后确认：普通 resume 恢复同周期完整已保存快照（累计／最近轮／版本）并接续版本；运行中保存失败不读旧磁盘回滚较新内存。旧周期不能按更大版本跨周期覆盖，不批准缺版本兼容或双执行者恢复。单执行者与 clear 后运行态仍待存储票。
+当前有效失败策略以[存储局部决议](../lighthouse/06-local-storage.md)修订 Q6／Q11 为准：用户已接受所有普通消费保存失败后丢弃未保存部分、从磁盘有效完整快照初始化，不自动重试／修复／补账；读不到有效磁盘则报告并停止这次保存，不猜零覆盖。此交接替代本票旧“保留内存／不回滚／下次带上未保存消费”措辞，不改变正常并发／账户隔离／去重，clear 与 estimate 失败仍分别未决。
+
+## Handoff from revised failure policy
+
+当前有效失败策略以[存储局部决议](../lighthouse/06-local-storage.md)修订 Q6／Q11 为准：用户已接受所有普通消费保存失败后丢弃未保存部分、从磁盘有效完整快照初始化，不自动重试／修复／补账；读不到有效磁盘则报告并停止这次保存，不猜零覆盖。此交接替代本票旧“保留内存／不回滚／下次带上未保存消费”措辞，不改变正常并发／账户隔离／去重，clear 与 estimate 失败仍分别未决。 业务失败初始化归 extension shared logic，不升级通用文件 module 为复杂恢复系统。
+
+## Handoff from storage Q13 / Q14
+
+[存储局部决议](../lighthouse/06-local-storage.md)Q13／Q14 已确认简化 clear 的归档先于活动原子重置，失败终止不补做；无有效基线暂停本实例消费统计／保存至下一次正常初始化，模型与独立余额／额度继续。extension shared logic 拥有失败政策，framework 拥有安全协调；归档输入／新周期运行态／锁与 schema 仍未定。
+
+## Handoff from storage Q15
+
+[存储局部决议](../lighthouse/06-local-storage.md)Q15 确认 clear 不增加跨进程内存收集、强制保存／排空或补账，业务归档输入仅锁内最新已保存活动文件。用户要求 clear 尽量简单；通用锁／安全发布仍归 framework，消费丢弃属于 extension shared logic，不用该偏好撤销正常多会话安全更新。
 
 ## Question
 

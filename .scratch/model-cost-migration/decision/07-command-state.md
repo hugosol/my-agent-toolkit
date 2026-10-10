@@ -15,13 +15,21 @@ Parent: [model-cost 完整迁移：通用能力分层与 OMP 适配](../map.md)
 
 ## Handoff from clear reset decision
 
-来源：[数据归属与账户周期决议](../lighthouse/12-state-data-contract.md)。只保留账户级 clear：归档目标账户全部会话的已知活动聚合，重置累计并关闭该账户 holiday；空消费也可结束 holiday。不提供会话树级 clear，不清其他账户、旧归档、Codex estimate 或入口 detail。clear 前在途消费丢弃，之后旧子新请求正常统计；不取消真实执行或改 framework 生命周期。
+来源：[数据归属与账户周期决议](../lighthouse/12-state-data-contract.md)。只保留账户级 clear：归档目标账户全部会话的已成功保存活动聚合，重置累计并关闭该账户 holiday；空消费也可结束 holiday。不提供会话树级 clear，不清其他账户、旧归档、Codex estimate 或入口 detail。clear 前在途消费丢弃，之后旧子新请求正常统计；不取消真实执行或改 framework 生命周期。
 
 Session／Round 累计限于适用账户当前周期；resume 只恢复已保存活动聚合，不扫描历史消息重估或合并旧归档，不维护跨周期 Session 总数。归档／reset／关闭 holiday 的一致成功／失败、跨进程旧缓存不复活、混账户关系保留与运行条件仍待决定；单一 DeepSeek 活动会话仅是讨论假设，不取消多会话支持。旧范围／交接文字见[同步前历史快照](../assets/contract-history-before-sync.md)，不再作为当前要求。
 
 ## Handoff from storage Q8 / Q9
 
 [存储局部决议](../lighthouse/06-local-storage.md)Q8 确认周期标识拒绝 clear 前旧提交，Q9 确认取权限前有限等待／可取消、更新开始后等待实际结果；本票据此决定命令反馈，不把普通 round_end 的 Q6 失败策略直接套给 clear／holiday。归档、重置、关闭 holiday 的一致成功与恢复仍待存储票。
+
+## Handoff from storage Q13 / Q14
+
+[存储局部决议](../lighthouse/06-local-storage.md)Q13 已确认先发布归档，再原子发布目标账户新周期／累计重置／holiday 关闭；归档失败不重置，重置未提交报告失败，不自动重试／补做，允许残留本次备份但不合并恢复。活动文件确实提交才算 clear 成功；本票承接反馈，归档输入／关系保留及实际平台实现仍待存储票。
+
+## Handoff from storage Q15
+
+[存储局部决议](../lighthouse/06-local-storage.md)Q15 已确认 clear 只归档协调范围内最新已成功保存的活动聚合，不收集任何进程未落盘内存、不触发强制保存或 Round 排空。已完成响应但未保存的消费也丢弃，不进入新周期、不补账；这是明确收窄旧“全部已知”范围，反馈遵循 Q13，不取消其他账户／estimate 保护。
 
 ## Question
 

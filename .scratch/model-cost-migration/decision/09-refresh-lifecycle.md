@@ -13,6 +13,10 @@ Parent: [model-cost 完整迁移：通用能力分层与 OMP 适配](../map.md)
 - 旧在途消费在目标账户 clear 后主动丢弃，不等于所有迟到远端测量也一律丢弃；远端余额／额度读数不是消费累计。区分账户周期 reset、会话／模型切换、原账户测量与当前展示，决定哪些响应／timer 仍可更新什么，不让旧实例覆盖新实例。
 - 不从 render 发请求、创建 timer 或更新权威业务态，不借新通用 State 替代扩展业务缓存。
 
+## Handoff from storage Q13 / Q14
+
+[存储局部决议](../lighthouse/06-local-storage.md)Q14 的暂停限于消费统计／保存，独立余额／额度功能不因此自动停用；不据此取消原刷新责任或反向恢复消费后台探测。下一次正常会话初始化的消费恢复依赖观察／装配，刷新规则仍按本票收口。
+
 ## Question
 
 将请求 headers 即时更新、assistant 完成的 30s TTL 主动刷新、旧原生 agent_end 强制刷新、session／原生 agent_start 开始 stale 拉取、模型切换预取与峰谷边界 timer 映射为精确业务调度。明确单源 TTL 与两源预取当前差异、single-flight、API/header 先后覆盖及失败是否保留旧值。

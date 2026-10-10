@@ -44,7 +44,7 @@ Session 累计限于适用账户当前周期，跨该会话各 Round；Round 累
 | switch | 选择目标会话本周期视图，已开始请求仍归原身份（账户 clear 的丢弃是显式例外） |
 | tree | 不回滚本周期 Session；该历史位置 Round 隐藏或不可用，不冒充零／最近轮 |
 | fork | 新实际会话自身从零，复制消息不是新消费；原会话本周期统计不被 fork 回滚 |
-| 账户 clear | 归档目标账户全部会话已知聚合，重置本周期并关闭 holiday；旧值只在归档中 |
+| 账户 clear | 归档目标账户全部会话已成功保存聚合，重置本周期并关闭 holiday；输入范围按[存储局部决议](06-local-storage.md)Q15，旧值只在归档中 |
 
 正常从历史位置继续触发新的实际活动按 framework Round 规则归属，不查询或恢复已经放弃的历史 Round。开放 Round 跨 clear 的统计快照映射尚未定型，不能伪造新轮。
 
@@ -87,6 +87,8 @@ Session 累计限于适用账户当前周期，跨该会话各 Round；Round 累
 - [展示](../decision/08-presentation.md)、[刷新](../decision/09-refresh-lifecycle.md)、[命令](../decision/07-command-state.md)、[装配](../decision/10-assembly-layout.md)、[验收](../decision/11-acceptance-cutover.md)仍各自未决，不把来源交接当生产实现。
 
 ## Postconditions
+
+- 普通消费保存失败的当前取舍及已确认损失范围以[存储局部决议](06-local-storage.md)修订 Q6／Q11 为唯一权威；此处不将正常并发正确性或仅异常退出的旧描述用于否定该显式修订，业务布局与普通 resume 结论不变。
 
 - 后续按扩展自有聚合、有限运行期关联、父子关系与本周期恢复设计，不要求历史 Turn／Round 留存、缺失补齐或跨周期 Session 总数。
 - 自身／含后代、账户／渠道口径可派生，实际请求不重复；无金额贡献不代表实际零消费。

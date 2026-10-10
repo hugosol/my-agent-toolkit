@@ -30,7 +30,7 @@ Labels: wayfinder:map
 
 - [model-cost 的哪些数据进入 framework State，如何声明与读取？](lighthouse/12-state-data-contract.md)：扩展自有逐响应聚合与最近 Round 快照、有限内存去重；累计限于账户当前周期，账户级 clear 归档重置并关闭 holiday，resume 不重算历史或合并旧归档。
 
-- [framework 如何提供独立存储、原子更新与跨进程协调？](lighthouse/06-local-storage.md)：局部确认消费单活动 JSON、独立历史归档与 Codex 估计文件，唯一聚合保存 Session／最近轮，提前提交异步保存、handler 完成前等待；框架提供通用安全更新；普通 round_end 保存失败报告但不阻断、保留内存累计，不增后台重试；同文件轻量进程内 FIFO，跨进程互斥不保证全局顺序；按会话合并并校验周期／版本，取得权限前有限等待／可取消；等待默认 15 秒可覆盖，同版本异内容报冲突；resume 接续完整快照／版本，运行中失败不回滚内存；schema／锁／单执行者／clear 一致性仍未决。
+- [framework 如何提供独立存储、原子更新与跨进程协调？](lighthouse/06-local-storage.md)：单活动 JSON／独立归档与 estimate、唯一聚合／最近轮；提前异步保存并在 handler 返回前等待，轻量 FIFO／跨进程互斥、周期／版本校验、默认协调等待 15 秒；普通消费保存失败丢弃未保存部分、从磁盘有效快照初始化，不重试补账并接受少量损失；clear 只归档已保存数据、不排空内存，先归档后提交、失败终止；无有效基线暂停统计至下一次初始化；跨进程运行态／路径／锁／schema 等仍未决。
 
 ## Not yet specified
 

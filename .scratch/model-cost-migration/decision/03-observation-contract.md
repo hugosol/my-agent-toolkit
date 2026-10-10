@@ -19,6 +19,14 @@ Parent: [model-cost 完整迁移：通用能力分层与 OMP 适配](../map.md)
 
 Q8／Q9 的确认来源为[存储局部决议](../lighthouse/06-local-storage.md)：旧周期提交不能重绑定到新周期；等待取协调权限时可取消，取消后不迟到写入，更新开始后等待实际结果。本票决定实际实例／生命周期的取消信号映射，不因统计拒绝取消真实模型执行或伪造 Round 结束。
 
+## Handoff from revised failure policy
+
+当前有效失败策略以[存储局部决议](../lighthouse/06-local-storage.md)修订 Q6／Q11 为准：用户已接受所有普通消费保存失败后丢弃未保存部分、从磁盘有效完整快照初始化，不自动重试／修复／补账；读不到有效磁盘则报告并停止这次保存，不猜零覆盖。此交接替代本票旧“保留内存／不回滚／下次带上未保存消费”措辞，不改变正常并发／账户隔离／去重，clear 与 estimate 失败仍分别未决。 不清 sessionId + turnId 已处理标记、不重新计入已丢弃响应，不伪造 framework 生命周期结束。
+
+## Handoff from storage Q13 / Q14
+
+[存储局部决议](../lighthouse/06-local-storage.md)Q14 已确认失败初始化无有效磁盘基线时暂停本实例消费统计／保存，不取消模型执行、不伪造 Round 结束；到下一次正常会话初始化加载，不主动探测／补算。本票提供该初始化事实与实例关联；已处理身份不因暂停清空，独立余额／额度不自动停用。
+
 ## Question
 
 设计 framework 拥有且由 OMP adapter 映射的观测契约：请求开始时刻与身份、HTTP 响应 headers/metadata、assistant 完成的 token usage、响应计费事实、工具执行、Round 边缘分别何时派发、如何关联？模型／provider／catalog cost、实际 Effort、上下文 tokens、会话累计／orchestration 统计与会话身份以什么小接口提供？

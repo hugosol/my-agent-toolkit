@@ -16,11 +16,19 @@ Parent: [model-cost 完整迁移：通用能力分层与 OMP 适配](../map.md)
 
 ## Handoff from storage Q6
 
-[存储局部决议](../lighthouse/06-local-storage.md#q6普通-round_end-保存失败不打断主流程)已确认普通 round_end 保存失败报告而不阻断主流程、不回滚内存、不假报成功；本票决定 UI／headless 反馈承载，不将该策略扩展到 clear 或 estimate。
+当前有效失败策略以[存储局部决议](../lighthouse/06-local-storage.md)修订 Q6／Q11 为准：用户已接受所有普通消费保存失败后丢弃未保存部分、从磁盘有效完整快照初始化，不自动重试／修复／补账；读不到有效磁盘则报告并停止这次保存，不猜零覆盖。此交接替代本票旧“保留内存／不回滚／下次带上未保存消费”措辞，不改变正常并发／账户隔离／去重，clear 与 estimate 失败仍分别未决。
 
 ## Handoff from storage Q10 / Q12
 
 [存储局部决议](../lighthouse/06-local-storage.md)Q12 确认同版本不同内容须报告明确冲突、不假报保存成功；普通 round_end 不因此中止主流程。超时失败沿 Q6 承载，Q10 不是中止代理或文件更新总耗时保证。
+
+## Handoff from revised failure policy
+
+当前有效失败策略以[存储局部决议](../lighthouse/06-local-storage.md)修订 Q6／Q11 为准：用户已接受所有普通消费保存失败后丢弃未保存部分、从磁盘有效完整快照初始化，不自动重试／修复／补账；读不到有效磁盘则报告并停止这次保存，不猜零覆盖。此交接替代本票旧“保留内存／不回滚／下次带上未保存消费”措辞，不改变正常并发／账户隔离／去重，clear 与 estimate 失败仍分别未决。 展示不伪装保存成功；重新初始化后统计可能回到已保存基线，不把丢失显示为确认零消费。
+
+## Handoff from storage Q13 / Q14
+
+[存储局部决议](../lighthouse/06-local-storage.md)Q13／Q14 确认 clear 以实际活动文件提交为成功点、失败不自动恢复；无有效磁盘基线暂停消费统计／保存至下一次正常初始化。反馈不能把失败／暂停少计当确认零或 clear 成功；模型继续，独立余额／额度不因此自动停用。
 
 ## Question
 

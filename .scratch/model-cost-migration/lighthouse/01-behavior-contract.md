@@ -36,7 +36,7 @@ provider 的 Codex／官方 DeepSeek／token-only／hidden 分层保留，具体
 
 Codex 双窗口、按报告时长识别、节奏／重置、ratio／left、同源成对测量及窗口变化规则保留；5h 增量至少 50pp、双窗口正增量且未饱和才采纳估计，无估计 estimating… 的既有业务基线不因此取消。
 
-累计／session 分段条（≤20 元 fine、>20 元 coarse）、detail／holiday／账户级 clear、费用／余额告警及故障反馈保留。clear 归档目标账户全部会话已知活动聚合，重置周期并关闭 holiday；空消费也能关闭 holiday，不清其他账户、旧归档、Codex estimate 或入口 detail。clear 前在途消费允许丢弃，之后旧子的新请求正常统计，不取消真实执行。详情与一致性前置由[数据决议](12-state-data-contract.md)和存储／命令票承接。
+累计／session 分段条（≤20 元 fine、>20 元 coarse）、detail／holiday／账户级 clear、费用／余额告警及故障反馈保留。clear 归档目标账户全部会话已成功保存活动聚合，重置周期并关闭 holiday；具体归档输入及未落盘损失范围按[存储局部决议](06-local-storage.md)Q15 的用户确认；空消费也能关闭 holiday，不清其他账户、旧归档、Codex estimate 或入口 detail。clear 前在途消费允许丢弃，之后旧子的新请求正常统计，不取消真实执行。详情与一致性前置由[数据决议](12-state-data-contract.md)和存储／命令票承接。
 
 正常有 usage 则累计；失败／取消有可靠 usage 也累计，无 usage 跳过。缺 usage／适用价格只提示，不建立缺失计数、补账或补算状态；有 usage 缺价仍累计 token、只跳过费用。Codex 参考缺价不影响额度，token-only／hidden 无金额口径不因缺价报错。新策略不等于全部 provider 源事实已认证，不承诺官网费用完全一致。
 
