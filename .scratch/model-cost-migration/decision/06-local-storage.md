@@ -1,23 +1,21 @@
 # framework 如何提供独立存储、原子更新与跨进程协调？
 
 Type: grilling
-Status: open
-Assignee:
-Lighthouse: [存储组织与唯一消费源局部决议](../lighthouse/06-local-storage.md)
+Status: resolved
+Outcome: [存储组织与唯一消费源局部决议](../lighthouse/06-local-storage.md)
+Assignee: hugos (本会话 agent 协助讨论)
 Blocked by: 01, 02, 12
 Prerequisites: [完整保留哪些业务行为，统计单位如何命名？](01-behavior-contract.md)；[用量与费用属于哪个会话、账户和请求，如何避免漏算与重复？](02-accounting-ownership.md)；[model-cost 的哪些数据进入 framework State，如何声明与读取？](12-state-data-contract.md)
 Parent: [model-cost 完整迁移：通用能力分层与 OMP 适配](../map.md)
 
 ## Handoff
 
-- 暂停原因：用户明确要求“我想暂停grilling”。本票未结案、未实施；保存本次已确认结果及未回答问题，暂停交接与追踪已完成，当前暂停且认领已释放。前置行为／消费归属／数据票仍已 resolved，暂停不改变任何依赖。
-- 确认结果：[存储组织与安全更新局部决议](../lighthouse/06-local-storage.md)为本票唯一权威，已确认至 Q22，包括 Q16–Q20 共享可配置根／字段局部 ~/／用户手动切换、Q21 固定文件组织与 Q22 本机本地文件系统范围；详细规则只在 Lighthouse。地图结果索引与装配／验收当前交接已同步。[数据归属与账户周期决议](../lighthouse/12-state-data-contract.md)继续提供布局与周期边界。无暂停新选择，不重问已定 Q5–Q22，不恢复旧保留内存／完整账本／补账要求。
-- 唯一恢复点：Q23 尚未回答——是否在每次可观察新模型请求开始前异步读取最新 consumption.json，先取得当前账户周期／holiday，再固定本请求的账户周期、归属与计价锚点？推荐仅为候选，用户暂停不是同意。
-- Q23 候选边界：同周期保留本实例尚未保存的累计，不以磁盘旧快照覆盖；周期变更沿已批准 clear 规则丢弃旧周期未保存部分，新请求进入新周期；关联固定后才发生 clear 的请求仍属旧周期，不重绑定。renderer 只读内存，不增加定时轮询。代价是每个新请求前一次本地异步读与解析，没有新路径时延测量或零开销承诺。读取失败、空闲窗口何时刷新、读取／clear 交错精确边界与开放 Round 跨周期快照还未决定，不由此默套 Q14；原生异步派发 interface 归观察票。
-- 其余未决：平台与跨进程锁／协调键、schema 与安全文件 interface、读缓存新鲜度、跨进程 clear 后新请求取得新周期、同 Session 单执行者与版本、混账户父子关系保留、迟到子消费发布；输入属于观察／账户等其他票时交其决定，不在本认领下代决。
-- 理由与拒绝分支：用户希望接近旧 JSON 方案、低复杂度，接受极端失败的少量消费损失，但不取消正常多会话／跨进程安全更新与账户隔离。消费活动一个 JSON、归档与 estimate 独立；不建数据库、完整明细账、后台恢复／自动补账或 clear 内存收集／强制排空。Q6／Q11 历史失败保留内存已被替代，以 Lighthouse 当前正文为准。
-- 证据限制：旧 archiveDirectory／archiveDocumentPath 的只读 Bun 探针返回用户 .omp/cost-archive 及旧文件名，没有创建目录或改统计；文档链接／结构检查通过，不是生产路径能力。已有 FIFO／失败初始化算式探针也不是原生 handler／实际文件／跨进程锁／性能验证。最新本地 OMP checkout 的请求前派发源码逐个 await handler；[exact 18.5.0 请求观测探针](../assets/omp-request-observation-smoke.md)仅证明已运行的正常／工具／重试／取消形状，不证明新读取路径延迟或 framework 异步契约已落地。旧存储与历史证据见[现状调查](../assets/current-state.md#存储现状)及下方 Comments，具体歧义才 zoom。
-- 追踪交接：本次暂停 Backtracer 已完成，最新报告见下方 Comments；已确认结果与装配／验收当前交接一致，无新结果，现有 Lighthouse 与地图索引保留。Q23 未回答，其读取失败、IO／clear 交错、空闲刷新及开放 Round 后果按既有责任票收口，无剩余无主 follow-up 或代理任务。恢复先认领本票，不重问已定 Q5–Q22；当前已释放本票 claim，保留 open／空 Assignee；整票没有 resolved。
+- 状态：本票已 resolved（2026-10-11 本会话，Q23–Q26 收口）。唯一权威为 [存储组织与安全更新局部决议](../lighthouse/06-local-storage.md)；详细规则只在 Lighthouse，本交接只留导航、理由与证据限制。
+- 本轮确认：Q23 取最简——不做请求前读取，跨进程 clear 由保存时周期校验（Q8）发现并按失败重初始化（Q6），最多丢一轮未保存消费；Q24 framework 通用文件能力 = 单一异步入口 + 规范化路径协调键 + 进程内 FIFO + 锁文件跨进程互斥 + 15s 预算 + 锁内重读 + 同目录临时文件 rename 原子发布 + 损坏不覆盖 + 陈旧锁回收（被误回收的存活写入者校验锁所有权并放弃覆盖）；Q25 consumption.json 最小物理 schema（schemaVersion／accounts／periodId／holiday／sessions{saveVersion／own／recentRound／parent}）与 `archives/<uuid>.json`；Q26 同会话多执行者不引入租约，靠 saveVersion + Q8 旧版本不覆盖 + Q12 同版本冲突 + Q6 重初始化收口。
+- 已定基线（不重问）：Q5–Q22 全部保持；账户周期／holiday、按会话合并、异步等待、clear 先归档后重置且只取已保存数据、无基线暂停、固定文件组织与本机本地文件系统范围不变。
+- 拒绝／替代：请求前读取候选（含读失败、空闲刷新、读／clear 交错、开放 Round 跨周期快照设计）与同会话租约／心跳均未采纳，理由是最简单实现与已接受的少量损失；Q6／Q11 旧保留内存政策仍以 Lighthouse 当前正文为准，历史仅在下方 Comments。
+- 证据限制：[exact 18.5.0 请求观测探针](../assets/omp-request-observation-smoke.md)与旧存储只读探针不证明新 framework 文件能力已实现；真实跨进程锁、崩溃／原子读、陈旧锁回收与路径别名验收由装配／验收票承担。
+- 无剩余无主恢复点；Q23–Q26 已收口。混账户父子关系保留与迟到子消费发布属账户／观察票；本票不再认领。
 
 ## Question
 
@@ -30,6 +28,28 @@ Parent: [model-cost 完整迁移：通用能力分层与 OMP 适配](../map.md)
 以既定数据记录与读写路径为前提，先看实际组织及调用方式，再决定操作级等待、锁与恢复；保持规划模式，不泛问整个 callback 同步／异步，不预建正常离开的额外保存钩子。
 
 ## Comments
+
+### Trace Report: framework 如何提供独立存储、原子更新与跨进程协调？（Q23–Q26 收口）
+
+#### Intent gaps
+- 无新增无主缺口。Q23–Q26 收口读新鲜度、framework 文件能力与锁、consumption.json schema／归档、同会话多执行者策略；Q23 取简后读失败／空闲刷新／读-clear 交错等不再展开，混账户父子与迟到子发布仍归账户／观察票。装配／验收由 Postconditions 承接实现与真实跨进程／崩溃／原子读验证，无新票。
+- Q24 的“不静默替换他人已完成更新”由锁所有权校验约束对齐 [ADR-0002 shared-file concurrency scope](../../../docs/adr/0002-semantic-extension-framework.md)；这是对已批准 Q24 的既有 ADR 约束补全，不是新政策。
+
+#### Layer gaps
+- 无新增无主前置。framework 文件能力缺实现（`framework/docs/framework-capabilities.md` 目前只有 config 只读）由装配／验收票承担；账户身份格式由账户访问票 04 提供，Q25 以不透明 id 解耦；observation 细节由观察票 03 承担，本票不代决。
+
+#### Layer violations
+- 无新增。协调／锁／原子发布留在 framework，schema／周期／版本／合并／归档留在 model-cost，原生 file-lock 不进入 shared logic。
+
+#### Peer asymmetry
+- 无新增。framework 文件能力为通用能力，model-cost 为首个消费者；其他 extension 可自行选择，不强制迁移，符合既有“扩展可以复用同一基础能力采用不同数据结构”的决定。
+
+#### Conflicts
+- 无剩余相反现行政策。ADR-0002 已要求协调读-改-发布与读端安全原子发布、最新磁盘值在协调范围内读取；Q24 与之对齐。地图 Out of scope 已确认旧统计不兼容，是 ADR-0002 通用兼容要求对 model-cost 的具名豁免，不改写其他 extension 政策。
+- Q23 与 [Lighthouse 12](../lighthouse/12-state-data-contract.md) “读缓存新鲜度留存储票”一致：现决定为锁内读最新 + 无每请求读。
+
+#### Gap follow-up
+- 无剩余无主 follow-up，不新增票、不解除其他依赖。本票 resolved 后，[观察契约](03-observation-contract.md) 与 [/budget 命令](07-command-state.md) 的前置 06 已满足，成为 frontier；[装配](10-assembly-layout.md) 仍受未结案票约束。
 
 ### Trace Report: framework 如何提供独立存储、原子更新与跨进程协调？（本次暂停）
 

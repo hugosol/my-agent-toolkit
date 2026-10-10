@@ -30,7 +30,7 @@ Labels: wayfinder:map
 
 - [model-cost 的哪些数据进入 framework State，如何声明与读取？](lighthouse/12-state-data-contract.md)：扩展自有逐响应聚合与最近 Round 快照、有限内存去重；累计限于账户当前周期，账户级 clear 归档重置并关闭 holiday，resume 不重算历史或合并旧归档。
 
-- [framework 如何提供独立存储、原子更新与跨进程协调？](lighthouse/06-local-storage.md)：单活动 JSON／独立归档与 estimate、唯一聚合／最近轮；提前异步保存并在 handler 返回前等待，轻量 FIFO／跨进程互斥、周期／版本校验、默认协调等待 15 秒；普通消费保存失败丢弃未保存部分、从磁盘有效快照初始化，不重试补账并接受少量损失；clear 只归档已保存数据、不排空内存，先归档后提交、失败终止；无有效基线暂停统计至下一次初始化；用户级共享、storageDir 可配置，~/ 特指用户 .omp 主目录，初始 ~/cost-archive 复用旧目录，由用户切换前手动备份清空、修改重启；固定 consumption.json、独立 codex-usage-estimate.json 与 archives/；本机本地文件系统同机跨进程共享已确认，不承诺网络盘／云同步跨机器写入；具体锁／跨进程运行态／读新鲜度／schema 等仍未决。
+- [framework 如何提供独立存储、原子更新与跨进程协调？](lighthouse/06-local-storage.md)：单活动 JSON／独立归档与 estimate、唯一聚合／最近轮；提前异步保存并在 handler 返回前等待，轻量 FIFO／跨进程互斥、周期／版本校验、默认协调等待 15 秒；普通消费保存失败丢弃未保存部分、从磁盘有效快照初始化，不重试补账并接受少量损失；clear 只归档已保存数据、不排空内存，先归档后提交、失败终止；无有效基线暂停统计至下一次初始化；用户级共享、storageDir 可配置，~/ 特指用户 .omp 主目录，初始 ~/cost-archive 复用旧目录，由用户切换前手动备份清空、修改重启；固定 consumption.json、独立 codex-usage-estimate.json 与 archives/；本机本地文件系统同机跨进程共享已确认，不承诺网络盘／云同步跨机器写入；framework 通用文件能力（规范化路径协调键、锁文件互斥、锁内重读、临时文件 rename 原子发布、损坏不覆盖、陈旧锁回收且不静默覆盖）、读新鲜度以锁内读为准不做每请求读取、consumption.json 最小 schema 与 UUID 归档、同会话多执行者靠版本冲突收口均已确认。
 
 ## Not yet specified
 
