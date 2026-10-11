@@ -6,26 +6,21 @@ Assignee:
 Blocked by: 01, 02, 12, 06
 Prerequisites: [完整保留哪些业务行为，统计单位如何命名？](01-behavior-contract.md)；[用量与费用属于哪个会话、账户和请求，如何避免漏算与重复？](02-accounting-ownership.md)；[model-cost 的哪些数据进入 framework State，如何声明与读取？](12-state-data-contract.md)；[framework 如何提供独立存储、原子更新与跨进程协调？](06-local-storage.md)
 Parent: [model-cost 完整迁移：通用能力分层与 OMP 适配](../map.md)
+Lighthouse: [观察局部决议](../lighthouse/03-observation-contract.md)
 
-## Handoff from storage Q5
+## Handoff
 
-[存储局部决议](../lighthouse/06-local-storage.md)已确认：model-cost 的 round_end handler 捕获稳定快照后提交非阻塞安全更新，继续不依赖保存结果且不写同一文件的独立逻辑，完成前 await 收口保存任务，包括提前返回／异常路径；不是 fire-and-forget。本票需核对实际派发／异步 handler 的完成映射，不由此决定全部生命周期 callback 必须等待所有远端刷新。存储错误与协调仍未决，整票依赖尚未解除。
-
-## Handoff from storage Q6
-
-[存储局部决议](../lighthouse/06-local-storage.md)Q6 已确认普通 round_end 保存失败不因此中止代理主流程；Q5 的 handler 返回前收口仍成立，不因允许失败而 fire-and-forget。反馈承载交展示票，独立业务错误与保存错误同时发生仍待存储票，不据 Q6 吞掉非保存错误。
-
-## Handoff from storage Q8 / Q9
-
-Q8／Q9 的确认来源为[存储局部决议](../lighthouse/06-local-storage.md)：旧周期提交不能重绑定到新周期；等待取协调权限时可取消，取消后不迟到写入，更新开始后等待实际结果。本票决定实际实例／生命周期的取消信号映射，不因统计拒绝取消真实模型执行或伪造 Round 结束。
-
-## Handoff from revised failure policy
-
-当前有效失败策略以[存储局部决议](../lighthouse/06-local-storage.md)修订 Q6／Q11 为准：用户已接受所有普通消费保存失败后丢弃未保存部分、从磁盘有效完整快照初始化，不自动重试／修复／补账；读不到有效磁盘则报告并停止这次保存，不猜零覆盖。此交接替代本票旧“保留内存／不回滚／下次带上未保存消费”措辞，不改变正常并发／账户隔离／去重，clear 与 estimate 失败仍分别未决。 不清 sessionId + turnId 已处理标记、不重新计入已丢弃响应，不伪造 framework 生命周期结束。
-
-## Handoff from storage Q13 / Q14
-
-[存储局部决议](../lighthouse/06-local-storage.md)Q14 已确认失败初始化无有效磁盘基线时暂停本实例消费统计／保存，不取消模型执行、不伪造 Round 结束；到下一次正常会话初始化加载，不主动探测／补算。本票提供该初始化事实与实例关联；已处理身份不因暂停清空，独立余额／额度不自动停用。
+- 暂停原因：用户“现在暂停grilling，我们开始回顾旧决策”；当前不继续采访或生产实施。已发布部分结果，但整票未完成，发布后回 open、清空认领。
+- 当前权威：[观察局部决议](../lighthouse/03-observation-contract.md)持有原已确认 Round／Turn 语义与本轮 Q10–Q13／Q15；[命令局部决议](../lighthouse/07-command-state.md)只持有用户批准的 clear 执行条件。行为／消费归属／数据／存储其余有效约束不变，不将局部发布视为接口已实现或命令票结案。
+- 本轮确认：轻量 Turn 处理与 Round 保存路径衔接、无结束后修正、framework 身份与 provider ID 分离、无法匹配丢弃、已知冲突丢弃并只清理该 Turn。理由是一次累计、简单实现与保留旧无明显新增延迟体验；详情／确认原话只在上述权威。
+- 拒绝／未采用：统一等待所有观察异步效果、metadata／usage 分拆公共事件、自动补配／补账、全局持续故障／完整性状态、“开放 Round 内 clear 后重设零基线”、pending clear。原历史完整文本见[发布前快照](../assets/observation-history-before-publication-2026-10-11.md)，下方 Comments 只作推导历史，不作为现行恢复点。
+- 前置重算：行为／消费归属／数据／存储票均 resolved；旧“等存储／数据后再回来”入口退役。本票仍有下面具名未决问题，不因一个输入可用就整票 resolved。命令票已有局部 clear 条件，其语法／实际状态判定／反馈尚未完成。
+- **下一回顾问题**：消费归属旧“拒绝并发驱动／检测待定”与存储 Q26“无执行者检测、保存版本冲突收口”是否需要按已批准的后者修订旧表述？本次只记录冲突，不擅自重开／关闭或决定已 resolved 票的其他范围。
+- **恢复本票的下一个技术问题**：在固定 OMP 18.5.0 实际观测面，怎样可靠区分 provider usage（包括真实零）与宿主默认零，并在 turn_end 一次交付？先查支持路径与证据，不问用户替代事实；没有可靠源按已定不可用规则处理，不凭非零字段或成功结果泛化所有 provider。
+- 剩余问题：Turn 原生关联／具体生成及乱序、取消、重发／重复／重放；结束候选复查、防旧候选终结新活动；异步派发与 round_end 保存完成／取消映射；恢复／reload／switch／tree／fork 的具体范围、旧实例隔离与观察身份；逐子代理／多 main 观察及 requiredSemantics／owner 效果隔离；父子启动分段、重用同子会话、混账户关系／迟到发布；跨入口 clear 后当前／最近 Round 可用性（本入口半轮清零方案不采用）；模型 catalog 价格单位、实际 Effort、上下文与会话／orchestration 事实读取、活动／专门交互事实、最终接口与消费者迁移责任。
+- 保留的理由／边界：Round 按可见信号与日常路径，不按任务语义；不要求全部后台 jobs 归零；子消费按实际启动关系，不按当前轮或 Session 含后代差值猜；存储 Q6／Q14 的磁盘初始化／无基线暂停与单 Turn 局部清理不同；跨进程旧周期拒绝不被本入口 clear 限制替代。已处理身份不因丢弃或 round_end 清掉，统计故障不取消模型或伪造生命周期。
+- 证据：[请求链探针](../assets/omp-request-observation-smoke.md)、[子代理调查](../assets/omp-subagent-round-findings.md)、[结束时序探针](../assets/omp-end-timing-smoke.md)、[旧观察等待调查](../assets/old-observer-waiting-smoke.md)、[数据 Backtracer](../assets/state-data-backtrace.md)。常见 OMP RPC／task 路径有既有运行证据，未证明新 framework 接口、全部 provider、实际 Effort／账单、完整取消／恢复／多 main／丢事件或 TUI。pi／connect-bot 早期探针与 HEAD 证据限制完整保留在快照，未认证 pi adapter 或真实自动关机。此次仅新增固定基线源码只读核对，无新运行 probe。
+- 追踪结果／待办见下方本轮 Trace Report；新增问题均有既有归属，不创建重复票。回顾旧决策期间不认领下一票；如需恢复 grilling 或切票，先检查当时实际 claim 与权威。
 
 ## Question
 
@@ -33,119 +28,19 @@ Q8／Q9 的确认来源为[存储局部决议](../lighthouse/06-local-storage.md
 
 确定顺序、异常／中止／无 usage、模型在 Round 内切换、每请求价格锚定及不可用观测的含义。不把原生 payload 整体透传，也不让 provider-specific Codex header parser 进入语义 core。审查已有 requiredSemantics、owner 门控、生命周期与异步 handler 支持是否适用；缺失能力不得伪造成功。按选定基线核对原生映射并要求实际链路证据。
 
-## Handoff from aggregate-data discussion
-
-- [数据讨论当前有效决定](12-state-data-contract.md)将聚合及其取舍放在 model-cost shared logic；本票提供 harness-independent Turn／response usage／Round 与身份事实，不反向要求完整业务账本。
-- 用户已收窄缺 usage 处理：不记录计数或补账记录，正常完成却缺 usage 则打印提示并跳过；失败／取消有可靠 usage 则累计，无 usage 则跳过并接受少计，不承诺补齐。具体替代范围以正式数据 Lighthouse 为准；旧 Lighthouse 有效正文已按用户要求同步，修订前版本保留快照；正常响应一定有 usage 不是所有 provider 已认证的事实，adapter 不得伪造 usage 或确认零。
-
-## Trace handoff from data Lighthouse
-
-追踪记录：[数据决议 Backtracer 报告](../assets/state-data-backtrace.md)。
-
-- 一致性核对仍待本票收口：本票旧“迟到 usage 补原 Turn／Round”不能被解释为 model-cost 仍需给已按缺 usage 跳过的请求补账；这项业务义务已由数据 Lighthouse 收窄。旧子代理新请求的迟到消费与已处理同一 Turn 的 usage 修正要区分，framework 是否另保留通用修正能力仍未批准。
-- 旧消费归属决议要求已知冲突保留证据／标记不完整；新业务只留已处理身份并不维护持续完整性状态。需要明确可信来源、终结交付与冲突处理在有限关联方案中的边界，不能当普通重复通知静默推导为任意覆盖或自动取消旧约束。此为本票未决问题，不在本次替用户批准新机制。
-
-- 数据票已 resolved，存储仍是本票未满足前置。最终事实／运行期处理约束来源为[数据归属与账户周期决议](../lighthouse/12-state-data-contract.md)，不再按旧数据票暂停入口重问。
-- 请求详情处理后释放，已处理 sessionId + turnId 仅内存保留到观察实例销毁，不在 round_end 清空，不按任意 TTL 淘汰；缺 usage 已跳过也视为处理完毕，不补账。需确定可靠身份、旧实例回调隔离与正常重复结束通知防重，不以持久账本解决。
-- 账户 clear 使该账户旧在途关联失效；结束不因找不到旧 ID 被重绑定新轮。旧子代理之后的新请求正常统计并能重新取得真实启动关系，不清 framework Round／活动事实。开放 Round 跨账户 reset 的快照、重用子会话不同启动的分段、混账户父子关系映射仍待明确，不造新的生命周期边缘。
-- 当前 Round 子消费只能按启动关系筛选，不能用含所有后代的 Session 总差值。正常缺 usage／价格的提示和跳过是已确认边界，所有 provider 的可靠来源认证并未完成。
-
-## 当前恢复入口：先建立数据／存储心智模型
-
-- 用户指出原顺序缺少实现前提：Turn 数据放在哪里、谁读写、何时持久化尚未确定，却要求选择回调同步／异步。Q10 原提议与修订提议均未获确认，暂停，不视为新接口契约。
-- 本次对话进一步选择聚合实现作为起点，具体取舍、tree 运行证据和新对话入口以[model-cost 的哪些数据进入 framework State，如何声明与读取？](12-state-data-contract.md)前部交接为准；本票的细粒度观测／身份方案须与该实现需求核对，不反过来强制逐 Turn 持久化。数据票已 resolved；本票仍 open、未认领，等待存储前置。
-- 本票释放认领并依赖数据／State 与存储票；[数据归属与账户周期决议](../lighthouse/12-state-data-contract.md)已完成数据布局；先处理[framework 如何提供独立存储、原子更新与跨进程协调？](06-local-storage.md)，得到具体发布／失败／等待方案后返回本票。此入口优先于下方旧暂停交接。
-- 已确认业务要求、原生事实与局部接口决定保留；不因路线修正自动撤销用户已确认的选择。未结案接口要在具体实现中核对适用性，必要修订带理由再确认；用户已要求旧 Lighthouse 当前正文同步最新决策，修订前版本保留历史快照。
-- 严格区分内存读写、历史查询、持久化／锁等待、远端刷新、渲染，各自说明执行路径和失败／等待影响后再作决定。不把 callback 是否 async 当作统一的读写策略。
-
-## 当前有效决策（续聊优先读取）
-
-本节是用户已确认的当前讨论结果；下方 Comments 保留推导过程及已替代提议。它不是整票结案或最终 lighthouse；未决问题不得据此视为已批准。
-
-1. **Round 采用连续活动周期（A）**，不按每条普通用户消息或输入消费批次切轮，不分析任务语义。工具、自动重试／续跑、排队消息消费、专门批准／交互都可留在同一 Round。普通文本澄清若代理已结束并等待输入，回答触发的新执行才开启新 Round。
-2. **按原生 start 与已知续跑开轮／补救**：没有开放 Round 时 agent_start 开新轮；已观测上次 agent_end.willContinue === true 时后续 start 继续旧轮；否则后续 start 即使旧轮未关闭，也以漏 end 截断旧轮并开新轮。补救截断不冒充正常完成，不产生面板 awaiting-input；如果连续跑通知也丢失，允许一次连续活动被拆为多轮。此用户确认规则替代早先“只要已有开放 Round 就忽略后续 start”的无条件去重。
-3. **终轮不能直接照搬每个 agent_end**：仅在宿主确认连续活动终止、不再继续当前活动时，关闭已开放 Round 并派发一次 round_end。用户确认最小 OMP 映射方向：willContinue === true 保持同轮，否则辅以本会话 idle／pending-message 事实判断结束，不额外要求全部后台 running jobs 归零。pi 映射方向为 agent_settled。确认方向不等于所有判定／链路已验证。
-4. **正常结束、明确取消与终止失败均能终轮**；请求／工具失败后仍有自动处理则不终轮。后到事实仍关联原 Turn／Round，不重新开启生命周期；model-cost 已按缺 usage 跳过的请求不补账，通用后到修正能力是否提供仍待本票决定。结束原因需要有事实依据；事件载荷与异常归因规则尚未定型。
-5. **framework 主活动轴为 idle／working**。working 包含工具、重试、续跑和开放 Round 内的专门交互；idle 表示当前活动已停止、没有待续执行，等待新输入。无法可靠观测不默认 idle；未知是事实可用性问题，不是第三种已批准的业务活动状态。
-6. **connect-bot 保留既有三态协议与业务**。公共 idle／working 与“本次接入后是否已观测 Round 结束”是不同事实：工作时报 working；空闲且尚未观测结束时报面板 idle；观测结束后的空闲时报 awaiting-input。保留 omp-bot 的监控／自动关机语义，不将其整体二态化，也不在本地图执行生产修改。
-7. **证据先于抽象**：先查宿主事件／派发位置／可用事实，再定契约；分别注明源码可见、实际链路可用与运行验证。观察面不能伪造请求身份、统计完整性或等待状态。实际会话身份与 State Owner 不混用；逐请求／逐子代理及多 main 的需求继续受[消费归属决议](../lighthouse/02-accounting-ownership.md)约束。
-
-8. **恢复／重载允许截断轮次**：用户确认关闭此前未完成 Round，原因是恢复／重载截断，不冒充正常完成、取消或已确认失败，不作为 connect-bot 的活动结束证据。恢复后已知 working 则开启新 Round；idle 则等实际执行才开轮。可靠的新消费仍按原启动关系归属，已跳过请求及账户 clear 前在途响应不补回；哪些操作构成恢复／重载及旧实例隔离仍待明确。
-9. **等待子代理结果的父 Round 保持开放**：用户确认阻塞等待、后台结果将自动回传并驱动父继续、以及父正在处理子结果时，父均保持 working／同一 Round。只有子已脱离当前活动、没有自动续跑且父实际停止，父才可结束；子自身 start/end 不关闭父轮。按实际 session 隔离开闭，消费按启动关系归属，不因某个子处于 running 就强制所有父轮等待。此规则满足用户日常场景，Round 基础定义与最小信号表收口，不再展开任务语义推断。
-
-10. **Turn 身份命名**：用户提出用 Turn ID 表达 framework 的请求／响应关联身份，沿用既有“一次 Request 与对应 Assistant response 构成 Turn”的概念；本轮采用 Turn identity／turnId，不另造同义的 framework Request ID。provider 返回的请求 ID 与它不是同一概念。此命名不证明宿主已能可靠关联重试与响应，也不视为用户已确认上一轮 Q1 的全部关联方案；身份建立时点与失败／取消时的表达已由下文 Q3 确认；具体宿主关联、生成方式与唯一性范围仍待明确。
-11. **请求观察只读**：用户确认新请求开始观察接口不兼任 payload 修改入口；本次只提供所需观察事实，其他 framework 能力以后按需扩展，不顺带设计或实施通用 payload 修改能力。
-
-12. **Turn 从请求开始即存在**：用户确认 Q3；可靠观测到请求开始时建立 Turn、分配 turnId，并固定该次请求归属与计价所需事实。后续可可靠关联的响应元数据、assistant response 与 usage 关联同一 turnId。取消、失败或没有完整响应不删除该 Turn，也不伪造响应完成；可观察的新调用／重发是新 Turn，重复观测／迟到 usage 属原 Turn。宿主内部隐藏传输重试的粒度已由 Q8 收口为同一可观察调用；其他重试路径是否可逐次识别仍依链路证据，不按每次钩子盲目生成身份。Turn glossary 已据此明确可能未完成的周期。
-
-13. **公共 Turn 观察收敛为开始／结束**：用户确认修订 Q4；采用 turn_start／turn_end 两个公共生命周期观察，不分别暴露响应元数据到达和 usage 到达事件。adapter 内部收集宿主事实，turn_end 尽力提供结束时已有的响应元数据、headers 与 usage，缺失明确缺失；正常完成／取消／失败作为结束结果而非独立公共事件。用户明确接受 Codex 响应头读数由旧 after_provider_response 即时更新，改为 Turn 结束时交付并更新，保留额度解析与估计功能。不为提前显示额度增加第三事件。model-cost 不补已按缺 usage 跳过的请求；framework 是否另提供通用后到事实修正、宿主支持与交付方式仍待本票决定，不先建额外事件。
-
-14. **Turn 开始／结束最小载荷**：用户确认 Q5；turn_start 提供 turnId、实际发起 sessionId、所属 roundId、请求开始时间、该次 provider／模型身份；turn_end 提供同一 turnId、结束时间、结束结果，以及已取得的 usage、HTTP status／headers、provider request ID。开始时归属与模型事实固定，结束不读当前模型替代；缺失明确缺失，不伪造零。不透传原生 payload、消息历史或宿主 context。framework 提供源事实，model-cost 拥有价格锚定、金额计算与 Codex header 解析。账户身份取得由账户访问票承接；catalog 价格快照及实际 Effort／上下文只读事实的语义已由后续讨论确认，字段、可靠来源和原生验证仍未完成。此为载荷语义，字段命名细节与原生映射／运行证据未冻结。
-
-15. **请求时固定 catalog 价格**：用户确认 Q6；turn_start 模型快照附带可可靠取得的 catalog 价格与明确币种／单位，供该 Turn 使用，不在结束时重查或用当前价格补猜。framework 只提供事实；DeepSeek 峰谷／holiday 锚价仍归 model-cost，Codex catalog 价格只用于参考费用，不参加消费金额累计。
-16. **当前会话事实采用只读快照**：用户确认 Q7；以一个小的只读接口提供当前模型、可确认的实际 Effort、上下文占用与窗口大小。读取不发请求、不写统计、不更新业务态；无法确认实际 Effort 则未知，不以配置值冒充。当前快照与 Turn 固定历史事实分开，上下文占用不等于 Session 累计 token。具体刷新时机交刷新生命周期票；原生映射和实际生效值验证未因此获批或完成。
-
-17. **接受隐藏传输重试的观测范围**：用户确认 Q8，并理解重试可在 harness／provider SDK 内部处理、不暴露给框架所接的扩展钩子。本次以可观察模型调用周期定义 Request／Turn；隐藏 HTTP 尝试不独立生成 turnId，使用可观察开始时刻锚价和可靠取得的最终 usage，不承诺隐藏尝试逐次身份、usage、锚时或完整费用。本次不新增底层传输拦截。可观察的新调用仍独立记录，包括取消修改后重发、工具后请求、暴露出新请求开始的重试；不将所有自动重试都合为同一 Turn。该决定明确收窄此前“实际重发独立记录”的覆盖范围；历史 lighthouse 保留，最终本票 lighthouse 必须交代修订及支持范围。
-
-18. **观察回调失败隔离**：用户确认 Q9；turn_start／turn_end 观察回调出错不阻断模型请求、工具或后续代理执行，报告故障，不静默吞掉异常或把失败统计更新标成功。同步异常与异步回调失败均受此规则约束；本次不顺带增加观察回调自动重试。此决定不取消同一 session 单执行者及必要宿主能力前置条件，也不决定存储损坏的业务恢复策略。异步处理是否等待／如何排序仍待明确。
-
-### 已确认的最小信号表
-
-| 本会话观测 | 处理 |
-| --- | --- |
-| agent_start，无开放轮次 | 开新 Round |
-| 上次已观测 agent_end.willContinue=true，随后 agent_start | 继续旧 Round |
-| 其他 agent_start，旧轮仍开放 | 以漏 end 补救截断旧轮，开新轮 |
-| agent_end.willContinue=true | 不终轮，记录已知续跑 |
-| 其他 agent_end | 结束候选；实际静止后终轮，不能仅在同步回调检查一次 |
-| 恢复／重载 | 截断旧轮；已知 working 开新轮，idle 等实际执行 |
-
-补救／恢复截断不冒充正常完成，不制造面板 awaiting-input。续跑通知本身缺失时允许拆轮，不靠任务语义猜测。表按实际会话应用；子／孙代理观测与父 Round 消费归属证据见[OMP 子代理 Round 信号与归属调查](../assets/omp-subagent-round-findings.md)。
-
-**替代关系**：Q4 的逐普通消息开轮已由 A 替代；Q6 的输入批次方案未被采纳。Q1 的普通文本澄清“只要仍属同一语义任务就留旧轮”不是现行规则，专门批准／交互例外保留。旧 lighthouse 是先前已确认决议的来源，本票最终 lighthouse 必须说明这些修订，而不是修改历史记录冒充从未改变。
-
-## 新对话交接
-
-- 用户本次再次要求保存决策并在新对话继续 grilling。**Round 基础规则、最小信号表、恢复／重载截断和子代理等待时父 Round 保持开放已确认并收口**；请求／响应观测及公共接口尚未完成。本票释放认领回 open，Assignee 清空，不标记 resolved。下次先认领同一票，不新建重复票。
-- 用户强调：从实际宿主信号与日常使用场景出发，优先采用简单可识别的规则，再为丢失信号补救；不要重新展开抽象 Round 定义，不追求用任务语义完美还原边界。用户已接受：已知续跑保持同轮；否则下一次 start 可截断未关闭旧轮，即使丢失续跑通知使一次活动被拆成多轮。
-- **存储前置满足后从 Request／响应观测继续**：核对 before_provider_request → after_provider_response → message_end 的真实关联、重试／取消及逐子代理支持，再 grilling 接口。前部当前有效决策和最小信号表是续聊基线，不把历史 Comments 的旧提议当现行规则。
-- 读取顺序：tracker 约定 → [model-cost 完整迁移：通用能力分层与 OMP 适配](../map.md) → 本节与当前有效决策 → 前置 lighthouse／事实资产按需展开。不要把下方历史 Comments 中的旧方案作为当前定义。
-- 调用 grilling 与 domain-modeling；接口设计咨询 codebase-design。保持地图规划模式，不进行生产实现。最终整票完成时仍须用户确认 lighthouse 草案、写文档再 resolved，随后 backtracer；此次暂停不执行结案流程。
-
-### 尚待解决（不是已确认接口）
-
-- Round 基础规则、最小信号表与等待子代理的父轮行为已由用户确认并收口。尚需确定结束候选复查／防迟到载荷机制，并在实施验收覆盖取消、重试、尾部排队与丢事件；不再重新展开已确认的业务含义，也不要求全部 running jobs 归零。
-- 观察按实际会话隔离并覆盖子代理，connect-bot 效果仍 owner-scoped；具体载荷、并发独立 main 的观察机制及迁移仍未完成。现有 roundOpen 和 owner-only 派发不是新契约已实现的证明。
-- 恢复／重载截断已确认，不再讨论延续旧开放轮的部分观察方案。具体操作范围、session 切换／tree／fork 的生命周期与历史关联，以及新轮身份仍待接口与恢复映射决定。
-- Request／Turn／Round 的身份与关联、实际重发与重复观测的区分、取消／迟到／乱序／恢复重放、冲突 usage 的可信来源。
-- 请求发起时刻、模型／账户／锚价关联；headers／metadata／usage／模型价格／实际 Effort／上下文占用的公共观察接口与 OMP 原生支持。provider-specific Codex parser 仍归 model-cost。
-- 活动／交互观测的可用性与状态读取契约；connect-bot 如何消费统一事实并保持原有协议；requiredSemantics、异步 handler 及必要消费者迁移职责。当前只有公共二态语义被确认，没有生产接口载荷或实现。
-
-**当前续聊起点**：Round 基础规则与子代理常见场景已收口，数据布局已 resolved，存储前置仍未满足；之后讨论 Request／响应身份、可信来源、后到事实与冲突处理。先核对宿主实际钩子，再确定公共接口，不重问 Round 定义或已接受的漏 end 取舍。原始暂停交接与历史 Comments 留作溯源，不覆盖当前有效决策。
-
-### 证据与验证边界
-
-- [pi 原生循环调查](../assets/pi-loop-findings.md)与[pi 扩展观测调查](../assets/pi-observation-findings.md)：pi HEAD a276dabe57911253350bffb93cb7d7aff6a73261。资产中的早期“每条 user 消息作为 Round 边界”等建议不是已确认决议，以本票当前有效决策为准。
-- [pi 队列 smoke](../assets/pi-queue-smoke.md)：真实 Agent + 真实事件流，确定性模型流，8 场景通过；不是 TUI／完整扩展链路，未访问远端模型／凭据。
-- connect-bot 真实状态机 + outbox 隔离探针已运行，end/start 会报告 awaiting-input/working；面板真实前端分类函数也已运行，在线 idle 不算 awaiting-input。一次性探针均已删除。
-- omp-bot HEAD b0dc22413e6b3c5f7ee14b68f5d6e001ea9d79c6 的自动关机判据来自源码；没有运行真实关机链路，没有修改该仓库。
-- [OMP 真实扩展结束时序探针](../assets/omp-end-timing-smoke.md)：普通完成及工具后续跑已运行；最终 agent_end 回调内 idle 可为 false，下一任务才变 true。因此不能一次同步检查后丢掉结束候选；采样延迟不是已批准的生产调度策略。
-- [OMP 子代理 Round 信号与归属调查](../assets/omp-subagent-round-findings.md)：真实 task／yield／扩展链路，单子、并发兄弟、嵌套孙、后台自动回传四场景有证据；父后台 willContinue=true 后自动 start 已观测，工具调用到子身份的启动关联也已观测。模型为本地确定性 fixture，usage 为零，不证明真实账单或新 framework 契约已交付。所有一次性 probe 源码及临时目录已清理，事实资产保留。
-- 没有验证完整 OMP／pi Round 异常／恢复／多 main／丢事件原生链路，不改变框架支持基线，不实现或认证 pi adapter。现有 framework 仍有旧 start 去重与子代理 owner gate；必须在实施阶段落实本票确定的观察面，不能冒充新增需求已交付。
-
-## Handoff from behavior-contract
-
-[完整保留哪些业务行为，统计单位如何命名？](01-behavior-contract.md) 修订公共术语：Turn 是一次 LLM Request 与对应 Assistant response，不含工具执行；不再将 Run 作为公共单元／状态。framework 统一 Round 与代理活动状态，model-cost 逐响应 usage 入账、按统一 Round 聚合，不等待或依赖原生 agent_end 才计费。本票重审旧 Question 中的 Run 结算／run 内切换，改用新术语设计；明确 Idle 与等待输入的差别、connect-bot 公共生命周期语义与面板协议的边界，并验证自动续跑、工具、异步任务、异常／中止的真实 Round 结束条件。不在本票执行消费者迁移。
-
-## Handoff from accounting-ownership
-
-来源：[消费归属决议](../lighthouse/02-accounting-ownership.md)。用户已确认业务约束；以下接口、机制与展示问题仍待本票决策，本交接不代表它们已解决。
-
-- 已确认约束：逐请求身份必须区分重复通知与实际重发；请求归属绑定发起会话、Turn／Round、账户、模型与锚价。需要逐子代理身份、父子启动关系、orchestration 独立请求／汇总区别，以及当前／最近 Round 和 tree 导航后的可用性事实，不要求历史 Round 位置索引。Owner 门控或 State follow 不得替代消费归属。
-- 待决定：OMP 在选定基线能否暴露这些事实；取消、迟到、乱序、恢复重放、同一请求冲突 usage 的可信来源是什么？缺失事实怎样明确不可用并提示／跳过，不能伪造身份、usage 或确认零；不要求持续完整性标记或缺失补账记录。已知冲突的可信来源和有限处理仍未决。支持多个独立 main；同一 session 单执行者的事实／检测与 adapter 责任是什么？
-- 价格与 token 观测供业务使用；计费／额度／无统计口径及 provider-specific 解析由 model-cost 拥有。公共 Round 不因后到事实重新开启；model-cost 不补已跳过请求，framework 通用修正能力未决。
-
 ## Comments
+
+### Trace Report：本轮暂停发布（2026-10-11）
+
+- 来源：[观察局部决议](../lighthouse/03-observation-contract.md)、[命令 clear 局部决议](../lighthouse/07-command-state.md)，以及行为／消费归属／数据／存储当前权威。确认原话已在两份新 Lighthouse 留存；本次没有新增运行验证。
+- Intent／layer 覆盖：逐响应不加文件等待、一次处理／无补账、局部清理后新请求继续由数据／存储提供业务基线，观察票提供源事实，装配／验收票提供实际链路落实；clear 拒绝／空闲执行归命令票、状态事实归观察票、反馈归命令／展示票。均有既有问题承接，不新建重复票。
+- Layer integrity／peer symmetry：usage／headers／身份来自 adapter；业务计价、局部丢弃与累计由 model-cost；安全文件更新仍由 framework。connect-bot 保持 owner-scoped 效果，不将逐子代理观察或公共二态直接覆盖面板协议。远端刷新与其他 extension 不因本次确认被统一改等待／故障策略。
+- 已协调的旧分支：消费归属 Lighthouse 中通用后到修正／冲突处理未决措辞已链接到观察权威；工作票旧 Q10 两个统一等待候选不再是恢复入口。clear 执行条件在命令权威，数据／存储只链接；账户周期／版本校验仍保留，入口 idle 不证明所有进程 idle。
+- 待回顾的具体冲突：[消费归属决议](../lighthouse/02-accounting-ownership.md)仍写“同一 session 单执行者，拒绝并发驱动；检测／实现层待定”，而[存储决议 Q26](../lighthouse/06-local-storage.md)明确不新增租约／心跳／执行者检测，只在保存时用版本冲突发现不受支持的双执行者。新观察权威不批准新增检测。应回顾早期文字是否仅需按已批准 Q26 修订；未擅自改旧权威或重开已 resolved 的票。装配／验收旧 Handoff 也存在检测措辞，开始时必须读当前权威，不能凭旧交接恢复被拒候选。
+- 仍有主的未决问题：可靠 usage 与真实零来源、结束候选复查／异步顺序／实例隔离、父子重用分段／迟到发布归观察／存储；命令的未知活动／保存失败反馈归命令；跨入口 clear 后开放 Round 的可用性归观察／展示。没有无主新票；未把用户对本入口 clear 的限制扩张为取消多进程支持。
+- Gap follow-up：本次不新增依赖、不解除其他票阻塞、不改其他会话 claim。具体冲突作为旧决策回顾入口保留，待用户判定／授权对应权威修订。暂停不继续 grilling，不为未确认冲突自动建立实施任务。
+
+以下此前讨论仅作历史，现行规则与恢复点以 Lighthouse／Handoff 为准。
 
 以下为带日期的历史讨论，可能包含已替代的迟到补齐、轮次划分与接口提议。当前契约以前部有效决定、已同步 Lighthouse 和明确的未决交接为准，不能把历史评论当新增补账／历史查询要求。
 
