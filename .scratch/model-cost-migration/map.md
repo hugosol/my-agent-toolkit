@@ -37,7 +37,7 @@ Labels: wayfinder:map
 
 - [账户凭据、provider 地址和代理如何跨 seam 提供？](lighthouse/04-provider-access.md)：已结案，adapter 按需交付当前访问资料，业务查询留 shared logic；身份、HTTP 与初始化规则分别消费其原权威。
 
-- [framework 的通用 HTTP 能力承诺什么，如何接入余额与额度请求？](lighthouse/05-http-capability.md)：部分确认独立配置、多代理及逐请求选择，缺配置直连、运行失败不自动直连重试；完整 interface 未决。
+- [framework 的通用 HTTP 能力承诺什么，如何接入余额与额度请求？](lighthouse/05-http-capability.md)：已结案；直接导入单一 request、原生 response、共享代理配置与逐请求选择、业务优先的可配置有限超时；显式选代理缺配置失败，model-cost／connect-bot 统一传输，业务留 shared logic，不预建主动取消。
 
 - [额度与余额在何时刷新，异步效果怎样跟随会话生命周期？](lighthouse/09-refresh-lifecycle.md)：部分确认初始化两源并行预取、首次模型请求前收口；其余调度未决。
 
@@ -48,7 +48,7 @@ Labels: wayfinder:map
 ## Not yet specified
 
 - 原生宿主缺失尚未具体暴露的观测能力时，其降级／拒绝与诊断如何衔接，遇到具体路径再展开；账户访问的局部查询失败原则已由账户访问权威持有，提示承载由现有展示票决定，不在此重复开雾。
-- 本次新增通用能力对 connect-bot 等既有消费者的复用或收口影响，需在接口定型后判断哪些是本次调用方迁移义务，避免制造第二套机制或扩大业务范围。
+- 非 HTTP 新增通用能力对 connect-bot 等既有消费者的复用或收口影响，待具体能力暴露后再判断，避免制造第二套机制或扩大业务范围。
 
 ## Out of scope
 
