@@ -25,7 +25,7 @@ A framework-defined lifecycle position where one harness-independent extension f
 _Avoid_: native event name, template text slot
 
 **Semantic lifecycle event（语义生命周期事件）**:
-A framework-defined, harness-independent lifecycle transition that a harness adapter synthesizes from that harness's native events. The framework owns its meaning, ordering, payload and owner scope; native event names, shapes and per-harness facts are not part of it.
+A framework-defined, harness-independent lifecycle transition derived from harness facts supplied through an adapter. The framework owns its meaning, ordering, payload and owner scope; native event names and shapes are distinct from it.
 _Avoid_: native event name, raw harness hook, phase state
 
 **Request（模型请求）**:

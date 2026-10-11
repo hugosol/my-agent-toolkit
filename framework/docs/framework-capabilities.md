@@ -10,6 +10,8 @@ It is not the contract and not an implementation description. The promises and s
 the architecture decision is [ADR 0002](../../docs/adr/0002-semantic-extension-framework.md). Only the first-release
 ("v1") surface is listed: the unions below are closed, and a kind outside them is not bound.
 
+The in-progress [model-cost observation decisions](../../.scratch/model-cost-migration/lighthouse/03-observation-contract.md) revise the target placement of reusable lifecycle logic; the index below still describes the implemented surface, not the planned input seam or a completed refactor.
+
 ## Entry points
 
 | Entry point | Source | Role |

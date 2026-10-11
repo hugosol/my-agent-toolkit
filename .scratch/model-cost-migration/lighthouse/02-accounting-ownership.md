@@ -2,7 +2,7 @@
 
 > Question and discussion: [用量与费用属于哪个会话、账户和请求，如何避免漏算与重复？](../decision/02-accounting-ownership.md)
 >
-> 当前有效版本：按用户要求与[数据归属与账户周期决议](12-state-data-contract.md)同步。原题与[此前批准版本／评论](../assets/contract-history-before-sync.md)保留历史，不将已取消的补账／历史查询作为当前要求。framework 身份及已知冲突／局部清理的批准范围见[观察局部决议](03-observation-contract.md)；可信来源和原生映射仍未完成。
+> 当前有效版本：按用户要求与[数据归属与账户周期决议](12-state-data-contract.md)同步，并于 2026-10-12 在原账户主题修订单账号支持和 DeepSeek 凭据身份取舍，确认来源见[账户访问原话](../assets/provider-access-confirmation-2026-10-12.md)。原题与[此前批准版本／评论](../assets/contract-history-before-sync.md)保留历史，不将已取消的补账／历史查询作为当前要求。framework 身份及已知冲突／局部清理的批准范围见[观察局部决议](03-observation-contract.md)；可信来源和原生映射仍未完成。
 
 ## Question
 
@@ -22,9 +22,9 @@
 
 ### 主会话、子代理与迟到消费
 
-实际代理各自累计自身，可查询主自身、各子自身／含后代、主含后代；UI 三口径及展开布局仍由展示票决定。保存直接父实际会话、启动父 Round 及区分启动实例的关系，恢复沿链汇总；每笔请求一次，不只保存 Owner 总数，不从父总数反推子消费。
+实际代理各自累计自身，可查询主自身、各子自身／含后代、主含后代；UI 三口径及展开布局仍由展示票决定。保存直接父实际会话关系，恢复沿链汇总 Session 口径；每笔请求一次，不只保存 Owner 总数，不从父总数反推子消费。
 
-旧轮子代理后来产生的新请求消费继续归启动关系，进入实际子与正确账户／主含后代 Session 聚合，不按到达时间污染当前 Round；原轮已被最近快照替换则不重建历史统计。当前轮子汇总按启动关系筛选，不能用含全部后代的 Session 总差值。关系随聚合发布，不加启动即落盘；复用同一子会话不同启动的分段和迟到发布由观察／存储票收口。
+本次观察票 Q27 已修订父 Round 分配，唯一取舍及确认来源见[数据归属决议的逐代理主题](12-state-data-contract.md)：子消费只汇总到父 Session，Round 为各实际会话自身口径；不再要求启动父 Round 标签或复用子会话消费分段。关系仍随聚合发布，不加启动即落盘；直接父身份、恢复与发布仍需原生／存储契约落实；账户范围按下方已修订单账号主题，不把历史混账号场景恢复为多账号管理要求。修订前原文见 [本次修订前原文](../assets/observation-revisions-before-pause-2026-10-11.md)。
 
 ### 金额口径、缺失与冲突边界
 
@@ -36,7 +36,7 @@ DeepSeek 是当前计费渠道，已知请求费用计入金额；Codex 是额�
 
 ### 本账户周期的 Session／Round、tree 与恢复
 
-Session 累计限于适用账户当前周期，跨该会话各 Round；Round 累计只属于该轮。只保存最近轮开始／结束快照，和 round_end 聚合同次发布／覆盖旧轮，不建立历史 Round 列表、历史位置索引或跨周期 Session lifetime total。费用快照来自已锚价累计，不以 token 差分乘当前价重算。
+Session 累计限于适用账户当前周期，跨该会话各 Round；Round 累计仅本实际会话自身，子代理汇总范围以[数据归属决议](12-state-data-contract.md)本次 Q27 修订为准。只保存最近轮开始／结束快照，和 round_end 聚合同次发布／覆盖旧轮，不建立历史 Round 列表、历史位置索引或跨周期 Session lifetime total。费用快照来自已锚价累计，不以 token 差分乘当前价重算。
 
 | 操作 | 当前有效行为 |
 | --- | --- |
@@ -56,7 +56,11 @@ Session 累计限于适用账户当前周期，跨该会话各 Round；Round 累
 
 ### 账户隔离、多会话与额度
 
-账户是 provider 计费／额度身份，不是 Owner、进程或当前主会话；不同账户有独立周期和测量／holiday／estimate。主子可能不同账户，重置时其他账户消费与其查询所需关系不能顺带删除。
+账户在领域上仍是 provider 计费／额度身份，不是 Owner、进程或当前主会话；本次实现的支持范围于 2026-10-12 明确收窄为 DeepSeek／Codex 各自一个当前配置账号，允许前后替换，不实现多账号选择、自动轮换或逐请求账号追踪。Codex 发现多账号配置时报告不支持并跳过额度查询，不阻断模型执行；这不是新增账号管理 interface。原「主子可同时使用不同账号／需要多账号选择」不再是本次验收要求；主子使用不同 provider／模型仍支持，同账号多会话／子代理／跨进程协调不取消。
+
+Codex 使用可靠 provider 账号身份；DeepSeek 接受按当前有效凭据的稳定、非秘密标识划分统计范围，不能把宿主本地 credentialId 当跨进程平台账号 ID。同账号换 Key 也视为新范围，不自动识别／合并旧累计或 holiday、不删旧数据；代价是无法连续统计同账号的不同 Key，收益是不增加远端账号查询或人工映射。换身份使用自己的周期／读数／estimate，不将旧值当新身份值；保留文件中的旧身份记录与查询所需关系不被当前操作顺带删除。具体稳定标识及 native 映射交装配落实，不冻结算法。
+
+旧要求 → 新取舍的确认来源：[账户访问会话原话](../assets/provider-access-confirmation-2026-10-12.md)（单账号范围、Q3 凭据身份 tradeoff、Q12 结案确认）；此前真实平台账号／混账号全面支持要求仅作被替代历史，见[旧批准历史](../assets/contract-history-before-sync.md)。当前访问资料 interface 与替换生效限制只在[账户访问 Lighthouse](04-provider-access.md)，本主题持有统计身份／支持范围唯一政策。
 
 支持同／跨进程多个独立 main，同一 session 单执行者，拒绝并发驱动；检测／实现层待定。正常同账户并发不得丢失、重复或覆盖其他会话贡献，不把已接受的异常退出／缺事实／clear 损失扩张成忽略并发正确性。讨论 clear 时单一 DeepSeek 活动会话只是推演假设，不是已取消的支持范围。
 
@@ -64,12 +68,12 @@ Session 累计限于适用账户当前周期，跨该会话各 Round；Round 累
 
 ## Decision
 
-以可观察请求的可靠消费为输入、实际会话 × 账户 × 模型自身聚合为源，沿父子启动关系无重复汇总，账户隔离和正常并发正确性保留。累计限于账户当前周期，历史只保留最近 Round／归档；缺事实不补账、未保存损失可接受，账户 clear 是显式重置，不按恢复时当前价重算历史。
+在本次单账号支持及已确认统计身份范围内，以可观察请求的可靠消费为输入、实际会话 × 统计身份 × 模型自身聚合为源，沿父子启动关系无重复汇总，身份隔离和正常同账号并发正确性保留。累计限于账户当前周期，历史只保留最近 Round／归档；缺事实不补账、未保存损失可接受，账户 clear 是显式重置，不按恢复时当前价重算历史。
 
 ## User stories
 
 1. As a 用户, I want 区分主自身与各子消费, so that 理解任务成本来源。
-2. As a 用户, I want 按启动关系查看含后代本周期累计, so that 嵌套请求不被重复收费或污染新轮。
+2. As a 用户, I want 按直接父 Session 链查看含后代本周期累计, so that 嵌套请求不重复收费且不维护父 Round 消费分配。
 3. As a 用户, I want 请求归属与锚价固定, so that 当前模型／账户切换不重解释旧消费。
 4. As a 用户, I want tree 的历史位置 Round 不可用且 Session 本周期不回滚, so that 不把最近轮伪装成历史查询。
 5. As a 用户, I want 领域概念区分未知／额度／无口径／确认零而运行时简化, so that 跳过金额不被解释成免费且不强迫完整性状态系统。
@@ -82,7 +86,7 @@ Session 累计限于适用账户当前周期，跨该会话各 Round；Round 累
 ## Preconditions
 
 - [行为契约](01-behavior-contract.md)提供仍保留的功能与计价基线；[数据归属与账户周期决议](12-state-data-contract.md)明确最新布局／寿命及有意简化，不重新决定完整账本。
-- [观察契约](../decision/03-observation-contract.md)收口可靠身份、usage 来源、结束交付、原生恢复／clear 与冲突机制；[账户访问](../decision/04-provider-access.md)提供账户识别，未知不能并公共默认账户。
+- [观察契约](../decision/03-observation-contract.md)提供可靠 Turn／实际会话／usage 与结束交付原则；[账户访问决议](04-provider-access.md)提供当前访问资料，统计身份按本节单账号／DeepSeek 凭据范围修订，未知不能并公共默认身份。
 - [存储协调](../decision/06-local-storage.md)决定物理聚合／关系／最近快照、发布／归档／reset／关闭 holiday、幂等／锁／失败；[模型覆盖](../decision/13-model-catalog-policy.md)决定适用计价与名单。
 - [展示](../decision/08-presentation.md)、[刷新](../decision/09-refresh-lifecycle.md)、[命令](../decision/07-command-state.md)、[装配](../decision/10-assembly-layout.md)、[验收](../decision/11-acceptance-cutover.md)仍各自未决，不把来源交接当生产实现。
 
@@ -103,7 +107,7 @@ Session 累计限于适用账户当前周期，跨该会话各 Round；Round 累
 - Session 本周期不因 tree／删改消息／fork 回滚；成功账户 clear 是显式重置例外，旧归档不自动并回。
 - 聚合不改 framework Turn／Round 活动含义；旧子新请求与同一 Turn 后到 usage 修正分开，后者不提供修正能力，已知冲突处理见[观察局部决议](03-observation-contract.md)。
 - Owner State 继承不决定消费；通用词义归 framework，消费词义归 model-cost glossary。
-- 账户隔离、正常请求去重与多会话并发同时成立，已批准损失边界不被默扩张。
+- 按本票当前统计身份范围隔离、正常请求去重与同账号多会话并发同时成立；不据此要求已取消的多账号选择／轮换，已批准损失边界不被默扩张。
 - 上下文、账户测量和消费保持正交，不累加子上下文为主预算，不换算 Codex 账户额度为 Session 消费。
 
 ## Historical ticket body

@@ -28,11 +28,11 @@ Round 自身消耗从同一累计的开始／结束快照派生；费用快照�
 
 上轮“沿旧 token 基线差分并把费用也改差分”的提议不作为最终模型；保留旧方案安全读改写组织，不要求复制其第二套累计维护。提交顺序由下节 Q7 确认，旧快照／账户周期有效性方向由 Q8 确认；版本恢复细节由 Q11 确认，同 session 单执行者由 Q26 收口，clear 一致性由 Q13／Q15／Q24 确认。
 
-自身 Round 的简单差分不能直接套用于含全部后代统计；子消费按启动父 Round 筛选，迟到子消费及跨 clear 快照仍按[数据归属与账户周期决议](12-state-data-contract.md)的既定边界交对应未决票；子关系物理 schema 已由 Q25 冻结为子会话记录的 `parent`，跨账户遍历语义仍留账户／观察票。
+父子 Session 合计按直接父链派生，Round 只作本实际会话自身累计的差分；依据[数据归属决议本次 Q27 修订](12-state-data-contract.md)，不再按启动父 Round 筛选子消费或保存父 Round 消费分段。子记录 parent 字段按下文 Q25 裁剪；跨账户遍历、直接父恢复与跨 clear 自身快照仍待对应契约，不因简化自动解决。
 
 ### Extension 模型与 framework 基础能力
 
-用户进一步澄清：Session、Round、Request／Assistant response 的公共字段、身份、生命周期与可取得的 usage 等源事实属于 framework 提供的能力，由 adapter 映射宿主。extension 组合这些能力，选择业务统计与不同精度的持久化，不自行重复定义宿主观测。前文“计算与模型归 extension”限定为消费业务计价、聚合组合及持久化模型，不把源事实生成转移到 extension。公共字段细节与累计事实是否提供仍由观察票决定，不因本澄清冻结新载荷或承诺不存在的宿主统计。
+用户进一步澄清：Session、Round、Request／Assistant response 的公共字段、身份、生命周期与可取得的 usage 等源事实属于 framework 提供的能力，由 adapter 映射宿主。extension 组合这些能力，选择业务统计与不同精度的持久化，不自行重复定义宿主观测。前文“计算与模型归 extension”限定为消费业务计价、聚合组合及持久化模型，不把源事实生成转移到 extension。公共逻辑／必要原生桥接的分层按[观察分层修订](03-observation-contract.md)，公共字段细节与累计事实是否提供仍由观察票决定，不因本澄清冻结新载荷或承诺不存在的宿主统计。
 
 用户明确该聚合／最近轮／保存频率模型是 model-cost extension 的实现取舍，不是 framework 的通用持久化模型。framework 提供可靠本地文件安全更新，隐藏同进程／跨进程协调和发布细节，业务层拥有格式与合并规则。其他 extension 可以复用同一基础能力采用不同数据结构、寿命和保存时机，不要求使用 Session／Round。
 
@@ -110,7 +110,7 @@ clear 当前入口的执行条件见[命令局部决议](07-command-state.md)；
 
 ### Q16：用户级共享目录，目录由配置指定
 
-用户明确回答“同意共享目录，另外目录地址请参考旧的extension，我需要文件目录可由配置指定”。确认同一操作系统用户各项目／终端共享存储，并要求目录可配置，而非硬编码；实际共享以各实例访问同一目录为前提。内部真实账户／实际会话隔离、账户周期及 clear 的既定范围不变。
+用户明确回答“同意共享目录，另外目录地址请参考旧的extension，我需要文件目录可由配置指定”。确认同一操作系统用户各项目／终端共享存储，并要求目录可配置，而非硬编码；实际共享以各实例访问同一目录为前提。内部统计身份／实际会话隔离、账户周期及 clear 的既定范围不变；统计身份不再一律要求真实平台账号 ID，按[消费归属当前修订](02-accounting-ownership.md#账户隔离多会话与额度)解释，物理文件仍保留不同身份的旧记录。
 
 旧 model-cost 的 archiveDirectory 实际写死 os.homedir() 下的 .omp/cost-archive，没有目录配置参数；只读 Bun 调用 archiveDirectory／archiveDocumentPath 得到旧目录及消费／estimate 文件路径，未创建目录或读写统计文件。源码证据：[旧 archive-store](../../../../my-omp-toolkit/extensions/model-cost/archive-store.ts)。该调查时尚未批准复用旧地址；后续 Q17–Q20 已批准在用户手动备份、清空后复用目录，不导入旧文档。
 
@@ -162,11 +162,11 @@ ADR-0002 已要求 framework 提供协调读-改-发布与读端安全的原子�
 
 用户同意以下最小结构；token 分桶键名与缺价口径以行为／消费契约为准，装配时落定：
 
-- 顶层 `schemaVersion`，`accounts` 以不透明 providerAccountId 为键（格式归账户票 04，schema 不解释）；每账户 `periodId`（成功 clear 更换的唯一值）、`holiday`、`sessions`。
-- 每会话：`saveVersion`、`own`（模型 × token 分桶 + 已算费用）、`recentRound`（label、start／end 累计快照，覆盖旧值）、`parent`（直接父会话、启动父 Round、启动实例身份；顶层会话省略）。
+- 顶层 `schemaVersion`，`accounts` 以不透明 providerAccountId 为键（schema 不解释；身份范围按[消费归属当前主题](02-accounting-ownership.md#账户隔离多会话与额度)，当前访问资料按[账户访问决议](04-provider-access.md)，具体稳定标识由装配落实）；每账户 `periodId`（成功 clear 更换的唯一值）、`holiday`、`sessions`。
+- 每会话：`saveVersion`、`own`（模型 × token 分桶 + 已算费用）、`recentRound`（label、start／end 累计快照，覆盖旧值）、`parent`（直接父实际会话；顶层会话省略）。依据[数据归属决议本次 Q27 修订](12-state-data-contract.md)，从原 Q25 parent 内容删除用于父 Round 消费分配的启动父 Round／启动实例字段，不新增归属段；原 schema 见 [本次修订前原文](../assets/observation-revisions-before-pause-2026-10-11.md)，批准来源见 [本轮确认来源与证据](../assets/observation-pause-evidence-2026-10-11.md)。该局部裁剪不改变其他字段、账户周期、saveVersion 或发布／归档契约。
 - 只存当前周期；历史在 `archives/<archiveId>.json`，`archiveId` 用 `crypto.randomUUID()`，已存在即拒绝覆盖；归档记 schemaVersion、账户、periodId 与该账户全部会话的已保存聚合。
 - 未知／缺失／损坏的 schemaVersion 按“无有效基线”走 Q14 暂停，不猜、不迁移；新文件名与旧 `deepseek-cost.json` 无兼容义务（地图 Out of scope 已确认）。
-- 跨账户父子遍历语义留账户／观察票；本 schema 只把关系存在子会话记录上。
+- 本 schema 只把关系存在子会话记录上；遍历按[数据的直接父 Session 汇总](12-state-data-contract.md)及[消费归属当前身份范围](02-accounting-ownership.md#账户隔离多会话与额度)，具体 native／查询接线归装配，不用此旧账户／观察输入恢复多账号管理。
 
 ### Q26：同会话多执行者靠版本冲突收口
 
