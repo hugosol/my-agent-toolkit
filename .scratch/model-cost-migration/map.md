@@ -53,7 +53,11 @@ Labels: wayfinder:map
 
 - [确定的新能力与 model-cost 如何组织、声明和装配？](lighthouse/10-assembly-layout.md)：部分确认扩展宿主专属实现、framework 当前查看会话与有效标记；完整接口、原生出口和装配仍未决。
 
-- [官方计价与 token-only 模型名单如何确定、配置和维护？](lighthouse/13-model-catalog-policy.md)：部分确认 DeepSeek 维护比例表、Codex 权重经 framework 宿主 catalog 派生；具体名单、格式、更新与缺失策略仍未决。
+- [官方计价与 token-only 模型名单如何确定、配置和维护？](lighthouse/13-model-catalog-policy.md)：已结案；官方两 ID／Go 五 ID、集中扩展谷价＋峰价系数、价格派生参考比例与 Codex 缺价退化；发现只辅助维护，历史金额不重算。
+
+- [DeepSeek 模型发现 API 提供哪些资料，能否支持集中维护？](lighthouse/14-deepseek-model-discovery.md)：研究与真实鉴权发现已完成；当前两 ID、无价格字段，文档样例／接受别名／实际名单分别记录。
+
+- [OpenCode Go 当前支持哪些模型及其精确 ID？](lighthouse/15-opencode-go-models.md)：研究与匿名发现已完成；独立 provider、38 个发现 ID／五个 DeepSeek ID，不把公开发现当账户调用认证。
 
 - [观察契约的 Handoff](decision/03-observation-contract.md#handoff)记录本轮收束、证据限度及下游职责；不恢复异常情景树或父 Round 分配，不把规划结案／临时探针当生产实现。
 
