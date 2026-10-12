@@ -4,6 +4,8 @@
 >
 > 2026-10-11 按用户「只需要给出一些基本的原则……确保happy flow功能正常」「可以，请按这个方向收束」收口。确认原话、Q28、撤回的 Q29 与本轮正常链路探针见[收束确认与证据](../assets/observation-happy-flow-convergence-2026-10-11.md)。本文件是规划契约，不表示生产 framework、完整 provider 适配或迁移已实现。先前确认来源见[暂停证据](../assets/observation-pause-evidence-2026-10-11.md)，收束前完整问题与权威见[历史快照](../assets/observation-before-happy-flow-convergence-2026-10-11.md)。
 
+> 本次 Traverse 补齐逐实际 Session 名称源事实；[Traverse 确认来源](../assets/traverse-confirmation-2026-10-13.md)。生产接线／支持认证仍未完成。
+
 ## Question
 
 为 model-cost 确定正常请求／响应、工具后续、Round 结束、正常子代理消费所需的小型宿主事实契约及三层职责。收束标准为正常数据流、必要事实的含义和交付位置、固定基线关键源事实／时序的可行性证据；不以穷举异常、冻结每个函数签名或证明所有恢复组合为结案条件。
@@ -46,8 +48,13 @@
 | turn_start | framework 不透明 turnId、实际 sessionId、所属 roundId、开始时刻、provider／模型身份；当时可靠可取得的 catalog 价格及币种／单位快照。开始事实固定，不被结束时当前模型替换 | OMP before_provider_request 的模型与实际会话 context；[请求探针](../assets/omp-request-observation-smoke.md) |
 | turn_end | 同一 turnId、结束时刻／结果、可取得的 input／output／cache usage、HTTP status／headers／metadata、provider request／response ID 参考事实；当时一次交付，不等工具结果，不拆字段事件 | after_provider_response 收集 HTTP 事实，assistant message_end 交付响应 usage；外部 requestId 与 responseId 不假定相等；原生 turn_end 含工具结果，不能照搬 |
 | Round／活动 | 按实际会话独立的 Round 身份、开始／结束语义；本会话活动／待续事实可重读；不是全后台任务归零或语义任务完成判断 | agent_start／agent_end.willContinue、同会话 idle／待续事实；[结束时序](../assets/omp-end-timing-smoke.md)及[本轮正常链路](../assets/observation-happy-flow-convergence-2026-10-11.md) |
-| Session／父子事实 | 稳定 harness 标识（非版本）、实际原生 sessionId 与同 harness 内直接父实际 Session 的可靠关系；Owner 只用于效果作用域，不代替会话身份，不用名字层级或 parentId 字符串冒充父 sessionId | 每个回调的 sessionManager.getSessionId、ctx.agent 身份及正常启动关系；[子代理调查](../assets/omp-subagent-round-findings.md)证明身份和关系线索，稳定映射由 adapter／framework 装配落实；harness＋sessionId 命名空间见[存储 Q25](06-local-storage.md)，仅预留 pi，不认证 pi；确认原话见[本轮存储 schema 确认来源](../assets/storage-schema-confirmation-2026-10-12.md)，修订前原文见[发布前快照](../assets/storage-schema-before-publication-2026-10-12.md)。 |
+| Session／父子事实 | 稳定 harness 标识（非版本）、实际原生 sessionId、同 harness 内直接父实际 Session 的可靠关系及 adapter 提供的最新 Session 展示名称；Owner 只用于效果作用域，不代替会话身份，不用名字层级或 parentId 字符串冒充父 sessionId | 每个回调的 sessionManager.getSessionId、ctx.agent 身份及正常启动关系；[子代理调查](../assets/omp-subagent-round-findings.md)证明身份和关系线索，稳定映射由 adapter／framework 装配落实；harness＋sessionId 命名空间见[存储 Q25](06-local-storage.md)，仅预留 pi，不认证 pi；确认原话见[本轮存储 schema 确认来源](../assets/storage-schema-confirmation-2026-10-12.md)，修订前原文见[发布前快照](../assets/storage-schema-before-publication-2026-10-12.md)。 |
 | 只读当前会话快照 | 当前模型、可确认的实际 Effort、上下文占用／窗口大小及可取得的宿主统计；上下文不是消费累计。读取不发请求、不写统计、不更新业务态；无法确认的 Effort 不以配置冒充 | 当前会话查询；既有请求探针证明快照会随宿主处理阶段变化，读取／刷新时点归[刷新决策](../decision/09-refresh-lifecycle.md)，具体接线及生产验证归装配／验收 |
+
+
+Session 展示名称由 adapter 读取宿主源事实，经 framework 随对应实际 Session 事实交付；名称可随宿主会话日志／名称事实更新，不只在创建时或当前查看时取得。消费者按 harness＋sessionId 持续更新内存中的同一会话信息，改名不改变身份、父子关系、消费归属或生命周期。不可取得时明确表达；展示可用可区分的 Session ID，不猜名称，不以不可取得覆盖已知名称。消费文件如何随下次正常保存更新只消费[存储 Q25](06-local-storage.md#q25consumptionjson-的物理-schema归档与版本)，不新增逐日志消费落盘。
+
+旧→新：最小 Session 事实补齐所有实际主／子／孙的最新名称，不再只有 Viewed session 能提供名称。用户 Q3 明确“session名称应由adapter提供……根据sessionId一直更新”，Q4 确认仅更新内存、随下次文件写入更新；原话与固定基线类型证据见 [Traverse 确认来源](../assets/traverse-confirmation-2026-10-13.md)。未完成 adapter 接线，不据此声称实时名称更新或生产验证已实现。
 
 framework 不提供新的消费账本，也不将宿主累计作为 model-cost 已批准自身聚合的第二权威。当前认证资料由[账户访问决策](../decision/04-provider-access.md)提供，统计范围消费[归属原权威](02-accounting-ownership.md#账户隔离多会话与额度)；官方名单、价格覆盖与维护由[模型覆盖决策](../decision/13-model-catalog-policy.md)确定；不是本票顺带冻结的名单或账户规则。
 
@@ -101,7 +108,7 @@ Q10–Q16 的已批准轻量原则保持：framework 为新可观察调用建立
 
 ## Decision
 
-先以 happy flow 建立基本原则，再尽量在原则内推进设计，以具体边界完善实现而非无限重审原则；本票以正常请求／响应、工具／已知续跑、正常逐代理消费及 Round 异步保存为主线，确定必要宿主事实与公共分层；以轻量、不猜账、不补账和统一 round_end 的基本原则处理异常，不穷举极端组合。原生结束与公共 handler／保存完成分离、宿主不设全局保存屏障；具体装配与生产验收在已有决策票完成，不以其尚未实现阻止本规划票结案。
+先以 happy flow 建立基本原则，再尽量在原则内推进设计，以具体边界完善实现而非无限重审原则；本票以正常请求／响应、工具／已知续跑、正常逐代理消费及 Round 异步保存为主线，确定必要宿主事实（含逐实际 Session 最新名称）与公共分层；以轻量、不猜账、不补账和统一 round_end 的基本原则处理异常，不穷举极端组合。原生结束与公共 handler／保存完成分离、宿主不设全局保存屏障；具体装配与生产验收在已有决策票完成，不以其尚未实现阻止本规划票结案。
 
 ## User stories
 
@@ -114,6 +121,7 @@ Q10–Q16 的已批准轻量原则保持：framework 为新可观察调用建立
 7. As a 用户, I want 尽量统一 round_end 并区分活动和真实完成证据, so that 不因异常机制膨胀或不可靠截断触发自动关机。
 
 8. As a 用户, I want 先从 happy flow 建立原则、再在原则内推进设计, so that 设计可以积极前进而不被不断构造的极端情景反复推翻。
+9. As a 用户, I want adapter 为每个实际 Session 提供持续更新的展示名称, so that 未查看的子／孙会话也能显示和保存当前名称而不改变身份或消费归属。
 
 ## Preconditions
 
@@ -123,7 +131,7 @@ Q10–Q16 的已批准轻量原则保持：framework 为新可观察调用建立
 
 ## Postconditions
 
-- [装配决策](../decision/10-assembly-layout.md)依据最小事实契约确定实际接口／capability、ID 与原生关联、实例／直接父映射、async 派发及消费者迁移；不复制完整原生 API，不引入第二套框架或业务 State。
+- [装配决策](../decision/10-assembly-layout.md)依据最小事实契约确定实际接口／capability、ID 与原生关联、实例／直接父映射、逐实际 Session 最新名称交付、async 派发及消费者迁移；不复制完整原生 API，不引入第二套框架或业务 State。
 - [验收决策](../decision/11-acceptance-cutover.md)确定生产正常链路和旧插件回归证明，证据区分原生事实探针、临时公共模拟与生产实现；只因想象到极端组合不得自动扩大恢复／测试系统。
 - 展示、命令、账户、模型覆盖与刷新仍消费各自已有范围；本票不批准新的布局／命令／名单或缺信号政策。
 
@@ -131,6 +139,7 @@ Q10–Q16 的已批准轻量原则保持：framework 为新可观察调用建立
 
 ## Invariants
 
+- Session 名称由 adapter 提供、framework 按实际 Session 身份交付；名称不是身份，更新不伪造生命周期或触发新的消费。
 - 正常可观察 Turn 只累计一次；工具结果、发布和父子汇总不产生第二笔消费；缺失不等于零，不以当前价格重估历史。
 - framework 公共语义／身份／生命周期、adapter 必要原生桥接、model-cost 业务计价／聚合／parser／保存政策三层分工保持；正常逐实际会话观察与 owner-scoped 效果隔离均保留。
 - 已处理标记只留本观察实例内存，局部故障不清其他关联；不补账、不新增持久逐 Turn 历史或完备异常状态机。

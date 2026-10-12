@@ -4,6 +4,8 @@
 >
 > 用户在 Q19「确认」授权整票发布；[本轮确认链与证据限度](../assets/assembly-confirmation-2026-10-13.md)、[发布前完整历史](../assets/assembly-before-publication-2026-10-13.md)可恢复。本文件取代原局部稿，原已批准宿主专属实现／Viewed session／marker 职责保留。以下为组织与装配规划，不是生产实现、宿主补丁或新支持基线认证。
 
+> 本次 Traverse 接线补充只消费名称、文件安全／后续可写、边界余额查询的原权威；[Traverse 确认来源](../assets/traverse-confirmation-2026-10-13.md)。不新增配置、State、保存触发或生产实现。
+
 ## Question
 
 将已定业务与公共能力契约落实到源码职责、authoring Interface、依赖注入、生命周期、公共观察、原生接入与消费者切换；让新增 harness 的维护者知道代码落点，而不复制业务或另建 framework。完整探索见源票。
@@ -63,13 +65,14 @@ Q4／Q6／Q15 确认按订阅组一次声明 Owner 或逐实际 Session 范围�
 | 当前查看 Session／模型／Effort／上下文 | 只读快照＋变化订阅 | 当前状态，通知后重读；不保留旧 ctx |
 | Viewed session 的有效 State／marker | framework 只读投影＋变化通知 | 非新 State Owner；不能靠查看取得写权限 |
 | 对应 provider／model catalog | 按需公共查询 | 无运行期 catalog 热更新需求，不预建订阅 |
+| 对应实际 Session 身份／直接父关系／最新展示名称 | 公共事实交付及更新 | 名称源事实消费[观察原主题](03-observation-contract.md#正常数据流与最小事实契约)，覆盖主／子／孙而非仅当前查看；不扩大 Owner 权限 |
 | 当前认证访问资料 | 每次操作读取 | OAuth／native 访问隐藏在 adapter，秘密不广播／持久化 |
 | Request／Turn／Round | 事件当时 delivery | 身份／顺序／请求锚点不被最新快照替代 |
 | 一次性初始化／销毁 | 公共生命周期入口 | 有调用、等待／清理约束 |
 | HTTP／安全文件更新 | 公共操作及结果 | 不包装为事实订阅，业务 schema 不进 framework |
 | 命令 | 动作与完成结果 | 复用 [命令权威](07-command-state.md)，不冒用激活 State |
 
-请求开始固定对应 Session／Round／provider／model／时间／可用 catalog 价格快照；结束交付同一身份、可靠 usage 与 HTTP metadata，详细字段与缺失规则消费 [观察权威](03-observation-contract.md)。实时认证／catalog／查看读取通过小公共事实 Interface，不注入任意 native 属性读取函数，不镜像完整宿主对象。读取与修改分开；不自动配 setter，model-cost 无修改模型／Effort 需求，不因 native setModel／setThinkingLevel 存在升级公共控制能力。
+请求开始固定对应 Session／Round／provider／model／时间／可用 catalog 价格快照；结束交付同一身份、可靠 usage 与 HTTP metadata，详细字段与缺失规则消费 [观察权威](03-observation-contract.md)。实时认证／catalog／查看读取通过小公共事实 Interface，不注入任意 native 属性读取函数，不镜像完整宿主对象。名称变化按实际 Session 身份更新内存／展示并随下次正常消费保存写入，消费[观察](03-observation-contract.md#正常数据流与最小事实契约)及[存储 Q25](06-local-storage.md#q25consumptionjson-的物理-schema归档与版本)原权威，不另设改名保存触发。读取与修改分开；不自动配 setter，model-cost 无修改模型／Effort 需求，不因 native setModel／setThinkingLevel 存在升级公共控制能力。
 
 ### Initialization, binding lifetime and asynchronous dispatch
 
@@ -85,7 +88,7 @@ framework 先处理公共身份／生命周期，再有序调用 handler；同�
 
 Q7／Q11 确认 runtime 隐藏 handler／命令／业务 Module 组合，宿主装配不组织计价、缓存与归档步骤。accounting 拥有自身累计与轻量 Round；消费存储 Module 暴露业务加载、稳定 Session 快照提交、归档切周期，隐藏 schema／记录合并／周期版本校验／阶段结果。普通保存失败后的丢弃、有效磁盘初始化或暂停仍由 runtime 按原权威处理，不自行重试／补账；同 Session 双执行者按存储 Q26 的版本冲突取舍，不新建检测／租约系统。
 
-providers 不知道 widget、不改消费累计；quota-estimate 独立沿已定采样与文件组织；presentation 只读同一源，承担字段选择、金额／token／比例格式与树数据，不持有第二套累计。model-data.ts 按 [模型权威](13-model-catalog-policy.md)持有精确映射、谷价与共用系数，不是用户 YAML，算法测试注入自造数据，不固定真实名单／价格快照。
+providers 不知道 widget、不改消费累计；命令的边界余额获取消费[刷新原主题](09-refresh-lifecycle.md#clear首次-holiday-的边界余额查询)，consumption-store 只接收该次结果并执行既定归档／切周期；文件锁安全与失败后后续可写只消费[存储 Q24](06-local-storage.md#q24framework-通用文件能力的接口锁与发布契约)，不恢复年龄抢占方案或另建恢复系统。quota-estimate 独立沿已定采样与文件组织；presentation 只读同一源，承担字段选择、金额／token／比例格式与树数据，不持有第二套累计。model-data.ts 按 [模型权威](13-model-catalog-policy.md)持有精确映射、谷价与共用系数，不是用户 YAML，算法测试注入自造数据，不固定真实名单／价格快照。
 
 前端 Seam 为只读展示结果＋更新订阅：累计、有效余额／额度、detail、峰谷边界等通知后重读当前目标与展示结果。public 查看变化也触发重读；render 无网络／timer／文件或权威数据修改。扩展宿主前端只处理原生 widget／主题／颜色／布局／树缩进／宽度；不接管 TTL、计价或保存。无 UI 不建前端／绘制订阅、不执行仅为绘制的格式化，同业务后端／错误承载沿刷新与展示原权威。后端 seam 集中测试业务，前端仍要绘制／接线验证，不以单元测试替代真实 UI。
 
@@ -139,6 +142,7 @@ Q19 完整确认覆盖本票全部规划范围。部署源码组织／生命周�
 7. As a 用户, I want 异步保存有承接而不阻塞后续事实, so that 下一轮继续执行且命令不把 idle 当已保存。
 8. As a 维护者, I want 独立验证报告与稳定源码 oracle, so that 支持声明有可恢复的版本／环境／覆盖证据而不污染启动流程。
 9. As a 维护者, I want 现有消费者完整迁移并复用行为测试, so that 不维护双轨架构且重构不悄改既有业务。
+10. As a 用户, I want 逐实际 Session 名称源事实接入既有 runtime 与展示 Seam, so that 未查看的子／孙会话也能持续更新名称且不增加消费文件保存频率。
 
 ## Preconditions
 

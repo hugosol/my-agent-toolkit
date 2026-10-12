@@ -33,6 +33,8 @@ Labels: wayfinder:map
 
 - 本轮[验收与切换](lighthouse/11-acceptance-cutover.md)获 Q14 整票确认；[确认来源与证据限度](assets/acceptance-confirmation-2026-10-13.md)、[发布前历史](assets/acceptance-before-publication-2026-10-13.md)及[工作票 Handoff](decision/11-acceptance-cutover.md#handoff)可恢复。Backtracer 未发现新 gap／冲突；决策收口不等于生产完成，下一阶段在独立 implementation 工作流进行，不改正式 OMP 环境或自动升级支持记录。
 
+- 本次 [Traverse 全票审阅与确认交接](assets/traverse-confirmation-2026-10-13.md)完成三项已确认收口；原权威在观察、存储、刷新与装配，旧全文见[发布前历史](assets/traverse-before-publication-2026-10-13.md)。不新开／认领／改状态，不把规划或文档 smoke 当生产完成；追溯结果以确认交接的当前 Handoff 为恢复入口。
+
 ## Decisions so far
 
 - [完整保留哪些业务行为，统计单位如何命名？](lighthouse/01-behavior-contract.md)： 保留请求锚价、公共 Turn／工具／Round 与 Codex 额度；当前基线消费 provider 单一统计范围、整文件 clear 与预算修改移除，不扩大所有 provider 展示。
@@ -41,15 +43,15 @@ Labels: wayfinder:map
 
 - [model-cost 的哪些数据进入 framework State，如何声明与读取？](lighthouse/12-state-data-contract.md)： Session 自身与父子关系持久化；Round 仅推断，正常连续对话可看上一 Round，resume/tree 只要求 Session 恢复；业务不升级 framework State。
 
-- [framework 如何提供独立存储、原子更新与跨进程协调？](lighthouse/06-local-storage.md)： 已结案；harness 优先／Session 扁平 list／provider-model 自身桶、周期与快照版本、起止元数据；单活动 JSON／独立归档与 estimate，安全异步更新与失败政策保留。
+- [framework 如何提供独立存储、原子更新与跨进程协调？](lighthouse/06-local-storage.md)： 已结案；Session-only schema／版本与安全更新，失效锁恢复及失败后后续可写按 Traverse 修订；名称随下次正常保存更新。
 
-- [framework 如何提供请求、响应、Turn／Round 与模型事实观测？](lighthouse/03-observation-contract.md)：已按正常数据流、最小必要事实与异常基本原则收束；公共逻辑优先 framework、adapter 必要桥接，尽量统一 round_end；宿主可先 idle／接受新输入，公共 handler 等待自身异步保存，具体装配与生产验收仍未实施。
+- [framework 如何提供请求、响应、Turn／Round 与模型事实观测？](lighthouse/03-observation-contract.md)：已按正常数据流、最小必要事实与异常基本原则收束；公共逻辑优先 framework、adapter 必要桥接，尽量统一 round_end；宿主可先 idle／接受新输入，公共 handler 等待自身异步保存；逐实际 Session 最新名称由 adapter 提供，具体装配与生产验收仍未实施。
 
 - [账户凭据、provider 地址和代理如何跨 seam 提供？](lighthouse/04-provider-access.md)： 按 framework 每 provider 单账号支持前提，adapter 提供当前认证确需资料／地址，不生成持久统计身份；业务查询留 shared logic，秘密不落盘。
 
 - [framework 的通用 HTTP 能力承诺什么，如何接入余额与额度请求？](lighthouse/05-http-capability.md)：已结案；直接导入单一 request、原生 response、共享代理配置与逐请求选择、业务优先的可配置有限超时；显式选代理缺配置失败，model-cost／connect-bot 统一传输，业务留 shared logic，不预建主动取消。
 
-- [额度与余额在何时刷新，异步效果怎样跟随会话生命周期？](lighthouse/09-refresh-lifecycle.md)：已结案；CLI 单次两源预取，运行期 DeepSeek usage TTL／Codex headers，窗口独立与估计成对，无 UI 同后端、结束不等网络，单一 UI 边界 timer。
+- [额度与余额在何时刷新，异步效果怎样跟随会话生命周期？](lighthouse/09-refresh-lifecycle.md)：已结案；CLI 两源、自动 usage TTL／headers、无 UI 与 timer 保留；clear／首次 holiday 新增一次有界边界余额查询。
 
 - [/budget 的参数、操作与状态如何在新框架表达？](lighthouse/07-command-state.md)： 已结案；actions 路由／等待／反馈，detail 入口偏好；holiday／clear 限当前 DeepSeek idle／保存收口，首次 holiday 自动完整归档并切新周期，已开启幂等；不把规划当生产实现。
 

@@ -4,6 +4,8 @@
 >
 > 本轮无账号键 schema 已获用户最终确认；当前文档为存储规划权威，文件 module、宿主接线、生产迁移与验收尚未实现。确认原话见[本轮存储 schema 确认来源](../assets/storage-schema-confirmation-2026-10-12.md)，修订前原文见[发布前快照](../assets/storage-schema-before-publication-2026-10-12.md)。
 
+> 本次 Traverse 补齐 Q24 锁回收／后续可写及 Q25 名称／余额边界；[Traverse 确认来源](../assets/traverse-confirmation-2026-10-13.md)。既有 resolved 状态与其他范围保留，仅规划出版。
+
 ## Question
 
 确定 model-cost 的本地数据组织、单一消费源与通用安全写入的职责：保存完成／失败、跨进程协调、clear 一致性、路径／平台条件，以及物理 schema 与 framework 文件能力边界。以下 Discussion 是唯一有效规则，源票保留探索记录与证据限制。
@@ -152,11 +154,13 @@ ADR-0002 已要求 framework 提供协调读-改-发布与读端安全的原子�
 - 取得协调权限后，framework 重读最新文件并解析，把当前文档交给更新函数；framework 不认识 schema，不做消费统计周期、版本或业务合并判断，只负责协调与发布。
 - 发布用同目录临时文件 + rename 原子替换；读方只看到完整旧文或完整新文；解析失败或文档损坏时不调用更新函数、不覆盖原文件，返回可判别的损坏失败。
 - 失败用可判别结果（超时／取消、IO、损坏；业务拒绝由更新函数返回），不抛未处理异常、无重试或后台队列。
-- 锁文件年龄超过等待预算视为陈旧并回收，避免崩溃后永久卡死；为满足 ADR-0002“不静默替换他人已完成更新”，被误回收的存活写入者在发布前校验锁所有权（内容 token），发现自己已失去锁则放弃本次写入并按失败返回，而不是用 rename 覆盖他人结果。代价是极慢写入者的未保存更新被丢弃，属已接受的少量损失；真实跨进程／崩溃／原子读契约由验收票验证。
+- 锁年龄不再单独证明持有者已退出，不仅凭年龄回收可能仍由存活进程持有的锁；取得权限的 15 秒等待预算与锁持有者活性分开。可靠确认持有者已退出才回收；无法可靠确认时本次有限失败，不迟到写入。正常并发仍保证锁内重读及不覆盖他人已完成更新，不能以发布前 token 检查与 rename 两步自动宣称已消除回收／发布竞争。实现需提供失效锁恢复路径、释放自身协调资源，单次失败不堵死后续队列；不得因遗留坏锁／不可确认的状态造成一直无法写入新数据。具体机制按本机 happy flow 顺畅优先、允许极端边界丢失数据的原则落实，不扩建复杂恢复或 Session 执行者检测系统。此处是设计要求，不是生产协议已验证；真实互斥、退出后恢复与后续可写由验收确认。
 - 协调键用目标目录规范化路径（已存在父目录的 realpath）+ 文件名，避免同一文件的不同写法绕过锁；路径别名统一。
 - 留在 model-cost：JSON schema、消费统计周期／版本校验、按会话合并、归档与 estimate 业务规则。
 
 明确不采用：把旧 OMP native file-lock 或惰性原生 import 带进共享代码；只锁最终写入而不在协调范围内重读；后台任务队列／自动重试；同步 interface（本次只确认安全异步更新）。本能力实现时补进 `framework/docs/framework-capabilities.md`（该文档目前只覆盖 config 只读 YAML）。
+
+旧→新：本次 Traverse 撤销“锁年龄超过预算即回收存活写入者，再仅以发布前 token 检查保证安全”的原机制；安全与可继续写入的正常路径约束保留，失败／极端损失仍按既有原则。用户强调“保证happy flow能顺利流畅完成……不要造成一直无法写入新数据的情况”，原话及设计反例见 [Traverse 确认来源](../assets/traverse-confirmation-2026-10-13.md)，旧全文见[发布前历史](../assets/traverse-before-publication-2026-10-13.md)。
 
 ### Q25：consumption.json 的物理 schema、归档与版本
 
@@ -234,8 +238,8 @@ ADR-0002 已要求 framework 提供协调读-改-发布与读端安全的原子�
 - own.<provider>.<model> 保存自身 token 四桶 input／cacheRead／cacheWrite／output；按公共 usage 口径区分，input 与缓存不重复累计。保存逐响应锚价后的费用；DeepSeek costCny 与 Codex referenceCostUsd 分开。缺价仍保留可靠 token，只不追加对应费用，不用以后价格补算。Codex 对金额合计贡献为0，不抹掉token／美元参考费用，不把混合 Session 的全部金额归零；渠道分类只消费[消费归属原权威](02-accounting-ownership.md#金额口径缺失与冲突边界)。
 - 不保存 Session／父含后代／全局 totalCost／totalTokens，不保存 last* 宿主差分基线，不保存 recentRound、Round／Turn 明细或轮次快照。总数从已算桶求和，可缓存内存只读视图；不是当前价重估，render 不读盘或改权威值。
 - saveVersion 作用域为 periodId＋harness＋sessionId；恢复已保存版本，新快照递增，同快照正常重交保持原版本。Q8 旧版本拒绝、同版本同内容幂等，Q12 同版本不同业务内容冲突，不相加／最后覆盖。业务相等按已确认记录字段内容比较，不以 JSON 字符串排版或 map 键顺序区分。正常合并只改负责记录，不以旧 list 整份覆盖。
-- start 是周期开始时间。start_bal 为可选的 DeepSeek 人民币边界余额，可靠读数缺失则省略，不填0。Session name 是展示名称，不作身份。最新余额缓存继续仅内存；起止边界读数是旧文件已有历史信息，不因此持久化一般远端读数。
-- archives/<archiveId>.json 使用 crypto.randomUUID()，已存在拒绝覆盖；保存锁内最新完整有效活动 JSON，另加 end 和可选 end_bal。本次同一可靠余额用作旧归档 end_bal 与新活动 start_bal，无可靠读数两者均省略；余额差不要求等于已算消费。时间用 ISO 字符串，归档保留旧 periodId／start／holiday／所有 harness Session。余额获取与可用性组织消费刷新／装配票，字段存在不证明远端请求已验收。
+- start 是周期开始时间。start_bal 为可选的 DeepSeek 人民币边界余额，可靠读数缺失则省略，不填0。Session name 是展示名称，不作身份。名称来源与持续事实更新消费[观察原主题](03-observation-contract.md#正常数据流与最小事实契约)：按 harness＋sessionId 更新内存中的同一会话名称，下次正常消费保存时一并更新该记录的 name；不因改名或宿主会话日志写入独立触发 consumption.json 写入，不改变 round_end 保存频率。最新余额缓存继续仅内存；起止边界读数是旧文件已有历史信息，不因此持久化一般远端读数。
+- archives/<archiveId>.json 使用 crypto.randomUUID()，已存在拒绝覆盖；保存锁内最新完整有效活动 JSON，另加 end 和可选 end_bal。本次同一可靠余额用作旧归档 end_bal 与新活动 start_bal，无可靠读数两者均省略；余额差不要求等于已算消费。时间用 ISO 字符串，归档保留旧 periodId／start／holiday／所有 harness Session。余额来源消费[刷新原主题的命令边界查询](09-refresh-lifecycle.md#clear首次-holiday-的边界余额查询)，成功查询提供同一边界值，失败／超时则两处省略，不以旧缓存代替该次查询结果；具体接线由装配负责，字段存在不证明远端请求已验收。
 - 零消费也归档。普通 clear 新活动含 schemaVersion、全新 periodId、start、可选 start_bal、holiday=false、harnesses={}；首次开启 holiday 复用同一安全归档／重置流程，新活动 holiday=true，不先 clear(false) 再第二次 setHoliday。已开启幂等，不重复切周期。完整消费 reset 涉及所有 harness／provider，已有归档、独立 Codex estimate 与入口 detail 不清。动作触发和条件只在[命令原主题](07-command-state.md#holiday-与-clear当前入口适用条件)持有；Q13 先归档再实际提交、失败终止仍有效。
 
 ### Q26：同会话多执行者靠版本冲突收口
@@ -248,7 +252,7 @@ ADR-0002 已要求 framework 提供协调读-改-发布与读端安全的原子�
 
 用户级共享且目录可配置，storageDir 的 ~/ 特指用户 .omp 主目录；初始 ~/cost-archive 复用旧目录，由用户切换前手动备份清空；初始化读取、修改重启，不热切换或自动迁移。该根下固定 consumption.json、codex-usage-estimate.json 与 archives/ 独立归档文件，不另设各文件路径配置。
 
-文件协调的本次保证限定本机本地文件系统，同机跨进程安全共享；不承诺网络盘／云同步的跨机器共同写入。
+文件协调的本次保证限定本机本地文件系统，同机跨进程正常安全共享及失败后后续可写；不承诺网络盘／云同步的跨机器共同写入，也不为极端完备性扩大恢复系统。
 
 framework 提供 harness-independent 的协调读-改-发布能力，业务 schema／合并规则归 model-cost；本轮 Q25 已冻结无账号键、harness 优先／Session list／provider-model 自身桶、格式／周期／保存版本与边界元数据。普通保存仅按负责记录更新，完整归档／重置遵循 Q13／Q25；读新鲜度与同 Session 多执行者取舍仍按 Q23／Q26。生产实现与验收尚未完成。
 
@@ -288,13 +292,15 @@ framework 提供 harness-independent 的协调读-改-发布能力，业务 sche
 22. As a 用户, I want 同会话双执行者靠版本冲突而非租约收口, so that 不引入额外仲裁机制且不静默覆盖。
 23. As a 用户, I want 保留周期时间、DeepSeek 起止余额和 Session 名称, so that 旧统计文件的可读边界信息不丢失。
 24. As a 用户, I want harness 优先分层、扁平 Session list 与 provider／model 桶, so that 保存恢复贴近原数据、不同宿主身份不碰撞且模型统计方便。
+25. As a 用户, I want 正常写入流畅且失效锁可恢复、失败不堵后续队列, so that 极端少量损失不会演变成一直不能保存新数据。
+26. As a 用户, I want 名称在内存持续更新并随下次正常保存写入同一 Session, so that 改名及时可见且不增加消费文件写入频率。
 
 ## Preconditions
 
 - 复用旧目录前由用户手动备份、清空旧统计并完成新旧加载切换；原新实现加载互斥与回退步骤由验收票收口，不将此规划当已经完成的用户动作。
 
 - [数据归属与账户周期决议](12-state-data-contract.md)提供本周期 Session 自身聚合、运行期 Round 推断、父子关系及接受的未保存损失边界。
-- [观察契约](../decision/03-observation-contract.md)仍需提供可靠响应、Round、会话与父子身份事实；[账户访问](../decision/04-provider-access.md)提供当前认证资料，不提供持久化统计身份。
+- [观察契约](03-observation-contract.md)提供可靠响应、Round、会话与父子身份及最新名称事实；[账户访问](../decision/04-provider-access.md)提供当前认证资料，不提供持久化统计身份。
 - Q23／Q24／Q26 已确认安全更新 interface、完成／失败结果、旧提交拒绝、锁与平台、路径、clear 归档／重置一致性及读新鲜度契约；这些仍是规划，不代表 framework 文件能力已实现。实现需 node:fs 等运行时文件 API（与 config 读取一致），不再要求统计账号身份格式；取消账号键后的物理 schema 已由 Q25 最终确认，落地点由装配票决定。
 
 ## Postconditions
@@ -313,7 +319,7 @@ framework 提供 harness-independent 的协调读-改-发布能力，业务 sche
 
 - [装配规格](../decision/10-assembly-layout.md)不得为本范围新增分布式锁／云同步冲突合并；[验收](../decision/11-acceptance-cutover.md)在已声明本地平台／运行基线上证明同机并发，不推定其他 OS 或网络盘已支持。
 
-- [装配规格](../decision/10-assembly-layout.md)把 Q24 协调读-改-发布能力暴露为 framework 公共能力（实现时同步 `framework/docs/framework-capabilities.md`），不把 schema／周期／版本／合并规则放进 framework；[验收](../decision/11-acceptance-cutover.md)验证真实跨进程互斥、锁内重读、原子读、损坏不覆盖、陈旧锁回收且不静默替换存活写入者，以及 Q25 恢复／归档与 Q26 版本冲突。
+- [装配规格](../decision/10-assembly-layout.md)把 Q24 协调读-改-发布能力暴露为 framework 公共能力（实现时同步 `framework/docs/framework-capabilities.md`），不把 schema／周期／版本／合并规则放进 framework；[验收](../decision/11-acceptance-cutover.md)验证真实跨进程互斥、锁内重读、原子读、损坏不覆盖、失效锁恢复、正常并发不覆盖他人已完成更新、失败后后续调用仍能写入，以及 Q25 恢复／归档、最新名称随正常保存更新与 Q26 版本冲突；不把极端完备性作为无限扩建机制的门槛。
 - [展示](../decision/08-presentation.md)读同一自身聚合；不做请求前读取或定时轮询，不因本能力新增第二种消费来源。
 
 ## Invariants
@@ -328,5 +334,6 @@ framework 提供 harness-independent 的协调读-改-发布能力，业务 sche
 
 - framework 文件能力不认识 holiday、消费统计周期、会话版本或 Session 业务 schema；schema／合并／归档规则归 model-cost，能力只负责协调、锁与发布。
 - 读新鲜度：锁内读取即最新；普通运行不做每请求磁盘读、无定时轮询、无空闲刷新。
-- 锁只保证互斥与发布安全；被误回收的存活写入者必须放弃写入而不是覆盖他人已完成更新（对齐 [ADR-0002 shared-file concurrency scope](../../../docs/adr/0002-semantic-extension-framework.md)）。
+- 正常锁内读改发布不覆盖他人已完成更新（对齐 [ADR-0002 shared-file concurrency scope](../../../docs/adr/0002-semantic-extension-framework.md)）；不能仅凭年龄夺取可能存活的持有者锁，也不能以两步 token 检查／rename 宣称原子保护。失效锁必须有恢复路径，单次失败不能堵死后续写入；极端边界允许数据损失，不扩建复杂恢复。
+- 名称更新只更新运行期信息，随下次正常消费保存按 harness＋sessionId 更新同一记录，不独立触发写入；起止余额查询触发只消费刷新权威。
 - 旧统计文档不兼容（地图 Out of scope 已确认）；程序不自动迁移、清空或合并旧数据。

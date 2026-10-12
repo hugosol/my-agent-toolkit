@@ -4,9 +4,11 @@
 >
 > 整票由用户 Q21「确定」确认；[本轮原话、替代分支及运行证据](../assets/refresh-confirmation-2026-10-12.md)。本文件取代此前初始化部分稿，旧内容与恢复点保留在[发布前历史](../assets/refresh-before-publication-2026-10-12.md)。规划结案，不是生产实现、真实远端认证或多窗口问题已修复。
 
+> 本次 Traverse 明确批准 clear／首次 holiday 的一次边界余额查询；[Traverse 确认来源](../assets/traverse-confirmation-2026-10-13.md)。其他自动调度与实例规则保留。
+
 ## Question
 
-确定 CLI 启动两源预取、实际 provider 响应驱动的更新、成功读数 TTL 与查询合并、Codex 窗口／估计采样、实例与查看切换、无 UI、退出和峰谷自动重绘的最小业务调度。具体公共 interface、原生接线和生产验收分别由装配／验收决定。
+确定 CLI 启动两源预取、实际 provider 响应驱动的自动更新、clear／首次 holiday 的一次边界余额查询、成功读数 TTL 与查询合并、Codex 窗口／估计采样、实例与查看切换、无 UI、退出和峰谷自动重绘的最小业务调度。具体公共 interface、原生接线和生产验收分别由装配／验收决定。
 
 ## Discussion
 
@@ -18,16 +20,24 @@
 
 首次模型请求前等待初始化查询成功、失败或超时收口，可以先输入文字；查询失败不阻断模型执行、不显示为零。该等待延续[先前 filename 定向确认](../assets/provider-access-confirmation-2026-10-12.md)，不恢复首请求之后懒加载，也不扩张成所有运行阶段等待网络。普通切模型、切会话、查看子代理或 /tree 不清缓存、不重新全量预取。
 
-### 运行期只有响应驱动的网络更新
+### 运行期自动更新与显式命令查询
 
-用户理由：usage 返回是 provider 刚发生消费的自然更新时机，请求已绑定 provider，故无需全量刷新或其他主动触发。消费触发不等于查询接口必成功；读数可能有服务端延迟，失败按下述简单规则处理，不为此扩建机制。
+用户理由：usage 返回是 provider 刚发生消费的自然更新时机，请求已绑定 provider，故自动更新无需全量刷新或其他活动触发；本次 Traverse 明确批准下节 clear／首次 holiday 的一次显式命令边界查询。消费触发不等于查询接口必成功；读数可能有服务端延迟，失败按下述简单规则处理，不为此扩建机制。
 
 - DeepSeek：usage 返回时按请求所属 provider 检查余额缓存 TTL，过期且无在途查询才后台查询余额。
 - Codex：运行期仅接纳模型响应 headers 的额度测量，额度 API 只负责 CLI 启动初始化。
 
-不因活动开始、Round 结束、模型／会话切换额外查询，不建立定期网络轮询；render 不请求、建 timer、落盘或更新权威业务态。主／子代理根据真实请求 provider 进入同一实例的刷新入口，不按当前查看模型过滤或顺带查询另一 provider。
+不因活动开始、Round 结束、模型／会话切换额外查询，不建立定期网络轮询；clear／首次 holiday 的查询是下节明确的命令例外，不受自动 usage TTL 触发限制；render 不请求、建 timer、落盘或更新权威业务态。主／子代理根据真实请求 provider 进入同一实例的刷新入口，不按当前查看模型过滤或顺带查询另一 provider。
 
 旧 → 新：旧会话／agent_start stale 拉取、原生 agent_end 强制查询、模型命令两源预取退役；曾讨论的 Codex runtime TTL API 兜底也由 Q11「采用」明确替代。不是每次 usage 都无条件发 HTTP，而是响应驱动检查；不添防抖、重试队列或 TTL 到期 timer。
+
+### clear／首次 holiday 的边界余额查询
+
+普通 clear 或首次开启 holiday，在[命令权威](07-command-state.md#holiday-与-clear当前入口适用条件)的适用条件允许后、取得消费文件锁之前，尝试一次 DeepSeek 余额查询；holiday 已开启的幂等提示不查询。沿既有认证／业务 endpoint、proxy:false 与 5 秒预算，不持有文件锁等网络、不自动重试，不恢复其他已取消的查询触发。
+
+成功取得的可靠人民币读数交给[存储 Q25](06-local-storage.md#q25consumptionjson-的物理-schema归档与版本)，本次同一读数用于旧归档 end_bal 与新活动 start_bal；它是本次边界查询结果，不以 TTL 已过期或查询失败后的旧缓存代替。失败／超时则两处省略，不填零、不因此阻止归档／重置；余额错误沿[展示错误承载](08-presentation.md#无-ui-记账与公共错误反馈)，动作成功仍只以消费活动文件实际提交为准。余额差不要求等于统计消费，查询成功也不等于归档／重置成功。
+
+旧→新：此前运行期查询只允许 usage TTL、边界余额来源未定；本次显式保留旧 clear 的一次 best-effort 查询并应用到首次 holiday，不增加轮询、后台补做或 Codex API 兜底。用户 Q2“可以，查询一次”，原提案范围与确认见 [Traverse 确认来源](../assets/traverse-confirmation-2026-10-13.md)；失败后省略而继续操作是本次已确认范围，生产查询尚未验收。
 
 ### DeepSeek TTL、在途合并与失败
 
@@ -53,7 +63,7 @@ headers 按接收顺序处理，不建立跨来源绝对时序系统、不声称
 
 测量是 provider 级内存数据，不是 Session 消费累计或 framework State。普通切会话／模型／tree、消费 clear 不使仍有效实例的 DeepSeek 查询失效；成功可更新其 provider 缓存。消费 clear 的周期／在途丢弃与保存规则仅由数据／存储／命令权威持有，余额更新不复活已清消费，也不新增账号替换识别／隔离。
 
-有 UI 时更新通知当前前端，由它读取[公共当前查看会话](10-assembly-layout.md#当前查看-session-的通用事实与状态投影)；不捕获取数开始时的旧 ctx 作为重绘目标。业务数据和 UI 目标的寿命分开，切换不取消 provider 缓存，当前查看不变更记账归属或 Owner 外部效果。
+有 UI 时更新通知当前前端，由它读取[公共当前查看会话](10-assembly-layout.md#public-viewed-session-prerequisite)；不捕获取数开始时的旧 ctx 作为重绘目标。业务数据和 UI 目标的寿命分开，切换不取消 provider 缓存，当前查看不变更记账归属或 Owner 外部效果。
 
 运行期远端查询不阻塞下一模型请求、工具执行或宿主 idle。运行实例销毁后停止接纳旧结果，不写缓存／新实例、不反馈或重绘；CLI 结束不等待余额／额度网络查询，不为此增加公共 HTTP 主动取消。已发查询仍受既定有限超时约束。该取舍不撤销消费保存或命令操作的等待／失败规则。
 
@@ -75,7 +85,7 @@ headers 按接收顺序处理，不建立跨来源绝对时序系统、不声称
 
 ## Decision
 
-CLI 启动一次性并行预取已配置两源并在首请求前收口；运行期 DeepSeek usage 按可配置成功 TTL 合并查询，Codex 只接纳 headers 且窗口独立更新、估计同报告成对。无 UI 运行相同业务，网络不阻塞运行或结束；峰谷以 CLI UI 实例级单一边界 timer 自动重绘当前视图。
+CLI 启动一次性并行预取已配置两源并在首请求前收口；运行期自动更新由 DeepSeek usage 按可配置成功 TTL 合并查询，clear／首次 holiday 另有一次 best-effort 边界查询；Codex 只接纳 headers 且窗口独立更新、估计同报告成对。无 UI 运行相同业务，网络不阻塞运行或结束；峰谷以 CLI UI 实例级单一边界 timer 自动重绘当前视图。
 
 ## User stories
 
@@ -86,6 +96,7 @@ CLI 启动一次性并行预取已配置两源并在首请求前收口；运行�
 5. As a 用户, I want 运行期与退出不等展示网络并使用当前 UI 目标, so that agent 不被展示拖住且切会话后不会重绘旧视图。
 6. As a 用户, I want 无 UI 保留同一后端及错误反馈, so that RPC 仍能记账和维护额度估计而不依赖 widget。
 7. As a 用户, I want 一个 UI 实例级边界 timer 自动重绘, so that 空闲跨峰谷界线仍更新图标且无需轮询或各会话争用 timer。
+8. As a 用户, I want clear／首次 holiday 前尝试一次有界余额查询, so that 周期起止余额有本次读数而查询失败不阻止归档或重置。
 
 ## Preconditions
 
@@ -93,13 +104,13 @@ CLI 启动一次性并行预取已配置两源并在首请求前收口；运行�
 - [观察](03-observation-contract.md)提供逐实际 Session／请求 usage 与 headers、原请求 provider 和公共生命周期；用户批准不等于这些接口已实施。
 - [账户访问](04-provider-access.md)提供启动及每次操作当前认证资料；[HTTP](05-http-capability.md)提供共享传输／代理／有限超时与无主动取消；model-cost 持有 provider 查询与 parser。
 - [展示](08-presentation.md)、[装配局部权威](10-assembly-layout.md)提供共享后端／宿主前端、当前查看事实与反馈 seam；CLI 级实例创建销毁、启动等待、配置字段、原生公开出口及 UI 通知仍待装配。
-- [存储](06-local-storage.md)提供 estimate 的独立文件及协调；[验收](../decision/11-acceptance-cutover.md)承担固定支持基线、真实查询／TUI／RPC／并发生命周期证据，不以 fixture 当账单或新实现证明。
+- [命令](07-command-state.md)提供 clear／首次 holiday 的适用条件；[存储](06-local-storage.md)提供边界字段、归档／重置与 estimate 的独立文件及协调；[验收](../decision/11-acceptance-cutover.md)承担固定支持基线、真实查询／TUI／RPC／并发生命周期证据，不以 fixture 当账单或新实现证明。
 
 ## Postconditions
 
 - 源票全 scope 已决定，无需继续 TTL／全量刷新／API runtime 兜底／失败冷却／轮询或配对门槛访谈；具体 interface 与落地工作不使该决策票保持未决。
-- 装配消费本权威落实启动入口与首次请求等待、CLI 级缓存／查询合并、provider 响应映射、headers 解析、DeepSeek YAML TTL、失效实例隔离与当前 UI 目标、单一边界 timer；不新建复杂 widget／State／配置体系。
-- 验收需覆盖初始化失败不阻断、无 UI 同后端、DeepSeek TTL／在途合并／失败旧值、Codex 初始化后无 API／单窗口／成对采样、会话切换／clear 不清测量、多 CLI UI 自动跨界及退出迟到结果。实际窗口缺失理由和多窗口根因不得凭本次源码猜测认证。
+- 装配消费本权威落实启动入口与首次请求等待、CLI 级缓存／查询合并、provider 响应映射、headers 解析、DeepSeek YAML TTL、失效实例隔离与当前 UI 目标、单一边界 timer、clear／首次 holiday 的锁外有界查询；不新建复杂 widget／State／配置体系。
+- 验收需覆盖初始化失败不阻断、无 UI 同后端、DeepSeek TTL／在途合并／失败旧值、Codex 初始化后无 API／单窗口／成对采样、会话切换／clear 不清测量、多 CLI UI 自动跨界及退出迟到结果，并覆盖边界查询成功同值双用、失败／超时省略不阻止归档、已开启 holiday 不查询及不持锁等待网络。实际窗口缺失理由和多窗口根因不得凭本次源码猜测认证。
 - 下游原问题／状态／claim 不因本票发布被改写；尚未决定模型名单和完整装配／验收仍由各原票持有。没有生产迁移、远端查询或支持版本升级。
 
 ## Invariants
@@ -109,6 +120,7 @@ CLI 启动一次性并行预取已配置两源并在首请求前收口；运行�
 - 复用 framework 现有 YAML／公共 exports／Extension feedback／当前查看接口；不建立第二套配置、状态或 UI 系统，不扩大 connect-bot 等 Owner 外部效果。
 - 缺失／失败／旧读数不等于零或无限；独立窗口不伪装为配对报告，成对 estimate 不拼时间或来源。
 - render 只读；网络、timer、持久化副作用由相应业务／实例路径驱动。展示 timer 不改请求锚价或消费文件。
+- clear／首次 holiday 的边界查询只在命令条件允许后于文件锁外执行一次，失败不重试、不冒充零或改用旧缓存；最终操作结果仍归存储／命令权威。
 - 不新增运行期 Codex API 兜底、网络轮询、失败冷却、自动重试、主动取消、账号替换隔离或跨进程网络合并。
 - CLI／UI／Session／Owner 寿命不混同；有效 provider 读数不因普通查看切换清空，销毁后的旧效果不进入新实例。
 - 源码与隔离实验不是生产链路证明；支持基线仍 18.5.0，不认证 pi，不宣称多窗口问题已修复。
