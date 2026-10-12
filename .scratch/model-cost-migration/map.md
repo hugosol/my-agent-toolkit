@@ -31,6 +31,8 @@ Labels: wayfinder:map
 
 - 本轮[完整组织与装配](lighthouse/10-assembly-layout.md)获 Q19 整票确认；[确认链与证据限度](assets/assembly-confirmation-2026-10-13.md)、[发布前历史](assets/assembly-before-publication-2026-10-13.md)及[工作票 Handoff](decision/10-assembly-layout.md#handoff)可恢复。独立兼容性验证在[原 support 主题](../../framework/docs/harness-support.md#independent-compatibility-verification)修订，源码架构在 ADR-0002 明确旧到新；这是规划出版，不是迁移、宿主补丁或新版本认证。
 
+- 本轮[验收与切换](lighthouse/11-acceptance-cutover.md)获 Q14 整票确认；[确认来源与证据限度](assets/acceptance-confirmation-2026-10-13.md)、[发布前历史](assets/acceptance-before-publication-2026-10-13.md)及[工作票 Handoff](decision/11-acceptance-cutover.md#handoff)可恢复。Backtracer 未发现新 gap／冲突；决策收口不等于生产完成，下一阶段在独立 implementation 工作流进行，不改正式 OMP 环境或自动升级支持记录。
+
 ## Decisions so far
 
 - [完整保留哪些业务行为，统计单位如何命名？](lighthouse/01-behavior-contract.md)： 保留请求锚价、公共 Turn／工具／Round 与 Codex 额度；当前基线消费 provider 单一统计范围、整文件 clear 与预算修改移除，不扩大所有 provider 展示。
@@ -61,12 +63,13 @@ Labels: wayfinder:map
 
 - [OpenCode Go 当前支持哪些模型及其精确 ID？](lighthouse/15-opencode-go-models.md)：研究与匿名发现已完成；独立 provider、38 个发现 ID／五个 DeepSeek ID，不把公开发现当账户调用认证。
 
+- [什么证据才算完整迁移，如何安全验收并切换？](lighthouse/11-acceptance-cutover.md)：本次文档优先、永久测试 mock 网络、真实 OMP 脚本尽力且隔离、少量自主冒烟与人工最终验收分开；冻结补丁组合，轻量记录，人类手动切换与回退。
+
 - [观察契约的 Handoff](decision/03-observation-contract.md#handoff)记录本轮收束、证据限度及下游职责；不恢复异常情景树或父 Round 分配，不把规划结案／临时探针当生产实现。
 
 ## Not yet specified
 
-- 尚未暴露的宿主事实／能力缺口，只有新实际路径使问题能具体描述时再展开；已定独立验证与局部数据失败政策不重开成运行时动态准入。当前查看公开出口的前置路线已在装配决定，实际补丁／版本／证据由验收原 Question 覆盖，不在 fog 重复列票。
-- 尚未暴露的非 HTTP 新增通用能力对 connect-bot 等既有消费者的影响，待具体能力出现后再判断。已经具体化的公共初始化／完整生命周期／观察范围／当前查看／有效标记及消费者完整切换由[完整装配决议](lighthouse/10-assembly-layout.md)承接，不在此重复作为 fog；只有其他尚未暴露的真实复用影响保留。
+当前没有已知且尚不能具体表述的规划问题。此前宿主能力与消费者影响的条件性 signpost，已由完整装配和验收的决议／实施前置覆盖，不因尚未实现继续列作 fog。若实际实施暴露新的具体能力缺口或文档冲突，按验收权威记录并请求裁决；不预先扩建假想决策票。
 
 ## Out of scope
 
