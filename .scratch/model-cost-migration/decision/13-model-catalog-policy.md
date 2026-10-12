@@ -1,8 +1,8 @@
 # 官方计价与 token-only 模型名单如何确定、配置和维护？
 
 Type: grilling
-Status: open
-Assignee:
+Status: claimed
+Assignee: hugos（本会话 agent 协助模型计价讨论）
 Blocked by: 01, 02
 Prerequisites: [完整保留哪些业务行为，统计单位如何命名？](01-behavior-contract.md)；[用量与费用属于哪个会话、账户和请求，如何避免漏算与重复？](02-accounting-ownership.md)
 Parent: [model-cost 完整迁移：通用能力分层与 OMP 适配](../map.md)

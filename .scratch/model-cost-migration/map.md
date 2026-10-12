@@ -27,6 +27,8 @@ Labels: wayfinder:map
 
 - 本轮[展示确认与证据](assets/presentation-confirmation-2026-10-12.md)获 Q33 收口；[展示权威](lighthouse/08-presentation.md)与[装配](lighthouse/10-assembly-layout.md)／[模型计价](lighthouse/13-model-catalog-policy.md)部分结果分别持有政策。[发布前历史](assets/presentation-before-publication-2026-10-12.md)保留旧恢复点；跨票发布不认领或改变目标票体，不将无 UI 记账推成远端刷新获批，支持基线未变。
 
+- 本轮[刷新生命周期](lighthouse/09-refresh-lifecycle.md)获整票确认并结案；[确认与实验限度](assets/refresh-confirmation-2026-10-12.md)、[发布前历史](assets/refresh-before-publication-2026-10-12.md)及[工作票 Handoff](decision/09-refresh-lifecycle.md#handoff)可恢复。新结果不改其他票的问题／claim，不把查询与边界探针当生产或多窗口问题已修复。
+
 ## Decisions so far
 
 - [完整保留哪些业务行为，统计单位如何命名？](lighthouse/01-behavior-contract.md)： 保留请求锚价、公共 Turn／工具／Round 与 Codex 额度；当前基线消费 provider 单一统计范围、整文件 clear 与预算修改移除，不扩大所有 provider 展示。
@@ -43,11 +45,11 @@ Labels: wayfinder:map
 
 - [framework 的通用 HTTP 能力承诺什么，如何接入余额与额度请求？](lighthouse/05-http-capability.md)：已结案；直接导入单一 request、原生 response、共享代理配置与逐请求选择、业务优先的可配置有限超时；显式选代理缺配置失败，model-cost／connect-bot 统一传输，业务留 shared logic，不预建主动取消。
 
-- [额度与余额在何时刷新，异步效果怎样跟随会话生命周期？](lighthouse/09-refresh-lifecycle.md)：部分确认初始化两源并行预取、首次模型请求前收口；其余调度未决。
+- [额度与余额在何时刷新，异步效果怎样跟随会话生命周期？](lighthouse/09-refresh-lifecycle.md)：已结案；CLI 单次两源预取，运行期 DeepSeek usage TTL／Codex headers，窗口独立与估计成对，无 UI 同后端、结束不等网络，单一 UI 边界 timer。
 
 - [/budget 的参数、操作与状态如何在新框架表达？](lighthouse/07-command-state.md)： 已结案；actions 路由／等待／反馈，detail 入口偏好；holiday／clear 限当前 DeepSeek idle／保存收口，首次 holiday 自动完整归档并切新周期，已开启幂等；不把规划当生产实现。
 
-- [动态 widget 如何分层，无 UI 时哪些业务仍需更新？](lighthouse/08-presentation.md)：已确认旧视觉／共享后端与宿主前端、混范围 Total、静态 detail 树、子代理 brief 与轻量 Round；无 UI 记账和错误可见，远端刷新仍未决。
+- [动态 widget 如何分层，无 UI 时哪些业务仍需更新？](lighthouse/08-presentation.md)：已确认旧视觉／共享后端与宿主前端、混范围 Total、静态 detail 树、子代理 brief 与轻量 Round；无 UI 记账和错误可见，远端调度只见刷新权威。
 
 - [确定的新能力与 model-cost 如何组织、声明和装配？](lighthouse/10-assembly-layout.md)：部分确认扩展宿主专属实现、framework 当前查看会话与有效标记；完整接口、原生出口和装配仍未决。
 
