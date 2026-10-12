@@ -23,7 +23,9 @@ Labels: wayfinder:map
 - 子票存放于 decision/；按编号扫描 open、无未满足依赖、未认领的票选 frontier。开始工作前先写 Status: claimed 和 Assignee。开放票不在地图正文重复列出。
 - [数据归属与账户周期决议](lighthouse/12-state-data-contract.md)已正式结案；最终取舍与历次暂停溯源只在 Lighthouse。后续按已定数据流推进存储与协调，再返回观察处理约束；不重问聚合／明细账、不恢复观察票旧 Q10，不把本票结案视为存储或原生观测已实现。继续工作时按 tracker 查询 frontier，或使用用户明确指定的票。
 
-- 本轮[命令决议](lighthouse/07-command-state.md)与其[确认来源](assets/command-confirmation-2026-10-12.md)已发布；账号／凭据身份隔离和定点 clear 在原权威修订。存储 Q25 的账号布局被取消，替代物理结构尚未批准；用户 Q21 已授权恢复存储原题，仅对 Q25 布局重审，现 open、未认领；其余存储原则不重开，装配不猜字段。
+- 本轮[存储 schema](lighthouse/06-local-storage.md#q25consumptionjson-的物理-schema归档与版本)已最终确认并结案；Round 持久化与恢复取舍在[数据原主题](lighthouse/12-state-data-contract.md#最近-roundtree-与恢复展示)修订，首次 holiday 自动切周期在[命令原主题](lighthouse/07-command-state.md#holiday-与-clear当前入口适用条件)修订。[确认来源](assets/storage-schema-confirmation-2026-10-12.md)与[发布前历史](assets/storage-schema-before-publication-2026-10-12.md)可恢复；未实施生产迁移，其他存储协调原则保留。
+
+- 本轮[展示确认与证据](assets/presentation-confirmation-2026-10-12.md)获 Q33 收口；[展示权威](lighthouse/08-presentation.md)与[装配](lighthouse/10-assembly-layout.md)／[模型计价](lighthouse/13-model-catalog-policy.md)部分结果分别持有政策。[发布前历史](assets/presentation-before-publication-2026-10-12.md)保留旧恢复点；跨票发布不认领或改变目标票体，不将无 UI 记账推成远端刷新获批，支持基线未变。
 
 ## Decisions so far
 
@@ -31,9 +33,9 @@ Labels: wayfinder:map
 
 - [用量与费用属于哪个会话、账户和请求，如何避免漏算与重复？](lighthouse/02-accounting-ownership.md)： framework 每 provider 单账号；取消账号／凭据统计身份与自动替换隔离，按 provider 单一范围聚合；多 CLI 正常并发、去重与直接父 Session 汇总保留。
 
-- [model-cost 的哪些数据进入 framework State，如何声明与读取？](lighthouse/12-state-data-contract.md)： 扩展自有逐响应聚合，实际会话 × provider × 模型；子代理仅 Session 汇总、Round 为本会话自身；整文件 clear，入口 detail 寿命保留，不存统计账号身份。
+- [model-cost 的哪些数据进入 framework State，如何声明与读取？](lighthouse/12-state-data-contract.md)： Session 自身与父子关系持久化；Round 仅推断，正常连续对话可看上一 Round，resume/tree 只要求 Session 恢复；业务不升级 framework State。
 
-- [framework 如何提供独立存储、原子更新与跨进程协调？](lighthouse/06-local-storage.md)： 单活动 JSON／独立归档与 estimate，安全异步发布、FIFO／跨进程锁、周期／版本拒绝旧提交；clear 完整归档／重置且零消费同流程，取消账号键；Q25 替代物理布局已授权定点重审，源票 open，其余已定协调与失败政策保留。
+- [framework 如何提供独立存储、原子更新与跨进程协调？](lighthouse/06-local-storage.md)： 已结案；harness 优先／Session 扁平 list／provider-model 自身桶、周期与快照版本、起止元数据；单活动 JSON／独立归档与 estimate，安全异步更新与失败政策保留。
 
 - [framework 如何提供请求、响应、Turn／Round 与模型事实观测？](lighthouse/03-observation-contract.md)：已按正常数据流、最小必要事实与异常基本原则收束；公共逻辑优先 framework、adapter 必要桥接，尽量统一 round_end；宿主可先 idle／接受新输入，公共 handler 等待自身异步保存，具体装配与生产验收仍未实施。
 
@@ -43,14 +45,20 @@ Labels: wayfinder:map
 
 - [额度与余额在何时刷新，异步效果怎样跟随会话生命周期？](lighthouse/09-refresh-lifecycle.md)：部分确认初始化两源并行预取、首次模型请求前收口；其余调度未决。
 
-- [/budget 的参数、操作与状态如何在新框架表达？](lighthouse/07-command-state.md)： 已发布一层 actions 路由、统一等待／异常报告与 warning；沿用 budget，detail 跟随旧入口偏好，holiday／clear 仅 DeepSeek 且当前入口 idle／保存收口；命令票已 resolved；存储物理布局跟进已交原题，不把命令结案当生产实施完成。
+- [/budget 的参数、操作与状态如何在新框架表达？](lighthouse/07-command-state.md)： 已结案；actions 路由／等待／反馈，detail 入口偏好；holiday／clear 限当前 DeepSeek idle／保存收口，首次 holiday 自动完整归档并切新周期，已开启幂等；不把规划当生产实现。
+
+- [动态 widget 如何分层，无 UI 时哪些业务仍需更新？](lighthouse/08-presentation.md)：已确认旧视觉／共享后端与宿主前端、混范围 Total、静态 detail 树、子代理 brief 与轻量 Round；无 UI 记账和错误可见，远端刷新仍未决。
+
+- [确定的新能力与 model-cost 如何组织、声明和装配？](lighthouse/10-assembly-layout.md)：部分确认扩展宿主专属实现、framework 当前查看会话与有效标记；完整接口、原生出口和装配仍未决。
+
+- [官方计价与 token-only 模型名单如何确定、配置和维护？](lighthouse/13-model-catalog-policy.md)：部分确认 DeepSeek 维护比例表、Codex 权重经 framework 宿主 catalog 派生；具体名单、格式、更新与缺失策略仍未决。
 
 - [观察契约的 Handoff](decision/03-observation-contract.md#handoff)记录本轮收束、证据限度及下游职责；不恢复异常情景树或父 Round 分配，不把规划结案／临时探针当生产实现。
 
 ## Not yet specified
 
 - 原生宿主缺失尚未具体暴露的观测能力时，其降级／拒绝与诊断如何衔接，遇到具体路径再展开；账户访问的局部查询失败原则已由账户访问权威持有，提示承载由现有展示票决定，不在此重复开雾。
-- 非 HTTP 新增通用能力对 connect-bot 等既有消费者的复用或收口影响，待具体能力暴露后再判断，避免制造第二套机制或扩大业务范围。
+- 尚未暴露的非 HTTP 新增通用能力对 connect-bot 等既有消费者的影响，待具体能力出现后再判断。已经具体化的当前查看会话／有效标记公共能力与消费者隔离由[装配局部结果](lighthouse/10-assembly-layout.md)及其原 Question 承接，不在此重复作为 fog；其他未知复用影响保留。
 
 ## Out of scope
 

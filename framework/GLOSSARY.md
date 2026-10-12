@@ -140,6 +140,10 @@ _Avoid_: whole-extension state copy, creation-time snapshot, process-global stat
 The session that holds an extension's owner-scoped State values; for any session it is the nearest ancestor session that is itself a top-level main session (a main session is its own owner). Subagent sessions are not owners; whether they follow their owner's values live is per-field and opt-in.
 _Avoid_: parent agent, process-global state, current session
 
+**Viewed session（当前查看会话）**:
+The actual agent session whose conversation and session-specific information are currently shown to the operator. It is distinct from the session that owns extension State or issued an observed request; changing the view does not change either ownership.
+_Avoid_: Owner, executing session, current session (without a viewing qualifier)
+
 **Parent agent（父代理）**:
 The session that directly created a subagent — the immediate spawner. It may itself be a subagent, so it equals the owner only at depth 1.
 _Avoid_: owner, root session, State holder

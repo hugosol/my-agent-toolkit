@@ -14,6 +14,8 @@
 
 ### 本轮批准修订与来源
 
+本轮持久身份为 harness＋实际 sessionId，物理命名空间与 list 只在[存储 Q25](06-local-storage.md)；Round 恢复与首次 holiday 行为消费[数据](12-state-data-contract.md#最近-roundtree-与恢复展示)和[命令](07-command-state.md#holiday-与-clear当前入口适用条件)原权威。确认原话见[本轮存储 schema 确认来源](../assets/storage-schema-confirmation-2026-10-12.md)，修订前原文见[发布前快照](../assets/storage-schema-before-publication-2026-10-12.md)。
+
 取消按账号／非秘密凭据标识隔离，把每 provider 单账号提升为 framework 支持前提；保留多 CLI 并发，整文件 clear 的输入与重置范围由存储权威承接。 批准来源：[命令票本轮确认来源](../assets/command-confirmation-2026-10-12.md)（Q13–Q16、Q17–Q20）。此前账号键／身份分区和定点 clear 的政策仅为已被替代历史；不要求认证秘密落盘。非本轮替代范围继续有效，规划不等于实现。
 
 ### 请求消费与自身聚合
@@ -40,11 +42,11 @@ DeepSeek 是当前计费渠道，已知请求费用计入金额；Codex 是额�
 
 ### 本账户周期的 Session／Round、tree 与恢复
 
-Session 累计限于当前消费统计周期，跨该会话各 Round；Round 累计仅本实际会话自身，子代理汇总范围以[数据归属决议](12-state-data-contract.md)本次 Q27 修订为准。只保存最近轮开始／结束快照，和 round_end 聚合同次发布／覆盖旧轮，不建立历史 Round 列表、历史位置索引或跨周期 Session lifetime total。费用快照来自已锚价累计，不以 token 差分乘当前价重算。
+Session 累计限于当前消费统计周期，跨该会话各 Round；Round 累计仅本实际会话自身，子代理汇总范围以[数据归属决议](12-state-data-contract.md)本次 Q27 修订为准。Round 寿命与恢复仅消费[数据原主题的 Session-only 修订](12-state-data-contract.md#最近-roundtree-与恢复展示)：Round 不落盘，正常连续对话可看上一 Round，resume/tree 不要求恢复 Round；Session 持久累计仍可恢复，不建立历史索引或跨周期 lifetime，不以当前价重算。
 
 | 操作 | 当前有效行为 |
 | --- | --- |
-| resume | 读取本周期已保存活动聚合，可明确展示最近 Round；不重估宿主历史、不自动合并旧归档 |
+| resume | 恢复本周期 Session 活动聚合，不要求恢复 Round；不重估宿主历史、不自动合并旧归档 |
 | switch | 选择目标会话本周期视图，已开始请求仍归原身份（整文件 clear 的丢弃是显式例外） |
 | tree | 不回滚本周期 Session；该历史位置 Round 隐藏或不可用，不冒充零／最近轮 |
 | fork | 新实际会话自身从零，复制消息不是新消费；原会话本周期统计不被 fork 回滚 |
@@ -91,7 +93,7 @@ framework 每 provider 单账号、model-cost 按 provider 单一范围聚合，
 
 - [行为契约](01-behavior-contract.md)提供仍保留的功能与计价基线；[数据归属与账户周期决议](12-state-data-contract.md)明确最新布局／寿命及有意简化，不重新决定完整账本。
 - [观察契约](../decision/03-observation-contract.md)提供可靠 Turn／实际会话／usage 与结束交付原则；[账户访问决议](04-provider-access.md)提供当前访问资料，当前访问资料只用于认证，不生成统计身份；provider 未知不能猜成 DeepSeek。
-- [存储协调](../decision/06-local-storage.md)决定物理聚合／关系／最近快照、发布／归档／reset／关闭 holiday、幂等／锁／失败；[模型覆盖](../decision/13-model-catalog-policy.md)决定适用计价与名单。
+- [存储协调](../decision/06-local-storage.md)决定物理 Session 聚合／关系、发布／归档／reset／holiday 切周期、幂等／锁／失败；[模型覆盖](../decision/13-model-catalog-policy.md)决定适用计价与名单。
 - [展示](../decision/08-presentation.md)、[刷新](../decision/09-refresh-lifecycle.md)、[命令](../decision/07-command-state.md)、[装配](../decision/10-assembly-layout.md)、[验收](../decision/11-acceptance-cutover.md)仍各自未决，不把来源交接当生产实现。
 
 ## Postconditions
@@ -100,7 +102,7 @@ framework 每 provider 单账号、model-cost 按 provider 单一范围聚合，
 
 - 后续按扩展自有聚合、有限运行期关联、父子关系与本周期恢复设计，不要求历史 Turn／Round 留存、缺失补齐或跨周期 Session 总数。
 - 自身／含后代、账户／渠道口径可派生，实际请求不重复；无金额贡献不代表实际零消费。
-- 验收覆盖可靠响应、重发／重复、最近轮／tree／resume、整文件 clear、父子与多会话正常并发及已确认损失边界，不按原旧验收恢复已取消要求。
+- 验收覆盖可靠响应、重发／重复、正常连续对话上一 Round／tree／resume 的 Session 恢复、整文件 clear／首次 holiday 切周期、父子与多会话正常并发及已确认损失边界，不按原旧验收恢复已取消要求。
 - 冲突丢弃／局部清理及身份已批准范围以[观察局部决议](03-observation-contract.md)为准；可信来源、宿主实例隔离、物理发布、调度和最终 UI 尚需具名票收口，文档不代表能力已实现。
 
 ## Invariants

@@ -1,57 +1,30 @@
 # 动态 widget 如何分层，无 UI 时哪些业务仍需更新？
 
 Type: grilling
-Status: open
+Status: resolved
 Assignee:
 Blocked by: 01, 03, 12
 Prerequisites: [完整保留哪些业务行为，统计单位如何命名？](01-behavior-contract.md)；[framework 如何提供请求、响应、Turn／Round 与模型事实观测？](03-observation-contract.md)；[model-cost 的哪些数据进入 framework State，如何声明与读取？](12-state-data-contract.md)
 Parent: [model-cost 完整迁移：通用能力分层与 OMP 适配](../map.md)
 
-## Trace handoff from data Lighthouse
+Lighthouse: [widget 展示与子代理视图决议](../lighthouse/08-presentation.md)
 
-- [数据归属与账户周期决议](../lighthouse/12-state-data-contract.md)限定 Session 为适用账户当前周期内跨 Round 的累计、Round 为其中该轮；clear 后 resume 不显示旧周期总数或重估宿主历史。旧归档仅保留可查文件，不默认新增归档 UI／查询命令。
-- UI 读取 shared logic 的自身／子代理合计／整体视图，布局和默认展开未定；只保存最近轮、恢复明确叫最近 Round，tree 后该位置轮数值不可用，不显示成零。混账户周期、clear 跨开放 Round 的描述需和观察票一致，不伪造新轮。
-- 缺 usage／价格只提示／跳过相应指标，不保持缺失计数或持续完整性标记；有 usage 缺价仍累计 token，失败／取消有可靠 usage 仍累计。提示位置、headless 可观察性仍由本票决定。
-- 固定 DeepSeek 450K／Codex 272K 预算显示／告警保留，修改入口移除；入口 detail 切会话／tree 保留、重载 brief。renderer 不维护第二套权威累计或副作用。
+## Handoff
 
-## Handoff from storage Q6
-
-当前有效失败策略以[存储局部决议](../lighthouse/06-local-storage.md)修订 Q6／Q11 为准：用户已接受所有普通消费保存失败后丢弃未保存部分、从磁盘有效完整快照初始化，不自动重试／修复／补账；读不到有效磁盘则报告并停止这次保存，不猜零覆盖。此交接替代本票旧“保留内存／不回滚／下次带上未保存消费”措辞，不改变正常并发／账户隔离／去重，clear 与 estimate 失败仍分别未决。
-
-## Handoff from storage Q10 / Q12
-
-[存储局部决议](../lighthouse/06-local-storage.md)Q12 确认同版本不同内容须报告明确冲突、不假报保存成功；普通 round_end 不因此中止主流程。超时失败沿 Q6 承载，Q10 不是中止代理或文件更新总耗时保证。
-
-## Handoff from revised failure policy
-
-当前有效失败策略以[存储局部决议](../lighthouse/06-local-storage.md)修订 Q6／Q11 为准：用户已接受所有普通消费保存失败后丢弃未保存部分、从磁盘有效完整快照初始化，不自动重试／修复／补账；读不到有效磁盘则报告并停止这次保存，不猜零覆盖。此交接替代本票旧“保留内存／不回滚／下次带上未保存消费”措辞，不改变正常并发／账户隔离／去重，clear 与 estimate 失败仍分别未决。 展示不伪装保存成功；重新初始化后统计可能回到已保存基线，不把丢失显示为确认零消费。
-
-## Handoff from storage Q13 / Q14
-
-[存储局部决议](../lighthouse/06-local-storage.md)Q13／Q14 确认 clear 以实际活动文件提交为成功点、失败不自动恢复；无有效磁盘基线暂停消费统计／保存至下一次正常初始化。反馈不能把失败／暂停少计当确认零或 clear 成功；模型继续，独立余额／额度不因此自动停用。
+- 用户 Q33 已确认展示 scope 收口；本票仅完成规划，生产前端／后端、原生接线与验收未实施。当前结果唯一权威：[widget 展示与子代理视图](../lighthouse/08-presentation.md)。本轮 Lighthouse 发布与 Backtracer 已完成，状态 resolved、claim 已清理。
+- 本轮确认与否决／替代理由：[展示访谈确认来源](../assets/presentation-confirmation-2026-10-12.md)。原 legacy Handoff 的完整问题、unique reasons 与历史证据：[发布前原文](../assets/presentation-before-publication-2026-10-12.md)。旧“保存最近 Round／clear 仍未定”等 resume 点已过时，恢复按当前权威，不从旧交接推翻新结果。
+- 跨票结果：[装配局部权威](../lighthouse/10-assembly-layout.md)（用户以 10-assembly-layout.md 确认职责层与当前查看能力）、[模型计价局部权威](../lighthouse/13-model-catalog-policy.md)（以 13-model-catalog-policy.md 确认比例表来源）。两票未认领、仍 open，其他问题及票体不因部分发布修改。
+- 剩余工作归属：装配票核验 OMP 原生查看出口／切换、Session 事实与有效 marker、实例／公共接口／消费后端接线；模型票决定具体权重名单、资料缺失／更新；刷新票决定无 UI 远端调度及 TTL／生命周期；验收票决定具体 TUI／RPC／Hub 证明与支持版本。本票不在无 UI 记账确认之外批准网络策略，也不自动升级 18.5.0。
+- 下一 ready 问题：本票没有待问展示政策；追溯完成后按 tracker 查询下一 frontier，不开始第二张非 research 票。若装配证据证明正常子 Round 必须加复杂机制，交用户局部重审，不静默取消或扩建。
+- 证据限度：本轮仅实际运行比例数学和安装版 18.9.2 真实 focus 控制器＋fixture Session／UI；不是完整 TUI、原生新公共出口或支持基线验收。工作区控制器缺 natives 的失败记录保留，没有复制 native 构建产物。
+- 发布追溯：本轮 Backtracer 已按 User stories／Invariants／依赖／peer symmetry／layer integrity 追溯展示及两项部分发布：逐 Session 事实与轻量 Round 由观察／数据／存储权威提供；公共查看、有效 marker、实例／native 接线与消费者迁移由装配票承接；比例表维护／catalog 缺失由模型票承接；无 UI 远端策略／TTL 由刷新票承接；TUI／Hub／headless／旧消费者回归及版本证明由验收票承接。没有新增无人承接的 gap 或未获用户裁决的政策冲突；开放 provider 不等于已满足／已实现，故不写空 trace report、不新增重复票、不同步目标票旧 Handoff。旧候选均已有确认替代链。
 
 ## Question
 
-明确动态多行进度条、窗口节奏、费用／余额告警色、Effort 着色、分段条与宽度降级归 extension harness presentation，还是本次抽出 framework 通用展示 capability？现有 marker area 只是框架统一的单行激活标记，不应强塞复杂 widget。
+widget 的共享后端／宿主前端如何分工，如何保留旧视觉并替代 detail，Total／Round／代理树的字段范围与费用参考比例如何表达，Hub 子会话应切哪些事实与有效标记，无 UI 怎样保留记账／保存与错误可见？
 
-确定 shared logic 提供什么已对齐的展示模型，native renderer 只读取与布局／主题，不在 render 改 lastContextTokens、请求 API、创建 timer 或落盘。明确无 UI／RPC 时必须保留的记账与持久化行为、远端刷新与展示计算是否运行；账户故障保持 widget-only 旧要求与无 UI 可观察性的关系要用户确认。输出具体视觉及 headless 验收场景。
+完整远端刷新调度由[刷新票](09-refresh-lifecycle.md)继续决定；公共查看与模型资料的具体实现归相应票。本票结果记录在 Lighthouse，不在正文复制规则。
 
-## Handoff from behavior-contract
+## Comments
 
-[完整保留哪些业务行为，统计单位如何命名？](01-behavior-contract.md) 的 Q9/Q10 要求保留双窗口节奏／重置展示、ratio／left、累计与 session 分段条、费用／余额告警、widget-only 请求错误和命令反馈的现状基线；本票承接视觉、宽度降级、标签及无 UI 可观察性取舍，改变需用户确认。新 Turn 是一次 LLM 请求／响应，不含工具执行；Round totals／Session totals 与“旧的 Turn”分开，最终 UI 标签在本票决定。更新由事件触发，结果更新后检查 UI 是否需要渲染，需要则请求一次刷新；无 UI 时是否刷新远端数据尚未决定，原 Question 中的无 UI 更新要求不得视为已经获批的完整策略。
-
-## Handoff from accounting-ownership
-
-来源：[消费归属决议](../lighthouse/02-accounting-ownership.md)。用户已确认业务约束；以下接口、机制与展示问题仍待本票决策，本交接不代表它们已解决。
-
-- 已确认约束：在适用账户当前周期中能清楚区分主会话自身（排除全部子代理）、每个子代理自身／含后代、主会话含后代的消费；异构子代理和切换前模型不能被当前模式过滤掉源记录。
-- 待决定：这些统计以何种视觉和查询入口呈现，本周期聚合与当前 provider 余额／额度如何并列或筛选？保留逐代理聚合查询，不默认加入历史 Turn／Round 明细或归档查询 UI。
-- 金额只汇总计费渠道；Codex 美元仅参考，不能进入消费金额总计。未知／额度消费／无统计口径保留领域区别，不标成免费；运行时不维护缺失计数或持续完整性标记，缺 usage／适用价格仅提示／跳过相应指标，有 usage 缺价仍保留 token。具体提示承载与 headless 策略未定。
-- 历史消费归属决议曾要求 tree 历史 Round 查询；该要求已由[数据讨论的当前有效决定](12-state-data-contract.md)明确收窄：只保存最近 Round 开始／结束快照，不保留历史 Round 列表；/tree 后 Round 数值隐藏或不可用，Session 累计不回滚，恢复快照明确称为最近 Round，不能冒充当前位置。旧 Lighthouse 当前正文已按用户要求同步，原版保留历史快照；正式数据 Lighthouse 已记录修订。上下文、账户、消费正交，不能累加子代理上下文作主会话预算。无 UI 的具体交互与刷新仍待本票和调度票决定。
-
-## Handoff from state-data discussion
-
-- 用户明确要求 UI 体现主会话自身消耗与子代理消耗区别；按实际会话独立聚合，不从父 Round 总数推算。详细语义及最新决定以[数据讨论](12-state-data-contract.md)为准，此处仅索引需求。
-- 本票后续决定主会话自身／子代理汇总／整体合计的布局、逐子代理展开方式及窄宽降级；这次确认不等于布局已批准或 UI 已实现。
-- 数据讨论已明确简化缺失事实处理：缺 usage 或计费所需价格时只打印提示并跳过相应指标，不维护缺失计数／持续完整性标记／补账记录。领域文档保留未知、无统计口径等概念供分析，不能因此要求 UI 实现完整状态模型；具体承载提示方式待本票确认。最新替代范围以数据票为准，前部旧交接的持续完整性要求不能覆盖该修订。
-
+本轮已批准旧 detail → 静态树、混范围字段、主树 Total 保持、子代理 brief 与轻量 Round。Q33 完整摘要获用户“同意”后进入 publication；候选与批准的区别、Q1–Q33 及 probe 事实仅链接确认资产，不粘贴日志。

@@ -138,6 +138,10 @@ Different native implementations do not by themselves justify moving behavior ou
 
 The framework owns State and other capabilities it defines; it does not automatically own every native operation an extension uses. Conversely, extensions should not each reimplement harness mapping for a framework contract. A harness-specific integration remains part of its extension, while a framework harness adapter is reused by all extensions. This placement rule does not exempt native calls from applicable history-preservation constraints.
 
+### Viewed-session presentation scope (additive planning; model-cost migration)
+
+The model-cost migration applies the responsibility test above to extension-owned harness-specific widget fronts, shared business/presentation backends, and framework-owned viewed-session facts and effective-State marker projection. The confirmed scope and remaining native/assembly questions live only in [the assembly Lighthouse](../../.scratch/model-cost-migration/lighthouse/10-assembly-layout.md); [the display Lighthouse](../../.scratch/model-cost-migration/lighthouse/08-presentation.md) owns widget-specific behavior, with [confirmation and evidence limits](../../.scratch/model-cost-migration/assets/presentation-confirmation-2026-10-12.md). This does not widen the native escape hatch or change State Owner, and does not certify an implemented public focus interface or a newer harness baseline.
+
 ## Scope map
 
 The discussion covers nine areas: (1) extension definition/configuration and shared TypeScript logic; (2) control patterns, commands, and subfeatures; (3) semantic hooks and State orchestration; (4) State ownership, storage, restoration, archives, and shared-file concurrency; (5) ongoing work and lifecycle effects; (6) instruction contribution and mandatory history preservation; (7) basic status feedback driven by State; (8) harness adapters and declared version/capability support; and (9) framework verification as upgrade regression detection. This map records responsibilities and exclusions, not a claim that these modules or all five migrations have been implemented.

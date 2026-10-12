@@ -14,7 +14,11 @@
 
 ### 本轮批准修订与来源
 
+本轮功能基线消费[数据原主题的 Session-only 修订](12-state-data-contract.md#最近-roundtree-与恢复展示)与[命令原主题的首次 holiday 切周期](07-command-state.md#holiday-与-clear当前入口适用条件)，不再要求最近 Round 落盘／恢复。确认原话见[本轮存储 schema 确认来源](../assets/storage-schema-confirmation-2026-10-12.md)，修订前原文见[发布前快照](../assets/storage-schema-before-publication-2026-10-12.md)。
+
 功能保留基线消费新的 provider 单一统计范围与整文件 clear；详情命令沿用旧入口偏好，不隐式扩大所有 provider 的展示覆盖。 批准来源：[命令票本轮确认来源](../assets/command-confirmation-2026-10-12.md)（Q13–Q16、Q17–Q20）。此前账号键／身份分区和定点 clear 的政策仅为已被替代历史；不要求认证秘密落盘。非本轮替代范围继续有效，规划不等于实现。
+
+本次展示访谈 Q33 已批准[展示原主题](08-presentation.md)的视觉保留与显式统计／detail 修订；这替代旧 detail 字段展开及尚未确定 UI 标签／布局的描述，不恢复旧 UI 的重价或逐 Turn 解释。确认原话与旧→新范围见[展示来源](../assets/presentation-confirmation-2026-10-12.md)，发布前正文见[历史](../assets/presentation-before-publication-2026-10-12.md)。展示规则只在该 Lighthouse 持有；未批准的远端调度与具体接线仍未决。
 
 ### 公共术语与活动边界
 
@@ -24,9 +28,9 @@ Round 是实际会话的连续活动周期，工具、已知自动续跑、排�
 
 ### 请求锚价、聚合与展示口径
 
-保留请求开始锚价、逐响应可靠 usage 计价，内存累计与 Round 生命周期分离。工具结果、Round 结束和父子汇总不产生第二笔消费。逐响应计算不等于逐响应落盘；本次以 round_end 发布聚合和最近 Round 快照，接受成功保存前的异常退出损失，不预建独立排空钩子或崩溃日志，详见[数据决议](12-state-data-contract.md)。
+保留请求开始锚价、逐响应可靠 usage 计价，内存累计与 Round 生命周期分离。工具结果、Round 结束和父子汇总不产生第二笔消费。逐响应计算不等于逐响应落盘；本次以 round_end 发布 Session 聚合，Round 仅运行期推断，接受成功保存前的异常退出损失，不预建独立排空钩子或崩溃日志，详见[数据决议](12-state-data-contract.md)。
 
-Session totals 是当前消费统计周期内该会话跨各 Round 的累计；Round totals 是其中某一轮，不是整个周期。自身／子代理／整体为 Session 视图，Round 仅本实际会话自身；子代理口径按[数据归属决议](12-state-data-contract.md)本次 Q27 修订，不再提供父 Round 含子汇总；只保留最近轮快照，tree 后该位置 Round 不可用、不显示成零，Session 本周期累计不随 tree 回滚。普通 resume 读取已保存活动聚合，不按宿主历史 token 用当前模型／费率重算，不自动合并旧归档。历史旧 UI Turn 指原生结算差分，不等于新 Turn 或完整 Round。
+Session totals 是当前消费统计周期内该会话跨各 Round 的累计；Round totals 是其中某一轮，不是整个周期。自身／子代理／整体为 Session 视图，Round 仅本实际会话自身；子代理口径按[数据归属决议](12-state-data-contract.md)本次 Q27 修订，不再提供父 Round 含子汇总；正常连续对话须显示上一 Round；不持久化轮次快照，resume/tree 不要求恢复 Round，不把不可用显示成零，Session 本周期累计不随 tree 回滚。普通 resume 读取已保存活动聚合，不按宿主历史 token 用当前模型／费率重算，不自动合并旧归档。历史旧 UI Turn 指原生结算差分，不等于新 Turn 或完整 Round。
 
 用户观察旧计价基本对应官网是保留算法的依据，不是独立账单认证。[旧聚合探针](../assets/old-accounting-granularity-smoke.md)的两次峰／谷请求累计为 13.5 元，按结束时谷价重算为 9 元；[旧 clear／resume 调查](../assets/old-clear-resume-smoke.md)区分 Total 显示重估与 Accrued 落盘，不宣称新生产能力已通过验收。
 
@@ -36,7 +40,7 @@ provider 的 Codex／官方 DeepSeek／token-only／hidden 分层保留，具体
 
 固定 DeepSeek 450K、Codex 272K 上下文预算显示／告警保留，只显示不限制执行；数字／K／0 修改预算功能已取消，不再把旧最高 1000K 的可调预算入口作为迁移要求。Effort 取实际生效值、未知为 ?、只给值着色。
 
-保留北京时间工作日 09:00–12:00、14:00–18:00 含端点峰价，其他时段／周末谷价；holiday 手动谷价、不追溯，持续到成功 clear。每请求锚价、DeepSeek 不另计 cacheWrite 继续生效。
+保留北京时间工作日 09:00–12:00、14:00–18:00 含端点峰价，其他时段／周末谷价；holiday 手动谷价、不追溯，持续到成功 clear；首次开启的整文件归档／切周期修订只消费[命令原主题](07-command-state.md#holiday-与-clear当前入口适用条件)。每请求锚价、DeepSeek 不另计 cacheWrite 继续生效。
 
 Codex 双窗口、按报告时长识别、节奏／重置、ratio／left、同源成对测量及窗口变化规则保留；5h 增量至少 50pp、双窗口正增量且未饱和才采纳估计，无估计 estimating… 的既有业务基线不因此取消。
 
@@ -73,14 +77,14 @@ detail 是入口级内存偏好：普通切会话／tree 保留，重载／重�
 
 - [数据归属与账户周期决议](12-state-data-contract.md)已明确当前修订，优先于本票原功能基线；本票不重新决定其布局／寿命。
 - [消费归属决议](02-accounting-ownership.md)承接实际会话／账户／父子消费原则；[观察契约](../decision/03-observation-contract.md)收口原生身份、usage 来源、结束／恢复与未决冲突处理。
-- [账户访问](../decision/04-provider-access.md)、[HTTP](../decision/05-http-capability.md)、[存储协调](../decision/06-local-storage.md)提供当前认证资料、传输与聚合发布；[命令](../decision/07-command-state.md)、[展示](../decision/08-presentation.md)、[刷新](../decision/09-refresh-lifecycle.md)决定未决交互／调度。
+- [账户访问](../decision/04-provider-access.md)、[HTTP](../decision/05-http-capability.md)、[存储协调](../decision/06-local-storage.md)提供当前认证资料、传输与聚合发布；[命令](07-command-state.md)与[展示](08-presentation.md)已确认本轮交互范围；[刷新](../decision/09-refresh-lifecycle.md)继续决定未决远端调度。
 - [装配](../decision/10-assembly-layout.md)、[验收与切换](../decision/11-acceptance-cutover.md)、[模型覆盖](../decision/13-model-catalog-policy.md)仍未结案。支持基线与 source oracle 须显式核验，不凭事件同名宣称完成。
 
 ## Postconditions
 
 - 后续工作采用当前功能清单与明确已批准修剪，不重新要求预算修改、历史 Round 账本、缺失补算或跨周期 Session 总数。
 - 价格算法、额度基线、固定预算、反馈及数据寿命继续约束后续票；最小逻辑布局由数据 Lighthouse 提供，不另造通用 State。
-- 原生接口、发布完成／失败、最终 UI、TTL 与无 UI 策略仍由对应 open 票决定。本次同步不改变票状态或交付生产行为。
+- 最终 UI 与无 UI 记账／错误可见范围由[展示权威](08-presentation.md)持有；原生接口、TTL 与无 UI 远端刷新仍由对应 open 票决定。规划发布不交付生产行为。
 - 原题、先前批准稿和评论可查历史快照；当前正文不再要求读者靠“后续已替代”自行消解旧承诺。
 
 ## Invariants

@@ -2,7 +2,7 @@
 
 > Question and discussion: [framework 如何提供独立存储、原子更新与跨进程协调？](../decision/06-local-storage.md)
 >
-> 已确认结果；源票已按 Q23–Q26 收口。以下是规划约束，不表示文件能力、原生观察或生产迁移已经实现。物理 schema、framework 文件 interface、锁机制与同会话多执行者策略已由 Q23–Q26 确认；实现与验收仍由装配／验收票承担。
+> 本轮无账号键 schema 已获用户最终确认；当前文档为存储规划权威，文件 module、宿主接线、生产迁移与验收尚未实现。确认原话见[本轮存储 schema 确认来源](../assets/storage-schema-confirmation-2026-10-12.md)，修订前原文见[发布前快照](../assets/storage-schema-before-publication-2026-10-12.md)。
 
 ## Question
 
@@ -12,13 +12,13 @@
 
 ### 本轮批准修订与来源
 
-按账号定点归档／重置改为完整消费 JSON 归档／重置，取消 accounts／providerAccountId，零消费走相同流程；多 CLI 事实保留跨进程锁。旧 Q25 布局被撤销，替代字段结构不由此次命令讨论隐式批准。 批准来源：[命令票本轮确认来源](../assets/command-confirmation-2026-10-12.md)（Q13–Q16、Q17–Q20）。此前账号键／身份分区和定点 clear 的政策仅为已被替代历史；不要求认证秘密落盘。非本轮替代范围继续有效，规划不等于实现。
+按账号定点归档／重置改为完整消费 JSON 归档／重置，取消 accounts／providerAccountId，零消费走相同流程；多 CLI 事实保留跨进程锁。旧 Q25 账号布局曾被撤销；本轮替代结构已显式批准，见当前 Q25。 批准来源：[命令票本轮确认来源](../assets/command-confirmation-2026-10-12.md)（Q13–Q16、Q17–Q20）。此前账号键／身份分区和定点 clear 的政策仅为已被替代历史；不要求认证秘密落盘。非本轮替代范围继续有效，规划不等于实现。
 
 ### 单个消费活动文件与独立历史归档
 
 用户选择本地 JSON，消费活动数据集中在一个文件，归档各自独立，不引入数据库、不按账号预拆文件。本轮取消 accounts／统计账号身份分区：framework 每 provider 单账号，model-cost 不识别替换，消费 clear 整文件备份／重置；provider 支持政策只在[消费归属原权威](02-accounting-ownership.md#账户隔离多会话与额度)持有。用户最常见为多个 CLI 同时运行，正常同机跨进程安全更新仍是支持范围。
 
-旧 daily-tracker 的活动／归档分离作为组织参照；旧算法和新业务并非必须逐字段相同。用户级共享目录及配置解析由 Q16–Q20 确认；文件组织与名称由 Q21 确认；旧 Q25 账号键布局已撤销，替代 schema 尚待该主题定点收口。程序不自动清除旧统计，用户切换版本时手动备份并清空后复用旧目录。
+旧 daily-tracker 的活动／归档分离作为组织参照；旧算法和新业务并非必须逐字段相同。用户级共享目录及配置解析由 Q16–Q20 确认；文件组织与名称由 Q21 确认；旧 Q25 账号键布局已撤销；替代 schema 现由 Q25 持有。程序不自动清除旧统计，用户切换版本时手动备份并清空后复用旧目录。
 
 ### 独立的 Codex 估计文件
 
@@ -26,13 +26,9 @@
 
 ### 一个消费计算来源与 Session／最近 Round
 
-用户确认前轮展示的模型，具体 JSON schema 由 Q25 冻结：消费只保留适用账户当前周期的会话自身累计和最近一轮开始／结束累计快照，不保存历史 Turn／Round 列表。每个可靠响应只在扩展 shared logic 中计价并累加一次。当前轮动态状态在内存，运行中同时持有恢复并持续更新的会话累计；这不意味着每次响应重读磁盘或只在内存留下轮次值。
+会话自身的 provider／model 聚合是唯一消费源，逐响应按请求锚价更新，round_end 保存 Session 累计与直接父关系，不保存 Round／Turn 记录、recentRound 或轮次开始／结束快照。Session 自身／子代理／含后代和全局金额均从自身桶派生，不另写 totalCost／totalTokens，不按当前价重估。正常连续对话的上一 Round 推断与恢复取舍只在[数据原主题](12-state-data-contract.md#最近-roundtree-与恢复展示)持有；运行期内存快照允许，不是持久字段。
 
-Round 自身消耗从同一累计的开始／结束快照派生；费用快照已经逐响应锚价计算，不再次以当前价格重估。round_end 将自身累计、最近快照及必要父子关系同次保存，覆盖旧最近轮。账户总数和父子合计从自身聚合派生，不另维护差分更新的第二套权威消费累计。磁盘是聚合的已保存快照，不是另一个独立计费来源。
-
-上轮“沿旧 token 基线差分并把费用也改差分”的提议不作为最终模型；保留旧方案安全读改写组织，不要求复制其第二套累计维护。提交顺序由下节 Q7 确认，旧快照／消费统计周期有效性方向由 Q8 确认；版本恢复细节由 Q11 确认，同 session 单执行者由 Q26 收口，clear 一致性由 Q13／Q15／Q24 确认。
-
-父子 Session 合计按直接父链派生，Round 只作本实际会话自身累计的差分；依据[数据归属决议本次 Q27 修订](12-state-data-contract.md)，不再按启动父 Round 筛选子消费或保存父 Round 消费分段。子记录 parent 字段按下文 Q25 裁剪；跨账户遍历、直接父恢复与跨 clear 自身快照仍待对应契约，不因简化自动解决。
+子代理保存独立自身累计与同 harness 内的直接父 Session ID，父子树在内存派生，不把子消费复制进父 own。理由是用户重新限定轻量文件只记录 Session 级消费，仍要求 Session 恢复。取消已批准的最近 Round 落盘不是取消正常运行的上一 Round 展示或 round_end 保存时机。确认原话见[本轮存储 schema 确认来源](../assets/storage-schema-confirmation-2026-10-12.md)，修订前原文见[发布前快照](../assets/storage-schema-before-publication-2026-10-12.md)。
 
 ### Extension 模型与 framework 基础能力
 
@@ -48,13 +44,13 @@ Round 自身消耗从同一累计的开始／结束快照派生；费用快照�
 
 ### Q5：提前提交，handler 返回前等待
 
-用户明确确认：捕获稳定的 Session 累计／最近 Round 快照，提交 framework 安全异步更新，继续不依赖保存成功、且不再写同一文件的独立逻辑，handler 完成前 await 保存结果。framework 底层采用非阻塞文件操作，不只是给同步 I/O 包 Promise；不是 fire-and-forget、不新增退出后排空系统。
+用户明确确认：捕获稳定的 Session 自身累计与直接父关系快照，提交 framework 安全异步更新，继续不依赖保存成功、且不再写同一文件的独立逻辑，handler 完成前 await 保存结果。framework 底层采用非阻塞文件操作，不只是给同步 I/O 包 Promise；不是 fire-and-forget、不新增退出后排空系统。
 
 所有正常返回／提前返回／异常路径都需收口该保存任务，并及时接住保存拒绝；普通 round_end 保存失败策略已由下节 Q6 确认；具体反馈承载由展示票 08 收口，业务拒绝与保存失败的可判别结果由 Q24 确认。实际 I/O 是否已开始及性能收益取决于协调与运行条件，不宣称已有测量。本决定替代 agent 先前立即 await 的推荐，后者从未作为用户批准约束。
 
 ### Q6：普通消费保存失败丢弃未保存部分并重新初始化
 
-用户在本轮明确确认修订：所有普通消费保存失败（包括业务不一致与临时 I/O／协调失败）都报告失败，但不因此停止代理主流程、不假报持久化成功；丢弃受影响消费状态的未保存部分，重新从磁盘当前有效完整快照初始化周期、累计、最近 Round 与版本。不将已有磁盘累计置零，不执行账户 clear，不重置磁盘周期／holiday。不清已处理请求的去重标记，避免旧通知重新计费。
+用户在本轮明确确认修订：所有普通消费保存失败（包括业务不一致与临时 I/O／协调失败）都报告失败，但不因此停止代理主流程、不假报持久化成功；丢弃受影响消费状态的未保存部分，重新从磁盘当前有效完整快照初始化周期、Session 累计与版本。不将已有磁盘累计置零，不执行账户 clear，不重置磁盘周期／holiday。不清已处理请求的去重标记，避免旧通知重新计费。
 
 读不到有效磁盘数据时，按 Q14 报告并暂停本实例消费统计／保存至下一次正常会话初始化，不猜零覆盖，不新增自动重试、修复、补账、持久恢复日志或后台补写。后续新消费只从有效初始化基线开始，不重交已经丢弃的消费。
 
@@ -86,13 +82,13 @@ Round 自身消耗从同一累计的开始／结束快照派生；费用快照�
 
 ### Q11：完整快照恢复与失败后的重新初始化
 
-普通重启／resume 没有运行中的内存状态时，读取当前消费统计周期内已保存的完整会话快照，一起恢复累计、最近 Round 与保存版本，新快照从恢复版本继续递增，同一快照正常重交保持原版本；新周期没有该会话记录时才从初始版本开始。不扫描历史消息、不合并旧归档、不以当前价重算旧消费。
+普通重启／resume 没有运行中的内存状态时，读取当前消费统计周期内已保存的完整会话快照，一起恢复 Session 累计与保存版本，新快照从恢复版本继续递增，同一快照正常重交保持原版本；新周期没有该会话记录时才从初始版本开始。不扫描历史消息、不合并旧归档、不以当前价重算旧消费。
 
-本轮按用户确认修订运行中失败分支：保存失败后不再保留较新未保存消费，按 Q6 丢弃并从磁盘当前有效完整快照重新初始化。版本只在同消费统计周期、同会话内比较，旧周期版本再大也不覆盖新周期；现有磁盘记录缺必要字段不是普通无内存版本，不据此猜值或兼容旧统计。同 Session 单执行者检测由 Q26 收口，clear 后运行态由 Q23／Q6 收口。普通 resume 契约未改变，仅“运行中保存失败不回滚”被明确替代；修订前原文见源票历史。
+本轮按用户确认修订运行中失败分支：保存失败后不再保留较新未保存消费，按 Q6 丢弃并从磁盘当前有效完整快照重新初始化。版本只在同消费统计周期、同 harness、同会话内比较，旧周期版本再大也不覆盖新周期；现有磁盘记录缺必要字段不是普通无内存版本，不据此猜值或兼容旧统计。同 Session 单执行者检测由 Q26 收口，clear 后运行态由 Q23／Q6 收口。普通 resume 契约未改变，仅“运行中保存失败不回滚”被明确替代；修订前原文见源票历史。
 
 ### Q12：同版本不同内容拒绝并报告冲突
 
-用户明确同意：同周期同会话同保存版本却不同快照内容时，保留磁盘内容，返回明确冲突并报告，不相加、不最后覆盖、不逐字段取最大值，也不新增持久冲突账本。区别于同版本同一快照的正常重复，不假报保存成功；普通 round_end 按 Q6 不因此中止主流程。业务快照相等的具体判断随 schema 收口。
+用户明确同意：同周期同会话同保存版本却不同快照内容时，保留磁盘内容，返回明确冲突并报告，不相加、不最后覆盖、不逐字段取最大值，也不新增持久冲突账本。区别于同版本同一快照的正常重复，不假报保存成功；普通 round_end 按 Q6 不因此中止主流程。业务快照相等按当前 Q25 的已确认 Session 字段内容判断。
 
 ### Q13：clear 先归档再重置，失败终止
 
@@ -130,7 +126,7 @@ model-cost config.yaml 的 storageDir 初始配置为 "~/cost-archive"。仅此�
 
 ### Q21：固定文件组织，一个可配置根
 
-用户对完整文件组织提议回答“同意”。storageDir 下固定 consumption.json 存放完整消费活动聚合／周期／holiday／会话自身累计／直接父关系／最近 Round；本轮取消账号分区，不改文件名。codex-usage-estimate.json 独立保存唯一 Codex 范围估计，消费 clear 不清它；archives/<本次归档唯一标识>.json 每次独立保存完整活动 JSON，不覆盖旧归档。取消账号键后的具体字段布局须按 Q25 定点收口，不新增各文件路径配置。
+用户对完整文件组织提议回答“同意”。storageDir 下固定 consumption.json 存放完整消费活动聚合／周期／holiday／Session 自身累计／直接父关系；本轮取消账号分区，不改文件名。codex-usage-estimate.json 独立保存唯一 Codex 范围估计，消费 clear 不清它；archives/<本次归档唯一标识>.json 每次独立保存完整活动 JSON，不覆盖旧归档。取消账号键后的具体字段布局按当前 Q25，不新增各文件路径配置。
 
 只配置根目录，不分别配置这三个位置。活动文件名不再沿用 deepseek-cost.json，因为新活动数据包括多账户／多模型；不增加第二套权威聚合。失败归档备份仍按 Q13 保留但不自动恢复／合并，不把文件存在当 clear 成功。文件名及组织已确认，JSON 字段／schema 版本／唯一归档标识由 Q25 确定，锁／协调键及原子发布契约由 Q24 确定（实现仍未开始）；没有创建目录或业务文件。
 
@@ -164,13 +160,83 @@ ADR-0002 已要求 framework 提供协调读-改-发布与读端安全的原子�
 
 ### Q25：consumption.json 的物理 schema、归档与版本
 
-用户同意以下最小结构；token 分桶键名与缺价口径以行为／消费契约为准，装配时落定：
+用户最终确认以下结构。示例数字和模型名仅解释字段，不是实际价格或源数据；不自动沿用旧格式或账号键。确认原话见[本轮存储 schema 确认来源](../assets/storage-schema-confirmation-2026-10-12.md)，修订前原文见[发布前快照](../assets/storage-schema-before-publication-2026-10-12.md)。
 
-- 原 Q25 的 accounts／providerAccountId 键与每账号分区已按本轮 Q13–Q15 批准取消，不得继续实现凭据指纹或账号 ID 持久化。
-- 仍保留 schemaVersion、周期拒绝旧提交、会话 saveVersion、唯一 own（provider／模型／token／费用口径）、recentRound 与直接父 parent 的需求；本次不重新引入父 Round 标签／归属段。
-- 只存当前活动范围；archives/<archiveId>.json 使用 crypto.randomUUID()，已存在拒绝覆盖，内容为锁内最新完整有效活动 JSON；零消费同样归档。
-- 未知／缺失／损坏 schemaVersion 按 Q14，不猜零、不自动迁移旧 deepseek-cost.json。
-- **待定点收口**：取消账号键之后，provider 分桶与 periodId／holiday／sessions 的具体物理位置尚未获批；旧 Q25 不能作为完成冻结的替代 schema。整文件 reset 的跨 provider 表示也应在同一次收口确认。此次发布只撤销被用户明确取消的账号布局，不替用户选择新字段结构；用户在命令票 Q21 已回答“可以”，授权该原题仅对这项物理布局定点重审；源存储票已恢复 open、未认领，替代 schema 仍未决定。其他 Q5–Q24／Q26 不重开。来源见[命令确认原话](../assets/command-confirmation-2026-10-12.md#q21-定点重审授权)。
+```json
+{
+  "schemaVersion": 1,
+  "periodId": "7e9983ee-6f68-4bb7-8c01-13a48beaf24b",
+  "start": "2026-10-12T04:00:00.000Z",
+  "start_bal": 99.8,
+  "holiday": true,
+  "harnesses": {
+    "omp": {
+      "sessions": [
+        {
+          "id": "session-main",
+          "name": "主会话",
+          "parent": null,
+          "saveVersion": 2,
+          "own": {
+            "deepseek": {
+              "model-A": {
+                "tokens": {
+                  "input": 1000,
+                  "cacheRead": 500,
+                  "cacheWrite": 0,
+                  "output": 200
+                },
+                "costCny": 0.01
+              }
+            },
+            "openai-codex": {
+              "model-B": {
+                "tokens": {
+                  "input": 2000,
+                  "cacheRead": 1000,
+                  "cacheWrite": 0,
+                  "output": 300
+                },
+                "referenceCostUsd": 0.02
+              }
+            }
+          }
+        },
+        {
+          "id": "session-child",
+          "name": "资料核对",
+          "parent": "session-main",
+          "saveVersion": 1,
+          "own": {
+            "deepseek": {
+              "model-A": {
+                "tokens": {
+                  "input": 600,
+                  "cacheRead": 0,
+                  "cacheWrite": 0,
+                  "output": 100
+                },
+                "costCny": 0.005
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
+- 文件根：schemaVersion、periodId、start、可选 start_bal、holiday、harnesses。schemaVersion=1 为当前格式门槛，正常保存／重置不递增；未知／缺失／损坏格式按 Q14，不猜零、不自动迁移旧 deepseek-cost.json。
+- periodId 是整文件重置代际，不是文件内分桶键。每次成功 clear／首次开启 holiday 切新周期；提交与锁内磁盘周期不同按 Q8 拒绝。它与 start 的可读时间、schemaVersion 的格式门槛、saveVersion 的快照排序各司其职。
+- harnesses.<harness>.sessions 为扁平 list，不是 sessions.<harness>、map 或嵌套树。Session 记录为 id、name、parent、saveVersion、own；同 harness 内 id 唯一，更新按 id 找到替换或追加，保留其他记录；不是按数组位置识别。完整身份为 harness＋原生 sessionId，harness 标识不是版本，parent 为同 harness 的直接父 Session ID，主会话为 null。不要求父记录先落盘，不创建占位父节点；恢复按关系派生树／汇总。
+- harness／实际 sessionId／直接父身份由 adapter 映射宿主事实，经 framework 公共接口提供；model-cost 不猜 ID 格式、不读原生 context。仅预留未来 pi 桶，不预建空 pi 数据，也不实现或认证 pi；具体接线由装配票落实。
+- own.<provider>.<model> 保存自身 token 四桶 input／cacheRead／cacheWrite／output；按公共 usage 口径区分，input 与缓存不重复累计。保存逐响应锚价后的费用；DeepSeek costCny 与 Codex referenceCostUsd 分开。缺价仍保留可靠 token，只不追加对应费用，不用以后价格补算。Codex 对金额合计贡献为0，不抹掉token／美元参考费用，不把混合 Session 的全部金额归零；渠道分类只消费[消费归属原权威](02-accounting-ownership.md#金额口径缺失与冲突边界)。
+- 不保存 Session／父含后代／全局 totalCost／totalTokens，不保存 last* 宿主差分基线，不保存 recentRound、Round／Turn 明细或轮次快照。总数从已算桶求和，可缓存内存只读视图；不是当前价重估，render 不读盘或改权威值。
+- saveVersion 作用域为 periodId＋harness＋sessionId；恢复已保存版本，新快照递增，同快照正常重交保持原版本。Q8 旧版本拒绝、同版本同内容幂等，Q12 同版本不同业务内容冲突，不相加／最后覆盖。业务相等按已确认记录字段内容比较，不以 JSON 字符串排版或 map 键顺序区分。正常合并只改负责记录，不以旧 list 整份覆盖。
+- start 是周期开始时间。start_bal 为可选的 DeepSeek 人民币边界余额，可靠读数缺失则省略，不填0。Session name 是展示名称，不作身份。最新余额缓存继续仅内存；起止边界读数是旧文件已有历史信息，不因此持久化一般远端读数。
+- archives/<archiveId>.json 使用 crypto.randomUUID()，已存在拒绝覆盖；保存锁内最新完整有效活动 JSON，另加 end 和可选 end_bal。本次同一可靠余额用作旧归档 end_bal 与新活动 start_bal，无可靠读数两者均省略；余额差不要求等于已算消费。时间用 ISO 字符串，归档保留旧 periodId／start／holiday／所有 harness Session。余额获取与可用性组织消费刷新／装配票，字段存在不证明远端请求已验收。
+- 零消费也归档。普通 clear 新活动含 schemaVersion、全新 periodId、start、可选 start_bal、holiday=false、harnesses={}；首次开启 holiday 复用同一安全归档／重置流程，新活动 holiday=true，不先 clear(false) 再第二次 setHoliday。已开启幂等，不重复切周期。完整消费 reset 涉及所有 harness／provider，已有归档、独立 Codex estimate 与入口 detail 不清。动作触发和条件只在[命令原主题](07-command-state.md#holiday-与-clear当前入口适用条件)持有；Q13 先归档再实际提交、失败终止仍有效。
 
 ### Q26：同会话多执行者靠版本冲突收口
 
@@ -178,18 +244,18 @@ ADR-0002 已要求 framework 提供协调读-改-发布与读端安全的原子�
 
 ## Decision
 
-消费活动数据集中存于一个本地 JSON，历史归档及 Codex 估计文件独立；model-cost 以唯一自身聚合派生统计，round_end 保存 Session 累计和最近 Round 快照。framework 提供公共 Session／Round／response 事实与可复用的安全文件更新机制，不规定扩展业务持久化模型；普通消费保存失败反馈而不打断主流程，丢弃未保存部分并从磁盘有效快照初始化，接受少量损失，不增后台重试；同文件更新采用轻量进程内 FIFO，跨进程互斥而不承诺全局顺序；按会话记录合并并校验消费统计周期／保存版本；取得权限前有限等待／可取消，开始更新后等待实际结果；协调等待默认 15 秒可由调用方覆盖，同版本不同内容拒绝并报告；resume 与失败后初始化均以磁盘有效完整快照为基线；clear 先归档再提交活动重置，失败终止；无有效基线暂停消费统计／保存至下一次正常初始化；clear 仅归档锁内最新已保存数据，不排空内存并丢弃未落盘消费。
+消费活动数据集中存于一个本地 JSON，历史归档及 Codex 估计文件独立；model-cost 以唯一自身聚合派生统计，round_end 保存 Session 自身累计与直接父关系，Round 只运行期推断。framework 提供公共 Session／Round／response 事实与可复用的安全文件更新机制，不规定扩展业务持久化模型；普通消费保存失败反馈而不打断主流程，丢弃未保存部分并从磁盘有效快照初始化，接受少量损失，不增后台重试；同文件更新采用轻量进程内 FIFO，跨进程互斥而不承诺全局顺序；按会话记录合并并校验消费统计周期／保存版本；取得权限前有限等待／可取消，开始更新后等待实际结果；协调等待默认 15 秒可由调用方覆盖，同版本不同内容拒绝并报告；resume 与失败后初始化均以磁盘有效完整快照为基线；clear 先归档再提交活动重置，失败终止；无有效基线暂停消费统计／保存至下一次正常初始化；clear 仅归档锁内最新已保存数据，不排空内存并丢弃未落盘消费。
 
 用户级共享且目录可配置，storageDir 的 ~/ 特指用户 .omp 主目录；初始 ~/cost-archive 复用旧目录，由用户切换前手动备份清空；初始化读取、修改重启，不热切换或自动迁移。该根下固定 consumption.json、codex-usage-estimate.json 与 archives/ 独立归档文件，不另设各文件路径配置。
 
 文件协调的本次保证限定本机本地文件系统，同机跨进程安全共享；不承诺网络盘／云同步的跨机器共同写入。
 
-framework 提供 harness-independent 的协调读-改-发布能力：单一异步入口、规范化路径协调键、进程内 FIFO、锁文件跨进程互斥、15 秒等待预算、锁内重读最新文档、调用方更新函数、同目录临时文件 + rename 原子发布、损坏不覆盖、陈旧锁回收且被误回收的写入者放弃覆盖；framework 不解释业务 schema。model-cost 拥有 consumption.json 物理 schema 的剩余约束（schemaVersion／无账号键的活动统计范围及会话 saveVersion／own／recentRound／parent；具体替代布局尚待 Q25 定点收口）与 `archives/<uuid>.json` 归档命名。读新鲜度以锁内读取为准，不做每请求读取，跨进程 clear 由保存时周期校验按 Q8／Q6 收口；同会话多执行者不引入租约，靠版本与冲突检测收口。
+framework 提供 harness-independent 的协调读-改-发布能力，业务 schema／合并规则归 model-cost；本轮 Q25 已冻结无账号键、harness 优先／Session list／provider-model 自身桶、格式／周期／保存版本与边界元数据。普通保存仅按负责记录更新，完整归档／重置遵循 Q13／Q25；读新鲜度与同 Session 多执行者取舍仍按 Q23／Q26。生产实现与验收尚未完成。
 
 ## User stories
 
 1. As a 用户, I want 一个消费活动文件与独立历史归档, so that 当前单账户使用不承担预拆文件复杂度且保留明确的消费统计周期恢复。
-2. As a 用户, I want Session 累计与最近 Round 来自同一消费聚合, so that 展示、保存和恢复不维护两套消费算法或重复计费。
+2. As a 用户, I want Session 持久累计与运行期上一 Round 推断来自同一消费聚合, so that 展示、保存和恢复不维护两套消费算法或重复计费。
 3. As a extension 开发者, I want framework 封装多会话安全更新, so that 不在每个扩展重复实现文件协调并能选择自己的持久化模型。
 4. As a 用户, I want Codex 转换估计保持独立持久化, so that 消费归档／clear 不误改另一功能的数据。
 5. As a 用户, I want 提前提交非阻塞保存并在 handler 完成前等待, so that 独立业务逻辑可与 I/O 重叠但不会留下脱离本次处理的保存任务。
@@ -220,20 +286,22 @@ framework 提供 harness-independent 的协调读-改-发布能力：单一异�
 20. As a extension 开发者, I want framework 提供带锁、锁内重读与原子发布的通用文件能力, so that 多进程安全更新不在每个扩展重复实现。
 21. As a 用户, I want consumption.json 一个最小且唯一的物理 schema, so that 恢复、归档与展示读取同一权威。
 22. As a 用户, I want 同会话双执行者靠版本冲突而非租约收口, so that 不引入额外仲裁机制且不静默覆盖。
+23. As a 用户, I want 保留周期时间、DeepSeek 起止余额和 Session 名称, so that 旧统计文件的可读边界信息不丢失。
+24. As a 用户, I want harness 优先分层、扁平 Session list 与 provider／model 桶, so that 保存恢复贴近原数据、不同宿主身份不碰撞且模型统计方便。
 
 ## Preconditions
 
 - 复用旧目录前由用户手动备份、清空旧统计并完成新旧加载切换；原新实现加载互斥与回退步骤由验收票收口，不将此规划当已经完成的用户动作。
 
-- [数据归属与账户周期决议](12-state-data-contract.md)提供本周期自身聚合、最近快照、父子关系及接受的未保存损失边界。
+- [数据归属与账户周期决议](12-state-data-contract.md)提供本周期 Session 自身聚合、运行期 Round 推断、父子关系及接受的未保存损失边界。
 - [观察契约](../decision/03-observation-contract.md)仍需提供可靠响应、Round、会话与父子身份事实；[账户访问](../decision/04-provider-access.md)提供当前认证资料，不提供持久化统计身份。
-- Q23／Q24／Q26 已确认安全更新 interface、完成／失败结果、旧提交拒绝、锁与平台、路径、clear 归档／重置一致性及读新鲜度契约；这些仍是规划，不代表 framework 文件能力已实现。实现需 node:fs 等运行时文件 API（与 config 读取一致），不再要求统计账号身份格式；取消账号键后的物理 schema 尚待 Q25 定点收口，落地点由装配票决定。
+- Q23／Q24／Q26 已确认安全更新 interface、完成／失败结果、旧提交拒绝、锁与平台、路径、clear 归档／重置一致性及读新鲜度契约；这些仍是规划，不代表 framework 文件能力已实现。实现需 node:fs 等运行时文件 API（与 config 读取一致），不再要求统计账号身份格式；取消账号键后的物理 schema 已由 Q25 最终确认，落地点由装配票决定。
 
 ## Postconditions
 
 - [装配规格](../decision/10-assembly-layout.md)不得把消费 schema、计价或 Session／Round 保存规则放入 framework 基础文件 module。
 - [展示](../decision/08-presentation.md)读取同一自身聚合及派生视图；[验收](../decision/11-acceptance-cutover.md)覆盖恢复与多会话保存，不恢复历史明细账要求。
-- [命令](../decision/07-command-state.md)的 clear 依赖本票已确认的 clear 一致性机制（Q13／Q15／Q24），实施由命令／验收票收口；[刷新](../decision/09-refresh-lifecycle.md)保留独立 estimate 的调度责任。
+- [命令](../decision/07-command-state.md)的 clear 与首次开启 holiday 消费本票的归档／重置一致性机制（Q13／Q15／Q24／Q25），生产实现与验收由装配／验收票承接；[刷新](../decision/09-refresh-lifecycle.md)保留独立 estimate 的调度责任。
 
 - [展示](../decision/08-presentation.md)确定普通 round_end 保存失败在 UI／headless 的反馈承载；[装配](../decision/10-assembly-layout.md)及[验收](../decision/11-acceptance-cutover.md)采用修订 Q6 的不阻断、丢弃未保存部分／磁盘有效基线初始化及明确接受少量损失，不按旧失败保留内存要求验收、不默增后台重试。
 
@@ -254,11 +322,11 @@ framework 提供 harness-independent 的协调读-改-发布能力：单一异�
 
 - 会话自身累计是唯一消费聚合源；工具、Round 发布、账户与父子汇总不产生第二笔消费。
 - 延续旧 daily-tracker 的本地 JSON 活动／历史分离思路，不要求照搬旧 token 差分／费用增量算法。
-- 持久化模型归 extension；framework 的基础文件 module 不认识 holiday、业务计价、本消费统计周期消费累计或最近 Round 持久化 schema，不升级 boolean 激活 State 为业务容器。
+- 持久化模型归 extension；framework 的基础文件 module 不认识 holiday、业务计价、本消费统计周期消费累计或 Session 持久化 schema，不升级 boolean 激活 State 为业务容器。
 - 原生 file-lock 不直接泄漏到 shared logic；安全协调按现有 harness-independent 分层决定。
 - clear 不改 framework 活动态，不清已有归档或独立 Codex estimate；账号分区与“其他账号保留”要求取消；本票局部确认不移除其余既定数据寿命。
 
-- framework 文件能力不认识 holiday、消费统计周期、会话版本或最近 Round 业务 schema；schema／合并／归档规则归 model-cost，能力只负责协调、锁与发布。
+- framework 文件能力不认识 holiday、消费统计周期、会话版本或 Session 业务 schema；schema／合并／归档规则归 model-cost，能力只负责协调、锁与发布。
 - 读新鲜度：锁内读取即最新；普通运行不做每请求磁盘读、无定时轮询、无空闲刷新。
 - 锁只保证互斥与发布安全；被误回收的存活写入者必须放弃写入而不是覆盖他人已完成更新（对齐 [ADR-0002 shared-file concurrency scope](../../../docs/adr/0002-semantic-extension-framework.md)）。
 - 旧统计文档不兼容（地图 Out of scope 已确认）；程序不自动迁移、清空或合并旧数据。

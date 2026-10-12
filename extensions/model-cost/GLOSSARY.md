@@ -52,6 +52,10 @@ _Avoid_: monetary-billed channel, zero consumption
 A model-priced monetary estimate retained for comparison, distinct from the consumption amount contributed under the channel accounting policy or a confirmed provider debit. Codex dollar estimates are reference costs.
 _Avoid_: consumption amount total, actual subscription charge
 
+**Fee composition reference ratio（费用结构参考占比）**:
+The proportions of a specified model’s input, output and cache usage valued with its relative pricing weights, used to compare their monetary significance. It is distinct from an unweighted token ratio and from the actual historical expenditure breakdown across changing price periods.
+_Avoid_: token ratio, actual expenditure breakdown, provider allowance percentage
+
 **Allowance consumption（额度消费）**:
 The indication that an accounting scope contains allowance-based consumption, whose contribution to the consumption amount subtotal is zero. It does not mean that the request consumed nothing or that its usage is unknown.
 _Avoid_: free request, unknown usage

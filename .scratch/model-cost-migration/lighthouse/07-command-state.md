@@ -2,7 +2,7 @@
 
 > Question and discussion: [/budget 的参数、操作与状态如何在新框架表达？](../decision/07-command-state.md)
 >
-> 本轮命令范围已确认并发布（2026-10-12），确认原话与事实边界见[本轮确认来源](../assets/command-confirmation-2026-10-12.md)。源票已 resolved、清理 claim；Backtracer 的存储 Q25 跟进已获用户授权并恢复原题为 open，尚未解决其字段布局。本文件不是生产实现证明。原先仅确认 clear 执行条件的局部结果已合入当前主题。
+> 命令范围已确认并发布，源票仍 resolved；本轮明确批准首次 holiday 的整文件归档／切周期修订，存储替代 schema 已由 Q25 最终确认。此为规划，不是生产实现。确认原话见[本轮存储 schema 确认来源](../assets/storage-schema-confirmation-2026-10-12.md)，修订前原文见[发布前快照](../assets/storage-schema-before-publication-2026-10-12.md)。
 
 ## Question
 
@@ -49,11 +49,15 @@ framework 捕获未处理的同步抛错与 Promise rejection，经既有公共�
 
 `/budget detail` 每次在 brief／detail 间切换，并反馈当前模式，不增加 brief 或 detail on/off。入口偏好寿命由[数据归属的 detail 主题](12-state-data-contract.md#holiday预算修改与入口-detail)持有：入口内存、普通切会话／tree 保留，重载／重启回 brief，独立入口互不影响，不按会话持久化或子代理继承。
 
-用户 Q19 授权跟随旧实现；已核对旧命令入口无 provider 限制、DeepSeek／Codex／token-only renderer 使用 detailMode，hidden 返回空 widget。因此 detail 动作不检查 provider，也不加 Round／保存门控；hidden 或无 UI 只更新偏好与公共反馈，不强制创建 widget。此选择不承诺所有 provider 都有 usage UI。具体展示布局／headless 行为由[展示票](../decision/08-presentation.md)决定，provider／模型名单由[模型覆盖票](../decision/13-model-catalog-policy.md)决定，不由命令票扩大。
+用户 Q19 授权跟随旧实现；已核对旧命令入口无 provider 限制、DeepSeek／Codex／token-only renderer 使用 detailMode，hidden 返回空 widget。因此 detail 动作不检查 provider，也不加 Round／保存门控；hidden 或无 UI 只更新偏好与公共反馈，不强制创建 widget。此选择不承诺所有 provider 都有 usage UI。具体展示布局／headless 记账与提示按[展示权威](08-presentation.md)，完整无 UI 远端调度仍由刷新票决定，provider／模型名单由[模型覆盖票](../decision/13-model-catalog-policy.md)决定，不由命令票扩大。
+
+本轮用户在展示访谈 Q31／Q33 确认 Hub 子代理不新增 detail 命令路由，具体显示模式与返回恢复只在[展示原主题](08-presentation.md#hub-子代理视图只切必要的-session-信息)持有；该来源修订旧 detail 显示而不改变本节主入口 toggle／寿命／无 UI 反馈。原话见[展示确认](../assets/presentation-confirmation-2026-10-12.md)，发布前文字见[历史](../assets/presentation-before-publication-2026-10-12.md)。
 
 ### holiday 与 clear：当前入口适用条件
 
-二者仅在当前 provider 为 DeepSeek 时可执行；clear 的 provider 检查只是适用限制，不再用于选择账号。holiday 保留幂等开启：已开启提示 info，不反转、不新增 off；成功持久化后反馈开启，不追溯已有消费或已锚价请求。其业务寿命由数据权威持有。
+二者仅在当前 provider 为 DeepSeek 时可执行，provider 检查只是入口限制，不选择账号／harness 清理目标。首次开启 holiday 改为自动归档整份消费活动文件并切新周期，新活动直接 holiday=true；影响所有 harness／provider 的消费累计，包括 Codex，但不清独立 estimate、旧归档或 detail。已开启仍幂等提示 info，不重复归档／重置、不反转、不新增 off。普通 clear 新活动 holiday=false。物理归档／发布／元数据只在[存储 Q13／Q25](06-local-storage.md)持有；不是先 clear(false) 再单独 setHoliday，实际活动文件发布后才反馈开启成功。
+
+旧→新：此前仅修改当前周期 holiday、不自动 clear 的命令行为，按用户 Q28「开启」及最终 schema 确认替换为首次开启即新统计段；理由是希望 holiday 开启边界与归档／周期一致。旧消费只留归档，不追溯重计价，旧周期未保存提交沿用存储的拒绝／损失取舍，不引入全局 idle 等待。确认原话见[本轮存储 schema 确认来源](../assets/storage-schema-confirmation-2026-10-12.md)，修订前原文见[发布前快照](../assets/storage-schema-before-publication-2026-10-12.md)。
 
 当前入口 Round 未结束，或结束后保存处理尚未收口时，holiday／clear 直接拒绝；不建立 pending 操作、不排队、不在未来 round_end 自动执行。既有历史会话只要当前可靠 idle 且没有待完成保存就允许；刚启动可靠 idle 也允许，不要求先发生 round_end。活动未知不默认 idle。
 
@@ -69,7 +73,7 @@ framework 捕获未处理的同步抛错与 Promise rejection，经既有公共�
 | holiday 已开启且条件允许 | info 已开启，不反转 |
 | 无有效存储基线，读取／更新／归档失败 | shared logic 将失败转为带操作背景的错误，framework 报告，不猜零覆盖 |
 | 操作完成 | 实际持久化提交后，shared logic 经公共通道发 info；detail 是内存操作，切换后反馈 |
-| clear 归档已生成、但重置未提交 | 报告“归档已生成，重置未成功”，不假报 clear 成功、不自动补做／恢复 |
+| clear／首次 holiday 归档已生成、但新活动未提交 | 报告归档已生成及重置／开启未成功，不假报成功、不自动补做／恢复 |
 
 整文件归档／重置、有效零消费同流程、未保存消费丢弃、先归档后提交与独立 estimate／旧归档／detail 保护，只消费[存储原权威](06-local-storage.md)；不将 clear 失败套为普通消费保存的成功，也不借内存初始化伪装已提交。
 
@@ -86,21 +90,22 @@ framework 新增声明式一层 `actions` 路由与统一等待／异常报告�
 5. As a 开发者, I want framework 统一承接错误与三个反馈级别, so that extension 不各自打印或重复报告。
 6. As a 用户, I want holiday／clear 在本入口工作中直接拒绝而 idle 时可用, so that 不维护一轮内重置／切界或延期队列，也不要求新建会话。
 7. As a 用户, I want detail 跟随旧实现而不强迫所有 provider 新增 UI, so that 展示覆盖仍由自己的决策负责。
-8. As a 用户, I want 归档成功但重置失败被准确报告, so that 知道当前活动统计没有清零而不误以为 clear 成功。
+8. As a 用户, I want 归档成功但新活动发布失败被准确报告, so that 不误以为 clear／holiday 已成功。
+9. As a 用户, I want 首次 holiday 归档并切新统计段, so that 假日计价设置与周期边界一致而无需手动先 clear。
 
 ## Preconditions
 
 - framework 提供当前 provider、可靠 Round／活动事实，shared logic 知道自身保存是否收口；具体 observation／command delivery 接线消费[观察权威](03-observation-contract.md)，由[装配](../decision/10-assembly-layout.md)落实，不把原生 canAcceptInput 单值冒充全部保存状态。
-- [存储权威](06-local-storage.md)提供安全异步读改发布和整文件归档／重置；本轮取消账号布局后的 Q25 物理 schema 仍有定点收口问题，未获批字段结构不由命令示例冻结。
+- [存储权威](06-local-storage.md)提供安全异步读改发布和整文件归档／重置；无账号键替代 schema 已在 Q25 最终确认，命令只消费该权威，不复制字段结构。
 - 每 provider 单账号但多 CLI 同机共享的支持前提由[消费归属原权威](02-accounting-ownership.md#账户隔离多会话与额度)持有；当前运行期认证资料由[账户访问权威](04-provider-access.md)持有。
 - 此为迁移规划，支持基线不因本轮 OMP／pi 进程探针改变，不实施 pi adapter。
 
 ## Postconditions
 
 - [装配票](../decision/10-assembly-layout.md)把同步／异步 action 的完成与错误从公共入口传到宿主，动作实现放 shared logic；复用既有声明、绑定、adapter 注册和公共反馈路径。
-- [验收票](../decision/11-acceptance-cutover.md)覆盖合法／非法输入、Promise 完成与失败、三个反馈级别、无 UI 输出、provider／当前入口门控、零消费归档及归档成功重置失败；生产验收尚未执行。
-- 展示与模型覆盖消费入口 detail 偏好，不将此票解释为所有 provider 的新 usage UI；无 UI 远端调度仍由展示／刷新票决定。
-- 账号统计隔离政策在原权威修订；命令票只链接，物理 schema 缺口已通过用户 Q21 授权恢复存储原题定点重审，不默选候选；命令范围结案不解除装配的未满足存储依赖。
+- [验收票](../decision/11-acceptance-cutover.md)覆盖合法／非法输入、Promise 完成与失败、三个反馈级别、无 UI 输出、provider／当前入口门控、零消费归档、首次 holiday 整文件切周期／已开启幂等及归档成功新活动发布失败；生产验收尚未执行。
+- 展示与模型覆盖消费入口 detail 偏好，不将此票解释为所有 provider 的新 usage UI；无 UI 记账与错误可见范围由[展示权威](08-presentation.md)持有；无 UI 远端调度仍只由[刷新票](../decision/09-refresh-lifecycle.md)决定。
+- 账号统计隔离、schema、Round 寿命均由原权威持有；本轮首次 holiday 行为已获显式修订，不重开其他命令问题，生产接线仍归装配／验收。
 
 ## Invariants
 
