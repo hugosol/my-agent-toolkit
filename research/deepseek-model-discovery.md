@@ -18,7 +18,8 @@ GET /models
 ```
 
 - No parameters are documented — no query/filter/pagination and no request body (`Parameters: 0`, `Request Body: 0` in the server-rendered page).
-- No auth/security section is rendered on the endpoint page itself. The key requirement comes from the [intro page](https://api-docs.deepseek.com/): `api_key` = "apply for an API key", and its chat example sends `Authorization: Bearer ${DEEPSEEK_API_KEY}` at base URL `https://api.deepseek.com` (Anthropic-format base URL `https://api.deepseek.com/anthropic`). Whether `GET /models` accepts the same header without a key, or returns 401, is not documented and was not tested here.
+- No auth/security section is rendered on the endpoint page itself. The key requirement comes from the [intro page](https://api-docs.deepseek.com/): `api_key` = "apply for an API key", and its chat example sends `Authorization: Bearer ${DEEPSEEK_API_KEY}` at base URL `https://api.deepseek.com` (Anthropic-format base URL `https://api.deepseek.com/anthropic`).
+- The endpoint does require credentials: an unauthenticated `curl https://api.deepseek.com/models` returns `HTTP 401 Authentication Fails (governor)` (reported by the requester 2026-10-12 and treated as ground truth here; the same 401 was not re-run in this environment). So no anonymous listing of model IDs exists, and the full set of IDs a key sees cannot be read without a key.
 - The page describes itself as listing "the currently available models"/"列出当前可用的模型", and links to Models & Pricing "for our currently supported models" — the docs already separate model discovery from price discovery in their own words.
 
 ### Documented 200 response schema (exhaustive; no price fields)
