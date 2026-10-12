@@ -6,23 +6,27 @@
 
 ## Question
 
-在 model-cost 当前单账号使用范围内，如何以 harness-independent 的小 interface 接入宿主当前身份／凭据／provider 地址，让余额、额度及消费隔离无需直接依赖 OMP 原生对象？HTTP 代理与初始化调度的确认分别由其 owner 持有。
+在 framework 每 provider 单账号支持范围内，如何以 harness-independent 小 interface 接入宿主当前凭据／provider 地址，让余额与额度查询无需依赖 OMP 原生对象？认证所需身份只在运行期使用，不生成持久统计身份，消费分区由[消费归属权威](02-accounting-ownership.md#账户隔离多会话与额度)持有。
 
 ## Discussion
 
+### 本轮批准修订与来源
+
+单账号支持上升为 framework 约束；原“provider／统计身份／凭据”访问要求取消统计身份，仅保留当前操作认证确需资料。 批准来源：[命令票本轮确认来源](../assets/command-confirmation-2026-10-12.md)（Q13–Q16、Q17–Q20）。此前账号键／身份分区和定点 clear 的政策仅为已被替代历史；不要求认证秘密落盘。非本轮替代范围继续有效，规划不等于实现。
+
 ### 三层职责与按需接入
 
-用户 Q1 同意三层拆分，Q10 明确「adapter功能先按需实现接入，如果没有扩展需要账号管理功能，则无需接入」。framework 提供 extension 所需的小 interface；adapter 接入宿主当前已生效的身份、凭据解析及 provider base URL，隐藏 OAuth 更新、credential storage 与原生配置访问。shared logic 不取得 modelRegistry／authStorage 原生对象，也不镜像完整宿主 interface。
+用户 Q1 同意三层拆分，Q10 明确「adapter功能先按需实现接入，如果没有扩展需要账号管理功能，则无需接入」。framework 提供 extension 所需的小 interface；adapter 接入宿主当前已生效的认证资料、凭据解析及 provider base URL，隐藏 OAuth 更新、credential storage 与原生配置访问。shared logic 不取得 modelRegistry／authStorage 原生对象，也不镜像完整宿主 interface。
 
 model-cost 持有 DeepSeek 余额／Codex 额度 endpoint、请求与响应解释、窗口选择和 parser 等业务。OMP 现成 usage provider／header parser 的存在不是把业务协议归入 framework 的理由；必要 native 桥接遵循 ADR-0002，具体接线由装配决定。framework HTTP 提供通用传输，代理不再由 OMP adapter 的环境变量约定决定。
 
 ### 单账号、允许替换与身份取舍
 
-支持范围、原多账户要求的明确收窄，以及 DeepSeek 凭据身份取代平台账号识别的 tradeoff，在原[消费归属权威的账户主题](02-accounting-ownership.md#账户隔离多会话与额度)修订；本票消费该单账号／允许替换结果，不另存身份规则或账号管理政策。
+framework 每 provider 单账号、取消 DeepSeek／Codex 统计身份识别与替换隔离的政策，只在[消费归属原权威](02-accounting-ownership.md#账户隔离多会话与额度)持有。本票消费当前支持前提，提供认证访问资料，不另存身份管理政策或把早期凭据分区要求恢复为当前约束。
 
-获取资料不能永久绑定首次账号；新操作取得宿主当前已生效的资料，本次操作固定使用该身份与认证资料，后来替换不重解释旧操作。外部修改凭据何时被运行中的宿主加载，依赖宿主 reload／重启机制，不承诺热检测／立即生效。初始化不依赖首次模型调用来发现账号。
+每次操作取得宿主当前已生效的认证访问资料并固定用于本次操作，不永久绑定首次凭据；后来替换不重解释正在进行的请求。宿主何时加载外部凭据变化依赖 reload／重启，不承诺热检测。只提供当前访问资料，不识别统计账号替换或自动隔离旧统计。初始化无需等首次模型调用。
 
-所需资料仅包括 provider／统计身份、本次操作可用认证资料、适用的已解析 base URL；不是完整账号列表／选择／增删管理。认证秘密仅用于运行期请求，不写入统计文件、日志或 tracker。DeepSeek 稳定非秘密统计标识的具体构造、跨进程一致性和 native 账号替换映射由装配落实，不凭 local credentialId 冒充 provider 平台账号 ID。
+所需资料包括 provider、本次操作可用认证资料及适用已解析 base URL；协议确实需要的 Codex 账号字段只供运行期认证使用，不作为持久化统计分区键。不生成 DeepSeek 凭据指纹或其他统计身份，不提供账号列表／选择／管理，不新增多账号登记或检测系统。认证秘密不写入统计文件、日志或 tracker。具体当前资料接入由 adapter 按需求落实。
 
 ### 业务查询地址
 
@@ -41,16 +45,16 @@ Codex 额度 endpoint 与协议由 model-cost 代码持有，不把模型推理 
 
 ## Decision
 
-adapter 按 model-cost 的单账号当前访问需求接入宿主身份／凭据／地址，framework 提供小型无原生对象 interface，provider 查询业务留在 model-cost。单账号支持及 DeepSeek 身份 tradeoff 以修订后的消费归属权威为准，传输和初始化时序分别消费其 owner 的部分决议。
+adapter 按 framework 每 provider 单账号支持约束接入当前认证资料／地址，framework 提供小型无原生对象 interface，provider 查询业务留在 model-cost。单账号支持及 DeepSeek 身份 tradeoff 以修订后的消费归属权威为准，传输和初始化时序分别消费其 owner 的部分决议。
 
 ## User stories
 
-1. As a 用户, I want 各 provider 单账号且可前后替换, so that 换账号不会永久读启动时账号或混入旧读数。
+1. As a 用户, I want 各 provider 单账号且可前后替换, so that 操作读取宿主当前认证资料且不建设多账号管理；统计替换隔离不承诺。
 2. As a 开发者, I want adapter 只接入当前消费者需要的能力, so that 不为可能的多账号管理镜像宿主或增加无消费者的 interface。
 3. As a 开发者, I want provider endpoint／parser 留在 shared logic, so that 其他 harness 可以复用业务而不复制 OMP 原生耦合。
 4. As a 用户, I want 访问资料在初始化即可取得, so that 第一条模型请求之前能够预取余额和额度。
 5. As a 用户, I want provider 查询失败独立收口, so that 一方未登录不会阻断另一方查询或模型执行。
-6. As a 用户, I want 密钥只用于认证且统计身份不暴露密钥, so that 统计文件、日志及决策资料不会泄漏凭据。
+6. As a 用户, I want 密钥与认证身份只在需要的运行期查询中使用, so that 统计文件、日志及决策资料不会泄漏凭据。
 
 ## Preconditions
 
@@ -61,14 +65,14 @@ adapter 按 model-cost 的单账号当前访问需求接入宿主身份／凭据
 ## Postconditions
 
 - [HTTP 能力决策](../decision/05-http-capability.md)可基于确定的 credential／地址职责和已确认代理原则继续工作，不必等待完整账号管理设计。
-- [装配决策](../decision/10-assembly-layout.md)落实最小 interface、稳定不暴露秘密的统计标识、native 当前资料映射、实例与初始化绑定；不新增账号管理或热切换保证。
+- [装配决策](../decision/10-assembly-layout.md)落实最小 interface、native 当前认证资料映射、实例与初始化绑定；不新增账号管理或热切换保证。
 - [刷新决策](../decision/09-refresh-lifecycle.md)消费初始化可读资料；[展示决策](../decision/08-presentation.md)决定局部失败和账号替换时的读数呈现；[验收决策](../decision/11-acceptance-cutover.md)验证实际路径及秘密不外泄。
 - 不实现／认证 pi adapter，不修改正式凭据、宿主配置或生产统计。
 
 ## Invariants
 
 - 延续 ADR-0002 的职责测试和 native import seam；shared logic 不导入 OMP native 对象。
-- Provider account 的领域含义不被 credentialId 改写；DeepSeek 按凭据划分是本次业务实现取舍，不是所有 provider 的通用定义。
-- 账号资料读取、消费归属与 Owner State 独立；不按 agent 名称猜账号，不把未知并入共享默认身份。
+- Provider account 的领域含义不被 credentialId 改写；取消凭据统计分区是本次明确修订，provider 账号字段只在认证确需时使用。
+- 账号资料读取、消费归属与 Owner State 独立；不按 agent 名称猜账号、不造认证凭据，不把 provider 未知当 DeepSeek。
 - 地址来源和业务路径分开；不把所有 endpoint 或 base URL 一律硬编码，也不新增未批准配置。
-- 规划批准不等于稳定标识算法、实际 OAuth、网络性能或新框架链路已验证。
+- 规划批准不等于实际 OAuth、网络性能或新框架链路已验证。

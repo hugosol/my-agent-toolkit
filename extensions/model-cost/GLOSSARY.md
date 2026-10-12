@@ -12,16 +12,16 @@ _Avoid_: round end, tool completion, final response of a round
 The reported model usage and corresponding request-priced cost attributable to one Turn's assistant response. Tool results used as input to a later model request are included in that later request's reported usage, not separately charged when the tool returns.
 _Avoid_: round totals, legacy Turn
 
-**Accounting period（账户统计周期）**:
-The scope of active consumption accounting for one provider account, bounded by explicit resets and distinct from the lifetime of an agent session or Round. Different accounts have independent periods.
+**Accounting period（消费统计周期）**:
+The scope of active consumption accounting bounded by explicit resets, distinct from the lifetime of an agent session or Round. A period identifies the accounting scope being accumulated; it does not establish that a provider-side account has been identified.
 _Avoid_: session lifetime, Round, calendar day, process lifetime
 
 **Round totals（轮次累计）**:
-The aggregate usage and cost attributed to one framework-defined Round within the applicable account accounting period. It is distinct from the sum of all Rounds in a session and from a single Turn's usage.
+The aggregate usage and cost attributed to one framework-defined Round within the applicable accounting period. It is distinct from the sum of all Rounds in a session and from a single Turn's usage.
 _Avoid_: legacy Turn, session totals, whole-period totals
 
 **Session totals（会话累计）**:
-The aggregate usage and cost attributed to one agent session within the applicable account accounting period, spanning its Rounds in that period. It is distinct from the session's lifetime consumption across periods.
+The aggregate usage and cost attributed to one agent session within the applicable accounting period, spanning its Rounds in that period. It is distinct from the session's lifetime consumption across periods.
 _Avoid_: round totals, provider account balance, lifetime session totals
 
 **Direct session totals（会话自身累计）**:

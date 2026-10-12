@@ -14,6 +14,10 @@
 
 ## Discussion
 
+### 本轮批准修订与来源
+
+业务逻辑键从实际会话 × 账号身份 × 模型改为实际会话 × provider × 模型；整文件 clear 取代账号定点 clear，取消其他账号隔离，不取消正常多进程与请求去重。 批准来源：[命令票本轮确认来源](../assets/command-confirmation-2026-10-12.md)（Q13–Q16、Q17–Q20）。此前账号键／身份分区和定点 clear 的政策仅为已被替代历史；不要求认证秘密落盘。非本轮替代范围继续有效，规划不等于实现。
+
 ### 先由具体数据流找到最小能力
 
 用户选择沿旧实现的聚合方案演化：先看数据在哪里、谁读写、何时保存，再讨论接口与等待策略。区分逐响应计算／累加、运行期请求关联、长期逐 Turn 留存；前两者不自动要求第三者。用具体必要场景验证，只有真实缺口无法满足才重新比较更细粒度方案，不把框架完整性或准确性最大化作为默认目标。
@@ -22,7 +26,7 @@
 
 ### 业务聚合归 shared logic，不升级 framework State
 
-model-cost 的 harness-independent shared logic 拥有计价、聚合、最近 Round、账户测量缓存和本次统计 tradeoff；framework 的 boolean 激活 State 不充当业务容器。本次不升级通用业务 State，也不建立第二套框架／配置／能力声明。
+model-cost 的 harness-independent shared logic 拥有计价、聚合、最近 Round、provider 测量缓存和本次统计 tradeoff；framework 的 boolean 激活 State 不充当业务容器。本次不升级通用业务 State，也不建立第二套框架／配置／能力声明。
 
 framework 提供 Round、可观察 Request／Turn、response usage、实际会话、直接父 Session 关系、模型等宿主事实；其公共逻辑／必要原生桥接分层按[观察契约分层决议](03-observation-contract.md)。shared logic 不读 OMP 原生 context／payload；其他 harness 可复用业务逻辑，本次仍只落地 OMP，不实现或认证 pi adapter。HTTP、文件和并发协调按地图既定分层归 framework 通用能力；DeepSeek 计价、Codex header parser、额度估计与具体业务数据格式不因此进入语义 core。
 
@@ -32,16 +36,16 @@ framework 提供 Round、可观察 Request／Turn、response usage、实际会�
 
 | 数据 | 逻辑键／用途 | 寿命与读取 |
 | --- | --- | --- |
-| 实际会话自身累计 | 实际会话 × provider 账户 × 模型；只含该会话自己发出的响应 token／已算费用 | shared logic 内存更新；按账户当前周期发布并恢复；UI 读只读视图 |
+| 实际会话自身累计 | 实际会话 × provider × 模型；只含该会话自己发出的响应 token／已算费用 | shared logic 内存更新；按当前消费统计周期发布并恢复；UI 读只读视图 |
 | 父子会话关系 | 子实际会话、直接父实际会话；不含用于父 Round 分配的启动标签／归属段 | 随聚合保存；恢复后沿直接父链查询 Session 自身／子代理／整体，不能猜 Owner 或名字层级 |
 | 当前／最近 Round | 本实际会话自身的当前归属、最近一轮开始／结束自身累计快照、当前统计位置是否可用 | 当前态内存；最近快照随本会话 round_end 聚合同次保存并覆盖旧轮 |
-| 在途请求 | sessionId／turnId 与原账户、Round、模型、请求时锚价 | 运行期保存；结束处理完成后释放完整详情 |
+| 在途请求 | sessionId／turnId 与provider、Round、模型、请求时锚价 | 运行期保存；结束处理完成后释放完整详情 |
 | 已处理请求身份 | sessionId + turnId；防止重复结束通知再累计 | 仅内存，保留到本次观察实例销毁；不在 round_end 清空、不按任意 TTL 淘汰、不落盘 |
-| 最新账户读数 | 账户维度的余额／双窗口、获取时间、加载／请求错误等测量状态 | 仅内存；重启重新获取，不能跨账户或跨来源拼接 |
-| 账户业务持久数据 | 当前周期聚合／归档、holiday、quota estimate 的既定基线与采纳值 | 账户隔离；具体发布、并发合并与读缓存新鲜度留存储／刷新票 |
+| 最新 provider 读数 | provider 维度的余额／双窗口、获取时间、加载／请求错误等测量状态 | 仅内存；重启重新获取，不能跨 provider 或跨来源拼接，不识别账号替换 |
+| provider 单一范围业务持久数据 | 当前周期聚合／归档、holiday、quota estimate 的既定基线与采纳值 | 不按账号分区；物理布局／发布／协调由存储权威持有，刷新票收口读缓存新鲜度 |
 | detail | 交互窗口／CLI 展示实例的偏好 | 仅入口内存；不是账户偏好、会话持久值或子代理继承 State |
 
-本表的账户逻辑键按[消费归属原权威的当前身份／支持范围](02-accounting-ownership.md#账户隔离多会话与额度)解释；不以本表旧称「provider 账户」恢复多账号管理或要求 DeepSeek 必须取得平台账号 ID。账号访问资料由[账户访问决议](04-provider-access.md)提供，本数据权威不另存身份政策。
+本表的逻辑范围按[消费归属原权威的单账号修订](02-accounting-ownership.md#账户隔离多会话与额度)解释：framework 每 provider 单账号，model-cost 不保存账号身份键，不自动隔离替换。认证资料只在运行期使用，由[账户访问权威](04-provider-access.md)提供；本数据权威不复制支持政策。
 
 自身累计是唯一消费聚合源。自身／子代理合计／整体合计是同一事实的不同口径，不是三份消费；UI 不维护第二套权威累计。账户也不能把父含后代汇总和子自身累计再叠加一遍。币种与渠道口径沿用消费归属决议：Codex 美元只作参考，不混入计费渠道消费金额。
 
@@ -65,7 +69,7 @@ framework 提供 Round、可观察 Request／Turn、response usage、实际会�
 
 旧政策要求启动父 Round、启动实例身份、同一子会话复用时的消费归属段；新政策取消这些 model-cost 统计要求，也取消父 Round 子消费汇总。以失去父 Round 含子口径为代价，换取稳定直接父 Session 关系与唯一自身聚合，无须处理归属切换、在途切界、迟到子消费回填父轮或协作消息重新认领。关系仍随聚合发布，不增启动即落盘／长期分段记录；物理 parent 字段的相应裁剪由[存储原 schema 主题](06-local-storage.md)持有。
 
-批准来源：用户提出“不再关心subagent归属于哪个round，只关心它们归属于哪个session”，对“Round 展示本实际会话自身的消费；子代理及含后代的汇总只提供 Session 口径，不作父 Round 消费分配”回答“Q27同意”。原话与此前 Q24／Q25 已被替代的讨论见 [本轮确认来源与证据](../assets/observation-pause-evidence-2026-10-11.md)，修订前完整规则见 [本次修订前原文](../assets/observation-revisions-before-pause-2026-10-11.md)。这不削弱账户隔离、正常去重、多会话并发或实际直接父身份可靠性；clear 的目标账户旧在途丢弃仍是既定例外。
+批准来源：用户提出“不再关心subagent归属于哪个round，只关心它们归属于哪个session”，对“Round 展示本实际会话自身的消费；子代理及含后代的汇总只提供 Session 口径，不作父 Round 消费分配”回答“Q27同意”。原话与此前 Q24／Q25 已被替代的讨论见 [本轮确认来源与证据](../assets/observation-pause-evidence-2026-10-11.md)，修订前完整规则见 [本次修订前原文](../assets/observation-revisions-before-pause-2026-10-11.md)。父 Session 汇总修订不削弱正常去重、多会话并发；账号隔离另由本轮单账号修订取消，不与这次父子关系裁剪混为一谈；仍要求实际直接父身份可靠；整文件 clear 前旧在途丢弃仍是既定例外。
 
 ### 最近 Round、tree 与恢复展示
 
@@ -81,27 +85,27 @@ framework 提供 Round、可观察 Request／Turn、response usage、实际会�
 
 未知、无统计口径、确认零、指标完整性、已知小计继续作为领域知识保留，不因运行时简化从 glossary 删除，也不要求因此实现枚举、计数器或完整 UI 状态模型。
 
-### 账户周期、账户级 clear、归档与 resume
+### 账户周期、整文件 clear、归档与 resume
 
 clear 当前入口的执行条件已于 2026-10-11 批准，唯一权威为[命令局部决议](07-command-state.md)。该入口限制不修改本节账户范围或存储的跨进程周期校验。
 
-账户周期限定从何时累计，Session／Round 限定统计哪组消费：Session totals 是适用账户当前周期内该会话跨各 Round 的累计；Round totals 仅该周期内本实际会话自身归属于某一 Round 的消费，不是整个周期总数。不同账户有独立周期，clear 不重定义 framework Round。
+消费统计周期限定从何时累计，Session／Round 限定统计哪组消费；累计与最近快照限当前活动统计范围，不恢复跨周期 lifetime。取消账号独立周期与身份 namespace；整文件 clear 不重定义 framework Round，周期／版本校验继续防止旧进程提交复活。取消账号键后的物理布局由[存储原 schema 主题](06-local-storage.md)收口，不由本逻辑表冻结。
 
-只保留账户级 clear，不提供仅当前会话树清理。归档目标账户全部会话已成功保存的活动聚合，再重置相应活动统计／旧业务关联；归档输入已按用户在[存储局部决议](06-local-storage.md)Q15 的确认收窄，未落盘消费不排空／补账，具体结果只在该权威文档记录；不清其他账户，不删除已有归档。clear 的完成／原子条件、如何保留其他账户父子查询所需关系，交账户访问与存储票，不粗暴删除跨账户共用关系。
+clear 改为整份消费活动 JSON 归档并重置，不提供会话树或目标账号选择；只取锁内最新已成功保存的完整活动聚合，不收集内存、强制保存或补账。零消费也统一归档并关闭 holiday。不删除已有归档，不清独立 Codex estimate 或入口 detail；具体顺序和失败语义只在[存储权威](06-local-storage.md)持有。取消“保留活动文件中其他账号”保护，因为不再按账号分区。
 
-归档不等旧在途请求，不建立逐 Turn 明细。成功 clear 后，目标账户 clear 前开始却尚未入账的请求之后即使有可靠 usage，也因旧关联失效而丢弃，不重新绑定当前轮、不猜补；接受丢掉这部分统计，不解释为零消费。旧缓存、排队保存或其他实例持有的旧值不得复活被清记录，具体代际／原子机制待定。
+归档不等旧在途请求，不建立逐 Turn 明细。成功 clear 后，活动范围 clear 前开始却尚未入账的请求之后即使有可靠 usage，也因旧关联失效而丢弃，不重新绑定当前轮、不猜补；接受丢掉这部分统计，不解释为零消费。旧缓存、排队保存或其他实例持有的旧值不得复活被清记录，具体代际／原子机制待定。
 
 仍运行的旧子／孙代理在 clear 后新开始的请求从零正常计价，利用仍可靠可取得的宿主直接父 Session 事实重建业务汇总关系；不是把整个代理永久排除。clear 不取消真实执行、不清 framework Round／活动状态／Owner、不因统计清理让 connect-bot 误报结束。开放 Round 跨 clear 的快照映射及原生支持留观察／展示票，不伪造新轮边缘。
 
-普通 resume 恢复本周期已成功保存的聚合，不每次从零。clear 成功重置后再 resume，被清账户本周期为零或后来已保存新值；旧值只在归档中，不自动合并旧归档、不扫描宿主历史重新计费，不额外维护跨周期 Session lifetime total，不默认新增归档查询命令。归档保留可查记录不等于已实现自动归档 UI。
+普通 resume 恢复本周期已成功保存的聚合，不每次从零。clear 成功重置后再 resume，活动数据本周期为零或后来已保存新值；旧值只在归档中，不自动合并旧归档、不扫描宿主历史重新计费，不额外维护跨周期 Session lifetime total，不默认新增归档查询命令。归档保留可查记录不等于已实现自动归档 UI。
 
-当前推演假设执行 clear 时只有一个开启 DeepSeek 的会话，不由此默取消已确认的多 main／跨进程支持，也不宣称已实现拒绝或检测其他运行会话的机制。
+用户确认最常见为不同 CLI 启动多个 agent；单账号约束不取消多进程／多会话统计与安全更新，也不新增等待其他会话全部 idle 的机制。进程事实证据见[OMP](../assets/omp-session-process-model.md)与[pi](../assets/pi-session-process-model.md)。
 
 旧版事实：旧 widget Total 从宿主 token 按当前／活动费率显示；Accrued 来自共享周期持久化。旧 clear 重置整个共享周期文件，不具备严格多账户 namespace；旧 resume 把已有 token 设基线、cost 为零，不把历史费用按当前价重写。新方案不沿用 Total 的历史重估来冒充实际已锚价累计，详见证据资产。
 
 ### holiday、预算修改与入口 detail
 
-holiday 按账户共享、跨重启保存，持续到该账户成功 clear 为止；无消费可归档时也能 clear 关闭。随后新请求恢复正常峰谷锚价，不追溯重算旧归档。clear 不清 Codex quota estimate 或入口 detail，其他账户不受影响。归档／累计重置／holiday 关闭一致性及失败反馈交存储／命令票。
+holiday 在唯一 DeepSeek 使用范围内共享并跨重启保存，持续到消费 clear 成功；开启与 clear 的当前入口 DeepSeek／Round／保存收口条件由[命令权威](07-command-state.md)持有。有效零消费同样归档／重置并关闭 holiday；不追溯费用，不清独立 Codex estimate 或 detail。其他账号独立 holiday 的旧要求取消，不自动识别账号替换。
 
 移除数字／K／0 修改或重置预算的子功能，不新增预算偏好保存；不因此取消 DeepSeek 450K、Codex 272K 固定预算显示／告警，预算不限制实际模型执行。detail、holiday、clear 保留，不把预算修改移除解释为整个命令票无必要。具体命令名、校验、模式限制留命令票。
 
@@ -112,8 +116,8 @@ detail 是同一交互窗口／CLI 展示实例的内存偏好：普通会话切
 1. 历史 Round／tree 查询、逐 Turn 持久记录和恢复补齐要求明确收窄为聚合、最近快照、tree Round 不可用与已接受的未保存损失；不是无意漏实现。
 2. 缺 usage／价格的持久缺失记录、计数、持续完整性标记与补算系统取消；可靠正常响应归属／去重与账户并发要求保留。
 3. 数字预算修改取消；固定预算显示／告警保留。
-4. 本轮一度确认的树级 clear 已由账户级 clear 替代；不清 holiday 的提议未采纳。单会话推演不取消多会话支持。
-5. Session lifetime total 改为账户本周期的会话累计；归档不自动恢复。tree 不回滚仍成立，clear 是显式重置例外。
+4. 本轮一度确认的树级 clear 已由整文件 clear 替代；不清 holiday 的提议未采纳；本轮再次批准改为整文件 clear，不恢复账号分区。单会话推演不取消多会话支持。
+5. Session lifetime total 改为消费统计周期的会话累计；归档不自动恢复。tree 不回滚仍成立，clear 是显式重置例外。
 6. 本次观察票 Q27 再次收窄：父 Round 子消费分配及其启动标签／归属段取消，保留直接父 Session 汇总和各实际会话自身 Round；此前嵌入历史只作溯源，不能恢复该已取消范围。
 
 [行为契约决议](01-behavior-contract.md)与[消费归属决议](02-accounting-ownership.md)的当前有效正文已按用户要求同步最新决定，修订前版本完整保存在[历史快照](../assets/contract-history-before-sync.md)，不伪装成从未改变；本数据决议仍是本次布局／寿命取舍的来源。观察票尚未结案的 Round／Turn 契约留其原票，不因本数据票结束视为接口已交付。
@@ -122,7 +126,7 @@ detail 是同一交互窗口／CLI 展示实例的内存偏好：普通会话切
 
 ## Decision
 
-model-cost shared logic 按请求锚价逐响应内存聚合，以实际会话 × 账户 × 模型的自身累计为源，保存直接父 Session 关系与本实际会话自身最近 Round 快照，子代理汇总仅 Session 口径，round_end 发布，不升级通用业务 State 或建立历史明细账。累计限于账户当前周期，账户级 clear 归档并重置、关闭 holiday；resume 仅读取已保存活动聚合，接受未落盘／缺事实／clear 前在途的统计损失，不重估历史或自动合并归档。
+model-cost shared logic 按请求锚价逐响应内存聚合，以实际会话 × provider × 模型的自身累计为源，保存直接父 Session 关系与本实际会话自身最近 Round 快照，子代理汇总仅 Session 口径，round_end 发布，不升级通用业务 State 或建立历史明细账。累计限于当前消费统计周期，整文件 clear 归档并重置、关闭 holiday；resume 仅读取已保存活动聚合，接受未落盘／缺事实／clear 前在途的统计损失，不重估历史或自动合并归档。
 
 ## User stories
 
@@ -134,10 +138,10 @@ model-cost shared logic 按请求锚价逐响应内存聚合，以实际会话 �
 6. As a 用户, I want round_end 批量保存并接受未保存损失, so that 不为崩溃恢复承担逐请求日志和额外排空机制。
 7. As a 用户, I want 只保留最近 Round 快照并明确 tree 不可用, so that 最近轮体验保留而不把历史位置或缺失冒充零。
 8. As a 用户, I want 正常 resume 恢复已保存本周期统计, so that 重启不会重复收费或按单一当前模型重估历史。
-9. As a 用户, I want 账户级 clear 归档后重新累计, so that 能结束整个账户周期且旧累计不因 resume 自动回来。
+9. As a 用户, I want 整文件 clear 归档后重新累计, so that 能结束整个账户周期且旧累计不因 resume 自动回来。
 10. As a 用户, I want clear 前在途响应丢弃、之后新请求正常统计, so that 重置简单且仍运行的子代理不被永久排除。
 11. As a 用户, I want holiday 持续到该账户成功 clear, so that 共享手动谷价周期有明确结束操作且不改写旧费用。
-12. As a 用户, I want 最新余额／双窗口与持久 estimate 分开, so that 账户切换不混测量且重启可恢复必要估计。
+12. As a 用户, I want 最新余额／双窗口与持久 estimate 分开, so that 同源测量与独立估计分开且重启可恢复；不承诺账号替换隔离。
 13. As a 用户, I want 缺 usage／价格只提示并跳过相应指标, so that 不猜零、不搭补账系统且有 usage 的 token 仍可累计。
 14. As a 用户, I want 固定预算显示／告警保留而移除修改入口, so that 简化操作不取消既有上下文提示。
 15. As a 用户, I want detail 是入口内存偏好, so that 切会话保留展示选择、重启回 brief 且独立入口互不影响。
@@ -145,14 +149,14 @@ model-cost shared logic 按请求锚价逐响应内存聚合，以实际会话 �
 17. As a 开发者, I want framework 只提供宿主无关事实和通用 IO／协调, so that 接入其他 harness 不重写业务也不泄漏 OMP 类型。
 18. As a 维护者, I want 从具体数据流倒推最小接口, so that 不在缺少数据／等待心智模型时冻结抽象或扩大范围。
 19. As a 维护者, I want 保留领域概念和明确的修订来源, so that 运行时简化不会被误认为零消费或无意遗漏需求。
-20. As a 用户, I want 多 main／同账户并发及不同账户隔离仍正确, so that 单会话推演和一个账户的 clear 不破坏其他消费。
+20. As a 用户, I want 多 CLI／同 provider 正常并发仍正确, so that 单账号简化不导致跨终端丢失或覆盖其他会话。
 
 ## Preconditions
 
 - 本决议依赖已确认的[行为契约](01-behavior-contract.md)和[消费归属决议](02-accounting-ownership.md)，并在上述替代范围修订它们。本票的业务选择不以未结案生产接口为证明。
 - 落地需[请求／响应与 Round 观测](../decision/03-observation-contract.md)提供可靠 Turn／实际会话／直接父 Session 关系、usage 来源、实例隔离、跨 clear 原生映射及派发处理约束。
-- [账户访问决议](04-provider-access.md)提供当前身份／凭据／地址 seam，身份解释按[消费归属修订](02-accounting-ownership.md#账户隔离多会话与额度)；不能把未知并到公共默认身份。代理选择与配置只在[HTTP 部分权威](05-http-capability.md)。
-- [HTTP 能力](../decision/05-http-capability.md)提供通用传输；[存储与协调](../decision/06-local-storage.md)确定 schema／路径、账户与周期 namespace、原子发布／归档／reset、锁、保存确认／失败、并发和迟到发布。
+- [账户访问决议](04-provider-access.md)提供当前认证资料／地址 seam，身份解释按[消费归属修订](02-accounting-ownership.md#账户隔离多会话与额度)；不生成统计账号身份；provider 未知不猜 DeepSeek。代理选择与配置只在[HTTP 部分权威](05-http-capability.md)。
+- [HTTP 能力](../decision/05-http-capability.md)提供通用传输；[存储与协调](../decision/06-local-storage.md)确定 schema／路径、无账号键的活动统计范围与周期、原子发布／归档／reset、锁、保存确认／失败、并发和迟到发布。
 - [命令状态](../decision/07-command-state.md)映射保留命令、成功／失败反馈及运行条件；[展示](../decision/08-presentation.md)决定三口径、最近轮／tree、提示与 headless；[刷新](../decision/09-refresh-lifecycle.md)决定 TTL／single-flight、测量新鲜度、来源成对与生命周期。
 - [组织与装配](../decision/10-assembly-layout.md)冻结模块、入口实例与注入 seam；[验收与切换](../decision/11-acceptance-cutover.md)按正式基线验证取舍；[模型与价格覆盖](../decision/13-model-catalog-policy.md)确认名单／数据来源，不重解释历史锚价。
 - 原统计文件保留、不自动删除或改写；新统计允许从空开始，不要求导入旧基线。本次不实施或认证 pi adapter。
@@ -165,16 +169,16 @@ model-cost shared logic 按请求锚价逐响应内存聚合，以实际会话 �
 - 存储票可设计聚合＋关系＋最近快照而非历史逐 Turn 账本；物理文件与发布幂等仍需决定，旧缓存不能复活 clear 数据。
 - 观察票提供事实与可靠运行期身份，不能反向强制持久账本、补账或猜 usage；不得把旧在途响应误关联为新请求。
 - 展示票消费只读业务视图，Session 区分自身／子代理／整体，Round 仅本实际会话自身；最近 Round 不冒充历史当前位置，本周期 Session 与跨周期 lifetime 不混用。
-- 命令票保留账户级 clear／归档／结束 holiday、detail；数字预算修改不迁移，Codex estimate 与其他账户不被误清。
+- 命令票保留整文件 clear／归档／结束 holiday、detail；数字预算修改不迁移，独立 Codex estimate、已有归档与 detail 不被误清。
 - 刷新／装配／验收票仍 unresolved；本票不冻结它们的接口、无 UI 远端策略、物理 schema、保存等待或所有恢复映射，不宣称新能力已实现。
 - 原题与历次已确认／被替代提议均保留溯源，旧 Lighthouse 当前有效正文按用户要求同步，历史快照保留；地图仍只索引具名决议的一行 gist。
 
 ## Invariants
 
 - 同一正常有 usage 请求仅累计一次；重发是新身份，工具结果、task 汇总和父子视图不是另一笔消费。
-- 请求开始绑定实际归属与模型／锚价，不以当前模型、State Owner、相同内容或到达时间替代身份；账户隔离与单 session 执行者要求不因简化取消。
+- 请求开始绑定实际归属与模型／锚价，不以当前模型、State Owner、相同内容或到达时间替代身份；单 session 执行者与正常多进程协调要求不取消；账号隔离已按本轮确认取消。
 - 自身累计不含子代理；祖先 Session 汇总每份响应一次。Round 只统计本实际会话自身，不提供父 Round 子消费分配，也不用后代 Session 总差值代替。
-- tree／切换／普通恢复不撤销已发生的本周期消费；成功账户 clear 是显式重置例外，归档不自动并回活动聚合。
+- tree／切换／普通恢复不撤销已发生的本周期消费；成功整文件 clear 是显式重置例外，归档不自动并回活动聚合。
 - 缺事实不等于确认零；计费／额度／无统计口径保持领域区别，运行时不维护完整性计数或补算状态。Codex 美元参考不入计费金额总计。
 - Round 生命周期事实与统计周期／发布完成分离；clear 不取消执行、不清 framework 活动、不让 connect-bot 面板误报结束。
 - renderer 只读，不发 API／建 timer／落盘／更新权威业务值；对齐[现有 framework 配置机制与 native import 责任](../../../docs/adr/0002-semantic-extension-framework.md)，不建立第二套配置或框架，不偷渡 OMP 原生锁到 shared logic。

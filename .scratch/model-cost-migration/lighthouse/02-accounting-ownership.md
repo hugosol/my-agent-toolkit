@@ -12,11 +12,15 @@
 
 ## Discussion
 
+### 本轮批准修订与来源
+
+取消按账号／非秘密凭据标识隔离，把每 provider 单账号提升为 framework 支持前提；保留多 CLI 并发，整文件 clear 的输入与重置范围由存储权威承接。 批准来源：[命令票本轮确认来源](../assets/command-confirmation-2026-10-12.md)（Q13–Q16、Q17–Q20）。此前账号键／身份分区和定点 clear 的政策仅为已被替代历史；不要求认证秘密落盘。非本轮替代范围继续有效，规划不等于实现。
+
 ### 请求消费与自身聚合
 
-每个可观察请求在开始时关联实际发起会话、Turn／Round、provider 账户、模型与锚价。可观察新调用／重发是新消费，即使内容相同；SDK 内隐藏传输重试不单独承诺身份／费用。归属不因模型／账户／会话切换改变，Owner State 不能替代实际会话或账户。
+每个可观察请求在开始时关联实际发起会话、Turn／Round、provider、模型与锚价。可观察新调用／重发是新消费，即使内容相同；SDK 内隐藏传输重试不单独承诺身份／费用。归属不因模型／账户／会话切换改变，Owner State 不能替代实际会话或账户。
 
-按可靠响应 usage 逐次计算并在内存累计，以实际会话 × 账户 × 模型的自身聚合为消费源，不保留完整历史请求账本。正常重复结束通知不再次累计；在途详情结束处理后释放，sessionId + turnId 已处理标记仅内存留至观察实例销毁，不在 round_end 清空、不按任意 TTL 淘汰、不持久化。framework 身份的批准范围见[观察局部决议](03-observation-contract.md)；具体原生关联与实例隔离仍未完成。
+按可靠响应 usage 逐次计算并在内存累计，以实际会话 × provider × 模型的自身聚合为消费源，不保留完整历史请求账本。正常重复结束通知不再次累计；在途详情结束处理后释放，sessionId + turnId 已处理标记仅内存留至观察实例销毁，不在 round_end 清空、不按任意 TTL 淘汰、不持久化。framework 身份的批准范围见[观察局部决议](03-observation-contract.md)；具体原生关联与实例隔离仍未完成。
 
 工具返回、Round 结束发布和 task／orchestration 汇总不产生第二笔消费。旧消息实际进入新请求时计新响应 usage，恢复读取旧消息不重新计费。
 
@@ -36,15 +40,15 @@ DeepSeek 是当前计费渠道，已知请求费用计入金额；Codex 是额�
 
 ### 本账户周期的 Session／Round、tree 与恢复
 
-Session 累计限于适用账户当前周期，跨该会话各 Round；Round 累计仅本实际会话自身，子代理汇总范围以[数据归属决议](12-state-data-contract.md)本次 Q27 修订为准。只保存最近轮开始／结束快照，和 round_end 聚合同次发布／覆盖旧轮，不建立历史 Round 列表、历史位置索引或跨周期 Session lifetime total。费用快照来自已锚价累计，不以 token 差分乘当前价重算。
+Session 累计限于当前消费统计周期，跨该会话各 Round；Round 累计仅本实际会话自身，子代理汇总范围以[数据归属决议](12-state-data-contract.md)本次 Q27 修订为准。只保存最近轮开始／结束快照，和 round_end 聚合同次发布／覆盖旧轮，不建立历史 Round 列表、历史位置索引或跨周期 Session lifetime total。费用快照来自已锚价累计，不以 token 差分乘当前价重算。
 
 | 操作 | 当前有效行为 |
 | --- | --- |
 | resume | 读取本周期已保存活动聚合，可明确展示最近 Round；不重估宿主历史、不自动合并旧归档 |
-| switch | 选择目标会话本周期视图，已开始请求仍归原身份（账户 clear 的丢弃是显式例外） |
+| switch | 选择目标会话本周期视图，已开始请求仍归原身份（整文件 clear 的丢弃是显式例外） |
 | tree | 不回滚本周期 Session；该历史位置 Round 隐藏或不可用，不冒充零／最近轮 |
 | fork | 新实际会话自身从零，复制消息不是新消费；原会话本周期统计不被 fork 回滚 |
-| 账户 clear | 归档目标账户全部会话已成功保存聚合，重置本周期并关闭 holiday；输入范围按[存储局部决议](06-local-storage.md)Q15，旧值只在归档中 |
+| 整文件 clear | 归档完整活动 JSON 的已保存聚合并重置，关闭 holiday；零消费也归档，旧值只在归档中，具体范围见[存储权威](06-local-storage.md) |
 
 正常从历史位置继续触发新的实际活动按 framework Round 规则归属，不查询或恢复已经放弃的历史 Round。开放 Round 跨 clear 的统计快照映射尚未定型，不能伪造新轮。
 
@@ -52,23 +56,23 @@ Session 累计限于适用账户当前周期，跨该会话各 Round；Round 累
 
 只恢复成功保存的聚合；强杀／崩溃的未发布内存消费可丢，不要求可靠未入账记录补账／恢复日志，不自动重发以补账、不以当前价猜收费。round_end 触发保存；不预建退出／切换／重载独立排空钩子。落盘幂等、等待／失败及多进程发布仍需存储票确定。
 
-仅保留账户级 clear：归档后重置目标账户活动累计及相关业务关联，成功关闭 holiday，空消费也可关闭。clear 前开始未入账的该账户请求之后丢弃，旧缓存／排队保存不能复活它；clear 后新请求正常计，包括旧子代理重新利用真实关系的消费。不清其他账户、已有归档、Codex estimate 或入口 detail，不取消真实执行或改 framework 活动态。
+clear 改为整份消费活动 JSON 归档／重置，不提供会话树或目标账号选择；成功关闭 holiday，零消费也走相同归档流程。只操作锁内已成功保存数据，不收集其他进程内存；clear 前旧周期未保存／在途提交丢弃，旧缓存不得复活，之后新请求正常累计。不清已有归档、独立 Codex estimate 或入口 detail，不取消真实执行。具体操作顺序与失败语义由[存储权威](06-local-storage.md)持有，入口 provider／Round 限制由[命令权威](07-command-state.md)持有。
 
 ### 账户隔离、多会话与额度
 
-账户在领域上仍是 provider 计费／额度身份，不是 Owner、进程或当前主会话；本次实现的支持范围于 2026-10-12 明确收窄为 DeepSeek／Codex 各自一个当前配置账号，允许前后替换，不实现多账号选择、自动轮换或逐请求账号追踪。Codex 发现多账号配置时报告不支持并跳过额度查询，不阻断模型执行；这不是新增账号管理 interface。原「主子可同时使用不同账号／需要多账号选择」不再是本次验收要求；主子使用不同 provider／模型仍支持，同账号多会话／子代理／跨进程协调不取消。
+本主题保留原标题供既有链接定位，当前政策已改为 provider 单一统计范围，不承诺账号身份隔离。framework 每个 provider 只支持一个使用中的账号；不提供账号列表、选择、轮换或持久化统计身份识别。共享同一统计目录的实例必须使用同一 provider 账号；多账号混用超出支持范围，不新增跨进程账号登记或检测系统。此限制是 framework 支持约束，不只是 model-cost 局部取舍。
 
-Codex 使用可靠 provider 账号身份；DeepSeek 接受按当前有效凭据的稳定、非秘密标识划分统计范围，不能把宿主本地 credentialId 当跨进程平台账号 ID。同账号换 Key 也视为新范围，不自动识别／合并旧累计或 holiday、不删旧数据；代价是无法连续统计同账号的不同 Key，收益是不增加远端账号查询或人工映射。换身份使用自己的周期／读数／estimate，不将旧值当新身份值；保留文件中的旧身份记录与查询所需关系不被当前操作顺带删除。具体稳定标识及 native 映射交装配落实，不冻结算法。
+model-cost 不按 DeepSeek Key、凭据指纹或 Codex 账号身份分区统计／holiday／estimate，不生成或持久化账号统计标识。同账号换 Key 不自动开始新范围；真正换账号也不自动识别、隔离或重置旧数据，用户需自行开始新数据，不能把旧消费或 estimate 当新账号专属结果。provider 计费账户的领域含义不变；认证查询在运行期需要的账号字段仍由访问 seam 提供，不因此写入统计文件。
 
-旧要求 → 新取舍的确认来源：[账户访问会话原话](../assets/provider-access-confirmation-2026-10-12.md)（单账号范围、Q3 凭据身份 tradeoff、Q12 结案确认）；此前真实平台账号／混账号全面支持要求仅作被替代历史，见[旧批准历史](../assets/contract-history-before-sync.md)。当前访问资料 interface 与替换生效限制只在[账户访问 Lighthouse](04-provider-access.md)，本主题持有统计身份／支持范围唯一政策。
+旧 → 新：原“各 provider 单账号但按账号／非秘密凭据身份隔离、替换身份使用自己的周期与数据”被“provider 单一范围、不自动处理替换”取代。旧政策并未要求保存 API Key 原文；修订理由是常见单账号场景优先、取消额外身份处理代码，不是承认原政策允许泄漏。批准原话及范围见[命令票本轮确认来源](../assets/command-confirmation-2026-10-12.md)（Q13、Q14、Q15）。
 
-支持同／跨进程多个独立 main，同一 session 单执行者，拒绝并发驱动；检测／实现层待定。正常同账户并发不得丢失、重复或覆盖其他会话贡献，不把已接受的异常退出／缺事实／clear 损失扩张成忽略并发正确性。讨论 clear 时单一 DeepSeek 活动会话只是推演假设，不是已取消的支持范围。
+支持同／跨进程多个独立 main 和子代理；同一实际会话仍按既有单执行者／保存版本冲突取舍处理，不新增执行者检测。用户确认最常见的是多个 CLI 启动多个 agent；[OMP](../assets/omp-session-process-model.md)与[pi](../assets/pi-session-process-model.md)探针也证明独立实例有不同 PID，因此不能以单账号取消跨进程协调。正常并发不得丢失、重复或覆盖其他会话贡献，已接受的缺事实／保存失败／clear 损失边界不被扩大。
 
-最新余额／双窗口、获取时间、加载／错误是账户级内存，换会话不自动清账户测量基线；换账户读自己的值。quota estimate 基线／采纳值持久化，读数同源成对、不拼跨来源窗口；不做 Codex 会话消费与账户额度分摊／换算。
+最新余额／双窗口、获取时间、加载／错误按 provider 保存在内存，换会话不自动清测量基线；持久 quota estimate 只有一份 Codex 范围。读数同源成对、不拼来源；不做 Codex 会话消费与 provider 额度分摊／换算。认证访问资料的具体 interface 与宿主替换生效限制由[账户访问权威](04-provider-access.md)持有。
 
 ## Decision
 
-在本次单账号支持及已确认统计身份范围内，以可观察请求的可靠消费为输入、实际会话 × 统计身份 × 模型自身聚合为源，沿父子启动关系无重复汇总，身份隔离和正常同账号并发正确性保留。累计限于账户当前周期，历史只保留最近 Round／归档；缺事实不补账、未保存损失可接受，账户 clear 是显式重置，不按恢复时当前价重算历史。
+framework 每 provider 单账号、model-cost 按 provider 单一范围聚合，不识别或持久化账号统计身份；实际会话 × provider × 模型自身聚合与直接父 Session 汇总不重复计费。多 CLI 正常并发仍支持，消费累计限于当前统计周期，整文件 clear 为显式重置例外，旧归档不自动恢复；各处详细规则以上述原主题为准。
 
 ## User stories
 
@@ -78,7 +82,7 @@ Codex 使用可靠 provider 账号身份；DeepSeek 接受按当前有效凭据�
 4. As a 用户, I want tree 的历史位置 Round 不可用且 Session 本周期不回滚, so that 不把最近轮伪装成历史查询。
 5. As a 用户, I want 领域概念区分未知／额度／无口径／确认零而运行时简化, so that 跳过金额不被解释成免费且不强迫完整性状态系统。
 6. As a 用户, I want 可靠 usage 按身份累计、重复不计、缺 usage 跳过, so that 取消重发的正常消费正确且不引入补账日志。
-7. As a 用户, I want 多会话同账户正常并发正确, so that 跨终端累计不丢不重且其他账户隔离。
+7. As a 用户, I want 多会话同账户正常并发正确, so that 跨终端累计不丢不重而无需账号分区。
 8. As a 用户, I want Codex 额度与参考费用不当现金消费, so that 不误做会话额度换算或混币种总额。
 9. As a 开发者, I want 唯一自身聚合与只读派生视图, so that renderer／父子汇总不会成为第二份权威消费。
 10. As a 用户, I want 明确缺失跳过与已知冲突丢弃边界, so that 不猜补费用也不把已知矛盾数据随意覆盖。
@@ -86,7 +90,7 @@ Codex 使用可靠 provider 账号身份；DeepSeek 接受按当前有效凭据�
 ## Preconditions
 
 - [行为契约](01-behavior-contract.md)提供仍保留的功能与计价基线；[数据归属与账户周期决议](12-state-data-contract.md)明确最新布局／寿命及有意简化，不重新决定完整账本。
-- [观察契约](../decision/03-observation-contract.md)提供可靠 Turn／实际会话／usage 与结束交付原则；[账户访问决议](04-provider-access.md)提供当前访问资料，统计身份按本节单账号／DeepSeek 凭据范围修订，未知不能并公共默认身份。
+- [观察契约](../decision/03-observation-contract.md)提供可靠 Turn／实际会话／usage 与结束交付原则；[账户访问决议](04-provider-access.md)提供当前访问资料，当前访问资料只用于认证，不生成统计身份；provider 未知不能猜成 DeepSeek。
 - [存储协调](../decision/06-local-storage.md)决定物理聚合／关系／最近快照、发布／归档／reset／关闭 holiday、幂等／锁／失败；[模型覆盖](../decision/13-model-catalog-policy.md)决定适用计价与名单。
 - [展示](../decision/08-presentation.md)、[刷新](../decision/09-refresh-lifecycle.md)、[命令](../decision/07-command-state.md)、[装配](../decision/10-assembly-layout.md)、[验收](../decision/11-acceptance-cutover.md)仍各自未决，不把来源交接当生产实现。
 
@@ -96,7 +100,7 @@ Codex 使用可靠 provider 账号身份；DeepSeek 接受按当前有效凭据�
 
 - 后续按扩展自有聚合、有限运行期关联、父子关系与本周期恢复设计，不要求历史 Turn／Round 留存、缺失补齐或跨周期 Session 总数。
 - 自身／含后代、账户／渠道口径可派生，实际请求不重复；无金额贡献不代表实际零消费。
-- 验收覆盖可靠响应、重发／重复、最近轮／tree／resume、账户 clear、父子与多会话正常并发及已确认损失边界，不按原旧验收恢复已取消要求。
+- 验收覆盖可靠响应、重发／重复、最近轮／tree／resume、整文件 clear、父子与多会话正常并发及已确认损失边界，不按原旧验收恢复已取消要求。
 - 冲突丢弃／局部清理及身份已批准范围以[观察局部决议](03-observation-contract.md)为准；可信来源、宿主实例隔离、物理发布、调度和最终 UI 尚需具名票收口，文档不代表能力已实现。
 
 ## Invariants
@@ -104,10 +108,10 @@ Codex 使用可靠 provider 账号身份；DeepSeek 接受按当前有效凭据�
 - 一个可观察请求在同一范围最多贡献一次，汇总不是新消费；隐藏尝试不承诺独立完整观测。
 - 请求开始的实际归属和锚价不随当前会话／模型／账户改变，不用当前价重估。
 - 未知／额度／无口径不等于免费；不据概念要求缺失计数或补账状态。
-- Session 本周期不因 tree／删改消息／fork 回滚；成功账户 clear 是显式重置例外，旧归档不自动并回。
+- Session 本周期不因 tree／删改消息／fork 回滚；成功整文件 clear 是显式重置例外，旧归档不自动并回。
 - 聚合不改 framework Turn／Round 活动含义；旧子新请求与同一 Turn 后到 usage 修正分开，后者不提供修正能力，已知冲突处理见[观察局部决议](03-observation-contract.md)。
 - Owner State 继承不决定消费；通用词义归 framework，消费词义归 model-cost glossary。
-- 按本票当前统计身份范围隔离、正常请求去重与同账号多会话并发同时成立；不据此要求已取消的多账号选择／轮换，已批准损失边界不被默扩张。
+- 按本票 provider 单一范围、正常请求去重与同账号多会话并发同时成立；不据此要求已取消的多账号选择／轮换，已批准损失边界不被默扩张。
 - 上下文、账户测量和消费保持正交，不累加子上下文为主预算，不换算 Codex 账户额度为 Session 消费。
 
 ## Historical ticket body

@@ -23,25 +23,27 @@ Labels: wayfinder:map
 - 子票存放于 decision/；按编号扫描 open、无未满足依赖、未认领的票选 frontier。开始工作前先写 Status: claimed 和 Assignee。开放票不在地图正文重复列出。
 - [数据归属与账户周期决议](lighthouse/12-state-data-contract.md)已正式结案；最终取舍与历次暂停溯源只在 Lighthouse。后续按已定数据流推进存储与协调，再返回观察处理约束；不重问聚合／明细账、不恢复观察票旧 Q10，不把本票结案视为存储或原生观测已实现。继续工作时按 tracker 查询 frontier，或使用用户明确指定的票。
 
+- 本轮[命令决议](lighthouse/07-command-state.md)与其[确认来源](assets/command-confirmation-2026-10-12.md)已发布；账号／凭据身份隔离和定点 clear 在原权威修订。存储 Q25 的账号布局被取消，替代物理结构尚未批准；Backtracer 提请原题定点重审，未授权前不自动重开票或由装配猜字段。
+
 ## Decisions so far
 
-- [完整保留哪些业务行为，统计单位如何命名？](lighthouse/01-behavior-contract.md)：保留请求锚价、公共 Turn／工具／Round 与 Codex 额度功能；当前有效功能清单已同步数据决议的聚合、账户周期及预算修改移除。
+- [完整保留哪些业务行为，统计单位如何命名？](lighthouse/01-behavior-contract.md)： 保留请求锚价、公共 Turn／工具／Round 与 Codex 额度；当前基线消费 provider 单一统计范围、整文件 clear 与预算修改移除，不扩大所有 provider 展示。
 
-- [用量与费用属于哪个会话、账户和请求，如何避免漏算与重复？](lighthouse/02-accounting-ownership.md)：实际会话／身份聚合与去重并发正确；单账号可替换、DeepSeek 凭据身份范围已修订，本周期／clear 与同账号多会话支持保留。
+- [用量与费用属于哪个会话、账户和请求，如何避免漏算与重复？](lighthouse/02-accounting-ownership.md)： framework 每 provider 单账号；取消账号／凭据统计身份与自动替换隔离，按 provider 单一范围聚合；多 CLI 正常并发、去重与直接父 Session 汇总保留。
 
-- [model-cost 的哪些数据进入 framework State，如何声明与读取？](lighthouse/12-state-data-contract.md)：扩展自有逐响应聚合；本轮修订子代理仅按直接父 Session 汇总、Round 仅本实际会话自身，取消父 Round 启动标签／消费分段；本周期、账户 clear 与恢复取舍保留。
+- [model-cost 的哪些数据进入 framework State，如何声明与读取？](lighthouse/12-state-data-contract.md)： 扩展自有逐响应聚合，实际会话 × provider × 模型；子代理仅 Session 汇总、Round 为本会话自身；整文件 clear，入口 detail 寿命保留，不存统计账号身份。
 
-- [framework 如何提供独立存储、原子更新与跨进程协调？](lighthouse/06-local-storage.md)：单活动 JSON／独立归档与 estimate、唯一聚合／最近轮；提前异步保存并在 handler 返回前等待，轻量 FIFO／跨进程互斥、周期／版本校验、默认协调等待 15 秒；普通消费保存失败丢弃未保存部分、从磁盘有效快照初始化，不重试补账并接受少量损失；clear 只归档已保存数据、不排空内存，先归档后提交、失败终止；无有效基线暂停统计至下一次初始化；用户级共享、storageDir 可配置，~/ 特指用户 .omp 主目录，初始 ~/cost-archive 复用旧目录，由用户切换前手动备份清空、修改重启；固定 consumption.json、独立 codex-usage-estimate.json 与 archives/；本机本地文件系统同机跨进程共享已确认，不承诺网络盘／云同步跨机器写入；framework 通用文件能力（规范化路径协调键、锁文件互斥、锁内重读、临时文件 rename 原子发布、损坏不覆盖、陈旧锁回收且不静默覆盖）、读新鲜度以锁内读为准不做每请求读取、consumption.json 最小 schema（parent 已按子代理 Session-only 修订裁剪）与 UUID 归档、同会话多执行者靠版本冲突收口均已确认。
+- [framework 如何提供独立存储、原子更新与跨进程协调？](lighthouse/06-local-storage.md)： 单活动 JSON／独立归档与 estimate，安全异步发布、FIFO／跨进程锁、周期／版本拒绝旧提交；clear 完整归档／重置且零消费同流程，取消账号键；Q25 替代物理布局待定点收口，其余已定协调与失败政策保留。
 
 - [framework 如何提供请求、响应、Turn／Round 与模型事实观测？](lighthouse/03-observation-contract.md)：已按正常数据流、最小必要事实与异常基本原则收束；公共逻辑优先 framework、adapter 必要桥接，尽量统一 round_end；宿主可先 idle／接受新输入，公共 handler 等待自身异步保存，具体装配与生产验收仍未实施。
 
-- [账户凭据、provider 地址和代理如何跨 seam 提供？](lighthouse/04-provider-access.md)：已结案，adapter 按需交付当前访问资料，业务查询留 shared logic；身份、HTTP 与初始化规则分别消费其原权威。
+- [账户凭据、provider 地址和代理如何跨 seam 提供？](lighthouse/04-provider-access.md)： 按 framework 每 provider 单账号支持前提，adapter 提供当前认证确需资料／地址，不生成持久统计身份；业务查询留 shared logic，秘密不落盘。
 
 - [framework 的通用 HTTP 能力承诺什么，如何接入余额与额度请求？](lighthouse/05-http-capability.md)：已结案；直接导入单一 request、原生 response、共享代理配置与逐请求选择、业务优先的可配置有限超时；显式选代理缺配置失败，model-cost／connect-bot 统一传输，业务留 shared logic，不预建主动取消。
 
 - [额度与余额在何时刷新，异步效果怎样跟随会话生命周期？](lighthouse/09-refresh-lifecycle.md)：部分确认初始化两源并行预取、首次模型请求前收口；其余调度未决。
 
-- [/budget 的参数、操作与状态如何在新框架表达？](lighthouse/07-command-state.md)：仅确认 clear 在当前入口 Round 中拒绝、不延期排队，结束并保存收口后可执行；其他命令问题未决。
+- [/budget 的参数、操作与状态如何在新框架表达？](lighthouse/07-command-state.md)： 已发布一层 actions 路由、统一等待／异常报告与 warning；沿用 budget，detail 跟随旧入口偏好，holiday／clear 仅 DeepSeek 且当前入口 idle／保存收口；源票待 Backtracer 的 Q25 缺口处置，未关票。
 
 - [观察契约的 Handoff](decision/03-observation-contract.md#handoff)记录本轮收束、证据限度及下游职责；不恢复异常情景树或父 Round 分配，不把规划结案／临时探针当生产实现。
 
@@ -52,7 +54,7 @@ Labels: wayfinder:map
 
 ## Out of scope
 
-- 本次 DeepSeek／Codex 多账号选择、自动轮换／逐请求账号追踪、无消费者的账号管理接入，以及 DeepSeek 同账号换 Key 的自动识别／统计合并；支持范围与取舍见[消费归属的账户主题](lighthouse/02-accounting-ownership.md#账户隔离多会话与额度)，单账号允许前后替换。
+- framework 每 provider 多账号选择／轮换／管理、统计账号识别／持久化分区、账号替换自动隔离或重置、跨进程账号登记检测；支持范围与取舍见[消费归属的账户主题](lighthouse/02-accounting-ownership.md#账户隔离多会话与额度)；只有当前认证资料随宿主实际生效，不承诺替换统计隔离。
 
 - 多台机器通过网络共享盘／云同步共同写入统计的正确性保证、分布式锁或同步冲突合并；[本地协调范围决议](lighthouse/06-local-storage.md)限定本机本地文件系统，不取消同机多进程安全共享。
 

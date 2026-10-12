@@ -165,7 +165,7 @@ The framework's single status region where each bound extension's marker is rend
 _Avoid_: extension-owned widget, per-extension marker key, extension-chosen placement
 
 **Extension feedback（扩展反馈）**:
-The framework's single harness-independent channel through which an extension publishes operator-facing notices, each carrying an `info` or `error` severity; the framework maps it to a UI notification when the session has one and to stderr when it does not, and it never enters model context.
+The framework's single harness-independent channel through which an extension publishes operator-facing notices, each carrying an `info`, `warning` or `error` severity; the framework maps it to a UI notification when the session has one and to stderr when it does not, and it never enters model context.
 _Avoid_: raw native notify, tool output, injected prompt, extension-owned widget
 
 **Injected prompt（注入提示词）**:

@@ -14,7 +14,7 @@
 
 原题不断扩展到缺信号、重放、恢复、混账户与并发组合，用户明确否定这种设计流程。现改为：正常功能成立，以基本原则约束异常，允许极端情况下出错或少计；只有实际出现可复现且影响目标的必要缺口、或者解决成本需要取舍，才重新讨论。此前的笼统「仍须验证全部原生关联／恢复／各来源／最终接口才结束本票」不再是本票结案门槛。
 
-这不是概括撤销正常去重、账户隔离、逐实际会话观察、旧插件效果隔离或已批准的文件协调，也不是宣称所有 provider／异常已认证。具体 ID 算法、原生关联实现、字段命名、capability 声明／requiredSemantics、实例装配与 exports 由[装配决策](../decision/10-assembly-layout.md)依本契约确定；生产证明与旧插件回归由[验收决策](../decision/11-acceptance-cutover.md)确定。技术实现工作不再伪装成本票未答的用户政策选择。
+这不是概括撤销正常去重、消费归属原权威的当前支持范围、逐实际会话观察、旧插件效果隔离或已批准的文件协调，也不是宣称所有 provider／异常已认证。具体 ID 算法、原生关联实现、字段命名、capability 声明／requiredSemantics、实例装配与 exports 由[装配决策](../decision/10-assembly-layout.md)依本契约确定；生产证明与旧插件回归由[验收决策](../decision/11-acceptance-cutover.md)确定。技术实现工作不再伪装成本票未答的用户政策选择。
 
 ### Happy flow 优先的设计推进原则
 
@@ -49,7 +49,7 @@
 | Session／父子事实 | 实际 sessionId 与直接父实际 Session 的可靠关系；Owner 只用于效果作用域，不代替会话身份，不用名字层级或 parentId 字符串冒充父 sessionId | 每个回调的 sessionManager.getSessionId、ctx.agent 身份及正常启动关系；[子代理调查](../assets/omp-subagent-round-findings.md)证明身份和关系线索，稳定映射由 adapter／framework 装配落实 |
 | 只读当前会话快照 | 当前模型、可确认的实际 Effort、上下文占用／窗口大小及可取得的宿主统计；上下文不是消费累计。读取不发请求、不写统计、不更新业务态；无法确认的 Effort 不以配置冒充 | 当前会话查询；既有请求探针证明快照会随宿主处理阶段变化，读取／刷新时点归[刷新决策](../decision/09-refresh-lifecycle.md)，具体接线及生产验证归装配／验收 |
 
-framework 不提供新的消费账本，也不将宿主累计作为 model-cost 已批准自身聚合的第二权威。账户身份／凭据由[账户访问决策](../decision/04-provider-access.md)提供；官方名单、价格覆盖与维护由[模型覆盖决策](../decision/13-model-catalog-policy.md)确定；不是本票顺带冻结的名单或账户规则。
+framework 不提供新的消费账本，也不将宿主累计作为 model-cost 已批准自身聚合的第二权威。当前认证资料由[账户访问决策](../decision/04-provider-access.md)提供，统计范围消费[归属原权威](02-accounting-ownership.md#账户隔离多会话与额度)；官方名单、价格覆盖与维护由[模型覆盖决策](../decision/13-model-catalog-policy.md)确定；不是本票顺带冻结的名单或账户规则。
 
 ### 分层与逐实际会话观察
 
@@ -83,7 +83,7 @@ model-cost 的公共 round_end handler 捕获稳定聚合快照，提前提交�
 
 Q10–Q16 的已批准轻量原则保持：framework 为新可观察调用建立不透明 turnId，各实际会话独立管理，不跨观察实例／重载复用。provider requestId／responseId 是参考，不作为公共身份、不假定相等。Turn 包含可失败／取消的模型调用周期，不含工具执行；隐藏 SDK 传输重试不拆新 Turn、不承诺逐隐藏尝试锚时，不新增底层传输拦截。
 
-请求开始在内存固定会话／Round、原账户周期、模型与业务锚价；响应结束在观察处理返回前完成关联、正常去重和逐响应内存累计，不等待 consumption.json 文件锁或远端刷新。处理后释放完整在途详情，sessionId + turnId 已处理标记仅内存留至观察实例销毁，不在 round_end 清空、不用任意 TTL 淘汰、不落盘。不提供结束后事实修正／后到 usage 补账，不从宿主历史重算。
+请求开始在内存固定会话／Round、原消费统计周期、模型与业务锚价；响应结束在观察处理返回前完成关联、正常去重和逐响应内存累计，不等待 consumption.json 文件锁或远端刷新。处理后释放完整在途详情，sessionId + turnId 已处理标记仅内存留至观察实例销毁，不在 round_end 清空、不用任意 TTL 淘汰、不落盘。不提供结束后事实修正／后到 usage 补账，不从宿主历史重算。
 
 不能可靠匹配的事实报告后丢弃，不按当前会话／模型或不可靠到达顺序猜归属、不临时补造开始、不自动补救。已知最终 usage 冲突且不能判定有效源时按不可用处理，不相加或任意覆盖；正常流式更新不是冲突。局部清理不清其他 Turn、既有累计或去重标记，不建长期冲突账本／全局损坏／持续完整性状态。
 
@@ -117,8 +117,8 @@ Q10–Q16 的已批准轻量原则保持：framework 为新可观察调用建立
 
 ## Preconditions
 
-- [行为](01-behavior-contract.md)、[消费归属](02-accounting-ownership.md)、[数据](12-state-data-contract.md)、[存储](06-local-storage.md)提供保留功能、自身聚合／Session-only 子汇总、有限关联、账户周期与保存／协调规则；这些是已定设计，不是已实施能力。
-- 账户身份／凭据、官方模型与价格名单、刷新时点仍分别由账户访问、模型覆盖与刷新决策提供；本票不假装它们已解决。
+- [行为](01-behavior-contract.md)、[消费归属](02-accounting-ownership.md)、[数据](12-state-data-contract.md)、[存储](06-local-storage.md)提供保留功能、自身聚合／Session-only 子汇总、有限关联、消费统计周期与保存／协调规则；这些是已定设计，不是已实施能力。
+- 当前认证资料、官方模型与价格名单、刷新时点仍分别由账户访问、模型覆盖与刷新决策提供；本票不假装它们已解决。
 - 固定 OMP 18.5.0 已有上述正常源事实与时序证据；当前 framework 的 adapter 过滤、owner gate 和同步 handler 仍需按本契约重构。
 
 ## Postconditions
@@ -135,4 +135,4 @@ Q10–Q16 的已批准轻量原则保持：framework 为新可观察调用建立
 - framework 公共语义／身份／生命周期、adapter 必要原生桥接、model-cost 业务计价／聚合／parser／保存政策三层分工保持；正常逐实际会话观察与 owner-scoped 效果隔离均保留。
 - 已处理标记只留本观察实例内存，局部故障不清其他关联；不补账、不新增持久逐 Turn 历史或完备异常状态机。
 - 宿主 idle／RPC 完成不等于统计已保存；公共 handler 等待自身保存，不额外全局阻塞代理入口；文件协调仍按存储原权威。
-- 异常可以导致极端情况下少计或不及时终轮，但不把不可靠结束当真实完成，不撤销正常账户隔离／文件安全要求。
+- 异常可以导致极端情况下少计或不及时终轮，但不把不可靠结束当真实完成，不撤销消费归属原权威的当前支持范围／文件安全要求。

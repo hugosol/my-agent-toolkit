@@ -1,0 +1,36 @@
+{
+  "root": "C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-lease-probe-2026-10-12T04-33-01-348Z",
+  "agentDir": "C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-lease-probe-2026-10-12T04-33-01-348Z\\agent",
+  "ownersDir": "C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-lease-probe-2026-10-12T04-33-01-348Z\\owners",
+  "projDir": "C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-lease-probe-2026-10-12T04-33-01-348Z\\proj",
+  "holder": {
+    "role": "holder",
+    "pid": 19340,
+    "sessionId": "01a12e62-ae85-74b8-87a1-25573beab282",
+    "file": "C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-lease-probe-2026-10-12T04-33-01-348Z\\agent\\sessions\\-tmp-omp-lease-probe-2026-10-12T04-33-01-348Z-proj\\2026-10-12T04-33-01-573Z_01a12e62-ae85-74b8-87a1-25573beab282.jsonl",
+    "size": 656
+  },
+  "ownerLeaseFiles": [],
+  "intruder": {
+    "role": "intruder",
+    "pid": 9364,
+    "sessionId": "01a12e62-af73-7414-8745-61940ed169c9",
+    "file": "C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-lease-probe-2026-10-12T04-33-01-348Z\\agent\\sessions\\-tmp-omp-lease-probe-2026-10-12T04-33-01-348Z-proj\\2026-10-12T04-33-01-811Z_01a12e62-af73-7414-8745-61940ed169c9.jsonl",
+    "targetSizeBefore": 656,
+    "targetSizeAfter": 656,
+    "siblings": [
+      "2026-10-12T04-33-01-573Z_01a12e62-ae85-74b8-87a1-25573beab282.jsonl",
+      "2026-10-12T04-33-01-811Z_01a12e62-af73-7414-8745-61940ed169c9.jsonl"
+    ]
+  },
+  "intruderOwnLeaseFiles": [],
+  "holderFileAfterIntruder": {
+    "size": 656,
+    "unchanged": true
+  },
+  "verdict": {
+    "intruderMovedToDifferentFile": true,
+    "holderFileUntouched": true,
+    "distinctProcesses": true
+  }
+}

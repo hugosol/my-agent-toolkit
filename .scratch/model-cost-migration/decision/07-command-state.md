@@ -1,50 +1,36 @@
 # /budget 的参数、操作与状态如何在新框架表达？
 
 Type: grilling
-Status: open
-Assignee:
+Status: claimed
+Assignee: hugos（本会话 agent 协助讨论）
 Blocked by: 01, 06, 12
 Prerequisites: [完整保留哪些业务行为，统计单位如何命名？](01-behavior-contract.md)；[framework 如何提供独立存储、原子更新与跨进程协调？](06-local-storage.md)；[model-cost 的哪些数据进入 framework State，如何声明与读取？](12-state-data-contract.md)
 Parent: [model-cost 完整迁移：通用能力分层与 OMP 适配](../map.md)
+Lighthouse: [通用动作与预算命令契约](../lighthouse/07-command-state.md)
 
-## Trace handoff from data Lighthouse
+## Handoff
 
-- 最终行为见[数据归属与账户周期决议](../lighthouse/12-state-data-contract.md)：只提供账户级 clear，不提供会话树级 clear；先归档，再重置目标账户周期并关闭 holiday，空消费也能通过 clear 结束 holiday。旧树级与不清 holiday 的建议不再有效。
-- 数字／K／0 预算修改取消；detail／holiday／clear 保留。detail 入口内存，切会话／tree 保留，重载回 brief；不清 Codex estimate、已有归档、其他账户或 detail。本票仍需决定命令名、模式限制、成功／失败反馈及原子操作映射。
-- 单一 DeepSeek 运行会话是已使用的推演条件，不是已批准检测／拒绝策略；若需要限制其他活动会话，必须在本票带实际路径作新决定。
-
-## Handoff from clear reset decision
-
-来源：[数据归属与账户周期决议](../lighthouse/12-state-data-contract.md)。只保留账户级 clear：归档目标账户全部会话的已成功保存活动聚合，重置累计并关闭该账户 holiday；空消费也可结束 holiday。不提供会话树级 clear，不清其他账户、旧归档、Codex estimate 或入口 detail。clear 前在途消费丢弃，之后旧子新请求正常统计；不取消真实执行或改 framework 生命周期。
-
-Session／Round 累计限于适用账户当前周期；resume 只恢复已保存活动聚合，不扫描历史消息重估或合并旧归档，不维护跨周期 Session 总数。归档／reset／关闭 holiday 的一致成功／失败、跨进程旧缓存不复活、混账户关系保留与运行条件仍待决定；单一 DeepSeek 活动会话仅是讨论假设，不取消多会话支持。旧范围／交接文字见[同步前历史快照](../assets/contract-history-before-sync.md)，不再作为当前要求。
-
-## Handoff from storage Q8 / Q9
-
-[存储局部决议](../lighthouse/06-local-storage.md)Q8 确认周期标识拒绝 clear 前旧提交，Q9 确认取权限前有限等待／可取消、更新开始后等待实际结果；本票据此决定命令反馈，不把普通 round_end 的 Q6 失败策略直接套给 clear／holiday。归档、重置、关闭 holiday 的一致成功与恢复仍待存储票。
-
-## Handoff from storage Q13 / Q14
-
-[存储局部决议](../lighthouse/06-local-storage.md)Q13 已确认先发布归档，再原子发布目标账户新周期／累计重置／holiday 关闭；归档失败不重置，重置未提交报告失败，不自动重试／补做，允许残留本次备份但不合并恢复。活动文件确实提交才算 clear 成功；本票承接反馈，归档输入／关系保留及实际平台实现仍待存储票。
-
-## Handoff from storage Q15
-
-[存储局部决议](../lighthouse/06-local-storage.md)Q15 已确认 clear 只归档协调范围内最新已成功保存的活动聚合，不收集任何进程未落盘内存、不触发强制保存或 Round 排空。已完成响应但未保存的消费也丢弃，不进入新周期、不补账；这是明确收窄旧“全部已知”范围，反馈遵循 Q13，不取消其他账户／estimate 保护。
+- 当前恢复点（2026-10-12）：Q1–Q20 的命令范围已确认并通过 Lighthouse 发布；源票保持 claimed，未宣称 resolved。发布后的 Backtracer 发现原存储 Q25 布局已因单账号修订失效，替代物理布局仍待用户授权定点重审；依赖的记录 outcome 尚不能按旧 resolved 状态视为最终 schema 已满足。
+- 已发布命令结果只在[命令 Lighthouse](../lighthouse/07-command-state.md)；单账号支持、取消账号统计身份与替换隔离只在[消费归属原主题](../lighthouse/02-accounting-ownership.md#账户隔离多会话与额度)，当前认证资料只在[访问原权威](../lighthouse/04-provider-access.md)，整文件 clear／零消费／失败顺序只在[存储原权威](../lighthouse/06-local-storage.md)，逻辑数据与 detail 寿命只在[数据原权威](../lighthouse/12-state-data-contract.md)。不得从旧交接恢复账号键／定点 clear，也不把一个 provider 单账号误当只有一个进程。
+- 下一 ready 问题（Q21）：是否授权[存储决策票](06-local-storage.md)仅对 Q25 的取消 accounts／providerAccountId 后布局做定点重审？确认 provider／模型数据口径、periodId／holiday／sessions 的物理位置及 whole-file reset 表示；不重开已确认 IO／锁／失败政策，不增加账号处理。授权尚未获得，不自动改该票 status／claim，不擅自冻结扁平或 provider 分桶候选；不在本会话解决第二张非 research 票。需要切票时走 Pause 发布／释放本票 claim，并在后续会话处理已授权范围。
+- 本票命令不再有未答的语法／模式／detail／holiday／clear 反馈分支；剩余发布跟进为上述上游前提裁决。具体 delivery 字段、实例与公共 exports、真实宿主 await／异常接线由原[装配票](10-assembly-layout.md)持有，不要求本票先实施。所有 provider 的新 usage UI 不在本票批准范围；展示／模型覆盖已有 owner，不重复开票。
+- 理由与拒绝分支：保留 budget 为前缀匹配便利；detail toggle 少记命令；动作表取代自由参数 handler，取消数字／K／0、默认动作、缩写、额外参数、业务配置语言、原生 handler 绕路、后台 action 模式及各扩展重复打印。holiday／clear 只拒绝当前 Round／保存未收口，不是整个 Session 禁用，不增加全局活动检测或延期队列。用户最常见多 CLI，故保留轻量跨进程协调。
+- 证据与限度：[确认原话／旧源码](../assets/command-confirmation-2026-10-12.md)、[OMP 进程调查](../assets/omp-session-process-model.md)、[pi 进程调查](../assets/pi-session-process-model.md)。旧 detail 入口没有 provider 检查、既有 renderer 消费偏好，hidden 不显示；授权沿旧行为不等于给所有 provider 新增 UI。探针版本与支持基线不同，未发模型请求，不证明生产 actions／warning／文件锁／TUI 已实现；正式基线仍 18.5.0。
+- Trace：[本轮 Backtracer 记录](../assets/command-trace-2026-10-12.md)已列 signals／coverage 与唯一待裁决 schema 项；无额外已确认新 gap ticket，不修改消费者票的恢复点或他人 claim。旧独有理由、交接和原 Question 全文保存在[本轮发布前快照](../assets/command-ticket-before-publication-2026-10-12.md)，只作溯源。
 
 ## Question
 
-用户已在[数据讨论](12-state-data-contract.md)明确移除修改预算功能，不再迁移数字／K／0 参数。确定保留的 detail、holiday、clear 的完整命令操作、命令名、模式限制、失败反馈和存活范围；不因保留旧 /budget 名称而恢复已移除的数字设置。框架当前仅 toggle/directed 与一个 boolean activation 字段，不能借 unrecognized 回调伪装完整 action 接口。
+在取消数字／K／0 预算修改的前提下，确定保留 detail、holiday、clear 的命令名、完整语法、适用条件、状态寿命与成功／拒绝／失败反馈，选择最小 framework 通用命令模式。当前生产框架仅 toggle／directed 与 boolean activation，不能借 unrecognized 回调或原生命令集成伪装通用 action。
 
-选择所需通用命令类别进入 framework，还是保留扩展原生命令集成；detail 与统计业务数据由 model-cost shared logic 管理，不为本次升级通用业务 State。detail 已确认是交互入口级内存偏好，同一入口普通会话切换／tree 保留、重载／重启恢复 brief，独立入口互不影响；holiday 跨会话／进程持久化；clear 不清 Codex estimate——确认这些业务规则如何映射。反馈现有仅 info/error，而旧命令含 warning，需有明确处理，不默默降级。
+本票已确认新增纯数据一层 actions 声明与注入 shared logic 实现，统一等待及异常报告，补齐公共 warning；不升级通用业务 State。操作规则以 Lighthouse 为唯一批准权威，不将保存失败策略、整文件 clear 或单账号政策复制进本票。当前唯一剩余前置裁决是上方 Q21 的原存储 schema 定点重审；未批准候选仍保持问题，不把源票旧 resolved 状态当替代结构已冻结。
 
-## Handoff from behavior-contract
+## Comments
 
-[完整保留哪些业务行为，统计单位如何命名？](01-behavior-contract.md) 最初确认需求基线；后续数据决议已移除数字／K／0，仅保留 detail、holiday、账户级 clear／归档和反馈。本票逐项决定完整语法、模式适用范围、状态寿命、反馈及失败边界；clear 默认仍是 DeepSeek 归档／新周期／清 holiday，不清 Codex estimate。任何偏离基线的取舍必须显式记录并经用户确认。
+### 本轮发布边界
 
-## Handoff from accounting-ownership
+Q19 用户授权“如果旧 extension 的回答也是 yes，可以跟随”，已核实无 provider 门控与三种既有 renderer；Q20 明确零消费也按最简单统一流程归档。所有确认与批准修订已回原权威；未修改正式源码、认证、统计或实施票。
 
-来源：[消费归属决议](../lighthouse/02-accounting-ownership.md)。用户已确认业务约束；以下接口、机制与展示问题仍待本票决策，本交接不代表它们已解决。
+### 依赖与恢复历史
 
-- 已确认约束：Session 已发生消费不因 tree、改消息或 fork 回滚；账户金额只累计计费渠道，额度消费和无统计口径不属于金额清零后可当免费的一组记录。
-- 待决定：账户级 clear 的实际目标账户选择、原子归档／新周期及命令反馈如何映射？不另造会话历史账本或会话级 clear。多会话并发、正在执行或迟到请求、账户切换与 clear 交错时，操作影响哪一周期与哪些视图？保留已确认的 clear 不清 Codex estimate 基线，任何改变需显式确认。
+本轮发布前的多份 Trace／Handoff 已收束到当前单一 Handoff；先前树级 clear、账号隔离／定点重置、未决存储 Q8–Q15 的旧描述不作为当前约束。旧已批准的去重／正常多会话、Session-only 子汇总、固定预算显示、独立 estimate 与旧数据保护继续有效，细则消费各原权威。
 
