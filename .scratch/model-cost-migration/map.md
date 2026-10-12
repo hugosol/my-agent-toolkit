@@ -29,6 +29,8 @@ Labels: wayfinder:map
 
 - 本轮[刷新生命周期](lighthouse/09-refresh-lifecycle.md)获整票确认并结案；[确认与实验限度](assets/refresh-confirmation-2026-10-12.md)、[发布前历史](assets/refresh-before-publication-2026-10-12.md)及[工作票 Handoff](decision/09-refresh-lifecycle.md#handoff)可恢复。新结果不改其他票的问题／claim，不把查询与边界探针当生产或多窗口问题已修复。
 
+- 本轮[完整组织与装配](lighthouse/10-assembly-layout.md)获 Q19 整票确认；[确认链与证据限度](assets/assembly-confirmation-2026-10-13.md)、[发布前历史](assets/assembly-before-publication-2026-10-13.md)及[工作票 Handoff](decision/10-assembly-layout.md#handoff)可恢复。独立兼容性验证在[原 support 主题](../../framework/docs/harness-support.md#independent-compatibility-verification)修订，源码架构在 ADR-0002 明确旧到新；这是规划出版，不是迁移、宿主补丁或新版本认证。
+
 ## Decisions so far
 
 - [完整保留哪些业务行为，统计单位如何命名？](lighthouse/01-behavior-contract.md)： 保留请求锚价、公共 Turn／工具／Round 与 Codex 额度；当前基线消费 provider 单一统计范围、整文件 clear 与预算修改移除，不扩大所有 provider 展示。
@@ -51,7 +53,7 @@ Labels: wayfinder:map
 
 - [动态 widget 如何分层，无 UI 时哪些业务仍需更新？](lighthouse/08-presentation.md)：已确认旧视觉／共享后端与宿主前端、混范围 Total、静态 detail 树、子代理 brief 与轻量 Round；无 UI 记账和错误可见，远端调度只见刷新权威。
 
-- [确定的新能力与 model-cost 如何组织、声明和装配？](lighthouse/10-assembly-layout.md)：部分确认扩展宿主专属实现、framework 当前查看会话与有效标记；完整接口、原生出口和装配仍未决。
+- [确定的新能力与 model-cost 如何组织、声明和装配？](lighthouse/10-assembly-layout.md)：已确认完整源码分层、公共工厂／初始化／清理、范围订阅与展示 Seam、独立验证及消费者切换；公开查看出口先行，实际版本／证据／切换由验收收口。
 
 - [官方计价与 token-only 模型名单如何确定、配置和维护？](lighthouse/13-model-catalog-policy.md)：已结案；官方两 ID／Go 五 ID、集中扩展谷价＋峰价系数、价格派生参考比例与 Codex 缺价退化；发现只辅助维护，历史金额不重算。
 
@@ -63,8 +65,8 @@ Labels: wayfinder:map
 
 ## Not yet specified
 
-- 原生宿主缺失尚未具体暴露的观测能力时，其降级／拒绝与诊断如何衔接，遇到具体路径再展开；账户访问的局部查询失败原则已由账户访问权威持有，提示承载由现有展示票决定，不在此重复开雾。
-- 尚未暴露的非 HTTP 新增通用能力对 connect-bot 等既有消费者的影响，待具体能力出现后再判断。已经具体化的当前查看会话／有效标记公共能力与消费者隔离由[装配局部结果](lighthouse/10-assembly-layout.md)及其原 Question 承接，不在此重复作为 fog；其他未知复用影响保留。
+- 尚未暴露的宿主事实／能力缺口，只有新实际路径使问题能具体描述时再展开；已定独立验证与局部数据失败政策不重开成运行时动态准入。当前查看公开出口的前置路线已在装配决定，实际补丁／版本／证据由验收原 Question 覆盖，不在 fog 重复列票。
+- 尚未暴露的非 HTTP 新增通用能力对 connect-bot 等既有消费者的影响，待具体能力出现后再判断。已经具体化的公共初始化／完整生命周期／观察范围／当前查看／有效标记及消费者完整切换由[完整装配决议](lighthouse/10-assembly-layout.md)承接，不在此重复作为 fog；只有其他尚未暴露的真实复用影响保留。
 
 ## Out of scope
 
