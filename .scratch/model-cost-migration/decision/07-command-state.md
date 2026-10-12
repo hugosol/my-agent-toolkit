@@ -1,8 +1,8 @@
 # /budget 的参数、操作与状态如何在新框架表达？
 
 Type: grilling
-Status: claimed
-Assignee: hugos（本会话 agent 协助讨论）
+Status: resolved
+Assignee:
 Blocked by: 01, 06, 12
 Prerequisites: [完整保留哪些业务行为，统计单位如何命名？](01-behavior-contract.md)；[framework 如何提供独立存储、原子更新与跨进程协调？](06-local-storage.md)；[model-cost 的哪些数据进入 framework State，如何声明与读取？](12-state-data-contract.md)
 Parent: [model-cost 完整迁移：通用能力分层与 OMP 适配](../map.md)
@@ -10,19 +10,19 @@ Lighthouse: [通用动作与预算命令契约](../lighthouse/07-command-state.m
 
 ## Handoff
 
-- 当前恢复点（2026-10-12）：Q1–Q20 的命令范围已确认并通过 Lighthouse 发布；源票保持 claimed，未宣称 resolved。发布后的 Backtracer 发现原存储 Q25 布局已因单账号修订失效，替代物理布局仍待用户授权定点重审；依赖的记录 outcome 尚不能按旧 resolved 状态视为最终 schema 已满足。
+- 状态：本票 resolved（2026-10-12），命令决策范围与 Q21 缺口授权均已收口，claim 已清理。用户“Q21 可以”授权将原存储票仅对 Q25 物理布局恢复为 open、未认领；该跟进未解决，不宣称其对装配的依赖已满足。
 - 已发布命令结果只在[命令 Lighthouse](../lighthouse/07-command-state.md)；单账号支持、取消账号统计身份与替换隔离只在[消费归属原主题](../lighthouse/02-accounting-ownership.md#账户隔离多会话与额度)，当前认证资料只在[访问原权威](../lighthouse/04-provider-access.md)，整文件 clear／零消费／失败顺序只在[存储原权威](../lighthouse/06-local-storage.md)，逻辑数据与 detail 寿命只在[数据原权威](../lighthouse/12-state-data-contract.md)。不得从旧交接恢复账号键／定点 clear，也不把一个 provider 单账号误当只有一个进程。
-- 下一 ready 问题（Q21）：是否授权[存储决策票](06-local-storage.md)仅对 Q25 的取消 accounts／providerAccountId 后布局做定点重审？确认 provider／模型数据口径、periodId／holiday／sessions 的物理位置及 whole-file reset 表示；不重开已确认 IO／锁／失败政策，不增加账号处理。授权尚未获得，不自动改该票 status／claim，不擅自冻结扁平或 provider 分桶候选；不在本会话解决第二张非 research 票。需要切票时走 Pause 发布／释放本票 claim，并在后续会话处理已授权范围。
-- 本票命令不再有未答的语法／模式／detail／holiday／clear 反馈分支；剩余发布跟进为上述上游前提裁决。具体 delivery 字段、实例与公共 exports、真实宿主 await／异常接线由原[装配票](10-assembly-layout.md)持有，不要求本票先实施。所有 provider 的新 usage UI 不在本票批准范围；展示／模型覆盖已有 owner，不重复开票。
+- 后续 ready 票：[framework 如何提供独立存储、原子更新与跨进程协调？](06-local-storage.md)，只收口取消账号键后的物理布局，下一会话先认领。Q21 授权已记录，不再重问；[该票当前 Handoff](06-local-storage.md#handoff)是精确恢复点。本会话不认领或解决第二张决策票。
+- 本票命令无剩余语法／模式／detail／holiday／clear 反馈问题；所需的整文件归档／reset 操作语义已有批准原权威，未定字段编码交给已授权的存储原题，因此不重开本票。delivery 字段、实例与公共 exports、宿主 await／异常接线由原[装配票](10-assembly-layout.md)持有，不要求先实施。全部 provider 的新 usage UI 不在本票批准范围。
 - 理由与拒绝分支：保留 budget 为前缀匹配便利；detail toggle 少记命令；动作表取代自由参数 handler，取消数字／K／0、默认动作、缩写、额外参数、业务配置语言、原生 handler 绕路、后台 action 模式及各扩展重复打印。holiday／clear 只拒绝当前 Round／保存未收口，不是整个 Session 禁用，不增加全局活动检测或延期队列。用户最常见多 CLI，故保留轻量跨进程协调。
 - 证据与限度：[确认原话／旧源码](../assets/command-confirmation-2026-10-12.md)、[OMP 进程调查](../assets/omp-session-process-model.md)、[pi 进程调查](../assets/pi-session-process-model.md)。旧 detail 入口没有 provider 检查、既有 renderer 消费偏好，hidden 不显示；授权沿旧行为不等于给所有 provider 新增 UI。探针版本与支持基线不同，未发模型请求，不证明生产 actions／warning／文件锁／TUI 已实现；正式基线仍 18.5.0。
-- Trace：[本轮 Backtracer 记录](../assets/command-trace-2026-10-12.md)已列 signals／coverage 与唯一待裁决 schema 项；无额外已确认新 gap ticket，不修改消费者票的恢复点或他人 claim。旧独有理由、交接和原 Question 全文保存在[本轮发布前快照](../assets/command-ticket-before-publication-2026-10-12.md)，只作溯源。
+- Trace：[本轮 Backtracer 记录](../assets/command-trace-2026-10-12.md)已列 signals／coverage 与唯一 schema 跟进；用户已授权恢复原存储题，无重复新票，不修改其他消费者的恢复点或 claim。旧独有理由、交接和原 Question 全文保存在[本轮发布前快照](../assets/command-ticket-before-publication-2026-10-12.md)，只作溯源。
 
 ## Question
 
 在取消数字／K／0 预算修改的前提下，确定保留 detail、holiday、clear 的命令名、完整语法、适用条件、状态寿命与成功／拒绝／失败反馈，选择最小 framework 通用命令模式。当前生产框架仅 toggle／directed 与 boolean activation，不能借 unrecognized 回调或原生命令集成伪装通用 action。
 
-本票已确认新增纯数据一层 actions 声明与注入 shared logic 实现，统一等待及异常报告，补齐公共 warning；不升级通用业务 State。操作规则以 Lighthouse 为唯一批准权威，不将保存失败策略、整文件 clear 或单账号政策复制进本票。当前唯一剩余前置裁决是上方 Q21 的原存储 schema 定点重审；未批准候选仍保持问题，不把源票旧 resolved 状态当替代结构已冻结。
+本票已确认新增纯数据一层 actions 声明与注入 shared logic 实现，统一等待及异常报告，补齐公共 warning；不升级通用业务 State。操作规则以 Lighthouse 为唯一批准权威，不将保存失败策略、整文件 clear 或单账号政策复制进本票。Q21 已授权原存储 schema 定点重审且有恢复点，本票完成；替代 schema 的候选仍未批准，不把本票结案当作物理存储或生产迁移完成。
 
 ## Comments
 

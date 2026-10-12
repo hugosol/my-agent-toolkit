@@ -170,7 +170,7 @@ ADR-0002 已要求 framework 提供协调读-改-发布与读端安全的原子�
 - 仍保留 schemaVersion、周期拒绝旧提交、会话 saveVersion、唯一 own（provider／模型／token／费用口径）、recentRound 与直接父 parent 的需求；本次不重新引入父 Round 标签／归属段。
 - 只存当前活动范围；archives/<archiveId>.json 使用 crypto.randomUUID()，已存在拒绝覆盖，内容为锁内最新完整有效活动 JSON；零消费同样归档。
 - 未知／缺失／损坏 schemaVersion 按 Q14，不猜零、不自动迁移旧 deepseek-cost.json。
-- **待定点收口**：取消账号键之后，provider 分桶与 periodId／holiday／sessions 的具体物理位置尚未获批；旧 Q25 不能作为完成冻结的替代 schema。整文件 reset 的跨 provider 表示也应在同一次收口确认。此次发布只撤销被用户明确取消的账号布局，不替用户选择新字段结构；需 Backtracer 提请用户授权该原题的定点重审。其他 Q5–Q24／Q26 不因此重开。
+- **待定点收口**：取消账号键之后，provider 分桶与 periodId／holiday／sessions 的具体物理位置尚未获批；旧 Q25 不能作为完成冻结的替代 schema。整文件 reset 的跨 provider 表示也应在同一次收口确认。此次发布只撤销被用户明确取消的账号布局，不替用户选择新字段结构；用户在命令票 Q21 已回答“可以”，授权该原题仅对这项物理布局定点重审；源存储票已恢复 open、未认领，替代 schema 仍未决定。其他 Q5–Q24／Q26 不重开。来源见[命令确认原话](../assets/command-confirmation-2026-10-12.md#q21-定点重审授权)。
 
 ### Q26：同会话多执行者靠版本冲突收口
 

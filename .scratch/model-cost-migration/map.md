@@ -23,7 +23,7 @@ Labels: wayfinder:map
 - 子票存放于 decision/；按编号扫描 open、无未满足依赖、未认领的票选 frontier。开始工作前先写 Status: claimed 和 Assignee。开放票不在地图正文重复列出。
 - [数据归属与账户周期决议](lighthouse/12-state-data-contract.md)已正式结案；最终取舍与历次暂停溯源只在 Lighthouse。后续按已定数据流推进存储与协调，再返回观察处理约束；不重问聚合／明细账、不恢复观察票旧 Q10，不把本票结案视为存储或原生观测已实现。继续工作时按 tracker 查询 frontier，或使用用户明确指定的票。
 
-- 本轮[命令决议](lighthouse/07-command-state.md)与其[确认来源](assets/command-confirmation-2026-10-12.md)已发布；账号／凭据身份隔离和定点 clear 在原权威修订。存储 Q25 的账号布局被取消，替代物理结构尚未批准；Backtracer 提请原题定点重审，未授权前不自动重开票或由装配猜字段。
+- 本轮[命令决议](lighthouse/07-command-state.md)与其[确认来源](assets/command-confirmation-2026-10-12.md)已发布；账号／凭据身份隔离和定点 clear 在原权威修订。存储 Q25 的账号布局被取消，替代物理结构尚未批准；用户 Q21 已授权恢复存储原题，仅对 Q25 布局重审，现 open、未认领；其余存储原则不重开，装配不猜字段。
 
 ## Decisions so far
 
@@ -33,7 +33,7 @@ Labels: wayfinder:map
 
 - [model-cost 的哪些数据进入 framework State，如何声明与读取？](lighthouse/12-state-data-contract.md)： 扩展自有逐响应聚合，实际会话 × provider × 模型；子代理仅 Session 汇总、Round 为本会话自身；整文件 clear，入口 detail 寿命保留，不存统计账号身份。
 
-- [framework 如何提供独立存储、原子更新与跨进程协调？](lighthouse/06-local-storage.md)： 单活动 JSON／独立归档与 estimate，安全异步发布、FIFO／跨进程锁、周期／版本拒绝旧提交；clear 完整归档／重置且零消费同流程，取消账号键；Q25 替代物理布局待定点收口，其余已定协调与失败政策保留。
+- [framework 如何提供独立存储、原子更新与跨进程协调？](lighthouse/06-local-storage.md)： 单活动 JSON／独立归档与 estimate，安全异步发布、FIFO／跨进程锁、周期／版本拒绝旧提交；clear 完整归档／重置且零消费同流程，取消账号键；Q25 替代物理布局已授权定点重审，源票 open，其余已定协调与失败政策保留。
 
 - [framework 如何提供请求、响应、Turn／Round 与模型事实观测？](lighthouse/03-observation-contract.md)：已按正常数据流、最小必要事实与异常基本原则收束；公共逻辑优先 framework、adapter 必要桥接，尽量统一 round_end；宿主可先 idle／接受新输入，公共 handler 等待自身异步保存，具体装配与生产验收仍未实施。
 
@@ -43,7 +43,7 @@ Labels: wayfinder:map
 
 - [额度与余额在何时刷新，异步效果怎样跟随会话生命周期？](lighthouse/09-refresh-lifecycle.md)：部分确认初始化两源并行预取、首次模型请求前收口；其余调度未决。
 
-- [/budget 的参数、操作与状态如何在新框架表达？](lighthouse/07-command-state.md)： 已发布一层 actions 路由、统一等待／异常报告与 warning；沿用 budget，detail 跟随旧入口偏好，holiday／clear 仅 DeepSeek 且当前入口 idle／保存收口；源票待 Backtracer 的 Q25 缺口处置，未关票。
+- [/budget 的参数、操作与状态如何在新框架表达？](lighthouse/07-command-state.md)： 已发布一层 actions 路由、统一等待／异常报告与 warning；沿用 budget，detail 跟随旧入口偏好，holiday／clear 仅 DeepSeek 且当前入口 idle／保存收口；命令票已 resolved；存储物理布局跟进已交原题，不把命令结案当生产实施完成。
 
 - [观察契约的 Handoff](decision/03-observation-contract.md#handoff)记录本轮收束、证据限度及下游职责；不恢复异常情景树或父 Round 分配，不把规划结案／临时探针当生产实现。
 

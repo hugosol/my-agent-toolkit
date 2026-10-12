@@ -22,18 +22,18 @@
 | pattern | FeedbackTransport／publishNotice、UI／stderr、handler 失败捕获 | 公共通道已存在；新增 Promise 等待及错误承接由装配与验收完成，不复制打印 module |
 | dependency | 当前 provider、实际 Session／Round、保存完成事实、有效 JSON、安全更新 | 观察／访问／数据／存储都有具名原权威；代码尚未实现并非新的规划缺口 |
 
-## Upstream gap requiring a user ruling
+## Confirmed upstream gap and assigned follow-up
 
 **取消账号键后的物理 schema 尚未收口。** 用户 Q13–Q15 明确取消 accounts／providerAccountId、账号独立分区，批准整文件 clear；它使存储原 Q25 的具体账号布局失效。但用户未决定替代布局：provider／模型口径放在哪里，periodId／holiday／sessions 是全文件还是 provider 分桶，以及 reset 对完整消费聚合的具体表示。
 
-- 原 provider：[framework 如何提供独立存储、原子更新与跨进程协调？](../decision/06-local-storage.md)的 Q25，当前源票仍 resolved、有历史 assignee；本轮未重开或认领该票。
+- 原 provider：[framework 如何提供独立存储、原子更新与跨进程协调？](../decision/06-local-storage.md)的 Q25，用户 Q21 已授权仅恢复物理布局问题，源票现 open、未认领；本轮未处理或解决该票。
 - 新权威状态：只撤销已确认取消的账号结构并保留其它安全规则，明确替代结构未批准；未擅自选择扁平或分桶结构。
 - 受影响输入：命令的归档／重置实现及装配的最终物理模型。装配不能把早期 source Handoff 的“Q25 已冻结”当新 schema；实际读本轮原 Lighthouse。
-- 待用户裁决：是否授权存储原题仅对 Q25 做定点重审，以不新增账号处理、保留多 CLI 协调与 whole-file clear 为约束，其他 Q5–Q24／Q26 不重开。需后续独立会话处理，不在命令会话再解决另一张非 research 决策票。
+- 已裁决／handoff：用户“Q21 可以”授权存储原题仅对 Q25 定点重审，以不新增账号处理、保留多 CLI 协调与 whole-file clear 为约束，其他 Q5–Q24／Q26 不重开。[原票当前 Handoff](../decision/06-local-storage.md#handoff)已记录唯一 ready 问题，后续独立会话处理。
 
 ## Disposition and follow-up
 
 - 未发现需要另开票的路由／反馈／展示或全局账号管理缺口；现有装配、验收、展示、刷新、模型覆盖问题已经持有其范围，仍未决，不宣称输入已实现。
-- 身份隔离／target-account clear 与新政策的旧冲突已回原权威处理；保留历史快照，不把消费者的历史交接当有效政策。本轮没有同步改写其他 ticket 的 Handoff 或 claim。
-- Q25 定点重审授权尚未获得，不自动重开已 resolved 票，不新增重复 schema 票。此 pending ruling 回到命令票 Handoff；保留命令 claim，不把本次发布说成整票结案。
-- 本轮 trace follow-up 尚有上述用户裁决；不能报告 no-gap 或完成整地图。没有新增 source-ticket status，也没有生产修改。
+- 身份隔离／target-account clear 与新政策的旧冲突已回原权威处理；保留历史快照，不把消费者的历史交接当有效政策。除用户明确授权的存储 Q25 恢复外，本轮未同步改写消费者 ticket 的 Handoff 或 claim。
+- Q25 已按用户授权恢复原题，不新增重复 schema 票。命令语法／效果／门控／反馈的决策范围已完整确认，所依赖的整文件操作语义也已发布；字段编码未定是原存储题的独立跟进，不能据此重问命令政策。命令票 resolved、清理 claim，不宣称存储依赖对装配已全满足。
+- 本轮 trace follow-up 已完成：唯一确认缺口有原题 owner 与恢复点，没有未分配 batch 或待授权冲突；物理 schema 本身仍未解决。地图未完成，装配依赖继续受开放存储票阻挡，不做生产修改。

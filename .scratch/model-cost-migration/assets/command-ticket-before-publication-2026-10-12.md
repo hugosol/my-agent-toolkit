@@ -8,7 +8,7 @@ Type: grilling
 Status: claimed
 Assignee: hugos（本会话 agent 协助讨论）
 Blocked by: 01, 06, 12
-Prerequisites: [完整保留哪些业务行为，统计单位如何命名？](01-behavior-contract.md)；[framework 如何提供独立存储、原子更新与跨进程协调？](06-local-storage.md)；[model-cost 的哪些数据进入 framework State，如何声明与读取？](12-state-data-contract.md)
+Prerequisites: [完整保留哪些业务行为，统计单位如何命名？](../decision/01-behavior-contract.md)；[framework 如何提供独立存储、原子更新与跨进程协调？](../decision/06-local-storage.md)；[model-cost 的哪些数据进入 framework State，如何声明与读取？](../decision/12-state-data-contract.md)
 Parent: [model-cost 完整迁移：通用能力分层与 OMP 适配](../map.md)
 
 ## Trace handoff from data Lighthouse
@@ -37,13 +37,13 @@ Session／Round 累计限于适用账户当前周期；resume 只恢复已保存
 
 ## Question
 
-用户已在[数据讨论](12-state-data-contract.md)明确移除修改预算功能，不再迁移数字／K／0 参数。确定保留的 detail、holiday、clear 的完整命令操作、命令名、模式限制、失败反馈和存活范围；不因保留旧 /budget 名称而恢复已移除的数字设置。框架当前仅 toggle/directed 与一个 boolean activation 字段，不能借 unrecognized 回调伪装完整 action 接口。
+用户已在[数据讨论](../decision/12-state-data-contract.md)明确移除修改预算功能，不再迁移数字／K／0 参数。确定保留的 detail、holiday、clear 的完整命令操作、命令名、模式限制、失败反馈和存活范围；不因保留旧 /budget 名称而恢复已移除的数字设置。框架当前仅 toggle/directed 与一个 boolean activation 字段，不能借 unrecognized 回调伪装完整 action 接口。
 
 选择所需通用命令类别进入 framework，还是保留扩展原生命令集成；detail 与统计业务数据由 model-cost shared logic 管理，不为本次升级通用业务 State。detail 已确认是交互入口级内存偏好，同一入口普通会话切换／tree 保留、重载／重启恢复 brief，独立入口互不影响；holiday 跨会话／进程持久化；clear 不清 Codex estimate——确认这些业务规则如何映射。反馈现有仅 info/error，而旧命令含 warning，需有明确处理，不默默降级。
 
 ## Handoff from behavior-contract
 
-[完整保留哪些业务行为，统计单位如何命名？](01-behavior-contract.md) 最初确认需求基线；后续数据决议已移除数字／K／0，仅保留 detail、holiday、账户级 clear／归档和反馈。本票逐项决定完整语法、模式适用范围、状态寿命、反馈及失败边界；clear 默认仍是 DeepSeek 归档／新周期／清 holiday，不清 Codex estimate。任何偏离基线的取舍必须显式记录并经用户确认。
+[完整保留哪些业务行为，统计单位如何命名？](../decision/01-behavior-contract.md) 最初确认需求基线；后续数据决议已移除数字／K／0，仅保留 detail、holiday、账户级 clear／归档和反馈。本票逐项决定完整语法、模式适用范围、状态寿命、反馈及失败边界；clear 默认仍是 DeepSeek 归档／新周期／清 holiday，不清 Codex estimate。任何偏离基线的取舍必须显式记录并经用户确认。
 
 ## Handoff from accounting-ownership
 

@@ -2,7 +2,7 @@
 
 > Question and discussion: [/budget 的参数、操作与状态如何在新框架表达？](../decision/07-command-state.md)
 >
-> 本轮命令范围已确认并发布（2026-10-12），确认原话与事实边界见[本轮确认来源](../assets/command-confirmation-2026-10-12.md)。源票保留 claim 至发布／Backtracer 缺口跟进收口；本文件不是生产实现证明。原先仅确认 clear 执行条件的局部结果已合入当前主题。
+> 本轮命令范围已确认并发布（2026-10-12），确认原话与事实边界见[本轮确认来源](../assets/command-confirmation-2026-10-12.md)。源票已 resolved、清理 claim；Backtracer 的存储 Q25 跟进已获用户授权并恢复原题为 open，尚未解决其字段布局。本文件不是生产实现证明。原先仅确认 clear 执行条件的局部结果已合入当前主题。
 
 ## Question
 
@@ -100,7 +100,7 @@ framework 新增声明式一层 `actions` 路由与统一等待／异常报告�
 - [装配票](../decision/10-assembly-layout.md)把同步／异步 action 的完成与错误从公共入口传到宿主，动作实现放 shared logic；复用既有声明、绑定、adapter 注册和公共反馈路径。
 - [验收票](../decision/11-acceptance-cutover.md)覆盖合法／非法输入、Promise 完成与失败、三个反馈级别、无 UI 输出、provider／当前入口门控、零消费归档及归档成功重置失败；生产验收尚未执行。
 - 展示与模型覆盖消费入口 detail 偏好，不将此票解释为所有 provider 的新 usage UI；无 UI 远端调度仍由展示／刷新票决定。
-- 账号统计隔离政策在原权威修订；命令票只链接，物理 schema 缺口由 Backtracer 提请原题定点重审，不默选候选。
+- 账号统计隔离政策在原权威修订；命令票只链接，物理 schema 缺口已通过用户 Q21 授权恢复存储原题定点重审，不默选候选；命令范围结案不解除装配的未满足存储依赖。
 
 ## Invariants
 

@@ -1,27 +1,30 @@
 # framework 如何提供独立存储、原子更新与跨进程协调？
 
 Type: grilling
-Status: resolved
+Status: open
 Outcome: [存储组织与唯一消费源局部决议](../lighthouse/06-local-storage.md)
-Assignee: hugos (本会话 agent 协助讨论)
+Assignee:
 Blocked by: 01, 02, 12
 Prerequisites: [完整保留哪些业务行为，统计单位如何命名？](01-behavior-contract.md)；[用量与费用属于哪个会话、账户和请求，如何避免漏算与重复？](02-accounting-ownership.md)；[model-cost 的哪些数据进入 framework State，如何声明与读取？](12-state-data-contract.md)
 Parent: [model-cost 完整迁移：通用能力分层与 OMP 适配](../map.md)
 
 ## Handoff
 
-- 状态：本票已 resolved（2026-10-11 本会话，Q23–Q26 收口）。唯一权威为 [存储组织与安全更新局部决议](../lighthouse/06-local-storage.md)；详细规则只在 Lighthouse，本交接只留导航、理由与证据限制。
-- 本轮确认：Q23 取最简——不做请求前读取，跨进程 clear 由保存时周期校验（Q8）发现并按失败重初始化（Q6），最多丢一轮未保存消费；Q24 framework 通用文件能力 = 单一异步入口 + 规范化路径协调键 + 进程内 FIFO + 锁文件跨进程互斥 + 15s 预算 + 锁内重读 + 同目录临时文件 rename 原子发布 + 损坏不覆盖 + 陈旧锁回收（被误回收的存活写入者校验锁所有权并放弃覆盖）；Q25 consumption.json 最小物理 schema（schemaVersion／accounts／periodId／holiday／sessions{saveVersion／own／recentRound／parent}）与 `archives/<uuid>.json`；Q26 同会话多执行者不引入租约，靠 saveVersion + Q8 旧版本不覆盖 + Q12 同版本冲突 + Q6 重初始化收口。
-- 已定基线（不重问）：Q5–Q22 全部保持；账户周期／holiday、按会话合并、异步等待、clear 先归档后重置且只取已保存数据、无基线暂停、固定文件组织与本机本地文件系统范围不变。
+- 状态：用户在命令票本轮 Q21 回答“可以”，授权仅对 Q25 的无账号键物理布局定点重审；本票现为 open、未认领。原已结案的其他存储决定保持，当前唯一权威为 [存储组织与安全更新局部决议](../lighthouse/06-local-storage.md)；详细规则只在 Lighthouse，本交接只留导航、理由与证据限制。
+- 本轮确认：Q23 取最简——不做请求前读取，跨进程 clear 由保存时周期校验（Q8）发现并按失败重初始化（Q6），最多丢一轮未保存消费；Q24 framework 通用文件能力 = 单一异步入口 + 规范化路径协调键 + 进程内 FIFO + 锁文件跨进程互斥 + 15s 预算 + 锁内重读 + 同目录临时文件 rename 原子发布 + 损坏不覆盖 + 陈旧锁回收（被误回收的存活写入者校验锁所有权并放弃覆盖）；原 Q25 的 accounts／providerAccountId 布局已被本轮单账号修订取消，替代布局尚未确定；独立 UUID 归档命名保留；Q26 同会话多执行者不引入租约，靠 saveVersion + Q8 旧版本不覆盖 + Q12 同版本冲突 + Q6 重初始化收口。
+- 已定基线（不重问）：消费原 Lighthouse 的当前 Q5–Q24／Q26；单账号、不识别统计身份、整文件 clear 与零消费统一归档已由命令会话批准，不恢复旧账号隔离／定点 clear。安全异步更新、跨进程锁／15s／锁内重读／周期版本、失败策略、固定文件组织与本机本地文件系统范围保留。
 - 拒绝／替代：请求前读取候选（含读失败、空闲刷新、读／clear 交错、开放 Round 跨周期快照设计）与同会话租约／心跳均未采纳，理由是最简单实现与已接受的少量损失；Q6／Q11 旧保留内存政策仍以 Lighthouse 当前正文为准，历史仅在下方 Comments。
 - 证据限制：[exact 18.5.0 请求观测探针](../assets/omp-request-observation-smoke.md)与旧存储只读探针不证明新 framework 文件能力已实现；真实跨进程锁、崩溃／原子读、陈旧锁回收与路径别名验收由装配／验收票承担。
-- 无剩余无主恢复点；Q23–Q26 已收口。混账户父子关系保留与迟到子消费发布属账户／观察票；本票不再认领。
+- 下一 ready 问题：取消 accounts／providerAccountId 后，如何用最小消费活动 JSON 表达 provider／模型口径、periodId／holiday／sessions 及完整归档／reset？先给一份普通 DeepSeek＋Codex 消费数据流／具体 JSON 再 grill；扁平或 provider 分桶均为候选，不擅自采用。本次仅恢复该问题，不重问账号政策、文件协调或异常系统。
+- 恢复来源：[命令确认原话](../assets/command-confirmation-2026-10-12.md#q21-定点重审授权)、[Backtracer 缺口与处置](../assets/command-trace-2026-10-12.md)。本次没有认领或处理此票；下一会话先认领，再读取原 Lighthouse Q25 与当前逻辑数据，不消费下方历史“schema 已冻结”来恢复旧账号键。
 
 ## Question
 
-新统计允许从空开始；存储根与路径配置已按存储 Lighthouse Q17–Q20 确认，复用用户 .omp/cost-archive，由用户切换前手动备份清空，程序不自动清理或兼容旧统计。文件组织已由 Q21 确认；继续确定扩展／账户／provider namespace 与物理 schema，本机本地文件系统的协调范围已由 Q22 确认，继续确定具体锁／平台运行契约。哪些通用文件能力进入 framework，哪些 JSON schema、合并／归档规则留在 model-cost？Codex estimate 保持独立文件并复用安全写入，本票不展开其业务采纳算法。
+**本轮仅重审原 Q25：无账号身份键的消费活动 JSON 物理布局。** framework 每 provider 单账号、统计不识别账号／Key、整份 consumption.json 归档和重置已经批准；不在这里重新选择这些政策。确认 provider／模型记录的位置、periodId／holiday／sessions 的最小层级，以及完整消费 reset 的表示，使恢复、最近 Round、直接父 Session 汇总与旧周期提交拒绝继续使用同一数据源。
 
-确定读缓存新鲜度、锁内重读／update、原子发布、跨进程锁、等待／取消／错误与损坏不覆盖契约，并讨论平台条件。旧 OMP native file-lock 不能作为 harness-independent implementation 偷渡进共享代码。保留当前已确认的账户周期聚合／归档／holiday 与 quota estimate 业务能力；不照搬旧完整账本或补齐要求。从空起步不等于取消本周期持久化、已保存值恢复或正常并发安全。
+schemaVersion、会话 saveVersion／own／recentRound／parent 的已定必要语义和 UUID 归档保留；原 accounts／providerAccountId 不再是可用候选。具体结构尚未批准，不由命令动作配置推断。其余路径、文件组织、IO／锁／等待／取消／失败／损坏不覆盖／协调平台与同会话执行者政策按原 Lighthouse 当前主题保持，不重新开泛化问题树。
+
+原 Question 与发布前 Handoff 见[定点重审前快照](../assets/storage-ticket-before-command-reopen-2026-10-12.md)，探索历史仍在下方 Comments 和原权威历史中；当前授权只恢复上述具体失效部分，不是全票重设计或生产实施。
 
 ## Discussion approach
 
