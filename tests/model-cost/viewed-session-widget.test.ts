@@ -205,7 +205,7 @@ function controlSession(options: {
 }
 
 /** A controlled extension API: it records the widget's handlers so a case can fire a session event. */
-function controlApi(): {
+function controlApi(options: { readonly thinkingLevel?: string } = {}): {
 	readonly api: OmpExtensionApi;
 	fire(event: string, ctx: OmpSessionContext): void;
 } {
@@ -216,6 +216,9 @@ function controlApi(): {
 			existing.push(handler);
 			handlers.set(event, existing);
 		},
+		// The bound session's actual effort, as the native API reports it: present on every host,
+		// before and after the viewed-session outlet, which is the surface the widget's fallback reads.
+		getThinkingLevel: () => options.thinkingLevel,
 		pi: undefined,
 	} as unknown as OmpExtensionApi;
 	return {
@@ -466,6 +469,24 @@ describe("a host without the approved outlet still draws the bound session's own
 			"\u{1F525}  [\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591   0% (1,234/450.0K)]  Effort: ?  \u23F3 Accrued: \u00A50.05 [\u258F]",
 			"Total:  Cache: 67%  \u00A5Cache/In/Out\uff1a4:7:89  Sum: 6,100  Cost: \u00A50.05",
 		]);
+	});
+
+	test("the bound session's own actual thinking level is drawn at initialization", async () => {
+		const runtime = await boundRuntime();
+		const { api, fire } = controlApi({ thinkingLevel: "medium" });
+		// The same unpatched host, whose native `getThinkingLevel()` every host has published all
+		// along. The effective level is read at the first render, so the effort is the bound session's
+		// own actual level rather than the question mark an unavailable outlet leaves.
+		const session = controlSession({
+			boundSessionId: "session-main",
+			boundModel: { provider: "official", id: "model-alpha" },
+			initial: {},
+			patched: false,
+			ownContext: { tokens: 1234, contextWindow: 64_000 },
+		});
+		attachModelCostWidget(api, runtime, uiBoundaryTimerOf(runtime), "lines");
+		fire("session_start", session.ctx);
+		expect(session.lastLines()?.some(line => line.includes("Effort: medium"))).toBe(true);
 	});
 
 	test("a host that publishes no reading at all is a bar-less widget, not a fabricated zero", async () => {

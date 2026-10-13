@@ -63,6 +63,22 @@ import {
 /** The document's fixed file name inside the configured storage root. */
 const CONSUMPTION_FILE_NAME = "consumption.json";
 
+/**
+ * The generation a root that holds no document yet is in: the one period every instance that starts
+ * before the first write agrees on.
+ *
+ * A period is normally the generation a reset publishes, and resets mint a random one. A root with
+ * no document has no reset behind it, so there is nothing that could make one instance's view of
+ * that first period different from another's: minting a random generation here would let two
+ * instances that both started on the empty root disagree about the period they are in, and the
+ * second one to save would refuse its own consumption as belonging to a period a reset had
+ * replaced. One fixed generation keeps that still-unwritten period shared until the first write
+ * names it on disk; every actual reset — including one opened while the root was still empty —
+ * publishes a fresh random generation as before, so an old instance's snapshot is still refused
+ * after a reset.
+ */
+const FRESH_PERIOD_ID = "period-fresh";
+
 /** The accounting period one instance is in: the generation its snapshots belong to. */
 export interface ConsumptionPeriod {
 	/** The generation an accounting reset produces; an ordinary save never changes it. */
@@ -448,9 +464,16 @@ export class ConsumptionStore {
 		this.#pauseReason = undefined;
 	}
 
-	/** A period that begins now, with no session in it: what a root holding no document means. */
+	/**
+	 * A period that begins now, with no session in it: what a root holding no document means.
+	 *
+	 * The generation is the one fixed {@link FRESH_PERIOD_ID} rather than a random one: every
+	 * instance that starts on such a root is in this same, still-unwritten period, so whichever of
+	 * them writes first names the generation the others already share, and no started-before-the-
+	 * first-write instance loses its accumulation to a period the file never held.
+	 */
 	#adoptFresh(): void {
-		this.#period = { periodId: randomUUID(), start: new Date().toISOString(), holiday: false };
+		this.#period = { periodId: FRESH_PERIOD_ID, start: new Date().toISOString(), holiday: false };
 		this.#records = new Map();
 		this.#pauseReason = undefined;
 	}

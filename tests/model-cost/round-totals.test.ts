@@ -91,7 +91,7 @@ async function bindAccounting(options: { readonly baseline?: unknown } = {}): Pr
 	const root = mkdtempSync(path.join(tmpdir(), "model-cost-round-totals-"));
 	roots.push(root);
 	const file = path.join(root, "consumption.json");
-	if (options.baseline !== undefined) Bun.write(file, JSON.stringify(options.baseline));
+	if (options.baseline !== undefined) await Bun.write(file, JSON.stringify(options.baseline));
 	const runtime = createModelCostRuntime({
 		config: { storageDir: root },
 		configDirectory: root,

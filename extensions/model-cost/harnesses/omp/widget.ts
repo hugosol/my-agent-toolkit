@@ -168,6 +168,26 @@ interface WidgetContext extends OmpSessionContext {
 	clearTimer(timer: unknown): void;
 }
 
+/**
+ * The native extension API this frontend draws through: the framework adapter's surface plus the
+ * members only this widget reads.
+ *
+ * The adapter names only the members its own mapping uses, so the bound session's actual effective
+ * thinking level — the native getter every host has published all along, viewed-session outlet or
+ * not — is named here, in the extension's own native half, beside the widget's other native reads.
+ */
+interface WidgetApi extends OmpExtensionApi {
+	/**
+	 * The bound session's actual effective thinking level, as the harness's own
+	 * `session.thinkingLevel` reports it.
+	 *
+	 * It is read only when the host publishes no viewed-session outlet at all, the same
+	 * bound-session fallback the context bar takes. Optional: a surface that reports no level leaves
+	 * the question mark the spec asks for rather than a guessed one.
+	 */
+	getThinkingLevel?(): string | undefined;
+}
+
 /** The native UI surface this frontend draws on, widened to the component form it may hand over. */
 interface WidgetUi {
 	notify(message: string, type?: "info" | "warning" | "error"): void;
@@ -331,6 +351,9 @@ export function attachModelCostWidget(
 	let context: WidgetContext | undefined;
 	let unwatchViewed: (() => void) | undefined;
 	let leaveTimer: (() => void) | undefined;
+	// The framework adapter's surface widened to the one native getter above: read through a cast
+	// rather than the exported parameter type, which stays the adapter's own surface.
+	const api = pi as WidgetApi;
 
 	/**
 	 * The target this session is displaying, from the host's own public outlet when it publishes one
@@ -339,17 +362,19 @@ export function attachModelCostWidget(
 	const targetOf = (ctx: WidgetContext): DisplayTarget => {
 		const facts = ctx.getViewedSession?.();
 		// A host that publishes the outlet is read through it alone: the displayed session's own
-		// reading, never the binding's, is the bar's fact. A host without the outlet has no separate
-		// view — the session this widget is bound to is the one being drawn — so its own native
-		// context reading answers here, the same fallback the provider and model already take.
+		// readings, never the binding's, are the bar's and the effort's facts. A host without the
+		// outlet has no separate view — the session this widget is bound to is the one being drawn —
+		// so its own native context reading and actual thinking level answer here, the same fallback
+		// the provider and model already take.
 		const context = facts?.context ?? (facts === undefined ? ctx.getContextUsage?.() : undefined);
+		const effort = facts === undefined ? api.getThinkingLevel?.() : facts.effort;
 		return {
 			sessionId: facts?.sessionId ?? ctx.sessionManager.getSessionId(),
 			provider: facts?.provider ?? ctx.model?.provider ?? "",
 			model: facts?.model ?? ctx.model?.id ?? "",
 			...(context?.tokens === undefined ? {} : { contextTokens: context.tokens }),
 			...(context?.contextWindow === undefined ? {} : { contextWindow: context.contextWindow }),
-			...(facts?.effort === undefined ? {} : { effort: facts.effort }),
+			...(effort === undefined ? {} : { effort }),
 		};
 	};
 

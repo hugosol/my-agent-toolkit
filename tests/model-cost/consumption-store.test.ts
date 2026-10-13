@@ -210,6 +210,32 @@ describe("the consumption store", () => {
 		expect(store.session("omp", OTHER_SESSION.id)).toEqual(OTHER_SESSION);
 	});
 
+	test("two instances that both loaded an empty root share the period the first write creates", async () => {
+		const root = freshRoot();
+		const first = new ConsumptionStore(root);
+		const second = new ConsumptionStore(root);
+		// Both start before either has written: the root holds no document, so both load a fresh
+		// period — and it is the same period, because an empty root holds one generation rather than
+		// one per instance that happens to look at it.
+		expect((await first.load()).kind).toBe("fresh");
+		expect((await second.load()).kind).toBe("fresh");
+		expect(first.period()?.periodId).toBe(second.period()?.periodId);
+
+		// The first instance's snapshot creates the document. The second instance accumulated in the
+		// same (still unwritten) period, so its snapshot must land in that document rather than being
+		// refused as a period a reset replaced — nothing was replaced and nothing was ever reset.
+		expect(await first.commit("omp", MAIN_SESSION)).toEqual({ kind: "saved" });
+		expect(await second.commit("omp", CHILD_SESSION)).toEqual({ kind: "saved" });
+		expect(second.period()?.periodId).toBe(first.period()?.periodId);
+		expect(fileDocument(root)).toEqual({
+			schemaVersion: 1,
+			periodId: first.period()?.periodId,
+			start: first.period()?.start,
+			holiday: false,
+			harnesses: { omp: { sessions: [MAIN_SESSION, CHILD_SESSION] } },
+		});
+	});
+
 	test("a snapshot with an older save version is refused", async () => {
 		const root = seededRoot(JSON.stringify(document([{ ...MAIN_SESSION, saveVersion: 5 }])));
 		const store = new ConsumptionStore(root);

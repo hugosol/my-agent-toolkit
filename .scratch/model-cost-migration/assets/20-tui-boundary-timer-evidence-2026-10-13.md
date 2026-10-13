@@ -236,6 +236,7 @@ Ticket 25 的独立验证交回一项具体缺口：**生产 widget 的 `Balance
 | green（最小实现） | `bun test tests/model-cost/widget-visual.test.ts` | **21 pass / 0 fail**（86 expect）。 |
 | 回归 | `bun test tests/model-cost` | **269 pass / 0 fail**。 |
 | 真实宿回归 | `bun test tests/harness-dock/detail-tree.test.ts tests/harness-dock/model-cost-modes.test.ts` | **7 pass / 0 fail**（91 expect）；`detail-tree` 现在断言 brief／detail 首行是带 `Effort:` 与 accrued 段的账户行，`model-cost-modes` 断言 `💰 Balance: ¥110.00` 在该行内、Go 帧无该行。 |
+| 真实宿全量 | `bun test tests/harness-dock` | **80 pass / 0 fail**（129.7s）；覆盖全部 model-cost dock 套件，含 `viewed-session-total.test.ts` 的 Effort 重读例（其 helper 已随本次迁移）。 |
 | 类型 | `bunx tsc --noEmit` | exit 0。 |
 
 其他票的既有 run 记录里仍有「widget 末行／`Balance:` 行」这类旧措辞（如 `assets/12-deepseek-balance-ttl`、`15-provider-init-auth-lifecycle`、`19-period-holiday-clear`、`25-acceptance-cutover`）：其中的金额与行为读数仍然成立，但余额所在的行位次以本节与第 5.2 节为准；遵循本仓「不改其他票正文」的惯例，仅在 20 本票记录并交回。

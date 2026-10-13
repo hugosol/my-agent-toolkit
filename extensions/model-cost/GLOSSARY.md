@@ -17,7 +17,7 @@ The provider, the exact model, the start instant, the accounting period, the hol
 _Avoid_: current price, end-time price, re-priced cost
 
 **Accounting period（消费统计周期）**:
-The scope of active consumption accounting bounded by explicit resets, distinct from the lifetime of an agent session or Round. A period identifies the accounting scope being accumulated; it does not establish that a provider-side account has been identified.
+The scope of active consumption accounting bounded by explicit resets, distinct from the lifetime of an agent session or Round. A period identifies the accounting scope being accumulated; it does not establish that a provider-side account has been identified. A reset mints a fresh generation; a root that holds no document yet is in one such generation shared by every instance that starts before the first write, so the first write names the period the others already accumulate in rather than replacing it.
 _Avoid_: session lifetime, Round, calendar day, process lifetime
 
 **Accounting reset（统计周期重置）**:

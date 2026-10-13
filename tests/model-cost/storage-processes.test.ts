@@ -277,6 +277,38 @@ describe("the storage root of independent processes", () => {
 		]);
 	});
 
+	test("processes that both start on an empty root share the first period and lose no record", async () => {
+		const run = tempDirectory("empty-concurrent");
+		const storeDirectory = path.join(run, "store");
+		const config = configRepository("empty-concurrent-config", storeDirectory);
+		const work = tempDirectory("empty-concurrent-work");
+
+		// Neither process has a document to read: both load a fresh period and only then save, so this
+		// is exactly two instances that started on the same empty root.
+		const startAt = Date.now() + 400;
+		const results = await Promise.all([
+			runChild(childPlan({ ...config, run, label: "a", record: session("session-a", null, 1), startAt }), {
+				cwd: work,
+			}),
+			runChild(
+				childPlan({ ...config, run, label: "b", record: session("session-b", "session-a", 1), startAt }),
+				{ cwd: work },
+			),
+		]);
+
+		expect(results.map(result => result.kind)).toEqual(["ran", "ran"]);
+		expect(results.map(result => result.load)).toEqual(["fresh", "fresh"]);
+		// The first write names the one period both instances were already in: neither save is refused
+		// as belonging to a period a reset replaced, and both records are in the document that period
+		// now holds.
+		expect(results.map(result => result.commits)).toEqual([[{ kind: "saved" }], [{ kind: "saved" }]]);
+		expect(results[0]?.period?.periodId).toBe(results[1]?.period?.periodId);
+		const stored = storedDocument(storeDirectory);
+		expect(results[0]?.period?.periodId).toBe(stored.periodId);
+		expect(stored.harnesses.omp?.sessions.map(record => record.id).sort()).toEqual(["session-a", "session-b"]);
+		expect(readdirSync(storeDirectory)).toEqual([CONSUMPTION_FILE]);
+	});
+
 	test("concurrent processes committing their own sessions lose no record", async () => {
 		const run = tempDirectory("concurrent");
 		const storeDirectory = path.join(run, "store");
