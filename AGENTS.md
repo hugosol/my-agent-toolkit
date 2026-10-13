@@ -8,6 +8,10 @@ Issues and specs live as markdown files under `.scratch/<feature>/` in this repo
 
 Implementation tickets use `needs-triage`/`needs-info`/`ready-for-agent`/`ready-for-human`/`wontfix`, with `in-progress`/`closed` tracking execution. See `docs/agents/triage-labels.md`.
 
+### Testing
+
+Before choosing test scope for iteration, ticket completion, or final integration, read `docs/agents/testing.md` for test tiers and shared-worktree run coordination.
+
 ### Domain docs
 
 Multi-context: `GLOSSARY-MAP.md` at the repo root points at one `GLOSSARY.md` per context (`framework/`, `extensions/<id>/`); `docs/adr/` and `docs/agents/` stay at the repo root. See `docs/agents/domain.md`.
