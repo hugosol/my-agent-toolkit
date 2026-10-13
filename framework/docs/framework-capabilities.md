@@ -505,7 +505,7 @@ caller prepares everything it means and interprets everything it gets back.
 | `options.headers?` | `Readonly<Record<string, string>>` | The headers, sent exactly as given — no content type, no authorization, nothing added. |
 | `options.body?` | `string` | The body, sent exactly as given — nothing is serialized. |
 | `options.timeoutMs?` | `number` | The wait budget in milliseconds. Omitted takes the shared `http.defaultTimeoutMs`, and with that absent — or with no shared file at all — the built-in 30000. A declared budget must be a whole number of milliseconds this harness's timer schedules (`isScheduledWait`): `0` does not turn the wait off, and an illegal value is refused rather than replaced. |
-| `options.proxy?` | `false \| string` | `false`, or omitted, is a direct connection. A string selects the entry of that name in the shared `http.proxies` table. |
+| `options.proxy?` | `false \| string` | `false`, or omitted, is a direct connection. A string selects the entry of that name in the shared `http.proxies` table; that entry is used only when it says `enabled: true`, and any other entry is an explicitly disabled one that connects directly. |
 
 **What comes back.** The runtime's own `Response`, streamed from the connection rather than
 buffered, so the caller reads `status`, `ok`, `headers` and the body itself. A non-2xx answer —
@@ -525,16 +525,19 @@ http:
   defaultTimeoutMs: 30000
   proxies:
     codex:
+      enabled: true
       url: "http://127.0.0.1:7890"
 ```
 
 `http.proxies.<name>.url` is the proxy's own address — `http://` or `https://`, which is the protocol of
-the connection *to the proxy*, not of the target. The file is optional, machine-owned, and read once per
-process, so an edited value takes effect with the next process. A request that names a proxy reads the
-table it selected and nothing else: no table, no such entry, an entry without a usable address, and a
-file that cannot be read or parsed are all `HttpConfigurationError`s that refuse the request *before
-anything is sent* — never a direct request, and never a second attempt after a chosen proxy fails to
-connect.
+the connection *to the proxy*, not of the target — and it is read only for an entry that says
+`enabled: true`. An entry that exists without `enabled: true` is an explicitly disabled one: the request
+connects directly and its `url` is never read, so a disabled entry may keep a placeholder or none. The
+file is optional, machine-owned, and read once per process, so an edited value takes effect with the next
+process. A request that names a proxy reads the table it selected and nothing else: no file, no table, no
+such entry, an entry that is not a mapping, and an enabled entry without a usable address are all
+`HttpConfigurationError`s that refuse the request *before anything is sent*; only an entry that exists
+and is not `enabled: true` connects directly, and a chosen proxy that fails is never retried direct.
 
 **How the route is realized.** The connection is made by this runtime's own `node:http`/`node:https`
 client, whose address is the one the request settled on and nothing else. A plain-HTTP target through a

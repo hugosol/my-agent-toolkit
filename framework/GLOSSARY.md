@@ -105,7 +105,7 @@ An extension's own `config.yaml` in its source directory, read and validated by 
 _Avoid_: harness settings, environment override, State, defaults embedded in code
 
 **Shared configuration（共享配置）**:
-The framework's own `framework/config.yaml`, beside the general HTTP module: the named proxy entries a request selects by name (`http.proxies.<name>.url`, an HTTP or HTTPS address) and the default wait budget (`http.defaultTimeoutMs`). It belongs to the machine, it is read once per process — a change requires a restart — and a request that names a proxy it cannot resolve fails as a configuration error instead of connecting directly.
+The framework's own `framework/config.yaml`, beside the general HTTP module: the named proxy entries a request selects by name (`http.proxies.<name>.enabled` and `http.proxies.<name>.url`) and the default wait budget (`http.defaultTimeoutMs`). It belongs to the machine, it is read once per process — a change requires a restart — and a request that names a proxy the file cannot resolve fails as a configuration error instead of connecting directly; an entry that exists without `enabled: true` is an explicitly disabled one and connects directly, so its `url` is never read.
 _Avoid_: extension configuration, environment variable, harness proxy setting, per-provider proxy field
 
 **Mode selection（模式设置）**:

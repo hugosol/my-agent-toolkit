@@ -465,9 +465,13 @@ writeFileSync(
 		"  defaultTimeoutMs: 30000",
 		"  proxies:",
 		"    loopback:",
+		"      enabled: true",
 		`      url: "http://127.0.0.1:${proxy.port}"`,
-		...(tlsProxy === undefined ? [] : ["    loopback-tls:", `      url: "https://127.0.0.1:${tlsProxy.port}"`]),
+		...(tlsProxy === undefined
+			? []
+			: ["    loopback-tls:", "      enabled: true", `      url: "https://127.0.0.1:${tlsProxy.port}"`]),
 		"    refused:",
+		"      enabled: true",
 		'      url: "http://127.0.0.1:1"',
 		"",
 	].join("\n"),

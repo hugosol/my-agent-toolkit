@@ -18,7 +18,7 @@
  * provider's price.
  */
 import { beforeAll, describe, expect, test } from "bun:test";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, cpSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
 import { MODEL_COST_WIDGET_KEY } from "../../extensions/model-cost/harnesses/omp/widget";
 import { writeAgentSettings } from "./agent-config";
@@ -30,10 +30,28 @@ import { ControlledSession, type RpcFrame } from "./session";
 import { ensureViewedSessionHarness } from "./viewed-session-harness";
 
 const record = readBaselineRecord();
-/** The extension's own OMP entrypoint, as the harness's loader discovers it. */
-const MODEL_COST_ENTRYPOINT = path.join(REPO_ROOT, "entrypoints", "omp", "model-cost.ts");
 /** The dock's own provider fixture: an unknown provider name, whose model this extension does not list. */
 const PROVIDER_FIXTURE = path.join(import.meta.dir, "fixtures", "extension-root", "provider.ts");
+
+/**
+ * A run-root copy of the extension's source with no shared framework configuration.
+ *
+ * The production entrypoint resolves `framework/config.yaml` from its own module location, and this
+ * suite's own `apiKey: "dock-key"` is a resolvable credential, so a machine that has enabled the
+ * `codex` proxy there would make every Codex run here issue a real account query. Copying the three
+ * trees the entrypoint needs and dropping the copied shared config keeps these runs loading the
+ * production source verbatim while the Codex startup query stays refused as `misconfigured`, exactly
+ * as it is on a machine with no such entry. The copy lives under the run root, so the run's own
+ * disposal removes it.
+ */
+function materializeModelCostSource(runRoot: RunRoot): string {
+	const source = path.join(runRoot.path, "source");
+	for (const relative of ["framework", "extensions/model-cost", "entrypoints/omp"]) {
+		cpSync(path.join(REPO_ROOT, relative), path.join(source, relative), { recursive: true });
+	}
+	rmSync(path.join(source, "framework", "config.yaml"), { force: true });
+	return path.join(source, "entrypoints", "omp", "model-cost.ts");
+}
 
 /** The document the extension keeps in its storage root. */
 const CONSUMPTION_FILE = "consumption.json";
@@ -287,7 +305,10 @@ async function startRun(
 		const session = await ControlledSession.start({
 			harness: patched,
 			runRoot,
-			extensions: options.withModelCost === false ? [PROVIDER_FIXTURE] : [PROVIDER_FIXTURE, MODEL_COST_ENTRYPOINT],
+			extensions:
+				options.withModelCost === false
+					? [PROVIDER_FIXTURE]
+					: [PROVIDER_FIXTURE, materializeModelCostSource(runRoot)],
 			model: definition.selector,
 			env: { [DOCK_CAPTURE_BASE_URL_ENV]: capture.baseUrl, ...home.env },
 			promptTimeoutMs: 120_000,

@@ -257,8 +257,10 @@ describe("the proxy path", () => {
 				"http:",
 				"  proxies:",
 				"    codex:",
+				"      enabled: true",
 				'      url: "http://127.0.0.1:7890"',
 				"    secure:",
+				"      enabled: true",
 				'      url: "https://127.0.0.1:7891"',
 				"",
 			].join("\n"),
@@ -268,6 +270,36 @@ describe("the proxy path", () => {
 		await http.request("https://chatgpt.com/backend-api/usage", { proxy: "secure" });
 
 		expect(sent.map(call => call.init.proxy)).toEqual(["http://127.0.0.1:7890", "https://127.0.0.1:7891"]);
+	});
+
+	test("an entry that is not explicitly enabled connects directly and its url is not read", async () => {
+		const cases: ReadonlyArray<{ readonly name: string; readonly config: string }> = [
+			{
+				name: "enabled: false",
+				config: 'http:\n  proxies:\n    codex:\n      enabled: false\n      url: "http://127.0.0.1:7890"\n',
+			},
+			{
+				name: "no enabled field",
+				config: 'http:\n  proxies:\n    codex:\n      url: "http://127.0.0.1:7890"\n',
+			},
+			{
+				name: "enabled as a string, not the boolean",
+				config: 'http:\n  proxies:\n    codex:\n      enabled: "true"\n      url: "http://127.0.0.1:7890"\n',
+			},
+			{ name: "disabled with no url", config: "http:\n  proxies:\n    codex:\n      enabled: false\n" },
+			{
+				name: "disabled with a url that would not be a proxy",
+				config: 'http:\n  proxies:\n    codex:\n      enabled: false\n      url: "127.0.0.1:7890"\n',
+			},
+		];
+
+		for (const { name, config } of cases) {
+			const { http, sent } = httpUnderTest({ config });
+
+			await http.request("https://chatgpt.com/backend-api/usage", { proxy: "codex" });
+
+			expect(sent.map(call => call.init.proxy), name).toEqual([false]);
+		}
 	});
 
 	test("a selection the shared file cannot satisfy is refused before anything is sent", async () => {
@@ -280,12 +312,18 @@ describe("the proxy path", () => {
 			{ name: "a proxies table that is not a mapping", config: "http:\n  proxies: nope\n" },
 			{ name: "no such entry", config: 'http:\n  proxies:\n    other:\n      url: "http://127.0.0.1:1"\n' },
 			{ name: "an entry that is not a mapping", config: "http:\n  proxies:\n    codex: http://127.0.0.1:7890\n" },
-			{ name: "an entry with no url", config: "http:\n  proxies:\n    codex: {}\n" },
-			{ name: "an empty url", config: 'http:\n  proxies:\n    codex:\n      url: ""\n' },
-			{ name: "a url that is not a url", config: 'http:\n  proxies:\n    codex:\n      url: "127.0.0.1:7890"\n' },
+			{ name: "an enabled entry with no url", config: "http:\n  proxies:\n    codex:\n      enabled: true\n" },
 			{
-				name: "a url outside http and https",
-				config: 'http:\n  proxies:\n    codex:\n      url: "socks5://127.0.0.1:1080"\n',
+				name: "an enabled entry with an empty url",
+				config: 'http:\n  proxies:\n    codex:\n      enabled: true\n      url: ""\n',
+			},
+			{
+				name: "an enabled entry with a url that is not a url",
+				config: 'http:\n  proxies:\n    codex:\n      enabled: true\n      url: "127.0.0.1:7890"\n',
+			},
+			{
+				name: "an enabled entry with a url outside http and https",
+				config: 'http:\n  proxies:\n    codex:\n      enabled: true\n      url: "socks5://127.0.0.1:1080"\n',
 			},
 		];
 
@@ -350,7 +388,7 @@ describe("the ambient environment", () => {
 		try {
 			for (const name of names) process.env[name] = "http://127.0.0.1:1";
 			const { http, sent } = httpUnderTest({
-				config: 'http:\n  proxies:\n    codex:\n      url: "http://127.0.0.1:7890"\n',
+				config: 'http:\n  proxies:\n    codex:\n      enabled: true\n      url: "http://127.0.0.1:7890"\n',
 			});
 
 			await http.request("http://127.0.0.1:9/user/balance");

@@ -20,10 +20,13 @@
  * - Transport failure and a wait that runs out reject; a body that fails to read rejects the
  *   read. None of these is turned into `null`, zero or a success/error result.
  * - `proxy: false`, and no `proxy` at all, is a direct connection. A string names one entry of
- *   the shared `http.proxies` table, and a selection the configuration cannot satisfy is
- *   refused before anything is sent: no table, no such entry, an illegal entry and a file that
- *   cannot be read are all errors, never a silent direct request. A proxy that connects and
- *   then fails propagates that failure; the request is not re-sent direct.
+ *   the shared `http.proxies` table. An entry is used only when it says `enabled: true`; any
+ *   other entry is an explicitly disabled one, and the request connects directly without
+ *   reading its `url` (so a disabled entry may keep a placeholder or none). A selection the
+ *   configuration cannot satisfy is refused before anything is sent: no file, no table, no such
+ *   entry, an entry that is not a mapping, and an enabled entry without a usable HTTP or HTTPS
+ *   address are all errors, never a silent direct request. A proxy that connects and then fails
+ *   propagates that failure; the request is not re-sent direct.
  * - The budget is `options.timeoutMs`, else the shared `http.defaultTimeoutMs`, else 30000ms. A
  *   declared budget must be a whole number of milliseconds the harness's timer schedules —
  *   `0` does not turn the wait off, and an illegal value is refused rather than replaced. It
@@ -58,6 +61,7 @@
  *   defaultTimeoutMs: 30000
  *   proxies:
  *     codex:
+ *       enabled: true
  *       url: "http://127.0.0.1:7890"
  * ```
  */
@@ -517,9 +521,13 @@ export function createHttpModule(seam: HttpModuleSeam = {}): HttpModule {
 		}
 		if (typeof entry !== "object" || entry === null || Array.isArray(entry)) {
 			throw new HttpConfigurationError(
-				`the shared configuration file "${configPath}" declares "http.proxies.${selection}" as ${describeValue(entry)}, but an entry is a mapping with a "url"`,
+				`the shared configuration file "${configPath}" declares "http.proxies.${selection}" as ${describeValue(entry)}, but an entry is a mapping`,
 			);
 		}
+		// Only an entry that says `enabled: true` selects the proxy. Any other entry is an
+		// explicitly disabled one: the request connects directly, and the entry's `url` is not
+		// read, so a disabled entry may keep a placeholder or none at all.
+		if ((entry as Readonly<Record<string, unknown>>)["enabled"] !== true) return false;
 		const address = (entry as Readonly<Record<string, unknown>>)["url"];
 		if (address === undefined) {
 			throw new HttpConfigurationError(

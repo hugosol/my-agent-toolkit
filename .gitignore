@@ -2,4 +2,3 @@ node_modules/
 .omp/
 .codebase-memory/
 .cache/
-framework/config.yaml
