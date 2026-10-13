@@ -1077,12 +1077,13 @@ export function accruedLine(accrued: DisplayAccrued): DisplayLine {
  *
  * A reading is written in its own currency with the same decimal rule as every other CNY amount, and
  * the amount carries the emphasis its own size calls for; a failure is written as the fact it is,
- * without a currency mark and without a zero, so it can never be read as a balance of nothing.
+ * without a currency mark and without a zero, so it can never be read as a balance of nothing. The
+ * line leads with the superseded widget's own money-bag mark, the way every balance it drew did.
  */
 export function balanceLine(result: ProviderBalanceResult): DisplayLine | undefined {
 	if (result.reading !== undefined) {
 		return [
-			{ text: "Balance: " },
+			{ text: "\u{1F4B0} Balance: " },
 			{
 				text: formatCny(result.reading.total),
 				emphasis: balanceEmphasis(result.reading.total),
@@ -1090,7 +1091,7 @@ export function balanceLine(result: ProviderBalanceResult): DisplayLine | undefi
 			},
 		];
 	}
-	if (result.failure !== undefined) return [{ text: `Balance: unavailable (${result.failure.detail})` }];
+	if (result.failure !== undefined) return [{ text: `\u{1F4B0} Balance: unavailable (${result.failure.detail})` }];
 	return undefined;
 }
 

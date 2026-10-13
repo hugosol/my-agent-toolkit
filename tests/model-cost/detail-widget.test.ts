@@ -288,10 +288,11 @@ describe("the brief draws the viewed session's own Rounds (P26)", () => {
 
 		// The document was loaded, and this instance has seen no Round boundary of that session: a
 		// restored accumulation is a session total and not a Round, so the brief carries its Total alone.
-		// The period's accrual leads it — the one session's own 0.05 CNY over the fine bar's single
-		// eighth-block — and no bar line appears without the host's context reading.
+		// The period's accrual leads it, on the old monetary account row with the season mark — the one
+		// session's own 0.05 CNY over the fine bar's single eighth-block — and no budget bar appears
+		// without the host's context reading.
 		expect(bound.host.lastLines()).toEqual([
-			"\u23F3 Accrued: \u00A50.05 [\u258F]",
+			"\u{1F525}  \u23F3 Accrued: \u00A50.05 [\u258F]",
 			"Total:  Cache: 67%  ¥Cache/In/Out：4:7:89  Sum: 6,100  Cost: ¥0.05",
 		]);
 	});
@@ -307,7 +308,7 @@ describe("the brief draws the viewed session's own Rounds (P26)", () => {
 		bound.double.deliverRound(OWNER, { event: { kind: "round_start" }, session: MAIN });
 		settleTurn(bound.double);
 		expect(bound.host.lastLines()).toEqual([
-			"\u23F3 Accrued: \u00A50.05 [\u258F]",
+			"\u{1F525}  \u23F3 Accrued: \u00A50.05 [\u258F]",
 			"Total:  Cache: 66%  ¥Cache/In/Out：4:7:89  Sum: 6,120  Cost: ¥0.05",
 			"Round:  Cache: 0%  ¥Cache/In/Out：0:20:80  Sum: 20  Cost: ¥0.0001",
 		]);
@@ -316,7 +317,7 @@ describe("the brief draws the viewed session's own Rounds (P26)", () => {
 		// Total is the same accumulation it already was — an ended Round is not new consumption.
 		bound.double.deliverRound(OWNER, { event: { kind: "round_end" }, session: MAIN });
 		expect(bound.host.lastLines()).toEqual([
-			"\u23F3 Accrued: \u00A50.05 [\u258F]",
+			"\u{1F525}  \u23F3 Accrued: \u00A50.05 [\u258F]",
 			"Total:  Cache: 66%  ¥Cache/In/Out：4:7:89  Sum: 6,120  Cost: ¥0.05",
 			"Prev:  Cache: 0%  ¥Cache/In/Out：0:20:80  Sum: 20  Cost: ¥0.0001",
 		]);
@@ -335,17 +336,17 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 			},
 		});
 
-		// The brief of a session with an ended Round: the season mark and the bar with the effort, the
-		// period's accrual, the Total, and that Round.
+		// The brief of a session with an ended Round: the old monetary account row — the season mark and
+		// the bar with the effort, the period's accrual beside them — then the Total and that Round.
 		bound.double.deliverRound(OWNER, { event: { kind: "round_start" }, session: MAIN });
 		settleTurn(bound.double);
 		bound.double.deliverRound(OWNER, { event: { kind: "round_end" }, session: MAIN });
 		const total = "Total:  Cache: 66%  ¥Cache/In/Out：4:7:89  Sum: 6,120  Cost: ¥0.05";
 		const bar = "\u{1F525}  [\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591   0% (1,234/450.0K)]  Effort: high";
 		const accrued = "\u23F3 Accrued: \u00A50.05 [\u258F]";
+		const account = `${bar}  ${accrued}`;
 		expect(bound.host.lastLines()).toEqual([
-			bar,
-			accrued,
+			account,
 			total,
 			"Prev:  Cache: 0%  ¥Cache/In/Out：0:20:80  Sum: 20  Cost: ¥0.0001",
 		]);
@@ -360,8 +361,7 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 		expect(run.feedback.map(notice => notice.level)).toEqual(["info"]);
 		expect(bound.host.frames()).toBeGreaterThan(framesBefore);
 		expect(bound.host.lastLines()).toEqual([
-			bar,
-			accrued,
+			account,
 			total,
 			"主会话",
 			"│  official / model-alpha  Cache: 66%  ¥Cache/In/Out：4:7:89  Sum: 6,020  Cost: ¥0.05",
@@ -372,8 +372,7 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 		// Flipping back draws the brief again, with the same Total line and no tree row left behind.
 		await bound.double.runToCompletion("budget", { args: "detail" });
 		expect(bound.host.lastLines()).toEqual([
-			bar,
-			accrued,
+			account,
 			total,
 			"Prev:  Cache: 0%  ¥Cache/In/Out：0:20:80  Sum: 20  Cost: ¥0.0001",
 		]);
@@ -411,7 +410,7 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 
 		// The entry is in detail and the main session is what it draws the tree for.
 		expect(bound.host.lastLines()).toEqual([
-			"\u23F3 Accrued: \u00A50.05 [\u258F]",
+			"\u{1F525}  \u23F3 Accrued: \u00A50.05 [\u258F]",
 			"Total:  Cache: 67%  ¥Cache/In/Out：4:7:89  Sum: 6,100  Cost: ¥0.05",
 			"主会话",
 			"│  official / model-alpha  Cache: 67%  ¥Cache/In/Out：4:7:89  Sum: 6,000  Cost: ¥0.05",
@@ -458,7 +457,7 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 		// the 20 reads of its 40+20 conversation input tokens, a whole 33 percent.
 		bound.host.publish({ sessionId: "session-main", provider: "official", model: "model-alpha" });
 		expect(bound.host.lastLines()).toEqual([
-			"\u23F3 Accrued: \u00A50.05 [\u258F]",
+			"\u{1F525}  \u23F3 Accrued: \u00A50.05 [\u258F]",
 			"Total:  Cache: 67%  ¥Cache/In/Out：4:7:89  Sum: 6,130  Cost: ¥0.05",
 			"主会话",
 			"│  official / model-alpha  Cache: 67%  ¥Cache/In/Out：4:7:89  Sum: 6,000  Cost: ¥0.05",

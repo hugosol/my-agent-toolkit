@@ -342,16 +342,20 @@ describe("the real host's widget: a brief with its own Round, then the static de
 			// The brief the operator sees first: the Total, and the main session's own Round — its Round
 			// ended when the delegation finished, so the last completed one is what stands there.
 			const briefLines = await linesUntil(run.session, lines => lines.some(line => line.startsWith("Prev:")));
-			// The balance and the period's accrued line are the process-wide readings beside the target's
-			// own rows: the rows below are read with the chrome they carry left out. The accrued line's own
-			// amount is the instance's held records at that very draw, so what is pinned here is the line
-			// itself — its own wording, a CNY amount and, on every draw taken after this run's commits have
-			// landed, the per-session bar. The exact amount, the per-session palette and both block forms
-			// are pinned over a fixed document in `tests/model-cost/widget-visual.test.ts`.
-			const accruedLine = /^\u23F3 Accrued: \u00A5\d+\.\d{2,4}( \[[\u2588\u258F\u258E\u258D\u258C\u258B\u258A\u2589]+\])?$/;
-			expect(String(briefLines?.[1])).toMatch(accruedLine);
+			// The period's accrued bar and the provider balance ride the monetary channel's one account
+			// row, together with the season mark, the fixed-budget bar and the effort: the rows below are
+			// read with that whole process-wide account row left out. The accrued bar's own amount is the
+			// instance's held records at that very draw, so what is pinned here is that the account row
+			// really carries it — wording, a CNY amount and, on every draw taken after this run's commits
+			// have landed, the per-session bar. The exact amount, shapes and palette are pinned over a
+			// fixed document in `tests/model-cost/widget-visual.test.ts`.
+			const account = String(briefLines?.[0]);
+			expect(account).toContain("Effort: ");
+			expect(account).toMatch(
+				/\u23F3 Accrued: \u00A5\d+\.\d{2,4}( \[[\u2588\u258F\u258E\u258D\u258C\u258B\u258A\u2589]+\])?$/,
+			);
 			const brief = (briefLines ?? []).filter(
-				line => !line.startsWith("Balance:") && !line.startsWith("\u23F3 Accrued:"),
+				line => !line.includes("Balance:") && !line.includes("\u23F3 Accrued:"),
 			);
 			const total = brief.find(line => line.startsWith("Total:"));
 			expect(total).toBeDefined();
@@ -368,22 +372,22 @@ describe("the real host's widget: a brief with its own Round, then the static de
 				lines.some(line => line.startsWith("\u2514\u2500 ") || line.startsWith("\u251C\u2500 ")),
 			);
 			const detail = (detailLines ?? []).filter(
-				line => !line.startsWith("Balance:") && !line.startsWith("\u23F3 Accrued:"),
+				line => !line.includes("Balance:") && !line.includes("\u23F3 Accrued:"),
 			);
 
-			// This draw follows the commits the document below already holds, so the period's accrued line
+			// This draw follows the commits the document below already holds, so the period's accrued bar
 			// carries its per-session bar here: the two records' own amounts are both non-zero, which is
-			// what a segment is.
-			expect(String(detailLines?.[1])).toMatch(
-				/^\u23F3 Accrued: \u00A5\d+\.\d{2,4} \[[\u2588\u258F\u258E\u258D\u258C\u258B\u258A\u2589]+\]$/,
+			// what a segment is. It rides the same account row as the bar and the effort.
+			expect(String(detailLines?.[0])).toContain("Effort: ");
+			expect(String(detailLines?.[0])).toMatch(
+				/\u23F3 Accrued: \u00A5\d+\.\d{2,4} \[[\u2588\u258F\u258E\u258D\u258C\u258B\u258A\u2589]+\]$/,
 			);
 
 			// The top Total is the very line it was, the root is the main session by name, the root's own
 			// pair is one model row indented under it, and the child is one row of its own accumulation.
 			// No Round row survives the detail form, and the root's row carries no figure of its own.
-			expect(detail[0]).toContain("Effort: ");
-			expect(detail[1]).toBe(total as string);
-			expect(detail.slice(2)).toEqual([
+			expect(detail[0]).toBe(total as string);
+			expect(detail.slice(1)).toEqual([
 				MAIN_SESSION_NAME,
 				`\u2502  ${MODEL_PROVIDER} / ${MODEL_ID}  Cache: ${main.cache}%  \u00A5Cache/In/Out\uff1a0:20:80  Sum: ${main.sum.toLocaleString("en-US")}  Cost: \u00A50.01`,
 				`\u2514\u2500 ${childRecord.name}  Cache: ${child.cache}%  Sum: ${child.sum.toLocaleString("en-US")}  Cost: \u00A50.0050`,
@@ -404,9 +408,9 @@ describe("the real host's widget: a brief with its own Round, then the static de
 			await run.session.prompt("/budget detail");
 			const backLines = await linesUntil(run.session, lines => lines.some(line => line.startsWith("Prev:")));
 			const back = (backLines ?? []).filter(
-				line => !line.startsWith("Balance:") && !line.startsWith("\u23F3 Accrued:"),
+				line => !line.includes("Balance:") && !line.includes("\u23F3 Accrued:"),
 			);
-			expect(back[1]).toBe(total as string);
+			expect(back[0]).toBe(total as string);
 			expect(back.filter(line => line.startsWith("Round:") || line.startsWith("Prev:")).length).toBe(1);
 			expect(back.some(line => line.startsWith("\u2514\u2500 ") || line.startsWith("\u251C\u2500 "))).toBe(false);
 			expect(noticesOf(run.session).map(notice => notice.level)).toEqual(["info", "info"]);

@@ -496,10 +496,11 @@ describe("the host's own drawing form decides what the frontend hands it (P67)",
 		const bound = await bindVisual({ drawing: "component" });
 
 		// The host was handed a factory, and what it answers with is the lines of the host's own theme: the
-		// bar carries the token its band calls for, and the effort value the colour its level is drawn by.
+		// bar carries the token its band calls for, the effort value the colour its level is drawn by, and
+		// the period's accrued bar rides the same account line.
 		const drawn = bound.host.draw(200);
 		expect(drawn.lines[0]).toBe(
-			`\u{1F525}  \u00ABdim:[${EMPTY_BAR}   0% (1,000/450.0K)]\u00BB  Effort: \u00ABeffort:high:high\u00BB`,
+			`\u{1F525}  \u00ABdim:[${EMPTY_BAR}   0% (1,000/450.0K)]\u00BB  Effort: \u00ABeffort:high:high\u00BB  \u23F3 Accrued: \u00A50.05 [\u00ABsuccess:\u258F\u00BB]`,
 		);
 		expect(drawn.levels).toEqual(["high"]);
 		expect(drawn.painted).toEqual([
@@ -513,9 +514,10 @@ describe("the host's own drawing form decides what the frontend hands it (P67)",
 
 		// The headless host takes text alone: every figure, threshold and narrower form is the same one,
 		// and nothing of the theme this frontend would have mapped survives into what it is handed.
+		// The superseded widget's own monetary account line: season, fixed-budget bar, effort, the
+		// provider balance and the period's accrued bar are one row (spec §192: preserve the old layout).
 		expect(bound.host.plain()).toEqual([
-			`\u{1F525}  [${EMPTY_BAR}   0% (1,000/450.0K)]  Effort: high`,
-			"\u23F3 Accrued: \u00A50.05 [\u258F]",
+			`\u{1F525}  [${EMPTY_BAR}   0% (1,000/450.0K)]  Effort: high  \u23F3 Accrued: \u00A50.05 [\u258F]`,
 			"Total:  Cache: 50%  \u00A5Cache/In/Out\uff1a5:19:76  Sum: 30  Cost: \u00A50.05",
 		]);
 		expect(bound.host.plain()?.some(line => line.includes("\u00AB") || line.includes("\u001B"))).toBe(false);
@@ -600,29 +602,31 @@ describe("the fixed-budget bar keeps the four bands it always warned in (P67)", 
 
 describe("the balance keeps its two warnings (P67)", () => {
 	test("below ten yuan it warns, below five it is an error, and it is drawn in its own currency", async () => {
+		// The balance rides the monetary account line now, bearing the old money-bag mark: its amount is
+		// tinted by the warning band it falls in, and both comparisons are strictly below.
 		const warning = await bindVisual({ balanceTotal: "9.99" });
 		const warningDraw = warning.host.draw(200);
-		expect(last(warningDraw.lines)).toBe("Balance: \u00ABwarning:\u00A59.99\u00BB");
-		expect(last(warningDraw.painted)).toEqual({ color: "warning", text: "\u00A59.99" });
+		expect(warningDraw.lines[0]).toContain("\u{1F4B0} Balance: \u00ABwarning:\u00A59.99\u00BB");
+		expect(warningDraw.painted).toContainEqual({ color: "warning", text: "\u00A59.99" });
 
 		const error = await bindVisual({ balanceTotal: "4.99" });
-		expect(last(error.host.draw(200).lines)).toBe("Balance: \u00ABerror:\u00A54.99\u00BB");
+		expect(error.host.draw(200).lines[0]).toContain("\u{1F4B0} Balance: \u00ABerror:\u00A54.99\u00BB");
 
 		// Exactly ten and exactly five are not yet the next warning: both comparisons are strictly below.
 		const ten = await bindVisual({ balanceTotal: "10.00", drawing: "lines" });
-		expect(last(ten.host.plain())).toBe("Balance: \u00A510.00");
+		expect(ten.host.plain()?.[0]).toContain("\u{1F4B0} Balance: \u00A510.00");
 
 		const five = await bindVisual({ balanceTotal: "5.00", drawing: "lines" });
-		expect(last(five.host.plain())).toBe("Balance: \u00A55.00");
+		expect(five.host.plain()?.[0]).toContain("\u{1F4B0} Balance: \u00A55.00");
 	});
 });
 
 describe("the balance is the monetary channel's own line (P8, P67)", () => {
 	test("a held reading is drawn for the official pair and for no other mode of the same CLI", async () => {
 		// One CLI whose process really holds a reading: the endpoint answered the instance's own prefetch
-		// before the first draw, which is what the official pair's line below states.
+		// before the first draw, which is what the official pair's account line below states.
 		const bound = await bindVisual({ balanceTotal: "110.00" });
-		expect(last(bound.host.draw(200).lines)).toBe("Balance: \u00ABtext:\u00A5110.00\u00BB");
+		expect(bound.host.draw(200).lines[0]).toContain("\u{1F4B0} Balance: \u00ABtext:\u00A5110.00\u00BB");
 
 		// The Go pair is a token-only model: its display is the approved usage, the fixed budget and the
 		// effort, and the reading the process still holds is not drawn — the specification lists the
@@ -632,12 +636,12 @@ describe("the balance is the monetary channel's own line (P8, P67)", () => {
 		expect(tokenOnly[0]).toBe(
 			`\u00ABdim:[${EMPTY_BAR}   0% (1,000/450.0K)]\u00BB  Effort: \u00ABeffort:high:high\u00BB`,
 		);
-		expect(tokenOnly.some(line => line.startsWith("Balance:"))).toBe(false);
+		expect(tokenOnly.some(line => line.includes("Balance:"))).toBe(false);
 
 		// The allowance pair reads no DeepSeek balance either: it is the other provider's channel, whose
 		// own reading is the two windows.
 		bound.host.publish(codexFacts());
-		expect(bound.host.draw(200).lines.some(line => line.startsWith("Balance:"))).toBe(false);
+		expect(bound.host.draw(200).lines.some(line => line.includes("Balance:"))).toBe(false);
 
 		// A pair this extension does not display is handed the clear, and the reading behind it stays held.
 		bound.host.publish({ sessionId: "session-main", provider: "unknown-provider", model: "model-x", effort: "high" });
@@ -646,7 +650,7 @@ describe("the balance is the monetary channel's own line (P8, P67)", () => {
 		// None of that dropped the reading: back on the official pair the same amount is drawn again, from
 		// the cache the process kept, and the whole switch asked the endpoint nothing further.
 		bound.host.publish(mainFacts());
-		expect(last(bound.host.draw(200).lines)).toBe("Balance: \u00ABtext:\u00A5110.00\u00BB");
+		expect(bound.host.draw(200).lines[0]).toContain("\u{1F4B0} Balance: \u00ABtext:\u00A5110.00\u00BB");
 		expect(bound.sent.filter(call => call.url.endsWith("/user/balance"))).toHaveLength(1);
 	});
 });
@@ -658,7 +662,7 @@ describe("the accrued bar keeps the old eighth-block shapes and palette (P67)", 
 		// Five cents is one eighth-block and ten is two; the middle session accrued nothing at all and is
 		// drawn as no segment rather than a sliver, while the palette slot it would have taken stays with
 		// the session after it: the third session is drawn in the third palette colour, not the second.
-		expect(bound.host.draw(200).lines[1]).toBe(
+		expect(bound.host.draw(200).lines[0]).toContain(
 			"\u23F3 Accrued: \u00A50.15 [\u00ABsuccess:\u258F\u00BB\u00ABerror:\u258E\u00BB]",
 		);
 	});
@@ -680,12 +684,12 @@ describe("the accrued bar keeps the old eighth-block shapes and palette (P67)", 
 
 		// Nine eighth-blocks is one whole character and one eighth: the bar's own decomposition, not a
 		// rounded column count.
-		expect(bound.host.plain()?.[1]).toBe("\u23F3 Accrued: \u00A50.45 [\u2588\u258F]");
+		expect(bound.host.plain()?.[0]).toContain("\u23F3 Accrued: \u00A50.45 [\u2588\u258F]");
 	});
 
 	test("nothing accrued draws no bar at all", async () => {
 		const bound = await bindVisual({ costs: [0], drawing: "lines" });
-		expect(bound.host.plain()?.[1]).toBe("\u23F3 Accrued: \u00A50.0000");
+		expect(bound.host.plain()?.[0]).toContain("\u23F3 Accrued: \u00A50.0000");
 	});
 
 	test("past twenty yuan the bar is whole yuan blocks, hiding a session that never reached one", async () => {
@@ -693,7 +697,7 @@ describe("the accrued bar keeps the old eighth-block shapes and palette (P67)", 
 
 		// Twenty-one and three whole yuan: the segment that never reached a yuan has no column, and the two
 		// that did keep the palette slots their own positions give them.
-		expect(bound.host.plain()?.[1]).toBe(
+		expect(bound.host.plain()?.[0]).toContain(
 			`\u23F3 Accrued: \u00A524.00 [${"\u2588".repeat(21)}${"\u2588".repeat(3)}]`,
 		);
 	});
@@ -702,21 +706,21 @@ describe("the accrued bar keeps the old eighth-block shapes and palette (P67)", 
 		// Eight sessions at 2.49 yuan are fifty eighth-blocks each and the ninth cent is one more: 401
 		// blocks over a cap of 400, so the first — the largest, at its own scale — gives one back.
 		const fine = await bindVisual({ costs: [2.49, 2.49, 2.49, 2.49, 2.49, 2.49, 2.49, 2.49, 0.02], drawing: "lines" });
-		expect(fine.host.plain()?.[1]).toBe(
+		expect(fine.host.plain()?.[0]).toContain(
 			`\u23F3 Accrued: \u00A519.94 [${"\u2588".repeat(6)}\u258F${`${"\u2588".repeat(6)}\u258E`.repeat(7)}\u258F]`,
 		);
 
 		// One session at sixty yuan is sixty whole blocks over a cap of fifty.
 		const coarse = await bindVisual({ costs: [60], drawing: "lines" });
-		expect(coarse.host.plain()?.[1]).toBe(`\u23F3 Accrued: \u00A560.00 [${"\u2588".repeat(50)}]`);
+		expect(coarse.host.plain()?.[0]).toContain(`\u23F3 Accrued: \u00A560.00 [${"\u2588".repeat(50)}]`);
 	});
 
-	test("the accrued line belongs to the monetary channel alone (P67)", async () => {
+	test("the accrued bar belongs to the monetary channel alone (P67)", async () => {
 		const tokenOnly = await bindVisual({ provider: "go-provider", model: "model-alpha", drawing: "lines" });
-		expect(tokenOnly.host.plain()?.some(line => line.startsWith("\u23F3 Accrued:"))).toBe(false);
+		expect(tokenOnly.host.plain()?.some(line => line.includes("\u23F3 Accrued:"))).toBe(false);
 
 		const codex = await bindVisual({ provider: CODEX, model: "gpt-6-luna", viewed: codexFacts(), drawing: "lines" });
-		expect(codex.host.plain()?.some(line => line.startsWith("\u23F3 Accrued:"))).toBe(false);
+		expect(codex.host.plain()?.some(line => line.includes("\u23F3 Accrued:"))).toBe(false);
 	});
 });
 
@@ -728,7 +732,7 @@ describe("only the effort value is coloured, by its own level (P67)", () => {
 		// The value alone is coloured: the label is drawn as the line's own text, and the colour is the
 		// level's, not a fixed token.
 		expect(drawn.lines[0]).toBe(
-			`\u{1F525}  \u00ABdim:[${EMPTY_BAR}   0% (1,000/450.0K)]\u00BB  Effort: \u00ABeffort:medium:medium\u00BB`,
+			`\u{1F525}  \u00ABdim:[${EMPTY_BAR}   0% (1,000/450.0K)]\u00BB  Effort: \u00ABeffort:medium:medium\u00BB  \u23F3 Accrued: \u00A50.05 [\u00ABsuccess:\u258F\u00BB]`,
 		);
 		expect(drawn.levels).toEqual(["medium"]);
 	});
@@ -736,7 +740,9 @@ describe("only the effort value is coloured, by its own level (P67)", () => {
 	test("an effort the host never reported is a question mark, coloured as the level it is (P67)", async () => {
 		const bound = await bindVisual({ viewed: { ...mainFacts(), effort: undefined } });
 		const drawn = bound.host.draw(200);
-		expect(drawn.lines[0]).toBe(`\u{1F525}  \u00ABdim:[${EMPTY_BAR}   0% (1,000/450.0K)]\u00BB  Effort: \u00ABeffort:?:?\u00BB`);
+		expect(drawn.lines[0]).toBe(
+			`\u{1F525}  \u00ABdim:[${EMPTY_BAR}   0% (1,000/450.0K)]\u00BB  Effort: \u00ABeffort:?:?\u00BB  \u23F3 Accrued: \u00A50.05 [\u00ABsuccess:\u258F\u00BB]`,
+		);
 		expect(drawn.levels).toEqual(["?"]);
 	});
 });

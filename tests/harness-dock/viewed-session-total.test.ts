@@ -192,10 +192,12 @@ async function hostLevel(session: ControlledSession): Promise<string | undefined
 	return typeof level === "string" ? level : undefined;
 }
 
-/** The effort the widget's own budget line carries, if the host drew one. */
+/** The effort the widget's own account line carries, if the host drew one. */
 function shownEffort(session: ControlledSession): string | undefined {
-	const lines = shownLines(session);
-	return lines?.find(line => line.includes("Effort: "))?.split("Effort: ")[1];
+	const line = shownLines(session)?.find(line => line.includes("Effort: "));
+	// The level is no longer the end of its line: the monetary account row continues with the balance
+	// and the accrued bar, and the level itself is the piece between `Effort: ` and the next separator.
+	return line?.split("Effort: ")[1]?.split("  ")[0];
 }
 
 let patched: IsolatedHarness;

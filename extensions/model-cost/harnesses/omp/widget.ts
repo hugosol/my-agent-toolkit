@@ -49,6 +49,7 @@ import {
 	type DisplayAccrued,
 	type DisplayEmphasis,
 	type DisplayLine,
+	type DisplayPiece,
 	type DisplayPeriod,
 	type DisplayTarget,
 	type RoundDisplay,
@@ -58,6 +59,7 @@ import {
 	fieldsText,
 	lineText,
 	roundText,
+	seasonMark,
 	totalText,
 } from "../../shared-logic/presentation/display";
 import type { ProviderBalanceResult } from "../../shared-logic/provider-balance";
@@ -144,6 +146,16 @@ interface WidgetContext extends OmpSessionContext {
 	getViewedSession?(): ViewedSessionFacts;
 	subscribeViewedSessionChanged?(listener: (facts: ViewedSessionFacts) => void): () => void;
 	/**
+	 * The bound session's own context reading, the native surface every host has published since
+	 * before the viewed-session outlet existed.
+	 *
+	 * It is read only when the host publishes no outlet at all — the approved patch is not installed,
+	 * so there is no separate view and the session this widget is bound to is the one being drawn.
+	 * A host that publishes the outlet is read through it alone. Optional, because a host that
+	 * reports no reading has no bar rather than a guessed one.
+	 */
+	getContextUsage?(): { readonly tokens?: number; readonly contextWindow?: number } | undefined;
+	/**
 	 * The session's managed one-shot timer, exactly as the harness hands it out: the handle is passed
 	 * back to {@link WidgetContext.clearTimer} and is cleared with the session.
 	 *
@@ -228,33 +240,43 @@ function treeLines(rows: readonly AgentTreeRow[]): DisplayLine[] {
  * draws the viewed session's own Rounds, and the detail form draws the static agent tree of the main
  * session in their place — never both, which is what "the detail form keeps the Total and replaces the
  * Round row" means for a terminal. The two currencies are written apart and never added together, and
- * a mode without an amount policy contributes no amount of its own. The provider balance line closes
- * the monetary channel's widget where this process holds a reading or a failure — a failure is shown,
- * never notified, and it never replaces the last reading — and no other channel draws it at all: the
- * balance is the account behind the official ids, while a token-only model has none and the allowance
- * channel's own account fact is the two windows above the total.
+ * a mode without an amount policy contributes no amount of its own.
+ *
+ * The monetary channel keeps the superseded widget's one account row: the season mark, the fixed-budget
+ * bar and effort, the provider balance and the period's accrued bar are written on a single line, in
+ * that order (spec §192 keeps the old layout). The balance remains the official channel's own fact — a
+ * token-only model has none (spec §134) and the allowance channel reads its own windows instead — so
+ * the row is composed for the monetary mode alone, and a failure the process holds is shown there
+ * rather than notified, never replacing the last reading.
  */
 export function widgetLayout(reading: WidgetReading): readonly DisplayLine[] | undefined {
 	const { display } = reading;
 	if (display.mode === "hidden") return undefined;
 	const lines: DisplayLine[] = [];
-	const budget = budgetLine(display, reading.period);
-	if (budget !== undefined) lines.push(budget);
-	if (display.mode === "monetary") lines.push(accruedLine(reading.accrued));
-	if (display.mode === "allowance") lines.push(...reading.quota);
+	if (display.mode === "monetary") {
+		// The old account row, one line: a target whose host reported no context reading still shows the
+		// season mark and the account facts — only the bar and its effort need a reading to compare.
+		const account: DisplayPiece[] = [];
+		const budget = budgetLine(display, reading.period);
+		if (budget !== undefined) {
+			account.push(...budget);
+		} else {
+			account.push({ text: seasonMark(reading.period) });
+		}
+		const balance = balanceLine(reading.balance);
+		if (balance !== undefined) account.push(...balance);
+		account.push(...accruedLine(reading.accrued));
+		lines.push(account);
+	} else {
+		const budget = budgetLine(display, reading.period);
+		if (budget !== undefined) lines.push(budget);
+		if (display.mode === "allowance") lines.push(...reading.quota);
+	}
 	lines.push([{ text: `Total:  ${totalText(display)}` }]);
 	if (display.form === "detail" && display.agentTree !== undefined) {
 		lines.push(...treeLines(display.agentTree));
 	} else {
 		lines.push(...roundLines(display.round.current, display.round.previous));
-	}
-	// The provider balance is the CLI's own official-channel fact rather than part of a target's
-	// consumption, so only the channel that bills against it draws it: a token-only model has no
-	// balance at all (spec §134), the allowance channel reads its own windows instead, and neither
-	// shows a reading this process does hold — which is why the gate is the mode and not the reading.
-	if (display.mode === "monetary") {
-		const balance = balanceLine(reading.balance);
-		if (balance !== undefined) lines.push(balance);
 	}
 	return lines;
 }
@@ -316,12 +338,17 @@ export function attachModelCostWidget(
 	 */
 	const targetOf = (ctx: WidgetContext): DisplayTarget => {
 		const facts = ctx.getViewedSession?.();
+		// A host that publishes the outlet is read through it alone: the displayed session's own
+		// reading, never the binding's, is the bar's fact. A host without the outlet has no separate
+		// view — the session this widget is bound to is the one being drawn — so its own native
+		// context reading answers here, the same fallback the provider and model already take.
+		const context = facts?.context ?? (facts === undefined ? ctx.getContextUsage?.() : undefined);
 		return {
 			sessionId: facts?.sessionId ?? ctx.sessionManager.getSessionId(),
 			provider: facts?.provider ?? ctx.model?.provider ?? "",
 			model: facts?.model ?? ctx.model?.id ?? "",
-			...(facts?.context?.tokens === undefined ? {} : { contextTokens: facts.context.tokens }),
-			...(facts?.context?.contextWindow === undefined ? {} : { contextWindow: facts.context.contextWindow }),
+			...(context?.tokens === undefined ? {} : { contextTokens: context.tokens }),
+			...(context?.contextWindow === undefined ? {} : { contextWindow: context.contextWindow }),
 			...(facts?.effort === undefined ? {} : { effort: facts.effort }),
 		};
 	};

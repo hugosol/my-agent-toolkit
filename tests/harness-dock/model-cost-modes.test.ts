@@ -604,7 +604,7 @@ describe("the balance the CLI holds is the official channel's own line (P8, P67)
 			// answered, and the endpoint's own amount is what the widget shows.
 			expect((await run.session.prompt("one priced exchange")).status).toBe("completed");
 			expect(await shownLinesWhere(run.session, text => text.includes("Balance:"))).toContain(
-				"Balance: \u00A5110.00",
+				"\u{1F4B0} Balance: \u00A5110.00",
 			);
 			expect(run.capture.balanceCalls()).toHaveLength(1);
 
@@ -617,7 +617,7 @@ describe("the balance the CLI holds is the official channel's own line (P8, P67)
 			const tokenOnly = (shownLines(run.session) ?? []).join("\n");
 			expect(tokenOnly).toContain("Sum: 6,000");
 			expect(tokenOnly).not.toContain("Cache/In/Out");
-			expect(tokenOnly.split("\n").some(line => line.startsWith("Balance:"))).toBe(false);
+			expect(tokenOnly.split("\n").some(line => line.includes("Balance:"))).toBe(false);
 
 			// The reading was not re-asked for having been hidden: a Go request is no request of the
 			// balance's own provider, so nothing in this phase consults the balance endpoint at all.
@@ -629,7 +629,7 @@ describe("the balance the CLI holds is the official channel's own line (P8, P67)
 			await run.session.request({ type: "set_model", provider: DEEPSEEK_PROVIDER, modelId: "deepseek-flash" });
 			expect((await run.session.prompt("one priced exchange again")).status).toBe("completed");
 			const restored = (shownLines(run.session) ?? []).join("\n");
-			expect(restored).toContain("Balance: \u00A5110.00");
+			expect(restored).toContain("\u{1F4B0} Balance: \u00A5110.00");
 			expect(restored).toContain("Sum: 9,000");
 			expect(run.capture.balanceCalls()).toHaveLength(1);
 			expect(run.capture.requests()).toHaveLength(3);

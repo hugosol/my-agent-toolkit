@@ -122,15 +122,15 @@ Contract: [P41／P67](../contract.md)；展示范围权威 [08-presentation](../
 
 | 场景 | 期望（逐字） | 自动来源 |
 | --- | --- | --- |
-| DeepSeek 峰、brief、宽 | `🔥  [░░░░░░░░░░░░░░░░░░░░   0% (1,000/450.0K)]  Effort: high` / `⏳ Accrued: ¥0.05 [▏]` / `Total:  Cache: 50%  ¥Cache/In/Out：5:19:76  Sum: 30  Cost: ¥0.05` | `widget-visual.test.ts`（文本与组件两例） |
+| DeepSeek 峰、brief、宽 | `🔥  [░░░░░░░░░░░░░░░░░░░░   0% (1,000/450.0K)]  Effort: high  ⏳ Accrued: ¥0.05 [▏]` / `Total:  Cache: 50%  ¥Cache/In/Out：5:19:76  Sum: 30  Cost: ¥0.05`（旧单行账户行；若有余额则 `💰 Balance: ¥…` 与 Accrued 同处此行、位于 Accrued 之前） | `widget-visual.test.ts`（文本与组件两例） |
 | DeepSeek 谷（13:00） | 首行以 `🌙` 开头，其余同上 | 同上（`OFF_PEAK_AT`） |
 | 首次 holiday 周期 | 首行以 `🏖️` 开头，其余同上 | 同上（`holiday: true`） |
 | token-only（Go 模型） | `[░░░░░░░░░░░░░░░░░░░░   0% (1,000/450.0K)]  Effort: high`（**无季节标记**）＋ `Total:` 行；**无 accrued 行**、无窗口行、**无余额行**（即使进程持有官方余额读数） | 同上（`widget-visual.test.ts`） |
 | Codex allowance | `[░░░░░░░░░░░░░░░░░░░░   0% (1,000/272.0K)]  Effort: high`（无标记）＋ `5h ━━━━━━━━━━━━━━━━│─── 85.0% / 80.0% · resets in 1h (dd/HH:MM)` ＋ `7d …` ＋ `Total:`；**无余额行** | `widget-visual.test.ts`（Codex 两例＋四步例） |
-| 主 detail | 首行同「预算条」；其下 `⏳ Accrued:`；再 `Total:`（逐字与 brief 相同）；再 `主会话` / `│  provider / model  …` / `└─ 子会话名  …`；**无 `Round:`／`Prev:`** | `detail-widget.test.ts`、`detail-tree.test.ts`（受控＋真实） |
+| 主 detail | 首行同「预算条」但末尾带 `⏳ Accrued:`（monetary 单行账户行）；再 `Total:`（逐字与 brief 相同）；再 `主会话` / `│  provider / model  …` / `└─ 子会话名  …`；**无 `Round:`／`Prev:`** | `detail-widget.test.ts`、`detail-tree.test.ts`（受控＋真实） |
 | 子代理查看 | 固定 brief：该子自己的 `Round:` 行与自身当前模型结构；`Sum／Cost／Ref` 仍是主树 | `viewed-session-widget.test.ts`、`viewed-session-total.test.ts` |
 | 不适用模式（hidden） | **没有 widget**：宿主收到的是 clear 而不是一个画空行的组件（widget 区不占位） | `widget-visual.test.ts`（组件形态的 clear 断言）、`model-cost-modes.test.ts`（真实宿的「无 widget 帧」断言） |
-| 余额行（仅 monetary） | `Balance: ¥9.99`（warning 色）／`Balance: ¥4.99`（error 色）／`Balance: ¥10.00`（无色）；同一进程持有读数时，token-only、allowance 与 hidden 三种目标都不画该行 | `widget-visual.test.ts`（余额两例＋模式门控例）；真实宿：`model-cost-modes.test.ts`（官方→Go→官方切换） |
+| 余额（仅 monetary，账户行内） | `💰 Balance: ¥9.99`（warning 色）／`💰 Balance: ¥4.99`（error 色）／`💰 Balance: ¥10.00`（无色），与 `Accrued` 同处 monetary 的单行账户行、位于 `⏳ Accrued:` 之前；同一进程持有读数时，token-only、allowance 与 hidden 三种目标都不画它 | `widget-visual.test.ts`（余额两例＋模式门控例）；真实宿：`model-cost-modes.test.ts`（官方→Go→官方切换） |
 | 窄宽降级（Codex 5h 行） | 宽 200：含 20 格条与 `│` 时间标记、`85.0% / 80.0%` 与 `· resets in 1h (dd/HH:MM)`；宽 50：`5h 85.0% / 80.0% · resets in 1h (dd/HH:MM)`（条先降掉）；宽 40：`5h 85.0% / 80.0% · resets in 1h`（绝对时刻再降掉）；宽 20：`5h 85.0% / 80.0%`；宽 10：`5h 85.0% …` | `widget-visual.test.ts`（组件路径：宽 200／50／40／20／10 逐字）＋ `quota-window-lines.test.ts`（显示结果路径，同四步） |
 
 ### 5.3 颜色／形状对照（H1 需人眼确认的部分）
@@ -160,7 +160,7 @@ Contract: [P41／P67](../contract.md)；展示范围权威 [08-presentation](../
 - **真实 TUI 未跑**：见第 5 节末段；`process.stdout.isTTY → component` 这一分支由视觉套件在**子进程**中读生产 assembly 证明（TTY=true→`component`、管道→`lines`），但「真实 TUI 里该分支下画出来的颜色」仍属 H1。
 - **余额行模式门控：已按批准范围修复（见第 9 节）**。上一次 run 观察到 `widgetLayout` 在**任何**模式下只要进程持有读数或失败就画 `Balance:` 行，而冻结旧实现只在 DeepSeek 模式画该行、规格 §134 也把「余额」列为 token-only **没有**的项。该观察当时记作待裁决；**这不是新的裁决**：P8 已批准「token-only 只提供批准的 usage 展示」，对应 `Delivers: P8、P67` 的前端侧本就应由本票修好，因此本票（retry）已按该批准范围把行门控到 monetary 通道，并把 `presentation.balance()`／TTL／进程级缓存原样保留（见第 9 节）。
 - **真实宿 baseline 记录失败（与本票无关，已由 08／17 票记录）**：`baseline.test.ts` 的两条失败源于 sibling 检查点前移，见第 3 节。本票不改记录、不改检查点。
-- **`Bal:` → `Balance:` 与行拆分是本次迁移的既有决定**：冻结旧实现把「标记＋预算条＋Effort＋余额＋Accrued 分段条」画在一行（`💰 Bal: …`），本迁移按 11／12／16 票已交付并已验收的形态画成「预算条行 / accrued 行 / Total 行 / Round 行 / 余额行」——其中余额行只属于 monetary 通道（第 9 节）。本票只保证**元素**（四带、阈值、形状、调色板、宽度降级）与旧视觉一致，并把该差异记在此处供人工在 H1 轮一并确认。
+- **旧单行账户行已在 H1 反馈中恢复（见第 10 节）**：冻结旧实现把「标记＋预算条＋Effort＋余额＋Accrued 分段条」画在一行（`💰 Bal: …`）。本迁移一度按 11／12／16 票的形态把它拆成「预算条行 / accrued 行 / Total 行 / Round 行 / 余额行」并记在此处供 H1 确认；用户 H1 复核判定该拆分与规格 §192「保留旧布局」不符 —— Accrued 与 Balance 不在同一行、Balance 前没有图标。因此 monetary 通道已恢复旧单行账户行：季节标记、预算条、Effort、`💰 Balance:` 与 `⏳ Accrued:`（含分段条）同处一行（`Balance:` 这一更清晰的标签保留，图标用回旧的 `💰`）；token-only／allowance 不画该行。逐字期望见第 5.2 节，本次修复记录见第 10 节。
 - **未触碰正式 OMP**：全部运行在 `.cache/omp-baseline/18.5.0-viewed-session` 与临时 run root／`mkdtemp` 内；未重启、未改配置、未对当前调度实例执行验证命令、未使用任何真实凭据。
 
 ## 8. P58／P52 中本票的具名责任
@@ -214,4 +214,31 @@ Ticket 25 的独立验证交回一项具体缺口：**生产 widget 的 `Balance
 隔离与权限：全部运行仍在冻结 artifact `.cache/omp-baseline/18.5.0-viewed-session` 与 `createRunRoot`／`mkdtemp` 的独立 agent state／session-dir／work／capture／user-home 内；未触碰正式 OMP、未重启、未改配置、未使用任何真实凭据。真实 provider `deepseek` 的 permission 仍由 dock 既有 fixture 充当（`writeProviderOverride` ＋ 本机 capture 端点，`Bearer dock-key` 是隔离 run 自己的 fixture 键）。
 
 已知限制（与第 5、7 节相同，不因本次修复改变）：真实交互 TUI 的颜色／字体／窄宽布局与真实 DeepSeek 账户读数仍属 **H1／H2 待人工**；本环境只能给出上面这些可证伪的自动断言与逐字期望。相关但属于其他票的观察：`assets/15-…-evidence` 的一条理由文字（「余额行在 widget 中不限模式显示」）随之变成过时表述，其下已交付行为（宿主无法鉴权时不记余额 failure）未变；本票不改其他票的正文，仅在此记录并交回。
+
+## 10. H1 反馈：monetary 通道恢复旧单行账户行（2026-10-14）
+
+用户 H1 复核 P67 的真实视觉时报告一项与旧实现的可见差异：**`Accrued` 与 `Balance` 不在同一行，且 `Balance` 前没有图标**。规格 §192 要求「保留旧布局」，第 7 节早已把该行拆分记作待 H1 确认项；用户判定该拆分不可接受，因此本次按批准范围恢复旧视觉。
+
+### 10.1 改了什么、没改什么
+
+| 位置 | 内容 |
+| --- | --- |
+| `extensions/model-cost/harnesses/omp/widget.ts` | `widgetLayout` 的 monetary 分支不再分别 push 预算条行、accrued 行和末尾余额行：它把 `budgetLine`（季节标记＋预算条＋Effort）、`balanceLine` 与 `accruedLine` 依旧顺序拼成**一条账户行**（季节 → 预算条／Effort → `💰 Balance:` → `⏳ Accrued:`），其后才是 `Total:`／Round／树。无 context 读数时仍以季节标记起头（旧行为），不造 bar。 |
+| `extensions/model-cost/shared-logic/presentation/display.ts` | `balanceLine` 的读数与失败两种文本都加回旧图标 `💰`（`💰 Balance: …` / `💰 Balance: unavailable (…)`）；`balanceEmphasis` 阈值与金额格式未变。 |
+| **未改（有意保留）** | token-only／allowance／hidden 的门控（第 9 节）：余额与 accrued 仍只在 monetary 通道画；`presentation.balance()`／`accrued()`／TTL／保存全部原样。`Balance:` 这一更清晰的标签保留（只补 `💰` 图标），未回退成旧缩写 `Bal:`。 |
+| 测试迁移 | `tests/model-cost/widget-visual.test.ts`、`detail-widget.test.ts`、`viewed-session-widget.test.ts`、`tests/harness-dock/detail-tree.test.ts`、`model-cost-modes.test.ts` 的逐字期望与行位次同步为单行账户行；余额断言由「最后一行」改为「账户行内含 `💰 Balance:`」；`tests/harness-dock/viewed-session-total.test.ts` 的 `shownEffort` 由「取 `Effort: ` 后的整段」改为「取到下一个分隔符为止」，因为 Effort 不再是该行末尾。 |
+
+### 10.2 red → green
+
+| 步骤 | 命令 | 结果 |
+| --- | --- | --- |
+| red（先写期望） | `bun test tests/model-cost/widget-visual.test.ts -t "a host that draws text is handed the same lines"` | **1 fail**：收到 `🔥 … Effort: high` 与 `⏳ Accrued: ¥0.05 [▏]` 两行，期望为旧单行 `🔥 … Effort: high  ⏳ Accrued: ¥0.05 [▏]` —— 即用户报告的行拆分本身。 |
+| green（最小实现） | `bun test tests/model-cost/widget-visual.test.ts` | **21 pass / 0 fail**（86 expect）。 |
+| 回归 | `bun test tests/model-cost` | **269 pass / 0 fail**。 |
+| 真实宿回归 | `bun test tests/harness-dock/detail-tree.test.ts tests/harness-dock/model-cost-modes.test.ts` | **7 pass / 0 fail**（91 expect）；`detail-tree` 现在断言 brief／detail 首行是带 `Effort:` 与 accrued 段的账户行，`model-cost-modes` 断言 `💰 Balance: ¥110.00` 在该行内、Go 帧无该行。 |
+| 类型 | `bunx tsc --noEmit` | exit 0。 |
+
+其他票的既有 run 记录里仍有「widget 末行／`Balance:` 行」这类旧措辞（如 `assets/12-deepseek-balance-ttl`、`15-provider-init-auth-lifecycle`、`19-period-holiday-clear`、`25-acceptance-cutover`）：其中的金额与行为读数仍然成立，但余额所在的行位次以本节与第 5.2 节为准；遵循本仓「不改其他票正文」的惯例，仅在 20 本票记录并交回。
+
+已知限制：交互 TUI 的实际颜色／字体／窄宽布局仍属 H1 人工；本次只恢复旧行结构与图标，不改第 5 节列出的颜色／形状规则。
 

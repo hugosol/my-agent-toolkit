@@ -145,6 +145,14 @@ function controlSession(options: {
 	readonly boundModel: { readonly provider: string; readonly id: string };
 	readonly initial: ViewedFacts;
 	readonly hasUI?: boolean;
+	/**
+	 * Whether this host publishes the approved viewed-session outlet. A host without it (the patch
+	 * not installed) has no separate view, so the widget is expected to read the bound session's own
+	 * native context instead.
+	 */
+	readonly patched?: boolean;
+	/** The bound session's own native context reading, for the unpatched host above. */
+	readonly ownContext?: { readonly tokens?: number; readonly contextWindow?: number };
 }): ControlSession {
 	let facts = options.initial;
 	const listeners = new Set<(facts: ViewedFacts) => void>();
@@ -161,14 +169,20 @@ function controlSession(options: {
 		},
 		sessionManager: { getSessionId: () => options.boundSessionId, getBranch: () => [] },
 		model: options.boundModel,
-		getViewedSession: () => facts,
-		subscribeViewedSessionChanged: (listener: (facts: ViewedFacts) => void): (() => void) => {
-			listeners.add(listener);
-			return () => {
-				if (!listeners.delete(listener)) return;
-				unsubscribes += 1;
-			};
-		},
+		// The outlet is what the approved patch adds; a host without it publishes the bound session's
+		// own context natively instead, which is the surface this suite pins for the bar's fallback.
+		...(options.patched === false
+			? { getContextUsage: () => options.ownContext }
+			: {
+					getViewedSession: () => facts,
+					subscribeViewedSessionChanged: (listener: (facts: ViewedFacts) => void): (() => void) => {
+						listeners.add(listener);
+						return () => {
+							if (!listeners.delete(listener)) return;
+							unsubscribes += 1;
+						};
+					},
+				}),
 		// The session's managed timer surface, present and quiet: this suite drives the display, and the
 		// UI's one boundary wait is driven by `boundary-timer.test.ts`.
 		setTimeout: () => undefined,
@@ -284,8 +298,7 @@ describe("the widget draws the viewed session's own fields and the whole main tr
 		// with the peak season mark, and the period's own accrual — the main session's 0.05 CNY over the
 		// fine bar's single eighth-block — follows it.
 		expect(session.lastLines()).toEqual([
-			"\u{1F525}  [\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591   0% (1,234/450.0K)]  Effort: high",
-			"\u23F3 Accrued: \u00A50.05 [\u258F]",
+			"\u{1F525}  [\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591   0% (1,234/450.0K)]  Effort: high  \u23F3 Accrued: \u00A50.05 [\u258F]",
 			"Total:  Cache: 67%  \u00A5Cache/In/Out\uff1a4:7:89  Sum: 6,100  Cost: \u00A50.05",
 		]);
 
@@ -318,8 +331,7 @@ describe("the widget draws the viewed session's own fields and the whole main tr
 			context: { tokens: 2222, contextWindow: 64_000 },
 		});
 		expect(session.lastLines()).toEqual([
-			"\u{1F525}  [\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591   0% (2,222/450.0K)]  Effort: medium",
-			"\u23F3 Accrued: \u00A50.05 [\u258F]",
+			"\u{1F525}  [\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591   0% (2,222/450.0K)]  Effort: medium  \u23F3 Accrued: \u00A50.05 [\u258F]",
 			"Total:  Cache: 0%  Sum: 6,100  Cost: \u00A50.05",
 		]);
 	});
@@ -427,5 +439,46 @@ describe("a switched-away context is dropped rather than kept (S1, S5)", () => {
 		fire("session_start", session.ctx);
 		session.publish(VIEWED_SUB);
 		expect(session.frames).toEqual([]);
+	});
+});
+
+describe("a host without the approved outlet still draws the bound session's own context bar (P10, P67)", () => {
+	test("the bar is drawn at initialization from the native reading, never left off the widget", async () => {
+		const runtime = await boundRuntime();
+		const { api, fire } = controlApi();
+		// The host as the global CLI ships before the approved patch: no `getViewedSession()` at all,
+		// but the native `getContextUsage()` every host has published all along. There is no separate
+		// view here, so the session this widget is bound to is the session being drawn, and the reading
+		// is the bar's fact rather than a question mark.
+		const session = controlSession({
+			boundSessionId: "session-main",
+			boundModel: { provider: "official", id: "model-alpha" },
+			initial: {},
+			patched: false,
+			ownContext: { tokens: 1234, contextWindow: 64_000 },
+		});
+		attachModelCostWidget(api, runtime, uiBoundaryTimerOf(runtime), "lines");
+		fire("session_start", session.ctx);
+
+		// The line the bar lives on is drawn from the bound session's own reading, exactly as the
+		// outlet path draws it: the fixture's peak season mark, the fixed 450K budget and the count.
+		expect(session.lastLines()).toEqual([
+			"\u{1F525}  [\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591   0% (1,234/450.0K)]  Effort: ?  \u23F3 Accrued: \u00A50.05 [\u258F]",
+			"Total:  Cache: 67%  \u00A5Cache/In/Out\uff1a4:7:89  Sum: 6,100  Cost: \u00A50.05",
+		]);
+	});
+
+	test("a host that publishes no reading at all is a bar-less widget, not a fabricated zero", async () => {
+		const runtime = await boundRuntime();
+		const { api, fire } = controlApi();
+		const session = controlSession({
+			boundSessionId: "session-main",
+			boundModel: { provider: "official", id: "model-alpha" },
+			initial: {},
+			patched: false,
+		});
+		attachModelCostWidget(api, runtime, uiBoundaryTimerOf(runtime), "lines");
+		fire("session_start", session.ctx);
+		expect(session.lastLines()?.[0]).toBe("\u{1F525}  \u23F3 Accrued: \u00A50.05 [\u258F]");
 	});
 });
