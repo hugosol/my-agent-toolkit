@@ -322,10 +322,18 @@ describe("the brief draws the viewed session's own Rounds (P26)", () => {
 			"Round:  Cache:  0%  ¥Cache/In/Out：0:20:80  Sum:    20  Cost: ¥0.0001",
 		]);
 
-		// A second Round opens after the first ended, so the instance now holds a current Round and a
-		// previous one at once. The brief still draws exactly one Round row — the open one — rather than
-		// a `Prev:` row beside it: the most recent Round is the only one shown.
+		// A second Round opens after the first ended, so the instance now holds an open Round and a
+		// previous one at once. Before the new Round's first Turn settles, its own additions are all
+		// zero: the brief keeps the previous Round's reading rather than dropping the row to zeroes.
 		bound.double.deliverRound(OWNER, { event: { kind: "round_start" }, session: MAIN });
+		expect(bound.host.lastLines()).toEqual([
+			"\u{1F525}  \u23F3 Accrued: \u00A50.05 [\u258F]",
+			"Total:  Cache: 66%  ¥Cache/In/Out： 4:7:89  Sum: 6,120  Cost:   ¥0.05",
+			"Round:  Cache:  0%  ¥Cache/In/Out：0:20:80  Sum:    20  Cost: ¥0.0001",
+		]);
+
+		// The new Round's first Turn settles: its data replaces the previous reading, and the row is
+		// still one `Round:` line rather than a `Prev:` row beside the live one.
 		settleTurn(bound.double);
 		const roundRows = (bound.host.lastLines() ?? []).filter(
 			line => line.startsWith("Round:") || line.startsWith("Prev:"),

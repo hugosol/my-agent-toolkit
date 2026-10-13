@@ -142,7 +142,7 @@ Contract: [已批准的承诺、seams 与验收覆盖](contract.md) — Rapid it
 - 每个主／子／孙 Session 各自累加并保存直接父 Session。沿父链汇总 Session，每份自身贡献一次；不按 Owner、名称或层级猜关系，不从父总数反推子消费。
 - 子消费只归父 Session 汇总，不归父 Round，不保存父 Round 启动标签、实例标签或消费归属段。迟到子消费增加自身及祖先 Session，不回填父 Round；子本身仍有 Turn／Round 和 round_end 保存。
 - Session totals 限当前 Accounting period，跨该会话各 Round；不维护跨周期 lifetime。普通 resume 读取已保存聚合与版本，switch 选目标视图，tree 不撤销真实消费，fork 新实际 Session 自身从零。复制／读取旧消息不产生新消费；不扫描宿主历史或合并归档。
-- Round 仅运行期：进行中的当前自身累计减开始快照，已结束的结束减开始快照，按可靠同 Session／同周期边界与已算金额推断。正常连续对话须显示最近一 Round（进行中优先，否则刚结束）；恢复、tree 或重载缺所需记录时隐藏，不猜零、不冒充任意文件差值为 Round，不存 recentRound 或历史索引。
+- Round 仅运行期：进行中的当前自身累计减开始快照，已结束的结束减开始快照，按可靠同 Session／同周期边界与已算金额推断。正常连续对话须显示最近一 Round：进行中已有本轮数据用当前差分，尚未产生时保持上一已完成 Round 的读数（不显示 0），否则刚结束的那一轮；恢复、tree 或重载缺所需记录时隐藏，不猜零、不冒充任意文件差值为 Round，不存 recentRound 或历史索引。
 - 最新余额、窗口、获取时间、加载与请求错误是 CLI provider 级内存缓存；detail 是入口内存偏好，普通切会话／tree 保留、重启／重载回 brief、入口互不影响、不按账号／Session 持久化或子继承。holiday 和 estimate 按各自业务持久化。
 - framework 每 provider 单账号，共享统计根的实例须使用同 provider 账号；不实现账号列表、识别、选择、轮换或持久分区，不做凭据指纹和跨进程账号登记。允许前后替换但不检测统计隔离／重置，用户须自行开始新数据，不能把旧消费或 estimate 当新账号专属。
 - 成功保存前的崩溃／强杀内存损失被接受，不增加逐 Turn 落盘、崩溃日志、退出排空或补账；正常去重和同机多独立会话并发仍必须成立。

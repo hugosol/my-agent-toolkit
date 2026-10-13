@@ -4,7 +4,7 @@ status: accepted
 
 # model-cost 采用扩展自有聚合，而不是通用业务账本
 
-model-cost 选择在 harness-independent shared logic 中逐响应按请求锚价计算、按实际会话独立聚合，并在 framework `round_end` 触发保存；文件只记录 Session 自身聚合与直接父关系；最近一 Round（进行中或刚结束）的连续对话展示通过运行期信息推断，不持久化最近轮快照，resume/tree 只要求 Session 恢复，不建立 Round／Turn 明细账。它以无法查询历史轮次、异常退出可能丢失未落盘消费，以及缺 usage／价格时只提示并跳过对应指标、不维护缺失计数或补算记录为代价，换取接近旧方案的复杂度与交互开销；这些是 model-cost 的业务取舍，不是所有 extension 必须采用的框架政策。Round、response usage、实际会话及父子关系通过 framework 的宿主无关接口提供，adapter 映射原生事实，其他 harness 复用同一 shared logic；不为本方案升级通用业务 State，也不让 UI 维护另一套权威累计。
+model-cost 选择在 harness-independent shared logic 中逐响应按请求锚价计算、按实际会话独立聚合，并在 framework `round_end` 触发保存；文件只记录 Session 自身聚合与直接父关系；最近一 Round（进行中或刚结束，进行中尚未产生数据时保持上一轮读数）的连续对话展示通过运行期信息推断，不持久化最近轮快照，resume/tree 只要求 Session 恢复，不建立 Round／Turn 明细账。它以无法查询历史轮次、异常退出可能丢失未落盘消费，以及缺 usage／价格时只提示并跳过对应指标、不维护缺失计数或补算记录为代价，换取接近旧方案的复杂度与交互开销；这些是 model-cost 的业务取舍，不是所有 extension 必须采用的框架政策。Round、response usage、实际会话及父子关系通过 framework 的宿主无关接口提供，adapter 映射原生事实，其他 harness 复用同一 shared logic；不为本方案升级通用业务 State，也不让 UI 维护另一套权威累计。
 
 ## 子代理汇总的进一步简化
 

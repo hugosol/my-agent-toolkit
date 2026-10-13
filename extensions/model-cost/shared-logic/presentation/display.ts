@@ -37,10 +37,11 @@
  *   two forms a display result is drawn in, and a subagent's target answers the brief whatever that
  *   preference is: the detail form belongs to the main session, which is the session whose own
  *   provider/model pairs and whose descendants the agent tree below lists.
- * - **The Rounds.** The viewed session's own Rounds — the open one and the last one this instance saw
- *   end between two of its own boundaries — are read from the same in-memory snapshots every other
- *   Round read uses, each with the target's current-model structure beside that Round's own Sum, Cost
- *   and Ref. A boundary pair this instance does not hold writes no Round at all.
+ * - **The Rounds.** One Round row is read from the same in-memory snapshots every other Round read
+ *   uses: the open Round once it holds an addition of its own, otherwise the last one this instance
+ *   saw end between two of its own boundaries — a Round that only began does not replace the previous
+ *   reading with zeroes. It carries the target's current-model structure beside that Round's own Sum,
+ *   Cost and Ref; a boundary pair this instance does not hold writes no Round at all.
  * - **The agent tree.** The detail form's rows are derived from the relations and own accumulations
  *   this instance already holds: the root by name, its own provider/model pairs one row each, and one
  *   row per descendant session's own accumulation, each with its distance from the root. No inclusive
@@ -253,8 +254,10 @@ export interface ConsumptionDisplay {
 	 */
 	readonly agentTree?: readonly AgentTreeRow[];
 	/**
-	 * The viewed session's most recent Round, as the brief writes it: the one open now while it runs,
-	 * or the last one this instance saw end with both of its boundaries at hand once it is over.
+	 * The viewed session's most recent Round that holds consumption to show, as the brief writes it:
+	 * the open Round once it has an addition of its own, otherwise the last one this instance saw end
+	 * with both of its boundaries at hand. A Round that only began — or whose first settled Turn
+	 * carried zero usage — leaves the previous reading in place rather than replacing it with zeroes.
 	 *
 	 * It is absent when this instance holds neither — a restored accumulation is a session total
 	 * rather than a Round, so a session whose Round this instance never saw begin has no row here
@@ -437,6 +440,22 @@ export function referenceRatioOf(tokens: TokenBuckets, price: CatalogPrice): Ref
 }
 
 /**
+ * Whether one Round's own consumption holds anything real.
+ *
+ * A Round that only began holds nothing yet, but `differenceOf` can still answer a bucket whose
+ * tokens and amounts are all zero, so the display asks for a real addition rather than a present one.
+ */
+function holdsConsumption(own: OwnConsumption): boolean {
+	for (const models of Object.values(own)) {
+		for (const entry of Object.values(models)) {
+			if (TOKEN_BUCKETS.some(bucket => entry.tokens[bucket] !== 0)) return true;
+			if ((entry.costCny ?? 0) !== 0 || (entry.referenceCostUsd ?? 0) !== 0) return true;
+		}
+	}
+	return false;
+}
+
+/**
  * The approved fields of one scope of a session's own consumption.
  *
  * An optional `provider`/`model` narrows the scope to that one pair — the current-model scope — and
@@ -609,10 +628,13 @@ export function createPresentation(inputs: PresentationInputs): ConsumptionPrese
 			const isTreeRoot = root !== undefined && root.parentSessionId === null;
 			const form: DisplayForm = isTreeRoot ? display.form() : "brief";
 			const rounds = view.roundTotals(target.sessionId);
-			// The brief carries one Round row: the most recent one, which is the open Round while it
-			// runs and the last completed one afterwards. The read-only seam still states the two
-			// separately; which of them is "the latest" is decided here, once, so no frontend has to.
-			const latest = rounds?.current ?? rounds?.previous;
+			// The brief keeps the last completed Round on screen while the open Round holds no addition
+			// of its own yet — a Round that only began (or whose first settled Turn carried zero usage)
+			// must not replace the reading the operator was just looking at with zeroes. The first real
+			// addition switches the row to the open Round; the read-only seam still states the two
+			// separately, so no frontend makes this choice.
+			const open = rounds?.current;
+			const latest = open !== undefined && holdsConsumption(open) ? open : rounds?.previous;
 			const round = latest === undefined ? undefined : roundOf(target, latest);
 			const budgetTokens = displayBudgetOf(mode);
 			const budget =
