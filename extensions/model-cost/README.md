@@ -57,7 +57,7 @@ expected text, field values, thresholds and the isolated steps — lives.
 | promise | what to watch in the real TUI | prepared material |
 | --- | --- | --- |
 | P11 | Effort shows the level the request really ran with (not the configured intent), and a subagent's own view shows that subagent's level; an unreadable level is `?` | [`16` §5](../../.scratch/model-cost-migration/assets/16-viewed-session-total-evidence-2026-10-13.md) |
-| P23 | `/budget detail` shows the Total block plus the static agent tree with a row per session and its own model, and no `Round:`/`Prev:` rows | [`17` §5](../../.scratch/model-cost-migration/assets/17-detail-tree-view-preference-evidence-2026-10-13.md) |
+| P23 | `/budget detail` shows the Total block plus the static agent tree with a row per session and its own model, and no `Round:` row | [`17` §5](../../.scratch/model-cost-migration/assets/17-detail-tree-view-preference-evidence-2026-10-13.md) |
 | P26 | Viewing a subagent shows that subagent's own context and Round in the fixed brief form; moving back restores the main preference | [`17` §5](../../.scratch/model-cost-migration/assets/17-detail-tree-view-preference-evidence-2026-10-13.md) |
 | P27 | The one marker line follows the session you are viewing (main ↔ subagent), and viewing never grants write authority | [`18`](../../.scratch/model-cost-migration/assets/18-viewed-state-marker-evidence-2026-10-13.md) |
 | P41 | Crossing a peak/off-peak boundary — and the holiday marker on the first holiday period — redraws the block once, with no request issued | [`20` §5.2](../../.scratch/model-cost-migration/assets/20-tui-boundary-timer-evidence-2026-10-13.md) |

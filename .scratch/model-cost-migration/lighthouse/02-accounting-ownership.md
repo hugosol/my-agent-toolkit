@@ -42,7 +42,7 @@ DeepSeek 是当前计费渠道，已知请求费用计入金额；Codex 是额�
 
 ### 本账户周期的 Session／Round、tree 与恢复
 
-Session 累计限于当前消费统计周期，跨该会话各 Round；Round 累计仅本实际会话自身，子代理汇总范围以[数据归属决议](12-state-data-contract.md)本次 Q27 修订为准。Round 寿命与恢复仅消费[数据原主题的 Session-only 修订](12-state-data-contract.md#最近-roundtree-与恢复展示)：Round 不落盘，正常连续对话可看上一 Round，resume/tree 不要求恢复 Round；Session 持久累计仍可恢复，不建立历史索引或跨周期 lifetime，不以当前价重算。
+Session 累计限于当前消费统计周期，跨该会话各 Round；Round 累计仅本实际会话自身，子代理汇总范围以[数据归属决议](12-state-data-contract.md)本次 Q27 修订为准。Round 寿命与恢复仅消费[数据原主题的 Session-only 修订](12-state-data-contract.md#最近-roundtree-与恢复展示)：Round 不落盘，正常连续对话可看最近一 Round，resume/tree 不要求恢复 Round；Session 持久累计仍可恢复，不建立历史索引或跨周期 lifetime，不以当前价重算。
 
 | 操作 | 当前有效行为 |
 | --- | --- |
@@ -102,7 +102,7 @@ framework 每 provider 单账号、model-cost 按 provider 单一范围聚合，
 
 - 后续按扩展自有聚合、有限运行期关联、父子关系与本周期恢复设计，不要求历史 Turn／Round 留存、缺失补齐或跨周期 Session 总数。
 - 自身／含后代、账户／渠道口径可派生，实际请求不重复；无金额贡献不代表实际零消费。
-- 验收覆盖可靠响应、重发／重复、正常连续对话上一 Round／tree／resume 的 Session 恢复、整文件 clear／首次 holiday 切周期、父子与多会话正常并发及已确认损失边界，不按原旧验收恢复已取消要求。
+- 验收覆盖可靠响应、重发／重复、正常连续对话最近一 Round／tree／resume 的 Session 恢复、整文件 clear／首次 holiday 切周期、父子与多会话正常并发及已确认损失边界，不按原旧验收恢复已取消要求。
 - 冲突丢弃／局部清理及身份已批准范围以[观察局部决议](03-observation-contract.md)为准；可信来源、宿主实例隔离、物理发布、调度和最终 UI 尚需具名票收口，文档不代表能力已实现。
 
 ## Invariants

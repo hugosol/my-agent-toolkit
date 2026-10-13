@@ -25,9 +25,10 @@
  *
  * What these runs do **not** establish: a real Codex account's allowance. The windows are the
  * endpoint's scripted literals, the credential is the isolated run's own fixture token, and the
- * account API is deliberately left unconfigured — this repository ships no shared
- * `http.proxies.codex` entry — so the one startup attempt is refused by configuration and never
- * leaves the process, which is the approved behaviour for a named selection with no configuration.
+ * account API is deliberately left unconfigured — the fixture points the framework's shared-file
+ * read at a path with no file, so this holds whatever the machine's own `framework/config.yaml`
+ * carries — so the one startup attempt is refused by configuration and never leaves the process,
+ * which is the approved behaviour for a named selection with no configuration.
  */
 import { beforeAll, describe, expect, test } from "bun:test";
 import { mkdirSync, writeFileSync } from "node:fs";
@@ -295,9 +296,9 @@ describe("a real Codex Turn's response headers on the patched baseline (P39; S5)
 			expect(last?.weekly?.resetsAt).toBe(resetAtEpochMs(at, weekly.resetInMs));
 			expect(last?.weekly?.resetState).toBe("valid");
 
-			// The one startup attempt settled as the configuration refusal this repository ships: the
-			// named `codex` proxy entry is not configured, so no request left the process — and that
-			// refusal sits beside the readings instead of becoming a window.
+			// The one startup attempt settled as the configuration refusal the fixture supplies: the
+			// named `codex` proxy entry resolves against a file with none, so no request left the
+			// process — and that refusal sits beside the readings instead of becoming a window.
 			expect(last?.failure?.detail).toBe("misconfigured");
 		} finally {
 			await disposeRun(run);

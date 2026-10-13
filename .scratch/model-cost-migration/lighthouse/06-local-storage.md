@@ -28,9 +28,9 @@
 
 ### 一个消费计算来源与 Session／最近 Round
 
-会话自身的 provider／model 聚合是唯一消费源，逐响应按请求锚价更新，round_end 保存 Session 累计与直接父关系，不保存 Round／Turn 记录、recentRound 或轮次开始／结束快照。Session 自身／子代理／含后代和全局金额均从自身桶派生，不另写 totalCost／totalTokens，不按当前价重估。正常连续对话的上一 Round 推断与恢复取舍只在[数据原主题](12-state-data-contract.md#最近-roundtree-与恢复展示)持有；运行期内存快照允许，不是持久字段。
+会话自身的 provider／model 聚合是唯一消费源，逐响应按请求锚价更新，round_end 保存 Session 累计与直接父关系，不保存 Round／Turn 记录、recentRound 或轮次开始／结束快照。Session 自身／子代理／含后代和全局金额均从自身桶派生，不另写 totalCost／totalTokens，不按当前价重估。正常连续对话的最近一 Round 推断与恢复取舍只在[数据原主题](12-state-data-contract.md#最近-roundtree-与恢复展示)持有；运行期内存快照允许，不是持久字段。
 
-子代理保存独立自身累计与同 harness 内的直接父 Session ID，父子树在内存派生，不把子消费复制进父 own。理由是用户重新限定轻量文件只记录 Session 级消费，仍要求 Session 恢复。取消已批准的最近 Round 落盘不是取消正常运行的上一 Round 展示或 round_end 保存时机。确认原话见[本轮存储 schema 确认来源](../assets/storage-schema-confirmation-2026-10-12.md)，修订前原文见[发布前快照](../assets/storage-schema-before-publication-2026-10-12.md)。
+子代理保存独立自身累计与同 harness 内的直接父 Session ID，父子树在内存派生，不把子消费复制进父 own。理由是用户重新限定轻量文件只记录 Session 级消费，仍要求 Session 恢复。取消已批准的最近 Round 落盘不是取消正常运行的最近一 Round 展示或 round_end 保存时机。确认原话见[本轮存储 schema 确认来源](../assets/storage-schema-confirmation-2026-10-12.md)，修订前原文见[发布前快照](../assets/storage-schema-before-publication-2026-10-12.md)。
 
 ### Extension 模型与 framework 基础能力
 
@@ -259,7 +259,7 @@ framework 提供 harness-independent 的协调读-改-发布能力，业务 sche
 ## User stories
 
 1. As a 用户, I want 一个消费活动文件与独立历史归档, so that 当前单账户使用不承担预拆文件复杂度且保留明确的消费统计周期恢复。
-2. As a 用户, I want Session 持久累计与运行期上一 Round 推断来自同一消费聚合, so that 展示、保存和恢复不维护两套消费算法或重复计费。
+2. As a 用户, I want Session 持久累计与运行期最近一 Round 推断来自同一消费聚合, so that 展示、保存和恢复不维护两套消费算法或重复计费。
 3. As a extension 开发者, I want framework 封装多会话安全更新, so that 不在每个扩展重复实现文件协调并能选择自己的持久化模型。
 4. As a 用户, I want Codex 转换估计保持独立持久化, so that 消费归档／clear 不误改另一功能的数据。
 5. As a 用户, I want 提前提交非阻塞保存并在 handler 完成前等待, so that 独立业务逻辑可与 I/O 重叠但不会留下脱离本次处理的保存任务。

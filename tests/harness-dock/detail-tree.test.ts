@@ -341,7 +341,7 @@ describe("the real host's widget: a brief with its own Round, then the static de
 
 			// The brief the operator sees first: the Total, and the main session's own Round — its Round
 			// ended when the delegation finished, so the last completed one is what stands there.
-			const briefLines = await linesUntil(run.session, lines => lines.some(line => line.startsWith("Prev:")));
+			const briefLines = await linesUntil(run.session, lines => lines.some(line => line.startsWith("Round:")));
 			// The period's accrued bar and the provider balance ride the monetary channel's one account
 			// row, together with the season mark, the fixed-budget bar and the effort: the rows below are
 			// read with that whole process-wide account row left out. The accrued bar's own amount is the
@@ -360,7 +360,7 @@ describe("the real host's widget: a brief with its own Round, then the static de
 			const total = brief.find(line => line.startsWith("Total:"));
 			expect(total).toBeDefined();
 			expect(brief.filter(line => line.startsWith("Total:")).length).toBe(1);
-			expect(brief.filter(line => line.startsWith("Round:") || line.startsWith("Prev:")).length).toBe(1);
+			expect(brief.filter(line => line.startsWith("Round:")).length).toBe(1);
 			expect(brief.some(line => line.startsWith("\u2502  ") || line.startsWith("\u2514\u2500 "))).toBe(false);
 
 			// The one command the operator types: the entry flips to the detail form, says so, and the
@@ -392,7 +392,7 @@ describe("the real host's widget: a brief with its own Round, then the static de
 				`\u2502  ${MODEL_PROVIDER} / ${MODEL_ID}  Cache: ${main.cache}%  \u00A5Cache/In/Out\uff1a0:20:80  Sum: ${main.sum.toLocaleString("en-US")}  Cost: \u00A50.01`,
 				`\u2514\u2500 ${childRecord.name}  Cache: ${child.cache}%  Sum: ${child.sum.toLocaleString("en-US")}  Cost: \u00A50.0050`,
 			]);
-			expect(detail.some(line => line.startsWith("Round:") || line.startsWith("Prev:"))).toBe(false);
+			expect(detail.some(line => line.startsWith("Round:"))).toBe(false);
 			// The tree's own Sum is the two records' own Sums added once each: the model row above is the
 			// main session's own alone, so nothing here is an inclusive figure counted twice.
 			expect(total).toContain(`Sum: ${(main.sum + child.sum).toLocaleString("en-US")}`);
@@ -406,12 +406,12 @@ describe("the real host's widget: a brief with its own Round, then the static de
 
 			// The same command flips the entry back, and the brief returns with its Round row and no tree.
 			await run.session.prompt("/budget detail");
-			const backLines = await linesUntil(run.session, lines => lines.some(line => line.startsWith("Prev:")));
+			const backLines = await linesUntil(run.session, lines => lines.some(line => line.startsWith("Round:")));
 			const back = (backLines ?? []).filter(
 				line => !line.includes("Balance:") && !line.includes("\u23F3 Accrued:"),
 			);
 			expect(back[0]).toBe(total as string);
-			expect(back.filter(line => line.startsWith("Round:") || line.startsWith("Prev:")).length).toBe(1);
+			expect(back.filter(line => line.startsWith("Round:")).length).toBe(1);
 			expect(back.some(line => line.startsWith("\u2514\u2500 ") || line.startsWith("\u251C\u2500 "))).toBe(false);
 			expect(noticesOf(run.session).map(notice => notice.level)).toEqual(["info", "info"]);
 			expect(run.capture.requests().length).toBe(requestsBeforeToggle);

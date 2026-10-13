@@ -27,10 +27,9 @@
  *   `WidgetDrawing`), not a decision of this module's.
  *
  * The fourth rule is this file's layout: the rows a display result carries are labelled and indented
- * here — `Round`/`Prev` for the brief's own Rounds, and the continuation bars and connectors of the
- * detail form's static tree, whose rows only state their distance from the root. How a terminal
- * draws a depth is a frontend's business; which rows there are, and what each row's own figures are,
- * is shared logic's.
+ * here — the brief's one `Round` row, and the continuation bars and connectors of the detail form's
+ * static tree, whose rows only state their distance from the root. How a terminal draws a depth is a
+ * frontend's business; which rows there are, and what each row's own figures are, is shared logic's.
  *
  * The Viewed session outlet is the host's public one (`ctx.getViewedSession()` /
  * `ctx.subscribeViewedSessionChanged()`), read here rather than through a private controller or a
@@ -212,15 +211,13 @@ export interface WidgetReading {
 }
 
 /**
- * The lines the brief draws for the viewed session's own Rounds, in the order they are read: the open
- * Round, then the last completed one. A Round this instance holds no boundary pair for writes no line
- * at all — the brief then carries the Total alone rather than a fabricated zero.
+ * The one line the brief draws for the viewed session's own Round: its most recent one, the open
+ * Round while it runs or the last completed one afterwards. A Round this instance holds no boundary
+ * pair for writes no line at all — the brief then carries the Total alone rather than a fabricated
+ * zero.
  */
-function roundLines(current: RoundDisplay | undefined, previous: RoundDisplay | undefined): DisplayLine[] {
-	const lines: DisplayLine[] = [];
-	if (current !== undefined) lines.push([{ text: `Round:  ${roundText(current)}` }]);
-	if (previous !== undefined) lines.push([{ text: `Prev:  ${roundText(previous)}` }]);
-	return lines;
+function roundLines(round: RoundDisplay | undefined): DisplayLine[] {
+	return round === undefined ? [] : [[{ text: `Round:  ${roundText(round)}` }]];
 }
 
 /**
@@ -257,9 +254,10 @@ function treeLines(rows: readonly AgentTreeRow[]): DisplayLine[] {
  * for the bar to compare — then the period's accrued line for the monetary channel and the allowance
  * windows for the Codex one. The total line follows, carrying the current model's own structure and
  * the main tree's Sum, Cost and Ref. Below it the entry's own form decides the content: the brief
- * draws the viewed session's own Rounds, and the detail form draws the static agent tree of the main
- * session in their place — never both, which is what "the detail form keeps the Total and replaces the
- * Round row" means for a terminal. The two currencies are written apart and never added together, and
+ * draws the viewed session's own most recent Round, and the detail form draws the static agent tree of
+ * the main session in its place — never both, which is what "the detail form keeps the Total and
+ * replaces the Round row" means for a terminal. The two currencies are written apart and never added
+ * together, and
  * a mode without an amount policy contributes no amount of its own.
  *
  * The monetary channel keeps the superseded widget's one account row: the season mark, the fixed-budget
@@ -296,7 +294,7 @@ export function widgetLayout(reading: WidgetReading): readonly DisplayLine[] | u
 	if (display.form === "detail" && display.agentTree !== undefined) {
 		lines.push(...treeLines(display.agentTree));
 	} else {
-		lines.push(...roundLines(display.round.current, display.round.previous));
+		lines.push(...roundLines(display.round));
 	}
 	return lines;
 }

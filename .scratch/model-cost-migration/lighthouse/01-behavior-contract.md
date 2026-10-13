@@ -30,7 +30,7 @@ Round 是实际会话的连续活动周期，工具、已知自动续跑、排�
 
 保留请求开始锚价、逐响应可靠 usage 计价，内存累计与 Round 生命周期分离。工具结果、Round 结束和父子汇总不产生第二笔消费。逐响应计算不等于逐响应落盘；本次以 round_end 发布 Session 聚合，Round 仅运行期推断，接受成功保存前的异常退出损失，不预建独立排空钩子或崩溃日志，详见[数据决议](12-state-data-contract.md)。
 
-Session totals 是当前消费统计周期内该会话跨各 Round 的累计；Round totals 是其中某一轮，不是整个周期。自身／子代理／整体为 Session 视图，Round 仅本实际会话自身；子代理口径按[数据归属决议](12-state-data-contract.md)本次 Q27 修订，不再提供父 Round 含子汇总；正常连续对话须显示上一 Round；不持久化轮次快照，resume/tree 不要求恢复 Round，不把不可用显示成零，Session 本周期累计不随 tree 回滚。普通 resume 读取已保存活动聚合，不按宿主历史 token 用当前模型／费率重算，不自动合并旧归档。历史旧 UI Turn 指原生结算差分，不等于新 Turn 或完整 Round。
+Session totals 是当前消费统计周期内该会话跨各 Round 的累计；Round totals 是其中某一轮，不是整个周期。自身／子代理／整体为 Session 视图，Round 仅本实际会话自身；子代理口径按[数据归属决议](12-state-data-contract.md)本次 Q27 修订，不再提供父 Round 含子汇总；正常连续对话须显示最近一 Round（进行中或刚结束）；不持久化轮次快照，resume/tree 不要求恢复 Round，不把不可用显示成零，Session 本周期累计不随 tree 回滚。普通 resume 读取已保存活动聚合，不按宿主历史 token 用当前模型／费率重算，不自动合并旧归档。历史旧 UI Turn 指原生结算差分，不等于新 Turn 或完整 Round。
 
 用户观察旧计价基本对应官网是保留算法的依据，不是独立账单认证。[旧聚合探针](../assets/old-accounting-granularity-smoke.md)的两次峰／谷请求累计为 13.5 元，按结束时谷价重算为 9 元；[旧 clear／resume 调查](../assets/old-clear-resume-smoke.md)区分 Total 显示重估与 Accrued 落盘，不宣称新生产能力已通过验收。
 

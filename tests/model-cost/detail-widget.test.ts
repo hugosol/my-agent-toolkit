@@ -297,7 +297,7 @@ describe("the brief draws the viewed session's own Rounds (P26)", () => {
 		]);
 	});
 
-	test("an open Round shows its own additions, and the ended one becomes the previous Round", async () => {
+	test("an open Round shows its own additions, and the ended one becomes the latest Round", async () => {
 		const bound = await bindWidget();
 
 		// The framework opens the session's Round and one request settles inside it. The brief's Total is
@@ -313,19 +313,30 @@ describe("the brief draws the viewed session's own Rounds (P26)", () => {
 			"Round:  Cache: 0%  ¥Cache/In/Out：0:20:80  Sum: 20  Cost: ¥0.0001",
 		]);
 
-		// The Round ends: its own additions become the previous Round, and the open one is gone. The
+		// The Round ends: its own additions become the latest Round, and the open one is gone. The
 		// Total is the same accumulation it already was — an ended Round is not new consumption.
 		bound.double.deliverRound(OWNER, { event: { kind: "round_end" }, session: MAIN });
 		expect(bound.host.lastLines()).toEqual([
 			"\u{1F525}  \u23F3 Accrued: \u00A50.05 [\u258F]",
 			"Total:  Cache: 66%  ¥Cache/In/Out：4:7:89  Sum: 6,120  Cost: ¥0.05",
-			"Prev:  Cache: 0%  ¥Cache/In/Out：0:20:80  Sum: 20  Cost: ¥0.0001",
+			"Round:  Cache: 0%  ¥Cache/In/Out：0:20:80  Sum: 20  Cost: ¥0.0001",
 		]);
+
+		// A second Round opens after the first ended, so the instance now holds a current Round and a
+		// previous one at once. The brief still draws exactly one Round row — the open one — rather than
+		// a `Prev:` row beside it: the most recent Round is the only one shown.
+		bound.double.deliverRound(OWNER, { event: { kind: "round_start" }, session: MAIN });
+		settleTurn(bound.double);
+		const roundRows = (bound.host.lastLines() ?? []).filter(
+			line => line.startsWith("Round:") || line.startsWith("Prev:"),
+		);
+		expect(roundRows).toHaveLength(1);
+		expect(roundRows[0]?.startsWith("Round:")).toBe(true);
 	});
 });
 
 describe("the detail form draws the static tree where the brief draws Rounds (P23, P29)", () => {
-	test("the toggle replaces the Round rows with the tree and keeps the same Total above it", async () => {
+	test("the toggle replaces the Round row with the tree and keeps the same Total above it", async () => {
 		const bound = await bindWidget({
 			viewed: {
 				sessionId: "session-main",
@@ -348,7 +359,7 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 		expect(bound.host.lastLines()).toEqual([
 			account,
 			total,
-			"Prev:  Cache: 0%  ¥Cache/In/Out：0:20:80  Sum: 20  Cost: ¥0.0001",
+			"Round:  Cache: 0%  ¥Cache/In/Out：0:20:80  Sum: 20  Cost: ¥0.0001",
 		]);
 
 		// The action redraws at once — no session boundary, no request and no save is needed for it —
@@ -367,14 +378,14 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 			"│  official / model-alpha  Cache: 66%  ¥Cache/In/Out：4:7:89  Sum: 6,020  Cost: ¥0.05",
 			"└─ 子代理  Cache: 40%  Sum: 100",
 		]);
-		expect(bound.host.lastLines()?.some(line => line.startsWith("Round:") || line.startsWith("Prev:"))).toBe(false);
+		expect(bound.host.lastLines()?.some(line => line.startsWith("Round:"))).toBe(false);
 
 		// Flipping back draws the brief again, with the same Total line and no tree row left behind.
 		await bound.double.runToCompletion("budget", { args: "detail" });
 		expect(bound.host.lastLines()).toEqual([
 			account,
 			total,
-			"Prev:  Cache: 0%  ¥Cache/In/Out：0:20:80  Sum: 20  Cost: ¥0.0001",
+			"Round:  Cache: 0%  ¥Cache/In/Out：0:20:80  Sum: 20  Cost: ¥0.0001",
 		]);
 	});
 

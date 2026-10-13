@@ -242,6 +242,13 @@ function startProxy(label: string, tls: { readonly cert: string; readonly key: s
 				if (method === "CONNECT") {
 					sightings.push({ hop, kind: "CONNECT", line });
 					const [authorityHost, authorityPort] = requestTarget.split(":");
+					if (authorityHost === undefined || authorityPort === undefined || authorityPort === "") {
+						// A CONNECT authority must name the port; a real proxy refuses a bare host
+						// rather than guessing at one.
+						socket.write("HTTP/1.1 400 Bad Request\r\ncontent-length: 0\r\nconnection: close\r\n\r\n");
+						socket.end();
+						return;
+					}
 					const upstream = netConnect(Number(authorityPort), authorityHost, () => {
 						socket.write("HTTP/1.1 200 Connection Established\r\n\r\n");
 					});
@@ -618,6 +625,27 @@ if (tlsTarget === undefined) {
 				tlsProxy.sightings[0]!.kind === "CONNECT" &&
 				tlsProxy.sightings[0]!.line === `CONNECT ${expectedAuthority} HTTP/1.1`,
 			`the TLS proxy was handed "${tlsProxy.sightings[0]?.line ?? ""}"; the client read reached=${String(readBack)} back`,
+		);
+	}
+
+	{
+		// 6b — the CONNECT authority states the port even when it is the scheme's default: `URL.host`
+		//      drops `:443`, and a proxy handed a bare host refuses the tunnel or sends it elsewhere.
+		//      Nothing listens on 443 here; the request line the proxy was handed is the evidence.
+		const defaultAuthority = "127.0.0.1:443";
+		clearSightings();
+		try {
+			const response = await shared.request("https://127.0.0.1/", { proxy: "loopback", timeoutMs: 2_000 });
+			await response.text();
+		} catch {
+			// Only the request line matters; whether a listener answered on 443 is not this case's claim.
+		}
+		observe(
+			"a CONNECT authority names the port even when it is the scheme's default",
+			proxy.sightings.length === 1 &&
+				proxy.sightings[0]!.kind === "CONNECT" &&
+				proxy.sightings[0]!.line === `CONNECT ${defaultAuthority} HTTP/1.1`,
+			`the proxy was handed "${proxy.sightings[0]?.line ?? ""}"`,
 		);
 	}
 

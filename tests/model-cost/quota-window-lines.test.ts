@@ -211,10 +211,10 @@ describe("both windows are drawn with the bar, the pace they have run at, and th
 	test("an unreported window is said to be unreported, with the attempt's own reason beside it", async () => {
 		const bound = await bindWindows({ answer: () => new Response("", { status: 500 }) });
 
-		// The startup attempt answered with no window in it: both lines are the wording an operator has
-		// always read for a window nobody reported, and the sanitized reason rides along.
+		// The startup attempt answered with no window in it: both lines are the wording for a window
+		// nobody reported, labeled once, and the sanitized reason rides along.
 		const text = bound.runtime.presentation.quotaLines(200).map(lineText);
-		expect(text).toEqual(["5h 5h limit not reported \u00B7 unreadable", "7d weekly limit not reported \u00B7 unreadable"]);
+		expect(text).toEqual(["5h limit not reported \u00B7 unreadable", "7d limit not reported \u00B7 unreadable"]);
 	});
 
 	test("a window the report itself left out is unreported while the other one is drawn", async () => {
@@ -224,7 +224,7 @@ describe("both windows are drawn with the bar, the pace they have run at, and th
 		// Only one window ever arrived: the weekly line says so rather than being drawn as an empty
 		// window, and the five-hour one is the reading it is.
 		const text = bound.runtime.presentation.quotaLines(200).map(lineText);
-		expect(text[1]).toBe("7d weekly limit not reported");
+		expect(text[1]).toBe("7d limit not reported");
 		expect(text[0]).toContain("42.0%");
 	});
 });

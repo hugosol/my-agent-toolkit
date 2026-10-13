@@ -40,7 +40,7 @@ framework 提供 Round、可观察 Request／Turn、response usage、实际会�
 | --- | --- | --- |
 | 实际会话自身累计 | harness＋实际会话 × provider × 模型；只含该会话自己发出的响应 token／已算费用 | shared logic 内存更新；按当前消费统计周期发布并恢复；UI 读只读视图 |
 | 父子会话关系 | 同 harness 内子实际会话、直接父实际会话；不含用于父 Round 分配的启动标签／归属段 | 随聚合保存；恢复后沿直接父链查询 Session 自身／子代理／整体，不能猜 Owner 或名字层级 |
-| 当前／上一 Round | 本实际会话自身消费，由 Session 累计及运行期信息推断 | 仅运行期；正常连续对话须显示上一 Round，不保存轮次快照，resume/tree 不要求恢复 |
+| 最近一 Round | 本实际会话自身消费，由 Session 累计及运行期信息推断：进行中＝当前自身累计 − 开始快照，已结束＝结束快照 − 开始快照 | 仅运行期；正常连续对话须显示最近一 Round（进行中或刚结束），不保存轮次快照，resume/tree 不要求恢复 |
 | 在途请求 | sessionId／turnId 与provider、Round、模型、请求时锚价 | 运行期保存；结束处理完成后释放完整详情 |
 | 已处理请求身份 | sessionId + turnId；防止重复结束通知再累计 | 仅内存，保留到本次观察实例销毁；不在 round_end 清空、不按任意 TTL 淘汰、不落盘 |
 | 最新 provider 读数 | provider 维度的余额／双窗口、获取时间、加载／请求错误等测量状态 | 仅内存；重启重新获取，不能跨 provider 或跨来源拼接，不识别账号替换 |
@@ -75,11 +75,11 @@ framework 提供 Round、可观察 Request／Turn、response usage、实际会�
 
 ### 最近 Round、tree 与恢复展示
 
-本轮新原则优先于旧决定：文件只持久化 Session 级消费与直接父关系，不保存 recentRound、最近 Round 开始／结束快照、Turn／Round 列表或历史位置索引。Round 消费通过 Session 记录或运行期内存信息推断；正常连续对话必须能显示上一 Round 的自身消费，允许运行期开始／结束累计快照，不要求这些快照落盘。费用差分只用已算累计，不以当前价重算。子消费仍只用于 Session 汇总，不借后代累计差分猜父 Round。
+本轮新原则优先于旧决定：文件只持久化 Session 级消费与直接父关系，不保存 recentRound、最近 Round 开始／结束快照、Turn／Round 列表或历史位置索引。Round 消费通过 Session 记录或运行期内存信息推断；正常连续对话必须能显示最近一 Round（进行中或刚结束）的自身消费，允许运行期开始／结束累计快照，不要求这些快照落盘。费用差分只用已算累计，不以当前价重算。子消费仍只用于 Session 汇总，不借后代累计差分猜父 Round。
 
 /resume、/tree 等情况不要求恢复 Round 信息，但须恢复当前周期的 Session 自身／子代理／含后代消费；不可取得的 Round 不冒充零或当前历史位置。原「最近 Round 快照随 round_end 保存、resume 可展示已保存最近轮」明确被取消，正常逐响应计算与 round_end 保存 Session 时机不变。
 
-理由：用户要求自行划定轻量统计文件保存范围，而不是让持久化结构为轮次恢复扩大。用户曾说上一 turn，Q30 明确更正为「上一round」，本原则不要求上一单次模型请求的单独留存。确认原话见[本轮存储 schema 确认来源](../assets/storage-schema-confirmation-2026-10-12.md)，修订前原文见[发布前快照](../assets/storage-schema-before-publication-2026-10-12.md)。
+理由：用户要求自行划定轻量统计文件保存范围，而不是让持久化结构为轮次恢复扩大。用户曾说上一 turn，Q30 明确更正为「上一round」（2026-10-14 再澄清：该「上一」即最近一 Round，进行中或刚结束都算同一条，不并列展示「当前」与「上一」两行），本原则不要求上一单次模型请求的单独留存。确认原话见[本轮存储 schema 确认来源](../assets/storage-schema-confirmation-2026-10-12.md)，修订前原文见[发布前快照](../assets/storage-schema-before-publication-2026-10-12.md)。
 
 ### 缺 usage／价格只提示，不建立补账状态
 
@@ -117,13 +117,13 @@ detail 是同一交互窗口／CLI 展示实例的内存偏好：普通会话切
 
 ### 历史决定的替代关系与文档职责
 
-1. 历史 Round／tree 查询、逐 Turn 持久记录和恢复补齐要求明确收窄为Session 聚合、运行期上一 Round 推断、tree Round 不可用与已接受的未保存损失；不是无意漏实现。
+1. 历史 Round／tree 查询、逐 Turn 持久记录和恢复补齐要求明确收窄为Session 聚合、运行期最近一 Round 推断、tree Round 不可用与已接受的未保存损失；不是无意漏实现。
 2. 缺 usage／价格的持久缺失记录、计数、持续完整性标记与补算系统取消；可靠正常响应归属／去重与账户并发要求保留。
 3. 数字预算修改取消；固定预算显示／告警保留。
 4. 本轮一度确认的树级 clear 已由整文件 clear 替代；不清 holiday 的提议未采纳；本轮再次批准改为整文件 clear，不恢复账号分区。单会话推演不取消多会话支持。
 5. Session lifetime total 改为消费统计周期的会话累计；归档不自动恢复。tree 不回滚仍成立，clear 是显式重置例外。
 6. 本次观察票 Q27 再次收窄：父 Round 子消费分配及其启动标签／归属段取消，保留直接父 Session 汇总和各实际会话自身 Round；此前嵌入历史只作溯源，不能恢复该已取消范围。
-7. 本轮取消此前已批准的最近 Round 落盘与恢复，改为 Session-only 持久化；正常连续对话上一 Round 为硬性需求，resume/tree 只要求 Session 恢复。确认原话见[本轮存储 schema 确认来源](../assets/storage-schema-confirmation-2026-10-12.md)，修订前原文见[发布前快照](../assets/storage-schema-before-publication-2026-10-12.md)。
+7. 本轮取消此前已批准的最近 Round 落盘与恢复，改为 Session-only 持久化；正常连续对话最近一 Round（进行中或刚结束）为硬性需求，resume/tree 只要求 Session 恢复。确认原话见[本轮存储 schema 确认来源](../assets/storage-schema-confirmation-2026-10-12.md)，修订前原文见[发布前快照](../assets/storage-schema-before-publication-2026-10-12.md)。
 
 [行为契约决议](01-behavior-contract.md)与[消费归属决议](02-accounting-ownership.md)的当前有效正文已按用户要求同步最新决定，修订前版本完整保存在[历史快照](../assets/contract-history-before-sync.md)，不伪装成从未改变；本数据决议仍是本次布局／寿命取舍的来源。观察票尚未结案的 Round／Turn 契约留其原票，不因本数据票结束视为接口已交付。
 
@@ -131,7 +131,7 @@ detail 是同一交互窗口／CLI 展示实例的内存偏好：普通会话切
 
 ## Decision
 
-model-cost shared logic 逐响应按请求锚价聚合，持久化 Session 自身 provider／model 桶与直接父 Session 关系，子代理合计派生；不持久化 Round／Turn 或最近轮快照。正常连续对话须显示上一 Round，resume/tree 须恢复 Session 而不要求恢复 Round。整文件周期重置、首次 holiday 切周期与 schema 编码消费[存储](06-local-storage.md)和[命令](07-command-state.md)原权威，不升级通用业务 State、不补账或重估历史。
+model-cost shared logic 逐响应按请求锚价聚合，持久化 Session 自身 provider／model 桶与直接父 Session 关系，子代理合计派生；不持久化 Round／Turn 或最近轮快照。正常连续对话须显示最近一 Round（进行中或刚结束），resume/tree 须恢复 Session 而不要求恢复 Round。整文件周期重置、首次 holiday 切周期与 schema 编码消费[存储](06-local-storage.md)和[命令](07-command-state.md)原权威，不升级通用业务 State、不补账或重估历史。
 
 ## User stories
 
@@ -141,7 +141,7 @@ model-cost shared logic 逐响应按请求锚价聚合，持久化 Session 自�
 4. As a 用户, I want 直接父 Session 关系与聚合一起恢复, so that resume 后仍可正确查询含后代 Session 总累计。
 5. As a 用户, I want Round 只统计本会话自身、子代理汇总只在 Session 层提供, so that 不必为追加任务、迟到响应和在途切界维护父 Round 分配或消费归属段。
 6. As a 用户, I want round_end 批量保存并接受未保存损失, so that 不为崩溃恢复承担逐请求日志和额外排空机制。
-7. As a 用户, I want Round 仅从运行期信息推断且正常连续对话可看上一 Round, so that 轻量文件只负责 Session 恢复而不为 resume/tree 保存轮次快照。
+7. As a 用户, I want Round 仅从运行期信息推断且正常连续对话可看最近一 Round（进行中或刚结束）, so that 轻量文件只负责 Session 恢复而不为 resume/tree 保存轮次快照。
 8. As a 用户, I want 正常 resume 恢复已保存本周期统计, so that 重启不会重复收费或按单一当前模型重估历史。
 9. As a 用户, I want 整文件 clear 归档后重新累计, so that 能结束整个账户周期且旧累计不因 resume 自动回来。
 10. As a 用户, I want clear 前在途响应丢弃、之后新请求正常统计, so that 重置简单且仍运行的子代理不被永久排除。

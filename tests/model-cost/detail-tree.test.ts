@@ -507,8 +507,8 @@ describe("a subagent's view is the brief, and the main session's tree is what it
 		expect(child.agentTree).toBeUndefined();
 		expect(child.current.sum).toBe(130);
 		expect(child.current.cacheHitRate).toBe(33);
-		expect(child.round.current?.total.sum).toBe(30);
-		expect(child.round.current?.current.referenceRatio).toBeUndefined();
+		expect(child.round?.total.sum).toBe(30);
+		expect(child.round?.current.referenceRatio).toBeUndefined();
 		expect(child.tree.sum).toBe(6924);
 
 		// Returning to the main session: the detail form again, the tree again, and the child's own row
@@ -544,7 +544,7 @@ describe("an ordinary model, session, tree or view change keeps the instance, it
 		// watches: an instance rebuilt from the file would hold no boundary pair and show no Round row.
 		bound.double.deliverRound(OWNER, { event: { kind: "round_start" }, session: MAIN });
 		settleMainTurn(bound.double, CLOCK);
-		expect(bound.runtime.presentation.of(MAIN_TARGET).round.current?.total.sum).toBe(20);
+		expect(bound.runtime.presentation.of(MAIN_TARGET).round?.total.sum).toBe(20);
 
 		// The ordinary changes: another session's own facts, a rename of the main session, a model
 		// switch inside the viewed session, another session's Round opening, and the view moving across
@@ -566,7 +566,7 @@ describe("an ordinary model, session, tree or view change keeps the instance, it
 		expect(after.agentTree?.[0]?.name).toBe("改名后的主会话");
 		expect(after.agentTree?.find(row => row.name === "子代理")).toBeDefined();
 		// The runtime Round is the same boundary pair it was, and the tree it belongs to is unchanged.
-		expect(after.round.current?.total.sum).toBe(20);
+		expect(after.round?.total.sum).toBe(20);
 		expect(after.tree.sum).toBe(6914);
 		// The reading this instance holds is the very one the startup asked for — no switch, model change
 		// or view change reached a provider for a second one — and the framework built exactly one

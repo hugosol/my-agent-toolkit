@@ -249,18 +249,15 @@ export interface ConsumptionDisplay {
 	 */
 	readonly agentTree?: readonly AgentTreeRow[];
 	/**
-	 * The viewed session's own Rounds, as the brief writes them: the one open now, and the last one this
-	 * instance saw end with both of its boundaries at hand.
+	 * The viewed session's most recent Round, as the brief writes it: the one open now while it runs,
+	 * or the last one this instance saw end with both of its boundaries at hand once it is over.
 	 *
-	 * Each is absent when this instance holds no such Round, and both are absent when it holds neither —
-	 * a restored accumulation is a session total rather than a Round, so a session whose Round this
-	 * instance never saw begin has no row here rather than a fabricated zero. Nothing is read from a
-	 * file and no Round is reconstructed from a document to fill either.
+	 * It is absent when this instance holds neither — a restored accumulation is a session total
+	 * rather than a Round, so a session whose Round this instance never saw begin has no row here
+	 * rather than a fabricated zero. Nothing is read from a file and no Round is reconstructed from a
+	 * document to fill it.
 	 */
-	readonly round: {
-		readonly current?: RoundDisplay;
-		readonly previous?: RoundDisplay;
-	};
+	readonly round?: RoundDisplay;
 	readonly budget?: DisplayBudget;
 	/** The target's actual effective effort, `?` when the host could not report one. */
 	readonly effort: string;
@@ -608,10 +605,11 @@ export function createPresentation(inputs: PresentationInputs): ConsumptionPrese
 			const isTreeRoot = root !== undefined && root.parentSessionId === null;
 			const form: DisplayForm = isTreeRoot ? display.form() : "brief";
 			const rounds = view.roundTotals(target.sessionId);
-			const round = {
-				...(rounds?.current === undefined ? {} : { current: roundOf(target, rounds.current) }),
-				...(rounds?.previous === undefined ? {} : { previous: roundOf(target, rounds.previous) }),
-			};
+			// The brief carries one Round row: the most recent one, which is the open Round while it
+			// runs and the last completed one afterwards. The read-only seam still states the two
+			// separately; which of them is "the latest" is decided here, once, so no frontend has to.
+			const latest = rounds?.current ?? rounds?.previous;
+			const round = latest === undefined ? undefined : roundOf(target, latest);
 			const budgetTokens = displayBudgetOf(mode);
 			const budget =
 				budgetTokens === undefined
@@ -625,7 +623,7 @@ export function createPresentation(inputs: PresentationInputs): ConsumptionPrese
 				// The detail form's content, read for the one target it belongs to: a subagent's display
 				// has no tree of its own in this form, which is what keeps that view the brief.
 				...(isTreeRoot ? { agentTree: agentTreeOf(target.sessionId) } : {}),
-				round,
+				...(round === undefined ? {} : { round }),
 				...(budget === undefined ? {} : { budget }),
 				effort: target.effort ?? "?",
 				...(target.contextTokens === undefined
@@ -1097,8 +1095,8 @@ export function balanceLine(result: ProviderBalanceResult): DisplayLine | undefi
 
 /** The label and the unreported wording each allowance window has always been drawn with. */
 const WINDOW_TEXT: Readonly<Record<CodexWindowKind, { readonly label: string; readonly missing: string; readonly minutes: boolean }>> = {
-	"five-hour": { label: "5h", missing: "5h limit not reported", minutes: true },
-	weekly: { label: "7d", missing: "weekly limit not reported", minutes: false },
+	"five-hour": { label: "5h", missing: "limit not reported", minutes: true },
+	weekly: { label: "7d", missing: "limit not reported", minutes: false },
 };
 
 /** The countdown width of one window: minutes for the five-hour one, hours for the weekly one. */

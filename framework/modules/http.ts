@@ -282,12 +282,16 @@ async function openTunnel(
 	open: OpenConnection[],
 ): Promise<Duplex> {
 	const client = proxy.protocol === "https:" ? https : http;
+	// A CONNECT request-target is in authority-form, which always names the port. `URL.host` drops a
+	// scheme's default port (`https://example.com/` is `example.com`), so the port is written
+	// explicitly: a proxy handed a bare host may tunnel somewhere else, or nowhere at all.
+	const authority = `${target.hostname}:${portOf(target)}`;
 	const call = client.request({
 		host: proxy.hostname,
 		port: portOf(proxy),
 		method: "CONNECT",
-		path: target.host,
-		headers: { host: target.host },
+		path: authority,
+		headers: { host: authority },
 		agent: false,
 	});
 	open.push(call);
