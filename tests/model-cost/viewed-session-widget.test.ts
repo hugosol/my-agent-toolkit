@@ -335,7 +335,7 @@ describe("the widget draws the viewed session's own fields and the whole main tr
 		});
 		expect(session.lastLines()).toEqual([
 			"\u{1F525}  [\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591   0% (2,222/450.0K)]  Effort: medium  \u23F3 Accrued: \u00A50.05 [\u258F]",
-			"Total:  Cache: 0%  \u00A5Cache/In/Out\uff1a--:--:--  Sum: 6,100  Cost: \u00A50.05",
+			"Total:  Cache: -  \u00A5Cache/In/Out\uff1a--:--:--  Sum: 6,100  Cost: \u00A50.05",
 		]);
 	});
 });

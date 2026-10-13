@@ -30,7 +30,9 @@
  *   than dropping the fields. Nothing here re-prices an amount that was already accounted.
  * - **Text.** Token counts, the two currency amounts and a ratio's percentages format here, so the
  *   total and Round lines of every channel read alike; a native frontend adds layout, color and the
- *   widget around them.
+ *   widget around them. A scope that has measured nothing at all writes a dash for its cache rate,
+ *   its Sum and any amount or ratio field its channel displays, so initialization keeps the row's
+ *   fields rather than showing zeros it cannot vouch for.
  * - **The form.** The entry's own display preference (`display-preference.ts`) decides which of the
  *   two forms a display result is drawn in, and a subagent's target answers the brief whatever that
  *   preference is: the detail form belongs to the main session, which is the session whose own
@@ -787,85 +789,111 @@ function ratioLabels(buckets: readonly string[]): string {
 	return buckets.map(bucket => names[bucket] ?? RATIO_BUCKET_NAMES[bucket]).join("/");
 }
 
-/** The bucket names a ratio writes, as each channel's own wording. */
-function ratioText(ratio: ReferenceRatio): string {
-	const labels = ratioLabels(ratio.parts.map(part => part.bucket));
-	return `${CURRENCY_MARKS[ratio.currency] ?? "\u00A5"}${labels}\uff1a${ratio.parts.map(part => part.percent).join(":")}`;
-}
-
-/** The field an unavailable ratio still writes: its channel's own label and one dash per priced bucket. */
-function unavailableRatioText(field: RatioField): string {
-	const labels = ratioLabels(field.buckets);
-	const values = field.buckets.map(() => "--").join(":");
-	return `${CURRENCY_MARKS[field.currency] ?? "\u00A5"}${labels}\uff1a${values}`;
-}
-
 /** Which amount field a row writes even while the scope has no value for it. */
 export type AmountField = "cost" | "ref";
 
 /**
- * The amount fields of one scope, each currency on its own: a known value as itself, and a field the
- * scope's channel displays but has no value for as a dash, so an amount-bearing row keeps its fields
- * rather than silently dropping them.
+ * One labelled value of a Total or Round row, before a frontend lays the row out.
+ *
+ * The label is the fixed part (`Cache: `, `Sum: `, or a ratio's own wording and `：`) and the value
+ * is what varies in width. Splitting a row into columns is what lets a frontend align two rows
+ * vertically without re-deciding any figure: this module says what each column is, the frontend says
+ * how much room it gets.
  */
-export function amountText(fields: ConsumptionFields, shown: readonly AmountField[] = []): string {
-	const parts: string[] = [];
-	if (fields.costCny !== undefined) parts.push(`Cost: ${formatCny(fields.costCny)}`);
-	else if (shown.includes("cost")) parts.push("Cost: -");
-	if (fields.referenceCostUsd !== undefined) parts.push(`Ref: ${formatUsd(fields.referenceCostUsd)}`);
-	else if (shown.includes("ref")) parts.push("Ref: -");
-	return parts.join("  ");
+export interface DisplayColumn {
+	readonly label: string;
+	readonly value: string;
+}
+
+/** One Total or Round row's columns, in the order the row writes them. */
+export type DisplayRow = readonly DisplayColumn[];
+
+/** A scope's whole Sum as the display writes it: a dash while the scope has measured no token at all. */
+function formatSum(sum: number): string {
+	return sum === 0 ? "-" : formatTokens(sum);
+}
+
+/** The ratio field one mode's current-model scope displays, or nothing when the mode has none. */
+function ratioFieldOf(mode: ConsumptionMode): RatioField | undefined {
+	if (mode === "monetary") return { currency: "CNY", buckets: ["cacheRead", "input", "output"] };
+	if (mode === "allowance") return { currency: "USD", buckets: ["cacheRead", "input", "cacheWrite", "output"] };
+	return undefined;
+}
+
+/** The label one ratio column leads with: the channel's bucket wording and the currency mark. */
+function ratioColumnLabel(currency: string, buckets: readonly string[]): string {
+	return `${CURRENCY_MARKS[currency] ?? "\u00A5"}${ratioLabels(buckets)}\uff1a`;
 }
 
 /**
- * The structure of one scope as every current-model part writes it: its cache hit rate, and the
- * fee-structure reference ratio where the scope has one. A scope with no conversation input has no
- * hit rate of its own, and the row writes that as a zero percent — the same text rule the Total row
- * has always used — while a scope whose channel displays a ratio without a value writes the field
- * with one dash per bucket instead of dropping it.
+ * The cache and ratio columns of one scope: its hit rate — a dash while the scope has measured no
+ * token at all, the initialization row; a zero percent when it measured usage without conversation
+ * input — and the ratio field its channel displays: a value where the scope has a usable price, one
+ * dash per bucket where it has the field but no value.
  */
-function structureText(fields: ConsumptionFields, ratioField?: RatioField): string {
-	const parts = [`Cache: ${fields.cacheHitRate ?? 0}%`];
-	if (fields.referenceRatio !== undefined) parts.push(ratioText(fields.referenceRatio));
-	else if (ratioField !== undefined) parts.push(unavailableRatioText(ratioField));
-	return parts.join("  ");
+function structureColumns(fields: ConsumptionFields, ratioField?: RatioField): DisplayColumn[] {
+	const columns: DisplayColumn[] = [
+		{ label: "Cache: ", value: fields.sum === 0 ? "-" : `${fields.cacheHitRate ?? 0}%` },
+	];
+	if (fields.referenceRatio !== undefined) {
+		const ratio = fields.referenceRatio;
+		columns.push({
+			label: ratioColumnLabel(ratio.currency, ratio.parts.map(part => part.bucket)),
+			value: ratio.parts.map(part => part.percent).join(":"),
+		});
+	} else if (ratioField !== undefined) {
+		columns.push({
+			label: ratioColumnLabel(ratioField.currency, ratioField.buckets),
+			value: ratioField.buckets.map(() => "--").join(":"),
+		});
+	}
+	return columns;
+}
+
+/**
+ * The amount columns of one scope, each currency on its own: a known value as itself, and a field the
+ * scope's channel displays but has no value for as a dash, so an amount-bearing row keeps its fields
+ * rather than silently dropping them.
+ */
+function amountColumns(fields: ConsumptionFields, shown: readonly AmountField[] = []): DisplayColumn[] {
+	const columns: DisplayColumn[] = [];
+	if (fields.costCny !== undefined) columns.push({ label: "Cost: ", value: formatCny(fields.costCny) });
+	else if (shown.includes("cost")) columns.push({ label: "Cost: ", value: "-" });
+	if (fields.referenceCostUsd !== undefined) columns.push({ label: "Ref: ", value: formatUsd(fields.referenceCostUsd) });
+	else if (shown.includes("ref")) columns.push({ label: "Ref: ", value: "-" });
+	return columns;
+}
+
+/** One scope's Sum column. */
+function sumColumn(sum: number): DisplayColumn {
+	return { label: "Sum: ", value: formatSum(sum) };
+}
+
+/** One scope's columns: its structure, its Sum, and the amounts its scope really carries. */
+function fieldsColumns(fields: ConsumptionFields): DisplayColumn[] {
+	return [...structureColumns(fields), sumColumn(fields.sum), ...amountColumns(fields)];
+}
+
+/** One row's columns joined in their plain, unaligned form. */
+function rowText(row: DisplayRow): string {
+	return row.map(column => `${column.label}${column.value}`).join("  ");
 }
 
 /** One scope's whole row: its structure, its Sum, and the amounts its scope really carries. */
 export function fieldsText(fields: ConsumptionFields): string {
-	const parts = [structureText(fields), `Sum: ${formatTokens(fields.sum)}`];
-	const amounts = amountText(fields);
-	if (amounts.length > 0) parts.push(amounts);
-	return parts.join("  ");
+	return rowText(fieldsColumns(fields));
 }
 
 /**
- * One Round's own row: the target's current-model structure within that Round, followed by that
- * Round's own Sum, Cost and Ref.
- *
- * It is the Total row's shape over a different scope — the same field rules with the data range
- * replaced — so the two read alike without either duplicating the other's formatting.
+ * One Round's own columns: the target's current-model structure within that Round — with the same
+ * ratio field its mode displays, dashes included — then that Round's own Sum, Cost and Ref.
  */
-export function roundText(round: RoundDisplay): string {
-	const parts = [structureText(round.current), `Sum: ${formatTokens(round.total.sum)}`];
-	const amounts = amountText(round.total);
-	if (amounts.length > 0) parts.push(amounts);
-	return parts.join("  ");
-}
-
-/**
- * The current-model fields of one display: what the target's own model shows, which is what the
- * mode gates. A mode with no amount policy contributes no amount text and no ratio at all; a mode
- * with one still writes the ratio field, with dashes while the scope has no priced usage.
- */
-export function currentText(display: ConsumptionDisplay): string {
-	const ratioField: RatioField | undefined =
-		display.mode === "monetary"
-			? { currency: "CNY", buckets: ["cacheRead", "input", "output"] }
-			: display.mode === "allowance"
-				? { currency: "USD", buckets: ["cacheRead", "input", "cacheWrite", "output"] }
-				: undefined;
-	return structureText(display.current, ratioField);
+export function roundColumns(round: RoundDisplay, mode?: ConsumptionMode): DisplayRow {
+	return [
+		...structureColumns(round.current, mode === undefined ? undefined : ratioFieldOf(mode)),
+		sumColumn(round.total.sum),
+		...amountColumns(round.total),
+	];
 }
 
 /**
@@ -881,17 +909,22 @@ function displayedAmounts(display: ConsumptionDisplay): readonly AmountField[] {
 }
 
 /**
- * One display's whole total line: the current model's own structure followed by the main tree's
- * Sum, Cost and Ref. The two currencies are written separately and never added together, and an
- * amount field the row's channels apply but hold no value for is written as a dash — the old row's
- * fields survive initialization rather than disappearing. A token-only or hidden tree writes no
- * amount field it has no policy for and no value beside.
+ * One display's Total columns: the current model's own structure — with the ratio field its mode
+ * displays, dashes included — then the main tree's Sum, Cost and Ref. The two currencies are kept
+ * apart, and an amount field the row's channels apply but hold no value for is a dash, so the old
+ * row's fields survive initialization rather than disappearing.
  */
+export function totalColumns(display: ConsumptionDisplay): DisplayRow {
+	return [
+		...structureColumns(display.current, ratioFieldOf(display.mode)),
+		sumColumn(display.tree.sum),
+		...amountColumns(display.tree, displayedAmounts(display)),
+	];
+}
+
+/** One display's whole total line, in its plain unaligned form. */
 export function totalText(display: ConsumptionDisplay): string {
-	const parts = [currentText(display), `Sum: ${formatTokens(display.tree.sum)}`];
-	const amounts = amountText(display.tree, displayedAmounts(display));
-	if (amounts.length > 0) parts.push(amounts);
-	return parts.join("  ");
+	return rowText(totalColumns(display));
 }
 
 /**

@@ -309,8 +309,8 @@ describe("the brief draws the viewed session's own Rounds (P26)", () => {
 		settleTurn(bound.double);
 		expect(bound.host.lastLines()).toEqual([
 			"\u{1F525}  \u23F3 Accrued: \u00A50.05 [\u258F]",
-			"Total:  Cache: 66%  ¥Cache/In/Out：4:7:89  Sum: 6,120  Cost: ¥0.05",
-			"Round:  Cache: 0%  ¥Cache/In/Out：0:20:80  Sum: 20  Cost: ¥0.0001",
+			"Total:  Cache: 66%  ¥Cache/In/Out： 4:7:89  Sum: 6,120  Cost:   ¥0.05",
+			"Round:  Cache:  0%  ¥Cache/In/Out：0:20:80  Sum:    20  Cost: ¥0.0001",
 		]);
 
 		// The Round ends: its own additions become the latest Round, and the open one is gone. The
@@ -318,8 +318,8 @@ describe("the brief draws the viewed session's own Rounds (P26)", () => {
 		bound.double.deliverRound(OWNER, { event: { kind: "round_end" }, session: MAIN });
 		expect(bound.host.lastLines()).toEqual([
 			"\u{1F525}  \u23F3 Accrued: \u00A50.05 [\u258F]",
-			"Total:  Cache: 66%  ¥Cache/In/Out：4:7:89  Sum: 6,120  Cost: ¥0.05",
-			"Round:  Cache: 0%  ¥Cache/In/Out：0:20:80  Sum: 20  Cost: ¥0.0001",
+			"Total:  Cache: 66%  ¥Cache/In/Out： 4:7:89  Sum: 6,120  Cost:   ¥0.05",
+			"Round:  Cache:  0%  ¥Cache/In/Out：0:20:80  Sum:    20  Cost: ¥0.0001",
 		]);
 
 		// A second Round opens after the first ended, so the instance now holds a current Round and a
@@ -352,14 +352,14 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 		bound.double.deliverRound(OWNER, { event: { kind: "round_start" }, session: MAIN });
 		settleTurn(bound.double);
 		bound.double.deliverRound(OWNER, { event: { kind: "round_end" }, session: MAIN });
-		const total = "Total:  Cache: 66%  ¥Cache/In/Out：4:7:89  Sum: 6,120  Cost: ¥0.05";
+		const total = "Total:  Cache: 66%  ¥Cache/In/Out： 4:7:89  Sum: 6,120  Cost:   ¥0.05";
 		const bar = "\u{1F525}  [\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591   0% (1,234/450.0K)]  Effort: high";
 		const accrued = "\u23F3 Accrued: \u00A50.05 [\u258F]";
 		const account = `${bar}  ${accrued}`;
 		expect(bound.host.lastLines()).toEqual([
 			account,
 			total,
-			"Round:  Cache: 0%  ¥Cache/In/Out：0:20:80  Sum: 20  Cost: ¥0.0001",
+			"Round:  Cache:  0%  ¥Cache/In/Out：0:20:80  Sum:    20  Cost: ¥0.0001",
 		]);
 
 		// The action redraws at once — no session boundary, no request and no save is needed for it —
@@ -385,7 +385,7 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 		expect(bound.host.lastLines()).toEqual([
 			account,
 			total,
-			"Round:  Cache: 0%  ¥Cache/In/Out：0:20:80  Sum: 20  Cost: ¥0.0001",
+			"Round:  Cache:  0%  ¥Cache/In/Out：0:20:80  Sum:    20  Cost: ¥0.0001",
 		]);
 	});
 
@@ -459,7 +459,7 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 		);
 		expect(bound.host.lastLines()).toEqual([
 			"Total:  Cache: 33%  Sum: 6,130  Cost: ¥0.05",
-			"Round:  Cache: 0%  Sum: 30",
+			"Round:  Cache:  0%  Sum:    30",
 		]);
 		expect(bound.host.lastLines()?.some(line => line.startsWith("\u2502  ") || line.includes("\u251C\u2500 ") || line.includes("\u2514\u2500 "))).toBe(false);
 

@@ -50,16 +50,16 @@ import {
 	type DisplayLine,
 	type DisplayPiece,
 	type DisplayPeriod,
+	type DisplayRow,
 	type DisplayTarget,
-	type RoundDisplay,
 	accruedLine,
 	balanceLine,
 	budgetLine,
 	fieldsText,
 	lineText,
-	roundText,
+	roundColumns,
 	seasonMark,
-	totalText,
+	totalColumns,
 } from "../../shared-logic/presentation/display";
 import type { ProviderBalanceResult } from "../../shared-logic/provider-balance";
 import type { ModelCostRuntime } from "../../shared-logic/runtime";
@@ -211,13 +211,42 @@ export interface WidgetReading {
 }
 
 /**
- * The one line the brief draws for the viewed session's own Round: its most recent one, the open
- * Round while it runs or the last completed one afterwards. A Round this instance holds no boundary
- * pair for writes no line at all — the brief then carries the Total alone rather than a fabricated
- * zero.
+ * The Total and Round rows laid out together, at the widths that make their fields line up.
+ *
+ * Every column is right-aligned to the widest value at its position and, where a column follows it,
+ * padded to the widest field, so each field starts at the same column whichever row it is on. A
+ * row's last column is left unpadded, so no line carries trailing blanks. The two rows are different
+ * scopes — the Total is the session's own current model and the whole main tree; the Round is that
+ * target's additions within one Round — so the same field can hold a different figure on each row
+ * and still start at the same column.
  */
-function roundLines(round: RoundDisplay | undefined): DisplayLine[] {
-	return round === undefined ? [] : [[{ text: `Round:  ${roundText(round)}` }]];
+function alignedLines(rows: readonly DisplayRow[]): DisplayLine[] {
+	const columnCount = rows.reduce((max, row) => Math.max(max, row.length), 0);
+	const valueWidths: number[] = [];
+	const fieldWidths: number[] = [];
+	for (let index = 0; index < columnCount; index++) {
+		let valueWidth = 0;
+		let fieldWidth = 0;
+		for (const row of rows) {
+			const column = row[index];
+			if (column === undefined) continue;
+			valueWidth = Math.max(valueWidth, column.value.length);
+			fieldWidth = Math.max(fieldWidth, column.label.length + column.value.length);
+		}
+		valueWidths.push(valueWidth);
+		fieldWidths.push(fieldWidth);
+	}
+	return rows.map(row =>
+		row.map((column, index) => {
+			const field = `${column.label}${column.value.padStart(valueWidths[index])}`;
+			return { text: index < row.length - 1 ? field.padEnd(fieldWidths[index]) : field };
+		}),
+	);
+}
+
+/** One row's line with its own fixed prefix ahead of the first column. */
+function prefixedLine(prefix: string, line: DisplayLine): DisplayLine {
+	return line.map((piece, index) => (index === 0 ? { ...piece, text: `${prefix}${piece.text}` } : piece));
 }
 
 /**
@@ -252,13 +281,13 @@ function treeLines(rows: readonly AgentTreeRow[]): DisplayLine[] {
  * The reading order is the one this widget has always drawn: the fixed-budget line first — with the
  * monetary channel's own season mark ahead of it, and only where the host reported a context reading
  * for the bar to compare — then the period's accrued line for the monetary channel and the allowance
- * windows for the Codex one. The total line follows, carrying the current model's own structure and
- * the main tree's Sum, Cost and Ref. Below it the entry's own form decides the content: the brief
+ * windows for the Codex one. The Total line follows, carrying the current model's own structure and
+ * the main tree's Sum, Cost and Ref; the brief's Round row is laid out from the same columns, so the
+ * two rows' fields line up vertically. Below that the entry's own form decides the content: the brief
  * draws the viewed session's own most recent Round, and the detail form draws the static agent tree of
  * the main session in its place — never both, which is what "the detail form keeps the Total and
  * replaces the Round row" means for a terminal. The two currencies are written apart and never added
- * together, and
- * a mode without an amount policy contributes no amount of its own.
+ * together, and a mode without an amount policy contributes no amount of its own.
  *
  * The monetary channel keeps the superseded widget's one account row: the season mark, the fixed-budget
  * bar and effort, the provider balance and the period's accrued bar are written on a single line, in
@@ -290,11 +319,18 @@ export function widgetLayout(reading: WidgetReading): readonly DisplayLine[] | u
 		if (budget !== undefined) lines.push(budget);
 		if (display.mode === "allowance") lines.push(...reading.quota);
 	}
-	lines.push([{ text: `Total:  ${totalText(display)}` }]);
+	// The Total and the brief's Round are one layout: their columns are padded together so every
+	// field starts at the same column on both rows. A detail form draws no Round, but still lays the
+	// Total out against the same Round when one exists, so the Total line it keeps above the tree is
+	// the very line the brief shows.
+	const round = display.round;
+	const rows = round === undefined ? [totalColumns(display)] : [totalColumns(display), roundColumns(round, display.mode)];
+	const [totalLine, roundLine] = alignedLines(rows);
+	lines.push(prefixedLine("Total:  ", totalLine));
 	if (display.form === "detail" && display.agentTree !== undefined) {
 		lines.push(...treeLines(display.agentTree));
-	} else {
-		lines.push(...roundLines(display.round));
+	} else if (roundLine !== undefined) {
+		lines.push(prefixedLine("Round:  ", roundLine));
 	}
 	return lines;
 }
