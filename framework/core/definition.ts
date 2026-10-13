@@ -122,13 +122,47 @@ export interface CommandDirectedDeclaration {
 }
 
 /**
+ * A command whose argument names one action out of a declared table.
+ *
+ * The declaration is plain data like every other field: it names the command and lists the
+ * actions it offers, each with the words the operator reads when the command is asked for help.
+ * The action implementations arrive at binding, injected by the extension's own assembly, so the
+ * declaration carries no handler and this module names no harness.
+ *
+ * The framework owns the whole argument surface: the argument is trimmed, lowercased and matched
+ * whole against the declared action names, an empty argument prints the help derived from this
+ * table, and any other text prints the same help at `error` severity and runs nothing. There is
+ * no abbreviation, no fuzzy match, no extra argument and no default action — a command whose
+ * argument is not exactly one of these names never reaches the extension's shared logic — and
+ * the unrecognized-argument path of a directed command is deliberately not involved.
+ *
+ * A declared action name is matched after the same normalization the argument receives, so two
+ * names that differ only in case or surrounding whitespace are one action, and a declaration that
+ * lists the same normalized name twice, or a name that normalizes to nothing, is refused rather
+ * than silently shadowed.
+ */
+export interface CommandActionsDeclaration {
+	/** Discriminant of the closed control-kind union. */
+	readonly type: "actions";
+	/** Command name, without the leading slash. */
+	readonly name: string;
+	/** Human-readable description, shown wherever the harness lists commands and in the help. */
+	readonly description?: string;
+	/** The actions this command offers: declared action name to the words the help shows for it. */
+	readonly actions: Readonly<Record<string, string>>;
+}
+
+/**
  * Every control kind the framework binds.
  *
  * The union is closed on purpose: it carries the kinds this version implements, and a
  * future control kind is an additive member here plus the behavior that honors it —
  * never a raw native handler handed to an extension.
  */
-export type CommandDeclaration = CommandToggleDeclaration | CommandDirectedDeclaration;
+export type CommandDeclaration =
+	| CommandToggleDeclaration
+	| CommandDirectedDeclaration
+	| CommandActionsDeclaration;
 
 /** The declared control kind of a command. */
 export type ControlKind = CommandDeclaration["type"];
@@ -140,9 +174,12 @@ export type ControlKind = CommandDeclaration["type"];
  * also arrive from plain JavaScript, so binding refuses a kind outside this list
  * instead of silently dropping the declaration. `directed` carries one requirement
  * beyond the declaration itself — an injected action for the command — and binding
- * refuses the declaration when the assembly injected none.
+ * refuses the declaration when the assembly injected none. `actions` carries the same
+ * requirement for every action it declares: binding refuses a declaration whose table
+ * has an entry with no injected implementation, so no help line can name an action that
+ * would do nothing.
  */
-export const BOUND_CONTROL_KINDS: readonly ControlKind[] = ["toggle", "directed"];
+export const BOUND_CONTROL_KINDS: readonly ControlKind[] = ["toggle", "directed", "actions"];
 
 /**
  * When an injected-prompt slot contributes. One rule per slot; a second rule for the

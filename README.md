@@ -38,6 +38,7 @@ glossary.
 | Semantic extension framework | [`framework/`](framework) | [`framework/README.md`](framework/README.md) · [`framework/GLOSSARY.md`](framework/GLOSSARY.md) |
 | connect-bot | [`extensions/connect-bot/`](extensions/connect-bot) | [`extensions/connect-bot/README.md`](extensions/connect-bot/README.md) · [`extensions/connect-bot/GLOSSARY.md`](extensions/connect-bot/GLOSSARY.md) |
 | codeBaseTools | [`extensions/codebase-tools/`](extensions/codebase-tools) | [`extensions/codebase-tools/README.md`](extensions/codebase-tools/README.md) · [`extensions/codebase-tools/GLOSSARY.md`](extensions/codebase-tools/GLOSSARY.md) |
+| modelCost | [`extensions/model-cost/`](extensions/model-cost) | [`extensions/model-cost/README.md`](extensions/model-cost/README.md) · [`extensions/model-cost/GLOSSARY.md`](extensions/model-cost/GLOSSARY.md) |
 
 ## Document index
 
@@ -56,7 +57,7 @@ glossary.
 | [`tests/codebase-tools/`](tests/codebase-tools) | The codeBaseTools extension behavior suite; runs permanently against the fixed supported version. | You changed the extension. |
 | [`tests/connect-bot/`](tests/connect-bot) | The connect-bot extension suite: registration lifecycle, session switch, failure budget and the panel interop. | You changed connect-bot. |
 | [`tests/harness-dock/`](tests/harness-dock) | The shared dock (isolated install, controlled session, capture) and its self-test. | You are writing a test that drives a real session. |
-| [`scripts/verify-omp-candidate.ts`](scripts/verify-omp-candidate.ts) | On-demand candidate verification: isolated exact install + framework suite + result record. | You are verifying another harness version. |
+| [`scripts/verify-omp-candidate.ts`](scripts/verify-omp-candidate.ts) | On-demand independent verification of one exact harness version: isolated exact install + framework suite + a scoped result record (version, revision anchor, source revision, lockfiles, environment, coverage). | You are verifying another harness version. |
 | [`scripts/capture-codex-outbound.ts`](scripts/capture-codex-outbound.ts) | Prepared layer-2 capture of a real `openai-codex` round trip; needs a human-supplied credential. | You are recording the real-credential role evidence. |
 | [`.scratch/connect-bot-migration/`](.scratch/connect-bot-migration) | The migration design record: spec, contract, map, decisions, lighthouse documents, implementation tickets and the run record. | You need the reasoning behind a requirement. |
 

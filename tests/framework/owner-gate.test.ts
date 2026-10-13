@@ -11,7 +11,7 @@
  * (a subagent session resolves an owner through the harness's agent registry and still
  * reaches no handler).
  */
-import { describe, expect, test } from "bun:test";
+import { afterEach, beforeEach, describe, expect, test, vi } from "bun:test";
 import { CODEBASE_TOOLS } from "../../extensions/codebase-tools/definition";
 import {
 	type OmpExtensionApi,
@@ -29,6 +29,15 @@ const INHERITED: OwnerReference = { kind: "inherited", key: "main:owner-gate-par
 
 /** A session whose parent chain leaves the process resolves no owner at all. */
 const UNRESOLVED: OwnerReference = { kind: "unresolved" };
+
+// The adapter confirms an end candidate on the harness's next task; the suite runs that task on a
+// deterministic clock rather than waiting for wall time to pass.
+beforeEach(() => {
+	vi.useFakeTimers();
+});
+afterEach(() => {
+	vi.useRealTimers();
+});
 
 /** Runs `run` while capturing the process's stderr (the adapter's non-model channel). */
 function withCapturedStderr<T>(run: () => T): { readonly stderr: string; readonly value: T } {
@@ -56,12 +65,12 @@ describe("a subscription receives its own owner's events and no other session's 
 		const double = portDouble();
 		const seen: string[] = [];
 		double.bind(CODEBASE_TOOLS, {
-			events: {
-				session_start: delivery => seen.push(`session_start:${ownerLabelOf(delivery.owner)}`),
-				session_end: delivery => seen.push(`session_end:${ownerLabelOf(delivery.owner)}`),
-				round_start: delivery => seen.push(`round_start:${ownerLabelOf(delivery.owner)}`),
-				round_end: delivery => seen.push(`round_end:${ownerLabelOf(delivery.owner)}`),
-			},
+			subscriptions: [{ scope: "owner", events: {
+				session_start: delivery => void seen.push(`session_start:${ownerLabelOf(delivery.owner)}`),
+				session_end: delivery => void seen.push(`session_end:${ownerLabelOf(delivery.owner)}`),
+				round_start: delivery => void seen.push(`round_start:${ownerLabelOf(delivery.owner)}`),
+				round_end: delivery => void seen.push(`round_end:${ownerLabelOf(delivery.owner)}`),
+			} }],
 		});
 
 		double.deliverSession(OWNER);
@@ -83,10 +92,10 @@ describe("a subscription receives its own owner's events and no other session's 
 		const double = portDouble();
 		const seen: string[] = [];
 		double.bind(CODEBASE_TOOLS, {
-			events: {
-				session_start: delivery => seen.push(`session:${ownerLabelOf(delivery.owner)}`),
-				round_start: delivery => seen.push(`round:${ownerLabelOf(delivery.owner)}`),
-			},
+			subscriptions: [{ scope: "owner", events: {
+				session_start: delivery => void seen.push(`session:${ownerLabelOf(delivery.owner)}`),
+				round_start: delivery => void seen.push(`round:${ownerLabelOf(delivery.owner)}`),
+			} }],
 		});
 
 		// A subagent session: its State belongs to the main session it followed, so its own
@@ -108,7 +117,7 @@ describe("a subscription receives its own owner's events and no other session's 
 
 	test("the framework's own behavior for a non-owner delivery still runs, and owns nothing", () => {
 		const double = portDouble();
-		double.bind(CODEBASE_TOOLS, { events: { session_start: () => {} } });
+		double.bind(CODEBASE_TOOLS, { subscriptions: [{ scope: "owner", events: { session_start: () => {} } }] });
 
 		const inherited = double.deliverSession(INHERITED, { statePayloads: [{ enabled: true }] });
 		const unresolved = double.deliverSession(UNRESOLVED, { statePayloads: [{ enabled: true }] });
@@ -125,9 +134,9 @@ describe("a subscription receives its own owner's events and no other session's 
 		const double = portDouble();
 		const rendersWhenHandlerRan: string[] = [];
 		double.bind(CODEBASE_TOOLS, {
-			events: {
-				session_start: () => rendersWhenHandlerRan.push(`${double.markerUpdates.length}`),
-			},
+			subscriptions: [{ scope: "owner", events: {
+				session_start: () => void rendersWhenHandlerRan.push(`${double.markerUpdates.length}`),
+			} }],
 		});
 
 		double.deliverSession(OWNER, { statePayloads: [{ enabled: true }] });
@@ -227,12 +236,14 @@ function gateSurface(): GateSurface {
 	};
 
 	const factory = ompAdapter(CODEBASE_TOOLS, {
-		events: {
-			session_start: delivery => observed.push(`${delivery.event.kind} ${ownerLabelOf(delivery.owner)}`),
-			session_end: delivery => observed.push(`${delivery.event.kind} ${ownerLabelOf(delivery.owner)}`),
-			round_start: delivery => observed.push(`${delivery.event.kind} ${ownerLabelOf(delivery.owner)}`),
-			round_end: delivery => observed.push(`${delivery.event.kind} ${ownerLabelOf(delivery.owner)}`),
-		},
+		factory: () => ({
+			subscriptions: [{ scope: "owner", events: {
+				session_start: delivery => void observed.push(`${delivery.event.kind} ${ownerLabelOf(delivery.owner)}`),
+				session_end: delivery => void observed.push(`${delivery.event.kind} ${ownerLabelOf(delivery.owner)}`),
+				round_start: delivery => void observed.push(`${delivery.event.kind} ${ownerLabelOf(delivery.owner)}`),
+				round_end: delivery => void observed.push(`${delivery.event.kind} ${ownerLabelOf(delivery.owner)}`),
+			} }],
+		}),
 	});
 	if (!factory(api).bound) throw new Error("the codebase-tools definition did not bind");
 
@@ -244,6 +255,9 @@ function gateSurface(): GateSurface {
 		for (const handler of roundHandlers[event as "agent_start" | "agent_end"]) {
 			handler({ type: event }, contextOf(session));
 		}
+		// A settle is an end candidate: it ends the round at the host's next task, which this
+		// surface reaches by running the callback the framework arranged.
+		if (event === "agent_end") vi.runAllTimers();
 	};
 
 	return {

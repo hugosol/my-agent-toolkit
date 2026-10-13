@@ -7,6 +7,8 @@
     "test:dock": "bun test tests/harness-dock",
     "test:framework": "bun test tests/framework",
     "test:codebase-tools": "bun test tests/codebase-tools",
+    "smoke:http-transport": "bun scripts/http-transport-smoke.ts",
+    "smoke:model-cost-data": "bun scripts/model-cost-data-smoke.ts",
     "verify:omp-candidate": "bun scripts/verify-omp-candidate.ts",
     "typecheck": "tsc --noEmit"
   },

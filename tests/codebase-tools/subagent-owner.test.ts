@@ -253,6 +253,20 @@ describe("a real built-in subagent follows the owner's current enabled (B9, C3, 
 				injectedMessages(onRequests[0] as CapturedRequest) + 1,
 			);
 
+			// The delivery facts the main path records hold for a subagent's own request too:
+			// the prompt lands after that session's own user message, at the tail of the
+			// conversation, under the role this serializer gives a persisted custom message.
+			// The order is read from the request the subagent really sent, not inferred.
+			const childMessages = bodyOf(onRequests[0] as CapturedRequest).messages ?? [];
+			const assignmentIndex = childMessages.findIndex(message =>
+				messageText(message.content).includes(CHILD_ON_ASSIGNMENT),
+			);
+			const injectedIndex = childMessages.findIndex(message => messageText(message.content).includes(INIT_PROMPT));
+			expect(assignmentIndex).toBeGreaterThanOrEqual(0);
+			expect(injectedIndex).toBeGreaterThan(assignmentIndex);
+			expect(injectedIndex).toBe(childMessages.length - 1);
+			expect(childMessages[injectedIndex]?.role).toBe("user");
+
 			// The owner's off turn carried nothing, and its enabled turn carried its own init.
 			const offTurnRequests = requestsCarrying(run, OFF_TURN);
 			expect(offTurnRequests.length).toBeGreaterThan(0);

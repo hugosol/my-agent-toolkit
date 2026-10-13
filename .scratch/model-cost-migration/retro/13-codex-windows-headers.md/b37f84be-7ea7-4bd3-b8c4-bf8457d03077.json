@@ -1,0 +1,174 @@
+{
+  "feature": "model-cost-migration",
+  "ticket": "13-codex-windows-headers.md",
+  "run_id": "b37f84be-7ea7-4bd3-b8c4-bf8457d03077",
+  "parent_session_id": "01a131a3-4562-728e-8c06-9608e1e88feb",
+  "parent_session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-12T19-42-26-146Z_01a131a3-4562-728e-8c06-9608e1e88feb.jsonl",
+  "workspace": "E:\\Developer\\myhub\\my-agent-toolkit",
+  "tool_call_id": "js-task-3973fe1a-1b07-44ea-b4a0-f2eddd741d40",
+  "started_at": "2026-10-13T04:13:55.521Z",
+  "tdd_status": "completed",
+  "retro_status": "completed",
+  "tdd_finished_at": "2026-10-13T04:36:33.795Z",
+  "tdd_result": {
+    "index": 0,
+    "id": "13-codex-windows-headersmd-2",
+    "agent": "tdd",
+    "agentSource": "user",
+    "task": "Complete assignment thoroughly:\n\nTicket filename: 13-codex-windows-headers.md\nTicket path: .scratch/model-cost-migration/implementation/13-codex-windows-headers.md\n\nFull ticket content:\n# 13: Codex 响应 headers 与独立额度窗口\n\n**What to build:** Codex 额度按实际报告时长识别并独立更新，运行期仅响应 headers 更新，不通过额外 API 补窗口。\n\n**Delivers:** P39, P65\n\n**Blocked by:** 03: 兑现公共 HTTP 代理和正文超时；05: 逐实际 Session 的 Turn 事实交付\n\n**Status:** ready-for-agent\n\n## Acceptance criteria\n\n- [ ] 初始化 API 和响应 headers 使用同一业务 parser，API 仅启动使用；初始化选命名 codex 代理、10000ms 业务预算，地址/headers 由业务持有，不借推理 base URL。\n- [ ] 按报告时长沿 ±5% 识别 5h/7d，不固定 primary/secondary；有效单窗口独立更新，缺失保留原成功值和原时间，没有则不可用。\n- [ ] 未知/过期/无效 reset 使用独立预期，headers 按接收序处理，不建立绝对时序系统。\n- [ ] 运行期无 API TTL/兜底/轮询/切换额外查询；mock 与出站捕获验证位置交换、单窗、缺失和更新次数，真实 adapter 接入使用正常 Turn headers。\n- [ ] 准备 P39/P65 H2 的脱敏来源、窗口结果或跳过原因与正常使用观察步骤；发现 API、mock 或 RPC 不认证真实额度效果。\n- [ ] 通过批准的生产公共 seam 观察行为，预期来自合同/规格、独立字面值或手算，不以被测实现重算；永久网络 tests 使用 mock。\n- [ ] 使用隔离安装/配置/工作/Session/数据根，不操作正式 OMP；承接异步失败并保留够用脱敏证据，完成本票自动检查及材料准备，不因计划人工验收暂停可执行工作。\n\n## Verification responsibility\n\n本票负责所列 Delivers 的自动 coverage 与适用宿主贯通/证据准备；P58/P52 按本票具名责任执行。合同采用 Rapid iteration：H1/H2 及允许的条件性 H3 按原 Coverage 交用户确认，未确认不记通过；不改变承诺或免除实现/永久 tests。\n\n[You have received this identical output 3 times. Re-reading '.scratch/model-cost-migration/implementation/13-codex-windows-headers.md' will not change it — use a narrower selector (path:A-B), or proceed with the edit.]\n\nRetry required production gap reported by ticket 14: real Codex Turn currently provides no HTTP response facts, making runtime headers and paired estimation unreachable. Close actual supported host bridge and verify captured literal response headers arrive at the normal production S1/S2 paths; one startup response alone is insufficient.",
+    "assignment": "Ticket filename: 13-codex-windows-headers.md\nTicket path: .scratch/model-cost-migration/implementation/13-codex-windows-headers.md\n\nFull ticket content:\n# 13: Codex 响应 headers 与独立额度窗口\n\n**What to build:** Codex 额度按实际报告时长识别并独立更新，运行期仅响应 headers 更新，不通过额外 API 补窗口。\n\n**Delivers:** P39, P65\n\n**Blocked by:** 03: 兑现公共 HTTP 代理和正文超时；05: 逐实际 Session 的 Turn 事实交付\n\n**Status:** ready-for-agent\n\n## Acceptance criteria\n\n- [ ] 初始化 API 和响应 headers 使用同一业务 parser，API 仅启动使用；初始化选命名 codex 代理、10000ms 业务预算，地址/headers 由业务持有，不借推理 base URL。\n- [ ] 按报告时长沿 ±5% 识别 5h/7d，不固定 primary/secondary；有效单窗口独立更新，缺失保留原成功值和原时间，没有则不可用。\n- [ ] 未知/过期/无效 reset 使用独立预期，headers 按接收序处理，不建立绝对时序系统。\n- [ ] 运行期无 API TTL/兜底/轮询/切换额外查询；mock 与出站捕获验证位置交换、单窗、缺失和更新次数，真实 adapter 接入使用正常 Turn headers。\n- [ ] 准备 P39/P65 H2 的脱敏来源、窗口结果或跳过原因与正常使用观察步骤；发现 API、mock 或 RPC 不认证真实额度效果。\n- [ ] 通过批准的生产公共 seam 观察行为，预期来自合同/规格、独立字面值或手算，不以被测实现重算；永久网络 tests 使用 mock。\n- [ ] 使用隔离安装/配置/工作/Session/数据根，不操作正式 OMP；承接异步失败并保留够用脱敏证据，完成本票自动检查及材料准备，不因计划人工验收暂停可执行工作。\n\n## Verification responsibility\n\n本票负责所列 Delivers 的自动 coverage 与适用宿主贯通/证据准备；P58/P52 按本票具名责任执行。合同采用 Rapid iteration：H1/H2 及允许的条件性 H3 按原 Coverage 交用户确认，未确认不记通过；不改变承诺或免除实现/永久 tests。\n\n[You have received this identical output 3 times. Re-reading '.scratch/model-cost-migration/implementation/13-codex-windows-headers.md' will not change it — use a narrower selector (path:A-B), or proceed with the edit.]\n\nRetry required production gap reported by ticket 14: real Codex Turn currently provides no HTTP response facts, making runtime headers and paired estimation unreachable. Close actual supported host bridge and verify captured literal response headers arrive at the normal production S1/S2 paths; one startup response alone is insufficient.",
+    "description": "Bridge real Codex Turn response headers to production paths",
+    "lastIntent": "Final working tree check",
+    "exitCode": 0,
+    "output": "{\n  \"ticket\": \".scratch/model-cost-migration/implementation/13-codex-windows-headers.md (P39, P65; retry)\",\n  \"status\": \"complete-with-noted-limits\",\n  \"what_the_retry_closed\": \"The previously recorded production gap — real OMP 18.5.0 Codex Turns delivered no HTTP response facts, so runtime headers and the paired estimation were unreachable — is now fixed on the frozen 18.5.0 artifact by a minimal local host patch, and verified end to end through the real loader/RPC on the normal production S1/S2 paths (after_provider_response -> adapter -> turn_end end.http -> production codex parser -> presentation). No version promotion, no native objects across the boundary, no private-controller/UI reading, no transport interception and no observation of SDK-hidden retries.\",\n  \"delivered\": {\n    \"host_patch\": \"host-patches/omp-18.5.0-codex-response-boundary/{patch.diff,record.json,README.md}. patch.diff: 4 hunks, 12 added lines, 0 removed, one file `pi-ai/src/providers/openai-codex-responses.ts` — imports the package's own `notifyProviderResponse` and calls it once per accepted response before the body is consumed, threading `options`/`model` through `openCodexSseEventStream` (its single call site). record.json (materialiser-written, committed): patch sha256 4ec9ad0de31b07966aa543db137b8f26d909b64fc8209981e2e8c217ac20214d; base 4223858912c4b960d794ba1c15014ee1eacf118d395b91adddf3fe982e4a4ffb -> patched a47d84105cfbc4a191a6339bc7fff350f46244eb343964f0de6b64864712d94b.\",\n    \"artifact\": \".cache/omp-baseline/18.5.0-codex-response-boundary (gitignored), materialised by tests/harness-dock/codex-response-harness.ts over the new shared materialiser; codex-response-host.json records install exit 0 / git apply exit 0. Prefix is a sibling of the unpatched 18.5.0 install, so neither is reused or overwritten.\",\n    \"new_test_infrastructure\": [\n      \"tests/harness-dock/host-patch-artifact.ts — shared host-patch artifact materialiser (exact install -> git apply -p1 -> hash-verify against record -> manifest/record); parameterised patch root, so one patch may touch another installed package of the same version (here @oh-my-pi/pi-ai).\",\n      \"tests/harness-dock/codex-response-harness.ts — this artifact's names + ensureCodexResponseHarness().\",\n      \"tests/harness-dock/viewed-session-harness.ts — rewritten as a thin description over the shared materialiser (exports and freezing semantics unchanged; its three suites re-ran green).\",\n      \"tests/harness-dock/codex-response-artifact.test.ts — artifact freeze suite.\",\n      \"tests/harness-dock/model-cost-codex-quota.test.ts — rewritten real-host smoke on the patched artifact with the unpatched baseline as control.\",\n      \"tests/harness-dock/capture-server.ts — responseHeaders may now be (request) => headers, so one run can script a sequence of reports.\",\n      \"tests/harness-dock/fixtures/codex-quota/entrypoint.ts — new `estimate` observation line (same notification as `quota`).\"\n    ],\n    \"docs\": [\n      \"framework/docs/harness-support.md — row `turn.provider-response-boundary` now records the production difference as closed by the local patch, support record unchanged, patched revision still an acceptance decision, and what stays outside the patch (WebSocket transport, non-2xx responses).\",\n      \"framework/docs/framework-capabilities.md — Turn-facts paragraph synced.\",\n      \"host-patches/omp-18.5.0-codex-response-boundary/README.md — what it publishes, frozen base/artifact, patch recipe + re-freeze procedure, isolated loading steps, evidence, fault-injection note, limits, P39/P65 H2 steps.\",\n      \".scratch/model-cost-migration/assets/13-codex-windows-headers-evidence-2026-10-13.md — rewritten per-criterion evidence, commands+results, sanitized real-run sample, H2 material, limits.\"\n    ]\n  },\n  \"criteria_evidence\": [\n    {\n      \"criterion\": \"Same business parser for the init API and for response headers; API used only at startup; named `codex` proxy, 10000ms budget, address/headers held by the business, not borrowed from the inference base URL\",\n      \"evidence\": \"S2 permanent (unchanged, passing): both sources reduce to the same ReportedWindow read by one windowsOf/chosenWindow/apply; literal outbound assertion {url https://chatgpt.com/backend-api/wham/usage, GET, headers, timeoutMs 10000, proxy codex} with the host base URL deliberately different; startup() `started` guard. S5: the one startup attempt settles `misconfigured` and never leaves the process.\"\n    },\n    {\n      \"criterion\": \"±5% identification of 5h/7d by reported length, not fixed primary/secondary; a valid single window updates independently; a missing window keeps its last successful value and instant; never reported means unavailable\",\n      \"evidence\": \"S2 boundary cases + swapped API and header positions. S5 (new): real Turn headers set fiveHour/weekly to the endpoint's scripted literals; a third report carrying only 5h sets 5h to 45% with a later obtainedAt while weekly stays byte-identical including obtainedAt.\"\n    },\n    {\n      \"criterion\": \"Unknown/expired/invalid reset uses independent expectations; headers processed in receipt order; no absolute time-ordering system\",\n      \"evidence\": \"S2: unknown/expired/invalid/valid cases with resetsAt preserved verbatim; non-numeric and 0 are not usable instants; equal-distance candidates resolved by receipt order; no cross-source ordering.\"\n    },\n    {\n      \"criterion\": \"No runtime API TTL/fallback/polling/switch query; mock and outbound capture verify position swap, single window, missing window and update count; the real adapter consumes normal Turn headers\",\n      \"evidence\": \"S2: outbound count stays 1 across Turns/Rounds/10-day clock advance. S5 (new): all three Turns have hasHttpFacts true and carry the six scripted `x-codex-*` names; capture shows only /codex/responses requests (3) and stderr has no allowance-query trace.\"\n    },\n    {\n      \"criterion\": \"H2 material for P39/P65: sanitized source, window results or skip reason, normal-use observation steps; API/mock/RPC never certify the real allowance\",\n      \"evidence\": \"README section + evidence-asset section. Skip reason changed from channel-missing to real-account-not-yet-observed. No passing claim is recorded from mock/RPC.\"\n    },\n    {\n      \"criterion\": \"Behaviour observed at approved production public seams with expectations from contract/spec, independent literals or hand arithmetic, never recomputed by the system under test; permanent network tests use mocks\",\n      \"evidence\": \"S2 drives the production runtime through public bindings and reads runtime.presentation.quota(); S5 expectations are this file's scripted numbers and hand arithmetic (ratio = 60/10 = 6, left = (100-30)/100*6 = 4.2); the only network is a 127.0.0.1 ephemeral capture endpoint.\"\n    },\n    {\n      \"criterion\": \"Isolated install/config/work/session/data roots, formal OMP untouched; async failures absorbed with sanitized evidence\",\n      \"evidence\": \"Every run uses an isolated .cache prefix + createRunRoot temp agent state/session/work/capture/user-home; models.yml/config.yml written only into the run's agent state (synthetic JWT acct-dock-13). No repo writes, no real credentials, no provider reached.\"\n    }\n  ],\n  \"commands_run\": [\n    {\n      \"command\": \"bun -e 'import { ensureCodexResponseHarness } ...'\",\n      \"result\": \"materialised the frozen patched install (install exit 0, apply exit 0); record.json frozen afterwards\"\n    },\n    {\n      \"command\": \"bun run typecheck\",\n      \"result\": \"first run reported 7 error TS2550 (Array.prototype.at absent from the project lib target, my new smoke) -> replaced with index access -> tsc --noEmit clean, 0 errors\"\n    },\n    {\n      \"command\": \"bun test tests/harness-dock/model-cost-codex-quota.test.ts tests/harness-dock/codex-response-artifact.test.ts\",\n      \"result\": \"6 pass / 0 fail, 67 expect, 5.64s\"\n    },\n    {\n      \"command\": \"temporary red check: first smoke case pointed at the unpatched baseline host\",\n      \"result\": \"1 fail — expect(turn.hasHttpFacts).toBe(true) received false; restored, re-ran green. (The unpatched baseline also runs permanently in the suite as the control case.)\"\n    },\n    {\n      \"command\": \"bun test tests/harness-dock/viewed-session.test.ts tests/harness-dock/viewed-session-host.test.ts tests/harness-dock/model-cost-modes.test.ts\",\n      \"result\": \"16 pass / 0 fail, 144 expect, 17.22s — the shared materialiser rewrite did not disturb ticket 01's artifact\"\n    },\n    {\n      \"command\": \"bun test tests/harness-dock\",\n      \"result\": \"52 pass / 2 fail, 564 expect, 74.47s (both fails are the pre-existing baseline anchor drift)\"\n    },\n    {\n      \"command\": \"bun test\",\n      \"result\": \"752 pass / 4 fail, 756 tests, 84 files, 219.95s, exit 1 — the 4 fails are pre-existing and recorded: 2 harness-dock/baseline.test.ts anchor drifts (checkout moved past the recorded anchor) + 2 connect-bot real-panel cases, confirmed by running tests/connect-bot alone (142 pass / 2 fail)\"\n    },\n    {\n      \"command\": \"bun test tests/connect-bot\",\n      \"result\": \"142 pass / 2 fail — P23 frozen protocol and P25 unregister window, i.e. exactly the reds ticket 12 recorded\"\n    }\n  ],\n  \"unverified_or_limits\": [\n    \"A real Codex account's allowance, its real 5h/7d readings and real-account headers are NOT observed: header values are the capture endpoint's scripted literals and the account API is deliberately unconfigured. H2 remains pending user confirmation (API/mock/RPC do not certify it).\",\n    \"WebSocket transport unobserved (runs pin SSE, providers.openaiWebsockets off); non-2xx responses publish no boundary (documented in README and the register row).\",\n    \"The patch is a local artifact on the recorded anchor: no support-record change, no version promotion, not merged upstream; whether it becomes the acceptance artifact is an acceptance decision.\",\n    \"Load sensitivity found and recorded: with the smoke split into 4 real sessions the directory-wide dock run pushed tests/harness-dock/session-recovery.test.ts past its fixed 20s wait (3 fail, reproduced twice; that case passes standalone and passes when my file is excluded). Merging the two runtime cases into one three-report session (3 real sessions) returned the directory run to the 2 known anchor reds. I did not touch ticket 10's wait budget.\"\n  ],\n  \"coordination\": \"Messaged peer 14-codex-ratio-estimatemd before editing shared dock files; they confirmed one real Turn delivering both windows per response is exactly the input their estimation wants, and that nothing else is needed from me. I did not touch extensions/model-cost/** or tests/model-cost/**.\",\n  \"notes_for_main\": [\n    \"Ticket file status left as-is (untouched): the invocation is not itself proof the ticket is complete, and H1/H2 confirmation is still user-side.\",\n    \"Shared working tree: framework/docs/framework-capabilities.md and framework/docs/harness-support.md carry other in-flight tickets' edits too; my row/paragraph changes are the only ones from this ticket.\",\n    \"Suggest running once after all subagents land: bun run typecheck; bun test tests/harness-dock/model-cost-codex-quota.test.ts tests/harness-dock/codex-response-artifact.test.ts; and bun test (expect the 4 recorded pre-existing reds only).\"\n  ]\n}",
+    "stderr": "",
+    "truncated": false,
+    "durationMs": 1358254,
+    "tokens": 281270,
+    "requests": 130,
+    "contextTokens": 252565,
+    "contextWindow": 1000000,
+    "modelOverride": [
+      "deepseek/deepseek-flash:high"
+    ],
+    "resolvedModel": "deepseek/deepseek-flash:high",
+    "resolvedModelIdentity": "deepseek/deepseek-flash",
+    "resolvedThinkingLevel": "high",
+    "aborted": false,
+    "usage": {
+      "input": 151675,
+      "output": 129595,
+      "cacheRead": 18643968,
+      "cacheWrite": 0,
+      "totalTokens": 18925238,
+      "reasoningTokens": 62411,
+      "cost": {
+        "input": 0.02275125,
+        "output": 0.07775700000000002,
+        "cacheRead": 0.055931904000000005,
+        "cacheWrite": 0,
+        "total": 0.15644015399999994
+      }
+    },
+    "outputPath": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-12T19-42-26-146Z_01a131a3-4562-728e-8c06-9608e1e88feb\\13-codex-windows-headersmd-2.md",
+    "extractedToolData": {
+      "yield": [
+        {
+          "data": {
+            "ticket": ".scratch/model-cost-migration/implementation/13-codex-windows-headers.md (P39, P65; retry)",
+            "status": "complete-with-noted-limits",
+            "what_the_retry_closed": "The previously recorded production gap — real OMP 18.5.0 Codex Turns delivered no HTTP response facts, so runtime headers and the paired estimation were unreachable — is now fixed on the frozen 18.5.0 artifact by a minimal local host patch, and verified end to end through the real loader/RPC on the normal production S1/S2 paths (after_provider_response -> adapter -> turn_end end.http -> production codex parser -> presentation). No version promotion, no native objects across the boundary, no private-controller/UI reading, no transport interception and no observation of SDK-hidden retries.",
+            "delivered": {
+              "host_patch": "host-patches/omp-18.5.0-codex-response-boundary/{patch.diff,record.json,README.md}. patch.diff: 4 hunks, 12 added lines, 0 removed, one file `pi-ai/src/providers/openai-codex-responses.ts` — imports the package's own `notifyProviderResponse` and calls it once per accepted response before the body is consumed, threading `options`/`model` through `openCodexSseEventStream` (its single call site). record.json (materialiser-written, committed): patch sha256 4ec9ad0de31b07966aa543db137b8f26d909b64fc8209981e2e8c217ac20214d; base 4223858912c4b960d794ba1c15014ee1eacf118d395b91adddf3fe982e4a4ffb -> patched a47d84105cfbc4a191a6339bc7fff350f46244eb343964f0de6b64864712d94b.",
+              "artifact": ".cache/omp-baseline/18.5.0-codex-response-boundary (gitignored), materialised by tests/harness-dock/codex-response-harness.ts over the new shared materialiser; codex-response-host.json records install exit 0 / git apply exit 0. Prefix is a sibling of the unpatched 18.5.0 install, so neither is reused or overwritten.",
+              "new_test_infrastructure": [
+                "tests/harness-dock/host-patch-artifact.ts — shared host-patch artifact materialiser (exact install -> git apply -p1 -> hash-verify against record -> manifest/record); parameterised patch root, so one patch may touch another installed package of the same version (here @oh-my-pi/pi-ai).",
+                "tests/harness-dock/codex-response-harness.ts — this artifact's names + ensureCodexResponseHarness().",
+                "tests/harness-dock/viewed-session-harness.ts — rewritten as a thin description over the shared materialiser (exports and freezing semantics unchanged; its three suites re-ran green).",
+                "tests/harness-dock/codex-response-artifact.test.ts — artifact freeze suite.",
+                "tests/harness-dock/model-cost-codex-quota.test.ts — rewritten real-host smoke on the patched artifact with the unpatched baseline as control.",
+                "tests/harness-dock/capture-server.ts — responseHeaders may now be (request) => headers, so one run can script a sequence of reports.",
+                "tests/harness-dock/fixtures/codex-quota/entrypoint.ts — new `estimate` observation line (same notification as `quota`)."
+              ],
+              "docs": [
+                "framework/docs/harness-support.md — row `turn.provider-response-boundary` now records the production difference as closed by the local patch, support record unchanged, patched revision still an acceptance decision, and what stays outside the patch (WebSocket transport, non-2xx responses).",
+                "framework/docs/framework-capabilities.md — Turn-facts paragraph synced.",
+                "host-patches/omp-18.5.0-codex-response-boundary/README.md — what it publishes, frozen base/artifact, patch recipe + re-freeze procedure, isolated loading steps, evidence, fault-injection note, limits, P39/P65 H2 steps.",
+                ".scratch/model-cost-migration/assets/13-codex-windows-headers-evidence-2026-10-13.md — rewritten per-criterion evidence, commands+results, sanitized real-run sample, H2 material, limits."
+              ]
+            },
+            "criteria_evidence": [
+              {
+                "criterion": "Same business parser for the init API and for response headers; API used only at startup; named `codex` proxy, 10000ms budget, address/headers held by the business, not borrowed from the inference base URL",
+                "evidence": "S2 permanent (unchanged, passing): both sources reduce to the same ReportedWindow read by one windowsOf/chosenWindow/apply; literal outbound assertion {url https://chatgpt.com/backend-api/wham/usage, GET, headers, timeoutMs 10000, proxy codex} with the host base URL deliberately different; startup() `started` guard. S5: the one startup attempt settles `misconfigured` and never leaves the process."
+              },
+              {
+                "criterion": "±5% identification of 5h/7d by reported length, not fixed primary/secondary; a valid single window updates independently; a missing window keeps its last successful value and instant; never reported means unavailable",
+                "evidence": "S2 boundary cases + swapped API and header positions. S5 (new): real Turn headers set fiveHour/weekly to the endpoint's scripted literals; a third report carrying only 5h sets 5h to 45% with a later obtainedAt while weekly stays byte-identical including obtainedAt."
+              },
+              {
+                "criterion": "Unknown/expired/invalid reset uses independent expectations; headers processed in receipt order; no absolute time-ordering system",
+                "evidence": "S2: unknown/expired/invalid/valid cases with resetsAt preserved verbatim; non-numeric and 0 are not usable instants; equal-distance candidates resolved by receipt order; no cross-source ordering."
+              },
+              {
+                "criterion": "No runtime API TTL/fallback/polling/switch query; mock and outbound capture verify position swap, single window, missing window and update count; the real adapter consumes normal Turn headers",
+                "evidence": "S2: outbound count stays 1 across Turns/Rounds/10-day clock advance. S5 (new): all three Turns have hasHttpFacts true and carry the six scripted `x-codex-*` names; capture shows only /codex/responses requests (3) and stderr has no allowance-query trace."
+              },
+              {
+                "criterion": "H2 material for P39/P65: sanitized source, window results or skip reason, normal-use observation steps; API/mock/RPC never certify the real allowance",
+                "evidence": "README section + evidence-asset section. Skip reason changed from channel-missing to real-account-not-yet-observed. No passing claim is recorded from mock/RPC."
+              },
+              {
+                "criterion": "Behaviour observed at approved production public seams with expectations from contract/spec, independent literals or hand arithmetic, never recomputed by the system under test; permanent network tests use mocks",
+                "evidence": "S2 drives the production runtime through public bindings and reads runtime.presentation.quota(); S5 expectations are this file's scripted numbers and hand arithmetic (ratio = 60/10 = 6, left = (100-30)/100*6 = 4.2); the only network is a 127.0.0.1 ephemeral capture endpoint."
+              },
+              {
+                "criterion": "Isolated install/config/work/session/data roots, formal OMP untouched; async failures absorbed with sanitized evidence",
+                "evidence": "Every run uses an isolated .cache prefix + createRunRoot temp agent state/session/work/capture/user-home; models.yml/config.yml written only into the run's agent state (synthetic JWT acct-dock-13). No repo writes, no real credentials, no provider reached."
+              }
+            ],
+            "commands_run": [
+              {
+                "command": "bun -e 'import { ensureCodexResponseHarness } ...'",
+                "result": "materialised the frozen patched install (install exit 0, apply exit 0); record.json frozen afterwards"
+              },
+              {
+                "command": "bun run typecheck",
+                "result": "first run reported 7 error TS2550 (Array.prototype.at absent from the project lib target, my new smoke) -> replaced with index access -> tsc --noEmit clean, 0 errors"
+              },
+              {
+                "command": "bun test tests/harness-dock/model-cost-codex-quota.test.ts tests/harness-dock/codex-response-artifact.test.ts",
+                "result": "6 pass / 0 fail, 67 expect, 5.64s"
+              },
+              {
+                "command": "temporary red check: first smoke case pointed at the unpatched baseline host",
+                "result": "1 fail — expect(turn.hasHttpFacts).toBe(true) received false; restored, re-ran green. (The unpatched baseline also runs permanently in the suite as the control case.)"
+              },
+              {
+                "command": "bun test tests/harness-dock/viewed-session.test.ts tests/harness-dock/viewed-session-host.test.ts tests/harness-dock/model-cost-modes.test.ts",
+                "result": "16 pass / 0 fail, 144 expect, 17.22s — the shared materialiser rewrite did not disturb ticket 01's artifact"
+              },
+              {
+                "command": "bun test tests/harness-dock",
+                "result": "52 pass / 2 fail, 564 expect, 74.47s (both fails are the pre-existing baseline anchor drift)"
+              },
+              {
+                "command": "bun test",
+                "result": "752 pass / 4 fail, 756 tests, 84 files, 219.95s, exit 1 — the 4 fails are pre-existing and recorded: 2 harness-dock/baseline.test.ts anchor drifts (checkout moved past the recorded anchor) + 2 connect-bot real-panel cases, confirmed by running tests/connect-bot alone (142 pass / 2 fail)"
+              },
+              {
+                "command": "bun test tests/connect-bot",
+                "result": "142 pass / 2 fail — P23 frozen protocol and P25 unregister window, i.e. exactly the reds ticket 12 recorded"
+              }
+            ],
+            "unverified_or_limits": [
+              "A real Codex account's allowance, its real 5h/7d readings and real-account headers are NOT observed: header values are the capture endpoint's scripted literals and the account API is deliberately unconfigured. H2 remains pending user confirmation (API/mock/RPC do not certify it).",
+              "WebSocket transport unobserved (runs pin SSE, providers.openaiWebsockets off); non-2xx responses publish no boundary (documented in README and the register row).",
+              "The patch is a local artifact on the recorded anchor: no support-record change, no version promotion, not merged upstream; whether it becomes the acceptance artifact is an acceptance decision.",
+              "Load sensitivity found and recorded: with the smoke split into 4 real sessions the directory-wide dock run pushed tests/harness-dock/session-recovery.test.ts past its fixed 20s wait (3 fail, reproduced twice; that case passes standalone and passes when my file is excluded). Merging the two runtime cases into one three-report session (3 real sessions) returned the directory run to the 2 known anchor reds. I did not touch ticket 10's wait budget."
+            ],
+            "coordination": "Messaged peer 14-codex-ratio-estimatemd before editing shared dock files; they confirmed one real Turn delivering both windows per response is exactly the input their estimation wants, and that nothing else is needed from me. I did not touch extensions/model-cost/** or tests/model-cost/**.",
+            "notes_for_main": [
+              "Ticket file status left as-is (untouched): the invocation is not itself proof the ticket is complete, and H1/H2 confirmation is still user-side.",
+              "Shared working tree: framework/docs/framework-capabilities.md and framework/docs/harness-support.md carry other in-flight tickets' edits too; my row/paragraph changes are the only ones from this ticket.",
+              "Suggest running once after all subagents land: bun run typecheck; bun test tests/harness-dock/model-cost-codex-quota.test.ts tests/harness-dock/codex-response-artifact.test.ts; and bun test (expect the 4 recorded pre-existing reds only)."
+            ]
+          },
+          "status": "success",
+          "type": "result"
+        }
+      ]
+    },
+    "outputMeta": {
+      "lineCount": 100,
+      "charCount": 11288
+    }
+  },
+  "agent": "tdd",
+  "agent_id": "13-codex-windows-headersmd-2",
+  "session_id": "01a13377-8de8-7791-8ab7-6874e2bc0f11",
+  "session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-12T19-42-26-146Z_01a131a3-4562-728e-8c06-9608e1e88feb\\13-codex-windows-headersmd-2.jsonl",
+  "execution_cwd": "E:\\Developer\\myhub\\my-agent-toolkit",
+  "retro_document": "E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\model-cost-migration\\retro\\13-codex-windows-headers.md\\b37f84be-7ea7-4bd3-b8c4-bf8457d03077.md",
+  "retro_finished_at": "2026-10-13T04:37:55.123Z"
+}

@@ -106,12 +106,23 @@ async function pumpLines(stream: ReadableStream<Uint8Array>, onLine: (line: stri
 /** Writes this run's own panel configuration into `directory`. */
 function writePanelConfig(directory: string): string {
 	const file = path.join(directory, "omp-bot.toml");
+	// The sessions section declares the two windows this run reads: the panel's own delivered
+	// defaults are 10s online / 30s retention, and a client that beats every 10s sits exactly on
+	// the default's edge — the scan would publish an offline view between two beats and the next
+	// beat publish it back. The runs here are about the extension's protocol rather than about
+	// those defaults, so the window is stated once, wide enough for a 10s beat to keep the row
+	// online, and every case reads the same declared numbers (30s online, 30s retention).
+	//
 	// The operations the panel can only ever invoke on request point at this run's own directory:
 	// this interop run never calls them, and they must never name a script the user cares about.
 	writeFileSync(
 		file,
 		[
 			`listen_addr = "127.0.0.1:0"`,
+			``,
+			`[sessions]`,
+			`online_timeout_seconds = 30`,
+			`offline_retention_seconds = 30`,
 			``,
 			`[operations.start]`,
 			`script = 'unused.bat'`,

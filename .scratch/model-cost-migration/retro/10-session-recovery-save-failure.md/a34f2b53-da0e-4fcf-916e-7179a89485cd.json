@@ -1,0 +1,199 @@
+{
+  "feature": "model-cost-migration",
+  "ticket": "10-session-recovery-save-failure.md",
+  "run_id": "a34f2b53-da0e-4fcf-916e-7179a89485cd",
+  "parent_session_id": "01a131a3-4562-728e-8c06-9608e1e88feb",
+  "parent_session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-12T19-42-26-146Z_01a131a3-4562-728e-8c06-9608e1e88feb.jsonl",
+  "workspace": "E:\\Developer\\myhub\\my-agent-toolkit",
+  "tool_call_id": "js-task-659ac7da-cf7b-4c7f-b63b-1fc3650a6d5f",
+  "started_at": "2026-10-13T01:50:12.574Z",
+  "tdd_status": "completed",
+  "retro_status": "completed",
+  "tdd_finished_at": "2026-10-13T02:21:26.017Z",
+  "tdd_result": {
+    "index": 0,
+    "id": "10-session-recovery-save-failuremd",
+    "agent": "tdd",
+    "agentSource": "user",
+    "task": "Complete assignment thoroughly:\n\nTicket filename: 10-session-recovery-save-failure.md\nTicket path: .scratch/model-cost-migration/implementation/10-session-recovery-save-failure.md\n\nFull ticket content:\n# 10: Session 恢复、导航与保存失败收口\n\n**What to build:** 重启和会话导航如实恢复当前周期消费；保存失败不阻断模型，也不重交丢弃消费或猜历史 Round。\n\n**Delivers:** P16, P17, P18, P19, P46\n\n**Blocked by:** 08: 工具续跑与轻量 Round 累计；09: 实际 Session 自身归属与父树汇总\n\n**Status:** ready-for-agent\n\n## Acceptance criteria\n\n- [ ] 正常保存后独立重启恢复已保存自身聚合、当前周期与版本，不扫描宿主历史/归档、不重算、不维护 lifetime。\n- [ ] tree 历史位置往返及继续执行不回滚已发生消费；缺可靠运行期快照的重启/tree/reload 不展示伪历史 Round，文件差值不冒充轮次。\n- [ ] fork 新实际 Session 自身从零，复制消息不产生消费且不改原累计；发生真实新请求后只新增本 Session。\n- [ ] 普通保存故障明确报告，丢弃受影响未保存段，恢复完整有效磁盘周期/Session/版本；不置零、不清 holiday/已处理标记、不自动重交。\n- [ ] 无有效基线按 06 暂停政策，不将普通保存恢复政策自动用于命令/estimate；不增加双执行者租约或异常账本。\n- [ ] 用生产入口故障场景、真实文件读回和独立重启验证有效 baseline/版本，隔离 OMP 证明故障后真实模型继续及导航/fork 结果；金额预期独立。\n- [ ] 通过批准的生产公共 seam 观察行为，预期来自合同/规格、独立字面值或手算，不以被测实现重算；永久网络 tests 使用 mock。\n- [ ] 使用隔离安装/配置/工作/Session/数据根，不操作正式 OMP；承接异步失败并保留够用脱敏证据，完成本票自动检查及材料准备，不因计划人工验收暂停可执行工作。\n\n## Verification responsibility\n\n本票负责所列 Delivers 的自动 coverage 与适用宿主贯通/证据准备；P58/P52 按本票具名责任执行。合同采用 Rapid iteration：H1/H2 及允许的条件性 H3 按原 Coverage 交用户确认，未确认不记通过；不改变承诺或免除实现/永久 tests。\n\n[You have received this identical output 3 times. Re-reading '.scratch/model-cost-migration/implementation/10-session-recovery-save-failure.md' will not change it — use a narrower selector (path:A-B), or proceed with the edit.]",
+    "assignment": "Ticket filename: 10-session-recovery-save-failure.md\nTicket path: .scratch/model-cost-migration/implementation/10-session-recovery-save-failure.md\n\nFull ticket content:\n# 10: Session 恢复、导航与保存失败收口\n\n**What to build:** 重启和会话导航如实恢复当前周期消费；保存失败不阻断模型，也不重交丢弃消费或猜历史 Round。\n\n**Delivers:** P16, P17, P18, P19, P46\n\n**Blocked by:** 08: 工具续跑与轻量 Round 累计；09: 实际 Session 自身归属与父树汇总\n\n**Status:** ready-for-agent\n\n## Acceptance criteria\n\n- [ ] 正常保存后独立重启恢复已保存自身聚合、当前周期与版本，不扫描宿主历史/归档、不重算、不维护 lifetime。\n- [ ] tree 历史位置往返及继续执行不回滚已发生消费；缺可靠运行期快照的重启/tree/reload 不展示伪历史 Round，文件差值不冒充轮次。\n- [ ] fork 新实际 Session 自身从零，复制消息不产生消费且不改原累计；发生真实新请求后只新增本 Session。\n- [ ] 普通保存故障明确报告，丢弃受影响未保存段，恢复完整有效磁盘周期/Session/版本；不置零、不清 holiday/已处理标记、不自动重交。\n- [ ] 无有效基线按 06 暂停政策，不将普通保存恢复政策自动用于命令/estimate；不增加双执行者租约或异常账本。\n- [ ] 用生产入口故障场景、真实文件读回和独立重启验证有效 baseline/版本，隔离 OMP 证明故障后真实模型继续及导航/fork 结果；金额预期独立。\n- [ ] 通过批准的生产公共 seam 观察行为，预期来自合同/规格、独立字面值或手算，不以被测实现重算；永久网络 tests 使用 mock。\n- [ ] 使用隔离安装/配置/工作/Session/数据根，不操作正式 OMP；承接异步失败并保留够用脱敏证据，完成本票自动检查及材料准备，不因计划人工验收暂停可执行工作。\n\n## Verification responsibility\n\n本票负责所列 Delivers 的自动 coverage 与适用宿主贯通/证据准备；P58/P52 按本票具名责任执行。合同采用 Rapid iteration：H1/H2 及允许的条件性 H3 按原 Coverage 交用户确认，未确认不记通过；不改变承诺或免除实现/永久 tests。\n\n[You have received this identical output 3 times. Re-reading '.scratch/model-cost-migration/implementation/10-session-recovery-save-failure.md' will not change it — use a narrower selector (path:A-B), or proceed with the edit.]",
+    "description": "Implement session recovery, navigation, and save-failure handling",
+    "lastIntent": "Reporting ticket 10 results",
+    "exitCode": 0,
+    "output": "{\n  \"ticket\": \"10-session-recovery-save-failure.md\",\n  \"delivers\": [\n    \"P16\",\n    \"P17\",\n    \"P18\",\n    \"P19\",\n    \"P46\"\n  ],\n  \"status\": \"complete-uncommitted\",\n  \"behavior_delivered\": {\n    \"P46_save_failure\": \"普通消费保存失败改为「报告 → 丢弃受影响未保存段 → 按磁盘当前有效快照重初始化」：request-accounting 新增私有 `discard`（受影响 Session 的 ledger 与当前/上一 Round 边界一起丢弃；`handled` 去重标记保留），`save` 对 saved/unchanged 以外结果分派（unusable→报暂停 notice+全丢弃；paused→静默全丢弃；conflict/stale-version/stale-period/failed→一条 error 含文件+结果+已丢弃+恢复去向，周期被替换时整实例丢弃以免旧周期消费写入新周期）；consumption-store 的 `commit` 在拒绝时把协调范围内真正读到的文档留作本实例基线（新增私有 `#rebase`），使版本/周期从磁盘续起而非永久复现冲突。此前实现是已批准正文（lighthouse/06 Q6/Q11/Q8）明确替代的旧政策「失败保留内存、下次正常保存带上」。\",\n    \"P16_P17_P18_P19\": \"现有按 sessionId 定位、由基线记录播种、无历史扫描/无 lifetime、Round 仅由本实例边界推断的实现经本票自动 coverage 与真实宿主贯通确认，未改实现。\"\n  },\n  \"criterion_evidence\": [\n    {\n      \"criterion\": \"正常保存后独立重启恢复自身聚合/周期/版本，不扫描历史或归档、不重算、不维护 lifetime\",\n      \"evidence\": \"tests/model-cost/session-recovery.test.ts『an independent restart restores the saved totals, the period and the version…』（同 periodId、saveVersion 1→2、own=2×字面量、root 内仅 consumption.json）；tests/harness-dock/session-recovery.test.ts『an independent restart continues its totals, version and period, and reads no history』（两个真实进程共 home，第二进程 switch_session 回该会话：版本 2、own=2×wire 桶、periodId 不变、单记录、无 notice）\"\n    },\n    {\n      \"criterion\": \"tree 往返与继续执行不回滚消费；缺运行期快照不展示伪历史 Round，文件差值不冒充轮次\",\n      \"evidence\": \"dock『a rewind stands up another session from the copied entries, and coming back continues the first one's record』（真实 get_entries→branch→switch_session 回原文件：离开的会话记录逐字段不变，返回后版本 2/own=2 笔，回退出会话 own=1 笔）；S2『a restored session shows no Round…』（重启后 roundTotals undefined，previous 始终 undefined，current 只含本轮自身增量）；S2『…not rolled back by another session's work…』\"\n    },\n    {\n      \"criterion\": \"fork 新实际 Session 自身从零、复制消息不产生消费、不改原累计、只新增本 Session\",\n      \"evidence\": \"S2 fork 例（文档已含源记录：新身份 own undefined、文件逐字节不变；首笔真实请求=版本 1/own 1 笔，源记录不变）；dock fork 例（真实 `fork`：出站仍 1 次、文档与 fork 前逐字段相同；fork 内再一笔后 fork 版本 1/own=1×wire 桶、源记录不变、共两条）\"\n    },\n    {\n      \"criterion\": \"普通保存故障明确报告、丢弃未保存段、恢复完整有效磁盘周期/Session/版本；不置零/不清 holiday/不清已处理标记/不自动重交\",\n      \"evidence\": \"S2 P46 五例：conflict（notice 含文件+「没有写入」+「丢弃」；view.own 回磁盘 100 输入/0.5；holiday:true 保持；重复 settle 不再计入；空消费轮不写；下一笔保存=磁盘版本+1、own=100+7 输入、costCny 0.50003）、stale-version（版本续到磁盘 7→8、own=10 笔）、stale-period（文件保持新周期、自身 undefined、新消费写入新 periodId 且版本从 1）、failed/io（目标被目录替代：报 failed、自身=最后有效基线、随后保存=基线版本+1）、unusable（报暂停、文件逐字节不变、后续不再计入/写）；dock P46 例（notice+文件等于另一写入者文档含 holiday:true+真实模型继续+保存=磁盘版本+1 且只加本轮，随后独立重启续到版本 3）\"\n    },\n    {\n      \"criterion\": \"无有效基线按 06 暂停政策；恢复政策不套给命令/estimate；不增租约或异常账本\",\n      \"evidence\": \"S2 unusable 例 + 既有 consumption-store/model-cost-store 暂停用例（报告并暂停、不猜零覆盖、仅下次正常初始化再读）；命令与独立 estimate 在本扩展代码中尚不存在（11/19/12/14 持有），恢复策略只写在普通消费保存 `save` 一处；实现未新增租约/心跳/重试队列/异常账本\"\n    },\n    {\n      \"criterion\": \"生产入口故障场景+真实文件读回+独立重启，隔离 OMP 证明故障后真实模型继续及导航/fork；金额预期独立\",\n      \"evidence\": \"dock 四例全部经记录基线安装 .cache/omp-baseline/18.5.0 + 生产 entrypoint + 本机捕获端点；token 桶由 wire 数字手推，costCny 仅用自我写入的字面值 0.5 做 `> 0.5` 判定未置零\"\n    },\n    {\n      \"criterion\": \"经批准的生产公共 seam 观察、期望独立；永久网络 tests 用 mock\",\n      \"evidence\": \"S2 只经 createModelCostRuntime + 框架公共绑定（port double）读 runtime.view 与落盘文档；期望为手算/字面值；永久 test 无网络访问\"\n    },\n    {\n      \"criterion\": \"隔离安装/配置/工作/Session/数据根，不操作正式 OMP；承接异步失败、保留脱敏证据、准备材料\",\n      \"evidence\": \"dock 每例独立 run root + 本票自建共享 home（os.tmpdir 下），正式 OMP 无写入；异步保存/failure notice 均等落地再断言；证据见 .scratch/model-cost-migration/assets/10-session-recovery-save-failure-evidence-2026-10-13.md\"\n    }\n  ],\n  \"files\": {\n    \"implementation\": [\n      \"extensions/model-cost/shared-logic/consumption-store.ts\",\n      \"extensions/model-cost/shared-logic/request-accounting.ts\"\n    ],\n    \"docs\": [\n      \"extensions/model-cost/GLOSSARY.md（Storage baseline 定义更新）\"\n    ],\n    \"tests_new\": [\n      \"tests/model-cost/session-recovery.test.ts（S2, 9 例）\",\n      \"tests/harness-dock/session-recovery.test.ts（S5 真实隔离宿主, 4 例）\"\n    ],\n    \"tests_extended\": [\n      \"tests/model-cost/consumption-store.test.ts（+2 例）\",\n      \"tests/model-cost/request-accounting.test.ts（07 拒绝用例补「被拒段被丢弃」断言）\"\n    ],\n    \"evidence\": [\n      \".scratch/model-cost-migration/assets/10-session-recovery-save-failure-evidence-2026-10-13.md\"\n    ],\n    \"not_touched\": \"consumption-document.ts（schema 未动）、runtime.ts、framework/*、ADR（政策已由 lighthouse/06 决定，无新取舍）\"\n  },\n  \"commands_run\": [\n    {\n      \"cmd\": \"bun run typecheck\",\n      \"result\": \"exit 0（无输出）\"\n    },\n    {\n      \"cmd\": \"bun test tests/model-cost\",\n      \"result\": \"94 pass / 0 fail（8 文件 360 expect 2.4s）\"\n    },\n    {\n      \"cmd\": \"bun test tests/framework\",\n      \"result\": \"368 pass / 0 fail（31 文件 1953 expect 39.0s）\"\n    },\n    {\n      \"cmd\": \"bun test tests/harness-dock/session-recovery.test.ts\",\n      \"result\": \"4 pass / 0 fail（65 expect 10.7s，真实隔离 OMP）\"\n    },\n    {\n      \"cmd\": \"bun test tests/harness-dock\",\n      \"result\": \"39 pass / 2 fail（41 例 54.7s；2 失败为既存环境项 baseline.test.ts 锚点漂移）\"\n    },\n    {\n      \"cmd\": \"bun test（全仓）\",\n      \"result\": \"667 pass / 4 fail（671 例 76 文件 215.4s；4 失败=baseline 两例 + connect-bot 两条需本机 127.0.0.1:8787 面板的超时，与 09 记录的既存同组；并行负载下另一次运行 666/5，多出的一条同属该面板超时，单跑本票文件稳定全绿）\"\n    },\n    {\n      \"cmd\": \"bun test tests/model-cost tests/harness-dock/session-recovery.test.ts\",\n      \"result\": \"98 pass / 0 fail（9 文件 425 expect 12.9s）\"\n    }\n  ],\n  \"fault_injection\": [\n    {\n      \"injection\": \"discard 变空操作\",\n      \"result\": \"S2 P46 五例全红 + 07 拒绝用例红\"\n    },\n    {\n      \"injection\": \"store 拒绝路径不 #rebase\",\n      \"result\": \"store 新 2 例 + S2 3 例红（io/unusable 例按预期不受影响）\"\n    },\n    {\n      \"injection\": \"view.own 不回落已加载记录\",\n      \"result\": \"S2 4 例红\"\n    },\n    {\n      \"injection\": \"ledgerFor 用同 harness 第一条记录兜底未知 Session\",\n      \"result\": \"S2 P17 与 P19 两例红\"\n    }\n  ],\n  \"leftovers_checked\": \"grep -rn 'fault injection|FAULTINJECT|TEMP DIAG' extensions/ tests/ framework/ → 无命中；注入均恢复后重跑全绿\",\n  \"unverified\": [\n    \"H1 真实 TUI 视觉（16/17 持有）与 H2 真实 provider 效果（07/12 持有）：不在本票 Coverage，未记通过\",\n    \"条件性 H3 未触发（真实脚本一次通过，无多次失败、无成本过高），故本票无人工项产生\",\n    \"同一 Session 已在途（丢弃前已提交、仍排文件 FIFO）的保存可能发布其携带段：属规格已接受的「同 Session 双执行者不支持、未保存段允许丢失」边界，未新增租约/取消机制；本票断言的是丢弃后新边界不重交该段\",\n    \"本机既存 4 项环境失败（baseline.test.ts 锚点、两条需本机 omp-bot 面板）与本票无关\"\n  ]\n}",
+    "stderr": "",
+    "truncated": false,
+    "durationMs": 1873429,
+    "tokens": 355590,
+    "requests": 195,
+    "contextTokens": 323131,
+    "contextWindow": 1000000,
+    "modelOverride": [
+      "deepseek/deepseek-flash:high"
+    ],
+    "resolvedModel": "deepseek/deepseek-flash:high",
+    "resolvedModelIdentity": "deepseek/deepseek-flash",
+    "resolvedThinkingLevel": "high",
+    "aborted": false,
+    "usage": {
+      "input": 194678,
+      "output": 160912,
+      "cacheRead": 39744000,
+      "cacheWrite": 0,
+      "totalTokens": 40099590,
+      "reasoningTokens": 88411,
+      "cost": {
+        "input": 0.05840339999999999,
+        "output": 0.19309439999999992,
+        "cacheRead": 0.23846400000000004,
+        "cacheWrite": 0,
+        "total": 0.4899618000000001
+      }
+    },
+    "outputPath": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-12T19-42-26-146Z_01a131a3-4562-728e-8c06-9608e1e88feb\\10-session-recovery-save-failuremd.md",
+    "extractedToolData": {
+      "yield": [
+        {
+          "data": {
+            "ticket": "10-session-recovery-save-failure.md",
+            "delivers": [
+              "P16",
+              "P17",
+              "P18",
+              "P19",
+              "P46"
+            ],
+            "status": "complete-uncommitted",
+            "behavior_delivered": {
+              "P46_save_failure": "普通消费保存失败改为「报告 → 丢弃受影响未保存段 → 按磁盘当前有效快照重初始化」：request-accounting 新增私有 `discard`（受影响 Session 的 ledger 与当前/上一 Round 边界一起丢弃；`handled` 去重标记保留），`save` 对 saved/unchanged 以外结果分派（unusable→报暂停 notice+全丢弃；paused→静默全丢弃；conflict/stale-version/stale-period/failed→一条 error 含文件+结果+已丢弃+恢复去向，周期被替换时整实例丢弃以免旧周期消费写入新周期）；consumption-store 的 `commit` 在拒绝时把协调范围内真正读到的文档留作本实例基线（新增私有 `#rebase`），使版本/周期从磁盘续起而非永久复现冲突。此前实现是已批准正文（lighthouse/06 Q6/Q11/Q8）明确替代的旧政策「失败保留内存、下次正常保存带上」。",
+              "P16_P17_P18_P19": "现有按 sessionId 定位、由基线记录播种、无历史扫描/无 lifetime、Round 仅由本实例边界推断的实现经本票自动 coverage 与真实宿主贯通确认，未改实现。"
+            },
+            "criterion_evidence": [
+              {
+                "criterion": "正常保存后独立重启恢复自身聚合/周期/版本，不扫描历史或归档、不重算、不维护 lifetime",
+                "evidence": "tests/model-cost/session-recovery.test.ts『an independent restart restores the saved totals, the period and the version…』（同 periodId、saveVersion 1→2、own=2×字面量、root 内仅 consumption.json）；tests/harness-dock/session-recovery.test.ts『an independent restart continues its totals, version and period, and reads no history』（两个真实进程共 home，第二进程 switch_session 回该会话：版本 2、own=2×wire 桶、periodId 不变、单记录、无 notice）"
+              },
+              {
+                "criterion": "tree 往返与继续执行不回滚消费；缺运行期快照不展示伪历史 Round，文件差值不冒充轮次",
+                "evidence": "dock『a rewind stands up another session from the copied entries, and coming back continues the first one's record』（真实 get_entries→branch→switch_session 回原文件：离开的会话记录逐字段不变，返回后版本 2/own=2 笔，回退出会话 own=1 笔）；S2『a restored session shows no Round…』（重启后 roundTotals undefined，previous 始终 undefined，current 只含本轮自身增量）；S2『…not rolled back by another session's work…』"
+              },
+              {
+                "criterion": "fork 新实际 Session 自身从零、复制消息不产生消费、不改原累计、只新增本 Session",
+                "evidence": "S2 fork 例（文档已含源记录：新身份 own undefined、文件逐字节不变；首笔真实请求=版本 1/own 1 笔，源记录不变）；dock fork 例（真实 `fork`：出站仍 1 次、文档与 fork 前逐字段相同；fork 内再一笔后 fork 版本 1/own=1×wire 桶、源记录不变、共两条）"
+              },
+              {
+                "criterion": "普通保存故障明确报告、丢弃未保存段、恢复完整有效磁盘周期/Session/版本；不置零/不清 holiday/不清已处理标记/不自动重交",
+                "evidence": "S2 P46 五例：conflict（notice 含文件+「没有写入」+「丢弃」；view.own 回磁盘 100 输入/0.5；holiday:true 保持；重复 settle 不再计入；空消费轮不写；下一笔保存=磁盘版本+1、own=100+7 输入、costCny 0.50003）、stale-version（版本续到磁盘 7→8、own=10 笔）、stale-period（文件保持新周期、自身 undefined、新消费写入新 periodId 且版本从 1）、failed/io（目标被目录替代：报 failed、自身=最后有效基线、随后保存=基线版本+1）、unusable（报暂停、文件逐字节不变、后续不再计入/写）；dock P46 例（notice+文件等于另一写入者文档含 holiday:true+真实模型继续+保存=磁盘版本+1 且只加本轮，随后独立重启续到版本 3）"
+              },
+              {
+                "criterion": "无有效基线按 06 暂停政策；恢复政策不套给命令/estimate；不增租约或异常账本",
+                "evidence": "S2 unusable 例 + 既有 consumption-store/model-cost-store 暂停用例（报告并暂停、不猜零覆盖、仅下次正常初始化再读）；命令与独立 estimate 在本扩展代码中尚不存在（11/19/12/14 持有），恢复策略只写在普通消费保存 `save` 一处；实现未新增租约/心跳/重试队列/异常账本"
+              },
+              {
+                "criterion": "生产入口故障场景+真实文件读回+独立重启，隔离 OMP 证明故障后真实模型继续及导航/fork；金额预期独立",
+                "evidence": "dock 四例全部经记录基线安装 .cache/omp-baseline/18.5.0 + 生产 entrypoint + 本机捕获端点；token 桶由 wire 数字手推，costCny 仅用自我写入的字面值 0.5 做 `> 0.5` 判定未置零"
+              },
+              {
+                "criterion": "经批准的生产公共 seam 观察、期望独立；永久网络 tests 用 mock",
+                "evidence": "S2 只经 createModelCostRuntime + 框架公共绑定（port double）读 runtime.view 与落盘文档；期望为手算/字面值；永久 test 无网络访问"
+              },
+              {
+                "criterion": "隔离安装/配置/工作/Session/数据根，不操作正式 OMP；承接异步失败、保留脱敏证据、准备材料",
+                "evidence": "dock 每例独立 run root + 本票自建共享 home（os.tmpdir 下），正式 OMP 无写入；异步保存/failure notice 均等落地再断言；证据见 .scratch/model-cost-migration/assets/10-session-recovery-save-failure-evidence-2026-10-13.md"
+              }
+            ],
+            "files": {
+              "implementation": [
+                "extensions/model-cost/shared-logic/consumption-store.ts",
+                "extensions/model-cost/shared-logic/request-accounting.ts"
+              ],
+              "docs": [
+                "extensions/model-cost/GLOSSARY.md（Storage baseline 定义更新）"
+              ],
+              "tests_new": [
+                "tests/model-cost/session-recovery.test.ts（S2, 9 例）",
+                "tests/harness-dock/session-recovery.test.ts（S5 真实隔离宿主, 4 例）"
+              ],
+              "tests_extended": [
+                "tests/model-cost/consumption-store.test.ts（+2 例）",
+                "tests/model-cost/request-accounting.test.ts（07 拒绝用例补「被拒段被丢弃」断言）"
+              ],
+              "evidence": [
+                ".scratch/model-cost-migration/assets/10-session-recovery-save-failure-evidence-2026-10-13.md"
+              ],
+              "not_touched": "consumption-document.ts（schema 未动）、runtime.ts、framework/*、ADR（政策已由 lighthouse/06 决定，无新取舍）"
+            },
+            "commands_run": [
+              {
+                "cmd": "bun run typecheck",
+                "result": "exit 0（无输出）"
+              },
+              {
+                "cmd": "bun test tests/model-cost",
+                "result": "94 pass / 0 fail（8 文件 360 expect 2.4s）"
+              },
+              {
+                "cmd": "bun test tests/framework",
+                "result": "368 pass / 0 fail（31 文件 1953 expect 39.0s）"
+              },
+              {
+                "cmd": "bun test tests/harness-dock/session-recovery.test.ts",
+                "result": "4 pass / 0 fail（65 expect 10.7s，真实隔离 OMP）"
+              },
+              {
+                "cmd": "bun test tests/harness-dock",
+                "result": "39 pass / 2 fail（41 例 54.7s；2 失败为既存环境项 baseline.test.ts 锚点漂移）"
+              },
+              {
+                "cmd": "bun test（全仓）",
+                "result": "667 pass / 4 fail（671 例 76 文件 215.4s；4 失败=baseline 两例 + connect-bot 两条需本机 127.0.0.1:8787 面板的超时，与 09 记录的既存同组；并行负载下另一次运行 666/5，多出的一条同属该面板超时，单跑本票文件稳定全绿）"
+              },
+              {
+                "cmd": "bun test tests/model-cost tests/harness-dock/session-recovery.test.ts",
+                "result": "98 pass / 0 fail（9 文件 425 expect 12.9s）"
+              }
+            ],
+            "fault_injection": [
+              {
+                "injection": "discard 变空操作",
+                "result": "S2 P46 五例全红 + 07 拒绝用例红"
+              },
+              {
+                "injection": "store 拒绝路径不 #rebase",
+                "result": "store 新 2 例 + S2 3 例红（io/unusable 例按预期不受影响）"
+              },
+              {
+                "injection": "view.own 不回落已加载记录",
+                "result": "S2 4 例红"
+              },
+              {
+                "injection": "ledgerFor 用同 harness 第一条记录兜底未知 Session",
+                "result": "S2 P17 与 P19 两例红"
+              }
+            ],
+            "leftovers_checked": "grep -rn 'fault injection|FAULTINJECT|TEMP DIAG' extensions/ tests/ framework/ → 无命中；注入均恢复后重跑全绿",
+            "unverified": [
+              "H1 真实 TUI 视觉（16/17 持有）与 H2 真实 provider 效果（07/12 持有）：不在本票 Coverage，未记通过",
+              "条件性 H3 未触发（真实脚本一次通过，无多次失败、无成本过高），故本票无人工项产生",
+              "同一 Session 已在途（丢弃前已提交、仍排文件 FIFO）的保存可能发布其携带段：属规格已接受的「同 Session 双执行者不支持、未保存段允许丢失」边界，未新增租约/取消机制；本票断言的是丢弃后新边界不重交该段",
+              "本机既存 4 项环境失败（baseline.test.ts 锚点、两条需本机 omp-bot 面板）与本票无关"
+            ]
+          },
+          "status": "success",
+          "type": "result"
+        }
+      ]
+    },
+    "outputMeta": {
+      "lineCount": 125,
+      "charCount": 6219
+    }
+  },
+  "agent": "tdd",
+  "agent_id": "10-session-recovery-save-failuremd",
+  "session_id": "01a132f3-fa7e-7584-ac30-dcf61a8ce0a2",
+  "session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-12T19-42-26-146Z_01a131a3-4562-728e-8c06-9608e1e88feb\\10-session-recovery-save-failuremd.jsonl",
+  "execution_cwd": "E:\\Developer\\myhub\\my-agent-toolkit",
+  "retro_document": "E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\model-cost-migration\\retro\\10-session-recovery-save-failure.md\\a34f2b53-da0e-4fcf-916e-7179a89485cd.md",
+  "retro_finished_at": "2026-10-13T02:23:03.011Z"
+}

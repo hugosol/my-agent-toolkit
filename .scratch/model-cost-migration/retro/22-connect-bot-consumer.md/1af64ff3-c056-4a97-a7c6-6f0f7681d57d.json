@@ -1,0 +1,178 @@
+{
+  "feature": "model-cost-migration",
+  "ticket": "22-connect-bot-consumer.md",
+  "run_id": "1af64ff3-c056-4a97-a7c6-6f0f7681d57d",
+  "parent_session_id": "01a131a3-4562-728e-8c06-9608e1e88feb",
+  "parent_session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-12T19-42-26-146Z_01a131a3-4562-728e-8c06-9608e1e88feb.jsonl",
+  "workspace": "E:\\Developer\\myhub\\my-agent-toolkit",
+  "tool_call_id": "js-task-8323b5c2-603b-4f63-80f7-e630e632f965",
+  "started_at": "2026-10-13T08:19:37.180Z",
+  "tdd_status": "completed",
+  "retro_status": "completed",
+  "tdd_finished_at": "2026-10-13T08:48:34.264Z",
+  "tdd_result": {
+    "index": 0,
+    "id": "22-connect-bot-consumermd",
+    "agent": "tdd",
+    "agentSource": "user",
+    "task": "Complete assignment thoroughly:\n\nTicket filename: 22-connect-bot-consumer.md\nTicket path: .scratch/model-cost-migration/implementation/22-connect-bot-consumer.md\n\nFull ticket content:\n# 22: connect-bot 统一接线与协议保留\n\n**What to build:** connect-bot 使用统一公共绑定/观察与 HTTP 仍保持原注册协议、活动状态、心跳和 Owner 效果。\n\n**Delivers:** P58（P58 的 connect-bot 覆盖）\n\n**Test owner for:** P58（connect-bot coverage partition；P58 整体由 22 与 23 共同完成）\n\n**Blocked by:** 03: 兑现公共 HTTP 代理和正文超时；05: 逐实际 Session 的 Turn 事实交付\n\n**Status:** ready-for-agent\n\n## Acceptance criteria\n\n- [ ] 02 已原子迁移公共契约，本票完成剩余公共生命周期/Owner 订阅/HTTP 接入；固定直连并沿自身超时，不改变 endpoint/envelope/JSON 协议。\n- [ ] 保留注册、心跳、失败预算、working/未见结束 idle/真实结束 awaiting-input 及完成证据；统计截断/reset 不伪造完成。\n- [ ] 子事实不能驱主效果，旧访问/清理不重建资源；失去独立职责的 PushTransport 和 assembly fetch 移除，不留兼容副本。\n- [ ] 本票拥有 P58 的 connect-bot 覆盖与 tests：真实 loader/RPC/出站捕获验证注册协议、心跳、失败预算、State/Owner 效果；永久远端网络 tests mock，不重钉内部旧形状。\n- [ ] P58 仅在本票及 23 都完成后整体完成；本票不认领 codebase-tools tests，24 架构验证不重复认领业务用例。\n- [ ] 通过批准的生产公共 seam 观察行为，预期来自合同/规格、独立字面值或手算，不以被测实现重算；永久网络 tests 使用 mock。\n- [ ] 使用隔离安装/配置/工作/Session/数据根，不操作正式 OMP；承接异步失败并保留够用脱敏证据，完成本票自动检查及材料准备，不因计划人工验收暂停可执行工作。\n\n## Verification responsibility\n\n本票负责所列 Delivers 的自动 coverage 与适用宿主贯通/证据准备；P58/P52 按本票具名责任执行。合同采用 Rapid iteration：H1/H2 及允许的条件性 H3 按原 Coverage 交用户确认，未确认不记通过；不改变承诺或免除实现/永久 tests。\n\n## P58 — coverage partition\n\n|Coverage item|Ticket|Test owner|\n|---|---|---|\n|connect-bot 注册、心跳、失败预算、State、Owner 效果与活动/完成证据|22|22|\n|codebase-tools prompt、历史保护、激活 State、follow/none 与原命令行为|23|23|\n\n两部分完成后 P58 才整体完成；本票只写所属分区测试。\n\n[You have received this identical output 3 times. Re-reading '.scratch/model-cost-migration/implementation/22-connect-bot-consumer.md' will not change it — use a narrower selector (path:A-B), or proceed with the edit.]",
+    "assignment": "Ticket filename: 22-connect-bot-consumer.md\nTicket path: .scratch/model-cost-migration/implementation/22-connect-bot-consumer.md\n\nFull ticket content:\n# 22: connect-bot 统一接线与协议保留\n\n**What to build:** connect-bot 使用统一公共绑定/观察与 HTTP 仍保持原注册协议、活动状态、心跳和 Owner 效果。\n\n**Delivers:** P58（P58 的 connect-bot 覆盖）\n\n**Test owner for:** P58（connect-bot coverage partition；P58 整体由 22 与 23 共同完成）\n\n**Blocked by:** 03: 兑现公共 HTTP 代理和正文超时；05: 逐实际 Session 的 Turn 事实交付\n\n**Status:** ready-for-agent\n\n## Acceptance criteria\n\n- [ ] 02 已原子迁移公共契约，本票完成剩余公共生命周期/Owner 订阅/HTTP 接入；固定直连并沿自身超时，不改变 endpoint/envelope/JSON 协议。\n- [ ] 保留注册、心跳、失败预算、working/未见结束 idle/真实结束 awaiting-input 及完成证据；统计截断/reset 不伪造完成。\n- [ ] 子事实不能驱主效果，旧访问/清理不重建资源；失去独立职责的 PushTransport 和 assembly fetch 移除，不留兼容副本。\n- [ ] 本票拥有 P58 的 connect-bot 覆盖与 tests：真实 loader/RPC/出站捕获验证注册协议、心跳、失败预算、State/Owner 效果；永久远端网络 tests mock，不重钉内部旧形状。\n- [ ] P58 仅在本票及 23 都完成后整体完成；本票不认领 codebase-tools tests，24 架构验证不重复认领业务用例。\n- [ ] 通过批准的生产公共 seam 观察行为，预期来自合同/规格、独立字面值或手算，不以被测实现重算；永久网络 tests 使用 mock。\n- [ ] 使用隔离安装/配置/工作/Session/数据根，不操作正式 OMP；承接异步失败并保留够用脱敏证据，完成本票自动检查及材料准备，不因计划人工验收暂停可执行工作。\n\n## Verification responsibility\n\n本票负责所列 Delivers 的自动 coverage 与适用宿主贯通/证据准备；P58/P52 按本票具名责任执行。合同采用 Rapid iteration：H1/H2 及允许的条件性 H3 按原 Coverage 交用户确认，未确认不记通过；不改变承诺或免除实现/永久 tests。\n\n## P58 — coverage partition\n\n| Coverage item | Ticket | Test owner |\n|---|---|---|\n| connect-bot 注册、心跳、失败预算、State、Owner 效果与活动/完成证据 | 22 | 22 |\n| codebase-tools prompt、历史保护、激活 State、follow/none 与原命令行为 | 23 | 23 |\n\n两部分完成后 P58 才整体完成；本票只写所属分区测试。\n\n[You have received this identical output 3 times. Re-reading '.scratch/model-cost-migration/implementation/22-connect-bot-consumer.md' will not change it — use a narrower selector (path:A-B), or proceed with the edit.]",
+    "description": "Integrate connect-bot with shared bindings, preserve HTTP protocol",
+    "lastIntent": "Notifying peer 21 about the widget wiring fix",
+    "exitCode": 0,
+    "output": "{\n  \"ticket\": \"22-connect-bot-consumer (P58 connect-bot partition)\",\n  \"behavior_delivered\": {\n    \"http_wiring\": \"connect-bot's outbound is now the framework's public HTTP call (`request` from framework/public.ts) instead of an extension-owned transport: each request declares a fixed direct connection (`proxy: false`) and the extension's own configured `timeoutMs` (extensions/connect-bot/shared-logic/panel/client.ts). `PushTransport`, `PushFetchInit`, `PushHttpResponse`, `installPushTransport`, `setPushTransportForTest` and the assembly's `platformTransport` (globalThis.fetch) are deleted with no compat copy; the one seam left is the same-interface `PanelRequest` + `setPanelRequestForTest`. Wire protocol untouched: route /api/sessions/events, {sessionId,kind,data?} envelope, JSON, 4 kinds, register receipt shape, 10s heartbeat, 3-failure budget, working/idle/awaiting-input semantics.\",\n    \"model_cost_dispose_wiring\": \"extensions/model-cost/harnesses/omp/widget.ts no longer subscribes `pi.on(\\\"session_shutdown\\\", …)`; `harnesses/omp.ts` composes the frontend release into the binding's single framework `cleanup` via `releasingFrontendOnCleanup`, and attaches the frontend only when `bound.bound`, so a refused binding leaves nothing unreleased.\",\n    \"docs\": \"extensions/connect-bot/README.md (outbound call section; panel windows corrected to the panel's delivered defaults 10s/30s + fixed 5s scan) and .scratch/model-cost-migration/assets/22-connect-bot-consumer-evidence-2026-10-13.md (per-criterion evidence, commands, failures, limits).\"\n  },\n  \"criteria\": [\n    {\n      \"criterion\": \"02 public factory/lifecycle + 05 subscriptions landed; this ticket completes the remaining public lifecycle/Owner-subscription/HTTP wiring; fixed direct connection along its own timeout, endpoint/envelope/JSON protocol unchanged\",\n      \"evidence\": \"structural (client.ts imports only framework/public `request`; assembly installs no transport; `grep -rn PushTransport framework extensions entrypoints tests scripts docs` = 0 hits) + tests/connect-bot/arm.test.ts 'an arm's requests state the direct connection and the extension's own budget (E17)' (declared url/proxy:false/timeoutMs from connectBotConfig()) + state-machine/off/heartbeat suites' wire-shape assertions\"\n    },\n    {\n      \"criterion\": \"Registration, heartbeat, failure budget, working / idle-without-observed-round-end / awaiting-input after a real end, and completion evidence preserved; truncation/reset does not fake completion\",\n      \"evidence\": \"tests/connect-bot/arm.test.ts, heartbeat.test.ts (10s cadence, cancelled timer sends nothing), failure-budget.test.ts (first failure announced once, third ends the connection), state-machine.test.ts (round-edge moves + de-bounce), session-switch.test.ts, budget-regression.test.ts, request-timeout.test.ts — all green\"\n    },\n    {\n      \"criterion\": \"Sub-facts do not drive main effects; old access/cleanup does not rebuild resources; PushTransport and assembly fetch removed with no compat copy\",\n      \"evidence\": \"state-machine.test.ts subagent-edge case (a subagent's edge neither moves nor creates the parent's record); transport removal structural; model-cost frontend released by the binding's framework cleanup, proven by tests/model-cost/boundary-timer.test.ts 'the binding's own cleanup releases the frontend, and then runs the instance's own' (frontend first, instance second)\"\n    },\n    {\n      \"criterion\": \"This ticket owns P58's connect-bot coverage/tests: real loader/RPC/outbound capture verifying register protocol, heartbeat, failure budget, State/Owner effects; permanent remote-network tests mock; no re-pinning of old internal shapes\",\n      \"evidence\": \"real loader+RPC+real panel: tests/connect-bot/harness-exit-budget.test.ts; real-panel interop: budget-regression.test.ts; isolated outbound capture over real local targets in their own process: request-timeout.test.ts; all permanent suites inject a fake of the framework call (no network); `init.signal`/globalThis.fetch assertions deleted or re-pointed at the declared proxy/timeoutMs\"\n    },\n    {\n      \"criterion\": \"P58 completes only when 22 and 23 are both done; this ticket claims no codebase-tools tests and 24 does not re-claim business cases\",\n      \"evidence\": \"NOT CLAIMED — codebase-tools (23's partition) and 24's architecture cases untouched; P58 remains open\"\n    },\n    {\n      \"criterion\": \"Observe through the approved production public seam; expectations from contract/spec, independent literals or hand computation; permanent network tests mocked\",\n      \"evidence\": \"seams S1 (OMP assembly/port double), S3 (declared framework-request interface), S5 (isolated real host); expectations from config.yaml via connectBotConfig(), protocol constants, REQUEST_TIMEOUT_MS read from the shipped file, and the hand-computed 10_000ms period; no expectation recomputed through the code under test\"\n    },\n    {\n      \"criterion\": \"Isolated install/config/work/session/data roots; production OMP untouched; async failures carried with redacted evidence; automatic checks and material preparation completed without pausing for planned manual acceptance\",\n      \"evidence\": \"ensureIsolatedHarness, createRunRoot, per-run config.yaml, probe processes, panel instance on a temp dir + ephemeral loopback port; user's panel and real OMP config untouched; .cache deployment copies removed by the suite; evidence asset written\"\n    }\n  ],\n  \"verification_run\": [\n    {\n      \"command\": \"bun run typecheck\",\n      \"result\": \"0 errors\"\n    },\n    {\n      \"command\": \"bun test tests/connect-bot\",\n      \"result\": \"144 pass / 0 fail, 712 expect, 19 files, 76.8s\"\n    },\n    {\n      \"command\": \"bun test tests/connect-bot/request-timeout.test.ts\",\n      \"result\": \"10 pass / 0 fail\"\n    },\n    {\n      \"command\": \"bun test tests/connect-bot/budget-regression.test.ts tests/connect-bot/panel-registration-lifecycle.test.ts\",\n      \"result\": \"11 pass / 0 fail (includes the two formerly-failing real-panel cases)\"\n    },\n    {\n      \"command\": \"bun test tests/connect-bot/harness-exit-budget.test.ts\",\n      \"result\": \"1 pass / 0 fail (twice)\"\n    },\n    {\n      \"command\": \"bun test tests/model-cost\",\n      \"result\": \"266 pass / 0 fail\"\n    },\n    {\n      \"command\": \"bun test tests/framework\",\n      \"result\": \"385 pass / 0 fail\"\n    },\n    {\n      \"command\": \"bun test (whole repo)\",\n      \"result\": \"886 pass / 3 fail, 889 tests, 100 files, 285.0s\"\n    },\n    {\n      \"command\": \"bun test tests/harness-dock/model-cost-balance.test.ts\",\n      \"result\": \"6 pass / 0 fail in isolation (the one full-run failure there is a timing-dependent ENOENT in that case's own recursive storage walk)\"\n    }\n  ],\n  \"pre_existing_failures_fixed\": [\n    {\n      \"case\": \"budget-regression.test.ts P23 'a whole session … is what the real panel records and answers'\",\n      \"root_cause\": \"the isolated panel used its delivered default window (online 10s / retention 30s) while beats are 10s apart: the row flapped offline/online and published two extra upserts\",\n      \"fix\": \"tests/connect-bot/support/omp-bot.ts now declares [sessions] online_timeout_seconds = 30, offline_retention_seconds = 30 in the isolated panel's own config; the suites' 30s/5s constants stay unchanged and now read a declared value\"\n    },\n    {\n      \"case\": \"panel-registration-lifecycle.test.ts P25 'the blocked row stays registered and goes offline by the 30s window'\",\n      \"root_cause\": \"same 10s delivered default: the offline view arrived at 15.0s against an expectation of >=29s\",\n      \"fix\": \"same declared window\"\n    },\n    {\n      \"case\": \"native-session-boundary.test.ts repo-wide arm (E14/P35)\",\n      \"root_cause\": \"extensions/model-cost/harnesses/omp/widget.ts named `session_shutdown` directly\",\n      \"fix\": \"frontend release moved into the binding's framework cleanup (see behavior_delivered); no allowlist widening, no behavior test suppressed\"\n    }\n  ],\n  \"unresolved_unverified\": [\n    \"P58 is NOT complete: 23's codebase-tools partition and 24's architecture verification are untouched.\",\n    \"No real provider, credential, DeepSeek/Codex request or production OMP was used; the real-panel interop uses an isolated instance of the sibling omp-bot release build on a temp dir/ephemeral port.\",\n    \"Permanent suites inject the HTTP call, so they prove the extension's declared request (url/method/headers/body/proxy/timeoutMs); the framework module's own connection, proxy and budget semantics remain proven by tests/framework/http.test.ts and scripts/http-transport-smoke.ts, not duplicated here.\",\n    \"The S5 real-harness case covers one scenario (a long budget must not extend the host's own exit); other isolated-host model paths are other tickets' coverage.\",\n    \"Three whole-repo failures remain and are not this ticket's: two harness-dock baseline drift cases (pre-existing, also recorded in the 03 evidence) and one flaky model-cost-balance storage-walk ENOENT that passes in isolation.\",\n    \"Human items H1/H2 and the allowed conditional H3 are untouched and not recorded as passed.\"\n  ],\n  \"notes_for_main\": [\n    \"Cross-partition maintenance was required by the widget fix: extensions/model-cost/harnesses/omp.ts, extensions/model-cost/harnesses/omp/widget.ts and tests/model-cost/boundary-timer.test.ts (the case pinning the removed native hook was replaced per 'delete old internal-shape tests, do not re-pin'). Peer 21 was notified so the fix is not duplicated.\",\n    \"One connect-bot test-side race was removed rather than papered over: harness-exit-budget.test.ts now waits for the panel's own published upsert instead of snapshotting while the adapter's forward is still in flight.\"\n  ]\n}",
+    "stderr": "",
+    "truncated": false,
+    "durationMs": 1737063,
+    "tokens": 362868,
+    "requests": 199,
+    "contextTokens": 340549,
+    "contextWindow": 1000000,
+    "modelOverride": [
+      "deepseek/deepseek-flash:high"
+    ],
+    "resolvedModel": "deepseek/deepseek-flash:high",
+    "resolvedModelIdentity": "deepseek/deepseek-flash",
+    "resolvedThinkingLevel": "high",
+    "aborted": false,
+    "usage": {
+      "input": 216529,
+      "output": 146339,
+      "cacheRead": 41669248,
+      "cacheWrite": 0,
+      "totalTokens": 42032116,
+      "reasoningTokens": 86283,
+      "cost": {
+        "input": 0.06495869999999997,
+        "output": 0.17560679999999995,
+        "cacheRead": 0.25001548800000006,
+        "cacheWrite": 0,
+        "total": 0.490580988
+      }
+    },
+    "outputPath": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-12T19-42-26-146Z_01a131a3-4562-728e-8c06-9608e1e88feb\\22-connect-bot-consumermd.md",
+    "extractedToolData": {
+      "yield": [
+        {
+          "data": {
+            "ticket": "22-connect-bot-consumer (P58 connect-bot partition)",
+            "behavior_delivered": {
+              "http_wiring": "connect-bot's outbound is now the framework's public HTTP call (`request` from framework/public.ts) instead of an extension-owned transport: each request declares a fixed direct connection (`proxy: false`) and the extension's own configured `timeoutMs` (extensions/connect-bot/shared-logic/panel/client.ts). `PushTransport`, `PushFetchInit`, `PushHttpResponse`, `installPushTransport`, `setPushTransportForTest` and the assembly's `platformTransport` (globalThis.fetch) are deleted with no compat copy; the one seam left is the same-interface `PanelRequest` + `setPanelRequestForTest`. Wire protocol untouched: route /api/sessions/events, {sessionId,kind,data?} envelope, JSON, 4 kinds, register receipt shape, 10s heartbeat, 3-failure budget, working/idle/awaiting-input semantics.",
+              "model_cost_dispose_wiring": "extensions/model-cost/harnesses/omp/widget.ts no longer subscribes `pi.on(\"session_shutdown\", …)`; `harnesses/omp.ts` composes the frontend release into the binding's single framework `cleanup` via `releasingFrontendOnCleanup`, and attaches the frontend only when `bound.bound`, so a refused binding leaves nothing unreleased.",
+              "docs": "extensions/connect-bot/README.md (outbound call section; panel windows corrected to the panel's delivered defaults 10s/30s + fixed 5s scan) and .scratch/model-cost-migration/assets/22-connect-bot-consumer-evidence-2026-10-13.md (per-criterion evidence, commands, failures, limits)."
+            },
+            "criteria": [
+              {
+                "criterion": "02 public factory/lifecycle + 05 subscriptions landed; this ticket completes the remaining public lifecycle/Owner-subscription/HTTP wiring; fixed direct connection along its own timeout, endpoint/envelope/JSON protocol unchanged",
+                "evidence": "structural (client.ts imports only framework/public `request`; assembly installs no transport; `grep -rn PushTransport framework extensions entrypoints tests scripts docs` = 0 hits) + tests/connect-bot/arm.test.ts 'an arm's requests state the direct connection and the extension's own budget (E17)' (declared url/proxy:false/timeoutMs from connectBotConfig()) + state-machine/off/heartbeat suites' wire-shape assertions"
+              },
+              {
+                "criterion": "Registration, heartbeat, failure budget, working / idle-without-observed-round-end / awaiting-input after a real end, and completion evidence preserved; truncation/reset does not fake completion",
+                "evidence": "tests/connect-bot/arm.test.ts, heartbeat.test.ts (10s cadence, cancelled timer sends nothing), failure-budget.test.ts (first failure announced once, third ends the connection), state-machine.test.ts (round-edge moves + de-bounce), session-switch.test.ts, budget-regression.test.ts, request-timeout.test.ts — all green"
+              },
+              {
+                "criterion": "Sub-facts do not drive main effects; old access/cleanup does not rebuild resources; PushTransport and assembly fetch removed with no compat copy",
+                "evidence": "state-machine.test.ts subagent-edge case (a subagent's edge neither moves nor creates the parent's record); transport removal structural; model-cost frontend released by the binding's framework cleanup, proven by tests/model-cost/boundary-timer.test.ts 'the binding's own cleanup releases the frontend, and then runs the instance's own' (frontend first, instance second)"
+              },
+              {
+                "criterion": "This ticket owns P58's connect-bot coverage/tests: real loader/RPC/outbound capture verifying register protocol, heartbeat, failure budget, State/Owner effects; permanent remote-network tests mock; no re-pinning of old internal shapes",
+                "evidence": "real loader+RPC+real panel: tests/connect-bot/harness-exit-budget.test.ts; real-panel interop: budget-regression.test.ts; isolated outbound capture over real local targets in their own process: request-timeout.test.ts; all permanent suites inject a fake of the framework call (no network); `init.signal`/globalThis.fetch assertions deleted or re-pointed at the declared proxy/timeoutMs"
+              },
+              {
+                "criterion": "P58 completes only when 22 and 23 are both done; this ticket claims no codebase-tools tests and 24 does not re-claim business cases",
+                "evidence": "NOT CLAIMED — codebase-tools (23's partition) and 24's architecture cases untouched; P58 remains open"
+              },
+              {
+                "criterion": "Observe through the approved production public seam; expectations from contract/spec, independent literals or hand computation; permanent network tests mocked",
+                "evidence": "seams S1 (OMP assembly/port double), S3 (declared framework-request interface), S5 (isolated real host); expectations from config.yaml via connectBotConfig(), protocol constants, REQUEST_TIMEOUT_MS read from the shipped file, and the hand-computed 10_000ms period; no expectation recomputed through the code under test"
+              },
+              {
+                "criterion": "Isolated install/config/work/session/data roots; production OMP untouched; async failures carried with redacted evidence; automatic checks and material preparation completed without pausing for planned manual acceptance",
+                "evidence": "ensureIsolatedHarness, createRunRoot, per-run config.yaml, probe processes, panel instance on a temp dir + ephemeral loopback port; user's panel and real OMP config untouched; .cache deployment copies removed by the suite; evidence asset written"
+              }
+            ],
+            "verification_run": [
+              {
+                "command": "bun run typecheck",
+                "result": "0 errors"
+              },
+              {
+                "command": "bun test tests/connect-bot",
+                "result": "144 pass / 0 fail, 712 expect, 19 files, 76.8s"
+              },
+              {
+                "command": "bun test tests/connect-bot/request-timeout.test.ts",
+                "result": "10 pass / 0 fail"
+              },
+              {
+                "command": "bun test tests/connect-bot/budget-regression.test.ts tests/connect-bot/panel-registration-lifecycle.test.ts",
+                "result": "11 pass / 0 fail (includes the two formerly-failing real-panel cases)"
+              },
+              {
+                "command": "bun test tests/connect-bot/harness-exit-budget.test.ts",
+                "result": "1 pass / 0 fail (twice)"
+              },
+              {
+                "command": "bun test tests/model-cost",
+                "result": "266 pass / 0 fail"
+              },
+              {
+                "command": "bun test tests/framework",
+                "result": "385 pass / 0 fail"
+              },
+              {
+                "command": "bun test (whole repo)",
+                "result": "886 pass / 3 fail, 889 tests, 100 files, 285.0s"
+              },
+              {
+                "command": "bun test tests/harness-dock/model-cost-balance.test.ts",
+                "result": "6 pass / 0 fail in isolation (the one full-run failure there is a timing-dependent ENOENT in that case's own recursive storage walk)"
+              }
+            ],
+            "pre_existing_failures_fixed": [
+              {
+                "case": "budget-regression.test.ts P23 'a whole session … is what the real panel records and answers'",
+                "root_cause": "the isolated panel used its delivered default window (online 10s / retention 30s) while beats are 10s apart: the row flapped offline/online and published two extra upserts",
+                "fix": "tests/connect-bot/support/omp-bot.ts now declares [sessions] online_timeout_seconds = 30, offline_retention_seconds = 30 in the isolated panel's own config; the suites' 30s/5s constants stay unchanged and now read a declared value"
+              },
+              {
+                "case": "panel-registration-lifecycle.test.ts P25 'the blocked row stays registered and goes offline by the 30s window'",
+                "root_cause": "same 10s delivered default: the offline view arrived at 15.0s against an expectation of >=29s",
+                "fix": "same declared window"
+              },
+              {
+                "case": "native-session-boundary.test.ts repo-wide arm (E14/P35)",
+                "root_cause": "extensions/model-cost/harnesses/omp/widget.ts named `session_shutdown` directly",
+                "fix": "frontend release moved into the binding's framework cleanup (see behavior_delivered); no allowlist widening, no behavior test suppressed"
+              }
+            ],
+            "unresolved_unverified": [
+              "P58 is NOT complete: 23's codebase-tools partition and 24's architecture verification are untouched.",
+              "No real provider, credential, DeepSeek/Codex request or production OMP was used; the real-panel interop uses an isolated instance of the sibling omp-bot release build on a temp dir/ephemeral port.",
+              "Permanent suites inject the HTTP call, so they prove the extension's declared request (url/method/headers/body/proxy/timeoutMs); the framework module's own connection, proxy and budget semantics remain proven by tests/framework/http.test.ts and scripts/http-transport-smoke.ts, not duplicated here.",
+              "The S5 real-harness case covers one scenario (a long budget must not extend the host's own exit); other isolated-host model paths are other tickets' coverage.",
+              "Three whole-repo failures remain and are not this ticket's: two harness-dock baseline drift cases (pre-existing, also recorded in the 03 evidence) and one flaky model-cost-balance storage-walk ENOENT that passes in isolation.",
+              "Human items H1/H2 and the allowed conditional H3 are untouched and not recorded as passed."
+            ],
+            "notes_for_main": [
+              "Cross-partition maintenance was required by the widget fix: extensions/model-cost/harnesses/omp.ts, extensions/model-cost/harnesses/omp/widget.ts and tests/model-cost/boundary-timer.test.ts (the case pinning the removed native hook was replaced per 'delete old internal-shape tests, do not re-pin'). Peer 21 was notified so the fix is not duplicated.",
+              "One connect-bot test-side race was removed rather than papered over: harness-exit-budget.test.ts now waits for the panel's own published upsert instead of snapshotting while the adapter's forward is still in flight."
+            ]
+          },
+          "status": "success"
+        }
+      ]
+    },
+    "outputMeta": {
+      "lineCount": 105,
+      "charCount": 9699
+    }
+  },
+  "agent": "tdd",
+  "agent_id": "22-connect-bot-consumermd",
+  "session_id": "01a13458-7e83-7481-bb72-c1b4de099e15",
+  "session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-12T19-42-26-146Z_01a131a3-4562-728e-8c06-9608e1e88feb\\22-connect-bot-consumermd.jsonl",
+  "execution_cwd": "E:\\Developer\\myhub\\my-agent-toolkit",
+  "retro_document": "E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\model-cost-migration\\retro\\22-connect-bot-consumer.md\\1af64ff3-c056-4a97-a7c6-6f0f7681d57d.md",
+  "retro_finished_at": "2026-10-13T08:50:23.321Z"
+}

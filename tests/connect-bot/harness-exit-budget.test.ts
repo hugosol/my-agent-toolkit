@@ -106,6 +106,10 @@ describe("a long request budget does not extend the harness's own exit (P27)", (
 			expect(armed.agentInvoked).toBe(false);
 			expect(armed.status).toBe("completed");
 			await adapter.waitFor(receipt => receipt.kind === "register", "the register the arm sent");
+			// The row is read where the panel *published* it rather than off the dependency's receipt:
+			// forwarding a request is asynchronous, so a request the adapter has received is not yet a
+			// row the panel holds.
+			await panel.waitFor(frame => frame.event === "upsert", "the row the register built");
 			const registered = (await panel.snapshot()).map(view => view.sessionId);
 			expect(registered).toHaveLength(1);
 

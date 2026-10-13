@@ -21,12 +21,16 @@ import type {
 	OmpSessionContext,
 	OmpSessionEvent,
 	OmpSessionEventType,
-	SessionEventDelivery,
-	SessionEventHandlers,
 } from "../../framework/adapters/omp";
 import * as frameworkOmp from "../../framework/adapters/omp";
 import type { OwnerReference, SessionEvent, SessionStartReason } from "../../framework/core/protocol";
-import { type ExtensionDefinition, defineExtension } from "../../framework/public";
+import {
+	type CommandImplementations,
+	type ExtensionDefinition,
+	type SessionEventDelivery,
+	type SessionEventHandlers,
+	defineExtension,
+} from "../../framework/public";
 
 /** The State entry the framework persists for the codebase-tools definition. */
 const STATE_ENTRY_TYPE = "codebase-tools:state";
@@ -48,6 +52,8 @@ interface SessionFacts {
 	/** The State payloads persisted on this session's branch, oldest first. */
 	readonly statePayloads: unknown[];
 	readonly kind?: "main" | "sub";
+	/** The display name the harness holds for this session, when it holds one. */
+	readonly name?: string;
 }
 
 interface Registration {
@@ -61,6 +67,13 @@ interface Observed {
 	readonly hasUI: boolean;
 }
 
+/** One session-facts delivery as this binding's session subscription observed it. */
+interface ObservedFacts {
+	readonly event: SessionEvent;
+	readonly session: SessionEventDelivery["session"];
+	readonly owner: OwnerReference;
+}
+
 /** The native surface a loader hands the factory, recording registrations and effects. */
 interface NativeSurface {
 	readonly api: OmpExtensionApi;
@@ -70,6 +83,8 @@ interface NativeSurface {
 	readonly notifications: string[];
 	/** The semantic session events the framework dispatched, in call order. */
 	readonly observed: Observed[];
+	/** The session-facts deliveries the framework dispatched, in call order. */
+	readonly factsObserved: ObservedFacts[];
 	/** Marker-area content in call order: the lines, or `undefined` for a cleared widget. */
 	readonly widgets: ReadonlyArray<readonly string[] | undefined>;
 	/** Loads a session, as the runner does at startup: `session_start`. */
@@ -82,6 +97,11 @@ interface NativeSurface {
 	navigateTree(facts: SessionFacts): void;
 	/** The process going away: `session_shutdown`. */
 	shutdown(facts: SessionFacts): void;
+	/**
+	 * Renames a session the way the harness does: the manager's own name becomes this one and
+	 * every listener it holds is notified, with no session event involved.
+	 */
+	renameSession(facts: SessionFacts, name: string): void;
 	/** A command context as the runner builds it for one session. */
 	commandContext(facts: SessionFacts): OmpCommandContext;
 	runCommand(ctx: OmpCommandContext): void;
@@ -103,16 +123,24 @@ type RunInitiationHandler = (
  * is the one an assembly would inject, so what the framework dispatched is observed through
  * the same surface an extension author gets.
  */
-function boundSurface(definition: ExtensionDefinition): NativeSurface {
+function boundSurface(
+	definition: ExtensionDefinition,
+	surface: { readonly nameChange?: "reported" | "absent" } = {},
+): NativeSurface {
 	const stateEntryType = `${definition.id}:state`;
 	const commandName = (definition.commands ?? [])[0]?.name;
 	const registrations = new Map<string, Registration>();
 	const appended: Array<{ customType: string; data: unknown }> = [];
 	const notifications: string[] = [];
 	const observed: Observed[] = [];
+	const factsObserved: ObservedFacts[] = [];
 	const widgets: Array<readonly string[] | undefined> = [];
+	/** The name each session manager holds, as the harness's own state holds it. */
+	const names = new Map<string, string>();
+	/** The listeners each session manager holds, as `onSessionNameChanged` keeps them. */
+	const nameListeners = new Map<string, (() => void)[]>();
 	// A closed vocabulary: one handler list per session event the loader can deliver.
-	const handlers: Record<OmpSessionEventType, SessionHandler[]> = {
+	const handlers: Record<string, SessionHandler[]> = {
 		session_start: [],
 		session_switch: [],
 		session_branch: [],
@@ -128,6 +156,24 @@ function boundSurface(definition: ExtensionDefinition): NativeSurface {
 			getSessionId: () => facts.sessionId,
 			// The branch as the session manager holds it: the State entries this session persisted.
 			getBranch: () => facts.statePayloads.map(data => ({ type: "custom", customType: stateEntryType, data })),
+			// The latest name, read live: the manager's own current value wins over the one the
+			// delivery's facts were built with, exactly as a rename would leave it.
+			getSessionName: () => names.get(facts.sessionId) ?? facts.name,
+			...(surface.nameChange === "absent"
+				? {}
+				: {
+						onSessionNameChanged: (listener: () => void) => {
+							const listeners = nameListeners.get(facts.sessionId) ?? [];
+							listeners.push(listener);
+							nameListeners.set(facts.sessionId, listeners);
+							return () => {
+								const held = nameListeners.get(facts.sessionId);
+								if (held === undefined) return;
+								const at = held.indexOf(listener);
+								if (at >= 0) held.splice(at, 1);
+							};
+						},
+					}),
 		},
 		hasUI: true,
 		ui: {
@@ -155,7 +201,7 @@ function boundSurface(definition: ExtensionDefinition): NativeSurface {
 		},
 		// This suite delivers session lifecycle events; the run-initiation hook is
 		// subscribed by binding but exercised by the injection suite.
-		on(event: OmpSessionEventType | OmpRoundEventType | "before_agent_start", handler: never): void {
+		on(event: string, handler: never): void {
 			// This suite drives the session axis; the run initiation has its own suite and the
 			// round axis has another.
 			if (event === "before_agent_start" || event === "agent_start" || event === "agent_end") return;
@@ -166,12 +212,16 @@ function boundSurface(definition: ExtensionDefinition): NativeSurface {
 	// The assembly's own subscription: what the framework hands a shared-logic session
 	// handler, recorded as the fact under test.
 	const events: SessionEventHandlers = {
-		session_start: (delivery: SessionEventDelivery) => observed.push(observationOf(delivery)),
-		session_end: (delivery: SessionEventDelivery) => observed.push(observationOf(delivery)),
+		session_start: (delivery: SessionEventDelivery) => void observed.push(observationOf(delivery)),
+		session_end: (delivery: SessionEventDelivery) => void observed.push(observationOf(delivery)),
+		session_facts: (delivery: SessionEventDelivery) =>
+			void factsObserved.push({ event: delivery.event, session: delivery.session, owner: delivery.owner }),
 	};
 
 	// The loader binds the extension for the session it is loading: one factory call.
-	const factory = frameworkOmp.ompAdapter(definition, { events });
+	const factory = frameworkOmp.ompAdapter(definition, {
+		factory: () => ({ subscriptions: [{ scope: "owner", events }] }),
+	});
 	if (!factory(api).bound) throw new Error(`the "${definition.id}" definition did not bind`);
 
 	return {
@@ -179,12 +229,17 @@ function boundSurface(definition: ExtensionDefinition): NativeSurface {
 		appended,
 		notifications,
 		observed,
+		factsObserved,
 		widgets,
 		startSession: facts => deliver({ type: "session_start" }, facts),
 		switchSession: (facts, reason) => deliver({ type: "session_switch", reason }, facts),
 		branchSession: (facts, reason) => deliver({ type: "session_branch", reason }, facts),
 		navigateTree: facts => deliver({ type: "session_tree" }, facts),
 		shutdown: facts => deliver({ type: "session_shutdown" }, facts),
+		renameSession: (facts, name) => {
+			names.set(facts.sessionId, name);
+			for (const listener of [...(nameListeners.get(facts.sessionId) ?? [])]) listener();
+		},
 		commandContext: facts => contextOf(facts),
 		runCommand(ctx: OmpCommandContext): void {
 			const registration = commandName === undefined ? undefined : registrations.get(commandName);
@@ -467,6 +522,50 @@ describe("session identity changes (F5, P7)", () => {
 		surface.switchSession(forked, "fork");
 		surface.runCommand(surface.commandContext(forked));
 
+		expect(surface.appended).toEqual([{ customType: STATE_ENTRY_TYPE, data: { enabled: false } }]);
+	});
+});
+
+describe("a rename the harness publishes is facts, not a boundary (P24)", () => {
+	test("the newest name reaches a session subscription where it happens, and nothing is reconciled", () => {
+		const surface = boundSurface(CODEBASE_TOOLS);
+		// The session's branch enables its State, so the start seeds `true` and renders its line.
+		const session: SessionFacts = { sessionId: "session-1", statePayloads: [{ enabled: true }] };
+		surface.startSession(session);
+		expect(surface.widgets).toEqual([["◈ codeBaseTools"]]);
+
+		surface.renameSession(session, "renamed-session");
+
+		// The harness's own name-change notification became one delivery: the session's facts, with
+		// the name the manager now holds, and no session event beside it.
+		expect(surface.factsObserved).toEqual([
+			{
+				event: { kind: "session_facts" },
+				session: { sessionId: "session-1", kind: "main", name: "renamed-session", unavailable: [] },
+				owner: { kind: "owner", key: "main:session-1" },
+			},
+		]);
+		// It is not a boundary: the run's own event log holds the start and nothing else, and the
+		// marker area was not re-published for it — the framework's behavior for a session event
+		// was skipped, so the cell the start seeded is untouched.
+		expect(surface.observed.map(entry => entry.event)).toEqual([{ kind: "session_start", reason: "initial" }]);
+		expect(surface.widgets).toEqual([["◈ codeBaseTools"]]);
+		// The session keeps its identity: the next toggle still flips the value the start seeded.
+		surface.runCommand(surface.commandContext(session));
+		expect(surface.appended).toEqual([{ customType: STATE_ENTRY_TYPE, data: { enabled: false } }]);
+	});
+
+	test("a manager that reports no name-change notification still binds and reconciles, and delivers no facts event", () => {
+		const surface = boundSurface(CODEBASE_TOOLS, { nameChange: "absent" });
+		const session: SessionFacts = { sessionId: "session-1", statePayloads: [{ enabled: true }] };
+
+		surface.startSession(session);
+		surface.runCommand(surface.commandContext(session));
+
+		// Nothing is synthesized where the harness publishes no such change, and the boundary the
+		// surface does report is reconciled exactly as before: the seeded value is what the toggle
+		// recorded rather than the declared default.
+		expect(surface.factsObserved).toEqual([]);
 		expect(surface.appended).toEqual([{ customType: STATE_ENTRY_TYPE, data: { enabled: false } }]);
 	});
 });

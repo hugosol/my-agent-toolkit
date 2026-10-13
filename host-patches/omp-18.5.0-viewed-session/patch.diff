@@ -1,0 +1,599 @@
+diff --git a/src/extensibility/extensions/index.ts b/src/extensibility/extensions/index.ts
+index 5785b5b..479a3b8 100644
+--- a/src/extensibility/extensions/index.ts
++++ b/src/extensibility/extensions/index.ts
+@@ -15,4 +15,5 @@ export {
+ export * from "./runner";
+ // Type guards
+ export * from "./types";
++export * from "./viewed-session";
+ export * from "./wrapper";
+diff --git a/src/extensibility/extensions/runner.ts b/src/extensibility/extensions/runner.ts
+index d926189..485faa4 100644
+--- a/src/extensibility/extensions/runner.ts
++++ b/src/extensibility/extensions/runner.ts
+@@ -36,6 +36,12 @@ import { type Theme, theme } from "@oh-my-pi/pi-tui/theme";
+ import type { AsyncJobSnapshot } from "../../session/agent-session";
+ import { MAIN_AGENT_ID } from "../../registry/agent-registry";
+ import type { SessionManager } from "../../session/session-manager";
++import {
++	type ViewedSessionFacts,
++	type ViewedSessionSource,
++	ViewedSessionOutlet,
++	viewedSessionFacts,
++} from "./viewed-session";
+ import { addFileDeleteFallback, addFileWriteFallback } from "../../tools/file-write-fallback";
+ import type { BranchHandler, NavigateTreeHandler, NewSessionHandler } from "../session-handler-types";
+ import { accumulateToolCallResult, buildAggregatedToolCallResult } from "../shared-events";
+@@ -487,6 +493,7 @@ export const TOP_LEVEL_AGENT: ExtensionAgentIdentity = Object.freeze({
+ 
+ export class ExtensionRunner {
+ 	#uiContext: ExtensionUIContext;
++	#viewedSession: ViewedSessionSource | undefined;
+ 	#mode: ExtensionMode = "print";
+ 	#toolApprovalPreviewWaiter?: (toolCallId: string) => Promise<void>;
+ 	#errorListeners: Set<ExtensionErrorListener> = new Set();
+@@ -1025,6 +1032,28 @@ export class ExtensionRunner {
+ 		return this.#uiContext !== noOpUIContext;
+ 	}
+ 
++	/**
++	 * Wire the outlet to the session this runner serves (see `createSessionViewedSessionSource`).
++	 * A runner without one still reports the agent identity and session name it owns and names
++	 * every other fact unavailable, rather than reporting another session's facts.
++	 */
++	setViewedSessionSource(source: ViewedSessionSource | undefined): void {
++		this.#viewedSession = source;
++	}
++
++	/**
++	 * Facts this runner can state without a session handle: the agent it serves, plus the session
++	 * manager's own id and name. A runner wired by {@link setViewedSessionSource} publishes the
++	 * displayed session's provider, model, actual effort and context as well.
++	 */
++	#ownSessionFacts(): ViewedSessionFacts {
++		return viewedSessionFacts({
++			agent: this.agent,
++			sessionId: this.sessionManager.getSessionId(),
++			name: this.sessionManager.getSessionName() ?? undefined,
++		});
++	}
++
+ 	getExtensionPaths(): string[] {
+ 		return this.extensions.map(e => e.path);
+ 	}
+@@ -1356,6 +1385,10 @@ export class ExtensionRunner {
+ 			ui: this.#uiContext,
+ 			mode: this.#mode,
+ 			getContextUsage: () => this.#getContextUsageFn(),
++			getViewedSession: () =>
++				(ViewedSessionOutlet.global().source ?? this.#viewedSession)?.read() ?? this.#ownSessionFacts(),
++			subscribeViewedSessionChanged: listener =>
++				(ViewedSessionOutlet.global().source ?? this.#viewedSession)?.subscribe(listener) ?? (() => {}),
+ 			compact: instructionsOrOptions => this.#compactFn(instructionsOrOptions),
+ 			getAsyncJobSnapshot: () => this.#getAsyncJobSnapshotFn(),
+ 			hasUI: this.hasUI(),
+diff --git a/src/extensibility/extensions/types.ts b/src/extensibility/extensions/types.ts
+index 12b5858..bdc62d5 100644
+--- a/src/extensibility/extensions/types.ts
++++ b/src/extensibility/extensions/types.ts
+@@ -87,6 +87,7 @@ import type { EphemeralTurnOptions, EphemeralTurnResult } from "../../session/ag
+ import type { CompactMode } from "../../session/compact-modes";
+ import type { CustomMessagePayload } from "../../session/messages";
+ import type { ReadonlySessionManager, SessionManager } from "../../session/session-manager";
++import type { ViewedSessionFacts } from "./viewed-session";
+ import type { BashToolInput, GlobToolInput, GrepToolInput, ReadToolInput, WriteToolInput } from "../../tools";
+ import type { GlobToolDetails } from "@oh-my-pi/pi-tui/tools/glob";
+ import type { GrepToolDetails } from "@oh-my-pi/pi-tui/tools/grep";
+@@ -385,6 +386,15 @@ export interface ExtensionUIContext {
+ // ============================================================================
+ 
+ export type { ContextUsage };
++export type {
++	ViewedSessionContextUsage,
++	ViewedSessionFactName,
++	ViewedSessionFacts,
++	ViewedSessionSessionLike,
++	ViewedSessionSource,
++	ViewedSessionTarget,
++	ViewedSessionView,
++} from "./viewed-session";
+ 
+ export interface CompactOptions {
+ 	onComplete?: (result: CompactionResult) => void;
+@@ -487,6 +497,21 @@ export interface ExtensionContext {
+ 	mode: ExtensionMode;
+ 	/** Get current context usage for the active model. */
+ 	getContextUsage(): ContextUsage | undefined;
++	/**
++	 * Read the session the operator is currently viewing: this session when the host has no
++	 * separate view (print, RPC, a subagent's own binding), the focused session in the
++	 * interactive TUI. Read-only — viewing never changes this session's execution, ownership or
++	 * write authority — and every fact the host cannot obtain is named in the snapshot's
++	 * `unavailable` list instead of being guessed.
++	 */
++	getViewedSession(): ViewedSessionFacts;
++	/**
++	 * Subscribe to viewed-session changes: the view switching to another session, the viewed
++	 * session becoming invalid, or the viewed session's own model, actual effort or context
++	 * changing. Returns the unsubscribe function. Every delivery is a fresh snapshot; re-read
++	 * with {@link getViewedSession} rather than caching the payload.
++	 */
++	subscribeViewedSessionChanged(listener: (facts: ViewedSessionFacts) => void): () => void;
+ 	/** Get a read-only snapshot of async jobs owned by this session. */
+ 	getAsyncJobSnapshot(): AsyncJobSnapshot | null;
+ 	/** Compact the session context (interactive mode shows UI). */
+diff --git a/src/extensibility/extensions/viewed-session.ts b/src/extensibility/extensions/viewed-session.ts
+new file mode 100644
+index 0000000..7d07805
+--- /dev/null
++++ b/src/extensibility/extensions/viewed-session.ts
+@@ -0,0 +1,274 @@
++/**
++ * The viewed session: the public read-only outlet for "which session is this host displaying,
++ * and what are its facts right now".
++ *
++ * A session's own extension context already answers what *its* session is doing. It cannot
++ * answer what the operator is *looking at*, which differs as soon as the interactive view is
++ * focused on a subagent. This module owns that fact once:
++ *
++ * - {@link ViewedSessionFacts} is the public snapshot — the displayed session's identity, its
++ *   direct parent, its latest display name, its provider/model, its actual effective effort and
++ *   its context usage. A fact the host cannot obtain is named in `unavailable` instead of being
++ *   guessed, and no private controller or rendered text is read to fill a gap.
++ * - {@link ViewedSessionSource} is the read-and-notify pair an extension consumes through
++ *   `ctx.getViewedSession()` / `ctx.subscribeViewedSessionChanged()`.
++ * - {@link ViewedSessionBroadcaster} is the change bus: it watches the live session behind the
++ *   current view and fans a fresh snapshot out when the target or its facts change.
++ * - {@link ViewedSessionOutlet} is the process-wide registration point for the one mode that
++ *   owns a view. Nothing registered means there is no separate view, so every runner reports its
++ *   own session as the displayed one.
++ *
++ * Read-only by construction: nothing here reaches a session's execution, ownership or write
++ * authority, so viewing a session can never change what that session is doing.
++ */
++import { logger } from "@oh-my-pi/pi-utils";
++
++/** A fact of the displayed session that a host may be unable to obtain. */
++export type ViewedSessionFactName = "sessionId" | "name" | "provider" | "model" | "effort" | "context";
++
++/** Context usage of the displayed session: estimated tokens in use and the window they fill. */
++export interface ViewedSessionContextUsage {
++	/** Estimated context tokens in use. */
++	tokens: number;
++	/** Context window of the model the displayed session runs. */
++	contextWindow: number;
++}
++
++/**
++ * One snapshot of the session the host currently displays.
++ *
++ * Every optional field that is absent is also named in {@link ViewSessionFacts.unavailable}:
++ * an absent value always means "this host could not obtain it here", never "zero", "default" or
++ * "same as the main session".
++ */
++export interface ViewedSessionFacts {
++	/** Identity of the displayed agent: registry id, main/sub kind and its direct parent. */
++	agent: {
++		id: string;
++		kind: "main" | "sub";
++		parentId?: string;
++	};
++	/** Session id the harness reports for the displayed session. */
++	sessionId?: string;
++	/** Latest display name of the displayed session. */
++	name?: string;
++	/** Provider of the displayed session's current model. */
++	provider?: string;
++	/** Id of the displayed session's current model. */
++	model?: string;
++	/** The displayed session's actual effective effort (its thinking level), not the configured intent. */
++	effort?: string;
++	/** Context usage of the displayed session. */
++	context?: ViewedSessionContextUsage;
++	/** Every fact above this host could not obtain; each name here has an absent value above. */
++	unavailable: readonly ViewedSessionFactName[];
++}
++
++/** Raw facts a host mode has about the session it displays, before unavailable facts are named. */
++export interface ViewedSessionTarget {
++	agent: {
++		id: string;
++		kind: "main" | "sub";
++		parentId?: string;
++	};
++	sessionId?: string;
++	name?: string;
++	provider?: string;
++	model?: string;
++	effort?: string;
++	context?: ViewedSessionContextUsage;
++}
++
++/**
++ * Project raw host facts into the public snapshot, naming every fact that is absent. This is
++ * the single place the "absent means unavailable" rule is applied, so a new host mode cannot
++ * publish a snapshot that hides the difference.
++ */
++export function viewedSessionFacts(target: ViewedSessionTarget): ViewedSessionFacts {
++	const unavailable: ViewedSessionFactName[] = [];
++	const fact = <T>(name: ViewedSessionFactName, value: T | undefined): T | undefined => {
++		if (value === undefined) unavailable.push(name);
++		return value;
++	};
++	return {
++		agent: {
++			id: target.agent.id,
++			kind: target.agent.kind,
++			...(target.agent.parentId === undefined ? {} : { parentId: target.agent.parentId }),
++		},
++		sessionId: fact("sessionId", target.sessionId),
++		name: fact("name", target.name),
++		provider: fact("provider", target.provider),
++		model: fact("model", target.model),
++		effort: fact("effort", target.effort),
++		context: fact("context", target.context),
++		unavailable,
++	};
++}
++
++/** Live session facts and change events, as much of a session as the outlet reads. */
++export interface ViewedSessionSessionLike {
++	/** Latest display name of that session. */
++	readonly sessionName?: string | undefined;
++	/** Session id the harness reports. */
++	readonly sessionId?: string | undefined;
++	/** Current model of that session. */
++	readonly model?: { readonly provider: string; readonly id: string } | undefined;
++	/** Actual effective effort of that session. */
++	readonly thinkingLevel?: string | undefined;
++	/** Context usage of that session, when it can be measured. */
++	getContextUsage(): ViewedSessionContextUsage | undefined;
++	/** Subscribe to that session's own events (its `model_changed`/`thinking_level_changed`/message events). */
++	subscribe(listener: (event: { readonly type: string }) => void): () => void;
++}
++
++/** The session a host mode displays right now, plus the live session behind it. */
++export interface ViewedSessionView {
++	readonly target: ViewedSessionTarget;
++	/** Live session behind the target; its events are the fact changes of that target. */
++	readonly session?: ViewedSessionSessionLike;
++}
++
++/** Read-and-notify pair behind `ctx.getViewedSession()` and `ctx.subscribeViewedSessionChanged()`. */
++export interface ViewedSessionSource {
++	/** Current snapshot; always re-read, never a cached or stale copy. */
++	read(): ViewedSessionFacts;
++	/** Delivers a fresh snapshot whenever the displayed target or its facts change; returns the unsubscribe. */
++	subscribe(listener: (facts: ViewedSessionFacts) => void): () => void;
++}
++
++/**
++ * Session events that can change the snapshot's model, effort or context. Anything else —
++ * token deltas, tool progress, queue updates — leaves every published fact untouched.
++ */
++const FACT_CHANGE_EVENTS: Record<string, true> = {
++	model_changed: true,
++	retry_fallback_applied: true,
++	thinking_level_changed: true,
++	message_start: true,
++	message_end: true,
++	agent_end: true,
++	auto_compaction_end: true,
++};
++
++/**
++ * Change bus over one {@link ViewedSessionView}: reads the view on demand, follows the live
++ * session behind it (re-pointing when the view moves), and delivers a fresh snapshot to every
++ * subscriber on {@link notify}.
++ *
++ * `notify` is the host's own signal, so the semantics stay explicit: a target switch or an
++ * invalidation is a host transition and notifies directly, while a same-target fact change is
++ * a session event and notifies through the watch.
++ */
++export class ViewedSessionBroadcaster implements ViewedSessionSource {
++	#listeners = new Set<(facts: ViewedSessionFacts) => void>();
++	#watched: ViewedSessionSessionLike | undefined;
++	#unwatch: (() => void) | undefined;
++
++	constructor(private readonly view: () => ViewedSessionView) {}
++
++	read(): ViewedSessionFacts {
++		return viewedSessionFacts(this.view().target);
++	}
++
++	subscribe(listener: (facts: ViewedSessionFacts) => void): () => void {
++		this.#listeners.add(listener);
++		this.#follow();
++		let subscribed = true;
++		return () => {
++			if (!subscribed) return;
++			subscribed = false;
++			this.#listeners.delete(listener);
++			if (this.#listeners.size === 0) this.#unwatchSession();
++		};
++	}
++
++	/** Re-read the view and deliver the current snapshot to every subscriber. */
++	notify(): void {
++		if (this.#listeners.size === 0) {
++			this.#follow();
++			return;
++		}
++		this.#follow();
++		const facts = this.read();
++		for (const listener of [...this.#listeners]) {
++			try {
++				listener(facts);
++			} catch (error) {
++				// A consumer's throw must never take down the agent loop or hide the other subscribers.
++				logger.warn("Viewed session change listener threw", { error: String(error) });
++			}
++		}
++	}
++
++	/** Drop every subscriber and the session watch. */
++	dispose(): void {
++		this.#listeners.clear();
++		this.#unwatchSession();
++	}
++
++	/** Point the fact watch at the session behind the current view, following view moves. */
++	#follow(): void {
++		const session = this.view().session;
++		if (session === this.#watched) return;
++		this.#unwatchSession();
++		this.#watched = session;
++		this.#unwatch = session?.subscribe(event => {
++			if (FACT_CHANGE_EVENTS[event.type] === true) this.notify();
++		});
++	}
++
++	#unwatchSession(): void {
++		this.#unwatch?.();
++		this.#unwatch = undefined;
++		this.#watched = undefined;
++	}
++}
++
++/**
++ * A view over one live session: the session the host displays when it has no separate view.
++ * Identity comes from the agent the runner serves; name, model, effort and context come from
++ * the session itself.
++ */
++export function createSessionViewedSessionSource(options: {
++	readonly agent: { readonly id: string; readonly kind: "main" | "sub"; readonly parentId?: string };
++	readonly session: ViewedSessionSessionLike;
++}): ViewedSessionSource {
++	const target = (): ViewedSessionTarget => ({
++		agent: options.agent,
++		sessionId: options.session.sessionId,
++		name: options.session.sessionName,
++		provider: options.session.model?.provider,
++		model: options.session.model?.id,
++		effort: options.session.thinkingLevel,
++		context: options.session.getContextUsage(),
++	});
++	return new ViewedSessionBroadcaster(() => ({ target: target(), session: options.session }));
++}
++
++/**
++ * Process-wide registration point for the one host mode that owns a view (the interactive TUI).
++ * A mode registers its source here so that every runner in the process — the main session's and
++ * each subagent's — observes the same view. Nothing registered means no separate view exists and
++ * each runner reports its own session.
++ */
++export class ViewedSessionOutlet {
++	static #global: ViewedSessionOutlet | undefined;
++
++	/** The process-wide outlet. */
++	static global(): ViewedSessionOutlet {
++		return (ViewedSessionOutlet.#global ??= new ViewedSessionOutlet());
++	}
++
++	#source: ViewedSessionSource | undefined;
++
++	/** Register the mode-owned view source, or clear it with `undefined` on teardown. */
++	setSource(source: ViewedSessionSource | undefined): void {
++		this.#source = source;
++	}
++
++	/** The registered view source, if a mode owns a view in this process. */
++	get source(): ViewedSessionSource | undefined {
++		return this.#source;
++	}
++}
+diff --git a/src/modes/controllers/session-focus-controller.ts b/src/modes/controllers/session-focus-controller.ts
+index 2f1c240..71563ee 100644
+--- a/src/modes/controllers/session-focus-controller.ts
++++ b/src/modes/controllers/session-focus-controller.ts
+@@ -53,6 +53,11 @@ export class SessionFocusController {
+ 		private ctx: InteractiveModeContext,
+ 		private registry: AgentRegistry = AgentRegistry.global(),
+ 		private lifecycle: () => AgentLifecycleManager = () => AgentLifecycleManager.global(),
++		/**
++		 * Called once the view has attached to another session — a focus switch, or the fallback
++		 * to main when a focused agent dies. The viewed-session outlet publishes the new target here.
++		 */
++		private readonly onViewAttached?: () => void,
+ 	) {}
+ 
+ 	get focusedAgentId(): string | undefined {
+@@ -235,6 +240,7 @@ export class SessionFocusController {
+ 			this.ctx.updatePendingMessagesDisplay();
+ 			this.ctx.updateEditorBorderColor();
+ 			this.ctx.ui.requestRender();
++			this.onViewAttached?.();
+ 			return true;
+ 		} catch (error) {
+ 			if (generation === this.#attachGeneration) {
+diff --git a/src/modes/interactive-mode.ts b/src/modes/interactive-mode.ts
+index 9bbe485..9d567ad 100644
+--- a/src/modes/interactive-mode.ts
++++ b/src/modes/interactive-mode.ts
+@@ -86,6 +86,11 @@ import type {
+ 	ExtensionWidgetOptions,
+ } from "../extensibility/extensions";
+ import type { CompactOptions } from "../extensibility/extensions/types";
++import {
++	type ViewedSessionView,
++	ViewedSessionBroadcaster,
++	ViewedSessionOutlet,
++} from "../extensibility/extensions/viewed-session";
+ import type { Skill } from "../extensibility/skills";
+ import type { FileSlashCommand } from "../extensibility/slash-commands";
+ import { loadSlashCommands } from "../extensibility/slash-commands";
+@@ -1580,6 +1585,8 @@ export class InteractiveMode implements InteractiveModeContext {
+ 	readonly #inputController: InputController;
+ 	readonly #selectorController: SelectorController;
+ 	readonly #focusController: SessionFocusController;
++	/** The interactive view's own outlet source: the focused session, or main while nothing is focused. */
++	readonly #viewedSession: ViewedSessionBroadcaster;
+ 	get viewSession(): AgentSession {
+ 		return this.#focusController.target ?? this.session;
+ 	}
+@@ -1619,6 +1626,32 @@ export class InteractiveMode implements InteractiveModeContext {
+ 		this.#focusController.invalidatePendingFocus();
+ 	}
+ 
++	/**
++	 * What the viewed-session outlet reads: the transcript's current session and the live session
++	 * behind it — the focused agent's own session while focused, so its type changes are that
++	 * target's fact changes.
++	 */
++	#viewedSessionView(): ViewedSessionView {
++		const session = this.viewSession;
++		const focusedId = this.#focusController.focusedAgentId;
++		return {
++			target: {
++				agent: {
++					id: focusedId ?? MAIN_AGENT_ID,
++					kind: focusedId ? "sub" : "main",
++					...(focusedId ? { parentId: AgentRegistry.global().get(focusedId)?.parentId } : {}),
++				},
++				sessionId: session.sessionId,
++				name: session.sessionName,
++				provider: session.model?.provider,
++				model: session.model?.id,
++				effort: session.thinkingLevel,
++				context: session.getContextUsage(),
++			},
++			session,
++		};
++	}
++
+ 	resolveViewportClickCandidates(index: number): string[] {
+ 		return this.composer.viewportClickCandidates(index);
+ 	}
+@@ -1928,7 +1961,12 @@ export class InteractiveMode implements InteractiveModeContext {
+ 		this.#todoCommandController = new TodoCommandController(this);
+ 		this.#liveCommandController = new LiveCommandController(this);
+ 		this.#selectorController = new SelectorController(this);
+-		this.#focusController = new SessionFocusController(this);
++		this.#viewedSession = new ViewedSessionBroadcaster(() => this.#viewedSessionView());
++		this.#focusController = new SessionFocusController(this, undefined, undefined, () => this.#viewedSession.notify());
++		// The view belongs to this process rather than to one binding, so the outlet is registered
++		// here: an extension bound to any session then reads the session the operator is looking at,
++		// instead of its own.
++		ViewedSessionOutlet.global().setSource(this.#viewedSession);
+ 		this.#inputController = new InputController(this);
+ 		this.collabController = new CollabController(this);
+ 		this.session.setPromptDropped?.(prompt => this.#restoreDroppedPrompt(prompt));
+@@ -6715,6 +6753,10 @@ export class InteractiveMode implements InteractiveModeContext {
+ 		}
+ 		this.#eventBusUnsubscribers = [];
+ 		this.#observerRegistry.dispose();
++		// The view is gone with this mode: drop the process-wide registration first, so no runner
++		// can read a disposed target, then release the outlet's own subscribers and fact watch.
++		ViewedSessionOutlet.global().setSource(undefined);
++		this.#viewedSession.dispose();
+ 		this.#agentRegistryUnsubscribe?.();
+ 		this.#agentRegistryUnsubscribe = undefined;
+ 		this.#agentRegistrySubscriptionTarget = undefined;
+diff --git a/src/sdk.ts b/src/sdk.ts
+index bb5a93a..d9b2872 100644
+--- a/src/sdk.ts
++++ b/src/sdk.ts
+@@ -102,6 +102,7 @@ import { discoverCustomToolPaths, loadCustomTools, type ToolPathWithSource } fro
+ import type { CustomTool, CustomToolContext, CustomToolSessionEvent } from "./extensibility/custom-tools/types";
+ import {
+ 	bindPreparedExtensions,
++	createSessionViewedSessionSource,
+ 	discoverAndLoadExtensions,
+ 	discoverExtensionPaths,
+ 	EXTENSION_HANDLER_TIMEOUT_MS,
+@@ -3216,6 +3217,15 @@ async function createAgentSessionScoped(options: CreateAgentSessionOptions): Pro
+ 		// (The builtin autoresearch extension is unconditionally loaded above, so this scenario
+ 		// is unreachable; unconditional runner construction keeps that invariant explicit and
+ 		// prevents future optional extensions from silently re-opening the hole.)
++		// Identity of the agent this session runs — what its extensions see as `ctx.agent`, and what
++		// the viewed-session outlet reports for a runner that has no separate view.
++		const agentIdentity = Object.freeze({
++			kind: isSubagentSession ? ("sub" as const) : ("main" as const),
++			id: resolvedAgentId,
++			name: resolvedAgentName,
++			depth: taskDepth,
++			...(options.parentAgentId ? { parentId: options.parentAgentId } : {}),
++		});
+ 		const extensionRunner: ExtensionRunner = new ExtensionRunner(
+ 			extensionsResult.extensions,
+ 			extensionsResult.runtime,
+@@ -3226,13 +3236,7 @@ async function createAgentSessionScoped(options: CreateAgentSessionOptions): Pro
+ 			settings,
+ 			localProtocolOptions,
+ 			() => (hasSession ? session.getAsyncJobSnapshot() : null),
+-			Object.freeze({
+-				kind: isSubagentSession ? "sub" : "main",
+-				id: resolvedAgentId,
+-				name: resolvedAgentName,
+-				depth: taskDepth,
+-				...(options.parentAgentId ? { parentId: options.parentAgentId } : {}),
+-			}),
++			agentIdentity,
+ 		);
+ 
+ 		credentialDisabledTarget = extensionRunner;
+@@ -4570,6 +4574,11 @@ async function createAgentSessionScoped(options: CreateAgentSessionOptions): Pro
+ 		});
+ 		hasSession = true;
+ 		credentialNoticeSession = session;
++		// The outlet's own-session default: what this session's extensions read as the displayed
++		// session when no mode owns a separate view. Wiring it to the live session is what keeps
++		// its provider, model, actual effort and context in that snapshot; a mode that owns a view
++		// (the interactive TUI) registers its own source on the process-wide outlet instead.
++		extensionRunner.setViewedSessionSource(createSessionViewedSessionSource({ agent: agentIdentity, session }));
+ 		if (ownedSkillDescriptionStore) {
+ 			// Let in-flight compressions land before releasing the file.
+ 			session.addDisposer(
+diff --git a/src/session/agent-session.ts b/src/session/agent-session.ts
+index da11d8e..2f4d697 100644
+--- a/src/session/agent-session.ts
++++ b/src/session/agent-session.ts
+@@ -154,6 +154,7 @@ import { emitSessionShutdownEvent, TOP_LEVEL_AGENT } from "../extensibility/exte
+ import { extensionEventFromSessionEvent } from "../extensibility/extensions/lifecycle-mirror";
+ import { ManagedTimers } from "../extensibility/extensions/managed-timers";
+ import { createExtensionModelQuery } from "../extensibility/extensions/model-api";
++import { createSessionViewedSessionSource } from "../extensibility/extensions/viewed-session";
+ import type { CompactOptions, ContextUsage } from "../extensibility/extensions/types";
+ import type { CustomCommandContext } from "../extensibility/custom-commands/types";
+ import { SkillDescriptionCatalog } from "../extensibility/skill-descriptions";
+@@ -7665,6 +7666,10 @@ export class AgentSession implements SettingsScope {
+ 			return this.#extensionRunner.createCommandContext();
+ 		}
+ 
++		// A hand-constructed session carries no runner, so nothing wired this session's outlet. The
++		// displayed session is then this session, exactly as a runner without a separate view
++		// reports it.
++		const viewedSession = createSessionViewedSessionSource({ agent: TOP_LEVEL_AGENT, session: this });
+ 		return {
+ 			ui: noOpUIContext,
+ 			mode: "print",
+@@ -7692,6 +7697,8 @@ export class AgentSession implements SettingsScope {
+ 				void this.dispose().finally(() => process.exit(0));
+ 			},
+ 			getContextUsage: () => this.getContextUsage(),
++			getViewedSession: () => viewedSession.read(),
++			subscribeViewedSessionChanged: listener => viewedSession.subscribe(listener),
+ 			getAsyncJobSnapshot: () => this.getAsyncJobSnapshot(),
+ 			waitForIdle: () => this.waitForIdle(),
+ 			newSession: async options => {

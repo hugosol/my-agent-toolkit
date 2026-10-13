@@ -1,5 +1,5 @@
 {
-  "$comment": "Single checkable record of the fixed verification baseline: harness revision anchor, run/acceptance artifact, and dependency lockfiles. Checked by tests/harness-dock/baseline.test.ts. Support status and admission policy stay in framework/docs/harness-support.md; this file records only the correspondence between the anchor, the artifact actually run, and the lockfiles.",
+  "$comment": "Single checkable record of the fixed verification baseline: harness revision anchor, run/acceptance artifact, and dependency lockfiles. Checked by tests/harness-dock/baseline.test.ts. Support status and the verification policy stay in framework/docs/harness-support.md; this file records only the correspondence between the anchor, the artifact actually run, and the lockfiles.",
   "recorded": "2026-10-07",
   "harness": {
     "package": "@oh-my-pi/pi-coding-agent",

@@ -4,7 +4,7 @@
  *
  * The extension is driven exactly as the loader drives it: its own OMP assembly binds the
  * definition against the double, and the command the framework registered runs with a doubled
- * session context. The panel is a fake transport injected through the extension's own seam, so a
+ * session context. The panel is a fake HTTP call injected through the extension's own seam, so a
  * test can hold a `register` on the wire and then interrupt it — with an `off`, with a session
  * boundary, or with a second command.
  *
@@ -15,11 +15,10 @@
  */
 import { describe, expect, test } from "bun:test";
 import {
-	type PushFetchInit,
-	type PushHttpResponse,
-	type PushTransport,
-	setPushTransportForTest,
+	type PanelRequest,
+	setPanelRequestForTest,
 } from "../../extensions/connect-bot/shared-logic/panel/client";
+import type { HttpRequestOptions } from "../../framework/public";
 import { botSessions } from "../../extensions/connect-bot/shared-logic/session/session";
 import connectBot from "../../extensions/connect-bot/harnesses/omp";
 import { type OmpDouble, ompDouble } from "./support/omp-double";
@@ -36,17 +35,15 @@ const DISCONNECTING = "正在断开 omp-bot 面板，请稍后重试";
 /** Off with the panel reachable. */
 const DISCONNECTED = "已断开 omp-bot 面板";
 
-/** One outbound request the extension made, as the transport received it. */
+/** One outbound request the extension made, as the framework's call received it. */
 interface Request {
 	readonly url: string;
-	readonly init: PushFetchInit;
+	readonly init: HttpRequestOptions;
 }
 
 /** The panel's answer to one request. */
-const panelAnswer = (status: number, body: unknown): PushHttpResponse => ({
-	status,
-	text: async () => JSON.stringify(body),
-});
+const panelAnswer = (status: number, body: unknown): Response =>
+	new Response(JSON.stringify(body), { status });
 
 /** The registered receipt a reachable panel answers a `register` with. */
 const registered = (onlineCount: number) => ({ outcome: "registered", onlineCount });
@@ -60,7 +57,7 @@ interface WireEnvelope {
 
 /** Reads one sent request body as the `{sessionId, kind, data?}` envelope the contract fixes. */
 function envelopeOf(request: Request): WireEnvelope {
-	const parsed: unknown = JSON.parse(request.init.body);
+	const parsed: unknown = JSON.parse(request.init.body ?? "");
 	if (parsed === null || typeof parsed !== "object") throw new Error("connect-bot sent a body that is not an object");
 	if (!("sessionId" in parsed) || typeof parsed.sessionId !== "string") throw new Error("no session id");
 	if (!("kind" in parsed) || typeof parsed.kind !== "string") throw new Error("no kind");
@@ -68,10 +65,10 @@ function envelopeOf(request: Request): WireEnvelope {
 }
 
 /** Binds the extension against a fresh double and injects one panel. */
-function bound(transport: PushTransport): OmpDouble {
+function bound(request: PanelRequest): OmpDouble {
 	const double = ompDouble();
 	connectBot(double.api);
-	setPushTransportForTest(transport);
+	setPanelRequestForTest(request);
 	return double;
 }
 
@@ -81,8 +78,8 @@ async function settleAll(): Promise<void> {
 }
 
 /** A request the test holds on the wire and releases on its own terms. */
-function heldRequest(): { readonly promise: Promise<PushHttpResponse>; readonly release: (response: PushHttpResponse) => void } {
-	const { promise, resolve } = Promise.withResolvers<PushHttpResponse>();
+function heldRequest(): { readonly promise: Promise<Response>; readonly release: (response: Response) => void } {
+	const { promise, resolve } = Promise.withResolvers<Response>();
 	return { promise, release: resolve };
 }
 
@@ -95,7 +92,7 @@ describe("an invalidated registration attempt never creates effects (E7, P28)", 
 	test("an off invalidates a register still in flight", async () => {
 		const held = heldRequest();
 		const requests: Request[] = [];
-		const double = bound(async (url, init) => {
+		const double = bound(async (url, init = {}) => {
 			const request = { url, init };
 			requests.push(request);
 			return envelopeOf(request).kind === "register" ? held.promise : panelAnswer(200, {});
@@ -121,7 +118,7 @@ describe("an invalidated registration attempt never creates effects (E7, P28)", 
 	test("the end of the owner's life invalidates a register still in flight, even if the owner returns", async () => {
 		const held = heldRequest();
 		const requests: Request[] = [];
-		const double = bound(async (url, init) => {
+		const double = bound(async (url, init = {}) => {
 			const request = { url, init };
 			requests.push(request);
 			return envelopeOf(request).kind === "register" ? held.promise : panelAnswer(200, {});
@@ -151,7 +148,7 @@ describe("valid registrations are serialized, not merged (E7, P28)", () => {
 		const first = heldRequest();
 		let registerCount = 0;
 		const requests: Request[] = [];
-		const double = bound(async (url, init) => {
+		const double = bound(async (url, init = {}) => {
 			const request = { url, init };
 			requests.push(request);
 			if (envelopeOf(request).kind !== "register") return panelAnswer(200, {});
@@ -188,7 +185,7 @@ describe("the disconnecting window refuses a new activation and then reopens (E7
 		const unregister = heldRequest();
 		let registerCount = 0;
 		const requests: Request[] = [];
-		const double = bound(async (url, init) => {
+		const double = bound(async (url, init = {}) => {
 			const request = { url, init };
 			requests.push(request);
 			const kind = envelopeOf(request).kind;

@@ -92,7 +92,7 @@ function nativeDouble(options: { readonly hasUI?: boolean } = {}): NativeDouble 
 		appendEntry(customType: string, data?: unknown): void {
 			appended.push({ customType, data });
 		},
-		on(event: OmpSessionEventType | OmpRoundEventType | "before_agent_start", handler: never): void {
+		on(event: string, handler: never): void {
 			if (event === "before_agent_start") runHooks.push(handler as RunInitiationHandler);
 		},
 	};

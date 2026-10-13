@@ -57,12 +57,16 @@ export interface StateSessionChange {
 /**
  * One store belongs to one adapter factory and is shared by that factory's bindings.
  * Different factories remain independent, even when their extension names are equal.
- * The process-wide Marker area reads these stores but does not own their values.
+ * The process-wide Marker area reads these stores but does not own their values: it
+ * asks each of them which Owners it serves to decide which registration answers for
+ * the seat it publishes for.
  */
 export class StateStore {
 	readonly #field: string;
 	readonly #persistence: StatePersistence;
 	readonly #cells = new Map<string, Map<string, StateValue>>();
+	/** Every Owner this store has served: a boundary it reconciled, or a cell it wrote. */
+	readonly #served = new Set<string>();
 	readonly #ownerLives = new OwnerLives();
 
 	constructor(rules: StateRules) {
@@ -74,6 +78,23 @@ export class StateStore {
 		return {
 			read: field => this.#cells.get(ownerKey)?.get(field) ?? DEFAULT_STATE_VALUE,
 		};
+	}
+
+	/**
+	 * Whether this store answers for an Owner.
+	 *
+	 * The process-wide Marker area is one area while its registrations come from one factory call per
+	 * session, so it has to decide which store answers for a seat, and that is the store that serves
+	 * the Owner the seat names. An Owner boundary this store reconciled counts, and so does a cell it
+	 * wrote; a store that never served an Owner does not, whatever another registration holds — the
+	 * session a binding is bound to cannot speak for a seat that is not its Owner.
+	 *
+	 * A retired Owner keeps counting. Its values are gone with it, so the store that served it is the
+	 * one that reads the declared default for it — the answer a clear needs — rather than leaving the
+	 * seat to a registration of an earlier session that happened to hold the same key.
+	 */
+	serves(ownerKey: string): boolean {
+		return this.#served.has(ownerKey);
 	}
 
 	/**
@@ -116,6 +137,27 @@ export class StateStore {
 	}
 
 	/**
+	 * The capability of a delivery whose session resolved no owner at all.
+	 *
+	 * There is no cell for it to read and no life to retain: the declared value is the declared
+	 * default and every write and notice is dropped. That is the `unresolved` rule made concrete —
+	 * no owning main session could be resolved, so the value reads as the declared default and no
+	 * path may write it — and it is deliberately not the capability a retired owner gets, which
+	 * `capability` mints against that owner's own life.
+	 */
+	inertCapability(): OwnerCapabilityHandle {
+		return {
+			state: {
+				read: () => DEFAULT_STATE_VALUE,
+				write: () => {},
+			},
+			feedback: {
+				notify: () => {},
+			},
+		};
+	}
+
+	/**
 	 * Cell retirement and capability revocation are one operation before any handler.
 	 * Every start reopens the life, including memory fields that must never be seeded.
 	 * Only the final branch payload supplies a persisted value; invalid payloads use the
@@ -124,6 +166,7 @@ export class StateStore {
 	reconcile(change: StateSessionChange): void {
 		const { owner, event } = change;
 		if (owner.kind !== "owner") return;
+		this.#served.add(owner.key);
 
 		if (event.kind === "session_end") {
 			this.#cells.delete(owner.key);
@@ -154,6 +197,7 @@ export class StateStore {
 		if (cell === undefined) {
 			cell = new Map<string, StateValue>();
 			this.#cells.set(target.ownerKey, cell);
+			this.#served.add(target.ownerKey);
 		}
 		cell.set(this.#field, value);
 

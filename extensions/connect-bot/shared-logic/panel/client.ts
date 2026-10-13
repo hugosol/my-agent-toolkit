@@ -3,12 +3,15 @@
  * the panel protocol's constants live.
  *
  * The protocol is frozen and never configuration: one route, one envelope shape, one request
- * shape. The platform call that performs a request is *installed* rather than imported — the
- * extension's harness assembly supplies it (bun's `fetch`, with `proxy: false`) — so shared
- * logic names no platform API, and a suite replaces the transport with a fake to observe the
- * production URL, request init and response parsing without touching `globalThis`.
+ * shape. The call that performs a request is the framework's own general HTTP module
+ * (`framework/public.ts`), imported here rather than installed by the harness assembly: the
+ * extension states the direct connection it means (`proxy: false`) and its own configured wait
+ * (`timeoutMs`), and the framework's client makes the connection and imposes the budget. The
+ * extension therefore carries no transport of its own, and a suite replaces the framework's one
+ * call with a fake of the same interface to observe the production URL, request options and
+ * response parsing without touching `globalThis`.
  */
-import { CONNECT_BOT } from "../../definition";
+import { type HttpRequestOptions, request } from "../../../../framework/public";
 
 /** Closed kind enum of the wire contract; each kind carries its own `data` shape. */
 export type PushKind = "register" | "heartbeat" | "state" | "unregister";
@@ -26,48 +29,22 @@ export interface PushEnvelope {
 /** The single session-event route. Protocol constant, never configuration. */
 export const EVENTS_PATH = "/api/sessions/events";
 
-/** Minimal response surface used here; the toolkit tsconfig carries no DOM fetch types. */
-export interface PushHttpResponse {
-	readonly status: number;
-	text(): Promise<string>;
-}
+/**
+ * The framework's public HTTP call, as this extension names it: one request and the platform's
+ * own response. The extension never writes its own transport, so a suite stands in an
+ * implementation of exactly this interface.
+ */
+export type PanelRequest = (url: string, options?: HttpRequestOptions) => Promise<Response>;
 
-/** Minimal request surface used here; `proxy` is a bun-only fetch option. */
-export interface PushFetchInit {
-	readonly method: "POST";
-	readonly headers: Record<string, string>;
-	readonly body: string;
-	readonly signal: AbortSignal;
-	/** Never route a panel request through an ambient/`http_proxy` proxy. */
-	readonly proxy: false;
-}
-
-/** The one outbound dependency: perform a single request. */
-export type PushTransport = (url: string, init: PushFetchInit) => Promise<PushHttpResponse>;
-
-/** The transport the harness assembly installed: the platform's own outbound call. */
-let installedTransport: PushTransport | undefined;
-
-/** The replacement a suite injected, when it injected one. */
-let replacementTransport: PushTransport | undefined;
+/** The call every panel request goes through: the framework's own, until a suite stands in one. */
+let panelRequest: PanelRequest = request;
 
 /**
- * Installs the transport the extension's harness assembly provides.
- *
- * Shared logic never reaches the platform's network API itself, so until a binding has
- * installed one there is nothing to send through — which is a misuse of the extension, not a
- * harness condition, and {@link pushEvent} says so rather than silently sending nothing.
+ * Test seam: the request a suite wants in effect instead of the framework's own; `null` puts
+ * the framework's back.
  */
-export function installPushTransport(next: PushTransport): void {
-	installedTransport = next;
-}
-
-/**
- * Test seam: the transport a suite wants in effect instead of the harness's own; `null` puts
- * the installed one back.
- */
-export function setPushTransportForTest(next: PushTransport | null): void {
-	replacementTransport = next ?? undefined;
+export function setPanelRequestForTest(next: PanelRequest | null): void {
+	panelRequest = next ?? request;
 }
 
 /** Result of one push attempt. */
@@ -83,21 +60,22 @@ export interface PushOutcome {
 /**
  * POST one event. Resolves for any HTTP response, whatever its status; rejects only when the
  * request itself fails or exceeds `timeoutMs`. No retry: a failed event is dropped.
+ *
+ * The direct connection and the wait budget are the request's own declaration: the framework's
+ * module connects to the target and imposes the budget on the whole exchange, the body read
+ * included — which is why the body is read here, inside this call's budget.
  */
 export async function pushEvent(
 	endpoint: string,
 	envelope: PushEnvelope,
 	timeoutMs: number,
 ): Promise<PushOutcome> {
-	const transport = replacementTransport ?? installedTransport;
-	if (transport === undefined) {
-		throw new Error(`connect-bot: no outbound transport is installed for ${CONNECT_BOT.id}`);
-	}
-	const response = await transport(`${endpoint}${EVENTS_PATH}`, {
+	const response = await panelRequest(`${endpoint}${EVENTS_PATH}`, {
 		method: "POST",
 		headers: { "content-type": "application/json" },
 		body: JSON.stringify(envelope),
-		signal: AbortSignal.timeout(timeoutMs),
+		timeoutMs,
+		// The panel is reached directly: never through an ambient or configured proxy.
 		proxy: false,
 	});
 	let body: unknown;

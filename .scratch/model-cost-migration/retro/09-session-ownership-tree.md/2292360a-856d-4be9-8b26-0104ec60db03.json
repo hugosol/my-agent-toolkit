@@ -1,0 +1,173 @@
+{
+  "feature": "model-cost-migration",
+  "ticket": "09-session-ownership-tree.md",
+  "run_id": "2292360a-856d-4be9-8b26-0104ec60db03",
+  "parent_session_id": "01a131a3-4562-728e-8c06-9608e1e88feb",
+  "parent_session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-12T19-42-26-146Z_01a131a3-4562-728e-8c06-9608e1e88feb.jsonl",
+  "workspace": "E:\\Developer\\myhub\\my-agent-toolkit",
+  "tool_call_id": "js-task-15886f11-6c56-4fe6-82a2-d4d82326bd71",
+  "started_at": "2026-10-13T01:03:59.068Z",
+  "tdd_status": "completed",
+  "retro_status": "completed",
+  "tdd_finished_at": "2026-10-13T01:27:58.423Z",
+  "tdd_result": {
+    "index": 0,
+    "id": "09-session-ownership-treemd",
+    "agent": "tdd",
+    "agentSource": "user",
+    "task": "Complete assignment thoroughly:\n\nTicket filename: 09-session-ownership-tree.md\nTicket path: .scratch/model-cost-migration/implementation/09-session-ownership-tree.md\n\nFull ticket content:\n# 09: 实际 Session 自身归属与父树汇总\n\n**What to build:** 主、子、孙和兄弟请求各自归入实际发起 Session，主树汇总不重复，最新名称不改变身份。\n\n**Delivers:** P12, P13, P24\n\n**Blocked by:** 07: 请求锚价与可靠 usage 记账\n\n**Status:** ready-for-agent\n\n## Acceptance criteria\n\n- [ ] 唯一消费源为 harness+实际 Session×provider×model 自身聚合；不按 Owner、当前查看目标、名称或报告层级入账，task/orchestration 报告不再计费。\n- [ ] 保存可靠直接父关系，沿父链汇总每份自身贡献一次；不从父总数反推子贡献，不要求父先保存或造占位父。\n- [ ] 构造异构主/子/孙/兄弟且整树与自身预期故意不同的数据，独立手算 token/Cost/Ref，验证在途切查看仍进入原发起桶。\n- [ ] 名称按实际身份持续更新，包括未查看子/孙；不可取得不猜名称或覆盖已知名称；内存/展示即时变化，只在下次正常消费保存写文件，不额外触发保存。\n- [ ] 通过 S1 身份/直接父事实、S2 展示和真实保存读回验证；隔离宿主脚本覆盖实际代理关系与查看切换，不将 Owner 过滤再次套在记账组。\n- [ ] 通过批准的生产公共 seam 观察行为，预期来自合同/规格、独立字面值或手算，不以被测实现重算；永久网络 tests 使用 mock。\n- [ ] 使用隔离安装/配置/工作/Session/数据根，不操作正式 OMP；承接异步失败并保留够用脱敏证据，完成本票自动检查及材料准备，不因计划人工验收暂停可执行工作。\n\n## Verification responsibility\n\n本票负责所列 Delivers 的自动 coverage 与适用宿主贯通/证据准备；P58/P52 按本票具名责任执行。合同采用 Rapid iteration：H1/H2 及允许的条件性 H3 按原 Coverage 交用户确认，未确认不记通过；不改变承诺或免除实现/永久 tests。\n\n[You have received this identical output 3 times. Re-reading '.scratch/model-cost-migration/implementation/09-session-ownership-tree.md' will not change it — use a narrower selector (path:A-B), or proceed with the edit.]",
+    "assignment": "Ticket filename: 09-session-ownership-tree.md\nTicket path: .scratch/model-cost-migration/implementation/09-session-ownership-tree.md\n\nFull ticket content:\n# 09: 实际 Session 自身归属与父树汇总\n\n**What to build:** 主、子、孙和兄弟请求各自归入实际发起 Session，主树汇总不重复，最新名称不改变身份。\n\n**Delivers:** P12, P13, P24\n\n**Blocked by:** 07: 请求锚价与可靠 usage 记账\n\n**Status:** ready-for-agent\n\n## Acceptance criteria\n\n- [ ] 唯一消费源为 harness+实际 Session×provider×model 自身聚合；不按 Owner、当前查看目标、名称或报告层级入账，task/orchestration 报告不再计费。\n- [ ] 保存可靠直接父关系，沿父链汇总每份自身贡献一次；不从父总数反推子贡献，不要求父先保存或造占位父。\n- [ ] 构造异构主/子/孙/兄弟且整树与自身预期故意不同的数据，独立手算 token/Cost/Ref，验证在途切查看仍进入原发起桶。\n- [ ] 名称按实际身份持续更新，包括未查看子/孙；不可取得不猜名称或覆盖已知名称；内存/展示即时变化，只在下次正常消费保存写文件，不额外触发保存。\n- [ ] 通过 S1 身份/直接父事实、S2 展示和真实保存读回验证；隔离宿主脚本覆盖实际代理关系与查看切换，不将 Owner 过滤再次套在记账组。\n- [ ] 通过批准的生产公共 seam 观察行为，预期来自合同/规格、独立字面值或手算，不以被测实现重算；永久网络 tests 使用 mock。\n- [ ] 使用隔离安装/配置/工作/Session/数据根，不操作正式 OMP；承接异步失败并保留够用脱敏证据，完成本票自动检查及材料准备，不因计划人工验收暂停可执行工作。\n\n## Verification responsibility\n\n本票负责所列 Delivers 的自动 coverage 与适用宿主贯通/证据准备；P58/P52 按本票具名责任执行。合同采用 Rapid iteration：H1/H2 及允许的条件性 H3 按原 Coverage 交用户确认，未确认不记通过；不改变承诺或免除实现/永久 tests。\n\n[You have received this identical output 3 times. Re-reading '.scratch/model-cost-migration/implementation/09-session-ownership-tree.md' will not change it — use a narrower selector (path:A-B), or proceed with the edit.]",
+    "description": "Implement actual session ownership and parent tree aggregation",
+    "lastIntent": "Fixing redundant phrasing",
+    "exitCode": 0,
+    "output": "{\n  \"ticket\": \"09-session-ownership-tree.md\",\n  \"delivers\": [\n    \"P12\",\n    \"P13\",\n    \"P24\"\n  ],\n  \"status\": \"implemented-and-verified-by-agent (acceptance checkboxes / `closed` left to maintainer)\",\n  \"delivered_behavior\": {\n    \"P12\": \"消费仍唯一来自 harness＋实际 Session×provider×model 自身聚合：记账只按 delivery 里实际 Session 的 id 入桶，完全不读 owner／查看目标／名称／报告层级；task／orchestration 报告与 Round／Session 边界不入账。\",\n    \"P13\": \"只读 seam 新增 `ConsumptionView.inclusiveTotals(sessionId)`：该 Session 自身＋全部后代自身，各计一次；按可靠直接父关系建索引遍历子树（不要求父先保存、不造占位父、不从父总数反推子贡献、环亦终止）。\",\n    \"P24\": \"只读 seam 新增 `ConsumptionView.identity(sessionId)`（最新名称＋可靠直接父，宿主最近报告值优先、已加载记录补齐、无事实为 undefined）；不可取得的名称既不猜也不覆盖已知名；身份变化立即 announce（内存／展示即时），改名只随下次正常消费保存落盘、不单独写文件、不额外触发保存。\"\n  },\n  \"files_changed\": [\n    {\n      \"path\": \"extensions/model-cost/shared-logic/request-accounting.ts\",\n      \"change\": \"identity()/inclusiveTotals() 两个派生结果 + remember 改为保留宿主报告事实并即时通知身份变化 + save 写合并后身份 + 模块头文档\"\n    },\n    {\n      \"path\": \"extensions/model-cost/harnesses/omp.ts\",\n      \"change\": \"缺陷修复：ompAdapter(MODEL_COST,…) 由“每个 binding 新建”改为模块加载时创建一次（进程单一 runtime）；这是子代理消费能否入账的前提\"\n    },\n    {\n      \"path\": \"tests/model-cost/session-ownership-tree.test.ts\",\n      \"change\": \"新增 S2 套件 7 例（P12×3、P13×2、P24×2），自造 pricing data、期望手算/字面值\"\n    },\n    {\n      \"path\": \"tests/harness-dock/session-ownership-tree.test.ts\",\n      \"change\": \"新增 S5 隔离真实宿主套件 2 例：真实委派树（主→子→孙）与真实显示 Session 切换（new_session / switch_session 回到原会话）\"\n    },\n    {\n      \"path\": \".scratch/model-cost-migration/assets/09-session-ownership-tree-evidence-2026-10-13.md\",\n      \"change\": \"本票证据资产（criterion→支撑、命令与结果、注入验证、P52/P58 具名责任、平台事实与限制）\"\n    }\n  ],\n  \"criterion_evidence\": {\n    \"唯一消费源；不按 Owner/查看目标/名称/报告层级；报告不再计费\": \"S2 三例：主(owner)与子/孙(inherited，同一 owner key)各自桶只含己方请求（alpha {2,4,5,3}+0.00003；token-only {2,4,5,3} 无金额；beta {1,2,0,2}+0.000052），父 Round 落盘只含父自己记录；两 Turn 在途时读第三个 Session 仍在原桶；session_start/end 与 Round 两端零消费零写入，其后一笔真实请求恰好加一次。S5：真实三条记录都在（owner-scope 会漏掉子代理）、零 notice\",\n    \"父链汇总每份一次；不反推；不要求父先保存/占位父\": \"S2 运行时树（子/孙先消费、父无记录）与恢复树（主/子/孙/无关主四条记录）两例，含 Ref 只出现一次、无关主不进树；S5 三条记录 parent 为主 null／子=主 id／孙=子 id（框架自报事实）\",\n    \"异构树、故意与整树预期不同、手算 token/Cost/Ref、在途切查看回原桶\": \"同一组用例：α/β 两个 monetary 档＋token-only＋树外主会话（其 alpha 与主同金额，抓“全实例相加”）；Ref 0.25 手写字面；在途切查看见 P12 第②例；S5 五个真实请求桶由端点 wire 数字手推（主 2×、子 2×、孙 1×）\",\n    \"名称持续更新（含未查看子/孙）；不可取得不猜不覆盖；即时可见、只随下次正常保存落盘\": \"S2：改名后 identity 立即新名＋订阅者恰 1 次通知＋own 不变＋文件尚未创建；子 Round 结束保存后同一 id/saveVersion 1 携带新名与真实父；unavailable 名称不覆盖记录名、从无名称者以 session id 展示、未知 Session 为 undefined。S5：主名来自宿主 set_session_name，子/孙记录为各自 session id\",\n    \"S1 事实＋S2 展示＋真实保存读回；宿主脚本覆盖实际代理关系与查看切换；记账组不再套 Owner 过滤\": \"S5 两例：真实 task 工具派生主→子→孙、round fixture 报出三 Session 与直接父、文档三条记录与之逐字一致；new_session 切显示会话后其自身记录 parent null/1 笔且原三条 id+saveVersion 不变，switch_session 回原会话文件后主记录下一版本 3 笔、子 2 笔、孙 1 笔，7 次真实出站各归原发起 Session\",\n    \"公共 seam 观察、期望独立、永久网络 tests 用 mock\": \"S2 只读 runtime.view 与落盘文档（无私有字段），期望手算/字面值；金额不断真实单价（dock 只断言 typeof costCny === number）；永久 test 不访问网络（dock 仅本机捕获端点）\",\n    \"隔离安装/配置/工作/Session/数据根，不操作正式 OMP\": \"基线安装 .cache/omp-baseline/18.5.0＋独立 run root（agent state／session-dir／work／capture／user-home 均在 mkdtemp 下，provider 经隔离 models.yml 改道），扩展 ~/cost-archive 落在 run root 内（失败信息可见实际文档路径）；正式 OMP 无写入；异步保存用“等期望内容”而非固定时长\"\n  },\n  \"commands_and_results\": [\n    {\n      \"cmd\": \"bun test tests/model-cost/session-ownership-tree.test.ts tests/harness-dock/session-ownership-tree.test.ts\",\n      \"result\": \"9 pass / 0 fail（85 expect，6.2s）\"\n    },\n    {\n      \"cmd\": \"bun test tests/model-cost\",\n      \"result\": \"83 pass / 0 fail（7 文件；07 的 22 例与 08 的 9 例无回归）\"\n    },\n    {\n      \"cmd\": \"bun test tests/framework\",\n      \"result\": \"365 pass / 0 fail（31 文件）\"\n    },\n    {\n      \"cmd\": \"bun test tests/harness-dock\",\n      \"result\": \"34 pass / 2 fail（2 fail 为既存 baseline.test.ts 记录锚点环境项）\"\n    },\n    {\n      \"cmd\": \"bun run typecheck\",\n      \"result\": \"exit 0（无输出）\"\n    },\n    {\n      \"cmd\": \"bun test（全仓）\",\n      \"result\": \"648 pass / 4 fail（652 例 74 文件 179.3s）；4 个失败＝connect-bot 两个真实面板超时（本机无 127.0.0.1:8787 面板）＋baseline.test.ts 两例，与 07/08 记录同组；本票零新增失败\"\n    }\n  ],\n  \"found_and_fixed_defect\": {\n    \"summary\": \"真实宿主演练暴露出：model-cost 装配在每个 binding 新建 adapter／业务 runtime，而 framework 只在“自身是 Owner 的 Session”节点跑一次初始化 → 子代理的 runtime 从未加载 baseline，其请求静默完全不入账（无 notice、无记录）。\",\n    \"observed\": \"修复前 dock 用例失败：consumption.json 只有主会话一条记录（own = 2 笔请求），子/孙 Round 已结束却无记录且无任何 notice；修复后同一用例通过（三条记录，2×/2×/1×）。\",\n    \"fix\": \"extensions/model-cost/harnesses/omp.ts：ompAdapter 提到模块加载时创建一次。\"\n  },\n  \"fault_injections_verified_then_restored\": [\n    \"identity 名称不回落已加载记录 → P24② 红\",\n    \"remember 不 announce → P24① 红\",\n    \"inclusiveTotals 起点改为全部已知 Session → P13 两例红\",\n    \"turnSettled 用 reported 第一个 Session 记账 → 7 例中 4 例红\",\n    \"turnSettled 用 owner.key 记账（忠实“按 Owner 入账”）→ 7 例中 6 例红（另 1 error）\",\n    \"装配回到每 binding 新建 adapter → S5 第①例红（已作为真实观察记录）\"\n  ],\n  \"p52_p58_named_responsibility\": {\n    \"P52 (Session 半边；完整 owner 24)\": \"未改 consumption-document.ts 与任何保存字段：记录仍为 {id,name,parent,saveVersion,own}；identity/inclusiveTotals 纯运行期派生、不落盘；改名只在下次正常消费保存写出，不新增保存触发\",\n    \"P58 (消费者迁移；完整 owner 22/23/24)\": \"S2 seam 为加法变更；全仓只有 tests/model-cost/* 读 runtime.view（生产前端属 16/17 未实现），无调用方需迁移；入口仍是薄重导出＋单默认工厂，framework 公共绑定契约与其它扩展未改；全仓除既存 4 例环境失败外全绿\"\n  },\n  \"unverified_or_open\": [\n    \"本票 acceptance checkbox 与 closed 状态留待维护者确认（实现与自动检查已完成）\",\n    \"H1（真实 TUI 视觉，含真正在途切到子代理的 focus）／H2（真实 DeepSeek/Codex 网络）不在本票 Coverage；H3 无转人工项（宿主用例修复后 3 次全绿）\",\n    \"未做：真实 DeepSeek 账单金额对照、其他 OS、pi adapter、跨进程共享根下的多 Session 归属（06/24 范围）\",\n    \"dock 局限：宿主无脚本化 TUI focus 切换（用 new_session/switch_session 等价驱动）；子代理与主会话同模型，异构模型维度由 S2 自造数据覆盖\"\n  ],\n  \"evidence_doc\": \".scratch/model-cost-migration/assets/09-session-ownership-tree-evidence-2026-10-13.md\",\n  \"notes_for_main\": [\n    \"未改任何其它 ticket 文件；未调用/等待 retro\",\n    \"新增文件：tests/model-cost/session-ownership-tree.test.ts、tests/harness-dock/session-ownership-tree.test.ts、上述证据资产；建议 main 复核时跑：bun test tests/model-cost tests/harness-dock/session-ownership-tree.test.ts 与 bun run typecheck\"\n  ]\n}",
+    "stderr": "",
+    "truncated": false,
+    "durationMs": 1439335,
+    "tokens": 354740,
+    "requests": 201,
+    "contextTokens": 326915,
+    "contextWindow": 1000000,
+    "modelOverride": [
+      "deepseek/deepseek-flash:high"
+    ],
+    "resolvedModel": "deepseek/deepseek-flash:high",
+    "resolvedModelIdentity": "deepseek/deepseek-flash",
+    "resolvedThinkingLevel": "high",
+    "aborted": false,
+    "usage": {
+      "input": 210805,
+      "output": 143935,
+      "cacheRead": 40379392,
+      "cacheWrite": 0,
+      "totalTokens": 40734132,
+      "reasoningTokens": 77657,
+      "cost": {
+        "input": 0.06324150000000002,
+        "output": 0.17272200000000004,
+        "cacheRead": 0.24227635200000006,
+        "cacheWrite": 0,
+        "total": 0.47823985199999963
+      }
+    },
+    "outputPath": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-12T19-42-26-146Z_01a131a3-4562-728e-8c06-9608e1e88feb\\09-session-ownership-treemd.md",
+    "extractedToolData": {
+      "yield": [
+        {
+          "data": {
+            "ticket": "09-session-ownership-tree.md",
+            "delivers": [
+              "P12",
+              "P13",
+              "P24"
+            ],
+            "status": "implemented-and-verified-by-agent (acceptance checkboxes / `closed` left to maintainer)",
+            "delivered_behavior": {
+              "P12": "消费仍唯一来自 harness＋实际 Session×provider×model 自身聚合：记账只按 delivery 里实际 Session 的 id 入桶，完全不读 owner／查看目标／名称／报告层级；task／orchestration 报告与 Round／Session 边界不入账。",
+              "P13": "只读 seam 新增 `ConsumptionView.inclusiveTotals(sessionId)`：该 Session 自身＋全部后代自身，各计一次；按可靠直接父关系建索引遍历子树（不要求父先保存、不造占位父、不从父总数反推子贡献、环亦终止）。",
+              "P24": "只读 seam 新增 `ConsumptionView.identity(sessionId)`（最新名称＋可靠直接父，宿主最近报告值优先、已加载记录补齐、无事实为 undefined）；不可取得的名称既不猜也不覆盖已知名；身份变化立即 announce（内存／展示即时），改名只随下次正常消费保存落盘、不单独写文件、不额外触发保存。"
+            },
+            "files_changed": [
+              {
+                "path": "extensions/model-cost/shared-logic/request-accounting.ts",
+                "change": "identity()/inclusiveTotals() 两个派生结果 + remember 改为保留宿主报告事实并即时通知身份变化 + save 写合并后身份 + 模块头文档"
+              },
+              {
+                "path": "extensions/model-cost/harnesses/omp.ts",
+                "change": "缺陷修复：ompAdapter(MODEL_COST,…) 由“每个 binding 新建”改为模块加载时创建一次（进程单一 runtime）；这是子代理消费能否入账的前提"
+              },
+              {
+                "path": "tests/model-cost/session-ownership-tree.test.ts",
+                "change": "新增 S2 套件 7 例（P12×3、P13×2、P24×2），自造 pricing data、期望手算/字面值"
+              },
+              {
+                "path": "tests/harness-dock/session-ownership-tree.test.ts",
+                "change": "新增 S5 隔离真实宿主套件 2 例：真实委派树（主→子→孙）与真实显示 Session 切换（new_session / switch_session 回到原会话）"
+              },
+              {
+                "path": ".scratch/model-cost-migration/assets/09-session-ownership-tree-evidence-2026-10-13.md",
+                "change": "本票证据资产（criterion→支撑、命令与结果、注入验证、P52/P58 具名责任、平台事实与限制）"
+              }
+            ],
+            "criterion_evidence": {
+              "唯一消费源；不按 Owner/查看目标/名称/报告层级；报告不再计费": "S2 三例：主(owner)与子/孙(inherited，同一 owner key)各自桶只含己方请求（alpha {2,4,5,3}+0.00003；token-only {2,4,5,3} 无金额；beta {1,2,0,2}+0.000052），父 Round 落盘只含父自己记录；两 Turn 在途时读第三个 Session 仍在原桶；session_start/end 与 Round 两端零消费零写入，其后一笔真实请求恰好加一次。S5：真实三条记录都在（owner-scope 会漏掉子代理）、零 notice",
+              "父链汇总每份一次；不反推；不要求父先保存/占位父": "S2 运行时树（子/孙先消费、父无记录）与恢复树（主/子/孙/无关主四条记录）两例，含 Ref 只出现一次、无关主不进树；S5 三条记录 parent 为主 null／子=主 id／孙=子 id（框架自报事实）",
+              "异构树、故意与整树预期不同、手算 token/Cost/Ref、在途切查看回原桶": "同一组用例：α/β 两个 monetary 档＋token-only＋树外主会话（其 alpha 与主同金额，抓“全实例相加”）；Ref 0.25 手写字面；在途切查看见 P12 第②例；S5 五个真实请求桶由端点 wire 数字手推（主 2×、子 2×、孙 1×）",
+              "名称持续更新（含未查看子/孙）；不可取得不猜不覆盖；即时可见、只随下次正常保存落盘": "S2：改名后 identity 立即新名＋订阅者恰 1 次通知＋own 不变＋文件尚未创建；子 Round 结束保存后同一 id/saveVersion 1 携带新名与真实父；unavailable 名称不覆盖记录名、从无名称者以 session id 展示、未知 Session 为 undefined。S5：主名来自宿主 set_session_name，子/孙记录为各自 session id",
+              "S1 事实＋S2 展示＋真实保存读回；宿主脚本覆盖实际代理关系与查看切换；记账组不再套 Owner 过滤": "S5 两例：真实 task 工具派生主→子→孙、round fixture 报出三 Session 与直接父、文档三条记录与之逐字一致；new_session 切显示会话后其自身记录 parent null/1 笔且原三条 id+saveVersion 不变，switch_session 回原会话文件后主记录下一版本 3 笔、子 2 笔、孙 1 笔，7 次真实出站各归原发起 Session",
+              "公共 seam 观察、期望独立、永久网络 tests 用 mock": "S2 只读 runtime.view 与落盘文档（无私有字段），期望手算/字面值；金额不断真实单价（dock 只断言 typeof costCny === number）；永久 test 不访问网络（dock 仅本机捕获端点）",
+              "隔离安装/配置/工作/Session/数据根，不操作正式 OMP": "基线安装 .cache/omp-baseline/18.5.0＋独立 run root（agent state／session-dir／work／capture／user-home 均在 mkdtemp 下，provider 经隔离 models.yml 改道），扩展 ~/cost-archive 落在 run root 内（失败信息可见实际文档路径）；正式 OMP 无写入；异步保存用“等期望内容”而非固定时长"
+            },
+            "commands_and_results": [
+              {
+                "cmd": "bun test tests/model-cost/session-ownership-tree.test.ts tests/harness-dock/session-ownership-tree.test.ts",
+                "result": "9 pass / 0 fail（85 expect，6.2s）"
+              },
+              {
+                "cmd": "bun test tests/model-cost",
+                "result": "83 pass / 0 fail（7 文件；07 的 22 例与 08 的 9 例无回归）"
+              },
+              {
+                "cmd": "bun test tests/framework",
+                "result": "365 pass / 0 fail（31 文件）"
+              },
+              {
+                "cmd": "bun test tests/harness-dock",
+                "result": "34 pass / 2 fail（2 fail 为既存 baseline.test.ts 记录锚点环境项）"
+              },
+              {
+                "cmd": "bun run typecheck",
+                "result": "exit 0（无输出）"
+              },
+              {
+                "cmd": "bun test（全仓）",
+                "result": "648 pass / 4 fail（652 例 74 文件 179.3s）；4 个失败＝connect-bot 两个真实面板超时（本机无 127.0.0.1:8787 面板）＋baseline.test.ts 两例，与 07/08 记录同组；本票零新增失败"
+              }
+            ],
+            "found_and_fixed_defect": {
+              "summary": "真实宿主演练暴露出：model-cost 装配在每个 binding 新建 adapter／业务 runtime，而 framework 只在“自身是 Owner 的 Session”节点跑一次初始化 → 子代理的 runtime 从未加载 baseline，其请求静默完全不入账（无 notice、无记录）。",
+              "observed": "修复前 dock 用例失败：consumption.json 只有主会话一条记录（own = 2 笔请求），子/孙 Round 已结束却无记录且无任何 notice；修复后同一用例通过（三条记录，2×/2×/1×）。",
+              "fix": "extensions/model-cost/harnesses/omp.ts：ompAdapter 提到模块加载时创建一次。"
+            },
+            "fault_injections_verified_then_restored": [
+              "identity 名称不回落已加载记录 → P24② 红",
+              "remember 不 announce → P24① 红",
+              "inclusiveTotals 起点改为全部已知 Session → P13 两例红",
+              "turnSettled 用 reported 第一个 Session 记账 → 7 例中 4 例红",
+              "turnSettled 用 owner.key 记账（忠实“按 Owner 入账”）→ 7 例中 6 例红（另 1 error）",
+              "装配回到每 binding 新建 adapter → S5 第①例红（已作为真实观察记录）"
+            ],
+            "p52_p58_named_responsibility": {
+              "P52 (Session 半边；完整 owner 24)": "未改 consumption-document.ts 与任何保存字段：记录仍为 {id,name,parent,saveVersion,own}；identity/inclusiveTotals 纯运行期派生、不落盘；改名只在下次正常消费保存写出，不新增保存触发",
+              "P58 (消费者迁移；完整 owner 22/23/24)": "S2 seam 为加法变更；全仓只有 tests/model-cost/* 读 runtime.view（生产前端属 16/17 未实现），无调用方需迁移；入口仍是薄重导出＋单默认工厂，framework 公共绑定契约与其它扩展未改；全仓除既存 4 例环境失败外全绿"
+            },
+            "unverified_or_open": [
+              "本票 acceptance checkbox 与 closed 状态留待维护者确认（实现与自动检查已完成）",
+              "H1（真实 TUI 视觉，含真正在途切到子代理的 focus）／H2（真实 DeepSeek/Codex 网络）不在本票 Coverage；H3 无转人工项（宿主用例修复后 3 次全绿）",
+              "未做：真实 DeepSeek 账单金额对照、其他 OS、pi adapter、跨进程共享根下的多 Session 归属（06/24 范围）",
+              "dock 局限：宿主无脚本化 TUI focus 切换（用 new_session/switch_session 等价驱动）；子代理与主会话同模型，异构模型维度由 S2 自造数据覆盖"
+            ],
+            "evidence_doc": ".scratch/model-cost-migration/assets/09-session-ownership-tree-evidence-2026-10-13.md",
+            "notes_for_main": [
+              "未改任何其它 ticket 文件；未调用/等待 retro",
+              "新增文件：tests/model-cost/session-ownership-tree.test.ts、tests/harness-dock/session-ownership-tree.test.ts、上述证据资产；建议 main 复核时跑：bun test tests/model-cost tests/harness-dock/session-ownership-tree.test.ts 与 bun run typecheck"
+            ]
+          },
+          "status": "success",
+          "type": "result"
+        }
+      ]
+    },
+    "outputMeta": {
+      "lineCount": 99,
+      "charCount": 5965
+    }
+  },
+  "agent": "tdd",
+  "agent_id": "09-session-ownership-treemd",
+  "session_id": "01a132c9-a887-77cb-b060-01c6849709f6",
+  "session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-12T19-42-26-146Z_01a131a3-4562-728e-8c06-9608e1e88feb\\09-session-ownership-treemd.jsonl",
+  "execution_cwd": "E:\\Developer\\myhub\\my-agent-toolkit",
+  "retro_document": "E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\model-cost-migration\\retro\\09-session-ownership-tree.md\\2292360a-856d-4be9-8b26-0104ec60db03.md",
+  "retro_finished_at": "2026-10-13T01:29:06.534Z"
+}

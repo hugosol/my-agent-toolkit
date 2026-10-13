@@ -1,0 +1,112 @@
+{
+  "feature": "model-cost-migration",
+  "ticket": "25-acceptance-cutover-handoff.md",
+  "run_id": "bcc07911-0986-4de2-b2bc-8af02bc44207",
+  "parent_session_id": "01a131a3-4562-728e-8c06-9608e1e88feb",
+  "parent_session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-12T19-42-26-146Z_01a131a3-4562-728e-8c06-9608e1e88feb.jsonl",
+  "workspace": "E:\\Developer\\myhub\\my-agent-toolkit",
+  "tool_call_id": "js-task-706e5f96-61ba-4827-85f8-16624406aa91",
+  "started_at": "2026-10-13T09:53:07.750Z",
+  "tdd_status": "completed",
+  "retro_status": "completed",
+  "tdd_finished_at": "2026-10-13T10:14:35.432Z",
+  "tdd_result": {
+    "index": 0,
+    "id": "25-acceptance-cutover-handoffmd",
+    "agent": "tdd",
+    "agentSource": "user",
+    "task": "Complete assignment thoroughly:\n\nTicket filename: 25-acceptance-cutover-handoff.md\nTicket path: .scratch/model-cost-migration/implementation/25-acceptance-cutover-handoff.md\n\nFull ticket content:\n# 25: 独立兼容性证据与人工切换交接\n\n**What to build:** 用户获得范围明确的独立验证记录、剩余人工场景及安全手动切换/回退清单，不将绿色测试误作完整迁移认证。\n\n**Delivers:** P60, P61, P62, P63, P64\n\n**Blocked by:** 24: 生产架构清理与完整持久化验证\n\n**Status:** ready-for-agent\n\n## Acceptance criteria\n\n- [ ] 运行既有独立验证，记录精确宿主版本/revision/artifact、framework/extension 源码 revision、依赖/lockfile/环境和验证范围；正常启动无版本/shape/report 门禁，保留必要配置和业务失败。\n- [ ] 从首票起保持独立安装/进程/配置/工作/Session/数据根，本票核对全部验证隔离证据；不向正式 OMP 发验证命令、重启、更改配置/加载/凭证或统计。\n- [ ] 汇总必需 tests、本地传输/文件/进程 smoke、OMP 脚本、少量真实 smoke 与 H1/H2，逐项区分通过/失败/跳过/待人工；mock/RPC/发现结果不能认证真实服务或视觉。\n- [ ] H1 场景及材料来自 P11/P23/P26/P27/P41/P67 对应 delivering tickets；H2 来自 P36/P38/P39/P65/P66，沿合同核对，缺证据不判通过。\n- [ ] H3 仅对应合同允许条目的真实 OMP 脚本多次失败或成本明显过高时转交；保留具体场景、尝试/原因、步骤、独立预期和自动结果，永久 tests 仍完成，无转交就无人工项。\n- [ ] 全部实现/自动检查先完成再人工轮；准备充分材料后明确列剩余确认，未获用户确认仍未验证，不把票的代理工作完成等同承诺整体通过。\n- [ ] 交付用户手动停机/备份旧配置统计/空数据准备/旧新加载互斥/启动/正式确认清单；失败停新实例、保留新数据排查、恢复旧配置备份后重启，不合并新旧统计。\n- [ ] 仅隔离演练切换/回退，不自动迁移/删除旧数据或执行正式切换；维护者按完整证据明确支持，不预造或扩大支持声明。\n- [ ] 具体缺口带脱敏证据请求裁决并记录未决，不静默删功能/缩范围或重开已批准原则扩建假想机制；真实秘密不进入对话、日志或 tracker。\n- [ ] 通过批准的生产公共 seam 观察行为，预期来自合同/规格、独立字面值或手算，不以被测实现重算；永久网络 tests 使用 mock。\n- [ ] 使用隔离安装/配置/工作/Session/数据根，不操作正式 OMP；承接异步失败并保留够用脱敏证据，完成本票自动检查及材料准备，不因计划人工验收暂停可执行工作。\n\n## Verification responsibility\n\n本票负责所列 Delivers 的自动 coverage 与适用宿主贯通/证据准备；P58/P52 按本票具名责任执行。合同采用 Rapid iteration：H1/H2 及允许的条件性 H3 按原 Coverage 交用户确认，未确认不记通过；不改变承诺或免除实现/永久 tests。\n\n[You have received this identical output 3 times. Re-reading '.scratch/model-cost-migration/implementation/25-acceptance-cutover-handoff.md' will not change it — use a narrower selector (path:A-B), or proceed with the edit.]",
+    "assignment": "Ticket filename: 25-acceptance-cutover-handoff.md\nTicket path: .scratch/model-cost-migration/implementation/25-acceptance-cutover-handoff.md\n\nFull ticket content:\n# 25: 独立兼容性证据与人工切换交接\n\n**What to build:** 用户获得范围明确的独立验证记录、剩余人工场景及安全手动切换/回退清单，不将绿色测试误作完整迁移认证。\n\n**Delivers:** P60, P61, P62, P63, P64\n\n**Blocked by:** 24: 生产架构清理与完整持久化验证\n\n**Status:** ready-for-agent\n\n## Acceptance criteria\n\n- [ ] 运行既有独立验证，记录精确宿主版本/revision/artifact、framework/extension 源码 revision、依赖/lockfile/环境和验证范围；正常启动无版本/shape/report 门禁，保留必要配置和业务失败。\n- [ ] 从首票起保持独立安装/进程/配置/工作/Session/数据根，本票核对全部验证隔离证据；不向正式 OMP 发验证命令、重启、更改配置/加载/凭证或统计。\n- [ ] 汇总必需 tests、本地传输/文件/进程 smoke、OMP 脚本、少量真实 smoke 与 H1/H2，逐项区分通过/失败/跳过/待人工；mock/RPC/发现结果不能认证真实服务或视觉。\n- [ ] H1 场景及材料来自 P11/P23/P26/P27/P41/P67 对应 delivering tickets；H2 来自 P36/P38/P39/P65/P66，沿合同核对，缺证据不判通过。\n- [ ] H3 仅对应合同允许条目的真实 OMP 脚本多次失败或成本明显过高时转交；保留具体场景、尝试/原因、步骤、独立预期和自动结果，永久 tests 仍完成，无转交就无人工项。\n- [ ] 全部实现/自动检查先完成再人工轮；准备充分材料后明确列剩余确认，未获用户确认仍未验证，不把票的代理工作完成等同承诺整体通过。\n- [ ] 交付用户手动停机/备份旧配置统计/空数据准备/旧新加载互斥/启动/正式确认清单；失败停新实例、保留新数据排查、恢复旧配置备份后重启，不合并新旧统计。\n- [ ] 仅隔离演练切换/回退，不自动迁移/删除旧数据或执行正式切换；维护者按完整证据明确支持，不预造或扩大支持声明。\n- [ ] 具体缺口带脱敏证据请求裁决并记录未决，不静默删功能/缩范围或重开已批准原则扩建假想机制；真实秘密不进入对话、日志或 tracker。\n- [ ] 通过批准的生产公共 seam 观察行为，预期来自合同/规格、独立字面值或手算，不以被测实现重算；永久网络 tests 使用 mock。\n- [ ] 使用隔离安装/配置/工作/Session/数据根，不操作正式 OMP；承接异步失败并保留够用脱敏证据，完成本票自动检查及材料准备，不因计划人工验收暂停可执行工作。\n\n## Verification responsibility\n\n本票负责所列 Delivers 的自动 coverage 与适用宿主贯通/证据准备；P58/P52 按本票具名责任执行。合同采用 Rapid iteration：H1/H2 及允许的条件性 H3 按原 Coverage 交用户确认，未确认不记通过；不改变承诺或免除实现/永久 tests。\n\n[You have received this identical output 3 times. Re-reading '.scratch/model-cost-migration/implementation/25-acceptance-cutover-handoff.md' will not change it — use a narrower selector (path:A-B), or proceed with the edit.]",
+    "description": "Prepare independent verification and cutover handoff",
+    "lastIntent": "Submitting ticket 25 result",
+    "exitCode": 0,
+    "output": "{\n  \"ticket\": \"25-acceptance-cutover-handoff.md\",\n  \"delivers\": [\n    \"P60\",\n    \"P61\",\n    \"P62\",\n    \"P63\",\n    \"P64\"\n  ],\n  \"status\": \"automated work complete and green; human round prepared and pending user confirmation\",\n  \"evidence_doc\": \".scratch/model-cost-migration/assets/25-acceptance-cutover-evidence-2026-10-13.md\",\n  \"delivered\": [\n    \"P60 cutover: startup has no version/shape/report gate. Deleted core/admission.ts, core/baseline.ts, behaviors/admission.ts; kept RequiredSemantic/FRAMEWORK_REQUIRED_SEMANTICS/DeclarableRequiredSemantic as verification metadata in new core/requirements.ts; binding no longer takes/consult admission; removed the required-semantics failure kind; adapter no longer reads pi.pi.VERSION or the surface shape. Config validation, declaration/implementation pairing and initialization failures preserved.\",\n    \"P60 verification entry: scripts/verify-omp-candidate.ts record now names revision anchor, source revision (base commit + working-tree digest + changed paths), lockfile comparisons, environment and executed/unverified coverage; certification text no longer names the deleted baseline list.\",\n    \"New test tests/framework/startup-requirements.test.ts (10 cases, red 5pass/4fail -> green).\",\n    \"Migrated callers: tests/framework/support/harness-port-double.ts options; deleted 5 admission suites + 2 admission fixtures; new tests/harness-dock/fixtures/second-extension/entrypoint.ts replaces the probe borrowed by the headless two-extension case.\",\n    \"P63 checklist + H1/H2 runbook delivered in new extensions/model-cost/README.md (stop, backup config+old stats, empty data incl. the shared estimate file name, load-source mutual exclusion, start/confirm, failure -> stop new instance/keep new data/restore backup/no stats merge).\",\n    \"Docs synced: framework/README.md, framework/docs/harness-support.md, framework/docs/framework-capabilities.md, framework/GLOSSARY.md, root README.md.\"\n  ],\n  \"verification_run\": {\n    \"typecheck\": \"0 errors\",\n    \"full suite\": \"bun test -> 862 pass / 0 fail, 98 files, 4796 expect, 289.86s (framework 351, connect-bot 142, codebase-tools 24, model-cost 266, dock 79)\",\n    \"isolated verification\": \"bun scripts/verify-omp-candidate.ts -> install 18.5.0, framework 351/0, green; record .cache/omp-baseline/18.5.0/candidate-verification.json with both lockfiles matching\",\n    \"smokes\": \"smoke:http-transport 18/18 (loopback only); smoke:model-cost-data 20/20\"\n  },\n  \"unverified_or_pending\": [\n    \"H1 x6 (P11/16, P23+P26/17, P27/18, P41+P67/20) and H2 x3 (P36+P38/12, P39+P65/13, P66/14): materials prepared and linked, all recorded pending-human; no screenshots possible (no interactive TUI)\",\n    \"H3: no items (conditional H3 untriggered in every delivering ticket)\",\n    \"Real provider smoke: skipped, no credential read\",\n    \"Open adjudication carried forward: Balance: line is not gated by mode while spec 134 says token-only has no balance (ticket 20 existing gap; not changed here)\",\n    \"Support statement unchanged (18.5.0 @9348320); combined host artifact is local and not merged upstream\",\n    \"Working tree is dirty (163 changed paths); record names base commit b48bb63 + digest 7555605742cd4eaf6677b2eb16f05e60432ba961d08a63e8846b8f9b14040020, no commit made\",\n    \"Pre-existing doc links to removed .scratch/codebase-tools-omp-v1 and .scratch/connect-bot-migration dirs remain broken (reported, not rewritten)\",\n    \"One non-recurring files.test.ts inode-identity flake observed once earlier; not reproduced in the isolated or full runs\"\n  ],\n  \"main_agent_should_run\": [\n    \"bun run typecheck && bun test (one final run on the frozen tree; the new test file had one tautological assertion removed after the recorded full run and re-ran 10/0 alone)\"\n  ]\n}",
+    "stderr": "",
+    "truncated": false,
+    "durationMs": 1287664,
+    "tokens": 366881,
+    "requests": 183,
+    "contextTokens": 339991,
+    "contextWindow": 1000000,
+    "modelOverride": [
+      "deepseek/deepseek-flash:high"
+    ],
+    "resolvedModel": "deepseek/deepseek-flash:high",
+    "resolvedModelIdentity": "deepseek/deepseek-flash",
+    "resolvedThinkingLevel": "high",
+    "aborted": false,
+    "usage": {
+      "input": 224192,
+      "output": 142689,
+      "cacheRead": 37913344,
+      "cacheWrite": 0,
+      "totalTokens": 38280225,
+      "reasoningTokens": 67135,
+      "cost": {
+        "input": 0.05481974999999999,
+        "output": 0.12456780000000002,
+        "cacheRead": 0.15226214399999993,
+        "cacheWrite": 0,
+        "total": 0.33164969399999994
+      }
+    },
+    "outputPath": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-12T19-42-26-146Z_01a131a3-4562-728e-8c06-9608e1e88feb\\25-acceptance-cutover-handoffmd.md",
+    "extractedToolData": {
+      "yield": [
+        {
+          "data": {
+            "ticket": "25-acceptance-cutover-handoff.md",
+            "delivers": [
+              "P60",
+              "P61",
+              "P62",
+              "P63",
+              "P64"
+            ],
+            "status": "automated work complete and green; human round prepared and pending user confirmation",
+            "evidence_doc": ".scratch/model-cost-migration/assets/25-acceptance-cutover-evidence-2026-10-13.md",
+            "delivered": [
+              "P60 cutover: startup has no version/shape/report gate. Deleted core/admission.ts, core/baseline.ts, behaviors/admission.ts; kept RequiredSemantic/FRAMEWORK_REQUIRED_SEMANTICS/DeclarableRequiredSemantic as verification metadata in new core/requirements.ts; binding no longer takes/consult admission; removed the required-semantics failure kind; adapter no longer reads pi.pi.VERSION or the surface shape. Config validation, declaration/implementation pairing and initialization failures preserved.",
+              "P60 verification entry: scripts/verify-omp-candidate.ts record now names revision anchor, source revision (base commit + working-tree digest + changed paths), lockfile comparisons, environment and executed/unverified coverage; certification text no longer names the deleted baseline list.",
+              "New test tests/framework/startup-requirements.test.ts (10 cases, red 5pass/4fail -> green).",
+              "Migrated callers: tests/framework/support/harness-port-double.ts options; deleted 5 admission suites + 2 admission fixtures; new tests/harness-dock/fixtures/second-extension/entrypoint.ts replaces the probe borrowed by the headless two-extension case.",
+              "P63 checklist + H1/H2 runbook delivered in new extensions/model-cost/README.md (stop, backup config+old stats, empty data incl. the shared estimate file name, load-source mutual exclusion, start/confirm, failure -> stop new instance/keep new data/restore backup/no stats merge).",
+              "Docs synced: framework/README.md, framework/docs/harness-support.md, framework/docs/framework-capabilities.md, framework/GLOSSARY.md, root README.md."
+            ],
+            "verification_run": {
+              "typecheck": "0 errors",
+              "full suite": "bun test -> 862 pass / 0 fail, 98 files, 4796 expect, 289.86s (framework 351, connect-bot 142, codebase-tools 24, model-cost 266, dock 79)",
+              "isolated verification": "bun scripts/verify-omp-candidate.ts -> install 18.5.0, framework 351/0, green; record .cache/omp-baseline/18.5.0/candidate-verification.json with both lockfiles matching",
+              "smokes": "smoke:http-transport 18/18 (loopback only); smoke:model-cost-data 20/20"
+            },
+            "unverified_or_pending": [
+              "H1 x6 (P11/16, P23+P26/17, P27/18, P41+P67/20) and H2 x3 (P36+P38/12, P39+P65/13, P66/14): materials prepared and linked, all recorded pending-human; no screenshots possible (no interactive TUI)",
+              "H3: no items (conditional H3 untriggered in every delivering ticket)",
+              "Real provider smoke: skipped, no credential read",
+              "Open adjudication carried forward: Balance: line is not gated by mode while spec 134 says token-only has no balance (ticket 20 existing gap; not changed here)",
+              "Support statement unchanged (18.5.0 @9348320); combined host artifact is local and not merged upstream",
+              "Working tree is dirty (163 changed paths); record names base commit b48bb63 + digest 7555605742cd4eaf6677b2eb16f05e60432ba961d08a63e8846b8f9b14040020, no commit made",
+              "Pre-existing doc links to removed .scratch/codebase-tools-omp-v1 and .scratch/connect-bot-migration dirs remain broken (reported, not rewritten)",
+              "One non-recurring files.test.ts inode-identity flake observed once earlier; not reproduced in the isolated or full runs"
+            ],
+            "main_agent_should_run": [
+              "bun run typecheck && bun test (one final run on the frozen tree; the new test file had one tautological assertion removed after the recorded full run and re-ran 10/0 alone)"
+            ]
+          },
+          "status": "success"
+        }
+      ]
+    },
+    "outputMeta": {
+      "lineCount": 39,
+      "charCount": 3767
+    }
+  },
+  "agent": "tdd",
+  "agent_id": "25-acceptance-cutover-handoffmd",
+  "session_id": "01a134ae-1acb-7060-b9d3-2e560ce89b30",
+  "session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-12T19-42-26-146Z_01a131a3-4562-728e-8c06-9608e1e88feb\\25-acceptance-cutover-handoffmd.jsonl",
+  "execution_cwd": "E:\\Developer\\myhub\\my-agent-toolkit",
+  "retro_document": "E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\model-cost-migration\\retro\\25-acceptance-cutover-handoff.md\\bcc07911-0986-4de2-b2bc-8af02bc44207.md",
+  "retro_finished_at": "2026-10-13T10:16:16.320Z"
+}

@@ -28,6 +28,10 @@ import { inWorkingDirectory } from "./support/working-directory";
 const OMP_ENTRYPOINT_DIR = path.join(REPO_ROOT, "entrypoints", "omp");
 const CODEBASE_TOOLS_ENTRYPOINT = path.join(OMP_ENTRYPOINT_DIR, "codebase-tools.ts");
 const CONNECT_BOT_ENTRYPOINT = path.join(OMP_ENTRYPOINT_DIR, "connect-bot.ts");
+const MODEL_COST_ENTRYPOINT = path.join(OMP_ENTRYPOINT_DIR, "model-cost.ts");
+
+/** The extension labels the repository's own OMP root binds, one per deployed entrypoint. */
+const DEPLOYED_EXTENSION_LABELS = ["codeBaseTools", "connectBot", "modelCost"];
 
 /** The credential-free provider fixture; it keeps a controlled turn off the network. */
 const PROVIDER_FIXTURE = path.join(REPO_ROOT, "tests", "harness-dock", "fixtures", "extension-root", "provider.ts");
@@ -117,14 +121,16 @@ describe("OMP entrypoint discovery (C12)", () => {
 
 		// One extension, one entrypoint: no aggregating root `index.ts` turns the
 		// directory into a single multi-extension factory.
-		expect(discovered.length).toBe(2);
+		expect(discovered.length).toBe(3);
 		expect(discovered.map(file => path.relative(REPO_ROOT, file).replace(/\\/g, "/")).sort()).toEqual([
 			"entrypoints/omp/codebase-tools.ts",
 			"entrypoints/omp/connect-bot.ts",
+			"entrypoints/omp/model-cost.ts",
 		]);
 		expect(discovered.map(file => helpers.getExtensionNameFromPath(file)).sort()).toEqual([
 			"codebase-tools",
 			"connect-bot",
+			"model-cost",
 		]);
 	});
 
@@ -148,21 +154,22 @@ describe("OMP entrypoint discovery (C12)", () => {
 
 	test("each entrypoint's out-of-directory shared source, Markdown text and bare dependency resolve with 0 errors", async () => {
 		const discovered = await discoverConfiguredRoots([OMP_ENTRYPOINT_DIR]);
-		// Both factories bind in one load: connect-bot's declared configuration resolves against
-		// the repository root its assembly derives from its own module location, whatever
-		// directory this process is running in.
+		// Every factory binds in one load: each extension's declared configuration resolves against
+		// the repository root its own assembly derives from its module location, whatever directory
+		// this process is running in.
 		const result = await loader.loadExtensions(discovered, REPO_ROOT);
 
 		// An unresolvable import anywhere in an entrypoint's graph surfaces here, so an
 		// empty error list is the resolution evidence: shared TypeScript under
 		// extensions/, the Markdown prompt resources imported as text, and the
-		// harness-provided bare package all resolved and both factories bound.
+		// harness-provided bare package all resolved and every factory bound.
 		expect(result.errors).toEqual([]);
-		expect(result.extensions.length).toBe(2);
+		expect(result.extensions.length).toBe(3);
 		const labelOf = (entrypoint: string) =>
 			result.extensions.find(extension => path.resolve(extension.resolvedPath) === path.resolve(entrypoint))?.label;
 		expect(labelOf(CODEBASE_TOOLS_ENTRYPOINT)).toBe("codeBaseTools");
 		expect(labelOf(CONNECT_BOT_ENTRYPOINT)).toBe("connectBot");
+		expect(labelOf(MODEL_COST_ENTRYPOINT)).toBe("modelCost");
 	});
 
 	test("the loader reports an unresolvable import instead of binding (control for the 0-error result)", async () => {
@@ -211,9 +218,9 @@ describe("connect-bot entrypoint discovery and binding (P42)", () => {
 		// source, and this load reports none of them failing.
 		expect(result.errors).toEqual([]);
 		expect(result.extensions.length).toBe(1);
-		// The label is set only past the framework's configuration and admission steps, so a
-		// labeled binding is the evidence that `extensions/connect-bot/config.yaml` was found,
-		// parsed and validated in this same load.
+		// The label is set only past the framework's configuration step, so a labeled binding is
+		// the evidence that `extensions/connect-bot/config.yaml` was found, parsed and validated
+		// in this same load.
 		const connectBot = result.extensions.find(
 			extension => path.resolve(extension.resolvedPath) === path.resolve(CONNECT_BOT_ENTRYPOINT),
 		);
@@ -240,7 +247,7 @@ describe("connect-bot entrypoint discovery and binding (P42)", () => {
 			expect(result.extensions.length).toBe(1);
 			// Binding is the evidence: this load ran in a directory that carries no valid file at
 			// the convention path, and the extension is in the load set with its label — which
-			// only the framework's configuration and admission steps set.
+			// only the framework's configuration step sets.
 			expect(result.extensions[0]?.label).toBe("connectBot");
 			expect(stderr.split("\n").filter(line => line.includes("configuration error"))).toEqual([]);
 		} finally {
@@ -285,6 +292,7 @@ describe("load-source mutual exclusion (N8)", () => {
 			expect(discovered.map(file => helpers.getExtensionNameFromPath(file)).sort()).toEqual([
 				"codebase-tools",
 				"connect-bot",
+				"model-cost",
 			]);
 			expect(discovered.map(file => path.resolve(file))).toContain(path.resolve(CODEBASE_TOOLS_ENTRYPOINT));
 			expect(discovered.some(file => path.resolve(file).startsWith(path.resolve(legacyRoot)))).toBe(false);
@@ -301,11 +309,12 @@ describe("load-source mutual exclusion (N8)", () => {
 			const legacyRoot = materializeLegacyImplementation(runRoot);
 			const discovered = await discoverConfiguredRoots([OMP_ENTRYPOINT_DIR, legacyRoot]);
 
-			expect(discovered.length).toBe(3);
+			expect(discovered.length).toBe(4);
 			expect(discovered.map(file => helpers.getExtensionNameFromPath(file)).sort()).toEqual([
 				"codebase-tools",
 				"codebase-tools",
 				"connect-bot",
+				"model-cost",
 			]);
 			expect(discovered.map(file => path.resolve(file))).toContain(path.resolve(CODEBASE_TOOLS_ENTRYPOINT));
 			expect(discovered.map(file => path.resolve(file))).toContain(path.resolve(CONNECT_BOT_ENTRYPOINT));
@@ -330,7 +339,7 @@ describe("load-source mutual exclusion (N8)", () => {
 			// no binding carries the legacy label.
 			const result = await loader.loadExtensions(discovered, REPO_ROOT);
 			expect(result.errors).toEqual([]);
-			expect(result.extensions.map(extension => extension.label).sort()).toEqual(["codeBaseTools", "connectBot"]);
+			expect(result.extensions.map(extension => extension.label).sort()).toEqual(DEPLOYED_EXTENSION_LABELS);
 		} finally {
 			runRoot.dispose();
 		}
@@ -359,6 +368,7 @@ describe("load-source mutual exclusion (N8)", () => {
 				"codeBaseTools",
 				"connectBot",
 				"legacyConnectBot",
+				"modelCost",
 			]);
 		} finally {
 			runRoot.dispose();
@@ -441,7 +451,7 @@ describe("connect-bot on the real harness (P42)", () => {
 			});
 			try {
 				// The extension's command is registered — which happens only past the framework's
-				// configuration and admission steps — so an argument the panel protocol does not
+				// configuration step — so an argument the panel protocol does not
 				// know is answered with the extension's own usage error, in this session that
 				// started nowhere near the file that declares the extension's configuration.
 				const usage = await session.prompt("/connect-bot unknown-argument");
@@ -460,8 +470,7 @@ describe("connect-bot on the real harness (P42)", () => {
 				const exit = await session.stop();
 				expect(exit.timedOut).toBe(false);
 				expect(exit.exitCode).toBe(0);
-				// Neither configuration nor admission refused the extension, so nothing about it
-				// reached the non-model channel.
+				// Nothing refused the extension, so nothing about it reached the non-model channel.
 				expect(diagnosticsFor("connect-bot", session)).toEqual([]);
 			} finally {
 				await session.stop({ timeoutMs: 5_000 }).catch(() => undefined);

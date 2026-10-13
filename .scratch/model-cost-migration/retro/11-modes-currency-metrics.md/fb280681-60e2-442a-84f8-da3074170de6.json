@@ -1,0 +1,211 @@
+{
+  "feature": "model-cost-migration",
+  "ticket": "11-modes-currency-metrics.md",
+  "run_id": "fb280681-60e2-442a-84f8-da3074170de6",
+  "parent_session_id": "01a131a3-4562-728e-8c06-9608e1e88feb",
+  "parent_session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-12T19-42-26-146Z_01a131a3-4562-728e-8c06-9608e1e88feb.jsonl",
+  "workspace": "E:\\Developer\\myhub\\my-agent-toolkit",
+  "tool_call_id": "js-task-a860ed6d-1e87-4d82-9823-1fe11d983849",
+  "started_at": "2026-10-13T02:21:52.445Z",
+  "tdd_status": "completed",
+  "retro_status": "completed",
+  "tdd_finished_at": "2026-10-13T02:41:46.422Z",
+  "tdd_result": {
+    "index": 0,
+    "id": "11-modes-currency-metricsmd",
+    "agent": "tdd",
+    "agentSource": "user",
+    "task": "Complete assignment thoroughly:\n\nTicket filename: 11-modes-currency-metrics.md\nTicket path: .scratch/model-cost-migration/implementation/11-modes-currency-metrics.md\n\nFull ticket content:\n# 11: 消费模式、双币种与只读指标\n\n**What to build:** 各模式展示批准 usage 与费用字段，人民币 Cost 和美元 Ref 不混加，未知与无口径不伪装成免费，预算不限制宿主。\n\n**Delivers:** P7, P8, P9, P10, P25\n\n**Blocked by:** 08: 工具续跑与轻量 Round 累计；09: 实际 Session 自身归属与父树汇总\n\n**Status:** ready-for-agent\n\n## Acceptance criteria\n\n- [ ] 混合 Session 树分别保留 CNY Cost、USD Ref 和 token；Codex Ref 不是订阅实付，不换算混币种，不因当前 token-only/hidden 抹掉其他已知贡献。\n- [ ] token-only 仅批准四类 token/命中率/Sum/context/实际 Effort/Session/正常 Round/detail 的适用指标，无自身金额/费用结构/官方峰谷余额/Go 额度/Codex 窗口估计。\n- [ ] hidden 不创建用量 widget，不改变模型执行权限；捕获实际宿主执行和 widget 结果，不仅测试分类返回值。\n- [ ] 固定显示预算按规格 DeepSeek/Go 450K、Codex 272K；只展示告警，不改变请求、输出、上下文窗口或压缩，不恢复数字/K/0 参数。\n- [ ] 费用结构参考占比用对应模型当前价格乘 token 后归一化，DeepSeek 谷价、Codex 对应 catalog 四项；缺价/全零不可用，不借其他模型或历史 Ref 反推，不重价金额。\n- [ ] 永久行为 tests 用自造数据和独立金额/比例；隔离出站捕获证明 token-only/hidden/预算不改变执行，S2 与最小生产前端展示可独立观察，不等待最终视觉票才提供模式行为。\n- [ ] 通过批准的生产公共 seam 观察行为，预期来自合同/规格、独立字面值或手算，不以被测实现重算；永久网络 tests 使用 mock。\n- [ ] 使用隔离安装/配置/工作/Session/数据根，不操作正式 OMP；承接异步失败并保留够用脱敏证据，完成本票自动检查及材料准备，不因计划人工验收暂停可执行工作。\n\n## Verification responsibility\n\n本票负责所列 Delivers 的自动 coverage 与适用宿主贯通/证据准备；P58/P52 按本票具名责任执行。合同采用 Rapid iteration：H1/H2 及允许的条件性 H3 按原 Coverage 交用户确认，未确认不记通过；不改变承诺或免除实现/永久 tests。\n\n[You have received this identical output 3 times. Re-reading '.scratch/model-cost-migration/implementation/11-modes-currency-metrics.md' will not change it — use a narrower selector (path:A-B), or proceed with the edit.]",
+    "assignment": "Ticket filename: 11-modes-currency-metrics.md\nTicket path: .scratch/model-cost-migration/implementation/11-modes-currency-metrics.md\n\nFull ticket content:\n# 11: 消费模式、双币种与只读指标\n\n**What to build:** 各模式展示批准 usage 与费用字段，人民币 Cost 和美元 Ref 不混加，未知与无口径不伪装成免费，预算不限制宿主。\n\n**Delivers:** P7, P8, P9, P10, P25\n\n**Blocked by:** 08: 工具续跑与轻量 Round 累计；09: 实际 Session 自身归属与父树汇总\n\n**Status:** ready-for-agent\n\n## Acceptance criteria\n\n- [ ] 混合 Session 树分别保留 CNY Cost、USD Ref 和 token；Codex Ref 不是订阅实付，不换算混币种，不因当前 token-only/hidden 抹掉其他已知贡献。\n- [ ] token-only 仅批准四类 token/命中率/Sum/context/实际 Effort/Session/正常 Round/detail 的适用指标，无自身金额/费用结构/官方峰谷余额/Go 额度/Codex 窗口估计。\n- [ ] hidden 不创建用量 widget，不改变模型执行权限；捕获实际宿主执行和 widget 结果，不仅测试分类返回值。\n- [ ] 固定显示预算按规格 DeepSeek/Go 450K、Codex 272K；只展示告警，不改变请求、输出、上下文窗口或压缩，不恢复数字/K/0 参数。\n- [ ] 费用结构参考占比用对应模型当前价格乘 token 后归一化，DeepSeek 谷价、Codex 对应 catalog 四项；缺价/全零不可用，不借其他模型或历史 Ref 反推，不重价金额。\n- [ ] 永久行为 tests 用自造数据和独立金额/比例；隔离出站捕获证明 token-only/hidden/预算不改变执行，S2 与最小生产前端展示可独立观察，不等待最终视觉票才提供模式行为。\n- [ ] 通过批准的生产公共 seam 观察行为，预期来自合同/规格、独立字面值或手算，不以被测实现重算；永久网络 tests 使用 mock。\n- [ ] 使用隔离安装/配置/工作/Session/数据根，不操作正式 OMP；承接异步失败并保留够用脱敏证据，完成本票自动检查及材料准备，不因计划人工验收暂停可执行工作。\n\n## Verification responsibility\n\n本票负责所列 Delivers 的自动 coverage 与适用宿主贯通/证据准备；P58/P52 按本票具名责任执行。合同采用 Rapid iteration：H1/H2 及允许的条件性 H3 按原 Coverage 交用户确认，未确认不记通过；不改变承诺或免除实现/永久 tests。\n\n[You have received this identical output 3 times. Re-reading '.scratch/model-cost-migration/implementation/11-modes-currency-metrics.md' will not change it — use a narrower selector (path:A-B), or proceed with the edit.]",
+    "description": "Implement dual-currency modes and read-only metrics",
+    "lastIntent": "Waiting for full-suite job result",
+    "exitCode": 0,
+    "output": "{\n  \"commands_run\": [\n    {\n      \"cmd\": \"bun test\",\n      \"result\": \"682 pass / 4 fail (686 tests, 78 files, 204s). The 4 failures are the same pre-existing environment items other tickets recorded (count identical to ticket 09's 648/4 baseline): the visible one is tests/harness-dock/baseline.test.ts 'the run artifact stays byte-identical to the anchor for the recorded contract files' (the local patched viewed-session artifact's runner.ts / types.ts / session-manager.ts / model-registry.ts hashes differ from the frozen anchor); the others are the same recorded set (a second baseline case plus the two connect-bot panel cases that need a real 127.0.0.1:8787 panel). No new failure comes from this ticket's 15 tests.\"\n    },\n    {\n      \"cmd\": \"bun test tests/model-cost/display.test.ts tests/harness-dock/model-cost-modes.test.ts\",\n      \"result\": \"15 pass / 0 fail (75 expect, 10.4s) — final tree state\"\n    },\n    {\n      \"cmd\": \"bun test tests/model-cost\",\n      \"result\": \"105 pass / 0 fail (9 files) — no regression to the 07/08/09 suites\"\n    },\n    {\n      \"cmd\": \"bun test tests/harness-dock/model-cost-accounting.test.ts tests/harness-dock/model-cost-store.test.ts tests/harness-dock/model-cost-modes.test.ts\",\n      \"result\": \"10 pass / 0 fail (20.0s)\"\n    },\n    {\n      \"cmd\": \"bun run smoke:model-cost-data\",\n      \"result\": \"SMOKE SUMMARY: 20 passed, 0 failed\"\n    },\n    {\n      \"cmd\": \"bunx tsc --noEmit\",\n      \"result\": \"no output (exit 0)\"\n    }\n  ],\n  \"delivered\": \"S2 display seam (extensions/model-cost/shared-logic/presentation/display.ts: mode/current/tree/budget/effort/context, fieldsOf, referenceRatioOf, displayBudgetOf, and the shared text rules), a minimal runnable production frontend (extensions/model-cost/harnesses/omp/widget.ts: key z-model-cost, hidden => no widget, re-read on accounting + host session + Viewed-session changes, hasUI guard, detach), wiring in harnesses/omp.ts + runtime.ts (optional catalog input shared by the framework price snapshot and the display ratio; runtime.presentation) and model-data.ts (dataCatalog), the GLOSSARY term Display budget, plus two new suites. Outcome: mixed trees keep CNY Cost / USD Ref / tokens apart and never convert them; token-only and hidden show no amount, no ratio, no budget(hidden) even over hostile records; hidden creates no widget while the model still runs; the fixed 450K/272K budgets are display-only and the captured request body is byte-identical to a run without the extension; the reference ratio comes from the model's own current price (DeepSeek off-peak three buckets, Codex catalog four) by largest remainder and is unavailable when missing or all-zero.\",\n  \"evidence_asset\": \".scratch/model-cost-migration/assets/11-modes-currency-metrics-evidence-2026-10-13.md\",\n  \"files\": [\n    \"extensions/model-cost/shared-logic/presentation/display.ts (new)\",\n    \"extensions/model-cost/harnesses/omp/widget.ts (new)\",\n    \"extensions/model-cost/shared-logic/runtime.ts\",\n    \"extensions/model-cost/shared-logic/model-data.ts\",\n    \"extensions/model-cost/harnesses/omp.ts\",\n    \"extensions/model-cost/GLOSSARY.md\",\n    \"tests/model-cost/display.test.ts (new, 11 S2 cases)\",\n    \"tests/harness-dock/model-cost-modes.test.ts (new, 4 S5 cases)\",\n    \".scratch/model-cost-migration/assets/11-modes-currency-metrics-evidence-2026-10-13.md (new)\"\n  ],\n  \"injections_verified\": [\n    \"dropping the largest-remainder apportionment fails only the 4:7:89 case (3:7:88)\",\n    \"letting widgetLines render for hidden fails the S5 hidden case\",\n    \"the initial red state was the missing amounts gate (P8's two cases read the seeded 9.99/7.77)\"\n  ],\n  \"promises\": \"P7, P8, P9, P10, P25 (S2, S5)\",\n  \"repo_hygiene\": \"no injected change left behind; only the listed files were touched; no other ticket file read or modified; tests/harness-dock/baseline.ts and capture-server.ts were already modified by other tickets, not by me\",\n  \"status\": \"implemented + automated checks run; ticket file left at ready-for-agent (in-progress/closed are the dispatcher's/merger's transitions; nothing is merged yet)\",\n  \"ticket\": \".scratch/model-cost-migration/implementation/11-modes-currency-metrics.md\",\n  \"unverified_or_limits\": [\n    \"Codex Ref amount and the Codex ratio price source are unreachable in production: the framework's only catalog is the extension's own (behaviors/turn-events.ts queries implementation.catalog), the maintained data deliberately holds no Codex prices, and the host model-price fact (ctx.models / ctx.model.cost) is not yet mapped by the adapter. A pure Codex session therefore shows the 272K bar and no Ref: — asserted as the honest no-fabrication result in the S5 allowance case; the four-item Codex ratio algorithm is proven in S2 with an injected catalog price. Closing this needs framework/adapter wiring (undecided); no second price source or real constant was invented.\",\n    \"Round and detail rows are not rendered by this ticket's widget (Round totals are ticket 08's view, the detail preference is 02/17); the mode gating still holds — a rendering subset, not unapproved fields.\",\n    \"Real TUI / narrow-width / colour visuals (H1) belong to ticket 20. No H3 transfer is needed: all four S5 cases passed on the first attempt, so there is no failing or over-costly real-OMP script to hand over.\",\n    \"No formal OMP environment was touched: every run used .cache/omp-baseline/18.5.0-viewed-session (the ticket-01 patched artifact) plus a temporary run root, with credential-free local capture endpoints.\"\n  ]\n}",
+    "stderr": "",
+    "truncated": false,
+    "durationMs": 1193950,
+    "tokens": 367844,
+    "requests": 211,
+    "contextTokens": 339929,
+    "contextWindow": 1000000,
+    "modelOverride": [
+      "deepseek/deepseek-flash:high"
+    ],
+    "resolvedModel": "deepseek/deepseek-flash:high",
+    "resolvedModelIdentity": "deepseek/deepseek-flash",
+    "resolvedThinkingLevel": "high",
+    "aborted": false,
+    "usage": {
+      "input": 216129,
+      "output": 151715,
+      "cacheRead": 43021056,
+      "cacheWrite": 0,
+      "totalTokens": 43388900,
+      "reasoningTokens": 83302,
+      "cost": {
+        "input": 0.06483869999999999,
+        "output": 0.1820579999999999,
+        "cacheRead": 0.25812633599999985,
+        "cacheWrite": 0,
+        "total": 0.5050230359999999
+      }
+    },
+    "outputPath": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-12T19-42-26-146Z_01a131a3-4562-728e-8c06-9608e1e88feb\\11-modes-currency-metricsmd.md",
+    "extractedToolData": {
+      "yield": [
+        {
+          "data": {
+            "ticket": ".scratch/model-cost-migration/implementation/11-modes-currency-metrics.md",
+            "status": "implemented + automated checks run; ticket file left at `ready-for-agent` (in-progress/closed are the dispatcher's/merger's transition; nothing merged yet)",
+            "promises": "P7, P8, P9, P10, P25 (seams S2, S5)",
+            "delivered": {
+              "new_shared_seam": "extensions/model-cost/shared-logic/presentation/display.ts — read-only display result for one target: mode (exact provider+model → monetary/allowance/token-only/hidden), `current` (the target's own provider/model, mode-gated: token-only/hidden carry no amount and no ratio even when a record holds one), `tree` (whole main tree, every model, CNY Cost and USD Ref as two fields never added or converted), `budget` (fixed 450K DeepSeek+Go / 272K Codex / none for hidden, plus `exceeded`), `effort` (? when unknown), `context`; pure computation `fieldsOf`, `referenceRatioOf` (model's own current price × tokens, normalized by largest remainder), `displayBudgetOf`; and the shared text rules formatTokens/formatCny/formatUsd/amountText/currentText/totalText/budgetBarText",
+              "new_frontend": "extensions/model-cost/harnesses/omp/widget.ts — the minimal runnable production frontend: key `z-model-cost`, `widgetLines(display)` (hidden → undefined, i.e. the widget is never created), `attachModelCostWidget(pi, runtime)` re-reading runtime.presentation on accounting changes, host session transitions and the host's public `ctx.subscribeViewedSessionChanged()`, drawing nothing when `hasUI !== true`, with a detach that clears the widget and its subscriptions",
+              "wiring": "extensions/model-cost/harnesses/omp.ts holds the process's one runtime from the factory and attaches the widget after the binding; extensions/model-cost/shared-logic/runtime.ts gains optional `catalog` input (default `dataCatalog(data)`, now a named export of model-data.ts) shared by the framework's request-price snapshot and the display's ratio query, plus `runtime.presentation`",
+              "docs": "extensions/model-cost/GLOSSARY.md gains the domain term **Display budget（显示预算）** (450K/272K, display-only, not the context window, not configurable, never a request/output/context/compaction limit)",
+              "evidence_asset": ".scratch/model-cost-migration/assets/11-modes-currency-metrics-evidence-2026-10-13.md (per-criterion table, real-host facts found, commands+results, injection log, named P52/P58 scope, limits)"
+            },
+            "criteria_evidence": {
+              "P7 mixed tree keeps CNY Cost, USD Ref and tokens apart; no conversion; other channels not erased": "tests/model-cost/display.test.ts #1: token-only target over a heterogeneous main tree → tree.costCny 0.55, tree.referenceCostUsd 0.02 (separate literal fields), tokens {1417,2120,50,3230}/Sum 6817 hand-summed, while the token-only target's own fields carry no amount; S5 allowance run shows no fabricated `Cost:`/`¥`, monetary run shows `Cost: ¥0.0050`",
+              "P8 token-only shows only approved metrics, no own amount/fee structure/balance/quota/window": "display.test.ts #2/#3: `current` = tokens+Sum+hit-rate only, even with hostile `costCny: 9.99`/`referenceCostUsd: 8.88` seeded in the record; hidden has no budget either; the display result has no balance/quota/window fields at all; S5 token-only widget text contains no `¥`, `$` or `Cache/In/Out`",
+              "P9 hidden creates no usage widget and does not stop execution (real host + widget result)": "tests/harness-dock/model-cost-modes.test.ts #1: real patched host, unlisted provider/model → prompt completed, agentInvoked true, exactly 1 request at the capture endpoint, and no `setWidget` frame ever carried lines under the widget key",
+              "P10 fixed display budget 450K/272K, warning only, execution untouched, no number/K/0 parameters": "display.test.ts #4/#5: literal 450_000/450_000/272_000/undefined per mode and the 449_999/450_000/450_001 boundary; S5: `450.0K` in token-only+monetary runs, `272.0K` in the allowance run; the monetary run's captured request body is byte-identical (only the run's own temp path normalized) to a control run without the extension loaded at all; no new command parameter exists",
+              "P25 ratio from the corresponding model's current price × tokens, normalized; DeepSeek off-peak, Codex catalog four items; missing/all-zero unusable; no other model or accumulated Ref substituted; amounts never re-priced": "display.test.ts #6–#10: DeepSeek 4:32:64, the non-dividing 3.703/7.407/88.888 → 4:7:89 (largest remainder), injected Codex catalog price → four parts 10:40:10:40 incl. cacheWrite, missing tier and an unanswering catalog both `undefined` (tokens and accumulated amount kept), all-zero scope unusable, ratio absent when only the accumulated Ref exists; every ratio case also asserts the already-accounted `costCny` unchanged; S5 shows the ratio is season-invariant (`0:20:80` under a holiday/off-peak period)"
+            },
+            "commands_run": [
+              {
+                "cmd": "bun test tests/model-cost/display.test.ts",
+                "result": "11 pass / 0 fail (43 expect) — S2"
+              },
+              {
+                "cmd": "bun test tests/harness-dock/model-cost-modes.test.ts",
+                "result": "4 pass / 0 fail (32 expect, 9.5s) — S5, real patched host, 4 real requests to the local capture endpoint"
+              },
+              {
+                "cmd": "bun test tests/model-cost/display.test.ts tests/harness-dock/model-cost-modes.test.ts",
+                "result": "15 pass / 0 fail (75 expect, 10.4s) — final tree state"
+              },
+              {
+                "cmd": "bun test tests/model-cost",
+                "result": "105 pass / 0 fail (9 files) — no regression to 07/08/09 suites"
+              },
+              {
+                "cmd": "bun test tests/harness-dock/model-cost-accounting.test.ts tests/harness-dock/model-cost-store.test.ts tests/harness-dock/model-cost-modes.test.ts",
+                "result": "10 pass / 0 fail (20.0s)"
+              },
+              {
+                "cmd": "bun run smoke:model-cost-data",
+                "result": "SMOKE SUMMARY: 20 passed, 0 failed"
+              },
+              {
+                "cmd": "bunx tsc --noEmit",
+                "result": "no output (exit 0)"
+              },
+              {
+                "cmd": "bun test (whole repo)",
+                "result": "started this session, still running when this report was written — result not observed; previous tickets recorded 648 pass / 4 fail with the same 4 pre-existing environment failures (harness-dock/baseline.test.ts anchor drift, two connect-bot panel cases needing a real 127.0.0.1:8787 panel)"
+              }
+            ],
+            "injections_verified": [
+              "dropping the largest-remainder apportionment fails the 4:7:89 case (3:7:88) and nothing else",
+              "letting `widgetLines` render for hidden fails the S5 hidden case (a frame with lines appeared)",
+              "the first red state itself was the missing `amounts` gate: P8's two cases failed with the seeded 9.99/7.77"
+            ],
+            "unverified_or_limits": [
+              "Codex reference amount and Codex ratio price source are unreachable in production: the framework's only catalog is the extension's own (`behaviors/turn-events.ts` queries `implementation.catalog`), the maintained data deliberately holds no Codex prices, and the host model-price fact (`ctx.models`/`ctx.model.cost`) is not yet mapped by the adapter. So a pure Codex session currently shows the 272K bar and no `Ref:` — asserted as the honest no-fabrication result in the S5 allowance case; the four-item Codex ratio algorithm is proven in S2 with an injected catalog price. Closing this needs a framework/adapter wiring (undecided); I did not invent a second price source or hard-code real constants.",
+              "Round and detail rows are not rendered by this ticket's widget (Round totals come from ticket 08's view, the detail preference from 02/17); the mode gating still holds — this is a rendering subset, not unapproved fields.",
+              "Real TUI/narrow-width/colour visuals (H1) belong to ticket 20; no H3 transfer is needed for this ticket — all four S5 cases passed on the first attempt, so there is no failing/over-costly real-OMP script to hand over.",
+              "The whole-repo `bun test` result was not observed before this report (background job still running).",
+              "No formal OMP environment was touched: every run used `.cache/omp-baseline/18.5.0-viewed-session` (the ticket-01 patched artifact) plus a temporary run root; capture endpoints were local-only and credential-free."
+            ],
+            "files": [
+              "extensions/model-cost/shared-logic/presentation/display.ts (new)",
+              "extensions/model-cost/harnesses/omp/widget.ts (new)",
+              "extensions/model-cost/shared-logic/runtime.ts",
+              "extensions/model-cost/shared-logic/model-data.ts",
+              "extensions/model-cost/harnesses/omp.ts",
+              "extensions/model-cost/GLOSSARY.md",
+              "tests/model-cost/display.test.ts (new)",
+              "tests/harness-dock/model-cost-modes.test.ts (new)",
+              ".scratch/model-cost-migration/assets/11-modes-currency-metrics-evidence-2026-10-13.md (new)"
+            ],
+            "repo_hygiene": "no injected change left behind; only the listed files were touched (no other ticket file read or modified); tests/harness-dock/baseline.ts and capture-server.ts were already modified by other tickets, not by me"
+          },
+          "status": "success",
+          "type": "result"
+        },
+        {
+          "data": {
+            "commands_run": [
+              {
+                "cmd": "bun test",
+                "result": "682 pass / 4 fail (686 tests, 78 files, 204s). The 4 failures are the same pre-existing environment items other tickets recorded (count identical to ticket 09's 648/4 baseline): the visible one is tests/harness-dock/baseline.test.ts 'the run artifact stays byte-identical to the anchor for the recorded contract files' (the local patched viewed-session artifact's runner.ts / types.ts / session-manager.ts / model-registry.ts hashes differ from the frozen anchor); the others are the same recorded set (a second baseline case plus the two connect-bot panel cases that need a real 127.0.0.1:8787 panel). No new failure comes from this ticket's 15 tests."
+              },
+              {
+                "cmd": "bun test tests/model-cost/display.test.ts tests/harness-dock/model-cost-modes.test.ts",
+                "result": "15 pass / 0 fail (75 expect, 10.4s) — final tree state"
+              },
+              {
+                "cmd": "bun test tests/model-cost",
+                "result": "105 pass / 0 fail (9 files) — no regression to the 07/08/09 suites"
+              },
+              {
+                "cmd": "bun test tests/harness-dock/model-cost-accounting.test.ts tests/harness-dock/model-cost-store.test.ts tests/harness-dock/model-cost-modes.test.ts",
+                "result": "10 pass / 0 fail (20.0s)"
+              },
+              {
+                "cmd": "bun run smoke:model-cost-data",
+                "result": "SMOKE SUMMARY: 20 passed, 0 failed"
+              },
+              {
+                "cmd": "bunx tsc --noEmit",
+                "result": "no output (exit 0)"
+              }
+            ],
+            "delivered": "S2 display seam (extensions/model-cost/shared-logic/presentation/display.ts: mode/current/tree/budget/effort/context, fieldsOf, referenceRatioOf, displayBudgetOf, and the shared text rules), a minimal runnable production frontend (extensions/model-cost/harnesses/omp/widget.ts: key z-model-cost, hidden => no widget, re-read on accounting + host session + Viewed-session changes, hasUI guard, detach), wiring in harnesses/omp.ts + runtime.ts (optional catalog input shared by the framework price snapshot and the display ratio; runtime.presentation) and model-data.ts (dataCatalog), the GLOSSARY term Display budget, plus two new suites. Outcome: mixed trees keep CNY Cost / USD Ref / tokens apart and never convert them; token-only and hidden show no amount, no ratio, no budget(hidden) even over hostile records; hidden creates no widget while the model still runs; the fixed 450K/272K budgets are display-only and the captured request body is byte-identical to a run without the extension; the reference ratio comes from the model's own current price (DeepSeek off-peak three buckets, Codex catalog four) by largest remainder and is unavailable when missing or all-zero.",
+            "evidence_asset": ".scratch/model-cost-migration/assets/11-modes-currency-metrics-evidence-2026-10-13.md",
+            "files": [
+              "extensions/model-cost/shared-logic/presentation/display.ts (new)",
+              "extensions/model-cost/harnesses/omp/widget.ts (new)",
+              "extensions/model-cost/shared-logic/runtime.ts",
+              "extensions/model-cost/shared-logic/model-data.ts",
+              "extensions/model-cost/harnesses/omp.ts",
+              "extensions/model-cost/GLOSSARY.md",
+              "tests/model-cost/display.test.ts (new, 11 S2 cases)",
+              "tests/harness-dock/model-cost-modes.test.ts (new, 4 S5 cases)",
+              ".scratch/model-cost-migration/assets/11-modes-currency-metrics-evidence-2026-10-13.md (new)"
+            ],
+            "injections_verified": [
+              "dropping the largest-remainder apportionment fails only the 4:7:89 case (3:7:88)",
+              "letting widgetLines render for hidden fails the S5 hidden case",
+              "the initial red state was the missing amounts gate (P8's two cases read the seeded 9.99/7.77)"
+            ],
+            "promises": "P7, P8, P9, P10, P25 (S2, S5)",
+            "repo_hygiene": "no injected change left behind; only the listed files were touched; no other ticket file read or modified; tests/harness-dock/baseline.ts and capture-server.ts were already modified by other tickets, not by me",
+            "status": "implemented + automated checks run; ticket file left at ready-for-agent (in-progress/closed are the dispatcher's/merger's transitions; nothing is merged yet)",
+            "ticket": ".scratch/model-cost-migration/implementation/11-modes-currency-metrics.md",
+            "unverified_or_limits": [
+              "Codex Ref amount and the Codex ratio price source are unreachable in production: the framework's only catalog is the extension's own (behaviors/turn-events.ts queries implementation.catalog), the maintained data deliberately holds no Codex prices, and the host model-price fact (ctx.models / ctx.model.cost) is not yet mapped by the adapter. A pure Codex session therefore shows the 272K bar and no Ref: — asserted as the honest no-fabrication result in the S5 allowance case; the four-item Codex ratio algorithm is proven in S2 with an injected catalog price. Closing this needs framework/adapter wiring (undecided); no second price source or real constant was invented.",
+              "Round and detail rows are not rendered by this ticket's widget (Round totals are ticket 08's view, the detail preference is 02/17); the mode gating still holds — a rendering subset, not unapproved fields.",
+              "Real TUI / narrow-width / colour visuals (H1) belong to ticket 20. No H3 transfer is needed: all four S5 cases passed on the first attempt, so there is no failing or over-costly real-OMP script to hand over.",
+              "No formal OMP environment was touched: every run used .cache/omp-baseline/18.5.0-viewed-session (the ticket-01 patched artifact) plus a temporary run root, with credential-free local capture endpoints."
+            ]
+          },
+          "status": "success",
+          "type": "result"
+        }
+      ]
+    },
+    "outputMeta": {
+      "lineCount": 56,
+      "charCount": 5526
+    }
+  },
+  "agent": "tdd",
+  "agent_id": "11-modes-currency-metricsmd",
+  "session_id": "01a13310-f7eb-7766-9521-db38f49bb84c",
+  "session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-12T19-42-26-146Z_01a131a3-4562-728e-8c06-9608e1e88feb\\11-modes-currency-metricsmd.jsonl",
+  "execution_cwd": "E:\\Developer\\myhub\\my-agent-toolkit",
+  "retro_document": "E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\model-cost-migration\\retro\\11-modes-currency-metrics.md\\fb280681-60e2-442a-84f8-da3074170de6.md",
+  "retro_finished_at": "2026-10-13T02:42:38.880Z"
+}

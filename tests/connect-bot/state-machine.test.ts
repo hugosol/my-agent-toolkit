@@ -17,12 +17,12 @@
 import { afterEach, describe, expect, jest, test } from "bun:test";
 import type { OmpCommandContext } from "../../framework/adapters/omp";
 import {
-	type PushFetchInit,
-	type PushHttpResponse,
-	type PushTransport,
+	type PanelRequest,
 	EVENTS_PATH,
-	setPushTransportForTest,
+	setPanelRequestForTest,
 } from "../../extensions/connect-bot/shared-logic/panel/client";
+import type { HttpRequestOptions } from "../../framework/public";
+import { connectBotConfig } from "../../extensions/connect-bot/shared-logic/panel/config";
 import { CONNECT_BOT } from "../../extensions/connect-bot/definition";
 import connectBot from "../../extensions/connect-bot/harnesses/omp";
 import { botSessions } from "../../extensions/connect-bot/shared-logic/session/session";
@@ -33,17 +33,15 @@ const ENDPOINT = "http://127.0.0.1:8787";
 /** The owner key the framework resolves for one main session. */
 const ownerKey = (sessionId: string) => `main:${sessionId}`;
 
-/** One outbound request the extension made, as the transport received it. */
+/** One outbound request the extension made, as the framework's call received it. */
 interface Request {
 	readonly url: string;
-	readonly init: PushFetchInit;
+	readonly init: HttpRequestOptions;
 }
 
 /** The panel's answer to one request. */
-const panelAnswer = (status: number, body: unknown): PushHttpResponse => ({
-	status,
-	text: async () => JSON.stringify(body),
-});
+const panelAnswer = (status: number, body: unknown): Response =>
+	new Response(JSON.stringify(body), { status });
 
 /** The registered receipt a reachable panel answers a `register` with. */
 const registered = (onlineCount: number) => ({ outcome: "registered", onlineCount });
@@ -57,7 +55,7 @@ interface WireEnvelope {
 
 /** Reads one sent request body as the `{sessionId, kind, data?}` envelope the contract fixes. */
 function envelopeOf(request: Request): WireEnvelope {
-	const parsed: unknown = JSON.parse(request.init.body);
+	const parsed: unknown = JSON.parse(request.init.body ?? "");
 	if (parsed === null || typeof parsed !== "object") {
 		throw new Error("connect-bot sent a body that is not an object");
 	}
@@ -102,11 +100,11 @@ function lastState(requests: readonly Request[]): { readonly value: string; read
 }
 
 /** Records every request and answers each of them as soon as it arrives. */
-function panel(): { readonly requests: Request[]; readonly transport: PushTransport } {
+function panel(): { readonly requests: Request[]; readonly request: PanelRequest } {
 	const requests: Request[] = [];
 	return {
 		requests,
-		transport: async (url, init) => {
+		request: async (url, init = {}) => {
 			requests.push({ url, init });
 			return envelopeOf({ url, init }).kind === "register" ? panelAnswer(200, registered(1)) : panelAnswer(200, {});
 		},
@@ -114,11 +112,11 @@ function panel(): { readonly requests: Request[]; readonly transport: PushTransp
 }
 
 /** Binds the extension against a fresh double and injects one panel. */
-function bound(transport: PushTransport): OmpDouble {
+function bound(request: PanelRequest): OmpDouble {
 	const double = ompDouble();
 	connectBot(double.api);
-	// The assembly installs the platform's own transport at binding; the fake takes its place.
-	setPushTransportForTest(transport);
+	// A real binding sends through the framework's own request; the fake takes its place.
+	setPanelRequestForTest(request);
 	return double;
 }
 
@@ -138,8 +136,8 @@ async function armed(
 	sessionId: string,
 	idle: boolean,
 ): Promise<{ readonly double: OmpDouble; readonly requests: Request[]; readonly ctx: OmpCommandContext }> {
-	const { requests, transport } = panel();
-	const double = bound(transport);
+	const { requests, request } = panel();
+	const double = bound(request);
 	const ctx = double.context({ sessionId, cwd: "E:/work/state", idle });
 	const announced = double.nextNotification();
 	double.run("connect-bot", "", ctx);
@@ -163,9 +161,9 @@ describe("arming reports the state the idle fact answers (E12, P33, story 74)", 
 		expect(requests[1]?.url).toBe(`${ENDPOINT}${EVENTS_PATH}`);
 		expect(requests[1]?.init.method).toBe("POST");
 		expect(requests[1]?.init.proxy).toBe(false);
-		// A queued push waits the extension's own configured budget under its own abort signal —
-		// never an endless one; the wait's real length is established in `request-timeout.test.ts`.
-		expect(requests[1]?.init.signal).toBeInstanceOf(AbortSignal);
+		// A queued push declares the extension's own configured budget — never an endless one; the
+		// wait's real length is established in `request-timeout.test.ts`.
+		expect(requests[1]?.init.timeoutMs).toBe(connectBotConfig().requestTimeoutMs);
 		expect(JSON.parse(requests[1]?.init.body ?? "")).toEqual({
 			sessionId: "state-idle",
 			kind: "state",
@@ -206,7 +204,7 @@ describe("the round edges move the state (E12, P33, story 74)", () => {
 		await settleAll();
 		expect(lastState(requests)).toEqual({ value: "working", reason: "round_start" });
 
-		double.settleRun(ctx);
+		await double.settleRun(ctx);
 		await settleAll();
 		expect(lastState(requests)).toEqual({ value: "awaiting-input", reason: "round_end" });
 
@@ -232,8 +230,8 @@ describe("the round edges move the state (E12, P33, story 74)", () => {
 		// reported end leaves 等待用户输入 where it already is.
 		const again = await armed("state-repeat", true);
 		again.double.startRun(again.ctx);
-		again.double.settleRun(again.ctx);
-		again.double.settleRun(again.ctx);
+		await again.double.settleRun(again.ctx);
+		await again.double.settleRun(again.ctx);
 		await settleAll();
 
 		expect(statePushes(again.requests)).toEqual([
@@ -250,12 +248,12 @@ describe("the round edges move the state (E12, P33, story 74)", () => {
 
 		// The agent has already scheduled its own next piece of work: an automatic retry, a recovery
 		// turn or a queued drain is a pause inside the round, not the operator's turn to speak.
-		double.settleRun(ctx, { willContinue: true });
+		await double.settleRun(ctx, { willContinue: true });
 		await settleAll();
 		expect(lastState(requests)).toEqual({ value: "working", reason: "round_start" });
 
 		// The real settle, once nothing is left to continue, is the round's end.
-		double.settleRun(ctx);
+		await double.settleRun(ctx);
 		await settleAll();
 		expect(lastState(requests)).toEqual({ value: "awaiting-input", reason: "round_end" });
 	});
@@ -268,7 +266,7 @@ describe("the round edges move the state (E12, P33, story 74)", () => {
 		// The session still reports itself busy when the run settles — a fact this harness states per
 		// delivery. An unestablished quiescence closes no round, so no edge arrives and nothing here
 		// invents a 等待用户输入 the session did not reach.
-		double.settleRun(double.context({ sessionId: "state-busy-settle", cwd: "E:/work/state", idle: false }));
+		await double.settleRun(double.context({ sessionId: "state-busy-settle", cwd: "E:/work/state", idle: false }));
 		await settleAll();
 
 		expect(statePushes(requests)).toEqual([
@@ -297,7 +295,7 @@ describe("the terminal shapes that never see an ordinary settle (E12)", () => {
 		test(`${label} lands on 等待用户输入`, async () => {
 			const { double, requests, ctx } = await armed(`state-terminal-${index}`, true);
 			double.startRun(ctx);
-			double.settleRun(ctx);
+			await double.settleRun(ctx);
 			await settleAll();
 
 			expect(lastState(requests), label).toEqual({ value: "awaiting-input", reason: "round_end" });
@@ -307,7 +305,7 @@ describe("the terminal shapes that never see an ordinary settle (E12)", () => {
 	test("a subagent's round edges never move the main session's state", async () => {
 		const { double, requests, ctx } = await armed("state-main", true);
 		double.startRun(ctx);
-		double.settleRun(ctx);
+		await double.settleRun(ctx);
 		await settleAll();
 		expect(lastState(requests)).toEqual({ value: "awaiting-input", reason: "round_end" });
 
@@ -323,7 +321,7 @@ describe("the terminal shapes that never see an ordinary settle (E12)", () => {
 
 		double.startRun(subagent);
 		await settleAll();
-		double.settleRun(subagent);
+		await double.settleRun(subagent);
 		await settleAll();
 
 		expect(statePushes(requests)).toEqual([
@@ -373,7 +371,7 @@ describe("the tri-state lives in the extension's own record (P6)", () => {
 
 		const { double, requests, ctx } = await armed("state-owner", true);
 		double.startRun(ctx);
-		double.settleRun(ctx);
+		await double.settleRun(ctx);
 		await settleAll();
 
 		// The value the panel is told lives in the owner's own record, reported on the wire's own

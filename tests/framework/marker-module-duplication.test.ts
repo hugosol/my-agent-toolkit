@@ -19,7 +19,7 @@
 import { describe, expect, test } from "bun:test";
 import type * as MarkerBehavior from "../../framework/behaviors/marker";
 import { activationField, statePersistence, type ExtensionDefinition, defineExtension } from "../../framework/core/definition";
-import type { MarkerTransport } from "../../framework/core/protocol";
+import type { MarkerTransport, OwnerReference } from "../../framework/core/protocol";
 import { StateStore } from "../../framework/core/state";
 
 /** One module instance of the marker behavior: what one extension's duplicated graph evaluates. */
@@ -34,19 +34,26 @@ function duplicatedMarkerModule(tag: string): Promise<MarkerModule> {
 	return import(specifier) as Promise<MarkerModule>;
 }
 
+/**
+ * The seat a case projects unless it names another one: the position the delivery itself carries,
+ * which is what a harness publishing no viewed-session outlet leaves the framework with.
+ */
+const ownSeat = (own: OwnerReference): OwnerReference => own;
+
 /** A marker-only extension: nothing but the text and the activation State its line follows. */
-function markerExtension(id: string, text: string): ExtensionDefinition {
+function markerExtension(id: string, text: string, inheritance?: "follow"): ExtensionDefinition {
 	return defineExtension({
 		id,
 		displayName: id,
-		state: { field: "enabled" },
+		state: inheritance === undefined ? { field: "enabled" } : { field: "enabled", inheritance },
 		marker: { text },
 	});
 }
 
 /** Declared out of id order on purpose: only a sort by id can put alpha's line first. */
 const OMEGA = markerExtension("graph-omega-extension", "◈ omega");
-const ALPHA = markerExtension("graph-alpha-extension", "◈ alpha");
+/** The field that follows the Owner, so a subagent's seat reads the Owner's current value. */
+const ALPHA = markerExtension("graph-alpha-extension", "◈ alpha", "follow");
 
 /** Writes one copy's activation value through its own store's declared-value write path. */
 function writeActivation(store: StateStore, ownerKey: string, value: boolean): void {
@@ -58,6 +65,7 @@ function linesPublishedBy(
 	behavior: MarkerModule,
 	definition: ExtensionDefinition,
 	ownerKey: string,
+	seat: (own: OwnerReference) => OwnerReference = ownSeat,
 ): readonly string[] {
 	const published: Array<readonly string[]> = [];
 	const transport: MarkerTransport = {
@@ -66,7 +74,7 @@ function linesPublishedBy(
 		},
 	};
 
-	behavior.publishMarkerOnTransition(definition, ownerKey, transport);
+	behavior.publishMarkerOnTransition(definition, ownerKey, transport, seat);
 
 	const last = published[published.length - 1];
 	if (last === undefined) throw new Error(`the "${definition.id}" transition published nothing`);
@@ -77,19 +85,23 @@ function linesPublishedBy(
 function linesPublishedOnRun(
 	behavior: MarkerModule,
 	definition: ExtensionDefinition,
-	state: StateStore,
 	ownerKey: string,
+	seat: (own: OwnerReference) => OwnerReference = ownSeat,
 ): readonly string[] {
 	const published: Array<readonly string[]> = [];
-	behavior.publishMarkerOnRun(definition, state, {
-		owner: { kind: "owner", key: ownerKey },
-		contributionIdentities: [],
-		markers: {
-			publishMarkers: lines => {
-				published.push([...lines]);
+	behavior.publishMarkerOnRun(
+		definition,
+		{
+			owner: { kind: "owner", key: ownerKey },
+			contributionIdentities: [],
+			markers: {
+				publishMarkers: lines => {
+					published.push([...lines]);
+				},
 			},
 		},
-	});
+		seat,
+	);
 
 	const last = published[published.length - 1];
 	if (last === undefined) throw new Error(`the "${definition.id}" run published nothing`);
@@ -138,8 +150,25 @@ describe("one area across duplicated module instances (P13, C10)", () => {
 		writeActivation(alphaState, ownerKey, true);
 		writeActivation(omegaState, ownerKey, true);
 
-		expect(linesPublishedOnRun(alpha, ALPHA, alphaState, ownerKey)).toEqual(["◈ alpha", "◈ omega"]);
-		expect(linesPublishedOnRun(omega, OMEGA, omegaState, ownerKey)).toEqual(["◈ alpha", "◈ omega"]);
+		expect(linesPublishedOnRun(alpha, ALPHA, ownerKey)).toEqual(["◈ alpha", "◈ omega"]);
+		expect(linesPublishedOnRun(omega, OMEGA, ownerKey)).toEqual(["◈ alpha", "◈ omega"]);
+	});
+
+	test("either copy projects the same displayed subagent, each extension reading its own declaration", async () => {
+		const { alpha, omega, alphaState, omegaState } = await twoDuplicatedGraphs();
+		const ownerKey = "duplicated-graph-viewed-owner";
+
+		writeActivation(alphaState, ownerKey, true);
+		writeActivation(omegaState, ownerKey, true);
+
+		// The seat is a subagent of that Owner: the following field reads the Owner's current value,
+		// and the other one reads its declared default. Both copies read the one area, so either of
+		// them publishes the same rendering — the duplicated graphs share the area, not the projection.
+		const displayedSubagent = { kind: "inherited", key: ownerKey } as const;
+		const subagentSeat = (): typeof displayedSubagent => displayedSubagent;
+
+		expect(linesPublishedBy(alpha, ALPHA, ownerKey, subagentSeat)).toEqual(["◈ alpha"]);
+		expect(linesPublishedOnRun(omega, OMEGA, ownerKey, subagentSeat)).toEqual(["◈ alpha"]);
 	});
 });
 

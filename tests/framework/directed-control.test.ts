@@ -16,8 +16,8 @@
  * and a value the framework "would have" derived from the argument is never recorded.
  */
 import { describe, expect, test } from "bun:test";
-import type { CommandActions, CommandDelivery, RecognizedDirective } from "../../framework/core/protocol";
-import { type ExtensionDefinition, defineExtension } from "../../framework/public";
+import type { CommandDelivery, RecognizedDirective } from "../../framework/core/protocol";
+import { type CommandImplementations, type ExtensionDefinition, defineExtension } from "../../framework/public";
 import { type PortDouble, portDouble } from "./support/harness-port-double";
 
 /** One implementation call, as the injected implementation saw it. */
@@ -42,13 +42,13 @@ function directedDefinition(id: string): ExtensionDefinition {
  * does with the delivery's declared-value seam.
  */
 function applyingActions(command: string): {
-	readonly actions: CommandActions;
+	readonly commands: CommandImplementations;
 	readonly calls: ActionCall[];
 } {
 	const calls: ActionCall[] = [];
 	return {
 		calls,
-		actions: {
+		commands: {
 			[command]: {
 				run: (directive, delivery: CommandDelivery) => {
 					calls.push({
@@ -65,8 +65,8 @@ function applyingActions(command: string): {
 describe("directed control: a named target and a repeated implementation (F1)", () => {
 	test("an empty argument activates the field and runs the injected implementation once", () => {
 		const double: PortDouble = portDouble();
-		const { actions, calls } = applyingActions("directed-activate");
-		const bound = double.bind(directedDefinition("directed-activate"), { actions });
+		const { commands: actions, calls } = applyingActions("directed-activate");
+		const bound = double.bind(directedDefinition("directed-activate"), { commands: actions });
 		expect(bound.bound).toBe(true);
 
 		const run = double.run("directed-activate", { owner: { kind: "owner", key: "main:activate" } });
@@ -80,8 +80,8 @@ describe("directed control: a named target and a repeated implementation (F1)", 
 
 	test("`off` deactivates the field and runs the injected implementation once", () => {
 		const double: PortDouble = portDouble();
-		const { actions, calls } = applyingActions("directed-deactivate");
-		double.bind(directedDefinition("directed-deactivate"), { actions });
+		const { commands: actions, calls } = applyingActions("directed-deactivate");
+		double.bind(directedDefinition("directed-deactivate"), { commands: actions });
 		const owner = { kind: "owner", key: "main:deactivate" } as const;
 
 		double.run("directed-deactivate", { owner });
@@ -98,8 +98,8 @@ describe("directed control: a named target and a repeated implementation (F1)", 
 
 	test("a repeated invocation runs the implementation again instead of short-circuiting", () => {
 		const double: PortDouble = portDouble();
-		const { actions, calls } = applyingActions("directed-repeat");
-		double.bind(directedDefinition("directed-repeat"), { actions });
+		const { commands: actions, calls } = applyingActions("directed-repeat");
+		double.bind(directedDefinition("directed-repeat"), { commands: actions });
 		const owner = { kind: "owner", key: "main:repeat" } as const;
 
 		const first = double.run("directed-repeat", { owner });
@@ -125,9 +125,9 @@ describe("directed control: a named target and a repeated implementation (F1)", 
 		const double: PortDouble = portDouble();
 		const started: string[] = [];
 		const pending: Array<() => void> = [];
-		const actions: CommandActions = {
+		const commands: CommandImplementations = {
 			"directed-pending": {
-				run: async directive => {
+				run: async (directive: RecognizedDirective) => {
 					started.push(directive.kind);
 					await new Promise<void>(resolve => {
 						pending.push(resolve);
@@ -135,7 +135,7 @@ describe("directed control: a named target and a repeated implementation (F1)", 
 				},
 			},
 		};
-		double.bind(directedDefinition("directed-pending"), { actions });
+		double.bind(directedDefinition("directed-pending"), { commands });
 
 		double.run("directed-pending", { owner: { kind: "owner", key: "main:pending" } });
 		double.run("directed-pending", { owner: { kind: "owner", key: "main:pending" } });
@@ -149,7 +149,7 @@ describe("directed control: a named target and a repeated implementation (F1)", 
 	test("an unrecognized argument reaches the implementation's own `unrecognized` member", () => {
 		const double: PortDouble = portDouble();
 		const seen: Array<{ readonly argument: string; readonly ownerKey: string }> = [];
-		const actions: CommandActions = {
+		const commands: CommandImplementations = {
 			"directed-hint": {
 				run: () => {
 					throw new Error("run must not be called for an argument that parsed to no directive");
@@ -163,7 +163,7 @@ describe("directed control: a named target and a repeated implementation (F1)", 
 				},
 			},
 		};
-		double.bind(directedDefinition("directed-hint"), { actions });
+		double.bind(directedDefinition("directed-hint"), { commands });
 		const owner = { kind: "owner", key: "main:hint" } as const;
 
 		// `offline` is the word this migration drops: it is an unknown argument now, carried to the
@@ -185,8 +185,8 @@ describe("directed control: a named target and a repeated implementation (F1)", 
 
 	test("an unrecognized argument runs no implementation and changes no State", () => {
 		const double: PortDouble = portDouble();
-		const { actions, calls } = applyingActions("directed-unknown");
-		double.bind(directedDefinition("directed-unknown"), { actions });
+		const { commands: actions, calls } = applyingActions("directed-unknown");
+		double.bind(directedDefinition("directed-unknown"), { commands: actions });
 		const owner = { kind: "owner", key: "main:unknown" } as const;
 
 		// `offline` is the word this migration drops: it is an unknown argument now, not a
@@ -212,8 +212,8 @@ describe("directed control: a named target and a repeated implementation (F1)", 
 
 	test("a subagent session runs no implementation and records no value", () => {
 		const double: PortDouble = portDouble();
-		const { actions, calls } = applyingActions("directed-subagent");
-		double.bind(directedDefinition("directed-subagent"), { actions });
+		const { commands: actions, calls } = applyingActions("directed-subagent");
+		double.bind(directedDefinition("directed-subagent"), { commands: actions });
 
 		const run = double.run("directed-subagent", { owner: { kind: "inherited", key: "main:runner-up" } });
 

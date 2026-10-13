@@ -24,7 +24,7 @@ import type {
 	StateValues,
 } from "../core/protocol";
 import type { StateStore } from "../core/state";
-import { publishMarkerOnTransition } from "./marker";
+import { type MarkerSeat, publishMarkerOnTransition } from "./marker";
 
 /** The feedback text for one activation value, derived from the extension's display name. */
 export function activationFeedback(definition: ExtensionDefinition, value: boolean): string {
@@ -50,6 +50,7 @@ export function runCommandToggle(
 	definition: ExtensionDefinition,
 	state: StateStore,
 	invocation: CommandInvocation,
+	seat: MarkerSeat,
 ): void {
 	if (invocation.owner.kind !== "owner") return;
 
@@ -57,7 +58,7 @@ export function runCommandToggle(
 	const seam = state.writer({
 		ownerKey,
 		persist: values => invocation.persist(values),
-		publishMarker: () => publishMarkerOnTransition(definition, ownerKey, invocation.markers),
+		publishMarker: () => publishMarkerOnTransition(definition, ownerKey, invocation.markers, seat),
 	});
 	const next = !seam.read();
 
@@ -112,6 +113,7 @@ export function runCommandDirected(
 	state: StateStore,
 	invocation: CommandInvocation,
 	implementation: DirectedCommandImplementation,
+	seat: MarkerSeat,
 ): void {
 	if (invocation.owner.kind !== "owner") return;
 
@@ -122,7 +124,7 @@ export function runCommandDirected(
 	// so a later write is indistinguishable from one made inside the delivery.
 	const target = {
 		ownerKey,
-		publishMarker: () => publishMarkerOnTransition(definition, ownerKey, invocation.markers),
+		publishMarker: () => publishMarkerOnTransition(definition, ownerKey, invocation.markers, seat),
 		persist: (values: StateValues) => invocation.persist(values),
 		feedback: invocation.feedback,
 	};

@@ -15,8 +15,8 @@
  */
 import { describe, expect, test } from "bun:test";
 import { CODEBASE_TOOLS } from "../../extensions/codebase-tools/definition";
-import type { CommandActions, CommandDelivery, OwnerReference } from "../../framework/core/protocol";
-import { type ExtensionDefinition, defineExtension } from "../../framework/public";
+import type { CommandDelivery, OwnerReference } from "../../framework/core/protocol";
+import { type CommandImplementations, type ExtensionDefinition, defineExtension } from "../../framework/public";
 import { portDouble } from "./support/harness-port-double";
 
 /** The owner a delivery acts on unless one is named. */
@@ -47,13 +47,13 @@ function probeDefinition(id: string): ExtensionDefinition {
  * what the arm path does with it, and it is why the answer never has to arrive as an event.
  */
 function queryingActions(command: string): {
-	readonly actions: CommandActions;
+	readonly commands: CommandImplementations;
 	readonly answers: Array<boolean | undefined>;
 } {
 	const answers: Array<boolean | undefined> = [];
 	return {
 		answers,
-		actions: {
+		commands: {
 			[command]: {
 				run: (_directive, delivery: CommandDelivery) => {
 					answers.push(delivery.canAcceptInput());
@@ -68,10 +68,10 @@ describe("a round edge reaches the handler subscribed to it (F6, P8)", () => {
 		const double = portDouble();
 		const seen: string[] = [];
 		double.bind(CODEBASE_TOOLS, {
-			events: {
-				round_start: delivery => seen.push(`start-handler:${delivery.event.kind}`),
-				round_end: delivery => seen.push(`end-handler:${delivery.event.kind}`),
-			},
+			subscriptions: [{ scope: "owner", events: {
+				round_start: delivery => void seen.push(`start-handler:${delivery.event.kind}`),
+				round_end: delivery => void seen.push(`end-handler:${delivery.event.kind}`),
+			} }],
 		});
 
 		double.deliverRound(OWNER, { event: { kind: "round_start" } });
@@ -84,10 +84,10 @@ describe("a round edge reaches the handler subscribed to it (F6, P8)", () => {
 		const double = portDouble();
 		const payloads: Array<readonly string[]> = [];
 		double.bind(CODEBASE_TOOLS, {
-			events: {
-				round_start: delivery => payloads.push(Object.keys(delivery.event)),
-				round_end: delivery => payloads.push(Object.keys(delivery.event)),
-			},
+			subscriptions: [{ scope: "owner", events: {
+				round_start: delivery => void payloads.push(Object.keys(delivery.event)),
+				round_end: delivery => void payloads.push(Object.keys(delivery.event)),
+			} }],
 		});
 
 		// An automatic continuation and an ordinary answer end the same way, so the edge names no
@@ -103,14 +103,17 @@ describe("a round edge reaches the handler subscribed to it (F6, P8)", () => {
 		const double = portDouble();
 		const seen: Array<{ readonly owner: OwnerReference; readonly hasUI: boolean }> = [];
 		double.bind(CODEBASE_TOOLS, {
-			events: {
+			subscriptions: [{ scope: "owner", events: {
 				round_end: delivery => {
 					delivery.feedback.notify("info", "push failed");
 					seen.push({ owner: delivery.owner, hasUI: delivery.hasUI });
 				},
-			},
+			} }],
 		});
 
+		// A settle is only evidence of a round that was open: the run reported as begun here is the
+		// round whose end this delivery is.
+		double.deliverRound(OWNER, { event: { kind: "round_start" } });
 		const boundary = double.deliverRound(OWNER, { event: { kind: "round_end" }, hasUI: false });
 
 		expect(seen).toEqual([{ owner: OWNER, hasUI: false }]);
@@ -119,7 +122,7 @@ describe("a round edge reaches the handler subscribed to it (F6, P8)", () => {
 
 	test("the framework applies no behavior of its own to a round", () => {
 		const double = portDouble();
-		double.bind(CODEBASE_TOOLS, { events: { round_start: () => {} } });
+		double.bind(CODEBASE_TOOLS, { subscriptions: [{ scope: "owner", events: { round_start: () => {} } }] });
 
 		double.deliverRound(OWNER, { event: { kind: "round_start" } });
 
@@ -133,13 +136,13 @@ describe("a round edge reaches the handler subscribed to it (F6, P8)", () => {
 		const double = portDouble();
 		const received: string[] = [];
 		double.bind(THROWING, {
-			events: {
+			subscriptions: [{ scope: "owner", events: {
 				round_start: () => {
 					throw new Error("boom");
 				},
-			},
+			} }],
 		});
-		double.bind(CODEBASE_TOOLS, { events: { round_start: delivery => received.push(delivery.event.kind) } });
+		double.bind(CODEBASE_TOOLS, { subscriptions: [{ scope: "owner", events: { round_start: delivery => void received.push(delivery.event.kind) } }] });
 
 		double.deliverRound(OWNER, { event: { kind: "round_start" } });
 
@@ -162,7 +165,7 @@ describe("a definition that observes no round injects no round hook (F6)", () =>
 	test("an injected round handler is what registers the hook", () => {
 		const double = portDouble();
 
-		double.bind(CODEBASE_TOOLS, { events: { round_end: () => {} } });
+		double.bind(CODEBASE_TOOLS, { subscriptions: [{ scope: "owner", events: { round_end: () => {} } }] });
 
 		expect(double.registrations).toEqual([
 			"label:codeBaseTools",
@@ -177,8 +180,8 @@ describe("a definition that observes no round injects no round hook (F6)", () =>
 describe("the idle query is the arm path's own fact (F6, P9)", () => {
 	test("the query answers the session's idle fact, with no event delivered first", () => {
 		const double = portDouble();
-		const { actions, answers } = queryingActions("idle-probe");
-		double.bind(probeDefinition("idle-probe"), { actions });
+		const { commands: actions, answers } = queryingActions("idle-probe");
+		double.bind(probeDefinition("idle-probe"), { commands: actions });
 
 		// Nothing has happened in this session: no session event, no round edge. The arm path
 		// still gets its answer, because the query asks the session rather than reading a payload
@@ -193,8 +196,8 @@ describe("the idle query is the arm path's own fact (F6, P9)", () => {
 
 	test("a harness that reports no idle fact answers nothing instead of a fabricated value", () => {
 		const double = portDouble();
-		const { actions, answers } = queryingActions("unreported-probe");
-		double.bind(probeDefinition("unreported-probe"), { actions });
+		const { commands: actions, answers } = queryingActions("unreported-probe");
+		double.bind(probeDefinition("unreported-probe"), { commands: actions });
 
 		const run = double.run("unreported-probe", { owner: OWNER, idle: "unreported" });
 
@@ -210,10 +213,10 @@ describe("the idle query is the arm path's own fact (F6, P9)", () => {
 		const sessionKeys: string[] = [];
 		const roundKeys: string[] = [];
 		double.bind(CODEBASE_TOOLS, {
-			events: {
-				session_start: delivery => sessionKeys.push(...Object.keys(delivery)),
-				round_start: delivery => roundKeys.push(...Object.keys(delivery)),
-			},
+			subscriptions: [{ scope: "owner", events: {
+				session_start: delivery => void sessionKeys.push(...Object.keys(delivery)),
+				round_start: delivery => void roundKeys.push(...Object.keys(delivery)),
+			} }],
 		});
 
 		double.deliverSession(OWNER);
@@ -222,8 +225,9 @@ describe("the idle query is the arm path's own fact (F6, P9)", () => {
 		// The idle fact is a query, never a payload: neither axis's delivery grows a field for it,
 		// so an extension can never mistake a stale event for the agent's current state. The session
 		// axis's delivery carries one thing more than the round axis's — the capability a handler
-		// may retain for the effects it drives outside the delivery (F13).
-		expect(sessionKeys.sort()).toEqual(["capability", "event", "feedback", "hasUI", "owner"]);
-		expect(roundKeys.sort()).toEqual(["event", "feedback", "hasUI", "owner"]);
+		// may retain for the effects it drives outside the delivery (F13) — and both carry the
+		// actual session's own identity, direct parent and latest name (P57).
+		expect(sessionKeys.sort()).toEqual(["capability", "event", "feedback", "hasUI", "owner", "session"]);
+		expect(roundKeys.sort()).toEqual(["event", "feedback", "hasUI", "owner", "session"]);
 	});
 });

@@ -44,6 +44,14 @@ _Avoid_: round, run, response plus tool execution
 The identity of one model request/response cycle, distinct from a provider-issued request identifier and from the identity of its containing Round or session.
 _Avoid_: provider request ID, round ID, message ID
 
+**Observation scope（观察范围）**:
+The declared extent of one subscription group's observations: `owner` covers only the owner session's own deliveries, `session` covers every actual session the adapter reports, each with its own identity, direct parent and latest name. Widening it changes which deliveries a group receives and nothing else — it grants no State write, no external-effect authority and no change to State inheritance.
+_Avoid_: permission level, owner key filter, execution scope
+
+**Subscription group（订阅组）**:
+One declared group of semantic lifecycle handlers under one observation scope, delivered through the framework's single dispatch. The scope is declared once for the whole group rather than per event kind or per handler, and an extension that needs both an owner-scoped effect body and a per-actual-session observation view declares two groups over one implementation.
+_Avoid_: handler bag, owner gate, per-event scope, second dispatcher
+
 **Tool execution（工具执行）**:
 The agent's execution of a tool-call instruction and production of a tool result, distinct from an LLM request/response Turn. It is work within a Round; its result may become input to a later Turn.
 _Avoid_: turn, model response, separately billed model request
@@ -96,6 +104,10 @@ _Avoid_: harness toggle, mode command
 An extension's own `config.yaml` in its source directory, read and validated by the framework at binding and exposed to the extension's shared logic; a change requires a restart. Its entries are plain configuration values and, in a future release, configuration switches.
 _Avoid_: harness settings, environment override, State, defaults embedded in code
 
+**Shared configuration（共享配置）**:
+The framework's own `framework/config.yaml`, beside the general HTTP module: the named proxy entries a request selects by name (`http.proxies.<name>.url`, an HTTP or HTTPS address) and the default wait budget (`http.defaultTimeoutMs`). It belongs to the machine, it is read once per process — a change requires a restart — and a request that names a proxy it cannot resolve fails as a configuration error instead of connecting directly.
+_Avoid_: extension configuration, environment variable, harness proxy setting, per-provider proxy field
+
 **Mode selection（模式设置）**:
 An explicit request for a named mode. Selecting an already active mode leaves it active without repeating mode-transition side effects.
 _Avoid_: toggle, inversion
@@ -117,8 +129,16 @@ A control scheme combining explicit mode selection and command toggling over the
 _Avoid_: a fourth mode, independent switches
 
 **Command action（命令动作）**:
-An extension subfeature invoked to perform an operation, rather than to select or alternate a mode.
-_Avoid_: mode transition, toggle
+An extension subfeature invoked to perform an operation, rather than to select or alternate a mode. The framework offers it as the `actions` control kind: the definition declares the command and a table of action names with the words its help shows, the framework trims and lowercases the argument and matches it whole — an empty argument prints the help, a match runs that action and waits for its completion, and anything else prints the same help at error severity and runs nothing — and the extension supplies one implementation per declared action.
+_Avoid_: mode transition, toggle, directed directive, abbreviation or default action
+
+**Implementation factory（实现工厂）**:
+The function one extension's assembly supplies for the harness adapter to call: it is called once the extension's declared configuration was read and validated, is handed those validated values, and returns the implementation — the command implementations, the semantic lifecycle handlers and, optionally, the one-time initialization and cleanup — that the framework connects to the definition's declarations. Building must have no effect of its own: no remote request and no timer, because the binding can still be refused afterwards.
+_Avoid_: registration or dependency-injection container, per-session constructor, handler bag assembled at authoring time
+
+**Implementation lifecycle（实现生命周期）**:
+The two entries an implementation may carry and the framework's rules for running them: `initialize` is called at most once per process, at the owner session node, and the first model request waits for it to settle; `cleanup` is called at most once, when the session the instance is *serving* is disposed — an ordinary switch ends the session being left as `transferred` and starts another, moving the served owner without disposing anything — and the binding delivers nothing to the extension afterwards, including through a command the host still holds a registration for. A disposed implementation is spent: a binding that comes after its cleanup builds a new instance instead of reusing the closed one. A refusal that follows a successful factory call runs the same single cleanup, and a subagent binding can neither initialize nor tear down the CLI's instance.
+_Avoid_: per-binding construction, re-initialization per session or round, automatic retry or rollback, hot reload
 
 **Parameter setting（参数设置）**:
 An extension subfeature that assigns a supplied value to a parameter; it does not inherently activate or deactivate the extension.
@@ -165,8 +185,12 @@ The decision whether and how a restored state should reacquire ongoing effects w
 _Avoid_: replaying the last command, automatic side-effect restoration
 
 **Marker area（状态标记区）**:
-The framework's single status region where each bound extension's marker is rendered, with a widget identity, placement and line order the framework owns and an activation-driven life cycle the framework derives from State; an extension contributes only its marker text and can never name or claim the widget. It is one per process, registered on the process global under a well-known symbol so that duplicated framework module graphs still share the one region.
-_Avoid_: extension-owned widget, per-extension marker key, extension-chosen placement
+The framework's single status region where each bound extension's marker is rendered, with a widget identity, placement and line order the framework owns and an activation-driven life cycle the framework derives from State; an extension contributes only its marker text and can never name or claim the widget. It is one per process, registered on the process global under a well-known symbol so that duplicated framework module graphs still share the one region. What it renders is the *displayed* session's effective State — the seat the host's public Viewed session outlet names, re-read whenever the area is published, and otherwise the position the delivery itself carries — so a subagent's seat reads a following field's Owner value and every other field's declared default rather than a copy of the Owner's lines, and being displayed grants no ownership or write path. One extension bound by several sessions registers once per binding — each session's runner keeps its own State — and a seat is answered by the newest registration whose store serves the Owner it names: a binding of a session nobody is displaying never served that Owner, so it can neither empty the region nor answer with its own value.
+_Avoid_: extension-owned widget, per-extension marker key, extension-chosen placement, marker area per viewed session, last binding wins, one registration per extension id
+
+**Viewed session seat（当前查看席位）**:
+The owner position of the session the host is displaying, as the harness's public Viewed session outlet reports it: the owner itself, a subagent following one, or nothing when the host cannot obtain the identity. It is a read of a fact used to project the Marker area and State reads — never an Owner, never a write path, never a capability, and never derived from a display name, a registry label or a string that merely looks hierarchical. A view that moves, or a target that becomes invalid, changes the projection and nothing else.
+_Avoid_: current view as Owner, view name as identity, viewing as permission, session-focus state
 
 **Extension feedback（扩展反馈）**:
 The framework's single harness-independent channel through which an extension publishes operator-facing notices, each carrying an `info`, `warning` or `error` severity; the framework maps it to a UI notification when the session has one and to stderr when it does not, and it never enters model context.
@@ -201,3 +225,11 @@ _Avoid_: semantic core, generated extension
 **Harness dock（对接坞，short `dock`）**:
 Repository-owned test infrastructure that verifies a harness. It materialises an isolated exact install of one harness version, drives it as a child process in RPC mode under an explicit-only extension set, and reads back that run's session JSONL, captured outbound requests and stderr. It is not itself a harness.
 _Avoid_: test runtime, test harness, fixture
+
+**Declared requirement（声明要求）**:
+A semantic a binding's behavior rests on — history preservation, the two semantic lifecycle axes — recorded as contract metadata rather than as a runtime switch: the framework's own requirements, and the ones an extension's assembly adds through `ExtensionAssembly.requiredSemantics`. What holds in a given harness scope is established by the independent verification, never decided at binding.
+_Avoid_: runtime feature flag, fallback route, startup gate
+
+**Independent compatibility verification（独立兼容性验证）**:
+The separately executed verification of one exact harness version, environment and source combination, recorded as a scoped report of executed, passed, failed and unverified coverage. A support claim rests on it; normal startup carries no version, capability-shape or report check of its own.
+_Avoid_: startup version check, runtime compatibility warning, a green suite as certification

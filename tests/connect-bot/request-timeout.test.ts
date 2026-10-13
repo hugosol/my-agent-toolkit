@@ -52,7 +52,7 @@ const ARM_FAILED = "无法连接 omp-bot，未连接；请确认面板已启动"
 /** The first failure of an outage, verbatim from the frozen baseline: what a dropped beat announces. */
 const FIRST_FAILURE = "与 omp-bot 面板连接中断；若持续失败将自动断开";
 
-/** One outbound request the probe made, as the transport that performed it reported it. */
+/** One outbound request the probe made, as the run's own recording of it reported it. */
 interface SentRequest {
 	readonly kind: string;
 	readonly url: string;

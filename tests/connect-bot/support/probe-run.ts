@@ -16,13 +16,13 @@ import { tmpdir } from "node:os";
 import * as path from "node:path";
 import { REPO_ROOT } from "../../harness-dock/baseline";
 
-/** One outbound request a probe run made, as the transport that performed it reported it. */
+/** One outbound request a probe run made, as the run's own recording of it reported it. */
 export interface SentRequest {
 	readonly kind: string;
 	readonly url: string;
 	readonly method: string;
 	readonly headers: Readonly<Record<string, string>>;
-	readonly proxy: boolean;
+	readonly proxy: false | string;
 	readonly requestBody: string;
 	readonly answerBody?: unknown;
 	readonly atMs: number;

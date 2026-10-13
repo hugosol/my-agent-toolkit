@@ -1,0 +1,113 @@
+{
+  "feature": "model-cost-migration",
+  "ticket": "07-request-price-accounting.md",
+  "run_id": "109eb6a4-a643-47ef-8a6c-5e938267dd4f",
+  "parent_session_id": "01a131a3-4562-728e-8c06-9608e1e88feb",
+  "parent_session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-12T19-42-26-146Z_01a131a3-4562-728e-8c06-9608e1e88feb.jsonl",
+  "workspace": "E:\\Developer\\myhub\\my-agent-toolkit",
+  "tool_call_id": "js-task-972ed9d6-4857-4c68-9f14-8a23d0357d0c",
+  "started_at": "2026-10-12T23:48:53.727Z",
+  "tdd_status": "completed",
+  "retro_status": "completed",
+  "tdd_finished_at": "2026-10-13T00:21:43.543Z",
+  "tdd_result": {
+    "index": 0,
+    "id": "07-request-price-accountingmd",
+    "agent": "tdd",
+    "agentSource": "user",
+    "task": "Complete assignment thoroughly:\n\nTicket filename: 07-request-price-accounting.md\nTicket path: .scratch/model-cost-migration/implementation/07-request-price-accounting.md\n\nFull ticket content:\n# 07: 请求锚价与可靠 usage 记账\n\n**What to build:** 一次实际模型请求按开始时价格只计入一次可靠 usage；缺失指标明确提示，不伪造免费、不在结束后补账。\n\n**Delivers:** P1, P2, P4, P5, P6, P59\n\n**Blocked by:** 05: 逐实际 Session 的 Turn 事实交付；06: 消费文档安全保存与存储基线\n\n**Status:** ready-for-agent\n\n## Acceptance criteria\n\n- [ ] 经生产公共事实固定实际 provider/model、开始时间、原周期、holiday 和适用价格/币种/单位；使用自造数据和独立手算验证北京工作日 09:00–12:00、14:00–18:00 含端点、周末/holiday、跨时段及模型切换。\n- [ ] 完成/失败/取消的可靠 input/cacheRead/cacheWrite/output 均入账，缓存与 input 不重复；缺 usage、无法区分真零与宿主默认零时提示跳过，不把跳过当免费。\n- [ ] 缺适用价格只跳过金额、保留 token 并提示；catalog 改变不补算、不删除或重估已累计金额，token-only/hidden 不因无金额口径报缺价错误。\n- [ ] 同 Session+Turn 重复结束跨 Round 不重计；相同内容新身份独立计入，缺 usage 已处理也不补账；已处理标记保留至实例销毁，旧回调不进入新实例。\n- [ ] provider+精确模型决定模式，不按前缀/base URL/owned_by/别名模糊匹配；实际名单、谷价及共同峰系数依规格集中显式维护，不 YAML 配价、不运行期发现/热更。\n- [ ] 算法永久 tests 用自造名单/价格证明匹配、锚价和缺失边界；实际白名单/价格与规格独立核对并隔离 smoke，不把频繁业务常量钉进算法 tests。\n- [ ] 通过 S2 生产只读展示结果及反馈/保存累计验证，不读私有字段；隔离真实 OMP 出站与请求开始事实贯通，预期不调用被测计算重新生成。\n- [ ] 通过批准的生产公共 seam 观察行为，预期来自合同/规格、独立字面值或手算，不以被测实现重算；永久网络 tests 使用 mock。\n- [ ] 使用隔离安装/配置/工作/Session/数据根，不操作正式 OMP；承接异步失败并保留够用脱敏证据，完成本票自动检查及材料准备，不因计划人工验收暂停可执行工作。\n\n## Verification responsibility\n\n本票负责所列 Delivers 的自动 coverage 与适用宿主贯通/证据准备；P58/P52 按本票具名责任执行。合同采用 Rapid iteration：H1/H2 及允许的条件性 H3 按原 Coverage 交用户确认，未确认不记通过；不改变承诺或免除实现/永久 tests。\n\n[You have received this identical output 3 times. Re-reading '.scratch/model-cost-migration/implementation/07-request-price-accounting.md' will not change it — use a narrower selector (path:A-B), or proceed with the edit.]",
+    "assignment": "Ticket filename: 07-request-price-accounting.md\nTicket path: .scratch/model-cost-migration/implementation/07-request-price-accounting.md\n\nFull ticket content:\n# 07: 请求锚价与可靠 usage 记账\n\n**What to build:** 一次实际模型请求按开始时价格只计入一次可靠 usage；缺失指标明确提示，不伪造免费、不在结束后补账。\n\n**Delivers:** P1, P2, P4, P5, P6, P59\n\n**Blocked by:** 05: 逐实际 Session 的 Turn 事实交付；06: 消费文档安全保存与存储基线\n\n**Status:** ready-for-agent\n\n## Acceptance criteria\n\n- [ ] 经生产公共事实固定实际 provider/model、开始时间、原周期、holiday 和适用价格/币种/单位；使用自造数据和独立手算验证北京工作日 09:00–12:00、14:00–18:00 含端点、周末/holiday、跨时段及模型切换。\n- [ ] 完成/失败/取消的可靠 input/cacheRead/cacheWrite/output 均入账，缓存与 input 不重复；缺 usage、无法区分真零与宿主默认零时提示跳过，不把跳过当免费。\n- [ ] 缺适用价格只跳过金额、保留 token 并提示；catalog 改变不补算、不删除或重估已累计金额，token-only/hidden 不因无金额口径报缺价错误。\n- [ ] 同 Session+Turn 重复结束跨 Round 不重计；相同内容新身份独立计入，缺 usage 已处理也不补账；已处理标记保留至实例销毁，旧回调不进入新实例。\n- [ ] provider+精确模型决定模式，不按前缀/base URL/owned_by/别名模糊匹配；实际名单、谷价及共同峰系数依规格集中显式维护，不 YAML 配价、不运行期发现/热更。\n- [ ] 算法永久 tests 用自造名单/价格证明匹配、锚价和缺失边界；实际白名单/价格与规格独立核对并隔离 smoke，不把频繁业务常量钉进算法 tests。\n- [ ] 通过 S2 生产只读展示结果及反馈/保存累计验证，不读私有字段；隔离真实 OMP 出站与请求开始事实贯通，预期不调用被测计算重新生成。\n- [ ] 通过批准的生产公共 seam 观察行为，预期来自合同/规格、独立字面值或手算，不以被测实现重算；永久网络 tests 使用 mock。\n- [ ] 使用隔离安装/配置/工作/Session/数据根，不操作正式 OMP；承接异步失败并保留够用脱敏证据，完成本票自动检查及材料准备，不因计划人工验收暂停可执行工作。\n\n## Verification responsibility\n\n本票负责所列 Delivers 的自动 coverage 与适用宿主贯通/证据准备；P58/P52 按本票具名责任执行。合同采用 Rapid iteration：H1/H2 及允许的条件性 H3 按原 Coverage 交用户确认，未确认不记通过；不改变承诺或免除实现/永久 tests。\n\n[You have received this identical output 3 times. Re-reading '.scratch/model-cost-migration/implementation/07-request-price-accounting.md' will not change it — use a narrower selector (path:A-B), or proceed with the edit.]",
+    "description": "Implement request price anchoring and reliable usage accounting",
+    "lastIntent": "Reporting the ticket result",
+    "exitCode": 0,
+    "output": "{\n  \"ticket\": \"07-request-price-accounting\",\n  \"status\": \"complete-implementation-and-automated-checks; human confirmation of criteria/closed pending\",\n  \"ticket_file_status\": \"in-progress (per docs/agents/triage-labels.md; checkboxes left to the maintainer)\",\n  \"delivered\": {\n    \"extensions/model-cost/shared-logic/model-data.ts\": \"the extension's one maintained data module: exact provider+model -> mode/tier, the five OpenCode Go token-only ids, openai-codex allowance channel, pro/flash off-peak CNY prices, shared peak multiplier 2, Beijing zone + two closed peak windows; entryOf/classify/catalogPriceOf; no YAML pricing, no runtime discovery/hot update\",\n    \"extensions/model-cost/shared-logic/request-price.ts\": \"data-injected anchor algorithm: seasonAt (closed 09:00-12:00 / 14:00-18:00, weekends and holiday off-peak) and requestPriceOf (monetary | missing-price | no-amount-policy, peak = off-peak x the data's multiplier)\",\n    \"extensions/model-cost/shared-logic/request-accounting.ts\": \"once-per-Turn accounting by identity, four buckets kept apart, skip-with-notice for missing usage and missing price, monetary amount only, ConsumptionView (read-only results + change subscription), and the Round-end snapshot commit (version from this instance's own last snapshot; revision counters so an in-flight save cannot clobber newer additions; refused saves reported, never counted as saved)\",\n    \"extensions/model-cost/shared-logic/runtime.ts + harnesses/omp.ts\": \"wired to the framework: catalog (data prices) at request start, one per-actual-session group over turn_start/turn_end/round_end, initialize, cleanup, harness identity \\\"omp\\\"\",\n    \"extensions/model-cost/docs/model-data-maintenance.md\": \"P59 maintenance note: sources (DeepSeek pricing doc / authed /models, OpenCode doc + /models), update steps, prohibitions\",\n    \"extensions/model-cost/GLOSSARY.md\": \"new term Request price anchor (请求锚价)\",\n    \"tests\": \"tests/model-cost/request-price.test.ts (11), tests/model-cost/request-accounting.test.ts (17), tests/model-cost/model-data.test.ts (8), tests/harness-dock/model-cost-accounting.test.ts (3, isolated real OMP)\",\n    \"framework public contract\": \"framework/core/protocol.ts FeedbackLevel widened to info|warning|error (+ framework/docs/framework-capabilities.md row) because the skip notices are warnings; additive, no caller migration needed (OMP adapter's ui.notify already supports three levels)\"\n  },\n  \"criteria_evidence\": {\n    \"P1/P6 exact matching + anchor\": \"request-price.test.ts self-made data (currency XTS, multiplier 3): inclusive endpoints (12:00:00.000 peak, 12:00:00.001 off-peak), weekends, holiday, peak=off-peak x3, model switch per tier; request-accounting.test.ts cross-window (peak start, off-peak end => peak price 0.00009)\",\n    \"P2 reliable usage\": \"request-accounting.test.ts: completed/failed/cancelled all accumulate; input/cacheRead/cacheWrite/output kept separate; empty readings and all-zero reading => view.own undefined + exactly one warning; real OMP: monetary without a usage chunk => exactly one warning, unlisted provider without usage => no notice at all\",\n    \"P5 missing price / no revaluation\": \"request-accounting.test.ts: monetary model with no priced tier => tokens kept, no costCny, one '缺适用价格' warning; token-only => tokens, no amount, no notice; hidden => nothing; seeded baseline costCny 0.5 + input 100 => saved as 0.50003 + input 102 at saveVersion 4 (old amount untouched)\",\n    \"P4 identity/dedup\": \"request-accounting.test.ts: repeated end across a round boundary => totals unchanged; same content under a new identity => exactly doubled; skipped request not back-accounted by a later settle; after the instance's cleanup entry, late Turn and Round deliveries change nothing\",\n    \"P6/P59 centralized explicit data\": \"model-data.test.ts checks the approved list/tiers/prices/multiplier/windows/currency; request-price.test.ts proves no prefix/case/other-provider/prototype upgrade; config.yaml still only names storageDir; the data module imports no HTTP/network\",\n    \"S2 read-only + feedback/saved accumulation\": \"all accounting cases read runtime.view (own/subscribe) and the published document only; saves asserted on the record (id/name/parent/saveVersion/own) incl. version continuity and a refused-save case; real OMP: outbound request captured per run\",\n    \"algorithm vs real data separation\": \"algorithm and accounting suites use self-made data only; real data appears only in the isolated data check and the real-host smoke\",\n    \"isolation\": \"every dock run in a fresh mkdtemp run root with isolated home/agent state (models.yml provider redirect)/session/work/capture dirs; no official OMP or real provider touched\"\n  },\n  \"verification_run\": {\n    \"bun test tests/model-cost\": \"81 pass / 0 fail (7 files)\",\n    \"bun test tests/harness-dock/model-cost-accounting.test.ts\": \"3 pass / 0 fail (5.6s)\",\n    \"bun test tests/harness-dock\": \"29 pass / 2 fail (both pre-existing environment items: baseline.test.ts drift vs the local ../oh-my-pi checkout)\",\n    \"bun run typecheck\": \"no output (clean)\",\n    \"bun test (whole repo)\": \"639 pass / 4 fail (166.7s, 72 files); the 4 failures are the same known environment items ticket 06 recorded (2 connect-bot tests needing a local omp-bot panel on 127.0.0.1:8787, 2 harness-dock baseline drift items); this ticket added 39 tests with zero new failures\",\n    \"fault injections (each applied then reverted; no residue, grep DBG clean)\": \"open window end / cacheRead folded into input / prefix matching / hardcoded peak factor 2 / silent missing-usage skip / unconditional round-end save / refused-save-treated-as-success each turned the named tests red and green again after revert\"\n  },\n  \"unresolved\": [\n    \"Real RPC-host gap (needs adjudication, evidence in the asset): the OMP adapter decides a Round's end at the native run end, where ctx.isIdle() is still false (hasPendingMessages=false, no running async job), so round_end is never delivered in an isolated RPC session (probed with temporary stderr instrumentation, since removed; two prompts produced no document). The spec's \\\"next task recheck of quiescence\\\" is not implemented in the adapter. Ticket 07 keeps round_end as the save point per the spec and verifies the save at the S2/S4 seams (public binding + real local files); the real-host leg becomes observable once that recheck lands. I did not change framework round semantics.\",\n    \"opencode-go token-only real-host leg not covered: that provider's catalog models use the OpenAI responses protocol, which the dock's capture endpoint does not fulfil (one prompt triggered 22 retryable failures, each faithfully reported as a missing usage). Token-only mode/accounting is covered at the S2 seam and by the data check.\",\n    \"One finding to note for the migration: registering a provider whose name the harness's catalog already knows does not redirect its base URL (a run reached api.deepseek.com and 401ed; no real credentials, nothing written). Dock runs now use writeProviderOverride (isolated models.yml) instead.\",\n    \"Human confirmation still required: ticket checkboxes and closed state; no H1/H2 items belong to this ticket and the conditional H3 items (P1/P2/P6) were satisfied by the automated real-OMP script, so nothing was handed off as H3.\"\n  ]\n}",
+    "stderr": "",
+    "truncated": false,
+    "durationMs": 1969796,
+    "tokens": 446009,
+    "requests": 200,
+    "contextTokens": 404279,
+    "contextWindow": 1000000,
+    "modelOverride": [
+      "deepseek/deepseek-flash:high"
+    ],
+    "resolvedModel": "deepseek/deepseek-flash:high",
+    "resolvedModelIdentity": "deepseek/deepseek-flash",
+    "resolvedThinkingLevel": "high",
+    "aborted": false,
+    "usage": {
+      "input": 217989,
+      "output": 228020,
+      "cacheRead": 49091456,
+      "cacheWrite": 0,
+      "totalTokens": 49537465,
+      "reasoningTokens": 129363,
+      "cost": {
+        "input": 0.03269835000000001,
+        "output": 0.13681200000000007,
+        "cacheRead": 0.14727436800000002,
+        "cacheWrite": 0,
+        "total": 0.31678471799999997
+      }
+    },
+    "outputPath": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-12T19-42-26-146Z_01a131a3-4562-728e-8c06-9608e1e88feb\\07-request-price-accountingmd.md",
+    "extractedToolData": {
+      "yield": [
+        {
+          "data": {
+            "ticket": "07-request-price-accounting",
+            "status": "complete-implementation-and-automated-checks; human confirmation of criteria/closed pending",
+            "ticket_file_status": "in-progress (per docs/agents/triage-labels.md; checkboxes left to the maintainer)",
+            "delivered": {
+              "extensions/model-cost/shared-logic/model-data.ts": "the extension's one maintained data module: exact provider+model -> mode/tier, the five OpenCode Go token-only ids, openai-codex allowance channel, pro/flash off-peak CNY prices, shared peak multiplier 2, Beijing zone + two closed peak windows; entryOf/classify/catalogPriceOf; no YAML pricing, no runtime discovery/hot update",
+              "extensions/model-cost/shared-logic/request-price.ts": "data-injected anchor algorithm: seasonAt (closed 09:00-12:00 / 14:00-18:00, weekends and holiday off-peak) and requestPriceOf (monetary | missing-price | no-amount-policy, peak = off-peak x the data's multiplier)",
+              "extensions/model-cost/shared-logic/request-accounting.ts": "once-per-Turn accounting by identity, four buckets kept apart, skip-with-notice for missing usage and missing price, monetary amount only, ConsumptionView (read-only results + change subscription), and the Round-end snapshot commit (version from this instance's own last snapshot; revision counters so an in-flight save cannot clobber newer additions; refused saves reported, never counted as saved)",
+              "extensions/model-cost/shared-logic/runtime.ts + harnesses/omp.ts": "wired to the framework: catalog (data prices) at request start, one per-actual-session group over turn_start/turn_end/round_end, initialize, cleanup, harness identity \"omp\"",
+              "extensions/model-cost/docs/model-data-maintenance.md": "P59 maintenance note: sources (DeepSeek pricing doc / authed /models, OpenCode doc + /models), update steps, prohibitions",
+              "extensions/model-cost/GLOSSARY.md": "new term Request price anchor (请求锚价)",
+              "tests": "tests/model-cost/request-price.test.ts (11), tests/model-cost/request-accounting.test.ts (17), tests/model-cost/model-data.test.ts (8), tests/harness-dock/model-cost-accounting.test.ts (3, isolated real OMP)",
+              "framework public contract": "framework/core/protocol.ts FeedbackLevel widened to info|warning|error (+ framework/docs/framework-capabilities.md row) because the skip notices are warnings; additive, no caller migration needed (OMP adapter's ui.notify already supports three levels)"
+            },
+            "criteria_evidence": {
+              "P1/P6 exact matching + anchor": "request-price.test.ts self-made data (currency XTS, multiplier 3): inclusive endpoints (12:00:00.000 peak, 12:00:00.001 off-peak), weekends, holiday, peak=off-peak x3, model switch per tier; request-accounting.test.ts cross-window (peak start, off-peak end => peak price 0.00009)",
+              "P2 reliable usage": "request-accounting.test.ts: completed/failed/cancelled all accumulate; input/cacheRead/cacheWrite/output kept separate; empty readings and all-zero reading => view.own undefined + exactly one warning; real OMP: monetary without a usage chunk => exactly one warning, unlisted provider without usage => no notice at all",
+              "P5 missing price / no revaluation": "request-accounting.test.ts: monetary model with no priced tier => tokens kept, no costCny, one '缺适用价格' warning; token-only => tokens, no amount, no notice; hidden => nothing; seeded baseline costCny 0.5 + input 100 => saved as 0.50003 + input 102 at saveVersion 4 (old amount untouched)",
+              "P4 identity/dedup": "request-accounting.test.ts: repeated end across a round boundary => totals unchanged; same content under a new identity => exactly doubled; skipped request not back-accounted by a later settle; after the instance's cleanup entry, late Turn and Round deliveries change nothing",
+              "P6/P59 centralized explicit data": "model-data.test.ts checks the approved list/tiers/prices/multiplier/windows/currency; request-price.test.ts proves no prefix/case/other-provider/prototype upgrade; config.yaml still only names storageDir; the data module imports no HTTP/network",
+              "S2 read-only + feedback/saved accumulation": "all accounting cases read runtime.view (own/subscribe) and the published document only; saves asserted on the record (id/name/parent/saveVersion/own) incl. version continuity and a refused-save case; real OMP: outbound request captured per run",
+              "algorithm vs real data separation": "algorithm and accounting suites use self-made data only; real data appears only in the isolated data check and the real-host smoke",
+              "isolation": "every dock run in a fresh mkdtemp run root with isolated home/agent state (models.yml provider redirect)/session/work/capture dirs; no official OMP or real provider touched"
+            },
+            "verification_run": {
+              "bun test tests/model-cost": "81 pass / 0 fail (7 files)",
+              "bun test tests/harness-dock/model-cost-accounting.test.ts": "3 pass / 0 fail (5.6s)",
+              "bun test tests/harness-dock": "29 pass / 2 fail (both pre-existing environment items: baseline.test.ts drift vs the local ../oh-my-pi checkout)",
+              "bun run typecheck": "no output (clean)",
+              "bun test (whole repo)": "639 pass / 4 fail (166.7s, 72 files); the 4 failures are the same known environment items ticket 06 recorded (2 connect-bot tests needing a local omp-bot panel on 127.0.0.1:8787, 2 harness-dock baseline drift items); this ticket added 39 tests with zero new failures",
+              "fault injections (each applied then reverted; no residue, grep DBG clean)": "open window end / cacheRead folded into input / prefix matching / hardcoded peak factor 2 / silent missing-usage skip / unconditional round-end save / refused-save-treated-as-success each turned the named tests red and green again after revert"
+            },
+            "unresolved": [
+              "Real RPC-host gap (needs adjudication, evidence in the asset): the OMP adapter decides a Round's end at the native run end, where ctx.isIdle() is still false (hasPendingMessages=false, no running async job), so round_end is never delivered in an isolated RPC session (probed with temporary stderr instrumentation, since removed; two prompts produced no document). The spec's \"next task recheck of quiescence\" is not implemented in the adapter. Ticket 07 keeps round_end as the save point per the spec and verifies the save at the S2/S4 seams (public binding + real local files); the real-host leg becomes observable once that recheck lands. I did not change framework round semantics.",
+              "opencode-go token-only real-host leg not covered: that provider's catalog models use the OpenAI responses protocol, which the dock's capture endpoint does not fulfil (one prompt triggered 22 retryable failures, each faithfully reported as a missing usage). Token-only mode/accounting is covered at the S2 seam and by the data check.",
+              "One finding to note for the migration: registering a provider whose name the harness's catalog already knows does not redirect its base URL (a run reached api.deepseek.com and 401ed; no real credentials, nothing written). Dock runs now use writeProviderOverride (isolated models.yml) instead.",
+              "Human confirmation still required: ticket checkboxes and closed state; no H1/H2 items belong to this ticket and the conditional H3 items (P1/P2/P6) were satisfied by the automated real-OMP script, so nothing was handed off as H3."
+            ]
+          },
+          "status": "success",
+          "type": "result"
+        }
+      ]
+    },
+    "outputMeta": {
+      "lineCount": 39,
+      "charCount": 7320
+    }
+  },
+  "agent": "tdd",
+  "agent_id": "07-request-price-accountingmd",
+  "session_id": "01a13284-e987-72ea-ac3d-a974d289bfa6",
+  "session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-12T19-42-26-146Z_01a131a3-4562-728e-8c06-9608e1e88feb\\07-request-price-accountingmd.jsonl",
+  "execution_cwd": "E:\\Developer\\myhub\\my-agent-toolkit",
+  "retro_document": "E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\model-cost-migration\\retro\\07-request-price-accounting.md\\109eb6a4-a643-47ef-8a6c-5e938267dd4f.md",
+  "retro_finished_at": "2026-10-13T00:22:41.109Z"
+}

@@ -6,17 +6,35 @@
  * `framework/public.ts`, and a harness adapter (for OMP, `framework/adapters/omp.ts`)
  * calls into this.
  *
- * Ordering is the contract: every fallible step (configuration rules, initialization,
- * admission) runs before the first registration, so a definition the framework refuses to
- * honor leaves nothing registered. Admission is the harness-level step and the last one
- * before registration: a semantic the harness cannot honor refuses the binding when it is
- * required of it — the framework requires history preservation of every binding, and an
- * assembly may declare the capability its extension additionally depends on — while an
- * unlisted version only makes the session's once-per-Owner notice due and lets binding
- * continue. Failures are reported once each and returned as data; the caller's agent
- * harness keeps running with the extension unbound.
+ * Ordering is the contract: every fallible step (configuration rules, the definition's file, the
+ * implementation factory, the declaration/implementation pairs) runs before the first
+ * registration, so a definition the framework refuses to honor leaves nothing registered and no
+ * implementation's resources behind. The factory is called only once the configuration validated
+ * — it is the extension's first look at its own values, and a definition whose file is missing or
+ * illegal never reaches it — and every refusal that follows it runs the implementation's one
+ * cleanup, because by then an extension has built something the framework must not leave behind.
+ * Failures are reported once each and returned as data; the caller's agent harness keeps running
+ * with the extension unbound.
+ *
+ * What binding deliberately does not have is a harness-compatibility step: it checks no version
+ * membership and judges no native capability surface, so a harness outside this repository's
+ * support record, or one whose surface lacks a member, binds like any other. That judgement
+ * belongs to the separately executed verification
+ * ([harness-support.md § Independent compatibility verification](../docs/harness-support.md#independent-compatibility-verification)),
+ * and normal startup carries none of it.
+ *
+ * The lifecycle after registration belongs to `framework/behaviors/lifecycle.ts`: the framework
+ * calls the implementation's one-time initialization at the owner session node and its one
+ * cleanup when the session the instance *serves* is disposed — an ordinary switch only moves that
+ * owner — and this module only decides which binding observes which boundary.
  */
-import { type AdmissionFacts, admit, type DeclarableRequiredSemantic } from "../core/admission";
+import {
+	type ActionsCommandImplementation,
+	type CommandImplementations,
+	type ExtensionFactory,
+	type ExtensionImplementation,
+	isPlainMapping,
+} from "../core/assembly";
 import {
 	BOUND_CONTROL_KINDS,
 	BOUND_STATE_INHERITANCES,
@@ -28,49 +46,60 @@ import {
 	type HarnessPort,
 	type BindingFailure,
 	type BindingResult,
-	type CommandActions,
 	describeBindingFailure,
-	type SemanticEventHandlers,
+	type DirectedCommandImplementation,
+	type PromptContribution,
 } from "../core/protocol";
 import type { StateStore } from "../core/state";
-import { findConfigFailure, type ConfigSource } from "../core/config";
+import { findConfigFailure, getConfig, type ConfigSource } from "../core/config";
 import { findConfigurationViolations } from "../core/violations";
-import { announceUnlistedVersion } from "./admission";
+import { runCommandActions } from "./actions";
 import { runCommandDirected, runCommandToggle } from "./control";
 import { planContribution } from "./injection";
-import { publishMarkerOnRun, registerMarker } from "./marker";
-import { dispatchRoundEvent } from "./round-events";
+import { cleanupImplementation, initializeImplementation, servingOwnerKeyOf, initializationPending } from "./lifecycle";
+import { publishMarkerOnRun, publishMarkerOnViewChange, registerMarker, markerSeat } from "./marker";
+import { createRoundSynthesis, roundLives } from "./round-events";
 import { dispatchSessionEvent } from "./session-events";
+import { ROUND_EVENT_KINDS, TURN_EVENT_KINDS, subscribesAny } from "./subscriptions";
+import { turnLives } from "./turn-events";
 
-/**
- * The admission inputs one binding resolves: the harness facts the adapter observed and the
- * semantics this binding's assembly declared its extension depends on.
- *
- * The supported-version set is deliberately not here: version membership is decided against the
- * framework's own Supported harness baseline, so no assembly supplies, widens or replaces
- * it ({@link admit}). Neither is a notice ledger: the unlisted-version notice is the framework's
- * and it is published per Owner for the whole process, so no assembly carries a record of it
- * (`framework/behaviors/admission.ts`).
- */
-export interface BindingAdmission {
-	readonly facts: AdmissionFacts;
-	/**
-	 * The semantics this binding's assembly declared the extension depends on, besides the
-	 * ones the framework requires of every binding — the assembly option that turns a gap
-	 * the harness has into a refusal instead of a capability the extension works around.
-	 * Omitted when the assembly declared none, which is what most extensions do.
-	 */
-	readonly requiredSemantics?: readonly DeclarableRequiredSemantic[];
+/** Whether one injected implementation is the directed half of a directed command. */
+function isDirectedImplementation(value: unknown): value is DirectedCommandImplementation {
+	if (!isPlainMapping(value)) return false;
+	return "run" in value && typeof value.run === "function";
+}
+
+/** The actions an injected implementation does not carry, or `undefined` when it carries them all. */
+function missingActions(value: unknown, declared: readonly string[]): readonly string[] | undefined {
+	if (!isPlainMapping(value) || isDirectedImplementation(value)) return declared;
+	const missing = declared.filter(action => typeof value[action] !== "function");
+	return missing.length === 0 ? undefined : missing;
+}
+
+/** The implementation an `actions` command declared, once the pair has been checked. */
+function actionsImplementationOf(
+	implementations: CommandImplementations,
+	name: string,
+): ActionsCommandImplementation | undefined {
+	const value = implementations[name];
+	if (value === undefined || isDirectedImplementation(value)) return undefined;
+	return value;
 }
 
 /**
  * The v1 initialization rules: what the framework must be able to honor before it
  * registers anything. Returns the failure detail, or `undefined` when the definition
  * can be bound.
+ *
+ * The last rule is the declaration/implementation pair: the definition names its commands as
+ * plain data, and the implementation the factory built is what runs. A pair that is incomplete —
+ * a directed command with nothing to run, an `actions` command missing one of the actions its own
+ * help lists, or an implementation of the other kind — is refused before the first registration
+ * rather than registered as something that would do nothing.
  */
 function findInitializationFailure(
 	definition: ExtensionDefinition,
-	actions: CommandActions,
+	implementations: CommandImplementations,
 ): string | undefined {
 	if (definition.id.trim().length === 0) return "the definition declares no extension id";
 	if (definition.displayName.trim().length === 0) return "the definition declares no display name";
@@ -84,23 +113,42 @@ function findInitializationFailure(
 		return `command "${unboundControl.name}" declares control kind "${unboundControl.type}", which this framework version does not bind`;
 	}
 
-	// A directed command is a declaration plus an implementation: the definition names the
-	// command and its field, and the assembly injects the implementation. Registering a
-	// declaration whose implementation never arrived would give the user a command that does
-	// nothing, so the incomplete pair is refused before the first registration instead.
-	const unpaired = (definition.commands ?? []).find(
-		command => command.type === "directed" && actions[command.name] === undefined,
-	);
-	if (unpaired !== undefined) {
-		return `command "${unpaired.name}" declares control kind "directed", but no implementation was injected for it`;
-	}
-
 	// v1 owns exactly one State field per extension: a command that transitions any
-	// other field would be a silently ignored declaration.
+	// other field would be a silently ignored declaration. An `actions` command drives no
+	// declared field at all, so it is not a writer and takes no part in this rule.
 	const field = activationField(definition);
-	const foreignWriter = (definition.commands ?? []).find(command => command.state !== field);
+	const foreignWriter = (definition.commands ?? [])
+		.flatMap(command => (command.type === "actions" ? [] : [command]))
+		.find(command => command.state !== field);
 	if (foreignWriter !== undefined) {
 		return `command "${foreignWriter.name}" transitions State field "${foreignWriter.state}", but the extension's State field is "${field}"`;
+	}
+
+	for (const command of definition.commands ?? []) {
+		const implementation = implementations[command.name];
+		if (command.type === "directed") {
+			if (implementation === undefined) {
+				return `command "${command.name}" declares control kind "directed", but no implementation was injected for it`;
+			}
+			if (!isDirectedImplementation(implementation)) {
+				return `command "${command.name}" declares control kind "directed", but its injected implementation is not a directed implementation`;
+			}
+			continue;
+		}
+		if (command.type === "actions") {
+			if (implementation === undefined) {
+				return `command "${command.name}" declares control kind "actions", but no implementation was injected for it`;
+			}
+			const declared = Object.keys(command.actions);
+			const missing = missingActions(implementation, declared);
+			if (missing !== undefined) {
+				const named = missing.length > 0 ? ` (missing: ${missing.map(action => `"${action}"`).join(", ")})` : "";
+				return `command "${command.name}" declares control kind "actions", but its injected implementation carries no action table${named}`;
+			}
+			if (isDirectedImplementation(implementation)) {
+				return `command "${command.name}" declares control kind "actions", but its injected implementation is a directed implementation`;
+			}
+		}
 	}
 
 	// The State lifecycle axes are closed unions like the control kinds, and this version
@@ -133,31 +181,25 @@ function findInitializationFailure(
  * Binds a definition to a harness, or refuses to.
  *
  * A refused definition contributes nothing — no label, no commands, no injections,
- * no marker — and reports one diagnostic per failure: a declared conflict, or a declared
- * configuration its file cannot satisfy. Nothing about a *binding* is retained: no
- * process-level registry exists to leak a partial binding into the next session, which is
- * why the same factory can bind every session and subagent independently, and why each
- * refused binding reports its own error.
+ * no marker — and reports one diagnostic per failure: a declared conflict, a declared
+ * configuration its file cannot satisfy, or a declaration whose implementation never arrived.
+ * An implementation the factory already built is cleaned up before that refusal is reported, so
+ * a binding that fails after creation leaves no resource of the extension's behind. Nothing about
+ * a *binding* is retained: no process-level registry exists to leak a partial binding into the
+ * next session, which is why the same factory can bind every session and subagent independently,
+ * and why each refused binding reports its own error.
  *
  * `state` is the one thing the adapter owns that outlives a binding: the adapter owns one
  * store per extension per process, so bindings for different sessions share the owner-keyed
- * cells rather than each starting from a private copy. The framework's own notice record
- * outlives a binding differently — it is not an assembly's at all: one process holds it per
- * Owner, so every extension's bindings publish for that Owner through the same record
- * (`framework/behaviors/admission.ts`).
+ * cells rather than each starting from a private copy.
  *
- * `actions` is the assembly half of a directed command: its implementations, keyed by
- * command name. The declaration says which command and which field, and this is what the
- * command runs; a directed declaration with no entry here is refused with the
- * initialization failures, so a registered command always has something to run and an
- * assembly that declares no directed command passes nothing.
- *
- * `events` is the assembly half of the semantic lifecycle subscription: the handlers, keyed by
- * the event each subscribes to. The framework's own session behavior runs for every session
- * delivery whether or not a handler arrived, and a subscribed session handler runs after it;
- * the round axis has no framework behavior of its own (three-valued agent state is not framework
- * State), so its hook is subscribed only when the assembly injected a handler for one of its
- * edges.
+ * `factory` is the extension's half of the assembly: called once the configuration validated,
+ * handed the validated values, and expected to build the extension's own business instance
+ * without sending a remote request or starting a timer. What it returns carries the commands and
+ * subscriptions the definition's declarations need and, optionally, the one-time initialization
+ * and cleanup the lifecycle runs. The adapter decides how long the returned implementation lives
+ * — an adapter that keeps one per process gives the extension one instance across every session
+ * and subagent — while this module decides only when its two entries run.
  *
  * `configSource` is the seam a declared configuration is read through: the reader and the
  * parser (this process's own file system and the pure-JS YAML parser by default, and a test's
@@ -165,15 +207,14 @@ function findInitializationFailure(
  * path is resolved against — the extension repository root the assembly supplies, since a
  * binding runs in an arbitrary project directory. It is read only when the definition declared
  * a configuration, and it is not binding state: the values it validates belong to the extension
- * for this process — they are what `getConfig` hands its shared logic — not to this binding.
+ * for this process — they are what `getConfig` hands its shared logic and what the factory
+ * receives — not to this binding.
  */
 export function bindExtension(
 	definition: ExtensionDefinition,
 	port: HarnessPort,
 	state: StateStore,
-	admission: BindingAdmission,
-	actions: CommandActions = {},
-	events: SemanticEventHandlers = {},
+	factory?: ExtensionFactory,
 	configSource: ConfigSource = {},
 ): BindingResult {
 	const failures: BindingFailure[] = findConfigurationViolations(definition).map(violation => ({
@@ -192,28 +233,69 @@ export function bindExtension(
 		}
 	}
 
-	if (failures.length === 0) {
-		const detail = findInitializationFailure(definition, actions);
-		if (detail !== undefined) failures.push({ kind: "initialization", detail });
-	}
-
 	if (failures.length > 0) {
 		for (const failure of failures) port.reportDiagnostic(describeBindingFailure(definition.id, failure));
 		return { bound: false, failures };
 	}
 
-	// The harness-level admission step, still before the first registration. A required
-	// semantic the harness cannot honor refuses the binding outright — required meaning the
-	// framework's own semantics plus whatever this assembly declared — while an unlisted
-	// version is not a refusal, and its notice is published by the session behavior below.
-	// The version axis is decided against the framework's own Supported harness baseline:
-	// this assembly declared no version list and cannot.
-	const outcome = admit(admission.facts, admission.requiredSemantics ?? []);
-	if (outcome.kind === "required-semantics-missing") {
-		const failure: BindingFailure = { kind: "required-semantics", missing: outcome.missing };
+	// The extension's own half, and the first point at which its code runs. It is reached only
+	// after the configuration validated, so the values handed over are the ones the definition
+	// declared and nothing is read from the file twice; a factory that throws is a refused
+	// binding like any other, reported with the initialization failures below. The harness's own
+	// model prices ride along when its adapter reported any: they are a fact of the harness rather
+	// than a handle, so what the factory receives is the query itself and never the native surface
+	// it was mapped from.
+	let implementation: ExtensionImplementation;
+	try {
+		implementation = factory === undefined
+			? {}
+			: factory({
+					config: definition.config === undefined ? {} : getConfig(definition),
+					...(port.modelPrices === undefined ? {} : { modelPrices: port.modelPrices }),
+					...(port.providerAccess === undefined ? {} : { providerAccess: port.providerAccess }),
+				});
+	} catch (error) {
+		const detail = error instanceof Error ? error.message : String(error);
+		const failure: BindingFailure = { kind: "initialization", detail: `the implementation factory failed: ${detail}` };
 		port.reportDiagnostic(describeBindingFailure(definition.id, failure));
 		return { bound: false, failures: [failure] };
 	}
+
+	// From here on the extension has built something, so every remaining refusal runs its one
+	// cleanup before it is reported: a failed binding never leaves a business instance running.
+	const refuse = (failure: BindingFailure): BindingResult => {
+		cleanupImplementation(definition.id, implementation, port.reportDiagnostic);
+		port.reportDiagnostic(describeBindingFailure(definition.id, failure));
+		return { bound: false, failures: [failure] };
+	};
+
+	const detail = findInitializationFailure(definition, implementation.commands ?? {});
+	if (detail !== undefined) return refuse({ kind: "initialization", detail });
+
+	// The groups this binding's implementation declared: the whole subscription surface, each group
+	// carrying the one scope it observes under. A definition that declared none subscribes nothing
+	// and installs none of the three hooks below.
+	const groups = implementation.subscriptions ?? [];
+	const implementations = implementation.commands ?? {};
+	// The binding's delivery is live until its cleanup runs. Ending the session the implementation
+	// serves tears it down, and from then on this binding delivers nothing to it: the native hooks
+	// were registered for the life of the session and cannot be unregistered, so the framework
+	// keeps its own switch — the extension's own cleanup is never followed by another delivery. The
+	// switch covers the command path as well: a registration cannot be withdrawn once the host holds
+	// it, so an invocation that arrives afterwards reaches neither an injected implementation nor a
+	// retained capability of the instance that was disposed. The framework's own local State path
+	// (`toggle`) is not the extension's code and stays reachable, exactly as the session suite shows.
+	let delivering = true;
+
+	// The seat every marker publication of this binding projects: the session the harness is
+	// displaying, re-read per publication, or the position the delivery itself carries when this
+	// harness publishes no viewed-session outlet. It is a read of a fact, never authority — nothing
+	// here writes State, retains a capability or drives an owner's effect.
+	const seat = markerSeat(port);
+	// The binding's one subscription to the harness's displayed session, given up with the binding.
+	// A definition with no marker contributes no line and so speaks for no area, and a harness with
+	// no outlet reports none to subscribe to.
+	let releaseViewed: (() => void) | undefined;
 
 	// Registration is a single commit after all validation: the extension is labeled, its
 	// State reconciles at every session boundary this binding observes, its injection slots
@@ -224,31 +306,102 @@ export function bindExtension(
 	try {
 		port.setLabel(definition.displayName);
 		port.onSession(session => {
-			if (outcome.kind === "unlisted-version") {
-				announceUnlistedVersion(outcome, session);
-			}
+			if (!delivering) return;
 			// The framework's own behavior runs before the extension's handler, and a handler
 			// that throws is reported rather than allowed to disturb the framework or another
 			// binding: see `session-events.ts` for the order and the isolation.
-			dispatchSessionEvent(definition, state, session, events, port.reportDiagnostic);
+			dispatchSessionEvent(definition, state, session, groups, seat, port.reportDiagnostic);
+
+			if (session.event.kind === "session_start" && session.owner.kind === "owner") {
+				// The owner session node: the first moment of this process in which the extension
+				// serves a session that can hold its business instance, and therefore where its
+				// one-time initialization runs. The run-initiation hook waits for the promise this
+				// creates, so the first model request is issued after the initialization settled.
+				void initializeImplementation(
+					definition.id,
+					implementation,
+					{
+						owner: session.owner,
+						hasUI: session.hasUI,
+						feedback: session.feedback,
+						markers: session.markers,
+					},
+					port.reportDiagnostic,
+				);
+				return;
+			}
+
+			if (
+				session.event.kind === "session_end" &&
+				session.event.reason === "disposed" &&
+				session.owner.kind === "owner" &&
+				session.owner.key === servingOwnerKeyOf(implementation)
+			) {
+				// The session this implementation is serving is gone: stop delivering to the
+				// extension, then run its one cleanup. The owner's own cell was retired by the
+				// framework's behavior above, so any capability the extension retained is already
+				// inert and a late callback cannot speak for the session that ended. The harness's
+				// view subscription is given up here too: this binding's part in the area is over,
+				// and a listener kept past it would speak for an extension that no longer delivers.
+				delivering = false;
+				releaseViewed?.();
+				releaseViewed = undefined;
+				cleanupImplementation(definition.id, implementation, port.reportDiagnostic);
+			}
 		});
-		// The round axis is subscribed only when this assembly observes one of its edges. Unlike
-		// the session subscription above there is no framework behavior to run for a round — the
-		// agent's work state is not framework State — so a definition that subscribed to no round
-		// asks the harness for no round deliveries, and its binding registers no such hook.
-		if (events.round_start !== undefined || events.round_end !== undefined) {
-			port.onRound(round => dispatchRoundEvent(definition, events, round, port.reportDiagnostic));
+		// The round axis is subscribed when this extension observes one of its edges *or* one of the
+		// Turn axis's, because a Turn states which round it belongs to and that identity is this
+		// bookkeeping's. Unlike the session subscription above there is no framework State behavior
+		// to run for a round — the agent's work state is not framework State — so a definition that
+		// subscribed to neither axis asks the harness for no round deliveries and registers no such
+		// hook. The same bookkeeping is what the Turn hook below reads.
+		const lives = roundLives();
+		if (subscribesAny(groups, [...ROUND_EVENT_KINDS, ...TURN_EVENT_KINDS])) {
+			// The synthesis is what decides the edges; the framework arranges its end-candidate
+			// re-check on the harness's next task, so a harness that never reports a `nextTask`
+			// capability leaves a candidate unconfirmed rather than being polled for one.
+			const rounds = createRoundSynthesis({
+				definition,
+				lives,
+				groups,
+				reportFailure: port.reportDiagnostic,
+				nextTask: callback => port.nextTask(callback),
+				delivering: () => delivering,
+			});
+			port.onRound(observation => {
+				if (!delivering) return;
+				rounds.observe(observation);
+			});
+		}
+		// The model-cycle hook is subscribed only when a group observes a Turn edge, so a definition
+		// that never looks at a request asks the harness for no model-cycle facts at all.
+		if (subscribesAny(groups, TURN_EVENT_KINDS)) {
+			const turns = turnLives(definition, lives, implementation.catalog, groups, port.reportDiagnostic);
+			port.onTurn(facts => {
+				if (!delivering) return;
+				turns.observe(facts);
+			});
 		}
 		// The run-initiation hook is subscribed when the definition participates in a run at
-		// all — a slot to contribute or a marker to re-assert; a definition with neither
-		// installs no handler. The behaviors themselves write nothing, so a re-entered
-		// delivery plans the same contribution and re-asserts the same area from the same
-		// State and branch facts.
+		// all — a slot to contribute, a marker to re-assert, or an initialization the request
+		// must wait for; a definition with none of them installs no handler. The behaviors
+		// themselves write nothing, so a re-entered delivery plans the same contribution and
+		// re-asserts the same area from the same State and branch facts.
 		const contributes = (definition.prompts ?? []).length > 0;
-		if (contributes || definition.marker !== undefined) {
+		const awaitsInitialization = implementation.initialize !== undefined || implementation.cleanup !== undefined;
+		if (contributes || definition.marker !== undefined || awaitsInitialization) {
 			port.onRunInitiation(run => {
-				publishMarkerOnRun(definition, state, run);
-				return contributes ? planContribution(definition, state, run) : undefined;
+				if (!delivering) return undefined;
+				publishMarkerOnRun(definition, run, seat);
+				const plan = contributes
+					? (): PromptContribution | undefined => planContribution(definition, state, run)
+					: undefined;
+				const pending = initializationPending(implementation);
+				if (pending === undefined) return plan === undefined ? undefined : plan();
+				// This is the framework's awaitable position before a model request: the request the
+				// run is about to issue waits for the initialization the session node started, and
+				// the contribution is planned with the facts as they stand once it settled.
+				return pending.then(() => (plan === undefined ? undefined : plan()));
 			});
 		}
 		registerMarker(definition, state);
@@ -258,32 +411,56 @@ export function bindExtension(
 					port.registerCommand({
 						name: command.name,
 						description: command.description,
-						run: invocation => runCommandToggle(definition, state, invocation),
+						run: invocation => runCommandToggle(definition, state, invocation, seat),
 					});
 					break;
 				case "directed": {
 					// The pair was completed at validation, so an implementation is present here;
 					// the check is what makes that reachable for the compiler as well as for plain
 					// JavaScript.
-					const implementation = actions[command.name];
-					if (implementation === undefined) break;
+					const injected = implementations[command.name];
+					if (injected === undefined || !isDirectedImplementation(injected)) break;
 					port.registerCommand({
 						name: command.name,
 						description: command.description,
 						run: invocation =>
-							runCommandDirected(definition, state, invocation, implementation),
+							delivering ? runCommandDirected(definition, state, invocation, injected, seat) : undefined,
+					});
+					break;
+				}
+				case "actions": {
+					const injected = actionsImplementationOf(implementations, command.name);
+					if (injected === undefined) break;
+					port.registerCommand({
+						name: command.name,
+						description: command.description,
+						run: invocation => (delivering ? runCommandActions(command, invocation, injected) : undefined),
 					});
 					break;
 				}
 			}
+		}
+		// The displayed session is a fact of the process rather than of one delivery, so a view that
+		// attaches to another session is a transition no delivery of this binding has to carry: the
+		// subscription is what re-projects the area for what is on screen now. It is created once,
+		// after the registrations, so a binding refused before this point never holds one.
+		const viewed = port.viewedSession;
+		if (definition.marker !== undefined && viewed !== undefined) {
+			releaseViewed = viewed.subscribe(markers => {
+				if (!delivering) return;
+				const displayed = viewed.read();
+				// The outlet went away rather than reporting a target: there is nothing to project,
+				// and the delivery-position projection is not this notification's to publish.
+				if (displayed === undefined) return;
+				publishMarkerOnViewChange(definition, markers, displayed);
+			});
 		}
 	} catch (error) {
 		const failure: BindingFailure = {
 			kind: "initialization",
 			detail: `registration failed: ${error instanceof Error ? error.message : String(error)}`,
 		};
-		port.reportDiagnostic(describeBindingFailure(definition.id, failure));
-		return { bound: false, failures: [failure] };
+		return refuse(failure);
 	}
 
 	return { bound: true, definition };

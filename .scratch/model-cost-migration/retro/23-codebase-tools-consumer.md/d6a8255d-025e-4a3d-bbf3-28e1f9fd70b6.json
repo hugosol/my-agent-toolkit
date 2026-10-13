@@ -1,0 +1,165 @@
+{
+  "feature": "model-cost-migration",
+  "ticket": "23-codebase-tools-consumer.md",
+  "run_id": "d6a8255d-025e-4a3d-bbf3-28e1f9fd70b6",
+  "parent_session_id": "01a131a3-4562-728e-8c06-9608e1e88feb",
+  "parent_session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-12T19-42-26-146Z_01a131a3-4562-728e-8c06-9608e1e88feb.jsonl",
+  "workspace": "E:\\Developer\\myhub\\my-agent-toolkit",
+  "tool_call_id": "js-task-476eef74-6095-47fb-9150-b1a314dca377",
+  "started_at": "2026-10-13T08:49:21.599Z",
+  "tdd_status": "completed",
+  "retro_status": "completed",
+  "tdd_finished_at": "2026-10-13T09:06:45.866Z",
+  "tdd_result": {
+    "index": 0,
+    "id": "23-codebase-tools-consumermd",
+    "agent": "tdd",
+    "agentSource": "user",
+    "task": "Complete assignment thoroughly:\n\nTicket filename: 23-codebase-tools-consumer.md\nTicket path: .scratch/model-cost-migration/implementation/23-codebase-tools-consumer.md\n\nFull ticket content:\n# 23: codebase-tools 统一接线与历史保护\n\n**What to build:** codebase-tools 使用新的公共接线保持 prompt、历史保护、激活 State 和子代理继承，不为简单扩展复制 model-cost 内部结构。\n\n**Delivers:** P58（P58 的 codebase-tools 覆盖）\n\n**Test owner for:** P58（codebase-tools coverage partition；P58 整体由 22 与 23 共同完成）\n\n**Blocked by:** 05: 逐实际 Session 的 Turn 事实交付\n\n**Status:** ready-for-agent\n\n## Acceptance criteria\n\n- [ ] 02 已原子迁移公共契约，本票完成剩余语义接入；保留原命令行为、prompt、历史保护和激活 State，不改变既有业务契约。\n- [ ] follow 仍 live 读取 Owner 当前值、none 使用默认，子不获写权限；真实主/子请求验证 prompt 与历史顺序，marker 统一出口由 18 持有。\n- [ ] 使用生产公共入口与真实 loader/RPC/出站及 Session 记录验证，不保留旧 owner-only blanket gate 或测试专属 dispatch。\n- [ ] 本票拥有 P58 的 codebase-tools 覆盖与 tests：prompt/历史保护/State/follow-none/原命令行为；保留有效场景，删内部转发或旧类型形状断言，不重钉旧内部预期。\n- [ ] P58 仅在 22 与本票都完成后整体完成，本票不重复认领 connect-bot tests，也不迁移 framework 内部私有组装接口给扩展使用。\n- [ ] 通过批准的生产公共 seam 观察行为，预期来自合同/规格、独立字面值或手算，不以被测实现重算；永久网络 tests 使用 mock。\n- [ ] 使用隔离安装/配置/工作/Session/数据根，不操作正式 OMP；承接异步失败并保留够用脱敏证据，完成本票自动检查及材料准备，不因计划人工验收暂停可执行工作。\n\n## Verification responsibility\n\n本票负责所列 Delivers 的自动 coverage 与适用宿主贯通/证据准备；P58/P52 按本票具名责任执行。合同采用 Rapid iteration：H1/H2 及允许的条件性 H3 按原 Coverage 交用户确认，未确认不记通过；不改变承诺或免除实现/永久 tests。\n\n## P58 — coverage partition\n\n|Coverage item|Ticket|Test owner|\n|---|---|---|\n|connect-bot 注册、心跳、失败预算、State、Owner 效果与活动/完成证据|22|22|\n|codebase-tools prompt、历史保护、激活 State、follow/none 与原命令行为|23|23|\n\n两部分完成后 P58 才整体完成；本票只写所属分区测试。\n\n[You have received this identical output 3 times. Re-reading '.scratch/model-cost-migration/implementation/23-codebase-tools-consumer.md' will not change it — use a narrower selector (path:A-B), or proceed with the edit.]",
+    "assignment": "Ticket filename: 23-codebase-tools-consumer.md\nTicket path: .scratch/model-cost-migration/implementation/23-codebase-tools-consumer.md\n\nFull ticket content:\n# 23: codebase-tools 统一接线与历史保护\n\n**What to build:** codebase-tools 使用新的公共接线保持 prompt、历史保护、激活 State 和子代理继承，不为简单扩展复制 model-cost 内部结构。\n\n**Delivers:** P58（P58 的 codebase-tools 覆盖）\n\n**Test owner for:** P58（codebase-tools coverage partition；P58 整体由 22 与 23 共同完成）\n\n**Blocked by:** 05: 逐实际 Session 的 Turn 事实交付\n\n**Status:** ready-for-agent\n\n## Acceptance criteria\n\n- [ ] 02 已原子迁移公共契约，本票完成剩余语义接入；保留原命令行为、prompt、历史保护和激活 State，不改变既有业务契约。\n- [ ] follow 仍 live 读取 Owner 当前值、none 使用默认，子不获写权限；真实主/子请求验证 prompt 与历史顺序，marker 统一出口由 18 持有。\n- [ ] 使用生产公共入口与真实 loader/RPC/出站及 Session 记录验证，不保留旧 owner-only blanket gate 或测试专属 dispatch。\n- [ ] 本票拥有 P58 的 codebase-tools 覆盖与 tests：prompt/历史保护/State/follow-none/原命令行为；保留有效场景，删内部转发或旧类型形状断言，不重钉旧内部预期。\n- [ ] P58 仅在 22 与本票都完成后整体完成，本票不重复认领 connect-bot tests，也不迁移 framework 内部私有组装接口给扩展使用。\n- [ ] 通过批准的生产公共 seam 观察行为，预期来自合同/规格、独立字面值或手算，不以被测实现重算；永久网络 tests 使用 mock。\n- [ ] 使用隔离安装/配置/工作/Session/数据根，不操作正式 OMP；承接异步失败并保留够用脱敏证据，完成本票自动检查及材料准备，不因计划人工验收暂停可执行工作。\n\n## Verification responsibility\n\n本票负责所列 Delivers 的自动 coverage 与适用宿主贯通/证据准备；P58/P52 按本票具名责任执行。合同采用 Rapid iteration：H1/H2 及允许的条件性 H3 按原 Coverage 交用户确认，未确认不记通过；不改变承诺或免除实现/永久 tests。\n\n## P58 — coverage partition\n\n| Coverage item | Ticket | Test owner |\n|---|---|---|\n| connect-bot 注册、心跳、失败预算、State、Owner 效果与活动/完成证据 | 22 | 22 |\n| codebase-tools prompt、历史保护、激活 State、follow/none 与原命令行为 | 23 | 23 |\n\n两部分完成后 P58 才整体完成；本票只写所属分区测试。\n\n[You have received this identical output 3 times. Re-reading '.scratch/model-cost-migration/implementation/23-codebase-tools-consumer.md' will not change it — use a narrower selector (path:A-B), or proceed with the edit.]",
+    "description": "Wire codebase-tools public seams and preserve history",
+    "lastIntent": "Confirming touched files",
+    "exitCode": 0,
+    "output": "{\n  \"ticket\": \"23-codebase-tools-consumer\",\n  \"status\": \"delivered (P58 codebase-tools partition complete; P58 overall still needs 22 + human confirmation)\",\n  \"changes\": [\n    {\n      \"path\": \"tests/codebase-tools/subagent-owner.test.ts\",\n      \"kind\": \"test-coverage addition\",\n      \"what\": \"4 assertions inside the existing real-delegation scenario: in the subagent's own first captured outbound request, the injected prompt (a) comes after that session's own user message, (b) is the last message of the request, (c) carries role 'user' (the recorded fact for the openai-completions serializer). No existing expectation rewritten; other 6 suites untouched.\"\n    },\n    {\n      \"path\": \".scratch/model-cost-migration/assets/23-codebase-tools-consumer-evidence-2026-10-13.md\",\n      \"kind\": \"evidence asset (new)\",\n      \"what\": \"Per-criterion mapping, P58 codebase-tools coverage matrix, structural checks (public-wiring-only, no old assembly shapes/transport/owner gate/test-only dispatch), red-green + mutation-sensitivity record, commands and results, whole-repo baseline, unverified/limits.\"\n    }\n  ],\n  \"no_production_change\": {\n    \"claim\": \"codebase-tools needed no production change: it is a pure declarative consumer already on the migrated public contract\",\n    \"evidence\": [\n      \"extensions/codebase-tools/definition.ts imports only framework/public (defineExtension); state { inheritance: 'follow' }, one toggle command, two prompt slots, marker text\",\n      \"extensions/codebase-tools/harnesses/omp.ts is ompAdapter(CODEBASE_TOOLS) + a bound observation; no factory, no requiredSemantics, no transport (no old events/actions assembly shape to migrate)\",\n      \"entrypoints/omp/codebase-tools.ts is the thin re-export the real loader discovers\",\n      \"grep PushTransport|installPushTransport|setPushTransportForTest|events:{|actions:{ over extensions/codebase-tools entrypoints/omp tests/codebase-tools framework/public.ts framework/core/definition.ts framework/core/assembly.ts -> zero hits\",\n      \"grep blanket over framework extensions tests entrypoints -> zero hits; the only declared subscription scope in the repo is connect-bot (22's partition)\"\n    ]\n  },\n  \"criteria_evidence\": [\n    {\n      \"criterion\": \"public-contract migration + keep command/prompt/history/State, business contract unchanged\",\n      \"evidence\": \"bun test tests/codebase-tools 24 pass / 0 fail (init-injection, reminder-injection, outbound-role, session-boundaries, command-toggle, marker-lifecycle, subagent-owner)\"\n    },\n    {\n      \"criterion\": \"follow live / none default / sub no write / real main+sub requests verify prompt and history order\",\n      \"evidence\": \"subagent-owner.test.ts: child spawned while owner off is silent and writes no State; child spawned under enabled owner initialises its own branch from the owner's current value, writes no State; nested subagent resolves the same root owner; new assertions recorded the child request's delivery order/role. none/default side: session-boundaries (new session, recordless fork start off), per-session init progress independent\"\n    },\n    {\n      \"criterion\": \"production public entry + real loader/RPC/outbound/Session records; no old owner-only gate or test-only dispatch\",\n      \"evidence\": \"every partition test runs --no-extensions -e entrypoints/omp (+ dock fixture) against the isolated 18.5.0 install; real RPC frames, verbatim captured request bodies, real session JSONL; codebase-tools declares no subscriptions at all so no owner gate exists to keep; S1 gate stays with tests/framework/owner-gate.test.ts (not re-claimed)\"\n    },\n    {\n      \"criterion\": \"keeps valid scenarios, deletes internal forwarding/old type-shape assertions, no re-nailing\",\n      \"evidence\": \"no expectation rewritten; tests import only bun:test, node:*, ../harness-dock/** and the extension's own prompt resources; zero hits for old transport/assembly symbols\"\n    },\n    {\n      \"criterion\": \"P58 partition ownership; no connect-bot tests claimed; no framework-private assembly interfaces handed to the extension\",\n      \"evidence\": \"change set touches neither tests/connect-bot/** nor extensions/connect-bot/**; no new imports of framework/core/** or framework/behaviors/** by the codebase-tools consumer\"\n    },\n    {\n      \"criterion\": \"approved production seams; expectations independent; permanent network tests mocked\",\n      \"evidence\": \"S5 seam only; literals from contract/recorded facts (slot identities, {enabled:true}, notify strings, marker key/placement/text, recorded roles user/developer, resource text read from disk); outbound goes only to the local capture endpoint\"\n    },\n    {\n      \"criterion\": \"isolated install/config/work/session/data roots; formal OMP untouched; evidence prepared\",\n      \"evidence\": \"ensureIsolatedHarness(.cache/omp-baseline/18.5.0) + createRunRoot temp dirs (%TEMP%\\\\omp-dock-*); no ~/.omp/agent/config.yml read/written; synthetic keys only; H1/H3 remain human and did not pause any executable work\"\n    }\n  ],\n  \"commands_run\": [\n    {\n      \"cmd\": \"bun run typecheck\",\n      \"result\": \"0 errors (before and after the test addition)\"\n    },\n    {\n      \"cmd\": \"bun test tests/codebase-tools/subagent-owner.test.ts\",\n      \"result\": \"2 pass / 0 fail, 41 expect, 3.4s\"\n    },\n    {\n      \"cmd\": \"bun test tests/codebase-tools\",\n      \"result\": \"24 pass / 0 fail, 334 expect, 7 files, 42.8s\"\n    },\n    {\n      \"cmd\": \"bun test tests/framework\",\n      \"result\": \"385 pass / 0 fail, 2004 expect, 32 files, 39.6s\"\n    },\n    {\n      \"cmd\": \"bun test\",\n      \"result\": \"886 pass / 3 fail, 889 tests, 100 files, 4928 expect, 284.4s — the 3 are the known baseline: 2 harness-dock/baseline.test.ts anchor drifts, 1 model-cost-balance.test.ts P53 .lock ENOENT walk race\"\n    }\n  ],\n  \"sensitivity_check\": \"Fault injection on the new assertion (role expected 'developer' instead of 'user') failed as expected with Received: 'user' (1 pass / 1 fail, 38 expect), proving the added assertions read the real captured subagent request; restored and re-verified green. The addition was green on first run (behaviour already satisfied), so it is coverage strengthening of an already-satisfied criterion, not a red->green cycle — recorded as such in the evidence.\",\n  \"unverified\": [\n    \"H1 interactive TUI acceptance and H3a permanent cutover for codebase-tools remain human-only and unverified (not claimed as passed)\",\n    \"P58 as a whole completes only once 22's connect-bot partition (evidence asset present) and this partition are both done\",\n    \"marker unified exit / viewed-session seat belongs to 18 and is deliberately not re-tested here; partition runs the unpatched pinned 18.5.0 artifact, so the viewed-seat State projection is out of this partition\",\n    \"no real provider, credential or real DeepSeek/Codex round trip was exercised (capture endpoint is a local mock; codex path is shape-only layer 1)\",\n    \"dangling .scratch/codebase-tools-omp-v1 links in extensions/codebase-tools/README.md and framework/docs/** left as-is (previous migration's planning dir; acceptance/cutover ticket owns the handoff)\"\n  ],\n  \"main_agent_checks\": [\n    \"bun run typecheck\",\n    \"bun test tests/codebase-tools (expect 24 pass / 0 fail)\",\n    \"bun test (expect 886 pass / 3 fail, the same 3 known baseline failures)\"\n  ]\n}",
+    "stderr": "",
+    "truncated": false,
+    "durationMs": 1044246,
+    "tokens": 181683,
+    "requests": 74,
+    "contextTokens": 174358,
+    "contextWindow": 1000000,
+    "modelOverride": [
+      "deepseek/deepseek-flash:high"
+    ],
+    "resolvedModel": "deepseek/deepseek-flash:high",
+    "resolvedModelIdentity": "deepseek/deepseek-flash",
+    "resolvedThinkingLevel": "high",
+    "aborted": false,
+    "usage": {
+      "input": 117722,
+      "output": 63961,
+      "cacheRead": 7609600,
+      "cacheWrite": 0,
+      "totalTokens": 7791283,
+      "reasoningTokens": 42888,
+      "cost": {
+        "input": 0.03531659999999999,
+        "output": 0.07675319999999997,
+        "cacheRead": 0.0456576,
+        "cacheWrite": 0,
+        "total": 0.15772740000000002
+      }
+    },
+    "outputPath": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-12T19-42-26-146Z_01a131a3-4562-728e-8c06-9608e1e88feb\\23-codebase-tools-consumermd.md",
+    "extractedToolData": {
+      "yield": [
+        {
+          "data": {
+            "ticket": "23-codebase-tools-consumer",
+            "status": "delivered (P58 codebase-tools partition complete; P58 overall still needs 22 + human confirmation)",
+            "changes": [
+              {
+                "path": "tests/codebase-tools/subagent-owner.test.ts",
+                "kind": "test-coverage addition",
+                "what": "4 assertions inside the existing real-delegation scenario: in the subagent's own first captured outbound request, the injected prompt (a) comes after that session's own user message, (b) is the last message of the request, (c) carries role 'user' (the recorded fact for the openai-completions serializer). No existing expectation rewritten; other 6 suites untouched."
+              },
+              {
+                "path": ".scratch/model-cost-migration/assets/23-codebase-tools-consumer-evidence-2026-10-13.md",
+                "kind": "evidence asset (new)",
+                "what": "Per-criterion mapping, P58 codebase-tools coverage matrix, structural checks (public-wiring-only, no old assembly shapes/transport/owner gate/test-only dispatch), red-green + mutation-sensitivity record, commands and results, whole-repo baseline, unverified/limits."
+              }
+            ],
+            "no_production_change": {
+              "claim": "codebase-tools needed no production change: it is a pure declarative consumer already on the migrated public contract",
+              "evidence": [
+                "extensions/codebase-tools/definition.ts imports only framework/public (defineExtension); state { inheritance: 'follow' }, one toggle command, two prompt slots, marker text",
+                "extensions/codebase-tools/harnesses/omp.ts is ompAdapter(CODEBASE_TOOLS) + a bound observation; no factory, no requiredSemantics, no transport (no old events/actions assembly shape to migrate)",
+                "entrypoints/omp/codebase-tools.ts is the thin re-export the real loader discovers",
+                "grep PushTransport|installPushTransport|setPushTransportForTest|events:{|actions:{ over extensions/codebase-tools entrypoints/omp tests/codebase-tools framework/public.ts framework/core/definition.ts framework/core/assembly.ts -> zero hits",
+                "grep blanket over framework extensions tests entrypoints -> zero hits; the only declared subscription scope in the repo is connect-bot (22's partition)"
+              ]
+            },
+            "criteria_evidence": [
+              {
+                "criterion": "public-contract migration + keep command/prompt/history/State, business contract unchanged",
+                "evidence": "bun test tests/codebase-tools 24 pass / 0 fail (init-injection, reminder-injection, outbound-role, session-boundaries, command-toggle, marker-lifecycle, subagent-owner)"
+              },
+              {
+                "criterion": "follow live / none default / sub no write / real main+sub requests verify prompt and history order",
+                "evidence": "subagent-owner.test.ts: child spawned while owner off is silent and writes no State; child spawned under enabled owner initialises its own branch from the owner's current value, writes no State; nested subagent resolves the same root owner; new assertions recorded the child request's delivery order/role. none/default side: session-boundaries (new session, recordless fork start off), per-session init progress independent"
+              },
+              {
+                "criterion": "production public entry + real loader/RPC/outbound/Session records; no old owner-only gate or test-only dispatch",
+                "evidence": "every partition test runs --no-extensions -e entrypoints/omp (+ dock fixture) against the isolated 18.5.0 install; real RPC frames, verbatim captured request bodies, real session JSONL; codebase-tools declares no subscriptions at all so no owner gate exists to keep; S1 gate stays with tests/framework/owner-gate.test.ts (not re-claimed)"
+              },
+              {
+                "criterion": "keeps valid scenarios, deletes internal forwarding/old type-shape assertions, no re-nailing",
+                "evidence": "no expectation rewritten; tests import only bun:test, node:*, ../harness-dock/** and the extension's own prompt resources; zero hits for old transport/assembly symbols"
+              },
+              {
+                "criterion": "P58 partition ownership; no connect-bot tests claimed; no framework-private assembly interfaces handed to the extension",
+                "evidence": "change set touches neither tests/connect-bot/** nor extensions/connect-bot/**; no new imports of framework/core/** or framework/behaviors/** by the codebase-tools consumer"
+              },
+              {
+                "criterion": "approved production seams; expectations independent; permanent network tests mocked",
+                "evidence": "S5 seam only; literals from contract/recorded facts (slot identities, {enabled:true}, notify strings, marker key/placement/text, recorded roles user/developer, resource text read from disk); outbound goes only to the local capture endpoint"
+              },
+              {
+                "criterion": "isolated install/config/work/session/data roots; formal OMP untouched; evidence prepared",
+                "evidence": "ensureIsolatedHarness(.cache/omp-baseline/18.5.0) + createRunRoot temp dirs (%TEMP%\\omp-dock-*); no ~/.omp/agent/config.yml read/written; synthetic keys only; H1/H3 remain human and did not pause any executable work"
+              }
+            ],
+            "commands_run": [
+              {
+                "cmd": "bun run typecheck",
+                "result": "0 errors (before and after the test addition)"
+              },
+              {
+                "cmd": "bun test tests/codebase-tools/subagent-owner.test.ts",
+                "result": "2 pass / 0 fail, 41 expect, 3.4s"
+              },
+              {
+                "cmd": "bun test tests/codebase-tools",
+                "result": "24 pass / 0 fail, 334 expect, 7 files, 42.8s"
+              },
+              {
+                "cmd": "bun test tests/framework",
+                "result": "385 pass / 0 fail, 2004 expect, 32 files, 39.6s"
+              },
+              {
+                "cmd": "bun test",
+                "result": "886 pass / 3 fail, 889 tests, 100 files, 4928 expect, 284.4s — the 3 are the known baseline: 2 harness-dock/baseline.test.ts anchor drifts, 1 model-cost-balance.test.ts P53 .lock ENOENT walk race"
+              }
+            ],
+            "sensitivity_check": "Fault injection on the new assertion (role expected 'developer' instead of 'user') failed as expected with Received: 'user' (1 pass / 1 fail, 38 expect), proving the added assertions read the real captured subagent request; restored and re-verified green. The addition was green on first run (behaviour already satisfied), so it is coverage strengthening of an already-satisfied criterion, not a red->green cycle — recorded as such in the evidence.",
+            "unverified": [
+              "H1 interactive TUI acceptance and H3a permanent cutover for codebase-tools remain human-only and unverified (not claimed as passed)",
+              "P58 as a whole completes only once 22's connect-bot partition (evidence asset present) and this partition are both done",
+              "marker unified exit / viewed-session seat belongs to 18 and is deliberately not re-tested here; partition runs the unpatched pinned 18.5.0 artifact, so the viewed-seat State projection is out of this partition",
+              "no real provider, credential or real DeepSeek/Codex round trip was exercised (capture endpoint is a local mock; codex path is shape-only layer 1)",
+              "dangling .scratch/codebase-tools-omp-v1 links in extensions/codebase-tools/README.md and framework/docs/** left as-is (previous migration's planning dir; acceptance/cutover ticket owns the handoff)"
+            ],
+            "main_agent_checks": [
+              "bun run typecheck",
+              "bun test tests/codebase-tools (expect 24 pass / 0 fail)",
+              "bun test (expect 886 pass / 3 fail, the same 3 known baseline failures)"
+            ]
+          },
+          "status": "success",
+          "type": "result"
+        }
+      ]
+    },
+    "outputMeta": {
+      "lineCount": 91,
+      "charCount": 7311
+    }
+  },
+  "agent": "tdd",
+  "agent_id": "23-codebase-tools-consumermd",
+  "session_id": "01a13473-b8e0-7280-bb09-2fcf93117cd7",
+  "session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-12T19-42-26-146Z_01a131a3-4562-728e-8c06-9608e1e88feb\\23-codebase-tools-consumermd.jsonl",
+  "execution_cwd": "E:\\Developer\\myhub\\my-agent-toolkit",
+  "retro_document": "E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\model-cost-migration\\retro\\23-codebase-tools-consumer.md\\d6a8255d-025e-4a3d-bbf3-28e1f9fd70b6.md",
+  "retro_finished_at": "2026-10-13T09:10:23.309Z"
+}

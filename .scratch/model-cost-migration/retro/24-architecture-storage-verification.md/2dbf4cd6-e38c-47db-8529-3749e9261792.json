@@ -1,0 +1,198 @@
+{
+  "feature": "model-cost-migration",
+  "ticket": "24-architecture-storage-verification.md",
+  "run_id": "2dbf4cd6-e38c-47db-8529-3749e9261792",
+  "parent_session_id": "01a131a3-4562-728e-8c06-9608e1e88feb",
+  "parent_session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-12T19-42-26-146Z_01a131a3-4562-728e-8c06-9608e1e88feb.jsonl",
+  "workspace": "E:\\Developer\\myhub\\my-agent-toolkit",
+  "tool_call_id": "js-task-2e0ab034-ec8b-40e9-bd7b-03f129ea16a4",
+  "started_at": "2026-10-13T09:07:29.327Z",
+  "tdd_status": "completed",
+  "retro_status": "completed",
+  "tdd_finished_at": "2026-10-13T09:51:58.487Z",
+  "tdd_result": {
+    "index": 0,
+    "id": "24-architecture-storage-verificationmd",
+    "agent": "tdd",
+    "agentSource": "user",
+    "task": "Complete assignment thoroughly:\n\nTicket filename: 24-architecture-storage-verification.md\nTicket path: .scratch/model-cost-migration/implementation/24-architecture-storage-verification.md\n\nFull ticket content:\n# 24: 生产架构清理与完整持久化验证\n\n**What to build:** 完整生产路径统一采用批准职责和持久数据模型；独立读回证明无旧双轨、额外账本或重复权威累计。\n\n**Delivers:** P68, P52\n\n**Blocked by:** 20: 完整 TUI 与单一峰谷边界 timer；21: 无 UI 同后端与干净 RPC 反馈；22: connect-bot 统一接线与协议保留；23: codebase-tools 统一接线与历史保护\n\n**Status:** ready-for-agent\n\n## Acceptance criteria\n\n- [ ] 本票是 P52 完整验证 owner；06/14/19 贡献活动消费、estimate 和归档生产路径，在全部已实现路径上写完整合同测试，不重复认领各贡献票业务用例。\n- [ ] 通过生产写出、独立 schema 检查及重启恢复核对根/Session/自身四 token 桶/币种/版本、父未先保存、唯一归档拒覆盖与独立 estimate 保护。\n- [ ] 拒绝新增 Turn/Round 账本、recentRound、历史价格、费用分项、账号键或重复权威 total；consumer-visible 读回保证正确，不用只扫描源码文本代替文档语义。\n- [ ] 公共调用方复用同一工厂/语义/HTTP/文件路径，framework 不依赖扩展，shared logic 不导入 native，HTTP/文件不依赖 adapter，前端不做业务调度。\n- [ ] 清理剩余旧生产装配/派发/传输类型和兼容双轨，不新建 DI/扫描/注册/配置体系或通用业务 State；清理不能把之前票留成不可运行半成品。\n- [ ] 执行既有 native import 责任检查和真实公共消费者集成行为，证明现有两消费者仍可用；P58 tests owner 仍为 22/23。\n- [ ] P52 检查通过只证明持久合同，P68 检查通过只证明本次责任/统一路径，不替代真实 provider/视觉人工确认或自动扩大支持声明。\n- [ ] 通过批准的生产公共 seam 观察行为，预期来自合同/规格、独立字面值或手算，不以被测实现重算；永久网络 tests 使用 mock。\n- [ ] 使用隔离安装/配置/工作/Session/数据根，不操作正式 OMP；承接异步失败并保留够用脱敏证据，完成本票自动检查及材料准备，不因计划人工验收暂停可执行工作。\n\n## Verification responsibility\n\n本票负责所列 Delivers 的自动 coverage 与适用宿主贯通/证据准备；P58/P52 按本票具名责任执行。合同采用 Rapid iteration：H1/H2 及允许的条件性 H3 按原 Coverage 交用户确认，未确认不记通过；不改变承诺或免除实现/永久 tests。\n\n## P52 — verification ownership\n\n本票统一拥有 P52 完整承诺测试，06/14/19 不提前认领 P52 完成。\n\n|Coverage item|Contributing ticket|Test owner|\n|---|---|---|\n|活动文档 schema、Session 自身四桶/币种/版本及父未先保存|06|24|\n|独立 estimate 文档及其重启恢复|14|24|\n|唯一归档拒覆盖、reset 保护 estimate|19|24|\n|组合恢复、无账本/重复权威总数|06、14、19|24|\n\n贡献票仍写自身业务测试；本票负责跨生产文档的合同检查，不重复认领那些业务用例。\n\n[You have received this identical output 3 times. Re-reading '.scratch/model-cost-migration/implementation/24-architecture-storage-verification.md' will not change it — use a narrower selector (path:A-B), or proceed with the edit.]",
+    "assignment": "Ticket filename: 24-architecture-storage-verification.md\nTicket path: .scratch/model-cost-migration/implementation/24-architecture-storage-verification.md\n\nFull ticket content:\n# 24: 生产架构清理与完整持久化验证\n\n**What to build:** 完整生产路径统一采用批准职责和持久数据模型；独立读回证明无旧双轨、额外账本或重复权威累计。\n\n**Delivers:** P68, P52\n\n**Blocked by:** 20: 完整 TUI 与单一峰谷边界 timer；21: 无 UI 同后端与干净 RPC 反馈；22: connect-bot 统一接线与协议保留；23: codebase-tools 统一接线与历史保护\n\n**Status:** ready-for-agent\n\n## Acceptance criteria\n\n- [ ] 本票是 P52 完整验证 owner；06/14/19 贡献活动消费、estimate 和归档生产路径，在全部已实现路径上写完整合同测试，不重复认领各贡献票业务用例。\n- [ ] 通过生产写出、独立 schema 检查及重启恢复核对根/Session/自身四 token 桶/币种/版本、父未先保存、唯一归档拒覆盖与独立 estimate 保护。\n- [ ] 拒绝新增 Turn/Round 账本、recentRound、历史价格、费用分项、账号键或重复权威 total；consumer-visible 读回保证正确，不用只扫描源码文本代替文档语义。\n- [ ] 公共调用方复用同一工厂/语义/HTTP/文件路径，framework 不依赖扩展，shared logic 不导入 native，HTTP/文件不依赖 adapter，前端不做业务调度。\n- [ ] 清理剩余旧生产装配/派发/传输类型和兼容双轨，不新建 DI/扫描/注册/配置体系或通用业务 State；清理不能把之前票留成不可运行半成品。\n- [ ] 执行既有 native import 责任检查和真实公共消费者集成行为，证明现有两消费者仍可用；P58 tests owner 仍为 22/23。\n- [ ] P52 检查通过只证明持久合同，P68 检查通过只证明本次责任/统一路径，不替代真实 provider/视觉人工确认或自动扩大支持声明。\n- [ ] 通过批准的生产公共 seam 观察行为，预期来自合同/规格、独立字面值或手算，不以被测实现重算；永久网络 tests 使用 mock。\n- [ ] 使用隔离安装/配置/工作/Session/数据根，不操作正式 OMP；承接异步失败并保留够用脱敏证据，完成本票自动检查及材料准备，不因计划人工验收暂停可执行工作。\n\n## Verification responsibility\n\n本票负责所列 Delivers 的自动 coverage 与适用宿主贯通/证据准备；P58/P52 按本票具名责任执行。合同采用 Rapid iteration：H1/H2 及允许的条件性 H3 按原 Coverage 交用户确认，未确认不记通过；不改变承诺或免除实现/永久 tests。\n\n## P52 — verification ownership\n\n本票统一拥有 P52 完整承诺测试，06/14/19 不提前认领 P52 完成。\n\n| Coverage item | Contributing ticket | Test owner |\n|---|---|---|\n| 活动文档 schema、Session 自身四桶/币种/版本及父未先保存 | 06 | 24 |\n| 独立 estimate 文档及其重启恢复 | 14 | 24 |\n| 唯一归档拒覆盖、reset 保护 estimate | 19 | 24 |\n| 组合恢复、无账本/重复权威总数 | 06、14、19 | 24 |\n\n贡献票仍写自身业务测试；本票负责跨生产文档的合同检查，不重复认领那些业务用例。\n\n[You have received this identical output 3 times. Re-reading '.scratch/model-cost-migration/implementation/24-architecture-storage-verification.md' will not change it — use a narrower selector (path:A-B), or proceed with the edit.]",
+    "description": "Verify production persistence and architecture cleanup",
+    "lastIntent": "Final housekeeping checks",
+    "exitCode": 0,
+    "output": "{\n  \"ticket\": \"24-architecture-storage-verification.md\",\n  \"status\": \"in-progress (Comments/E 证据已写；待提交与人工/复核)\",\n  \"delivered\": {\n    \"P52\": \"跨文档持久化合同（生产写出→独立 schema 读回→重启→归档→estimate 保护→父未先保存），全部在组合 host 的真实 loader/RPC 上\",\n    \"P68\": \"架构职责与统一路径检查：C1 模块图告警＋反方向新断言、旧装配/传输/blanket 双轨 0 命中、前端不调度业务、无重复 native 生命周期\",\n    \"组合 artifact\": \"host-patches/omp-18.5.0-viewed-session-codex-response/{record.json,README.md}：01 viewed-session patch ＋ 13 codex-response-boundary patch 在**同一安装**上的一条链（9 文件 pre/post sha256 实测冻结，两步 apply 命令可复现）；物化器 host-patch-artifact.ts 由单 patch 推广为 patch 链，两个单 patch artifact 的 record/suite 一并迁移（哈希一字未改）\"\n  },\n  \"files\": {\n    \"new\": [\n      \"host-patches/omp-18.5.0-viewed-session-codex-response/record.json\",\n      \"host-patches/omp-18.5.0-viewed-session-codex-response/README.md\",\n      \"tests/harness-dock/combined-host-harness.ts\",\n      \"tests/harness-dock/combined-host-artifact.test.ts\",\n      \"tests/harness-dock/model-cost-persistence.test.ts\",\n      \".scratch/model-cost-migration/assets/24-architecture-storage-verification-evidence-2026-10-13.md\"\n    ],\n    \"changed\": [\n      \"tests/harness-dock/host-patch-artifact.ts\",\n      \"tests/harness-dock/viewed-session-harness.ts\",\n      \"tests/harness-dock/codex-response-harness.ts\",\n      \"tests/harness-dock/viewed-session.test.ts\",\n      \"tests/harness-dock/codex-response-artifact.test.ts\",\n      \"tests/harness-dock/baseline.ts\",\n      \"tests/harness-dock/baseline.test.ts\",\n      \"tests/harness-dock/model-cost-balance.test.ts\",\n      \"tests/framework/import-boundary.test.ts\",\n      \"host-patches/omp-18.5.0-viewed-session/record.json\",\n      \"host-patches/omp-18.5.0-codex-response-boundary/record.json\",\n      \".scratch/model-cost-migration/implementation/24-architecture-storage-verification.md\"\n    ]\n  },\n  \"criteria_evidence\": [\n    {\n      \"criterion\": \"P52 owner；跨生产文档完整合同测试，不重复贡献票业务用例\",\n      \"evidence\": \"tests/harness-dock/model-cost-persistence.test.ts（4 例）＋ P52 覆盖表 4 行各自指到具体用例；06/14/19 业务用例未改未重复\"\n    },\n    {\n      \"criterion\": \"生产写出、独立 schema、重启恢复：根/Session/四桶/币种/版本/父未先保存/唯一归档拒覆盖/estimate 保护\",\n      \"evidence\": \"同上：精确键集读回（活动/归档/estimate 三形状）、四桶＝端点脚本 usage 独立字面、DeepSeek costCny>0 与 Codex 不写 CNY、saveVersion 跨重启 +1、子记录先于父落盘且已写 parent、两次 close 两个不同名且首份字节不变、estimate 字节前后一致\"\n    },\n    {\n      \"criterion\": \"拒绝账本/recentRound/历史价格/费用分项/账号键/重复权威 total；不用源码文字代替文档语义\",\n      \"evidence\": \"逐层精确键集校验＋存储根 JSON 文件集合精确；故障注入（记录里加 total: 21）使 4 例全部以 'carries keys the approved schema does not name: total' 失败，还原后 4 pass\"\n    },\n    {\n      \"criterion\": \"公共调用方复用工厂/语义/HTTP/文件路径；framework 不依赖扩展；shared logic 不导入 native；HTTP/文件不依赖 adapter；前端不做业务调度\",\n      \"evidence\": \"grep 结构检查 0/0/0 命中；import-boundary.test.ts 新增反方向断言 0 命中；harness 装配只导入 adapter（逃生舱）／framework/public／自身 shared-logic／node 内建；model-cost 前端不碰 store/fs\"\n    },\n    {\n      \"criterion\": \"清理旧生产装配/派发/传输类型与兼容双轨；不新建 DI/扫描/注册/配置体系或通用 State；不留半成品\",\n      \"evidence\": \"PushTransport/installPushTransport/setPushTransportForTest/platformTransport/blanket 0 命中；events:{/actions:{ 唯一命中是当前公共 SubscriptionGroup；本次只把物化器推广为链＋在既有告警里加一条断言，无新体系；迁移后的两个 artifact 与两个消费者分区均真实运行通过\"\n    },\n    {\n      \"criterion\": \"执行既有 native import 责任检查和真实公共消费者集成行为\",\n      \"evidence\": \"tests/framework/import-boundary.test.ts 4 pass；tests/connect-bot 144 pass（22 分区，含真实 panel）；tests/codebase-tools 24 pass（23 分区）；P58 整体仍归 22/23，未加任何人工门禁\"\n    },\n    {\n      \"criterion\": \"P52/P68 通过不替代真实 provider/视觉确认、不扩大支持声明\",\n      \"evidence\": \"证据文件「未验证/限度」逐条列明；支持版本仍 18.5.0（harness-baseline.json 未改）；组合 artifact 未并入上游 checkout\"\n    },\n    {\n      \"criterion\": \"观察在批准 seam（S5/S2）、预期独立、永久网络用 mock；隔离安装/配置/工作/Session/数据根，不碰正式 OMP\",\n      \"evidence\": \"组合前缀＋createRunRoot＋mkdtemp 隔离 home；provider 覆盖只写运行自己的 models.yml；所有远端交互是 dock 本地 capture endpoint；等待按文档内容而非时长\"\n    },\n    {\n      \"criterion\": \"承 21 待办：final24 验证无重复 native 生命周期\",\n      \"evidence\": \"去注释后全仓 session_shutdown 仅 framework/adapters/omp.ts 一处；model-cost 前端释放只经 binding 唯一 cleanup（releasingFrontendOnCleanup）且只在 bound.bound 时挂接；native-session-boundary.test.ts 全仓断言在 connect-bot 分区通过\"\n    }\n  ],\n  \"commands\": [\n    {\n      \"cmd\": \"bun run typecheck\",\n      \"result\": \"0 errors\"\n    },\n    {\n      \"cmd\": \"bun test (full, twice)\",\n      \"result\": \"899 pass / 0 fail, 102 files, 5072 expect, 294.5s and 297.7s（无 ENOENT 复发）\"\n    },\n    {\n      \"cmd\": \"bun test tests/harness-dock\",\n      \"result\": \"79 pass / 0 fail, 22 files, 130.0s\"\n    },\n    {\n      \"cmd\": \"bun test tests/model-cost\",\n      \"result\": \"266 pass / 0 fail, 3.1s\"\n    },\n    {\n      \"cmd\": \"bun test tests/framework\",\n      \"result\": \"386 pass / 0 fail, 39.1s\"\n    },\n    {\n      \"cmd\": \"bun test tests/connect-bot\",\n      \"result\": \"144 pass / 0 fail, 76.9s\"\n    },\n    {\n      \"cmd\": \"bun test tests/codebase-tools\",\n      \"result\": \"24 pass / 0 fail, 42.7s\"\n    },\n    {\n      \"cmd\": \"bun test tests/harness-dock/combined-host-artifact.test.ts tests/harness-dock/model-cost-persistence.test.ts\",\n      \"result\": \"5 + 4 pass / 0 fail\"\n    },\n    {\n      \"cmd\": \"fault injection: request-accounting SessionRecord + total: 21\",\n      \"result\": \"4 fail with the schema reason; restored → 4 pass\"\n    }\n  ],\n  \"failures_fixed_in_this_ticket\": [\n    \"两项 baseline anchor 漂移：verifyArtifactByteIdentity 改为比对记录 revision 自身的 blob 字节（git cat-file blob <commit>:<path>），anchor 用例改为「checkout 仍携带该 revision + 其自身 manifest + tag 与 commit 同指」；未伪造哈希、未提高版本\",\n    \"一项 balance 存储根遍历 ENOENT：遍历容忍原子发布中被 rename 走的临时文档\"\n  ],\n  \"unverified_or_limits\": [\n    \"H1/H2（真实 provider、TUI 视觉）仍归原 Coverage 票；本票不新增人工项\",\n    \"归档名冲突分支（wx 拒绝）在随机名下属防御性代码，未能无副作用强制（bun:test 的 mock.module 在该 runner 里进程级，会污染其他 suite 的随机名，导致 tests/model-cost 挂起，已删除该用例）；其守护语义由 19 的 S2 用例与本票真实宿主用例覆盖\",\n    \"estimate ratio 同实例内的每分钟节流仍属 14 的 S2 用例；本票只断言 baseline 即刻落盘与重启后新实例首个合格配对立即写出 ratio 6\"\n  ],\n  \"notes_for_handoff\": [\n    \"25（acceptance cutover）可用 tests/harness-dock/combined-host-harness.ts 的 ensureCombinedHostHarness()／readCombinedHostRecord()／combinedHostLayout() 作为最终 exact artifact：它就是 01＋13 两个 patch 在**同一安装**上的一条链，勿把两份独立 artifact 报告当作同一认证\",\n    \"07 evidence 第 89/99 行「真实 RPC 不派发 round_end」的旧限度已被 08 取代（本票在真实 RPC 会话里等到两次 prompt 各自落盘）；未修改 07 材料，只在 24 材料里标注其过时\",\n    \"11 的 retry 报告「Cost: JPY」与仓库不符：仓库无 JPY（grep 0 命中），数据为 CNY、显示为 ¥/$，DeepSeek 记录写 costCny；20 的标签核对不受影响\",\n    \"旧装配/传输/blanket 门禁清理：本会话 grep 全部 0 命中（PushTransport/platformTransport/blanket），无需再清\"\n  ]\n}",
+    "stderr": "",
+    "truncated": false,
+    "durationMs": 2669140,
+    "tokens": 402836,
+    "requests": 197,
+    "contextTokens": 375953,
+    "contextWindow": 1000000,
+    "modelOverride": [
+      "deepseek/deepseek-flash:high"
+    ],
+    "resolvedModel": "deepseek/deepseek-flash:high",
+    "resolvedModelIdentity": "deepseek/deepseek-flash",
+    "resolvedThinkingLevel": "high",
+    "aborted": false,
+    "usage": {
+      "input": 211552,
+      "output": 191284,
+      "cacheRead": 43177472,
+      "cacheWrite": 0,
+      "totalTokens": 43580308,
+      "reasoningTokens": 97059,
+      "cost": {
+        "input": 0.06346559999999998,
+        "output": 0.22954079999999993,
+        "cacheRead": 0.25906483199999997,
+        "cacheWrite": 0,
+        "total": 0.5520712320000001
+      }
+    },
+    "outputPath": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-12T19-42-26-146Z_01a131a3-4562-728e-8c06-9608e1e88feb\\24-architecture-storage-verificationmd.md",
+    "extractedToolData": {
+      "yield": [
+        {
+          "data": {
+            "ticket": "24-architecture-storage-verification.md",
+            "status": "in-progress (Comments/E 证据已写；待提交与人工/复核)",
+            "delivered": {
+              "P52": "跨文档持久化合同（生产写出→独立 schema 读回→重启→归档→estimate 保护→父未先保存），全部在组合 host 的真实 loader/RPC 上",
+              "P68": "架构职责与统一路径检查：C1 模块图告警＋反方向新断言、旧装配/传输/blanket 双轨 0 命中、前端不调度业务、无重复 native 生命周期",
+              "组合 artifact": "host-patches/omp-18.5.0-viewed-session-codex-response/{record.json,README.md}：01 viewed-session patch ＋ 13 codex-response-boundary patch 在**同一安装**上的一条链（9 文件 pre/post sha256 实测冻结，两步 apply 命令可复现）；物化器 host-patch-artifact.ts 由单 patch 推广为 patch 链，两个单 patch artifact 的 record/suite 一并迁移（哈希一字未改）"
+            },
+            "files": {
+              "new": [
+                "host-patches/omp-18.5.0-viewed-session-codex-response/record.json",
+                "host-patches/omp-18.5.0-viewed-session-codex-response/README.md",
+                "tests/harness-dock/combined-host-harness.ts",
+                "tests/harness-dock/combined-host-artifact.test.ts",
+                "tests/harness-dock/model-cost-persistence.test.ts",
+                ".scratch/model-cost-migration/assets/24-architecture-storage-verification-evidence-2026-10-13.md"
+              ],
+              "changed": [
+                "tests/harness-dock/host-patch-artifact.ts",
+                "tests/harness-dock/viewed-session-harness.ts",
+                "tests/harness-dock/codex-response-harness.ts",
+                "tests/harness-dock/viewed-session.test.ts",
+                "tests/harness-dock/codex-response-artifact.test.ts",
+                "tests/harness-dock/baseline.ts",
+                "tests/harness-dock/baseline.test.ts",
+                "tests/harness-dock/model-cost-balance.test.ts",
+                "tests/framework/import-boundary.test.ts",
+                "host-patches/omp-18.5.0-viewed-session/record.json",
+                "host-patches/omp-18.5.0-codex-response-boundary/record.json",
+                ".scratch/model-cost-migration/implementation/24-architecture-storage-verification.md"
+              ]
+            },
+            "criteria_evidence": [
+              {
+                "criterion": "P52 owner；跨生产文档完整合同测试，不重复贡献票业务用例",
+                "evidence": "tests/harness-dock/model-cost-persistence.test.ts（4 例）＋ P52 覆盖表 4 行各自指到具体用例；06/14/19 业务用例未改未重复"
+              },
+              {
+                "criterion": "生产写出、独立 schema、重启恢复：根/Session/四桶/币种/版本/父未先保存/唯一归档拒覆盖/estimate 保护",
+                "evidence": "同上：精确键集读回（活动/归档/estimate 三形状）、四桶＝端点脚本 usage 独立字面、DeepSeek costCny>0 与 Codex 不写 CNY、saveVersion 跨重启 +1、子记录先于父落盘且已写 parent、两次 close 两个不同名且首份字节不变、estimate 字节前后一致"
+              },
+              {
+                "criterion": "拒绝账本/recentRound/历史价格/费用分项/账号键/重复权威 total；不用源码文字代替文档语义",
+                "evidence": "逐层精确键集校验＋存储根 JSON 文件集合精确；故障注入（记录里加 total: 21）使 4 例全部以 'carries keys the approved schema does not name: total' 失败，还原后 4 pass"
+              },
+              {
+                "criterion": "公共调用方复用工厂/语义/HTTP/文件路径；framework 不依赖扩展；shared logic 不导入 native；HTTP/文件不依赖 adapter；前端不做业务调度",
+                "evidence": "grep 结构检查 0/0/0 命中；import-boundary.test.ts 新增反方向断言 0 命中；harness 装配只导入 adapter（逃生舱）／framework/public／自身 shared-logic／node 内建；model-cost 前端不碰 store/fs"
+              },
+              {
+                "criterion": "清理旧生产装配/派发/传输类型与兼容双轨；不新建 DI/扫描/注册/配置体系或通用 State；不留半成品",
+                "evidence": "PushTransport/installPushTransport/setPushTransportForTest/platformTransport/blanket 0 命中；events:{/actions:{ 唯一命中是当前公共 SubscriptionGroup；本次只把物化器推广为链＋在既有告警里加一条断言，无新体系；迁移后的两个 artifact 与两个消费者分区均真实运行通过"
+              },
+              {
+                "criterion": "执行既有 native import 责任检查和真实公共消费者集成行为",
+                "evidence": "tests/framework/import-boundary.test.ts 4 pass；tests/connect-bot 144 pass（22 分区，含真实 panel）；tests/codebase-tools 24 pass（23 分区）；P58 整体仍归 22/23，未加任何人工门禁"
+              },
+              {
+                "criterion": "P52/P68 通过不替代真实 provider/视觉确认、不扩大支持声明",
+                "evidence": "证据文件「未验证/限度」逐条列明；支持版本仍 18.5.0（harness-baseline.json 未改）；组合 artifact 未并入上游 checkout"
+              },
+              {
+                "criterion": "观察在批准 seam（S5/S2）、预期独立、永久网络用 mock；隔离安装/配置/工作/Session/数据根，不碰正式 OMP",
+                "evidence": "组合前缀＋createRunRoot＋mkdtemp 隔离 home；provider 覆盖只写运行自己的 models.yml；所有远端交互是 dock 本地 capture endpoint；等待按文档内容而非时长"
+              },
+              {
+                "criterion": "承 21 待办：final24 验证无重复 native 生命周期",
+                "evidence": "去注释后全仓 session_shutdown 仅 framework/adapters/omp.ts 一处；model-cost 前端释放只经 binding 唯一 cleanup（releasingFrontendOnCleanup）且只在 bound.bound 时挂接；native-session-boundary.test.ts 全仓断言在 connect-bot 分区通过"
+              }
+            ],
+            "commands": [
+              {
+                "cmd": "bun run typecheck",
+                "result": "0 errors"
+              },
+              {
+                "cmd": "bun test (full, twice)",
+                "result": "899 pass / 0 fail, 102 files, 5072 expect, 294.5s and 297.7s（无 ENOENT 复发）"
+              },
+              {
+                "cmd": "bun test tests/harness-dock",
+                "result": "79 pass / 0 fail, 22 files, 130.0s"
+              },
+              {
+                "cmd": "bun test tests/model-cost",
+                "result": "266 pass / 0 fail, 3.1s"
+              },
+              {
+                "cmd": "bun test tests/framework",
+                "result": "386 pass / 0 fail, 39.1s"
+              },
+              {
+                "cmd": "bun test tests/connect-bot",
+                "result": "144 pass / 0 fail, 76.9s"
+              },
+              {
+                "cmd": "bun test tests/codebase-tools",
+                "result": "24 pass / 0 fail, 42.7s"
+              },
+              {
+                "cmd": "bun test tests/harness-dock/combined-host-artifact.test.ts tests/harness-dock/model-cost-persistence.test.ts",
+                "result": "5 + 4 pass / 0 fail"
+              },
+              {
+                "cmd": "fault injection: request-accounting SessionRecord + total: 21",
+                "result": "4 fail with the schema reason; restored → 4 pass"
+              }
+            ],
+            "failures_fixed_in_this_ticket": [
+              "两项 baseline anchor 漂移：verifyArtifactByteIdentity 改为比对记录 revision 自身的 blob 字节（git cat-file blob <commit>:<path>），anchor 用例改为「checkout 仍携带该 revision + 其自身 manifest + tag 与 commit 同指」；未伪造哈希、未提高版本",
+              "一项 balance 存储根遍历 ENOENT：遍历容忍原子发布中被 rename 走的临时文档"
+            ],
+            "unverified_or_limits": [
+              "H1/H2（真实 provider、TUI 视觉）仍归原 Coverage 票；本票不新增人工项",
+              "归档名冲突分支（wx 拒绝）在随机名下属防御性代码，未能无副作用强制（bun:test 的 mock.module 在该 runner 里进程级，会污染其他 suite 的随机名，导致 tests/model-cost 挂起，已删除该用例）；其守护语义由 19 的 S2 用例与本票真实宿主用例覆盖",
+              "estimate ratio 同实例内的每分钟节流仍属 14 的 S2 用例；本票只断言 baseline 即刻落盘与重启后新实例首个合格配对立即写出 ratio 6"
+            ],
+            "notes_for_handoff": [
+              "25（acceptance cutover）可用 tests/harness-dock/combined-host-harness.ts 的 ensureCombinedHostHarness()／readCombinedHostRecord()／combinedHostLayout() 作为最终 exact artifact：它就是 01＋13 两个 patch 在**同一安装**上的一条链，勿把两份独立 artifact 报告当作同一认证",
+              "07 evidence 第 89/99 行「真实 RPC 不派发 round_end」的旧限度已被 08 取代（本票在真实 RPC 会话里等到两次 prompt 各自落盘）；未修改 07 材料，只在 24 材料里标注其过时",
+              "11 的 retry 报告「Cost: JPY」与仓库不符：仓库无 JPY（grep 0 命中），数据为 CNY、显示为 ¥/$，DeepSeek 记录写 costCny；20 的标签核对不受影响",
+              "旧装配/传输/blanket 门禁清理：本会话 grep 全部 0 命中（PushTransport/platformTransport/blanket），无需再清"
+            ]
+          },
+          "status": "success",
+          "type": "result"
+        }
+      ]
+    },
+    "outputMeta": {
+      "lineCount": 124,
+      "charCount": 6336
+    }
+  },
+  "agent": "tdd",
+  "agent_id": "24-architecture-storage-verificationmd",
+  "session_id": "01a13484-51d6-7207-bfdc-27399b895ad7",
+  "session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-12T19-42-26-146Z_01a131a3-4562-728e-8c06-9608e1e88feb\\24-architecture-storage-verificationmd.jsonl",
+  "execution_cwd": "E:\\Developer\\myhub\\my-agent-toolkit",
+  "retro_document": "E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\model-cost-migration\\retro\\24-architecture-storage-verification.md\\2dbf4cd6-e38c-47db-8529-3749e9261792.md",
+  "retro_finished_at": "2026-10-13T09:53:33.062Z"
+}

@@ -161,11 +161,16 @@ export interface OmpDouble {
 	 */
 	startRun(ctx: OmpCommandContext): void;
 	/**
-	 * Delivers the native run-end event, as the harness does when a run settles. Whether that
-	 * settle closes the round is the adapter's synthesis, not this double's: it hands over the
-	 * native event and the context, and the edge (if any) follows from them.
+	 * Delivers the native run-end event, as the harness does when a run settles, and reaches the
+	 * host's next task.
+	 *
+	 * Whether that settle closes the round is the framework's synthesis, not this double's, and it
+	 * is not decided inside the native callback: a settle that scheduled nothing is an end candidate
+	 * the framework confirms on the host's next task. Awaiting this is therefore what a test does to
+	 * observe the edge a settle produced — the double hands over the native event and the context,
+	 * then arrives at the task the framework arranged.
 	 */
-	settleRun(ctx: OmpCommandContext, options?: { readonly willContinue?: boolean }): void;
+	settleRun(ctx: OmpCommandContext, options?: { readonly willContinue?: boolean }): Promise<void>;
 	/**
 	 * Resolves with the message of the next UI notification, so a test can await the effect
 	 * it is about to observe instead of guessing how long an unawaited handler takes. Ask
@@ -196,14 +201,14 @@ export function ompDouble(options: OmpDoubleOptions = {}): OmpDouble {
 	// itself: a test hands the native event and a context to the delivery methods below, exactly
 	// as the harness would, and the framework's synthesis decides whether a semantic event (or no
 	// event at all) follows.
-	const roundHandlers: Record<OmpRoundEventType, Array<(event: unknown, ctx: OmpSessionContext) => void>> = {
+	const roundHandlers: Record<string, Array<(event: unknown, ctx: OmpSessionContext) => void>> = {
 		agent_start: [],
 		agent_end: [],
 	};
 	// A closed vocabulary like the round one: one handler list per native session event the loader
 	// can deliver, so a test drives the whole session axis through the same surface the adapter
 	// subscribed it on.
-	const sessionHandlers: Record<OmpSessionEventType, SessionHandler[]> = {
+	const sessionHandlers: Record<string, SessionHandler[]> = {
 		session_start: [],
 		session_switch: [],
 		session_branch: [],
@@ -225,7 +230,7 @@ export function ompDouble(options: OmpDoubleOptions = {}): OmpDouble {
 		// round axis for the semantic events; this suite's commands are driven directly, so what the
 		// subscriptions have to do is exist — and the lifecycle ones are recorded for the tests that
 		// deliver them.
-		on(event: OmpSessionEventType | OmpRoundEventType | "before_agent_start", handler: never): void {
+		on(event: string, handler: never): void {
 			if (event === "agent_start" || event === "agent_end") {
 				roundHandlers[event].push(handler as (event: unknown, ctx: OmpSessionContext) => void);
 				return;
@@ -353,10 +358,16 @@ export function ompDouble(options: OmpDoubleOptions = {}): OmpDouble {
 				handler({ type: "session_shutdown" }, ctx as unknown as OmpSessionContext);
 			}
 		},
-		settleRun(ctx, options) {
+		async settleRun(ctx, options) {
 			for (const handler of roundHandlers.agent_end) {
 				handler({ type: "agent_end", willContinue: options?.willContinue }, ctx as unknown as OmpSessionContext);
 			}
+			// The host's next task: the moment the framework's own re-check of an end candidate runs.
+			// A macrotask is the real thing here — the re-check is arranged on the harness's own task
+			// queue — so this is the one place the suite waits on the platform's clock.
+			const { promise, resolve } = Promise.withResolvers<void>();
+			setTimeout(resolve, 0);
+			await promise;
 		},
 		nextNotification() {
 			const { promise, resolve } = Promise.withResolvers<string>();

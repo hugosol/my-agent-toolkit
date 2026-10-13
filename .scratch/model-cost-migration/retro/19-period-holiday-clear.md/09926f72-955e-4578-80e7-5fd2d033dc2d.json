@@ -1,0 +1,178 @@
+{
+  "feature": "model-cost-migration",
+  "ticket": "19-period-holiday-clear.md",
+  "run_id": "09926f72-955e-4578-80e7-5fd2d033dc2d",
+  "parent_session_id": "01a131a3-4562-728e-8c06-9608e1e88feb",
+  "parent_session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-12T19-42-26-146Z_01a131a3-4562-728e-8c06-9608e1e88feb.jsonl",
+  "workspace": "E:\\Developer\\myhub\\my-agent-toolkit",
+  "tool_call_id": "js-task-6af00f27-f366-4828-b33e-029383434e68",
+  "started_at": "2026-10-13T06:41:36.492Z",
+  "tdd_status": "completed",
+  "retro_status": "completed",
+  "tdd_finished_at": "2026-10-13T07:13:15.412Z",
+  "tdd_result": {
+    "index": 0,
+    "id": "19-period-holiday-clearmd",
+    "agent": "tdd",
+    "agentSource": "user",
+    "task": "Complete assignment thoroughly:\n\nTicket filename: 19-period-holiday-clear.md\nTicket path: .scratch/model-cost-migration/implementation/19-period-holiday-clear.md\n\nFull ticket content:\n# 19: holiday 与 clear 的完整周期切换\n\n**What to build:** 用户在可靠允许的 DeepSeek 入口执行 holiday/clear，完整归档已保存消费后切新周期，阶段失败反馈真实且不迟到执行。\n\n**Delivers:** P30, P31, P32, P33, P34, P35, P36\n\n**Blocked by:** 14: Codex 成对采样估计与独立保存；17: 静态 detail 与立即切换入口偏好\n\n**Status:** ready-for-agent\n\n## Acceptance criteria\n\n- [ ] 仅当前 DeepSeek 入口可靠 idle 且保存已收口允许；busy/pending-save warning、unknown error 拒绝，不排队/延期，不要求其他 CLI/子全空闲，不清真实活动或 Owner。\n- [ ] 首次 holiday 新周期直接 true，clear 新周期 false；已开启 holiday info 幂等不切周期不查余额，无 off。\n- [ ] 允许后、文件锁前只尝试一次 5000ms 余额，可靠同值作旧 end_bal 和新 start_bal；失败/超时省略两处仍 reset，不用旧缓存/零/重试。\n- [ ] 权限内重读最新完整有效活动文档，先生成唯一拒覆盖归档含 end，再原子发布新活动，跨 provider 全文件且零消费也归档；只归档已保存数据。\n- [ ] 归档失败不 reset；归档已生成但活动发布失败保留归档并准确报告阶段，只在实际新活动提交后成功；宿主命令等待真实完成，同步/异步错误单报，不补做/事务日志。\n- [ ] 新 periodId 拒绝旧周期/在途提交，不收集其他进程内存/强制保存/终轮，不复活旧消费；不清旧归档、独立 estimate 或 detail。\n- [ ] 本票写 P30–P36 全部业务 tests，经公共命令/S2、mock 单次查询捕获和真实文件独立读回验证顺序/归档/幂等/失败/保留；完整跨文档 P52 验证由 24 负责。\n- [ ] 准备 P36 H2 边界余额脱敏读数或跳过原因与归档检查步骤；人工结果未确认不记真实余额贯通通过。\n- [ ] 通过批准的生产公共 seam 观察行为，预期来自合同/规格、独立字面值或手算，不以被测实现重算；永久网络 tests 使用 mock。\n- [ ] 使用隔离安装/配置/工作/Session/数据根，不操作正式 OMP；承接异步失败并保留够用脱敏证据，完成本票自动检查及材料准备，不因计划人工验收暂停可执行工作。\n\n## Verification responsibility\n\n本票负责所列 Delivers 的自动 coverage 与适用宿主贯通/证据准备；P58/P52 按本票具名责任执行。合同采用 Rapid iteration：H1/H2 及允许的条件性 H3 按原 Coverage 交用户确认，未确认不记通过；不改变承诺或免除实现/永久 tests。\n\n[You have received this identical output 3 times. Re-reading '.scratch/model-cost-migration/implementation/19-period-holiday-clear.md' will not change it — use a narrower selector (path:A-B), or proceed with the edit.]",
+    "assignment": "Ticket filename: 19-period-holiday-clear.md\nTicket path: .scratch/model-cost-migration/implementation/19-period-holiday-clear.md\n\nFull ticket content:\n# 19: holiday 与 clear 的完整周期切换\n\n**What to build:** 用户在可靠允许的 DeepSeek 入口执行 holiday/clear，完整归档已保存消费后切新周期，阶段失败反馈真实且不迟到执行。\n\n**Delivers:** P30, P31, P32, P33, P34, P35, P36\n\n**Blocked by:** 14: Codex 成对采样估计与独立保存；17: 静态 detail 与立即切换入口偏好\n\n**Status:** ready-for-agent\n\n## Acceptance criteria\n\n- [ ] 仅当前 DeepSeek 入口可靠 idle 且保存已收口允许；busy/pending-save warning、unknown error 拒绝，不排队/延期，不要求其他 CLI/子全空闲，不清真实活动或 Owner。\n- [ ] 首次 holiday 新周期直接 true，clear 新周期 false；已开启 holiday info 幂等不切周期不查余额，无 off。\n- [ ] 允许后、文件锁前只尝试一次 5000ms 余额，可靠同值作旧 end_bal 和新 start_bal；失败/超时省略两处仍 reset，不用旧缓存/零/重试。\n- [ ] 权限内重读最新完整有效活动文档，先生成唯一拒覆盖归档含 end，再原子发布新活动，跨 provider 全文件且零消费也归档；只归档已保存数据。\n- [ ] 归档失败不 reset；归档已生成但活动发布失败保留归档并准确报告阶段，只在实际新活动提交后成功；宿主命令等待真实完成，同步/异步错误单报，不补做/事务日志。\n- [ ] 新 periodId 拒绝旧周期/在途提交，不收集其他进程内存/强制保存/终轮，不复活旧消费；不清旧归档、独立 estimate 或 detail。\n- [ ] 本票写 P30–P36 全部业务 tests，经公共命令/S2、mock 单次查询捕获和真实文件独立读回验证顺序/归档/幂等/失败/保留；完整跨文档 P52 验证由 24 负责。\n- [ ] 准备 P36 H2 边界余额脱敏读数或跳过原因与归档检查步骤；人工结果未确认不记真实余额贯通通过。\n- [ ] 通过批准的生产公共 seam 观察行为，预期来自合同/规格、独立字面值或手算，不以被测实现重算；永久网络 tests 使用 mock。\n- [ ] 使用隔离安装/配置/工作/Session/数据根，不操作正式 OMP；承接异步失败并保留够用脱敏证据，完成本票自动检查及材料准备，不因计划人工验收暂停可执行工作。\n\n## Verification responsibility\n\n本票负责所列 Delivers 的自动 coverage 与适用宿主贯通/证据准备；P58/P52 按本票具名责任执行。合同采用 Rapid iteration：H1/H2 及允许的条件性 H3 按原 Coverage 交用户确认，未确认不记通过；不改变承诺或免除实现/永久 tests。\n\n[You have received this identical output 3 times. Re-reading '.scratch/model-cost-migration/implementation/19-period-holiday-clear.md' will not change it — use a narrower selector (path:A-B), or proceed with the edit.]",
+    "description": "Implement holiday and clear period switching",
+    "lastIntent": "Reporting ticket 19 completion",
+    "exitCode": 0,
+    "output": "{\n  \"status\": \"complete\",\n  \"delivered\": {\n    \"behavior\": \"/budget holiday and /budget clear are implemented end to end: entry conditions (own DeepSeek provider, three-valued idle, own save settled, holiday idempotence), one lock-outside 5000ms boundary balance read used for both the closed period's end_bal and the new period's start_bal, archive-then-publish reset through one coordinated scope with per-stage reporting, and preservation of earlier archives / the independent Codex estimate / the entry's detail.\",\n    \"promises\": \"P30, P31, P32, P33, P34, P35, P36\"\n  },\n  \"source_files\": [\n    \"extensions/model-cost/definition.ts (declares holiday + clear in the same action table as detail)\",\n    \"extensions/model-cost/shared-logic/period-switch.ts (new: gates, wording, boundary read, stage reporting)\",\n    \"extensions/model-cost/shared-logic/consumption-archive.ts (new: archives/<uuid>.json, exclusive create, Activity+end+end_bal)\",\n    \"extensions/model-cost/shared-logic/consumption-store.ts (new reset(): read -> archive -> publish new period in one coordination scope; PeriodReset outcomes)\",\n    \"extensions/model-cost/shared-logic/provider-balance.ts (new boundaryReading(); a query now answers the reading its own attempt obtained)\",\n    \"extensions/model-cost/shared-logic/request-accounting.ts (new savePending() and periodSwitched())\",\n    \"extensions/model-cost/shared-logic/runtime.ts (wires the switch into implementation.commands.budget)\",\n    \"framework/core/protocol.ts (CommandInvocation/ActionDelivery gain provider: string | undefined)\",\n    \"framework/adapters/omp.ts (maps ctx.model?.provider into the invocation)\",\n    \"tests/framework/support/harness-port-double.ts (models provider; CommandRun.completion)\",\n    \"extensions/model-cost/GLOSSARY.md, GLOSSARY-MAP.md, framework/docs/framework-capabilities.md, framework/docs/harness-support.md\"\n  ],\n  \"criterion_evidence\": [\n    {\n      \"criterion\": \"DeepSeek-only, reliably idle, own save settled; busy/pending-save warning, unknown error, no queueing, no State/Owner effect\",\n      \"evidence\": \"tests/model-cost/period-switch.test.ts: provider gate (plan-provider + undefined), idle busy (warning) and unreported (error), pending-save gate via a real in-flight Round save (updateFile holds the document; the same save lands as saveVersion 4 after release), persisted === [] in every case\"\n    },\n    {\n      \"criterion\": \"First holiday opens holiday=true, clear opens false, repeated holiday is info/idempotent, no off\",\n      \"evidence\": \"same file: exact toEqual of the new document ({new periodId, start == archive end, start_bal, holiday:true|false, harnesses:{}}), one info notice only (no clear(false)-then-set), holiday-on baseline -> info with unchanged periodId, no archive and no extra request; 'holiday off' -> one error + help with the file byte-identical\"\n    },\n    {\n      \"criterion\": \"One 5000ms boundary read outside the lock; same value for old end_bal and new start_bal; failure/timeout omits both, no cache/zero/retry\",\n      \"evidence\": \"same file: prefetch 12.50 vs boundary 7.75 -> end_bal = start_bal = 7.75; captured request URL /user/balance with Bearer probe-key, timeoutMs 5000, proxy false; ordering case observes the request while the document is still held (no archive yet); failing attempt -> both fields absent, exactly 2 requests, switch still happens\"\n    },\n    {\n      \"criterion\": \"Re-read the latest valid activity document in-scope, archive first (unique, deny-overwrite, with end), then publish; whole file across providers; zero consumption archived; only saved data\",\n      \"evidence\": \"same file: archive equals the pre-run document byte-for-byte plus end/end_bal (deepseek CNY + plan-provider USD records); empty-period and no-document-at-all cases; two switches -> two archives with the first unchanged; the closed-period case shows an accounted-but-unsaved Turn is neither archived nor force-saved\"\n    },\n    {\n      \"criterion\": \"Archive failure does not reset; archive written + publish failed keeps the archive and reports the stage; success only after the commit; host waits; one report; no retry/journal\",\n      \"evidence\": \"same file: archives-as-a-file -> one error '归档未生成', file unchanged; platform-refused publication (win32 read-only target / POSIX unwritable dir) -> one error naming both stages, archive kept, file unchanged; unusable baseline (schemaVersion 2) -> one error, no boundary request at all; root moved away -> one error '消费活动未提交'; nothing announced while the document is held, success only after run.completion. tests/harness-dock/period-switch.test.ts shows the archive and new period already on disk the instant the real host's prompt returns\"\n    },\n    {\n      \"criterion\": \"New periodId; no other process memory/forced save/final round; closed consumption not revived; old archives/estimate/detail untouched\",\n      \"evidence\": \"period/version refusal stays the existing store rule (consumption-store / storage-processes / session-recovery, unchanged); same file: hand-placed earlier archive and codex-usage-estimate.json byte-identical across a switch, detail preference still 'detail', and after a switch view.own is undefined, the round open across the switch publishes nothing, and the next round saves the session at saveVersion 1 with only the new request's 10/10 tokens and hand-computed ¥0.0001 (red first, then green — this gap was real and is fixed)\"\n    },\n    {\n      \"criterion\": \"All P30-P36 business tests via public command/S2, mock single-query capture, real file read-back\",\n      \"evidence\": \"20 cases in tests/model-cost/period-switch.test.ts + 1 real-host case in tests/harness-dock/period-switch.test.ts; read-back always via readFileSync/readdirSync; P52 cross-document verification left to 24\"\n    },\n    {\n      \"criterion\": \"P36 H2 material prepared (sanitized reading or skip reason, boundary reading + archive check steps); not recorded as passed\",\n      \"evidence\": \".scratch/model-cost-migration/assets/19-period-holiday-clear-evidence-2026-10-13.md section 5: skip reason for this session, isolation steps, exact fields to compare (archive end_bal == new start_bal), masked recording format\"\n    },\n    {\n      \"criterion\": \"Approved production seams; expectations from spec/hand-computed literals; mocks for permanent network tests\",\n      \"evidence\": \"only the real registered /budget command through the port double + createModelCostRuntime + injected httpRequest + real files (S1/S2/S3/S4); S5 via the real loader/RPC and a loopback capture endpoint; all expectations are hand-written literals (12.50/7.75/schemaVersion 1/harnesses {}/0.0001/0.02...)\"\n    },\n    {\n      \"criterion\": \"Isolated install/config/work/Session/data roots; production OMP untouched\",\n      \"evidence\": \"S2 cases each mkdtempSync their own storage root; the dock case uses .cache/omp-baseline/18.5.0 plus createRunRoot's own agent state/session dir/work/capture/user-home and its own fixture credentials; no production path, config, restart or command was touched\"\n    }\n  ],\n  \"verification_run\": [\n    {\n      \"command\": \"bun test tests/model-cost tests/framework tests/harness-dock/period-switch.test.ts tests/harness-dock/detail-tree.test.ts\",\n      \"result\": \"608 pass / 0 fail (52 files, 3036 expects, 51.1s) — final source and final tests\"\n    },\n    {\n      \"command\": \"bun run typecheck (tsc --noEmit)\",\n      \"result\": \"no output, exit 0 (after the last source change)\"\n    },\n    {\n      \"command\": \"bun test tests/model-cost\",\n      \"result\": \"221 pass / 0 fail (18 files) — no regression across tickets 01-17\"\n    },\n    {\n      \"command\": \"bun test tests/model-cost/period-switch.test.ts\",\n      \"result\": \"20 pass / 0 fail (119 expects, 0.27s)\"\n    },\n    {\n      \"command\": \"bun test tests/harness-dock/period-switch.test.ts\",\n      \"result\": \"1 pass / 0 fail (26 expects, ~1.9s); run standalone 6 times, always 1 pass; 7-file dock batch with it: 23 pass / 0 fail\"\n    },\n    {\n      \"command\": \"bun test tests/harness-dock/{period-switch,detail-tree,model-cost-balance,model-cost-store,model-cost-accounting,model-cost-modes,model-cost-codex-quota}.test.ts\",\n      \"result\": \"23 pass / 0 fail on the final source; two earlier runs of the same batch showed model-cost-balance's P53 sentinel case failing (that file alone: once 5/1, then 6/0 and 6/0)\"\n    },\n    {\n      \"command\": \"7 targeted fault injections (savePending ignored, idle branches disabled, boundary read returning the cached reading, archive failure ignored, premature success notice, unusable/failed stages faked, plus the natural red first for the closed-period case)\",\n      \"result\": \"each injection made the corresponding case(s) fail; all injections reverted and confirmed with grep + tsc\"\n    }\n  ],\n  \"unverified\": [\n    \"P36 H2: no real DeepSeek credential was available and no authorization to hit a real provider — the boundary reading's real-account effect is NOT claimed; only the steps/format in the evidence note's section 5 are prepared.\",\n    \"P52 cross-document schema/restart verification belongs to ticket 24.\",\n    \"H1 does not apply to P30-P36 (no visual judgement is assigned to this ticket); visual/TUI stays with ticket 20's P67.\",\n    \"Observed unrelated failures I do not claim: tests/connect-bot/panel-registration-lifecycle.test.ts (panel 30s window measured ~15s) and tests/connect-bot/budget-regression.test.ts (frozen protocol frames +2) fail identically when run alone; tests/harness-dock/model-cost-balance.test.ts's P53 sentinel case is environment-flaky (passes on repeat) and does not touch the switch path.\"\n  ],\n  \"notes_for_main_agent\": [\n    \"Framework public surface changed (S1): CommandInvocation and ActionDelivery now carry provider: string | undefined, and the OMP adapter maps ctx.model?.provider into it — worth a cross-consumer look since it is a required field on the command invocation types.\",\n    \"The port double in tests/framework/support/harness-port-double.ts gained a provider option and CommandRun.completion (additive; peers' framework tests unaffected).\",\n    \"Ticket file 19-period-holiday-clear.md was left untouched (no status edits made).\",\n    \"Evidence/materials: .scratch/model-cost-migration/assets/19-period-holiday-clear-evidence-2026-10-13.md. GLOSSARY-MAP.md line 9 was edited; peer 18 confirmed it did not touch that file.\"\n  ]\n}",
+    "stderr": "",
+    "truncated": false,
+    "durationMs": 1898904,
+    "tokens": 439839,
+    "requests": 198,
+    "contextTokens": 391493,
+    "contextWindow": 1000000,
+    "modelOverride": [
+      "deepseek/deepseek-flash:high"
+    ],
+    "resolvedModel": "deepseek/deepseek-flash:high",
+    "resolvedModelIdentity": "deepseek/deepseek-flash",
+    "resolvedThinkingLevel": "high",
+    "aborted": false,
+    "usage": {
+      "input": 231084,
+      "output": 208755,
+      "cacheRead": 48051200,
+      "cacheWrite": 0,
+      "totalTokens": 48491039,
+      "reasoningTokens": 116687,
+      "cost": {
+        "input": 0.06932519999999996,
+        "output": 0.25050600000000006,
+        "cacheRead": 0.28830719999999993,
+        "cacheWrite": 0,
+        "total": 0.6081383999999996
+      }
+    },
+    "outputPath": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-12T19-42-26-146Z_01a131a3-4562-728e-8c06-9608e1e88feb\\19-period-holiday-clearmd.md",
+    "extractedToolData": {
+      "yield": [
+        {
+          "data": {
+            "status": "complete",
+            "delivered": {
+              "behavior": "/budget holiday and /budget clear are implemented end to end: entry conditions (own DeepSeek provider, three-valued idle, own save settled, holiday idempotence), one lock-outside 5000ms boundary balance read used for both the closed period's end_bal and the new period's start_bal, archive-then-publish reset through one coordinated scope with per-stage reporting, and preservation of earlier archives / the independent Codex estimate / the entry's detail.",
+              "promises": "P30, P31, P32, P33, P34, P35, P36"
+            },
+            "source_files": [
+              "extensions/model-cost/definition.ts (declares holiday + clear in the same action table as detail)",
+              "extensions/model-cost/shared-logic/period-switch.ts (new: gates, wording, boundary read, stage reporting)",
+              "extensions/model-cost/shared-logic/consumption-archive.ts (new: archives/<uuid>.json, exclusive create, Activity+end+end_bal)",
+              "extensions/model-cost/shared-logic/consumption-store.ts (new reset(): read -> archive -> publish new period in one coordination scope; PeriodReset outcomes)",
+              "extensions/model-cost/shared-logic/provider-balance.ts (new boundaryReading(); a query now answers the reading its own attempt obtained)",
+              "extensions/model-cost/shared-logic/request-accounting.ts (new savePending() and periodSwitched())",
+              "extensions/model-cost/shared-logic/runtime.ts (wires the switch into implementation.commands.budget)",
+              "framework/core/protocol.ts (CommandInvocation/ActionDelivery gain provider: string | undefined)",
+              "framework/adapters/omp.ts (maps ctx.model?.provider into the invocation)",
+              "tests/framework/support/harness-port-double.ts (models provider; CommandRun.completion)",
+              "extensions/model-cost/GLOSSARY.md, GLOSSARY-MAP.md, framework/docs/framework-capabilities.md, framework/docs/harness-support.md"
+            ],
+            "criterion_evidence": [
+              {
+                "criterion": "DeepSeek-only, reliably idle, own save settled; busy/pending-save warning, unknown error, no queueing, no State/Owner effect",
+                "evidence": "tests/model-cost/period-switch.test.ts: provider gate (plan-provider + undefined), idle busy (warning) and unreported (error), pending-save gate via a real in-flight Round save (updateFile holds the document; the same save lands as saveVersion 4 after release), persisted === [] in every case"
+              },
+              {
+                "criterion": "First holiday opens holiday=true, clear opens false, repeated holiday is info/idempotent, no off",
+                "evidence": "same file: exact toEqual of the new document ({new periodId, start == archive end, start_bal, holiday:true|false, harnesses:{}}), one info notice only (no clear(false)-then-set), holiday-on baseline -> info with unchanged periodId, no archive and no extra request; 'holiday off' -> one error + help with the file byte-identical"
+              },
+              {
+                "criterion": "One 5000ms boundary read outside the lock; same value for old end_bal and new start_bal; failure/timeout omits both, no cache/zero/retry",
+                "evidence": "same file: prefetch 12.50 vs boundary 7.75 -> end_bal = start_bal = 7.75; captured request URL /user/balance with Bearer probe-key, timeoutMs 5000, proxy false; ordering case observes the request while the document is still held (no archive yet); failing attempt -> both fields absent, exactly 2 requests, switch still happens"
+              },
+              {
+                "criterion": "Re-read the latest valid activity document in-scope, archive first (unique, deny-overwrite, with end), then publish; whole file across providers; zero consumption archived; only saved data",
+                "evidence": "same file: archive equals the pre-run document byte-for-byte plus end/end_bal (deepseek CNY + plan-provider USD records); empty-period and no-document-at-all cases; two switches -> two archives with the first unchanged; the closed-period case shows an accounted-but-unsaved Turn is neither archived nor force-saved"
+              },
+              {
+                "criterion": "Archive failure does not reset; archive written + publish failed keeps the archive and reports the stage; success only after the commit; host waits; one report; no retry/journal",
+                "evidence": "same file: archives-as-a-file -> one error '归档未生成', file unchanged; platform-refused publication (win32 read-only target / POSIX unwritable dir) -> one error naming both stages, archive kept, file unchanged; unusable baseline (schemaVersion 2) -> one error, no boundary request at all; root moved away -> one error '消费活动未提交'; nothing announced while the document is held, success only after run.completion. tests/harness-dock/period-switch.test.ts shows the archive and new period already on disk the instant the real host's prompt returns"
+              },
+              {
+                "criterion": "New periodId; no other process memory/forced save/final round; closed consumption not revived; old archives/estimate/detail untouched",
+                "evidence": "period/version refusal stays the existing store rule (consumption-store / storage-processes / session-recovery, unchanged); same file: hand-placed earlier archive and codex-usage-estimate.json byte-identical across a switch, detail preference still 'detail', and after a switch view.own is undefined, the round open across the switch publishes nothing, and the next round saves the session at saveVersion 1 with only the new request's 10/10 tokens and hand-computed ¥0.0001 (red first, then green — this gap was real and is fixed)"
+              },
+              {
+                "criterion": "All P30-P36 business tests via public command/S2, mock single-query capture, real file read-back",
+                "evidence": "20 cases in tests/model-cost/period-switch.test.ts + 1 real-host case in tests/harness-dock/period-switch.test.ts; read-back always via readFileSync/readdirSync; P52 cross-document verification left to 24"
+              },
+              {
+                "criterion": "P36 H2 material prepared (sanitized reading or skip reason, boundary reading + archive check steps); not recorded as passed",
+                "evidence": ".scratch/model-cost-migration/assets/19-period-holiday-clear-evidence-2026-10-13.md section 5: skip reason for this session, isolation steps, exact fields to compare (archive end_bal == new start_bal), masked recording format"
+              },
+              {
+                "criterion": "Approved production seams; expectations from spec/hand-computed literals; mocks for permanent network tests",
+                "evidence": "only the real registered /budget command through the port double + createModelCostRuntime + injected httpRequest + real files (S1/S2/S3/S4); S5 via the real loader/RPC and a loopback capture endpoint; all expectations are hand-written literals (12.50/7.75/schemaVersion 1/harnesses {}/0.0001/0.02...)"
+              },
+              {
+                "criterion": "Isolated install/config/work/Session/data roots; production OMP untouched",
+                "evidence": "S2 cases each mkdtempSync their own storage root; the dock case uses .cache/omp-baseline/18.5.0 plus createRunRoot's own agent state/session dir/work/capture/user-home and its own fixture credentials; no production path, config, restart or command was touched"
+              }
+            ],
+            "verification_run": [
+              {
+                "command": "bun test tests/model-cost tests/framework tests/harness-dock/period-switch.test.ts tests/harness-dock/detail-tree.test.ts",
+                "result": "608 pass / 0 fail (52 files, 3036 expects, 51.1s) — final source and final tests"
+              },
+              {
+                "command": "bun run typecheck (tsc --noEmit)",
+                "result": "no output, exit 0 (after the last source change)"
+              },
+              {
+                "command": "bun test tests/model-cost",
+                "result": "221 pass / 0 fail (18 files) — no regression across tickets 01-17"
+              },
+              {
+                "command": "bun test tests/model-cost/period-switch.test.ts",
+                "result": "20 pass / 0 fail (119 expects, 0.27s)"
+              },
+              {
+                "command": "bun test tests/harness-dock/period-switch.test.ts",
+                "result": "1 pass / 0 fail (26 expects, ~1.9s); run standalone 6 times, always 1 pass; 7-file dock batch with it: 23 pass / 0 fail"
+              },
+              {
+                "command": "bun test tests/harness-dock/{period-switch,detail-tree,model-cost-balance,model-cost-store,model-cost-accounting,model-cost-modes,model-cost-codex-quota}.test.ts",
+                "result": "23 pass / 0 fail on the final source; two earlier runs of the same batch showed model-cost-balance's P53 sentinel case failing (that file alone: once 5/1, then 6/0 and 6/0)"
+              },
+              {
+                "command": "7 targeted fault injections (savePending ignored, idle branches disabled, boundary read returning the cached reading, archive failure ignored, premature success notice, unusable/failed stages faked, plus the natural red first for the closed-period case)",
+                "result": "each injection made the corresponding case(s) fail; all injections reverted and confirmed with grep + tsc"
+              }
+            ],
+            "unverified": [
+              "P36 H2: no real DeepSeek credential was available and no authorization to hit a real provider — the boundary reading's real-account effect is NOT claimed; only the steps/format in the evidence note's section 5 are prepared.",
+              "P52 cross-document schema/restart verification belongs to ticket 24.",
+              "H1 does not apply to P30-P36 (no visual judgement is assigned to this ticket); visual/TUI stays with ticket 20's P67.",
+              "Observed unrelated failures I do not claim: tests/connect-bot/panel-registration-lifecycle.test.ts (panel 30s window measured ~15s) and tests/connect-bot/budget-regression.test.ts (frozen protocol frames +2) fail identically when run alone; tests/harness-dock/model-cost-balance.test.ts's P53 sentinel case is environment-flaky (passes on repeat) and does not touch the switch path."
+            ],
+            "notes_for_main_agent": [
+              "Framework public surface changed (S1): CommandInvocation and ActionDelivery now carry provider: string | undefined, and the OMP adapter maps ctx.model?.provider into it — worth a cross-consumer look since it is a required field on the command invocation types.",
+              "The port double in tests/framework/support/harness-port-double.ts gained a provider option and CommandRun.completion (additive; peers' framework tests unaffected).",
+              "Ticket file 19-period-holiday-clear.md was left untouched (no status edits made).",
+              "Evidence/materials: .scratch/model-cost-migration/assets/19-period-holiday-clear-evidence-2026-10-13.md. GLOSSARY-MAP.md line 9 was edited; peer 18 confirmed it did not touch that file."
+            ]
+          },
+          "status": "success",
+          "type": "result"
+        }
+      ]
+    },
+    "outputMeta": {
+      "lineCount": 104,
+      "charCount": 10364
+    }
+  },
+  "agent": "tdd",
+  "agent_id": "19-period-holiday-clearmd",
+  "session_id": "01a133fe-c318-77d5-b3cb-4c75b511ddac",
+  "session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-12T19-42-26-146Z_01a131a3-4562-728e-8c06-9608e1e88feb\\19-period-holiday-clearmd.jsonl",
+  "execution_cwd": "E:\\Developer\\myhub\\my-agent-toolkit",
+  "retro_document": "E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\model-cost-migration\\retro\\19-period-holiday-clear.md\\09926f72-955e-4578-80e7-5fd2d033dc2d.md",
+  "retro_finished_at": "2026-10-13T07:14:29.228Z"
+}

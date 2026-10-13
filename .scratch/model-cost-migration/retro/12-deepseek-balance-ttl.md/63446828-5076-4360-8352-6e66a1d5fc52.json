@@ -1,0 +1,141 @@
+{
+  "feature": "model-cost-migration",
+  "ticket": "12-deepseek-balance-ttl.md",
+  "run_id": "63446828-5076-4360-8352-6e66a1d5fc52",
+  "parent_session_id": "01a131a3-4562-728e-8c06-9608e1e88feb",
+  "parent_session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-12T19-42-26-146Z_01a131a3-4562-728e-8c06-9608e1e88feb.jsonl",
+  "workspace": "E:\\Developer\\myhub\\my-agent-toolkit",
+  "tool_call_id": "js-task-ba569115-c582-47ab-83c0-daef32fdf343",
+  "started_at": "2026-10-13T03:02:40.558Z",
+  "tdd_status": "completed",
+  "retro_status": "completed",
+  "tdd_finished_at": "2026-10-13T03:21:47.270Z",
+  "tdd_result": {
+    "index": 0,
+    "id": "12-deepseek-balance-ttlmd",
+    "agent": "tdd",
+    "agentSource": "user",
+    "task": "Complete assignment thoroughly:\n\nTicket filename: 12-deepseek-balance-ttl.md\nTicket path: .scratch/model-cost-migration/implementation/12-deepseek-balance-ttl.md\n\nFull ticket content:\n# 12: DeepSeek 余额成功 TTL 与在途合并\n\n**What to build:** DeepSeek usage 可后台刷新余额，成功读数决定 TTL，失败保留上次可靠值且不产生自动查询风暴。\n\n**Delivers:** P38\n\n**Blocked by:** 03: 兑现公共 HTTP 代理和正文超时；07: 请求锚价与可靠 usage 记账\n\n**Status:** ready-for-agent\n\n## Acceptance criteria\n\n- [ ] 按真实请求 provider 的 usage 触发检查成功 TTL，默认 30000ms，沿既有扩展 YAML 机制可配置；过期无在途才查，不因到点/活动开始/终轮/切换查。\n- [ ] 同实例触发合并在途，完成后不补发；成功更新读数与时间，失败保留旧值和旧时间，不冷却/重试，后续 usage 可重新尝试。\n- [ ] 余额通过公共 HTTP 直连，业务预算 5000ms；按当次宿主凭据/base URL 去末尾 /v1 后余额路径，缺地址用批准默认，不借其他凭据。\n- [ ] 通过生产业务 S2 结果/变化订阅及公共依赖受控时间验证成功 TTL 端点、在途合并与失败时间，永久网络 tests mock，捕获次数证明无轮询/补发。\n- [ ] 准备 P38 的 H2 脱敏余额结果或跳过原因及正常 usage 观察方法；真实最终效果仍待用户，不读取真实秘密进入对话。\n- [ ] 通过批准的生产公共 seam 观察行为，预期来自合同/规格、独立字面值或手算，不以被测实现重算；永久网络 tests 使用 mock。\n- [ ] 使用隔离安装/配置/工作/Session/数据根，不操作正式 OMP；承接异步失败并保留够用脱敏证据，完成本票自动检查及材料准备，不因计划人工验收暂停可执行工作。\n\n## Verification responsibility\n\n本票负责所列 Delivers 的自动 coverage 与适用宿主贯通/证据准备；P58/P52 按本票具名责任执行。合同采用 Rapid iteration：H1/H2 及允许的条件性 H3 按原 Coverage 交用户确认，未确认不记通过；不改变承诺或免除实现/永久 tests。\n\n[You have received this identical output 3 times. Re-reading '.scratch/model-cost-migration/implementation/12-deepseek-balance-ttl.md' will not change it — use a narrower selector (path:A-B), or proceed with the edit.]",
+    "assignment": "Ticket filename: 12-deepseek-balance-ttl.md\nTicket path: .scratch/model-cost-migration/implementation/12-deepseek-balance-ttl.md\n\nFull ticket content:\n# 12: DeepSeek 余额成功 TTL 与在途合并\n\n**What to build:** DeepSeek usage 可后台刷新余额，成功读数决定 TTL，失败保留上次可靠值且不产生自动查询风暴。\n\n**Delivers:** P38\n\n**Blocked by:** 03: 兑现公共 HTTP 代理和正文超时；07: 请求锚价与可靠 usage 记账\n\n**Status:** ready-for-agent\n\n## Acceptance criteria\n\n- [ ] 按真实请求 provider 的 usage 触发检查成功 TTL，默认 30000ms，沿既有扩展 YAML 机制可配置；过期无在途才查，不因到点/活动开始/终轮/切换查。\n- [ ] 同实例触发合并在途，完成后不补发；成功更新读数与时间，失败保留旧值和旧时间，不冷却/重试，后续 usage 可重新尝试。\n- [ ] 余额通过公共 HTTP 直连，业务预算 5000ms；按当次宿主凭据/base URL 去末尾 /v1 后余额路径，缺地址用批准默认，不借其他凭据。\n- [ ] 通过生产业务 S2 结果/变化订阅及公共依赖受控时间验证成功 TTL 端点、在途合并与失败时间，永久网络 tests mock，捕获次数证明无轮询/补发。\n- [ ] 准备 P38 的 H2 脱敏余额结果或跳过原因及正常 usage 观察方法；真实最终效果仍待用户，不读取真实秘密进入对话。\n- [ ] 通过批准的生产公共 seam 观察行为，预期来自合同/规格、独立字面值或手算，不以被测实现重算；永久网络 tests 使用 mock。\n- [ ] 使用隔离安装/配置/工作/Session/数据根，不操作正式 OMP；承接异步失败并保留够用脱敏证据，完成本票自动检查及材料准备，不因计划人工验收暂停可执行工作。\n\n## Verification responsibility\n\n本票负责所列 Delivers 的自动 coverage 与适用宿主贯通/证据准备；P58/P52 按本票具名责任执行。合同采用 Rapid iteration：H1/H2 及允许的条件性 H3 按原 Coverage 交用户确认，未确认不记通过；不改变承诺或免除实现/永久 tests。\n\n[You have received this identical output 3 times. Re-reading '.scratch/model-cost-migration/implementation/12-deepseek-balance-ttl.md' will not change it — use a narrower selector (path:A-B), or proceed with the edit.]",
+    "description": "Implement DeepSeek balance TTL with in-flight merge",
+    "lastIntent": "Recording the observed injection results",
+    "exitCode": 0,
+    "output": "{\n  \"ticket\": \"12-deepseek-balance-ttl (P38; seams S2, S5)\",\n  \"status\": \"delivered\",\n  \"behaviour\": \"DeepSeek usage refreshes the provider balance in the background under a success TTL with in-flight merging, exposed through the production S2 read-only seam. One process-wide reading (CNY total + accepted instant) lives in new shared-logic/provider-balance.ts; a settled request of the request's own provider checks the success TTL (default 30000ms, configurable via the existing extension YAML field balanceTtlMs), merges into any in-flight query with no re-issue on completion, and on failure keeps the last value and its instant with no cooldown or retry. The query uses the public HTTP module (GET <base minus trailing /v1>/user/balance, proxy:false, timeoutMs:5000, Bearer <credential>), the documented DeepSeek default when the host resolved no address, and never another provider's credential.\",\n  \"files\": [\n    \"extensions/model-cost/shared-logic/provider-balance.ts (new)\",\n    \"extensions/model-cost/shared-logic/runtime.ts\",\n    \"extensions/model-cost/shared-logic/request-accounting.ts (announceChanged)\",\n    \"extensions/model-cost/shared-logic/presentation/display.ts\",\n    \"extensions/model-cost/harnesses/omp.ts\",\n    \"extensions/model-cost/harnesses/omp/widget.ts\",\n    \"extensions/model-cost/definition.ts\",\n    \"extensions/model-cost/config.yaml\",\n    \"extensions/model-cost/GLOSSARY.md\",\n    \"framework/core/protocol.ts\",\n    \"framework/core/assembly.ts\",\n    \"framework/behaviors/binding.ts\",\n    \"framework/public.ts\",\n    \"framework/adapters/omp.ts\",\n    \"framework/docs/framework-capabilities.md\",\n    \"tests/model-cost/provider-balance.test.ts (new, 12)\",\n    \"tests/harness-dock/model-cost-balance.test.ts (new, 2)\",\n    \"tests/harness-dock/capture-server.ts (balance answer + balanceCalls)\",\n    \"tests/framework/turn.test.ts (+3 provider-access mapping)\",\n    \"tests/framework/support/harness-port-double.ts\",\n    \"tests/model-cost/{display,request-accounting,round-totals,session-ownership-tree,session-recovery,storage-processes,storage-root}.test.ts (config readers / declaration assertion)\",\n    \".scratch/model-cost-migration/assets/12-deepseek-balance-ttl-evidence-2026-10-13.md (new)\"\n  ],\n  \"commands\": [\n    \"bun run typecheck -> 0 errors\",\n    \"bun test tests/model-cost/provider-balance.test.ts -> 12 pass / 0 fail, 37 expect\",\n    \"bun test tests/framework/turn.test.ts -> 16 pass / 0 fail\",\n    \"bun test tests/model-cost tests/framework -> 496 pass / 0 fail (41 files)\",\n    \"bun test tests/harness-dock/model-cost-balance.test.ts -> 2 pass / 0 fail (isolated real OMP: GET /user/balance with Bearer dock-key, widget Balance: CNY110.00, second exchange inside TTL still 1 balance call; 503 -> Balance: unavailable (unreadable), no notify, model unaffected)\",\n    \"bun test (full) -> 708 pass / 4 fail; the 4 are pre-existing and unrelated (2 harness-dock/baseline.test.ts revision-drift failures from the local oh-my-pi checkout at 579da1d..., 2 connect-bot panel timeouts; same set as .cache/full-suite.log and the ticket-08 evidence)\",\n    \"fault injection (edit -> run -> revert -> green): removing the TTL check failed 2 cases; removing the in-flight guard failed 1; clearing the reading on failure failed 1; dropping the adapter keyless-sentinel mapping failed 1\"\n  ],\n  \"criteria\": {\n    \"usage-triggered success TTL, default 30000ms, YAML-configurable; expired+no-in-flight only; not at expiry/activity start/round end/switch\": \"S2 boundary 29999ms/30000ms, configured 1000ms, 10,000,000ms idle time with zero requests, non-provider provider -> 0, round_start/session_facts/round_end -> 0\",\n    \"in-flight merge, no re-issue, success updates reading+instant, failure keeps both, no cooldown, later usage retries\": \"S2 merge case (3 triggers on 1 request, still 1 after completion) + failure cases (rejection, 503, no-CNY body) keeping reading/obtainedAt verbatim then a successful immediate retry\",\n    \"public HTTP direct, 5000ms budget, host credential/base URL minus trailing /v1 + balance path, approved default, no borrowed credential\": \"S2 literal assertions on {method:GET, headers:{authorization:Bearer key-one}, timeoutMs:5000, proxy:false} and on https://host.example/user/balance, .../api/user/balance, https://api.deepseek.com/user/balance; resolve called only for deepseek; no credential -> no request + no-access\",\n    \"production S2 result/change subscription + public dependency with controlled time; permanent network tests mocked; capture counts prove no polling/re-issue\": \"all S2 cases via the real runtime + framework binding (port double), reading only runtime.presentation.balance(); HTTP call substituted with a recording same-shape call; injected clock; view.subscribe notified once per change\",\n    \"expectations from contract/spec/independent literals\": \"URL rule, 5000ms, 30000ms, Bearer <credential> are spec literals; the balance document shape comes from DeepSeek's public API docs, not from the implementation\",\n    \"H2 sanitized result/skip reason + normal usage observation method\": \"evidence doc section with 4 operator steps and the no-access skip reason\",\n    \"isolated install/config/work/session/data roots; formal OMP untouched; async failures + sanitized evidence\": \"dock uses the recorded 18.5.0 install with an mkdtemp run root (agent state/session/work/capture/user-home) and the dock-key fixture credential; S2 uses mkdtemp roots; no real secret read\"\n  },\n  \"verification\": [\n    {\n      \"claim\": \"OMP adapter maps ctx.modelRegistry into ProviderAccess\",\n      \"evidence\": \"tests/framework/turn.test.ts 3 cases (address/credential, keyless sentinel -> no access, no registry -> nothing) + dock smoke using the real adapter\"\n    },\n    {\n      \"claim\": \"P58 (affected consumers migrated, original protocols unchanged)\",\n      \"evidence\": \"additive public surface (presenter.balance(), providerAccess, balanceTtlMs) with callers migrated in-ticket: assembly, port double, 6 test config readers + storage-root declaration assertion, capture-server additive option; model-cost + framework + dock suites pass\"\n    },\n    {\n      \"claim\": \"P52 (persistent document unchanged, no ledger)\",\n      \"evidence\": \"the reading lives only in memory in provider-balance.ts; no consumption.json field or schema change\"\n    }\n  ],\n  \"unverified\": [\n    \"H2 real DeepSeek balance effect (needs the user's real credential; observation steps and skip reasons prepared, not passed)\",\n    \"the /user/balance response shape comes from DeepSeek's public API documentation, not a real-service run\",\n    \"low-balance colour warning (<10/<5 CNY) belongs to the display/visual work; this ticket delivers the reading and its text line only\",\n    \"real-host registry refresh/keyless-sentinel behavior verified only against the isolated 18.5.0 install and the dock\"\n  ],\n  \"blockers\": []\n}",
+    "stderr": "",
+    "truncated": false,
+    "durationMs": 1146693,
+    "tokens": 317503,
+    "requests": 221,
+    "contextTokens": 287228,
+    "contextWindow": 1000000,
+    "modelOverride": [
+      "deepseek/deepseek-flash:high"
+    ],
+    "resolvedModel": "deepseek/deepseek-flash:high",
+    "resolvedModelIdentity": "deepseek/deepseek-flash",
+    "resolvedThinkingLevel": "high",
+    "aborted": false,
+    "usage": {
+      "input": 200298,
+      "output": 117205,
+      "cacheRead": 40707200,
+      "cacheWrite": 0,
+      "totalTokens": 41024703,
+      "reasoningTokens": 50902,
+      "cost": {
+        "input": 0.060089400000000036,
+        "output": 0.14064600000000008,
+        "cacheRead": 0.24424320000000002,
+        "cacheWrite": 0,
+        "total": 0.44497859999999984
+      }
+    },
+    "outputPath": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-12T19-42-26-146Z_01a131a3-4562-728e-8c06-9608e1e88feb\\12-deepseek-balance-ttlmd.md",
+    "extractedToolData": {
+      "yield": [
+        {
+          "data": {
+            "ticket": "12-deepseek-balance-ttl (P38; seams S2, S5)",
+            "status": "delivered",
+            "behaviour": "DeepSeek usage refreshes the provider balance in the background under a success TTL with in-flight merging, exposed through the production S2 read-only seam. One process-wide reading (CNY total + accepted instant) lives in new shared-logic/provider-balance.ts; a settled request of the request's own provider checks the success TTL (default 30000ms, configurable via the existing extension YAML field balanceTtlMs), merges into any in-flight query with no re-issue on completion, and on failure keeps the last value and its instant with no cooldown or retry. The query uses the public HTTP module (GET <base minus trailing /v1>/user/balance, proxy:false, timeoutMs:5000, Bearer <credential>), the documented DeepSeek default when the host resolved no address, and never another provider's credential.",
+            "files": [
+              "extensions/model-cost/shared-logic/provider-balance.ts (new)",
+              "extensions/model-cost/shared-logic/runtime.ts",
+              "extensions/model-cost/shared-logic/request-accounting.ts (announceChanged)",
+              "extensions/model-cost/shared-logic/presentation/display.ts",
+              "extensions/model-cost/harnesses/omp.ts",
+              "extensions/model-cost/harnesses/omp/widget.ts",
+              "extensions/model-cost/definition.ts",
+              "extensions/model-cost/config.yaml",
+              "extensions/model-cost/GLOSSARY.md",
+              "framework/core/protocol.ts",
+              "framework/core/assembly.ts",
+              "framework/behaviors/binding.ts",
+              "framework/public.ts",
+              "framework/adapters/omp.ts",
+              "framework/docs/framework-capabilities.md",
+              "tests/model-cost/provider-balance.test.ts (new, 12)",
+              "tests/harness-dock/model-cost-balance.test.ts (new, 2)",
+              "tests/harness-dock/capture-server.ts (balance answer + balanceCalls)",
+              "tests/framework/turn.test.ts (+3 provider-access mapping)",
+              "tests/framework/support/harness-port-double.ts",
+              "tests/model-cost/{display,request-accounting,round-totals,session-ownership-tree,session-recovery,storage-processes,storage-root}.test.ts (config readers / declaration assertion)",
+              ".scratch/model-cost-migration/assets/12-deepseek-balance-ttl-evidence-2026-10-13.md (new)"
+            ],
+            "commands": [
+              "bun run typecheck -> 0 errors",
+              "bun test tests/model-cost/provider-balance.test.ts -> 12 pass / 0 fail, 37 expect",
+              "bun test tests/framework/turn.test.ts -> 16 pass / 0 fail",
+              "bun test tests/model-cost tests/framework -> 496 pass / 0 fail (41 files)",
+              "bun test tests/harness-dock/model-cost-balance.test.ts -> 2 pass / 0 fail (isolated real OMP: GET /user/balance with Bearer dock-key, widget Balance: CNY110.00, second exchange inside TTL still 1 balance call; 503 -> Balance: unavailable (unreadable), no notify, model unaffected)",
+              "bun test (full) -> 708 pass / 4 fail; the 4 are pre-existing and unrelated (2 harness-dock/baseline.test.ts revision-drift failures from the local oh-my-pi checkout at 579da1d..., 2 connect-bot panel timeouts; same set as .cache/full-suite.log and the ticket-08 evidence)",
+              "fault injection (edit -> run -> revert -> green): removing the TTL check failed 2 cases; removing the in-flight guard failed 1; clearing the reading on failure failed 1; dropping the adapter keyless-sentinel mapping failed 1"
+            ],
+            "criteria": {
+              "usage-triggered success TTL, default 30000ms, YAML-configurable; expired+no-in-flight only; not at expiry/activity start/round end/switch": "S2 boundary 29999ms/30000ms, configured 1000ms, 10,000,000ms idle time with zero requests, non-provider provider -> 0, round_start/session_facts/round_end -> 0",
+              "in-flight merge, no re-issue, success updates reading+instant, failure keeps both, no cooldown, later usage retries": "S2 merge case (3 triggers on 1 request, still 1 after completion) + failure cases (rejection, 503, no-CNY body) keeping reading/obtainedAt verbatim then a successful immediate retry",
+              "public HTTP direct, 5000ms budget, host credential/base URL minus trailing /v1 + balance path, approved default, no borrowed credential": "S2 literal assertions on {method:GET, headers:{authorization:Bearer key-one}, timeoutMs:5000, proxy:false} and on https://host.example/user/balance, .../api/user/balance, https://api.deepseek.com/user/balance; resolve called only for deepseek; no credential -> no request + no-access",
+              "production S2 result/change subscription + public dependency with controlled time; permanent network tests mocked; capture counts prove no polling/re-issue": "all S2 cases via the real runtime + framework binding (port double), reading only runtime.presentation.balance(); HTTP call substituted with a recording same-shape call; injected clock; view.subscribe notified once per change",
+              "expectations from contract/spec/independent literals": "URL rule, 5000ms, 30000ms, Bearer <credential> are spec literals; the balance document shape comes from DeepSeek's public API docs, not from the implementation",
+              "H2 sanitized result/skip reason + normal usage observation method": "evidence doc section with 4 operator steps and the no-access skip reason",
+              "isolated install/config/work/session/data roots; formal OMP untouched; async failures + sanitized evidence": "dock uses the recorded 18.5.0 install with an mkdtemp run root (agent state/session/work/capture/user-home) and the dock-key fixture credential; S2 uses mkdtemp roots; no real secret read"
+            },
+            "verification": [
+              {
+                "claim": "OMP adapter maps ctx.modelRegistry into ProviderAccess",
+                "evidence": "tests/framework/turn.test.ts 3 cases (address/credential, keyless sentinel -> no access, no registry -> nothing) + dock smoke using the real adapter"
+              },
+              {
+                "claim": "P58 (affected consumers migrated, original protocols unchanged)",
+                "evidence": "additive public surface (presenter.balance(), providerAccess, balanceTtlMs) with callers migrated in-ticket: assembly, port double, 6 test config readers + storage-root declaration assertion, capture-server additive option; model-cost + framework + dock suites pass"
+              },
+              {
+                "claim": "P52 (persistent document unchanged, no ledger)",
+                "evidence": "the reading lives only in memory in provider-balance.ts; no consumption.json field or schema change"
+              }
+            ],
+            "unverified": [
+              "H2 real DeepSeek balance effect (needs the user's real credential; observation steps and skip reasons prepared, not passed)",
+              "the /user/balance response shape comes from DeepSeek's public API documentation, not a real-service run",
+              "low-balance colour warning (<10/<5 CNY) belongs to the display/visual work; this ticket delivers the reading and its text line only",
+              "real-host registry refresh/keyless-sentinel behavior verified only against the isolated 18.5.0 install and the dock"
+            ],
+            "blockers": []
+          },
+          "status": "success"
+        }
+      ]
+    },
+    "outputMeta": {
+      "lineCount": 68,
+      "charCount": 6856
+    }
+  },
+  "agent": "tdd",
+  "agent_id": "12-deepseek-balance-ttlmd",
+  "session_id": "01a13336-52d2-7641-a321-9ff4574d9af8",
+  "session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-12T19-42-26-146Z_01a131a3-4562-728e-8c06-9608e1e88feb\\12-deepseek-balance-ttlmd.jsonl",
+  "execution_cwd": "E:\\Developer\\myhub\\my-agent-toolkit",
+  "retro_document": "E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\model-cost-migration\\retro\\12-deepseek-balance-ttl.md\\63446828-5076-4360-8352-6e66a1d5fc52.md",
+  "retro_finished_at": "2026-10-13T03:22:41.038Z"
+}

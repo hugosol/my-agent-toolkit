@@ -1,0 +1,120 @@
+{
+  "feature": "model-cost-migration",
+  "ticket": "11-modes-currency-metrics.md",
+  "run_id": "7a34107f-8b21-45ff-b1e1-dd8a9272c493",
+  "parent_session_id": "01a131a3-4562-728e-8c06-9608e1e88feb",
+  "parent_session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-12T19-42-26-146Z_01a131a3-4562-728e-8c06-9608e1e88feb.jsonl",
+  "workspace": "E:\\Developer\\myhub\\my-agent-toolkit",
+  "tool_call_id": "js-task-91e3e5ac-c118-4e28-a9bf-26490f29749a",
+  "started_at": "2026-10-13T02:42:11.682Z",
+  "tdd_status": "completed",
+  "retro_status": "completed",
+  "tdd_finished_at": "2026-10-13T03:02:10.561Z",
+  "tdd_result": {
+    "index": 0,
+    "id": "11-modes-currency-metricsmd-2",
+    "agent": "tdd",
+    "agentSource": "user",
+    "task": "Complete assignment thoroughly:\n\nTicket filename: 11-modes-currency-metrics.md\nTicket path: .scratch/model-cost-migration/implementation/11-modes-currency-metrics.md\n\nFull ticket content:\n# 11: 消费模式、双币种与只读指标\n\n**What to build:** 各模式展示批准 usage 与费用字段，人民币 Cost 和美元 Ref 不混加，未知与无口径不伪装成免费，预算不限制宿主。\n\n**Delivers:** P7, P8, P9, P10, P25\n\n**Blocked by:** 08: 工具续跑与轻量 Round 累计；09: 实际 Session 自身归属与父树汇总\n\n**Status:** ready-for-agent\n\n## Acceptance criteria\n\n- [ ] 混合 Session 树分别保留 CNY Cost、USD Ref 和 token；Codex Ref 不是订阅实付，不换算混币种，不因当前 token-only/hidden 抹掉其他已知贡献。\n- [ ] token-only 仅批准四类 token/命中率/Sum/context/实际 Effort/Session/正常 Round/detail 的适用指标，无自身金额/费用结构/官方峰谷余额/Go 额度/Codex 窗口估计。\n- [ ] hidden 不创建用量 widget，不改变模型执行权限；捕获实际宿主执行和 widget 结果，不仅测试分类返回值。\n- [ ] 固定显示预算按规格 DeepSeek/Go 450K、Codex 272K；只展示告警，不改变请求、输出、上下文窗口或压缩，不恢复数字/K/0 参数。\n- [ ] 费用结构参考占比用对应模型当前价格乘 token 后归一化，DeepSeek 谷价、Codex 对应 catalog 四项；缺价/全零不可用，不借其他模型或历史 Ref 反推，不重价金额。\n- [ ] 永久行为 tests 用自造数据和独立金额/比例；隔离出站捕获证明 token-only/hidden/预算不改变执行，S2 与最小生产前端展示可独立观察，不等待最终视觉票才提供模式行为。\n- [ ] 通过批准的生产公共 seam 观察行为，预期来自合同/规格、独立字面值或手算，不以被测实现重算；永久网络 tests 使用 mock。\n- [ ] 使用隔离安装/配置/工作/Session/数据根，不操作正式 OMP；承接异步失败并保留够用脱敏证据，完成本票自动检查及材料准备，不因计划人工验收暂停可执行工作。\n\n## Verification responsibility\n\n本票负责所列 Delivers 的自动 coverage 与适用宿主贯通/证据准备；P58/P52 按本票具名责任执行。合同采用 Rapid iteration：H1/H2 及允许的条件性 H3 按原 Coverage 交用户确认，未确认不记通过；不改变承诺或免除实现/永久 tests。\n\n[You have received this identical output 3 times. Re-reading '.scratch/model-cost-migration/implementation/11-modes-currency-metrics.md' will not change it — use a narrower selector (path:A-B), or proceed with the edit.]\n\nRetry required gap: production Codex referenceCostUsd and fee composition cannot currently obtain the host model catalog. Wire the approved price fact so these promises are observable on the actual OMP production path, not only an injected catalog test.",
+    "assignment": "Ticket filename: 11-modes-currency-metrics.md\nTicket path: .scratch/model-cost-migration/implementation/11-modes-currency-metrics.md\n\nFull ticket content:\n# 11: 消费模式、双币种与只读指标\n\n**What to build:** 各模式展示批准 usage 与费用字段，人民币 Cost 和美元 Ref 不混加，未知与无口径不伪装成免费，预算不限制宿主。\n\n**Delivers:** P7, P8, P9, P10, P25\n\n**Blocked by:** 08: 工具续跑与轻量 Round 累计；09: 实际 Session 自身归属与父树汇总\n\n**Status:** ready-for-agent\n\n## Acceptance criteria\n\n- [ ] 混合 Session 树分别保留 CNY Cost、USD Ref 和 token；Codex Ref 不是订阅实付，不换算混币种，不因当前 token-only/hidden 抹掉其他已知贡献。\n- [ ] token-only 仅批准四类 token/命中率/Sum/context/实际 Effort/Session/正常 Round/detail 的适用指标，无自身金额/费用结构/官方峰谷余额/Go 额度/Codex 窗口估计。\n- [ ] hidden 不创建用量 widget，不改变模型执行权限；捕获实际宿主执行和 widget 结果，不仅测试分类返回值。\n- [ ] 固定显示预算按规格 DeepSeek/Go 450K、Codex 272K；只展示告警，不改变请求、输出、上下文窗口或压缩，不恢复数字/K/0 参数。\n- [ ] 费用结构参考占比用对应模型当前价格乘 token 后归一化，DeepSeek 谷价、Codex 对应 catalog 四项；缺价/全零不可用，不借其他模型或历史 Ref 反推，不重价金额。\n- [ ] 永久行为 tests 用自造数据和独立金额/比例；隔离出站捕获证明 token-only/hidden/预算不改变执行，S2 与最小生产前端展示可独立观察，不等待最终视觉票才提供模式行为。\n- [ ] 通过批准的生产公共 seam 观察行为，预期来自合同/规格、独立字面值或手算，不以被测实现重算；永久网络 tests 使用 mock。\n- [ ] 使用隔离安装/配置/工作/Session/数据根，不操作正式 OMP；承接异步失败并保留够用脱敏证据，完成本票自动检查及材料准备，不因计划人工验收暂停可执行工作。\n\n## Verification responsibility\n\n本票负责所列 Delivers 的自动 coverage 与适用宿主贯通/证据准备；P58/P52 按本票具名责任执行。合同采用 Rapid iteration：H1/H2 及允许的条件性 H3 按原 Coverage 交用户确认，未确认不记通过；不改变承诺或免除实现/永久 tests。\n\n[You have received this identical output 3 times. Re-reading '.scratch/model-cost-migration/implementation/11-modes-currency-metrics.md' will not change it — use a narrower selector (path:A-B), or proceed with the edit.]\n\nRetry required gap: production Codex referenceCostUsd and fee composition cannot currently obtain the host model catalog. Wire the approved price fact so these promises are observable on the actual OMP production path, not only an injected catalog test.",
+    "description": "Wire host model catalog to production Codex pricing",
+    "lastIntent": "Documenting the harness model prices fact",
+    "exitCode": 0,
+    "output": "{\n  \"status\": \"production Codex price fact wired and verified on the real host; ticket materials left to update\",\n  \"gap_closed\": {\n    \"claim\": \"production Codex referenceCostUsd and the fee-structure ratio were unreachable (an injected-catalog unit test only); both are now produced by the real OMP path\",\n    \"how\": \"the OMP adapter maps the host's own model catalog (the live session context's model query, ctx.models) into the framework's public CatalogPriceSource fact; the framework hands it to the extension factory; the model-cost runtime composes it after its maintained data (data wins for pairs it names) and the request accounting accumulates the USD reference from the framework's request-start snapshot\"\n  },\n  \"changed\": {\n    \"framework/core/protocol.ts\": \"HarnessPort.modelPrices?: CatalogPriceSource (documented as a fact, never a native model/registry/context); CatalogPriceSource doc generalized to both owners\",\n    \"framework/core/assembly.ts\": \"ImplementationContext.modelPrices?: CatalogPriceSource\",\n    \"framework/behaviors/binding.ts\": \"binding hands the port's modelPrices to the factory (conditional spread)\",\n    \"framework/adapters/omp.ts\": \"OmpSessionContext.models (the used native reading only); harnessPriceOf maps the host cost (USD per million tokens, four buckets) and answers nothing for an unknown pair or an all-zero cost; harnessModelPrices answers from the newest delivery context; the port reports modelPrices and each delivery records its context\",\n    \"extensions/model-cost/shared-logic/runtime.ts\": \"input renamed catalog -> modelPrices; composedCatalog() = dataCatalog first, harness second\",\n    \"extensions/model-cost/shared-logic/request-price.ts\": \"new RequestPrice kind {kind:'reference'; price} decided from RequestPriceFacts.catalogPrice (the framework's request-start snapshot); allowance with no stated price stays no-amount-policy (silent, no missing-price notice)\",\n    \"extensions/model-cost/shared-logic/request-accounting.ts\": \"addUsage takes the anchor and adds costCny for monetary or referenceCostUsd for reference; turnStarted passes delivery.turn.price\",\n    \"extensions/model-cost/harnesses/omp.ts\": \"passes context.modelPrices into the runtime\",\n    \"tests/framework/turn.test.ts\": \"+3 cases at the OMP adapter seam (mapping through ctx.models, unknown/zero-priced pairs, no catalog)\",\n    \"tests/model-cost/display.test.ts\": \"bindDisplay routes modelPrices through the framework's factory context; +5 cases (reference accumulation + save, data-wins composition, no-price tokens-only with no notice, start-anchored amount proven by a catalog that answers once, one session's two channels + switch not erasing the other)\",\n    \"tests/harness-dock/capture-server.ts\": \"answers by request path (Responses path -> Codex SSE, chat path -> chat chunks); scripted usage now also carried on the Responses stream; protocol option removed\",\n    \"tests/harness-dock/model-cost-modes.test.ts\": \"run-level models.yml writer; codex model defined with an explicit four-amount price fixture; allowance case now asserts Ref: $0.0050, Sum 3,500, $CacheRead/In/CacheWrite/Out:20:20:20:40, 272.0K, no CNY, and the saved referenceCostUsd; new mixed case (deepseek request -> set_model -> codex request) asserting Cost: JPY0.0055 + Ref: $0.0050 together, 272.0K and a document holding both channels with the CNY amount unchanged\",\n    \"tests/codebase-tools/outbound-role.test.ts\": \"call site migrated to the path-decided capture server (removed protocol option)\",\n    \"framework/docs/framework-capabilities.md\": \"new bullet documenting HarnessPort.modelPrices / ImplementationContext.modelPrices and the omp mapping\"\n  },\n  \"criterion_evidence\": {\n    \"混合树双币种、Codex Ref 非实付/不换算/不抹掉\": \"S5 tests/harness-dock/model-cost-modes.test.ts: one session's two channels keep both currencies across a model switch (Cost: JPY0.0055 ... Ref: $0.0050 in one total line; saved record holds deepseek-flash costCny 0.00552 and codex referenceCostUsd 0.005, the former unchanged by the switch). S2 display.test.ts: same-session two-channel case reads view/display/document\",\n    \"token-only 仅批准指标，无自身金额/费用结构\": \"unchanged S2 P8 cases (hostile record amounts still hidden) + S5 token-only case still green\",\n    \"hidden 不创建 widget、不改变执行\": \"unchanged S5 hidden case still green (real request, no lines ever on the widget key)\",\n    \"固定显示预算 450K/272K，仅展示告警\": \"unchanged S2 budget cases + S5 monetary control-run body equality; S5 allowance now asserts 272.0K beside the real Ref\",\n    \"费用结构参考占比用对应模型当前价格、缺价/全零不可用、不反推\": \"S2 P25 cases (XTS data price wins over a harness price for the same pair; Codex four amounts incl. cache write) + S5 allowance shows the four-part USD ratio from the run's own fixture price; no-price case keeps tokens and yields no amount/ratio\",\n    \"通过批准的生产公共 seam 观察，期望手算\": \"S2: framework public binding (port double) + runtime.presentation; S5: real patched host via RPC/setWidget/capture endpoint. Amounts hand-computed from fixture numbers written in the test files (5000/1e6 = 0.005; 5520/1e6 = 0.00552; 10500/1e6 = 0.0105)\",\n    \"不凭最新模型重价/锚价\": \"S2 case with a catalog that answers exactly one query then nothing: the amount is still accounted, proving the start snapshot is what prices the request; S5 mixed case shows the earlier CNY amount untouched after the switch\"\n  },\n  \"commands_run\": {\n    \"bun test tests/model-cost\": \"110 pass / 0 fail (428 expect)\",\n    \"bun test tests/harness-dock/model-cost-modes.test.ts\": \"5 pass / 0 fail (49 expect; includes 3 real host runs)\",\n    \"bun test tests/framework/turn.test.ts\": \"13 pass / 0 fail\",\n    \"bun test tests/framework\": \"371 pass / 0 fail (run before the dock edits; framework sources unchanged since)\",\n    \"bun run typecheck\": \"clean (exit 0)\"\n  },\n  \"unresolved\": {\n    \"ticket evidence asset\": \".scratch/model-cost-migration/assets/11-modes-currency-metrics-evidence-2026-10-13.md still describes the old state (production Codex Ref unreachable; allowance case asserting no Ref, Sum 2). Not updated this round\",\n    \"ticket file/status\": \".scratch/model-cost-migration/implementation/11-modes-currency-metrics.md checkboxes/Status untouched (left to the main agent's ticket flow)\",\n    \"suites not re-run this round\": \"bun test (whole repo), tests/codebase-tools/outbound-role.test.ts and the other dock suites affected by the capture-server protocol change (typecheck is clean; the path-decided answers preserve each run's previous protocol)\",\n    \"human items\": \"unchanged and untouched: this ticket's P8/P9/P10 conditional H3 (no scenario needed this round; all S5 cases passed first run), the visual/TUI checks owned by later tickets, and H1/H2 held elsewhere\",\n    \"scope note\": \"no second catalog/price table, no new config system and no test controller was introduced; the DeepSeek maintained data is unchanged and still wins for the pairs it names\"\n  }\n}",
+    "stderr": "",
+    "truncated": false,
+    "durationMs": 1198862,
+    "tokens": 388403,
+    "requests": 217,
+    "contextTokens": 363214,
+    "contextWindow": 1000000,
+    "modelOverride": [
+      "deepseek/deepseek-flash:high"
+    ],
+    "resolvedModel": "deepseek/deepseek-flash:high",
+    "resolvedModelIdentity": "deepseek/deepseek-flash",
+    "resolvedThinkingLevel": "high",
+    "aborted": false,
+    "usage": {
+      "input": 220957,
+      "output": 167446,
+      "cacheRead": 46240640,
+      "cacheWrite": 0,
+      "totalTokens": 46629043,
+      "reasoningTokens": 93094,
+      "cost": {
+        "input": 0.0662871,
+        "output": 0.20093519999999998,
+        "cacheRead": 0.2774438399999999,
+        "cacheWrite": 0,
+        "total": 0.5446661399999999
+      }
+    },
+    "outputPath": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-12T19-42-26-146Z_01a131a3-4562-728e-8c06-9608e1e88feb\\11-modes-currency-metricsmd-2.md",
+    "extractedToolData": {
+      "yield": [
+        {
+          "data": {
+            "status": "production Codex price fact wired and verified on the real host; ticket materials left to update",
+            "gap_closed": {
+              "claim": "production Codex referenceCostUsd and the fee-structure ratio were unreachable (an injected-catalog unit test only); both are now produced by the real OMP path",
+              "how": "the OMP adapter maps the host's own model catalog (the live session context's model query, ctx.models) into the framework's public CatalogPriceSource fact; the framework hands it to the extension factory; the model-cost runtime composes it after its maintained data (data wins for pairs it names) and the request accounting accumulates the USD reference from the framework's request-start snapshot"
+            },
+            "changed": {
+              "framework/core/protocol.ts": "HarnessPort.modelPrices?: CatalogPriceSource (documented as a fact, never a native model/registry/context); CatalogPriceSource doc generalized to both owners",
+              "framework/core/assembly.ts": "ImplementationContext.modelPrices?: CatalogPriceSource",
+              "framework/behaviors/binding.ts": "binding hands the port's modelPrices to the factory (conditional spread)",
+              "framework/adapters/omp.ts": "OmpSessionContext.models (the used native reading only); harnessPriceOf maps the host cost (USD per million tokens, four buckets) and answers nothing for an unknown pair or an all-zero cost; harnessModelPrices answers from the newest delivery context; the port reports modelPrices and each delivery records its context",
+              "extensions/model-cost/shared-logic/runtime.ts": "input renamed catalog -> modelPrices; composedCatalog() = dataCatalog first, harness second",
+              "extensions/model-cost/shared-logic/request-price.ts": "new RequestPrice kind {kind:'reference'; price} decided from RequestPriceFacts.catalogPrice (the framework's request-start snapshot); allowance with no stated price stays no-amount-policy (silent, no missing-price notice)",
+              "extensions/model-cost/shared-logic/request-accounting.ts": "addUsage takes the anchor and adds costCny for monetary or referenceCostUsd for reference; turnStarted passes delivery.turn.price",
+              "extensions/model-cost/harnesses/omp.ts": "passes context.modelPrices into the runtime",
+              "tests/framework/turn.test.ts": "+3 cases at the OMP adapter seam (mapping through ctx.models, unknown/zero-priced pairs, no catalog)",
+              "tests/model-cost/display.test.ts": "bindDisplay routes modelPrices through the framework's factory context; +5 cases (reference accumulation + save, data-wins composition, no-price tokens-only with no notice, start-anchored amount proven by a catalog that answers once, one session's two channels + switch not erasing the other)",
+              "tests/harness-dock/capture-server.ts": "answers by request path (Responses path -> Codex SSE, chat path -> chat chunks); scripted usage now also carried on the Responses stream; protocol option removed",
+              "tests/harness-dock/model-cost-modes.test.ts": "run-level models.yml writer; codex model defined with an explicit four-amount price fixture; allowance case now asserts Ref: $0.0050, Sum 3,500, $CacheRead/In/CacheWrite/Out:20:20:20:40, 272.0K, no CNY, and the saved referenceCostUsd; new mixed case (deepseek request -> set_model -> codex request) asserting Cost: JPY0.0055 + Ref: $0.0050 together, 272.0K and a document holding both channels with the CNY amount unchanged",
+              "tests/codebase-tools/outbound-role.test.ts": "call site migrated to the path-decided capture server (removed protocol option)",
+              "framework/docs/framework-capabilities.md": "new bullet documenting HarnessPort.modelPrices / ImplementationContext.modelPrices and the omp mapping"
+            },
+            "criterion_evidence": {
+              "混合树双币种、Codex Ref 非实付/不换算/不抹掉": "S5 tests/harness-dock/model-cost-modes.test.ts: one session's two channels keep both currencies across a model switch (Cost: JPY0.0055 ... Ref: $0.0050 in one total line; saved record holds deepseek-flash costCny 0.00552 and codex referenceCostUsd 0.005, the former unchanged by the switch). S2 display.test.ts: same-session two-channel case reads view/display/document",
+              "token-only 仅批准指标，无自身金额/费用结构": "unchanged S2 P8 cases (hostile record amounts still hidden) + S5 token-only case still green",
+              "hidden 不创建 widget、不改变执行": "unchanged S5 hidden case still green (real request, no lines ever on the widget key)",
+              "固定显示预算 450K/272K，仅展示告警": "unchanged S2 budget cases + S5 monetary control-run body equality; S5 allowance now asserts 272.0K beside the real Ref",
+              "费用结构参考占比用对应模型当前价格、缺价/全零不可用、不反推": "S2 P25 cases (XTS data price wins over a harness price for the same pair; Codex four amounts incl. cache write) + S5 allowance shows the four-part USD ratio from the run's own fixture price; no-price case keeps tokens and yields no amount/ratio",
+              "通过批准的生产公共 seam 观察，期望手算": "S2: framework public binding (port double) + runtime.presentation; S5: real patched host via RPC/setWidget/capture endpoint. Amounts hand-computed from fixture numbers written in the test files (5000/1e6 = 0.005; 5520/1e6 = 0.00552; 10500/1e6 = 0.0105)",
+              "不凭最新模型重价/锚价": "S2 case with a catalog that answers exactly one query then nothing: the amount is still accounted, proving the start snapshot is what prices the request; S5 mixed case shows the earlier CNY amount untouched after the switch"
+            },
+            "commands_run": {
+              "bun test tests/model-cost": "110 pass / 0 fail (428 expect)",
+              "bun test tests/harness-dock/model-cost-modes.test.ts": "5 pass / 0 fail (49 expect; includes 3 real host runs)",
+              "bun test tests/framework/turn.test.ts": "13 pass / 0 fail",
+              "bun test tests/framework": "371 pass / 0 fail (run before the dock edits; framework sources unchanged since)",
+              "bun run typecheck": "clean (exit 0)"
+            },
+            "unresolved": {
+              "ticket evidence asset": ".scratch/model-cost-migration/assets/11-modes-currency-metrics-evidence-2026-10-13.md still describes the old state (production Codex Ref unreachable; allowance case asserting no Ref, Sum 2). Not updated this round",
+              "ticket file/status": ".scratch/model-cost-migration/implementation/11-modes-currency-metrics.md checkboxes/Status untouched (left to the main agent's ticket flow)",
+              "suites not re-run this round": "bun test (whole repo), tests/codebase-tools/outbound-role.test.ts and the other dock suites affected by the capture-server protocol change (typecheck is clean; the path-decided answers preserve each run's previous protocol)",
+              "human items": "unchanged and untouched: this ticket's P8/P9/P10 conditional H3 (no scenario needed this round; all S5 cases passed first run), the visual/TUI checks owned by later tickets, and H1/H2 held elsewhere",
+              "scope note": "no second catalog/price table, no new config system and no test controller was introduced; the DeepSeek maintained data is unchanged and still wins for the pairs it names"
+            }
+          },
+          "status": "success",
+          "type": "result"
+        }
+      ]
+    },
+    "outputMeta": {
+      "lineCount": 46,
+      "charCount": 6878
+    }
+  },
+  "agent": "tdd",
+  "agent_id": "11-modes-currency-metricsmd-2",
+  "session_id": "01a13323-9287-70ed-83d5-18f1ca2124b9",
+  "session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-12T19-42-26-146Z_01a131a3-4562-728e-8c06-9608e1e88feb\\11-modes-currency-metricsmd-2.jsonl",
+  "execution_cwd": "E:\\Developer\\myhub\\my-agent-toolkit",
+  "retro_document": "E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\model-cost-migration\\retro\\11-modes-currency-metrics.md\\7a34107f-8b21-45ff-b1e1-dd8a9272c493.md",
+  "retro_finished_at": "2026-10-13T03:02:52.000Z"
+}

@@ -17,8 +17,8 @@
  */
 import { describe, expect, test } from "bun:test";
 import { CODEBASE_TOOLS } from "../../extensions/codebase-tools/definition";
-import type { CommandActions, CommandDelivery } from "../../framework/core/protocol";
-import { type ExtensionDefinition, defineExtension } from "../../framework/public";
+import type { CommandDelivery } from "../../framework/core/protocol";
+import { type CommandImplementations, type ExtensionDefinition, defineExtension } from "../../framework/public";
 import { type PortDouble, portDouble } from "./support/harness-port-double";
 
 /** A directed extension whose whole behavior is one command plus the marker it drives. */
@@ -32,7 +32,7 @@ function directedExtension(id: string, options: { readonly marker?: boolean } = 
 }
 
 /** An implementation that writes one value through the delivery's seam, whatever the directive named. */
-function writeValue(command: string, value: boolean): CommandActions {
+function writeValue(command: string, value: boolean): CommandImplementations {
 	return {
 		[command]: {
 			run: (_directive, delivery: CommandDelivery) => delivery.state.write(value),
@@ -41,7 +41,7 @@ function writeValue(command: string, value: boolean): CommandActions {
 }
 
 /** An implementation that writes the value its directive named. */
-function applyDirective(command: string): CommandActions {
+function applyDirective(command: string): CommandImplementations {
 	return {
 		[command]: {
 			run: (directive, delivery: CommandDelivery) => delivery.state.write(directive.kind === "activate"),
@@ -56,11 +56,11 @@ interface WriteCall {
 }
 
 /** An implementation that reads the declared value, records the pair, and writes the directive's value. */
-function directiveActions(command: string): { readonly actions: CommandActions; readonly calls: WriteCall[] } {
+function directiveActions(command: string): { readonly commands: CommandImplementations; readonly calls: WriteCall[] } {
 	const calls: WriteCall[] = [];
 	return {
 		calls,
-		actions: {
+		commands: {
 			[command]: {
 				run: (directive, delivery: CommandDelivery) => {
 					const written = directive.kind === "activate";
@@ -77,14 +77,14 @@ describe("the handler runs before the write and owns it (F4, P5)", () => {
 		const double: PortDouble = portDouble();
 		const owner = { kind: "owner", key: "main:silent" } as const;
 		const reads: boolean[] = [];
-		const actions: CommandActions = {
+		const commands: CommandImplementations = {
 			"directed-silent": {
 				run: (_directive, delivery: CommandDelivery) => {
 					reads.push(delivery.state.read());
 				},
 			},
 		};
-		double.bind(directedExtension("directed-silent"), { actions });
+		double.bind(directedExtension("directed-silent"), { commands });
 
 		const run = double.run("directed-silent", { owner });
 
@@ -101,7 +101,7 @@ describe("the handler runs before the write and owns it (F4, P5)", () => {
 		const double = portDouble();
 		const owner = { kind: "owner", key: "main:partial" } as const;
 		// The empty argument names `on`; the handler's action failed and kept the extension off.
-		double.bind(directedExtension("directed-partial"), { actions: writeValue("directed-partial", false) });
+		double.bind(directedExtension("directed-partial"), { commands: writeValue("directed-partial", false) });
 
 		const run = double.run("directed-partial", { owner });
 
@@ -114,8 +114,8 @@ describe("the handler runs before the write and owns it (F4, P5)", () => {
 	test("each invocation's handler sees the value the previous one left", () => {
 		const double = portDouble();
 		const owner = { kind: "owner", key: "main:seam-order" } as const;
-		const { actions, calls } = directiveActions("directed-seam-order");
-		double.bind(directedExtension("directed-seam-order"), { actions });
+		const { commands: actions, calls } = directiveActions("directed-seam-order");
+		double.bind(directedExtension("directed-seam-order"), { commands: actions });
 
 		double.run("directed-seam-order", { owner });
 		double.run("directed-seam-order", { args: "off", owner });
@@ -133,7 +133,7 @@ describe("the handler runs before the write and owns it (F4, P5)", () => {
 	test("two identical writes are two writes: nothing is deduplicated", () => {
 		const double = portDouble();
 		const owner = { kind: "owner", key: "main:twice" } as const;
-		const actions: CommandActions = {
+		const commands: CommandImplementations = {
 			"directed-twice": {
 				run: (_directive, delivery: CommandDelivery) => {
 					delivery.state.write(true);
@@ -141,7 +141,7 @@ describe("the handler runs before the write and owns it (F4, P5)", () => {
 				},
 			},
 		};
-		double.bind(directedExtension("directed-twice"), { actions });
+		double.bind(directedExtension("directed-twice"), { commands });
 
 		const run = double.run("directed-twice", { owner });
 
@@ -154,7 +154,7 @@ describe("every declared-value write republishes the area, and false clears it (
 	test("a write of true shows the extension's line and a write of false removes it", () => {
 		const double = portDouble();
 		const owner = { kind: "owner", key: "main:lifecycle" } as const;
-		double.bind(directedExtension("directed-lifecycle"), { actions: applyDirective("directed-lifecycle") });
+		double.bind(directedExtension("directed-lifecycle"), { commands: applyDirective("directed-lifecycle") });
 
 		const on = double.run("directed-lifecycle", { owner });
 		const off = double.run("directed-lifecycle", { args: "off", owner });
@@ -170,7 +170,7 @@ describe("every declared-value write republishes the area, and false clears it (
 		const double = portDouble();
 		const owner = { kind: "owner", key: "main:disarm" } as const;
 		// An auto-disarm inside one callback: the extension turns on, then gives up and writes off.
-		const actions: CommandActions = {
+		const commands: CommandImplementations = {
 			"directed-disarm": {
 				run: (_directive, delivery: CommandDelivery) => {
 					delivery.state.write(true);
@@ -178,7 +178,7 @@ describe("every declared-value write republishes the area, and false clears it (
 				},
 			},
 		};
-		double.bind(directedExtension("directed-disarm"), { actions });
+		double.bind(directedExtension("directed-disarm"), { commands });
 
 		const run = double.run("directed-disarm", { owner });
 
@@ -194,8 +194,8 @@ describe("the area is framework-owned: id order, coexistence, no-marker extensio
 		const zzz = portDouble();
 		const aaa = portDouble();
 		const owner = { kind: "owner", key: "main:coexist" } as const;
-		zzz.bind(directedExtension("dir-zzz"), { actions: writeValue("dir-zzz", true) });
-		aaa.bind(directedExtension("dir-aaa"), { actions: writeValue("dir-aaa", true) });
+		zzz.bind(directedExtension("dir-zzz"), { commands: writeValue("dir-zzz", true) });
+		aaa.bind(directedExtension("dir-aaa"), { commands: writeValue("dir-aaa", true) });
 
 		const zzzRun = zzz.run("dir-zzz", { owner });
 		const aaaRun = aaa.run("dir-aaa", { owner });
@@ -210,8 +210,8 @@ describe("the area is framework-owned: id order, coexistence, no-marker extensio
 		const zzz = portDouble();
 		const aaa = portDouble();
 		const owner = { kind: "owner", key: "main:coexist-off" } as const;
-		zzz.bind(directedExtension("dir-zzz"), { actions: applyDirective("dir-zzz") });
-		aaa.bind(directedExtension("dir-aaa"), { actions: applyDirective("dir-aaa") });
+		zzz.bind(directedExtension("dir-zzz"), { commands: applyDirective("dir-zzz") });
+		aaa.bind(directedExtension("dir-aaa"), { commands: applyDirective("dir-aaa") });
 
 		zzz.run("dir-zzz", { owner });
 		aaa.run("dir-aaa", { owner });
@@ -229,7 +229,7 @@ describe("the area is framework-owned: id order, coexistence, no-marker extensio
 		const double = portDouble();
 		const owner = { kind: "owner", key: "main:unmarked" } as const;
 		double.bind(directedExtension("directed-unmarked", { marker: false }), {
-			actions: writeValue("directed-unmarked", true),
+			commands: writeValue("directed-unmarked", true),
 		});
 
 		const run = double.run("directed-unmarked", { owner });

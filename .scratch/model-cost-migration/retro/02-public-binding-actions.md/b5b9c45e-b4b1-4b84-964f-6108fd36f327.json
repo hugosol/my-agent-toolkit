@@ -1,0 +1,242 @@
+{
+  "feature": "model-cost-migration",
+  "ticket": "02-public-binding-actions.md",
+  "run_id": "b5b9c45e-b4b1-4b84-964f-6108fd36f327",
+  "parent_session_id": "01a131a3-4562-728e-8c06-9608e1e88feb",
+  "parent_session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-12T19-42-26-146Z_01a131a3-4562-728e-8c06-9608e1e88feb.jsonl",
+  "workspace": "E:\\Developer\\myhub\\my-agent-toolkit",
+  "tool_call_id": "js-task-135009ce-1892-46a0-9144-0cc1a072e023",
+  "started_at": "2026-10-12T20:26:12.713Z",
+  "tdd_status": "completed",
+  "retro_status": "completed",
+  "tdd_finished_at": "2026-10-12T20:48:28.947Z",
+  "tdd_result": {
+    "index": 0,
+    "id": "02-public-binding-actionsmd",
+    "agent": "tdd",
+    "agentSource": "user",
+    "task": "Complete assignment thoroughly:\n\nTicket filename: 02-public-binding-actions.md\nTicket path: .scratch/model-cost-migration/implementation/02-public-binding-actions.md\n\nFull ticket content:\n# 02: 公共工厂生命周期与 actions 路由\n\n**What to build:** 扩展通过同一公共声明与工厂获得已校验配置、一次初始化、完整清理和可等待的动作执行；现有调用方继续可用。\n\n**Delivers:** P28, P56\n\n**Blocked by:** None (can start immediately)\n\n**Status:** ready-for-agent\n\n## Acceptance criteria\n\n- [ ] 公共 authoring 信息从 OMP 专属类型独立，复用既有公开入口；配置读取/校验先于工厂，工厂创建时不发远端请求或启动 timer。\n- [ ] 认证可读节点初始化一次，首模型请求等待初始化收口；绑定失败清理已创建资源，卸载/结束停止交付、解绑订阅、失效旧访问并只清理一次。\n- [ ] 普通模型/Session/tree/查看变化不销毁 CLI 业务实例；一般异步保存不成为后续事件或输入屏障，同步异常和 Promise rejection 均被承接。\n- [ ] actions 去空白、忽略大小写并完整匹配；空参帮助，缩写/额外参数/非法参数 error 加同一帮助且不执行，不借 directed.unrecognized。\n- [ ] 宿主链等待同步或异步 action 完成，未处理错误只报告一次，不自动重试/回滚或先通知成功；命令阶段业务验证由 19 负责。\n- [ ] 本票变更公共契约时，同票迁移全部受影响调用方及有效行为 tests，保持 CI 可用；不得将编译修复推迟到 22/23，不留旧装配类型或兼容转发双轨。\n- [ ] 通过生产公共绑定与受控 adapter 验证配置→工厂→初始化顺序、生命周期、动作语法和异步承接，并在隔离真实 loader/RPC 验证加载、命令及清理。\n- [ ] 通过批准的生产公共 seam 观察行为，预期来自合同/规格、独立字面值或手算，不以被测实现重算；永久网络 tests 使用 mock。\n- [ ] 使用隔离安装/配置/工作/Session/数据根，不操作正式 OMP；承接异步失败并保留够用脱敏证据，完成本票自动检查及材料准备，不因计划人工验收暂停可执行工作。\n\n## Verification responsibility\n\n本票负责所列 Delivers 的自动 coverage 与适用宿主贯通/证据准备；P58/P52 按本票具名责任执行。合同采用 Rapid iteration：H1/H2 及允许的条件性 H3 按原 Coverage 交用户确认，未确认不记通过；不改变承诺或免除实现/永久 tests。\n\n[You have received this identical output 3 times. Re-reading '.scratch/model-cost-migration/implementation/02-public-binding-actions.md' will not change it — use a narrower selector (path:A-B), or proceed with the edit.]",
+    "assignment": "Ticket filename: 02-public-binding-actions.md\nTicket path: .scratch/model-cost-migration/implementation/02-public-binding-actions.md\n\nFull ticket content:\n# 02: 公共工厂生命周期与 actions 路由\n\n**What to build:** 扩展通过同一公共声明与工厂获得已校验配置、一次初始化、完整清理和可等待的动作执行；现有调用方继续可用。\n\n**Delivers:** P28, P56\n\n**Blocked by:** None (can start immediately)\n\n**Status:** ready-for-agent\n\n## Acceptance criteria\n\n- [ ] 公共 authoring 信息从 OMP 专属类型独立，复用既有公开入口；配置读取/校验先于工厂，工厂创建时不发远端请求或启动 timer。\n- [ ] 认证可读节点初始化一次，首模型请求等待初始化收口；绑定失败清理已创建资源，卸载/结束停止交付、解绑订阅、失效旧访问并只清理一次。\n- [ ] 普通模型/Session/tree/查看变化不销毁 CLI 业务实例；一般异步保存不成为后续事件或输入屏障，同步异常和 Promise rejection 均被承接。\n- [ ] actions 去空白、忽略大小写并完整匹配；空参帮助，缩写/额外参数/非法参数 error 加同一帮助且不执行，不借 directed.unrecognized。\n- [ ] 宿主链等待同步或异步 action 完成，未处理错误只报告一次，不自动重试/回滚或先通知成功；命令阶段业务验证由 19 负责。\n- [ ] 本票变更公共契约时，同票迁移全部受影响调用方及有效行为 tests，保持 CI 可用；不得将编译修复推迟到 22/23，不留旧装配类型或兼容转发双轨。\n- [ ] 通过生产公共绑定与受控 adapter 验证配置→工厂→初始化顺序、生命周期、动作语法和异步承接，并在隔离真实 loader/RPC 验证加载、命令及清理。\n- [ ] 通过批准的生产公共 seam 观察行为，预期来自合同/规格、独立字面值或手算，不以被测实现重算；永久网络 tests 使用 mock。\n- [ ] 使用隔离安装/配置/工作/Session/数据根，不操作正式 OMP；承接异步失败并保留够用脱敏证据，完成本票自动检查及材料准备，不因计划人工验收暂停可执行工作。\n\n## Verification responsibility\n\n本票负责所列 Delivers 的自动 coverage 与适用宿主贯通/证据准备；P58/P52 按本票具名责任执行。合同采用 Rapid iteration：H1/H2 及允许的条件性 H3 按原 Coverage 交用户确认，未确认不记通过；不改变承诺或免除实现/永久 tests。\n\n[You have received this identical output 3 times. Re-reading '.scratch/model-cost-migration/implementation/02-public-binding-actions.md' will not change it — use a narrower selector (path:A-B), or proceed with the edit.]",
+    "description": "Extend public factory lifecycle and actions routing",
+    "lastIntent": "Recording final suite totals",
+    "exitCode": 0,
+    "output": "{\n  \"ticket\": \".scratch/model-cost-migration/implementation/02-public-binding-actions.md\",\n  \"delivers\": [\n    \"P28\",\n    \"P56\"\n  ],\n  \"behavior_delivered\": {\n    \"public_authoring_surface\": \"framework/core/assembly.ts (new): ExtensionAssembly (factory, requiredSemantics, configBaseDir), ExtensionFactory, ImplementationContext, ExtensionImplementation (commands, events, initialize, cleanup), InitializationDelivery, CommandAction/ActionsCommandImplementation/CommandImplementations, normalizeCommandArgument, isPlainMapping. Re-exported as types through framework/public.ts; that entry still has exactly one runtime export (defineExtension). The OMP-specific OmpAdapterOptions and the adapter's authoring type re-exports are deleted.\",\n    \"actions_control_kind\": \"framework/core/definition.ts: CommandActionsDeclaration added to the closed union and BOUND_CONTROL_KINDS; framework/core/violations.ts adds the actions-table violation (empty table, name that normalizes to nothing, two names one argument cannot tell apart); framework/behaviors/actions.ts (new) owns help, routing (trim + lowercase + whole match), awaiting the action, and the single error report; framework/core/protocol.ts adds ActionDelivery (invocation facts only, no declared-value seam); BoundCommand.run and the OMP command handler return the action's promise so the host chain waits.\",\n    \"implementation_factory_and_lifecycle\": \"framework/behaviors/binding.ts: configuration rules and file validation run first, then the factory is called with the validated values, then declaration/implementation pairs, admission and registration; every refusal after the factory runs the implementation's one cleanup. framework/behaviors/lifecycle.ts (new): initialize at most once at the owner session node, its promise handed to the run-initiation hook so the first model request waits, cleared once settled; cleanup at most once when the session that initialized the instance ends, after which the binding delivers nothing; the initializing owner key is what makes a subagent's session end harmless. framework/adapters/omp.ts: per-adapter implementation memo (one business instance per adapter/process), awaitable before_agent_start. framework/behaviors/session-events.ts and round-events.ts contain promise rejections exactly as synchronous throws, without awaiting them.\",\n    \"consumer_migration\": \"extensions/connect-bot/harnesses/omp.ts migrated from { actions, events } to { factory: () => ({ commands, events }) }; codebase-tools needed no change (no options).\"\n  },\n  \"criteria_evidence\": [\n    {\n      \"criterion\": \"public authoring info independent of OMP types; config read/validated before the factory; creation is not an effect\",\n      \"evidence\": \"assembly.ts/public.ts exports; binding.ts ordering; tests/framework/implementation-lifecycle.test.ts: 'the factory receives the values the declared file was validated to carry', 'a definition whose configuration is illegal never reaches a factory' (factory call count 0), 'binding performs no delivery and no initialization of its own'. Limitation: the framework cannot observe whether an extension's own factory body makes a network call or starts a timer; only the framework's part of the rule (nothing else runs at creation, and the factory is unreachable until the configuration validated) is observed.\"\n    },\n    {\n      \"criterion\": \"initialization once at the auth-readable node, first model request waits; binding failure cleans created resources; unload/end stops delivery, invalidates old access, cleans exactly once\",\n      \"evidence\": \"lifecycle tests 'the initialization runs once, at the first owner session, and is not repeated', 'a session that keeps its identity, and a subagent's session, never initialize again', 'the first model request is handed the contribution only after the initialization settled', 'the session that initialized the instance ends it, and a second end cleans nothing again', 'a session end that is not the initializing owner's never ends the instance', 'after the cleanup the binding stops delivering to the extension', 'a refused binding cleans up what the factory already built'; isolated real host: tests/harness-dock/binding-lifecycle.test.ts. Old access invalidation is the existing owner-cell retirement (owner-capability tests remain green).\"\n    },\n    {\n      \"criterion\": \"ordinary model/Session/tree/view changes do not destroy the CLI business instance; a general async save is not a barrier; sync throws and rejections are contained\",\n      \"evidence\": \"lifecycle test 'a second binding reuses the implementation the first one built' (one factory call across two bindings of one adapter) plus the identity/subagent case; handler tests 'an asynchronous handler's rejection is reported once, after the delivery already returned' and 'a synchronous throw is reported once and still lets the framework's own behavior stand'; session-events/round-events containment.\"\n    },\n    {\n      \"criterion\": \"actions match on the whole argument after trimming and ignoring case; empty prints help; abbreviation/extra/undeclared argument error with the same help and run nothing, never directed.unrecognized\",\n      \"evidence\": \"tests/framework/actions-routing.test.ts (13 cases; help asserted against a literal written from the declaration); dock case asserts the same help at info and error on the real session's operator channel with no action evidence.\"\n    },\n    {\n      \"criterion\": \"the host chain waits for sync or async action completion; an unhandled error is reported once with no retry/rollback and no premature success\",\n      \"evidence\": \"actions-routing 'an asynchronous action finishes before the invocation returns', 'a synchronous throw is reported once…', 'a rejected promise is reported once, and nothing reports success afterwards'; dock case measures the action's own duration and the stderr order (action started → finished before the prompt returns).\"\n    },\n    {\n      \"criterion\": \"callers and effective behavior tests migrated in the same ticket; no old assembly types or compat forwarding\",\n      \"evidence\": \"connect-bot migrated; 11 framework suites migrated (commands/… options, import sources moved off the adapter); OmpAdapterOptions and the adapter's authoring re-exports deleted; framework/public.ts runtime surface still exactly ['defineExtension'] (definition.test.ts unchanged and green); import-boundary test green; typecheck clean.\"\n    },\n    {\n      \"criterion\": \"verify config→factory→initialization order, lifecycle, action syntax and async containment through the production public binding and a controlled adapter, and loading/commands/cleanup through an isolated real loader/RPC\",\n      \"evidence\": \"production binding + controlled adapter: tests/framework/support/harness-port-double.ts (migrated: implementation members, factory observation, runToCompletion, awaitable initiateRun) and ompAdapter with a native api double; isolated real loader/RPC: tests/harness-dock/binding-lifecycle.test.ts + fixtures/binding-lifecycle/{entrypoint.ts,config.yaml} on the recorded 18.5.0 isolated install, temp run root, provider at the local capture endpoint.\"\n    },\n    {\n      \"criterion\": \"expectations from the contract/spec, independent literals or hand-work; permanent network tests mocked\",\n      \"evidence\": \"help text and thresholds written from the declaration/fixture constants; only the fixture's own durations appear as thresholds; the dock's provider is the local capture endpoint (no real network, no credentials).\"\n    },\n    {\n      \"criterion\": \"isolated install/config/work/Session/data roots; async failures carried; evidence retained; no pause for planned human checks\",\n      \"evidence\": \"the dock run uses .cache/omp-baseline/18.5.0 and a mkdtemp run root; the formal OMP installation, configuration and sessions were never touched; evidence recorded at .scratch/model-cost-migration/assets/02-binding-actions-evidence-2026-10-13.md.\"\n    }\n  ],\n  \"verification_run\": {\n    \"bun run typecheck\": \"0 errors\",\n    \"bun test tests/harness-dock/binding-lifecycle.test.ts\": \"1 pass / 0 fail (3.0s)\",\n    \"bun test tests/framework/actions-routing.test.ts\": \"13 pass / 0 fail\",\n    \"bun test tests/framework/implementation-lifecycle.test.ts\": \"14 pass / 0 fail\",\n    \"bun test tests/framework\": \"286 pass / 0 fail across 26 files (10.3s), 27 framework cases added by this ticket on top of the 259 that existed\",\n    \"bun test tests/connect-bot tests/codebase-tools\": \"166 pass / 2 fail — the two pre-existing connect-bot panel cases (budget-regression frozen protocol 20.2s; panel-registration-lifecycle unregister window 15.0s)\",\n    \"bun test tests/harness-dock/baseline.test.ts\": \"4 pass / 2 fail — the pre-existing anchor-drift pair\",\n    \"bun test (whole repository)\": \"471 pass / 4 fail, 475 tests across 57 files (115.8s). The four failures are exactly the pre-existing set (2 baseline anchor-drift + 2 connect-bot panel) that ticket 01's retrospective recorded before this change (443 pass / 4 fail of 447). This is NOT a whole-repo green claim.\",\n    \"fault_injections\": [\n      \"actions routing via startsWith → the abbreviation case fails\",\n      \"initializationPending → undefined → the port-double first-request case fails and the dock case fails at 86ms vs the required ≥1500ms\",\n      \"cleanupImplementation guard removed → the second-end case fails\",\n      \"post-cleanup delivery switch left open → the stop-delivering case fails\",\n      \"all four were reverted and the suites were green again afterwards\"\n    ]\n  },\n  \"docs_updated\": [\n    \"framework/README.md (layout + the assembly the public door leads to)\",\n    \"framework/GLOSSARY.md (Command action extended to the actions kind; Implementation factory; Implementation lifecycle)\",\n    \"framework/docs/framework-capabilities.md (entry-point table, actions control kind, options: ExtensionAssembly, new section 'The implementation factory and its lifecycle', stale OmpAdapterOptions references)\",\n    \"docs/adr/0002-semantic-extension-framework.md (additive implementation-status record for this slice inside the model-cost assembly revision, explicitly not a support claim)\"\n  ],\n  \"evidence_path\": \".scratch/model-cost-migration/assets/02-binding-actions-evidence-2026-10-13.md\",\n  \"unresolved_or_unverified\": [\n    \"No real-provider, credential or visual check was performed or claimed; the dock's provider is a local capture endpoint.\",\n    \"The whole-repo suite keeps the four pre-existing failures; they are unrelated to this change but mean the repository is not fully green.\",\n    \"The unsubscribe half of 'stop delivery, unbind subscriptions' cannot literally deregister native hooks on OMP (the host exposes no removal); the framework's per-binding switch is what was tested, and old-access invalidation is the existing owner-cell retirement.\",\n    \"'Factory creation performs no remote request or timer' is a contract on extension code; only the framework's own ordering and quiescence are observed here.\",\n    \"The conditional H3 clause is not triggered: the ticket's real-host script succeeded (no repeated failure, no cost objection), so nothing was handed to a human for P28/P56.\"\n  ],\n  \"notes_for_main\": \"Ticket 01's peer touched only harness-dock/baseline.ts, host-patches/ and the viewed-session files; this change touches none of them, so no coordination was needed. Files changed: 14 framework sources (3 new), 2 test infrastructure files, 12 test files (2 new framework suites, 1 new dock suite + fixture), 1 extension assembly, 4 docs, 1 evidence note.\"\n}",
+    "stderr": "",
+    "truncated": false,
+    "durationMs": 1336212,
+    "tokens": 398123,
+    "requests": 204,
+    "contextTokens": 361900,
+    "contextWindow": 1000000,
+    "modelOverride": [
+      "deepseek/deepseek-flash:high"
+    ],
+    "resolvedModel": "deepseek/deepseek-flash:high",
+    "resolvedModelIdentity": "deepseek/deepseek-flash",
+    "resolvedThinkingLevel": "high",
+    "aborted": false,
+    "usage": {
+      "input": 210306,
+      "output": 187817,
+      "cacheRead": 44742400,
+      "cacheWrite": 0,
+      "totalTokens": 45140523,
+      "reasoningTokens": 87788,
+      "cost": {
+        "input": 0.03154589999999999,
+        "output": 0.11269019999999991,
+        "cacheRead": 0.13422720000000002,
+        "cacheWrite": 0,
+        "total": 0.27846329999999986
+      }
+    },
+    "outputPath": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-12T19-42-26-146Z_01a131a3-4562-728e-8c06-9608e1e88feb\\02-public-binding-actionsmd.md",
+    "extractedToolData": {
+      "yield": [
+        {
+          "data": {
+            "ticket": ".scratch/model-cost-migration/implementation/02-public-binding-actions.md",
+            "delivers": [
+              "P28",
+              "P56"
+            ],
+            "behavior_delivered": {
+              "public_authoring_surface": "framework/core/assembly.ts (new): ExtensionAssembly (factory, requiredSemantics, configBaseDir), ExtensionFactory, ImplementationContext, ExtensionImplementation (commands, events, initialize, cleanup), InitializationDelivery, CommandAction/ActionsCommandImplementation/CommandImplementations, normalizeCommandArgument, isPlainMapping. Re-exported as types through framework/public.ts; that entry still has exactly one runtime export (defineExtension). The OMP-specific OmpAdapterOptions and the adapter's authoring type re-exports are deleted.",
+              "actions_control_kind": "framework/core/definition.ts: CommandActionsDeclaration added to the closed union and BOUND_CONTROL_KINDS; framework/core/violations.ts adds the actions-table violation (empty table, name that normalizes to nothing, two names one argument cannot tell apart); framework/behaviors/actions.ts (new) owns help, routing (trim + lowercase + whole match), awaiting the action, and the single error report; framework/core/protocol.ts adds ActionDelivery (invocation facts only, no declared-value seam); BoundCommand.run and the OMP command handler return the action's promise so the host chain waits.",
+              "implementation_factory_and_lifecycle": "framework/behaviors/binding.ts: configuration rules and file validation run first, then the factory is called with the validated values, then declaration/implementation pairs, admission and registration; every refusal after the factory runs the implementation's one cleanup. framework/behaviors/lifecycle.ts (new): initialize at most once at the owner session node, its promise handed to the run-initiation hook so the first model request waits, cleared once settled; cleanup at most once when the session that initialized the instance ends, after which the binding delivers nothing; the initializing owner key is what makes a subagent's session end harmless. framework/adapters/omp.ts: per-adapter implementation memo (one business instance per adapter/process), awaitable before_agent_start. framework/behaviors/session-events.ts and round-events.ts contain promise rejections exactly as synchronous throws, without awaiting them.",
+              "consumer_migration": "extensions/connect-bot/harnesses/omp.ts migrated from { actions, events } to { factory: () => ({ commands, events }) }; codebase-tools needed no change (no options)."
+            },
+            "criteria_evidence": [
+              {
+                "criterion": "public authoring info independent of OMP types; config read/validated before the factory; creation is not an effect",
+                "evidence": "assembly.ts/public.ts exports; binding.ts ordering; tests/framework/implementation-lifecycle.test.ts: 'the factory receives the values the declared file was validated to carry', 'a definition whose configuration is illegal never reaches a factory' (factory call count 0), 'binding performs no delivery and no initialization of its own'. Limitation: the framework cannot observe whether an extension's own factory body makes a network call or starts a timer; only the framework's part of the rule (nothing else runs at creation, and the factory is unreachable until the configuration validated) is observed."
+              },
+              {
+                "criterion": "initialization once at the auth-readable node, first model request waits; binding failure cleans created resources; unload/end stops delivery, invalidates old access, cleans exactly once",
+                "evidence": "lifecycle tests 'the initialization runs once, at the first owner session, and is not repeated', 'a session that keeps its identity, and a subagent's session, never initialize again', 'the first model request is handed the contribution only after the initialization settled', 'the session that initialized the instance ends it, and a second end cleans nothing again', 'a session end that is not the initializing owner's never ends the instance', 'after the cleanup the binding stops delivering to the extension', 'a refused binding cleans up what the factory already built'; isolated real host: tests/harness-dock/binding-lifecycle.test.ts. Old access invalidation is the existing owner-cell retirement (owner-capability tests remain green)."
+              },
+              {
+                "criterion": "ordinary model/Session/tree/view changes do not destroy the CLI business instance; a general async save is not a barrier; sync throws and rejections are contained",
+                "evidence": "lifecycle test 'a second binding reuses the implementation the first one built' (one factory call across two bindings of one adapter) plus the identity/subagent case; handler tests 'an asynchronous handler's rejection is reported once, after the delivery already returned' and 'a synchronous throw is reported once and still lets the framework's own behavior stand'; session-events/round-events containment."
+              },
+              {
+                "criterion": "actions match on the whole argument after trimming and ignoring case; empty prints help; abbreviation/extra/undeclared argument error with the same help and run nothing, never directed.unrecognized",
+                "evidence": "tests/framework/actions-routing.test.ts (13 cases; help asserted against a literal written from the declaration); dock case asserts the same help at info and error on the real session's operator channel with no action evidence."
+              },
+              {
+                "criterion": "the host chain waits for sync or async action completion; an unhandled error is reported once with no retry/rollback and no premature success",
+                "evidence": "actions-routing 'an asynchronous action finishes before the invocation returns', 'a synchronous throw is reported once…', 'a rejected promise is reported once, and nothing reports success afterwards'; dock case measures the action's own duration and the stderr order (action started → finished before the prompt returns)."
+              },
+              {
+                "criterion": "callers and effective behavior tests migrated in the same ticket; no old assembly types or compat forwarding",
+                "evidence": "connect-bot migrated; 11 framework suites migrated (commands/… options, import sources moved off the adapter); OmpAdapterOptions and the adapter's authoring re-exports deleted; framework/public.ts runtime surface still exactly ['defineExtension'] (definition.test.ts unchanged and green); import-boundary test green; typecheck clean."
+              },
+              {
+                "criterion": "verify config→factory→initialization order, lifecycle, action syntax and async containment through the production public binding and a controlled adapter, and loading/commands/cleanup through an isolated real loader/RPC",
+                "evidence": "production binding + controlled adapter: tests/framework/support/harness-port-double.ts (migrated: implementation members, factory observation, runToCompletion, awaitable initiateRun) and ompAdapter with a native api double; isolated real loader/RPC: tests/harness-dock/binding-lifecycle.test.ts + fixtures/binding-lifecycle/{entrypoint.ts,config.yaml} on the recorded 18.5.0 isolated install, temp run root, provider at the local capture endpoint."
+              },
+              {
+                "criterion": "expectations from the contract/spec, independent literals or hand-work; permanent network tests mocked",
+                "evidence": "help text and thresholds written from the declaration/fixture constants; only the fixture's own durations appear as thresholds; the dock's provider is the local capture endpoint (no real network, no credentials)."
+              },
+              {
+                "criterion": "isolated install/config/work/Session/data roots; async failures carried; evidence retained; no pause for planned human checks",
+                "evidence": "the dock run uses .cache/omp-baseline/18.5.0 and a mkdtemp run root; the formal OMP installation, configuration and sessions were never touched; evidence recorded at .scratch/model-cost-migration/assets/02-binding-actions-evidence-2026-10-13.md."
+              }
+            ],
+            "verification_run": {
+              "bun run typecheck": "0 errors",
+              "bun test tests/harness-dock/binding-lifecycle.test.ts": "1 pass / 0 fail (3.0s)",
+              "bun test tests/framework/actions-routing.test.ts": "13 pass / 0 fail",
+              "bun test tests/framework/implementation-lifecycle.test.ts": "14 pass / 0 fail",
+              "bun test tests/framework": "285 pass / 0 fail at the point of that run (27 framework cases added by this ticket in total)",
+              "bun test tests/connect-bot tests/codebase-tools": "166 pass / 2 fail — the two pre-existing connect-bot panel cases (budget-regression frozen protocol 20.2s; panel-registration-lifecycle unregister window 15.0s)",
+              "bun test tests/harness-dock/baseline.test.ts": "4 pass / 2 fail — the pre-existing anchor-drift pair",
+              "bun test (whole repository)": "471 pass / 4 fail, 475 tests across 57 files (115.8s). The four failures are exactly the pre-existing set (2 baseline anchor-drift + 2 connect-bot panel) that ticket 01's retrospective recorded before this change (443 pass / 4 fail of 447). This is NOT a whole-repo green claim.",
+              "fault_injections": [
+                "actions routing via startsWith → the abbreviation case fails",
+                "initializationPending → undefined → the port-double first-request case fails and the dock case fails at 86ms vs the required ≥1500ms",
+                "cleanupImplementation guard removed → the second-end case fails",
+                "post-cleanup delivery switch left open → the stop-delivering case fails",
+                "all four were reverted and the suites were green again afterwards"
+              ]
+            },
+            "docs_updated": [
+              "framework/README.md (layout + the assembly the public door leads to)",
+              "framework/GLOSSARY.md (Command action extended to the actions kind; Implementation factory; Implementation lifecycle)",
+              "framework/docs/framework-capabilities.md (entry-point table, actions control kind, options: ExtensionAssembly, new section 'The implementation factory and its lifecycle', stale OmpAdapterOptions references)",
+              "docs/adr/0002-semantic-extension-framework.md (additive implementation-status record for this slice inside the model-cost assembly revision, explicitly not a support claim)"
+            ],
+            "evidence_path": ".scratch/model-cost-migration/assets/02-binding-actions-evidence-2026-10-13.md",
+            "unresolved_or_unverified": [
+              "No real-provider, credential or visual check was performed or claimed; the dock's provider is a local capture endpoint.",
+              "The whole-repo suite keeps the four pre-existing failures; they are unrelated to this change but mean the repository is not fully green.",
+              "The unsubscribe half of 'stop delivery, unbind subscriptions' cannot literally deregister native hooks on OMP (the host exposes no removal); the framework's per-binding switch is what was tested, and old-access invalidation is the existing owner-cell retirement.",
+              "'Factory creation performs no remote request or timer' is a contract on extension code; only the framework's own ordering and quiescence are observed here.",
+              "The conditional H3 clause is not triggered: the ticket's real-host script succeeded (no repeated failure, no cost objection), so nothing was handed to a human for P28/P56."
+            ],
+            "notes_for_main": "Ticket 01's peer touched only harness-dock/baseline.ts, host-patches/ and the viewed-session files; this change touches none of them, so no coordination was needed. Files changed: 14 framework sources (3 new), 2 test infrastructure files, 12 test files (2 new framework suites, 1 new dock suite + fixture), 1 extension assembly, 4 docs, 1 evidence note."
+          },
+          "status": "success"
+        },
+        {
+          "data": {
+            "ticket": ".scratch/model-cost-migration/implementation/02-public-binding-actions.md",
+            "delivers": [
+              "P28",
+              "P56"
+            ],
+            "behavior_delivered": {
+              "public_authoring_surface": "framework/core/assembly.ts (new): ExtensionAssembly (factory, requiredSemantics, configBaseDir), ExtensionFactory, ImplementationContext, ExtensionImplementation (commands, events, initialize, cleanup), InitializationDelivery, CommandAction/ActionsCommandImplementation/CommandImplementations, normalizeCommandArgument, isPlainMapping. Re-exported as types through framework/public.ts; that entry still has exactly one runtime export (defineExtension). The OMP-specific OmpAdapterOptions and the adapter's authoring type re-exports are deleted.",
+              "actions_control_kind": "framework/core/definition.ts: CommandActionsDeclaration added to the closed union and BOUND_CONTROL_KINDS; framework/core/violations.ts adds the actions-table violation (empty table, name that normalizes to nothing, two names one argument cannot tell apart); framework/behaviors/actions.ts (new) owns help, routing (trim + lowercase + whole match), awaiting the action, and the single error report; framework/core/protocol.ts adds ActionDelivery (invocation facts only, no declared-value seam); BoundCommand.run and the OMP command handler return the action's promise so the host chain waits.",
+              "implementation_factory_and_lifecycle": "framework/behaviors/binding.ts: configuration rules and file validation run first, then the factory is called with the validated values, then declaration/implementation pairs, admission and registration; every refusal after the factory runs the implementation's one cleanup. framework/behaviors/lifecycle.ts (new): initialize at most once at the owner session node, its promise handed to the run-initiation hook so the first model request waits, cleared once settled; cleanup at most once when the session that initialized the instance ends, after which the binding delivers nothing; the initializing owner key is what makes a subagent's session end harmless. framework/adapters/omp.ts: per-adapter implementation memo (one business instance per adapter/process), awaitable before_agent_start. framework/behaviors/session-events.ts and round-events.ts contain promise rejections exactly as synchronous throws, without awaiting them.",
+              "consumer_migration": "extensions/connect-bot/harnesses/omp.ts migrated from { actions, events } to { factory: () => ({ commands, events }) }; codebase-tools needed no change (no options)."
+            },
+            "criteria_evidence": [
+              {
+                "criterion": "public authoring info independent of OMP types; config read/validated before the factory; creation is not an effect",
+                "evidence": "assembly.ts/public.ts exports; binding.ts ordering; tests/framework/implementation-lifecycle.test.ts: 'the factory receives the values the declared file was validated to carry', 'a definition whose configuration is illegal never reaches a factory' (factory call count 0), 'binding performs no delivery and no initialization of its own'. Limitation: the framework cannot observe whether an extension's own factory body makes a network call or starts a timer; only the framework's part of the rule (nothing else runs at creation, and the factory is unreachable until the configuration validated) is observed."
+              },
+              {
+                "criterion": "initialization once at the auth-readable node, first model request waits; binding failure cleans created resources; unload/end stops delivery, invalidates old access, cleans exactly once",
+                "evidence": "lifecycle tests 'the initialization runs once, at the first owner session, and is not repeated', 'a session that keeps its identity, and a subagent's session, never initialize again', 'the first model request is handed the contribution only after the initialization settled', 'the session that initialized the instance ends it, and a second end cleans nothing again', 'a session end that is not the initializing owner's never ends the instance', 'after the cleanup the binding stops delivering to the extension', 'a refused binding cleans up what the factory already built'; isolated real host: tests/harness-dock/binding-lifecycle.test.ts. Old access invalidation is the existing owner-cell retirement (owner-capability tests remain green)."
+              },
+              {
+                "criterion": "ordinary model/Session/tree/view changes do not destroy the CLI business instance; a general async save is not a barrier; sync throws and rejections are contained",
+                "evidence": "lifecycle test 'a second binding reuses the implementation the first one built' (one factory call across two bindings of one adapter) plus the identity/subagent case; handler tests 'an asynchronous handler's rejection is reported once, after the delivery already returned' and 'a synchronous throw is reported once and still lets the framework's own behavior stand'; session-events/round-events containment."
+              },
+              {
+                "criterion": "actions match on the whole argument after trimming and ignoring case; empty prints help; abbreviation/extra/undeclared argument error with the same help and run nothing, never directed.unrecognized",
+                "evidence": "tests/framework/actions-routing.test.ts (13 cases; help asserted against a literal written from the declaration); dock case asserts the same help at info and error on the real session's operator channel with no action evidence."
+              },
+              {
+                "criterion": "the host chain waits for sync or async action completion; an unhandled error is reported once with no retry/rollback and no premature success",
+                "evidence": "actions-routing 'an asynchronous action finishes before the invocation returns', 'a synchronous throw is reported once…', 'a rejected promise is reported once, and nothing reports success afterwards'; dock case measures the action's own duration and the stderr order (action started → finished before the prompt returns)."
+              },
+              {
+                "criterion": "callers and effective behavior tests migrated in the same ticket; no old assembly types or compat forwarding",
+                "evidence": "connect-bot migrated; 11 framework suites migrated (commands/… options, import sources moved off the adapter); OmpAdapterOptions and the adapter's authoring re-exports deleted; framework/public.ts runtime surface still exactly ['defineExtension'] (definition.test.ts unchanged and green); import-boundary test green; typecheck clean."
+              },
+              {
+                "criterion": "verify config→factory→initialization order, lifecycle, action syntax and async containment through the production public binding and a controlled adapter, and loading/commands/cleanup through an isolated real loader/RPC",
+                "evidence": "production binding + controlled adapter: tests/framework/support/harness-port-double.ts (migrated: implementation members, factory observation, runToCompletion, awaitable initiateRun) and ompAdapter with a native api double; isolated real loader/RPC: tests/harness-dock/binding-lifecycle.test.ts + fixtures/binding-lifecycle/{entrypoint.ts,config.yaml} on the recorded 18.5.0 isolated install, temp run root, provider at the local capture endpoint."
+              },
+              {
+                "criterion": "expectations from the contract/spec, independent literals or hand-work; permanent network tests mocked",
+                "evidence": "help text and thresholds written from the declaration/fixture constants; only the fixture's own durations appear as thresholds; the dock's provider is the local capture endpoint (no real network, no credentials)."
+              },
+              {
+                "criterion": "isolated install/config/work/Session/data roots; async failures carried; evidence retained; no pause for planned human checks",
+                "evidence": "the dock run uses .cache/omp-baseline/18.5.0 and a mkdtemp run root; the formal OMP installation, configuration and sessions were never touched; evidence recorded at .scratch/model-cost-migration/assets/02-binding-actions-evidence-2026-10-13.md."
+              }
+            ],
+            "verification_run": {
+              "bun run typecheck": "0 errors",
+              "bun test tests/harness-dock/binding-lifecycle.test.ts": "1 pass / 0 fail (3.0s)",
+              "bun test tests/framework/actions-routing.test.ts": "13 pass / 0 fail",
+              "bun test tests/framework/implementation-lifecycle.test.ts": "14 pass / 0 fail",
+              "bun test tests/framework": "286 pass / 0 fail across 26 files (10.3s), 27 framework cases added by this ticket on top of the 259 that existed",
+              "bun test tests/connect-bot tests/codebase-tools": "166 pass / 2 fail — the two pre-existing connect-bot panel cases (budget-regression frozen protocol 20.2s; panel-registration-lifecycle unregister window 15.0s)",
+              "bun test tests/harness-dock/baseline.test.ts": "4 pass / 2 fail — the pre-existing anchor-drift pair",
+              "bun test (whole repository)": "471 pass / 4 fail, 475 tests across 57 files (115.8s). The four failures are exactly the pre-existing set (2 baseline anchor-drift + 2 connect-bot panel) that ticket 01's retrospective recorded before this change (443 pass / 4 fail of 447). This is NOT a whole-repo green claim.",
+              "fault_injections": [
+                "actions routing via startsWith → the abbreviation case fails",
+                "initializationPending → undefined → the port-double first-request case fails and the dock case fails at 86ms vs the required ≥1500ms",
+                "cleanupImplementation guard removed → the second-end case fails",
+                "post-cleanup delivery switch left open → the stop-delivering case fails",
+                "all four were reverted and the suites were green again afterwards"
+              ]
+            },
+            "docs_updated": [
+              "framework/README.md (layout + the assembly the public door leads to)",
+              "framework/GLOSSARY.md (Command action extended to the actions kind; Implementation factory; Implementation lifecycle)",
+              "framework/docs/framework-capabilities.md (entry-point table, actions control kind, options: ExtensionAssembly, new section 'The implementation factory and its lifecycle', stale OmpAdapterOptions references)",
+              "docs/adr/0002-semantic-extension-framework.md (additive implementation-status record for this slice inside the model-cost assembly revision, explicitly not a support claim)"
+            ],
+            "evidence_path": ".scratch/model-cost-migration/assets/02-binding-actions-evidence-2026-10-13.md",
+            "unresolved_or_unverified": [
+              "No real-provider, credential or visual check was performed or claimed; the dock's provider is a local capture endpoint.",
+              "The whole-repo suite keeps the four pre-existing failures; they are unrelated to this change but mean the repository is not fully green.",
+              "The unsubscribe half of 'stop delivery, unbind subscriptions' cannot literally deregister native hooks on OMP (the host exposes no removal); the framework's per-binding switch is what was tested, and old-access invalidation is the existing owner-cell retirement.",
+              "'Factory creation performs no remote request or timer' is a contract on extension code; only the framework's own ordering and quiescence are observed here.",
+              "The conditional H3 clause is not triggered: the ticket's real-host script succeeded (no repeated failure, no cost objection), so nothing was handed to a human for P28/P56."
+            ],
+            "notes_for_main": "Ticket 01's peer touched only harness-dock/baseline.ts, host-patches/ and the viewed-session files; this change touches none of them, so no coordination was needed. Files changed: 14 framework sources (3 new), 2 test infrastructure files, 12 test files (2 new framework suites, 1 new dock suite + fixture), 1 extension assembly, 4 docs, 1 evidence note."
+          },
+          "status": "success"
+        }
+      ]
+    },
+    "outputMeta": {
+      "lineCount": 83,
+      "charCount": 11574
+    }
+  },
+  "agent": "tdd",
+  "agent_id": "02-public-binding-actionsmd",
+  "session_id": "01a131cb-5992-74c9-b63a-ce2d7db27407",
+  "session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-12T19-42-26-146Z_01a131a3-4562-728e-8c06-9608e1e88feb\\02-public-binding-actionsmd.jsonl",
+  "execution_cwd": "E:\\Developer\\myhub\\my-agent-toolkit",
+  "retro_document": "E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\model-cost-migration\\retro\\02-public-binding-actions.md\\b5b9c45e-b4b1-4b84-964f-6108fd36f327.md",
+  "retro_finished_at": "2026-10-12T20:49:26.438Z"
+}

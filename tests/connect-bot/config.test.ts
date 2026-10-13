@@ -12,19 +12,18 @@
  * A validated configuration is recorded once per extension per process, and a refused one is
  * recorded not at all, so every binding here declares the extension's own fields under an id of
  * its own: each case reaches the document it supplies rather than a value an earlier case
- * recorded for connect-bot. The panel is a fake transport injected through the extension's own
+ * recorded for connect-bot. The panel is a fake HTTP call injected through the extension's own
  * outbound seam, so a request — which only the extension's registered command and its lifecycle
  * handlers can make — is observed without a network.
  */
 import { afterEach, describe, expect, test } from "bun:test";
 import * as path from "node:path";
 import {
-	type PushFetchInit,
-	type PushHttpResponse,
-	type PushTransport,
+	type PanelRequest,
 	EVENTS_PATH,
-	setPushTransportForTest,
+	setPanelRequestForTest,
 } from "../../extensions/connect-bot/shared-logic/panel/client";
+import type { HttpRequestOptions } from "../../framework/public";
 import { connectBotConfig } from "../../extensions/connect-bot/shared-logic/panel/config";
 import { CONNECT_BOT } from "../../extensions/connect-bot/definition";
 import connectBot from "../../entrypoints/omp/connect-bot";
@@ -46,20 +45,17 @@ const SHIPPED_CONFIG_FILE = path.join(REPO_ROOT, "extensions", "connect-bot", "c
 /** What the shipped file requires, as the framework's read of it reports a missing key. */
 const SHIPPED_FIELDS = CONNECT_BOT.config?.fields;
 
-/** One outbound request the extension made, as the transport received it. */
+/** One outbound request the extension made, as the framework's call received it. */
 interface Request {
 	readonly url: string;
-	readonly init: PushFetchInit;
+	readonly init: HttpRequestOptions;
 }
 
 /** A panel that records every request and answers the registered receipt, so an arm can complete. */
-function recordingPanel(requests: Request[]): PushTransport {
-	return async (url, init) => {
+function recordingPanel(requests: Request[]): PanelRequest {
+	return async (url, init = {}) => {
 		requests.push({ url, init });
-		return {
-			status: 200,
-			text: async () => JSON.stringify({ outcome: "registered", onlineCount: 1 }),
-		} satisfies PushHttpResponse;
+		return new Response(JSON.stringify({ outcome: "registered", onlineCount: 1 }), { status: 200 });
 	};
 }
 
@@ -93,9 +89,9 @@ function configDetails(result: BindingResult): readonly string[] {
 	);
 }
 
-/** An injected panel is per-test state: it must not stand in for the next test's transport. */
+/** An injected panel is per-test state: it must not stand in for the next test's request. */
 afterEach(() => {
-	setPushTransportForTest(null);
+	setPanelRequestForTest(null);
 });
 
 describe("the shipped configuration file is the source of the request budget (P14)", () => {
@@ -113,7 +109,7 @@ describe("the shipped configuration file is the source of the request budget (P1
 		const requests: Request[] = [];
 		// The panel is in place before the binding, so a request made *during* binding — the shape a
 		// load-time probe would take — is recorded like any other.
-		setPushTransportForTest(recordingPanel(requests));
+		setPanelRequestForTest(recordingPanel(requests));
 		const double = ompDouble();
 
 		connectBot(double.api);
@@ -184,7 +180,7 @@ describe("a missing or illegal request budget refuses the extension (P14)", () =
 			// A request can only be made through the command the binding registers, so the panel's
 			// record is watched from before the binding: nothing may reach it while the binding is
 			// refused.
-			setPushTransportForTest(recordingPanel(requests));
+			setPanelRequestForTest(recordingPanel(requests));
 			const id = `budget-refused-${name.replace(/\W+/g, "-")}`;
 
 			const { result, diagnostics, registrations } = bindDocument(requiringConnectBotFields(id), document);

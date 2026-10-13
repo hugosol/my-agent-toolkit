@@ -1,0 +1,145 @@
+{
+  "feature": "model-cost-migration",
+  "ticket": "20-tui-boundary-timer.md",
+  "run_id": "0bc950bd-807d-4fd9-8712-5bdd4ea7161c",
+  "parent_session_id": "01a131a3-4562-728e-8c06-9608e1e88feb",
+  "parent_session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-12T19-42-26-146Z_01a131a3-4562-728e-8c06-9608e1e88feb.jsonl",
+  "workspace": "E:\\Developer\\myhub\\my-agent-toolkit",
+  "tool_call_id": "js-task-de0aca8b-766a-47d5-b2e0-9f584e00092d",
+  "started_at": "2026-10-13T10:15:15.584Z",
+  "tdd_status": "completed",
+  "retro_status": "completed",
+  "tdd_finished_at": "2026-10-13T10:26:48.548Z",
+  "tdd_result": {
+    "index": 0,
+    "id": "20-tui-boundary-timermd-3",
+    "agent": "tdd",
+    "agentSource": "user",
+    "task": "Complete assignment thoroughly:\n\nTicket filename: 20-tui-boundary-timer.md\nTicket path: .scratch/model-cost-migration/implementation/20-tui-boundary-timer.md\n\nFull ticket content:\n# 20: 完整 TUI 与单一峰谷边界 timer\n\n**What to build:** 用户在全部适用模式和主子查看下获得批准视觉与告警，峰谷到点由唯一 timer 更新当前视图而不改账或发查询。\n\n**Delivers:** P41, P67\n\n**Blocked by:** 18: Viewed session 的唯一 Marker area；19: holiday 与 clear 的完整周期切换\n\n**Status:** ready-for-agent\n\n## Acceptance criteria\n\n- [ ] 保留原布局/字体/色彩/context 条/Effort 值着色/峰谷 holiday、余额 <10/<5 元告警，以及 ≤20 元 fine、>20 元 coarse 的 Accrued/Session 分段条。\n- [ ] 保留 Codex 20 格节奏、quota/time%、倒计时/绝对 reset，5h 分钟/7d 小时精度，未知/过期/无效 reset 及窄宽降级；统一 CacheR/CacheW、Total/Round 与适用金额单位。\n- [ ] 每 CLI UI 仅一个下一峰谷边界一次性 timeout，含端点后通知并按实际时间安排未来边界；切目标不各自 arm，休眠/阻塞后纠正，销毁清理，headless 无绘制 timer。\n- [ ] render 只读同一权威结果，无网络/保存/timer/计价修改；timer 不发网络/写文件/改费用，前端只负责原生主题/布局/宽度。\n- [ ] 自动验证对应字段、金额单位、告警阈值和降级内容；受控时钟证明单 timer/当前目标/销毁，不能以正确数字代替视觉保留。\n- [ ] 本票准备 P41/P67 H1 全部适用模式、主子 brief/detail 和宽窄场景的精确 artifact、隔离步骤、预期、自动结果及可获得截图/录屏；冻结旧 source oracle 仅作授权对照，复用前检查许可证。\n- [ ] 通过批准的生产公共 seam 观察行为，预期来自合同/规格、独立字面值或手算，不以被测实现重算；永久网络 tests 使用 mock。\n- [ ] 使用隔离安装/配置/工作/Session/数据根，不操作正式 OMP；承接异步失败并保留够用脱敏证据，完成本票自动检查及材料准备，不因计划人工验收暂停可执行工作。\n\n## Verification responsibility\n\n本票负责所列 Delivers 的自动 coverage 与适用宿主贯通/证据准备；P58/P52 按本票具名责任执行。合同采用 Rapid iteration：H1/H2 及允许的条件性 H3 按原 Coverage 交用户确认，未确认不记通过；不改变承诺或免除实现/永久 tests。\n\n[You have received this identical output 3 times. Re-reading '.scratch/model-cost-migration/implementation/20-tui-boundary-timer.md' will not change it — use a narrower selector (path:A-B), or proceed with the edit.]\n\nRetry required approved scope violation reported by ticket25: production Balance row can appear in token-only although spec/contract forbid official balance there. Fix actual mode gating without disabling backend caches or erasing mixed tree contributions; verify cached-balance mode switches end to end.",
+    "assignment": "Ticket filename: 20-tui-boundary-timer.md\nTicket path: .scratch/model-cost-migration/implementation/20-tui-boundary-timer.md\n\nFull ticket content:\n# 20: 完整 TUI 与单一峰谷边界 timer\n\n**What to build:** 用户在全部适用模式和主子查看下获得批准视觉与告警，峰谷到点由唯一 timer 更新当前视图而不改账或发查询。\n\n**Delivers:** P41, P67\n\n**Blocked by:** 18: Viewed session 的唯一 Marker area；19: holiday 与 clear 的完整周期切换\n\n**Status:** ready-for-agent\n\n## Acceptance criteria\n\n- [ ] 保留原布局/字体/色彩/context 条/Effort 值着色/峰谷 holiday、余额 <10/<5 元告警，以及 ≤20 元 fine、>20 元 coarse 的 Accrued/Session 分段条。\n- [ ] 保留 Codex 20 格节奏、quota/time%、倒计时/绝对 reset，5h 分钟/7d 小时精度，未知/过期/无效 reset 及窄宽降级；统一 CacheR/CacheW、Total/Round 与适用金额单位。\n- [ ] 每 CLI UI 仅一个下一峰谷边界一次性 timeout，含端点后通知并按实际时间安排未来边界；切目标不各自 arm，休眠/阻塞后纠正，销毁清理，headless 无绘制 timer。\n- [ ] render 只读同一权威结果，无网络/保存/timer/计价修改；timer 不发网络/写文件/改费用，前端只负责原生主题/布局/宽度。\n- [ ] 自动验证对应字段、金额单位、告警阈值和降级内容；受控时钟证明单 timer/当前目标/销毁，不能以正确数字代替视觉保留。\n- [ ] 本票准备 P41/P67 H1 全部适用模式、主子 brief/detail 和宽窄场景的精确 artifact、隔离步骤、预期、自动结果及可获得截图/录屏；冻结旧 source oracle 仅作授权对照，复用前检查许可证。\n- [ ] 通过批准的生产公共 seam 观察行为，预期来自合同/规格、独立字面值或手算，不以被测实现重算；永久网络 tests 使用 mock。\n- [ ] 使用隔离安装/配置/工作/Session/数据根，不操作正式 OMP；承接异步失败并保留够用脱敏证据，完成本票自动检查及材料准备，不因计划人工验收暂停可执行工作。\n\n## Verification responsibility\n\n本票负责所列 Delivers 的自动 coverage 与适用宿主贯通/证据准备；P58/P52 按本票具名责任执行。合同采用 Rapid iteration：H1/H2 及允许的条件性 H3 按原 Coverage 交用户确认，未确认不记通过；不改变承诺或免除实现/永久 tests。\n\n[You have received this identical output 3 times. Re-reading '.scratch/model-cost-migration/implementation/20-tui-boundary-timer.md' will not change it — use a narrower selector (path:A-B), or proceed with the edit.]\n\nRetry required approved scope violation reported by ticket25: production Balance row can appear in token-only although spec/contract forbid official balance there. Fix actual mode gating without disabling backend caches or erasing mixed tree contributions; verify cached-balance mode switches end to end.",
+    "description": "Fix Balance row mode gating and verify cached-balance switches",
+    "lastIntent": "Confirming my changed files",
+    "exitCode": 0,
+    "output": "{\n  \"ticket\": \"20-tui-boundary-timer (retry: approved-scope gap reported by ticket 25)\",\n  \"delivered\": \"Production Balance row is now mode-gated: `widgetLayout` draws the provider balance line only for the monetary channel (monetary-billed DeepSeek), matching spec §134 (token-only has no official peak/valley/holiday price or balance), P8 ('token-only only provides the approved usage display') and the frozen old implementation (`my-omp-toolkit@fd3b507`: only the DeepSeek branch pushes the balance; codex goes to buildChatGPTWidgetLines; token-only returns early). Nothing else changed: `presentation.balance()`, the startup prefetch, the success TTL, in-flight merge, failure-keeps-last-reading, and the process-level cache all still run untouched, and the mixed main tree keeps every known Cost/Ref.\",\n  \"criteria_evidence\": [\n    {\n      \"criterion\": \"Balance row gated by the mode actually being displayed (token-only/hidden/allowance must not show it) — ticket 25 gap, owned by P8+P67\",\n      \"evidence\": \"S2/S5 `tests/model-cost/widget-visual.test.ts` new case `the balance is the monetary channel's own line (P8, P67)` driven through the production frontend `attachModelCostWidget` with the recording host theme+width: the same process holds a real reading (`Balance: «text:¥110.00»` in the official frame), then token-only / allowance / hidden targets draw no `Balance:` line (token-only frame is exactly the approved bar+Effort form, hidden gets the clear), and switching back draws the same amount again with `/user/balance` still called exactly once.\"\n    },\n    {\n      \"criterion\": \"Real CLI, same instance: official → Go → official shows the switch, keeps the balance cache, and does not re-query; save and request counts unchanged\",\n      \"evidence\": \"S5 `tests/harness-dock/model-cost-modes.test.ts` new case `a held reading survives a real switch to a Go id and back, and only the official pair draws it` (frozen artifact + real RPC + local capture endpoint): official frame `Balance: ¥110.00`, `balanceCalls()==1`; Go frame `Sum: 6,000`, no `Cache/In/Out`, no `Balance:` line, `balanceCalls()` still 1; back on official: `Balance: ¥110.00`, `Sum: 9,000`, `balanceCalls()` still 1, `requests()==3`; saved document holds the official pair `2000/2000/0/2000` + `costCny≈0.01004` and the Go pair `1000/1000/0/1000` with `costCny`/`referenceCostUsd` undefined.\"\n    },\n    {\n      \"criterion\": \"Do not disable the backend cache or erase mixed-tree contributions while gating the display\",\n      \"evidence\": \"No change to `provider-balance.ts`, `runtime.ts` or `presentation.balance()`; the suites that read the backend directly are unmodified and green (`tests/model-cost/provider-balance.test.ts`, `runtime-initialization.test.ts`, `detail-tree.test.ts` asserting `presentation.balance().reading?.total`, `headless-feedback.test.ts`). The monetary branch still draws readings and failures; the mixed tree still yields every Cost/Ref (`fieldsOf` unchanged).\"\n    },\n    {\n      \"criterion\": \"Fault-injection: an implementation containing the violation must fail these tests\",\n      \"evidence\": \"Temporarily reverting the gate to `if (display.mode !== \\\"hidden\\\")` (the defect form) failed both cases at the same behavioral assertion ('the Go frame drew a Balance line'); restored and re-ran green.\"\n    },\n    {\n      \"criterion\": \"Ticket 20 materials updated, no stale 'pending adjudication' wording; H1 material stays honest\",\n      \"evidence\": \"`assets/20-tui-boundary-timer-evidence-2026-10-13.md`: §7 pending-adjudication bullet replaced by the resolved record (not a new adjudication — P8 already approved it), §0/§1/§2/§5.1/§5.2/§5.3 updated, new §9 with the change, both evidences, red→green, injection, all commands and limits; §5 H1 conclusion (real interactive TUI unverified, no screenshots available) unchanged.\"\n    }\n  ],\n  \"commands\": [\n    {\n      \"cmd\": \"bun test tests/model-cost/widget-visual.test.ts\",\n      \"result\": \"red first: 1 fail (token-only frame contained `Balance:`); after the one-line gate: 21 pass / 0 fail (86 expect, 0.25s)\"\n    },\n    {\n      \"cmd\": \"bun test tests/harness-dock/model-cost-modes.test.ts -t \\\"the balance the CLI holds\\\"\",\n      \"result\": \"1 pass / 0 fail (18 expect, 1.95s)\"\n    },\n    {\n      \"cmd\": \"bun test tests/harness-dock/model-cost-modes.test.ts tests/harness-dock/detail-tree.test.ts\",\n      \"result\": \"7 pass / 0 fail (90 expect, 15.96s)\"\n    },\n    {\n      \"cmd\": \"bun test tests/model-cost\",\n      \"result\": \"267 pass / 0 fail (22 files, 3.07s)\"\n    },\n    {\n      \"cmd\": \"bun test (whole repo)\",\n      \"result\": \"864 pass / 0 fail (98 files, 4820 expect, 292.6s) = previous 862 + the 2 new cases; the two pre-existing `baseline record` failures recorded last run did not appear, unmodified by this ticket and not explained further\"\n    },\n    {\n      \"cmd\": \"bunx tsc --noEmit\",\n      \"result\": \"exit 0, no output (TypeScript 7.0.2; --listFiles contains the three edited files)\"\n    }\n  ],\n  \"files_changed\": [\n    \"extensions/model-cost/harnesses/omp/widget.ts (gate + doc)\",\n    \"tests/model-cost/widget-visual.test.ts (+1 case)\",\n    \"tests/harness-dock/model-cost-modes.test.ts (run options object, `monetary-and-go` provision, widget wait helper, +1 case)\",\n    \"extensions/model-cost/GLOSSARY.md (balance entry: monetary-only display; hiding it never touches the reading/TTL/in-flight query)\",\n    \"extensions/model-cost/README.md (P67 H1 row qualified)\",\n    \"extensions/model-cost/docs/model-data-maintenance.md (mode is the display gate)\",\n    \".scratch/model-cost-migration/assets/20-tui-boundary-timer-evidence-2026-10-13.md (§9 + de-staled wording)\"\n  ],\n  \"callers_migrated\": \"None needed: `widgetLayout`/`widgetLines` callers are this extension's own assembly and tests; `balanceLine()` is a pure shared-logic formatter whose meaning is unchanged; no public contract change (spec §134 / P8 only make the display match).\",\n  \"unverified\": [\n    \"H1 (real interactive TUI colours/fonts/narrow-width layout, real focus switching, real boundary redraw) remains human — no interactive TUI in this environment and no screenshot/recording obtainable; recorded, not worked around.\",\n    \"H2 (real DeepSeek account reading) remains human; the capture endpoint's ¥110.00 is the dock fixture, not a real account (peer dock.run known: provider permission stays the existing fixture, `Bearer dock-key`).\",\n    \"The phase-3 'no further query' claim holds because the run stays inside the shipped 30,000ms success TTL (observed 1.95s); a TTL refresh from a settled DeepSeek request is the delivered 12-ticket policy, and the Go phase itself can never query (other provider).\"\n  ],\n  \"coordination\": [\n    \"Peer 25 confirmed it booked the closure in its own §10 (I did not re-run its readings); its H1/H2 list is unchanged.\",\n    \"Stale line flagged, not edited: `assets/15-provider-init-auth-lifecycle-evidence` line 88's rationale ('the balance row is drawn in the widget regardless of mode') is now outdated; the behavior it supports (no self-reported balance failure for a provider the process never used) is unchanged. Left to the owning ticket / Main; also recorded in §9 of my evidence.\"\n  ],\n  \"main_agent_checks\": \"No further checks required for the retry — the whole repository suite (864/0) and `bunx tsc --noEmit` were run after the last code edit; doc edits followed and touch no test input. If you want an independent confirmation, `bun test tests/model-cost tests/harness-dock/model-cost-modes.test.ts` is the tight pair.\"\n}",
+    "stderr": "",
+    "truncated": false,
+    "durationMs": 692948,
+    "tokens": 214143,
+    "requests": 109,
+    "contextTokens": 205714,
+    "contextWindow": 1000000,
+    "modelOverride": [
+      "deepseek/deepseek-flash:high"
+    ],
+    "resolvedModel": "deepseek/deepseek-flash:high",
+    "resolvedModelIdentity": "deepseek/deepseek-flash",
+    "resolvedThinkingLevel": "high",
+    "aborted": false,
+    "usage": {
+      "input": 147853,
+      "output": 66290,
+      "cacheRead": 14467840,
+      "cacheWrite": 0,
+      "totalTokens": 14681983,
+      "reasoningTokens": 36499,
+      "cost": {
+        "input": 0.022177950000000023,
+        "output": 0.03977399999999999,
+        "cacheRead": 0.043403519999999994,
+        "cacheWrite": 0,
+        "total": 0.10535546999999998
+      }
+    },
+    "outputPath": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-12T19-42-26-146Z_01a131a3-4562-728e-8c06-9608e1e88feb\\20-tui-boundary-timermd-3.md",
+    "extractedToolData": {
+      "yield": [
+        {
+          "data": {
+            "ticket": "20-tui-boundary-timer (retry: approved-scope gap reported by ticket 25)",
+            "delivered": "Production Balance row is now mode-gated: `widgetLayout` draws the provider balance line only for the monetary channel (monetary-billed DeepSeek), matching spec §134 (token-only has no official peak/valley/holiday price or balance), P8 ('token-only only provides the approved usage display') and the frozen old implementation (`my-omp-toolkit@fd3b507`: only the DeepSeek branch pushes the balance; codex goes to buildChatGPTWidgetLines; token-only returns early). Nothing else changed: `presentation.balance()`, the startup prefetch, the success TTL, in-flight merge, failure-keeps-last-reading, and the process-level cache all still run untouched, and the mixed main tree keeps every known Cost/Ref.",
+            "criteria_evidence": [
+              {
+                "criterion": "Balance row gated by the mode actually being displayed (token-only/hidden/allowance must not show it) — ticket 25 gap, owned by P8+P67",
+                "evidence": "S2/S5 `tests/model-cost/widget-visual.test.ts` new case `the balance is the monetary channel's own line (P8, P67)` driven through the production frontend `attachModelCostWidget` with the recording host theme+width: the same process holds a real reading (`Balance: «text:¥110.00»` in the official frame), then token-only / allowance / hidden targets draw no `Balance:` line (token-only frame is exactly the approved bar+Effort form, hidden gets the clear), and switching back draws the same amount again with `/user/balance` still called exactly once."
+              },
+              {
+                "criterion": "Real CLI, same instance: official → Go → official shows the switch, keeps the balance cache, and does not re-query; save and request counts unchanged",
+                "evidence": "S5 `tests/harness-dock/model-cost-modes.test.ts` new case `a held reading survives a real switch to a Go id and back, and only the official pair draws it` (frozen artifact + real RPC + local capture endpoint): official frame `Balance: ¥110.00`, `balanceCalls()==1`; Go frame `Sum: 6,000`, no `Cache/In/Out`, no `Balance:` line, `balanceCalls()` still 1; back on official: `Balance: ¥110.00`, `Sum: 9,000`, `balanceCalls()` still 1, `requests()==3`; saved document holds the official pair `2000/2000/0/2000` + `costCny≈0.01004` and the Go pair `1000/1000/0/1000` with `costCny`/`referenceCostUsd` undefined."
+              },
+              {
+                "criterion": "Do not disable the backend cache or erase mixed-tree contributions while gating the display",
+                "evidence": "No change to `provider-balance.ts`, `runtime.ts` or `presentation.balance()`; the suites that read the backend directly are unmodified and green (`tests/model-cost/provider-balance.test.ts`, `runtime-initialization.test.ts`, `detail-tree.test.ts` asserting `presentation.balance().reading?.total`, `headless-feedback.test.ts`). The monetary branch still draws readings and failures; the mixed tree still yields every Cost/Ref (`fieldsOf` unchanged)."
+              },
+              {
+                "criterion": "Fault-injection: an implementation containing the violation must fail these tests",
+                "evidence": "Temporarily reverting the gate to `if (display.mode !== \"hidden\")` (the defect form) failed both cases at the same behavioral assertion ('the Go frame drew a Balance line'); restored and re-ran green."
+              },
+              {
+                "criterion": "Ticket 20 materials updated, no stale 'pending adjudication' wording; H1 material stays honest",
+                "evidence": "`assets/20-tui-boundary-timer-evidence-2026-10-13.md`: §7 pending-adjudication bullet replaced by the resolved record (not a new adjudication — P8 already approved it), §0/§1/§2/§5.1/§5.2/§5.3 updated, new §9 with the change, both evidences, red→green, injection, all commands and limits; §5 H1 conclusion (real interactive TUI unverified, no screenshots available) unchanged."
+              }
+            ],
+            "commands": [
+              {
+                "cmd": "bun test tests/model-cost/widget-visual.test.ts",
+                "result": "red first: 1 fail (token-only frame contained `Balance:`); after the one-line gate: 21 pass / 0 fail (86 expect, 0.25s)"
+              },
+              {
+                "cmd": "bun test tests/harness-dock/model-cost-modes.test.ts -t \"the balance the CLI holds\"",
+                "result": "1 pass / 0 fail (18 expect, 1.95s)"
+              },
+              {
+                "cmd": "bun test tests/harness-dock/model-cost-modes.test.ts tests/harness-dock/detail-tree.test.ts",
+                "result": "7 pass / 0 fail (90 expect, 15.96s)"
+              },
+              {
+                "cmd": "bun test tests/model-cost",
+                "result": "267 pass / 0 fail (22 files, 3.07s)"
+              },
+              {
+                "cmd": "bun test (whole repo)",
+                "result": "864 pass / 0 fail (98 files, 4820 expect, 292.6s) = previous 862 + the 2 new cases; the two pre-existing `baseline record` failures recorded last run did not appear, unmodified by this ticket and not explained further"
+              },
+              {
+                "cmd": "bunx tsc --noEmit",
+                "result": "exit 0, no output (TypeScript 7.0.2; --listFiles contains the three edited files)"
+              }
+            ],
+            "files_changed": [
+              "extensions/model-cost/harnesses/omp/widget.ts (gate + doc)",
+              "tests/model-cost/widget-visual.test.ts (+1 case)",
+              "tests/harness-dock/model-cost-modes.test.ts (run options object, `monetary-and-go` provision, widget wait helper, +1 case)",
+              "extensions/model-cost/GLOSSARY.md (balance entry: monetary-only display; hiding it never touches the reading/TTL/in-flight query)",
+              "extensions/model-cost/README.md (P67 H1 row qualified)",
+              "extensions/model-cost/docs/model-data-maintenance.md (mode is the display gate)",
+              ".scratch/model-cost-migration/assets/20-tui-boundary-timer-evidence-2026-10-13.md (§9 + de-staled wording)"
+            ],
+            "callers_migrated": "None needed: `widgetLayout`/`widgetLines` callers are this extension's own assembly and tests; `balanceLine()` is a pure shared-logic formatter whose meaning is unchanged; no public contract change (spec §134 / P8 only make the display match).",
+            "unverified": [
+              "H1 (real interactive TUI colours/fonts/narrow-width layout, real focus switching, real boundary redraw) remains human — no interactive TUI in this environment and no screenshot/recording obtainable; recorded, not worked around.",
+              "H2 (real DeepSeek account reading) remains human; the capture endpoint's ¥110.00 is the dock fixture, not a real account (peer dock.run known: provider permission stays the existing fixture, `Bearer dock-key`).",
+              "The phase-3 'no further query' claim holds because the run stays inside the shipped 30,000ms success TTL (observed 1.95s); a TTL refresh from a settled DeepSeek request is the delivered 12-ticket policy, and the Go phase itself can never query (other provider)."
+            ],
+            "coordination": [
+              "Peer 25 confirmed it booked the closure in its own §10 (I did not re-run its readings); its H1/H2 list is unchanged.",
+              "Stale line flagged, not edited: `assets/15-provider-init-auth-lifecycle-evidence` line 88's rationale ('the balance row is drawn in the widget regardless of mode') is now outdated; the behavior it supports (no self-reported balance failure for a provider the process never used) is unchanged. Left to the owning ticket / Main; also recorded in §9 of my evidence."
+            ],
+            "main_agent_checks": "No further checks required for the retry — the whole repository suite (864/0) and `bunx tsc --noEmit` were run after the last code edit; doc edits followed and touch no test input. If you want an independent confirmation, `bun test tests/model-cost tests/harness-dock/model-cost-modes.test.ts` is the tight pair."
+          },
+          "status": "success"
+        }
+      ]
+    },
+    "outputMeta": {
+      "lineCount": 72,
+      "charCount": 7522
+    }
+  },
+  "agent": "tdd",
+  "agent_id": "20-tui-boundary-timermd-3",
+  "session_id": "01a134c2-5da2-7050-b2ec-a6537a8fa7c1",
+  "session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-12T19-42-26-146Z_01a131a3-4562-728e-8c06-9608e1e88feb\\20-tui-boundary-timermd-3.jsonl",
+  "execution_cwd": "E:\\Developer\\myhub\\my-agent-toolkit",
+  "retro_document": "E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\model-cost-migration\\retro\\20-tui-boundary-timer.md\\0bc950bd-807d-4fd9-8712-5bdd4ea7161c.md",
+  "retro_finished_at": "2026-10-13T10:28:47.273Z"
+}

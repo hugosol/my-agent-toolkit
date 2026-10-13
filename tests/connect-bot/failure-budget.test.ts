@@ -4,7 +4,7 @@
  *
  * The extension is driven exactly as the loader drives it: its own OMP assembly binds the
  * definition against the double, and the command the framework registered runs with a doubled
- * session context. The panel is a fake transport injected through the extension's own seam, so
+ * session context. The panel is a fake HTTP call injected through the extension's own seam, so
  * every request is observed without a network, and each test's session id is its own so nothing
  * about one case can leak into the next.
  *
@@ -22,11 +22,10 @@
 import { afterEach, describe, expect, jest, test } from "bun:test";
 import * as path from "node:path";
 import {
-	type PushFetchInit,
-	type PushHttpResponse,
-	type PushTransport,
-	setPushTransportForTest,
+	type PanelRequest,
+	setPanelRequestForTest,
 } from "../../extensions/connect-bot/shared-logic/panel/client";
+import type { HttpRequestOptions } from "../../framework/public";
 import { CONNECT_BOT } from "../../extensions/connect-bot/definition";
 import { botSessions } from "../../extensions/connect-bot/shared-logic/session/session";
 import connectBot from "../../extensions/connect-bot/harnesses/omp";
@@ -58,17 +57,15 @@ const FIRST_FAILURE = "与 omp-bot 面板连接中断；若持续失败将自动
 /** The budget running out, verbatim from the frozen baseline. */
 const AUTO_DISARM = "与 omp-bot 连接中断，已断开；重新执行 /connect-bot 可重连";
 
-/** One outbound request the extension made, as the transport received it. */
+/** One outbound request the extension made, as the framework's call received it. */
 interface Request {
 	readonly url: string;
-	readonly init: PushFetchInit;
+	readonly init: HttpRequestOptions;
 }
 
 /** The panel's answer to one request. */
-const panelAnswer = (status: number, body: unknown): PushHttpResponse => ({
-	status,
-	text: async () => JSON.stringify(body),
-});
+const panelAnswer = (status: number, body: unknown): Response =>
+	new Response(JSON.stringify(body), { status });
 
 /**
  * The envelope fields a test reads off the wire: the two strings the contract's envelope always
@@ -84,7 +81,7 @@ interface WireEnvelope {
 
 /** Reads one sent request body as the `{sessionId, kind, data?}` envelope the contract fixes. */
 function envelopeOf(request: Request): WireEnvelope {
-	const parsed: unknown = JSON.parse(request.init.body);
+	const parsed: unknown = JSON.parse(request.init.body ?? "");
 	if (parsed === null || typeof parsed !== "object") {
 		throw new Error("connect-bot sent a body that is not an object");
 	}
@@ -108,7 +105,7 @@ function envelopeOf(request: Request): WireEnvelope {
  */
 const answers = {
 	/** The panel is gone: the request itself fails (a reject, and the abort at the budget alike). */
-	gone: async (): Promise<PushHttpResponse> => {
+	gone: async (): Promise<Response> => {
 		throw new Error("the panel never answered");
 	},
 	/** The panel is reachable but has forgotten this session, as after an omp-bot restart. */
@@ -127,7 +124,7 @@ type Answer = (typeof answers)[keyof typeof answers];
  */
 interface Panel {
 	readonly requests: Request[];
-	readonly transport: PushTransport;
+	readonly request: PanelRequest;
 	/** What the panel does with the next background push. */
 	keep(answer: Answer): void;
 	/** Holds every background push from now on until {@link release}, as a silent panel does. */
@@ -143,7 +140,7 @@ function panel(answer: Answer): Panel {
 	let holding = false;
 	return {
 		requests,
-		transport: async (url, init) => {
+		request: async (url, init = {}) => {
 			const request = { url, init };
 			requests.push(request);
 			const kind = envelopeOf(request).kind;
@@ -157,7 +154,7 @@ function panel(answer: Answer): Panel {
 				return panelAnswer(200, { outcome: "accepted" });
 			}
 			if (holding) {
-				return new Promise<PushHttpResponse>(resolve => held.push(() => resolve(current())));
+				return new Promise<Response>(resolve => held.push(() => resolve(current())));
 			}
 			return current();
 		},
@@ -175,11 +172,11 @@ function panel(answer: Answer): Panel {
 }
 
 /** Binds the extension against a fresh double and injects one panel. */
-function bound(transport: PushTransport): OmpDouble {
+function bound(request: PanelRequest): OmpDouble {
 	const double = ompDouble();
 	connectBot(double.api);
-	// The assembly installs the platform's own transport at binding; the fake takes its place.
-	setPushTransportForTest(transport);
+	// A real binding sends through the framework's own request; the fake takes its place.
+	setPanelRequestForTest(request);
 	return double;
 }
 
@@ -189,8 +186,8 @@ function bound(transport: PushTransport): OmpDouble {
  * the state report the arm path sends behind its register is then let settle too, so the connection
  * each test takes down is up, with its queue drained, before the outage begins.
  */
-async function armed(transport: PushTransport, sessionId: string): Promise<OmpDouble> {
-	const double = bound(transport);
+async function armed(request: PanelRequest, sessionId: string): Promise<OmpDouble> {
+	const double = bound(request);
 	const announced = double.nextNotification();
 	double.run("connect-bot", "", double.context({ sessionId, cwd: "E:/work/budget" }));
 	await announced;
@@ -221,7 +218,7 @@ afterEach(() => {
 describe("the first failure of an outage is announced once (E10, P31)", () => {
 	test("the first failed beat is announced and the second is counted silently", async () => {
 		const sent = panel(answers.gone);
-		const double = await armed(sent.transport, "budget-first");
+		const double = await armed(sent.request, "budget-first");
 
 		fireTimer(double);
 		await settleAll();
@@ -250,7 +247,7 @@ describe("the first failure of an outage is announced once (E10, P31)", () => {
 	test("a push the panel never answers is one failure of the budget", async () => {
 		jest.useFakeTimers();
 		const requests: Request[] = [];
-		const double = await armed((url, init) => {
+		const double = await armed((url, init = {}) => {
 			const request = { url, init };
 			requests.push(request);
 			const kind = envelopeOf(request).kind;
@@ -260,9 +257,10 @@ describe("the first failure of an outage is announced once (E10, P31)", () => {
 			if (kind === "state") {
 				return Promise.resolve(panelAnswer(200, { outcome: "accepted" }));
 			}
-			return new Promise<PushHttpResponse>((_resolve, reject) => {
-				// A panel that is gone never answers; the request ends the way an aborted fetch does.
-				init.signal.addEventListener("abort", () => reject(new Error("push budget exceeded")));
+			return new Promise<Response>((_resolve, reject) => {
+				// A panel that is gone never answers: the push is abandoned when the wait it declared
+				// runs out, on this file's own fake clock, advanced by exactly that budget below.
+				setTimeout(() => reject(new Error("push budget exceeded")), init.timeoutMs);
 			});
 		}, "budget-timeout");
 
@@ -270,14 +268,15 @@ describe("the first failure of an outage is announced once (E10, P31)", () => {
 		expect(double.notifications).toEqual([CONNECTED]);
 
 		// The configured budget every request waits — the queued push included — runs out, the
-		// request is aborted, and the failure is accounted like any other: the outage is announced
+		// request is abandoned, and the failure is accounted like any other: the outage is announced
 		// on this first failure, not on a later one.
 		jest.advanceTimersByTime(REQUEST_TIMEOUT_MS);
 		await settleAll();
 
-		// The push that timed out is the beat; the arm path's own report had already been answered.
+		// The push that ran out of budget is the beat, and the wait it declared is the extension's
+		// configured budget rather than a constant of this file.
 		const beats = requests.filter(request => envelopeOf(request).kind === "heartbeat");
-		expect(beats[beats.length - 1]?.init.signal.aborted).toBe(true);
+		expect(beats[beats.length - 1]?.init.timeoutMs).toBe(REQUEST_TIMEOUT_MS);
 		expect(double.notifications).toEqual([CONNECTED, FIRST_FAILURE]);
 	});
 });
@@ -285,7 +284,7 @@ describe("the first failure of an outage is announced once (E10, P31)", () => {
 describe("three consecutive failures end the connection by themselves (E10, P31, P36, P38, P40)", () => {
 	test("the third failed beat auto-disarms: local stop, marker gone, one notice", async () => {
 		const sent = panel(answers.unknownSession);
-		const double = await armed(sent.transport, "budget-third");
+		const double = await armed(sent.request, "budget-third");
 
 		fireTimer(double);
 		await settleAll();
@@ -328,7 +327,7 @@ describe("three consecutive failures end the connection by themselves (E10, P31,
 
 	test("a beat queued behind the failing one never goes, and its answer is accounted to nobody", async () => {
 		const sent = panel(answers.gone);
-		const double = await armed(sent.transport, "budget-late");
+		const double = await armed(sent.request, "budget-late");
 
 		fireTimer(double);
 		await settleAll();
@@ -365,7 +364,7 @@ describe("three consecutive failures end the connection by themselves (E10, P31,
 describe("a push the panel takes resets the segment (E10, P31)", () => {
 	test("a successful beat clears the count and the flag, so the next outage announces itself again", async () => {
 		const sent = panel(answers.gone);
-		const double = await armed(sent.transport, "budget-reset");
+		const double = await armed(sent.request, "budget-reset");
 
 		fireTimer(double);
 		await settleAll();
@@ -401,7 +400,7 @@ describe("a push the panel takes resets the segment (E10, P31)", () => {
 
 	test("a re-register is a fresh start: the budget the record holds begins again", async () => {
 		const sent = panel(answers.gone);
-		const double = await armed(sent.transport, "budget-rearm");
+		const double = await armed(sent.request, "budget-rearm");
 
 		fireTimer(double);
 		await settleAll();

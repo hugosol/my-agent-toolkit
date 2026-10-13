@@ -1,0 +1,67 @@
+{
+  "feature": "model-cost-migration",
+  "ticket": "01-viewed-session-artifact.md",
+  "run_id": "dd99bf58-3a73-4fe9-8c28-7a0c2d6afa58",
+  "parent_session_id": "01a131a3-4562-728e-8c06-9608e1e88feb",
+  "parent_session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-12T19-42-26-146Z_01a131a3-4562-728e-8c06-9608e1e88feb.jsonl",
+  "workspace": "E:\\Developer\\myhub\\my-agent-toolkit",
+  "tool_call_id": "js-task-9c00a7a0-ad5f-4cd6-82e5-21b5e79eb5bb",
+  "started_at": "2026-10-12T19:56:37.945Z",
+  "tdd_status": "failed",
+  "retro_status": "failed",
+  "tdd_finished_at": "2026-10-12T19:57:07.997Z",
+  "tdd_result": {
+    "index": 0,
+    "id": "01-viewed-session-artifactmd",
+    "agent": "tdd",
+    "agentSource": "user",
+    "task": "Complete assignment thoroughly:\n\nTicket filename: 01-viewed-session-artifact.md\nTicket path: .scratch/model-cost-migration/implementation/01-viewed-session-artifact.md\n\nFull ticket content:\n# 01: 公开 Viewed session 并冻结隔离宿主\n\n**What to build:** 在隔离 OMP 中通过公共只读出口读取当前查看会话及其变化，冻结可运行的补丁宿主，供实际 Effort 与有效 State 展示接入。\n\n**Delivers:** enabling: unblocks P11, P27\n\n**Blocked by:** None (can start immediately)\n\n**Status:** ready-for-agent\n\n## Acceptance criteria\n\n- [ ] 以批准的 OMP 18.5.0（@9348320）支持基础补最小公开出口；如必须换基础版本，提供具体证据请求裁决，不自行升级。\n- [ ] 公开快照及变化订阅提供实际 Session 身份、名称、必要关系、provider/model、实际 Effort、context 使用/窗口；缺失显式不可取得，不读取私有 controller 或 UI 文本猜值。\n- [ ] 覆盖目标切换、同目标事实变化、目标失效和解除订阅；查看不改变执行 Session、Owner 或写权限。\n- [ ] 冻结精确 revision 和可运行 artifact，记录构建/依赖/环境及隔离加载步骤；不预造 revision，不把局部探针当支持认证。\n- [ ] 复用 Harness dock，在独立安装、配置、工作、Session 和数据根启动实际补丁宿主，观察出口变化与解除后的结果；不驱动正式 OMP。\n- [ ] 通过批准的生产公共 seam 观察行为，预期来自合同/规格、独立字面值或手算，不以被测实现重算；永久网络 tests 使用 mock。\n- [ ] 使用隔离安装/配置/工作/Session/数据根，不操作正式 OMP；承接异步失败并保留够用脱敏证据，完成本票自动检查及材料准备，不因计划人工验收暂停可执行工作。\n\n## Verification responsibility\n\n本票为 enabling，提供真实公开出口与隔离 artifact，不认领 P11/P27 最终验收。合同采用 Rapid iteration：H1/H2 及允许的条件性 H3 按原 Coverage 交用户确认，未确认不记通过；不改变承诺或免除实现/永久 tests。",
+    "assignment": "Ticket filename: 01-viewed-session-artifact.md\nTicket path: .scratch/model-cost-migration/implementation/01-viewed-session-artifact.md\n\nFull ticket content:\n# 01: 公开 Viewed session 并冻结隔离宿主\n\n**What to build:** 在隔离 OMP 中通过公共只读出口读取当前查看会话及其变化，冻结可运行的补丁宿主，供实际 Effort 与有效 State 展示接入。\n\n**Delivers:** enabling: unblocks P11, P27\n\n**Blocked by:** None (can start immediately)\n\n**Status:** ready-for-agent\n\n## Acceptance criteria\n\n- [ ] 以批准的 OMP 18.5.0（@9348320）支持基础补最小公开出口；如必须换基础版本，提供具体证据请求裁决，不自行升级。\n- [ ] 公开快照及变化订阅提供实际 Session 身份、名称、必要关系、provider/model、实际 Effort、context 使用/窗口；缺失显式不可取得，不读取私有 controller 或 UI 文本猜值。\n- [ ] 覆盖目标切换、同目标事实变化、目标失效和解除订阅；查看不改变执行 Session、Owner 或写权限。\n- [ ] 冻结精确 revision 和可运行 artifact，记录构建/依赖/环境及隔离加载步骤；不预造 revision，不把局部探针当支持认证。\n- [ ] 复用 Harness dock，在独立安装、配置、工作、Session 和数据根启动实际补丁宿主，观察出口变化与解除后的结果；不驱动正式 OMP。\n- [ ] 通过批准的生产公共 seam 观察行为，预期来自合同/规格、独立字面值或手算，不以被测实现重算；永久网络 tests 使用 mock。\n- [ ] 使用隔离安装/配置/工作/Session/数据根，不操作正式 OMP；承接异步失败并保留够用脱敏证据，完成本票自动检查及材料准备，不因计划人工验收暂停可执行工作。\n\n## Verification responsibility\n\n本票为 enabling，提供真实公开出口与隔离 artifact，不认领 P11/P27 最终验收。合同采用 Rapid iteration：H1/H2 及允许的条件性 H3 按原 Coverage 交用户确认，未确认不记通过；不改变承诺或免除实现/永久 tests。",
+    "description": "Expose read-only viewed session and freeze patch host",
+    "lastIntent": "Counting lines in dock and framework files",
+    "exitCode": 1,
+    "output": "....",
+    "stderr": "",
+    "truncated": false,
+    "durationMs": 30026,
+    "tokens": 47811,
+    "requests": 13,
+    "contextTokens": 46135,
+    "contextWindow": 1000000,
+    "modelOverride": [
+      "deepseek/deepseek-flash:high"
+    ],
+    "resolvedModel": "deepseek/deepseek-flash:high",
+    "resolvedModelIdentity": "deepseek/deepseek-flash",
+    "resolvedThinkingLevel": "high",
+    "aborted": true,
+    "abortReason": "Idle for 30s",
+    "usage": {
+      "input": 42957,
+      "output": 4854,
+      "cacheRead": 344320,
+      "cacheWrite": 0,
+      "totalTokens": 392131,
+      "reasoningTokens": 2557,
+      "cost": {
+        "input": 0.006443549999999999,
+        "output": 0.0029124,
+        "cacheRead": 0.0010329599999999999,
+        "cacheWrite": 0,
+        "total": 0.01038891
+      }
+    },
+    "outputPath": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-12T19-42-26-146Z_01a131a3-4562-728e-8c06-9608e1e88feb\\01-viewed-session-artifactmd.md",
+    "outputMeta": {
+      "lineCount": 1,
+      "charCount": 4
+    }
+  },
+  "agent": "tdd",
+  "agent_id": "01-viewed-session-artifactmd",
+  "session_id": "01a131b0-44e4-71d3-a554-4c0af93d98df",
+  "session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-12T19-42-26-146Z_01a131a3-4562-728e-8c06-9608e1e88feb\\01-viewed-session-artifactmd.jsonl",
+  "execution_cwd": "E:\\Developer\\myhub\\my-agent-toolkit",
+  "retro_error": "Agent \"01-viewed-session-artifactmd\" is aborted and cannot be revived (no reviver registered). Its transcript remains readable at history://01-viewed-session-artifactmd.",
+  "retro_finished_at": "2026-10-12T19:57:08.007Z"
+}

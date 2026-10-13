@@ -1,0 +1,145 @@
+{
+  "feature": "model-cost-migration",
+  "ticket": "17-detail-tree-view-preference.md",
+  "run_id": "e3315951-f98c-41f4-a213-8a121199ce45",
+  "parent_session_id": "01a131a3-4562-728e-8c06-9608e1e88feb",
+  "parent_session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-12T19-42-26-146Z_01a131a3-4562-728e-8c06-9608e1e88feb.jsonl",
+  "workspace": "E:\\Developer\\myhub\\my-agent-toolkit",
+  "tool_call_id": "js-task-93b99237-de4d-4a51-845e-e3033ec886f6",
+  "started_at": "2026-10-13T05:22:18.241Z",
+  "tdd_status": "completed",
+  "retro_status": "completed",
+  "tdd_finished_at": "2026-10-13T05:46:50.228Z",
+  "tdd_result": {
+    "index": 0,
+    "id": "17-detail-tree-view-preferencemd",
+    "agent": "tdd",
+    "agentSource": "user",
+    "task": "Complete assignment thoroughly:\n\nTicket filename: 17-detail-tree-view-preference.md\nTicket path: .scratch/model-cost-migration/implementation/17-detail-tree-view-preference.md\n\nFull ticket content:\n# 17: 静态 detail 与立即切换入口偏好\n\n**What to build:** 用户立即切换主入口 detail，查看子代理固定 brief，返回恢复主偏好；静态代理树如实展示自身消费且不重建业务缓存。\n\n**Delivers:** P20, P23, P26, P29\n\n**Blocked by:** 16: 主子查看事实与主树 Total\n\n**Status:** ready-for-agent\n\n## Acceptance criteria\n\n- [ ] 主 detail 保留顶部 Total，在 Round 位置显示根名称、根自身 provider/model 分行、子/孙各一条自身累计按直接父缩进；无 Round 行、不展开子模型、不增加合计节点/交互查询。\n- [ ] 树各行保留适用字段，不缩成仅金额+token；模型行不是代理节点，异构自造树核对字段范围及名称。\n- [ ] detail 动作立即切入口内存偏好并反馈，不检查 provider/idle/保存，hidden/headless/busy 也不强制 widget；无 brief/on-off/focused 子命令路由。\n- [ ] 普通模型/Session/tree/查看变化保留 CLI 业务实例、provider 缓存及 detail；入口独立，重启/reload 回 brief，不持久/不继承偏好。\n- [ ] 子查看切自身 context/实际 Effort/当前模型结构/自身 Round，固定 brief，主树总数和 provider 全局测量不伪造子独享；主 detail→子 brief→主 detail 完整往返不改 Owner/记账。\n- [ ] 本票拥有 P20/P23/P26/P29 全部自动行为覆盖，用请求计数、偏好和字段对照证明实例/缓存保留；实际隔离操作准备 P23/P26 H1 期望树、缩进、往返与可获得视觉证据。\n- [ ] 通过批准的生产公共 seam 观察行为，预期来自合同/规格、独立字面值或手算，不以被测实现重算；永久网络 tests 使用 mock。\n- [ ] 使用隔离安装/配置/工作/Session/数据根，不操作正式 OMP；承接异步失败并保留够用脱敏证据，完成本票自动检查及材料准备，不因计划人工验收暂停可执行工作。\n\n## Verification responsibility\n\n本票负责所列 Delivers 的自动 coverage 与适用宿主贯通/证据准备；P58/P52 按本票具名责任执行。合同采用 Rapid iteration：H1/H2 及允许的条件性 H3 按原 Coverage 交用户确认，未确认不记通过；不改变承诺或免除实现/永久 tests。\n\n[You have received this identical output 3 times. Re-reading '.scratch/model-cost-migration/implementation/17-detail-tree-view-preference.md' will not change it — use a narrower selector (path:A-B), or proceed with the edit.]",
+    "assignment": "Ticket filename: 17-detail-tree-view-preference.md\nTicket path: .scratch/model-cost-migration/implementation/17-detail-tree-view-preference.md\n\nFull ticket content:\n# 17: 静态 detail 与立即切换入口偏好\n\n**What to build:** 用户立即切换主入口 detail，查看子代理固定 brief，返回恢复主偏好；静态代理树如实展示自身消费且不重建业务缓存。\n\n**Delivers:** P20, P23, P26, P29\n\n**Blocked by:** 16: 主子查看事实与主树 Total\n\n**Status:** ready-for-agent\n\n## Acceptance criteria\n\n- [ ] 主 detail 保留顶部 Total，在 Round 位置显示根名称、根自身 provider/model 分行、子/孙各一条自身累计按直接父缩进；无 Round 行、不展开子模型、不增加合计节点/交互查询。\n- [ ] 树各行保留适用字段，不缩成仅金额+token；模型行不是代理节点，异构自造树核对字段范围及名称。\n- [ ] detail 动作立即切入口内存偏好并反馈，不检查 provider/idle/保存，hidden/headless/busy 也不强制 widget；无 brief/on-off/focused 子命令路由。\n- [ ] 普通模型/Session/tree/查看变化保留 CLI 业务实例、provider 缓存及 detail；入口独立，重启/reload 回 brief，不持久/不继承偏好。\n- [ ] 子查看切自身 context/实际 Effort/当前模型结构/自身 Round，固定 brief，主树总数和 provider 全局测量不伪造子独享；主 detail→子 brief→主 detail 完整往返不改 Owner/记账。\n- [ ] 本票拥有 P20/P23/P26/P29 全部自动行为覆盖，用请求计数、偏好和字段对照证明实例/缓存保留；实际隔离操作准备 P23/P26 H1 期望树、缩进、往返与可获得视觉证据。\n- [ ] 通过批准的生产公共 seam 观察行为，预期来自合同/规格、独立字面值或手算，不以被测实现重算；永久网络 tests 使用 mock。\n- [ ] 使用隔离安装/配置/工作/Session/数据根，不操作正式 OMP；承接异步失败并保留够用脱敏证据，完成本票自动检查及材料准备，不因计划人工验收暂停可执行工作。\n\n## Verification responsibility\n\n本票负责所列 Delivers 的自动 coverage 与适用宿主贯通/证据准备；P58/P52 按本票具名责任执行。合同采用 Rapid iteration：H1/H2 及允许的条件性 H3 按原 Coverage 交用户确认，未确认不记通过；不改变承诺或免除实现/永久 tests。\n\n[You have received this identical output 3 times. Re-reading '.scratch/model-cost-migration/implementation/17-detail-tree-view-preference.md' will not change it — use a narrower selector (path:A-B), or proceed with the edit.]",
+    "description": "Implement static detail and entry preference",
+    "lastIntent": "Reporting the completed ticket",
+    "exitCode": 0,
+    "output": "{\n  \"ticket\": \"17-detail-tree-view-preference (P20, P23, P26, P29; seams S1/S2/S5)\",\n  \"status\": \"implementation complete; all automated coverage green; P23/P26 H1 material prepared and unverified (user confirmation pending)\",\n  \"behavior_delivered\": {\n    \"entry_display_preference\": \"shared-logic/presentation/display-preference.ts (new): brief/detail memory-only preference per CLI entry, one flip by /budget detail, announces through the existing change notification; no provider/idle/save/UI check, never persisted, never inherited\",\n    \"budget_command\": \"definition.ts declares one `actions` command `/budget` whose table lists `detail` only (no brief/on/off/focused route, no stub holiday/clear); runtime.ts implements commands.budget.detail = flip + feedback\",\n    \"brief_rows\": \"widget now draws `Round:` (open Round) and `Prev:` (last completed Round) from view.roundTotals, each hidden when this instance holds no boundary pair\",\n    \"detail_tree\": \"display result gains form / round / agentTree; detail draws the root by name, the root's own provider/model rows (`│  provider / model`), and one row per descendant at its direct-parent depth (`├─`/`└─`); no Round row, no aggregate node, model rows are never agent nodes\",\n    \"read_seam\": \"ConsumptionView.identities() added (document records first, then delivery-learned sessions) so the tree is walked without scanning the whole set per level\",\n    \"docs\": \"extensions/model-cost/GLOSSARY.md + GLOSSARY-MAP.md gain `Entry display preference` and `Agent tree`; evidence doc .scratch/model-cost-migration/assets/17-detail-tree-view-preference-evidence-2026-10-13.md\"\n  },\n  \"criteria_evidence\": [\n    {\n      \"criterion\": \"main detail keeps top Total, root name + root provider/model rows + child/grandchild rows indented by direct parent; no Round row, no sub-model expansion, no aggregate/interactive node\",\n      \"evidence\": \"S5 controlled widget exact line array (bar, Total, 主会话, `│  official / model-alpha …`, `└─ 子代理 …`) with `startsWith(Round:/Prev:) === false`; S5 real host asserts the same shape byte-for-byte with Total unchanged across the toggle; S2 asserts row kinds/names/depths and that no row carries the whole-tree Sum\"\n    },\n    {\n      \"criterion\": \"tree rows keep their applicable fields; model rows are not agent nodes; heterogeneous self-made tree verifies field scope and names\",\n      \"evidence\": \"S2: per-row hand-computed fields (hit rates 67/20/60/40/0/50, sums [undefined,6000,750,2,20,100,7,15] vs tree 6894), model rows carry their own pair ratio (4:7:89 and 10:40:10:40), session rows carry none; with a harness catalog pricing every pair the token-only and unlisted rows still show no amount/ratio\"\n    },\n    {\n      \"criterion\": \"detail action flips the entry preference immediately with feedback; no provider/idle/save check; hidden/headless/busy forces no widget; no brief/on-off/focused subcommand route\",\n      \"evidence\": \"S1+S2: two flips, one info each, distinct wording; hasUI:false / idle busy / idle unreported all flip with persisted=[] and markers=[]; brief/detail on/on/off/focused/det refused with error+help and the preference unchanged; S5: headless draws zero frames after the flip, hidden target stays cleared (no tree invented), the flip redraws on the same tick\"\n    },\n    {\n      \"criterion\": \"ordinary model/session/tree/view changes keep the CLI business instance, provider cache and detail; entries independent; restart/reload answers brief; not persisted/inherited\",\n      \"evidence\": \"S2 watched case: 1 startup provider request only; facts of another session, a rename of the main session, another session's Round, cross-session/cross-model views and the round trip add no request; the held balance reading is the same 12.5; form stays detail, the tree root follows the host's rename, the runtime Round survives, factoryRuns()===1; a second entry bound over the same storage root answers brief while the first stays detail\"\n    },\n    {\n      \"criterion\": \"sub view uses its own context/effort/current-model structure/own Round, fixed brief; main-tree totals and provider-global measurements not faked as sub-exclusive; main detail→sub brief→main detail changes no Owner/accounting\",\n      \"evidence\": \"S2: `of(sub)` form=brief, agentTree undefined (even with the entry in detail), current=130/33%, round.current.total=30 (token-only), tree.sum still the whole main tree; after the round trip the main tree's child row shows the child's own 130, view.own(main) unchanged, the document is byte-identical and no marker was published; S5 controlled widget draws the sub's own brief (no tree row at all) then the tree again on return\"\n    },\n    {\n      \"criterion\": \"ticket owns P20/P23/P26/P29 automated coverage, using request counts, preference and field comparison; isolated operations prepare the P23/P26 H1 expected tree, indentation, round trip and obtainable visual evidence\",\n      \"evidence\": \"counts: `sent` (watched) and capture `requests()` (real host); preference: `form` + feedback wording; field comparison: view.own / saved document vs row fields; H1 material incl. the real run's observed widget frame is section 5 of the evidence doc; real run: tests/harness-dock/detail-tree.test.ts\"\n    },\n    {\n      \"criterion\": \"observe through approved production public seams; expectations from contract/spec, independent literals or hand computation; permanent network tests mocked\",\n      \"evidence\": \"S2/S1 via createModelCostRuntime + framework public binding + the really-registered command; S5 via production attachModelCostWidget with a controlled host; S5 real via loader/RPC/set_session_name/`/budget detail`/local capture endpoint; every permanent case is pure memory or the local capture endpoint\"\n    },\n    {\n      \"criterion\": \"isolated install/config/work/session/data roots; production OMP untouched; async failures carried with enough redacted evidence\",\n      \"evidence\": \"real case runs on the frozen .cache/omp-baseline/18.5.0-viewed-session artifact (hash-checked) with createRunRoot agent-state/--session-dir/work/capture/user-home; failures surface the actual widget text and session diagnostics, no secrets, no production paths\"\n    }\n  ],\n  \"commands_run\": [\n    \"bun test tests/model-cost/detail-tree.test.ts -> 9 pass / 0 fail (116 expect)\",\n    \"bun test tests/model-cost/detail-widget.test.ts -> 6 pass / 0 fail (20 expect)\",\n    \"bun test tests/harness-dock/detail-tree.test.ts -> 1 pass / 0 fail (21 expect, 2.63s; real RPC run: real task delegation, real subagent yield, 2 requests to the local capture endpoint)\",\n    \"bun test tests/model-cost -> 201 pass / 0 fail (17 files)\",\n    \"bun test tests/framework -> 374 pass / 0 fail (31 files)\",\n    \"bun test tests/model-cost tests/framework -> 575 pass / 0 fail (48 files, no regression)\",\n    \"bun run typecheck (tsc --noEmit) -> exit 0\",\n    \"bun test tests/harness-dock (whole dir, twice) -> 58/3 then 59/2; the 2 remaining failures are the pre-existing baseline anchor checks (sibling oh-my-pi checkout moved, documented by ticket 08); the extra balance ENOENT in run 1 was parallel-process contention (single-file rerun: 6 pass / 0 fail)\"\n  ],\n  \"fault_injection\": [\n    \"removed the preference's onChange() announcement -> the S5 'the toggle redraws at once' assertion failed (frames 4, expected >4); restored from backup and confirmed cmp byte-identical, suite green again\"\n  ],\n  \"unverified\": [\n    \"P23/P26 H1 (real TUI focus switch, colours, narrow-width layout): RPC host has no independent view, so main/sub view switching on screen is human-only; material, steps and expected lines are prepared in section 5 of the evidence doc - unconfirmed items are not recorded as passed\",\n    \"The `Round:`/`Prev:` two-line wording is this ticket's display decision (lighthouse fixes only 'Turn row renamed Round' and 'current/previous Round'); final visual wording stays subject to ticket 20's P67 H1\",\n    \"H3: no concrete real-OMP-script scenario needed transferring (the real case passed on its own, 2.7s, no retry); H2 not held by this ticket\",\n    \"README.md still omits model-cost and tests/model-cost (pre-existing before this migration's implementation; publishing belongs to the cutover/handoff tickets)\"\n  ],\n  \"p52_p58_named_responsibility\": \"This ticket neither implements nor touches P58/P52: no document field, schemaVersion, periodId or save trigger changed (the S2 case asserts the consumption document is byte-identical across a main→sub→main round trip and the real case asserts the session records are identical after two toggles); no framework/connect-bot/codebase-tools/config/host-patch file was touched, and the /budget actions routing itself was delivered by ticket 02, so there is no callsite to migrate\",\n  \"ticket_file\": \"left untouched (status judgement belongs to main/user)\",\n  \"notes_for_main\": [\n    \"The static tree and the Round rows are display content owned by shared logic (display.ts), with tree indentation/labels in the OMP frontend; ticket 20 (P67) can colour/lay it out without changing these rows\",\n    \"The child row names a subagent by its session id when the host reports no name, matching ticket 09's recorded behaviour\"\n  ]\n}",
+    "stderr": "",
+    "truncated": false,
+    "durationMs": 1471971,
+    "tokens": 403379,
+    "requests": 161,
+    "contextTokens": 374626,
+    "contextWindow": 1000000,
+    "modelOverride": [
+      "deepseek/deepseek-flash:high"
+    ],
+    "resolvedModel": "deepseek/deepseek-flash:high",
+    "resolvedModelIdentity": "deepseek/deepseek-flash",
+    "resolvedThinkingLevel": "high",
+    "aborted": false,
+    "usage": {
+      "input": 218216,
+      "output": 185163,
+      "cacheRead": 38041216,
+      "cacheWrite": 0,
+      "totalTokens": 38444595,
+      "reasoningTokens": 103547,
+      "cost": {
+        "input": 0.032732399999999995,
+        "output": 0.1110978,
+        "cacheRead": 0.11412364800000002,
+        "cacheWrite": 0,
+        "total": 0.2579538480000001
+      }
+    },
+    "outputPath": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-12T19-42-26-146Z_01a131a3-4562-728e-8c06-9608e1e88feb\\17-detail-tree-view-preferencemd.md",
+    "extractedToolData": {
+      "yield": [
+        {
+          "data": {
+            "ticket": "17-detail-tree-view-preference (P20, P23, P26, P29; seams S1/S2/S5)",
+            "status": "implementation complete; all automated coverage green; P23/P26 H1 material prepared and unverified (user confirmation pending)",
+            "behavior_delivered": {
+              "entry_display_preference": "shared-logic/presentation/display-preference.ts (new): brief/detail memory-only preference per CLI entry, one flip by /budget detail, announces through the existing change notification; no provider/idle/save/UI check, never persisted, never inherited",
+              "budget_command": "definition.ts declares one `actions` command `/budget` whose table lists `detail` only (no brief/on/off/focused route, no stub holiday/clear); runtime.ts implements commands.budget.detail = flip + feedback",
+              "brief_rows": "widget now draws `Round:` (open Round) and `Prev:` (last completed Round) from view.roundTotals, each hidden when this instance holds no boundary pair",
+              "detail_tree": "display result gains form / round / agentTree; detail draws the root by name, the root's own provider/model rows (`│  provider / model`), and one row per descendant at its direct-parent depth (`├─`/`└─`); no Round row, no aggregate node, model rows are never agent nodes",
+              "read_seam": "ConsumptionView.identities() added (document records first, then delivery-learned sessions) so the tree is walked without scanning the whole set per level",
+              "docs": "extensions/model-cost/GLOSSARY.md + GLOSSARY-MAP.md gain `Entry display preference` and `Agent tree`; evidence doc .scratch/model-cost-migration/assets/17-detail-tree-view-preference-evidence-2026-10-13.md"
+            },
+            "criteria_evidence": [
+              {
+                "criterion": "main detail keeps top Total, root name + root provider/model rows + child/grandchild rows indented by direct parent; no Round row, no sub-model expansion, no aggregate/interactive node",
+                "evidence": "S5 controlled widget exact line array (bar, Total, 主会话, `│  official / model-alpha …`, `└─ 子代理 …`) with `startsWith(Round:/Prev:) === false`; S5 real host asserts the same shape byte-for-byte with Total unchanged across the toggle; S2 asserts row kinds/names/depths and that no row carries the whole-tree Sum"
+              },
+              {
+                "criterion": "tree rows keep their applicable fields; model rows are not agent nodes; heterogeneous self-made tree verifies field scope and names",
+                "evidence": "S2: per-row hand-computed fields (hit rates 67/20/60/40/0/50, sums [undefined,6000,750,2,20,100,7,15] vs tree 6894), model rows carry their own pair ratio (4:7:89 and 10:40:10:40), session rows carry none; with a harness catalog pricing every pair the token-only and unlisted rows still show no amount/ratio"
+              },
+              {
+                "criterion": "detail action flips the entry preference immediately with feedback; no provider/idle/save check; hidden/headless/busy forces no widget; no brief/on-off/focused subcommand route",
+                "evidence": "S1+S2: two flips, one info each, distinct wording; hasUI:false / idle busy / idle unreported all flip with persisted=[] and markers=[]; brief/detail on/on/off/focused/det refused with error+help and the preference unchanged; S5: headless draws zero frames after the flip, hidden target stays cleared (no tree invented), the flip redraws on the same tick"
+              },
+              {
+                "criterion": "ordinary model/session/tree/view changes keep the CLI business instance, provider cache and detail; entries independent; restart/reload answers brief; not persisted/inherited",
+                "evidence": "S2 watched case: 1 startup provider request only; facts of another session, a rename of the main session, another session's Round, cross-session/cross-model views and the round trip add no request; the held balance reading is the same 12.5; form stays detail, the tree root follows the host's rename, the runtime Round survives, factoryRuns()===1; a second entry bound over the same storage root answers brief while the first stays detail"
+              },
+              {
+                "criterion": "sub view uses its own context/effort/current-model structure/own Round, fixed brief; main-tree totals and provider-global measurements not faked as sub-exclusive; main detail→sub brief→main detail changes no Owner/accounting",
+                "evidence": "S2: `of(sub)` form=brief, agentTree undefined (even with the entry in detail), current=130/33%, round.current.total=30 (token-only), tree.sum still the whole main tree; after the round trip the main tree's child row shows the child's own 130, view.own(main) unchanged, the document is byte-identical and no marker was published; S5 controlled widget draws the sub's own brief (no tree row at all) then the tree again on return"
+              },
+              {
+                "criterion": "ticket owns P20/P23/P26/P29 automated coverage, using request counts, preference and field comparison; isolated operations prepare the P23/P26 H1 expected tree, indentation, round trip and obtainable visual evidence",
+                "evidence": "counts: `sent` (watched) and capture `requests()` (real host); preference: `form` + feedback wording; field comparison: view.own / saved document vs row fields; H1 material incl. the real run's observed widget frame is section 5 of the evidence doc; real run: tests/harness-dock/detail-tree.test.ts"
+              },
+              {
+                "criterion": "observe through approved production public seams; expectations from contract/spec, independent literals or hand computation; permanent network tests mocked",
+                "evidence": "S2/S1 via createModelCostRuntime + framework public binding + the really-registered command; S5 via production attachModelCostWidget with a controlled host; S5 real via loader/RPC/set_session_name/`/budget detail`/local capture endpoint; every permanent case is pure memory or the local capture endpoint"
+              },
+              {
+                "criterion": "isolated install/config/work/session/data roots; production OMP untouched; async failures carried with enough redacted evidence",
+                "evidence": "real case runs on the frozen .cache/omp-baseline/18.5.0-viewed-session artifact (hash-checked) with createRunRoot agent-state/--session-dir/work/capture/user-home; failures surface the actual widget text and session diagnostics, no secrets, no production paths"
+              }
+            ],
+            "commands_run": [
+              "bun test tests/model-cost/detail-tree.test.ts -> 9 pass / 0 fail (116 expect)",
+              "bun test tests/model-cost/detail-widget.test.ts -> 6 pass / 0 fail (20 expect)",
+              "bun test tests/harness-dock/detail-tree.test.ts -> 1 pass / 0 fail (21 expect, 2.63s; real RPC run: real task delegation, real subagent yield, 2 requests to the local capture endpoint)",
+              "bun test tests/model-cost -> 201 pass / 0 fail (17 files)",
+              "bun test tests/framework -> 374 pass / 0 fail (31 files)",
+              "bun test tests/model-cost tests/framework -> 575 pass / 0 fail (48 files, no regression)",
+              "bun run typecheck (tsc --noEmit) -> exit 0",
+              "bun test tests/harness-dock (whole dir, twice) -> 58/3 then 59/2; the 2 remaining failures are the pre-existing baseline anchor checks (sibling oh-my-pi checkout moved, documented by ticket 08); the extra balance ENOENT in run 1 was parallel-process contention (single-file rerun: 6 pass / 0 fail)"
+            ],
+            "fault_injection": [
+              "removed the preference's onChange() announcement -> the S5 'the toggle redraws at once' assertion failed (frames 4, expected >4); restored from backup and confirmed cmp byte-identical, suite green again"
+            ],
+            "unverified": [
+              "P23/P26 H1 (real TUI focus switch, colours, narrow-width layout): RPC host has no independent view, so main/sub view switching on screen is human-only; material, steps and expected lines are prepared in section 5 of the evidence doc - unconfirmed items are not recorded as passed",
+              "The `Round:`/`Prev:` two-line wording is this ticket's display decision (lighthouse fixes only 'Turn row renamed Round' and 'current/previous Round'); final visual wording stays subject to ticket 20's P67 H1",
+              "H3: no concrete real-OMP-script scenario needed transferring (the real case passed on its own, 2.7s, no retry); H2 not held by this ticket",
+              "README.md still omits model-cost and tests/model-cost (pre-existing before this migration's implementation; publishing belongs to the cutover/handoff tickets)"
+            ],
+            "p52_p58_named_responsibility": "This ticket neither implements nor touches P58/P52: no document field, schemaVersion, periodId or save trigger changed (the S2 case asserts the consumption document is byte-identical across a main→sub→main round trip and the real case asserts the session records are identical after two toggles); no framework/connect-bot/codebase-tools/config/host-patch file was touched, and the /budget actions routing itself was delivered by ticket 02, so there is no callsite to migrate",
+            "ticket_file": "left untouched (status judgement belongs to main/user)",
+            "notes_for_main": [
+              "The static tree and the Round rows are display content owned by shared logic (display.ts), with tree indentation/labels in the OMP frontend; ticket 20 (P67) can colour/lay it out without changing these rows",
+              "The child row names a subagent by its session id when the host reports no name, matching ticket 09's recorded behaviour"
+            ]
+          },
+          "status": "success",
+          "type": "result"
+        }
+      ]
+    },
+    "outputMeta": {
+      "lineCount": 71,
+      "charCount": 9193
+    }
+  },
+  "agent": "tdd",
+  "agent_id": "17-detail-tree-view-preferencemd",
+  "session_id": "01a133b6-2823-734b-9e7b-c4d72bf5c997",
+  "session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-12T19-42-26-146Z_01a131a3-4562-728e-8c06-9608e1e88feb\\17-detail-tree-view-preferencemd.jsonl",
+  "execution_cwd": "E:\\Developer\\myhub\\my-agent-toolkit",
+  "retro_document": "E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\model-cost-migration\\retro\\17-detail-tree-view-preference.md\\e3315951-f98c-41f4-a213-8a121199ce45.md",
+  "retro_finished_at": "2026-10-13T05:48:27.368Z"
+}

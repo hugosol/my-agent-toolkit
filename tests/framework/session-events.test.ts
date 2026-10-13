@@ -17,7 +17,7 @@
 import { describe, expect, test } from "bun:test";
 import { CODEBASE_TOOLS } from "../../extensions/codebase-tools/definition";
 import type { OwnerReference, SessionEvent } from "../../framework/core/protocol";
-import { type ExtensionDefinition, defineExtension } from "../../framework/public";
+import { type CommandImplementations, type ExtensionDefinition, defineExtension } from "../../framework/public";
 import { portDouble } from "./support/harness-port-double";
 
 /** The owner a delivery acts on unless one is named. */
@@ -51,7 +51,7 @@ describe("a start seeds the owner its event names (F5, P7)", () => {
 	test("the value comes from the branch the delivery names, and renders in that owner's area", () => {
 		const double = portDouble();
 		const seen: SessionEvent[] = [];
-		double.bind(CODEBASE_TOOLS, { events: { session_start: delivery => seen.push(delivery.event) } });
+		double.bind(CODEBASE_TOOLS, { subscriptions: [{ scope: "owner", events: { session_start: delivery => void seen.push(delivery.event) } }] });
 
 		const boundary = double.deliverSession(OWNER, { statePayloads: [{ enabled: true }] });
 
@@ -129,20 +129,20 @@ describe("a transition is an end followed by a start (F5, P7)", () => {
 		const double = portDouble();
 		const seen: Array<{ readonly event: SessionEvent; readonly ownerKey: string; readonly hasUI: boolean }> = [];
 		double.bind(CODEBASE_TOOLS, {
-			events: {
+			subscriptions: [{ scope: "owner", events: {
 				session_start: delivery =>
-					seen.push({
+					void seen.push({
 						event: delivery.event,
 						ownerKey: delivery.owner.kind === "unresolved" ? "<unresolved>" : delivery.owner.key,
 						hasUI: delivery.hasUI,
 					}),
 				session_end: delivery =>
-					seen.push({
+					void seen.push({
 						event: delivery.event,
 						ownerKey: delivery.owner.kind === "unresolved" ? "<unresolved>" : delivery.owner.key,
 						hasUI: delivery.hasUI,
 					}),
-			},
+			} }],
 		});
 
 		double.deliverSession(ENDING, { statePayloads: [{ enabled: true }] });
@@ -164,10 +164,10 @@ describe("the framework's behavior runs before the injected handler, and one han
 		const double = portDouble();
 		const rendersWhenHandlerRan: number[] = [];
 		double.bind(CODEBASE_TOOLS, {
-			events: {
-				session_start: () => rendersWhenHandlerRan.push(double.markerUpdates.length),
-				session_end: () => rendersWhenHandlerRan.push(double.markerUpdates.length),
-			},
+			subscriptions: [{ scope: "owner", events: {
+				session_start: () => void rendersWhenHandlerRan.push(double.markerUpdates.length),
+				session_end: () => void rendersWhenHandlerRan.push(double.markerUpdates.length),
+			} }],
 		});
 
 		double.deliverSession(OWNER, { statePayloads: [{ enabled: true }] });
@@ -182,12 +182,12 @@ describe("the framework's behavior runs before the injected handler, and one han
 		const double = portDouble();
 		const seen: Array<{ readonly owner: OwnerReference; readonly hasUI: boolean }> = [];
 		double.bind(CODEBASE_TOOLS, {
-			events: {
+			subscriptions: [{ scope: "owner", events: {
 				session_end: delivery => {
 					delivery.feedback.notify("info", "session transferred");
 					seen.push({ owner: delivery.owner, hasUI: delivery.hasUI });
 				},
-			},
+			} }],
 		});
 
 		const boundary = double.deliverSession(OWNER, { event: end("transferred"), hasUI: false });
@@ -202,13 +202,13 @@ describe("the framework's behavior runs before the injected handler, and one han
 		const double = portDouble();
 		const received: SessionEvent[] = [];
 		double.bind(THROWING, {
-			events: {
+			subscriptions: [{ scope: "owner", events: {
 				session_start: () => {
 					throw new Error("boom");
 				},
-			},
+			} }],
 		});
-		double.bind(CODEBASE_TOOLS, { events: { session_start: delivery => received.push(delivery.event) } });
+		double.bind(CODEBASE_TOOLS, { subscriptions: [{ scope: "owner", events: { session_start: delivery => void received.push(delivery.event) } }] });
 
 		const boundary = double.deliverSession(OWNER, { statePayloads: [{ enabled: true }] });
 
@@ -239,5 +239,41 @@ describe("a session that is not its own owner reconciles nothing (F5)", () => {
 		// its owner's value through the inheritance axis, never by becoming it.
 		expect(inherited.markers).toEqual([]);
 		expect(unresolved.markers).toEqual([]);
+	});
+});
+
+describe("a session whose facts were re-reported crossed no boundary (P24)", () => {
+	test("the facts reach a subscriber and nothing the framework owns moves for them", () => {
+		const double = portDouble();
+		// The marker area is one process-wide area per owner, so this case names an owner of its
+		// own: the renderings it reads are then this extension's alone.
+		const owner: OwnerReference = { kind: "owner", key: "main:session-facts" };
+		const seen: Array<{ readonly event: SessionEvent; readonly name: string | undefined }> = [];
+		double.bind(CODEBASE_TOOLS, {
+			subscriptions: [
+				{
+					scope: "owner",
+					events: {
+						session_facts: delivery => void seen.push({ event: delivery.event, name: delivery.session.name }),
+					},
+				},
+			],
+		});
+		const started = double.deliverSession(owner, { statePayloads: [{ enabled: true }] });
+		expect(started.markers).toEqual([["◈ codeBaseTools"]]);
+
+		const facts = double.deliverSession(owner, {
+			event: { kind: "session_facts" },
+			session: { sessionId: "session-renamed", kind: "sub", parentSessionId: "session-a", name: "renamed", unavailable: [] },
+		});
+
+		// The facts delivery is subscription only: the area was not re-published for it, and the
+		// cell the start seeded is untouched — the toggle turns the seeded true off rather than
+		// the declared default on, which is what a re-seed from this delivery's empty branch
+		// would have left behind.
+		expect(facts.markers).toEqual([]);
+		expect(double.run("codebase-tools", { owner }).persisted).toEqual([{ enabled: false }]);
+		// The subscriber the kind names was reached, and it read the session's own facts.
+		expect(seen).toEqual([{ event: { kind: "session_facts" }, name: "renamed" }]);
 	});
 });

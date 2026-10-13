@@ -6,7 +6,7 @@
 - [connect-bot](./extensions/connect-bot/GLOSSARY.md): joins an agent session to the omp-bot panel; `/connect-bot` registers the current session, `/connect-bot off` disconnects it.
 - [codeBaseTools](./extensions/codebase-tools/GLOSSARY.md): routes the agent's code exploration toward the codebase-memory-mcp graph and LSP, controlled by `/codebase-tools`.
 
-- [model-cost](./extensions/model-cost/GLOSSARY.md): distinguishes response accounting, Turn usage, Round totals, Session totals and the legacy widget's Turn statistic.
+- [model-cost](./extensions/model-cost/GLOSSARY.md): distinguishes response accounting, Turn usage, Round totals, Session totals, the accounting reset with its consumption archive and boundary balance reading, the storage root/baseline the consumption document lives in, the entry's display preference with its agent tree, season boundary wait and accrued bar, the host's widget drawing form, and the legacy widget's Turn statistic.
 
 ## Relationships
 

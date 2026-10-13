@@ -8,10 +8,6 @@
  * channels — a UI notification carrying the severity the extension chose, and one stderr
  * line when the session has no UI — and the `hasUI` fact shared extension logic gates on
  * can be read from the delivery the handler was given.
- *
- * The framework's own warning-level notice is not extension feedback and is observed where
- * it belongs: `admission.test.ts` asserts the unlisted-version notice arrives as a
- * `warning` on the UI and as stderr without one.
  */
 import { describe, expect, test } from "bun:test";
 import { CODEBASE_TOOLS } from "../../extensions/codebase-tools/definition";
@@ -24,8 +20,8 @@ import type {
 	OmpSessionEventType,
 } from "../../framework/adapters/omp";
 import * as frameworkOmp from "../../framework/adapters/omp";
-import type { CommandActions, CommandDelivery } from "../../framework/core/protocol";
-import { defineExtension } from "../../framework/public";
+import type { CommandDelivery } from "../../framework/core/protocol";
+import { type CommandImplementations, defineExtension } from "../../framework/public";
 
 /** A definition whose whole behavior is one directed command the assembly implements. */
 const PROBE = defineExtension({
@@ -72,7 +68,7 @@ function nativeDouble(): NativeDouble {
 		appendEntry(customType: string, data?: unknown): void {
 			appended.push({ customType, data });
 		},
-		on(event: OmpSessionEventType | OmpRoundEventType | "before_agent_start", handler: never): void {
+		on(event: string, handler: never): void {
 			if (event === "before_agent_start") runHandlers.push(handler as OmpRunInitiationHandler);
 		},
 	};
@@ -104,6 +100,9 @@ function nativeDouble(): NativeDouble {
 			let contribution: OmpRunInitiationResult | undefined;
 			for (const handler of runHandlers) {
 				const result = handler(undefined, ctx);
+				// This probe declares no initialization, so the framework's run hook settles
+				// synchronously; a promise here would mean it started to await one.
+				if (result instanceof Promise) throw new Error("the run hook waited for an initialization");
 				if (result !== undefined) contribution = result;
 			}
 			return contribution;
@@ -116,7 +115,7 @@ function nativeDouble(): NativeDouble {
  * publishes one notice per severity.
  */
 function bindProbe(double: NativeDouble, seenHasUI: boolean[]): void {
-	const actions: CommandActions = {
+	const commands: CommandImplementations = {
 		"feedback-probe": {
 			run: (_directive, delivery: CommandDelivery) => {
 				seenHasUI.push(delivery.hasUI);
@@ -126,7 +125,7 @@ function bindProbe(double: NativeDouble, seenHasUI: boolean[]): void {
 			},
 		},
 	};
-	const factory = frameworkOmp.ompAdapter(PROBE, { actions });
+	const factory = frameworkOmp.ompAdapter(PROBE, { factory: () => ({ commands }) });
 	if (!factory(double.api).bound) throw new Error("the feedback probe definition did not bind");
 }
 

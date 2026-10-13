@@ -1,0 +1,41 @@
+{
+	"recorded": "2026-10-13",
+	"harness": {
+		"package": "@oh-my-pi/pi-coding-agent",
+		"version": "18.5.0",
+		"revisionAnchor": {
+			"path": "../oh-my-pi",
+			"commit": "9348320cc4a30a7195d36a1f05a6c11bcb701a17",
+			"tag": "v18.5.0"
+		}
+	},
+	"patches": [
+		{
+			"file": "host-patches/omp-18.5.0-codex-response-boundary/patch.diff",
+			"sha256": "4ec9ad0de31b07966aa543db137b8f26d909b64fc8209981e2e8c217ac20214d",
+			"files": [
+				{
+					"path": "pi-ai/src/providers/openai-codex-responses.ts",
+					"baseSha256": "4223858912c4b960d794ba1c15014ee1eacf118d395b91adddf3fe982e4a4ffb",
+					"patchedSha256": "a47d84105cfbc4a191a6339bc7fff350f46244eb343964f0de6b64864712d94b"
+				}
+			]
+		}
+	],
+	"materialise": {
+		"prefix": ".cache/omp-baseline/18.5.0-codex-response-boundary",
+		"install": "write package.json declaring @oh-my-pi/pi-coding-agent@18.5.0 and run `bun install` in the prefix",
+		"apply": [
+			"from the repository root: git -c core.autocrlf=false apply -p1 --whitespace=nowarn --directory=.cache/omp-baseline/18.5.0-codex-response-boundary/node_modules/@oh-my-pi host-patches/omp-18.5.0-codex-response-boundary/patch.diff"
+		]
+	},
+	"runtime": {
+		"cliEntry": "src/cli.ts",
+		"load": "bun .cache/omp-baseline/18.5.0-codex-response-boundary/node_modules/@oh-my-pi/pi-coding-agent/src/cli.ts --mode rpc --no-extensions -e <extension> --model <provider>/<model> --session-dir <run>/sessions --cwd <run>/work with PI_CODING_AGENT_DIR=<run>/agent-state"
+	},
+	"environment": {
+		"platform": "win32",
+		"arch": "x64",
+		"bun": "1.4.2"
+	}
+}

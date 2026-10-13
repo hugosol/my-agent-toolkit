@@ -100,7 +100,7 @@ function nativeDouble(): NativeDouble {
 		appendEntry(customType: string, data?: unknown): void {
 			appended.push({ customType, data });
 		},
-		on(event: OmpSessionEventType | OmpRoundEventType | "before_agent_start", handler: never): void {
+		on(event: string, handler: never): void {
 			// This suite is about the run initiation; session reconciliation and the round axis
 			// have their own suites.
 			if (event === "before_agent_start") {
@@ -119,7 +119,12 @@ function nativeDouble(): NativeDouble {
 		},
 		deliverRun(facts) {
 			if (hook === undefined) throw new Error("binding subscribed no run-initiation hook");
-			return hook({ type: "before_agent_start" }, sessionFacts(facts.sessionId, facts.branch)) ?? undefined;
+			const committed = hook({ type: "before_agent_start" }, sessionFacts(facts.sessionId, facts.branch));
+			// These definitions declare no initialization, so the framework's run hook settles
+			// synchronously: a promise here would mean the double is driving an extension that does,
+			// and the suite would rather fail than read a pending value as a contribution.
+			if (committed instanceof Promise) throw new Error("the run hook waited for an initialization");
+			return committed ?? undefined;
 		},
 	};
 }

@@ -8,7 +8,7 @@
  * ones — once per scenario — and it drives the extension exactly as the loader does: the
  * extension's own OMP assembly binds the definition, the command the framework registered runs,
  * the native session events the harness delivers are handed to that binding, and the outbound
- * dependency is the platform's own call to the real panel the run was given.
+ * dependency is the framework's own request, made to the real panel the run was given.
  *
  * Nothing here reaches inside the extension: the budget under test is the one the configuration
  * file this run names carries, the waits it produces are read off the wire (each request's own
@@ -33,18 +33,15 @@ import { ompAdapter } from "../../../framework/adapters/omp";
 import type { ExtensionDefinition } from "../../../framework/core/definition";
 import { CONNECT_BOT } from "../../../extensions/connect-bot/definition";
 import { connectBotConfig } from "../../../extensions/connect-bot/shared-logic/panel/config";
-import {
-	type PushFetchInit,
-	type PushHttpResponse,
-	installPushTransport,
-} from "../../../extensions/connect-bot/shared-logic/panel/client";
+import { setPanelRequestForTest } from "../../../extensions/connect-bot/shared-logic/panel/client";
+import { type HttpRequestOptions, request } from "../../../framework/public";
 import connectBot from "../../../extensions/connect-bot/harnesses/omp";
 import { botSessions } from "../../../extensions/connect-bot/shared-logic/session/session";
 import type { OmpCommandContext } from "../../../framework/adapters/omp";
 import { ControlledClock } from "./controlled-clock";
 import { ompDouble, type ContextOptions, type TimerMode } from "./omp-double";
 
-/** One outbound request this run made, as the transport that performed it saw it. */
+/** One outbound request this run made, as the framework's own call saw it. */
 interface SentRequest {
 	kind: string;
 	url: string;
@@ -67,7 +64,8 @@ interface SentRequest {
 	/** The request's own shape, as the extension built it: the protocol's method, headers and proxy policy. */
 	readonly method: string;
 	readonly headers: Readonly<Record<string, string>>;
-	readonly proxy: boolean;
+	/** The selection the request declared: `false` for the direct connection, else the entry's name. */
+	readonly proxy: false | string;
 	/** The exact request body the extension sent, for the wire-shape comparisons. */
 	readonly requestBody: string;
 	/** The panel's own answer body, parsed; `undefined` when the request never settled or answered JSON of no shape. */
@@ -132,11 +130,12 @@ function envelopeOf(body: string): SentEnvelope {
 	return { sessionId, kind };
 }
 
-/** The platform's own outbound call, narrowed exactly as the extension's assembly narrows it. */
-const platformFetch = globalThis.fetch as unknown as (
-	input: string,
-	request: PushFetchInit,
-) => Promise<PushHttpResponse>;
+/** Whether one call's failure was the wait it declared running out rather than a transport failure. */
+function ranOutOfBudget(error: unknown): boolean {
+	// The framework's module rejects a budget that ran out with the wait's own reason, whose name is
+	// the platform's `TimeoutError`; a refused connection or an unreadable body is neither.
+	return error instanceof Error && error.name === "TimeoutError";
+}
 
 /** Lets every pending microtask of an effect run to its end. */
 async function settleAll(): Promise<void> {
@@ -185,12 +184,12 @@ const sent: SentRequest[] = [];
 const inFlight = new Set<Promise<void>>();
 
 connectBot(double.api);
-// The transport the assembly installed is the platform's own outbound call; this run performs the
-// same call, records the request's own body and the answer it got, and times it, so every request
-// below is a real HTTP request to the panel this run was given and its wait is the one the
-// extension's own budget produced.
-installPushTransport(async (url, init: PushFetchInit): Promise<PushHttpResponse> => {
-	const envelope = envelopeOf(init.body);
+// The extension's one outbound call is the framework's own general HTTP request; this run stands a
+// recording wrapper in its place, so every request below is a real HTTPS/HTTP request to the panel
+// this run was given, made by the framework's own client under the extension's own configured
+// budget, with its body and answer recorded beside the times it took.
+setPanelRequestForTest(async (url: string, options: HttpRequestOptions = {}): Promise<Response> => {
+	const envelope = envelopeOf(options.body ?? "");
 	const entry: SentRequest = {
 		kind: envelope.kind,
 		url,
@@ -198,10 +197,12 @@ installPushTransport(async (url, init: PushFetchInit): Promise<PushHttpResponse>
 		atMs: performance.now() - runStartedAt,
 		...(virtualClock === undefined ? {} : { virtualMs: virtualClock.now() }),
 		outcome: "failed",
-		method: init.method,
-		headers: init.headers,
-		proxy: init.proxy,
-		requestBody: init.body,
+		method: options.method ?? "GET",
+		headers: options.headers ?? {},
+		// The extension states the direct connection it means; the selection is recorded as declared,
+		// so a regression that stopped naming one — or named a proxy — is visible here.
+		proxy: options.proxy ?? false,
+		requestBody: options.body ?? "",
 		stateWhenSent: {
 			armed: botSessions.get(`main:${envelope.sessionId}`) !== undefined,
 			beatsRunning: double.timers.filter(timer => !timer.cancelled).length,
@@ -212,22 +213,23 @@ installPushTransport(async (url, init: PushFetchInit): Promise<PushHttpResponse>
 	inFlight.add(settling.promise);
 	const startedAt = performance.now();
 	try {
-		const response = await platformFetch(url, init);
+		const response = await request(url, options);
 		entry.elapsedMs = performance.now() - startedAt;
 		entry.outcome = "answered";
 		entry.status = response.status;
 		// The body is read once here so the panel's own answer is part of the record; the extension
-		// receives the same text and parses it exactly as it would have parsed the response itself.
+		// receives the same status and text, and parses it exactly as it would have parsed the
+		// response itself.
 		const text = await response.text();
 		try {
 			entry.answerBody = JSON.parse(text);
 		} catch {
 			entry.answerBody = undefined;
 		}
-		return { status: response.status, text: async () => text };
+		return new Response(text, { status: response.status, headers: response.headers });
 	} catch (error) {
 		entry.elapsedMs = performance.now() - startedAt;
-		entry.outcome = init.signal.aborted ? "timed-out" : "failed";
+		entry.outcome = ranOutOfBudget(error) ? "timed-out" : "failed";
 		throw error;
 	} finally {
 		inFlight.delete(settling.promise);
@@ -241,7 +243,7 @@ installPushTransport(async (url, init: PushFetchInit): Promise<PushHttpResponse>
  * A queued push is dispatched asynchronously and a request settles on the network's own time, so
  * a scenario that has observed its operator notice still has a request in flight: reporting before
  * it settles would describe it as a failure that never happened. Nothing here reaches into the
- * extension — this waits on the requests the transport itself performed.
+ * extension — this waits on the requests the recording call itself performed.
  */
 async function settleRequests(): Promise<void> {
 	// A queued push may not be on the wire yet, so "nothing is in flight" is only conclusive once
@@ -412,16 +414,16 @@ async function runScenario(): Promise<void> {
 		}
 		case "interop": {
 			const ctx = await arm(sessionId, { cwd: "E:/work/interop", model: "interop-model", sessionName: "interop" });
-			// The actual omp-bot panel the suite started, reached by the platform transport the
-			// assembly itself installed: two real beats from the harness's own interval, then one round
-			// edge pair, then the disconnect the panel answers. Nothing awaits the disconnect's own
-			// notice — a session that was never armed publishes none, and this report has to describe
-			// whatever really happened rather than wait for a word that may never come.
+			// The actual omp-bot panel the suite started, reached through the framework's own request:
+			// two real beats from the harness's own interval, then one round edge pair, then the
+			// disconnect the panel answers. Nothing awaits the disconnect's own notice — a session that
+			// was never armed publishes none, and this report has to describe whatever really happened
+			// rather than wait for a word that may never come.
 			await waitForBeats(2, 25_000);
 			await settleAll();
 			await settleRequests();
 			double.startRun(ctx);
-			double.settleRun(ctx);
+			await double.settleRun(ctx);
 			await settleAll();
 			await settleRequests();
 			double.run("connect-bot", "off", ctx);
