@@ -25,7 +25,9 @@
  *   four bucket amounts come from. The ratio is unavailable — never zero — when the price is
  *   missing, when the price does not state a bucket the scope used, or when the priced total is
  *   not positive, and no other model's price and no already-accumulated amount is ever substituted
- *   for it. Nothing here re-prices an amount that was already accounted.
+ *   for it. An amount-bearing channel's Total still writes the ratio field with one dash per bucket
+ *   in that case, and writes a Cost or Ref the tree has no value for as a dash beside it, rather
+ *   than dropping the fields. Nothing here re-prices an amount that was already accounted.
  * - **Text.** Token counts, the two currency amounts and a ratio's percentages format here, so the
  *   total and Round lines of every channel read alike; a native frontend adds layout, color and the
  *   widget around them.
@@ -767,21 +769,51 @@ const MONETARY_BUCKET_NAMES: Record<string, string> = { cacheRead: "Cache", inpu
 /** The display mark of each currency a ratio can be valued in. */
 const CURRENCY_MARKS: Record<string, string> = { USD: "$" };
 
-/** The bucket names a ratio writes, as each channel's own wording. */
-function ratioText(ratio: ReferenceRatio): string {
+/**
+ * The fee-structure ratio field one channel displays, before any value is known: the priced buckets
+ * and the currency mark its label carries. A channel that displays a ratio still writes this field
+ * with dashes when no ratio value is available, instead of dropping the field from the row.
+ */
+export interface RatioField {
+	readonly currency: string;
+	readonly buckets: readonly string[];
+}
+
+/** The bucket labels a ratio writes, as each channel's own wording. */
+function ratioLabels(buckets: readonly string[]): string {
 	// The monetary channel's three parts are the familiar Cache/In/Out wording; a price that also
 	// states cache write (the Codex catalog's four amounts) names all four.
-	const hasCacheWrite = ratio.parts.some(part => part.bucket === "cacheWrite");
-	const names = hasCacheWrite ? RATIO_BUCKET_NAMES : MONETARY_BUCKET_NAMES;
-	const labels = ratio.parts.map(part => names[part.bucket] ?? RATIO_BUCKET_NAMES[part.bucket]).join("/");
+	const names = buckets.includes("cacheWrite") ? RATIO_BUCKET_NAMES : MONETARY_BUCKET_NAMES;
+	return buckets.map(bucket => names[bucket] ?? RATIO_BUCKET_NAMES[bucket]).join("/");
+}
+
+/** The bucket names a ratio writes, as each channel's own wording. */
+function ratioText(ratio: ReferenceRatio): string {
+	const labels = ratioLabels(ratio.parts.map(part => part.bucket));
 	return `${CURRENCY_MARKS[ratio.currency] ?? "\u00A5"}${labels}\uff1a${ratio.parts.map(part => part.percent).join(":")}`;
 }
 
-/** The amount fields of one scope, each currency on its own and only where it exists. */
-export function amountText(fields: ConsumptionFields): string {
+/** The field an unavailable ratio still writes: its channel's own label and one dash per priced bucket. */
+function unavailableRatioText(field: RatioField): string {
+	const labels = ratioLabels(field.buckets);
+	const values = field.buckets.map(() => "--").join(":");
+	return `${CURRENCY_MARKS[field.currency] ?? "\u00A5"}${labels}\uff1a${values}`;
+}
+
+/** Which amount field a row writes even while the scope has no value for it. */
+export type AmountField = "cost" | "ref";
+
+/**
+ * The amount fields of one scope, each currency on its own: a known value as itself, and a field the
+ * scope's channel displays but has no value for as a dash, so an amount-bearing row keeps its fields
+ * rather than silently dropping them.
+ */
+export function amountText(fields: ConsumptionFields, shown: readonly AmountField[] = []): string {
 	const parts: string[] = [];
 	if (fields.costCny !== undefined) parts.push(`Cost: ${formatCny(fields.costCny)}`);
+	else if (shown.includes("cost")) parts.push("Cost: -");
 	if (fields.referenceCostUsd !== undefined) parts.push(`Ref: ${formatUsd(fields.referenceCostUsd)}`);
+	else if (shown.includes("ref")) parts.push("Ref: -");
 	return parts.join("  ");
 }
 
@@ -789,11 +821,13 @@ export function amountText(fields: ConsumptionFields): string {
  * The structure of one scope as every current-model part writes it: its cache hit rate, and the
  * fee-structure reference ratio where the scope has one. A scope with no conversation input has no
  * hit rate of its own, and the row writes that as a zero percent — the same text rule the Total row
- * has always used — while a scope with no ratio simply has no ratio part.
+ * has always used — while a scope whose channel displays a ratio without a value writes the field
+ * with one dash per bucket instead of dropping it.
  */
-function structureText(fields: ConsumptionFields): string {
+function structureText(fields: ConsumptionFields, ratioField?: RatioField): string {
 	const parts = [`Cache: ${fields.cacheHitRate ?? 0}%`];
 	if (fields.referenceRatio !== undefined) parts.push(ratioText(fields.referenceRatio));
+	else if (ratioField !== undefined) parts.push(unavailableRatioText(ratioField));
 	return parts.join("  ");
 }
 
@@ -821,19 +855,41 @@ export function roundText(round: RoundDisplay): string {
 
 /**
  * The current-model fields of one display: what the target's own model shows, which is what the
- * mode gates. A mode with no amount policy contributes no amount text and no ratio at all.
+ * mode gates. A mode with no amount policy contributes no amount text and no ratio at all; a mode
+ * with one still writes the ratio field, with dashes while the scope has no priced usage.
  */
 export function currentText(display: ConsumptionDisplay): string {
-	return structureText(display.current);
+	const ratioField: RatioField | undefined =
+		display.mode === "monetary"
+			? { currency: "CNY", buckets: ["cacheRead", "input", "output"] }
+			: display.mode === "allowance"
+				? { currency: "USD", buckets: ["cacheRead", "input", "cacheWrite", "output"] }
+				: undefined;
+	return structureText(display.current, ratioField);
+}
+
+/**
+ * The amount fields one display's Total always writes: the target's own channel's amount, plus the
+ * other currency whenever the tree really carries one. A field whose value is missing is written as
+ * a dash, so the Total keeps the old row's fields even at initialization.
+ */
+function displayedAmounts(display: ConsumptionDisplay): readonly AmountField[] {
+	const shown: AmountField[] = [];
+	if (display.mode === "monetary" || display.tree.costCny !== undefined) shown.push("cost");
+	if (display.mode === "allowance" || display.tree.referenceCostUsd !== undefined) shown.push("ref");
+	return shown;
 }
 
 /**
  * One display's whole total line: the current model's own structure followed by the main tree's
- * Sum, Cost and Ref. The two currencies are written separately and never added together.
+ * Sum, Cost and Ref. The two currencies are written separately and never added together, and an
+ * amount field the row's channels apply but hold no value for is written as a dash — the old row's
+ * fields survive initialization rather than disappearing. A token-only or hidden tree writes no
+ * amount field it has no policy for and no value beside.
  */
 export function totalText(display: ConsumptionDisplay): string {
 	const parts = [currentText(display), `Sum: ${formatTokens(display.tree.sum)}`];
-	const amounts = amountText(display.tree);
+	const amounts = amountText(display.tree, displayedAmounts(display));
 	if (amounts.length > 0) parts.push(amounts);
 	return parts.join("  ");
 }
