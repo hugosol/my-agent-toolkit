@@ -1,0 +1,8 @@
+$ bun test tests/model-cost   # revision c7ad7e8, 2026-10-14T21:17:11+08:00
+bun test v1.4.2 (744846f84)
+
+ 341 pass
+ 0 fail
+ 1692 expect() calls
+Ran 341 tests across 27 files. [4.74s]
+exit=0

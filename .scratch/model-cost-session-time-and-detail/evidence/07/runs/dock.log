@@ -1,0 +1,9 @@
+$ bun run test:dock   # revision c7ad7e8, 2026-10-14T21:14:14+08:00
+$ bun test tests/harness-dock
+bun test v1.4.2 (744846f84)
+
+ 86 pass
+ 0 fail
+ 1023 expect() calls
+Ran 86 tests across 23 files. [176.68s]
+exit=0

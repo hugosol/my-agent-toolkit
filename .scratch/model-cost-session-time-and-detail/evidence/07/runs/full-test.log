@@ -1,0 +1,14 @@
+$ OMP_BOT_BINARY=E:/Developer/myhub/omp-bot/backend/target/release/omp-bot.exe bun run test   # revision c7ad7e8 (c7ad7e81075981b53229083efc63b505186ed732), 2026-10-14T21:08:25+08:00
+$ bun test
+bun test v1.4.2 (744846f84)
+codebase-tools: no owning main session resolved for this session; the extension stays off
+codebase-tools: no owning main session resolved for this session; the extension stays off
+codebase-tools: no owning main session resolved for this session; the extension stays off
+codebase-tools: no owning main session resolved for this session; the extension stays off
+codebase-tools: no owning main session resolved for this session; the extension stays off
+
+ 963 pass
+ 0 fail
+ 5541 expect() calls
+Ran 963 tests across 106 files. [342.27s]
+exit=0

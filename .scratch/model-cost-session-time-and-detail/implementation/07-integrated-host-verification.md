@@ -8,7 +8,7 @@
 
 **Blocked by:** 04 — 消费周期重置与旧执行隔离；06 — 按树深度对齐与窄终端布局。传递依赖覆盖 01/02/03/05，不另加冗余边。
 
-**Status:** in-progress — implemented, tested and committed on this ticket branch; the integration-branch merge of this branch and the acceptance round follow.
+**Status:** in-progress — implemented, tested green on the final integrated tree (whole repository, 963 pass / 0 fail) and committed on this ticket branch; the workflow's merge of this branch into `wayfinder/subagent-enhance` and the acceptance round follow.
 
 Source: [approved contract](../contract.md) · [spec](../spec.md)
 
@@ -44,7 +44,7 @@ P9 的组合测试与 P34 的完整宿主兼容证明归本票；P35 的并发�
 
 ### P34 — 现有支持范围的真实宿主
 
-- 命令：`bun test tests/harness-dock` → **86 pass / 0 fail，23 files，230 s**。宿主为记录的基线隔离安装 `@oh-my-pi/pi-coding-agent@18.5.0`（revision anchor `9348320cc4a30a7195d36a1f05a6c11bcb701a17`，frozen，另加既有两个本地宿主补丁工件 `omp-18.5.0-viewed-session` 与 `omp-18.5.0-codex-response-boundary`），不扩大支持范围；无凭据、无外发（请求走 dock 本地抓取端点）。
+- 命令：`bun run test:dock` → **86 pass / 0 fail，23 files，1023 expect，176.7 s**（本轮运行；同一批 dock 用例也包含在全仓库 `bun run test` 的绿结果内）。宿主为记录的基线隔离安装 `@oh-my-pi/pi-coding-agent@18.5.0`（revision anchor `9348320cc4a30a7195d36a1f05a6c11bcb701a17`，frozen，另加既有两个本地宿主补丁工件 `omp-18.5.0-viewed-session` 与 `omp-18.5.0-codex-response-boundary`），不扩大支持范围；无凭据、无外发（请求走 dock 本地抓取端点）。
 - 覆盖的实际宿主行为（均在本次全绿运行内）：真实 RPC 会话的**输入**（含用户调用的 skill 输入）建立主会话起点与**主会话 Round 结束**（`tests/harness-dock/model-cost-session-span.test.ts`）；真实 `task` **子代理执行**、其原生 runtime 被绘制并在**独立进程恢复**后重现、既有提交与 `/budget detail` 形态（`tests/harness-dock/detail-tree.test.ts`）；`/budget clear`／`holiday` 的重置（`tests/harness-dock/period-switch.test.ts`）。
 - **无本需求新增宿主改动**：`git diff --name-only e3a1d0ea3ef9fdc78dc04f2d6719b3159c6e14fc..HEAD | grep -Ei 'host-patches|oh-my-pi|pi-coding-agent|patch.diff'` → 无输出；`host-patches/**` 的三份 record 最早提交于 `726da83`，早于本需求评审起点，属于既有支持前提。本需求改动集中在 `extensions/model-cost/**`、`framework/{adapters,behaviors,core,public.ts,docs}`、`tests/**`、`scripts/**`、ADR 与票据文件。
 - 受控 adapter（`tests/model-cost/**` 的 port double）只用于 S1/S2/S3 的组合与恢复场景，未被当作宿主证明；宿主结论只来自上面的 dock 运行。
@@ -59,11 +59,16 @@ P9 的组合测试与 P34 的完整宿主兼容证明归本票；P35 的并发�
 
 | 命令 | 退出码 | 范围与结果 |
 | --- | --- | --- |
-| `bun run typecheck` | 0 | 全仓 `tsc --noEmit` |
-| `bun run test` | 1 | 963 tests / 106 files：958 pass、5 fail（282.4 s）。5 个失败全部是 `tests/connect-bot/{budget-regression,harness-exit-budget,panel-registration-lifecycle}.test.ts` 的互操作用例，因缺少真实 `omp-bot.exe`（`…\Temp\omp-bot\backend\target\release\omp-bot.exe`）而在 setup 阶段抛出：属环境前提缺失，不是代码差异，失败路径中不含 connect-bot 或 model-cost 的源码改动。其余全部通过。 |
-| `bun test tests/model-cost` | 0 | 341 pass / 0 fail（本票新增 2 项在内；基线 339） |
-| `bun test tests/harness-dock` | 0 | 86 pass / 0 fail |
-| `bun run smoke:model-cost-detail-layout` | 0 | 见上 |
+| `bun run typecheck` | 0 | 全仓 `tsc --noEmit`（`evidence/07/runs/typecheck.log`） |
+| `OMP_BOT_BINARY=<sibling checkout>/backend/target/release/omp-bot.exe bun run test` | 0 | **963 pass / 0 fail**（963 tests / 106 files，5541 expect，342.3 s）——全仓库绿，含 `tests/connect-bot` 的真实面板互操作用例。上一轮那 5 例失败的原因是本 worktree 位于 `%TEMP%`、默认解析不到同级 `../omp-bot` 构建；以项目既有的 `OMP_BOT_BINARY` 指认真实 release 二进制后全部通过，未 skip、未 mock、未弱化任何用例（`runs/full-test.log`）。 |
+| `OMP_BOT_BINARY=… bun test tests/connect-bot` | 0 | 142 pass / 0 fail（18 files，689 expect，76.6 s）（`runs/connect-bot.log`） |
+| `OMP_BOT_BINARY=… bun test tests/connect-bot/{budget-regression,harness-exit-budget,panel-registration-lifecycle}.test.ts` | 0 | 12 pass / 0 fail（3 files，120 expect，61.1 s）——正是上一轮在 setup 抛出的那三个文件（`runs/connect-bot-interop-five.log`） |
+| `bun test tests/model-cost` | 0 | 341 pass / 0 fail（27 files，1692 expect，4.7 s；本票新增 2 项在内） |
+| `bun run test:dock` | 0 | 86 pass / 0 fail（23 files，1023 expect，176.7 s；真实隔离宿主） |
+| `bun run smoke:model-cost-detail-layout` | 0 | 各宽度全 PASS（`runs/layout-smoke.log`） |
+| `bun run smoke:model-cost-detail-layout-terminal` | 2 | 本会话无控制台设备、开新控制台被拒（见上），沿用 06 的已准备真机证据 |
+
+以上全部命令都在本票提交的源文件上运行，逐条留档于 `.scratch/model-cost-session-time-and-detail/evidence/07/runs/`（typecheck、full-test、connect-bot、connect-bot-interop-five、model-cost、dock、layout-smoke），命令行与 revision 写在每个日志首行；运行期间源与 fixtures 未改动，工作区除本票文件外干净。
 
 ### 其他票据证据的汇集与交叉核对
 
@@ -79,9 +84,9 @@ P9 的组合测试与 P34 的完整宿主兼容证明归本票；P35 的并发�
 
 ### 环境说明与限制
 
-- **集成分支同步（本地）**：本票分支起点与 `wayfinder/subagent-enhance` 的本地 tip 相同（`26e79cd`），提交前后各核对一次均未移动；`git merge wayfinder/subagent-enhance` → `Already up to date.`（无冲突、无空合并提交）。因此本票的全部运行与提交都在已含 01–06 的合并树上完成。
-- **受测源即提交源**：`bun run typecheck`、`bun run test`、两个分区与 smoke 都在提交 `b247bc7` 的源文件上运行；该次提交之后仅修改票据与本证据文档（测试与扩展源码未再改动）。
-- **本 worktree 的行尾归一（只影响工作区，不改任何受跟踪字节）**：票据 worktree 曾被以 CRLF 检出（`core.autocrlf=true`），使 `tests/harness-dock/baseline.test.ts` 按记录的 `bun.lock` sha256 失败（9e9f4833… vs 7f5c82e6…），也会破坏只认 LF 的 patch 解析。以 `git -c core.autocrlf=false checkout -- .` 按索引重写工作区后字节与记录一致，dock 全绿；此后 `git status` 除本票新增文件外无差异。
+- **集成分支同步（本地）**：本票分支起点与 `wayfinder/subagent-enhance` 的本地 tip 相同（`26e79cd`），提交前后各核对一次均未移动；`git merge wayfinder/subagent-enhance` → `Already up to date.`（无冲突、无空合并提交）。因此本票的全部运行与提交都在已含 01–06 的合并树上完成。全部 Git 操作仅本地：未 fetch／pull／push，未操作集成分支工作区。
+- **受测源即提交源（本轮）**：本轮 `bun run typecheck`、`bun run test`、`tests/connect-bot`、`tests/model-cost`、`bun run test:dock` 与 layout smoke 都在同一份源（revision `c7ad7e8` 之后的本次提交）上运行，运行期间未改动任何源或 fixture；命令与 revision 记在每个日志首行。
+- **本 worktree 的行尾归一（只影响工作区，不改任何受跟踪字节）**：票据 worktree 曾被以 CRLF 检出（`core.autocrlf=true`），使 `tests/harness-dock/baseline.test.ts` 按记录的 `bun.lock` sha256 失败（9e9f4833… vs 7f5c82e6…），也会破坏只认 LF 的 patch 解析。以 `git -c core.autocrlf=false checkout -- .` 按索引重写工作区后字节与记录一致；本轮运行前复核 `bun.lock` 与 `host-patches/*/patch.diff` 的 CR 计数均为 0，dock 与 connect-bot 因此无需任何临时归一化即全绿。
 - 设备级终端 smoke 无法在本会话重跑（见上），已用 06 的已准备真机证据替代，并保留可复现命令。
-- `tests/connect-bot` 的 5 个互操作用例需要真实 `omp-bot.exe`（环境前提），本次未构建，未伪造结果。
-- 未验证项：P33 的人工可读性判断；本分支向集成分支的合并（工作流步骤）与随后的验收轮。
+- `tests/connect-bot` 的真实面板互操作用例需要一个 `omp-bot.exe`：`tests/connect-bot/support/omp-bot.ts` 先取 `OMP_BOT_BINARY`，未设时才回落到 `<worktree>/../omp-bot/backend/target/release/omp-bot.exe`。本 worktree 在 `%TEMP%` 下没有同级 checkout，故以 `OMP_BOT_BINARY=E:/Developer/myhub/omp-bot/backend/target/release/omp-bot.exe` 指认该真实 release 构建（01/02/06 各轮同样如此记录）；不设该变量时这 5 例只做 `existsSync` 检查即报缺二进制，与仓库代码无关。
+- 未验证项：P33 的人工可读性判断（证据已备齐，本票不宣称通过）；本分支向集成分支的合并（工作流步骤）与随后的验收轮。
