@@ -1090,6 +1090,18 @@ describe("the production documents of one storage root, read back independently 
 				}
 				expect(parent?.own[DEEPSEEK_PROVIDER]?.["deepseek-flash"]?.tokens).toEqual(usageOfRequests(3, DEEPSEEK_USAGE));
 
+				// The subagent runtime: each child's own record carries the duration the host really
+				// measured for its executions, as a number of milliseconds, and the parent's record — the
+				// main session's own — carries none. What the host measured is a subagent's execution, and a
+				// final reading that arrived after a child's own commit is allowed to be unsaved, so the
+				// assertion is that the field is the right kind of number and never on the wrong session.
+				expect(children.every(child => child.runtimeMs === undefined || child.runtimeMs > 0)).toBe(true);
+				expect(parent?.runtimeMs).toBeUndefined();
+				// And the run reported no unusable runtime: every execution the host stated was attributed to
+				// the session it ran in and read as a duration, which is what an extension notices when it
+				// cannot (see `tests/framework/subagent-runtime.test.ts` for both failure shapes).
+				expect(noticesOf(session)).toEqual([]);
+
 				// The moment itself: the children's records were on disk while their parent had none, and each
 				// already named the parent's id. A record therefore never waits for its parent to be saved.
 				const unsaved = whileTheParentWasUnsaved;
