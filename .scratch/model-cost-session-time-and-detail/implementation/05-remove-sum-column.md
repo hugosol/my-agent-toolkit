@@ -8,7 +8,7 @@
 
 **Blocked by:** None (can start immediately).
 
-**Status:** ready-for-agent
+**Status:** in-progress — implemented and tested on this ticket's branch (Sum removed from Total, Round and every detail row); awaiting integration-branch merge and acceptance.
 
 Source: [approved contract](../contract.md) · [spec](../spec.md)
 

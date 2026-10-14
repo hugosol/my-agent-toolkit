@@ -11,7 +11,7 @@
  * operator would see, not a double's rendering of it.
  *
  * The document the run writes is the accounting's own record of what each session issued, and the
- * figures below are hand-added from it: the row sums, the tree's Sum and each row's cache rate are
+ * figures below are hand-added from it: each row's own cache rate and each row's own amount are
  * derived from the wire numbers the capture endpoint reported, so a row that showed another session's
  * consumption, an inclusive figure, or a Round row in the detail form could not pass.
  *
@@ -54,13 +54,11 @@ const MODEL_SELECTOR = `${MODEL_PROVIDER}/${MODEL_ID}`;
  * prompt tokens, 1000 of them served from the prompt cache, and 1000 completion tokens.
  *
  * The protocol's `prompt_tokens` counts the cached ones, so one response is accounted as 1000
- * non-cached input, 1000 cache reads, no cache writes and 1000 output — a Sum of 3,000 and a cache
- * hit rate of 1000 of 2000, a whole 50 percent, both hand-derived here.
+ * non-cached input, 1000 cache reads, no cache writes and 1000 output — a cache hit rate of 1000 of
+ * 2000, a whole 50 percent, hand-derived here. The four buckets' own total is a computed figure of
+ * the scope rather than a column any row writes (P23), so nothing here reads it back off a row.
  */
 const CAPTURE_USAGE = { input: 2000, output: 1000, cacheRead: 1000 };
-
-/** One response's own buckets, as the extension accounts them. */
-const ONE_RESPONSE_SUM = 3000;
 
 /** The main session's name, which the run sets through the host's own command before prompting. */
 const MAIN_SESSION_NAME = "dock-detail-main";
@@ -232,20 +230,17 @@ function sessionsOf(document: SavedDocument): SavedSession[] {
 	return Object.values(document.harnesses ?? {}).flatMap(bucket => bucket.sessions ?? []);
 }
 
-/** One session's own Sum and cache rate, hand-added from its record's buckets. */
-function figuresOf(record: SavedSession): { readonly sum: number; readonly cache: number } {
-	let sum = 0;
+/** One session's own cache rate, hand-added from its record's buckets. */
+function cacheRateOf(record: SavedSession): number {
 	let cacheRead = 0;
 	let input = 0;
 	for (const models of Object.values(record.own)) {
 		for (const entry of Object.values(models)) {
-			const tokens = entry.tokens;
-			sum += tokens.input + tokens.cacheRead + tokens.cacheWrite + tokens.output;
-			cacheRead += tokens.cacheRead;
-			input += tokens.input;
+			cacheRead += entry.tokens.cacheRead;
+			input += entry.tokens.input;
 		}
 	}
-	return { sum, cache: input + cacheRead > 0 ? Math.round((cacheRead / (input + cacheRead)) * 100) : 0 };
+	return input + cacheRead > 0 ? Math.round((cacheRead / (input + cacheRead)) * 100) : 0;
 }
 
 /** Lets the event loop turn over until nothing already queued is left. */
@@ -339,8 +334,8 @@ describe("the real host's widget: a brief with its own Round, then the static de
 				throw new Error(`the document holds no separate main and child record: ${JSON.stringify(sessions)}`);
 			}
 			expect(childRecord.parent).toBe(mainRecord.id);
-			const main = figuresOf(mainRecord);
-			const child = figuresOf(childRecord);
+			const main = cacheRateOf(mainRecord);
+			const child = cacheRateOf(childRecord);
 			const requestsBeforeToggle = run.capture.requests().length;
 
 			// The brief the operator sees first: the Total, and the main session's own Round — its Round
@@ -394,7 +389,7 @@ describe("the real host's widget: a brief with its own Round, then the static de
 			expect(detail[0]).toBe(total as string);
 			expect(detail[1]).toBe(MAIN_SESSION_NAME);
 			expect(detail[2]).toBe(
-				`\u2502  ${MODEL_PROVIDER} / ${MODEL_ID}  Cache: ${main.cache}%  \u00A5Cache/In/Out\uff1a0:20:80  Sum: ${main.sum.toLocaleString("en-US")}  Cost: \u00A50.01`,
+				`\u2502  ${MODEL_PROVIDER} / ${MODEL_ID}  Cache: ${main}%  \u00A5Cache/In/Out\uff1a0:20:80  Cost: \u00A50.01`,
 			);
 			// The child's own row carries its accumulation and the current context the harness recorded from
 			// that subagent's own binding: `percent (tokens/budget)`, the same form the bar above reads and
@@ -402,15 +397,17 @@ describe("the real host's widget: a brief with its own Round, then the static de
 			// The token figure is the host's own estimate of the child's conversation rather than a number
 			// this document holds, so it is pinned to the form and the budget, not to a token count.
 			const childRow = String(detail[3]);
-			const childPrefix = `\u2514\u2500 ${childRecord.name}  Cache: ${child.cache}%  Sum: ${child.sum.toLocaleString("en-US")}  Cost: \u00A50.0050  Ctx: `;
+			const childPrefix = `\u2514\u2500 ${childRecord.name}  Cache: ${child}%  Cost: \u00A50.0050  Ctx: `;
 			expect(childRow.startsWith(childPrefix)).toBe(true);
 			const childContext = childRow.slice(childPrefix.length);
 			expect(childContext).toMatch(/^\d+% \([\d.,]+K?\//);
 			expect(childContext.endsWith(`/${formatTokens(DEEPSEEK_DISPLAY_BUDGET)})`)).toBe(true);
 			expect(detail.some(line => line.startsWith("Round:"))).toBe(false);
-			// The tree's own Sum is the two records' own Sums added once each: the model row above is the
-			// main session's own alone, so nothing here is an inclusive figure counted twice.
-			expect(total).toContain(`Sum: ${(main.sum + child.sum).toLocaleString("en-US")}`);
+			// The total behind that tree is the two records' own amounts added once each: 0.01004 (the
+			// main session's two responses) plus 0.00502 (the child's one), 0.01506 under the same amount
+			// rule as \u00A50.02 — the model row above is the main session's own alone, so nothing here is an
+			// inclusive figure counted twice. Sum is no longer one of the fields this proves it by (P23).
+			expect(total).toContain("Cost: \u00A50.02");
 
 			// The feedback named the form the entry is now in, and the toggle asked no provider for
 			// anything: no request left the host for it.

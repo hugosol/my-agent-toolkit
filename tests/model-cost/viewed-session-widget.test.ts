@@ -12,8 +12,8 @@
  * The business half behind it is the real one: the runtime is built by the production factory over a
  * self-made two-session document (the main session on its monetary pair, its subagent token-only),
  * so the values the cases assert are the read-only display result the extension itself produces. The
- * tree is deliberately different from every target's own fields (Sum 6,100 versus 6,000 and 100), and
- * every expected figure below is a hand-computed literal.
+ * tree is deliberately different from every target's own fields (its 6,100 accounted tokens versus
+ * 6,000 and 100), and every expected figure below is a hand-computed literal.
  *
  * The re-read behavior the suite turns on — a target switch and a same-target fact change both end in
  * a fresh read, and a switched-away context is unsubscribed rather than kept — is the widget's own
@@ -288,7 +288,7 @@ afterEach(() => {
 });
 
 describe("the widget draws the viewed session's own fields and the whole main tree beside them (P21, P22)", () => {
-	test("a target switch redraws the current-model fields while Sum, Cost and Ref stay the main tree", async () => {
+	test("a target switch redraws the current-model fields while Cost and Ref stay the main tree", async () => {
 		const runtime = await boundRuntime();
 		const { api, fire } = controlApi();
 		const session = controlSession({ boundSessionId: "session-main", boundModel: BOUND_MODEL, initial: VIEWED_MAIN });
@@ -302,18 +302,18 @@ describe("the widget draws the viewed session's own fields and the whole main tr
 		// fine bar's single eighth-block — follows it.
 		expect(session.lastLines()).toEqual([
 			"\u{1F525}  [\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591   0% (1,234/450.0K)]  Effort: high  \u23F3 Accrued: \u00A50.05 [\u258F]",
-			"Total:  Cache: 67%  \u00A5Cache/In/Out\uff1a4:7:89  Sum: 6,100  Cost: \u00A50.05",
+			"Total:  Cache: 67%  \u00A5Cache/In/Out\uff1a4:7:89  Cost: \u00A50.05",
 		]);
 
 		// The host's view moves to the subagent: the current-model fields are the subagent's own
 		// token-only pair (30/20/0/50, a 40 percent cache hit rate, no ratio and no amount of its own),
-		// while Sum, Cost and Ref are the very same main tree the previous target showed. A token-only
+		// while Cost and Ref are the very same main tree the previous target showed. A token-only
 		// channel has no season of its own to mark and no amount of its own to accrue, so the line it
 		// leads with is the bar alone.
 		session.publish(VIEWED_SUB);
 		expect(session.lastLines()).toEqual([
 			"[░░░░░░░░░░░░░░░░░░░░   0% (50/450.0K)]  Effort: low",
-			"Total:  Cache: 40%  Sum: 6,100  Cost: \u00A50.05",
+			"Total:  Cache: 40%  Cost: \u00A50.05",
 		]);
 	});
 
@@ -335,7 +335,7 @@ describe("the widget draws the viewed session's own fields and the whole main tr
 		});
 		expect(session.lastLines()).toEqual([
 			"\u{1F525}  [\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591   0% (2,222/450.0K)]  Effort: medium  \u23F3 Accrued: \u00A50.05 [\u258F]",
-			"Total:  Cache: -  \u00A5Cache/In/Out\uff1a--:--:--  Sum: 6,100  Cost: \u00A50.05",
+			"Total:  Cache: -  \u00A5Cache/In/Out\uff1a--:--:--  Cost: \u00A50.05",
 		]);
 	});
 });
@@ -365,13 +365,13 @@ describe("every displayed fact comes from the public outlet, not from the bindin
 		// is the question mark the spec asks for — never the bound session's and never a configured one.
 		expect(session.lastLines()).toEqual([
 			"[░░░░░░░░░░░░░░░░░░░░   0% (50/450.0K)]  Effort: ?",
-			"Total:  Cache: 40%  Sum: 6,100  Cost: \u00A50.05",
+			"Total:  Cache: 40%  Cost: \u00A50.05",
 		]);
 
 		// And a context the outlet could not measure is not a bar: the line the bar lives on is dropped
 		// rather than filled from another session's reading.
 		session.publish({ sessionId: "session-sub", provider: "go-provider", model: "model-alpha" });
-		expect(session.lastLines()).toEqual(["Total:  Cache: 40%  Sum: 6,100  Cost: \u00A50.05"]);
+		expect(session.lastLines()).toEqual(["Total:  Cache: 40%  Cost: \u00A50.05"]);
 	});
 
 	test("a mode this extension does not display draws no widget at all, and still draws the tree for one it does", async () => {
@@ -413,7 +413,7 @@ describe("a switched-away context is dropped rather than kept (S1, S5)", () => {
 		expect(second.subscribers()).toBe(1);
 		expect(second.lastLines()).toEqual([
 			"[░░░░░░░░░░░░░░░░░░░░   0% (50/450.0K)]  Effort: low",
-			"Total:  Cache: 40%  Sum: 6,100  Cost: \u00A50.05",
+			"Total:  Cache: 40%  Cost: \u00A50.05",
 		]);
 
 		// A change published on the context the widget left behind no longer reaches it: the stale
@@ -467,7 +467,7 @@ describe("a host without the approved outlet still draws the bound session's own
 		// outlet path draws it: the fixture's peak season mark, the fixed 450K budget and the count.
 		expect(session.lastLines()).toEqual([
 			"\u{1F525}  [\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591   0% (1,234/450.0K)]  Effort: ?  \u23F3 Accrued: \u00A50.05 [\u258F]",
-			"Total:  Cache: 67%  \u00A5Cache/In/Out\uff1a4:7:89  Sum: 6,100  Cost: \u00A50.05",
+			"Total:  Cache: 67%  \u00A5Cache/In/Out\uff1a4:7:89  Cost: \u00A50.05",
 		]);
 	});
 
