@@ -1068,24 +1068,23 @@ function spanColumn(display: ConsumptionDisplay): DisplayColumn {
 	return { label: "Span: ", value: display.span === undefined ? "\u2014" : formatSpan(display.span.elapsedMs) };
 }
 
-/** One scope's columns: its structure and the amounts its scope really carries. */
-function fieldsColumns(fields: ConsumptionFields): DisplayColumn[] {
+/**
+ * One scope's columns: its structure and the amounts its scope really carries.
+ *
+ * It is exported for the one frontend whose rows are laid out as a grid rather than as one text: the
+ * detail form's agent-tree rows align their statistics within a depth group, so a caller has to be
+ * handed the very columns a row's line used to be joined from, with no figure re-decided on the way.
+ * A scope's columns stay what they were — no row writes a Sum column any more (P23), and the four
+ * buckets' total is still computed because the cache column's own dash rule reads it — and the
+ * caller states only how much room each of them gets.
+ */
+export function fieldsColumns(fields: ConsumptionFields): DisplayColumn[] {
 	return [...structureColumns(fields), ...amountColumns(fields)];
 }
 
 /** One row's columns joined in their plain, unaligned form. */
 function rowText(row: DisplayRow): string {
 	return row.map(column => `${column.label}${column.value}`).join("  ");
-}
-
-/**
- * One scope's whole row: its structure and the amounts its scope really carries.
- *
- * No row writes a Sum column any more (P23). The four buckets' total is still computed — the cache
- * column's own dash rule reads it — but it is no longer a field the display writes.
- */
-export function fieldsText(fields: ConsumptionFields): string {
-	return rowText(fieldsColumns(fields));
 }
 
 /**
