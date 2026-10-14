@@ -1121,6 +1121,90 @@ describe("a switch clears the period's own time with the consumption it closes (
 		expect(storedRecord(bound.root, MAIN.sessionId)?.span).toEqual({ start: NEW_INPUT, end: NEW_ROUND_END });
 	});
 
+	test("a reset another process committed takes this instance's observed time with the closed period (P20, P21)", async () => {
+		let clock = atBeijing(10, 10);
+		const bound = await bind({ document: TIMED_TREE, now: () => clock });
+
+		// This instance observed a submission of its own in the period the other process later closes: the
+		// document's committed start still answers over that observation while that period is the active one.
+		bound.double.deliverUserInput(OWNER, { session: MAIN });
+		expect(bound.runtime.view.sessionSpan(MAIN.sessionId)).toEqual({
+			startAt: OLD_INPUT,
+			endAt: OLD_ROUND_END,
+			elapsedMs: 300_000,
+		});
+
+		// Another process commits a reset: the file belongs to a period this instance's next snapshot
+		// cannot be published into, and it holds none of the closed period's records.
+		await updateFile(bound.consumptionFile, () => ({
+			schemaVersion: 1,
+			periodId: "period-another-process",
+			start: "2026-10-01T00:00:00.000Z",
+			holiday: false,
+			harnesses: {},
+		}));
+
+		// The next Round with consumption is refused as a snapshot of the replaced period. What this
+		// instance accumulated for it goes — its own observation of the closed period's time included.
+		clock = atBeijing(10, 40);
+		bound.double.deliverRound(OWNER, { event: { kind: "round_start" }, session: MAIN });
+		bound.double.deliverTurn(
+			{ kind: "request_started", session: MAIN, at: clock, provider: "deepseek", model: "deepseek-chat" },
+			{ owner: OWNER },
+		);
+		bound.double.deliverTurn(
+			{
+				kind: "response_settled",
+				session: MAIN,
+				at: clock,
+				outcome: "completed",
+				readings: [{ input: 10, output: 10, cacheRead: 0, cacheWrite: 0, totalTokens: 20 }],
+			},
+			{ owner: OWNER },
+		);
+		clock = atBeijing(10, 41);
+		const refusal = bound.double.deliverRound(OWNER, { event: { kind: "round_end" }, session: MAIN });
+		await updateFile(bound.consumptionFile, current => current);
+
+		expect(refusal.feedback).toHaveLength(1);
+		expect(refusal.feedback[0]?.level).toBe("error");
+		expect(refusal.feedback[0]?.message).toContain("另一个周期");
+		// The period that replaced the closed one has no start of its own yet: the instant this instance
+		// observed before the reset is not carried past it, and an unfinished Round fabricates no end.
+		expect(bound.runtime.view.sessionSpan(MAIN.sessionId)).toBeUndefined();
+		expect(widgetLinesOf(bound, MAIN_TARGET).find(line => line.startsWith("Total: "))).toContain("Span: \u2014");
+
+		// The new period's span begins at the first input this instance observes in it, and the existing
+		// commit path carries that pair and nothing of the closed period's.
+		clock = NEW_INPUT;
+		bound.double.deliverUserInput(OWNER, { session: MAIN });
+		bound.double.deliverRound(OWNER, { event: { kind: "round_start" }, session: MAIN });
+		bound.double.deliverTurn(
+			{ kind: "request_started", session: MAIN, at: NEW_INPUT, provider: "deepseek", model: "deepseek-chat" },
+			{ owner: OWNER },
+		);
+		bound.double.deliverTurn(
+			{
+				kind: "response_settled",
+				session: MAIN,
+				at: NEW_INPUT,
+				outcome: "completed",
+				readings: [{ input: 10, output: 10, cacheRead: 0, cacheWrite: 0, totalTokens: 20 }],
+			},
+			{ owner: OWNER },
+		);
+		clock = NEW_ROUND_END;
+		bound.double.deliverRound(OWNER, { event: { kind: "round_end" }, session: MAIN });
+		expect(bound.runtime.view.sessionSpan(MAIN.sessionId)).toEqual({
+			startAt: NEW_INPUT,
+			endAt: NEW_ROUND_END,
+			elapsedMs: 180_000,
+		});
+
+		await updateFile(bound.consumptionFile, current => current);
+		expect(storedRecord(bound.root, MAIN.sessionId)?.span).toEqual({ start: NEW_INPUT, end: NEW_ROUND_END });
+	});
+
 	test("a switch that could not archive writes no time and keeps the readings it had", async () => {
 		const bound = await bind({ document: TIMED_TREE, now: () => SWITCH_AT });
 		// A file where the archive directory belongs: no archive can be made there, so no period is closed.

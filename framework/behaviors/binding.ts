@@ -60,7 +60,6 @@ import { cleanupImplementation, initializeImplementation, servingOwnerKeyOf, ini
 import { publishMarkerOnRun, publishMarkerOnViewChange, registerMarker, markerSeat } from "./marker";
 import { createRoundSynthesis, roundLives } from "./round-events";
 import { dispatchSessionEvent } from "./session-events";
-import { dispatchSubagentRuntime } from "./subagent-runtime";
 import { ROUND_EVENT_KINDS, SUBAGENT_RUNTIME_EVENT_KINDS, TURN_EVENT_KINDS, USER_INPUT_EVENT_KINDS, dispatchToGroups, subscribesAny } from "./subscriptions";
 import { turnLives } from "./turn-events";
 
@@ -385,12 +384,21 @@ export function bindExtension(
 		}
 		// The subagent-runtime hook is subscribed only when a group observes that axis, so a
 		// definition that does not care about an execution's own duration asks the harness for no
-		// such facts. Nothing of the framework's runs for a delivery — the axis owns no state — so
-		// the observation goes straight to the subscribed handlers.
+		// such facts. Nothing of the framework's runs for a delivery — the axis owns no state the
+		// framework holds: no State is reconciled, no Round is opened or closed, no consumption is
+		// settled and no file is written — so the observation goes straight to the subscribed
+		// handlers, unchanged, exactly as the adapter mapped it.
 		if (subscribesAny(groups, SUBAGENT_RUNTIME_EVENT_KINDS)) {
 			port.onSubagentRuntime(delivery => {
 				if (!delivering) return;
-				dispatchSubagentRuntime(definition, delivery, groups, port.reportDiagnostic);
+				dispatchToGroups(
+					definition.id,
+					groups,
+					delivery.event.kind,
+					delivery.owner,
+					() => ({ delivery }),
+					port.reportDiagnostic,
+				);
 			});
 		}
 		// The input hook is subscribed only when a group observes it. There is no framework behavior

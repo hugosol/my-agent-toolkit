@@ -498,9 +498,10 @@ export interface OmpExtensionApi {
 	 *
 	 * Both are facts about one tool call rather than about the agent's work: a running tool's
 	 * progress frame and its settled result. The adapter reads the harness's own delegation tool's
-	 * payloads alone — the one place a subagent execution's own duration is stated — and decides
-	 * nothing about which reading is a replacement, which execution is new or which completion it
-	 * has already seen.
+	 * payloads here — the route that states each spawn a call runs — and decides nothing about which
+	 * reading is a replacement, which execution is new or which completion it has already seen. The
+	 * harness's own subagent frames carry the same metric on {@link OmpExtensionApi.events}, for the
+	 * executions this one never carries.
 	 */
 	on(event: "tool_execution_update", handler: (event: OmpToolExecutionEvent, ctx: OmpSessionContext) => void): void;
 	on(event: "tool_execution_end", handler: (event: OmpToolExecutionEvent, ctx: OmpSessionContext) => void): void;
@@ -532,6 +533,23 @@ export interface OmpExtensionApi {
 	 * follows no activation instead of guessing one.
 	 */
 	readonly pi?: OmpSdkSurface;
+	/**
+	 * The harness's shared event bus, where its own subagent frames are published.
+	 *
+	 * This is the one native surface a fact reaches the adapter on outside any delivery of its own:
+	 * the frames stating what each subagent execution had run when they were emitted, which is the
+	 * only route that carries a kept-alive subagent's follow-up turns. The bus is the harness's own
+	 * and is shared with every extension in the process; the adapter reads two channels from it and
+	 * publishes nothing on it. Optional: a surface that publishes no bus is observed on the
+	 * delegation tool's payloads alone, and an execution only the frames state is then unreported
+	 * rather than guessed.
+	 */
+	readonly events?: OmpEventBus;
+}
+
+/** The minimal event-bus surface this adapter subscribes on: one channel's own handler, and the unsubscribe back. */
+export interface OmpEventBus {
+	on(channel: string, handler: (data: unknown) => void): () => void;
 }
 
 /** The native contribution payload a run-initiation handler may return. */
@@ -876,15 +894,28 @@ function startupFactsOf(pi: OmpExtensionApi, ctx: OmpSessionContext, unavailable
 const ZERO_READING: TurnUsage = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, totalTokens: 0 };
 
 /**
- * The name the harness runs its own delegation tool under.
+ * The name the harness runs its own delegation tool under, and the two channels its own subagent
+ * frames travel on.
  *
- * That tool is the one place a subagent *execution*'s own measured duration is stated: each spawn
- * it runs gets a reading of what that spawn had run when the frame was emitted, and its settled
- * result carries each spawn's final one. Nothing else on this native surface reports it, and no
- * session's creation-to-last-record span is a substitute — the span counts the idle gaps between
+ * One subagent *execution*'s own measured duration is stated in two places on this native surface,
+ * and the adapter reads both because neither of them carries every execution. The delegation tool's
+ * payloads state the spawns one call runs — each spawn gets a reading of what it had run when the
+ * payload was built, and its settled result carries the final one — and the harness's own subagent
+ * channels state every execution of every agent, including the follow-up turns a kept-alive
+ * subagent runs: those turn in an existing session with no delegation call of their own, so the
+ * tool's payloads never carry them, and what is accumulated from that route alone would keep the
+ * agent's first runtime forever. The frames are the harness's own statement of the same metric — an
+ * execution's own elapsed run, emitted while it runs and once more as it settles — and no session's
+ * creation-to-last-record span is a substitute for any of it: a span counts the idle gaps between
  * executions as if they were execution time.
  */
 const SUBAGENT_TOOL_NAME = "task";
+
+/** The harness channel one execution's live progress frames are published on, as it names it. */
+const SUBAGENT_PROGRESS_CHANNEL = "task:subagent:progress";
+
+/** The harness channel the frames opening and settling one execution are published on, as it names it. */
+const SUBAGENT_LIFECYCLE_CHANNEL = "task:subagent:lifecycle";
 
 /** One native fact stated as a non-empty string, or nothing when the host stated none. */
 function statedText(value: unknown): string | undefined {
@@ -949,6 +980,129 @@ function executionOwnerOf(pi: OmpExtensionApi, ref: OmpAgentRef, sessionId: stri
 }
 
 /**
+ * The identities one subagent's executions are reported under, as the harness's own frames bracket
+ * them.
+ *
+ * The harness names an execution by the agent that runs it — the id its agent graph, its messaging
+ * and its delegation payloads all use — and it reuses that name for every later execution of the
+ * same agent, which is what a kept-alive subagent's follow-up turn is: the same registry id running
+ * again. A consumer accumulates a duration per execution and retires an execution's identity once
+ * its end has been observed, so a later execution reported under that same name would be read as a
+ * repeat of the first and contribute nothing. What the harness does state is the boundary between
+ * two of an agent's executions: a `started` lifecycle frame opens one. This bracket numbers the
+ * executions of each agent as those frames open them, so the first execution observed under an
+ * agent keeps the agent's own id — the identity the delegation tool's payloads state for it too —
+ * and every later one is named `<agent id>#<execution number>`. Readings of one execution therefore
+ * carry one identity however many of them arrive, and a follow-up is a new one.
+ *
+ * The count is this adapter's own observation of the frames, and it is ordered by the harness's own
+ * emission: the frame opening an execution is published before any reading of it, and both routes
+ * that carry readings reach this adapter from that same process. An execution this adapter began
+ * observing after its opening frame is therefore the first one it knows of that agent, and takes the
+ * agent's own id like any other first execution.
+ */
+interface SubagentExecutions {
+	/** The identity one agent's readings belong under, or nothing when no agent was named. */
+	readonly identityOf: (agentId: string | undefined) => string | undefined;
+	/** Applies one lifecycle frame's own statement about an execution's opening. */
+	readonly opened: (payload: unknown) => void;
+}
+
+/** Build the execution brackets of one subscription. */
+function subagentExecutions(): SubagentExecutions {
+	/** How many executions of each agent this adapter has seen opened, by agent id. */
+	const openedCounts = new Map<string, number>();
+	return {
+		identityOf: agentId => {
+			if (agentId === undefined) return undefined;
+			const count = openedCounts.get(agentId) ?? 1;
+			openedCounts.set(agentId, count);
+			return count === 1 ? agentId : `${agentId}#${count}`;
+		},
+		opened: payload => {
+			if (!isPlainMapping(payload) || payload.status !== "started") return;
+			const agentId = statedText(payload.id);
+			if (agentId === undefined) return;
+			openedCounts.set(agentId, (openedCounts.get(agentId) ?? 0) + 1);
+		},
+	};
+}
+
+/**
+ * The subagent-runtime delivery one observation of one execution states.
+ *
+ * The execution's identity is the harness's own: the agent id a payload or frame names, resolved
+ * through the harness's agent graph for the session that execution ran in, so the delivery names the
+ * actual session, its direct parent and its latest name rather than a display name, a depth or a
+ * payload field, and the owner is the nearest top-level main session above it. `identity` is what a
+ * consumer accumulates under — the agent's own id for the execution it is currently running, and a
+ * bracketed name for a later execution of that agent (see {@link subagentExecutions}). An
+ * observation whose execution, session or duration this host cannot read is delivered as the fact
+ * that it is `unavailable`, anchored to the session the observation was made in rather than dropped:
+ * an execution was reported, and an operator has to be told which reading could not be obtained
+ * rather than be shown a zero or a span in its place.
+ */
+function subagentRuntimeDelivery(
+	pi: OmpExtensionApi,
+	frame: {
+		readonly session: SessionFacts;
+		readonly owner: OwnerReference;
+		readonly hasUI: boolean;
+		readonly feedback: FeedbackTransport;
+	},
+	observation: {
+		/** The harness's own agent id the reading names, when it named one. */
+		readonly agentId: string | undefined;
+		/** The identity this execution's readings are reported under, when one is known. */
+		readonly identity: string | undefined;
+		/** The duration the host stated at that instant, as it stated it. */
+		readonly runtimeMs: unknown;
+		readonly status: "running" | "ended";
+	},
+): SubagentRuntimeDelivery {
+	const registry = pi.pi?.AgentRegistry?.global();
+	const ref = observation.agentId === undefined ? undefined : registry?.get(observation.agentId);
+	const sessionId = statedText(ref?.session?.sessionManager?.getSessionId());
+	if (observation.identity === undefined || ref === undefined || sessionId === undefined) {
+		return {
+			event: { kind: "subagent_runtime" } as const,
+			owner: frame.owner,
+			session: frame.session,
+			runtime: {
+				kind: "unavailable" as const,
+				reason:
+					observation.agentId === undefined
+						? "子代理执行身份"
+						: `子代理执行「${observation.agentId}」所属 Session`,
+			},
+			hasUI: frame.hasUI,
+			feedback: frame.feedback,
+		};
+	}
+	const runtimeMs = observation.runtimeMs;
+	const usable = typeof runtimeMs === "number" && Number.isFinite(runtimeMs) && runtimeMs >= 0 ? runtimeMs : undefined;
+	return {
+		event: { kind: "subagent_runtime" } as const,
+		owner: executionOwnerOf(pi, ref, sessionId),
+		session: executionSessionFacts(pi, ref, sessionId),
+		runtime:
+			usable === undefined
+				? {
+						kind: "unavailable" as const,
+						reason: `子代理执行「${observation.agentId}」的运行耗时（${describeValue(runtimeMs)}）`,
+					}
+				: {
+						kind: "reading" as const,
+						executionId: observation.identity,
+						runtimeMs: usable,
+						status: observation.status,
+					},
+		hasUI: frame.hasUI,
+		feedback: frame.feedback,
+	};
+}
+
+/**
  * The subagent-runtime deliveries one payload of the harness's delegation tool states.
  *
  * Each entry names one execution and the duration the host measured for it. An entry whose own
@@ -970,45 +1124,60 @@ function subagentRuntimeDeliveries(
 	},
 	payload: unknown,
 	status: "running" | "ended",
+	executions: SubagentExecutions,
 ): readonly SubagentRuntimeDelivery[] {
-	const registry = pi.pi?.AgentRegistry?.global();
 	return subagentEntries(payload, status).map(entry => {
-		const executionId = statedText(entry.id);
-		const ref = executionId === undefined ? undefined : registry?.get(executionId);
-		const sessionId = statedText(ref?.session?.sessionManager?.getSessionId());
-		if (executionId === undefined || ref === undefined || sessionId === undefined) {
-			return {
-				event: { kind: "subagent_runtime" } as const,
-				owner: frame.owner,
-				session: frame.session,
-				runtime: {
-					kind: "unavailable" as const,
-					reason:
-						executionId === undefined
-							? "子代理执行身份"
-							: `子代理执行「${executionId}」所属 Session`,
-				},
-				hasUI: frame.hasUI,
-				feedback: frame.feedback,
-			};
-		}
-		const runtimeMs = entry.durationMs;
-		const usable = typeof runtimeMs === "number" && Number.isFinite(runtimeMs) && runtimeMs >= 0 ? runtimeMs : undefined;
-		return {
-			event: { kind: "subagent_runtime" } as const,
-			owner: executionOwnerOf(pi, ref, sessionId),
-			session: executionSessionFacts(pi, ref, sessionId),
-			runtime:
-				usable === undefined
-					? {
-							kind: "unavailable" as const,
-							reason: `子代理执行「${executionId}」的运行耗时（${describeValue(runtimeMs)}）`,
-						}
-					: { kind: "reading" as const, executionId, runtimeMs: usable, status },
-			hasUI: frame.hasUI,
-			feedback: frame.feedback,
-		};
+		const agentId = statedText(entry.id);
+		return subagentRuntimeDelivery(pi, frame, {
+			agentId,
+			identity: executions.identityOf(agentId),
+			runtimeMs: entry.durationMs,
+			status,
+		});
 	});
+}
+
+/**
+ * The subagent-runtime deliveries one frame of the harness's own subagent channel states.
+ *
+ * The frame carries the progress of one execution: the agent it runs, the status the harness holds
+ * it in and the number of milliseconds it had run when the frame was built. The status is read in
+ * the harness's own vocabulary — an execution still going is a reading that replaces the previous
+ * one, and the three terminal statuses are its final reading — and a frame stating neither a usable
+ * status nor the agent it belongs to states no runtime either and produces no delivery. One
+ * delivery at most: a frame is the progress of exactly one execution.
+ */
+function subagentFrameDeliveries(
+	pi: OmpExtensionApi,
+	frame: {
+		readonly session: SessionFacts;
+		readonly owner: OwnerReference;
+		readonly hasUI: boolean;
+		readonly feedback: FeedbackTransport;
+	},
+	payload: unknown,
+	executions: SubagentExecutions,
+): readonly SubagentRuntimeDelivery[] {
+	const progress = isPlainMapping(payload) ? payload.progress : undefined;
+	if (!isPlainMapping(progress)) return [];
+	const agentId = statedText(progress.id);
+	if (agentId === undefined) return [];
+	const status = progress.status;
+	const moment: "running" | "ended" | undefined =
+		status === "running" || status === "pending"
+			? "running"
+			: status === "completed" || status === "failed" || status === "aborted"
+				? "ended"
+				: undefined;
+	if (moment === undefined) return [];
+	return [
+		subagentRuntimeDelivery(pi, frame, {
+			agentId,
+			identity: executions.identityOf(agentId),
+			runtimeMs: progress.durationMs,
+			status: moment,
+		}),
+	];
 }
 
 /**
@@ -1244,11 +1413,12 @@ function ompPort(
 	};
 
 	/**
-	 * The newest session context a delivery came from: the surface the displayed-session fact is
-	 * read through. It is a live context, never a copied fact, and `undefined` before this binding's
-	 * first delivery — when there is no display to speak of yet.
+	 * The newest session context a delivery of this binding came from: a live context, never a copied
+	 * fact, and `undefined` before this binding's first delivery. Two facts are read through it — the
+	 * session the host is displaying, and the session this binding serves when the harness's own
+	 * frames arrive outside any delivery of their own.
 	 */
-	let viewContext: OmpSessionContext | undefined;
+	let newestContext: OmpSessionContext | undefined;
 	/** The context the outlet is currently subscribed through, so a context that does not move is not re-subscribed. */
 	let watchedContext: OmpSessionContext | undefined;
 	/** The native unsubscribe of that subscription. */
@@ -1265,7 +1435,7 @@ function ompPort(
 	 * session to report.
 	 */
 	const watchViewedSession = (ctx: OmpSessionContext): void => {
-		viewContext = ctx;
+		newestContext = ctx;
 		if (typeof ctx.subscribeViewedSessionChanged !== "function" || watchedContext === ctx) return;
 		watchedContext = ctx;
 		unwatchViewed?.();
@@ -1287,7 +1457,7 @@ function ompPort(
 	 */
 	const viewedSession: ViewedSessionPort = {
 		read: () => {
-			const ctx = viewContext;
+			const ctx = newestContext;
 			if (ctx === undefined || typeof ctx.getViewedSession !== "function") return undefined;
 			return viewedOwnerOf(pi, ctx.getViewedSession());
 		},
@@ -1666,10 +1836,12 @@ function ompPort(
 			});
 		},
 		onSubagentRuntime: handler => {
-			// The adapter's whole job on this axis: read the harness's own delegation payloads and map
-			// the per-execution duration the host stated there, attributed through the harness's own
-			// agent graph. Which reading replaces which, which execution is new and which completion was
-			// already observed are the consumer's rules, so every reading is reported as it stands.
+			// The adapter's whole job on this axis: read the harness's own delegation payloads and the
+			// harness's own subagent frames, and map the per-execution duration the host stated there,
+			// attributed through the harness's own agent graph. Which reading replaces which, which
+			// execution is new and which completion was already observed are the consumer's rules, so
+			// every reading is reported as it stands.
+			const executions = subagentExecutions();
 			const report = (payload: unknown, ctx: OmpSessionContext, status: "running" | "ended"): void => {
 				const frame = {
 					session: sessionFactsOf(pi, ctx),
@@ -1677,7 +1849,7 @@ function ompPort(
 					hasUI: ctx.hasUI,
 					feedback: feedbackTransport(ctx),
 				};
-				for (const delivery of subagentRuntimeDeliveries(pi, frame, payload, status)) handler(delivery);
+				for (const delivery of subagentRuntimeDeliveries(pi, frame, payload, status, executions)) handler(delivery);
 			};
 			pi.on("tool_execution_update", (event, ctx) => {
 				if (event.toolName !== SUBAGENT_TOOL_NAME) return;
@@ -1687,6 +1859,28 @@ function ompPort(
 				if (event.toolName !== SUBAGENT_TOOL_NAME) return;
 				report(event.result, ctx, "ended");
 			});
+			// The harness's own frames, which reach this process outside any delivery: they are the one
+			// route that carries the follow-up turns a kept-alive subagent runs, and they bracket each
+			// execution of every agent, which is what keeps a later execution of an agent from being read
+			// as a repeat of its first. A frame is anchored to the session this binding serves, as its
+			// newest delivery reported it, because that is the session whose operator the observation is
+			// about — a frame no delivery has preceded yet has no session to anchor a reading to and is
+			// left unobserved rather than attributed to a session this adapter guessed.
+			const events = pi.events;
+			if (events !== undefined) {
+				events.on(SUBAGENT_PROGRESS_CHANNEL, payload => {
+					const ctx = newestContext;
+					if (ctx === undefined) return;
+					const frame = {
+						session: sessionFactsOf(pi, ctx),
+						owner: ownerOf(catalogued(ctx)),
+						hasUI: ctx.hasUI,
+						feedback: feedbackTransport(ctx),
+					};
+					for (const delivery of subagentFrameDeliveries(pi, frame, payload, executions)) handler(delivery);
+				});
+				events.on(SUBAGENT_LIFECYCLE_CHANNEL, payload => executions.opened(payload));
+			}
 		},
 		onRunInitiation: handler => {
 			pi.on("before_agent_start", (_event, ctx) => {

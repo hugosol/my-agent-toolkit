@@ -28,6 +28,7 @@ import { MODEL_PRICING_DATA } from "../../extensions/model-cost/shared-logic/mod
 import type { ModelCostRuntime } from "../../extensions/model-cost/shared-logic/runtime";
 import { createModelCostRuntime } from "../../extensions/model-cost/shared-logic/runtime";
 import { portDouble } from "../../tests/framework/support/harness-port-double";
+import { controlApi } from "../../tests/model-cost/support/control-api";
 import { uiBoundaryTimerOf } from "../../tests/model-cost/support/ui-timer";
 
 export const HARNESS = "smoke-harness";
@@ -204,24 +205,6 @@ export function recordingHost(): RecordingHost {
 				painted: factory(undefined, ANSI_THEME).render(width),
 				plain: factory(undefined, undefined as unknown as WidgetTheme).render(width),
 			};
-		},
-	};
-}
-
-/** A controlled extension API that records the handlers the frontend registers. */
-function controlApi(): { readonly api: OmpExtensionApi; fire(event: string, ctx: OmpSessionContext): void } {
-	const handlers = new Map<string, Array<(event: unknown, ctx: OmpSessionContext) => void>>();
-	return {
-		api: {
-			on(event: string, handler: (event: unknown, ctx: OmpSessionContext) => void): void {
-				const existing = handlers.get(event) ?? [];
-				existing.push(handler);
-				handlers.set(event, existing);
-			},
-			pi: undefined,
-		} as unknown as OmpExtensionApi,
-		fire(event, ctx) {
-			for (const handler of handlers.get(event) ?? []) handler({ type: event }, ctx);
 		},
 	};
 }

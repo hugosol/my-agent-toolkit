@@ -776,14 +776,18 @@ export function createRequestAccounting(inputs: RequestAccountingInputs): Reques
 	 * request identities stay: a repeated end for a Turn already accounted or already skipped must
 	 * not account a second time because its session's accumulation was discarded.
 	 *
-	 * A Session span is not part of what is discarded. The instants it holds are observations rather
-	 * than additions, so a snapshot that did not land leaves them as they were — the reading a display
-	 * shows is still the span this instance really saw — and the next snapshot that does land carries
-	 * them to the file instead of asking the user to say something again. The identities of the
-	 * executions the accumulations being dropped were told about are not discarded either: an
-	 * execution belongs to the period it ran in, so those identities are kept outside the accumulation
-	 * that is going, where they keep a late reading of one of them from contributing to the period
-	 * that replaced it.
+	 * A Session span goes with the period it was measured in, and stays when only one session's
+	 * snapshot was refused. The instants it holds are observations rather than additions, so a
+	 * snapshot that did not land under the period this instance is still accumulating in leaves them
+	 * as they were — the reading a display shows is still the span this instance really saw — and the
+	 * next snapshot that does land carries them to the file instead of asking the user to say
+	 * something again. A period that was replaced or whose baseline is gone is the other case: its
+	 * spans were measured in it, so they go with everything else, and the period that follows begins
+	 * its span at the next user input this instance observes rather than carrying an instant of the
+	 * closed period into a document that holds none of it. The identities of the executions the
+	 * accumulations being dropped were told about are not discarded either: an execution belongs to
+	 * the period it ran in, so those identities are kept outside the accumulation that is going,
+	 * where they keep a late reading of one of them from contributing to the period that replaced it.
 	 */
 	const discard = (sessionId: string | undefined): void => {
 		if (sessionId === undefined) {
@@ -801,6 +805,10 @@ export function createRequestAccounting(inputs: RequestAccountingInputs): Reques
 			ledgers.clear();
 			openRounds.clear();
 			endedRounds.clear();
+			// The Session spans were measured in that same period, so they go with it: a new period's
+			// span begins at the next user input this instance observes, and nothing of the replaced
+			// period's time is carried into it or reconstructed from its records.
+			spans.clear();
 		} else {
 			ledgers.delete(sessionId);
 			openRounds.delete(sessionId);
@@ -1127,14 +1135,11 @@ export function createRequestAccounting(inputs: RequestAccountingInputs): Reques
 		savePending: () => savesPublishing > 0,
 		periodSwitched() {
 			// The period a snapshot was measured in is gone, so the snapshot is no longer this instance's
-			// to publish: every session's own accumulation and every boundary pair goes, including the
-			// Round that was open across the switch. The handled request identities stay (see the
-			// interface), and so do the identity facts the host reported about each session.
+			// to publish: every session's own accumulation, every boundary pair and the Session spans
+			// measured in it go together, including the Round that was open across the switch. The
+			// handled request identities stay (see the interface), and so do the identity facts the host
+			// reported about each session.
 			discard(undefined);
-			// The Session spans were measured in that same period, so they go with it: a new period's
-			// span begins at the next user input this instance observes, and nothing of the closed
-			// period's time is carried into it or reconstructed from its records.
-			spans.clear();
 		},
 		dispose() {
 			disposed = true;

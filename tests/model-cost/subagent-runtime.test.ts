@@ -27,7 +27,7 @@ import type { ModelPricingData } from "../../extensions/model-cost/shared-logic/
 import type { ModelCostRuntime } from "../../extensions/model-cost/shared-logic/runtime";
 import { createModelCostRuntime } from "../../extensions/model-cost/shared-logic/runtime";
 import type { OwnerReference, SessionFacts, SubagentRuntimeFact } from "../../framework/core/protocol";
-import { type PortDouble, portDouble } from "../framework/support/harness-port-double";
+import { type FeedbackNotice, type PortDouble, portDouble } from "../framework/support/harness-port-double";
 
 /** The self-made pricing data: one monetary tier and one token-only pair. */
 const DATA: ModelPricingData = {
@@ -105,6 +105,8 @@ interface Bound {
 	readonly double: PortDouble;
 	readonly root: string;
 	readonly consumptionFile: string;
+	/** What this instance's binding was told while it loaded: the load's own notices, if any. */
+	readonly feedback: readonly FeedbackNotice[];
 }
 
 /**
@@ -139,9 +141,9 @@ async function bind(
 			return runtime.implementation;
 		},
 	});
-	double.deliverSession(OWNER, { session: MAIN });
+	const session = double.deliverSession(OWNER, { session: MAIN });
 	await double.initiateRun(OWNER);
-	return { runtime: runtime as ModelCostRuntime, double, root, consumptionFile };
+	return { runtime: runtime as ModelCostRuntime, double, root, consumptionFile, feedback: session.feedback };
 }
 
 /** One native runtime reading, as an adapter maps it for one execution of one session. */
@@ -581,6 +583,17 @@ describe("an old document without the new field stays ordinary consumption (P22,
 		expect(bound.runtime.view.own("session-child")).toEqual(CHILD_OWN);
 		expect(bound.runtime.view.identity("session-child")?.parentSessionId).toBe("session-main");
 		expect(bound.runtime.view.runtime("session-child")).toBeUndefined();
+
+		// The operator is told which figure was dropped, where it sits and what it was: left unstated,
+		// the value would simply disappear from a later commit of a session nobody was warned about.
+		expect(bound.feedback).toHaveLength(1);
+		expect(bound.feedback[0]?.level).toBe("error");
+		expect(bound.feedback[0]?.message).toContain(CONSUMPTION_FILE);
+		expect(bound.feedback[0]?.message).toContain(`harnesses.${HARNESS}.sessions[1].runtimeMs`);
+		expect(bound.feedback[0]?.message).toContain('"8 minutes"');
+		// It is the time notice and not the pause one: the consumption in the same document is valid.
+		expect(bound.feedback[0]?.message).toContain("时间数据无效");
+		expect(bound.feedback[0]?.message).not.toContain("暂停");
 
 		// And the session keeps committing: the next snapshot replaces the unusable value with what this
 		// instance really knows, while every other record survives.

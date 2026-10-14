@@ -500,12 +500,21 @@ as over — or the fact that this host produced none, with the reason it could n
   `subagent_runtime`, so a definition that does not care about an execution's duration asks its harness for no
   such facts, and no ordering or pagination promise attaches to the ones it does ask for.
 
-On `omp` the adapter maps these facts from the harness's own delegation tool (`task`), whose progress frames
-carry a running spawn's own elapsed reading and whose settled result carries each spawn's final one; the
-execution's session and its direct parent are read from the harness's agent registry rather than from a name, a
-depth or anything that merely looks hierarchical. The rules above are observable at the adapter contract in
+On `omp` the adapter maps these facts from two native routes, because neither one carries every execution. The
+harness's own delegation tool (`task`) states the spawns one call runs — a progress frame carries a running
+spawn's own elapsed reading and the settled result carries its final one — and the harness's own subagent
+channels (`task:subagent:progress` for the readings, `task:subagent:lifecycle` for the frames that open and
+settle an execution) state every execution of every agent, which is the only route that carries the follow-up
+turns a kept-alive subagent runs: those run in an existing session with no delegation call of their own. An
+execution's identity is the harness's own agent id, and because that id is reused by an agent's later executions
+the adapter brackets them by the openings that channel states — the first execution observed under an agent keeps
+the agent's own id, later ones are reported as `<agent id>#<execution number>` — so a consumer accumulates each
+execution instead of reading a follow-up as a repeat of the first. The execution's session and its direct parent
+are read from the harness's agent registry rather than from a name, a depth or anything that merely looks
+hierarchical. The rules above are observable at the adapter contract in
 `tests/framework/subagent-runtime.test.ts` — the two readings against the same agent record's much longer
-registered span, the attribution through the registry, and the unavailable shapes — and in a running harness in
+registered span, the attribution through the registry, the unavailable shapes, and a follow-up execution's own
+bracketed identity against the spawn's — and in a running harness in
 `tests/harness-dock/detail-tree.test.ts` and `tests/harness-dock/model-cost-persistence.test.ts`, where a real
 `task` call's children carry a duration the host really measured.
 

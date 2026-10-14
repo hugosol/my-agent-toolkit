@@ -58,10 +58,14 @@ interface NativeSurface {
 	readonly observed: ObservedDelivery[];
 	/** Every native event name the binding subscribed to, in call order. */
 	readonly registrations: string[];
+	/** Every channel of the harness's own event bus the binding subscribed to, in call order. */
+	readonly busRegistrations: string[];
 	/** One native tool-progress frame, as the runner delivers it. */
 	progress(event: OmpToolExecutionEvent, ctx: OmpSessionContext): void;
 	/** One native tool result, as the runner delivers it. */
 	settle(event: OmpToolExecutionEvent, ctx: OmpSessionContext): void;
+	/** One frame of the harness's own subagent channels, as the harness publishes it. */
+	emit(channel: string, payload: unknown): void;
 	/** The main session's own context, as a delivery from it carries. */
 	mainContext(): OmpSessionContext;
 }
@@ -107,8 +111,11 @@ function boundSurface(
 		tool_execution_update: [],
 		tool_execution_end: [],
 	};
+	/** The harness's own bus, as the loader hands it over: one listener list per channel. */
+	const busListeners = new Map<string, Array<(data: unknown) => void>>();
 	const observed: ObservedDelivery[] = [];
 	const registrations: string[] = [];
+	const busRegistrations: string[] = [];
 	const spanMs = options.spanMs ?? 3_600_000;
 	const mainRef: AgentRef = {
 		id: "Main",
@@ -138,6 +145,17 @@ function boundSurface(
 			}
 		},
 		pi: { AgentRegistry: { global: () => registry } },
+		events: {
+			on(channel: string, handler: (data: unknown) => void): () => void {
+				busRegistrations.push(channel);
+				const listeners = busListeners.get(channel) ?? [];
+				listeners.push(handler);
+				busListeners.set(channel, listeners);
+				return () => {
+					busListeners.set(channel, listeners.filter(listener => listener !== handler));
+				};
+			},
+		},
 	};
 
 	const record = (delivery: SubagentRuntimeDelivery): void => {
@@ -163,11 +181,15 @@ function boundSurface(
 		api,
 		observed,
 		registrations,
+		busRegistrations,
 		progress: (event, ctx) => {
 			for (const handler of toolHandlers.tool_execution_update) handler(event as never, ctx as never);
 		},
 		settle: (event, ctx) => {
 			for (const handler of toolHandlers.tool_execution_end) handler(event as never, ctx as never);
+		},
+		emit: (channel, payload) => {
+			for (const listener of [...(busListeners.get(channel) ?? [])]) listener(payload);
 		},
 		mainContext: () => contextOf({ sessionId: MAIN_SESSION_ID, kind: "main", agentId: "Main", name: "主会话" }),
 	};
@@ -249,6 +271,94 @@ describe("the runtime is the host's own per-execution duration, attributed to th
 		surface.settle({ type: "tool_execution_end", toolName: "task", result: { details: { results: [] } } }, surface.mainContext());
 
 		expect(surface.observed).toEqual([]);
+	});
+});
+
+describe("a kept-alive agent's later execution is a new one, stated on the harness's own frames (P11, P12)", () => {
+	/** One frame of the harness's progress channel, in the shape its own subagent executor publishes. */
+	const progressPayload = (id: string, status: string, durationMs: unknown): unknown => ({
+		index: 0,
+		agent: "task",
+		task: "follow-up",
+		progress: { id, status, durationMs },
+	});
+
+	/** One frame of the harness's lifecycle channel, as the executor publishes it around a run. */
+	const lifecyclePayload = (id: string, status: string): unknown => ({ id, status, agent: "task", index: 0 });
+
+	test("a follow-up execution of one agent is reported under its own identity, and its readings replace each other", () => {
+		const surface = boundSurface();
+
+		// The spawn's own execution: the harness opens it on its lifecycle channel and the delegation
+		// tool's payloads state its duration under the agent's own id.
+		surface.emit("task:subagent:lifecycle", lifecyclePayload(EXECUTION_ID, "started"));
+		surface.progress(progressFrame({ id: EXECUTION_ID, durationMs: 180_000 }), surface.mainContext());
+		surface.settle(settledResult({ id: EXECUTION_ID, durationMs: 360_000 }), surface.mainContext());
+
+		// The kept-alive agent's follow-up turn: the same agent id run again, with no delegation call of
+		// its own, so the frames are the only route that carries it.
+		surface.emit("task:subagent:lifecycle", lifecyclePayload(EXECUTION_ID, "started"));
+		surface.emit("task:subagent:progress", progressPayload(EXECUTION_ID, "running", 30_000));
+		surface.emit("task:subagent:progress", progressPayload(EXECUTION_ID, "running", 90_000));
+		surface.emit("task:subagent:progress", progressPayload(EXECUTION_ID, "completed", 120_000));
+
+		expect(surface.observed.map(delivery => delivery.runtime)).toEqual([
+			{ kind: "reading", executionId: EXECUTION_ID, runtimeMs: 180_000, status: "running" },
+			{ kind: "reading", executionId: EXECUTION_ID, runtimeMs: 360_000, status: "ended" },
+			// The follow-up: the agent's own id bracketed by the execution number the harness's own
+			// opening frame established, so a consumer accumulates it instead of reading it as a repeat
+			// of the spawn — and the three readings are one execution's own, replacing each other.
+			{ kind: "reading", executionId: `${EXECUTION_ID}#2`, runtimeMs: 30_000, status: "running" },
+			{ kind: "reading", executionId: `${EXECUTION_ID}#2`, runtimeMs: 90_000, status: "running" },
+			{ kind: "reading", executionId: `${EXECUTION_ID}#2`, runtimeMs: 120_000, status: "ended" },
+		]);
+		// A frame carries no session of its own: the execution's own session and the main session above it
+		// are resolved from the harness's agent graph, exactly as they are for the tool route.
+		expect(surface.observed[2]?.sessionId).toBe(CHILD_SESSION_ID);
+		expect(surface.observed[2]?.owner).toBe(`main:${MAIN_SESSION_ID}`);
+		// A terminal frame is that execution's final reading; a running one is not.
+		expect(surface.observed[4]?.runtime.kind === "reading" ? surface.observed[4].runtime.status : "").toBe("ended");
+	});
+
+	test("a terminal status the harness states is an end, and a frame stating neither a status nor an agent produces nothing", () => {
+		const surface = boundSurface();
+		surface.progress(progressFrame({ id: EXECUTION_ID, durationMs: 0 }), surface.mainContext());
+
+		surface.emit("task:subagent:progress", progressPayload(EXECUTION_ID, "failed", 60_000));
+		surface.emit("task:subagent:progress", progressPayload(EXECUTION_ID, "aborted", 70_000));
+		// No status this host's vocabulary holds, no execution id, no progress object at all: each states
+		// no reading, and none of them is guessed into a runtime.
+		surface.emit("task:subagent:progress", progressPayload(EXECUTION_ID, "thinking", 80_000));
+		surface.emit("task:subagent:progress", { progress: { status: "running", durationMs: 90_000 } });
+		surface.emit("task:subagent:progress", { index: 0 });
+
+		expect(surface.observed.map(delivery => delivery.runtime)).toEqual([
+			{ kind: "reading", executionId: EXECUTION_ID, runtimeMs: 0, status: "running" },
+			{ kind: "reading", executionId: EXECUTION_ID, runtimeMs: 60_000, status: "ended" },
+			{ kind: "reading", executionId: EXECUTION_ID, runtimeMs: 70_000, status: "ended" },
+		]);
+		// The binding asks the harness's bus for exactly the two channels this axis is stated on.
+		expect(surface.busRegistrations).toEqual(["task:subagent:progress", "task:subagent:lifecycle"]);
+	});
+
+	test("a frame whose execution the graph does not hold is unavailable, and one that precedes every delivery is left unobserved", () => {
+		const early = boundSurface();
+		// No delivery has reached this binding yet, so there is no session to anchor an observation to:
+		// nothing is attributed rather than guessed at.
+		early.emit("task:subagent:progress", progressPayload(EXECUTION_ID, "running", 30_000));
+		expect(early.observed).toEqual([]);
+
+		const surface = boundSurface();
+		surface.progress(progressFrame({ id: EXECUTION_ID, durationMs: 0 }), surface.mainContext());
+		surface.emit("task:subagent:progress", progressPayload("0-Gone", "running", 30_000));
+
+		// The execution was reported, so the operator is told which reading could not be attributed —
+		// anchored to the session the observation was made in, as the tool route's own unresolved
+		// readings are.
+		const [delivery] = surface.observed.slice(-1);
+		expect(delivery?.runtime.kind).toBe("unavailable");
+		expect(delivery?.sessionId).toBe(MAIN_SESSION_ID);
+		expect(delivery?.runtime.kind === "unavailable" ? delivery.runtime.reason : "").toContain("0-Gone");
 	});
 });
 

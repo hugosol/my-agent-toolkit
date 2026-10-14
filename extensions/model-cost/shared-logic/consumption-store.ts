@@ -95,9 +95,10 @@ export type BaselineLoad =
 	| {
 			readonly kind: "loaded";
 			/**
-			 * Every unreadable optional main-session time fact the loaded document carried, as the
-			 * read named it. The document is usable and this instance's accounting runs on it; what the
-			 * faults cost is the time reading itself, which is unknown rather than guessed.
+			 * Every unreadable optional time fact the loaded document carried, as the read named it:
+			 * a session's own span, and the subagent runtime a record accumulated. The document is
+			 * usable and this instance's accounting runs on it; what the faults cost is the time
+			 * reading itself, which is unknown rather than guessed.
 			 */
 			readonly faults: readonly string[];
 	  }
@@ -154,18 +155,18 @@ export function unusableBaselineNotice(file: string, reason: string): StoreNotic
 }
 
 /**
- * What the operator is told about a main-session time fact the loaded document could not be read for.
+ * What the operator is told about a time fact the loaded document could not be read for.
  *
  * It is deliberately not a pause: the consumption the same document holds is valid, so what an
- * unreadable time fact costs is the time reading alone — the affected session's span is unknown
- * (exactly as an absent one is) and nothing is substituted for it. The notice names the file and the
- * place inside it, because those are what the operator has to look at, and it says what was kept:
- * consumption, saving and every other field continue.
+ * unreadable time fact costs is the time reading alone — the affected session's span or accumulated
+ * runtime is unknown (exactly as an absent one is) and nothing is substituted for it. The notice
+ * names the file and the place inside it, because those are what the operator has to look at, and it
+ * says what was kept: consumption, saving and every other field continue.
  */
 export function timeFactFaultNotice(file: string, fault: string): StoreNotice {
 	return {
 		level: "error",
-		message: `消费数据「${file}」中的主会话时间无效（${fault}）；该时间已按未知处理，消费数据、保存与其他字段继续正常使用。`,
+		message: `消费数据「${file}」中的时间数据无效（${fault}）；该时间已按未知处理，消费数据、保存与其他字段继续正常使用。`,
 	};
 }
 

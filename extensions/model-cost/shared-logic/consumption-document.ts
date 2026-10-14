@@ -180,14 +180,15 @@ export type ConsumptionDocumentRead =
 			readonly kind: "document";
 			readonly document: ConsumptionDocument;
 			/**
-			 * Every invalid *optional* main-session time fact the document carried, named the way its
-			 * place names it, in the order the records were read.
+			 * Every invalid *optional* time fact the document carried, named the way its place names
+			 * it, in the order the records were read: the main session's own span, and the subagent
+			 * runtime one session's record accumulated.
 			 *
 			 * An invalid time fact is not a reason to refuse the document: the consumption beside it is
 			 * what the document is for, and a record whose time is unreadable still holds valid
-			 * consumption. What the fault does is what the absence of a span does — the fact is dropped
-			 * rather than guessed — and it is reported separately so the operator is told, instead of the
-			 * whole document being treated as corrupt and either refused or overwritten.
+			 * consumption. What the fault does is what the absence of the fact does — the value is
+			 * dropped rather than guessed — and it is reported separately so the operator is told,
+			 * instead of the whole document being treated as corrupt and either refused or overwritten.
 			 */
 			readonly faults: readonly string[];
 	  }
@@ -198,7 +199,7 @@ type Validated<T> = { readonly value: T } | { readonly reason: string };
 
 /** What one validated session record answered. */
 type SessionRecordRead =
-	| { readonly record: SessionRecord; readonly timeFault?: string }
+	| { readonly record: SessionRecord; readonly timeFaults?: readonly string[] }
 	| { readonly reason: string };
 
 /** The keys each level of the approved schema declares, and nothing else. */
@@ -358,11 +359,20 @@ function readSessionRecord(value: unknown, path: string): SessionRecordRead {
 	// accept as a measurement is left out rather than refusing the whole document. The consumption
 	// this record carries is valid however that one optional figure stands, so treating a bad one as
 	// a damaged document would pause an accounting that is not damaged — and the record's other
-	// fields must survive it. The next snapshot this session commits replaces the value.
+	// fields must survive it. The next snapshot this session commits replaces the value. What the
+	// record did carry is still reported: a declared runtime the schema cannot read is a time fact
+	// that was not recorded, so the operator is told which value was dropped instead of that value
+	// disappearing from the next commit without a word.
 	const declaredRuntime = value.runtimeMs;
-	// The one optional fact of the record: an unreadable time never makes the record unusable, so its
-	// fault is carried beside the record rather than in place of it.
+	const runtimeFault = declaredRuntime === undefined ? undefined : measurementFault(declaredRuntime);
+	// The optional time facts of the record: an unreadable time never makes the record unusable, so its
+	// fault is carried beside the record rather than in place of it — each of them, so a record whose
+	// runtime and span are both bad states both places the operator has to look at.
 	const span = readSessionSpan(value.span, `${path}.span`);
+	const timeFaults = [
+		...(runtimeFault === undefined ? [] : [`${path}.runtimeMs ${runtimeFault}`]),
+		...(span.fault === undefined ? [] : [span.fault]),
+	];
 	return {
 		record: {
 			id: value.id,
@@ -374,7 +384,7 @@ function readSessionRecord(value: unknown, path: string): SessionRecordRead {
 			...(isMeasurement(declaredRuntime) ? { runtimeMs: declaredRuntime } : {}),
 			...(span.span === undefined ? {} : { span: span.span }),
 		},
-		...(span.fault === undefined ? {} : { timeFault: span.fault }),
+		...(timeFaults.length === 0 ? {} : { timeFaults }),
 	};
 }
 
@@ -456,7 +466,9 @@ export function readConsumptionDocument(value: unknown): ConsumptionDocumentRead
 				return unusable(`harnesses.${harness} 出现重复的 Session id「${read.record.id}」`);
 			}
 			ids.add(read.record.id);
-			if (read.timeFault !== undefined) faults.push(`harnesses.${harness}.sessions[${index}]：${read.timeFault}`);
+			if (read.timeFaults !== undefined) {
+				for (const fault of read.timeFaults) faults.push(`harnesses.${harness}.sessions[${index}]：${fault}`);
+			}
 			sessions.push(read.record);
 		}
 		harnesses[harness] = { sessions };

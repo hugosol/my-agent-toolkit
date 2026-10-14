@@ -258,6 +258,67 @@ describe("the consumption document's startup facts", () => {
 	});
 });
 
+describe("the consumption document's optional time facts", () => {
+	/** One document holding records with the given extra time fields beside the valid consumption. */
+	const documentWith = (records: readonly unknown[]): ConsumptionDocument =>
+		({
+			schemaVersion: 1,
+			periodId: "7e9983ee-6f68-4bb7-8c01-13a48beaf24b",
+			start: "2026-10-12T04:00:00.000Z",
+			holiday: false,
+			harnesses: { omp: { sessions: records } },
+		}) as unknown as ConsumptionDocument;
+
+	test("a readable span and runtime are read as the record's own facts", () => {
+		const outcome = readConsumptionDocument(
+			documentWith([MAIN_SESSION, { ...CHILD_SESSION, runtimeMs: 480_000, span: { start: 1_000, end: 301_000 } }]),
+		);
+		expect(outcome.kind).toBe("document");
+		if (outcome.kind !== "document") return;
+		expect(outcome.faults).toEqual([]);
+		expect(outcome.document.harnesses.omp?.sessions[1]?.runtimeMs).toBe(480_000);
+		expect(outcome.document.harnesses.omp?.sessions[1]?.span).toEqual({ start: 1_000, end: 301_000 });
+	});
+
+	test("a declared runtime the schema cannot read is a fault beside the valid consumption rather than a silent drop", () => {
+		const outcome = readConsumptionDocument(
+			documentWith([MAIN_SESSION, { ...CHILD_SESSION, runtimeMs: "8 minutes" }]),
+		);
+		expect(outcome.kind).toBe("document");
+		if (outcome.kind !== "document") return;
+		// The record is still the one the file holds — the consumption beside the figure is not damage —
+		// and the place the operator has to look at is named with the value that was dropped.
+		expect(outcome.document.harnesses.omp?.sessions[1]?.own).toEqual(CHILD_SESSION.own);
+		expect(outcome.document.harnesses.omp?.sessions[1]?.runtimeMs).toBeUndefined();
+		expect(outcome.faults).toEqual([
+			'harnesses.omp.sessions[1]：harnesses.omp.sessions[1].runtimeMs 不是有限数字（"8 minutes"）',
+		]);
+
+		const negative = readConsumptionDocument(documentWith([{ ...CHILD_SESSION, runtimeMs: -1 }]));
+		expect(negative.kind).toBe("document");
+		if (negative.kind !== "document") return;
+		expect(negative.faults).toEqual(["harnesses.omp.sessions[0]：harnesses.omp.sessions[0].runtimeMs 为负数"]);
+	});
+
+	test("a record whose runtime and span are both unreadable states both places, each once", () => {
+		const outcome = readConsumptionDocument(
+			documentWith([{ ...CHILD_SESSION, runtimeMs: "8 minutes", span: { start: 1_000, end: 500 } }]),
+		);
+		expect(outcome.kind).toBe("document");
+		if (outcome.kind !== "document") return;
+		expect(outcome.faults).toEqual([
+			'harnesses.omp.sessions[0]：harnesses.omp.sessions[0].runtimeMs 不是有限数字（"8 minutes"）',
+			"harnesses.omp.sessions[0]：harnesses.omp.sessions[0].span.end 早于 harnesses.omp.sessions[0].span.start",
+		]);
+		// An absent figure is not a fault at all: a record written before the field existed, and one
+		// whose figure is simply unknown, both stay silent.
+		const absent = readConsumptionDocument(documentWith([MAIN_SESSION, CHILD_SESSION]));
+		expect(absent.kind).toBe("document");
+		if (absent.kind !== "document") return;
+		expect(absent.faults).toEqual([]);
+	});
+});
+
 describe("the consumption document's merge", () => {
 	test("a record whose id is not in the harness is appended, and the others survive", () => {
 		const document: ConsumptionDocument = { ...approvedDocument(), harnesses: { omp: { sessions: [MAIN_SESSION] } } };

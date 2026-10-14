@@ -859,6 +859,22 @@ describe("an older document keeps its data and gains the time beside it (P22, P2
 describe("the whole-document rules are unchanged by an optional time fact (P36)", () => {
 	test("a commit another writer's version conflicts with is reported, dropped and re-initialized from the disk, and no time is written by it", async () => {
 		const root = freshRoot();
+		// The generation this instance loads, and therefore the one the other writer's document below
+		// belongs to: this case is about a version conflict inside one period, where the time the
+		// instance observed is still the period's own. A file belonging to a period a reset replaced is
+		// `period-switch.test.ts`'s subject, and there the time goes with the period.
+		const periodId = "period-one";
+		writeFileSync(
+			path.join(root, CONSUMPTION_FILE),
+			JSON.stringify({
+				schemaVersion: 1,
+				periodId,
+				start: "2026-10-01T00:00:00.000Z",
+				holiday: true,
+				harnesses: {},
+			}),
+			"utf8",
+		);
 		const { runtime, double, file } = await bindAccounting(root);
 		// A second process publishes its own record of the same session at the version this instance is
 		// about to publish, so the coordinated update really refuses it.
@@ -871,7 +887,7 @@ describe("the whole-document rules are unchanged by an optional time fact (P36)"
 		};
 		const theirDocument: ConsumptionDocument = {
 			schemaVersion: 1,
-			periodId: "period-one",
+			periodId,
 			start: "2026-10-01T00:00:00.000Z",
 			holiday: true,
 			harnesses: { [HARNESS]: { sessions: [theirs] } },
@@ -987,7 +1003,7 @@ describe("the whole-document rules are unchanged by an optional time fact (P36)"
 		expect(feedback).toHaveLength(1);
 		expect(feedback[0]?.level).toBe("error");
 		expect(feedback[0]?.message).toContain(CONSUMPTION_FILE);
-		expect(feedback[0]?.message).toContain("主会话时间无效");
+		expect(feedback[0]?.message).toContain("时间数据无效");
 		expect(feedback[0]?.message).not.toContain("暂停");
 		expect(runtime.storage.pauseReason()).toBeUndefined();
 		// The load wrote nothing: an unreadable optional fact is dropped rather than repaired in place.

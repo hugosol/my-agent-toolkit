@@ -37,6 +37,7 @@ import type { ModelCostRuntime } from "../../extensions/model-cost/shared-logic/
 import { createModelCostRuntime } from "../../extensions/model-cost/shared-logic/runtime";
 import type { OwnerReference, SessionFacts } from "../../framework/core/protocol";
 import { type PortDouble, portDouble } from "../framework/support/harness-port-double";
+import { controlApi } from "./support/control-api";
 import { uiBoundaryTimerOf } from "./support/ui-timer";
 
 /** The self-made pricing data: one monetary tier and one token-only pair, as the other suites state it. */
@@ -277,24 +278,6 @@ function controlledHost(options: {
 			return drawn[drawn.length - 1];
 		},
 		frames: () => drawn.length,
-	};
-}
-
-/** A controlled extension API: it records the handlers the frontend registers. */
-function controlApi(): { readonly api: OmpExtensionApi; fire(event: string, ctx: OmpSessionContext): void } {
-	const handlers = new Map<string, Array<(event: unknown, ctx: OmpSessionContext) => void>>();
-	return {
-		api: {
-			on(event: string, handler: (event: unknown, ctx: OmpSessionContext) => void): void {
-				const existing = handlers.get(event) ?? [];
-				existing.push(handler);
-				handlers.set(event, existing);
-			},
-			pi: undefined,
-		} as unknown as OmpExtensionApi,
-		fire(event, ctx) {
-			for (const handler of handlers.get(event) ?? []) handler({ type: event }, ctx);
-		},
 	};
 }
 
