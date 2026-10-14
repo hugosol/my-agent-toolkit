@@ -79,6 +79,8 @@ P9 的组合测试与 P34 的完整宿主兼容证明归本票；P35 的并发�
 
 ### 环境说明与限制
 
+- **集成分支同步（本地）**：本票分支起点与 `wayfinder/subagent-enhance` 的本地 tip 相同（`26e79cd`），提交前后各核对一次均未移动；`git merge wayfinder/subagent-enhance` → `Already up to date.`（无冲突、无空合并提交）。因此本票的全部运行与提交都在已含 01–06 的合并树上完成。
+- **受测源即提交源**：`bun run typecheck`、`bun run test`、两个分区与 smoke 都在提交 `b247bc7` 的源文件上运行；该次提交之后仅修改票据与本证据文档（测试与扩展源码未再改动）。
 - **本 worktree 的行尾归一（只影响工作区，不改任何受跟踪字节）**：票据 worktree 曾被以 CRLF 检出（`core.autocrlf=true`），使 `tests/harness-dock/baseline.test.ts` 按记录的 `bun.lock` sha256 失败（9e9f4833… vs 7f5c82e6…），也会破坏只认 LF 的 patch 解析。以 `git -c core.autocrlf=false checkout -- .` 按索引重写工作区后字节与记录一致，dock 全绿；此后 `git status` 除本票新增文件外无差异。
 - 设备级终端 smoke 无法在本会话重跑（见上），已用 06 的已准备真机证据替代，并保留可复现命令。
 - `tests/connect-bot` 的 5 个互操作用例需要真实 `omp-bot.exe`（环境前提），本次未构建，未伪造结果。
