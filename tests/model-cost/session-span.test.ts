@@ -838,7 +838,7 @@ describe("an older document keeps its data and gains the time beside it (P22, P2
 		// The main session's span is drawn beside those readings, and it is the pair the record carried.
 		expect(monetary.span).toEqual({ startAt: atBeijing(10, 0, 0), endAt: atBeijing(10, 5, 0), elapsedMs: 300_000 });
 		expect(totalText(monetary)).toContain("Cache: 67%");
-		expect(totalText(monetary)).toContain("Sum: 28");
+		expect(totalText(monetary)).toContain("Cost: ");
 		// The span is the last column of the Total: every field before it keeps its own place, which is
 		// what leaves the columns a Round shares with the Total positionally unchanged.
 		expect(totalText(monetary)).toMatch(/Span: 0:05:00$/);

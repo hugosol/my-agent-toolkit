@@ -9,10 +9,11 @@
  *
  * The tree is self-made and deliberately heterogeneous: main, a subagent, a grandchild and a sibling,
  * four sessions whose own consumptions sit on four different provider/model pairs in three modes. The
- * whole main tree's Sum/Cost/Ref are therefore deliberately different from every single target's own
- * current-model fields, which is what a case can tell a scoped field from an unscoped one by. Every
- * expectation below is a hand-computed literal or a relation between two of them; none is computed by
- * calling the implementation.
+ * whole main tree's own total, Cost and Ref are therefore deliberately different from every single
+ * target's own current-model fields, which is what a case can tell a scoped figure from an unscoped
+ * one by; the total is a computed figure of each scope rather than a column any row writes (P23).
+ * Every expectation below is a hand-computed literal or a relation between two of them; none is
+ * computed by calling the implementation.
  */
 import { afterEach, describe, expect, test } from "bun:test";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
@@ -224,7 +225,7 @@ describe("the Total's current-model fields are the viewed session's own current 
 		expect(display.current.costCny).toBeUndefined();
 		expect(display.current.referenceCostUsd).toBeUndefined();
 		expect(display.current.referenceRatio).toBeUndefined();
-		// The field the case turns on: the viewed target's own Sum is deliberately not the tree's.
+		// The figure the case turns on: the viewed target's own total is deliberately not the tree's.
 		expect(display.current.sum).toBe(15);
 		expect(display.current.sum).not.toBe(display.tree.sum);
 	});
@@ -303,7 +304,7 @@ describe("the Total's current-model fields are the viewed session's own current 
 	});
 });
 
-describe("the Total's Sum, Cost and Ref keep the whole main tree (P22)", () => {
+describe("the Total's tree figures, Cost and Ref keep the whole main tree (P22)", () => {
 	test("viewing a grandchild keeps its parent's and its uncle's consumption", async () => {
 		const runtime = await bindView();
 		const display = runtime.presentation.of({
@@ -324,7 +325,7 @@ describe("the Total's Sum, Cost and Ref keep the whole main tree (P22)", () => {
 		expect(display.tree.sum).not.toBe(display.current.sum);
 	});
 
-	test("every target of the tree reads the same Sum, Cost and Ref, whichever session the view is on", async () => {
+	test("every target of the tree reads the same tree figures, whichever session the view is on", async () => {
 		const runtime = await bindView();
 		const targets = [
 			{ sessionId: "session-main", provider: "official", model: "model-alpha" },
@@ -343,7 +344,7 @@ describe("the Total's Sum, Cost and Ref keep the whole main tree (P22)", () => {
 			expect(tree.costCny).toBe(TREE_COST_CNY);
 			expect(tree.referenceCostUsd).toBe(TREE_REFERENCE_USD);
 		}
-		// And no target's own Sum is that figure: each current scope stays its own, hand-added per target.
+		// And no target's own total is that figure: each current scope stays its own, hand-added per target.
 		const currents = targets.map(target => runtime.presentation.of(target).current.sum);
 		expect(currents).toEqual([6000, 150, 7, 15, 130]);
 	});
