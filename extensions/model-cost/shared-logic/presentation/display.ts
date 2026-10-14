@@ -30,9 +30,10 @@
  *   than dropping the fields. Nothing here re-prices an amount that was already accounted.
  * - **Text.** Token counts, the two currency amounts and a ratio's percentages format here, so the
  *   total and Round lines of every channel read alike; a native frontend adds layout, color and the
- *   widget around them. A scope that has measured nothing at all writes a dash for its cache rate,
- *   its Sum and any amount or ratio field its channel displays, so initialization keeps the row's
- *   fields rather than showing zeros it cannot vouch for.
+ *   widget around them. A scope that has measured nothing at all writes a dash for its cache rate
+ *   and any amount or ratio field its channel displays, so initialization keeps the row's fields
+ *   rather than showing zeros it cannot vouch for. The four buckets' own total is what tells that
+ *   empty scope from a measured one, and it is no longer a field any row writes (P23).
  * - **The form.** The entry's own display preference (`display-preference.ts`) decides which of the
  *   two forms a display result is drawn in, and a subagent's target answers the brief whatever that
  *   preference is: the detail form belongs to the main session, which is the session whose own
@@ -40,8 +41,8 @@
  * - **The Rounds.** One Round row is read from the same in-memory snapshots every other Round read
  *   uses: the open Round once it holds an addition of its own, otherwise the last one this instance
  *   saw end between two of its own boundaries — a Round that only began does not replace the previous
- *   reading with zeroes. It carries the target's current-model structure beside that Round's own Sum,
- *   Cost and Ref; a boundary pair this instance does not hold writes no Round at all.
+ *   reading with zeroes. It carries the target's current-model structure beside that Round's own Cost
+ *   and Ref; a boundary pair this instance does not hold writes no Round at all.
  * - **The agent tree.** The detail form's rows are derived from the relations and own accumulations
  *   this instance already holds: the root by name, its own provider/model pairs one row each, and one
  *   row per descendant session's own accumulation, each with its distance from the root. No inclusive
@@ -71,6 +72,7 @@ import { type ModelPricingData, classify } from "../model-data";
 import type { ProviderBalance, ProviderBalanceResult } from "../provider-balance";
 import { type Season, nextSeasonChange, seasonAt } from "../request-price";
 import type { ConsumptionView, SessionIdentity } from "../request-accounting";
+import type { SessionSpanReading } from "../session-span";
 import type { DisplayForm, DisplayPreference } from "./display-preference";
 import type { SessionContextReading } from "./session-context";
 
@@ -121,7 +123,13 @@ export interface ReferenceRatio {
 export interface ConsumptionFields {
 	/** The four reported token buckets. */
 	readonly tokens: TokenBuckets;
-	/** Every bucket added up. */
+	/**
+	 * Every bucket added up.
+	 *
+	 * No row writes it any more (P23): the display's columns are the cache rate, the ratio field and
+	 * the amounts, and the total survives as the fact the cache column's own dash rule reads — a scope
+	 * that has measured no token at all shows a dash rather than a rate.
+	 */
 	readonly sum: number;
 	/** Cached share of the conversation input, as a whole percent; absent when no input was read or written. */
 	readonly cacheHitRate?: number;
@@ -147,7 +155,7 @@ export interface DisplayContextUsage {
  * The Round is that session's own consumption between two boundaries of its own — no descendant's
  * request is ever part of it — and it is the same provider-and-model shape the session's own
  * accumulation has, so the row's structure is read from the target's own current pair within it while
- * its Sum, Cost and Ref are the whole Round's.
+ * its Cost and Ref are the whole Round's.
  */
 export interface RoundDisplay {
 	/** The target's own current provider/model within this Round, gated by that pair's mode. */
@@ -318,6 +326,18 @@ export interface ConsumptionDisplay {
 	 * document to fill it.
 	 */
 	readonly round?: RoundDisplay;
+	/**
+	 * The Session span of the main session this target belongs to, as this instance holds it: the
+	 * interval from that session's first user input in the applicable period to its latest observed
+	 * Round end, or `undefined` while either of those facts is unknown.
+	 *
+	 * It is the *main session's* time rather than the target's own, and never an inclusive figure: a
+	 * subagent's view draws the main session's span, which is one of the two facts that keep a
+	 * subagent's execution from being read as the conversation's elapsed time. `undefined` is the
+	 * ordinary state of a session whose first Round has not ended — not a span of nothing — and a
+	 * reading of exactly zero milliseconds is the present pair of two equal instants.
+	 */
+	readonly span?: SessionSpanReading;
 	readonly budget?: DisplayBudget;
 	/** The target's actual effective effort, `?` when the host could not report one. */
 	readonly effort: string;
@@ -601,7 +621,7 @@ export function createPresentation(inputs: PresentationInputs): ConsumptionPrese
 
 	/**
 	 * One Round of one target as the brief writes it: the target's own current pair within the Round
-	 * for the row's structure, and the Round's whole own accumulation for its Sum, Cost and Ref.
+	 * for the row's structure, and the Round's whole own accumulation for its Cost and Ref.
 	 */
 	const roundOf = (target: DisplayTarget, own: OwnConsumption): RoundDisplay => ({
 		current: pairFieldsOf(own, target.provider, target.model),
@@ -703,7 +723,12 @@ export function createPresentation(inputs: PresentationInputs): ConsumptionPrese
 			// that pair's amount policy; the tree beside it is mixed by construction, so nothing about it
 			// is gated: every model's known contribution stays and the two currencies stay separate.
 			const current = pairFieldsOf(view.own(target.sessionId) ?? {}, target.provider, target.model);
-			const tree = fieldsOf(view.inclusiveTotals(rootOf(target.sessionId)));
+			// The main session this target belongs to: the root of its own tree, which is the session the
+			// tree beside the target is aggregated over and the session whose Session span the Total
+			// carries. For a target that is itself that root the two are the same session.
+			const mainSessionId = rootOf(target.sessionId);
+			const tree = fieldsOf(view.inclusiveTotals(mainSessionId));
+			const span = view.sessionSpan(mainSessionId);
 			// The detail form belongs to the main session alone, and a session with no direct parent is
 			// the root of its own tree: a subagent's view answers the brief however the entry's own
 			// preference stands, which is what keeps that display fixed while the operator is focused on
@@ -734,6 +759,7 @@ export function createPresentation(inputs: PresentationInputs): ConsumptionPrese
 				// has no tree of its own in this form, which is what keeps that view the brief.
 				...(isTreeRoot ? { agentTree: agentTreeOf(target.sessionId) } : {}),
 				...(round === undefined ? {} : { round }),
+				...(span === undefined ? {} : { span }),
 				...(budget === undefined ? {} : { budget }),
 				effort: target.effort ?? "?",
 				...(target.contextTokens === undefined
@@ -912,10 +938,10 @@ export type AmountField = "cost" | "ref";
 /**
  * One labelled value of a Total or Round row, before a frontend lays the row out.
  *
- * The label is the fixed part (`Cache: `, `Sum: `, or a ratio's own wording and `：`) and the value
- * is what varies in width. Splitting a row into columns is what lets a frontend align two rows
- * vertically without re-deciding any figure: this module says what each column is, the frontend says
- * how much room it gets.
+ * The label is the fixed part (`Cache: `, or a ratio's own wording and `：`) and the value is what
+ * varies in width. Splitting a row into columns is what lets a frontend align two rows vertically
+ * without re-deciding any figure: this module says what each column is, the frontend says how much
+ * room it gets.
  */
 export interface DisplayColumn {
 	readonly label: string;
@@ -924,11 +950,6 @@ export interface DisplayColumn {
 
 /** One Total or Round row's columns, in the order the row writes them. */
 export type DisplayRow = readonly DisplayColumn[];
-
-/** A scope's whole Sum as the display writes it: a dash while the scope has measured no token at all. */
-function formatSum(sum: number): string {
-	return sum === 0 ? "-" : formatTokens(sum);
-}
 
 /** The ratio field one mode's current-model scope displays, or nothing when the mode has none. */
 function ratioFieldOf(mode: ConsumptionMode): RatioField | undefined {
@@ -947,6 +968,9 @@ function ratioColumnLabel(currency: string, buckets: readonly string[]): string 
  * token at all, the initialization row; a zero percent when it measured usage without conversation
  * input — and the ratio field its channel displays: a value where the scope has a usable price, one
  * dash per bucket where it has the field but no value.
+ *
+ * Whether the scope has measured anything is read from the four buckets' own total, which is why
+ * that total stays a computed field of the scope even though no row writes it as a column (P23).
  */
 function structureColumns(fields: ConsumptionFields, ratioField?: RatioField): DisplayColumn[] {
 	const columns: DisplayColumn[] = [
@@ -981,14 +1005,37 @@ function amountColumns(fields: ConsumptionFields, shown: readonly AmountField[] 
 	return columns;
 }
 
-/** One scope's Sum column. */
-function sumColumn(sum: number): DisplayColumn {
-	return { label: "Sum: ", value: formatSum(sum) };
+/**
+ * One Session span as the display writes it: whole hours, minutes and seconds of the interval, with
+ * the hours unbounded rather than wrapped at a day — a session that lasted past midnight lasted that
+ * long, and an interval is not a time of day.
+ *
+ * The two smaller fields keep two digits so the reading stays a fixed width as it grows, which is
+ * what lets the same span start at the same column on every redraw.
+ */
+export function formatSpan(elapsedMs: number): string {
+	const seconds = Math.floor(elapsedMs / 1000);
+	const hours = Math.floor(seconds / 3600);
+	const minutes = Math.floor((seconds % 3600) / 60);
+	return `${hours}:${String(minutes).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
 }
 
-/** One scope's columns: its structure, its Sum, and the amounts its scope really carries. */
+/**
+ * One display's Session span column: the main session's span as the display writes it, or a dash
+ * while the span is unknown.
+ *
+ * A dash is what an unknown span is written as, and it is not zero: a session whose first Round has
+ * not ended has no elapsed time to show, and a session whose span really is zero milliseconds is
+ * written as `0:00:00` — the two are told apart by the reading being there at all. The column is
+ * always a column, so the field keeps its place whether or not a reading exists.
+ */
+function spanColumn(display: ConsumptionDisplay): DisplayColumn {
+	return { label: "Span: ", value: display.span === undefined ? "\u2014" : formatSpan(display.span.elapsedMs) };
+}
+
+/** One scope's columns: its structure and the amounts its scope really carries. */
 function fieldsColumns(fields: ConsumptionFields): DisplayColumn[] {
-	return [...structureColumns(fields), sumColumn(fields.sum), ...amountColumns(fields)];
+	return [...structureColumns(fields), ...amountColumns(fields)];
 }
 
 /** One row's columns joined in their plain, unaligned form. */
@@ -996,19 +1043,25 @@ function rowText(row: DisplayRow): string {
 	return row.map(column => `${column.label}${column.value}`).join("  ");
 }
 
-/** One scope's whole row: its structure, its Sum, and the amounts its scope really carries. */
+/**
+ * One scope's whole row: its structure and the amounts its scope really carries.
+ *
+ * No row writes a Sum column any more (P23). The four buckets' total is still computed — the cache
+ * column's own dash rule reads it — but it is no longer a field the display writes.
+ */
 export function fieldsText(fields: ConsumptionFields): string {
 	return rowText(fieldsColumns(fields));
 }
 
 /**
  * One Round's own columns: the target's current-model structure within that Round — with the same
- * ratio field its mode displays, dashes included — then that Round's own Sum, Cost and Ref.
+ * ratio field its mode displays, dashes included — then that Round's own Cost and Ref. A Round writes
+ * no bucket total of its own and no time, either: its own additions are a scope of their own rather
+ * than the session the Total is the span of.
  */
 export function roundColumns(round: RoundDisplay, mode?: ConsumptionMode): DisplayRow {
 	return [
 		...structureColumns(round.current, mode === undefined ? undefined : ratioFieldOf(mode)),
-		sumColumn(round.total.sum),
 		...amountColumns(round.total),
 	];
 }
@@ -1027,15 +1080,22 @@ function displayedAmounts(display: ConsumptionDisplay): readonly AmountField[] {
 
 /**
  * One display's Total columns: the current model's own structure — with the ratio field its mode
- * displays, dashes included — then the main tree's Sum, Cost and Ref. The two currencies are kept
- * apart, and an amount field the row's channels apply but hold no value for is a dash, so the old
- * row's fields survive initialization rather than disappearing.
+ * displays, dashes included — then the main tree's Cost and Ref, then the main session's own Session
+ * span. The two currencies are kept apart, and an amount field the row's channels apply but hold no
+ * value for is a dash, so the old row's fields survive initialization rather than disappearing. The
+ * tree's bucket total is not a column of this row: no row writes a Sum column (P23).
+ *
+ * The span is the one column the brief's Round row has no counterpart for, which is why it comes
+ * last: every column before it is positional — a Round's field sits under the Total's field of the
+ * same name — and appending this one leaves that correspondence untouched. The Round has no time
+ * column of its own by design: the session's elapsed time is not attributable to one Round, and a
+ * Round's own duration is not a figure this extension measures.
  */
 export function totalColumns(display: ConsumptionDisplay): DisplayRow {
 	return [
 		...structureColumns(display.current, ratioFieldOf(display.mode)),
-		sumColumn(display.tree.sum),
 		...amountColumns(display.tree, displayedAmounts(display)),
+		spanColumn(display),
 	];
 }
 

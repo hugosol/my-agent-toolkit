@@ -392,8 +392,7 @@ export interface OmpMessageUpdateEvent {
 	readonly message: OmpAgentMessage;
 }
 
-/**
- * A message ending.
+/** A message ending.
  *
  * It fires for every message kind, so the adapter reads it only for the finalized assistant
  * response — the one message that can settle a model request/response cycle.
@@ -401,6 +400,21 @@ export interface OmpMessageUpdateEvent {
 export interface OmpMessageEndEvent {
 	readonly type: "message_end";
 	readonly message: OmpAgentMessage;
+}
+
+/**
+ * The native submission event: one input admitted to a session, published before the harness decides
+ * what the submission is.
+ *
+ * Only the one field this mapping reads is named. `source` is the harness's own attribution of who
+ * submitted it — the interactive editor, its RPC client, or an extension submitting on its own
+ * behalf — which is the one distinction the framework's input fact carries. The text and the images
+ * are the harness's own material for the submission it is about to make and are deliberately not
+ * read here: an input fact is not the prompt's content.
+ */
+export interface OmpInputEvent {
+	readonly type: "input";
+	readonly source: "interactive" | "rpc" | "extension";
 }
 
 /**
@@ -454,6 +468,15 @@ export interface OmpExtensionApi {
 	on(event: "message_start", handler: (event: OmpMessageStartEvent, ctx: OmpSessionContext) => void): void;
 	on(event: "message_update", handler: (event: OmpMessageUpdateEvent, ctx: OmpSessionContext) => void): void;
 	on(event: "message_end", handler: (event: OmpMessageEndEvent, ctx: OmpSessionContext) => void): void;
+	/**
+	 * Subscribes to the native submission event: one input admitted to a session, whether the editor
+	 * submitted it, its RPC client did, or an extension did on its own behalf.
+	 *
+	 * A session that must be told only about what the *user* submitted reads the event's own source
+	 * fact; the framework's input hook is where that distinction is mapped, and registering for it is
+	 * what makes the harness publish the fact for this binding at all.
+	 */
+	on(event: "input", handler: (event: OmpInputEvent, ctx: OmpSessionContext) => void): void;
 	/**
 	 * The bound session's actual effective thinking level, as the harness's own session reports it.
 	 *
@@ -1351,6 +1374,36 @@ function ompPort(
 			// everything already queued — the session's own unwinding and any input it drained — has
 			// had its turn. Nothing here waits on a duration or repeats.
 			setTimeout(callback, 0);
+		},
+		onUserInput: handler => {
+			// The adapter's whole job on this axis: read the one fact the harness states about who
+			// submitted the input, and report the submission as the user's input when it is the user's.
+			// A submission an extension made on its own behalf is deliberately not one — the harness
+			// itself distinguishes the two, and reading that distinction is what keeps an agent's own
+			// input from being reported as the user's.
+			//
+			// A harness surface that refuses the registration publishes no submission event at all. That
+			// is the honest absence and it is reported as such: the framework then reports no user input
+			// rather than inferring one from some other fact, and everything else in the binding runs
+			// unchanged.
+			try {
+				pi.on("input", (event, ctx) => {
+					if (event.source === "extension") return;
+					catalogued(ctx);
+					handler({
+						event: { kind: "user_input" },
+						owner: ownerOf(catalogued(ctx)),
+						session: sessionFactsOf(pi, ctx),
+						hasUI: ctx.hasUI,
+						feedback: feedbackTransport(ctx),
+					});
+				});
+			} catch (error) {
+				const detail = error instanceof Error ? error.message : String(error);
+				reportDiagnostic(
+					`${definition.id}: this harness publishes no submission event (input); the framework reports no user input rather than inventing one (${detail})`,
+				);
+			}
 		},
 		onTurn: handler => {
 			// The adapter's whole job on this axis: map native facts to signals and frame each one

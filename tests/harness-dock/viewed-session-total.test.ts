@@ -41,8 +41,8 @@ const CONSUMPTION_FILE = "consumption.json";
  * them served from the prompt cache, and 1000 completion tokens.
  *
  * The protocol's `prompt_tokens` counts the cached ones, so the reading the extension accounts is
- * 1000 non-cached input, 1000 cache reads, no cache writes and 1000 output — a Sum of 3,000 and a
- * cache hit rate of 1000 of 2000, a whole 50 percent, both hand-derived here.
+ * 1000 non-cached input, 1000 cache reads, no cache writes and 1000 output — a cache hit rate of
+ * 1000 of 2000, a whole 50 percent, hand-derived here.
  */
 const CAPTURE_USAGE = { input: 2000, output: 1000, cacheRead: 1000 };
 
@@ -220,13 +220,12 @@ describe("the widget's Effort is the host's actual level, re-read when it change
 			expect(shownEffort(run.session)).toBe(before as string);
 
 			// The Total line is this run's own accounting: 1000/1000/0/1000 tokens of the endpoint's
-			// wire payload, so a Sum of 3,000 and a 50 percent cache hit rate, priced by the flash
-			// tier's holiday off-peak 1/0.02/4 CNY per million — 0.00502 CNY, whose structure ratio is
-			// 20:1000:4000 of 5020, displayed as 0:20:80.
+			// wire payload, so a 50 percent cache hit rate, priced by the flash tier's holiday off-peak
+			// 1/0.02/4 CNY per million — 0.00502 CNY, whose structure ratio is 20:1000:4000 of 5020,
+			// displayed as 0:20:80. The four buckets' total is no column of the row any more (P23).
 			const total = (shownLines(run.session) ?? []).find(line => line.startsWith("Total:"));
 			expect(total).toBeDefined();
 			expect(total).toContain("Cache: 50%");
-			expect(total).toContain("Sum: 3,000");
 			expect(total).toContain("Cost: \u00A50.0050");
 			expect(total).toContain("\u00A5Cache/In/Out\uff1a0:20:80");
 

@@ -291,8 +291,9 @@ describe("a mode without an amount policy shows no amount of its own (P8)", () =
 		});
 
 		expect(display.mode).toBe("token-only");
-		// The approved usage fields: the four buckets, their Sum and the cache hit rate (1000 of 3000
-		// conversation input tokens were cached, so a whole 33 percent).
+		// The approved usage fields: the four buckets, the total they add up to (a computed figure the
+		// cache column's dash rule reads, no column of its own any more — P23) and the cache hit rate
+		// (1000 of 3000 conversation input tokens were cached, so a whole 33 percent).
 		expect(display.current.tokens).toEqual({ input: 2000, cacheRead: 1000, cacheWrite: 0, output: 1000 });
 		expect(display.current.sum).toBe(4000);
 		expect(display.current.cacheHitRate).toBe(33);

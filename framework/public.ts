@@ -131,6 +131,9 @@ export type {
 	TurnStartDelivery,
 	TurnStartFacts,
 	TurnUsage,
+	UserInputDelivery,
+	UserInputEvent,
+	UserInputEventHandler,
 } from "./core/protocol";
 
 /** The semantics an assembly may declare its extension additional dependency on. */

@@ -716,14 +716,54 @@ export type TurnEventHandler = (delivery: TurnStartDelivery | TurnEndDelivery) =
 export type TurnEventHandlers = Readonly<Partial<Record<TurnEvent["kind"], TurnEventHandler>>>;
 
 /**
- * Any semantic lifecycle event the framework models: the session axis, the round axis and the
- * Turn axis.
+ * One semantic input event: the one fact that a session took up input the harness itself attributed
+ * to the user.
  *
- * The three axes are orthogonal and never merged — entering a session is not starting work,
- * starting work does not change which session is current, and a Turn is not a Round — so this
- * union exists only where one assembly injects its handlers for all of them.
+ * It is deliberately one edge and no pair. The harness publishes exactly one such fact — a
+ * submission admitted to a session — and it publishes it before it decides what the submission is,
+ * so an ordinary prompt, a queued steer, a follow-up and a user-invoked skill are the same fact
+ * here. Nothing about the text, the images or what the submission turned out to be is part of it:
+ * those are the harness's own material, and the fact a consumer acts on is only that the user, and
+ * not the agent, put something in. Input an extension itself submits is not this fact.
  */
-export type SemanticEvent = SessionEvent | RoundEvent | TurnEvent;
+export type UserInputEvent = { readonly kind: "user_input" };
+
+/**
+ * The facts one user-input edge carries, both to the adapter's hook and to the subscribed handler.
+ *
+ * Like a round edge it has nothing an extension may not see, so there is no withheld half: the edge
+ * itself, the session it belongs to (a subagent's submission names the subagent, never its owner
+ * above it), the owner scope it concerns, the faithful `hasUI` fact and the unified extension
+ * feedback channel.
+ *
+ * It carries no instant, because the harness publishes none: when the fact is observed is the
+ * observer's own fact, exactly as it is for every other harness fact.
+ */
+export interface UserInputDelivery {
+	/** The edge itself: that this session took up user input. */
+	readonly event: UserInputEvent;
+	/** The owner whose agent this submission concerns, as the adapter resolved it. */
+	readonly owner: OwnerReference;
+	/** The actual session the submission was admitted to: its identity, direct parent and latest name. */
+	readonly session: SessionFacts;
+	/** Whether the session this submission belongs to has a UI, as the adapter resolved it. */
+	readonly hasUI: boolean;
+	/** The transport this edge's extension feedback is published through. */
+	readonly feedback: FeedbackTransport;
+}
+
+/** One extension handler for one semantic input edge. */
+export type UserInputEventHandler = (delivery: UserInputDelivery) => void | Promise<void>;
+
+/**
+ * Any semantic lifecycle event the framework models: the session axis, the round axis, the Turn
+ * axis and the input axis.
+ *
+ * The axes are orthogonal and never merged — entering a session is not starting work, starting work
+ * does not change which session is current, a Turn is not a Round, and input arriving is not itself
+ * work — so this union exists only where one assembly injects its handlers for all of them.
+ */
+export type SemanticEvent = SessionEvent | RoundEvent | TurnEvent | UserInputEvent;
 
 /** The delivery each semantic event kind carries, so a handler's kind and its facts stay paired. */
 export interface SemanticEventDeliveryMap {
@@ -735,23 +775,25 @@ export interface SemanticEventDeliveryMap {
 	readonly round_end: RoundDelivery;
 	readonly turn_start: TurnStartDelivery;
 	readonly turn_end: TurnEndDelivery;
+	readonly user_input: UserInputDelivery;
 }
 
 /**
  * The semantic handlers one assembly injects for one subscription group, keyed by the event each
  * subscribes to.
  *
- * This is the whole handler surface of one group: the session axis, the round axis and the Turn
- * axis arrive here together, exactly as a directed command's implementations arrive through
- * `CommandActions`. A definition stays plain data either way: it names no handler, and an event
- * kind with no entry subscribes nothing.
+ * This is the whole handler surface of one group: the session axis, the round axis, the Turn axis
+ * and the input axis arrive here together, exactly as a directed command's implementations arrive
+ * through `CommandActions`. A definition stays plain data either way: it names no handler, and an
+ * event kind with no entry subscribes nothing.
  *
  * The session axis is a *reconciliation* trigger as well as a subscription — the framework
- * applies its own behavior for every delivery whether or not a handler arrived — while the round
- * and Turn axes are subscription only: three-value agent state is not framework State (contract
- * P6), and a Turn changes nothing the framework owns beyond the identity bookkeeping it does
- * before a handler runs. A `session_facts` delivery is subscription only as well, because a
- * session whose facts were re-reported crossed no boundary: nothing of the framework's moves, so
+ * applies its own behavior for every delivery whether or not a handler arrived — while the round,
+ * Turn and input axes are subscription only: three-value agent state is not framework State
+ * (contract P6), a Turn changes nothing the framework owns beyond the identity bookkeeping it does
+ * before a handler runs, and a user input crosses no boundary at all — it is a fact about the
+ * session, not a transition of it. A `session_facts` delivery is subscription only as well, because
+ * a session whose facts were re-reported crossed no boundary: nothing of the framework's moves, so
  * its own behavior is skipped and only the handlers that subscribe to that kind are reached.
  *
  * Which deliveries reach a handler is its group's {@link ObservationScope}, not this type: an
@@ -1271,6 +1313,21 @@ export interface HarnessPort {
 	 * maps the request hook, the response-boundary hook and the finalized assistant message.
 	 */
 	onTurn(handler: (facts: TurnSignalFacts) => void): void;
+	/**
+	 * Registers the framework's input hook: one delivery per submission the harness itself
+	 * attributed to the user and admitted to the session this binding serves.
+	 *
+	 * It is a fact and not an edge: a submission crosses no boundary, so nothing about the session's
+	 * axis or its work moves with it, and a harness that publishes no such fact reports none rather
+	 * than having the framework infer one from activity. Input is reported *before* the submission
+	 * has been decided to be anything else — a prompt, a queued steer, a command the harness handles
+	 * itself, a user-invoked skill — so a fact that turns out to be none of a consumer's business is
+	 * still reported, and nothing here filters on the submission's text or on its source beyond the
+	 * one distinction the delivery states: whether the *user* submitted it.
+	 *
+	 * The adapter owns that distinction, because only the harness's own event carries it.
+	 */
+	onUserInput(handler: (delivery: UserInputDelivery) => void): void;
 	/**
 	 * The harness's own model prices, when its adapter can report them.
 	 *
