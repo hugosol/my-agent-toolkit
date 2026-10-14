@@ -302,7 +302,7 @@ describe("the widget draws the viewed session's own fields and the whole main tr
 		// fine bar's single eighth-block — follows it.
 		expect(session.lastLines()).toEqual([
 			"\u{1F525}  [\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591   0% (1,234/450.0K)]  Effort: high  \u23F3 Accrued: \u00A50.05 [\u258F]",
-			"Total:  Cache: 67%  \u00A5Cache/In/Out\uff1a4:7:89  Sum: 6,100  Cost: \u00A50.05",
+			"Total:  Cache: 67%  \u00A5Cache/In/Out\uff1a4:7:89  Sum: 6,100  Cost: \u00A50.05  Span: \u2014",
 		]);
 
 		// The host's view moves to the subagent: the current-model fields are the subagent's own
@@ -313,7 +313,7 @@ describe("the widget draws the viewed session's own fields and the whole main tr
 		session.publish(VIEWED_SUB);
 		expect(session.lastLines()).toEqual([
 			"[░░░░░░░░░░░░░░░░░░░░   0% (50/450.0K)]  Effort: low",
-			"Total:  Cache: 40%  Sum: 6,100  Cost: \u00A50.05",
+			"Total:  Cache: 40%  Sum: 6,100  Cost: \u00A50.05  Span: \u2014",
 		]);
 	});
 
@@ -335,7 +335,7 @@ describe("the widget draws the viewed session's own fields and the whole main tr
 		});
 		expect(session.lastLines()).toEqual([
 			"\u{1F525}  [\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591   0% (2,222/450.0K)]  Effort: medium  \u23F3 Accrued: \u00A50.05 [\u258F]",
-			"Total:  Cache: -  \u00A5Cache/In/Out\uff1a--:--:--  Sum: 6,100  Cost: \u00A50.05",
+			"Total:  Cache: -  \u00A5Cache/In/Out\uff1a--:--:--  Sum: 6,100  Cost: \u00A50.05  Span: \u2014",
 		]);
 	});
 });
@@ -365,13 +365,13 @@ describe("every displayed fact comes from the public outlet, not from the bindin
 		// is the question mark the spec asks for — never the bound session's and never a configured one.
 		expect(session.lastLines()).toEqual([
 			"[░░░░░░░░░░░░░░░░░░░░   0% (50/450.0K)]  Effort: ?",
-			"Total:  Cache: 40%  Sum: 6,100  Cost: \u00A50.05",
+			"Total:  Cache: 40%  Sum: 6,100  Cost: \u00A50.05  Span: \u2014",
 		]);
 
 		// And a context the outlet could not measure is not a bar: the line the bar lives on is dropped
 		// rather than filled from another session's reading.
 		session.publish({ sessionId: "session-sub", provider: "go-provider", model: "model-alpha" });
-		expect(session.lastLines()).toEqual(["Total:  Cache: 40%  Sum: 6,100  Cost: \u00A50.05"]);
+		expect(session.lastLines()).toEqual(["Total:  Cache: 40%  Sum: 6,100  Cost: \u00A50.05  Span: \u2014"]);
 	});
 
 	test("a mode this extension does not display draws no widget at all, and still draws the tree for one it does", async () => {
@@ -413,7 +413,7 @@ describe("a switched-away context is dropped rather than kept (S1, S5)", () => {
 		expect(second.subscribers()).toBe(1);
 		expect(second.lastLines()).toEqual([
 			"[░░░░░░░░░░░░░░░░░░░░   0% (50/450.0K)]  Effort: low",
-			"Total:  Cache: 40%  Sum: 6,100  Cost: \u00A50.05",
+			"Total:  Cache: 40%  Sum: 6,100  Cost: \u00A50.05  Span: \u2014",
 		]);
 
 		// A change published on the context the widget left behind no longer reaches it: the stale
@@ -467,7 +467,7 @@ describe("a host without the approved outlet still draws the bound session's own
 		// outlet path draws it: the fixture's peak season mark, the fixed 450K budget and the count.
 		expect(session.lastLines()).toEqual([
 			"\u{1F525}  [\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591   0% (1,234/450.0K)]  Effort: ?  \u23F3 Accrued: \u00A50.05 [\u258F]",
-			"Total:  Cache: 67%  \u00A5Cache/In/Out\uff1a4:7:89  Sum: 6,100  Cost: \u00A50.05",
+			"Total:  Cache: 67%  \u00A5Cache/In/Out\uff1a4:7:89  Sum: 6,100  Cost: \u00A50.05  Span: \u2014",
 		]);
 	});
 

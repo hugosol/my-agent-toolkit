@@ -52,7 +52,7 @@ import type { CatalogPriceSource, FeedbackTransport, ProviderAccess, SemanticEve
 import type { HttpRequestOptions } from "../../../framework/modules/http";
 import { DEFAULT_CODEX_QUOTA_TTL_MS, type CodexQuotaFailure, createCodexQuota } from "./codex-quota";
 import { CodexEstimateStore } from "./codex-estimate-store";
-import { type BaselineLoad, ConsumptionStore, unusableBaselineNotice } from "./consumption-store";
+import { type BaselineLoad, ConsumptionStore, timeFactFaultNotice, unusableBaselineNotice } from "./consumption-store";
 import { MODEL_PRICING_DATA, type ModelPricingData, dataCatalog } from "./model-data";
 import { createPeriodSwitch } from "./period-switch";
 import { type ConsumptionPresenter, createPresentation } from "./presentation/display";
@@ -194,7 +194,12 @@ export function createModelCostRuntime(inputs: ModelCostRuntimeInputs): ModelCos
 			userHomeDirectory: inputs.userHomeDirectory,
 		}),
 	);
-	const accounting = createRequestAccounting({ data, harness: inputs.harness, storage });
+	// The process's one instant source, read by every source that records when a fact was observed:
+	// the accounting's Session spans, the balance reading and the Codex windows alike.
+	const now = inputs.now ?? Date.now;
+	// The accounting's own clock timestamps the two Session span facts — the first user input and the
+	// latest Round end — because the harness delivers neither with an instant of its own.
+	const accounting = createRequestAccounting({ data, harness: inputs.harness, storage, now });
 
 	// The entry's own display preference: `/budget detail` flips it, and the flip announces the change
 	// through the one notification every reader of this extension's read-only result already holds, so
@@ -222,7 +227,6 @@ export function createModelCostRuntime(inputs: ModelCostRuntimeInputs): ModelCos
 	// initialization and refreshed by a settled Codex request under the same success-TTL policy the
 	// balance reading uses. Nothing else queries them, so no view change, model switch, Round edge or
 	// elapsed budget reaches a provider.
-	const now = inputs.now ?? Date.now;
 	// The Codex ratio measurement: one measurement per process, fed only by the paired readings a
 	// single report carried and persisted independently of the consumption document, so a consumption
 	// reset never touches it and a restart continues measuring from the same baseline.
@@ -296,6 +300,14 @@ export function createModelCostRuntime(inputs: ModelCostRuntimeInputs): ModelCos
 			const notice = unusableBaselineNotice(storage.consumptionFile, load.reason);
 			delivery.feedback.notify(notice.level, notice.message);
 		}
+		if (load.kind === "loaded") {
+			// The document is usable, so an unreadable time fact costs the time reading alone: each one
+			// is stated, and nothing is paused, zeroed or substituted for it.
+			for (const fault of load.faults) {
+				const notice = timeFactFaultNotice(storage.consumptionFile, fault);
+				delivery.feedback.notify(notice.level, notice.message);
+			}
+		}
 		// The estimate document is read after the storage root's own load — which is what creates the
 		// root this document lives in — and before any source can report a reading, so the measurement
 		// continues from what the file holds rather than re-anchoring on the first report.
@@ -360,6 +372,13 @@ export function createModelCostRuntime(inputs: ModelCostRuntimeInputs): ModelCos
 		round_end: delivery => {
 			stateProviderFailures(delivery);
 			return accounting.roundEnded(delivery);
+		},
+		// The one fact that establishes a session's Session span start: input the harness itself
+		// attributed to the user, published for every submission it admitted — an ordinary prompt and a
+		// user-invoked skill alike.
+		user_input: delivery => {
+			stateProviderFailures(delivery);
+			accounting.userInput(delivery);
 		},
 		// The harness's own name-change fact, which is what keeps a session's identity current
 		// between boundaries — for a subagent nobody is viewing exactly as for the session on screen.

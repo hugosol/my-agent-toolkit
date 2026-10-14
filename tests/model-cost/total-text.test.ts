@@ -52,18 +52,18 @@ function freshDisplay(mode: ConsumptionMode, price?: CatalogPrice): ConsumptionD
 describe("the Total row keeps the old extension's fields with dashes at initialization", () => {
 	test("the monetary channel writes its three-bucket ratio field and Cost with no value", () => {
 		expect(totalText(freshDisplay("monetary", PRO_PRICE))).toBe(
-			"Cache: -  \u00A5Cache/In/Out\uff1a--:--:--  Sum: -  Cost: -",
+			"Cache: -  \u00A5Cache/In/Out\uff1a--:--:--  Sum: -  Cost: -  Span: \u2014",
 		);
 	});
 
 	test("the allowance channel writes its four-bucket ratio field and Ref with no value", () => {
 		expect(totalText(freshDisplay("allowance"))).toBe(
-			"Cache: -  $CacheR/In/CacheW/Out\uff1a--:--:--:--  Sum: -  Ref: -",
+			"Cache: -  $CacheR/In/CacheW/Out\uff1a--:--:--:--  Sum: -  Ref: -  Span: \u2014",
 		);
 	});
 
 	test("a token-only channel writes no amount and no ratio of its own", () => {
-		expect(totalText(freshDisplay("token-only"))).toBe("Cache: -  Sum: -");
+		expect(totalText(freshDisplay("token-only"))).toBe("Cache: -  Sum: -  Span: \u2014");
 	});
 
 	test("an empty ratio keeps its field while the tree's known Cost is written beside it", () => {
@@ -72,7 +72,7 @@ describe("the Total row keeps the old extension's fields with dashes at initiali
 			tree: { tokens: { ...EMPTY_TOKENS, input: 1_000, output: 2_000 }, sum: 3_000, costCny: 0.05 },
 		};
 		expect(totalText(withTree)).toBe(
-			"Cache: -  \u00A5Cache/In/Out\uff1a--:--:--  Sum: 3,000  Cost: \u00A50.05",
+			"Cache: -  \u00A5Cache/In/Out\uff1a--:--:--  Sum: 3,000  Cost: \u00A50.05  Span: \u2014",
 		);
 	});
 });

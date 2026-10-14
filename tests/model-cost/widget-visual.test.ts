@@ -555,7 +555,7 @@ describe("the host's own drawing form decides what the frontend hands it (P67)",
 		// provider balance and the period's accrued bar are one row (spec §192: preserve the old layout).
 		expect(bound.host.plain()).toEqual([
 			`\u{1F525}  [${EMPTY_BAR}   0% (1,000/450.0K)]  Effort: high  \u23F3 Accrued: \u00A50.05 [\u258F]`,
-			"Total:  Cache: 50%  \u00A5Cache/In/Out\uff1a5:19:76  Sum: 30  Cost: \u00A50.05",
+			"Total:  Cache: 50%  \u00A5Cache/In/Out\uff1a5:19:76  Sum: 30  Cost: \u00A50.05  Span: \u2014",
 		]);
 		expect(bound.host.plain()?.some(line => line.includes("\u00AB") || line.includes("\u001B"))).toBe(false);
 	});
