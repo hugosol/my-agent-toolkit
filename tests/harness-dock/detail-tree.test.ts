@@ -204,19 +204,27 @@ interface DockRun {
 interface RunOptions {
 	/** The root to run in; omitted for a run of its own. A restart passes the first run's root. */
 	readonly runRoot?: RunRoot;
+	/** The isolated home another process over that root already made, when this one must reuse it. */
+	readonly home?: IsolatedHome;
 	/** Further fixtures this run needs beside the two every case runs. */
 	readonly extraExtensions?: readonly string[];
 }
 
-/** One run: the recorded install's own loader, the project's model-cost entrypoint, real RPC. */
+/**
+ * One run: the recorded install's own loader, the project's model-cost entrypoint, real RPC.
+ *
+ * A run started again over a case's own home and run root is a second process of the same isolated
+ * environment — the restart the reload case below is about — so both are taken from the caller when
+ * it has them, and only this run's own endpoint and capture directory are new.
+ */
 async function startRun(label: string, options: RunOptions = {}): Promise<DockRun> {
 	const runRoot = options.runRoot ?? createRunRoot(label);
-	const home = isolateHome(runRoot);
+	const home = options.home ?? isolateHome(runRoot);
 	// Blocking delegation is the host setting this needs: an RPC host otherwise runs a spawn as a
 	// background job, which a suite that prompts once has no second prompt to observe.
 	writeAgentSettings(runRoot.agentDir, { "async.enabled": false });
 	const capture = startCaptureServer({
-		dir: runRoot.captureDir,
+		dir: options.runRoot === undefined ? runRoot.captureDir : path.join(runRoot.path, `captures-${label}`),
 		replyText: "dock detail reply",
 		usage: CAPTURE_USAGE,
 		respond: delegatingStep,
@@ -249,9 +257,10 @@ async function stopRun(run: DockRun): Promise<void> {
 	run.capture.stop();
 }
 
-async function disposeRun(run: DockRun): Promise<void> {
+/** Ends one run entirely: its process and endpoint, and the root it created unless the case keeps it. */
+async function disposeRun(run: DockRun, options: { readonly keepRoot?: boolean } = {}): Promise<void> {
 	await stopRun(run);
-	if (run.ownsRoot) run.runRoot.dispose();
+	if (options.keepRoot !== true && run.ownsRoot) run.runRoot.dispose();
 }
 
 /** One session's record as the document holds it, with the fields this file asserts. */
@@ -265,6 +274,8 @@ interface SavedSession {
 		readonly effort?: string;
 	};
 	readonly own: Record<string, Record<string, { readonly tokens: Record<string, number> }>>;
+	/** The milliseconds this session's own executions accumulated, when the run committed one. */
+	readonly runtimeMs?: number;
 }
 
 /** The document as this file reads it: the sessions the extension saved, keyed by harness. */
@@ -288,6 +299,22 @@ function cacheRateOf(record: SavedSession): number {
 		}
 	}
 	return input + cacheRead > 0 ? Math.round((cacheRead / (input + cacheRead)) * 100) : 0;
+}
+
+/**
+ * The milliseconds one drawn runtime field states, or nothing when it states no duration at all.
+ *
+ * The form is the display's own — milliseconds under a second, then seconds, whole minutes and hours,
+ * a compound only where the figure needs it — so a case reads the figure back rather than pinning the
+ * wording. The unavailable marker the same field carries is deliberately not a duration: a host that
+ * measured nothing and a host that really measured a duration must not read the same here.
+ */
+function drawnRuntimeMs(text: string): number | undefined {
+	const match = /^(\d+)(ms|s|m|h)(?:(\d+)(s|m))?$/.exec(text.trim());
+	if (match === null) return undefined;
+	const unit = { ms: 1, s: 1_000, m: 60_000, h: 3_600_000 }[match[2] as "ms" | "s" | "m" | "h"];
+	const rest = match[3] === undefined ? 0 : Number(match[3]) * (match[4] === "s" ? 1_000 : 60_000);
+	return Number(match[1]) * unit + rest;
 }
 
 /** Lets the event loop turn over until nothing already queued is left. */
@@ -555,10 +582,12 @@ describe("the real host's widget: a brief with its own Round, then the static de
 			// (the native probe in the restart case names that source directly) — then its own accumulation
 			// and the current context the harness recorded from that subagent's own binding:
 			// `percent (tokens/budget)`, the same form the bar above reads and against the monetary
-			// channel's own fixed display budget — never the host's context window. The token figure is
-			// the host's own estimate of the child's conversation rather than a number this document
-			// holds, so it is pinned to the form and the budget, not to a token count.
+			// channel's own fixed display budget — never the host's context window — and, after that, the
+			// runtime the host itself measured for that child's executions. The token figure is the host's
+			// own estimate of the child's conversation rather than a number this document holds, so it is
+			// pinned to the form and the budget, not to a token count.
 			const childRow = String(detail[3]);
+			const runtimeMark = "  Run: ";
 			const childHead = `\u2514\u2500 ${childRecord.name}  Model: ${MODEL_PROVIDER} / ${MODEL_ID}  Effort: `;
 			expect(childRow.startsWith(childHead)).toBe(true);
 			const afterHead = childRow.slice(childHead.length);
@@ -569,9 +598,19 @@ describe("the real host's widget: a brief with its own Round, then the static de
 			const childTail = afterHead.slice(effort.length + 2);
 			const childPrefix = `Cache: ${child}%  Cost: \u00A50.0050  Ctx: `;
 			expect(childTail.startsWith(childPrefix)).toBe(true);
-			const childContext = childTail.slice(childPrefix.length);
+			const [childContext, childRuntime] = childTail.slice(childPrefix.length).split(runtimeMark);
+			expect(childRuntime).toBeDefined();
 			expect(childContext).toMatch(/^\d+% \([\d.,]+K?\//);
 			expect(childContext.endsWith(`/${formatTokens(DEEPSEEK_DISPLAY_BUDGET)})`)).toBe(true);
+
+			// What the row states there is a duration the real host really measured for that subagent's own
+			// execution — read back from the drawn field, so a host that had produced no such reading (the
+			// unavailable marker) cannot pass as one. The run reported no unusable runtime either, which is
+			// what the notices below are: an execution the host stated and this extension could not use
+			// would arrive as an error there. The root's own model row above carries no runtime at all: a
+			// runtime belongs to the session an execution ran in, and the main session is not one.
+			expect(drawnRuntimeMs(childRuntime)).toBeGreaterThan(0);
+			expect(String(detail[2])).not.toContain(runtimeMark);
 			expect(detail.some(line => line.startsWith("Round:"))).toBe(false);
 			// The total behind that tree is the two records' own amounts added once each: 0.01004 (the
 			// main session's two responses) plus 0.00502 (the child's one), 0.01506 under the same amount
@@ -759,6 +798,65 @@ describe("a real spawn's own start facts reach its row, the document and the nex
 			}
 		} finally {
 			await disposeRun(first);
+			runRoot.dispose();
+		}
+	}, 300_000);
+});
+
+describe("a resumed process draws the runtime the document already carries (P10, P19, P35)", () => {
+	test("the child's own row states the saved figure and not a second accumulation of the same execution", async () => {
+		const first = await startRun("runtime-reload");
+		const home = first.home;
+		const runRoot = first.runRoot;
+		let resumed: { readonly id: string; readonly file: string };
+		let childName: string;
+		let savedRuntime: number;
+		try {
+			await first.session.request({ type: "set_session_name", name: MAIN_SESSION_NAME });
+			expect((await first.session.prompt(DELEGATE_PROMPT)).status).toBe("completed");
+
+			// The first process really measured the child's executions and committed the figure.
+			const document = await savedDocument(
+				home.consumptionFile,
+				saved => sessionsOf(saved).some(session => session.name !== MAIN_SESSION_NAME && typeof session.runtimeMs === "number"),
+			);
+			const child = sessionsOf(document).find(session => session.name !== MAIN_SESSION_NAME);
+			if (child === undefined || typeof child.runtimeMs !== "number") {
+				throw new Error(`the document holds no child runtime: ${JSON.stringify(sessionsOf(document))}`);
+			}
+			childName = child.name;
+			savedRuntime = child.runtimeMs;
+			resumed = await currentSession(first);
+		} finally {
+			// The root survives the first process: the second one starts over the same storage and the
+			// same session directory, which is what makes it a restart rather than a fresh run.
+			await disposeRun(first, { keepRoot: true });
+		}
+
+		// A second, independent process over the very environment the first one wrote — the session is
+		// resumed from the file the host persisted, so its transcript, including the delegation the child
+		// ran under, is loaded again by a process whose own accumulation starts from the document.
+		const second = await startRun("runtime-reload-second", { home, runRoot });
+		try {
+			const switched = payloadOf(await second.session.request({ type: "switch_session", sessionPath: resumed.file }));
+			expect(switched.cancelled).toBe(false);
+			expect((await currentSession(second)).id).toBe(resumed.id);
+			const before = readFileSync(home.consumptionFile, "utf8");
+
+			// The detail form the resumed process draws: the tree is read from the document this process
+			// loaded, so the child's row carries the runtime that document holds. An execution the previous
+			// process already accumulated is not observed again here — the harness states a spawn's own
+			// duration while that spawn runs, and a resumed session runs no tool again — so the row states
+			// the saved figure rather than twice it, and the draw writes nothing.
+			await second.session.prompt("/budget detail");
+			const lines = await linesUntil(second.session, shown => shown.some(line => line.includes("  Run: ")));
+			const row = (lines ?? []).find(line => line.includes(`\u2514\u2500 ${childName}`) || line.includes(`\u251C\u2500 ${childName}`));
+			if (row === undefined) throw new Error(`no child row was drawn: ${JSON.stringify(lines)}`);
+			const drawn = drawnRuntimeMs(row.slice(row.indexOf("  Run: ") + "  Run: ".length));
+			expect(drawn).toBe(savedRuntime);
+			expect(readFileSync(home.consumptionFile, "utf8")).toBe(before);
+		} finally {
+			await disposeRun(second);
 			runRoot.dispose();
 		}
 	}, 300_000);

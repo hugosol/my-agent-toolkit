@@ -59,6 +59,7 @@ import {
 	fieldsText,
 	lineText,
 	roundColumns,
+	runtimeText,
 	seasonMark,
 	totalColumns,
 } from "../../shared-logic/presentation/display";
@@ -251,10 +252,15 @@ function prefixedLine(prefix: string, line: DisplayLine): DisplayLine {
  *
  * A descendant session's row names the session and then states the model and effective effort it
  * *started* on — both written as `?` where nothing proved them — with its own consumption fields
- * following, and its current context reading last as `Ctx: percent (tokens/budget)` — the subagent's
- * own tokens against the same fixed display budget the bar above uses for its channel, which is what
- * the operator can read for a session the budget bar does not follow. A session no binding observed
- * carries no such field.
+ * following, and its current context reading after them as `Ctx: percent (tokens/budget)` — the
+ * subagent's own tokens against the same fixed display budget the bar above uses for its channel,
+ * which is what the operator can read for a session the budget bar does not follow. A session no
+ * binding observed carries no such field.
+ *
+ * The row that is a descendant session also carries its accumulated subagent runtime, written after
+ * the context field. It is drawn for every such row, and an unavailable figure is drawn as its own
+ * marker rather than omitted: the value is a figure the host measured, so "none was reported" and
+ * "the reported figure was zero" are different facts and the row has to show which one it is.
  */
 function treeLines(rows: readonly AgentTreeRow[]): DisplayLine[] {
 	return rows.map((row, index) => {
@@ -271,6 +277,7 @@ function treeLines(rows: readonly AgentTreeRow[]): DisplayLine[] {
 		if (row.startup !== undefined) parts.push(`Model: ${row.startup.model}  Effort: ${row.startup.effort}`);
 		if (row.fields !== undefined) parts.push(fieldsText(row.fields));
 		if (row.context !== undefined) parts.push(`Ctx: ${contextText(row.context)}`);
+		if (row.kind === "session") parts.push(`Run: ${runtimeText(row.runtimeMs)}`);
 		return [{ text: parts.join("  ") }];
 	});
 }

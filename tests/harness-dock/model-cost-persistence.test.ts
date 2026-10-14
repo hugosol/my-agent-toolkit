@@ -12,13 +12,13 @@
  * - **the approved schema, key by key.** The activity document carries `schemaVersion`, `periodId`,
  *   `start`, `holiday` and `harnesses`, a session record carries `id`, `name`, `parent`, `startup`,
  *   `saveVersion` and `own` — plus the optional `span` pair when the run observed a session's own
- *   main-session time — and a usage entry carries the four token buckets and, when a provider's
- *   accounting produced one, its own currency field. Nothing else is accepted — no Turn or Round
- *   ledger, no `recentRound`, no historical price, no cost breakdown, no account key and no second
- *   authoritative total — because the check is an exact key set rather than a search for known
- *   leftovers. `startup` is the one optional snapshot key: it states the model and effective level
- *   the session began on, is absent from a record nothing proved one for, and is never the pair the
- *   session runs now.
+ *   main-session time, and an optional `runtimeMs` when the host measured one — and a usage entry
+ *   carries the four token buckets and, when a provider's accounting produced one, its own currency
+ *   field. Nothing else is accepted — no Turn or Round ledger, no `recentRound`, no historical
+ *   price, no cost breakdown, no account key and no second authoritative total — because the check
+ *   is an exact key set rather than a search for known leftovers. `startup` is the one optional
+ *   snapshot key: it states the model and effective level the session began on, is absent from a
+ *   record nothing proved one for, and is never the pair the session runs now.
  * - **the numbers, against this file's own literals.** The endpoint's scripted usage is what the
  *   record's own buckets have to equal, and the ratio the estimate document holds is this file's
  *   arithmetic over the two account answers it scripted.
@@ -409,7 +409,7 @@ function answeredTurns(request: CapturedRequest): number {
 /** The keys the approved activity schema declares, at each level, and nothing else. */
 const DOCUMENT_KEYS = ["schemaVersion", "periodId", "start", "start_bal", "holiday", "harnesses"];
 const HARNESS_KEYS = ["sessions"];
-const SESSION_KEYS = ["id", "name", "parent", "startup", "saveVersion", "own", "span"];
+const SESSION_KEYS = ["id", "name", "parent", "startup", "saveVersion", "own", "runtimeMs", "span"];
 const STARTUP_KEYS = ["model", "effort"];
 const STARTUP_MODEL_KEYS = ["provider", "model"];
 /** The two instants of one session's own main-session time fact, which are always written together. */
@@ -441,6 +441,11 @@ interface SavedRecord {
 	};
 	readonly saveVersion: number;
 	readonly own: Record<string, Record<string, { readonly tokens: Record<string, number>; readonly costCny?: number }>>;
+	/**
+	 * The subagent runtime this session's own executions accumulated in the period, when one was
+	 * reliably measured: a count of milliseconds, absent rather than zero when none was.
+	 */
+	readonly runtimeMs?: number;
 	/**
 	 * The session's own main-session time fact, when the run observed both of its instants: the first
 	 * user input of the period and the latest Round end, in epoch milliseconds. Absent is ordinary —
@@ -579,6 +584,10 @@ function readRecord(value: unknown, where: string): SavedRecord {
 		}
 		own[provider] = bucket;
 	}
+	const runtime = candidate.runtimeMs;
+	if (runtime !== undefined && (typeof runtime !== "number" || !Number.isFinite(runtime) || runtime < 0)) {
+		throw new Error(`${where}.runtimeMs is neither absent nor a non-negative finite number`);
+	}
 	return {
 		id: candidate.id,
 		name: candidate.name,
@@ -586,6 +595,7 @@ function readRecord(value: unknown, where: string): SavedRecord {
 		...(startup === undefined ? {} : { startup }),
 		saveVersion: candidate.saveVersion,
 		own,
+		...(runtime === undefined ? {} : { runtimeMs: runtime as number }),
 		...(span === undefined ? {} : { span }),
 	};
 }
@@ -1147,6 +1157,19 @@ describe("the production documents of one storage root, read back independently 
 					expect(child.own[DEEPSEEK_PROVIDER]?.["deepseek-flash"]?.tokens).toEqual(usageOfRequests(1, DEEPSEEK_USAGE));
 				}
 				expect(parent?.own[DEEPSEEK_PROVIDER]?.["deepseek-flash"]?.tokens).toEqual(usageOfRequests(3, DEEPSEEK_USAGE));
+
+				// The subagent runtime: each child's own record carries the duration the host really
+				// measured for its executions, as a positive number of milliseconds, and the parent's record
+				// — the main session's own — carries none. What is committed may be the last reading the
+				// commit caught rather than the settled one (a settled reading that arrived after a child's
+				// own commit is allowed to be unsaved), but a subagent whose executions the host measured is
+				// never left unknown here: the host states each spawn's own duration while it runs.
+				expect(children.every(child => typeof child.runtimeMs === "number" && child.runtimeMs > 0)).toBe(true);
+				expect(parent?.runtimeMs).toBeUndefined();
+				// And the run reported no unusable runtime: every execution the host stated was attributed to
+				// the session it ran in and read as a duration, which is what an extension notices when it
+				// cannot (see `tests/framework/subagent-runtime.test.ts` for both failure shapes).
+				expect(noticesOf(session)).toEqual([]);
 
 				// The moment itself: the children's records were on disk while their parent had none, and each
 				// already named the parent's id. A record therefore never waits for its parent to be saved.

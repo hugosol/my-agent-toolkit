@@ -437,3 +437,81 @@ describe("the storage root of independent processes", () => {
 		expect(readFileSync(path.join(storeDirectory, CONSUMPTION_FILE), "utf8")).toBe(legacy);
 	});
 });
+
+describe("a session's runtime merges through the same coordinated commit (P35)", () => {
+	test("two processes' independent sessions keep their own runtimes, and a later version carries its own alone", async () => {
+		const run = tempDirectory("runtime");
+		const storeDirectory = path.join(run, "store");
+		const config = configRepository("runtime-config", storeDirectory);
+		const workA = tempDirectory("runtime-work-a");
+		const workB = tempDirectory("runtime-work-b");
+		const workC = tempDirectory("runtime-work-c");
+		const firstRecord = { ...session("session-child-one", null, 1), runtimeMs: 360_000 };
+		const secondRecord = { ...session("session-child-two", null, 1), runtimeMs: 120_000 };
+
+		// Two independent processes, each committing its own session's snapshot with the runtime that
+		// session's own executions accumulated. Neither may overwrite the other's record.
+		const [first, second] = await Promise.all([
+			runChild(childPlan({ ...config, run, label: "first", record: firstRecord }), { cwd: workA }),
+			runChild(childPlan({ ...config, run, label: "second", record: secondRecord }), { cwd: workB }),
+		]);
+
+		expect([first.kind, second.kind]).toEqual(["ran", "ran"]);
+		expect([...first.commits, ...second.commits]).toEqual([{ kind: "saved" }, { kind: "saved" }]);
+		// Both records are there, each with its own runtime. Which of the two processes committed first is
+		// the coordination's business rather than the contract's, so the comparison is by identity.
+		const byId = (): readonly unknown[] =>
+			[...(storedDocument(storeDirectory).harnesses.omp?.sessions ?? [])].sort((left, right) =>
+				left.id.localeCompare(right.id),
+			);
+		expect(byId()).toEqual([firstRecord, secondRecord]);
+
+		// A later process commits the next version of the first session with what its own executions have
+		// accumulated by then: the first session's figure moves, and the second session's own record —
+		// consumption, parent and runtime — is exactly the one the other process left.
+		const third = await runChild(
+			childPlan({
+				...config,
+				run,
+				label: "third",
+				record: { ...session("session-child-one", null, 2), runtimeMs: 480_000 },
+			}),
+			{ cwd: workC },
+		);
+		expect(third.commits).toEqual([{ kind: "saved" }]);
+		expect(byId()).toEqual([{ ...session("session-child-one", null, 2), runtimeMs: 480_000 }, secondRecord]);
+	});
+
+	test("an execution observed a second time contributes no second time, at the same version or a later one", async () => {
+		const run = tempDirectory("runtime-twice");
+		const storeDirectory = path.join(run, "store");
+		const config = configRepository("runtime-twice-config", storeDirectory);
+		const workA = tempDirectory("runtime-twice-a");
+		const workB = tempDirectory("runtime-twice-b");
+		const workC = tempDirectory("runtime-twice-c");
+		// One execution's own duration, as the record of the version that produced it states it.
+		const observed = { ...session("session-child", null, 1), runtimeMs: 360_000 };
+
+		const first = await runChild(childPlan({ ...config, run, label: "first", record: observed }), { cwd: workA });
+		expect(first.commits).toEqual([{ kind: "saved" }]);
+
+		// Another process states that same execution again — the same figure at the same version — and the
+		// coordinated commit answers it as the content the file already carries rather than as a new
+		// contribution.
+		const second = await runChild(childPlan({ ...config, run, label: "second", record: observed }), { cwd: workB });
+		expect(second.commits).toEqual([{ kind: "unchanged" }]);
+		expect(storedDocument(storeDirectory).harnesses.omp?.sessions).toEqual([observed]);
+
+		// A later process commits its own next version of that session with the same one execution behind
+		// it: the file's figure is what that execution ran — 360000, never the 720000 a second contribution
+		// would make of two writes — because a repeated observation states a figure rather than adding one.
+		const third = await runChild(
+			childPlan({ ...config, run, label: "third", record: { ...session("session-child", null, 2), runtimeMs: 360_000 } }),
+			{ cwd: workC },
+		);
+		expect(third.commits).toEqual([{ kind: "saved" }]);
+		expect(storedDocument(storeDirectory).harnesses.omp?.sessions).toEqual([
+			{ ...session("session-child", null, 2), runtimeMs: 360_000 },
+		]);
+	});
+});

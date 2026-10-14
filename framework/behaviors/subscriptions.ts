@@ -26,6 +26,7 @@ import type {
 	SemanticEvent,
 	SemanticEventDeliveryMap,
 	SessionEvent,
+	SubagentRuntimeEvent,
 	SubscriptionGroup,
 	TurnEvent,
 	UserInputEvent,
@@ -39,6 +40,9 @@ export const ROUND_EVENT_KINDS: readonly RoundEvent["kind"][] = ["round_start", 
 
 /** The Turn axis's event kinds. */
 export const TURN_EVENT_KINDS: readonly TurnEvent["kind"][] = ["turn_start", "turn_end"];
+
+/** The subagent-runtime axis's event kinds. */
+export const SUBAGENT_RUNTIME_EVENT_KINDS: readonly SubagentRuntimeEvent["kind"][] = ["subagent_runtime"];
 
 /** The input axis's event kinds. */
 export const USER_INPUT_EVENT_KINDS: readonly UserInputEvent["kind"][] = ["user_input"];
