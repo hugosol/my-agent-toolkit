@@ -483,4 +483,48 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 			"└─ 子代理  Cache: 33%  Sum: 130",
 		]);
 	});
+
+	test("a subagent's own context is read against its channel's fixed display budget (P26)", async () => {
+		const bound = await bindWidget();
+		await bound.double.runToCompletion("budget", { args: "detail" });
+
+		// No binding has reported the subagent's context: its row carries its consumption alone, and no
+		// context field is invented for it.
+		expect(bound.host.lastLines()?.find(line => line.includes("子代理"))).toBe("└─ 子代理  Cache: 40%  Sum: 100");
+
+		// The subagent's own binding publishes its current context on the monetary channel. The row reads
+		// it against that channel's own 450K display budget, as `percent (tokens/budget)` — the same form
+		// and the same figure the bar above uses, not the host's own context window.
+		bound.runtime.sessionContext.observe("session-sub", {
+			tokens: 381_500,
+			provider: "official",
+			model: "model-alpha",
+		});
+		bound.host.publish({ sessionId: "session-main", provider: "official", model: "model-alpha" });
+		expect(bound.host.lastLines()?.find(line => line.includes("子代理"))).toBe(
+			"└─ 子代理  Cache: 40%  Sum: 100  Ctx: 85% (381.5K/450.0K)",
+		);
+
+		// A later reading on the allowance channel is read against that channel's own 272K budget, chosen
+		// from the reading's own model rather than from the target being drawn.
+		bound.runtime.sessionContext.observe("session-sub", {
+			tokens: 136_000,
+			provider: "plan-provider",
+			model: "plan-model",
+		});
+		bound.host.publish({ sessionId: "session-main", provider: "official", model: "model-alpha" });
+		expect(bound.host.lastLines()?.find(line => line.includes("子代理"))).toBe(
+			"└─ 子代理  Cache: 40%  Sum: 100  Ctx: 50% (136.0K/272.0K)",
+		);
+
+		// A pair the data does not classify has no display budget at all, so the row carries no context
+		// field rather than a figure with nothing to read it against.
+		bound.runtime.sessionContext.observe("session-sub", {
+			tokens: 1_000,
+			provider: "unlisted-provider",
+			model: "no-such",
+		});
+		bound.host.publish({ sessionId: "session-main", provider: "official", model: "model-alpha" });
+		expect(bound.host.lastLines()?.find(line => line.includes("子代理"))).toBe("└─ 子代理  Cache: 40%  Sum: 100");
+	});
 });

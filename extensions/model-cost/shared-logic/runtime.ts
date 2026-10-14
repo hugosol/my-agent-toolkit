@@ -57,6 +57,7 @@ import { MODEL_PRICING_DATA, type ModelPricingData, dataCatalog } from "./model-
 import { createPeriodSwitch } from "./period-switch";
 import { type ConsumptionPresenter, createPresentation } from "./presentation/display";
 import { createDisplayPreference, displayFormNotice } from "./presentation/display-preference";
+import { SessionContextRegistry } from "./presentation/session-context";
 import { DEFAULT_BALANCE_TTL_MS, type ProviderBalanceFailure, createProviderBalance } from "./provider-balance";
 import { type ConsumptionView, createRequestAccounting } from "./request-accounting";
 import { resolveStorageRoot } from "./storage-root";
@@ -147,6 +148,15 @@ export interface ModelCostRuntime {
 	readonly view: ConsumptionView;
 	/** The extension's read-only display results, for the frontends that render them. */
 	readonly presentation: ConsumptionPresenter;
+	/**
+	 * The process's per-session context readings, fed by the harness half as each session binding
+	 * reports its own current `getContextUsage()`, and read by the detail tree's descendant rows.
+	 *
+	 * It is a reading rather than an accumulation: a session no binding observed has no entry rather
+	 * than a zero, it is never written to the storage root, and a frontend that reads it sees the
+	 * latest observation whether or not that session is the one being viewed.
+	 */
+	readonly sessionContext: SessionContextRegistry;
 	/** The half the framework connects: the catalog, the observation group and the lifecycle. */
 	readonly implementation: ExtensionImplementation;
 	/**
@@ -190,6 +200,11 @@ export function createModelCostRuntime(inputs: ModelCostRuntimeInputs): ModelCos
 	// through the one notification every reader of this extension's read-only result already holds, so
 	// a frontend redraws the form the entry is now in without a channel of its own.
 	const display = createDisplayPreference({ onChange: () => accounting.announceChanged() });
+
+	// The per-session context readings: one process-wide record the harness half feeds from every
+	// session binding's own `getContextUsage()` — the main session's and each subagent's — and the
+	// detail tree reads for its descendant rows. It is a reading, never persisted or fetched.
+	const sessionContext = new SessionContextRegistry();
 
 	// The provider balance reading: one per process, refreshed only by a settled request of its own
 	// provider when the reading it holds has outlived the configured success TTL. Its changes are
@@ -361,6 +376,7 @@ export function createModelCostRuntime(inputs: ModelCostRuntimeInputs): ModelCos
 		view: accounting.view,
 		presentation: createPresentation({
 			view: accounting.view,
+			sessionContext,
 			data,
 			priceOf: (provider, model) => catalog.priceOf(provider, model),
 			display,
@@ -376,6 +392,7 @@ export function createModelCostRuntime(inputs: ModelCostRuntimeInputs): ModelCos
 			},
 			now,
 		}),
+		sessionContext,
 		implementation: {
 			catalog,
 			// One group over every actual session, main or subagent: a request's consumption belongs to

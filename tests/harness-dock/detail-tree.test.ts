@@ -24,6 +24,10 @@ import { beforeAll, describe, expect, test } from "bun:test";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
 import { MODEL_COST_WIDGET_KEY } from "../../extensions/model-cost/harnesses/omp/widget";
+import {
+	DEEPSEEK_DISPLAY_BUDGET,
+	formatTokens,
+} from "../../extensions/model-cost/shared-logic/presentation/display";
 import { writeAgentSettings, writeProviderOverride } from "./agent-config";
 import { type IsolatedHarness, REPO_ROOT, readBaselineRecord } from "./baseline";
 import { type CaptureServer, type CaptureStep, type CapturedRequest, startCaptureServer } from "./capture-server";
@@ -386,12 +390,23 @@ describe("the real host's widget: a brief with its own Round, then the static de
 			// The top Total is the very line it was, the root is the main session by name, the root's own
 			// pair is one model row indented under it, and the child is one row of its own accumulation.
 			// No Round row survives the detail form, and the root's row carries no figure of its own.
+			expect(detail).toHaveLength(4);
 			expect(detail[0]).toBe(total as string);
-			expect(detail.slice(1)).toEqual([
-				MAIN_SESSION_NAME,
+			expect(detail[1]).toBe(MAIN_SESSION_NAME);
+			expect(detail[2]).toBe(
 				`\u2502  ${MODEL_PROVIDER} / ${MODEL_ID}  Cache: ${main.cache}%  \u00A5Cache/In/Out\uff1a0:20:80  Sum: ${main.sum.toLocaleString("en-US")}  Cost: \u00A50.01`,
-				`\u2514\u2500 ${childRecord.name}  Cache: ${child.cache}%  Sum: ${child.sum.toLocaleString("en-US")}  Cost: \u00A50.0050`,
-			]);
+			);
+			// The child's own row carries its accumulation and the current context the harness recorded from
+			// that subagent's own binding: `percent (tokens/budget)`, the same form the bar above reads and
+			// against the monetary channel's own fixed display budget — never the host's context window.
+			// The token figure is the host's own estimate of the child's conversation rather than a number
+			// this document holds, so it is pinned to the form and the budget, not to a token count.
+			const childRow = String(detail[3]);
+			const childPrefix = `\u2514\u2500 ${childRecord.name}  Cache: ${child.cache}%  Sum: ${child.sum.toLocaleString("en-US")}  Cost: \u00A50.0050  Ctx: `;
+			expect(childRow.startsWith(childPrefix)).toBe(true);
+			const childContext = childRow.slice(childPrefix.length);
+			expect(childContext).toMatch(/^\d+% \([\d.,]+K?\//);
+			expect(childContext.endsWith(`/${formatTokens(DEEPSEEK_DISPLAY_BUDGET)})`)).toBe(true);
 			expect(detail.some(line => line.startsWith("Round:"))).toBe(false);
 			// The tree's own Sum is the two records' own Sums added once each: the model row above is the
 			// main session's own alone, so nothing here is an inclusive figure counted twice.

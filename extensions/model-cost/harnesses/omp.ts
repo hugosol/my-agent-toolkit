@@ -160,6 +160,55 @@ const bindModelCost = ompAdapter(MODEL_COST, {
 	},
 });
 
+/** The native session facts the context observer reads: the session's identity, its model and its own context. */
+interface SessionContextSource {
+	/** The session manager, read only for the session id this binding's reading is keyed by. */
+	readonly sessionManager: { getSessionId(): string };
+	/** The session's current model, read only for the channel its display budget comes from. */
+	readonly model?: { readonly id?: string; readonly provider?: string };
+	/** The session's own context, as its binding reports it; absent when the host reports none. */
+	getContextUsage?(): { readonly tokens?: number } | undefined;
+}
+
+/** The native api surface the observer registers through: the one `on` every host publishes. */
+interface SessionContextApi {
+	on(event: string, handler: (event: unknown, ctx: SessionContextSource) => void): void;
+}
+
+/** The events that can move a session's own context reading. */
+const SESSION_CONTEXT_EVENTS = ["session_start", "message_end", "agent_end"] as const;
+
+/**
+ * Keep the process's per-session context readings current.
+ *
+ * A session's own context usage is reachable only from its own binding, so every binding this
+ * extension gets — the main session's and each subagent's — publishes its own reading into the one
+ * runtime the process shares, keyed by the session id the host reports. The detail tree then shows
+ * each descendant session's own context beside its consumption, which is what lets an operator read
+ * a subagent's context from the session they are already on: it needs no viewed-session outlet and
+ * no host change. A session that parks or ends keeps the last reading it reported, because this half
+ * names no native shutdown hook of its own — the bindings' own lifecycle is the framework's.
+ */
+function observeSessionContext(pi: OmpExtensionApi, runtime: ModelCostRuntime): void {
+	// Reason: the adapter names only the members its own mapping uses; these are the native reads this
+	// half adds, the same widening the widget performs for the reads it owns.
+	const api = pi as unknown as SessionContextApi;
+	const observe = (ctx: SessionContextSource): void => {
+		const usage = ctx.getContextUsage?.();
+		if (usage === undefined || usage.tokens === undefined) return;
+		// The session's own current model travels with the reading: the figure is displayed against that
+		// model's channel budget, and the host's own context window is never what this extension compares.
+		runtime.sessionContext.observe(ctx.sessionManager.getSessionId(), {
+			tokens: usage.tokens,
+			...(ctx.model?.provider === undefined ? {} : { provider: ctx.model.provider }),
+			...(ctx.model?.id === undefined ? {} : { model: ctx.model.id }),
+		});
+	};
+	for (const event of SESSION_CONTEXT_EVENTS) {
+		api.on(event, (_event, ctx) => observe(ctx));
+	}
+}
+
 export default function modelCost(pi: OmpExtensionApi): void {
 	const bound = bindModelCost(pi);
 	// The extension's own frontend, attached after the binding it draws beside and only when that
@@ -167,4 +216,8 @@ export default function modelCost(pi: OmpExtensionApi): void {
 	// and the host's native widget is the only thing it owns. A refused binding subscribes nothing
 	// here — no widget, no drawing timer — exactly as it registers nothing of the half above.
 	if (bound.bound && runtime !== undefined) releaseFrontend = attachModelCostWidget(pi, runtime, uiBoundaryTimer, MODEL_COST_WIDGET_DRAWING);
+	// Every binding — a subagent's as much as the main session's — publishes its own context reading,
+	// so the detail tree can show each subagent's context without a viewed-session outlet. The registry
+	// is the process's one runtime, built by whichever binding was its own session's owner.
+	if (runtime !== undefined) observeSessionContext(pi, runtime);
 }

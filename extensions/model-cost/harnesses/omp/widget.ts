@@ -55,6 +55,7 @@ import {
 	accruedLine,
 	balanceLine,
 	budgetLine,
+	contextText,
 	fieldsText,
 	lineText,
 	roundColumns,
@@ -258,6 +259,11 @@ function prefixedLine(prefix: string, line: DisplayLine): DisplayLine {
  * its siblings calls for — the last of a parent's children closes with `└`, every earlier one branches
  * with `├`. A row's distance from the root is the only thing the shared result states; how a terminal
  * draws it is here.
+ *
+ * A descendant session's own consumption fields follow its name, and its current context reading
+ * follows them as `Ctx: percent (tokens/budget)` — the subagent's own tokens against the same fixed
+ * display budget the bar above uses for its channel, which is what the operator can read for a
+ * session the budget bar does not follow. A session no binding observed carries no such field.
  */
 function treeLines(rows: readonly AgentTreeRow[]): DisplayLine[] {
 	return rows.map((row, index) => {
@@ -270,8 +276,10 @@ function treeLines(rows: readonly AgentTreeRow[]): DisplayLine[] {
 				: row.kind === "session"
 					? `${continuation}${last ? "\u2514\u2500 " : "\u251C\u2500 "}${row.name}`
 					: `${continuation}\u2502  ${row.name}`;
-		const fields = row.fields;
-		return [{ text: fields === undefined ? head : `${head}  ${fieldsText(fields)}` }];
+		const parts = [head];
+		if (row.fields !== undefined) parts.push(fieldsText(row.fields));
+		if (row.context !== undefined) parts.push(`Ctx: ${contextText(row.context)}`);
+		return [{ text: parts.join("  ") }];
 	});
 }
 

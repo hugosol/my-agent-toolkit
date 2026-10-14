@@ -59,7 +59,13 @@ glossary.
 | [`tests/harness-dock/`](tests/harness-dock) | The shared dock (isolated install, controlled session, capture) and its self-test. | You are writing a test that drives a real session. |
 | [`scripts/verify-omp-candidate.ts`](scripts/verify-omp-candidate.ts) | On-demand independent verification of one exact harness version: isolated exact install + framework suite + a scoped result record (version, revision anchor, source revision, lockfiles, environment, coverage). | You are verifying another harness version. |
 | [`scripts/capture-codex-outbound.ts`](scripts/capture-codex-outbound.ts) | Prepared layer-2 capture of a real `openai-codex` round trip; needs a human-supplied credential. | You are recording the real-credential role evidence. |
-| [`.scratch/connect-bot-migration/`](.scratch/connect-bot-migration) | The migration design record: spec, contract, map, decisions, lighthouse documents, implementation tickets and the run record. | You need the reasoning behind a requirement. |
+
+The durable documentation is self-contained: migration decisions, constraints and recorded
+evidence are stated in the per-extension READMEs, framework documents and ADRs rather than
+delegated to working tickets or external archives. The extension READMEs also preserve the
+prepared human-acceptance expectations and their verification limits; context terminology is
+indexed by [`GLOSSARY-MAP.md`](GLOSSARY-MAP.md). Archiving a planning record does not establish
+that its implementation, human acceptance or production cutover has completed.
 
 ## Human acceptance and cutover
 

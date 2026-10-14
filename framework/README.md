@@ -91,9 +91,9 @@ command; the credential lands in that directory's `agent.db` and never enters a 
 repository. `--run` without a credential exits non-zero and re-prints those steps — that is the
 expected not-yet-delivered state. A completed run records `rr-session-N.json` request bodies plus the
 session JSONL under `.cache/codex-layer2/captures/`, and reports where the injected prompt landed and
-under which role. Compare with layer 1 — the shape-only capture
-[`.scratch/codebase-tools-omp-v1/assets/11/captures/codex/`](../.scratch/codebase-tools-omp-v1/assets/11/captures/codex)
-and [`tests/codebase-tools/outbound-role.test.ts`](../tests/codebase-tools/outbound-role.test.ts) — and
+under which role. Compare with layer 1 — the shape-only capture on this path recorded the injected
+prompt as a trailing `input` item with role `developer`, while `instructions` does not carry it
+(exercised by [`tests/codebase-tools/outbound-role.test.ts`](../tests/codebase-tools/outbound-role.test.ts)) — and
 with the provider-path role table in
 [`docs/harness-support.md`](docs/harness-support.md#provider-path-role-evidence-recorded-facts-not-a-gate).
 When no credential or capture is available, record the path as `unverified`; it does not block the

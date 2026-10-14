@@ -5,10 +5,9 @@
  * entry point only: baseline record + isolated install, isolated environment, controlled
  * session driver, session JSONL read-back and outbound request capture.
  *
- * The driving techniques are the ones proven by the decision-03 probes
- * (`.scratch/codebase-tools-omp-v1/assets/03/probes/`): RPC-mode session driving, a local
- * OpenAI-compatible capture endpoint, and a provider-registration override that keeps the
- * run credential-free.
+ * The dock drives sessions in RPC mode, captures outbound requests at a local
+ * OpenAI-compatible endpoint, and registers a provider override so verification
+ * does not require a real provider credential.
  */
 export * from "./agent-config";
 export * from "./baseline";

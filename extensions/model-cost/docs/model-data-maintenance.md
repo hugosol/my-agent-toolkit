@@ -28,7 +28,13 @@
 | `openai-codex` 全 provider 走额度渠道 | 既有行为；其金额来自 framework 提供的对应 provider／模型 catalog 价格，不在本数据内 |
 | 峰段 09:00–12:00、14:00–18:00（含端点）、周末与 holiday 谷价、共用系数 2 | 既有行为与官方价格文档；不自动识别法定节假日 |
 
-收窄与确认的原始记录：`.scratch/model-cost-migration/assets/model-catalog-confirmation-2026-10-12.md`、`.scratch/model-cost-migration/lighthouse/13-model-catalog-policy.md`（以及 14／15 两份发现事实）。
+以上范围的确认链（2026-10-12，用户逐项确认后批准发布）：
+
+- **官方两 ID**：来自一次经用户授权的实际发现请求 `GET https://api.deepseek.com/models`（凭据只用于该次请求，未打印、未入库；未鉴权调用返回 401）。返回的 Model ID 恰为 `deepseek-v4-pro` 与 `deepseek-flash`（各自 1048576 context／393216 max output／`effort.supported_levels=[low,high,max]`，响应没有任何价格／币种／峰谷字段，也没有另外两个旧别名）；用户随后明确把官方名单限定为这两个 ID，不补旧别名、不自动支持未收录模型。
+- **Go 五 ID**：来自匿名的 `GET https://opencode.ai/zen/go/v1/models`，返回 38 个条目，其中 DeepSeek 家族恰为表中五个 ID；用户确认只取这五个、按 token-only 维护，不取全部 38 个、不接 Zen／PAYG 金额。发现字段 `owned_by=opencode` 不等于接入 provider ID；provider 身份按第一方文档映射为 `opencode-go`。
+- 比例由价格派生（不维护第二套比例配置）、缺价策略与「单元测试用自造数据、不固定真实价格／名单」等决定同样出自本轮确认，见上表与下文。
+
+发现只辅助开发维护，**不**证明模型调用、账单或账户权益；时点证据不构成未来名单保证。原始访谈原话、完整 38-ID 快照与证据限度随迁移工作材料保存，本文件只保留维护所需的事实。
 
 已退役、不得恢复的取值：官方旧 `deepseek-v4-flash`／`deepseek-v4-flash-vision-exp` 的默认支持、任意非官方 provider 的 pro／v4-flash 通配、全部 Go 模型、Zen／PAYG 金额、按当前价重算历史金额、独立比例配置表。
 

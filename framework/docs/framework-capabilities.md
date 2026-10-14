@@ -5,12 +5,18 @@ accepted value of every parameter `defineExtension` and `ompAdapter` take. It is
 an agent that has to *find* an entry point and then read the source for detail — every symbol below is
 cited to its defining file and line, and that source is authoritative for behavior, ordering and errors.
 
-It is not the contract and not an implementation description. The promises and seams live in the
-[contract](../../.scratch/connect-bot-migration/contract.md); terminology lives in [GLOSSARY.md](../GLOSSARY.md);
-the architecture decision is [ADR 0002](../../docs/adr/0002-semantic-extension-framework.md). Only the first-release
-("v1") surface is listed: the unions below are closed, and a kind outside them is not bound.
+It is not the contract and not an implementation description. The promises and seams of the
+first-release migrations — for connect-bot, promises P1–P48 across the real OMP extension seam (S1)
+and the runtime-neutral public-interface seam (S2) — are recorded with the migration records;
+terminology lives in [GLOSSARY.md](../GLOSSARY.md); the architecture decision is
+[ADR 0002](../../docs/adr/0002-semantic-extension-framework.md). Only the first-release ("v1") surface is
+listed: the unions below are closed, and a kind outside them is not bound.
 
-The in-progress [model-cost observation decisions](../../.scratch/model-cost-migration/lighthouse/03-observation-contract.md) revise the target placement of reusable lifecycle logic; the index below still describes the implemented surface, not the planned input seam or a completed refactor.
+The in-progress model-cost observation decisions (2026-10-11) revise the target placement of reusable
+lifecycle logic — identity and in-flight association, generic dedup/conflict handling, and Round
+open/close with the deferred end-candidate re-check belong to the framework as far as possible, while
+the adapter keeps native subscriptions, field/signal mapping and capability clues; the index below
+still describes the implemented surface, not the planned input seam or a completed refactor.
 
 ## Entry points
 

@@ -72,6 +72,7 @@ import type { ProviderBalance, ProviderBalanceResult } from "../provider-balance
 import { type Season, nextSeasonChange, seasonAt } from "../request-price";
 import type { ConsumptionView, SessionIdentity } from "../request-accounting";
 import type { DisplayForm, DisplayPreference } from "./display-preference";
+import type { SessionContextReading } from "./session-context";
 
 /** The accounting channel a display target's model belongs to, as the maintained data classifies it. */
 export type ConsumptionMode = "monetary" | "allowance" | "token-only" | "hidden";
@@ -169,6 +170,22 @@ export interface RoundDisplay {
 export type AgentTreeRowKind = "root" | "model" | "session";
 
 /**
+ * One descendant session's own current context as the detail tree draws it: the tokens its
+ * conversation holds, and the fixed display budget the same channel's bar compares them against.
+ *
+ * The budget is {@link displayBudgetOf}'s own figure for the session's current model — 450K for the
+ * monetary and token-only channels and 272K for the allowance one — and never the host's reported
+ * context window. A mode with no budget at all carries no context field, so a row that has one always
+ * states both the figure and the budget it is read against.
+ */
+export interface AgentTreeContext {
+	/** Estimated tokens the session's conversation holds, as its own binding reported them. */
+	readonly tokens: number;
+	/** The fixed display budget that session's mode compares against, from the one {@link displayBudgetOf}. */
+	readonly budget: number;
+}
+
+/**
  * One row of the detail form's static tree: what a frontend draws as one line, before its own
  * indentation and colour.
  *
@@ -185,6 +202,16 @@ export interface AgentTreeRow {
 	readonly depth: number;
 	/** The row's own applicable fields; absent on the root row, whose consumption is its model rows. */
 	readonly fields?: ConsumptionFields;
+	/**
+	 * The descendant session's own current context, when this process observed one.
+	 *
+	 * It is a reading published by that session's own binding rather than a consumption figure, so it
+	 * is carried on the descendant session rows alone — a model row is not a session, and the root row
+	 * is the session the tree is *of*, whose own context the widget's budget bar already shows. Absent
+	 * when no binding has reported one, and absent for a channel whose mode has no display budget: an
+	 * unobserved or unbudgeted session shows no field rather than a zero.
+	 */
+	readonly context?: AgentTreeContext;
 }
 
 /** The fixed display budget and whether the reported context usage has crossed it. */
@@ -385,6 +412,11 @@ export interface CodexQuotaEstimateDisplay {
 export interface PresentationInputs {
 	/** The process's read-only consumption results. */
 	readonly view: ConsumptionView;
+	/**
+	 * The process's per-session context readings, as each session's own binding published them: what a
+	 * descendant session row shows. A session no binding reported reads as nothing, never as zero.
+	 */
+	readonly sessionContext: SessionContextReading;
 	/** The entry's own display preference: which form a main session's display is drawn in. */
 	readonly display: DisplayPreference;
 	/** The maintained model and price data the mode comes from. */
@@ -510,7 +542,7 @@ export function fieldsOf(
  * the current results, so a frontend that re-reads after a change notification sees the change.
  */
 export function createPresentation(inputs: PresentationInputs): ConsumptionPresenter {
-	const { view, data, priceOf, display, balance, quota, estimate, now, period: periodFacts } = inputs;
+	const { view, data, priceOf, display, balance, quota, estimate, now, period: periodFacts, sessionContext } = inputs;
 
 	/**
 	 * The top-level session one session belongs to, walked through the reliable direct parents this
@@ -564,6 +596,11 @@ export function createPresentation(inputs: PresentationInputs): ConsumptionPrese
 	 * walking forever. A session carries one row whether it is a child or a grandchild of the root, and
 	 * a pair the root consumed that this extension does not display is still one of the root's own rows,
 	 * with the usage alone that its policy allows.
+	 *
+	 * Each descendant row also carries that session's own current context reading when this process
+	 * observed one — a reading its own binding published, not a consumption figure — so the tree shows
+	 * what each subagent's context holds beside what it has spent. A row with no observed reading
+	 * carries no such field.
 	 */
 	const agentTreeOf = (rootId: string): readonly AgentTreeRow[] => {
 		const children = new Map<string, SessionIdentity[]>();
@@ -591,11 +628,23 @@ export function createPresentation(inputs: PresentationInputs): ConsumptionPrese
 			for (const child of children.get(parentId) ?? []) {
 				if (included.has(child.sessionId)) continue;
 				included.add(child.sessionId);
+				// The descendant's own current context, as this process observed its binding publish it, read
+				// against the same fixed display budget the bar uses for that session's own channel — chosen
+				// from the model the reading was taken on, never from the host's context window. A mode with
+				// no budget and an unobserved session both carry no field rather than a zero.
+				const observed = sessionContext.read(child.sessionId);
+				const budget =
+					observed === undefined
+						? undefined
+						: displayBudgetOf(classify(data, observed.provider ?? "", observed.model ?? "").mode);
 				rows.push({
 					kind: "session",
 					name: child.name,
 					depth,
 					fields: fieldsOf(view.own(child.sessionId) ?? {}),
+					...(observed === undefined || budget === undefined
+						? {}
+						: { context: { tokens: observed.tokens, budget } }),
 				});
 				walk(child.sessionId, depth + 1);
 			}
@@ -767,6 +816,17 @@ export function formatTokens(count: number): string {
 		return tenth >= 10 ? `${(whole + 1).toLocaleString("en-US")}.0K` : `${whole.toLocaleString("en-US")}.${tenth}K`;
 	}
 	return count.toLocaleString("en-US");
+}
+
+/**
+ * One descendant session's context as the display writes it: the share of its channel's fixed display
+ * budget the session's tokens fill, then the tokens themselves over that budget — the same
+ * `percent (tokens/budget)` form the fixed-budget bar reads, without the bar itself. The label a
+ * frontend leads it with is that frontend's own.
+ */
+export function contextText(context: AgentTreeContext): string {
+	const percentile = (context.tokens / context.budget) * 100;
+	return `${percentile.toFixed(0)}% (${formatTokens(context.tokens)}/${formatTokens(context.budget)})`;
 }
 
 /** A CNY amount as the display writes it: two decimals past one cent, four below it. */

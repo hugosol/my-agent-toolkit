@@ -51,10 +51,26 @@ Both terms are this context's vocabulary in [GLOSSARY.md](GLOSSARY.md).
 
 ## H3b — cut over connect-bot
 
-Precondition: H1 passed and the connect-bot acceptance round has been run and recorded — the M-layer
-observation checklist in
-[lighthouse 06 §6](../../.scratch/connect-bot-migration/lighthouse/06-acceptance-contract.md) — so the
-old implementation is still the one in use. The two shared cutover steps (add the discovery root once,
+Precondition: H1 passed and the connect-bot acceptance round has been run and recorded — this
+repository claims neither yet — so the old implementation is still the one in use. That round is
+manual and is never an automated gate: the
+user loads this repository's entrypoints from the explicit-only root
+(`--no-extensions -e entrypoints/omp`) on an isolated install, against a running omp-bot panel whose
+`listen_addr` matches `config.yaml`'s `endpoint`, and records each step's observation (screenshots
+or logs) — panel ready; `/connect-bot` registering the row (a new session is `空闲`); idempotent
+re-register (one row, no flicker, count unchanged); round-end transitions (`工作中` →
+`等待用户输入`, with the panel's own finished-round count and dot, cleared by its acknowledgement
+while the dot stays); terminal states after an aborted or assistant-less turn; active
+`/connect-bot off`; a killed process (the row stays, then passes offline); a panel outage (one
+first-failure notice, auto-disarm about 30s later, no automatic reconnect); the guards (`--no-ui`,
+unknown argument); multi-session isolation; coexistence with codebase-tools; load-source
+exclusivity; and the configuration switch. Its record must name the frozen source baseline
+(`my-omp-toolkit` `master@34d7c40`, extension commit `d3648a0`), the runtime
+(`@oh-my-pi/pi-coding-agent@18.5.0` + `bun --version` + the lockfiles), the panel revision
+(`omp-bot@d50e35c`), the `config.yaml` content, the executor and the date; the automated
+precondition is the recorded release gate — `bun test` 367 pass / 0 fail across 42 files and a clean
+`tsc --noEmit` on those baselines (recorded 2026-10-07). The two shared
+cutover steps (add the discovery root once,
 restart the harness) are in
 [H3 — permanent cutover and cutover smoke](../../framework/README.md#h3--permanent-cutover-and-cutover-smoke);
 what differs here is the configuration file, the panel rows the old implementation leaves behind, and
