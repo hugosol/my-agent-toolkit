@@ -8,7 +8,7 @@
 
 **Blocked by:** 02 — 子代理原生运行耗时的累计与落盘；03 — 正确任务名称与不可变启动快照；05 — 移除 Sum，保留消费字段语义。
 
-**Status:** in-progress（实现、自动化检查、真实终端设备证据与集成分支 tip 的合入已完成；仅 P33 的可读性判断留给用户，关闭待父级验收）
+**Status:** in-progress（实现、自动化检查、真实终端设备证据与集成分支 tip 的合入已完成；2026-10-14 复核：集成分支 tip `d05703d` 仍为本分支祖先、无需再合并，验收与全部回归已在合并树 `be884ba` 上重跑且全绿（`bun test` 961 pass / 0 fail）；仅 P33 的可读性判断留给用户，关闭待父级验收）
 
 Source: [approved contract](../contract.md) · [spec](../spec.md)
 
@@ -107,3 +107,29 @@ Source: [approved contract](../contract.md) · [spec](../spec.md)
 3. **设备把非 BMP 字符画成 U+FFFD**：账户行的 🌙 在控制台缓冲里就是 U+FFFD（占 2 格），是 conhost 的表现，不是前端截图问题；对本票的列与数值无影响。
 4. **Total／账户行不随终端变窄**：60 列时 Total 行本身超过控制台宽度、由控制台折行；本票边界明确不要求 Total 与子代理行共用列宽，故本 smoke 的列检查只作用于树行，未对 Total 行作任何断言。
 5. bun 不发出 resize 通知（两轮都是 0 次）；宽度改动的证据是设备自报宽度与逐 pass 重画，不是事件。（真实宿主自行决定何时以新宽度重画，属宿主职责。）
+
+## Integration sync（agent，2026-10-14，同步复核与合并树重跑）
+
+**同步**：集成分支 `wayfinder/subagent-enhance` 的最新 tip 仍是 `d05703d`（以本地 ref 为准；`origin/wayfinder/subagent-enhance` 落后本地 33 个提交，本轮未联网 fetch；`E:/Developer/myhub/my-agent-toolkit` 工作区干净、reflog 无新合入）。`git rev-list --count HEAD..wayfinder/subagent-enhance` = 0：tip 已是本分支 HEAD `be884ba` 的祖先，**无需合并、无冲突可解**（`git merge` 会是 `Already up to date`）。集成分支工作区只被运行过只读命令；未 reset、未丢弃任何提交。反向预演 `git merge-tree --write-tree wayfinder/subagent-enhance HEAD` → 单一 tree 对象、exit 0，即本票合入集成分支也不会冲突。
+
+**范围复核**：`git diff --stat wayfinder/subagent-enhance...HEAD` 仍只有本票的 10 个文件（本票记录、扩展 README／GLOSSARY、`widget.ts`、`display.ts`、`package.json`、三个脚本、`tests/model-cost/detail-layout.test.ts`）；spec、contract、`entrypoints/`、`framework/`、`host-patches/` 均未被本票触碰；树内无冲突标记。
+
+**工作区级归一化（未提交、不改动已提交内容）**：本机 `core.autocrlf=true` 会把 `host-patches/omp-18.5.0-codex-response-boundary/patch.diff`、`host-patches/omp-18.5.0-viewed-session/patch.diff` 与 `bun.lock` 检出成 CRLF，而 `patchTouchedFiles` 与 lockfile 里录制的 sha256 针对的是已提交的 LF blob。本轮把这三份文件按 `git cat-file blob HEAD:<path>` 的字节写回（`git hash-object` 与 `HEAD:<path>` 相同，`git diff` 为空、`git status` 干净），dock 套件与 `session-driver` 的 lockfile 校验因此可运行。这是工作区／机器级处理，不随分支提交；集成分支工作区与新建的 `%TEMP%` 工作区会再次出现 CRLF 检出（上一轮记录的是临时转 LF 后再恢复，本轮保持归一化后的 LF）。
+
+**合并树（重跑时的 HEAD `be884ba`，含 `d05703d` 与全部本票提交；紧随其后的记录提交 `72b75d8` 只改本文件）上的重跑**：
+
+| 命令 | 结果 |
+|---|---|
+| `bun run typecheck` | exit 0 |
+| `bun test tests/model-cost` | 339 pass / 0 fail（26 文件，1635 expect） |
+| `bun test tests/harness-dock` | 86 pass / 0 fail（23 文件，1023 expect，214.5 s；含 `baseline`、`session-driver`，即上一轮记录的启动期 `patch.diff touches no file` 失败已随归一化消失） |
+| 具名受影响消费者：`detail-tree` / `viewed-session-total` / `model-cost-modes` | 3 / 2 / 6 pass，0 fail（73 / 19 / 67 expect，真实 patched host 的 `setWidget` 帧） |
+| `bun test tests/framework tests/codebase-tools` | 394 pass / 0 fail（38 文件，2137 expect） |
+| `bun test tests/connect-bot`（`OMP_BOT_BINARY=E:/Developer/myhub/omp-bot/backend/target/release/omp-bot.exe`） | 142 pass / 0 fail（18 文件，689 expect）——此前各轮记录的 5 例「找不到 omp-bot 面板二进制」在真实 release 二进制下全部通过：该二进制存在于 `E:/Developer/myhub/omp-bot/backend/target/release/`，而 `%TEMP%` 工作区默认解析的同级 `../omp-bot` 不存在，用 `OMP_BOT_BINARY` 指认即可 |
+| `bun test`（全仓库，同一 env） | **961 pass / 0 fail**（105 文件，5484 expect，337.8 s） |
+| `bun run smoke:model-cost-detail-layout --widths 160,120,100,80,60,40` | 19 PASS / 0 FAIL；输出与抽取共用 fixture 之前的基线逐字节相同（`cmp` 无差异） |
+| 设备 smoke（ConPTY 会话，`--device-session --session-passes 4`，客户端改宽 120→100→60→120，`conpty-session.py` 驱动器） | 4 pass、36 项观测全部成立、0 失败；逐 pass 设备列、行数（16/16/24/16）、颜色与上一轮记录逐项相同（仅控制台回显的命令行路径不同，流 26747 vs 26726 字节）；storage 文档仍 1384 字节未变 |
+
+本轮证据目录（工作区之外）：`C:\Users\hugos\AppData\Local\Temp\integrate-06-evidence\`（`device-report.json`、`device-session.bin`、`printed-smoke.txt`、`dock-full.log`、`connect-bot.log`、`full-suite.log`）。
+
+**唯一未决项未变**：P33 的人工可读性判断（上一节第 1 条）；本轮没有新增人工目视证据，判断方式与准备好的证据不变（`bun run smoke:model-cost-detail-layout-terminal`）。
