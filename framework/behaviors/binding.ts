@@ -60,7 +60,7 @@ import { cleanupImplementation, initializeImplementation, servingOwnerKeyOf, ini
 import { publishMarkerOnRun, publishMarkerOnViewChange, registerMarker, markerSeat } from "./marker";
 import { createRoundSynthesis, roundLives } from "./round-events";
 import { dispatchSessionEvent } from "./session-events";
-import { ROUND_EVENT_KINDS, TURN_EVENT_KINDS, subscribesAny } from "./subscriptions";
+import { ROUND_EVENT_KINDS, SUBAGENT_RUNTIME_EVENT_KINDS, TURN_EVENT_KINDS, USER_INPUT_EVENT_KINDS, dispatchToGroups, subscribesAny } from "./subscriptions";
 import { turnLives } from "./turn-events";
 
 /** Whether one injected implementation is the directed half of a directed command. */
@@ -380,6 +380,41 @@ export function bindExtension(
 			port.onTurn(facts => {
 				if (!delivering) return;
 				turns.observe(facts);
+			});
+		}
+		// The subagent-runtime hook is subscribed only when a group observes that axis, so a
+		// definition that does not care about an execution's own duration asks the harness for no
+		// such facts. Nothing of the framework's runs for a delivery — the axis owns no state the
+		// framework holds: no State is reconciled, no Round is opened or closed, no consumption is
+		// settled and no file is written — so the observation goes straight to the subscribed
+		// handlers, unchanged, exactly as the adapter mapped it.
+		if (subscribesAny(groups, SUBAGENT_RUNTIME_EVENT_KINDS)) {
+			port.onSubagentRuntime(delivery => {
+				if (!delivering) return;
+				dispatchToGroups(
+					definition.id,
+					groups,
+					delivery.event.kind,
+					delivery.owner,
+					() => ({ delivery }),
+					port.reportDiagnostic,
+				);
+			});
+		}
+		// The input hook is subscribed only when a group observes it. There is no framework behavior
+		// behind it — a submission crosses no boundary, so nothing the framework owns moves — so the
+		// delivery reaches its subscribers exactly as the adapter resolved it.
+		if (subscribesAny(groups, USER_INPUT_EVENT_KINDS)) {
+			port.onUserInput(input => {
+				if (!delivering) return;
+				dispatchToGroups(
+					definition.id,
+					groups,
+					input.event.kind,
+					input.owner,
+					() => ({ delivery: input }),
+					port.reportDiagnostic,
+				);
 			});
 		}
 		// The run-initiation hook is subscribed when the definition participates in a run at

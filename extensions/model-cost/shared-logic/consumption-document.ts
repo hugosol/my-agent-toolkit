@@ -9,17 +9,24 @@
  * - The root carries `schemaVersion` (the document format gate, `1` for this extension and never
  *   stepped by an ordinary save), `periodId` (the generation an accounting reset produces),
  *   `start`, an optional `start_bal`, `holiday` and `harnesses`.
- * - `harnesses.<harness>.sessions` is a flat list of records `{id, name, parent, saveVersion,
- *   own}`, unique by `id` inside one harness. `parent` is the same harness's direct parent session
- *   id, or `null` for a session with none; a parent that has not been saved yet is ordinary data,
- *   not an error, and no placeholder parent is invented. The harness part of the identity is the
- *   harness key, so the record itself carries no harness field.
+ * - `harnesses.<harness>.sessions` is a flat list of records `{id, name, parent, startup?,
+ *   saveVersion, own, runtimeMs?}`, unique by `id` inside one harness. `parent` is the same
+ *   harness's direct parent session id, or `null` for a session with none; a parent that has not
+ *   been saved yet is ordinary data, not an error, and no placeholder parent is invented. The
+ *   harness part of the identity is the harness key, so the record itself carries no harness field.
+ *   `startup` is the model and effective effort the session began with, omitted when nothing proved
+ *   them, and it is never rewritten: a document written before this field existed is the same
+ *   approved format with the field simply absent.
  * - `own.<provider>.<model>` carries the session's own four token buckets and, when the provider's
  *   accounting produced one, `costCny` or `referenceCostUsd` — the two currencies are separate
  *   fields and neither is derived from the other. No authoritative total, account key, round or
  *   turn detail, host difference baseline or historical price has a place here, and a document (or
  *   record, or usage entry) carrying a field this schema does not name is not read as this
  *   version: an unrecognized shape is refused, never guessed at, defaulted or silently trimmed.
+ *   `runtimeMs` is the one optional measurement a record may carry: a count of milliseconds,
+ *   never a formatted duration, absent when the host never produced one and `0` when a reading
+ *   really was zero — while a value that is not a measurement at all is dropped from the record
+ *   rather than taken for damage to the consumption beside it.
  *
  * A document the file holds is read through {@link readConsumptionDocument}, which answers either
  * with the validated document or with the reason it is not one. Nothing here reads the file, and
@@ -63,18 +70,89 @@ export interface ModelConsumption {
 /** One session's own consumption: provider, then model, then that model's buckets and amounts. */
 export type OwnConsumption = Readonly<Record<string, Readonly<Record<string, ModelConsumption>>>>;
 
-/** One session's own record: its identity, display data, direct parent and snapshot version. */
+/**
+ * The model and effective effort one session began with, as its startup was observed or recorded.
+ *
+ * It is a *startup* fact rather than the session's current one, and it is never rewritten: the model
+ * the session began on, and the level it really ran there — the level the harness resolved, never the
+ * configured selector behind it. Each member is absent when nothing proved it, and a session whose
+ * record carries none keeps both unknown however it runs now.
+ */
+export interface SessionStartup {
+	/** The model the session began on, both parts as the harness reported them. */
+	readonly model?: {
+		/** The provider the harness serves that model under. */
+		readonly provider: string;
+		/** The exact model id, as the harness resolves it. */
+		readonly model: string;
+	};
+	/** The effective thinking level the session began with. */
+	readonly effort?: string;
+}
+
+/**
+ * One session's main-session time facts as its record carries them: the two instants a Session span
+ * is the difference of, in epoch milliseconds.
+ *
+ * Both are always present together. An instant is only ever written once it has really been
+ * observed — the first user input, the latest Turn end — so a pair here is a pair of observations
+ * and never one observation with a placeholder beside it: a session whose end is still unknown keeps
+ * no span at all rather than a span whose end is a guess, a zero or the last transcript time.
+ */
+export interface SessionSpanFact {
+	/** The instant this session's first user input of the period was observed. */
+	readonly start: number;
+	/** The instant this session's most recent observed Turn end was, as that Turn's own delivery stated it. */
+	readonly end: number;
+}
+
+/** One session's record: its identity, display data, direct parent and snapshot version. */
 export interface SessionRecord {
 	/** The session's identity inside its harness; its complete identity is harness + this id. */
 	readonly id: string;
 	/** The session's latest display name; display data, never an identity. */
 	readonly name: string;
-	/** The same harness's direct parent session id, or `null` for a session with no parent. */
+	/** The same harness's direct parent session id, or `null` for a session with none. */
 	readonly parent: string | null;
+	/**
+	 * The model and effective effort this session began with, omitted when nothing proved them.
+	 *
+	 * It is recorded once, with the session's first snapshot, and never rewritten: a later model
+	 * switch, a later level change or a later execution leaves what the session started on as it was.
+	 */
+	readonly startup?: SessionStartup;
 	/** The snapshot's version, compared inside periodId + harness + sessionId. */
 	readonly saveVersion: number;
 	/** This session's own consumption, excluding anything its subagents issued. */
 	readonly own: OwnConsumption;
+	/**
+	 * The subagent runtime this session's own executions accumulated in this period, in
+	 * milliseconds, or nothing when no reliable reading ever produced one.
+	 *
+	 * It is the harness's *own* measurement of each execution's duration, summed per execution —
+	 * never a session's creation-to-last-record span, which counts the idle gaps between
+	 * executions, and never a formatted string, so a later statistical tool reads a number.
+	 * Absent is *unavailable* rather than zero: a session whose host reported no such reading and
+	 * one whose executions really took no measurable time are different facts, and the second is
+	 * stored as `0`.
+	 */
+	readonly runtimeMs?: number;
+	/**
+	 * This session's own main-session time facts within the applicable accounting period, when both
+	 * of them have been observed: the instant of its first user input and the instant of its most
+	 * recent observed Turn end, in epoch milliseconds.
+	 *
+	 * Absent is the ordinary state — a session that has not taken up input yet, one whose Turns have
+	 * not settled yet, and every record written before this field existed. An absent span is unknown
+	 * rather than zero, so nothing reads it as an elapsed time of nothing, and a reliable reading of
+	 * zero milliseconds is a *present* span whose two instants are equal.
+	 *
+	 * It is the session's own time and not its subagents': nothing here is added to it, and a
+	 * descendant's own span is its own record's. Like the consumption beside it, it belongs to the
+	 * period that record is in — an accounting reset clears it with everything else rather than
+	 * carrying it into the new period.
+	 */
+	readonly span?: SessionSpanFact;
 }
 
 /** One harness's sessions, as the flat list the schema fixes. */
@@ -98,21 +176,50 @@ export interface ConsumptionDocument {
 
 /** What reading one value as a document answered. */
 export type ConsumptionDocumentRead =
-	| { readonly kind: "document"; readonly document: ConsumptionDocument }
+	| {
+			readonly kind: "document";
+			readonly document: ConsumptionDocument;
+			/**
+			 * Every invalid *optional* time fact the document carried, named the way its place names
+			 * it, in the order the records were read: the main session's own span, and the subagent
+			 * runtime one session's record accumulated.
+			 *
+			 * An invalid time fact is not a reason to refuse the document: the consumption beside it is
+			 * what the document is for, and a record whose time is unreadable still holds valid
+			 * consumption. What the fault does is what the absence of the fact does — the value is
+			 * dropped rather than guessed — and it is reported separately so the operator is told,
+			 * instead of the whole document being treated as corrupt and either refused or overwritten.
+			 */
+			readonly faults: readonly string[];
+	  }
 	| { readonly kind: "unusable"; readonly reason: string };
 
 /** One validated value, or the reason it is not one — the shape every level of the read uses. */
 type Validated<T> = { readonly value: T } | { readonly reason: string };
 
 /** What one validated session record answered. */
-type SessionRecordRead = { readonly record: SessionRecord } | { readonly reason: string };
+type SessionRecordRead =
+	| { readonly record: SessionRecord; readonly timeFaults?: readonly string[] }
+	| { readonly reason: string };
 
 /** The keys each level of the approved schema declares, and nothing else. */
 type ApprovedKeys = Readonly<Record<string, true>>;
 
 const DOCUMENT_KEYS: ApprovedKeys = { schemaVersion: true, periodId: true, start: true, start_bal: true, holiday: true, harnesses: true };
 const HARNESS_KEYS: ApprovedKeys = { sessions: true };
-const SESSION_KEYS: ApprovedKeys = { id: true, name: true, parent: true, saveVersion: true, own: true };
+const SESSION_KEYS: ApprovedKeys = {
+	id: true,
+	name: true,
+	parent: true,
+	startup: true,
+	saveVersion: true,
+	own: true,
+	runtimeMs: true,
+	span: true,
+};
+const STARTUP_KEYS: ApprovedKeys = { model: true, effort: true };
+const STARTUP_MODEL_KEYS: ApprovedKeys = { provider: true, model: true };
+const SPAN_KEYS: ApprovedKeys = { start: true, end: true };
 const USAGE_KEYS: ApprovedKeys = { tokens: true, costCny: true, referenceCostUsd: true };
 const TOKEN_KEYS: ApprovedKeys = { input: true, cacheRead: true, cacheWrite: true, output: true };
 
@@ -134,6 +241,11 @@ function measurementFault(value: unknown): string | undefined {
 	if (typeof value !== "number" || !Number.isFinite(value)) return `不是有限数字（${describeValue(value)}）`;
 	if (value < 0) return "为负数";
 	return undefined;
+}
+
+/** Whether one value is a measurement this schema accepts — the narrowing form of the check above. */
+function isMeasurement(value: unknown): value is number {
+	return measurementFault(value) === undefined;
 }
 
 /** The four token buckets of one model's usage, or the reason that entry is not one. */
@@ -190,6 +302,33 @@ function readOwnConsumption(value: unknown, path: string): Validated<OwnConsumpt
 	return { value: own };
 }
 
+/** One session's startup facts, or the reason this value is not them. */
+function readStartup(value: unknown, path: string): Validated<SessionStartup> {
+	if (!isMapping(value)) return { reason: `${path} 不是映射（${describeValue(value)}）` };
+	const undeclared = undeclaredKey(value, STARTUP_KEYS);
+	if (undeclared !== undefined) return { reason: `${path}.${undeclared} 不是本格式的字段` };
+	const startup: { model?: { provider: string; model: string }; effort?: string } = {};
+	if (value.model !== undefined) {
+		if (!isMapping(value.model)) return { reason: `${path}.model 不是映射（${describeValue(value.model)}）` };
+		const undeclaredPart = undeclaredKey(value.model, STARTUP_MODEL_KEYS);
+		if (undeclaredPart !== undefined) return { reason: `${path}.model.${undeclaredPart} 不是本格式的字段` };
+		for (const part of ["provider", "model"] as const) {
+			const field = value.model[part];
+			if (typeof field !== "string" || field.length === 0) {
+				return { reason: `${path}.model.${part} 不是非空字符串（${describeValue(field)}）` };
+			}
+		}
+		startup.model = { provider: value.model.provider as string, model: value.model.model as string };
+	}
+	if (value.effort !== undefined) {
+		if (typeof value.effort !== "string" || value.effort.length === 0) {
+			return { reason: `${path}.effort 不是非空字符串（${describeValue(value.effort)}）` };
+		}
+		startup.effort = value.effort;
+	}
+	return { value: startup };
+}
+
 /** One session record of the approved schema, or the reason this value is not one. */
 function readSessionRecord(value: unknown, path: string): SessionRecordRead {
 	if (!isMapping(value)) return { reason: `${path} 不是映射（${describeValue(value)}）` };
@@ -202,20 +341,78 @@ function readSessionRecord(value: unknown, path: string): SessionRecordRead {
 	if (value.parent !== null && (typeof value.parent !== "string" || value.parent.length === 0)) {
 		return { reason: `${path}.parent 不是 null 或非空字符串（${describeValue(value.parent)}）` };
 	}
+	// The startup facts are optional in both directions: a record that carries none is the shape every
+	// document written before they existed has, and one that carries them states each part of them. A
+	// member the record omits stays unknown; nothing is filled in from anything else.
+	let startup: SessionStartup | undefined;
+	if (value.startup !== undefined) {
+		const read = readStartup(value.startup, `${path}.startup`);
+		if ("reason" in read) return read;
+		startup = read.value;
+	}
 	if (typeof value.saveVersion !== "number" || !Number.isInteger(value.saveVersion) || value.saveVersion < 0) {
 		return { reason: `${path}.saveVersion 不是非负整数（${describeValue(value.saveVersion)}）` };
 	}
 	const own = readOwnConsumption(value.own, `${path}.own`);
 	if ("reason" in own) return own;
+	// The session's runtime rides the same record and is read leniently: a value this schema cannot
+	// accept as a measurement is left out rather than refusing the whole document. The consumption
+	// this record carries is valid however that one optional figure stands, so treating a bad one as
+	// a damaged document would pause an accounting that is not damaged — and the record's other
+	// fields must survive it. The next snapshot this session commits replaces the value. What the
+	// record did carry is still reported: a declared runtime the schema cannot read is a time fact
+	// that was not recorded, so the operator is told which value was dropped instead of that value
+	// disappearing from the next commit without a word.
+	const declaredRuntime = value.runtimeMs;
+	const runtimeFault = declaredRuntime === undefined ? undefined : measurementFault(declaredRuntime);
+	// The optional time facts of the record: an unreadable time never makes the record unusable, so its
+	// fault is carried beside the record rather than in place of it — each of them, so a record whose
+	// runtime and span are both bad states both places the operator has to look at.
+	const span = readSessionSpan(value.span, `${path}.span`);
+	const timeFaults = [
+		...(runtimeFault === undefined ? [] : [`${path}.runtimeMs ${runtimeFault}`]),
+		...(span.fault === undefined ? [] : [span.fault]),
+	];
 	return {
 		record: {
 			id: value.id,
 			name: value.name,
 			parent: value.parent,
+			...(startup === undefined ? {} : { startup }),
 			saveVersion: value.saveVersion,
 			own: own.value,
+			...(isMeasurement(declaredRuntime) ? { runtimeMs: declaredRuntime } : {}),
+			...(span.span === undefined ? {} : { span: span.span }),
 		},
+		...(timeFaults.length === 0 ? {} : { timeFaults }),
 	};
+}
+
+/**
+ * One record's optional main-session time facts, or the reason they are not readable.
+ *
+ * An absent fact is not a fault at all: a record written before this field existed, and a session
+ * whose span has not been established, both carry nothing here. A value that is present must be
+ * exactly this pair of instants — this schema names nothing else, and a document is never trimmed
+ * into shape — and its two instants must be a readable pair, which is to say two finite,
+ * non-negative instants no later than each other. Anything else is reported as a fault and the fact
+ * is dropped, so an unreadable time never travels on as a guessed one.
+ */
+function readSessionSpan(value: unknown, path: string): { readonly span?: SessionSpanFact; readonly fault?: string } {
+	if (value === undefined) return {};
+	if (!isMapping(value)) return { fault: `${path} 不是映射（${describeValue(value)}）` };
+	const undeclared = undeclaredKey(value, SPAN_KEYS);
+	if (undeclared !== undefined) return { fault: `${path}.${undeclared} 不是本格式的字段` };
+	for (const key of ["start", "end"] as const) {
+		const fault = measurementFault(value[key]);
+		if (fault !== undefined) return { fault: `${path}.${key} ${fault}` };
+	}
+	const start = value.start as number;
+	const end = value.end as number;
+	if (end < start) {
+		return { fault: `${path}.end 早于 ${path}.start` };
+	}
+	return { span: { start, end } };
 }
 
 /**
@@ -250,6 +447,9 @@ export function readConsumptionDocument(value: unknown): ConsumptionDocumentRead
 	if (!isMapping(value.harnesses)) return unusable(`harnesses 不是映射（${describeValue(value.harnesses)}）`);
 
 	const harnesses: Record<string, HarnessSessions> = {};
+	// Every unreadable optional time fact the document carries, in the order the records were read:
+	// the document is still usable, and this is what the instance reports to its operator.
+	const faults: string[] = [];
 	for (const [harness, bucket] of Object.entries(value.harnesses)) {
 		if (!isMapping(bucket)) return unusable(`harnesses.${harness} 不是映射（${describeValue(bucket)}）`);
 		const bucketKey = undeclaredKey(bucket, HARNESS_KEYS);
@@ -266,6 +466,9 @@ export function readConsumptionDocument(value: unknown): ConsumptionDocumentRead
 				return unusable(`harnesses.${harness} 出现重复的 Session id「${read.record.id}」`);
 			}
 			ids.add(read.record.id);
+			if (read.timeFaults !== undefined) {
+				for (const fault of read.timeFaults) faults.push(`harnesses.${harness}.sessions[${index}]：${fault}`);
+			}
 			sessions.push(read.record);
 		}
 		harnesses[harness] = { sessions };
@@ -281,6 +484,7 @@ export function readConsumptionDocument(value: unknown): ConsumptionDocumentRead
 			holiday: value.holiday,
 			harnesses,
 		},
+		faults,
 	};
 }
 
@@ -305,19 +509,30 @@ function sameBusinessValue(left: unknown, right: unknown): boolean {
 }
 
 /**
- * Whether two records say the same business thing: the same identity, display name, direct parent
- * and snapshot version, and the same own consumption at every level.
+ * Whether two records say the same business thing: the same identity, display name, direct parent,
+ * startup facts, snapshot version, own consumption at every level, subagent runtime, and
+ * main-session time facts.
  *
  * A name is part of the record's content, so a rename at an unchanged version is other content
- * rather than a silent update — names travel with consumption, not through a write of their own.
+ * rather than a silent update — names travel with consumption, not through a write of their own —
+ * and the startup facts are content in the same way: a snapshot never changes, so two records that
+ * disagree about it are other content rather than one overwriting the other. The runtime is content
+ * for the same reason: it rides the same commit, and an accumulation that grew is a change the file
+ * has to carry rather than a snapshot to drop as idempotent. The span is content for the same
+ * reason: a reading that differs from the one the disk holds is a different snapshot, and two
+ * records that disagree about it are a conflict rather than something to settle by taking the later
+ * instant.
  */
 export function sameSessionContent(left: SessionRecord, right: SessionRecord): boolean {
 	return (
 		left.id === right.id &&
 		left.name === right.name &&
 		left.parent === right.parent &&
+		sameBusinessValue(left.startup, right.startup) &&
 		left.saveVersion === right.saveVersion &&
-		sameBusinessValue(left.own, right.own)
+		left.runtimeMs === right.runtimeMs &&
+		sameBusinessValue(left.own, right.own) &&
+		sameBusinessValue(left.span, right.span)
 	);
 }
 

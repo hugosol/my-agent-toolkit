@@ -1,0 +1,201 @@
+{
+  "feature": "model-cost-session-time-and-detail",
+  "ticket": "06-depth-aligned-detail-layout.md",
+  "run_id": "0ab333cf-98c3-418a-bca7-4049e7c97f19",
+  "parent_session_id": "01a1399e-bbbf-7756-b9c1-b208b4848d5c",
+  "parent_session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-14T08-54-26-495Z_01a1399e-bbbf-7756-b9c1-b208b4848d5c.jsonl",
+  "workspace": "E:\\Developer\\myhub\\my-agent-toolkit",
+  "tool_call_id": "03037f68-4cf3-4fab-8efc-6640ad4a1100",
+  "started_at": "2026-10-14T11:47:38.621Z",
+  "tdd_status": "completed",
+  "retro_status": "completed",
+  "tdd_finished_at": "2026-10-14T12:20:31.205Z",
+  "tdd_result": {
+    "index": 0,
+    "id": "06-depth-aligned-detail-layoutmd-03037f68-4cf3-4",
+    "agent": "tdd",
+    "agentSource": "user",
+    "task": "Complete assignment thoroughly:\n\n在当前 worktree 实现唯一票据：C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-NR12PO\\.scratch\\model-cost-session-time-and-detail\\implementation\\06-depth-aligned-detail-layout.md。\n集成分支：wayfinder/subagent-enhance\n固定评审起点：e3a1d0ea3ef9fdc78dc04f2d6719b3159c6e14fc\nspec：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\model-cost-session-time-and-detail\\spec.md\ncontract：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\model-cost-session-time-and-detail\\contract.md\n接手此前实现进度，不丢弃已有修改。先读上次报告：C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-auto-coding-nTyzY7\\implement-fc27aee8-09c1-417e-b2da-f7dadca50989.md\n遵守 tdd skill。逐项报告验收证据、实际验证命令及未完成事项。不要修改其他票据、retro 或工作流报告。不要操作集成分支工作区。完成前将集成分支最新 tip 合入当前票据分支，解决冲突并验证；提交本票实现。不得 reset 丢弃既有工作。只执行本票，不调用 retro、不派发其他票据。",
+    "assignment": "在当前 worktree 实现唯一票据：C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-NR12PO\\.scratch\\model-cost-session-time-and-detail\\implementation\\06-depth-aligned-detail-layout.md。\n集成分支：wayfinder/subagent-enhance\n固定评审起点：e3a1d0ea3ef9fdc78dc04f2d6719b3159c6e14fc\nspec：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\model-cost-session-time-and-detail\\spec.md\ncontract：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\model-cost-session-time-and-detail\\contract.md\n接手此前实现进度，不丢弃已有修改。先读上次报告：C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-auto-coding-nTyzY7\\implement-fc27aee8-09c1-417e-b2da-f7dadca50989.md\n遵守 tdd skill。逐项报告验收证据、实际验证命令及未完成事项。不要修改其他票据、retro 或工作流报告。不要操作集成分支工作区。完成前将集成分支最新 tip 合入当前票据分支，解决冲突并验证；提交本票实现。不得 reset 丢弃既有工作。只执行本票，不调用 retro、不派发其他票据。",
+    "description": "Implement depth-aligned detail layout ticket",
+    "lastIntent": "Final state check",
+    "exitCode": 0,
+    "output": "{\n  \"ticket\": \".scratch/model-cost-session-time-and-detail/implementation/06-depth-aligned-detail-layout.md\",\n  \"branch\": \"hyper/model-cost-session-time-and-detail/06-depth-aligned-detail-layout-21acbd-e5951e40ed62\",\n  \"commits\": [\n    \"be884ba 06: measure the detail tree on a real console device (P30-P33 device columns, P32's terminal evidence)\",\n    \"9d5cac9 (previous run) record the acceptance evidence...\",\n    \"ce58ade (previous run) merge integration tip d05703d\"\n  ],\n  \"integration\": \"wayfinder/subagent-enhance tip is still d05703d and is already an ancestor of HEAD (git rev-list --count HEAD..wayfinder/subagent-enhance = 0): nothing to merge, no conflicts. Local Git only; the integration worktree was not touched.\",\n  \"status\": \"in-progress: implementation, automated checks and real-terminal device evidence all done and committed; only P33's readability judgement is left to the user, closing is the parent's acceptance step.\",\n  \"answer_to_the_parent_question\": \"P32's real terminal output and a real terminal smoke were obtained after all. A real Windows console device (ConPTY = conhost) is scriptable from here: my first launcher attached the child but the child inherited this process' pipe handles, so conhost gave it a fresh 120x30 console and nothing reached the pseudo console; with the child's std handles cleared and no handle inheritance it is attached to the console we create, at the size we ask, with a real TTY and its own screen buffer. On top of that, scripts/model-cost-detail-layout-terminal-smoke.ts reads that device back (ReadConsoleOutputCharacterW/Attribute) and every check now reports the *device's* numbers.\",\n  \"behaviour_delivered\": [\n    \"New `bun run smoke:model-cost-detail-layout-terminal` (scripts/model-cost-detail-layout-terminal-smoke.ts): runs inside a real Windows console, asks the console for each width (SetConsoleWindowInfo + SetConsoleScreenBufferSize, or --device-session where the *client* resizes it the way a terminal window does), draws the production frame at the width the device states, and reads the device's own cells and attributes back: each field's start column (the cell index of an ASCII label — no width computed), each Chinese name's span in cells (leading/trailing cell marks 0x0100/0x0200), each cell's colour, the width the console states after a resize, and the cells of a redraw at the width the run started at. 6 checks per pass + 4 cross-pass checks (36 total), report JSON always written (--report or the system temp dir).\",\n    \"The tree, host, theme and reading helpers both smokes draw through are now one fixture, scripts/support/detail-layout-fixture.ts; scripts/model-cost-detail-layout-smoke.ts imports it and its output is byte-identical to the pre-refactor baseline (diff clean).\",\n    \"The extension, spec, contract and omp are untouched; no host patch, no new dependency, bun.lock unchanged.\"\n  ],\n  \"files_changed\": [\n    \"scripts/model-cost-detail-layout-terminal-smoke.ts (new, ~745 lines: device API via bun:ffi kernel32, per-pass measurement, 36 checks, JSON report)\",\n    \"scripts/support/detail-layout-fixture.ts (new: tree document, recording host, ANSI theme, column readings extracted verbatim from the printed smoke)\",\n    \"scripts/model-cost-detail-layout-smoke.ts (imports the fixture; -316/+? lines, output byte-identical)\",\n    \"package.json (+1 script smoke:model-cost-detail-layout-terminal)\",\n    \"extensions/model-cost/README.md (H1 evidence paragraph corrected: device smoke recorded, 36 checks at 120/100/60/120)\",\n    \".scratch/.../implementation/06-depth-aligned-detail-layout.md (Status + new Execution record section for the device evidence)\"\n  ],\n  \"criteria_evidence\": [\n    {\n      \"criterion\": \"P32 real terminal output: Chinese/ASCII names and coloured/plain output aligned by terminal display width, not by character count\",\n      \"evidence\": \"Device-measured on two real consoles. Names: 主会话 = 6 cells for 3 characters, 检索定价核查表 = 14 cells for 7, 孙子代理乙 = 10 cells for 5 — the device's own cells, 2 per character (character counting would have said 3/7/5). Every field's device column equals the frontend's stated column on every row at every width (48 of 48 fields per pass). Colour: the lines carrying the theme's escape sequences are drawn by the device with 2/3/5/6/7 foregrounds (account line: four segment colours) while every other line keeps the device's single default attribute 7, and the coloured frame's columns and widths are identical to the plain frame's — a theme adds colours, no column. NOTE: the detail tree's own rows carry no theme colour at all in this implementation (only the monetary account line does), so the colour half is measured there; the tree's colour-freeness is reported as an observation, not as a claim.\"\n    },\n    {\n      \"criterion\": \"P30 same-depth rows share field start columns on the device; different parents do not split a group; each depth has its own columns, not one whole-tree grid\",\n      \"evidence\": \"At 120 device columns: depth 1 (检索定价核查表 and pricing-scan, different names) Model=19 Effort=53 Cache=67 Cost=79 Run=94; depth 2 (one grandchild under each of the two children) Model=35 Effort=45 Cache=61 (Cost=73 Ctx=86 on the one that has them) Run=112 — the two groups share no column. Same at 100 (19/52/66/78/93 vs 15/25/41/53/66/92) and at 60 in the continuation layout (9/19/33/45 + Run 9 vs 12/22/38 + Cost 12/Ctx 25/Run 51). Tree rows keep tree order and depth; no aggregate row, no reorder.\"\n    },\n    {\n      \"criterion\": \"P31 a missing field keeps its column slot on the device; later fields never shift left\",\n      \"evidence\": \"On the device: the grandchild with no Cost/Ctx keeps Run at 112 (the column the sibling that states Cost and Ctx puts it at) at 120/100, and at 60 (continuation) at 51; its blank column is drawn as blanks. Check 'a field a row has none of keeps its device column' passes at every width, scoped to each depth group (a row of another depth is aligned against its own group's columns).\"\n    },\n    {\n      \"criterion\": \"P33 abbreviation marked with …; a group that cannot fit uses one continuation layout; a width change redraws consistently (device)\",\n      \"evidence\": \"100 columns: depth 2's name column 18→15 with 'detail…', model column 28→? with 'deepseek / deepseek-fla…'; the sibling's '孙子代…' and 'Model: …'; later columns unchanged on both rows. 60 columns: each depth group's rows are drawn on the same number of continuation lines, the continuation fields at that group's own columns (depth 1 Run 9; depth 2 Cost 12 / Ctx 25 / Run 51, and the Ctx-less row's Run still 51), every tree line whole on one console row, no line wider than the console (the 60-cell line fills the row exactly). Redraw: the last pass at 120 puts the same cells back cell-for-cell (text, columns, width, colours).\"\n    },\n    {\n      \"criterion\": \"P33/P24 truncation or wrapping changes neither readings nor full data, on the device and in the stored document\",\n      \"evidence\": \"The tree's retained values (Cache/Cost/Ctx/Run) are the same multiset at 120, 100, 60 and 120 on the device (14 values); the storage document is byte-identical before and after all passes (1384 bytes) and still holds the whole names, the deepseek-flash startup snapshot and \\\"runtimeMs\\\":480000.\"\n    },\n    {\n      \"criterion\": \"Automated layout checks, owning partition, affected consumers, typecheck, real terminal smoke\",\n      \"evidence\": \"Commands and results below. The device smoke is green in a headless ConPTY session (client-resized 120→100→60→120) and in a real Windows Terminal window (the process asks the console, WT follows).\"\n    },\n    {\n      \"criterion\": \"Final delivery lists P33's pending human readability judgement and the prepared evidence\",\n      \"evidence\": \"Recorded in the ticket's Execution record and the README's H1 paragraph: running `bun run smoke:model-cost-detail-layout-terminal` in your own terminal redraws at 120/100/60/120 and reads the device's cells back, so the frames the judgement is about are the ones it draws.\"\n    }\n  ],\n  \"commands_run\": [\n    {\n      \"command\": \"bun run typecheck\",\n      \"result\": \"clean (tsc --noEmit, run on the committed tree)\"\n    },\n    {\n      \"command\": \"bun test tests/model-cost\",\n      \"result\": \"339 pass / 0 fail, 1635 expect() calls, 26 files\"\n    },\n    {\n      \"command\": \"bun run smoke:model-cost-detail-layout --widths 160,120,100,80,60,40\",\n      \"result\": \"all PASS; output byte-identical to the pre-refactor baseline (diff clean)\"\n    },\n    {\n      \"command\": \"python <conpty session driver> 120 40 <stream> 120,100,60,120 <bun> scripts/model-cost-detail-layout-terminal-smoke.ts --device-session --session-passes 4\",\n      \"result\": \"4 passes at device widths 120/100/60/120, 36 observations, 0 failing; device stream 26726 bytes; report JSON saved\"\n    },\n    {\n      \"command\": \"wt.exe -w new nt -d <repo> bun <abs>/scripts/model-cost-detail-layout-terminal-smoke.ts\",\n      \"result\": \"real Windows Terminal window: 4 passes (120/100/60/120), 36 observations, 0 failing\"\n    },\n    {\n      \"command\": \"fault injection: textColumns replaced by a character count, then restored\",\n      \"result\": \"15 of 36 device observations fail (same-depth device columns part: Model=24/Effort=58 vs Model=17/Effort=51; a field's device column no longer equals the frontend's; only 2 of 6 tree lines fit). After restore: 36 pass. The device readings do detect a wrong width function.\"\n    },\n    {\n      \"command\": \"bun test tests/harness-dock/detail-tree.test.ts\",\n      \"result\": \"0 pass / 1 fail: the suite cannot start in this checkout (patchTouchedFiles reports 'patch.diff touches no file' because host-patches/*.diff are CRLF under local core.autocrlf=true). Pre-existing environment/checkout issue, unchanged by this ticket; this ticket touched no harness and did not rewrite line endings this round.\"\n    },\n    {\n      \"command\": \"bun scripts/model-cost-detail-layout-terminal-smoke.ts with no console\",\n      \"result\": \"exit code 2 with a message naming a working launch command (no false green when there is no device)\"\n    }\n  ],\n  \"evidence_artifacts\": [\n    \"C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\term-evidence\\\\conpty-report.json (headless ConPTY session: per-pass device columns, colours, cells, observations)\",\n    \"C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\term-evidence\\\\windows-terminal-report.json (Windows Terminal run)\",\n    \"C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\term-evidence\\\\final2.bin (the raw VT stream the console emitted, 26726 bytes)\",\n    \"the same numbers are in the ticket's Execution record; the smoke reproduces them on demand\"\n  ],\n  \"unverified_or_limited\": [\n    {\n      \"item\": \"P33 human-led readability of the ellipsis and of the wrapped group\",\n      \"state\": \"unverified by design; the only item left to the user\",\n      \"prepared_evidence\": \"bun run smoke:model-cost-detail-layout-terminal (draws and self-measures 120/100/60/120 in the user's own terminal), bun run smoke:model-cost-detail-layout (frames + observed columns), and the per-width device columns in the ticket record\"\n    },\n    {\n      \"item\": \"No display-level (pixel) evidence\",\n      \"state\": \"not obtained: the evidence is console-device level (conhost's screen buffer cells and attributes) as read back by the process inside it; no screenshot and no human looked at it. The Windows Terminal window was opened by script and closed itself.\",\n      \"next\": \"run the smoke in your own terminal; the frames are what you then see\"\n    },\n    {\n      \"item\": \"The console draws non-BMP glyphs as U+FFFD\",\n      \"state\": \"observed: the season mark's 🌙 is stored by conhost as U+FFFD in a 2-cell span, so the account row's cells read back that way. A device limitation, not a frontend change; it does not move any column or figure.\"\n    },\n    {\n      \"item\": \"The account and Total lines are not fitted to the terminal\",\n      \"state\": \"observed: at 60 columns the Total line is wider than the console and the console wraps it; the ticket's boundaries explicitly do not require Total, the main model row and the subagent rows to share a width, so the device checks assert only the tree's rows and claim nothing about the Total line's fit.\"\n    },\n    {\n      \"item\": \"bun emits no resize notification\",\n      \"state\": \"observed: 0 resize events in both runs even though the device width really changed; the passes are driven by the width the device states (GetConsoleScreenBufferInfo), which is what the smoke draws and reports. A real host decides when to redraw with a new width.\"\n    },\n    {\n      \"item\": \"Dock suite on this checkout\",\n      \"state\": \"tests/harness-dock cannot start while host-patches/omp-18.5.0-*/patch.diff are CRLF in the working tree (pre-existing, not caused by this ticket; the harness was not modified).\"\n    }\n  ],\n  \"what_main_should_do\": [\n    \"Merge this ticket branch into wayfinder/subagent-enhance (the current integration tip d05703d is already an ancestor; be884ba adds only scripts, package.json, the extension README and the ticket record).\",\n    \"Verification to run after all tickets land: bun run typecheck and bun run test, plus the dock partition in an LF checkout (the connect-bot interop failures need ../omp-bot's release binary).\",\n    \"Hand the P33 readability judgement to the user with `bun run smoke:model-cost-detail-layout-terminal` (or the printed smoke for the frame-by-frame version); everything else of P30-P33 and P24's layout item now has device-measured evidence.\"\n  ]\n}",
+    "stderr": "",
+    "truncated": false,
+    "durationMs": 1972550,
+    "tokens": 317885,
+    "requests": 177,
+    "contextTokens": 300441,
+    "contextWindow": 1000000,
+    "modelOverride": [
+      "deepseek/deepseek-flash:high"
+    ],
+    "resolvedModel": "deepseek/deepseek-flash:high",
+    "resolvedModelIdentity": "deepseek/deepseek-flash",
+    "resolvedThinkingLevel": "high",
+    "aborted": false,
+    "usage": {
+      "input": 111692,
+      "output": 206193,
+      "cacheRead": 31058944,
+      "cacheWrite": 0,
+      "totalTokens": 31376829,
+      "reasoningTokens": 112107,
+      "cost": {
+        "input": 0.016753799999999992,
+        "output": 0.12371579999999995,
+        "cacheRead": 0.09317683200000001,
+        "cacheWrite": 0,
+        "total": 0.23364643200000001
+      }
+    },
+    "outputPath": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-14T08-54-26-495Z_01a1399e-bbbf-7756-b9c1-b208b4848d5c\\06-depth-aligned-detail-layoutmd-03037f68-4cf3-4.md",
+    "extractedToolData": {
+      "yield": [
+        {
+          "data": {
+            "ticket": ".scratch/model-cost-session-time-and-detail/implementation/06-depth-aligned-detail-layout.md",
+            "branch": "hyper/model-cost-session-time-and-detail/06-depth-aligned-detail-layout-21acbd-e5951e40ed62",
+            "commits": [
+              "be884ba 06: measure the detail tree on a real console device (P30-P33 device columns, P32's terminal evidence)",
+              "9d5cac9 (previous run) record the acceptance evidence...",
+              "ce58ade (previous run) merge integration tip d05703d"
+            ],
+            "integration": "wayfinder/subagent-enhance tip is still d05703d and is already an ancestor of HEAD (git rev-list --count HEAD..wayfinder/subagent-enhance = 0): nothing to merge, no conflicts. Local Git only; the integration worktree was not touched.",
+            "status": "in-progress: implementation, automated checks and real-terminal device evidence all done and committed; only P33's readability judgement is left to the user, closing is the parent's acceptance step.",
+            "answer_to_the_parent_question": "P32's real terminal output and a real terminal smoke were obtained after all. A real Windows console device (ConPTY = conhost) is scriptable from here: my first launcher attached the child but the child inherited this process' pipe handles, so conhost gave it a fresh 120x30 console and nothing reached the pseudo console; with the child's std handles cleared and no handle inheritance it is attached to the console we create, at the size we ask, with a real TTY and its own screen buffer. On top of that, scripts/model-cost-detail-layout-terminal-smoke.ts reads that device back (ReadConsoleOutputCharacterW/Attribute) and every check now reports the *device's* numbers.",
+            "behaviour_delivered": [
+              "New `bun run smoke:model-cost-detail-layout-terminal` (scripts/model-cost-detail-layout-terminal-smoke.ts): runs inside a real Windows console, asks the console for each width (SetConsoleWindowInfo + SetConsoleScreenBufferSize, or --device-session where the *client* resizes it the way a terminal window does), draws the production frame at the width the device states, and reads the device's own cells and attributes back: each field's start column (the cell index of an ASCII label — no width computed), each Chinese name's span in cells (leading/trailing cell marks 0x0100/0x0200), each cell's colour, the width the console states after a resize, and the cells of a redraw at the width the run started at. 6 checks per pass + 4 cross-pass checks (36 total), report JSON always written (--report or the system temp dir).",
+              "The tree, host, theme and reading helpers both smokes draw through are now one fixture, scripts/support/detail-layout-fixture.ts; scripts/model-cost-detail-layout-smoke.ts imports it and its output is byte-identical to the pre-refactor baseline (diff clean).",
+              "The extension, spec, contract and omp are untouched; no host patch, no new dependency, bun.lock unchanged."
+            ],
+            "files_changed": [
+              "scripts/model-cost-detail-layout-terminal-smoke.ts (new, ~745 lines: device API via bun:ffi kernel32, per-pass measurement, 36 checks, JSON report)",
+              "scripts/support/detail-layout-fixture.ts (new: tree document, recording host, ANSI theme, column readings extracted verbatim from the printed smoke)",
+              "scripts/model-cost-detail-layout-smoke.ts (imports the fixture; -316/+? lines, output byte-identical)",
+              "package.json (+1 script smoke:model-cost-detail-layout-terminal)",
+              "extensions/model-cost/README.md (H1 evidence paragraph corrected: device smoke recorded, 36 checks at 120/100/60/120)",
+              ".scratch/.../implementation/06-depth-aligned-detail-layout.md (Status + new Execution record section for the device evidence)"
+            ],
+            "criteria_evidence": [
+              {
+                "criterion": "P32 real terminal output: Chinese/ASCII names and coloured/plain output aligned by terminal display width, not by character count",
+                "evidence": "Device-measured on two real consoles. Names: 主会话 = 6 cells for 3 characters, 检索定价核查表 = 14 cells for 7, 孙子代理乙 = 10 cells for 5 — the device's own cells, 2 per character (character counting would have said 3/7/5). Every field's device column equals the frontend's stated column on every row at every width (48 of 48 fields per pass). Colour: the lines carrying the theme's escape sequences are drawn by the device with 2/3/5/6/7 foregrounds (account line: four segment colours) while every other line keeps the device's single default attribute 7, and the coloured frame's columns and widths are identical to the plain frame's — a theme adds colours, no column. NOTE: the detail tree's own rows carry no theme colour at all in this implementation (only the monetary account line does), so the colour half is measured there; the tree's colour-freeness is reported as an observation, not as a claim."
+              },
+              {
+                "criterion": "P30 same-depth rows share field start columns on the device; different parents do not split a group; each depth has its own columns, not one whole-tree grid",
+                "evidence": "At 120 device columns: depth 1 (检索定价核查表 and pricing-scan, different names) Model=19 Effort=53 Cache=67 Cost=79 Run=94; depth 2 (one grandchild under each of the two children) Model=35 Effort=45 Cache=61 (Cost=73 Ctx=86 on the one that has them) Run=112 — the two groups share no column. Same at 100 (19/52/66/78/93 vs 15/25/41/53/66/92) and at 60 in the continuation layout (9/19/33/45 + Run 9 vs 12/22/38 + Cost 12/Ctx 25/Run 51). Tree rows keep tree order and depth; no aggregate row, no reorder."
+              },
+              {
+                "criterion": "P31 a missing field keeps its column slot on the device; later fields never shift left",
+                "evidence": "On the device: the grandchild with no Cost/Ctx keeps Run at 112 (the column the sibling that states Cost and Ctx puts it at) at 120/100, and at 60 (continuation) at 51; its blank column is drawn as blanks. Check 'a field a row has none of keeps its device column' passes at every width, scoped to each depth group (a row of another depth is aligned against its own group's columns)."
+              },
+              {
+                "criterion": "P33 abbreviation marked with …; a group that cannot fit uses one continuation layout; a width change redraws consistently (device)",
+                "evidence": "100 columns: depth 2's name column 18→15 with 'detail…', model column 28→? with 'deepseek / deepseek-fla…'; the sibling's '孙子代…' and 'Model: …'; later columns unchanged on both rows. 60 columns: each depth group's rows are drawn on the same number of continuation lines, the continuation fields at that group's own columns (depth 1 Run 9; depth 2 Cost 12 / Ctx 25 / Run 51, and the Ctx-less row's Run still 51), every tree line whole on one console row, no line wider than the console (the 60-cell line fills the row exactly). Redraw: the last pass at 120 puts the same cells back cell-for-cell (text, columns, width, colours)."
+              },
+              {
+                "criterion": "P33/P24 truncation or wrapping changes neither readings nor full data, on the device and in the stored document",
+                "evidence": "The tree's retained values (Cache/Cost/Ctx/Run) are the same multiset at 120, 100, 60 and 120 on the device (14 values); the storage document is byte-identical before and after all passes (1384 bytes) and still holds the whole names, the deepseek-flash startup snapshot and \"runtimeMs\":480000."
+              },
+              {
+                "criterion": "Automated layout checks, owning partition, affected consumers, typecheck, real terminal smoke",
+                "evidence": "Commands and results below. The device smoke is green in a headless ConPTY session (client-resized 120→100→60→120) and in a real Windows Terminal window (the process asks the console, WT follows)."
+              },
+              {
+                "criterion": "Final delivery lists P33's pending human readability judgement and the prepared evidence",
+                "evidence": "Recorded in the ticket's Execution record and the README's H1 paragraph: running `bun run smoke:model-cost-detail-layout-terminal` in your own terminal redraws at 120/100/60/120 and reads the device's cells back, so the frames the judgement is about are the ones it draws."
+              }
+            ],
+            "commands_run": [
+              {
+                "command": "bun run typecheck",
+                "result": "clean (tsc --noEmit, run on the committed tree)"
+              },
+              {
+                "command": "bun test tests/model-cost",
+                "result": "339 pass / 0 fail, 1635 expect() calls, 26 files"
+              },
+              {
+                "command": "bun run smoke:model-cost-detail-layout --widths 160,120,100,80,60,40",
+                "result": "all PASS; output byte-identical to the pre-refactor baseline (diff clean)"
+              },
+              {
+                "command": "python <conpty session driver> 120 40 <stream> 120,100,60,120 <bun> scripts/model-cost-detail-layout-terminal-smoke.ts --device-session --session-passes 4",
+                "result": "4 passes at device widths 120/100/60/120, 36 observations, 0 failing; device stream 26726 bytes; report JSON saved"
+              },
+              {
+                "command": "wt.exe -w new nt -d <repo> bun <abs>/scripts/model-cost-detail-layout-terminal-smoke.ts",
+                "result": "real Windows Terminal window: 4 passes (120/100/60/120), 36 observations, 0 failing"
+              },
+              {
+                "command": "fault injection: textColumns replaced by a character count, then restored",
+                "result": "15 of 36 device observations fail (same-depth device columns part: Model=24/Effort=58 vs Model=17/Effort=51; a field's device column no longer equals the frontend's; only 2 of 6 tree lines fit). After restore: 36 pass. The device readings do detect a wrong width function."
+              },
+              {
+                "command": "bun test tests/harness-dock/detail-tree.test.ts",
+                "result": "0 pass / 1 fail: the suite cannot start in this checkout (patchTouchedFiles reports 'patch.diff touches no file' because host-patches/*.diff are CRLF under local core.autocrlf=true). Pre-existing environment/checkout issue, unchanged by this ticket; this ticket touched no harness and did not rewrite line endings this round."
+              },
+              {
+                "command": "bun scripts/model-cost-detail-layout-terminal-smoke.ts with no console",
+                "result": "exit code 2 with a message naming a working launch command (no false green when there is no device)"
+              }
+            ],
+            "evidence_artifacts": [
+              "C:\\Users\\hugos\\AppData\\Local\\Temp\\term-evidence\\conpty-report.json (headless ConPTY session: per-pass device columns, colours, cells, observations)",
+              "C:\\Users\\hugos\\AppData\\Local\\Temp\\term-evidence\\windows-terminal-report.json (Windows Terminal run)",
+              "C:\\Users\\hugos\\AppData\\Local\\Temp\\term-evidence\\final2.bin (the raw VT stream the console emitted, 26726 bytes)",
+              "the same numbers are in the ticket's Execution record; the smoke reproduces them on demand"
+            ],
+            "unverified_or_limited": [
+              {
+                "item": "P33 human-led readability of the ellipsis and of the wrapped group",
+                "state": "unverified by design; the only item left to the user",
+                "prepared_evidence": "bun run smoke:model-cost-detail-layout-terminal (draws and self-measures 120/100/60/120 in the user's own terminal), bun run smoke:model-cost-detail-layout (frames + observed columns), and the per-width device columns in the ticket record"
+              },
+              {
+                "item": "No display-level (pixel) evidence",
+                "state": "not obtained: the evidence is console-device level (conhost's screen buffer cells and attributes) as read back by the process inside it; no screenshot and no human looked at it. The Windows Terminal window was opened by script and closed itself.",
+                "next": "run the smoke in your own terminal; the frames are what you then see"
+              },
+              {
+                "item": "The console draws non-BMP glyphs as U+FFFD",
+                "state": "observed: the season mark's 🌙 is stored by conhost as U+FFFD in a 2-cell span, so the account row's cells read back that way. A device limitation, not a frontend change; it does not move any column or figure."
+              },
+              {
+                "item": "The account and Total lines are not fitted to the terminal",
+                "state": "observed: at 60 columns the Total line is wider than the console and the console wraps it; the ticket's boundaries explicitly do not require Total, the main model row and the subagent rows to share a width, so the device checks assert only the tree's rows and claim nothing about the Total line's fit."
+              },
+              {
+                "item": "bun emits no resize notification",
+                "state": "observed: 0 resize events in both runs even though the device width really changed; the passes are driven by the width the device states (GetConsoleScreenBufferInfo), which is what the smoke draws and reports. A real host decides when to redraw with a new width."
+              },
+              {
+                "item": "Dock suite on this checkout",
+                "state": "tests/harness-dock cannot start while host-patches/omp-18.5.0-*/patch.diff are CRLF in the working tree (pre-existing, not caused by this ticket; the harness was not modified)."
+              }
+            ],
+            "what_main_should_do": [
+              "Merge this ticket branch into wayfinder/subagent-enhance (the current integration tip d05703d is already an ancestor; be884ba adds only scripts, package.json, the extension README and the ticket record).",
+              "Verification to run after all tickets land: bun run typecheck and bun run test, plus the dock partition in an LF checkout (the connect-bot interop failures need ../omp-bot's release binary).",
+              "Hand the P33 readability judgement to the user with `bun run smoke:model-cost-detail-layout-terminal` (or the printed smoke for the frame-by-frame version); everything else of P30-P33 and P24's layout item now has device-measured evidence."
+            ]
+          },
+          "status": "success"
+        }
+      ]
+    },
+    "outputMeta": {
+      "lineCount": 128,
+      "charCount": 13510
+    }
+  },
+  "agent": "tdd",
+  "agent_id": "06-depth-aligned-detail-layoutmd-03037f68-4cf3-4",
+  "session_id": "01a13a3d-4e11-7340-a03e-51878afab9a1",
+  "session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-14T08-54-26-495Z_01a1399e-bbbf-7756-b9c1-b208b4848d5c\\06-depth-aligned-detail-layoutmd-03037f68-4cf3-4.jsonl",
+  "execution_cwd": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-NR12PO",
+  "retro_document": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-auto-coding-nTyzY7\\retro\\06-depth-aligned-detail-layout.md\\0ab333cf-98c3-418a-bca7-4049e7c97f19.md",
+  "retro_finished_at": "2026-10-14T12:21:26.029Z"
+}

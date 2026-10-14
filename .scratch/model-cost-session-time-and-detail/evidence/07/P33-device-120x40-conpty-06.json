@@ -1,0 +1,1983 @@
+{
+  "device": {
+    "launch": 120,
+    "rows": 40,
+    "isTTY": true
+  },
+  "passes": [
+    {
+      "width": 120,
+      "deviceWidth": 120,
+      "hostColumns": 120,
+      "lines": [
+        {
+          "plain": false,
+          "tree": false,
+          "line": "🌙  ⏳ Accrued: ¥0.08 [▏▏▏▏]",
+          "row": 6,
+          "deviceWidth": 28,
+          "cellWidth": 28,
+          "cells": "�  ⏳ Accrued: ¥0.08 [▏▏▏▏]",
+          "deviceColumns": {},
+          "predictedColumns": {},
+          "colours": [
+            2,
+            3,
+            5,
+            6,
+            7
+          ],
+          "retainedValues": []
+        },
+        {
+          "plain": false,
+          "tree": false,
+          "line": "Total:  Cache: 67%  ¥Cache/In/Out：0:8:92  Cost: ¥0.08  Span: —",
+          "row": 7,
+          "deviceWidth": 63,
+          "cellWidth": 63,
+          "cells": "Total:  Cache: 67%  ¥Cache/In/Out：0:8:92  Cost: ¥0.08  Span: —",
+          "deviceColumns": {
+            "Cache:": 8,
+            "Cost:": 43
+          },
+          "predictedColumns": {
+            "Cache:": 8,
+            "Cost:": 43
+          },
+          "colours": [
+            7
+          ],
+          "retainedValues": [
+            "Cache:67%  ¥Cache/In/Out：0:8:92",
+            "Cost:¥0.08  Span: —"
+          ]
+        },
+        {
+          "plain": false,
+          "tree": false,
+          "line": "主会话",
+          "row": 8,
+          "deviceWidth": 6,
+          "cellWidth": 6,
+          "cells": "主会话",
+          "deviceColumns": {},
+          "predictedColumns": {},
+          "colours": [
+            7
+          ],
+          "retainedValues": []
+        },
+        {
+          "plain": false,
+          "tree": false,
+          "line": "│  deepseek / deepseek-flash  Cache: 67%  ¥Cache/In/Out：0:8:92  Cost: ¥0.05",
+          "row": 9,
+          "deviceWidth": 76,
+          "cellWidth": 76,
+          "cells": "│  deepseek / deepseek-flash  Cache: 67%  ¥Cache/In/Out：0:8:92  Cost: ¥0.05",
+          "deviceColumns": {
+            "Cache:": 30,
+            "Cost:": 65
+          },
+          "predictedColumns": {
+            "Cache:": 30,
+            "Cost:": 65
+          },
+          "colours": [
+            7
+          ],
+          "retainedValues": [
+            "Cache:67%  ¥Cache/In/Out：0:8:92",
+            "Cost:¥0.05"
+          ]
+        },
+        {
+          "plain": false,
+          "tree": false,
+          "line": "├─ 检索定价核查表  Model: ?                          Effort: ?     Cache: 40%  Cost: ¥0.0040  Run: 8m",
+          "row": 10,
+          "deviceWidth": 101,
+          "cellWidth": 101,
+          "cells": "├─ 检索定价核查表  Model: ?                          Effort: ?     Cache: 40%  Cost: ¥0.0040  Run: 8m",
+          "deviceColumns": {
+            "Model:": 19,
+            "Effort:": 53,
+            "Cache:": 67,
+            "Cost:": 79,
+            "Run:": 94
+          },
+          "predictedColumns": {
+            "Model:": 19,
+            "Effort:": 53,
+            "Cache:": 67,
+            "Cost:": 79,
+            "Run:": 94
+          },
+          "colours": [
+            7
+          ],
+          "retainedValues": [
+            "Cache:40%",
+            "Cost:¥0.0040",
+            "Run:8m"
+          ]
+        },
+        {
+          "plain": false,
+          "tree": false,
+          "line": "│  └─ details-under-the-first-ch…  Model: ?  Effort: ?       Cache: 50%                                         Run: 0ms",
+          "row": 11,
+          "deviceWidth": 119,
+          "cellWidth": 120,
+          "cells": "│  └─ details-under-the-first-ch…  Model: ?  Effort: ?       Cache: 50%                                         Run: 0ms",
+          "deviceColumns": {
+            "Model:": 35,
+            "Effort:": 45,
+            "Cache:": 61,
+            "Run:": 112
+          },
+          "predictedColumns": {
+            "Model:": 35,
+            "Effort:": 45,
+            "Cache:": 61,
+            "Run:": 112
+          },
+          "colours": [
+            7
+          ],
+          "retainedValues": [
+            "Cache:50%",
+            "Run:0ms"
+          ]
+        },
+        {
+          "plain": false,
+          "tree": false,
+          "line": "├─ pricing-scan    Model: deepseek / deepseek-flash  Effort: high  Cache: 50%  Cost: ¥0.01    Run: —",
+          "row": 12,
+          "deviceWidth": 100,
+          "cellWidth": 100,
+          "cells": "├─ pricing-scan    Model: deepseek / deepseek-flash  Effort: high  Cache: 50%  Cost: ¥0.01    Run: —",
+          "deviceColumns": {
+            "Model:": 19,
+            "Effort:": 53,
+            "Cache:": 67,
+            "Cost:": 79,
+            "Run:": 94
+          },
+          "predictedColumns": {
+            "Model:": 19,
+            "Effort:": 53,
+            "Cache:": 67,
+            "Cost:": 79,
+            "Run:": 94
+          },
+          "colours": [
+            7
+          ],
+          "retainedValues": [
+            "Cache:50%",
+            "Cost:¥0.01",
+            "Run:—"
+          ]
+        },
+        {
+          "plain": false,
+          "tree": false,
+          "line": "│  └─ 孙子代理乙                   Model: …  Effort: medium  Cache: 50%  Cost: ¥0.02  Ctx: 50% (225.0K/450.0K)  Run: —",
+          "row": 13,
+          "deviceWidth": 118,
+          "cellWidth": 118,
+          "cells": "│  └─ 孙子代理乙                   Model: …  Effort: medium  Cache: 50%  Cost: ¥0.02  Ctx: 50% (225.0K/450.0K)  Run: —",
+          "deviceColumns": {
+            "Model:": 35,
+            "Effort:": 45,
+            "Cache:": 61,
+            "Cost:": 73,
+            "Ctx:": 86,
+            "Run:": 112
+          },
+          "predictedColumns": {
+            "Model:": 35,
+            "Effort:": 45,
+            "Cache:": 61,
+            "Cost:": 73,
+            "Ctx:": 86,
+            "Run:": 112
+          },
+          "colours": [
+            7
+          ],
+          "retainedValues": [
+            "Cache:50%",
+            "Cost:¥0.02",
+            "Ctx:50% (225.0K/450.0K)",
+            "Run:—"
+          ]
+        },
+        {
+          "plain": true,
+          "tree": false,
+          "line": "🌙  ⏳ Accrued: ¥0.08 [▏▏▏▏]",
+          "row": 25,
+          "deviceWidth": 28,
+          "cellWidth": 28,
+          "cells": "�  ⏳ Accrued: ¥0.08 [▏▏▏▏]",
+          "deviceColumns": {},
+          "predictedColumns": {},
+          "colours": [
+            7
+          ],
+          "retainedValues": []
+        },
+        {
+          "plain": true,
+          "tree": false,
+          "line": "Total:  Cache: 67%  ¥Cache/In/Out：0:8:92  Cost: ¥0.08  Span: —",
+          "row": 26,
+          "deviceWidth": 63,
+          "cellWidth": 63,
+          "cells": "Total:  Cache: 67%  ¥Cache/In/Out：0:8:92  Cost: ¥0.08  Span: —",
+          "deviceColumns": {
+            "Cache:": 8,
+            "Cost:": 43
+          },
+          "predictedColumns": {
+            "Cache:": 8,
+            "Cost:": 43
+          },
+          "colours": [
+            7
+          ],
+          "retainedValues": [
+            "Cache:67%  ¥Cache/In/Out：0:8:92",
+            "Cost:¥0.08  Span: —"
+          ]
+        },
+        {
+          "plain": true,
+          "tree": true,
+          "line": "主会话",
+          "row": 27,
+          "deviceWidth": 6,
+          "cellWidth": 6,
+          "cells": "主会话",
+          "deviceColumns": {},
+          "predictedColumns": {},
+          "colours": [
+            7
+          ],
+          "retainedValues": []
+        },
+        {
+          "plain": true,
+          "tree": true,
+          "line": "│  deepseek / deepseek-flash  Cache: 67%  ¥Cache/In/Out：0:8:92  Cost: ¥0.05",
+          "row": 28,
+          "deviceWidth": 76,
+          "cellWidth": 76,
+          "cells": "│  deepseek / deepseek-flash  Cache: 67%  ¥Cache/In/Out：0:8:92  Cost: ¥0.05",
+          "deviceColumns": {
+            "Cache:": 30,
+            "Cost:": 65
+          },
+          "predictedColumns": {
+            "Cache:": 30,
+            "Cost:": 65
+          },
+          "colours": [
+            7
+          ],
+          "retainedValues": [
+            "Cache:67%  ¥Cache/In/Out：0:8:92",
+            "Cost:¥0.05"
+          ]
+        },
+        {
+          "plain": true,
+          "tree": true,
+          "line": "├─ 检索定价核查表  Model: ?                          Effort: ?     Cache: 40%  Cost: ¥0.0040  Run: 8m",
+          "row": 29,
+          "deviceWidth": 101,
+          "cellWidth": 101,
+          "cells": "├─ 检索定价核查表  Model: ?                          Effort: ?     Cache: 40%  Cost: ¥0.0040  Run: 8m",
+          "deviceColumns": {
+            "Model:": 19,
+            "Effort:": 53,
+            "Cache:": 67,
+            "Cost:": 79,
+            "Run:": 94
+          },
+          "predictedColumns": {
+            "Model:": 19,
+            "Effort:": 53,
+            "Cache:": 67,
+            "Cost:": 79,
+            "Run:": 94
+          },
+          "colours": [
+            7
+          ],
+          "retainedValues": [
+            "Cache:40%",
+            "Cost:¥0.0040",
+            "Run:8m"
+          ]
+        },
+        {
+          "plain": true,
+          "tree": true,
+          "line": "│  └─ details-under-the-first-ch…  Model: ?  Effort: ?       Cache: 50%                                         Run: 0ms",
+          "row": 30,
+          "deviceWidth": 119,
+          "cellWidth": 120,
+          "cells": "│  └─ details-under-the-first-ch…  Model: ?  Effort: ?       Cache: 50%                                         Run: 0ms",
+          "deviceColumns": {
+            "Model:": 35,
+            "Effort:": 45,
+            "Cache:": 61,
+            "Run:": 112
+          },
+          "predictedColumns": {
+            "Model:": 35,
+            "Effort:": 45,
+            "Cache:": 61,
+            "Run:": 112
+          },
+          "colours": [
+            7
+          ],
+          "retainedValues": [
+            "Cache:50%",
+            "Run:0ms"
+          ]
+        },
+        {
+          "plain": true,
+          "tree": true,
+          "line": "├─ pricing-scan    Model: deepseek / deepseek-flash  Effort: high  Cache: 50%  Cost: ¥0.01    Run: —",
+          "row": 31,
+          "deviceWidth": 100,
+          "cellWidth": 100,
+          "cells": "├─ pricing-scan    Model: deepseek / deepseek-flash  Effort: high  Cache: 50%  Cost: ¥0.01    Run: —",
+          "deviceColumns": {
+            "Model:": 19,
+            "Effort:": 53,
+            "Cache:": 67,
+            "Cost:": 79,
+            "Run:": 94
+          },
+          "predictedColumns": {
+            "Model:": 19,
+            "Effort:": 53,
+            "Cache:": 67,
+            "Cost:": 79,
+            "Run:": 94
+          },
+          "colours": [
+            7
+          ],
+          "retainedValues": [
+            "Cache:50%",
+            "Cost:¥0.01",
+            "Run:—"
+          ]
+        },
+        {
+          "plain": true,
+          "tree": true,
+          "line": "│  └─ 孙子代理乙                   Model: …  Effort: medium  Cache: 50%  Cost: ¥0.02  Ctx: 50% (225.0K/450.0K)  Run: —",
+          "row": 32,
+          "deviceWidth": 118,
+          "cellWidth": 118,
+          "cells": "│  └─ 孙子代理乙                   Model: …  Effort: medium  Cache: 50%  Cost: ¥0.02  Ctx: 50% (225.0K/450.0K)  Run: —",
+          "deviceColumns": {
+            "Model:": 35,
+            "Effort:": 45,
+            "Cache:": 61,
+            "Cost:": 73,
+            "Ctx:": 86,
+            "Run:": 112
+          },
+          "predictedColumns": {
+            "Model:": 35,
+            "Effort:": 45,
+            "Cache:": 61,
+            "Cost:": 73,
+            "Ctx:": 86,
+            "Run:": 112
+          },
+          "colours": [
+            7
+          ],
+          "retainedValues": [
+            "Cache:50%",
+            "Cost:¥0.02",
+            "Ctx:50% (225.0K/450.0K)",
+            "Run:—"
+          ]
+        }
+      ]
+    },
+    {
+      "width": 100,
+      "deviceWidth": 100,
+      "hostColumns": 120,
+      "lines": [
+        {
+          "plain": false,
+          "tree": false,
+          "line": "🌙  ⏳ Accrued: ¥0.08 [▏▏▏▏]",
+          "row": 39,
+          "deviceWidth": 28,
+          "cellWidth": 28,
+          "cells": "�  ⏳ Accrued: ¥0.08 [▏▏▏▏]",
+          "deviceColumns": {},
+          "predictedColumns": {},
+          "colours": [
+            2,
+            3,
+            5,
+            6,
+            7
+          ],
+          "retainedValues": []
+        },
+        {
+          "plain": false,
+          "tree": false,
+          "line": "Total:  Cache: 67%  ¥Cache/In/Out：0:8:92  Cost: ¥0.08  Span: —",
+          "row": 39,
+          "deviceWidth": 63,
+          "cellWidth": 63,
+          "cells": "Total:  Cache: 67%  ¥Cache/In/Out：0:8:92  Cost: ¥0.08  Span: —",
+          "deviceColumns": {
+            "Cache:": 8,
+            "Cost:": 43
+          },
+          "predictedColumns": {
+            "Cache:": 8,
+            "Cost:": 43
+          },
+          "colours": [
+            7
+          ],
+          "retainedValues": [
+            "Cache:67%  ¥Cache/In/Out：0:8:92",
+            "Cost:¥0.08  Span: —"
+          ]
+        },
+        {
+          "plain": false,
+          "tree": false,
+          "line": "主会话",
+          "row": 39,
+          "deviceWidth": 6,
+          "cellWidth": 6,
+          "cells": "主会话",
+          "deviceColumns": {},
+          "predictedColumns": {},
+          "colours": [
+            7
+          ],
+          "retainedValues": []
+        },
+        {
+          "plain": false,
+          "tree": false,
+          "line": "│  deepseek / deepseek-flash  Cache: 67%  ¥Cache/In/Out：0:8:92  Cost: ¥0.05",
+          "row": 39,
+          "deviceWidth": 76,
+          "cellWidth": 76,
+          "cells": "│  deepseek / deepseek-flash  Cache: 67%  ¥Cache/In/Out：0:8:92  Cost: ¥0.05",
+          "deviceColumns": {
+            "Cache:": 30,
+            "Cost:": 65
+          },
+          "predictedColumns": {
+            "Cache:": 30,
+            "Cost:": 65
+          },
+          "colours": [
+            7
+          ],
+          "retainedValues": [
+            "Cache:67%  ¥Cache/In/Out：0:8:92",
+            "Cost:¥0.05"
+          ]
+        },
+        {
+          "plain": false,
+          "tree": false,
+          "line": "├─ 检索定价核查表  Model: ?                         Effort: ?     Cache: 40%  Cost: ¥0.0040  Run: 8m",
+          "row": 39,
+          "deviceWidth": 99,
+          "cellWidth": 100,
+          "cells": "├─ 检索定价核查表  Model: ?                         Effort: ?     Cache: 40%  Cost: ¥0.0040  Run: 8m",
+          "deviceColumns": {
+            "Model:": 19,
+            "Effort:": 52,
+            "Cache:": 66,
+            "Cost:": 78,
+            "Run:": 93
+          },
+          "predictedColumns": {
+            "Model:": 19,
+            "Effort:": 52,
+            "Cache:": 66,
+            "Cost:": 78,
+            "Run:": 93
+          },
+          "colours": [
+            7
+          ],
+          "retainedValues": [
+            "Cache:40%",
+            "Cost:¥0.0040",
+            "Run:8m"
+          ]
+        },
+        {
+          "plain": false,
+          "tree": false,
+          "line": "│  └─ detail…  Model: ?  Effort: ?       Cache: 50%                                         Run: 0ms",
+          "row": 39,
+          "deviceWidth": 99,
+          "cellWidth": 100,
+          "cells": "│  └─ detail…  Model: ?  Effort: ?       Cache: 50%                                         Run: 0ms",
+          "deviceColumns": {
+            "Model:": 15,
+            "Effort:": 25,
+            "Cache:": 41,
+            "Run:": 92
+          },
+          "predictedColumns": {
+            "Model:": 15,
+            "Effort:": 25,
+            "Cache:": 41,
+            "Run:": 92
+          },
+          "colours": [
+            7
+          ],
+          "retainedValues": [
+            "Cache:50%",
+            "Run:0ms"
+          ]
+        },
+        {
+          "plain": false,
+          "tree": false,
+          "line": "├─ pricing-scan    Model: deepseek / deepseek-fla…  Effort: high  Cache: 50%  Cost: ¥0.01    Run: —",
+          "row": 39,
+          "deviceWidth": 99,
+          "cellWidth": 99,
+          "cells": "├─ pricing-scan    Model: deepseek / deepseek-fla…  Effort: high  Cache: 50%  Cost: ¥0.01    Run: —",
+          "deviceColumns": {
+            "Model:": 19,
+            "Effort:": 52,
+            "Cache:": 66,
+            "Cost:": 78,
+            "Run:": 93
+          },
+          "predictedColumns": {
+            "Model:": 19,
+            "Effort:": 52,
+            "Cache:": 66,
+            "Cost:": 78,
+            "Run:": 93
+          },
+          "colours": [
+            7
+          ],
+          "retainedValues": [
+            "Cache:50%",
+            "Cost:¥0.01",
+            "Run:—"
+          ]
+        },
+        {
+          "plain": false,
+          "tree": false,
+          "line": "│  └─ 孙子代…  Model: …  Effort: medium  Cache: 50%  Cost: ¥0.02  Ctx: 50% (225.0K/450.0K)  Run: —",
+          "row": 39,
+          "deviceWidth": 98,
+          "cellWidth": 98,
+          "cells": "│  └─ 孙子代…  Model: …  Effort: medium  Cache: 50%  Cost: ¥0.02  Ctx: 50% (225.0K/450.0K)  Run: —",
+          "deviceColumns": {
+            "Model:": 15,
+            "Effort:": 25,
+            "Cache:": 41,
+            "Cost:": 53,
+            "Ctx:": 66,
+            "Run:": 92
+          },
+          "predictedColumns": {
+            "Model:": 15,
+            "Effort:": 25,
+            "Cache:": 41,
+            "Cost:": 53,
+            "Ctx:": 66,
+            "Run:": 92
+          },
+          "colours": [
+            7
+          ],
+          "retainedValues": [
+            "Cache:50%",
+            "Cost:¥0.02",
+            "Ctx:50% (225.0K/450.0K)",
+            "Run:—"
+          ]
+        },
+        {
+          "plain": true,
+          "tree": false,
+          "line": "🌙  ⏳ Accrued: ¥0.08 [▏▏▏▏]",
+          "row": 39,
+          "deviceWidth": 28,
+          "cellWidth": 28,
+          "cells": "�  ⏳ Accrued: ¥0.08 [▏▏▏▏]",
+          "deviceColumns": {},
+          "predictedColumns": {},
+          "colours": [
+            7
+          ],
+          "retainedValues": []
+        },
+        {
+          "plain": true,
+          "tree": false,
+          "line": "Total:  Cache: 67%  ¥Cache/In/Out：0:8:92  Cost: ¥0.08  Span: —",
+          "row": 39,
+          "deviceWidth": 63,
+          "cellWidth": 63,
+          "cells": "Total:  Cache: 67%  ¥Cache/In/Out：0:8:92  Cost: ¥0.08  Span: —",
+          "deviceColumns": {
+            "Cache:": 8,
+            "Cost:": 43
+          },
+          "predictedColumns": {
+            "Cache:": 8,
+            "Cost:": 43
+          },
+          "colours": [
+            7
+          ],
+          "retainedValues": [
+            "Cache:67%  ¥Cache/In/Out：0:8:92",
+            "Cost:¥0.08  Span: —"
+          ]
+        },
+        {
+          "plain": true,
+          "tree": true,
+          "line": "主会话",
+          "row": 39,
+          "deviceWidth": 6,
+          "cellWidth": 6,
+          "cells": "主会话",
+          "deviceColumns": {},
+          "predictedColumns": {},
+          "colours": [
+            7
+          ],
+          "retainedValues": []
+        },
+        {
+          "plain": true,
+          "tree": true,
+          "line": "│  deepseek / deepseek-flash  Cache: 67%  ¥Cache/In/Out：0:8:92  Cost: ¥0.05",
+          "row": 39,
+          "deviceWidth": 76,
+          "cellWidth": 76,
+          "cells": "│  deepseek / deepseek-flash  Cache: 67%  ¥Cache/In/Out：0:8:92  Cost: ¥0.05",
+          "deviceColumns": {
+            "Cache:": 30,
+            "Cost:": 65
+          },
+          "predictedColumns": {
+            "Cache:": 30,
+            "Cost:": 65
+          },
+          "colours": [
+            7
+          ],
+          "retainedValues": [
+            "Cache:67%  ¥Cache/In/Out：0:8:92",
+            "Cost:¥0.05"
+          ]
+        },
+        {
+          "plain": true,
+          "tree": true,
+          "line": "├─ 检索定价核查表  Model: ?                         Effort: ?     Cache: 40%  Cost: ¥0.0040  Run: 8m",
+          "row": 39,
+          "deviceWidth": 99,
+          "cellWidth": 100,
+          "cells": "├─ 检索定价核查表  Model: ?                         Effort: ?     Cache: 40%  Cost: ¥0.0040  Run: 8m",
+          "deviceColumns": {
+            "Model:": 19,
+            "Effort:": 52,
+            "Cache:": 66,
+            "Cost:": 78,
+            "Run:": 93
+          },
+          "predictedColumns": {
+            "Model:": 19,
+            "Effort:": 52,
+            "Cache:": 66,
+            "Cost:": 78,
+            "Run:": 93
+          },
+          "colours": [
+            7
+          ],
+          "retainedValues": [
+            "Cache:40%",
+            "Cost:¥0.0040",
+            "Run:8m"
+          ]
+        },
+        {
+          "plain": true,
+          "tree": true,
+          "line": "│  └─ detail…  Model: ?  Effort: ?       Cache: 50%                                         Run: 0ms",
+          "row": 39,
+          "deviceWidth": 99,
+          "cellWidth": 100,
+          "cells": "│  └─ detail…  Model: ?  Effort: ?       Cache: 50%                                         Run: 0ms",
+          "deviceColumns": {
+            "Model:": 15,
+            "Effort:": 25,
+            "Cache:": 41,
+            "Run:": 92
+          },
+          "predictedColumns": {
+            "Model:": 15,
+            "Effort:": 25,
+            "Cache:": 41,
+            "Run:": 92
+          },
+          "colours": [
+            7
+          ],
+          "retainedValues": [
+            "Cache:50%",
+            "Run:0ms"
+          ]
+        },
+        {
+          "plain": true,
+          "tree": true,
+          "line": "├─ pricing-scan    Model: deepseek / deepseek-fla…  Effort: high  Cache: 50%  Cost: ¥0.01    Run: —",
+          "row": 39,
+          "deviceWidth": 99,
+          "cellWidth": 99,
+          "cells": "├─ pricing-scan    Model: deepseek / deepseek-fla…  Effort: high  Cache: 50%  Cost: ¥0.01    Run: —",
+          "deviceColumns": {
+            "Model:": 19,
+            "Effort:": 52,
+            "Cache:": 66,
+            "Cost:": 78,
+            "Run:": 93
+          },
+          "predictedColumns": {
+            "Model:": 19,
+            "Effort:": 52,
+            "Cache:": 66,
+            "Cost:": 78,
+            "Run:": 93
+          },
+          "colours": [
+            7
+          ],
+          "retainedValues": [
+            "Cache:50%",
+            "Cost:¥0.01",
+            "Run:—"
+          ]
+        },
+        {
+          "plain": true,
+          "tree": true,
+          "line": "│  └─ 孙子代…  Model: …  Effort: medium  Cache: 50%  Cost: ¥0.02  Ctx: 50% (225.0K/450.0K)  Run: —",
+          "row": 39,
+          "deviceWidth": 98,
+          "cellWidth": 98,
+          "cells": "│  └─ 孙子代…  Model: …  Effort: medium  Cache: 50%  Cost: ¥0.02  Ctx: 50% (225.0K/450.0K)  Run: —",
+          "deviceColumns": {
+            "Model:": 15,
+            "Effort:": 25,
+            "Cache:": 41,
+            "Cost:": 53,
+            "Ctx:": 66,
+            "Run:": 92
+          },
+          "predictedColumns": {
+            "Model:": 15,
+            "Effort:": 25,
+            "Cache:": 41,
+            "Cost:": 53,
+            "Ctx:": 66,
+            "Run:": 92
+          },
+          "colours": [
+            7
+          ],
+          "retainedValues": [
+            "Cache:50%",
+            "Cost:¥0.02",
+            "Ctx:50% (225.0K/450.0K)",
+            "Run:—"
+          ]
+        }
+      ]
+    },
+    {
+      "width": 60,
+      "deviceWidth": 60,
+      "hostColumns": 120,
+      "lines": [
+        {
+          "plain": false,
+          "tree": false,
+          "line": "🌙  ⏳ Accrued: ¥0.08 [▏▏▏▏]",
+          "row": 39,
+          "deviceWidth": 28,
+          "cellWidth": 28,
+          "cells": "�  ⏳ Accrued: ¥0.08 [▏▏▏▏]",
+          "deviceColumns": {},
+          "predictedColumns": {},
+          "colours": [
+            2,
+            3,
+            5,
+            6,
+            7
+          ],
+          "retainedValues": []
+        },
+        {
+          "plain": false,
+          "tree": false,
+          "line": "Total:  Cache: 67%  ¥Cache/In/Out：0:8:92  Cost: ¥0.08  Span: —",
+          "row": 39,
+          "deviceWidth": 3,
+          "cellWidth": 3,
+          "cells": ": —",
+          "deviceColumns": {},
+          "predictedColumns": {
+            "Cache:": 8,
+            "Cost:": 43
+          },
+          "colours": [
+            7
+          ],
+          "retainedValues": []
+        },
+        {
+          "plain": false,
+          "tree": false,
+          "line": "主会话",
+          "row": 39,
+          "deviceWidth": 6,
+          "cellWidth": 6,
+          "cells": "主会话",
+          "deviceColumns": {},
+          "predictedColumns": {},
+          "colours": [
+            7
+          ],
+          "retainedValues": []
+        },
+        {
+          "plain": false,
+          "tree": false,
+          "line": "│  deepseek…  Cache: 67%  ¥Cache/In/Out：0:8:92  Cost: ¥0.05",
+          "row": 39,
+          "deviceWidth": 59,
+          "cellWidth": 60,
+          "cells": "│  deepseek…  Cache: 67%  ¥Cache/In/Out：0:8:92  Cost: ¥0.05",
+          "deviceColumns": {
+            "Cache:": 14,
+            "Cost:": 49
+          },
+          "predictedColumns": {
+            "Cache:": 14,
+            "Cost:": 49
+          },
+          "colours": [
+            7
+          ],
+          "retainedValues": [
+            "Cache:67%  ¥Cache/In/Out：0:8:92",
+            "Cost:¥0.05"
+          ]
+        },
+        {
+          "plain": false,
+          "tree": false,
+          "line": "├─ 检…   Model: ?  Effort: ?     Cache: 40%  Cost: ¥0.0040",
+          "row": 39,
+          "deviceWidth": 58,
+          "cellWidth": 58,
+          "cells": "├─ 检…   Model: ?  Effort: ?     Cache: 40%  Cost: ¥0.0040",
+          "deviceColumns": {
+            "Model:": 9,
+            "Effort:": 19,
+            "Cache:": 33,
+            "Cost:": 45
+          },
+          "predictedColumns": {
+            "Model:": 9,
+            "Effort:": 19,
+            "Cache:": 33,
+            "Cost:": 45
+          },
+          "colours": [
+            7
+          ],
+          "retainedValues": [
+            "Cache:40%",
+            "Cost:¥0.0040"
+          ]
+        },
+        {
+          "plain": false,
+          "tree": false,
+          "line": "         Run: 8m",
+          "row": 39,
+          "deviceWidth": 16,
+          "cellWidth": 16,
+          "cells": "         Run: 8m",
+          "deviceColumns": {
+            "Run:": 9
+          },
+          "predictedColumns": {
+            "Run:": 9
+          },
+          "colours": [
+            7
+          ],
+          "retainedValues": [
+            "Run:8m"
+          ]
+        },
+        {
+          "plain": false,
+          "tree": false,
+          "line": "│  └─ det…  Model: ?  Effort: ?       Cache: 50%",
+          "row": 39,
+          "deviceWidth": 48,
+          "cellWidth": 48,
+          "cells": "│  └─ det…  Model: ?  Effort: ?       Cache: 50%",
+          "deviceColumns": {
+            "Model:": 12,
+            "Effort:": 22,
+            "Cache:": 38
+          },
+          "predictedColumns": {
+            "Model:": 12,
+            "Effort:": 22,
+            "Cache:": 38
+          },
+          "colours": [
+            7
+          ],
+          "retainedValues": [
+            "Cache:50%"
+          ]
+        },
+        {
+          "plain": false,
+          "tree": false,
+          "line": "                                                   Run: 0ms",
+          "row": 39,
+          "deviceWidth": 59,
+          "cellWidth": 59,
+          "cells": "                                                   Run: 0ms",
+          "deviceColumns": {
+            "Run:": 51
+          },
+          "predictedColumns": {
+            "Run:": 51
+          },
+          "colours": [
+            7
+          ],
+          "retainedValues": [
+            "Run:0ms"
+          ]
+        },
+        {
+          "plain": false,
+          "tree": false,
+          "line": "├─ pri…  Model: …  Effort: high  Cache: 50%  Cost: ¥0.01  ",
+          "row": 39,
+          "deviceWidth": 58,
+          "cellWidth": 56,
+          "cells": "├─ pri…  Model: …  Effort: high  Cache: 50%  Cost: ¥0.01",
+          "deviceColumns": {
+            "Model:": 9,
+            "Effort:": 19,
+            "Cache:": 33,
+            "Cost:": 45
+          },
+          "predictedColumns": {
+            "Model:": 9,
+            "Effort:": 19,
+            "Cache:": 33,
+            "Cost:": 45
+          },
+          "colours": [
+            7
+          ],
+          "retainedValues": [
+            "Cache:50%",
+            "Cost:¥0.01"
+          ]
+        },
+        {
+          "plain": false,
+          "tree": false,
+          "line": "         Run: —",
+          "row": 39,
+          "deviceWidth": 15,
+          "cellWidth": 15,
+          "cells": "         Run: —",
+          "deviceColumns": {
+            "Run:": 9
+          },
+          "predictedColumns": {
+            "Run:": 9
+          },
+          "colours": [
+            7
+          ],
+          "retainedValues": [
+            "Run:—"
+          ]
+        },
+        {
+          "plain": false,
+          "tree": false,
+          "line": "│  └─ 孙…   Model: …  Effort: medium  Cache: 50%",
+          "row": 39,
+          "deviceWidth": 48,
+          "cellWidth": 48,
+          "cells": "│  └─ 孙…   Model: …  Effort: medium  Cache: 50%",
+          "deviceColumns": {
+            "Model:": 12,
+            "Effort:": 22,
+            "Cache:": 38
+          },
+          "predictedColumns": {
+            "Model:": 12,
+            "Effort:": 22,
+            "Cache:": 38
+          },
+          "colours": [
+            7
+          ],
+          "retainedValues": [
+            "Cache:50%"
+          ]
+        },
+        {
+          "plain": false,
+          "tree": false,
+          "line": "            Cost: ¥0.02  Ctx: 50% (225.0K/450.0K)  Run: —",
+          "row": 39,
+          "deviceWidth": 57,
+          "cellWidth": 57,
+          "cells": "            Cost: ¥0.02  Ctx: 50% (225.0K/450.0K)  Run: —",
+          "deviceColumns": {
+            "Cost:": 12,
+            "Ctx:": 25,
+            "Run:": 51
+          },
+          "predictedColumns": {
+            "Cost:": 12,
+            "Ctx:": 25,
+            "Run:": 51
+          },
+          "colours": [
+            7
+          ],
+          "retainedValues": [
+            "Cost:¥0.02",
+            "Ctx:50% (225.0K/450.0K)",
+            "Run:—"
+          ]
+        },
+        {
+          "plain": true,
+          "tree": false,
+          "line": "🌙  ⏳ Accrued: ¥0.08 [▏▏▏▏]",
+          "row": 39,
+          "deviceWidth": 28,
+          "cellWidth": 28,
+          "cells": "�  ⏳ Accrued: ¥0.08 [▏▏▏▏]",
+          "deviceColumns": {},
+          "predictedColumns": {},
+          "colours": [
+            7
+          ],
+          "retainedValues": []
+        },
+        {
+          "plain": true,
+          "tree": false,
+          "line": "Total:  Cache: 67%  ¥Cache/In/Out：0:8:92  Cost: ¥0.08  Span: —",
+          "row": 39,
+          "deviceWidth": 3,
+          "cellWidth": 3,
+          "cells": ": —",
+          "deviceColumns": {},
+          "predictedColumns": {
+            "Cache:": 8,
+            "Cost:": 43
+          },
+          "colours": [
+            7
+          ],
+          "retainedValues": []
+        },
+        {
+          "plain": true,
+          "tree": true,
+          "line": "主会话",
+          "row": 39,
+          "deviceWidth": 6,
+          "cellWidth": 6,
+          "cells": "主会话",
+          "deviceColumns": {},
+          "predictedColumns": {},
+          "colours": [
+            7
+          ],
+          "retainedValues": []
+        },
+        {
+          "plain": true,
+          "tree": true,
+          "line": "│  deepseek…  Cache: 67%  ¥Cache/In/Out：0:8:92  Cost: ¥0.05",
+          "row": 39,
+          "deviceWidth": 59,
+          "cellWidth": 60,
+          "cells": "│  deepseek…  Cache: 67%  ¥Cache/In/Out：0:8:92  Cost: ¥0.05",
+          "deviceColumns": {
+            "Cache:": 14,
+            "Cost:": 49
+          },
+          "predictedColumns": {
+            "Cache:": 14,
+            "Cost:": 49
+          },
+          "colours": [
+            7
+          ],
+          "retainedValues": [
+            "Cache:67%  ¥Cache/In/Out：0:8:92",
+            "Cost:¥0.05"
+          ]
+        },
+        {
+          "plain": true,
+          "tree": true,
+          "line": "├─ 检…   Model: ?  Effort: ?     Cache: 40%  Cost: ¥0.0040",
+          "row": 39,
+          "deviceWidth": 58,
+          "cellWidth": 58,
+          "cells": "├─ 检…   Model: ?  Effort: ?     Cache: 40%  Cost: ¥0.0040",
+          "deviceColumns": {
+            "Model:": 9,
+            "Effort:": 19,
+            "Cache:": 33,
+            "Cost:": 45
+          },
+          "predictedColumns": {
+            "Model:": 9,
+            "Effort:": 19,
+            "Cache:": 33,
+            "Cost:": 45
+          },
+          "colours": [
+            7
+          ],
+          "retainedValues": [
+            "Cache:40%",
+            "Cost:¥0.0040"
+          ]
+        },
+        {
+          "plain": true,
+          "tree": true,
+          "line": "         Run: 8m",
+          "row": 39,
+          "deviceWidth": 16,
+          "cellWidth": 16,
+          "cells": "         Run: 8m",
+          "deviceColumns": {
+            "Run:": 9
+          },
+          "predictedColumns": {
+            "Run:": 9
+          },
+          "colours": [
+            7
+          ],
+          "retainedValues": [
+            "Run:8m"
+          ]
+        },
+        {
+          "plain": true,
+          "tree": true,
+          "line": "│  └─ det…  Model: ?  Effort: ?       Cache: 50%",
+          "row": 39,
+          "deviceWidth": 48,
+          "cellWidth": 48,
+          "cells": "│  └─ det…  Model: ?  Effort: ?       Cache: 50%",
+          "deviceColumns": {
+            "Model:": 12,
+            "Effort:": 22,
+            "Cache:": 38
+          },
+          "predictedColumns": {
+            "Model:": 12,
+            "Effort:": 22,
+            "Cache:": 38
+          },
+          "colours": [
+            7
+          ],
+          "retainedValues": [
+            "Cache:50%"
+          ]
+        },
+        {
+          "plain": true,
+          "tree": true,
+          "line": "                                                   Run: 0ms",
+          "row": 39,
+          "deviceWidth": 59,
+          "cellWidth": 59,
+          "cells": "                                                   Run: 0ms",
+          "deviceColumns": {
+            "Run:": 51
+          },
+          "predictedColumns": {
+            "Run:": 51
+          },
+          "colours": [
+            7
+          ],
+          "retainedValues": [
+            "Run:0ms"
+          ]
+        },
+        {
+          "plain": true,
+          "tree": true,
+          "line": "├─ pri…  Model: …  Effort: high  Cache: 50%  Cost: ¥0.01  ",
+          "row": 39,
+          "deviceWidth": 58,
+          "cellWidth": 56,
+          "cells": "├─ pri…  Model: …  Effort: high  Cache: 50%  Cost: ¥0.01",
+          "deviceColumns": {
+            "Model:": 9,
+            "Effort:": 19,
+            "Cache:": 33,
+            "Cost:": 45
+          },
+          "predictedColumns": {
+            "Model:": 9,
+            "Effort:": 19,
+            "Cache:": 33,
+            "Cost:": 45
+          },
+          "colours": [
+            7
+          ],
+          "retainedValues": [
+            "Cache:50%",
+            "Cost:¥0.01"
+          ]
+        },
+        {
+          "plain": true,
+          "tree": true,
+          "line": "         Run: —",
+          "row": 39,
+          "deviceWidth": 15,
+          "cellWidth": 15,
+          "cells": "         Run: —",
+          "deviceColumns": {
+            "Run:": 9
+          },
+          "predictedColumns": {
+            "Run:": 9
+          },
+          "colours": [
+            7
+          ],
+          "retainedValues": [
+            "Run:—"
+          ]
+        },
+        {
+          "plain": true,
+          "tree": true,
+          "line": "│  └─ 孙…   Model: …  Effort: medium  Cache: 50%",
+          "row": 39,
+          "deviceWidth": 48,
+          "cellWidth": 48,
+          "cells": "│  └─ 孙…   Model: …  Effort: medium  Cache: 50%",
+          "deviceColumns": {
+            "Model:": 12,
+            "Effort:": 22,
+            "Cache:": 38
+          },
+          "predictedColumns": {
+            "Model:": 12,
+            "Effort:": 22,
+            "Cache:": 38
+          },
+          "colours": [
+            7
+          ],
+          "retainedValues": [
+            "Cache:50%"
+          ]
+        },
+        {
+          "plain": true,
+          "tree": true,
+          "line": "            Cost: ¥0.02  Ctx: 50% (225.0K/450.0K)  Run: —",
+          "row": 39,
+          "deviceWidth": 57,
+          "cellWidth": 57,
+          "cells": "            Cost: ¥0.02  Ctx: 50% (225.0K/450.0K)  Run: —",
+          "deviceColumns": {
+            "Cost:": 12,
+            "Ctx:": 25,
+            "Run:": 51
+          },
+          "predictedColumns": {
+            "Cost:": 12,
+            "Ctx:": 25,
+            "Run:": 51
+          },
+          "colours": [
+            7
+          ],
+          "retainedValues": [
+            "Cost:¥0.02",
+            "Ctx:50% (225.0K/450.0K)",
+            "Run:—"
+          ]
+        }
+      ]
+    },
+    {
+      "width": 120,
+      "deviceWidth": 120,
+      "hostColumns": 120,
+      "lines": [
+        {
+          "plain": false,
+          "tree": false,
+          "line": "🌙  ⏳ Accrued: ¥0.08 [▏▏▏▏]",
+          "row": 29,
+          "deviceWidth": 28,
+          "cellWidth": 28,
+          "cells": "�  ⏳ Accrued: ¥0.08 [▏▏▏▏]",
+          "deviceColumns": {},
+          "predictedColumns": {},
+          "colours": [
+            2,
+            3,
+            5,
+            6,
+            7
+          ],
+          "retainedValues": []
+        },
+        {
+          "plain": false,
+          "tree": false,
+          "line": "Total:  Cache: 67%  ¥Cache/In/Out：0:8:92  Cost: ¥0.08  Span: —",
+          "row": 30,
+          "deviceWidth": 63,
+          "cellWidth": 63,
+          "cells": "Total:  Cache: 67%  ¥Cache/In/Out：0:8:92  Cost: ¥0.08  Span: —",
+          "deviceColumns": {
+            "Cache:": 8,
+            "Cost:": 43
+          },
+          "predictedColumns": {
+            "Cache:": 8,
+            "Cost:": 43
+          },
+          "colours": [
+            7
+          ],
+          "retainedValues": [
+            "Cache:67%  ¥Cache/In/Out：0:8:92",
+            "Cost:¥0.08  Span: —"
+          ]
+        },
+        {
+          "plain": false,
+          "tree": false,
+          "line": "主会话",
+          "row": 31,
+          "deviceWidth": 6,
+          "cellWidth": 6,
+          "cells": "主会话",
+          "deviceColumns": {},
+          "predictedColumns": {},
+          "colours": [
+            7
+          ],
+          "retainedValues": []
+        },
+        {
+          "plain": false,
+          "tree": false,
+          "line": "│  deepseek / deepseek-flash  Cache: 67%  ¥Cache/In/Out：0:8:92  Cost: ¥0.05",
+          "row": 32,
+          "deviceWidth": 76,
+          "cellWidth": 76,
+          "cells": "│  deepseek / deepseek-flash  Cache: 67%  ¥Cache/In/Out：0:8:92  Cost: ¥0.05",
+          "deviceColumns": {
+            "Cache:": 30,
+            "Cost:": 65
+          },
+          "predictedColumns": {
+            "Cache:": 30,
+            "Cost:": 65
+          },
+          "colours": [
+            7
+          ],
+          "retainedValues": [
+            "Cache:67%  ¥Cache/In/Out：0:8:92",
+            "Cost:¥0.05"
+          ]
+        },
+        {
+          "plain": false,
+          "tree": false,
+          "line": "├─ 检索定价核查表  Model: ?                          Effort: ?     Cache: 40%  Cost: ¥0.0040  Run: 8m",
+          "row": 33,
+          "deviceWidth": 101,
+          "cellWidth": 101,
+          "cells": "├─ 检索定价核查表  Model: ?                          Effort: ?     Cache: 40%  Cost: ¥0.0040  Run: 8m",
+          "deviceColumns": {
+            "Model:": 19,
+            "Effort:": 53,
+            "Cache:": 67,
+            "Cost:": 79,
+            "Run:": 94
+          },
+          "predictedColumns": {
+            "Model:": 19,
+            "Effort:": 53,
+            "Cache:": 67,
+            "Cost:": 79,
+            "Run:": 94
+          },
+          "colours": [
+            7
+          ],
+          "retainedValues": [
+            "Cache:40%",
+            "Cost:¥0.0040",
+            "Run:8m"
+          ]
+        },
+        {
+          "plain": false,
+          "tree": false,
+          "line": "│  └─ details-under-the-first-ch…  Model: ?  Effort: ?       Cache: 50%                                         Run: 0ms",
+          "row": 34,
+          "deviceWidth": 119,
+          "cellWidth": 120,
+          "cells": "│  └─ details-under-the-first-ch…  Model: ?  Effort: ?       Cache: 50%                                         Run: 0ms",
+          "deviceColumns": {
+            "Model:": 35,
+            "Effort:": 45,
+            "Cache:": 61,
+            "Run:": 112
+          },
+          "predictedColumns": {
+            "Model:": 35,
+            "Effort:": 45,
+            "Cache:": 61,
+            "Run:": 112
+          },
+          "colours": [
+            7
+          ],
+          "retainedValues": [
+            "Cache:50%",
+            "Run:0ms"
+          ]
+        },
+        {
+          "plain": false,
+          "tree": false,
+          "line": "├─ pricing-scan    Model: deepseek / deepseek-flash  Effort: high  Cache: 50%  Cost: ¥0.01    Run: —",
+          "row": 35,
+          "deviceWidth": 100,
+          "cellWidth": 100,
+          "cells": "├─ pricing-scan    Model: deepseek / deepseek-flash  Effort: high  Cache: 50%  Cost: ¥0.01    Run: —",
+          "deviceColumns": {
+            "Model:": 19,
+            "Effort:": 53,
+            "Cache:": 67,
+            "Cost:": 79,
+            "Run:": 94
+          },
+          "predictedColumns": {
+            "Model:": 19,
+            "Effort:": 53,
+            "Cache:": 67,
+            "Cost:": 79,
+            "Run:": 94
+          },
+          "colours": [
+            7
+          ],
+          "retainedValues": [
+            "Cache:50%",
+            "Cost:¥0.01",
+            "Run:—"
+          ]
+        },
+        {
+          "plain": false,
+          "tree": false,
+          "line": "│  └─ 孙子代理乙                   Model: …  Effort: medium  Cache: 50%  Cost: ¥0.02  Ctx: 50% (225.0K/450.0K)  Run: —",
+          "row": 36,
+          "deviceWidth": 118,
+          "cellWidth": 118,
+          "cells": "│  └─ 孙子代理乙                   Model: …  Effort: medium  Cache: 50%  Cost: ¥0.02  Ctx: 50% (225.0K/450.0K)  Run: —",
+          "deviceColumns": {
+            "Model:": 35,
+            "Effort:": 45,
+            "Cache:": 61,
+            "Cost:": 73,
+            "Ctx:": 86,
+            "Run:": 112
+          },
+          "predictedColumns": {
+            "Model:": 35,
+            "Effort:": 45,
+            "Cache:": 61,
+            "Cost:": 73,
+            "Ctx:": 86,
+            "Run:": 112
+          },
+          "colours": [
+            7
+          ],
+          "retainedValues": [
+            "Cache:50%",
+            "Cost:¥0.02",
+            "Ctx:50% (225.0K/450.0K)",
+            "Run:—"
+          ]
+        },
+        {
+          "plain": true,
+          "tree": false,
+          "line": "🌙  ⏳ Accrued: ¥0.08 [▏▏▏▏]",
+          "row": 39,
+          "deviceWidth": 28,
+          "cellWidth": 28,
+          "cells": "�  ⏳ Accrued: ¥0.08 [▏▏▏▏]",
+          "deviceColumns": {},
+          "predictedColumns": {},
+          "colours": [
+            7
+          ],
+          "retainedValues": []
+        },
+        {
+          "plain": true,
+          "tree": false,
+          "line": "Total:  Cache: 67%  ¥Cache/In/Out：0:8:92  Cost: ¥0.08  Span: —",
+          "row": 39,
+          "deviceWidth": 63,
+          "cellWidth": 63,
+          "cells": "Total:  Cache: 67%  ¥Cache/In/Out：0:8:92  Cost: ¥0.08  Span: —",
+          "deviceColumns": {
+            "Cache:": 8,
+            "Cost:": 43
+          },
+          "predictedColumns": {
+            "Cache:": 8,
+            "Cost:": 43
+          },
+          "colours": [
+            7
+          ],
+          "retainedValues": [
+            "Cache:67%  ¥Cache/In/Out：0:8:92",
+            "Cost:¥0.08  Span: —"
+          ]
+        },
+        {
+          "plain": true,
+          "tree": true,
+          "line": "主会话",
+          "row": 39,
+          "deviceWidth": 6,
+          "cellWidth": 6,
+          "cells": "主会话",
+          "deviceColumns": {},
+          "predictedColumns": {},
+          "colours": [
+            7
+          ],
+          "retainedValues": []
+        },
+        {
+          "plain": true,
+          "tree": true,
+          "line": "│  deepseek / deepseek-flash  Cache: 67%  ¥Cache/In/Out：0:8:92  Cost: ¥0.05",
+          "row": 39,
+          "deviceWidth": 76,
+          "cellWidth": 76,
+          "cells": "│  deepseek / deepseek-flash  Cache: 67%  ¥Cache/In/Out：0:8:92  Cost: ¥0.05",
+          "deviceColumns": {
+            "Cache:": 30,
+            "Cost:": 65
+          },
+          "predictedColumns": {
+            "Cache:": 30,
+            "Cost:": 65
+          },
+          "colours": [
+            7
+          ],
+          "retainedValues": [
+            "Cache:67%  ¥Cache/In/Out：0:8:92",
+            "Cost:¥0.05"
+          ]
+        },
+        {
+          "plain": true,
+          "tree": true,
+          "line": "├─ 检索定价核查表  Model: ?                          Effort: ?     Cache: 40%  Cost: ¥0.0040  Run: 8m",
+          "row": 39,
+          "deviceWidth": 101,
+          "cellWidth": 101,
+          "cells": "├─ 检索定价核查表  Model: ?                          Effort: ?     Cache: 40%  Cost: ¥0.0040  Run: 8m",
+          "deviceColumns": {
+            "Model:": 19,
+            "Effort:": 53,
+            "Cache:": 67,
+            "Cost:": 79,
+            "Run:": 94
+          },
+          "predictedColumns": {
+            "Model:": 19,
+            "Effort:": 53,
+            "Cache:": 67,
+            "Cost:": 79,
+            "Run:": 94
+          },
+          "colours": [
+            7
+          ],
+          "retainedValues": [
+            "Cache:40%",
+            "Cost:¥0.0040",
+            "Run:8m"
+          ]
+        },
+        {
+          "plain": true,
+          "tree": true,
+          "line": "│  └─ details-under-the-first-ch…  Model: ?  Effort: ?       Cache: 50%                                         Run: 0ms",
+          "row": 39,
+          "deviceWidth": 119,
+          "cellWidth": 120,
+          "cells": "│  └─ details-under-the-first-ch…  Model: ?  Effort: ?       Cache: 50%                                         Run: 0ms",
+          "deviceColumns": {
+            "Model:": 35,
+            "Effort:": 45,
+            "Cache:": 61,
+            "Run:": 112
+          },
+          "predictedColumns": {
+            "Model:": 35,
+            "Effort:": 45,
+            "Cache:": 61,
+            "Run:": 112
+          },
+          "colours": [
+            7
+          ],
+          "retainedValues": [
+            "Cache:50%",
+            "Run:0ms"
+          ]
+        },
+        {
+          "plain": true,
+          "tree": true,
+          "line": "├─ pricing-scan    Model: deepseek / deepseek-flash  Effort: high  Cache: 50%  Cost: ¥0.01    Run: —",
+          "row": 39,
+          "deviceWidth": 100,
+          "cellWidth": 100,
+          "cells": "├─ pricing-scan    Model: deepseek / deepseek-flash  Effort: high  Cache: 50%  Cost: ¥0.01    Run: —",
+          "deviceColumns": {
+            "Model:": 19,
+            "Effort:": 53,
+            "Cache:": 67,
+            "Cost:": 79,
+            "Run:": 94
+          },
+          "predictedColumns": {
+            "Model:": 19,
+            "Effort:": 53,
+            "Cache:": 67,
+            "Cost:": 79,
+            "Run:": 94
+          },
+          "colours": [
+            7
+          ],
+          "retainedValues": [
+            "Cache:50%",
+            "Cost:¥0.01",
+            "Run:—"
+          ]
+        },
+        {
+          "plain": true,
+          "tree": true,
+          "line": "│  └─ 孙子代理乙                   Model: …  Effort: medium  Cache: 50%  Cost: ¥0.02  Ctx: 50% (225.0K/450.0K)  Run: —",
+          "row": 39,
+          "deviceWidth": 118,
+          "cellWidth": 118,
+          "cells": "│  └─ 孙子代理乙                   Model: …  Effort: medium  Cache: 50%  Cost: ¥0.02  Ctx: 50% (225.0K/450.0K)  Run: —",
+          "deviceColumns": {
+            "Model:": 35,
+            "Effort:": 45,
+            "Cache:": 61,
+            "Cost:": 73,
+            "Ctx:": 86,
+            "Run:": 112
+          },
+          "predictedColumns": {
+            "Model:": 35,
+            "Effort:": 45,
+            "Cache:": 61,
+            "Cost:": 73,
+            "Ctx:": 86,
+            "Run:": 112
+          },
+          "colours": [
+            7
+          ],
+          "retainedValues": [
+            "Cache:50%",
+            "Cost:¥0.02",
+            "Ctx:50% (225.0K/450.0K)",
+            "Run:—"
+          ]
+        }
+      ]
+    }
+  ],
+  "observations": [
+    {
+      "name": "the device draws every tree line whole at 120",
+      "held": true,
+      "detail": "6 of 6 tree lines on one console row at their stated width, colours 7"
+    },
+    {
+      "name": "the device puts every field at the column the frontend states at 120",
+      "held": true,
+      "detail": "22 fields of 6 rows"
+    },
+    {
+      "name": "a Chinese name takes two device cells per character at 120",
+      "held": true,
+      "detail": "3 whole names of the tree (主会话=6 cells, 检索定价核查表=14 cells, 孙子代理乙=10 cells)"
+    },
+    {
+      "name": "rows of one depth share their device columns at 120",
+      "held": true,
+      "detail": "[Model=19 Effort=53 Cache=67 Cost=79 Run=94 | Model=19 Effort=53 Cache=67 Cost=79 Run=94]; [Model=35 Effort=45 Cache=61 Run=112 | Model=35 Effort=45 Cache=61 Cost=73 Ctx=86 Run=112]"
+    },
+    {
+      "name": "each depth has device columns of its own at 120",
+      "held": true,
+      "detail": "2 depths drawn: depth 3 => Model=19 Effort=53 Cache=67 Cost=79 Run=94; depth 6 => Model=35 Effort=45 Cache=61 Run=112"
+    },
+    {
+      "name": "a field a row has none of keeps its device column at 120",
+      "held": true,
+      "detail": "6 rows, every missing field's slot left for a blank"
+    },
+    {
+      "name": "the theme reaches the device at 120",
+      "held": true,
+      "detail": "1 of 8 lines carry the theme's own sequences, and the device draws them with 2/3/5/6/7 colours"
+    },
+    {
+      "name": "the theme adds no device column at 120",
+      "held": true,
+      "detail": "8 coloured lines measured against their plain twins"
+    },
+    {
+      "name": "the device draws every tree line whole at 100",
+      "held": true,
+      "detail": "6 of 6 tree lines on one console row at their stated width, colours 7"
+    },
+    {
+      "name": "the device puts every field at the column the frontend states at 100",
+      "held": true,
+      "detail": "22 fields of 6 rows"
+    },
+    {
+      "name": "a Chinese name takes two device cells per character at 100",
+      "held": true,
+      "detail": "2 whole names of the tree (主会话=6 cells, 检索定价核查表=14 cells)"
+    },
+    {
+      "name": "rows of one depth share their device columns at 100",
+      "held": true,
+      "detail": "[Model=19 Effort=52 Cache=66 Cost=78 Run=93 | Model=19 Effort=52 Cache=66 Cost=78 Run=93]; [Model=15 Effort=25 Cache=41 Run=92 | Model=15 Effort=25 Cache=41 Cost=53 Ctx=66 Run=92]"
+    },
+    {
+      "name": "each depth has device columns of its own at 100",
+      "held": true,
+      "detail": "2 depths drawn: depth 3 => Model=19 Effort=52 Cache=66 Cost=78 Run=93; depth 6 => Model=15 Effort=25 Cache=41 Run=92"
+    },
+    {
+      "name": "a field a row has none of keeps its device column at 100",
+      "held": true,
+      "detail": "6 rows, every missing field's slot left for a blank"
+    },
+    {
+      "name": "the theme reaches the device at 100",
+      "held": true,
+      "detail": "1 of 8 lines carry the theme's own sequences, and the device draws them with 2/3/5/6/7 colours"
+    },
+    {
+      "name": "the theme adds no device column at 100",
+      "held": true,
+      "detail": "8 coloured lines measured against their plain twins"
+    },
+    {
+      "name": "the device draws every tree line whole at 60",
+      "held": true,
+      "detail": "10 of 10 tree lines on one console row at their stated width, colours 7"
+    },
+    {
+      "name": "the device puts every field at the column the frontend states at 60",
+      "held": true,
+      "detail": "22 fields of 10 rows"
+    },
+    {
+      "name": "a Chinese name takes two device cells per character at 60",
+      "held": true,
+      "detail": "1 whole names of the tree (主会话=6 cells)"
+    },
+    {
+      "name": "rows of one depth share their device columns at 60",
+      "held": true,
+      "detail": "[Model=9 Effort=19 Cache=33 Cost=45 | Model=9 Effort=19 Cache=33 Cost=45]; [Run=9 | Run=9]; [Model=12 Effort=22 Cache=38 | Model=12 Effort=22 Cache=38]"
+    },
+    {
+      "name": "each depth has device columns of its own at 60",
+      "held": true,
+      "detail": "3 depths drawn: depth 3 => Model=9 Effort=19 Cache=33 Cost=45; depth 9 => Run=9; depth 6 => Model=12 Effort=22 Cache=38"
+    },
+    {
+      "name": "a field a row has none of keeps its device column at 60",
+      "held": true,
+      "detail": "10 rows, every missing field's slot left for a blank"
+    },
+    {
+      "name": "the theme reaches the device at 60",
+      "held": true,
+      "detail": "1 of 12 lines carry the theme's own sequences, and the device draws them with 2/3/5/6/7 colours"
+    },
+    {
+      "name": "the theme adds no device column at 60",
+      "held": true,
+      "detail": "12 coloured lines measured against their plain twins"
+    },
+    {
+      "name": "the device draws every tree line whole at 120",
+      "held": true,
+      "detail": "6 of 6 tree lines on one console row at their stated width, colours 7"
+    },
+    {
+      "name": "the device puts every field at the column the frontend states at 120",
+      "held": true,
+      "detail": "22 fields of 6 rows"
+    },
+    {
+      "name": "a Chinese name takes two device cells per character at 120",
+      "held": true,
+      "detail": "3 whole names of the tree (主会话=6 cells, 检索定价核查表=14 cells, 孙子代理乙=10 cells)"
+    },
+    {
+      "name": "rows of one depth share their device columns at 120",
+      "held": true,
+      "detail": "[Model=19 Effort=53 Cache=67 Cost=79 Run=94 | Model=19 Effort=53 Cache=67 Cost=79 Run=94]; [Model=35 Effort=45 Cache=61 Run=112 | Model=35 Effort=45 Cache=61 Cost=73 Ctx=86 Run=112]"
+    },
+    {
+      "name": "each depth has device columns of its own at 120",
+      "held": true,
+      "detail": "2 depths drawn: depth 3 => Model=19 Effort=53 Cache=67 Cost=79 Run=94; depth 6 => Model=35 Effort=45 Cache=61 Run=112"
+    },
+    {
+      "name": "a field a row has none of keeps its device column at 120",
+      "held": true,
+      "detail": "6 rows, every missing field's slot left for a blank"
+    },
+    {
+      "name": "the theme reaches the device at 120",
+      "held": true,
+      "detail": "1 of 8 lines carry the theme's own sequences, and the device draws them with 2/3/5/6/7 colours"
+    },
+    {
+      "name": "the theme adds no device column at 120",
+      "held": true,
+      "detail": "8 coloured lines measured against their plain twins"
+    },
+    {
+      "name": "the retained figures say the same thing at every width",
+      "held": true,
+      "detail": "4 widths, 14 retained values (60 columns among them)"
+    },
+    {
+      "name": "the console's width changed under the process and every pass drew at the width it stated",
+      "held": true,
+      "detail": "3 width changes among 4 passes (120 -> 100 -> 60 -> 120), 0 of them reported to this process as a resize notification"
+    },
+    {
+      "name": "the width 120 started at puts the same cells back",
+      "held": true,
+      "detail": "6 rows of tree cells against 6 at the same width at the end"
+    },
+    {
+      "name": "the stored document keeps every whole name, model and figure",
+      "held": true,
+      "detail": "1384 bytes, unchanged: true, missing: nothing"
+    }
+  ]
+}

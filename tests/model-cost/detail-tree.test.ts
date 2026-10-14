@@ -20,6 +20,7 @@ import * as path from "node:path";
 import { MODEL_COST } from "../../extensions/model-cost/definition";
 import type { ConsumptionDocument } from "../../extensions/model-cost/shared-logic/consumption-document";
 import type { ModelPricingData } from "../../extensions/model-cost/shared-logic/model-data";
+import { type AgentTreeRow, type ConsumptionFields, fieldsColumns } from "../../extensions/model-cost/shared-logic/presentation/display";
 import type { ModelCostRuntime } from "../../extensions/model-cost/shared-logic/runtime";
 import { createModelCostRuntime } from "../../extensions/model-cost/shared-logic/runtime";
 import type { CatalogPrice, CatalogPriceSource, OwnerReference, SessionFacts } from "../../framework/core/protocol";
@@ -403,10 +404,11 @@ describe("the detail form's static tree: the root's own models and one row per d
 		]);
 		expect(rows.filter(row => row.kind === "model").every(row => row.depth === 1)).toBe(true);
 
-		// Each row's own figures, hand-added from the record's buckets. The whole tree's own Sum is
-		// 6,894 — the row sums below are what adds up to it, each contribution once:
+		// Each row's own figures, hand-added from the record's buckets. The whole tree's own total is
+		// 6,894 — the row totals below are what adds up to it, each contribution once:
 		// 6000+750+2+20+100+7+15. No row of this list carries that inclusive figure, and none carries a
-		// subtree total of its own.
+		// subtree total of its own. These totals are computed figures of each scope rather than columns
+		// the display writes (P23), which is why the algorithm is asserted here instead of on a row's text.
 		expect(rows.map(row => row.fields?.sum)).toEqual([undefined, 6000, 750, 2, 20, 100, 7, 15]);
 		expect(rows.map(row => row.fields?.sum)).not.toContain(6894);
 		const [alpha, codex, unlisted, tokenOnly, child, grand, sibling] = rows.slice(1).map(row => row.fields);
@@ -426,6 +428,33 @@ describe("the detail form's static tree: the root's own models and one row per d
 		expect(grand?.cacheHitRate).toBe(0);
 		expect(sibling?.cacheHitRate).toBe(50);
 		expect(sibling?.costCny).toBe(0.1);
+	});
+
+	test("a session row states no cached share while its own model rows keep theirs", async () => {
+		const bound = await bind();
+		const rows = bound.runtime.presentation.of(MAIN_TARGET).agentTree ?? [];
+		/** The columns one row states, in the order it writes them. */
+		const columnsOf = (name: string): readonly string[] =>
+			fieldsColumns(rows.find(row => row.name === name)?.fields as ConsumptionFields).map(column => column.label);
+
+		// The root's own pair rows are rows of a *model*, so each states the cached share of the
+		// conversation that pair saw, beside its ratio and its amounts. The descendant rows are the
+		// subagent list: what is compared between them is what each session consumed, so the cached-share
+		// column is dropped from the row rather than written empty, and the fields that follow it start
+		// where it would have been.
+		expect(columnsOf("official / model-alpha")).toContain("Cache: ");
+		expect(columnsOf("go-provider / model-alpha")).toContain("Cache: ");
+		expect(columnsOf("session-child")).not.toContain("Cache: ");
+		expect(columnsOf("session-grand")).not.toContain("Cache: ");
+		expect(columnsOf("session-sibling")).not.toContain("Cache: ");
+
+		// Dropping the column re-states no figure: a session row's usage, its amounts and the cached share
+		// computed behind it are the ones its own accumulation holds, exactly as they were.
+		const child = rows.find(row => row.name === "session-child")?.fields;
+		expect(child?.tokens).toEqual({ input: 30, cacheRead: 20, cacheWrite: 0, output: 50 });
+		expect(child?.cacheHitRate).toBe(40);
+		expect(child?.sum).toBe(100);
+		expect(rows.find(row => row.name === "session-sibling")?.fields?.costCny).toBe(0.1);
 	});
 
 	test("a row's ratio is its own model's price, and the current-model ratio is not borrowed", async () => {
@@ -479,6 +508,101 @@ describe("the detail form's static tree: the root's own models and one row per d
 	});
 });
 
+describe("the detail form's static tree marks the session that is working right now (P23)", () => {
+	test("a descendant's name is emphasised while its Round is open, and plain again once that Round ends", async () => {
+		const bound = await bind();
+		/** The row the tree draws under one name, or nothing while it draws none. */
+		const rowOf = (name: string): AgentTreeRow | undefined =>
+			(bound.runtime.presentation.of(MAIN_TARGET).agentTree ?? []).find(row => row.name === name);
+
+		// No Round edge has moved any session yet, so the row the document records for the child — under
+		// the name the document holds — states no emphasis at all: an unestablished activity is not
+		// idleness, and the tree draws that name exactly as it did before this reading existed.
+		expect(rowOf("session-child")?.nameEmphasis).toBeUndefined();
+		expect(rowOf("session-grand")?.nameEmphasis).toBeUndefined();
+		expect(rowOf("session-sibling")?.nameEmphasis).toBeUndefined();
+
+		// The child takes up a Round. That delivery carries the session's own facts, its latest name among
+		// them, so the row is drawn under `子代理` from here on — and the reading belongs to the session the
+		// edge named, so it is the only row of the tree that is emphasised.
+		bound.double.deliverRound(OWNER, { event: { kind: "round_start" }, session: CHILD });
+		expect(rowOf("子代理")?.nameEmphasis).toBe("active");
+		const rows = bound.runtime.presentation.of(MAIN_TARGET).agentTree ?? [];
+		expect(rows.filter(row => row.nameEmphasis !== undefined).map(row => row.name)).toEqual(["子代理"]);
+		expect(rows.find(row => row.kind === "root")?.nameEmphasis).toBeUndefined();
+
+		// The framework's own end edge is what moves it back, and the row is then drawn exactly as it was:
+		// idle is a reading that states no emphasis rather than a different one.
+		bound.double.deliverRound(OWNER, { event: { kind: "round_end" }, session: CHILD });
+		expect(rowOf("子代理")?.nameEmphasis).toBeUndefined();
+	});
+
+	test("the root session and a subagent are read on the same per-session axis", async () => {
+		const bound = await bind();
+
+		// The reading is the session's own whichever kind of session it is: a main session's Round open is
+		// that session working, exactly as a subagent's is, and a session no edge has moved has no reading
+		// at all rather than an idle one.
+		expect(bound.runtime.sessionActivity.read("session-main")).toBeUndefined();
+		bound.double.deliverRound(OWNER, { event: { kind: "round_start" }, session: MAIN });
+		expect(bound.runtime.sessionActivity.read("session-main")).toBe("working");
+		bound.double.deliverRound(OWNER, { event: { kind: "round_end" }, session: MAIN });
+		expect(bound.runtime.sessionActivity.read("session-main")).toBe("idle");
+
+		// The tree's root row is the session the tree is *of* rather than one of the subagent rows it
+		// lists, so it carries no emphasis however that session reads: the emphasis is how the subagent
+		// list picks out the rows that are running.
+		expect(bound.runtime.presentation.of(MAIN_TARGET).agentTree?.[0]?.nameEmphasis).toBeUndefined();
+	});
+});
+
+describe("the detail form's static tree: the started-on facts a descendant row states (P26, P27, P28, P29)", () => {
+	test("a descendant row states the one snapshot its session began on, `?` for each part nothing proved", async () => {
+		// Four actual sessions: one child the document recorded as having begun on a model and a level,
+		// one grandchild that recorded only its level, one sibling that recorded neither, and the root.
+		const document = {
+			...TREE,
+			harnesses: {
+				[HARNESS]: {
+					sessions: [
+						record("session-main", null, {
+							official: { "model-alpha": { tokens: { input: 10, cacheRead: 0, cacheWrite: 0, output: 20 } } },
+						}),
+						{
+							...record("session-child", "session-main", {
+								"go-provider": { "model-alpha": { tokens: { input: 4, cacheRead: 6, cacheWrite: 0, output: 10 } } },
+							}),
+							startup: { model: { provider: "go-provider", model: "model-alpha" }, effort: "high" },
+						},
+						{
+							...record("session-grand", "session-child", {}),
+							startup: { effort: "medium" },
+						},
+						record("session-sibling", "session-main", {}),
+					],
+				},
+			},
+		} as unknown as ConsumptionDocument;
+		const bound = await bind({ document });
+		const rows = bound.runtime.presentation.of(MAIN_TARGET).agentTree ?? [];
+
+		// Every descendant row carries the one snapshot — the model the session began on with the level it
+		// began on, already in the form the row prints them — and a part the document proves nothing about
+		// is `?` rather than borrowed from the model or level the session runs now. The tail is the half of
+		// that text a row too narrow for the whole snapshot keeps whole.
+		expect(rows.filter(row => row.kind === "session").map(row => ({ name: row.name, startup: row.startup }))).toEqual([
+			{ name: "session-child", startup: { text: "go-provider/model-alpha(high)", tail: "(high)" } },
+			{ name: "session-grand", startup: { text: "?(medium)", tail: "(medium)" } },
+			{ name: "session-sibling", startup: { text: "?(?)", tail: "(?)" } },
+		]);
+		// Nothing that is not an actual descendant session carries a startup: the root is the session the
+		// tree is drawn for rather than one that began below it, and a model row is a pair of figures
+		// rather than a session at all.
+		expect(rows[0]?.startup).toBeUndefined();
+		expect(rows.filter(row => row.kind === "model").every(row => row.startup === undefined)).toBe(true);
+	});
+});
+
 describe("a subagent's view is the brief, and the main session's tree is what it returns to (P26)", () => {
 	test("the subagent's own Round is drawn as a brief, and the round trip re-accounts nothing", async () => {
 		const bound = await bind();
@@ -494,10 +618,11 @@ describe("a subagent's view is the brief, and the main session's tree is what it
 		settleChildTurn(bound.double, CLOCK);
 
 		// Viewing the child: the brief, drawn from that session's own facts — its own current-model
-		// fields (30+10 input, 20 cache reads, 50+20 output: a Sum of 130 and a 33 percent hit rate), its
-		// own Round's 30 tokens with no amount and no ratio, since the pair has no amount policy — and
-		// the same whole main tree's Sum behind them. No tree of its own is offered at all, which is what
-		// the fixed brief means: the entry's preference cannot turn this view into the detail form.
+		// fields (30+10 input, 20 cache reads, 50+20 output: 130 accounted tokens, no column of their
+		// own any more, and a 33 percent hit rate), its own Round's 30 tokens with no amount and no
+		// ratio, since the pair has no amount policy — and the same whole main tree's own total behind
+		// them. No tree of its own is offered at all, which is what the fixed brief means: the entry's
+		// preference cannot turn this view into the detail form.
 		const child = bound.runtime.presentation.of({
 			sessionId: "session-child",
 			provider: "go-provider",

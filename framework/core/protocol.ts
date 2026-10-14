@@ -124,6 +124,29 @@ export interface FeedbackTransport {
 }
 
 /**
+ * The model and effective effort one session began with, as its harness reported them at the start
+ * that proved the session was beginning — the two readings a display shows a subagent's row by, and
+ * nothing a later setting, a later model switch or a later execution may rewrite.
+ *
+ * It is a *startup* fact rather than the session's current one: the model it was started on, and the
+ * level it really runs there. The level is the harness's resolved effective effort, never the
+ * configured selector behind it (an `auto` setting is not a level a row may show). Each member is
+ * absent when this host could not report it, and named in `unavailable`; a start that proved no
+ * beginning carries neither rather than reading the pair the session happens to run now.
+ */
+export interface SessionStartup {
+	/** The model the session began on, both parts as the harness reported them. */
+	readonly model?: {
+		/** The provider the harness serves that model under. */
+		readonly provider: string;
+		/** The exact model id, as the harness resolves it. */
+		readonly model: string;
+	};
+	/** The effective thinking level the session began with. */
+	readonly effort?: string;
+}
+
+/**
  * The actual session one delivery concerns: its identity, its direct parent and its latest
  * display name, as the adapter resolved them.
  *
@@ -153,11 +176,26 @@ export interface SessionFacts {
 	/** The session's latest display name, as the harness reports it; display data, never an identity. */
 	readonly name?: string;
 	/**
+	 * The name the harness reported for the task this session was spawned to carry out — the
+	 * handle the spawning call gave that work — when this harness names one.
+	 *
+	 * It names the *work*, not the agent that runs it: the agent definition a session runs is a
+	 * kind of agent (see {@link SessionFacts.agentName}), which is not a task's name however much
+	 * either looks like a label, and it is not the same fact as the identity `agentId` indexes. A
+	 * display that has to name a subagent's row uses this name before the agent's own, because it
+	 * is the one fact that says which piece of work the row accounts for. Only a spawned session
+	 * has one: absent for a top-level session, and — on a host whose handle for a task *is* the
+	 * registry identity its spawn was allocated, as every surface this framework adapts reports it
+	 * — absent exactly where that identity is, which `unavailable` names in its place.
+	 */
+	readonly taskName?: string;
+	/**
 	 * The name of the agent this session runs, as its harness registers it.
 	 *
-	 * It is the harness's own display name for the agent — the same one its roster shows — which is
-	 * what lets a session the harness never gave a display name be shown by a name rather than by an
-	 * id. Absent when the harness reports none, and named in `unavailable`.
+	 * It is the harness's own name for the agent *definition* — which kind of agent this session is
+	 * (a `task`, an `explore`, a `scout`) — and so a category rather than a name for the work; and it
+	 * is what lets a session the harness never named be shown by a kind of agent rather than by an id.
+	 * Absent when the harness reports none, and named in `unavailable`.
 	 */
 	readonly agentName?: string;
 	/**
@@ -165,9 +203,25 @@ export interface SessionFacts {
 	 *
 	 * It is the harness's own handle for the agent — the id its roster, its messaging and its history
 	 * index use — and it is the fallback a display takes only when neither the session nor the agent
-	 * has a name. Absent when the harness reports none, and named in `unavailable`.
+	 * has a name. For a session an agent was spawned to run, it is also the identity that spawn was
+	 * allocated, which is the fact {@link SessionFacts.taskName} reports; absent when the harness
+	 * reports none, and named in `unavailable`.
 	 */
 	readonly agentId?: string;
+	/**
+	 * The model and effective effort this session began with, as the harness reported them on a start
+	 * that proved the session was beginning — and absent on every other delivery.
+	 *
+	 * A start proves a beginning only where the host can show that the session was not already there:
+	 * the delivery is a creation rather than a way into an existing session (no `resume`, no `fork`),
+	 * and the session's own transcript carries no conversation of its own yet. A session the harness
+	 * reloaded and re-bound — a parked subagent revived, a session re-entered in another process —
+	 * fires the same start signal as a fresh spawn while replaying the conversation it was built from,
+	 * so it reports none: what a delivery reads for it is the session's *current* model and level,
+	 * which is not what it started on. A harness that cannot show a beginning reports none either,
+	 * rather than filling the pair in from the settings in effect.
+	 */
+	readonly startup?: SessionStartup;
 	/** Every fact above this host could not obtain, named as the delivery names it. */
 	readonly unavailable: readonly string[];
 }
@@ -179,8 +233,9 @@ export interface SessionFacts {
  * or a Turn of a subagent session belongs to the owner that session follows, so a group that
  * drives an owner-scoped effect is never moved by a subagent's work. `session` — the group
  * observes every actual session the adapter reports, main or sub, with that session's own
- * identity, its direct parent and its latest name; it is the scope a per-session observation view
- * declares.
+ * identity, its direct parent, its latest name, the handle of the task it was spawned for and — on
+ * the start alone that proves the session was beginning — the model and effective effort it began
+ * on; it is the scope a per-session observation view declares.
  *
  * The two scopes share one dispatch mechanism and differ only in which deliveries a group admits.
  * Widening a subscription to `session` grants no State write and no external-effect authority:
@@ -661,14 +716,156 @@ export type TurnEventHandler = (delivery: TurnStartDelivery | TurnEndDelivery) =
 export type TurnEventHandlers = Readonly<Partial<Record<TurnEvent["kind"], TurnEventHandler>>>;
 
 /**
- * Any semantic lifecycle event the framework models: the session axis, the round axis and the
- * Turn axis.
+ * One semantic subagent-runtime fact: the execution duration a harness itself measured and
+ * reported for one subagent execution of one actual session.
  *
- * The three axes are orthogonal and never merged — entering a session is not starting work,
- * starting work does not change which session is current, and a Turn is not a Round — so this
- * union exists only where one assembly injects its handlers for all of them.
+ * It is a *fact*, never an edge, and it is deliberately not a Round edge either: an execution's
+ * duration arrives while the session it belongs to is still working — a harness reports its
+ * progress while the work runs — and the final reading arrives when the execution is over, which
+ * is not the same moment as the session's Round ending and must never be treated as one. Which
+ * readings are a replacement of an earlier reading of the same execution, which are a new
+ * execution's own contribution, and which repeat a reading already accounted are the consumer's
+ * rules; the framework carries the harness's own facts and decides nothing about them.
+ *
+ * It is also *not* the same metric as the wall-clock span a harness may persist for a session
+ * (creation to last record): that span includes the idle gaps between executions, so it can never
+ * stand in for a runtime. What crosses this seam is only what the harness itself measured for the
+ * execution it ran.
  */
-export type SemanticEvent = SessionEvent | RoundEvent | TurnEvent;
+export type SubagentRuntimeEvent = { readonly kind: "subagent_runtime" };
+
+/**
+ * The reading one subagent-runtime delivery carries, or the fact that this host produced none.
+ *
+ * `unavailable` is not an absent observation: the harness did report an execution, and the
+ * duration this host could not read, could not trust or could not attribute to a session is a
+ * fact an operator has to be told about. A reading of `0` is therefore a reading the harness
+ * really reported — a completed execution that consumed no measurable time — and never the
+ * placeholder an unavailable runtime leaves behind.
+ *
+ * Nor is `unavailable` the same fact as a reading that never arrived. A host that is still
+ * establishing the session an execution runs in has nothing to attribute the readings it publishes
+ * in that window to, so it states no delivery for them instead: the readings of an execution are
+ * cumulative, which is why the first delivery that does name a session carries the whole duration
+ * that elapsed, and why nothing an operator could have seen is lost by waiting. That window is this
+ * axis's one silence. Once an execution has been attributed, a reading of it this host can no longer
+ * attribute to a session is `unavailable` — and so is *every* reading that reports an execution
+ * over, even one published before any session was established — so an execution that was lost or
+ * that failed to settle is always named rather than quietly dropped. A consumer therefore reads the
+ * two apart: no delivery means no reading exists yet, `unavailable` means one was due and could not
+ * be produced.
+ */
+export type SubagentRuntimeFact =
+	| {
+			/** Whether this reading is a replacement of the same execution's own earlier one, or its final one. */
+			readonly kind: "reading";
+			/** The harness's own identity for the execution this reading belongs to. */
+			readonly executionId: string;
+			/** The milliseconds that execution had run when the harness reported this reading. */
+			readonly runtimeMs: number;
+			/**
+			 * Whether the harness reported the execution as over at that instant.
+			 *
+			 * A later reading of the *same* execution replaces this one; an execution this host
+			 * reports as ended only once, however many times the same completion is observed.
+			 */
+			readonly status: "running" | "ended";
+	  }
+	| {
+			readonly kind: "unavailable";
+			/** Why this host could not produce a reading, as this host states it. */
+			readonly reason: string;
+	  };
+
+/**
+ * The facts one subagent-runtime observation carries, both to the adapter's hook and to the
+ * subscribed handler.
+ *
+ * Unlike a session delivery there is no withheld half: what the adapter mapped is what a handler
+ * receives. It carries the actual session the reported execution belongs to, the owner scope it
+ * concerns, the reading, the faithful `hasUI` fact and the unified extension feedback channel —
+ * the same seams every other handler delivery carries — and no write path, because observing a
+ * runtime grants no authority over the session it belongs to.
+ */
+export interface SubagentRuntimeDelivery {
+	readonly event: SubagentRuntimeEvent;
+	/** The owner whose agent this observation concerns, as the adapter resolved it. */
+	readonly owner: OwnerReference;
+	/**
+	 * The actual session the reported execution belongs to, as the adapter resolved it.
+	 *
+	 * A reading is only ever accumulated for a session a delivery names here, and this is never
+	 * the owner above: an execution a subagent ran names the subagent's own session.
+	 *
+	 * A runtime this host could not attribute to any session — the fact is then `unavailable` —
+	 * carries the session the observation was *made* in instead, which is the session whose own
+	 * work reported the execution.
+	 */
+	readonly session: SessionFacts;
+	/** The reading, or the reason this host produced none. */
+	readonly runtime: SubagentRuntimeFact;
+	/** Whether the session this observation carries has a UI, as the adapter resolved it. */
+	readonly hasUI: boolean;
+	/** The transport this observation's extension feedback is published through. */
+	readonly feedback: FeedbackTransport;
+}
+
+/** One extension handler for one semantic subagent-runtime fact. */
+export type SubagentRuntimeEventHandler = (delivery: SubagentRuntimeDelivery) => void | Promise<void>;
+
+/** The subagent-runtime handlers one assembly injects, keyed by the event each subscribes to. */
+export type SubagentRuntimeEventHandlers = Readonly<Partial<Record<SubagentRuntimeEvent["kind"], SubagentRuntimeEventHandler>>>;
+
+/**
+ * One semantic input event: the one fact that a session took up input the harness itself attributed
+ * to the user.
+ *
+ * It is deliberately one edge and no pair. The harness publishes exactly one such fact — a
+ * submission admitted to a session — and it publishes it before it decides what the submission is,
+ * so an ordinary prompt, a queued steer, a follow-up and a user-invoked skill are the same fact
+ * here. Nothing about the text, the images or what the submission turned out to be is part of it:
+ * those are the harness's own material, and the fact a consumer acts on is only that the user, and
+ * not the agent, put something in. Input an extension itself submits is not this fact.
+ */
+export type UserInputEvent = { readonly kind: "user_input" };
+
+/**
+ * The facts one user-input edge carries, both to the adapter's hook and to the subscribed handler.
+ *
+ * Like a round edge it has nothing an extension may not see, so there is no withheld half: the edge
+ * itself, the session it belongs to (a subagent's submission names the subagent, never its owner
+ * above it), the owner scope it concerns, the faithful `hasUI` fact and the unified extension
+ * feedback channel.
+ *
+ * It carries no instant, because the harness publishes none: when the fact is observed is the
+ * observer's own fact, exactly as it is for every other harness fact.
+ */
+export interface UserInputDelivery {
+	/** The edge itself: that this session took up user input. */
+	readonly event: UserInputEvent;
+	/** The owner whose agent this submission concerns, as the adapter resolved it. */
+	readonly owner: OwnerReference;
+	/** The actual session the submission was admitted to: its identity, direct parent and latest name. */
+	readonly session: SessionFacts;
+	/** Whether the session this submission belongs to has a UI, as the adapter resolved it. */
+	readonly hasUI: boolean;
+	/** The transport this edge's extension feedback is published through. */
+	readonly feedback: FeedbackTransport;
+}
+
+/** One extension handler for one semantic input edge. */
+export type UserInputEventHandler = (delivery: UserInputDelivery) => void | Promise<void>;
+
+/**
+ * Any semantic lifecycle event the framework models: the session axis, the round axis, the Turn
+ * axis, the subagent-runtime axis and the input axis.
+ *
+ * The axes are orthogonal and never merged — entering a session is not starting work, starting
+ * work does not change which session is current, a Turn is not a Round, an execution's own
+ * duration is not the session's span nor the end of a Round, and input arriving is not itself
+ * work — so this union exists only where one assembly injects its handlers for all of them.
+ */
+export type SemanticEvent = SessionEvent | RoundEvent | TurnEvent | SubagentRuntimeEvent | UserInputEvent;
 
 /** The delivery each semantic event kind carries, so a handler's kind and its facts stay paired. */
 export interface SemanticEventDeliveryMap {
@@ -680,22 +877,27 @@ export interface SemanticEventDeliveryMap {
 	readonly round_end: RoundDelivery;
 	readonly turn_start: TurnStartDelivery;
 	readonly turn_end: TurnEndDelivery;
+	readonly subagent_runtime: SubagentRuntimeDelivery;
+	readonly user_input: UserInputDelivery;
 }
 
 /**
  * The semantic handlers one assembly injects for one subscription group, keyed by the event each
  * subscribes to.
  *
- * This is the whole handler surface of one group: the session axis, the round axis and the Turn
- * axis arrive here together, exactly as a directed command's implementations arrive through
- * `CommandActions`. A definition stays plain data either way: it names no handler, and an event
- * kind with no entry subscribes nothing.
+ * This is the whole handler surface of one group: the session axis, the round axis, the Turn axis
+ * and the subagent-runtime axis and the input axis arrive here together, exactly as a directed
+ * command's implementations arrive through `CommandActions`. A definition stays plain data either
+ * way: it names no handler, and an event kind with no entry subscribes nothing.
  *
  * The session axis is a *reconciliation* trigger as well as a subscription — the framework
- * applies its own behavior for every delivery whether or not a handler arrived — while the round
- * and Turn axes are subscription only: three-value agent state is not framework State (contract
- * P6), and a Turn changes nothing the framework owns beyond the identity bookkeeping it does
- * before a handler runs. A `session_facts` delivery is subscription only as well, because a
+ * applies its own behavior for every delivery whether or not a handler arrived — while the round,
+ * Turn, subagent-runtime and input axes are subscription only: three-value agent state is not
+ * framework State (contract P6), a Turn changes nothing the framework owns beyond the identity
+ * bookkeeping it does before a handler runs, an execution's own duration changes nothing the
+ * framework owns at all — it is the extension's business to accumulate and to persist with its own
+ * next commit — and a user input crosses no boundary at all: it is a fact about the session, not a
+ * transition of it. A `session_facts` delivery is subscription only as well, because a
  * session whose facts were re-reported crossed no boundary: nothing of the framework's moves, so
  * its own behavior is skipped and only the handlers that subscribe to that kind are reached.
  *
@@ -1216,6 +1418,34 @@ export interface HarnessPort {
 	 * maps the request hook, the response-boundary hook and the finalized assistant message.
 	 */
 	onTurn(handler: (facts: TurnSignalFacts) => void): void;
+	/**
+	 * Registers the framework's subagent-runtime hook: one observation per native execution-duration
+	 * reading the adapter mapped, for the session this binding serves.
+	 *
+	 * The hook reports the harness's own measurement of one *execution* — a subagent's own run, whose
+	 * duration the harness states while it is running and once it is over — together with the actual
+	 * session that execution belongs to. It is neither a Round edge nor a Turn, the final reading of
+	 * an execution is not the end of the session's Round, and a session's persisted wall-clock span
+	 * is a different metric that must never be reported here in a runtime's place. An adapter that
+	 * cannot read the duration, or cannot attribute the execution to a session, reports that fact
+	 * rather than dropping the observation or reporting a zero.
+	 */
+	onSubagentRuntime(handler: (delivery: SubagentRuntimeDelivery) => void): void;
+	/**
+	 * Registers the framework's input hook: one delivery per submission the harness itself
+	 * attributed to the user and admitted to the session this binding serves.
+	 *
+	 * It is a fact and not an edge: a submission crosses no boundary, so nothing about the session's
+	 * axis or its work moves with it, and a harness that publishes no such fact reports none rather
+	 * than having the framework infer one from activity. Input is reported *before* the submission
+	 * has been decided to be anything else — a prompt, a queued steer, a command the harness handles
+	 * itself, a user-invoked skill — so a fact that turns out to be none of a consumer's business is
+	 * still reported, and nothing here filters on the submission's text or on its source beyond the
+	 * one distinction the delivery states: whether the *user* submitted it.
+	 *
+	 * The adapter owns that distinction, because only the harness's own event carries it.
+	 */
+	onUserInput(handler: (delivery: UserInputDelivery) => void): void;
 	/**
 	 * The harness's own model prices, when its adapter can report them.
 	 *

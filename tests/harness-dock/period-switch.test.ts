@@ -171,6 +171,12 @@ function documentOf(file: string): Record<string, unknown> {
 	return JSON.parse(readFileSync(file, "utf8")) as Record<string, unknown>;
 }
 
+/** Every session record one parsed document holds, whichever harness bucket carries it. */
+function sessionsOf(document: Record<string, unknown>): Record<string, unknown>[] {
+	const harnesses = document.harnesses as Record<string, { readonly sessions: Record<string, unknown>[] }> | undefined;
+	return Object.values(harnesses ?? {}).flatMap(bucket => bucket.sessions);
+}
+
 /** The archive files one run's storage root holds, by name. */
 function archiveNames(storageDirectory: string): string[] {
 	const directory = path.join(storageDirectory, ARCHIVE_DIRECTORY);
@@ -213,6 +219,14 @@ describe("the real host's period switch archives the period it closes and opens 
 			const before = await savedText(run.consumptionFile, text => text.includes("\"own\""));
 			const previous = JSON.parse(before) as Record<string, unknown>;
 			expect(previous.periodId).toBe(START_PERIOD);
+			// The period the switch closes holds its own time: this run's own submission as the start, and
+			// the last Turn's own settle as the end, carried by the commit the Round end made.
+			const [priorRecord] = sessionsOf(previous);
+			const priorSpan = priorRecord?.span as { readonly start?: number; readonly end?: number } | undefined;
+			if (typeof priorSpan?.start !== "number" || typeof priorSpan.end !== "number") {
+				throw new Error(`the closed period's own record carries no span: ${JSON.stringify(priorRecord)}`);
+			}
+			expect(priorSpan.end).toBeGreaterThanOrEqual(priorSpan.start);
 			// The CLI's own startup prefetch is the only balance query so far.
 			expect(run.capture.balanceCalls()).toHaveLength(1);
 
@@ -249,6 +263,9 @@ describe("the real host's period switch archives the period it closes and opens 
 				harnesses: {},
 			});
 			expect(opened.periodId).not.toBe(START_PERIOD);
+			// The period's own time goes with the period it belonged to: the new activity holds no session
+			// at all, so nothing of the closed period's span is in it.
+			expect(sessionsOf(opened)).toEqual([]);
 			// The boundary read really left the process: one more balance query on the provider's own path.
 			const calls = run.capture.balanceCalls();
 			expect(calls.length).toBeGreaterThanOrEqual(2);

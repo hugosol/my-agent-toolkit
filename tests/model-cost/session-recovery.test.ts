@@ -102,6 +102,21 @@ function oneRequest(count: number): OwnConsumption {
 	};
 }
 
+/** The amount the same usage costs at the data's own `beta` price: (2·10 + 4·1 + 3·20) / 1e6. */
+const BETA_OFF_PEAK_AMOUNT = 0.000084;
+
+/** The same one request's accounting when the session runs on that other monetary model. */
+function oneBetaRequest(count: number): OwnConsumption {
+	return {
+		[PROVIDER]: {
+			"model-beta": {
+				tokens: { input: 2 * count, cacheRead: 4 * count, cacheWrite: 5 * count, output: 3 * count },
+				costCny: BETA_OFF_PEAK_AMOUNT * count,
+			},
+		},
+	};
+}
+
 /** One Turn signal pair's facts, as an adapter maps them. */
 function startedAt(session: SessionFacts, at: number, provider = PROVIDER, model = MODEL): TurnSignal {
 	return { kind: "request_started", session, at, provider, model };
@@ -385,6 +400,214 @@ describe("a fork is its own session from zero, and its source is untouched (P19)
 		});
 		expect(recordOf(document, MAIN.sessionId)).toEqual(sourceRecord);
 		expect(sessionsOf(document)).toHaveLength(2);
+	});
+});
+
+describe("a spawned session's startup facts ride its consumption commits (P19, P27, P28)", () => {
+	/** The handle the spawned session's task was allocated, and the facts its start reports. */
+	const SPAWNED_NAME = "检索定价";
+	const SPAWNED: SessionFacts = {
+		sessionId: "session-spawned",
+		kind: "sub",
+		parentSessionId: MAIN.sessionId,
+		agentName: "task",
+		agentId: SPAWNED_NAME,
+		taskName: SPAWNED_NAME,
+		unavailable: [],
+	};
+	const SPAWNED_STARTUP = { model: { provider: PROVIDER, model: MODEL }, effort: "high" };
+
+	/** One start delivery for that session, carrying the facts this process read at its start. */
+	function announceStart(
+		double: PortDouble,
+		startup: { readonly model: { readonly provider: string; readonly model: string }; readonly effort?: string },
+	): void {
+		double.deliverSession(OWNER, {
+			event: { kind: "session_start", reason: "initial" },
+			session: { ...SPAWNED, startup, unavailable: [] },
+		});
+	}
+
+	/**
+	 * One start delivery of a session this process only recovered: the harness re-bound the extension
+	 * to a session it reloaded — a parked subagent revived, a session entered again in a second
+	 * process — so the delivery proves nothing about what that session began on and carries no
+	 * startup facts at all. The model and the level it runs now are what its own bindings read, which
+	 * is where they belong.
+	 */
+	function announceRecovery(double: PortDouble): void {
+		double.deliverSession(OWNER, {
+			event: { kind: "session_start", reason: "initial" },
+			session: { ...SPAWNED, unavailable: ["session name"] },
+		});
+	}
+
+	/** One request of a session on the data's other monetary model: what a later setting runs on. */
+	function deliverCurrentRequest(double: PortDouble, session: SessionFacts): void {
+		double.deliverTurn(startedAt(session, OFF_PEAK_START, PROVIDER, "model-beta"), { owner: OWNER });
+		double.deliverTurn(settled(session, OFF_PEAK_START + 60_000), { owner: OWNER });
+	}
+
+	test("the snapshot is saved with the session's own consumption and never rewritten", async () => {
+		const root = freshRoot();
+		const first = await bindAccounting(root);
+		// The session's own binding announces its start before it works: the model it began on and the
+		// level it really runs — the level the host resolved, never the configured selector behind it.
+		announceStart(first.double, SPAWNED_STARTUP);
+		await recordOneRequest(first, SPAWNED);
+		const saved = await savedDocument(first.file, document => recordOf(document, SPAWNED.sessionId) !== undefined);
+
+		// The snapshot travels with that consumption rather than through a write of its own: the record is
+		// the session's own, named by the handle its task was given, and carries the startup facts beside
+		// its usage. The root holds the one document and no second file for them.
+		expect(recordOf(saved, SPAWNED.sessionId)).toEqual({
+			id: SPAWNED.sessionId,
+			name: SPAWNED_NAME,
+			parent: MAIN.sessionId,
+			startup: SPAWNED_STARTUP,
+			saveVersion: 1,
+			own: oneRequest(1),
+		});
+		expect(readdirSync(root).filter(name => name.endsWith(".json"))).toEqual([CONSUMPTION_FILE]);
+
+		// The session then runs on another model at another level, and a follow-up execution announces its
+		// start again. What it began on does not move: the second commit carries the same snapshot beside
+		// the consumption it added, and no combination of models or levels is kept anywhere.
+		announceStart(first.double, { model: { provider: PROVIDER, model: "model-beta" }, effort: "medium" });
+		expect(first.runtime.view.startup(SPAWNED.sessionId)).toEqual(SPAWNED_STARTUP);
+		await recordOneRequest(first, SPAWNED);
+		const next = await savedDocument(first.file, document => recordOf(document, SPAWNED.sessionId)?.saveVersion === 2);
+		expect(recordOf(next, SPAWNED.sessionId)).toEqual({
+			id: SPAWNED.sessionId,
+			name: SPAWNED_NAME,
+			parent: MAIN.sessionId,
+			startup: SPAWNED_STARTUP,
+			saveVersion: 2,
+			own: oneRequest(2),
+		});
+	});
+
+	test("a new process restores the saved snapshot and draws it on that session's row (P19)", async () => {
+		const root = freshRoot();
+		const first = await bindAccounting(root);
+		announceStart(first.double, SPAWNED_STARTUP);
+		await recordOneRequest(first, SPAWNED);
+		// The session that spawned it has its own record too, which is what makes it the root of the tree
+		// the display is asked for below.
+		await recordOneRequest(first, MAIN);
+		await savedDocument(
+			first.file,
+			document =>
+				recordOf(document, SPAWNED.sessionId) !== undefined && recordOf(document, MAIN.sessionId) !== undefined,
+		);
+
+		// The process ends and an independent one starts over the same root. It observed no start of this
+		// session at all, so what it answers — and what its detail tree draws — is only what the document
+		// recorded: the same model and level, under the same name and direct parent.
+		const second = await bindAccounting(root);
+		expect(second.runtime.view.startup(SPAWNED.sessionId)).toEqual(SPAWNED_STARTUP);
+		expect(second.runtime.view.identity(SPAWNED.sessionId)).toEqual({
+			sessionId: SPAWNED.sessionId,
+			name: SPAWNED_NAME,
+			parentSessionId: MAIN.sessionId,
+		});
+		const rows =
+			second.runtime.presentation.of({ sessionId: MAIN.sessionId, provider: PROVIDER, model: MODEL }).agentTree ?? [];
+		expect(rows.find(row => row.name === SPAWNED_NAME)?.startup?.text).toBe(`${PROVIDER}/${MODEL}(high)`);
+	});
+
+	test("a document written before the snapshot existed keeps its consumption and keeps committing (P22)", async () => {
+		const root = freshRoot();
+		// The record an earlier version of this extension wrote: a name, a direct parent and usage, and
+		// no startup facts at all.
+		const baseline: ConsumptionDocument = {
+			schemaVersion: 1,
+			periodId: "period-one",
+			start: "2026-10-01T00:00:00.000Z",
+			holiday: false,
+			harnesses: {
+				[HARNESS]: {
+					sessions: [
+						{
+							id: SPAWNED.sessionId,
+							name: SPAWNED_NAME,
+							parent: MAIN.sessionId,
+							saveVersion: 1,
+							own: oneRequest(1),
+						},
+					],
+				},
+			},
+		};
+		const first = await bindAccounting(root, baseline);
+
+		// The missing fields are not a damaged document: the record's own consumption and relations are
+		// loaded as they were, and nothing about them is unknown.
+		expect(first.runtime.view.own(SPAWNED.sessionId)).toEqual(oneRequest(1));
+		expect(first.runtime.view.startup(SPAWNED.sessionId)).toBeUndefined();
+
+		// The session reports its start while it runs — the harness re-bound the extension to a session
+		// it reloaded, so this delivery proves nothing about what it *began* on and carries no startup
+		// facts, only the identity it was already known by. The commit therefore continues the record
+		// exactly as it was: the same name, the same direct parent, its consumption plus the new
+		// request, and no snapshot filled in from what happens to run today.
+		announceRecovery(first.double);
+		await recordOneRequest(first, SPAWNED);
+		const saved = await savedDocument(first.file, document => recordOf(document, SPAWNED.sessionId)?.saveVersion === 2);
+		expect(recordOf(saved, SPAWNED.sessionId)).toEqual({
+			id: SPAWNED.sessionId,
+			name: SPAWNED_NAME,
+			parent: MAIN.sessionId,
+			saveVersion: 2,
+			own: oneRequest(2),
+		});
+		expect(first.runtime.view.startup(SPAWNED.sessionId)).toBeUndefined();
+		expect(readdirSync(root).filter(name => name.endsWith(".json"))).toEqual([CONSUMPTION_FILE]);
+	});
+
+	test("a recovered session the document never recorded keeps its startup unknown, whatever it runs now (P29)", async () => {
+		const root = freshRoot();
+		// The document this instance loads holds the main session's own record alone: nothing about this
+		// subagent's startup was ever recorded, and simply having no record of it is no proof that the
+		// process just watched it begin.
+		const baseline: ConsumptionDocument = {
+			schemaVersion: 1,
+			periodId: "period-one",
+			start: "2026-10-01T00:00:00.000Z",
+			holiday: false,
+			harnesses: {
+				[HARNESS]: {
+					sessions: [
+						{ id: MAIN.sessionId, name: MAIN_NAME, parent: null, saveVersion: 1, own: oneRequest(1) },
+					],
+				},
+			},
+		};
+		const first = await bindAccounting(root, baseline);
+
+		// The harness recovered that session into this process — a parked subagent revived, a session
+		// entered again — and the session's own branch already carries the conversation it was built
+		// from. Neither the delivery nor the document proves what it began on, so nothing is filled in:
+		// the model it happens to run now is not a startup fact.
+		announceRecovery(first.double);
+		expect(first.runtime.view.startup(SPAWNED.sessionId)).toBeUndefined();
+
+		// It works on the model this process's own settings resolve now, at the level the harness
+		// answers for it, and the commit that follows carries the consumption alone: the record holds
+		// no snapshot, exactly as no reading of it proved one, and no write of its own was added.
+		deliverCurrentRequest(first.double, SPAWNED);
+		deliverRound(first.double, SPAWNED, "round_start");
+		deliverRound(first.double, SPAWNED, "round_end");
+		const saved = await savedDocument(first.file, document => recordOf(document, SPAWNED.sessionId) !== undefined);
+		expect(recordOf(saved, SPAWNED.sessionId)).toEqual({
+			id: SPAWNED.sessionId,
+			name: SPAWNED_NAME,
+			parent: MAIN.sessionId,
+			saveVersion: 1,
+			own: oneBetaRequest(1),
+		});
+		expect(first.runtime.view.startup(SPAWNED.sessionId)).toBeUndefined();
+		expect(readdirSync(root).filter(name => name.endsWith(".json"))).toEqual([CONSUMPTION_FILE]);
 	});
 });
 

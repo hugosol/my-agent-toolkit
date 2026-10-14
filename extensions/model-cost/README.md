@@ -1,8 +1,9 @@
 # modelCost
 
 The consumption widget and the `/budget` command for an `omp` session: per-request cost anchored at
-the request's own peak/off-peak price, session and round totals, the independent Codex allowance
-estimate and the provider balance reading. The declaration is [`definition.ts`](definition.ts), the
+the request's own peak/off-peak price, session and round totals, each subagent session's own
+accumulated native runtime, the independent Codex allowance estimate and the provider balance
+reading. The declaration is [`definition.ts`](definition.ts), the
 business rules are under [`shared-logic/`](shared-logic), the OMP assembly is
 [`harnesses/omp.ts`](harnesses/omp.ts), the operator surfaces are documented by
 [`GLOSSARY.md`](GLOSSARY.md), and the maintained model/price data is documented in
@@ -18,6 +19,31 @@ business rules are under [`shared-logic/`](shared-logic), the OMP assembly is
 
 Those suites are the agent's evidence. They are not an acceptance: what a real account reports and
 what a real TUI draws are human-only, and nothing in this repository claims either.
+
+## Timing and detail behavior
+
+- The main session's span runs from its first user input in the accounting period to the latest
+  framework `turn_end`, regardless of success, failure or cancellation. It refreshes while a Round
+  is still open, excludes the tool tail after that response, and stays fixed between Turn ends.
+  Consumption still saves through the existing `round_end` path; time changes add no writes.
+- On OMP, startup progress before the real child Session is attached produces no runtime delivery
+  or timing error. Once the adapter can resolve the actual Session identity, the next valid native
+  progress supplies its full execution duration; no synthetic `0ms` or public ready event is added.
+  Existing cumulative runtime is retained. Invalid readings after readiness and unresolved terminal
+  executions remain errors rather than being silently discarded.
+- `/budget detail` combines each child's startup snapshot as `provider/model(effort)`, for example
+  `deepseek/deepseek-flash(high)`, without `Model:` or `Effort:` labels. Unknown facts remain `?` and
+  a reported `off` remains `off`. Same-depth rows retain aligned columns; model abbreviation keeps
+  the effort suffix where it fits, with the existing wrapping and final clipping at extreme widths.
+
+Verification of these updates: the startup-progress replay reproduced three unattributable creation
+readings before the fix, then passed the creation, first-attributed-reading and post-readiness-loss
+checks after it. The framework/model-cost partitions passed 731 tests, and the four affected real-host
+dock files passed 11 tests. The production layout smoke passed at 160/120/85/60/40 columns; the Windows
+console-device smoke passed all 44 checks at 120/85/60/40/120 columns, including resize, Chinese cell
+widths, retained figures and unchanged storage. Final integration passed `bun run typecheck` and
+`bun run test` (983 tests across 106 files, no failures). These observations do not certify a real provider
+account or replace the human readability judgement below.
 
 ## Human acceptance
 
@@ -58,17 +84,31 @@ real value" from "unavailable".
 
 | promise | what to watch in the real TUI | prepared expectation (recorded with the migration; not yet observed) |
 | --- | --- | --- |
-| P11 | Effort shows the level the request really ran with (not the configured intent), and a subagent's own view shows that subagent's level; an unreadable level is `?` | Focus a subagent spawned by a real `task` call: its own Effort (the level the host's own status line reports for it), its own context bar and its own current-model fields are the three things that must switch; the tree `Sum`/`Cost`/`Ref` must not move. Changing the subagent's thinking level updates Effort with no new model request; returning to the main session restores its values. Recorded RPC cross-checks: the shown Effort equals the host's own `thinkingLevel`; the current-model fields switch from `Cache: 67%  ¥Cache/In/Out：4:7:89` (main) to `Cache: 40%` (subagent) while `Sum: 6,100  Cost: ¥0.05` stays untouched. |
-| P23 | `/budget detail` shows the Total block plus the static agent tree with a row per session and its own model — each row named by its session name, else its agent's own name, and only by an id when neither was reported — each subagent row beside its own current context (`Ctx: percent (tokens/budget)`, read against that channel's fixed display budget), and no `Round:` row | `/budget detail` keeps the context bar and the `Total:` line byte-identical, then replaces the Round rows with the static tree: the root name alone, a `│  provider / model` model row per model the root itself consumed (carrying that model's own fields; session rows carry no single-model ratio), and one `├─`/`└─`-indented row per own session. Recorded dock example (Main 6,000 tokens / `Cost: ¥0.01`; child 3,000 / `¥0.0050`; tree 9,000 / `¥0.02`): `dock-detail-main` / `│  deepseek / deepseek-flash  Cache: 50%  ¥Cache/In/Out：0:20:80  Sum: 6,000  Cost: ¥0.01` / `└─ <child agent name>  Cache: 50%  Sum: 3,000  Cost: ¥0.0050`. |
-| P26 | Viewing a subagent shows that subagent's own context and Round in the fixed brief form; moving back restores the main preference | Focus a subagent: it must show the fixed brief form — its own Effort, context, current-model fields and its own Round — with no tree; `Sum`/`Cost`/`Ref` remain the whole main tree. Returning to the main session restores the detail tree, and a subagent row reflects consumption recorded while you were away; `/budget detail` typed while focused only flips the entry preference, visible after returning; restarting the CLI returns to brief. |
+| P11 | Effort shows the level the request really ran with (not the configured intent), and a subagent's own view shows that subagent's level; an unreadable level is `?` | Focus a subagent spawned by a real `task` call: its own Effort (the level the host's own status line reports for it), its own context bar and its own current-model fields are the three things that must switch; the tree `Cost`/`Ref` must not move (the `Sum` column this round was recorded with is gone — no row writes it any more). Changing the subagent's thinking level updates Effort with no new model request; returning to the main session restores its values. Recorded RPC cross-checks: the shown Effort equals the host's own `thinkingLevel`; the current-model fields switch from `Cache: 67%  ¥Cache/In/Out：4:7:89` (main) to `Cache: 40%` (subagent) while `Sum: 6,100  Cost: ¥0.05` stays untouched. |
+| P10, P18, P19 | A subagent's own row states the runtime the host itself measured for that session's executions — the harness's native per-execution duration accumulated over the accounting period, saved beside that session's consumption as a number of milliseconds, neither a stopwatch of the extension's own nor the hub's creation-to-last-record span; a session nothing measured states `—` and a session whose execution really measured zero states `0ms` | After a real `task` call, `/budget detail` ends each child's row with `Run: <duration>` (milliseconds under a second, then `s`, `m` and `h`) while the root's own model row carries no such field, and a child whose host reported no duration keeps `Run: —` rather than a zero or a span. Focus, restart and resume the session, open the detail form again: the row still states what the document holds, no execution is charged twice, and a further spawn of that session adds only its own duration. Recorded dock cross-checks: a real delegating run's child record carried 754 ms — the host's own `durationMs` for that spawn, read back from the document as a number — with the main session's record carrying none, and a second process over the same storage drew that same figure rather than twice it. Restarting is judged by the row, not by a screenshot. |
+| P23 | `/budget detail` shows the Total block plus the static agent tree with a row per session and its own model — each row named by its session name, else the task handle its spawn was given, else the name the document holds, else its agent's own name (a category), and only by an id when nothing else named it — each subagent row beside the model and effective level that session *began* on (`provider/model(level)`, each `?` when nothing proved it), its own current context (`Ctx: percent (tokens/budget)`, read against that channel's fixed display budget) and its own statistics without the cached share of its conversation input, with the name of a session that is *working* right now drawn in the theme's activity colour, and no `Round:` row | `/budget detail` keeps the context bar and the `Total:` line byte-identical, then replaces the Round rows with the static tree: the root name alone, a `│  provider / model` model row per model the root itself consumed (carrying that model's own fields; session rows carry no single-model ratio and no cached share of their own), and one `├─`/`└─`-indented row per own session. Recorded dock example (Main 6,000 tokens / `Cost: ¥0.01`; child 3,000 / `¥0.0050`; tree 9,000 / `¥0.02`): `dock-detail-main` / `│  deepseek / deepseek-flash  Cache: 50%  ¥Cache/In/Out：0:20:80  Sum: 6,000  Cost: ¥0.01` / `└─ dock-detail-child  Model: deepseek / deepseek-flash  Effort: <resolved level>  Cache: 50%  Sum: 3,000  Cost: ¥0.0050`. |
+| P26 | Viewing a subagent shows that subagent's own context and Round in the fixed brief form; moving back restores the main preference | Focus a subagent: it must show the fixed brief form — its own Effort, context, current-model fields and its own Round — with no tree; `Cost`/`Ref` remain the whole main tree (no row writes the `Sum` column the earlier round was recorded with). Returning to the main session restores the detail tree, and a subagent row reflects consumption recorded while you were away; `/budget detail` typed while focused only flips the entry preference, visible after returning; restarting the CLI returns to brief. |
 | P27 | The one marker line follows the session you are viewing (main ↔ subagent), and viewing never grants write authority | With two marker fixtures (`◈ followMarker` = follow, `◐ noneMarker` = none) enabled in the main session: the main view shows both lines sorted by id inside the one framework marker area; focusing the subagent shows only the follow row, reading the owner's current value live (turning the follow extension off while focused removes the row); losing the view target falls back to the main session and both lines return. Viewing never grants write authority, and the main area is never blanked by the subagent's own publication — the delegation regression the recorded run fixed. |
+| P30–P33 | The detail tree lines one depth group up: the fields a row states start at the same terminal column on every row of that depth, whatever the rows' name lengths, their parents, or the fields one of them has none of, and each depth has columns of its own | `/budget detail` with a Chinese-named child and an ASCII-named child at one depth and a grandchild under each: the combined startup snapshot and `Cost:`/`Ctx:`/`Run:` columns of a depth start at the same terminal column on every row of it and at a different one at the other depth (the cached share is the root's own model rows' column, not a session depth's); a row with no amount, no context reading or no runtime leaves that column's blanks in place instead of pulling the fields after it left. Narrowing the window cuts a long name or model with `…` and, narrower still, wraps the whole group at one break — every line still starts its fields at the group's own columns and none overruns the width, and drawing the original width again answers it again. Prepared evidence: `bun run smoke:model-cost-detail-layout` prints those frames with each line's display width and each field's observed column at 160/120/100/80/60/40 columns and checks them, `tests/model-cost/detail-layout.test.ts` covers the columns, the slots, the Chinese widths, the cuts, the wraps and the resize, and the whole names, models and figures are read back from the display result and the document. Only `…`'s and the wrap's readability is this round's own judgement. |
 | P41 | Crossing a peak/off-peak boundary — and the holiday marker on the first holiday period — redraws the block once, with no request issued | At a Beijing-time peak/off-peak boundary — and on the first holiday period — the marker and the whole block redraw once, and the boundary itself issues no request. Recorded automatic cross-checks: one one-shot timer per UI process; the boundary is endpoint-inclusive (12:00:00.000 is still peak, so the next change answers 12:00:00.001); after a sleep or block it re-arms from the actual clock; holiday periods do not arm; no UI does not arm; the callback touches no network, file or ledger. |
 | P67 | The approved visual form: the old single monetary account row (season marker, bar bands, `💰 Balance:` and `Accrued` segment colours together), the balance warning thresholds (a token-only or allowance view draws no balance at all), Codex pacing rows, and the four-step narrow-width degradation | One monetary account row: season marker + budget bar + `Effort:` + `💰 Balance:` + `⏳ Accrued:` (with its segment bar) on a single line — the form restored after the H1 review feedback of 2026-10-14 rejected the split balance/accrued rows — then `Total:` and, in detail, the tree. A token-only or allowance view draws no balance and no accrued row. Thresholds and colours: budget bands `<36%` dim / `36–63%` success / `64–81%` warning / `≥82%` error; balance `<5` error / `5–9.99` warning / `≥10` plain; accrued fine blocks ≤ ¥20 (5-fen granularity) and coarse > ¥20 (¥1) with the eight-colour cycle; Effort colours only the value, via the host theme. Codex 5h row narrow-width degradation: 200 → 20-cell bar + time marker + `85.0% / 80.0% · resets in 1h (dd/HH:MM)`; 50 → `5h 85.0% / 80.0% · resets in 1h (dd/HH:MM)`; 40 → `5h 85.0% / 80.0% · resets in 1h`; 20 → `5h 85.0% / 80.0%`; 10 → `5h 85.0% …`. Host-theme colours, fonts and the real narrow-width rendering are the remaining visual judgement. |
 
-No screenshot or recording could be produced in the agent's environment (no interactive TUI), so
-this round is judged from what you see — that limitation is recorded rather than worked around.
-Everything above is prepared material, not a result: P11, P23, P26, P27, P41 and P67 stay
-unverified until you record this round.
+No screenshot or recording could be produced in the agent's environment, and what was measured there
+was read through the console's own API rather than looked at: this round's rows are still judged from
+what you see, and the limitation is recorded rather than worked around. Everything above is prepared
+material, not a result: P10, P11, P18, P19, P23, P26, P27, P41 and P67 stay unverified until you
+record this round. Of P30–P33 only the readability of an abbreviation and of a wrapped group is yours
+to judge: their column alignment, their reserved slots, their measurement of Chinese names in terminal
+columns, their cuts, their wraps and their resize are checked by `tests/model-cost/detail-layout.test.ts`
+and by two smokes — `bun run smoke:model-cost-detail-layout`, which measures the lines the frontend
+hands a host, and `bun run smoke:model-cost-detail-layout-terminal`, which draws those lines on a real
+Windows console and reads the *device's* own cells back: the column each field landed in, the colour
+each cell carries, the width the console states after a resize, and the Chinese names measured in the
+cells the console spends on them. A recorded run of the latter at 120, 100, 60 and 120 columns — once
+through a headless ConPTY session resized by its client, once in a Windows Terminal window — passed
+all 36 of its checks and left the stored document untouched. Run it in your own terminal — it resizes
+the console itself and redraws at each width — beside `bun run smoke:model-cost-data`, the heavier
+smoke recorded with this migration.
 
 ### H2 — a real provider's effect
 

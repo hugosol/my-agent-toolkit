@@ -30,9 +30,10 @@
  *   than dropping the fields. Nothing here re-prices an amount that was already accounted.
  * - **Text.** Token counts, the two currency amounts and a ratio's percentages format here, so the
  *   total and Round lines of every channel read alike; a native frontend adds layout, color and the
- *   widget around them. A scope that has measured nothing at all writes a dash for its cache rate,
- *   its Sum and any amount or ratio field its channel displays, so initialization keeps the row's
- *   fields rather than showing zeros it cannot vouch for.
+ *   widget around them. A scope that has measured nothing at all writes a dash for its cache rate
+ *   and any amount or ratio field its channel displays, so initialization keeps the row's fields
+ *   rather than showing zeros it cannot vouch for. The four buckets' own total is what tells that
+ *   empty scope from a measured one, and it is no longer a field any row writes (P23).
  * - **The form.** The entry's own display preference (`display-preference.ts`) decides which of the
  *   two forms a display result is drawn in, and a subagent's target answers the brief whatever that
  *   preference is: the detail form belongs to the main session, which is the session whose own
@@ -40,12 +41,22 @@
  * - **The Rounds.** One Round row is read from the same in-memory snapshots every other Round read
  *   uses: the open Round once it holds an addition of its own, otherwise the last one this instance
  *   saw end between two of its own boundaries — a Round that only began does not replace the previous
- *   reading with zeroes. It carries the target's current-model structure beside that Round's own Sum,
- *   Cost and Ref; a boundary pair this instance does not hold writes no Round at all.
+ *   reading with zeroes. It carries the target's current-model structure beside that Round's own Cost
+ *   and Ref; a boundary pair this instance does not hold writes no Round at all.
  * - **The agent tree.** The detail form's rows are derived from the relations and own accumulations
  *   this instance already holds: the root by name, its own provider/model pairs one row each, and one
  *   row per descendant session's own accumulation, each with its distance from the root. No inclusive
- *   figure, aggregate node or per-agent query is added, and a model row is never an agent node.
+ *   figure, aggregate node or per-agent query is added, and a model row is never an agent node. A
+ *   descendant's own row states the consumption it accumulated without the cached-share column the
+ *   model rows and the Total keep, and it carries the row's own name emphasis while that session is
+ *   working — see **The activity** below.
+ * - **The activity.** The rows a descendant's name is emphasised against are the per-session activity
+ *   readings the framework's own Round edges moved (`session-activity.ts`): a session whose Round is
+ *   open is working, and one whose Round has ended is idle — the same reading for a subagent as for
+ *   the main session. Only `working` is emphasised: an idle reading, and a session no edge has moved,
+ *   both leave the name plain, because an unestablished activity is not idleness. Which of a
+ *   frontend's own colours expresses it is that frontend's; that the row *is* emphasised is decided
+ *   here.
  * - **The allowance windows.** The Codex 5h/7d readings are provider-account facts rather than parts
  *   of a target's consumption, so they are read beside the target instead of inside it, and what this
  *   seam adds to them is the state their reported reset instant has at the moment of reading.
@@ -71,8 +82,10 @@ import { type ModelPricingData, classify } from "../model-data";
 import type { ProviderBalance, ProviderBalanceResult } from "../provider-balance";
 import { type Season, nextSeasonChange, seasonAt } from "../request-price";
 import type { ConsumptionView, SessionIdentity } from "../request-accounting";
+import type { SessionSpanReading } from "../session-span";
 import type { DisplayForm, DisplayPreference } from "./display-preference";
 import type { SessionContextReading } from "./session-context";
+import type { SessionActivityReading } from "./session-activity";
 
 /** The accounting channel a display target's model belongs to, as the maintained data classifies it. */
 export type ConsumptionMode = "monetary" | "allowance" | "token-only" | "hidden";
@@ -121,10 +134,27 @@ export interface ReferenceRatio {
 export interface ConsumptionFields {
 	/** The four reported token buckets. */
 	readonly tokens: TokenBuckets;
-	/** Every bucket added up. */
+	/**
+	 * Every bucket added up.
+	 *
+	 * No row writes it any more (P23): the display's columns are the cache rate, the ratio field and
+	 * the amounts, and the total survives as the fact the cache column's own dash rule reads — a scope
+	 * that has measured no token at all shows a dash rather than a rate.
+	 */
 	readonly sum: number;
 	/** Cached share of the conversation input, as a whole percent; absent when no input was read or written. */
 	readonly cacheHitRate?: number;
+	/**
+	 * Whether a row writing these fields writes the cached-share column as well.
+	 *
+	 * Omitted means it does, and that is every scope but one: the detail form's *session* rows state
+	 * `false`, because the subagent list is read for what each session consumed rather than for the
+	 * cached share of that session's own conversation input. The column is dropped from the row rather
+	 * than written empty, and nothing behind the row moves with it — the same scope read as the Total,
+	 * a Round or a provider/model row still writes the column, and the usage and the amounts it does
+	 * write are the very same figures.
+	 */
+	readonly cacheShare?: boolean;
 	/** The accounted amount in CNY, when the scope's policy produced one. */
 	readonly costCny?: number;
 	/** The reference estimate in USD, when the scope's policy produced one. */
@@ -147,7 +177,7 @@ export interface DisplayContextUsage {
  * The Round is that session's own consumption between two boundaries of its own — no descendant's
  * request is ever part of it — and it is the same provider-and-model shape the session's own
  * accumulation has, so the row's structure is read from the target's own current pair within it while
- * its Sum, Cost and Ref are the whole Round's.
+ * its Cost and Ref are the whole Round's.
  */
 export interface RoundDisplay {
 	/** The target's own current provider/model within this Round, gated by that pair's mode. */
@@ -186,6 +216,24 @@ export interface AgentTreeContext {
 }
 
 /**
+ * One descendant session's startup facts as the detail tree draws them: the model it began on with
+ * the effective effort it began with, written as the one snapshot a row carries.
+ *
+ * The text is already written the way a row shows it — `provider/model(effort)`, with no field header
+ * in front of it and no spaces around the slash — and it is always present: a part nothing proved is
+ * `?` rather than being dropped, so the snapshot keeps its place in the row and a later field never
+ * shifts into the gap. It is not truncating — what a narrow terminal does with it is the frontend's
+ * own — but the tail is the part of it a narrowed row keeps whole, because the effective level is what
+ * an operator compares one session's beginning with another's by.
+ */
+export interface AgentTreeStartup {
+	/** The whole snapshot as one row states it: `provider/model(effort)`, `?` for a part nothing proved. */
+	readonly text: string;
+	/** The snapshot's own tail — the effective effort in parentheses — which a narrowed row keeps whole. */
+	readonly tail: string;
+}
+
+/**
  * One row of the detail form's static tree: what a frontend draws as one line, before its own
  * indentation and colour.
  *
@@ -200,8 +248,30 @@ export interface AgentTreeRow {
 	readonly name: string;
 	/** The row's distance from the root: 0 for the root, 1 for its model rows and its children, and so on. */
 	readonly depth: number;
+	/**
+	 * The emphasis this row's own name is drawn with, when shared logic has one to state.
+	 *
+	 * It is the row's activity expressed as a drawing instruction rather than as a figure: a descendant
+	 * session whose own Round is open right now is working, and its name is emphasised so an operator
+	 * can pick the running session out of the tree at a glance. Absent for every other reading — a
+	 * session that has gone idle, one no Round edge has moved at all, and every kind of row but a
+	 * descendant session — so those names are drawn exactly as they always were. Which of a frontend's
+	 * own colours the emphasis becomes is that frontend's mapping.
+	 */
+	readonly nameEmphasis?: DisplayEmphasis;
 	/** The row's own applicable fields; absent on the root row, whose consumption is its model rows. */
 	readonly fields?: ConsumptionFields;
+	/**
+	 * The startup facts of a descendant session: the one snapshot of the model and the effective effort
+	 * it began with.
+	 *
+	 * It is what that session started on and not what it runs now, so a later model switch or level
+	 * change does not move it; each part of the snapshot is `?` when nothing proved it. Present on every
+	 * descendant session row and absent on the root and model rows, which are not sessions: a model row
+	 * is a pair the root consumed, and the root row is the session the tree is *of*, whose own current
+	 * pair the Total above already writes.
+	 */
+	readonly startup?: AgentTreeStartup;
 	/**
 	 * The descendant session's own current context, when this process observed one.
 	 *
@@ -212,6 +282,16 @@ export interface AgentTreeRow {
 	 * unobserved or unbudgeted session shows no field rather than a zero.
 	 */
 	readonly context?: AgentTreeContext;
+	/**
+	 * The descendant session's own accumulated subagent runtime in this period, in milliseconds.
+	 *
+	 * It is the harness's own measurement of that session's executions, so it is carried on the
+	 * descendant session rows alone — a model row is not a session, and the root row is the session
+	 * the tree is *of*. Absent means *unavailable* rather than zero: a session whose executions were
+	 * never reliably measured still keeps the field's place, and `0` is reserved for a session whose
+	 * executions really took no measurable time.
+	 */
+	readonly runtimeMs?: number;
 }
 
 /** The fixed display budget and whether the reported context usage has crossed it. */
@@ -292,6 +372,18 @@ export interface ConsumptionDisplay {
 	 * document to fill it.
 	 */
 	readonly round?: RoundDisplay;
+	/**
+	 * The Session span of the main session this target belongs to, as this instance holds it: the
+	 * interval from that session's first user input in the applicable period to its latest Turn end,
+	 * or `undefined` while either of those facts is unknown.
+	 *
+	 * It is the *main session's* time rather than the target's own, and never an inclusive figure: a
+	 * subagent's view draws the main session's span, which is one of the two facts that keep a
+	 * subagent's execution from being read as the conversation's elapsed time. `undefined` is the
+	 * ordinary state of a session whose first Turn has not ended — not a span of nothing — and a
+	 * reading of exactly zero milliseconds is the present pair of two equal instants.
+	 */
+	readonly span?: SessionSpanReading;
 	readonly budget?: DisplayBudget;
 	/** The target's actual effective effort, `?` when the host could not report one. */
 	readonly effort: string;
@@ -417,6 +509,12 @@ export interface PresentationInputs {
 	 * descendant session row shows. A session no binding reported reads as nothing, never as zero.
 	 */
 	readonly sessionContext: SessionContextReading;
+	/**
+	 * The process's per-session activity readings, as the framework's own Round edges moved them: which
+	 * descendant session rows carry the working emphasis. A session no edge has moved reads as nothing,
+	 * which is neither working nor idle, and its row is drawn with no emphasis at all.
+	 */
+	readonly sessionActivity: SessionActivityReading;
 	/** The entry's own display preference: which form a main session's display is drawn in. */
 	readonly display: DisplayPreference;
 	/** The maintained model and price data the mode comes from. */
@@ -503,6 +601,11 @@ export function fieldsOf(
 		readonly price?: CatalogPrice;
 		/** Whether the scope's policy carries amounts at all; `false` reads usage alone. */
 		readonly amounts?: boolean;
+		/**
+		 * Whether a row writing this scope writes the cached-share column too; `false` states the scope
+		 * without it, which is what a descendant session's own row asks for. Omitted keeps the column.
+		 */
+		readonly cacheShare?: boolean;
 	} = {},
 ): ConsumptionFields {
 	const amounts = options.amounts ?? true;
@@ -528,6 +631,7 @@ export function fieldsOf(
 	return {
 		tokens,
 		sum,
+		...(options.cacheShare === false ? { cacheShare: false } : {}),
 		...(cacheHitRate === undefined ? {} : { cacheHitRate }),
 		...(costCny === undefined ? {} : { costCny }),
 		...(referenceCostUsd === undefined ? {} : { referenceCostUsd }),
@@ -542,7 +646,19 @@ export function fieldsOf(
  * the current results, so a frontend that re-reads after a change notification sees the change.
  */
 export function createPresentation(inputs: PresentationInputs): ConsumptionPresenter {
-	const { view, data, priceOf, display, balance, quota, estimate, now, period: periodFacts, sessionContext } = inputs;
+	const {
+		view,
+		data,
+		priceOf,
+		display,
+		balance,
+		quota,
+		estimate,
+		now,
+		period: periodFacts,
+		sessionContext,
+		sessionActivity,
+	} = inputs;
 
 	/**
 	 * The top-level session one session belongs to, walked through the reliable direct parents this
@@ -575,7 +691,7 @@ export function createPresentation(inputs: PresentationInputs): ConsumptionPrese
 
 	/**
 	 * One Round of one target as the brief writes it: the target's own current pair within the Round
-	 * for the row's structure, and the Round's whole own accumulation for its Sum, Cost and Ref.
+	 * for the row's structure, and the Round's whole own accumulation for its Cost and Ref.
 	 */
 	const roundOf = (target: DisplayTarget, own: OwnConsumption): RoundDisplay => ({
 		current: pairFieldsOf(own, target.provider, target.model),
@@ -637,11 +753,32 @@ export function createPresentation(inputs: PresentationInputs): ConsumptionPrese
 					observed === undefined
 						? undefined
 						: displayBudgetOf(classify(data, observed.provider ?? "", observed.model ?? "").mode);
+				// The startup facts as a row writes them: what the session began on, or `?` for a part
+				// nothing proved — the row keeps the one snapshot rather than borrowing the model or level
+				// anything else is running now.
+				const started = view.startup(child.sessionId);
+				const startedModel =
+					started?.model === undefined ? "\u003F" : `${started.model.provider}/${started.model.model}`;
+				const startedEffort = started?.effort ?? "\u003F";
+				const runtimeMs = view.runtime(child.sessionId);
+				// This session's own activity, as the framework's Round edges moved it: a session whose Round
+				// is open is working, and its name is the one thing on the row that says so. An idle reading
+				// and a session no edge has moved both leave the name exactly as it was drawn.
+				const activity = sessionActivity.read(child.sessionId);
 				rows.push({
 					kind: "session",
 					name: child.name,
 					depth,
-					fields: fieldsOf(view.own(child.sessionId) ?? {}),
+					// The descendant's own statistics, without the cached share of its conversation input: what
+					// the tree compares between sessions is what each of them consumed, so the column is
+					// dropped from this row rather than written empty. Its own model rows above keep theirs.
+					fields: fieldsOf(view.own(child.sessionId) ?? {}, { cacheShare: false }),
+					...(activity === "working" ? { nameEmphasis: "active" } : {}),
+					startup: { text: `${startedModel}(${startedEffort})`, tail: `(${startedEffort})` },
+					// The runtime is absent when nothing reliable is known about this session's executions:
+					// the row keeps the field and the display shows it as unavailable, which is not the
+					// same fact as an execution that really took no measurable time.
+					...(runtimeMs === undefined ? {} : { runtimeMs }),
 					...(observed === undefined || budget === undefined
 						? {}
 						: { context: { tokens: observed.tokens, budget } }),
@@ -668,7 +805,12 @@ export function createPresentation(inputs: PresentationInputs): ConsumptionPrese
 			// that pair's amount policy; the tree beside it is mixed by construction, so nothing about it
 			// is gated: every model's known contribution stays and the two currencies stay separate.
 			const current = pairFieldsOf(view.own(target.sessionId) ?? {}, target.provider, target.model);
-			const tree = fieldsOf(view.inclusiveTotals(rootOf(target.sessionId)));
+			// The main session this target belongs to: the root of its own tree, which is the session the
+			// tree beside the target is aggregated over and the session whose Session span the Total
+			// carries. For a target that is itself that root the two are the same session.
+			const mainSessionId = rootOf(target.sessionId);
+			const tree = fieldsOf(view.inclusiveTotals(mainSessionId));
+			const span = view.sessionSpan(mainSessionId);
 			// The detail form belongs to the main session alone, and a session with no direct parent is
 			// the root of its own tree: a subagent's view answers the brief however the entry's own
 			// preference stands, which is what keeps that display fixed while the operator is focused on
@@ -699,6 +841,7 @@ export function createPresentation(inputs: PresentationInputs): ConsumptionPrese
 				// has no tree of its own in this form, which is what keeps that view the brief.
 				...(isTreeRoot ? { agentTree: agentTreeOf(target.sessionId) } : {}),
 				...(round === undefined ? {} : { round }),
+				...(span === undefined ? {} : { span }),
 				...(budget === undefined ? {} : { budget }),
 				effort: target.effort ?? "?",
 				...(target.contextTokens === undefined
@@ -829,6 +972,26 @@ export function contextText(context: AgentTreeContext): string {
 	return `${percentile.toFixed(0)}% (${formatTokens(context.tokens)}/${formatTokens(context.budget)})`;
 }
 
+/**
+ * One descendant session's accumulated subagent runtime as the display writes it.
+ *
+ * `undefined` is the unavailable marker, never a zero: a session whose executions this host never
+ * measured is not a session that measured zero, and showing `0ms` for it would assert a reading
+ * nobody made. A reported figure is written in the unit that keeps it readable — milliseconds under
+ * a second, then seconds, minutes and hours — and it is only ever the display of the value: the
+ * document keeps the number of milliseconds, never this text.
+ */
+export function runtimeText(runtimeMs: number | undefined): string {
+	if (runtimeMs === undefined) return "—";
+	if (runtimeMs < 1000) return `${Math.round(runtimeMs)}ms`;
+	const seconds = Math.round(runtimeMs / 1000);
+	if (seconds < 60) return `${seconds}s`;
+	const minutes = Math.floor(seconds / 60);
+	if (minutes < 60) return seconds % 60 === 0 ? `${minutes}m` : `${minutes}m${seconds % 60}s`;
+	const hours = Math.floor(minutes / 60);
+	return minutes % 60 === 0 ? `${hours}h` : `${hours}h${minutes % 60}m`;
+}
+
 /** A CNY amount as the display writes it: two decimals past one cent, four below it. */
 export function formatCny(amount: number): string {
 	return `\u00A5${amount >= 0.01 ? amount.toFixed(2) : amount.toFixed(4)}`;
@@ -877,10 +1040,10 @@ export type AmountField = "cost" | "ref";
 /**
  * One labelled value of a Total or Round row, before a frontend lays the row out.
  *
- * The label is the fixed part (`Cache: `, `Sum: `, or a ratio's own wording and `：`) and the value
- * is what varies in width. Splitting a row into columns is what lets a frontend align two rows
- * vertically without re-deciding any figure: this module says what each column is, the frontend says
- * how much room it gets.
+ * The label is the fixed part (`Cache: `, or a ratio's own wording and `：`) and the value is what
+ * varies in width. Splitting a row into columns is what lets a frontend align two rows vertically
+ * without re-deciding any figure: this module says what each column is, the frontend says how much
+ * room it gets.
  */
 export interface DisplayColumn {
 	readonly label: string;
@@ -889,11 +1052,6 @@ export interface DisplayColumn {
 
 /** One Total or Round row's columns, in the order the row writes them. */
 export type DisplayRow = readonly DisplayColumn[];
-
-/** A scope's whole Sum as the display writes it: a dash while the scope has measured no token at all. */
-function formatSum(sum: number): string {
-	return sum === 0 ? "-" : formatTokens(sum);
-}
 
 /** The ratio field one mode's current-model scope displays, or nothing when the mode has none. */
 function ratioFieldOf(mode: ConsumptionMode): RatioField | undefined {
@@ -908,15 +1066,25 @@ function ratioColumnLabel(currency: string, buckets: readonly string[]): string 
 }
 
 /**
- * The cache and ratio columns of one scope: its hit rate — a dash while the scope has measured no
- * token at all, the initialization row; a zero percent when it measured usage without conversation
- * input — and the ratio field its channel displays: a value where the scope has a usable price, one
- * dash per bucket where it has the field but no value.
+ * The columns of one scope that describe what it used rather than what it cost: the cached share of
+ * its conversation input — a dash while the scope has measured no token at all, the initialization
+ * row; a zero percent when it measured usage without conversation input — and the ratio field its
+ * channel displays: a value where the scope has a usable price, one dash per bucket where it has the
+ * field but no value.
+ *
+ * The cached share is the one of those columns a scope can state it does not write at all
+ * ({@link ConsumptionFields.cacheShare}): a descendant session's row drops it, and whatever follows
+ * it in the row — the ratio field, then the amounts — takes its place rather than leaving a column of
+ * blanks behind it.
+ *
+ * Whether the scope has measured anything is read from the four buckets' own total, which is why
+ * that total stays a computed field of the scope even though no row writes it as a column (P23).
  */
 function structureColumns(fields: ConsumptionFields, ratioField?: RatioField): DisplayColumn[] {
-	const columns: DisplayColumn[] = [
-		{ label: "Cache: ", value: fields.sum === 0 ? "-" : `${fields.cacheHitRate ?? 0}%` },
-	];
+	const columns: DisplayColumn[] = [];
+	if (fields.cacheShare !== false) {
+		columns.push({ label: "Cache: ", value: fields.sum === 0 ? "-" : `${fields.cacheHitRate ?? 0}%` });
+	}
 	if (fields.referenceRatio !== undefined) {
 		const ratio = fields.referenceRatio;
 		columns.push({
@@ -946,14 +1114,48 @@ function amountColumns(fields: ConsumptionFields, shown: readonly AmountField[] 
 	return columns;
 }
 
-/** One scope's Sum column. */
-function sumColumn(sum: number): DisplayColumn {
-	return { label: "Sum: ", value: formatSum(sum) };
+/**
+ * One Session span as the display writes it: whole hours, minutes and seconds of the interval, with
+ * the hours unbounded rather than wrapped at a day — a session that lasted past midnight lasted that
+ * long, and an interval is not a time of day.
+ *
+ * The two smaller fields keep two digits so the reading stays a fixed width as it grows, which is
+ * what lets the same span start at the same column on every redraw.
+ */
+export function formatSpan(elapsedMs: number): string {
+	const seconds = Math.floor(elapsedMs / 1000);
+	const hours = Math.floor(seconds / 3600);
+	const minutes = Math.floor((seconds % 3600) / 60);
+	return `${hours}:${String(minutes).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
 }
 
-/** One scope's columns: its structure, its Sum, and the amounts its scope really carries. */
-function fieldsColumns(fields: ConsumptionFields): DisplayColumn[] {
-	return [...structureColumns(fields), sumColumn(fields.sum), ...amountColumns(fields)];
+/**
+ * One display's Session span column: the main session's span as the display writes it, or a dash
+ * while the span is unknown.
+ *
+ * A dash is what an unknown span is written as, and it is not zero: a session whose first Turn has not
+ * settled has no elapsed time to show, and a session whose span really is zero milliseconds is
+ * written as `0:00:00` — the two are told apart by the reading being there at all. The column is
+ * always a column, so the field keeps its place whether or not a reading exists.
+ */
+function spanColumn(display: ConsumptionDisplay): DisplayColumn {
+	return { label: "Span: ", value: display.span === undefined ? "\u2014" : formatSpan(display.span.elapsedMs) };
+}
+
+/**
+ * One scope's columns: its structure and the amounts its scope really carries.
+ *
+ * It is exported for the one frontend whose rows are laid out as a grid rather than as one text: the
+ * detail form's agent-tree rows align their statistics within a depth group, so a caller has to be
+ * handed the very columns a row's line used to be joined from, with no figure re-decided on the way.
+ * A scope's columns stay what they were — no row writes a Sum column any more (P23), and the four
+ * buckets' total is still computed because the cache column's own dash rule reads it — and the
+ * caller states only how much room each of them gets. Which fields those columns are is not the
+ * caller's to choose either: a scope that states it writes no cached share is handed its columns
+ * without one ({@link ConsumptionFields.cacheShare}).
+ */
+export function fieldsColumns(fields: ConsumptionFields): DisplayColumn[] {
+	return [...structureColumns(fields), ...amountColumns(fields)];
 }
 
 /** One row's columns joined in their plain, unaligned form. */
@@ -961,19 +1163,15 @@ function rowText(row: DisplayRow): string {
 	return row.map(column => `${column.label}${column.value}`).join("  ");
 }
 
-/** One scope's whole row: its structure, its Sum, and the amounts its scope really carries. */
-export function fieldsText(fields: ConsumptionFields): string {
-	return rowText(fieldsColumns(fields));
-}
-
 /**
  * One Round's own columns: the target's current-model structure within that Round — with the same
- * ratio field its mode displays, dashes included — then that Round's own Sum, Cost and Ref.
+ * ratio field its mode displays, dashes included — then that Round's own Cost and Ref. A Round writes
+ * no bucket total of its own and no time, either: its own additions are a scope of their own rather
+ * than the session the Total is the span of.
  */
 export function roundColumns(round: RoundDisplay, mode?: ConsumptionMode): DisplayRow {
 	return [
 		...structureColumns(round.current, mode === undefined ? undefined : ratioFieldOf(mode)),
-		sumColumn(round.total.sum),
 		...amountColumns(round.total),
 	];
 }
@@ -992,15 +1190,22 @@ function displayedAmounts(display: ConsumptionDisplay): readonly AmountField[] {
 
 /**
  * One display's Total columns: the current model's own structure — with the ratio field its mode
- * displays, dashes included — then the main tree's Sum, Cost and Ref. The two currencies are kept
- * apart, and an amount field the row's channels apply but hold no value for is a dash, so the old
- * row's fields survive initialization rather than disappearing.
+ * displays, dashes included — then the main tree's Cost and Ref, then the main session's own Session
+ * span. The two currencies are kept apart, and an amount field the row's channels apply but hold no
+ * value for is a dash, so the old row's fields survive initialization rather than disappearing. The
+ * tree's bucket total is not a column of this row: no row writes a Sum column (P23).
+ *
+ * The span is the one column the brief's Round row has no counterpart for, which is why it comes
+ * last: every column before it is positional — a Round's field sits under the Total's field of the
+ * same name — and appending this one leaves that correspondence untouched. The Round has no time
+ * column of its own by design: the session's elapsed time is not attributable to one Round, and a
+ * Round's own duration is not a figure this extension measures.
  */
 export function totalColumns(display: ConsumptionDisplay): DisplayRow {
 	return [
 		...structureColumns(display.current, ratioFieldOf(display.mode)),
-		sumColumn(display.tree.sum),
 		...amountColumns(display.tree, displayedAmounts(display)),
+		spanColumn(display),
 	];
 }
 
@@ -1043,7 +1248,9 @@ export function seasonMark(period: DisplayPeriod): string {
  * result can be drawn by a second frontend without restating a threshold. `effort` is the one
  * emphasis whose colour is a level's own — a frontend paints it with its thinking-level colour — and
  * `segment1`…`segment8` is the per-session palette the accrued bar cycles through, in the fixed order
- * that bar has always drawn its sessions in.
+ * that bar has always drawn its sessions in. `active` is the one emphasis about the moment rather than
+ * about a value: a row whose session is being worked in right now, which a frontend paints with a
+ * colour of its own rather than with one of the bar's bands.
  */
 export type DisplayEmphasis =
 	| "plain"
@@ -1052,6 +1259,7 @@ export type DisplayEmphasis =
 	| "success"
 	| "warning"
 	| "error"
+	| "active"
 	| "effort"
 	| "segment1"
 	| "segment2"
