@@ -206,10 +206,11 @@ export interface RequestAccounting {
 	/**
 	 * One actual session's own start, as its binding announced it.
 	 *
-	 * The session's identity facts are kept as on any delivery, and — for a session this instance
-	 * holds no record of — the model and effective effort it began with are kept as that session's
-	 * startup facts. Nothing else is done with them here: they are recorded for the display and for
-	 * the session's next snapshot to carry, and no save of their own is started for their arrival.
+	 * A delivery of this kind either carries the model and effective effort the session began with —
+	 * the adapter reports them only on a start that proves the session was beginning — or carries
+	 * none, which is what a recovered session's start states. The session's identity facts are kept as
+	 * on any delivery; nothing else is done with them here, no save of their own is started for their
+	 * arrival, and a pair that was never proved is never filled in from what the session runs now.
 	 */
 	started(session: SessionFacts): void;
 	/**
@@ -409,7 +410,8 @@ export function createRequestAccounting(inputs: RequestAccountingInputs): Reques
 	const endedRounds = new Map<string, OwnConsumption>();
 	/**
 	 * The startup facts each session's own start reported, by session: the model and effective effort
-	 * it began with, kept once and never rewritten.
+	 * it began with, kept once and never rewritten. A session nothing proved a startup for has no
+	 * entry here, which is what a display draws as unknown.
 	 */
 	const startups = new Map<string, SessionStartup>();
 	/** How many snapshots this instance committed and has not yet seen land. */
@@ -877,19 +879,13 @@ export function createRequestAccounting(inputs: RequestAccountingInputs): Reques
 			if (disposed) return;
 			const startup = session.startup;
 			if (startup === undefined) return;
-			// This delivery is read for the one thing only it can prove: the model and effective effort the
-			// session began with. The identity facts it also carries — its name, its task handle, its direct
-			// parent — arrive again on the next delivery the session makes, so a session that only ever
-			// announced its start is not turned into a known session (and no row) by this delivery alone.
-			// A startup fact is in turn provable only for a session that began while this instance held no
-			// record of it: a record that already exists — a session the document carries from an earlier
-			// run or an earlier period — is evidence that the session was already there, so what a start
-			// reports now is a current reading rather than what the session began with, and an old record's
-			// missing snapshot stays missing rather than being filled from what happens to run today. A
-			// session this instance already holds startup facts for keeps them: the first start it observed
-			// is that session's startup, whatever a later execution of it reports.
+			// The adapter reports these facts on the one kind of delivery that proves them — a start
+			// that shows the session only now beginning — so a delivery either carries them or states
+			// that nothing proved them, and nothing here fills a missing pair from what the session
+			// happens to run now. The first pair this instance is handed is the session's startup: a
+			// later start of an existing session is a recovery, which proves nothing and carries
+			// nothing, and a pair that was already established is never rewritten.
 			if (startups.has(session.sessionId)) return;
-			if (storage.session(harness, session.sessionId) !== undefined) return;
 			startups.set(session.sessionId, startup);
 			// The rows a display draws carry these facts, so a start that taught this instance something
 			// new is a change of the read-only result like any other: publishing it is what redraws a

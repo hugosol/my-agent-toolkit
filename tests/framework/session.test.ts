@@ -61,6 +61,12 @@ interface SessionFacts {
 	readonly agentId?: string;
 	/** The model this session's context reports; absent models a context with no model fact. */
 	readonly model?: { readonly id?: string; readonly provider?: string };
+	/**
+	 * Whether this session's own branch already carries a conversation at the moment a delivery is
+	 * made: what the harness's manager reports for a session it reloaded, and what it does not
+	 * report for a session that is only now beginning.
+	 */
+	readonly conversation?: boolean;
 }
 
 interface Registration {
@@ -169,8 +175,12 @@ function boundSurface(
 		...(facts.model === undefined ? {} : { model: facts.model }),
 		sessionManager: {
 			getSessionId: () => facts.sessionId,
-			// The branch as the session manager holds it: the State entries this session persisted.
-			getBranch: () => facts.statePayloads.map(data => ({ type: "custom", customType: stateEntryType, data })),
+			// The branch as the session manager holds it: the conversation this session already
+			// carries, then the State entries it persisted.
+			getBranch: () => [
+				...(facts.conversation === true ? [{ type: "message", message: { role: "user" } }] : []),
+				...facts.statePayloads.map(data => ({ type: "custom", customType: stateEntryType, data })),
+			],
 			// The latest name, read live: the manager's own current value wins over the one the
 			// delivery's facts were built with, exactly as a rename would leave it.
 			getSessionName: () => names.get(facts.sessionId) ?? facts.name,
@@ -631,6 +641,44 @@ describe("a session's own start carries the facts a display names it by (P26, P2
 			startup: { model: { provider: "deepseek", model: "deepseek-flash" } },
 			unavailable: ["direct parent session", "session name", "startup effort"],
 		});
+	});
+
+	test("a start the harness makes over a session that already carries a conversation proves no startup", () => {
+		const surface = boundSurface(CODEBASE_TOOLS, { scope: "session", effort: "medium" });
+
+		// The harness re-bound the extension to a session it reloaded — a parked subagent revived, a
+		// session entered again in a second process — and that session's own transcript already
+		// carries the conversation it was built from. The start signal is the same one a spawn makes,
+		// so the model and level this context reports now (`model-beta` at `medium`) are what the
+		// session happens to run rather than what it began on. Nothing here proves a startup, and a
+		// pair nothing proves stays absent instead of being read off the current settings.
+		surface.startSession({
+			...SPAWNED,
+			model: { provider: "official", id: "model-beta" },
+			conversation: true,
+		});
+
+		expect(surface.startFacts[0]).toEqual({
+			sessionId: "session-child",
+			kind: "sub",
+			taskName: "检索定价",
+			agentName: "scout",
+			agentId: "检索定价",
+			unavailable: ["direct parent session", "session name"],
+		});
+	});
+
+	test("a transition into an existing session proves no startup, whatever its transcript carries", () => {
+		const surface = boundSurface(CODEBASE_TOOLS, { scope: "session", effort: "high" });
+
+		// A resume enters a session that already exists and a fork stands a session up from another
+		// session's entries: neither is the session's own beginning, so neither reports a startup —
+		// not even over a session file that carries no conversation of its own yet, which is the one
+		// case an empty transcript alone could not tell apart from a spawn.
+		surface.switchSession({ ...SPAWNED, model: { provider: "official", id: "model-beta" } }, "resume");
+		surface.branchSession(SPAWNED, "fork");
+
+		expect(surface.startFacts.map(facts => facts.startup)).toEqual([undefined, undefined]);
 	});
 });
 

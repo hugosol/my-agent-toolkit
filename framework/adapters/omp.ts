@@ -65,9 +65,9 @@ const MARKER_AREA_PLACEMENT = "aboveEditor";
  * One session entry as the native session manager holds it.
  *
  * Only the persisted shapes the adapter recognizes are named: the State payload
- * (`type: "custom"`) and the injected-prompt contribution (`type: "custom_message"`).
- * Whether a payload declares a usable value is the framework's validation rule, so the
- * adapter hands payloads over unread.
+ * (`type: "custom"`), the injected-prompt contribution (`type: "custom_message"`) and the
+ * conversation itself (`type: "message"`). Whether a payload declares a usable value is the
+ * framework's validation rule, so the adapter hands payloads over unread.
  */
 export interface OmpSessionEntry {
 	readonly type?: string;
@@ -78,6 +78,15 @@ export interface OmpSessionEntry {
 	readonly content?: string;
 	readonly display?: boolean;
 	readonly attribution?: "user" | "agent";
+	/**
+	 * The message a conversation entry carries (`type: "message"`), read for its role alone.
+	 *
+	 * It is the fact that says a session already has a conversation of its own: a session the
+	 * harness reloaded replays its messages onto the branch before it rebinds the extension, while
+	 * a session that is only now beginning has none yet. Nothing here interprets the message
+	 * beyond that — the role is all this adapter reads.
+	 */
+	readonly message?: { readonly role?: string };
 }
 
 /**
@@ -689,12 +698,15 @@ function startReasonOf(event: OmpSessionEvent): SessionStartReason {
  * own `name` when it gave one, a generated handle when it named none, and — for a spawn made from
  * inside another subagent — that handle under the spawning agent's id. It is reported as the task's
  * own name as well, because it says which work the session carries out, where the agent's registered
- * name says only what kind of agent runs it. `reportStarted` is set by the one delivery that announces
- * the session's own start in this process, which is the only one whose readings are startup facts: the
+ * name says only what kind of agent runs it.
+ *
+ * `startReason` is named by the delivery that announces a session's start and by no other delivery.
+ * It decides whether that start proves the session *began* there (see {@link beginsHere}), which is
+ * the one condition under which the readings of that instant are the session's startup facts: the
  * model it began on and the effective level this harness resolves for it — never the configured
  * selector behind that level, and never what a later delivery could read.
  */
-function sessionFactsOf(pi: OmpExtensionApi, ctx: OmpSessionContext, reportStarted = false): SessionFacts {
+function sessionFactsOf(pi: OmpExtensionApi, ctx: OmpSessionContext, startReason?: SessionStartReason): SessionFacts {
 	const unavailable: string[] = [];
 	const kind = ctx.agent.kind === "main" ? "main" : "sub";
 	let parentSessionId: string | undefined;
@@ -718,12 +730,13 @@ function sessionFactsOf(pi: OmpExtensionApi, ctx: OmpSessionContext, reportStart
 	const reportedAgentId = ctx.agent.id?.trim();
 	const agentId = reportedAgentId === undefined || reportedAgentId.length === 0 ? undefined : reportedAgentId;
 	if (agentId === undefined) unavailable.push("agent id");
-	// Only a spawned session carries a task handle, and only its own start carries startup facts: a
-	// main session is loaded rather than spawned (a process-level label such as `Main` names no task),
-	// and what a later delivery reads is the session's current model and level rather than the ones it
-	// began with.
+	// Only a spawned session carries a task handle. A main session is loaded rather than spawned, so a
+	// process-level label such as `Main` never stands for a task's name.
 	const taskName = kind === "sub" ? agentId : undefined;
-	const startup = reportStarted && kind === "sub" ? startupFactsOf(pi, ctx, unavailable) : undefined;
+	const startup =
+		startReason !== undefined && kind === "sub" && beginsHere(ctx, startReason)
+			? startupFactsOf(pi, ctx, unavailable)
+			: undefined;
 	return {
 		sessionId: ctx.sessionManager.getSessionId(),
 		kind,
@@ -738,8 +751,34 @@ function sessionFactsOf(pi: OmpExtensionApi, ctx: OmpSessionContext, reportStart
 }
 
 /**
+ * Whether one start delivery proves the session it announces *began* there, so that what this
+ * context reports at that instant is what the session started on.
+ *
+ * Two host facts have to agree, because the harness's own start signal is the same one a fresh spawn
+ * and a session it merely reloaded both make. The transition has to be a creation rather than a way
+ * into a session that already exists — a `resume` enters one, and a `fork` stands one up from
+ * another session's entries, whose model and level are not this session's own beginning. And the
+ * session's own branch must carry no conversation yet: the harness replays a reloaded session's
+ * messages onto it before it rebinds the extension, and that replayed history is what tells the
+ * session apart from one beginning now. A user or assistant message is exactly what such a replay
+ * leaves behind and what a session with no history at all cannot have.
+ *
+ * A surface that reports no such history is read as proving nothing, so a startup fact is left
+ * absent rather than taken from what the session happens to run — the same answer a host that cannot
+ * report a model or a level gives.
+ */
+function beginsHere(ctx: OmpSessionContext, reason: SessionStartReason): boolean {
+	if (reason === "resume" || reason === "fork") return false;
+	return !ctx.sessionManager.getBranch().some(entry => {
+		const role = entry.message?.role;
+		return entry.type === "message" && (role === "user" || role === "assistant");
+	});
+}
+
+/**
  * The model and effective effort the session this context reports began with, as the harness answers
- * for it at the session's own start — the readings the framework's startup facts are built from.
+ * for it at the start that proved the session began — the readings the framework's startup facts are
+ * built from.
  *
  * Neither is a setting: the model is the one the context reports for the request being issued at
  * that moment, and the level is the harness's own getter, which answers the level the session really
@@ -1168,8 +1207,10 @@ function ompPort(
 				handler({
 					event,
 					// One start delivery is the session's own beginning in this process, and it is the one
-					// whose readings are the session's startup facts; every other delivery reports none.
-					session: sessionFactsOf(pi, ctx, event.kind === "session_start"),
+					// whose readings are the session's startup facts; every other delivery reports none —
+					// and a start that proves no beginning (a resume, a fork, a session whose own branch
+					// already carries a conversation) reports none either.
+					session: sessionFactsOf(pi, ctx, event.kind === "session_start" ? event.reason : undefined),
 					owner,
 					statePayloads: statePayloadsOf(ctx, stateEntryType),
 					// The same medium the command path records State through: an entry this

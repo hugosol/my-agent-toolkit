@@ -352,15 +352,14 @@ describe("the detail tree shows the model and effort a subagent started on (P27,
 		);
 	});
 
-	test("a session the document already records keeps an unproved startup unknown, part by part", async () => {
+	test("a session the document already records and this process only recovered keeps an unproved startup unknown", async () => {
 		const bound = await bindWidget();
 		await bound.double.runToCompletion("budget", { args: "detail" });
 
-		// The subagent the document already carries reports its start while running on another model and
-		// level now. Nothing there proves what it *began* on: the record predates this instance's
-		// observation, so both fields keep their place and stay unknown rather than taking the model and
-		// level that happen to be current — and a start that could read the model but no level leaves the
-		// level unknown alone, each part proved independently.
+		// The subagent this document already carries reports its start while running on another model
+		// and level now. The harness re-bound the extension to a session it reloaded, so nothing in that
+		// delivery proves what the session *began* on: both fields keep their place and stay unknown
+		// rather than taking the model and level that happen to be current.
 		expect(namedRow(bound.host.lastLines(), "子代理")).toBe(
 			"└─ 子代理  Model: ?  Effort: ?  Cache: 40%  Sum: 100",
 		);
@@ -370,8 +369,7 @@ describe("the detail tree shows the model and effort a subagent started on (P27,
 				sessionId: "session-sub",
 				kind: "sub",
 				parentSessionId: "session-main",
-				startup: { model: { provider: "official", model: "model-beta" } },
-				unavailable: ["session name", "agent name", "agent id", "startup effort"],
+				unavailable: ["session name", "agent name", "agent id"],
 			},
 		});
 		bound.host.publish({ sessionId: "session-main", provider: "official", model: "model-alpha" });

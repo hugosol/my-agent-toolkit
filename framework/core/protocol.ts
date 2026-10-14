@@ -124,14 +124,15 @@ export interface FeedbackTransport {
 }
 
 /**
- * The model and effective effort one session began with, as its harness reported them at the
- * session's own start — the two readings a display shows a subagent's row by, and nothing a later
- * setting, a later model switch or a later execution may rewrite.
+ * The model and effective effort one session began with, as its harness reported them at the start
+ * that proved the session was beginning — the two readings a display shows a subagent's row by, and
+ * nothing a later setting, a later model switch or a later execution may rewrite.
  *
  * It is a *startup* fact rather than the session's current one: the model it was started on, and the
  * level it really runs there. The level is the harness's resolved effective effort, never the
  * configured selector behind it (an `auto` setting is not a level a row may show). Each member is
- * absent when this host could not report it, and named in `unavailable`.
+ * absent when this host could not report it, and named in `unavailable`; a start that proved no
+ * beginning carries neither rather than reading the pair the session happens to run now.
  */
 export interface SessionStartup {
 	/** The model the session began on, both parts as the harness reported them. */
@@ -208,14 +209,17 @@ export interface SessionFacts {
 	 */
 	readonly agentId?: string;
 	/**
-	 * The model and effective effort this session began with, as the harness reported them on the
-	 * delivery that announced the session's own start — and absent on every other delivery.
+	 * The model and effective effort this session began with, as the harness reported them on a start
+	 * that proved the session was beginning — and absent on every other delivery.
 	 *
-	 * A start delivery is the one moment a startup reading is a fact this host can report rather than
-	 * a guess: what a later delivery could read is the session's *current* model and level, which is
-	 * not what it started on. A harness reports this for a session it spawned, whose start that
-	 * delivery is; a session it merely loaded (a resumed one) reports none, because its own start is
-	 * behind this process's observation.
+	 * A start proves a beginning only where the host can show that the session was not already there:
+	 * the delivery is a creation rather than a way into an existing session (no `resume`, no `fork`),
+	 * and the session's own transcript carries no conversation of its own yet. A session the harness
+	 * reloaded and re-bound — a parked subagent revived, a session re-entered in another process —
+	 * fires the same start signal as a fresh spawn while replaying the conversation it was built from,
+	 * so it reports none: what a delivery reads for it is the session's *current* model and level,
+	 * which is not what it started on. A harness that cannot show a beginning reports none either,
+	 * rather than filling the pair in from the settings in effect.
 	 */
 	readonly startup?: SessionStartup;
 	/** Every fact above this host could not obtain, named as the delivery names it. */
@@ -229,9 +233,9 @@ export interface SessionFacts {
  * or a Turn of a subagent session belongs to the owner that session follows, so a group that
  * drives an owner-scoped effect is never moved by a subagent's work. `session` — the group
  * observes every actual session the adapter reports, main or sub, with that session's own
- * identity, its direct parent, its latest name, the handle of the task it was spawned for and —
- * on its own start alone — the model and effective effort it began on; it is the scope a
- * per-session observation view declares.
+ * identity, its direct parent, its latest name, the handle of the task it was spawned for and — on
+ * the start alone that proves the session was beginning — the model and effective effort it began
+ * on; it is the scope a per-session observation view declares.
  *
  * The two scopes share one dispatch mechanism and differ only in which deliveries a group admits.
  * Widening a subscription to `session` grants no State write and no external-effect authority:

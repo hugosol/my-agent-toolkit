@@ -317,11 +317,13 @@ boundary, so a session nobody is viewing is as current as the one on screen; it 
 nothing and publishes no marker area, and a harness that reports no such change simply never delivers it.
 
 A start delivery is also the one delivery whose facts include the pair the session *began* on — the model and
-the effective level the harness resolved for it ([`SessionStartup`](../core/protocol.ts#L136)) — because the
-harness's own start signal is the one instant that reading is a fact rather than the session's current pair;
-every other delivery reports none, and a session a host merely loaded reports none either, its own start lying
-behind this process's observation. A fact nothing proved stays absent, part by part, rather than being filled
-in from the settings in effect.
+the effective level the harness resolved for it ([`SessionStartup`](../core/protocol.ts#L137)) — and only where
+that start proves the session was beginning: a creation rather than a way into a session that already exists
+(no `resume`, no `fork`), over a session whose own transcript carries no conversation yet. A fresh spawn is that
+case; a session the host reloaded and re-bound — a parked subagent revived, a session re-entered in another
+process — fires the same start signal while replaying its conversation, and reports none. Every other delivery
+reports none as well, because what it could read is the session's *current* pair rather than the one it started
+on. A fact nothing proved stays absent, part by part, rather than being filled in from the settings in effect.
 
 The run axis is the edge-triggered pair `round_start` and `round_end`
 ([`protocol.ts#L241`](../core/protocol.ts#L241)), where a `Round` is one period of agent activity
@@ -372,8 +374,9 @@ or `unresolved` ([`protocol.ts#L31`](../core/protocol.ts#L31)) and reach no `own
 deliveries belong to the owner that session follows, and the effect body an extension drives from them
 belongs to the session that armed it, which is why a subagent can never report or stop the owner's effects.
 A `session` group is dispatched every actual session's deliveries, each naming that session's own identity,
-direct parent, latest name, the handle of the task its spawn was allocated and — on its own start alone — the
-model and effective level it began on: the scope a per-session observation view declares. The handle names the
+direct parent, latest name, the handle of the task its spawn was allocated and — on the start alone that proves
+the session was beginning — the model and effective level it began on: the scope a per-session observation view
+declares. The handle names the
 session's work rather than the agent definition it runs, which is a kind of agent, and none of these facts is
 an identity: a rename or a handle leaves the session's own id, its direct parent and its Owner exactly as they
 were. Widening a group grants

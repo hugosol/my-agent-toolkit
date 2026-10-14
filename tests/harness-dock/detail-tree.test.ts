@@ -16,10 +16,15 @@
  * consumption, an inclusive figure, or a Round row in the detail form could not pass.
  *
  * The last case reads the host's own answers at a spawned session's start — its registry id, the
- * agent definition it runs, the model and the resolved thinking level — straight off the native
- * extension API through the `session-start-probe` fixture, and compares the drawn row and the saved
- * record against them, both while that session runs and after an independent process restores the
- * document: the source of the facts is the harness's, never this repository's rendering of them.
+ * agent definition it runs, the model, the resolved thinking level and whether that session's branch
+ * already carries a conversation — straight off the native extension API through the
+ * `session-start-probe` fixture, and compares the drawn row and the saved record against them, both
+ * while that session runs and after an independent process restores the document: the source of the
+ * facts is the harness's, never this repository's rendering of them. The same case reads what the
+ * framework's own delivery carried through the public factory (`startup-facts-probe`): the pair the
+ * host answered for the session that really began, and nothing at all for the session the second
+ * process entered with its conversation replayed, which is the difference the adapter's startup
+ * requirement is built on.
  *
  * Every model is reached through the dock's own capture endpoint, so no run needs a credential and
  * nothing leaves the machine; the run's own agent state, session directory, working directory and
@@ -39,6 +44,7 @@ import { type IsolatedHarness, REPO_ROOT, readBaselineRecord } from "./baseline"
 import { type CaptureServer, type CaptureStep, type CapturedRequest, startCaptureServer } from "./capture-server";
 import { DOCK_CAPTURE_BASE_URL_ENV } from "./fixtures/extension-root/provider";
 import { SESSION_START_PROBE_ID } from "./fixtures/session-start-probe/entrypoint";
+import { STARTUP_FACTS_ID } from "./fixtures/startup-facts-probe/entrypoint";
 import { type RunRoot, createRunRoot } from "./run-root";
 import { ControlledSession, type RpcFrame } from "./session";
 import { ensureViewedSessionHarness } from "./viewed-session-harness";
@@ -80,6 +86,8 @@ const CHILD_TASK_NAME = "dock-detail-child";
 const SPAWN_AGENT = "task";
 /** The fixture that reports the harness's own answers at a session's own start, natively. */
 const SESSION_START_PROBE = path.join(import.meta.dir, "fixtures", "session-start-probe", "entrypoint.ts");
+/** The fixture that reports the framework's own start delivery through the public factory. */
+const STARTUP_FACTS_PROBE = path.join(import.meta.dir, "fixtures", "startup-facts-probe", "entrypoint.ts");
 
 let harness: IsolatedHarness;
 
@@ -365,10 +373,15 @@ async function linesUntil(
  *
  * These are the harness's own readings, taken straight off the extension API it publishes: the
  * registry id the spawn was allocated, the agent definition the session runs, the spawning agent's
- * id, the context's model and the effective level getter. They are the source a case compares the
- * drawn row and the saved record against.
+ * id, the context's model, the effective level getter, and whether that session's own branch already
+ * carried a conversation — the fact the harness itself reads to tell a session it reloaded from one
+ * that is beginning. They are the source a case compares the drawn row and the saved record against.
  */
 interface StartReading {
+	/** The native transition this reading was taken on: the start, a switch or a branch. */
+	readonly nativeEvent: string;
+	/** The reason that transition carried, when it named one. */
+	readonly nativeReason: string | null;
 	readonly sessionId: string;
 	readonly kind: string;
 	readonly id: string;
@@ -377,6 +390,7 @@ interface StartReading {
 	readonly provider: string | null;
 	readonly model: string | null;
 	readonly level: string | null;
+	readonly conversation: boolean;
 }
 
 /** Every start reading one run's probe fixture wrote, in the order the host produced them. */
@@ -403,6 +417,53 @@ async function startReadingsUntil(
 		await queuedWorkSettled();
 	}
 }
+
+/**
+ * What the framework's own start delivery carried, as the `startup-facts-probe` fixture reported it:
+ * the session the delivery was about, the kind of session it is, why the start happened, and the
+ * startup facts the adapter reported — `null` when it reported none.
+ */
+interface StartFactsLine {
+	readonly sessionId: string;
+	readonly kind: string;
+	readonly reason: string | null;
+	readonly startup: {
+		readonly model?: { readonly provider: string; readonly model: string };
+		readonly effort?: string;
+	} | null;
+}
+
+/** Every framework start delivery one run's fixture reported, in the order the framework dispatched them. */
+function startFactsLines(session: ControlledSession): StartFactsLine[] {
+	const prefix = `[${STARTUP_FACTS_ID}] session_start `;
+	const lines: StartFactsLine[] = [];
+	for (const raw of session.stderr().split("\n")) {
+		if (!raw.startsWith(prefix)) continue;
+		lines.push(JSON.parse(raw.slice(prefix.length)) as StartFactsLine);
+	}
+	return lines;
+}
+
+/** Waits until the framework's own start deliveries satisfy a case, and answers with all of them. */
+async function startFactsUntil(
+	session: ControlledSession,
+	accept: (lines: readonly StartFactsLine[]) => boolean,
+): Promise<StartFactsLine[]> {
+	const deadline = Date.now() + 20_000;
+	for (;;) {
+		const lines = startFactsLines(session);
+		if (accept(lines)) return lines;
+		if (Date.now() > deadline) throw new Error(`no framework start delivery the case expects appeared:\n${session.stderr()}`);
+		await queuedWorkSettled();
+	}
+}
+
+/** One framework start delivery for a session, waited for by that session's id. */
+async function startFactsOf(session: ControlledSession, sessionId: string): Promise<StartFactsLine | undefined> {
+	const lines = await startFactsUntil(session, all => all.some(line => line.sessionId === sessionId));
+	return lines.find(line => line.sessionId === sessionId);
+}
+
 
 /** The actual session the harness is showing, and the file it persists, as the harness reports them. */
 async function currentSession(run: DockRun): Promise<{ readonly id: string; readonly file: string }> {
@@ -556,7 +617,7 @@ describe("a real spawn's own start facts reach its row, the document and the nex
 		const runRoot = createRunRoot("detail-tree-startup");
 		const first = await startRun("detail-tree-startup-first", {
 			runRoot,
-			extraExtensions: [SESSION_START_PROBE],
+			extraExtensions: [SESSION_START_PROBE, STARTUP_FACTS_PROBE],
 		});
 		try {
 			await first.session.request({ type: "set_session_name", name: MAIN_SESSION_NAME });
@@ -586,6 +647,21 @@ describe("a real spawn's own start facts reach its row, the document and the nex
 			expect(childStart.level).not.toBeNull();
 			expect(childStart.level).not.toBe("auto");
 			const provedLevel = String(childStart.level);
+			// The host's own reading of what makes this a beginning: the spawned session's branch
+			// carries no conversation yet, which is the fact the adapter requires before it treats this
+			// instant's model and level as the session's startup rather than as its current pair. The
+			// same reading is `true` for a session the harness reloads with its transcript (the second
+			// process below).
+			expect(childStart.conversation).toBe(false);
+			// And the framework's own delivery carried the pair this host answered, on the session's own
+			// start: the source of the row and the record below is the harness's reading, mapped.
+			const spawnedStart = await startFactsOf(first.session, childStart.sessionId);
+			expect(spawnedStart?.kind).toBe("sub");
+			expect(spawnedStart?.reason).toBe("initial");
+			expect(spawnedStart?.startup).toEqual({
+				model: { provider: MODEL_PROVIDER, model: MODEL_ID },
+				effort: provedLevel,
+			});
 			/** The effort one drawn row states, as the row's own separator delimits it. */
 			const effortOf = (row: string): string => row.slice(row.indexOf("Effort: ") + "Effort: ".length).split("  ")[0] as string;
 
@@ -636,13 +712,32 @@ describe("a real spawn's own start facts reach its row, the document and the nex
 			// and reads the document the first one left — observing no start of the child at all.
 			const position = await currentSession(first);
 			await stopRun(first);
-			const second = await startRun("detail-tree-startup-second", { runRoot });
+			const second = await startRun("detail-tree-startup-second", {
+				runRoot,
+				extraExtensions: [SESSION_START_PROBE, STARTUP_FACTS_PROBE],
+			});
 			try {
 				expect(payloadOf(await second.session.request({ type: "switch_session", sessionPath: position.file })).cancelled).toBe(
 					false,
 				);
 				expect((await currentSession(second)).id).toBe(position.id);
 				expect(startReadings(second.session).some(reading => reading.sessionId === childStart.sessionId)).toBe(false);
+
+				// The session this process really entered is the one the first process left behind: the
+				// host replayed its conversation, and its own reading says exactly that — a switch into an
+				// existing session (`resume`), whose branch already carries the conversation. It is the
+				// same signal a spawn makes, so this reading is what the adapter's requirement (a creation
+				// over a session with no conversation yet) rejects. The framework therefore reports no
+				// startup facts for it, whatever its context answers now.
+				const resumedReading = await startReadingsUntil(second.session, all =>
+					all.some(reading => reading.sessionId === position.id),
+				).then(all => all.find(reading => reading.sessionId === position.id));
+				expect(resumedReading?.nativeEvent).toBe("session_switch");
+				expect(resumedReading?.nativeReason).toBe("resume");
+				expect(resumedReading?.conversation).toBe(true);
+				const resumedStart = await startFactsOf(second.session, position.id);
+				expect(resumedStart?.reason).toBe("resume");
+				expect(resumedStart?.startup).toBeNull();
 
 				const documentBefore = sessionsOf(readDocument(second.home.consumptionFile) ?? {});
 				const requestsBeforeDetail = second.capture.requests().length;
