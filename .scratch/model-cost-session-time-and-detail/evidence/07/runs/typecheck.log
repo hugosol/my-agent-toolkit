@@ -1,0 +1,3 @@
+$ bun run typecheck   # revision e548e80 (e548e80eb9345ccae792d61f26134d0d33da88d2), 2026-10-14T21:23:47+08:00
+$ tsc --noEmit
+exit=0

@@ -1,0 +1,52 @@
+$ HTTPS_PROXY=http://127.0.0.1:10808 HTTP_PROXY=http://127.0.0.1:10808 NO_PROXY=127.0.0.1,localhost bun test tests/harness-dock/session-ownership-tree.test.ts   # revision e548e80, 2026-10-14T21:39:46+08:00  (probe 2: machine proxy for outbound discovery)
+bun test v1.4.2 (744846f84)
+
+tests\harness-dock\session-ownership-tree.test.ts:
+412 | 			expect((await run.session.prompt(DELEGATE_PROMPT)).status).toBe("completed");
+413 | 
+414 | 			// The host made five model requests: the main session's delegation, the child's delegation,
+415 | 			// the grandchild's answer, the child's answer, and the main session's prose reply. The tool
+416 | 			// executions between them are not requests.
+417 | 			expect(run.capture.requests()).toHaveLength(5);
+                                        ^
+error: expect(received).toHaveLength(expected)
+
+Expected length: 5
+Received length: 11
+
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-EBBKM4\tests\harness-dock\session-ownership-tree.test.ts:417:35)
+(fail) a real delegating run accounts each actual session's own requests (P12, P13, P24) > three sessions save their own record, with the direct parent the host reported [2229.33ms]
+539 | 			expect(recordOf(document, childId)?.parent).toBe(mainId);
+540 | 			expect(recordOf(document, grandchildId)?.parent).toBe(childId);
+541 | 			// Seven model requests in all: five for the delegation, one in the session the view moved to,
+542 | 			// one after switching back — and every one of them is accounted under the session it was
+543 | 			// issued by.
+544 | 			expect(run.capture.requests()).toHaveLength(7);
+                                        ^
+error: expect(received).toHaveLength(expected)
+
+Expected length: 7
+Received length: 13
+
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-EBBKM4\tests\harness-dock\session-ownership-tree.test.ts:544:35)
+(fail) a real delegating run accounts each actual session's own requests (P12, P13, P24) > switching the session the host displays leaves every session's own record where it was [2468.65ms]
+560 | 			await run.session.request({ type: "set_session_name", name: MAIN_SESSION_NAME });
+561 | 			expect((await run.session.prompt(DELEGATE_PROMPT)).status).toBe("completed");
+562 | 
+563 | 			// The renames cost the model nothing: the same five requests, and no notice at all — a
+564 | 			// rename is display data, never a request or a skipped reading.
+565 | 			expect(run.capture.requests()).toHaveLength(5);
+                                        ^
+error: expect(received).toHaveLength(expected)
+
+Expected length: 5
+Received length: 11
+
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-EBBKM4\tests\harness-dock\session-ownership-tree.test.ts:565:35)
+(fail) a session renamed while it runs and nobody views it (P24, S5) > the host's own rename reaches a subscriber where it happens, and only the next normal save writes it [2346.82ms]
+
+ 0 pass
+ 3 fail
+ 18 expect() calls
+Ran 3 tests across 1 file. [7.09s]
+exit=1

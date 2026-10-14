@@ -1,0 +1,8 @@
+$ OMP_BOT_BINARY=E:/Developer/myhub/omp-bot/backend/target/release/omp-bot.exe bun test tests/connect-bot   # revision c7ad7e8, 2026-10-14T21:17:20+08:00
+bun test v1.4.2 (744846f84)
+
+ 142 pass
+ 0 fail
+ 689 expect() calls
+Ran 142 tests across 18 files. [76.55s]
+exit=0
