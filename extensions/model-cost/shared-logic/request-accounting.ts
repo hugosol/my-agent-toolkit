@@ -43,7 +43,9 @@
  *   states no duration at all leaves the figure unavailable instead of zero. That figure is business
  *   data of its own — it is added to no token bucket, currency or total, and no amount is derived
  *   from it — and it rides the same commit as the session's consumption rather than causing one, so
- *   a reading that arrived after the last commit waits for the next one.
+ *   a reading that arrived after the last commit waits for the next one. An execution's duration
+ *   belongs to the period it ran in: an execution the closed period already accounted contributes
+ *   nothing to the period that replaced it, however late its own readings arrive.
  *
  * Two derived results read that same authority without adding to it. An actual session's identity
  * ({@link ConsumptionView.identity}) is its latest reported display name and its reliable
@@ -512,6 +514,20 @@ export function createRequestAccounting(inputs: RequestAccountingInputs): Reques
 	const anchors = new Map<string, RequestPrice>();
 	/** The Turns this instance has already accounted for or deliberately skipped, by identity. */
 	const handled = new Set<string>();
+	/**
+	 * The executions each session's accumulation had been told about when the period underneath this
+	 * instance was closed.
+	 *
+	 * An execution's own duration belongs to the period that execution ran in, so the identity memory
+	 * has to outlive the accumulation the closed period's figure lived in: a harness states an
+	 * execution's duration while that execution runs, so one still running when the period was closed
+	 * can report its next reading — or its own end — after the period that began it is gone. Those
+	 * readings are facts about the closed period's work, and they contribute nothing to the period
+	 * that replaced it. What is kept is the identities alone (see
+	 * {@link SubagentRuntimes.knownExecutions}): never the figures, never a per-execution duration,
+	 * and nothing that is persisted anywhere.
+	 */
+	const closedExecutions = new Map<string, Set<string>>();
 	const listeners = new Set<() => void>();
 	/**
 	 * The snapshot each session's open Round is measured from, with the period that snapshot
@@ -763,10 +779,25 @@ export function createRequestAccounting(inputs: RequestAccountingInputs): Reques
 	 * A Session span is not part of what is discarded. The instants it holds are observations rather
 	 * than additions, so a snapshot that did not land leaves them as they were — the reading a display
 	 * shows is still the span this instance really saw — and the next snapshot that does land carries
-	 * them to the file instead of asking the user to say something again.
+	 * them to the file instead of asking the user to say something again. The identities of the
+	 * executions the accumulations being dropped were told about are not discarded either: an
+	 * execution belongs to the period it ran in, so those identities are kept outside the accumulation
+	 * that is going, where they keep a late reading of one of them from contributing to the period
+	 * that replaced it.
 	 */
 	const discard = (sessionId: string | undefined): void => {
 		if (sessionId === undefined) {
+			// The period underneath this instance was replaced, so what it accumulated belongs to a
+			// generation that can no longer be written. The executions each accumulation was told about
+			// are moved out of it first: the identities are what keeps a reading of one of them — its own
+			// end included — from contributing to the period that replaced it.
+			for (const [id, ledger] of ledgers) {
+				const known = ledger.runtimes.knownExecutions();
+				if (known.length === 0) continue;
+				const closed = closedExecutions.get(id) ?? new Set<string>();
+				for (const executionId of known) closed.add(executionId);
+				closedExecutions.set(id, closed);
+			}
 			ledgers.clear();
 			openRounds.clear();
 			endedRounds.clear();
@@ -1060,12 +1091,24 @@ export function createRequestAccounting(inputs: RequestAccountingInputs): Reques
 		subagentRuntime(delivery) {
 			if (disposed) return;
 			remember(delivery.session);
+			// A reading naming an execution the closed period already knew is a fact about that period's
+			// work rather than this one's, so it contributes nothing here: it is dropped before any ledger
+			// is built for it, which is why nothing accumulates, nothing is drawn and nothing is committed
+			// out of it. A reading this host could not turn into one still carries no execution to place
+			// and is reported the same way it always was.
+			const runtime = delivery.runtime;
+			if (
+				runtime.kind === "reading" &&
+				closedExecutions.get(delivery.session.sessionId)?.has(runtime.executionId) === true
+			) {
+				return;
+			}
 			// The reading belongs to the execution the harness reported, so it is applied to the session
 			// that execution ran in — and only there. Nothing else this instance holds moves with it: no
 			// Round is opened or closed, no consumption is settled, no other session's own record or
 			// direct parent is touched, and no commit is started.
 			const ledger = ledgerFor(delivery.session.sessionId);
-			const fault = ledger.runtimes.accept(delivery.runtime);
+			const fault = ledger.runtimes.accept(runtime);
 			if (fault !== undefined) {
 				// A runtime this host could not state is reported rather than filled in: no zero, no
 				// wall-clock span and no other duration stands in for it, and what was already

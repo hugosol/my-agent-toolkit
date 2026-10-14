@@ -1,6 +1,15 @@
 /**
  * `/budget holiday` and `/budget clear`: the period switch, its entry conditions, the one boundary
- * balance query and the archive-then-publish order (P30, P31, P32, P33, P34, P35, P36; S2, S3, S4).
+ * balance query, the archive-then-publish order, and the period's own time it closes with everything
+ * else (P20, P21, P30, P31, P32, P33, P34, P35, P36; S1, S2, S3).
+ *
+ * The time a switch closes is the period's own: the main session's Session span and each subagent's
+ * accumulated native runtime are facts of the period they were observed in, so the activity the
+ * switch publishes holds none of them, the archive keeps the ones the file really carried, and an
+ * execution the closed period already measured is not the next period's — however late its readings
+ * arrive. The cases below read that through the command an operator runs, the document and the
+ * archive the root holds, the widget lines the display result draws, and a second instance bound over
+ * the same root as the reload it is.
  *
  * The seam under test is production: the extension's real definition bound through the framework's
  * public binding (the port double, `tests/framework/support/harness-port-double.ts`), the command
@@ -31,11 +40,13 @@ import {
 import { tmpdir } from "node:os";
 import * as path from "node:path";
 import { MODEL_COST } from "../../extensions/model-cost/definition";
+import { widgetLines } from "../../extensions/model-cost/harnesses/omp/widget";
 import type { ConsumptionDocument } from "../../extensions/model-cost/shared-logic/consumption-document";
 import type { ModelPricingData } from "../../extensions/model-cost/shared-logic/model-data";
+import type { DisplayTarget } from "../../extensions/model-cost/shared-logic/presentation/display";
 import type { ModelCostRuntime } from "../../extensions/model-cost/shared-logic/runtime";
 import { createModelCostRuntime } from "../../extensions/model-cost/shared-logic/runtime";
-import type { OwnerReference, SessionFacts, TurnSignal } from "../../framework/core/protocol";
+import type { OwnerReference, SessionFacts, SubagentRuntimeFact, TurnSignal } from "../../framework/core/protocol";
 import { updateFile } from "../../framework/modules/files";
 import type { HttpRequestOptions } from "../../framework/modules/http";
 import { type CommandRun, type PortDouble, portDouble } from "../framework/support/harness-port-double";
@@ -117,6 +128,88 @@ const EMPTY_PERIOD: ConsumptionDocument = {
 	harnesses: {},
 };
 
+/** One Beijing wall-clock reading of the timed fixture's own day, as the epoch instant the clock reads. */
+const BEIJING_OFFSET_MS = 8 * 60 * 60 * 1000;
+function atBeijing(hours: number, minutes = 0): number {
+	return Date.UTC(2026, 9, 5, hours, minutes) - BEIJING_OFFSET_MS;
+}
+
+/** The closed period's own two instants: the input it began at, and the Round end it last observed. */
+const OLD_INPUT = atBeijing(10, 0);
+const OLD_ROUND_END = atBeijing(10, 5);
+/** The instant the timed cases' clock reads when they close the period. */
+const SWITCH_AT = atBeijing(10, 30);
+/** The new period's own input and Round end, which its span is the difference of: 180,000 ms. */
+const NEW_INPUT = atBeijing(11, 0);
+const NEW_ROUND_END = atBeijing(11, 3);
+
+/** A subagent of the main session, as a host that reports its facts makes it one row of the tree. */
+const SUB: SessionFacts = {
+	sessionId: "session-sub",
+	kind: "sub",
+	name: "子代理",
+	parentSessionId: "session-main",
+	unavailable: [],
+};
+
+/** The target every widget reading below is taken for: the main session on its own current pair. */
+const MAIN_TARGET: DisplayTarget = { sessionId: "session-main", provider: "deepseek", model: "deepseek-chat" };
+
+/**
+ * The document a time-carrying case binds over: {@link TREE}'s own consumption with the closed
+ * period's two committed time facts beside it — the main session's Session span of 300,000 ms
+ * (10:00 → 10:05) and its subagent's accumulated native runtime of 360,000 ms.
+ */
+const TIMED_TREE: ConsumptionDocument = {
+	schemaVersion: 1,
+	periodId: "period-timed",
+	start: "2026-10-01T00:00:00.000Z",
+	start_bal: 30.25,
+	holiday: false,
+	harnesses: {
+		[HARNESS]: {
+			sessions: [
+				{
+					id: "session-main",
+					name: "主会话",
+					parent: null,
+					saveVersion: 3,
+					own: {
+						deepseek: {
+							"deepseek-chat": {
+								tokens: { input: 1000, cacheRead: 500, cacheWrite: 0, output: 200 },
+								costCny: 0.031,
+							},
+						},
+						"plan-provider": {
+							"codex-model": {
+								tokens: { input: 400, cacheRead: 100, cacheWrite: 50, output: 200 },
+								referenceCostUsd: 0.02,
+							},
+						},
+					},
+					span: { start: OLD_INPUT, end: OLD_ROUND_END },
+				},
+				{
+					id: "session-sub",
+					name: "子代理",
+					parent: "session-main",
+					saveVersion: 2,
+					own: {
+						"plan-provider": {
+							"codex-model": {
+								tokens: { input: 40, cacheRead: 10, cacheWrite: 5, output: 20 },
+								referenceCostUsd: 0.004,
+							},
+						},
+					},
+					runtimeMs: 360_000,
+				},
+			],
+		},
+	},
+};
+
 /** The balance answer a case's provider returns, in the provider's documented shape. */
 function balanceAnswer(total: string): Response {
 	return new Response(
@@ -153,7 +246,9 @@ interface Bound {
  * locally and can be counted; the clock is this case's own fixed instant, so a reading the entry
  * holds can never cross its own success TTL while a case runs. `answer` is what a case varies when
  * the boundary query's own outcome is its subject, and `onQuery` is how a case waits for the request
- * itself rather than for a duration.
+ * itself rather than for a duration. `storageRoot` binds this same production over a root a case
+ * already wrote, which is the second instance a reload is; `now` is the clock that instance reads,
+ * for a case that places its observations at instants of its own.
  */
 async function bind(
 	options: {
@@ -163,12 +258,16 @@ async function bind(
 		readonly onQuery?: (query: Query, attempt: number) => void;
 		/** A document this case leaves absent, for a root that holds no activity yet. */
 		readonly noDocument?: boolean;
+		/** A root a case already wrote, which a second instance is bound over as the reload it is. */
+		readonly storageRoot?: string;
+		/** The instants this instance's own clock reads; omitted means this case's one fixed instant. */
+		readonly now?: () => number;
 	} = {},
 ): Promise<Bound> {
-	const root = mkdtempSync(path.join(tmpdir(), "model-cost-period-switch-"));
-	roots.push(root);
+	const root = options.storageRoot ?? mkdtempSync(path.join(tmpdir(), "model-cost-period-switch-"));
+	if (options.storageRoot === undefined) roots.push(root);
 	const consumptionFile = path.join(root, CONSUMPTION_FILE);
-	if (options.noDocument !== true) {
+	if (options.storageRoot === undefined && options.noDocument !== true) {
 		writeFileSync(consumptionFile, JSON.stringify(options.document ?? TREE), "utf8");
 	}
 	const queries: Query[] = [];
@@ -187,7 +286,7 @@ async function bind(
 					resolve: async (provider: string) =>
 						provider === "deepseek" ? { baseUrl: "https://host.example/v1", credential: "probe-key" } : undefined,
 				},
-				now: () => CLOCK,
+				now: options.now ?? (() => CLOCK),
 				httpRequest: async (url: string, httpOptions?: HttpRequestOptions) => {
 					const query: Query = { url, options: httpOptions };
 					queries.push(query);
@@ -220,6 +319,35 @@ function singleArchive(root: string): Record<string, unknown> {
 /** The active consumption document of a root, parsed as the plain JSON document it is. */
 function active(root: string): Record<string, unknown> {
 	return JSON.parse(readFileSync(path.join(root, CONSUMPTION_FILE), "utf8")) as Record<string, unknown>;
+}
+
+/** One session's record inside a root's active document, as the plain JSON document it is. */
+function storedRecord(root: string, id: string): Record<string, unknown> | undefined {
+	const harnesses = active(root).harnesses as Record<string, { readonly sessions: readonly Record<string, unknown>[] }>;
+	return Object.values(harnesses)
+		.flatMap(bucket => bucket.sessions)
+		.find(record => record.id === id);
+}
+
+/**
+ * The lines the frontend draws for one target right now.
+ *
+ * It is the widget's own reading, composed exactly as the frontend composes it — the read-only
+ * display result, this process's balance, the pricing period, the accrual and the allowance lines —
+ * and drawn by the widget's own layout, so what a case reads is the text an operator sees rather than
+ * a field of the display result.
+ */
+function widgetLinesOf(bound: Bound, target: DisplayTarget): readonly string[] {
+	const presentation = bound.runtime.presentation;
+	return (
+		widgetLines({
+			display: presentation.of(target),
+			balance: presentation.balance(),
+			period: presentation.period(),
+			accrued: presentation.accrued(),
+			quota: presentation.quotaLines(),
+		}) ?? []
+	);
 }
 
 /**
@@ -735,5 +863,282 @@ describe("a switch reports exactly how far it got and never reports success earl
 		expect(run.feedback).toHaveLength(1);
 		expect(run.feedback[0]?.level).toBe("info");
 		expect(active(bound.root).holiday).toBe(false);
+	});
+});
+
+describe("a switch clears the period's own time with the consumption it closes (P20, P21)", () => {
+	test("clear takes the committed span and the descendant's runtime out of the new document, and a reload holds neither", async () => {
+		const bound = await bind({ document: TIMED_TREE, now: () => SWITCH_AT });
+		// The subagent's own facts are reported, so its row is the same row on both sides of the switch
+		// rather than one a rename or a lost parent could hide it behind; the entry is put in its detail
+		// form so the widget draws that tree at all.
+		bound.double.deliverSession(OWNER, { event: { kind: "session_facts" }, session: SUB });
+		await bound.double.runToCompletion("budget", { args: "detail", provider: "deepseek" });
+
+		// The period the file holds carries its own time: 10:00 → 10:05 of the main session (300,000 ms)
+		// and 360,000 ms of native runtime under it, both as the display and the widget read them.
+		expect(bound.runtime.view.sessionSpan(MAIN.sessionId)).toEqual({
+			startAt: OLD_INPUT,
+			endAt: OLD_ROUND_END,
+			elapsedMs: 300_000,
+		});
+		expect(bound.runtime.view.runtime(SUB.sessionId)).toBe(360_000);
+		const before = widgetLinesOf(bound, MAIN_TARGET);
+		expect(before.find(line => line.startsWith("Total: "))).toContain("Span: 0:05:00");
+		expect(before.find(line => line.startsWith("└─ 子代理"))).toContain("Run: 6m");
+
+		const run = await bound.double.runToCompletion("budget", { args: "clear", provider: "deepseek" });
+		expect(run.feedback).toHaveLength(1);
+		expect(run.feedback[0]?.level).toBe("info");
+
+		// The archive is the closed period's own document plus the instant it ended: the time it really
+		// committed stays in that record, and nothing extra was collected for it on the way out.
+		expect(singleArchive(bound.root)).toEqual({
+			...TIMED_TREE,
+			end: new Date(SWITCH_AT).toISOString(),
+			end_bal: 12.5,
+		});
+		// The new activity holds no session at all, so none of the closed period's time is in it.
+		const document = active(bound.root);
+		expect(document).toEqual({
+			schemaVersion: 1,
+			periodId: document.periodId,
+			start: new Date(SWITCH_AT).toISOString(),
+			start_bal: 12.5,
+			holiday: false,
+			harnesses: {},
+		});
+		expect(document.periodId).not.toBe("period-timed");
+
+		// What this instance answers afterwards is unavailable rather than the closed period's reading,
+		// and the widget says the same: the Total's span and the descendant's runtime are both dashes.
+		expect(bound.runtime.view.sessionSpan(MAIN.sessionId)).toBeUndefined();
+		expect(bound.runtime.view.runtime(SUB.sessionId)).toBeUndefined();
+		const after = widgetLinesOf(bound, MAIN_TARGET);
+		expect(after.find(line => line.startsWith("Total: "))).toContain("Span: \u2014");
+		expect(after.find(line => line.startsWith("└─ 子代理"))).toContain("Run: \u2014");
+
+		// A second instance over the same root — the reload a restart is — reads the same: the new
+		// document holds no time, and none is read back out of the archive the switch wrote.
+		const reloaded = await bind({ storageRoot: bound.root, now: () => SWITCH_AT });
+		expect(reloaded.runtime.storage.sessions(HARNESS)).toEqual([]);
+		expect(reloaded.runtime.view.sessionSpan(MAIN.sessionId)).toBeUndefined();
+		expect(reloaded.runtime.view.runtime(SUB.sessionId)).toBeUndefined();
+	});
+
+	test("the first holiday clears them the same way and opens a period that holds no time", async () => {
+		const bound = await bind({ document: TIMED_TREE, now: () => SWITCH_AT });
+
+		const run = await bound.double.runToCompletion("budget", { args: "holiday", provider: "deepseek" });
+
+		expect(run.feedback).toHaveLength(1);
+		expect(run.feedback[0]?.level).toBe("info");
+		expect(singleArchive(bound.root)).toEqual({
+			...TIMED_TREE,
+			end: new Date(SWITCH_AT).toISOString(),
+			end_bal: 12.5,
+		});
+		const document = active(bound.root);
+		expect(document).toEqual({
+			schemaVersion: 1,
+			periodId: document.periodId,
+			start: new Date(SWITCH_AT).toISOString(),
+			start_bal: 12.5,
+			holiday: true,
+			harnesses: {},
+		});
+		expect(bound.runtime.view.sessionSpan(MAIN.sessionId)).toBeUndefined();
+		expect(bound.runtime.view.runtime(SUB.sessionId)).toBeUndefined();
+		expect(storedRecord(bound.root, "session-sub")).toBeUndefined();
+
+		const reloaded = await bind({ storageRoot: bound.root, now: () => SWITCH_AT });
+		expect(reloaded.runtime.view.sessionSpan(MAIN.sessionId)).toBeUndefined();
+		expect(reloaded.runtime.view.runtime(SUB.sessionId)).toBeUndefined();
+	});
+
+	test("an entry already in a holiday period is not reset again, so its time is neither written nor archived", async () => {
+		const bound = await bind({
+			document: { ...TIMED_TREE, periodId: "period-holiday", holiday: true },
+			now: () => SWITCH_AT,
+		});
+		const before = readFileSync(bound.consumptionFile, "utf8");
+
+		const run = await bound.double.runToCompletion("budget", { args: "holiday", provider: "deepseek" });
+
+		expect(run.feedback).toHaveLength(1);
+		expect(run.feedback[0]?.level).toBe("info");
+		expect(run.feedback[0]?.message).toContain("holiday 已开启");
+		// Nothing was switched, so nothing was archived and nothing was written: the time the document
+		// already carried is the time it still carries, rather than a copy of it written again.
+		expect(archiveNames(bound.root)).toEqual([]);
+		expect(readFileSync(bound.consumptionFile, "utf8")).toBe(before);
+		expect(bound.runtime.view.sessionSpan(MAIN.sessionId)).toEqual({
+			startAt: OLD_INPUT,
+			endAt: OLD_ROUND_END,
+			elapsedMs: 300_000,
+		});
+		expect(bound.runtime.view.runtime(SUB.sessionId)).toBe(360_000);
+	});
+
+	test("an execution the closed period measured is not the new period's time, however late its readings arrive (P21)", async () => {
+		let clock = SWITCH_AT;
+		const bound = await bind({ document: TIMED_TREE, now: () => clock });
+		bound.double.deliverSession(OWNER, { event: { kind: "session_facts" }, session: SUB });
+		await bound.double.runToCompletion("budget", { args: "detail", provider: "deepseek" });
+
+		// The closed period's own execution, open at 100,000 ms when the period is closed, on top of the
+		// 360,000 ms the session's record already carried.
+		bound.double.deliverSubagentRuntime({
+			runtime: { kind: "reading", executionId: "exec-closed", runtimeMs: 100_000, status: "running" },
+			owner: OWNER,
+			session: SUB,
+		});
+		expect(bound.runtime.view.runtime(SUB.sessionId)).toBe(460_000);
+
+		const run = await bound.double.runToCompletion("budget", { args: "clear", provider: "deepseek" });
+		expect(run.feedback[0]?.level).toBe("info");
+		expect(bound.runtime.view.runtime(SUB.sessionId)).toBeUndefined();
+		expect(widgetLinesOf(bound, MAIN_TARGET).find(line => line.startsWith("└─ 子代理"))).toContain("Run: \u2014");
+
+		// That execution reports its own end, and then one more progress reading, after the switch: both
+		// are facts about work the closed period measured, so neither is time of the period that replaced
+		// it — and neither one re-opens the accumulation this instance let go of.
+		bound.double.deliverSubagentRuntime({
+			runtime: { kind: "reading", executionId: "exec-closed", runtimeMs: 210_000, status: "ended" },
+			owner: OWNER,
+			session: SUB,
+		});
+		expect(bound.runtime.view.runtime(SUB.sessionId)).toBeUndefined();
+		bound.double.deliverSubagentRuntime({
+			runtime: { kind: "reading", executionId: "exec-closed", runtimeMs: 220_000, status: "running" },
+			owner: OWNER,
+			session: SUB,
+		});
+		expect(bound.runtime.view.runtime(SUB.sessionId)).toBeUndefined();
+		expect(widgetLinesOf(bound, MAIN_TARGET).find(line => line.startsWith("└─ 子代理"))).toContain("Run: \u2014");
+
+		// A new execution of that same session is the new period's own work: it is the whole of the
+		// accumulation, and the figure the existing commit path carries is that figure alone.
+		bound.double.deliverSubagentRuntime({
+			runtime: { kind: "reading", executionId: "exec-new", runtimeMs: 120_000, status: "ended" },
+			owner: OWNER,
+			session: SUB,
+		});
+		expect(bound.runtime.view.runtime(SUB.sessionId)).toBe(120_000);
+		expect(widgetLinesOf(bound, MAIN_TARGET).find(line => line.startsWith("└─ 子代理"))).toContain("Run: 2m");
+
+		clock = NEW_INPUT;
+		bound.double.deliverRound(OWNER, { event: { kind: "round_start" }, session: SUB });
+		bound.double.deliverTurn(
+			{ kind: "request_started", session: SUB, at: NEW_INPUT, provider: "deepseek", model: "deepseek-chat" },
+			{ owner: OWNER },
+		);
+		bound.double.deliverTurn(
+			{
+				kind: "response_settled",
+				session: SUB,
+				at: NEW_INPUT,
+				outcome: "completed",
+				readings: [{ input: 10, output: 10, cacheRead: 0, cacheWrite: 0, totalTokens: 20 }],
+			},
+			{ owner: OWNER },
+		);
+		bound.double.deliverRound(OWNER, { event: { kind: "round_end" }, session: SUB });
+		await updateFile(bound.consumptionFile, current => current);
+
+		// The new period's own record: this session's first version of it, the one Turn it really ran —
+		// priced at the peak the fixture's 11:00 is in, (10·2 + 10·8)·3 / 1e6 — and the 120,000 ms of the
+		// new execution as the numeric milliseconds the document carries.
+		expect(storedRecord(bound.root, "session-sub")).toEqual({
+			id: "session-sub",
+			name: "子代理",
+			parent: "session-main",
+			saveVersion: 1,
+			own: {
+				deepseek: {
+					"deepseek-chat": {
+						tokens: { input: 10, cacheRead: 0, cacheWrite: 0, output: 10 },
+						costCny: 0.0003,
+					},
+				},
+			},
+			runtimeMs: 120_000,
+		});
+
+		// A reload reads that same figure from that same document.
+		const reloaded = await bind({ storageRoot: bound.root, now: () => clock });
+		expect(reloaded.runtime.view.runtime(SUB.sessionId)).toBe(120_000);
+		expect(storedRecord(bound.root, "session-sub")?.runtimeMs).toBe(120_000);
+	});
+
+	test("the main session's time starts at the next input after the switch, not at the input it closed with (P21)", async () => {
+		let clock = SWITCH_AT;
+		const bound = await bind({ document: TIMED_TREE, now: () => clock });
+
+		const run = await bound.double.runToCompletion("budget", { args: "clear", provider: "deepseek" });
+		expect(run.feedback[0]?.level).toBe("info");
+
+		// No input has been observed since the switch, so the new period has no start: the main session's
+		// time is unavailable rather than the 10:00 start the closed period was closed with.
+		expect(bound.runtime.view.sessionSpan(MAIN.sessionId)).toBeUndefined();
+		expect(widgetLinesOf(bound, MAIN_TARGET).find(line => line.startsWith("Total: "))).toContain("Span: \u2014");
+
+		// The next input is what the new period's span starts at: 11:00, not the closed period's 10:00 and
+		// not the instant the switch itself happened.
+		clock = NEW_INPUT;
+		bound.double.deliverUserInput(OWNER, { session: MAIN });
+		bound.double.deliverRound(OWNER, { event: { kind: "round_start" }, session: MAIN });
+		// An input with no observed Round end after it is still nothing to read: both facts are needed.
+		expect(bound.runtime.view.sessionSpan(MAIN.sessionId)).toBeUndefined();
+
+		clock = NEW_ROUND_END;
+		bound.double.deliverTurn(
+			{ kind: "request_started", session: MAIN, at: NEW_INPUT, provider: "deepseek", model: "deepseek-chat" },
+			{ owner: OWNER },
+		);
+		bound.double.deliverTurn(
+			{
+				kind: "response_settled",
+				session: MAIN,
+				at: NEW_INPUT,
+				outcome: "completed",
+				readings: [{ input: 10, output: 10, cacheRead: 0, cacheWrite: 0, totalTokens: 20 }],
+			},
+			{ owner: OWNER },
+		);
+		bound.double.deliverRound(OWNER, { event: { kind: "round_end" }, session: MAIN });
+
+		expect(bound.runtime.view.sessionSpan(MAIN.sessionId)).toEqual({
+			startAt: NEW_INPUT,
+			endAt: NEW_ROUND_END,
+			elapsedMs: 180_000,
+		});
+		expect(widgetLinesOf(bound, MAIN_TARGET).find(line => line.startsWith("Total: "))).toContain("Span: 0:03:00");
+
+		// The existing commit path carries that same new pair and nothing of the closed period's: the
+		// record the round's own save published holds the new period's two instants.
+		await updateFile(bound.consumptionFile, current => current);
+		expect(storedRecord(bound.root, MAIN.sessionId)?.span).toEqual({ start: NEW_INPUT, end: NEW_ROUND_END });
+	});
+
+	test("a switch that could not archive writes no time and keeps the readings it had", async () => {
+		const bound = await bind({ document: TIMED_TREE, now: () => SWITCH_AT });
+		// A file where the archive directory belongs: no archive can be made there, so no period is closed.
+		writeFileSync(path.join(bound.root, "archives"), "not a directory", "utf8");
+		const before = readFileSync(bound.consumptionFile, "utf8");
+
+		const run = await bound.double.runToCompletion("budget", { args: "clear", provider: "deepseek" });
+
+		expect(run.feedback).toHaveLength(1);
+		expect(run.feedback[0]?.level).toBe("error");
+		expect(readFileSync(bound.consumptionFile, "utf8")).toBe(before);
+		// A period that was not closed is still the period this instance is in: the time it had is not
+		// dropped, and nothing is recovered from an archive that was never written.
+		expect(bound.runtime.view.sessionSpan(MAIN.sessionId)).toEqual({
+			startAt: OLD_INPUT,
+			endAt: OLD_ROUND_END,
+			elapsedMs: 300_000,
+		});
+		expect(bound.runtime.view.runtime(SUB.sessionId)).toBe(360_000);
 	});
 });
