@@ -1,4 +1,4 @@
-$ bun run smoke:model-cost-detail-layout   # revision c7ad7e8, 2026-10-14T21:17:15+08:00
+$ bun run smoke:model-cost-detail-layout   # revision e548e80 (e548e80eb9345ccae792d61f26134d0d33da88d2), 2026-10-14T21:23:52+08:00
 $ bun scripts/model-cost-detail-layout-smoke.ts
 # detail tree in a real terminal, drawn through the production frontend
 # stdout is a terminal: false, reported width: unknown

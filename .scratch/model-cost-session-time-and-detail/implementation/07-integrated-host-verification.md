@@ -8,7 +8,7 @@
 
 **Blocked by:** 04 — 消费周期重置与旧执行隔离；06 — 按树深度对齐与窄终端布局。传递依赖覆盖 01/02/03/05，不另加冗余边。
 
-**Status:** in-progress — implemented, tested green on the final integrated tree (whole repository, 963 pass / 0 fail) and committed on this ticket branch; the workflow's merge of this branch into `wayfinder/subagent-enhance` and the acceptance round follow.
+**Status:** in-progress — implemented, tested green on the final integrated tree (whole repository, 963 pass / 0 fail) and committed on this ticket branch; the workflow's merge of this branch into `wayfinder/subagent-enhance` and the acceptance round follow.（集成同步轮重跑见文末：typecheck／model-cost／layout smoke 绿；dock 另 3 例为环境级红，定位见 `evidence/07/dock-judge-chain-finding.md`。）
 
 Source: [approved contract](../contract.md) · [spec](../spec.md)
 
@@ -90,3 +90,10 @@ P9 的组合测试与 P34 的完整宿主兼容证明归本票；P35 的并发�
 - 设备级终端 smoke 无法在本会话重跑（见上），已用 06 的已准备真机证据替代，并保留可复现命令。
 - `tests/connect-bot` 的真实面板互操作用例需要一个 `omp-bot.exe`：`tests/connect-bot/support/omp-bot.ts` 先取 `OMP_BOT_BINARY`，未设时才回落到 `<worktree>/../omp-bot/backend/target/release/omp-bot.exe`。本 worktree 在 `%TEMP%` 下没有同级 checkout，故以 `OMP_BOT_BINARY=E:/Developer/myhub/omp-bot/backend/target/release/omp-bot.exe` 指认该真实 release 构建（01/02/06 各轮同样如此记录）；不设该变量时这 5 例只做 `existsSync` 检查即报缺二进制，与仓库代码无关。
 - 未验证项：P33 的人工可读性判断（证据已备齐，本票不宣称通过）；本分支向集成分支的合并（工作流步骤）与随后的验收轮。
+
+### 集成同步轮（integration-helper 轮，本轮）重跑记录
+
+- **同步**：`git merge wayfinder/subagent-enhance` → `Already up to date.`（本地 tip 仍为 `26e79cd`，合并前后各核对一次未移动；无冲突、无空合并提交）。集成分支工作区未被操作，全部 Git 操作仅本地。
+- **重跑（同一已合并树，revision `e548e80`，与记录的绿 run 只差票据 markdown 与日志）**：`bun run typecheck` → 0；`bun test tests/model-cost` → 341 pass / 0 fail；`bun run smoke:model-cost-detail-layout` → 0（各宽度全 PASS）；`bun run test`（含 `OMP_BOT_BINARY`）→ **960 pass / 3 fail**；`bun run test:dock` → **83 pass / 3 fail**。3 个失败全部是 `tests/harness-dock/session-ownership-tree.test.ts` 的请求条数断言（每例恰多 6 条宿主自身 `auto-thinking` judge 请求），属当前机器环境下的宿主 judge 候选链差异而非本票代码：同一失败在另一棵 parked worktree（06 票，NR12PO）以相同文件内容复现；定位证据见 [`evidence/07/dock-judge-chain-finding.md`](../evidence/07/dock-judge-chain-finding.md)，本轮日志见 `evidence/07/runs/{full-test,dock,dock-ownership-single}.log`。
+- 设备级终端 smoke 本轮仍无法重跑（无控制台设备：pty 不可用，`CREATE_NEW_CONSOLE` 无设备，`wt.exe` 未产出报告），沿用 06 的已准备真机证据。
+- 未决项：本机环境下 typesafe provider 未能进入宿主模型注册表的开关未定位（`PI_PROXY`／`HTTPS_PROXY`／`TYPESAFE_BASE_URL` 探测均未改变结果）；上述 3 例需在环境恢复后复跑。

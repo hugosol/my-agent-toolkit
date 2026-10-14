@@ -1,14 +1,1234 @@
-$ OMP_BOT_BINARY=E:/Developer/myhub/omp-bot/backend/target/release/omp-bot.exe bun run test   # revision c7ad7e8 (c7ad7e81075981b53229083efc63b505186ed732), 2026-10-14T21:08:25+08:00
+$ OMP_BOT_BINARY=E:/Developer/myhub/omp-bot/backend/target/release/omp-bot.exe bun run test   # revision e548e80 (e548e80eb9345ccae792d61f26134d0d33da88d2), 2026-10-14T21:58:44+08:00
 $ bun test
 bun test v1.4.2 (744846f84)
-codebase-tools: no owning main session resolved for this session; the extension stays off
-codebase-tools: no owning main session resolved for this session; the extension stays off
-codebase-tools: no owning main session resolved for this session; the extension stays off
-codebase-tools: no owning main session resolved for this session; the extension stays off
-codebase-tools: no owning main session resolved for this session; the extension stays off
 
- 963 pass
- 0 fail
- 5541 expect() calls
-Ran 963 tests across 106 files. [342.27s]
-exit=0
+tests\codebase-tools\command-toggle.test.ts:
+(pass) clean session load (B1, P36) > a session that never toggles records no state and contributes nothing [1465.64ms]
+(pass) command toggle end to end (B2, P11, P12) > two runs of /codebase-tools persist each new value and announce it [1447.28ms]
+
+tests\codebase-tools\init-injection.test.ts:
+(pass) first enabled run injects one init (B3, C6, C7, P19, P21) > one hidden persisted init is appended once per user turn, across a tool continuation [1504.96ms]
+(pass) resume replays the init without rewriting history (B5, C8, P22) > the persisted init is replayed on resume and no second init is injected [2916.37ms]
+(pass) enabling injects a prompt and nothing else (B10, C11, P37) > the turn's tool set is unchanged by enabling: no capability is probed or trimmed [1468.57ms]
+
+tests\codebase-tools\marker-lifecycle.test.ts:
+(pass) marker area over one command toggle (B2, B6, C10, P13) > a default-off session shows no marker; the toggle shows, each enabled turn re-asserts, and off clears [1492.48ms]
+(pass) a restored activation value (P13, B6) > a resumed enabled session renders the restored line at its boundary and re-asserts it per turn (P13, B6, F9) [2907.84ms]
+(pass) marker area without a UI (P14, N9) > a headless session renders nothing, still completes the toggles, and reports them on stderr [1451.21ms]
+
+tests\codebase-tools\outbound-role.test.ts:
+(pass) the injected init is delivered as its own message (C9, deepseek path) > openai-completions delivers the init after the turn's user message, as role user [1446.81ms]
+(pass) the openai-codex path serializes the same injection (C9, shape-only layer 1) > openai-codex-responses delivers the init as an appended developer input item [1909.04ms]
+(pass) the delivered role is a recorded fact, not a gate (C9) > both paths deliver the injection, under the different roles their serializers choose [3132.44ms]
+
+tests\codebase-tools\reminder-injection.test.ts:
+(pass) every enabled run after the first carries one reminder (B4, C7, P18) > three enabled turns inject one init and then exactly one reminder per turn [1597.83ms]
+(pass) off and on again keep the branch's progress (B7, P18) > the off turn injects nothing and the re-enabled turn carries the reminder, not a second init [1550.30ms]
+(pass) a branch rewound past the init re-injects it (B11, P20) > navigating the tree back past the init puts the next run back to init, then to reminder [1560.99ms]
+(pass) one enabled run injects one reminder however many requests it makes (B11, C6) > a tool continuation inside the run leaves the reminder count at one [2905.67ms]
+
+tests\codebase-tools\session-boundaries.test.ts:
+(pass) restore across a restart (C4, P10, B8) > a resumed session reads back the value the new implementation wrote [2882.38ms]
+(pass) restore across a restart (C4, P10, B8) > legacy `{on}` data does not restore: the session falls back to off (N5, B8) [2879.69ms]
+(pass) session identity changes (B8, P5) > a new session starts off while the session it replaced stays enabled [1463.88ms]
+(pass) tree navigation (B8, P5) > navigating the session tree does not reseed the session's State [1495.78ms]
+(pass) tree navigation (B8, P5) > a branch into a new identity seeds from the branch it keeps [1516.79ms]
+(pass) tree navigation (B8, P5) > a fork seeds from the branch it carries [1530.68ms]
+(pass) tree navigation (B8, P5) > a fork of a session whose branch carries no State starts off [1518.68ms]
+
+tests\codebase-tools\subagent-owner.test.ts:
+(pass) a real built-in subagent follows the owner's current enabled (B9, C3, P4) > a subagent spawned while the owner is off stays silent; after the owner is enabled, a subagent initialises its own branch [1745.50ms]
+(pass) a nested real subagent follows the same root owner (C3, P4) > a subagent's own subagent resolves two levels up and initialises its own branch [1725.78ms]
+
+tests\connect-bot\arm.test.ts:
+(pass) an empty argument arms this session (E2, E17, E18) > registers the main session with the fixed route and envelope, then shows the marker [12.87ms]
+(pass) an empty argument arms this session (E2, E17, E18) > a session that reports no model or name sends the facts it has, and no empty value [0.32ms]
+(pass) a panel that does not register this session arms nothing (E4, E17) > 404 after a restart reports the arm failure and leaves the session unarmed [0.31ms]
+(pass) a panel that does not register this session arms nothing (E4, E17) > a non-2xx answer reports the arm failure and leaves the session unarmed [0.11ms]
+(pass) a panel that does not register this session arms nothing (E4, E17) > a 2xx answer that is not the receipt reports the arm failure and leaves the session unarmed [0.12ms]
+(pass) a panel that does not register this session arms nothing (E4, E17) > a request that never completed reports the same failure [0.24ms]
+(pass) an arm's requests state the direct connection and the extension's own budget (E17) > both of an arm's requests ask for a direct connection, at the configured wait [0.50ms]
+(pass) a session that never armed does nothing at all (E5) > binding alone sends no request, schedules no timer and writes no state [0.23ms]
+(pass) a session that never armed does nothing at all (E5) > `off` in a session that never armed sends no request and changes nothing [0.21ms]
+(pass) running the command again on an armed session re-registers it (E3, story 63) > a repeat after a panel restart re-sends `register` for the same session and never an `unregister` [0.76ms]
+(pass) running the command again on an armed session re-registers it (E3, story 63) > the repeat after a panel restart reports the panel's own count and never empties the marker area [0.39ms]
+(pass) an arm that fails leaves nothing behind and can be retried (E4, story 64) > a rejected register reports the failure, and no timer or request outlives it [0.26ms]
+(pass) an arm that fails leaves nothing behind and can be retried (E4, story 64) > a register the panel never answers fails within its configured budget [0.27ms]
+(pass) an arm that fails leaves nothing behind and can be retried (E4, story 64) > a re-register the panel refuses takes an armed session back to unarmed [0.51ms]
+(pass) an arm that fails leaves nothing behind and can be retried (E4, story 64) > a failed arm can be retried: the next empty argument arms the session [0.58ms]
+
+tests\connect-bot\budget-regression.test.ts:
+(pass) the beat is the extension's own 10s cadence, whatever the request budget is (P21) > three periods of controlled time produce exactly one beat each, and the stop cancels the beat [329.77ms]
+(pass) the beat is the extension's own 10s cadence, whatever the request budget is (P21) > a changed request budget leaves the cadence exactly where it was [321.01ms]
+(pass) a failed or timed-out request is never retried, backed off or compensated (P20) > a register the panel answers too late is attempted once, and nothing follows it [387.43ms]
+(pass) a failed or timed-out request is never retried, backed off or compensated (P20) > an unregister the panel answers too late is asked once, and nothing follows it [380.88ms]
+(pass) a failed or timed-out request is never retried, backed off or compensated (P20) > a session boundary's unregister the panel answers too late is asked once, and nothing follows it [376.02ms]
+(pass) a failed or timed-out request is never retried, backed off or compensated (P20) > a beat the panel answers too late is dropped, and the next beat is a new event one period later [433.32ms]
+(pass) the background push still ends the connection on the third consecutive failure (P22) > two failures do not exhaust the budget, a success resets it, and the third consecutive failure ends the connection [386.11ms]
+(pass) the protocol the actual omp-bot panel receives is the frozen one (P23) > a whole session — register, beats, state moves, unregister — is what the real panel records and answers [20258.41ms]
+
+tests\connect-bot\config.test.ts:
+(pass) the shipped configuration file is the source of the request budget (P14) > the repository's own file carries 1000ms, and the framework's read of it accepts that [0.91ms]
+(pass) the shipped configuration file is the source of the request budget (P14) > the admitted binding registers the command, and the budget is what the extension's own config read returns [0.36ms]
+(pass) a missing or illegal request budget refuses the extension (P14) > the field is missing: refused at binding, reported once, nothing registered [0.51ms]
+(pass) a missing or illegal request budget refuses the extension (P14) > zero: refused at binding, reported once, nothing registered [0.21ms]
+(pass) a missing or illegal request budget refuses the extension (P14) > a negative value: refused at binding, reported once, nothing registered [0.15ms]
+(pass) a missing or illegal request budget refuses the extension (P14) > a fraction: refused at binding, reported once, nothing registered [0.18ms]
+(pass) a missing or illegal request budget refuses the extension (P14) > text that is not a number: refused at binding, reported once, nothing registered [0.39ms]
+(pass) a missing or illegal request budget refuses the extension (P14) > a non-finite value: refused at binding, reported once, nothing registered [0.25ms]
+(pass) a missing or illegal request budget refuses the extension (P14) > a value beyond the range the harness schedules: refused at binding, reported once, nothing registered [0.17ms]
+(pass) a missing or illegal request budget refuses the extension (P14) > a legal whole millisecond budget binds, and the value is what the extension's declaration reads [0.23ms]
+(pass) no environment value and no code default supplies the request budget (P14) > the value the shipped file carries is what the framework's read returns, whatever the environment names [0.67ms]
+(pass) no environment value and no code default supplies the request budget (P14) > a binding records the file's budget rather than the environment's [0.27ms]
+(pass) no environment value and no code default supplies the request budget (P14) > the environment cannot fill a field the file omits [0.21ms]
+
+tests\connect-bot\failure-budget.test.ts:
+(pass) the first failure of an outage is announced once (E10, P31) > the first failed beat is announced and the second is counted silently [0.63ms]
+(pass) the first failure of an outage is announced once (E10, P31) > a push the panel never answers is one failure of the budget [0.29ms]
+(pass) three consecutive failures end the connection by themselves (E10, P31, P36, P38, P40) > the third failed beat auto-disarms: local stop, marker gone, one notice [0.30ms]
+(pass) three consecutive failures end the connection by themselves (E10, P31, P36, P38, P40) > a beat queued behind the failing one never goes, and its answer is accounted to nobody [0.33ms]
+(pass) a push the panel takes resets the segment (E10, P31) > a successful beat clears the count and the flag, so the next outage announces itself again [0.31ms]
+(pass) a push the panel takes resets the segment (E10, P31) > a re-register is a fresh start: the budget the record holds begins again [0.33ms]
+
+tests\connect-bot\feedback.test.ts:
+(pass) the table's words are the frozen baseline's, verbatim (E16, P37) > A: an arm the panel registered, with the online count it reported [0.01ms]
+(pass) the table's words are the frozen baseline's, verbatim (E16, P37) > B: an arm no panel registered: this session is not being monitored
+(pass) the table's words are the frozen baseline's, verbatim (E16, P37) > C: an off the panel answered
+(pass) the table's words are the frozen baseline's, verbatim (E16, P37) > D: an off the panel never answered
+(pass) the table's words are the frozen baseline's, verbatim (E16, P37) > E: the first failure of an outage, announced once
+(pass) the table's words are the frozen baseline's, verbatim (E16, P37) > F: the failure that exhausts the budget: the connection ended and needs the command again
+(pass) the table's words are the frozen baseline's, verbatim (E16, P37) > G: a session being left for another identity
+(pass) the table's words are the frozen baseline's, verbatim (E16, P37) > H: an argument the command surface does not recognize, echoed as typed
+(pass) the table's words are the frozen baseline's, verbatim (E16, P37) > I: a session whose mode has no UI at all
+(pass) the table's words are the frozen baseline's, verbatim (E16, P37) > J: a subagent, whose refusal is deliberately silent
+(pass) the table's words are the frozen baseline's, verbatim (E16, P37) > K: a new activation while the requested unregister is still in flight
+(pass) the table's words are the frozen baseline's, verbatim (E16, P37) > the usage error names `off`, the one word form this command has [0.02ms]
+(pass) the table's silences are its own answers, not absent calls (E16, P37) > an off for a session that was not connected publishes nothing [0.02ms]
+(pass) the table's silences are its own answers, not absent calls (E16, P37) > an off for a session that was not connected, whatever the panel answered publishes nothing
+(pass) the table's silences are its own answers, not absent calls (E16, P37) > a failure the segment has already accounted for publishes nothing
+(pass) the table's silences are its own answers, not absent calls (E16, P37) > a disposal: the process is going away, not the connection alone publishes nothing
+(pass) the table's silences are its own answers, not absent calls (E16, P37) > a transfer of a session that was never connected publishes nothing
+(pass) the table's silences are its own answers, not absent calls (E16, P37) > a refusal of a session that does have a UI publishes nothing
+(pass) no status code decides a sentence (P37) > the table's code carries no status at all [0.15ms]
+
+tests\connect-bot\guards.test.ts:
+(pass) only a main session with a UI may act (E6) > a subagent is refused in silence: no request, no write, no record, no words [0.92ms]
+(pass) only a main session with a UI may act (E6) > a session without a UI is refused on stderr and changes nothing [0.14ms]
+
+tests\connect-bot\harness-exit-budget.test.ts:
+(pass) a long request budget does not extend the harness's own exit (P27) > the harness ends on its own lifecycle with a minute-budget unregister still on the wire [1281.13ms]
+
+tests\connect-bot\heartbeat.test.ts:
+(pass) an armed session beats on its one managed interval with the state it holds (E9, P30) > the empty argument schedules one heartbeat carrying the state the panel is owed [0.65ms]
+(pass) an armed session beats on its one managed interval with the state it holds (E9, P30) > a session the harness reports as working beats 工作中, not a fabricated 空闲 [0.21ms]
+(pass) no heartbeat exists before an arm and none survives an `off` (E5, P28) > `off` on a session that never armed schedules no timer and sends nothing [0.08ms]
+(pass) no heartbeat exists before an arm and none survives an `off` (E5, P28) > `off` cancels the owner's timer, drops its queue, and a beat that still fires says nothing [0.32ms]
+(pass) a repeat is the same connection asked again (E3) > re-arming keeps the one timer and drops what the old connection had queued [0.34ms]
+(pass) a queued push waits the configured budget and is never retried (E11, P32) > a heartbeat the panel never answers is aborted at its budget, and the next beat still goes [0.30ms]
+(pass) the outbox is bounded and sends one event at a time (E11, P32) > beats pile up only to the queue's bound, and one flusher drains them in order [0.31ms]
+
+tests\connect-bot\native-session-boundary.test.ts:
+(pass) the extension registers no native session hook of its own (E14, P35) > the extension has source to check [0.02ms]
+(pass) the extension registers no native session hook of its own (E14, P35) > no extension module names a native lifecycle event [0.75ms]
+(pass) the extension registers no native session hook of its own (E14, P35) > no extension module subscribes the harness's event surface itself [0.57ms]
+(pass) the extension registers no native session hook of its own (E14, P35) > the semantic axis really is what this extension reacts to, so the scan has a subject [0.09ms]
+(pass) the extension registers no native session hook of its own (E14, P35) > the harness's own shutdown name is code only where the adapter synthesizes the disposal [4.60ms]
+
+tests\connect-bot\native-timer-boundary.test.ts:
+(pass) only the OMP assembly reaches the native timer (P39) > the extension has both a shared source and an assembly to tell apart [0.01ms]
+(pass) only the OMP assembly reaches the native timer (P39) > no shared module names a native timer [0.61ms]
+(pass) only the OMP assembly reaches the native timer (P39) > the assembly is where the native timer really is reached, so the scan has a subject [0.08ms]
+
+tests\connect-bot\no-panel-expiry.test.ts:
+(pass) the extension carries no panel-side expiry (P30) > the extension has source to check [0.01ms]
+(pass) the extension carries no panel-side expiry (P30) > no module implements a 30s window or keeps a freshness field [0.62ms]
+
+tests\connect-bot\off.test.ts:
+(pass) `off` drops the local switch first and removes the panel row best-effort (E7, P28) > the local switch and the marker are gone while the unregister is still unanswered [0.44ms]
+(pass) `off` drops the local switch first and removes the panel row best-effort (E7, P28) > a 2xx answer reports the disconnect [0.25ms]
+(pass) `off` drops the local switch first and removes the panel row best-effort (E7, P28) > a 404 after an omp-bot restart reports the disconnect [0.18ms]
+(pass) `off` drops the local switch first and removes the panel row best-effort (E7, P28) > a request that never completes reports the panel did not answer, and the session is already off [0.26ms]
+(pass) `off` drops the local switch first and removes the panel row best-effort (E7, P28) > an unregister the panel never answers aborts within its configured budget [0.29ms]
+(pass) `off` drops the local switch first and removes the panel row best-effort (E7, P28) > after off the session is unarmed again: a second off does nothing at all [0.21ms]
+(pass) `off` drops the local switch first and removes the panel row best-effort (E7, P28) > off in a session that never armed sends no request and says nothing [0.07ms]
+(pass) an unrecognized argument is an error that changes nothing (E8, P29) > `offline` is no longer a form: it reports the usage error and leaves the session connected [0.20ms]
+(pass) an unrecognized argument is an error that changes nothing (E8, P29) > an unknown argument in a session that never armed sends no request and writes nothing [0.07ms]
+(pass) the gate `/connect-bot` runs behind covers `off` and rule-breakers alike (E6, P27) > a subagent running off is refused in silence: no request, no write, no words [0.12ms]
+(pass) the gate `/connect-bot` runs behind covers `off` and rule-breakers alike (E6, P27) > a session without a UI refuses off on stderr and changes nothing [0.08ms]
+(pass) the gate `/connect-bot` runs behind covers `off` and rule-breakers alike (E6, P27) > a session without a UI refuses an unknown argument with the no-UI refusal, not the usage error [0.09ms]
+
+tests\connect-bot\outbox.test.ts:
+(pass) the outbox queue (E11) > hands events to the flusher in enqueue order [0.05ms]
+(pass) the outbox queue (E11) > is bounded at 16, dropping the oldest heartbeat for the 17th event [0.07ms]
+(pass) the outbox queue (E11) > drops an older heartbeat rather than an older non-heartbeat event [0.04ms]
+(pass) the outbox queue (E11) > falls back to the oldest event when the queue holds no heartbeat at all [0.03ms]
+(pass) the outbox queue (E11) > drops everything pending on clear() without ending the queue [0.02ms]
+(pass) the outbox queue (E11) > keeps the contract's limit of 16
+(pass) the one flusher (E11) > sends one event at a time, in enqueue order, and never retries a failed one [0.20ms]
+(pass) the one flusher (E11) > reports every settled event to the caller, an answer and a failed request alike [0.09ms]
+(pass) the one flusher (E11) > never runs a second drain loop while one is going [0.08ms]
+(pass) the one flusher (E11) > stop() drops what is pending, ends the flusher and settles nothing more [0.05ms]
+
+tests\connect-bot\panel-registration-lifecycle.test.ts:
+(pass) a server-processed unregister deletes the panel's row (P24) > the panel removes the row the register built, instead of letting it go offline [136.77ms]
+(pass) an unregister that never arrives leaves the row to the panel's own window (P25) > the blocked row stays registered and goes offline by the 30s window, never by deletion [35018.23ms]
+(pass) a client's timeout is not a statement about the panel (P26) > a response held back past the budget: the client timed out and the row is really gone [1609.18ms]
+
+tests\connect-bot\registration-lifecycle.test.ts:
+(pass) an invalidated registration attempt never creates effects (E7, P28) > an off invalidates a register still in flight [1.05ms]
+(pass) an invalidated registration attempt never creates effects (E7, P28) > the end of the owner's life invalidates a register still in flight, even if the owner returns [0.42ms]
+(pass) valid registrations are serialized, not merged (E7, P28) > a second activation waits for the first, and both are honored in order [0.27ms]
+(pass) the disconnecting window refuses a new activation and then reopens (E7, P28) > an activation during an unregister is refused, not queued, and works after it settles [0.57ms]
+
+tests\connect-bot\request-timeout.test.ts:
+(pass) register waits the configured budget against a real panel (P13, P16) > the shipped budget gives up before the panel's 1200ms answer, and the attempt is a failed one [1285.99ms]
+(pass) register waits the configured budget against a real panel (P13, P16) > a 2000ms budget in a process of its own receives the registered receipt and connects [1336.41ms]
+(pass) `/connect-bot off` waits the same budget, locally first (P17) > the shipped budget times the unregister out while the session is already disconnected [1288.12ms]
+(pass) `/connect-bot off` waits the same budget, locally first (P17) > a 2000ms budget completes the same unregister and reports the panel's answer [1337.05ms]
+(pass) a session boundary's unregister waits the same budget (P18) > a switched session asks once, waits the shipped budget, and is silent about the outcome [1729.49ms]
+(pass) a session boundary's unregister waits the same budget (P18) > a 2000ms budget lets the same boundary's unregister finish inside the panel's delay [1723.67ms]
+(pass) a session boundary's unregister waits the same budget (P18) > a disposal sends no request at all: the event conditions still decide whether one is sent [1736.34ms]
+(pass) a background push waits the same budget, not one of its own (P19) > the shipped budget abandons a beat the panel answers after 1200ms, and the beat is not retried [1284.08ms]
+(pass) a background push waits the same budget, not one of its own (P19) > a 2000ms budget lets the same beat complete, with no failure accounted [1343.15ms]
+(pass) the budget is the file's value for the life of the process (P15) > a file changed to 2000 in a running process leaves its 1000ms budget in place, and the next process adopts 2000 [2451.48ms]
+
+tests\connect-bot\session-switch.test.ts:
+(pass) another identity takes the session's place (E13, P34, P15) > everything local stops before the old row is even asked about [1.00ms]
+(pass) another identity takes the session's place (E13, P34, P15) > the session that took its place stays unarmed: no record, no beat, no register [0.41ms]
+(pass) another identity takes the session's place (E13, P34, P15) > an unregister the panel never answers aborts in its budget, is not retried and is not reported [0.43ms]
+(pass) another identity takes the session's place (E13, P34, P15) > a beat and a capability that outlive the boundary write nothing back [0.58ms]
+(pass) another identity takes the session's place (E13, P34, P15) > a session that is not its own owner never reaches this extension's cleanup [0.36ms]
+(pass) the session is disposed rather than transferred (E14, P35) > a shutdown stops everything local and says nothing: the row is the panel's expiry to clean up [0.29ms]
+(pass) the session is disposed rather than transferred (E14, P35) > a disposal schedules nothing that could expire the session itself [0.16ms]
+(pass) a navigation that keeps the session's identity is not a boundary (E13, P34) > a tree jump, a reload, a clear, a same-file resume and a branch leave the connection alone [0.28ms]
+
+tests\connect-bot\state-machine.test.ts:
+(pass) arming reports the state the idle fact answers (E12, P33, story 74) > an arm that can take input reports 空闲, on the owner's own queue behind the register [0.40ms]
+(pass) arming reports the state the idle fact answers (E12, P33, story 74) > an arm while the agent is working reports 工作中 rather than a 空闲 it never was [0.15ms]
+(pass) arming reports the state the idle fact answers (E12, P33, story 74) > a re-arm reports once more even though the state did not move (story 75) [0.18ms]
+(pass) the round edges move the state (E12, P33, story 74) > round_start reports 工作中 and round_end reports 等待用户输入 [1.91ms]
+(pass) the round edges move the state (E12, P33, story 74) > an edge that does not move the value reports nothing [2.94ms]
+(pass) the round edges move the state (E12, P33, story 74) > a settle that already scheduled its continuation is not a round end [3.03ms]
+(pass) the round edges move the state (E12, P33, story 74) > a settle that cannot establish quiescence leaves the value where it was [1.50ms]
+(pass) the terminal shapes that never see an ordinary settle (E12) > 尾消息仍带 toolCall lands on 等待用户输入 [1.51ms]
+(pass) the terminal shapes that never see an ordinary settle (E12) > skip-post-turn-maintenance lands on 等待用户输入 [1.50ms]
+(pass) the terminal shapes that never see an ordinary settle (E12) > successful yield lands on 等待用户输入 [1.56ms]
+(pass) the terminal shapes that never see an ordinary settle (E12) > compaction deferredHandoff / automaticContinuationBlocked lands on 等待用户输入 [1.57ms]
+(pass) the terminal shapes that never see an ordinary settle (E12) > a subagent's round edges never move the main session's state [2.96ms]
+(pass) the heartbeat carries the state and never moves it (E12, story 76) > a beat reports the value in force and adds no state report [0.28ms]
+(pass) the tri-state lives in the extension's own record (P6) > the framework's State declaration is one value, and the three-valued state is not in it [1.85ms]
+
+tests\framework\actions-routing.test.ts:
+(pass) an action is selected by the whole argument, after trimming and ignoring case (P28) > a declared action runs when the argument is exactly its name [0.41ms]
+(pass) an action is selected by the whole argument, after trimming and ignoring case (P28) > surrounding whitespace and letter case are not part of the action name [0.09ms]
+(pass) an action is selected by the whole argument, after trimming and ignoring case (P28) > an empty argument prints the help and runs nothing [0.12ms]
+(pass) an action is selected by the whole argument, after trimming and ignoring case (P28) > an abbreviation, an extra argument and an undeclared word are refused with the same help [0.10ms]
+(pass) the host chain waits for the action, and an unhandled failure is reported once (P28, P56) > an asynchronous action finishes before the invocation returns [0.09ms]
+(pass) the host chain waits for the action, and an unhandled failure is reported once (P28, P56) > a synchronous throw is reported once, at error severity, and concludes the command [0.07ms]
+(pass) the host chain waits for the action, and an unhandled failure is reported once (P28, P56) > a rejected promise is reported once, and nothing reports success afterwards [0.06ms]
+(pass) a declaration and its implementation are one pair (P28) > an action the declaration lists with no implementation refuses the binding [0.07ms]
+(pass) a declaration and its implementation are one pair (P28) > an actions command with no implementation at all refuses the binding [0.02ms]
+(pass) a declaration and its implementation are one pair (P28) > a directed implementation injected for an actions command refuses the binding [0.03ms]
+(pass) an action table the framework cannot route is a configuration error (P28) > a table that declares no action is refused [0.03ms]
+(pass) an action table the framework cannot route is a configuration error (P28) > two names one argument cannot tell apart are refused [0.04ms]
+(pass) an action table the framework cannot route is a configuration error (P28) > a name that holds nothing the framework can match is refused [0.03ms]
+
+tests\framework\config.test.ts:
+(pass) an illegal configuration declaration refuses the extension (P19, P20) > config is not an object: one configuration failure, reported once, nothing registered [0.10ms]
+(pass) an illegal configuration declaration refuses the extension (P19, P20) > config is null: one configuration failure, reported once, nothing registered [0.02ms]
+(pass) an illegal configuration declaration refuses the extension (P19, P20) > config is an array: one configuration failure, reported once, nothing registered [0.01ms]
+(pass) an illegal configuration declaration refuses the extension (P19, P20) > config declares no fields: one configuration failure, reported once, nothing registered [0.01ms]
+(pass) an illegal configuration declaration refuses the extension (P19, P20) > fields is not an object: one configuration failure, reported once, nothing registered
+(pass) an illegal configuration declaration refuses the extension (P19, P20) > fields is null: one configuration failure, reported once, nothing registered
+(pass) an illegal configuration declaration refuses the extension (P19, P20) > fields is an array: one configuration failure, reported once, nothing registered
+(pass) an illegal configuration declaration refuses the extension (P19, P20) > a field names an unbound type: one configuration failure, reported once, nothing registered [0.05ms]
+(pass) an illegal configuration declaration refuses the extension (P19, P20) > the path is an empty string: one configuration failure, reported once, nothing registered [0.01ms]
+(pass) an illegal configuration declaration refuses the extension (P19, P20) > the path is not a string: one configuration failure, reported once, nothing registered
+(pass) the configuration declaration is pure data (P19) > a declaration that names the bound types is accepted as declared [0.02ms]
+(pass) an illegal configuration file refuses the extension (P20) > a missing file: one configuration failure, reported once, nothing registered [0.12ms]
+(pass) an illegal configuration file refuses the extension (P20) > an unreadable file: one configuration failure, reported once, nothing registered [0.04ms]
+(pass) an illegal configuration file refuses the extension (P20) > a top-level sequence: one configuration failure, reported once, nothing registered [0.54ms]
+(pass) an illegal configuration file refuses the extension (P20) > a top-level scalar: one configuration failure, reported once, nothing registered [0.10ms]
+(pass) an illegal configuration file refuses the extension (P20) > an empty file: one configuration failure, reported once, nothing registered [0.03ms]
+(pass) an illegal configuration file refuses the extension (P20) > a required key that is missing: one configuration failure, reported once, nothing registered [0.09ms]
+(pass) an illegal configuration file refuses the extension (P20) > a number where a non-empty-string is required: one configuration failure, reported once, nothing registered [0.12ms]
+(pass) an illegal configuration file refuses the extension (P20) > an empty string where a non-empty-string is required: one configuration failure, reported once, nothing registered [0.07ms]
+(pass) an illegal configuration file refuses the extension (P20) > a null value where a non-empty-string is required: one configuration failure, reported once, nothing registered [0.14ms]
+(pass) an illegal configuration file refuses the extension (P20) > a string where a number is required: one configuration failure, reported once, nothing registered [0.11ms]
+(pass) an illegal configuration file refuses the extension (P20) > a string where a boolean is required: one configuration failure, reported once, nothing registered [0.11ms]
+(pass) an illegal configuration file refuses the extension (P20) > a number where a string is required: one configuration failure, reported once, nothing registered [0.10ms]
+(pass) an illegal configuration file refuses the extension (P20) > a file that is not valid YAML: one configuration failure carrying the parser's reason [1.21ms]
+(pass) a declared milliseconds field is a whole millisecond budget this harness schedules (P14) > whole millisecond budgets bind, and the value recorded is the file's [0.37ms]
+(pass) a declared milliseconds field is a whole millisecond budget this harness schedules (P14) > the field is missing: refused at binding, reported once, nothing registered [0.14ms]
+(pass) a declared milliseconds field is a whole millisecond budget this harness schedules (P14) > zero: refused at binding, reported once, nothing registered [0.25ms]
+(pass) a declared milliseconds field is a whole millisecond budget this harness schedules (P14) > a negative value: refused at binding, reported once, nothing registered [0.16ms]
+(pass) a declared milliseconds field is a whole millisecond budget this harness schedules (P14) > a fraction: refused at binding, reported once, nothing registered [0.17ms]
+(pass) a declared milliseconds field is a whole millisecond budget this harness schedules (P14) > text that is not a number: refused at binding, reported once, nothing registered [0.12ms]
+(pass) a declared milliseconds field is a whole millisecond budget this harness schedules (P14) > a non-finite value: refused at binding, reported once, nothing registered [0.10ms]
+(pass) a declared milliseconds field is a whole millisecond budget this harness schedules (P14) > not-a-number: refused at binding, reported once, nothing registered [0.07ms]
+(pass) a declared milliseconds field is a whole millisecond budget this harness schedules (P14) > the first value the harness does not schedule: refused at binding, reported once, nothing registered [0.06ms]
+(pass) a declared milliseconds field is a whole millisecond budget this harness schedules (P14) > a value beyond any millisecond this harness counts: refused at binding, reported once, nothing registered [0.05ms]
+(pass) a relative declaration resolves against the assembly's configuration base directory (P19, P42) > the convention path is the one under that directory, and its values are the file's [0.16ms]
+(pass) a relative declaration resolves against the assembly's configuration base directory (P19, P42) > a relative config.path override resolves against the same directory [0.11ms]
+(pass) a relative declaration resolves against the assembly's configuration base directory (P19, P42) > an absolute config.path is used as declared, whatever directory is supplied [0.09ms]
+(pass) a relative declaration resolves against the assembly's configuration base directory (P19, P42) > a missing file is refused at the resolved path, so the report names what was looked for [0.47ms]
+(pass) a relative declaration resolves against the assembly's configuration base directory (P19, P42) > with no directory supplied the path stays this process's own, as it was before [0.14ms]
+(pass) readConfig is the one reading, parsing and validating implementation (P19) > a loading-time failure is a ConfigLoadError carrying the detail, never an ExtensionConfigError [0.14ms]
+(pass) readConfig is the one reading, parsing and validating implementation (P19) > the shared source reaches no Bun API, no harness package and no environment value [0.17ms]
+(pass) a declared configuration is read, validated and recorded at binding (P19) > the validated values are what shared logic reads through getConfig [0.16ms]
+(pass) a declared configuration is read, validated and recorded at binding (P19) > the values are exactly the declared keys, each validated by the framework [0.30ms]
+(pass) a declared configuration is read, validated and recorded at binding (P19) > the defaults read a real file as YAML: comments and all [1.80ms]
+(pass) a declared configuration is read, validated and recorded at binding (P19) > the file is read once per process: a later binding reuses the validated values [0.19ms]
+(pass) an extension that declares no configuration is untouched (P19) > nothing is read, nothing is reported, and the binding is unchanged [0.06ms]
+(pass) getConfig is only for a bound extension with validated values (P19) > an extension that declares no configuration has nothing to read [0.04ms]
+(pass) getConfig is only for a bound extension with validated values (P19) > a declared configuration that was never validated is a misuse, not a binding failure [0.02ms]
+(pass) getConfig is only for a bound extension with validated values (P19) > a refused binding records nothing, so shared logic cannot read a file that failed [0.13ms]
+
+tests\framework\control.test.ts:
+(pass) toggle command end to end (P11, P12) > binding registers the declared command and nothing else [0.15ms]
+(pass) toggle command end to end (P11, P12) > each toggle records the new value and announces it, alternating between runs [0.24ms]
+(pass) deterministic write path (C5) > persistence is attempted before the marker and feedback, and the record carries the new value [0.06ms]
+(pass) deterministic write path (C5) > feedback goes to stderr when the session has no UI, and the command still completes [0.10ms]
+(pass) best-effort persistence (N3, P6) > a failed record does not change the feedback or the authoritative current value [0.06ms]
+(pass) owner-scoped State (C2) > two sessions keep independent values even though they share the registry label [0.04ms]
+(pass) State read and write surfaces (C2) > a write through the declared-value seam updates the owner it names and leaves other owners at the default [0.03ms]
+(pass) State read and write surfaces (C2) > a marker publication that fails does not roll back the value or its record [0.04ms]
+
+tests\framework\declared-value-write.test.ts:
+(pass) the handler runs before the write and owns it (F4, P5) > a handler that writes nothing records nothing and publishes nothing [0.27ms]
+(pass) the handler runs before the write and owns it (F4, P5) > the value the handler writes is what State holds, not the one the directive named [0.17ms]
+(pass) the handler runs before the write and owns it (F4, P5) > each invocation's handler sees the value the previous one left [0.29ms]
+(pass) the handler runs before the write and owns it (F4, P5) > two identical writes are two writes: nothing is deduplicated [0.16ms]
+(pass) every declared-value write republishes the area, and false clears it (F4, F12, P18) > a write of true shows the extension's line and a write of false removes it [0.15ms]
+(pass) every declared-value write republishes the area, and false clears it (F4, F12, P18) > a write that follows another write in the same invocation republishes again [0.11ms]
+(pass) the area is framework-owned: id order, coexistence, no-marker extensions (F12, P18) > two extensions' writes render in one area, ordered by extension id [0.13ms]
+(pass) the area is framework-owned: id order, coexistence, no-marker extensions (F12, P18) > turning one extension off leaves the other's line; the last off clears the area [0.16ms]
+(pass) the area is framework-owned: id order, coexistence, no-marker extensions (F12, P18) > an extension that declares no marker writes no area line and no error [0.09ms]
+(pass) the toggle path keeps its order and its text (F14, C5) > a toggle records through the same seam: record, then marker, then feedback [0.13ms]
+
+tests\framework\definition.test.ts:
+(pass) declarative extension definition (P1) > codebase-tools expresses its whole behavior as plain data [0.09ms]
+(pass) OMP adapter binding (P2) > binding the codebase-tools definition labels the extension [0.21ms]
+(pass) public interface surface (P1, P2) > the OMP entry exposes the assembly function and nothing else at runtime [0.02ms]
+(pass) public interface surface (P1, P2) > declaring an extension is plain data: the declaration is handed back unchanged [0.02ms]
+(pass) configuration conflicts (P16, N6) > two commands under one name are refused with one explicit startup error [0.17ms]
+(pass) configuration conflicts (P16, N6) > two commands writing one State field are refused with one explicit startup error [0.06ms]
+(pass) configuration conflicts (P16, N6) > one injection slot under two rules is refused with one explicit startup error [0.08ms]
+(pass) configuration conflicts (P16, N6) > a refused definition does not interrupt the harness: the next binding still succeeds [0.11ms]
+(pass) initialization and binding failures (P17, N7) > a command transitioning a State field the extension does not own is refused before any registration [0.12ms]
+(pass) initialization and binding failures (P17, N7) > a control kind this version does not bind is refused, not silently dropped [0.07ms]
+(pass) initialization and binding failures (P17, N7) > a State declaration this version cannot honor is refused, not silently read as a default one [0.13ms]
+(pass) initialization and binding failures (P17, N7) > a harness that refuses registration leaves the extension unbound and keeps nothing [0.29ms]
+(pass) initialization and binding failures (P17, N7) > binding keeps no process-level state: one session's failure does not reach the next [0.14ms]
+
+tests\framework\deployment.test.ts:
+(pass) OMP entrypoint discovery (C12) > the OMP entrypoint directory yields one thin entrypoint per extension [14.26ms]
+(pass) OMP entrypoint discovery (C12) > a root index.ts would collapse the directory into one aggregate, which is why none exists [8.16ms]
+(pass) OMP entrypoint discovery (C12) > each entrypoint's out-of-directory shared source, Markdown text and bare dependency resolve with 0 errors [477.67ms]
+(pass) OMP entrypoint discovery (C12) > the loader reports an unresolvable import instead of binding (control for the 0-error result) [24.97ms]
+(pass) connect-bot entrypoint discovery and binding (P42) > the configured root yields the connect-bot entrypoint exactly once, under the extension's own name [0.68ms]
+(pass) connect-bot entrypoint discovery and binding (P42) > the entrypoint's shared source resolves and its binding reads the declared configuration file [178.93ms]
+(pass) connect-bot entrypoint discovery and binding (P42) > a working directory outside the repository still binds the extension, and its own file is ignored [225.40ms]
+(pass) load-source mutual exclusion (N8) > the explicit-only OMP root discovers only this repository's implementation [4.51ms]
+(pass) load-source mutual exclusion (N8) > the loader does not deduplicate by extension name, so exclusion can only come from the load sources [4.96ms]
+(pass) load-source mutual exclusion (N8) > the explicit-only root reaches only this repository's connect-bot implementation [438.97ms]
+(pass) load-source mutual exclusion (N8) > with both sources in the discovery range both connect-bot implementations are bound [490.99ms]
+(pass) explicit-only isolated run (P31) > the real CLI runs the repository's OMP root under a temporary agent state and exits cleanly [1438.95ms]
+(pass) connect-bot on the real harness (P42) > the run's working directory carries no configuration file, and the extension's command runs [1381.75ms]
+(pass) connect-bot on the real harness (P42) > a configuration file in the run's working directory is ignored: the binding reads the extension's own [1361.62ms]
+
+tests\framework\directed-control.test.ts:
+(pass) directed control: a named target and a repeated implementation (F1) > an empty argument activates the field and runs the injected implementation once [0.44ms]
+(pass) directed control: a named target and a repeated implementation (F1) > `off` deactivates the field and runs the injected implementation once [0.14ms]
+(pass) directed control: a named target and a repeated implementation (F1) > a repeated invocation runs the implementation again instead of short-circuiting [0.13ms]
+(pass) directed control: a named target and a repeated implementation (F1) > a pending implementation does not delay the next invocation: nothing is serialized [0.17ms]
+(pass) directed control: a named target and a repeated implementation (F1) > an unrecognized argument reaches the implementation's own `unrecognized` member [0.10ms]
+(pass) directed control: a named target and a repeated implementation (F1) > an unrecognized argument runs no implementation and changes no State [0.11ms]
+(pass) directed control: a named target and a repeated implementation (F1) > a subagent session runs no implementation and records no value [0.05ms]
+(pass) directed control: a named target and a repeated implementation (F1) > a directed declaration with no injected implementation is refused before any registration [0.06ms]
+
+tests\framework\extension-feedback.test.ts:
+(pass) the toggle's feedback goes out on the unified channel (F14) > each toggle announces the value it produced, at info severity [0.12ms]
+(pass) a handler's own notices keep the severity they chose (F10) > an implementation's error and info notices reach the operator unchanged, in call order [0.10ms]
+(pass) the hasUI fact is the harness's, carried unchanged (F11) > a command delivery reports whether the session has a UI, in both harness states [0.05ms]
+(pass) the hasUI fact is the harness's, carried unchanged (F11) > a session delivery reports whether the session has a UI, in both harness states [0.12ms]
+(pass) feedback never enters model context (P16) > a notice a handler published leaves no trace in the recorded value, the contribution or the marker area [0.34ms]
+
+tests\framework\feedback-harness.test.ts:
+(pass) both severities on a session with a UI (F10) > an info notice and an error notice each arrive as the severity the extension chose [0.25ms]
+(pass) both severities on a session without a UI (F10) > the same notices fall back to stderr, whatever their severity [0.07ms]
+(pass) the hasUI fact the delivery carries (F11) > a command delivery reports the session's own fact in both harness states [0.05ms]
+(pass) the toggle's moved feedback (F14) > its text is unchanged and it goes out at info severity [0.06ms]
+(pass) a notice is never model context (P16) > what was published stays out of the session entries and out of the run's contribution [0.16ms]
+
+tests\framework\files.test.ts:
+(pass) the published entry > hands the update function the current document and publishes what it returns, whatever its shape [7.88ms]
+(pass) the published entry > refuses a target whose directory does not exist or whose path is not absolute [0.67ms]
+(pass) one document in one process > runs one update at a time in submission order, each seeing the previous document [94.21ms]
+(pass) one document in one process > a refused update is the caller's own error, changes nothing, and the document stays usable [12.13ms]
+(pass) one document in one process > the budget covers the in-process queue, so a call that could not run in time never runs at all [305.15ms]
+(pass) one document in one process > a signal aborted after the update began is not a cancellation: the call waits for the real result [5.71ms]
+(pass) one document in one process > a document being updated never holds another one [61.46ms]
+(pass) a document another process writes > two independent processes updating it lose no update [541.12ms]
+(pass) a document another process writes > two spellings of its directory are one document: they queue, and a live holder still stops them [531.87ms]
+(pass) a document another process writes > a live holder is never taken over, and the call that waited out its budget writes nothing [4062.63ms]
+(pass) a document another process writes > an aborted wait is cancelled, and never becomes a late write [3063.32ms]
+(pass) a document another process writes > a lock whose holding process died is recovered, and the next update commits [63.79ms]
+(pass) a document another process writes > every process that races to recover one dead lock commits, and the count proves none lost [869.54ms]
+(pass) a document another process writes > the process that recovered a dead lock is a live holder no peer takes it from [2628.36ms]
+(pass) a document another process writes > with no declared budget the wait is the contract's 15000ms [15063.70ms]
+(pass) a document another process writes > republishing a document never shows a reader a partial one [112.22ms]
+(pass) the target document itself > a document that is not JSON is refused: the update function is not called and the file is not overwritten [8.30ms]
+
+tests\framework\http.test.ts:
+(pass) the request call > a request with no options is a GET, and the platform's own response is what comes back [0.41ms]
+(pass) the request call > the method, headers and body travel exactly as the caller prepared them [0.11ms]
+(pass) the request call > a non-2xx answer is returned for the caller to interpret, not turned into a failure [0.09ms]
+(pass) the request call > a transport failure rejects with the platform's own failure [0.07ms]
+(pass) the request call > a body that cannot be read rejects the read [0.08ms]
+(pass) the wait budget > the request's own budget is what the platform is given [41.66ms]
+(pass) the wait budget > the shared default is used when the request declares no budget [122.68ms]
+(pass) the wait budget > with neither declared, the built-in budget is far longer than any declared one [62.91ms]
+(pass) the wait budget > a budget that is not a wait this timer schedules is refused before anything is sent [0.94ms]
+(pass) the wait budget > an illegal shared default is refused, never quietly replaced by the built-in one [2.39ms]
+(pass) the wait budget > the wait runs out on the platform's terms, and the request rejects [40.49ms]
+(pass) the proxy path > a request that names no proxy connects directly, with no shared file at all [0.61ms]
+(pass) the proxy path > a direct request reads only the budget it needs, not a proxy table it did not select [1.01ms]
+(pass) the proxy path > a named entry is resolved from the shared http.proxies table and handed to the platform [1.10ms]
+(pass) the proxy path > an entry that is not explicitly enabled connects directly and its url is not read [1.48ms]
+(pass) the proxy path > a selection the shared file cannot satisfy is refused before anything is sent [3.54ms]
+(pass) the proxy path > a shared file that cannot be read or parsed is a configuration failure, not a silent direct request [1.22ms]
+(pass) the proxy path > the shared file is read once per module, so a changed value waits for the next process [251.72ms]
+(pass) the ambient environment > the proxy environment decides nothing here [1.33ms]
+
+tests\framework\implementation-lifecycle.test.ts:
+(pass) the factory is called with the validated configuration, before anything is registered (P56) > the factory receives the values the declared file was validated to carry [0.42ms]
+(pass) the factory is called with the validated configuration, before anything is registered (P56) > a definition whose configuration is illegal never reaches a factory [1.01ms]
+(pass) the factory is called with the validated configuration, before anything is registered (P56) > binding performs no delivery and no initialization of its own [0.24ms]
+(pass) the one-time initialization runs at the owner session node, and the first request waits for it (P56) > the initialization runs once, at the first owner session, and is not repeated [0.41ms]
+(pass) the one-time initialization runs at the owner session node, and the first request waits for it (P56) > the first model request is handed the contribution only after the initialization settled [0.42ms]
+(pass) the one-time initialization runs at the owner session node, and the first request waits for it (P56) > a session that keeps its identity, and a subagent's session, never initialize again [0.41ms]
+(pass) the one-time initialization runs at the owner session node, and the first request waits for it (P56) > a later request is handed its contribution without waiting again [0.38ms]
+(pass) the one cleanup runs exactly once, and the binding then delivers nothing (P56) > the session that initialized the instance ends it, and a second end cleans nothing again [0.37ms]
+(pass) the one cleanup runs exactly once, and the binding then delivers nothing (P56) > a session end that is not the initializing owner's never ends the instance [0.24ms]
+(pass) the one cleanup runs exactly once, and the binding then delivers nothing (P56) > an ordinary switch moves the owner, and the disposal that follows cleans once [0.26ms]
+(pass) the one cleanup runs exactly once, and the binding then delivers nothing (P56) > after the cleanup the binding stops delivering to the extension [0.42ms]
+(pass) a refused binding cleans up what the factory already built (P56) > the incompleteness is reported and the created implementation is cleaned up once [0.13ms]
+(pass) handlers may finish asynchronously, and neither a throw nor a rejection becomes a barrier (P56) > an asynchronous handler's rejection is reported once, after the delivery already returned [2.65ms]
+(pass) handlers may finish asynchronously, and neither a throw nor a rejection becomes a barrier (P56) > a synchronous throw is reported once and still lets the framework's own behavior stand [0.33ms]
+(pass) an ordinary switch keeps the instance, and only its disposal ends it (P56) > the one instance keeps serving the session that takes over [2.38ms]
+(pass) an ordinary switch keeps the instance, and only its disposal ends it (P56) > a command no longer reaches the extension once its disposal ran [0.23ms]
+(pass) an ordinary switch keeps the instance, and only its disposal ends it (P56) > a subagent's session end is never the instance's disposal [0.12ms]
+(pass) one implementation serves every binding of one adapter (P56) > a second binding reuses the implementation the first one built [0.15ms]
+(pass) one implementation serves every binding of one adapter (P56) > a binding after the instance's disposal builds and initializes a fresh one [0.56ms]
+
+tests\framework\import-boundary.test.ts:
+(pass) shared source imports no harness types (C1) > the framework outside adapters and the extension modules outside harnesses stay host-independent [9.10ms]
+(pass) shared source imports no harness types (C1) > the native escape hatch appears only in adapters and harness assemblies [8.05ms]
+(pass) shared source imports no harness types (C1) > the framework's own source depends on no extension [3.09ms]
+(pass) shared source imports no harness types (C1) > each discovery entrypoint only re-exports its extension's harness assembly [0.63ms]
+
+tests\framework\injection.test.ts:
+(pass) first enabled run contributes init (P18, P19, C7) > an enabled run whose branch has no slot identity contributes one hidden, agent-attributed init [0.60ms]
+(pass) first enabled run contributes init (P18, P19, C7) > a run whose branch already carries the slot identity never contributes a second init [0.19ms]
+(pass) first enabled run contributes init (P18, P19, C7) > a disabled owner contributes nothing, whatever its branch carries [0.09ms]
+(pass) first enabled run contributes init (P18, P19, C7) > a re-entered delivery plans the same contribution and writes no State [0.13ms]
+(pass) prompt resources load independently (P37, C11, B10) > each slot's text is its own resource file, loaded unmodified [0.32ms]
+(pass) prompt resources load independently (P37, C11, B10) > the run's contribution carries the init slot's resource text [0.21ms]
+(pass) the repeating slot contributes on every enabled run (P18, P20, C7) > an enabled run whose branch already carries the init contributes the reminder slot [0.12ms]
+(pass) the repeating slot contributes on every enabled run (P18, P20, C7) > consecutive enabled runs each contribute the reminder, and no delivery writes an entry [0.27ms]
+(pass) the repeating slot contributes on every enabled run (P18, P20, C7) > a pending one-shot slot is chosen over a repeating slot declared ahead of it [0.15ms]
+(pass) the repeating slot contributes on every enabled run (P18, P20, C7) > one run never carries two contributions: the first declared repeating slot is the one [0.08ms]
+(pass) off, re-entry and branch rewinds keep the contribution honest (P20, B7, B11) > an off run contributes nothing, and re-enabling resumes with the reminder [0.18ms]
+(pass) off, re-entry and branch rewinds keep the contribution honest (P20, B7, B11) > an attempt cancelled before commit leaves the same plan, and a rewound branch returns to init [0.31ms]
+(pass) off, re-entry and branch rewinds keep the contribution honest (P20, B7, B11) > two bindings of one extension decide from State and branch, not from which delivered first [0.28ms]
+
+tests\framework\marker-module-duplication.test.ts:
+(pass) one area across duplicated module instances (P13, C10) > either copy publishes both extensions' lines, ordered by id, not by registration [1.17ms]
+(pass) one area across duplicated module instances (P13, C10) > a run initiation from either copy re-asserts the whole area [0.26ms]
+(pass) one area across duplicated module instances (P13, C10) > either copy projects the same displayed subagent, each extension reading its own declaration [0.19ms]
+(pass) coexistence across duplicated copies: alone, together, one off (P13, B6) > the area follows State through all three states, from either copy [0.19ms]
+
+tests\framework\marker.test.ts:
+(pass) one framework-owned area, sorted by extension id (P13, C10) > two extensions render under the framework's key, in id order, not declaration order [0.67ms]
+(pass) one framework-owned area, sorted by extension id (P13, C10) > an extension that declares no marker never writes the area [0.15ms]
+(pass) State drives the area: show, remove, clear when empty (P13, B6) > turning one extension off removes only its line; the last off clears the area [0.20ms]
+(pass) State drives the area: show, remove, clear when empty (P13, B6) > every enabled run re-asserts the area, and an inert run writes nothing at all [0.28ms]
+(pass) a session with no UI (P14, N9) > marker updates are a whole no-op and the toggle feedback reaches stderr without throwing [0.26ms]
+
+tests\framework\owner-capability.test.ts:
+(pass) a handler delivery hands out a capability its owner may retain (F13, P12) > a capability retained by a command handler writes, records, renders and notifies while the owner lives [0.26ms]
+(pass) a handler delivery hands out a capability its owner may retain (F13, P12) > the retained capability reads the owner's current value, as the delivery's seam does [0.18ms]
+(pass) a handler delivery hands out a capability its owner may retain (F13, P12) > the capability a start delivery hands out works on the owner that start entered [0.37ms]
+(pass) the boundary that ends an owner ends the capability it handed out (F13, P13) > a write through a capability retained for a retired owner is a no-op that rebuilds nothing [0.22ms]
+(pass) the boundary that ends an owner ends the capability it handed out (F13, P13) > feedback through a capability retained for a retired owner reaches nobody [0.15ms]
+(pass) the boundary that ends an owner ends the capability it handed out (F13, P13) > a start opens the owner's life again, and the capability the ended life held stays inert [0.20ms]
+(pass) the capability is the write and the feedback channel, and nothing else (F13, P12) > it carries no `hasUI`: a background effect publishes through the channel it was handed [0.15ms]
+(pass) a session_end delivery keeps a feedback channel of its own, for that dispatch (F13, P13) > the handler announces the switch on it, and the channel is closed when the dispatch ends [0.15ms]
+(pass) a session_end delivery keeps a feedback channel of its own, for that dispatch (F13, P13) > the capability that same delivery hands out is inert, and is not that channel [0.12ms]
+
+tests\framework\owner-gate.test.ts:
+(pass) a subscription receives its own owner's events and no other session's (F8, P11) > the owner's own session and round edges reach its handlers [0.45ms]
+(pass) a subscription receives its own owner's events and no other session's (F8, P11) > a subagent's and an ownerless session's deliveries reach no handler [0.16ms]
+(pass) a subscription receives its own owner's events and no other session's (F8, P11) > the framework's own behavior for a non-owner delivery still runs, and owns nothing [0.08ms]
+(pass) a subscription receives its own owner's events and no other session's (F8, P11) > an owner delivery is reconciled before the gated handler runs [0.11ms]
+(pass) the owner gate at the OMP seam (F8, P11) > a subagent's native session and round events reach the extension's subscription never [0.52ms]
+(pass) the owner gate at the OMP seam (F8, P11) > an ownerless session's deliveries reach the subscription never, and are reported once [0.22ms]
+(pass) the owner gate at the OMP seam (F8, P11) > the owner's own native events still arrive, with the owner they resolved [0.29ms]
+
+tests\framework\owner-inheritance.test.ts:
+(pass) per-field inheritance: a subagent reads the declared default unless the field declares follow (P4) > a field that declares no follow contributes nothing and renders nothing in a subagent [0.89ms]
+(pass) per-field inheritance: an explicit follow keeps the live read (P4, C3) > each run reads the owner's current value, and the subagent's own branch decides the slot [0.43ms]
+(pass) per-field inheritance: an explicit follow keeps the live read (P4, C3) > a subagent's run derives its slot from its own branch, not the owner's [0.32ms]
+(pass) per-field inheritance: an explicit follow keeps the live read (P4, C3) > a nested subagent walks up the parent chain to the same root owner [0.26ms]
+(pass) a subagent has no write face (P3, C3) > a command in a subagent writes nothing and announces nothing [0.20ms]
+(pass) per-field persistence: a memory field owns no value across a boundary (P3) > a memory field is never seeded from its branch and is never recorded [0.20ms]
+(pass) per-field persistence: a memory field owns no value across a boundary (P3) > replacing the owner drops a memory field to the declared default [0.22ms]
+(pass) two extensions with different per-field policies coexist (P3, P4) > each field keeps its own value, its own record and its own line [0.38ms]
+(pass) an unresolvable owner degrades to off (P8, N4) > a session whose parent link resolves to no main contributes nothing and cannot toggle [0.38ms]
+(pass) an unresolvable owner degrades to off (P8, N4) > a background fork whose parent link is absent is off too [0.23ms]
+(pass) an unresolvable owner degrades to off (P8, N4) > a subagent whose main ancestor is known is not reported as unresolved [0.24ms]
+
+tests\framework\round-events.test.ts:
+(pass) a round edge reaches the handler subscribed to it (F6, P8) > each edge kind is delivered to its own subscriber [0.17ms]
+(pass) a round edge reaches the handler subscribed to it (F6, P8) > the edge carries no payload beyond the fact that it happened [0.13ms]
+(pass) a round edge reaches the handler subscribed to it (F6, P8) > the delivery names the owner scope, the hasUI fact and the feedback channel [0.14ms]
+(pass) a round edge reaches the handler subscribed to it (F6, P8) > the framework applies no behavior of its own to a round [0.11ms]
+(pass) a round edge reaches the handler subscribed to it (F6, P8) > a throwing handler is reported, and another subscriber still receives its edge [0.14ms]
+(pass) a definition that observes no round injects no round hook (F6) > no round subscription means the harness is asked for no round deliveries [0.04ms]
+(pass) a definition that observes no round injects no round hook (F6) > an injected round handler is what registers the hook [0.05ms]
+(pass) the idle query is the arm path's own fact (F6, P9) > the query answers the session's idle fact, with no event delivered first [0.13ms]
+(pass) the idle query is the arm path's own fact (F6, P9) > a harness that reports no idle fact answers nothing instead of a fabricated value [0.07ms]
+(pass) the idle query is the arm path's own fact (F6, P9) > no delivery carries the idle fact as a field [0.15ms]
+
+tests\framework\round.test.ts:
+(pass) the round opens and closes on real transitions (F6, P8) > the first run start opens the round, and a further start inside it opens no other [0.35ms]
+(pass) the round opens and closes on real transitions (F6, P8) > a settle is an end candidate, and the round ends at the host's next task instead [0.20ms]
+(pass) the round opens and closes on real transitions (F6, P8) > a session still at work does not end, and a later settle that finds it idle does [0.10ms]
+(pass) the round opens and closes on real transitions (F6, P8) > a settle that already scheduled its continuation is a pause inside the round [0.11ms]
+(pass) the round opens and closes on real transitions (F6, P8) > a drained queued message stays inside the round, and supersedes its candidate [0.12ms]
+(pass) the round opens and closes on real transitions (F6, P8) > a running asynchronous job keeps the round open until it drains [0.11ms]
+(pass) the round opens and closes on real transitions (F6, P8) > one session's settle never closes another session's round, and a child's end is its own [0.11ms]
+(pass) an abrupt terminal state closes the round too (F6, P8) > a failed run and an interrupted run end the round as an ordinary answer does [0.12ms]
+(pass) an abrupt terminal state closes the round too (F6, P8) > an abrupt end still carries no outcome: the round edge is the edge alone [0.08ms]
+(pass) the round edge's facts come from its own session (F6, P8) > the owner and the hasUI fact are the ones the edge's session reports [0.08ms]
+(pass) the round edge's facts come from its own session (F6, P8) > a surface that reports no quiescence fact closes no round, and says so once [0.20ms]
+(pass) the idle query at the native seam (F6, P9) > the query answers the session's own idle fact [0.12ms]
+(pass) the idle query at the native seam (F6, P9) > a context that reports no idle fact answers nothing, and says so once [0.10ms]
+
+tests\framework\same-name-extensions.test.ts:
+(pass) same-name extensions in one process (N8, P30) > two assemblies of one identity both register: the framework does not dedupe by name [0.73ms]
+(pass) same-name extensions in one process (N8, P30) > one assembly registers once, so the double is not inflating the count [0.10ms]
+
+tests\framework\session-events.test.ts:
+(pass) a start seeds the owner its event names (F5, P7) > the value comes from the branch the delivery names, and renders in that owner's area [0.27ms]
+(pass) a start seeds the owner its event names (F5, P7) > a definition with no session subscription is reconciled all the same [0.14ms]
+(pass) a start seeds the owner its event names (F5, P7) > a branch that declares no usable value leaves the owner off [0.09ms]
+(pass) a transition is an end followed by a start (F5, P7) > a transferred end retires the owner it names, and the start that follows seeds its own [0.20ms]
+(pass) a transition is an end followed by a start (F5, P7) > a disposed end retires the owner it names and clears the line that owner held (F9) [0.13ms]
+(pass) a transition is an end followed by a start (F5, P7) > every delivery names the owner it concerns, never the one replacing it (P14) [0.21ms]
+(pass) the framework's behavior runs before the injected handler, and one handler's failure is its own (F7, P10) > a handler observes State and the area as the event left them [0.16ms]
+(pass) the framework's behavior runs before the injected handler, and one handler's failure is its own (F7, P10) > the handler delivery carries the owner scope, the hasUI fact and the feedback channel [0.09ms]
+(pass) the framework's behavior runs before the injected handler, and one handler's failure is its own (F7, P10) > a throwing handler is reported, and disturbs neither the framework nor another subscriber [0.34ms]
+(pass) a session that is not its own owner reconciles nothing (F5) > an inherited and an unresolved owner seed no cell and render no area [0.09ms]
+(pass) a session whose facts were re-reported crossed no boundary (P24) > the facts reach a subscriber and nothing the framework owns moves for them [0.25ms]
+
+tests\framework\session.test.ts:
+(pass) session boundary seeding (F5, P7) > a resumed session reads its State back from the target branch [0.61ms]
+(pass) session boundary seeding (F5, P7) > missing, unknown, or malformed State data falls back to off (P7, N5) [0.96ms]
+(pass) the semantic events one native transition produces (F5, P7) > the harness's startup signal opens the session the binding first serves [0.16ms]
+(pass) the semantic events one native transition produces (F5, P7) > a switch to another session ends the one it leaves and starts the one it enters [0.21ms]
+(pass) the semantic events one native transition produces (F5, P7) > each native transition reason maps onto the framework's own vocabulary [1.15ms]
+(pass) the semantic events one native transition produces (F5, P7) > the harness's shutdown disposes the owner this binding serves [0.21ms]
+(pass) the semantic events one native transition produces (F5, P7) > a shutdown of a session this binding never served ends nothing [0.06ms]
+(pass) navigations that keep the session's identity (F5, P7, P10) > a tree jump, a same-file resume and a branch of the same session emit nothing [0.13ms]
+(pass) navigations that keep the session's identity (F5, P7, P10) > a tree navigation reseeds nothing: the session's current value stays authoritative [0.15ms]
+(pass) navigations that keep the session's identity (F5, P7, P10) > a navigation that keeps the identity never re-reads the branch either [0.16ms]
+(pass) session identity changes (F5, P7) > a new session starts from its own branch and retires the session it replaced [0.24ms]
+(pass) session identity changes (F5, P7) > a branch into a new identity seeds from its own target branch [0.12ms]
+(pass) session identity changes (F5, P7) > a fork seeds from its own target branch [0.11ms]
+codebase-tools: no owning main session resolved for this session; the extension stays off
+(pass) a session's own start carries the facts a display names it by (P26, P27) > a spawned session's start reports its task handle, the model it began on and its effective level [0.31ms]
+codebase-tools: no owning main session resolved for this session; the extension stays off
+(pass) a session's own start carries the facts a display names it by (P26, P27) > a later delivery carries no startup facts, and a main session's start carries no task handle [0.28ms]
+codebase-tools: no owning main session resolved for this session; the extension stays off
+(pass) a session's own start carries the facts a display names it by (P26, P27) > a level this host cannot report is named unavailable rather than filled in [0.09ms]
+codebase-tools: no owning main session resolved for this session; the extension stays off
+(pass) a session's own start carries the facts a display names it by (P26, P27) > a start the harness makes over a session that already carries a conversation proves no startup [0.10ms]
+codebase-tools: no owning main session resolved for this session; the extension stays off
+(pass) a session's own start carries the facts a display names it by (P26, P27) > a transition into an existing session proves no startup, whatever its transcript carries [0.10ms]
+(pass) a rename the harness publishes is facts, not a boundary (P24) > the newest name reaches a session subscription where it happens, and nothing is reconciled [0.17ms]
+(pass) a rename the harness publishes is facts, not a boundary (P24) > a manager that reports no name-change notification still binds and reconciles, and delivers no facts event [0.13ms]
+(pass) the marker area at a session boundary (F9, P10) > a session change renders the area of the session it moved to, never the one it left [0.21ms]
+(pass) the marker area at a session boundary (F9, P10) > a session that leaves its State behind clears the line it held [0.17ms]
+(pass) per-field persistence at a session boundary (P3) > a memory field is not seeded by a branch or a fork, and records nothing [0.20ms]
+(pass) per-field persistence at a session boundary (P3) > a navigation that keeps the owner keeps a memory field's value [0.09ms]
+
+tests\framework\startup-requirements.test.ts:
+(pass) normal startup performs no version membership judgement (P60) > a version outside the recorded support set binds and is reported on no channel [0.48ms]
+(pass) normal startup performs no version membership judgement (P60) > a surface that reports no version at all is not judged either [0.11ms]
+(pass) normal startup performs no native-interface shape judgement (P60) > a surface without the append-only recording path still binds and registers [0.12ms]
+(pass) normal startup performs no native-interface shape judgement (P60) > a declared semantic the surface cannot honor is metadata, not a refusal [0.18ms]
+(pass) normal startup performs no native-interface shape judgement (P60) > an assembly may state the semantics it depends on, and nothing judges the statement [0.28ms]
+(pass) what startup still owes an extension (P60) > an illegal declared configuration is refused before anything registers [0.99ms]
+(pass) what startup still owes an extension (P60) > a declaration whose implementation cannot be built is refused whole with one report [0.15ms]
+(pass) what startup still owes an extension (P60) > binding still registers only: no command runs, no entry is written, no area is rendered [0.11ms]
+(pass) the removed startup route is absent from production source (P60) > no production module names the version list, the notice or the shape refusal [9.10ms]
+(pass) the removed startup route is absent from production source (P60) > no production module reads the candidate verification report [4.96ms]
+
+tests\framework\subagent-runtime.test.ts:
+(pass) the runtime is the host's own per-execution duration, attributed to the session that ran it (P10) > a running frame and a settled result each deliver their own duration, and never the session's physical span [0.92ms]
+(pass) the runtime is the host's own per-execution duration, attributed to the session that ran it (P10) > an execution whose own duration the host states none for is unavailable, and the session's span never stands in [0.12ms]
+(pass) the runtime is the host's own per-execution duration, attributed to the session that ran it (P10) > the reading is observed somewhere but belongs elsewhere: the spawn's own session, its direct parent, and its inherited owner [0.16ms]
+(pass) the runtime is the host's own per-execution duration, attributed to the session that ran it (P10) > a subagent's own runtime never reaches an owner-scoped group, and a session-scoped one receives it [0.16ms]
+(pass) the runtime is the host's own per-execution duration, attributed to the session that ran it (P10) > a tool that is not the harness's delegation, and a payload that names no execution, produce no observation [0.09ms]
+(pass) a host that cannot attribute an execution reports that fact rather than a reading (P15) > an execution identity or a session the graph does not hold is unavailable, and the observation names where it was read [0.24ms]
+(pass) a host that cannot attribute an execution reports that fact rather than a reading (P15) > a duration the host did not state as a usable number is unavailable, and a stated zero is a reading [0.22ms]
+(pass) the axis carries no framework behavior of its own (P13) > an observation is dispatched unchanged, and the binding subscribes to nothing else for it [0.12ms]
+
+tests\framework\subscription-scope.test.ts:
+(pass) a subscription group's scope decides which deliveries reach it (P57) > a session-scoped group observes a subagent's own identity, parent and name [0.14ms]
+(pass) a subscription group's scope decides which deliveries reach it (P57) > an owner-scoped group is never moved by a subagent's delivery [0.16ms]
+(pass) a subscription group's scope decides which deliveries reach it (P57) > both scopes run in one binding from the one declaration [0.13ms]
+(pass) a subscription group's scope decides which deliveries reach it (P57) > a grandchild's direct parent is its own parent session, not the main session [0.13ms]
+(pass) a subscription group's scope decides which deliveries reach it (P57) > a session-scoped round edge carries the actual session's facts [0.10ms]
+(pass) a subscription group's scope decides which deliveries reach it (P57) > an owner-scoped round group still sees no subagent edge [0.09ms]
+
+tests\framework\turn-facts.test.ts:
+(pass) a Turn fixes its request-time facts at the start and repeats them at the end (P57) > turn_start carries the framework's own opaque identity, the session, the round and the request facts [0.53ms]
+(pass) a Turn fixes its request-time facts at the start and repeats them at the end (P57) > turn_end repeats the same identity and the same request-time anchor [0.32ms]
+(pass) a Turn fixes its request-time facts at the start and repeats them at the end (P57) > a model changed before the end does not re-attribute or re-price the Turn [0.14ms]
+(pass) a Turn fixes its request-time facts at the start and repeats them at the end (P57) > a missing fact is named, never fabricated: no round and no catalog entry [0.10ms]
+(pass) a Turn fixes its request-time facts at the start and repeats them at the end (P57) > an implementation that supplies no catalog reports the price as unavailable [0.07ms]
+(pass) a Turn fixes its request-time facts at the start and repeats them at the end (P57) > a missing HTTP response boundary is named at the end, never filled with a default [0.10ms]
+(pass) the framework associates a Turn's facts with its own in-flight record (P57) > a response for a session with no Turn in flight is dropped, and the other session's Turn is untouched [0.11ms]
+(pass) the framework associates a Turn's facts with its own in-flight record (P57) > a repeated settle carrying the same reading is normal deduplication, not a second Turn [0.10ms]
+(pass) the framework associates a Turn's facts with its own in-flight record (P57) > a later settle carrying different usage is a conflict: reported, dropped, and the end stands [0.09ms]
+(pass) the framework associates a Turn's facts with its own in-flight record (P57) > a start arriving while a Turn is in flight drops the earlier record and reports the conflict [0.10ms]
+(pass) usage is reliable or explicitly unavailable, never zero by default (P57) > no reported reading is unavailable, not zero [0.09ms]
+(pass) usage is reliable or explicitly unavailable, never zero by default (P57) > an all-zero reading the harness reported is delivered as the confirmed zero it is [0.09ms]
+(pass) usage is reliable or explicitly unavailable, never zero by default (P57) > an all-zero end after a non-zero streamed reading is named as the host default it must be [0.10ms]
+(pass) usage is reliable or explicitly unavailable, never zero by default (P57) > a streamed reading is never the final usage and never makes a conflict [0.17ms]
+(pass) usage is reliable or explicitly unavailable, never zero by default (P57) > final readings that disagree leave no determinable source, so the usage is unavailable [0.19ms]
+(pass) usage is reliable or explicitly unavailable, never zero by default (P57) > an outcome that is not an ordinary answer still delivers its reliable usage [0.34ms]
+(pass) the scope declaration decides which sessions a group observes (P57) > a session-scoped group observes a subagent's Turn with the subagent's own identity [0.14ms]
+(pass) the scope declaration decides which sessions a group observes (P57) > an owner-scoped group is never moved by a subagent's Turn [0.14ms]
+(pass) the scope declaration decides which sessions a group observes (P57) > one declaration drives both scopes through the one dispatch, with the same identity [0.10ms]
+(pass) the scope declaration decides which sessions a group observes (P57) > a Turn delivery carries no write path: observation grants no owner authority [0.30ms]
+(pass) the scope declaration decides which sessions a group observes (P57) > a handler's synchronous throw and rejected promise are reported once and disturb nobody else [0.32ms]
+(pass) the scope declaration decides which sessions a group observes (P57) > a Turn delivery reaches only the group that declared the Turn axis [0.18ms]
+
+tests\framework\turn.test.ts:
+(pass) the native model-cycle facts map to the framework's Turn facts (P57) > a tool-requesting response settles its own Turn before the tools run, and the follow-up request is a new Turn [0.91ms]
+(pass) the native model-cycle facts map to the framework's Turn facts (P57) > a request start fixes the request's own model and the actual session facts [0.09ms]
+(pass) the native model-cycle facts map to the framework's Turn facts (P57) > the response boundary and the finalized assistant message are one Turn's end [0.13ms]
+(pass) the native model-cycle facts map to the framework's Turn facts (P57) > an interrupted response is cancelled and a failed one is failed [0.23ms]
+(pass) the native model-cycle facts map to the framework's Turn facts (P57) > a message that is not the assistant response settles nothing [0.09ms]
+(pass) the native model-cycle facts map to the framework's Turn facts (P57) > a context that reports no model fact starts no Turn, and says so on the diagnostic channel [0.09ms]
+(pass) the native model-cycle facts map to the framework's Turn facts (P57) > a streamed reading is reported once per distinct usage, never as the final one [0.23ms]
+(pass) the native model-cycle facts map to the framework's Turn facts (P57) > a round edge and a Turn of one session carry that session's own facts [0.34ms]
+(pass) the native model-cycle facts map to the framework's Turn facts (P57) > a parent the registry does not hold, and one that is parked, are unavailable facts [0.26ms]
+(pass) the native model-cycle facts map to the framework's Turn facts (P57) > the framework's owner scope is untouched by the wider observation [0.13ms]
+(pass) the harness's own model prices reach the factory and the request-start snapshot > a request-time snapshot carries the harness's own price for that provider and model [0.26ms]
+(pass) the harness's own model prices reach the factory and the request-start snapshot > a pair the harness does not price, and one it prices at zero, are both no price at all [0.20ms]
+(pass) the harness's own model prices reach the factory and the request-start snapshot > a harness that reports no model catalog answers no price rather than guessing one [0.08ms]
+(pass) the harness's own provider access reaches the factory as a per-operation query > the query answers the current address and credential of the provider it is asked about [0.28ms]
+(pass) the harness's own provider access reaches the factory as a per-operation query > the keyless sentinel is no credential, and a provider the host cannot answer for is no access [0.12ms]
+(pass) the harness's own provider access reaches the factory as a per-operation query > a context that reported no registry answers nothing rather than guessing the host's access [0.10ms]
+
+tests\framework\user-input.test.ts:
+(pass) the harness's own submission reaches a subscribed group as a user input fact (P1, P2) > a submitted prompt is delivered as this session's user input [0.40ms]
+(pass) the harness's own submission reaches a subscribed group as a user input fact (P1, P2) > a user-invoked skill submission is the same fact as an ordinary prompt [0.10ms]
+(pass) the harness's own submission reaches a subscribed group as a user input fact (P1, P2) > a submission an extension itself made is not the user's input [0.06ms]
+(pass) the input axis is subscribed only when it is observed (S1) > a definition that observes no input asks the harness for no input event [0.05ms]
+(pass) the input axis is subscribed only when it is observed (S1) > a surface that publishes no submission event is named on the non-model channel, and the rest of the binding stands [0.10ms]
+
+tests\framework\viewed-marker.test.ts:
+(pass) the area projects the displayed session's own effective State (P27) > a displayed subagent shows the Owner's current value where the field follows and the declared default where it does not [0.96ms]
+(pass) the area projects the displayed session's own effective State (P27) > a view change re-projects the area on its own, through the framework's one widget [0.30ms]
+(pass) the area projects the displayed session's own effective State (P27) > a delivery in another session does not move the area away from what is displayed [0.44ms]
+(pass) the area projects the displayed session's own effective State (P27) > a displayed target the host cannot identify empties the area instead of keeping the Owner's lines [0.27ms]
+(pass) the projection re-reads State and grants no authority (P27) > what a displayed subagent shows follows the Owner's current value, not a copy taken at the switch [0.46ms]
+(pass) the projection re-reads State and grants no authority (P27) > a subagent's own boundary and commands write nothing: the Owner keeps its value and its persistence [0.44ms]
+(pass) the projection re-reads State and grants no authority (P27) > a disposed binding stops projecting and gives its view subscription back [0.31ms]
+(pass) the one area stays the displayed session's rendering beside another binding of the same extension (P27, P13) > the displayed Owner's session still renders both lines after a second binding registers [0.58ms]
+(pass) the one area stays the displayed session's rendering beside another binding of the same extension (P27, P13) > the spawned session's own deliveries render the seat on screen, never an empty area [0.34ms]
+(pass) the one area stays the displayed session's rendering beside another binding of the same extension (P27, P13) > two sessions that bound the same extension read their own Owner, whichever bound last [0.24ms]
+
+tests\harness-dock\baseline.test.ts:
+(pass) baseline record > the isolated install provides exactly the recorded supported version [0.03ms]
+(pass) baseline record > the recorded revision anchor is reachable in the checkout and names the recorded version [92.30ms]
+(pass) baseline record > the run artifact stays byte-identical to the recorded revision for the recorded contract files [136.92ms]
+(pass) baseline record > records the lockfiles of this repository and of the behavior oracle [0.38ms]
+(pass) baseline record > the oracle checkout carries the recorded revision [41.84ms]
+(pass) baseline record > records the accepted environment as conditions, not as pending work [0.08ms]
+
+tests\harness-dock\binding-lifecycle.test.ts:
+(pass) the public binding in a real session (P28, P56) > the host loads it with its validated configuration, waits for its initialization, runs its actions and cleans it up once [3056.63ms]
+(pass) the public binding in a real session (P28, P56) > an ordinary switch keeps the one instance, and the shutdown cleans it once [2838.43ms]
+
+tests\harness-dock\codex-response-artifact.test.ts:
+(pass) the frozen Codex response-boundary host artifact > the record pins the base revision this repository records as supported, not a newer one [0.14ms]
+(pass) the frozen Codex response-boundary host artifact > every patched file's base hash is the installed base revision's own bytes [0.66ms]
+(pass) the frozen Codex response-boundary host artifact > the materialised host carries exactly the frozen post-patch bytes [0.27ms]
+
+tests\harness-dock\combined-host-artifact.test.ts:
+(pass) the frozen combined host artifact > the record chains both patches on the base revision this repository records as supported [0.09ms]
+(pass) the frozen combined host artifact > each chain step's hashes and files are the single-patch artifact's own frozen ones [0.20ms]
+(pass) the frozen combined host artifact > every file's pre-patch hash is the unpatched install's own bytes, and the patch changes it [1.51ms]
+(pass) the frozen combined host artifact > the materialised host carries exactly the frozen post-patch bytes of both patches [1.46ms]
+(pass) the frozen combined host artifact > neither behaviour is in the unpatched install: both come from the chain [0.31ms]
+
+tests\harness-dock\detail-tree.test.ts:
+(pass) the real host's widget: a brief with its own Round, then the static detail tree (P23, P29) > the toggle replaces the Round row with the root and its rows, redrawing at once and asking no provider [2127.47ms]
+(pass) a real spawn's own start facts reach its row, the document and the next process (P26, P27, P19) > the host's answers name the task and the pair, the widget and the document carry them, and a restart restores them [3557.39ms]
+(pass) a resumed process draws the runtime the document already carries (P10, P19, P35) > the child's own row states the saved figure and not a second accumulation of the same execution [3430.57ms]
+
+tests\harness-dock\model-cost-accounting.test.ts:
+(pass) a real request reaches the accounting with the host's own facts (P1, P2, P6) > an official monetary request the endpoint reported no usage for is skipped with a warning [1937.53ms]
+(pass) a real request reaches the accounting with the host's own facts (P1, P2, P6) > a model the data does not list is not accounted at all, and says nothing [1938.99ms]
+(pass) a real request reaches the accounting with the host's own facts (P1, P2, P6) > a request with a reliable usage and an applicable price is accounted silently [2021.71ms]
+(pass) a real request reaches the accounting with the host's own facts (P1, P2, P6) > an all-zero usage the endpoint reported is still no reliable reading, and is skipped the same way [1951.35ms]
+
+tests\harness-dock\model-cost-balance.test.ts:
+(pass) the CLI's startup prefetch really leaves the process, and the first exchange waits for it (P37, P38) > the reading the endpoint answered is shown once, and a fresh reading is not queried again [1955.31ms]
+(pass) the CLI's startup prefetch really leaves the process, and the first exchange waits for it (P37, P38) > the first model request is not issued until the prefetch's query has been answered [5094.15ms]
+(pass) the CLI's startup prefetch really leaves the process, and the first exchange waits for it (P37, P38) > a provider that refuses the balance query shows the failure and does not notify or block the model [1983.34ms]
+(pass) a balance query that never answers does not hold the work (P40) > the next exchange is issued while the query is still out, and the query it meets is the one it joins [7127.64ms]
+(pass) a balance query that never answers does not hold the work (P40) > the run ends while the query is still out, and its exit is not held by it [1965.77ms]
+(pass) the credential reaches its own query and no other surface of a real run (P53) > the synthetic sentinel authenticates the balance query and appears in nothing else this run produced [2020.15ms]
+
+tests\harness-dock\model-cost-codex-quota.test.ts:
+(pass) the account query's own windows in a real Codex Turn (P39, P65; S5) > a settled Turn's query moves the windows, and the response's own headers change nothing [1994.06ms]
+(pass) the account query's own windows in a real Codex Turn (P39, P65; S5) > with no response boundary at all, the same Turn still moves the windows [2000.87ms]
+(pass) the success TTL and the one query in flight (P39; S5) > a reading inside the TTL keeps the next settled Turn from asking again [1953.65ms]
+(pass) the success TTL and the one query in flight (P39; S5) > a Turn that arrives while a query is still out joins it instead of asking again [2053.72ms]
+
+tests\harness-dock\model-cost-headless.test.ts:
+(pass) a headless session observes, accounts and saves the same way, with no widget at all (P42, P69) > one session's exchanges are accounted, saved and drawn nowhere, and stdout stays protocol only [2113.21ms]
+(pass) a headless session observes, accounts and saves the same way, with no widget at all (P42, P69) > the provider refresh a settled request begins still happens with no UI, and does not hold the next request [2116.39ms]
+(pass) a headless session observes, accounts and saves the same way, with no widget at all (P42, P69) > a refused balance is visible on stderr and the session goes on issuing requests (P43, P69) [2074.57ms]
+(pass) a headless session's other business notices reach stderr, once, at their own severity (P43) > an unusable baseline pauses the instance with one error line, and the agent still runs [2098.84ms]
+(pass) a headless session's other business notices reach stderr, once, at their own severity (P43) > a command's own result and an unrecognized argument are both on stderr, once each [2195.03ms]
+(pass) a headless session's other business notices reach stderr, once, at their own severity (P43) > another extension's presence in the same process hides none of it [2242.32ms]
+(pass) the allowance windows and the ratio measurement still run with no UI (P42) > two real answers feed the windows and the ratio with no widget in the process [2197.02ms]
+
+tests\harness-dock\model-cost-modes.test.ts:
+(pass) a hidden model draws no usage widget and still runs (P8, P9) > an unlisted pair shows no widget at all while the model really executes [5194.57ms]
+(pass) a token-only model shows its approved usage with no amount of its own (P8) > the Go ids draw the fixed budget and a token total, and no currency anywhere [4673.67ms]
+(pass) the allowance model draws the Codex budget and the reference its own catalog prices (P7, P10, P25) > a pure Codex session shows 272K, the hand-computed Ref and the four-amount ratio [6136.74ms]
+(pass) one session's two channels keep both currencies across a model switch (P7) > an amount already accounted is not re-priced, and the other channel is added beside it [5861.20ms]
+(pass) a monetary model shows the fixed budget and the accounted cost (P10) > the DeepSeek budget is displayed at 450K while the request the host sends is unchanged [6922.02ms]
+(pass) the balance the CLI holds is the official channel's own line (P8, P67) > a held reading survives a real switch to a Go id and back, and only the official pair draws it [5299.93ms]
+
+tests\harness-dock\model-cost-persistence.test.ts:
+(pass) the production documents of one storage root, read back independently (P52) > one root holds the approved activity document and the independent estimate, both written by the run [1935.56ms]
+(pass) the production documents of one storage root, read back independently (P52) > a period close archives the whole file it closes and leaves the estimate exactly as it was [3473.46ms]
+(pass) the production documents of one storage root, read back independently (P52) > a later process reads both documents back and continues from them (P52) [3452.89ms]
+(pass) the production documents of one storage root, read back independently (P52) > a subagent's own record is saved before its parent's, naming the parent it has (P52) [2239.08ms]
+
+tests\harness-dock\model-cost-session-span.test.ts:
+(pass) a real submission establishes and advances the main session's span (P1, P2, P8, P14) > one submission yields a saved span whose start is the submission, and the real widget draws it [3566.93ms]
+(pass) a real submission establishes and advances the main session's span (P1, P2, P8, P14) > a second submission in the same session keeps the start and moves the end [3630.31ms]
+(pass) a real submission establishes and advances the main session's span (P1, P2, P8, P14) > a user-invoked skill's submission is the start, at the instant the user submitted it [3547.54ms]
+
+tests\harness-dock\model-cost-store.test.ts:
+(pass) the consumption store in a real session (P47, P51) > an unusable baseline is reported to the operator and the file is left exactly as it was [1830.62ms]
+(pass) the consumption store in a real session (P47, P51) > a readable baseline is not rewritten, and an absent one is not created [1815.86ms]
+(pass) the consumption store in a real session (P47, P51) > a root with no document is left without one: an empty start is not a save [1842.75ms]
+
+tests\harness-dock\period-switch.test.ts:
+(pass) the real host's period switch archives the period it closes and opens the next one (P30, P31, P32, P34, P35, P36) > the prompt returns with the archive and the new period already on disk, and a repeated holiday switches nothing [2265.36ms]
+
+tests\harness-dock\round-facts.test.ts:
+(pass) one prompt's tool continuation is one Round, and the round end saves it (P3, P15) > two requests, one Round, one save, and the round end after the host's own settle [2893.99ms]
+(pass) consecutive prompts are consecutive Rounds (P15) > a second prompt opens a second Round, with its own round identity and its own save [2967.72ms]
+
+tests\harness-dock\session-driver.test.ts:
+(pass) controlled session > starts the isolated artifact under a temporary agent state, not the default environment [1288.96ms]
+(pass) controlled session > executes an extension command, runs a turn, and reads the session JSONL and outbound request back [1771.94ms]
+(pass) controlled session > reports diagnosable output when a session cannot start [36.69ms]
+
+tests\harness-dock\session-ownership-tree.test.ts:
+412 | 			expect((await run.session.prompt(DELEGATE_PROMPT)).status).toBe("completed");
+413 | 
+414 | 			// The host made five model requests: the main session's delegation, the child's delegation,
+415 | 			// the grandchild's answer, the child's answer, and the main session's prose reply. The tool
+416 | 			// executions between them are not requests.
+417 | 			expect(run.capture.requests()).toHaveLength(5);
+                                        ^
+error: expect(received).toHaveLength(expected)
+
+Expected length: 5
+Received length: 11
+
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-EBBKM4\tests\harness-dock\session-ownership-tree.test.ts:417:35)
+(fail) a real delegating run accounts each actual session's own requests (P12, P13, P24) > three sessions save their own record, with the direct parent the host reported [3347.37ms]
+539 | 			expect(recordOf(document, childId)?.parent).toBe(mainId);
+540 | 			expect(recordOf(document, grandchildId)?.parent).toBe(childId);
+541 | 			// Seven model requests in all: five for the delegation, one in the session the view moved to,
+542 | 			// one after switching back — and every one of them is accounted under the session it was
+543 | 			// issued by.
+544 | 			expect(run.capture.requests()).toHaveLength(7);
+                                        ^
+error: expect(received).toHaveLength(expected)
+
+Expected length: 7
+Received length: 13
+
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-EBBKM4\tests\harness-dock\session-ownership-tree.test.ts:544:35)
+(fail) a real delegating run accounts each actual session's own requests (P12, P13, P24) > switching the session the host displays leaves every session's own record where it was [2443.25ms]
+560 | 			await run.session.request({ type: "set_session_name", name: MAIN_SESSION_NAME });
+561 | 			expect((await run.session.prompt(DELEGATE_PROMPT)).status).toBe("completed");
+562 | 
+563 | 			// The renames cost the model nothing: the same five requests, and no notice at all — a
+564 | 			// rename is display data, never a request or a skipped reading.
+565 | 			expect(run.capture.requests()).toHaveLength(5);
+                                        ^
+error: expect(received).toHaveLength(expected)
+
+Expected length: 5
+Received length: 11
+
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-EBBKM4\tests\harness-dock\session-ownership-tree.test.ts:565:35)
+(fail) a session renamed while it runs and nobody views it (P24, S5) > the host's own rename reaches a subscriber where it happens, and only the next normal save writes it [2382.30ms]
+
+tests\harness-dock\session-recovery.test.ts:
+(pass) a saved session resumes in the next process (P16, P18) > an independent restart continues its totals, version and period, and reads no history [3461.59ms]
+(pass) a save that did not land is reported and dropped, and the model keeps running (P46) > another writer's record of that session stands, the refused consumption is dropped, and the next process resumes the disk's version [3455.18ms]
+(pass) navigating the session's own tree does not roll back its consumption (P17, P18) > a rewind stands up another session from the copied entries, and coming back continues the first one's record [2080.16ms]
+(pass) a fork is its own session, from zero (P19) > the harness's own fork copies the transcript without consuming, and adds only the fork's own requests [2060.50ms]
+
+tests\harness-dock\turn-facts.test.ts:
+(pass) a real session's request delivers Turn facts to both scopes (P57) > the request's start facts, the same Turn's end with reliable usage, and the HTTP boundary [1325.92ms]
+(pass) a real session's request delivers Turn facts to both scopes (P57) > a delegating run delivers each actual session's own identity, parent and Turn, and never drives the owner group from a subagent [1538.72ms]
+(pass) a real session's request delivers Turn facts to both scopes (P57) > a real tool runs between two Turns, and the harness's own turn_end neither ends one nor starts another [1443.90ms]
+
+tests\harness-dock\viewed-marker.test.ts:
+(pass) the frozen host renders the displayed session's own marker area (S5, P27) > a subagent's own run renders its effective projection, not every line the Owner's session shows [1487.34ms]
+
+tests\harness-dock\viewed-session-host.test.ts:
+(pass) the frozen Viewed session host publishes the outlet (S5) > an extension reads the displayed session's identity, name, model, effort and context with nothing unavailable [1157.94ms]
+(pass) the frozen Viewed session host publishes the outlet (S5) > a subscriber is told when the displayed session's effort, model and context change, and unsubscribe stops it [1318.87ms]
+(pass) the frozen Viewed session host publishes the outlet (S5) > switching the session the host displays is readable as a live identity change [1162.50ms]
+(pass) the frozen Viewed session host publishes the outlet (S5) > the unpatched baseline install reports no outlet to the same extension (control) [1210.23ms]
+
+tests\harness-dock\viewed-session-total.test.ts:
+(pass) the widget's Effort is the host's actual level, re-read when it changes (P11) > a real level is displayed, and a same-target change is read again without another request [1985.84ms]
+(pass) a model with no settable effort is displayed as a question mark (P11) > the widget says ? rather than borrowing a configured or default level [1997.59ms]
+
+tests\harness-dock\viewed-session.test.ts:
+(pass) the frozen Viewed session host artifact > the record pins the base revision this repository records as supported, not a newer one [0.22ms]
+(pass) the frozen Viewed session host artifact > every patched file's base hash agrees with the baseline record's own revision anchor [0.15ms]
+(pass) the frozen Viewed session host artifact > the materialised host carries exactly the frozen post-patch bytes [1.62ms]
+(pass) the frozen Viewed session host artifact > the unpatched baseline install carries no outlet: the patch is what publishes it [0.31ms]
+(pass) the viewed session contract, as the frozen artifact implements it > a fact the host cannot obtain is named unavailable instead of guessed [0.16ms]
+(pass) the viewed session contract, as the frozen artifact implements it > a target switch, a same-target fact change and an invalidation each notify; unsubscribe stops it [0.52ms]
+(pass) the viewed session contract, as the frozen artifact implements it > a source over one live session reads its facts and follows its own model, effort and context events [0.18ms]
+
+tests\model-cost\assembled-consumption.test.ts:
+(pass) the Total's time is the main session's span, beside its subagents' own runtimes (P9) > a ten-minute main span with two parallel six-minute subagents is still ten minutes [19.68ms]
+(pass) every change assembled survives a commit and a new process (P24) > the drawn figures and the restored records are the ones this run's own numbers make [115.27ms]
+
+tests\model-cost\boundary-timer.test.ts:
+(pass) the UI waits once for the next season change (P41) > one session's UI arms exactly one timeout, at the instant the schedule states after the endpoint [2.27ms]
+(pass) the UI waits once for the next season change (P41) > a reading exactly on the endpoint waits one millisecond rather than the next window [1.23ms]
+(pass) the UI waits once for the next season change (P41) > a session and its subagent share the one wait, and a target switch rebuilds nothing [1.44ms]
+(pass) the UI waits once for the next season change (P41) > a boundary the process slept through is corrected from the actual time, not replayed [1.38ms]
+(pass) the UI waits once for the next season change (P41) > a holiday period has no boundary ahead of it, so nothing is armed and the mark says so [1.15ms]
+(pass) the wait belongs to the UI's lifetime, not to a session's (P41) > a headless session draws nothing and arms nothing [1.01ms]
+(pass) the wait belongs to the UI's lifetime, not to a session's (P41) > the frontend's own release cancels the timeout the UI holds and clears the widget [1.23ms]
+(pass) the wait belongs to the UI's lifetime, not to a session's (P41) > the binding's own cleanup releases the frontend, and then runs the instance's own [0.06ms]
+(pass) the wait belongs to the UI's lifetime, not to a session's (P41) > neither a redraw nor the boundary itself reaches the network, the file or the accounting [1.54ms]
+
+tests\model-cost\codex-estimate.test.ts:
+(pass) a report's own pair is the only thing a sample may come from (P66) > the first usable pair shows no estimate yet [3.07ms]
+(pass) a report's own pair is the only thing a sample may come from (P66) > 50 five-hour points over 5 weekly points read ratio≈10.0, with left from the displayed week [2.39ms]
+(pass) a report's own pair is the only thing a sample may come from (P66) > no interval below the thresholds or at saturation replaces the stored ratio [4.27ms]
+(pass) a report's own pair is the only thing a sample may come from (P66) > a report carrying one window pairs nothing and leaves the baseline it did not carry alone [10.23ms]
+(pass) a crossed window boundary rebuilds the baseline and never withdraws the ratio (P66) > a moved five-hour reset instant rebaselines, and the next sample spans only the new window [3.01ms]
+(pass) a crossed window boundary rebuilds the baseline and never withdraws the ratio (P66) > a percentage drop rebuilds the baseline when no reset instant can be compared [3.01ms]
+(pass) a crossed window boundary rebuilds the baseline and never withdraws the ratio (P66) > a baseline aged exactly five hours is never sampled across [2.31ms]
+(pass) the baseline is published at once and a ratio refinement waits a minute (P66) > the first usable pair publishes the baseline with the ratio still unknown [6.51ms]
+(pass) the baseline is published at once and a ratio refinement waits a minute (P66) > a ratio refinement inside the minute stays in memory, and the next one after it lands [9.91ms]
+(pass) the baseline is published at once and a ratio refinement waits a minute (P66) > a rebaselined window inside the minute is published at once [9.72ms]
+(pass) a shared document merges by the baseline's capture instant (P66) > a newer baseline on disk is kept, and the instance holding the older one adopts it [13.07ms]
+(pass) a shared document merges by the baseline's capture instant (P66) > an older baseline on disk is superseded, and its known ratio is never dropped to nothing [9.74ms]
+(pass) a shared document merges by the baseline's capture instant (P66) > equal capture instants leave the writing instance's measurement in the document [9.92ms]
+(pass) a restart continues the measurement the document carries (P66) > a restarted process shows the stored ratio and keeps sampling from the stored baseline [10.43ms]
+(pass) a document that is not this measurement reads as a first run (P66) > a document whose baseline is not an object is not a measurement, and the next qualifying pair republishes one [9.89ms]
+(pass) a document that is not this measurement reads as a first run (P66) > a document whose ratio is not a number is not a measurement, and the next qualifying pair republishes one [11.03ms]
+(pass) a document that is not this measurement reads as a first run (P66) > a used percent above one hundred is not a measurement, and the next qualifying pair republishes one [9.93ms]
+(pass) a document that is not this measurement reads as a first run (P66) > a used percent below zero is not a measurement, and the next qualifying pair republishes one [14.37ms]
+(pass) a document that is not this measurement reads as a first run (P66) > a malformed capture instant is not a measurement, and the next qualifying pair republishes one [12.87ms]
+(pass) a document that is not this measurement reads as a first run (P66) > a capture instant in the future is not a measurement, and the next qualifying pair republishes one [11.36ms]
+(pass) a document that is not this measurement reads as a first run (P66) > a zero ratio is not a measurement, and the next qualifying pair republishes one [8.24ms]
+(pass) a document that is not this measurement reads as a first run (P66) > a previous shape this measurement never wrote is not a measurement, and the next qualifying pair republishes one [5.21ms]
+(pass) a document that is not this measurement reads as a first run (P66) > text that is not JSON is never overwritten, and the measurement carries on in memory [3.87ms]
+
+tests\model-cost\codex-quota.test.ts:
+(pass) the account API is asked at initialization and on a settled Codex request > the query uses the business address, the credential's own headers and the named codex proxy [7.35ms]
+(pass) the account API is asked at initialization and on a settled Codex request > the window is decided by the length it reports, not by which position carried it [2.56ms]
+(pass) the account API is asked at initialization and on a settled Codex request > a settled Codex request refreshes the windows only once the success TTL has passed [2.62ms]
+(pass) the account API is asked at initialization and on a settled Codex request > a request of another provider neither queries the account API nor updates a window [10.15ms]
+(pass) the account API is asked at initialization and on a settled Codex request > a query already out is joined rather than duplicated, and its own instant is what is accepted [3.13ms]
+(pass) the account API is asked at initialization and on a settled Codex request > the account id comes from the credential; a credential that states none sends no such header [2.52ms]
+(pass) the account API is asked at initialization and on a settled Codex request > a missing credential fails as having no access and sends nothing [1.11ms]
+(pass) the account API is asked at initialization and on a settled Codex request > a refused proxy selection fails as a configuration failure, without a direct request [1.44ms]
+(pass) the account API is asked at initialization and on a settled Codex request > a non-2xx answer and a refused transport are failures, and neither is a window [2.14ms]
+(pass) the account API is asked at initialization and on a settled Codex request > a failed attempt earns no TTL, so the next settled request asks again [2.66ms]
+(pass) the account answer updates each window on its own > a document that carries one window updates that one and leaves the other's value and instant alone [1.86ms]
+(pass) the account answer updates each window on its own > a document that identifies no window changes nothing and notifies no one, and earns no TTL [8.90ms]
+(pass) the account answer updates each window on its own > two candidates of one kind in one document: the closest length wins, and an exact tie keeps the first listed [2.34ms]
+(pass) a window's reset instant is read as the state it has now > unknown, expired and invalid are told apart, and the reported instant is never rewritten [2.73ms]
+(pass) a window's reset instant is read as the state it has now > a reset that is not an instant is no instant, and a state is never written onto the reading [1.86ms]
+
+tests\model-cost\consumption-document.test.ts:
+(pass) the consumption document's schema > an approved document is read with its root fields, sessions and own buckets intact [0.20ms]
+(pass) the consumption document's schema > an optional boundary balance may be omitted, and a zero is not written in its place [0.08ms]
+(pass) the consumption document's schema > another format version is not read as this one [0.05ms]
+(pass) the consumption document's schema > a legacy document is not read as this one [0.04ms]
+(pass) the consumption document's schema > a missing root field is unusable rather than defaulted [0.03ms]
+(pass) the consumption document's schema > a field the approved schema does not name is unusable, not preserved by accident [0.03ms]
+(pass) the consumption document's schema > a session record carrying an extra authoritative total is refused [0.04ms]
+(pass) the consumption document's schema > a session record built from the wrong shape is refused [0.12ms]
+(pass) the consumption document's schema > an own entry outside the two approved currencies is refused [0.07ms]
+(pass) the consumption document's schema > a negative or non-finite measurement is refused [0.05ms]
+(pass) the consumption document's startup facts > a record's startup facts are read with each part intact, and a part nothing proved stays absent [0.16ms]
+(pass) the consumption document's startup facts > a startup member the schema does not name, or a part of another shape, is refused [0.15ms]
+(pass) the consumption document's startup facts > two records differing only in their startup facts are not the same business content [0.14ms]
+(pass) the consumption document's merge > a record whose id is not in the harness is appended, and the others survive [0.06ms]
+(pass) the consumption document's merge > a record replaces the one with its id, wherever that record sits [0.04ms]
+(pass) the consumption document's merge > a parent that was never saved is no obstacle [0.03ms]
+(pass) the consumption document's merge > an older save version is refused and the document stays as it was [0.02ms]
+(pass) the consumption document's merge > the same version with the same business content is idempotent [0.05ms]
+(pass) the consumption document's merge > the same version with other business content is a conflict, never a merge [0.04ms]
+(pass) the consumption document's merge > records whose keys were written in another order are the same business content [0.09ms]
+(pass) the consumption document's merge > the version scope is the harness's own list, so another harness is another record [0.05ms]
+
+tests\model-cost\consumption-store.test.ts:
+(pass) the consumption store > a root with no document starts a fresh period and writes nothing [1.10ms]
+(pass) the consumption store > a committed snapshot is read back by a later instance, parent included [10.31ms]
+(pass) the consumption store > committing one session leaves every other record exactly as it was [6.42ms]
+(pass) the consumption store > committing the same snapshot again is idempotent [10.49ms]
+(pass) the consumption store > a snapshot of the same version with other content is a conflict, and the disk wins [9.71ms]
+(pass) the consumption store > a refused snapshot leaves the document the file holds as the instance's own baseline [4.52ms]
+(pass) the consumption store > a period another CLI reset becomes the instance's period, so the replaced period is not rebound [4.39ms]
+(pass) the consumption store > two instances that both loaded an empty root share the period the first write creates [10.07ms]
+(pass) the consumption store > a snapshot with an older save version is refused [5.51ms]
+(pass) the consumption store > a snapshot belonging to another period is refused and never rebound [4.79ms]
+(pass) the consumption store > a document that is not JSON pauses the instance and is never overwritten [0.96ms]
+(pass) the consumption store > a document of another format version pauses the instance and is never overwritten [0.87ms]
+(pass) the consumption store > the next normal initialization loads again, once the document is usable [16.43ms]
+(pass) the consumption store > a commit before any load is a misuse, not a data condition [0.72ms]
+(pass) the consumption store > concurrent commits of one document serialize, and no session's record is lost [34.62ms]
+
+tests\model-cost\detail-layout.test.ts:
+(pass) one depth group shares its field columns (P30) > the same depth's rows align, though their names differ in length and their parents differ [5.37ms]
+(pass) a field a row has none of keeps its own column (P31) > a runtime, a context reading and a startup fact are each missing on one row of a group [3.87ms]
+(pass) columns are terminal columns, not string lengths (P32) > a Chinese name sizes its group by the columns it draws in, and the theme adds none [4.79ms]
+(pass) a narrow terminal abbreviates and then wraps, group by group (P33) > a name and a model identifier are marked when cut, and the group's columns stay put [5.91ms]
+(pass) a narrow terminal abbreviates and then wraps, group by group (P33) > a group that cannot fit even abbreviated wraps at one break for all of its rows [5.07ms]
+(pass) a narrow terminal abbreviates and then wraps, group by group (P33) > a width change is a fresh layout: the same width draws the same lines again [6.15ms]
+(pass) abbreviation and wrapping change no reading and no data (P33, P24) > the figures, the whole names and models, and the document itself survive every width [5.82ms]
+
+tests\model-cost\detail-tree.test.ts:
+(pass) the detail action flips the entry preference at once, whatever state the session is in (P29) > two invocations alternate the preference and each answers with the form now in effect [2.90ms]
+(pass) the detail action flips the entry preference at once, whatever state the session is in (P29) > a headless, a busy and an unreported entry all flip: nothing consults the UI, idle or a save [8.06ms]
+(pass) the detail action flips the entry preference at once, whatever state the session is in (P29) > the declaration offers `detail` alone: brief, on, off and a focused route are refused untouched [2.65ms]
+(pass) the detail action flips the entry preference at once, whatever state the session is in (P29) > a second entry over the same storage root answers the brief: the preference is neither persisted nor shared [3.08ms]
+(pass) the detail form's static tree: the root's own models and one row per descendant (P23) > the root by name, its own pairs one row each, descendants one row each by direct parent [2.65ms]
+(pass) the detail form's static tree: the root's own models and one row per descendant (P23) > a row's ratio is its own model's price, and the current-model ratio is not borrowed [2.10ms]
+(pass) the detail form's static tree: the root's own models and one row per descendant (P23) > a pair with no amount policy shows usage alone, whatever the harness catalog states for it [2.10ms]
+(pass) the detail form's static tree: the started-on facts a descendant row states (P26, P27, P28, P29) > a descendant row states the pair its session began on, part by part, and `?` where nothing proved it [2.04ms]
+(pass) a subagent's view is the brief, and the main session's tree is what it returns to (P26) > the subagent's own Round is drawn as a brief, and the round trip re-accounts nothing [2.43ms]
+(pass) an ordinary model, session, tree or view change keeps the instance, its cache and the preference (P20) > the preference, the held reading and the runtime Round all survive, and no provider is asked again [2.70ms]
+
+tests\model-cost\detail-widget.test.ts:
+(pass) the detail tree shows the model and effort a subagent started on (P27, P28) > the row shows the started-on facts, and no later model or level rewrites them [3.50ms]
+(pass) the detail tree shows the model and effort a subagent started on (P27, P28) > a session the document already records and this process only recovered keeps an unproved startup unknown [2.27ms]
+(pass) the brief draws the viewed session's own Rounds (P26) > no boundary pair means no Round row, not a fabricated zero [1.49ms]
+(pass) the brief draws the viewed session's own Rounds (P26) > an open Round shows its own additions, and the ended one becomes the latest Round [2.77ms]
+(pass) the detail form draws the static tree where the brief draws Rounds (P23, P29) > the toggle replaces the Round row with the tree and keeps the same Total above it [3.75ms]
+(pass) the detail form draws the static tree where the brief draws Rounds (P23, P29) > the Round row's own field set is the retained one, with no time of the Total's (P25) [2.95ms]
+(pass) the detail form draws the static tree where the brief draws Rounds (P23, P29) > the child's own row draws the runtime the host measured, and a measured zero is not the missing marker [4.86ms]
+(pass) the detail form draws the static tree where the brief draws Rounds (P23, P29) > a headless entry draws nothing, and the toggle still flips without creating a widget [1.92ms]
+(pass) the detail form draws the static tree where the brief draws Rounds (P23, P29) > a hidden target is cleared rather than shown, and the detail form never invents a tree for it [1.99ms]
+(pass) the detail form draws the static tree where the brief draws Rounds (P23, P29) > a subagent's view stays the brief while the entry is in detail, and returning draws the tree (P26) [2.76ms]
+(pass) the detail form draws the static tree where the brief draws Rounds (P23, P29) > a subagent's own context is read against its channel's fixed display budget (P26) [2.94ms]
+(pass) the detail form draws the static tree where the brief draws Rounds (P23, P29) > a session is named by its task handle, and a session's own name outranks it (P26) [4.09ms]
+
+tests\model-cost\display.test.ts:
+(pass) the mixed tree keeps both currencies and the tokens apart (P7) > a token-only target's main tree still carries the CNY cost and the USD reference separately [2.38ms]
+(pass) a mode without an amount policy shows no amount of its own (P8) > a token-only target keeps its approved usage fields and shows no amount or ratio [1.98ms]
+(pass) a mode without an amount policy shows no amount of its own (P8) > a hidden target keeps its usage and shows neither amount nor ratio nor a display budget [1.76ms]
+(pass) the fixed display budget is a display fact of the mode (P10) > DeepSeek and its Go ids share 450K, Codex carries 272K, and hidden has none [2.12ms]
+(pass) the fixed display budget is a display fact of the mode (P10) > the budget is exceeded only above its own figure, and never becomes a limit of its own [2.17ms]
+(pass) the fee-structure reference ratio is derived from the model's current price (P25) > a monetary model's three priced buckets normalize to the data's off-peak weights [2.14ms]
+(pass) the fee-structure reference ratio is derived from the model's current price (P25) > percentages that do not divide evenly are apportioned to sum to exactly 100 [1.89ms]
+(pass) the fee-structure reference ratio is derived from the model's current price (P25) > an allowance model uses the catalog's four amounts, cache write included [1.85ms]
+(pass) the fee-structure reference ratio is derived from the model's current price (P25) > a model whose tier the data prices nowhere has no ratio, and another model's price is not borrowed [1.82ms]
+(pass) the fee-structure reference ratio is derived from the model's current price (P25) > an all-zero scope and a catalog answering nothing both leave the ratio unavailable [3.72ms]
+(pass) the reference channel's amount is the harness's own price, fixed at the request's start (P7) > an allowance request adds the reference amount the harness prices it at, and every view reads it [35.96ms]
+(pass) the reference channel's amount is the harness's own price, fixed at the request's start (P7) > the maintained data still prices the models it names, whatever the harness also states [2.63ms]
+(pass) the reference channel's amount is the harness's own price, fixed at the request's start (P7) > a channel the harness states no price for keeps its tokens, adds no amount and reports nothing [2.29ms]
+(pass) the reference channel's amount is the harness's own price, fixed at the request's start (P7) > the amount was fixed at the request's start: a price that disappears afterwards is not read again [2.18ms]
+(pass) the reference channel's amount is the harness's own price, fixed at the request's start (P7) > one session's two channels keep both currencies, and a switch shows the other without erasing it [36.30ms]
+(pass) the target's own facts are reported as the host gave them > an unavailable effort is a question mark rather than a borrowed value [2.29ms]
+
+tests\model-cost\headless-feedback.test.ts:
+(pass) a provider query that failed reaches the operator on the channel the session has (P43) > a session with a UI draws it in the widget and publishes nothing [2.21ms]
+(pass) a provider query that failed reaches the operator on the channel the session has (P43) > a session without a UI is told both failures, once each, at error severity [1.22ms]
+(pass) a provider query that failed reaches the operator on the channel the session has (P43) > the fact that a later delivery sees is stated once, and only a new attempt speaks again [28.29ms]
+(pass) a provider query that failed reaches the operator on the channel the session has (P43) > a source that answers publishes nothing, and one refused source does not stand for the other [1.62ms]
+(pass) a provider query that failed reaches the operator on the channel the session has (P43) > a query that was never sent is no failed request: a missing credential or proxy config stays on the read-only result [2.97ms]
+(pass) a provider query that failed reaches the operator on the channel the session has (P43) > a stated failure carries no credential: the synthetic sentinel reaches its own query and nothing else [1.58ms]
+(pass) a disposed instance reports nothing, and a late failure is not a fact of the next one (P56) > a disposal before the answers land leaves the operator channel untouched [2.31ms]
+(pass) the other business notices keep their levels and their single report without a UI (P43) > a command's own result is published at its own level, and an invalid argument is reported once [1.54ms]
+(pass) the other business notices keep their levels and their single report without a UI (P43) > a request with no reliable usage, and one whose pair has no applicable price, are each warned once [2.08ms]
+(pass) the other business notices keep their levels and their single report without a UI (P43) > a save that did not land is an error, and a paused instance is one too [11.71ms]
+
+tests\model-cost\period-switch.test.ts:
+(pass) /budget exposes holiday and clear beside detail (P30, P32) > the help names all three declared actions [2.52ms]
+(pass) /budget exposes holiday and clear beside detail (P30, P32) > an argument that is not a whole action name is refused with the help and switches nothing [2.49ms]
+(pass) the period actions run only from a DeepSeek entry that is reliably idle with its save settled (P34) > an entry running another provider is warned and nothing is written [2.60ms]
+(pass) the period actions run only from a DeepSeek entry that is reliably idle with its save settled (P34) > a working entry is warned, and no later state of the session makes the refusal run [2.32ms]
+(pass) the period actions run only from a DeepSeek entry that is reliably idle with its save settled (P34) > an activity state the harness cannot report is refused as an error, never guessed idle [1.88ms]
+(pass) the period actions run only from a DeepSeek entry that is reliably idle with its save settled (P34) > a save this entry started and has not seen land refuses the switch, and the switch is not queued behind it [16.61ms]
+(pass) a switch archives the whole file it closes and opens the next period in one commit (P30, P32) > the first holiday leaves the closed period whole, holiday and all, and opens a holiday period [9.77ms]
+(pass) a switch archives the whole file it closes and opens the next period in one commit (P30, P32) > clear archives a period that consumed nothing and opens an ordinary period [8.12ms]
+(pass) a switch archives the whole file it closes and opens the next period in one commit (P30, P32) > a clear on a root that saved nothing yet still closes the period the entry is in [7.21ms]
+(pass) a switch archives the whole file it closes and opens the next period in one commit (P30, P32) > an already-open holiday is answered idempotently, without switching, archiving or querying [2.18ms]
+(pass) a switch archives the whole file it closes and opens the next period in one commit (P30, P32) > a switch drops what this instance accumulated for the closed period, and the next request starts from zero [21.80ms]
+(pass) a switch archives the whole file it closes and opens the next period in one commit (P30, P32) > an earlier archive is never replaced by a later switch [12.56ms]
+(pass) the one boundary balance read is made outside the coordination and used by both sides (P36) > the read is out before the activity document is coordinated, and the command waits for the real commit [12.71ms]
+(pass) the one boundary balance read is made outside the coordination and used by both sides (P36) > a boundary read that fails leaves both balance fields out and the switch still happens [8.13ms]
+(pass) a switch touches nothing but the period it closes (P33) > earlier archives, the independent estimate and the entry's detail all survive [9.49ms]
+(pass) a switch reports exactly how far it got and never reports success early (P35) > an archive that could not be written leaves the activity alone and is reported once [6.17ms]
+(pass) a switch reports exactly how far it got and never reports success early (P35) > an archive that landed while the new activity did not keeps its stage and reports no success [143.95ms]
+(pass) a switch reports exactly how far it got and never reports success early (P35) > a baseline this instance cannot use is refused as an error, without being overwritten [2.45ms]
+(pass) a switch reports exactly how far it got and never reports success early (P35) > a publication that cannot even begin reports no change and writes nothing [4.72ms]
+(pass) a switch reports exactly how far it got and never reports success early (P35) > nothing is said while the document is still being published, and success follows the commit [9.72ms]
+(pass) a switch clears the period's own time with the consumption it closes (P20, P21) > clear takes the committed span and the descendant's runtime out of the new document, and a reload holds neither [5.50ms]
+(pass) a switch clears the period's own time with the consumption it closes (P20, P21) > the first holiday clears them the same way and opens a period that holds no time [8.25ms]
+(pass) a switch clears the period's own time with the consumption it closes (P20, P21) > an entry already in a holiday period is not reset again, so its time is neither written nor archived [2.31ms]
+(pass) a switch clears the period's own time with the consumption it closes (P20, P21) > an execution the closed period measured is not the new period's time, however late its readings arrive (P21) [22.54ms]
+(pass) a switch clears the period's own time with the consumption it closes (P20, P21) > the main session's time starts at the next input after the switch, not at the input it closed with (P21) [18.96ms]
+(pass) a switch clears the period's own time with the consumption it closes (P20, P21) > a switch that could not archive writes no time and keeps the readings it had [6.14ms]
+
+tests\model-cost\provider-balance.test.ts:
+(pass) the CLI's prefetch asks once, and a settled request checks its reading's success TTL (P38) > a settled request past the prefetched reading's TTL queries with the host address, credential and budget [7.66ms]
+(pass) the CLI's prefetch asks once, and a settled request checks its reading's success TTL (P38) > the TTL boundary is the success instant plus 30000ms: one millisecond inside it is not refreshed [12.06ms]
+(pass) the CLI's prefetch asks once, and a settled request checks its reading's success TTL (P38) > a configured TTL replaces the default, and the TTL expiring on its own queries nothing [176.24ms]
+(pass) the CLI's prefetch asks once, and a settled request checks its reading's success TTL (P38) > only the request's own provider triggers the check; another provider's usage queries nothing [107.71ms]
+(pass) the CLI's prefetch asks once, and a settled request checks its reading's success TTL (P38) > a Round's edges and a session's own facts query nothing: no activity start, round end or switch is a trigger [891.36ms]
+(pass) one in-flight query serves every trigger, and nothing is re-issued when it completes (P38) > triggers arriving while the prefetch is out join it, and the completion re-issues nothing [104.73ms]
+(pass) a failed query keeps the last reading and its instant, with no cooldown (P38) > a rejected transport leaves the reading and its obtained instant untouched, and a later usage retries [445.53ms]
+(pass) a failed query keeps the last reading and its instant, with no cooldown (P38) > a non-2xx answer and a body with no CNY balance are failures, never a reading of zero [97.12ms]
+(pass) a failed query keeps the last reading and its instant, with no cooldown (P38) > a host with no access fails without a request, and no other provider's credential is borrowed [153.76ms]
+(pass) a failed query keeps the last reading and its instant, with no cooldown (P38) > a host that resolved an address but no credential fails rather than sending the request unauthenticated [200.00ms]
+(pass) the balance address follows the host and falls back to the provider's own default (P38) > a host address without a trailing /v1 keeps its own path [103.56ms]
+(pass) the balance address follows the host and falls back to the provider's own default (P38) > a host that resolved no address uses the documented DeepSeek default [898.93ms]
+
+tests\model-cost\quota-window-lines.test.ts:
+(pass) both windows are drawn with the bar, the pace they have run at, and their reset (P65, P67) > the five-hour window counts its reset in minutes and the weekly one in hours [3.84ms]
+(pass) both windows are drawn with the bar, the pace they have run at, and their reset (P65, P67) > an unreported window is said to be unreported, with the attempt's own reason beside it [0.81ms]
+(pass) both windows are drawn with the bar, the pace they have run at, and their reset (P65, P67) > a window the report itself left out is unreported while the other one is drawn [22.43ms]
+(pass) the state a reset instant is in is what the line says (P67) > a reset the source never stated reads as unknown [70.98ms]
+(pass) the state a reset instant is in is what the line says (P67) > a reset instant already past reads as expired, and one beyond the window as invalid [148.35ms]
+(pass) a line that does not fit is drawn in the next form down (P67) > the bar goes first, then the absolute instant, and a line too narrow is cut [4.00ms]
+
+tests\model-cost\request-accounting.test.ts:
+(pass) a settled request adds its reliable usage once, priced at its own start (P1, P2) > the four reported buckets are added as delivered, and the amount is the off-peak price's [3.35ms]
+(pass) a settled request adds its reliable usage once, priced at its own start (P1, P2) > a request that starts inside a peak window is priced at the peak price, whatever time it ends [2.37ms]
+(pass) a settled request adds its reliable usage once, priced at its own start (P1, P2) > completed, failed and cancelled requests all add their reliable usage [1.90ms]
+(pass) the anchored price is the request's own start in the data's zone (P1) > a workday's two windows are closed at both ends, and one millisecond past either is not [2.95ms]
+(pass) the anchored price is the request's own start in the data's zone (P1) > a weekend is off-peak all day, inside a window's hours or not [1.60ms]
+(pass) the anchored price is the request's own start in the data's zone (P1) > a holiday period is off-peak at every instant inside it [3.35ms]
+(pass) the anchored price is the request's own start in the data's zone (P1) > the peak price is the data's own multiplier, and a model switch carries its own tier's [1.68ms]
+(pass) a request is classified by its provider and exact model id, never by resemblance (P6) > a resembling or differently cased pair, another provider's id and an inherited key are all hidden [1.55ms]
+(pass) reliable usage is accounted and an established zero is not the same as no reading (P2) > a settle that reported nothing leaves the session unconsumed and tells the operator [1.24ms]
+(pass) reliable usage is accounted and an established zero is not the same as no reading (P2) > a reading the harness reported as zero is accounted as the confirmed zero it is [6.48ms]
+(pass) a missing price skips the amount only, and a mode without an amount policy is no error (P5, P6) > a monetary model the data prices nowhere keeps its tokens and is told about the amount [1.42ms]
+(pass) a missing price skips the amount only, and a mode without an amount policy is no error (P5, P6) > a token-only request keeps its tokens with no amount and no missing-price notice [1.15ms]
+(pass) a missing price skips the amount only, and a mode without an amount policy is no error (P5, P6) > an allowance provider's model keeps its tokens with no amount and no notice [1.47ms]
+(pass) a Turn is accounted by its own identity, once, across rounds (P4) > a repeated end for the same Turn changes nothing, and a new Turn of the same content counts [1.52ms]
+(pass) a Turn is accounted by its own identity, once, across rounds (P4) > a skipped request is not back-accounted when a later reading for it arrives [1.31ms]
+(pass) a session's own consumption is published at its Round's end (P4, P52) > the round's save carries the session's own record, and the next round's carries the next version [11.09ms]
+(pass) a session's own consumption is published at its Round's end (P4, P52) > a round that consumed nothing writes nothing at all [6.36ms]
+(pass) a session's own consumption is published at its Round's end (P4, P52) > a round with nothing new since the last save does not rewrite the document [11.09ms]
+(pass) a session's own consumption is published at its Round's end (P4, P52) > a save the document refuses is reported, and the disk's own record stands [10.23ms]
+(pass) a session's own consumption is published at its Round's end (P4, P52) > a loaded baseline's own amounts are continued, never re-priced or replaced [6.97ms]
+(pass) the display seam is read-only and announces its changes (S2) > a subscriber is told when the results change and stops being told once it unsubscribes [1.29ms]
+(pass) the display seam is read-only and announces its changes (S2) > an instance that was ended accounts nothing late [1.22ms]
+
+tests\model-cost\round-totals.test.ts:
+(pass) a Round total is the session's own accumulation across its own boundaries (P15) > the open Round is the session's accumulation since it began, and nothing is a previous Round yet [1.49ms]
+(pass) a Round total is the session's own accumulation across its own boundaries (P15) > the Round that ended is the previous one, and the next Round's current starts over from its own boundary [1.43ms]
+(pass) a Round total is the session's own accumulation across its own boundaries (P15) > a Round the session began in another period is not measured against this one's snapshot [2.22ms]
+(pass) a Round total is the session's own accumulation across its own boundaries (P15) > a Round end with no observed start publishes no previous Round [1.09ms]
+(pass) a tool continuation is one Round's own consumption (P3, P15) > the follow-up request after a tool is part of the Round, and the Round's end adds nothing [1.35ms]
+(pass) a Round holds only its own session's consumption (P14) > a child session's request never enters its parent's Round [1.07ms]
+(pass) a Round holds only its own session's consumption (P14) > a request that arrives after the parent's Round ended does not back-fill it [1.33ms]
+(pass) a Round total comes from this instance's own boundaries, never from a file (P15) > a restored accumulation is not a Round, and the next Round counts only its own additions [2.12ms]
+(pass) a Round total comes from this instance's own boundaries, never from a file (P15) > a session with no consumption in this process has no Round total to show [1.03ms]
+
+tests\model-cost\runtime-initialization.test.ts:
+(pass) the CLI asks its two configured sources once, in parallel, before the first request (P37) > both requests are out before either answers, each with its own address, credential and budget [2.15ms]
+(pass) the CLI asks its two configured sources once, in parallel, before the first request (P37) > a source the host cannot authenticate is not queried: no request, and no failure of its own [1.59ms]
+(pass) the CLI asks its two configured sources once, in parallel, before the first request (P37) > an address without a credential is not a query either, and no other provider's credential is sent [1.38ms]
+(pass) the CLI asks its two configured sources once, in parallel, before the first request (P37) > the prefetch does not depend on the session's model: both sources are asked before any Turn fact [1.10ms]
+(pass) the first request waits for the prefetches to settle, and a failure is not one (P37) > a refused balance and a refused account query settle the initialization without failing the request [1.13ms]
+(pass) the first request waits for the prefetches to settle, and a failure is not one (P37) > one source answering is enough for the first request, and the other's failure stays its own [1.13ms]
+(pass) one CLI shares its one initialization; two CLIs each ask their own (P37) > a subagent's session and its run initiation ask nothing again [2.51ms]
+(pass) one CLI shares its one initialization; two CLIs each ask their own (P37) > an ordinary session switch asks nothing again: the instance and its caches survive it [2.37ms]
+(pass) one CLI shares its one initialization; two CLIs each ask their own (P37) > a second runtime is a second CLI: its own queries, its own credential, nothing shared [2.42ms]
+(pass) a runtime query never holds the next request, and a disposed instance takes nothing (P40) > a hanging refresh does not hold the next run initiation, and the next usage joins it [2.20ms]
+(pass) a runtime query never holds the next request, and a disposed instance takes nothing (P40) > an answer arriving after the instance's disposal is not a reading, and redraws nothing [2.82ms]
+(pass) each operation fixes its own credential, and one provider's failure stays its own (P53) > a credential replaced while a query is out reaches the next operation, not the one in flight [1.47ms]
+(pass) a credential reaches its own provider's request and nothing else observable (P53) > the synthetic sentinel authenticates its own query and appears on no other surface [1.76ms]
+
+tests\model-cost\session-ownership-tree.test.ts:
+(pass) a session's latest name is display data that never changes its identity (P24) > an unviewed child renamed after its first request shows the new name at once and only saves it later [7.13ms]
+(pass) a name this host cannot report is neither guessed nor written over (P24) > an unreportable name keeps the known one, and a session never named shows its identity [35.96ms]
+(pass) the parent tree's inclusive totals count every session's own contribution once (P13) > a nested heterogeneous tree is the sum of its members' own requests and nothing outside it [1.85ms]
+(pass) the parent tree's inclusive totals count every session's own contribution once (P13) > a restored tree aggregates the records' own contributions, including a reference estimate [2.14ms]
+(pass) a request's consumption belongs to the session that issued it (P12) > subagent requests delivered under the main session's owner land in the subagents' own buckets [6.31ms]
+(pass) a request's consumption belongs to the session that issued it (P12) > a request stays in the session that issued it while the display reads another one [1.32ms]
+(pass) a request's consumption belongs to the session that issued it (P12) > a session boundary and a Round edge are not requests: only a real response adds consumption [18.60ms]
+
+tests\model-cost\session-recovery.test.ts:
+(pass) a restart continues what the document already holds (P16, P17, P18) > an independent restart restores the saved totals, the period and the version, and adds only what it accounted [62.55ms]
+(pass) a restart continues what the document already holds (P16, P17, P18) > a restored session shows no Round, and the next one counts only what this instance saw (P18) [12.91ms]
+(pass) a restart continues what the document already holds (P16, P17, P18) > a session the document records is not rolled back by another session's work, and continuing it adds on top (P17) [42.50ms]
+(pass) a fork is its own session from zero, and its source is untouched (P19) > copying a transcript accounts nothing, and the fork's own request adds only its own record [3.91ms]
+(pass) a spawned session's startup facts ride its consumption commits (P19, P27, P28) > the snapshot is saved with the session's own consumption and never rewritten [5.38ms]
+(pass) a spawned session's startup facts ride its consumption commits (P19, P27, P28) > a new process restores the saved snapshot and draws it on that session's row (P19) [65.82ms]
+(pass) a spawned session's startup facts ride its consumption commits (P19, P27, P28) > a document written before the snapshot existed keeps its consumption and keeps committing (P22) [9.55ms]
+(pass) a spawned session's startup facts ride its consumption commits (P19, P27, P28) > a recovered session the document never recorded keeps its startup unknown, whatever it runs now (P29) [6.97ms]
+(pass) a save that did not land is reported, dropped, and re-initialized from the disk (P46) > a record another writer holds is kept, the refused consumption is dropped, and the next save continues from the disk's version [5.02ms]
+(pass) a save that did not land is reported, dropped, and re-initialized from the disk (P46) > a version that moved on is restored from the disk, and the session goes on from that version [4.63ms]
+(pass) a save that did not land is reported, dropped, and re-initialized from the disk (P46) > a period another CLI reset is not written into: the instance re-initializes onto the disk's own period [9.76ms]
+(pass) a save that did not land is reported, dropped, and re-initialized from the disk (P46) > a target that cannot be read is reported as that failure, and the baseline it last read stands [37.86ms]
+(pass) a save that did not land is reported, dropped, and re-initialized from the disk (P46) > a document that became unusable under the instance pauses it, and it is not guessed at or overwritten [25.70ms]
+
+tests\model-cost\session-span.test.ts:
+(pass) the start is the session's own first user input (P1, P2) > a session created at 09:50 whose input is at 10:00 starts at 10:00, not at its creation or its first request [2.10ms]
+(pass) the start is the session's own first user input (P1, P2) > a submission the harness attributed to the user establishes the start with no request of any kind [1.38ms]
+(pass) the start is the session's own first user input (P1, P2) > a later input never moves a start the session already has [1.21ms]
+(pass) a fork starts from its own first new input (P3) > a copied history establishes nothing, and the fork's own submission establishes its start [1.18ms]
+(pass) the span is the first input up to the latest observed Round end (P4, P6) > a Round that ends at 10:05 reads 300,000 ms and does not grow while the next one runs [1.88ms]
+(pass) a span that is not known is unavailable rather than zero (P5, P16) > a first Round that has not ended reads as a dash and never grows while it runs [1.89ms]
+(pass) a span that is not known is unavailable rather than zero (P5, P16) > a restored history with no observed end stays unknown however long the next Round runs [2.13ms]
+(pass) a span that is not known is unavailable rather than zero (P5, P16) > a reliable zero is a present reading and is told apart from an absent one [6.48ms]
+(pass) the saved pair is restored and continued rather than restarted (P7, P19) > a later process resumes from the saved instants, keeps the start, and its next end includes the interval it was closed for [38.53ms]
+(pass) the time is carried by existing commits and by nothing else (P8, P14) > an unfinished Round fabricates no end, and time moving or waiting writes nothing [11.50ms]
+(pass) the time is carried by existing commits and by nothing else (P8, P14) > a Round that ends without its own consumption growing refreshes the reading and writes nothing [3.45ms]
+(pass) an invalid time reading is reported without stopping anything (P15) > an unusable clock reading reports it, keeps the last reading, and the consumption is still accounted and saved [12.15ms]
+(pass) an invalid time reading is reported without stopping anything (P15) > a Round that has not ended yet is unknown rather than reported as a failure [1.43ms]
+(pass) an older document keeps its data and gains the time beside it (P22, P24) > an old document without any time field restores tokens, cost and parent, and continues committing [33.73ms]
+(pass) an older document keeps its data and gains the time beside it (P22, P24) > the readings the Total shows are the ones given here by hand, with the span beside them [2.42ms]
+(pass) the whole-document rules are unchanged by an optional time fact (P36) > a commit another writer's version conflicts with is reported, dropped and re-initialized from the disk, and no time is written by it [10.80ms]
+(pass) the whole-document rules are unchanged by an optional time fact (P36) > a consumption document that is not readable is refused and never overwritten, time or no time [2.22ms]
+(pass) the whole-document rules are unchanged by an optional time fact (P36) > a valid consumption whose time fact alone is invalid keeps the consumption and is told apart from the refusal [8.43ms]
+
+tests\model-cost\storage-processes.test.ts:
+(pass) the storage root of independent processes > processes in different working directories share the root a relative value names [229.83ms]
+(pass) the storage root of independent processes > the field's own ~/ is the isolated user's OMP home, and it never follows the cwd [135.85ms]
+(pass) the storage root of independent processes > a changed value names another root in the next process, and nothing migrates [211.91ms]
+(pass) the storage root of independent processes > two spellings of one root are one document, and the file is where the root says [214.74ms]
+(pass) the storage root of independent processes > processes that both start on an empty root share the first period and lose no record [444.51ms]
+(pass) the storage root of independent processes > concurrent processes committing their own sessions lose no record [560.47ms]
+(pass) the storage root of independent processes > concurrent processes submitting one version with other content conflict, and the file keeps one [500.97ms]
+(pass) the storage root of independent processes > an older version from another process is refused and the file keeps its own record [120.66ms]
+(pass) the storage root of independent processes > an unusable baseline pauses every process and is never written over [86.56ms]
+(pass) the storage root of independent processes > a legacy document is refused the same way, with the reason it cannot be read [81.89ms]
+(pass) a session's runtime merges through the same coordinated commit (P35) > two processes' independent sessions keep their own runtimes, and a later version carries its own alone [238.14ms]
+(pass) a session's runtime merges through the same coordinated commit (P35) > an execution observed a second time contributes no second time, at the same version or a later one [326.86ms]
+
+tests\model-cost\storage-root.test.ts:
+(pass) model-cost storage root > the shipped default is the user's OMP home, not the user's home [0.06ms]
+(pass) model-cost storage root > the framework's own read carries the declared value verbatim [0.88ms]
+(pass) model-cost storage root > a plain relative value is resolved against the config directory, never the cwd [0.06ms]
+(pass) model-cost storage root > an absolute value is used as it was declared [0.02ms]
+(pass) model-cost storage root > the platform's other spelling of the home prefix is the same field-local rule [0.02ms]
+(pass) model-cost storage root > a bare tilde is not the exception: it is a relative path like any other
+
+tests\model-cost\subagent-runtime.test.ts:
+(pass) a session's executions accumulate onto its own one row, and save as numeric milliseconds (P11, P18) > two executions' own durations, both obtained before the commit, save as 480000 beside the session's consumption [6.37ms]
+(pass) one execution contributes once, however its readings arrive (P12, P35) > progress readings replace the open execution, a repeated completion adds nothing, and the next execution adds its own [1.06ms]
+(pass) one execution contributes once, however its readings arrive (P12, P35) > the accumulated figure is what the next existing commit writes, not the readings' sum [4.20ms]
+(pass) one execution contributes once, however its readings arrive (P12, P35) > an execution the commit already carries is not observed again: the next commit states its own duration once (P12, P35) [7.15ms]
+(pass) a runtime is a fact about executions and settles nothing (P13, P14) > readings write no file of their own, add no write, and leave every session's own record alone [6.38ms]
+(pass) a runtime is a fact about executions and settles nothing (P13, P14) > saving one session's runtime changes no other session's own consumption or its direct parent [33.76ms]
+(pass) a runtime is a fact about executions and settles nothing (P13, P14) > closing the instance writes nothing: the runtime no commit carried stays in memory (P14) [896.20ms]
+(pass) an unusable native runtime is reported and blocks nothing (P15, P16) > a missing source and an invalid duration each report an error, keep the last valid value, and cost no other feature [13.77ms]
+(pass) an unusable native runtime is reported and blocks nothing (P15, P16) > a host that reports no runtime leaves the value unavailable, and a reported zero is not that absence (P16) [6.88ms]
+(pass) a late final reading neither delays nor back-fills a commit (P17) > the disk keeps what the commit wrote until a later existing commit can carry the reliable value [36.53ms]
+(pass) a restart restores the saved accumulation and continues it (P19) > a new runtime reads the saved value back, continues from it, and never claims an unsaved reading was restored [37.39ms]
+(pass) an old document without the new field stays ordinary consumption (P22, P36) > a record that carries no runtime keeps every field it has and keeps being saved [6.19ms]
+(pass) an old document without the new field stays ordinary consumption (P22, P36) > a record whose runtime is not a measurement is not damage to the consumption beside it, while the schema's own rules still hold [33.63ms]
+(pass) an old document without the new field stays ordinary consumption (P22, P36) > the whole-document rules are unchanged: a record with no usable consumption is still refused whole [1.90ms]
+(pass) adding a runtime changes no other business figure (P24) > the own and inclusive totals, the amounts, the cache rate and the context reading are the same with and without it [2.15ms]
+
+tests\model-cost\total-text.test.ts:
+(pass) the Total row keeps the old extension's fields with dashes at initialization > the monetary channel writes its three-bucket ratio field and Cost with no value [0.09ms]
+(pass) the Total row keeps the old extension's fields with dashes at initialization > the allowance channel writes its four-bucket ratio field and Ref with no value [0.05ms]
+(pass) the Total row keeps the old extension's fields with dashes at initialization > a token-only channel writes no amount and no ratio of its own [0.02ms]
+(pass) the Total row keeps the old extension's fields with dashes at initialization > an empty ratio keeps its field while the tree's known Cost is written beside it [0.06ms]
+(pass) the Total row keeps the old extension's fields with dashes at initialization > the allowance Total writes the tree's known Ref, keeping its own four-bucket ratio field [0.06ms]
+
+tests\model-cost\viewed-session-total.test.ts:
+(pass) the Total's current-model fields are the viewed session's own current model (P21) > viewing a sibling shows only that sibling's own current pair, while its other model stays out [2.03ms]
+(pass) the Total's current-model fields are the viewed session's own current model (P21) > a viewed session's own current model is one of its pairs: switching it changes only the current fields [1.79ms]
+(pass) the Total's current-model fields are the viewed session's own current model (P21) > a ratio is the viewed model's own price, never another model's and never the saved amount [1.86ms]
+(pass) the Total's tree figures, Cost and Ref keep the whole main tree (P22) > viewing a grandchild keeps its parent's and its uncle's consumption [1.70ms]
+(pass) the Total's tree figures, Cost and Ref keep the whole main tree (P22) > every target of the tree reads the same tree figures, whichever session the view is on [1.96ms]
+(pass) the Total's tree figures, Cost and Ref keep the whole main tree (P22) > a token-only view keeps the tree's CNY Cost and USD Ref, so no mode fabricates a free tree [1.60ms]
+(pass) the target's own facts come from the viewed session and are never borrowed (P11) > the effort is what the target published, and a target that published none is a question mark [1.71ms]
+
+tests\model-cost\viewed-session-widget.test.ts:
+(pass) the widget draws the viewed session's own fields and the whole main tree beside them (P21, P22) > a target switch redraws the current-model fields while Cost and Ref stay the main tree [2.43ms]
+(pass) the widget draws the viewed session's own fields and the whole main tree beside them (P21, P22) > a same-target fact change is re-read: the new change shows, not a cached reading [1.99ms]
+(pass) every displayed fact comes from the public outlet, not from the binding or a configuration (P11) > a fact the outlet could not obtain is a question mark, and the bound session's model is not borrowed [1.98ms]
+(pass) every displayed fact comes from the public outlet, not from the binding or a configuration (P11) > a mode this extension does not display draws no widget at all, and still draws the tree for one it does [1.85ms]
+(pass) a switched-away context is dropped rather than kept (S1, S5) > rebinding subscribes the new context once, stops the previous one and draws on the new one [2.03ms]
+(pass) a switched-away context is dropped rather than kept (S1, S5) > a session without a UI is drawn nothing [1.52ms]
+(pass) a host without the approved outlet still draws the bound session's own context bar (P10, P67) > the bar is drawn at initialization from the native reading, never left off the widget [1.84ms]
+(pass) a host without the approved outlet still draws the bound session's own context bar (P10, P67) > the bound session's own actual thinking level is drawn at initialization [1.80ms]
+(pass) a host without the approved outlet still draws the bound session's own context bar (P10, P67) > a host that publishes no reading at all is a bar-less widget, not a fabricated zero [1.68ms]
+
+tests\model-cost\widget-visual.test.ts:
+(pass) the host's own drawing form decides what the frontend hands it (P67) > an interactive CLI is handed a component, and a headless one plain lines [150.33ms]
+(pass) the host's own drawing form decides what the frontend hands it (P67) > the component is drawn with the host's theme and at the host's width [2.40ms]
+(pass) the host's own drawing form decides what the frontend hands it (P67) > a host that draws text is handed the same lines with no colour token in them (P67) [1.20ms]
+(pass) the fixed-budget bar keeps the four bands it always warned in (P67) > each band is drawn in its own theme token, at the boundaries that separate them [2.96ms]
+(pass) the fixed-budget bar keeps the four bands it always warned in (P67) > the Codex pair is drawn against its own fixed budget (P67) [1.46ms]
+(pass) the fixed-budget bar keeps the four bands it always warned in (P67) > a mode this extension does not display is handed the clear, never an empty widget (P9, P67) [1.74ms]
+(pass) the fixed-budget bar keeps the four bands it always warned in (P67) > the monetary bar carries the season mark and the others do not (P67) [4.96ms]
+(pass) the balance keeps its two warnings (P67) > below ten yuan it warns, below five it is an error, and it is drawn in its own currency [4.03ms]
+(pass) the balance is the monetary channel's own line (P8, P67) > a held reading is drawn for the official pair and for no other mode of the same CLI [1.85ms]
+(pass) the accrued bar keeps the old eighth-block shapes and palette (P67) > each session's segment keeps its own palette colour, and a session with nothing accrues no segment [1.43ms]
+(pass) the accrued bar keeps the old eighth-block shapes and palette (P67) > the eight palette colours cycle in the order the bar has always drawn them [1.40ms]
+(pass) the accrued bar keeps the old eighth-block shapes and palette (P67) > past a whole character the segment is full blocks with an eighth-block remainder [1.24ms]
+(pass) the accrued bar keeps the old eighth-block shapes and palette (P67) > nothing accrued draws no bar at all [1.13ms]
+(pass) the accrued bar keeps the old eighth-block shapes and palette (P67) > past twenty yuan the bar is whole yuan blocks, hiding a session that never reached one [1.24ms]
+(pass) the accrued bar keeps the old eighth-block shapes and palette (P67) > either form is capped in columns, and the largest segment absorbs the correction [2.40ms]
+(pass) the accrued bar keeps the old eighth-block shapes and palette (P67) > the accrued bar belongs to the monetary channel alone (P67) [2.31ms]
+(pass) only the effort value is coloured, by its own level (P67) > the label stays plain and the value is drawn with the level's own colour [1.47ms]
+(pass) only the effort value is coloured, by its own level (P67) > an effort the host never reported is a question mark, coloured as the level it is (P67) [1.27ms]
+(pass) the allowance windows are drawn as the Codex operator reads them (P65, P67) > the pace each window has run at decides its colour, over the two bands beside the plain one [643.58ms]
+(pass) the allowance windows are drawn as the Codex operator reads them (P65, P67) > a window with no usable reset is drawn muted, with the dashes it always showed [5.87ms]
+(pass) the allowance windows are drawn as the Codex operator reads them (P65, P67) > the host's width reaches the window line, one form down at a time (P67) [98.66ms]
+
+3 tests failed:
+(fail) a real delegating run accounts each actual session's own requests (P12, P13, P24) > three sessions save their own record, with the direct parent the host reported [3347.37ms]
+(fail) a real delegating run accounts each actual session's own requests (P12, P13, P24) > switching the session the host displays leaves every session's own record where it was [2443.25ms]
+(fail) a session renamed while it runs and nobody views it (P24, S5) > the host's own rename reaches a subscriber where it happens, and only the next normal save writes it [2382.30ms]
+
+ 960 pass
+ 3 fail
+ 5494 expect() calls
+Ran 963 tests across 106 files. [341.05s]
+error: script "test" exited with code 1
+exit=1
