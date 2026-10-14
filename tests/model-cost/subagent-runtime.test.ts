@@ -277,7 +277,7 @@ describe("a session's executions accumulate onto its own one row, and save as nu
 	});
 });
 
-describe("one execution contributes once, however its readings arrive (P12)", () => {
+describe("one execution contributes once, however its readings arrive (P12, P35)", () => {
 	test("progress readings replace the open execution, a repeated completion adds nothing, and the next execution adds its own", async () => {
 		const loaded = await bind();
 
@@ -312,6 +312,30 @@ describe("one execution contributes once, however its readings arrive (P12)", ()
 		bound.double.deliverRound(OWNER, { event: { kind: "round_end" }, session: CHILD });
 		const document = await savedDocument(bound.consumptionFile, candidate => stored(candidate, "session-child")?.saveVersion === 2);
 		expect(stored(document, "session-child")?.runtimeMs).toBe(300_000);
+	});
+
+	test("an execution the commit already carries is not observed again: the next commit states its own duration once (P12, P35)", async () => {
+		const bound = await bind();
+		childRound(bound, CLOCK);
+		bound.double.deliverSubagentRuntime({ runtime: reading("run-1", 360_000, "ended"), session: CHILD });
+		bound.double.deliverRound(OWNER, { event: { kind: "round_end" }, session: CHILD });
+		const first = await savedDocument(bound.consumptionFile, candidate => stored(candidate, "session-child")?.saveVersion === 2);
+		expect(stored(first, "session-child")?.runtimeMs).toBe(360_000);
+
+		// The host states that same completed execution again — a repeated notification arriving after the
+		// commit that already carries it, which is the observation a second observer of one execution makes
+		// — and then states a stale running reading of it. Neither contributes anything: the accumulation is
+		// still that execution's own 360000 and never 720000.
+		bound.double.deliverSubagentRuntime({ runtime: reading("run-1", 360_000, "ended"), session: CHILD });
+		bound.double.deliverSubagentRuntime({ runtime: reading("run-1", 360_000, "running"), session: CHILD });
+		expect(bound.runtime.view.runtime("session-child")).toBe(360_000);
+
+		// The session's next existing commit writes that same figure: the document's own value is what the
+		// fact-to-accumulation-to-save path carries, not the sum of every reading it was told.
+		childRound(bound, CLOCK + 3_600_000);
+		bound.double.deliverRound(OWNER, { event: { kind: "round_end" }, session: CHILD });
+		const second = await savedDocument(bound.consumptionFile, candidate => stored(candidate, "session-child")?.saveVersion === 3);
+		expect(stored(second, "session-child")?.runtimeMs).toBe(360_000);
 	});
 });
 
@@ -363,6 +387,39 @@ describe("a runtime is a fact about executions and settles nothing (P13, P14)", 
 		expect(stored(document, "session-main")).toEqual(record("session-main", null, MAIN_OWN));
 		expect(stored(document, "session-child")?.parent).toBe("session-main");
 	});
+
+	test("closing the instance writes nothing: the runtime no commit carried stays in memory (P14)", async () => {
+		const bound = await bind();
+		childRound(bound, CLOCK);
+		let announced = 0;
+		bound.runtime.view.subscribe(() => {
+			announced += 1;
+		});
+
+		// A reading of an execution whose session's Round is still open, while the instance is alive: it
+		// accumulates and the display is told to redraw. Nothing has committed since the child's Turn
+		// settled, so both are this instance's memory alone.
+		bound.double.deliverSubagentRuntime({ runtime: reading("run-1", 360_000, "ended"), session: CHILD });
+		expect(announced).toBe(1);
+		await nextTick();
+		const before = readFileSync(bound.consumptionFile, "utf8");
+		const filesBefore = rootFiles(bound.root);
+
+		// The session this instance serves ends and the framework disposes it. Closing is not a commit:
+		// the root gains no time-specific file, nothing is written on the way out, and the document holds
+		// the very bytes the last real commit left — so the figure is not claimed as saved either.
+		bound.double.deliverSession(OWNER, { event: { kind: "session_end", reason: "disposed" } });
+		await nextTick();
+		expect(readFileSync(bound.consumptionFile, "utf8")).toBe(before);
+		expect(rootFiles(bound.root)).toEqual(filesBefore);
+		expect(stored(JSON.parse(before) as ConsumptionDocument, "session-child")?.runtimeMs).toBeUndefined();
+
+		// The close really happened: a reading arriving after it reaches nobody and redraws nothing, which
+		// is what makes the untouched file above the disposal's own behaviour rather than a case whose
+		// instance was never disposed of at all.
+		bound.double.deliverSubagentRuntime({ runtime: reading("run-2", 600_000, "ended"), session: CHILD });
+		expect(announced).toBe(1);
+	});
 });
 
 describe("an unusable native runtime is reported and blocks nothing (P15, P16)", () => {
@@ -389,9 +446,24 @@ describe("an unusable native runtime is reported and blocks nothing (P15, P16)",
 			"go-provider": { "model-alpha": { tokens: { input: 40, cacheRead: 20, cacheWrite: 0, output: 70 } } },
 		});
 		expect(bound.runtime.presentation.of(MAIN_TARGET).agentTree?.find(row => row.name === "子代理")?.runtimeMs).toBe(360_000);
+
+		// The session's next request is accounted as usual: an unusable runtime is a fact about an
+		// execution, so it neither blocks the work that follows nor stops the session's own consumption
+		// from growing — the baseline's 30 input and 50 output plus each of the two settled Turns' ten
+		// input and twenty output.
+		settleChildTurn(bound, CLOCK + 60_000);
+		expect(bound.runtime.view.own("session-child")).toEqual({
+			"go-provider": { "model-alpha": { tokens: { input: 50, cacheRead: 20, cacheWrite: 0, output: 90 } } },
+		});
+
+		// Its existing commit still lands, carrying the consumption it grew and the last valid runtime
+		// beside it.
 		bound.double.deliverRound(OWNER, { event: { kind: "round_end" }, session: CHILD });
 		const document = await savedDocument(bound.consumptionFile, candidate => stored(candidate, "session-child")?.saveVersion === 2);
 		expect(stored(document, "session-child")?.runtimeMs).toBe(360_000);
+		expect(stored(document, "session-child")?.own).toEqual({
+			"go-provider": { "model-alpha": { tokens: { input: 50, cacheRead: 20, cacheWrite: 0, output: 90 } } },
+		});
 		expect(bound.runtime.storage.pauseReason()).toBeUndefined();
 	});
 

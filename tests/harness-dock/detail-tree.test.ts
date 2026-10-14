@@ -21,7 +21,7 @@
  * environment, its configuration or its sessions.
  */
 import { beforeAll, describe, expect, test } from "bun:test";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
 import { MODEL_COST_WIDGET_KEY } from "../../extensions/model-cost/harnesses/omp/widget";
 import {
@@ -171,15 +171,24 @@ interface DockRun {
 	readonly home: IsolatedHome;
 }
 
-/** One run: the recorded install's own loader, the project's model-cost entrypoint, real RPC. */
-async function startRun(label: string): Promise<DockRun> {
-	const runRoot = createRunRoot(label);
-	const home = isolateHome(runRoot);
+/**
+ * One run: the recorded install's own loader, the project's model-cost entrypoint, real RPC.
+ *
+ * A run started again over a case's own home and run root is a second process of the same isolated
+ * environment — the restart the reload case below is about — so both are taken from the caller when
+ * it has them, and only this run's own endpoint and capture directory are new.
+ */
+async function startRun(
+	label: string,
+	existing?: { readonly home: IsolatedHome; readonly runRoot: RunRoot },
+): Promise<DockRun> {
+	const runRoot = existing?.runRoot ?? createRunRoot(label);
+	const home = existing?.home ?? isolateHome(runRoot);
 	// Blocking delegation is the host setting this needs: an RPC host otherwise runs a spawn as a
 	// background job, which a suite that prompts once has no second prompt to observe.
 	writeAgentSettings(runRoot.agentDir, { "async.enabled": false });
 	const capture = startCaptureServer({
-		dir: runRoot.captureDir,
+		dir: existing === undefined ? runRoot.captureDir : path.join(runRoot.path, `captures-${label}`),
 		replyText: "dock detail reply",
 		usage: CAPTURE_USAGE,
 		respond: delegatingStep,
@@ -202,14 +211,36 @@ async function startRun(label: string): Promise<DockRun> {
 	}
 }
 
-async function disposeRun(run: DockRun): Promise<void> {
+async function disposeRun(run: DockRun, options: { readonly keepRoot?: boolean } = {}): Promise<void> {
 	try {
 		if (run.session.exited() === null) await run.session.stop({ timeoutMs: 15_000 });
 	} catch {
 		// The session already stopped (or never started); the rest of the run still gets cleaned up.
 	}
 	run.capture.stop();
-	run.runRoot.dispose();
+	if (options.keepRoot !== true) run.runRoot.dispose();
+}
+
+/** The payload one RPC response carried, when it really is the object this file reads. */
+function payloadOf(frame: RpcFrame): Record<string, unknown> {
+	const data = frame.data;
+	return data !== null && typeof data === "object" ? (data as Record<string, unknown>) : {};
+}
+
+/** The session this process is running, with the file the next process would resume. */
+async function currentSession(
+	session: ControlledSession,
+	runRoot: RunRoot,
+): Promise<{ readonly id: string; readonly file: string }> {
+	const payload = payloadOf(await session.request({ type: "get_state" }));
+	const id = typeof payload.sessionId === "string" ? payload.sessionId : "";
+	if (id.length === 0) throw new Error(`the harness reported no session id: ${JSON.stringify(payload)}`);
+	const file = readdirSync(runRoot.sessionDir)
+		.filter(name => name.endsWith(".jsonl"))
+		.map(name => path.join(runRoot.sessionDir, name))
+		.find(candidate => candidate.includes(id));
+	if (file === undefined) throw new Error(`no persisted session file names ${id} in ${runRoot.sessionDir}`);
+	return { id, file };
 }
 
 /** One session's record as the document holds it, with the fields this file asserts. */
@@ -218,6 +249,8 @@ interface SavedSession {
 	readonly name: string;
 	readonly parent: string | null;
 	readonly own: Record<string, Record<string, { readonly tokens: Record<string, number> }>>;
+	/** The milliseconds this session's own executions accumulated, when the run committed one. */
+	readonly runtimeMs?: number;
 }
 
 /** The document as this file reads it: the sessions the extension saved, keyed by harness. */
@@ -461,6 +494,64 @@ describe("the real host's widget: a brief with its own Round, then the static de
 			expect(after === undefined ? [] : sessionsOf(after)).toEqual(sessions);
 		} finally {
 			await disposeRun(run);
+		}
+	}, 300_000);
+});
+
+describe("a resumed process draws the runtime the document already carries (P10, P19, P35)", () => {
+	test("the child's own row states the saved figure and not a second accumulation of the same execution", async () => {
+		const first = await startRun("runtime-reload");
+		const home = first.home;
+		const runRoot = first.runRoot;
+		let resumed: { readonly id: string; readonly file: string };
+		let childName: string;
+		let savedRuntime: number;
+		try {
+			await first.session.request({ type: "set_session_name", name: MAIN_SESSION_NAME });
+			expect((await first.session.prompt(DELEGATE_PROMPT)).status).toBe("completed");
+
+			// The first process really measured the child's executions and committed the figure.
+			const document = await savedDocument(
+				home.consumptionFile,
+				saved => sessionsOf(saved).some(session => session.name !== MAIN_SESSION_NAME && typeof session.runtimeMs === "number"),
+			);
+			const child = sessionsOf(document).find(session => session.name !== MAIN_SESSION_NAME);
+			if (child === undefined || typeof child.runtimeMs !== "number") {
+				throw new Error(`the document holds no child runtime: ${JSON.stringify(sessionsOf(document))}`);
+			}
+			childName = child.name;
+			savedRuntime = child.runtimeMs;
+			resumed = await currentSession(first.session, runRoot);
+		} finally {
+			// The root survives the first process: the second one starts over the same storage and the
+			// same session directory, which is what makes it a restart rather than a fresh run.
+			await disposeRun(first, { keepRoot: true });
+		}
+
+		// A second, independent process over the very environment the first one wrote — the session is
+		// resumed from the file the host persisted, so its transcript, including the delegation the child
+		// ran under, is loaded again by a process whose own accumulation starts from the document.
+		const second = await startRun("runtime-reload-second", { home, runRoot });
+		try {
+			const switched = payloadOf(await second.session.request({ type: "switch_session", sessionPath: resumed.file }));
+			expect(switched.cancelled).toBe(false);
+			expect((await currentSession(second.session, runRoot)).id).toBe(resumed.id);
+			const before = readFileSync(home.consumptionFile, "utf8");
+
+			// The detail form the resumed process draws: the tree is read from the document this process
+			// loaded, so the child's row carries the runtime that document holds. An execution the previous
+			// process already accumulated is not observed again here — the harness states a spawn's own
+			// duration while that spawn runs, and a resumed session runs no tool again — so the row states
+			// the saved figure rather than twice it, and the draw writes nothing.
+			await second.session.prompt("/budget detail");
+			const lines = await linesUntil(second.session, shown => shown.some(line => line.includes("  Run: ")));
+			const row = (lines ?? []).find(line => line.includes(`\u2514\u2500 ${childName}`) || line.includes(`\u251C\u2500 ${childName}`));
+			if (row === undefined) throw new Error(`no child row was drawn: ${JSON.stringify(lines)}`);
+			const drawn = drawnRuntimeMs(row.slice(row.indexOf("  Run: ") + "  Run: ".length));
+			expect(drawn).toBe(savedRuntime);
+			expect(readFileSync(home.consumptionFile, "utf8")).toBe(before);
+		} finally {
+			await disposeRun(second);
 		}
 	}, 300_000);
 });

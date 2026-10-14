@@ -11,6 +11,15 @@
  *   harness gives each one. A reading of an execution already accounted for — the same completion
  *   observed again, whether by a repeated notification or by a second observer — is ignored, so a
  *   duplicated observation cannot charge a duration twice.
+ * - **The identity memory belongs to the accumulation, which is what makes a restart safe.** An
+ *   accumulation is seeded from the figure the session's record already carries and remembers the
+ *   executions *it* has since been told about. That is enough because a harness states an execution's
+ *   own duration while that execution runs, in the process running it: a figure an earlier commit
+ *   already carries is therefore not reported again to a later instance, and a restarted process
+ *   continues from the saved value instead of charging the executions behind it a second time (the
+ *   resumed process in `tests/harness-dock/detail-tree.test.ts` draws the saved figure, not twice it).
+ *   Persisting the identities themselves would be the per-execution ledger the approved design
+ *   deliberately leaves out, and it would misfile a harness that ever reused an identity.
  * - **A reading of an open execution replaces its earlier reading.** A harness reports a spawn's
  *   progress while the work runs, and those readings are a running total of *that* execution, not
  *   a series to add up. Only a reading that names a different execution adds anything: the open
