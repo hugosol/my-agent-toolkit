@@ -521,7 +521,6 @@ describe("the real host's widget: a brief with its own Round, then the static de
 			}
 			expect(childRecord.parent).toBe(mainRecord.id);
 			const main = cacheRateOf(mainRecord);
-			const child = cacheRateOf(childRecord);
 			const requestsBeforeToggle = run.capture.requests().length;
 
 			// The brief the operator sees first: the Total, and the main session's own Round — its Round
@@ -596,7 +595,10 @@ describe("the real host's widget: a brief with its own Round, then the static de
 			// the configured selector off as it, so the row carries a resolved level rather than `?`.
 			expect(effort).not.toBe("\u003F");
 			const childTail = afterHead.slice(effort.length + 2);
-			const childPrefix = `Cache: ${child}%  Cost: \u00A50.0050  Ctx: `;
+			// The child's own row states the accumulation it holds without the cached share of its own
+			// conversation input — that column belongs to the root's model row above, not to the subagent
+			// list — so the amount and the context reading follow its effort directly.
+			const childPrefix = `Cost: \u00A50.0050  Ctx: `;
 			expect(childTail.startsWith(childPrefix)).toBe(true);
 			const [childContext, childRuntime] = childTail.slice(childPrefix.length).split(runtimeMark);
 			expect(childRuntime).toBeDefined();

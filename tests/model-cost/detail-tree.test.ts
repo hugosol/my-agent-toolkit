@@ -20,6 +20,7 @@ import * as path from "node:path";
 import { MODEL_COST } from "../../extensions/model-cost/definition";
 import type { ConsumptionDocument } from "../../extensions/model-cost/shared-logic/consumption-document";
 import type { ModelPricingData } from "../../extensions/model-cost/shared-logic/model-data";
+import { type AgentTreeRow, type ConsumptionFields, fieldsColumns } from "../../extensions/model-cost/shared-logic/presentation/display";
 import type { ModelCostRuntime } from "../../extensions/model-cost/shared-logic/runtime";
 import { createModelCostRuntime } from "../../extensions/model-cost/shared-logic/runtime";
 import type { CatalogPrice, CatalogPriceSource, OwnerReference, SessionFacts } from "../../framework/core/protocol";
@@ -429,6 +430,33 @@ describe("the detail form's static tree: the root's own models and one row per d
 		expect(sibling?.costCny).toBe(0.1);
 	});
 
+	test("a session row states no cached share while its own model rows keep theirs", async () => {
+		const bound = await bind();
+		const rows = bound.runtime.presentation.of(MAIN_TARGET).agentTree ?? [];
+		/** The columns one row states, in the order it writes them. */
+		const columnsOf = (name: string): readonly string[] =>
+			fieldsColumns(rows.find(row => row.name === name)?.fields as ConsumptionFields).map(column => column.label);
+
+		// The root's own pair rows are rows of a *model*, so each states the cached share of the
+		// conversation that pair saw, beside its ratio and its amounts. The descendant rows are the
+		// subagent list: what is compared between them is what each session consumed, so the cached-share
+		// column is dropped from the row rather than written empty, and the fields that follow it start
+		// where it would have been.
+		expect(columnsOf("official / model-alpha")).toContain("Cache: ");
+		expect(columnsOf("go-provider / model-alpha")).toContain("Cache: ");
+		expect(columnsOf("session-child")).not.toContain("Cache: ");
+		expect(columnsOf("session-grand")).not.toContain("Cache: ");
+		expect(columnsOf("session-sibling")).not.toContain("Cache: ");
+
+		// Dropping the column re-states no figure: a session row's usage, its amounts and the cached share
+		// computed behind it are the ones its own accumulation holds, exactly as they were.
+		const child = rows.find(row => row.name === "session-child")?.fields;
+		expect(child?.tokens).toEqual({ input: 30, cacheRead: 20, cacheWrite: 0, output: 50 });
+		expect(child?.cacheHitRate).toBe(40);
+		expect(child?.sum).toBe(100);
+		expect(rows.find(row => row.name === "session-sibling")?.fields?.costCny).toBe(0.1);
+	});
+
 	test("a row's ratio is its own model's price, and the current-model ratio is not borrowed", async () => {
 		// The allowance channel's price is the harness's own statement, exactly as it is for the Total's
 		// current-model fields: the maintained data prices no tier for that provider.
@@ -477,6 +505,54 @@ describe("the detail form's static tree: the root's own models and one row per d
 		expect(
 			rows.find(row => row.name === "plan-provider / codex-model")?.fields?.referenceRatio?.parts.map(part => part.percent),
 		).toEqual([10, 40, 10, 40]);
+	});
+});
+
+describe("the detail form's static tree marks the session that is working right now (P23)", () => {
+	test("a descendant's name is emphasised while its Round is open, and plain again once that Round ends", async () => {
+		const bound = await bind();
+		/** The row the tree draws under one name, or nothing while it draws none. */
+		const rowOf = (name: string): AgentTreeRow | undefined =>
+			(bound.runtime.presentation.of(MAIN_TARGET).agentTree ?? []).find(row => row.name === name);
+
+		// No Round edge has moved any session yet, so the row the document records for the child — under
+		// the name the document holds — states no emphasis at all: an unestablished activity is not
+		// idleness, and the tree draws that name exactly as it did before this reading existed.
+		expect(rowOf("session-child")?.nameEmphasis).toBeUndefined();
+		expect(rowOf("session-grand")?.nameEmphasis).toBeUndefined();
+		expect(rowOf("session-sibling")?.nameEmphasis).toBeUndefined();
+
+		// The child takes up a Round. That delivery carries the session's own facts, its latest name among
+		// them, so the row is drawn under `子代理` from here on — and the reading belongs to the session the
+		// edge named, so it is the only row of the tree that is emphasised.
+		bound.double.deliverRound(OWNER, { event: { kind: "round_start" }, session: CHILD });
+		expect(rowOf("子代理")?.nameEmphasis).toBe("active");
+		const rows = bound.runtime.presentation.of(MAIN_TARGET).agentTree ?? [];
+		expect(rows.filter(row => row.nameEmphasis !== undefined).map(row => row.name)).toEqual(["子代理"]);
+		expect(rows.find(row => row.kind === "root")?.nameEmphasis).toBeUndefined();
+
+		// The framework's own end edge is what moves it back, and the row is then drawn exactly as it was:
+		// idle is a reading that states no emphasis rather than a different one.
+		bound.double.deliverRound(OWNER, { event: { kind: "round_end" }, session: CHILD });
+		expect(rowOf("子代理")?.nameEmphasis).toBeUndefined();
+	});
+
+	test("the root session and a subagent are read on the same per-session axis", async () => {
+		const bound = await bind();
+
+		// The reading is the session's own whichever kind of session it is: a main session's Round open is
+		// that session working, exactly as a subagent's is, and a session no edge has moved has no reading
+		// at all rather than an idle one.
+		expect(bound.runtime.sessionActivity.read("session-main")).toBeUndefined();
+		bound.double.deliverRound(OWNER, { event: { kind: "round_start" }, session: MAIN });
+		expect(bound.runtime.sessionActivity.read("session-main")).toBe("working");
+		bound.double.deliverRound(OWNER, { event: { kind: "round_end" }, session: MAIN });
+		expect(bound.runtime.sessionActivity.read("session-main")).toBe("idle");
+
+		// The tree's root row is the session the tree is *of* rather than one of the subagent rows it
+		// lists, so it carries no emphasis however that session reads: the emphasis is how the subagent
+		// list picks out the rows that are running.
+		expect(bound.runtime.presentation.of(MAIN_TARGET).agentTree?.[0]?.nameEmphasis).toBeUndefined();
 	});
 });
 

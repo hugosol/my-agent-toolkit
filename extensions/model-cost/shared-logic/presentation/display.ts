@@ -46,7 +46,17 @@
  * - **The agent tree.** The detail form's rows are derived from the relations and own accumulations
  *   this instance already holds: the root by name, its own provider/model pairs one row each, and one
  *   row per descendant session's own accumulation, each with its distance from the root. No inclusive
- *   figure, aggregate node or per-agent query is added, and a model row is never an agent node.
+ *   figure, aggregate node or per-agent query is added, and a model row is never an agent node. A
+ *   descendant's own row states the consumption it accumulated without the cached-share column the
+ *   model rows and the Total keep, and it carries the row's own name emphasis while that session is
+ *   working — see **The activity** below.
+ * - **The activity.** The rows a descendant's name is emphasised against are the per-session activity
+ *   readings the framework's own Round edges moved (`session-activity.ts`): a session whose Round is
+ *   open is working, and one whose Round has ended is idle — the same reading for a subagent as for
+ *   the main session. Only `working` is emphasised: an idle reading, and a session no edge has moved,
+ *   both leave the name plain, because an unestablished activity is not idleness. Which of a
+ *   frontend's own colours expresses it is that frontend's; that the row *is* emphasised is decided
+ *   here.
  * - **The allowance windows.** The Codex 5h/7d readings are provider-account facts rather than parts
  *   of a target's consumption, so they are read beside the target instead of inside it, and what this
  *   seam adds to them is the state their reported reset instant has at the moment of reading.
@@ -75,6 +85,7 @@ import type { ConsumptionView, SessionIdentity } from "../request-accounting";
 import type { SessionSpanReading } from "../session-span";
 import type { DisplayForm, DisplayPreference } from "./display-preference";
 import type { SessionContextReading } from "./session-context";
+import type { SessionActivityReading } from "./session-activity";
 
 /** The accounting channel a display target's model belongs to, as the maintained data classifies it. */
 export type ConsumptionMode = "monetary" | "allowance" | "token-only" | "hidden";
@@ -133,6 +144,17 @@ export interface ConsumptionFields {
 	readonly sum: number;
 	/** Cached share of the conversation input, as a whole percent; absent when no input was read or written. */
 	readonly cacheHitRate?: number;
+	/**
+	 * Whether a row writing these fields writes the cached-share column as well.
+	 *
+	 * Omitted means it does, and that is every scope but one: the detail form's *session* rows state
+	 * `false`, because the subagent list is read for what each session consumed rather than for the
+	 * cached share of that session's own conversation input. The column is dropped from the row rather
+	 * than written empty, and nothing behind the row moves with it — the same scope read as the Total,
+	 * a Round or a provider/model row still writes the column, and the usage and the amounts it does
+	 * write are the very same figures.
+	 */
+	readonly cacheShare?: boolean;
 	/** The accounted amount in CNY, when the scope's policy produced one. */
 	readonly costCny?: number;
 	/** The reference estimate in USD, when the scope's policy produced one. */
@@ -224,6 +246,17 @@ export interface AgentTreeRow {
 	readonly name: string;
 	/** The row's distance from the root: 0 for the root, 1 for its model rows and its children, and so on. */
 	readonly depth: number;
+	/**
+	 * The emphasis this row's own name is drawn with, when shared logic has one to state.
+	 *
+	 * It is the row's activity expressed as a drawing instruction rather than as a figure: a descendant
+	 * session whose own Round is open right now is working, and its name is emphasised so an operator
+	 * can pick the running session out of the tree at a glance. Absent for every other reading — a
+	 * session that has gone idle, one no Round edge has moved at all, and every kind of row but a
+	 * descendant session — so those names are drawn exactly as they always were. Which of a frontend's
+	 * own colours the emphasis becomes is that frontend's mapping.
+	 */
+	readonly nameEmphasis?: DisplayEmphasis;
 	/** The row's own applicable fields; absent on the root row, whose consumption is its model rows. */
 	readonly fields?: ConsumptionFields;
 	/**
@@ -473,6 +506,12 @@ export interface PresentationInputs {
 	 * descendant session row shows. A session no binding reported reads as nothing, never as zero.
 	 */
 	readonly sessionContext: SessionContextReading;
+	/**
+	 * The process's per-session activity readings, as the framework's own Round edges moved them: which
+	 * descendant session rows carry the working emphasis. A session no edge has moved reads as nothing,
+	 * which is neither working nor idle, and its row is drawn with no emphasis at all.
+	 */
+	readonly sessionActivity: SessionActivityReading;
 	/** The entry's own display preference: which form a main session's display is drawn in. */
 	readonly display: DisplayPreference;
 	/** The maintained model and price data the mode comes from. */
@@ -559,6 +598,11 @@ export function fieldsOf(
 		readonly price?: CatalogPrice;
 		/** Whether the scope's policy carries amounts at all; `false` reads usage alone. */
 		readonly amounts?: boolean;
+		/**
+		 * Whether a row writing this scope writes the cached-share column too; `false` states the scope
+		 * without it, which is what a descendant session's own row asks for. Omitted keeps the column.
+		 */
+		readonly cacheShare?: boolean;
 	} = {},
 ): ConsumptionFields {
 	const amounts = options.amounts ?? true;
@@ -584,6 +628,7 @@ export function fieldsOf(
 	return {
 		tokens,
 		sum,
+		...(options.cacheShare === false ? { cacheShare: false } : {}),
 		...(cacheHitRate === undefined ? {} : { cacheHitRate }),
 		...(costCny === undefined ? {} : { costCny }),
 		...(referenceCostUsd === undefined ? {} : { referenceCostUsd }),
@@ -598,7 +643,19 @@ export function fieldsOf(
  * the current results, so a frontend that re-reads after a change notification sees the change.
  */
 export function createPresentation(inputs: PresentationInputs): ConsumptionPresenter {
-	const { view, data, priceOf, display, balance, quota, estimate, now, period: periodFacts, sessionContext } = inputs;
+	const {
+		view,
+		data,
+		priceOf,
+		display,
+		balance,
+		quota,
+		estimate,
+		now,
+		period: periodFacts,
+		sessionContext,
+		sessionActivity,
+	} = inputs;
 
 	/**
 	 * The top-level session one session belongs to, walked through the reliable direct parents this
@@ -698,11 +755,19 @@ export function createPresentation(inputs: PresentationInputs): ConsumptionPrese
 				// anything else is running now.
 				const startup = view.startup(child.sessionId);
 				const runtimeMs = view.runtime(child.sessionId);
+				// This session's own activity, as the framework's Round edges moved it: a session whose Round
+				// is open is working, and its name is the one thing on the row that says so. An idle reading
+				// and a session no edge has moved both leave the name exactly as it was drawn.
+				const activity = sessionActivity.read(child.sessionId);
 				rows.push({
 					kind: "session",
 					name: child.name,
 					depth,
-					fields: fieldsOf(view.own(child.sessionId) ?? {}),
+					// The descendant's own statistics, without the cached share of its conversation input: what
+					// the tree compares between sessions is what each of them consumed, so the column is
+					// dropped from this row rather than written empty. Its own model rows above keep theirs.
+					fields: fieldsOf(view.own(child.sessionId) ?? {}, { cacheShare: false }),
+					...(activity === "working" ? { nameEmphasis: "active" } : {}),
 					startup: {
 						model:
 							startup?.model === undefined ? "\u003F" : `${startup.model.provider} / ${startup.model.model}`,
@@ -999,18 +1064,25 @@ function ratioColumnLabel(currency: string, buckets: readonly string[]): string 
 }
 
 /**
- * The cache and ratio columns of one scope: its hit rate — a dash while the scope has measured no
- * token at all, the initialization row; a zero percent when it measured usage without conversation
- * input — and the ratio field its channel displays: a value where the scope has a usable price, one
- * dash per bucket where it has the field but no value.
+ * The columns of one scope that describe what it used rather than what it cost: the cached share of
+ * its conversation input — a dash while the scope has measured no token at all, the initialization
+ * row; a zero percent when it measured usage without conversation input — and the ratio field its
+ * channel displays: a value where the scope has a usable price, one dash per bucket where it has the
+ * field but no value.
+ *
+ * The cached share is the one of those columns a scope can state it does not write at all
+ * ({@link ConsumptionFields.cacheShare}): a descendant session's row drops it, and whatever follows
+ * it in the row — the ratio field, then the amounts — takes its place rather than leaving a column of
+ * blanks behind it.
  *
  * Whether the scope has measured anything is read from the four buckets' own total, which is why
  * that total stays a computed field of the scope even though no row writes it as a column (P23).
  */
 function structureColumns(fields: ConsumptionFields, ratioField?: RatioField): DisplayColumn[] {
-	const columns: DisplayColumn[] = [
-		{ label: "Cache: ", value: fields.sum === 0 ? "-" : `${fields.cacheHitRate ?? 0}%` },
-	];
+	const columns: DisplayColumn[] = [];
+	if (fields.cacheShare !== false) {
+		columns.push({ label: "Cache: ", value: fields.sum === 0 ? "-" : `${fields.cacheHitRate ?? 0}%` });
+	}
 	if (fields.referenceRatio !== undefined) {
 		const ratio = fields.referenceRatio;
 		columns.push({
@@ -1076,7 +1148,9 @@ function spanColumn(display: ConsumptionDisplay): DisplayColumn {
  * handed the very columns a row's line used to be joined from, with no figure re-decided on the way.
  * A scope's columns stay what they were — no row writes a Sum column any more (P23), and the four
  * buckets' total is still computed because the cache column's own dash rule reads it — and the
- * caller states only how much room each of them gets.
+ * caller states only how much room each of them gets. Which fields those columns are is not the
+ * caller's to choose either: a scope that states it writes no cached share is handed its columns
+ * without one ({@link ConsumptionFields.cacheShare}).
  */
 export function fieldsColumns(fields: ConsumptionFields): DisplayColumn[] {
 	return [...structureColumns(fields), ...amountColumns(fields)];
@@ -1172,7 +1246,9 @@ export function seasonMark(period: DisplayPeriod): string {
  * result can be drawn by a second frontend without restating a threshold. `effort` is the one
  * emphasis whose colour is a level's own — a frontend paints it with its thinking-level colour — and
  * `segment1`…`segment8` is the per-session palette the accrued bar cycles through, in the fixed order
- * that bar has always drawn its sessions in.
+ * that bar has always drawn its sessions in. `active` is the one emphasis about the moment rather than
+ * about a value: a row whose session is being worked in right now, which a frontend paints with a
+ * colour of its own rather than with one of the bar's bands.
  */
 export type DisplayEmphasis =
 	| "plain"
@@ -1181,6 +1257,7 @@ export type DisplayEmphasis =
 	| "success"
 	| "warning"
 	| "error"
+	| "active"
 	| "effort"
 	| "segment1"
 	| "segment2"

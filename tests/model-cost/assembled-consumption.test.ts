@@ -612,29 +612,31 @@ describe("every change assembled survives a commit and a new process (P24)", () 
 			rows.map(row => row.replace(/^(?:\u2502  )*[\u251C\u2514]\u2500 /, "").split(/\s{2,}/)[0] as string),
 		).toEqual([CHILD_A_HANDLE, GRAND_HANDLE, CHILD_B_HANDLE]);
 
-		// Each row's own figures are the ones this run gave it: the first child's own amount and cache
-		// rate, the second child's reference amount and its own rate, the grandchild's own two buckets —
-		// with every one of their runtimes restored from the document rather than held in memory.
+		// Each row's own figures are the ones this run gave it: the first child's own amount, the second
+		// child's reference amount, the grandchild's own two buckets — with every one of their runtimes
+		// restored from the document rather than held in memory. None of them states the cached share of
+		// its own conversation input: a descendant row is read for what that session consumed.
 		const childA = rowOf(lines, CHILD_A_HANDLE);
 		const grand = rowOf(lines, GRAND_HANDLE);
 		const childB = rowOf(lines, CHILD_B_HANDLE);
 		expect(childA).toContain("Model: official / model-alpha");
 		expect(childA).toContain("Effort: high");
-		expect(childA).toContain("Cache: 67%");
 		expect(childA).toContain("Cost: \u00A50.02");
 		expect(childA).toContain(`Ctx: ${CHILD_A_CONTEXT_TEXT}`);
 		expect(childA).toContain("Run: 6m");
 		expect(childB).toContain("Model: plan-provider / codex-model");
 		expect(childB).toContain("Effort: low");
-		expect(childB).toContain("Cache: 20%");
 		expect(childB).toContain("Ref: $0.02");
 		expect(childB).toContain("Run: 6m");
-		expect(grand).toContain("Cache: 40%");
 		expect(grand).toContain("Run: 2m");
+		expect(rows.every(row => !row.includes("Cache:"))).toBe(true);
+		// The root's own pair row above them is a row of a model rather than of a session, so it keeps the
+		// cached-share column: its own 8,000 reads of 9,000 conversation tokens, a whole 89 percent.
+		expect(lines.some(line => line.includes("official / model-alpha") && line.includes("Cache: 89%"))).toBe(true);
 
 		// The two subagents are one depth and one alignment group: the fields they both state start at the
 		// same column on both rows, and the grandchild's own depth starts them somewhere else.
-		for (const field of ["Model:", "Effort:", "Cache:", "Run:"]) {
+		for (const field of ["Model:", "Effort:", "Run:"]) {
 			expect(columnOf(childA, field)).toBe(columnOf(childB, field));
 			expect(columnOf(grand, field)).not.toBe(columnOf(childA, field));
 		}

@@ -37,7 +37,11 @@ export const OWNER: OwnerReference = { kind: "owner", key: "main:detail-layout-s
 export const MAIN: SessionFacts = { sessionId: "session-main", kind: "main", name: "主会话", unavailable: [] };
 export const MAIN_TARGET = { sessionId: "session-main", provider: "deepseek", model: "deepseek-flash" } as const;
 
-/** The fields a report reads the column of: the ones a depth group lines up. */
+/**
+ * The fields a report reads the column of: the ones the tree's own rows state. A session row states no
+ * cached share of its conversation input, so `Cache:` is read on the root's model row alone — a row a
+ * group of its own — while every field after it belongs to the session depths.
+ */
 export const REPORTED_FIELDS = ["Model:", "Effort:", "Cache:", "Cost:", "Ctx:", "Run:"] as const;
 
 /** The theme a terminal host draws with, as escape sequences a terminal really interprets. */

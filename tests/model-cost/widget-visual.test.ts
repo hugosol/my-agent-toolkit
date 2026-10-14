@@ -877,3 +877,47 @@ describe("the allowance windows are drawn as the Codex operator reads them (P65,
 		expect(at(10).lines[0]).toBe("5h 85.0% \u2026");
 	});
 });
+
+describe("the agent tree paints the session that is working with the activity colour (P23)", () => {
+	/** The child the document records second, as the host reports that session's own facts. */
+	const CHILD: SessionFacts = { sessionId: "session-1", kind: "sub", name: "会话 1", unavailable: [] };
+
+	test("a descendant at work carries the accent token, and one that is not is handed over plain", async () => {
+		const bound = await bindVisual({ costs: [0.05, 0.01] });
+		await bound.double.runToCompletion("budget", { args: "detail" });
+
+		// Nothing has taken up a Round yet, so no reading the tree draws by exists at all: the descendant's
+		// name is handed over as plain text like every other cell, and the theme is asked for no activity
+		// colour — an unestablished activity is not idleness, and it is not a colour either.
+		const quiet = bound.host.draw(200);
+		expect(quiet.lines.some(line => line.includes("会话 1"))).toBe(true);
+		expect(quiet.painted.some(paint => paint.text === "会话 1")).toBe(false);
+
+		// The child takes up a Round. The widget redraws on that edge — the running row is what the display
+		// now states, and nothing has to settle, accumulate or be saved for it to be drawn — and the
+		// descendant's name is the one piece of the tree painted with the accent token shared logic asked
+		// for.
+		const framesBefore = bound.host.frames();
+		bound.double.deliverRound(OWNER, { event: { kind: "round_start" }, session: CHILD });
+		expect(bound.host.frames()).toBeGreaterThan(framesBefore);
+		expect(bound.host.draw(200).painted).toContainEqual({ color: "accent", text: "会话 1" });
+
+		// Its Round ends and the name is handed over plain again: idle is a reading that states no emphasis,
+		// so it draws no colour rather than a second one.
+		bound.double.deliverRound(OWNER, { event: { kind: "round_end" }, session: CHILD });
+		expect(bound.host.draw(200).painted.some(paint => paint.text === "会话 1")).toBe(false);
+	});
+
+	test("the text form reads the same and carries no colour token", async () => {
+		const bound = await bindVisual({ costs: [0.05, 0.01], drawing: "lines" });
+		await bound.double.runToCompletion("budget", { args: "detail" });
+		bound.double.deliverRound(OWNER, { event: { kind: "round_start" }, session: CHILD });
+
+		// A host that draws text is handed the working session's name in the same column as before and with
+		// nothing of the theme this frontend would have mapped: a colour token here would be text nobody
+		// drew.
+		const lines = bound.host.plain() ?? [];
+		expect(lines.some(line => line.includes("会话 1"))).toBe(true);
+		expect(lines.every(line => !line.includes("\u00AB") && !line.includes("\u001B"))).toBe(true);
+	});
+});

@@ -28,8 +28,12 @@
  *
  * The fourth rule is this file's layout: the rows a display result carries are labelled and indented
  * here — the brief's one `Round` row, and the continuation bars and connectors of the detail form's
- * static tree, whose rows only state their distance from the root. How a terminal draws a depth is a
- * frontend's business; which rows there are, and what each row's own figures are, is shared logic's.
+ * static tree, whose rows only state their distance from the root. The one thing a row hands this
+ * frontend beyond its text is the emphasis its name may carry, and painting that is a mapping like any
+ * other: the tree's running session is handed over as one of the theme's own colours, and a name with
+ * no emphasis is written exactly as it always was. How a terminal draws a depth is a frontend's
+ * business; which rows there are, what each row's own figures are and whether a name is emphasised at
+ * all is shared logic's.
  *
  * The Viewed session outlet is the host's public one (`ctx.getViewedSession()` /
  * `ctx.subscribeViewedSessionChanged()`), read here rather than through a private controller or a
@@ -105,7 +109,9 @@ export interface WidgetComponent {
  * with — a budget bar's four bands, the balance's two warnings, one window's pacing, and the eight
  * colours the accrued bar's sessions cycle through — so a described emphasis keeps the exact shade it
  * had before the display was split into shared logic and a frontend. `effort` is not here: it is the
- * one emphasis whose colour is the level's own.
+ * one emphasis whose colour is the level's own. `active` is not one of those older shades either: a
+ * session that is working right now is drawn with the theme's `accent`, which every theme states and
+ * which nothing else on these lines uses.
  */
 const EMPHASIS_COLORS: Record<Exclude<DisplayEmphasis, "effort">, string> = {
 	plain: "text",
@@ -114,6 +120,7 @@ const EMPHASIS_COLORS: Record<Exclude<DisplayEmphasis, "effort">, string> = {
 	success: "success",
 	warning: "warning",
 	error: "error",
+	active: "accent",
 	segment1: "success",
 	segment2: "warning",
 	segment3: "error",
@@ -284,7 +291,18 @@ function treeLines(rows: readonly AgentTreeRow[], width: number | undefined): Di
 				: row.kind === "session"
 					? `${continuation}${last ? "\u2514\u2500 " : "\u251C\u2500 "}`
 					: `${continuation}\u2502  `;
-		const cells: TreeCell[] = [{ field: TREE_NAME_FIELD, label: "", value: row.name, abbreviated: true }];
+		const cells: TreeCell[] = [
+			{
+				field: TREE_NAME_FIELD,
+				label: "",
+				value: row.name,
+				abbreviated: true,
+				// The one cell a row can carry an emphasis on, as the row itself stated it: a descendant
+				// session whose own Round is open right now. Nothing is decided here — the emphasis the row
+				// carries is copied through, and the theme's colour for it is the painter's business.
+				...(row.nameEmphasis === undefined ? {} : { emphasis: row.nameEmphasis }),
+			},
+		];
 		if (row.startup !== undefined) {
 			cells.push({
 				field: TREE_LABELS.startupModel,
@@ -462,6 +480,15 @@ interface TreeCell {
 	readonly label: string;
 	readonly value: string;
 	readonly abbreviated: boolean;
+	/**
+	 * The row's own semantic emphasis for this cell, where shared logic stated one.
+	 *
+	 * Only a name carries one — a descendant session that is working right now — and it is copied from
+	 * the display result rather than decided here: this frontend's part is to hand the description to
+	 * `paintedLine`, which maps it onto a colour of its theme, and to draw every other cell as it
+	 * stands.
+	 */
+	readonly emphasis?: DisplayEmphasis;
 }
 
 /** One agent-tree row as the grid lays it out: the glyphs it is indented by and the fields it writes. */
@@ -699,43 +726,78 @@ function gridRowLines(grid: TreeGrid, width: number | undefined): readonly (read
 			: wrappedFields(grid.fields.slice(1), widths, available);
 	return grid.rows.map(row => {
 		const last = lastWrittenField(row, grid.fields);
-		const lines: DisplayLine[] = [];
 		const name = row.cells.find(cell => cell.field === TREE_NAME_FIELD) as TreeCell;
 		const nameText = name.abbreviated
 			? cutColumns(`${name.label}${name.value}`, nameColumns())
 			: `${name.label}${name.value}`;
-		// The row's own first column: its glyphs, its name, and the blanks that carry the group's name
-		// column out to where its fields start. A row with no field after its name states the name alone
-		// rather than padding it, so no line ends in blanks it does not need.
-		const head = `${row.prefix}${nameText}${" ".repeat(Math.max(0, nameColumns() - textColumns(nameText)))}`;
+		// The row's own leading columns, as pieces: the tree's glyphs, then the name as a piece of its
+		// own — the one cell a row carries an emphasis on, and an emphasis has to be painted around the
+		// name alone rather than around the glyphs that indent it.
+		const head: DisplayPiece[] = [];
+		if (row.prefix.length > 0) head.push({ text: row.prefix });
+		head.push({
+			text: nameText,
+			separator: "",
+			...(name.emphasis === undefined ? {} : { emphasis: name.emphasis }),
+		});
+		// The blanks that carry the group's name column out to where its fields start, and the fields
+		// themselves behind the gap. A row whose last field is its name writes neither.
+		const blanks = " ".repeat(Math.max(0, nameColumns() - textColumns(nameText)));
+		const withFields = (fields: string): DisplayPiece[] => [
+			...head,
+			...(blanks.length === 0 ? [] : [{ text: blanks, separator: "" }]),
+			{ text: `${TREE_GAP}${fields}`, separator: "" },
+		];
 		if (wrapped === undefined) {
 			const fields = grid.fields.slice(1, last + 1);
-			const text =
-				fields.length === 0
-					? `${row.prefix}${nameText}`
-					: `${head}${TREE_GAP}${treeFieldsOf(grid, row, fields, widths)}`;
-			lines.push([{ text: withinWidth(text, width) }]);
-			return lines;
+			return [withinWidthPieces(fields.length === 0 ? head : withFields(treeFieldsOf(grid, row, fields, widths)), width)];
 		}
+		const lines: DisplayLine[] = [];
 		for (const [position, chunk] of wrapped.entries()) {
 			const carried = chunk.filter(field => grid.fields.indexOf(field) <= last);
 			if (carried.length === 0) break;
 			const fields = treeFieldsOf(grid, row, carried, widths);
-			const text = position === 0 ? `${head}${TREE_GAP}${fields}` : `${" ".repeat(indent)}${fields}`;
-			lines.push([{ text: withinWidth(text, width) }]);
+			lines.push(
+				withinWidthPieces(
+					position === 0 ? withFields(fields) : [{ text: `${" ".repeat(indent)}${fields}` }],
+					width,
+				),
+			);
 		}
 		return lines;
 	});
 }
 
 /**
- * One drawn line as the host will really take it: the line itself, or, at a width the group could not
- * be laid out inside at all — one column wider than the whole line, which is a terminal narrower than
- * the tree's own indentation — the line cut with an ellipsis rather than handed over overflowing.
+ * One line's pieces as the host will really take them: the pieces themselves, or, at a width the
+ * group could not be laid out inside at all — one column wider than the whole line, which is a
+ * terminal narrower than the tree's own indentation — the line cut with an ellipsis rather than handed
+ * over overflowing.
+ *
+ * The cut is the one a single string would get, column for column: one column of the width is kept for
+ * the ellipsis, the pieces before the cut are kept whole, and the piece the cut lands in carries the
+ * ellipsis. Which piece that is does not change where the cut falls — a painted line is measured in
+ * the columns it occupies, not in the pieces it was assembled from — so splitting the name out of the
+ * line cannot move what survives a narrow terminal.
  */
-function withinWidth(text: string, width: number | undefined): string {
-	if (width === undefined || textColumns(text) <= width) return text;
-	return cutColumns(text, width);
+function withinWidthPieces(pieces: readonly DisplayPiece[], width: number | undefined): DisplayLine {
+	if (width === undefined) return pieces;
+	const total = pieces.reduce((columns, piece) => columns + textColumns(piece.text), 0);
+	if (total <= width) return pieces;
+	let budget = width - 1;
+	const kept: DisplayPiece[] = [];
+	for (const piece of pieces) {
+		const columns = textColumns(piece.text);
+		if (columns <= budget) {
+			kept.push(piece);
+			budget -= columns;
+			continue;
+		}
+		return [...kept, { ...piece, text: cutColumns(piece.text, budget + 1) }];
+	}
+	// The loop above returns at the piece the cut lands in whenever the pieces really are wider than the
+	// width they are drawn at, so this is only the total result a caller sees when none of them is.
+	return kept;
 }
 
 /**

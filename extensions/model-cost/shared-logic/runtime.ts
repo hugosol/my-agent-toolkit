@@ -57,6 +57,7 @@ import { MODEL_PRICING_DATA, type ModelPricingData, dataCatalog } from "./model-
 import { createPeriodSwitch } from "./period-switch";
 import { type ConsumptionPresenter, createPresentation } from "./presentation/display";
 import { createDisplayPreference, displayFormNotice } from "./presentation/display-preference";
+import { SessionActivityRegistry } from "./presentation/session-activity";
 import { SessionContextRegistry } from "./presentation/session-context";
 import { DEFAULT_BALANCE_TTL_MS, type ProviderBalanceFailure, createProviderBalance } from "./provider-balance";
 import { type ConsumptionView, createRequestAccounting } from "./request-accounting";
@@ -157,6 +158,15 @@ export interface ModelCostRuntime {
 	 * latest observation whether or not that session is the one being viewed.
 	 */
 	readonly sessionContext: SessionContextRegistry;
+	/**
+	 * The process's per-session activity readings, moved by the framework's own Round edges and read by
+	 * the detail tree's working-row emphasis.
+	 *
+	 * It is a reading of the moment rather than an accounting number: a session no Round edge has moved
+	 * has no entry rather than an idle one, nothing about it is written to the storage root, and a
+	 * frontend that reads it sees what each session is doing now rather than what it accumulated.
+	 */
+	readonly sessionActivity: SessionActivityRegistry;
 	/** The half the framework connects: the catalog, the observation group and the lifecycle. */
 	readonly implementation: ExtensionImplementation;
 	/**
@@ -210,6 +220,13 @@ export function createModelCostRuntime(inputs: ModelCostRuntimeInputs): ModelCos
 	// session binding's own `getContextUsage()` — the main session's and each subagent's — and the
 	// detail tree reads for its descendant rows. It is a reading, never persisted or fetched.
 	const sessionContext = new SessionContextRegistry();
+
+	// The per-session activity readings: one process-wide record the framework's own Round edges move —
+	// a start opens a session's Round and a confirmed end closes it, for a main session and for a
+	// subagent alike — and the detail tree reads to emphasise the rows whose session is working right
+	// now. It is a reading of the moment: nothing here is persisted, and a session no edge has moved
+	// stays unestablished rather than being assumed idle.
+	const sessionActivity = new SessionActivityRegistry();
 
 	// The provider balance reading: one per process, refreshed only by a settled request of its own
 	// provider when the reading it holds has outlived the configured success TTL. Its changes are
@@ -363,14 +380,22 @@ export function createModelCostRuntime(inputs: ModelCostRuntimeInputs): ModelCos
 			balance.usageSettled(delivery.turn.provider);
 			quota.usageSettled(delivery.turn.provider);
 		},
-		// Both edges of a Round: the start fixes the snapshot its own additions are measured from, and
-		// the end measures them, saves the session's own snapshot and becomes the previous Round.
+		// Both edges of a Round. Each one is that session's own activity fact as well as an accounting
+		// boundary — an open Round is the session working and a confirmed end is the session idle — so
+		// the reading the display draws is moved here, ahead of the accounting's own handling and its
+		// own guards, and a real move is published at once rather than waiting for the next request to
+		// redraw a row whose session just started or stopped working.
+		//
+		// The accounting's own half: the start fixes the snapshot its own additions are measured from,
+		// and the end measures them, saves the session's own snapshot and becomes the previous Round.
 		round_start: delivery => {
 			stateProviderFailures(delivery);
+			if (sessionActivity.observe(delivery.session.sessionId, "working")) accounting.announceChanged();
 			accounting.roundStarted(delivery);
 		},
 		round_end: delivery => {
 			stateProviderFailures(delivery);
+			if (sessionActivity.observe(delivery.session.sessionId, "idle")) accounting.announceChanged();
 			return accounting.roundEnded(delivery);
 		},
 		// The one fact that establishes a session's Session span start: input the harness itself
@@ -411,6 +436,7 @@ export function createModelCostRuntime(inputs: ModelCostRuntimeInputs): ModelCos
 		presentation: createPresentation({
 			view: accounting.view,
 			sessionContext,
+			sessionActivity,
 			data,
 			priceOf: (provider, model) => catalog.priceOf(provider, model),
 			display,
@@ -427,6 +453,7 @@ export function createModelCostRuntime(inputs: ModelCostRuntimeInputs): ModelCos
 			now,
 		}),
 		sessionContext,
+		sessionActivity,
 		implementation: {
 			catalog,
 			// One group over every actual session, main or subagent: a request's consumption belongs to
