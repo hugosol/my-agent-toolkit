@@ -122,6 +122,13 @@ export interface OmpSessionContext {
 	readonly agent: {
 		readonly kind: "main" | "sub";
 		readonly id: string;
+		/**
+		 * The agent's own name, as the harness registers it — the label its roster shows.
+		 *
+		 * Optional: a surface that reports no agent name answers nothing here rather than being read
+		 * through a private field, and the delivery then names the fact it could not obtain.
+		 */
+		readonly name?: string;
 		readonly parentId?: string;
 	};
 	/** The session manager, read for the session identity and the branch entries. */
@@ -680,11 +687,21 @@ function sessionFactsOf(pi: OmpExtensionApi, ctx: OmpSessionContext): SessionFac
 	const reportedName = ctx.sessionManager.getSessionName?.();
 	const name = reportedName === undefined || reportedName.trim().length === 0 ? undefined : reportedName;
 	if (name === undefined) unavailable.push("session name");
+	// The agent's own name first and its registry id second: the name is what the host's roster shows,
+	// and the id is the fallback a display takes only when no name was reported anywhere.
+	const reportedAgentName = ctx.agent.name?.trim();
+	const agentName = reportedAgentName === undefined || reportedAgentName.length === 0 ? undefined : reportedAgentName;
+	if (agentName === undefined) unavailable.push("agent name");
+	const reportedAgentId = ctx.agent.id?.trim();
+	const agentId = reportedAgentId === undefined || reportedAgentId.length === 0 ? undefined : reportedAgentId;
+	if (agentId === undefined) unavailable.push("agent id");
 	return {
 		sessionId: ctx.sessionManager.getSessionId(),
 		kind,
 		...(parentSessionId === undefined ? {} : { parentSessionId }),
 		...(name === undefined ? {} : { name }),
+		...(agentName === undefined ? {} : { agentName }),
+		...(agentId === undefined ? {} : { agentId }),
 		unavailable,
 	};
 }

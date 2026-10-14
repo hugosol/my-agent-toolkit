@@ -148,7 +148,7 @@ export interface ConsumptionView {
 export interface SessionIdentity {
 	/** The session's identity inside its harness. */
 	readonly sessionId: string;
-	/** The session's latest display name, or its own identity when no name has ever been reported. */
+	/** The latest display name, falling back to the agent's own name then id, then the session id. */
 	readonly name: string;
 	/** The same harness's direct parent session id, or `null` for a session with none. */
 	readonly parentSessionId: string | null;
@@ -365,7 +365,10 @@ export function createRequestAccounting(inputs: RequestAccountingInputs): Reques
 	const { data, harness, storage } = inputs;
 	const ledgers = new Map<string, SessionLedger>();
 	/** What the host has reported about each actual session, as far as it reported anything. */
-	const reported = new Map<string, { readonly name?: string; readonly parent?: string | null }>();
+	const reported = new Map<
+		string,
+		{ readonly name?: string; readonly agentName?: string; readonly agentId?: string; readonly parent?: string | null }
+	>();
 	/** The price each started Turn was anchored at, by the Turn identity the framework minted. */
 	const anchors = new Map<string, RequestPrice>();
 	/** The Turns this instance has already accounted for or deliberately skipped, by identity. */
@@ -397,10 +400,10 @@ export function createRequestAccounting(inputs: RequestAccountingInputs): Reques
 		if (facts === undefined && record === undefined) return undefined;
 		return {
 			sessionId,
-			// A name is display data rather than an identity: an unreported one falls back to the name
-			// the document holds, and a session that has never had one is shown by its own id instead of
-			// by a name borrowed from anything else.
-			name: facts?.name ?? record?.name ?? sessionId,
+			// A name is display data rather than an identity, and a name always wins over an id: the
+			// session's own latest name, then the agent's own name, then the name the document holds; only
+			// with no name anywhere does an id stand in — the agent's own first, the session's last.
+			name: facts?.name ?? facts?.agentName ?? record?.name ?? facts?.agentId ?? sessionId,
 			// The two absences differ: a host that reported no parent said so, while one that reported
 			// nothing leaves the fact to be filled from the record rather than read as parentless.
 			parentSessionId: facts?.parent !== undefined ? facts.parent : (record?.parent ?? null),
@@ -408,21 +411,25 @@ export function createRequestAccounting(inputs: RequestAccountingInputs): Reques
 	};
 
 	/**
-	 * Keeps the latest name and direct parent the host reported for one actual session.
+	 * Keeps the latest name, agent name, agent id and direct parent the host reported for one session.
 	 *
 	 * A fact this host cannot report never overwrites one it already reported, and never invents one.
 	 * Learning a session's first facts is not a change — the request that carried them announces the
-	 * session's own result anyway — but a name or a parent that differs from what this instance
-	 * already held is display data that changed, so the display is told about it now rather than at
-	 * the next save: a rename rides along with consumption, it does not wait for it.
+	 * session's own result anyway — but a display fact that differs from what this instance already
+	 * held is data that changed, so the display is told about it now rather than at the next save: a
+	 * rename rides along with consumption, it does not wait for it.
 	 */
 	const remember = (session: SessionFacts): void => {
 		const before = identityOf(session.sessionId);
 		const previous = reported.get(session.sessionId);
 		const name = session.name ?? previous?.name;
+		const agentName = session.agentName ?? previous?.agentName;
+		const agentId = session.agentId ?? previous?.agentId;
 		const parent = session.parentSessionId ?? previous?.parent;
 		reported.set(session.sessionId, {
 			...(name === undefined ? {} : { name }),
+			...(agentName === undefined ? {} : { agentName }),
+			...(agentId === undefined ? {} : { agentId }),
 			...(parent === undefined ? {} : { parent }),
 		});
 		const after = identityOf(session.sessionId);

@@ -527,4 +527,51 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 		bound.host.publish({ sessionId: "session-main", provider: "official", model: "model-alpha" });
 		expect(bound.host.lastLines()?.find(line => line.includes("子代理"))).toBe("└─ 子代理  Cache: 40%  Sum: 100");
 	});
+
+	test("a session is shown by its name, and only by an id when no name is reported at all (P23)", async () => {
+		const bound = await bindWidget();
+		await bound.double.runToCompletion("budget", { args: "detail" });
+
+		// The document already names the subagent: that recorded name is what its row shows.
+		expect(bound.host.lastLines()?.find(line => line.includes("子代理"))).toBe("└─ 子代理  Cache: 40%  Sum: 100");
+
+		// A report carrying only the agent's id adds no name, so the name already known still stands: an id
+		// never displaces a name.
+		bound.double.deliverSession(OWNER, {
+			event: { kind: "session_facts" },
+			session: { sessionId: "session-sub", kind: "sub", agentId: "0-Explore", unavailable: [] },
+		});
+		bound.host.publish({ sessionId: "session-main", provider: "official", model: "model-alpha" });
+		expect(bound.host.lastLines()?.find(line => line.includes("子代理"))).toBe("└─ 子代理  Cache: 40%  Sum: 100");
+
+		// The host then reports the agent's own name — the label its roster shows — and that name becomes
+		// what the row shows.
+		bound.double.deliverSession(OWNER, {
+			event: { kind: "session_facts" },
+			session: {
+				sessionId: "session-sub",
+				kind: "sub",
+				agentName: "explore",
+				agentId: "0-Explore",
+				unavailable: [],
+			},
+		});
+		bound.host.publish({ sessionId: "session-main", provider: "official", model: "model-alpha" });
+		expect(bound.host.lastLines()?.find(line => line.includes("explore"))).toBe("└─ explore  Cache: 40%  Sum: 100");
+
+		// A session the document never named, for which the host reports only an agent id, falls back to
+		// that id rather than to its raw session id.
+		bound.double.deliverSession(OWNER, {
+			event: { kind: "session_facts" },
+			session: {
+				sessionId: "session-unseen",
+				kind: "sub",
+				parentSessionId: "session-main",
+				agentId: "0-Unseen",
+				unavailable: [],
+			},
+		});
+		bound.host.publish({ sessionId: "session-main", provider: "official", model: "model-alpha" });
+		expect(bound.host.lastLines()?.some(line => line.startsWith("└─ 0-Unseen"))).toBe(true);
+	});
 });

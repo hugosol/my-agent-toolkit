@@ -151,7 +151,11 @@ function boundSurface(
 	// The registry label is deliberately identical for every main session: the owner key
 	// must come from the session identity, not from this label.
 	const contextOf = (facts: SessionFacts): OmpSessionContext => ({
-		agent: { kind: facts.kind ?? "main", id: facts.kind === "sub" ? "0-Explore" : "Main" },
+		agent: {
+			kind: facts.kind ?? "main",
+			id: facts.kind === "sub" ? "0-Explore" : "Main",
+			name: facts.kind === "sub" ? "explore" : "main",
+		},
 		sessionManager: {
 			getSessionId: () => facts.sessionId,
 			// The branch as the session manager holds it: the State entries this session persisted.
@@ -541,7 +545,14 @@ describe("a rename the harness publishes is facts, not a boundary (P24)", () => 
 		expect(surface.factsObserved).toEqual([
 			{
 				event: { kind: "session_facts" },
-				session: { sessionId: "session-1", kind: "main", name: "renamed-session", unavailable: [] },
+				session: {
+					sessionId: "session-1",
+					kind: "main",
+					name: "renamed-session",
+					agentName: "main",
+					agentId: "Main",
+					unavailable: [],
+				},
 				owner: { kind: "owner", key: "main:session-1" },
 			},
 		]);

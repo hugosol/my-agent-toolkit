@@ -84,6 +84,8 @@ const CHILD_ASSIGNMENT = "dock child: take over and finish";
 const GRANDCHILD_ASSIGNMENT = "dock grandchild: finish now";
 const CHILD_NAME = "dock-child";
 const GRANDCHILD_NAME = "dock-grandchild";
+/** The agent definition every spawned session in this suite runs; the host's own name for that agent. */
+const SPAWN_AGENT = "task";
 
 /** The prompts the view-switch case adds: one in the session it switched to, one after switching back. */
 const OTHER_PROMPT = "dock run: an exchange in the session the view moved to";
@@ -134,7 +136,7 @@ function delegationStep(name: string, assignment: string): CaptureStep {
 			name: "task",
 			arguments: JSON.stringify({
 				context: "dock delegation context",
-				tasks: [{ name, agent: "task", task: assignment, solutionSpace: "one fixed answer, nothing open" }],
+				tasks: [{ name, agent: SPAWN_AGENT, task: assignment, solutionSpace: "one fixed answer, nothing open" }],
 			}),
 		},
 	};
@@ -458,12 +460,12 @@ describe("a real delegating run accounts each actual session's own requests (P12
 				expect(entry.saveVersion).toBeGreaterThanOrEqual(1);
 			}
 
-			// The names are the host's own facts: the main session was renamed through the host's command
-			// and keeps that name, while a subagent this host reports no name for is recorded by the
-			// identity that distinguishes it rather than by a name borrowed from anything else.
+			// The names are the host's own display facts: the main session was renamed through the host's
+			// command and keeps that name, while a subagent — which this host never gives a session name —
+			// is recorded by its own agent's name, the label the host's roster shows.
 			expect(recordOf(document, mainId)?.name).toBe(MAIN_SESSION_NAME);
-			expect(recordOf(document, childId)?.name).toBe(childId);
-			expect(recordOf(document, grandchildId)?.name).toBe(grandchildId);
+			expect(recordOf(document, childId)?.name).toBe(SPAWN_AGENT);
+			expect(recordOf(document, grandchildId)?.name).toBe(SPAWN_AGENT);
 		} finally {
 			await disposeRun(run);
 		}

@@ -67,7 +67,13 @@ interface NativeModelRow {
 /** The session one native context reports. */
 interface SessionSurface {
 	readonly sessionId: string;
-	readonly agent: { readonly kind: "main" | "sub"; readonly id: string; readonly parentId?: string };
+	readonly agent: {
+		readonly kind: "main" | "sub";
+		readonly id: string;
+		/** The agent's own name the context reports; absent models a surface that reports none. */
+		readonly name?: string;
+		readonly parentId?: string;
+	};
 	/** The name the session manager reports; absent models a surface that reports none. */
 	readonly name?: string;
 	/** The model the context reports; absent models a context with no model fact. */
@@ -253,7 +259,7 @@ function boundSurface(
 /** The main session, as the harness reports it. */
 const MAIN: SessionSurface = {
 	sessionId: "sess-main",
-	agent: { kind: "main", id: "Main" },
+	agent: { kind: "main", id: "Main", name: "main" },
 	name: "main session",
 	model: { id: "deepseek-v4-pro", provider: "deepseek" },
 };
@@ -316,6 +322,8 @@ describe("the native model-cycle facts map to the framework's Turn facts (P57)",
 			sessionId: "sess-main",
 			kind: "main",
 			name: "main session",
+			agentName: "main",
+			agentId: "Main",
 			unavailable: [],
 		});
 		// No round was opened for this session, so the fact is named rather than invented.
@@ -392,13 +400,13 @@ describe("the native model-cycle facts map to the framework's Turn facts (P57)",
 		]);
 		const child: SessionSurface = {
 			sessionId: "sess-child",
-			agent: { kind: "sub", id: "wf-child", parentId: "Main" },
+			agent: { kind: "sub", id: "wf-child", name: "task", parentId: "Main" },
 			name: "child task",
 			model: { id: "deepseek-flash", provider: "deepseek" },
 		};
 		const grand: SessionSurface = {
 			sessionId: "sess-grand",
-			agent: { kind: "sub", id: "wf-child.wf-grand", parentId: "wf-child" },
+			agent: { kind: "sub", id: "wf-child.wf-grand", name: "task", parentId: "wf-child" },
 			model: { id: "deepseek-flash", provider: "deepseek" },
 		};
 
@@ -411,15 +419,19 @@ describe("the native model-cycle facts map to the framework's Turn facts (P57)",
 			kind: "sub",
 			parentSessionId: "sess-main",
 			name: "child task",
+			agentName: "task",
+			agentId: "wf-child",
 			unavailable: [],
 		});
 		expect(surface.turnSessions[0]).toEqual(surface.roundSessions[0]);
-		// A grandchild's direct parent is the child session, not the top-level main session, and the
-		// missing name is named rather than borrowed from the parent.
+		// A grandchild's direct parent is the child session, not the top-level main session, and its own
+		// agent id is still reported while the missing session name is named rather than borrowed.
 		expect(surface.turnSessions[1]).toEqual({
 			sessionId: "sess-grand",
 			kind: "sub",
 			parentSessionId: "sess-child",
+			agentName: "task",
+			agentId: "wf-child.wf-grand",
 			unavailable: ["session name"],
 		});
 	});
@@ -429,13 +441,15 @@ describe("the native model-cycle facts map to the framework's Turn facts (P57)",
 		const unheldRun = withCapturedStderr(() =>
 			unheld.startRequest({
 				sessionId: "sess-child",
-				agent: { kind: "sub", id: "gone", parentId: "unknown-parent" },
+				agent: { kind: "sub", id: "gone", name: "explore", parentId: "unknown-parent" },
 				model: { id: "deepseek-flash", provider: "deepseek" },
 			}),
 		);
 		expect(unheld.turnSessions[0]).toEqual({
 			sessionId: "sess-child",
 			kind: "sub",
+			agentName: "explore",
+			agentId: "gone",
 			unavailable: ["direct parent session", "session name"],
 		});
 
@@ -445,7 +459,7 @@ describe("the native model-cycle facts map to the framework's Turn facts (P57)",
 		const parkedRun = withCapturedStderr(() =>
 			parked.startRequest({
 				sessionId: "sess-child",
-				agent: { kind: "sub", id: "wf-child", parentId: "Main" },
+				agent: { kind: "sub", id: "wf-child", name: "task", parentId: "Main" },
 				model: { id: "deepseek-flash", provider: "deepseek" },
 			}),
 		);
@@ -454,6 +468,8 @@ describe("the native model-cycle facts map to the framework's Turn facts (P57)",
 		expect(parked.turnSessions[0]).toEqual({
 			sessionId: "sess-child",
 			kind: "sub",
+			agentName: "task",
+			agentId: "wf-child",
 			unavailable: ["direct parent session", "session name"],
 		});
 	});

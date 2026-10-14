@@ -152,6 +152,22 @@ export interface SessionFacts {
 	readonly parentSessionId?: string;
 	/** The session's latest display name, as the harness reports it; display data, never an identity. */
 	readonly name?: string;
+	/**
+	 * The name of the agent this session runs, as its harness registers it.
+	 *
+	 * It is the harness's own display name for the agent — the same one its roster shows — which is
+	 * what lets a session the harness never gave a display name be shown by a name rather than by an
+	 * id. Absent when the harness reports none, and named in `unavailable`.
+	 */
+	readonly agentName?: string;
+	/**
+	 * The identity of the agent this session runs, as its harness registers it.
+	 *
+	 * It is the harness's own handle for the agent — the id its roster, its messaging and its history
+	 * index use — and it is the fallback a display takes only when neither the session nor the agent
+	 * has a name. Absent when the harness reports none, and named in `unavailable`.
+	 */
+	readonly agentId?: string;
 	/** Every fact above this host could not obtain, named as the delivery names it. */
 	readonly unavailable: readonly string[];
 }
