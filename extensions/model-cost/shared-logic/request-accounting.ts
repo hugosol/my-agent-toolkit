@@ -80,9 +80,14 @@
  *
  * A session's Session span is the second thing this module owns, and it is a fact rather than a
  * difference: the instant of the first user input the harness attributed to the user
- * ({@link RequestAccounting.userInput}) and the instant of the latest Round end it observed, kept by
- * `session-span.ts` as what this instance saw plus what the loaded document already carried. It
- * never sums anything — no descendant's time, no other session's — and it is read through
+ * ({@link RequestAccounting.userInput}) and the instant of the latest Turn end observed
+ * ({@link RequestAccounting.turnSettled}), kept by `session-span.ts` as what this instance saw plus
+ * what the loaded document already carried. The end is a Turn's own instant, taken from the
+ * delivery that settled it rather than from a clock read here, and every outcome delivers one: a
+ * failed or cancelled Turn ends the session's span exactly as a completed one does, and a missing
+ * usage reading, an unanchored request or a replaced period costs that Turn's consumption and never
+ * its time. A Round's own end is no part of it — a Round that never ended costs the reading nothing.
+ * It never sums anything — no descendant's time, no other session's — and it is read through
  * {@link ConsumptionView.sessionSpan}. Like a name, an observed instant is not an accumulation: it
  * survives a snapshot that did not land and travels with the next one that does, and a period switch
  * clears it with everything else measured in the period it is closing.
@@ -180,8 +185,11 @@ export interface ConsumptionView {
 	runtime(sessionId: string): number | undefined;
 	/**
 	 * One actual session's Session span as this instance has it: the first user input it observed for
-	 * that session in this period, and the latest Round end it observed, or `undefined` while either
+	 * that session in this period, and the latest Turn end it observed, or `undefined` while either
 	 * of those facts is unknown.
+	 *
+	 * The end is a Turn's own: the instant the framework stated for the response that settled that
+	 * Turn, whatever its outcome, and never the clock read when this instance handled the delivery.
 	 *
 	 * It is the session's own time — what a display reads for the main session of the tree a target
 	 * belongs to — and never an inclusive one: no descendant's time is added to it. A reading that the
@@ -235,11 +243,23 @@ export interface RequestAccounting {
 	readonly view: ConsumptionView;
 	/** The request's own start: its price is anchored now, for its end to use. */
 	turnStarted(delivery: TurnStartDelivery): void;
-	/** The request's settled response: its usage is accounted once, or the skip is reported. */
+	/**
+	 * The request's settled response: it ends the session's Session span at the instant the delivery
+	 * states, and its usage is accounted once, or the skip is reported.
+	 *
+	 * The two are independent: the end is observed before any of the accounting's own refusals — an
+	 * unanchored request, a missing usage reading or a Turn of a replaced period — because a session's
+	 * time and its consumption are different facts about the same Turn.
+	 */
 	turnSettled(delivery: TurnEndDelivery): void;
 	/** One actual session's Round opening: its own accumulation is snapshotted as that Round's base. */
 	roundStarted(delivery: RoundDelivery): void;
-	/** One actual session's Round end: its own consumption is saved when it grew. */
+	/**
+	 * One actual session's Round end: its own consumption is saved when it grew.
+	 *
+	 * It is a boundary of the Round and of the session's activity, and never one of its Session span:
+	 * the span's end was already observed when the Turn it ends settled.
+	 */
 	roundEnded(delivery: RoundDelivery): Promise<void>;
 	/**
 	 * One native subagent execution's own duration, for the session it belongs to.
@@ -321,12 +341,14 @@ export interface RequestAccountingInputs {
 	/** The active consumption document this instance accumulates into and saves through. */
 	readonly storage: ConsumptionStore;
 	/**
-	 * The instant source this instance's Session span observations are recorded on.
+	 * The instant source this instance's own clock readings are taken from: the Session span start,
+	 * which is the one span fact the harness publishes with no instant of its own.
 	 *
-	 * Omitted means the process clock (`Date.now`). The framework delivers harness facts without an
-	 * instant of their own, so when a fact is *observed* is the observer's own fact — which is exactly
-	 * what a span is measured against, and what lets a suite place an input and a Round end at the
-	 * instants a case names.
+	 * Omitted means the process clock (`Date.now`). The framework delivers a user input without an
+	 * instant, so when the input was observed is the observer's own fact — which is exactly what the
+	 * start of a span is measured at, and what lets a suite place an input at the instant a case
+	 * names. A Turn's end is not read here: that instant is the framework's own, stated by the Turn's
+	 * own delivery.
 	 */
 	readonly now?: () => number;
 }
@@ -471,7 +493,7 @@ export function createRequestAccounting(inputs: RequestAccountingInputs): Reques
 	const now = inputs.now ?? Date.now;
 	const ledgers = new Map<string, SessionLedger>();
 	/**
-	 * This instance's Session spans: the first user input it observed per session and the latest Round
+	 * This instance's Session spans: the first user input it observed per session and the latest Turn
 	 * end, seeded from the record the document already carries. They belong to the accounting period
 	 * the instance is accumulating in, which is why a period switch clears them with everything else.
 	 */
@@ -480,25 +502,27 @@ export function createRequestAccounting(inputs: RequestAccountingInputs): Reques
 	});
 
 	/**
-	 * The instant one Session span observation is recorded at, or `undefined` when the clock's own
-	 * reading is not one.
+	 * The instant one reading of a time fact is recorded at, or `undefined` when the reading is not
+	 * one.
 	 *
-	 * The clock is this extension's one source for these instants — the harness delivers neither a
-	 * submission nor a Round end with a time of its own — so a reading that is not a finite,
-	 * non-negative instant is an invalid time fact and nothing is recorded from it. What a delivery
-	 * whose reading was invalid costs is that one observation: the reading a display shows stays what
-	 * it was, or stays unknown, and nothing is filled in with a zero, the previous instant or the
-	 * process's start time.
+	 * Two readings of the same process clock are checked here: the clock this extension reads for a
+	 * fact the harness delivers with no instant of its own — a user input — and the instant a Turn's
+	 * own end delivery carries, which the framework measured when that Turn's response settled. A
+	 * reading that is not a finite, non-negative instant is an invalid time fact and nothing is
+	 * recorded from it. What a reading that is not one costs is that one observation: the reading a
+	 * display shows stays what it was, or stays unknown, and nothing is filled in with a zero, the
+	 * previous instant or the process's start time.
 	 */
-	const observedAt = (feedback: FeedbackTransport): number | undefined => {
-		const at = now();
-		if (Number.isFinite(at) && at >= 0) return at;
+	const instantOf = (read: number, source: string, feedback: FeedbackTransport): number | undefined => {
+		if (Number.isFinite(read) && read >= 0) return read;
 		feedback.notify(
 			"error",
-			`主会话时间采集失败（时钟读数不是有效时刻：${String(at)}）；本次未记录该时间，已保留上一次有效读数或不可用状态，消费统计、既有提交与其他字段不受影响。`,
+			`主会话时间采集失败（${source}不是有效时刻：${String(read)}）；本次未记录该时间，已保留上一次有效读数或不可用状态，消费统计、既有提交与其他字段不受影响。`,
 		);
 		return undefined;
 	};
+	/** The instant this extension's own clock answers, for a fact the harness delivers without one. */
+	const observedAt = (feedback: FeedbackTransport): number | undefined => instantOf(now(), "时钟读数", feedback);
 	/** What the host has reported about each actual session, as far as it reported anything. */
 	const reported = new Map<
 		string,
@@ -991,6 +1015,20 @@ export function createRequestAccounting(inputs: RequestAccountingInputs): Reques
 			const turn = delivery.turn;
 			const session = turn.session;
 			remember(session);
+			// The one instant a Session span's end moves on: the Turn's own end, taken from the instant
+			// the framework's delivery carries — the moment that Turn's response settled — rather than
+			// from this extension's clock read here, so a Turn that really ended before the period now
+			// underneath this instance is not stamped with an instant of the period that replaced it.
+			//
+			// It is observed before anything below can refuse this Turn — an identity this instance
+			// already accounted, a request it never anchored, a Turn whose reliable usage is missing, or
+			// one whose consumption the period underneath it replaced — because the end is a fact about
+			// the session's own time rather than about this Turn's consumption. Every outcome delivers
+			// it: a completed Turn, a failed one and a cancelled one alike end the work the session did
+			// and end this session's span at the instant they settled, while the consumption below is
+			// skipped exactly as the accounting's own rules say.
+			const endedAt = instantOf(delivery.end.endedAt, "Turn 结束时刻", delivery.feedback);
+			if (endedAt !== undefined && spans.ended(session.sessionId, endedAt)) announce();
 			const identity = `${session.sessionId}\u0000${turn.turnId}`;
 			if (handled.has(identity)) return;
 			const anchor = anchors.get(turn.turnId);
@@ -1035,14 +1073,11 @@ export function createRequestAccounting(inputs: RequestAccountingInputs): Reques
 			if (disposed) return;
 			remember(delivery.session);
 			const sessionId = delivery.session.sessionId;
-			// The one instant a Session span's end moves on: the Round this session really ended. It is
-			// observed whether or not this Round's own consumption grew, and whether or not the instance
-			// can save — the reading is a fact this instance holds, and a save that does not follow leaves
-			// it unpersisted rather than unobserved. Nothing else advances it: a settle the framework
-			// never confirmed reaches no handler at all, so a cancelled, failed or interrupted Round that
-			// delivered no end leaves the earlier one in place.
-			const endedAt = observedAt(delivery.feedback);
-			const spanAdvanced = endedAt !== undefined && spans.ended(sessionId, endedAt);
+			// A Round's end is a boundary of the session's consumption and of its activity, not of its
+			// Session span: the span's end is the Turn's own, observed when that Turn settled, and this
+			// edge never moves it. An unfinished Round, a cancelled one and one whose confirmation never
+			// arrived therefore cost the reading nothing — the end a Turn really settled at stays where it
+			// was put, whatever happens to the Round around it.
 			const started = openRounds.get(sessionId);
 			openRounds.delete(sessionId);
 			// The Round's own additions are the difference between the accumulation it began from and
@@ -1051,8 +1086,6 @@ export function createRequestAccounting(inputs: RequestAccountingInputs): Reques
 			// whatever the session happens to hold.
 			if (started !== undefined && started.periodId === storage.period()?.periodId) {
 				endedRounds.set(sessionId, differenceOf(ownOf(sessionId), started.own));
-				announce();
-			} else if (spanAdvanced) {
 				announce();
 			}
 			if (storage.pauseReason() !== undefined) return;

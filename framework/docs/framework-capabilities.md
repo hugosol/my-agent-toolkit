@@ -491,6 +491,14 @@ as over — or the fact that this host produced none, with the reason it could n
 - **Absence is named, and zero is a reading.** A host that reports no duration, or one that cannot be
   attributed to a session, is delivered as `unavailable` — never as a zero and never as a span — while a
   duration the harness really reported as `0` is a reading.
+- **A spawn's creation is not an absence.** While the session an execution runs in is still being
+  established, the host states no delivery for the readings it publishes in that window rather than an
+  `unavailable` one: nothing could be attributed yet, and because its readings are cumulative the first
+  delivery that names a session carries the whole duration that elapsed. That window is the axis's one
+  silence: an execution the host *has* attributed and can no longer attribute — and every reading that
+  reports an execution over without an attributable session, even one published during the creation — is
+  `unavailable`, so an execution that was lost or that failed to settle is named rather than quietly
+  swallowed.
 - **The scope is the execution's own session.** A delivery names that session's identity, direct parent and
   latest name, and resolves its owner through the session graph, so an `owner`-scoped group is not moved by a
   child's work while a `session`-scoped group observes it — exactly as a subagent's own round edge and Turn are
@@ -511,7 +519,12 @@ the adapter brackets them by the openings that channel states — the first exec
 the agent's own id, later ones are reported as `<agent id>#<execution number>` — so a consumer accumulates each
 execution instead of reading a follow-up as a repeat of the first. The execution's session and its direct parent
 are read from the harness's agent registry rather than from a name, a depth or anything that merely looks
-hierarchical. The rules above are observable at the adapter contract in
+hierarchical. A spawn's readings begin before the session it will run in exists — on the delegation route,
+before the registry holds its agent at all — so the adapter states nothing for the running readings
+published in that window (a session's creation, not a reading an operator lost), and states an `unavailable`
+reading as soon as an execution it has already attributed becomes unattributable again, or one of its
+readings reports the execution over without an attributable session.
+The rules above are observable at the adapter contract in
 `tests/framework/subagent-runtime.test.ts` — the two readings against the same agent record's much longer
 registered span, the attribution through the registry, the unavailable shapes, and a follow-up execution's own
 bracketed identity against the spawn's — and in a running harness in

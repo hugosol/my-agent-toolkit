@@ -17,18 +17,18 @@ Coverage 中“自动”均由 agent 负责；真实宿主证据不能由受控 
 |P1|主会话起点取本 Session、适用消费周期内的首条新用户输入，而非会话创建或首个模型请求时刻。|自动：创建 09:50、输入 10:00、请求 10:00:05 时，起点必须为 10:00；受控输入与真实宿主取证。|[stories 2, 40](./spec.md#user-stories)|S1、S3|
 |P2|宿主可靠认定为用户发起的 skill 等输入可建立主会话起点。|自动：没有普通 user 条目、只有用户调用的 skill 输入时，取得其真实输入时间；实际宿主验证。|[story 3](./spec.md#user-stories)|S1、S3|
 |P3|fork 的新 Session 不以复制历史中的输入建立起点。|自动：源会话 10:00 输入，11:00 fork，11:10 新输入；新起点为 11:10，新输入前为不可用。|[story 6](./spec.md#user-stories)|S1、S2、S3|
-|P4|主会话 Session span 是首条输入到最近已观察到的 round_end 的物理时间差。|自动：10:00 输入、10:05 第一轮结束、11:03 第二轮结束，对应 300,000 ms 与 3,780,000 ms，含中间空闲。|[stories 1, 4, 7](./spec.md#user-stories)|S2、S3|
-|P5|主会话缺少已观察到的终点时显示“—”，不显示零或实时经过时间。|自动：首轮未结束、fork 尚无新输入、历史终点缺失三种场景均观察输出。|[stories 8, 21](./spec.md#user-stories)|S2|
-|P6|后续 Round 进行中，主会话时间保持上次已结束轮次的读数。|自动：第二轮执行中推进受控时钟，读数仍为首轮结束的 300,000 ms 所对应显示，直到真实 round_end。|[story 9](./spec.md#user-stories)|S2|
+|P4|主会话 Session span 是首条输入到最近已观察到的框架 turn_end 的物理时间差，不区分成功、失败或取消。|自动：10:00 输入、10:05 首个 Turn 结束、11:03 后续 Turn 结束，对应 300,000 ms 与 3,780,000 ms，含中间空闲；不要求 Round 已结束。|[stories 1, 4, 7](./spec.md#user-stories)|S2、S3|
+|P5|主会话缺少已观察到的终点时显示“—”，不显示零或实时经过时间。|自动：尚无 turn_end、fork 尚无新输入、历史终点缺失三种场景均观察输出。|[stories 8, 21](./spec.md#user-stories)|S2|
+|P6|相邻框架 turn_end 之间，主会话时间保持最近结束的 Turn 读数，不实时递增。|自动：Round 仍进行中，推进受控时钟不改变 300,000 ms 的读数；下一 turn_end 即刷新，不等待 round_end。|[story 9](./spec.md#user-stories)|S2|
 |P7|同一消费周期内 resume 保留已保存的主会话起点。|自动：重新加载同一存储并继续 Session；恢复后结束时间含关闭程序的间隔，不重新起算。|[stories 5, 18](./spec.md#user-stories)|S1、S2、S3|
-|P8|未观察到 round_end 的取消、失败或退出不补造主会话终点。|自动：无结束交付时保留旧终点；已有结束交付时正常刷新，不新增退出补存。|[Implementation Decisions：主会话时间](./spec.md#implementation-decisions)|S1、S2、S3|
+|P8|未观察到 turn_end 的取消、失败或退出不补造主会话终点。|自动：无结束交付时保留旧终点；已有结束交付时正常刷新，不新增退出补存。|[Implementation Decisions：主会话时间](./spec.md#implementation-decisions)|S1、S2、S3|
 |P9|Total 的时间只代表主会话跨度，不把子代理耗时相加。|自动：主跨度 600,000 ms、两个并行子代理各 360,000 ms，Total 仍表示 600,000 ms。|[story 10](./spec.md#user-stories)|S2|
 |P10|子代理耗时读取 omp 原生运行耗时，不以自建计时器或 Hub 物理跨度替代。|自动：以原生最终 360,000 ms 与不同物理跨度作可区别输入，观察实际采用值；真实 omp 事件证据。|[stories 11, 22, 37](./spec.md#user-stories)|S1、S2、S3|
 |P11|同一子代理 Session 的多次执行仍在一行中累计运行耗时。|自动：两次原生执行 360,000 ms、120,000 ms，且均在既有提交前取得；一行累计 480,000 ms。|[stories 12, 13](./spec.md#user-stories)|S2、S3|
 |P12|同一执行的多次进度及重复结束观察不重复贡献耗时。|自动：同次进度 100,000、200,000 ms 后最终 210,000 ms，重复最终通知，再执行 90,000 ms；累计为 300,000 ms，而非进度之和。|[stories 14, 15](./spec.md#user-stories)|S1、S2、S3|
 |P13|子代理时间采集或提交不改变主／子 Session 的消费归属和既有 Round 语义。|自动：子代理原生执行结束但其 Round 仍有自动继续时，不伪造 round_end、不提前消费结算；保存时间不覆盖其他 Session 的 own 消费。|inferred — required to fulfill stories 11, 16, 24；继承聚合 ADR 的消费归属与观察权限|S1、S3|
 |P14|时间与消费共用既有 JSON 提交，不增加时间专属文件或额外写入。|自动：消费提交前可用的时间随同一文档提交可见；仅进度／原生结束／等待时间／关闭过程不增加时间写入；观察实际文件操作与正常消费路径。|[stories 16, 39](./spec.md#user-stories)|S1、S3|
-|P15|时间采集缺失或时间数据无效会报错，但不阻止请求、消费统计、既有消费提交或其他展示。|自动：缺原生来源及无效时间读数，捕获明确错误输出，同时用预定消费值证明请求／消费提交可继续；正常“尚无首轮终点”不冒充有效时长。|[story 38](./spec.md#user-stories)|S1、S2、S3|
+|P15|创建期尚未附着真实 Session 的子代理进度不投递耗时事实、不报错、不补造零；就绪后时间采集缺失、数据无效或终结仍无法归属会报错，但不阻止请求、消费统计、既有消费提交或其他展示。|自动：缺原生来源及无效时间读数，捕获明确错误输出，同时用预定消费值证明请求／消费提交可继续；正常“尚无首轮终点”不冒充有效时长。|[story 38](./spec.md#user-stories)|S1、S2、S3|
 |P16|没有可靠时间来源的指标保持不可用，不填零或推测历史值。|自动：缺源显示“—”；可靠报告的 0 ms 与缺失可区分；旧记录不使用最后 transcript 时间伪造终点。|[stories 21, 22](./spec.md#user-stories)|S1、S2、S3|
 |P17|晚于消费提交到达的最终耗时不触发补写或要求消费等待。|自动：消费先提交、最终耗时后到；无后续既有提交时磁盘不补写，有后续提交时可保存已取得的可靠值；不把未保存值声明为已落盘。|[story 39 与最终保存取舍](./spec.md#user-stories)|S1、S3|
 |P18|成功提交的子代理累计耗时在 JSON 中是可统计的数值毫秒，不只是显示文本。|自动：两次原生耗时示例提交后读取 480,000 的数值毫秒累计及其实际 Session 归属，而非“8分钟”字符串。|[story 17](./spec.md#user-stories)|S3|
@@ -40,7 +40,7 @@ Coverage 中“自动”均由 agent 负责；真实宿主证据不能由受控 
 |P24|移除 Sum 和增加时间不改变保留字段的业务数值及消费算法。|自动：独立给定 Cache、费用、参考费用、上下文与自身／含后代累计期望值，验证与既有合同一致；不把金额与耗时互换。|[story 24](./spec.md#user-stories)|S2、S3|
 |P25|Round 不新增时间列。|自动：brief 下实际 Round 输出字段验证，与 Total 的主会话时间区分。|[Implementation Decisions：主会话时间](./spec.md#implementation-decisions)|S2|
 |P26|子代理显示可靠任务命名句柄，且尊重明确 Session 名称，不将 agent 类别当作任务名称。|自动：类别 task、句柄“检索定价”、后续明确 Session 名称“定价核查”的来源映射和实际输出；以 scout 等非 task 类别验证不是字符串特判。|[stories 25, 26](./spec.md#user-stories)|S1、S2、S3|
-|P27|子代理展示可可靠证明的启动实际模型及有效思考强度。|自动：启动 model-A / high，原生来源映射与输出对应该组合；auto 情况仅采用可可靠取得的初始有效强度；真实宿主证据。|[stories 27, 28](./spec.md#user-stories)|S1、S2、S3|
+|P27|子代理展示可可靠证明的启动实际模型及有效思考强度，合并为无表头 provider/model(effort)，未知仍为 ?；窄屏缩略优先保留强度后缀，极窄沿用换行／兜底裁切。|自动：启动 model-A / high，原生来源映射与输出对应该组合；auto 情况仅采用可可靠取得的初始有效强度；真实宿主证据。|[stories 27, 28](./spec.md#user-stories)|S1、S2、S3|
 |P28|后续切模型、改强度或追加执行不改写子代理原有启动快照。|自动：启动 model-A / high，后续 model-B / medium，显示与成功保存的快照仍为原组合；当前值不反推启动值。|[story 29](./spec.md#user-stories)|S1、S2、S3|
 |P29|无法证明的历史启动模型／强度显示“?”，不以当前设置补造。|自动：旧文档没有快照、只有当前 model-B / medium 的情况下，相应启动字段保持未知。|[story 30](./spec.md#user-stories)|S1、S2、S3|
 |P30|子代理字段在同一树深度内纵向对齐，各深度独立列宽。|自动：同深度不同名称长度、同深度不同父代理、不同深度分别观察字段起始显示列；保留树形关系与一 Session 一行的逻辑记录。|[stories 31, 32](./spec.md#user-stories)|S2|

@@ -576,10 +576,11 @@ describe("the real host's widget: a brief with its own Round, then the static de
 			expect(detail[2]).toBe(
 				`\u2502  ${MODEL_PROVIDER} / ${MODEL_ID}  Cache: ${main}%  \u00A5Cache/In/Out\uff1a0:20:80  Cost: \u00A50.01`,
 			);
-			// The child's own row leads with the task handle its spawn was allocated and the pair its own
-			// start reported — the model it began on and the effective level this harness resolved for it
-			// (the native probe in the restart case names that source directly) — then its own accumulation
-			// and the current context the harness recorded from that subagent's own binding:
+			// The child's own row leads with the task handle its spawn was allocated and the one startup
+			// snapshot its own start reported — the model it began on with the effective level this harness
+			// resolved for it, `provider/model(level)` with no field header in front of them (the native
+			// probe in the restart case names that source directly) — then its own accumulation and the
+			// current context the harness recorded from that subagent's own binding:
 			// `percent (tokens/budget)`, the same form the bar above reads and against the monetary
 			// channel's own fixed display budget — never the host's context window — and, after that, the
 			// runtime the host itself measured for that child's executions. The token figure is the host's
@@ -587,18 +588,18 @@ describe("the real host's widget: a brief with its own Round, then the static de
 			// pinned to the form and the budget, not to a token count.
 			const childRow = String(detail[3]);
 			const runtimeMark = "  Run: ";
-			const childHead = `\u2514\u2500 ${childRecord.name}  Model: ${MODEL_PROVIDER} / ${MODEL_ID}  Effort: `;
+			const childHead = `\u2514\u2500 ${childRecord.name}  ${MODEL_PROVIDER}/${MODEL_ID}(`;
 			expect(childRow.startsWith(childHead)).toBe(true);
 			const afterHead = childRow.slice(childHead.length);
-			const effort = afterHead.slice(0, afterHead.indexOf("  "));
+			const effort = afterHead.slice(0, afterHead.indexOf(")"));
 			// The host resolves a level for this session and the adapter neither invents one nor passes
 			// the configured selector off as it, so the row carries a resolved level rather than `?`.
 			expect(effort).not.toBe("\u003F");
-			const childTail = afterHead.slice(effort.length + 2);
+			const childTail = afterHead.slice(effort.length + 1);
 			// The child's own row states the accumulation it holds without the cached share of its own
 			// conversation input — that column belongs to the root's model row above, not to the subagent
-			// list — so the amount and the context reading follow its effort directly.
-			const childPrefix = `Cost: \u00A50.0050  Ctx: `;
+			// list — so the amount and the context reading follow its snapshot directly.
+			const childPrefix = `  Cost: \u00A50.0050  Ctx: `;
 			expect(childTail.startsWith(childPrefix)).toBe(true);
 			const [childContext, childRuntime] = childTail.slice(childPrefix.length).split(runtimeMark);
 			expect(childRuntime).toBeDefined();
@@ -680,7 +681,7 @@ describe("a real spawn's own start facts reach its row, the document and the nex
 			// The level the host answered at that session's own start. The bundled `task` agent runs the
 			// *auto* thinking selector, and the getter the probe reads — the harness's own — answers the
 			// effective level rather than that selector: on the recorded baseline's default configuration it
-			// answers `high` here. It is the reading the row owes its `Effort:` field, and the configured
+			// answers `high` here. It is the reading the row's startup snapshot ends with, and the configured
 			// selector is never what a row states.
 			expect(childStart.level).not.toBeNull();
 			expect(childStart.level).not.toBe("auto");
@@ -700,8 +701,12 @@ describe("a real spawn's own start facts reach its row, the document and the nex
 				model: { provider: MODEL_PROVIDER, model: MODEL_ID },
 				effort: provedLevel,
 			});
-			/** The effort one drawn row states, as the row's own separator delimits it. */
-			const effortOf = (row: string): string => row.slice(row.indexOf("Effort: ") + "Effort: ".length).split("  ")[0] as string;
+			/** The effective level one drawn row's startup snapshot ends with, between its own parentheses. */
+			const levelOf = (row: string): string => {
+				const snapshot = /[^\s()]+\(([^()]*)\)/.exec(row);
+				if (snapshot === null) throw new Error(`the row states no startup snapshot: ${JSON.stringify(row)}`);
+				return snapshot[1] as string;
+			};
 
 			const saved = await savedDocument(first.home.consumptionFile, document => sessionsOf(document).length >= 2);
 			const mainRecord = sessionsOf(saved).find(entry => entry.parent === null);
@@ -718,16 +723,17 @@ describe("a real spawn's own start facts reach its row, the document and the nex
 			expect(childRecord.parent).toBe(mainRecord.id);
 
 			// The detail tree the operator asks for names that row by the task handle — never by the agent
-			// definition — and states the pair the session began on, exactly as the host answered it above.
+			// definition — and states the one snapshot the session began on, exactly as the host answered it
+			// above.
 			await first.session.prompt("/budget detail");
 			const detail =
 				(await linesUntil(first.session, lines => lines.some(line => line.startsWith("\u2514\u2500 ")))) ?? [];
 			const childRow = detail.find(line => line.startsWith(`\u2514\u2500 ${CHILD_TASK_NAME} `));
 			expect(childRow).toBeDefined();
-			expect(childRow).toContain(`Model: ${MODEL_PROVIDER} / ${MODEL_ID}  Effort: ${provedLevel}`);
+			expect(childRow).toContain(`${MODEL_PROVIDER}/${MODEL_ID}(${provedLevel})`);
 			// A level this host did not prove is `?`; the configured selector (`auto`, which is what the
 			// bundled `task` agent declares) is never passed off as one.
-			expect(effortOf(childRow as string)).not.toBe("auto");
+			expect(levelOf(childRow as string)).not.toBe("auto");
 
 			// The same facts rode that session's own consumption commit rather than a write of their own:
 			// the record is named by the handle, carries the started-on pair exactly as proved, and the
@@ -783,11 +789,11 @@ describe("a real spawn's own start facts reach its row, the document and the nex
 				const restored =
 					(await linesUntil(second.session, lines => lines.some(line => line.startsWith("\u2514\u2500 ")))) ?? [];
 				const restoredRow = restored.find(line => line.startsWith(`\u2514\u2500 ${CHILD_TASK_NAME} `));
-				// The restored row states the same handle and the same started-on pair the process that really
-				// spawned the session drew: the whole snapshot came back from the document rather than a
-				// truncated display text, and the row asked no provider for anything.
+				// The restored row states the same handle and the same started-on snapshot the process that
+				// really spawned the session drew: the whole snapshot came back from the document rather than
+				// a truncated display text, and the row asked no provider for anything.
 				expect(restoredRow).toBeDefined();
-				expect(restoredRow).toContain(`Model: ${MODEL_PROVIDER} / ${MODEL_ID}  Effort: ${provedLevel}`);
+				expect(restoredRow).toContain(`${MODEL_PROVIDER}/${MODEL_ID}(${provedLevel})`);
 				expect(second.capture.requests().length).toBe(requestsBeforeDetail);
 				// Reading the snapshot started no write of its own either: the document still holds exactly
 				// the records the first process's commits produced, and it is still the only file there.

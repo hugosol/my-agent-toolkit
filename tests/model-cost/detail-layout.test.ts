@@ -79,7 +79,7 @@ const CLOCK_AT = Date.parse("2026-10-01T03:00:00.000Z");
  *
  * - `session-a` is a child of the root named by a seven-character Chinese name on the token-only pair —
  *   a price with no tier, so its own columns are its cache rate alone — with a runtime of eight whole
- *   minutes and no startup snapshot: its row states `?` for both.
+ *   minutes and no startup snapshot: its row states the unproved `?(?)`.
  * - `session-a1` is `session-a`'s own child, named `a`, with a measured runtime of zero milliseconds.
  * - `session-b` is the root's second child, named in ASCII, on a priced pair, so its row carries a
  *   ratio and an amount beside its cache rate; its startup snapshot and its level are recorded.
@@ -353,6 +353,23 @@ function columnOf(line: string, text: string): number {
 	return textColumns(line.slice(0, at));
 }
 
+/**
+ * The startup snapshot one drawn row carries: the label-less field between its own name and its
+ * statistics, `provider/model(effort)` with the model half as short as a cut left it. It is read off
+ * the line's own shape because the field leads with no header at all, which is also why no case below
+ * may find an agent row by a `Model:` of its own.
+ */
+function snapshotOf(row: string): string {
+	const snapshot = /[^\s()]+\([^()]*\)/.exec(row);
+	if (snapshot === null) throw new Error(`${JSON.stringify(row)} carries no startup snapshot`);
+	return snapshot[0];
+}
+
+/** The column one drawn row's startup snapshot starts at: the column of the field itself. */
+function snapshotColumn(row: string): number {
+	return columnOf(row, snapshotOf(row));
+}
+
 /** The drawn tree's own lines: everything from the root row down, the account and Total lines above it. */
 function treeOf(lines: readonly string[]): readonly string[] {
 	const root = lines.findIndex(line => line === MAIN_NAME);
@@ -410,37 +427,32 @@ describe("one depth group shares its field columns (P30)", () => {
 
 		// The first depth's name column is fourteen columns wide — `检索定价核查表` is seven characters and
 		// fourteen terminal columns, and the ASCII name beside it is twelve — so each field after it starts
-		// at the one before plus that field's own column and the two-column gap: the model column is the
-		// widest model in the group (28 for `Model: official / model-beta`), the effort column 12, the
-		// amount column 11 and the runtime column 7, putting them at 19, 49, 63 and 76. A session row
-		// states no cached share of its own, so this depth aligns no cache column at all.
-		expect(columnOf(a as string, "Model:")).toBe(19);
-		expect(columnOf(b as string, "Model:")).toBe(19);
-		expect(columnOf(a as string, "Effort:")).toBe(49);
-		expect(columnOf(b as string, "Cost:")).toBe(63);
-		expect(columnOf(a as string, "Run:")).toBe(76);
+		// at the one before plus that field's own column and the two-column gap: the snapshot column is the
+		// widest snapshot in the group (25 for `official/model-beta(high)`), the amount column 11 and the
+		// runtime column 7, putting them at 19, 46 and 59. A session row states no cached share of its own
+		// conversation input and no ratio column of its own, so this depth aligns neither of them.
+		expect(snapshotColumn(a as string)).toBe(19);
+		expect(snapshotColumn(b as string)).toBe(19);
+		expect(columnOf(b as string, "Cost:")).toBe(46);
+		expect(columnOf(a as string, "Run:")).toBe(59);
 
 		// Every field both rows carry starts at the same column on both of them, whichever pair of parents
 		// they were spawned under.
-		for (const field of ["Model:", "Effort:", "Run:"]) {
-			expect(columnOf(a as string, field)).toBe(columnOf(b as string, field));
-		}
+		expect(snapshotColumn(a as string)).toBe(snapshotColumn(b as string));
+		expect(columnOf(a as string, "Run:")).toBe(columnOf(b as string, "Run:"));
 
 		// The second depth has columns of its own: two glyph steps take six columns and the group's own
 		// name column is `孙子代理乙`'s ten, so its first field starts at 6 + 10 + 2 = 18 — neither the depth
-		// above it nor a whole-tree grid — and its own widest fields put the rest at 48, 64, 77 and 103.
-		// Both of its rows state them at those columns even though one hangs from each of the two children
-		// above, which is what "the same depth aligns across different parents" means.
-		expect(columnOf(a1 as string, "Model:")).toBe(18);
-		expect(columnOf(b1 as string, "Model:")).toBe(18);
-		expect(columnOf(a1 as string, "Model:")).not.toBe(columnOf(a as string, "Model:"));
-		expect(columnOf(a1 as string, "Effort:")).toBe(48);
-		expect(columnOf(b1 as string, "Cost:")).toBe(64);
-		expect(columnOf(b1 as string, "Ctx:")).toBe(77);
-		expect(columnOf(b1 as string, "Run:")).toBe(103);
-		for (const field of ["Model:", "Effort:", "Run:"]) {
-			expect(columnOf(a1 as string, field)).toBe(columnOf(b1 as string, field));
-		}
+		// above it nor a whole-tree grid — and its own widest fields put the rest at 47, 60 and 86. Both of
+		// its rows state them at those columns even though one hangs from each of the two children above,
+		// which is what "the same depth aligns across different parents" means.
+		expect(snapshotColumn(a1 as string)).toBe(18);
+		expect(snapshotColumn(b1 as string)).toBe(18);
+		expect(snapshotColumn(a1 as string)).not.toBe(snapshotColumn(a as string));
+		expect(columnOf(b1 as string, "Cost:")).toBe(47);
+		expect(columnOf(b1 as string, "Ctx:")).toBe(60);
+		expect(columnOf(b1 as string, "Run:")).toBe(86);
+		expect(columnOf(a1 as string, "Run:")).toBe(columnOf(b1 as string, "Run:"));
 
 		// The root row is a group of its own and states its name alone: a row of the session the tree is of
 		// carries no fields of its own, because its consumption is the pair row below it.
@@ -450,7 +462,7 @@ describe("one depth group shares its field columns (P30)", () => {
 });
 
 describe("a field a row has none of keeps its own column (P31)", () => {
-	test("a runtime, a context reading and a startup fact are each missing on one row of a group", async () => {
+	test("a runtime, a context reading and a startup snapshot are each missing on one row of a group", async () => {
 		const bound = await bindLayout();
 		const lines = bound.text.text() as readonly string[];
 		const [a, a1, b, b1] = sessionRows(lines).map(row => row as string);
@@ -462,15 +474,11 @@ describe("a field a row has none of keeps its own column (P31)", () => {
 		expect(b).toContain("Run: \u2014");
 		expect(columnOf(a, "Run:")).toBe(columnOf(b, "Run:"));
 		// The statics of the two differ — the priced row carries an amount the token-only row has none of —
-		// so the row without it keeps that column as blanks: its runtime is still at 76, which is
-		// 3 + 14 + 2 + 28 + 2 + 12 + 2 + 11 + 2 — the group's own columns, the missing amount's eleven among
-		// them. A layout that let the missing field pull the rest left would have put the runtime at 63.
+		// so the row without it keeps that column as blanks: its runtime is still at 59, which is
+		// 3 + 14 + 2 + 25 + 2 + 11 + 2 — the group's own columns, the missing amount's eleven among them. A
+		// layout that let the missing field pull the rest left would have put the runtime at 46.
 		expect(a).not.toContain("Cost:");
-		expect(columnOf(a, "Run:")).toBe(76);
-		// Between them the row writes blanks — the effort column's own padding, the gap, the missing
-		// amount's eleven columns and the gap after it — so the runtime it does have still starts at 76
-		// rather than at 63.
-		expect(a).toMatch(/Effort: \? {18}Run: 8m$/);
+		expect(columnOf(a, "Run:")).toBe(59);
 
 		// One depth, one context reading observed and one session whose binding never reported: the row
 		// without one writes no context field at all rather than a zero, and its runtime still starts at
@@ -480,14 +488,12 @@ describe("a field a row has none of keeps its own column (P31)", () => {
 		expect(columnOf(a1, "Run:")).toBe(columnOf(b1, "Run:"));
 
 		// One depth, one startup snapshot proved and one session whose beginning nothing proved: both rows
-		// keep the two fields, the unknown one as its own `?` marker, and every field after them still
-		// starts at the group's own column.
-		expect(b1).toContain("Model: official / model-beta");
-		expect(a1).toContain("Model: ?");
-		expect(a1).toContain("Effort: ?");
-		for (const field of ["Model:", "Effort:", "Run:"]) {
-			expect(columnOf(a1, field)).toBe(columnOf(b1, field));
-		}
+		// keep the field — the unknown one as its own `?(?)` — and every field after it still starts at the
+		// group's own column.
+		expect(snapshotOf(b1)).toBe("official/model-beta(medium)");
+		expect(snapshotOf(a1)).toBe("?(?)");
+		expect(snapshotColumn(a1)).toBe(snapshotColumn(b1));
+		expect(columnOf(a1, "Run:")).toBe(columnOf(b1, "Run:"));
 	});
 });
 
@@ -499,21 +505,21 @@ describe("columns are terminal columns, not string lengths (P32)", () => {
 		const cjk = rows.find(row => row.includes("检索定价核查表")) as string;
 
 		// Seven Chinese characters take fourteen columns, so the group's name column is fourteen and its
-		// first field starts at 19. Counting characters would have put every field of that row two columns
-		// earlier — which is exactly the misalignment this promise is about.
-		expect(columnOf(cjk, "Model:")).toBe(19);
-		expect(columnOf(cjk, "Model:")).not.toBe(17);
+		// snapshot column starts at 19. Counting characters would have put every field of that row two
+		// columns earlier — which is exactly the misalignment this promise is about.
+		expect(snapshotColumn(cjk)).toBe(19);
+		expect(snapshotColumn(cjk)).not.toBe(17);
 
 		// The deeper group's own Chinese name is five characters and ten columns, the widest in it, so its
-		// first field starts at 18 — five characters counted as five would have said 13.
+		// snapshot column starts at 18 — five characters counted as five would have said 13.
 		const deep = rows.find(row => row.includes("孙子代理乙")) as string;
-		expect(columnOf(deep, "Model:")).toBe(18);
-		expect(columnOf(deep, "Model:")).not.toBe(13);
+		expect(snapshotColumn(deep)).toBe(18);
+		expect(snapshotColumn(deep)).not.toBe(13);
 
 		// A host that draws with its own theme adds no visible column of its own: what it hands over at the
 		// same width is the same line, so every column above holds on the coloured output too.
 		expect(sessionRows(drawn.painted).map(visible)).toEqual([...rows]);
-		expect(columnOf(visible(sessionRows(drawn.painted)[0] as string), "Model:")).toBe(19);
+		expect(snapshotColumn(visible(sessionRows(drawn.painted)[0] as string))).toBe(19);
 
 		// The width a host stated is the only thing that narrows this: with none, the frontend draws the
 		// fullest form of the group, which is the same line a wide terminal gets.
@@ -522,42 +528,41 @@ describe("columns are terminal columns, not string lengths (P32)", () => {
 });
 
 describe("a narrow terminal abbreviates and then wraps, group by group (P33)", () => {
-	test("a name and a model identifier are marked when cut, and the group's columns stay put", async () => {
+	test("a name and a snapshot are marked when cut, and the group's columns stay put", async () => {
 		const bound = await bindLayout();
 		const wide = bound.screen.draw(125);
 		const drawn = bound.screen.draw(85);
 
-		// A width both groups fit in abbreviates nothing: the deeper depth needs 111 columns and the first
-		// one 83, so both are drawn in full at 125.
+		// A width both groups fit in abbreviates nothing: the deeper depth needs 94 columns and the first
+		// one 66, so both are drawn in full at 125.
 		expect(wide.plain.some(line => line.includes("\u2026"))).toBe(false);
 
-		// At 85 columns the deeper group cannot state everything: its model column is cut to its own label
-		// and an ellipsis, its name column loses six of its ten — down to the floor of four — and its first
-		// field therefore starts at 6 + 4 + 2 = 12 rather than at the 18 the full form puts it at. Nothing
+		// At 85 columns the deeper group cannot state its snapshot in full: the model half of
+		// `official/model-beta(medium)` is cut to `official/…` and the level it ends with is kept whole,
+		// which is the half an operator compares one session's beginning with another's by. Nothing
 		// overruns the width drawn at.
 		for (const width of widths(drawn.plain)) expect(width).toBeLessThanOrEqual(85);
-		expect(drawn.plain.some(line => line.includes("孙\u2026"))).toBe(true);
-		expect(drawn.plain.some(line => line.includes("Model: \u2026"))).toBe(true);
-		expect(drawn.plain.some(line => line.includes("孙子代理乙"))).toBe(false);
+		expect(drawn.plain.some(line => line.includes("official/\u2026(medium)"))).toBe(true);
+		expect(drawn.plain.some(line => line.includes("official/model-beta(medium)"))).toBe(false);
 
-		// The abbreviation is the group's, not a row's: both of the deeper rows are cut to the same name
-		// and model columns, so every field after them still starts at one column on both — 12, 22, 38, 51
-		// and 77, each the one before it plus that column's own width and the two-column gap.
+		// The abbreviation is the group's, not a row's: both of the deeper rows state their snapshot at one
+		// column — 18, two columns past the name column their own group sizes — and every field after them
+		// still starts at one column on both — 38, 51 and 77, each the one before it plus that column's own
+		// width and the two-column gap.
 		const [a, a1, b, b1] = sessionRows(drawn.plain).map(row => row as string);
-		expect(columnOf(a1, "Model:")).toBe(12);
-		expect(columnOf(b1, "Model:")).toBe(12);
-		expect(columnOf(a1, "Effort:")).toBe(22);
+		expect(snapshotColumn(a1)).toBe(18);
+		expect(snapshotColumn(b1)).toBe(18);
 		expect(columnOf(b1, "Cost:")).toBe(38);
 		expect(columnOf(b1, "Ctx:")).toBe(51);
 		expect(columnOf(a1, "Run:")).toBe(columnOf(b1, "Run:"));
 		expect(columnOf(a1, "Run:")).toBe(77);
 
-		// The first depth needs 83 columns and fits in 85, so it is drawn in full: a narrower terminal
+		// The first depth needs 66 columns and fits in 85, so it is drawn in full: a narrower terminal
 		// abbreviates the group that does not fit and leaves the group beside it alone.
 		expect(a).toContain("检索定价核查表");
-		expect(b).toContain("Model: official / model-beta");
-		expect(columnOf(a, "Model:")).toBe(19);
-		expect(columnOf(a, "Run:")).toBe(76);
+		expect(b).toContain("official/model-beta(high)");
+		expect(snapshotColumn(a)).toBe(19);
+		expect(columnOf(a, "Run:")).toBe(59);
 	});
 
 	test("a group that cannot fit even abbreviated wraps at one break for all of its rows", async () => {
@@ -578,41 +583,45 @@ describe("a narrow terminal abbreviates and then wraps, group by group (P33)", (
 		const rows = rowLinesOf(treeOf(lines));
 		expect(rows.map(row => row.length)).toEqual([1, 1, 1, 2, 1, 2]);
 
-		// The deeper group's rows carry their context reading and their runtime on the second line, at 12
-		// and 38: the indentation is the group's own first field's column — six glyph columns, a name column
-		// cut to four and the two-column gap — and every field after it follows in its own column. The row
-		// that reported no context reading keeps that column as blanks and still states its runtime at 38,
-		// so a missing field moves nothing.
-		const [a1Second, b1Second] = [rows[3]?.[1] as string, rows[5]?.[1] as string];
-		expect(b1Second).toContain("Ctx: 50% (225.0K/450.0K)");
-		expect(columnOf(b1Second, "Ctx:")).toBe(12);
-		expect(columnOf(b1Second, "Run:")).toBe(38);
-		expect(a1Second).not.toContain("Ctx:");
-		expect(a1Second).not.toContain("Cost:");
-		expect(columnOf(a1Second, "Run:")).toBe(38);
-		// The amount each of those rows has is on its own first line, with the field that row has none of
-		// kept as blanks rather than pulled left.
-		expect(rows[5]?.[0]).toContain("Cost: \u00A50.02");
-		expect(rows[3]?.[0]).not.toContain("Cost:");
+		// The deeper group's rows state their snapshot on their first line — the model half cut away and the
+		// level it began on the whole of what is left, since the column may not fall below the longest level
+		// its rows carry — and carry their amount and their context reading beside it, at 23 and 36, with
+		// their runtime on the second line at the indentation the group's first field starts at: six glyph
+		// columns, a name column cut to four and the two-column gap. The row that reported no amount and no
+		// context reading keeps those columns as blanks and still states its runtime at 12, so a missing
+		// field moves nothing.
+		const [a1First, a1Second] = [rows[3]?.[0] as string, rows[3]?.[1] as string];
+		const [b1First, b1Second] = [rows[5]?.[0] as string, rows[5]?.[1] as string];
+		expect(snapshotOf(a1First)).toBe("?(?)");
+		expect(snapshotOf(b1First)).toBe("\u2026(medium)");
+		expect(b1First).toContain("Cost: \u00A50.02");
+		expect(b1First).toContain("Ctx: 50% (225.0K/450.0K)");
+		expect(columnOf(b1First, "Cost:")).toBe(23);
+		expect(columnOf(b1First, "Ctx:")).toBe(36);
+		expect(a1First).not.toContain("Cost:");
+		expect(a1First).not.toContain("Ctx:");
+		expect(columnOf(a1Second, "Run:")).toBe(12);
+		expect(columnOf(b1Second, "Run:")).toBe(12);
 
 		// The first depth's own columns are abbreviated until they fit, so both of its rows stay on one
-		// line: its name column narrows to eleven of its fourteen columns and `Model: official / model-beta`
-		// to its label and an ellipsis, which starts the fields after them at 16 — not at the 19 the full
-		// form puts them at, and not at a column of the other group's.
+		// line: its name column keeps all fourteen of its columns and the snapshot it groups is cut to the
+		// nineteen that fit — `official/mod…(high)`, the level still whole — which starts the fields after
+		// it at 19, the column the full form puts them at too.
 		const [a, b] = [rows[2]?.[0] as string, rows[4]?.[0] as string];
-		expect(a).toContain("检索定价核\u2026");
-		expect(b).toContain("Model: \u2026");
+		expect(a).toContain("检索定价核查表");
+		expect(snapshotOf(b)).toBe("official/mod\u2026(high)");
 		expect(a).not.toContain("Cost:");
-		expect(columnOf(a, "Model:")).toBe(16);
+		expect(snapshotColumn(a)).toBe(19);
 		expect(columnOf(b, "Cost:")).toBe(40);
 		expect(columnOf(a, "Run:")).toBe(53);
 		expect(columnOf(b, "Run:")).toBe(53);
 
-		// Abbreviation happened before wrapping, as the promise orders it: both groups' names are already
-		// cut at this width — the deeper group's to four columns, the first depth's to eleven — so every
-		// wrapped line carries whole fields rather than half of one.
+		// Abbreviation happened before wrapping, as the promise orders it: the deeper group's names are
+		// already cut to their four columns — three of the characters' own columns and the ellipsis — and
+		// its snapshots are already down to the level each row began on, so every wrapped line carries whole
+		// fields rather than half of one.
 		expect(lines.some(line => line.includes("孙\u2026"))).toBe(true);
-		expect(lines.some(line => line.includes("检索定价核\u2026"))).toBe(true);
+		expect(lines.some(line => line.includes("\u2026(medium)"))).toBe(true);
 	});
 
 	test("a width change is a fresh layout: the same width draws the same lines again", async () => {
@@ -644,7 +653,6 @@ describe("abbreviation and wrapping change no reading and no data (P33, P24)", (
 		for (const figure of [
 			"Cache: 67%",
 			"Cost: \u00A50.01",
-			"Effort: high",
 			"Run: 8m",
 			"Ctx: 50% (225.0K/450.0K)",
 		]) {
@@ -653,10 +661,16 @@ describe("abbreviation and wrapping change no reading and no data (P33, P24)", (
 		}
 		expect(sessionRows(wide).every(row => !row.includes("Cache:"))).toBe(true);
 		expect(sessionRows(narrow).every(row => !row.includes("Cache:"))).toBe(true);
+		// The startup snapshot is the one field a width may cut into: what survives the cut at either width
+		// is the level the session began on, the half an operator compares its beginning by.
+		for (const drawn of [wide, narrow]) {
+			expect(drawn.join("\n")).toContain("(high)");
+			expect(drawn.join("\n")).toContain("(medium)");
+		}
 
 		// The values behind the lines are whole whatever the drawing did with them: the display result
-		// still names the sessions and states the startup pair and the accumulated runtime in full, and
-		// the reference amounts are still the records' own.
+		// still names the sessions and states each startup snapshot and each accumulated runtime in full,
+		// and the reference amounts are still the records' own.
 		const tree = bound.runtime.presentation.of(MAIN_TARGET).agentTree ?? [];
 		expect(tree.map(row => row.name)).toEqual([
 			MAIN_NAME,
@@ -667,12 +681,12 @@ describe("abbreviation and wrapping change no reading and no data (P33, P24)", (
 			"孙子代理乙",
 		]);
 		const child = tree.find(row => row.name === "孙子代理乙");
-		expect(child?.startup?.model).toBe("official / model-beta");
-		expect(child?.startup?.effort).toBe("medium");
+		expect(child?.startup?.text).toBe("official/model-beta(medium)");
+		expect(child?.startup?.tail).toBe("(medium)");
 		expect(child?.fields?.costCny).toBe(0.02);
 		expect(tree.find(row => row.name === "检索定价核查表")?.runtimeMs).toBe(480_000);
 		expect(tree.find(row => row.name === "a")?.runtimeMs).toBe(0);
-		expect(tree.find(row => row.name === "检索定价核查表")?.startup?.model).toBe("?");
+		expect(tree.find(row => row.name === "检索定价核查表")?.startup?.text).toBe("?(?)");
 		expect(tree.find(row => row.name === "pricing-scan")?.fields?.costCny).toBe(0.01);
 
 		// And the document on the storage root is exactly what it was: drawing a narrower line neither

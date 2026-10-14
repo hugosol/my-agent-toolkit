@@ -11,7 +11,7 @@
  *
  * What it does: binds the real extension over a self-made consumption tree — two children at one
  * depth under different parents, a grandchild under each, a long ASCII name and a Chinese one, a
- * session whose model and effort nothing proved, one whose context was never reported and one whose
+ * session whose startup snapshot nothing proved, one whose context was never reported and one whose
  * runtime was never measured — flips the entry into `/budget detail`, and draws the production
  * frontend at each width. Every frame is printed twice, once with the host's own theme and once with
  * none, and beside each frame it prints the terminal column every field starts at, measured on the
@@ -41,6 +41,7 @@ import {
 	columnText,
 	readColumns,
 	readRow,
+	snapshotOf,
 	treeOf,
 	withoutAnsi,
 } from "./support/detail-layout-fixture";
@@ -112,15 +113,15 @@ for (const width of widthsToDraw) {
 		detail: `${painted.length} lines drawn with the host's own theme`,
 	});
 	// One depth's rows state their fields at one column: rows are grouped by the glyphs they are indented
-	// with, by whether they are agent rows (which carry their startup facts) or the root's own model row,
-	// and by which of the row's own lines this is — a wrapped group's continuation lines are compared with
-	// the same line of their siblings, never with another line of the same row.
+	// with, by whether they are agent rows (which carry their startup snapshot) or the root's own model
+	// row, and by which of the row's own lines this is — a wrapped group's continuation lines are compared
+	// with the same line of their siblings, never with another line of the same row.
 	const grouped = new Map<string, ReadonlyMap<string, number>[]>();
 	let continuation = 0;
 	for (const line of tree) {
 		const glyphs = line.match(/^[\s\u2502\u251C\u2514\u2500]*/)?.[0] ?? "";
 		continuation = /^\s/.test(line) ? continuation + 1 : 0;
-		const key = `${textColumns(glyphs)}:${line.includes("Model:")}:${continuation}`;
+		const key = `${textColumns(glyphs)}:${snapshotOf(line) !== undefined}:${continuation}`;
 		grouped.set(key, [...(grouped.get(key) ?? []), readColumns(line)]);
 	}
 	const groups = [...grouped.entries()].filter(([, columns]) => columns.length > 1);

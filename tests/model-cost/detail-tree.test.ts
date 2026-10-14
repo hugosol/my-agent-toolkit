@@ -557,7 +557,7 @@ describe("the detail form's static tree marks the session that is working right 
 });
 
 describe("the detail form's static tree: the started-on facts a descendant row states (P26, P27, P28, P29)", () => {
-	test("a descendant row states the pair its session began on, part by part, and `?` where nothing proved it", async () => {
+	test("a descendant row states the one snapshot its session began on, `?` for each part nothing proved", async () => {
 		// Four actual sessions: one child the document recorded as having begun on a model and a level,
 		// one grandchild that recorded only its level, one sibling that recorded neither, and the root.
 		const document = {
@@ -586,13 +586,14 @@ describe("the detail form's static tree: the started-on facts a descendant row s
 		const bound = await bind({ document });
 		const rows = bound.runtime.presentation.of(MAIN_TARGET).agentTree ?? [];
 
-		// Every descendant row carries both fields — the row keeps the pair the session began on, each
-		// part already in the form the row prints it — and a part the document proves nothing about is
-		// `?` rather than borrowed from the model or level the session runs now.
+		// Every descendant row carries the one snapshot — the model the session began on with the level it
+		// began on, already in the form the row prints them — and a part the document proves nothing about
+		// is `?` rather than borrowed from the model or level the session runs now. The tail is the half of
+		// that text a row too narrow for the whole snapshot keeps whole.
 		expect(rows.filter(row => row.kind === "session").map(row => ({ name: row.name, startup: row.startup }))).toEqual([
-			{ name: "session-child", startup: { model: "go-provider / model-alpha", effort: "high" } },
-			{ name: "session-grand", startup: { model: "?", effort: "medium" } },
-			{ name: "session-sibling", startup: { model: "?", effort: "?" } },
+			{ name: "session-child", startup: { text: "go-provider/model-alpha(high)", tail: "(high)" } },
+			{ name: "session-grand", startup: { text: "?(medium)", tail: "(medium)" } },
+			{ name: "session-sibling", startup: { text: "?(?)", tail: "(?)" } },
 		]);
 		// Nothing that is not an actual descendant session carries a startup: the root is the session the
 		// tree is drawn for rather than one that began below it, and a model row is a pair of figures

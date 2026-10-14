@@ -1,7 +1,7 @@
 /**
  * Session span: the one wall-clock interval a session's own time facts add up to — from the first
  * user input this extension observed for that session in the applicable accounting period, up to the
- * latest Round end it observed for it.
+ * latest Turn end it observed for it.
  *
  * The rules it implements are the approved ones:
  *
@@ -13,14 +13,18 @@
  *   observe has *no* start until the user really puts something in, which is why a fork's copied
  *   messages establish nothing and the waiting period before its first new input reads as unknown
  *   rather than as zero.
- * - **The end is the latest observed Round end.** Every Round end this instance observes replaces the
- *   end with the instant it was observed at, so the span grows across the idle time between Rounds
- *   and across an interruption in which the program was closed. Nothing else can establish an end:
- *   the last transcript time is not one, an unfinished Round is not one, and a cancellation, a failure
- *   or a process ending delivers no end of its own — a session whose Round never ended keeps the end
- *   it already had, and one that never had an end stays unknown.
+ * - **The end is the latest observed Turn end.** Every Turn end this instance observes replaces the
+ *   end with that Turn's own instant — the moment its response settled, as the delivery itself states
+ *   it — so the span grows across the idle time between Turns and Rounds, and across an interruption
+ *   in which the program was closed. Every outcome delivers one: a completed Turn, a failed one and a
+ *   cancelled one alike end the work the session did, and each ends this span at its own instant.
+ *   Nothing else can establish an end: the last transcript time is not one, a Round's own end is not
+ *   one — a Round may never end at all — and the instant some later handler read its clock is not one
+ *   either, which is why a Turn that settled before an accounting reset is never stamped with an
+ *   instant of the period that replaced it. A session whose Turns all settled keeps the latest of
+ *   them, and one that has never had a Turn end stays unknown.
  * - **Both instants or nothing.** A span is read only when both of its own facts are known, so a
- *   session that has taken up input but has not completed a Round yet is *unavailable* rather than a
+ *   session that has taken up input but has not had a Turn end yet is *unavailable* rather than a
  *   span of nothing. A reliable reading of exactly zero milliseconds is a real value and is not this
  *   case: two observed instants that happen to be equal are a span of zero, and they are told apart
  *   from a missing fact by the fact that they are there at all.
@@ -45,7 +49,7 @@ import type { SessionSpanFact } from "./consumption-document";
 export interface SessionSpanReading {
 	/** When this session's first user input of the period was observed. */
 	readonly startAt: number;
-	/** When this session's most recent observed Round end was. */
+	/** When this session's most recent observed Turn end was. */
 	readonly endAt: number;
 	/** The interval between them, in milliseconds. */
 	readonly elapsedMs: number;
@@ -59,7 +63,10 @@ export interface SessionSpans {
 	 * sees.
 	 */
 	input(sessionId: string, at: number): boolean;
-	/** A Round end was observed for one session, at `at`. Answers whether that changed its reading. */
+	/**
+	 * A Turn end was observed for one session, at `at`, which is that Turn's own instant. Answers
+	 * whether that changed its reading.
+	 */
 	ended(sessionId: string, at: number): boolean;
 	/** One session's span reading, or `undefined` while either of its own facts is unknown. */
 	of(sessionId: string): SessionSpanReading | undefined;
@@ -117,8 +124,8 @@ export function createSessionSpans(inputs: SessionSpanInputs): SessionSpans {
 	 * a start is taken once for a session and a resume must not take a second one, so an input this
 	 * instance observed after the document already carried a start is an input like any other and
 	 * moves nothing. The end resolves the other way — this instance's own observation is the later
-	 * one, because every observed Round end replaces it — and the document's end is what a session
-	 * that has not ended a Round since this instance started still has.
+	 * one, because every observed Turn end replaces it — and the document's end is what a session
+	 * that has not ended a Turn since this instance started still has.
 	 */
 	const instantsOf = (sessionId: string): SessionSpanFact | undefined => {
 		const facts = observed.get(sessionId);
@@ -166,8 +173,8 @@ export function createSessionSpans(inputs: SessionSpanInputs): SessionSpans {
 		},
 		ended(sessionId, at) {
 			const facts = factsOf(sessionId);
-			// Every observed Round end replaces the end: the latest one is the span's own end, and a
-			// later Round is what makes the span grow rather than a second fact being added beside it.
+			// Every observed Turn end replaces the end: the latest one is the span's own end, and a
+			// later Turn is what makes the span grow rather than a second fact being added beside it.
 			facts.end = at;
 			return changedReading(sessionId);
 		},

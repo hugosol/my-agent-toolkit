@@ -204,11 +204,14 @@ export function createModelCostRuntime(inputs: ModelCostRuntimeInputs): ModelCos
 			userHomeDirectory: inputs.userHomeDirectory,
 		}),
 	);
-	// The process's one instant source, read by every source that records when a fact was observed:
-	// the accounting's Session spans, the balance reading and the Codex windows alike.
+	// The process's one instant source, for every source that records when a fact was observed and
+	// the harness delivers no instant of its own: the accounting's first user input, the balance
+	// reading and the Codex windows alike. A Turn's end is not one of them — that instant is the
+	// framework's own fact, stated by the Turn's own delivery — so the clock is not read for it.
 	const now = inputs.now ?? Date.now;
-	// The accounting's own clock timestamps the two Session span facts — the first user input and the
-	// latest Round end — because the harness delivers neither with an instant of its own.
+	// The accounting's own clock is what timestamps a user input, the one Session span fact the
+	// harness publishes with no instant of its own. The span's other fact is a Turn's own settle
+	// instant, which the Turn's own end delivery carries.
 	const accounting = createRequestAccounting({ data, harness: inputs.harness, storage, now });
 
 	// The entry's own display preference: `/budget detail` flips it, and the flip announces the change
@@ -371,6 +374,11 @@ export function createModelCostRuntime(inputs: ModelCostRuntimeInputs): ModelCos
 		},
 		turn_end: delivery => {
 			stateProviderFailures(delivery);
+			// The settled response's own two facts: it ends that session's Session span at the instant
+			// this delivery states — every outcome delivers one, so a failed or cancelled Turn ends the
+			// span too — and its reported usage is accounted once, or the skip is reported. The end is
+			// observed whether or not the accounting has anything to count for this Turn, and a Round
+			// that never ends costs the reading nothing.
 			accounting.turnSettled(delivery);
 			// The usage-driven provider refresh reads the *request's* own provider rather than whatever
 			// is being viewed or is current now, so a subagent's request and a main session's refresh the

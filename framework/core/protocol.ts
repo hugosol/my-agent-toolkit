@@ -742,6 +742,18 @@ export type SubagentRuntimeEvent = { readonly kind: "subagent_runtime" };
  * fact an operator has to be told about. A reading of `0` is therefore a reading the harness
  * really reported — a completed execution that consumed no measurable time — and never the
  * placeholder an unavailable runtime leaves behind.
+ *
+ * Nor is `unavailable` the same fact as a reading that never arrived. A host that is still
+ * establishing the session an execution runs in has nothing to attribute the readings it publishes
+ * in that window to, so it states no delivery for them instead: the readings of an execution are
+ * cumulative, which is why the first delivery that does name a session carries the whole duration
+ * that elapsed, and why nothing an operator could have seen is lost by waiting. That window is this
+ * axis's one silence. Once an execution has been attributed, a reading of it this host can no longer
+ * attribute to a session is `unavailable` — and so is *every* reading that reports an execution
+ * over, even one published before any session was established — so an execution that was lost or
+ * that failed to settle is always named rather than quietly dropped. A consumer therefore reads the
+ * two apart: no delivery means no reading exists yet, `unavailable` means one was due and could not
+ * be produced.
  */
 export type SubagentRuntimeFact =
 	| {

@@ -43,8 +43,9 @@
  * - the theme reaches the device — the lines that carry its escape sequences are the ones the device
  *   shows several colours for, and a line the theme never touched keeps the device's one default
  *   attribute — and adds no column: the fields sit at the same device columns and widths either way;
- * - the retained figures say the same thing at every width while names and models are cut and a narrow
- *   group is continued, and the stored document keeps every whole name, model and figure;
+ * - the retained figures say the same thing at every width while names and startup snapshots are cut —
+ *   a snapshot keeping the level it began on — and a narrow group is continued, and the stored document
+ *   keeps every whole name, model and figure;
  * - the width a run started at puts the same cells back when it is drawn once more at the end.
  *
  * Reading an abbreviation or a wrap is still a human's judgement (P33); this script measures the cells
@@ -58,10 +59,12 @@ import { textColumns } from "../extensions/model-cost/harnesses/omp/widget";
 import {
 	CONSUMPTION_FILE,
 	REPORTED_FIELDS,
+	SNAPSHOT_FIELD,
 	agreesOnColumns,
 	bindDetailLayout,
 	columnText,
 	readColumns,
+	snapshotOf,
 	treeOf,
 } from "./support/detail-layout-fixture";
 
@@ -70,8 +73,11 @@ const STD_OUTPUT_HANDLE = -11;
 const TRAILING_CELL = 0x0200;
 /** The attribute a cell the theme never touched carries. */
 const DEFAULT_ATTRIBUTE = 0x0007;
-/** The fields whose *values* a width may never change: a group may cut a name or a model, never a figure. */
-const RETAINED_FIELDS = ["Cache:", "Cost:", "Ctx:", "Run:"] as const;
+/**
+ * The fields whose *values* a width may never change: a group may cut a name or the model half of a
+ * startup snapshot, never a figure.
+ */
+const RETAINED_FIELDS = ["Cache:", "¥Cache/In/Out：", "Cost:", "Ctx:", "Run:"] as const;
 /** The narrowest console a run will ask for or draw at. */
 const MINIMUM_WIDTH = 40;
 
@@ -164,7 +170,7 @@ function retainedValues(cells: readonly string[]): string[] {
 		const at = text.indexOf(field);
 		if (at < 0) continue;
 		const rest = text.slice(at + field.length);
-		const ends = REPORTED_FIELDS.filter(other => other !== field)
+		const ends = RETAINED_FIELDS.filter(other => other !== field)
 			.map(other => rest.indexOf(other))
 			.filter(next => next >= 0);
 		stated.push(`${field}${rest.slice(0, ends.length === 0 ? rest.length : Math.min(...ends)).trim()}`);
@@ -275,9 +281,21 @@ function spanOnDevice(cells: readonly string[], text: string): { readonly at: nu
 	return undefined;
 }
 
-/** The column each field starts at on this device row, in the device's own cells. */
-function deviceColumns(cells: readonly string[]): Map<string, number> {
+/**
+ * The column each field starts at on this device row, in the device's own cells.
+ *
+ * A labelled field is found by its own header; the startup snapshot leads with none, so the device's
+ * cells are searched for the text the frontend itself wrote for it — the very characters the device
+ * was handed, a cut model half and its ellipsis included — which is what puts that field's column on
+ * the device's measurement too.
+ */
+function deviceColumns(cells: readonly string[], line: string): Map<string, number> {
 	const columns = new Map<string, number>();
+	const snapshot = snapshotOf(line);
+	if (snapshot !== undefined) {
+		const span = spanOnDevice(cells, snapshot);
+		if (span !== undefined) columns.set(SNAPSHOT_FIELD, span.at);
+	}
 	for (const field of REPORTED_FIELDS) {
 		const span = spanOnDevice(cells, field);
 		if (span !== undefined) columns.set(field, span.at);
@@ -317,7 +335,7 @@ function drawOnDevice(lines: readonly string[], plain: boolean, columns: number)
 			row,
 			deviceWidth: movedRows === 0 ? endedAt : movedRows === 1 && endedAt === 0 ? columns : -1,
 			cells: cells === undefined ? [] : cells.cells,
-			device: cells === undefined ? new Map<string, number>() : deviceColumns(cells.cells),
+			device: cells === undefined ? new Map<string, number>() : deviceColumns(cells.cells, line),
 			predicted: readColumns(line),
 			colours: cells === undefined ? [] : distinctAttributes(cells),
 			values: cells === undefined ? [] : retainedValues(cells.cells),
@@ -378,8 +396,9 @@ function reportTarget(): string {
 
 /**
  * The lines of one depth group, as the device drew them: the glyphs a line is indented with, whether
- * it is an agent row, and which of the row's own lines it is — a continued group's lines are compared
- * with the same line of their siblings, never with another line of the same row.
+ * it is an agent row — read off the startup snapshot it carries, the tree's one label-less field — and
+ * which of the row's own lines it is: a continued group's lines are compared with the same line of
+ * their siblings, never with another line of the same row.
  */
 function depthGroups(lines: readonly PassLine[], of: (line: PassLine) => string): Map<string, PassLine[]> {
 	const groups = new Map<string, PassLine[]>();
@@ -388,7 +407,7 @@ function depthGroups(lines: readonly PassLine[], of: (line: PassLine) => string)
 		const text = of(line);
 		const glyphs = text.match(/^[\s\u2502\u251C\u2514\u2500]*/)?.[0] ?? "";
 		continuation = /^\s/.test(text) ? continuation + 1 : 0;
-		const key = `${glyphs.length}:${text.includes("Model:")}:${continuation}`;
+		const key = `${glyphs.length}:${snapshotOf(text) !== undefined}:${continuation}`;
 		groups.set(key, [...(groups.get(key) ?? []), line]);
 	}
 	return groups;

@@ -5,9 +5,10 @@
  * This is the isolated real-host smoke of the half a controlled double cannot answer: the dock
  * materialises the recorded baseline install, loads this repository's own model-cost entrypoint
  * through the harness's real loader, and drives a real RPC session — so the submission the extension
- * is told about is the harness's own `input` fact for a prompt this client really sent, and the Round
- * end is the real session's own settle. Nothing here models a harness: that fact has no other source,
- * and a harness that published none would leave the session with no start at all.
+ * is told about is the harness's own `input` fact for a prompt this client really sent, and the span's
+ * end is the real response's own settle, as that Turn's own delivery states it. Nothing here models a
+ * harness: that fact has no other source, and a harness that published none would leave the session
+ * with no start at all.
  *
  * What is read back is both halves of the observable path: the document the extension itself wrote
  * into its shipped storage root (a record's own span, among the root's real files), and the widget the
@@ -297,8 +298,9 @@ describe("a real submission establishes and advances the main session's span (P1
 			expect(span.start).toBeLessThanOrEqual(settledAt);
 			expect(span.end).toBeGreaterThanOrEqual(span.start);
 			expect(span.end).toBeLessThanOrEqual(Date.now());
-			// The Round it is measured to is this run's own: the save that carried the pair is the Round
-			// end's, which is also the only commit this run made — no time-only file, no extra write.
+			// The Turn it is measured to is this run's own response: its settle is a real instant of the
+			// run, and the save that carried the pair is the Round end's commit, which is also the only
+			// commit this run made — no time-only file, no extra write.
 			expect(record.saveVersion).toBe(1);
 			expect(readdirSync(run.storageDirectory).sort()).toEqual([`${CONSUMPTION_FILE}.lock`, CONSUMPTION_FILE].sort());
 
@@ -336,8 +338,9 @@ describe("a real submission establishes and advances the main session's span (P1
 			if (secondSpan === undefined) throw new Error("the second saved record carries no span");
 
 			// The start is the same instant, exactly: the second submission is an input like any other and
-			// never a second start. The end is the newer Round's, so the reading grew rather than being
-			// restarted, and it is the interval between the two that includes the idle time between them.
+			// never a second start. The end is the newer Turn's own settle, so the reading grew rather than
+			// being restarted, and it is the interval between the two that includes the idle time between
+			// them.
 			expect(secondSpan.start).toBe(firstSpan.start);
 			expect(firstSpan.start).toBeGreaterThanOrEqual(submittedAt - SUBMISSION_SLACK_MS);
 			expect(secondSpan.end).toBeGreaterThanOrEqual(secondSubmittedAt - SUBMISSION_SLACK_MS);

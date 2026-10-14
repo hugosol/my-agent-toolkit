@@ -216,19 +216,21 @@ export interface AgentTreeContext {
 }
 
 /**
- * One descendant session's startup facts as the detail tree draws them: the model it began on and
- * the effective effort it began with.
+ * One descendant session's startup facts as the detail tree draws them: the model it began on with
+ * the effective effort it began with, written as the one snapshot a row carries.
  *
- * Both members are already written the way a row shows them, and both are always present: a part
- * nothing proved is `?` rather than being dropped, so the field keeps its place in the row and a
- * later field never shifts into the gap. Neither is truncating — what a narrow terminal does with
- * them is the frontend's own.
+ * The text is already written the way a row shows it — `provider/model(effort)`, with no field header
+ * in front of it and no spaces around the slash — and it is always present: a part nothing proved is
+ * `?` rather than being dropped, so the snapshot keeps its place in the row and a later field never
+ * shifts into the gap. It is not truncating — what a narrow terminal does with it is the frontend's
+ * own — but the tail is the part of it a narrowed row keeps whole, because the effective level is what
+ * an operator compares one session's beginning with another's by.
  */
 export interface AgentTreeStartup {
-	/** The model the session began on as `provider / model`, or `?` when nothing proved one. */
-	readonly model: string;
-	/** The effective effort it began with, or `?` when nothing proved one. */
-	readonly effort: string;
+	/** The whole snapshot as one row states it: `provider/model(effort)`, `?` for a part nothing proved. */
+	readonly text: string;
+	/** The snapshot's own tail — the effective effort in parentheses — which a narrowed row keeps whole. */
+	readonly tail: string;
 }
 
 /**
@@ -260,13 +262,14 @@ export interface AgentTreeRow {
 	/** The row's own applicable fields; absent on the root row, whose consumption is its model rows. */
 	readonly fields?: ConsumptionFields;
 	/**
-	 * The startup facts of a descendant session: the model and effective effort it began with.
+	 * The startup facts of a descendant session: the one snapshot of the model and the effective effort
+	 * it began with.
 	 *
 	 * It is what that session started on and not what it runs now, so a later model switch or level
-	 * change does not move it; each part is `?` when nothing proved it. Present on every descendant
-	 * session row and absent on the root and model rows, which are not sessions: a model row is a pair
-	 * the root consumed, and the root row is the session the tree is *of*, whose own current pair the
-	 * Total above already writes.
+	 * change does not move it; each part of the snapshot is `?` when nothing proved it. Present on every
+	 * descendant session row and absent on the root and model rows, which are not sessions: a model row
+	 * is a pair the root consumed, and the root row is the session the tree is *of*, whose own current
+	 * pair the Total above already writes.
 	 */
 	readonly startup?: AgentTreeStartup;
 	/**
@@ -371,13 +374,13 @@ export interface ConsumptionDisplay {
 	readonly round?: RoundDisplay;
 	/**
 	 * The Session span of the main session this target belongs to, as this instance holds it: the
-	 * interval from that session's first user input in the applicable period to its latest observed
-	 * Round end, or `undefined` while either of those facts is unknown.
+	 * interval from that session's first user input in the applicable period to its latest Turn end,
+	 * or `undefined` while either of those facts is unknown.
 	 *
 	 * It is the *main session's* time rather than the target's own, and never an inclusive figure: a
 	 * subagent's view draws the main session's span, which is one of the two facts that keep a
 	 * subagent's execution from being read as the conversation's elapsed time. `undefined` is the
-	 * ordinary state of a session whose first Round has not ended — not a span of nothing — and a
+	 * ordinary state of a session whose first Turn has not ended — not a span of nothing — and a
 	 * reading of exactly zero milliseconds is the present pair of two equal instants.
 	 */
 	readonly span?: SessionSpanReading;
@@ -751,9 +754,12 @@ export function createPresentation(inputs: PresentationInputs): ConsumptionPrese
 						? undefined
 						: displayBudgetOf(classify(data, observed.provider ?? "", observed.model ?? "").mode);
 				// The startup facts as a row writes them: what the session began on, or `?` for a part
-				// nothing proved — the row keeps both fields rather than borrowing the model or level
+				// nothing proved — the row keeps the one snapshot rather than borrowing the model or level
 				// anything else is running now.
-				const startup = view.startup(child.sessionId);
+				const started = view.startup(child.sessionId);
+				const startedModel =
+					started?.model === undefined ? "\u003F" : `${started.model.provider}/${started.model.model}`;
+				const startedEffort = started?.effort ?? "\u003F";
 				const runtimeMs = view.runtime(child.sessionId);
 				// This session's own activity, as the framework's Round edges moved it: a session whose Round
 				// is open is working, and its name is the one thing on the row that says so. An idle reading
@@ -768,11 +774,7 @@ export function createPresentation(inputs: PresentationInputs): ConsumptionPrese
 					// dropped from this row rather than written empty. Its own model rows above keep theirs.
 					fields: fieldsOf(view.own(child.sessionId) ?? {}, { cacheShare: false }),
 					...(activity === "working" ? { nameEmphasis: "active" } : {}),
-					startup: {
-						model:
-							startup?.model === undefined ? "\u003F" : `${startup.model.provider} / ${startup.model.model}`,
-						effort: startup?.effort ?? "\u003F",
-					},
+					startup: { text: `${startedModel}(${startedEffort})`, tail: `(${startedEffort})` },
 					// The runtime is absent when nothing reliable is known about this session's executions:
 					// the row keeps the field and the display shows it as unavailable, which is not the
 					// same fact as an execution that really took no measurable time.
@@ -1131,8 +1133,8 @@ export function formatSpan(elapsedMs: number): string {
  * One display's Session span column: the main session's span as the display writes it, or a dash
  * while the span is unknown.
  *
- * A dash is what an unknown span is written as, and it is not zero: a session whose first Round has
- * not ended has no elapsed time to show, and a session whose span really is zero milliseconds is
+ * A dash is what an unknown span is written as, and it is not zero: a session whose first Turn has not
+ * settled has no elapsed time to show, and a session whose span really is zero milliseconds is
  * written as `0:00:00` — the two are told apart by the reading being there at all. The column is
  * always a column, so the field keeps its place whether or not a reading exists.
  */

@@ -16,7 +16,7 @@ Total、Round 和 detail 的 Sum 列增加了展示负担。子代理行通常�
 
 提供两种明确区分的时间指标：
 
-- **Session span（会话跨度）**用于主会话：从该 Session 在适用消费周期内的首条新用户输入到最近一次已观察到的 Round 结束，包含本周期内轮次之间的空闲以及同一 Session 恢复前的间隔。Total 展示该主会话跨度，不累加子代理时间。
+- **Session span（会话跨度）**用于主会话：从该 Session 在适用消费周期内的首条新用户输入到最近一次已观察到的框架 Turn 结束，包含本周期内轮次之间的空闲以及同一 Session 恢复前的间隔。Total 展示该主会话跨度，不累加子代理时间。
 - **Subagent runtime（子代理运行耗时）**用于子代理：直接复用 omp 提供的运行耗时，同一子代理 Session 的多次执行累计在一行中。原生执行结束更新可用耗时，时间只随既有消费提交顺带保存到同一 JSON，以便恢复及后续统计；不新增时间专属写入。
 
 精简 Total、Round 和 detail，移除 Sum 展示列。detail 的子代理行显示正确的任务名称、启动时的实际模型及有效思考强度、自身累计运行耗时，以及原有保留字段。
@@ -31,9 +31,9 @@ Total、Round 和 detail 的 Sum 列增加了展示负担。子代理行通常�
 4. As a model-cost user, I want idle gaps between Rounds included in Session span, so that the figure represents physical elapsed conversation time rather than execution time.
 5. As a model-cost user, I want resuming the same Session to retain its original start, so that interruptions and restarts do not silently start a new clock.
 6. As a model-cost user, I want a forked Session to start at its own first new user input, so that copied historical messages do not inflate the new conversation’s span.
-7. As a model-cost user, I want Session span to refresh only when an existing round_end is observed, so that the figure has a stable, understandable boundary.
-8. As a model-cost user, I want an unfinished first Round to show an unavailable time marker, so that lack of an end time is not mistaken for zero duration.
-9. As a model-cost user, I want later in-progress Rounds to retain the previous completed time reading, so that the main session’s span does not grow continuously between refreshes.
+7. As a model-cost user, I want Session span to refresh only when an existing turn_end is observed, so that the figure has a stable, understandable boundary.
+8. As a model-cost user, I want the time before the first observed Turn end to show an unavailable marker, so that lack of an end time is not mistaken for zero duration.
+9. As a model-cost user, I want the span to retain its latest Turn-end reading between events, so that it refreshes during a Round without growing continuously.
 10. As a model-cost user, I want Total to show only the main session’s span, so that parallel subagent work does not inflate elapsed conversation time.
 11. As a model-cost user, I want each subagent’s row to show native runtime rather than wall-clock span, so that idle gaps are not counted as execution.
 12. As a model-cost user, I want multiple executions of one subagent Session to remain on one detail row, so that the existing session-based consumption view stays compact.
@@ -45,7 +45,7 @@ Total、Round 和 detail 的 Sum 列增加了展示负担。子代理行通常�
 18. As a model-cost user, I want saved time readings restored after a restart, so that completed observations remain available later.
 19. As a model-cost user, I want clear and the first holiday accounting reset to clear time records together with consumption, so that the new period starts with a clean document and simple reset semantics.
 20. As a model-cost user, I want existing consumption records retained when new fields are introduced, so that enabling time statistics does not discard accumulated usage and cost.
-21. As a model-cost user, I want missing historical end times left unavailable until a real round_end is observed, so that the extension does not fabricate historical completion times.
+21. As a model-cost user, I want missing historical end times left unavailable until a real turn_end is observed, so that the extension does not fabricate historical completion times.
 22. As a model-cost user, I want subagents without a reliable native runtime source to show an unavailable marker, so that a different timing metric is not silently substituted.
 23. As a model-cost user, I want Sum removed from Total, Round and every detail row, so that the display contains fewer redundant fields.
 24. As a model-cost user, I want Cache, cost, reference cost and context readings to retain their existing meanings, so that field simplification does not change accounting behavior.
@@ -79,13 +79,14 @@ Total、Round 和 detail 的 Sum 列增加了展示负担。子代理行通常�
 - Session span 的起点是该主 Session 自己的首条用户输入，不是会话文件创建时间，也不是第一笔模型请求的开始时间。
 - 用户输入包括宿主可靠认定为用户发起的输入；不能只检查普通 role=user 而遗漏用户调用的 skill 等输入。
 - 同一消费周期内，同一 Session 的 resume 保留起点，包含中间关闭程序的间隔。fork 创建新 Session，其复制历史中的输入不构成新起点；等待新 Session 的首条新用户输入。消费重置后从下一条新用户输入重新起算，不扫描旧历史带回已清除的起点。
-- 终点只保留最近一次已观察到的 framework round_end 的时间，不建立逐 Round 时间明细。在该边界更新读数，并随既有消费写入顺带保存可用主会话时间；不能仅因时间变化另行触发提交。
-- 只使用已有 round_end 路径；不新增取消、失败或进程退出的补记机制。已有路径若交付结束就记录，未交付则保留上次终点。用户接受因此少一次时间刷新。
-- 尚无已观察到的终点时显示“—”；后续执行中沿用上一轮的读数，不实时增长。缺失起点同样不能伪装为零。
+- 终点只保留最近一次已观察到的 framework turn_end 的时间，不建立逐 Round 时间明细。在该边界更新读数，并随既有消费写入顺带保存可用主会话时间；不能仅因时间变化另行触发提交。
+- 只捕捉框架提供的 turn_end，不区分成功、失败或取消；不直接绑定 OMP 原生同名事件，也不新增取消、失败或进程退出的补记机制。未交付则保留上次终点。
+- 尚无已观察到的终点时显示“—”；相邻 turn_end 之间沿用最近读数，不实时增长。缺失起点同样不能伪装为零。消费仍由原有 round_end 路径提交，时间更新不另行触发保存。
 - Total 的时间只代表主会话 Session span，不累加子代理时间。Round 不新增时间列。
 
 ### 子代理时间
 
+- OMP 创建阶段尚未附着真实 Session 时，由 framework adapter 暂不投递运行耗时事实，不报创建期 unavailable，也不补造 0；附着且可读实际 sessionId 后，下一条有效原生进度开始显示和刷新。model-cost 始终订阅已有 subagent_runtime，不新增公共 ready 事件，也不自行管理原生初始化顺序。已就绪后失联、无效读数及执行终结仍无法归属保持异常处理。
 - Subagent runtime 直接使用 omp 提供的原生运行耗时，不自行重建运行计时器。原生运行耗时与 Hub 持久化的创建到最后记录的物理跨度是不同指标，后者不能作为替代。
 - 现有 Agent tree 每个 descendant Session 一行；保留该结构，因此同一 Session 的多次执行耗时累计到该行，不新增逐执行行。
 - 同一执行的原生进度更新是替换读数，而非累加多个进度值；不同执行才贡献新的运行耗时。重复观察结束不能重复计入。
@@ -98,7 +99,7 @@ Total、Round 和 detail 的 Sum 列增加了展示负担。子代理行通常�
 
 - 主会话时间与子代理时间随 Accounting period 重置：clear 与首次开启 holiday 的既有归档／重置提交同时清除时间记录，新活动文档不携带旧时间数据。已经处于 holiday 时沿用不再次重置的既有规则。主会话从下一条新用户输入起算；子代理只累计重置后新的执行，不从旧历史、迟到的旧执行读数或归档恢复已清除时间。
 - 保留旧消费数据。旧文档缺少新时间或启动快照字段不等于文档损坏，也不意味着允许清空已累计消费。
-- 不从最后一条 transcript 记录推导历史 round_end。能可靠恢复的事实可复用；缺失历史主会话终点显示“—”，下一次真实 round_end 后才产生新终点。
+- 不从最后一条 transcript 记录推导历史 turn_end。能可靠恢复的事实可复用；缺失历史主会话终点显示“—”，下一次真实 turn_end 后才产生新终点。
 - 旧子代理缺少可靠耗时证据时保留为不可用；缺少启动模型／强度证据时显示“?”，不将当前设置补写为启动事实。
 - 延续现有协调写入和消费聚合原则，不改变消费归属、金额计算或已有消费存储失败策略。时间与消费使用同一 JSON、同一次既有提交，不增加独立时间文件、定时保存、退出保存或补存写入。
 - 时间采集缺失或时间数据无效时打印明确错误，保持最后有效已保存时间或不可用状态，不阻止请求执行、消费统计、消费提交和其他字段展示；不把缺失填成零。时间读数到达不要求消费等待，整个 JSON 的既有写入失败仍按原消费保存失败规则处理。具体扩展字段与 schema 演进的 interface 契约由 /to-contract 记录，内部实现不由本 spec 预先固定。
@@ -117,16 +118,16 @@ Total、Round 和 detail 的 Sum 列增加了展示负担。子代理行通常�
 
 - 保留静态 Agent tree、已有父子关系及深度，不新增展开操作、查询命令或聚合节点。
 - 按 depth 分组计算子代理列宽。同一深度共用一套列宽，不同深度独立；不按每个直接父节点再拆成不同对齐组。
-- 对齐名称、模型、思考强度、运行耗时及原有保留统计字段；缺失字段保留其列槽和占位，不造成后续字段错位。
+- 子代理启动模型和思考强度合并为无表头的 provider/model(effort)，例如 deepseek/deepseek-flash(high)；仍使用启动快照，未知部分保留 ?，实际 off 原样展示。名称、合并启动字段、运行耗时及原有保留统计字段按同深度对齐，缺失字段保留其列槽和占位，不造成后续字段错位。
 - 根据终端实际显示宽度处理中文等宽字符差异和颜色包装，不能只使用字符串字符数保证对齐。
-- 窄终端优先对齐与可读性：可缩略名称／模型等文本并标识省略，但不改变保存的完整值。
+- 窄终端优先对齐与可读性：可缩略名称／模型等文本并标识省略，合并启动字段缩略时优先保留 (effort) 后缀；不改变保存的完整值。极窄宽度仍使用既有组内续行与兜底裁切。
 - 缩略仍不能容纳时使用同一深度组内统一的续行布局，不让每行自行换行造成列错位。
 - 不要求不同深度、Total 与子代理列表、主会话 model 行与子代理行共用同一列宽。
 
 ## Testing Decisions
 
 - 既有先例包括 Total 文本、detail widget、viewed-session widget、widget visual、Session 消费持久化与恢复，以及 framework Round 生命周期合成的验证。实施时复用相关测试约定；本 spec 不选择新的测试 seam 或分配各 promise 的覆盖层级。
-- 访谈阶段已有只读场景验证：Sum 是四个 token 桶的总和，当前名称选择确实会被 agent 类别覆盖，现有 detail 子代理一 Session 一行且缺少模型／强度列。另有真实 transcript 检查及 Round 合成场景，确认原生物理跨度与需求不同、历史 transcript 没有可靠 round_end 记录。这些是现状证据，不是新功能已通过的证明。
+- 访谈阶段已有只读场景验证：Sum 是四个 token 桶的总和，当前名称选择确实会被 agent 类别覆盖，现有 detail 子代理一 Session 一行且缺少模型／强度列。另有真实 transcript 检查及 Round 合成场景，确认原生物理跨度与需求不同、历史 transcript 没有可靠 round_end 记录；这是旧 Round 终点方案的历史调查，不作为 Turn 终点的来源证明。这些是现状证据，不是新功能已通过的证明。
 - 后续行为验证必须覆盖已经确认的可见边界：首条输入、首轮未结束、恢复、fork、多次子代理执行、重复进度／结束、同次消费提交保存、晚到耗时无后续提交、时间缺失非阻塞、重启、消费重置清除时间、旧数据缺字段、同深度不同父代理对齐、不同深度独立列宽、中文与窄屏。
 - 使用项目测试分层和共享工作树协调规则：迭代运行受影响范围，ticket 完成覆盖所属分区与受影响消费者；TypeScript 变更运行 typecheck；最终集成遵守既有全量验证要求。
 - 宿主接入变化需要真实宿主的相应验证；终端展示需实际观察不同名称长度、中文、多层级、长模型标识及窄宽度的输出。测试通过不能替代展示 smoke 证据。
@@ -149,6 +150,8 @@ Total、Round 和 detail 的 Sum 列增加了展示负担。子代理行通常�
 - 在本 spec 中确定新的 seam、接口类型或各 seam 的测试覆盖承诺。
 
 ## Further Notes
+
+- 2026-10-15 本轮用户确认修订：Q2 明确 extension 通过 adapter 消费框架 turn_end；Q4 确认真实 Session 附着后的首条有效进度才开始显示；Q5 要求“只捕捉框架能提供的turn_end事件，不管成功还是失败”；Q6 接受窄屏保留强度。最后以“可以，按你推荐的方式即可”确认 adapter 内部门槛，不新增公共就绪事件。旧的 Round-end 时间刷新及分离 Model:/Effort: 展示已被本轮规则替代，消费 round_end 保存策略不变。
 
 - 本规格综合用户逐轮确认的需求，最终对子代理采用原生运行耗时，而不是最初提出的与主会话相同的首尾跨度。布局最终采用同一深度对齐，而不是整棵树统一对齐。
 - 两个时间概念已记录于 model-cost 领域 glossary。Session totals 和时间累计均以适用消费周期为保留范围，但 Session span 仍是含空闲的物理跨度，Subagent runtime 仍是原生执行耗时，两者不可相加或互换。

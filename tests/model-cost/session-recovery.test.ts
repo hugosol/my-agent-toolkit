@@ -513,10 +513,7 @@ describe("a spawned session's startup facts ride its consumption commits (P19, P
 		});
 		const rows =
 			second.runtime.presentation.of({ sessionId: MAIN.sessionId, provider: PROVIDER, model: MODEL }).agentTree ?? [];
-		expect(rows.find(row => row.name === SPAWNED_NAME)?.startup).toEqual({
-			model: `${PROVIDER} / ${MODEL}`,
-			effort: "high",
-		});
+		expect(rows.find(row => row.name === SPAWNED_NAME)?.startup?.text).toBe(`${PROVIDER}/${MODEL}(high)`);
 	});
 
 	test("a document written before the snapshot existed keeps its consumption and keeps committing (P22)", async () => {

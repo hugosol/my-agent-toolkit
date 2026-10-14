@@ -68,6 +68,12 @@ interface NativeSurface {
 	emit(channel: string, payload: unknown): void;
 	/** The main session's own context, as a delivery from it carries. */
 	mainContext(): OmpSessionContext;
+	/** Registers the spawn's agent, as the harness does when the session is being stood up. */
+	registerChild(): void;
+	/** Attaches the session the spawn runs in, as the harness does once it exists. */
+	attachChild(): void;
+	/** Detaches it again, as the harness does once that agent is parked and only its history remains. */
+	detachChild(): void;
 }
 
 /** One native context, as the loader builds it for a delivery's session. */
@@ -103,9 +109,19 @@ function contextOf(facts: {
  * `spanMs` is the wall-clock distance between the spawn's registration and its last activity — the
  * metric the hub-style "time" column of a session would show. It is deliberately a different number
  * from any duration a payload states, because the case's question is which of the two arrives.
+ *
+ * `childRegistered` and `childAttached` are the two stages a spawn passes through on the host: the
+ * registry holds its agent from the moment it is registered, and the live session that agent runs in
+ * is attached after that — the delegation route's own readings begin before either exists.
  */
 function boundSurface(
-	options: { readonly spanMs?: number; readonly scope?: "owner" | "session"; readonly ownReading?: boolean } = {},
+	options: {
+		readonly spanMs?: number;
+		readonly scope?: "owner" | "session";
+		readonly ownReading?: boolean;
+		readonly childAttached?: boolean;
+		readonly childRegistered?: boolean;
+	} = {},
 ): NativeSurface {
 	const toolHandlers: Record<"tool_execution_update" | "tool_execution_end", Array<(event: never, ctx: never) => void>> = {
 		tool_execution_update: [],
@@ -132,7 +148,12 @@ function boundSurface(
 	// a session's own span would use and what no execution's duration may be answered with.
 	Object.assign(mainRef, { createdAt: 1_000, lastActivity: 1_000 + spanMs });
 	Object.assign(childRef, { createdAt: 1_000, lastActivity: 1_000 + spanMs });
-	const registry = { get: (id: string) => (id === "Main" ? mainRef : id === EXECUTION_ID ? childRef : undefined) };
+	const childSession = childRef.session;
+	if (options.childAttached === false) Object.assign(childRef, { session: null });
+	let childRegistered = options.childRegistered !== false;
+	const registry = {
+		get: (id: string) => (id === "Main" ? mainRef : id === EXECUTION_ID && childRegistered ? childRef : undefined),
+	};
 
 	const api: OmpExtensionApi = {
 		setLabel(): void {},
@@ -192,6 +213,9 @@ function boundSurface(
 			for (const listener of [...(busListeners.get(channel) ?? [])]) listener(payload);
 		},
 		mainContext: () => contextOf({ sessionId: MAIN_SESSION_ID, kind: "main", agentId: "Main", name: "主会话" }),
+		registerChild: () => { childRegistered = true; },
+		attachChild: () => { Object.assign(childRef, { session: childSession }); },
+		detachChild: () => { Object.assign(childRef, { session: null }); },
 	};
 }
 
@@ -205,7 +229,69 @@ function settledResult(entry: Record<string, unknown>): OmpToolExecutionEvent {
 	return { type: "tool_execution_end", toolName: "task", result: { details: { results: [entry] } } };
 }
 
+/** One frame of the harness's progress channel, in the shape its own subagent executor publishes. */
+function progressPayload(id: string, status: string, durationMs: unknown): unknown {
+	return { index: 0, agent: "task", task: "follow-up", progress: { id, status, durationMs } };
+}
+
+/** One frame of the harness's lifecycle channel, as the executor publishes it around a run. */
+function lifecyclePayload(id: string, status: string): unknown {
+	return { id, status, agent: "task", index: 0 };
+}
+
 describe("the runtime is the host's own per-execution duration, attributed to the session that ran it (P10)", () => {
+	test("startup progress stays unobserved until the actual child Session is attached", () => {
+		const surface = boundSurface({ childAttached: false });
+		for (const durationMs of [0, 25, 80]) {
+			surface.progress(progressFrame({ id: EXECUTION_ID, status: "running", durationMs }), surface.mainContext());
+		}
+		expect(surface.observed).toEqual([]);
+		surface.attachChild();
+		surface.progress(progressFrame({ id: EXECUTION_ID, status: "running", durationMs: 120 }), surface.mainContext());
+		expect(surface.observed.map(({ sessionId, runtime }) => ({ sessionId, runtime }))).toEqual([
+			{ sessionId: CHILD_SESSION_ID, runtime: { kind: "reading", executionId: EXECUTION_ID, runtimeMs: 120, status: "running" } },
+		]);
+	});
+	test("the readings that precede the spawn's own registry entry state nothing either", () => {
+		const surface = boundSurface({ childRegistered: false, childAttached: false });
+
+		// The delegation route publishes a spawn's first rows before the harness has registered its
+		// agent at all, and keeps publishing while that agent has no live session yet: neither stage of
+		// the creation is a reading an operator lost.
+		surface.progress(progressFrame({ id: EXECUTION_ID, status: "running", durationMs: 0 }), surface.mainContext());
+		expect(surface.observed).toEqual([]);
+
+		surface.registerChild();
+		surface.progress(progressFrame({ id: EXECUTION_ID, status: "running", durationMs: 50 }), surface.mainContext());
+		expect(surface.observed).toEqual([]);
+
+		surface.attachChild();
+		surface.progress(progressFrame({ id: EXECUTION_ID, status: "running", durationMs: 200 }), surface.mainContext());
+
+		// The first reading that resolves a session is the whole duration the host had measured by then.
+		expect(surface.observed.map(({ sessionId, runtime }) => ({ sessionId, runtime }))).toEqual([
+			{ sessionId: CHILD_SESSION_ID, runtime: { kind: "reading", executionId: EXECUTION_ID, runtimeMs: 200, status: "running" } },
+		]);
+	});
+	test("the harness's own frame route states nothing in that window either, and its first attributed frame is the whole duration", () => {
+		const surface = boundSurface({ childAttached: false });
+
+		// A delegation payload anchors the binding to the session whose own work reported the spawn —
+		// the frames carry no session — and states nothing for the spawn's unattributed readings; the
+		// frames the harness publishes in the same window are silent for the same reason.
+		surface.progress(progressFrame({ id: EXECUTION_ID, status: "running", durationMs: 0 }), surface.mainContext());
+		surface.emit("task:subagent:progress", progressPayload(EXECUTION_ID, "running", 40_000));
+		expect(surface.observed).toEqual([]);
+
+		surface.attachChild();
+		surface.emit("task:subagent:progress", progressPayload(EXECUTION_ID, "running", 150_000));
+
+		// The frame that finally names the session carries the duration the host had measured by then —
+		// the execution's whole elapsed time, since a reading is cumulative and never a delta.
+		expect(surface.observed.map(({ sessionId, runtime }) => ({ sessionId, runtime }))).toEqual([
+			{ sessionId: CHILD_SESSION_ID, runtime: { kind: "reading", executionId: EXECUTION_ID, runtimeMs: 150_000, status: "running" } },
+		]);
+	});
 	test("a running frame and a settled result each deliver their own duration, and never the session's physical span", () => {
 		const surface = boundSurface({ spanMs: 3_600_000 });
 
@@ -275,17 +361,6 @@ describe("the runtime is the host's own per-execution duration, attributed to th
 });
 
 describe("a kept-alive agent's later execution is a new one, stated on the harness's own frames (P11, P12)", () => {
-	/** One frame of the harness's progress channel, in the shape its own subagent executor publishes. */
-	const progressPayload = (id: string, status: string, durationMs: unknown): unknown => ({
-		index: 0,
-		agent: "task",
-		task: "follow-up",
-		progress: { id, status, durationMs },
-	});
-
-	/** One frame of the harness's lifecycle channel, as the executor publishes it around a run. */
-	const lifecyclePayload = (id: string, status: string): unknown => ({ id, status, agent: "task", index: 0 });
-
 	test("a follow-up execution of one agent is reported under its own identity, and its readings replace each other", () => {
 		const surface = boundSurface();
 
@@ -341,7 +416,7 @@ describe("a kept-alive agent's later execution is a new one, stated on the harne
 		expect(surface.busRegistrations).toEqual(["task:subagent:progress", "task:subagent:lifecycle"]);
 	});
 
-	test("a frame whose execution the graph does not hold is unavailable, and one that precedes every delivery is left unobserved", () => {
+	test("an execution the graph holds no session for states nothing while it runs, and its end is unavailable", () => {
 		const early = boundSurface();
 		// No delivery has reached this binding yet, so there is no session to anchor an observation to:
 		// nothing is attributed rather than guessed at.
@@ -352,9 +427,14 @@ describe("a kept-alive agent's later execution is a new one, stated on the harne
 		surface.progress(progressFrame({ id: EXECUTION_ID, durationMs: 0 }), surface.mainContext());
 		surface.emit("task:subagent:progress", progressPayload("0-Gone", "running", 30_000));
 
-		// The execution was reported, so the operator is told which reading could not be attributed —
-		// anchored to the session the observation was made in, as the tool route's own unresolved
-		// readings are.
+		// A running reading of an execution no reading ever attributed is the creation window of a spawn
+		// this host cannot place yet, so nothing is stated in place of a reading: the readings of an
+		// execution are cumulative, and the frame reporting it over — the last fact the host has about
+		// it — is what tells the operator which reading could not be obtained, anchored to the session
+		// the observation was made in.
+		expect(surface.observed).toHaveLength(1);
+		surface.emit("task:subagent:progress", progressPayload("0-Gone", "completed", 60_000));
+
 		const [delivery] = surface.observed.slice(-1);
 		expect(delivery?.runtime.kind).toBe("unavailable");
 		expect(delivery?.sessionId).toBe(MAIN_SESSION_ID);
@@ -378,6 +458,38 @@ describe("a host that cannot attribute an execution reports that fact rather tha
 		expect(
 			surface.observed.map(delivery => (delivery.runtime.kind === "unavailable" ? delivery.runtime.reason : "")),
 		).toEqual(["子代理执行身份", `子代理执行「${foreignSessionId}」所属 Session`]);
+	});
+
+	test("an execution reported over before its session was ever established is unavailable, not the silence of a creation", () => {
+		const surface = boundSurface({ childAttached: false });
+
+		surface.settle(settledResult({ id: EXECUTION_ID, durationMs: 360_000 }), surface.mainContext());
+
+		// Only the running readings of a spawn whose session is still being established are left
+		// unstated: a reading that reports the execution over is the last fact the host has about it,
+		// and an operator has to be told it could not be attributed rather than shown nothing at all.
+		const [delivery] = surface.observed;
+		expect(delivery?.runtime.kind).toBe("unavailable");
+		expect(delivery?.sessionId).toBe(MAIN_SESSION_ID);
+		expect(delivery?.runtime.kind === "unavailable" ? delivery.runtime.reason : "").toContain(EXECUTION_ID);
+	});
+
+	test("an execution whose session was established and is then lost is unavailable rather than going quiet", () => {
+		const surface = boundSurface();
+
+		surface.progress(progressFrame({ id: EXECUTION_ID, status: "running", durationMs: 90_000 }), surface.mainContext());
+		surface.detachChild();
+		surface.progress(progressFrame({ id: EXECUTION_ID, status: "running", durationMs: 120_000 }), surface.mainContext());
+		surface.emit("task:subagent:progress", progressPayload(EXECUTION_ID, "running", 150_000));
+
+		// The first reading established the execution's session; the readings after that session was
+		// detached are an execution this host can no longer attribute, which is a fact on the delegation
+		// payloads and on the harness's own frames alike — not the silence a creation window is.
+		expect(surface.observed.map(delivery => delivery.runtime.kind)).toEqual(["reading", "unavailable", "unavailable"]);
+		for (const delivery of surface.observed.slice(1)) {
+			expect(delivery.sessionId).toBe(MAIN_SESSION_ID);
+			expect(delivery.runtime.kind === "unavailable" ? delivery.runtime.reason : "").toContain(EXECUTION_ID);
+		}
 	});
 
 	test("a duration the host did not state as a usable number is unavailable, and a stated zero is a reading", () => {

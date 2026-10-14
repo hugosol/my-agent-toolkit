@@ -131,7 +131,7 @@ const MAIN_TARGET = { sessionId: MAIN.sessionId, provider: "official", model: "m
  */
 const T0 = Date.parse("2026-10-01T00:00:00.000Z");
 
-/** The main session's own span this run is given: the input above, and its Round end ten minutes on. */
+/** The main session's own span this run is given: the input above, and its last Turn's settle ten minutes on. */
 const MAIN_SPAN_MS = 600_000;
 /** What each of the two parallel subagents' executions was really measured at. */
 const PARALLEL_RUNTIME_MS = 360_000;
@@ -364,9 +364,10 @@ function reading(executionId: string, runtimeMs: number): SubagentRuntimeFact {
 }
 
 /**
- * The one run every case reads: the main session's own submission and its Round ending ten minutes
- * later, and — inside that same Round — two parallel subagents whose own executions the host measured
- * at 360,000 ms apiece, plus one grandchild under the first of them.
+ * The one run every case reads: the main session's own submission, its last Turn settling ten minutes
+ * later, and its Round ending at that same instant, and — inside that same Round — two parallel
+ * subagents whose own executions the host measured at 360,000 ms apiece, plus one grandchild under
+ * the first of them.
  *
  * Both of the parallel subagents' requests run inside the same wall-clock interval (at +100 s and
  * +200 s of the main Round), which is what makes their 6 minutes *parallel* time rather than two more
@@ -378,7 +379,10 @@ function runAssembled(bound: Bound): void {
 	clock = T0;
 	bound.double.deliverUserInput(OWNER, { session: MAIN });
 	bound.double.deliverRound(OWNER, { event: { kind: "round_start" }, session: MAIN });
-	settleTurn(bound, MAIN, T0 + 1_000, "official", "model-alpha", USAGE_MAIN);
+	// The main session's own Turn: its request begins nine minutes in, and its response settles exactly
+	// at T0 + MAIN_SPAN_MS — the instant its Round also ends, an ordinary minute after that request went
+	// out. The span's end is that Turn's own settle, and the Round's end is the commit that carries it.
+	settleTurn(bound, MAIN, T0 + MAIN_SPAN_MS - 60_000, "official", "model-alpha", USAGE_MAIN);
 
 	runSubagent(bound, {
 		session: CHILD_A,
@@ -486,7 +490,8 @@ describe("the Total's time is the main session's span, beside its subagents' own
 
 		const display = bound.runtime.presentation.of(MAIN_TARGET);
 		// The main session's own two observed instants, and nothing else, are what its span is: ten
-		// minutes from its own submission to its own Round's end.
+		// minutes from its own submission to its own last Turn's settle, which is the instant its Round
+		// also ended at.
 		expect(display.span).toEqual({ startAt: T0, endAt: T0 + MAIN_SPAN_MS, elapsedMs: MAIN_SPAN_MS });
 
 		// The brief the entry is in before it is flipped: its Total ends with that same span, written as
@@ -619,27 +624,29 @@ describe("every change assembled survives a commit and a new process (P24)", () 
 		const childA = rowOf(lines, CHILD_A_HANDLE);
 		const grand = rowOf(lines, GRAND_HANDLE);
 		const childB = rowOf(lines, CHILD_B_HANDLE);
-		expect(childA).toContain("Model: official / model-alpha");
-		expect(childA).toContain("Effort: high");
+		expect(childA).toContain("official/model-alpha(high)");
 		expect(childA).toContain("Cost: \u00A50.02");
 		expect(childA).toContain(`Ctx: ${CHILD_A_CONTEXT_TEXT}`);
 		expect(childA).toContain("Run: 6m");
-		expect(childB).toContain("Model: plan-provider / codex-model");
-		expect(childB).toContain("Effort: low");
+		expect(childB).toContain("plan-provider/codex-model(low)");
 		expect(childB).toContain("Ref: $0.02");
 		expect(childB).toContain("Run: 6m");
+		expect(grand).toContain("go-provider/model-alpha(medium)");
 		expect(grand).toContain("Run: 2m");
 		expect(rows.every(row => !row.includes("Cache:"))).toBe(true);
 		// The root's own pair row above them is a row of a model rather than of a session, so it keeps the
 		// cached-share column: its own 8,000 reads of 9,000 conversation tokens, a whole 89 percent.
 		expect(lines.some(line => line.includes("official / model-alpha") && line.includes("Cache: 89%"))).toBe(true);
 
-		// The two subagents are one depth and one alignment group: the fields they both state start at the
-		// same column on both rows, and the grandchild's own depth starts them somewhere else.
-		for (const field of ["Model:", "Effort:", "Run:"]) {
-			expect(columnOf(childA, field)).toBe(columnOf(childB, field));
-			expect(columnOf(grand, field)).not.toBe(columnOf(childA, field));
-		}
+		// The two children are one depth and one alignment group: the snapshot each of them began on and the
+		// fields they both state start at the same column on both rows, and the grandchild's own depth
+		// starts them somewhere else.
+		expect(columnOf(childA, "official/model-alpha(high)")).toBe(columnOf(childB, "plan-provider/codex-model(low)"));
+		expect(columnOf(childA, "Run:")).toBe(columnOf(childB, "Run:"));
+		expect(columnOf(grand, "go-provider/model-alpha(medium)")).not.toBe(
+			columnOf(childA, "official/model-alpha(high)"),
+		);
+		expect(columnOf(grand, "Run:")).not.toBe(columnOf(childA, "Run:"));
 
 		// The document the run committed: the main session's span, and one record per descendant carrying
 		// that session's own consumption, its startup snapshot and the host's own millisecond runtime.

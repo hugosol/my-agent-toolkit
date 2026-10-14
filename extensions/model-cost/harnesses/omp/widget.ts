@@ -266,19 +266,21 @@ function prefixedLine(prefix: string, line: DisplayLine): DisplayLine {
  * with `├`. A row's distance from the root is the only thing the shared result states; how a terminal
  * draws it is here.
  *
- * The rows of one kind at one distance from the root are laid out as one grid: their names, the model
- * and effective effort a session *started* on — both written as `?` where nothing proved them — the
- * statistics their own scope carries, the current context reading a session's own binding published
- * as `Ctx: percent (tokens/budget)`, and the accumulated subagent runtime a session's executions were
+ * The rows of one kind at one distance from the root are laid out as one grid: their names, the
+ * startup snapshot a session carries — the model it began on with the effective effort it began with,
+ * `provider/model(effort)` with `?` where nothing proved a part — the statistics their own scope
+ * carries, the current context reading a session's own binding published as
+ * `Ctx: percent (tokens/budget)`, and the accumulated subagent runtime a session's executions were
  * measured at, all start at the same column on every one of those rows. A field one row has none of
  * leaves its column empty instead of pulling the fields after it left, and two depths share no width
  * at all: a grandchild's own longer name sizes its own group and moves nothing above it. The rows
  * themselves keep their order and their tree: one row per session, drawn where the relations put it.
  *
  * What each row *states* is shared logic's — every name, figure, `?` and `—` — and this width-aware
- * drawing never rewrites one: a line too narrow for the group abbreviates a name or a model identifier
- * with an ellipsis and, narrower still, wraps the group's fields at one break for all of its rows. The
- * full value is in the display result either way, and in the document behind it.
+ * drawing never rewrites one: a line too narrow for the group abbreviates a name or a snapshot with an
+ * ellipsis — keeping the snapshot's own level, which is the half an operator reads the row for — and,
+ * narrower still, wraps the group's fields at one break for all of its rows. The full value is in the
+ * display result either way, and in the document behind it.
  */
 function treeLines(rows: readonly AgentTreeRow[], width: number | undefined): DisplayLine[] {
 	const gridRows: TreeGridRow[] = rows.map((row, index) => {
@@ -305,16 +307,14 @@ function treeLines(rows: readonly AgentTreeRow[], width: number | undefined): Di
 		];
 		if (row.startup !== undefined) {
 			cells.push({
-				field: TREE_LABELS.startupModel,
-				label: TREE_LABELS.startupModel,
-				value: row.startup.model,
+				field: TREE_STARTUP_FIELD,
+				label: "",
+				value: row.startup.text,
 				abbreviated: true,
-			});
-			cells.push({
-				field: TREE_LABELS.startupEffort,
-				label: TREE_LABELS.startupEffort,
-				value: row.startup.effort,
-				abbreviated: false,
+				// The half of the snapshot a column too narrow for it keeps whole: the effective level the
+				// session began with, which is what an operator compares one session's beginning with
+				// another's by. Everything the cut drops is the model half beside it.
+				keepTail: row.startup.tail,
 			});
 		}
 		if (row.fields !== undefined) {
@@ -374,10 +374,11 @@ const MIN_ABBREVIATED_COLUMNS = 4;
 /** The field an agent-tree row's own name is: the column every row of a group writes first. */
 const TREE_NAME_FIELD = "name";
 
+/** The field a session row's startup snapshot is: the label-less column it writes after its name. */
+const TREE_STARTUP_FIELD = "startup";
+
 /** The label each remaining field of an agent-tree row leads with, which is the field it aligns by too. */
 const TREE_LABELS = {
-	startupModel: "Model: ",
-	startupEffort: "Effort: ",
 	context: "Ctx: ",
 	runtime: "Run: ",
 } as const;
@@ -472,14 +473,23 @@ function cutColumns(text: string, columns: number): string {
  * ratio, an amount, a context reading or a runtime only one of them carries leaves a slot the width of
  * that group's own column rather than shifting everything after it left. The label is apart from the
  * text so that a column too narrow for the whole cell is cut to the value it states: an operator
- * reading `Model: …` still knows which field they are looking at, and the name, whose label is empty,
- * is cut like any other value.
+ * reading `Ctx: …` still knows which field they are looking at, while a cell whose label is empty —
+ * the name, and the startup snapshot beside it — is cut like any other value.
  */
 interface TreeCell {
 	readonly field: string;
 	readonly label: string;
 	readonly value: string;
 	readonly abbreviated: boolean;
+	/**
+	 * The tail of the value a column too narrow for the whole cell keeps whole, where a cell has one.
+	 *
+	 * It is what the value's own end means rather than padding: a session's startup snapshot states the
+	 * effective level it began with there, so a narrowed column cuts the model half beside it and lets
+	 * the ellipsis fall there rather than dropping the level an operator reads the row for. Absent on
+	 * every other cell, which narrows by cutting its own end.
+	 */
+	readonly keepTail?: string;
 	/**
 	 * The row's own semantic emphasis for this cell, where shared logic stated one.
 	 *
@@ -524,7 +534,7 @@ interface TreeGrid {
  * The fields one group writes, in an order that keeps every one of its rows' own orders.
  *
  * A row states its fields in the order it draws them, and the group it lands in may not change that
- * order: a session row's startup facts sit between its name and its statistics and stay there, and a
+ * order: a session row's startup snapshot sits between its name and its statistics and stays there, and a
  * model row's statistics come straight after its name. So the group's order is the merge of the rows'
  * own orders — every field a row writes after another is written after it, a field only some rows
  * carry takes the place those rows give it, and the one order every row agrees with is what the group
@@ -571,12 +581,17 @@ function treeGridOf(rows: readonly TreeGridRow[]): TreeGrid {
 			field,
 			cells.reduce((widest, cell) => Math.max(widest, textColumns(`${cell.label}${cell.value}`)), 0),
 		);
-		// A column may be cut down to its own label plus an ellipsis and no further, so a narrowed
-		// terminal still says which field a value belongs to; a name, whose label is empty, keeps the few
-		// columns below which an ellipsis would be the whole cell.
+		// A column may be cut down to its own label, the widest tail any of the group's cells keeps whole
+		// and an ellipsis and no further, so a narrowed terminal still says which field a value belongs to
+		// and a snapshot keeps the level it began on: the column is the group's, so the level of the row
+		// with the longest one is what it may not fall below. A name, whose label and tail are both empty,
+		// keeps the few columns below which an ellipsis would be the whole cell.
 		floors.set(
 			field,
-			Math.max(MIN_ABBREVIATED_COLUMNS, textColumns(cells[0]?.label ?? "") + 1),
+			Math.max(
+				MIN_ABBREVIATED_COLUMNS,
+				cells.reduce((floor, cell) => Math.max(floor, textColumns(`${cell.label}${cell.keepTail ?? ""}`) + 1), 0),
+			),
 		);
 	}
 	return {
@@ -650,10 +665,21 @@ function wrappedFields(
  * One cell as a column too narrow for it writes it: its own label, and as much of its value as the
  * column has left, with an ellipsis marking whatever was dropped. A column narrower than the label
  * itself is the whole cell's own opening columns, which is the one case where the label is cut too.
+ *
+ * A cell whose tail is kept whole — a session's startup snapshot, whose effective level is the half
+ * that says which session began where — spends that tail's own columns first, so what the ellipsis cuts
+ * is the model half beside it rather than the level. A column with no room for the label and the tail
+ * together falls back to the plain cut, which is what keeps this from stating a tail alone.
  */
 function abbreviatedCell(cell: TreeCell, columns: number): string {
 	const label = textColumns(cell.label);
 	if (label >= columns) return cutColumns(`${cell.label}${cell.value}`, columns);
+	const tail = cell.keepTail ?? "";
+	const tailColumns = textColumns(tail);
+	if (tail !== "" && cell.value.endsWith(tail) && label + tailColumns < columns) {
+		const head = cell.value.slice(0, cell.value.length - tail.length);
+		return `${cell.label}${cutColumns(head, columns - label - tailColumns)}${tail}`;
+	}
 	return `${cell.label}${cutColumns(cell.value, columns - label)}`;
 }
 

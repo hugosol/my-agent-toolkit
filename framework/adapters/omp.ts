@@ -1000,18 +1000,38 @@ function executionOwnerOf(pi: OmpExtensionApi, ref: OmpAgentRef, sessionId: stri
  * that carry readings reach this adapter from that same process. An execution this adapter began
  * observing after its opening frame is therefore the first one it knows of that agent, and takes the
  * agent's own id like any other first execution.
+ *
+ * The same object keeps this adapter's own memory of which executions it has attributed to a session
+ * (see {@link SubagentExecutions.attributedBefore}), because that is the one fact that tells a spawn's
+ * creation apart from an execution this host read and then lost: a reading of either resolves no
+ * session — the registry may not hold the spawn's agent yet, or hold it without a live session — and
+ * only an earlier attribution says which of the two a reading belongs to.
  */
 interface SubagentExecutions {
 	/** The identity one agent's readings belong under, or nothing when no agent was named. */
 	readonly identityOf: (agentId: string | undefined) => string | undefined;
 	/** Applies one lifecycle frame's own statement about an execution's opening. */
 	readonly opened: (payload: unknown) => void;
+	/**
+	 * Whether some earlier reading of one execution already attributed it to a session.
+	 *
+	 * This is this adapter's own memory of its readings, and it is the one fact that tells a spawn's
+	 * creation apart from an execution this host read and then lost. A spawn's readings begin before
+	 * the session it will run in exists — on the delegation route, before the registry holds its agent
+	 * at all — so a reading of either state names no session, and only the absence of any earlier
+	 * attribution says which of the two this is.
+	 */
+	readonly attributedBefore: (identity: string) => boolean;
+	/** Records that one reading attributed this execution to the session it actually ran in. */
+	readonly recordAttribution: (identity: string) => void;
 }
 
 /** Build the execution brackets of one subscription. */
 function subagentExecutions(): SubagentExecutions {
 	/** How many executions of each agent this adapter has seen opened, by agent id. */
 	const openedCounts = new Map<string, number>();
+	/** The execution identities this adapter has already attributed to a session. */
+	const attributed = new Set<string>();
 	return {
 		identityOf: agentId => {
 			if (agentId === undefined) return undefined;
@@ -1024,6 +1044,10 @@ function subagentExecutions(): SubagentExecutions {
 			const agentId = statedText(payload.id);
 			if (agentId === undefined) return;
 			openedCounts.set(agentId, (openedCounts.get(agentId) ?? 0) + 1);
+		},
+		attributedBefore: identity => attributed.has(identity),
+		recordAttribution: identity => {
+			attributed.add(identity);
 		},
 	};
 }
@@ -1040,7 +1064,13 @@ function subagentExecutions(): SubagentExecutions {
  * observation whose execution, session or duration this host cannot read is delivered as the fact
  * that it is `unavailable`, anchored to the session the observation was made in rather than dropped:
  * an execution was reported, and an operator has to be told which reading could not be obtained
- * rather than be shown a zero or a span in its place.
+ * rather than be shown a zero or a span in its place. The one exception is a *running* reading of an
+ * execution this host has never attributed to a session — a spawn whose session does not exist yet,
+ * or which the registry does not hold at all — which states no runtime and produces no delivery, so a
+ * session's creation is never reported as an unavailable reading of the main session that spawned it;
+ * nothing is lost, as the readings of an execution are cumulative and the first one that resolves a
+ * session states the whole duration. An execution already attributed once, and one whose execution is
+ * over, are outside that window: their unattributable reading is that `unavailable` fact.
  */
 function subagentRuntimeDelivery(
 	pi: OmpExtensionApi,
@@ -1059,10 +1089,27 @@ function subagentRuntimeDelivery(
 		readonly runtimeMs: unknown;
 		readonly status: "running" | "ended";
 	},
-): SubagentRuntimeDelivery {
+	executions: SubagentExecutions,
+): SubagentRuntimeDelivery | undefined {
 	const registry = pi.pi?.AgentRegistry?.global();
 	const ref = observation.agentId === undefined ? undefined : registry?.get(observation.agentId);
 	const sessionId = statedText(ref?.session?.sessionManager?.getSessionId());
+	// A spawn's readings begin before the harness has a session for it — and, on the harness's own
+	// delegation route, before its agent registry holds the agent at all — so the *running* readings
+	// published in that window are about an execution this adapter has never attributed: that is the
+	// creation transition, and it states no runtime at all, not an unavailable one. Nothing is lost by
+	// withholding it, because the readings of an execution are cumulative: the first one that does
+	// resolve a session states the whole duration elapsed, not the part of it after the attach. An
+	// execution already attributed and one whose execution is reported over are outside that window:
+	// their unattributable reading is that `unavailable` fact, never silence.
+	if (
+		observation.status === "running" &&
+		observation.identity !== undefined &&
+		sessionId === undefined &&
+		!executions.attributedBefore(observation.identity)
+	) {
+		return undefined;
+	}
 	if (observation.identity === undefined || ref === undefined || sessionId === undefined) {
 		return {
 			event: { kind: "subagent_runtime" } as const,
@@ -1079,6 +1126,10 @@ function subagentRuntimeDelivery(
 			feedback: frame.feedback,
 		};
 	}
+	// This reading resolved the session the execution runs in, which is the fact a later reading of the
+	// same execution is read against: once attributed, an execution whose session can no longer be
+	// resolved is an observation an operator has to be told about rather than a creation to wait out.
+	executions.recordAttribution(observation.identity);
 	const runtimeMs = observation.runtimeMs;
 	const usable = typeof runtimeMs === "number" && Number.isFinite(runtimeMs) && runtimeMs >= 0 ? runtimeMs : undefined;
 	return {
@@ -1112,7 +1163,8 @@ function subagentRuntimeDelivery(
  * told which reading could not be obtained rather than be shown a zero or a span in its place. Such
  * an observation is anchored to the session it was read in, which is why `frame` carries that
  * session's own facts, owner and channel. A payload that names no execution at all states no
- * runtime either, and produces no delivery.
+ * runtime either, and produces no delivery — as does a running entry about an execution this adapter
+ * has never attributed to a session (see {@link subagentRuntimeDelivery}).
  */
 function subagentRuntimeDeliveries(
 	pi: OmpExtensionApi,
@@ -1126,14 +1178,20 @@ function subagentRuntimeDeliveries(
 	status: "running" | "ended",
 	executions: SubagentExecutions,
 ): readonly SubagentRuntimeDelivery[] {
-	return subagentEntries(payload, status).map(entry => {
+	return subagentEntries(payload, status).flatMap(entry => {
 		const agentId = statedText(entry.id);
-		return subagentRuntimeDelivery(pi, frame, {
-			agentId,
-			identity: executions.identityOf(agentId),
-			runtimeMs: entry.durationMs,
-			status,
-		});
+		const delivery = subagentRuntimeDelivery(
+			pi,
+			frame,
+			{
+				agentId,
+				identity: executions.identityOf(agentId),
+				runtimeMs: entry.durationMs,
+				status,
+			},
+			executions,
+		);
+		return delivery === undefined ? [] : [delivery];
 	});
 }
 
@@ -1145,7 +1203,9 @@ function subagentRuntimeDeliveries(
  * the harness's own vocabulary — an execution still going is a reading that replaces the previous
  * one, and the three terminal statuses are its final reading — and a frame stating neither a usable
  * status nor the agent it belongs to states no runtime either and produces no delivery. One
- * delivery at most: a frame is the progress of exactly one execution.
+ * delivery at most: a frame is the progress of exactly one execution, and a running one about an
+ * execution this adapter has never attributed to a session produces none either (see
+ * {@link subagentRuntimeDelivery}).
  */
 function subagentFrameDeliveries(
 	pi: OmpExtensionApi,
@@ -1170,14 +1230,18 @@ function subagentFrameDeliveries(
 				? "ended"
 				: undefined;
 	if (moment === undefined) return [];
-	return [
-		subagentRuntimeDelivery(pi, frame, {
+	const delivery = subagentRuntimeDelivery(
+		pi,
+		frame,
+		{
 			agentId,
 			identity: executions.identityOf(agentId),
 			runtimeMs: progress.durationMs,
 			status: moment,
-		}),
-	];
+		},
+		executions,
+	);
+	return delivery === undefined ? [] : [delivery];
 }
 
 /**
@@ -1840,7 +1904,9 @@ function ompPort(
 			// harness's own subagent frames, and map the per-execution duration the host stated there,
 			// attributed through the harness's own agent graph. Which reading replaces which, which
 			// execution is new and which completion was already observed are the consumer's rules, so
-			// every reading is reported as it stands.
+			// every reading is reported as it stands. The one fact that is not reported is the running
+			// reading a spawn publishes before its session exists: the adapter holds no session to
+			// attribute it to yet, so it states nothing until the first reading that resolves one.
 			const executions = subagentExecutions();
 			const report = (payload: unknown, ctx: OmpSessionContext, status: "running" | "ended"): void => {
 				const frame = {

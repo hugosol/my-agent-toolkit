@@ -38,11 +38,22 @@ export const MAIN: SessionFacts = { sessionId: "session-main", kind: "main", nam
 export const MAIN_TARGET = { sessionId: "session-main", provider: "deepseek", model: "deepseek-flash" } as const;
 
 /**
- * The fields a report reads the column of: the ones the tree's own rows state. A session row states no
- * cached share of its conversation input, so `Cache:` is read on the root's model row alone — a row a
- * group of its own — while every field after it belongs to the session depths.
+ * The fields a report reads the column of, by the header each of them leads with: the ones the tree's
+ * own rows state. A session row states no cached share of its conversation input, so `Cache:` is read
+ * on the root's model row alone — a row a group of its own — while every field after it belongs to the
+ * session depths. The startup snapshot a session row carries is the tree's one field with no header at
+ * all, so it is read by its own shape and reported as {@link SNAPSHOT_FIELD}.
  */
-export const REPORTED_FIELDS = ["Model:", "Effort:", "Cache:", "Cost:", "Ctx:", "Run:"] as const;
+export const REPORTED_FIELDS = ["Cache:", "Cost:", "Ctx:", "Run:"] as const;
+
+/** The name a report reads the label-less field of a session row under: its startup snapshot. */
+export const SNAPSHOT_FIELD = "Snapshot";
+
+/**
+ * How one startup snapshot is found on a drawn line: the model half, as short as an ellipsis left it,
+ * immediately followed by the level in its own parentheses.
+ */
+const SNAPSHOT = /[^\s()]+\([^()]*\)/;
 
 /** The theme a terminal host draws with, as escape sequences a terminal really interprets. */
 export const ANSI_THEME: WidgetTheme = {
@@ -257,10 +268,31 @@ export async function bindDetailLayout(): Promise<FixtureRun> {
 	return { runtime: built, host, root };
 }
 
-/** One tree line's own fields, as the terminal column each of them starts at. */
+/**
+ * One tree line's own startup snapshot, or nothing while it carries none: the label-less field a
+ * session row writes between its name and its statistics, `provider/model(effort)` with the model half
+ * as short as a cut left it. Nothing else a row draws is shaped that way — a context reading's own
+ * parentheses follow a space, so the text before them is not part of a `…(...)` of its own.
+ *
+ * It is what tells an agent row from the root's own model row at one depth, now that the snapshot
+ * leads with no header: a session row carries one, whatever became of its columns, and a model row is
+ * a pair of figures rather than a session and never does.
+ */
+export function snapshotOf(line: string): string | undefined {
+	return SNAPSHOT.exec(withoutAnsi(line))?.[0];
+}
+
+/**
+ * One tree line's own fields, as the terminal column each of them starts at.
+ *
+ * The startup snapshot is found by its own shape rather than by a header, and measured where the model
+ * half of it begins — the field's own column, which is the one every row of its group states it at.
+ */
 export function readColumns(line: string): ReadonlyMap<string, number> {
 	const visible = withoutAnsi(line);
 	const columns = new Map<string, number>();
+	const snapshot = snapshotOf(visible);
+	if (snapshot !== undefined) columns.set(SNAPSHOT_FIELD, textColumns(visible.slice(0, visible.indexOf(snapshot))));
 	for (const field of REPORTED_FIELDS) {
 		if (visible.includes(field)) columns.set(field, textColumns(visible.slice(0, visible.indexOf(field))));
 	}

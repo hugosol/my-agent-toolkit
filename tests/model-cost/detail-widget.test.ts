@@ -302,12 +302,12 @@ afterEach(() => {
 	while (roots.length > 0) rmSync(roots.pop() as string, { recursive: true, force: true });
 });
 
-describe("the detail tree shows the model and effort a subagent started on (P27, P28)", () => {
+describe("the detail tree shows the startup snapshot a subagent began on (P27, P28)", () => {
 	/** The one descendant row drawn for a session named `name`, or nothing while none is. */
 	const namedRow = (lines: readonly string[] | undefined, name: string): string | undefined =>
 		treeRows(lines ?? []).find(row => row.name === name)?.line;
 
-	test("the row shows the started-on facts, and no later model or level rewrites them", async () => {
+	test("the row shows the started-on snapshot, and no later model or level rewrites it", async () => {
 		const bound = await bindWidget();
 		await bound.double.runToCompletion("budget", { args: "detail" });
 
@@ -336,9 +336,7 @@ describe("the detail tree shows the model and effort a subagent started on (P27,
 		// Round does — which is what makes the row exist to draw the startup facts on.
 		bound.double.deliverRound(OWNER, { event: { kind: "round_start" }, session: spawned });
 		bound.host.publish({ sessionId: "session-main", provider: "official", model: "model-alpha" });
-		expect(namedRow(bound.host.lastLines(), "检索定价")).toContain(
-			"Model: go-provider / model-alpha  Effort: high",
-		);
+		expect(namedRow(bound.host.lastLines(), "检索定价")).toContain("go-provider/model-alpha(high)");
 
 		// The session then runs on another model at another level — the host says so on a second start of
 		// the same session, which is what a later execution of it would look like. Neither the row nor
@@ -353,9 +351,39 @@ describe("the detail tree shows the model and effort a subagent started on (P27,
 			},
 		});
 		bound.host.publish({ sessionId: "session-main", provider: "official", model: "model-alpha" });
-		expect(namedRow(bound.host.lastLines(), "检索定价")).toContain(
-			"Model: go-provider / model-alpha  Effort: high",
-		);
+		expect(namedRow(bound.host.lastLines(), "检索定价")).toContain("go-provider/model-alpha(high)");
+	});
+
+	test("a level the host answered as `off` is stated as itself, never as an unknown", async () => {
+		const bound = await bindWidget();
+		await bound.double.runToCompletion("budget", { args: "detail" });
+
+		/** The spawned session as its own binding reports it: one that began on no thinking at all. */
+		const off: SessionFacts = {
+			sessionId: "session-quiet",
+			kind: "sub",
+			parentSessionId: "session-main",
+			agentName: "task",
+			agentId: "关闭思考",
+			taskName: "关闭思考",
+			unavailable: [],
+		};
+		bound.double.deliverSession(OWNER, {
+			event: { kind: "session_start", reason: "initial" },
+			session: {
+				...off,
+				startup: { model: { provider: "go-provider", model: "model-alpha" }, effort: "off" },
+				unavailable: [],
+			},
+		});
+		bound.double.deliverRound(OWNER, { event: { kind: "round_start" }, session: off });
+		bound.host.publish({ sessionId: "session-main", provider: "official", model: "model-alpha" });
+
+		// The level is a reading the host really made — it answered no thinking — so the snapshot ends with
+		// it rather than with the `?` an unproved part is written as: one row of the group states a level,
+		// and the other, whose beginning nothing proved, still keeps its own `?(?)`.
+		expect(namedRow(bound.host.lastLines(), "关闭思考")).toContain("go-provider/model-alpha(off)");
+		expect(namedRow(bound.host.lastLines(), "子代理")).toContain("?(?)");
 	});
 
 	test("a session the document already records and this process only recovered keeps an unproved startup unknown", async () => {
@@ -364,10 +392,10 @@ describe("the detail tree shows the model and effort a subagent started on (P27,
 
 		// The subagent this document already carries reports its start while running on another model
 		// and level now. The harness re-bound the extension to a session it reloaded, so nothing in that
-		// delivery proves what the session *began* on: both fields keep their place and stay unknown
+		// delivery proves what the session *began* on: the one snapshot keeps its place and stays unknown
 		// rather than taking the model and level that happen to be current.
 		expect(namedRow(bound.host.lastLines(), "子代理")).toBe(
-			"└─ 子代理  Model: ?  Effort: ?  Run: —",
+			"└─ 子代理  ?(?)  Run: —",
 		);
 		bound.double.deliverSession(OWNER, {
 			event: { kind: "session_start", reason: "initial" },
@@ -380,7 +408,7 @@ describe("the detail tree shows the model and effort a subagent started on (P27,
 		});
 		bound.host.publish({ sessionId: "session-main", provider: "official", model: "model-alpha" });
 		expect(namedRow(bound.host.lastLines(), "子代理")).toBe(
-			"└─ 子代理  Model: ?  Effort: ?  Run: —",
+			"└─ 子代理  ?(?)  Run: —",
 		);
 	});
 });
@@ -489,7 +517,7 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 			total,
 			"主会话",
 			"│  official / model-alpha  Cache: 66%  ¥Cache/In/Out：4:7:89  Cost: ¥0.05",
-			"└─ 子代理  Model: ?  Effort: ?  Run: —",
+			"└─ 子代理  ?(?)  Run: —",
 		]);
 		// The subagent list is read for what each session consumed, so a session row states neither the
 		// root's cached share nor its own: the subagent's row carries no `Cache:` field at all, while the
@@ -542,12 +570,12 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 
 		// Nothing has been measured for the subagent's own executions: its row keeps the runtime field and
 		// states that fact, which is not a zero.
-		expect(childRow()).toBe("└─ 子代理  Model: ?  Effort: ?  Run: —");
+		expect(childRow()).toBe("└─ 子代理  ?(?)  Run: —");
 
 		// The harness states one completed execution's own duration — 480,000 milliseconds, eight whole
 		// minutes, a figure stated here rather than read back from the widget — and the row draws it.
 		bound.double.deliverSubagentRuntime({ runtime: runtimeReading("0-Explore", 480_000, "ended"), session: SUB });
-		expect(childRow()).toBe("└─ 子代理  Model: ?  Effort: ?  Run: 8m");
+		expect(childRow()).toBe("└─ 子代理  ?(?)  Run: 8m");
 
 		// An execution that really took no measurable time is a reading the harness made, so a session
 		// whose only reading is that zero draws the zero — never the marker above.
@@ -558,7 +586,7 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 			session: SUB,
 		});
 		expect(measuredZero.host.lastLines()?.find(line => line.includes("子代理"))).toBe(
-			"└─ 子代理  Model: ?  Effort: ?  Run: 0ms",
+			"└─ 子代理  ?(?)  Run: 0ms",
 		);
 	});
 
@@ -598,7 +626,7 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 			"Total:  Cache: 67%  \u00A5Cache/In/Out\uff1a4:7:89  Cost: \u00A50.05  Span: \u2014",
 			"主会话",
 			"│  official / model-alpha  Cache: 67%  ¥Cache/In/Out：4:7:89  Cost: ¥0.05",
-			"└─ 子代理  Model: ?  Effort: ?  Run: —",
+			"└─ 子代理  ?(?)  Run: —",
 		]);
 
 		// The view moves to the subagent, whose own Round then opens and settles one request: what is
@@ -647,7 +675,7 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 			"Total:  Cache: 67%  \u00A5Cache/In/Out\uff1a4:7:89  Cost: \u00A50.05  Span: \u2014",
 			"主会话",
 			"│  official / model-alpha  Cache: 67%  ¥Cache/In/Out：4:7:89  Cost: ¥0.05",
-			"└─ 子代理  Model: ?  Effort: ?  Run: —",
+			"└─ 子代理  ?(?)  Run: —",
 		]);
 	});
 
@@ -657,7 +685,7 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 
 		// No binding has reported the subagent's context: its row carries its consumption alone, and no
 		// context field is invented for it.
-		expect(bound.host.lastLines()?.find(line => line.includes("子代理"))).toBe("└─ 子代理  Model: ?  Effort: ?  Run: —");
+		expect(bound.host.lastLines()?.find(line => line.includes("子代理"))).toBe("└─ 子代理  ?(?)  Run: —");
 
 		// The subagent's own binding publishes its current context on the monetary channel. The row reads
 		// it against that channel's own 450K display budget, as `percent (tokens/budget)` — the same form
@@ -669,7 +697,7 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 		});
 		bound.host.publish({ sessionId: "session-main", provider: "official", model: "model-alpha" });
 		expect(bound.host.lastLines()?.find(line => line.includes("子代理"))).toBe(
-			"└─ 子代理  Model: ?  Effort: ?  Ctx: 85% (381.5K/450.0K)  Run: —",
+			"└─ 子代理  ?(?)  Ctx: 85% (381.5K/450.0K)  Run: —",
 		);
 
 		// A later reading on the allowance channel is read against that channel's own 272K budget, chosen
@@ -681,7 +709,7 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 		});
 		bound.host.publish({ sessionId: "session-main", provider: "official", model: "model-alpha" });
 		expect(bound.host.lastLines()?.find(line => line.includes("子代理"))).toBe(
-			"└─ 子代理  Model: ?  Effort: ?  Ctx: 50% (136.0K/272.0K)  Run: —",
+			"└─ 子代理  ?(?)  Ctx: 50% (136.0K/272.0K)  Run: —",
 		);
 
 		// A pair the data does not classify has no display budget at all, so the row carries no context
@@ -692,7 +720,7 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 			model: "no-such",
 		});
 		bound.host.publish({ sessionId: "session-main", provider: "official", model: "model-alpha" });
-		expect(bound.host.lastLines()?.find(line => line.includes("子代理"))).toBe("└─ 子代理  Model: ?  Effort: ?  Run: —");
+		expect(bound.host.lastLines()?.find(line => line.includes("子代理"))).toBe("└─ 子代理  ?(?)  Run: —");
 	});
 
 	test("a session is named by its task handle, and a session's own name outranks it (P26)", async () => {
@@ -702,7 +730,7 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 		// The document already names the subagent: that recorded name is what its row shows, because no
 		// newer fact about it has been reported yet.
 		expect(treeRows(bound.host.lastLines() ?? []).map(row => row.name)).toEqual(["子代理"]);
-		expect(bound.host.lastLines()?.find(line => line.includes("子代理"))).toBe("└─ 子代理  Model: ?  Effort: ?  Run: —");
+		expect(bound.host.lastLines()?.find(line => line.includes("子代理"))).toBe("└─ 子代理  ?(?)  Run: —");
 
 		// A report carrying only the agent's id adds no name, so the name already known still stands: an id
 		// never displaces a name.
@@ -711,7 +739,7 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 			session: { sessionId: "session-sub", kind: "sub", agentId: "0-Explore", unavailable: [] },
 		});
 		bound.host.publish({ sessionId: "session-main", provider: "official", model: "model-alpha" });
-		expect(bound.host.lastLines()?.find(line => line.includes("子代理"))).toBe("└─ 子代理  Model: ?  Effort: ?  Run: —");
+		expect(bound.host.lastLines()?.find(line => line.includes("子代理"))).toBe("└─ 子代理  ?(?)  Run: —");
 
 		// The host reports the kind of agent this session runs and the registry identity behind it — for
 		// a spawned session those are the agent definition (`task`, `explore`, `scout`) and the id its
@@ -749,7 +777,7 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 		bound.host.publish({ sessionId: "session-main", provider: "official", model: "model-alpha" });
 		expect(treeRows(bound.host.lastLines() ?? []).map(row => row.name)).toEqual(["检索定价"]);
 		expect(bound.host.lastLines()?.find(line => line.includes("检索定价"))).toBe(
-			"└─ 检索定价  Model: ?  Effort: ?  Run: —",
+			"└─ 检索定价  ?(?)  Run: —",
 		);
 
 		// The operator names the session explicitly, and that name is what the row shows: the handle is

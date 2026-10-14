@@ -134,14 +134,14 @@ function atBeijing(hours: number, minutes = 0): number {
 	return Date.UTC(2026, 9, 5, hours, minutes) - BEIJING_OFFSET_MS;
 }
 
-/** The closed period's own two instants: the input it began at, and the Round end it last observed. */
+/** The closed period's own two instants: the input it began at, and the latest Turn end it observed. */
 const OLD_INPUT = atBeijing(10, 0);
-const OLD_ROUND_END = atBeijing(10, 5);
+const OLD_TURN_END = atBeijing(10, 5);
 /** The instant the timed cases' clock reads when they close the period. */
 const SWITCH_AT = atBeijing(10, 30);
-/** The new period's own input and Round end, which its span is the difference of: 180,000 ms. */
+/** The new period's own input and Turn end, which its span is the difference of: 180,000 ms. */
 const NEW_INPUT = atBeijing(11, 0);
-const NEW_ROUND_END = atBeijing(11, 3);
+const NEW_TURN_END = atBeijing(11, 3);
 
 /** A subagent of the main session, as a host that reports its facts makes it one row of the tree. */
 const SUB: SessionFacts = {
@@ -188,7 +188,7 @@ const TIMED_TREE: ConsumptionDocument = {
 							},
 						},
 					},
-					span: { start: OLD_INPUT, end: OLD_ROUND_END },
+					span: { start: OLD_INPUT, end: OLD_TURN_END },
 				},
 				{
 					id: "session-sub",
@@ -879,7 +879,7 @@ describe("a switch clears the period's own time with the consumption it closes (
 		// and 360,000 ms of native runtime under it, both as the display and the widget read them.
 		expect(bound.runtime.view.sessionSpan(MAIN.sessionId)).toEqual({
 			startAt: OLD_INPUT,
-			endAt: OLD_ROUND_END,
+			endAt: OLD_TURN_END,
 			elapsedMs: 300_000,
 		});
 		expect(bound.runtime.view.runtime(SUB.sessionId)).toBe(360_000);
@@ -974,7 +974,7 @@ describe("a switch clears the period's own time with the consumption it closes (
 		expect(readFileSync(bound.consumptionFile, "utf8")).toBe(before);
 		expect(bound.runtime.view.sessionSpan(MAIN.sessionId)).toEqual({
 			startAt: OLD_INPUT,
-			endAt: OLD_ROUND_END,
+			endAt: OLD_TURN_END,
 			elapsedMs: 300_000,
 		});
 		expect(bound.runtime.view.runtime(SUB.sessionId)).toBe(360_000);
@@ -1088,19 +1088,21 @@ describe("a switch clears the period's own time with the consumption it closes (
 		clock = NEW_INPUT;
 		bound.double.deliverUserInput(OWNER, { session: MAIN });
 		bound.double.deliverRound(OWNER, { event: { kind: "round_start" }, session: MAIN });
-		// An input with no observed Round end after it is still nothing to read: both facts are needed.
+		// An input with no settled Turn after it is still nothing to read: both facts are needed.
 		expect(bound.runtime.view.sessionSpan(MAIN.sessionId)).toBeUndefined();
 
-		clock = NEW_ROUND_END;
+		clock = NEW_TURN_END;
 		bound.double.deliverTurn(
 			{ kind: "request_started", session: MAIN, at: NEW_INPUT, provider: "deepseek", model: "deepseek-chat" },
 			{ owner: OWNER },
 		);
+		// The Turn's own end is the period's own 11:03 — the instant the response settled, which is what
+		// the span's end takes rather than the clock this delivery was handled on.
 		bound.double.deliverTurn(
 			{
 				kind: "response_settled",
 				session: MAIN,
-				at: NEW_INPUT,
+				at: NEW_TURN_END,
 				outcome: "completed",
 				readings: [{ input: 10, output: 10, cacheRead: 0, cacheWrite: 0, totalTokens: 20 }],
 			},
@@ -1110,7 +1112,7 @@ describe("a switch clears the period's own time with the consumption it closes (
 
 		expect(bound.runtime.view.sessionSpan(MAIN.sessionId)).toEqual({
 			startAt: NEW_INPUT,
-			endAt: NEW_ROUND_END,
+			endAt: NEW_TURN_END,
 			elapsedMs: 180_000,
 		});
 		expect(widgetLinesOf(bound, MAIN_TARGET).find(line => line.startsWith("Total: "))).toContain("Span: 0:03:00");
@@ -1118,7 +1120,7 @@ describe("a switch clears the period's own time with the consumption it closes (
 		// The existing commit path carries that same new pair and nothing of the closed period's: the
 		// record the round's own save published holds the new period's two instants.
 		await updateFile(bound.consumptionFile, current => current);
-		expect(storedRecord(bound.root, MAIN.sessionId)?.span).toEqual({ start: NEW_INPUT, end: NEW_ROUND_END });
+		expect(storedRecord(bound.root, MAIN.sessionId)?.span).toEqual({ start: NEW_INPUT, end: NEW_TURN_END });
 	});
 
 	test("a reset another process committed takes this instance's observed time with the closed period (P20, P21)", async () => {
@@ -1130,7 +1132,7 @@ describe("a switch clears the period's own time with the consumption it closes (
 		bound.double.deliverUserInput(OWNER, { session: MAIN });
 		expect(bound.runtime.view.sessionSpan(MAIN.sessionId)).toEqual({
 			startAt: OLD_INPUT,
-			endAt: OLD_ROUND_END,
+			endAt: OLD_TURN_END,
 			elapsedMs: 300_000,
 		});
 
@@ -1170,12 +1172,13 @@ describe("a switch clears the period's own time with the consumption it closes (
 		expect(refusal.feedback[0]?.level).toBe("error");
 		expect(refusal.feedback[0]?.message).toContain("另一个周期");
 		// The period that replaced the closed one has no start of its own yet: the instant this instance
-		// observed before the reset is not carried past it, and an unfinished Round fabricates no end.
+		// observed before the reset is not carried past it, and an unsettled Turn fabricates no end.
 		expect(bound.runtime.view.sessionSpan(MAIN.sessionId)).toBeUndefined();
 		expect(widgetLinesOf(bound, MAIN_TARGET).find(line => line.startsWith("Total: "))).toContain("Span: \u2014");
 
-		// The new period's span begins at the first input this instance observes in it, and the existing
-		// commit path carries that pair and nothing of the closed period's.
+		// The new period's span begins at the first input this instance observes in it and ends at the
+		// first Turn end it observes in it, and the existing commit path carries that pair and nothing of
+		// the closed period's.
 		clock = NEW_INPUT;
 		bound.double.deliverUserInput(OWNER, { session: MAIN });
 		bound.double.deliverRound(OWNER, { event: { kind: "round_start" }, session: MAIN });
@@ -1187,22 +1190,22 @@ describe("a switch clears the period's own time with the consumption it closes (
 			{
 				kind: "response_settled",
 				session: MAIN,
-				at: NEW_INPUT,
+				at: NEW_TURN_END,
 				outcome: "completed",
 				readings: [{ input: 10, output: 10, cacheRead: 0, cacheWrite: 0, totalTokens: 20 }],
 			},
 			{ owner: OWNER },
 		);
-		clock = NEW_ROUND_END;
+		clock = NEW_TURN_END;
 		bound.double.deliverRound(OWNER, { event: { kind: "round_end" }, session: MAIN });
 		expect(bound.runtime.view.sessionSpan(MAIN.sessionId)).toEqual({
 			startAt: NEW_INPUT,
-			endAt: NEW_ROUND_END,
+			endAt: NEW_TURN_END,
 			elapsedMs: 180_000,
 		});
 
 		await updateFile(bound.consumptionFile, current => current);
-		expect(storedRecord(bound.root, MAIN.sessionId)?.span).toEqual({ start: NEW_INPUT, end: NEW_ROUND_END });
+		expect(storedRecord(bound.root, MAIN.sessionId)?.span).toEqual({ start: NEW_INPUT, end: NEW_TURN_END });
 	});
 
 	test("a switch that could not archive writes no time and keeps the readings it had", async () => {
@@ -1220,7 +1223,7 @@ describe("a switch clears the period's own time with the consumption it closes (
 		// dropped, and nothing is recovered from an archive that was never written.
 		expect(bound.runtime.view.sessionSpan(MAIN.sessionId)).toEqual({
 			startAt: OLD_INPUT,
-			endAt: OLD_ROUND_END,
+			endAt: OLD_TURN_END,
 			elapsedMs: 300_000,
 		});
 		expect(bound.runtime.view.runtime(SUB.sessionId)).toBe(360_000);

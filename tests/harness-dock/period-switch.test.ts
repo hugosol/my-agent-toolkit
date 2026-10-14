@@ -219,8 +219,8 @@ describe("the real host's period switch archives the period it closes and opens 
 			const before = await savedText(run.consumptionFile, text => text.includes("\"own\""));
 			const previous = JSON.parse(before) as Record<string, unknown>;
 			expect(previous.periodId).toBe(START_PERIOD);
-			// The period the switch closes holds its own time: this run's own submission as the start,
-			// measured to the Round end that save belongs to.
+			// The period the switch closes holds its own time: this run's own submission as the start, and
+			// the last Turn's own settle as the end, carried by the commit the Round end made.
 			const [priorRecord] = sessionsOf(previous);
 			const priorSpan = priorRecord?.span as { readonly start?: number; readonly end?: number } | undefined;
 			if (typeof priorSpan?.start !== "number" || typeof priorSpan.end !== "number") {

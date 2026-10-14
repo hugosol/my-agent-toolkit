@@ -10,9 +10,11 @@
  * line drawn from it, and the consumption document the Round's own save publishes — never a private
  * field.
  *
- * The clock is the extension's own injectable instant source, driven by hand: the harness publishes
- * *that* a submission or a Round end arrived, not an instant of its own, so a case that places an
- * input at 10:00 and an end at 10:05 is stating the two observations the span is the difference of.
+ * The clock is the extension's own injectable instant source, driven by hand, and it timestamps the
+ * one span fact the harness publishes with no instant of its own: the submission. A Turn's own end is
+ * a fact of the delivery — the instant the framework states for the response that settled it — so a
+ * case that places an input at 10:00 and a Turn's settle at 10:05 is stating the two observations the
+ * span is the difference of, and the clock value at that delivery is deliberately not it.
  * Every expected millisecond count below is arithmetic on those two instants, written here rather
  * than read back from the implementation.
  *
@@ -34,7 +36,7 @@ import type {
 import type { ModelPricingData } from "../../extensions/model-cost/shared-logic/model-data";
 import { type ModelCostRuntime, createModelCostRuntime } from "../../extensions/model-cost/shared-logic/runtime";
 import { totalText } from "../../extensions/model-cost/shared-logic/presentation/display";
-import type { OwnerReference, SessionFacts, TurnSignal, TurnUsage } from "../../framework/core/protocol";
+import type { OwnerReference, SessionFacts, TurnOutcome, TurnSignal, TurnUsage } from "../../framework/core/protocol";
 import { type PortDouble, portDouble } from "../framework/support/harness-port-double";
 
 const BEIJING_OFFSET_MS = 8 * 60 * 60 * 1000;
@@ -105,9 +107,38 @@ function startedAt(session: SessionFacts, at: number, provider = PROVIDER, model
 	return { kind: "request_started", session, at, provider, model };
 }
 
-/** One settled response, with the reading the harness reported. */
-function settled(session: SessionFacts, at: number, readings: readonly TurnUsage[] = [USAGE]): TurnSignal {
-	return { kind: "response_settled", session, at, outcome: "completed", readings };
+/**
+ * One settled response, with the outcome the harness reported and the reading it carried.
+ *
+ * The outcome is the delivery's own fact: this extension accounts the reading the same way whatever it
+ * is, and what a case varies it for is that a failed or cancelled Turn is a Turn that ended like any
+ * other.
+ */
+function settled(
+	session: SessionFacts,
+	at: number,
+	readings: readonly TurnUsage[] = [USAGE],
+	outcome: TurnOutcome = "completed",
+): TurnSignal {
+	return { kind: "response_settled", session, at, outcome, readings };
+}
+
+/**
+ * One Turn in an actual session: the request about to be sent at `requestedAt`, and the response that
+ * settles it at `endedAt`.
+ *
+ * The settle is the Turn's own end: `endedAt` is the instant the framework's own delivery states, and
+ * it is the instant this session's Session span end takes — never the value the hand-driven clock
+ * happens to hold when a handler runs.
+ */
+function deliverRequest(double: PortDouble, session: SessionFacts, requestedAt: number, endedAt: number): void {
+	double.deliverTurn(startedAt(session, requestedAt), { owner: OWNER });
+	double.deliverTurn(settled(session, endedAt), { owner: OWNER });
+}
+
+/** One Turn whose response settles at `endedAt`, an ordinary minute after its request went out. */
+function deliverTurnEndingAt(double: PortDouble, session: SessionFacts, endedAt: number): void {
+	deliverRequest(double, session, endedAt - 60_000, endedAt);
 }
 
 /** Every root this file created, removed after each case. */
@@ -169,13 +200,12 @@ async function bindAccounting(root: string, baseline?: unknown): Promise<BoundAc
 	return { runtime, double, file, feedback: session.feedback };
 }
 
-/** One request in an actual session, delivered as a Turn's start and its settled response. */
-function deliverRequest(double: PortDouble, session: SessionFacts, at = atBeijing(13)): void {
-	double.deliverTurn(startedAt(session, at), { owner: OWNER });
-	double.deliverTurn(settled(session, at + 60_000), { owner: OWNER });
-}
-
-/** One Round's opening edge or its end edge, as the harness reports it for one session. */
+/**
+ * One Round's opening edge or its end edge, as the harness reports it for one session.
+ *
+ * A Round edge is a boundary of the session's consumption and of its activity, and no part of its
+ * Session span: the cases that drive it do so to show what it does *not* move.
+ */
 function deliverEdge(double: PortDouble, session: SessionFacts, edge: "round_start" | "round_end") {
 	return double.deliverRound(OWNER, { event: { kind: edge }, session });
 }
@@ -245,26 +275,36 @@ describe("the start is the session's own first user input (P1, P2)", () => {
 	test("a session created at 09:50 whose input is at 10:00 starts at 10:00, not at its creation or its first request", async () => {
 		const { runtime, double } = await bindAccounting(freshRoot());
 
-		// The host reports the session at 09:50 — the fact that a session exists — and a request runs at
-		// 09:52, before the operator has said anything. Neither is a start: no input has been observed,
-		// so the span is unknown rather than zero or the request's own instant.
+		// The host reports the session at 09:50 — the fact that a session exists — and a whole Turn runs at
+		// 09:52, before the operator has said anything. Neither is a start: no input has been observed, so
+		// the span is unknown rather than zero or the request's own instant, and a settled Turn cannot
+		// supply the start a session has never taken.
 		clock = atBeijing(9, 50);
 		double.deliverSession(OWNER, { session: MAIN });
 		clock = atBeijing(9, 52);
-		deliverRequest(double, MAIN, atBeijing(9, 52));
+		deliverRequest(double, MAIN, atBeijing(9, 52), atBeijing(9, 53));
 		expect(runtime.view.sessionSpan(MAIN.sessionId)).toBeUndefined();
 
 		// The operator's own submission at 10:00 — the one fact that establishes the start — and the
-		// request it leads to at 10:00:05, which is not it either.
+		// request it leads to at 10:00:05, which is not it either. That request's own settle at 10:00:10
+		// is the first end there is, so the reading is ten seconds, counted from the input.
 		clock = atBeijing(10, 0, 0);
 		double.deliverUserInput(OWNER, { session: MAIN });
 		clock = atBeijing(10, 0, 5);
-		deliverRequest(double, MAIN, atBeijing(10, 0, 5));
+		deliverRequest(double, MAIN, atBeijing(10, 0, 5), atBeijing(10, 0, 10));
+		expect(runtime.view.sessionSpan(MAIN.sessionId)).toEqual({
+			startAt: atBeijing(10, 0, 0),
+			endAt: atBeijing(10, 0, 10),
+			elapsedMs: 10_000,
+		});
 
-		// The Round the submission started ends at 10:05: five minutes of wall clock, counted from the
-		// input and from nothing else.
+		// The next Turn's own settle at 10:05 moves the end and never the start, and the Round's end that
+		// follows it moves neither: five minutes of wall clock, counted from the input and from nothing
+		// else — not from the Round edge, whose own instant this case deliberately leaves later.
 		deliverEdge(double, MAIN, "round_start");
-		clock = atBeijing(10, 5);
+		clock = atBeijing(10, 4);
+		deliverRequest(double, MAIN, atBeijing(10, 4), atBeijing(10, 5));
+		clock = atBeijing(10, 20);
 		deliverEdge(double, MAIN, "round_end");
 
 		expect(runtime.view.sessionSpan(MAIN.sessionId)).toEqual({
@@ -274,19 +314,28 @@ describe("the start is the session's own first user input (P1, P2)", () => {
 		});
 	});
 
-	test("a submission the harness attributed to the user establishes the start with no request of any kind", async () => {
+	test("a submission the harness attributed to the user establishes the start, and an unsettled Turn leaves no reading", async () => {
 		const { runtime, double } = await bindAccounting(freshRoot());
 
-		// The only fact this session ever produces is the input fact itself: no Turn, no request and no
-		// message of any role. The harness publishes that fact for every submission it admitted — before
-		// deciding what the submission is — so a user-invoked skill is this same fact, and the start it
-		// establishes is the instant the submission arrived.
+		// The input fact is the one fact this session produces first: no Turn, no request and no message of
+		// any role. The harness publishes it for every submission it admitted — before deciding what the
+		// submission is — so a user-invoked skill is this same fact, and the start it establishes is the
+		// instant the submission arrived.
 		clock = atBeijing(10, 0, 0);
 		double.deliverUserInput(OWNER, { session: MAIN });
 		deliverEdge(double, MAIN, "round_start");
-		clock = atBeijing(10, 30, 0);
-		deliverEdge(double, MAIN, "round_end");
+		double.deliverTurn(startedAt(MAIN, atBeijing(10, 0, 10)), { owner: OWNER });
 
+		// A Turn is in flight and the Round has run for half an hour: a start with no end observed is
+		// unknown, and neither the clock moving nor the Round's own end supplies one.
+		clock = atBeijing(10, 30, 0);
+		expect(runtime.view.sessionSpan(MAIN.sessionId)).toBeUndefined();
+		deliverEdge(double, MAIN, "round_end");
+		await queuedWorkSettled();
+		expect(runtime.view.sessionSpan(MAIN.sessionId)).toBeUndefined();
+
+		// That Turn's own settle is the end: half an hour of wall clock, counted from the input.
+		double.deliverTurn(settled(MAIN, atBeijing(10, 30, 0)), { owner: OWNER });
 		expect(runtime.view.sessionSpan(MAIN.sessionId)).toEqual({
 			startAt: atBeijing(10, 0, 0),
 			endAt: atBeijing(10, 30, 0),
@@ -302,8 +351,7 @@ describe("the start is the session's own first user input (P1, P2)", () => {
 		clock = atBeijing(10, 20, 0);
 		double.deliverUserInput(OWNER, { session: MAIN });
 		deliverEdge(double, MAIN, "round_start");
-		clock = atBeijing(10, 35, 0);
-		deliverEdge(double, MAIN, "round_end");
+		deliverTurnEndingAt(double, MAIN, atBeijing(10, 35, 0));
 
 		// The first input is the start and the second is not: 35 minutes, not 15.
 		expect(runtime.view.sessionSpan(MAIN.sessionId)).toEqual({
@@ -318,13 +366,11 @@ describe("a fork starts from its own first new input (P3)", () => {
 	test("a copied history establishes nothing, and the fork's own submission establishes its start", async () => {
 		const { runtime, double } = await bindAccounting(freshRoot());
 
-		// The source session holds a span of its own: input at 10:00, its Round ended at 10:05.
+		// The source session holds a span of its own: input at 10:00, its Turn settled at 10:05.
 		clock = atBeijing(10, 0, 0);
 		double.deliverUserInput(OWNER, { session: MAIN });
 		deliverEdge(double, MAIN, "round_start");
-		deliverRequest(double, MAIN, atBeijing(13));
-		clock = atBeijing(10, 5, 0);
-		deliverEdge(double, MAIN, "round_end");
+		deliverTurnEndingAt(double, MAIN, atBeijing(10, 5, 0));
 		const sourceSpan = { startAt: atBeijing(10, 0, 0), endAt: atBeijing(10, 5, 0), elapsedMs: 300_000 };
 		expect(runtime.view.sessionSpan(MAIN.sessionId)).toEqual(sourceSpan);
 
@@ -338,13 +384,12 @@ describe("a fork starts from its own first new input (P3)", () => {
 			runtime.presentation.of({ sessionId: FORK.sessionId, provider: PROVIDER, model: MODEL }).span,
 		).toBeUndefined();
 
-		// Its own first submission at 11:10 is its start, and its first Round ends at 11:13: three
+		// Its own first submission at 11:10 is its start, and its own first Turn settles at 11:13: three
 		// minutes, counted from 11:10 and not from the copied 10:00.
 		clock = atBeijing(11, 10, 0);
 		double.deliverUserInput(OWNER, { session: FORK });
 		deliverEdge(double, FORK, "round_start");
-		clock = atBeijing(11, 13, 0);
-		deliverEdge(double, FORK, "round_end");
+		deliverTurnEndingAt(double, FORK, atBeijing(11, 13, 0));
 
 		expect(runtime.view.sessionSpan(FORK.sessionId)).toEqual({
 			startAt: atBeijing(11, 10, 0),
@@ -356,36 +401,37 @@ describe("a fork starts from its own first new input (P3)", () => {
 	});
 });
 
-describe("the span is the first input up to the latest observed Round end (P4, P6)", () => {
-	test("a Round that ends at 10:05 reads 300,000 ms and does not grow while the next one runs", async () => {
+describe("the span is the first input up to the latest observed Turn end (P4, P6)", () => {
+	test("a Turn that settles at 10:05 reads 300,000 ms and does not grow while the next one is in flight", async () => {
 		const { runtime, double } = await bindAccounting(freshRoot());
 		const mainLine = () => totalText(runtime.presentation.of({ sessionId: MAIN.sessionId, provider: PROVIDER, model: MODEL }));
 
 		clock = atBeijing(10, 0, 0);
 		double.deliverUserInput(OWNER, { session: MAIN });
 		deliverEdge(double, MAIN, "round_start");
-		deliverRequest(double, MAIN, atBeijing(13));
-		clock = atBeijing(10, 5, 0);
-		deliverEdge(double, MAIN, "round_end");
+		deliverTurnEndingAt(double, MAIN, atBeijing(10, 5, 0));
 
 		expect(runtime.view.sessionSpan(MAIN.sessionId)?.elapsedMs).toBe(300_000);
 		expect(mainLine()).toContain("Span: 0:05:00");
 
-		// The next Round begins at 10:06 and work goes on for a long while. The reading is the last
-		// Round's own end, so it stays where it is as the clock advances: the Total shows the same five
-		// minutes it showed before, not the hour that has passed since.
+		// The next Round begins at 10:06 and its Turn runs on for a long while without settling. The
+		// reading is the last Turn's own end, so it stays where it is as the clock advances: the Total
+		// shows the same five minutes it showed before, not the hour the response has been coming for.
 		clock = atBeijing(10, 6, 0);
 		deliverEdge(double, MAIN, "round_start");
+		double.deliverTurn(startedAt(MAIN, atBeijing(10, 6, 0)), { owner: OWNER });
 		clock = atBeijing(10, 30, 0);
-		deliverRequest(double, MAIN, atBeijing(13));
 		expect(runtime.view.sessionSpan(MAIN.sessionId)?.elapsedMs).toBe(300_000);
 		expect(mainLine()).toContain("Span: 0:05:00");
 
-		clock = atBeijing(11, 3, 0);
+		// Its own settle at 11:03 is the new end — the Round it belongs to ends after it, and moves
+		// nothing.
+		double.deliverTurn(settled(MAIN, atBeijing(11, 3, 0)), { owner: OWNER });
+		clock = atBeijing(11, 4, 0);
 		deliverEdge(double, MAIN, "round_end");
 
-		// 10:00 to 11:03 is 63 minutes: the first Round's 300,000 ms plus the idle time between the two
-		// Rounds, which is what makes this a physical span rather than an execution time.
+		// 10:00 to 11:03 is 63 minutes: the first Turn's 300,000 ms plus the idle time between the two
+		// Turns, which is what makes this a physical span rather than an execution time.
 		expect(runtime.view.sessionSpan(MAIN.sessionId)).toEqual({
 			startAt: atBeijing(10, 0, 0),
 			endAt: atBeijing(11, 3, 0),
@@ -396,16 +442,16 @@ describe("the span is the first input up to the latest observed Round end (P4, P
 });
 
 describe("a span that is not known is unavailable rather than zero (P5, P16)", () => {
-	test("a first Round that has not ended reads as a dash and never grows while it runs", async () => {
+	test("a first Turn that has not settled reads as a dash and never grows while it runs", async () => {
 		const { runtime, double, file } = await bindAccounting(freshRoot());
 
 		clock = atBeijing(10, 0, 0);
 		double.deliverUserInput(OWNER, { session: MAIN });
 		deliverEdge(double, MAIN, "round_start");
-		deliverRequest(double, MAIN, atBeijing(13));
+		double.deliverTurn(startedAt(MAIN, atBeijing(10, 0, 5)), { owner: OWNER });
 
-		// An hour of a Round in progress: no end has been observed, so the session's time is unknown and
-		// the Total says so, rather than showing the hour that has elapsed or a zero.
+		// An hour of a Turn in flight: no end has been observed, so the session's time is unknown and the
+		// Total says so, rather than showing the hour that has elapsed or a zero.
 		clock = atBeijing(11, 0, 0);
 		expect(runtime.view.sessionSpan(MAIN.sessionId)).toBeUndefined();
 		expect(runtime.presentation.of({ sessionId: MAIN.sessionId, provider: PROVIDER, model: MODEL }).span).toBeUndefined();
@@ -413,7 +459,7 @@ describe("a span that is not known is unavailable rather than zero (P5, P16)", (
 			totalText(runtime.presentation.of({ sessionId: MAIN.sessionId, provider: PROVIDER, model: MODEL })),
 		).toContain("Span: \u2014");
 		// Nothing was written either: a time reading that cannot exist yet is not a reason to touch the
-		// document, and the Round in progress has not ended.
+		// document, and the request in flight has consumed nothing yet.
 		await queuedWorkSettled();
 		expect(readDocument(file)).toBeUndefined();
 	});
@@ -435,13 +481,16 @@ describe("a span that is not known is unavailable rather than zero (P5, P16)", (
 		};
 		const { runtime, double } = await bindAccounting(root, historical);
 
-		// The instance sees a Round begin and then the clock move well past any last transcript time the
-		// history held. No end was observed, so nothing is fabricated for the missing one.
+		// The instance sees a Round begin and end and the clock move well past any last transcript time
+		// the history held, while no Turn settles at all. Neither an end observed for the Round nor the
+		// clock is an end for the span, so nothing is fabricated for the missing one.
 		clock = atBeijing(10, 0, 0);
 		double.deliverUserInput(OWNER, { session: MAIN });
 		deliverEdge(double, MAIN, "round_start");
+		double.deliverTurn(startedAt(MAIN, atBeijing(10, 0, 5)), { owner: OWNER });
 		clock = atBeijing(12, 0, 0);
-		deliverRequest(double, MAIN, atBeijing(13));
+		deliverEdge(double, MAIN, "round_end");
+		await queuedWorkSettled();
 		expect(runtime.view.sessionSpan(MAIN.sessionId)).toBeUndefined();
 		expect(
 			totalText(runtime.presentation.of({ sessionId: MAIN.sessionId, provider: PROVIDER, model: MODEL })),
@@ -451,12 +500,12 @@ describe("a span that is not known is unavailable rather than zero (P5, P16)", (
 	test("a reliable zero is a present reading and is told apart from an absent one", async () => {
 		const { runtime, double, file } = await bindAccounting(freshRoot());
 
-		// The input and the Round's end are the same instant: the pair is present and its difference is
-		// exactly zero. The consumption the same save carries is what makes this an ordinary commit.
+		// The input and the Turn's own end are the same instant: the pair is present and its difference
+		// is exactly zero. The consumption the same save carries is what makes this an ordinary commit.
 		clock = atBeijing(13, 0, 0);
 		double.deliverUserInput(OWNER, { session: MAIN });
 		deliverEdge(double, MAIN, "round_start");
-		deliverRequest(double, MAIN, atBeijing(13, 0, 5));
+		deliverRequest(double, MAIN, atBeijing(13, 0, 0), atBeijing(13, 0, 0));
 		deliverEdge(double, MAIN, "round_end");
 
 		expect(runtime.view.sessionSpan(MAIN.sessionId)).toEqual({
@@ -492,13 +541,13 @@ describe("the saved pair is restored and continued rather than restarted (P7, P1
 		const root = freshRoot();
 		const first = await bindAccounting(root);
 
-		// The first process: input at 10:00, a request in the Round, the Round ended at 10:05 — the pair
+		// The first process: input at 10:00, a Turn settling at 10:05, the Round ended after it — the pair
 		// the ordinary commit carries.
 		clock = atBeijing(10, 0, 0);
 		first.double.deliverUserInput(OWNER, { session: MAIN });
 		deliverEdge(first.double, MAIN, "round_start");
-		deliverRequest(first.double, MAIN, atBeijing(13));
-		clock = atBeijing(10, 5, 0);
+		deliverTurnEndingAt(first.double, MAIN, atBeijing(10, 5, 0));
+		clock = atBeijing(10, 6, 0);
 		deliverEdge(first.double, MAIN, "round_end");
 		await savedDocument(
 			first.file,
@@ -526,11 +575,11 @@ describe("the saved pair is restored and continued rather than restarted (P7, P1
 			elapsedMs: 300_000,
 		});
 
-		// Its Round ends at 12:30: two and a half hours from the original start, which includes the two
-		// hours the programme was closed for.
+		// Its own next Turn settles at 12:30: two and a half hours from the original start, which includes
+		// the two hours the programme was closed for.
 		deliverEdge(second.double, MAIN, "round_start");
-		deliverRequest(second.double, MAIN, atBeijing(13));
-		clock = atBeijing(12, 30, 0);
+		deliverTurnEndingAt(second.double, MAIN, atBeijing(12, 30, 0));
+		clock = atBeijing(12, 31, 0);
 		deliverEdge(second.double, MAIN, "round_end");
 		expect(second.runtime.view.sessionSpan(MAIN.sessionId)).toEqual({
 			startAt: atBeijing(10, 0, 0),
@@ -554,17 +603,19 @@ describe("the saved pair is restored and continued rather than restarted (P7, P1
 });
 
 describe("the time is carried by existing commits and by nothing else (P8, P14)", () => {
-	test("an unfinished Round fabricates no end, and time moving or waiting writes nothing", async () => {
+	test("an unsettled Turn fabricates no end, and time moving or waiting writes nothing", async () => {
 		const { runtime, double, file } = await bindAccounting(freshRoot());
 		const root = path.dirname(file);
 
-		// One ordinary Round: input 10:00, a request, end 10:05. That commit is the only thing that
-		// carries time, and the pair it left is the reading.
-		clock = atBeijing(10, 0, 0);
+		// One ordinary Round: input 13:00, a Turn settling at 13:05, the Round's end after it. That commit
+		// is the only thing that carries time, and the pair it left is the reading. Both of the Turns below
+		// go out inside the data's off-peak afternoon window, so the amounts this case reads are the
+		// tier's own off-peak price.
+		clock = atBeijing(13, 0, 0);
 		double.deliverUserInput(OWNER, { session: MAIN });
 		deliverEdge(double, MAIN, "round_start");
-		deliverRequest(double, MAIN, atBeijing(13));
-		clock = atBeijing(10, 5, 0);
+		deliverTurnEndingAt(double, MAIN, atBeijing(13, 5, 0));
+		clock = atBeijing(13, 6, 0);
 		deliverEdge(double, MAIN, "round_end");
 		await savedDocument(file, candidate => recordOf(candidate, MAIN.sessionId)?.span !== undefined);
 		const saved = readFileSync(file, "utf8");
@@ -574,31 +625,32 @@ describe("the time is carried by existing commits and by nothing else (P8, P14)"
 		expect(storageFiles).toContain(CONSUMPTION_FILE);
 		expect(storageFiles.filter(name => !name.startsWith(CONSUMPTION_FILE))).toEqual([]);
 
-		// The next Round runs and is never ended: a cancelled, failed or interrupted Round delivers no
-		// end, so the previous end stays — and the clock moving on, further user input and the work of
-		// the unfinished Round write nothing at all, because there is no commit for time to ride on.
-		clock = atBeijing(10, 6, 0);
+		// The next Round runs with a Turn in flight that never settles: no end is invented for it, so the
+		// previous one stays — and the clock moving on, further user input and the work of the unfinished
+		// Round write nothing at all, because there is no commit for time to ride on.
+		clock = atBeijing(13, 7, 0);
 		deliverEdge(double, MAIN, "round_start");
-		deliverRequest(double, MAIN, atBeijing(13));
-		clock = atBeijing(11, 30, 0);
+		double.deliverTurn(startedAt(MAIN, atBeijing(13, 7, 0)), { owner: OWNER });
+		clock = atBeijing(13, 30, 0);
 		double.deliverUserInput(OWNER, { session: MAIN });
-		clock = atBeijing(12, 0, 0);
+		clock = atBeijing(13, 59, 0);
 		await queuedWorkSettled();
 		expect(readFileSync(file, "utf8")).toBe(saved);
 		expect(readdirSync(root)).toEqual(storageFiles);
 		expect(runtime.view.sessionSpan(MAIN.sessionId)).toEqual({
-			startAt: atBeijing(10, 0, 0),
-			endAt: atBeijing(10, 5, 0),
+			startAt: atBeijing(13, 0, 0),
+			endAt: atBeijing(13, 5, 0),
 			elapsedMs: 300_000,
 		});
 
-		// That Round's real end refreshes the reading, and the same existing commit carries it: no
-		// second write and no time-only file appear for it.
-		clock = atBeijing(12, 3, 0);
+		// Its own settle at 14:00 is the new end, and the same existing commit carries it: no second
+		// write and no time-only file appear for it.
+		double.deliverTurn(settled(MAIN, atBeijing(14, 0, 0)), { owner: OWNER });
+		clock = atBeijing(14, 1, 0);
 		deliverEdge(double, MAIN, "round_end");
 		const refreshed = await savedDocument(
 			file,
-			candidate => recordOf(candidate, MAIN.sessionId)?.span?.end === atBeijing(12, 3, 0),
+			candidate => recordOf(candidate, MAIN.sessionId)?.span?.end === atBeijing(14, 0, 0),
 		);
 		expect(recordOf(refreshed, MAIN.sessionId)).toEqual({
 			id: MAIN.sessionId,
@@ -606,14 +658,14 @@ describe("the time is carried by existing commits and by nothing else (P8, P14)"
 			parent: null,
 			saveVersion: 2,
 			own: oneRequest(2),
-			span: { start: atBeijing(10, 0, 0), end: atBeijing(12, 3, 0) },
+			span: { start: atBeijing(13, 0, 0), end: atBeijing(14, 0, 0) },
 		});
 		expect(readdirSync(root)).toEqual(storageFiles);
 
 		// The session ends and the process goes away. A close writes nothing of its own: no exit save, no
 		// catch-up write for the time this instance holds, and nothing new in the root.
 		const refreshedText = readFileSync(file, "utf8");
-		clock = atBeijing(12, 40, 0);
+		clock = atBeijing(14, 30, 0);
 		double.deliverSession(OWNER, { event: { kind: "session_end", reason: "disposed" } });
 		double.deliverUserInput(OWNER, { session: MAIN });
 		deliverEdge(double, MAIN, "round_start");
@@ -623,23 +675,30 @@ describe("the time is carried by existing commits and by nothing else (P8, P14)"
 		expect(readdirSync(root)).toEqual(storageFiles);
 	});
 
-	test("a Round that ends without its own consumption growing refreshes the reading and writes nothing", async () => {
+	test("a Turn that settles without a reliable usage reading refreshes the reading and writes nothing", async () => {
 		const { runtime, double, file } = await bindAccounting(freshRoot());
 
+		// One ordinary Round first: input 10:00, a Turn settling at 10:05, the Round's end saving the pair.
 		clock = atBeijing(10, 0, 0);
 		double.deliverUserInput(OWNER, { session: MAIN });
 		deliverEdge(double, MAIN, "round_start");
-		deliverRequest(double, MAIN, atBeijing(13));
-		clock = atBeijing(10, 5, 0);
+		deliverTurnEndingAt(double, MAIN, atBeijing(10, 5, 0));
+		clock = atBeijing(10, 6, 0);
 		deliverEdge(double, MAIN, "round_end");
 		await savedDocument(file, candidate => recordOf(candidate, MAIN.sessionId)?.span !== undefined);
 		const saved = readFileSync(file, "utf8");
 
-		// A Round with nothing of its own ends at 11:00. The end was really delivered, so the reading
-		// advances — but the session's own consumption has not grown since the last snapshot, so there is
-		// no commit for it to be saved through, and the document keeps the pair it already holds.
+		// A Turn whose response reported no usable usage settles at 11:00. Its end is a fact of its own,
+		// so the reading advances — the skip is reported, and what it skips is the consumption alone —
+		// while the session's own consumption has not grown since the last snapshot, so the Round's own
+		// end finds nothing to save and the document keeps the pair it already holds.
 		deliverEdge(double, MAIN, "round_start");
-		clock = atBeijing(11, 0, 0);
+		double.deliverTurn(startedAt(MAIN, atBeijing(10, 59, 0)), { owner: OWNER });
+		const skipped = double.deliverTurn(settled(MAIN, atBeijing(11, 0, 0), []), { owner: OWNER }).feedback;
+		expect(skipped).toHaveLength(1);
+		expect(skipped[0]?.level).toBe("warning");
+		expect(skipped[0]?.message).toContain("usage");
+		clock = atBeijing(11, 1, 0);
 		deliverEdge(double, MAIN, "round_end");
 		await queuedWorkSettled();
 		expect(runtime.view.sessionSpan(MAIN.sessionId)).toEqual({
@@ -652,37 +711,44 @@ describe("the time is carried by existing commits and by nothing else (P8, P14)"
 });
 
 describe("an invalid time reading is reported without stopping anything (P15)", () => {
-	test("an unusable clock reading reports it, keeps the last reading, and the consumption is still accounted and saved", async () => {
+	test("an unusable reading reports it, keeps the last reading, and the consumption is still accounted and saved", async () => {
 		const { runtime, double, file } = await bindAccounting(freshRoot());
 
-		// One ordinary Round first, so there is a reading to keep.
-		clock = atBeijing(10, 0, 0);
+		// One ordinary Round first — input 13:00, a Turn settling at 13:05, the Round ending after it — so
+		// there is a reading to keep. The afternoon hour is the data's own off-peak window, so the amounts
+		// below are the tier's own off-peak price rather than its peak multiple.
+		clock = atBeijing(13, 0, 0);
 		double.deliverUserInput(OWNER, { session: MAIN });
 		deliverEdge(double, MAIN, "round_start");
-		deliverRequest(double, MAIN, atBeijing(13));
-		clock = atBeijing(10, 5, 0);
+		deliverTurnEndingAt(double, MAIN, atBeijing(13, 5, 0));
+		clock = atBeijing(13, 6, 0);
 		deliverEdge(double, MAIN, "round_end");
 
-		// The clock answers something that is not an instant at all.
+		// The clock answers something that is not an instant at all when the submission it timestamps
+		// arrives.
 		clock = Number.NaN;
 		const inputFeedback = double.deliverUserInput(OWNER, { session: MAIN }).feedback;
 		expect(inputFeedback).toHaveLength(1);
 		expect(inputFeedback[0]?.level).toBe("error");
 		expect(inputFeedback[0]?.message).toContain("主会话时间采集失败");
+		expect(inputFeedback[0]?.message).toContain("时钟读数");
 
+		// A Turn's own end is not an instant either: it is reported the same way and nothing is recorded
+		// from it, while the request it carried is accounted and saved exactly as it would have been: the
+		// same independent value the first Round's own request yielded, at the next version.
 		deliverEdge(double, MAIN, "round_start");
-		deliverRequest(double, MAIN, atBeijing(13));
-		const endFeedback = await feedbackOf(deliverEdge(double, MAIN, "round_end"));
+		double.deliverTurn(startedAt(MAIN, atBeijing(13, 20, 0)), { owner: OWNER });
+		const endFeedback = double.deliverTurn(settled(MAIN, Number.NaN), { owner: OWNER }).feedback;
 		expect(endFeedback).toHaveLength(1);
 		expect(endFeedback[0]?.level).toBe("error");
 		expect(endFeedback[0]?.message).toContain("主会话时间采集失败");
+		expect(endFeedback[0]?.message).toContain("Turn 结束时刻");
+		clock = atBeijing(13, 25, 0);
+		deliverEdge(double, MAIN, "round_end");
 
-		// The reading is the last valid one and no instant was filled in for the invalid one, while the
-		// request the Round carried was accounted and saved exactly as it would have been: the same
-		// independent value the first Round's own request yielded, at the next version.
 		expect(runtime.view.sessionSpan(MAIN.sessionId)).toEqual({
-			startAt: atBeijing(10, 0, 0),
-			endAt: atBeijing(10, 5, 0),
+			startAt: atBeijing(13, 0, 0),
+			endAt: atBeijing(13, 5, 0),
 			elapsedMs: 300_000,
 		});
 		const document = await savedDocument(file, candidate => recordOf(candidate, MAIN.sessionId)?.saveVersion === 2);
@@ -692,22 +758,22 @@ describe("an invalid time reading is reported without stopping anything (P15)", 
 			parent: null,
 			saveVersion: 2,
 			own: oneRequest(2),
-			span: { start: atBeijing(10, 0, 0), end: atBeijing(10, 5, 0) },
+			span: { start: atBeijing(13, 0, 0), end: atBeijing(13, 5, 0) },
 		});
 	});
 
-	test("a Round that has not ended yet is unknown rather than reported as a failure", async () => {
+	test("a Turn that has not settled yet is unknown rather than reported as a failure", async () => {
 		const { runtime, double } = await bindAccounting(freshRoot());
 
 		clock = atBeijing(10, 0, 0);
 		const inputFeedback = double.deliverUserInput(OWNER, { session: MAIN }).feedback;
 		deliverEdge(double, MAIN, "round_start");
+		double.deliverTurn(startedAt(MAIN, atBeijing(10, 0, 5)), { owner: OWNER });
 		clock = atBeijing(10, 30, 0);
-		deliverRequest(double, MAIN, atBeijing(13));
 		await queuedWorkSettled();
 
-		// Nothing was wrong: an ordinary session that has not finished its first Round has no end to
-		// pair its start with, and nothing is reported about it in either direction.
+		// Nothing was wrong: an ordinary session whose first Turn has not settled has no end to pair its
+		// start with, and nothing is reported about it in either direction.
 		expect(inputFeedback).toEqual([]);
 		expect(runtime.view.sessionSpan(MAIN.sessionId)).toBeUndefined();
 	});
@@ -743,13 +809,15 @@ describe("an older document keeps its data and gains the time beside it (P22, P2
 		expect(runtime.view.sessionSpan(MAIN.sessionId)).toBeUndefined();
 
 		// The session it belongs to keeps working, and its next commit is one version on with the old
-		// consumption plus the new request, the parent intact and the time it has now really observed.
+		// consumption plus the new request, the parent intact and the time it has now really observed. Its
+		// own Turn goes out in the data's off-peak afternoon window, so the amount added is the tier's own
+		// off-peak price.
 		double.deliverSession(OWNER, { session: FORK });
-		clock = atBeijing(10, 0, 0);
+		clock = atBeijing(13, 0, 0);
 		double.deliverUserInput(OWNER, { session: FORK });
 		deliverEdge(double, FORK, "round_start");
-		deliverRequest(double, FORK, atBeijing(13));
-		clock = atBeijing(10, 5, 0);
+		deliverTurnEndingAt(double, FORK, atBeijing(13, 5, 0));
+		clock = atBeijing(13, 6, 0);
 		deliverEdge(double, FORK, "round_end");
 
 		const document = await savedDocument(file, candidate => recordOf(candidate, FORK.sessionId)?.saveVersion === 6);
@@ -759,7 +827,7 @@ describe("an older document keeps its data and gains the time beside it (P22, P2
 			parent: MAIN.sessionId,
 			saveVersion: 6,
 			own: oneRequest(3),
-			span: { start: atBeijing(10, 0, 0), end: atBeijing(10, 5, 0) },
+			span: { start: atBeijing(13, 0, 0), end: atBeijing(13, 5, 0) },
 		});
 		// The session the work did not touch is the record it was, with no time added to it.
 		expect(recordOf(document, MAIN.sessionId)).toEqual({
@@ -894,11 +962,13 @@ describe("the whole-document rules are unchanged by an optional time fact (P36)"
 		};
 		writeFileSync(file, JSON.stringify(theirDocument), "utf8");
 
-		clock = atBeijing(10, 0, 0);
+		// A submission and a whole Turn in the data's off-peak afternoon window: input 13:00, a Turn
+		// settling at 13:05, the Round ending after it.
+		clock = atBeijing(13, 0, 0);
 		double.deliverUserInput(OWNER, { session: MAIN });
 		deliverEdge(double, MAIN, "round_start");
-		deliverRequest(double, MAIN, atBeijing(13));
-		clock = atBeijing(10, 5, 0);
+		deliverTurnEndingAt(double, MAIN, atBeijing(13, 5, 0));
+		clock = atBeijing(13, 6, 0);
 		const notices = await feedbackOf(deliverEdge(double, MAIN, "round_end"));
 
 		// The existing refusal rule, word for word: the operator is told, the refused accumulation is
@@ -911,18 +981,18 @@ describe("the whole-document rules are unchanged by an optional time fact (P36)"
 		expect(notices[0]?.message).toContain("丢弃");
 		expect(readDocument(file)).toEqual(theirDocument);
 		expect(runtime.view.own(MAIN.sessionId)).toEqual(theirs.own);
-		// The reading this instance sees is the span it observed: an end really arrived, so the time it
+		// The reading this instance sees is the span it observed: a Turn really settled, so the time it
 		// holds is a fact even though the commit that would have carried it did not land.
 		expect(runtime.view.sessionSpan(MAIN.sessionId)).toEqual({
-			startAt: atBeijing(10, 0, 0),
-			endAt: atBeijing(10, 5, 0),
+			startAt: atBeijing(13, 0, 0),
+			endAt: atBeijing(13, 5, 0),
 			elapsedMs: 300_000,
 		});
 
 		// The next real commit continues from the disk's own version and carries the time along with it.
 		deliverEdge(double, MAIN, "round_start");
-		deliverRequest(double, MAIN, atBeijing(13));
-		clock = atBeijing(10, 20, 0);
+		deliverTurnEndingAt(double, MAIN, atBeijing(13, 25, 0));
+		clock = atBeijing(13, 26, 0);
 		deliverEdge(double, MAIN, "round_end");
 		const next = await savedDocument(file, candidate => recordOf(candidate, MAIN.sessionId)?.saveVersion === 2);
 		expect(recordOf(next, MAIN.sessionId)).toEqual({
@@ -935,7 +1005,7 @@ describe("the whole-document rules are unchanged by an optional time fact (P36)"
 					[MODEL]: { tokens: { input: 102, cacheRead: 4, cacheWrite: 5, output: 3 }, costCny: 0.50003 },
 				},
 			},
-			span: { start: atBeijing(10, 0, 0), end: atBeijing(10, 20, 0) },
+			span: { start: atBeijing(13, 0, 0), end: atBeijing(13, 25, 0) },
 		});
 	});
 
@@ -955,8 +1025,8 @@ describe("the whole-document rules are unchanged by an optional time fact (P36)"
 		clock = atBeijing(10, 0, 0);
 		double.deliverUserInput(OWNER, { session: MAIN });
 		deliverEdge(double, MAIN, "round_start");
-		deliverRequest(double, MAIN, atBeijing(13));
-		clock = atBeijing(10, 5, 0);
+		deliverTurnEndingAt(double, MAIN, atBeijing(10, 5, 0));
+		clock = atBeijing(10, 6, 0);
 		deliverEdge(double, MAIN, "round_end");
 		await queuedWorkSettled();
 		expect(readFileSync(file, "utf8")).toBe(broken);
@@ -1021,13 +1091,14 @@ describe("the whole-document rules are unchanged by an optional time fact (P36)"
 		expect(runtime.view.sessionSpan(FORK.sessionId)).toBeUndefined();
 
 		// The affected session keeps working, and its next commit carries the consumption it already had
-		// plus the new request — with the time it has really observed since, never the invalid pair.
+		// plus the new request — with the time it has really observed since, never the invalid pair. Its own
+		// Turn goes out inside the data's off-peak afternoon window.
 		double.deliverSession(OWNER, { session: FORK });
-		clock = atBeijing(10, 0, 0);
+		clock = atBeijing(13, 0, 0);
 		double.deliverUserInput(OWNER, { session: FORK });
 		deliverEdge(double, FORK, "round_start");
-		deliverRequest(double, FORK, atBeijing(13));
-		clock = atBeijing(10, 5, 0);
+		deliverTurnEndingAt(double, FORK, atBeijing(13, 5, 0));
+		clock = atBeijing(13, 6, 0);
 		deliverEdge(double, FORK, "round_end");
 		const document = await savedDocument(file, candidate => recordOf(candidate, FORK.sessionId)?.saveVersion === 4);
 		expect(recordOf(document, FORK.sessionId)).toEqual({
@@ -1036,7 +1107,70 @@ describe("the whole-document rules are unchanged by an optional time fact (P36)"
 			parent: MAIN.sessionId,
 			saveVersion: 4,
 			own: oneRequest(3),
-			span: { start: atBeijing(10, 0, 0), end: atBeijing(10, 5, 0) },
+			span: { start: atBeijing(13, 0, 0), end: atBeijing(13, 5, 0) },
 		});
+	});
+});
+
+describe("every outcome of a Turn ends the session's span (P8, P14)", () => {
+	test("a failed Turn and a cancelled one end it exactly as a completed one does", async () => {
+		const { runtime, double } = await bindAccounting(freshRoot());
+
+		clock = atBeijing(13, 0, 0);
+		double.deliverUserInput(OWNER, { session: MAIN });
+		deliverEdge(double, MAIN, "round_start");
+
+		// A request that failed: the harness settled its response at 13:05 with the reading it could still
+		// report, so the span ends there — and the consumption is accounted exactly as a completed Turn's
+		// would be, because the outcome is not what this extension counts.
+		double.deliverTurn(startedAt(MAIN, atBeijing(13, 4, 0)), { owner: OWNER });
+		double.deliverTurn(settled(MAIN, atBeijing(13, 5, 0), [USAGE], "failed"), { owner: OWNER });
+		expect(runtime.view.sessionSpan(MAIN.sessionId)).toEqual({
+			startAt: atBeijing(13, 0, 0),
+			endAt: atBeijing(13, 5, 0),
+			elapsedMs: 300_000,
+		});
+		expect(runtime.view.own(MAIN.sessionId)).toEqual(oneRequest(1));
+
+		// A request the operator cancelled: it reported no reliable usage, and the span still ends at the
+		// instant its response settled. What the missing reading costs is that Turn's consumption alone —
+		// the skip is reported and the time stays — and the accumulation keeps the failed Turn's own.
+		double.deliverTurn(startedAt(MAIN, atBeijing(13, 6, 0)), { owner: OWNER });
+		const skipped = double.deliverTurn(settled(MAIN, atBeijing(13, 10, 0), [], "cancelled"), { owner: OWNER })
+			.feedback;
+		expect(skipped).toHaveLength(1);
+		expect(skipped[0]?.level).toBe("warning");
+		expect(skipped[0]?.message).toContain("usage");
+		expect(runtime.view.sessionSpan(MAIN.sessionId)).toEqual({
+			startAt: atBeijing(13, 0, 0),
+			endAt: atBeijing(13, 10, 0),
+			elapsedMs: 600_000,
+		});
+		expect(runtime.view.own(MAIN.sessionId)).toEqual(oneRequest(1));
+	});
+
+	test("a Turn this instance never anchored still ends the span, while its consumption is skipped", async () => {
+		// An instance whose baseline cannot be read is paused: it prices nothing and counts nothing, so
+		// every Turn of it is a Turn with no anchor at all. Its session's time is not part of that refusal —
+		// the end is a fact about the Turn, not about the price it never fixed.
+		const broken = "{ this is not a document";
+		const { runtime, double, file } = await bindAccounting(freshRoot(), broken);
+
+		clock = atBeijing(13, 0, 0);
+		double.deliverUserInput(OWNER, { session: MAIN });
+		deliverEdge(double, MAIN, "round_start");
+		double.deliverTurn(startedAt(MAIN, atBeijing(13, 4, 0)), { owner: OWNER });
+		double.deliverTurn(settled(MAIN, atBeijing(13, 5, 0), [USAGE]), { owner: OWNER });
+
+		expect(runtime.view.sessionSpan(MAIN.sessionId)).toEqual({
+			startAt: atBeijing(13, 0, 0),
+			endAt: atBeijing(13, 5, 0),
+			elapsedMs: 300_000,
+		});
+		// Nothing was counted for that Turn and nothing was written: the refusal is the accounting's, and
+		// the time the same instance observed stays a reading it holds.
+		expect(runtime.view.own(MAIN.sessionId)).toBeUndefined();
+		await queuedWorkSettled();
+		expect(readFileSync(file, "utf8")).toBe(broken);
 	});
 });
