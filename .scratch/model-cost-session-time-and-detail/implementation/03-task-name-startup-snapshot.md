@@ -8,7 +8,7 @@
 
 **Blocked by:** None (can start immediately).
 
-**Status:** ready-for-agent
+**Status:** in-progress
 
 Source: [approved contract](../contract.md) · [spec](../spec.md)
 

@@ -186,6 +186,22 @@ export interface AgentTreeContext {
 }
 
 /**
+ * One descendant session's startup facts as the detail tree draws them: the model it began on and
+ * the effective effort it began with.
+ *
+ * Both members are already written the way a row shows them, and both are always present: a part
+ * nothing proved is `?` rather than being dropped, so the field keeps its place in the row and a
+ * later field never shifts into the gap. Neither is truncating — what a narrow terminal does with
+ * them is the frontend's own.
+ */
+export interface AgentTreeStartup {
+	/** The model the session began on as `provider / model`, or `?` when nothing proved one. */
+	readonly model: string;
+	/** The effective effort it began with, or `?` when nothing proved one. */
+	readonly effort: string;
+}
+
+/**
  * One row of the detail form's static tree: what a frontend draws as one line, before its own
  * indentation and colour.
  *
@@ -202,6 +218,16 @@ export interface AgentTreeRow {
 	readonly depth: number;
 	/** The row's own applicable fields; absent on the root row, whose consumption is its model rows. */
 	readonly fields?: ConsumptionFields;
+	/**
+	 * The startup facts of a descendant session: the model and effective effort it began with.
+	 *
+	 * It is what that session started on and not what it runs now, so a later model switch or level
+	 * change does not move it; each part is `?` when nothing proved it. Present on every descendant
+	 * session row and absent on the root and model rows, which are not sessions: a model row is a pair
+	 * the root consumed, and the root row is the session the tree is *of*, whose own current pair the
+	 * Total above already writes.
+	 */
+	readonly startup?: AgentTreeStartup;
 	/**
 	 * The descendant session's own current context, when this process observed one.
 	 *
@@ -637,11 +663,20 @@ export function createPresentation(inputs: PresentationInputs): ConsumptionPrese
 					observed === undefined
 						? undefined
 						: displayBudgetOf(classify(data, observed.provider ?? "", observed.model ?? "").mode);
+				// The startup facts as a row writes them: what the session began on, or `?` for a part
+				// nothing proved — the row keeps both fields rather than borrowing the model or level
+				// anything else is running now.
+				const startup = view.startup(child.sessionId);
 				rows.push({
 					kind: "session",
 					name: child.name,
 					depth,
 					fields: fieldsOf(view.own(child.sessionId) ?? {}),
+					startup: {
+						model:
+							startup?.model === undefined ? "\u003F" : `${startup.model.provider} / ${startup.model.model}`,
+						effort: startup?.effort ?? "\u003F",
+					},
 					...(observed === undefined || budget === undefined
 						? {}
 						: { context: { tokens: observed.tokens, budget } }),

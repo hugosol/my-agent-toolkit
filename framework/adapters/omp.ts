@@ -33,6 +33,7 @@ import type {
 	SessionEvent,
 	SessionFacts,
 	SessionStartReason,
+	SessionStartup,
 	TurnOutcome,
 	TurnSignalFacts,
 	TurnUsage,
@@ -445,6 +446,16 @@ export interface OmpExtensionApi {
 	on(event: "message_update", handler: (event: OmpMessageUpdateEvent, ctx: OmpSessionContext) => void): void;
 	on(event: "message_end", handler: (event: OmpMessageEndEvent, ctx: OmpSessionContext) => void): void;
 	/**
+	 * The bound session's actual effective thinking level, as the harness's own session reports it.
+	 *
+	 * It is the level the session really runs with, already resolved: a configured `auto` (or any
+	 * other selector the user set) is not what this answers, which is why it is the one reading a
+	 * startup fact may be built from. Optional: a surface that publishes no such getter reports no
+	 * level rather than being read through a private field, and the delivery then names the fact it
+	 * could not obtain.
+	 */
+	getThinkingLevel?(): string | undefined;
+	/**
 	 * The injected SDK surface (`pi.pi`).
 	 *
 	 * Optional because only owner resolution needs it: a top-level main session is its own
@@ -657,7 +668,9 @@ function startReasonOf(event: OmpSessionEvent): SessionStartReason {
 }
 
 /**
- * The actual session facts one delivery carries: identity, direct parent and latest name.
+ * The actual session facts one delivery carries: identity, direct parent, latest name, the task's
+ * own naming handle, and — on the delivery that announces the session's own start — the model and
+ * effective effort it began with.
  *
  * Identity is the session manager's own session id and the harness's agent kind. The direct parent
  * is resolved exactly one hop — the registry entry the spawning id names, then that agent's live
@@ -671,8 +684,16 @@ function startReasonOf(event: OmpSessionEvent): SessionStartReason {
  * session manager publishes its own name-change notification — on a facts delivery of its own,
  * made when the rename happens rather than at the session's next boundary. A harness that reports
  * no name, and an empty one, are both named as unavailable rather than invented.
+ *
+ * A spawned session's registry id *is* the naming handle its spawn was allocated (`name` on the
+ * spawning call, or a generated one), so it is reported as the task's own name as well: it says
+ * which work the session carries out, where the agent's registered name says only what kind of
+ * agent runs it. `reportStarted` is set by the one delivery that announces the session's own start
+ * in this process, which is the only one whose readings are startup facts: the model it began on
+ * and the effective level this harness resolves for it — never the configured selector behind that
+ * level, and never what a later delivery could read.
  */
-function sessionFactsOf(pi: OmpExtensionApi, ctx: OmpSessionContext): SessionFacts {
+function sessionFactsOf(pi: OmpExtensionApi, ctx: OmpSessionContext, reportStarted = false): SessionFacts {
 	const unavailable: string[] = [];
 	const kind = ctx.agent.kind === "main" ? "main" : "sub";
 	let parentSessionId: string | undefined;
@@ -687,23 +708,65 @@ function sessionFactsOf(pi: OmpExtensionApi, ctx: OmpSessionContext): SessionFac
 	const reportedName = ctx.sessionManager.getSessionName?.();
 	const name = reportedName === undefined || reportedName.trim().length === 0 ? undefined : reportedName;
 	if (name === undefined) unavailable.push("session name");
-	// The agent's own name first and its registry id second: the name is what the host's roster shows,
-	// and the id is the fallback a display takes only when no name was reported anywhere.
+	// The agent's own name and its registry id: the first is the agent *definition* the session runs,
+	// the second the identity its registry, messaging and history index use. Neither is the task's
+	// own name, so both are reported as what they are.
 	const reportedAgentName = ctx.agent.name?.trim();
 	const agentName = reportedAgentName === undefined || reportedAgentName.length === 0 ? undefined : reportedAgentName;
 	if (agentName === undefined) unavailable.push("agent name");
 	const reportedAgentId = ctx.agent.id?.trim();
 	const agentId = reportedAgentId === undefined || reportedAgentId.length === 0 ? undefined : reportedAgentId;
 	if (agentId === undefined) unavailable.push("agent id");
+	// Only a spawned session carries a task handle, and only its own start carries startup facts: a
+	// main session is loaded rather than spawned (a process-level label such as `Main` names no task),
+	// and what a later delivery reads is the session's current model and level rather than the ones it
+	// began with.
+	const taskName = kind === "sub" ? agentId : undefined;
+	const startup = reportStarted && kind === "sub" ? startupFactsOf(pi, ctx, unavailable) : undefined;
 	return {
 		sessionId: ctx.sessionManager.getSessionId(),
 		kind,
 		...(parentSessionId === undefined ? {} : { parentSessionId }),
 		...(name === undefined ? {} : { name }),
+		...(taskName === undefined ? {} : { taskName }),
 		...(agentName === undefined ? {} : { agentName }),
 		...(agentId === undefined ? {} : { agentId }),
+		...(startup === undefined ? {} : { startup }),
 		unavailable,
 	};
+}
+
+/**
+ * The model and effective effort the session this context reports began with, as the harness answers
+ * for it at the session's own start — the readings the framework's startup facts are built from.
+ *
+ * Neither is a setting: the model is the one the context reports for the request being issued at
+ * that moment, and the level is the harness's own getter, which answers the level the session really
+ * runs (a configured `auto` selector is not a level). A reading this host cannot give is named in
+ * `unavailable` rather than replaced by anything — not by the model's own cap, not by a level the
+ * configuration mentions, and not by a zero. Nothing is reported at all when neither reading is
+ * available, so the absence of a startup fact stays distinguishable from an empty one.
+ */
+function startupFactsOf(pi: OmpExtensionApi, ctx: OmpSessionContext, unavailable: string[]): SessionStartup | undefined {
+	const reported = ctx.model;
+	const model =
+		reported?.id === undefined || reported.id.length === 0 || reported.provider === undefined || reported.provider.length === 0
+			? undefined
+			: { provider: reported.provider, model: reported.id };
+	if (model === undefined) unavailable.push("startup model");
+	// A harness that publishes no level getter reports no level at all; one that publishes it and
+	// answers nothing means this session has none, which is an ordinary absence rather than an
+	// unobtainable fact — and equally not a level this adapter may invent.
+	const readLevel = pi.getThinkingLevel;
+	let effort: string | undefined;
+	if (typeof readLevel !== "function") {
+		unavailable.push("startup effort");
+	} else {
+		const level = readLevel.call(pi);
+		if (typeof level === "string" && level.length > 0) effort = level;
+	}
+	if (model === undefined && effort === undefined) return undefined;
+	return { ...(model === undefined ? {} : { model }), ...(effort === undefined ? {} : { effort }) };
 }
 
 /** The all-zero reading a message carries when the provider reported no usage at all. */
@@ -1103,7 +1166,9 @@ function ompPort(
 				catalogued(ctx);
 				handler({
 					event,
-					session: sessionFactsOf(pi, ctx),
+					// One start delivery is the session's own beginning in this process, and it is the one
+					// whose readings are the session's startup facts; every other delivery reports none.
+					session: sessionFactsOf(pi, ctx, event.kind === "session_start"),
 					owner,
 					statePayloads: statePayloadsOf(ctx, stateEntryType),
 					// The same medium the command path records State through: an entry this

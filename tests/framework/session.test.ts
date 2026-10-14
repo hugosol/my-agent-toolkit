@@ -27,6 +27,7 @@ import type { OwnerReference, SessionEvent, SessionStartReason } from "../../fra
 import {
 	type CommandImplementations,
 	type ExtensionDefinition,
+	type ObservationScope,
 	type SessionEventDelivery,
 	type SessionEventHandlers,
 	defineExtension,
@@ -54,6 +55,12 @@ interface SessionFacts {
 	readonly kind?: "main" | "sub";
 	/** The display name the harness holds for this session, when it holds one. */
 	readonly name?: string;
+	/** The name the harness registers for the agent the session runs; absent models none reported. */
+	readonly agentName?: string;
+	/** The registry id the harness allocated the session's spawn; absent models none reported. */
+	readonly agentId?: string;
+	/** The model this session's context reports; absent models a context with no model fact. */
+	readonly model?: { readonly id?: string; readonly provider?: string };
 }
 
 interface Registration {
@@ -85,6 +92,8 @@ interface NativeSurface {
 	readonly observed: Observed[];
 	/** The session-facts deliveries the framework dispatched, in call order. */
 	readonly factsObserved: ObservedFacts[];
+	/** The actual session facts each start delivery carried, in call order. */
+	readonly startFacts: SessionEventDelivery["session"][];
 	/** Marker-area content in call order: the lines, or `undefined` for a cleared widget. */
 	readonly widgets: ReadonlyArray<readonly string[] | undefined>;
 	/** Loads a session, as the runner does at startup: `session_start`. */
@@ -125,7 +134,7 @@ type RunInitiationHandler = (
  */
 function boundSurface(
 	definition: ExtensionDefinition,
-	surface: { readonly nameChange?: "reported" | "absent" } = {},
+	surface: { readonly nameChange?: "reported" | "absent"; readonly scope?: ObservationScope; readonly effort?: string } = {},
 ): NativeSurface {
 	const stateEntryType = `${definition.id}:state`;
 	const commandName = (definition.commands ?? [])[0]?.name;
@@ -134,6 +143,7 @@ function boundSurface(
 	const notifications: string[] = [];
 	const observed: Observed[] = [];
 	const factsObserved: ObservedFacts[] = [];
+	const startFacts: SessionEventDelivery["session"][] = [];
 	const widgets: Array<readonly string[] | undefined> = [];
 	/** The name each session manager holds, as the harness's own state holds it. */
 	const names = new Map<string, string>();
@@ -153,9 +163,10 @@ function boundSurface(
 	const contextOf = (facts: SessionFacts): OmpSessionContext => ({
 		agent: {
 			kind: facts.kind ?? "main",
-			id: facts.kind === "sub" ? "0-Explore" : "Main",
-			name: facts.kind === "sub" ? "explore" : "main",
+			id: facts.agentId ?? (facts.kind === "sub" ? "0-Explore" : "Main"),
+			name: facts.agentName ?? (facts.kind === "sub" ? "explore" : "main"),
 		},
+		...(facts.model === undefined ? {} : { model: facts.model }),
 		sessionManager: {
 			getSessionId: () => facts.sessionId,
 			// The branch as the session manager holds it: the State entries this session persisted.
@@ -211,12 +222,18 @@ function boundSurface(
 			if (event === "before_agent_start" || event === "agent_start" || event === "agent_end") return;
 			handlers[event].push(handler as SessionHandler);
 		},
+		// The session's own effective level, as the harness's api reports it; absent models a
+		// surface that publishes no level getter at all.
+		...(surface.effort === undefined ? {} : { getThinkingLevel: () => surface.effort as string }),
 	};
 
 	// The assembly's own subscription: what the framework hands a shared-logic session
 	// handler, recorded as the fact under test.
 	const events: SessionEventHandlers = {
-		session_start: (delivery: SessionEventDelivery) => void observed.push(observationOf(delivery)),
+		session_start: (delivery: SessionEventDelivery) => {
+			startFacts.push(delivery.session);
+			observed.push(observationOf(delivery));
+		},
 		session_end: (delivery: SessionEventDelivery) => void observed.push(observationOf(delivery)),
 		session_facts: (delivery: SessionEventDelivery) =>
 			void factsObserved.push({ event: delivery.event, session: delivery.session, owner: delivery.owner }),
@@ -224,7 +241,7 @@ function boundSurface(
 
 	// The loader binds the extension for the session it is loading: one factory call.
 	const factory = frameworkOmp.ompAdapter(definition, {
-		factory: () => ({ subscriptions: [{ scope: "owner", events }] }),
+		factory: () => ({ subscriptions: [{ scope: surface.scope ?? "owner", events }] }),
 	});
 	if (!factory(api).bound) throw new Error(`the "${definition.id}" definition did not bind`);
 
@@ -234,6 +251,7 @@ function boundSurface(
 		notifications,
 		observed,
 		factsObserved,
+		startFacts,
 		widgets,
 		startSession: facts => deliver({ type: "session_start" }, facts),
 		switchSession: (facts, reason) => deliver({ type: "session_switch", reason }, facts),
@@ -527,6 +545,92 @@ describe("session identity changes (F5, P7)", () => {
 		surface.runCommand(surface.commandContext(forked));
 
 		expect(surface.appended).toEqual([{ customType: STATE_ENTRY_TYPE, data: { enabled: false } }]);
+	});
+});
+
+describe("a session's own start carries the facts a display names it by (P26, P27)", () => {
+	/** One session as a spawned subagent's native surface reports it: a task handle, a model, a level. */
+	const SPAWNED: SessionFacts = {
+		sessionId: "session-child",
+		statePayloads: [],
+		kind: "sub",
+		agentName: "scout",
+		agentId: "检索定价",
+		model: { provider: "deepseek", id: "deepseek-flash" },
+	};
+
+	test("a spawned session's start reports its task handle, the model it began on and its effective level", () => {
+		const surface = boundSurface(CODEBASE_TOOLS, { scope: "session", effort: "high" });
+
+		surface.startSession(SPAWNED);
+
+		// Three facts of their own, none of them borrowed from another: the task's own naming handle
+		// (`检索定价`, the name the spawn allocated this work) is neither the name the harness
+		// registers for the agent the session runs (`scout`, a definition the display must not pass
+		// off as the task's name) nor the registry identity an index uses. The startup facts are what
+		// this delivery read at the session's own start: the model it began on, and the level it
+		// really runs — the resolved level, not the configured selector behind it (`auto`).
+		expect(surface.startFacts).toEqual([
+			{
+				sessionId: "session-child",
+				kind: "sub",
+				taskName: "检索定价",
+				agentName: "scout",
+				agentId: "检索定价",
+				startup: { model: { provider: "deepseek", model: "deepseek-flash" }, effort: "high" },
+				unavailable: ["direct parent session", "session name"],
+			},
+		]);
+	});
+
+	test("a later delivery carries no startup facts, and a main session's start carries no task handle", () => {
+		const surface = boundSurface(CODEBASE_TOOLS, { scope: "session", effort: "medium" });
+		surface.startSession(SPAWNED);
+		surface.startSession({ sessionId: "session-main", statePayloads: [], name: "主会话" });
+
+		// The main session's own start names no task and states no startup facts: it was loaded rather
+		// than spawned, so what this process reads at its start is not provably what it began with —
+		// and a process-level label is never a task's name.
+		expect(surface.startFacts[1]).toEqual({
+			sessionId: "session-main",
+			kind: "main",
+			name: "主会话",
+			agentName: "main",
+			agentId: "Main",
+			unavailable: [],
+		});
+
+		// A delivery that is not a session's own start states no startup facts either: a rename reads
+		// the session's current model and level, which is not what it started on.
+		surface.renameSession(SPAWNED, "定价核查");
+		const renamed = surface.factsObserved[surface.factsObserved.length - 1]?.session;
+		expect(renamed).toEqual({
+			sessionId: "session-child",
+			kind: "sub",
+			name: "定价核查",
+			taskName: "检索定价",
+			agentName: "scout",
+			agentId: "检索定价",
+			unavailable: ["direct parent session"],
+		});
+	});
+
+	test("a level this host cannot report is named unavailable rather than filled in", () => {
+		const surface = boundSurface(CODEBASE_TOOLS, { scope: "session" });
+
+		surface.startSession(SPAWNED);
+
+		// This surface publishes no thinking-level getter at all, so the level is a fact it could not
+		// obtain: it is named rather than replaced by the model's own cap or by anything else.
+		expect(surface.startFacts[0]).toEqual({
+			sessionId: "session-child",
+			kind: "sub",
+			taskName: "检索定价",
+			agentName: "scout",
+			agentId: "检索定价",
+			startup: { model: { provider: "deepseek", model: "deepseek-flash" } },
+			unavailable: ["direct parent session", "session name", "startup effort"],
+		});
 	});
 });
 

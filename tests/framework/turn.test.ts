@@ -421,17 +421,20 @@ describe("the native model-cycle facts map to the framework's Turn facts (P57)",
 			name: "child task",
 			agentName: "task",
 			agentId: "wf-child",
+			taskName: "wf-child",
 			unavailable: [],
 		});
 		expect(surface.turnSessions[0]).toEqual(surface.roundSessions[0]);
 		// A grandchild's direct parent is the child session, not the top-level main session, and its own
-		// agent id is still reported while the missing session name is named rather than borrowed.
+		// agent id is still reported while the missing session name is named rather than borrowed. Its
+		// task handle is the one the spawn allocated, nested under the agent that spawned it.
 		expect(surface.turnSessions[1]).toEqual({
 			sessionId: "sess-grand",
 			kind: "sub",
 			parentSessionId: "sess-child",
 			agentName: "task",
 			agentId: "wf-child.wf-grand",
+			taskName: "wf-child.wf-grand",
 			unavailable: ["session name"],
 		});
 	});
@@ -450,6 +453,7 @@ describe("the native model-cycle facts map to the framework's Turn facts (P57)",
 			kind: "sub",
 			agentName: "explore",
 			agentId: "gone",
+			taskName: "gone",
 			unavailable: ["direct parent session", "session name"],
 		});
 
@@ -470,6 +474,7 @@ describe("the native model-cycle facts map to the framework's Turn facts (P57)",
 			kind: "sub",
 			agentName: "task",
 			agentId: "wf-child",
+			taskName: "wf-child",
 			unavailable: ["direct parent session", "session name"],
 		});
 	});

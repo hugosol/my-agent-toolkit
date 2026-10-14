@@ -169,24 +169,13 @@ interface WidgetContext extends OmpSessionContext {
 }
 
 /**
- * The native extension API this frontend draws through: the framework adapter's surface plus the
- * members only this widget reads.
+ * The native extension API this frontend draws through.
  *
- * The adapter names only the members its own mapping uses, so the bound session's actual effective
- * thinking level — the native getter every host has published all along, viewed-session outlet or
- * not — is named here, in the extension's own native half, beside the widget's other native reads.
+ * It is the framework adapter's own surface, which already names the bound session's actual
+ * effective thinking level — the native getter every host has published all along — beside the
+ * members the framework's own mapping uses.
  */
-interface WidgetApi extends OmpExtensionApi {
-	/**
-	 * The bound session's actual effective thinking level, as the harness's own
-	 * `session.thinkingLevel` reports it.
-	 *
-	 * It is read only when the host publishes no viewed-session outlet at all, the same
-	 * bound-session fallback the context bar takes. Optional: a surface that reports no level leaves
-	 * the question mark the spec asks for rather than a guessed one.
-	 */
-	getThinkingLevel?(): string | undefined;
-}
+type WidgetApi = OmpExtensionApi;
 
 /** The native UI surface this frontend draws on, widened to the component form it may hand over. */
 interface WidgetUi {
@@ -260,10 +249,12 @@ function prefixedLine(prefix: string, line: DisplayLine): DisplayLine {
  * with `├`. A row's distance from the root is the only thing the shared result states; how a terminal
  * draws it is here.
  *
- * A descendant session's own consumption fields follow its name, and its current context reading
- * follows them as `Ctx: percent (tokens/budget)` — the subagent's own tokens against the same fixed
- * display budget the bar above uses for its channel, which is what the operator can read for a
- * session the budget bar does not follow. A session no binding observed carries no such field.
+ * A descendant session's row leads with the model and effective effort that session *started* on —
+ * both written as `?` where nothing proved them — and its own consumption fields follow its name, then
+ * its current context reading as `Ctx: percent (tokens/budget)` — the subagent's own tokens against
+ * the same fixed display budget the bar above uses for its channel, which is what the operator can
+ * read for a session the budget bar does not follow. A session no binding observed carries no such
+ * field.
  */
 function treeLines(rows: readonly AgentTreeRow[]): DisplayLine[] {
 	return rows.map((row, index) => {
@@ -277,6 +268,7 @@ function treeLines(rows: readonly AgentTreeRow[]): DisplayLine[] {
 					? `${continuation}${last ? "\u2514\u2500 " : "\u251C\u2500 "}${row.name}`
 					: `${continuation}\u2502  ${row.name}`;
 		const parts = [head];
+		if (row.startup !== undefined) parts.push(`Model: ${row.startup.model}  Effort: ${row.startup.effort}`);
 		if (row.fields !== undefined) parts.push(fieldsText(row.fields));
 		if (row.context !== undefined) parts.push(`Ctx: ${contextText(row.context)}`);
 		return [{ text: parts.join("  ") }];

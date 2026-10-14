@@ -124,6 +124,28 @@ export interface FeedbackTransport {
 }
 
 /**
+ * The model and effective effort one session began with, as its harness reported them at the
+ * session's own start — the two readings a display shows a subagent's row by, and nothing a later
+ * setting, a later model switch or a later execution may rewrite.
+ *
+ * It is a *startup* fact rather than the session's current one: the model it was started on, and the
+ * level it really runs there. The level is the harness's resolved effective effort, never the
+ * configured selector behind it (an `auto` setting is not a level a row may show). Each member is
+ * absent when this host could not report it, and named in `unavailable`.
+ */
+export interface SessionStartup {
+	/** The model the session began on, both parts as the harness reported them. */
+	readonly model?: {
+		/** The provider the harness serves that model under. */
+		readonly provider: string;
+		/** The exact model id, as the harness resolves it. */
+		readonly model: string;
+	};
+	/** The effective thinking level the session began with. */
+	readonly effort?: string;
+}
+
+/**
  * The actual session one delivery concerns: its identity, its direct parent and its latest
  * display name, as the adapter resolved them.
  *
@@ -153,11 +175,24 @@ export interface SessionFacts {
 	/** The session's latest display name, as the harness reports it; display data, never an identity. */
 	readonly name?: string;
 	/**
+	 * The name the harness reported for the task this session was spawned to carry out — the
+	 * handle the spawning call gave that work — when this harness names one.
+	 *
+	 * It names the *work*, not the agent that runs it: the agent definition a session runs is a
+	 * kind of agent (see {@link SessionFacts.agentName}), which is not a task's name however much
+	 * either looks like a label, and it is not the identity `agentId` indexes. A display that has
+	 * to name a subagent's row uses this name before the agent's own, because it is the one fact
+	 * that says which piece of work the row accounts for. Only a spawned session has one: absent
+	 * for a top-level session, and named in `unavailable` when this host reports none.
+	 */
+	readonly taskName?: string;
+	/**
 	 * The name of the agent this session runs, as its harness registers it.
 	 *
-	 * It is the harness's own display name for the agent — the same one its roster shows — which is
-	 * what lets a session the harness never gave a display name be shown by a name rather than by an
-	 * id. Absent when the harness reports none, and named in `unavailable`.
+	 * It is the harness's own name for the agent *definition* — which kind of agent this session is
+	 * (a `task`, an `explore`, a `scout`) — and so a category rather than a name for the work; and it
+	 * is what lets a session the harness never named be shown by a kind of agent rather than by an id.
+	 * Absent when the harness reports none, and named in `unavailable`.
 	 */
 	readonly agentName?: string;
 	/**
@@ -168,6 +203,17 @@ export interface SessionFacts {
 	 * has a name. Absent when the harness reports none, and named in `unavailable`.
 	 */
 	readonly agentId?: string;
+	/**
+	 * The model and effective effort this session began with, as the harness reported them on the
+	 * delivery that announced the session's own start — and absent on every other delivery.
+	 *
+	 * A start delivery is the one moment a startup reading is a fact this host can report rather than
+	 * a guess: what a later delivery could read is the session's *current* model and level, which is
+	 * not what it started on. A harness reports this for a session it spawned, whose start that
+	 * delivery is; a session it merely loaded (a resumed one) reports none, because its own start is
+	 * behind this process's observation.
+	 */
+	readonly startup?: SessionStartup;
 	/** Every fact above this host could not obtain, named as the delivery names it. */
 	readonly unavailable: readonly string[];
 }

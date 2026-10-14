@@ -212,6 +212,20 @@ function controlApi(): { readonly api: OmpExtensionApi; fire(event: string, ctx:
 	};
 }
 
+/**
+ * One drawn tree's descendant rows: the name the display decided to call each session, and the whole
+ * line it drew for it, in draw order. A tree's root and its model rows carry no connector, so they
+ * are not among them.
+ */
+function treeRows(lines: readonly string[]): ReadonlyArray<{ readonly name: string; readonly line: string }> {
+	return lines
+		.filter(line => line.startsWith("\u251C\u2500 ") || line.startsWith("\u2514\u2500 "))
+		.map(line => ({
+			name: line.replace(/^(?:\u2502  )*[\u251C\u2514]\u2500 /, "").split("  ")[0] as string,
+			line,
+		}));
+}
+
 /** Every part of one run: the runtime, the port double that drives it, and the host drawing it. */
 interface BoundWidget {
 	readonly runtime: ModelCostRuntime;
@@ -280,6 +294,91 @@ function settleTurn(double: PortDouble): void {
 
 afterEach(() => {
 	while (roots.length > 0) rmSync(roots.pop() as string, { recursive: true, force: true });
+});
+
+describe("the detail tree shows the model and effort a subagent started on (P27, P28)", () => {
+	/** The one descendant row drawn for a session named `name`, or nothing while none is. */
+	const namedRow = (lines: readonly string[] | undefined, name: string): string | undefined =>
+		treeRows(lines ?? []).find(row => row.name === name)?.line;
+
+	test("the row shows the started-on facts, and no later model or level rewrites them", async () => {
+		const bound = await bindWidget();
+		await bound.double.runToCompletion("budget", { args: "detail" });
+
+		/** The spawned session as its own binding reports it: its start, then the facts its run carries. */
+		const spawned: SessionFacts = {
+			sessionId: "session-fresh",
+			kind: "sub",
+			parentSessionId: "session-main",
+			agentName: "task",
+			agentId: "检索定价",
+			taskName: "检索定价",
+			unavailable: [],
+		};
+
+		// The session's own binding announces its start: the model it began on and the level it really
+		// runs — the level the host resolved, never the configured selector behind it.
+		bound.double.deliverSession(OWNER, {
+			event: { kind: "session_start", reason: "initial" },
+			session: {
+				...spawned,
+				startup: { model: { provider: "go-provider", model: "model-alpha" }, effort: "high" },
+				unavailable: [],
+			},
+		});
+		// The run it takes up carries that session's own facts, exactly as a spawned session's first
+		// Round does — which is what makes the row exist to draw the startup facts on.
+		bound.double.deliverRound(OWNER, { event: { kind: "round_start" }, session: spawned });
+		bound.host.publish({ sessionId: "session-main", provider: "official", model: "model-alpha" });
+		expect(namedRow(bound.host.lastLines(), "检索定价")).toContain(
+			"Model: go-provider / model-alpha  Effort: high",
+		);
+
+		// The session then runs on another model at another level — the host says so on a second start of
+		// the same session, which is what a later execution of it would look like. Neither the row nor
+		// what a save would record follows it: the snapshot is what the session started on, and no
+		// history of model/level combinations is kept beside it.
+		bound.double.deliverSession(OWNER, {
+			event: { kind: "session_start", reason: "initial" },
+			session: {
+				...spawned,
+				startup: { model: { provider: "official", model: "model-beta" }, effort: "medium" },
+				unavailable: [],
+			},
+		});
+		bound.host.publish({ sessionId: "session-main", provider: "official", model: "model-alpha" });
+		expect(namedRow(bound.host.lastLines(), "检索定价")).toContain(
+			"Model: go-provider / model-alpha  Effort: high",
+		);
+	});
+
+	test("a session the document already records keeps an unproved startup unknown, part by part", async () => {
+		const bound = await bindWidget();
+		await bound.double.runToCompletion("budget", { args: "detail" });
+
+		// The subagent the document already carries reports its start while running on another model and
+		// level now. Nothing there proves what it *began* on: the record predates this instance's
+		// observation, so both fields keep their place and stay unknown rather than taking the model and
+		// level that happen to be current — and a start that could read the model but no level leaves the
+		// level unknown alone, each part proved independently.
+		expect(namedRow(bound.host.lastLines(), "子代理")).toBe(
+			"└─ 子代理  Model: ?  Effort: ?  Cache: 40%  Sum: 100",
+		);
+		bound.double.deliverSession(OWNER, {
+			event: { kind: "session_start", reason: "initial" },
+			session: {
+				sessionId: "session-sub",
+				kind: "sub",
+				parentSessionId: "session-main",
+				startup: { model: { provider: "official", model: "model-beta" } },
+				unavailable: ["session name", "agent name", "agent id", "startup effort"],
+			},
+		});
+		bound.host.publish({ sessionId: "session-main", provider: "official", model: "model-alpha" });
+		expect(namedRow(bound.host.lastLines(), "子代理")).toBe(
+			"└─ 子代理  Model: ?  Effort: ?  Cache: 40%  Sum: 100",
+		);
+	});
 });
 
 describe("the brief draws the viewed session's own Rounds (P26)", () => {
@@ -384,7 +483,7 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 			total,
 			"主会话",
 			"│  official / model-alpha  Cache: 66%  ¥Cache/In/Out：4:7:89  Sum: 6,020  Cost: ¥0.05",
-			"└─ 子代理  Cache: 40%  Sum: 100",
+			"└─ 子代理  Model: ?  Effort: ?  Cache: 40%  Sum: 100",
 		]);
 		expect(bound.host.lastLines()?.some(line => line.startsWith("Round:"))).toBe(false);
 
@@ -433,7 +532,7 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 			"Total:  Cache: 67%  ¥Cache/In/Out：4:7:89  Sum: 6,100  Cost: ¥0.05",
 			"主会话",
 			"│  official / model-alpha  Cache: 67%  ¥Cache/In/Out：4:7:89  Sum: 6,000  Cost: ¥0.05",
-			"└─ 子代理  Cache: 40%  Sum: 100",
+			"└─ 子代理  Model: ?  Effort: ?  Cache: 40%  Sum: 100",
 		]);
 
 		// The view moves to the subagent, whose own Round then opens and settles one request: what is
@@ -480,7 +579,7 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 			"Total:  Cache: 67%  ¥Cache/In/Out：4:7:89  Sum: 6,130  Cost: ¥0.05",
 			"主会话",
 			"│  official / model-alpha  Cache: 67%  ¥Cache/In/Out：4:7:89  Sum: 6,000  Cost: ¥0.05",
-			"└─ 子代理  Cache: 33%  Sum: 130",
+			"└─ 子代理  Model: ?  Effort: ?  Cache: 33%  Sum: 130",
 		]);
 	});
 
@@ -490,7 +589,7 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 
 		// No binding has reported the subagent's context: its row carries its consumption alone, and no
 		// context field is invented for it.
-		expect(bound.host.lastLines()?.find(line => line.includes("子代理"))).toBe("└─ 子代理  Cache: 40%  Sum: 100");
+		expect(bound.host.lastLines()?.find(line => line.includes("子代理"))).toBe("└─ 子代理  Model: ?  Effort: ?  Cache: 40%  Sum: 100");
 
 		// The subagent's own binding publishes its current context on the monetary channel. The row reads
 		// it against that channel's own 450K display budget, as `percent (tokens/budget)` — the same form
@@ -502,7 +601,7 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 		});
 		bound.host.publish({ sessionId: "session-main", provider: "official", model: "model-alpha" });
 		expect(bound.host.lastLines()?.find(line => line.includes("子代理"))).toBe(
-			"└─ 子代理  Cache: 40%  Sum: 100  Ctx: 85% (381.5K/450.0K)",
+			"└─ 子代理  Model: ?  Effort: ?  Cache: 40%  Sum: 100  Ctx: 85% (381.5K/450.0K)",
 		);
 
 		// A later reading on the allowance channel is read against that channel's own 272K budget, chosen
@@ -514,7 +613,7 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 		});
 		bound.host.publish({ sessionId: "session-main", provider: "official", model: "model-alpha" });
 		expect(bound.host.lastLines()?.find(line => line.includes("子代理"))).toBe(
-			"└─ 子代理  Cache: 40%  Sum: 100  Ctx: 50% (136.0K/272.0K)",
+			"└─ 子代理  Model: ?  Effort: ?  Cache: 40%  Sum: 100  Ctx: 50% (136.0K/272.0K)",
 		);
 
 		// A pair the data does not classify has no display budget at all, so the row carries no context
@@ -525,42 +624,92 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 			model: "no-such",
 		});
 		bound.host.publish({ sessionId: "session-main", provider: "official", model: "model-alpha" });
-		expect(bound.host.lastLines()?.find(line => line.includes("子代理"))).toBe("└─ 子代理  Cache: 40%  Sum: 100");
+		expect(bound.host.lastLines()?.find(line => line.includes("子代理"))).toBe("└─ 子代理  Model: ?  Effort: ?  Cache: 40%  Sum: 100");
 	});
 
-	test("a session is shown by its name, and only by an id when no name is reported at all (P23)", async () => {
+	test("a session is named by its task handle, and a session's own name outranks it (P26)", async () => {
 		const bound = await bindWidget();
 		await bound.double.runToCompletion("budget", { args: "detail" });
 
-		// The document already names the subagent: that recorded name is what its row shows.
-		expect(bound.host.lastLines()?.find(line => line.includes("子代理"))).toBe("└─ 子代理  Cache: 40%  Sum: 100");
+		// The document already names the subagent: that recorded name is what its row shows, because no
+		// newer fact about it has been reported yet.
+		expect(treeRows(bound.host.lastLines() ?? []).map(row => row.name)).toEqual(["子代理"]);
+		expect(bound.host.lastLines()?.find(line => line.includes("子代理"))).toBe("└─ 子代理  Model: ?  Effort: ?  Cache: 40%  Sum: 100");
 
-		// A report carrying only the agent's id adds no name, so the name already known still stands: an id
-		// never displaces a name.
-		bound.double.deliverSession(OWNER, {
-			event: { kind: "session_facts" },
-			session: { sessionId: "session-sub", kind: "sub", agentId: "0-Explore", unavailable: [] },
-		});
-		bound.host.publish({ sessionId: "session-main", provider: "official", model: "model-alpha" });
-		expect(bound.host.lastLines()?.find(line => line.includes("子代理"))).toBe("└─ 子代理  Cache: 40%  Sum: 100");
-
-		// The host then reports the agent's own name — the label its roster shows — and that name becomes
-		// what the row shows.
+		// The host reports the kind of agent this session runs and the registry identity behind it — for
+		// a spawned session those are the agent definition (`task`, `explore`, `scout`) and the id its
+		// index uses. Neither is a name for the work, so neither displaces the name the session is
+		// already known by.
 		bound.double.deliverSession(OWNER, {
 			event: { kind: "session_facts" },
 			session: {
 				sessionId: "session-sub",
 				kind: "sub",
+				parentSessionId: "session-main",
 				agentName: "explore",
 				agentId: "0-Explore",
 				unavailable: [],
 			},
 		});
 		bound.host.publish({ sessionId: "session-main", provider: "official", model: "model-alpha" });
-		expect(bound.host.lastLines()?.find(line => line.includes("explore"))).toBe("└─ explore  Cache: 40%  Sum: 100");
+		expect(treeRows(bound.host.lastLines() ?? []).map(row => row.name)).toEqual(["子代理"]);
 
-		// A session the document never named, for which the host reports only an agent id, falls back to
-		// that id rather than to its raw session id.
+		// The host then reports the handle the session's own spawn was allocated: the row is named by it,
+		// because that is the one fact that says which piece of work the row accounts for. The agent
+		// definition reported beside it is a category, and the row is not named by it.
+		bound.double.deliverSession(OWNER, {
+			event: { kind: "session_facts" },
+			session: {
+				sessionId: "session-sub",
+				kind: "sub",
+				parentSessionId: "session-main",
+				agentName: "task",
+				agentId: "检索定价",
+				taskName: "检索定价",
+				unavailable: [],
+			},
+		});
+		bound.host.publish({ sessionId: "session-main", provider: "official", model: "model-alpha" });
+		expect(treeRows(bound.host.lastLines() ?? []).map(row => row.name)).toEqual(["检索定价"]);
+		expect(bound.host.lastLines()?.find(line => line.includes("检索定价"))).toBe(
+			"└─ 检索定价  Model: ?  Effort: ?  Cache: 40%  Sum: 100",
+		);
+
+		// The operator names the session explicitly, and that name is what the row shows: the handle is
+		// the fallback for a session the host never named, never an override of the name it reports.
+		bound.double.deliverSession(OWNER, {
+			event: { kind: "session_facts" },
+			session: {
+				sessionId: "session-sub",
+				kind: "sub",
+				parentSessionId: "session-main",
+				name: "定价核查",
+				agentName: "task",
+				agentId: "检索定价",
+				taskName: "检索定价",
+				unavailable: [],
+			},
+		});
+		bound.host.publish({ sessionId: "session-main", provider: "official", model: "model-alpha" });
+		expect(treeRows(bound.host.lastLines() ?? []).map(row => row.name)).toEqual(["定价核查"]);
+
+		// A second spawned session whose agent definition is `scout` — not `task` — is named by its own
+		// handle just the same: the rule reads the handle the spawn was given rather than special-casing
+		// one agent definition's name.
+		bound.double.deliverSession(OWNER, {
+			event: { kind: "session_facts" },
+			session: {
+				sessionId: "session-scouted",
+				kind: "sub",
+				parentSessionId: "session-main",
+				agentName: "scout",
+				agentId: "检索价格",
+				taskName: "检索价格",
+				unavailable: [],
+			},
+		});
+		// A session the document never named, for which the host reports only a registry identity, falls
+		// back to that identity rather than to its raw session id.
 		bound.double.deliverSession(OWNER, {
 			event: { kind: "session_facts" },
 			session: {
@@ -572,6 +721,6 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 			},
 		});
 		bound.host.publish({ sessionId: "session-main", provider: "official", model: "model-alpha" });
-		expect(bound.host.lastLines()?.some(line => line.startsWith("└─ 0-Unseen"))).toBe(true);
+		expect(treeRows(bound.host.lastLines() ?? []).map(row => row.name)).toEqual(["定价核查", "检索价格", "0-Unseen"]);
 	});
 });

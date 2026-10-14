@@ -367,6 +367,13 @@ export function createModelCostRuntime(inputs: ModelCostRuntimeInputs): ModelCos
 			stateProviderFailures(delivery);
 			accounting.sessionFacts(delivery.session);
 		},
+		// One actual session's own start. A spawned session's binding announces it once, and it is the
+		// one delivery whose model and level readings are that session's startup facts — what the detail
+		// tree shows a subagent's row by, and what its next consumption commit carries into the document.
+		session_start: delivery => {
+			stateProviderFailures(delivery);
+			accounting.started(delivery.session);
+		},
 	};
 
 	return {
