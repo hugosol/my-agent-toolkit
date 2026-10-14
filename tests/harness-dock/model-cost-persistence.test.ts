@@ -10,13 +10,15 @@
  * What each document is checked for, independently of the implementation that wrote it:
  *
  * - **the approved schema, key by key.** The activity document carries `schemaVersion`, `periodId`,
- *   `start`, `holiday` and `harnesses`, a session record carries `id`, `name`, `parent`, `saveVersion`,
- *   `own` — plus the optional `span` pair when the run observed a session's own main-session time and,
- *   when the host measured one, an optional `runtimeMs` — and a usage entry carries the four token
- *   buckets and, when a provider's accounting
- *   produced one, its own currency field. Nothing else is accepted — no Turn or Round ledger, no
- *   `recentRound`, no historical price, no cost breakdown, no account key and no second authoritative
- *   total — because the check is an exact key set rather than a search for known leftovers.
+ *   `start`, `holiday` and `harnesses`, a session record carries `id`, `name`, `parent`, `startup`,
+ *   `saveVersion` and `own` — plus the optional `span` pair when the run observed a session's own
+ *   main-session time, and an optional `runtimeMs` when the host measured one — and a usage entry
+ *   carries the four token buckets and, when a provider's accounting produced one, its own currency
+ *   field. Nothing else is accepted — no Turn or Round ledger, no `recentRound`, no historical
+ *   price, no cost breakdown, no account key and no second authoritative total — because the check
+ *   is an exact key set rather than a search for known leftovers. `startup` is the one optional
+ *   snapshot key: it states the model and effective level the session began on, is absent from a
+ *   record nothing proved one for, and is never the pair the session runs now.
  * - **the numbers, against this file's own literals.** The endpoint's scripted usage is what the
  *   record's own buckets have to equal, and the ratio the estimate document holds is this file's
  *   arithmetic over the two account answers it scripted.
@@ -407,7 +409,9 @@ function answeredTurns(request: CapturedRequest): number {
 /** The keys the approved activity schema declares, at each level, and nothing else. */
 const DOCUMENT_KEYS = ["schemaVersion", "periodId", "start", "start_bal", "holiday", "harnesses"];
 const HARNESS_KEYS = ["sessions"];
-const SESSION_KEYS = ["id", "name", "parent", "saveVersion", "own", "runtimeMs", "span"];
+const SESSION_KEYS = ["id", "name", "parent", "startup", "saveVersion", "own", "runtimeMs", "span"];
+const STARTUP_KEYS = ["model", "effort"];
+const STARTUP_MODEL_KEYS = ["provider", "model"];
 /** The two instants of one session's own main-session time fact, which are always written together. */
 const SPAN_KEYS = ["start", "end"];
 const USAGE_KEYS = ["tokens", "costCny", "referenceCostUsd"];
@@ -430,6 +434,11 @@ interface SavedRecord {
 	readonly id: string;
 	readonly name: string;
 	readonly parent: string | null;
+	/** The model and effective level the session began on, when the document recorded one. */
+	readonly startup?: {
+		readonly model?: { readonly provider: string; readonly model: string };
+		readonly effort?: string;
+	};
 	readonly saveVersion: number;
 	readonly own: Record<string, Record<string, { readonly tokens: Record<string, number>; readonly costCny?: number }>>;
 	/**
@@ -518,6 +527,32 @@ function readRecord(value: unknown, where: string): SavedRecord {
 	if (candidate.parent !== null && (typeof candidate.parent !== "string" || candidate.parent.length === 0)) {
 		throw new Error(`${where}.parent is neither null nor a non-empty string`);
 	}
+	let startup: SavedRecord["startup"];
+	if (candidate.startup !== undefined) {
+		const startupKeys = keyFault(candidate.startup, STARTUP_KEYS, `${where}.startup`);
+		if (startupKeys !== undefined) throw new Error(startupKeys);
+		const declared = candidate.startup as Record<string, unknown>;
+		let model: { provider: string; model: string } | undefined;
+		if (declared.model !== undefined) {
+			const modelKeys = keyFault(declared.model, STARTUP_MODEL_KEYS, `${where}.startup.model`);
+			if (modelKeys !== undefined) throw new Error(modelKeys);
+			const pair = declared.model as Record<string, unknown>;
+			if (typeof pair.provider !== "string" || pair.provider.length === 0) {
+				throw new Error(`${where}.startup.model.provider is not a non-empty string`);
+			}
+			if (typeof pair.model !== "string" || pair.model.length === 0) {
+				throw new Error(`${where}.startup.model.model is not a non-empty string`);
+			}
+			model = { provider: pair.provider, model: pair.model };
+		}
+		if (declared.effort !== undefined && (typeof declared.effort !== "string" || declared.effort.length === 0)) {
+			throw new Error(`${where}.startup.effort is not a non-empty string`);
+		}
+		startup = {
+			...(model === undefined ? {} : { model }),
+			...(declared.effort === undefined ? {} : { effort: declared.effort as string }),
+		};
+	}
 	if (typeof candidate.saveVersion !== "number" || !Number.isInteger(candidate.saveVersion) || candidate.saveVersion < 0) {
 		throw new Error(`${where}.saveVersion is not a non-negative integer`);
 	}
@@ -557,6 +592,7 @@ function readRecord(value: unknown, where: string): SavedRecord {
 		id: candidate.id,
 		name: candidate.name,
 		parent: candidate.parent as string | null,
+		...(startup === undefined ? {} : { startup }),
 		saveVersion: candidate.saveVersion,
 		own,
 		...(runtime === undefined ? {} : { runtimeMs: runtime as number }),

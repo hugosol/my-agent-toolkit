@@ -119,6 +119,7 @@ export type {
 	SessionEventHandlers,
 	SessionFacts,
 	SessionStartReason,
+	SessionStartup,
 	SubscriptionGroup,
 	SubagentRuntimeDelivery,
 	SubagentRuntimeEvent,

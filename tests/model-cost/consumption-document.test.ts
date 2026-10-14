@@ -6,10 +6,10 @@
  * like to be read at all, whether two session records say the same business thing, and what one
  * session's commit does to the document a coordinated read just produced. Every expectation is
  * written here from the storage contract — the root fields, the flat session list keyed by id,
- * the four token buckets with the two currencies kept apart, the version scope
- * periodId+harness+sessionId, and the refusal of anything the approved schema does not name — and
- * the documents the cases read are written out in full rather than produced by the code under
- * test.
+ * the four token buckets with the two currencies kept apart, the optional startup facts a spawned
+ * session's own start contributes (P19, P22), the version scope periodId+harness+sessionId, and the
+ * refusal of anything the approved schema does not name — and the documents the cases read are
+ * written out in full rather than produced by the code under test.
  */
 import { describe, expect, test } from "bun:test";
 import {
@@ -198,6 +198,63 @@ describe("the consumption document's schema", () => {
 				},
 			}).kind,
 		).toBe("unusable");
+	});
+});
+
+describe("the consumption document's startup facts", () => {
+	/** The same child record carrying what a spawned session's own start reported. */
+	const WITH_STARTUP: SessionRecord = {
+		...CHILD_SESSION,
+		startup: { model: { provider: "deepseek", model: "model-A" }, effort: "high" },
+	};
+
+	/** One document holding a single record with one candidate `startup` value. */
+	const documentWith = (startup: unknown): ConsumptionDocument => ({
+		...approvedDocument(),
+		harnesses: { omp: { sessions: [{ ...CHILD_SESSION, startup } as SessionRecord] } },
+	});
+
+	test("a record's startup facts are read with each part intact, and a part nothing proved stays absent", () => {
+		const outcome = readConsumptionDocument(documentWith(WITH_STARTUP.startup));
+		expect(outcome.kind).toBe("document");
+		if (outcome.kind !== "document") return;
+		expect(outcome.document.harnesses.omp?.sessions[0]?.startup).toEqual({
+			model: { provider: "deepseek", model: "model-A" },
+			effort: "high",
+		});
+
+		// Each part stands on its own: a record that proved the level and no model keeps exactly that,
+		// and nothing completes the pair for it.
+		const half = readConsumptionDocument(documentWith({ effort: "high" }));
+		expect(half.kind).toBe("document");
+		if (half.kind !== "document") return;
+		expect(half.document.harnesses.omp?.sessions[0]?.startup).toEqual({ effort: "high" });
+	});
+
+	test("a startup member the schema does not name, or a part of another shape, is refused", () => {
+		const reasonOf = (startup: unknown): string | undefined => {
+			const outcome = readConsumptionDocument(documentWith(startup));
+			return outcome.kind === "unusable" ? outcome.reason : undefined;
+		};
+		// The document states the pair the schema fixes and nothing else: a model as a bare selector, a
+		// pair missing one of its parts, the configured selector behind a level, and an empty level are
+		// each a shape the schema does not carry.
+		expect(reasonOf("deepseek/model-A")).toContain(".startup");
+		expect(reasonOf({ model: "deepseek/model-A" })).toContain("startup.model");
+		expect(reasonOf({ model: { provider: "deepseek" } })).toContain("startup.model.model");
+		expect(reasonOf({ model: { provider: "deepseek", model: "model-A", selector: "auto" } })).toContain("selector");
+		expect(reasonOf({ level: "high" })).toContain("level");
+		expect(reasonOf({ effort: "" })).toContain("startup.effort");
+	});
+
+	test("two records differing only in their startup facts are not the same business content", () => {
+		// The startup facts are content like the name: a pair that changed, or that arrived where the
+		// document holds none, is a conflict at the same version rather than a silent update, which is
+		// what keeps a startup the document already recorded from being rewritten later.
+		expect(sameSessionContent(WITH_STARTUP, CHILD_SESSION)).toBe(false);
+		expect(sameSessionContent(WITH_STARTUP, { ...WITH_STARTUP })).toBe(true);
+		const document: ConsumptionDocument = { ...approvedDocument(), harnesses: { omp: { sessions: [CHILD_SESSION] } } };
+		expect(mergeSession(document, "omp", { ...CHILD_SESSION, startup: { effort: "high" } }).kind).toBe("conflict");
 	});
 });
 

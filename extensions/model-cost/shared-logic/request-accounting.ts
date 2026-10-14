@@ -97,7 +97,7 @@ import type {
 	TurnUsage,
 	UserInputDelivery,
 } from "../../../framework/core/protocol";
-import type { ModelConsumption, OwnConsumption, SessionRecord, TokenBuckets } from "./consumption-document";
+import type { ModelConsumption, OwnConsumption, SessionRecord, SessionStartup, TokenBuckets } from "./consumption-document";
 import { type ConsumptionStore, type SessionCommit, unusableBaselineNotice } from "./consumption-store";
 import type { ModelPricingData } from "./model-data";
 import { type RequestPrice, requestPriceOf } from "./request-price";
@@ -156,6 +156,16 @@ export interface ConsumptionView {
 	 * document: a restored accumulation is a session total, not a Round.
 	 */
 	roundTotals(sessionId: string): RoundTotals | undefined;
+	/**
+	 * The startup facts of one actual session — the model and effective effort it began with — or
+	 * `undefined` when nothing about them is proved.
+	 *
+	 * It is what that session's own start reported, or what the loaded document recorded for it, and
+	 * never what the session runs now: a model switch or a level change after the start leaves it
+	 * alone. Each member of the answer is absent when nothing proved it, which is what a display draws
+	 * as unknown rather than filling in from anything current.
+	 */
+	startup(sessionId: string): SessionStartup | undefined;
 	/**
 	 * The subagent runtime one actual session's own executions accumulated in this period, in
 	 * milliseconds, or `undefined` when nothing reliable is known about it.
@@ -260,6 +270,16 @@ export interface RequestAccounting {
 	 * are told when either really changed, and nothing is consumed, priced or written.
 	 */
 	sessionFacts(session: SessionFacts): void;
+	/**
+	 * One actual session's own start, as its binding announced it.
+	 *
+	 * A delivery of this kind either carries the model and effective effort the session began with —
+	 * the adapter reports them only on a start that proves the session was beginning — or carries
+	 * none, which is what a recovered session's start states. The session's identity facts are kept as
+	 * on any delivery; nothing else is done with them here, no save of their own is started for their
+	 * arrival, and a pair that was never proved is never filled in from what the session runs now.
+	 */
+	started(session: SessionFacts): void;
 	/**
 	 * Tell this instance's subscribers that the results they read changed.
 	 *
@@ -482,7 +502,13 @@ export function createRequestAccounting(inputs: RequestAccountingInputs): Reques
 	/** What the host has reported about each actual session, as far as it reported anything. */
 	const reported = new Map<
 		string,
-		{ readonly name?: string; readonly agentName?: string; readonly agentId?: string; readonly parent?: string | null }
+		{
+			readonly name?: string;
+			readonly taskName?: string;
+			readonly agentName?: string;
+			readonly agentId?: string;
+			readonly parent?: string | null;
+		}
 	>();
 	/** The price each started Turn was anchored at, by the Turn identity the framework minted. */
 	const anchors = new Map<string, RequestPrice>();
@@ -511,6 +537,12 @@ export function createRequestAccounting(inputs: RequestAccountingInputs): Reques
 	const openRounds = new Map<string, { readonly own: OwnConsumption; readonly periodId: string }>();
 	/** The last Round each session ended with both of its boundaries at hand, as its own additions. */
 	const endedRounds = new Map<string, OwnConsumption>();
+	/**
+	 * The startup facts each session's own start reported, by session: the model and effective effort
+	 * it began with, kept once and never rewritten. A session nothing proved a startup for has no
+	 * entry here, which is what a display draws as unknown.
+	 */
+	const startups = new Map<string, SessionStartup>();
 	/** How many snapshots this instance committed and has not yet seen land. */
 	let savesPublishing = 0;
 	let disposed = false;
@@ -529,10 +561,13 @@ export function createRequestAccounting(inputs: RequestAccountingInputs): Reques
 		if (facts === undefined && record === undefined) return undefined;
 		return {
 			sessionId,
-			// A name is display data rather than an identity, and a name always wins over an id: the
-			// session's own latest name, then the agent's own name, then the name the document holds; only
-			// with no name anywhere does an id stand in — the agent's own first, the session's last.
-			name: facts?.name ?? facts?.agentName ?? record?.name ?? facts?.agentId ?? sessionId,
+			// A name is display data rather than an identity, and it is selected from the facts that name
+			// the *work* before the ones that describe the agent: the session's own latest name, then the
+			// handle the harness gave the session's task (what the row accounts for), then the name the
+			// document already recorded for it. Only then does the agent's own registered name — the kind
+			// of agent a session is, which is a category rather than a name for the work — stand in, and an
+			// id last: the agent's registry identity, then the session's own id.
+			name: facts?.name ?? facts?.taskName ?? record?.name ?? facts?.agentName ?? facts?.agentId ?? sessionId,
 			// The two absences differ: a host that reported no parent said so, while one that reported
 			// nothing leaves the fact to be filled from the record rather than read as parentless.
 			parentSessionId: facts?.parent !== undefined ? facts.parent : (record?.parent ?? null),
@@ -540,7 +575,20 @@ export function createRequestAccounting(inputs: RequestAccountingInputs): Reques
 	};
 
 	/**
-	 * Keeps the latest name, agent name, agent id and direct parent the host reported for one session.
+	 * The startup facts this instance holds for one actual session: what its own start reported, or —
+	 * for a session this instance observed no start of — what the loaded document recorded when it
+	 * began.
+	 *
+	 * It is never what the session runs now: nothing here reads the session's current model or level,
+	 * so a model switch or a level change after the start leaves the answer exactly as it was, and a
+	 * session nothing proved a startup for answers `undefined` rather than the current settings.
+	 */
+	const startupOf = (sessionId: string): SessionStartup | undefined =>
+		startups.get(sessionId) ?? storage.session(harness, sessionId)?.startup;
+
+	/**
+	 * Keeps the latest name, task handle, agent name, agent id and direct parent the host reported for
+	 * one session.
 	 *
 	 * A fact this host cannot report never overwrites one it already reported, and never invents one.
 	 * Learning a session's first facts is not a change — the request that carried them announces the
@@ -552,11 +600,13 @@ export function createRequestAccounting(inputs: RequestAccountingInputs): Reques
 		const before = identityOf(session.sessionId);
 		const previous = reported.get(session.sessionId);
 		const name = session.name ?? previous?.name;
+		const taskName = session.taskName ?? previous?.taskName;
 		const agentName = session.agentName ?? previous?.agentName;
 		const agentId = session.agentId ?? previous?.agentId;
 		const parent = session.parentSessionId ?? previous?.parent;
 		reported.set(session.sessionId, {
 			...(name === undefined ? {} : { name }),
+			...(taskName === undefined ? {} : { taskName }),
 			...(agentName === undefined ? {} : { agentName }),
 			...(agentId === undefined ? {} : { agentId }),
 			...(parent === undefined ? {} : { parent }),
@@ -784,6 +834,11 @@ export function createRequestAccounting(inputs: RequestAccountingInputs): Reques
 			parentSessionId: null,
 		};
 		const revision = ledger.revision;
+		// The startup facts this snapshot carries: what the session's own start reported, or what the
+		// document already recorded when it began. A snapshot is what the session started on and never
+		// what it runs now, so an established one is written exactly as it was; a session nothing proved
+		// a startup for carries no such field rather than an empty one.
+		const startup = startupOf(session.sessionId);
 		const runtimeMs = ledger.runtimes.available();
 		// The span this snapshot carries is the one this instance has observed up to now — the same two
 		// instants its own display reads — and it is written with the consumption rather than through a
@@ -794,6 +849,7 @@ export function createRequestAccounting(inputs: RequestAccountingInputs): Reques
 			id: session.sessionId,
 			name: facts.name,
 			parent: facts.parentSessionId,
+			...(startup === undefined ? {} : { startup }),
 			saveVersion: (ledger.saved?.saveVersion ?? 0) + 1,
 			own: snapshotOf(ledger),
 			// The session's accumulated runtime rides this same commit: it is the value available at
@@ -870,6 +926,7 @@ export function createRequestAccounting(inputs: RequestAccountingInputs): Reques
 			return identities;
 		},
 		inclusiveTotals: inclusiveTotalsOf,
+		startup: startupOf,
 		sessionSpan: spans.of,
 		roundTotals: sessionId => {
 			const started = openRounds.get(sessionId);
@@ -1012,6 +1069,24 @@ export function createRequestAccounting(inputs: RequestAccountingInputs): Reques
 		sessionFacts(session) {
 			if (disposed) return;
 			remember(session);
+		},
+		started(session) {
+			if (disposed) return;
+			const startup = session.startup;
+			if (startup === undefined) return;
+			// The adapter reports these facts on the one kind of delivery that proves them — a start
+			// that shows the session only now beginning — so a delivery either carries them or states
+			// that nothing proved them, and nothing here fills a missing pair from what the session
+			// happens to run now. The first pair this instance is handed is the session's startup: a
+			// later start of an existing session is a recovery, which proves nothing and carries
+			// nothing, and a pair that was already established is never rewritten.
+			if (startups.has(session.sessionId)) return;
+			startups.set(session.sessionId, startup);
+			// The rows a display draws carry these facts, so a start that taught this instance something
+			// new is a change of the read-only result like any other: publishing it is what redraws a
+			// frontend. It starts no save of its own — the snapshot travels with the session's next
+			// consumption commit, exactly as its name does.
+			announce();
 		},
 		subagentRuntime(delivery) {
 			if (disposed) return;

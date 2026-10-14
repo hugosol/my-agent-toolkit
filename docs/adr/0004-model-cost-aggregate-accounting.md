@@ -16,6 +16,8 @@ model-cost 选择在 harness-independent shared logic 中逐响应按请求锚�
 
 本轮用户要求自己划定轻量文件保存范围，以放弃轮次恢复换取 Session-only；provider／model 分桶仍保留。物理结构：根为 schemaVersion、periodId、start、可选 start_bal、holiday 与 harnesses.<harness>.sessions 扁平 list（harness 优先，而非 sessions.<harness>）；Session 记录为 id、name、parent、saveVersion 与 own.<provider>.<model>，token 分 input／cacheRead／cacheWrite／output 四桶，DeepSeek 金额 costCny 与 Codex 参考费用 referenceCostUsd 分开保存；parent 为同 harness 内直接父 Session ID，主会话为 null，树与含后代合计按关系派生，不保存 totalCost／totalTokens，也不保存 recentRound、Round／Turn 明细或轮次快照。Round 只在运行期推断：进行中 = 当前自身累计 − 开始快照，已结束 = 结束快照 − 开始快照；正常连续对话要求显示最近一 Round（进行中或刚结束，进行中尚未产生本轮数据时保持上一已完成 Round 读数、不显示 0），resume／tree 只要求恢复当前周期的 Session 自身／子代理／含后代消费；缺可靠快照时隐藏 Round，不扫描历史、不补账、不猜零。保存时机仍为 framework round_end。
 
+后续排期新增的事实以*可选成员*追加在同一条 Session 记录上（子代理的启动快照即一例：它记该实际会话开始时可靠取得的实际模型与有效思考强度，随既有消费提交一并保存、不额外写入，后来的切模型／改强度／追加执行都不改写它）；缺这些成员的旧文档不是损坏文档，仍按本 ADR 的语义读取与继续提交，未知事实保持未知而不从当前设置反推。
+
 ## 账号接入的进一步简化
 
 本次用户选择按实际单账号需求接入 adapter，而不实现多账号管理，并接受 DeepSeek 凭据身份的限制，以无法自动识别同账号换 Key 为代价减少账号识别机制。唯一支持范围：framework 每 provider 只支持一个使用中的账号，不提供账号列表、选择、轮换或持久化统计身份；model-cost 不按 Key／凭据指纹／Codex 账号身份分区统计、holiday 或 estimate；同账号换 Key 不自动开始新范围，真正换账号也不自动识别、隔离或重置旧数据，用户需自行开始新数据。接入 seam：adapter 按需提供宿主当前 provider、本次操作可用认证资料与已解析 base URL（隐藏 OAuth 更新与 credential storage），每次操作读取并固定用于本次操作，只供运行期认证、不写入统计文件；DeepSeek 余额路径与缺省官方地址、Codex 额度 endpoint／协议与 parser 留在 shared logic。本 ADR 不改变 Provider account 的领域定义，也不以单账号取消同账号多会话／跨进程协调：多 CLI 同机并发仍是支持范围，跨进程锁、周期与版本校验不变。旧到新修订：原按账号／非秘密凭据身份隔离、替换身份即启用独立周期与数据的政策已被本单账号范围取代。
