@@ -54,6 +54,18 @@ export interface SubagentRuntimes {
 	 * instance has since accounted, or nothing while nothing is known about it.
 	 */
 	available(): number | undefined;
+	/**
+	 * Every execution this accumulation has been told about: the ones it counted and the one still
+	 * open.
+	 *
+	 * The identities are what the surrounding accounting keeps when the period underneath it is
+	 * closed — the identities alone, never the figures — so an execution the closed period already
+	 * measured is not counted again by the period that replaced it when a reading of it arrives late.
+	 * It is not a per-execution ledger: no execution's own duration is returned, nothing here is ever
+	 * persisted, and the accumulation that held those figures is dropped with the period it belonged
+	 * to.
+	 */
+	knownExecutions(): readonly string[];
 }
 
 /**
@@ -102,6 +114,13 @@ export function createSubagentRuntimes(saved: number | undefined): SubagentRunti
 			// rather than a zero, and a host that never measures executions leaves it that way.
 			if (!observed && savedMs === undefined) return undefined;
 			return (savedMs ?? 0) + closedMs + (open?.runtimeMs ?? 0);
+		},
+		knownExecutions() {
+			// The open execution counts as known: the closed period was already told about it, and its
+			// own end is exactly the reading that must contribute nothing to the period after it.
+			const known = [...accounted];
+			if (open !== undefined) known.push(open.executionId);
+			return known;
 		},
 	};
 }
