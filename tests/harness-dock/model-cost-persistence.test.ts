@@ -10,8 +10,8 @@
  * What each document is checked for, independently of the implementation that wrote it:
  *
  * - **the approved schema, key by key.** The activity document carries `schemaVersion`, `periodId`,
- *   `start`, `holiday` and `harnesses`, a session record carries `id`, `name`, `parent`, `saveVersion`
- *   and `own`, and a usage entry carries the four token buckets and, when a provider's accounting
+ *   `start`, `holiday` and `harnesses`, a session record carries `id`, `name`, `parent`, `saveVersion`,
+ *   `own` and, when the host measured one, an optional `runtimeMs`, and a usage entry carries the four token buckets and, when a provider's accounting
  *   produced one, its own currency field. Nothing else is accepted — no Turn or Round ledger, no
  *   `recentRound`, no historical price, no cost breakdown, no account key and no second authoritative
  *   total — because the check is an exact key set rather than a search for known leftovers.
@@ -405,7 +405,7 @@ function answeredTurns(request: CapturedRequest): number {
 /** The keys the approved activity schema declares, at each level, and nothing else. */
 const DOCUMENT_KEYS = ["schemaVersion", "periodId", "start", "start_bal", "holiday", "harnesses"];
 const HARNESS_KEYS = ["sessions"];
-const SESSION_KEYS = ["id", "name", "parent", "saveVersion", "own"];
+const SESSION_KEYS = ["id", "name", "parent", "saveVersion", "own", "runtimeMs"];
 const USAGE_KEYS = ["tokens", "costCny", "referenceCostUsd"];
 const TOKEN_KEYS = ["input", "cacheRead", "cacheWrite", "output"];
 /** The archive is the closed activity document plus the two facts only the closing instant states. */
@@ -422,6 +422,11 @@ interface SavedRecord {
 	readonly parent: string | null;
 	readonly saveVersion: number;
 	readonly own: Record<string, Record<string, { readonly tokens: Record<string, number>; readonly costCny?: number }>>;
+	/**
+	 * The subagent runtime this session's own executions accumulated in the period, when one was
+	 * reliably measured: a count of milliseconds, absent rather than zero when none was.
+	 */
+	readonly runtimeMs?: number;
 }
 
 /** One activity document, as the approved schema declares it. */
@@ -513,12 +518,17 @@ function readRecord(value: unknown, where: string): SavedRecord {
 		}
 		own[provider] = bucket;
 	}
+	const runtime = candidate.runtimeMs;
+	if (runtime !== undefined && (typeof runtime !== "number" || !Number.isFinite(runtime) || runtime < 0)) {
+		throw new Error(`${where}.runtimeMs is neither absent nor a non-negative finite number`);
+	}
 	return {
 		id: candidate.id,
 		name: candidate.name,
 		parent: candidate.parent as string | null,
 		saveVersion: candidate.saveVersion,
 		own,
+		...(runtime === undefined ? {} : { runtimeMs: runtime as number }),
 	};
 }
 

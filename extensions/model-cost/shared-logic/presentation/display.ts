@@ -212,6 +212,16 @@ export interface AgentTreeRow {
 	 * unobserved or unbudgeted session shows no field rather than a zero.
 	 */
 	readonly context?: AgentTreeContext;
+	/**
+	 * The descendant session's own accumulated subagent runtime in this period, in milliseconds.
+	 *
+	 * It is the harness's own measurement of that session's executions, so it is carried on the
+	 * descendant session rows alone — a model row is not a session, and the root row is the session
+	 * the tree is *of*. Absent means *unavailable* rather than zero: a session whose executions were
+	 * never reliably measured still keeps the field's place, and `0` is reserved for a session whose
+	 * executions really took no measurable time.
+	 */
+	readonly runtimeMs?: number;
 }
 
 /** The fixed display budget and whether the reported context usage has crossed it. */
@@ -637,11 +647,16 @@ export function createPresentation(inputs: PresentationInputs): ConsumptionPrese
 					observed === undefined
 						? undefined
 						: displayBudgetOf(classify(data, observed.provider ?? "", observed.model ?? "").mode);
+				const runtimeMs = view.runtime(child.sessionId);
 				rows.push({
 					kind: "session",
 					name: child.name,
 					depth,
 					fields: fieldsOf(view.own(child.sessionId) ?? {}),
+					// The runtime is absent when nothing reliable is known about this session's executions:
+					// the row keeps the field and the display shows it as unavailable, which is not the
+					// same fact as an execution that really took no measurable time.
+					...(runtimeMs === undefined ? {} : { runtimeMs }),
 					...(observed === undefined || budget === undefined
 						? {}
 						: { context: { tokens: observed.tokens, budget } }),
@@ -827,6 +842,26 @@ export function formatTokens(count: number): string {
 export function contextText(context: AgentTreeContext): string {
 	const percentile = (context.tokens / context.budget) * 100;
 	return `${percentile.toFixed(0)}% (${formatTokens(context.tokens)}/${formatTokens(context.budget)})`;
+}
+
+/**
+ * One descendant session's accumulated subagent runtime as the display writes it.
+ *
+ * `undefined` is the unavailable marker, never a zero: a session whose executions this host never
+ * measured is not a session that measured zero, and showing `0ms` for it would assert a reading
+ * nobody made. A reported figure is written in the unit that keeps it readable — milliseconds under
+ * a second, then seconds, minutes and hours — and it is only ever the display of the value: the
+ * document keeps the number of milliseconds, never this text.
+ */
+export function runtimeText(runtimeMs: number | undefined): string {
+	if (runtimeMs === undefined) return "—";
+	if (runtimeMs < 1000) return `${Math.round(runtimeMs)}ms`;
+	const seconds = Math.round(runtimeMs / 1000);
+	if (seconds < 60) return `${seconds}s`;
+	const minutes = Math.floor(seconds / 60);
+	if (minutes < 60) return seconds % 60 === 0 ? `${minutes}m` : `${minutes}m${seconds % 60}s`;
+	const hours = Math.floor(minutes / 60);
+	return minutes % 60 === 0 ? `${hours}h` : `${hours}h${minutes % 60}m`;
 }
 
 /** A CNY amount as the display writes it: two decimals past one cent, four below it. */

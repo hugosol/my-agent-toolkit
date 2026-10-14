@@ -59,6 +59,7 @@ import {
 	fieldsText,
 	lineText,
 	roundColumns,
+	runtimeText,
 	seasonMark,
 	totalColumns,
 } from "../../shared-logic/presentation/display";
@@ -264,6 +265,11 @@ function prefixedLine(prefix: string, line: DisplayLine): DisplayLine {
  * follows them as `Ctx: percent (tokens/budget)` — the subagent's own tokens against the same fixed
  * display budget the bar above uses for its channel, which is what the operator can read for a
  * session the budget bar does not follow. A session no binding observed carries no such field.
+ *
+ * The row that is a descendant session also carries its accumulated subagent runtime, written after
+ * the context field. It is drawn for every such row, and an unavailable figure is drawn as its own
+ * marker rather than omitted: the value is a figure the host measured, so "none was reported" and
+ * "the reported figure was zero" are different facts and the row has to show which one it is.
  */
 function treeLines(rows: readonly AgentTreeRow[]): DisplayLine[] {
 	return rows.map((row, index) => {
@@ -279,6 +285,7 @@ function treeLines(rows: readonly AgentTreeRow[]): DisplayLine[] {
 		const parts = [head];
 		if (row.fields !== undefined) parts.push(fieldsText(row.fields));
 		if (row.context !== undefined) parts.push(`Ctx: ${contextText(row.context)}`);
+		if (row.kind === "session") parts.push(`Run: ${runtimeText(row.runtimeMs)}`);
 		return [{ text: parts.join("  ") }];
 	});
 }

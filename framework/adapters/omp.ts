@@ -11,11 +11,13 @@
  */
 import { bindExtension } from "../behaviors/binding";
 import { isImplementationDisposed } from "../behaviors/lifecycle";
-import type {
-	ExtensionAssembly,
-	ExtensionImplementation,
-	ImplementationContext,
+import {
+	isPlainMapping,
+	type ExtensionAssembly,
+	type ExtensionImplementation,
+	type ImplementationContext,
 } from "../core/assembly";
+import { describeValue } from "../core/config";
 import { activationField, type ExtensionDefinition, statePersistence } from "../core/definition";
 import type {
 	BindingResult,
@@ -33,6 +35,7 @@ import type {
 	SessionEvent,
 	SessionFacts,
 	SessionStartReason,
+	SubagentRuntimeDelivery,
 	TurnOutcome,
 	TurnSignalFacts,
 	TurnUsage,
@@ -394,6 +397,28 @@ export interface OmpMessageEndEvent {
 }
 
 /**
+ * The two native tool-execution facts the subagent-runtime axis is mapped from.
+ *
+ * The harness states a subagent *execution*'s own measured duration in exactly one place: the
+ * payloads its own delegation tool (`task`) publishes while a spawn runs and once it settled. A
+ * progress frame carries the running spawn's own elapsed reading and the settled result carries
+ * each spawn's final one — neither is a session's creation-to-last-record span, which includes the
+ * idle gaps between executions and is a different metric.
+ */
+export type OmpToolExecutionEventType = "tool_execution_update" | "tool_execution_end";
+
+/** One native tool-execution event, as the runner delivers it; only the members this mapping reads. */
+export interface OmpToolExecutionEvent {
+	readonly type?: OmpToolExecutionEventType;
+	/** The tool that ran. Only the harness's own delegation tool carries an execution's duration. */
+	readonly toolName?: string;
+	/** The partial result a running tool reported; the delegation tool's progress frames arrive here. */
+	readonly partialResult?: unknown;
+	/** The settled tool result; the delegation tool's own per-spawn results arrive here. */
+	readonly result?: unknown;
+}
+
+/**
  * The native surface this adapter uses, as the OMP loader hands it to an extension
  * factory. Only the used members are named; the loader passes the full API.
  */
@@ -444,6 +469,17 @@ export interface OmpExtensionApi {
 	on(event: "message_start", handler: (event: OmpMessageStartEvent, ctx: OmpSessionContext) => void): void;
 	on(event: "message_update", handler: (event: OmpMessageUpdateEvent, ctx: OmpSessionContext) => void): void;
 	on(event: "message_end", handler: (event: OmpMessageEndEvent, ctx: OmpSessionContext) => void): void;
+	/**
+	 * Subscribes to the native tool-execution facts the subagent-runtime axis is mapped from.
+	 *
+	 * Both are facts about one tool call rather than about the agent's work: a running tool's
+	 * progress frame and its settled result. The adapter reads the harness's own delegation tool's
+	 * payloads alone — the one place a subagent execution's own duration is stated — and decides
+	 * nothing about which reading is a replacement, which execution is new or which completion it
+	 * has already seen.
+	 */
+	on(event: "tool_execution_update", handler: (event: OmpToolExecutionEvent, ctx: OmpSessionContext) => void): void;
+	on(event: "tool_execution_end", handler: (event: OmpToolExecutionEvent, ctx: OmpSessionContext) => void): void;
 	/**
 	 * The injected SDK surface (`pi.pi`).
 	 *
@@ -502,7 +538,11 @@ export interface OmpAgentRef {
 	readonly parentId?: string;
 	/** The live session, or null once the agent is parked and only its history remains. */
 	readonly session?: {
-		readonly sessionManager?: { getSessionId(): string };
+		readonly sessionManager?: {
+			getSessionId(): string;
+			/** The session's own latest display name, when this host publishes one. */
+			getSessionName?(): string | undefined;
+		};
 	} | null;
 }
 
@@ -708,6 +748,142 @@ function sessionFactsOf(pi: OmpExtensionApi, ctx: OmpSessionContext): SessionFac
 
 /** The all-zero reading a message carries when the provider reported no usage at all. */
 const ZERO_READING: TurnUsage = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, totalTokens: 0 };
+
+/**
+ * The name the harness runs its own delegation tool under.
+ *
+ * That tool is the one place a subagent *execution*'s own measured duration is stated: each spawn
+ * it runs gets a reading of what that spawn had run when the frame was emitted, and its settled
+ * result carries each spawn's final one. Nothing else on this native surface reports it, and no
+ * session's creation-to-last-record span is a substitute — the span counts the idle gaps between
+ * executions as if they were execution time.
+ */
+const SUBAGENT_TOOL_NAME = "task";
+
+/** One native fact stated as a non-empty string, or nothing when the host stated none. */
+function statedText(value: unknown): string | undefined {
+	return typeof value === "string" && value.length > 0 ? value : undefined;
+}
+
+/**
+ * The per-execution entries one payload of the harness's delegation tool carries, as the host
+ * stated them: the running spawns' progress frames for a frame still in flight, and the settled
+ * spawns' own results for a result that has landed. Either list may be the one a given host mode
+ * fills, so the one that fits the reading's own moment is preferred and the other answers when it
+ * is absent.
+ */
+function subagentEntries(payload: unknown, status: "running" | "ended"): readonly Readonly<Record<string, unknown>>[] {
+	if (!isPlainMapping(payload)) return [];
+	const details = payload.details;
+	if (!isPlainMapping(details)) return [];
+	const preferred = status === "running" ? details.progress : details.results;
+	const fallback = status === "running" ? details.results : details.progress;
+	const list = Array.isArray(preferred) ? preferred : Array.isArray(fallback) ? fallback : [];
+	return list.filter(isPlainMapping);
+}
+
+/**
+ * The actual session facts of one execution's own session, read from the harness's own agent graph.
+ *
+ * The delegation payload names the *agent* a spawn ran as, not the session it ran in, so the
+ * execution's session is resolved the same way a delivery's owner and a session's direct parent
+ * already are: through the harness's own registry, never from a display name, a depth or a string
+ * that merely looks hierarchical. The direct parent is one hop of the same graph, and the name is
+ * the execution's own session manager's, so a fact this host cannot obtain is named in
+ * `unavailable` rather than guessed.
+ */
+function executionSessionFacts(pi: OmpExtensionApi, ref: OmpAgentRef, sessionId: string): SessionFacts {
+	const unavailable: string[] = [];
+	const spawningId = ref.parentId;
+	const parentSession =
+		spawningId === undefined ? undefined : pi.pi?.AgentRegistry?.global()?.get(spawningId)?.session;
+	const parentId = statedText(parentSession?.sessionManager?.getSessionId());
+	if (parentId === undefined) unavailable.push("direct parent session");
+	const name = statedText(ref.session?.sessionManager?.getSessionName?.());
+	if (name === undefined) unavailable.push("session name");
+	return {
+		sessionId,
+		kind: ref.kind === "main" ? "main" : "sub",
+		...(parentId === undefined ? {} : { parentSessionId: parentId }),
+		...(name === undefined ? {} : { name }),
+		unavailable,
+	};
+}
+
+/**
+ * The owner one *execution's own* session belongs to, resolved from the harness's own agent graph.
+ *
+ * It is deliberately not the observing binding's owner: an execution a subagent ran belongs to the
+ * top-level main session that subagent follows, so a group scoped to an owner is not moved by a
+ * child's work — exactly as a subagent's own round edge and Turn are not.
+ */
+function executionOwnerOf(pi: OmpExtensionApi, ref: OmpAgentRef, sessionId: string): OwnerReference {
+	if (ref.kind === "main") return { kind: "owner", key: mainOwnerKey(sessionId) };
+	return mainAncestorOf(pi, ref.parentId);
+}
+
+/**
+ * The subagent-runtime deliveries one payload of the harness's delegation tool states.
+ *
+ * Each entry names one execution and the duration the host measured for it. An entry whose own
+ * runtime this adapter cannot state — no execution identity, no session the harness's graph
+ * resolves for it, or a duration the host did not state as a usable number — is delivered as the
+ * fact that it is `unavailable`, not dropped: an execution was reported, and an operator has to be
+ * told which reading could not be obtained rather than be shown a zero or a span in its place. Such
+ * an observation is anchored to the session it was read in, which is why `frame` carries that
+ * session's own facts, owner and channel. A payload that names no execution at all states no
+ * runtime either, and produces no delivery.
+ */
+function subagentRuntimeDeliveries(
+	pi: OmpExtensionApi,
+	frame: {
+		readonly session: SessionFacts;
+		readonly owner: OwnerReference;
+		readonly hasUI: boolean;
+		readonly feedback: FeedbackTransport;
+	},
+	payload: unknown,
+	status: "running" | "ended",
+): readonly SubagentRuntimeDelivery[] {
+	const registry = pi.pi?.AgentRegistry?.global();
+	return subagentEntries(payload, status).map(entry => {
+		const executionId = statedText(entry.id);
+		const ref = executionId === undefined ? undefined : registry?.get(executionId);
+		const sessionId = statedText(ref?.session?.sessionManager?.getSessionId());
+		if (executionId === undefined || ref === undefined || sessionId === undefined) {
+			return {
+				event: { kind: "subagent_runtime" } as const,
+				owner: frame.owner,
+				session: frame.session,
+				runtime: {
+					kind: "unavailable" as const,
+					reason:
+						executionId === undefined
+							? "子代理执行身份"
+							: `子代理执行「${executionId}」所属 Session`,
+				},
+				hasUI: frame.hasUI,
+				feedback: frame.feedback,
+			};
+		}
+		const runtimeMs = entry.durationMs;
+		const usable = typeof runtimeMs === "number" && Number.isFinite(runtimeMs) && runtimeMs >= 0 ? runtimeMs : undefined;
+		return {
+			event: { kind: "subagent_runtime" } as const,
+			owner: executionOwnerOf(pi, ref, sessionId),
+			session: executionSessionFacts(pi, ref, sessionId),
+			runtime:
+				usable === undefined
+					? {
+							kind: "unavailable" as const,
+							reason: `子代理执行「${executionId}」的运行耗时（${describeValue(runtimeMs)}）`,
+						}
+					: { kind: "reading" as const, executionId, runtimeMs: usable, status },
+			hasUI: frame.hasUI,
+			feedback: frame.feedback,
+		};
+	});
+}
 
 /**
  * The usage one assistant message carried, as the four reported buckets plus the reported total, or
@@ -1327,6 +1503,29 @@ function ompPort(
 						...(event.message.responseId === undefined ? {} : { responseId: event.message.responseId }),
 					},
 				});
+			});
+		},
+		onSubagentRuntime: handler => {
+			// The adapter's whole job on this axis: read the harness's own delegation payloads and map
+			// the per-execution duration the host stated there, attributed through the harness's own
+			// agent graph. Which reading replaces which, which execution is new and which completion was
+			// already observed are the consumer's rules, so every reading is reported as it stands.
+			const report = (payload: unknown, ctx: OmpSessionContext, status: "running" | "ended"): void => {
+				const frame = {
+					session: sessionFactsOf(pi, ctx),
+					owner: ownerOf(catalogued(ctx)),
+					hasUI: ctx.hasUI,
+					feedback: feedbackTransport(ctx),
+				};
+				for (const delivery of subagentRuntimeDeliveries(pi, frame, payload, status)) handler(delivery);
+			};
+			pi.on("tool_execution_update", (event, ctx) => {
+				if (event.toolName !== SUBAGENT_TOOL_NAME) return;
+				report(event.partialResult, ctx, "running");
+			});
+			pi.on("tool_execution_end", (event, ctx) => {
+				if (event.toolName !== SUBAGENT_TOOL_NAME) return;
+				report(event.result, ctx, "ended");
 			});
 		},
 		onRunInitiation: handler => {

@@ -26,6 +26,7 @@ import type {
 	SemanticEvent,
 	SemanticEventDeliveryMap,
 	SessionEvent,
+	SubagentRuntimeEvent,
 	SubscriptionGroup,
 	TurnEvent,
 } from "../core/protocol";
@@ -38,6 +39,9 @@ export const ROUND_EVENT_KINDS: readonly RoundEvent["kind"][] = ["round_start", 
 
 /** The Turn axis's event kinds. */
 export const TURN_EVENT_KINDS: readonly TurnEvent["kind"][] = ["turn_start", "turn_end"];
+
+/** The subagent-runtime axis's event kinds. */
+export const SUBAGENT_RUNTIME_EVENT_KINDS: readonly SubagentRuntimeEvent["kind"][] = ["subagent_runtime"];
 
 /**
  * Whether one group's scope admits a delivery whose owner resolved this way.

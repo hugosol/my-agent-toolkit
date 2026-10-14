@@ -10,7 +10,7 @@
  *   stepped by an ordinary save), `periodId` (the generation an accounting reset produces),
  *   `start`, an optional `start_bal`, `holiday` and `harnesses`.
  * - `harnesses.<harness>.sessions` is a flat list of records `{id, name, parent, saveVersion,
- *   own}`, unique by `id` inside one harness. `parent` is the same harness's direct parent session
+ *   own, runtimeMs?}`, unique by `id` inside one harness. `parent` is the same harness's direct parent session
  *   id, or `null` for a session with none; a parent that has not been saved yet is ordinary data,
  *   not an error, and no placeholder parent is invented. The harness part of the identity is the
  *   harness key, so the record itself carries no harness field.
@@ -20,6 +20,10 @@
  *   turn detail, host difference baseline or historical price has a place here, and a document (or
  *   record, or usage entry) carrying a field this schema does not name is not read as this
  *   version: an unrecognized shape is refused, never guessed at, defaulted or silently trimmed.
+ *   `runtimeMs` is the one optional measurement a record may carry: a count of milliseconds,
+ *   never a formatted duration, absent when the host never produced one and `0` when a reading
+ *   really was zero — while a value that is not a measurement at all is dropped from the record
+ *   rather than taken for damage to the consumption beside it.
  *
  * A document the file holds is read through {@link readConsumptionDocument}, which answers either
  * with the validated document or with the reason it is not one. Nothing here reads the file, and
@@ -75,6 +79,18 @@ export interface SessionRecord {
 	readonly saveVersion: number;
 	/** This session's own consumption, excluding anything its subagents issued. */
 	readonly own: OwnConsumption;
+	/**
+	 * The subagent runtime this session's own executions accumulated in this period, in
+	 * milliseconds, or nothing when no reliable reading ever produced one.
+	 *
+	 * It is the harness's *own* measurement of each execution's duration, summed per execution —
+	 * never a session's creation-to-last-record span, which counts the idle gaps between
+	 * executions, and never a formatted string, so a later statistical tool reads a number.
+	 * Absent is *unavailable* rather than zero: a session whose host reported no such reading and
+	 * one whose executions really took no measurable time are different facts, and the second is
+	 * stored as `0`.
+	 */
+	readonly runtimeMs?: number;
 }
 
 /** One harness's sessions, as the flat list the schema fixes. */
@@ -112,7 +128,7 @@ type ApprovedKeys = Readonly<Record<string, true>>;
 
 const DOCUMENT_KEYS: ApprovedKeys = { schemaVersion: true, periodId: true, start: true, start_bal: true, holiday: true, harnesses: true };
 const HARNESS_KEYS: ApprovedKeys = { sessions: true };
-const SESSION_KEYS: ApprovedKeys = { id: true, name: true, parent: true, saveVersion: true, own: true };
+const SESSION_KEYS: ApprovedKeys = { id: true, name: true, parent: true, saveVersion: true, own: true, runtimeMs: true };
 const USAGE_KEYS: ApprovedKeys = { tokens: true, costCny: true, referenceCostUsd: true };
 const TOKEN_KEYS: ApprovedKeys = { input: true, cacheRead: true, cacheWrite: true, output: true };
 
@@ -134,6 +150,11 @@ function measurementFault(value: unknown): string | undefined {
 	if (typeof value !== "number" || !Number.isFinite(value)) return `不是有限数字（${describeValue(value)}）`;
 	if (value < 0) return "为负数";
 	return undefined;
+}
+
+/** Whether one value is a measurement this schema accepts — the narrowing form of the check above. */
+function isMeasurement(value: unknown): value is number {
+	return measurementFault(value) === undefined;
 }
 
 /** The four token buckets of one model's usage, or the reason that entry is not one. */
@@ -207,6 +228,12 @@ function readSessionRecord(value: unknown, path: string): SessionRecordRead {
 	}
 	const own = readOwnConsumption(value.own, `${path}.own`);
 	if ("reason" in own) return own;
+	// The session's runtime rides the same record and is read leniently: a value this schema cannot
+	// accept as a measurement is left out rather than refusing the whole document. The consumption
+	// this record carries is valid however that one optional figure stands, so treating a bad one as
+	// a damaged document would pause an accounting that is not damaged — and the record's other
+	// fields must survive it. The next snapshot this session commits replaces the value.
+	const declaredRuntime = value.runtimeMs;
 	return {
 		record: {
 			id: value.id,
@@ -214,6 +241,7 @@ function readSessionRecord(value: unknown, path: string): SessionRecordRead {
 			parent: value.parent,
 			saveVersion: value.saveVersion,
 			own: own.value,
+			...(isMeasurement(declaredRuntime) ? { runtimeMs: declaredRuntime } : {}),
 		},
 	};
 }
@@ -305,11 +333,13 @@ function sameBusinessValue(left: unknown, right: unknown): boolean {
 }
 
 /**
- * Whether two records say the same business thing: the same identity, display name, direct parent
- * and snapshot version, and the same own consumption at every level.
+ * Whether two records say the same business thing: the same identity, display name, direct parent,
+ * snapshot version, own consumption at every level and subagent runtime.
  *
  * A name is part of the record's content, so a rename at an unchanged version is other content
  * rather than a silent update — names travel with consumption, not through a write of their own.
+ * The runtime is content for the same reason: it rides the same commit, and an accumulation that
+ * grew is a change the file has to carry rather than a snapshot to drop as idempotent.
  */
 export function sameSessionContent(left: SessionRecord, right: SessionRecord): boolean {
 	return (
@@ -317,6 +347,7 @@ export function sameSessionContent(left: SessionRecord, right: SessionRecord): b
 		left.name === right.name &&
 		left.parent === right.parent &&
 		left.saveVersion === right.saveVersion &&
+		left.runtimeMs === right.runtimeMs &&
 		sameBusinessValue(left.own, right.own)
 	);
 }

@@ -384,7 +384,7 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 			total,
 			"主会话",
 			"│  official / model-alpha  Cache: 66%  ¥Cache/In/Out：4:7:89  Sum: 6,020  Cost: ¥0.05",
-			"└─ 子代理  Cache: 40%  Sum: 100",
+			"└─ 子代理  Cache: 40%  Sum: 100  Run: —",
 		]);
 		expect(bound.host.lastLines()?.some(line => line.startsWith("Round:"))).toBe(false);
 
@@ -433,7 +433,7 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 			"Total:  Cache: 67%  ¥Cache/In/Out：4:7:89  Sum: 6,100  Cost: ¥0.05",
 			"主会话",
 			"│  official / model-alpha  Cache: 67%  ¥Cache/In/Out：4:7:89  Sum: 6,000  Cost: ¥0.05",
-			"└─ 子代理  Cache: 40%  Sum: 100",
+			"└─ 子代理  Cache: 40%  Sum: 100  Run: —",
 		]);
 
 		// The view moves to the subagent, whose own Round then opens and settles one request: what is
@@ -480,7 +480,7 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 			"Total:  Cache: 67%  ¥Cache/In/Out：4:7:89  Sum: 6,130  Cost: ¥0.05",
 			"主会话",
 			"│  official / model-alpha  Cache: 67%  ¥Cache/In/Out：4:7:89  Sum: 6,000  Cost: ¥0.05",
-			"└─ 子代理  Cache: 33%  Sum: 130",
+			"└─ 子代理  Cache: 33%  Sum: 130  Run: —",
 		]);
 	});
 
@@ -490,7 +490,7 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 
 		// No binding has reported the subagent's context: its row carries its consumption alone, and no
 		// context field is invented for it.
-		expect(bound.host.lastLines()?.find(line => line.includes("子代理"))).toBe("└─ 子代理  Cache: 40%  Sum: 100");
+		expect(bound.host.lastLines()?.find(line => line.includes("子代理"))).toBe("└─ 子代理  Cache: 40%  Sum: 100  Run: —");
 
 		// The subagent's own binding publishes its current context on the monetary channel. The row reads
 		// it against that channel's own 450K display budget, as `percent (tokens/budget)` — the same form
@@ -502,7 +502,7 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 		});
 		bound.host.publish({ sessionId: "session-main", provider: "official", model: "model-alpha" });
 		expect(bound.host.lastLines()?.find(line => line.includes("子代理"))).toBe(
-			"└─ 子代理  Cache: 40%  Sum: 100  Ctx: 85% (381.5K/450.0K)",
+			"└─ 子代理  Cache: 40%  Sum: 100  Ctx: 85% (381.5K/450.0K)  Run: —",
 		);
 
 		// A later reading on the allowance channel is read against that channel's own 272K budget, chosen
@@ -514,7 +514,7 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 		});
 		bound.host.publish({ sessionId: "session-main", provider: "official", model: "model-alpha" });
 		expect(bound.host.lastLines()?.find(line => line.includes("子代理"))).toBe(
-			"└─ 子代理  Cache: 40%  Sum: 100  Ctx: 50% (136.0K/272.0K)",
+			"└─ 子代理  Cache: 40%  Sum: 100  Ctx: 50% (136.0K/272.0K)  Run: —",
 		);
 
 		// A pair the data does not classify has no display budget at all, so the row carries no context
@@ -525,7 +525,7 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 			model: "no-such",
 		});
 		bound.host.publish({ sessionId: "session-main", provider: "official", model: "model-alpha" });
-		expect(bound.host.lastLines()?.find(line => line.includes("子代理"))).toBe("└─ 子代理  Cache: 40%  Sum: 100");
+		expect(bound.host.lastLines()?.find(line => line.includes("子代理"))).toBe("└─ 子代理  Cache: 40%  Sum: 100  Run: —");
 	});
 
 	test("a session is shown by its name, and only by an id when no name is reported at all (P23)", async () => {
@@ -533,7 +533,7 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 		await bound.double.runToCompletion("budget", { args: "detail" });
 
 		// The document already names the subagent: that recorded name is what its row shows.
-		expect(bound.host.lastLines()?.find(line => line.includes("子代理"))).toBe("└─ 子代理  Cache: 40%  Sum: 100");
+		expect(bound.host.lastLines()?.find(line => line.includes("子代理"))).toBe("└─ 子代理  Cache: 40%  Sum: 100  Run: —");
 
 		// A report carrying only the agent's id adds no name, so the name already known still stands: an id
 		// never displaces a name.
@@ -542,7 +542,7 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 			session: { sessionId: "session-sub", kind: "sub", agentId: "0-Explore", unavailable: [] },
 		});
 		bound.host.publish({ sessionId: "session-main", provider: "official", model: "model-alpha" });
-		expect(bound.host.lastLines()?.find(line => line.includes("子代理"))).toBe("└─ 子代理  Cache: 40%  Sum: 100");
+		expect(bound.host.lastLines()?.find(line => line.includes("子代理"))).toBe("└─ 子代理  Cache: 40%  Sum: 100  Run: —");
 
 		// The host then reports the agent's own name — the label its roster shows — and that name becomes
 		// what the row shows.
@@ -557,7 +557,7 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 			},
 		});
 		bound.host.publish({ sessionId: "session-main", provider: "official", model: "model-alpha" });
-		expect(bound.host.lastLines()?.find(line => line.includes("explore"))).toBe("└─ explore  Cache: 40%  Sum: 100");
+		expect(bound.host.lastLines()?.find(line => line.includes("explore"))).toBe("└─ explore  Cache: 40%  Sum: 100  Run: —");
 
 		// A session the document never named, for which the host reports only an agent id, falls back to
 		// that id rather than to its raw session id.
