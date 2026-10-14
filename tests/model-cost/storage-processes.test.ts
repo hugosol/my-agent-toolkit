@@ -82,7 +82,7 @@ function configRepository(label: string, declaredStorageDir: string): { reposito
 	mkdirSync(configDirectory, { recursive: true });
 	writeFileSync(
 		path.join(configDirectory, "config.yaml"),
-		`# the storage root of one case of the storage suite\nstorageDir: ${JSON.stringify(declaredStorageDir)}\nbalanceTtlMs: 30000\n`,
+		`# the storage root of one case of the storage suite\nstorageDir: ${JSON.stringify(declaredStorageDir)}\nbalanceTtlMs: 30000\ncodexQuotaTtlMs: 15000\n`,
 		"utf8",
 	);
 	return { repositoryRoot, configDirectory };
@@ -228,7 +228,7 @@ describe("the storage root of independent processes", () => {
 		// The operator edits the one config entry: the next process selects another root.
 		writeFileSync(
 			path.join(config.configDirectory, "config.yaml"),
-			`storageDir: ${JSON.stringify(secondRoot)}\nbalanceTtlMs: 30000\n`,
+			`storageDir: ${JSON.stringify(secondRoot)}\nbalanceTtlMs: 30000\ncodexQuotaTtlMs: 15000\n`,
 			"utf8",
 		);
 		const second = await runChild(

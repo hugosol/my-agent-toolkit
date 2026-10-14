@@ -63,7 +63,7 @@ DeepSeek 5 秒／Codex 10 秒是业务预算而非 framework 默认；connect-bo
 
 ### 请求范围、adapter 与 Codex 原生 helper
 
-[账户访问决议](04-provider-access.md)已确定：framework adapter 按需提供宿主当前身份／可用凭据／provider 地址，隐藏 authStorage／modelRegistry 和 OAuth 维护，shared logic 不取得 OMP 原生对象。model-cost 的主动 DeepSeek／Codex 查询全部走 framework HTTP，由 shared logic 准备地址、认证、proxy 和 timeoutMs；endpoint／请求与响应解释／header parser／窗口选择／额度估计／业务失败解释尽量留 shared logic。
+[账户访问决议](04-provider-access.md)已确定：framework adapter 按需提供宿主当前身份／可用凭据／provider 地址，隐藏 authStorage／modelRegistry 和 OAuth 维护，shared logic 不取得 OMP 原生对象。model-cost 的主动 DeepSeek／Codex 查询全部走 framework HTTP，由 shared logic 准备地址、认证、proxy 和 timeoutMs；endpoint／请求与响应解释／额度 parser／窗口选择／额度估计／业务失败解释尽量留 shared logic。
 
 旧 openaiCodexUsageProvider 和 parseCodexRateLimitHeaders 是旧代码使用的原生 helper，不因来自 OMP 包就自动成为 framework 能力；本票未批准必须保留 usage provider，也不为其预建第二套 fetch interface。必要代码复用或注入桥接必须服从上述职责，在装配票核对，不能把业务移回 adapter／HTTP，也不能让直接查询绕过统一传输或泄漏 OMP 类型。response 原生返回保留必要 fetch 风格接入条件，不创建额外业务格式。
 
@@ -108,7 +108,7 @@ framework 提供可直接导入的单一 request interface，统一代理选择�
 
 - 每项政策唯一权威在本 Lighthouse；消费者链接当前结果，不另存代理／超时副本或恢复被替代规则。
 - 对齐现有配置 module 与 framework 公共入口；不建立平行 YAML／声明体系，不把 OMP native 类型带入 shared logic。
-- model-cost 请求业务、header parser、窗口／估计／错误解释留 shared logic；HTTP 不拥有账号管理、provider 路由、业务缓存或刷新调度。
+- model-cost 请求业务、额度 parser、窗口／估计／错误解释留 shared logic；HTTP 不拥有账号管理、provider 路由、业务缓存或刷新调度。
 - proxy:false／省略明确直连；显式选择必须兑现或失败，缺配置和运行失败均不默换路径。
 - 超时执行在内部、预算有限且可覆盖，响应头返回不解除正文阶段约束；不新增公共主动取消。
 - 不增加自动重试、telemetry、测速、轮换、热更新、SOCKS 或接管宿主自身网络的保证。

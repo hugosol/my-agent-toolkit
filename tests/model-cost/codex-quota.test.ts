@@ -1,32 +1,34 @@
 /**
- * The Codex allowance windows at the extension's display seam (P39, P65; S2).
+ * The Codex allowance windows at the extension's display seam.
  *
  * The seam under test is production throughout: the extension's real definition is bound through the
  * framework's public binding (the port double, `tests/framework/support/harness-port-double.ts`), the
  * runtime is the one `createModelCostRuntime` builds, and every Turn delivery below is fed exactly as
  * a harness adapter would feed it. What the cases read is what a frontend reads —
- * `runtime.presentation.quota()`, the process-level read-only result — and what they count is what the
- * two sources really did, through the two public dependencies this extension's own business takes:
- * the harness's provider access (`ProviderAccess`) and the framework's HTTP call.
+ * `runtime.presentation.quota()`, the process-level read-only result — and what they count is what
+ * the one account query really did, through the two public dependencies this extension's own business
+ * takes: the harness's provider access (`ProviderAccess`) and the framework's HTTP call.
  *
  * The HTTP call is the same single-request interface production runs on
  * (`framework/modules/http.ts`), substituted here so no permanent case reaches a provider; the mock
  * records every call with the exact URL and options the query built, which is what makes the account
  * address, the authentication headers, the named proxy selection and the 10000ms business budget
- * observable rather than asserted about — and what proves that the runtime makes no second API call
- * however many Turns pass. The clock is a controlled input, so every reset state below is placed
- * exactly.
+ * observable rather than asserted about. It also carries every answer the account API gives: a
+ * settled Codex request refreshes the windows through the shared success TTL and in-flight policy, so
+ * the number of calls is part of the contract these cases pin. The clock is a controlled input, so
+ * every reset state below is placed exactly.
  *
- * Nothing here recomputes an expectation with the code under test: the header names and the document's
- * field names are the Codex protocol's own, written out by hand; the window lengths (5 hours, 7 days)
- * and the ±5% band are the specification's own rule, arithmetic on this file's literals; the reset
- * instants are hand-computed from this file's clock; and the token's account id is a literal this file
- * built into the credential rather than a value read back from the implementation.
+ * Nothing here recomputes an expectation with the code under test: the document's field names are the
+ * Codex protocol's own, written out by hand; the window lengths (5 hours, 7 days) and the ±5% band
+ * are the specification's own rule, arithmetic on this file's literals; the reset instants are
+ * hand-computed from this file's clock; and the token's account id is a literal this file built into
+ * the credential rather than a value read back from the implementation.
  */
 import { afterEach, describe, expect, test } from "bun:test";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
+import { setImmediate as immediate } from "node:timers/promises";
 import { MODEL_COST } from "../../extensions/model-cost/definition";
 import type { ModelPricingData } from "../../extensions/model-cost/shared-logic/model-data";
 import { type ModelCostRuntime, createModelCostRuntime } from "../../extensions/model-cost/shared-logic/runtime";
@@ -60,9 +62,10 @@ const OTHER_PROVIDER = "deepseek";
 /** The account id this file wrote into the credential, and the credential itself. */
 const ACCOUNT_ID = "acct-13";
 
-/** Five hours, seven days and one day, in milliseconds: the specification's own window lengths. */
-const FIVE_HOUR_MS = 5 * 60 * 60 * 1000;
-const WEEKLY_MS = 7 * 24 * 60 * 60 * 1000;
+/** The specification's own success TTL for the windows, as the shipped configuration states it. */
+const SPEC_TTL_MS = 15_000;
+
+/** One day in milliseconds: the weekly reset arithmetic below is stated against it. */
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 /**
@@ -85,20 +88,31 @@ interface SentRequest {
 	readonly options: HttpRequestOptions | undefined;
 }
 
+/** One window as a document reports it: seconds for the length, seconds for the reset instant. */
+interface UsageWindow {
+	readonly usedPercent: number;
+	readonly seconds: number;
+	readonly resetAt?: number;
+}
+
+/** The windows one account API answer states, each under the position the document gave it. */
+interface UsageWindows {
+	readonly primary?: UsageWindow;
+	readonly secondary?: UsageWindow;
+}
+
 /**
  * One account API answer, in the provider's own document shape, as one JSON response.
  *
  * The windows are stated in seconds, which is the unit the backend reports them in, so each case's
- * expectation is a hand-computed epoch-millisecond instant.
+ * expectation is a hand-computed epoch-millisecond instant. A reset the case omits is a document that
+ * stated none, which is a window whose reset is unknown rather than a window at zero.
  */
-function usageAnswer(windows: {
-	readonly primary?: { readonly usedPercent: number; readonly seconds: number; readonly resetAt: number };
-	readonly secondary?: { readonly usedPercent: number; readonly seconds: number; readonly resetAt: number };
-}): Response {
-	const windowOf = (window: { usedPercent: number; seconds: number; resetAt: number }): Record<string, unknown> => ({
+function usageAnswer(windows: UsageWindows): Response {
+	const windowOf = (window: UsageWindow): Record<string, unknown> => ({
 		used_percent: window.usedPercent,
 		limit_window_seconds: window.seconds,
-		reset_at: window.resetAt,
+		...(window.resetAt === undefined ? {} : { reset_at: window.resetAt }),
 	});
 	return new Response(
 		JSON.stringify({
@@ -113,16 +127,22 @@ function usageAnswer(windows: {
 }
 
 /** The five-hour and weekly windows one document reports, with each reset stated in seconds. */
-const DOCUMENT_WINDOWS = {
+const DOCUMENT_WINDOWS: UsageWindows = {
 	primary: { usedPercent: 12.5, seconds: 18_000, resetAt: 1_700_003_600 },
 	secondary: { usedPercent: 60, seconds: 604_800, resetAt: 1_700_086_400 },
 };
 
 /**
- * One whole Codex request in a session of its own: its Turn's start facts, its response's headers and
- * the settled response — the deliveries a real Codex exchange produces.
+ * One whole Codex request in a session of its own: its Turn's start facts, its response — whose
+ * headers this module no longer reads, carried here so a case can prove they are ignored — and the
+ * settled response, the deliveries a real Codex exchange produces.
  */
-function codexTurn(double: PortDouble, headers: Readonly<Record<string, string>>, at: number, provider = CODEX): void {
+function codexTurn(
+	double: PortDouble,
+	at: number,
+	provider = CODEX,
+	headers: Readonly<Record<string, string>> = {},
+): void {
 	const session: SessionFacts = { sessionId: `session-${provider}-${at}`, kind: "main", unavailable: [] };
 	double.deliverTurn(
 		{ kind: "request_started", session, at, provider, model: "gpt-6-luna" } as TurnSignal,
@@ -144,22 +164,16 @@ function codexTurn(double: PortDouble, headers: Readonly<Record<string, string>>
 	);
 }
 
-/** The five-hour window's three headers, as one response would carry them. */
-function fiveHourHeaders(usedPercent: string, resetAtSeconds?: number): Record<string, string> {
-	return {
-		"x-codex-primary-used-percent": usedPercent,
-		"x-codex-primary-window-minutes": "300",
-		...(resetAtSeconds === undefined ? {} : { "x-codex-primary-reset-at": String(resetAtSeconds) }),
-	};
-}
+/** Let the query one trigger began settle: it awaits the host's facts, the answer and its body. */
+const drain = (): Promise<void> => immediate();
 
-/** The weekly window's three headers, as one response would carry them. */
-function weeklyHeaders(usedPercent: string, resetAtSeconds?: number): Record<string, string> {
-	return {
-		"x-codex-secondary-used-percent": usedPercent,
-		"x-codex-secondary-window-minutes": "10080",
-		...(resetAtSeconds === undefined ? {} : { "x-codex-secondary-reset-at": String(resetAtSeconds) }),
-	};
+/** Wait until `predicate` holds, yielding between checks; a query that never arrives fails loudly. */
+async function until(predicate: () => boolean, description: string): Promise<void> {
+	for (let attempt = 0; attempt < 200; attempt += 1) {
+		if (predicate()) return;
+		await drain();
+	}
+	throw new Error(`timed out waiting for ${description}`);
 }
 
 /** One bound instance, and what a case drives and observes it through. */
@@ -185,6 +199,7 @@ const roots: string[] = [];
 async function bindQuota(options: {
 	readonly access?: (provider: string) => Promise<ProviderAccessFacts | undefined>;
 	readonly respond?: (request: SentRequest, index: number) => Response | Promise<Response>;
+	readonly ttlMs?: number;
 } = {}): Promise<BoundQuota> {
 	const root = mkdtempSync(path.join(tmpdir(), "model-cost-codex-"));
 	roots.push(root);
@@ -205,8 +220,9 @@ async function bindQuota(options: {
 				: options.access(provider);
 		},
 	};
+	const ttlMs = options.ttlMs ?? SPEC_TTL_MS;
 	const runtime = createModelCostRuntime({
-		config: { storageDir: root, balanceTtlMs: 30_000 },
+		config: { storageDir: root, balanceTtlMs: 30_000, codexQuotaTtlMs: ttlMs },
 		configDirectory: root,
 		userHomeDirectory: root,
 		harness: HARNESS,
@@ -222,7 +238,7 @@ async function bindQuota(options: {
 	const double = portDouble();
 	double.bind(MODEL_COST, {
 		factory: () => runtime.implementation,
-		config: { reader: () => `storageDir: ${root}\nbalanceTtlMs: 30000\n` },
+		config: { reader: () => `storageDir: ${root}\nbalanceTtlMs: 30000\ncodexQuotaTtlMs: ${ttlMs}\n` },
 	});
 	double.deliverSession(OWNER, { session: MAIN });
 	// The run-initiation hook is where the framework waits for the one-time initialization, so this is
@@ -238,10 +254,9 @@ afterEach(() => {
 	for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
 });
 
-describe("the account API is asked once, at initialization, and the headers carry the runtime (P39)", () => {
-	test("the startup query uses the business address, the credential's own headers and the named codex proxy", async () => {
+describe("the account API is asked at initialization and on a settled Codex request", () => {
+	test("the query uses the business address, the credential's own headers and the named codex proxy", async () => {
 		const bound = await bindQuota();
-
 		expect(bound.sent).toEqual([
 			{
 				url: "https://chatgpt.com/backend-api/wham/usage",
@@ -292,54 +307,82 @@ describe("the account API is asked once, at initialization, and the headers carr
 		expect(quota.weekly?.usedPercent).toBe(60);
 	});
 
-	test("header lengths outside the ±5% band are not these windows, and no window is a zero", async () => {
-		const bound = await bindQuota({ respond: () => usageAnswer({}) });
+	test("a settled Codex request refreshes the windows only once the success TTL has passed", async () => {
+		let reply: () => Response = () => usageAnswer(DOCUMENT_WINDOWS);
+		const bound = await bindQuota({ respond: () => reply() });
+		expect(bound.sent).toHaveLength(1);
 
-		// A document that reports neither window leaves both unavailable; nothing is answered as zero.
-		expect(bound.runtime.presentation.quota()).toEqual({});
+		// One second after the startup reading: the reading has not outlived the 15000ms TTL, so this
+		// settled request asks nothing and the windows keep their value and instant.
+		reply = () => usageAnswer({ primary: { usedPercent: 20, seconds: 18_000, resetAt: 1_700_003_600 } });
+		bound.clock.now = CLOCK + 1_000;
+		codexTurn(bound.double, bound.clock.now);
+		await drain();
+		expect(bound.sent).toHaveLength(1);
+		expect(bound.runtime.presentation.quota().fiveHour).toEqual({
+			usedPercent: 12.5,
+			resetsAt: 1_700_003_600_000,
+			resetState: "valid",
+			obtainedAt: CLOCK,
+		});
 
-		// 18,900s and 17,100s are exactly ±5% of five hours, and 302 minutes (18,120s) sits inside the
-		// band without being the nominal length: an identified window's reported length need not be the
-		// round number this extension's nominal length is.
-		codexTurn(
-			bound.double,
-			{ "x-codex-primary-used-percent": "77", "x-codex-primary-window-minutes": "302" },
-			CLOCK,
-		);
-		expect(bound.runtime.presentation.quota().fiveHour?.usedPercent).toBe(77);
-
-		// 18,901s is outside the band, so that reading is not one of this extension's windows.
-		codexTurn(
-			bound.double,
-			{
-				"x-codex-primary-used-percent": "88",
-				"x-codex-primary-window-minutes": "315.0166666667",
-			},
-			bound.clock.now,
-		);
-		// The window that carried no identified length left the reading where it was rather than
-		// reporting 88 against a meter this extension does not track.
-		expect(bound.runtime.presentation.quota().fiveHour?.usedPercent).toBe(77);
+		// At exactly the TTL the reading has expired, and this settled request refreshes the five-hour
+		// window from the document the endpoint now answers with.
+		bound.clock.now = CLOCK + SPEC_TTL_MS;
+		codexTurn(bound.double, bound.clock.now);
+		await drain();
+		expect(bound.sent).toHaveLength(2);
+		expect(bound.runtime.presentation.quota().fiveHour).toEqual({
+			usedPercent: 20,
+			resetsAt: 1_700_003_600_000,
+			resetState: "valid",
+			obtainedAt: CLOCK + SPEC_TTL_MS,
+		});
+		// The weekly window was not carried by that document, so it keeps its reading and its instant.
+		expect(bound.runtime.presentation.quota().weekly?.obtainedAt).toBe(CLOCK);
 	});
 
-	test("the runtime makes no second API call, whatever the Turns, the Rounds or the view do", async () => {
+	test("a request of another provider neither queries the account API nor updates a window", async () => {
 		const bound = await bindQuota();
-		expect(bound.sent).toHaveLength(1);
+		const seeded = bound.runtime.presentation.quota();
 
-		// Several Turns carrying headers, and the whole span of session, round and Turn deliveries a
-		// session produces: none of them reaches the account API.
-		codexTurn(bound.double, { ...fiveHourHeaders("20", 1_700_003_600), ...weeklyHeaders("61", 1_700_086_400) }, CLOCK);
-		bound.clock.now = CLOCK + 10 * DAY_MS;
-		codexTurn(bound.double, { ...fiveHourHeaders("21", 1_700_003_600), ...weeklyHeaders("62", 1_700_086_400) }, bound.clock.now);
-		bound.double.deliverRound(OWNER, { event: { kind: "round_start" } });
-		bound.double.deliverRound(OWNER, { event: { kind: "round_end" } });
-		bound.double.deliverSession(OWNER, { session: MAIN });
+		codexTurn(
+			bound.double,
+			CLOCK + 10 * DAY_MS,
+			OTHER_PROVIDER,
+			{ "x-codex-primary-used-percent": "50", "x-codex-primary-window-minutes": "300" },
+		);
+		await drain();
 
 		expect(bound.sent).toHaveLength(1);
-		// Ten days later the 5h window's reported instant is long past, and the elapsed time alone
-		// still asked nothing.
-		expect(bound.runtime.presentation.quota().fiveHour?.resetState).toBe("expired");
-		expect(bound.sent).toHaveLength(1);
+		expect(bound.runtime.presentation.quota()).toEqual(seeded);
+	});
+
+	test("a query already out is joined rather than duplicated, and its own instant is what is accepted", async () => {
+		const held = Promise.withResolvers<Response>();
+		let reply: () => Response | Promise<Response> = () => usageAnswer(DOCUMENT_WINDOWS);
+		const bound = await bindQuota({ respond: () => reply() });
+
+		reply = () => held.promise;
+		bound.clock.now = CLOCK + 20_000;
+		codexTurn(bound.double, bound.clock.now);
+		await until(() => bound.sent.length === 2, "the settled request's query to be issued");
+
+		// A second settled request arrives while that one is still out: it joins the query rather than
+		// issuing a second request, so the provider sees exactly the one attempt.
+		bound.clock.now = CLOCK + 40_000;
+		codexTurn(bound.double, bound.clock.now);
+		await drain();
+		expect(bound.sent).toHaveLength(2);
+
+		held.resolve(usageAnswer({ primary: { usedPercent: 33, seconds: 18_000, resetAt: 1_700_003_600 } }));
+		await drain();
+		expect(bound.runtime.presentation.quota().fiveHour).toEqual({
+			usedPercent: 33,
+			resetsAt: 1_700_003_600_000,
+			resetState: "valid",
+			obtainedAt: CLOCK + 40_000,
+		});
 	});
 
 	test("the account id comes from the credential; a credential that states none sends no such header", async () => {
@@ -386,37 +429,21 @@ describe("the account API is asked once, at initialization, and the headers carr
 		});
 		expect(transport.runtime.presentation.quota()).toEqual({ failure: { at: CLOCK, detail: "unreachable" } });
 	});
+
+	test("a failed attempt earns no TTL, so the next settled request asks again", async () => {
+		const bound = await bindQuota({ respond: () => new Response("{}", { status: 403 }) });
+		expect(bound.sent).toHaveLength(1);
+
+		codexTurn(bound.double, CLOCK + 1_000);
+		await drain();
+		expect(bound.sent).toHaveLength(2);
+	});
 });
 
-describe("response headers update each window on its own (P39, P65)", () => {
-	test("a response's headers update the window they identify, in the order they were received", async () => {
-		const bound = await bindQuota({ respond: () => usageAnswer({}) });
-
-		codexTurn(bound.double, { ...fiveHourHeaders("20", 1_700_003_600), ...weeklyHeaders("61", 1_700_086_400) }, CLOCK);
-		expect(bound.runtime.presentation.quota().fiveHour?.usedPercent).toBe(20);
-		expect(bound.runtime.presentation.quota().weekly?.usedPercent).toBe(61);
-
-		// The positions swapped: the weekly meter arrives as `primary` and the 5h one as `secondary`.
-		bound.clock.now = CLOCK + 60_000;
-		codexTurn(
-			bound.double,
-			{
-				"x-codex-primary-used-percent": "62",
-				"x-codex-primary-window-minutes": "10080",
-				"x-codex-secondary-used-percent": "21",
-				"x-codex-secondary-window-minutes": "300",
-			},
-			bound.clock.now,
-		);
-		const swapped = bound.runtime.presentation.quota();
-		expect(swapped.fiveHour?.usedPercent).toBe(21);
-		expect(swapped.weekly?.usedPercent).toBe(62);
-		expect(swapped.fiveHour?.obtainedAt).toBe(CLOCK + 60_000);
-		expect(swapped.weekly?.obtainedAt).toBe(CLOCK + 60_000);
-	});
-
-	test("a batch that carries one window updates that one and leaves the other's value and instant alone", async () => {
-		const bound = await bindQuota();
+describe("the account answer updates each window on its own", () => {
+	test("a document that carries one window updates that one and leaves the other's value and instant alone", async () => {
+		let reply: () => Response = () => usageAnswer(DOCUMENT_WINDOWS);
+		const bound = await bindQuota({ respond: () => reply() });
 		const seeded = bound.runtime.presentation.quota();
 		expect(seeded.weekly).toEqual({
 			usedPercent: 60,
@@ -425,8 +452,10 @@ describe("response headers update each window on its own (P39, P65)", () => {
 			obtainedAt: CLOCK,
 		});
 
+		reply = () => usageAnswer({ primary: { usedPercent: 31, seconds: 18_000, resetAt: 1_700_003_600 } });
 		bound.clock.now = CLOCK + 30 * 60_000;
-		codexTurn(bound.double, fiveHourHeaders("31", 1_700_003_600), bound.clock.now);
+		codexTurn(bound.double, bound.clock.now);
+		await drain();
 
 		const after = bound.runtime.presentation.quota();
 		expect(after.fiveHour).toEqual({
@@ -435,143 +464,170 @@ describe("response headers update each window on its own (P39, P65)", () => {
 			resetState: "valid",
 			obtainedAt: CLOCK + 30 * 60_000,
 		});
-		// The window this response did not carry keeps its reading *and* the instant it was accepted at.
+		// The window this answer did not carry keeps its reading *and* the instant it was accepted at.
 		expect(after.weekly).toEqual(seeded.weekly);
 		expect(bound.notifications()).toBe(1);
 	});
 
-	test("a batch that identifies no window changes nothing and notifies no one", async () => {
-		const bound = await bindQuota();
-		const seeded = bound.runtime.presentation.quota();
+	test("a document that identifies no window changes nothing and notifies no one, and earns no TTL", async () => {
+		let reply: () => Response = () => usageAnswer({});
+		const bound = await bindQuota({ respond: () => reply() });
 		const before = bound.notifications();
+		expect(bound.runtime.presentation.quota()).toEqual({});
 
-		// A response whose headers carry no rate-limit facts at all, and one whose stated length is not
-		// this extension's window, are both nothing to update.
-		codexTurn(bound.double, { "x-request-id": "capture-1", "content-type": "text/event-stream" }, CLOCK);
-		codexTurn(
-			bound.double,
-			{ "x-codex-primary-used-percent": "99", "x-codex-primary-window-minutes": "1" },
-			CLOCK + 1_000,
-		);
+		// A document whose only window states a length this extension does not track is nothing to
+		// update, and neither is a second answer that identifies none.
+		reply = () => usageAnswer({ primary: { usedPercent: 99, seconds: 60 } });
+		bound.clock.now = CLOCK + 20_000;
+		codexTurn(bound.double, bound.clock.now);
+		await drain();
+		reply = () => usageAnswer({});
+		bound.clock.now = CLOCK + 40_000;
+		codexTurn(bound.double, bound.clock.now);
+		await drain();
 
-		expect(bound.runtime.presentation.quota()).toEqual(seeded);
+		expect(bound.runtime.presentation.quota()).toEqual({});
+		// Neither answer produced a window, so neither earned a success TTL: each settled request asks
+		// again rather than waiting one out.
+		expect(bound.sent).toHaveLength(3);
 		expect(bound.notifications()).toBe(before);
 	});
 
-	test("two candidates of one kind in one batch: the closest length wins, and an exact tie keeps the first received", async () => {
-		const bound = await bindQuota({ respond: () => usageAnswer({}) });
+	test("two candidates of one kind in one document: the closest length wins, and an exact tie keeps the first listed", async () => {
+		let reply: () => Response = () => usageAnswer(DOCUMENT_WINDOWS);
+		const bound = await bindQuota({ respond: () => reply() });
 
 		// 315 and 285 minutes are both exactly ±5% of five hours, so the two are equally close and the
-		// one the response carried first is the reading; the second record states them the other way.
-		codexTurn(
-			bound.double,
-			{
-				"x-codex-secondary-used-percent": "77",
-				"x-codex-secondary-window-minutes": "285",
-				"x-codex-primary-used-percent": "11",
-				"x-codex-primary-window-minutes": "315",
-			},
-			CLOCK,
-		);
-		expect(bound.runtime.presentation.quota().fiveHour?.usedPercent).toBe(77);
+		// one the document listed first is the reading; the second record states them the other way.
+		reply = () =>
+			usageAnswer({
+				primary: { usedPercent: 11, seconds: 315 * 60 },
+				secondary: { usedPercent: 77, seconds: 285 * 60 },
+			});
+		bound.clock.now = CLOCK + 20_000;
+		codexTurn(bound.double, bound.clock.now);
+		await drain();
+		expect(bound.runtime.presentation.quota().fiveHour?.usedPercent).toBe(11);
 
-		codexTurn(
-			bound.double,
-			{
-				"x-codex-primary-used-percent": "12",
-				"x-codex-primary-window-minutes": "315",
-				"x-codex-secondary-used-percent": "78",
-				"x-codex-secondary-window-minutes": "285",
-			},
-			CLOCK + 1_000,
-		);
+		reply = () =>
+			usageAnswer({
+				primary: { usedPercent: 12, seconds: 315 * 60 },
+				secondary: { usedPercent: 78, seconds: 285 * 60 },
+			});
+		bound.clock.now = CLOCK + 40_000;
+		codexTurn(bound.double, bound.clock.now);
+		await drain();
 		expect(bound.runtime.presentation.quota().fiveHour?.usedPercent).toBe(12);
-	});
-
-	test("a Turn of another provider updates nothing, even when its headers look like Codex's", async () => {
-		const bound = await bindQuota({ respond: () => usageAnswer({}) });
-
-		codexTurn(bound.double, fiveHourHeaders("50", 1_700_003_600), CLOCK, OTHER_PROVIDER);
-
-		expect(bound.runtime.presentation.quota()).toEqual({});
 	});
 });
 
-describe("a window's reset instant is read as the state it has now (P65)", () => {
+describe("a window's reset instant is read as the state it has now", () => {
 	test("unknown, expired and invalid are told apart, and the reported instant is never rewritten", async () => {
-		const bound = await bindQuota({ respond: () => usageAnswer({}) });
+		let reply: () => Response = () => usageAnswer(DOCUMENT_WINDOWS);
+		const bound = await bindQuota({ respond: () => reply() });
 
 		// No reset was stated at all: unknown, and no instant is invented for it.
-		codexTurn(bound.double, fiveHourHeaders("10"), CLOCK);
+		reply = () => usageAnswer({ primary: { usedPercent: 10, seconds: 18_000 } });
+		bound.clock.now = CLOCK + 20_000;
+		codexTurn(bound.double, bound.clock.now);
+		await drain();
 		expect(bound.runtime.presentation.quota().fiveHour).toEqual({
 			usedPercent: 10,
 			resetState: "unknown",
-			obtainedAt: CLOCK,
+			obtainedAt: CLOCK + 20_000,
 		});
 
 		// A reset one minute behind the clock is expired, and the instant it reported is still there.
-		codexTurn(bound.double, fiveHourHeaders("11", (CLOCK - 60_000) / 1000), CLOCK);
+		reply = () => usageAnswer({ primary: { usedPercent: 11, seconds: 18_000, resetAt: (CLOCK - 60_000) / 1000 } });
+		bound.clock.now = CLOCK + 40_000;
+		codexTurn(bound.double, bound.clock.now);
+		await drain();
 		expect(bound.runtime.presentation.quota().fiveHour).toEqual({
 			usedPercent: 11,
 			resetsAt: CLOCK - 60_000,
 			resetState: "expired",
-			obtainedAt: CLOCK,
+			obtainedAt: CLOCK + 40_000,
 		});
 
 		// A reset further away than the window itself lasts is invalid, with six hours against a
 		// five-hour window.
-		codexTurn(bound.double, fiveHourHeaders("12", (CLOCK + 6 * 60 * 60 * 1000) / 1000), CLOCK);
+		reply = () =>
+			usageAnswer({ primary: { usedPercent: 12, seconds: 18_000, resetAt: (CLOCK + 6 * 60 * 60 * 1000) / 1000 } });
+		bound.clock.now = CLOCK + 60_000;
+		codexTurn(bound.double, bound.clock.now);
+		await drain();
 		expect(bound.runtime.presentation.quota().fiveHour).toEqual({
 			usedPercent: 12,
 			resetsAt: CLOCK + 6 * 60 * 60 * 1000,
 			resetState: "invalid",
-			obtainedAt: CLOCK,
+			obtainedAt: CLOCK + 60_000,
 		});
 
 		// The weekly window reads its own length: seven days away is invalid there, six hours is not.
-		codexTurn(bound.double, weeklyHeaders("60", (CLOCK + 8 * DAY_MS) / 1000), CLOCK);
+		reply = () => usageAnswer({ secondary: { usedPercent: 60, seconds: 604_800, resetAt: (CLOCK + 8 * DAY_MS) / 1000 } });
+		bound.clock.now = CLOCK + 80_000;
+		codexTurn(bound.double, bound.clock.now);
+		await drain();
 		expect(bound.runtime.presentation.quota().weekly?.resetState).toBe("invalid");
-		codexTurn(bound.double, weeklyHeaders("61", (CLOCK + 6 * 60 * 60 * 1000) / 1000), CLOCK);
+		reply = () =>
+			usageAnswer({ secondary: { usedPercent: 61, seconds: 604_800, resetAt: (CLOCK + 6 * 60 * 60 * 1000) / 1000 } });
+		bound.clock.now = CLOCK + 100_000;
+		codexTurn(bound.double, bound.clock.now);
+		await drain();
 		expect(bound.runtime.presentation.quota().weekly).toEqual({
 			usedPercent: 61,
 			resetsAt: CLOCK + 6 * 60 * 60 * 1000,
 			resetState: "valid",
-			obtainedAt: CLOCK,
+			obtainedAt: CLOCK + 100_000,
 		});
 		expect(bound.runtime.presentation.quota().weekly?.resetsAt).toBe(CLOCK + 6 * 60 * 60 * 1000);
 	});
 
 	test("a reset that is not an instant is no instant, and a state is never written onto the reading", async () => {
-		const bound = await bindQuota({ respond: () => usageAnswer({}) });
+		let reply: () => Response = () => usageAnswer(DOCUMENT_WINDOWS);
+		const bound = await bindQuota({ respond: () => reply() });
 
-		codexTurn(
-			bound.double,
-			{ ...fiveHourHeaders("13"), "x-codex-primary-reset-at": "soon" },
-			CLOCK,
-		);
+		// A reset the document states as a non-numeric value is no usable instant.
+		reply = () =>
+			new Response(
+				JSON.stringify({
+					rate_limit: { primary_window: { used_percent: 13, limit_window_seconds: 18_000, reset_at: "soon" } },
+				}),
+				{ status: 200 },
+			);
+		bound.clock.now = CLOCK + 20_000;
+		codexTurn(bound.double, bound.clock.now);
+		await drain();
 		expect(bound.runtime.presentation.quota().fiveHour).toEqual({
 			usedPercent: 13,
 			resetState: "unknown",
-			obtainedAt: CLOCK,
+			obtainedAt: CLOCK + 20_000,
 		});
 
-		codexTurn(bound.double, { ...fiveHourHeaders("14"), "x-codex-primary-reset-at": "0" }, CLOCK);
+		// Zero is not an instant either, which is what the provider's own client reads it as.
+		reply = () => usageAnswer({ primary: { usedPercent: 14, seconds: 18_000, resetAt: 0 } });
+		bound.clock.now = CLOCK + 40_000;
+		codexTurn(bound.double, bound.clock.now);
+		await drain();
 		expect(bound.runtime.presentation.quota().fiveHour).toEqual({
 			usedPercent: 14,
 			resetState: "unknown",
-			obtainedAt: CLOCK,
+			obtainedAt: CLOCK + 40_000,
 		});
 
-		// The instant reported in the past was kept as reported, so the moment this reading's own state
-		// moves to expired is the clock's business and not a rewrite of the value.
-		codexTurn(bound.double, fiveHourHeaders("15", (CLOCK + 60_000) / 1000), CLOCK);
+		// The instant reported in the future was kept as reported, so the moment this reading's own
+		// state moves to expired is the clock's business and not a rewrite of the value.
+		reply = () => usageAnswer({ primary: { usedPercent: 15, seconds: 18_000, resetAt: (CLOCK + 60_000) / 1000 } });
+		bound.clock.now = CLOCK + 60_000;
+		codexTurn(bound.double, bound.clock.now);
+		await drain();
 		expect(bound.runtime.presentation.quota().fiveHour?.resetState).toBe("valid");
 		bound.clock.now = CLOCK + 61_000;
 		expect(bound.runtime.presentation.quota().fiveHour).toEqual({
 			usedPercent: 15,
 			resetsAt: CLOCK + 60_000,
 			resetState: "expired",
-			obtainedAt: CLOCK,
+			obtainedAt: CLOCK + 60_000,
 		});
 	});
 });

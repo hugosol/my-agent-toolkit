@@ -6,10 +6,11 @@
  * The report cases drive the production runtime through the framework's public binding (the port
  * double, `tests/framework/support/harness-port-double.ts`) and read what a frontend reads:
  * `runtime.presentation.estimate()`, the process-level read-only result. Every report below is fed
- * exactly as a harness adapter feeds one — the account API answer through the runtime's one startup
- * query, and a response's rate-limit headers through one Turn's facts — so the pairing of a single
- * report, the qualifying thresholds, the rebaseline rules and the `estimating…` reading are all
- * observed where the display observes them, and no file is read to see them.
+ * exactly as a harness adapter feeds one — the account API answer alone, through the runtime's one
+ * query entry, whether the attempt at initialization or the refresh a settled Codex Turn triggers —
+ * so the pairing of a single report, the qualifying thresholds, the rebaseline rules and the
+ * `estimating…` reading are all observed where the display observes them, and no file is read to
+ * see them.
  *
  * The document cases drive the measurement's own entry (`runtime.estimate.observe`), which answers
  * when the write it triggered has settled — the same shape the consumption store's own save has — and
@@ -28,6 +29,7 @@ import { afterEach, describe, expect, test } from "bun:test";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
+import { setImmediate as immediate } from "node:timers/promises";
 import { MODEL_COST } from "../../extensions/model-cost/definition";
 import type { CodexPairedReading } from "../../extensions/model-cost/shared-logic/codex-estimate";
 import type { ModelPricingData } from "../../extensions/model-cost/shared-logic/model-data";
@@ -133,53 +135,32 @@ function usageAnswer(windows: {
 	);
 }
 
+/** The five-hour window of one report, with its reset instant in seconds: one hour after the clock. */
+function fiveHourWindow(usedPercent: number, resetAt: number = RESET_FIVE_HOUR_SECONDS): ReportedWindow {
+	return { usedPercent, seconds: 18_000, resetAt };
+}
+
+/** The weekly window of one report, with its reset instant in seconds: one day after the clock. */
+function weeklyWindow(usedPercent: number, resetAt: number = RESET_WEEKLY_SECONDS): ReportedWindow {
+	return { usedPercent, seconds: 604_800, resetAt };
+}
+
 /**
  * One account API answer carrying both windows — one report, and therefore one pair — with each
- * window reporting a reset instant one hour and one day after the clock.
+ * window reporting the reset instant every case's reports use. The same document answers the
+ * startup query and every later refresh: the two triggers differ in when they ask, never in what an
+ * answer is shaped like.
  */
-function startupAnswer(fiveHourPercent: number, weeklyPercent: number): Response {
-	return usageAnswer({
-		primary: { usedPercent: fiveHourPercent, seconds: 18_000, resetAt: RESET_FIVE_HOUR_SECONDS },
-		secondary: { usedPercent: weeklyPercent, seconds: 604_800, resetAt: RESET_WEEKLY_SECONDS },
-	});
-}
-
-/** The five-hour window of one response, with its reset stated in seconds. */
-function fiveHourHeaders(usedPercent: string, resetAtSeconds: number): Record<string, string> {
-	return {
-		"x-codex-primary-used-percent": usedPercent,
-		"x-codex-primary-window-minutes": "300",
-		"x-codex-primary-reset-at": String(resetAtSeconds),
-	};
-}
-
-/** The weekly window of one response, with its reset stated in seconds. */
-function weeklyHeaders(usedPercent: string, resetAtSeconds: number): Record<string, string> {
-	return {
-		"x-codex-secondary-used-percent": usedPercent,
-		"x-codex-secondary-window-minutes": "10080",
-		"x-codex-secondary-reset-at": String(resetAtSeconds),
-	};
-}
-
-/** Both windows of one report, in one batch of headers: what pairs. */
-function pairedHeaders(fiveHour: readonly [string, number], weekly: readonly [string, number]): Record<string, string> {
-	return { ...fiveHourHeaders(fiveHour[0], fiveHour[1]), ...weeklyHeaders(weekly[0], weekly[1]) };
-}
-
-/** Both windows of one report, stating the reset instants every case's reports use. */
-function reportHeaders(fiveHourPercent: string, weeklyPercent: string): Record<string, string> {
-	return pairedHeaders([fiveHourPercent, RESET_FIVE_HOUR_SECONDS], [weeklyPercent, RESET_WEEKLY_SECONDS]);
+function codexAnswer(fiveHourPercent: number, weeklyPercent: number): Response {
+	return usageAnswer({ primary: fiveHourWindow(fiveHourPercent), secondary: weeklyWindow(weeklyPercent) });
 }
 
 /** Both windows of one report whose source stated no reset instant at all. */
-function headerWithoutResets(fiveHourPercent: string, weeklyPercent: string): Record<string, string> {
-	return {
-		"x-codex-primary-used-percent": fiveHourPercent,
-		"x-codex-primary-window-minutes": "300",
-		"x-codex-secondary-used-percent": weeklyPercent,
-		"x-codex-secondary-window-minutes": "10080",
-	};
+function codexAnswerWithoutResets(fiveHourPercent: number, weeklyPercent: number): Response {
+	return usageAnswer({
+		primary: { usedPercent: fiveHourPercent, seconds: 18_000 },
+		secondary: { usedPercent: weeklyPercent, seconds: 604_800 },
+	});
 }
 
 /** One report's own pair, in the measurement's own terms, written here rather than read from a report. */
@@ -213,8 +194,10 @@ const roots: string[] = [];
  * One estimate instance over a storage root: the production runtime, bound through the framework's
  * own binding, with the harness's provider access and the HTTP call substituted. A root of its own is
  * created unless a case names one, which is what lets a second instance — a restart, or a peer
- * process — continue from the same file. An answer of no windows at all leaves the measurement empty,
- * which is what the cases that drive its own entry directly start from.
+ * process — continue from the same file. The substituted call answers every account API query from
+ * `answer`, so a report-driven case stages the report's own document in it before delivering the
+ * Turn; an answer of no windows at all leaves the measurement empty, which is what the cases that
+ * drive its own entry directly start from.
  */
 async function bindEstimate(
 	options: { readonly answer?: () => Response; readonly root?: string } = {},
@@ -243,7 +226,7 @@ async function bindEstimate(
 	const double = portDouble();
 	double.bind(MODEL_COST, {
 		factory: () => runtime.implementation,
-		config: { reader: () => `storageDir: ${root}\nbalanceTtlMs: 30000\n` },
+		config: { reader: () => `storageDir: ${root}\nbalanceTtlMs: 30000\ncodexQuotaTtlMs: 15000\n` },
 	});
 	double.deliverSession(OWNER, { session: MAIN });
 	// The run-initiation hook is where the framework waits for the one-time initialization, so this is
@@ -254,16 +237,19 @@ async function bindEstimate(
 
 /**
  * One whole Codex report as the deliveries a real exchange produces: the Turn's start facts, its
- * response's headers and the settled response.
+ * response — whose rate-limit headers this module no longer reads, so it carries none — and the
+ * settled response. What the report states reaches the measurement through the account API answer
+ * staged as the next answer before this delivery; the query the settled Turn starts is awaited by
+ * the `drain` that follows it.
  */
-function report(bound: BoundEstimate, headers: Readonly<Record<string, string>>, at: number): void {
+function report(bound: BoundEstimate, at: number): void {
 	const session: SessionFacts = { sessionId: `session-codex-${at}`, kind: "main", unavailable: [] };
 	bound.double.deliverTurn(
 		{ kind: "request_started", session, at, provider: CODEX, model: "gpt-6-luna" } as TurnSignal,
 		{ owner: OWNER },
 	);
 	bound.double.deliverTurn(
-		{ kind: "response_received", session, http: { status: 200, headers } } as TurnSignal,
+		{ kind: "response_received", session, http: { status: 200, headers: {} } } as TurnSignal,
 		{ owner: OWNER },
 	);
 	bound.double.deliverTurn(
@@ -277,6 +263,9 @@ function report(bound: BoundEstimate, headers: Readonly<Record<string, string>>,
 		{ owner: OWNER },
 	);
 }
+
+/** Let the query one settled report began settle: it awaits the host's facts, the answer and its body. */
+const drain = (): Promise<void> => immediate();
 
 /** One window as the readable document carries it. */
 interface DocumentWindow {
@@ -389,7 +378,7 @@ afterEach(() => {
 
 describe("a report's own pair is the only thing a sample may come from (P66)", () => {
 	test("the first usable pair shows no estimate yet", async () => {
-		const bound = await bindEstimate({ answer: () => startupAnswer(12.5, 60) });
+		const bound = await bindEstimate({ answer: () => codexAnswer(12.5, 60) });
 
 		// The startup answer carried both windows, and no ratio can exist before a change from an
 		// anchor has been seen: the display says exactly that rather than showing an exhausted plan.
@@ -397,13 +386,16 @@ describe("a report's own pair is the only thing a sample may come from (P66)", (
 	});
 
 	test("50 five-hour points over 5 weekly points read ratio≈10.0, with left from the displayed week", async () => {
-		const bound = await bindEstimate({ answer: () => startupAnswer(10, 2) });
+		let reply: () => Response = () => codexAnswer(10, 2);
+		const bound = await bindEstimate({ answer: () => reply() });
 
 		// 10% → 60% is exactly the 50-point five-hour threshold, and the weekly window moved up by 5
 		// points without either window saturating: 50 / 5 = 10. `left` is the unconsumed weekly share
 		// this display shows — (100 − 7) / 100 × 10 = 9.3 five-hour quotas.
+		reply = () => codexAnswer(60, 7);
 		bound.clock.now = CLOCK + 30_000;
-		report(bound, reportHeaders("60", "7"), CLOCK + 30_000);
+		report(bound, CLOCK + 30_000);
+		await drain();
 
 		expect(bound.runtime.presentation.estimate()).toEqual({
 			ratio: 10,
@@ -413,9 +405,12 @@ describe("a report's own pair is the only thing a sample may come from (P66)", (
 	});
 
 	test("no interval below the thresholds or at saturation replaces the stored ratio", async () => {
-		const bound = await bindEstimate({ answer: () => startupAnswer(0, 0) });
+		let reply: () => Response = () => codexAnswer(0, 0);
+		const bound = await bindEstimate({ answer: () => reply() });
+		reply = () => codexAnswer(50, 5);
 		bound.clock.now = CLOCK + 30_000;
-		report(bound, reportHeaders("50", "5"), CLOCK + 30_000);
+		report(bound, CLOCK + 30_000);
+		await drain();
 		expect(bound.runtime.presentation.estimate()?.ratio).toBe(10);
 
 		// Every interval is a complete pair from one report against the 0% / 0% baseline; the first is
@@ -423,18 +418,20 @@ describe("a report's own pair is the only thing a sample may come from (P66)", (
 		// saturation, where a window hides the consumption after it. `left` is the hand-computed
 		// (100 − weekly) / 100 × 10 for the weekly percent each report carries, and the segment renders
 		// it to one decimal.
-		const intervals: readonly (readonly [string, string, string, number, string])[] = [
-			["one point below the five-hour span threshold", "49", "4.9", 9.51, "left≈9.5×5h · ratio≈10.0"],
-			["no movement in either window", "0", "0", 10, "left≈10.0×5h · ratio≈10.0"],
-			["weekly movement only", "0", "5", 9.5, "left≈9.5×5h · ratio≈10.0"],
-			["five-hour movement only", "60", "0", 10, "left≈10.0×5h · ratio≈10.0"],
-			["a saturated five-hour window", "100", "40", 6, "left≈6.0×5h · ratio≈10.0"],
-			["a saturated weekly window", "60", "100", 0, "left≈0.0×5h · ratio≈10.0"],
+		const intervals: readonly (readonly [string, number, number, number, string])[] = [
+			["one point below the five-hour span threshold", 49, 4.9, 9.51, "left≈9.5×5h · ratio≈10.0"],
+			["no movement in either window", 0, 0, 10, "left≈10.0×5h · ratio≈10.0"],
+			["weekly movement only", 0, 5, 9.5, "left≈9.5×5h · ratio≈10.0"],
+			["five-hour movement only", 60, 0, 10, "left≈10.0×5h · ratio≈10.0"],
+			["a saturated five-hour window", 100, 40, 6, "left≈6.0×5h · ratio≈10.0"],
+			["a saturated weekly window", 60, 100, 0, "left≈0.0×5h · ratio≈10.0"],
 		];
 		let at = CLOCK + 60_000;
 		for (const [interval, fiveHour, weekly, left, text] of intervals) {
+			reply = () => codexAnswer(fiveHour, weekly);
 			bound.clock.now = at;
-			report(bound, reportHeaders(fiveHour, weekly), at);
+			report(bound, at);
+			await drain();
 			const estimate = bound.runtime.presentation.estimate();
 			expect({ interval, text: estimate?.text }).toEqual({ interval, text });
 			expect({ interval, ratio: estimate?.ratio }).toEqual({ interval, ratio: 10 });
@@ -444,15 +441,20 @@ describe("a report's own pair is the only thing a sample may come from (P66)", (
 	});
 
 	test("a report carrying one window pairs nothing and leaves the baseline it did not carry alone", async () => {
-		const bound = await bindEstimate({ answer: () => startupAnswer(0, 0) });
+		let reply: () => Response = () => codexAnswer(0, 0);
+		const bound = await bindEstimate({ answer: () => reply() });
+		reply = () => codexAnswer(50, 5);
 		bound.clock.now = CLOCK + 30_000;
-		report(bound, reportHeaders("50", "5"), CLOCK + 30_000);
+		report(bound, CLOCK + 30_000);
+		await drain();
 		expect(bound.runtime.presentation.estimate()?.ratio).toBe(10);
 
-		// The headers carry the weekly window only, so the held 50% five-hour reading is what the
+		// The answer carries the weekly window only, so the held 50% five-hour reading is what the
 		// process shows; pairing it with the fresh 20% would read 50 / 20 and measure nothing real.
+		reply = () => usageAnswer({ secondary: weeklyWindow(20) });
 		bound.clock.now = CLOCK + 60_000;
-		report(bound, weeklyHeaders("20", RESET_WEEKLY_SECONDS), CLOCK + 60_000);
+		report(bound, CLOCK + 60_000);
+		await drain();
 		// The held pair still renders, with `left` following the weekly percent this display shows:
 		// (100 − 20) / 100 × 10 = 8.0.
 		expect(bound.runtime.presentation.estimate()).toEqual({
@@ -464,8 +466,10 @@ describe("a report's own pair is the only thing a sample may come from (P66)", (
 		// The baseline is still the one the pair anchored: 60 − 0 = 60 five-hour points over 12 − 0 = 12
 		// weekly ones reads 5.0, where rebasing on the single-window report would have measured
 		// 60 − 50 = 10 over 12 − 20.
+		reply = () => codexAnswer(60, 12);
 		bound.clock.now = CLOCK + 90_000;
-		report(bound, reportHeaders("60", "12"), CLOCK + 90_000);
+		report(bound, CLOCK + 90_000);
+		await drain();
 		expect(bound.runtime.presentation.estimate()).toEqual({
 			ratio: 5,
 			left: 4.4,
@@ -476,16 +480,21 @@ describe("a report's own pair is the only thing a sample may come from (P66)", (
 
 describe("a crossed window boundary rebuilds the baseline and never withdraws the ratio (P66)", () => {
 	test("a moved five-hour reset instant rebaselines, and the next sample spans only the new window", async () => {
-		const bound = await bindEstimate({ answer: () => startupAnswer(10, 2) });
+		let reply: () => Response = () => codexAnswer(10, 2);
+		const bound = await bindEstimate({ answer: () => reply() });
+		reply = () => codexAnswer(60, 7);
 		bound.clock.now = CLOCK + 30_000;
-		report(bound, reportHeaders("60", "7"), CLOCK + 30_000);
+		report(bound, CLOCK + 30_000);
+		await drain();
 		expect(bound.runtime.presentation.estimate()?.ratio).toBe(10);
 
 		// The five-hour window rolled over: its reset instant moved five hours on and its percent
 		// dropped to 5. No sample spans that boundary, and the ratio stays what it was.
 		const rolledReset = RESET_FIVE_HOUR_SECONDS + FIVE_HOUR_MS / 1000;
+		reply = () => usageAnswer({ primary: fiveHourWindow(5, rolledReset), secondary: weeklyWindow(3) });
 		bound.clock.now = CLOCK + 60_000;
-		report(bound, { ...fiveHourHeaders("5", rolledReset), ...weeklyHeaders("3", RESET_WEEKLY_SECONDS) }, CLOCK + 60_000);
+		report(bound, CLOCK + 60_000);
+		await drain();
 		expect(bound.runtime.presentation.estimate()).toEqual({
 			ratio: 10,
 			left: 9.7,
@@ -494,60 +503,72 @@ describe("a crossed window boundary rebuilds the baseline and never withdraws th
 
 		// The new baseline was 5% / 3%: 55 / 7.5 measures 50 five-hour points over 4.5 weekly ones,
 		// where the pre-rollover baseline would have measured 45 / 5.5.
+		reply = () => usageAnswer({ primary: fiveHourWindow(55, rolledReset), secondary: weeklyWindow(7.5) });
 		bound.clock.now = CLOCK + 90_000;
-		report(bound, { ...fiveHourHeaders("55", rolledReset), ...weeklyHeaders("7.5", RESET_WEEKLY_SECONDS) }, CLOCK + 90_000);
+		report(bound, CLOCK + 90_000);
+		await drain();
 		expect(bound.runtime.presentation.estimate()?.ratio).toBeCloseTo(11.1111, 3);
 		expect(bound.runtime.presentation.estimate()?.text).toBe("left≈10.3×5h · ratio≈11.1");
 	});
 
 	test("a percentage drop rebuilds the baseline when no reset instant can be compared", async () => {
-		const bound = await bindEstimate({
-			answer: () =>
-				usageAnswer({
-					primary: { usedPercent: 10, seconds: 18_000 },
-					secondary: { usedPercent: 2, seconds: 604_800 },
-				}),
-		});
+		let reply: () => Response = () => codexAnswerWithoutResets(10, 2);
+		const bound = await bindEstimate({ answer: () => reply() });
 
 		// A one-point drop is below the fallback's own trigger, and it moves nothing up, so it samples
 		// nothing: the measurement still knows no ratio.
+		reply = () => codexAnswerWithoutResets(9, 1.5);
 		bound.clock.now = CLOCK + 30_000;
-		report(bound, headerWithoutResets("9", "1.5"), CLOCK + 30_000);
+		report(bound, CLOCK + 30_000);
+		await drain();
 		expect(bound.runtime.presentation.estimate()).toEqual({ text: "estimating…" });
 
 		// The same anchor still measures the qualifying span: 60 − 10 = 50 over 7 − 2 = 5.
+		reply = () => codexAnswerWithoutResets(60, 7);
 		bound.clock.now = CLOCK + 60_000;
-		report(bound, headerWithoutResets("60", "7"), CLOCK + 60_000);
+		report(bound, CLOCK + 60_000);
+		await drain();
 		expect(bound.runtime.presentation.estimate()?.ratio).toBe(10);
 
 		// A 55-point drop with no instant to compare is a rollover: the baseline becomes 5% / 1% and
 		// the ratio survives it.
+		reply = () => codexAnswerWithoutResets(5, 1);
 		bound.clock.now = CLOCK + 90_000;
-		report(bound, headerWithoutResets("5", "1"), CLOCK + 90_000);
+		report(bound, CLOCK + 90_000);
+		await drain();
 		expect(bound.runtime.presentation.estimate()?.ratio).toBe(10);
 
 		// 55 − 5 = 50 over 11 − 1 = 10 only qualifies against the rebuilt baseline.
+		reply = () => codexAnswerWithoutResets(55, 11);
 		bound.clock.now = CLOCK + 120_000;
-		report(bound, headerWithoutResets("55", "11"), CLOCK + 120_000);
+		report(bound, CLOCK + 120_000);
+		await drain();
 		expect(bound.runtime.presentation.estimate()?.ratio).toBe(5);
 	});
 
 	test("a baseline aged exactly five hours is never sampled across", async () => {
-		const bound = await bindEstimate({ answer: () => startupAnswer(10, 2) });
+		let reply: () => Response = () => codexAnswer(10, 2);
+		const bound = await bindEstimate({ answer: () => reply() });
+		reply = () => codexAnswer(60, 7);
 		bound.clock.now = CLOCK + 30_000;
-		report(bound, reportHeaders("60", "7"), CLOCK + 30_000);
+		report(bound, CLOCK + 30_000);
+		await drain();
 		expect(bound.runtime.presentation.estimate()?.ratio).toBe(10);
 
 		// The five-hour window the baseline anchored has just run out: its reported reset instants did
 		// not move, so only the age shows it, and the reading below anchors a new baseline instead of
 		// measuring 20 points against the old one.
+		reply = () => codexAnswer(30, 4);
 		bound.clock.now = CLOCK + FIVE_HOUR_MS;
-		report(bound, reportHeaders("30", "4"), CLOCK + FIVE_HOUR_MS);
+		report(bound, CLOCK + FIVE_HOUR_MS);
+		await drain();
 		expect(bound.runtime.presentation.estimate()?.ratio).toBe(10);
 
 		// Measured from the rebuilt anchor: 80 − 30 = 50 over 14 − 4 = 10.
+		reply = () => codexAnswer(80, 14);
 		bound.clock.now = CLOCK + FIVE_HOUR_MS + 60_000;
-		report(bound, reportHeaders("80", "14"), CLOCK + FIVE_HOUR_MS + 60_000);
+		report(bound, CLOCK + FIVE_HOUR_MS + 60_000);
+		await drain();
 		expect(bound.runtime.presentation.estimate()?.ratio).toBe(5);
 	});
 });
@@ -750,7 +771,8 @@ describe("a restart continues the measurement the document carries (P66)", () =>
 		// The restart's own startup answer reports 40% / 8%, which qualifies nothing against the stored
 		// baseline and is not what it measures from: the stored ratio is shown without relearning, and
 		// `left` follows the weekly percent this display shows — (100 − 8) / 100 × 10 = 9.2.
-		const restarted = await bindEstimate({ root: first.root, answer: () => startupAnswer(40, 8) });
+		let reply: () => Response = () => codexAnswer(40, 8);
+		const restarted = await bindEstimate({ root: first.root, answer: () => reply() });
 		expect(restarted.runtime.presentation.estimate()).toEqual({
 			ratio: 10,
 			left: expect.closeTo(9.2, 6),
@@ -759,8 +781,10 @@ describe("a restart continues the measurement the document carries (P66)", () =>
 
 		// Sampling continues from the stored 0% / 0% anchor: 90 − 0 = 90 over 13 − 0 = 13 reads 6.9231,
 		// where re-anchoring on the 40% / 8% startup report would have measured 50 / 5.
+		reply = () => codexAnswer(90, 13);
 		restarted.clock.now = CLOCK + 180_000;
-		report(restarted, reportHeaders("90", "13"), CLOCK + 180_000);
+		report(restarted, CLOCK + 180_000);
+		await drain();
 		const estimate = restarted.runtime.presentation.estimate();
 		expect(estimate?.ratio).toBeCloseTo(6.9231, 3);
 		expect(estimate?.text).toBe("left≈6.0×5h · ratio≈6.9");

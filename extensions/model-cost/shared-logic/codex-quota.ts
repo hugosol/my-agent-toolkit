@@ -1,16 +1,17 @@
 /**
- * The Codex allowance windows this process holds, the one startup query that seeds them and the
- * response headers that keep them current.
+ * The Codex allowance windows this process holds, the account API query that reports them, and the
+ * shared refresh policy that keeps them current.
  *
  * An allowance window is a fact of the provider account rather than of a session, a model or a
  * Round, so this module is one set of windows per process, exactly as the host serves one Codex
- * account. The two sources the Codex backend offers enter this one business module and are read by
- * one parser: the account API answer, asked once when the process initializes, and the
- * `x-codex-*` rate-limit headers the backend attaches to every model response, read as each
- * response's facts arrive. Nothing else reaches the windows: there is no runtime API call, no TTL
- * that re-arms a query, no fallback for a window the headers did not carry and no query when the
- * viewed session or the model changes. The startup answer is what makes the windows available
- * before any header has been seen; after it, headers alone are the source.
+ * account. One source reports them: the Codex account API answer, reduced to this module's own
+ * reported-window shape and read by its one parser. That one query entry serves both triggers — the
+ * one attempt while the instance initializes and the settled Codex request that asks again through
+ * the shared success TTL and in-flight policy (`provider-refresh.ts`, the policy the DeepSeek
+ * balance reading uses too) — so the two triggers differ only in when they ask, never in what they
+ * send or how the answer is read. No other trigger reaches the query: a TTL expiring on its own, a
+ * Round edge, a model switch or a viewed session's change asks nothing, and a window the answer did
+ * not carry keeps its own value.
  *
  * A window is identified by the *duration it reports*, never by the position it arrived in: a
  * window whose reported length is within ±5% of five hours is the five-hour window and one within
@@ -26,16 +27,16 @@
  * reported the value, not the moment it is displayed, and a batch that carries no value for a
  * window does not move it.
  *
- * Headers are read in the order they arrived and each batch is applied as it is read; this module
- * keeps no absolute time line of its own, compares no source instant against another, and decides
- * nothing from a wall-clock ordering between two sources. What it does decide, when it reads a
- * window, is the *state* of the reset instant the source reported relative to the current clock:
+ * A report's windows are read in the order the report listed them and each batch is applied as it
+ * is read; this module keeps no absolute time line of its own and compares no source instant
+ * against another. What it does decide, when it reads a window, is the *state* of the reset instant
+ * the source reported relative to the current clock:
  * a reset the source did not report (or reported unusably) is unknown, one already past is expired,
  * one further away than the window itself lasts is invalid, and only one inside the window is
  * valid. That state is a read-time reading of the reported instant, not a rewrite of it, so a past
  * or nonsensical instant is neither dropped nor clamped.
  *
- * The startup query is this extension's business and the framework's public HTTP module is the
+ * The account query is this extension's business and the framework's public HTTP module is the
  * transport it uses: the account API address and the headers (the bearer this extension formats
  * from the credential the harness resolved for this one operation, and the account id that same
  * credential states) are held here, not borrowed from the provider's inference base URL, and the
@@ -53,6 +54,7 @@
 import type { ProviderAccess } from "../../../framework/core/protocol";
 import { HttpConfigurationError, type HttpRequestOptions, request } from "../../../framework/modules/http";
 import type { CodexEstimateSink } from "./codex-estimate";
+import { createProviderRefresh } from "./provider-refresh";
 
 /** The provider whose allowance this extension tracks, as this extension's own data names it. */
 export const CODEX_PROVIDER = "openai-codex";
@@ -85,6 +87,9 @@ export const CODEX_USAGE_TIMEOUT_MS = 10_000;
  * instruction to connect directly.
  */
 export const CODEX_USAGE_PROXY = "codex";
+
+/** The success TTL a window reading keeps before a later settled Codex request may refresh it. */
+export const DEFAULT_CODEX_QUOTA_TTL_MS = 15_000;
 
 /** Five hours in milliseconds: the length the five-hour window reports. */
 export const FIVE_HOUR_MS = 5 * 60 * 60 * 1000;
@@ -128,7 +133,7 @@ export interface CodexQuotaWindow {
 }
 
 /**
- * One failed startup query.
+ * One failed account query.
  *
  * It describes the *last* attempt, and it is deliberately not a reading: a failure never becomes a
  * window at zero, and the windows already held stay untouched beside it. `detail` is a short,
@@ -140,26 +145,29 @@ export interface CodexQuotaFailure {
 	readonly detail: string;
 }
 
-/** What one frontend reads: the windows the process holds, the last startup failure, or neither. */
+/** What one frontend reads: the windows the process holds, the last attempt's failure, or neither. */
 export interface CodexQuotaResult {
 	/** The five-hour window, absent until a source has reported it. */
 	readonly fiveHour?: CodexQuotaWindow;
 	/** The weekly window, absent until a source has reported it. */
 	readonly weekly?: CodexQuotaWindow;
-	/** The last startup attempt's failure, absent while the last attempt succeeded or none has run. */
+	/** The last attempt's failure, absent while the last attempt succeeded or none has run. */
 	readonly failure?: CodexQuotaFailure;
 }
 
-/** The read-only allowance this instance answers with, and the two sources that feed it. */
+/** The read-only allowance this instance answers with, and the one query that feeds it. */
 export interface CodexQuota {
 	/** The current result, as the display reads it; every call answers the current state. */
 	result(): CodexQuotaResult;
 	/**
-	 * One Turn's response headers, in the order they were received: the only runtime update.
+	 * One settled Codex request: the usage-driven refresh.
 	 *
-	 * A batch that identifies no window changes nothing and notifies no one.
+	 * Only the tracked provider reaches the check, so a request of another provider neither queries
+	 * the account API nor filters by what is being viewed. The last accepted reading is compared
+	 * against the configured success TTL at this instant, and a query already out is joined rather
+	 * than duplicated.
 	 */
-	headersReceived(headers: Readonly<Record<string, string>>): void;
+	usageSettled(provider: string): void;
 	/**
 	 * Ask the account API once, at initialization.
 	 *
@@ -177,17 +185,19 @@ export interface CodexQuotaInputs {
 	readonly access?: ProviderAccess;
 	/** The instant source, on the process's own clock. */
 	readonly now: () => number;
+	/** The success TTL, in milliseconds, a window reading keeps before a settled request may refresh it. */
+	readonly ttlMs: number;
 	/**
-	 * Tell this instance's reader that the result changed — a window was accepted, or the startup
-	 * attempt failed — so it can read again.
+	 * Tell this instance's reader that the result changed — a window was accepted, or an attempt
+	 * failed — so it can read again.
 	 */
 	readonly onChange: () => void;
 	/**
 	 * The ratio measurement every report's own pair is folded into.
 	 *
-	 * The windows reach it from here because this module holds the one parser both sources go
-	 * through: what a report carried is known only while it is being applied, and the measurement is
-	 * never allowed to read the merged windows instead.
+	 * The windows reach it from here because this module holds the one parser the account answer
+	 * goes through: what a report carried is known only while it is being applied, and the
+	 * measurement is never allowed to read the merged windows instead.
 	 */
 	readonly estimate: CodexEstimateSink;
 	/** The outbound call; the framework's public HTTP module unless a caller substitutes one. */
@@ -195,7 +205,7 @@ export interface CodexQuotaInputs {
 }
 
 /**
- * Build the process's allowance windows, their one startup query and their header updates.
+ * Build the process's allowance windows, their one account query and their shared refresh policy.
  *
  * Building has no effect of its own: nothing is queried, no timer is armed and no listener is
  * registered.
@@ -204,8 +214,13 @@ export function createCodexQuota(inputs: CodexQuotaInputs): CodexQuota {
 	const httpRequest = inputs.httpRequest ?? request;
 	const windows: Partial<Record<CodexWindowKind, CodexQuotaWindow>> = {};
 	let failure: CodexQuotaFailure | undefined;
+	/** The instant of the last attempt that produced at least one window; nothing before one. */
+	let lastAcceptedAt: number | undefined;
 	let started = false;
 	let disposed = false;
+
+	/** The shared refresh policy: the success TTL, and the one query in flight that later triggers join. */
+	const refresh = createProviderRefresh({ now: inputs.now, ttlMs: inputs.ttlMs });
 
 	/** Record one attempt's own outcome and tell the reader, whether it produced a window or not. */
 	const fail = (detail: string): void => {
@@ -251,7 +266,7 @@ export function createCodexQuota(inputs: CodexQuotaInputs): CodexQuota {
 		return changed;
 	};
 
-	const runStartup = async (): Promise<void> => {
+	const runQuery = async (): Promise<void> => {
 		const now = inputs.now;
 		try {
 			const facts = await inputs.access?.resolve(CODEX_PROVIDER);
@@ -275,9 +290,13 @@ export function createCodexQuota(inputs: CodexQuotaInputs): CodexQuota {
 			}
 			const document = await response.json().catch(() => undefined);
 			if (disposed) return;
-			// The answer and the headers are read by the same parser, so the document is reduced to the
-			// same reported windows the headers are before either reaches the windows.
-			const accepted = apply(reportedFromDocument(document), now());
+			// The answer is reduced to the reported windows this module's one parser reads.
+			const at = now();
+			const accepted = apply(reportedFromDocument(document), at);
+			// Only an attempt that really produced a window starts a new success TTL; an answer that
+			// identified none leaves the last accepted instant where it was, so the next trigger asks
+			// again rather than waiting out a TTL this attempt never earned.
+			if (accepted) lastAcceptedAt = at;
 			// This attempt answered, so a failure an earlier attempt left is cleared; a reader is told
 			// when either that or a window itself changed, and not when the result is what it already was.
 			const clearedFailure = failure !== undefined;
@@ -297,19 +316,19 @@ export function createCodexQuota(inputs: CodexQuotaInputs): CodexQuota {
 			...(windows.weekly === undefined ? {} : { weekly: windows.weekly }),
 			...(failure === undefined ? {} : { failure }),
 		}),
-		headersReceived(headers: Readonly<Record<string, string>>): void {
-			if (disposed) return;
-			const at = inputs.now();
-			// The headers of one response are one batch, applied as they were received and in the order
-			// they were received; a batch that identifies no window is not a change and notifies no one.
-			if (apply(reportedFromHeaders(headers), at)) inputs.onChange();
+		usageSettled(provider: string): void {
+			if (disposed || provider !== CODEX_PROVIDER) return;
+			// Only a settled request of this provider reaches the check, and only a reading that has
+			// outlived the success TTL begins one; a query already out is joined by the shared policy.
+			if (!refresh.due(lastAcceptedAt)) return;
+			void refresh.begin(runQuery);
 		},
 		async startup(): Promise<void> {
-			// One attempt per instance, at initialization: no TTL, no retry, no fallback query and no
-			// re-run when a window later turns out to be missing.
+			// One attempt per instance, at initialization: the first query is due because nothing has
+			// been accepted yet, and a later call does nothing rather than re-asking.
 			if (disposed || started) return;
 			started = true;
-			await runStartup();
+			await refresh.begin(runQuery);
 		},
 		dispose(): void {
 			disposed = true;
@@ -334,12 +353,11 @@ export function resetStateOf(window: CodexQuotaWindow, kind: CodexWindowKind, no
 }
 
 /**
- * One window as a source reported it, in the field names of neither protocol.
+ * One window as the account API reported it, in the field names of neither protocol.
  *
- * The two sources state the same three facts under different names and units — the API's
- * `used_percent`/`limit_window_seconds`/`reset_at` in a JSON body, the `x-codex-{primary,secondary}-*`
- * headers as strings in minutes — so each source is reduced to this shape first and the parser below
- * reads both alike.
+ * The document states the three facts under its own names and units — the API's
+ * `used_percent`/`limit_window_seconds`/`reset_at` in a JSON body — so the answer is reduced to
+ * this shape first and the parser below reads it.
  */
 interface ReportedWindow {
 	readonly usedPercent: unknown;
@@ -359,7 +377,8 @@ interface CandidateWindow {
 }
 
 /**
- * The one parser both sources use: the windows a source reported, as this extension reads them.
+ * The parser the account answer goes through: the windows one report stated, as this extension
+ * reads them.
  *
  * A reported window joins the answer only when it states a usable used percentage *and* a usable
  * length: one without either is not a reading this extension can identify or apply, so it is left
@@ -385,8 +404,8 @@ function windowsOf(reported: readonly ReportedWindow[], now: number): readonly C
  * The kind is decided by the reported length alone: a candidate within ±5% of the kind's nominal
  * length is that kind, wherever it arrived. When one batch reports two candidates of the same kind
  * — a backend that reports the same meter twice, or a length that drifted close to the boundary —
- * the one closest to the nominal length wins, and an exact tie keeps the one that arrived first,
- * which is the receipt order this module reads in.
+ * the one closest to the nominal length wins, and an exact tie keeps the one the report listed
+ * first.
  */
 function chosenWindow(candidates: readonly CandidateWindow[], kind: CodexWindowKind): CandidateWindow | undefined {
 	const nominal = CODEX_WINDOW_DURATION_MS[kind];
@@ -424,44 +443,6 @@ function numberOf(value: unknown): number | undefined {
 	if (text.length === 0) return undefined;
 	const parsed = Number(text);
 	return Number.isFinite(parsed) ? parsed : undefined;
-}
-
-/**
- * The windows one response's headers reported, in the order they were received.
- *
- * Only this protocol's own `x-codex-{primary,secondary}-{used-percent,window-minutes,reset-at}`
- * names are read; every other header, including the transport's own reference id, is none of this
- * module's business. A position enters the answer where its first field appears, so the order the
- * windows are considered in is the order the response actually carried them in.
- */
-function reportedFromHeaders(headers: Readonly<Record<string, string>>): readonly ReportedWindow[] {
-	const fields = new Map<string, { usedPercent?: string; windowMinutes?: string; resetAt?: string }>();
-	for (const [name, value] of Object.entries(headers)) {
-		const match = /^x-codex-(primary|secondary)-(used-percent|window-minutes|reset-at)$/.exec(name.trim().toLowerCase());
-		if (match === null) continue;
-		const position = match[1];
-		const field = match[2];
-		const entry = fields.get(position) ?? {};
-		// The first receipt of one field is the fact; a repeated name is not a second reading.
-		if (field === "used-percent" && entry.usedPercent === undefined) entry.usedPercent = value;
-		if (field === "window-minutes" && entry.windowMinutes === undefined) entry.windowMinutes = value;
-		if (field === "reset-at" && entry.resetAt === undefined) entry.resetAt = value;
-		fields.set(position, entry);
-	}
-	const reported: ReportedWindow[] = [];
-	for (const fieldsOfPosition of fields.values()) {
-		// The header states the window in minutes while the parser reads seconds, so the source's own
-		// unit is converted here rather than inside the shared reading; a value that is not a number in
-		// minutes is left as it stands for the parser to reject.
-		const minutes = numberOf(fieldsOfPosition.windowMinutes);
-		reported.push({
-			usedPercent: fieldsOfPosition.usedPercent,
-			windowSeconds: minutes === undefined ? fieldsOfPosition.windowMinutes : minutes * 60,
-			resetAt: fieldsOfPosition.resetAt,
-			resetAfterSeconds: undefined,
-		});
-	}
-	return reported;
 }
 
 /**

@@ -40,6 +40,7 @@
  */
 import type { ProviderAccess } from "../../../framework/core/protocol";
 import { type HttpRequestOptions, request } from "../../../framework/modules/http";
+import { createProviderRefresh } from "./provider-refresh";
 
 /** The provider whose balance this extension tracks, as this extension's own data names it. */
 export const DEEPSEEK_PROVIDER = "deepseek";
@@ -180,8 +181,8 @@ export function createProviderBalance(inputs: ProviderBalanceInputs): ProviderBa
 	const httpRequest = inputs.httpRequest ?? request;
 	let reading: ProviderBalanceReading | undefined;
 	let failure: ProviderBalanceFailure | undefined;
-	/** The one query this instance has out, while it is out; a later trigger joins it. */
-	let outstanding: Promise<number | undefined> | undefined;
+	/** The shared refresh policy: the success TTL, and the one query in flight that later triggers join. */
+	const refresh = createProviderRefresh({ now: inputs.now, ttlMs: inputs.ttlMs });
 	/** Whether the CLI's own prefetch has been asked for; it is one attempt per instance. */
 	let prefetched = false;
 	let disposed = false;
@@ -242,23 +243,6 @@ export function createProviderBalance(inputs: ProviderBalanceInputs): ProviderBa
 		}
 	};
 
-	/**
-	 * Begin one query, unless one is already out; answer the completion of the query this trigger
-	 * belongs to — its own, or the one it joined — with the reading that attempt obtained.
-	 *
-	 * The instance never has two queries in flight: a trigger that arrives while one is out joins it
-	 * rather than duplicating it, which is what keeps several settled requests, a period switch's own
-	 * boundary read, and the startup prefetch beside them down to the one request the provider sees.
-	 */
-	const beginQuery = (trigger: QueryTrigger): Promise<number | undefined> => {
-		if (outstanding !== undefined) return outstanding;
-		const started = runQuery(trigger).finally(() => {
-			outstanding = undefined;
-		});
-		outstanding = started;
-		return started;
-	};
-
 	return {
 		result: () => ({
 			...(reading === undefined ? {} : { reading }),
@@ -273,8 +257,8 @@ export function createProviderBalance(inputs: ProviderBalanceInputs): ProviderBa
 		 */
 		usageSettled(provider: string): void {
 			if (disposed || provider !== DEEPSEEK_PROVIDER) return;
-			if (reading !== undefined && inputs.now() - reading.obtainedAt < inputs.ttlMs) return;
-			void beginQuery("settled-request");
+			if (!refresh.due(reading?.obtainedAt)) return;
+			void refresh.begin(() => runQuery("settled-request"));
 		},
 		/**
 		 * The CLI's own prefetch: one attempt, at initialization, before the first model request.
@@ -287,7 +271,7 @@ export function createProviderBalance(inputs: ProviderBalanceInputs): ProviderBa
 		prefetch(): Promise<void> {
 			if (disposed || prefetched) return Promise.resolve();
 			prefetched = true;
-			return beginQuery("startup-prefetch").then(() => undefined);
+			return refresh.begin(() => runQuery("startup-prefetch")).then(() => undefined);
 		},
 		/**
 		 * One boundary read for a period switch, made outside any file coordination.
@@ -299,7 +283,7 @@ export function createProviderBalance(inputs: ProviderBalanceInputs): ProviderBa
 		 */
 		boundaryReading(): Promise<number | undefined> {
 			if (disposed) return Promise.resolve(undefined);
-			return beginQuery("boundary-reading");
+			return refresh.begin(() => runQuery("boundary-reading"));
 		},
 		dispose(): void {
 			disposed = true;

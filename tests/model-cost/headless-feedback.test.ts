@@ -197,7 +197,7 @@ async function bind(
 	const double = portDouble();
 	double.bind(MODEL_COST, {
 		factory: () => runtime.implementation,
-		config: { reader: () => `storageDir: ${root}\nbalanceTtlMs: ${SPEC_TTL_MS}\n` },
+		config: { reader: () => `storageDir: ${root}\nbalanceTtlMs: ${SPEC_TTL_MS}\ncodexQuotaTtlMs: 15000\n` },
 	});
 	const hasUI = options.hasUI ?? true;
 	const bound: Bound = { runtime, double, root, hasUI, sent, clock, boundaries: [], turns: [], rounds: [] };

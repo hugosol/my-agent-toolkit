@@ -235,7 +235,7 @@ async function bindRuntime(
 	const double = portDouble();
 	double.bind(MODEL_COST, {
 		factory: () => runtime.implementation,
-		config: { reader: () => `storageDir: ${root}\nbalanceTtlMs: ${SPEC_TTL_MS}\n` },
+		config: { reader: () => `storageDir: ${root}\nbalanceTtlMs: ${SPEC_TTL_MS}\ncodexQuotaTtlMs: 15000\n` },
 	});
 	runtime.view.subscribe(() => {
 		notifications += 1;

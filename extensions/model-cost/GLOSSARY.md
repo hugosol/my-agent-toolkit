@@ -137,8 +137,8 @@ The used percentage one window was last reported at, with the reset instant that
 _Avoid_: zero on missing, blanked window, re-timed reading, merged windows
 
 **Allowance window source（额度窗口来源）**:
-The two things that report the windows, read by one parser: the Codex account API, asked once when the instance initializes (the extension's own address, headers and the shared configuration's named `codex` proxy, with a 10,000ms business budget), and the `x-codex-*` rate-limit headers every Codex response carries, read as each Turn's facts arrive. At runtime the headers are the only source: there is no API TTL, no fallback for a missing window, no polling and no extra query on a switch. A batch of headers that identifies no window is not an update and notifies no reader.
-_Avoid_: runtime API refresh, usage-driven allowance query, position-based source
+The Codex account API that reports the provider account's allowance windows. An allowance window source is distinct from the response usage used for request accounting and from the timing of an allowance query.
+_Avoid_: response rate-limit headers, response usage, query trigger, position-based source
 
 **Reset instant state（重置时刻状态）**:
 How one window's reported reset instant reads at the moment it is read: `unknown` when the report stated none usable, `expired` when it is already past, `invalid` when it lies further ahead than the window itself lasts, and `valid` only inside that. It is a read-time reading of the instant the window already carries — the reported instant is never rewritten, clamped or dropped — and two sources are never ordered against each other to decide it.

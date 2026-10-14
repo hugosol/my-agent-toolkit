@@ -151,7 +151,7 @@ async function bindAccounting(root: string, baseline?: unknown): Promise<BoundAc
 		factory: () => runtime.implementation,
 		// The declared configuration is read once per extension per process; this reader answers the
 		// declaration so the binding validates without touching the repository's own file.
-		config: { reader: () => `storageDir: ${root}\nbalanceTtlMs: 30000\n` },
+		config: { reader: () => `storageDir: ${root}\nbalanceTtlMs: 30000\ncodexQuotaTtlMs: 15000\n` },
 	});
 	double.deliverSession(OWNER, { session: MAIN });
 	await double.initiateRun(OWNER);

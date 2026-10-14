@@ -54,7 +54,7 @@ model-cost shared logic 管理自身聚合、父子关系、当前／最近轮�
 
 detail 是入口级内存偏好：普通切会话／tree 保留，重载／重启回 brief，其他入口互不影响，不按账户共享、不按会话持久化或子代理继承。
 
-更新由事件驱动，更新后按 UI 需要刷新；render 不请求远端、建 timer、落盘或改权威值。初始化预取已由[刷新原权威的部分结果](09-refresh-lifecycle.md)确认，不能恢复只按当前模型／首请求后预取；时间参数沿用既有 YAML，其他 TTL／防抖／single-flight、API／header 来源、无 UI 完整调度与提示承载仍未決，不推定任一候选方案已批准。
+更新由事件驱动，更新后按 UI 需要刷新；render 不请求远端、建 timer、落盘或改权威值。初始化预取已由[刷新原权威的部分结果](09-refresh-lifecycle.md)确认，不能恢复只按当前模型／首请求后预取；时间参数沿用既有 YAML，两种读数各自的成功 TTL、API 来源与无 UI 完整调度／提示承载已由[刷新原权威](09-refresh-lifecycle.md)收口，不推定其未列候选方案已批准。
 
 ## Decision
 

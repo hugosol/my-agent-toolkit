@@ -182,7 +182,7 @@ async function bindView(options: {
 	});
 	let runtime: ModelCostRuntime | undefined;
 	double.bind(MODEL_COST, {
-		config: { reader: () => `storageDir: ${root}\nbalanceTtlMs: 30000\n` },
+		config: { reader: () => `storageDir: ${root}\nbalanceTtlMs: 30000\ncodexQuotaTtlMs: 15000\n` },
 		factory: context => {
 			runtime = createModelCostRuntime({
 				config: { storageDir: root },

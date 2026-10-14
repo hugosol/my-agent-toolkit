@@ -183,7 +183,7 @@ async function bindAccounting(options: { readonly baseline?: unknown } = {}): Pr
 		factory: () => runtime.implementation,
 		// The declared configuration is read once per extension per process; this reader answers the
 		// declaration so the binding validates without touching the repository's own file.
-		config: { reader: () => `storageDir: ${root}\nbalanceTtlMs: 30000\n` },
+		config: { reader: () => `storageDir: ${root}\nbalanceTtlMs: 30000\ncodexQuotaTtlMs: 15000\n` },
 	});
 	double.deliverSession(OWNER, { session: MAIN });
 	// The framework's awaitable position before a model request: the initialization — and the

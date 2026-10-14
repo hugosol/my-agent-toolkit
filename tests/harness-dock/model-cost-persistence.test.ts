@@ -17,7 +17,7 @@
  *   total — because the check is an exact key set rather than a search for known leftovers.
  * - **the numbers, against this file's own literals.** The endpoint's scripted usage is what the
  *   record's own buckets have to equal, and the ratio the estimate document holds is this file's
- *   arithmetic over the two reports it scripted.
+ *   arithmetic over the two account answers it scripted.
  * - **the relations between the three documents.** A period close archives the whole activity
  *   document it closes — every provider's records, not just the closing entry's — opens the next
  *   period empty, and leaves the independent estimate exactly as it was.
@@ -27,8 +27,9 @@
  *
  * The runs execute the combined install, so each one also shows the two patched behaviours in one
  * process: the viewed-session outlet the probe reads, and a settled Codex Turn carrying the
- * response's own headers. Both are asserted here as the artifact's own live half; the artifact bytes
- * are `combined-host-artifact.test.ts`.
+ * response's own headers — facts the allowance windows no longer read, since they come from the
+ * account API answer the fixture's own transport serves. Both are asserted here as the artifact's own
+ * live half; the artifact bytes are `combined-host-artifact.test.ts`.
  *
  * The ticket's own separate cases stay where they are, and this file does not restate them: the
  * store's concurrency and refusal cases are `tests/model-cost/storage-processes.test.ts` (06), the
@@ -48,7 +49,11 @@ import { ensureCombinedHostHarness } from "./combined-host-harness";
 import {
 	CODEX_QUOTA_ESTIMATE_LINE,
 	CODEX_QUOTA_LINE,
+	CODEX_QUOTA_SCRIPT_DIR_ENV,
+	CODEX_QUOTA_TTL_MS_ENV,
 	CODEX_QUOTA_TURN_LINE,
+	type ScriptedAccountAnswer,
+	writeAccountAnswer,
 } from "./fixtures/codex-quota/entrypoint";
 import { DOCK_CAPTURE_BASE_URL_ENV } from "./fixtures/extension-root/provider";
 import {
@@ -92,11 +97,17 @@ const CHILD_ONE_ASSIGNMENT = "first child assignment, answered by a scripted res
 const CHILD_TWO_NAME = "persistenceChildTwo";
 const CHILD_TWO_ASSIGNMENT = "second child assignment, answered by a scripted result";
 const DELEGATE_PROMPT = "one exchange that delegates to two subagents";
-/** The Codex window lengths the reports below state, in the unit its headers use. */
-const FIVE_HOUR_MINUTES = 300;
-const WEEKLY_MINUTES = 10_080;
+/** The Codex window lengths the account answers below state, in the unit its document uses. */
+const FIVE_HOUR_SECONDS = 5 * 60 * 60;
+const WEEKLY_SECONDS = 7 * 24 * 60 * 60;
 const HOUR_MS = 60 * 60 * 1000;
 const DAY_MS = 24 * HOUR_MS;
+/**
+ * The success TTL every Codex run here is built with: the smallest the field accepts, because the
+ * host's own local Turn settles tens of milliseconds after the initialization's answer, so each
+ * settled Turn's own account answer is what moves the windows (and the estimate's pair) on.
+ */
+const PROMPT_TTL_MS = 1;
 
 let harness: IsolatedHarness;
 
@@ -155,26 +166,57 @@ function disposeHome(home: IsolatedHome): void {
 	rmSync(home.home, { recursive: true, force: true });
 }
 
-/** One report's own window: the share the backend states and how far ahead its reset sits. */
+/** One window one account answer states: the share the API reports and how far ahead its reset sits. */
 interface ScriptedWindow {
 	readonly usedPercent: number;
 	readonly resetInMs: number;
 }
 
-/** The reset instant one window's header states, as the extension's parser reads it back. */
-function resetAtEpochMs(at: number, offsetMs: number): number {
-	return Math.floor((at + offsetMs) / 1000) * 1000;
+/** The epoch second one window's reset instant is stated as: the API states whole seconds. */
+function resetSeconds(at: number, offsetMs: number): number {
+	return Math.floor((at + offsetMs) / 1000);
 }
 
-/** One report's headers: both windows of one response, in the Codex backend's own names and units. */
-function reportHeaders(at: number, fiveHour: ScriptedWindow, weekly: ScriptedWindow): Record<string, string> {
+/** One account API answer: the windows it states, under the API's own fields and units. */
+function accountDocument(at: number, fiveHour: ScriptedWindow, weekly: ScriptedWindow): unknown {
 	return {
-		"x-codex-primary-used-percent": String(fiveHour.usedPercent),
-		"x-codex-primary-window-minutes": String(FIVE_HOUR_MINUTES),
-		"x-codex-primary-reset-at": String(resetAtEpochMs(at, fiveHour.resetInMs) / 1000),
-		"x-codex-secondary-used-percent": String(weekly.usedPercent),
-		"x-codex-secondary-window-minutes": String(WEEKLY_MINUTES),
-		"x-codex-secondary-reset-at": String(resetAtEpochMs(at, weekly.resetInMs) / 1000),
+		rate_limit: {
+			primary_window: {
+				used_percent: fiveHour.usedPercent,
+				limit_window_seconds: FIVE_HOUR_SECONDS,
+				reset_at: resetSeconds(at, fiveHour.resetInMs),
+			},
+			secondary_window: {
+				used_percent: weekly.usedPercent,
+				limit_window_seconds: WEEKLY_SECONDS,
+				reset_at: resetSeconds(at, weekly.resetInMs),
+			},
+		},
+	};
+}
+
+/**
+ * The two account answers every Codex run here scripts, by this file's own literals: the first
+ * states both windows, the second states both again with the five-hour one up 60 points and the
+ * weekly one up 10 — the one qualified pair the measurement samples, so the ratio the estimate
+ * document must hold is 60 / 10 = 6.
+ */
+function accountAnswers(at: number): Readonly<Record<number, ScriptedAccountAnswer>> {
+	return {
+		1: {
+			document: accountDocument(
+				at,
+				{ usedPercent: 10, resetInMs: 2 * HOUR_MS },
+				{ usedPercent: 20, resetInMs: 2 * DAY_MS },
+			),
+		},
+		2: {
+			document: accountDocument(
+				at,
+				{ usedPercent: 70, resetInMs: 2 * HOUR_MS },
+				{ usedPercent: 30, resetInMs: 2 * DAY_MS },
+			),
+		},
 	};
 }
 
@@ -209,19 +251,29 @@ async function disposeRun(run: DockRun): Promise<void> {
 	run.capture.stop();
 }
 
-/** One Codex-path run on the combined host: the production runtime, the viewed probe, scripted reports. */
+/** One Codex-path run: the account answers its script holds, and where its own files go. */
+interface CodexRunOptions {
+	/** The answer the n-th account query of this run receives (1-based). */
+	readonly answers: Readonly<Record<number, ScriptedAccountAnswer>>;
+	/** Where this run's own capture records go. */
+	readonly captureDir: string;
+	/** Where this run's own account-query script and call log go. */
+	readonly accountDir: string;
+}
+
+/** One Codex-path run on the combined host: the production runtime, the viewed probe, a scripted account API. */
 async function startCodexRun(
-	label: string,
 	home: IsolatedHome,
 	runRoot: RunRoot,
-	responseHeaders: (request: CapturedRequest) => Record<string, string>,
-	captureDir: string = runRoot.captureDir,
+	options: CodexRunOptions,
 ): Promise<DockRun & { readonly viewedEvidence: string }> {
+	for (const [index, answer] of Object.entries(options.answers)) {
+		writeAccountAnswer(options.accountDir, Number(index), answer);
+	}
 	const capture = startCaptureServer({
-		dir: captureDir,
+		dir: options.captureDir,
 		replyText: "dock persistence codex reply",
 		usage: CAPTURE_USAGE,
-		responseHeaders,
 	});
 	writeProviderOverride(runRoot.agentDir, CODEX_PROVIDER, {
 		baseUrl: capture.baseUrl,
@@ -236,7 +288,12 @@ async function startCodexRun(
 			runRoot,
 			extensions: [CODEX_QUOTA_ENTRYPOINT, VIEWED_PROBE],
 			model: CODEX_SELECTOR,
-			env: { ...home.env, [VIEWED_PROBE_EVIDENCE_ENV]: viewedEvidence },
+			env: {
+				...home.env,
+				[VIEWED_PROBE_EVIDENCE_ENV]: viewedEvidence,
+				[CODEX_QUOTA_SCRIPT_DIR_ENV]: options.accountDir,
+				[CODEX_QUOTA_TTL_MS_ENV]: String(PROMPT_TTL_MS),
+			},
 			promptTimeoutMs: 120_000,
 		});
 		return { session, capture, runRoot, viewedEvidence };
@@ -699,14 +756,16 @@ describe("the production documents of one storage root, read back independently 
 	test("one root holds the approved activity document and the independent estimate, both written by the run", async () => {
 		const home = isolatedHome("codex");
 		const runRoot = createRunRoot("persistence-codex");
-		// Two reports through one session, each answer scripted by this file's own literals: A states both
-		// windows, B states both again with the five-hour one up 60 points and the weekly one up 10 — the
-		// one qualified pair the measurement samples, so the ratio this document must hold is 60/10 = 6.
+		// Two account answers through one session, each scripted by this file's own literals: the startup
+		// query states both windows, the first settled Turn's query states both again with the five-hour
+		// one up 60 points and the weekly one up 10 — the one qualified pair the measurement samples, so
+		// the ratio this document must hold is 60/10 = 6.
 		const at = Date.now();
-		const reportA = reportHeaders(at, { usedPercent: 10, resetInMs: 2 * HOUR_MS }, { usedPercent: 20, resetInMs: 2 * DAY_MS });
-		const reportB = reportHeaders(at, { usedPercent: 70, resetInMs: 2 * HOUR_MS }, { usedPercent: 30, resetInMs: 2 * DAY_MS });
-		const byRequest: Record<number, Record<string, string>> = { 1: reportA, 2: reportB };
-		const run = await startCodexRun("persistence-codex", home, runRoot, request => byRequest[request.index] ?? reportB);
+		const run = await startCodexRun(home, runRoot, {
+			answers: accountAnswers(at),
+			captureDir: runRoot.captureDir,
+			accountDir: path.join(runRoot.path, "account-codex"),
+		});
 		try {
 			for (const prompt of ["first codex exchange", "second codex exchange"]) {
 				expect((await run.session.prompt(prompt)).status).toBe("completed");
@@ -735,8 +794,8 @@ describe("the production documents of one storage root, read back independently 
 			expect(own?.own[CODEX_PROVIDER]?.["gpt-6-luna"]?.costCny).toBeUndefined();
 
 			// The estimate document is its own file with its own approved shape. What it holds after this run
-			// is the first report's own windows, which land as soon as that report is folded in: the ratio a
-			// pair produces is published at most once a minute (the policy's own case in
+			// is the first account answer's own windows, which land as soon as that answer is folded in: the
+			// ratio a pair produces is published at most once a minute (the policy's own case in
 			// `tests/model-cost/codex-estimate.test.ts`), so the refinement is not in the file yet — the
 			// reading the run published below is where this run's qualified measurement is observed.
 			const estimate = await savedDocument(
@@ -747,14 +806,15 @@ describe("the production documents of one storage root, read back independently 
 			expect(estimate.ratio).toBeNull();
 
 			// The one install carries both patched behaviours in this very process: the Codex Turns publish
-			// the response's own headers, and the viewed-session probe reads the outlet the other patch adds.
+			// the response's own boundary — facts the allowance windows no longer read, because they move
+			// to the account API answer a settled Turn's own query obtains — and the viewed-session probe
+			// reads the outlet the other patch adds.
 			const turns = linesWith<PublishedTurn>(run.session, CODEX_QUOTA_TURN_LINE);
 			expect(turns).toHaveLength(2);
 			for (const turn of turns) {
 				expect(turn.provider).toBe(CODEX_PROVIDER);
 				expect(turn.outcome).toBe("completed");
 				expect(turn.hasHttpFacts).toBe(true);
-				for (const name of Object.keys(reportB)) expect(turn.headerNames).toContain(name);
 				expect(turn.unavailable).not.toContain("HTTP response facts");
 			}
 			expect(linesWith<unknown>(run.session, CODEX_QUOTA_LINE).length).toBeGreaterThan(0);
@@ -783,11 +843,13 @@ describe("the production documents of one storage root, read back independently 
 		const home = isolatedHome("reset");
 		const runRoot = createRunRoot("persistence-reset");
 		// The estimate has to exist before the close, and it is the Codex path that produces one: two
-		// reports through one session, scripted by this file's own literals.
+		// account answers through one session, scripted by this file's own literals.
 		const at = Date.now();
-		const reportA = reportHeaders(at, { usedPercent: 10, resetInMs: 2 * HOUR_MS }, { usedPercent: 20, resetInMs: 2 * DAY_MS });
-		const reportB = reportHeaders(at, { usedPercent: 70, resetInMs: 2 * HOUR_MS }, { usedPercent: 30, resetInMs: 2 * DAY_MS });
-		const codex = await startCodexRun("persistence-reset-codex", home, runRoot, request => (request.index === 1 ? reportA : reportB), path.join(runRoot.path, "capture-codex"));
+		const codex = await startCodexRun(home, runRoot, {
+			answers: accountAnswers(at),
+			captureDir: path.join(runRoot.path, "capture-codex"),
+			accountDir: path.join(runRoot.path, "account-reset-codex"),
+		});
 		/** The Codex session's own identity, and the estimate as the reset must leave it. */
 		let codexPosition: { readonly id: string; readonly file: string };
 		let estimateBefore: string;
@@ -895,9 +957,11 @@ describe("the production documents of one storage root, read back independently 
 		const home = isolatedHome("restart");
 		const runRoot = createRunRoot("persistence-restart");
 		const at = Date.now();
-		const reportA = reportHeaders(at, { usedPercent: 10, resetInMs: 2 * HOUR_MS }, { usedPercent: 20, resetInMs: 2 * DAY_MS });
-		const reportB = reportHeaders(at, { usedPercent: 70, resetInMs: 2 * HOUR_MS }, { usedPercent: 30, resetInMs: 2 * DAY_MS });
-		const first = await startCodexRun("persistence-restart-first", home, runRoot, request => (request.index === 1 ? reportA : reportB), path.join(runRoot.path, "capture-first"));
+		const first = await startCodexRun(home, runRoot, {
+			answers: accountAnswers(at),
+			captureDir: path.join(runRoot.path, "capture-first"),
+			accountDir: path.join(runRoot.path, "account-first"),
+		});
 		let position: { readonly id: string; readonly file: string };
 		try {
 			for (const prompt of ["first codex exchange", "second codex exchange"]) {
@@ -915,8 +979,14 @@ describe("the production documents of one storage root, read back independently 
 		}
 
 		// A second, independent process over the same isolated home: its extension reads the documents the
-		// first one left as its baseline, and the conversation is resumed from the file it persisted.
-		const second = await startCodexRun("persistence-restart-second", home, runRoot, () => reportB, path.join(runRoot.path, "capture-second"));
+		// first one left as its baseline, and the conversation is resumed from the file it persisted. Its
+		// own account answers are the same two the first process ran on, so its own measurement continues
+		// from the baseline the document carries rather than from a fresh anchor.
+		const second = await startCodexRun(home, runRoot, {
+			answers: accountAnswers(at),
+			captureDir: path.join(runRoot.path, "capture-second"),
+			accountDir: path.join(runRoot.path, "account-second"),
+		});
 		try {
 			const switched = payloadRecord(await second.session.request({ type: "switch_session", sessionPath: position.file }));
 			expect(switched.cancelled).toBe(false);

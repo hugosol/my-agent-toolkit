@@ -38,13 +38,16 @@ import { beforeAll, describe, expect, test } from "bun:test";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
 import { type IsolatedHarness, REPO_ROOT, ensureIsolatedHarness, readBaselineRecord } from "./baseline";
-import { type CaptureServer, type CapturedRequest, startCaptureServer } from "./capture-server";
-import { ensureCodexResponseHarness } from "./codex-response-harness";
+import { type CaptureServer, startCaptureServer } from "./capture-server";
 import { writeAgentSettings, writeProviderOverride } from "./agent-config";
 import {
 	CODEX_QUOTA_ESTIMATE_LINE,
 	CODEX_QUOTA_LINE,
+	CODEX_QUOTA_SCRIPT_DIR_ENV,
+	CODEX_QUOTA_TTL_MS_ENV,
 	CODEX_QUOTA_TURN_LINE,
+	recordedAccountQueries,
+	writeAccountAnswer,
 } from "./fixtures/codex-quota/entrypoint";
 import { type RunRoot, createRunRoot } from "./run-root";
 import { ControlledSession, type RpcFrame } from "./session";
@@ -82,7 +85,6 @@ const DOCK_CREDENTIAL = "dock-key";
 const BALANCE_TOTAL = "110.00";
 
 let harness: IsolatedHarness;
-let patchedHarness: IsolatedHarness;
 
 beforeAll(async () => {
 	harness = await ensureIsolatedHarness(record);
@@ -460,27 +462,32 @@ describe("a headless session's other business notices reach stderr, once, at the
 });
 
 /**
- * The Codex side of the same headless scheduling (P42; S5): the allowance windows come from a real
- * response's own rate-limit headers, and two reports of one session still drive the ratio
- * measurement — with no UI in the process to draw either.
+ * The Codex side of the same headless scheduling (P42; S5): the allowance windows come from the
+ * account API query a settled Codex Turn triggers — the same query the initialization makes — and
+ * two answers of one session still drive the ratio measurement, with no UI in the process to draw
+ * either.
  *
- * These runs use the Codex response-boundary patch (see `codex-response-harness.ts`) and the
- * fixture that binds the production runtime while publishing what it read, because the windows and
- * the measurement are process state with no file of their own to read back; the fixture's lines go
- * to stderr, which is also where a headless session's own feedback lands.
+ * The run uses the fixture that binds the production runtime while publishing what it read, because
+ * the windows and the measurement are process state with no file of their own to read back; the
+ * fixture's lines go to stderr, which is also where a headless session's own feedback lands. The
+ * account API is the fixture's own scripted transport, answered from the answers this file writes,
+ * and the response's `x-codex-*` headers are scripted with values no answer states, so a window that
+ * moved to them would be a window this file could see.
  */
 describe("the allowance windows and the ratio measurement still run with no UI (P42)", () => {
-	beforeAll(async () => {
-		patchedHarness = await ensureCodexResponseHarness(record);
-	}, 600_000);
-
 	/** The fixture extension that binds the production runtime and publishes what it reads. */
 	const CODEX_QUOTA_ENTRYPOINT = path.join(import.meta.dir, "fixtures", "codex-quota", "entrypoint.ts");
 	const CODEX_MODEL_SELECTOR = "openai-codex/gpt-6-luna";
-	const FIVE_HOUR_MINUTES = 300;
-	const WEEKLY_MINUTES = 10_080;
+	const FIVE_HOUR_SECONDS = 5 * 60 * 60;
+	const WEEKLY_SECONDS = 7 * 24 * 60 * 60;
 	const HOUR_MS = 60 * 60 * 1000;
 	const DAY_MS = 24 * HOUR_MS;
+	/**
+	 * The success TTL this run is built with: the smallest the field accepts, because the host's own
+	 * local Turn settles tens of milliseconds after the initialization's answer, so each settled
+	 * Turn's answer is what refreshes the windows.
+	 */
+	const PROMPT_TTL_MS = 1;
 
 	/** The lines one prefix published, parsed, in publication order. */
 	function linesWith<T>(session: ControlledSession, prefix: string): T[] {
@@ -491,16 +498,50 @@ describe("the allowance windows and the ratio measurement still run with no UI (
 			.map(line => JSON.parse(line.slice(prefix.length)) as T);
 	}
 
-	/** One report's headers: both windows of one response, in the Codex backend's own names and units. */
-	function reportHeaders(at: number, fiveHour: number, weekly: number): Record<string, string> {
-		const resetAt = (offsetMs: number): string => String(Math.floor((at + offsetMs) / 1000));
+	/** One allowance result the fixture published, as this case reads it. */
+	interface PublishedQuota {
+		readonly fiveHour?: { readonly usedPercent: number; readonly resetsAt?: number };
+		readonly weekly?: { readonly usedPercent: number; readonly resetsAt?: number };
+	}
+
+	/** One window one account answer states: the share the API reports and how far ahead its reset sits. */
+	interface ScriptedWindow {
+		readonly usedPercent: number;
+		readonly resetInMs: number;
+	}
+
+	/** The epoch second one window's reset instant is stated as: the API states whole seconds. */
+	function resetSeconds(at: number, offsetMs: number): number {
+		return Math.floor((at + offsetMs) / 1000);
+	}
+
+	/** One account API answer: the windows it states, under the API's own fields and units. */
+	function accountDocument(at: number, fiveHour: ScriptedWindow, weekly: ScriptedWindow): unknown {
 		return {
-			"x-codex-primary-used-percent": String(fiveHour),
-			"x-codex-primary-window-minutes": String(FIVE_HOUR_MINUTES),
-			"x-codex-primary-reset-at": resetAt(2 * HOUR_MS),
-			"x-codex-secondary-used-percent": String(weekly),
-			"x-codex-secondary-window-minutes": String(WEEKLY_MINUTES),
-			"x-codex-secondary-reset-at": resetAt(2 * DAY_MS),
+			rate_limit: {
+				primary_window: {
+					used_percent: fiveHour.usedPercent,
+					limit_window_seconds: FIVE_HOUR_SECONDS,
+					reset_at: resetSeconds(at, fiveHour.resetInMs),
+				},
+				secondary_window: {
+					used_percent: weekly.usedPercent,
+					limit_window_seconds: WEEKLY_SECONDS,
+					reset_at: resetSeconds(at, weekly.resetInMs),
+				},
+			},
+		};
+	}
+
+	/** One response's own facts, in the Codex backend's names and units: values no answer here states. */
+	function reportHeaders(at: number, fiveHour: ScriptedWindow, weekly: ScriptedWindow): Record<string, string> {
+		return {
+			"x-codex-primary-used-percent": String(fiveHour.usedPercent),
+			"x-codex-primary-window-minutes": String(FIVE_HOUR_SECONDS / 60),
+			"x-codex-primary-reset-at": String(resetSeconds(at, fiveHour.resetInMs)),
+			"x-codex-secondary-used-percent": String(weekly.usedPercent),
+			"x-codex-secondary-window-minutes": String(WEEKLY_SECONDS / 60),
+			"x-codex-secondary-reset-at": String(resetSeconds(at, weekly.resetInMs)),
 		};
 	}
 
@@ -513,19 +554,57 @@ describe("the allowance windows and the ratio measurement still run with no UI (
 		return `aaa.${claims}.bbb`;
 	}
 
-	test("two real reports feed the windows and the ratio with no widget in the process", async () => {
+	/**
+	 * Waits until one run's own record holds what a case expects of it, and answers with it.
+	 *
+	 * The record is written by *another* process — the harness this case is driving — so there is no
+	 * promise in this process to await and no fake clock that could advance it: the poll is the
+	 * observation, and the deadline keeps a record that never arrives from hanging the case.
+	 */
+	async function until<T>(read: () => T | undefined, expectation: string): Promise<T> {
+		const deadline = Date.now() + 30_000;
+		for (;;) {
+			const value = read();
+			if (value !== undefined) return value;
+			if (Date.now() >= deadline) throw new Error(`timed out waiting for ${expectation}`);
+			await Bun.sleep(25);
+		}
+	}
+
+	test("two real answers feed the windows and the ratio with no widget in the process", async () => {
 		const at = Date.now();
-		const byRequest: Readonly<Record<number, Record<string, string>>> = {
-			1: reportHeaders(at, 10, 20),
-			2: reportHeaders(at, 70, 30),
-		};
+		// The account API's own answers, scripted by this file's literals: the startup query states both
+		// windows, and the first settled Turn's query states both again with the five-hour window up 60
+		// points and the weekly one up 10 — the pair the measurement samples.
 		const runRoot = createRunRoot("model-cost-headless-codex");
 		const home = isolateHome(runRoot, baselineDocument("period-headless-codex"));
+		const accountDir = path.join(runRoot.path, "account-api");
+		writeAccountAnswer(accountDir, 1, {
+			document: accountDocument(
+				at,
+				{ usedPercent: 10, resetInMs: 2 * HOUR_MS },
+				{ usedPercent: 20, resetInMs: 2 * DAY_MS },
+			),
+		});
+		writeAccountAnswer(accountDir, 2, {
+			document: accountDocument(
+				at,
+				{ usedPercent: 70, resetInMs: 2 * HOUR_MS },
+				{ usedPercent: 30, resetInMs: 2 * DAY_MS },
+			),
+		});
 		const capture = startCaptureServer({
 			dir: runRoot.captureDir,
 			replyText: "dock headless codex reply",
 			usage: CAPTURE_USAGE,
-			responseHeaders: (request: CapturedRequest) => byRequest[request.index] ?? {},
+			// The endpoint states windows of its own on every answer — values no account answer here
+			// states — because the runtime must not read a response's headers at all.
+			responseHeaders: () =>
+				reportHeaders(
+					at,
+					{ usedPercent: 99.5, resetInMs: 3 * HOUR_MS },
+					{ usedPercent: 88, resetInMs: 3 * DAY_MS },
+				),
 		});
 		writeProviderOverride(runRoot.agentDir, "openai-codex", {
 			baseUrl: capture.baseUrl,
@@ -534,11 +613,15 @@ describe("the allowance windows and the ratio measurement still run with no UI (
 		// The catalog model prefers websockets; these runs must observe a real HTTP response.
 		writeAgentSettings(runRoot.agentDir, { "providers.openaiWebsockets": "off" });
 		const session = await ControlledSession.start({
-			harness: patchedHarness,
+			harness,
 			runRoot,
 			extensions: [CODEX_QUOTA_ENTRYPOINT],
 			model: CODEX_MODEL_SELECTOR,
-			env: home.env,
+			env: {
+				...home.env,
+				[CODEX_QUOTA_SCRIPT_DIR_ENV]: accountDir,
+				[CODEX_QUOTA_TTL_MS_ENV]: String(PROMPT_TTL_MS),
+			},
 			extraArgs: ["--no-ui"],
 			promptTimeoutMs: 120_000,
 		});
@@ -552,27 +635,44 @@ describe("the allowance windows and the ratio measurement still run with no UI (
 			expect(uiFrames(session)).toEqual([]);
 			expect(protocolFaults(session)).toEqual([]);
 
-			// The host published each response's own boundary, so the runtime had real headers to read.
+			// The account query is what ran — the initialization's own, then one per settled Turn — while
+			// the host published no response boundary for either Turn. Nothing about any of it depends on
+			// a UI existing.
+			expect(run.capture.requests()).toHaveLength(2);
+			expect(run.capture.requests().every(request => request.url.includes("/codex/responses"))).toBe(true);
+			const queries = await until(() => recordedAccountQueries(accountDir)[2], "the second Turn's account query");
+			expect(queries.index).toBe(3);
+			expect(recordedAccountQueries(accountDir)).toHaveLength(3);
 			const turns = linesWith<{ readonly hasHttpFacts: boolean }>(session, CODEX_QUOTA_TURN_LINE);
 			expect(turns).toHaveLength(2);
-			expect(turns.every(turn => turn.hasHttpFacts)).toBe(true);
+			expect(turns.every(turn => turn.hasHttpFacts)).toBe(false);
 
-			// The windows are the ones the endpoint reported, identified by the length each stated —
-			// nothing about them depends on a UI existing.
-			const quota = linesWith<{ readonly fiveHour?: { readonly usedPercent: number }; readonly weekly?: { readonly usedPercent: number } }>(
-				session,
-				CODEX_QUOTA_LINE,
+			// The windows are the second answer's own, identified by the length each stated — not the
+			// response's headers beside it, whose values this run never holds.
+			const last = await until(() => {
+				const published = linesWith<PublishedQuota>(session, CODEX_QUOTA_LINE);
+				const reading = published[published.length - 1];
+				return reading?.fiveHour?.usedPercent === 70 ? reading : undefined;
+			}, "the second answer's reading");
+			expect(last.weekly?.usedPercent).toBe(30);
+			expect(last.fiveHour?.resetsAt).toBe(resetSeconds(at, 2 * HOUR_MS) * 1000);
+			expect(last.weekly?.resetsAt).toBe(resetSeconds(at, 2 * DAY_MS) * 1000);
+			const percents = new Set(
+				linesWith<PublishedQuota>(session, CODEX_QUOTA_LINE).flatMap(reading => [
+					reading.fiveHour?.usedPercent,
+					reading.weekly?.usedPercent,
+				]),
 			);
-			const last = quota[quota.length - 1];
-			expect(last?.fiveHour?.usedPercent).toBe(70);
-			expect(last?.weekly?.usedPercent).toBe(30);
+			expect(percents.has(99.5)).toBe(false);
+			expect(percents.has(88)).toBe(false);
 
-			// The two paired reports drove the same measurement a UI run's redraw reads: this file's own
+			// The two paired answers drove the same measurement a UI run's redraw reads: this file's own
 			// arithmetic (60 / 10 = 6, and (100 − 30) / 100 × 6 = 4.2) without any frontend drawing it.
 			const estimates = linesWith<{ readonly ratio?: number; readonly left?: number; readonly text: string } | null>(
 				session,
 				CODEX_QUOTA_ESTIMATE_LINE,
 			).filter((entry): entry is { readonly ratio?: number; readonly left?: number; readonly text: string } => entry !== null);
+			expect(estimates[0]?.text).toBe("estimating…");
 			const sampled = estimates.find(entry => entry.ratio !== undefined);
 			expect(sampled?.ratio).toBe(6);
 			expect(sampled?.left).toBeCloseTo(4.2, 10);

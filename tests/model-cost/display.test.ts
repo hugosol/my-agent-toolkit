@@ -147,7 +147,7 @@ async function bindDisplay(options: {
 	double.bind(MODEL_COST, {
 		// The declared configuration is read once per extension per process — the framework's own rule —
 		// so this reader only answers the declaration; each case's runtime reads its own root below.
-		config: { reader: () => `storageDir: ${root}\nbalanceTtlMs: 30000\n` },
+		config: { reader: () => `storageDir: ${root}\nbalanceTtlMs: 30000\ncodexQuotaTtlMs: 15000\n` },
 		factory: context => {
 			runtime = createModelCostRuntime({
 				config: { storageDir: root },

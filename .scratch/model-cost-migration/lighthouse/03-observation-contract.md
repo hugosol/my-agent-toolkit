@@ -60,7 +60,7 @@ framework 不提供新的消费账本，也不将宿主累计作为 model-cost �
 
 ### 分层与逐实际会话观察
 
-按 Q17 已批准修订：能统一语义的身份管理、在途关联、通用去重／冲突处理机制、Round 开闭和结束候选复查尽量归 framework。OMP adapter 负责原生订阅、字段／信号映射、能力与可靠关联线索，允许必要桥接函数，不要求全是配置表。不将原生 payload 整体透传，不把 DeepSeek 峰谷／holiday、计价、Codex header parser、聚合、保存政策移入 framework。
+按 Q17 已批准修订：能统一语义的身份管理、在途关联、通用去重／冲突处理机制、Round 开闭和结束候选复查尽量归 framework。OMP adapter 负责原生订阅、字段／信号映射、能力与可靠关联线索，允许必要桥接函数，不要求全是配置表。不将原生 payload 整体透传，不把 DeepSeek 峰谷／holiday、计价、Codex 额度 parser、聚合、保存政策移入 framework。
 
 本次允许重构旧 onRound／quiescent 与仅交付过滤后边缘的 HarnessPort seam，以旧插件行为回归约束。逐实际会话消费不能被旧 blanket owner gate 丢弃；connect-bot 等 owner-scoped 效果仍不被子会话事件驱动。正常父／子／兄弟／孙各有自身身份，父自动续跑不因子结束切轮。
 

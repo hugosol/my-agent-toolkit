@@ -192,7 +192,7 @@ async function bindBalance(
 		// TTL reaches the runtime through its inputs above, which is what decides whether the extension
 		// reads a configured value or the specification's default.
 		config: {
-			reader: () => `storageDir: ${root}\nbalanceTtlMs: ${options.ttlMs ?? SPEC_TTL_MS}\n`,
+			reader: () => `storageDir: ${root}\nbalanceTtlMs: ${options.ttlMs ?? SPEC_TTL_MS}\ncodexQuotaTtlMs: 15000\n`,
 		},
 	});
 	// One change subscription, exactly as a frontend keeps: a reading or a failure reaches it.

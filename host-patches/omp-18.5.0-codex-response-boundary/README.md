@@ -2,11 +2,14 @@
 
 A minimal patch on the approved support base that makes the Codex transport publish **the HTTP
 response boundary it already holds** — the status and headers — to extensions, exactly as the
-chat-completions, Responses, Anthropic and native provider paths already do. It is the prerequisite
-the migration's Codex allowance work (P39/P65) consumes: without it a settled Codex Turn reaches an
-extension with `unavailable: ["HTTP response facts"]`, so a response's own `x-codex-*` rate-limit
-headers cannot reach any consumer. It is not part of any formal OMP installation and it is not a new
-support claim.
+chat-completions, Responses, Anthropic and native provider paths already do. It was the prerequisite
+the migration's original Codex allowance work (P39/P65) consumed: without it a settled Codex Turn
+reaches an extension with `unavailable: ["HTTP response facts"]`, so a response's own `x-codex-*`
+rate-limit headers cannot reach any consumer. Since 2026-10-14 model-cost no longer reads those
+headers — its windows come from the account API answer, refreshed on a settled Codex request under
+`codexQuotaTtlMs` — so this patch is no longer required by that extension; it remains a frozen local
+artifact publishing a general host capability. It is not part of any formal OMP installation and it
+is not a new support claim.
 
 ## What the patch publishes
 
@@ -122,7 +125,7 @@ The artifact is never a formal installation. A run:
 | test | what it establishes |
 | --- | --- |
 | [`tests/harness-dock/codex-response-artifact.test.ts`](../../tests/harness-dock/codex-response-artifact.test.ts) | the artifact is frozen: the record pins the recorded revision (not the moved-on checkout), every base hash is the exact 18.5.0 install's own bytes, the materialised host carries exactly the frozen post-patch bytes, and the change is the one provider file |
-| [`tests/harness-dock/model-cost-codex-quota.test.ts`](../../tests/harness-dock/model-cost-codex-quota.test.ts) | through the real loader and RPC: a settled `openai-codex` Turn carries the response's own `x-codex-*` headers, the extension's windows read their values and reset instants from them, a report carrying one window leaves the other reading *and its instant* untouched, two reports drive the ratio measurement from their own pairs, no Turn asks the account API again, and the configured-missing-proxy refusal stands with no direct connection. The **unpatched baseline** runs the same scripted response as the control: `hasHttpFacts: false`, `unavailable: ["HTTP response facts"]`, no window |
+| [`tests/harness-dock/model-cost-codex-quota.test.ts`](../../tests/harness-dock/model-cost-codex-quota.test.ts) | through the real loader and RPC: on the patched host a settled `openai-codex` Turn carries the response's own `x-codex-*` headers, but the extension no longer reads them — its windows come from the account API answer the same settled Turn triggers (scripted by the fixture), so the scripted header values never appear in a published reading. The **unpatched baseline** runs the same scripted response with `hasHttpFacts: false`, `unavailable: ["HTTP response facts"]`, and the windows still move from the account answer: the refresh is the settled Turn's trigger, not the host's boundary. |
 | [`tests/harness-dock/viewed-session.test.ts`](../../tests/harness-dock/viewed-session.test.ts), [`viewed-session-host.test.ts`](../../tests/harness-dock/viewed-session-host.test.ts), [`model-cost-modes.test.ts`](../../tests/harness-dock/model-cost-modes.test.ts) | the shared materialiser this artifact uses still freezes and runs the Viewed session artifact unchanged |
 
 Reproduce:
@@ -144,10 +147,14 @@ version: the support record stays at 18.5.0, and the eventual patched revision f
 an acceptance decision. The patch is a local artifact, not merged into any upstream checkout — an
 upstream release that closes the same gap would make it redundant, not wrong.
 
-## Prepared human check (H2 material for P39/P65)
+## Prepared human check (H2 material for P39/P65) — superseded 2026-10-14
 
-Not executed here; the steps and expectations are ready so the eventual acceptance round does not
-have to reconstruct them.
+Not executed here. Since model-cost no longer reads response headers, the steps below (which expect
+the windows to equal the response's own `x-codex-*` values) are superseded: the current H2 material
+for P39/P65 is the account-API expectation in
+[`extensions/model-cost/README.md`](../../extensions/model-cost/README.md#h2--a-real-providers-effect),
+and this artifact is no longer required by that extension. The steps remain as the artifact's
+historical record.
 
 1. On a machine with a real ChatGPT/Codex credential, run one Codex model request through OMP with
    this extension loaded (any host carrying the boundary — the patched artifact above, or an upstream

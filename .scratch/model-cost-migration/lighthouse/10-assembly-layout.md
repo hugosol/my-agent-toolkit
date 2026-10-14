@@ -98,9 +98,9 @@ storageDir 使用 [存储路径原权威](06-local-storage.md)：字段局部 ~/
 
 Q12／Q13／Q17 确认旧 my-omp-toolkit oracle 固定 fd3b507f99d11f8a68b63446c45aa911f0ee5c84，检查时工作区干净。原源代码、视觉和业务算法是对照，不胜过新契约，不实时跨仓库 import，不自动随 HEAD 移动；更新基线须记录差异。
 
-Codex endpoint、认证 headers 组织、业务预算、API／headers parser、窗口识别、测量与估计归 shared logic；adapter 只提供当次认证和响应事实，framework HTTP 执行。适用纯逻辑复用前核对来源／许可证，不保留 OMP usage helper、proxy wrapper、惰性 native import 或专属查询桥接，也不整包搬迁宿主实现。
+Codex endpoint、认证 headers 组织、业务预算、额度 API parser、窗口识别、测量与估计归 shared logic；adapter 只提供当次认证和响应事实，framework HTTP 执行。适用纯逻辑复用前核对来源／许可证，不保留 OMP usage helper、proxy wrapper、惰性 native import 或专属查询桥接，也不整包搬迁宿主实现。
 
-业务固定逐请求选择：DeepSeek 余额 proxy:false、Codex 启动额度 proxy:"codex"、connect-bot proxy:false。共享配置可改 codex URL，但删配置不是直连指令；改为直连需改集中业务选择。显式缺配置按 HTTP 原权威失败，不自动重发／直连，不加 balanceProxy／usageProxy，不接管宿主推理或 OAuth 网络。
+业务固定逐请求选择：DeepSeek 余额 proxy:false、Codex 额度查询（启动与运行期共用同一入口）proxy:"codex"、connect-bot proxy:false。共享配置可改 codex URL，但删配置不是直连指令；改为直连需改集中业务选择。显式缺配置按 HTTP 原权威失败，不自动重发／直连，不加 balanceProxy／usageProxy，不接管宿主推理或 OAuth 网络。
 
 ### Public Viewed session prerequisite
 

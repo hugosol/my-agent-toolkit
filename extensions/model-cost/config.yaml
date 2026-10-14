@@ -22,3 +22,11 @@ storageDir: "~/cost-archive"
 # TTL expiring on its own never queries anything. The specification's own default is 30000, which is
 # what this file states.
 balanceTtlMs: 30000
+
+# The success TTL of the Codex allowance windows, in milliseconds: how long a reading the account API
+# really answered is kept before a later settled Codex request may refresh it. It is the same policy
+# as `balanceTtlMs`, applied through the same query entry the initialization uses: only a success
+# resets it, a failed query keeps the last accepted reading and the instant it was obtained, and the
+# TTL expiring on its own never queries anything. The specification's own default is 15000, which is
+# what this file states.
+codexQuotaTtlMs: 15000

@@ -8,8 +8,9 @@
  *
  * What it declares here is the extension's identity, the requirement its own `config.yaml`
  * has to satisfy — one `storageDir` whose value names the root every file of this extension's
- * data lives under, and one `balanceTtlMs` whose value is the success TTL of the DeepSeek
- * balance reading — and the operator surface it offers. The `storageDir` field's own `~/` rule is
+ * data lives under, one `balanceTtlMs` whose value is the success TTL of the DeepSeek balance
+ * reading, and one `codexQuotaTtlMs` whose value is the success TTL of the Codex allowance-window
+ * query — and the operator surface it offers. The `storageDir` field's own `~/` rule is
  * the extension's (see `shared-logic/storage-root.ts`); the framework only reads and validates the
  * declared values.
  *
@@ -24,7 +25,7 @@ import { defineExtension } from "../../framework/public";
 export const MODEL_COST = defineExtension({
 	id: "model-cost",
 	displayName: "modelCost",
-	config: { fields: { storageDir: "non-empty-string", balanceTtlMs: "milliseconds" } },
+	config: { fields: { storageDir: "non-empty-string", balanceTtlMs: "milliseconds", codexQuotaTtlMs: "milliseconds" } },
 	commands: [
 		{
 			type: "actions",

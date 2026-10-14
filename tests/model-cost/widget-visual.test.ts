@@ -32,10 +32,12 @@ import { afterEach, describe, expect, test } from "bun:test";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
+import { setImmediate as immediate } from "node:timers/promises";
 import type { OmpExtensionApi, OmpSessionContext } from "../../framework/adapters/omp";
 import { MODEL_COST } from "../../extensions/model-cost/definition";
 import type { WidgetDrawing, WidgetTheme } from "../../extensions/model-cost/harnesses/omp/widget";
 import { MODEL_COST_WIDGET_KEY, attachModelCostWidget } from "../../extensions/model-cost/harnesses/omp/widget";
+import { CODEX_USAGE_URL } from "../../extensions/model-cost/shared-logic/codex-quota";
 import type { ConsumptionDocument } from "../../extensions/model-cost/shared-logic/consumption-document";
 import type { ModelPricingData } from "../../extensions/model-cost/shared-logic/model-data";
 import { type ModelCostRuntime, createModelCostRuntime } from "../../extensions/model-cost/shared-logic/runtime";
@@ -309,8 +311,10 @@ interface BoundVisual {
  * reaches a service.
  *
  * Provider access is resolved for the balance's own provider only, and only where a case states a
- * balance at all: a case that states none asks no provider about anything, and no Codex account API
- * request is made by the windows below, which arrive from response headers the way they do at runtime.
+ * balance at all: a case that states none asks no provider about anything. The Codex account API is
+ * asked only by a case that resolves that provider's access, and every answer it gives is the one
+ * its `codexAnswer` states — the windows the Codex cases below read therefore arrive from the
+ * account API's own document rather than from any response header.
  */
 async function bindVisual(
 	options: {
@@ -322,6 +326,7 @@ async function bindVisual(
 		readonly drawing?: WidgetDrawing;
 		readonly balanceTotal?: string;
 		readonly codex?: boolean;
+		readonly codexAnswer?: () => Response;
 		readonly hasUI?: boolean;
 		readonly at?: number;
 	} = {},
@@ -342,7 +347,7 @@ async function bindVisual(
 	);
 	const clock = { now: options.at ?? PEAK_AT };
 	const sent: { readonly url: string; readonly options: HttpRequestOptions | undefined }[] = [];
-	/** The Codex account API's own address, so an answer of "no window in it" is told from the balance's. */
+	/** The inference base URL the harness resolves for the Codex provider: no case here sends to it. */
 	const codexAddress = "https://host.example/codex";
 	const access: ProviderAccess = {
 		resolve: async (provider: string): Promise<ProviderAccessFacts | undefined> => {
@@ -364,10 +369,10 @@ async function bindVisual(
 		now: () => clock.now,
 		httpRequest: async (url, httpOptions) => {
 			sent.push({ url, options: httpOptions });
-			// The account API answered a document with no window in it: the windows below arrive the way
-			// they do at runtime, from one response's own rate-limit headers.
-			if (url.startsWith(codexAddress)) {
-				return new Response(JSON.stringify({}), { status: 200, headers: { "content-type": "application/json" } });
+			// The one account API query answers the document a case staged, and no window at all until
+			// one is: the Codex windows below arrive the way they do at runtime, from this answer alone.
+			if (url === CODEX_USAGE_URL) {
+				return options.codexAnswer?.() ?? usageAnswer({});
 			}
 			return balanceAnswer(options.balanceTotal ?? "0.00");
 		},
@@ -375,7 +380,7 @@ async function bindVisual(
 	const double = portDouble();
 	double.bind(MODEL_COST, {
 		factory: () => runtime.implementation,
-		config: { reader: () => `storageDir: ${root}\nbalanceTtlMs: 30000\n` },
+		config: { reader: () => `storageDir: ${root}\nbalanceTtlMs: 30000\ncodexQuotaTtlMs: 15000\n` },
 	});
 	double.deliverSession(OWNER, { session: MAIN });
 	await double.initiateRun(OWNER);
@@ -399,28 +404,57 @@ async function bindVisual(
 	return { runtime, host, double, clock, sent };
 }
 
-/** One window's rate-limit headers as a response carries them, with its reset stated in seconds. */
-function windowHeaders(
-	slot: "primary" | "secondary",
-	usedPercent: string,
-	minutes: number,
-	resetAt?: number,
-): Record<string, string> {
-	return {
-		[`x-codex-${slot}-used-percent`]: usedPercent,
-		[`x-codex-${slot}-window-minutes`]: String(minutes),
-		...(resetAt === undefined ? {} : { [`x-codex-${slot}-reset-at`]: String(resetAt / 1000) }),
-	};
+/** One window as the account API's document states it: seconds for the length and the reset instant. */
+interface UsageWindow {
+	readonly usedPercent: number;
+	readonly seconds: number;
+	readonly resetAt?: number;
 }
 
-/** One whole Codex exchange carrying one batch of rate-limit headers. */
-function reportCodex(bound: BoundVisual, headers: Readonly<Record<string, string>>): void {
+/** The windows one account API answer states, each under the position the document gave it. */
+interface UsageWindows {
+	readonly primary?: UsageWindow;
+	readonly secondary?: UsageWindow;
+}
+
+/**
+ * One account API answer, in the provider's own document shape, as one JSON response.
+ *
+ * The windows are stated in seconds, which is the unit the backend reports them in, so each case's
+ * expectation is a hand-computed epoch-millisecond instant. A reset a case omits is a document that
+ * stated none, which is a window whose reset is unknown rather than a window at zero.
+ */
+function usageAnswer(windows: UsageWindows): Response {
+	const windowOf = (window: UsageWindow): Record<string, unknown> => ({
+		used_percent: window.usedPercent,
+		limit_window_seconds: window.seconds,
+		...(window.resetAt === undefined ? {} : { reset_at: window.resetAt }),
+	});
+	return new Response(
+		JSON.stringify({
+			plan_type: "pro",
+			rate_limit: {
+				...(windows.primary === undefined ? {} : { primary_window: windowOf(windows.primary) }),
+				...(windows.secondary === undefined ? {} : { secondary_window: windowOf(windows.secondary) }),
+			},
+		}),
+		{ status: 200, headers: { "content-type": "application/json" } },
+	);
+}
+
+/**
+ * One whole Codex exchange: its start facts, its response — whose rate-limit headers this extension
+ * no longer reads, so it carries none — and its settled response. The answer the report's windows
+ * come from was staged as the next account API answer; the query the settled Turn starts is awaited
+ * by the `drain` that follows it.
+ */
+function reportCodex(bound: BoundVisual): void {
 	const session: SessionFacts = { sessionId: "session-codex", kind: "main", unavailable: [] };
 	bound.double.deliverTurn(
 		{ kind: "request_started", session, at: bound.clock.now, provider: CODEX, model: "gpt-6-luna" } as TurnSignal,
 		{ owner: OWNER },
 	);
-	bound.double.deliverTurn({ kind: "response_received", session, http: { status: 200, headers } } as TurnSignal, {
+	bound.double.deliverTurn({ kind: "response_received", session, http: { status: 200, headers: {} } } as TurnSignal, {
 		owner: OWNER,
 	});
 	bound.double.deliverTurn(
@@ -428,6 +462,9 @@ function reportCodex(bound: BoundVisual, headers: Readonly<Record<string, string
 		{ owner: OWNER },
 	);
 }
+
+/** Let the query one settled report began settle: it awaits the host's facts, the answer and its body. */
+const drain = (): Promise<void> => immediate();
 
 /** The instant a line's own absolute reset text names, parsed back on this machine's clock. */
 function absoluteInstantOf(text: string, year: number): number | undefined {
@@ -748,30 +785,48 @@ describe("only the effort value is coloured, by its own level (P67)", () => {
 });
 
 describe("the allowance windows are drawn as the Codex operator reads them (P65, P67)", () => {
-	/** One Codex host whose account API reported no window: every window below arrives from headers. */
-	async function bindCodexWindows(): Promise<BoundVisual> {
-		return bindVisual({ provider: CODEX, model: "gpt-6-luna", viewed: codexWindowFacts(), codex: true });
+	/**
+	 * One Codex host whose account API answers whatever the case stages: every window below arrives
+	 * from the answer a settled report's own query reads, never from a response header.
+	 */
+	function bindCodexWindows(codexAnswer?: () => Response): Promise<BoundVisual> {
+		return bindVisual({
+			provider: CODEX,
+			model: "gpt-6-luna",
+			viewed: codexWindowFacts(),
+			codex: true,
+			...(codexAnswer === undefined ? {} : { codexAnswer }),
+		});
 	}
 
 	test("the pace each window has run at decides its colour, over the two bands beside the plain one", async () => {
 		// Each report states its own reset an hour ahead of the five-hour window, so four of that window's
 		// five hours have run and the points it leads its own clock by are the band it lands in.
-		const bound = await bindCodexWindows();
-		const bands: readonly (readonly [string, number, string])[] = [
+		let reply: () => Response = () => usageAnswer({});
+		const bound = await bindCodexWindows(() => reply());
+		const bands: readonly (readonly [number, number, string])[] = [
 			// used percent, hours until its reset, the theme token the pace's own band is drawn in.
-			["85", 1, "success"], // five points ahead of its own clock
-			["95", 1, "success"], // exactly fifteen: still the first band
-			["96", 1, "warning"], // sixteen
-			["99", 4, "error"], // seventy-nine, past the second band's own thirty
-			["80", 1, "text"], // exactly on its own clock
-			["70", 1, "text"], // behind its own clock
+			[85, 1, "success"], // five points ahead of its own clock
+			[95, 1, "success"], // exactly fifteen: still the first band
+			[96, 1, "warning"], // sixteen
+			[99, 4, "error"], // seventy-nine, past the second band's own thirty
+			[80, 1, "text"], // exactly on its own clock
+			[70, 1, "text"], // behind its own clock
 		];
 		for (const [used, hoursToReset, token] of bands) {
-			reportCodex(bound, windowHeaders("primary", used, 300, bound.clock.now + hoursToReset * HOUR_MS));
+			// The controlled clock moves past the success TTL between the bands, so each report is a
+			// settled Turn whose reading really is due, and its reset is stated from that instant.
+			bound.clock.now += 30_000;
+			reply = () =>
+				usageAnswer({
+					primary: { usedPercent: used, seconds: 18_000, resetAt: (bound.clock.now + hoursToReset * HOUR_MS) / 1000 },
+				});
+			reportCodex(bound);
+			await drain();
 			const drawn = bound.host.draw(200);
 			// Everything a pace is drawn with — the bar's own runs of used cells and the percentage itself —
 			// carries the one token the band calls for, in the order the line draws them.
-			expect(last(drawn.painted)).toEqual({ color: token, text: `${Number(used).toFixed(1)}%` });
+			expect(last(drawn.painted)).toEqual({ color: token, text: `${used.toFixed(1)}%` });
 			expect(drawn.painted.slice(0, -1).every(paint => paint.color === token)).toBe(true);
 			expect(drawn.painted.length).toBeGreaterThan(1);
 			expect(drawn.lines[0]?.startsWith("5h ")).toBe(true);
@@ -779,8 +834,11 @@ describe("the allowance windows are drawn as the Codex operator reads them (P65,
 	});
 
 	test("a window with no usable reset is drawn muted, with the dashes it always showed", async () => {
-		const bound = await bindCodexWindows();
-		reportCodex(bound, windowHeaders("primary", "42", 300));
+		let reply: () => Response = () => usageAnswer({});
+		const bound = await bindCodexWindows(() => reply());
+		reply = () => usageAnswer({ primary: { usedPercent: 42, seconds: 18_000 } });
+		reportCodex(bound);
+		await drain();
 		const drawn = bound.host.draw(200);
 
 		// No reset instant: no marker can be placed and no pace can be measured, so the used run and the
@@ -795,8 +853,12 @@ describe("the allowance windows are drawn as the Codex operator reads them (P65,
 	});
 
 	test("the host's width reaches the window line, one form down at a time (P67)", async () => {
-		const bound = await bindCodexWindows();
-		reportCodex(bound, windowHeaders("primary", "85", 300, bound.clock.now + HOUR_MS));
+		let reply: () => Response = () => usageAnswer({});
+		const bound = await bindCodexWindows(() => reply());
+		reply = () =>
+			usageAnswer({ primary: { usedPercent: 85, seconds: 18_000, resetAt: (bound.clock.now + HOUR_MS) / 1000 } });
+		reportCodex(bound);
+		await drain();
 		const at = (width: number): Draw => bound.host.draw(width);
 
 		// Wide enough for everything: the twenty-cell bar with its time marker inside it, both percentages

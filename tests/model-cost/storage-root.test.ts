@@ -62,10 +62,15 @@ describe("model-cost storage root", () => {
 		// is this extension's field-local rule, so the framework must hand the value on unchanged.
 		const values = readConfig(SHIPPED_CONFIG_FILE, { fields: MODEL_COST.config?.fields });
 		expect(values.storageDir).toBe(SHIPPED_STORAGE_DIR);
-		// The balance TTL is the extension's other declared field: a whole number of milliseconds the
-		// specification's own default states.
+		// The two TTLs are the extension's other declared fields: whole numbers of milliseconds the
+		// specification's own defaults state.
 		expect(values.balanceTtlMs).toBe(30_000);
-		expect(MODEL_COST.config?.fields).toEqual({ storageDir: "non-empty-string", balanceTtlMs: "milliseconds" });
+		expect(values.codexQuotaTtlMs).toBe(15_000);
+		expect(MODEL_COST.config?.fields).toEqual({
+			storageDir: "non-empty-string",
+			balanceTtlMs: "milliseconds",
+			codexQuotaTtlMs: "milliseconds",
+		});
 	});
 
 	test("a plain relative value is resolved against the config directory, never the cwd", () => {

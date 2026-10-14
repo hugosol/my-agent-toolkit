@@ -18,7 +18,7 @@
 
 用户 Q1 同意三层拆分，Q10 明确「adapter功能先按需实现接入，如果没有扩展需要账号管理功能，则无需接入」。framework 提供 extension 所需的小 interface；adapter 接入宿主当前已生效的认证资料、凭据解析及 provider base URL，隐藏 OAuth 更新、credential storage 与原生配置访问。shared logic 不取得 modelRegistry／authStorage 原生对象，也不镜像完整宿主 interface。
 
-model-cost 持有 DeepSeek 余额／Codex 额度 endpoint、请求与响应解释、窗口选择和 parser 等业务。OMP 现成 usage provider／header parser 的存在不是把业务协议归入 framework 的理由；必要 native 桥接遵循 ADR-0002，具体接线由装配决定。framework HTTP 提供通用传输，代理不再由 OMP adapter 的环境变量约定决定。
+model-cost 持有 DeepSeek 余额／Codex 额度 endpoint、请求与响应解释、窗口选择和 parser 等业务。OMP 现成 usage provider／rate-limit helper 的存在不是把业务协议归入 framework 的理由；必要 native 桥接遵循 ADR-0002，具体接线由装配决定。framework HTTP 提供通用传输，代理不再由 OMP adapter 的环境变量约定决定。
 
 ### 单账号、允许替换与身份取舍
 

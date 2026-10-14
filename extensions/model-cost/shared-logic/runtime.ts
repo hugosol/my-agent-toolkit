@@ -34,10 +34,10 @@
  * them — including a rename it reports between that session's own boundaries. The DeepSeek balance
  * reading (`provider-balance.ts`) is asked once here, while this instance initializes, and a settled
  * request then refreshes it through the framework's public HTTP module only when that reading has
- * outlived its configured success TTL and no query is already out. The same delivery is where the
- * Codex allowance windows (`codex-quota.ts`) are read: the rate-limit headers a Codex response
- * carries are the only runtime source for them, and the one account API query that seeds them is
- * made while this instance initializes, at the same moment as the balance's own prefetch. Both
+ * outlived its configured success TTL and no query is already out. The Codex allowance windows
+ * (`codex-quota.ts`) follow the same shape: one account API query is made while this instance
+ * initializes, and a settled Codex request refreshes the windows through the same success-TTL and
+ * in-flight policy — differing only in which reading it refreshes, not in the query it sends. Both
  * provider sources are asked in parallel, so the first model request waits for the slower of the two
  * rather than for one after the other, and neither a refusal nor an unauthenticated host is what
  * stops it. The reading is a fact of the provider account rather than of a session, so it is read
@@ -50,7 +50,7 @@
 import type { ExtensionImplementation, InitializationDelivery } from "../../../framework/core/assembly";
 import type { CatalogPriceSource, FeedbackTransport, ProviderAccess, SemanticEventHandlers } from "../../../framework/core/protocol";
 import type { HttpRequestOptions } from "../../../framework/modules/http";
-import { CODEX_PROVIDER, type CodexQuotaFailure, createCodexQuota } from "./codex-quota";
+import { DEFAULT_CODEX_QUOTA_TTL_MS, type CodexQuotaFailure, createCodexQuota } from "./codex-quota";
 import { CodexEstimateStore } from "./codex-estimate-store";
 import { type BaselineLoad, ConsumptionStore, unusableBaselineNotice } from "./consumption-store";
 import { MODEL_PRICING_DATA, type ModelPricingData, dataCatalog } from "./model-data";
@@ -219,8 +219,9 @@ export function createModelCostRuntime(inputs: ModelCostRuntimeInputs): ModelCos
 	});
 
 	// The Codex allowance windows: one set per process, seeded once by the account API query at
-	// initialization and kept current by the rate-limit headers of every Codex response. Nothing else
-	// queries them, so no view change, model switch, Round edge or elapsed budget reaches a provider.
+	// initialization and refreshed by a settled Codex request under the same success-TTL policy the
+	// balance reading uses. Nothing else queries them, so no view change, model switch, Round edge or
+	// elapsed budget reaches a provider.
 	const now = inputs.now ?? Date.now;
 	// The Codex ratio measurement: one measurement per process, fed only by the paired readings a
 	// single report carried and persisted independently of the consumption document, so a consumption
@@ -229,6 +230,7 @@ export function createModelCostRuntime(inputs: ModelCostRuntimeInputs): ModelCos
 	const quota = createCodexQuota({
 		...(inputs.providerAccess === undefined ? {} : { access: inputs.providerAccess }),
 		now,
+		ttlMs: codexQuotaTtlMs(inputs.config),
 		onChange: () => accounting.announceChanged(),
 		estimate,
 		...(inputs.httpRequest === undefined ? {} : { httpRequest: inputs.httpRequest }),
@@ -341,16 +343,13 @@ export function createModelCostRuntime(inputs: ModelCostRuntimeInputs): ModelCos
 		turn_end: delivery => {
 			stateProviderFailures(delivery);
 			accounting.turnSettled(delivery);
-			// The usage-driven balance refresh reads the *request's* own provider rather than whatever
+			// The usage-driven provider refresh reads the *request's* own provider rather than whatever
 			// is being viewed or is current now, so a subagent's request and a main session's refresh the
-			// same one reading, and a request of another provider reaches nothing here.
+			// same one reading, and a request of another provider reaches nothing here. The balance and
+			// the Codex windows share the policy: each module filters to its own provider and checks its
+			// own success TTL, and an expired reading with no query already out begins one.
 			balance.usageSettled(delivery.turn.provider);
-			// The other runtime source of this extension's allowance windows: the rate-limit headers a
-			// Codex response carries. They are read as this response's delivery arrives, in the order they
-			// were received, and no other event reads or asks for them.
-			if (delivery.turn.provider === CODEX_PROVIDER && delivery.end.http !== undefined) {
-				quota.headersReceived(delivery.end.http.headers);
-			}
+			quota.usageSettled(delivery.turn.provider);
 		},
 		// Both edges of a Round: the start fixes the snapshot its own additions are measured from, and
 		// the end measures them, saves the session's own snapshot and becomes the previous Round.
@@ -446,6 +445,19 @@ export function createModelCostRuntime(inputs: ModelCostRuntimeInputs): ModelCos
 function balanceTtlMs(config: Readonly<Record<string, unknown>>): number {
 	const declared = config.balanceTtlMs;
 	return typeof declared === "number" ? declared : DEFAULT_BALANCE_TTL_MS;
+}
+
+/**
+ * The success TTL the Codex allowance windows keep, as the extension's own configuration states it.
+ *
+ * The declared field is validated by the framework before the factory runs, so the value read here
+ * is the one its `config.yaml` was checked to carry; a configuration that does not state it — which
+ * is what a suite constructing a runtime from plain inputs does — keeps the specification's own
+ * default rather than a value this module invents per call.
+ */
+function codexQuotaTtlMs(config: Readonly<Record<string, unknown>>): number {
+	const declared = config.codexQuotaTtlMs;
+	return typeof declared === "number" ? declared : DEFAULT_CODEX_QUOTA_TTL_MS;
 }
 
 /**

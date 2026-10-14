@@ -30,7 +30,7 @@
 
 model-cost 的 harness-independent shared logic 拥有计价、聚合、最近 Round、provider 测量缓存和本次统计 tradeoff；framework 的 boolean 激活 State 不充当业务容器。本次不升级通用业务 State，也不建立第二套框架／配置／能力声明。
 
-framework 提供 Round、可观察 Request／Turn、response usage、实际会话、直接父 Session 关系、模型等宿主事实；其公共逻辑／必要原生桥接分层按[观察契约分层决议](03-observation-contract.md)。shared logic 不读 OMP 原生 context／payload；其他 harness 可复用业务逻辑，本次仍只落地 OMP，不实现或认证 pi adapter。HTTP、文件和并发协调按地图既定分层归 framework 通用能力；DeepSeek 计价、Codex header parser、额度估计与具体业务数据格式不因此进入语义 core。
+framework 提供 Round、可观察 Request／Turn、response usage、实际会话、直接父 Session 关系、模型等宿主事实；其公共逻辑／必要原生桥接分层按[观察契约分层决议](03-observation-contract.md)。shared logic 不读 OMP 原生 context／payload；其他 harness 可复用业务逻辑，本次仍只落地 OMP，不实现或认证 pi adapter。HTTP、文件和并发协调按地图既定分层归 framework 通用能力；DeepSeek 计价、Codex 额度 parser、额度估计与具体业务数据格式不因此进入语义 core。
 
 ### 最小逻辑数据布局与查询路径
 

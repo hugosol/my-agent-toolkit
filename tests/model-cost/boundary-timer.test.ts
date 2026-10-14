@@ -248,7 +248,7 @@ async function bindBoundary(options: { readonly holiday?: boolean; readonly from
 	const double = portDouble();
 	let runtime: ModelCostRuntime | undefined;
 	double.bind(MODEL_COST, {
-		config: { reader: () => `storageDir: ${root}\nbalanceTtlMs: 30000\n` },
+		config: { reader: () => `storageDir: ${root}\nbalanceTtlMs: 30000\ncodexQuotaTtlMs: 15000\n` },
 		factory: () => {
 			runtime = createModelCostRuntime({
 				config: { storageDir: root },
