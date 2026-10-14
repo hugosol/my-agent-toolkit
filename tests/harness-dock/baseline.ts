@@ -240,7 +240,7 @@ function detectPrebuiltNatives(prefix: string): IsolatedHarness["prebuiltNatives
 	return { packages, binaries };
 }
 
-function describeHarness(
+export function describeHarness(
 	record: BaselineRecord,
 	layout: IsolatedHarnessLayout,
 ): IsolatedHarness {
@@ -336,7 +336,15 @@ export async function ensureIsolatedVersion(
 	return describeHarness(record, layout);
 }
 
-/** Re-check the anchor<->artifact file identity claimed by the record. */
+/**
+ * Re-check the anchor<->artifact file identity claimed by the record.
+ *
+ * The anchor half is the *recorded revision's own bytes*, read from the checkout's object database,
+ * not the bytes the checkout's working tree happens to hold now: the record names the revision the
+ * accepted artifact is byte-identical to, and a checkout that has moved past that revision still
+ * carries it. Comparing against a working tree would make this check a claim about the environment's
+ * tip instead of about the frozen revision, which is the opposite of what the record is for.
+ */
 export function verifyArtifactByteIdentity(
 	record: BaselineRecord = readBaselineRecord(),
 	repoRoot: string = REPO_ROOT,
@@ -344,11 +352,12 @@ export function verifyArtifactByteIdentity(
 	// Always the recorded artifact: the byte-identity claim is about the fixed baseline
 	// install, independent of any candidate the runtime parameter names.
 	const { packageRoot } = isolatedHarnessLayout(record, repoRoot, record.harness.supportedVersion);
-	const anchorRoot = path.join(resolveRecordPath(record.harness.revisionAnchor.path, repoRoot), "packages", "coding-agent", "src");
+	const anchorPath = resolveRecordPath(record.harness.revisionAnchor.path, repoRoot);
+	const anchorRevision = record.harness.revisionAnchor.commit;
 	return record.harness.acceptanceArtifact.byteIdentity.files.map(file => {
-		const anchorFile = path.join(anchorRoot, file.path);
+		const anchor = readRevisionFile(anchorPath, anchorRevision, `packages/coding-agent/src/${file.path}`);
+		const anchorSha256 = anchor === null ? null : createHash("sha256").update(anchor).digest("hex");
 		const artifactFile = path.join(packageRoot, "src", file.path);
-		const anchorSha256 = existsSync(anchorFile) ? sha256File(anchorFile) : null;
 		const artifactSha256 = existsSync(artifactFile) ? sha256File(artifactFile) : null;
 		return {
 			path: file.path,
@@ -388,14 +397,45 @@ export function checkoutCarries(checkoutPath: string, revision: string): boolean
 	return result.exitCode === 0;
 }
 
-export function readCheckoutCommit(checkoutPath: string): CheckoutCommit {
+/**
+ * The commit a ref names in one checkout, `HEAD` by default.
+ *
+ * A record identifies the revision its material comes from by both its commit and its tag, so
+ * resolving a ref is how the tag half of that identity is checked without moving any checkout.
+ */
+export function readCheckoutCommit(checkoutPath: string, ref: string = "HEAD"): CheckoutCommit {
 	if (!existsSync(checkoutPath)) {
 		return { commit: null, error: `checkout path does not exist: ${checkoutPath}` };
 	}
-	const result = Bun.spawnSync(["git", "-C", checkoutPath, "rev-parse", "HEAD"], { stdout: "pipe", stderr: "pipe" });
+	const result = Bun.spawnSync(["git", "-C", checkoutPath, "rev-parse", `${ref}^{commit}`], {
+		stdout: "pipe",
+		stderr: "pipe",
+	});
 	const commit = result.stdout.toString().trim();
 	if (result.exitCode !== 0 || commit.length === 0) {
-		return { commit: null, error: `git rev-parse HEAD failed in ${checkoutPath}: ${result.stderr.toString().trim()}` };
+		return {
+			commit: null,
+			error: `git rev-parse ${ref} failed in ${checkoutPath}: ${result.stderr.toString().trim()}`,
+		};
 	}
 	return { commit, error: null };
+}
+
+/**
+ * One file as one revision's own object carries it, or `null` when that checkout does not carry the
+ * revision or the revision does not carry the file.
+ *
+ * This is what a record's anchor half is checked against: the frozen revision's bytes, which stay
+ * reachable in the object database whatever the checkout's working tree or tip has moved on to. The
+ * bytes are returned raw rather than decoded, so hashing a binary contract file is as meaningful as
+ * hashing a text one.
+ */
+export function readRevisionFile(checkoutPath: string, revision: string, path: string): Buffer | null {
+	if (!existsSync(checkoutPath)) return null;
+	const result = Bun.spawnSync(["git", "-C", checkoutPath, "cat-file", "blob", `${revision}:${path}`], {
+		stdout: "pipe",
+		stderr: "pipe",
+	});
+	if (result.exitCode !== 0) return null;
+	return Buffer.from(result.stdout);
 }

@@ -9,15 +9,26 @@ individual extension.
 
 | Layer | What lives there |
 | --- | --- |
-| `core/` | The semantic contracts and the harness-independent engines: `protocol.ts` (the delivery and capability types), `definition.ts` (the declaration shape and its closed sets), `state.ts`, `config.ts`, `admission.ts`, `baseline.ts`, `owner-lives.ts`, `violations.ts`. |
-| `behaviors/` | The semantic behaviors built over those contracts: `admission.ts`, `binding.ts`, `control.ts`, `injection.ts`, `marker.ts`, `round-events.ts`, `session-events.ts`, `state-scope.ts`. |
+| `core/` | The semantic contracts and the harness-independent engines: `protocol.ts` (the delivery and capability types), `definition.ts` (the declaration shape and its closed sets), `assembly.ts` (the public assembly surface: the implementation factory, what it builds, and the generic assembly options), `state.ts`, `config.ts`, `requirements.ts` (the semantics a binding's behavior rests on: contract metadata for the independent verification), `owner-lives.ts`, `violations.ts`. |
+| `behaviors/` | The semantic behaviors built over those contracts: `binding.ts`, `actions.ts`, `control.ts`, `lifecycle.ts`, `injection.ts`, `marker.ts`, `subscriptions.ts` (the one scope rule and ordered dispatch every semantic delivery takes), `session-events.ts`, `round-events.ts` (round identities per actual session) and `turn-events.ts` (the Turn identity, in-flight association, dedup and conflict rules), plus the shared `state-scope.ts`. |
 | `adapters/` | The only native surface: `omp.ts` (the OMP port and assembly) and `modules.d.ts` (the harness package declarations). Native access is permitted here and nowhere else in the framework. |
-| `public.ts` | The single authoring door: `defineExtension` and the definition/configuration types an extension may name. |
+| `modules/` | The harness-independent capabilities shared logic imports directly rather than receiving through a delivery: `http.ts` (the one `request`, the per-request proxy choice and the wait budget) and `files.ts` (the one `updateFile`, the coordination it takes and the publication it makes). See [the general HTTP module](docs/framework-capabilities.md#general-http-module) and [the general safe-file module](docs/framework-capabilities.md#general-safe-file-module). |
+| `public.ts` | The authoring door: `defineExtension`, plus the general HTTP module's `request` and `HttpConfigurationError`, the general safe-file module's `updateFile` and `SafeFileUpdateError`, and the definition, configuration and assembly types an extension may name. |
 
 [`docs/framework-capabilities.md`](docs/framework-capabilities.md) is the symbol → meaning → source
 index of that public surface; the source it cites is authoritative for behavior, ordering and errors.
 The native boundary is enforced by
 [`../tests/framework/import-boundary.test.ts`](../tests/framework/import-boundary.test.ts).
+
+**The assembly the public door leads to.** An extension declares plain data with `defineExtension`, and
+what the framework connects to that declaration is an `ExtensionAssembly`: a factory called once the
+declared configuration validated — handed the validated values, expected to build the extension's business
+instance without sending a remote request or starting a timer — plus the semantics the extension
+additionally depends on and the directory its relative configuration path is resolved against. A harness
+adapter consumes that value unchanged, so an assembly names no harness. What the factory returns carries
+the commands and lifecycle handlers the declarations need and, optionally, the one-time `initialize` the
+first model request waits for and the one `cleanup` the disposal of the session the instance serves runs. See
+[the implementation factory and its lifecycle](docs/framework-capabilities.md#the-implementation-factory-and-its-lifecycle).
 
 ## Quick start
 
@@ -46,6 +57,13 @@ Run them in order. H3 is blocked until H1 passes; it covers both migrated extens
 per extension (codebase-tools first, then connect-bot). H4 is the same explicit action as step 4 of
 [Upgrading the supported harness](#upgrading-the-supported-harness).
 
+**The model-cost migration is a separate, later acceptance round** with its own H1 (real interactive
+TUI) and H2 (real provider effect) checks, its own frozen combined host artifact and its own manual
+cutover and rollback checklist; the per-promise scenarios and the prepared material are in
+[`extensions/model-cost/README.md`](../extensions/model-cost/README.md#human-acceptance). Nothing in
+that round is claimed until the user confirms it, and the same isolation rule below applies to every
+command it runs.
+
 **Isolation rule for every command below.** Run the isolated exact install
 (`.cache/omp-baseline/18.5.0`, materialised by the first suite run), keep the agent state in a
 throwaway directory via `PI_CODING_AGENT_DIR`, and pass `--no-extensions -e <repo>/entrypoints/omp`
@@ -73,9 +91,9 @@ command; the credential lands in that directory's `agent.db` and never enters a 
 repository. `--run` without a credential exits non-zero and re-prints those steps — that is the
 expected not-yet-delivered state. A completed run records `rr-session-N.json` request bodies plus the
 session JSONL under `.cache/codex-layer2/captures/`, and reports where the injected prompt landed and
-under which role. Compare with layer 1 — the shape-only capture
-[`.scratch/codebase-tools-omp-v1/assets/11/captures/codex/`](../.scratch/codebase-tools-omp-v1/assets/11/captures/codex)
-and [`tests/codebase-tools/outbound-role.test.ts`](../tests/codebase-tools/outbound-role.test.ts) — and
+under which role. Compare with layer 1 — the shape-only capture on this path recorded the injected
+prompt as a trailing `input` item with role `developer`, while `instructions` does not carry it
+(exercised by [`tests/codebase-tools/outbound-role.test.ts`](../tests/codebase-tools/outbound-role.test.ts)) — and
 with the provider-path role table in
 [`docs/harness-support.md`](docs/harness-support.md#provider-path-role-evidence-recorded-facts-not-a-gate).
 When no credential or capture is available, record the path as `unverified`; it does not block the
@@ -112,13 +130,14 @@ they prove the loader behavior, not the human cutover.
 ### H4 — replace the supported version
 
 This is the explicit maintainer action in step 4 of
-[Upgrading the supported harness](#upgrading-the-supported-harness): change
-`SUPPORTED_HARNESS_VERSIONS` in [`core/baseline.ts`](core/baseline.ts) — the framework-owned
-baseline, since version support belongs to the framework and an extension assembly declares no version
-list — update the four-state support record in
+[Upgrading the supported harness](#upgrading-the-supported-harness). Support is an evidence claim
+recorded in this repository, not a runtime list: update the four-state support record in
 [`docs/harness-support.md`](docs/harness-support.md), refresh
 [`docs/harness-baseline.json`](docs/harness-baseline.json) (re-checked by
-[`tests/harness-dock/baseline.test.ts`](../tests/harness-dock/baseline.test.ts)), then restart. The candidate
+[`tests/harness-dock/baseline.test.ts`](../tests/harness-dock/baseline.test.ts)), then restart. No
+framework source declares a supported version any more and normal startup reads none — the dock
+selects the version to run from the record (or from `OMP_TEST_VERSION` for a candidate), and a
+binding neither warns about nor refuses a harness the record does not list. The candidate
 result record from [`scripts/verify-omp-candidate.ts`](../scripts/verify-omp-candidate.ts)
 (`.cache/omp-baseline/<version>/candidate-verification.json`) is input to that decision, never the
 decision itself.
@@ -172,10 +191,6 @@ are mechanical and can be run by a human or an agent; steps 3–4 are human/main
 4. **Replace the supported version — an explicit maintainer action.**
    Only after reviewing the candidate result (and the spot check where step 3 applied):
 
-   - change `SUPPORTED_HARNESS_VERSIONS` in
-     [`core/baseline.ts`](core/baseline.ts)
-     from `["18.5.0"]` to the new exact version — this list is the framework-owned Supported
-     harness baseline, and no extension assembly carries one;
    - update the four-state support record and the upgrade standard in
      [`docs/harness-support.md`](docs/harness-support.md) with the new combination,
      evidence and conditions;
@@ -185,6 +200,10 @@ are mechanical and can be run by a human or an agent; steps 3–4 are human/main
    - restart the harness. A whole-process restart is required: there is no hot reload and
      the discovery root is never swapped inside a running process.
 
-Until that action is taken, the framework's baseline stays exactly `["18.5.0"]` and an installed
-version outside it is warned about once per main session and then continues without a support
-claim — that warning is expected behaviour, not a failure.
+No framework source declares a supported version, so there is no runtime list to edit: the dock
+selects the version it runs from the record (or from `OMP_TEST_VERSION` for a candidate), and a
+binding neither warns about nor refuses a harness the record does not list. Until the maintainer
+takes that action, the support record stays exactly `18.5.0` and the dock keeps running it — a
+harness outside the record is simply not claimed as supported, which is what
+[independent compatibility verification](docs/harness-support.md#independent-compatibility-verification)
+covers instead of a startup check.

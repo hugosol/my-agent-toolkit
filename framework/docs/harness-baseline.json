@@ -1,5 +1,5 @@
 {
-  "$comment": "Single checkable record of the fixed verification baseline: harness revision anchor, run/acceptance artifact, and dependency lockfiles. Checked by tests/harness-dock/baseline.test.ts. Support status and admission policy stay in framework/docs/harness-support.md; this file records only the correspondence between the anchor, the artifact actually run, and the lockfiles.",
+  "$comment": "Single checkable record of the fixed verification baseline: harness revision anchor, run/acceptance artifact, and dependency lockfiles. Checked by tests/harness-dock/baseline.test.ts. Support status and the verification policy stay in framework/docs/harness-support.md; this file records only the correspondence between the anchor, the artifact actually run, and the lockfiles.",
   "recorded": "2026-10-07",
   "harness": {
     "package": "@oh-my-pi/pi-coding-agent",
@@ -20,7 +20,7 @@
       "cliEntry": "src/cli.ts",
       "role": "the only harness that acceptance/verification runs execute; the local checkout cannot run a full session because its native addon is not built",
       "byteIdentity": {
-        "source": "reused conclusion of decision 03 (.scratch/codebase-tools-omp-v1/decision/03-extension-path-probes.md, probe assets under assets/03): the isolated 18.5.0 install is byte-identical to the checkout for the files that carry the extension, session, model and auth contracts",
+        "source": "reused conclusion of the migration's extension-path probes (2026-10-06): the isolated 18.5.0 install is byte-identical to the checkout at the recorded revision for the files that carry the extension, session, model and auth contracts; every dock run re-checks the recorded hashes against both sides (tests/harness-dock/baseline.test.ts, verifyArtifactByteIdentity)",
         "method": "sha256",
         "conclusion": "6/6 identical",
         "files": [

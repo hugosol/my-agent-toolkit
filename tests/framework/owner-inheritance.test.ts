@@ -186,7 +186,7 @@ function nativeDouble(): NativeDouble {
 				},
 			});
 
-			const handlers: Record<OmpSessionEventType, SessionHandler[]> = {
+			const handlers: Record<string, SessionHandler[]> = {
 				session_start: [],
 				session_switch: [],
 				session_branch: [],
@@ -207,7 +207,7 @@ function nativeDouble(): NativeDouble {
 				appendEntry(customType: string, data?: unknown): void {
 					appended.push({ customType, data });
 				},
-				on(event: OmpSessionEventType | OmpRoundEventType | "before_agent_start", handler: never): void {
+				on(event: string, handler: never): void {
 					if (event === "before_agent_start") runHandler = handler as RunInitiationHandler;
 					// This double drives the session axis; the round axis has its own suite.
 					else if (event !== "agent_start" && event !== "agent_end")
@@ -485,9 +485,11 @@ describe("two extensions with different per-field policies coexist (P3, P4)", ()
 		const rendersBeforeRuns = double.widgets.length;
 		expect(persistedSub.run()?.message.customType).toBe(INIT_IDENTITY);
 		// ...while the memory field, enabled in its owner, is still absent from the subagent:
-		// its run contributes nothing and renders no line of its owner's.
+		// its run contributes nothing, and the area the subagent renders is its own effective
+		// projection — the followed field's live value and the memory field's declared default —
+		// rather than a copy of every line the owner's session shows.
 		expect(memorySub.run()).toBeUndefined();
-		expect(double.widgets.slice(rendersBeforeRuns)).toEqual([["◈ codeBaseTools", "◈ memoryTools"]]);
+		expect(double.widgets.slice(rendersBeforeRuns)).toEqual([["◈ codeBaseTools"]]);
 
 		// Turning codebase-tools off leaves the memory field's line standing: the two
 		// policies share the area and their records without either deciding the other's value.

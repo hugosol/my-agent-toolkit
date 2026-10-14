@@ -4,7 +4,7 @@
  * The extension is driven exactly as the loader drives it: its own OMP assembly binds the
  * definition against the double, the native session lifecycle events the harness delivers are
  * handed to that same binding, and the command the framework registered arms a session. The panel
- * is a fake transport injected through the extension's own seam, so the `unregister` a boundary
+ * is a fake HTTP call injected through the extension's own seam, so the `unregister` a boundary
  * sends is observed without a network.
  *
  * What a boundary promises is an order, and the order is observed rather than assumed: a switch
@@ -17,11 +17,10 @@
 import { afterEach, describe, expect, jest, test } from "bun:test";
 import type { OmpCommandContext } from "../../framework/adapters/omp";
 import {
-	type PushFetchInit,
-	type PushHttpResponse,
-	type PushTransport,
-	setPushTransportForTest,
+	type PanelRequest,
+	setPanelRequestForTest,
 } from "../../extensions/connect-bot/shared-logic/panel/client";
+import type { HttpRequestOptions } from "../../framework/public";
 import { connectBotConfig } from "../../extensions/connect-bot/shared-logic/panel/config";
 import { botSessions } from "../../extensions/connect-bot/shared-logic/session/session";
 import connectBot from "../../extensions/connect-bot/harnesses/omp";
@@ -34,17 +33,15 @@ const CONNECTED = "已接入 omp-bot 面板（当前 1 个在线会话）";
 /** The notice a session being left gets when another identity takes its place, verbatim. */
 const SWITCHED = "会话已切换，已断开面板；重新 /connect-bot 可重连";
 
-/** One outbound request the extension made, as the transport received it. */
+/** One outbound request the extension made, as the framework's call received it. */
 interface Request {
 	readonly url: string;
-	readonly init: PushFetchInit;
+	readonly init: HttpRequestOptions;
 }
 
 /** The panel's answer to one request. */
-const panelAnswer = (status: number, body: unknown): PushHttpResponse => ({
-	status,
-	text: async () => JSON.stringify(body),
-});
+const panelAnswer = (status: number, body: unknown): Response =>
+	new Response(JSON.stringify(body), { status });
 
 /** The registered receipt a reachable panel answers a `register` with. */
 const registered = (onlineCount: number) => ({ outcome: "registered", onlineCount });
@@ -61,7 +58,7 @@ interface WireEnvelope {
 
 /** Reads one sent request body as the `{sessionId, kind, data?}` envelope the contract fixes. */
 function envelopeOf(request: Request): WireEnvelope {
-	const parsed: unknown = JSON.parse(request.init.body);
+	const parsed: unknown = JSON.parse(request.init.body ?? "");
 	if (parsed === null || typeof parsed !== "object") {
 		throw new Error("connect-bot sent a body that is not an object");
 	}
@@ -83,12 +80,12 @@ function envelopeOf(request: Request): WireEnvelope {
  * reachable panel; what a boundary sends is then the only thing left for `background` to answer.
  */
 function panel(
-	background: (kind: string) => PushHttpResponse | Promise<PushHttpResponse> = () => panelAnswer(200, {}),
-): { readonly requests: Request[]; readonly transport: PushTransport } {
+	background: (kind: string) => Response | Promise<Response> = () => panelAnswer(200, {}),
+): { readonly requests: Request[]; readonly request: PanelRequest } {
 	const requests: Request[] = [];
 	return {
 		requests,
-		transport: async (url, init) => {
+		request: async (url, init = {}) => {
 			const request = { url, init };
 			requests.push(request);
 			const kind = envelopeOf(request).kind;
@@ -100,11 +97,11 @@ function panel(
 }
 
 /** Binds the extension against a fresh double and injects one panel. */
-function bound(transport: PushTransport): OmpDouble {
+function bound(request: PanelRequest): OmpDouble {
 	const double = ompDouble();
 	connectBot(double.api);
-	// The assembly installs the platform's own transport at binding; the fake takes its place.
-	setPushTransportForTest(transport);
+	// A real binding sends through the framework's own request; the fake takes its place.
+	setPanelRequestForTest(request);
 	return double;
 }
 
@@ -143,7 +140,7 @@ describe("another identity takes the session's place (E13, P34, P15)", () => {
 		// observation that separates "local first" from "stop it whenever the answer comes back".
 		let atRemoval: { record: unknown; beatCancelled: boolean | undefined } | undefined;
 		const requests: Request[] = [];
-		const double = bound(async (url, init) => {
+		const double = bound(async (url, init = {}) => {
 			const request = { url, init };
 			requests.push(request);
 			const kind = envelopeOf(request).kind;
@@ -154,7 +151,7 @@ describe("another identity takes the session's place (E13, P34, P15)", () => {
 				beatCancelled: double.timers[0]?.cancelled,
 			};
 			// The panel is reachable but slow: the answer is held until the test releases it.
-			return new Promise<PushHttpResponse>(resolve => {
+			return new Promise<Response>(resolve => {
 				releaseUnregister = () => resolve(panelAnswer(200, {}));
 			});
 		});
@@ -192,8 +189,8 @@ describe("another identity takes the session's place (E13, P34, P15)", () => {
 	});
 
 	test("the session that took its place stays unarmed: no record, no beat, no register", async () => {
-		const { requests, transport } = panel();
-		const double = bound(transport);
+		const { requests, request } = panel();
+		const double = bound(request);
 		await arm(double, "switch-left");
 
 		double.switchSession(double.context({ sessionId: "switch-entered", cwd: "E:/work/switch" }), "new");
@@ -213,15 +210,16 @@ describe("another identity takes the session's place (E13, P34, P15)", () => {
 	test("an unregister the panel never answers aborts in its budget, is not retried and is not reported", async () => {
 		jest.useFakeTimers();
 		const requests: Request[] = [];
-		const double = bound((url, init) => {
+		const double = bound((url, init = {}) => {
 			const request = { url, init };
 			requests.push(request);
 			const kind = envelopeOf(request).kind;
 			if (kind === "register") return Promise.resolve(panelAnswer(200, registered(1)));
 			if (kind === "state") return Promise.resolve(panelAnswer(200, {}));
-			return new Promise<PushHttpResponse>((_resolve, reject) => {
-				// A panel that is gone never answers; the request ends the way an aborted fetch does.
-				init.signal.addEventListener("abort", () => reject(new Error("unregister budget exceeded")));
+			return new Promise<Response>((_resolve, reject) => {
+				// A panel that is gone never answers: the unregister is abandoned when the wait it
+				// declared runs out, on this file's own fake clock, advanced by exactly that below.
+				setTimeout(() => reject(new Error("unregister budget exceeded")), init.timeoutMs);
 			});
 		});
 		await arm(double, "switch-silent-old");
@@ -233,16 +231,16 @@ describe("another identity takes the session's place (E13, P34, P15)", () => {
 		jest.advanceTimersByTime(connectBotConfig().requestTimeoutMs);
 		await settleAll();
 
-		expect(requests[2]?.init.signal.aborted).toBe(true);
-		// Best-effort: the failure is not the operator's business, nothing is attempted a second time,
-		// and the row is left to the panel's own expiry exactly as a disposed session's is.
+		// The boundary's unregister declared the extension's own configured wait; the best-effort
+		// failure it ran out with is not the operator's business, and the request is not repeated.
+		expect(requests[2]?.init.timeoutMs).toBe(connectBotConfig().requestTimeoutMs);
 		expect(double.notifications).toEqual([CONNECTED, SWITCHED]);
 		expect(requests.map(request => envelopeOf(request).kind)).toEqual(["register", "state", "unregister"]);
 	});
 
 	test("a beat and a capability that outlive the boundary write nothing back", async () => {
-		const { requests, transport } = panel();
-		const double = bound(transport);
+		const { requests, request } = panel();
+		const double = bound(request);
 		await arm(double, "switch-late");
 		const beat = double.timers[0]!;
 		const capability = botSessions.get(ownerKey("switch-late"))!.capability;
@@ -267,8 +265,8 @@ describe("another identity takes the session's place (E13, P34, P15)", () => {
 	});
 
 	test("a session that is not its own owner never reaches this extension's cleanup", async () => {
-		const { requests, transport } = panel();
-		const double = bound(transport);
+		const { requests, request } = panel();
+		const double = bound(request);
 		await arm(double, "owner-scope");
 		const record = botSessions.get(ownerKey("owner-scope"));
 		// The registry the adapter walks: this child resolves to the main session it follows, so its
@@ -301,8 +299,8 @@ describe("another identity takes the session's place (E13, P34, P15)", () => {
 
 describe("the session is disposed rather than transferred (E14, P35)", () => {
 	test("a shutdown stops everything local and says nothing: the row is the panel's expiry to clean up", async () => {
-		const { requests, transport } = panel();
-		const double = bound(transport);
+		const { requests, request } = panel();
+		const double = bound(request);
 		const ctx = await arm(double, "dispose-1");
 
 		double.shutdown(ctx);
@@ -322,8 +320,8 @@ describe("the session is disposed rather than transferred (E14, P35)", () => {
 	});
 
 	test("a disposal schedules nothing that could expire the session itself", async () => {
-		const { transport } = panel();
-		const double = bound(transport);
+		const { request } = panel();
+		const double = bound(request);
 		const ctx = await arm(double, "dispose-2");
 
 		double.shutdown(ctx);
@@ -338,8 +336,8 @@ describe("the session is disposed rather than transferred (E14, P35)", () => {
 
 describe("a navigation that keeps the session's identity is not a boundary (E13, P34)", () => {
 	test("a tree jump, a reload, a clear, a same-file resume and a branch leave the connection alone", async () => {
-		const { requests, transport } = panel();
-		const double = bound(transport);
+		const { requests, request } = panel();
+		const double = bound(request);
 		const session = await arm(double, "navigate-1");
 		const record = botSessions.get(ownerKey("navigate-1"));
 		const beat = double.timers[0]!;

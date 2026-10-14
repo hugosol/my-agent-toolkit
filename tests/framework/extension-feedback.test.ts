@@ -7,17 +7,15 @@
  * there is observed end to end — a toggle announces its activation on the delivery's
  * feedback channel at `info`, an assembly-injected implementation's notices keep the
  * severity they chose and the order they were made in, a delivery carries the adapter's
- * `hasUI` fact unchanged, the framework's own admission notice stays on its own channel,
- * and no notice ever reaches model context.
+ * `hasUI` fact unchanged, and no notice ever reaches model context.
  *
  * How a level becomes a UI notification or a stderr line is the adapter's mapping; the OMP
- * side of it is observed in `feedback-harness.test.ts`, together with the framework's own
- * warning-level notice, which is not extension feedback.
+ * side of it is observed in `feedback-harness.test.ts`.
  */
 import { describe, expect, test } from "bun:test";
 import { CODEBASE_TOOLS } from "../../extensions/codebase-tools/definition";
-import type { CommandActions, CommandDelivery, FeedbackLevel } from "../../framework/core/protocol";
-import { type ExtensionDefinition, defineExtension } from "../../framework/public";
+import type { CommandDelivery, FeedbackLevel } from "../../framework/core/protocol";
+import { type CommandImplementations, type ExtensionDefinition, defineExtension } from "../../framework/public";
 import { DEFAULT_OWNER_KEY, portDouble } from "./support/harness-port-double";
 
 /** The owner a run acts on; the double resolves one main session per key. */
@@ -40,7 +38,7 @@ function publishingActions(
 	command: string,
 	notices: ReadonlyArray<{ readonly level: FeedbackLevel; readonly message: string }>,
 	seenHasUI: boolean[],
-): CommandActions {
+): CommandImplementations {
 	return {
 		[command]: {
 			run: (_directive, delivery: CommandDelivery) => {
@@ -77,7 +75,7 @@ describe("a handler's own notices keep the severity they chose (F10)", () => {
 			{ level: "info" as const, message: "disconnected from session-1" },
 		];
 		double.bind(feedbackDefinition("directed-feedback"), {
-			actions: publishingActions("directed-feedback", notices, seenHasUI),
+			commands: publishingActions("directed-feedback", notices, seenHasUI),
 		});
 
 		const run = double.run("directed-feedback", { owner: OWNER });
@@ -94,7 +92,7 @@ describe("the hasUI fact is the harness's, carried unchanged (F11)", () => {
 		const double = portDouble();
 		const seenHasUI: boolean[] = [];
 		double.bind(feedbackDefinition("directed-hasui"), {
-			actions: publishingActions("directed-hasui", [], seenHasUI),
+			commands: publishingActions("directed-hasui", [], seenHasUI),
 		});
 
 		const withUI = double.run("directed-hasui", { owner: OWNER, hasUI: true });
@@ -111,7 +109,7 @@ describe("the hasUI fact is the harness's, carried unchanged (F11)", () => {
 	test("a session delivery reports whether the session has a UI, in both harness states", () => {
 		const double = portDouble();
 		double.bind(feedbackDefinition("directed-session-hasui"), {
-			actions: publishingActions("directed-session-hasui", [], []),
+			commands: publishingActions("directed-session-hasui", [], []),
 		});
 
 		// The semantic-event delivery carries the same fact a command delivery does, so one
@@ -121,38 +119,8 @@ describe("the hasUI fact is the harness's, carried unchanged (F11)", () => {
 	});
 });
 
-describe("the framework's own notices are not extension feedback", () => {
-	test("an unlisted version is announced on the framework's notice channel, and the feedback channel stays empty", () => {
-		const double = portDouble();
-		double.bind(CODEBASE_TOOLS, { version: "18.6.1" });
-
-		const boundary = double.deliverSession({ kind: "owner", key: "main:feedback-notice-channel" });
-
-		// What this suite observes is the channel: the framework published exactly one notice,
-		// on the framework's own notice channel, naming the framework, the version it is about
-		// and the support set it echoes — and never the extension whose binding produced it.
-		expect(boundary.notices).toHaveLength(1);
-		expect(boundary.notices[0]).toContain("my-agent-toolkit");
-		expect(boundary.notices[0]).not.toContain(CODEBASE_TOOLS.displayName);
-		expect(boundary.notices[0]).toContain("18.6.1");
-		// A framework warning is not an extension notice: it is never routed through the
-		// channel an extension's own text travels.
-		expect(boundary.feedback).toEqual([]);
-	});
-
-	test("a session with nothing to say publishes on neither channel", () => {
-		const double = portDouble();
-		double.bind(CODEBASE_TOOLS);
-
-		const boundary = double.deliverSession(OWNER);
-
-		expect(boundary.notices).toEqual([]);
-		expect(boundary.feedback).toEqual([]);
-	});
-});
-
 describe("feedback never enters model context (P16)", () => {
-	test("a notice a handler published leaves no trace in the recorded value, the contribution or the marker area", () => {
+	test("a notice a handler published leaves no trace in the recorded value, the contribution or the marker area", async () => {
 		const NOTICE = "register rejected: the panel did not answer";
 		const double = portDouble();
 		const definition = defineExtension({
@@ -164,7 +132,7 @@ describe("feedback never enters model context (P16)", () => {
 			marker: { text: "◈ leakProbe" },
 		});
 		double.bind(definition, {
-			actions: {
+			commands: {
 				"leak-probe": {
 					run: (_directive, delivery: CommandDelivery) => {
 						delivery.state.write(true);
@@ -175,7 +143,7 @@ describe("feedback never enters model context (P16)", () => {
 		});
 
 		const run = double.run("leak-probe", { owner: OWNER });
-		const initiated = double.initiateRun(OWNER);
+		const initiated = await double.initiateRun(OWNER);
 
 		// The notice really was published, so the absences below are not a silent channel.
 		expect(run.feedback).toEqual([{ level: "error", message: NOTICE }]);

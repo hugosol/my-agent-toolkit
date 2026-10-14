@@ -24,12 +24,6 @@
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { type OmpExtensionApi, ompAdapter } from "../../../framework/adapters/omp";
-import {
-	type PushFetchInit,
-	type PushHttpResponse,
-	type PushTransport,
-	installPushTransport,
-} from "../shared-logic/panel/client";
 import { createConnectBotCommand } from "../shared-logic/command/command";
 import { CONNECT_BOT } from "../definition";
 import type { ManagedTimers } from "../shared-logic/managed-timer";
@@ -49,14 +43,6 @@ import { applyRoundEdge } from "../shared-logic/session/state-machine";
  * source is harness-neutral and holds no path of its own.
  */
 export const EXTENSION_REPOSITORY_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
-
-/**
- * The outbound transport the platform provides: bun's `fetch`, narrowed to the request surface
- * this extension uses (the toolkit's tsconfig carries no DOM fetch types). `proxy: false` is
- * part of the request the wire client builds, not of this call.
- */
-const platformTransport: PushTransport = (url, init) =>
-	(globalThis.fetch as unknown as (input: string, request: PushFetchInit) => Promise<PushHttpResponse>)(url, init);
 
 /**
  * OMP's own extension context, widened to the members this assembly reads.
@@ -178,7 +164,6 @@ function observeSessionContext(pi: OmpExtensionApi): {
  * on the non-model channel, and this session then simply runs without the extension.
  */
 export default function connectBot(pi: OmpExtensionApi): void {
-	installPushTransport(platformTransport);
 	const observed = observeSessionContext(pi);
 	// One registration lifecycle per binding: the command path and the session-end path must see
 	// the same attempts, or a boundary could stop effects an in-flight register is about to create.
@@ -198,21 +183,27 @@ export default function connectBot(pi: OmpExtensionApi): void {
 		// would leave a heartbeat beating for a session that is no longer current — with no way for
 		// the extension to learn that it should stop.
 		requiredSemantics: ["session-lifecycle-events", "round-lifecycle-events"],
-		events: {
-			// The session leaving: the one boundary this extension acts on. A start needs no handler —
-			// the session taking over starts unarmed, which is what "not armed" already means.
-			session_end: delivery => registrations.ownerEnded(delivery),
-			round_start: delivery => applyRoundEdge(delivery.owner, "round_start"),
-			round_end: delivery => applyRoundEdge(delivery.owner, "round_end"),
-		},
-		actions: {
-			"connect-bot": createConnectBotCommand(
-				{
-					sessionFacts: () => sessionFactsOf(observed.current()),
-					managedTimers: () => managedTimersOf(observed.current()),
-				},
-				registrations,
-			),
-		},
+		// The extension's own half: what the framework connects to the definition's declarations.
+		// The factory is handed the validated configuration and builds nothing here — this assembly's
+		// one business object per binding is the panel registration lifecycle it created above — so
+		// a refused binding leaves no resource of the extension's behind.
+		factory: () => ({
+			subscriptions: [{ scope: "owner", events: {
+				// The session leaving: the one boundary this extension acts on. A start needs no handler —
+				// the session taking over starts unarmed, which is what "not armed" already means.
+				session_end: delivery => registrations.ownerEnded(delivery),
+				round_start: delivery => applyRoundEdge(delivery.owner, "round_start"),
+				round_end: delivery => applyRoundEdge(delivery.owner, "round_end"),
+			} }],
+			commands: {
+				"connect-bot": createConnectBotCommand(
+					{
+						sessionFacts: () => sessionFactsOf(observed.current()),
+						managedTimers: () => managedTimersOf(observed.current()),
+					},
+					registrations,
+				),
+			},
+		}),
 	})(observed.api);
 }

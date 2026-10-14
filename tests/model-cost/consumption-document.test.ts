@@ -1,0 +1,293 @@
+/**
+ * The consumption document's approved schema, its business comparison and its merge rules
+ * (P45, P52's session half; S2/S4).
+ *
+ * The seam is the extension's own document module: what a file at `consumption.json` has to look
+ * like to be read at all, whether two session records say the same business thing, and what one
+ * session's commit does to the document a coordinated read just produced. Every expectation is
+ * written here from the storage contract — the root fields, the flat session list keyed by id,
+ * the four token buckets with the two currencies kept apart, the version scope
+ * periodId+harness+sessionId, and the refusal of anything the approved schema does not name — and
+ * the documents the cases read are written out in full rather than produced by the code under
+ * test.
+ */
+import { describe, expect, test } from "bun:test";
+import {
+	type ConsumptionDocument,
+	type SessionRecord,
+	mergeSession,
+	readConsumptionDocument,
+	sameSessionContent,
+} from "../../extensions/model-cost/shared-logic/consumption-document";
+
+/** One session record, as the approved schema writes it: a main session with two providers. */
+const MAIN_SESSION: SessionRecord = {
+	id: "session-main",
+	name: "主会话",
+	parent: null,
+	saveVersion: 2,
+	own: {
+		deepseek: {
+			"model-A": {
+				tokens: { input: 1000, cacheRead: 500, cacheWrite: 0, output: 200 },
+				costCny: 0.01,
+			},
+		},
+		"openai-codex": {
+			"model-B": {
+				tokens: { input: 2000, cacheRead: 1000, cacheWrite: 0, output: 300 },
+				referenceCostUsd: 0.02,
+			},
+		},
+	},
+};
+
+/** One subagent record: the same shape, with a direct parent and one provider. */
+const CHILD_SESSION: SessionRecord = {
+	id: "session-child",
+	name: "资料核对",
+	parent: "session-main",
+	saveVersion: 1,
+	own: {
+		deepseek: {
+			"model-A": {
+				tokens: { input: 600, cacheRead: 0, cacheWrite: 0, output: 100 },
+				costCny: 0.005,
+			},
+		},
+	},
+};
+
+/** A complete document of the approved schema, with both sessions in one harness. */
+function approvedDocument(): ConsumptionDocument {
+	return {
+		schemaVersion: 1,
+		periodId: "7e9983ee-6f68-4bb7-8c01-13a48beaf24b",
+		start: "2026-10-12T04:00:00.000Z",
+		start_bal: 99.8,
+		holiday: true,
+		harnesses: { omp: { sessions: [MAIN_SESSION, CHILD_SESSION] } },
+	};
+}
+
+describe("the consumption document's schema", () => {
+	test("an approved document is read with its root fields, sessions and own buckets intact", () => {
+		const outcome = readConsumptionDocument(approvedDocument());
+		expect(outcome.kind).toBe("document");
+		if (outcome.kind !== "document") return;
+		expect(outcome.document.schemaVersion).toBe(1);
+		expect(outcome.document.periodId).toBe("7e9983ee-6f68-4bb7-8c01-13a48beaf24b");
+		expect(outcome.document.start).toBe("2026-10-12T04:00:00.000Z");
+		expect(outcome.document.start_bal).toBe(99.8);
+		expect(outcome.document.holiday).toBe(true);
+		expect(outcome.document.harnesses.omp?.sessions).toEqual([MAIN_SESSION, CHILD_SESSION]);
+		// The two currencies stay what they were: a Codex reference estimate is not an amount.
+		expect(outcome.document.harnesses.omp?.sessions[1]?.own.deepseek?.["model-A"]?.costCny).toBe(0.005);
+		expect(outcome.document.harnesses.omp?.sessions[0]?.own["openai-codex"]?.["model-B"]?.referenceCostUsd).toBe(
+			0.02,
+		);
+	});
+
+	test("an optional boundary balance may be omitted, and a zero is not written in its place", () => {
+		const { start_bal: _omittedBoundaryBalance, ...withoutBoundaryBalance } = approvedDocument();
+		const outcome = readConsumptionDocument(withoutBoundaryBalance);
+		expect(outcome.kind).toBe("document");
+		if (outcome.kind !== "document") return;
+		expect("start_bal" in outcome.document).toBe(false);
+	});
+
+	test("another format version is not read as this one", () => {
+		const outcome = readConsumptionDocument({ ...approvedDocument(), schemaVersion: 2 });
+		expect(outcome.kind).toBe("unusable");
+		if (outcome.kind !== "unusable") return;
+		expect(outcome.reason).toContain("schemaVersion");
+	});
+
+	test("a legacy document is not read as this one", () => {
+		// The old DeepSeek cost file: another shape entirely, and never migrated into this one.
+		const outcome = readConsumptionDocument({ totalCost: 12.5, sessions: { "session-main": { costCny: 3 } }, holiday: false });
+		expect(outcome.kind).toBe("unusable");
+	});
+
+	test("a missing root field is unusable rather than defaulted", () => {
+		const { harnesses: _omittedHarnesses, ...withoutHarnesses } = approvedDocument();
+		expect(readConsumptionDocument(withoutHarnesses).kind).toBe("unusable");
+	});
+
+	test("a field the approved schema does not name is unusable, not preserved by accident", () => {
+		const outcome = readConsumptionDocument({ ...approvedDocument(), accounts: { main: {} } });
+		expect(outcome.kind).toBe("unusable");
+		if (outcome.kind !== "unusable") return;
+		expect(outcome.reason).toContain("accounts");
+	});
+
+	test("a session record carrying an extra authoritative total is refused", () => {
+		const outcome = readConsumptionDocument({
+			...approvedDocument(),
+			harnesses: { omp: { sessions: [{ ...MAIN_SESSION, totalCost: 5, totalTokens: 4000 }] } },
+		});
+		expect(outcome.kind).toBe("unusable");
+		if (outcome.kind !== "unusable") return;
+		expect(outcome.reason).toContain("totalCost");
+	});
+
+	test("a session record built from the wrong shape is refused", () => {
+		// `harnesses.<harness>.sessions` is a flat list; a map of sessions is not this schema.
+		expect(
+			readConsumptionDocument({
+				...approvedDocument(),
+				harnesses: { omp: { sessions: { "session-main": MAIN_SESSION } } },
+			}).kind,
+		).toBe("unusable");
+		expect(
+			readConsumptionDocument({
+				...approvedDocument(),
+				harnesses: { omp: { sessions: [{ ...MAIN_SESSION, tokens: { input: 1 } }] } },
+			}).kind,
+		).toBe("unusable");
+		expect(
+			readConsumptionDocument({
+				...approvedDocument(),
+				harnesses: { omp: { sessions: [MAIN_SESSION, { ...CHILD_SESSION, id: "session-main" }] } },
+			}).kind,
+		).toBe("unusable");
+	});
+
+	test("an own entry outside the two approved currencies is refused", () => {
+		expect(
+			readConsumptionDocument({
+				...approvedDocument(),
+				harnesses: {
+					omp: {
+						sessions: [
+							{
+								...MAIN_SESSION,
+								own: {
+									deepseek: {
+										"model-A": {
+											tokens: { input: 1, cacheRead: 0, cacheWrite: 0, output: 0 },
+											costUsd: 3,
+										},
+									},
+								},
+							},
+						],
+					},
+				},
+			}).kind,
+		).toBe("unusable");
+	});
+
+	test("a negative or non-finite measurement is refused", () => {
+		expect(
+			readConsumptionDocument({
+				...approvedDocument(),
+				harnesses: {
+					omp: {
+						sessions: [
+							{
+								...MAIN_SESSION,
+								own: {
+									deepseek: {
+										"model-A": { tokens: { input: -1, cacheRead: 0, cacheWrite: 0, output: 0 } },
+									},
+								},
+							},
+						],
+					},
+				},
+			}).kind,
+		).toBe("unusable");
+	});
+});
+
+describe("the consumption document's merge", () => {
+	test("a record whose id is not in the harness is appended, and the others survive", () => {
+		const document: ConsumptionDocument = { ...approvedDocument(), harnesses: { omp: { sessions: [MAIN_SESSION] } } };
+		const candidate: SessionRecord = { ...CHILD_SESSION, id: "session-second-child", parent: null };
+		const outcome = mergeSession(document, "omp", candidate);
+		expect(outcome.kind).toBe("updated");
+		if (outcome.kind !== "updated") return;
+		expect(outcome.document.harnesses.omp?.sessions.map(session => session.id)).toEqual([
+			"session-main",
+			"session-second-child",
+		]);
+		expect(outcome.document.harnesses.omp?.sessions[0]).toEqual(MAIN_SESSION);
+	});
+
+	test("a record replaces the one with its id, wherever that record sits", () => {
+		const replacement: SessionRecord = { ...CHILD_SESSION, saveVersion: 4, name: "资料核对（改）" };
+		const outcome = mergeSession(approvedDocument(), "omp", replacement);
+		expect(outcome.kind).toBe("updated");
+		if (outcome.kind !== "updated") return;
+		expect(outcome.document.harnesses.omp?.sessions).toEqual([MAIN_SESSION, replacement]);
+	});
+
+	test("a parent that was never saved is no obstacle", () => {
+		const orphan: SessionRecord = { ...CHILD_SESSION, id: "session-orphan", parent: "session-absent" };
+		const outcome = mergeSession(approvedDocument(), "omp", orphan);
+		expect(outcome.kind).toBe("updated");
+		if (outcome.kind !== "updated") return;
+		expect(outcome.document.harnesses.omp?.sessions[2]).toEqual(orphan);
+	});
+
+	test("an older save version is refused and the document stays as it was", () => {
+		const stale: SessionRecord = { ...MAIN_SESSION, saveVersion: 1 };
+		expect(mergeSession(approvedDocument(), "omp", stale).kind).toBe("stale-version");
+	});
+
+	test("the same version with the same business content is idempotent", () => {
+		const repeat: SessionRecord = { ...MAIN_SESSION, own: { ...MAIN_SESSION.own } };
+		const outcome = mergeSession(approvedDocument(), "omp", repeat);
+		expect(outcome.kind).toBe("unchanged");
+		if (outcome.kind !== "unchanged") return;
+		expect(outcome.document).toEqual(approvedDocument());
+	});
+
+	test("the same version with other business content is a conflict, never a merge", () => {
+		const different: SessionRecord = {
+			...MAIN_SESSION,
+			own: {
+				deepseek: {
+					"model-A": { tokens: { input: 1500, cacheRead: 0, cacheWrite: 0, output: 0 }, costCny: 0.02 },
+				},
+			},
+		};
+		expect(mergeSession(approvedDocument(), "omp", different).kind).toBe("conflict");
+		// A rename at the same version is other business content too: the record's fields are its
+		// content, and a name is one of them.
+		expect(mergeSession(approvedDocument(), "omp", { ...MAIN_SESSION, name: "别的名字" }).kind).toBe("conflict");
+	});
+
+	test("records whose keys were written in another order are the same business content", () => {
+		const reordered: SessionRecord = {
+			saveVersion: 2,
+			parent: null,
+			name: "主会话",
+			id: "session-main",
+			own: {
+				"openai-codex": {
+					"model-B": {
+						referenceCostUsd: 0.02,
+						tokens: { output: 300, cacheWrite: 0, cacheRead: 1000, input: 2000 },
+					},
+				},
+				deepseek: {
+					"model-A": { costCny: 0.01, tokens: { output: 200, cacheWrite: 0, cacheRead: 500, input: 1000 } },
+				},
+			},
+		};
+		expect(sameSessionContent(MAIN_SESSION, reordered)).toBe(true);
+		expect(mergeSession(approvedDocument(), "omp", reordered).kind).toBe("unchanged");
+	});
+
+	test("the version scope is the harness's own list, so another harness is another record", () => {
+		const document: ConsumptionDocument = { ...approvedDocument(), harnesses: { omp: { sessions: [MAIN_SESSION] } } };
+		const other: SessionRecord = { ...MAIN_SESSION, saveVersion: 1, name: "另一个宿主" };
+		const outcome = mergeSession(document, "pi", other);
+		expect(outcome.kind).toBe("updated");
+		if (outcome.kind !== "updated") return;
+		expect(outcome.document.harnesses.omp?.sessions).toEqual([MAIN_SESSION]);
+		expect(outcome.document.harnesses.pi?.sessions).toEqual([other]);
+	});
+});

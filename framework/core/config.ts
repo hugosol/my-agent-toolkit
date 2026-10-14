@@ -106,8 +106,13 @@ interface ResolvedConfigDeclaration {
 	readonly fields: Readonly<Record<string, ConfigFieldType>>;
 }
 
-/** How failure text names a value that is not the one the declaration requires. */
-function describeValue(value: unknown): string {
+/**
+ * How failure text names a value that is not the one a configuration requires.
+ *
+ * It is shared by every configuration read the framework performs — the extension file and the
+ * framework's own shared file — so both report a value the same way.
+ */
+export function describeValue(value: unknown): string {
 	if (value === null) return "null";
 	if (Array.isArray(value)) return "an array";
 	switch (typeof value) {
@@ -131,13 +136,34 @@ function describeValue(value: unknown): string {
  */
 const MILLISECOND_RANGE = { least: 1, most: 2 ** 31 - 1 } as const;
 
+/**
+ * Whether one declared value is a wait this harness's timer schedules.
+ *
+ * It is the rule behind a `milliseconds` field and behind a request's own wait budget: a whole
+ * number of milliseconds, at least the shortest wait that is a wait (1) and at most the longest
+ * delay the harness's timer schedules (`2 ** 31 - 1`, the length above which a delay is clamped
+ * to 1ms instead of waited for). A budget outside it would not be the wait it names, so it is
+ * refused rather than replaced.
+ */
+export function isScheduledWait(value: unknown): value is number {
+	return (
+		typeof value === "number" &&
+		Number.isInteger(value) &&
+		value >= MILLISECOND_RANGE.least &&
+		value <= MILLISECOND_RANGE.most
+	);
+}
+
+/** How a declared wait is named in failure text. */
+export const SCHEDULED_WAIT_TEXT = `a whole number of milliseconds between ${MILLISECOND_RANGE.least} and ${MILLISECOND_RANGE.most}`;
+
 /** How one field requirement is named in failure text. */
 const FIELD_TYPE_TEXT: Readonly<Record<ConfigFieldType, string>> = {
 	string: "a string",
 	"non-empty-string": "a non-empty-string",
 	number: "a number",
 	boolean: "a boolean",
-	milliseconds: `a whole number of milliseconds between ${MILLISECOND_RANGE.least} and ${MILLISECOND_RANGE.most}`,
+	milliseconds: SCHEDULED_WAIT_TEXT,
 };
 
 /** Whether one file value matches the type its declaration requires. */
@@ -146,11 +172,7 @@ const FIELD_TYPE_MATCHES: Readonly<Record<ConfigFieldType, (value: unknown) => b
 	"non-empty-string": value => typeof value === "string" && value.length > 0,
 	number: value => typeof value === "number" && Number.isFinite(value),
 	boolean: value => typeof value === "boolean",
-	milliseconds: value =>
-		typeof value === "number" &&
-		Number.isInteger(value) &&
-		value >= MILLISECOND_RANGE.least &&
-		value <= MILLISECOND_RANGE.most,
+	milliseconds: isScheduledWait,
 };
 
 /** Throws when one field mapping names a type this framework version does not bind. */
@@ -218,6 +240,37 @@ function resolveDeclaredFile(path: string, baseDir: string | undefined): string 
 }
 
 /**
+ * The document one YAML file declares, read and parsed through the injectable seam, or
+ * `undefined` when no file exists at `file`.
+ *
+ * This is the half every configuration read shares: obtaining the text, turning it into a
+ * value, and reporting a file that cannot be obtained or that is not YAML. A read that
+ * tolerates an absent file (the framework's own shared file, which is optional) and one that
+ * refuses it (an extension's declared file) differ only in what they make of these two
+ * answers. The value is what the document declared: a mapping, but also `null` for a file
+ * that declares nothing and a scalar or array for one that is not a mapping — the caller
+ * interprets both.
+ */
+function readDocument(file: string, source: ConfigSource): unknown | undefined {
+	let text: string;
+	try {
+		text = (source.reader ?? (candidate => readFileSync(candidate, "utf8")))(file);
+	} catch (error) {
+		const reason = error instanceof Error ? error.message : String(error);
+		if ((error as { readonly code?: unknown } | null)?.code === "ENOENT") return undefined;
+		throw new ConfigLoadError(`the configuration file "${file}" could not be read: ${reason}`);
+	}
+
+	try {
+		return (source.parser ?? (document => parse(document)))(text);
+	} catch (error) {
+		throw new ConfigLoadError(
+			`the configuration file "${file}" is not valid YAML: ${error instanceof Error ? error.message : String(error)}`,
+		);
+	}
+}
+
+/**
  * Reads, parses and validates one configuration file — the one implementation every
  * configuration read goes through.
  *
@@ -245,33 +298,17 @@ export function readConfig(path: string, options: ConfigReadOptions = {}): Reado
 	assertBoundFieldTypes(fields);
 	const file = resolveDeclaredFile(path, options.baseDir);
 
-	let text: string;
-	try {
-		text = (options.reader ?? (candidate => readFileSync(candidate, "utf8")))(file);
-	} catch (error) {
-		const reason = error instanceof Error ? error.message : String(error);
-		if ((error as { readonly code?: unknown } | null)?.code === "ENOENT") {
-			throw new ConfigLoadError(`the configuration file "${file}" does not exist`);
-		}
-		throw new ConfigLoadError(`the configuration file "${file}" could not be read: ${reason}`);
+	const document = readDocument(file, options);
+	if (document === undefined) {
+		throw new ConfigLoadError(`the configuration file "${file}" does not exist`);
 	}
-
-	let parsed: unknown;
-	try {
-		parsed = (options.parser ?? (document => parse(document)))(text);
-	} catch (error) {
+	if (typeof document !== "object" || document === null || Array.isArray(document)) {
 		throw new ConfigLoadError(
-			`the configuration file "${file}" is not valid YAML: ${error instanceof Error ? error.message : String(error)}`,
+			`the configuration file "${file}" does not declare a mapping at its top level (it declares ${describeValue(document)})`,
 		);
 	}
 
-	if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
-		throw new ConfigLoadError(
-			`the configuration file "${file}" does not declare a mapping at its top level (it declares ${describeValue(parsed)})`,
-		);
-	}
-
-	const mapping = parsed as Readonly<Record<string, unknown>>;
+	const mapping = document as Readonly<Record<string, unknown>>;
 	const values: Record<string, unknown> = {};
 	for (const [field, type] of Object.entries(fields)) {
 		if (!Object.prototype.hasOwnProperty.call(mapping, field) || mapping[field] === undefined) {
@@ -288,6 +325,34 @@ export function readConfig(path: string, options: ConfigReadOptions = {}): Reado
 		values[field] = value;
 	}
 	return values;
+}
+
+/**
+ * The shared configuration document at `path` — the mapping the file declares, or
+ * `undefined` when no file exists there.
+ *
+ * This is the framework's own configuration read, beside the per-extension one: the same
+ * reader, parser and failure text, with the two callers differing in what they make of the
+ * answer. A missing file is not a failure here — the framework's shared configuration is
+ * optional, so a read that finds no file has nothing to declare — while a file that exists
+ * and cannot be read or parsed, or that is not a mapping, is a {@link ConfigLoadError} like
+ * any other. A file that declares nothing at all (an empty document) is the empty mapping:
+ * declaring no key is not the same as declaring something the framework cannot honor.
+ */
+export function readConfigDocument(
+	path: string,
+	source: ConfigSource = {},
+): Readonly<Record<string, unknown>> | undefined {
+	const file = resolveDeclaredFile(path, source.baseDir);
+	const document = readDocument(file, source);
+	if (document === undefined) return undefined;
+	if (document === null) return {};
+	if (typeof document !== "object" || Array.isArray(document)) {
+		throw new ConfigLoadError(
+			`the configuration file "${file}" does not declare a mapping at its top level (it declares ${describeValue(document)})`,
+		);
+	}
+	return document as Readonly<Record<string, unknown>>;
 }
 
 /**

@@ -4,7 +4,7 @@
  *
  * The extension is driven exactly as the loader drives it: its own OMP assembly binds the
  * definition against the double, and the command the framework registered runs with a doubled
- * session context. The panel is a fake transport injected through the extension's own seam, so
+ * session context. The panel is a fake HTTP call injected through the extension's own seam, so
  * every request is observed without a network. What `off` promises is a sequence, and the order
  * is observed rather than assumed: the local switch and the marker are already gone while the
  * `unregister` is still in flight, and only then does the panel's answer decide which of the two
@@ -17,12 +17,11 @@
  */
 import { afterEach, describe, expect, jest, test } from "bun:test";
 import {
-	type PushFetchInit,
-	type PushHttpResponse,
-	type PushTransport,
+	type PanelRequest,
 	EVENTS_PATH,
-	setPushTransportForTest,
+	setPanelRequestForTest,
 } from "../../extensions/connect-bot/shared-logic/panel/client";
+import type { HttpRequestOptions } from "../../framework/public";
 import { connectBotConfig } from "../../extensions/connect-bot/shared-logic/panel/config";
 import { botSessions } from "../../extensions/connect-bot/shared-logic/session/session";
 import connectBot from "../../extensions/connect-bot/harnesses/omp";
@@ -50,17 +49,15 @@ const NO_UI_REFUSAL = "当前模式无 UI，不支持接入面板";
 const unknownArgument = (argument: string) =>
 	`未知参数「${argument}」；用法：/connect-bot（接入 omp-bot 面板）或 /connect-bot off（断开）。`;
 
-/** One outbound request the extension made, as the transport received it. */
+/** One outbound request the extension made, as the framework's call received it. */
 interface Request {
 	readonly url: string;
-	readonly init: PushFetchInit;
+	readonly init: HttpRequestOptions;
 }
 
 /** The panel's answer to one request. */
-const panelAnswer = (status: number, body: unknown): PushHttpResponse => ({
-	status,
-	text: async () => JSON.stringify(body),
-});
+const panelAnswer = (status: number, body: unknown): Response =>
+	new Response(JSON.stringify(body), { status });
 
 /** The registered receipt a reachable panel answers a `register` with. */
 const registered = (onlineCount: number) => ({ outcome: "registered", onlineCount });
@@ -78,7 +75,7 @@ interface WireEnvelope {
 
 /** Reads one sent request body as the `{sessionId, kind, data?}` envelope the contract fixes. */
 function envelopeOf(request: Request): WireEnvelope {
-	const parsed: unknown = JSON.parse(request.init.body);
+	const parsed: unknown = JSON.parse(request.init.body ?? "");
 	if (parsed === null || typeof parsed !== "object") {
 		throw new Error("connect-bot sent a body that is not an object");
 	}
@@ -96,14 +93,14 @@ function envelopeOf(request: Request): WireEnvelope {
 }
 
 /** Records every request and answers it from the panel the test scripted, by the envelope's kind. */
-function panel(answer: (kind: string) => PushHttpResponse | Promise<PushHttpResponse>): {
+function panel(answer: (kind: string) => Response | Promise<Response>): {
 	readonly requests: Request[];
-	readonly transport: PushTransport;
+	readonly request: PanelRequest;
 } {
 	const requests: Request[] = [];
 	return {
 		requests,
-		transport: async (url, init) => {
+		request: async (url, init = {}) => {
 			const request = { url, init };
 			requests.push(request);
 			return answer(envelopeOf(request).kind);
@@ -112,11 +109,11 @@ function panel(answer: (kind: string) => PushHttpResponse | Promise<PushHttpResp
 }
 
 /** Binds the extension against a fresh double and injects one panel. */
-function bound(transport: PushTransport): OmpDouble {
+function bound(request: PanelRequest): OmpDouble {
 	const double = ompDouble();
 	connectBot(double.api);
-	// The assembly installs the platform's own transport at binding; the fake takes its place.
-	setPushTransportForTest(transport);
+	// A real binding sends through the framework's own request; the fake takes its place.
+	setPanelRequestForTest(request);
 	return double;
 }
 
@@ -146,10 +143,10 @@ function withCapturedStderr<T>(run: () => T): { readonly diagnostics: string; re
  * answers everything else with an ordinary 2xx.
  */
 function armingPanel(
-	background: (kind: string) => PushHttpResponse | Promise<PushHttpResponse> = () => panelAnswer(200, {}),
+	background: (kind: string) => Response | Promise<Response> = () => panelAnswer(200, {}),
 ): {
 	readonly requests: Request[];
-	readonly transport: PushTransport;
+	readonly request: PanelRequest;
 } {
 	return panel(kind => {
 		if (kind === "register") return panelAnswer(200, registered(1));
@@ -166,14 +163,14 @@ afterEach(() => {
 describe("`off` drops the local switch first and removes the panel row best-effort (E7, P28)", () => {
 	test("the local switch and the marker are gone while the unregister is still unanswered", async () => {
 		let releaseUnregister!: () => void;
-		const { requests, transport } = armingPanel(
+		const { requests, request } = armingPanel(
 			() =>
 				// The panel is reachable but slow: the answer is held until the test releases it.
-				new Promise<PushHttpResponse>(resolve => {
+				new Promise<Response>(resolve => {
 					releaseUnregister = () => resolve(panelAnswer(200, {}));
 				}),
 		);
-		const double = bound(transport);
+		const double = bound(request);
 		const sessionId = "off-local-first";
 		const ctx = double.context({ sessionId, cwd: "E:/work/off" });
 
@@ -202,7 +199,7 @@ describe("`off` drops the local switch first and removes the panel row best-effo
 		expect(requests[2]?.init.method).toBe("POST");
 		expect(requests[2]?.init.headers).toEqual({ "content-type": "application/json" });
 		expect(requests[2]?.init.proxy).toBe(false);
-		expect(requests[2]?.init.signal).toBeInstanceOf(AbortSignal);
+		expect(requests[2]?.init.timeoutMs).toBe(connectBotConfig().requestTimeoutMs);
 		expect(requests[2]?.init.body).toBe(JSON.stringify({ sessionId, kind: "unregister" }));
 
 		releaseUnregister();
@@ -221,8 +218,8 @@ describe("`off` drops the local switch first and removes the panel row best-effo
 
 	for (const [label, status] of reachable) {
 		test(`${label} reports the disconnect`, async () => {
-			const { requests, transport } = armingPanel(() => panelAnswer(status, { error: "whatever" }));
-			const double = bound(transport);
+			const { requests, request } = armingPanel(() => panelAnswer(status, { error: "whatever" }));
+			const double = bound(request);
 			const sessionId = `off-reachable-${status}`;
 			const ctx = double.context({ sessionId, cwd: "E:/work/off" });
 
@@ -245,10 +242,10 @@ describe("`off` drops the local switch first and removes the panel row best-effo
 	}
 
 	test("a request that never completes reports the panel did not answer, and the session is already off", async () => {
-		const { requests, transport } = armingPanel(() => {
+		const { requests, request } = armingPanel(() => {
 			throw new Error("the panel never answered");
 		});
-		const double = bound(transport);
+		const double = bound(request);
 		const sessionId = "off-unreachable";
 		const ctx = double.context({ sessionId, cwd: "E:/work/off" });
 
@@ -273,15 +270,16 @@ describe("`off` drops the local switch first and removes the panel row best-effo
 	test("an unregister the panel never answers aborts within its configured budget", async () => {
 		jest.useFakeTimers();
 		const requests: Request[] = [];
-		const double = bound((url, init) => {
+		const double = bound((url, init = {}) => {
 			const request = { url, init };
 			requests.push(request);
 			const kind = envelopeOf(request).kind;
 			if (kind === "register") return Promise.resolve(panelAnswer(200, registered(1)));
 			if (kind === "state") return Promise.resolve(panelAnswer(200, {}));
-			return new Promise<PushHttpResponse>((_resolve, reject) => {
-				// A panel that is gone never answers; the request ends the way an aborted fetch does.
-				init.signal.addEventListener("abort", () => reject(new Error("unregister budget exceeded")));
+			return new Promise<Response>((_resolve, reject) => {
+				// A panel that is gone never answers: the unregister is abandoned when the wait it
+				// declared runs out, on this file's own fake clock, advanced by exactly that below.
+				setTimeout(() => reject(new Error("unregister budget exceeded")), init.timeoutMs);
 			});
 		});
 		const sessionId = "off-timeout";
@@ -301,15 +299,17 @@ describe("`off` drops the local switch first and removes the panel row best-effo
 		jest.advanceTimersByTime(connectBotConfig().requestTimeoutMs);
 		await announced;
 
-		expect(requests[2]?.init.signal.aborted).toBe(true);
+		// The unregister declared the extension's own configured wait, and a request that never
+		// completed is the failure the operator is told about.
+		expect(requests[2]?.init.timeoutMs).toBe(connectBotConfig().requestTimeoutMs);
 		expect(double.notifications).toEqual([CONNECTED, UNREACHABLE]);
 		expect(double.notificationLevels).toEqual(["info", "error"]);
 		expect(botSessions.get(ownerKey(sessionId))).toBeUndefined();
 	});
 
 	test("after off the session is unarmed again: a second off does nothing at all", async () => {
-		const { requests, transport } = armingPanel();
-		const double = bound(transport);
+		const { requests, request } = armingPanel();
+		const double = bound(request);
 		const sessionId = "off-twice";
 		const ctx = double.context({ sessionId, cwd: "E:/work/off" });
 
@@ -335,8 +335,8 @@ describe("`off` drops the local switch first and removes the panel row best-effo
 	});
 
 	test("off in a session that never armed sends no request and says nothing", () => {
-		const { requests, transport } = armingPanel();
-		const double = bound(transport);
+		const { requests, request } = armingPanel();
+		const double = bound(request);
 		const ctx = double.context({ sessionId: "off-never-armed", cwd: "E:/work/off" });
 
 		double.run("connect-bot", "off", ctx);
@@ -352,8 +352,8 @@ describe("`off` drops the local switch first and removes the panel row best-effo
 
 describe("an unrecognized argument is an error that changes nothing (E8, P29)", () => {
 	test("`offline` is no longer a form: it reports the usage error and leaves the session connected", async () => {
-		const { requests, transport } = armingPanel();
-		const double = bound(transport);
+		const { requests, request } = armingPanel();
+		const double = bound(request);
 		const sessionId = "unknown-offline";
 		const ctx = double.context({ sessionId, cwd: "E:/work/off" });
 
@@ -376,8 +376,8 @@ describe("an unrecognized argument is an error that changes nothing (E8, P29)", 
 	});
 
 	test("an unknown argument in a session that never armed sends no request and writes nothing", () => {
-		const { requests, transport } = armingPanel();
-		const double = bound(transport);
+		const { requests, request } = armingPanel();
+		const double = bound(request);
 		const ctx = double.context({ sessionId: "unknown-never-armed", cwd: "E:/work/off" });
 
 		double.run("connect-bot", "yes please", ctx);
@@ -393,8 +393,8 @@ describe("an unrecognized argument is an error that changes nothing (E8, P29)", 
 
 describe("the gate `/connect-bot` runs behind covers `off` and rule-breakers alike (E6, P27)", () => {
 	test("a subagent running off is refused in silence: no request, no write, no words", () => {
-		const { requests, transport } = armingPanel();
-		const double = bound(transport);
+		const { requests, request } = armingPanel();
+		const double = bound(request);
 		const ctx = double.context({ sessionId: "off-subagent", cwd: "E:/work/sub", kind: "sub" });
 
 		const refusal = withCapturedStderr(() => double.run("connect-bot", "off", ctx));
@@ -408,8 +408,8 @@ describe("the gate `/connect-bot` runs behind covers `off` and rule-breakers ali
 	});
 
 	test("a session without a UI refuses off on stderr and changes nothing", () => {
-		const { requests, transport } = armingPanel();
-		const double = bound(transport);
+		const { requests, request } = armingPanel();
+		const double = bound(request);
 		const ctx = double.context({ sessionId: "off-no-ui", cwd: "E:/work/headless", hasUI: false });
 
 		const refusal = withCapturedStderr(() => double.run("connect-bot", "off", ctx));
@@ -422,8 +422,8 @@ describe("the gate `/connect-bot` runs behind covers `off` and rule-breakers ali
 	});
 
 	test("a session without a UI refuses an unknown argument with the no-UI refusal, not the usage error", () => {
-		const { requests, transport } = armingPanel();
-		const double = bound(transport);
+		const { requests, request } = armingPanel();
+		const double = bound(request);
 		const ctx = double.context({ sessionId: "unknown-no-ui", cwd: "E:/work/headless", hasUI: false });
 
 		const refusal = withCapturedStderr(() => double.run("connect-bot", "offline", ctx));

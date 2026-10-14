@@ -6,22 +6,21 @@
  *
  * The extension is driven exactly as the loader drives it: its own OMP assembly binds the
  * definition against the double, and the command the framework registered runs with a
- * doubled session context. The panel is a fake transport injected through the extension's
- * own seam, so every request is observed without a network, and each test's session id is
- * its own so nothing about one case can leak into the next. The failure cases that claim
- * nothing outlives the failure drive bun's fake timers, so "nothing later happens" is
- * established by advancing time rather than by waiting.
+ * doubled session context. The panel is a fake HTTP call standing in for the framework's own
+ * request at the extension's own seam, so every request is observed without a network, and each
+ * test's session id is its own so nothing about one case can leak into the next. The failure
+ * cases that claim nothing outlives the failure drive bun's fake timers, so "nothing later
+ * happens" is established by advancing time rather than by waiting.
  */
 import { afterEach, describe, expect, jest, test } from "bun:test";
 import {
-	type PushFetchInit,
-	type PushHttpResponse,
-	type PushTransport,
 	EVENTS_PATH,
-	setPushTransportForTest,
+	type PanelRequest,
+	setPanelRequestForTest,
 } from "../../extensions/connect-bot/shared-logic/panel/client";
 import { connectBotConfig } from "../../extensions/connect-bot/shared-logic/panel/config";
 import { botSessions } from "../../extensions/connect-bot/shared-logic/session/session";
+import type { HttpRequestOptions } from "../../framework/public";
 import connectBot from "../../extensions/connect-bot/harnesses/omp";
 import { type OmpDouble, ompDouble } from "./support/omp-double";
 
@@ -35,17 +34,15 @@ const ENDPOINT = "http://127.0.0.1:8787";
 /** The owner key the framework resolves for one main session. */
 const ownerKey = (sessionId: string) => `main:${sessionId}`;
 
-/** One outbound request the extension made, as the transport received it. */
+/** One outbound request the extension made, as the framework's call received it. */
 interface Request {
 	readonly url: string;
-	readonly init: PushFetchInit;
+	readonly init: HttpRequestOptions;
 }
 
 /** The panel's answer to one request. */
-const panelAnswer = (status: number, body: unknown): PushHttpResponse => ({
-	status,
-	text: async () => JSON.stringify(body),
-});
+const panelAnswer = (status: number, body: unknown): Response =>
+	new Response(JSON.stringify(body), { status });
 
 /** The registered receipt a reachable panel answers a `register` with. */
 const registered = (onlineCount: number) => ({ outcome: "registered", onlineCount });
@@ -64,7 +61,7 @@ interface WireEnvelope {
 
 /** Reads one sent request body as the `{sessionId, kind, data?}` envelope the contract fixes. */
 function envelopeOf(request: Request): WireEnvelope {
-	const parsed: unknown = JSON.parse(request.init.body);
+	const parsed: unknown = JSON.parse(request.init.body ?? "");
 	if (parsed === null || typeof parsed !== "object") {
 		throw new Error("connect-bot sent a body that is not an object");
 	}
@@ -82,11 +79,11 @@ function envelopeOf(request: Request): WireEnvelope {
 }
 
 /** Records every request and answers with `answer`. */
-function panel(answer: () => Promise<PushHttpResponse>): { readonly requests: Request[]; readonly transport: PushTransport } {
+function panel(answer: () => Promise<Response>): { readonly requests: Request[]; readonly request: PanelRequest } {
 	const requests: Request[] = [];
 	return {
 		requests,
-		transport: async (url, init) => {
+		request: async (url, init = {}) => {
 			requests.push({ url, init });
 			return answer();
 		},
@@ -94,11 +91,11 @@ function panel(answer: () => Promise<PushHttpResponse>): { readonly requests: Re
 }
 
 /** Binds the extension against a fresh double and injects one panel. */
-function bound(transport: PushTransport): OmpDouble {
+function bound(request: PanelRequest): OmpDouble {
 	const double = ompDouble();
 	connectBot(double.api);
-	// The assembly installs the platform's own transport at binding; the fake takes its place.
-	setPushTransportForTest(transport);
+	// A real binding sends through the framework's own request; the fake takes its place.
+	setPanelRequestForTest(request);
 	return double;
 }
 
@@ -110,15 +107,15 @@ function bound(transport: PushTransport): OmpDouble {
  * state report the arm path sends behind each of them is part of the connection rather than one of
  * those attempts, so it is answered the way a live panel answers it and consumes no script entry.
  */
-function scriptedPanel(answers: ReadonlyArray<() => Promise<PushHttpResponse>>): {
+function scriptedPanel(answers: ReadonlyArray<() => Promise<Response>>): {
 	readonly requests: Request[];
-	readonly transport: PushTransport;
+	readonly request: PanelRequest;
 } {
 	const requests: Request[] = [];
 	let scripted = 0;
 	return {
 		requests,
-		transport: async (url, init) => {
+		request: async (url, init = {}) => {
 			requests.push({ url, init });
 			if (envelopeOf({ url, init }).kind === "state") return panelAnswer(200, { outcome: "accepted" });
 			const answer = answers[scripted] ?? answers[answers.length - 1];
@@ -136,8 +133,8 @@ afterEach(() => {
 
 describe("an empty argument arms this session (E2, E17, E18)", () => {
 	test("registers the main session with the fixed route and envelope, then shows the marker", async () => {
-		const { requests, transport } = panel(async () => panelAnswer(200, registered(3)));
-		const double = bound(transport);
+		const { requests, request } = panel(async () => panelAnswer(200, registered(3)));
+		const double = bound(request);
 		const ctx = double.context({ sessionId: "arm-1", cwd: "E:/work/alpha", model: "deepseek", sessionName: "alpha" });
 
 		// The framework never awaits an injected command implementation, so the arm effect's
@@ -155,7 +152,7 @@ describe("an empty argument arms this session (E2, E17, E18)", () => {
 		expect(requests[0]?.init.proxy).toBe(false);
 		// The wait this request carries is the extension's own configured budget rather than a
 		// constant here — `request-timeout.test.ts` observes it against a real panel.
-		expect(requests[0]?.init.signal).toBeInstanceOf(AbortSignal);
+		expect(requests[0]?.init.timeoutMs).toBe(connectBotConfig().requestTimeoutMs);
 		// The real session facts the adapter's opaque owner key deliberately does not carry.
 		expect(JSON.parse(requests[0]?.init.body ?? "")).toEqual({
 			sessionId: "arm-1",
@@ -175,8 +172,8 @@ describe("an empty argument arms this session (E2, E17, E18)", () => {
 	});
 
 	test("a session that reports no model or name sends the facts it has, and no empty value", async () => {
-		const { requests, transport } = panel(async () => panelAnswer(200, registered(1)));
-		const double = bound(transport);
+		const { requests, request } = panel(async () => panelAnswer(200, registered(1)));
+		const double = bound(request);
 		// An empty display name is not a fact: it must be omitted, not sent as an empty string.
 		const ctx = double.context({ sessionId: "arm-2", cwd: "E:/work/empty", model: "", sessionName: "" });
 
@@ -194,9 +191,9 @@ describe("a panel that does not register this session arms nothing (E4, E17)", (
 	/**
 	 * Every way an arm can fail is the same outcome: a `404` after an omp-bot restart, any other
 	 * non-2xx, a 2xx answer that is not the registered receipt, and a request that never
-	 * completed (reject or timeout — the transport fails the same way for both).
+	 * completed (reject or timeout — the call surfaces both as one failure).
 	 */
-	const unreachable: ReadonlyArray<readonly [string, () => Promise<PushHttpResponse>]> = [
+	const unreachable: ReadonlyArray<readonly [string, () => Promise<Response>]> = [
 		["404 after a restart", async () => panelAnswer(404, { error: "unknown-session" })],
 		["a non-2xx answer", async () => panelAnswer(500, { error: "boom" })],
 		["a 2xx answer that is not the receipt", async () => panelAnswer(200, { outcome: "accepted" })],
@@ -204,8 +201,8 @@ describe("a panel that does not register this session arms nothing (E4, E17)", (
 
 	for (const [label, answer] of unreachable) {
 		test(`${label} reports the arm failure and leaves the session unarmed`, async () => {
-			const { requests, transport } = panel(answer);
-			const double = bound(transport);
+			const { requests, request } = panel(answer);
+			const double = bound(request);
 			const sessionId = `arm-failed-${requests.length}${label.length}`;
 			const ctx = double.context({ sessionId, cwd: "E:/work/beta" });
 
@@ -224,7 +221,7 @@ describe("a panel that does not register this session arms nothing (E4, E17)", (
 
 	test("a request that never completed reports the same failure", async () => {
 		const requests: Request[] = [];
-		const double = bound(async (url, init) => {
+		const double = bound(async (url, init = {}) => {
 			requests.push({ url, init });
 			throw new Error("the panel never answered");
 		});
@@ -243,39 +240,34 @@ describe("a panel that does not register this session arms nothing (E4, E17)", (
 	});
 });
 
-describe("the transport the assembly installs is the platform's own (E17)", () => {
-	test("a request goes through bun's fetch, and never rides an ambient proxy", async () => {
-		const double = ompDouble();
-		connectBot(double.api);
-		// Drop the test replacement: the request now travels through what the assembly installed.
-		setPushTransportForTest(null);
-
-		const calls: Array<{ readonly url: string; readonly init: PushFetchInit }> = [];
-		const originalFetch = globalThis.fetch;
-		globalThis.fetch = (async (url: string, init: PushFetchInit) => {
-			calls.push({ url, init });
+describe("an arm's requests state the direct connection and the extension's own budget (E17)", () => {
+	test("both of an arm's requests ask for a direct connection, at the configured wait", async () => {
+		const requests: Request[] = [];
+		const double = bound(async (url, init = {}) => {
+			requests.push({ url, init });
 			return panelAnswer(200, registered(1));
-		}) as unknown as typeof globalThis.fetch;
-		try {
-			const announced = double.nextNotification();
-			double.run("connect-bot", "", double.context({ sessionId: "arm-platform", cwd: "E:/work/gamma" }));
-			await announced;
-		} finally {
-			globalThis.fetch = originalFetch;
-		}
+		});
 
-		// Both requests an arm makes — its register and the state report behind it — travel through
-		// what the assembly installed, and neither rides an ambient proxy.
-		expect(calls.length).toBe(2);
-		expect(calls.map(call => call.url)).toEqual([`${ENDPOINT}${EVENTS_PATH}`, `${ENDPOINT}${EVENTS_PATH}`]);
-		expect(calls.map(call => call.init.proxy)).toEqual([false, false]);
+		const announced = double.nextNotification();
+		double.run("connect-bot", "", double.context({ sessionId: "arm-platform", cwd: "E:/work/gamma" }));
+		await announced;
+
+		// Both requests an arm makes — its register and the state report behind it — name the one
+		// route and state a direct connection: the panel is never reached through an ambient proxy,
+		// and the wait each of them carries is the extension's own configured budget.
+		expect(requests.map(request => request.url)).toEqual([`${ENDPOINT}${EVENTS_PATH}`, `${ENDPOINT}${EVENTS_PATH}`]);
+		expect(requests.map(request => request.init.proxy)).toEqual([false, false]);
+		expect(requests.map(request => request.init.timeoutMs)).toEqual([
+			connectBotConfig().requestTimeoutMs,
+			connectBotConfig().requestTimeoutMs,
+		]);
 	});
 });
 
 describe("a session that never armed does nothing at all (E5)", () => {
 	test("binding alone sends no request, schedules no timer and writes no state", () => {
-		const { requests, transport } = panel(async () => panelAnswer(200, registered(1)));
-		const double = bound(transport);
+		const { requests, request } = panel(async () => panelAnswer(200, registered(1)));
+		const double = bound(request);
 
 		// Binding is the whole of what happened: the command is registered and the marker is
 		// declared, and nothing about any session has been touched.
@@ -290,8 +282,8 @@ describe("a session that never armed does nothing at all (E5)", () => {
 	});
 
 	test("`off` in a session that never armed sends no request and changes nothing", () => {
-		const { requests, transport } = panel(async () => panelAnswer(200, registered(1)));
-		const double = bound(transport);
+		const { requests, request } = panel(async () => panelAnswer(200, registered(1)));
+		const double = bound(request);
 		const ctx = double.context({ sessionId: "never-armed-off", cwd: "E:/work/delta" });
 
 		double.run("connect-bot", "off", ctx);
@@ -311,8 +303,8 @@ describe("running the command again on an armed session re-registers it (E3, sto
 	 * so by asking the panel again rather than by doing nothing.
 	 */
 	test("a repeat after a panel restart re-sends `register` for the same session and never an `unregister`", async () => {
-		const { requests, transport } = panel(async () => panelAnswer(200, registered(2)));
-		const double = bound(transport);
+		const { requests, request } = panel(async () => panelAnswer(200, registered(2)));
+		const double = bound(request);
 		const ctx = double.context({ sessionId: "reregister-1", cwd: "E:/work/reconnect", model: "deepseek" });
 
 		const first = double.nextNotification();
@@ -342,8 +334,8 @@ describe("running the command again on an armed session re-registers it (E3, sto
 	});
 
 	test("the repeat after a panel restart reports the panel's own count and never empties the marker area", async () => {
-		const { transport } = panel(async () => panelAnswer(200, registered(3)));
-		const double = bound(transport);
+		const { request } = panel(async () => panelAnswer(200, registered(3)));
+		const double = bound(request);
 		const ctx = double.context({ sessionId: "reregister-2", cwd: "E:/work/reconnect" });
 
 		for (let attempt = 1; attempt <= 2; attempt += 1) {
@@ -375,7 +367,7 @@ describe("an arm that fails leaves nothing behind and can be retried (E4, story 
 	test("a rejected register reports the failure, and no timer or request outlives it", async () => {
 		jest.useFakeTimers();
 		const attempts: Request[] = [];
-		const double = bound(async (url, init) => {
+		const double = bound(async (url, init = {}) => {
 			attempts.push({ url, init });
 			throw new Error("the panel never answered");
 		});
@@ -401,15 +393,17 @@ describe("an arm that fails leaves nothing behind and can be retried (E4, story 
 		expect(double.notifications).toEqual([ARM_FAILED]);
 	});
 
-	test("a register the panel never answers fails within its configured budget and aborts the request", async () => {
+	test("a register the panel never answers fails within its configured budget", async () => {
 		jest.useFakeTimers();
 		const attempts: Request[] = [];
 		const double = bound(
-			(url, init) =>
-				new Promise<PushHttpResponse>((_resolve, reject) => {
+			(url, init = {}) =>
+				new Promise<Response>((_resolve, reject) => {
 					attempts.push({ url, init });
-					// A panel that is gone never answers; the request ends the way an aborted fetch does.
-					init.signal.addEventListener("abort", () => reject(new Error("register budget exceeded")));
+					// A panel that is gone never answers: the call is abandoned when the wait it declared
+					// runs out — the same budget a real one would be imposed under. The clock is this
+					// file's own fake one, advanced by exactly that declared wait below.
+					setTimeout(() => reject(new Error("register budget exceeded")), init.timeoutMs);
 				}),
 		);
 		const sessionId = "arm-failed-timeout";
@@ -420,19 +414,19 @@ describe("an arm that fails leaves nothing behind and can be retried (E4, story 
 		// In flight, and nothing has been reported yet: the request owns its own budget.
 		expect(attempts.length).toBe(1);
 		expect(double.notifications).toEqual([]);
+		expect(attempts[0]?.init.timeoutMs).toBe(connectBotConfig().requestTimeoutMs);
 
 		// The request's own budget: the extension's configured value, advanced to rather than waited out.
 		jest.advanceTimersByTime(connectBotConfig().requestTimeoutMs);
 		await announced;
 
-		// A timeout is the same outcome as a reject: the request is aborted, the operator is told
+		// A timeout is the same outcome as a reject: the request is abandoned, the operator is told
 		// this session is not connected, and nothing was armed.
-		expect(attempts[0]?.init.signal.aborted).toBe(true);
 		expect(double.notifications).toEqual([ARM_FAILED]);
 		expect(double.widgets).toEqual([]);
 		expect(botSessions.get(ownerKey(sessionId))).toBeUndefined();
 
-		// The aborted attempt leaves nothing behind either: no retry, no timer, no further word.
+		// The abandoned attempt leaves nothing behind either: no retry, no timer, no further word.
 		jest.advanceTimersByTime(60_000);
 		expect(attempts.length).toBe(1);
 		expect(double.timers).toEqual([]);
@@ -441,12 +435,12 @@ describe("an arm that fails leaves nothing behind and can be retried (E4, story 
 
 	test("a re-register the panel refuses takes an armed session back to unarmed", async () => {
 		jest.useFakeTimers();
-		const { requests, transport } = scriptedPanel([
+		const { requests, request } = scriptedPanel([
 			async () => panelAnswer(200, registered(4)),
 			// The panel restarted and this session is unknown to it: the re-register is refused.
 			async () => panelAnswer(404, { error: "unknown-session" }),
 		]);
-		const double = bound(transport);
+		const double = bound(request);
 		const sessionId = "reregister-refused";
 		const ctx = double.context({ sessionId, cwd: "E:/work/reconnect" });
 
@@ -478,11 +472,11 @@ describe("an arm that fails leaves nothing behind and can be retried (E4, story 
 	});
 
 	test("a failed arm can be retried: the next empty argument arms the session", async () => {
-		const { requests, transport } = scriptedPanel([
+		const { requests, request } = scriptedPanel([
 			async () => panelAnswer(404, { error: "unknown-session" }),
 			async () => panelAnswer(200, registered(1)),
 		]);
-		const double = bound(transport);
+		const double = bound(request);
 		const sessionId = "arm-retry";
 		const ctx = double.context({ sessionId, cwd: "E:/work/gamma", model: "deepseek" });
 

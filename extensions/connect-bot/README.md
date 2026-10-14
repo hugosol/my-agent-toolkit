@@ -5,6 +5,15 @@ Joins an agent session to the omp-bot panel; `/connect-bot` registers the curren
 harness-independent logic is under [`shared-logic/`](shared-logic), and its OMP assembly is
 [`harnesses/omp.ts`](harnesses/omp.ts).
 
+The extension's outbound call is the framework's general HTTP module — `request` from
+[`framework/public.ts`](../../framework/public.ts) — rather than a transport of its own: each panel
+request states a direct connection (`proxy: false`) and the extension's own configured wait, and the
+framework's client makes the connection and imposes the budget, over the whole exchange the body read
+included. The protocol on the wire is unchanged: one route (`/api/sessions/events`), one
+`{sessionId, kind, data?}` envelope per kind, JSON, and a non-2xx answer interpreted by the
+extension rather than by the transport
+([framework capabilities § General HTTP module](../../framework/docs/framework-capabilities.md#general-http-module)).
+
 ## Configuration
 
 connect-bot's panel endpoint and its request budget are plain values in one file the framework reads
@@ -33,18 +42,35 @@ Two facts this budget does not decide, and which the smoke list below must not c
 has stopped waiting is **not** evidence that the panel did not receive or apply a request — a request
 can be received, processed and applied while its answer is still on its way — and Panel session
 registration (the panel's row) is a different thing from Panel session online status (the panel's own
-judgement that a row has been heard from recently enough). The panel's online window (30s) and scan
-cadence (5s) are server-side numbers derived from nothing this extension sends, so adjusting
-`requestTimeoutMs` requires **no change to omp-bot**
+judgement that a row has been heard from recently enough). The panel's two session windows
+(`[sessions] online_timeout_seconds`, delivered default 10s, and `offline_retention_seconds`,
+default 30s) and its fixed 5s scan cadence are server-side numbers derived from nothing this
+extension sends, so adjusting `requestTimeoutMs` requires **no change to omp-bot**
 ([`tests/connect-bot/panel-registration-lifecycle.test.ts`](../../tests/connect-bot/panel-registration-lifecycle.test.ts)).
 Both terms are this context's vocabulary in [GLOSSARY.md](GLOSSARY.md).
 
 ## H3b — cut over connect-bot
 
-Precondition: H1 passed and the connect-bot acceptance round has been run and recorded — the M-layer
-observation checklist in
-[lighthouse 06 §6](../../.scratch/connect-bot-migration/lighthouse/06-acceptance-contract.md) — so the
-old implementation is still the one in use. The two shared cutover steps (add the discovery root once,
+Precondition: H1 passed and the connect-bot acceptance round has been run and recorded — this
+repository claims neither yet — so the old implementation is still the one in use. That round is
+manual and is never an automated gate: the
+user loads this repository's entrypoints from the explicit-only root
+(`--no-extensions -e entrypoints/omp`) on an isolated install, against a running omp-bot panel whose
+`listen_addr` matches `config.yaml`'s `endpoint`, and records each step's observation (screenshots
+or logs) — panel ready; `/connect-bot` registering the row (a new session is `空闲`); idempotent
+re-register (one row, no flicker, count unchanged); round-end transitions (`工作中` →
+`等待用户输入`, with the panel's own finished-round count and dot, cleared by its acknowledgement
+while the dot stays); terminal states after an aborted or assistant-less turn; active
+`/connect-bot off`; a killed process (the row stays, then passes offline); a panel outage (one
+first-failure notice, auto-disarm about 30s later, no automatic reconnect); the guards (`--no-ui`,
+unknown argument); multi-session isolation; coexistence with codebase-tools; load-source
+exclusivity; and the configuration switch. Its record must name the frozen source baseline
+(`my-omp-toolkit` `master@34d7c40`, extension commit `d3648a0`), the runtime
+(`@oh-my-pi/pi-coding-agent@18.5.0` + `bun --version` + the lockfiles), the panel revision
+(`omp-bot@d50e35c`), the `config.yaml` content, the executor and the date; the automated
+precondition is the recorded release gate — `bun test` 367 pass / 0 fail across 42 files and a clean
+`tsc --noEmit` on those baselines (recorded 2026-10-07). The two shared
+cutover steps (add the discovery root once,
 restart the harness) are in
 [H3 — permanent cutover and cutover smoke](../../framework/README.md#h3--permanent-cutover-and-cutover-smoke);
 what differs here is the configuration file, the panel rows the old implementation leaves behind, and
@@ -67,9 +93,10 @@ the smoke list.
    this machine can reach. There is no automatic conversion and no state migration — the new
    implementation persists only `{enabled}`.
 4. Expect the old implementation's panel rows to expire without an `unregister`: it is no longer
-   running, so its rows pass the panel's 30s keep-alive (a ≤35s scan, worst case about 45s), turn
-   "offline" and stay until an `unregister` or a panel restart. The new implementation starts
-   unconnected, so no new row appears until a session runs `/connect-bot`.
+   running, so its rows pass the panel's windows — offline after the online window (10s by default,
+   ≤15s with the panel's 5s scan) and removed after both windows (≤45s by default) — and stay until
+   an `unregister` or a panel restart. The new implementation starts unconnected, so no new row
+   appears until a session runs `/connect-bot`.
 5. Smoke once after the cutover: start the harness normally (no `--no-extensions`) against a running
    panel whose `listen_addr` covers `config.yaml`'s `endpoint`, and confirm:
 

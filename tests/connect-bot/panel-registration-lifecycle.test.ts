@@ -10,9 +10,10 @@
  *   row gone from the table a later connection reads, which is not something a client's echo of its
  *   own request could establish;
  * - an `unregister` that never reaches the panel still leaves the row to the panel's own online
- *   window: the row stays registered and the panel judges it offline on its documented 30s window
- *   and 5s scan — Panel session online status is the panel's own assessment, the client's failure is
- *   not evidence about it, and going offline removes nothing;
+ *   window: the row stays registered, and the panel judges it offline only after the online window
+ *   this run declares (30s) plus one of the panel's own 5s scans — Panel session online status is
+ *   the panel's own assessment, the client's failure is not evidence about it, and going offline
+ *   removes nothing;
  * - a client that times out is *not* reporting that the panel did nothing: the same request can be
  *   received, processed and applied while its answer is still on its way, and the two facts have to
  *   be recorded separately on the side that owns each of them.
@@ -54,9 +55,12 @@ const TIGHT_BUDGET_MS = 300;
 /** How long the adapter holds the panel's own answer back: several client budgets long. */
 const RELEASE_DELAY_MS = 1_500;
 /**
- * The panel's own online window and scan cadence, as the panel documents them (omp-bot's
- * `ONLINE_WINDOW` / `EXPIRY_SCAN_INTERVAL`). They are the *server's* numbers, derived from nothing
- * this extension sends, and they are what makes a row that went quiet visible as offline.
+ * The online window this isolated run declares, and the panel's own scan cadence.
+ *
+ * The window is stated in the panel configuration `support/omp-bot.ts` writes for the run — the
+ * panel's delivered default is 10s, which a 10s beat sits exactly on the edge of — and the cadence
+ * is the panel's fixed `EXPIRY_SCAN_INTERVAL`. They are the *server's* numbers, derived from
+ * nothing this extension sends, and they are what makes a row that went quiet visible as offline.
  */
 const ONLINE_WINDOW_MS = 30_000;
 const EXPIRY_SCAN_MS = 5_000;

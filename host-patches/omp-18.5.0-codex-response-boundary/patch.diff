@@ -1,0 +1,44 @@
+diff --git a/pi-ai/src/providers/openai-codex-responses.ts b/pi-ai/src/providers/openai-codex-responses.ts
+index eeea02d..cd011a9 100644
+--- a/pi-ai/src/providers/openai-codex-responses.ts
++++ b/pi-ai/src/providers/openai-codex-responses.ts
+@@ -66,6 +66,7 @@ import {
+ 	getOpenAIStreamIdleTimeoutMs,
+ 	iterateWithIdleTimeout,
+ } from "../utils/idle-iterator";
++import { notifyProviderResponse } from "../utils/provider-response";
+ import { getProxyForUrl } from "../utils/proxy";
+ import { createRequestDebugSession, isRequestDebugEnabled, type RequestDebugResponseLog } from "../utils/request-debug";
+ import { adaptSchemaForStrict, NO_STRICT, sanitizeSchemaForOpenAIResponses, toolWireSchema } from "../utils/schema";
+@@ -1995,6 +1996,8 @@ async function openCodexSseTransport(
+ 				options?.codexSseMaxAttempts,
+ 				event => options?.onSseEvent?.(event, model),
+ 				options?.fetch,
++				options,
++				model,
+ 			),
+ 		);
+ 	};
+@@ -4623,6 +4626,10 @@ async function openCodexSseEventStream(
+ 	codexSseMaxAttempts: number | undefined,
+ 	onSseEvent?: OpenAICodexResponsesOptions["onSseEvent"],
+ 	fetchOverride?: FetchImpl,
++	/** The stream options carrying the caller's response observer, when it set one. */
++	options?: OpenAICodexResponsesOptions,
++	/** The model this request runs, carried into the boundary the observer receives. */
++	model?: Model<"openai-codex-responses">,
+ ): Promise<AsyncGenerator<Record<string, unknown>>> {
+ 	const headers = createCodexHeaders(
+ 		requestHeaders,
+@@ -4732,6 +4739,11 @@ async function openCodexSseEventStream(
+ 			clearPreResponseTimeout?.();
+ 		}
+ 	}
++	// The response boundary: the status and headers the transport just received, published before the
++	// body is consumed — the boundary the chat-completions, Responses, Anthropic and native paths
++	// already reach extensions through (`../utils/provider-response`). Without it a Codex response's
++	// own rate-limit headers never reach an extension's `after_provider_response` handler.
++	await notifyProviderResponse(options, response, model);
+ 	updateCodexSessionMetadataFromHeaders(turnState, state, response.headers);
+ 	if (!response.body) {
+ 		throw new CodexProviderStreamError("No response body", false);

@@ -9,5 +9,5 @@
     "skipLibCheck": true,
     "noEmit": true
   },
-  "include": ["framework", "extensions", "entrypoints", "tests"]
+  "include": ["framework", "extensions", "entrypoints", "tests", "scripts"]
 }

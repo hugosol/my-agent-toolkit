@@ -8,6 +8,7 @@
  * names — and reporting is per failure class: one explicit startup error tells the
  * operator what to fix, and the whole definition is rejected anyway.
  */
+import { isPlainMapping, normalizeCommandArgument } from "./assembly";
 import type { ExtensionDefinition } from "./definition";
 
 /** The configuration rules the framework refuses to resolve implicitly. */
@@ -18,6 +19,8 @@ export type ConfigurationViolationKind =
 	| "duplicate-state-writer"
 	/** One injected-prompt slot (`tag`) carries more than one contribution rule. */
 	| "duplicate-slot-rule"
+	/** An `actions` command's action table is not one the framework can route. */
+	| "actions-table"
 	/** The extension's declared configuration — its declaration or its file — is illegal. */
 	| "config";
 
@@ -55,7 +58,9 @@ export function findConfigurationViolations(definition: ExtensionDefinition): Co
 		});
 	}
 
-	const duplicatedWriter = firstRepeated(commands.map(command => command.state));
+	const duplicatedWriter = firstRepeated(
+		commands.flatMap(command => (command.type === "actions" ? [] : [command.state])),
+	);
 	if (duplicatedWriter !== undefined) {
 		violations.push({
 			kind: "duplicate-state-writer",
@@ -69,6 +74,47 @@ export function findConfigurationViolations(definition: ExtensionDefinition): Co
 			kind: "duplicate-slot-rule",
 			detail: `prompts declares more than one rule for the injection slot "${duplicatedSlot}"`,
 		});
+	}
+
+	// An `actions` command's table is the routing vocabulary itself, so a name the framework
+	// could not match — one that normalizes to nothing, or one that collides with another after
+	// the normalization routing applies — is refused rather than left as an unreachable line of
+	// help or as two names one argument would select.
+	for (const command of commands) {
+		if (command.type !== "actions") continue;
+		const table: unknown = command.actions;
+		if (!isPlainMapping(table)) {
+			violations.push({
+				kind: "actions-table",
+				detail: `command "${command.name}" declares an actions table that is not a mapping of action names`,
+			});
+			continue;
+		}
+		const names = Object.keys(table);
+		if (names.length === 0) {
+			violations.push({
+				kind: "actions-table",
+				detail: `command "${command.name}" declares no action, so it could offer nothing to invoke`,
+			});
+			continue;
+		}
+		const namesThatNormalizeToNothing = names.filter(name => normalizeCommandArgument(name).length === 0);
+		if (namesThatNormalizeToNothing.length > 0) {
+			violations.push({
+				kind: "actions-table",
+				detail: `command "${command.name}" declares the action name "${namesThatNormalizeToNothing[0] ?? ""}", which holds no characters the framework can match`,
+			});
+			continue;
+		}
+		const normalized = names.map(name => normalizeCommandArgument(name));
+		const collision = firstRepeated(normalized);
+		if (collision !== undefined) {
+			const originals = names.filter(name => normalizeCommandArgument(name) === collision);
+			violations.push({
+				kind: "actions-table",
+				detail: `command "${command.name}" declares the actions ${originals.map(name => `"${name}"`).join(" and ")}, which one argument cannot tell apart`,
+			});
+		}
 	}
 
 	return violations;

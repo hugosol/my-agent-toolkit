@@ -4,14 +4,13 @@
  * and the dependency lockfiles of this repository and of the behavior oracle.
  */
 import { beforeAll, describe, expect, test } from "bun:test";
-import { readFileSync } from "node:fs";
-import * as path from "node:path";
 import {
 	type IsolatedHarness,
 	checkoutCarries,
 	ensureIsolatedHarness,
 	readBaselineRecord,
 	readCheckoutCommit,
+	readRevisionFile,
 	resolveRecordPath,
 	selectHarnessVersion,
 	verifyArtifactByteIdentity,
@@ -41,19 +40,30 @@ describeFixedRecord("baseline record", () => {
 		expect(harness.cliPath.startsWith(harness.prefix)).toBe(true);
 	});
 
-	test("the checkout is at the recorded revision anchor", () => {
+	test("the recorded revision anchor is reachable in the checkout and names the recorded version", () => {
 		const anchorPath = resolveRecordPath(record.harness.revisionAnchor.path);
-		const checkout = readCheckoutCommit(anchorPath);
-		expect(checkout.error).toBeNull();
-		expect(checkout.commit).toBe(record.harness.revisionAnchor.commit);
+		// The anchor is a revision, not a checkout position: the checkout that holds it may have moved
+		// past it in commits of its own (the frozen baseline's later history removes material this
+		// migration moved out), so what a run relies on is that the recorded revision is still in that
+		// checkout's history and that its own bytes are the ones the record names. The record stays the
+		// authority; the observed tip is recorded per run in the migration run record (D-01).
+		expect(checkoutCarries(anchorPath, record.harness.revisionAnchor.commit)).toBe(true);
 
-		const manifest = JSON.parse(
-			readFileSync(path.join(anchorPath, "packages", "coding-agent", "package.json"), "utf8"),
-		) as { version?: string };
-		expect(manifest.version).toBe(record.harness.revisionAnchor.version);
+		const manifest = readRevisionFile(anchorPath, record.harness.revisionAnchor.commit, "packages/coding-agent/package.json");
+		expect(manifest).not.toBeNull();
+		const parsed = JSON.parse((manifest as Buffer).toString("utf8")) as { version?: string };
+		expect(parsed.version).toBe(record.harness.revisionAnchor.version);
+
+		// The record identifies that revision by its commit and by its tag; both have to name it.
+		const tag = record.harness.revisionAnchor.tag;
+		expect(tag).toBeDefined();
+		expect(readCheckoutCommit(anchorPath, tag as string)).toEqual({
+			commit: record.harness.revisionAnchor.commit,
+			error: null,
+		});
 	});
 
-	test("the run artifact stays byte-identical to the anchor for the recorded contract files", () => {
+	test("the run artifact stays byte-identical to the recorded revision for the recorded contract files", () => {
 		const recorded = record.harness.acceptanceArtifact.byteIdentity.files;
 		const comparisons = verifyArtifactByteIdentity(record);
 
@@ -65,6 +75,11 @@ describeFixedRecord("baseline record", () => {
 					`${comparison.path}: anchor ${comparison.anchorSha256 ?? "<missing>"} vs artifact ${comparison.artifactSha256 ?? "<missing>"}`,
 			);
 		expect(drifted).toEqual([]);
+		// The anchor half is the recorded revision's own bytes: a checkout whose working tree has moved
+		// on cannot make this comparison pass by accident, and the frozen hashes stay the record's.
+		expect(comparisons.map(comparison => [comparison.path, comparison.anchorSha256])).toEqual(
+			recorded.map(file => [file.path, file.sha256]),
+		);
 		expect(comparisons.map(comparison => [comparison.path, comparison.artifactSha256])).toEqual(
 			recorded.map(file => [file.path, file.sha256]),
 		);

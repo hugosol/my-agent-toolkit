@@ -11,7 +11,7 @@ Issues and specs for this repo live as markdown files in `.scratch/`.
 - **Implementation tickets**: `.scratch/<feature-slug>/implementation/<NN>-<slug>.md`, numbered from `01`
   → Produced by `/to-tickets`. Use Implementation ticket statuses from `triage-labels.md`.
 - Record a `Status:` line near the top of each ticket. Decision tickets use the lifecycle below; only implementation tickets use triage roles from `triage-labels.md`.
-- Comments and conversation history append to the bottom of the file under a `## Comments` heading
+- Discussion history belongs under `## Comments`. Decision tickets keep one current `## Handoff` before `## Question`; Wayfinder's Local ticket handoff section defines its contents and updates.
 
 ## When a skill says "publish to the issue tracker"
 
@@ -30,4 +30,4 @@ Used by `/wayfinder`. The **map** is a file with one **child** file per ticket.
 - **Blocking**: a `Blocked by: NN, NN` line near the top. A ticket is unblocked when every listed decision ticket is `resolved` and its recorded outcome satisfies the prerequisite. For a blocker listed in the map’s Out of scope, follow wayfinder’s disposition dependency review; status alone never unblocks its dependents.
 - **Frontier**: scan `.scratch/<effort>/decision/` for files that are open, unblocked, and unclaimed; first by number wins.
 - **Claim**: set `Status: claimed` and save before any work.
-- **Resolve**: follow wayfinder’s Work through the map procedure. For a confirmed out-of-scope disposition, use its Out of scope branch.
+- **Resolve**: follow wayfinder’s Work through the map procedure. For a confirmed out-of-scope disposition, use its Out of scope procedure.

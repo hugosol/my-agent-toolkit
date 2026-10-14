@@ -111,6 +111,27 @@ describe("shared source imports no harness types (C1)", () => {
 		expect(naming.filter(file => !ESCAPE_HATCH.some(pattern => pattern.test(file)))).toEqual([]);
 	});
 
+	/**
+	 * The same module graph in the other direction: the framework is the layer every extension
+	 * builds on, so nothing under `framework/` may reach an extension — a framework module that
+	 * imported one would make the general surface depend on a particular consumer, and the
+	 * extensions that do not exist yet could not be added without changing it.
+	 */
+	test("the framework's own source depends on no extension", () => {
+		const frameworkFiles = sourceFiles.filter(file => file.startsWith("framework/"));
+		expect(frameworkFiles.length).toBeGreaterThan(0);
+
+		const crossings: string[] = [];
+		for (const file of frameworkFiles) {
+			for (const specifier of specifiersOf(file)) {
+				if (resolvesInto(file, specifier, [/^extensions\//])) {
+					crossings.push(`${file} imports the extension module "${specifier}"`);
+				}
+			}
+		}
+		expect(crossings).toEqual([]);
+	});
+
 	test("each discovery entrypoint only re-exports its extension's harness assembly", () => {
 		const entrypoints = sourceFiles.filter(file => file.startsWith("entrypoints/"));
 		expect(entrypoints.length).toBeGreaterThan(0);

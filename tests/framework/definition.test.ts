@@ -124,12 +124,6 @@ describe("OMP adapter binding (P2)", () => {
 });
 
 describe("public interface surface (P1, P2)", () => {
-	test("the definition entry exposes the declaration function and nothing else at runtime", () => {
-		// The public interface is deliberately two entries: a builder, a plugin bus, a
-		// scheduler or a raw handler back door would each appear as an added export.
-		expect(Object.keys(frameworkDefinition).sort()).toEqual(["defineExtension"]);
-	});
-
 	test("the OMP entry exposes the assembly function and nothing else at runtime", () => {
 		expect(Object.keys(frameworkOmp).sort()).toEqual(["ompAdapter"]);
 	});

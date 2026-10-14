@@ -21,7 +21,7 @@ import { readFileSync } from "node:fs";
 import * as path from "node:path";
 import { type IsolatedHarness, REPO_ROOT, ensureIsolatedHarness, readBaselineRecord } from "../harness-dock/baseline";
 import { writeAgentSettings, writeProviderOverride } from "../harness-dock/agent-config";
-import { type CaptureProtocol, type CapturedRequest, type CaptureServer, startCaptureServer } from "../harness-dock/capture-server";
+import { type CapturedRequest, type CaptureServer, startCaptureServer } from "../harness-dock/capture-server";
 import { type RunRoot, createRunRoot } from "../harness-dock/run-root";
 import { ControlledSession } from "../harness-dock/session";
 
@@ -68,7 +68,6 @@ interface RoleRunOptions {
 	/** Catalog model selector the run executes. */
 	readonly model: string;
 	readonly apiKey: string;
-	readonly protocol: CaptureProtocol;
 	/** Harness settings the path needs to be observable (Codex prefers websockets). */
 	readonly settings?: Record<string, string>;
 }
@@ -76,7 +75,7 @@ interface RoleRunOptions {
 /** One controlled run: temporary agent state carrying the provider override and capture. */
 function createRoleRun(options: RoleRunOptions): RoleRun {
 	const runRoot = createRunRoot(options.label);
-	const capture = startCaptureServer({ dir: runRoot.captureDir, protocol: options.protocol });
+	const capture = startCaptureServer({ dir: runRoot.captureDir });
 	writeProviderOverride(runRoot.agentDir, options.provider, { baseUrl: capture.baseUrl, apiKey: options.apiKey });
 	if (options.settings !== undefined) writeAgentSettings(runRoot.agentDir, options.settings);
 	return { runRoot, capture };
@@ -88,7 +87,6 @@ const DEEPSEEK_PATH: RoleRunOptions = {
 	provider: "deepseek",
 	model: "deepseek/deepseek-flash",
 	apiKey: "dock-deepseek-key",
-	protocol: "openai-completions",
 };
 
 const CODEX_PATH: RoleRunOptions = {
@@ -96,7 +94,6 @@ const CODEX_PATH: RoleRunOptions = {
 	provider: "openai-codex",
 	model: "openai-codex/gpt-6-luna",
 	apiKey: codexProbeToken(),
-	protocol: "openai-codex-responses",
 	// The catalog model prefers websockets, and `PI_REQ_DEBUG`-style capture of the Codex
 	// transport only sees the SSE request; pinning SSE is what makes the body observable.
 	settings: { "providers.openaiWebsockets": "off" },

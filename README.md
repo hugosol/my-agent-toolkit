@@ -38,11 +38,13 @@ glossary.
 | Semantic extension framework | [`framework/`](framework) | [`framework/README.md`](framework/README.md) · [`framework/GLOSSARY.md`](framework/GLOSSARY.md) |
 | connect-bot | [`extensions/connect-bot/`](extensions/connect-bot) | [`extensions/connect-bot/README.md`](extensions/connect-bot/README.md) · [`extensions/connect-bot/GLOSSARY.md`](extensions/connect-bot/GLOSSARY.md) |
 | codeBaseTools | [`extensions/codebase-tools/`](extensions/codebase-tools) | [`extensions/codebase-tools/README.md`](extensions/codebase-tools/README.md) · [`extensions/codebase-tools/GLOSSARY.md`](extensions/codebase-tools/GLOSSARY.md) |
+| modelCost | [`extensions/model-cost/`](extensions/model-cost) | [`extensions/model-cost/README.md`](extensions/model-cost/README.md) · [`extensions/model-cost/GLOSSARY.md`](extensions/model-cost/GLOSSARY.md) |
 
 ## Document index
 
 | Document | What it is | Read it when |
 | --- | --- | --- |
+| [`framework/docs/extension-development-map.md`](framework/docs/extension-development-map.md) | Long-lived principles for extension layering and finding existing framework capabilities; a Chinese guide, not an API or implementation inventory. | You are adding or changing an extension and deciding where its responsibilities belong. |
 | [`framework/README.md`](framework/README.md) | The framework's layout guide and runbook: `core/` / `behaviors/` / `adapters/`, the framework suite, candidate verification, the human acceptance index, and the supported-version upgrade standard. | You are working on framework code or upgrading the supported harness. |
 | [`framework/docs/harness-support.md`](framework/docs/harness-support.md) | **Authority** for harness version compatibility: the four-state support record (`verified-supported` / `verified-unlisted` / `unverified` / `unsupported`), its evidence and conditions, the provider-path role evidence, and the long-term upgrade standard and its triggers. | You need to know what is supported, what is not, and how a version becomes supported. |
 | [`framework/docs/harness-baseline.json`](framework/docs/harness-baseline.json) | Data record of the fixed baseline: the revision anchor, the artifact that actually runs, and the dependency lockfiles. Re-checked by `tests/harness-dock/baseline.test.ts`. | You need the machine-checkable correspondence behind the supported row; refresh it after a deliberate dependency or version change. |
@@ -56,9 +58,15 @@ glossary.
 | [`tests/codebase-tools/`](tests/codebase-tools) | The codeBaseTools extension behavior suite; runs permanently against the fixed supported version. | You changed the extension. |
 | [`tests/connect-bot/`](tests/connect-bot) | The connect-bot extension suite: registration lifecycle, session switch, failure budget and the panel interop. | You changed connect-bot. |
 | [`tests/harness-dock/`](tests/harness-dock) | The shared dock (isolated install, controlled session, capture) and its self-test. | You are writing a test that drives a real session. |
-| [`scripts/verify-omp-candidate.ts`](scripts/verify-omp-candidate.ts) | On-demand candidate verification: isolated exact install + framework suite + result record. | You are verifying another harness version. |
+| [`scripts/verify-omp-candidate.ts`](scripts/verify-omp-candidate.ts) | On-demand independent verification of one exact harness version: isolated exact install + framework suite + a scoped result record (version, revision anchor, source revision, lockfiles, environment, coverage). | You are verifying another harness version. |
 | [`scripts/capture-codex-outbound.ts`](scripts/capture-codex-outbound.ts) | Prepared layer-2 capture of a real `openai-codex` round trip; needs a human-supplied credential. | You are recording the real-credential role evidence. |
-| [`.scratch/connect-bot-migration/`](.scratch/connect-bot-migration) | The migration design record: spec, contract, map, decisions, lighthouse documents, implementation tickets and the run record. | You need the reasoning behind a requirement. |
+
+The durable documentation is self-contained: migration decisions, constraints and recorded
+evidence are stated in the per-extension READMEs, framework documents and ADRs rather than
+delegated to working tickets or external archives. The extension READMEs also preserve the
+prepared human-acceptance expectations and their verification limits; context terminology is
+indexed by [`GLOSSARY-MAP.md`](GLOSSARY-MAP.md). Archiving a planning record does not establish
+that its implementation, human acceptance or production cutover has completed.
 
 ## Human acceptance and cutover
 

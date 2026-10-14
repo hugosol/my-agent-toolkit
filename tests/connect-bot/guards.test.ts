@@ -9,10 +9,10 @@
  */
 import { describe, expect, test } from "bun:test";
 import {
-	type PushFetchInit,
-	type PushTransport,
-	setPushTransportForTest,
+	type PanelRequest,
+	setPanelRequestForTest,
 } from "../../extensions/connect-bot/shared-logic/panel/client";
+import type { HttpRequestOptions } from "../../framework/public";
 import { botSessions } from "../../extensions/connect-bot/shared-logic/session/session";
 import connectBot from "../../extensions/connect-bot/harnesses/omp";
 import { type OmpDouble, ompDouble } from "./support/omp-double";
@@ -23,19 +23,19 @@ const NO_UI_REFUSAL = "当前模式无 UI，不支持接入面板";
 /** Every request the extension attempted, in order. */
 interface Attempt {
 	readonly url: string;
-	readonly init: PushFetchInit;
+	readonly init: HttpRequestOptions;
 }
 
 /** Binds the extension against a fresh double with a panel that would register if it were asked. */
 function bound(): { readonly double: OmpDouble; readonly attempts: Attempt[] } {
 	const attempts: Attempt[] = [];
-	const transport: PushTransport = async (url, init) => {
+	const request: PanelRequest = async (url, init = {}) => {
 		attempts.push({ url, init });
-		return { status: 200, text: async () => JSON.stringify({ outcome: "registered", onlineCount: 1 }) };
+		return new Response(JSON.stringify({ outcome: "registered", onlineCount: 1 }), { status: 200 });
 	};
 	const double = ompDouble();
 	connectBot(double.api);
-	setPushTransportForTest(transport);
+	setPanelRequestForTest(request);
 	return { double, attempts };
 }
 

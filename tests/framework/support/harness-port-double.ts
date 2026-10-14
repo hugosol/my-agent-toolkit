@@ -18,25 +18,29 @@
  * assembly at all — one process holds it per Owner, whichever extension published for it.
  */
 import { bindExtension } from "../../../framework/behaviors/binding";
-import type { DeclarableRequiredSemantic, RequiredSemantic } from "../../../framework/core/admission";
+import type { ExtensionFactory, ExtensionImplementation } from "../../../framework/core/assembly";
 import type { ConfigSource } from "../../../framework/core/config";
 import { activationField, statePersistence, type ExtensionDefinition } from "../../../framework/core/definition";
 import type {
 	HarnessPort,
 	BindingResult,
 	BoundCommand,
-	CommandActions,
+	CatalogPriceSource,
 	CommandInvocation,
 	FeedbackLevel,
 	MarkerTransport,
 	OwnerReference,
 	PromptContribution,
-	RoundDelivery,
+	ProviderAccess,
 	RoundEvent,
+	RoundObservation,
 	SemanticEventHandlers,
 	SessionDelivery,
 	SessionEvent,
+	SessionFacts,
 	StateValues,
+	TurnSignal,
+	TurnSignalFacts,
 } from "../../../framework/core/protocol";
 import { StateStore } from "../../../framework/core/state";
 
@@ -73,6 +77,32 @@ export interface CommandRun {
 	 * the contract — a value is recorded, then rendered, then announced.
 	 */
 	readonly effects: readonly string[];
+	/**
+	 * The invocation's own completion, resolved when this command's action is really over.
+	 *
+	 * {@link PortDouble.run} hands it over so a suite can read the record while the action is still
+	 * running and then wait for the effect itself, which is how a case observes that nothing was
+	 * announced before a write it waits for landed.
+	 */
+	readonly completion: Promise<void>;
+}
+
+/** The facts one command execution runs with, as a suite models them. */
+export interface CommandRunOptions {
+	readonly args?: string;
+	readonly owner?: OwnerReference;
+	readonly hasUI?: boolean;
+	/**
+	 * The idle fact the session reports through the invocation's query: `"idle"` and
+	 * `"busy"` for a harness that answers, `"unreported"` for one that reports none.
+	 * Omitted means idle, the state a session at a command prompt is in.
+	 */
+	readonly idle?: "idle" | "busy" | "unreported";
+	/**
+	 * The provider the session reports it currently runs, as the invocation's own fact.
+	 * Omitted models a surface that reports no current model, which answers `undefined`.
+	 */
+	readonly provider?: string;
 }
 
 /** What one run initiation observed. */
@@ -103,25 +133,33 @@ export interface RoundBoundary {
 	readonly feedback: readonly FeedbackNotice[];
 }
 
-/** The facts one binding resolves, besides the definition and the actions injected for it. */
-export interface PortBindingOptions {
-	/** The assembly's implementations of the definition's directed commands, by command name. */
-	readonly actions?: CommandActions;
-	/** The assembly's handlers for the definition's semantic lifecycle events, by event kind. */
-	readonly events?: SemanticEventHandlers;
+/** What one Turn signal delivery observed. */
+export interface TurnBoundary {
+	/** Whether the session had a UI, as the double modelled it. */
+	readonly hasUI: boolean;
+	/** Extension feedback the framework published while dispatching, with its severity. */
+	readonly feedback: readonly FeedbackNotice[];
+}
+
+/** The actual session a delivery from the double is about when a suite names none. */
+const DEFAULT_SESSION: SessionFacts = { sessionId: "port-double", kind: "main", unavailable: [] };
+
+/**
+ * The facts one binding resolves, besides the definition and the implementation built for it.
+ *
+ * The implementation members are the double's own model of what an assembly's factory returns:
+ * a suite states the commands, subscriptions, initialization and cleanup a binding runs with,
+ * exactly as `framework/core/assembly.ts` defines them, and the double wraps them in the one
+ * factory a binding calls.
+ */
+export interface PortBindingOptions extends Partial<ExtensionImplementation> {
 	/**
-	 * The version the harness reports; omitted models this repository's recorded baseline version,
-	 * and `"unreported"` models a harness surface that reports no version at all — which is not the
-	 * same as one that reports a version the baseline does not list.
+	 * The factory the binding calls, when a suite wants to observe what an assembly's own factory
+	 * is handed. Omitted, the implementation members above are what a factory returns — so the
+	 * common case states only what it runs with, and the factory case can watch the validated
+	 * configuration arrive.
 	 */
-	readonly version?: string | "unreported";
-	/** The semantics the harness cannot honor. */
-	readonly missingRequiredSemantics?: readonly RequiredSemantic[];
-	/**
-	 * The semantics this binding's assembly declared it depends on, besides the ones the
-	 * framework requires of every binding; an assembly that declared none passes nothing.
-	 */
-	readonly requiredSemantics?: readonly DeclarableRequiredSemantic[];
+	readonly factory?: ExtensionFactory;
 	/**
 	 * The configuration source the binding reads a declared configuration through: the
 	 * framework's own file system and YAML parser by default, so a suite injects one only to
@@ -156,20 +194,14 @@ export interface PortDouble {
 	readonly markerUpdates: ReadonlyArray<readonly string[]>;
 	bind(definition: ExtensionDefinition, options?: PortBindingOptions): BindingResult;
 	/** Runs one registered command as a user of `owner` would; throws when it was never registered. */
-	run(
-		command: string,
-		options?: {
-			readonly args?: string;
-			readonly owner?: OwnerReference;
-			readonly hasUI?: boolean;
-			/**
-			 * The idle fact the session reports through the invocation's query: `"idle"` and
-			 * `"busy"` for a harness that answers, `"unreported"` for one that reports none.
-			 * Omitted means idle, the state a session at a command prompt is in.
-			 */
-			readonly idle?: "idle" | "busy" | "unreported";
-		},
-	): CommandRun;
+	run(command: string, options?: CommandRunOptions): CommandRun;
+	/**
+	 * The same execution, awaited.
+	 *
+	 * An `actions` command's effect and feedback land while it runs, so a suite observing one
+	 * awaits this rather than the synchronous {@link run}: the record it returns is complete.
+	 */
+	runToCompletion(command: string, options?: CommandRunOptions): Promise<CommandRun>;
 	/** Delivers one semantic session event to every extension bound so far. */
 	deliverSession(
 		owner: OwnerReference,
@@ -177,21 +209,56 @@ export interface PortDouble {
 			readonly event?: SessionEvent;
 			readonly statePayloads?: readonly unknown[];
 			readonly hasUI?: boolean;
+			/** The actual session the delivery is about; omitted models a top-level `port-double` session. */
+			readonly session?: SessionFacts;
 		},
 	): SessionBoundary;
 	/** Delivers one semantic round edge to every extension bound so far. */
 	deliverRound(
 		owner: OwnerReference,
-		options?: { readonly event?: RoundEvent; readonly hasUI?: boolean },
+		options?: {
+			readonly event?: RoundEvent;
+			readonly hasUI?: boolean;
+			readonly session?: SessionFacts;
+			/**
+			 * Whether the session is at quiescence when the framework re-checks an end candidate.
+			 * Omitted models a session at the prompt; `false` models one that still has work, whose
+			 * round therefore stays open.
+			 */
+			readonly quiescent?: boolean;
+		},
 	): RoundBoundary;
-	/** Delivers one run initiation to every extension bound so far. */
+	/**
+	 * Delivers one mapped native Turn signal to every extension bound so far, as an adapter would.
+	 *
+	 * The double frames the signal the way a harness does — resolving the owner, the UI fact and the
+	 * feedback channel — and the framework's own Turn rules then decide what, if anything, reaches a
+	 * handler.
+	 */
+	deliverTurn(signal: TurnSignal, options?: { readonly owner?: OwnerReference; readonly hasUI?: boolean }): TurnBoundary;
+	/** Delivers one run initiation to every extension bound so far, and waits for it. */
 	initiateRun(
 		owner: OwnerReference,
 		options?: { readonly contributionIdentities?: readonly string[] },
-	): RunInitiation;
+	): Promise<RunInitiation>;
 }
 
-export function portDouble(): PortDouble {
+/**
+ * The model prices one double's harness reports, when a suite drives an extension that prices a
+ * channel from the harness's own catalog. Omitted models a harness that states no prices at all,
+ * which is the member being absent rather than an empty query.
+ */
+export interface PortDoubleOptions {
+	readonly modelPrices?: CatalogPriceSource;
+	/**
+	 * The provider access one double's harness reports, when a suite drives an extension that queries
+	 * a provider for itself. Omitted models a harness that resolves no access, which is the member
+	 * being absent rather than a query that always answers nothing.
+	 */
+	readonly providerAccess?: ProviderAccess;
+}
+
+export function portDouble(options: PortDoubleOptions = {}): PortDouble {
 	// One assembly serves one extension, so one store with one set of declaration rules —
 	// the ones the definition its first binding names resolves to.
 	let state: StateStore | undefined;
@@ -207,14 +274,78 @@ export function portDouble(): PortDouble {
 	const registrations: string[] = [];
 	const commands: BoundCommand[] = [];
 	const sessionHandlers: Array<(session: SessionDelivery) => void> = [];
-	const roundHandlers: Array<(round: RoundDelivery) => void> = [];
+	const roundObservers: Array<(observation: RoundObservation) => void> = [];
+	const turnHandlers: Array<(facts: TurnSignalFacts) => void> = [];
 	const runHandlers: Array<Parameters<HarnessPort["onRunInitiation"]>[0]> = [];
 	const markerUpdates: string[][] = [];
+	/** The callbacks the framework arranged on the harness's next task, oldest first. */
+	const pendingTasks: Array<() => void> = [];
 
 	const commandUnder = (name: string): BoundCommand => {
 		const command = commands.find(candidate => candidate.name === name);
 		if (command === undefined) throw new Error(`no command registered under "${name}"`);
 		return command;
+	};
+
+	/**
+	 * One command execution, prepared but not yet run.
+	 *
+	 * A suite that only needs the recorded invocation runs the attempt synchronously; a suite
+	 * observing an `actions` command awaits the same attempt, because that command's effects and
+	 * feedback land while it runs rather than before it returns.
+	 */
+	const commandAttempt = (
+		name: string,
+		options: CommandRunOptions,
+	): { invoke: () => void | Promise<void>; observed: CommandRun } => {
+		const command = commandUnder(name);
+		const completion = Promise.withResolvers<void>();
+		const persisted: StateValues[] = [];
+		const feedback: FeedbackNotice[] = [];
+		const markers: string[][] = [];
+		const effects: string[] = [];
+		const hasUI = options.hasUI ?? true;
+		// The idle fact the session reports through the invocation's query: a harness that
+		// answers reports the modelled state, and one that reports none answers nothing.
+		const idle = options.idle ?? "idle";
+		const canAcceptInput = (): boolean | undefined =>
+			idle === "unreported" ? undefined : idle === "idle";
+		const invocation: CommandInvocation = {
+			args: options.args ?? "",
+			owner: options.owner ?? { kind: "owner", key: DEFAULT_OWNER_KEY },
+			persist: values => {
+				effects.push("persist");
+				persisted.push(values);
+			},
+			hasUI,
+			canAcceptInput,
+			provider: options.provider,
+			feedback: {
+				notify: (level, message) => {
+					effects.push("notify");
+					feedback.push({ level, message });
+				},
+			},
+			markers: markerTransport(markers, effects),
+		};
+		return {
+			invoke: () =>
+				Promise.resolve(command.run(invocation)).finally(() => {
+					completion.resolve();
+				}),
+			observed: {
+				command: name,
+				args: invocation.args,
+				owner: invocation.owner,
+				hasUI: invocation.hasUI,
+				persisted,
+				canAcceptInput: canAcceptInput(),
+				feedback,
+				markers,
+				effects,
+				completion: completion.promise,
+			},
+		};
 	};
 
 	/**
@@ -239,6 +370,8 @@ export function portDouble(): PortDouble {
 			labels.push(label);
 			registrations.push(`label:${label}`);
 		},
+		...(options.modelPrices === undefined ? {} : { modelPrices: options.modelPrices }),
+		...(options.providerAccess === undefined ? {} : { providerAccess: options.providerAccess }),
 		reportDiagnostic: message => {
 			diagnostics.push(message);
 		},
@@ -246,9 +379,18 @@ export function portDouble(): PortDouble {
 			registrations.push("onSession");
 			sessionHandlers.push(handler);
 		},
-		onRound: handler => {
+		onRound: observer => {
 			registrations.push("onRound");
-			roundHandlers.push(handler);
+			roundObservers.push(observer);
+		},
+		nextTask: callback => {
+			// The harness's next task, as a queue the double runs when a suite's delivery reaches it:
+			// the same one-shot arrangement the omp adapter makes with its host's own task primitive.
+			pendingTasks.push(callback);
+		},
+		onTurn: handler => {
+			registrations.push("onTurn");
+			turnHandlers.push(handler);
 		},
 		onRunInitiation: handler => {
 			registrations.push("onRunInitiation");
@@ -273,63 +415,27 @@ export function portDouble(): PortDouble {
 		commands,
 		markerUpdates,
 		bind(definition, options = {}) {
+			const { config, factory, ...implementation } = options;
 			return bindExtension(
 				definition,
 				port,
 				stateOf(definition),
-				{
-					facts: {
-						version: options.version === "unreported" ? undefined : (options.version ?? "18.5.0"),
-						missingRequiredSemantics: options.missingRequiredSemantics,
-					},
-					requiredSemantics: options.requiredSemantics,
-				},
-				options.actions,
-				options.events,
-				options.config,
+				// One implementation per binding, handed over the way an adapter hands over its
+				// assembly's own: the double does not model a process-shared instance, so a suite that
+				// wants to observe the once-per-implementation lifecycle binds once and drives it.
+				factory ?? (() => implementation),
+				config,
 			);
 		},
 		run(name, options = {}) {
-			const command = commandUnder(name);
-			const persisted: StateValues[] = [];
-			const feedback: FeedbackNotice[] = [];
-			const markers: string[][] = [];
-			const effects: string[] = [];
-			const hasUI = options.hasUI ?? true;
-			// The idle fact the session reports through the invocation's query: a harness that
-			// answers reports the modelled state, and one that reports none answers nothing.
-			const idle = options.idle ?? "idle";
-			const canAcceptInput = (): boolean | undefined =>
-				idle === "unreported" ? undefined : idle === "idle";
-			const invocation: CommandInvocation = {
-				args: options.args ?? "",
-				owner: options.owner ?? { kind: "owner", key: DEFAULT_OWNER_KEY },
-				persist: values => {
-					effects.push("persist");
-					persisted.push(values);
-				},
-				hasUI,
-				canAcceptInput,
-				feedback: {
-					notify: (level, message) => {
-						effects.push("notify");
-						feedback.push({ level, message });
-					},
-				},
-				markers: markerTransport(markers, effects),
-			};
-			command.run(invocation);
-			return {
-				command: name,
-				args: invocation.args,
-				owner: invocation.owner,
-				hasUI: invocation.hasUI,
-				persisted,
-				canAcceptInput: canAcceptInput(),
-				feedback,
-				markers,
-				effects,
-			};
+			const attempt = commandAttempt(name, options);
+			attempt.invoke();
+			return attempt.observed;
+		},
+		async runToCompletion(name, options = {}) {
+			const attempt = commandAttempt(name, options);
+			await attempt.invoke();
+			return attempt.observed;
 		},
 		deliverSession(owner, options = {}) {
 			const notices: string[] = [];
@@ -340,6 +446,7 @@ export function portDouble(): PortDouble {
 			for (const handler of sessionHandlers) {
 				handler({
 					event: options.event ?? { kind: "session_start", reason: "initial" },
+					session: options.session ?? DEFAULT_SESSION,
 					owner,
 					statePayloads: options.statePayloads ?? [],
 					persist: values => {
@@ -364,24 +471,53 @@ export function portDouble(): PortDouble {
 		deliverRound(owner, options = {}) {
 			const feedback: FeedbackNotice[] = [];
 			const hasUI = options.hasUI ?? true;
-			for (const handler of roundHandlers) {
-				handler({
-					event: options.event ?? { kind: "round_start" },
-					owner,
-					hasUI,
-					feedback: {
-						notify: (level, message) => {
-							feedback.push({ level, message });
-						},
+			const event = options.event ?? { kind: "round_start" };
+			const quiescent = options.quiescent ?? true;
+			// The observation a harness reports: the run-cycle fact behind the edge a suite asked
+			// for, its own session's facts, and the live quiescence read the framework re-checks.
+			const observation: RoundObservation = {
+				signal:
+					event.kind === "round_start"
+						? { kind: "activity_started" }
+						: { kind: "settled", willContinue: false },
+				session: options.session ?? DEFAULT_SESSION,
+				owner,
+				hasUI,
+				feedback: {
+					notify: (level, message) => {
+						feedback.push({ level, message });
 					},
-				});
+				},
+				quiescent: () => quiescent,
+			};
+			for (const observer of roundObservers) observer(observation);
+			// An end candidate is confirmed on the harness's next task, so a suite driving the edge
+			// runs what that delivery arranged — the host reaching the task the framework asked for.
+			for (const task of pendingTasks.splice(0)) task();
+			return { hasUI, feedback };
+		},
+		deliverTurn(signal, options = {}) {
+			const feedback: FeedbackNotice[] = [];
+			const hasUI = options.hasUI ?? true;
+			const facts: TurnSignalFacts = {
+				signal,
+				owner: options.owner ?? { kind: "owner", key: DEFAULT_OWNER_KEY },
+				hasUI,
+				feedback: {
+					notify: (level, message) => {
+						feedback.push({ level, message });
+					},
+				},
+			};
+			for (const handler of turnHandlers) {
+				handler(facts);
 			}
 			return { hasUI, feedback };
 		},
-		initiateRun(owner, options = {}) {
+		async initiateRun(owner, options = {}) {
 			const markers: string[][] = [];
 			for (const handler of runHandlers) {
-				const contribution = handler({
+				const contribution = await handler({
 					owner,
 					contributionIdentities: options.contributionIdentities ?? [],
 					markers: markerTransport(markers),

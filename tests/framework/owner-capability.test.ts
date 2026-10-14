@@ -18,12 +18,11 @@
  */
 import { describe, expect, test } from "bun:test";
 import type {
-	CommandActions,
 	CommandDelivery,
 	FeedbackTransport,
 	OwnerCapabilityHandle,
 } from "../../framework/core/protocol";
-import { type ExtensionDefinition, defineExtension } from "../../framework/public";
+import { type CommandImplementations, type ExtensionDefinition, defineExtension } from "../../framework/public";
 import { type PortDouble, portDouble } from "./support/harness-port-double";
 
 /** A directed extension whose whole behavior is one command plus the marker it drives. */
@@ -49,7 +48,7 @@ function armingActions(
 	command: string,
 	retained: OwnerCapabilityHandle[],
 	value: boolean,
-): CommandActions {
+): CommandImplementations {
 	return {
 		[command]: {
 			run: (_directive, delivery: CommandDelivery) => {
@@ -65,7 +64,7 @@ describe("a handler delivery hands out a capability its owner may retain (F13, P
 		const double: PortDouble = portDouble();
 		const owner = { kind: "owner", key: "main:retained-arm" } as const;
 		const retained: OwnerCapabilityHandle[] = [];
-		double.bind(directedExtension("retained-arm"), { actions: armingActions("retained-arm", retained, true) });
+		double.bind(directedExtension("retained-arm"), { commands: armingActions("retained-arm", retained, true) });
 
 		// The arm path: the handler runs, writes through the delivery's own seam, and keeps the
 		// capability for the effects it will drive after this delivery is over.
@@ -91,7 +90,7 @@ describe("a handler delivery hands out a capability its owner may retain (F13, P
 		const double = portDouble();
 		const owner = { kind: "owner", key: "main:retained-read" } as const;
 		const retained: OwnerCapabilityHandle[] = [];
-		double.bind(directedExtension("retained-read"), { actions: armingActions("retained-read", retained, true) });
+		double.bind(directedExtension("retained-read"), { commands: armingActions("retained-read", retained, true) });
 
 		double.run("retained-read", { owner });
 
@@ -106,11 +105,11 @@ describe("a handler delivery hands out a capability its owner may retain (F13, P
 		const owner = { kind: "owner", key: "main:retained-start" } as const;
 		const retained: OwnerCapabilityHandle[] = [];
 		double.bind(sessionArmedExtension("retained-start"), {
-			events: {
+			subscriptions: [{ scope: "owner", events: {
 				session_start: delivery => {
 					retained.push(delivery.capability);
 				},
-			},
+			} }],
 		});
 
 		const start = double.deliverSession(owner, { event: { kind: "session_start", reason: "initial" } });
@@ -134,7 +133,7 @@ describe("the boundary that ends an owner ends the capability it handed out (F13
 		const owner = { kind: "owner", key: "main:retired-write" } as const;
 		const retained: OwnerCapabilityHandle[] = [];
 		double.bind(directedExtension("retired-write"), {
-			actions: armingActions("retired-write", retained, true),
+			commands: armingActions("retired-write", retained, true),
 		});
 
 		const arm = double.run("retired-write", { owner });
@@ -161,7 +160,7 @@ describe("the boundary that ends an owner ends the capability it handed out (F13
 		const double = portDouble();
 		const owner = { kind: "owner", key: "main:retired-notify" } as const;
 		const retained: OwnerCapabilityHandle[] = [];
-		const actions: CommandActions = {
+		const commands: CommandImplementations = {
 			"retired-notify": {
 				run: (_directive, delivery: CommandDelivery) => {
 					retained.push(delivery.capability);
@@ -169,7 +168,7 @@ describe("the boundary that ends an owner ends the capability it handed out (F13
 				},
 			},
 		};
-		double.bind(directedExtension("retired-notify"), { actions });
+		double.bind(directedExtension("retired-notify"), { commands });
 
 		const arm = double.run("retired-notify", { owner });
 		expect(arm.feedback).toEqual([{ level: "info", message: "已接入 2 个会话" }]);
@@ -188,11 +187,11 @@ describe("the boundary that ends an owner ends the capability it handed out (F13
 		const owner = { kind: "owner", key: "main:reopened" } as const;
 		const retained: OwnerCapabilityHandle[] = [];
 		double.bind(sessionArmedExtension("reopened"), {
-			events: {
+			subscriptions: [{ scope: "owner", events: {
 				session_start: delivery => {
 					retained.push(delivery.capability);
 				},
-			},
+			} }],
 		});
 
 		double.deliverSession(owner); // the first life of this owner
@@ -216,7 +215,7 @@ describe("the capability is the write and the feedback channel, and nothing else
 		const owner = { kind: "owner", key: "main:capability-shape" } as const;
 		const retained: OwnerCapabilityHandle[] = [];
 		double.bind(directedExtension("capability-shape"), {
-			actions: armingActions("capability-shape", retained, true),
+			commands: armingActions("capability-shape", retained, true),
 		});
 
 		double.run("capability-shape", { owner });
@@ -232,12 +231,12 @@ describe("a session_end delivery keeps a feedback channel of its own, for that d
 		const owner = { kind: "owner", key: "main:end-notice" } as const;
 		const held: FeedbackTransport[] = [];
 		double.bind(sessionArmedExtension("end-notice"), {
-			events: {
+			subscriptions: [{ scope: "owner", events: {
 				session_end: delivery => {
 					delivery.feedback.notify("info", "已切到新会话");
 					held.push(delivery.feedback);
 				},
-			},
+			} }],
 		});
 
 		// The framework retired the owner before the handler ran, so this dispatch's channel — not
@@ -255,12 +254,12 @@ describe("a session_end delivery keeps a feedback channel of its own, for that d
 		const owner = { kind: "owner", key: "main:end-capability" } as const;
 		const retained: OwnerCapabilityHandle[] = [];
 		double.bind(sessionArmedExtension("end-capability"), {
-			events: {
+			subscriptions: [{ scope: "owner", events: {
 				session_end: delivery => {
 					retained.push(delivery.capability);
 					delivery.feedback.notify("info", "已切到新会话");
 				},
-			},
+			} }],
 		});
 
 		const end = double.deliverSession(owner, { event: { kind: "session_end", reason: "transferred" } });

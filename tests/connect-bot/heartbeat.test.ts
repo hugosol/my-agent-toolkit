@@ -4,7 +4,7 @@
  *
  * The extension is driven exactly as the loader drives it: its own OMP assembly binds the
  * definition against the double, and the command the framework registered runs with a doubled
- * session context. The panel is a fake transport injected through the extension's own seam, so
+ * session context. The panel is a fake HTTP call injected through the extension's own seam, so
  * every request is observed without a network.
  *
  * The beat itself is observed at the seam it really has: the extension asks the harness for a
@@ -17,12 +17,11 @@
 import { afterEach, describe, expect, jest, test } from "bun:test";
 import * as path from "node:path";
 import {
-	type PushFetchInit,
-	type PushHttpResponse,
-	type PushTransport,
+	type PanelRequest,
 	EVENTS_PATH,
-	setPushTransportForTest,
+	setPanelRequestForTest,
 } from "../../extensions/connect-bot/shared-logic/panel/client";
+import type { HttpRequestOptions } from "../../framework/public";
 import { CONNECT_BOT } from "../../extensions/connect-bot/definition";
 import { readConfig } from "../../framework/core/config";
 import { OUTBOX_LIMIT } from "../../extensions/connect-bot/shared-logic/panel/outbox";
@@ -44,17 +43,15 @@ const REQUEST_TIMEOUT_MS = readConfig(path.join(REPO_ROOT, "extensions", "connec
 /** The owner key the framework resolves for one main session. */
 const ownerKey = (sessionId: string) => `main:${sessionId}`;
 
-/** One outbound request the extension made, as the transport received it. */
+/** One outbound request the extension made, as the framework's call received it. */
 interface Request {
 	readonly url: string;
-	readonly init: PushFetchInit;
+	readonly init: HttpRequestOptions;
 }
 
 /** The panel's answer to one request. */
-const panelAnswer = (status: number, body: unknown): PushHttpResponse => ({
-	status,
-	text: async () => JSON.stringify(body),
-});
+const panelAnswer = (status: number, body: unknown): Response =>
+	new Response(JSON.stringify(body), { status });
 
 /** The registered receipt a reachable panel answers a `register` with. */
 const registered = (onlineCount: number) => ({ outcome: "registered", onlineCount });
@@ -71,7 +68,7 @@ interface WireEnvelope {
 
 /** Reads one sent request body as the `{sessionId, kind, data?}` envelope the contract fixes. */
 function envelopeOf(request: Request): WireEnvelope {
-	const parsed: unknown = JSON.parse(request.init.body);
+	const parsed: unknown = JSON.parse(request.init.body ?? "");
 	if (parsed === null || typeof parsed !== "object") {
 		throw new Error("connect-bot sent a body that is not an object");
 	}
@@ -93,7 +90,7 @@ interface Panel {
 	readonly requests: Request[];
 	/** The largest number of pushes the extension had on the wire at once. */
 	readonly maxInFlight: () => number;
-	readonly transport: PushTransport;
+	readonly request: PanelRequest;
 }
 
 /**
@@ -101,14 +98,14 @@ interface Panel {
  * its register, and hands each `heartbeat` to `answerHeartbeat` — which is what lets a test hold a
  * background push in flight and see what the queue does behind it.
  */
-function panel(answerHeartbeat: (request: Request) => Promise<PushHttpResponse>): Panel {
+function panel(answerHeartbeat: (request: Request) => Promise<Response>): Panel {
 	const requests: Request[] = [];
 	let inFlight = 0;
 	let peak = 0;
 	return {
 		requests,
 		maxInFlight: () => peak,
-		transport: async (url, init) => {
+		request: async (url, init = {}) => {
 			const request = { url, init };
 			requests.push(request);
 			const kind = envelopeOf(request).kind;
@@ -136,7 +133,7 @@ function stalledPanel(): Panel & { readonly release: () => void } {
 	let reachable = false;
 	const stalled = panel(request => {
 		if (reachable) return Promise.resolve(panelAnswer(200, { outcome: "accepted" }));
-		return new Promise<PushHttpResponse>(resolve => held.push(() => resolve(panelAnswer(200, {}))));
+		return new Promise<Response>(resolve => held.push(() => resolve(panelAnswer(200, {}))));
 	});
 	return {
 		...stalled,
@@ -148,11 +145,11 @@ function stalledPanel(): Panel & { readonly release: () => void } {
 }
 
 /** Binds the extension against a fresh double and injects one panel. */
-function bound(transport: PushTransport): OmpDouble {
+function bound(request: PanelRequest): OmpDouble {
 	const double = ompDouble();
 	connectBot(double.api);
-	// The assembly installs the platform's own transport at binding; the fake takes its place.
-	setPushTransportForTest(transport);
+	// A real binding sends through the framework's own request; the fake takes its place.
+	setPanelRequestForTest(request);
 	return double;
 }
 
@@ -162,8 +159,8 @@ function bound(transport: PushTransport): OmpDouble {
  * the state report sent behind the register is then let settle, so every test below starts from a
  * connection whose queue is drained and with its one timer already running.
  */
-async function armed(transport: PushTransport, sessionId: string, idle?: boolean): Promise<OmpDouble> {
-	const double = bound(transport);
+async function armed(request: PanelRequest, sessionId: string, idle?: boolean): Promise<OmpDouble> {
+	const double = bound(request);
 	const announced = double.nextNotification();
 	double.run("connect-bot", "", double.context({ sessionId, cwd: "E:/work/beat", idle }));
 	await announced;
@@ -188,8 +185,8 @@ afterEach(() => {
 
 describe("an armed session beats on its one managed interval with the state it holds (E9, P30)", () => {
 	test("the empty argument schedules one heartbeat carrying the state the panel is owed", async () => {
-		const { requests, transport } = reachablePanel();
-		const double = await armed(transport, "beat-1");
+		const { requests, request } = reachablePanel();
+		const double = await armed(request, "beat-1");
 
 		// The one periodic effect of this owner: a managed interval, and nothing else scheduled at
 		// all. Its period is what the cadence run advances time by — `budget-regression.test.ts`
@@ -213,11 +210,10 @@ describe("an armed session beats on its one managed interval with the state it h
 		expect(requests[2]?.init.method).toBe("POST");
 		expect(requests[2]?.init.headers).toEqual({ "content-type": "application/json" });
 		expect(requests[2]?.init.proxy).toBe(false);
-		// A queued push waits the extension's own configured budget under its own abort signal —
-		// never the register's, and never an endless one. How long that wait really is, against a
-		// panel that answers late, is what `request-timeout.test.ts` establishes (P19).
-		expect(requests[2]?.init.signal).toBeInstanceOf(AbortSignal);
-		expect(requests[2]?.init.signal.aborted).toBe(false);
+		// A queued push declares the extension's own configured budget — never the register's, and
+		// never an endless one. How long that wait really is, against a panel that answers late, is
+		// what `request-timeout.test.ts` establishes (P19).
+		expect(requests[2]?.init.timeoutMs).toBe(REQUEST_TIMEOUT_MS);
 
 		// The next beat says the same thing again: the panel's keepAlive is the repetition.
 		fireTimer(double);
@@ -227,8 +223,8 @@ describe("an armed session beats on its one managed interval with the state it h
 	});
 
 	test("a session the harness reports as working beats 工作中, not a fabricated 空闲", async () => {
-		const { requests, transport } = reachablePanel();
-		const double = await armed(transport, "beat-working", false);
+		const { requests, request } = reachablePanel();
+		const double = await armed(request, "beat-working", false);
 
 		fireTimer(double);
 		await settleAll();
@@ -242,8 +238,8 @@ describe("an armed session beats on its one managed interval with the state it h
 
 describe("no heartbeat exists before an arm and none survives an `off` (E5, P28)", () => {
 	test("`off` on a session that never armed schedules no timer and sends nothing", () => {
-		const { requests, transport } = reachablePanel();
-		const double = bound(transport);
+		const { requests, request } = reachablePanel();
+		const double = bound(request);
 
 		double.run("connect-bot", "off", double.context({ sessionId: "beat-never", cwd: "E:/work/beat" }));
 
@@ -253,8 +249,8 @@ describe("no heartbeat exists before an arm and none survives an `off` (E5, P28)
 	});
 
 	test("`off` cancels the owner's timer, drops its queue, and a beat that still fires says nothing", async () => {
-		const { requests, transport } = reachablePanel();
-		const double = await armed(transport, "beat-off");
+		const { requests, request } = reachablePanel();
+		const double = await armed(request, "beat-off");
 		const ctx = double.context({ sessionId: "beat-off", cwd: "E:/work/beat" });
 
 		const announced = double.nextNotification();
@@ -276,7 +272,7 @@ describe("no heartbeat exists before an arm and none survives an `off` (E5, P28)
 describe("a repeat is the same connection asked again (E3)", () => {
 	test("re-arming keeps the one timer and drops what the old connection had queued", async () => {
 		const stalled = stalledPanel();
-		const double = await armed(stalled.transport, "beat-repeat");
+		const double = await armed(stalled.request, "beat-repeat");
 
 		// One beat is on the wire and a second is waiting behind it: the panel has stopped answering.
 		fireTimer(double);
@@ -316,30 +312,31 @@ describe("a queued push waits the configured budget and is never retried (E11, P
 		const sawAbort = new Promise<void>(resolve => {
 			aborted = resolve;
 		});
-		const double = await armed(async (url, init) => {
+		const double = await armed(async (url, init = {}) => {
 			requests.push({ url, init });
 			const kind = envelopeOf({ url, init }).kind;
 			if (kind === "register") return panelAnswer(200, registered(1));
 			if (kind === "state") return panelAnswer(200, { outcome: "accepted" });
-			return new Promise<PushHttpResponse>((_resolve, reject) => {
-				// A panel that is gone never answers; the request ends the way an aborted fetch does.
-				init.signal.addEventListener("abort", () => {
+			return new Promise<Response>((_resolve, reject) => {
+				// A panel that is gone never answers: the push is abandoned when the wait it declared
+				// runs out, on this file's own fake clock, advanced by exactly that budget below.
+				setTimeout(() => {
 					aborted();
 					reject(new Error("push budget exceeded"));
-				});
+				}, init.timeoutMs);
 			});
 		}, "beat-timeout");
 
 		fireTimer(double);
 		expect(requests).toHaveLength(3);
-		expect(requests[2]?.init.signal.aborted).toBe(false);
+		// The wait the beat declared is the extension's own configured budget, not a constant here.
+		expect(requests[2]?.init.timeoutMs).toBe(REQUEST_TIMEOUT_MS);
 
 		jest.advanceTimersByTime(REQUEST_TIMEOUT_MS);
 		await sawAbort;
 		await settleAll();
 
-		// The budget ran out, the request was aborted, and the event was dropped rather than retried.
-		expect(requests[2]?.init.signal.aborted).toBe(true);
+		// The budget ran out and the event was dropped rather than retried.
 		jest.advanceTimersByTime(60_000);
 		await settleAll();
 		expect(requests).toHaveLength(3);
@@ -355,7 +352,7 @@ describe("a queued push waits the configured budget and is never retried (E11, P
 describe("the outbox is bounded and sends one event at a time (E11, P32)", () => {
 	test("beats pile up only to the queue's bound, and one flusher drains them in order", async () => {
 		const stalled = stalledPanel();
-		const double = await armed(stalled.transport, "beat-burst");
+		const double = await armed(stalled.request, "beat-burst");
 
 		// A panel that stopped answering while the beats keep coming: the one flusher is stuck on
 		// the first push and everything after it waits in the queue.
