@@ -36,6 +36,14 @@
  *   disk already carried — are never re-priced, re-derived, deleted or rewritten because the price
  *   data, the harness's own catalog, the model or the season changed later. A request's own price was
  *   fixed at its start.
+ * - **Time is a fact about executions, not a consumption.** Each subagent session also accumulates
+ *   the duration its harness measured for each of its *executions*, once per execution
+ *   ({@link createSubagentRuntimes}): a running reading is that execution's own replacement reading
+ *   rather than another contribution, a repeated completion is not counted twice, and a host that
+ *   states no duration at all leaves the figure unavailable instead of zero. That figure is business
+ *   data of its own — it is added to no token bucket, currency or total, and no amount is derived
+ *   from it — and it rides the same commit as the session's consumption rather than causing one, so
+ *   a reading that arrived after the last commit waits for the next one.
  *
  * Two derived results read that same authority without adding to it. An actual session's identity
  * ({@link ConsumptionView.identity}) is its latest reported display name and its reliable
@@ -81,6 +89,7 @@ import type {
 	FeedbackTransport,
 	RoundDelivery,
 	SessionFacts,
+	SubagentRuntimeDelivery,
 	TurnEndDelivery,
 	TurnStartDelivery,
 	TurnUsage,
@@ -90,6 +99,7 @@ import type { ModelConsumption, OwnConsumption, SessionRecord, TokenBuckets } fr
 import { type ConsumptionStore, type SessionCommit, unusableBaselineNotice } from "./consumption-store";
 import type { ModelPricingData } from "./model-data";
 import { type RequestPrice, requestPriceOf } from "./request-price";
+import { type SubagentRuntimes, createSubagentRuntimes } from "./subagent-runtime";
 import { type SessionSpanReading, createSessionSpans } from "./session-span";
 
 /** The read-only consumption this instance holds: the extension's display seam, read never written. */
@@ -144,6 +154,18 @@ export interface ConsumptionView {
 	 * document: a restored accumulation is a session total, not a Round.
 	 */
 	roundTotals(sessionId: string): RoundTotals | undefined;
+	/**
+	 * The subagent runtime one actual session's own executions accumulated in this period, in
+	 * milliseconds, or `undefined` when nothing reliable is known about it.
+	 *
+	 * It is the harness's own measurement of each execution's duration, summed once per execution:
+	 * not a session's creation-to-last-record span, which counts the idle gaps between executions,
+	 * and not a development of its own from any wall clock. The value is `0` when the host really
+	 * reported no measurable time and absent when it reported nothing at all — a difference the
+	 * display keeps — and a reading that arrived after the last commit is part of what this answers
+	 * even though the file does not hold it yet.
+	 */
+	runtime(sessionId: string): number | undefined;
 	/**
 	 * One actual session's Session span as this instance has it: the first user input it observed for
 	 * that session in this period, and the latest Round end it observed, or `undefined` while either
@@ -207,6 +229,18 @@ export interface RequestAccounting {
 	roundStarted(delivery: RoundDelivery): void;
 	/** One actual session's Round end: its own consumption is saved when it grew. */
 	roundEnded(delivery: RoundDelivery): Promise<void>;
+	/**
+	 * One native subagent execution's own duration, for the session it belongs to.
+	 *
+	 * It is a fact about the session's work rather than a boundary of it: nothing opens or closes,
+	 * nothing is saved and no commit is started. What the reading contributes is part of the
+	 * session's next existing commit — the one its own Round's end already makes — so an execution's
+	 * duration is persisted beside the consumption it accompanied and never through a write of its
+	 * own, and a reading that arrives after that commit waits for the next one instead of causing
+	 * one. An unusable reading changes no accumulation: the operator is told, and the last valid
+	 * figure stays.
+	 */
+	subagentRuntime(delivery: SubagentRuntimeDelivery): void;
 	/**
 	 * One user input the harness attributed to the user was admitted to one actual session.
 	 *
@@ -298,6 +332,15 @@ interface SessionLedger {
 	revision: number;
 	/** The revision the last accepted snapshot carried. */
 	savedRevision: number;
+	/**
+	 * The subagent runtime this session's own executions accumulated in this period.
+	 *
+	 * It is kept beside the consumption rather than inside the model buckets, because it is a fact
+	 * about the session's *executions* and not about any provider or model: nothing adds it to a
+	 * token bucket, and no amount is ever derived from it. It is seeded from the record's own value
+	 * and written back by the same snapshot, which is what keeps it in the one commit.
+	 */
+	readonly runtimes: SubagentRuntimes;
 }
 
 /** The reported usage buckets an amount is computed over, and their order. */
@@ -517,7 +560,13 @@ export function createRequestAccounting(inputs: RequestAccountingInputs): Reques
 		const existing = ledgers.get(sessionId);
 		if (existing !== undefined) return existing;
 		const saved = storage.session(harness, sessionId);
-		const ledger: SessionLedger = { models: new Map(), saved, revision: 0, savedRevision: 0 };
+		const ledger: SessionLedger = {
+			models: new Map(),
+			saved,
+			revision: 0,
+			savedRevision: 0,
+			runtimes: createSubagentRuntimes(saved?.runtimeMs),
+		};
 		for (const [provider, models] of Object.entries(saved?.own ?? {})) {
 			const byModel = new Map<string, ModelLedger>();
 			for (const [model, usage] of Object.entries(models)) {
@@ -704,6 +753,7 @@ export function createRequestAccounting(inputs: RequestAccountingInputs): Reques
 			parentSessionId: null,
 		};
 		const revision = ledger.revision;
+		const runtimeMs = ledger.runtimes.available();
 		// The span this snapshot carries is the one this instance has observed up to now — the same two
 		// instants its own display reads — and it is written with the consumption rather than through a
 		// write of its own. A session whose span is still unknown writes none: an absent fact is what a
@@ -715,6 +765,10 @@ export function createRequestAccounting(inputs: RequestAccountingInputs): Reques
 			parent: facts.parentSessionId,
 			saveVersion: (ledger.saved?.saveVersion ?? 0) + 1,
 			own: snapshotOf(ledger),
+			// The session's accumulated runtime rides this same commit: it is the value available at
+			// the moment the snapshot is built, and it is absent when nothing reliable is known rather
+			// than written as a zero.
+			...(runtimeMs === undefined ? {} : { runtimeMs }),
 			...(span === undefined ? {} : { span }),
 		};
 		ledger.saved = record;
@@ -799,6 +853,13 @@ export function createRequestAccounting(inputs: RequestAccountingInputs): Reques
 				...(open === undefined ? {} : { current: differenceOf(ownOf(sessionId), open.own) }),
 				...(previous === undefined ? {} : { previous }),
 			};
+		},
+		runtime: sessionId => {
+			// A session this instance has accounted an execution for reads its own accumulation; one it
+			// has not touched reads the record the document holds — the value an earlier process saved.
+			const ledger = ledgers.get(sessionId);
+			if (ledger !== undefined) return ledger.runtimes.available();
+			return storage.session(harness, sessionId)?.runtimeMs;
 		},
 		subscribe: listener => {
 			listeners.add(listener);
@@ -920,6 +981,27 @@ export function createRequestAccounting(inputs: RequestAccountingInputs): Reques
 		sessionFacts(session) {
 			if (disposed) return;
 			remember(session);
+		},
+		subagentRuntime(delivery) {
+			if (disposed) return;
+			remember(delivery.session);
+			// The reading belongs to the execution the harness reported, so it is applied to the session
+			// that execution ran in — and only there. Nothing else this instance holds moves with it: no
+			// Round is opened or closed, no consumption is settled, no other session's own record or
+			// direct parent is touched, and no commit is started.
+			const ledger = ledgerFor(delivery.session.sessionId);
+			const fault = ledger.runtimes.accept(delivery.runtime);
+			if (fault !== undefined) {
+				// A runtime this host could not state is reported rather than filled in: no zero, no
+				// wall-clock span and no other duration stands in for it, and what was already
+				// accumulated stays where it is.
+				delivery.feedback.notify(
+					"error",
+					`子代理原生运行耗时不可用（${fault.fault}）；本次未记录耗时，已保留此前有效值。`,
+				);
+				return;
+			}
+			announce();
 		},
 		announceChanged() {
 			announce();

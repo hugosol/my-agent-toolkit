@@ -36,8 +36,9 @@ still describes the implemented surface, not the planned input seam or a complet
 | `OwnerCapabilityHandle` | [`protocol.ts#L432`](../core/protocol.ts#L432) | The owner-scoped capability a handler may retain — the declared-value seam plus the unified feedback channel, bound to the owner its delivery resolved — for the effects it drives after the delivery is over (a heartbeat timer, an outbound flusher). Valid while its owner lives, inert afterwards; carries no `hasUI`. See [Owner-scoped effect capabilities](#owner-scoped-effect-capabilities). |
 | `SessionEvent`, `SessionStartReason`, `SessionEndReason` | [`framework/core/protocol.ts#L76`](../core/protocol.ts#L76), [`#L44`](../core/protocol.ts#L44), [`#L54`](../core/protocol.ts#L54) | The session axis of the semantic lifecycle: the symmetric `session_start`/`session_end` pair and the reason vocabulary each member carries, plus `session_facts` — the one session delivery that is not a boundary, reporting a session's own facts where the harness learned they changed (a rename, most often) and reconciling nothing. |
 | `RoundEvent`, `RoundDelivery`, `RoundObservation` | [`framework/core/protocol.ts#L331`](../core/protocol.ts#L331) | The round axis of the semantic lifecycle: the edge-triggered `round_start`/`round_end` pair (no payload), the facts one edge carries, and the actual session (`SessionFacts`) it came from — plus the native run-cycle observation an adapter reports instead of an edge, which carries the harness's continuation flag and the live quiescence read the re-check asks. The framework mints and retires the round's identity per actual session from the edges its own synthesis dispatches; the identity is what a Turn's start facts name as the round it belongs to. |
-| `SemanticEvent`, `SemanticEventHandlers`, `SemanticEventDeliveryMap` | [`protocol.ts#L550`](../core/protocol.ts#L550), [`#L582`](../core/protocol.ts#L582), [`#L553`](../core/protocol.ts#L553) | All three axes as one handler surface: the event union (session, round and Turn), the handler map an implementation delivers for one subscription group keyed by event, and the map that keeps each kind paired with the delivery it carries. Which deliveries reach a handler is the group's declared `ObservationScope`, not this type. |
-| `SessionEventHandlers`, `SessionEventHandler`, `SessionEventDelivery`, `RoundEventHandlers`, `RoundEventHandler`, `TurnEventHandlers`, `TurnEventHandler` | [`protocol.ts#L266`](../core/protocol.ts#L266) | The per-axis handler aliases, keyed by event, and the delivery each one receives — the session axis's delivery carries the actual session's facts and the owner-scoped capability, the round axis's carries the session facts and no capability, and the Turn axis's carries the Turn's facts and no capability either. A handler may return a promise: the framework contains its rejection the way it contains a synchronous throw, and does not wait for it. All of these are public authoring types ([`framework/public.ts`](../public.ts)), not adapter exports. |
+| `SemanticEvent`, `SemanticEventHandlers`, `SemanticEventDeliveryMap` | [`protocol.ts#L550`](../core/protocol.ts#L550), [`#L582`](../core/protocol.ts#L582), [`#L553`](../core/protocol.ts#L553) | All four axes as one handler surface: the event union (session, round, Turn and subagent-runtime), the handler map an implementation delivers for one subscription group keyed by event, and the map that keeps each kind paired with the delivery it carries. Which deliveries reach a handler is the group's declared `ObservationScope`, not this type. |
+| `SessionEventHandlers`, `SessionEventHandler`, `SessionEventDelivery`, `RoundEventHandlers`, `RoundEventHandler`, `TurnEventHandlers`, `TurnEventHandler`, `SubagentRuntimeEventHandlers`, `SubagentRuntimeEventHandler`, `SubagentRuntimeDelivery` | [`protocol.ts#L266`](../core/protocol.ts#L266) | The per-axis handler aliases, keyed by event, and the delivery each one receives — the session axis's delivery carries the actual session's facts and the owner-scoped capability, the round axis's carries the session facts and no capability, the Turn axis's carries the Turn's facts and no capability either, and the subagent-runtime axis's carries the actual session the execution ran in, the reading and no capability. A handler may return a promise: the framework contains its rejection the way it contains a synchronous throw, and does not wait for it. All of these are public authoring types ([`framework/public.ts`](../public.ts)), not adapter exports. |
+| `SubagentRuntimeEvent`, `SubagentRuntimeFact`, `SubagentRuntimeDelivery` | [`framework/core/protocol.ts#L680`](../core/protocol.ts#L680) | The subagent-runtime axis of the semantic lifecycle: the one `subagent_runtime` kind, the reading it carries — the duration the harness itself measured for one *execution* of one actual session, or the reason this host produced none — and the actual session that execution ran in. A fact, never an edge: the final reading of an execution is not the end of that session's Round, and a session's creation-to-last-record span is a different metric that must never stand in for a runtime. See [The subagent-runtime axis](#the-subagent-runtime-axis-the-harnesss-own-per-execution-duration). |
 | Requirement types (`RequiredSemantic`, `DeclarableRequiredSemantic`, `FRAMEWORK_REQUIRED_SEMANTICS`) | [`framework/core/requirements.ts`](../core/requirements.ts) | The semantics a binding's behavior rests on: the framework's own, and the ones an assembly may declare its extension additionally depends on. Contract metadata for the independent verification — no runtime switch. |
 | `ConfigurationViolation` | [`framework/core/violations.ts`](../core/violations.ts) | The report of one broken configuration rule, carried by a `configuration` binding failure: a `ConfigurationViolationKind` and the deterministic `detail`. |
 | `ExtensionConfigDeclaration`, `ConfigFieldType`, `BOUND_CONFIG_FIELD_TYPES` | [`framework/core/definition.ts#L255`](../core/definition.ts#L255) | The configuration an extension requires of its own `config.yaml`: the file's path, and the keys the file must carry with the type each must match. See [Extension configuration](#extension-configuration-declaration--file). |
@@ -45,7 +46,7 @@ still describes the implemented surface, not the planned input seam or a complet
 | `readConfigDocument`, `isScheduledWait`, `SCHEDULED_WAIT_TEXT`, `describeValue` | [`framework/core/config.ts`](../core/config.ts) | The same reading and parsing seam used for a document the framework interprets itself rather than validating against a declaration — the shared configuration file, where a missing file is an answer rather than a failure — and the shared vocabulary for a value that is not what a configuration requires and for a wait this harness's timer schedules. |
 | `request`, `HttpRequestOptions`, `HttpConfigurationError` | [`framework/public.ts`](../public.ts), defined at [`framework/modules/http.ts`](../modules/http.ts) | The framework's general HTTP module: the one call shared logic imports directly, what a request declares (method, headers, body, `timeoutMs`, `proxy`), and the configuration failure a request may reject with before anything is sent. These are values — `defineExtension` and `request` are the entry's runtime exports. See [General HTTP module](#general-http-module). |
 | `updateFile`, `SafeFileUpdateOptions`, `SafeFileUpdateError`, `SafeFileUpdateFailureKind` | [`framework/public.ts`](../public.ts), defined at [`framework/modules/files.ts`](../modules/files.ts) | The framework's general safe-file module: the one coordinated read-modify-publish call shared logic imports directly, the absolute target and update function it takes, the wait budget and abort it accepts, and the distinguishable failure a refused coordination rejects with. These are values too — `defineExtension`, `request` and `updateFile` are the entry's runtime exports. See [General safe-file module](#general-safe-file-module). |
-| Adapter-facing delivery types (`OwnerReference`, `NoticeTransport`, `FeedbackLevel`, `FeedbackTransport`, `MarkerTransport`, `StateValues`, `TurnSignal`, `TurnSignalFacts`) | [`framework/core/protocol.ts#L15`](../core/protocol.ts#L15), [`#L907`](../core/protocol.ts#L907) | The facts and transports a harness adapter resolves; not authored by an extension. `HarnessPort.onTurn` ([`protocol.ts#L1023`](../core/protocol.ts#L1023)) is the hook an adapter reports its mapped model-cycle facts through. |
+| Adapter-facing delivery types (`OwnerReference`, `NoticeTransport`, `FeedbackLevel`, `FeedbackTransport`, `MarkerTransport`, `StateValues`, `TurnSignal`, `TurnSignalFacts`, `SubagentRuntimeDelivery`, `SubagentRuntimeFact`) | [`framework/core/protocol.ts#L15`](../core/protocol.ts#L15), [`#L907`](../core/protocol.ts#L907) | The facts and transports a harness adapter resolves; not authored by an extension. `HarnessPort.onTurn` ([`protocol.ts#L1023`](../core/protocol.ts#L1023)) is the hook an adapter reports its mapped model-cycle facts through, and `HarnessPort.onSubagentRuntime` ([`protocol.ts#L1324`](../core/protocol.ts#L1324)) the hook it reports one execution's own measured duration through. |
 
 A real, minimal consumer is the codebase-tools extension: the shared declaration is
 [`extensions/codebase-tools/definition.ts`](../../extensions/codebase-tools/definition.ts), its OMP assembly is
@@ -346,11 +347,12 @@ subscribes. The delivery each handler receives
 ([`protocol.ts#L266`](../core/protocol.ts#L266)) carries the event, the owner scope it concerns, the
 faithful `hasUI` fact, the unified extension feedback channel
 ([`protocol.ts#L111`](../core/protocol.ts#L111)) — the same two seams a command delivery carries, so
-one shared gate and one notice path serve both handler kinds and all three axes — and the owner-scoped capability a
+one shared gate and one notice path serve both handler kinds and every axis — and the owner-scoped capability a
 handler may retain for the effects it drives outside the delivery
 ([`protocol.ts#L703`](../core/protocol.ts#L703)), because a `session_start` is an arm path like a
 command. A round or Turn delivery carries the first three and the feedback channel, and no capability:
-neither edge is an arm path. The framework's
+neither edge is an arm path. A subagent-runtime delivery carries the same four and no capability
+either: it observes an execution the extension did not start and grants no authority over any session. The framework's
 own behavior for a session event always runs first — the one exception is `session_facts`, which crossed no
 boundary and therefore runs no framework behavior at all — and a handler that throws — or returns a promise that
 rejects — is reported on the adapter's diagnostic channel without changing what the framework already did or
@@ -447,6 +449,51 @@ main session spawns a real subagent that spawns a real grandchild, so all three 
 own identity, direct parent and Turn while the owner-scoped group is driven by the main session alone; and one
 run in which a real tool executes, where the harness's own `turn_end` — the one carrying that tool's result —
 is observed falling between two Turns rather than ending one.
+
+## The subagent-runtime axis: the harness's own per-execution duration
+
+A **subagent execution** is one spawn of one subagent session — one row of such a session however many times it
+ran (see [GLOSSARY.md](../GLOSSARY.md)). The axis carries one fact about such an execution: **the duration the
+harness itself measured for it**, which the host states while the execution runs and once it is over. The one
+event kind is `subagent_runtime`
+([`protocol.ts#L680`](../core/protocol.ts#L680)) and the delivery's `runtime` member is either a *reading* —
+the harness's own identity for the execution, the milliseconds it had run, and whether the harness reported it
+as over — or the fact that this host produced none, with the reason it could not.
+
+- **It is not the session's span.** A harness may persist the wall-clock distance from a session's creation to
+  its last record. That number counts the idle gaps between executions, so an adapter that reported one here
+  would be reporting pauses as work; what crosses this seam is only what the harness measured for the execution
+  it ran.
+- **It is not a Round edge and not a Turn.** A reading arrives while the session it belongs to is still working,
+  and the final reading of an execution is not the end of that session's Round. The framework therefore
+  synthesizes nothing on this axis and owns no state of its own.
+- **Which reading is what is the consumer's rule.** Whether a reading replaces an earlier reading of the same
+  execution, whether it is another execution's own contribution, and whether it merely repeats a completion
+  already accounted depend on the accumulation being kept — and the framework keeps none. It delivers every
+  fact exactly as the adapter mapped it, including a repeated one.
+- **Nothing persists a runtime here.** An extension that has to record one does so with the commit it already
+  makes for its own business, which is what keeps an execution's duration from causing a write of its own; a
+  reading that arrives after such a commit waits for the next one rather than delaying or re-writing it.
+- **Absence is named, and zero is a reading.** A host that reports no duration, or one that cannot be
+  attributed to a session, is delivered as `unavailable` — never as a zero and never as a span — while a
+  duration the harness really reported as `0` is a reading.
+- **The scope is the execution's own session.** A delivery names that session's identity, direct parent and
+  latest name, and resolves its owner through the session graph, so an `owner`-scoped group is not moved by a
+  child's work while a `session`-scoped group observes it — exactly as a subagent's own round edge and Turn are
+  scoped.
+- **It is subscribed only when an assembly asks for it.** `HarnessPort.onSubagentRuntime`
+  ([`protocol.ts#L1324`](../core/protocol.ts#L1324)) is registered only for the groups whose handlers cover
+  `subagent_runtime`, so a definition that does not care about an execution's duration asks its harness for no
+  such facts, and no ordering or pagination promise attaches to the ones it does ask for.
+
+On `omp` the adapter maps these facts from the harness's own delegation tool (`task`), whose progress frames
+carry a running spawn's own elapsed reading and whose settled result carries each spawn's final one; the
+execution's session and its direct parent are read from the harness's agent registry rather than from a name, a
+depth or anything that merely looks hierarchical. The rules above are observable at the adapter contract in
+`tests/framework/subagent-runtime.test.ts` — the two readings against the same agent record's much longer
+registered span, the attribution through the registry, and the unavailable shapes — and in a running harness in
+`tests/harness-dock/detail-tree.test.ts` and `tests/harness-dock/model-cost-persistence.test.ts`, where a real
+`task` call's children carry a duration the host really measured.
 
 ## Extension configuration (declaration + file)
 
@@ -741,7 +788,7 @@ to one stderr line when the session has no UI ([`omp.ts#L546`](../adapters/omp.t
 | `MarkerTransport` | [`protocol.ts#L324`](../core/protocol.ts#L324) | `{ publishMarkers(lines: readonly string[]): void }` — the transport for the unified marker area. |
 | `ViewedSessionPort` | [`protocol.ts`](../core/protocol.ts) | The session the host is displaying, as its adapter resolves it — the fact behind the one marker area's projection, and never authority: `read(): OwnerReference \| undefined` (the displayed session's position, re-read per publication; `undefined` means this harness publishes no outlet at all, while a resolved `unresolved` means the outlet exists and its owner could not be obtained) and `subscribe(listener: (markers: MarkerTransport) => void): () => void` (one listener per change of the display; the listener re-reads and publishes through the transport it is handed). A harness that publishes no such outlet omits the member on `HarnessPort`, and the framework then projects the position each delivery carries. |
 | `StateValues` | [`protocol.ts#L15`](../core/protocol.ts#L15) | `Readonly<Record<string, boolean>>` — the State values one write path records, by field name. |
-| `HarnessPort` | [`protocol.ts#L590`](../core/protocol.ts#L590) | The registration and feedback surface an adapter provides (`setLabel`, `reportDiagnostic`, `onSession`, `onRound`, `nextTask`, `onRunInitiation`, `registerCommand`), plus the facts it resolves when it can and omits when it cannot: `modelPrices`, `providerAccess` and `viewedSession`. `onRound` is subscribed only when the assembly injected a round handler, and what it receives are the harness's run-cycle observations (`RoundObservation`), not edges: the synthesis above decides which of them is a transition. `nextTask(callback)` is the harness's own task boundary, which is where the framework re-checks an end candidate — one callback per arrangement, no duration and no repetition. |
+| `HarnessPort` | [`protocol.ts#L590`](../core/protocol.ts#L590) | The registration and feedback surface an adapter provides (`setLabel`, `reportDiagnostic`, `onSession`, `onRound`, `onTurn`, `onSubagentRuntime`, `nextTask`, `onRunInitiation`, `registerCommand`), plus the facts it resolves when it can and omits when it cannot: `modelPrices`, `providerAccess` and `viewedSession`. `onRound` is subscribed only when the assembly injected a round handler, and what it receives are the harness's run-cycle observations (`RoundObservation`), not edges: the synthesis above decides which of them is a transition. `onSubagentRuntime` is subscribed only when a group observes that axis, and what it receives is one execution's own duration as the harness measured it (`SubagentRuntimeDelivery`), never a session's span. `nextTask(callback)` is the harness's own task boundary, which is where the framework re-checks an end candidate — one callback per arrangement, no duration and no repetition. |
 | `CanAcceptInput` | [`protocol.ts#L500`](../core/protocol.ts#L500) | `() => boolean \| undefined` — the framework's idle query: `true` when the agent can take input now, `false` when it is working, and `undefined` when the harness reports no idle fact at all (surfaced, never fabricated). It is a query and not a payload, carried by command invocations so the arm path can read the state it starts from without waiting for any event. |
 | `CommandInvocation` | [`protocol.ts#L511`](../core/protocol.ts#L511) | One command invocation's facts: the argument text, the owner, whether the session has a UI (`hasUI`), the idle query (`canAcceptInput`), the provider that session currently runs (`provider`, absent as `undefined` when the surface reports no current model), and the feedback, persistence and marker transports. |
 | `CommandDelivery` | [`protocol.ts#L566`](../core/protocol.ts#L566) | The invocation a handler receives: those facts plus the declared-value seam it writes through and the owner-scoped capability it may retain. |

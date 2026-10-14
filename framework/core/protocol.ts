@@ -661,6 +661,95 @@ export type TurnEventHandler = (delivery: TurnStartDelivery | TurnEndDelivery) =
 export type TurnEventHandlers = Readonly<Partial<Record<TurnEvent["kind"], TurnEventHandler>>>;
 
 /**
+ * One semantic subagent-runtime fact: the execution duration a harness itself measured and
+ * reported for one subagent execution of one actual session.
+ *
+ * It is a *fact*, never an edge, and it is deliberately not a Round edge either: an execution's
+ * duration arrives while the session it belongs to is still working — a harness reports its
+ * progress while the work runs — and the final reading arrives when the execution is over, which
+ * is not the same moment as the session's Round ending and must never be treated as one. Which
+ * readings are a replacement of an earlier reading of the same execution, which are a new
+ * execution's own contribution, and which repeat a reading already accounted are the consumer's
+ * rules; the framework carries the harness's own facts and decides nothing about them.
+ *
+ * It is also *not* the same metric as the wall-clock span a harness may persist for a session
+ * (creation to last record): that span includes the idle gaps between executions, so it can never
+ * stand in for a runtime. What crosses this seam is only what the harness itself measured for the
+ * execution it ran.
+ */
+export type SubagentRuntimeEvent = { readonly kind: "subagent_runtime" };
+
+/**
+ * The reading one subagent-runtime delivery carries, or the fact that this host produced none.
+ *
+ * `unavailable` is not an absent observation: the harness did report an execution, and the
+ * duration this host could not read, could not trust or could not attribute to a session is a
+ * fact an operator has to be told about. A reading of `0` is therefore a reading the harness
+ * really reported — a completed execution that consumed no measurable time — and never the
+ * placeholder an unavailable runtime leaves behind.
+ */
+export type SubagentRuntimeFact =
+	| {
+			/** Whether this reading is a replacement of the same execution's own earlier one, or its final one. */
+			readonly kind: "reading";
+			/** The harness's own identity for the execution this reading belongs to. */
+			readonly executionId: string;
+			/** The milliseconds that execution had run when the harness reported this reading. */
+			readonly runtimeMs: number;
+			/**
+			 * Whether the harness reported the execution as over at that instant.
+			 *
+			 * A later reading of the *same* execution replaces this one; an execution this host
+			 * reports as ended only once, however many times the same completion is observed.
+			 */
+			readonly status: "running" | "ended";
+	  }
+	| {
+			readonly kind: "unavailable";
+			/** Why this host could not produce a reading, as this host states it. */
+			readonly reason: string;
+	  };
+
+/**
+ * The facts one subagent-runtime observation carries, both to the adapter's hook and to the
+ * subscribed handler.
+ *
+ * Unlike a session delivery there is no withheld half: what the adapter mapped is what a handler
+ * receives. It carries the actual session the reported execution belongs to, the owner scope it
+ * concerns, the reading, the faithful `hasUI` fact and the unified extension feedback channel —
+ * the same seams every other handler delivery carries — and no write path, because observing a
+ * runtime grants no authority over the session it belongs to.
+ */
+export interface SubagentRuntimeDelivery {
+	readonly event: SubagentRuntimeEvent;
+	/** The owner whose agent this observation concerns, as the adapter resolved it. */
+	readonly owner: OwnerReference;
+	/**
+	 * The actual session the reported execution belongs to, as the adapter resolved it.
+	 *
+	 * A reading is only ever accumulated for a session a delivery names here, and this is never
+	 * the owner above: an execution a subagent ran names the subagent's own session.
+	 *
+	 * A runtime this host could not attribute to any session — the fact is then `unavailable` —
+	 * carries the session the observation was *made* in instead, which is the session whose own
+	 * work reported the execution.
+	 */
+	readonly session: SessionFacts;
+	/** The reading, or the reason this host produced none. */
+	readonly runtime: SubagentRuntimeFact;
+	/** Whether the session this observation carries has a UI, as the adapter resolved it. */
+	readonly hasUI: boolean;
+	/** The transport this observation's extension feedback is published through. */
+	readonly feedback: FeedbackTransport;
+}
+
+/** One extension handler for one semantic subagent-runtime fact. */
+export type SubagentRuntimeEventHandler = (delivery: SubagentRuntimeDelivery) => void | Promise<void>;
+
+/** The subagent-runtime handlers one assembly injects, keyed by the event each subscribes to. */
+export type SubagentRuntimeEventHandlers = Readonly<Partial<Record<SubagentRuntimeEvent["kind"], SubagentRuntimeEventHandler>>>;
+
+/**
  * One semantic input event: the one fact that a session took up input the harness itself attributed
  * to the user.
  *
@@ -702,13 +791,14 @@ export type UserInputEventHandler = (delivery: UserInputDelivery) => void | Prom
 
 /**
  * Any semantic lifecycle event the framework models: the session axis, the round axis, the Turn
- * axis and the input axis.
+ * axis, the subagent-runtime axis and the input axis.
  *
- * The axes are orthogonal and never merged — entering a session is not starting work, starting work
- * does not change which session is current, a Turn is not a Round, and input arriving is not itself
+ * The axes are orthogonal and never merged — entering a session is not starting work, starting
+ * work does not change which session is current, a Turn is not a Round, an execution's own
+ * duration is not the session's span nor the end of a Round, and input arriving is not itself
  * work — so this union exists only where one assembly injects its handlers for all of them.
  */
-export type SemanticEvent = SessionEvent | RoundEvent | TurnEvent | UserInputEvent;
+export type SemanticEvent = SessionEvent | RoundEvent | TurnEvent | SubagentRuntimeEvent | UserInputEvent;
 
 /** The delivery each semantic event kind carries, so a handler's kind and its facts stay paired. */
 export interface SemanticEventDeliveryMap {
@@ -720,6 +810,7 @@ export interface SemanticEventDeliveryMap {
 	readonly round_end: RoundDelivery;
 	readonly turn_start: TurnStartDelivery;
 	readonly turn_end: TurnEndDelivery;
+	readonly subagent_runtime: SubagentRuntimeDelivery;
 	readonly user_input: UserInputDelivery;
 }
 
@@ -728,17 +819,19 @@ export interface SemanticEventDeliveryMap {
  * subscribes to.
  *
  * This is the whole handler surface of one group: the session axis, the round axis, the Turn axis
- * and the input axis arrive here together, exactly as a directed command's implementations arrive
- * through `CommandActions`. A definition stays plain data either way: it names no handler, and an
- * event kind with no entry subscribes nothing.
+ * and the subagent-runtime axis and the input axis arrive here together, exactly as a directed
+ * command's implementations arrive through `CommandActions`. A definition stays plain data either
+ * way: it names no handler, and an event kind with no entry subscribes nothing.
  *
  * The session axis is a *reconciliation* trigger as well as a subscription — the framework
  * applies its own behavior for every delivery whether or not a handler arrived — while the round,
- * Turn and input axes are subscription only: three-value agent state is not framework State
- * (contract P6), a Turn changes nothing the framework owns beyond the identity bookkeeping it does
- * before a handler runs, and a user input crosses no boundary at all — it is a fact about the
- * session, not a transition of it. A `session_facts` delivery is subscription only as well, because
- * a session whose facts were re-reported crossed no boundary: nothing of the framework's moves, so
+ * Turn, subagent-runtime and input axes are subscription only: three-value agent state is not
+ * framework State (contract P6), a Turn changes nothing the framework owns beyond the identity
+ * bookkeeping it does before a handler runs, an execution's own duration changes nothing the
+ * framework owns at all — it is the extension's business to accumulate and to persist with its own
+ * next commit — and a user input crosses no boundary at all: it is a fact about the session, not a
+ * transition of it. A `session_facts` delivery is subscription only as well, because a
+ * session whose facts were re-reported crossed no boundary: nothing of the framework's moves, so
  * its own behavior is skipped and only the handlers that subscribe to that kind are reached.
  *
  * Which deliveries reach a handler is its group's {@link ObservationScope}, not this type: an
@@ -1258,6 +1351,19 @@ export interface HarnessPort {
 	 * maps the request hook, the response-boundary hook and the finalized assistant message.
 	 */
 	onTurn(handler: (facts: TurnSignalFacts) => void): void;
+	/**
+	 * Registers the framework's subagent-runtime hook: one observation per native execution-duration
+	 * reading the adapter mapped, for the session this binding serves.
+	 *
+	 * The hook reports the harness's own measurement of one *execution* — a subagent's own run, whose
+	 * duration the harness states while it is running and once it is over — together with the actual
+	 * session that execution belongs to. It is neither a Round edge nor a Turn, the final reading of
+	 * an execution is not the end of the session's Round, and a session's persisted wall-clock span
+	 * is a different metric that must never be reported here in a runtime's place. An adapter that
+	 * cannot read the duration, or cannot attribute the execution to a session, reports that fact
+	 * rather than dropping the observation or reporting a zero.
+	 */
+	onSubagentRuntime(handler: (delivery: SubagentRuntimeDelivery) => void): void;
 	/**
 	 * Registers the framework's input hook: one delivery per submission the harness itself
 	 * attributed to the user and admitted to the session this binding serves.

@@ -1,8 +1,9 @@
 # modelCost
 
 The consumption widget and the `/budget` command for an `omp` session: per-request cost anchored at
-the request's own peak/off-peak price, session and round totals, the independent Codex allowance
-estimate and the provider balance reading. The declaration is [`definition.ts`](definition.ts), the
+the request's own peak/off-peak price, session and round totals, each subagent session's own
+accumulated native runtime, the independent Codex allowance estimate and the provider balance
+reading. The declaration is [`definition.ts`](definition.ts), the
 business rules are under [`shared-logic/`](shared-logic), the OMP assembly is
 [`harnesses/omp.ts`](harnesses/omp.ts), the operator surfaces are documented by
 [`GLOSSARY.md`](GLOSSARY.md), and the maintained model/price data is documented in
@@ -59,6 +60,7 @@ real value" from "unavailable".
 | promise | what to watch in the real TUI | prepared expectation (recorded with the migration; not yet observed) |
 | --- | --- | --- |
 | P11 | Effort shows the level the request really ran with (not the configured intent), and a subagent's own view shows that subagent's level; an unreadable level is `?` | Focus a subagent spawned by a real `task` call: its own Effort (the level the host's own status line reports for it), its own context bar and its own current-model fields are the three things that must switch; the tree `Cost`/`Ref` must not move (the `Sum` column this round was recorded with is gone — no row writes it any more). Changing the subagent's thinking level updates Effort with no new model request; returning to the main session restores its values. Recorded RPC cross-checks: the shown Effort equals the host's own `thinkingLevel`; the current-model fields switch from `Cache: 67%  ¥Cache/In/Out：4:7:89` (main) to `Cache: 40%` (subagent) while `Sum: 6,100  Cost: ¥0.05` stays untouched. |
+| P10, P18, P19 | A subagent's own row states the runtime the host itself measured for that session's executions — the harness's native per-execution duration accumulated over the accounting period, saved beside that session's consumption as a number of milliseconds, neither a stopwatch of the extension's own nor the hub's creation-to-last-record span; a session nothing measured states `—` and a session whose execution really measured zero states `0ms` | After a real `task` call, `/budget detail` ends each child's row with `Run: <duration>` (milliseconds under a second, then `s`, `m` and `h`) while the root's own model row carries no such field, and a child whose host reported no duration keeps `Run: —` rather than a zero or a span. Focus, restart and resume the session, open the detail form again: the row still states what the document holds, no execution is charged twice, and a further spawn of that session adds only its own duration. Recorded dock cross-checks: a real delegating run's child record carried 754 ms — the host's own `durationMs` for that spawn, read back from the document as a number — with the main session's record carrying none, and a second process over the same storage drew that same figure rather than twice it. Restarting is judged by the row, not by a screenshot. |
 | P23 | `/budget detail` shows the Total block plus the static agent tree with a row per session and its own model — each row named by its session name, else its agent's own name, and only by an id when neither was reported — each subagent row beside its own current context (`Ctx: percent (tokens/budget)`, read against that channel's fixed display budget), and no `Round:` row | `/budget detail` keeps the context bar and the `Total:` line byte-identical, then replaces the Round rows with the static tree: the root name alone, a `│  provider / model` model row per model the root itself consumed (carrying that model's own fields; session rows carry no single-model ratio), and one `├─`/`└─`-indented row per own session. Recorded dock example (Main 6,000 tokens / `Cost: ¥0.01`; child 3,000 / `¥0.0050`; tree 9,000 / `¥0.02`): `dock-detail-main` / `│  deepseek / deepseek-flash  Cache: 50%  ¥Cache/In/Out：0:20:80  Sum: 6,000  Cost: ¥0.01` / `└─ <child agent name>  Cache: 50%  Sum: 3,000  Cost: ¥0.0050`. |
 | P26 | Viewing a subagent shows that subagent's own context and Round in the fixed brief form; moving back restores the main preference | Focus a subagent: it must show the fixed brief form — its own Effort, context, current-model fields and its own Round — with no tree; `Cost`/`Ref` remain the whole main tree (no row writes the `Sum` column the earlier round was recorded with). Returning to the main session restores the detail tree, and a subagent row reflects consumption recorded while you were away; `/budget detail` typed while focused only flips the entry preference, visible after returning; restarting the CLI returns to brief. |
 | P27 | The one marker line follows the session you are viewing (main ↔ subagent), and viewing never grants write authority | With two marker fixtures (`◈ followMarker` = follow, `◐ noneMarker` = none) enabled in the main session: the main view shows both lines sorted by id inside the one framework marker area; focusing the subagent shows only the follow row, reading the owner's current value live (turning the follow extension off while focused removes the row); losing the view target falls back to the main session and both lines return. Viewing never grants write authority, and the main area is never blanked by the subagent's own publication — the delegation regression the recorded run fixed. |
@@ -67,8 +69,8 @@ real value" from "unavailable".
 
 No screenshot or recording could be produced in the agent's environment (no interactive TUI), so
 this round is judged from what you see — that limitation is recorded rather than worked around.
-Everything above is prepared material, not a result: P11, P23, P26, P27, P41 and P67 stay
-unverified until you record this round.
+Everything above is prepared material, not a result: P10, P11, P18, P19, P23, P26, P27, P41 and P67
+stay unverified until you record this round.
 
 ### H2 — a real provider's effect
 

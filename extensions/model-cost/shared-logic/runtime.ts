@@ -386,6 +386,14 @@ export function createModelCostRuntime(inputs: ModelCostRuntimeInputs): ModelCos
 			stateProviderFailures(delivery);
 			accounting.sessionFacts(delivery.session);
 		},
+		// The harness's own measurement of one subagent *execution*'s duration. It is a fact about the
+		// session's work rather than a boundary of it, so it settles nothing here: what it contributes
+		// rides the same commit the session's own Round end already makes, and it never opens, closes or
+		// saves anything by itself.
+		subagent_runtime: delivery => {
+			stateProviderFailures(delivery);
+			accounting.subagentRuntime(delivery);
+		},
 	};
 
 	return {
