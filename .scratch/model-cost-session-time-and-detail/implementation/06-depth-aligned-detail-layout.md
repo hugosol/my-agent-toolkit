@@ -8,7 +8,7 @@
 
 **Blocked by:** 02 — 子代理原生运行耗时的累计与落盘；03 — 正确任务名称与不可变启动快照；05 — 移除 Sum，保留消费字段语义。
 
-**Status:** in-progress（实现、自动化检查与集成分支 tip 的合入已完成；关闭待父级验收）
+**Status:** in-progress（实现、自动化检查、真实终端设备证据与集成分支 tip 的合入已完成；仅 P33 的可读性判断留给用户，关闭待父级验收）
 
 Source: [approved contract](../contract.md) · [spec](../spec.md)
 
@@ -67,3 +67,43 @@ Source: [approved contract](../contract.md) · [spec](../spec.md)
 2. **真实终端设备缺失**：agent 环境 `process.stdout.isTTY` 为 false（`TERM=dumb`、`pty requested but unavailable`），smoke 的帧与观测列是同一生产前端在同一宽度下的输出，但没有在真实终端设备上显示过；用户运行上述命令即可补齐这一目视证据。
 3. **dock 与本 checkout 的行尾**：`host-patches/omp-18.5.0-*/patch.diff` 在工作树里是 CRLF（本地 `core.autocrlf=true`），`patchTouchedFiles` 的正则因此解析不到文件，dock 套件在本 checkout 会直接报 `patch.diff touches no file`；上面两个 dock 文件是在把两个 patch 临时转为 LF 后跑通的，随后已 `git checkout` 恢复（工作树干净）。这是环境／checkout 问题，不是本票改动，未在本票修改共享 harness。
 4. 本票未改 spec／contract／其他票据，未建补丁、未新增加依赖（`package.json` 只新增一个 smoke 脚本，`bun.lock` 未变）。
+
+## Execution record（agent，2026-10-14，真实终端设备证据）
+
+上节第 2 条（真实终端设备缺失）已由本轮补齐；实现代码未变，只新增设备侧证据工具与本次观测。
+
+**新增／改动**：`scripts/model-cost-detail-layout-terminal-smoke.ts`（新，设备侧 smoke，`bun run smoke:model-cost-detail-layout-terminal`）；`scripts/support/detail-layout-fixture.ts`（新，把原 smoke 的 fixture（树文档、记录型宿主、主题、读列辅助）提出来，两个 smoke 共用一套；原 `scripts/model-cost-detail-layout-smoke.ts` 改为引用它，输出与改动前逐字节相同，见下）；`package.json` 新增该 npm script。未触碰扩展实现、spec、contract、omp 与宿主补丁。
+
+**测量方式（都是设备自己的数）**：在真实 Windows 控制台（ConPTY＝conhost）里运行；每个宽度先让控制台变成该宽度（`SetConsoleWindowInfo`＋`SetConsoleScreenBufferSize`，无会话模式；或由客户端 `ResizePseudoConsole` 改宽度，`--device-session` 模式），随后读 `GetConsoleScreenBufferInfo` 得到**设备自报宽度**并按它绘制，再把帧写进控制台，最后用 `ReadConsoleOutputCharacterW`＋`ReadConsoleOutputAttribute` 读回**设备自己的单元格**：字段起始列＝标签首字符所在单元格的下标（标签是 ASCII，1 字符 1 格），中文名的宽度＝设备花在它上面的格数（宽字符的首格带 `0x0100`、次格带 `0x0200`，次格不画字符），颜色＝该格的前景属性。逐行测量时先读光标行再写该行，写完先读回该行才换行，因此滚动不会移动已读的内容。无会话模式由进程自己让控制台变宽；`--device-session` 模式由客户端（模拟终端窗口 resizing）改宽度，进程每见设备宽度变化就重画一次。为无终端环境准备了 ConPTY 驱动器（`CreatePseudoConsole`＋`CreateProcessW(PROC_THREAD_ATTRIBUTE_PSEUDOCONSOLE)`；子进程不继承本进程的管道句柄并清空 std handle，控制台才把伪句柄给它；`ClosePseudoConsole` 在本机阻塞，故读完流即以进程退出收尾），本票不使用它作为交付物，只用于本轮自动证据。
+
+**观测证据**（同一 fixture；设备列＝`cellWidth/字段列`，均与前端声明列完全相等）：
+
+| 宽度（设备自报） | depth1（检索定价核查表／pricing-scan） | depth2（两个孙代理，父不同） | 中文名设备跨度 | 颜色 |
+|---|---|---|---|---|
+| 120 | Model 19 / Effort 53 / Cache 67 / Cost 79 / Run 94 | Model 35 / Effort 45 / Cache 61 / Cost 73 / Ctx 86 / Run 112 | 主会话=6、检索定价核查表=14、孙子代理乙=10 格（7 字＝14 格） | 树行全是设备默认属性 7；账户行 2/3/5/6/7 四段色，着色前后列与宽度不变 |
+| 100 | Model 19 / Effort 52 / Cache 66 / Cost 78 / Run 93 | Model 15 / Effort 25 / Cache 41 / Cost 53 / Ctx 66 / Run 92（名称 `detail…`、模型 `deepseek / deepseek-fla…`） | 主会话=6、检索定价核查表=14 | 同上 |
+| 60 | Model 9 / Effort 19 / Cache 33 / Cost 45；续行 Run 9 | Model 12 / Effort 22 / Cache 38；续行 Cost 12 / Ctx 25 / Run 51（无 Ctx 的行 Run 仍 51） | 主会话=6 | 同上 |
+| 120（重画） | 与首次 120 逐格相同 | 同上 | 同上 | 同上 |
+
+同一轮 36 项设备检查全 PASS，含：设备按声明宽度整行画完（树行每行占一行、格宽＝前端声明宽度）；每个字段的设备列＝前端声明列；同深度各行设备列相同、不同深度列不同（120：depth1 19/53/67/79/94，depth2 35/45/61/73/86/112）；缺字段的行后续字段仍在原列（无 Cost/Ctx 的孙行 Run 仍 112，60 列时仍 51）；主题只加颜色不加列（着色帧与无色帧同列同宽）；中文名每字 2 格；各宽度保留字段读数相同（14 个值）；重画回原宽度格内容逐格一致；storage JSON 1384 字节逐字节未变且仍含全名、`deepseek-flash` 启动快照与 `runtimeMs:480000`。
+
+**resize 证据**：两次真实运行都是 120→100→60→120 四个 pass 全 PASS——(a) 无头 ConPTY 会话，客户端 `ResizePseudoConsole` 改宽度；(b) 真实 Windows Terminal 窗口，由进程让控制台改宽（`--size`/`--report` 之类参数会被 `wt.exe` 自己吃掉，故无参数启动，报告写到系统临时目录）。两轮报告分别为 `conpty-report.json`、`windows-terminal-report.json`（本轮证据目录）。注意：bun 的 `process.stdout.columns` 在设备改宽后仍是旧值（两轮都报 120），本 smoke 因此始终用设备自报宽度绘图并在报告里如实记录该字段。
+
+**故障注入**（随后恢复并确认 36 PASS）：把 `textColumns` 换成「字符数」→ 36 项里 15 项失败，含「同深度共享设备列」（`Model=24 … | Model=17 …`）、「字段设备列＝前端声明列」（`Cache=30 Cost=65 vs Cache=30 Cost=64`）、「整行画完」（6 行中仅 2 行合规）。说明设备读数确实能判出宽度函数错误。
+
+**实际运行的命令与结果**：
+
+- `bun run typecheck` → 通过。
+- `bun test tests/model-cost` → 339 pass / 0 fail（26 文件）。
+- `bun run smoke:model-cost-detail-layout --widths 160,120,100,80,60,40` → 输出与抽出共用 fixture 之前逐字节相同（`diff` 无差异）。
+- `bun run smoke:model-cost-detail-layout-terminal`（无头 ConPTY，`--device-session --session-passes 4`，宽度序列 120,100,60,120）→ 4 pass / 36 项检查全 PASS，流 26726 字节。
+- 同上无参数在真实 Windows Terminal 窗口运行 → 4 pass / 36 项检查全 PASS。
+- `bun test tests/harness-dock/detail-tree.test.ts` → 本 checkout 仍 0 pass / 1 fail，失败在启动即 `patch.diff touches no file`（上节第 3 条的 CRLF 环境问题，与本票改动无关；本票本轮未改共享 harness，故未再临时改行尾）。
+
+**未完成／限制**：
+
+1. **P33 人工可读性仍未验证**（唯一留给用户的门禁）：缩略 `…` 与组内续行的可读性需用户目视判断。证据已备：`bun run smoke:model-cost-detail-layout-terminal` 在用户自己的终端里就会按 120/100/60/120 重画并读回设备格；另有上面的逐宽度设备列与 `bun run smoke:model-cost-detail-layout` 的帧。
+2. **无显示级像素证据**：本轮是控制台设备级证据（conhost 的屏幕缓冲与属性），不是屏幕截图，也没有人眼看过；agent 环境无交互 TTY，真实窗口是脚本拉起后自动关闭的。用户在自己终端跑一次即可补上目视证据。
+3. **设备把非 BMP 字符画成 U+FFFD**：账户行的 🌙 在控制台缓冲里就是 U+FFFD（占 2 格），是 conhost 的表现，不是前端截图问题；对本票的列与数值无影响。
+4. **Total／账户行不随终端变窄**：60 列时 Total 行本身超过控制台宽度、由控制台折行；本票边界明确不要求 Total 与子代理行共用列宽，故本 smoke 的列检查只作用于树行，未对 Total 行作任何断言。
+5. bun 不发出 resize 通知（两轮都是 0 次）；宽度改动的证据是设备自报宽度与逐 pass 重画，不是事件。（真实宿主自行决定何时以新宽度重画，属宿主职责。）

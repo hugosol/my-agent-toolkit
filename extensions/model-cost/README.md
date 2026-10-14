@@ -68,14 +68,22 @@ real value" from "unavailable".
 | P41 | Crossing a peak/off-peak boundary — and the holiday marker on the first holiday period — redraws the block once, with no request issued | At a Beijing-time peak/off-peak boundary — and on the first holiday period — the marker and the whole block redraw once, and the boundary itself issues no request. Recorded automatic cross-checks: one one-shot timer per UI process; the boundary is endpoint-inclusive (12:00:00.000 is still peak, so the next change answers 12:00:00.001); after a sleep or block it re-arms from the actual clock; holiday periods do not arm; no UI does not arm; the callback touches no network, file or ledger. |
 | P67 | The approved visual form: the old single monetary account row (season marker, bar bands, `💰 Balance:` and `Accrued` segment colours together), the balance warning thresholds (a token-only or allowance view draws no balance at all), Codex pacing rows, and the four-step narrow-width degradation | One monetary account row: season marker + budget bar + `Effort:` + `💰 Balance:` + `⏳ Accrued:` (with its segment bar) on a single line — the form restored after the H1 review feedback of 2026-10-14 rejected the split balance/accrued rows — then `Total:` and, in detail, the tree. A token-only or allowance view draws no balance and no accrued row. Thresholds and colours: budget bands `<36%` dim / `36–63%` success / `64–81%` warning / `≥82%` error; balance `<5` error / `5–9.99` warning / `≥10` plain; accrued fine blocks ≤ ¥20 (5-fen granularity) and coarse > ¥20 (¥1) with the eight-colour cycle; Effort colours only the value, via the host theme. Codex 5h row narrow-width degradation: 200 → 20-cell bar + time marker + `85.0% / 80.0% · resets in 1h (dd/HH:MM)`; 50 → `5h 85.0% / 80.0% · resets in 1h (dd/HH:MM)`; 40 → `5h 85.0% / 80.0% · resets in 1h`; 20 → `5h 85.0% / 80.0%`; 10 → `5h 85.0% …`. Host-theme colours, fonts and the real narrow-width rendering are the remaining visual judgement. |
 
-No screenshot or recording could be produced in the agent's environment (no interactive TUI), so
-this round is judged from what you see — that limitation is recorded rather than worked around.
-Everything above is prepared material, not a result: P10, P11, P18, P19, P23, P26, P27, P41 and P67
-stay unverified until you record this round. Of P30–P33 only the readability of an abbreviation and
-of a wrapped group is yours to judge: their column alignment, their reserved slots, their measurement
-of Chinese names in terminal columns, their cuts, their wraps and their resize are checked by
-`tests/model-cost/detail-layout.test.ts` and by `bun run smoke:model-cost-detail-layout`, whose
-frames, observed columns and line widths are the prepared evidence for the judgement.
+No screenshot or recording could be produced in the agent's environment, and what was measured there
+was read through the console's own API rather than looked at: this round's rows are still judged from
+what you see, and the limitation is recorded rather than worked around. Everything above is prepared
+material, not a result: P10, P11, P18, P19, P23, P26, P27, P41 and P67 stay unverified until you
+record this round. Of P30–P33 only the readability of an abbreviation and of a wrapped group is yours
+to judge: their column alignment, their reserved slots, their measurement of Chinese names in terminal
+columns, their cuts, their wraps and their resize are checked by `tests/model-cost/detail-layout.test.ts`
+and by two smokes — `bun run smoke:model-cost-detail-layout`, which measures the lines the frontend
+hands a host, and `bun run smoke:model-cost-detail-layout-terminal`, which draws those lines on a real
+Windows console and reads the *device's* own cells back: the column each field landed in, the colour
+each cell carries, the width the console states after a resize, and the Chinese names measured in the
+cells the console spends on them. A recorded run of the latter at 120, 100, 60 and 120 columns — once
+through a headless ConPTY session resized by its client, once in a Windows Terminal window — passed
+all 36 of its checks and left the stored document untouched. Run it in your own terminal — it resizes
+the console itself and redraws at each width — beside `bun run smoke:model-cost-data`, the heavier
+smoke recorded with this migration.
 
 ### H2 — a real provider's effect
 

@@ -10,6 +10,7 @@
     "smoke:http-transport": "bun scripts/http-transport-smoke.ts",
     "smoke:model-cost-data": "bun scripts/model-cost-data-smoke.ts",
     "smoke:model-cost-detail-layout": "bun scripts/model-cost-detail-layout-smoke.ts",
+    "smoke:model-cost-detail-layout-terminal": "bun scripts/model-cost-detail-layout-terminal-smoke.ts",
     "verify:omp-candidate": "bun scripts/verify-omp-candidate.ts",
     "typecheck": "tsc --noEmit"
   },
