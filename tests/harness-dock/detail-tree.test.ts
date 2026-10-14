@@ -248,6 +248,22 @@ function figuresOf(record: SavedSession): { readonly sum: number; readonly cache
 	return { sum, cache: input + cacheRead > 0 ? Math.round((cacheRead / (input + cacheRead)) * 100) : 0 };
 }
 
+/**
+ * The milliseconds one drawn runtime field states, or nothing when it states no duration at all.
+ *
+ * The form is the display's own — milliseconds under a second, then seconds, whole minutes and hours,
+ * a compound only where the figure needs it — so a case reads the figure back rather than pinning the
+ * wording. The unavailable marker the same field carries is deliberately not a duration: a host that
+ * measured nothing and a host that really measured a duration must not read the same here.
+ */
+function drawnRuntimeMs(text: string): number | undefined {
+	const match = /^(\d+)(ms|s|m|h)(?:(\d+)(s|m))?$/.exec(text.trim());
+	if (match === null) return undefined;
+	const unit = { ms: 1, s: 1_000, m: 60_000, h: 3_600_000 }[match[2] as "ms" | "s" | "m" | "h"];
+	const rest = match[3] === undefined ? 0 : Number(match[3]) * (match[4] === "s" ? 1_000 : 60_000);
+	return Number(match[1]) * unit + rest;
+}
+
 /** Lets the event loop turn over until nothing already queued is left. */
 async function queuedWorkSettled(): Promise<void> {
 	const { promise, resolve } = Promise.withResolvers<void>();
@@ -396,17 +412,29 @@ describe("the real host's widget: a brief with its own Round, then the static de
 			expect(detail[2]).toBe(
 				`\u2502  ${MODEL_PROVIDER} / ${MODEL_ID}  Cache: ${main.cache}%  \u00A5Cache/In/Out\uff1a0:20:80  Sum: ${main.sum.toLocaleString("en-US")}  Cost: \u00A50.01`,
 			);
-			// The child's own row carries its accumulation and the current context the harness recorded from
-			// that subagent's own binding: `percent (tokens/budget)`, the same form the bar above reads and
-			// against the monetary channel's own fixed display budget — never the host's context window.
+			// The child's own row carries its accumulation, the current context the harness recorded from
+			// that subagent's own binding — `percent (tokens/budget)`, the same form the bar above reads
+			// and against the monetary channel's own fixed display budget, never the host's context
+			// window — and, after it, the runtime the host itself measured for that child's executions.
 			// The token figure is the host's own estimate of the child's conversation rather than a number
 			// this document holds, so it is pinned to the form and the budget, not to a token count.
 			const childRow = String(detail[3]);
+			const runtimeMark = "  Run: ";
 			const childPrefix = `\u2514\u2500 ${childRecord.name}  Cache: ${child.cache}%  Sum: ${child.sum.toLocaleString("en-US")}  Cost: \u00A50.0050  Ctx: `;
 			expect(childRow.startsWith(childPrefix)).toBe(true);
-			const childContext = childRow.slice(childPrefix.length);
+			const [childContext, childRuntime] = childRow.slice(childPrefix.length).split(runtimeMark);
+			expect(childRuntime).toBeDefined();
 			expect(childContext).toMatch(/^\d+% \([\d.,]+K?\//);
 			expect(childContext.endsWith(`/${formatTokens(DEEPSEEK_DISPLAY_BUDGET)})`)).toBe(true);
+
+			// What the row states there is a duration the real host really measured for that subagent's own
+			// execution — read back from the drawn field, so a host that had produced no such reading (the
+			// unavailable marker) cannot pass as one. The run reported no unusable runtime either, which is
+			// what the notices below are: an execution the host stated and this extension could not use
+			// would arrive as an error there. The root's own model row above carries no runtime at all: a
+			// runtime belongs to the session an execution ran in, and the main session is not one.
+			expect(drawnRuntimeMs(childRuntime)).toBeGreaterThan(0);
+			expect(String(detail[2])).not.toContain(runtimeMark);
 			expect(detail.some(line => line.startsWith("Round:"))).toBe(false);
 			// The tree's own Sum is the two records' own Sums added once each: the model row above is the
 			// main session's own alone, so nothing here is an inclusive figure counted twice.

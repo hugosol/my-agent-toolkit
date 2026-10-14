@@ -1091,11 +1091,12 @@ describe("the production documents of one storage root, read back independently 
 				expect(parent?.own[DEEPSEEK_PROVIDER]?.["deepseek-flash"]?.tokens).toEqual(usageOfRequests(3, DEEPSEEK_USAGE));
 
 				// The subagent runtime: each child's own record carries the duration the host really
-				// measured for its executions, as a number of milliseconds, and the parent's record — the
-				// main session's own — carries none. What the host measured is a subagent's execution, and a
-				// final reading that arrived after a child's own commit is allowed to be unsaved, so the
-				// assertion is that the field is the right kind of number and never on the wrong session.
-				expect(children.every(child => child.runtimeMs === undefined || child.runtimeMs > 0)).toBe(true);
+				// measured for its executions, as a positive number of milliseconds, and the parent's record
+				// — the main session's own — carries none. What is committed may be the last reading the
+				// commit caught rather than the settled one (a settled reading that arrived after a child's
+				// own commit is allowed to be unsaved), but a subagent whose executions the host measured is
+				// never left unknown here: the host states each spawn's own duration while it runs.
+				expect(children.every(child => typeof child.runtimeMs === "number" && child.runtimeMs > 0)).toBe(true);
 				expect(parent?.runtimeMs).toBeUndefined();
 				// And the run reported no unusable runtime: every execution the host stated was attributed to
 				// the session it ran in and read as a duration, which is what an extension notices when it

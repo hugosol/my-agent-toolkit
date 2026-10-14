@@ -8,7 +8,7 @@
 
 **Blocked by:** None (can start immediately).
 
-**Status:** ready-for-agent
+**Status:** in-progress — implemented and tested on this ticket's branch (the host's own per-execution duration accumulated per session, saved as numeric milliseconds with the existing commit, drawn on the detail row as `Run:`, with real-host and real-process evidence); awaiting integration-branch merge and acceptance.
 
 Source: [approved contract](../contract.md) · [spec](../spec.md)
 

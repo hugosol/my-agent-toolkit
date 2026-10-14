@@ -481,4 +481,37 @@ describe("a session's runtime merges through the same coordinated commit (P35)",
 		expect(third.commits).toEqual([{ kind: "saved" }]);
 		expect(byId()).toEqual([{ ...session("session-child-one", null, 2), runtimeMs: 480_000 }, secondRecord]);
 	});
+
+	test("an execution observed a second time contributes no second time, at the same version or a later one", async () => {
+		const run = tempDirectory("runtime-twice");
+		const storeDirectory = path.join(run, "store");
+		const config = configRepository("runtime-twice-config", storeDirectory);
+		const workA = tempDirectory("runtime-twice-a");
+		const workB = tempDirectory("runtime-twice-b");
+		const workC = tempDirectory("runtime-twice-c");
+		// One execution's own duration, as the record of the version that produced it states it.
+		const observed = { ...session("session-child", null, 1), runtimeMs: 360_000 };
+
+		const first = await runChild(childPlan({ ...config, run, label: "first", record: observed }), { cwd: workA });
+		expect(first.commits).toEqual([{ kind: "saved" }]);
+
+		// Another process states that same execution again — the same figure at the same version — and the
+		// coordinated commit answers it as the content the file already carries rather than as a new
+		// contribution.
+		const second = await runChild(childPlan({ ...config, run, label: "second", record: observed }), { cwd: workB });
+		expect(second.commits).toEqual([{ kind: "unchanged" }]);
+		expect(storedDocument(storeDirectory).harnesses.omp?.sessions).toEqual([observed]);
+
+		// A later process commits its own next version of that session with the same one execution behind
+		// it: the file's figure is what that execution ran — 360000, never the 720000 a second contribution
+		// would make of two writes — because a repeated observation states a figure rather than adding one.
+		const third = await runChild(
+			childPlan({ ...config, run, label: "third", record: { ...session("session-child", null, 2), runtimeMs: 360_000 } }),
+			{ cwd: workC },
+		);
+		expect(third.commits).toEqual([{ kind: "saved" }]);
+		expect(storedDocument(storeDirectory).harnesses.omp?.sessions).toEqual([
+			{ ...session("session-child", null, 2), runtimeMs: 360_000 },
+		]);
+	});
 });

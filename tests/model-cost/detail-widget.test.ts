@@ -26,7 +26,7 @@ import type { ConsumptionDocument } from "../../extensions/model-cost/shared-log
 import type { ModelPricingData } from "../../extensions/model-cost/shared-logic/model-data";
 import type { ModelCostRuntime } from "../../extensions/model-cost/shared-logic/runtime";
 import { createModelCostRuntime } from "../../extensions/model-cost/shared-logic/runtime";
-import type { OwnerReference, SessionFacts, TurnSignal, TurnUsage } from "../../framework/core/protocol";
+import type { OwnerReference, SessionFacts, SubagentRuntimeFact, TurnSignal, TurnUsage } from "../../framework/core/protocol";
 import { type PortDouble, portDouble } from "../framework/support/harness-port-double";
 import { uiBoundaryTimerOf } from "./support/ui-timer";
 
@@ -278,6 +278,11 @@ function settleTurn(double: PortDouble): void {
 	);
 }
 
+/** One native execution-duration reading, as an adapter maps it for one execution of one session. */
+function runtimeReading(executionId: string, runtimeMs: number, status: "running" | "ended"): SubagentRuntimeFact {
+	return { kind: "reading", executionId, runtimeMs, status };
+}
+
 afterEach(() => {
 	while (roots.length > 0) rmSync(roots.pop() as string, { recursive: true, force: true });
 });
@@ -395,6 +400,33 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 			total,
 			"Round:  Cache:  0%  ¥Cache/In/Out：0:20:80  Sum:    20  Cost: ¥0.0001",
 		]);
+	});
+
+	test("the child's own row draws the runtime the host measured, and a measured zero is not the missing marker", async () => {
+		const bound = await bindWidget();
+		await bound.double.runToCompletion("budget", { args: "detail" });
+		const childRow = (): string | undefined => bound.host.lastLines()?.find(line => line.includes("子代理"));
+
+		// Nothing has been measured for the subagent's own executions: its row keeps the runtime field and
+		// states that fact, which is not a zero.
+		expect(childRow()).toBe("└─ 子代理  Cache: 40%  Sum: 100  Run: —");
+
+		// The harness states one completed execution's own duration — 480,000 milliseconds, eight whole
+		// minutes, a figure stated here rather than read back from the widget — and the row draws it.
+		bound.double.deliverSubagentRuntime({ runtime: runtimeReading("0-Explore", 480_000, "ended"), session: SUB });
+		expect(childRow()).toBe("└─ 子代理  Cache: 40%  Sum: 100  Run: 8m");
+
+		// An execution that really took no measurable time is a reading the harness made, so a session
+		// whose only reading is that zero draws the zero — never the marker above.
+		const measuredZero = await bindWidget();
+		await measuredZero.double.runToCompletion("budget", { args: "detail" });
+		measuredZero.double.deliverSubagentRuntime({
+			runtime: runtimeReading("0-Explore", 0, "ended"),
+			session: SUB,
+		});
+		expect(measuredZero.host.lastLines()?.find(line => line.includes("子代理"))).toBe(
+			"└─ 子代理  Cache: 40%  Sum: 100  Run: 0ms",
+		);
 	});
 
 	test("a headless entry draws nothing, and the toggle still flips without creating a widget", async () => {
