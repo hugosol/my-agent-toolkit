@@ -370,8 +370,10 @@ describe("a real submission establishes and advances the main session's span (P1
 			// The submission really was that skill: the request the harness sent its provider carries the
 			// skill file's own body, so what the extension was told about is a user-invoked skill that ran
 			// and not a slash-shaped prompt. A harness that resolved no such skill would send the raw text
-			// and carry no marker at all.
-			expect(run.capture.requests().some(request => request.raw.includes(SKILL_BODY))).toBe(true);
+			// and carry no marker at all. It is also this run's only request, which is what makes the saved
+			// start the skill submission's own: no other submission and no other Round exists here.
+			expect(run.capture.requests()).toHaveLength(1);
+			expect(run.capture.requests()[0]?.raw.includes(SKILL_BODY)).toBe(true);
 
 			// The host published its own submission fact for it — the same fact an ordinary prompt gets —
 			// and the extension recorded no failure of its own clock while doing so.
