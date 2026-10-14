@@ -16,6 +16,11 @@
  * than the session's creation, and a second submission moves the end and not the start — instead of
  * hard-coded values.
  *
+ * One case submits a skill rather than prose: the run writes its own `SKILL.md` into its isolated
+ * agent state, the user invokes it as `/skill:<name>`, and the harness's request is read back for the
+ * skill's own body. That makes the skill half of `P2` an observation about a submission the harness
+ * really resolved as a user-invoked skill, not an inference from the shape of a prompt.
+ *
  * Every request is reached through the dock's own capture endpoint, so the run needs no credential
  * and nothing leaves the machine; its agent state, session directory, working directory and storage
  * root all sit inside its temporary run root, and nothing here touches the production OMP
@@ -45,6 +50,11 @@ const CONSUMPTION_FILE = "consumption.json";
 /** The submission the first Round carries, and the second one that must not restart the clock. */
 const FIRST_PROMPT = "dock span run: one exchange for the session span";
 const SECOND_PROMPT = "dock span run: a second exchange in the same session";
+/** The user-invoked skill one case carries: its name, and the marker only its own body holds. */
+const SKILL_NAME = "dock-span-skill";
+const SKILL_BODY = "DOCK-SPAN-SKILL-MARKER-7f31 — this skill's own body, present only while it runs.";
+/** The user's own submission of that skill, exactly as the RPC client sends it. */
+const SKILL_PROMPT = `/skill:${SKILL_NAME} dock span run: one exchange through a user-invoked skill`;
 /**
  * How long the run leaves the session idle before the first submission.
  *
@@ -132,12 +142,37 @@ interface DockRun {
 	readonly startedAt: number;
 }
 
+/** What one run is given before its session starts: nothing, or the skill it must be able to invoke. */
+interface StartRunOptions {
+	/** A user-invoked skill to make discoverable in this run's own agent state. */
+	readonly skill?: { readonly name: string; readonly body: string };
+}
+
+/**
+ * One skill file inside the run's own agent state, where the harness's own user-level skill scan
+ * looks for it (`skills/<name>/SKILL.md` under `PI_CODING_AGENT_DIR`).
+ *
+ * The harness reads the description from the frontmatter — a skill without one is not discovered —
+ * and takes the body as the skill's own material. The fixture is written before the session starts,
+ * because the harness resolves the skills a session may invoke while it boots; it lives and dies
+ * inside this run's temporary run root, and no shipped configuration or skill is touched by it.
+ */
+function writeSkillFixture(agentDir: string, skill: { readonly name: string; readonly body: string }): void {
+	const directory = path.join(agentDir, "skills", skill.name);
+	mkdirSync(directory, { recursive: true });
+	writeFileSync(
+		path.join(directory, "SKILL.md"),
+		`---\nname: ${skill.name}\ndescription: Dock fixture skill, present only in this run's own agent state.\n---\n\n${skill.body}\n`,
+	);
+}
+
 /** One run: an isolated home whose storage root the extension's own shipped `config.yaml` names. */
-async function startRun(label: string): Promise<DockRun> {
+async function startRun(label: string, options?: StartRunOptions): Promise<DockRun> {
 	const runRoot = createRunRoot(label);
 	const home = path.join(runRoot.path, "user-home");
 	const storageDirectory = path.join(home, ".omp", "cost-archive");
 	mkdirSync(storageDirectory, { recursive: true });
+	if (options?.skill !== undefined) writeSkillFixture(runRoot.agentDir, options.skill);
 	const capture = startCaptureServer({ dir: runRoot.captureDir, replyText: "dock model-cost reply", usage: CAPTURE_USAGE });
 	writeProviderOverride(runRoot.agentDir, PROVIDER, { baseUrl: capture.baseUrl, apiKey: "dock-key" });
 	const startedAt = Date.now();
@@ -312,6 +347,54 @@ describe("a real submission establishes and advances the main session's span (P1
 			const total = await totalLineUntil(
 				run.session,
 				line => line.endsWith(`Span: ${displayedSpan(secondSpan.end - secondSpan.start)}`),
+			);
+			expect(total).toContain("Span: ");
+		} finally {
+			await disposeRun(run);
+		}
+	}, 240_000);
+
+	test("a user-invoked skill's submission is the start, at the instant the user submitted it", async () => {
+		const run = await startRun("model-cost-span-skill", { skill: { name: SKILL_NAME, body: SKILL_BODY } });
+		try {
+			// The session boots with the fixture discoverable and then sits idle, so a start that was not
+			// the submission would be measurably earlier; the submission itself is the skill's own name,
+			// which is the only submission the harness resolves as a skill rather than as prose. The pause
+			// is a real one for the reason the constant above names: the session is a real process, so no
+			// fake timer can put the session's creation and the submission where this case needs them.
+			await Bun.sleep(PRE_SUBMISSION_PAUSE_MS);
+			const submittedAt = Date.now();
+			expect((await run.session.prompt(SKILL_PROMPT)).status).toBe("completed");
+			const settledAt = Date.now();
+
+			// The submission really was that skill: the request the harness sent its provider carries the
+			// skill file's own body, so what the extension was told about is a user-invoked skill that ran
+			// and not a slash-shaped prompt. A harness that resolved no such skill would send the raw text
+			// and carry no marker at all.
+			expect(run.capture.requests().some(request => request.raw.includes(SKILL_BODY))).toBe(true);
+
+			// The host published its own submission fact for it — the same fact an ordinary prompt gets —
+			// and the extension recorded no failure of its own clock while doing so.
+			expect(run.session.stderr()).not.toContain("publishes no submission event");
+			expect(run.session.stderr()).not.toContain("主会话时间采集失败");
+
+			// The start is the instant the user submitted: after the session had been idle for longer than
+			// the slack, and no later than the skill prompt the harness built from that submission settled.
+			// Nothing here is read off the resolved skill prompt, the first request or the transcript —
+			// those are all later than the submission the user made.
+			const record = await savedRecord(run.consumptionFile, candidate => candidate.span !== undefined);
+			const span = record.span;
+			if (span === undefined) throw new Error("the saved record carries no span");
+			expect(span.start).toBeGreaterThanOrEqual(submittedAt - SUBMISSION_SLACK_MS);
+			expect(span.start).toBeGreaterThanOrEqual(run.startedAt);
+			expect(span.start).toBeLessThanOrEqual(settledAt);
+			expect(span.end).toBeGreaterThanOrEqual(span.start);
+			expect(record.saveVersion).toBe(1);
+
+			// The widget the host was told to draw shows the same reading, in the Total row.
+			const total = await totalLineUntil(
+				run.session,
+				line => line.endsWith(`Span: ${displayedSpan(span.end - span.start)}`),
 			);
 			expect(total).toContain("Span: ");
 		} finally {
