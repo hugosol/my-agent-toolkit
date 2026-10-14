@@ -290,7 +290,7 @@ function treeLines(rows: readonly AgentTreeRow[]): DisplayLine[] {
  * monetary channel's own season mark ahead of it, and only where the host reported a context reading
  * for the bar to compare — then the period's accrued line for the monetary channel and the allowance
  * windows for the Codex one. The Total line follows, carrying the current model's own structure and
- * the main tree's Sum, Cost and Ref; the brief's Round row is laid out from the same columns, so the
+ * the main tree's Cost and Ref; the brief's Round row is laid out from the same columns, so the
  * two rows' fields line up vertically. Below that the entry's own form decides the content: the brief
  * draws the viewed session's own most recent Round, and the detail form draws the static agent tree of
  * the main session in its place — never both, which is what "the detail form keeps the Total and

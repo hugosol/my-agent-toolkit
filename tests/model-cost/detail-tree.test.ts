@@ -403,10 +403,11 @@ describe("the detail form's static tree: the root's own models and one row per d
 		]);
 		expect(rows.filter(row => row.kind === "model").every(row => row.depth === 1)).toBe(true);
 
-		// Each row's own figures, hand-added from the record's buckets. The whole tree's own Sum is
-		// 6,894 — the row sums below are what adds up to it, each contribution once:
+		// Each row's own figures, hand-added from the record's buckets. The whole tree's own total is
+		// 6,894 — the row totals below are what adds up to it, each contribution once:
 		// 6000+750+2+20+100+7+15. No row of this list carries that inclusive figure, and none carries a
-		// subtree total of its own.
+		// subtree total of its own. These totals are computed figures of each scope rather than columns
+		// the display writes (P23), which is why the algorithm is asserted here instead of on a row's text.
 		expect(rows.map(row => row.fields?.sum)).toEqual([undefined, 6000, 750, 2, 20, 100, 7, 15]);
 		expect(rows.map(row => row.fields?.sum)).not.toContain(6894);
 		const [alpha, codex, unlisted, tokenOnly, child, grand, sibling] = rows.slice(1).map(row => row.fields);
@@ -494,10 +495,11 @@ describe("a subagent's view is the brief, and the main session's tree is what it
 		settleChildTurn(bound.double, CLOCK);
 
 		// Viewing the child: the brief, drawn from that session's own facts — its own current-model
-		// fields (30+10 input, 20 cache reads, 50+20 output: a Sum of 130 and a 33 percent hit rate), its
-		// own Round's 30 tokens with no amount and no ratio, since the pair has no amount policy — and
-		// the same whole main tree's Sum behind them. No tree of its own is offered at all, which is what
-		// the fixed brief means: the entry's preference cannot turn this view into the detail form.
+		// fields (30+10 input, 20 cache reads, 50+20 output: 130 accounted tokens, no column of their
+		// own any more, and a 33 percent hit rate), its own Round's 30 tokens with no amount and no
+		// ratio, since the pair has no amount policy — and the same whole main tree's own total behind
+		// them. No tree of its own is offered at all, which is what the fixed brief means: the entry's
+		// preference cannot turn this view into the detail form.
 		const child = bound.runtime.presentation.of({
 			sessionId: "session-child",
 			provider: "go-provider",
