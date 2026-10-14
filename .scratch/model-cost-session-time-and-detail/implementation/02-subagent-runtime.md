@@ -8,7 +8,7 @@
 
 **Blocked by:** None (can start immediately).
 
-**Status:** in-progress — implemented and tested on this ticket's branch (the host's own per-execution duration accumulated per session, saved as numeric milliseconds with the existing commit, drawn on the detail row as `Run:`, with real-host and real-process evidence). A second agent took the ticket over on 2026-10-14: it re-verified every criterion on the integration-tip-merged branch, closed the open P35 duplicate-observation question with real-host evidence (see `## Verification`), strengthened the reachable-duplicate and closing coverage, and added the framework capability, harness-register and user documentation. The integration tip (`d68b469`) is an ancestor of this branch's HEAD; the local merge into `wayfinder/subagent-enhance` and the human acceptance round remain.
+**Status:** in-progress — implemented and tested on this ticket's branch (the host's own per-execution duration accumulated per session, saved as numeric milliseconds with the existing commit, drawn on the detail row as `Run:`, with real-host and real-process evidence). A second agent took the ticket over on 2026-10-14: it re-verified every criterion on the integration-tip-merged branch, closed the open P35 duplicate-observation question with real-host evidence (see `## Verification`), strengthened the reachable-duplicate and closing coverage, and added the framework capability, harness-register and user documentation. The integration tip's current position (`8a882f7`, ticket 01's main-session span) is merged into this branch and every check re-ran green on the merged tree (see `## Integration sync`); the local merge of this branch into `wayfinder/subagent-enhance` and the human acceptance round remain.
 
 Source: [approved contract](../contract.md) · [spec](../spec.md)
 
@@ -68,3 +68,16 @@ The takeover re-ran every check on this branch after `d68b469` (the integration 
 **Documentation added by this round.** The framework capability (`framework/docs/framework-capabilities.md`: the axis section, the symbol rows and the `HarnessPort.onSubagentRuntime` row), the harness-qualified evidence (`framework/docs/harness-support.md`: the new `execution.subagent-duration` register entry with the probe's own payload readings), and the user-facing description (`extensions/model-cost/README.md`: the intro line and the H1 acceptance row for P10/P18/P19, with the `Run:` field, the `—` marker, `0ms` and the restart behaviour).
 
 **Still unverified by this round.** The interactive TUI render (the widget is read from the host's real `setWidget` frames — no terminal was observed), and the human acceptance rows themselves. The local merge into `wayfinder/subagent-enhance` and the final integration run are the integration step's; it was not performed here because the integration worktree was not to be touched and no push is allowed.
+
+## Integration sync (2026-10-14, merged-tree run)
+
+`wayfinder/subagent-enhance` advanced from `d68b469` (this branch's merge base) to `8a882f7` — ticket 01's main-session span, merged into the integration branch. The new tip was merged into this ticket's branch in the ticket's own worktree, as merge commit `04e2440` ("Merge wayfinder/subagent-enhance (ticket 01's main-session span) into 02"). Eight files conflicted; each was resolved additively so both axes survive — the subagent runtime and the main-session span with its input hook — with the shared documentation, the `SemanticEvent` union, the delivery map and the two harness hooks carrying both rather than one side being chosen: `consumption-document.ts`, `request-accounting.ts`, `adapters/omp.ts`, `behaviors/binding.ts`, `behaviors/subscriptions.ts`, `core/protocol.ts`, `tests/framework/support/harness-port-double.ts` and `tests/harness-dock/model-cost-persistence.test.ts`. Checked afterwards: every non-trivial line of both parents' versions is present in the merged files.
+
+| command | result |
+|---|---|
+| `bun run typecheck` | 0 errors (TS 7.0.2) |
+| `bun test tests/model-cost` | 316 pass / 0 fail, 25 files — this ticket's `subagent-runtime.test.ts` among them |
+| `bun test tests/framework` | 365 pass / 0 fail, 31 files — both axes' framework tests |
+| `bun test tests/harness-dock` | 85 pass / 0 fail, 23 files, 170 s — this ticket's real-host delegation and reload cases plus ticket 01's new session-span dock file. The two lockfile-hash assertions again required `host-patches/*/patch.diff` and `bun.lock` LF-normalized for the run (the recorded hashes are LF; this workstation checks them out CRLF); the worktree was restored to its checked-out form afterwards — line endings only, `git diff` empty either way, nothing committed |
+
+The local merge of this branch into `wayfinder/subagent-enhance` itself, and the final full-repository run, remain the integration step's; the integration branch's worktree was not touched here and nothing was pushed. The interactive TUI render and the human acceptance rows stay unverified as stated above.
