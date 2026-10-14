@@ -473,9 +473,10 @@ describe("a token-only model shows its approved usage with no amount of its own 
 
 			// The approved fields, as the host itself reported them: the endpoint's prompt count minus the
 			// cached tokens it detailed is the non-cached input (2000 - 1000 = 1000), so this run's own
-			// buckets are 1000/1000/0/1000 — a Sum of 3,000 and a cache hit rate of 1000 of 2000, 50%.
+			// buckets are 1000/1000/0/1000 — a cache hit rate of 1000 of 2000, 50%. The row writes the
+			// retained fields alone: the four buckets' own total is no longer a column (P23).
 			expect(text).toContain("Cache: 50%");
-			expect(text).toContain("Sum: 3,000");
+			expect(text).not.toContain("Sum:");
 			// The run's own model has no amount policy, so no amount and no fee-structure ratio appears:
 			// no currency mark and no Cache/In/Out ratio wording anywhere in the widget.
 			expect(text).not.toContain("\u00A5");
@@ -510,8 +511,9 @@ describe("the allowance model draws the Codex budget and the reference its own c
 			expect(text).toContain("Ref: $0.0050");
 			// The allowance channel's own display budget is the specification's 272K, not DeepSeek's.
 			expect(text).toContain("272.0K");
-			expect(text).toContain("Sum: 3,500");
 			expect(text).toContain("Cache: 50%");
+			// The retained fields are the row's whole content: no Sum column is written any more (P23).
+			expect(text).not.toContain("Sum:");
 			// The ratio's own structure is the catalog's four amounts, cache write included: 1000, 1000,
 			// 500·2 and 1000 of 5000 are 20:20:20:40.
 			expect(text).toContain("$CacheR/In/CacheW/Out\uff1a20:20:20:40");
@@ -630,13 +632,17 @@ describe("the balance the CLI holds is the official channel's own line (P8, P67)
 			expect(run.capture.balanceCalls()).toHaveLength(1);
 
 			// The same CLI switches to the Go channel's token-only id. Its own model has no amount policy,
-			// so its structure contributes no ratio of its own, while the tree's Sum keeps both channels'
-			// usage — and the balance the process holds is not drawn at all: a token-only display has no
-			// official balance (spec §134).
+			// so its structure contributes no ratio of its own, while the tree's own amount still keeps the
+			// official channel's contribution — the one response the phase before issued, 2000/2000/0/2000
+			// tokens at the flash tier's off-peak 1/0.02/4 per million, 0.00502 CNY written as ¥0.0050 —
+			// and the balance the process holds is not drawn at all: a token-only display has no official
+			// balance (spec §134).
 			await run.session.request({ type: "set_model", provider: GO_PROVIDER, modelId: GO_MODEL });
 			expect((await run.session.prompt("one token-only exchange")).status).toBe("completed");
 			const tokenOnly = (shownLines(run.session) ?? []).join("\n");
-			expect(tokenOnly).toContain("Sum: 6,000");
+			// The label and the amount are what this pins; the blanks before the amount are the row's own
+			// alignment against the Round beside it, which the display decides rather than this file.
+			expect(tokenOnly).toMatch(/Cost:\s+\u00A50\.0050(?!\d)/);
 			expect(tokenOnly).not.toContain("Cache/In/Out");
 			expect(tokenOnly.split("\n").some(line => line.includes("Balance:"))).toBe(false);
 
@@ -651,7 +657,9 @@ describe("the balance the CLI holds is the official channel's own line (P8, P67)
 			expect((await run.session.prompt("one priced exchange again")).status).toBe("completed");
 			const restored = (shownLines(run.session) ?? []).join("\n");
 			expect(restored).toContain("\u{1F4B0} Balance: \u00A5110.00");
-			expect(restored).toContain("Sum: 9,000");
+			// The tree's own amount is both official responses' (2 × 0.00502 = 0.01004, written ¥0.01),
+			// with the Go channel's usage still contributing no amount of its own.
+			expect(restored).toMatch(/Cost:\s+\u00A50\.01(?!\d)/);
 			expect(run.capture.balanceCalls()).toHaveLength(1);
 			expect(run.capture.requests()).toHaveLength(3);
 

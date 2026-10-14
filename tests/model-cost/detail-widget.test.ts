@@ -24,6 +24,7 @@ import { MODEL_COST } from "../../extensions/model-cost/definition";
 import { MODEL_COST_WIDGET_KEY, attachModelCostWidget } from "../../extensions/model-cost/harnesses/omp/widget";
 import type { ConsumptionDocument } from "../../extensions/model-cost/shared-logic/consumption-document";
 import type { ModelPricingData } from "../../extensions/model-cost/shared-logic/model-data";
+import { type RoundDisplay, roundColumns } from "../../extensions/model-cost/shared-logic/presentation/display";
 import type { ModelCostRuntime } from "../../extensions/model-cost/shared-logic/runtime";
 import { createModelCostRuntime } from "../../extensions/model-cost/shared-logic/runtime";
 import type { OwnerReference, SessionFacts, SubagentRuntimeFact, TurnSignal, TurnUsage } from "../../framework/core/protocol";
@@ -298,7 +299,7 @@ describe("the brief draws the viewed session's own Rounds (P26)", () => {
 		// without the host's context reading.
 		expect(bound.host.lastLines()).toEqual([
 			"\u{1F525}  \u23F3 Accrued: \u00A50.05 [\u258F]",
-			"Total:  Cache: 67%  ¥Cache/In/Out：4:7:89  Sum: 6,100  Cost: ¥0.05",
+			"Total:  Cache: 67%  ¥Cache/In/Out：4:7:89  Cost: ¥0.05",
 		]);
 	});
 
@@ -307,15 +308,16 @@ describe("the brief draws the viewed session's own Rounds (P26)", () => {
 
 		// The framework opens the session's Round and one request settles inside it. The brief's Total is
 		// the session's own current model (2,000 of 3,010 conversation tokens: 66 percent) and the whole
-		// main tree's Sum, Cost and Ref (6,000 + 20 + 100 tokens, 0.05 + 0.0001 CNY); the Round row is
+		// main tree's Cost (0.05 CNY over the tree's 6,120 accounted tokens, whose bucket total is no
+		// longer a column of its own — the row writes the retained fields alone, P23); the Round row is
 		// that Round's own additions alone — ten input and ten output tokens, priced 20·1 + 10·8 of the
 		// 100-unit total, an exact 0:20:80.
 		bound.double.deliverRound(OWNER, { event: { kind: "round_start" }, session: MAIN });
 		settleTurn(bound.double);
 		expect(bound.host.lastLines()).toEqual([
 			"\u{1F525}  \u23F3 Accrued: \u00A50.05 [\u258F]",
-			"Total:  Cache: 66%  ¥Cache/In/Out： 4:7:89  Sum: 6,120  Cost:   ¥0.05",
-			"Round:  Cache:  0%  ¥Cache/In/Out：0:20:80  Sum:    20  Cost: ¥0.0001",
+			"Total:  Cache: 66%  ¥Cache/In/Out： 4:7:89  Cost:   ¥0.05",
+			"Round:  Cache:  0%  ¥Cache/In/Out：0:20:80  Cost: ¥0.0001",
 		]);
 
 		// The Round ends: its own additions become the latest Round, and the open one is gone. The
@@ -323,8 +325,8 @@ describe("the brief draws the viewed session's own Rounds (P26)", () => {
 		bound.double.deliverRound(OWNER, { event: { kind: "round_end" }, session: MAIN });
 		expect(bound.host.lastLines()).toEqual([
 			"\u{1F525}  \u23F3 Accrued: \u00A50.05 [\u258F]",
-			"Total:  Cache: 66%  ¥Cache/In/Out： 4:7:89  Sum: 6,120  Cost:   ¥0.05",
-			"Round:  Cache:  0%  ¥Cache/In/Out：0:20:80  Sum:    20  Cost: ¥0.0001",
+			"Total:  Cache: 66%  ¥Cache/In/Out： 4:7:89  Cost:   ¥0.05",
+			"Round:  Cache:  0%  ¥Cache/In/Out：0:20:80  Cost: ¥0.0001",
 		]);
 
 		// A second Round opens after the first ended, so the instance now holds an open Round and a
@@ -333,8 +335,8 @@ describe("the brief draws the viewed session's own Rounds (P26)", () => {
 		bound.double.deliverRound(OWNER, { event: { kind: "round_start" }, session: MAIN });
 		expect(bound.host.lastLines()).toEqual([
 			"\u{1F525}  \u23F3 Accrued: \u00A50.05 [\u258F]",
-			"Total:  Cache: 66%  ¥Cache/In/Out： 4:7:89  Sum: 6,120  Cost:   ¥0.05",
-			"Round:  Cache:  0%  ¥Cache/In/Out：0:20:80  Sum:    20  Cost: ¥0.0001",
+			"Total:  Cache: 66%  ¥Cache/In/Out： 4:7:89  Cost:   ¥0.05",
+			"Round:  Cache:  0%  ¥Cache/In/Out：0:20:80  Cost: ¥0.0001",
 		]);
 
 		// The new Round's first Turn settles: its data replaces the previous reading, and the row is
@@ -365,21 +367,22 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 		bound.double.deliverRound(OWNER, { event: { kind: "round_start" }, session: MAIN });
 		settleTurn(bound.double);
 		bound.double.deliverRound(OWNER, { event: { kind: "round_end" }, session: MAIN });
-		const total = "Total:  Cache: 66%  ¥Cache/In/Out： 4:7:89  Sum: 6,120  Cost:   ¥0.05";
+		const total = "Total:  Cache: 66%  ¥Cache/In/Out： 4:7:89  Cost:   ¥0.05";
 		const bar = "\u{1F525}  [\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591   0% (1,234/450.0K)]  Effort: high";
 		const accrued = "\u23F3 Accrued: \u00A50.05 [\u258F]";
 		const account = `${bar}  ${accrued}`;
 		expect(bound.host.lastLines()).toEqual([
 			account,
 			total,
-			"Round:  Cache:  0%  ¥Cache/In/Out：0:20:80  Sum:    20  Cost: ¥0.0001",
+			"Round:  Cache:  0%  ¥Cache/In/Out：0:20:80  Cost: ¥0.0001",
 		]);
 
 		// The action redraws at once — no session boundary, no request and no save is needed for it —
 		// and what it draws is the tree in the Round rows' place. The root is named, its own pair is one
-		// row indented under it (2,000 of 3,010 conversation tokens, 4:7:89 of its own tier, its own
-		// 6,020 tokens and its 0.05 CNY), and the subagent is one row of its own 100 tokens at its
-		// direct parent's depth. No Round row survives, and the Total above is the very line it was.
+		// row indented under it (its cache rate over 2,000 of 3,010 conversation tokens, the 4:7:89
+		// ratio of its own tier and its 0.05 CNY — the row's retained fields alone, its 6,020 accounted
+		// tokens no longer a column of their own), and the subagent is one row of its own consumption at
+		// its direct parent's depth. No Round row survives, and the Total above is the very line it was.
 		const framesBefore = bound.host.frames();
 		const run = await bound.double.runToCompletion("budget", { args: "detail" });
 		expect(run.feedback.map(notice => notice.level)).toEqual(["info"]);
@@ -388,8 +391,8 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 			account,
 			total,
 			"主会话",
-			"│  official / model-alpha  Cache: 66%  ¥Cache/In/Out：4:7:89  Sum: 6,020  Cost: ¥0.05",
-			"└─ 子代理  Cache: 40%  Sum: 100  Run: —",
+			"│  official / model-alpha  Cache: 66%  ¥Cache/In/Out：4:7:89  Cost: ¥0.05",
+			"└─ 子代理  Cache: 40%  Run: —",
 		]);
 		expect(bound.host.lastLines()?.some(line => line.startsWith("Round:"))).toBe(false);
 
@@ -398,7 +401,34 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 		expect(bound.host.lastLines()).toEqual([
 			account,
 			total,
-			"Round:  Cache:  0%  ¥Cache/In/Out：0:20:80  Sum:    20  Cost: ¥0.0001",
+			"Round:  Cache:  0%  ¥Cache/In/Out：0:20:80  Cost: ¥0.0001",
+		]);
+	});
+
+	test("the Round row's own field set is the retained one, with no time of the Total's (P25)", async () => {
+		const bound = await bindWidget();
+
+		// One Round of the viewed session, begun and ended around a settled Turn: the row the brief keeps
+		// is that Round, written from the same fields it has always been written from.
+		bound.double.deliverRound(OWNER, { event: { kind: "round_start" }, session: MAIN });
+		settleTurn(bound.double);
+		bound.double.deliverRound(OWNER, { event: { kind: "round_end" }, session: MAIN });
+
+		const lines = bound.host.lastLines() ?? [];
+		expect(lines.find(line => line.startsWith("Round:"))).toBe(
+			"Round:  Cache:  0%  \u00A5Cache/In/Out\uff1a0:20:80  Cost: \u00A50.0001",
+		);
+
+		// And its columns are exactly the retained ones, in the retained order: the target's cache rate,
+		// the ratio field its channel displays, and this Round's own amount. A Round is a scope of its own
+		// rather than the session, so neither the session's own span — the Total's fact — nor a
+		// subagent's runtime belongs here: the Round gains no time column of its own.
+		const display = bound.runtime.presentation.of({ sessionId: "session-main", ...MAIN_PAIR });
+		expect(display.round).toBeDefined();
+		expect(roundColumns(display.round as RoundDisplay, display.mode).map(column => column.label)).toEqual([
+			"Cache: ",
+			"\u00A5Cache/In/Out\uff1a",
+			"Cost: ",
 		]);
 	});
 
@@ -409,12 +439,12 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 
 		// Nothing has been measured for the subagent's own executions: its row keeps the runtime field and
 		// states that fact, which is not a zero.
-		expect(childRow()).toBe("└─ 子代理  Cache: 40%  Sum: 100  Run: —");
+		expect(childRow()).toBe("└─ 子代理  Cache: 40%  Run: —");
 
 		// The harness states one completed execution's own duration — 480,000 milliseconds, eight whole
 		// minutes, a figure stated here rather than read back from the widget — and the row draws it.
 		bound.double.deliverSubagentRuntime({ runtime: runtimeReading("0-Explore", 480_000, "ended"), session: SUB });
-		expect(childRow()).toBe("└─ 子代理  Cache: 40%  Sum: 100  Run: 8m");
+		expect(childRow()).toBe("└─ 子代理  Cache: 40%  Run: 8m");
 
 		// An execution that really took no measurable time is a reading the harness made, so a session
 		// whose only reading is that zero draws the zero — never the marker above.
@@ -425,7 +455,7 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 			session: SUB,
 		});
 		expect(measuredZero.host.lastLines()?.find(line => line.includes("子代理"))).toBe(
-			"└─ 子代理  Cache: 40%  Sum: 100  Run: 0ms",
+			"└─ 子代理  Cache: 40%  Run: 0ms",
 		);
 	});
 
@@ -462,16 +492,16 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 		// The entry is in detail and the main session is what it draws the tree for.
 		expect(bound.host.lastLines()).toEqual([
 			"\u{1F525}  \u23F3 Accrued: \u00A50.05 [\u258F]",
-			"Total:  Cache: 67%  ¥Cache/In/Out：4:7:89  Sum: 6,100  Cost: ¥0.05",
+			"Total:  Cache: 67%  ¥Cache/In/Out：4:7:89  Cost: ¥0.05",
 			"主会话",
-			"│  official / model-alpha  Cache: 67%  ¥Cache/In/Out：4:7:89  Sum: 6,000  Cost: ¥0.05",
-			"└─ 子代理  Cache: 40%  Sum: 100  Run: —",
+			"│  official / model-alpha  Cache: 67%  ¥Cache/In/Out：4:7:89  Cost: ¥0.05",
+			"└─ 子代理  Cache: 40%  Run: —",
 		]);
 
 		// The view moves to the subagent, whose own Round then opens and settles one request: what is
 		// drawn is *that* session's brief — its own current-model fields (130 tokens, a 33 percent cache
 		// rate, no amount of its own), its own Round's 30 tokens with no ratio — and the same main tree's
-		// Sum and Cost behind it. No tree row appears at all, whatever the entry's preference is.
+		// Cost behind it. No tree row appears at all, whatever the entry's preference is.
 		bound.host.publish({ sessionId: "session-sub", provider: "go-provider", model: "model-alpha", effort: "low" });
 		bound.double.deliverRound(OWNER, {
 			event: { kind: "round_start" },
@@ -498,8 +528,8 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 			{ owner: OWNER },
 		);
 		expect(bound.host.lastLines()).toEqual([
-			"Total:  Cache: 33%  Sum: 6,130  Cost: ¥0.05",
-			"Round:  Cache:  0%  Sum:    30",
+			"Total:  Cache: 33%  Cost: ¥0.05",
+			"Round:  Cache:  0%",
 		]);
 		expect(bound.host.lastLines()?.some(line => line.startsWith("\u2502  ") || line.includes("\u251C\u2500 ") || line.includes("\u2514\u2500 "))).toBe(false);
 
@@ -509,10 +539,10 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 		bound.host.publish({ sessionId: "session-main", provider: "official", model: "model-alpha" });
 		expect(bound.host.lastLines()).toEqual([
 			"\u{1F525}  \u23F3 Accrued: \u00A50.05 [\u258F]",
-			"Total:  Cache: 67%  ¥Cache/In/Out：4:7:89  Sum: 6,130  Cost: ¥0.05",
+			"Total:  Cache: 67%  ¥Cache/In/Out：4:7:89  Cost: ¥0.05",
 			"主会话",
-			"│  official / model-alpha  Cache: 67%  ¥Cache/In/Out：4:7:89  Sum: 6,000  Cost: ¥0.05",
-			"└─ 子代理  Cache: 33%  Sum: 130  Run: —",
+			"│  official / model-alpha  Cache: 67%  ¥Cache/In/Out：4:7:89  Cost: ¥0.05",
+			"└─ 子代理  Cache: 33%  Run: —",
 		]);
 	});
 
@@ -522,7 +552,7 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 
 		// No binding has reported the subagent's context: its row carries its consumption alone, and no
 		// context field is invented for it.
-		expect(bound.host.lastLines()?.find(line => line.includes("子代理"))).toBe("└─ 子代理  Cache: 40%  Sum: 100  Run: —");
+		expect(bound.host.lastLines()?.find(line => line.includes("子代理"))).toBe("└─ 子代理  Cache: 40%  Run: —");
 
 		// The subagent's own binding publishes its current context on the monetary channel. The row reads
 		// it against that channel's own 450K display budget, as `percent (tokens/budget)` — the same form
@@ -534,7 +564,7 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 		});
 		bound.host.publish({ sessionId: "session-main", provider: "official", model: "model-alpha" });
 		expect(bound.host.lastLines()?.find(line => line.includes("子代理"))).toBe(
-			"└─ 子代理  Cache: 40%  Sum: 100  Ctx: 85% (381.5K/450.0K)  Run: —",
+			"└─ 子代理  Cache: 40%  Ctx: 85% (381.5K/450.0K)  Run: —",
 		);
 
 		// A later reading on the allowance channel is read against that channel's own 272K budget, chosen
@@ -546,7 +576,7 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 		});
 		bound.host.publish({ sessionId: "session-main", provider: "official", model: "model-alpha" });
 		expect(bound.host.lastLines()?.find(line => line.includes("子代理"))).toBe(
-			"└─ 子代理  Cache: 40%  Sum: 100  Ctx: 50% (136.0K/272.0K)  Run: —",
+			"└─ 子代理  Cache: 40%  Ctx: 50% (136.0K/272.0K)  Run: —",
 		);
 
 		// A pair the data does not classify has no display budget at all, so the row carries no context
@@ -557,7 +587,7 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 			model: "no-such",
 		});
 		bound.host.publish({ sessionId: "session-main", provider: "official", model: "model-alpha" });
-		expect(bound.host.lastLines()?.find(line => line.includes("子代理"))).toBe("└─ 子代理  Cache: 40%  Sum: 100  Run: —");
+		expect(bound.host.lastLines()?.find(line => line.includes("子代理"))).toBe("└─ 子代理  Cache: 40%  Run: —");
 	});
 
 	test("a session is shown by its name, and only by an id when no name is reported at all (P23)", async () => {
@@ -565,7 +595,7 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 		await bound.double.runToCompletion("budget", { args: "detail" });
 
 		// The document already names the subagent: that recorded name is what its row shows.
-		expect(bound.host.lastLines()?.find(line => line.includes("子代理"))).toBe("└─ 子代理  Cache: 40%  Sum: 100  Run: —");
+		expect(bound.host.lastLines()?.find(line => line.includes("子代理"))).toBe("└─ 子代理  Cache: 40%  Run: —");
 
 		// A report carrying only the agent's id adds no name, so the name already known still stands: an id
 		// never displaces a name.
@@ -574,7 +604,7 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 			session: { sessionId: "session-sub", kind: "sub", agentId: "0-Explore", unavailable: [] },
 		});
 		bound.host.publish({ sessionId: "session-main", provider: "official", model: "model-alpha" });
-		expect(bound.host.lastLines()?.find(line => line.includes("子代理"))).toBe("└─ 子代理  Cache: 40%  Sum: 100  Run: —");
+		expect(bound.host.lastLines()?.find(line => line.includes("子代理"))).toBe("└─ 子代理  Cache: 40%  Run: —");
 
 		// The host then reports the agent's own name — the label its roster shows — and that name becomes
 		// what the row shows.
@@ -589,7 +619,7 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 			},
 		});
 		bound.host.publish({ sessionId: "session-main", provider: "official", model: "model-alpha" });
-		expect(bound.host.lastLines()?.find(line => line.includes("explore"))).toBe("└─ explore  Cache: 40%  Sum: 100  Run: —");
+		expect(bound.host.lastLines()?.find(line => line.includes("explore"))).toBe("└─ explore  Cache: 40%  Run: —");
 
 		// A session the document never named, for which the host reports only an agent id, falls back to
 		// that id rather than to its raw session id.
