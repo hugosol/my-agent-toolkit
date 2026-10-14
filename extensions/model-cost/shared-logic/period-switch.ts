@@ -49,7 +49,9 @@ export interface PeriodSwitchInputs {
 	readonly boundaryReading: () => Promise<number | undefined>;
 	/**
 	 * Told once a reset really landed, so the business state that period belonged to can be dropped:
-	 * the accounting's own accumulation for the closed period is not the new period's, and leaving it
+	 * the accounting's own accumulation for the closed period is not the new period's — neither are
+	 * the Session spans it observed, the subagent runtimes it accumulated, or the executions behind
+	 * those runtimes, whose late readings are no longer that period's to count — and leaving any of it
 	 * in place would publish it into the period that replaced it.
 	 */
 	readonly onReset: () => void;
