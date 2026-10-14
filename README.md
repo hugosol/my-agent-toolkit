@@ -44,6 +44,7 @@ glossary.
 
 | Document | What it is | Read it when |
 | --- | --- | --- |
+| [`framework/docs/extension-development-map.md`](framework/docs/extension-development-map.md) | Long-lived principles for extension layering and finding existing framework capabilities; a Chinese guide, not an API or implementation inventory. | You are adding or changing an extension and deciding where its responsibilities belong. |
 | [`framework/README.md`](framework/README.md) | The framework's layout guide and runbook: `core/` / `behaviors/` / `adapters/`, the framework suite, candidate verification, the human acceptance index, and the supported-version upgrade standard. | You are working on framework code or upgrading the supported harness. |
 | [`framework/docs/harness-support.md`](framework/docs/harness-support.md) | **Authority** for harness version compatibility: the four-state support record (`verified-supported` / `verified-unlisted` / `unverified` / `unsupported`), its evidence and conditions, the provider-path role evidence, and the long-term upgrade standard and its triggers. | You need to know what is supported, what is not, and how a version becomes supported. |
 | [`framework/docs/harness-baseline.json`](framework/docs/harness-baseline.json) | Data record of the fixed baseline: the revision anchor, the artifact that actually runs, and the dependency lockfiles. Re-checked by `tests/harness-dock/baseline.test.ts`. | You need the machine-checkable correspondence behind the supported row; refresh it after a deliberate dependency or version change. |
