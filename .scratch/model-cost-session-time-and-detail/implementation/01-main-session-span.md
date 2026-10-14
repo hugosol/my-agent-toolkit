@@ -8,7 +8,7 @@
 
 **Blocked by:** None (can start immediately).
 
-**Status:** ready-for-agent
+**Status:** in-progress — implemented and tested on this ticket's branch（主会话 Session span 的采集、保存与展示，以及 resume 起点修复）；集成分支 `wayfinder/subagent-enhance` 最新 tip `d68b469` 已是本分支祖先（`git merge` 为 no-op，无冲突可解），并已在合并后的树上重跑本票验收与全仓库回归（`bun run typecheck` exit 0；本票 dock 验收 7 pass / 0 fail；`bun test` 900 pass / 5 fail，5 处均为 connect-bot 真实面板二进制的机器布局前置项，与本票无关，见 `## Comments`）；等待合入集成分支并由主 agent 验收。证据见 `## Comments`。
 
 Source: [approved contract](../contract.md) · [spec](../spec.md)
 
@@ -43,3 +43,15 @@ Source: [approved contract](../contract.md) · [spec](../spec.md)
 ## Boundaries
 
 复用 S1 宿主事实、S2 widget 和 S3 消费 JSON seams：原生映射在 framework adapter，业务和持久化在 model-cost shared logic，绘制在宿主前端。不透传完整宿主对象、不猜私有字段、不改 omp 或新增补丁、不新增命令或存储根配置、不建立 Round／Turn 明细。公共事实和可选文档字段的演进须与 02/03 协调，不能以共享文件制造额外业务阻塞。周期重置由 04 交付，主／子指标不混加的组合验证由 07 负责。
+
+## Comments
+
+- 集成分支最新 tip `wayfinder/subagent-enhance` = `d68b469`，已是本票分支 HEAD（`d8ab7dc`）的祖先；`git merge wayfinder/subagent-enhance` 报 `Already up to date`，无冲突可解。集成分支工作区未被操作。
+- 上一轮把 `P2` 的 skill 一侧只留作“受控用例 + 按锚定修订读宿主源码”的证据。本轮补上真实宿主证据：`tests/harness-dock/model-cost-session-span.test.ts` 新增第 3 例（`a user-invoked skill's submission is the start, at the instant the user submitted it`）——该 run 在自己的隔离 agent state 里写入 `skills/dock-span-skill/SKILL.md`（真实 omp 的 user-level skill 扫描位置，`PI_CODING_AGENT_DIR` 下，会话启动前写好），用户以 `/skill:dock-span-skill …` 提交，然后断言：①宿主发给 provider 的真实请求体里带着该 skill 自身的 body 标记（证明这是一次真的被宿主解析并执行的用户发起 skill，而不是斜杠形状的普通 prompt）；②stderr 无 “publishes no submission event”、无“主会话时间采集失败”；③存盘记录 `span.start` ∈ [提交时刻−500 ms, 提交 settle]，且 ≥ 会话启动时刻、`end ≥ start`、`saveVersion = 1`；④真实 `setWidget` 的 Total 行以同一区间结尾；⑤该 run 的 provider 请求恰为 1 条（`requests()` 长度 1），即这里唯一的一次提交与唯一一轮就是该 skill，起点只能来自它。
+- 该新增例的判别力用故障注入确认过：把 fixture 的 frontmatter `name` 改成不匹配的值（skill 无法解析 → 宿主按普通文本发送），同一份测试在该断言处失败（`request.raw.includes(SKILL_BODY)` 为 false），恢复后重跑为绿。故 ①不是构造性成立的断言，而是真的在观察宿主的 skill 解析。
+- 本票工作树的验证（工作树只有本票改动，`git status` 仅 `tests/harness-dock/model-cost-session-span.test.ts`）：`bun run typecheck` → exit 0；`bun test tests/model-cost` → 298 pass / 0 fail（24 files，1303 expect）；`bun test tests/framework` → 357 pass / 0 fail（30 files，1771 expect）；`bun test tests/harness-dock/model-cost-session-span.test.ts tests/harness-dock/model-cost-persistence.test.ts` → 7 pass / 0 fail（本票 3 例真实宿主 + 4 例受影响消费者，均真实宿主进程）；本票 dock 文件在收紧断言后单独重跑 → 3 pass / 0 fail（31 expect，10.8 s）。
+- `tests/harness-dock` 全分区：本机 `core.autocrlf=true` 会把 `host-patches/**/patch.diff` 与 `bun.lock` 检出成 CRLF，而录制的 sha256 与 `patchTouchedFiles` 针对的是已提交的 LF blob，因此未归一前 `model-cost-persistence.test.ts` 等文件在 fixture 装载期即失败（`…/patch.diff touches no file`），与票据行为无关。把这两份 `patch.diff` 与 `bun.lock` 逐行去 CR（结果 sha256 与 `git show HEAD:<path>` 完全一致）后重跑全分区（即最终修订版，含收紧后的本票用例）：**84 pass / 0 fail，23 files，974 expect，168.3 s**（含 `baseline.test.ts`、`session-driver.test.ts`，即此前记录的 2 例环境失败同源）。运行结束后已按字节恢复这三个文件的原始 CRLF 检出状态（sha256 与归一前一致），未提交、未改动任何被录制的仓库内容。
+- 未验证／限制：`P2` 的 interactive 一侧仍无真实宿主运行（dock 只驱动 RPC）；其受控覆盖见 `tests/framework/user-input.test.ts`（任意 source 的提交映射为一个 input 事实、`extension` 自提交不是用户输入、宿主不发布该事件时的明确诊断）。`P25`（Round 行不新增时间列）由 05/07 负责，本票只以合并后 widget/Round 期望全绿作旁证。票据 Status 中的 `closed` 定义包含 merged，本票分支尚未合入集成分支，故仍为 `in-progress`。
+- 集成同步（本轮，固定评审起点 `e3a1d0e`）：`git merge wayfinder/subagent-enhance` → `Already up to date`（集成分支 tip 仍是 `d68b469`，已是本票 HEAD 的祖先；tip 未前进，故无冲突可解）。集成分支工作区（`E:/Developer/myhub/my-agent-toolkit`）未被操作；未 reset、未丢弃任何既有提交；本轮结束后的 `git status` 与本轮开始时一致（干净）。附注：02/03 的票据分支在本轮期间仍在推进（02 已到 `ffb8e17`），但都尚未合入集成分支。
+- 合并后的树（HEAD `3346457`，含 `d68b469` 与全部本票提交）上的重跑：`bun run typecheck` → exit 0；`bun test tests/harness-dock/model-cost-session-span.test.ts tests/harness-dock/model-cost-persistence.test.ts` → 7 pass / 0 fail（106 expect，24.85 s，真实宿主进程）；`bun test`（全仓库 102 个测试文件）→ 900 pass / 5 fail，905 tests，5001 expect，287.79 s。5 处失败全部来自 `tests/connect-bot/` 的三个真实面板 interop 文件（`budget-regression` 1 例、`harness-exit-budget` 1 例、`panel-registration-lifecycle` 3 例），错误均为 “the interop run needs the actual omp-bot panel, but no binary is at …/omp-bot/backend/target/release/omp-bot.exe” —— 本 worktree 位于 `%TEMP%`，默认同级路径下没有该构建（该测试自身声明缺它就无法运行该面板）。以真实同级构建 `OMP_BOT_BINARY=E:/Developer/myhub/omp-bot/backend/target/release/omp-bot.exe` 重跑这三个文件 → 12 pass / 0 fail（61.09 s），确认属机器布局前置项，与本票及本次同步无关；本轮未为此改动任何仓库内容。本票所辖分区（model-cost 24 文件、framework 30 文件、harness-dock 23 文件）在同一轮全仓库运行中零失败。
+- 环境注意事项（本轮同样适用）：本机 `core.autocrlf=true` 使 `host-patches/**/patch.diff` 与 `bun.lock` 检出为 CRLF，而录制 sha256 与 `patchTouchedFiles` 针对 LF blob。本轮运行前把这三份文件逐行去 CR（去 CR 后的 sha256 与 `git show HEAD:<path>` 完全一致），运行结束后按字节恢复原始 CRLF 检出（恢复后 sha256 与运行前逐一相同，`git status` 干净），未提交、未改动任何被录制内容。

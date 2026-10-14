@@ -11,7 +11,9 @@
  *
  * - **the approved schema, key by key.** The activity document carries `schemaVersion`, `periodId`,
  *   `start`, `holiday` and `harnesses`, a session record carries `id`, `name`, `parent`, `saveVersion`,
- *   `own` and, when the host measured one, an optional `runtimeMs`, and a usage entry carries the four token buckets and, when a provider's accounting
+ *   `own` — plus the optional `span` pair when the run observed a session's own main-session time and,
+ *   when the host measured one, an optional `runtimeMs` — and a usage entry carries the four token
+ *   buckets and, when a provider's accounting
  *   produced one, its own currency field. Nothing else is accepted — no Turn or Round ledger, no
  *   `recentRound`, no historical price, no cost breakdown, no account key and no second authoritative
  *   total — because the check is an exact key set rather than a search for known leftovers.
@@ -405,7 +407,9 @@ function answeredTurns(request: CapturedRequest): number {
 /** The keys the approved activity schema declares, at each level, and nothing else. */
 const DOCUMENT_KEYS = ["schemaVersion", "periodId", "start", "start_bal", "holiday", "harnesses"];
 const HARNESS_KEYS = ["sessions"];
-const SESSION_KEYS = ["id", "name", "parent", "saveVersion", "own", "runtimeMs"];
+const SESSION_KEYS = ["id", "name", "parent", "saveVersion", "own", "runtimeMs", "span"];
+/** The two instants of one session's own main-session time fact, which are always written together. */
+const SPAN_KEYS = ["start", "end"];
 const USAGE_KEYS = ["tokens", "costCny", "referenceCostUsd"];
 const TOKEN_KEYS = ["input", "cacheRead", "cacheWrite", "output"];
 /** The archive is the closed activity document plus the two facts only the closing instant states. */
@@ -414,6 +418,12 @@ const ARCHIVE_KEYS = [...DOCUMENT_KEYS, "end", "end_bal"];
 const ESTIMATE_KEYS = ["baseline", "ratio"];
 const ESTIMATE_BASELINE_KEYS = ["capturedAt", "fiveHour", "weekly"];
 const ESTIMATE_WINDOW_KEYS = ["usedPercent", "resetsAt"];
+
+/** One session's own main-session time fact, as the approved schema declares it. */
+interface SavedSpan {
+	readonly start: number;
+	readonly end: number;
+}
 
 /** One session's record, as the approved schema declares it. */
 interface SavedRecord {
@@ -427,6 +437,13 @@ interface SavedRecord {
 	 * reliably measured: a count of milliseconds, absent rather than zero when none was.
 	 */
 	readonly runtimeMs?: number;
+	/**
+	 * The session's own main-session time fact, when the run observed both of its instants: the first
+	 * user input of the period and the latest Round end, in epoch milliseconds. Absent is ordinary —
+	 * a session that has not taken up input, one whose first Round has not ended, and a record written
+	 * before this field existed all carry nothing here.
+	 */
+	readonly span?: SavedSpan;
 }
 
 /** One activity document, as the approved schema declares it. */
@@ -507,6 +524,20 @@ function readRecord(value: unknown, where: string): SavedRecord {
 	if (candidate.own === null || typeof candidate.own !== "object" || Array.isArray(candidate.own)) {
 		throw new Error(`${where}.own is not a mapping`);
 	}
+	// The one optional fact of the record: absent is ordinary, and present must be exactly the pair of
+	// finite instants this schema declares, with its end no earlier than its start.
+	let span: SavedSpan | undefined;
+	if (candidate.span !== undefined) {
+		const spanKeys = keyFault(candidate.span, SPAN_KEYS, `${where}.span`);
+		if (spanKeys !== undefined) throw new Error(spanKeys);
+		const pair = candidate.span as Record<string, unknown>;
+		for (const key of SPAN_KEYS) {
+			const fault = measurementFault(pair[key], `${where}.span.${key}`);
+			if (fault !== undefined) throw new Error(fault);
+		}
+		span = { start: pair.start as number, end: pair.end as number };
+		if (span.end < span.start) throw new Error(`${where}.span.end is earlier than its own start`);
+	}
 	const own: Record<string, Record<string, { tokens: Record<string, number>; costCny?: number }>> = {};
 	for (const [provider, models] of Object.entries(candidate.own as Record<string, unknown>)) {
 		if (models === null || typeof models !== "object" || Array.isArray(models)) {
@@ -529,6 +560,7 @@ function readRecord(value: unknown, where: string): SavedRecord {
 		saveVersion: candidate.saveVersion,
 		own,
 		...(runtime === undefined ? {} : { runtimeMs: runtime as number }),
+		...(span === undefined ? {} : { span }),
 	};
 }
 

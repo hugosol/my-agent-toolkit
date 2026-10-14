@@ -72,6 +72,7 @@ import { type ModelPricingData, classify } from "../model-data";
 import type { ProviderBalance, ProviderBalanceResult } from "../provider-balance";
 import { type Season, nextSeasonChange, seasonAt } from "../request-price";
 import type { ConsumptionView, SessionIdentity } from "../request-accounting";
+import type { SessionSpanReading } from "../session-span";
 import type { DisplayForm, DisplayPreference } from "./display-preference";
 import type { SessionContextReading } from "./session-context";
 
@@ -309,6 +310,18 @@ export interface ConsumptionDisplay {
 	 * document to fill it.
 	 */
 	readonly round?: RoundDisplay;
+	/**
+	 * The Session span of the main session this target belongs to, as this instance holds it: the
+	 * interval from that session's first user input in the applicable period to its latest observed
+	 * Round end, or `undefined` while either of those facts is unknown.
+	 *
+	 * It is the *main session's* time rather than the target's own, and never an inclusive figure: a
+	 * subagent's view draws the main session's span, which is one of the two facts that keep a
+	 * subagent's execution from being read as the conversation's elapsed time. `undefined` is the
+	 * ordinary state of a session whose first Round has not ended — not a span of nothing — and a
+	 * reading of exactly zero milliseconds is the present pair of two equal instants.
+	 */
+	readonly span?: SessionSpanReading;
 	readonly budget?: DisplayBudget;
 	/** The target's actual effective effort, `?` when the host could not report one. */
 	readonly effort: string;
@@ -690,7 +703,12 @@ export function createPresentation(inputs: PresentationInputs): ConsumptionPrese
 			// that pair's amount policy; the tree beside it is mixed by construction, so nothing about it
 			// is gated: every model's known contribution stays and the two currencies stay separate.
 			const current = pairFieldsOf(view.own(target.sessionId) ?? {}, target.provider, target.model);
-			const tree = fieldsOf(view.inclusiveTotals(rootOf(target.sessionId)));
+			// The main session this target belongs to: the root of its own tree, which is the session the
+			// tree beside the target is aggregated over and the session whose Session span the Total
+			// carries. For a target that is itself that root the two are the same session.
+			const mainSessionId = rootOf(target.sessionId);
+			const tree = fieldsOf(view.inclusiveTotals(mainSessionId));
+			const span = view.sessionSpan(mainSessionId);
 			// The detail form belongs to the main session alone, and a session with no direct parent is
 			// the root of its own tree: a subagent's view answers the brief however the entry's own
 			// preference stands, which is what keeps that display fixed while the operator is focused on
@@ -721,6 +739,7 @@ export function createPresentation(inputs: PresentationInputs): ConsumptionPrese
 				// has no tree of its own in this form, which is what keeps that view the brief.
 				...(isTreeRoot ? { agentTree: agentTreeOf(target.sessionId) } : {}),
 				...(round === undefined ? {} : { round }),
+				...(span === undefined ? {} : { span }),
 				...(budget === undefined ? {} : { budget }),
 				effort: target.effort ?? "?",
 				...(target.contextTokens === undefined
@@ -986,6 +1005,34 @@ function amountColumns(fields: ConsumptionFields, shown: readonly AmountField[] 
 	return columns;
 }
 
+/**
+ * One Session span as the display writes it: whole hours, minutes and seconds of the interval, with
+ * the hours unbounded rather than wrapped at a day — a session that lasted past midnight lasted that
+ * long, and an interval is not a time of day.
+ *
+ * The two smaller fields keep two digits so the reading stays a fixed width as it grows, which is
+ * what lets the same span start at the same column on every redraw.
+ */
+export function formatSpan(elapsedMs: number): string {
+	const seconds = Math.floor(elapsedMs / 1000);
+	const hours = Math.floor(seconds / 3600);
+	const minutes = Math.floor((seconds % 3600) / 60);
+	return `${hours}:${String(minutes).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
+}
+
+/**
+ * One display's Session span column: the main session's span as the display writes it, or a dash
+ * while the span is unknown.
+ *
+ * A dash is what an unknown span is written as, and it is not zero: a session whose first Round has
+ * not ended has no elapsed time to show, and a session whose span really is zero milliseconds is
+ * written as `0:00:00` — the two are told apart by the reading being there at all. The column is
+ * always a column, so the field keeps its place whether or not a reading exists.
+ */
+function spanColumn(display: ConsumptionDisplay): DisplayColumn {
+	return { label: "Span: ", value: display.span === undefined ? "\u2014" : formatSpan(display.span.elapsedMs) };
+}
+
 /** One scope's columns: its structure and the amounts its scope really carries. */
 function fieldsColumns(fields: ConsumptionFields): DisplayColumn[] {
 	return [...structureColumns(fields), ...amountColumns(fields)];
@@ -1033,15 +1080,22 @@ function displayedAmounts(display: ConsumptionDisplay): readonly AmountField[] {
 
 /**
  * One display's Total columns: the current model's own structure — with the ratio field its mode
- * displays, dashes included — then the main tree's Cost and Ref. The two currencies are kept
- * apart, and an amount field the row's channels apply but hold no value for is a dash, so the old
- * row's fields survive initialization rather than disappearing. The tree's bucket total is not a
- * column of this row: no row writes a Sum column (P23).
+ * displays, dashes included — then the main tree's Cost and Ref, then the main session's own Session
+ * span. The two currencies are kept apart, and an amount field the row's channels apply but hold no
+ * value for is a dash, so the old row's fields survive initialization rather than disappearing. The
+ * tree's bucket total is not a column of this row: no row writes a Sum column (P23).
+ *
+ * The span is the one column the brief's Round row has no counterpart for, which is why it comes
+ * last: every column before it is positional — a Round's field sits under the Total's field of the
+ * same name — and appending this one leaves that correspondence untouched. The Round has no time
+ * column of its own by design: the session's elapsed time is not attributable to one Round, and a
+ * Round's own duration is not a figure this extension measures.
  */
 export function totalColumns(display: ConsumptionDisplay): DisplayRow {
 	return [
 		...structureColumns(display.current, ratioFieldOf(display.mode)),
 		...amountColumns(display.tree, displayedAmounts(display)),
+		spanColumn(display),
 	];
 }
 

@@ -61,7 +61,7 @@ import { publishMarkerOnRun, publishMarkerOnViewChange, registerMarker, markerSe
 import { createRoundSynthesis, roundLives } from "./round-events";
 import { dispatchSessionEvent } from "./session-events";
 import { dispatchSubagentRuntime } from "./subagent-runtime";
-import { ROUND_EVENT_KINDS, SUBAGENT_RUNTIME_EVENT_KINDS, TURN_EVENT_KINDS, subscribesAny } from "./subscriptions";
+import { ROUND_EVENT_KINDS, SUBAGENT_RUNTIME_EVENT_KINDS, TURN_EVENT_KINDS, USER_INPUT_EVENT_KINDS, dispatchToGroups, subscribesAny } from "./subscriptions";
 import { turnLives } from "./turn-events";
 
 /** Whether one injected implementation is the directed half of a directed command. */
@@ -391,6 +391,22 @@ export function bindExtension(
 			port.onSubagentRuntime(delivery => {
 				if (!delivering) return;
 				dispatchSubagentRuntime(definition, delivery, groups, port.reportDiagnostic);
+			});
+		}
+		// The input hook is subscribed only when a group observes it. There is no framework behavior
+		// behind it — a submission crosses no boundary, so nothing the framework owns moves — so the
+		// delivery reaches its subscribers exactly as the adapter resolved it.
+		if (subscribesAny(groups, USER_INPUT_EVENT_KINDS)) {
+			port.onUserInput(input => {
+				if (!delivering) return;
+				dispatchToGroups(
+					definition.id,
+					groups,
+					input.event.kind,
+					input.owner,
+					() => ({ delivery: input }),
+					port.reportDiagnostic,
+				);
 			});
 		}
 		// The run-initiation hook is subscribed when the definition participates in a run at
