@@ -8,7 +8,7 @@
 
 **Blocked by:** None (can start immediately).
 
-**Status:** in-progress — implemented and tested on this ticket's branch (Sum removed from Total, Round and every detail row); awaiting integration-branch merge and acceptance.
+**Status:** in-progress — implemented and tested on this ticket's branch (Sum removed from Total, Round and every detail row); the integration tip `e3a1d0e` is already contained (merge was a no-op, no conflicts) and the checks were re-run on it; awaiting merge into the integration branch and acceptance.
 
 Source: [approved contract](../contract.md) · [spec](../spec.md)
 
@@ -29,3 +29,11 @@ Source: [approved contract](../contract.md) · [spec](../spec.md)
 ## Boundaries
 
 使用现有 S2 输出 seam。字段选择由 model-cost shared logic 决定，主题与终端布局在宿主绘制层；不改 omp 或新增补丁，不新增命令、聚合节点或查询 UI。时间功能由 01/02 交付，最终子代理列宽及窄屏布局由 06 交付；本票可独立完成。
+
+## Comments
+
+- 集成分支最新 tip `wayfinder/subagent-enhance` = `e3a1d0e` 即本票分支的 merge-base；`git merge wayfinder/subagent-enhance` 报 `Already up to date`，无冲突可解。
+- 在 tip `d267d95` 上重跑（工作树干净，`git status` 无输出）：`bun test tests/model-cost` → 280 pass / 0 fail；`bun run typecheck` → exit 0；`bun test tests/harness-dock/detail-tree.test.ts tests/harness-dock/model-cost-modes.test.ts tests/harness-dock/viewed-session-total.test.ts tests/harness-dock/viewed-session.test.ts tests/harness-dock/viewed-session-host.test.ts` → 20 pass / 0 fail（真实 patched host 的 `setWidget` 帧）。
+- 整个 `tests/harness-dock` 分区为 76 pass / 5 fail，5 个失败均先于本票存在且与显示字段无关：4 个 `baseline.test.ts` 需要同级的 `../my-omp-toolkit` oracle checkout（本机不存在），1 个 `session-driver.test.ts` 的 lockfile 录制哈希校验。
+- 该 lockfile 失败与先前 15 个 dock 失败同源：本机 `core.autocrlf=true`（`D:/Program Files/Git/etc/gitconfig`）把 `host-patches/**/patch.diff` 与 `bun.lock` 检出成 CRLF，使 `patchTouchedFiles` 读不到文件、录制 sha256 对不上（已提交 blob 均为 LF）。本地把工作区的两份 `patch.diff` 归一化为 LF 后（字节与已提交 blob 相同，`git status` 仍干净），dock 分区从 39/15 变为 76/5；归一化未提交，也未改动任何被录制的仓库内容。
+- 未验证：P33 的人工可读性判断不由本票负责（06/人工验收）。
