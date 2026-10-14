@@ -36,6 +36,14 @@ _Avoid_: legacy Turn, session totals, whole-period totals
 The aggregate usage and cost attributed to one agent session within the applicable accounting period, spanning its Rounds in that period. It is distinct from the session's lifetime consumption across periods.
 _Avoid_: round totals, provider account balance, lifetime session totals
 
+**Session span（会话跨度）**:
+The wall-clock interval from a main session’s first user input in the applicable accounting period to its most recent observed Round completion, including idle gaps and interruptions before the same session is resumed within that period. It does not sum subagent time; a forked session starts with its own first new input, and an accounting reset starts a new span at the next new input rather than retaining historical input times.
+_Avoid_: execution time, model latency, accounting period duration, summed agent time
+
+**Subagent runtime（子代理运行耗时）**:
+The cumulative harness-reported execution duration attributable to one subagent session’s executions in the applicable accounting period, excluding the idle gaps between them. It is distinct from a main session’s wall-clock Session span and from only its latest execution’s duration; an accounting reset begins a fresh runtime accumulation.
+_Avoid_: session span, last execution duration, summed progress readings
+
 **Direct session totals（会话自身累计）**:
 The usage and cost of requests issued directly by one agent session, excluding requests issued by its subagents.
 _Avoid_: inclusive session totals, owner totals
