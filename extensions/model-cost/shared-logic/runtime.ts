@@ -386,6 +386,14 @@ export function createModelCostRuntime(inputs: ModelCostRuntimeInputs): ModelCos
 			stateProviderFailures(delivery);
 			accounting.sessionFacts(delivery.session);
 		},
+		// One actual session's own start. A spawned session's binding announces it once, and it is the
+		// one delivery whose model and level readings are that session's startup facts — the framework
+		// reports them on a start that proves the session was beginning, and on no other delivery, so a
+		// session merely recovered here arrives with nothing to record for its startup.
+		session_start: delivery => {
+			stateProviderFailures(delivery);
+			accounting.started(delivery.session);
+		},
 		// The harness's own measurement of one subagent *execution*'s duration. It is a fact about the
 		// session's work rather than a boundary of it, so it settles nothing here: what it contributes
 		// rides the same commit the session's own Round end already makes, and it never opens, closes or

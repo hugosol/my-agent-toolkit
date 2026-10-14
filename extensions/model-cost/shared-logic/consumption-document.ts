@@ -9,11 +9,14 @@
  * - The root carries `schemaVersion` (the document format gate, `1` for this extension and never
  *   stepped by an ordinary save), `periodId` (the generation an accounting reset produces),
  *   `start`, an optional `start_bal`, `holiday` and `harnesses`.
- * - `harnesses.<harness>.sessions` is a flat list of records `{id, name, parent, saveVersion,
- *   own, runtimeMs?}`, unique by `id` inside one harness. `parent` is the same harness's direct parent session
- *   id, or `null` for a session with none; a parent that has not been saved yet is ordinary data,
- *   not an error, and no placeholder parent is invented. The harness part of the identity is the
- *   harness key, so the record itself carries no harness field.
+ * - `harnesses.<harness>.sessions` is a flat list of records `{id, name, parent, startup?,
+ *   saveVersion, own, runtimeMs?}`, unique by `id` inside one harness. `parent` is the same
+ *   harness's direct parent session id, or `null` for a session with none; a parent that has not
+ *   been saved yet is ordinary data, not an error, and no placeholder parent is invented. The
+ *   harness part of the identity is the harness key, so the record itself carries no harness field.
+ *   `startup` is the model and effective effort the session began with, omitted when nothing proved
+ *   them, and it is never rewritten: a document written before this field existed is the same
+ *   approved format with the field simply absent.
  * - `own.<provider>.<model>` carries the session's own four token buckets and, when the provider's
  *   accounting produced one, `costCny` or `referenceCostUsd` — the two currencies are separate
  *   fields and neither is derived from the other. No authoritative total, account key, round or
@@ -68,6 +71,26 @@ export interface ModelConsumption {
 export type OwnConsumption = Readonly<Record<string, Readonly<Record<string, ModelConsumption>>>>;
 
 /**
+ * The model and effective effort one session began with, as its startup was observed or recorded.
+ *
+ * It is a *startup* fact rather than the session's current one, and it is never rewritten: the model
+ * the session began on, and the level it really ran there — the level the harness resolved, never the
+ * configured selector behind it. Each member is absent when nothing proved it, and a session whose
+ * record carries none keeps both unknown however it runs now.
+ */
+export interface SessionStartup {
+	/** The model the session began on, both parts as the harness reported them. */
+	readonly model?: {
+		/** The provider the harness serves that model under. */
+		readonly provider: string;
+		/** The exact model id, as the harness resolves it. */
+		readonly model: string;
+	};
+	/** The effective thinking level the session began with. */
+	readonly effort?: string;
+}
+
+/**
  * One session's main-session time facts as its record carries them: the two instants a Session span
  * is the difference of, in epoch milliseconds.
  *
@@ -91,6 +114,13 @@ export interface SessionRecord {
 	readonly name: string;
 	/** The same harness's direct parent session id, or `null` for a session with none. */
 	readonly parent: string | null;
+	/**
+	 * The model and effective effort this session began with, omitted when nothing proved them.
+	 *
+	 * It is recorded once, with the session's first snapshot, and never rewritten: a later model
+	 * switch, a later level change or a later execution leaves what the session started on as it was.
+	 */
+	readonly startup?: SessionStartup;
 	/** The snapshot's version, compared inside periodId + harness + sessionId. */
 	readonly saveVersion: number;
 	/** This session's own consumption, excluding anything its subagents issued. */
@@ -176,7 +206,18 @@ type ApprovedKeys = Readonly<Record<string, true>>;
 
 const DOCUMENT_KEYS: ApprovedKeys = { schemaVersion: true, periodId: true, start: true, start_bal: true, holiday: true, harnesses: true };
 const HARNESS_KEYS: ApprovedKeys = { sessions: true };
-const SESSION_KEYS: ApprovedKeys = { id: true, name: true, parent: true, saveVersion: true, own: true, runtimeMs: true, span: true };
+const SESSION_KEYS: ApprovedKeys = {
+	id: true,
+	name: true,
+	parent: true,
+	startup: true,
+	saveVersion: true,
+	own: true,
+	runtimeMs: true,
+	span: true,
+};
+const STARTUP_KEYS: ApprovedKeys = { model: true, effort: true };
+const STARTUP_MODEL_KEYS: ApprovedKeys = { provider: true, model: true };
 const SPAN_KEYS: ApprovedKeys = { start: true, end: true };
 const USAGE_KEYS: ApprovedKeys = { tokens: true, costCny: true, referenceCostUsd: true };
 const TOKEN_KEYS: ApprovedKeys = { input: true, cacheRead: true, cacheWrite: true, output: true };
@@ -260,6 +301,33 @@ function readOwnConsumption(value: unknown, path: string): Validated<OwnConsumpt
 	return { value: own };
 }
 
+/** One session's startup facts, or the reason this value is not them. */
+function readStartup(value: unknown, path: string): Validated<SessionStartup> {
+	if (!isMapping(value)) return { reason: `${path} 不是映射（${describeValue(value)}）` };
+	const undeclared = undeclaredKey(value, STARTUP_KEYS);
+	if (undeclared !== undefined) return { reason: `${path}.${undeclared} 不是本格式的字段` };
+	const startup: { model?: { provider: string; model: string }; effort?: string } = {};
+	if (value.model !== undefined) {
+		if (!isMapping(value.model)) return { reason: `${path}.model 不是映射（${describeValue(value.model)}）` };
+		const undeclaredPart = undeclaredKey(value.model, STARTUP_MODEL_KEYS);
+		if (undeclaredPart !== undefined) return { reason: `${path}.model.${undeclaredPart} 不是本格式的字段` };
+		for (const part of ["provider", "model"] as const) {
+			const field = value.model[part];
+			if (typeof field !== "string" || field.length === 0) {
+				return { reason: `${path}.model.${part} 不是非空字符串（${describeValue(field)}）` };
+			}
+		}
+		startup.model = { provider: value.model.provider as string, model: value.model.model as string };
+	}
+	if (value.effort !== undefined) {
+		if (typeof value.effort !== "string" || value.effort.length === 0) {
+			return { reason: `${path}.effort 不是非空字符串（${describeValue(value.effort)}）` };
+		}
+		startup.effort = value.effort;
+	}
+	return { value: startup };
+}
+
 /** One session record of the approved schema, or the reason this value is not one. */
 function readSessionRecord(value: unknown, path: string): SessionRecordRead {
 	if (!isMapping(value)) return { reason: `${path} 不是映射（${describeValue(value)}）` };
@@ -271,6 +339,15 @@ function readSessionRecord(value: unknown, path: string): SessionRecordRead {
 	if (typeof value.name !== "string") return { reason: `${path}.name 不是字符串（${describeValue(value.name)}）` };
 	if (value.parent !== null && (typeof value.parent !== "string" || value.parent.length === 0)) {
 		return { reason: `${path}.parent 不是 null 或非空字符串（${describeValue(value.parent)}）` };
+	}
+	// The startup facts are optional in both directions: a record that carries none is the shape every
+	// document written before they existed has, and one that carries them states each part of them. A
+	// member the record omits stays unknown; nothing is filled in from anything else.
+	let startup: SessionStartup | undefined;
+	if (value.startup !== undefined) {
+		const read = readStartup(value.startup, `${path}.startup`);
+		if ("reason" in read) return read;
+		startup = read.value;
 	}
 	if (typeof value.saveVersion !== "number" || !Number.isInteger(value.saveVersion) || value.saveVersion < 0) {
 		return { reason: `${path}.saveVersion 不是非负整数（${describeValue(value.saveVersion)}）` };
@@ -291,6 +368,7 @@ function readSessionRecord(value: unknown, path: string): SessionRecordRead {
 			id: value.id,
 			name: value.name,
 			parent: value.parent,
+			...(startup === undefined ? {} : { startup }),
 			saveVersion: value.saveVersion,
 			own: own.value,
 			...(isMeasurement(declaredRuntime) ? { runtimeMs: declaredRuntime } : {}),
@@ -420,22 +498,25 @@ function sameBusinessValue(left: unknown, right: unknown): boolean {
 
 /**
  * Whether two records say the same business thing: the same identity, display name, direct parent,
- * snapshot version, own consumption at every level and subagent runtime, and the same main-session
- * time facts.
+ * startup facts, snapshot version, own consumption at every level, subagent runtime, and
+ * main-session time facts.
  *
  * A name is part of the record's content, so a rename at an unchanged version is other content
- * rather than a silent update — names travel with consumption, not through a write of their own.
- * The runtime is content for the same reason: it rides the same commit, and an accumulation that
- * grew is a change the file has to carry rather than a snapshot to drop as idempotent.
- * The span is content for the same reason: a reading that differs from the one the disk holds is a
- * different snapshot, and two records that disagree about it are a conflict rather than something to
- * settle by taking the later instant.
+ * rather than a silent update — names travel with consumption, not through a write of their own —
+ * and the startup facts are content in the same way: a snapshot never changes, so two records that
+ * disagree about it are other content rather than one overwriting the other. The runtime is content
+ * for the same reason: it rides the same commit, and an accumulation that grew is a change the file
+ * has to carry rather than a snapshot to drop as idempotent. The span is content for the same
+ * reason: a reading that differs from the one the disk holds is a different snapshot, and two
+ * records that disagree about it are a conflict rather than something to settle by taking the later
+ * instant.
  */
 export function sameSessionContent(left: SessionRecord, right: SessionRecord): boolean {
 	return (
 		left.id === right.id &&
 		left.name === right.name &&
 		left.parent === right.parent &&
+		sameBusinessValue(left.startup, right.startup) &&
 		left.saveVersion === right.saveVersion &&
 		left.runtimeMs === right.runtimeMs &&
 		sameBusinessValue(left.own, right.own) &&
