@@ -685,13 +685,14 @@ function startReasonOf(event: OmpSessionEvent): SessionStartReason {
  * made when the rename happens rather than at the session's next boundary. A harness that reports
  * no name, and an empty one, are both named as unavailable rather than invented.
  *
- * A spawned session's registry id *is* the naming handle its spawn was allocated (`name` on the
- * spawning call, or a generated one), so it is reported as the task's own name as well: it says
- * which work the session carries out, where the agent's registered name says only what kind of
- * agent runs it. `reportStarted` is set by the one delivery that announces the session's own start
- * in this process, which is the only one whose readings are startup facts: the model it began on
- * and the effective level this harness resolves for it — never the configured selector behind that
- * level, and never what a later delivery could read.
+ * A spawned session's registry id *is* the naming handle its spawn was allocated: the spawning call's
+ * own `name` when it gave one, a generated handle when it named none, and — for a spawn made from
+ * inside another subagent — that handle under the spawning agent's id. It is reported as the task's
+ * own name as well, because it says which work the session carries out, where the agent's registered
+ * name says only what kind of agent runs it. `reportStarted` is set by the one delivery that announces
+ * the session's own start in this process, which is the only one whose readings are startup facts: the
+ * model it began on and the effective level this harness resolves for it — never the configured
+ * selector behind that level, and never what a later delivery could read.
  */
 function sessionFactsOf(pi: OmpExtensionApi, ctx: OmpSessionContext, reportStarted = false): SessionFacts {
 	const unavailable: string[] = [];

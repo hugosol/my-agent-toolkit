@@ -180,10 +180,12 @@ export interface SessionFacts {
 	 *
 	 * It names the *work*, not the agent that runs it: the agent definition a session runs is a
 	 * kind of agent (see {@link SessionFacts.agentName}), which is not a task's name however much
-	 * either looks like a label, and it is not the identity `agentId` indexes. A display that has
-	 * to name a subagent's row uses this name before the agent's own, because it is the one fact
-	 * that says which piece of work the row accounts for. Only a spawned session has one: absent
-	 * for a top-level session, and named in `unavailable` when this host reports none.
+	 * either looks like a label, and it is not the same fact as the identity `agentId` indexes. A
+	 * display that has to name a subagent's row uses this name before the agent's own, because it
+	 * is the one fact that says which piece of work the row accounts for. Only a spawned session
+	 * has one: absent for a top-level session, and — on a host whose handle for a task *is* the
+	 * registry identity its spawn was allocated, as every surface this framework adapts reports it
+	 * — absent exactly where that identity is, which `unavailable` names in its place.
 	 */
 	readonly taskName?: string;
 	/**
@@ -200,7 +202,9 @@ export interface SessionFacts {
 	 *
 	 * It is the harness's own handle for the agent — the id its roster, its messaging and its history
 	 * index use — and it is the fallback a display takes only when neither the session nor the agent
-	 * has a name. Absent when the harness reports none, and named in `unavailable`.
+	 * has a name. For a session an agent was spawned to run, it is also the identity that spawn was
+	 * allocated, which is the fact {@link SessionFacts.taskName} reports; absent when the harness
+	 * reports none, and named in `unavailable`.
 	 */
 	readonly agentId?: string;
 	/**
@@ -225,8 +229,9 @@ export interface SessionFacts {
  * or a Turn of a subagent session belongs to the owner that session follows, so a group that
  * drives an owner-scoped effect is never moved by a subagent's work. `session` — the group
  * observes every actual session the adapter reports, main or sub, with that session's own
- * identity, its direct parent and its latest name; it is the scope a per-session observation view
- * declares.
+ * identity, its direct parent, its latest name, the handle of the task it was spawned for and —
+ * on its own start alone — the model and effective effort it began on; it is the scope a
+ * per-session observation view declares.
  *
  * The two scopes share one dispatch mechanism and differ only in which deliveries a group admits.
  * Widening a subscription to `session` grants no State write and no external-effect authority:

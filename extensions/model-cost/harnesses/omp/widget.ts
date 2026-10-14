@@ -249,12 +249,12 @@ function prefixedLine(prefix: string, line: DisplayLine): DisplayLine {
  * with `├`. A row's distance from the root is the only thing the shared result states; how a terminal
  * draws it is here.
  *
- * A descendant session's row leads with the model and effective effort that session *started* on —
- * both written as `?` where nothing proved them — and its own consumption fields follow its name, then
- * its current context reading as `Ctx: percent (tokens/budget)` — the subagent's own tokens against
- * the same fixed display budget the bar above uses for its channel, which is what the operator can
- * read for a session the budget bar does not follow. A session no binding observed carries no such
- * field.
+ * A descendant session's row names the session and then states the model and effective effort it
+ * *started* on — both written as `?` where nothing proved them — with its own consumption fields
+ * following, and its current context reading last as `Ctx: percent (tokens/budget)` — the subagent's
+ * own tokens against the same fixed display budget the bar above uses for its channel, which is what
+ * the operator can read for a session the budget bar does not follow. A session no binding observed
+ * carries no such field.
  */
 function treeLines(rows: readonly AgentTreeRow[]): DisplayLine[] {
 	return rows.map((row, index) => {

@@ -84,6 +84,12 @@ const CHILD_ASSIGNMENT = "dock child: take over and finish";
 const GRANDCHILD_ASSIGNMENT = "dock grandchild: finish now";
 const CHILD_NAME = "dock-child";
 const GRANDCHILD_NAME = "dock-grandchild";
+/**
+ * The registry id a nested spawn is allocated: the handle its own call named, under the spawning
+ * agent's id — the host's id for a session spawned from inside another subagent, rather than the
+ * bare handle a spawn from the top-level session is given.
+ */
+const NESTED_GRANDCHILD_ID = `${CHILD_NAME}.${GRANDCHILD_NAME}`;
 /** The agent definition every spawned session in this suite runs; the host's own name for that agent. */
 const SPAWN_AGENT = "task";
 
@@ -462,10 +468,12 @@ describe("a real delegating run accounts each actual session's own requests (P12
 
 			// The names are the host's own display facts: the main session was renamed through the host's
 			// command and keeps that name, while a subagent — which this host never gives a session name —
-			// is recorded by its own agent's name, the label the host's roster shows.
+			// is recorded by the handle its own spawn was allocated, the name its calling `task` really gave
+			// that work, rather than by the agent definition beside it (`task`, a category every spawned
+			// session in this suite runs) or by the registry identity an index uses.
 			expect(recordOf(document, mainId)?.name).toBe(MAIN_SESSION_NAME);
-			expect(recordOf(document, childId)?.name).toBe(SPAWN_AGENT);
-			expect(recordOf(document, grandchildId)?.name).toBe(SPAWN_AGENT);
+			expect(recordOf(document, childId)?.name).toBe(CHILD_NAME);
+			expect(recordOf(document, grandchildId)?.name).toBe(NESTED_GRANDCHILD_ID);
 		} finally {
 			await disposeRun(run);
 		}

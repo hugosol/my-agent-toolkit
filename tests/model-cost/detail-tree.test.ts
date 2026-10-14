@@ -479,6 +479,52 @@ describe("the detail form's static tree: the root's own models and one row per d
 	});
 });
 
+describe("the detail form's static tree: the started-on facts a descendant row states (P26, P27, P28, P29)", () => {
+	test("a descendant row states the pair its session began on, part by part, and `?` where nothing proved it", async () => {
+		// Four actual sessions: one child the document recorded as having begun on a model and a level,
+		// one grandchild that recorded only its level, one sibling that recorded neither, and the root.
+		const document = {
+			...TREE,
+			harnesses: {
+				[HARNESS]: {
+					sessions: [
+						record("session-main", null, {
+							official: { "model-alpha": { tokens: { input: 10, cacheRead: 0, cacheWrite: 0, output: 20 } } },
+						}),
+						{
+							...record("session-child", "session-main", {
+								"go-provider": { "model-alpha": { tokens: { input: 4, cacheRead: 6, cacheWrite: 0, output: 10 } } },
+							}),
+							startup: { model: { provider: "go-provider", model: "model-alpha" }, effort: "high" },
+						},
+						{
+							...record("session-grand", "session-child", {}),
+							startup: { effort: "medium" },
+						},
+						record("session-sibling", "session-main", {}),
+					],
+				},
+			},
+		} as unknown as ConsumptionDocument;
+		const bound = await bind({ document });
+		const rows = bound.runtime.presentation.of(MAIN_TARGET).agentTree ?? [];
+
+		// Every descendant row carries both fields — the row keeps the pair the session began on, each
+		// part already in the form the row prints it — and a part the document proves nothing about is
+		// `?` rather than borrowed from the model or level the session runs now.
+		expect(rows.filter(row => row.kind === "session").map(row => ({ name: row.name, startup: row.startup }))).toEqual([
+			{ name: "session-child", startup: { model: "go-provider / model-alpha", effort: "high" } },
+			{ name: "session-grand", startup: { model: "?", effort: "medium" } },
+			{ name: "session-sibling", startup: { model: "?", effort: "?" } },
+		]);
+		// Nothing that is not an actual descendant session carries a startup: the root is the session the
+		// tree is drawn for rather than one that began below it, and a model row is a pair of figures
+		// rather than a session at all.
+		expect(rows[0]?.startup).toBeUndefined();
+		expect(rows.filter(row => row.kind === "model").every(row => row.startup === undefined)).toBe(true);
+	});
+});
+
 describe("a subagent's view is the brief, and the main session's tree is what it returns to (P26)", () => {
 	test("the subagent's own Round is drawn as a brief, and the round trip re-accounts nothing", async () => {
 		const bound = await bind();

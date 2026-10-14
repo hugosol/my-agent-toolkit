@@ -15,13 +15,19 @@
  * derived from the wire numbers the capture endpoint reported, so a row that showed another session's
  * consumption, an inclusive figure, or a Round row in the detail form could not pass.
  *
+ * The last case reads the host's own answers at a spawned session's start — its registry id, the
+ * agent definition it runs, the model and the resolved thinking level — straight off the native
+ * extension API through the `session-start-probe` fixture, and compares the drawn row and the saved
+ * record against them, both while that session runs and after an independent process restores the
+ * document: the source of the facts is the harness's, never this repository's rendering of them.
+ *
  * Every model is reached through the dock's own capture endpoint, so no run needs a credential and
  * nothing leaves the machine; the run's own agent state, session directory, working directory and
  * storage root all sit inside its temporary run root. Nothing here touches the production OMP
  * environment, its configuration or its sessions.
  */
 import { beforeAll, describe, expect, test } from "bun:test";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
 import { MODEL_COST_WIDGET_KEY } from "../../extensions/model-cost/harnesses/omp/widget";
 import {
@@ -32,6 +38,7 @@ import { writeAgentSettings, writeProviderOverride } from "./agent-config";
 import { type IsolatedHarness, REPO_ROOT, readBaselineRecord } from "./baseline";
 import { type CaptureServer, type CaptureStep, type CapturedRequest, startCaptureServer } from "./capture-server";
 import { DOCK_CAPTURE_BASE_URL_ENV } from "./fixtures/extension-root/provider";
+import { SESSION_START_PROBE_ID } from "./fixtures/session-start-probe/entrypoint";
 import { type RunRoot, createRunRoot } from "./run-root";
 import { ControlledSession, type RpcFrame } from "./session";
 import { ensureViewedSessionHarness } from "./viewed-session-harness";
@@ -69,6 +76,10 @@ const MAIN_SESSION_NAME = "dock-detail-main";
 const DELEGATE_PROMPT = "dock detail run: delegate to a child";
 const CHILD_ASSIGNMENT = "dock detail child: finish now";
 const CHILD_TASK_NAME = "dock-detail-child";
+/** The agent definition the spawned session runs: the host's own name for that kind of agent. */
+const SPAWN_AGENT = "task";
+/** The fixture that reports the harness's own answers at a session's own start, natively. */
+const SESSION_START_PROBE = path.join(import.meta.dir, "fixtures", "session-start-probe", "entrypoint.ts");
 
 let harness: IsolatedHarness;
 
@@ -79,6 +90,7 @@ beforeAll(async () => {
 /** One run's isolated home and the storage root the extension's shipped configuration names in it. */
 interface IsolatedHome {
 	readonly home: string;
+	readonly storageDirectory: string;
 	readonly consumptionFile: string;
 	readonly env: Record<string, string>;
 }
@@ -87,25 +99,32 @@ interface IsolatedHome {
  * The isolated user home one run uses, with the storage root already holding its own period: a
  * holiday period, because DeepSeek bills one off-peak all day, so every amount this run accounts is
  * the same figure whatever the wall clock says when a request goes out.
+ *
+ * The period is written only when the root holds no document yet: two processes over one root — a
+ * restart — share this home, and the second must read what the first one saved rather than a fresh
+ * period.
  */
 function isolateHome(runRoot: RunRoot): IsolatedHome {
 	const home = path.join(runRoot.path, "user-home");
 	const storageDirectory = path.join(home, ".omp", "cost-archive");
 	mkdirSync(storageDirectory, { recursive: true });
 	const consumptionFile = path.join(storageDirectory, CONSUMPTION_FILE);
-	writeFileSync(
-		consumptionFile,
-		JSON.stringify({
-			schemaVersion: 1,
-			periodId: "period-detail-tree",
-			start: "2026-10-01T00:00:00.000Z",
-			holiday: true,
-			harnesses: { omp: { sessions: [] } },
-		}),
-		"utf8",
-	);
+	if (!existsSync(consumptionFile)) {
+		writeFileSync(
+			consumptionFile,
+			JSON.stringify({
+				schemaVersion: 1,
+				periodId: "period-detail-tree",
+				start: "2026-10-01T00:00:00.000Z",
+				holiday: true,
+				harnesses: { omp: { sessions: [] } },
+			}),
+			"utf8",
+		);
+	}
 	return {
 		home,
+		storageDirectory,
 		consumptionFile,
 		env: {
 			USERPROFILE: home,
@@ -157,7 +176,7 @@ function delegatingStep(request: CapturedRequest): CaptureStep | undefined {
 				name: "task",
 				arguments: JSON.stringify({
 					context: "dock detail delegation context",
-					tasks: [{ name: CHILD_TASK_NAME, agent: "task", task: CHILD_ASSIGNMENT, solutionSpace: "one fixed answer, nothing open" }],
+					tasks: [{ name: CHILD_TASK_NAME, agent: SPAWN_AGENT, task: CHILD_ASSIGNMENT, solutionSpace: "one fixed answer, nothing open" }],
 				}),
 			},
 		};
@@ -171,11 +190,21 @@ interface DockRun {
 	readonly capture: CaptureServer;
 	readonly runRoot: RunRoot;
 	readonly home: IsolatedHome;
+	/** Whether this run created the root it ran in, and so is the one that disposes it. */
+	readonly ownsRoot: boolean;
+}
+
+/** What one run needs beyond its own label: a root it shares with another process, extra fixtures. */
+interface RunOptions {
+	/** The root to run in; omitted for a run of its own. A restart passes the first run's root. */
+	readonly runRoot?: RunRoot;
+	/** Further fixtures this run needs beside the two every case runs. */
+	readonly extraExtensions?: readonly string[];
 }
 
 /** One run: the recorded install's own loader, the project's model-cost entrypoint, real RPC. */
-async function startRun(label: string): Promise<DockRun> {
-	const runRoot = createRunRoot(label);
+async function startRun(label: string, options: RunOptions = {}): Promise<DockRun> {
+	const runRoot = options.runRoot ?? createRunRoot(label);
 	const home = isolateHome(runRoot);
 	// Blocking delegation is the host setting this needs: an RPC host otherwise runs a spawn as a
 	// background job, which a suite that prompts once has no second prompt to observe.
@@ -191,27 +220,32 @@ async function startRun(label: string): Promise<DockRun> {
 		const session = await ControlledSession.start({
 			harness,
 			runRoot,
-			extensions: [PROVIDER_FIXTURE, MODEL_COST_ENTRYPOINT],
+			extensions: [PROVIDER_FIXTURE, MODEL_COST_ENTRYPOINT, ...(options.extraExtensions ?? [])],
 			model: MODEL_SELECTOR,
 			env: { [DOCK_CAPTURE_BASE_URL_ENV]: capture.baseUrl, ...home.env },
 			promptTimeoutMs: 120_000,
 		});
-		return { session, capture, runRoot, home };
+		return { session, capture, runRoot, home, ownsRoot: options.runRoot === undefined };
 	} catch (error) {
 		capture.stop();
-		runRoot.dispose();
+		if (options.runRoot === undefined) runRoot.dispose();
 		throw error;
 	}
 }
 
-async function disposeRun(run: DockRun): Promise<void> {
+/** Ends one run's process and its endpoint; the directories it ran in belong to the caller. */
+async function stopRun(run: DockRun): Promise<void> {
 	try {
 		if (run.session.exited() === null) await run.session.stop({ timeoutMs: 15_000 });
 	} catch {
-		// The session already stopped (or never started); the rest of the run still gets cleaned up.
+		// The session already stopped (or never started); the case's own cleanup still runs.
 	}
 	run.capture.stop();
-	run.runRoot.dispose();
+}
+
+async function disposeRun(run: DockRun): Promise<void> {
+	await stopRun(run);
+	if (run.ownsRoot) run.runRoot.dispose();
 }
 
 /** One session's record as the document holds it, with the fields this file asserts. */
@@ -219,6 +253,11 @@ interface SavedSession {
 	readonly id: string;
 	readonly name: string;
 	readonly parent: string | null;
+	/** The model and effective level that session began on, when the document holds them. */
+	readonly startup?: {
+		readonly model?: { readonly provider: string; readonly model: string };
+		readonly effort?: string;
+	};
 	readonly own: Record<string, Record<string, { readonly tokens: Record<string, number> }>>;
 }
 
@@ -321,6 +360,65 @@ async function linesUntil(
 	}
 }
 
+/**
+ * What the host answered at one session's own start, as the native probe fixture reported it.
+ *
+ * These are the harness's own readings, taken straight off the extension API it publishes: the
+ * registry id the spawn was allocated, the agent definition the session runs, the spawning agent's
+ * id, the context's model and the effective level getter. They are the source a case compares the
+ * drawn row and the saved record against.
+ */
+interface StartReading {
+	readonly sessionId: string;
+	readonly kind: string;
+	readonly id: string;
+	readonly name: string | null;
+	readonly parentId: string | null;
+	readonly provider: string | null;
+	readonly model: string | null;
+	readonly level: string | null;
+}
+
+/** Every start reading one run's probe fixture wrote, in the order the host produced them. */
+function startReadings(session: ControlledSession): StartReading[] {
+	const prefix = `[${SESSION_START_PROBE_ID}] session_start `;
+	const readings: StartReading[] = [];
+	for (const raw of session.stderr().split("\n")) {
+		if (!raw.startsWith(prefix)) continue;
+		readings.push(JSON.parse(raw.slice(prefix.length)) as StartReading);
+	}
+	return readings;
+}
+
+/** Waits until the run's own start readings satisfy a case, and answers with all of them. */
+async function startReadingsUntil(
+	session: ControlledSession,
+	accept: (readings: readonly StartReading[]) => boolean,
+): Promise<StartReading[]> {
+	const deadline = Date.now() + 20_000;
+	for (;;) {
+		const readings = startReadings(session);
+		if (accept(readings)) return readings;
+		if (Date.now() > deadline) throw new Error(`no start reading the case expects appeared:\n${session.stderr()}`);
+		await queuedWorkSettled();
+	}
+}
+
+/** The actual session the harness is showing, and the file it persists, as the harness reports them. */
+async function currentSession(run: DockRun): Promise<{ readonly id: string; readonly file: string }> {
+	const state = payloadOf(await run.session.request({ type: "get_state" }));
+	if (typeof state.sessionId !== "string" || typeof state.sessionFile !== "string") {
+		throw new Error(`the harness reported no current session and file: ${JSON.stringify(state)}`);
+	}
+	return { id: state.sessionId, file: state.sessionFile };
+}
+
+/** The object payload of one RPC answer, when the frame really carries one. */
+function payloadOf(frame: RpcFrame): Record<string, unknown> {
+	const data = frame.data;
+	return data !== null && typeof data === "object" ? (data as Record<string, unknown>) : {};
+}
+
 describe("the real host's widget: a brief with its own Round, then the static detail tree (P23, P29)", () => {
 	test("the toggle replaces the Round row with the root and its rows, redrawing at once and asking no provider", async () => {
 		const run = await startRun("detail-tree");
@@ -396,15 +494,26 @@ describe("the real host's widget: a brief with its own Round, then the static de
 			expect(detail[2]).toBe(
 				`\u2502  ${MODEL_PROVIDER} / ${MODEL_ID}  Cache: ${main.cache}%  \u00A5Cache/In/Out\uff1a0:20:80  Sum: ${main.sum.toLocaleString("en-US")}  Cost: \u00A50.01`,
 			);
-			// The child's own row carries its accumulation and the current context the harness recorded from
-			// that subagent's own binding: `percent (tokens/budget)`, the same form the bar above reads and
-			// against the monetary channel's own fixed display budget — never the host's context window.
-			// The token figure is the host's own estimate of the child's conversation rather than a number
-			// this document holds, so it is pinned to the form and the budget, not to a token count.
+			// The child's own row leads with the task handle its spawn was allocated and the pair its own
+			// start reported — the model it began on and the effective level this harness resolved for it
+			// (the native probe in the restart case names that source directly) — then its own accumulation
+			// and the current context the harness recorded from that subagent's own binding:
+			// `percent (tokens/budget)`, the same form the bar above reads and against the monetary
+			// channel's own fixed display budget — never the host's context window. The token figure is
+			// the host's own estimate of the child's conversation rather than a number this document
+			// holds, so it is pinned to the form and the budget, not to a token count.
 			const childRow = String(detail[3]);
-			const childPrefix = `\u2514\u2500 ${childRecord.name}  Cache: ${child.cache}%  Sum: ${child.sum.toLocaleString("en-US")}  Cost: \u00A50.0050  Ctx: `;
-			expect(childRow.startsWith(childPrefix)).toBe(true);
-			const childContext = childRow.slice(childPrefix.length);
+			const childHead = `\u2514\u2500 ${childRecord.name}  Model: ${MODEL_PROVIDER} / ${MODEL_ID}  Effort: `;
+			expect(childRow.startsWith(childHead)).toBe(true);
+			const afterHead = childRow.slice(childHead.length);
+			const effort = afterHead.slice(0, afterHead.indexOf("  "));
+			// The host resolves a level for this session and the adapter neither invents one nor passes
+			// the configured selector off as it, so the row carries a resolved level rather than `?`.
+			expect(effort).not.toBe("\u003F");
+			const childTail = afterHead.slice(effort.length + 2);
+			const childPrefix = `Cache: ${child.cache}%  Sum: ${child.sum.toLocaleString("en-US")}  Cost: \u00A50.0050  Ctx: `;
+			expect(childTail.startsWith(childPrefix)).toBe(true);
+			const childContext = childTail.slice(childPrefix.length);
 			expect(childContext).toMatch(/^\d+% \([\d.,]+K?\//);
 			expect(childContext.endsWith(`/${formatTokens(DEEPSEEK_DISPLAY_BUDGET)})`)).toBe(true);
 			expect(detail.some(line => line.startsWith("Round:"))).toBe(false);
@@ -436,6 +545,129 @@ describe("the real host's widget: a brief with its own Round, then the static de
 			expect(after === undefined ? [] : sessionsOf(after)).toEqual(sessions);
 		} finally {
 			await disposeRun(run);
+		}
+	}, 300_000);
+});
+
+describe("a real spawn's own start facts reach its row, the document and the next process (P26, P27, P19)", () => {
+	test("the host's answers name the task and the pair, the widget and the document carry them, and a restart restores them", async () => {
+		// One root for both processes: the second one resumes the session the first produced, over the
+		// very document the first one left, and observes no start of the child at all.
+		const runRoot = createRunRoot("detail-tree-startup");
+		const first = await startRun("detail-tree-startup-first", {
+			runRoot,
+			extraExtensions: [SESSION_START_PROBE],
+		});
+		try {
+			await first.session.request({ type: "set_session_name", name: MAIN_SESSION_NAME });
+			expect((await first.session.prompt(DELEGATE_PROMPT)).status).toBe("completed");
+
+			// What the harness itself answered at the spawned session's own start, read straight off the
+			// native extension API by the probe fixture — the source side of the extension's mapping. The
+			// registry id the spawn was allocated is the name that call gave the task; the agent definition
+			// the session runs is the kind of agent (`task`), which is a category rather than the task's
+			// name; the model and the level are the pair the session began on. The bundled `task` agent runs
+			// the *auto* thinking selector, so whatever level the harness answers here is one it resolved
+			// itself — and if it resolves none at the session's start, the honest reading is that no level
+			// was proved, never the selector.
+			const readings = await startReadingsUntil(first.session, all => all.some(line => line.kind === "sub"));
+			const spawned = readings.filter(line => line.kind === "sub");
+			const childStart = spawned[0] as StartReading;
+			expect(spawned.every(line => line.id === CHILD_TASK_NAME)).toBe(true);
+			expect(childStart.id).toBe(CHILD_TASK_NAME);
+			expect(childStart.name).toBe(SPAWN_AGENT);
+			expect(childStart.provider).toBe(MODEL_PROVIDER);
+			expect(childStart.model).toBe(MODEL_ID);
+			// The level the host answered at that session's own start. The bundled `task` agent runs the
+			// *auto* thinking selector, and the getter the probe reads — the harness's own — answers the
+			// effective level rather than that selector: on the recorded baseline's default configuration it
+			// answers `high` here. It is the reading the row owes its `Effort:` field, and the configured
+			// selector is never what a row states.
+			expect(childStart.level).not.toBeNull();
+			expect(childStart.level).not.toBe("auto");
+			const provedLevel = String(childStart.level);
+			/** The effort one drawn row states, as the row's own separator delimits it. */
+			const effortOf = (row: string): string => row.slice(row.indexOf("Effort: ") + "Effort: ".length).split("  ")[0] as string;
+
+			const saved = await savedDocument(first.home.consumptionFile, document => sessionsOf(document).length >= 2);
+			const mainRecord = sessionsOf(saved).find(entry => entry.parent === null);
+			const childRecord =
+				mainRecord === undefined ? undefined : sessionsOf(saved).find(entry => entry.parent === mainRecord.id);
+			if (mainRecord === undefined || childRecord === undefined) {
+				throw new Error(`the run saved no main/child pair: ${JSON.stringify(sessionsOf(saved))}`);
+			}
+			// The host reported this spawn a spawning agent, and the document filed the child under the
+			// main session's own identity rather than under that registry id: the adapter's one-hop
+			// resolution of the relation, not a guess about the hierarchy.
+			expect(childStart.parentId).not.toBeNull();
+			expect(childRecord.id).toBe(childStart.sessionId);
+			expect(childRecord.parent).toBe(mainRecord.id);
+
+			// The detail tree the operator asks for names that row by the task handle — never by the agent
+			// definition — and states the pair the session began on, exactly as the host answered it above.
+			await first.session.prompt("/budget detail");
+			const detail =
+				(await linesUntil(first.session, lines => lines.some(line => line.startsWith("\u2514\u2500 ")))) ?? [];
+			const childRow = detail.find(line => line.startsWith(`\u2514\u2500 ${CHILD_TASK_NAME} `));
+			expect(childRow).toBeDefined();
+			expect(childRow).toContain(`Model: ${MODEL_PROVIDER} / ${MODEL_ID}  Effort: ${provedLevel}`);
+			// A level this host did not prove is `?`; the configured selector (`auto`, which is what the
+			// bundled `task` agent declares) is never passed off as one.
+			expect(effortOf(childRow as string)).not.toBe("auto");
+
+			// The same facts rode that session's own consumption commit rather than a write of their own:
+			// the record is named by the handle, carries the started-on pair exactly as proved, and the
+			// storage root still holds the one document.
+			const withSnapshot = await savedDocument(
+				first.home.consumptionFile,
+				document => sessionsOf(document).some(entry => entry.id === childStart.sessionId && entry.startup !== undefined),
+			);
+			const stored = sessionsOf(withSnapshot).find(entry => entry.id === childStart.sessionId);
+			expect(stored?.name).toBe(CHILD_TASK_NAME);
+			expect(stored?.startup).toEqual({
+				model: { provider: MODEL_PROVIDER, model: MODEL_ID },
+				effort: provedLevel,
+			});
+			expect(readdirSync(first.home.storageDirectory).filter(name => name.endsWith(".json"))).toEqual([
+				CONSUMPTION_FILE,
+			]);
+
+			// The process ends. An independent process starts over the same root, resumes that very session
+			// and reads the document the first one left — observing no start of the child at all.
+			const position = await currentSession(first);
+			await stopRun(first);
+			const second = await startRun("detail-tree-startup-second", { runRoot });
+			try {
+				expect(payloadOf(await second.session.request({ type: "switch_session", sessionPath: position.file })).cancelled).toBe(
+					false,
+				);
+				expect((await currentSession(second)).id).toBe(position.id);
+				expect(startReadings(second.session).some(reading => reading.sessionId === childStart.sessionId)).toBe(false);
+
+				const documentBefore = sessionsOf(readDocument(second.home.consumptionFile) ?? {});
+				const requestsBeforeDetail = second.capture.requests().length;
+				await second.session.prompt("/budget detail");
+				const restored =
+					(await linesUntil(second.session, lines => lines.some(line => line.startsWith("\u2514\u2500 ")))) ?? [];
+				const restoredRow = restored.find(line => line.startsWith(`\u2514\u2500 ${CHILD_TASK_NAME} `));
+				// The restored row states the same handle and the same started-on pair the process that really
+				// spawned the session drew: the whole snapshot came back from the document rather than a
+				// truncated display text, and the row asked no provider for anything.
+				expect(restoredRow).toBeDefined();
+				expect(restoredRow).toContain(`Model: ${MODEL_PROVIDER} / ${MODEL_ID}  Effort: ${provedLevel}`);
+				expect(second.capture.requests().length).toBe(requestsBeforeDetail);
+				// Reading the snapshot started no write of its own either: the document still holds exactly
+				// the records the first process's commits produced, and it is still the only file there.
+				expect(sessionsOf(readDocument(second.home.consumptionFile) ?? {})).toEqual(documentBefore);
+				expect(readdirSync(second.home.storageDirectory).filter(name => name.endsWith(".json"))).toEqual([
+					CONSUMPTION_FILE,
+				]);
+			} finally {
+				await disposeRun(second);
+			}
+		} finally {
+			await disposeRun(first);
+			runRoot.dispose();
 		}
 	}, 300_000);
 });
