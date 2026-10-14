@@ -67,6 +67,15 @@
  * boundaries are used — a restored accumulation is a session total and not a Round, a Round whose
  * start this instance never saw is hidden, and nothing is ever written to the document for a Round,
  * because a Round is not persisted state.
+ *
+ * A session's Session span is the second thing this module owns, and it is a fact rather than a
+ * difference: the instant of the first user input the harness attributed to the user
+ * ({@link RequestAccounting.userInput}) and the instant of the latest Round end it observed, kept by
+ * `session-span.ts` as what this instance saw plus what the loaded document already carried. It
+ * never sums anything — no descendant's time, no other session's — and it is read through
+ * {@link ConsumptionView.sessionSpan}. Like a name, an observed instant is not an accumulation: it
+ * survives a snapshot that did not land and travels with the next one that does, and a period switch
+ * clears it with everything else measured in the period it is closing.
  */
 import type {
 	FeedbackTransport,
@@ -75,11 +84,13 @@ import type {
 	TurnEndDelivery,
 	TurnStartDelivery,
 	TurnUsage,
+	UserInputDelivery,
 } from "../../../framework/core/protocol";
 import type { ModelConsumption, OwnConsumption, SessionRecord, TokenBuckets } from "./consumption-document";
 import { type ConsumptionStore, type SessionCommit, unusableBaselineNotice } from "./consumption-store";
 import type { ModelPricingData } from "./model-data";
 import { type RequestPrice, requestPriceOf } from "./request-price";
+import { type SessionSpanReading, createSessionSpans } from "./session-span";
 
 /** The read-only consumption this instance holds: the extension's display seam, read never written. */
 export interface ConsumptionView {
@@ -133,6 +144,17 @@ export interface ConsumptionView {
 	 * document: a restored accumulation is a session total, not a Round.
 	 */
 	roundTotals(sessionId: string): RoundTotals | undefined;
+	/**
+	 * One actual session's Session span as this instance has it: the first user input it observed for
+	 * that session in this period, and the latest Round end it observed, or `undefined` while either
+	 * of those facts is unknown.
+	 *
+	 * It is the session's own time — what a display reads for the main session of the tree a target
+	 * belongs to — and never an inclusive one: no descendant's time is added to it. A reading that the
+	 * loaded document already carried is answered as soon as the baseline is loaded, which is what
+	 * makes a restart continue the same span rather than starting a new one.
+	 */
+	sessionSpan(sessionId: string): SessionSpanReading | undefined;
 	/** Subscribe to a change of those results; returns the unsubscribe that stops it. */
 	subscribe(listener: () => void): () => void;
 }
@@ -186,6 +208,15 @@ export interface RequestAccounting {
 	/** One actual session's Round end: its own consumption is saved when it grew. */
 	roundEnded(delivery: RoundDelivery): Promise<void>;
 	/**
+	 * One user input the harness attributed to the user was admitted to one actual session.
+	 *
+	 * It is the start of that session's Session span: the first such delivery fixes the instant, and
+	 * every later one leaves it where it is. It is not a boundary — nothing is consumed, priced or
+	 * written here — and it starts nothing for a session the loaded document already carries a start
+	 * for.
+	 */
+	userInput(delivery: UserInputDelivery): void;
+	/**
 	 * One actual session's own facts, re-reported by the host as they changed.
 	 *
 	 * It is the one delivery the accounting applies without a boundary behind it: the session's
@@ -233,6 +264,15 @@ export interface RequestAccountingInputs {
 	readonly harness: string;
 	/** The active consumption document this instance accumulates into and saves through. */
 	readonly storage: ConsumptionStore;
+	/**
+	 * The instant source this instance's Session span observations are recorded on.
+	 *
+	 * Omitted means the process clock (`Date.now`). The framework delivers harness facts without an
+	 * instant of their own, so when a fact is *observed* is the observer's own fact — which is exactly
+	 * what a span is measured against, and what lets a suite place an input and a Round end at the
+	 * instants a case names.
+	 */
+	readonly now?: () => number;
 }
 
 /** One model's running totals inside one session's ledger, which is what additions mutate. */
@@ -363,7 +403,37 @@ function addConsumption(into: Record<string, Record<string, ModelConsumption>>, 
  */
 export function createRequestAccounting(inputs: RequestAccountingInputs): RequestAccounting {
 	const { data, harness, storage } = inputs;
+	const now = inputs.now ?? Date.now;
 	const ledgers = new Map<string, SessionLedger>();
+	/**
+	 * This instance's Session spans: the first user input it observed per session and the latest Round
+	 * end, seeded from the record the document already carries. They belong to the accounting period
+	 * the instance is accumulating in, which is why a period switch clears them with everything else.
+	 */
+	const spans = createSessionSpans({
+		saved: sessionId => storage.session(harness, sessionId)?.span,
+	});
+
+	/**
+	 * The instant one Session span observation is recorded at, or `undefined` when the clock's own
+	 * reading is not one.
+	 *
+	 * The clock is this extension's one source for these instants — the harness delivers neither a
+	 * submission nor a Round end with a time of its own — so a reading that is not a finite,
+	 * non-negative instant is an invalid time fact and nothing is recorded from it. What a delivery
+	 * whose reading was invalid costs is that one observation: the reading a display shows stays what
+	 * it was, or stays unknown, and nothing is filled in with a zero, the previous instant or the
+	 * process's start time.
+	 */
+	const observedAt = (feedback: FeedbackTransport): number | undefined => {
+		const at = now();
+		if (Number.isFinite(at) && at >= 0) return at;
+		feedback.notify(
+			"error",
+			`主会话时间采集失败（时钟读数不是有效时刻：${String(at)}）；本次未记录该时间，已保留上一次有效读数或不可用状态，消费统计、既有提交与其他字段不受影响。`,
+		);
+		return undefined;
+	};
 	/** What the host has reported about each actual session, as far as it reported anything. */
 	const reported = new Map<
 		string,
@@ -590,6 +660,11 @@ export function createRequestAccounting(inputs: RequestAccountingInputs): Reques
 	 * Round derived from them would be a difference this instance cannot stand behind. The handled
 	 * request identities stay: a repeated end for a Turn already accounted or already skipped must
 	 * not account a second time because its session's accumulation was discarded.
+	 *
+	 * A Session span is not part of what is discarded. The instants it holds are observations rather
+	 * than additions, so a snapshot that did not land leaves them as they were — the reading a display
+	 * shows is still the span this instance really saw — and the next snapshot that does land carries
+	 * them to the file instead of asking the user to say something again.
 	 */
 	const discard = (sessionId: string | undefined): void => {
 		if (sessionId === undefined) {
@@ -629,12 +704,18 @@ export function createRequestAccounting(inputs: RequestAccountingInputs): Reques
 			parentSessionId: null,
 		};
 		const revision = ledger.revision;
+		// The span this snapshot carries is the one this instance has observed up to now — the same two
+		// instants its own display reads — and it is written with the consumption rather than through a
+		// write of its own. A session whose span is still unknown writes none: an absent fact is what a
+		// reader treats as unknown, and an end that has not been observed is never filled in here.
+		const span = spans.fact(session.sessionId);
 		const record: SessionRecord = {
 			id: session.sessionId,
 			name: facts.name,
 			parent: facts.parentSessionId,
 			saveVersion: (ledger.saved?.saveVersion ?? 0) + 1,
 			own: snapshotOf(ledger),
+			...(span === undefined ? {} : { span }),
 		};
 		ledger.saved = record;
 		// This snapshot carries every addition up to `revision`, and it says so before the write
@@ -704,6 +785,7 @@ export function createRequestAccounting(inputs: RequestAccountingInputs): Reques
 			return identities;
 		},
 		inclusiveTotals: inclusiveTotalsOf,
+		sessionSpan: spans.of,
 		roundTotals: sessionId => {
 			const started = openRounds.get(sessionId);
 			// A Round whose snapshot belongs to another period than the one this instance is
@@ -796,6 +878,14 @@ export function createRequestAccounting(inputs: RequestAccountingInputs): Reques
 			if (disposed) return;
 			remember(delivery.session);
 			const sessionId = delivery.session.sessionId;
+			// The one instant a Session span's end moves on: the Round this session really ended. It is
+			// observed whether or not this Round's own consumption grew, and whether or not the instance
+			// can save — the reading is a fact this instance holds, and a save that does not follow leaves
+			// it unpersisted rather than unobserved. Nothing else advances it: a settle the framework
+			// never confirmed reaches no handler at all, so a cancelled, failed or interrupted Round that
+			// delivered no end leaves the earlier one in place.
+			const endedAt = observedAt(delivery.feedback);
+			const spanAdvanced = endedAt !== undefined && spans.ended(sessionId, endedAt);
 			const started = openRounds.get(sessionId);
 			openRounds.delete(sessionId);
 			// The Round's own additions are the difference between the accumulation it began from and
@@ -805,14 +895,27 @@ export function createRequestAccounting(inputs: RequestAccountingInputs): Reques
 			if (started !== undefined && started.periodId === storage.period()?.periodId) {
 				endedRounds.set(sessionId, differenceOf(ownOf(sessionId), started.own));
 				announce();
+			} else if (spanAdvanced) {
+				announce();
 			}
 			if (storage.pauseReason() !== undefined) return;
 			const ledger = ledgers.get(delivery.session.sessionId);
 			// Nothing to save when the session's own consumption has not grown since the snapshot this
 			// instance last built (or is still publishing): a rename rides along with the next real save
-			// rather than causing a write of its own.
+			// rather than causing a write of its own. A Session span is carried by that same snapshot
+			// and never written for its own sake.
 			if (ledger === undefined || ledger.revision <= ledger.savedRevision) return;
 			await save(delivery.session, ledger, delivery.feedback);
+		},
+		userInput(delivery) {
+			if (disposed) return;
+			remember(delivery.session);
+			// The start of that session's Session span, taken from the first input the user really put in
+			// and from nothing else. It is not a boundary: no Round opens, nothing is consumed, nothing is
+			// priced and no file is touched — what changes is a reading a display may show, and only once
+			// an end is known as well.
+			const at = observedAt(delivery.feedback);
+			if (at !== undefined && spans.input(delivery.session.sessionId, at)) announce();
 		},
 		sessionFacts(session) {
 			if (disposed) return;
@@ -828,6 +931,10 @@ export function createRequestAccounting(inputs: RequestAccountingInputs): Reques
 			// Round that was open across the switch. The handled request identities stay (see the
 			// interface), and so do the identity facts the host reported about each session.
 			discard(undefined);
+			// The Session spans were measured in that same period, so they go with it: a new period's
+			// span begins at the next user input this instance observes, and nothing of the closed
+			// period's time is carried into it or reconstructed from its records.
+			spans.clear();
 		},
 		dispose() {
 			disposed = true;

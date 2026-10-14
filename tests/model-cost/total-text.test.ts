@@ -10,7 +10,8 @@
  * ratio or an account amount still writes that field with dashes when it has no value, and a channel
  * with no amount policy writes neither. The tree's bucket total is not one of those fields any more:
  * no row writes a Sum column (P23), while the total itself stays the figure the cache column's own
- * dash rule reads.
+ * dash rule reads. The main session's own Session span is the row's last column, written as a dash
+ * while no interval has been observed yet.
  */
 import { describe, expect, test } from "bun:test";
 import type { CatalogPrice } from "../../framework/core/protocol";
@@ -54,18 +55,18 @@ function freshDisplay(mode: ConsumptionMode, price?: CatalogPrice): ConsumptionD
 describe("the Total row keeps the old extension's fields with dashes at initialization", () => {
 	test("the monetary channel writes its three-bucket ratio field and Cost with no value", () => {
 		expect(totalText(freshDisplay("monetary", PRO_PRICE))).toBe(
-			"Cache: -  \u00A5Cache/In/Out\uff1a--:--:--  Cost: -",
+			"Cache: -  \u00A5Cache/In/Out\uff1a--:--:--  Cost: -  Span: \u2014",
 		);
 	});
 
 	test("the allowance channel writes its four-bucket ratio field and Ref with no value", () => {
 		expect(totalText(freshDisplay("allowance"))).toBe(
-			"Cache: -  $CacheR/In/CacheW/Out\uff1a--:--:--:--  Ref: -",
+			"Cache: -  $CacheR/In/CacheW/Out\uff1a--:--:--:--  Ref: -  Span: \u2014",
 		);
 	});
 
 	test("a token-only channel writes no amount and no ratio of its own", () => {
-		expect(totalText(freshDisplay("token-only"))).toBe("Cache: -");
+		expect(totalText(freshDisplay("token-only"))).toBe("Cache: -  Span: \u2014");
 	});
 
 	test("an empty ratio keeps its field while the tree's known Cost is written beside it", () => {
@@ -73,7 +74,7 @@ describe("the Total row keeps the old extension's fields with dashes at initiali
 			...freshDisplay("monetary", PRO_PRICE),
 			tree: { tokens: { ...EMPTY_TOKENS, input: 1_000, output: 2_000 }, sum: 3_000, costCny: 0.05 },
 		};
-		expect(totalText(withTree)).toBe("Cache: -  \u00A5Cache/In/Out\uff1a--:--:--  Cost: \u00A50.05");
+		expect(totalText(withTree)).toBe("Cache: -  \u00A5Cache/In/Out\uff1a--:--:--  Cost: \u00A50.05  Span: \u2014");
 	});
 
 	test("the allowance Total writes the tree's known Ref, keeping its own four-bucket ratio field", () => {
@@ -81,6 +82,6 @@ describe("the Total row keeps the old extension's fields with dashes at initiali
 			...freshDisplay("allowance"),
 			tree: { tokens: { ...EMPTY_TOKENS, input: 500, output: 1_500 }, sum: 2_000, referenceCostUsd: 0.03 },
 		};
-		expect(totalText(withTree)).toBe("Cache: -  $CacheR/In/CacheW/Out\uff1a--:--:--:--  Ref: $0.03");
+		expect(totalText(withTree)).toBe("Cache: -  $CacheR/In/CacheW/Out\uff1a--:--:--:--  Ref: $0.03  Span: \u2014");
 	});
 });
