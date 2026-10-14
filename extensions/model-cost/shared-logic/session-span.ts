@@ -109,14 +109,21 @@ export function createSessionSpans(inputs: SessionSpanInputs): SessionSpans {
 	};
 
 	/**
-	 * Both of one session's instants: what this instance observed for it, and — for whichever fact it
-	 * has not observed — what the loaded document already carries. Neither an observed end nor a saved
-	 * one is invented: a session that has only one of the two is answered with nothing.
+	 * Both of one session's instants: the start the session already had, and the latest end that has
+	 * been observed for it. Neither one is invented: a session that has only one of the two is answered
+	 * with nothing.
+	 *
+	 * The start resolves towards the document's own instant rather than this instance's observation:
+	 * a start is taken once for a session and a resume must not take a second one, so an input this
+	 * instance observed after the document already carried a start is an input like any other and
+	 * moves nothing. The end resolves the other way — this instance's own observation is the later
+	 * one, because every observed Round end replaces it — and the document's end is what a session
+	 * that has not ended a Round since this instance started still has.
 	 */
 	const instantsOf = (sessionId: string): SessionSpanFact | undefined => {
 		const facts = observed.get(sessionId);
 		const record = saved(sessionId);
-		const start = facts?.start ?? record?.start;
+		const start = record?.start ?? facts?.start;
 		const end = facts?.end ?? record?.end;
 		if (start === undefined || end === undefined) return undefined;
 		return { start, end };

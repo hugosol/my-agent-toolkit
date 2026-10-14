@@ -46,6 +46,8 @@ interface NativeSurface {
 	readonly observed: UserInputDelivery[];
 	/** Whether the adapter subscribed the native input event at all. */
 	readonly subscribed: boolean;
+	/** What the binding wrote on the process's non-model channel (stderr) while it bound. */
+	readonly diagnostic: string;
 	/** One submission, as the harness publishes it for one session. */
 	submit(options: {
 		readonly source: "interactive" | "rpc" | "extension";
@@ -55,7 +57,9 @@ interface NativeSurface {
 }
 
 /** Builds one bound definition over a recording native surface. */
-function boundSurface(options: { readonly events?: SemanticEventHandlers } = {}): NativeSurface {
+function boundSurface(
+	options: { readonly events?: SemanticEventHandlers; readonly refusesInput?: boolean } = {},
+): NativeSurface {
 	const inputHandlers: InputHandler[] = [];
 	const registrations: string[] = [];
 	const observed: UserInputDelivery[] = [];
@@ -74,7 +78,11 @@ function boundSurface(options: { readonly events?: SemanticEventHandlers } = {})
 		},
 		appendEntry(): void {},
 		on(event: string, handler: never): void {
-			if (event === "input") inputHandlers.push(handler as InputHandler);
+			if (event !== "input") return;
+			// A surface that cannot publish submissions at all refuses the registration, which is the
+			// only way a harness states that this fact does not exist here.
+			if (options.refusesInput === true) throw new Error("this surface has no input event");
+			inputHandlers.push(handler as InputHandler);
 		},
 	};
 
@@ -91,12 +99,27 @@ function boundSurface(options: { readonly events?: SemanticEventHandlers } = {})
 			commands: { "input-probe": { run: () => undefined } },
 		}),
 	});
-	if (!factory(api).bound) throw new Error("the input probe definition did not bind");
+	// The adapter's own diagnostics go to stderr, because startup precedes any UI: captured here so a
+	// case can read what the operator would have been told.
+	const chunks: string[] = [];
+	const original = process.stderr.write;
+	process.stderr.write = ((chunk: string | Uint8Array) => {
+		chunks.push(typeof chunk === "string" ? chunk : Buffer.from(chunk).toString("utf8"));
+		return true;
+	}) as typeof process.stderr.write;
+	let bound: boolean;
+	try {
+		bound = factory(api).bound;
+	} finally {
+		process.stderr.write = original;
+	}
+	if (!bound) throw new Error("the input probe definition did not bind");
 
 	return {
 		registrations,
 		observed,
 		subscribed: inputHandlers.length > 0,
+		diagnostic: chunks.join(""),
 		submit(options) {
 			for (const handler of inputHandlers) {
 				handler(
@@ -151,5 +174,21 @@ describe("the input axis is subscribed only when it is observed (S1)", () => {
 		const surface = boundSurface({ events: { round_start: () => undefined } });
 
 		expect(surface.subscribed).toBe(false);
+	});
+
+	test("a surface that publishes no submission event is named on the non-model channel, and the rest of the binding stands", () => {
+		const surface = boundSurface({ refusesInput: true });
+
+		// The absence is stated rather than filled in: no input is reported for this binding, because no
+		// submission fact exists here to report. The wording names the definition and the fact, and the
+		// command the definition declares is registered either way.
+		expect(surface.diagnostic).toContain(`${PROBE.id}: this harness publishes no submission event (input)`);
+		expect(surface.subscribed).toBe(false);
+		expect(surface.observed).toEqual([]);
+		expect(surface.registrations).toContain("command:input-probe");
+
+		// And the definition really is bound: an un-subscribed optional fact is not a refused binding.
+		surface.submit({ source: "interactive" });
+		expect(surface.observed).toEqual([]);
 	});
 });
