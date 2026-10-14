@@ -1,0 +1,185 @@
+{
+  "feature": "model-cost-session-time-and-detail",
+  "ticket": "05-remove-sum-column.md",
+  "run_id": "c3cbe012-4449-443d-b34e-81b9670a8125",
+  "parent_session_id": "01a1399e-bbbf-7756-b9c1-b208b4848d5c",
+  "parent_session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-14T08-54-26-495Z_01a1399e-bbbf-7756-b9c1-b208b4848d5c.jsonl",
+  "workspace": "E:\\Developer\\myhub\\my-agent-toolkit",
+  "tool_call_id": "633bbe96-fa97-43a4-8ca2-c159c97d235e",
+  "started_at": "2026-10-14T09:06:49.443Z",
+  "tdd_status": "completed",
+  "retro_status": "completed",
+  "tdd_finished_at": "2026-10-14T09:26:25.069Z",
+  "tdd_result": {
+    "index": 0,
+    "id": "05-remove-sum-columnmd-633bbe96-fa97-43a4-8ca2-c",
+    "agent": "tdd",
+    "agentSource": "user",
+    "task": "Complete assignment thoroughly:\n\n在当前 worktree 实现唯一票据：C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-XIa54W\\.scratch\\model-cost-session-time-and-detail\\implementation\\05-remove-sum-column.md。\n集成分支：wayfinder/subagent-enhance\n固定评审起点：e3a1d0ea3ef9fdc78dc04f2d6719b3159c6e14fc\nspec：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\model-cost-session-time-and-detail\\spec.md\ncontract：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\model-cost-session-time-and-detail\\contract.md\n这是本票首次执行。\n遵守 tdd skill。逐项报告验收证据、实际验证命令及未完成事项。不要修改其他票据、retro 或工作流报告。不要操作集成分支工作区。完成前将集成分支最新 tip 合入当前票据分支，解决冲突并验证；提交本票实现。不得 reset 丢弃既有工作。只执行本票，不调用 retro、不派发其他票据。",
+    "assignment": "在当前 worktree 实现唯一票据：C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-XIa54W\\.scratch\\model-cost-session-time-and-detail\\implementation\\05-remove-sum-column.md。\n集成分支：wayfinder/subagent-enhance\n固定评审起点：e3a1d0ea3ef9fdc78dc04f2d6719b3159c6e14fc\nspec：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\model-cost-session-time-and-detail\\spec.md\ncontract：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\model-cost-session-time-and-detail\\contract.md\n这是本票首次执行。\n遵守 tdd skill。逐项报告验收证据、实际验证命令及未完成事项。不要修改其他票据、retro 或工作流报告。不要操作集成分支工作区。完成前将集成分支最新 tip 合入当前票据分支，解决冲突并验证；提交本票实现。不得 reset 丢弃既有工作。只执行本票，不调用 retro、不派发其他票据。",
+    "description": "Remove sum column per ticket",
+    "lastIntent": "Cleaning up throwaway snapshot",
+    "exitCode": 0,
+    "output": "{\n  \"ticket\": \"05-remove-sum-column\",\n  \"branch\": \"hyper/model-cost-session-time-and-detail/05-remove-sum-column-05ea2a-e5951e40ed62\",\n  \"commit\": \"d267d95\",\n  \"result\": \"Sum column removed from Total, Round, model rows and descendant rows across all modes; P23/P25/P24 evidenced at the S2 output seam; owning partition, affected consumers, framework partition, typecheck and real-host dock runs green; integration tip merged (no-op).\"\n}",
+    "stderr": "",
+    "truncated": false,
+    "durationMs": 1175574,
+    "tokens": 281337,
+    "requests": 199,
+    "contextTokens": 252014,
+    "contextWindow": 1000000,
+    "modelOverride": [
+      "deepseek/deepseek-flash:high"
+    ],
+    "resolvedModel": "deepseek/deepseek-flash:high",
+    "resolvedModelIdentity": "deepseek/deepseek-flash",
+    "resolvedThinkingLevel": "high",
+    "aborted": false,
+    "usage": {
+      "input": 152340,
+      "output": 128997,
+      "cacheRead": 32614912,
+      "cacheWrite": 0,
+      "totalTokens": 32896249,
+      "reasoningTokens": 75222,
+      "cost": {
+        "input": 0.045701999999999986,
+        "output": 0.1547964,
+        "cacheRead": 0.19568947199999995,
+        "cacheWrite": 0,
+        "total": 0.3961878719999998
+      }
+    },
+    "outputPath": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-14T08-54-26-495Z_01a1399e-bbbf-7756-b9c1-b208b4848d5c\\05-remove-sum-columnmd-633bbe96-fa97-43a4-8ca2-c.md",
+    "extractedToolData": {
+      "yield": [
+        {
+          "data": {
+            "ticket": ".scratch/model-cost-session-time-and-detail/implementation/05-remove-sum-column.md",
+            "branch": "hyper/model-cost-session-time-and-detail/05-remove-sum-column-05ea2a-e5951e40ed62",
+            "commit": "d267d95 - remove the model-cost Sum column from Total, Round and every detail row",
+            "status_set": "Ticket marked Status: in-progress (implemented + tested on the ticket branch; merge/acceptance is the main agent's)",
+            "merge": "wayfinder/subagent-enhance is still at e3a1d0e (my base, already an ancestor). git merge wayfinder/subagent-enhance -> 'Already up to date.' No conflicts, nothing to resolve. Re-checked after the amend.",
+            "delivered": "No row writes a Sum column any more: brief/detail Total, brief Round, the detail root's provider/model rows and every descendant session row, in monetary, allowance and token-only. The four buckets are still added up (fieldsOf unchanged) because the cache column's dash rule reads that total, so an empty scope still shows 'Cache: -' and a measured one a percentage. Removed as now-dead: sumColumn/formatSum in display.ts and an unused test constant; no other display field, amount, ratio, context or storage behaviour was touched."
+          },
+          "status": "success",
+          "type": [
+            "section"
+          ]
+        },
+        {
+          "data": {
+            "criteria": {
+              "P23": "Verified on the actual widget output in every owned surface, as fields (labels+values) rather than fixed whole-row spacing. Updated/covered by: tests/model-cost/total-text.test.ts (Total row text per mode, incl. dashes at initialization and a new allowance Ref-value case), tests/model-cost/detail-widget.test.ts (production attachModelCostWidget over the framework port double: brief Total+Round, detail root model row and descendant row, subagent-view brief), tests/model-cost/viewed-session-widget.test.ts (Total across a target switch and a same-target change), tests/model-cost/widget-visual.test.ts (the plain-lines drawing form), tests/harness-dock/detail-tree.test.ts (real patched host: model row + child row), tests/harness-dock/model-cost-modes.test.ts (real host: token-only and allowance phases assert not.toContain('Sum:')), tests/harness-dock/viewed-session-total.test.ts (real host Total). Machine-checkable residue: grep -rn 'Sum:' tests/ extensions/ entrypoints/ scripts/ returns only the two intentional negative assertions.",
+              "P25": "New test 'the Round row's own field set is the retained one, with no time of the Total's (P25)' in tests/model-cost/detail-widget.test.ts pins the rendered brief Round line AND roundColumns(...).map(label) == ['Cache: ', 'YenCache/In/Out：', 'Cost: '] - an independent literal from the ticket, so a time column on the Round fails it. Guard verified by temporary mutation: injecting {label:'Span: ', value:'600.0K'} into roundColumns turned the test red (received '... Sum-free ... Span: 600.0K ...'), then restored to green. LIMIT: the time feature itself is delivered by tickets 01/02, so only the Round side of the contrast is observable in this branch.",
+              "P24": "Retained values unchanged, with the hand-derived literals in each suite left as they were: Cache %/ratio/Cost/Ctx on Total, Round, model and descendant rows (detail-widget: 66/67/40/33 %, 4:7:89, Cost Yen0.05 and Yen0.0001, descendant Ctx 85%/50% against 450.0K/272.0K), reference cost and context in the allowance/token-only paths (total-text allowance 'Ref: $0.03'; dock modes allowance run 'Ref: $0.0050'; display-result allowance row referenceCostUsd 0.02 + ratio 10:40:10:40 in tests/model-cost/detail-tree.test.ts and viewed-session-total), and the inclusive/own cumulative figures now asserted on retained fields: dock detail-tree Total Cost Yen0.02 (0.01004 main + 0.00502 child), dock modes tree Cost Yen0.0050 then Yen0.01 across the Go switch and return. No Cost/Ref swap: each mode's labels and values are pinned. Internal computation kept: ConsumptionFields.sum is still computed and still asserted (display.test.ts, detail-tree rows[].fields.sum, viewed-session-total current.sum/tree.sum). Storage and consumption attribution untouched by the diff.",
+              "criterion4": "Covered by the above: only the Sum column builder, its private formatSum and one dead test constant were deleted; cost/time are not interchanged (labels+values pinned per mode); no storage, aggregation or period module appears in the diff.",
+              "criterion5": "Owning partition + affected consumers + typecheck + actual widget smoke all run; see commands_and_results."
+            }
+          },
+          "status": "success",
+          "type": [
+            "section"
+          ]
+        },
+        {
+          "data": {
+            "commands_run": [
+              {
+                "cmd": "bun test tests/model-cost",
+                "result": "280 pass / 0 fail, 1200 expect() calls, 23 files (owning output partition, on the final commit)"
+              },
+              {
+                "cmd": "bun test tests/framework",
+                "result": "352 pass / 0 fail (shared contracts unaffected)"
+              },
+              {
+                "cmd": "bun run typecheck",
+                "result": "tsc --noEmit clean"
+              },
+              {
+                "cmd": "bun test tests/model-cost/detail-widget.test.ts -t P25",
+                "result": "red with the injected time column ('Received: ... Sum-free ... Span: 600.0K ...'), green after restoring"
+              },
+              {
+                "cmd": "bun test tests/model-cost/total-text.test.ts (before implementing)",
+                "result": "red for the right reason: 'Received: Cache: -  Sum: -' where 'Cache: -' was expected"
+              },
+              {
+                "cmd": "bun test tests/model-cost/detail-widget.test.ts (before implementing)",
+                "result": "red for the right reason: Round/model/descendant rows still carried 'Sum: ...'"
+              }
+            ]
+          },
+          "status": "success",
+          "type": [
+            "section"
+          ]
+        },
+        {
+          "data": {
+            "dock_evidence": "This Windows worktree cannot materialize the patched host at all: tests/harness-dock/host-patch-artifact.ts patchTouchedFiles() splits patch text on LF while the checkout is CRLF (core.autocrlf=true, i:w/crlf), so ensureViewedSessionHarness throws 'patch.diff touches no file' in beforeAll before any code under test runs. This is pre-existing and independent of this diff. Workaround used: an isolated LF snapshot next to this worktree (git -c core.autocrlf=false clone --branch <ticket branch>; the modified files copied in; bun install), which is the state a Linux/CI checkout has. Snapshot deleted afterwards.",
+            "dock_results": [
+              {
+                "cmd": "bun test tests/harness-dock/detail-tree.test.ts (snapshot)",
+                "result": "1 pass / 0 fail, 29 assertions, real patched host (writes no Sum, model row and child row with Ctx, new inclusive Total Cost Y0.02)"
+              },
+              {
+                "cmd": "bun test tests/harness-dock/model-cost-modes.test.ts (snapshot)",
+                "result": "6 pass / 0 fail, 67 assertions; first run surfaced one assertion of mine tripping on alignment padding, fixed to a padding-tolerant field match and re-run green"
+              },
+              {
+                "cmd": "bun test tests/harness-dock/viewed-session-total.test.ts (snapshot)",
+                "result": "2 pass / 0 fail, 19 assertions"
+              },
+              {
+                "cmd": "bun test tests/harness-dock (snapshot, whole tier)",
+                "result": "77 pass / 4 fail, 81 tests, 22 files, 207.6s"
+              }
+            ]
+          },
+          "status": "success",
+          "type": [
+            "section"
+          ]
+        },
+        {
+          "data": {
+            "dock_failures_classified": "All 4 dock-tier failures are in tests/harness-dock/baseline.test.ts and are environment gaps, not this diff: the recorded revision anchor ../oh-my-pi and the behaviour oracle ../my-omp-toolkit are absent ('anchor <missing>', 'checkout path does not exist'), and the oracle lockfile cannot be hashed. Reproduced identically by running the same file in the ticket worktree (2 pass / 4 fail), and my commit touches neither framework/docs/harness-baseline.json nor bun.lock (git show --stat).",
+            "unverified": [
+              "P25's contrast ('Total carries the session span, Round does not') can only be observed once tickets 01/02 deliver the time field; this branch pins the Round side with an explicit field-set assertion plus the mutation check.",
+              "The human-led interactive-TUI round is not run here; the widget smoke evidence is the controlled production frontend plus the real patched host. I updated only the two live verification instructions in extensions/model-cost/README.md (P11 and P26 rows) and deliberately left their 'Recorded ...' examples untouched, since those record an already-observed run; the recorded Sum text in them is now historically stale.",
+              "Column widths and narrow-screen layout are ticket 06's; the exact rendered-line assertions inherit the current alignment and may be re-pinned by that work (the label/value assertions do not depend on padding)."
+            ],
+            "scope_notes": "Diff touches only extensions/model-cost source/tests plus its README; no other ticket, retro or workflow report was read or modified, and the integration-branch workspace was never operated (only a read-only merge into this branch)."
+          },
+          "status": "success",
+          "type": [
+            "section"
+          ]
+        },
+        {
+          "data": {
+            "ticket": "05-remove-sum-column",
+            "branch": "hyper/model-cost-session-time-and-detail/05-remove-sum-column-05ea2a-e5951e40ed62",
+            "commit": "d267d95",
+            "result": "Sum column removed from Total, Round, model rows and descendant rows across all modes; P23/P25/P24 evidenced at the S2 output seam; owning partition, affected consumers, framework partition, typecheck and real-host dock runs green; integration tip merged (no-op)."
+          },
+          "status": "success",
+          "type": "\"result\""
+        }
+      ]
+    },
+    "outputMeta": {
+      "lineCount": 6,
+      "charCount": 437
+    }
+  },
+  "agent": "tdd",
+  "agent_id": "05-remove-sum-columnmd-633bbe96-fa97-43a4-8ca2-c",
+  "session_id": "01a139aa-11fd-71b9-a39e-6b7c5bcba8ff",
+  "session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-14T08-54-26-495Z_01a1399e-bbbf-7756-b9c1-b208b4848d5c\\05-remove-sum-columnmd-633bbe96-fa97-43a4-8ca2-c.jsonl",
+  "execution_cwd": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-XIa54W",
+  "retro_document": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-auto-coding-nTyzY7\\retro\\05-remove-sum-column.md\\c3cbe012-4449-443d-b34e-81b9670a8125.md",
+  "retro_finished_at": "2026-10-14T09:27:14.641Z"
+}

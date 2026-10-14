@@ -1,0 +1,195 @@
+{
+  "feature": "model-cost-session-time-and-detail",
+  "ticket": "02-subagent-runtime.md",
+  "run_id": "34fe12fd-3cc4-4d30-9390-ab51390d583e",
+  "parent_session_id": "01a1399e-bbbf-7756-b9c1-b208b4848d5c",
+  "parent_session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-14T08-54-26-495Z_01a1399e-bbbf-7756-b9c1-b208b4848d5c.jsonl",
+  "workspace": "E:\\Developer\\myhub\\my-agent-toolkit",
+  "tool_call_id": "bcfb46e1-0014-4d94-8e9d-654c72eb838a",
+  "started_at": "2026-10-14T10:00:25.261Z",
+  "tdd_status": "completed",
+  "retro_status": "completed",
+  "tdd_finished_at": "2026-10-14T10:21:49.448Z",
+  "tdd_result": {
+    "index": 0,
+    "id": "02-subagent-runtimemd-bcfb46e1-0014-4d94-8e9d-65",
+    "agent": "tdd",
+    "agentSource": "user",
+    "task": "Complete assignment thoroughly:\n\n在当前 worktree 实现唯一票据：C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-1Earge\\.scratch\\model-cost-session-time-and-detail\\implementation\\02-subagent-runtime.md。\n集成分支：wayfinder/subagent-enhance\n固定评审起点：e3a1d0ea3ef9fdc78dc04f2d6719b3159c6e14fc\nspec：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\model-cost-session-time-and-detail\\spec.md\ncontract：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\model-cost-session-time-and-detail\\contract.md\n接手此前实现进度，不丢弃已有修改。先读上次报告：C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-auto-coding-nTyzY7\\implement-ca22a25a-04b9-430e-ad76-cd00fd761a97.md\n遵守 tdd skill。逐项报告验收证据、实际验证命令及未完成事项。不要修改其他票据、retro 或工作流报告。不要操作集成分支工作区。完成前将集成分支最新 tip 合入当前票据分支，解决冲突并验证；提交本票实现。不得 reset 丢弃既有工作。只执行本票，不调用 retro、不派发其他票据。",
+    "assignment": "在当前 worktree 实现唯一票据：C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-1Earge\\.scratch\\model-cost-session-time-and-detail\\implementation\\02-subagent-runtime.md。\n集成分支：wayfinder/subagent-enhance\n固定评审起点：e3a1d0ea3ef9fdc78dc04f2d6719b3159c6e14fc\nspec：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\model-cost-session-time-and-detail\\spec.md\ncontract：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\model-cost-session-time-and-detail\\contract.md\n接手此前实现进度，不丢弃已有修改。先读上次报告：C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-auto-coding-nTyzY7\\implement-ca22a25a-04b9-430e-ad76-cd00fd761a97.md\n遵守 tdd skill。逐项报告验收证据、实际验证命令及未完成事项。不要修改其他票据、retro 或工作流报告。不要操作集成分支工作区。完成前将集成分支最新 tip 合入当前票据分支，解决冲突并验证；提交本票实现。不得 reset 丢弃既有工作。只执行本票，不调用 retro、不派发其他票据。",
+    "description": "Implement subagent runtime ticket 02",
+    "lastIntent": "Cleaning the temporary probe dump",
+    "exitCode": 0,
+    "output": "{\n  \"ticket\": \"02-subagent-runtime\",\n  \"branch\": \"hyper/model-cost-session-time-and-detail/02-subagent-runtime-a5dc52-e5951e40ed62\",\n  \"head\": \"ffb8e17\",\n  \"base\": \"90d043f (the previous attempt's work, kept)\",\n  \"commits\": [\n    \"ffb8e17 02: settle the duplicate-observation question on the real host and document the axis (this round: P35 resolution + real-host reload evidence, P14-close and P15-request coverage, the axis/register/user docs, ticket verification section)\"\n  ],\n  \"integration\": \"wayfinder/subagent-enhance is still d68b469, an ancestor of HEAD — so the local merge into it is a fast-forward and conflict-free. I did NOT perform it: both assignments forbid operating the integration branch worktree (which is where that branch is checked out) and no push is allowed. Prepared command for the integration step: `git -C <integration worktree> merge --ff-only hyper/model-cost-session-time-and-detail/02-subagent-runtime-a5dc52-e5951e40ed62`. Worktree is clean; no fetch/pull/push was run.\",\n  \"delivered\": \"One logical record per descendant session shows the host's own per-execution runtime accumulated in the consumption period; available readings ride that session's existing consumption commit as numeric milliseconds, are restored and continue accumulating, and progress/repeated notifications/same-process second observers contribute once; late values cause no back-fill, wait or extra write. No omp change, no host patch, no time-specific file/write/timer/polling, no per-execution ledger.\",\n  \"p35_resolution\": {\n    \"previous_gap\": \"The last round admitted that an instance seeded from a record would re-add an execution if it were told about it again (reload / second process).\",\n    \"part_1_duplicate_path_proven_once\": \"tests/model-cost/subagent-runtime.test.ts — new case: one execution's final 360000 is delivered before an existing commit, committed (saveVersion 2), then that same execution's completion AND a stale running reading of it are delivered again; the accumulation stays 360000 and the session's next commit (saveVersion 3) writes 360000, not 720000. Independent literals; the value comes from the fact→accumulation→save path, not from a pre-filled record.\",\n    \"part_1_sensitivity\": \"temporary mutation `if (false && accounted.has(runtime.executionId))` → the case fails (1080000 vs 360000); source restored, case passes.\",\n    \"part_2_reload_reachability_real_host\": \"tests/harness-dock/detail-tree.test.ts — new case 'a resumed process draws the runtime the document already carries': process 1 really delegates through the host's task tool, commits the child's runtime (754 ms in that run) and stops; process 2 over the SAME isolated home + run root resumes the session with the host's own switch_session and opens the detail form. The child row states exactly the document's figure (not twice it) and the resumed process writes nothing. Sensitivity: temporary `savedRuntime * 2` in ConsumptionView.runtime → the case fails (drawn 2000 vs saved 754); restored, passes.\",\n    \"part_2_why_mechanism_evidence\": \"temporary probe in the omp adapter (since removed) dumping the real host's delegation payloads during a delegating run: both frame kinds carry details {projectAgentsDir, results, totalDurationMs, progress}; the running frames state each spawn's own durationMs (42→770 and 31→444 for the two children of one task call) and each child's ended frame states its final one under results[] (780, 444). So the readings are the host's own and the final reading really arrives; a resumed transcript is not replayed as live tool-execution events, so no process is told about an execution its file already holds. Recorded in framework/docs/harness-support.md (execution.subagent-duration).\",\n    \"part_2_design_note\": \"No persisted per-execution identity was added: the approved contract leaves out a per-execution ledger and a time-specific write, and a persisted id list would misfile a harness that ever reused an identity. The accumulator's module doc now states the lifetime of its identity memory and why a restart is safe; the ticket records this as the resolution rather than a narrowed promise.\",\n    \"reachable_duplicate_verified\": \"The in-process duplicates (repeated notification, progress=replacement, stale frame, second observer in one process) are deduplicated by the accumulator and verified in tests/model-cost/subagent-runtime.test.ts (P12 cases) and tests/framework/subagent-runtime.test.ts (every frame mapped as it stands, each naming its execution); independent sessions in two real processes do not overwrite each other in tests/model-cost/storage-processes.test.ts (real child processes, real store commit).\"\n  },\n  \"criteria_evidence\": [\n    {\n      \"criterion\": \"P10 native source + attribution; never a timer or the hub span\",\n      \"evidence\": \"tests/framework/subagent-runtime.test.ts (real adapter seam: native 180000/360000 vs the same agent record's 3,600,000 span; missing/invalid → unavailable; attribution through AgentRegistry to the spawn's session, direct parent, inherited owner; non-task tools and payload-less frames produce nothing). Real host: tests/harness-dock/model-cost-persistence.test.ts delegating run — children's records carry the host's own durationMs (754 ms in this round's run) as positive numbers, main session's none, notices = []; the payload probe above shows which native fields carry it.\"\n    },\n    {\n      \"criterion\": \"P11/P18 one row accumulates 360000+120000 = 480000, saved as numeric milliseconds in the same commit\",\n      \"evidence\": \"tests/model-cost/subagent-runtime.test.ts: row runtimeMs 480000, document record runtimeMs 480000 with typeof number, raw JSON matches /\\\"runtimeMs\\\"\\\\s*:\\\\s*480000/, other sessions untouched.\"\n    },\n    {\n      \"criterion\": \"P12 progress replacements, repeated finals and a later execution each contribute once\",\n      \"evidence\": \"tests/model-cost/subagent-runtime.test.ts: 100000→200000 replacement, 210000 final, repeated 210000 ignored, +90000 → 300000 in memory and 300000 committed (not the readings' sum); new case: the same execution re-observed after its own commit stays one contribution.\"\n    },\n    {\n      \"criterion\": \"P13 a reading settles nothing and disturbs no other session\",\n      \"evidence\": \"tests/model-cost/subagent-runtime.test.ts (no fabricated round_end, no early settlement, other records/parents byte-identical); tests/framework/subagent-runtime.test.ts (the axis carries no framework behaviour; the binding subscribes no agent lifecycle for it).\"\n    },\n    {\n      \"criterion\": \"P14 no time-specific file or extra write; only the existing commit carries the value\",\n      \"evidence\": \"tests/model-cost/subagent-runtime.test.ts — readings write nothing and the root's file set is unchanged, the next round_end carries 480000 in the same file; new case for the CLOSE clause: a final reading is accepted while alive (one redraw), the framework then disposes the instance (proved by a later reading being taken by nobody), the document bytes and the file set are unchanged. Sensitivity: temporary writeFileSync(...,'runtime.json') in cleanup → the case fails on the file set; restored, passes.\"\n    },\n    {\n      \"criterion\": \"P17 a late final reading neither delays nor back-fills\",\n      \"evidence\": \"tests/model-cost/subagent-runtime.test.ts: 359900 committed; a late 360000 updates only the display while disk bytes stay identical; the next existing commit writes 360000.\"\n    },\n    {\n      \"criterion\": \"P15/P16 unusable runtime reported, nothing blocked, 0 ≠ missing\",\n      \"evidence\": \"tests/framework/subagent-runtime.test.ts (absent/negative/NaN → unavailable with the reason; 0 → a reading). tests/model-cost/subagent-runtime.test.ts: one error notice each for missing and invalid, last valid 360000 kept, storage not paused — now also proving the REQUEST clause: a further settled Turn after the unusable reading is accounted (50 input / 90 output) and the existing commit carries it with the runtime. Row runtimeMs undefined vs 0; document field absent vs 0. tests/model-cost/detail-widget.test.ts: `Run: —` vs `Run: 0ms` (480000 drawn as `8m`).\"\n    },\n    {\n      \"criterion\": \"P19 restart restores 480000 and continues; an in-memory-only value is not claimed as restored\",\n      \"evidence\": \"tests/model-cost/subagent-runtime.test.ts: a second instance over the same root reads 480000 (not the 1,080,000 the previous instance's memory held) and continues to 600000, committed. tests/harness-dock/detail-tree.test.ts new case: a second real process draws the document's figure.\"\n    },\n    {\n      \"criterion\": \"P22 an old document without the field stays ordinary consumption\",\n      \"evidence\": \"tests/model-cost/subagent-runtime.test.ts: a record with no runtimeMs reads as valid, keeps own/parent, commits again without inventing a figure.\"\n    },\n    {\n      \"criterion\": \"P24 adding a runtime changes no retained business figure\",\n      \"evidence\": \"tests/model-cost/subagent-runtime.test.ts: fields, tree, inclusiveTotals, costCny, cache rate and context reading identical before/after (tree sum 3644, cost 0.55) with amount and duration never interchanged.\"\n    },\n    {\n      \"criterion\": \"P35 real multi-process/file coordination; no overwrite, no double count\",\n      \"evidence\": \"tests/model-cost/storage-processes.test.ts (real child processes, real files, the framework's cross-process lock): two processes' independent sessions each keep their own runtimeMs, a later version carries its own alone, and a repeated statement at the same version is answered `unchanged`; tests/model-cost/subagent-runtime.test.ts (new, fact→accumulate→save); the real-host reload case above; storage merges are not proved by in-memory locking.\"\n    },\n    {\n      \"criterion\": \"P36 an invalid sub-runtime does not widen into document damage\",\n      \"evidence\": \"tests/model-cost/subagent-runtime.test.ts: runtimeMs \\\"8 minutes\\\" is dropped rather than taken for damage (not paused, own/parent kept, later commit succeeds) while a record with no usable consumption is still refused whole (paused).\"\n    },\n    {\n      \"criterion\": \"completion: owning partitions, affected consumers, typecheck, real file/process and real host/detail smoke\",\n      \"evidence\": \"See commands; consumers re-run (framework partition, entrypoint loading exercised by every dock run, tests/codebase-tools and connect-bot unrelated to this change).\"\n    },\n    {\n      \"criterion\": \"docs added by this round (main agent's request)\",\n      \"evidence\": \"framework/docs/framework-capabilities.md (new axis section, three index rows and the HarnessPort.onSubagentRuntime row); framework/docs/harness-support.md (new `execution.subagent-duration` register entry with the probe's own payload readings); extensions/model-cost/README.md (intro + H1 acceptance row for P10/P18/P19: the `Run:` field, `—`, `0ms`, restart behaviour); extensions/model-cost/shared-logic/subagent-runtime.ts (module doc: the identity memory's lifetime and why a restart is safe).\"\n    }\n  ],\n  \"commands\": [\n    {\n      \"command\": \"bun run typecheck\",\n      \"result\": \"0 errors (TS 7.0.2; proved real by a temporary bad-typed file in scripts/ → exit 1 with TS2322, then removed)\"\n    },\n    {\n      \"command\": \"bun test tests/model-cost\",\n      \"result\": \"298 pass / 0 fail, 24 files\"\n    },\n    {\n      \"command\": \"bun test tests/framework\",\n      \"result\": \"360 pass / 0 fail, 30 files\"\n    },\n    {\n      \"command\": \"bun test tests/harness-dock\",\n      \"result\": \"82 pass / 0 fail, 22 files, 178 s (whole dock partition incl. real delegating runs and the new reload case)\"\n    },\n    {\n      \"command\": \"bun test tests/harness-dock/detail-tree.test.ts -t \\\"resumed process\\\"\",\n      \"result\": \"1 pass (saved 754 ms drawn exactly, nothing written); with the doubled-figure mutation 1 fail (2000 vs 754), restored\"\n    },\n    {\n      \"command\": \"bun test tests/model-cost/subagent-runtime.test.ts\",\n      \"result\": \"15 pass / 0 fail; 3 consecutive runs green; with the accounted-set mutation 3 fail, restored\"\n    },\n    {\n      \"command\": \"bun test tests/model-cost/subagent-runtime.test.ts -t \\\"closing the instance\\\"\",\n      \"result\": \"1 pass; with a temporary write in cleanup 1 fail on the file set, restored\"\n    },\n    {\n      \"command\": \"git merge wayfinder/subagent-enhance\",\n      \"result\": \"already an ancestor (d68b469); nothing to merge, no conflict; integration tip re-verified after the commit\"\n    }\n  ],\n  \"unverified\": [\n    \"The real interactive TUI render: the widget content is read from the host's real setWidget frames, so no terminal was observed (no screenshot/recording is possible here). The contract's human-led readability check (P33) is not this ticket's.\",\n    \"The human acceptance rows added to the README (P10/P18/P19) are prepared material: they stay unverified until the user records the H1 round.\",\n    \"The local merge into wayfinder/subagent-enhance and the final full-repository run belong to the integration step; not performed here because the integration worktree was not to be touched and no push is allowed (see `integration`).\",\n    \"A CRLF-checkout re-run of the dock partition needs `host-patches/*/patch.diff` and `bun.lock` LF-normalized (the recorded hashes are LF; this workstation has core.autocrlf=true). The worktree was restored to its checked-out CRLF form, and the ticket records the exact command. The normalization is line-ending only: git diff is empty for those files either way and nothing about it is committed.\"\n  ],\n  \"notes\": [\n    \"Scope kept to this ticket: no other ticket file, retro or workflow report was modified, no sibling worktree was touched, and spec/contract were not edited. Sibling 03 owns the same ADR/README/framework-doc files; it already added a generic paragraph in docs/adr/0004 covering optional record members, so my `runtimeMs` needed no ADR edit and this round's doc additions are disjoint from its changes except for possible trivial conflict hunks in framework/docs/*, which integration resolves.\",\n    \"Ticket file: status stays `in-progress` (the branch is not merged into the integration branch yet); all acceptance checkboxes are ticked with a `## Verification` section carrying the commands, the fault-injection controls and the P35 resolution.\"\n  ]\n}",
+    "stderr": "",
+    "truncated": false,
+    "durationMs": 1284082,
+    "tokens": 299472,
+    "requests": 159,
+    "contextTokens": 281843,
+    "contextWindow": 1000000,
+    "modelOverride": [
+      "deepseek/deepseek-flash:high"
+    ],
+    "resolvedModel": "deepseek/deepseek-flash:high",
+    "resolvedModelIdentity": "deepseek/deepseek-flash",
+    "resolvedThinkingLevel": "high",
+    "aborted": false,
+    "usage": {
+      "input": 168622,
+      "output": 130850,
+      "cacheRead": 24535168,
+      "cacheWrite": 0,
+      "totalTokens": 24834640,
+      "reasoningTokens": 80977,
+      "cost": {
+        "input": 0.025293299999999998,
+        "output": 0.07850999999999998,
+        "cacheRead": 0.07360550400000004,
+        "cacheWrite": 0,
+        "total": 0.17740880399999992
+      }
+    },
+    "outputPath": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-14T08-54-26-495Z_01a1399e-bbbf-7756-b9c1-b208b4848d5c\\02-subagent-runtimemd-bcfb46e1-0014-4d94-8e9d-65.md",
+    "extractedToolData": {
+      "yield": [
+        {
+          "data": {
+            "ticket": "02-subagent-runtime",
+            "branch": "hyper/model-cost-session-time-and-detail/02-subagent-runtime-a5dc52-e5951e40ed62",
+            "head": "ffb8e17",
+            "base": "90d043f (the previous attempt's work, kept)",
+            "commits": [
+              "ffb8e17 02: settle the duplicate-observation question on the real host and document the axis (this round: P35 resolution + real-host reload evidence, P14-close and P15-request coverage, the axis/register/user docs, ticket verification section)"
+            ],
+            "integration": "wayfinder/subagent-enhance is still d68b469, an ancestor of HEAD — so the local merge into it is a fast-forward and conflict-free. I did NOT perform it: both assignments forbid operating the integration branch worktree (which is where that branch is checked out) and no push is allowed. Prepared command for the integration step: `git -C <integration worktree> merge --ff-only hyper/model-cost-session-time-and-detail/02-subagent-runtime-a5dc52-e5951e40ed62`. Worktree is clean; no fetch/pull/push was run.",
+            "delivered": "One logical record per descendant session shows the host's own per-execution runtime accumulated in the consumption period; available readings ride that session's existing consumption commit as numeric milliseconds, are restored and continue accumulating, and progress/repeated notifications/same-process second observers contribute once; late values cause no back-fill, wait or extra write. No omp change, no host patch, no time-specific file/write/timer/polling, no per-execution ledger.",
+            "p35_resolution": {
+              "previous_gap": "The last round admitted that an instance seeded from a record would re-add an execution if it were told about it again (reload / second process).",
+              "part_1_duplicate_path_proven_once": "tests/model-cost/subagent-runtime.test.ts — new case: one execution's final 360000 is delivered before an existing commit, committed (saveVersion 2), then that same execution's completion AND a stale running reading of it are delivered again; the accumulation stays 360000 and the session's next commit (saveVersion 3) writes 360000, not 720000. Independent literals; the value comes from the fact→accumulation→save path, not from a pre-filled record.",
+              "part_1_sensitivity": "temporary mutation `if (false && accounted.has(runtime.executionId))` → the case fails (1080000 vs 360000); source restored, case passes.",
+              "part_2_reload_reachability_real_host": "tests/harness-dock/detail-tree.test.ts — new case 'a resumed process draws the runtime the document already carries': process 1 really delegates through the host's task tool, commits the child's runtime (754 ms in that run) and stops; process 2 over the SAME isolated home + run root resumes the session with the host's own switch_session and opens the detail form. The child row states exactly the document's figure (not twice it) and the resumed process writes nothing. Sensitivity: temporary `savedRuntime * 2` in ConsumptionView.runtime → the case fails (drawn 2000 vs saved 754); restored, passes.",
+              "part_2_why_mechanism_evidence": "temporary probe in the omp adapter (since removed) dumping the real host's delegation payloads during a delegating run: both frame kinds carry details {projectAgentsDir, results, totalDurationMs, progress}; the running frames state each spawn's own durationMs (42→770 and 31→444 for the two children of one task call) and each child's ended frame states its final one under results[] (780, 444). So the readings are the host's own and the final reading really arrives; a resumed transcript is not replayed as live tool-execution events, so no process is told about an execution its file already holds. Recorded in framework/docs/harness-support.md (execution.subagent-duration).",
+              "part_2_design_note": "No persisted per-execution identity was added: the approved contract leaves out a per-execution ledger and a time-specific write, and a persisted id list would misfile a harness that ever reused an identity. The accumulator's module doc now states the lifetime of its identity memory and why a restart is safe; the ticket records this as the resolution rather than a narrowed promise.",
+              "reachable_duplicate_verified": "The in-process duplicates (repeated notification, progress=replacement, stale frame, second observer in one process) are deduplicated by the accumulator and verified in tests/model-cost/subagent-runtime.test.ts (P12 cases) and tests/framework/subagent-runtime.test.ts (every frame mapped as it stands, each naming its execution); independent sessions in two real processes do not overwrite each other in tests/model-cost/storage-processes.test.ts (real child processes, real store commit)."
+            },
+            "criteria_evidence": [
+              {
+                "criterion": "P10 native source + attribution; never a timer or the hub span",
+                "evidence": "tests/framework/subagent-runtime.test.ts (real adapter seam: native 180000/360000 vs the same agent record's 3,600,000 span; missing/invalid → unavailable; attribution through AgentRegistry to the spawn's session, direct parent, inherited owner; non-task tools and payload-less frames produce nothing). Real host: tests/harness-dock/model-cost-persistence.test.ts delegating run — children's records carry the host's own durationMs (754 ms in this round's run) as positive numbers, main session's none, notices = []; the payload probe above shows which native fields carry it."
+              },
+              {
+                "criterion": "P11/P18 one row accumulates 360000+120000 = 480000, saved as numeric milliseconds in the same commit",
+                "evidence": "tests/model-cost/subagent-runtime.test.ts: row runtimeMs 480000, document record runtimeMs 480000 with typeof number, raw JSON matches /\"runtimeMs\"\\s*:\\s*480000/, other sessions untouched."
+              },
+              {
+                "criterion": "P12 progress replacements, repeated finals and a later execution each contribute once",
+                "evidence": "tests/model-cost/subagent-runtime.test.ts: 100000→200000 replacement, 210000 final, repeated 210000 ignored, +90000 → 300000 in memory and 300000 committed (not the readings' sum); new case: the same execution re-observed after its own commit stays one contribution."
+              },
+              {
+                "criterion": "P13 a reading settles nothing and disturbs no other session",
+                "evidence": "tests/model-cost/subagent-runtime.test.ts (no fabricated round_end, no early settlement, other records/parents byte-identical); tests/framework/subagent-runtime.test.ts (the axis carries no framework behaviour; the binding subscribes no agent lifecycle for it)."
+              },
+              {
+                "criterion": "P14 no time-specific file or extra write; only the existing commit carries the value",
+                "evidence": "tests/model-cost/subagent-runtime.test.ts — readings write nothing and the root's file set is unchanged, the next round_end carries 480000 in the same file; new case for the CLOSE clause: a final reading is accepted while alive (one redraw), the framework then disposes the instance (proved by a later reading being taken by nobody), the document bytes and the file set are unchanged. Sensitivity: temporary writeFileSync(...,'runtime.json') in cleanup → the case fails on the file set; restored, passes."
+              },
+              {
+                "criterion": "P17 a late final reading neither delays nor back-fills",
+                "evidence": "tests/model-cost/subagent-runtime.test.ts: 359900 committed; a late 360000 updates only the display while disk bytes stay identical; the next existing commit writes 360000."
+              },
+              {
+                "criterion": "P15/P16 unusable runtime reported, nothing blocked, 0 ≠ missing",
+                "evidence": "tests/framework/subagent-runtime.test.ts (absent/negative/NaN → unavailable with the reason; 0 → a reading). tests/model-cost/subagent-runtime.test.ts: one error notice each for missing and invalid, last valid 360000 kept, storage not paused — now also proving the REQUEST clause: a further settled Turn after the unusable reading is accounted (50 input / 90 output) and the existing commit carries it with the runtime. Row runtimeMs undefined vs 0; document field absent vs 0. tests/model-cost/detail-widget.test.ts: `Run: —` vs `Run: 0ms` (480000 drawn as `8m`)."
+              },
+              {
+                "criterion": "P19 restart restores 480000 and continues; an in-memory-only value is not claimed as restored",
+                "evidence": "tests/model-cost/subagent-runtime.test.ts: a second instance over the same root reads 480000 (not the 1,080,000 the previous instance's memory held) and continues to 600000, committed. tests/harness-dock/detail-tree.test.ts new case: a second real process draws the document's figure."
+              },
+              {
+                "criterion": "P22 an old document without the field stays ordinary consumption",
+                "evidence": "tests/model-cost/subagent-runtime.test.ts: a record with no runtimeMs reads as valid, keeps own/parent, commits again without inventing a figure."
+              },
+              {
+                "criterion": "P24 adding a runtime changes no retained business figure",
+                "evidence": "tests/model-cost/subagent-runtime.test.ts: fields, tree, inclusiveTotals, costCny, cache rate and context reading identical before/after (tree sum 3644, cost 0.55) with amount and duration never interchanged."
+              },
+              {
+                "criterion": "P35 real multi-process/file coordination; no overwrite, no double count",
+                "evidence": "tests/model-cost/storage-processes.test.ts (real child processes, real files, the framework's cross-process lock): two processes' independent sessions each keep their own runtimeMs, a later version carries its own alone, and a repeated statement at the same version is answered `unchanged`; tests/model-cost/subagent-runtime.test.ts (new, fact→accumulate→save); the real-host reload case above; storage merges are not proved by in-memory locking."
+              },
+              {
+                "criterion": "P36 an invalid sub-runtime does not widen into document damage",
+                "evidence": "tests/model-cost/subagent-runtime.test.ts: runtimeMs \"8 minutes\" is dropped rather than taken for damage (not paused, own/parent kept, later commit succeeds) while a record with no usable consumption is still refused whole (paused)."
+              },
+              {
+                "criterion": "completion: owning partitions, affected consumers, typecheck, real file/process and real host/detail smoke",
+                "evidence": "See commands; consumers re-run (framework partition, entrypoint loading exercised by every dock run, tests/codebase-tools and connect-bot unrelated to this change)."
+              },
+              {
+                "criterion": "docs added by this round (main agent's request)",
+                "evidence": "framework/docs/framework-capabilities.md (new axis section, three index rows and the HarnessPort.onSubagentRuntime row); framework/docs/harness-support.md (new `execution.subagent-duration` register entry with the probe's own payload readings); extensions/model-cost/README.md (intro + H1 acceptance row for P10/P18/P19: the `Run:` field, `—`, `0ms`, restart behaviour); extensions/model-cost/shared-logic/subagent-runtime.ts (module doc: the identity memory's lifetime and why a restart is safe)."
+              }
+            ],
+            "commands": [
+              {
+                "command": "bun run typecheck",
+                "result": "0 errors (TS 7.0.2; proved real by a temporary bad-typed file in scripts/ → exit 1 with TS2322, then removed)"
+              },
+              {
+                "command": "bun test tests/model-cost",
+                "result": "298 pass / 0 fail, 24 files"
+              },
+              {
+                "command": "bun test tests/framework",
+                "result": "360 pass / 0 fail, 30 files"
+              },
+              {
+                "command": "bun test tests/harness-dock",
+                "result": "82 pass / 0 fail, 22 files, 178 s (whole dock partition incl. real delegating runs and the new reload case)"
+              },
+              {
+                "command": "bun test tests/harness-dock/detail-tree.test.ts -t \"resumed process\"",
+                "result": "1 pass (saved 754 ms drawn exactly, nothing written); with the doubled-figure mutation 1 fail (2000 vs 754), restored"
+              },
+              {
+                "command": "bun test tests/model-cost/subagent-runtime.test.ts",
+                "result": "15 pass / 0 fail; 3 consecutive runs green; with the accounted-set mutation 3 fail, restored"
+              },
+              {
+                "command": "bun test tests/model-cost/subagent-runtime.test.ts -t \"closing the instance\"",
+                "result": "1 pass; with a temporary write in cleanup 1 fail on the file set, restored"
+              },
+              {
+                "command": "git merge wayfinder/subagent-enhance",
+                "result": "already an ancestor (d68b469); nothing to merge, no conflict; integration tip re-verified after the commit"
+              }
+            ],
+            "unverified": [
+              "The real interactive TUI render: the widget content is read from the host's real setWidget frames, so no terminal was observed (no screenshot/recording is possible here). The contract's human-led readability check (P33) is not this ticket's.",
+              "The human acceptance rows added to the README (P10/P18/P19) are prepared material: they stay unverified until the user records the H1 round.",
+              "The local merge into wayfinder/subagent-enhance and the final full-repository run belong to the integration step; not performed here because the integration worktree was not to be touched and no push is allowed (see `integration`).",
+              "A CRLF-checkout re-run of the dock partition needs `host-patches/*/patch.diff` and `bun.lock` LF-normalized (the recorded hashes are LF; this workstation has core.autocrlf=true). The worktree was restored to its checked-out CRLF form, and the ticket records the exact command. The normalization is line-ending only: git diff is empty for those files either way and nothing about it is committed."
+            ],
+            "notes": [
+              "Scope kept to this ticket: no other ticket file, retro or workflow report was modified, no sibling worktree was touched, and spec/contract were not edited. Sibling 03 owns the same ADR/README/framework-doc files; it already added a generic paragraph in docs/adr/0004 covering optional record members, so my `runtimeMs` needed no ADR edit and this round's doc additions are disjoint from its changes except for possible trivial conflict hunks in framework/docs/*, which integration resolves.",
+              "Ticket file: status stays `in-progress` (the branch is not merged into the integration branch yet); all acceptance checkboxes are ticked with a `## Verification` section carrying the commands, the fault-injection controls and the P35 resolution."
+            ]
+          },
+          "status": "success"
+        }
+      ]
+    },
+    "outputMeta": {
+      "lineCount": 122,
+      "charCount": 14291
+    }
+  },
+  "agent": "tdd",
+  "agent_id": "02-subagent-runtimemd-bcfb46e1-0014-4d94-8e9d-65",
+  "session_id": "01a139db-2401-751c-b948-24a31eafaa52",
+  "session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-14T08-54-26-495Z_01a1399e-bbbf-7756-b9c1-b208b4848d5c\\02-subagent-runtimemd-bcfb46e1-0014-4d94-8e9d-65.jsonl",
+  "execution_cwd": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-1Earge",
+  "retro_document": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-auto-coding-nTyzY7\\retro\\02-subagent-runtime.md\\34fe12fd-3cc4-4d30-9390-ab51390d583e.md",
+  "retro_finished_at": "2026-10-14T10:23:02.494Z"
+}

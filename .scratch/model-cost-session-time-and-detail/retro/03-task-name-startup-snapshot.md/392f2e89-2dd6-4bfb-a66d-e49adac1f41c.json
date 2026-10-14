@@ -1,0 +1,105 @@
+{
+  "feature": "model-cost-session-time-and-detail",
+  "ticket": "03-task-name-startup-snapshot.md",
+  "run_id": "392f2e89-2dd6-4bfb-a66d-e49adac1f41c",
+  "parent_session_id": "01a1399e-bbbf-7756-b9c1-b208b4848d5c",
+  "parent_session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-14T08-54-26-495Z_01a1399e-bbbf-7756-b9c1-b208b4848d5c.jsonl",
+  "workspace": "E:\\Developer\\myhub\\my-agent-toolkit",
+  "tool_call_id": "e79560c5-9982-455d-8b65-9c2fb94b112d",
+  "started_at": "2026-10-14T09:06:49.193Z",
+  "tdd_status": "completed",
+  "retro_status": "completed",
+  "tdd_finished_at": "2026-10-14T09:32:06.588Z",
+  "tdd_result": {
+    "index": 0,
+    "id": "03-task-name-startup-snapshotmd-e79560c5-9982-45",
+    "agent": "tdd",
+    "agentSource": "user",
+    "task": "Complete assignment thoroughly:\n\n在当前 worktree 实现唯一票据：C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-wK2iNw\\.scratch\\model-cost-session-time-and-detail\\implementation\\03-task-name-startup-snapshot.md。\n集成分支：wayfinder/subagent-enhance\n固定评审起点：e3a1d0ea3ef9fdc78dc04f2d6719b3159c6e14fc\nspec：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\model-cost-session-time-and-detail\\spec.md\ncontract：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\model-cost-session-time-and-detail\\contract.md\n这是本票首次执行。\n遵守 tdd skill。逐项报告验收证据、实际验证命令及未完成事项。不要修改其他票据、retro 或工作流报告。不要操作集成分支工作区。完成前将集成分支最新 tip 合入当前票据分支，解决冲突并验证；提交本票实现。不得 reset 丢弃既有工作。只执行本票，不调用 retro、不派发其他票据。",
+    "assignment": "在当前 worktree 实现唯一票据：C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-wK2iNw\\.scratch\\model-cost-session-time-and-detail\\implementation\\03-task-name-startup-snapshot.md。\n集成分支：wayfinder/subagent-enhance\n固定评审起点：e3a1d0ea3ef9fdc78dc04f2d6719b3159c6e14fc\nspec：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\model-cost-session-time-and-detail\\spec.md\ncontract：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\model-cost-session-time-and-detail\\contract.md\n这是本票首次执行。\n遵守 tdd skill。逐项报告验收证据、实际验证命令及未完成事项。不要修改其他票据、retro 或工作流报告。不要操作集成分支工作区。完成前将集成分支最新 tip 合入当前票据分支，解决冲突并验证；提交本票实现。不得 reset 丢弃既有工作。只执行本票，不调用 retro、不派发其他票据。",
+    "description": "Implement startup snapshot task ticket",
+    "lastIntent": "Merging integration tip and committing",
+    "exitCode": 0,
+    "output": "{\n  \"status\": \"incomplete\",\n  \"commit\": \"b3eef9e on hyper/model-cost-session-time-and-detail/03-task-name-startup-snapshot-962093-e5951e40ed62 (integration tip wayfinder/subagent-enhance = e3a1d0e, already the branch base: merge was a no-op, nothing to integrate yet)\",\n  \"delivered\": {\n    \"framework_S1\": \"framework/core/protocol.ts + public.ts: SessionFacts.taskName (the spawn's naming handle) and SessionFacts.startup ({model:{provider,model}, effort}) with corrected agentName doc (agent definition = category); framework/adapters/omp.ts: OmpExtensionApi.getThinkingLevel?(), sessionFactsOf(pi,ctx,reportStarted) maps a spawned session's registry id as taskName and, on the session's own start only, ctx.model + the harness-resolved level as startup (unobtainable part named in `unavailable`, no level behind `auto` invented), main sessions report neither; widget.ts dropped its now-duplicate getThinkingLevel widening.\",\n    \"shared_logic_S2\": \"request-accounting identityOf name order is now name ?? taskName ?? record.name ?? agentName ?? agentId ?? sessionId; `started()` records the startup pair once per session — only for a session with no stored record (an existing record proves the session predates this instance, so a current reading is never back-filled) and never rewritten; view.startup(); save() carries `startup` with the existing consumption commit and starts no write of its own; display AgentTreeRow.startup ({model:'provider / model'|'?', effort|'?'}) composed by agentTreeOf and drawn by treeLines as `Model: …  Effort: …`.\",\n    \"persistence_S3\": \"consumption-document.ts: SessionRecord.startup (optional), SESSION_KEYS/STARTUP_KEYS/STARTUP_MODEL_KEYS, readStartup validator (per-part strings, unknown keys refused), sameSessionContent compares startup as business content; store untouched (records flow through merge as before).\",\n    \"ticket\": \".scratch/.../implementation/03-task-name-startup-snapshot.md Status: in-progress\"\n  },\n  \"evidence\": {\n    \"P26\": \"tests/model-cost/detail-widget.test.ts `a session is named by its task handle, and a session's own name outranks it` — record name stands against a reported category (`explore`), handle `检索定价` beats category `task`, explicit session name `定价核查` beats the handle, a `scout`-category session is named by its handle (no string special-case), id only as last resort.\",\n    \"P27\": \"tests/framework/session.test.ts `a spawned session's start reports its task handle, the model it began on and its effective level` (adapter source mapping, `effort: 'high'` from the api getter, model from ctx) + `a level this host cannot report is named unavailable` ; tests/model-cost/detail-widget.test.ts `the row shows the started-on facts…` (rendered `Model: go-provider / model-alpha  Effort: high`).\",\n    \"P28\": \"controlled: second start of the same session with model-B/medium leaves the row at model-A/high; S3: tests/model-cost/session-recovery.test.ts `the snapshot is saved with the session's own consumption and never rewritten` asserts record.startup unchanged at saveVersion 2 while own grows.\",\n    \"P29\": \"controlled: `a session the document already records keeps an unproved startup unknown, part by part` — a start reporting model-B still draws `Model: ?  Effort: ?` (and a model-without-level start stays per-field unknown); S3: `a document written before the snapshot existed keeps its consumption and keeps committing (P22)` — old record loads (own/parent/name kept), continues to saveVersion 2 with no snapshot filled in.\",\n    \"P19\": \"tests/model-cost/session-recovery.test.ts `a new process restores the saved snapshot and draws it on that session's row` — a second runtime over the same root answers view.startup = the saved pair, identity = handle/parent, and its detail tree row carries `{model:'official / model-alpha', effort:'high'}`.\",\n    \"P22\": \"session-recovery case above (old document keeps tokens/cost/parent and keeps committing; missing field stays unknown, document not treated as damaged) + schema reads records with and without `startup`.\"\n  },\n  \"commands_run\": [\n    \"bun test tests/framework/session.test.ts tests/framework/turn.test.ts -> 38 pass / 0 fail\",\n    \"bun test tests/model-cost -> 280 pass / 0 fail\",\n    \"bun test tests/model-cost tests/framework -> 638 tests, 0 fail (after fixing 1 restore-case fixture: the tree needs the root session's own record)\",\n    \"bun run typecheck -> clean (after `.at(-1)` and a missing `unavailable` in test fixtures)\",\n    \"bun test (whole repo) -> 837 pass / 21 fail, every failure inside tests/harness-dock/** at setup\"\n  ],\n  \"blockers_and_gaps\": [\n    \"Real-host (harness-dock) evidence is MISSING and the dock partition is unrunnable in this worktree: host-patches/omp-18.5.0-viewed-session/patch.diff is checked out with CRLF (599 CRs) and tests/harness-dock/host-patch-artifact.ts#patchTouchedFiles matches /^diff --git a\\\\/(.+?) b\\\\/(.+)$/ per split('\\\\n') line, so the trailing \\\\r makes it return [] and ensureViewedSessionHarness throws `patch.diff touches no file` before any case runs (pre-existing checkout artifact, not caused by this diff). Result: P26/P27/P28/P19/P22 host-source evidence uncollected, and the dock assertions my change invalidates are not updated — tests/harness-dock/session-ownership-tree.test.ts expects the child record name to be the agent category `task` (now the spawn handle), tests/harness-dock/detail-tree.test.ts asserts the child row text without the new `Model:`/`Effort:` fields.\",\n    \"Docs not updated: framework/docs/framework-capabilities.md SessionFacts row + adapter paragraph, extensions/model-cost/README.md detail description; no glossary entries for startup-snapshot / task-handle terms (left to /domain-modeling).\",\n    \"Not written: consumption-document.test.ts cases for accepting/refusing a `startup` shape, and a structured `row.startup` assertion in tests/model-cost/detail-tree.test.ts.\",\n    \"Unverified/untested: behaviour of the in-memory startup map across `/budget clear` (deliberate choice: identity-like facts survive a reset, measurements are cleared — no test asserts it); scripts/verify-omp-candidate.ts not run.\",\n    \"Ticket left `in-progress` (implementation committed but not merged; acceptance is the main agent's).\"\n  ]\n}",
+    "stderr": "",
+    "truncated": false,
+    "durationMs": 1517356,
+    "tokens": 407705,
+    "requests": 216,
+    "contextTokens": 380106,
+    "contextWindow": 1000000,
+    "modelOverride": [
+      "deepseek/deepseek-flash:high"
+    ],
+    "resolvedModel": "deepseek/deepseek-flash:high",
+    "resolvedModelIdentity": "deepseek/deepseek-flash",
+    "resolvedThinkingLevel": "high",
+    "aborted": false,
+    "usage": {
+      "input": 234774,
+      "output": 172931,
+      "cacheRead": 48481792,
+      "cacheWrite": 0,
+      "totalTokens": 48889497,
+      "reasoningTokens": 103138,
+      "cost": {
+        "input": 0.07043219999999996,
+        "output": 0.20751719999999999,
+        "cacheRead": 0.290890752,
+        "cacheWrite": 0,
+        "total": 0.5688401520000003
+      }
+    },
+    "outputPath": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-14T08-54-26-495Z_01a1399e-bbbf-7756-b9c1-b208b4848d5c\\03-task-name-startup-snapshotmd-e79560c5-9982-45.md",
+    "extractedToolData": {
+      "yield": [
+        {
+          "data": {
+            "status": "incomplete",
+            "commit": "b3eef9e on hyper/model-cost-session-time-and-detail/03-task-name-startup-snapshot-962093-e5951e40ed62 (integration tip wayfinder/subagent-enhance = e3a1d0e, already the branch base: merge was a no-op, nothing to integrate yet)",
+            "delivered": {
+              "framework_S1": "framework/core/protocol.ts + public.ts: SessionFacts.taskName (the spawn's naming handle) and SessionFacts.startup ({model:{provider,model}, effort}) with corrected agentName doc (agent definition = category); framework/adapters/omp.ts: OmpExtensionApi.getThinkingLevel?(), sessionFactsOf(pi,ctx,reportStarted) maps a spawned session's registry id as taskName and, on the session's own start only, ctx.model + the harness-resolved level as startup (unobtainable part named in `unavailable`, no level behind `auto` invented), main sessions report neither; widget.ts dropped its now-duplicate getThinkingLevel widening.",
+              "shared_logic_S2": "request-accounting identityOf name order is now name ?? taskName ?? record.name ?? agentName ?? agentId ?? sessionId; `started()` records the startup pair once per session — only for a session with no stored record (an existing record proves the session predates this instance, so a current reading is never back-filled) and never rewritten; view.startup(); save() carries `startup` with the existing consumption commit and starts no write of its own; display AgentTreeRow.startup ({model:'provider / model'|'?', effort|'?'}) composed by agentTreeOf and drawn by treeLines as `Model: …  Effort: …`.",
+              "persistence_S3": "consumption-document.ts: SessionRecord.startup (optional), SESSION_KEYS/STARTUP_KEYS/STARTUP_MODEL_KEYS, readStartup validator (per-part strings, unknown keys refused), sameSessionContent compares startup as business content; store untouched (records flow through merge as before).",
+              "ticket": ".scratch/.../implementation/03-task-name-startup-snapshot.md Status: in-progress"
+            },
+            "evidence": {
+              "P26": "tests/model-cost/detail-widget.test.ts `a session is named by its task handle, and a session's own name outranks it` — record name stands against a reported category (`explore`), handle `检索定价` beats category `task`, explicit session name `定价核查` beats the handle, a `scout`-category session is named by its handle (no string special-case), id only as last resort.",
+              "P27": "tests/framework/session.test.ts `a spawned session's start reports its task handle, the model it began on and its effective level` (adapter source mapping, `effort: 'high'` from the api getter, model from ctx) + `a level this host cannot report is named unavailable` ; tests/model-cost/detail-widget.test.ts `the row shows the started-on facts…` (rendered `Model: go-provider / model-alpha  Effort: high`).",
+              "P28": "controlled: second start of the same session with model-B/medium leaves the row at model-A/high; S3: tests/model-cost/session-recovery.test.ts `the snapshot is saved with the session's own consumption and never rewritten` asserts record.startup unchanged at saveVersion 2 while own grows.",
+              "P29": "controlled: `a session the document already records keeps an unproved startup unknown, part by part` — a start reporting model-B still draws `Model: ?  Effort: ?` (and a model-without-level start stays per-field unknown); S3: `a document written before the snapshot existed keeps its consumption and keeps committing (P22)` — old record loads (own/parent/name kept), continues to saveVersion 2 with no snapshot filled in.",
+              "P19": "tests/model-cost/session-recovery.test.ts `a new process restores the saved snapshot and draws it on that session's row` — a second runtime over the same root answers view.startup = the saved pair, identity = handle/parent, and its detail tree row carries `{model:'official / model-alpha', effort:'high'}`.",
+              "P22": "session-recovery case above (old document keeps tokens/cost/parent and keeps committing; missing field stays unknown, document not treated as damaged) + schema reads records with and without `startup`."
+            },
+            "commands_run": [
+              "bun test tests/framework/session.test.ts tests/framework/turn.test.ts -> 38 pass / 0 fail",
+              "bun test tests/model-cost -> 280 pass / 0 fail",
+              "bun test tests/model-cost tests/framework -> 638 tests, 0 fail (after fixing 1 restore-case fixture: the tree needs the root session's own record)",
+              "bun run typecheck -> clean (after `.at(-1)` and a missing `unavailable` in test fixtures)",
+              "bun test (whole repo) -> 837 pass / 21 fail, every failure inside tests/harness-dock/** at setup"
+            ],
+            "blockers_and_gaps": [
+              "Real-host (harness-dock) evidence is MISSING and the dock partition is unrunnable in this worktree: host-patches/omp-18.5.0-viewed-session/patch.diff is checked out with CRLF (599 CRs) and tests/harness-dock/host-patch-artifact.ts#patchTouchedFiles matches /^diff --git a\\/(.+?) b\\/(.+)$/ per split('\\n') line, so the trailing \\r makes it return [] and ensureViewedSessionHarness throws `patch.diff touches no file` before any case runs (pre-existing checkout artifact, not caused by this diff). Result: P26/P27/P28/P19/P22 host-source evidence uncollected, and the dock assertions my change invalidates are not updated — tests/harness-dock/session-ownership-tree.test.ts expects the child record name to be the agent category `task` (now the spawn handle), tests/harness-dock/detail-tree.test.ts asserts the child row text without the new `Model:`/`Effort:` fields.",
+              "Docs not updated: framework/docs/framework-capabilities.md SessionFacts row + adapter paragraph, extensions/model-cost/README.md detail description; no glossary entries for startup-snapshot / task-handle terms (left to /domain-modeling).",
+              "Not written: consumption-document.test.ts cases for accepting/refusing a `startup` shape, and a structured `row.startup` assertion in tests/model-cost/detail-tree.test.ts.",
+              "Unverified/untested: behaviour of the in-memory startup map across `/budget clear` (deliberate choice: identity-like facts survive a reset, measurements are cleared — no test asserts it); scripts/verify-omp-candidate.ts not run.",
+              "Ticket left `in-progress` (implementation committed but not merged; acceptance is the main agent's)."
+            ]
+          },
+          "status": "success"
+        }
+      ]
+    },
+    "outputMeta": {
+      "lineCount": 32,
+      "charCount": 6261
+    }
+  },
+  "agent": "tdd",
+  "agent_id": "03-task-name-startup-snapshotmd-e79560c5-9982-45",
+  "session_id": "01a139aa-10fd-76f2-840c-2a5615d334a8",
+  "session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-14T08-54-26-495Z_01a1399e-bbbf-7756-b9c1-b208b4848d5c\\03-task-name-startup-snapshotmd-e79560c5-9982-45.jsonl",
+  "execution_cwd": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-wK2iNw",
+  "retro_document": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-auto-coding-nTyzY7\\retro\\03-task-name-startup-snapshot.md\\392f2e89-2dd6-4bfb-a66d-e49adac1f41c.md",
+  "retro_finished_at": "2026-10-14T09:33:23.142Z"
+}
