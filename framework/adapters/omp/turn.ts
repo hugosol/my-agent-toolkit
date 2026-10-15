@@ -1,6 +1,7 @@
 /**
  * OMP Turn observations: native subscriptions, response mapping and per-subscription
- * streaming readings. Session/Owner facts and binding-wide diagnostics stay with assembly;
+ * streaming readings. The assembly supplies Session/Owner facts from `./session` and
+ * keeps binding-wide diagnostics;
  * the shared framework owns Turn identity, association and lifecycle semantics.
  */
 import type { HarnessPort, SessionFacts, TurnOutcome, TurnSignalFacts, TurnUsage } from "../../core/protocol";

@@ -1,7 +1,7 @@
 /**
  * OMP's subagent execution observations: native subscriptions, payload mapping and
- * per-subscription execution identities. Shared Session/Owner facts stay with the
- * adapter assembly; no native payload or mutable execution record leaves this module.
+ * per-subscription execution identities. The assembly supplies Session/Owner facts
+ * from `./session`; no native payload or mutable execution record leaves this module.
  */
 import { isPlainMapping } from "../../core/assembly";
 import { describeValue } from "../../core/config";

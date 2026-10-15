@@ -242,8 +242,12 @@ Its private OMP observation modules keep native subscriptions together with the 
 that interprets their facts: [`adapters/omp/turn.ts`](../adapters/omp/turn.ts) owns request/response
 mapping, usage availability and per-subscription streaming-reading deduplication;
 [`adapters/omp/round.ts`](../adapters/omp/round.ts) owns activity signals, continuation flags and
-late quiescence reads. The assembly retains shared Session/Owner facts, context tracking,
-binding-wide diagnostic deduplication and the next-task scheduling mechanism. Turn identity and
+late quiescence reads. The private [`adapters/omp/session.ts`](../adapters/omp/session.ts) module
+reads Session identity, direct parent, Owner ancestry, startup facts, persisted State payloads and
+injected-prompt identities. Owner is the State-owning main session (a main session owns itself),
+not the immediate Parent agent. The assembly retains native types, event wiring, Session transition
+pairing, delivery assembly, context tracking, binding-wide diagnostic deduplication and next-task
+scheduling. The fact module holds no binding state or subscriptions. Turn identity and
 Round transitions remain harness-independent framework semantics. These modules add no public
 interface: tests continue to drive native events through `ompAdapter`, not internal helpers.
 
@@ -527,7 +531,8 @@ as over — or the fact that this host produced none, with the reason it could n
 On `omp`, the private [`adapters/omp/subagents.ts`](../adapters/omp/subagents.ts) module owns the native
 subscriptions, payload mapping and execution-identity/attribution records. Each subscription creates its own
 records; none are shared across bindings. [`adapters/omp.ts`](../adapters/omp.ts) remains the assembly entry
-and supplies shared Owner resolution and delivery facts. Tool observations use their own delivery context;
+and supplies shared Owner resolution and delivery facts using the private
+[`adapters/omp/session.ts`](../adapters/omp/session.ts) fact mappings. Tool observations use their own delivery context;
 context-free bus frames use the latest actual delivery and remain unobserved until one exists. The public
 `ompAdapter` interface and the consumer's accumulation rules are unchanged; adapter behavior tests continue
 to drive native events through that assembled interface, not internal mapping helpers.
