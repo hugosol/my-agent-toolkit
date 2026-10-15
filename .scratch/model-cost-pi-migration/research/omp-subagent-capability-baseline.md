@@ -14,8 +14,9 @@ Map: `.scratch/model-cost-pi-migration/map.md`
 | 来源 | 修订 | 说明 |
 | --- | --- | --- |
 | 框架/扩展仓库（本仓库） | `E:/Developer/myhub/my-agent-toolkit` @ `59f36fbf2ab6be22879f3bd5370dd09815352974`（分支 `pi-adapter`） | 所有 `framework/**`、`extensions/**` 行号以此为准 |
-| OMP 参考检出 | `E:/Developer/myhub/oh-my-pi` @ `N-REV`（见 N 段） | 原生事实行号 |
-| pi 参考检出 | `E:/Developer/myhub/pi` @ `P-REV`（见 P 段） | pi 原生事实行号 |
+| OMP 参考检出 | `E:/Developer/myhub/oh-my-pi` @ `611c189fa2f6b8c9b368559ea6b98062b9b54539`（`main`，`@oh-my-pi/pi-coding-agent@18.10.4`） | 仅作交叉确认（C 段标 `OMPCHK`） |
+| pi 参考检出 | `E:/Developer/myhub/pi` @ `4a5d37291531ad48b8e536c892557877d219463c`（`main`，`@earendil-works/pi-coding-agent@1.2.0`） | E 段 pi 原生事实行号 |
+| OMP 受支持工件（源码可读） | `.cache/omp-baseline/18.5.0` 与 `.cache/omp-baseline/18.5.0-viewed-session-codex-response`（后者 = 18.5.0 + Viewed session 补丁 + Codex response-boundary 补丁） | C 段标 `OMP185`/`OMP185P`；原生事实以此为准，它们是发布 tarball 而非检出 |
 | 记录的支持基线 | `@oh-my-pi/pi-coding-agent@18.5.0`，检出 `9348320cc4a30a7195d36a1f05a6c11bcb701a17`，Windows x64，Bun 1.4.2（`framework/docs/harness-support.md`） | 支持状态由该文档拥有 |
 
 ### 隔离
