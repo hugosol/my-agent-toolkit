@@ -238,6 +238,15 @@ Assembles an `ExtensionDefinition` for the `omp` harness
 ([`omp.ts`](../adapters/omp.ts)) — `(api) => BindingResult` — which each thin entrypoint
 re-exports as its default factory and the loader calls once per binding.
 
+Its private OMP observation modules keep native subscriptions together with the implementation
+that interprets their facts: [`adapters/omp/turn.ts`](../adapters/omp/turn.ts) owns request/response
+mapping, usage availability and per-subscription streaming-reading deduplication;
+[`adapters/omp/round.ts`](../adapters/omp/round.ts) owns activity signals, continuation flags and
+late quiescence reads. The assembly retains shared Session/Owner facts, context tracking,
+binding-wide diagnostic deduplication and the next-task scheduling mechanism. Turn identity and
+Round transitions remain harness-independent framework semantics. These modules add no public
+interface: tests continue to drive native events through `ompAdapter`, not internal helpers.
+
 ### `definition: ExtensionDefinition`
 
 The same plain definition `defineExtension` returns. The adapter is the point at which declared conflicts

@@ -1,7 +1,9 @@
 /**
  * The OMP adapter entry and assembly. Native mappings stay in this adapter and its
- * private feature modules under `omp/`; the subagent observation module owns its
- * subscriptions, payload mapping and per-subscription execution records.
+ * private feature modules under `omp/`. Turn observations own response mapping and
+ * per-subscription streaming readings; Round observations own native activity signals
+ * and late quiescence reads; subagent observations own payload mapping and execution
+ * records. Shared Session/Owner facts and binding-wide diagnostics stay in this assembly.
  *
  * It translates the native API into the framework's port before any behavior runs and
  * translates framework outcomes back into native effects. It carries no extension
@@ -26,18 +28,16 @@ import type {
 	OwnerReference,
 	PromptContribution,
 	ProviderAccess,
-	RoundSignal,
 	SessionEvent,
 	SessionFacts,
 	SessionStartReason,
 	SessionStartup,
-	TurnOutcome,
-	TurnSignalFacts,
-	TurnUsage,
 	ViewedSessionPort,
 } from "../core/protocol";
 import { StateStore } from "../core/state";
+import { observeRounds } from "./omp/round";
 import { observeSubagentRuntime } from "./omp/subagents";
+import { observeTurns } from "./omp/turn";
 
 /**
  * Re-exported because it is what {@link OmpExtensionFactory} returns.
@@ -885,9 +885,6 @@ function startupFactsOf(pi: OmpExtensionApi, ctx: OmpSessionContext, unavailable
 	return { ...(model === undefined ? {} : { model }), ...(effort === undefined ? {} : { effort }) };
 }
 
-/** The all-zero reading a message carries when the provider reported no usage at all. */
-const ZERO_READING: TurnUsage = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, totalTokens: 0 };
-
 /**
  * The owner one *execution's own* session belongs to, resolved from the harness's own agent graph.
  *
@@ -898,42 +895,6 @@ const ZERO_READING: TurnUsage = { input: 0, output: 0, cacheRead: 0, cacheWrite:
 function executionOwnerOf(pi: OmpExtensionApi, ref: OmpAgentRef, sessionId: string): OwnerReference {
 	if (ref.kind === "main") return { kind: "owner", key: mainOwnerKey(sessionId) };
 	return mainAncestorOf(pi, ref.parentId);
-}
-
-/**
- * The usage one assistant message carried, as the four reported buckets plus the reported total, or
- * no reading when that message establishes none.
- *
- * An assistant message always carries a usage object here, but this host fills it with zeros when
- * the provider reported none: a controlled run of the dock's own endpoint that sent no usage chunk
- * at all and one that reported zeros explicitly produce the identical message fact, so a zero this
- * adapter cannot tell apart from that default is not a reading the framework may account for. A
- * non-zero reading is one the provider must have reported, and is delivered as it stands.
- */
-function usageOf(message: OmpAgentMessage): TurnUsage | undefined {
-	const usage = message.usage;
-	if (usage === undefined) return undefined;
-	const reading: TurnUsage = {
-		input: usage.input ?? 0,
-		output: usage.output ?? 0,
-		cacheRead: usage.cacheRead ?? 0,
-		cacheWrite: usage.cacheWrite ?? 0,
-		totalTokens: usage.totalTokens ?? 0,
-	};
-	return sameReading(reading, ZERO_READING) ? undefined : reading;
-}
-
-/**
- * How one settled assistant message ended, in the framework's three-valued vocabulary.
- *
- * The mapping is the adapter's alone: an interrupted cycle is `cancelled` and a cycle whose
- * message carries an error is `failed`, whatever native stop reason spelled them; everything else
- * — including a response that only requested tools — is a completed response.
- */
-function outcomeOf(message: OmpAgentMessage): TurnOutcome {
-	if (message.stopReason === "aborted") return "cancelled";
-	if (message.stopReason === "error" || message.errorMessage !== undefined) return "failed";
-	return "completed";
 }
 
 /**
@@ -1058,17 +1019,6 @@ function harnessProviderAccess(): HarnessProviderAccess {
 			if (ctx.modelRegistry !== undefined) newest = ctx.modelRegistry;
 		},
 	};
-}
-
-/** Whether two readings report the same usage. */
-function sameReading(left: TurnUsage, right: TurnUsage): boolean {
-	return (
-		left.input === right.input &&
-		left.output === right.output &&
-		left.cacheRead === right.cacheRead &&
-		left.cacheWrite === right.cacheWrite &&
-		left.totalTokens === right.totalTokens
-	);
 }
 
 /**
@@ -1264,26 +1214,6 @@ function ompPort(
 		return ctx.isIdle();
 	};
 
-	/**
-	 * Whether a settled run left the session at quiescence: idle, with nothing queued and no
-	 * asynchronous job still running.
-	 *
-	 * It is read late — when the framework re-checks an end candidate, not at the native settle
-	 * that raised it — so it answers for what the context reports *then*. When the harness reports
-	 * none of those facts, quiescence cannot be established at all: the answer is nothing rather
-	 * than a value, and an unestablished quiescence closes no round.
-	 */
-	const quiescent = (ctx: OmpSessionContext): boolean | undefined => {
-		if (typeof ctx.isIdle !== "function") return reportMissingFact("idle fact (isIdle)");
-		if (typeof ctx.hasPendingMessages !== "function") {
-			return reportMissingFact("pending-message fact (hasPendingMessages)");
-		}
-		if (typeof ctx.getAsyncJobSnapshot !== "function") {
-			return reportMissingFact("async-job fact (getAsyncJobSnapshot)");
-		}
-		return ctx.isIdle() && !ctx.hasPendingMessages() && (ctx.getAsyncJobSnapshot()?.running.length ?? 0) === 0;
-	};
-
 	return {
 		setLabel: label => pi.setLabel(label),
 		reportDiagnostic,
@@ -1404,35 +1334,17 @@ function ompPort(
 			});
 		},
 		onRound: observer => {
-			// The adapter's whole job on this axis: map the harness's run-cycle facts to the
-			// observations the framework synthesizes the round axis from. Nothing about which fact is
-			// a transition is decided here — a start is reported even while a round is open, and a
-			// settle is reported whether or not the session looks idle at this instant, because the
-			// session it belongs to is only read for quiescence when the framework re-checks.
-			const report = (signal: RoundSignal, ctx: OmpSessionContext): void => {
-				catalogued(ctx);
-				observer({
-					signal,
-					session: sessionFactsOf(pi, ctx),
-					owner: ownerOf(ctx),
-					hasUI: ctx.hasUI,
-					feedback: feedbackTransport(ctx),
-					// The live read the framework's re-check asks for, at its own next task: what the
-					// context reports *then* is what decides whether the round ended, never what it
-					// reported while this native callback was still running.
-					quiescent: () => quiescent(ctx),
-				});
-			};
-
-			pi.on("agent_start", (_event, ctx) => {
-				report({ kind: "activity_started" }, ctx);
-			});
-			pi.on("agent_end", (event, ctx) => {
-				// The run settled, carrying the harness's own continuation flag: `true` means the
-				// session already scheduled its next piece of work — an automatic retry, an
-				// empty-stop recovery, a compaction or stop-hook turn, a pending asynchronous wake —
-				// and an absent flag means it scheduled nothing.
-				report({ kind: "settled", willContinue: event.willContinue === true }, ctx);
+			observeRounds(pi, observer, {
+				frame: ctx => {
+					catalogued(ctx);
+					return {
+						session: sessionFactsOf(pi, ctx),
+						owner: ownerOf(ctx),
+						hasUI: ctx.hasUI,
+						feedback: feedbackTransport(ctx),
+					};
+				},
+				reportMissingFact,
 			});
 		},
 		nextTask: callback => {
@@ -1472,87 +1384,14 @@ function ompPort(
 			}
 		},
 		onTurn: handler => {
-			// The adapter's whole job on this axis: map native facts to signals and frame each one
-			// with the session context it came from. Which Turn a fact belongs to, whether a reading
-			// is final, and what an unreliable fact means are the framework's rules.
-			const frame = (ctx: OmpSessionContext): Omit<TurnSignalFacts, "signal"> => ({
-				owner: ownerOf(catalogued(ctx)),
-				hasUI: ctx.hasUI,
-				feedback: feedbackTransport(ctx),
-			});
-			// The last reading this binding already reported while a response streamed, per session:
-			// a streaming event fires per delta, and only a changed reading is a fact at all.
-			const streamed = new Map<string, TurnUsage>();
-
-			pi.on("before_provider_request", (_event, ctx) => {
-				const model = ctx.model;
-				if (model?.id === undefined || model.provider === undefined) {
-					// The request's model identity is the one fact this signal cannot be without: a
-					// start that named no model would attribute and price the request to nothing.
-					reportMissingFact("model identity at a request start");
-					return;
-				}
-				handler({
-					...frame(ctx),
-					signal: {
-						kind: "request_started",
-						session: sessionFactsOf(pi, ctx),
-						at: Date.now(),
-						provider: model.provider,
-						model: model.id,
-					},
-				});
-			});
-			pi.on("after_provider_response", (event, ctx) => {
-				handler({
-					...frame(ctx),
-					signal: {
-						kind: "response_received",
-						session: sessionFactsOf(pi, ctx),
-						http: {
-							status: event.status,
-							headers: event.headers,
-							...(event.metadata === undefined ? {} : { metadata: event.metadata }),
-							...(typeof event.requestId === "string" && event.requestId.length > 0
-								? { requestId: event.requestId }
-								: {}),
-						},
-					},
-				});
-			});
-			pi.on("message_start", (_event, ctx) => {
-				// A new message begins: the next response's streaming readings are its own.
-				streamed.delete(ctx.sessionManager.getSessionId());
-			});
-			pi.on("message_update", (event, ctx) => {
-				if (event.message.role !== "assistant") return;
-				const usage = usageOf(event.message);
-				if (usage === undefined) return;
-				const sessionId = ctx.sessionManager.getSessionId();
-				const previous = streamed.get(sessionId);
-				if (previous !== undefined && sameReading(previous, usage)) return;
-				streamed.set(sessionId, usage);
-				handler({
-					...frame(ctx),
-					signal: { kind: "usage_streamed", session: sessionFactsOf(pi, ctx), usage },
-				});
-			});
-			pi.on("message_end", (event, ctx) => {
-				// Only the finalized assistant response settles a Turn; every other message kind this
-				// hook also fires for is not a model cycle's end.
-				if (event.message.role !== "assistant") return;
-				const usage = usageOf(event.message);
-				handler({
-					...frame(ctx),
-					signal: {
-						kind: "response_settled",
-						session: sessionFactsOf(pi, ctx),
-						at: Date.now(),
-						outcome: outcomeOf(event.message),
-						readings: usage === undefined ? [] : [usage],
-						...(event.message.responseId === undefined ? {} : { responseId: event.message.responseId }),
-					},
-				});
+			observeTurns(pi, handler, {
+				frame: ctx => ({
+					owner: ownerOf(catalogued(ctx)),
+					hasUI: ctx.hasUI,
+					feedback: feedbackTransport(ctx),
+				}),
+				session: ctx => sessionFactsOf(pi, ctx),
+				reportMissingFact,
 			});
 		},
 		onSubagentRuntime: handler => {
