@@ -3,8 +3,11 @@
  * private feature modules under `omp/`. Turn observations own response mapping and
  * per-subscription streaming readings; Round observations own native activity signals
  * and late quiescence reads; subagent observations own payload mapping and execution
- * records. Session/Owner fact mappings live in `omp/session`; event wiring, delivery
- * assembly, context tracking and binding-wide diagnostics stay in this assembly.
+ * records. `omp/session/` owns Session/Owner facts and native Session transitions;
+ * `omp/viewed-session` owns the Viewed session subscription and its release. Delivery
+ * assembly, the latest context shared by observations, and binding-wide diagnostics
+ * stay here. Feature-owned native types live beside their implementation and remain
+ * available through this adapter entry.
  *
  * It translates the native API into the framework's port before any behavior runs and
  * translates framework outcomes back into native effects. It carries no extension
@@ -28,9 +31,6 @@ import type {
 	OwnerReference,
 	PromptContribution,
 	ProviderAccess,
-	SessionEvent,
-	SessionStartReason,
-	ViewedSessionPort,
 } from "../core/protocol";
 import { StateStore } from "../core/state";
 import { observeRounds } from "./omp/round";
@@ -39,12 +39,20 @@ import {
 	executionOwnerOf,
 	ownerReferenceOf,
 	sessionFactsOf,
-	startReasonOf,
 	statePayloadsOf,
-	viewedOwnerOf,
-} from "./omp/session";
+} from "./omp/session/facts";
+import {
+	createSessionObserver,
+	type OmpSessionEvent,
+	type OmpSessionEventType,
+} from "./omp/session/lifecycle";
 import { observeSubagentRuntime } from "./omp/subagents";
 import { observeTurns } from "./omp/turn";
+import { createViewedSession, type OmpViewedSessionFacts } from "./omp/viewed-session";
+
+// Native types remain available through the adapter entry consumed by harness assemblies.
+export type { OmpSessionEvent, OmpSessionEventType, OmpSessionReason } from "./omp/session/lifecycle";
+export type { OmpViewedSessionFacts } from "./omp/viewed-session";
 
 /**
  * Re-exported because it is what {@link OmpExtensionFactory} returns.
@@ -107,25 +115,6 @@ export interface OmpUiContext {
 		content: readonly string[] | undefined,
 		options?: { readonly placement?: "aboveEditor" | "belowEditor" },
 	): void;
-}
-
-/**
- * The facts the host's public Viewed session outlet publishes about the session it displays.
- *
- * Only the fields this adapter maps are named: the displayed session's own identity and its agent's
- * kind and direct parent, which is what resolves *whose* State the marker area projects. A fact the
- * host could not obtain is absent (and named in the outlet's own `unavailable` list), so the adapter
- * resolves no seat rather than guessing one from a displayed name or from the session it is bound to.
- */
-export interface OmpViewedSessionFacts {
-	/** Identity of the displayed agent: its registry id, its kind and its direct parent. */
-	readonly agent: {
-		readonly kind: "main" | "sub";
-		readonly id: string;
-		readonly parentId?: string;
-	};
-	/** Session id the harness reports for the displayed session. */
-	readonly sessionId?: string;
 }
 
 /**
@@ -267,41 +256,6 @@ export interface OmpSessionContext {
 	 * going. A job still running is work the agent has not finished, so it too keeps a round open.
 	 */
 	getAsyncJobSnapshot?(): { readonly running: readonly unknown[] } | null;
-}
-
-/**
- * The native session lifecycle events this adapter maps to the framework's semantic session
- * events.
- *
- * The harness's vocabulary is richer than the framework's model: `session_start` is the
- * harness's own startup signal, which carries no reason (the framework's `initial`),
- * `session_switch` and `session_branch` each carry the transition's reason, and
- * `session_shutdown` is the process going away (the framework's `disposed`). `session_tree`
- * is navigation inside one session — the same owner, a different leaf — so it maps to no
- * event at all, which is why the adapter subscribes to nothing for it. Which native event
- * means what is decided here and nowhere else; shared behavior sees only
- * {@link SessionEvent}.
- *
- * One more native fact is mapped from outside this vocabulary: the session manager's own
- * name-change notification. It is not a lifecycle event — nothing about which session is current
- * moved — so it maps to `session_facts`, the one session delivery that is not a boundary and
- * carries the session's facts alone.
- */
-export type OmpSessionEventType =
-	| "session_start"
-	| "session_switch"
-	| "session_branch"
-	| "session_tree"
-	| "session_shutdown";
-
-/** Why the harness changed sessions, as its event carries it. */
-export type OmpSessionReason = "new" | "resume" | "fork" | "branch" | "btw";
-
-/** A native session lifecycle event, as the runner delivers it. */
-export interface OmpSessionEvent {
-	readonly type: OmpSessionEventType;
-	/** The transition's reason: a switch carries `new`/`resume`/`fork`, a branch its own reason. */
-	readonly reason?: OmpSessionReason;
 }
 
 /** The native command context the adapter reads, as the OMP runner builds it.
@@ -778,12 +732,6 @@ function ompPort(
 	harnessAccess: HarnessProviderAccess,
 ): HarnessPort {
 	const stateEntryType = `${definition.id}:state`;
-	// The owner key this binding currently serves — the session it started and has not ended.
-	// It is the whole identity criterion: a native session event that leaves this key alone is
-	// no transition, and one that changes it names the owner being left, so no session can
-	// read a value another one left behind and no session takes over without the one it
-	// replaced being retired first.
-	let activeOwnerKey: string | undefined;
 	// At most one ownerless diagnostic per binding: the first delivery that resolves no
 	// owner reports it, and every later one stays quiet.
 	let reportedOwnerless = false;
@@ -807,6 +755,7 @@ function ompPort(
 	const catalogued = (ctx: OmpSessionContext): OmpSessionContext => {
 		harnessPrices.saw(ctx);
 		harnessAccess.saw(ctx);
+		newestContext = ctx;
 		watchViewedSession(ctx);
 		return ctx;
 	};
@@ -818,62 +767,6 @@ function ompPort(
 	 * frames arrive outside any delivery of their own.
 	 */
 	let newestContext: OmpSessionContext | undefined;
-	/** The context the outlet is currently subscribed through, so a context that does not move is not re-subscribed. */
-	let watchedContext: OmpSessionContext | undefined;
-	/** The native unsubscribe of that subscription. */
-	let unwatchViewed: (() => void) | undefined;
-	/** The framework's listeners on the displayed session, one per interested binding of this assembly. */
-	const viewedListeners = new Set<(markers: MarkerTransport) => void>();
-
-	/**
-	 * Points the adapter's view at one delivery's context and keeps one native subscription alive.
-	 *
-	 * The subscription is re-pointed when the context moves — a session switch, a subagent's own
-	 * delivery — because the outlet is reachable only through a live context; a host that publishes
-	 * no outlet is never subscribed to, and its deliveries simply leave the adapter with no displayed
-	 * session to report.
-	 */
-	const watchViewedSession = (ctx: OmpSessionContext): void => {
-		newestContext = ctx;
-		if (typeof ctx.subscribeViewedSessionChanged !== "function" || watchedContext === ctx) return;
-		watchedContext = ctx;
-		unwatchViewed?.();
-		unwatchViewed = ctx.subscribeViewedSessionChanged(() => {
-			const markers = markerTransport(ctx);
-			for (const listener of [...viewedListeners]) listener(markers);
-		});
-	};
-
-	/**
-	 * The harness's displayed session, as the framework observes it: re-read per publication through
-	 * the newest context, and subscribed to so a view attaching to another session republishes the
-	 * area without any delivery having to carry that fact.
-	 *
-	 * A context that publishes no outlet is the honest absence: `read` answers nothing and the
-	 * framework keeps projecting the position its deliveries carry. The subscription holds the
-	 * framework's own listeners and is this binding's to give up; subscribing creates no owner and
-	 * touches no session's state.
-	 */
-	const viewedSession: ViewedSessionPort = {
-		read: () => {
-			const ctx = newestContext;
-			if (ctx === undefined || typeof ctx.getViewedSession !== "function") return undefined;
-			return viewedOwnerOf(pi, ctx.getViewedSession());
-		},
-		subscribe: listener => {
-			viewedListeners.add(listener);
-			return () => {
-				viewedListeners.delete(listener);
-				// The last listener is leaving: the host's own subscription goes with it rather than
-				// outliving every binding that cared about the displayed session. The next delivery
-				// re-points it if anything subscribes again.
-				if (viewedListeners.size > 0) return;
-				unwatchViewed?.();
-				unwatchViewed = undefined;
-				watchedContext = undefined;
-			};
-		},
-	};
 
 	/**
 	 * The marker area's transport for one delivery: the framework-owned widget of this
@@ -937,6 +830,9 @@ function ompPort(
 		return undefined;
 	};
 
+	const observeSession = createSessionObserver(pi, ownerOf);
+	const { viewedSession, watch: watchViewedSession } = createViewedSession(pi, () => newestContext, markerTransport);
+
 	/** Whether the agent can take input now, or `undefined` when this context reports no idle fact. */
 	const canAcceptInputOf = (ctx: OmpSessionContext): boolean | undefined => {
 		if (typeof ctx.isIdle !== "function") return reportMissingFact("idle fact (isIdle)");
@@ -950,7 +846,7 @@ function ompPort(
 		providerAccess: harnessAccess.access,
 		viewedSession,
 		onSession: handler => {
-			const deliver = (event: SessionEvent, owner: OwnerReference, ctx: OmpSessionContext): void => {
+			observeSession((event, owner, ctx) => {
 				catalogued(ctx);
 				handler({
 					event,
@@ -972,94 +868,6 @@ function ompPort(
 					notices: noticeTransport(ctx),
 					markers: markerTransport(ctx),
 				});
-			};
-
-			/**
-			 * Subscribes this context's own name-change fact, once per session manager.
-			 *
-			 * The harness publishes a rename where it happens, so what this produces is a facts
-			 * delivery: the session's own identity, direct parent and latest name, resolved then.
-			 * That is what makes a rename of a session nobody is viewing reach a per-session
-			 * observation immediately rather than at the renamed session's next delivery. The
-			 * notification is read as the manager's own method — it is that object's state, not a
-			 * function to detach from it — and the listener stays subscribed for the manager's own
-			 * life, so a session this binding has since left still reports its facts when it is
-			 * renamed; the framework's delivery switch, not this subscription, is what ends a
-			 * disposed binding's delivery. A manager that reports no such change leaves this bridge
-			 * inert, and the session's name is then read on its other deliveries alone.
-			 */
-			const watchedManagers = new WeakSet<OmpSessionContext["sessionManager"]>();
-			const watchNameChanges = (ctx: OmpSessionContext): void => {
-				const manager = ctx.sessionManager;
-				if (watchedManagers.has(manager)) return;
-				if (typeof manager.onSessionNameChanged !== "function") return;
-				watchedManagers.add(manager);
-				manager.onSessionNameChanged(() => {
-					deliver({ kind: "session_facts" }, ownerOf(ctx), ctx);
-				});
-			};
-
-			/**
-			 * One start-type native event (a startup, a switch, a branch), synthesized into the
-			 * semantic transition it is.
-			 *
-			 * The judgment is the owner key, and it is the only thing that decides: a native
-			 * transition that leaves the owner this binding already serves alone is not a
-			 * transition at all — no event, no retired cell, no reseed — which is what makes
-			 * `/reload`, a same-file `/resume`, `/clear` and a TUI `/branch` silent rather than
-			 * boundaries. An event that does move the owner to another session is the symmetric
-			 * pair: the session being left ends as `transferred` — named by its own key, so its
-			 * cell and its effects are found without consulting anything else — and the session
-			 * being entered starts with the reason the native event carried.
-			 *
-			 * A session that is not its own owner has no cell of its own, so it is delivered
-			 * with the owner it resolved and takes no part in this bookkeeping: there is
-			 * nothing of its own to pair.
-			 */
-			const startOf = (reason: SessionStartReason, ctx: OmpSessionContext): void => {
-				const owner = ownerOf(ctx);
-				if (owner.kind !== "owner") {
-					deliver({ kind: "session_start", reason }, owner, ctx);
-					return;
-				}
-				if (owner.key === activeOwnerKey) return;
-
-				const endedOwnerKey = activeOwnerKey;
-				activeOwnerKey = owner.key;
-				if (endedOwnerKey !== undefined) {
-					deliver(
-						{ kind: "session_end", reason: "transferred" },
-						{ kind: "owner", key: endedOwnerKey },
-						ctx,
-					);
-				}
-				deliver({ kind: "session_start", reason }, owner, ctx);
-			};
-
-			// One semantic event per native session event, and no other native event reaches
-			// this hook: a per-turn run initiation is a separate semantic hook, so a run can
-			// never arrive here and reseed the session's State.
-			pi.on("session_start", (_event, ctx) => {
-				// The harness's startup signal carries no reason: this is the session the
-				// binding first serves in this process.
-				watchNameChanges(ctx);
-				startOf("initial", ctx);
-			});
-			pi.on("session_switch", (event, ctx) => {
-				watchNameChanges(ctx);
-				startOf(startReasonOf(event), ctx);
-			});
-			pi.on("session_branch", (event, ctx) => {
-				watchNameChanges(ctx);
-				startOf(startReasonOf(event), ctx);
-			});
-			pi.on("session_shutdown", (_event, ctx) => {
-				// Only a session this binding started can end: the owner that is ending is the
-				// one this binding serves, whatever the shutting-down session resolves now.
-				const endedOwnerKey = activeOwnerKey;
-				if (endedOwnerKey === undefined) return;
-				activeOwnerKey = undefined;
-				deliver({ kind: "session_end", reason: "disposed" }, { kind: "owner", key: endedOwnerKey }, ctx);
 			});
 		},
 		onRound: observer => {
