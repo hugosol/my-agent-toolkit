@@ -4,11 +4,51 @@ Recorded: 2026-10-03; aligned with the first-release migration decisions on 2026
 
 Approved target revision: [independent compatibility verification](#independent-compatibility-verification), confirmed in assembly Q10a/Q19, supersedes all historical startup admission/warning descriptions below. Source/installed observations and first-release implementation evidence are retained as history, not as target startup policy; the framework cutover of that former route is delivered (2026-10-13), while the human acceptance round and the formal cutover are still pending — the residual independent-verification summary and the manual cutover checklist (stop, back up the old configuration/statistics, prepare empty data, load-source mutual exclusion, restart, rollback) were handed over as human work, never auto-certified.
 
+## pi codebase-tools adapter evidence
+
+Added 2026-10-15 following the confirmed pi adapter scope. This section supersedes the historical
+“no pi adapter / pi loader deferred” statements below **only for codebase-tools and the mapped
+capabilities listed here**; it does not promote pi to the historical OMP supported baseline.
+
+- Exercised artifact: installed `@earendil-works/pi-coding-agent@1.2.0` Node bundle on Windows x64,
+  driven with Node **22.19.0** and Bun **1.4.2** as the smoke driver. The reference pi checkout inspected
+  was `4a5d37291531ad48b8e536c892557877d219463c`; no pi source or formal configuration was changed.
+- `bun scripts/pi-codebase-tools-smoke.ts` with `PI_NODE` pointing at Node 22.19.0 passed **52 checks
+  across four isolated runs**: real loader/out-of-directory TypeScript and Markdown resources,
+  default-off, toggle feedback and marker frames, hidden tail-appended init/reminder, persisted State,
+  append-only journal and unchanged outgoing message prefix, disabling without history deletion,
+  new-session isolation, process-restart resume and in-process switch/resume.
+- Additional throwaway runtime probes exercised an actual `read` tool continuation: two outbound
+  model requests in one run retained one injected prompt each and an unchanged message prefix;
+  the second carried the real fixture-file result. Print mode reported activation on stderr with
+  empty stdout. A real PTY TUI run displayed the enabled/disabled notices and marker appearance/removal;
+  this is agent-observed terminal evidence, not maintainer H1 sign-off.
+- Provider evidence is a **local OpenAI-compatible capture**, not real-service delivery or a cache-hit
+  guarantee. pi converts hidden custom messages to `user`; no developer/system authority is promised.
+- **Runtime limitation:** the same multi-request/EOF probe on Node **24.18.0** triggered Windows/libuv
+  `UV_HANDLE_CLOSING` assertion exit 9, both with this adapter and with **no extensions** (10/10 runs
+  each). Node 22.19.0 completed the full smoke cleanly. No exception or exit failure is suppressed;
+  use `PI_NODE=<Node 22.19.0 executable>` for this verified smoke combination. Other Node versions
+  and real provider paths remain unverified.
+- Mapped scope: session boundaries and branch records required by State, run-initiation prompt
+  delivery, commands, marker and feedback. Round, Turn, subagent-runtime and user-input observation
+  subscriptions are not implemented and are explicitly refused. No model-catalog, provider-access
+  or viewed-session outlet is supplied. pi's entry-label API is not an extension label; the latter
+  remains an internal diagnostic label.
+- Subagent integration is out of scope: the inspected pi exposes no native subagent relationship.
+  The user explicitly excluded inheritance work for this adapter; no runner or first-activation
+  inheritance notice is added. This supersedes the future-notice policy below for this scoped pi
+  implementation, without changing OMP inheritance or the shared definition.
+- Node text loading is installed at the adapter boundary, once per process and limited to this
+  repository's `extensions/` Markdown resources. It leaves the shared prompt module unchanged;
+  Bun's native text imports need no hook. Hot reload and concurrent main-session instances are not
+  certified by these runs.
+
 ## Harness targets and evidence
 
 | Harness | Package | Source version / checkout | Observed installed harness | Evidence status |
 | --- | --- | --- | --- | --- |
-| pi | `@earendil-works/pi-coding-agent` | 1.0.0; `a276dabe57911253350bffb93cb7d7aff6a73261` | `pi --version`: `1.0.0` | Source inspected; isolated RPC and local OpenAI-compatible request smoke performed. **Not part of the first release**: no pi adapter is implemented or certified; this evidence is retained for a later pi adapter. |
+| pi | `@earendil-works/pi-coding-agent` | Historical research: 1.0.0 at `a276dabe57911253350bffb93cb7d7aff6a73261`; current reference/installed artifact: see [pi adapter evidence](#pi-codebase-tools-adapter-evidence) | Current executed version/environment: see that evidence | codebase-tools adapter implemented and independently smoke-exercised in the recorded scope; not a full pi framework certification or an OMP baseline replacement. |
 | oh-my-pi | `@oh-my-pi/pi-coding-agent` | 18.5.0; `9348320cc4a30a7195d36a1f05a6c11bcb701a17` | observed installs: `omp/18.4.6` (design time), `18.6.1` (later) | **First-release supported baseline: 18.5.0 (checkout `@9348320`) + Windows x64 + Bun 1.4.2.** Decision 03 runtime-exercised the extension-path behaviors on an isolated exact install of `@18.5.0`. Installed versions outside the enumeration are historical unlisted observations, not additional support evidence. Current target verification is independent of startup. |
 
 Sources: the respective `packages/coding-agent/package.json` files, source-checkout `git log -1`, and direct executable version checks. Checking an executable version is not functional validation. Decision 03 subsequently runtime-exercised OMP 18.5.0 through the extension interface on an isolated exact install; that is the runtime evidence behind the first-release baseline, and it does not certify other versions or provider paths.
@@ -34,8 +74,8 @@ Every support statement in this document uses one of four states, and each row c
 | --- | --- | --- | --- | --- |
 | `verified-supported` | `@oh-my-pi/pi-coding-agent@18.5.0`, checkout `@9348320` + Windows x64 + Bun 1.4.2 | Decision 03 runtime-exercised the extension path on an isolated exact install (byte identity with the anchor `6/6`, re-checked by the baseline record); the migration suites then ran green on that same isolated install — framework 234 pass, codebase-tools 24 pass, connect-bot 103 pass, dock 9 pass (release-gate run RR-01, 2026-10-07 — framework revision `57107c51…` plus the then-uncommitted migration work; post-fix rerun 370 pass / 0 fail overall, and the run's `bun.lock` sha256 is the one `harness-baseline.json` carries) | Exactly this combination; verified provider paths only (`deepseek/deepseek-flash` → `openai-completions`; `openai-codex/gpt-6-luna` → `openai-codex-responses`, shape-only layer 1); every run executes the isolated exact install under a temporary agent state | Framework capabilities only (C1–C15), by isolated candidate verification (see [Upgrade standard and triggering](#upgrade-standard-and-triggering)). No extension capability is part of the long-term standard |
 | `verified-unlisted` | Historical installation observations outside the supported baseline (18.4.6 / 18.6.1) | Installation observation only; no behavior exercised on that version | No new support claim; the former startup warning route is superseded by independent verification | Independently verify the exact source/environment/extension combination; partial candidate alarms alone do not promote support |
-| `unverified` | openai-codex layer-2 real-credential delivery; interactive TUI visual acceptance; every provider path not listed above (including pi) | Dock prepared but not executed (`scripts/capture-codex-outbound.ts`, layer 2); TUI acceptance not performed; a local capture endpoint proves serialization only, never real-service acceptance | Recorded as unverified, never as passing; no inference from a verified path; the ready-to-run steps are in the [README human acceptance runbook](../README.md#human-acceptance-and-cutover) | Not a candidate path: it becomes evidence only when a human supplies the credential or performs the acceptance |
-| `unsupported` | pi adapter (the first release ships none); two main sessions in one process; hot reload or in-process discovery-root swap | The framework suite asserts the supported shape only; the multi-main shape has no test, and a green suite for the supported shape says nothing about it | States that the framework integration is not provided — not that the harness lacks the native feature | Revisit only through an explicit decision, not through a test run |
+| `unverified` | openai-codex layer-2 real-credential delivery; interactive TUI visual acceptance; real-provider pi delivery and every provider path outside the scoped captures | Dock prepared but not executed (`scripts/capture-codex-outbound.ts`, layer 2); TUI acceptance not performed; a local capture endpoint proves serialization only, never real-service acceptance | Recorded as unverified, never as passing; no inference from a verified path; the ready-to-run steps are in the [README human acceptance runbook](../README.md#human-acceptance-and-cutover) | Not a candidate path: it becomes evidence only when a human supplies the credential or performs the acceptance |
+| `unsupported` | pi capabilities beyond the [codebase-tools scope](#pi-codebase-tools-adapter-evidence) (the historical first release shipped no pi adapter); two main sessions in one process; hot reload or in-process discovery-root swap | The framework suite asserts the supported shape only; the multi-main shape has no test, and a green suite for the supported shape says nothing about it | States that the framework integration is not provided — not that the harness lacks the native feature | Revisit only through an explicit decision, not through a test run |
 
 The `verified-supported` row also fixes *what runs*: the revision anchor is the local checkout `@9348320` (= 18.5.0), and the run/acceptance artifact is the isolated exact install at `.cache/omp-baseline/18.5.0` (replaying decision 03's byte-identity conclusion). That correspondence — `harness.revisionAnchor` ↔ `harness.acceptanceArtifact` ↔ the `sourceCombination`/`oracle` lockfiles — is recorded as data in [`harness-baseline.json`](harness-baseline.json), not restated here. Role evidence per provider path has its own table above and keeps its own states ([provider-path role evidence](#provider-path-role-evidence-recorded-facts-not-a-gate)).
 
@@ -97,7 +137,8 @@ The delivered role of a persisted injected prompt is recorded from the harness's
 | --- | --- | --- | --- |
 | `deepseek/deepseek-flash` (`openai-completions`) | One message, appended after the turn's own user message and last in the request; the system message does not carry the injected text | `user` | Real outbound capture through the real catalog model and its api adapter, with a local capture endpoint standing in for the real service: `tests/codebase-tools/outbound-role.test.ts`; the recorded body carries the injected text as the last message with `role:"user"` |
 | `openai-codex/gpt-6-luna` (`openai-codex-responses`) | One `input` item appended after the turn's own user item and last in the array; the system prompt travels in `instructions` and does not carry the injected text | `developer` (input item) | **Shape-only layer 1** — local probe, same capture and suite; the Codex serializer preserves the `developer` slot the harness's LLM view gives a persisted custom message, unlike the shared Responses conversion, which folds user/developer into `user`. Whether chatgpt.com accepts it (and whether a `developer` item mid-conversation is valid) is **not** established |
-| every other provider path (including pi) | — | `unverified` / undecided | Not recorded. Other harnesses' role and authority semantics stay **undecided**, and no cross-harness developer-authority guarantee is claimed |
+| pi local OpenAI-compatible path | Hidden persisted custom message at the request tail | `user` | See [pi adapter evidence](#pi-codebase-tools-adapter-evidence); local capture only, not real-service acceptance |
+| every other provider path | — | `unverified` / undecided | Not recorded. No cross-harness developer-authority guarantee is claimed |
 
 Two observations that the record depends on, both from the role-capture probe run (a probe extension driving the isolated exact install against a local capture endpoint):
 

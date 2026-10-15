@@ -2,7 +2,29 @@
 
 Routes the agent's code exploration toward the codebase-memory-mcp graph and LSP, controlled by
 `/codebase-tools`. The declaration is [`definition.ts`](definition.ts), its shared prompts are
-under [`shared-logic/`](shared-logic), and its OMP assembly is [`harnesses/omp.ts`](harnesses/omp.ts).
+under [`shared-logic/`](shared-logic). Its thin assemblies are [`harnesses/omp.ts`](harnesses/omp.ts) and
+[`harnesses/pi.ts`](harnesses/pi.ts); both consume the same unchanged definition and prompt resources.
+
+## pi adapter
+
+Load only the pi entrypoint, not the implementation directories:
+
+```bash
+pi --no-extensions -e <repository>/entrypoints/pi/codebase-tools.ts
+```
+
+`/codebase-tools` uses the existing framework toggle and injection rules. The pi adapter returns a
+hidden custom message at run initiation; pi appends it after the user's input, retains it in the
+message list and writes it to session history. Later requests retain earlier contributions; disabling
+stops new contributions and does not remove old messages. Existing history is preserved, not a promise
+of provider cache hits. MCP/LSP tool availability remains the user's pi environment's responsibility.
+Subagent integration is outside this adapter's scope.
+
+The repeatable isolated check is `bun scripts/pi-codebase-tools-smoke.ts`; `--pi <CLI path>` or `PI_CLI`
+selects the installed pi and `PI_NODE` selects the Node executable for a script/shim installation.
+It uses temporary state, dummy credentials and a local capture server, never the formal configuration.
+The exercised combination and runtime limitation are recorded in the framework's
+[pi support evidence](../../framework/docs/harness-support.md#pi-codebase-tools-adapter-evidence).
 
 ## H1 — interactive TUI acceptance (visual)
 

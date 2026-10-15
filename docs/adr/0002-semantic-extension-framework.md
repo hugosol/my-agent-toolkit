@@ -16,6 +16,21 @@ Keep the semantic core separate from reusable behaviors, feature templates, and 
 
 This chooses direct source debugging and atomic framework/extension changes in one repository over independent package releases and standalone installability. The tested repository revision and dependency lockfile identify the deployed source combination. An actual installed harness loader must be exercised with an entrypoint importing extension and framework TypeScript from outside its discovery directory before claiming the organization works; the first release exercises the OMP loader, with the pi loader deferred. Direct source imports do not imply automatic hot reload or working source breakpoints; reload/cache behavior and debugger mapping require their own verification.
 
+## pi adapter scope revision (2026-10-15)
+
+The maintainer approved adding only the pi extension-layer mechanisms consumed by codebase-tools,
+with no change to its definition, shared logic or the framework's behavior rules. Reuse the public
+binding and State contracts; keep pi native calls and text-resource loading in framework adapters,
+and the extension assembly/discovery entrypoint thin. This supersedes the historical “no pi
+implementation authorized” scope below, not the separation of responsibilities.
+
+Injected messages use pi's native hidden, persisted custom-message path after the user's input;
+the adapter does not choose prompt frequency or rewrite history/system instructions. The maintainer
+accepts the native delivered role. Subagent integration is explicitly excluded, so the historical
+future pi first-activation inheritance notice is not added for this implementation. No MCP/LSP
+supply, pi source modification, full observation adapter or automatic compatibility gate is included.
+Executed evidence and limitations belong solely to [the support record](../../framework/docs/harness-support.md#pi-codebase-tools-adapter-evidence).
+
 ## Repository ownership and migration references
 
 The framework's authoritative design and implementation live in my-agent-toolkit. The original independent extensions remain in [my-omp-toolkit](../../../my-omp-toolkit/), which is the source of existing business contracts, proven implementations, and selectable rollback baselines. Replacements are developed here incrementally; this document's source layout describes the target, not a migration already performed.
