@@ -1,7 +1,7 @@
 # Semantic extension framework — capability and options index
 
 This is the index of the framework's public authoring surface: the entry points, and the meaning and
-accepted value of every parameter `defineExtension` and `ompAdapter` take. It is written for a human or
+accepted value of every parameter `defineExtension`, `ompAdapter` and the scoped `piAdapter` take. It is written for a human or
 an agent that has to *find* an entry point and then read the source for detail — every symbol below is
 cited to its defining file and line, and that source is authoritative for behavior, ordering and errors.
 
@@ -29,6 +29,7 @@ still describes the implemented surface, not the planned input seam or a complet
 | `SessionFacts`, `SessionStartup`, `TurnEvent`, `TurnStartDelivery`, `TurnEndDelivery`, `TurnStartFacts`, `TurnEndFacts`, `TurnUsage`, `TurnOutcome`, `ProviderHttpFacts`, `TurnSignal`, `TurnSignalFacts`, `CatalogPrice`, `CatalogPriceSource`, `ProviderAccess`, `ProviderAccessFacts` | [`framework/core/protocol.ts#L130`](../core/protocol.ts#L130), [`#L376`](../core/protocol.ts#L376), [`#L511`](../core/protocol.ts#L511), [`#L527`](../core/protocol.ts#L527) | The per-actual-session facts and the Turn axis: a session's identity, direct parent, latest name, the handle of the task it was spawned for (a subagent's own name for its work, which is neither the agent definition it runs nor the id its registry uses), the name and id of the agent it runs, and the optional `SessionStartup` — the model and effective level the session began on, reported on its own start alone and never rewritten; the two Turn edges with the request-time facts fixed at the first and repeated at the second; the reliable-or-unavailable usage, outcome, HTTP facts and the two provider reference ids; the mapped native signals a harness adapter reports, and the extension's own catalog the framework queries at each request's start. See [The Turn axis and the two observation scopes](#the-turn-axis-and-the-two-observation-scopes). |
 | `CommandImplementations`, `CommandImplementation`, `CommandAction`, `ActionsCommandImplementation`, `ActionDelivery` | [`framework/core/assembly.ts#L50`](../core/assembly.ts#L50), [`framework/core/protocol.ts#L591`](../core/protocol.ts#L591) | What an implementation delivers for one command: a directed implementation under its command name, or an `actions` command's table of named actions. An action may return a promise the host's command chain waits for, and its delivery is the invocation facts alone — the argument, the owner, `hasUI`, the idle query, the running session's `provider` and the feedback and marker transports — with no declared-value seam, because an `actions` command drives no State. |
 | `ompAdapter(definition, options?)` | [`framework/adapters/omp.ts#L789`](../adapters/omp.ts#L789) | Assembles a definition for the `omp` harness; returns an `OmpExtensionFactory`. Also re-exports `BindingResult`, which is what that factory returns. |
+| `piAdapter(definition, options?)` | [`framework/adapters/pi.ts`](../adapters/pi.ts) | Uses the same `ExtensionAssembly`, `StateStore` and binding behaviors for pi. Maps the session boundaries, branch records, commands, hidden persisted prompt messages, marker and feedback used by codebase-tools. Round, Turn, subagent-runtime and user-input observation subscriptions are explicitly refused; catalog, provider-access and viewed-session outlets are not provided. |
 | `ExtensionAssembly` | [`framework/core/assembly.ts#L178`](../core/assembly.ts#L178) | The harness-independent assembly information, every member optional (`factory`, `requiredSemantics`, `configBaseDir`). Harness version support is deliberately not one of them either: support is an evidence claim recorded in the repository's support record ([`harness-support.md`](harness-support.md)), and no assembly supplies or widens it. |
 | `BindingResult`, `BindingFailure` | [`framework/core/protocol.ts#L680`](../core/protocol.ts#L680) | What a binding concluded, and why it was refused. |
 | `CommandActions`, `DirectedCommandImplementation`, `CommandDelivery`, `DeclaredValueSeam` | [`protocol.ts#L484`](../core/protocol.ts#L484), [`#L447`](../core/protocol.ts#L447), [`#L566`](../core/protocol.ts#L566), [`#L398`](../core/protocol.ts#L398) | The implementations an assembly injects for a definition's directed commands, keyed by command name — each with a `run` member and an optional `unrecognized` member for an argument that parsed to no directive — and the delivery and declared-value seam each one writes through. |
@@ -52,6 +53,12 @@ A real, minimal consumer is the codebase-tools extension: the shared declaration
 [`extensions/codebase-tools/definition.ts`](../../extensions/codebase-tools/definition.ts), its OMP assembly is
 [`extensions/codebase-tools/harnesses/omp.ts`](../../extensions/codebase-tools/harnesses/omp.ts), and the discovery
 entrypoint that re-exports it is [`entrypoints/omp/codebase-tools.ts`](../../entrypoints/omp/codebase-tools.ts).
+The same declaration is connected to `piAdapter` by
+[`extensions/codebase-tools/harnesses/pi.ts`](../../extensions/codebase-tools/harnesses/pi.ts), exposed through
+[`entrypoints/pi/codebase-tools.ts`](../../entrypoints/pi/codebase-tools.ts). Its first import initializes the
+adapter's scoped Node Markdown loader before loading the shared definition. pi has no native extension-label
+surface: the binding label is used for diagnostics, not pi's unrelated session-entry labels. See the
+[pi support evidence](harness-support.md#pi-codebase-tools-adapter-evidence) for verified scope and runtime limits.
 
 ## `defineExtension(definition)`
 
