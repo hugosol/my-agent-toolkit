@@ -1,0 +1,1166 @@
+{
+ "pi-subagents": {
+  "latest": "0.78.0",
+  "license": "MIT",
+  "repo": "git+https://github.com/nicobailon/pi-subagents.git",
+  "pi_manifest": {
+   "skills": [
+    "./skills"
+   ],
+   "prompts": [
+    "./prompts"
+   ],
+   "extensions": [
+    "./index.js"
+   ]
+  },
+  "peer": [
+   "typebox",
+   "@earendil-works/pi-ai",
+   "@earendil-works/pi-tui",
+   "@earendil-works/pi-agent-core",
+   "@earendil-works/pi-coding-agent"
+  ],
+  "deps": [
+   "jiti",
+   "yaml",
+   "acorn",
+   "undici",
+   "@js-temporal/polyfill"
+  ],
+  "published": "2026-10-13T05:39:09.648Z",
+  "modified": "2026-10-13T05:39:10.047Z",
+  "versions_count": 146,
+  "desc": "Pi extension for single-agent delegation and scripted multi-agent workflows",
+  "homepage": "https://github.com/nicobailon/pi-subagents#readme",
+  "main_exports": {
+   ".": {
+    "types": "./index.d.ts",
+    "default": "./index.js"
+   },
+   "./agents": {
+    "types": "./src/api/agents.d.ts",
+    "default": "./src/api/agents.js"
+   },
+   "./preflight": {
+    "types": "./src/api/preflight.d.ts",
+    "default": "./src/api/preflight.js"
+   },
+   "./delegation": {
+    "types": "./src/api/delegation.d.ts",
+    "default": "./src/api/delegation.js"
+   },
+   "./inspectors": {
+    "types": "./src/api/inspectors.d.ts",
+    "default": "./src/api/inspectors.js"
+   },
+   "./shared-types": {
+    "types": "./src/api/shared-types.d.ts",
+    "default": "./src/api/shared-types.js"
+   },
+   "./external-runs": {
+    "types": "./src/api/external-runs.d.ts",
+    "default": "./src/api/external-runs.js"
+   },
+   "./project-panes": {
+    "types": "./src/api/project-panes.d.ts",
+    "default": "./src/api/project-panes.js"
+   },
+   "./background-work": {
+    "types": "./src/api/background-work.d.ts",
+    "default": "./src/api/background-work.js"
+   },
+   "./child-tool-plan": {
+    "types": "./src/api/child-tool-plan.d.ts",
+    "default": "./src/api/child-tool-plan.js"
+   },
+   "./control-channel": {
+    "types": "./src/api/control-channel.d.ts",
+    "default": "./src/api/control-channel.js"
+   },
+   "./intercom-bridge": {
+    "types": "./src/api/intercom-bridge.d.ts",
+    "default": "./src/api/intercom-bridge.js"
+   },
+   "./capability-ceiling": {
+    "types": "./src/api/capability-ceiling.d.ts",
+    "default": "./src/api/capability-ceiling.js"
+   },
+   "./workflow-resources": {
+    "types": "./src/api/workflow-resources.d.ts",
+    "default": "./src/api/workflow-resources.js"
+   },
+   "./external-job-provider": {
+    "types": "./src/api/external-job-provider.d.ts",
+    "default": "./src/api/external-job-provider.js"
+   },
+   "./required-child-extensions": {
+    "types": "./src/api/required-child-extensions.d.ts",
+    "default": "./src/api/required-child-extensions.js"
+   }
+  },
+  "main": null,
+  "types": "./index.d.ts"
+ },
+ "pi-background-tasks": {
+  "latest": "2.6.10",
+  "license": "ISC",
+  "repo": "git+https://github.com/ismailsaleekh/pi-background-tasks.git",
+  "pi_manifest": {
+   "image": "https://raw.githubusercontent.com/ismailsaleekh/pi-background-tasks/main/logo.png",
+   "extensions": [
+    "./dist/extensions/anthropic-attribution.js",
+    "./dist/extensions/background-tasks.js"
+   ]
+  },
+  "peer": [
+   "typebox",
+   "@earendil-works/pi-ai",
+   "@earendil-works/pi-tui",
+   "@earendil-works/pi-coding-agent"
+  ],
+  "deps": [
+   "turndown"
+  ],
+  "published": "2026-10-13T13:11:13.445Z",
+  "modified": "2026-10-13T13:11:13.622Z",
+  "versions_count": 34,
+  "desc": "Pi extension for durable background shell tasks, read-only delegated agents, local attested Pi runs, and fixed-purpose Fusion workflows through child Pi processes.",
+  "homepage": "https://github.com/ismailsaleekh/pi-background-tasks#readme",
+  "main_exports": null,
+  "main": null,
+  "types": null
+ },
+ "@tintinweb/pi-subagents": {
+  "latest": "0.22.0",
+  "license": "MIT",
+  "repo": "git+https://github.com/tintinweb/pi-subagents.git",
+  "pi_manifest": {
+   "image": "https://github.com/tintinweb/pi-subagents/raw/master/media/screenshot.png",
+   "video": "https://github.com/tintinweb/pi-subagents/raw/master/media/demo.mp4",
+   "extensions": [
+    "./src/index.ts"
+   ]
+  },
+  "peer": [
+   "typebox",
+   "@earendil-works/pi-ai",
+   "@earendil-works/pi-tui",
+   "@earendil-works/pi-coding-agent"
+  ],
+  "deps": [
+   "croner",
+   "nanoid"
+  ],
+  "published": "2026-10-13T12:15:01.113Z",
+  "modified": "2026-10-13T12:15:01.345Z",
+  "versions_count": 59,
+  "desc": "A pi extension that brings Claude Code-like sub-agents and workflow orchestration to pi — parallel execution, live widget, fleet view, custom agent types, mid-run steering, dynamic workflows, Claude Code compatibility, look and feel.",
+  "homepage": "https://github.com/tintinweb/pi-subagents#readme",
+  "main_exports": null,
+  "main": null,
+  "types": null
+ },
+ "@quintinshaw/pi-dynamic-workflows": {
+  "latest": "3.14.0",
+  "license": "MIT",
+  "repo": "git+https://github.com/QuintinShaw/pi-dynamic-workflows.git",
+  "pi_manifest": {
+   "image": "https://raw.githubusercontent.com/QuintinShaw/pi-dynamic-workflows/main/assets/readme/package-cover.png",
+   "skills": [
+    "skills/workflow-authoring",
+    "skills/workflow-patterns"
+   ],
+   "extensions": [
+    "extensions/workflow.ts"
+   ]
+  },
+  "peer": [
+   "typebox",
+   "@earendil-works/pi-tui",
+   "@earendil-works/pi-coding-agent"
+  ],
+  "deps": [
+   "acorn"
+  ],
+  "published": "2026-10-06T14:55:52.165Z",
+  "modified": "2026-10-06T14:55:52.525Z",
+  "versions_count": 62,
+  "desc": "Claude-Code-style dynamic workflows for Pi — fan a task out across 100s of subagents with real model routing, token/cost accounting, resume, git-worktree isolation, an interactive /workflows TUI, and a real /deep-research.",
+  "homepage": "https://github.com/QuintinShaw/pi-dynamic-workflows#readme",
+  "main_exports": {
+   ".": {
+    "types": "./dist/index.d.ts",
+    "import": "./dist/index.js"
+   }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts"
+ },
+ "@henryqw/pi-subagent": {
+  "latest": "27.2.0",
+  "license": "MIT",
+  "repo": "git+https://github.com/HenryQW/pi-harness.git",
+  "pi_manifest": {
+   "image": "https://raw.githubusercontent.com/HenryQW/pi-harness/main/extensions/pi-subagent/example.png",
+   "skills": [
+    "./skills"
+   ],
+   "extensions": [
+    "./extensions/subagent.ts"
+   ]
+  },
+  "peer": [
+   "typebox",
+   "@earendil-works/pi-ai",
+   "@earendil-works/pi-tui",
+   "@earendil-works/pi-coding-agent"
+  ],
+  "deps": [
+   "proper-lockfile",
+   "@henryqw/pi-herdr",
+   "@henryqw/pi-process",
+   "@henryqw/pi-multi-codex",
+   "@henryqw/pi-task-models",
+   "@henryqw/pi-config-store"
+  ],
+  "published": "2026-10-15T02:57:40.489Z",
+  "modified": "2026-10-15T02:57:40.893Z",
+  "versions_count": 109,
+  "desc": "Delegate bounded direct work or durable checked isolated task graphs to Pi roles.",
+  "homepage": "https://github.com/HenryQW/pi-harness#readme",
+  "main_exports": {
+   ".": {
+    "types": "./dist/index.d.ts",
+    "import": "./dist/index.js"
+   }
+  },
+  "main": null,
+  "types": "./dist/index.d.ts"
+ },
+ "@gotgenes/pi-subagents": {
+  "latest": "23.4.0",
+  "license": "MIT",
+  "repo": "git+https://github.com/gotgenes/pi-packages.git",
+  "pi_manifest": {
+   "image": "https://raw.githubusercontent.com/gotgenes/pi-packages/main/packages/pi-subagents/docs/assets/demo.webp",
+   "extensions": [
+    "./src/index.ts"
+   ]
+  },
+  "peer": [
+   "typebox",
+   "@earendil-works/pi-ai",
+   "@earendil-works/pi-tui",
+   "@earendil-works/pi-coding-agent"
+  ],
+  "deps": [],
+  "published": "2026-10-09T05:48:34.355Z",
+  "modified": "2026-10-09T05:48:34.717Z",
+  "versions_count": 197,
+  "desc": "A focused, in-process sub-agent core for pi — autonomous agents plus a typed API and lifecycle events other extensions build on. Friendly fork of @tintinweb/pi-subagents.",
+  "homepage": "https://github.com/gotgenes/pi-packages/tree/main/packages/pi-subagents#readme",
+  "main_exports": {
+   ".": {
+    "types": "./dist/public.d.ts",
+    "default": "./src/service/service.ts"
+   },
+   "./settings": {
+    "types": "./dist/settings.d.ts",
+    "default": "./src/layered-settings.ts"
+   }
+  },
+  "main": null,
+  "types": null
+ },
+ "@chankov/agent-fleet": {
+  "latest": "2.0.19",
+  "license": "MIT",
+  "repo": "git+https://github.com/chankov/agent-fleet.git",
+  "pi_manifest": {
+   "image": "https://raw.githubusercontent.com/chankov/agent-fleet/main/docs/assets/branding/agent-fleet-logo-white-v1.png",
+   "skills": [
+    "./skills",
+    "./vendor/agent-skills-upstream/skills/api-and-interface-design",
+    "./vendor/agent-skills-upstream/skills/ci-cd-and-automation",
+    "./vendor/agent-skills-upstream/skills/code-simplification",
+    "./vendor/agent-skills-upstream/skills/debugging-and-error-recovery",
+    "./vendor/agent-skills-upstream/skills/documentation-and-adrs",
+    "./vendor/agent-skills-upstream/skills/doubt-driven-development",
+    "./vendor/agent-skills-upstream/skills/observability-and-instrumentation",
+    "./vendor/agent-skills-upstream/skills/shipping-and-launch",
+    "./vendor/agent-skills-upstream/skills/source-driven-development",
+    "./vendor/agent-skills-upstream/skills/test-driven-development",
+    "./.pi/skills",
+    "./node_modules/pi-ask-user/skills"
+   ],
+   "prompts": [
+    "./.pi/prompts"
+   ],
+   "extensions": [
+    "./.pi/harnesses/ask-user-remote/index.ts"
+   ]
+  },
+  "peer": [
+   "typebox",
+   "@sinclair/typebox"
+  ],
+  "deps": [
+   "yaml",
+   "pi-ask-user",
+   "@modelcontextprotocol/sdk"
+  ],
+  "published": "2026-10-07T19:50:41.854Z",
+  "modified": "2026-10-07T19:50:42.286Z",
+  "versions_count": 36,
+  "desc": "Subagent orchestration for the pi coding agent — a thin dispatcher runs parallel subagents under a verification contract, keeping their output out of its context window. Multi-agent fleets, 15 personas, skills, herdr panes, peer coms, Hermes desktop.",
+  "homepage": "https://github.com/chankov/agent-fleet",
+  "main_exports": null,
+  "main": null,
+  "types": null
+ },
+ "pi-cowboy": {
+  "latest": "0.14.1",
+  "license": "MIT",
+  "repo": "git+https://github.com/electric-dragon-80000v/pi-cowboy.git",
+  "pi_manifest": {
+   "image": "https://raw.githubusercontent.com/electric-dragon-80000v/pi-cowboy/main/docs/assets/logo-pi-package-landscape.png",
+   "video": "https://github.com/electric-dragon-80000v/pi-cowboy/raw/refs/heads/main/docs/assets/pi-cowboy.mp4",
+   "extensions": [
+    "./dist/index.js"
+   ]
+  },
+  "peer": [
+   "typebox",
+   "@earendil-works/pi-ai",
+   "@earendil-works/pi-tui",
+   "@earendil-works/pi-coding-agent"
+  ],
+  "deps": [
+   "zod",
+   "yaml",
+   "mustache",
+   "smol-toml"
+  ],
+  "published": "2026-10-15T15:31:45.079Z",
+  "modified": "2026-10-15T15:31:45.420Z",
+  "versions_count": 23,
+  "desc": "Agent orchestrator for pi: can manage Codex, Claude Code, OpenCode, pi, pig and pi-bolt as subagents. Runs subagents in background Herdr panes, isolated in copy-on-write Git worktrees.",
+  "homepage": "https://github.com/electric-dragon-80000v/pi-cowboy#readme",
+  "main_exports": {
+   ".": "./dist/index.js",
+   "./package.json": "./package.json"
+  },
+  "main": "./dist/index.js",
+  "types": null
+ },
+ "pi-herdsman": {
+  "latest": "0.27.0",
+  "license": "Apache-2.0",
+  "repo": "git+https://github.com/boadij/pi-herdsman.git",
+  "pi_manifest": {
+   "image": "https://raw.githubusercontent.com/boadij/pi-herdsman/main/docs/assets/thumbnail.webp",
+   "skills": [
+    "./SKILL.md",
+    "./skills"
+   ],
+   "extensions": [
+    "./dist/index.js"
+   ]
+  },
+  "peer": [
+   "typebox",
+   "@earendil-works/pi-ai",
+   "@earendil-works/pi-tui",
+   "@howaboua/pi-codex-conversion",
+   "@earendil-works/pi-coding-agent"
+  ],
+  "deps": [],
+  "published": "2026-10-15T10:11:06.646Z",
+  "modified": "2026-10-15T10:11:07.030Z",
+  "versions_count": 59,
+  "desc": "Asynchronous Pi subagents and agent fleet orchestration for parallel coding agents with nested delegation, background work, and supervision in herdr.",
+  "homepage": "https://github.com/boadij/pi-herdsman#readme",
+  "main_exports": null,
+  "main": null,
+  "types": null
+ },
+ "pi-agents": {
+  "latest": "0.32.2",
+  "license": "MIT",
+  "repo": "git+https://github.com/mavam/pi-agents.git",
+  "pi_manifest": {
+   "extensions": [
+    "./src"
+   ]
+  },
+  "peer": [
+   "typebox",
+   "@earendil-works/pi-ai",
+   "@earendil-works/pi-tui",
+   "@earendil-works/pi-coding-agent"
+  ],
+  "deps": [
+   "@earendil-works/chord",
+   "@earendil-works/pi-durable",
+   "@earendil-works/pi-codemode"
+  ],
+  "published": "2026-10-15T04:48:39.999Z",
+  "modified": "2026-10-15T04:48:40.419Z",
+  "versions_count": 42,
+  "desc": "Durable, named agents for Pi: delegate tasks, compose agents into graphs, and watch them work.",
+  "homepage": "https://github.com/mavam/pi-agents#readme",
+  "main_exports": {
+   ".": "./src/index.ts",
+   "./package.json": "./package.json"
+  },
+  "main": null,
+  "types": null
+ },
+ "@arhen/pi-core-subagent": {
+  "latest": "1.3.68",
+  "license": "MIT",
+  "repo": "git+https://github.com/arhen/pi-extensions.git",
+  "pi_manifest": {
+   "extensions": [
+    "./src/index.ts"
+   ]
+  },
+  "peer": [
+   "typebox",
+   "@earendil-works/pi-ai",
+   "@earendil-works/pi-tui",
+   "@earendil-works/pi-agent-core",
+   "@earendil-works/pi-coding-agent"
+  ],
+  "deps": [],
+  "published": "2026-10-08T13:30:13.775Z",
+  "modified": "2026-10-08T13:30:14.008Z",
+  "versions_count": 106,
+  "desc": "pi extension: fast in-process subagents with a dependency-graph scheduler (needs edges gate tasks and carry upstream output into dependent prompts), plus background runs, intercom and agent-to-agent mailbox. Leader defines agents inline.",
+  "homepage": "https://github.com/arhen/pi-extensions#readme",
+  "main_exports": null,
+  "main": "./src/index.ts",
+  "types": null
+ },
+ "@bacnh85/pi-subagent": {
+  "latest": "0.23.3",
+  "license": "MIT",
+  "repo": "git+https://github.com/bacnh85/pi-extensions.git",
+  "pi_manifest": {
+   "extensions": [
+    "./extensions/index.ts"
+   ]
+  },
+  "peer": [
+   "typebox",
+   "@earendil-works/pi-ai",
+   "@earendil-works/pi-tui",
+   "@earendil-works/pi-agent-core",
+   "@earendil-works/pi-coding-agent"
+  ],
+  "deps": [
+   "@bacnh85/pi-config-panel"
+  ],
+  "published": "2026-10-11T03:32:45.248Z",
+  "modified": "2026-10-11T03:32:45.425Z",
+  "versions_count": 52,
+  "desc": "In-process subagents for Pi with isolated SDK sessions, parallel and chained delegation, and inspectable threads.",
+  "homepage": "https://github.com/bacnh85/pi-extensions/tree/main/pi-subagent",
+  "main_exports": null,
+  "main": null,
+  "types": null
+ },
+ "@zhushanwen/pi-subagent-workflow": {
+  "latest": "9.5.1",
+  "license": "MIT",
+  "repo": null,
+  "pi_manifest": {
+   "skills": [
+    "./skills"
+   ],
+   "extensions": [
+    "./index.ts"
+   ]
+  },
+  "peer": [
+   "typebox",
+   "@earendil-works/pi-ai",
+   "@earendil-works/pi-tui",
+   "@earendil-works/pi-coding-agent",
+   "@zhushanwen/pi-structured-output",
+   "@zhushanwen/pi-pending-notifications"
+  ],
+  "deps": [
+   "@zhushanwen/pi-ext-guards",
+   "@zhushanwen/subagent-core",
+   "@zhushanwen/pi-subagent-cli",
+   "@zhushanwen/session-delivery",
+   "@zhushanwen/extension-protocol",
+   "@zhushanwen/zcode-subagent-cli",
+   "@zhushanwen/pi-extension-logger",
+   "@zhushanwen/pi-notify-ledger-host"
+  ],
+  "published": "2026-10-14T16:34:50.706Z",
+  "modified": "2026-10-14T16:34:50.964Z",
+  "versions_count": 66,
+  "desc": "Unified subagent execution and multi-agent workflow orchestration for Pi — spawned-process agent runtime with sync/background modes, stateful workflow management with persistence, state machine, and execution tracing.",
+  "homepage": null,
+  "main_exports": null,
+  "main": "index.ts",
+  "types": null
+ },
+ "pi-ptc-subagents": {
+  "latest": "3.2.0",
+  "license": "Apache-2.0",
+  "repo": "git+https://github.com/a1121611810/pi-ptc-subagents.git",
+  "pi_manifest": {
+   "extensions": [
+    "./dist/index.js"
+   ]
+  },
+  "peer": [
+   "typebox",
+   "@earendil-works/pi-ai",
+   "@earendil-works/pi-tui",
+   "@earendil-works/pi-coding-agent"
+  ],
+  "deps": [
+   "minimatch"
+  ],
+  "published": "2026-10-15T14:11:13.725Z",
+  "modified": "2026-10-15T14:11:14.753Z",
+  "versions_count": 21,
+  "desc": "Programmable tool calling (PTC) and subagent fan-out for pi — the model writes JS/TS programs that call pi's tools, or fans out to a fresh pi subprocess per subagent task",
+  "homepage": "https://a1121611810.github.io/pi-ptc-subagents/",
+  "main_exports": {
+   ".": {
+    "types": "./dist/index.d.ts",
+    "import": "./dist/index.js"
+   }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts"
+ },
+ "pi-durable-subagents": {
+  "latest": "1.0.40",
+  "license": "MIT",
+  "repo": "git+https://github.com/purboo/pi-durable-subagents.git",
+  "pi_manifest": {
+   "extensions": [
+    "./index.js"
+   ]
+  },
+  "peer": [
+   "@earendil-works/pi-ai",
+   "@earendil-works/pi-tui",
+   "@earendil-works/pi-coding-agent"
+  ],
+  "deps": [],
+  "published": "2026-10-14T12:11:41.790Z",
+  "modified": "2026-10-14T12:11:42.251Z",
+  "versions_count": 34,
+  "desc": "Subagents for pi that never lose work and never do it twice. Crash-safe workflows, automatic recovery, and a live view just like the main agent.",
+  "homepage": "https://github.com/purboo/pi-durable-subagents#readme",
+  "main_exports": null,
+  "main": null,
+  "types": null
+ },
+ "pi-better-subagents": {
+  "latest": "0.18.0",
+  "license": "MIT",
+  "repo": "git+https://github.com/1aboveio/pi-better-harness.git",
+  "pi_manifest": {
+   "image": "https://raw.githubusercontent.com/1aboveio/pi-better-harness/main/docs/images/package-gallery/pi-better-subagents.png",
+   "extensions": [
+    "./index.ts"
+   ]
+  },
+  "peer": [
+   "@earendil-works/pi-ai",
+   "@earendil-works/pi-tui",
+   "@earendil-works/pi-coding-agent"
+  ],
+  "deps": [
+   "yaml",
+   "smol-toml",
+   "proper-lockfile"
+  ],
+  "published": "2026-10-11T05:29:52.753Z",
+  "modified": "2026-10-11T05:29:53.036Z",
+  "versions_count": 57,
+  "desc": "Pi extension for detached, sandboxed subagent runs that keep the foreground session free.",
+  "homepage": "https://github.com/1aboveio/pi-better-harness/tree/main/packages/pi-better-subagents#readme",
+  "main_exports": null,
+  "main": null,
+  "types": null
+ },
+ "@d3ara1n/pi-subagent": {
+  "latest": "3.7.2",
+  "license": "MIT",
+  "repo": "git+https://github.com/d3ara1n/pi-extensions.git",
+  "pi_manifest": {
+   "image": "https://raw.githubusercontent.com/d3ara1n/pi-extensions/main/packages/pi-subagent/preview.png",
+   "extensions": [
+    "./src/index.ts"
+   ]
+  },
+  "peer": [
+   "@earendil-works/pi-ai",
+   "@earendil-works/pi-tui",
+   "@d3ara1n/pi-model-roles",
+   "@earendil-works/pi-coding-agent"
+  ],
+  "deps": [
+   "@d3ara1n/pi-model-roles",
+   "@d3ara1n/pi-command-palette-core"
+  ],
+  "published": "2026-10-11T09:10:17.561Z",
+  "modified": "2026-10-11T09:10:17.954Z",
+  "versions_count": 57,
+  "desc": "Role-based subagent orchestration for pi — delegates tasks to specialized pi child processes with configurable model roles",
+  "homepage": "https://github.com/d3ara1n/pi-extensions/tree/main/packages/pi-subagent#readme",
+  "main_exports": null,
+  "main": "src/index.ts",
+  "types": null
+ },
+ "@esso0428/pi-subagents": {
+  "latest": "0.17.40",
+  "license": "MIT",
+  "repo": "git+https://github.com/ESSO0428/pi-subagents.git",
+  "pi_manifest": {
+   "image": "https://github.com/tintinweb/pi-subagents/raw/master/media/screenshot.png",
+   "video": "https://github.com/tintinweb/pi-subagents/raw/master/media/demo.mp4",
+   "extensions": [
+    "./src/index.ts"
+   ]
+  },
+  "peer": [
+   "@sinclair/typebox",
+   "@earendil-works/pi-ai",
+   "@earendil-works/pi-tui",
+   "@earendil-works/pi-coding-agent"
+  ],
+  "deps": [
+   "croner",
+   "nanoid",
+   "@shikijs/cli"
+  ],
+  "published": "2026-10-15T09:00:16.287Z",
+  "modified": "2026-10-15T09:00:16.851Z",
+  "versions_count": 60,
+  "desc": "A pi extension that brings smart Claude Code-style autonomous sub-agents to pi, with npm:pi-subagents-style JSON agent overrides.",
+  "homepage": "https://github.com/ESSO0428/pi-subagents#readme",
+  "main_exports": null,
+  "main": null,
+  "types": null
+ },
+ "@rhinos0608/pi-subagents": {
+  "latest": "0.71.0-beta.0",
+  "license": "MIT",
+  "repo": "git+https://github.com/rhinos0608/Pi-Subagents.git",
+  "pi_manifest": {
+   "extensions": [
+    "./index.ts"
+   ],
+   "skills": [
+    "./skills"
+   ],
+   "prompts": [
+    "./prompts"
+   ]
+  },
+  "peer": [
+   "@earendil-works/pi-agent-core",
+   "@earendil-works/pi-ai",
+   "@earendil-works/pi-coding-agent",
+   "@earendil-works/pi-tui",
+   "typebox"
+  ],
+  "deps": [
+   "acorn",
+   "jiti",
+   "undici",
+   "yaml"
+  ],
+  "published": "2026-09-29T01:08:44.608Z",
+  "modified": "2026-09-29T01:08:44.732Z",
+  "versions_count": 1,
+  "desc": "Pi extension for single-agent delegation and scripted multi-agent workflows",
+  "homepage": "https://github.com/rhinos0608/Pi-Subagents#readme",
+  "main_exports": {
+   ".": "./index.ts",
+   "./background-work": "./src/api/background-work.ts",
+   "./external-job-provider": "./src/api/external-job-provider.ts",
+   "./external-runs": "./src/api/external-runs.ts",
+   "./agents": "./src/api/agents.ts",
+   "./delegation": "./src/api/delegation.ts",
+   "./capability-ceiling": "./src/api/capability-ceiling.ts",
+   "./workflow-resources": "./src/api/workflow-resources.ts",
+   "./required-child-extensions": "./src/api/required-child-extensions.ts",
+   "./preflight": "./src/api/preflight.ts",
+   "./runtime-rpc": "./src/api/runtime-rpc.ts",
+   "./control-channel": "./src/api/control-channel.ts",
+   "./intercom-bridge": "./src/api/intercom-bridge.ts",
+   "./child-tool-plan": "./src/api/child-tool-plan.ts",
+   "./shared-types": "./src/api/shared-types.ts",
+   "./project-panes": "./src/api/project-panes.ts"
+  },
+  "main": null,
+  "types": null
+ },
+ "pi-fabric": {
+  "latest": "0.117.1",
+  "license": "MIT",
+  "repo": "git+https://github.com/fabric-runtime/pi-fabric.git",
+  "pi_manifest": {
+   "image": "https://raw.githubusercontent.com/fabric-runtime/pi-fabric/main/media/banner.svg",
+   "skills": [],
+   "extensions": [
+    "./dist/extension-bootstrap.js",
+    "./node_modules/pi-coralbricks-provider/index.ts"
+   ]
+  },
+  "peer": [
+   "typebox",
+   "@earendil-works/pi-ai",
+   "@earendil-works/pi-tui",
+   "@earendil-works/pi-agent-core",
+   "@earendil-works/pi-coding-agent"
+  ],
+  "deps": [
+   "diff",
+   "yaml",
+   "shiki",
+   "mcporter",
+   "typescript",
+   "cross-spawn",
+   "@lezer/common",
+   "@lezer/python",
+   "@shikijs/langs",
+   "@pydantic/monty",
+   "@shikijs/themes",
+   "pi-fabric-worker-sdk"
+  ],
+  "published": "2026-10-15T06:04:51.434Z",
+  "modified": "2026-10-15T06:04:51.604Z",
+  "versions_count": 351,
+  "desc": "A programmable tool and agent runtime for Pi",
+  "homepage": "https://github.com/fabric-runtime/pi-fabric#readme",
+  "main_exports": {
+   ".": {
+    "types": "./dist/index.d.ts",
+    "import": "./dist/index.js"
+   },
+   "./jev": {
+    "types": "./dist/jev.d.ts",
+    "import": "./dist/jev.js"
+   },
+   "./mcp": {
+    "types": "./dist/mcp.d.ts",
+    "import": "./dist/mcp.js"
+   },
+   "./scope": {
+    "types": "./dist/scope.d.ts",
+    "import": "./dist/scope.js"
+   },
+   "./agents": {
+    "types": "./dist/agents.d.ts",
+    "import": "./dist/agents.js"
+   },
+   "./memory": {
+    "types": "./dist/memory.d.ts",
+    "import": "./dist/memory.js"
+   },
+   "./durable": {
+    "types": "./dist/durable.d.ts",
+    "import": "./dist/durable.js"
+   },
+   "./runners": {
+    "types": "./dist/runners.d.ts",
+    "import": "./dist/runners.js"
+   },
+   "./protocol": {
+    "types": "./dist/protocol.d.ts",
+    "import": "./dist/protocol.js"
+   },
+   "./assessment": {
+    "types": "./dist/assessment.d.ts",
+    "import": "./dist/assessment.js"
+   }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts"
+ },
+ "@kontextmind/kxm": {
+  "latest": "0.7.183",
+  "license": "MIT",
+  "repo": "git+https://github.com/kontextmind/kxm.git",
+  "pi_manifest": {
+   "skills": [
+    "./plugins/kxm/skills"
+   ],
+   "extensions": [
+    "./plugins/kxm/dist/extension.js"
+   ]
+  },
+  "peer": [
+   "typebox",
+   "@earendil-works/pi-coding-agent"
+  ],
+  "deps": [
+   "yaml",
+   "@earendil-works/pi-tui",
+   "@modelcontextprotocol/sdk",
+   "@anthropic-ai/claude-agent-sdk"
+  ],
+  "published": "2026-10-15T00:41:23.251Z",
+  "modified": "2026-10-15T00:41:23.468Z",
+  "versions_count": 167,
+  "desc": "KXM local-first multi-agent orchestration and operator dashboard",
+  "homepage": "https://github.com/kontextmind/kxm#readme",
+  "main_exports": {
+   "./mcp": "./plugins/kxm/dist/mcp-server.js",
+   "./tui": "./packages/core/tui/dist/index.js",
+   "./core": "./plugins/kxm/dist/core.js",
+   "./client": "./plugins/kxm/dist/client.js",
+   "./runtime": "./plugins/kxm/dist/runtime.js",
+   "./extension": "./plugins/kxm/dist/extension.js",
+   "./package.json": "./package.json"
+  },
+  "main": null,
+  "types": null
+ },
+ "pi-subagent-manager": {
+  "latest": "0.29.1",
+  "license": "MIT",
+  "repo": "git+https://github.com/championswimmer/pi-subagent-manager.git",
+  "pi_manifest": {
+   "extensions": [
+    "./src/index.ts"
+   ]
+  },
+  "peer": [
+   "typebox",
+   "@earendil-works/pi-ai",
+   "@earendil-works/pi-tui",
+   "@earendil-works/pi-agent-core",
+   "@earendil-works/pi-coding-agent"
+  ],
+  "deps": [
+   "yaml",
+   "fuzzysort",
+   "shell-quote"
+  ],
+  "published": "2026-10-14T03:41:39.501Z",
+  "modified": "2026-10-14T03:41:40.187Z",
+  "versions_count": 40,
+  "desc": "Hierarchical, steerable subagent threads for pi",
+  "homepage": "https://github.com/championswimmer/pi-subagent-manager#readme",
+  "main_exports": null,
+  "main": null,
+  "types": null
+ },
+ "pi-extended-teams": {
+  "latest": "2.5.2",
+  "license": "MIT",
+  "repo": "git+https://github.com/dantetekanem/pi-extended-teams.git",
+  "pi_manifest": {
+   "image": "https://raw.githubusercontent.com/dantetekanem/pi-extended-teams/main/assets/pi-extended-teams-in-action.png",
+   "skills": [
+    "skills"
+   ],
+   "extensions": [
+    "extensions/index.ts"
+   ]
+  },
+  "peer": [
+   "@sinclair/typebox",
+   "@mariozechner/pi-tui",
+   "@mariozechner/pi-coding-agent"
+  ],
+  "deps": [
+   "uuid"
+  ],
+  "published": "2026-10-02T15:35:49.836Z",
+  "modified": "2026-10-02T15:35:50.158Z",
+  "versions_count": 21,
+  "desc": "Control-first, session-connected subagents for Pi with live navigation and intent-tier routing",
+  "homepage": "https://github.com/dantetekanem/pi-extended-teams#readme",
+  "main_exports": {
+   ".": "./extensions/index.ts",
+   "./src/*": "./src/*",
+   "./skills/*": "./skills/*",
+   "./extensions/*": "./extensions/*",
+   "./package.json": "./package.json",
+   "./orchestration": "./src/orchestration/index.ts",
+   "./orchestration/types": "./src/orchestration/types.ts"
+  },
+  "main": "extensions/index.ts",
+  "types": null
+ },
+ "@pify/subagent": {
+  "latest": "0.20.0",
+  "license": "MIT",
+  "repo": "git+https://github.com/pifydev/subagent.git",
+  "pi_manifest": {
+   "skills": [
+    "./skills"
+   ],
+   "extensions": [
+    "./extensions/subagent.ts"
+   ]
+  },
+  "peer": [
+   "typebox",
+   "@earendil-works/pi-tui",
+   "@earendil-works/pi-coding-agent"
+  ],
+  "deps": [],
+  "published": "2026-10-14T08:18:11.229Z",
+  "modified": "2026-10-14T08:18:11.621Z",
+  "versions_count": 34,
+  "desc": "Spawn scoped subagents from within a pi session: agent_run/agent_result tools, Claude Code-compatible agent types, turn caps and tool allowlists",
+  "homepage": "https://github.com/pifydev/subagent#readme",
+  "main_exports": null,
+  "main": null,
+  "types": null
+ },
+ "@cr1ms0n/pi-subagent": {
+  "latest": "0.12.2",
+  "license": "MIT",
+  "repo": "git+https://github.com/awoaCrim/pi-smart-subagents.git",
+  "pi_manifest": {
+   "skills": [
+    "./skills"
+   ],
+   "extensions": [
+    "./extensions/subagent.ts"
+   ]
+  },
+  "peer": [
+   "typebox",
+   "@earendil-works/pi-ai",
+   "@earendil-works/pi-tui",
+   "@earendil-works/pi-coding-agent"
+  ],
+  "deps": [],
+  "published": "2026-10-13T03:24:48.232Z",
+  "modified": "2026-10-13T03:24:48.557Z",
+  "versions_count": 30,
+  "desc": "Community fork of Luke Parke's pi-subagent with Jev model routing, local tool activation and verified Pi child capabilities",
+  "homepage": "https://www.npmjs.com/package/@cr1ms0n/pi-subagent",
+  "main_exports": {
+   ".": "./src/index.ts",
+   "./sdk": "./src/index.ts",
+   "./package.json": "./package.json"
+  },
+  "main": null,
+  "types": null
+ },
+ "pi-messenger-swarm": {
+  "latest": "0.26.8",
+  "license": "MIT",
+  "repo": "git+https://github.com/monotykamary/pi-messenger-swarm.git",
+  "pi_manifest": {
+   "skills": [
+    "./skills"
+   ],
+   "extensions": [
+    "./dist/index.js"
+   ]
+  },
+  "peer": [
+   "@earendil-works/pi-tui",
+   "@earendil-works/pi-coding-agent"
+  ],
+  "deps": [],
+  "published": "2026-10-15T06:04:45.727Z",
+  "modified": "2026-10-15T06:04:45.901Z",
+  "versions_count": 82,
+  "desc": "Swarm-first multi-agent messaging and task orchestration extension for Pi",
+  "homepage": "https://github.com/monotykamary/pi-messenger-swarm#readme",
+  "main_exports": null,
+  "main": null,
+  "types": null
+ },
+ "@agimon-ai/doompi-team": {
+  "latest": "0.0.1-alpha.128",
+  "license": "MIT",
+  "repo": "git+https://github.com/AgiFlow/doompi.git",
+  "pi_manifest": {
+   "extensions": [
+    "./dist/extensions/pi.mjs"
+   ]
+  },
+  "peer": [
+   "@earendil-works/pi-ai",
+   "@earendil-works/pi-tui",
+   "@earendil-works/pi-agent-core",
+   "@earendil-works/pi-coding-agent"
+  ],
+  "deps": [
+   "yaml",
+   "typebox",
+   "@deepseek-ai/cordis",
+   "@agimon-ai/doompi-ui",
+   "@agimon-ai/doompi-core",
+   "@agimon-ai/doompi-cache",
+   "@agimon-ai/doompi-config",
+   "@agimon-ai/doompi-session",
+   "@agimon-ai/doompi-telemetry",
+   "@agimon-ai/doompi-web-security",
+   "@agimon-ai/doompi-web-components"
+  ],
+  "published": "2026-10-11T05:18:27.855Z",
+  "modified": "2026-10-11T05:25:22.420Z",
+  "versions_count": 118,
+  "desc": "Asynchronous named subagents, team runs, intercom, and model policy for Pi coding agents.",
+  "homepage": "https://agimon.ai",
+  "main_exports": {
+   ".": {
+    "types": "./dist/index.d.mts",
+    "import": "./dist/index.mjs",
+    "require": "./dist/index.cjs"
+   },
+   "./env": {
+    "types": "./dist/env.d.mts",
+    "import": "./dist/env.mjs",
+    "require": "./dist/env.cjs"
+   },
+   "./fablePlan": {
+    "types": "./dist/fablePlan.d.mts",
+    "import": "./dist/fablePlan.mjs",
+    "require": "./dist/fablePlan.cjs"
+   },
+   "./delegation": {
+    "types": "./dist/delegation.d.mts",
+    "import": "./dist/delegation.mjs",
+    "require": "./dist/delegation.cjs"
+   },
+   "./apiContracts": {
+    "types": "./dist/apiContracts.d.mts",
+    "import": "./dist/apiContracts.mjs",
+    "require": "./dist/apiContracts.cjs"
+   },
+   "./fablePlanApi": {
+    "types": "./dist/fablePlanApi.d.mts",
+    "import": "./dist/fablePlanApi.mjs",
+    "require": "./dist/fablePlanApi.cjs"
+   },
+   "./package.json": "./package.json",
+   "./subagentTool": {
+    "types": "./dist/subagentTool.d.mts",
+    "import": "./dist/subagentTool.mjs",
+    "require": "./dist/subagentTool.cjs"
+   },
+   "./teamSnapshot": {
+    "types": "./dist/teamSnapshot.d.mts",
+    "import": "./dist/teamSnapshot.mjs",
+    "require": "./dist/teamSnapshot.cjs"
+   },
+   "./delegationApi": {
+    "types": "./dist/delegationApi.d.mts",
+    "import": "./dist/delegationApi.mjs",
+    "require": "./dist/delegationApi.cjs"
+   },
+   "./extensions/pi": {
+    "types": "./dist/extensions/pi.d.mts",
+    "import": "./dist/extensions/pi.mjs",
+    "require": "./dist/extensions/pi.cjs"
+   },
+   "./extensions/web": {
+    "import": "./dist/extensions/web.mjs"
+   },
+   "./subagentPolicy": {
+    "types": "./dist/subagentPolicy.d.mts",
+    "import": "./dist/subagentPolicy.mjs",
+    "require": "./dist/subagentPolicy.cjs"
+   },
+   "./capabilityCeiling": {
+    "types": "./dist/capabilityCeiling.d.mts",
+    "import": "./dist/capabilityCeiling.mjs",
+    "require": "./dist/capabilityCeiling.cjs"
+   },
+   "./extensions/server": {
+    "types": "./dist/extensions/server.d.mts",
+    "import": "./dist/extensions/server.mjs",
+    "require": "./dist/extensions/server.cjs"
+   },
+   "./runtimeSubagentTool": {
+    "types": "./dist/runtimeSubagentTool.d.mts",
+    "import": "./dist/runtimeSubagentTool.mjs",
+    "require": "./dist/runtimeSubagentTool.cjs"
+   },
+   "./runtimeSubagentPolicy": {
+    "types": "./dist/runtimeSubagentPolicy.d.mts",
+    "import": "./dist/runtimeSubagentPolicy.mjs",
+    "require": "./dist/runtimeSubagentPolicy.cjs"
+   },
+   "./runs/background/cliRunnerEntry": {
+    "types": "./dist/runs/background/cliRunnerEntry.d.mts",
+    "import": "./dist/runs/background/cliRunnerEntry.mjs",
+    "require": "./dist/runs/background/cliRunnerEntry.cjs"
+   }
+  },
+  "main": "./dist/index.cjs",
+  "types": "./dist/index.d.mts"
+ },
+ "pi-maestro-flow": {
+  "latest": "0.33.0",
+  "license": null,
+  "repo": null,
+  "pi_manifest": {
+   "skills": [
+    "./.pi/skills"
+   ],
+   "extensions": [
+    "./src/extension/index.ts",
+    "./src/advisor/extension.ts",
+    "./src/self-evolve/extension.ts",
+    "./src/submit-gate/extension.ts",
+    "./src/classifier/extension.ts",
+    "./src/decision-policy/extension.ts",
+    "./src/providers/codex-fast.ts"
+   ]
+  },
+  "peer": [
+   "typebox",
+   "@earendil-works/pi-ai",
+   "@earendil-works/pi-tui",
+   "@earendil-works/pi-agent-core",
+   "@earendil-works/pi-coding-agent"
+  ],
+  "deps": [
+   "ws",
+   "zod",
+   "jiti",
+   "open",
+   "ssh2",
+   "unpdf",
+   "p-limit",
+   "recheck",
+   "linkedom",
+   "turndown",
+   "pi-cockpit",
+   "cross-spawn"
+  ],
+  "published": "2026-10-12T08:20:09.389Z",
+  "modified": "2026-10-12T08:20:09.671Z",
+  "versions_count": 63,
+  "desc": "All-in-one multi-agent orchestration for the Pi coding agent — parallel teammate dispatch, goals, plans, knowledge system, MCP/LSP/browser, and cockpit visualization in a single install",
+  "homepage": null,
+  "main_exports": {
+   "./gui": "./src/gui/index.ts",
+   "./src/*": "./src/*",
+   "./gateway/v1": "./src/gateway/public/v1/index.ts",
+   "./gui/client": "./src/gui/client.ts",
+   "./ask-transport": "./src/ask-transport.ts",
+   "./plan-transport": "./src/plan-transport.ts",
+   "./compaction/arbiter": "./src/compaction/compaction-arbiter.ts",
+   "./compaction/settings": "./src/compaction/compaction-settings.ts"
+  },
+  "main": null,
+  "types": null
+ }
+}

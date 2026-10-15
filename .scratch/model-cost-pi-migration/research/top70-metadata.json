@@ -1,0 +1,1199 @@
+{
+ "pi-web-access": {
+  "v": "0.41.0",
+  "license": "MIT",
+  "repo": "git+https://github.com/nicobailon/pi-web-access.git",
+  "pi": {
+   "video": "https://github.com/nicobailon/pi-web-access/raw/refs/heads/main/pi-web-fetch-demo.mp4",
+   "extensions": [
+    "./dist"
+   ]
+  },
+  "ns": "earendil",
+  "exports": false,
+  "n_versions": 50,
+  "pub": "2026-10-15"
+ },
+ "pi-subagents": {
+  "v": "0.78.0",
+  "license": "MIT",
+  "repo": "git+https://github.com/nicobailon/pi-subagents.git",
+  "pi": {
+   "skills": [
+    "./skills"
+   ],
+   "prompts": [
+    "./prompts"
+   ],
+   "extensions": [
+    "./index.js"
+   ]
+  },
+  "ns": "earendil",
+  "exports": true,
+  "n_versions": 146,
+  "pub": "2026-10-13"
+ },
+ "pi-background-tasks": {
+  "v": "2.6.10",
+  "license": "ISC",
+  "repo": "git+https://github.com/ismailsaleekh/pi-background-tasks.git",
+  "pi": {
+   "image": "https://raw.githubusercontent.com/ismailsaleekh/pi-background-tasks/main/logo.png",
+   "extensions": [
+    "./dist/extensions/anthropic-attribution.js",
+    "./dist/extensions/background-tasks.js"
+   ]
+  },
+  "ns": "earendil",
+  "exports": false,
+  "n_versions": 34,
+  "pub": "2026-10-13"
+ },
+ "pi-btw": {
+  "v": "0.8.0",
+  "license": "MIT",
+  "repo": "git+https://github.com/dbachelder/pi-btw.git",
+  "pi": {
+   "image": "https://raw.githubusercontent.com/dbachelder/pi-btw/main/docs/btw-overlay.png",
+   "skills": [
+    "./skills"
+   ],
+   "extensions": [
+    "./extensions/btw.ts"
+   ]
+  },
+  "ns": "earendil",
+  "exports": false,
+  "n_versions": 14,
+  "pub": "2026-10-10"
+ },
+ "@akagilnc/pi-workflow-roles": {
+  "v": "0.1.5837",
+  "license": "Apache-2.0",
+  "repo": "git+https://github.com/Akagilnc/ak-pi-workflow-roles.git",
+  "pi": {
+   "extensions": []
+  },
+  "ns": "earendil",
+  "exports": false,
+  "n_versions": 478,
+  "pub": "2026-10-11"
+ },
+ "pi-fabric": {
+  "v": "0.117.1",
+  "license": "MIT",
+  "repo": "git+https://github.com/fabric-runtime/pi-fabric.git",
+  "pi": {
+   "image": "https://raw.githubusercontent.com/fabric-runtime/pi-fabric/main/media/banner.svg",
+   "skills": [],
+   "extensions": [
+    "./dist/extension-bootstrap.js",
+    "./node_modules/pi-coralbricks-provider/index.ts"
+   ]
+  },
+  "ns": "earendil",
+  "exports": true,
+  "n_versions": 351,
+  "pub": "2026-10-15"
+ },
+ "gentle-pi": {
+  "v": "4.2.0",
+  "license": "MIT",
+  "repo": "git+https://github.com/Gentleman-Programming/gentle-shell.git",
+  "pi": {
+   "image": "https://cdn.jsdelivr.net/npm/gentle-pi/assets/gentle-logo-only.png",
+   "skills": [
+    "./skills"
+   ],
+   "themes": [
+    "./themes"
+   ],
+   "prompts": [
+    "./prompts"
+   ],
+   "extensions": [
+    "./extensions"
+   ]
+  },
+  "ns": "earendil",
+  "exports": false,
+  "n_versions": 104,
+  "pub": "2026-10-13"
+ },
+ "@tintinweb/pi-subagents": {
+  "v": "0.22.0",
+  "license": "MIT",
+  "repo": "git+https://github.com/tintinweb/pi-subagents.git",
+  "pi": {
+   "image": "https://github.com/tintinweb/pi-subagents/raw/master/media/screenshot.png",
+   "video": "https://github.com/tintinweb/pi-subagents/raw/master/media/demo.mp4",
+   "extensions": [
+    "./src/index.ts"
+   ]
+  },
+  "ns": "earendil",
+  "exports": false,
+  "n_versions": 59,
+  "pub": "2026-10-13"
+ },
+ "@kontextmind/kxm": {
+  "v": "0.7.183",
+  "license": "MIT",
+  "repo": "git+https://github.com/kontextmind/kxm.git",
+  "pi": {
+   "skills": [
+    "./plugins/kxm/skills"
+   ],
+   "extensions": [
+    "./plugins/kxm/dist/extension.js"
+   ]
+  },
+  "ns": "earendil",
+  "exports": true,
+  "n_versions": 167,
+  "pub": "2026-10-15"
+ },
+ "@quintinshaw/pi-dynamic-workflows": {
+  "v": "3.14.0",
+  "license": "MIT",
+  "repo": "git+https://github.com/QuintinShaw/pi-dynamic-workflows.git",
+  "pi": {
+   "image": "https://raw.githubusercontent.com/QuintinShaw/pi-dynamic-workflows/main/assets/readme/package-cover.png",
+   "skills": [
+    "skills/workflow-authoring",
+    "skills/workflow-patterns"
+   ],
+   "extensions": [
+    "extensions/workflow.ts"
+   ]
+  },
+  "ns": "earendil",
+  "exports": true,
+  "n_versions": 62,
+  "pub": "2026-10-06"
+ },
+ "@henryqw/pi-subagent": {
+  "v": "27.2.0",
+  "license": "MIT",
+  "repo": "git+https://github.com/HenryQW/pi-harness.git",
+  "pi": {
+   "image": "https://raw.githubusercontent.com/HenryQW/pi-harness/main/extensions/pi-subagent/example.png",
+   "skills": [
+    "./skills"
+   ],
+   "extensions": [
+    "./extensions/subagent.ts"
+   ]
+  },
+  "ns": "earendil",
+  "exports": true,
+  "n_versions": 109,
+  "pub": "2026-10-15"
+ },
+ "@mjasnikovs/pi-task": {
+  "v": "0.42.63",
+  "license": "AGPL-3.0-only",
+  "repo": "git+https://github.com/mjasnikovs/pi-task.git",
+  "pi": {
+   "image": "https://raw.githubusercontent.com/mjasnikovs/pi-task/main/assets/card.png",
+   "extensions": [
+    "dist/index.js"
+   ]
+  },
+  "ns": "earendil",
+  "exports": false,
+  "n_versions": 369,
+  "pub": "2026-10-15"
+ },
+ "pi-gauntlet": {
+  "v": "7.11.2",
+  "license": "MIT",
+  "repo": "git+https://github.com/jjuraszek/pi-gauntlet.git",
+  "pi": {
+   "image": "https://raw.githubusercontent.com/jjuraszek/pi-gauntlet/main/pi-gauntlet.png",
+   "skills": [
+    "./skills"
+   ],
+   "extensions": [
+    "./extensions/phase-tracker.ts",
+    "./extensions/plan-tracker.ts",
+    "./extensions/verify-before-ship.ts",
+    "./extensions/telemetry.ts"
+   ]
+  },
+  "ns": "other/none",
+  "exports": false,
+  "n_versions": 129,
+  "pub": "2026-10-15"
+ },
+ "@gotgenes/pi-subagents": {
+  "v": "23.4.0",
+  "license": "MIT",
+  "repo": "git+https://github.com/gotgenes/pi-packages.git",
+  "pi": {
+   "image": "https://raw.githubusercontent.com/gotgenes/pi-packages/main/packages/pi-subagents/docs/assets/demo.webp",
+   "extensions": [
+    "./src/index.ts"
+   ]
+  },
+  "ns": "earendil",
+  "exports": true,
+  "n_versions": 197,
+  "pub": "2026-10-09"
+ },
+ "@chankov/agent-fleet": {
+  "v": "2.0.19",
+  "license": "MIT",
+  "repo": "git+https://github.com/chankov/agent-fleet.git",
+  "pi": {
+   "image": "https://raw.githubusercontent.com/chankov/agent-fleet/main/docs/assets/branding/agent-fleet-logo-white-v1.png",
+   "skills": [
+    "./skills",
+    "./vendor/agent-skills-upstream/skills/api-and-interface-design",
+    "./vendor/agent-skills-upstream/skills/ci-cd-and-automation",
+    "./vendor/agent-skills-upstream/skills/code-simplification",
+    "./vendor/agent-skills-upstream/skills/debugging-and-error-recovery",
+    "./vendor/agent-skills-upstream/skills/documentation-and-adrs",
+    "./vendor/agent-skills-upstream/skills/doubt-driven-development",
+    "./vendor/agent-skills-upstream/skills/observability-and-instrumentation",
+    "./vendor/agent-skills-upstream/skills/shipping-and-launch",
+    "./vendor/agent-skills-upstream/skills/source-driven-development",
+    "./vendor/agent-skills-upstream/skills/test-driven-development",
+    "./.pi/skills",
+    "./node_modules/pi-ask-user/skills"
+   ],
+   "prompts": [
+    "./.pi/prompts"
+   ],
+   "extensions": [
+    "./.pi/harnesses/ask-user-remote/index.ts"
+   ]
+  },
+  "ns": "other/none",
+  "exports": false,
+  "n_versions": 36,
+  "pub": "2026-10-07"
+ },
+ "@selesai/code": {
+  "v": "0.14.7",
+  "license": null,
+  "repo": "git+https://github.com/SelesaiInTech/selesai-code.git",
+  "pi": null,
+  "ns": "other/none",
+  "exports": true,
+  "n_versions": 142,
+  "pub": "2026-10-15"
+ },
+ "@getpipher/vision": {
+  "v": "0.5.3",
+  "license": "MIT",
+  "repo": "git+https://github.com/getpipher/vision.git",
+  "pi": {
+   "extensions": [
+    "./extensions/vision.ts",
+    "./extensions/paste.ts"
+   ]
+  },
+  "ns": "earendil",
+  "exports": true,
+  "n_versions": 14,
+  "pub": "2026-09-02"
+ },
+ "rolebox": {
+  "v": "1.10.0",
+  "license": "MIT",
+  "repo": "git+https://github.com/EricMoin/rolebox.git",
+  "pi": {
+   "extensions": [
+    "./dist/entries/pi.js"
+   ]
+  },
+  "ns": "earendil",
+  "exports": true,
+  "n_versions": 40,
+  "pub": "2026-09-19"
+ },
+ "@agimon-ai/doompi-task": {
+  "v": "0.0.1-alpha.128",
+  "license": "MIT",
+  "repo": "git+https://github.com/AgiFlow/doompi.git",
+  "pi": {
+   "extensions": [
+    "./dist/extensions/pi.mjs"
+   ]
+  },
+  "ns": "earendil",
+  "exports": true,
+  "n_versions": 118,
+  "pub": "2026-10-11"
+ },
+ "@agimon-ai/doompi-team": {
+  "v": "0.0.1-alpha.128",
+  "license": "MIT",
+  "repo": "git+https://github.com/AgiFlow/doompi.git",
+  "pi": {
+   "extensions": [
+    "./dist/extensions/pi.mjs"
+   ]
+  },
+  "ns": "earendil",
+  "exports": true,
+  "n_versions": 118,
+  "pub": "2026-10-11"
+ },
+ "pi-code": {
+  "v": "1.5.2",
+  "license": "MIT",
+  "repo": "git+https://github.com/ilovepixelart/pi-code.git",
+  "pi": {
+   "extensions": [
+    "./extensions/claude-rules.ts",
+    "./extensions"
+   ]
+  },
+  "ns": "earendil",
+  "exports": false,
+  "n_versions": 107,
+  "pub": "2026-10-12"
+ },
+ "pi-better-harness": {
+  "v": "0.29.1",
+  "license": "MIT",
+  "repo": "git+https://github.com/1aboveio/pi-better-harness.git",
+  "pi": {
+   "image": "https://raw.githubusercontent.com/1aboveio/pi-better-harness/main/docs/images/package-gallery/pi-better-harness.png",
+   "extensions": [
+    "extensions/sandbox/index.ts",
+    "extensions/subagents/index.ts",
+    "extensions/background-tasks/index.ts",
+    "extensions/ssh/index.ts",
+    "extensions/goal/index.ts",
+    "extensions/plan/index.ts",
+    "extensions/minimal-output/index.ts",
+    "extensions/settings/index.ts"
+   ]
+  },
+  "ns": "other/none",
+  "exports": false,
+  "n_versions": 93,
+  "pub": "2026-10-15"
+ },
+ "pi-herdsman": {
+  "v": "0.27.0",
+  "license": "Apache-2.0",
+  "repo": "git+https://github.com/boadij/pi-herdsman.git",
+  "pi": {
+   "image": "https://raw.githubusercontent.com/boadij/pi-herdsman/main/docs/assets/thumbnail.webp",
+   "skills": [
+    "./SKILL.md",
+    "./skills"
+   ],
+   "extensions": [
+    "./dist/index.js"
+   ]
+  },
+  "ns": "earendil",
+  "exports": false,
+  "n_versions": 59,
+  "pub": "2026-10-15"
+ },
+ "@pi-unipi/btw": {
+  "v": "2.20.5",
+  "license": "MIT",
+  "repo": "git+https://github.com/Neuron-Mr-White/unipi.git",
+  "pi": {
+   "skills": [
+    "./skills"
+   ],
+   "themes": [],
+   "prompts": [],
+   "extensions": [
+    "./extensions/btw.ts"
+   ]
+  },
+  "ns": "earendil",
+  "exports": false,
+  "n_versions": 103,
+  "pub": "2026-09-19"
+ },
+ "@a-t-h-i/bot-lobby": {
+  "v": "0.6.49",
+  "license": "Apache-2.0",
+  "repo": "git+https://github.com/a-t-h-i/bot-lobby.git",
+  "pi": {
+   "image": "https://raw.githubusercontent.com/a-t-h-i/bot-lobby/main/.github/screenshots/lobby.png",
+   "extensions": [
+    "./src/index.ts"
+   ]
+  },
+  "ns": "earendil",
+  "exports": false,
+  "n_versions": 56,
+  "pub": "2026-10-15"
+ },
+ "@undefineds.co/models": {
+  "v": "0.2.63",
+  "license": null,
+  "repo": "git+https://github.com/undefinedsco/models.git",
+  "pi": {
+   "skills": [
+    "./skills"
+   ]
+  },
+  "ns": "other/none",
+  "exports": true,
+  "n_versions": 55,
+  "pub": "2026-10-11"
+ },
+ "pi-crew": {
+  "v": "0.11.21",
+  "license": "MIT",
+  "repo": "git+https://github.com/baphuongna/pi-crew.git",
+  "pi": {
+   "skills": [
+    "./skills"
+   ],
+   "extensions": [
+    "./index.ts"
+   ]
+  },
+  "ns": "earendil",
+  "exports": true,
+  "n_versions": 225,
+  "pub": "2026-10-14"
+ },
+ "pi-subagent-manager": {
+  "v": "0.29.1",
+  "license": "MIT",
+  "repo": "git+https://github.com/championswimmer/pi-subagent-manager.git",
+  "pi": {
+   "extensions": [
+    "./src/index.ts"
+   ]
+  },
+  "ns": "earendil",
+  "exports": false,
+  "n_versions": 40,
+  "pub": "2026-10-14"
+ },
+ "@awebai/pi": {
+  "v": "0.3.14",
+  "license": "MIT",
+  "repo": "git+https://github.com/awebai/aweb.git",
+  "pi": {
+   "skills": [
+    "./skills"
+   ],
+   "extensions": [
+    "./dist/index.js"
+   ]
+  },
+  "ns": "earendil",
+  "exports": false,
+  "n_versions": 40,
+  "pub": "2026-10-14"
+ },
+ "opencode-agent-skill": {
+  "v": "16.16.0",
+  "license": "MIT",
+  "repo": "git+https://github.com/laivannha0202/opencode-agent-skill-.git",
+  "pi": {
+   "skills": [
+    "./global-config/skills"
+   ],
+   "prompts": [
+    "./pi/prompts/*.md"
+   ],
+   "extensions": [
+    "./pi/extensions/ues.ts",
+    "./pi/extensions/ues-loop-recovery.ts"
+   ]
+  },
+  "ns": "earendil",
+  "exports": false,
+  "n_versions": 43,
+  "pub": "2026-10-09"
+ },
+ "@esso0428/pi-subagents": {
+  "v": "0.17.40",
+  "license": "MIT",
+  "repo": "git+https://github.com/ESSO0428/pi-subagents.git",
+  "pi": {
+   "image": "https://github.com/tintinweb/pi-subagents/raw/master/media/screenshot.png",
+   "video": "https://github.com/tintinweb/pi-subagents/raw/master/media/demo.mp4",
+   "extensions": [
+    "./src/index.ts"
+   ]
+  },
+  "ns": "earendil",
+  "exports": false,
+  "n_versions": 60,
+  "pub": "2026-10-15"
+ },
+ "@astrofoundry/pi-astro": {
+  "v": "0.29.1",
+  "license": "ISC",
+  "repo": "git+https://github.com/astrofoundry/pi-astro.git",
+  "pi": {
+   "skills": [
+    "./skills"
+   ],
+   "themes": [
+    "./themes"
+   ],
+   "prompts": [
+    "./prompts"
+   ],
+   "extensions": [
+    "./extensions"
+   ]
+  },
+  "ns": "earendil",
+  "exports": false,
+  "n_versions": 80,
+  "pub": "2026-09-26"
+ },
+ "pi-better-subagents": {
+  "v": "0.18.0",
+  "license": "MIT",
+  "repo": "git+https://github.com/1aboveio/pi-better-harness.git",
+  "pi": {
+   "image": "https://raw.githubusercontent.com/1aboveio/pi-better-harness/main/docs/images/package-gallery/pi-better-subagents.png",
+   "extensions": [
+    "./index.ts"
+   ]
+  },
+  "ns": "earendil",
+  "exports": false,
+  "n_versions": 57,
+  "pub": "2026-10-11"
+ },
+ "pi-daddy": {
+  "v": "0.49.3",
+  "license": "MIT",
+  "repo": "git+https://github.com/mojomanyana/pi-daddy.git",
+  "pi": {
+   "extensions": [
+    "./extensions/grants.ts"
+   ]
+  },
+  "ns": "earendil",
+  "exports": true,
+  "n_versions": 59,
+  "pub": "2026-10-10"
+ },
+ "@rhinos0608/pi-subagents": {
+  "v": "0.71.0-beta.0",
+  "license": "MIT",
+  "repo": "git+https://github.com/rhinos0608/Pi-Subagents.git",
+  "pi": {
+   "extensions": [
+    "./index.ts"
+   ],
+   "skills": [
+    "./skills"
+   ],
+   "prompts": [
+    "./prompts"
+   ]
+  },
+  "ns": "earendil",
+  "exports": true,
+  "n_versions": 1,
+  "pub": "2026-09-29"
+ },
+ "@pi-unipi/long-horizon": {
+  "v": "3.0.0-alpha.0",
+  "license": "MIT",
+  "repo": "git+https://github.com/Neuron-Mr-White/unipi.git",
+  "pi": {
+   "skills": [],
+   "themes": [],
+   "prompts": [],
+   "extensions": [
+    "./index.ts"
+   ]
+  },
+  "ns": "earendil",
+  "exports": false,
+  "n_versions": 42,
+  "pub": "2026-09-25"
+ },
+ "trimegisto": {
+  "v": "1.6.32",
+  "license": "MIT",
+  "repo": "git+https://github.com/noguerol/trimegisto.git",
+  "pi": {
+   "image": "https://raw.githubusercontent.com/noguerol/trimegisto/main/docs/preview.jpeg",
+   "skills": [
+    "./agents"
+   ],
+   "extensions": [
+    "./src/index.ts"
+   ]
+  },
+  "ns": "earendil",
+  "exports": false,
+  "n_versions": 47,
+  "pub": "2026-09-29"
+ },
+ "pi-extensible-workflows": {
+  "v": "6.2.2",
+  "license": "MIT",
+  "repo": "git+https://github.com/vekexasia/pi-extensible-workflows.git",
+  "pi": {
+   "image": "https://raw.githubusercontent.com/vekexasia/pi-extensible-workflows/main/assets/banner.svg",
+   "prompts": [
+    "./starter/prompts"
+   ],
+   "extensions": [
+    "./dist/src/index.js",
+    "./dist/starter/index.js",
+    "./dist/subagents/index.js",
+    "./dist/trajectory/index.js"
+   ]
+  },
+  "ns": "earendil",
+  "exports": true,
+  "n_versions": 52,
+  "pub": "2026-10-14"
+ },
+ "pi-maestro-flow": {
+  "v": "0.33.0",
+  "license": null,
+  "repo": null,
+  "pi": {
+   "skills": [
+    "./.pi/skills"
+   ],
+   "extensions": [
+    "./src/extension/index.ts",
+    "./src/advisor/extension.ts",
+    "./src/self-evolve/extension.ts",
+    "./src/submit-gate/extension.ts",
+    "./src/classifier/extension.ts",
+    "./src/decision-policy/extension.ts",
+    "./src/providers/codex-fast.ts"
+   ]
+  },
+  "ns": "earendil",
+  "exports": true,
+  "n_versions": 63,
+  "pub": "2026-10-12"
+ },
+ "pi-herdr-agents": {
+  "v": "3.2.1",
+  "license": "MIT",
+  "repo": "git+https://github.com/giuseppecrj/pi-herdr-agents.git",
+  "pi": {
+   "image": "https://raw.githubusercontent.com/giuseppecrj/pi-herdr-agents/main/docs/assets/pi-herdr-agents-gallery.png",
+   "skills": [
+    "./skills"
+   ],
+   "extensions": [
+    "./pi-extension/subagents/index.ts"
+   ]
+  },
+  "ns": "earendil",
+  "exports": false,
+  "n_versions": 37,
+  "pub": "2026-10-10"
+ },
+ "pi-durable-subagents": {
+  "v": "1.0.40",
+  "license": "MIT",
+  "repo": "git+https://github.com/purboo/pi-durable-subagents.git",
+  "pi": {
+   "extensions": [
+    "./index.js"
+   ]
+  },
+  "ns": "earendil",
+  "exports": false,
+  "n_versions": 34,
+  "pub": "2026-10-14"
+ },
+ "@juicesharp/rpiv-pi": {
+  "v": "2.13.8",
+  "license": "MIT",
+  "repo": "git+https://github.com/juicesharp/rpiv-mono.git",
+  "pi": {
+   "image": "https://raw.githubusercontent.com/juicesharp/rpiv-mono/main/packages/rpiv-pi/docs/cover.png",
+   "skills": [
+    "./skills"
+   ],
+   "extensions": [
+    "./extensions"
+   ]
+  },
+  "ns": "earendil",
+  "exports": false,
+  "n_versions": 140,
+  "pub": "2026-10-12"
+ },
+ "@tangle-network/tcloud-agent": {
+  "v": "0.3.3",
+  "license": "(MIT OR Apache-2.0)",
+  "repo": "git+https://github.com/tangle-network/tcloud.git",
+  "pi": {
+   "extensions": [
+    "./src/pi-extension.ts"
+   ]
+  },
+  "ns": "mariozechner",
+  "exports": true,
+  "n_versions": 5,
+  "pub": "2026-07-01"
+ },
+ "leos-agent": {
+  "v": "12.2026101109.0",
+  "license": "MIT",
+  "repo": "git+https://github.com/foxhatleo/leos-agent.git",
+  "pi": {
+   "skills": [
+    "./skills"
+   ],
+   "extensions": [
+    "./pi-extension.js"
+   ]
+  },
+  "ns": "other/none",
+  "exports": false,
+  "n_versions": 49,
+  "pub": "2026-10-11"
+ },
+ "pi-orchestrator-config": {
+  "v": "4.11.0",
+  "license": "MIT",
+  "repo": null,
+  "pi": {
+   "skills": [
+    "./skills"
+   ],
+   "prompts": [
+    "./prompts"
+   ],
+   "extensions": [
+    "./extensions"
+   ]
+  },
+  "ns": "earendil",
+  "exports": false,
+  "n_versions": 38,
+  "pub": "2026-10-15"
+ },
+ "@arhen/pi-core-subagent": {
+  "v": "1.3.68",
+  "license": "MIT",
+  "repo": "git+https://github.com/arhen/pi-extensions.git",
+  "pi": {
+   "extensions": [
+    "./src/index.ts"
+   ]
+  },
+  "ns": "earendil",
+  "exports": false,
+  "n_versions": 106,
+  "pub": "2026-10-08"
+ },
+ "@cr1ms0n/pi-subagent": {
+  "v": "0.12.2",
+  "license": "MIT",
+  "repo": "git+https://github.com/awoaCrim/pi-smart-subagents.git",
+  "pi": {
+   "skills": [
+    "./skills"
+   ],
+   "extensions": [
+    "./extensions/subagent.ts"
+   ]
+  },
+  "ns": "earendil",
+  "exports": true,
+  "n_versions": 30,
+  "pub": "2026-10-13"
+ },
+ "@blackbelt-technology/pi-flows": {
+  "v": "0.8.0",
+  "license": "MIT",
+  "repo": "git+https://github.com/BlackBeltTechnology/pi-flows.git",
+  "pi": {
+   "extensions": [
+    "./extensions"
+   ]
+  },
+  "ns": "earendil",
+  "exports": true,
+  "n_versions": 17,
+  "pub": "2026-10-08"
+ },
+ "@zswarm/pi": {
+  "v": "0.1.29",
+  "license": "MIT",
+  "repo": null,
+  "pi": {
+   "extensions": [
+    "./extensions"
+   ]
+  },
+  "ns": "earendil",
+  "exports": false,
+  "n_versions": 30,
+  "pub": "2026-10-06"
+ },
+ "@zhushanwen/pi-subagent-workflow": {
+  "v": "9.5.1",
+  "license": "MIT",
+  "repo": null,
+  "pi": {
+   "skills": [
+    "./skills"
+   ],
+   "extensions": [
+    "./index.ts"
+   ]
+  },
+  "ns": "earendil",
+  "exports": false,
+  "n_versions": 66,
+  "pub": "2026-10-14"
+ },
+ "@tranhoangnguyen0310/pi-flow-external": {
+  "v": "5.0.0-external.0",
+  "license": "MIT",
+  "repo": "git+https://github.com/tranhoangnguyen03/pi-flow-external.git",
+  "pi": {
+   "image": "https://raw.githubusercontent.com/tranhoangnguyen03/pi-flow-external/main/assets/pi-flow.png",
+   "extensions": [
+    "./index.ts"
+   ]
+  },
+  "ns": "earendil",
+  "exports": true,
+  "n_versions": 45,
+  "pub": "2026-10-15"
+ },
+ "pi-better-sandbox": {
+  "v": "0.12.0",
+  "license": "MIT",
+  "repo": "git+https://github.com/1aboveio/pi-better-harness.git",
+  "pi": {
+   "image": "https://raw.githubusercontent.com/1aboveio/pi-better-harness/main/docs/images/package-gallery/pi-better-sandbox.png",
+   "extensions": [
+    "./index.ts"
+   ]
+  },
+  "ns": "earendil",
+  "exports": false,
+  "n_versions": 23,
+  "pub": "2026-10-07"
+ },
+ "@deathbeam/pi-delegate": {
+  "v": "0.0.25",
+  "license": "MIT",
+  "repo": "git+https://github.com/deathbeam/pi-packages.git",
+  "pi": {
+   "extensions": [
+    "./index.ts"
+   ]
+  },
+  "ns": "earendil",
+  "exports": false,
+  "n_versions": 25,
+  "pub": "2026-10-14"
+ },
+ "prime-agent-feature-factory": {
+  "v": "0.10.16",
+  "license": "MIT",
+  "repo": "git+https://github.com/jasoncarreira/feature-factory.git",
+  "pi": {
+   "skills": [
+    "./skills"
+   ],
+   "extensions": [
+    "./extensions"
+   ]
+  },
+  "ns": "other/none",
+  "exports": false,
+  "n_versions": 36,
+  "pub": "2026-10-13"
+ },
+ "@pify/swarm": {
+  "v": "0.16.0",
+  "license": "MIT",
+  "repo": "git+https://github.com/pifydev/swarm.git",
+  "pi": {
+   "skills": [
+    "./skills"
+   ],
+   "extensions": [
+    "./extensions/swarm.ts"
+   ]
+  },
+  "ns": "earendil",
+  "exports": false,
+  "n_versions": 29,
+  "pub": "2026-10-14"
+ },
+ "pi-messenger-swarm": {
+  "v": "0.26.8",
+  "license": "MIT",
+  "repo": "git+https://github.com/monotykamary/pi-messenger-swarm.git",
+  "pi": {
+   "skills": [
+    "./skills"
+   ],
+   "extensions": [
+    "./dist/index.js"
+   ]
+  },
+  "ns": "earendil",
+  "exports": false,
+  "n_versions": 82,
+  "pub": "2026-10-15"
+ },
+ "pi-claude-supervisor": {
+  "v": "0.10.0",
+  "license": "MIT",
+  "repo": "git+https://github.com/btnalit/pi-claude-supervisor.git",
+  "pi": {
+   "extensions": [
+    "./src/index.ts"
+   ]
+  },
+  "ns": "earendil",
+  "exports": false,
+  "n_versions": 23,
+  "pub": "2026-09-24"
+ },
+ "session-orchestrator": {
+  "v": "5.12.0",
+  "license": "MIT",
+  "repo": "git+https://github.com/Kanevry/session-orchestrator.git",
+  "pi": {
+   "skills": [
+    "./skills"
+   ],
+   "prompts": [
+    "./pi/prompts/*.md"
+   ],
+   "extensions": [
+    "./pi/extensions/session-orchestrator.ts"
+   ]
+  },
+  "ns": "other/none",
+  "exports": false,
+  "n_versions": 25,
+  "pub": "2026-10-11"
+ },
+ "@bacnh85/pi-subagent": {
+  "v": "0.23.3",
+  "license": "MIT",
+  "repo": "git+https://github.com/bacnh85/pi-extensions.git",
+  "pi": {
+   "extensions": [
+    "./extensions/index.ts"
+   ]
+  },
+  "ns": "earendil",
+  "exports": false,
+  "n_versions": 52,
+  "pub": "2026-10-11"
+ },
+ "@trevonistrevon/pi-loop": {
+  "v": "0.7.18",
+  "license": "MIT",
+  "repo": "git+https://github.com/trvon/pi-loop.git",
+  "pi": {
+   "extensions": [
+    "./dist/index.js"
+   ]
+  },
+  "ns": "earendil",
+  "exports": true,
+  "n_versions": 70,
+  "pub": "2026-10-14"
+ },
+ "@evoclock/pi-agentic-driver": {
+  "v": "1.1.2",
+  "license": "AGPL-3.0-only",
+  "repo": "git+https://github.com/evoclock/pi-agentic-driver.git",
+  "pi": {
+   "skills": [
+    "./skills/decision-to-spec"
+   ],
+   "extensions": [
+    "./extensions"
+   ]
+  },
+  "ns": "other/none",
+  "exports": false,
+  "n_versions": 20,
+  "pub": "2026-10-11"
+ },
+ "@kvidzibo/pi-delegate": {
+  "v": "0.21.0",
+  "license": "MIT",
+  "repo": "git+https://github.com/kvidzibo/pi-delegate.git",
+  "pi": {
+   "extensions": [
+    "./delegate"
+   ]
+  },
+  "ns": "earendil",
+  "exports": false,
+  "n_versions": 28,
+  "pub": "2026-10-10"
+ },
+ "pi-jar": {
+  "v": "0.3.2",
+  "license": "MIT",
+  "repo": "git+https://github.com/ygrip/pi-jar.git",
+  "pi": {
+   "image": "https://raw.githubusercontent.com/ygrip/pi-jar/main/docs/assets/pi-jar-demo.gif",
+   "themes": [
+    "./themes"
+   ],
+   "extensions": [
+    "./extensions"
+   ]
+  },
+  "ns": "earendil",
+  "exports": false,
+  "n_versions": 23,
+  "pub": "2026-10-14"
+ },
+ "pi-ptc-subagents": {
+  "v": "3.2.0",
+  "license": "Apache-2.0",
+  "repo": "git+https://github.com/a1121611810/pi-ptc-subagents.git",
+  "pi": {
+   "extensions": [
+    "./dist/index.js"
+   ]
+  },
+  "ns": "earendil",
+  "exports": true,
+  "n_versions": 21,
+  "pub": "2026-10-15"
+ },
+ "pi-matt-subagent": {
+  "v": "0.11.0",
+  "license": "MIT",
+  "repo": "git+https://github.com/hu3rror/pi-matt-subagent.git",
+  "pi": {
+   "extensions": [
+    "./extensions"
+   ]
+  },
+  "ns": "earendil",
+  "exports": false,
+  "n_versions": 19,
+  "pub": "2026-10-08"
+ },
+ "pi-owed": {
+  "v": "0.22.1",
+  "license": "MIT",
+  "repo": "git+https://github.com/purboo/pi-owed.git",
+  "pi": {
+   "skills": [
+    "./skills"
+   ],
+   "extensions": [
+    "./index.js"
+   ]
+  },
+  "ns": "earendil",
+  "exports": false,
+  "n_versions": 27,
+  "pub": "2026-10-15"
+ },
+ "pi-agents": {
+  "v": "0.32.2",
+  "license": "MIT",
+  "repo": "git+https://github.com/mavam/pi-agents.git",
+  "pi": {
+   "extensions": [
+    "./src"
+   ]
+  },
+  "ns": "earendil",
+  "exports": true,
+  "n_versions": 42,
+  "pub": "2026-10-15"
+ },
+ "pi-agent-suite": {
+  "v": "2.14.2",
+  "license": null,
+  "repo": "git+https://github.com/n-r-w/pi-agent-suite.git",
+  "pi": {
+   "extensions": [
+    "./extensions/system-prompt/index.ts",
+    "./extensions/project-rules/index.ts",
+    "./extensions/mcp-wrapper/index.ts",
+    "./extensions/enable-tools/index.ts",
+    "./extensions/footer/index.ts",
+    "./extensions/codex-fast/index.ts",
+    "./extensions/codex-verbosity/index.ts",
+    "./extensions/codex-quota/index.ts",
+    "./extensions/custom-compaction/index.ts",
+    "./extensions/context-projection/index.ts",
+    "./extensions/compaction-trigger/index.ts",
+    "./extensions/model-response-timeout/index.ts",
+    "./extensions/completion-sound/index.ts",
+    "./extensions/cmux/index.ts",
+    "./extensions/main-agent-selection/index.ts",
+    "./extensions/run-subagent/index.ts",
+    "./extensions/usage/index.ts",
+    "./extensions/knowledge/index.ts",
+    "./extensions/algorithms/index.ts",
+    "./extensions/workflow/index.ts",
+    "./extensions/structured-prompt/index.ts",
+    "./extensions/ask-llm/index.ts",
+    "./extensions/consult-advisor/index.ts",
+    "./extensions/convene-council/index.ts",
+    "./extensions/vision/index.ts",
+    "./extensions/remote-image/index.ts"
+   ]
+  },
+  "ns": "earendil",
+  "exports": false,
+  "n_versions": 78,
+  "pub": "2026-10-13"
+ },
+ "@d3ara1n/pi-subagent": {
+  "v": "3.7.2",
+  "license": "MIT",
+  "repo": "git+https://github.com/d3ara1n/pi-extensions.git",
+  "pi": {
+   "image": "https://raw.githubusercontent.com/d3ara1n/pi-extensions/main/packages/pi-subagent/preview.png",
+   "extensions": [
+    "./src/index.ts"
+   ]
+  },
+  "ns": "earendil",
+  "exports": false,
+  "n_versions": 57,
+  "pub": "2026-10-11"
+ },
+ "pi-extended-teams": {
+  "v": "2.5.2",
+  "license": "MIT",
+  "repo": "git+https://github.com/dantetekanem/pi-extended-teams.git",
+  "pi": {
+   "image": "https://raw.githubusercontent.com/dantetekanem/pi-extended-teams/main/assets/pi-extended-teams-in-action.png",
+   "skills": [
+    "skills"
+   ],
+   "extensions": [
+    "extensions/index.ts"
+   ]
+  },
+  "ns": "mariozechner",
+  "exports": true,
+  "n_versions": 21,
+  "pub": "2026-10-02"
+ }
+}

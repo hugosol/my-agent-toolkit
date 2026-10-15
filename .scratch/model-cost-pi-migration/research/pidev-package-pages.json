@@ -1,0 +1,295 @@
+{
+ "pi-subagents": {
+  "version": "0.78.0",
+  "dl_mo": "609K",
+  "repo_url": "github.com/earendil-works/pi",
+  "license_on_page": "MIT",
+  "kinds": [
+   "extension",
+   "prompt",
+   "skill"
+  ]
+ },
+ "pi-background-tasks": {
+  "version": "2.6.10",
+  "dl_mo": "97.6K",
+  "repo_url": "github.com/earendil-works/pi",
+  "license_on_page": "ISC",
+  "kinds": [
+   "extension",
+   "prompt",
+   "skill"
+  ]
+ },
+ "@tintinweb/pi-subagents": {
+  "version": "0.22.0",
+  "dl_mo": "36.2K",
+  "repo_url": "github.com/earendil-works/pi",
+  "license_on_page": "MIT",
+  "kinds": [
+   "extension",
+   "prompt",
+   "skill"
+  ]
+ },
+ "@quintinshaw/pi-dynamic-workflows": {
+  "version": "3.14.0",
+  "dl_mo": "26K",
+  "repo_url": "github.com/earendil-works/pi",
+  "license_on_page": "MIT",
+  "kinds": [
+   "extension",
+   "prompt",
+   "skill"
+  ]
+ },
+ "@henryqw/pi-subagent": {
+  "version": "27.2.0",
+  "dl_mo": "24.8K",
+  "repo_url": "github.com/earendil-works/pi",
+  "license_on_page": "MIT",
+  "kinds": [
+   "extension",
+   "prompt",
+   "skill"
+  ]
+ },
+ "@gotgenes/pi-subagents": {
+  "version": "23.4.0",
+  "dl_mo": "14.5K",
+  "repo_url": "github.com/earendil-works/pi",
+  "license_on_page": "MIT",
+  "kinds": [
+   "extension",
+   "prompt",
+   "skill"
+  ]
+ },
+ "@chankov/agent-fleet": {
+  "version": "2.0.19",
+  "dl_mo": "14.3K",
+  "repo_url": "github.com/earendil-works/pi",
+  "license_on_page": "MIT",
+  "kinds": [
+   "extension",
+   "prompt",
+   "skill"
+  ]
+ },
+ "pi-cowboy": {
+  "version": "0.12.2",
+  "dl_mo": "1,731",
+  "repo_url": "github.com/earendil-works/pi",
+  "license_on_page": "MIT",
+  "kinds": [
+   "extension",
+   "prompt",
+   "theme"
+  ]
+ },
+ "pi-herdsman": {
+  "version": "0.27.0",
+  "dl_mo": "9,243",
+  "repo_url": "github.com/earendil-works/pi",
+  "license_on_page": "Apache-2.0",
+  "kinds": [
+   "extension",
+   "skill",
+   "theme"
+  ]
+ },
+ "pi-agents": {
+  "version": "0.32.2",
+  "dl_mo": "3,191",
+  "repo_url": "github.com/earendil-works/pi",
+  "license_on_page": "MIT",
+  "kinds": [
+   "extension",
+   "theme"
+  ]
+ },
+ "@arhen/pi-core-subagent": {
+  "version": "1.3.68",
+  "dl_mo": "4,512",
+  "repo_url": "github.com/earendil-works/pi",
+  "license_on_page": "MIT",
+  "kinds": [
+   "extension",
+   "prompt",
+   "theme"
+  ]
+ },
+ "@bacnh85/pi-subagent": {
+  "version": "0.23.3",
+  "dl_mo": "3,533",
+  "repo_url": "github.com/earendil-works/pi",
+  "license_on_page": "MIT",
+  "kinds": [
+   "extension",
+   "prompt",
+   "theme"
+  ]
+ },
+ "@zhushanwen/pi-subagent-workflow": {
+  "version": "9.5.1",
+  "dl_mo": "3,896",
+  "repo_url": "github.com/earendil-works/pi",
+  "license_on_page": "MIT",
+  "kinds": [
+   "extension",
+   "prompt",
+   "skill"
+  ]
+ },
+ "pi-ptc-subagents": {
+  "version": "3.2.0",
+  "dl_mo": "3,300",
+  "repo_url": "github.com/earendil-works/pi",
+  "license_on_page": "Apache-2.0",
+  "kinds": [
+   "extension",
+   "prompt",
+   "theme"
+  ]
+ },
+ "pi-durable-subagents": {
+  "version": "1.0.40",
+  "dl_mo": "5,031",
+  "repo_url": "github.com/earendil-works/pi",
+  "license_on_page": "MIT",
+  "kinds": [
+   "extension",
+   "prompt",
+   "theme"
+  ]
+ },
+ "pi-better-subagents": {
+  "version": "0.18.0",
+  "dl_mo": "6,113",
+  "repo_url": "github.com/earendil-works/pi",
+  "license_on_page": "MIT",
+  "kinds": [
+   "extension",
+   "theme"
+  ]
+ },
+ "@d3ara1n/pi-subagent": {
+  "version": "3.7.2",
+  "dl_mo": "3,142",
+  "repo_url": "github.com/earendil-works/pi",
+  "license_on_page": "MIT",
+  "kinds": [
+   "extension",
+   "prompt",
+   "theme"
+  ]
+ },
+ "@esso0428/pi-subagents": {
+  "version": "0.17.40",
+  "dl_mo": "6,788",
+  "repo_url": "github.com/earendil-works/pi",
+  "license_on_page": "MIT",
+  "kinds": [
+   "extension",
+   "prompt",
+   "skill"
+  ]
+ },
+ "@rhinos0608/pi-subagents": {
+  "version": "0.71.0-beta.0",
+  "dl_mo": "5,838",
+  "repo_url": "github.com/earendil-works/pi",
+  "license_on_page": "MIT",
+  "kinds": [
+   "extension",
+   "prompt",
+   "skill"
+  ]
+ },
+ "pi-fabric": {
+  "version": "0.117.1",
+  "dl_mo": "37.7K",
+  "repo_url": "github.com/earendil-works/pi",
+  "license_on_page": "MIT",
+  "kinds": [
+   "extension",
+   "skill",
+   "theme"
+  ]
+ },
+ "@kontextmind/kxm": {
+  "version": "0.7.183",
+  "dl_mo": "30.3K",
+  "repo_url": "github.com/earendil-works/pi",
+  "license_on_page": "MIT",
+  "kinds": [
+   "extension",
+   "skill",
+   "theme"
+  ]
+ },
+ "pi-subagent-manager": {
+  "version": "0.29.1",
+  "dl_mo": "7,500",
+  "repo_url": "github.com/earendil-works/pi",
+  "license_on_page": "MIT",
+  "kinds": [
+   "extension",
+   "theme"
+  ]
+ },
+ "@pify/subagent": {
+  "version": "0.20.0",
+  "dl_mo": "3,085",
+  "repo_url": "github.com/earendil-works/pi",
+  "license_on_page": "MIT",
+  "kinds": [
+   "extension",
+   "prompt",
+   "skill"
+  ]
+ },
+ "@cr1ms0n/pi-subagent": {
+  "version": "0.12.2",
+  "dl_mo": "4,438",
+  "repo_url": "github.com/earendil-works/pi",
+  "license_on_page": "MIT",
+  "kinds": [
+   "extension",
+   "prompt",
+   "skill"
+  ]
+ },
+ "pi-messenger-swarm": {
+  "version": "0.26.8",
+  "dl_mo": "3,660",
+  "repo_url": "github.com/earendil-works/pi",
+  "license_on_page": "MIT",
+  "kinds": [
+   "extension",
+   "skill",
+   "theme"
+  ]
+ },
+ "@agimon-ai/doompi-team": {
+  "version": "0.0.1-alpha.128",
+  "dl_mo": "10.9K",
+  "repo_url": "github.com/earendil-works/pi",
+  "license_on_page": "MIT",
+  "kinds": [
+   "extension",
+   "theme"
+  ]
+ },
+ "pi-maestro-flow": {
+  "version": "0.33.0",
+  "dl_mo": "5,200",
+  "repo_url": "github.com/earendil-works/pi",
+  "license_on_page": "MIT",
+  "kinds": [
+   "extension",
+   "prompt",
+   "skill"
+  ]
+ }
+}
