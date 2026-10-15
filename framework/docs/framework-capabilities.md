@@ -28,7 +28,7 @@ still describes the implemented surface, not the planned input seam or a complet
 | `SubscriptionGroup`, `ObservationScope` | [`framework/core/protocol.ts#L175`](../core/protocol.ts#L175), [`#L165`](../core/protocol.ts#L165) | The one-time declaration of what a subscription observes: a group carries the scope it covers (`owner` — the owner session's own deliveries; `session` — every actual session the adapter reports, with that session's own identity, direct parent, latest name, the handle of the task it was spawned for, the name and id of the agent it runs and, on the delivery that announces its own start, the model and effective level it began on) and the handlers for the event kinds it subscribes. Both scopes run through the one dispatch, and widening a group to `session` grants no State write and no external-effect authority. |
 | `SessionFacts`, `SessionStartup`, `TurnEvent`, `TurnStartDelivery`, `TurnEndDelivery`, `TurnStartFacts`, `TurnEndFacts`, `TurnUsage`, `TurnOutcome`, `ProviderHttpFacts`, `TurnSignal`, `TurnSignalFacts`, `CatalogPrice`, `CatalogPriceSource`, `ProviderAccess`, `ProviderAccessFacts` | [`framework/core/protocol.ts#L130`](../core/protocol.ts#L130), [`#L376`](../core/protocol.ts#L376), [`#L511`](../core/protocol.ts#L511), [`#L527`](../core/protocol.ts#L527) | The per-actual-session facts and the Turn axis: a session's identity, direct parent, latest name, the handle of the task it was spawned for (a subagent's own name for its work, which is neither the agent definition it runs nor the id its registry uses), the name and id of the agent it runs, and the optional `SessionStartup` — the model and effective level the session began on, reported on its own start alone and never rewritten; the two Turn edges with the request-time facts fixed at the first and repeated at the second; the reliable-or-unavailable usage, outcome, HTTP facts and the two provider reference ids; the mapped native signals a harness adapter reports, and the extension's own catalog the framework queries at each request's start. See [The Turn axis and the two observation scopes](#the-turn-axis-and-the-two-observation-scopes). |
 | `CommandImplementations`, `CommandImplementation`, `CommandAction`, `ActionsCommandImplementation`, `ActionDelivery` | [`framework/core/assembly.ts#L50`](../core/assembly.ts#L50), [`framework/core/protocol.ts#L591`](../core/protocol.ts#L591) | What an implementation delivers for one command: a directed implementation under its command name, or an `actions` command's table of named actions. An action may return a promise the host's command chain waits for, and its delivery is the invocation facts alone — the argument, the owner, `hasUI`, the idle query, the running session's `provider` and the feedback and marker transports — with no declared-value seam, because an `actions` command drives no State. |
-| `ompAdapter(definition, options?)` | [`framework/adapters/omp.ts#L789`](../adapters/omp.ts#L789) | Assembles a definition for the `omp` harness; returns an `OmpExtensionFactory`. Also re-exports `BindingResult`, which is what that factory returns. |
+| `ompAdapter(definition, options?)` | [`framework/adapters/omp.ts`](../adapters/omp.ts) | Assembles a definition for the `omp` harness; returns an `OmpExtensionFactory`. Also re-exports `BindingResult`, which is what that factory returns. |
 | `piAdapter(definition, options?)` | [`framework/adapters/pi.ts`](../adapters/pi.ts) | Uses the same `ExtensionAssembly`, `StateStore` and binding behaviors for pi. Maps the session boundaries, branch records, commands, hidden persisted prompt messages, marker and feedback used by codebase-tools. Round, Turn, subagent-runtime and user-input observation subscriptions are explicitly refused; catalog, provider-access and viewed-session outlets are not provided. |
 | `ExtensionAssembly` | [`framework/core/assembly.ts#L178`](../core/assembly.ts#L178) | The harness-independent assembly information, every member optional (`factory`, `requiredSemantics`, `configBaseDir`). Harness version support is deliberately not one of them either: support is an evidence claim recorded in the repository's support record ([`harness-support.md`](harness-support.md)), and no assembly supplies or widens it. |
 | `BindingResult`, `BindingFailure` | [`framework/core/protocol.ts#L680`](../core/protocol.ts#L680) | What a binding concluded, and why it was refused. |
@@ -234,8 +234,8 @@ it names is what `getConfig` hands the extension's shared logic. See
 ## `ompAdapter(definition, options)`
 
 Assembles an `ExtensionDefinition` for the `omp` harness
-([`framework/adapters/omp.ts#L789`](../adapters/omp.ts#L789)). It returns an `OmpExtensionFactory`
-([`omp.ts#L279`](../adapters/omp.ts#L279)) — `(api) => BindingResult` — which each thin entrypoint
+([`framework/adapters/omp.ts`](../adapters/omp.ts)). It returns an `OmpExtensionFactory`
+([`omp.ts`](../adapters/omp.ts)) — `(api) => BindingResult` — which each thin entrypoint
 re-exports as its default factory and the loader calls once per binding.
 
 ### `definition: ExtensionDefinition`
@@ -278,7 +278,7 @@ behind ([`binding.ts#L234`](../behaviors/binding.ts#L281)).
 
 **One implementation per adapter.** The `omp` adapter calls the factory once — the first binding hands it the
 validated configuration, and every later binding (another session's, a subagent's) reuses what it built
-([`omp.ts#L795`](../adapters/omp.ts#L795)) — with one exception: an implementation whose cleanup has already
+([`omp.ts`](../adapters/omp.ts)) — with one exception: an implementation whose cleanup has already
 run is spent, so the binding that comes after it builds a fresh instance rather than delivering to a closed
 one. An assembly that wants the instance to be the *process's* creates its adapter once, at module load, as
 the entrypoints do; that is what makes an ordinary model, session, tree or view change harmless.
@@ -514,6 +514,14 @@ as over — or the fact that this host produced none, with the reason it could n
   ([`protocol.ts#L1324`](../core/protocol.ts#L1324)) is registered only for the groups whose handlers cover
   `subagent_runtime`, so a definition that does not care about an execution's duration asks its harness for no
   such facts, and no ordering or pagination promise attaches to the ones it does ask for.
+
+On `omp`, the private [`adapters/omp/subagents.ts`](../adapters/omp/subagents.ts) module owns the native
+subscriptions, payload mapping and execution-identity/attribution records. Each subscription creates its own
+records; none are shared across bindings. [`adapters/omp.ts`](../adapters/omp.ts) remains the assembly entry
+and supplies shared Owner resolution and delivery facts. Tool observations use their own delivery context;
+context-free bus frames use the latest actual delivery and remain unobserved until one exists. The public
+`ompAdapter` interface and the consumer's accumulation rules are unchanged; adapter behavior tests continue
+to drive native events through that assembled interface, not internal mapping helpers.
 
 On `omp` the adapter maps these facts from two native routes, because neither one carries every execution. The
 harness's own delegation tool (`task`) states the spawns one call runs — a progress frame carries a running
@@ -820,7 +828,7 @@ these facts.
 These are resolved by a harness adapter, not authored by an extension, and are cited here so the
 option/feedback surface is complete. Both feedback channels travel the session's own UI channel on the `omp`
 harness — the framework's notice as a `warning`, an extension's feedback at the level it chose — and fall back
-to one stderr line when the session has no UI ([`omp.ts#L546`](../adapters/omp.ts#L546)).
+to one stderr line when the session has no UI ([`omp.ts`](../adapters/omp.ts)).
 
 | Symbol | Source | Shape and meaning |
 | --- | --- | --- |
@@ -884,7 +892,7 @@ with the behavior it must preserve, is
 | Member | Meaning |
 | --- | --- |
 | `StateRules` | The State one store serves: `{ field, persistence }`, exactly the pair an assembly resolves from the definition through `activationField` ([`definition.ts#L255`](../core/definition.ts#L255)) and `statePersistence` ([`definition.ts#L260`](../core/definition.ts#L260)). The constructor requires it: a store knows its field and persistence and holds no definition. |
-| `new StateStore(rules)` | One store per `ompAdapter` factory call ([`omp.ts#L789`](../adapters/omp.ts#L789)), shared by every session binding of that extension — not a process-global registry keyed by definition id. |
+| `new StateStore(rules)` | One store per `ompAdapter` factory call ([`omp.ts`](../adapters/omp.ts)), shared by every session binding of that extension — not a process-global registry keyed by definition id. |
 | `view(ownerKey)` | The read surface, unchanged: `read(field)` is the owner's current value, or the declared default when unset. |
 | `serves(ownerKey)` | Whether this store answers for an Owner: an Owner boundary it reconciled, or a cell it wrote — a fact that survives the Owner's retirement. It is what the process-wide Marker area reads to decide which of one extension's registrations answers for a seat, so a session's binding speaks for its own Owner and nothing else. |
 | `writer(target)` | The declared-value seam of one delivery (`StateWriteTarget`: `ownerKey`, `persist(values)`, `publishMarker()`), ungated: the value is set first, then recorded best-effort where the field persists (`memory` is never recorded), then the marker area is published. A repeated write of the same value is not deduplicated. |
