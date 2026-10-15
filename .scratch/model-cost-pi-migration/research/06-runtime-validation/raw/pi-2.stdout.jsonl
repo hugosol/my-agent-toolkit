@@ -1,0 +1,2 @@
+{"type":"extension_ui_request","id":"f8349701-930b-4c87-b9b0-739281cbca4c","method":"setWidget","widgetKey":"agents"}
+{"type":"extension_ui_request","id":"2db0e2c9-4cfd-4e95-be51-e8e9263323a3","method":"setStatus","statusKey":"subagents"}

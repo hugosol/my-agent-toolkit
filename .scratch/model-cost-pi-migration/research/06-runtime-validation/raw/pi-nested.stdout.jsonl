@@ -1,0 +1,6 @@
+{"type":"extension_ui_request","id":"d03fa542-2e9b-4d55-b4ce-bf6866a7ad88","method":"setStatus","statusKey":"subagents","statusText":"1 running agent"}
+{"type":"entry_appended","entry":{"type":"custom","customType":"subagents:record","data":{"id":"6cb1c729-c9b9-4f1","type":"nested-ok","description":"nested parent probe","status":"completed","result":"NESTED_RESULT=OK","startedAt":1792083211798,"completedAt":1792083213668},"id":"fb55eb2a","parentId":"48b9c604","timestamp":"2026-10-15T16:53:33.669Z"}}
+{"type":"extension_ui_request","id":"3169103a-ab71-4460-8a52-ff2343a23be9","method":"setStatus","statusKey":"subagents"}
+{"type":"extension_ui_request","id":"03bfc58a-d657-49f3-a61a-e7ac78d08f41","method":"setWidget","widgetKey":"agents"}
+{"type":"extension_ui_request","id":"7d44c022-621c-491c-842e-d4d33132aee4","method":"setStatus","statusKey":"subagents"}
+{"type":"extension_ui_request","id":"b0123d66-242b-42cc-81cd-d8f9589769d6","method":"setWidget","widgetKey":"fleet"}

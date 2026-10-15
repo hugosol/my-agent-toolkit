@@ -1,28 +1,29 @@
 # pi 子代理扩展的接口证据与覆盖对照
 
 Type: research
-Status: open
+Status: resolved
 Assignee:
 Map: [model-cost 迁移到 pi：决策地图](../map.md)
-Related input: [OMP 子代理能力基线与 model-cost 迁移差距](01-capability-baseline.md)；已消费其基线行完成对照。
+Related input: [OMP 子代理能力基线与 model-cost 迁移差距](01-capability-baseline.md)；消费其完整基线，不以 model-cost 子集替代。
 
 ## Handoff
 
-- 起点：从 https://pi.dev/packages 寻找实际候选，追溯其一手文档及源码；同时读取本地 pi 源码验证宿主机制。
-- **用户指定候选（必须纳入后续正式对照与选型讨论）**：[tintinweb/pi-subagents](https://github.com/tintinweb/pi-subagents)，npm 包 `@tintinweb/pi-subagents`。该项目已在原研究中检查（v0.22.0，revision `85a704cb8f35c96c0cabfa665b572bab296942e5`），但主会话的简短候选表遗漏；用户本次明确要求加入，不代表批准选用。现有证据见下述 `research/candidates/tintinweb-gotgenes-workflows.md` 的独立章节。后续须单独呈现其公开事件/RPC、会话与父链事实、逐 Turn 用量、执行耗时及续跑覆盖，区分它与 nicobailon 的同名项目及 gotgenes 分叉；既有报告的分层勘误同样适用。
-- **tintinweb 初步复核结果**：主会话直接复读固定 revision 的 `package.json`、`docs/rpc.md:1-75,125-180`、`src/index.ts:535-594`、`src/types.ts:230-310`。已确认存在文档化的跨扩展 EventBus RPC（ping/spawn/stop/consume）和 registry；因此“无 exports”不等于“无公开接口”。终态事件有累计 Usage 与 `durationMs`，但事件构造不带 actual sessionId/parentSessionId，且 nested/workflow children 被显式过滤出顶层生命周期通道。RPC spawn 覆写 `onSessionCreated`/`onAssistantUsage`/`onTurnEnd`，故不能仅靠传回调旁接逐请求事实。当前只能判断值得保留候选、现成公开通道不足以证明完整覆盖；应重点评估公开的只读全子会话事实/请求事件、每执行耗时与身份接口。原报告将有 conversation viewer 判为 Viewed session 契约 covered 过强，UI 存在不证明提供“当前查看席位”的可读订阅。无安装或运行验证，未批准选型。
-- 产出：候选发现与源码比较报告已交付；正式发布尚未完成。研究代理曾直接设为 resolved，但未完成 Lighthouse/Backtracer 流程，主会话恢复 open 并释放已结束代理的 claim；不是撤销已批准选型（从未批准选型）。
-- 审阅恢复点：保留原研究分支为证据快照，下列勘误优先于原报告的概括，不得直接拿原表做完整覆盖结论。下一步应修订覆盖分类后发布事实结果，不需要重新搜索整个市场。
-- **已核实的勘误**：原报告 §2.5 称 pi 没有用户输入事件，与本地 pi `packages/coding-agent/src/core/extensions/types.ts:1170-1187` 的 `InputEvent`/`input` 声明及基线研究矛盾。同文件 `:917-920,1636` 明确存在 `after_provider_response` 且携带 HTTP `status`/`headers`，故不能把 JSON 导出流缺字段等同于所有 pi 公开接口缺事实。
-- **分层分类修正要求**：Turn 身份、Round 身份/开闭及请求锚价由现有 framework/shared-logic 机制负责；候选没有这些最终语义不直接构成需上游接口的缺口。必须核对它提供的原生请求起止、模型、用量、队列/执行事实是否足够。每 ResourceLoader 独立 EventBus 只证明不自动共享，不证明提供方无法桥接；原报告“事先堵死”及“只有两家有版本化公开契约”也过强（其自身列出其他版本化事件/邮箱）。保留逐候选原始证据，暂不发布绝对结论。
-- 对照：已消费能力基线分支 `research/omp-capability-baseline`（worktree `E:/Developer/myhub/wt/omp-capability-baseline`）的 F-/O-/N-/M-/P-/G- 行；两侧在“pi 无原生子代理身份/注册表/执行耗时、无 `getAsyncJobSnapshot`、无 viewed session”上一致；本报告另证 `pi.events` 是每 `ResourceLoader` 一份（`packages/coding-agent/src/core/resource-loader.ts:379`），这是“跨 owner 观察范围”需要新接口的直接原因。
-- 结论性质：事实与候选比较，**不批准**任何提供方；未宣称穷尽市场（范围与排除原因见报告 §1）。
-- 下一步（属 ticket 03/04 与用户）：选型、缺口处理路线（上游贡献 / 适配层 / 是否允许例外 fork）、以及是否接受运行验证成本。
-- 剩余未验证项（不是阻塞，是本轮证据等级的边界）：全部为固定 revision 的源码/tarball 阅读，**无安装、无构建、无运行**；`@quintinshaw/pi-dynamic-workflows` 仅有 npm tarball 证据（声明仓库 404）；`@zhushanwen/pi-subagent-workflow` 无仓库且无 LICENSE 文件；候选在 Windows × 当前 pi 版本上的运行时兼容未验证。
-- Research asset: 分支 `research/pi-subagent-candidates`（worktree `E:/Developer/myhub/wt/pi-subagent-candidates`，commit `b5c903f`）已推送 origin（`origin/research/pi-subagent-candidates`，新建分支，未开 PR、未合并）。
-  - 主报告（绝对路径）：`E:/Developer/myhub/wt/pi-subagent-candidates/.scratch/model-cost-pi-migration/research/02-pi-subagent-candidates-report.md`
-  - 逐候选深挖：同目录 `research/candidates/{pi-subagents,tintinweb-gotgenes-workflows,background-tasks-group,fleet-runtime-group,process-boundary-group}.md`
-  - 原始证据：同目录 `research/{search-scope.json,search-scope-focus.md,npm-metadata.json,top70-metadata.json,pidev-package-pages.json}`
+- 当前恢复点：已发布 [候选对照 Lighthouse](../lighthouse/02-pi-subagent-candidates.md)，研究范围完成。当前事实入口为 [修订研究与候选摘要](../research/02-candidate-comparison-corrected.md)，逐项源码和分类在 [主候选复核](../research/02-primary-candidates-correction.md) 与 [其他候选复核](../research/02-other-candidates-correction.md)。旧报告仅保留为快照，其过强覆盖表已被取代。
+- 确认/授权来源：用户明确要求纳入 `tintinweb/pi-subagents`，随后“请开始ticket02”授权本次 AFK 事实收尾；不是最终提供方选择、私有 API/fork 许可或生产迁移批准。用户允许评估补接口/上游贡献，所有路线取舍仍归用户。
+- 核心分层：Turn 身份、Round 合成、请求锚价及 State/效果权限继续复用 framework/shared-logic；候选需提供实际会话/直接父、请求、可靠用量、活动/静默和每 execution 测量等原生输入。累计 usage、provider cost、时间戳、viewer 及私有字段都不能自动算完整覆盖。
+- 已撤销旧概括：pi 没有 input/HTTP response/responseId；只有两家有公开契约；独立 EventBus 使全子会话观察不可能；`--no-session` 不可能有身份；viewer 即 Viewed 席位；时间戳即 runtime；缺最终 Turn/Round/锚价就必须改上游。勘误理由与源码位置统一见修订研究，不在本票重复保存规则。
+- 用户指定的 tintinweb 固定候选为 `@tintinweb/pi-subagents@0.22.0` / `85a704cb8f35c96c0cabfa665b572bab296942e5`。已复核公开 v2 ping/spawn/stop/consume、registry 和顶层终态累计 Usage/本次 duration；明确事件无 actual session/直接 parent、嵌套/workflow 过滤、spawn 覆写观察回调、无公开枚举/续跑 RPC、逐请求与 Viewed 席位缺口。它不是 nicobailon 同名包；gotgenes 是 tintinweb 分叉。不因此批准任何候选或认定必须长期 fork。
+- 证据与限制：复读固定 revision 本地源码、类型、README/文档、npm tarball 和既有元数据快照；宿主 HEAD 实测为 `4a5d37291531ad48b8e536c892557877d219463c` / pi 1.2.0。五项只读源码断言通过（input 来源、response status/headers、公开 response 订阅、settled 事件、可注入 bus）；这是静态事实校验，未安装、未构建、未启动宿主、未作 RPC 实际往返、未调用模型。未验证 Windows 兼容及任意未来版本。d3ara1n 的旧 pin 与现有树对应未证、部分 tarball 来源/许可和 dist/source 对应限制均在附件显式保留。
+- 下一就绪动作：[tintinweb 子代理扩展的本机隔离验证](06-tintinweb-runtime-validation.md)可领取，先做固定工件与无模型费用的加载/发现/RPC/清理，再按授权边界处理最小真实调用。模型、最大次数和数值费用上限仍须明确；本票不消耗或扩大该授权。
+- 其他未决问题及归属：[选择 pi 子代理扩展及缺口处理路线](03-subagent-provider-choice.md)在隔离验证后由用户选依赖与补接口路线；[第三方能力适配的集中组织与公共语义复用](04-third-party-adapter-organization.md)决定桥接/身份归一/订阅寿命/集中组织；[model-cost 完整迁移的职责落点与验收路线](05-complete-migration-plan.md)决定全部功能落点与验收。静态比较不承诺任何候选现成完整覆盖；不存在默许降级或多 main 扩围。
+- Backtracer 追溯：沿当前 Lighthouse 的 stories/invariants 和已发布基线逐项检查完整能力、依赖选择/补接口、公开事实/权限/寿命、固定版本/平台/许可及真实消费者证据。提供方分别是既有能力基线、上述选型、组织、完整方案与隔离验证票；公共模式的 definition/shared-logic、framework、adapter、harness/entrypoint 已由组织和完整方案问题承接。旧报告矛盾属于本票待修正研究事实，不是需要用户重裁的已批准上游政策。无新增无主缺口或政策冲突，不新建 ticket，不改其他票状态/claim；未完成提供方仍未满足下游前置。
+
+### Evidence assets
+
+- 本次修订与逐候选复核保存于本 effort 的 `research/02-*-correction.md` 和 `research/02-candidate-comparison-corrected.md`；正式结果导航为上面的 Lighthouse。
+- 原研究分支 `research/pi-subagent-candidates`，worktree `E:/Developer/myhub/wt/pi-subagent-candidates`，交付提交 `b5c903f`。原记录称已推送 `origin/research/pi-subagent-candidates`、无 PR、未合并；本次未重新检查远端，不声称本次新提交/推送。
+- 原主报告：`E:/Developer/myhub/wt/pi-subagent-candidates/.scratch/model-cost-pi-migration/research/02-pi-subagent-candidates-report.md`。原逐候选材料位于同目录 `candidates/{pi-subagents,tintinweb-gotgenes-workflows,background-tasks-group,fleet-runtime-group,process-boundary-group}.md`。
+- 原始市场/元数据：同目录 `search-scope.json`、`search-scope-focus.md`、`npm-metadata.json`、`top70-metadata.json`、`pidev-package-pages.json`。市场范围为有界抽样，统计沿用 2026-10-15 快照；不重搜市场、不宣称绝对穷尽。旧包页个别共用字段和版本过期信号按附件限制使用。
 
 ## Question
 
@@ -32,10 +33,6 @@ Related input: [OMP 子代理能力基线与 model-cost 迁移差距](01-capabil
 
 ## Comments
 
-用户允许考虑补接口/向上游贡献，但最终选哪个扩展以及如何取舍由用户决定。本票仅产出事实和候选比较，不作选型批准。
-
-- 2026-10-16 CandidateResearch：研究交付完成并 resolve（事实与比较，不含批准）。要点供 ticket 03/04 引用：
-  - 提供方分档：只有 `pi-subagents`(nicobailon, v0.78.0, MIT) 与 `@gotgenes/pi-subagents`(23.4.0, MIT) 给第三方扩展**可导入/版本化的公开契约**；tintinweb/esso0428/arhen 只有事件频道；herdsman 有版本化文件邮箱但不可 import；background/better/durable 走 CLI/JSON/文件；cowboy 不产生任何会话或用量事实。
-  - 没有任何候选提供 OMP 式的「agent 注册表 + 每 execution 读数 + round 边」；最接近者：pi-subagents（`runId/childId`+`durationMs`+8 值状态+owner 会话）、pi-durable-subagents（`wid/key/gen/exec`+active 时间+`main:<sessionId>`，且 `follow-up` 开新 generation 最像保活后续执行）、pi-herdsman（`ownerSessionId/piSessionId/piSessionFile`）。
-  - 一致缺口（全部候选 + pi 本身）：turnId、请求时刻目录价、http status/responseId、round 记录、`getAsyncJobSnapshot` 式的异步 job 静默判据、viewed session 事实、跨 owner 的 session scope 观察（根因：`pi.events` 每 `ResourceLoader` 一份）。
-  - 外部前提：herdr ≥0.8 与 Linux/macOS（cowboy/herdsman）；Node 地板差异；许可需澄清的包（workflows 无 LICENSE 文件且无仓库、pi-task 为 AGPL、maestro-flow/selesai-code 无 license）。
+- 用户允许考虑补接口/向上游贡献，但最终选哪个扩展以及如何取舍由用户决定。本票仅产出事实和候选比较，不作选型批准。
+- 2026-10-16 原 CandidateResearch 曾在研究交付后直接设为 resolved；因未完成 Lighthouse/Backtracer 且出现分层勘误，主会话恢复 open 并释放当时 claim。原报告中的“只有两家公开契约”“全部候选与 pi 均无请求/HTTP 事实”等概括已由本次修订取代，历史证据保留于上述原分支。
+- 2026-10-16 本次领取后完成固定来源复核、覆盖分类修订、Lighthouse 发布与 Backtracer 追溯，正式设为 resolved 并清除本会话 claim。未执行生产迁移或付费调用。

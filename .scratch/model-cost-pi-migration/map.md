@@ -20,16 +20,18 @@ Labels: wayfinder:map
 ## Decisions so far
 
 - [OMP 子代理能力基线与 model-cost 迁移差距](lighthouse/01-capability-baseline.md)：已发布固定修订的源码事实基线、model-cost 消费标注与 pi 缺口分类；不含提供方选择、组织批准或运行通过结论。
+- [pi 子代理扩展的接口证据与覆盖对照](lighthouse/02-pi-subagent-candidates.md)：已发布修订的候选公开事实对照与覆盖边界；取代旧报告过强分类，不批准提供方，也不代表实际运行或完整覆盖通过。
+- [tintinweb 子代理扩展的本机隔离验证](lighthouse/06-tintinweb-runtime-validation.md)：已发布真实运行结论——公开总线支撑“自 spawn 顶层代理”的发现/启动/终态/停止；嵌套需 agent 定义 opt-in，且嵌套与 workflow 子代理在公开总线不可见；逐请求与查看席位无公开出口；取消运行无费用读数；未覆盖项已标注；不批准提供方选择。
 
 ## Decision tickets
 
 - [OMP 子代理能力基线与 model-cost 迁移差距](decision/01-capability-baseline.md)：research；已正式发布并完成追溯，研究范围已解决；证据与后续问题归属见 Handoff。
-- [pi 子代理扩展的接口证据与覆盖对照](decision/02-pi-subagent-candidates.md)：research；报告已交付；审阅发现原生事实与公共语义混淆，勘误及恢复点见 Handoff，覆盖分类待修订后发布。
-- [选择 pi 子代理扩展及缺口处理路线](decision/03-subagent-provider-choice.md)：grilling；等待两项研究与 tintinweb 本机隔离验证，由用户决定。
+- [pi 子代理扩展的接口证据与覆盖对照](decision/02-pi-subagent-candidates.md)：research；已修订覆盖分类、发布 Lighthouse 并完成追溯，研究范围已解决；不含选型批准或运行通过结论。
+- [选择 pi 子代理扩展及缺口处理路线](decision/03-subagent-provider-choice.md)：grilling；能力基线、候选对照与本机隔离验证均已发布，前置已满足，下一步由用户选择提供方与缺口处理路线。
 - [第三方能力适配的集中组织与公共语义复用](decision/04-third-party-adapter-organization.md)：grilling；等待能力基线与提供方选择。
 - [model-cost 完整迁移的职责落点与验收路线](decision/05-complete-migration-plan.md)：grilling；等待能力基线、提供方选择与适配组织决定。
 
-- [tintinweb 子代理扩展的本机隔离验证](decision/06-tintinweb-runtime-validation.md)：task；用户已确认新增，先做固定版本隔离验证；真实调用前确定模型、调用次数与费用上限，不修改日常配置或生产 adapter。
+- [tintinweb 子代理扩展的本机隔离验证](decision/06-tintinweb-runtime-validation.md)：task；已按批准限额完成固定版本隔离真实运行验证，Lighthouse 与 Backtracer 均已发布，状态 resolved；结论见 Decisions so far。
 
 ## Not yet specified
 

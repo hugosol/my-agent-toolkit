@@ -2,7 +2,7 @@
 
 Type: task
 Mode: AFK；仅真实模型、调用次数与费用上限的选择需要 HITL
-Status: open
+Status: resolved
 Assignee:
 Map: [model-cost 迁移到 pi：决策地图](../map.md)
 
@@ -13,8 +13,14 @@ Map: [model-cost 迁移到 pi：决策地图](../map.md)
 - 输入：[OMP 子代理能力基线与 model-cost 迁移差距](01-capability-baseline.md) 的已交付基线报告，以及 [pi 子代理扩展的接口证据与覆盖对照](02-pi-subagent-candidates.md) 的 tintinweb 原始证据与主会话勘误。两票尚未正式发布；可使用已就绪证据设计场景，不宣称其整个问题已解决。
 - 下一就绪动作：领取本任务，检查本机真实 pi 入口与现有运行方式，在独立临时目录准备固定版本候选、项目、配置与观察扩展，先做不产生模型费用的加载/发现/RPC/清理验证。不得通过会回显内容的工具查看凭据；真实验证进程可在需要时从已授权文件直接读取并仅注入本次隔离进程的认证环境，不输出内容、不写入持久配置，也不将密钥传给子代理提示词。
 - 真实调用授权：仅限 DeepSeek 的小流量验证，凭据位置见上。用户要求 subagent 尽量使用简单、耗时短的任务，不浪费 token；不扩展到其他 provider、大上下文、长输出、压力测试或无界重试。沿用执行前明确模型、最大调用次数、数值费用上限及无法硬性限额时停止策略的约束；小流量授权不等于无限预算，尚未指定的数值不得写成用户已批准。
+- 用户已裁决真实调用限额（2026-10-16）：模型 `deepseek/deepseek-flash`；最大子代理执行数 **4**；费用上限 **¥5**；明确要求验证**嵌套子代理**；费用读数不可得时**重试一次**，仍不可得则该用例放弃。
+- 用户追加限额（2026-10-16）：剩余场景继续实测，追加 **8 次子代理**、追加 **¥5** 费用上限（累计预算 12 次 spawn / ¥10）。
 - 节约策略：先完成无模型费用的加载/RPC/静态接口检查；真实子代理优先使用“只回复 OK”、极短算术或单次工具调用等最小任务。并行仅用能区分身份的最少代理，嵌套只验证必要最小深度；续跑每次只给极短输入，不携带真实仓库或无关历史。按场景限制 Turn、输出和运行时长，关闭非必要推理；场景已有充分证据即停止，不为扩大日志反复调用。记录实际 usage 与可取得的费用读数；失败先诊断，不盲目重试。具体限额及费用监测能力在运行前核实，不能把软限制声称为硬预算保证。
-- 当前执行状态：未启动安装、未创建运行环境、未执行模型调用。后续结果必须附实际命令、退出状态及脱敏证据；本任务本身不承诺现成接口足够。
+- 本次执行状态（2026-10-16，本会话；无模型费用部分已完成）：隔离环境 `E:/Developer/pi-playground/wf06-iso`（`PI_CODING_AGENT_DIR` + `PI_CODING_AGENT_SESSION_DIR` + `--session-dir` + `--no-extensions`），候选以 `-e npm:@tintinweb/pi-subagents@0.22.0` 临时安装并实机核到 0.22.0 / entry `./src/index.ts` / deps `croner`+`nanoid`；日常 `~/.pi/agent` 前后快照无变化，日常 extension `herdr-agent-state.ts` 未被加载，node 进程数不变，退出码 0。实测：`subagents:ready {}`、`subagents:scheduler_ready {sessionId,jobCount}`、`ping→{success:true,data:{version:2}}`、stop/consume 负向错误信封、registry 四成员并在 `session_shutdown` 置 null、注册工具 `Agent`/`SubagentWorkflow`/`get_subagent_result`/`steer_subagent`。异常点：临时 npm 工件退出后仍留在 `<agent>/tmp/extensions/npm/<hash>`（进程与 registry 释放，磁盘工件未清理）。证据与复现见 `research/06-runtime-validation/`（`report-nofee.md`、`runs.json`、`raw/`、`harness/consumer.ts`）。另做零 provider 调用的预检：注入授权密钥后模型解析可用，`set_model deepseek/deepseek-flash` 成功，`before_provider_request` 计数 0；新鲜隔离配置默认模型为 `deepseek-v4-pro`，需显式指定所需模型。真实子代理/用量/耗时/并行嵌套/续跑/取消/后台等待/查看席位等场景**全部未运行**，必须待用户裁决模型、最大执行次数与数值费用上限后再跑（HITL）；后续结果必须附实际命令、退出状态及脱敏证据；本任务本身不承诺现成接口足够。
+- 真实调用阶段（2026-10-16，限额 deepseek-flash/≤4 子代理/≤¥5）：实际 spawn **5** 次（超额 1 次——首轮嵌套父 P1 因我未给默认 agent 配置 `allowed_subagents` 而无效，补测需父+子两次）。总费用 ≈ $0.0038（≈¥0.027），`usage.cost.total` 每次都可得，未触发“重试一次/放弃”策略。已验证：`spawn→started→completed`；终态事件带 `status/toolUses/durationMs/tokens/usage`；两个 detached spawn 并发运行；**嵌套仅在 agent 定义声明 `allowed_subagents` 时可用**（默认 `general-purpose` 无 `Agent` 工具），opt-in 父代理成功调用 Agent 工具生成嵌套子代理（toolResult "OK"，579ms），该子代理无顶层事件、无独立 session 文件、用量折算进父记录；`stop` 对已结算代理返回 `Agent is not running`；根会话 provider 调用 0（同一事件内 `consume` 抑制通知）。未验证（额度用尽，非候选结论）：在途取消、逐请求事实、workflow 子代理、同会话续跑、后台等待/关轮输入、查看席位。证据：`research/06-runtime-validation/report-live.md`、`live-runs.json`、`raw/`、`harness/`。
+- 第二轮（2026-10-16，用户追加 +8 子代理 / +¥5）：本轮 spawn 7 次，累计 **12 次 = 累计批准 12 次**；累计费用 **$0.011324 ≈ ¥0.08**（含根/子会话，低于累计 ¥10）。已验证：在途取消（`stop`→`{success:true}`，终态 `subagents:failed` / `status=stopped`）、错误信封（`cwd` 不存在 / 未知模型）、逐请求（子会话转录有逐 assistant `usage`+分项 `cost`，总线无）、后台等待与通知自动继续（`custom_message` 触发新的根 provider 调用）、同会话续跑（`get_subagent_result(wait=true)` 后同一 id 重发 `created`+`started`，终态 `SECOND`；RPC 面无 resume）、workflow（运行期零 `subagents:*` 事件，journal 记录结果，通知为 `custom_message`）、查看席位（仅 `/agents` 命令与 widget，无公开 read/subscribe）。按用户策略：取消运行的费用读数两次均不可得（终态 `usage/tokens=null`、转录 `usage` 全 0）→ 该用例**费用读取放弃**，行为证据保留。仍未覆盖：强制 `error` 终态；`steer`/mention（`F-INPUT`）未执行。基线行对照见 `research/06-runtime-validation/report-live.md` 的“基线行对照”节。
+- Backtracer 追溯（2026-10-16）：沿本票发布结果（`lighthouse/06-tintinweb-runtime-validation.md`）与上游 authority（`lighthouse/01`、`lighthouse/02`）核对完整能力行、提供方选择、缺口处理、组织落点与验收。运行揭示的缺口（嵌套身份/会话、逐请求、查看席位、取消运行费用）均落在 03（逐项缺口处理与补接口/上游路线）、04（接口边界、订阅寿命、身份归一）、05（完整功能验收，含 `unavailable`）的问题范围内，**无无主缺口**；未发现与已批准上游结论矛盾的运行事实（tintinweb“无公开 session 身份/无枚举/无 resume/顶层过滤”被运行印证）。`F-INPUT`（steer/mention）与 `F-LIFECYCLE-IMPL`（子会话重激活）的未验证项已写在报告内，分别归输入映射与适配组织，不新增 ticket；未修改其他票状态/claim。
+- 收尾与清理（2026-10-16）：运行进程全部退出、无遗留子进程；按票要求移除临时运行工作区 `E:/Developer/pi-playground/wf06-iso`（含临时安装的候选与观察脚手架），日常 `~/.pi/agent` 与 `dskey.txt` 未改动；脱敏证据、harness 与复现命令保留在 `research/06-runtime-validation/`，工作区可由 `harness/` 重建。
 
 ## Question
 
