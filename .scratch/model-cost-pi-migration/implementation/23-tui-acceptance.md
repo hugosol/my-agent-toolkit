@@ -36,3 +36,4 @@
   - “不以 22 的人工效率确认作为本票 blocker”：遵守（两处人工判断互不牵连，本票未引用 22 的结论）。
   - “P52 完整 Coverage（S2）”：Agent 半如上；**人类半未确认**。
 - **未因自动检查全绿而改变的限制**：22/21 的结论、OMP 消费端回归、docs 更新与 fault-injection 复核不在本票；`runtimeGap`（持久化的不完整事实）在绘制面无额外标记，本票按下记录，不新增绘制要求。
+- **复核轮（重新派发后，同一 worktree／分支，源与已提交状态逐字节相同）**：重跑了本票的全部可执行检查——`bun run typecheck` exit 0；`bun test tests/model-cost` 463 pass / 0 fail；`bun scripts/pi-tui-acceptance.ts --widths 120,80,60` **46 ok / 0 failed**，`observations` 与已提交 `report.json` 逐条相同（只有运行根随机路径与终端空白尾行的差异）。用两次临时故障注入确认检查灵敏：丢掉每条会话自己的金额 → 6 条 FAIL；窄宽度吞掉行尾（`Balance:`／`Span:`）→ 4 条只落在 60 列的 FAIL；两次注入均已还原（`git status` 干净）并在还原后重跑回复 46/0。捕获运行无残留隔离根与残留进程，工作树未被写入。**本轮无控制台**（shell 无 pty），`--interactive` 只验证到入口建立隔离根并启动 pi 后退出；"交互形态真的画出内容"仍由上一轮真实控制台那次运行与捕获模式的 6 个 PTY 帧支持。**人类验收（格式／间距／窄宽度／观感）仍未确认，不得据此判为通过。** 详见[证据](../evidence/23-tui-acceptance.md) §7 与 `logs/23-tui-acceptance-recheck.log`。

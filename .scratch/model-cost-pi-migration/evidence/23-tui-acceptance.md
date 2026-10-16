@@ -67,3 +67,18 @@ $ bun scripts/pi-tui-acceptance.ts --widths 120,80,60
 ## 6. 隔离与清理
 
 捕获运行全部在 `%TEMP%\omp-dock-tui-acceptance-*\` 下（隔离 agent state、session 目录、工作目录、`user-home/.omp/cost-archive` 与捕获端点目录），运行结束即释放；`--interactive` 的运行根**保留**并打印路径，由操作者自行删除。迭代期间的临时探针、ANSI 屏、png 渲染页面都在工作树之外（`%TEMP%`），未写入仓库；未操作集成工作区、未切换分支、未新建 worktree、未 reset、未调用 retro，也未自行合入 `pi-adapter`。
+
+## 7. 复核（本轮重跑；不改 §1–§6 的结论，也不改变人类验收的地位）
+
+- **源状态**：分支 `hyper/model-cost-pi-migration/23-tui-acceptance-e6bb1a-411dc288ea83` @ `b408c83`，工作树 `git status` 干净；四个交付文件的 `git hash-object` 与 §1 逐字相同（`bdc7060d…`／`c2e0dcc1…`／`2f0faa25…`／`e05afde5…`），所以 §2 的旧结果在相同来源上可复用——下列检查仍在本轮重跑过一遍。原始输出见 `logs/23-tui-acceptance-recheck.log`。
+- **命令与结果（本轮实际运行）**：
+  - `bun run typecheck` → exit 0（无诊断）。
+  - `bun test tests/model-cost` → 463 pass / 0 fail（40 files, 2524 expect, 11.54s, exit 0）。
+  - `bun scripts/pi-tui-acceptance.ts --widths 120,80,60`（输出到工作树之外）→ **46 ok / 0 failed**，exit 0；`report.json` 的 `observations` 与 §3 那份**逐条相同**（46 条，名称与 detail 均同），`scenario.document` 相同，`source` 仍是 pi 1.2.0 / bun 1.4.2 / win32 x64。与已提交证据的差异只有运行根随机路径与终端空白尾行／分隔线的帧状态（`screen-detail-60.txt` 逐字节相同）。
+  - `bun scripts/pi-tui-acceptance.ts --interactive` → 入口解析出 pi 1.2.0、建立隔离根、写入固定场景、打印操作指引，随后 pi 退出（exit 0）。**本轮没有控制台**（shell 无 pty，`pty requested but unavailable`），pi 在无 TTY 时不画 TUI，因此“交互形态真的画出内容”仍只由 §2 那次真实控制台运行（pid 11960）与捕获模式的 6 个 PTY 帧支持，本轮不新增该结论。
+- **检查灵敏性（两次临时故障注入；每次注入后还原、`git status` 确认为空，并在还原后重跑回复 46/0）**：
+  - **注入 A**——`extensions/model-cost/shared-logic/presentation/display.ts` 的 `amountColumns`：金额已知时也不再写 `Cost:` 列（即绘制丢掉每条会话自己的金额）→ exit 1、6 条 FAIL，含 `the Total row draws … (brief, 120 columns) — missing: Cost: ¥0.07` 与 `every session's own amount is drawn on the tree (120 columns) — missing: Cost: ¥0.0040, Cost: ¥0.01, Cost: ¥0.0020, Cost: ¥0.0010`（60 列各同样两条）。这证明内容检查读的是真帧文本、比较的是手写字面量（不重算），且绘制丢掉一个承诺的金额时确实会失败。
+  - **注入 B**——`extensions/model-cost/harnesses/pi/widget.ts` 的 `wrappedPieces`：放不下的一件不换行而丢弃（即“窄终端吞掉行尾”的退化）→ exit 1、4 条 FAIL 全部落在 60 列帧（`… Balance: ¥12.34` 与 `… Span: 0:05:00` 缺失），120 列的两帧仍全绿。这证明宽度退化是被真的检查着的，而不是假定的。
+- **释放与隔离**：捕获运行在工作树之外进行，运行前后各查一次 `%TEMP%\omp-dock-tui-acceptance-*`，结束**无残留**（只剩 §6 说明保留的那次交互运行根）；工作树未被写入（`git status` 0 条），`*pi-tui-acceptance*` 无残留进程。本轮自己那次交互尝试的运行根已删除。
+- **环境修复（不属仓库内容）**：共享仓库 config 的 `core.autocrlf` 曾被写成非法布尔值 `core.eol`，使本机所有 git 命令失败；已改回 `true`（系统默认值），仓库内容未改动。本轮环境仍为 win32 10.0.26200 / x64 / bun 1.4.2，且本票会话不发任何模型请求。
+- **仍未确认**：人类验收（格式、间距、窄宽度、观感）——本轮不代判、不写通过；本环境无法提供真实控制台，"人在真终端上看"这一步只能由人在自己的终端执行 `bun scripts/pi-tui-acceptance.ts --interactive`。
