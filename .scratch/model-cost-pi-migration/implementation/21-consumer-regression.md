@@ -6,7 +6,7 @@
 
 **Blocked by:** [18：两端原生展示与实时 context](18-native-presentation.md)、[20：完整装配的共享准备与处置验证](20-assembly-lifecycle.md)
 
-**Status:** implemented — 验证证据见 [evidence/21-consumer-regression.md](../evidence/21-consumer-regression.md)；合并由集成子代理执行
+**Status:** implemented — 实现已随集成提交 `39fdc3dab2f19a67f54b096f4164e8ddcc7faaa1` 合入 `pi-adapter`，宿主已把该提交合回本分支，故本分支 HEAD 即该提交（与 `pi-adapter` 同 tree）；本轮集成验收在同一 HEAD 完成（`bun run typecheck` exit 0、`OMP_BOT_BINARY` 下全仓 `bun run test` 第 2 次 1200 pass / 0 fail / exit 0），本轮无源码修复。集成同步与合并后回归见 [evidence/21-consumer-regression.md](../evidence/21-consumer-regression.md) §8，真实宿主未覆盖项见其 §6。
 
 ## Acceptance criteria
 
