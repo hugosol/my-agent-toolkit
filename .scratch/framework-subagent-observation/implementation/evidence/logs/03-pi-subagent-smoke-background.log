@@ -1,0 +1,21 @@
+pi 1.3.0 (D:\nvm4w\nodejs\node_modules\@earendil-works\pi-coding-agent\dist\bundle\cli.js)
+  ok    the harness under test is the fixed version this run states
+  ok    the pinned provider artifact this repository installs is present
+
+phase: a real delegation in the background
+  ok    the spawned session registered with the owner's process before its first Round ended
+  ok    the identity it registered with is the one the host's own session file states
+  ok    the owner's own observation source holds the reading that arrived
+790 | 			candidate => recordOf(candidate, childId) !== undefined,
+791 | 			45_000,
+792 | 		);
+793 | 	} catch (error) {
+794 | 		// Missing accounting after a successful child run is a failed observation, not a green skip.
+795 | 		throw new SmokeFailure("the asynchronous child's consumption is saved",
+              ^
+SmokeFailure: check failed: the asynchronous child's consumption is saved
+  no consumption document this case expects was published at C:\Users\hugos\AppData\Local\Temp\omp-dock-background-SOuUKz\user-home\.omp\cost-archive\consumption.json
+      at phaseBackgroundDelegation (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-JiuTYK\scripts\pi-subagent-smoke.ts:795:9)
+      at async main (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-JiuTYK\scripts\pi-subagent-smoke.ts:854:58)
+
+Bun v1.4.2 (Windows x64)

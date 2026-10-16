@@ -20,7 +20,7 @@
  * This module is harness-independent: it reads and writes no State and names no native API.
  */
 import type { ExtensionDefinition } from "../core/definition";
-import type { SessionObservations } from "../core/observations";
+import { handOverReading, type ObservationHandOver, type SessionObservations } from "../core/observations";
 import type { SessionContextObservation, SubscriptionGroup } from "../core/protocol";
 import { dispatchToGroups } from "./subscriptions";
 
@@ -32,6 +32,15 @@ export interface ContextCollectionInputs {
 	readonly observations: SessionObservations;
 	/** The subscription groups a change is offered to, in declaration order. */
 	readonly groups: readonly SubscriptionGroup[];
+	/**
+	 * Where a reading of a session whose owner this process does not serve is handed, when this
+	 * binding's sessions may run in another process (see {@link ObservationHandOver}).
+	 *
+	 * A context reading is collected from the session's own host, so a session the harness ran
+	 * elsewhere is only observed here if the process that ran it delivers what it read there — and
+	 * this is where that reading leaves, from the collection that read it.
+	 */
+	readonly handOver?: ObservationHandOver;
 	/** Reports a handler's failure outside model context. */
 	readonly reportFailure: (message: string) => void;
 }
@@ -44,11 +53,14 @@ export interface ContextCollection {
 
 /** Build one binding's context collection. */
 export function createContextCollection(inputs: ContextCollectionInputs): ContextCollection {
-	const { definition, observations, groups, reportFailure } = inputs;
+	const { definition, observations, groups, handOver, reportFailure } = inputs;
 	return {
 		observe(observation) {
 			const { session, owner, reading, hasUI, feedback } = observation;
 			if (!observations.observeContext(session.sessionId, reading)) return;
+			// A reading that moved is the owner's process's business where the owner is not served
+			// here: it leaves with the facts that name the session it was read in.
+			handOverReading(handOver, { session, owner, context: reading });
 			dispatchToGroups(
 				definition.id,
 				groups,

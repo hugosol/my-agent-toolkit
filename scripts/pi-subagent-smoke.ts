@@ -43,6 +43,7 @@ import { MODEL_COST_WIDGET_KEY } from "../extensions/model-cost/harnesses/pi/wid
 import type { CapturedRequest } from "../tests/harness-dock/capture-server";
 import { PI_MODEL_COST_CONFIG_ROOT_ENV } from "../tests/harness-dock/fixtures/pi-model-cost/env";
 import { PI_SESSION_FACTS_PREFIX } from "../tests/harness-dock/fixtures/pi-session-facts/prefix";
+import { PI_SUBAGENT_OBSERVATION_PREFIX } from "../tests/harness-dock/fixtures/pi-subagent-observation/prefix";
 import { type PiCli, type PiRun, PiSession, piVersion, resolvePiCli, startPiRun } from "../tests/harness-dock/pi-session";
 
 /** The repository root: this script lives in `scripts/`. */
@@ -64,6 +65,38 @@ const PROVIDER_ENTRY = path.join(REPO_ROOT, "node_modules", "pi-subagents", "ind
 /** The dock fixture that reports the public session facts one real binding dispatches. */
 const FACTS_PROBE = path.join(REPO_ROOT, "tests", "harness-dock", "fixtures", "pi-session-facts", "entrypoint.ts");
 
+/** The dock fixture that reports the per-session observations one real binding delivers. */
+const OBSERVATION_PROBE = path.join(
+	REPO_ROOT,
+	"tests",
+	"harness-dock",
+	"fixtures",
+	"pi-subagent-observation",
+	"entrypoint.ts",
+);
+
+/**
+ * The observation probe's entry in one run's own layout, written the way a deployment writes one.
+ *
+ * Observations cross between processes for one extension — the seat is the pair of an extension id
+ * and an owner — so the probe is loaded both in the owner session and in the sessions that session
+ * spawns; the entry names itself as the file a spawned session loads, exactly as the extension
+ * under test does.
+ */
+function writeObservationProbeEntry(configRoot: string): string {
+	const directory = path.join(configRoot, "entrypoints", "pi");
+	mkdirSync(directory, { recursive: true });
+	const file = path.join(directory, "pi-subagent-observation.ts");
+	const relative = path.relative(directory, OBSERVATION_PROBE).replace(/\\/g, "/");
+	const specifier = path.isAbsolute(relative) || relative.startsWith(".") ? relative : `./${relative}`;
+	writeFileSync(
+		file,
+		`import { piSubagentObservationProbe } from ${JSON.stringify(specifier)};\n\nexport default piSubagentObservationProbe(${JSON.stringify(file)});\n`,
+		"utf8",
+	);
+	return file;
+}
+
 /** The version this smoke's expectations were written against. */
 const EXPECTED_PI_VERSION = "1.2.0";
 
@@ -76,6 +109,15 @@ const CONSUMPTION_FILE = "consumption.json";
 
 /** The usage the capture endpoint reports for every completion, so a saved amount is non-zero. */
 const CAPTURE_USAGE = { input: 1_000, output: 200, cacheRead: 0, cacheWrite: 0 } as const;
+
+/**
+ * How long every scripted answer of the background phase is held before it is sent.
+ *
+ * It is what makes the phase's ordering claim a fact rather than a race: a session waiting on an
+ * unanswered request has no Round it can end and nothing it can save, so a run whose own process
+ * observed that session is observed *before* anything of it was persisted anywhere.
+ */
+const HELD_FIRST_REQUEST_MS = 4000;
 
 /** The text a request is answered with when the case scripts no tool call for it. */
 const REPLY_TEXT = "subagent-smoke-reply";
@@ -363,6 +405,32 @@ function factOf(line: string | undefined, name: string): string | undefined {
 	if (line === undefined) return undefined;
 	const match = new RegExp(`(?:^| )${name}=([^ ]*)`).exec(line);
 	return match?.[1];
+}
+
+/** Every observation line one run's owner process published, in the order they were written. */
+function observationLines(session: PiSession): string[] {
+	return session
+		.stderr()
+		.split("\n")
+		.filter(line => line.startsWith(`${PI_SUBAGENT_OBSERVATION_PREFIX} `))
+		.map(line => line.slice(PI_SUBAGENT_OBSERVATION_PREFIX.length + 1));
+}
+
+/**
+ * The observation lines one run's owner process published for one actual session, waited for.
+ *
+ * A line is written where the delivery arrived, which is a moment after the session that delivered
+ * it began: the wait is bounded and answers the empty list when the owner process never observed
+ * that session at all.
+ */
+async function observationLinesFor(session: PiSession, sessionId: string, timeoutMs: number): Promise<string[]> {
+	const deadline = Date.now() + timeoutMs;
+	for (;;) {
+		const found = observationLines(session).filter(line => factOf(line, "id") === sessionId);
+		if (found.length > 0) return found;
+		if (Date.now() > deadline) return [];
+		await Bun.sleep(50);
+	}
 }
 
 /** Whether one request carries the provider's own delegation tool. */
@@ -659,11 +727,17 @@ async function phaseForegroundDelegation(cli: PiCli): Promise<void> {
  */
 async function phaseBackgroundDelegation(cli: PiCli): Promise<void> {
 	console.log("\nphase: a real delegation in the background");
+	const delegated = delegationOnce({ async: true });
 	const dock = startDockRun(cli, "background", {
-		respond: delegationOnce({ async: true }),
+		// Every request is held before it is answered, and the child's first one is what makes "the
+		// owner's process observed this session before that session's first Round ended" a fact
+		// rather than a race: a Round cannot end, and its consumption cannot be saved, while the
+		// request that Round is waiting on is still unanswered. The hold is the fixture's own
+		// controlled answer, not a delay this repository's code waits on.
+		respond: request => ({ ...(delegated(request) ?? {}), answerDelayMs: HELD_FIRST_REQUEST_MS }),
 	});
 	const codebaseEntry = path.join(REPO_ROOT, "entrypoints", "pi", "codebase-tools.ts");
-	const session = await openSession(dock, [codebaseEntry, dock.childEntry, PROVIDER_ENTRY, FACTS_PROBE]);
+	const session = await openSession(dock, [codebaseEntry, dock.childEntry, PROVIDER_ENTRY, FACTS_PROBE, writeObservationProbeEntry(dock.configRoot)]);
 	const balanceBefore = dock.run.capture.balanceCalls().length;
 	let settled = true;
 	try {
@@ -679,15 +753,41 @@ async function phaseBackgroundDelegation(cli: PiCli): Promise<void> {
 	// provider's own detached runner writes what it writes beside the child's own session — so what
 	// this phase reads is that session's file and the record its own process saved for it.
 	const child = await childSessionOf(dock, parentFile, 60_000);
-	if (child?.header?.id === undefined) {
+	const childId = child?.header?.id;
+	if (childId === undefined) {
 		throw new SmokeFailure("the asynchronous delegation produced a child session",
 			`settled ${settled}, child ${JSON.stringify(child?.header)}`);
 	}
+	// What the owner's own process observed of that session, read while the spawned process's first
+	// request is still held unanswered: nothing of it can have ended a Round or saved anything yet,
+	// and what the owner process already holds is what the spawned process delivered — its identity,
+	// its activity and its context — adopted into the framework's own observation source.
+	const observed = await observationLinesFor(session, childId, 30_000);
+	const beforeAnySave = readDocument(dock.home.consumptionFile);
+	observe(
+		"the spawned session registered with the owner's process before its first Round ended",
+		observed.length > 0 && recordOf(beforeAnySave, childId) === undefined,
+		`lines: ${JSON.stringify(observed.slice(0, 3))}, record: ${JSON.stringify(recordOf(beforeAnySave, childId))}`,
+	);
+	observe(
+		"the identity it registered with is the one the host's own session file states",
+		observed.every(line => factOf(line, "id") === childId) &&
+			observed.every(line => factOf(line, "kind") === "sub") &&
+			observed.every(line => factOf(line, "parent") === parent?.id) &&
+			observed.every(line => factOf(line, "owner") === `inherited:main:${parent?.id ?? ""}`),
+		`lines: ${JSON.stringify(observed)}, header: ${JSON.stringify(child?.header)}`,
+	);
+	observe(
+		"the owner's own observation source holds the reading that arrived",
+		observed.some(line => line.startsWith("activity ")) &&
+			observed.every(line => line.startsWith("activity ") === (factOf(line, "held_activity") === factOf(line, "activity"))),
+		`lines: ${JSON.stringify(observed)}`,
+	);
 	let document: ConsumptionDocument | undefined;
 	try {
 		document = await savedDocument(
 			dock.home.consumptionFile,
-			candidate => recordOf(candidate, child.header?.id ?? "<none>") !== undefined,
+			candidate => recordOf(candidate, childId) !== undefined,
 			45_000,
 		);
 	} catch (error) {
@@ -695,7 +795,7 @@ async function phaseBackgroundDelegation(cli: PiCli): Promise<void> {
 		throw new SmokeFailure("the asynchronous child's consumption is saved",
 			error instanceof Error ? error.message.split("\n")[0] : String(error));
 	}
-	const record = recordOf(document, child.header.id);
+	const record = recordOf(document, childId);
 	observe(
 		"the child's own consumption was saved under the child's own identity by its own process",
 		record !== undefined && record.parent === parent?.id && (record.own?.[PROVIDER]?.[MODEL]?.tokens?.input ?? 0) > 0,
@@ -703,8 +803,8 @@ async function phaseBackgroundDelegation(cli: PiCli): Promise<void> {
 	);
 	observe(
 		"the child's own file and the saved record agree on the session that spawned it",
-		path.resolve(child.header.parentSession ?? "") === path.resolve(parentFile) && record?.parent === parent?.id,
-		`header: ${JSON.stringify(child.header.parentSession)}, record: ${JSON.stringify(record?.parent)}`,
+		path.resolve(child?.header?.parentSession ?? "") === path.resolve(parentFile) && record?.parent === parent?.id,
+		`header: ${JSON.stringify(child?.header?.parentSession)}, record: ${JSON.stringify(record?.parent)}`,
 	);
 	observe(
 		"the saved startup pair is the one the child's own start stated",
@@ -717,6 +817,18 @@ async function phaseBackgroundDelegation(cli: PiCli): Promise<void> {
 		"the child's own process started no root-side prefetch of its own",
 		dock.run.capture.balanceCalls().length === balanceBefore + 1,
 		`balance calls ${JSON.stringify(dock.run.capture.balanceCalls().map(call => call.url))}`,
+	);
+	// And what that session's context read travelled too, with the model it was read at and with the
+	// owner process's own source holding the same reading — the reading the child's process measured
+	// was the one the owner's process kept, without either of them reading anything to obtain it.
+	const forChild = observationLines(session).filter(line => factOf(line, "id") === childId);
+	const contextLines = forChild.filter(line => line.startsWith("context ") && factOf(line, "tokens") !== "none");
+	observe(
+		"the child's context reading reached the owner's process with the model it was read at",
+		contextLines.length > 0 &&
+			contextLines.every(line => factOf(line, "held_tokens") === factOf(line, "tokens")) &&
+			contextLines.some(line => (factOf(line, "model") ?? "none") !== "none"),
+		`lines: ${JSON.stringify(contextLines.slice(0, 3))}`,
 	);
 }
 

@@ -739,7 +739,8 @@ processes that lose no update, and readers that only ever see whole documents.
 
 The framework's general local-access module ([`modules/local-access.ts`](../modules/local-access.ts))
 is the one way a process offers the *declared values* of an owner it serves to a session this harness
-runs in another process: the serving process publishes where its access is, and a reading process in
+runs in another process, and the one way such a session hands the process that serves its owner the
+*observation* of itself: the serving process publishes where its access is, and a session in
 another process reaches it over a name the platform already provides — a Windows named pipe
 (`\\.\pipe\my-agent-toolkit-access-<id>`) or a POSIX socket file. It is **not** an extension entry and
 not part of `public.ts`: an extension never touches it. The harness adapter builds the serving half and
@@ -769,9 +770,32 @@ serves its owner.
 **What one access is.** A *seat* is one extension's access to one owner (`{ extension, owner }`) — an
 owner key alone is not unique across extensions, because two extensions of one process serve the same
 session's owner. The serving process offers a seat's current declared values, pushes that seat's
-changes one way, and answers a declared read on demand. Nothing else crosses: there is no write frame,
-no method name and no argument list, so this is not an RPC surface, and a frame that is not the declared
-`hello` or `read` is refused rather than interpreted.
+changes one way, and answers a declared read on demand; the same seat carries one direction more, and
+it is the observation a session the harness ran elsewhere holds of itself. Nothing else crosses: there
+is no write frame, no method name and no argument list, so this is not an RPC surface, a session cannot
+reach any value or any other session through it, and a frame that is not the declared `hello`, `read`
+or `observed` is refused rather than interpreted.
+
+**The two halves of one seat are offered separately.** `OwnerAccessPublisher.offer` offers a seat's
+declared values and `OwnerAccessPublisher.receive` receives its observations; the seat, its location
+record and its endpoint live while either half is offered and are released with the last of them, and
+a half offered again over a seat that is still there keeps that seat's verification, so a reader that
+already read the record is not locked out by it. An adapter builds the serving half once per process
+and hands the framework the two directions it uses: `HarnessPort.sessionObservationAccess` carries
+`receive` (the owner this process serves admits the readings delivered for it) and `deliver` (a reading
+of a session this process runs whose owner it does not serve, carried to the process that serves it).
+
+**Observation delivery.** The framework decides *which* readings cross, not the adapter: a session's
+facts are handed over where the delivery that named it arrived, its activity and its context where the
+edges and collections that moved them ran, and only for a session whose owner this process does not
+serve (`core/observations.ts`, `handOverReading`). On the other end the receiving process records the
+reading in its own observation source and dispatches it to the subscribers of the session that follows
+that owner (`behaviors/binding.ts`, `adoptReading`), so an extension reads a session it never ran
+exactly as it reads its own. `createObservationDeliverer` is the delivering half as an adapter uses it:
+one reach per owner, the state this process holds sent as the access's first word, later readings
+written straight onto the connection, a miss reported as nothing at all, and a runtime directory this
+process cannot state reported as its own configuration failure. Nothing here is persisted and nothing
+is polled: a reading arrives because a session's own observation moved.
 
 **The location is separate from the messages.** One JSON record per seat lives under the configured
 runtime directory, named from the seat itself, holding the seat, the endpoint, that access's own

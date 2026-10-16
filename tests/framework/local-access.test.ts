@@ -787,7 +787,7 @@ describe("the framework offers an owner's access with the owner's life (S1)", ()
 		}
 	});
 
-	test("the pi assembly offers an owner only for a follow field in a host that spawns sessions", async () => {
+	test("the pi assembly offers an owner's values only for a follow field, and its observation seat wherever it spawns", async () => {
 		const follow = defineExtension({
 			id: "local-access-follow-probe",
 			displayName: "localAccessFollowProbe",
@@ -795,6 +795,7 @@ describe("the framework offers an owner's access with the owner's life (S1)", ()
 		});
 		const plain = defineExtension({ id: "local-access-plain-probe", displayName: "localAccessPlainProbe" });
 		const childEntry = path.join(REPO_ROOT, "entrypoints", "pi", "model-cost.ts");
+		const repositoryConfig = path.join(REPO_ROOT, "framework", "config.yaml");
 		rmSync(REPO_RUNTIME_DIRECTORY, { recursive: true, force: true });
 		try {
 			const offering = boundPiSurface({ definition: follow, childEntry });
@@ -807,7 +808,7 @@ describe("the framework offers an owner's access with the owner's life (S1)", ()
 			expect(record.extension).toBe(follow.id);
 			// The read itself is the same-process one: a session in this process reads the store it
 			// serves, and the record is what a session in another process would use.
-			const caller = await openOwnerAccess({ target, configPath: path.join(REPO_ROOT, "framework", "config.yaml"), waitMs: 10000 });
+			const caller = await openOwnerAccess({ target, configPath: repositoryConfig, waitMs: 10000 });
 			expect(await caller.request("enabled")).toBe(false);
 			caller.dispose();
 
@@ -819,23 +820,36 @@ describe("the framework offers an owner's access with the owner's life (S1)", ()
 			const inProcess = boundPiSurface({ definition: follow });
 			inProcess.sessionStarts({ sessionId: "pi-in-process-session" }, "new");
 
-			// A field that declares no follow is never read as another session's value, so an owner
-			// of one is not offered either.
+			// A field that declares no follow is never read as another session's value, so no value is
+			// served for that owner. Its *observation* seat is another matter: this host spawns
+			// sessions, so the sessions that follow that owner are observed here and deliver to this
+			// process, and the seat they deliver to is served for as long as this process serves the
+			// owner.
 			const spawning = boundPiSurface({ definition: plain, childEntry });
 			spawning.sessionStarts({ sessionId: "pi-plain-session" }, "new");
+			const observationSeat: AccessTarget = { extension: plain.id, owner: "main:pi-plain-session" };
+			expect(localOwnerAccess(observationSeat)).toBeUndefined();
+			await until(() => recordsIn(REPO_RUNTIME_DIRECTORY).length === 1, "the observation seat published no record");
+			expect(onlyRecord(REPO_RUNTIME_DIRECTORY).owner).toBe(observationSeat.owner);
+			// The seat carries no values at all: a reader that reaches it is answered nothing for the
+			// field, because the owner of a field that follows nothing serves none.
+			const reading = await openOwnerAccess({ target: observationSeat, configPath: repositoryConfig, waitMs: 10000 });
+			expect(await reading.request("enabled")).toBeUndefined();
+			reading.dispose();
 
-			// Neither offers anything: a process that would have published states no record, and the
-			// state of the store they serve is the ordinary in-process one.
+			// The process that runs every session here published no record, and neither did the one
+			// whose owner is gone: the observation seat went with its owner's life too.
 			const absent = await refusalOf(
 				openOwnerAccess({
 					target: { extension: follow.id, owner: "main:pi-in-process-session" },
-					configPath: path.join(REPO_ROOT, "framework", "config.yaml"),
+					configPath: repositoryConfig,
 					waitMs: 300,
 				}),
 			);
 			expect(absent.reason).toBe("no-location");
-			expect(localOwnerAccess({ extension: plain.id, owner: "main:pi-plain-session" })).toBeUndefined();
-			expect(recordsIn(REPO_RUNTIME_DIRECTORY)).toEqual([]);
+			spawning.sessionShutsDown({ sessionId: "pi-plain-session" }, "quit");
+			await until(() => recordsIn(REPO_RUNTIME_DIRECTORY).length === 0, "the observation seat outlived the session");
+			expect(localOwnerAccess(observationSeat)).toBeUndefined();
 		} finally {
 			rmSync(REPO_RUNTIME_DIRECTORY, { recursive: true, force: true });
 		}

@@ -60,7 +60,7 @@
  * This module is harness-independent: it reads and writes no State and names no native API.
  */
 import type { ExtensionDefinition } from "../core/definition";
-import type { SessionObservations } from "../core/observations";
+import { handOverReading, type ObservationHandOver, type SessionObservations } from "../core/observations";
 import type { RoundDelivery, RoundEvent, RoundObservation, SubscriptionGroup } from "../core/protocol";
 import { ACTIVITY_OF_EDGE, type SessionActivityAxis } from "./session-activity";
 import { dispatchToGroups } from "./subscriptions";
@@ -138,6 +138,15 @@ export interface RoundSynthesisInputs {
 	 * second interpretation of the native facts.
 	 */
 	readonly activity: SessionActivityAxis;
+	/**
+	 * Where a reading of a session whose owner this process does not serve is handed, when this
+	 * binding's sessions may run in another process (see {@link ObservationHandOver}).
+	 *
+	 * The activity this synthesis derives is this process's own decision, so a session the harness
+	 * ran elsewhere is only observed here if the process that ran it delivers what it decided there —
+	 * and this is where that reading leaves, from the same edge that left it.
+	 */
+	readonly handOver?: ObservationHandOver;
 	/** Reports a handler's failure or an unarrangeable re-check outside model context. */
 	readonly reportFailure: (message: string) => void;
 	/** Arranges one callback on the harness's next task; see {@link HarnessPort.nextTask}. */
@@ -159,7 +168,7 @@ export interface RoundSynthesisInputs {
  * and an edge is dispatched through it so that bookkeeping and subscribers always agree.
  */
 export function createRoundSynthesis(inputs: RoundSynthesisInputs): RoundSynthesis {
-	const { definition, lives, groups, observations, activity, reportFailure, nextTask, delivering } = inputs;
+	const { definition, lives, groups, observations, activity, handOver, reportFailure, nextTask, delivering } = inputs;
 	/** The settle each session is waiting to have confirmed, by that session's identity. */
 	const candidates = new Map<string, RoundObservation>();
 
@@ -174,14 +183,19 @@ export function createRoundSynthesis(inputs: RoundSynthesisInputs): RoundSynthes
 		dispatchRoundEvent(definition, lives, delivery, groups, reportFailure);
 		// The reading this edge leaves the session in, recorded after the edge was applied so the
 		// source and the subscribers agree on what the edge left behind.
-		observations?.observeActivity(observation.session.sessionId, ACTIVITY_OF_EDGE[kind]);
+		const reading = ACTIVITY_OF_EDGE[kind];
+		if (observations?.observeActivity(observation.session.sessionId, reading) === true) {
+			// A reading this process decided is the reading its owner's process needs, where the owner
+			// is not served here: it leaves with the same edge, carrying the session's own facts.
+			handOverReading(handOver, { session: observation.session, owner: observation.owner, activity: reading });
+		}
 		// The edge's own current-state projection, stated after the edge so a subscriber that reads
 		// both axes sees the transition before the reading it left behind. It is dispatched from the
 		// session the edge named, which is why one session's transition never moves another's reading.
 		activity.observe({
 			session: delivery.session,
 			owner: delivery.owner,
-			activity: ACTIVITY_OF_EDGE[kind],
+			activity: reading,
 			hasUI: delivery.hasUI,
 			feedback: delivery.feedback,
 		});

@@ -30,6 +30,7 @@ import type {
 	CommandInvocation,
 	FeedbackLevel,
 	MarkerTransport,
+	ObservedSession,
 	OwnerReference,
 	PromptContribution,
 	ProviderAccess,
@@ -41,6 +42,7 @@ import type {
 	SessionDelivery,
 	SessionEvent,
 	SessionFacts,
+	SessionObservationAccess,
 	StateValues,
 	TurnSignal,
 	TurnSignalFacts,
@@ -221,6 +223,21 @@ export interface PortDouble {
 	 * framework's own behavior ran before it did.
 	 */
 	readonly markerUpdates: ReadonlyArray<readonly string[]>;
+	/**
+	 * Every reading this double's access was asked to deliver, in order: what this process handed over
+	 * for a session whose owner it does not serve. It is empty unless the double was built with
+	 * {@link PortDoubleOptions.observationsAcrossProcesses}.
+	 */
+	readonly deliveredObservations: readonly ObservedSession[];
+	/** The owner keys this double's access is receiving observations for right now. */
+	readonly receivingOwners: readonly string[];
+	/**
+	 * Delivers one reading a session in another process sent for an owner, as the serving end of the
+	 * access does: whoever receives that seat's observations is handed it, and a reading for an owner
+	 * this process receives nothing for reaches nobody — the same silence the real access answers a
+	 * delivery with when the seat is not served here.
+	 */
+	deliverObserved(reading: ObservedSession): void;
 	bind(definition: ExtensionDefinition, options?: PortBindingOptions): BindingResult;
 	/** Runs one registered command as a user of `owner` would; throws when it was never registered. */
 	run(command: string, options?: CommandRunOptions): CommandRun;
@@ -319,8 +336,7 @@ export interface PortDouble {
 	): Promise<RunInitiation>;
 }
 
-/**
- * The model prices one double's harness reports, when a suite drives an extension that prices a
+/** The model prices one double's harness reports, when a suite drives an extension that prices a
  * channel from the harness's own catalog. Omitted models a harness that states no prices at all,
  * which is the member being absent rather than an empty query.
  */
@@ -338,6 +354,18 @@ export interface PortDoubleOptions {
 	 * in-process assembly: every read is this process's own cell or the declared default.
 	 */
 	readonly follow?: FollowedAccessReader;
+	/**
+	 * Whether this double's harness carries observations across processes, as an adapter whose
+	 * sessions may run in another process does (see {@link SessionObservationAccess}).
+	 *
+	 * Omitted models the in-process assembly: the port supplies no access at all, every session this
+	 * double reports is observed into this process's own source, and no reading crosses anywhere. A
+	 * suite that states it drives the framework's side of the boundary — what it receives, what it hands
+	 * over, and what it does with a reading that arrived — through a double whose access is a plain
+	 * record rather than a carrier; the real carrier is what `local-access-observation.test.ts` starts
+	 * processes over.
+	 */
+	readonly observationsAcrossProcesses?: boolean;
 }
 
 export function portDouble(options: PortDoubleOptions = {}): PortDouble {
@@ -368,6 +396,22 @@ export function portDouble(options: PortDoubleOptions = {}): PortDouble {
 	const markerUpdates: string[][] = [];
 	/** The callbacks the framework arranged on the harness's next task, oldest first. */
 	const pendingTasks: Array<() => void> = [];
+	/** What this process handed over for the sessions whose owners it does not serve, in order. */
+	const deliveredObservations: ObservedSession[] = [];
+	/** Where each owner's admitted readings are handed, as the serving end of the access holds them. */
+	const receivingSinks = new Map<string, (reading: ObservedSession) => void>();
+	const observationAccess: SessionObservationAccess | undefined =
+		options.observationsAcrossProcesses !== true
+			? undefined
+			: {
+					receive: (owner, sink) => {
+						receivingSinks.set(owner, sink);
+						return () => {
+							if (receivingSinks.get(owner) === sink) receivingSinks.delete(owner);
+						};
+					},
+					deliver: reading => void deliveredObservations.push(reading),
+				};
 
 	const commandUnder = (name: string): BoundCommand => {
 		const command = commands.find(candidate => candidate.name === name);
@@ -460,6 +504,7 @@ export function portDouble(options: PortDoubleOptions = {}): PortDouble {
 		},
 		...(options.modelPrices === undefined ? {} : { modelPrices: options.modelPrices }),
 		...(options.providerAccess === undefined ? {} : { providerAccess: options.providerAccess }),
+		...(observationAccess === undefined ? {} : { sessionObservationAccess: observationAccess }),
 		reportDiagnostic: message => {
 			diagnostics.push(message);
 		},
@@ -511,6 +556,17 @@ export function portDouble(options: PortDoubleOptions = {}): PortDouble {
 		registrations,
 		commands,
 		markerUpdates,
+		deliveredObservations,
+		get receivingOwners(): readonly string[] {
+			return [...receivingSinks.keys()];
+		},
+		deliverObserved(reading) {
+			// The serving end hands one seat's readings to whoever receives that seat, and nothing to
+			// anyone else: an owner this process receives nothing for is handed nothing, exactly as the
+			// real access answers a seat it does not serve.
+			if (reading.owner.kind !== "inherited") return;
+			receivingSinks.get(reading.owner.key)?.(reading);
+		},
 		bind(definition, options = {}) {
 			const { config, factory, ...implementation } = options;
 			return bindExtension(

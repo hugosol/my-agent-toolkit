@@ -6,8 +6,10 @@
  * observation interface: one source belongs to one extension in one process — created by the
  * adapter beside the State store and handed to every binding it makes, exactly as that store is —
  * so the sessions this process runs, main and subagent alike, are observed into one place however
- * many bindings report their facts. A session the harness runs in another process is not here at
- * all; carrying its facts across that boundary is the local access's business, not this source's.
+ * many bindings report their facts. A session the harness runs in another process is not observed
+ * into anything here until its readings arrive: the adapter's own local access carries them, and
+ * {@link handOverReading} is the framework's rule for which readings are the ones that cross in the
+ * other direction — out of this process, to the owner they follow.
  *
  * Two readings are recorded and nothing else: the activity the framework's own Round bookkeeping
  * last left a session in, and the latest context reading an adapter collected for it. Neither is
@@ -29,11 +31,50 @@
  */
 import type {
 	AgentActivity,
+	ObservedSession,
 	OwnerReference,
 	SessionContextReading,
 	SessionFacts,
 	SessionObservation,
 } from "./protocol";
+
+/**
+ * Where this process's readings of the sessions a process elsewhere serves go: the one rule that
+ * decides whether a reading crosses the boundary between the two processes, and the access that
+ * carries it.
+ *
+ * A session the harness runs in this process and whose owner this process serves is observed here
+ * and delivered here; there is nowhere to hand its readings, and nothing to hand them to. A session
+ * whose owner this process does *not* serve is the one case that crosses: the owner — and every
+ * reader of it — lives in the process that runs that owner, and this process holds the session's own
+ * observation (its facts, its activity and its context) and can state it to nobody else. That is the
+ * whole of the choice, and it is made from what the framework's own deliveries resolved: an owner key
+ * this process has served, and the owner reference the delivery carries.
+ *
+ * `serves` is asked per reading rather than captured, because which owners this process serves
+ * changes with its own sessions: a process that begins serving an owner begins holding that owner's
+ * sessions' readings itself.
+ */
+export interface ObservationHandOver {
+	/** Whether this process serves this owner: a reading of the sessions that follow it is already here. */
+	serves(ownerKey: string): boolean;
+	/** Hands one moved reading of one session to the process that serves the owner it follows. */
+	changed(reading: ObservedSession): void;
+}
+
+/**
+ * Hands one reading over, where it is one this process does not already hold.
+ *
+ * Three cases and no fourth: a reading of a session that follows an owner this process serves stays
+ * here, because this source is where that owner's sessions are observed; a reading of a session whose
+ * owner this process cannot name has no seat to be carried to; and everything else — a session whose
+ * owner is served elsewhere — crosses.
+ */
+export function handOverReading(handOver: ObservationHandOver | undefined, reading: ObservedSession): void {
+	if (handOver === undefined || reading.owner.kind !== "inherited") return;
+	if (handOver.serves(reading.owner.key)) return;
+	handOver.changed(reading);
+}
 
 /** One session's entry inside the source: the reading being read or written, never handed out as a handle. */
 interface Entry {
@@ -108,6 +149,31 @@ export class SessionObservations {
 	/** One session's current observation, or nothing when this process has observed none of it. */
 	read(sessionId: string): SessionObservation | undefined {
 		return this.#bySession.get(sessionId);
+	}
+
+	/**
+	 * Every session this source holds for one owner, with the readings it currently holds for it.
+	 *
+	 * This is what an access's first word to the process serving that owner carries: the readings
+	 * already collected here for the sessions that follow it, each with the facts that name it, so a
+	 * reading taken before that access was reached is not lost and nothing has to be re-collected for
+	 * it. Entries that never saw a session's own facts are left out — a reading with no identity
+	 * cannot be delivered to the process that has to key it — and an absent reading stays absent
+	 * rather than being stated as a zero.
+	 */
+	readingsFor(ownerKey: string): readonly ObservedSession[] {
+		const readings: ObservedSession[] = [];
+		for (const entry of this.#bySession.values()) {
+			const { session, owner } = entry;
+			if (session === undefined || owner?.kind !== "inherited" || owner.key !== ownerKey) continue;
+			readings.push({
+				session,
+				owner,
+				...(entry.activity === undefined ? {} : { activity: entry.activity }),
+				...(entry.context === undefined ? {} : { context: entry.context }),
+			});
+		}
+		return readings;
 	}
 
 	/**

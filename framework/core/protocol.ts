@@ -968,6 +968,62 @@ export interface SessionContextDelivery {
 	readonly feedback: FeedbackTransport;
 }
 
+/**
+ * One actual session's observation as it crosses a process boundary: the session's own facts, the
+ * owner it follows, and the readings currently known for it.
+ *
+ * It is what the process that *runs* a session hands the process that serves the owner that session
+ * follows, and it travels in the observation direction of the framework's local access. The facts
+ * are the ones the running process resolved from its own host — never a name, a path or a process id
+ * read as an identity on the way — and the two readings are the same ones the framework's own
+ * observation source holds: the activity the running process's Round bookkeeping last left the
+ * session in, and the latest context reading its adapter collected for it. An absent reading is the
+ * honest absence rather than a zero, exactly as it is in the source.
+ *
+ * A session's identity travels with every reading of it, so the receiving process records the facts
+ * and the owner from the same word it takes readings from, and an arriving word is adopted as the
+ * reading it is: nothing here drives a Round, mints a Turn or accounts a request.
+ */
+export interface ObservedSession {
+	/** The actual session's own facts, as the process that runs it resolved them. */
+	readonly session: SessionFacts;
+	/** The owner that session follows — the seat this observation belongs to. */
+	readonly owner: OwnerReference;
+	/** The activity the running process's Round bookkeeping last left that session in, when it has one. */
+	readonly activity?: AgentActivity;
+	/** The latest context reading that process collected for the session, when it has one. */
+	readonly context?: SessionContextReading;
+}
+
+/**
+ * The framework's cross-process half of session observation, as one adapter's local access supplies
+ * it: the process that serves an owner's seat and the process that runs a session following that
+ * owner, each with the one direction it speaks.
+ *
+ * `receive` is the serving half. The process that serves a seat offers it here for exactly as long as
+ * it serves that owner, and the readings a session the harness ran in another process delivers are
+ * handed to the sink. Nothing else crosses: the carrying, the connection, the target check and the
+ * access's own verification are the adapter's, and what the framework does with a reading that
+ * arrived is the framework's own rules (see `core/observations.ts` and `behaviors/binding.ts`).
+ *
+ * `deliver` is the reading half. A reading of a session this process runs whose owner it does not
+ * serve is handed here, and the adapter carries it to the process serving that owner over the same
+ * access — the first word it sends to a seat carries the readings that process currently holds for
+ * the owner's sessions, so a reading collected before the access was reached is not lost.
+ *
+ * Neither half is a write path to anything: a reading states what a session was observed to be, and
+ * a seat's declared State values are read and never written from here.
+ */
+export interface SessionObservationAccess {
+	/**
+	 * Admits the readings delivered for one owner this process serves: `ownerKey` is that owner's
+	 * key — the seat's own owner half — and the returned function withdraws exactly this admission.
+	 */
+	receive(ownerKey: string, sink: (reading: ObservedSession) => void): () => void;
+	/** Delivers one reading of one session this process runs to the process that serves its owner. */
+	deliver(reading: ObservedSession): void;
+}
+
 /** One extension handler for one semantic context edge. */
 export type SessionContextHandler = (delivery: SessionContextDelivery) => void | Promise<void>;
 
@@ -1553,6 +1609,18 @@ export interface HarnessPort {
 	 * rather than as a reading of zero.
 	 */
 	onSessionContext(handler: (observation: SessionContextObservation) => void): void;
+	/**
+	 * The framework's local access to the sessions this harness runs in another process, when this
+	 * adapter can carry observations across that boundary (see {@link SessionObservationAccess}).
+	 *
+	 * It is the adapter's own business — offering the seat of an owner this process serves, carrying
+	 * a reading to the process that serves the owner a session follows, and everything about the
+	 * connection — and what crosses this member is only the two directions the framework uses. An
+	 * adapter whose harness runs every session in this process omits it, and the framework then
+	 * observes into this process's own source alone: a reading is delivered across processes only
+	 * where the harness itself can have a session elsewhere.
+	 */
+	sessionObservationAccess?: SessionObservationAccess;
 	/**
 	 * Arranges one callback on the harness's next task: after the callback that is running has
 	 * returned and the host has had its chance to settle.
