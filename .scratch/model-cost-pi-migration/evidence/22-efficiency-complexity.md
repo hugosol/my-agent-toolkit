@@ -114,12 +114,12 @@ disposal / afterDisposal             0/0        0/0    0/0      0/0       0/0   
 
 - **人类验收未完成**：`P51` 的最终判断（"明显额外开销与复杂度是否可接受"）属人类验收者，本票只准备材料，**不标为通过**；`P52`（真实终端观感）、`P53`（真实账户侧核对）不在本票范围。
 - **不预设百分比**：报告与本文只陈述可归属的差值与成本，任何"可接受"判断留给人类；`compare:efficiency` 不因差异失败。
-- **未逐步归因的项**：(a) 并发序列 draws 的 +2（机制可归属到 P24 新增的每子代理 Round 结束 `announce()`，但未定位到具体哪几次渲染被合并）—— **§13/§14 把它归到唯一路径、§17.1 归到渲染级（同一帧内容多画 3 次）、§18 归到通知级（3 条通知 ↔ 3 帧 1:1 配对，其中第 3 条即该 `announce()`），该条已关闭**；(b) 主子会话例 widget 绘制 33 → 18 —— **§15.3 已把它归到内容级**：两侧状态推进与内容一致，差异全在同一状态被重复重绘的次数（迁移前 33 帧 = 6 条两行帧 + 27 条三行帧、尾部那组三行帧重绘 26 次；迁移后 18 帧 = 6 + 12、同一组 12 次），同一 run 的非 widget 帧数（38）、provider 到达、存储根操作与网络效果逐项相同，**逐帧/逐通知的机制定位仍未做**。两者都只涉及前端渲染次数。
+- **未逐步归因的项**：(a) 并发序列 draws 的 +2（机制可归属到 P24 新增的每子代理 Round 结束 `announce()`，但未定位到具体哪几次渲染被合并）—— **§13/§14 把它归到唯一路径、§17.1 归到渲染级（同一帧内容多画 3 次）、§18 归到通知级（3 条通知 ↔ 3 帧 1:1 配对，其中第 3 条即该 `announce()`），该条已关闭**；(b) 主子会话例 widget 绘制 33 → 18 —— **§15.3 已把它归到内容级**：两侧状态推进与内容一致，差异全在同一状态被重复重绘的次数（迁移前 33 帧 = 6 条两行帧 + 27 条三行帧、尾部那组三行帧重绘 26 次；迁移后 18 帧 = 6 + 12、同一组 12 次），同一 run 的非 widget 帧数（38）、provider 到达、存储根操作与网络效果逐项相同，**逐帧/逐通知的机制定位仍未做**（§19.5 记录本轮对这条的处置与理由：方向为减少、不属 P51 的交付项，按限制记录）。两者都只涉及前端渲染次数。
 - **只覆盖 OMP 侧的"同进程无 IPC"**：pi 的本机接入（管道发布/连接）按其设计存在，其行为由 P14/P16/P42/P56 的分区与真实 pi 冒烟覆盖；本票的记录器只注入 OMP dock 的宿主进程，未对 pi 宿主做同样的外部效果计数。
 - **S1 采样不覆盖宿主原生半边**：OMP adapter 的原生事实映射、宿主自己的会话 JSONL/日志、真实终端绘制仍不可比（01 的 `notComparableScenarios` 原样保留）；本票用真实 OMP 宿主覆盖了其中的存储/请求/IPC/空闲部分，但不覆盖真实终端绘制与真实 provider 账户。
 - **范围限制**：全部证据仅覆盖 win32/x64、bun 1.4.2、隔离 OMP 18.5.0（未打补丁）、以及指向本机 capture endpoint 的 shipped DeepSeek provider；不推广到其他版本、POSIX、跨用户或真实账户。
 - **迁移前 dock 对照的构造**：before 侧是把本票新增的测试文件与记录器复制进 `59a0ed7` 工作树后运行（该文件当时不存在）；两侧使用同一份测试文件与同一份 OMP 18.5.0 安装版本，故计数可比。after 侧表内 `ms`/失败列等噪声项不参与比较。（§15.3 用同一构造在 `9738b5f` 上第一手复现了 `10`/`33`，该 revision 的产品面与 `59a0ed7` 逐文件相同。）
-- **已关闭的限制**：§8/§11/§12 列出的「对照入口无自动化测试覆盖」已由 §13 的 `tests/harness-dock/efficiency-comparison.test.ts`（11 例，含 4 次目标注入证明灵敏度）关闭；§14 另把 §13 的 A/B 归因改写成可复现形式（原报告引用的临时提交 `3f547df` 在交付分支不可达）；§15.2 补上「同一陈述下迁移前产品的实测」（冻结对照里的 `requests`/`events` 两条是陈述级而非产品级），§15.3 把主子例 `frames 33 → 18` 归到内容级；**§17.1 把并发序列 `draws +3` 归到渲染级、§18 把它的「通知→帧」配对做完（本票内部最后一条可归属缺口）**；本节其余各条仍然成立。
+- **已关闭的限制**：§8/§11/§12 列出的「对照入口无自动化测试覆盖」已由 §13 的 `tests/harness-dock/efficiency-comparison.test.ts`（11 例，含 4 次目标注入证明灵敏度）关闭；§14 另把 §13 的 A/B 归因改写成可复现形式（原报告引用的临时提交 `3f547df` 在交付分支不可达）；§15.2 补上「同一陈述下迁移前产品的实测」（冻结对照里的 `requests`/`events` 两条是陈述级而非产品级），§15.3 把主子例 `frames 33 → 18` 归到内容级；**§17.1 把并发序列 `draws +3` 归到渲染级、§18 把它的「通知→帧」配对做完（本票内部最后一条可归属缺口）**；**§19** 用第二套独立管线（`git archive` tar 流 + 逐文件行计数）复算产品面复杂度并与对照入口的数字**逐族一致**（`19287 → 23773 (+4486)`，集成尖端 `190e1b5` 相同），并把分区首次运行的一次**负载型假失败**（`model-cost-modes.test.ts` 两例 90s 宿主启动停滞、其 `catch` 的 `EBUSY` 掩盖原错；同样两例单跑 6.71s 通过、同源状态整分区重跑 **104 pass / 0 fail** / 220.12s）如实记录在案；本节其余各条仍然成立。
 
 ## 7. 复现步骤（本票实际执行）
 
@@ -629,3 +629,87 @@ MY_DOCK_FRAMES_OUT=<logs>/22-takeover-i-frames-after  bun test tests/harness-doc
 ### 18.4 本轮未覆盖项
 
 `P51`/`P52`/`P53` 的人类判断未做（票内含人类确认的两个勾选项保持未勾选）；并发序列 `draws +3` 的**通知→帧配对本轮已完成**（18.1），主子例 `frames 33 → 18` 仍是**内容级**（§15.3，§17.1 独立复算一致）；pi 侧本机接入未做同样的记录器注入；证据范围仍限 win32/x64、bun 1.4.2、隔离 OMP 18.5.0（未打补丁）、无 provider 凭据（模型请求与余额查询由本机 capture endpoint 回答）；§15.2 的匹配采样是补充可比性材料，不改写 01 的冻结工件；`.cache/22` 一项仍按 §17.3 的事实记为丢失。
+
+## 19. 第十二次接手复核（源状态 `0d92213`；公开入口/所属分区/消费者第一手重跑 + 第二套独立管线复算复杂度 + 集成尖端只读核对；含一次负载导致的假失败及其排除）
+
+接手时：HEAD `0d92213437f1fabf07aaa983414fd212f548ceea`（= §18 定稿树；`efb03e0` … `78cfbf5` 的既有提交全部原样保留，**未做任何 reset**，未改产品代码或 fixture）。工作树除 `bun.lock` 与两份 `host-patches/*/patch.diff`（§8/§12/§14/§17/§18 记录的 `core.autocrlf=true` 检出 stat 现象）外干净：本轮用 `sha256sum` 逐份比过工作树文件与 `HEAD` blob —— `bun.lock` 两侧同为 `a5d37ab28396324eab85bcf6404c7cfb63c968925b7ae58378f8492bbea820e6`、`host-patches/omp-18.5.0-viewed-session/patch.diff` 两侧同为 `66195465cc0c56c7726d9475e376c86a7632f1a062318b5cbe296526cf96602b`（三份文件工作树里 CRLF 计数均为 0，即已是 LF）—— 即内容与 `HEAD` 相同、**未 checkout/restore**。源状态快照见 `logs/22-takeover-m-source.txt`：`head=0d92213`、分支 `hyper/model-cost-pi-migration/22-efficiency-acceptance-a73e6b-411dc288ea83`、`git diff --name-only 39fdc3d HEAD -- framework extensions entrypoints` 为空。本节改动只有 `.scratch/` 下的本文件、票文件与 `logs/22-takeover-m-*`；**所有采样与测试都在源码/fixture 未变的状态下跑完，之后才写本节**。
+
+### 19.1 公开入口、所属分区与共同消费者（本树，串行；运行期间未改被测源码或 fixture）
+
+| 命令 | 退出 | 结果 | 日志 |
+| --- | --- | --- | --- |
+| `bun run typecheck` | 0 | `tsc --noEmit` 无诊断 | `logs/22-takeover-m-typecheck.log` |
+| `bun run baseline:efficiency --out …/logs/22-takeover-m-after.json --label takeover-m`（`14:04:54Z`） | 0 | 七条序列 `every invariant held.`；下表；并发序列 `requests=2`（`/user/balance`×2）、`draws=33`、`events=23`；probe `{"operations":13,"documentReads":2,"documentPublishes":1,"lockOperations":7,"stagingOperations":2,"syncOperations":1}`（与 §9–§18 逐项相同） | `logs/22-takeover-m-baseline.log`、工件 `22-takeover-m-after.json` |
+| 新跑工件 vs 已提交 `22-efficiency-after.json` | 0 | `none: every comparable figure of every sequence and window agrees.`、`every sequence delivered the same kinds the same number of times.`；`PRODUCT SUBTOTAL 23773 → 23773 (+0)`、`EVIDENCE SUBTOTAL 80455 → 79994`（−461 = §13 的 `tests/harness-dock/efficiency-comparison.test.ts` 与 §10 的对照入口改动：本树 revision 有、`efb03e0` 没有） | `logs/22-takeover-m-reproduction.txt`、`…-reproduction-console.log` |
+| `--before 01-… --after 22-…`（`--out` 到新文件） | 0 | 复现 §3/§4：`requests 1→2`、`draws 30→33`、`events 24→23`（`subagent_runtime 1 → 0`）、七条序列窗口级文件成本逐列相同；`PRODUCT 19287 → 23773 (+4486)`、`EVIDENCE 54806 → 80455`；**重生成报告与已提交 `logs/22-efficiency-comparison.txt` 逐字节相同**（两文件 sha256 同为 `a486f32712e4314108ef256d0e74a4aefdf7512ffb77e16600c5daab78b1fe72`，各 11531 字节） | `logs/22-takeover-m-frozen-comparison.txt`、`…-frozen-comparison-console.log`；`logs/22-takeover-m-vs-committed.txt`（01 vs 新跑工件） |
+| `bun test tests/harness-dock/efficiency-effects.test.ts`（真实宿主） | 0 | **3 pass / 0 fail**、21 expect()、15.34s；效果 `2295` / `2689`；存储根 13 次操作（`mkdir` 锁暂存、`mkdir cost-archive`、读 `codex-usage-estimate.json`、读 `consumption.json`、`realpath cost-archive`、两处 `rename`、两处 `unlink`、两处 `writeFile`，与 §5 明细逐条相同）；健康空闲窗口 `[]`；frames `10` / `18`；arrivals `["balance","model"]` / `["balance","model","model","model"]`；网络只有指向本机 capture 端口的一次 `createConnection`（无 `createServer`、无 `my-agent-toolkit-access`） | `logs/22-takeover-m-effects.log` |
+| `OMP_BOT_BINARY="E:/Developer/myhub/omp-bot/backend/target/release/omp-bot.exe" bun test tests/harness-dock`（所属分区，真实宿主，串行） | 0 | **104 pass / 0 fail**、1161 expect()、27 文件 / 220.12s（与 §13–§18 逐项相同） | `logs/22-takeover-m-partition-harness-dock-rerun.log` |
+| `bun test tests/framework`（共同路径消费者） | 0 | **481 pass / 0 fail**、2250 expect()、38 文件 / 39.37s | `logs/22-takeover-m-partition-framework.log` |
+| `bun test tests/model-cost`（共同路径消费者） | 0 | **463 pass / 0 fail**、2524 expect()、40 文件 / 7.34s（§11 记录的实时期限 flake 本轮未复现） | `logs/22-takeover-m-partition-model-cost.log` |
+
+`bun run baseline:efficiency` 的七条序列（本轮新跑，`--label takeover-m`）：
+
+```
+sequence                   events reads pubs locks stage  meta  dirs other  fail   req draws     ms  invariants
+main-request                    6     3     1     7      2      1     1     0     6      1     8     24 ok
+multi-turn                     14     3     1     7      2      1     1     0     6      1    16      7 ok
+main-child-concurrency         23     6     4    28      8      4     1     0    16      2    33     47 ok
+save-onto-shared-document       6     3     1     7      2      1     1     0     4      1     8      7 ok
+read-only-refresh               6     0     0     0      0      0     0     0     0      1     8      4 ok
+healthy-idle                    6     3     1     7      2      1     1     0     6      1     8   3007 ok
+disposal                       10     3     1     7      2      1     1     0     6      1     9    508 ok
+```
+
+（与 §17.2/§18.2 同一组数；`read-only-refresh` 序列级文件操作为 0，`healthy-idle`/`disposal` 的**测量窗口**为 0，两条序列自身各含一次准备轮 —— §16 的措辞口径。）
+
+### 19.2 分区首次运行的一次负载型假失败，与它的排除（如实记录）
+
+本轮第一次跑所属分区（`14:06`–`14:14`）结束时是 **102 pass / 2 fail**、整轮 **480.60s**（同源状态下 §13–§18 与本节重跑都是 220–232s，即约 **2.07×**）。两例都在 `tests/harness-dock/model-cost-modes.test.ts`：
+
+| 失败例 | 报告的错误 | 时长 |
+| --- | --- | --- |
+| `a hidden model draws no usage widget and still runs (P8, P9) > an unlisted pair shows no widget at all while the model really executes` | `EBUSY: resource busy or locked, rm '<TEMP>\omp-dock-model-cost-modes-hidden-GweJhC'`（`tests/harness-dock/run-root.ts:40`，来自 `startRun` 的 catch：`model-cost-modes.test.ts:319`） | 90052.85ms |
+| `a token-only model shows its approved usage with no amount of its own (P8) > the Go ids draw the fixed budget and a token total, and no currency anywhere` | 同上（`…-token-only-q8PD7b`） | 90049.04ms |
+
+**成因判读（第一手）**：可见的 `EBUSY` 不是根因 —— 它由 `startRun` 自己的 `catch` 里那句 `runRoot.dispose()` 抛出，**掩盖**了先前 `ControlledSession.start` 的停滞（该文件这两例自己声明的预算是 `240_000ms`，所以 90.05s 不是用例预算到期；`EBUSY` 出现在 90.05s 只说明那一刻宿主进程仍占着 run root）。即这一轮遇到的是宿主启动停滞，而不是行为失败。
+
+**排除证据（同一源状态 `0d92213`，产品代码与这两例的 fixture 本轮都未改动）**：
+
+1. 同样两例单独跑：`bun test tests/harness-dock/model-cost-modes.test.ts -t "unlisted pair shows no widget at all|the Go ids draw the fixed budget"` → **2 pass / 0 fail**、14 expect()、**6.71s**（`logs/22-takeover-m-modes-targeted-rerun.log`）—— 正常情况下这两例远在预算之内。
+2. 随后整分区重跑：**104 pass / 0 fail**、1161 expect()、27 文件 / **220.12s**（§19.1 表中那一行，`…-partition-harness-dock-rerun.log`），与 §13–§18 逐项相同。
+3. 本票不改产品代码（§19 开头：`framework`/`extensions`/`entrypoints` 零差异），这两例也不属于本票新增用例；首次运行期间本机没有其它被测套件在跑（两次 dock 运行之间只有只读 git 与文档写作）。
+
+**临时资源（本节第一手核对）**：失败运行留下的两个 run root 里的文件已全部删除（现存各 0 文件，只剩空目录骨架与一条指回同树内已删目标的悬空链接 `user-home/.bun/install/cache/yaml/2.9.1@@@1`，MSYS 下 `rm` 报 `Permission denied` 删不掉，按 OS temp 垃圾如实记录）。本票自己的前缀在 OS temp 下**新增残留 0**：`omp-dock-effect-*` 0、`efficiency-comparison-*` 0、`model-cost-baseline-*` 0（现存 4 个 `model-cost-baseline-probe-*` 的 mtime 为 `13:26`/`13:29`，早于本轮，与 §16/§17/§18 记录同一批）；另外两个 `omp-dock-model-cost-modes-*` 目录（`…-hidden-cRVyKC`、`…-token-only-7f2bTJ`）的 mtime 是 **2026-10-15 21:28/21:30**，属更早运行留下的、非本轮的残留。本轮**未创建临时 worktree、未使用 junction、未做任何缓存删除**（§17.3 那次事故的成因与正确做法在本轮不适用），也未改动任何 ref 或集成分支工作区。
+
+### 19.3 复杂度的第二套独立复算（`git archive` tar 流 + 逐文件行计数）
+
+§4/§10/§3 的复杂度由对照入口自己的管线（`git ls-tree` + `git cat-file --batch`）得到。本节另用一条**独立实现**复算：`git archive --format=tar <rev> framework extensions entrypoints` 取出该 revision 自己的 tree，逐 `.ts` 成员按"换行数 + 末字节非换行时 +1"计数（即 §10 定下的行口径），再按族聚合。
+
+| family | before `59a0ed7` | after `efb03e0` | tip `pi-adapter` `190e1b5` |
+| --- | --- | --- | --- |
+| `entrypoints/omp` | 28 | 28 | 28 |
+| `entrypoints/pi` | 9 | 18 | 18 |
+| `extensions/codebase-tools` | 90 | 111 | 111 |
+| `extensions/connect-bot` | 1608 | 1608 | 1608 |
+| `extensions/model-cost` | 8537 | 10326 | 10326 |
+| `framework` | 161 | 158 | 158 |
+| `framework/adapters` | 2571 | 3890 | 3890 |
+| `framework/behaviors` | 2070 | 2142 | 2142 |
+| `framework/core` | 2949 | 3248 | 3248 |
+| `framework/modules` | 1264 | 2244 | 2244 |
+| **PRODUCT SUBTOTAL** | **19287** | **23773** | **23773** |
+
+逐族与 `+4486` 与 §4 完全一致，且与对照入口自己在同一 revision 上的数字相同 —— 即 §4 那张表不是单一管线的产物。
+
+### 19.4 集成分支只读核对（本轮新增两条第一手事实）
+
+- `pi-adapter` 尖端仍 `190e1b5`（本轮未推进；未操作、未合入），`origin/pi-adapter` `212f32a` 是它的**祖先**；`git merge-base --is-ancestor origin/pi-adapter pi-adapter` → 0。
+- 产品面零漂移：`git diff --stat efb03e0 pi-adapter -- 'framework/**/*.ts' 'extensions/**/*.ts' 'entrypoints/**/*.ts'` **无输出**；`--after-rev pi-adapter` 得 `PRODUCT SUBTOTAL 19287 → 23773 (+4486)`、逐族与 §4/§19.3 相同（`EVIDENCE SUBTOTAL 54806 → 80085`，`logs/22-takeover-m-integration-tip-complexity.txt`）。
+- 合并可行性（只读）：`git merge-tree --write-tree --name-only HEAD pi-adapter` → exit 0、tree `fe49bdb7a94848f8f59d2fa20f51dd93d042d917`、**无冲突列表**（`logs/22-takeover-m-merge-tree.txt`；未改任何 ref 或工作树）。
+- **本轮新查清的一条集成事实**：尖端**尚不含本票的证据面文件** —— `pi-adapter:scripts/efficiency-comparison.ts` 与 `pi-adapter:tests/harness-dock/efficiency-effects.test.ts` 在尖端树里不存在，`pi-adapter:scripts/efficiency-baseline.ts` 是 1711 行的（§10 修正前）变体；尖端另含 **25 的证据审计段落** `framework/docs/harness-support.md`（本树没有，因为本票在它之前分叉）。因此合入本票会带入本票的 4 个证据面新增/修改文件并保留 25 那段文档，`merge-tree` 判定无冲突。**合入后全仓数的预期**：25 的记录是全组装树 `bun test` **1200 pass / 0 fail**，其中不含本票的 14 例（`efficiency-effects` 3 + `efficiency-comparison` 11），所以合并后的全仓运行预期为 **1214 pass**（由 25 的记录加算术得出，本节未跑全仓 `bun test`）。
+
+### 19.5 本轮未覆盖项
+
+`P51`/`P52`/`P53` 的人类判断未做（票内含人类确认的两个勾选项保持未勾选，本票只提供材料）；`pi` 侧本机接入未做同样的记录器注入（该观察面归 pi 各票，见 §6）；证据范围仍限 win32/x64、bun 1.4.2、隔离 OMP 18.5.0（未打补丁）、无 provider 凭据（模型请求与余额查询由本机 capture endpoint 回答）；§15.2 的匹配采样是补充可比性材料，不改写 01 的冻结工件；`.cache/22` 一项仍按 §17.3 的事实记为丢失；§19.2 那次负载型假失败的成因按观察记录（宿主启动 90s 停滞），未追到更深的系统层原因，结论是它不属本票改动。
+
+**主子例 `frames 33 → 18`（真实宿主）的处置（明确写下，不是遗漏）**：它保持 §15.3 的**内容级**归因（§17.1 用已提交转储独立复算一致），本轮**不再**为它加探针，理由三条：(a) 它的方向是重绘**减少**（33 → 18、与前帧逐字节相同的帧数 23 → 10、非 widget 帧数两侧同为 38），P51 要确认的"禁止的重复工作不新增"不因一次减少而改变；(b) 迁移前侧已有的两条可比差异（`requests`、`events`）已在 §15.2 归到采样陈述级，同陈述下全表只剩并发序列 `draws +3`，而那条已在 §17.1/§18.1 从路径级走到通知级配对被关闭；(c) 要把真实宿主侧也做到"逐通知→逐帧"，需要在宿主进程里包住前端自己的订阅（§18.1 的成套器械是对采样器**自己**的受控宿主做的，真实宿主侧只能临时改产品文件），代价与本票要交付的材料不成比例。该条因此**按限制记录**（属于 AC1 要求的"未覆盖项"），**不标为通过，也不影响 P51 的结论**（真实宿主侧的重绘次数差异只涉展示，且方向为减少）。
