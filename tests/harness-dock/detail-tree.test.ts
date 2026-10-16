@@ -317,6 +317,25 @@ function drawnRuntimeMs(text: string): number | undefined {
 	return Number(match[1]) * unit + rest;
 }
 
+/**
+ * The milliseconds the display states for one figure the document holds — the inverse of the reader
+ * above, in the same form: milliseconds under a second, then whole seconds, whole minutes and hours,
+ * a compound only where the figure needs it.
+ *
+ * A case that compares a drawn figure against the figure a document carries has only this form to
+ * compare in: the document keeps the exact milliseconds while the row states the readable unit, so a
+ * runtime past a second reaches the row rounded to whole seconds (1533 becomes 2s, read back as 2000).
+ */
+function statedRuntimeMs(runtimeMs: number): number {
+	if (runtimeMs < 1000) return Math.round(runtimeMs);
+	const seconds = Math.round(runtimeMs / 1000);
+	if (seconds < 60) return seconds * 1_000;
+	const minutes = Math.floor(seconds / 60);
+	if (minutes < 60) return (minutes * 60 + (seconds % 60 === 0 ? 0 : seconds % 60)) * 1_000;
+	const hours = Math.floor(minutes / 60);
+	return (hours * 3_600 + (minutes % 60 === 0 ? 0 : minutes % 60) * 60) * 1_000;
+}
+
 /** Lets the event loop turn over until nothing already queued is left. */
 async function queuedWorkSettled(): Promise<void> {
 	const { promise, resolve } = Promise.withResolvers<void>();
@@ -861,7 +880,11 @@ describe("a resumed process draws the runtime the document already carries (P10,
 			const row = (lines ?? []).find(line => line.includes(`\u2514\u2500 ${childName}`) || line.includes(`\u251C\u2500 ${childName}`));
 			if (row === undefined) throw new Error(`no child row was drawn: ${JSON.stringify(lines)}`);
 			const drawn = drawnRuntimeMs(row.slice(row.indexOf("  Run: ") + "  Run: ".length));
-			expect(drawn).toBe(savedRuntime);
+			// The row states the figure the resumed process loaded from the document, in the display's
+			// own unit — the saved milliseconds under a second, the saved figure rounded to whole
+			// seconds above it — so a second accumulation of the same execution would state a figure
+			// near twice this one rather than this one.
+			expect(drawn).toBe(statedRuntimeMs(savedRuntime));
 			expect(readFileSync(home.consumptionFile, "utf8")).toBe(before);
 		} finally {
 			await disposeRun(second);
