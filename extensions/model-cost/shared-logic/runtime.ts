@@ -48,7 +48,7 @@
  * continues the same measurement instead of re-anchoring on its first report.
  */
 import type { ExtensionImplementation, InitializationDelivery } from "../../../framework/core/assembly";
-import type { CatalogPriceSource, FeedbackTransport, ProviderAccess, SemanticEventHandlers } from "../../../framework/core/protocol";
+import type { CatalogPriceSource, FeedbackTransport, ProviderAccess, SemanticEventHandlers, SubagentIntegration } from "../../../framework/core/protocol";
 import type { HttpRequestOptions } from "../../../framework/modules/http";
 import { DEFAULT_CODEX_QUOTA_TTL_MS, type CodexQuotaFailure, createCodexQuota } from "./codex-quota";
 import { CodexEstimateStore } from "./codex-estimate-store";
@@ -63,7 +63,7 @@ import {
 import { MODEL_PRICING_DATA, type ModelPricingData, dataCatalog } from "./model-data";
 import { createPeriodSwitch } from "./period-switch";
 import { type ConsumptionPresenter, createPresentation } from "./presentation/display";
-import { createDisplayPreference, displayFormNotice } from "./presentation/display-preference";
+import { createDisplayPreference, displayFormNotice, displayFormUnavailableNotice } from "./presentation/display-preference";
 import { SessionActivityRegistry } from "./presentation/session-activity";
 import { SessionContextRegistry } from "./presentation/session-context";
 import { DEFAULT_BALANCE_TTL_MS, type ProviderBalanceFailure, createProviderBalance } from "./provider-balance";
@@ -143,6 +143,18 @@ export interface ModelCostRuntimeInputs {
 	 * header, its budget and its connection path — without reaching a provider.
 	 */
 	readonly httpRequest?: (url: string, options?: HttpRequestOptions) => Promise<Response>;
+	/**
+	 * The answer this entry's subagent integration settled as, as the harness assembly states it, or a
+	 * function answering nothing while no such answer exists.
+	 *
+	 * It decides one thing here: `/budget detail` draws the sessions this entry observed as its main
+	 * session's descendants, so an entry whose integration settled as the no-subagent mode has no such
+	 * form to offer and the action answers the operator instead of moving the preference. Every other
+	 * answer — an integrated entry, and an integration that failed rather than being absent — keeps the
+	 * action exactly as the extension delivers it, and so does an assembly that states none: the OMP
+	 * assembly states none because every entry it binds is integrated.
+	 */
+	readonly subagentIntegrationMode?: () => SubagentIntegration["mode"] | undefined;
 }
 
 /** The extension's business instance: the storage it saves consumption through and its initialization. */
@@ -573,13 +585,20 @@ export function createModelCostRuntime(inputs: ModelCostRuntimeInputs): ModelCos
 			// framework's routing reaches and whose effects and words are business decisions. `detail`
 			// flips the entry's preference and says which form the entry is now in; it checks no
 			// provider, no idle fact, no pending save and no UI, and it never creates a widget — a
-			// frontend draws what the changed preference now reads as, if it has anywhere to draw.
+			// frontend draws what the changed preference now reads as, if it has anywhere to draw. An
+			// entry whose subagent integration settled as the no-subagent mode is the one exception: the
+			// form lists the descendants this entry observed, so there is nothing for it to draw and the
+			// action answers the operator instead (see `subagentIntegrationMode` above).
 			// The two period actions are the entry's own conditions and the store's own close, and
 			// each says exactly how far it got.
 			commands: {
 				budget: {
 					detail: delivery => {
 						stateProviderFailures(delivery);
+						if (inputs.subagentIntegrationMode?.() === "none") {
+							delivery.feedback.notify("warning", displayFormUnavailableNotice());
+							return;
+						}
 						const form = display.toggle();
 						delivery.feedback.notify("info", displayFormNotice(form));
 					},

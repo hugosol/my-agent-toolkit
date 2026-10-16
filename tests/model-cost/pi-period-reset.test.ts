@@ -439,6 +439,11 @@ function assemble(
 				configDirectory: path.join(REPOSITORY_ROOT, "extensions", MODEL_COST.id),
 				userHomeDirectory: root,
 				harness: MODEL_COST_HARNESS,
+				// The one harness fact this hand-built assembly states for itself: the case below drives
+				// the entry's display preference, which the extension offers to an entry whose subagent
+				// observations integrated — the shipped assembly records that answer from the framework's
+				// own initialization delivery (see `harnesses/pi.ts`).
+				subagentIntegrationMode: () => "subagents",
 				data: DATA,
 				...(context.modelPrices === undefined ? {} : { modelPrices: context.modelPrices }),
 				...(context.providerAccess === undefined ? {} : { providerAccess: context.providerAccess }),
