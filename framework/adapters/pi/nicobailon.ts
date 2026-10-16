@@ -33,17 +33,7 @@
 import type { SubagentIntegration, SubagentIntegrationFailure } from "../../core/protocol";
 import type { PiExtensionApi } from "../pi";
 import type { SessionBackgroundWork } from "./round";
-
-/**
- * The provider's published child-extension module, as its own documentation names it.
- *
- * It is a bare specifier resolved the way every other dependency of this repository is: the pinned
- * artifact sits in this repository's own installed packages, because the adapter's requirement is a
- * development-time pin of the third party this migration targets. A deployment that carries the
- * framework without that artifact loads no such module, which is a provider this entry does not
- * have — not a failure of the harness.
- */
-const PROVIDER_MODULE = "pi-subagents/required-child-extensions";
+import { loadPiSubagentProvider } from "./subagent-provider";
 
 /** The provider's announcement channel: its statement that it is serving a session. */
 const PROVIDER_READY_CHANNEL = "subagents:rpc:v1:ready";
@@ -278,11 +268,15 @@ export interface PiSubagentIntegration {
  * anywhere and no integration to settle, which the adapter reports as the absence itself rather
  * than as a failed one.
  */
-export function createPiSubagentIntegration(extensionId: string, childEntry: string): PiSubagentIntegration {
-	/** The provider's module, imported once: a module this process carries or one it does not. */
-	const provider: Promise<PiSubagentProvider | undefined> = import(PROVIDER_MODULE).then(
+export function createPiSubagentIntegration(extensionId: string, childEntry: string, configPath?: string): PiSubagentIntegration {
+	/** Explicit configuration errors are retained for settlement, never read as an absent provider. */
+	let loadFailure: string | undefined;
+	const provider: Promise<PiSubagentProvider | undefined> = loadPiSubagentProvider(configPath).then(
 		(loaded: unknown) => providerOf(loaded),
-		() => undefined,
+		(error: unknown) => {
+			loadFailure = String(error);
+			return undefined;
+		},
 	);
 	/** The requirements this process holds, by the session each belongs to. */
 	const requirements = new Map<string, { dispose(): void }>();
@@ -411,6 +405,7 @@ export function createPiSubagentIntegration(extensionId: string, childEntry: str
 
 	const settleOnce = async (sessionId: string | undefined): Promise<SubagentIntegration> => {
 		const module = await provider;
+		if (loadFailure !== undefined) return failed("registration", loadFailure);
 		const requirement = sessionId === undefined ? undefined : await requireInOnce(sessionId);
 
 		// No provider artifact in this process: no child-extension interface is reachable at all, so

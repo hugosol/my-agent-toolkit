@@ -24,3 +24,12 @@ http:
 # whatever their working directories are. A Windows pipe name carries no directory: only the
 # location record and a POSIX socket file are files, and they live here.
 runtimeDir: ".runtime"
+
+# Optional pi-subagents package root, reusing the installation Pi itself loads.
+# This affects integration only; Pi must still load the pi-subagents extension.
+# Omit packagePath to use normal repository dependency resolution. Relative paths are
+# relative to this file. An invalid explicit path is an integration failure, not none-mode.
+# Read once per assembly; restart Pi after changing it.
+pi:
+  subagents:
+    packagePath: "C:/Users/hugos/.pi/agent/npm/node_modules/pi-subagents"

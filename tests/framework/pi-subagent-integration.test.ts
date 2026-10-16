@@ -25,7 +25,7 @@
 import { realpathSync } from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
-import { registerRequiredChildExtensions } from "pi-subagents/required-child-extensions";
+import { loadPiSubagentProvider } from "../../framework/adapters/pi/subagent-provider";
 import { describe, expect, test } from "bun:test";
 import type { InitializationDelivery, SubagentIntegrationFailure } from "../../framework/public";
 import { withCapturedStderrAsync } from "./support/captured-stderr";
@@ -38,6 +38,15 @@ import {
 	type PiSurfaceSession,
 	boundPiSurface,
 } from "./support/pi-surface-double";
+
+// Read the same public module as production, including an explicitly configured installation.
+const { registerRequiredChildExtensions } = await loadPiSubagentProvider() as {
+	registerRequiredChildExtensions(options: {
+		sessionId: string;
+		extensions: Array<{ id: string; path: string }>;
+		requireForAllRunners: boolean;
+	}): { dispose(): void };
+};
 
 /** The repository root: this suite lives in `tests/framework/`. */
 const REPO_ROOT = path.resolve(import.meta.dir, "..", "..");
