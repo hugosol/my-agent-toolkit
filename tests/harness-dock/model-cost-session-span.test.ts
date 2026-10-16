@@ -300,9 +300,12 @@ describe("a real submission establishes and advances the main session's span (P1
 			expect(span.end).toBeLessThanOrEqual(Date.now());
 			// The Turn it is measured to is this run's own response: its settle is a real instant of the
 			// run, and the save that carried the pair is the Round end's commit, which is also the only
-			// commit this run made — no time-only file, no extra write.
+			// commit this run made — no time-only file, no extra write. The coordination lock is the
+			// framework's own name, held only while a write is in flight, so a listing taken after the save
+			// may or may not catch it: what the run must leave is the document and no artifact of its own.
 			expect(record.saveVersion).toBe(1);
-			expect(readdirSync(run.storageDirectory).sort()).toEqual([`${CONSUMPTION_FILE}.lock`, CONSUMPTION_FILE].sort());
+			const written = readdirSync(run.storageDirectory).filter(name => name !== `${CONSUMPTION_FILE}.lock`);
+			expect(written.sort()).toEqual([CONSUMPTION_FILE]);
 
 			// The widget the host was told to draw shows the same reading in the Total row, as a duration
 			// rather than the unknown marker: the interval from the submission to the Round's end.
