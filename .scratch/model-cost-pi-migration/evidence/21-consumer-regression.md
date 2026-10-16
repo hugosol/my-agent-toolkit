@@ -1,6 +1,6 @@
 # 21：共同路径消费者与真实宿主回归（P50）
 
-**Status:** implemented（实现 + 自动检查已完成；合并由集成子代理执行，本票不自行合入）
+**Status:** implemented（实现 + 自动检查已完成；集成提交 `39fdc3dab2f19a67f54b096f4164e8ddcc7faaa1` 已由宿主合入 `pi-adapter` 并合回本分支，本轮集成验收见 §8；本票不自行合入）
 
 ## 1. 本票范围与实际变更盘点
 
@@ -96,3 +96,42 @@
 - **S3**（存储根持久化文档）：由复用的消费者分区承载——`tests/model-cost`（consumption-store/document、storage-processes 真实多进程、shared-storage-refresh、period-switch、session-recovery）463/463，`tests/harness-dock` 的 model-cost-persistence/store/detail-tree 等真实宿主读回在其 90/90 内；本票未新增 S3 断言，不重复认领其它票据的持久化承诺。
 
 **P50 结论**：共同路径变更后，OMP 端与两个受影响扩展的既有消费者行为在分区与真实宿主路径上均保持（上表逐项），且新增的跨消费者/完整装配回归在三消费者同进程时成立；pi 端通过不替代 OMP 端（两边证据分别给出，上述既有失败与限制如实保留）。
+
+## 8. 集成同步与合并后全仓回归（本轮）
+
+**同步状态**：宿主已把集成提交 `39fdc3dab2f19a67f54b096f4164e8ddcc7faaa1` merge 回本票开发分支，故本分支 HEAD 即该提交，
+且 `git rev-parse HEAD pi-adapter` 同为该提交、两侧 tree 相同（`git diff --stat pi-adapter HEAD` 空、`git rev-list --left-right --count pi-adapter...HEAD` = `0 0`）。
+提交关系：`39fdc3d` 的父为 `578e19f`（合并前的集成 tip，20 的集成记录合入点）与 `55290fc`（本票末提交，父 `8c86378`）。
+
+**无冲突可解**：`git ls-files -u` 0 条未合并路径；本 worktree 的 gitdir（`E:/Developer/myhub/my-agent-toolkit/.git/worktrees/hyper-ticket-SgtXkc`）内没有 `MERGE_HEAD`／rebase／cherry-pick 状态。
+
+**合入内容逐项核对**：`git diff --name-status 578e19f HEAD` 与本票自身的 `git diff --name-status 8c86378 55290fc` **逐项相同**（均只有本票三份文件：新增 `tests/harness-dock/consumer-regression.test.ts`、新增 `evidence/21-consumer-regression.md`、修改 `implementation/21-consumer-regression.md`）；
+且 `git diff --stat 55290fc HEAD -- extensions framework tests scripts entrypoints package.json tsconfig.json` **为空** —— 合入树里全部被测源码/夹具的字节与本票实现提交逐一相同，本票实现没有在合入时被改写。
+
+**检出与环境**：本 worktree 的三处行尾敏感文件已处于已提交 LF blob 字节（`bun.lock` 与 `host-patches/omp-18.5.0-{viewed-session,codex-response-boundary}/patch.diff` 的 CR 字节数均为 0，工作区 blob sha 与 `HEAD:<path>` 逐一相等），故本轮无需再归一即可物化补丁。
+因本 worktree 位于 `%TEMP%`，`tests/connect-bot/support/omp-bot.ts` 的默认同级路径 `…\Temp\omp-bot\backend\target\release\omp-bot.exe` 不存在（`ls` 为 `No such file or directory`），真实面板二进制以 `OMP_BOT_BINARY=E:/Developer/myhub/omp-bot/backend/target/release/omp-bot.exe`（本机既有 release 构建，非本票产物）显式给名。
+
+**全仓回归（`bun run test`，同一 HEAD 与同一环境）**：
+
+| 命令 | 退出 | 结果 | 日志 |
+| --- | --- | --- | --- |
+| `bun run typecheck` | 0 | 无诊断 | `logs/21-consumer-regression-integration-typecheck.log` |
+| `bun run test`（第 1 次） | 1 | 1199 pass / 1 fail（1200 tests / 128 files / 6870 expect() calls / 434.74s） | `logs/21-consumer-regression-integration-run1.log` |
+| `bun run test`（第 2 次，同一树与同一环境） | 0 | **1200 pass / 0 fail**（6897 expect() calls / 128 files / 408.63s） | `logs/21-consumer-regression-integration-run2.log` |
+
+**第 1 次全仓的唯一失败（第 2 次消失，单独重跑为 0 fail）**：`tests/harness-dock/period-switch.test.ts:219`（用例「the real host's period switch archives the period it closes and opens the next one」（P30、P31、P32、P34、P35、P36））在 `savedText`（`period-switch.test.ts:205` 的 `Date.now() + 20_000` 挂起护栏）上超时：
+`error: no consumption document the case expects was published at …\user-home\.omp\cost-archive\consumption.json`（该等待是文件自身的读取轮询，护栏原意只是「不永远挂住用例」）。
+单独重跑该文件：`OMP_BOT_BINARY=… bun test tests/harness-dock/period-switch.test.ts` → **1 pass / 0 fail（2.17s）**。
+该用例跑的是真实 OMP 子进程（保存按真实主体落盘），128 文件并发的全仓运行下该子进程被拖慢，护栏先到期。
+与本票改动无关：合入树里 `tests/**` 的字节与本票实现提交 `55290fc` 逐一相同（见上核对），且第 2 次同一树零失败。
+同类（真实宿主的落盘/发布等待在满载下先到期）在 [15](15-period-reset.md) 的集成轮（`model-cost-session-span.test.ts` 的锁目录读回）与本票实现轮 §6 第 1 次全仓（`pi-period-reset.test.ts` 的 `savedDocument` 让步耗尽）都已如实记录。
+
+**本轮修复：无源码修复。** 唯一失败是另一分区的真实宿主挂起护栏在满载下到期，不是合入源码的缺陷：合入源码与本票实现提交逐字节相同、该文件单独重跑与第 2 次全仓均零失败。
+按仓库 testing 约定，满载下的真实宿主时序观察以「限定范围重跑 + 如实列出」处理（同类先例见 17、18、19、20 各轮）；
+dock 全线挂起护栏的时限、行尾鲁棒解析／`.gitattributes` 与跨票据整体验收都不在本票内改动，归最后独立门禁。
+
+**本票新增分区的归属**：第 2 次全仓为 128 files / 1200 tests，与本票实现轮第 2 次（1200 pass / 0 fail）相同；本票新增的 `tests/harness-dock/consumer-regression.test.ts` 3 例在两次全仓中都在树内且通过，两轮中没有任何失败来自本票的三份文件。
+
+**运行后状态**：`git status` 只余本轮记录改动（本文件、票据状态、三份日志）；运行期间被测源码与夹具未改。
+未操作集成工作区（`E:/Developer/myhub/my-agent-toolkit`）、未切换分支、未新建 worktree、未 reset、未调用 retro，也未自行合入 `pi-adapter`。
+本轮通过不改变 §6 的「未覆盖 / 不属本票」：P51/P52/P53 人类验收、pi host 的 smoke 后续阶段、跨版本/POSIX/跨用户主张仍原样未验证，全部真实宿主证据仍只覆盖 win32/x64。
