@@ -215,6 +215,8 @@ export function ompDouble(options: OmpDoubleOptions = {}): OmpDouble {
 		session_tree: [],
 		session_shutdown: [],
 	};
+	/** The native message facts the axes subscribe to, recorded so this surface stays the whole of one. */
+	const messageHandlers: Array<(event: unknown, ctx: OmpSessionContext) => void> = [];
 
 	const api: OmpExtensionApi = {
 		setLabel(label: string): void {
@@ -236,6 +238,13 @@ export function ompDouble(options: OmpDoubleOptions = {}): OmpDouble {
 				return;
 			}
 			if (event === "before_agent_start") return;
+			// The round axis reads how an activity ended from the finalized message, exactly as the Turn
+			// axis does: a native fact this surface holds for the tests that drive one, and one no
+			// command of this extension's depends on.
+			if (event === "message_end") {
+				messageHandlers.push(handler as (event: unknown, ctx: OmpSessionContext) => void);
+				return;
+			}
 			sessionHandlers[event].push(handler as SessionHandler);
 		},
 		// The official agent graph the adapter walks for a session that is not its own owner: a

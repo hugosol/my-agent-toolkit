@@ -32,6 +32,13 @@
  *   be — so it is dropped rather than closing something that was never opened. That is also what a
  *   restore or a reload leaves behind: this binding starts with no open round, so no completion is
  *   ever fabricated for a round an earlier process was in the middle of.
+ * - A settle the harness reported as *cancelled or terminally failed* is confirmed by the
+ *   session's own rest alone. Such an activity has no continuation left to wait for, so work still
+ *   going elsewhere — a delegation whose result will never wake it, an asynchronous job it is no
+ *   longer waiting on — cannot be what its round waits for, and a round held open on one would be
+ *   a round nothing could ever close. Every other settle still has to be told that nothing beyond
+ *   it is held, so a cancelled or failed activity ends its round where an ordinary one would have
+ *   kept waiting, and an ordinary one keeps waiting exactly as before.
  *
  * The framework has no *State* behavior of its own here, and that is the design rather than an
  * omission: the agent's work condition is a fact of the extension (contract P6), the framework's
@@ -152,13 +159,30 @@ export function createRoundSynthesis(inputs: RoundSynthesisInputs): RoundSynthes
 	 * A candidate that is no longer pending has been superseded — the work it described continued,
 	 * or another settle replaced it with its own re-check — and a re-check that ran anyway would be
 	 * confirming an end the harness has already taken back.
+	 *
+	 * The session's own rest is read first, and it is the whole condition for one case: an activity
+	 * the harness reported as cancelled or terminally failed is not waiting on anything, so nothing
+	 * beyond it may keep its round open. Every other settle has to be told that nothing beyond it is
+	 * held — a delegated result, an asynchronous job — before its round may end; a statement this
+	 * surface did not establish confirms nothing, exactly as `false` does not.
 	 */
 	const recheck = (sessionId: string, candidate: RoundObservation): void => {
 		if (!delivering()) return;
 		if (candidates.get(sessionId) !== candidate) return;
-		let quiescent: boolean | undefined;
+		let confirmable: boolean | undefined;
 		try {
-			quiescent = candidate.quiescent();
+			confirmable = candidate.quiescent();
+			// An activity the harness reported as cancelled or terminally failed is not waiting on
+			// anything, so nothing beyond it may keep its round open — a round left open on one could
+			// never be closed again. A settle with no outcome, or with an ordinary one, has to be told
+			// that nothing beyond it is held: a delegated result or an asynchronous job whose own
+			// completion is what continues the session. A statement this surface did not establish
+			// confirms nothing, exactly as a held one does not.
+			const { signal } = candidate;
+			const abandoned = signal.kind === "settled" && (signal.outcome === "cancelled" || signal.outcome === "failed");
+			if (confirmable === true && !abandoned) {
+				confirmable = candidate.heldWork() === false;
+			}
 		} catch (error) {
 			const detail = error instanceof Error ? error.message : String(error);
 			reportFailure(`${definition.id}: reading whether the session is at quiescence failed: ${detail}`);
@@ -166,7 +190,7 @@ export function createRoundSynthesis(inputs: RoundSynthesisInputs): RoundSynthes
 		}
 		// Anything but a confirmation is not one: a session with work left keeps its candidate, and
 		// the next relevant fact re-verifies it rather than this module asking again.
-		if (quiescent !== true) return;
+		if (confirmable !== true) return;
 		candidates.delete(sessionId);
 		dispatch(candidate, "round_end");
 	};

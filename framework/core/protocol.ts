@@ -440,7 +440,15 @@ export type RoundEventHandler = (delivery: RoundDelivery) => void | Promise<void
  * a fresh prompt or from a continuation the session scheduled for itself. `settled` is a run
  * reaching its native end, carrying the harness's own continuation flag mapped to its two-valued
  * form: `willContinue` is `true` only when the session has already scheduled its next piece of
- * work, and a settle that says nothing is a settle that scheduled nothing.
+ * work, and a settle that says nothing is a settle that scheduled nothing, plus — when the
+ * surface states one — how the activity that settled ended.
+ *
+ * The outcome is the same three-valued fact a Turn's end states, read from the same native
+ * material: nothing about it is part of the edge, and an adapter that established none states
+ * none. It is on the *signal* rather than on the round edge because how a round ended is
+ * deliberately not part of the public model — a round that finishes on an ordinary answer, on an
+ * error and on an abort ends the same way there — while an activity that was cancelled or failed
+ * is exactly the one whose settlement the framework confirms without waiting for work beyond it.
  *
  * Neither is an edge. Which of them opens a round, which continues one, and which ends one is the
  * framework's synthesis ({@link createRoundSynthesis}); an adapter reports facts and decides
@@ -448,19 +456,28 @@ export type RoundEventHandler = (delivery: RoundDelivery) => void | Promise<void
  */
 export type RoundSignal =
 	| { readonly kind: "activity_started" }
-	| { readonly kind: "settled"; readonly willContinue: boolean };
+	| {
+			readonly kind: "settled";
+			readonly willContinue: boolean;
+			/**
+			 * How the activity that settled ended, when this surface established it: the harness's
+			 * own stopping fact read in the framework's three-valued vocabulary. Absent when no
+			 * native fact established one, which is not the same as a completed activity.
+			 */
+			readonly outcome?: TurnOutcome;
+	  };
 
 /**
  * One mapped round-cycle fact together with the per-delivery facts its own harness context
- * carries, plus the one live read a round's end is confirmed by.
+ * carries, plus the two live reads a round's end is confirmed by.
  *
- * The `quiescent` read is a query rather than a field because it has to be asked *later* than the
- * fact that raises the question. A harness reports a run as over before its own work has unwound
- * — its session is not idle at that instant, and a queued message or a running asynchronous job
- * may still continue the work — so the framework submits the settle as an end candidate, lets the
- * adapter return so the host can settle, and re-checks this read on its next task. A read that
- * answers anything but `true` is not a confirmation: `false` is a session with work left, and
- * `undefined` is a surface that does not report one of the facts at all, which closes no round.
+ * Both reads are queries rather than fields because they have to be asked *later* than the fact
+ * that raises the question. A harness reports a run as over before its own work has unwound — its
+ * session is not idle at that instant, and a queued message or a running asynchronous job may
+ * still continue the work — so the framework submits the settle as an end candidate, lets the
+ * adapter return so the host can settle, and re-checks them on its next task. A read that answers
+ * anything but `true` is not a confirmation: `false` is a session with work left, and `undefined`
+ * is a surface that does not report one of those facts at all, which closes no round.
  */
 export interface RoundObservation {
 	/** The native run-cycle fact this observation is. */
@@ -474,11 +491,21 @@ export interface RoundObservation {
 	/** The transport this fact's extension feedback is published through. */
 	readonly feedback: FeedbackTransport;
 	/**
-	 * Reads, now, whether that actual session is at quiescence: idle, with nothing queued and no
-	 * asynchronous job still running. `undefined` when this surface does not report one of those
-	 * facts — an unestablished quiescence, which is not one.
+	 * Reads, now, whether that actual session's own activity has come to rest: idle, with nothing
+	 * queued and no work of the run that just settled still going. `undefined` when this surface
+	 * does not report one of those facts — an unestablished quiescence, which is not one.
 	 */
 	quiescent(): boolean | undefined;
+	/**
+	 * Reads, now, whether work beyond the run that just settled still holds this actual session:
+	 * a third party's delegated work, an asynchronous job whose result will resume it — anything
+	 * whose own completion is what will continue the session rather than the run's own loop.
+	 *
+	 * `false` is the statement that nothing is held and is the only answer that lets a round end
+	 * on it; `true` is work the session is still waiting on; `undefined` is a statement this
+	 * surface did not establish, which is answered as neither.
+	 */
+	heldWork(): boolean | undefined;
 }
 
 /**

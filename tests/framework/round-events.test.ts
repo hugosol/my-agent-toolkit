@@ -17,7 +17,7 @@ import { describe, expect, test } from "bun:test";
 import { CODEBASE_TOOLS } from "../../extensions/codebase-tools/definition";
 import type { CommandDelivery, OwnerReference } from "../../framework/core/protocol";
 import { type CommandImplementations, type ExtensionDefinition, defineExtension } from "../../framework/public";
-import { portDouble } from "./support/harness-port-double";
+import { type PortDouble, portDouble } from "./support/harness-port-double";
 
 /** The owner a delivery acts on unless one is named. */
 const OWNER: OwnerReference = { kind: "owner", key: "main:round-events" };
@@ -229,5 +229,74 @@ describe("the idle query is the arm path's own fact (F6, P9)", () => {
 		// actual session's own identity, direct parent and latest name (P57).
 		expect(sessionKeys.sort()).toEqual(["capability", "event", "feedback", "hasUI", "owner", "session"]);
 		expect(roundKeys.sort()).toEqual(["event", "feedback", "hasUI", "owner", "session"]);
+	});
+});
+
+describe("a cancelled or failed activity ends its round without waiting on work beyond it (P21)", () => {
+	/** One definition whose round end is recorded, so every case reads the same sequence. */
+	function endRecorder(): { readonly double: PortDouble; readonly ends: string[] } {
+		const double = portDouble();
+		const ends: string[] = [];
+		double.bind(CODEBASE_TOOLS, {
+			subscriptions: [{ scope: "owner", events: { round_end: delivery => void ends.push(delivery.event.kind) } }],
+		});
+		return { double, ends };
+	}
+
+	test("a cancelled settle ends the round although work beyond it still holds the session", () => {
+		const { double, ends } = endRecorder();
+
+		double.deliverRound(OWNER, { event: { kind: "round_start" } });
+		// The session settled and its own work has unwound, while the statement about work beyond the
+		// run says something is still held. A round waiting on that statement could never close again:
+		// the activity it belongs to was cancelled, so nothing it was waiting on will resume it.
+		double.deliverRound(OWNER, { event: { kind: "round_end" }, outcome: "cancelled", heldWork: true });
+
+		expect(ends).toEqual(["round_end"]);
+	});
+
+	test("a failed settle ends it the same way", () => {
+		const { double, ends } = endRecorder();
+
+		double.deliverRound(OWNER, { event: { kind: "round_start" } });
+		double.deliverRound(OWNER, { event: { kind: "round_end" }, outcome: "failed", heldWork: true });
+
+		expect(ends).toEqual(["round_end"]);
+	});
+
+	test("an ordinary settle still waits for what is held, and ends once that statement clears", () => {
+		const { double, ends } = endRecorder();
+
+		double.deliverRound(OWNER, { event: { kind: "round_start" } });
+		// The ordinary answer: nothing scheduled a continuation, and a delegation this session waits
+		// on is still running. Its Round stays open — the work it is waiting on is what will continue
+		// it — and only the statement that nothing is held ends it.
+		double.deliverRound(OWNER, { event: { kind: "round_end" }, outcome: "completed", heldWork: true });
+		expect(ends).toEqual([]);
+
+		double.deliverRound(OWNER, { event: { kind: "round_end" }, outcome: "completed", heldWork: false });
+		expect(ends).toEqual(["round_end"]);
+	});
+
+	test("a settle that stated no outcome is not a cancellation", () => {
+		const { double, ends } = endRecorder();
+
+		double.deliverRound(OWNER, { event: { kind: "round_start" } });
+		// This surface established no outcome for the activity, which is not the same as stating it
+		// was cancelled: the round then waits on what every other settle waits on.
+		double.deliverRound(OWNER, { event: { kind: "round_end" }, heldWork: true });
+
+		expect(ends).toEqual([]);
+	});
+
+	test("a cancelled activity that has not settled yet closes nothing", () => {
+		const { double, ends } = endRecorder();
+
+		double.deliverRound(OWNER, { event: { kind: "round_start" } });
+		// The session's own work has not unwound: the cancellation is a fact about how the activity
+		// ended, never by itself a reason to publish an end before the host settles.
+		double.deliverRound(OWNER, { event: { kind: "round_end" }, outcome: "cancelled", quiescent: false });
+
+		expect(ends).toEqual([]);
 	});
 });

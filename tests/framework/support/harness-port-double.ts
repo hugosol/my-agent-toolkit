@@ -42,6 +42,7 @@ import type {
 	StateValues,
 	TurnSignal,
 	TurnSignalFacts,
+	TurnOutcome,
 	UserInputDelivery,
 } from "../../../framework/core/protocol";
 import { StateStore } from "../../../framework/core/state";
@@ -237,6 +238,18 @@ export interface PortDouble {
 			 * round therefore stays open.
 			 */
 			readonly quiescent?: boolean;
+			/**
+			 * Whether work beyond the run still holds the session when the framework re-checks an end
+			 * candidate. Omitted models a session nothing holds, which is what an ordinary settle
+			 * needs to end; `true` models one waiting on delegated work, whose round stays open, and
+			 * `undefined` a harness that established nothing either way.
+			 */
+			readonly heldWork?: boolean;
+			/**
+			 * How the activity that settled ended, as the harness stated it. Omitted models a settle
+			 * that stated no outcome, which is not the same as a completed activity.
+			 */
+			readonly outcome?: TurnOutcome;
 		},
 	): RoundBoundary;
 	/**
@@ -508,12 +521,16 @@ export function portDouble(options: PortDoubleOptions = {}): PortDouble {
 			const event = options.event ?? { kind: "round_start" };
 			const quiescent = options.quiescent ?? true;
 			// The observation a harness reports: the run-cycle fact behind the edge a suite asked
-			// for, its own session's facts, and the live quiescence read the framework re-checks.
+			// for, its own session's facts, and the live reads the framework re-checks.
 			const observation: RoundObservation = {
 				signal:
 					event.kind === "round_start"
 						? { kind: "activity_started" }
-						: { kind: "settled", willContinue: false },
+						: {
+								kind: "settled",
+								willContinue: false,
+								...(options.outcome === undefined ? {} : { outcome: options.outcome }),
+							},
 				session: options.session ?? DEFAULT_SESSION,
 				owner,
 				hasUI,
@@ -523,6 +540,7 @@ export function portDouble(options: PortDoubleOptions = {}): PortDouble {
 					},
 				},
 				quiescent: () => quiescent,
+				heldWork: () => options.heldWork ?? false,
 			};
 			for (const observer of roundObservers) observer(observation);
 			// An end candidate is confirmed on the harness's next task, so a suite driving the edge

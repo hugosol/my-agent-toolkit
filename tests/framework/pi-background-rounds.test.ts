@@ -14,6 +14,15 @@
  * obtain — no registration, a registration naming another session, a failed integration, a registry
  * this entry does not hold — is not that statement. Nothing in this mapping keeps a Round open by
  * itself: no registration of its own, no timer, no second lifecycle.
+ *
+ * The one activity that does not wait on that statement is the one that was cancelled or terminally
+ * failed: pi's own abort flag or the last settled message's stop reason says so, and the shared
+ * framework confirms such a Round on the session's own rest alone — the wake the provider holds
+ * back for an interrupted session is never the thing that resumes it, so waiting on it would leave
+ * a Round open that nothing could close. The cases below drive that outcome through the native
+ * facts a real pi run publishes, and hold the contrast: an ordinary answer with the same statement
+ * still waits, an error pi retries is not a terminal outcome at all, and work arriving after an
+ * ended Round opens none.
  */
 import { tmpdir } from "node:os";
 import * as path from "node:path";
@@ -362,5 +371,140 @@ describe("a parent's round and its children's rounds are their own (P19)", () =>
 		surface.runSettles(parent);
 		surface.nextTask();
 		expect(kindsOf(parent.sessionId)).toEqual(["round_start", "round_end"]);
+	});
+});
+
+describe("a cancelled or failed run ends its round although the provider still holds work (P21)", () => {
+	/** One assistant response as pi hands its finalized message over: the stop reason is what decides. */
+	function assistantMessage(stopReason: string): {
+		readonly role: string;
+		readonly stopReason: string;
+		readonly usage: { readonly input: number; readonly output: number; readonly cacheRead: number; readonly cacheWrite: number; readonly totalTokens: number };
+	} {
+		return {
+			role: "assistant",
+			stopReason,
+			usage: { input: 10, output: 7, cacheRead: 3, cacheWrite: 0, totalTokens: 20 },
+		};
+	}
+
+	test("an interrupted run's round ends while the provider's own statement still holds work", async () => {
+		const { surface, session } = await surfaceServedByProvider("cancelled-run");
+		const registration = registerProviderLiveness({ sessionId: session.sessionId, isActive: () => true });
+		expect(registration.registered).toBe(true);
+
+		surface.runStarts(session);
+		surface.messageEnds(session, assistantMessage("aborted"));
+		surface.runSettles(session, { aborted: true });
+		surface.nextTask();
+
+		// The activity was aborted: the wake it was waiting on is the provider's paused one, and that
+		// is precisely what would never resume it. A round held open on that statement could never
+		// close, so the abort's own settlement ends it.
+		expect(surface.edges).toEqual(["round_start", "round_end"]);
+	});
+
+	test("a terminally failed run's round ends the same way", async () => {
+		const { surface, session } = await surfaceServedByProvider("failed-run");
+		registerProviderLiveness({ sessionId: session.sessionId, isActive: () => true });
+
+		surface.runStarts(session);
+		surface.messageEnds(session, assistantMessage("error"));
+		surface.runSettles(session);
+		surface.nextTask();
+
+		expect(surface.edges).toEqual(["round_start", "round_end"]);
+	});
+
+	test("an ordinary answer with the same held statement keeps its round open until that statement clears", async () => {
+		const { surface, session } = await surfaceServedByProvider("ordinary-answer");
+		let held = true;
+		registerProviderLiveness({ sessionId: session.sessionId, isActive: () => held });
+
+		surface.runStarts(session);
+		surface.messageEnds(session, assistantMessage("stop"));
+		surface.runSettles(session);
+		surface.nextTask();
+		// Nothing scheduled a continuation and the activity answered: the delegation the provider
+		// holds is what will resume this session, so the round stays open exactly as it did before.
+		expect(surface.edges).toEqual(["round_start"]);
+
+		held = false;
+		surface.runSettles(session);
+		surface.nextTask();
+		expect(surface.edges).toEqual(["round_start", "round_end"]);
+	});
+
+	test("an error pi retries is not the activity's terminal outcome", async () => {
+		const { surface, session } = await surfaceServedByProvider("retried-error");
+		let held = true;
+		registerProviderLiveness({ sessionId: session.sessionId, isActive: () => held });
+
+		surface.runStarts(session);
+		// The cycle errored; pi scheduled its own retry, which is why it publishes `agent_end` rather
+		// than a settled run, and why no candidate is raised at all.
+		surface.messageEnds(session, assistantMessage("error"));
+		surface.deliver("agent_end", { type: "agent_end", messages: [] }, session);
+		surface.nextTask();
+		expect(surface.edges).toEqual(["round_start"]);
+
+		// The retry answered, and the run then settled: this activity's outcome is the answer, so its
+		// round waits on the delegation the provider still holds.
+		surface.messageEnds(session, assistantMessage("stop"));
+		surface.runSettles(session);
+		surface.nextTask();
+		expect(surface.edges).toEqual(["round_start"]);
+
+		held = false;
+		surface.runSettles(session);
+		surface.nextTask();
+		expect(surface.edges).toEqual(["round_start", "round_end"]);
+	});
+
+	test("a settle with no round open closes nothing, whatever the provider states", async () => {
+		const { surface, session } = await surfaceServedByProvider("restored");
+		registerProviderLiveness({ sessionId: session.sessionId, isActive: () => true });
+
+		// A process handed a settle for a session it never saw start has no round whose end this could
+		// be: neither the provider's statement nor the abort fabricates one.
+		surface.messageEnds(session, assistantMessage("aborted"));
+		surface.runSettles(session, { aborted: true });
+		surface.nextTask();
+
+		expect(surface.edges).toEqual([]);
+	});
+});
+
+describe("an ended round is not reopened, and only a real execution opens a new one (P22)", () => {
+	test("a late result opens no round, and a wake that really runs opens its own", async () => {
+		const { surface, session } = await surfaceServedByProvider("late-result");
+		let held = true;
+		registerProviderLiveness({ sessionId: session.sessionId, isActive: () => held });
+
+		surface.runStarts(session);
+		surface.messageEnds(session, { role: "assistant", stopReason: "aborted" });
+		surface.runSettles(session, { aborted: true });
+		surface.nextTask();
+		expect(surface.edges).toEqual(["round_start", "round_end"]);
+
+		// The delegation's result arrives after the interrupted round: it is appended to the session,
+		// which is not an execution, so there is no activity and no edge for it.
+		surface.deliver("message_end", { type: "message_end", message: { role: "custom" } }, session);
+		surface.nextTask();
+		expect(surface.edges).toEqual(["round_start", "round_end"]);
+
+		// The wake that really starts execution is an activity beginning, which opens a round: the
+		// round that ended with the cancellation is never reopened, and this new one waits on the work
+		// it can still be resumed by.
+		surface.runStarts(session);
+		surface.messageEnds(session, { role: "assistant", stopReason: "stop" });
+		surface.runSettles(session);
+		surface.nextTask();
+		expect(surface.edges).toEqual(["round_start", "round_end", "round_start"]);
+
+		held = false;
+		surface.runSettles(session);
+		surface.nextTask();
+		expect(surface.edges).toEqual(["round_start", "round_end", "round_start", "round_end"]);
 	});
 });

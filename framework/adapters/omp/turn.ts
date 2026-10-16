@@ -39,8 +39,13 @@ function usageOf(message: OmpAgentMessage): TurnUsage | undefined {
  * The mapping is the adapter's alone: an interrupted cycle is `cancelled` and a cycle whose
  * message carries an error is `failed`, whatever native stop reason spelled them; everything else
  * — including a response that only requested tools — is a completed response.
+ *
+ * Both axes of this adapter read it, because both are stated by the same native material: a Turn
+ * reports how its response settled, and the activity the Round axis observes reports its own
+ * outcome from the last message to settle. It is exported for that second reader rather than
+ * spelled a second time, so which stop reason is a cancellation cannot drift between them.
  */
-function outcomeOf(message: OmpAgentMessage): TurnOutcome {
+export function outcomeOf(message: OmpAgentMessage): TurnOutcome {
 	if (message.stopReason === "aborted") return "cancelled";
 	if (message.stopReason === "error" || message.errorMessage !== undefined) return "failed";
 	return "completed";
