@@ -45,6 +45,17 @@
  * cancelled wait, an I/O failure of that one publication — is reported as that failure (`failed`)
  * and leaves the last baseline this instance read in place; what the caller then does with its own
  * unsaved consumption is not this module's decision.
+ *
+ * Committing is not the only way one instance comes to hold what another writer put in the file:
+ * {@link ConsumptionStore.synchronize} is the read-only one. It reads the document the file holds
+ * now and adopts it as this instance's basis without writing anything — no lock, no temporary file,
+ * no publication — for a caller that has an event which means "the file may have changed" (a
+ * third-party completion notice, say) and wants the saved records of the other writers without
+ * forcing its own in-flight accumulation out to disk. It is not an initialization: it creates no
+ * root, reads no absent document as a fresh period, and never clears a pause, so a root holding no
+ * document is answered as nothing to adopt and a paused instance answers `paused` without reading.
+ * A document that is not this extension's format pauses the instance exactly as a save meeting the
+ * same document does; a file that could not be read at all is reported as such without pausing it.
  */
 import { randomUUID } from "node:crypto";
 import { mkdir, readFile } from "node:fs/promises";
@@ -58,6 +69,7 @@ import {
 	type SessionRecord,
 	mergeSession,
 	readConsumptionDocument,
+	sameSessionContent,
 } from "./consumption-document";
 
 /** The document's fixed file name inside the configured storage root. */
@@ -123,6 +135,32 @@ export interface StoreNotice {
 }
 
 /**
+ * What one read-only synchronization of this instance's baseline answered.
+ *
+ * `adopted` is the file's own valid document becoming this instance's basis, with what it changed:
+ * `periodChanged` when the document names another generation than the one the instance is in, and
+ * `changed` when anything about it differs from the baseline the instance held — a period change is
+ * one of the ways it differs. `absent` is a root holding no document at all, which is nothing to
+ * adopt rather than a fresh start: what this instance holds stays what it holds, and nothing is
+ * created. `paused` is an instance that already has no usable baseline, which does not read the
+ * file again. `unusable` is a document that is not this extension's format — not JSON, or not this
+ * schema — and it pauses this instance exactly as a save that met the same document does, leaving
+ * the file for inspection. `unreadable` is a file that could not be read at all: it is reported
+ * without pausing anything, because a read that failed says nothing about the baseline this
+ * instance already holds.
+ */
+export type BaselineSync =
+	| {
+			readonly kind: "adopted";
+			readonly periodChanged: boolean;
+			readonly changed: boolean;
+	  }
+	| { readonly kind: "absent" }
+	| { readonly kind: "paused" }
+	| { readonly kind: "unusable"; readonly reason: string }
+	| { readonly kind: "unreadable"; readonly reason: string };
+
+/**
  * What one period reset answered.
  *
  * `reset` is the whole operation landing: the archive was written *and* the new activity document
@@ -151,6 +189,21 @@ export function unusableBaselineNotice(file: string, reason: string): StoreNotic
 	return {
 		level: "error",
 		message: `消费数据「${file}」不能作为基线读取（${reason}）；已暂停本实例的消费统计与保存，不会覆盖该文件，下次正常初始化会重新加载。`,
+	};
+}
+
+/**
+ * What the operator is told about a file a synchronization could not read.
+ *
+ * It is deliberately not a pause: nothing was written, and what could not be read says nothing about
+ * the baseline this instance holds, so the instance keeps accounting and saving against it. The
+ * notice names the file because that is what the operator has to look at; the next synchronization or
+ * save reads it again, and a file that is really unusable is reported by its own outcome.
+ */
+export function unreadableBaselineNotice(file: string, reason: string): StoreNotice {
+	return {
+		level: "error",
+		message: `消费数据「${file}」本次无法读取（${reason}）；已保留当前基线，未写入任何内容，消费统计与保存继续。`,
 	};
 }
 
@@ -255,6 +308,22 @@ export class ConsumptionStore {
 		return [...(this.#records.get(harness)?.values() ?? [])];
 	}
 
+	/**
+	 * Every harness's session records the period holds, in the order the document keeps them.
+	 *
+	 * This is the one reading of the period's own contents that is not scoped to a harness: the
+	 * period's consumption is the whole shared document's, and a document two harnesses have written
+	 * into holds both harnesses' records in it. A harness partition is an identity namespace rather
+	 * than a filter on the period's totals, so this is what the period's aggregate display reads —
+	 * while anything scoped to one session's own tree reads {@link ConsumptionStore.sessions}, which
+	 * is the one partition a session identity belongs to.
+	 */
+	periodSessions(): readonly SessionRecord[] {
+		const records: SessionRecord[] = [];
+		for (const bucket of this.#records.values()) records.push(...bucket.values());
+		return records;
+	}
+
 	/** One session's record, or `undefined` when this instance holds none for that identity. */
 	session(harness: string, id: string): SessionRecord | undefined {
 		return this.#records.get(harness)?.get(id);
@@ -293,6 +362,95 @@ export class ConsumptionStore {
 		if (read.kind === "unusable") return this.#pause(read.reason);
 		this.#adopt(read.document);
 		return { kind: "loaded", faults: read.faults };
+	}
+
+	/**
+	 * Adopt what the file holds now, without writing anything.
+	 *
+	 * This is the read half of sharing one storage root: another harness's process, or another
+	 * process of this one, commits its own sessions into the same document, and an instance that is
+	 * asked to synchronize reads that document and makes it the baseline its read-only answers come
+	 * from. It is deliberately not {@link ConsumptionStore.load}: a load is an initialization, it
+	 * creates the root and treats a root holding no document as a fresh period, and a failure it
+	 * meets pauses the instance until the next initialization. A synchronization is a read of a
+	 * running instance, so it creates nothing, reads no document as a fresh period, and leaves what
+	 * this instance already holds exactly where it is when the file holds nothing at all.
+	 *
+	 * Nothing here writes: the file is not locked, no temporary file is made and the document is
+	 * never published, because publication is an atomic replacement of the whole document (a
+	 * same-directory temporary file renamed into place), so a reader sees the document before that
+	 * replacement or the one after it and never a half-written one. What a synchronization does
+	 * cost is the read itself, and what it cannot do is make anything this instance has not saved
+	 * appear: only records the file already holds are adopted, every local accumulation that has
+	 * not reached its own commit stays local, and no version chain moves.
+	 *
+	 * What it answers is the change itself, which is what a caller acts on: a document in another
+	 * generation than this instance's is a period the instance has to take as its own (and the
+	 * accumulation measured in the replaced one is no longer publishable), while a same-generation
+	 * document that differs from the held baseline is what a display has to redraw. A document that
+	 * is not this extension's format pauses the instance, exactly as a save meeting the same
+	 * document does, and a file that could not be read at all is reported without pausing: it says
+	 * nothing about the baseline this instance holds, and a transient failure must not become a
+	 * persistent fault that only the next initialization could clear.
+	 */
+	async synchronize(): Promise<BaselineSync> {
+		if (this.#pauseReason !== undefined) return { kind: "paused" };
+		const period = this.#period;
+		if (period === undefined) {
+			throw new Error("model-cost: the store was synchronized before it loaded a baseline");
+		}
+
+		let text: string;
+		try {
+			text = await readFile(this.consumptionFile, "utf8");
+		} catch (error) {
+			if (isMissingFile(error)) return { kind: "absent" };
+			return { kind: "unreadable", reason: error instanceof Error ? error.message : String(error) };
+		}
+
+		let parsed: unknown;
+		try {
+			parsed = JSON.parse(text);
+		} catch (error) {
+			return this.#pause(`不是 JSON 文档（${error instanceof Error ? error.message : String(error)}）`);
+		}
+		const read = readConsumptionDocument(parsed);
+		if (read.kind === "unusable") return this.#pause(read.reason);
+		const periodChanged = period.periodId !== read.document.periodId;
+		const changed = periodChanged || !this.#holdsBaseline(read.document);
+		this.#adopt(read.document);
+		return { kind: "adopted", periodChanged, changed };
+	}
+
+	/**
+	 * Whether one document is the baseline this instance already holds: the same period facts and,
+	 * harness by harness, the same records — content and order alike, because the document's own
+	 * order is what the period's per-session segments are drawn in.
+	 *
+	 * It is a business comparison rather than a textual one: key order and formatting decide nothing,
+	 * and a record that differs only in how it was written is the same baseline.
+	 */
+	#holdsBaseline(document: ConsumptionDocument): boolean {
+		const period = this.#period;
+		if (period === undefined) return false;
+		if (
+			period.periodId !== document.periodId ||
+			period.start !== document.start ||
+			period.holiday !== document.holiday ||
+			period.startBal !== document.start_bal
+		) {
+			return false;
+		}
+		const harnesses = Object.keys(document.harnesses);
+		if (harnesses.length !== this.#records.size) return false;
+		for (const [harness, bucket] of Object.entries(document.harnesses)) {
+			const held = [...(this.#records.get(harness)?.values() ?? [])];
+			if (held.length !== bucket.sessions.length) return false;
+			if (!held.every((record, index) => sameSessionContent(record, bucket.sessions[index] as SessionRecord))) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	/**

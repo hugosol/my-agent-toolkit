@@ -92,6 +92,26 @@ function document(sessions: readonly SessionRecord[], periodId = "period-one"): 
 	};
 }
 
+/**
+ * A complete document one bucket per named harness, which is what two harnesses sharing the root
+ * write: each harness's own sessions under its own key, in the order the file keeps them.
+ */
+function sharedDocument(
+	buckets: Readonly<Record<string, readonly SessionRecord[]>>,
+	periodId = "period-one",
+): ConsumptionDocument {
+	const harnesses: Record<string, { sessions: readonly SessionRecord[] }> = {};
+	for (const [harness, sessions] of Object.entries(buckets)) harnesses[harness] = { sessions };
+	return {
+		schemaVersion: 1,
+		periodId,
+		start: "2026-10-01T00:00:00.000Z",
+		start_bal: 42.5,
+		holiday: false,
+		harnesses,
+	};
+}
+
 /** One root holding one document at the fixed file name. */
 function seededRoot(contents: string): string {
 	const root = freshRoot();
@@ -270,6 +290,26 @@ describe("the consumption store", () => {
 		expect(readdirSync(root)).toEqual([CONSUMPTION_FILE]);
 	});
 
+	test("a target no document can be read from pauses the initializing instance and is left alone", async () => {
+		const root = freshRoot();
+		mkdirSync(root, { recursive: true });
+		// The name holds something a document cannot be read from: an initialization meets the same
+		// answer a save does, and neither guesses nor repairs.
+		mkdirSync(path.join(root, CONSUMPTION_FILE));
+
+		const store = new ConsumptionStore(root);
+		const outcome = await store.load();
+		expect(outcome.kind).toBe("unusable");
+		if (outcome.kind !== "unusable") return;
+		expect(outcome.reason).toContain("无法读取");
+		expect(store.pauseReason()).toBeDefined();
+		expect(store.period()).toBeUndefined();
+		expect(await store.commit("omp", MAIN_SESSION)).toEqual({ kind: "paused" });
+		// The name is exactly what it was: still a directory, with nothing written beside it.
+		expect(readdirSync(root)).toEqual([CONSUMPTION_FILE]);
+		expect(readdirSync(path.join(root, CONSUMPTION_FILE))).toEqual([]);
+	});
+
 	test("a document of another format version pauses the instance and is never overwritten", async () => {
 		const other = JSON.stringify({ ...document([MAIN_SESSION]), schemaVersion: 2 });
 		const root = seededRoot(other);
@@ -337,5 +377,277 @@ describe("the consumption store", () => {
 		const written = fileDocument(root) as ConsumptionDocument;
 		expect(written.harnesses.omp?.sessions.map(session => session.id)).toEqual(batch.map(session => session.id));
 		expect(written.harnesses.omp?.sessions[3]).toEqual(batch[3] as SessionRecord);
+	});
+});
+
+/**
+ * The same session id under two harnesses: the file holds both, and each is an identity of its own
+ * partition — a different name, direct parent, version and consumption.
+ */
+const OMP_SHARED: SessionRecord = {
+	id: "session-shared",
+	name: "omp 的会话",
+	parent: null,
+	saveVersion: 1,
+	own: {
+		deepseek: {
+			"model-A": { tokens: { input: 10, cacheRead: 0, cacheWrite: 0, output: 1 }, costCny: 0.01 },
+		},
+	},
+};
+
+/** The same id in the other harness: another parent, a far greater version and other consumption. */
+const PI_SHARED: SessionRecord = {
+	id: "session-shared",
+	name: "pi 的会话",
+	parent: "pi-parent",
+	saveVersion: 9,
+	own: {
+		"plan-provider": {
+			"model-B": { tokens: { input: 20, cacheRead: 0, cacheWrite: 0, output: 2 }, referenceCostUsd: 0.02 },
+		},
+	},
+};
+
+/** The omp record one snapshot later: its own consumption grew and its parent is still its own. */
+const OMP_SHARED_GROWN: SessionRecord = {
+	...OMP_SHARED,
+	saveVersion: 2,
+	name: "omp 的会话（改）",
+	own: {
+		deepseek: {
+			"model-A": { tokens: { input: 30, cacheRead: 0, cacheWrite: 0, output: 4 }, costCny: 0.03 },
+		},
+	},
+};
+
+describe("one document holds two harnesses' identities apart (P39)", () => {
+	test("the same session id is another record under another harness: its own parent, version and content", async () => {
+		const root = seededRoot(JSON.stringify(sharedDocument({ omp: [OMP_SHARED], pi: [PI_SHARED] })));
+		const store = new ConsumptionStore(root);
+		expect((await store.load()).kind).toBe("loaded");
+
+		// One id, two identities: each partition answers its own record, and the period's own reading
+		// holds both in the order the document keeps them.
+		expect(store.session("omp", "session-shared")).toEqual(OMP_SHARED);
+		expect(store.session("pi", "session-shared")).toEqual(PI_SHARED);
+		expect(store.sessions("omp")).toEqual([OMP_SHARED]);
+		expect(store.sessions("pi")).toEqual([PI_SHARED]);
+		expect(store.periodSessions()).toEqual([OMP_SHARED, PI_SHARED]);
+
+		// A version the other partition is far past: versions are compared inside one harness's own
+		// records, so this snapshot is the next one of *its* identity rather than an older version.
+		expect(await store.commit("omp", OMP_SHARED_GROWN)).toEqual({ kind: "saved" });
+		// And the other partition's own record is judged against itself: the same version with the same
+		// content is idempotent, and the same version with other content is a conflict — neither is a
+		// verdict about the record this harness just published at the same id.
+		expect(await store.commit("pi", PI_SHARED)).toEqual({ kind: "unchanged" });
+		expect(await store.commit("pi", { ...PI_SHARED, name: "另一个名字" })).toEqual({ kind: "conflict" });
+
+		// Both partitions are exactly what their own commits made them: no parent, version or content
+		// crossed the harness boundary.
+		expect(fileDocument(root)).toEqual(
+			sharedDocument({ omp: [OMP_SHARED_GROWN], pi: [PI_SHARED] }),
+		);
+		expect(store.session("omp", "session-shared")?.parent).toBeNull();
+		expect(store.session("pi", "session-shared")?.parent).toBe("pi-parent");
+	});
+
+	test("a commit only ever rewrites its own harness's record, and a refused one changes nothing", async () => {
+		const root = seededRoot(JSON.stringify(sharedDocument({ omp: [OMP_SHARED], pi: [PI_SHARED] })));
+		const store = new ConsumptionStore(root);
+		await store.load();
+
+		expect(await store.commit("omp", OMP_SHARED_GROWN)).toEqual({ kind: "saved" });
+		expect(await store.commit("pi", { ...PI_SHARED, saveVersion: 10, name: "pi 的会话（改）" })).toEqual({
+			kind: "saved",
+		});
+		const saved = fileDocument(root);
+		expect(saved).toEqual(
+			sharedDocument({ omp: [OMP_SHARED_GROWN], pi: [{ ...PI_SHARED, saveVersion: 10, name: "pi 的会话（改）" }] }),
+		);
+
+		// A version the other partition is far past does not refuse this partition's own next snapshot:
+		// the omp record is the one a commit under omp reaches, and its version 3 is its own successor
+		// however far ahead the pi record of the same id is.
+		expect(await store.commit("omp", { ...OMP_SHARED, saveVersion: 3, name: "omp 的会话（再改）" })).toEqual({
+			kind: "saved",
+		});
+		expect((fileDocument(root) as ConsumptionDocument).harnesses.pi?.sessions[0]?.saveVersion).toBe(10);
+		expect(store.session("pi", "session-shared")?.name).toBe("pi 的会话（改）");
+		expect(store.periodSessions().map(record => `${record.id}@${record.name}`)).toEqual([
+			"session-shared@omp 的会话（再改）",
+			"session-shared@pi 的会话（改）",
+		]);
+	});
+});
+
+describe("a read-only synchronization adopts what another writer committed (P33)", () => {
+	/** The document one instance loaded, and the one another harness's process later published. */
+	const LOADED = sharedDocument({ omp: [OMP_SHARED] });
+	const PUBLISHED = sharedDocument({ omp: [OMP_SHARED, { ...OMP_SHARED, id: "session-two", parent: "session-shared" }] });
+
+	test("another writer's records are adopted, and the file is not opened for writing at all", async () => {
+		const root = seededRoot(JSON.stringify(LOADED));
+		const store = new ConsumptionStore(root);
+		await store.load();
+		// Another harness's process commits its own session in the same period, while this instance is
+		// running: the file it sees is the one that process published.
+		const published = JSON.stringify(PUBLISHED);
+		writeFileSync(path.join(root, CONSUMPTION_FILE), published, "utf8");
+
+		expect(await store.synchronize()).toEqual({ kind: "adopted", periodChanged: false, changed: true });
+		expect(store.sessions("omp")).toEqual(PUBLISHED.harnesses.omp?.sessions);
+		// Nothing was written: the file is the same bytes, and the root holds no lock, staging directory
+		// or temporary file a coordinated update would have left behind on its way through.
+		expect(fileText(root)).toBe(published);
+		expect(readdirSync(root)).toEqual([CONSUMPTION_FILE]);
+		// Once the baseline is what the file holds, a second synchronization has nothing to adopt and
+		// nothing to announce: the same document read again is not a change.
+		expect(await store.synchronize()).toEqual({ kind: "adopted", periodChanged: false, changed: false });
+		expect(fileText(root)).toBe(published);
+	});
+
+	test("a document naming another generation is adopted as the period itself", async () => {
+		const root = seededRoot(JSON.stringify(LOADED));
+		const store = new ConsumptionStore(root);
+		await store.load();
+		// Another process reset the period: the document it published names a new generation, and this
+		// instance's accumulation belongs to the one that was closed.
+		const next = sharedDocument({ omp: [{ ...OMP_SHARED, saveVersion: 20 }] }, "period-two");
+		writeFileSync(path.join(root, CONSUMPTION_FILE), JSON.stringify(next), "utf8");
+
+		expect(await store.synchronize()).toEqual({ kind: "adopted", periodChanged: true, changed: true });
+		expect(store.period()?.periodId).toBe("period-two");
+		expect(store.sessions("omp")).toEqual(next.harnesses.omp?.sessions);
+
+		// The generation the instance is in is now the file's own, so a snapshot older than the record
+		// that generation holds is refused as an older version and the new period's document is left as
+		// it is: nothing from the closed one is revived into it.
+		const before = fileText(root);
+		expect(await store.commit("omp", { ...OMP_SHARED, saveVersion: 2 })).toEqual({ kind: "stale-version" });
+		expect(fileText(root)).toBe(before);
+		// A snapshot of that generation is the one that lands: the successor of the record it holds.
+		expect(await store.commit("omp", { ...OMP_SHARED, saveVersion: 21 })).toEqual({ kind: "saved" });
+		expect((fileDocument(root) as ConsumptionDocument).periodId).toBe("period-two");
+		expect(store.session("omp", "session-shared")?.saveVersion).toBe(21);
+	});
+
+	test("a root holding no document is nothing to adopt, never a fresh period", async () => {
+		const empty = freshRoot();
+		const first = new ConsumptionStore(empty);
+		await first.load();
+		expect(await first.synchronize()).toEqual({ kind: "absent" });
+		expect(first.period()?.periodId).toBe("period-fresh");
+		expect(fileText(empty)).toBeUndefined();
+
+		// A document the instance loaded and the file then lost is the same answer: what this instance
+		// holds stays what it holds, and nothing is created, zeroed or re-read as a first run.
+		const root = seededRoot(JSON.stringify(LOADED));
+		const store = new ConsumptionStore(root);
+		await store.load();
+		rmSync(path.join(root, CONSUMPTION_FILE), { force: true });
+		expect(await store.synchronize()).toEqual({ kind: "absent" });
+		expect(store.period()?.periodId).toBe(LOADED.periodId);
+		expect(store.sessions("omp")).toEqual(LOADED.harnesses.omp?.sessions);
+		expect(fileText(root)).toBeUndefined();
+	});
+
+	test("a document that is not this extension's format pauses the instance and is left alone", async () => {
+		const broken = "{ this is not a document";
+		const root = seededRoot(JSON.stringify(LOADED));
+		const store = new ConsumptionStore(root);
+		await store.load();
+		writeFileSync(path.join(root, CONSUMPTION_FILE), broken, "utf8");
+
+		const outcome = await store.synchronize();
+		expect(outcome.kind).toBe("unusable");
+		expect(store.pauseReason()).toBeDefined();
+		expect(store.period()).toBeUndefined();
+		// Nothing is overwritten, and no repair is attempted: the file is the bytes it was, the root
+		// holds nothing else, and the pause is what every later commit answers.
+		expect(fileText(root)).toBe(broken);
+		expect(readdirSync(root)).toEqual([CONSUMPTION_FILE]);
+		expect(await store.commit("omp", OMP_SHARED)).toEqual({ kind: "paused" });
+	});
+
+	test("a file that cannot be read is reported without pausing the instance", async () => {
+		const root = seededRoot(JSON.stringify(LOADED));
+		const store = new ConsumptionStore(root);
+		await store.load();
+		// The target became something this process cannot read a document from: a directory in its place.
+		rmSync(path.join(root, CONSUMPTION_FILE), { force: true });
+		mkdirSync(path.join(root, CONSUMPTION_FILE));
+
+		const outcome = await store.synchronize();
+		expect(outcome.kind).toBe("unreadable");
+		// A read that failed is not a baseline that is gone: the instance goes on against the document it
+		// last read, and the target is left exactly as it is.
+		expect(store.pauseReason()).toBeUndefined();
+		expect(store.sessions("omp")).toEqual(LOADED.harnesses.omp?.sessions);
+		expect(existsSync(path.join(root, CONSUMPTION_FILE))).toBe(true);
+
+		// Once the target is a document again, the next synchronization adopts it — and the pause never
+		// happened, so nothing had to be re-initialized.
+		rmSync(path.join(root, CONSUMPTION_FILE), { recursive: true, force: true });
+		writeFileSync(path.join(root, CONSUMPTION_FILE), JSON.stringify(PUBLISHED), "utf8");
+		expect(await store.synchronize()).toEqual({ kind: "adopted", periodChanged: false, changed: true });
+	});
+
+	test("an instance that is already paused does not read the file again", async () => {
+		const root = seededRoot("{ not a document at all");
+		const store = new ConsumptionStore(root);
+		expect((await store.load()).kind).toBe("unusable");
+		// Nothing is probed or repaired while the instance is paused: the file is not even opened, which
+		// is what a target replaced by a directory proves — a read would have reported it unreadable.
+		rmSync(path.join(root, CONSUMPTION_FILE), { force: true });
+		mkdirSync(path.join(root, CONSUMPTION_FILE));
+		expect(await store.synchronize()).toEqual({ kind: "paused" });
+	});
+
+	test("a synchronization before any baseline is a misuse, not a data condition", async () => {
+		const root = freshRoot();
+		const store = new ConsumptionStore(root);
+		const failure = store
+			.synchronize()
+			.then(() => "resolved", (error: unknown) => (error instanceof Error ? error.message : String(error)));
+		await expect(failure).resolves.toContain("before it loaded a baseline");
+		expect(fileText(root)).toBeUndefined();
+	});
+});
+
+describe("a batch of commits is adjudicated one record at a time (P32)", () => {
+	test("the valid records of a mixed batch are published and the refused one is left refused", async () => {
+		const STALE_TARGET: SessionRecord = { ...MAIN_SESSION, saveVersion: 5, own: { deepseek: { "model-A": { tokens: { input: 50, cacheRead: 0, cacheWrite: 0, output: 5 }, costCny: 0.05 } } } };
+		const root = seededRoot(JSON.stringify(document([STALE_TARGET])));
+		const store = new ConsumptionStore(root);
+		await store.load();
+
+		// One process's own batch, submitted in order: an older version of a session the file holds, then
+		// two sessions this process is the first to save, then the next version of the session whose old
+		// snapshot was refused.
+		const second: SessionRecord = { ...CHILD_SESSION, id: "session-second", parent: null };
+		const third: SessionRecord = { ...CHILD_SESSION, id: "session-third", parent: "session-second" };
+		const outcomes = await Promise.all([
+			store.commit("omp", { ...STALE_TARGET, saveVersion: 4 }),
+			store.commit("omp", second),
+			store.commit("omp", third),
+			// The next version of that session after the refusal: the file still holds version 5, and this
+			// snapshot was built from the baseline this process loaded rather than from the refused one.
+			store.commit("omp", { ...STALE_TARGET, saveVersion: 6, own: { deepseek: { "model-A": { tokens: { input: 60, cacheRead: 0, cacheWrite: 0, output: 6 }, costCny: 0.06 } } } }),
+		]);
+
+		// Each record is decided on its own: the older version is refused and the three others land, in
+		// the order they were submitted.
+		expect(outcomes).toEqual([{ kind: "stale-version" }, { kind: "saved" }, { kind: "saved" }, { kind: "saved" }]);
+		// The refused record's version and content are nowhere in the file, and no retry of it happened:
+		// what the file holds is exactly the three snapshots that were accepted.
+		expect(fileDocument(root)).toEqual(
+			document([
+				{ ...STALE_TARGET, saveVersion: 6, own: { deepseek: { "model-A": { tokens: { input: 60, cacheRead: 0, cacheWrite: 0, output: 6 }, costCny: 0.06 } } } },
+				second,
+				third,
+			]),
+		);
 	});
 });

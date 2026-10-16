@@ -228,3 +228,21 @@ export function recordedFsOperations(): readonly FsOperation[] | undefined {
 	const registered = holder[OPERATIONS_KEY];
 	return isInstrumentedScope(registered) ? registered.operations : undefined;
 }
+
+/**
+ * Whether the calls one module namespace exposes are the ones this instrument wrapped.
+ *
+ * This is the check a caller that *demands* a count makes before it trusts one: a module namespace is
+ * bound to the functions the module held when it was first reached, so a namespace carrying this
+ * module's own wrapper is a process the instrument was preloaded into, while a namespace reached
+ * before any wrap — or after a wrap that no already-bound consumer sees — is a process whose calls
+ * are going unrecorded. A zero count is only evidence of no work in the first case; in the second it
+ * is evidence of no instrument, which is why both answers are checkable rather than assumed.
+ */
+export function namespaceInstrumented(namespace: unknown): boolean {
+	if (typeof namespace !== "object" || namespace === null) return false;
+	// Reason: a module namespace is a plain object of members; the mark below is what this module puts
+	// on the functions it wrapped, and it is the only thing this check asks about.
+	const readFile = (namespace as Record<string, unknown>).readFile;
+	return typeof readFile === "function" && INSTRUMENT_MARK in readFile;
+}

@@ -675,6 +675,106 @@ describe("the reference channel's amount is the harness's own price, fixed at th
 	});
 });
 
+/**
+ * One document two harnesses have written into: this harness's own session beside another
+ * harness's two, which the other harness committed itself. The amounts are literals and add up
+ * exactly (0.5 + 0.25 + 0.125 = 0.875 CNY), and the token counts are the ones each record states.
+ */
+const SHARED_PERIOD: ConsumptionDocument = {
+	schemaVersion: 1,
+	periodId: "period-shared",
+	start: "2026-10-01T00:00:00.000Z",
+	holiday: false,
+	harnesses: {
+		[HARNESS]: {
+			sessions: [
+				record("session-main", null, {
+					official: { "model-alpha": { tokens: { input: 1000, cacheRead: 0, cacheWrite: 0, output: 0 }, costCny: 0.5 } },
+				}),
+			] as unknown as ConsumptionDocument["harnesses"][string]["sessions"],
+		},
+		"other-harness": {
+			sessions: [
+				record("session-other", null, {
+					official: { "model-alpha": { tokens: { input: 10, cacheRead: 0, cacheWrite: 0, output: 0 }, costCny: 0.25 } },
+				}),
+				record("session-other-child", "session-other", {
+					official: { "model-alpha": { tokens: { input: 20, cacheRead: 0, cacheWrite: 0, output: 0 }, costCny: 0.125 } },
+				}),
+			] as unknown as ConsumptionDocument["harnesses"][string]["sessions"],
+		},
+	},
+};
+
+describe("the period's accrual is the whole shared document's, not this harness's (P38)", () => {
+	test("a document another harness wrote into contributes its own records to the period's total", async () => {
+		const { runtime } = await bindDisplay({ baseline: SHARED_PERIOD });
+
+		// The period's own consumption, read from the records the loaded document holds: this harness's
+		// session and the other harness's two, one share each, in the order the document keeps them.
+		expect(runtime.presentation.accrued()).toEqual({ totalCny: 0.875, sessionCostsCny: [0.5, 0.25, 0.125] });
+
+		// The tree of the session this harness is displaying is still this harness's own: the other
+		// harness's session is another identity in the same file, not a descendant of this one.
+		const display = runtime.presentation.of({
+			sessionId: "session-main",
+			provider: "official",
+			model: "model-alpha",
+		});
+		expect(display.tree.costCny).toBe(0.5);
+		expect(display.tree.tokens.input).toBe(1000);
+	});
+
+	test("a session's uncommitted consumption is not added to the period's total a second time", async () => {
+		const SAVED = baseline([
+			record("session-main", null, {
+				official: {
+					"model-alpha": {
+						tokens: { input: 1000, cacheRead: 0, cacheWrite: 0, output: 0 },
+						costCny: 0.5,
+					},
+				},
+			}),
+		]);
+		const OFF_PEAK = Date.UTC(2026, 9, 14, 5, 0, 0);
+		// One request whose amount is hand-computed from the data's own off-peak alpha tier:
+		// (1000·2 + 1000·0.5 + 1000·8) / 1e6 = 0.0105 XTS.
+		const USAGE: TurnUsage = { input: 1000, cacheRead: 1000, cacheWrite: 0, output: 1000, totalTokens: 3000 };
+		const { runtime, double, consumptionFile } = await bindDisplay({ baseline: SAVED });
+		expect(runtime.presentation.accrued()).toEqual({ totalCny: 0.5, sessionCostsCny: [0.5] });
+
+		double.deliverTurn(startedAt(MAIN, "official", "model-alpha", OFF_PEAK), { owner: OWNER });
+		double.deliverTurn(settled(MAIN, OFF_PEAK + 1_000, USAGE), { owner: OWNER });
+
+		// The request is accounted but not yet committed: the period's own total is what the document
+		// holds, so the session's uncommitted accumulation neither replaces it nor is added to it.
+		expect(runtime.view.own(MAIN.sessionId)).toEqual({
+			official: { "model-alpha": { tokens: { input: 2000, cacheRead: 1000, cacheWrite: 0, output: 1000 }, costCny: 0.5105 } },
+		});
+		expect(runtime.presentation.accrued()).toEqual({ totalCny: 0.5, sessionCostsCny: [0.5] });
+
+		// Once the Round's own commit lands, the same one session carries the larger amount — one share,
+		// not a saved share beside an in-memory one.
+		double.deliverRound(OWNER, { event: { kind: "round_start" }, session: MAIN });
+		double.deliverRound(OWNER, { event: { kind: "round_end" }, session: MAIN });
+		// The loaded record of that session is version 1, so the Round's own snapshot is version 2. The
+		// publication is what the case waits on (a Round's end dispatches its save without waiting for
+		// it), and the instance adopts that document through the same update, a couple of file
+		// operations later — so the accrual is read once the instance really holds the new version.
+		await savedDocument(consumptionFile, candidate => candidate.harnesses[HARNESS]?.sessions[0]?.saveVersion === 2);
+		const deadline = Date.now() + 5_000;
+		while (runtime.storage.sessions(HARNESS)[0]?.saveVersion !== 2) {
+			if (Date.now() > deadline) throw new Error("the instance never adopted the version the Round committed");
+			await nextTick();
+		}
+		// 0.5 + the request's own 0.0105, compared within the double's own rounding of that sum.
+		const accrued = runtime.presentation.accrued();
+		expect(accrued.sessionCostsCny).toHaveLength(1);
+		expect(accrued.totalCny).toBeCloseTo(0.5105, 12);
+		expect(accrued.sessionCostsCny[0] as number).toBeCloseTo(0.5105, 12);
+	});
+});
+
 describe("the target's own facts are reported as the host gave them", () => {
 	test("an unavailable effort is a question mark rather than a borrowed value", async () => {
 		const { runtime } = await bindDisplay({ baseline: MIXED });
