@@ -8,7 +8,7 @@
 
 **Blocked by:** [05：真实子入口接入与可靠会话事实](05-subagent-facts.md)、[15：整文档归档与有条件周期重置](15-period-reset.md)
 
-**Status:** ready-for-agent
+**Status:** in-progress — 实现已随集成提交 `506a445ad81736798452bce9b53b98a3199d7cb1` 合入 `pi-adapter`；本轮集成验收在该提交上完成（`bun run typecheck` exit 0、归一检出 + `OMP_BOT_BINARY` 下全仓 `bun run test` 1162 pass / 0 fail），本轮无源码修复，本记录提交尚未合入 `pi-adapter`。实现侧的真实宿主未覆盖项见 [evidence/17-budget-actions.md](../evidence/17-budget-actions.md) 的「未覆盖 / 未验收」，仍原样成立。
 
 ## Acceptance criteria
 
@@ -45,3 +45,11 @@ P57 跨票交付，下表按 Coverage item 唯一分配交付票与测试负责�
 | P48：共享准备、工厂及根专属效果不重复 | [20：完整装配的共享准备与处置验证](20-assembly-lifecycle.md) | 20 |
 | P49：处置后旧资源不再产生效果 | [20：完整装配的共享准备与处置验证](20-assembly-lifecycle.md) | 20 |
 | P51：禁止的重复工作和健康空闲轮询不新增 | [22：效率前后对照与复杂度判断](22-efficiency-acceptance.md) | 22 |
+
+## Comments
+
+- **集成同步（本轮由集成 helper 执行；本票实现提交 `480e50b`，结果 HEAD `506a445`）**：宿主把本票分支合进 `pi-adapter` 后把该集成提交（`506a445ad81736798452bce9b53b98a3199d7cb1`）合回本分支，故本分支 HEAD 即该集成提交，其父为 `99e9578`（前一集成 tip）与 `480e50b`（本票实现提交），与 `pi-adapter` tip 同一提交。**无冲突可解**：本 worktree 的 gitdir 内无 `MERGE_HEAD`/rebase/cherry-pick 状态，`git ls-files -u` 空，`git status --porcelain` 空；`git diff --stat 99e9578 HEAD` 正好是本票 14 个文件（生产/测试/文档 11 个加本票证据与两份实现日志），且 `git diff 480e50b HEAD` 对本票那 11 个生产/测试/文档文件为空（合并没有改写交付面）。未操作集成工作区、未切换分支、未新建 worktree、未 reset、未调用 retro、未自行合入集成分支。
+- **本轮集成验收（HEAD `506a445`）**：`bun run typecheck` → exit 0。`bun run test` 按检出原样 → **1116 pass / 17 fail**（1133 tests / 123 files / 6069 expect() calls / 234.15s / exit 1），17 例全为本机环境前置项（5 例缺 `omp-bot.exe` 的默认同级路径、10 例 CRLF 检出使 `patch.diff` 物化失败、2 例锁文件 sha 按 LF blob 录制），无一落在本票合入的文件上。归一检出（`bun.lock` 与两份 `patch.diff` 还原为已提交 LF 字节，sha256 与 `git cat-file blob HEAD:<path>` 逐一相等）+ `OMP_BOT_BINARY=E:/Developer/myhub/omp-bot/backend/target/release/omp-bot.exe` 下 `bun run test` → **1162 pass / 0 fail**（123 files / 6655 expect() calls / 399.16s / exit 0）；归一比原样多出的 29 例正是那 10 个 dock 文件在文件级失败后未注册的用例。
+- **本轮修复：无源码修复。** 无一条失败由本票合入引入（本票 14 个文件与全部失败文件 `tests/connect-bot/**`、`tests/harness-dock/**` 交集为空；本票的进程内消费者 `tests/model-cost` 全分区在归一后的全仓运行中全绿，含本票新增 `pi-budget-actions` 的 6 用例与既有 `pi-period-reset`／`pi-session-accounting`／`pi-session-span`／`detail-tree`）；归一后零失败说明没有失败被上述环境例掩盖，故不改仓库内容（`.gitattributes` 或按行尾鲁棒的解析属装配/宿主验证票）。运行后三处文件按字节恢复 CRLF 检出状态，工作树只余本记录与证据/日志改动。
+- **未验证／限制**：实现侧 evidence 的「未覆盖 / 未验收（不声称通过）」原样成立——真实 pi 的 `/reload` 未驱动、`scripts/pi-session-accounting.ts` 的 6 条 FAIL 不认领、真实账户侧 provider 事实（P53）与 TUI 可读性（P52）未核对；实机 smoke、跨票据整体验收与 P51/P52/P53 人类验收属最终独立门禁，本轮未执行。
+- 详细命令、日志路径与逐条失败归因见 [evidence/17-budget-actions.md](../evidence/17-budget-actions.md) 的「集成同步与合并后全仓回归」。
