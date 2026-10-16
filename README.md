@@ -60,6 +60,7 @@ glossary.
 | [`tests/harness-dock/`](tests/harness-dock) | The shared dock (isolated install, controlled session, capture) and its self-test. | You are writing a test that drives a real session. |
 | [`scripts/verify-omp-candidate.ts`](scripts/verify-omp-candidate.ts) | On-demand independent verification of one exact harness version: isolated exact install + framework suite + a scoped result record (version, revision anchor, source revision, lockfiles, environment, coverage). | You are verifying another harness version. |
 | [`scripts/capture-codex-outbound.ts`](scripts/capture-codex-outbound.ts) | Prepared layer-2 capture of a real `openai-codex` round trip; needs a human-supplied credential. | You are recording the real-credential role evidence. |
+| [`scripts/pi-provider-account-read.ts`](scripts/pi-provider-account-read.ts) | The real account-side reading for the pi migration: runs the loaded extension on the real host against a real provider account and publishes a desensitized, timestamped reading beside what the host drew. Reads the machine's own credential, prints it only as a fingerprint, makes no model request, and reports a missing credential as a blocker. | You are recording or replaying the account-side acceptance evidence (P53). |
 
 The durable documentation is self-contained: migration decisions, constraints and recorded
 evidence are stated in the per-extension READMEs, framework documents and ADRs rather than
