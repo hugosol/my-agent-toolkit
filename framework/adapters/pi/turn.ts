@@ -44,8 +44,13 @@ function usageOf(message: PiAssistantMessage): TurnUsage | undefined {
  * The mapping is the adapter's alone: pi's `aborted` stop reason is a cancelled cycle, an `error`
  * stop reason or an error the message carries is a failed one, and everything else — including a
  * response that only requested tools — is a completed response.
+ *
+ * Both axes of this adapter read it, because both are stated by the same native material: a Turn
+ * reports how its response settled, and the activity the Round axis observes reports its own
+ * outcome from the last message to settle. It is exported for that second reader rather than
+ * spelled a second time, so which stop reason is a cancellation cannot drift between them.
  */
-function outcomeOf(message: PiAssistantMessage): TurnOutcome {
+export function outcomeOf(message: PiAssistantMessage): TurnOutcome {
 	if (message.stopReason === "aborted") return "cancelled";
 	if (message.stopReason === "error" || message.errorMessage !== undefined) return "failed";
 	return "completed";
