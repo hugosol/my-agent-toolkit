@@ -46,3 +46,17 @@ P57 跨票交付，下表按 Coverage item 唯一分配交付票与测试负责�
 | P48：共享准备、工厂及根专属效果不重复 | [20：完整装配的共享准备与处置验证](20-assembly-lifecycle.md) | 20 |
 | P49：处置后旧资源不再产生效果 | [20：完整装配的共享准备与处置验证](20-assembly-lifecycle.md) | 20 |
 | P51：禁止的重复工作和健康空闲轮询不新增 | [22：效率前后对照与复杂度判断](22-efficiency-acceptance.md) | 22 |
+
+## Comments
+
+- **集成同步**（本轮由集成 helper 执行，起点 `3b3e8a41`，终点 `2ea7fee3`）：宿主已把集成提交 `2ea7fee31a3c3c0f11d9ad3d1e15a70bfd926637`（parents `5ad9af75` 集成 tip + 本票 tip `3b3e8a41`）合回本分支，本分支 HEAD 即该提交；`git status` 干净、无 `MERGE_HEAD`，`extensions/`、`framework/`、`entrypoints/`、`scripts/`、`tests/`、`docs/` 与本文件所在目录内均无冲突标记，故本轮无冲突可解、无需修复提交。集成分支此后又前进到 `79325364`（[13] 的 evidence、`implementation/02-pi-main-session.md`、smoke 与 `tests/harness-dock/capture-server.ts` 改动），属宿主排队合并的后续票，与本轮同步结论无关。集成工作区（`E:/Developer/myhub/my-agent-toolkit`）未被操作；未切换分支、未新建 worktree、未 reset、未丢弃提交、未调用 retro。
+- **原始检出**：`bun run typecheck` → exit 0（无诊断）。`bun test` → 960 pass / 17 fail（107 files，241.8 s）。17 例全部是本机检出／布局前置项：12 例由 `core.autocrlf=true` 的 CRLF 检出引起（10 个 dock 文件在补丁物化期即报 `…/patch.diff touches no file`；`baseline.test.ts` 与 `session-driver.test.ts` 因录制 sha256 针对已提交的 LF blob 而失败），5 例是 `tests/connect-bot` 在 `%TEMP%` 布局下找不到同级 `omp-bot.exe`。
+- **归一后的全仓回归**（两份 `patch.diff` 与 `bun.lock` 去 CR，去 CR 后 sha256 与 `git cat-file blob HEAD:<path>` 逐一相同；`OMP_BOT_BINARY=E:/Developer/myhub/omp-bot/backend/target/release/omp-bot.exe`）：`bun test` → **1003 pass / 3 fail**（1006 tests / 107 files / 383.8 s）。分区读数：model-cost 376 pass、framework 378 pass、connect-bot 142 pass、codebase-tools 24 pass，dock 83 pass / 3 fail。
+- **3 例失败的定位（本机宿主环境，与本票及本轮合入内容无关）**：全部在 `tests/harness-dock/session-ownership-tree.test.ts`（真实宿主），断言 `expect(run.capture.requests()).toHaveLength(5|7)` 实收 11|13，每例恰多 6 条。四条一手证据：
+  1. 残存 run root `%TEMP%/omp-dock-ownership-tree-delegation-fBQ9B/captures/` 的 11 份请求体中，5 份是会话轮次（带 system-reminder 与工作目录），6 份只有 2 条消息（system + user），user 恰为 `State: <solution_space>one fixed answer, nothing open</solution_space> Answer with exactly one of: low, medium, high, xhigh. Do not execute this state; judge it only.`
+  2. 录制安装自身即此路径：`@oh-my-pi/pi-coding-agent/src/task/agents.ts` 给 `task` agent `thinkingLevel: AUTO_THINKING`；`src/auto-thinking/classifier.ts` 按 `prompts/system/auto-thinking-solution-space-question.md` 经 live `judge` 角色链提问；`src/judgment/index.ts` 的 `withSessionFallback()` 在链中无 native 候选时把**会话模型**追加为 judge 候选。
+  3. 该 run 的宿主日志（`<run root>/user-home/.omp/logs/omp.2026-10-14.27080.log`）：`judgment candidate failed candidate deepseek/deepseek-flash error: judgment "level": no option label in reply: "dock ownership reply"` 与 `auto-thinking: classification failed; using fallback level` —— judge 候选落到被 dock 重定向到 capture 端点的会话模型，而夹具固定应答不是等级答案。
+  4. **无扩展对照**（未提交探针 `.cache/int-04-probe/host-classifier.test.ts`，用后已删）：同一录制安装、run root、capture 端点与 provider override，`extensions: []`（`--no-extensions` 且无 `-e`），一次委派一个子代 → `requests=6 judge=3 turns=3`（exit 0）。即本仓库任何代码都不在进程内时 judge 请求照样出现，每个 task 子代理轮次 3 条；本套件两个子代理 → +6，与实收差值完全一致。
+  同一现象（同 3 例、同 11|13 vs 5|7、同宿主成因；另一棵 parked worktree 亦可复现；绿 run 的 `agent-state/models.db` 有 native `typesafe` 候选而红 run 只有在线候选）已由兄弟线 `hyper/model-cost-session-time-and-detail` 的 `evidence/07/dock-judge-chain-finding.md` 独立记录。本机当前 judge 链无 native 候选，而该套件的 5/7 条期望以「存在 native 候选」为前提。
+- **处置**：本轮无冲突、无本票导致的失败，故无修复提交；归一属本机检出／环境条件而非仓库内容，不入库（沿用 01 轮约定）。每次运行后三份文件已按字节还原（`057e01f6…`、`294b3727…`、`7f5c82e6…`，与运行前逐一相同），`git status --porcelain` 为空；探针脚本已删除。
+- **未验证/限制**：POSIX 未运行；未改动宿主 judge 链环境（不制造 native 候选以求绿），该 3 例在本机当前环境下可复现；真实 pi 宿主/终端与 provider 账户侧仍按各票证据的不可比清单，属后续门禁。
