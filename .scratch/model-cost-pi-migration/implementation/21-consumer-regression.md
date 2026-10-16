@@ -6,16 +6,16 @@
 
 **Blocked by:** [18：两端原生展示与实时 context](18-native-presentation.md)、[20：完整装配的共享准备与处置验证](20-assembly-lifecycle.md)
 
-**Status:** ready-for-agent
+**Status:** implemented — 验证证据见 [evidence/21-consumer-regression.md](../evidence/21-consumer-regression.md)；合并由集成子代理执行
 
 ## Acceptance criteria
 
-- [ ] 根据实际变更列明并执行消费者分区，覆盖 State、观察/权限、marker、初始化/清理、取消/失败终止及相应真实宿主路径。
-- [ ] 运行最终集成 bun run typecheck 与 bun run test，并串行运行适用真实宿主 dock/smoke；共享工作树运行期间保持源码与 fixture 不变。
-- [ ] 记录命令、退出状态、失败及来源状态；已有失败仅在场景/签名/条件匹配时引用，仍明确列出，不用 pi 通过替代 OMP 回归。
-- [ ] 审查共同组织与干净切换，迁移全部受影响消费者并移除旧接线/别名/shim，不重钉旧内部 duration 或接线副本测试。
-- [ ] 复用各功能票的承诺测试，新增本票独有的跨消费者/完整装配回归；P57 用例保持其唯一负责人，不集中重写。
-- [ ] **P50 完整 Coverage（S1、S2、S3）**：覆盖对应消费者分区与两端真实宿主路径，尤其 State、观察/权限、marker、初始化/清理及取消/失败终止；不以 pi 通过替代 OMP 回归，不测试旧内部接线副本。
+- [x] 根据实际变更列明并执行消费者分区，覆盖 State、观察/权限、marker、初始化/清理、取消/失败终止及相应真实宿主路径。
+- [x] 运行最终集成 bun run typecheck 与 bun run test，并串行运行适用真实宿主 dock/smoke；共享工作树运行期间保持源码与 fixture 不变。
+- [x] 记录命令、退出状态、失败及来源状态；已有失败仅在场景/签名/条件匹配时引用，仍明确列出，不用 pi 通过替代 OMP 回归。
+- [x] 审查共同组织与干净切换，迁移全部受影响消费者并移除旧接线/别名/shim，不重钉旧内部 duration 或接线副本测试。
+- [x] 复用各功能票的承诺测试，新增本票独有的跨消费者/完整装配回归；P57 用例保持其唯一负责人，不集中重写。
+- [x] **P50 完整 Coverage（S1、S2、S3）**：覆盖对应消费者分区与两端真实宿主路径，尤其 State、观察/权限、marker、初始化/清理及取消/失败终止；不以 pi 通过替代 OMP 回归，不测试旧内部接线副本。
 
 ## 执行与证据约束
 
