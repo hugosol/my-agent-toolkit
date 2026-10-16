@@ -49,6 +49,13 @@ what a real TUI draws are human-only, and nothing in this repository claims eith
   `deepseek/deepseek-flash(high)`, without `Model:` or `Effort:` labels. Unknown facts remain `?` and
   a reported `off` remains `off`. Same-depth rows retain aligned columns; model abbreviation keeps
   the effort suffix where it fits, with the existing wrapping and final clipping at extreme widths.
+- The tree lists the union of the sessions the document holds and the sessions this process observed,
+  merged by the session's own identity: a subagent another process runs takes its row at the direct
+  parent its own host stated — a grandchild under its own parent, never under the owner — and a
+  session whose first consumption is still uncommitted is shown with the readings that did arrive
+  (its context, its activity) and with no consumption figure at all rather than a zero. A later run
+  or process that continues the same session updates that row instead of adding a second one, and
+  nothing of an observation is written to the storage root.
 
 Verification of these updates: the startup-progress replay reproduced three unattributable creation
 readings before the fix, then passed the creation, first-attributed-reading and post-readiness-loss

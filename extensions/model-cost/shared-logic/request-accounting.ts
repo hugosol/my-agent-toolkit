@@ -100,6 +100,7 @@ import type {
 	FeedbackTransport,
 	RoundDelivery,
 	SessionFacts,
+	SessionObservation,
 	TurnEndDelivery,
 	TurnStartDelivery,
 	TurnUsage,
@@ -122,19 +123,29 @@ export interface ConsumptionView {
 	own(sessionId: string): OwnConsumption | undefined;
 	/**
 	 * The identity facts this instance holds for one actual session — its latest display name and its
-	 * direct parent — or `undefined` when it holds neither a delivery nor a record for that session.
+	 * direct parent — or `undefined` when it holds neither a host fact nor a record for that session.
 	 *
 	 * The name is display data and never an identity: a rename changes what this answers and nothing
-	 * else about the session. What this instance has been told since it started is what it answers,
-	 * with the document's own record filling in a fact no delivery has reported yet, so a display
-	 * reads a session's latest name as soon as it is reported rather than at the next save.
+	 * else about the session. What the session's own host stated is what it answers, with the
+	 * document's own record filling in a member nothing stated, so a display reads a session's latest
+	 * name as soon as it is reported rather than at the next save. The host facts are read from the
+	 * process's own observation record first (see {@link RequestAccountingInputs.registrations}),
+	 * because that record is refreshed by every session delivery *and* by every reading another
+	 * process sent — including one that states facts and no reading of its own — so a session another
+	 * process runs, and a session renamed wherever it runs, are both answered here.
 	 */
 	identity(sessionId: string): SessionIdentity | undefined;
 	/**
 	 * Every actual session this instance can answer an identity for, each once, in the order it learned
 	 * them: the records the loaded document holds first, then the sessions a delivery has since
-	 * reported. A session this instance knows nothing about is not among them, and a session it knows
+	 * reported, then the sessions the process observed and this instance was never delivered anything
+	 * about. A session this instance knows nothing about is not among them, and a session it knows
 	 * only a name or a parent for is.
+	 *
+	 * It is the *union* the detail tree is drawn from: the sessions a previous process committed and
+	 * the sessions this process observed running, merged by the session's own identity, so a session
+	 * another process runs is one row of that tree rather than a second kind of thing — and a session
+	 * both sources hold is still one row.
 	 *
 	 * It exists because the relations are held per session rather than as a tree: a reader that has to
 	 * walk them — the detail's static agent tree, for instance — reads this one list and builds the
@@ -333,6 +344,18 @@ export interface RequestAccountingInputs {
 	/** The active consumption document this instance accumulates into and saves through. */
 	readonly storage: ConsumptionStore;
 	/**
+	 * The process's own record of the sessions it observed, as this instance reads it for the ones it
+	 * holds no delivery of its own about.
+	 *
+	 * It is the framework's session observation source (`framework/core/observations.ts`) — one per
+	 * extension in one process — and what this instance takes from it is identity alone: the facts a
+	 * session's own process resolved for it, never an accumulation. A session the harness ran in
+	 * another process is observed into that record from the readings that process delivered, which is
+	 * how a session nothing of this instance's own ever named is still a session this instance can
+	 * name, place and draw. Omitted means this instance knows only what it was delivered itself.
+	 */
+	readonly registrations?: SessionObservationSource;
+	/**
 	 * The instant source this instance's own clock readings are taken from: the Session span start,
 	 * which is the one span fact the harness publishes with no instant of its own.
 	 *
@@ -343,6 +366,35 @@ export interface RequestAccountingInputs {
 	 * own delivery.
 	 */
 	readonly now?: () => number;
+}
+
+/**
+ * The half of the process's session observation record this instance reads: what each session the
+ * process observed was, by that session's own identity.
+ *
+ * It is the framework's own source, and the two reads below are the whole of what this instance uses
+ * it for: one session's observation, and every session the record holds something for, in the order
+ * the process first observed each. A session an extension never had a delivery of its own about — one
+ * another process ran, and reported only through the readings it delivered — is exactly what the
+ * second read is for, and an entry that never saw a session's own facts carries no identity to name.
+ */
+export interface SessionObservationSource {
+	/** One session's current observation, or nothing when this process has observed none of it. */
+	read(sessionId: string): SessionObservation | undefined;
+	/** Every session this record holds something for, in the order the process first observed each. */
+	snapshot(): readonly SessionObservation[];
+}
+
+/**
+ * The identity facts one actual session's own host stated, as this instance keeps them: any member
+ * the host did not report stays absent rather than being filled in from the session's current state.
+ */
+interface ReportedFacts {
+	readonly name?: string;
+	readonly taskName?: string;
+	readonly agentName?: string;
+	readonly agentId?: string;
+	readonly parent?: string | null;
 }
 
 /** One model's running totals inside one session's ledger, which is what additions mutate. */
@@ -493,6 +545,10 @@ function addConsumption(into: Record<string, Record<string, ModelConsumption>>, 
  */
 export function createRequestAccounting(inputs: RequestAccountingInputs): RequestAccounting {
 	const { data, harness, storage } = inputs;
+	// The process's own observation record, as this instance reads it for the sessions nothing of its
+	// own ever delivered: a session another process ran is registered there from the readings that
+	// process sent, and its facts are what let this instance name and place it at all.
+	const registrations = inputs.registrations;
 	const now = inputs.now ?? Date.now;
 	const ledgers = new Map<string, SessionLedger>();
 	/**
@@ -540,16 +596,7 @@ export function createRequestAccounting(inputs: RequestAccountingInputs): Reques
 		return Number.isFinite(read) && read >= 0 ? read : undefined;
 	};
 	/** What the host has reported about each actual session, as far as it reported anything. */
-	const reported = new Map<
-		string,
-		{
-			readonly name?: string;
-			readonly taskName?: string;
-			readonly agentName?: string;
-			readonly agentId?: string;
-			readonly parent?: string | null;
-		}
-	>();
+	const reported = new Map<string, ReportedFacts>();
 	/** The price each started Turn was anchored at, by the Turn identity the framework minted. */
 	const anchors = new Map<string, RequestPrice>();
 	/** The Turns this instance has already accounted for or deliberately skipped, by identity. */
@@ -586,15 +633,45 @@ export function createRequestAccounting(inputs: RequestAccountingInputs): Reques
 	let disposed = false;
 
 	/**
-	 * The identity facts this instance holds for one actual session: what the host has reported about
-	 * it and, for a fact no delivery reported yet, what the loaded document already holds for it.
+	 * The identity facts one actual session is named and placed by: what the process's own record
+	 * holds for it, with what this instance was delivered itself filling in a member the record does
+	 * not hold.
 	 *
-	 * `undefined` means this instance knows nothing about that session — it has neither seen a
-	 * delivery for it nor loaded a record of it — which is not the same as a known session whose name
-	 * this host could not report.
+	 * The record wins where it holds a member because it is the fresher of the two by construction: it
+	 * is updated from every session delivery *and* from every reading another process delivered —
+	 * including a word that states facts and no reading of its own, and one whose reading repeated a
+	 * value nothing about it moved, neither of which this instance is delivered any event for. So a
+	 * session renamed wherever it runs is named here by the name its own host last stated, whichever
+	 * process observed that statement. Nothing is guessed on the way: the facts are the ones a host
+	 * resolved for the session, and `undefined` means neither holder has ever heard of it.
+	 */
+	const factsOf = (sessionId: string): ReportedFacts | undefined => {
+		const registered = registrations?.read(sessionId)?.session;
+		const own = reported.get(sessionId);
+		if (registered === undefined) return own;
+		const name = registered.name ?? own?.name;
+		const taskName = registered.taskName ?? own?.taskName;
+		const agentName = registered.agentName ?? own?.agentName;
+		const agentId = registered.agentId ?? own?.agentId;
+		const parent = registered.parentSessionId ?? own?.parent;
+		return {
+			...(name === undefined ? {} : { name }),
+			...(taskName === undefined ? {} : { taskName }),
+			...(agentName === undefined ? {} : { agentName }),
+			...(agentId === undefined ? {} : { agentId }),
+			...(parent === undefined ? {} : { parent }),
+		};
+	};
+
+	/**
+	 * The identity facts this instance holds for one actual session: what the session's own host
+	 * stated, and — for a member nothing stated — what the loaded document already holds for it.
+	 *
+	 * `undefined` means this instance knows nothing about that session — neither a host fact nor a
+	 * loaded record — which is not the same as a known session whose name nothing could report.
 	 */
 	const identityOf = (sessionId: string): SessionIdentity | undefined => {
-		const facts = reported.get(sessionId);
+		const facts = factsOf(sessionId);
 		const record = storage.session(harness, sessionId);
 		if (facts === undefined && record === undefined) return undefined;
 		return {
@@ -738,6 +815,11 @@ export function createRequestAccounting(inputs: RequestAccountingInputs): Reques
 		const known = new Set<string>(reported.keys());
 		for (const id of ledgers.keys()) known.add(id);
 		for (const record of storage.sessions(harness)) known.add(record.id);
+		// A session the process observed running is one of the relations the walk has to hold even
+		// where this instance was delivered nothing about it: a committed descendant of a session
+		// another process ran is that session's own descendant, and its consumption belongs to the
+		// same tree whether or not the session between them ever committed anything itself.
+		for (const entry of registrations?.snapshot() ?? []) known.add(entry.sessionId);
 		// Every known session's own descendants are read off one index of the relations rather than by
 		// scanning the whole set at each level.
 		const children = new Map<string, string[]>();
@@ -972,6 +1054,16 @@ export function createRequestAccounting(inputs: RequestAccountingInputs): Reques
 				if (seen.has(sessionId)) continue;
 				seen.add(sessionId);
 				const identity = identityOf(sessionId);
+				if (identity !== undefined) identities.push(identity);
+			}
+			// The sessions the process observed and this instance was never delivered anything about:
+			// a session another process ran is registered in the process's own record by the readings
+			// that process sent, and it takes its place in the same list, once, under its own identity.
+			// An entry that carries no facts names no identity and is left out of the union.
+			for (const entry of registrations?.snapshot() ?? []) {
+				if (seen.has(entry.sessionId) || entry.session === undefined) continue;
+				seen.add(entry.sessionId);
+				const identity = identityOf(entry.sessionId);
 				if (identity !== undefined) identities.push(identity);
 			}
 			return identities;
