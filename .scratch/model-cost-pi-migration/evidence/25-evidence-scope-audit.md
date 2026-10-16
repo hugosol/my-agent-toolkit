@@ -1,7 +1,10 @@
 # 25：最终证据与兼容范围审计（P54）
 
 **Status:** implemented（本票实现 = 本轮真实验证 + 本文汇总记录 + [`framework/docs/harness-support.md`](../../../framework/docs/harness-support.md)
-的「pi model-cost migration evidence」一节；无生产代码改动。**整体迁移仍未完成**：P51/P52/P53 的人类确认未到，
+的「pi model-cost migration evidence」一节；无生产代码改动。实现已随集成提交 `e45a9ffcbb071ea18d937c660dab38cf5f8e2db6`
+合入 `pi-adapter`，宿主已把该提交合回本分支（故本分支 HEAD 即该提交、与 `pi-adapter` 同 tree，见 §10）；
+本轮集成验收在同一 HEAD 完成，`bun run typecheck` 与全仓 `bun run test` 均 exit 0、无源码修复。
+**整体迁移仍未完成**：P51/P52/P53 的人类确认未到，
 且下文 §8 列出的未通过真实路径仍未通过。）
 
 **本文件是本票交付的记录**：逐票汇总已产生的真实运行（源、版本/工件、OMP 补丁条件、环境、命令、结果、未覆盖项），
@@ -182,3 +185,55 @@
 - **持久记录**：固定版本、工件、补丁条件与未验收项已写入
   [`framework/docs/harness-support.md`](../../../framework/docs/harness-support.md) 的「pi model-cost migration evidence」；
   后续只需针对变化的事实重新核验（story 58）。
+
+## 10. 集成同步与合并后全仓回归（本轮集成验收）
+
+**同步状态**：宿主已把集成提交 `e45a9ffcbb071ea18d937c660dab38cf5f8e2db6` merge 回本票开发分支，故本分支 HEAD 即该提交：
+`git rev-parse HEAD pi-adapter` 同为 `e45a9ff…`、`git rev-list --left-right --count pi-adapter...HEAD` = `0 0`、
+`git diff --stat pi-adapter HEAD` 为空（两侧同 tree）。提交关系：`e45a9ff` 的父为 `a6f1c6a`（合并前的集成 tip）
+与 `a230648`（本票末提交，父 `39fdc3d`）。
+
+**无冲突可解**：`git ls-files -u` 0 条未合并路径；本 worktree 的 gitdir
+（`E:/Developer/myhub/my-agent-toolkit/.git/worktrees/hyper-ticket-JCfW4W`）内没有 `MERGE_HEAD`、`rebase-merge`
+或 cherry-pick 状态。
+
+**合入内容逐项核对**：`git diff --name-status a6f1c6a HEAD` 与本票自身的 `git diff --name-status 39fdc3d a230648`
+**逐项相同**（同为 13 个路径：新增 `evidence/25-evidence-scope-audit.md` 与 `evidence/logs/25-*.log` 十份、修改
+`implementation/25-evidence-scope-audit.md` 与 `framework/docs/harness-support.md`）；且
+`git diff --stat a230648 HEAD -- extensions framework tests scripts entrypoints package.json tsconfig.json bun.lock host-patches`
+**为空** —— 合入树里全部被测源码/夹具/依赖清单的字节与本票实现提交 `a230648` 逐一相同，本票实现没有在合入时被改写。
+
+**检出与环境**：三处行尾敏感文件按各前轮做法归一到已提交 LF blob 字节后运行（`bun.lock` `a5d37ab2…`、
+viewed-session `66195465…`、codex-response-boundary `4ec9ad0d…`，CR 字节均为 0，与 `git cat-file blob HEAD:<path>`
+逐一相等），运行结束按字节恢复为运行前的 CRLF 检出（`e7ed487b…` / `057e01f6…` / `294b3727…`，与本轮开始前逐一相同）。
+`bun install --frozen-lockfile` exit 0（`Checked 13 installs across 33 packages (no changes)`，`bun.lock` 字节不变）。
+`%TEMP%` 下 `tests/connect-bot/support/omp-bot.ts` 的默认同级路径不存在，真实面板二进制以
+`OMP_BOT_BINARY=E:/Developer/myhub/omp-bot/backend/target/release/omp-bot.exe` 显式给名（本机既有 release 构建，
+非本票产物）。环境：win32 `10.0.26200` / x64 / Bun 1.4.2 / Node v24.18.0。运行期间与 23 的集成会话约定错开
+（其全仓运行推迟到本轮结束后），减少真实宿主时序用例的满载干扰。
+
+**全仓回归（`bun run test`，同一 HEAD 与同一环境，一次运行）**：
+
+| 命令 | 退出 | 结果 | 日志 |
+| --- | --- | --- | --- |
+| `bun run typecheck` | 0 | 无诊断（`$ tsc --noEmit`） | `logs/25-integration-typecheck.log` |
+| `bun run test`（`OMP_BOT_BINARY` + 归一检出） | 0 | **1200 pass / 0 fail**，6897 expect()，128 文件，409.21s | `logs/25-integration-fulltest.log` |
+
+计数与本票实现轮在同一源上的归一全仓运行（§2：1200 pass / 6897 expect() / 128 文件）一致，即合入没有改变可观察结果。
+
+**本轮修复：无源码修复。** 全仓一次通过、没有可归因于合入的失败；本轮改动只有本记录、实现文件的状态行与两份日志。
+
+**环境观察（非仓库内容）**：本轮期间共享仓库配置 `E:/Developer/myhub/my-agent-toolkit/.git/config` 曾短暂带有无效值
+`core.autocrlf = core.eol`（mtime `19:53:10`），使需要解析该布尔的 git 命令直接 fatal
+（`fatal: bad boolean config value 'core.eol' for 'core.autocrlf'`；实测影响 `git status --porcelain`、`git ls-files`、
+`git cat-file blob <rev>:<path>`，而 `rev-parse`/`log`/`diff`/`show` 仍可用）。该值自 `19:54:32` 起回到
+`core.autocrlf=true` 并保持稳定，本轮验收运行即在该值下进行，其后各项核对与提交也以同一值执行。这不是仓库改动，
+也不是本票产物，如实记录供最终门禁参考。
+
+**运行后状态**：工作区只余本轮记录（本文件、实现文件状态行、两份日志）；运行期间被测源码与夹具未改。
+本轮未操作集成工作区（`E:/Developer/myhub/my-agent-toolkit`）、未切换分支、未新建 worktree、未 reset、未调用 retro，
+也未自行合入 `pi-adapter`（返回后由宿主排队合并）。
+
+**本轮通过不改变 §8**：全仓绿只说明合入没有破坏任何已执行检查；§8 的未验收清单（人类确认、18 的真实宿主半、
+P8/P10 的 detached 记账、无 `evidence/*.md` 的两票、未覆盖的真实宿主行为、平台/版本范围、既有失败/时序项、付费与凭据）
+原样保留，本文件仍不宣称总体完成、不关闭任何未完成验收票。
