@@ -15,14 +15,23 @@
  * and that an unusable baseline is neither overwritten nor turned into a fresh start.
  */
 import { afterEach, describe, expect, test } from "bun:test";
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import {
+	closeSync,
+	existsSync,
+	mkdirSync,
+	mkdtempSync,
+	openSync,
+	readdirSync,
+	readFileSync,
+	rmSync,
+	symlinkSync,
+	writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
 import type { ConsumptionDocument, SessionRecord } from "../../extensions/model-cost/shared-logic/consumption-document";
 import type { ChildPlan, ChildResult } from "./support/store-child";
-
-/** The child fixture, as this process starts it. */
-const CHILD = path.join(import.meta.dir, "support", "store-child.ts");
+import { FS_INSTRUMENT, runStoreChild } from "./support/store-child-runner";
 
 /** Every temporary directory this file created, removed after each case. */
 const directories: string[] = [];
@@ -88,31 +97,6 @@ function configRepository(label: string, declaredStorageDir: string): { reposito
 	return { repositoryRoot, configDirectory };
 }
 
-/**
- * Start one child process and read its results back.
- *
- * The child runs in the working directory the case demands, with this process's own environment
- * plus any override a case needs (an isolated user home, for instance), and its plan is written
- * beside its results.
- */
-async function runChild(
-	plan: ChildPlan,
-	options: { readonly cwd: string; readonly env?: Record<string, string | undefined> },
-): Promise<ChildResult> {
-	const planFile = plan.resultPath.replace(/\.json$/, ".plan.json");
-	writeFileSync(planFile, JSON.stringify(plan), "utf8");
-	const child = Bun.spawn(["bun", CHILD, planFile], {
-		cwd: options.cwd,
-		env: { ...process.env, ...options.env },
-		stdout: "pipe",
-		stderr: "pipe",
-	});
-	const [stderr, exitCode] = await Promise.all([new Response(child.stderr).text(), child.exited]);
-	if (exitCode !== 0) throw new Error(`store-child exited ${String(exitCode)}:\n${stderr}`);
-	if (!existsSync(plan.resultPath)) throw new Error(`store-child wrote no results (stderr: ${stderr})`);
-	return JSON.parse(readFileSync(plan.resultPath, "utf8")) as ChildResult;
-}
-
 /** The document one root's consumption file holds. */
 function storedDocument(storeDirectory: string): ConsumptionDocument {
 	return JSON.parse(readFileSync(path.join(storeDirectory, CONSUMPTION_FILE), "utf8")) as ConsumptionDocument;
@@ -128,6 +112,12 @@ function childPlan(input: {
 	readonly startAt?: number;
 	/** The home the child must really have before it runs; the child's own `homedir()` decides it. */
 	readonly requireUserHome?: string;
+	/** The harness the child's own runtime belongs to, when the case is about another one. */
+	readonly harness?: string;
+	/** How many read-only synchronizations the child runs after its commits. */
+	readonly syncs?: number;
+	/** Whether the case starts the child with the file-system instrument and demands its counts. */
+	readonly instrumented?: boolean;
 }): ChildPlan {
 	return {
 		configRoot: input.repositoryRoot,
@@ -136,7 +126,10 @@ function childPlan(input: {
 			? { userHomeDirectory: path.join(input.run, "home") }
 			: { requireUserHome: input.requireUserHome }),
 		...(input.startAt === undefined ? {} : { startAt: input.startAt }),
-		...(input.record === undefined ? {} : { commits: [{ harness: "omp", record: input.record }] }),
+		...(input.record === undefined ? {} : { commits: [{ harness: input.harness ?? "omp", record: input.record }] }),
+		...(input.harness === undefined ? {} : { harness: input.harness }),
+		...(input.syncs === undefined ? {} : { syncs: input.syncs }),
+		...(input.instrumented === undefined ? {} : { instrumented: input.instrumented }),
 		resultPath: path.join(input.run, `result-${input.label}.json`),
 	};
 }
@@ -155,13 +148,13 @@ describe("the storage root of independent processes", () => {
 		// own config file lives in, whatever working directory the process was started in.
 		const expectedRoot = path.join(config.configDirectory, "data", "archive");
 
-		const first = await runChild(
+		const first = await runStoreChild(
 			childPlan({ ...config, run, label: "a", record: session("session-a", null, 1) }),
 			{ cwd: workA },
 		);
 		// The second process reads the document the first one created, so its own save joins that
 		// period rather than starting another one.
-		const second = await runChild(
+		const second = await runStoreChild(
 			childPlan({ ...config, run, label: "b", record: session("session-b", "session-a", 1) }),
 			{ cwd: workB },
 		);
@@ -190,7 +183,7 @@ describe("the storage root of independent processes", () => {
 		const work = tempDirectory("home-work");
 		const expectedRoot = path.join(home, ".omp", "cost-archive");
 
-		const result = await runChild(
+		const result = await runStoreChild(
 			childPlan({ ...config, run, label: "home", record: session("session-home", null, 1), requireUserHome: home }),
 			{
 				cwd: work,
@@ -218,7 +211,7 @@ describe("the storage root of independent processes", () => {
 		const config = configRepository("retarget-config", firstRoot);
 		const work = tempDirectory("retarget-work");
 
-		const first = await runChild(
+		const first = await runStoreChild(
 			childPlan({ ...config, run, label: "one", record: session("session-one", null, 1) }),
 			{ cwd: work },
 		);
@@ -231,7 +224,7 @@ describe("the storage root of independent processes", () => {
 			`storageDir: ${JSON.stringify(secondRoot)}\nbalanceTtlMs: 30000\ncodexQuotaTtlMs: 15000\n`,
 			"utf8",
 		);
-		const second = await runChild(
+		const second = await runStoreChild(
 			childPlan({ ...config, run, label: "two", record: session("session-two", null, 1) }),
 			{ cwd: work },
 		);
@@ -257,11 +250,11 @@ describe("the storage root of independent processes", () => {
 		const alias = configRepository("alias-link", linkDirectory);
 		const work = tempDirectory("alias-work");
 
-		const first = await runChild(
+		const first = await runStoreChild(
 			childPlan({ ...plain, run, label: "plain", record: session("session-plain", null, 1) }),
 			{ cwd: work },
 		);
-		const second = await runChild(
+		const second = await runStoreChild(
 			childPlan({ ...alias, run, label: "alias", record: session("session-alias", "session-plain", 1) }),
 			{ cwd: work },
 		);
@@ -287,10 +280,10 @@ describe("the storage root of independent processes", () => {
 		// is exactly two instances that started on the same empty root.
 		const startAt = Date.now() + 400;
 		const results = await Promise.all([
-			runChild(childPlan({ ...config, run, label: "a", record: session("session-a", null, 1), startAt }), {
+			runStoreChild(childPlan({ ...config, run, label: "a", record: session("session-a", null, 1), startAt }), {
 				cwd: work,
 			}),
-			runChild(
+			runStoreChild(
 				childPlan({ ...config, run, label: "b", record: session("session-b", "session-a", 1), startAt }),
 				{ cwd: work },
 			),
@@ -323,7 +316,7 @@ describe("the storage root of independent processes", () => {
 		const startAt = Date.now() + 400;
 		const results = await Promise.all(
 			records.map((record, index) =>
-				runChild(childPlan({ ...config, run, label: String(index), record, startAt }), { cwd: work }),
+				runStoreChild(childPlan({ ...config, run, label: String(index), record, startAt }), { cwd: work }),
 			),
 		);
 
@@ -354,7 +347,7 @@ describe("the storage root of independent processes", () => {
 		const startAt = Date.now() + 400;
 		const results = await Promise.all(
 			candidates.map((record, index) =>
-				runChild(childPlan({ ...config, run, label: String(index), record, startAt }), { cwd: work }),
+				runStoreChild(childPlan({ ...config, run, label: String(index), record, startAt }), { cwd: work }),
 			),
 		);
 
@@ -379,7 +372,7 @@ describe("the storage root of independent processes", () => {
 		seedStore(storeDirectory, JSON.stringify(document([current])));
 		const before = readFileSync(path.join(storeDirectory, CONSUMPTION_FILE), "utf8");
 
-		const result = await runChild(
+		const result = await runStoreChild(
 			childPlan({ ...config, run, label: "stale", record: session("session-main", null, 4, 0.99) }),
 			{ cwd: work },
 		);
@@ -399,7 +392,7 @@ describe("the storage root of independent processes", () => {
 
 		const results = await Promise.all(
 			[0, 1].map(index =>
-				runChild(childPlan({ ...config, run, label: String(index), record: session(`session-${String(index)}`, null, 1) }), {
+				runStoreChild(childPlan({ ...config, run, label: String(index), record: session(`session-${String(index)}`, null, 1) }), {
 					cwd: work,
 				}),
 			),
@@ -425,7 +418,7 @@ describe("the storage root of independent processes", () => {
 		const legacy = JSON.stringify({ totalCost: 12.5, holiday: false });
 		seedStore(storeDirectory, legacy);
 
-		const result = await runChild(
+		const result = await runStoreChild(
 			childPlan({ ...config, run, label: "legacy", record: session("session-legacy", null, 1) }),
 			{ cwd: work },
 		);
@@ -452,8 +445,8 @@ describe("a session's runtime merges through the same coordinated commit (P35)",
 		// Two independent processes, each committing its own session's snapshot with the runtime that
 		// session's own executions accumulated. Neither may overwrite the other's record.
 		const [first, second] = await Promise.all([
-			runChild(childPlan({ ...config, run, label: "first", record: firstRecord }), { cwd: workA }),
-			runChild(childPlan({ ...config, run, label: "second", record: secondRecord }), { cwd: workB }),
+			runStoreChild(childPlan({ ...config, run, label: "first", record: firstRecord }), { cwd: workA }),
+			runStoreChild(childPlan({ ...config, run, label: "second", record: secondRecord }), { cwd: workB }),
 		]);
 
 		expect([first.kind, second.kind]).toEqual(["ran", "ran"]);
@@ -469,7 +462,7 @@ describe("a session's runtime merges through the same coordinated commit (P35)",
 		// A later process commits the next version of the first session with what its own executions have
 		// accumulated by then: the first session's figure moves, and the second session's own record —
 		// consumption, parent and runtime — is exactly the one the other process left.
-		const third = await runChild(
+		const third = await runStoreChild(
 			childPlan({
 				...config,
 				run,
@@ -492,20 +485,20 @@ describe("a session's runtime merges through the same coordinated commit (P35)",
 		// One execution's own duration, as the record of the version that produced it states it.
 		const observed = { ...session("session-child", null, 1), runtimeMs: 360_000 };
 
-		const first = await runChild(childPlan({ ...config, run, label: "first", record: observed }), { cwd: workA });
+		const first = await runStoreChild(childPlan({ ...config, run, label: "first", record: observed }), { cwd: workA });
 		expect(first.commits).toEqual([{ kind: "saved" }]);
 
 		// Another process states that same execution again — the same figure at the same version — and the
 		// coordinated commit answers it as the content the file already carries rather than as a new
 		// contribution.
-		const second = await runChild(childPlan({ ...config, run, label: "second", record: observed }), { cwd: workB });
+		const second = await runStoreChild(childPlan({ ...config, run, label: "second", record: observed }), { cwd: workB });
 		expect(second.commits).toEqual([{ kind: "unchanged" }]);
 		expect(storedDocument(storeDirectory).harnesses.omp?.sessions).toEqual([observed]);
 
 		// A later process commits its own next version of that session with the same one execution behind
 		// it: the file's figure is what that execution ran — 360000, never the 720000 a second contribution
 		// would make of two writes — because a repeated observation states a figure rather than adding one.
-		const third = await runChild(
+		const third = await runStoreChild(
 			childPlan({ ...config, run, label: "third", record: { ...session("session-child", null, 2), runtimeMs: 360_000 } }),
 			{ cwd: workC },
 		);
@@ -513,5 +506,243 @@ describe("a session's runtime merges through the same coordinated commit (P35)",
 		expect(storedDocument(storeDirectory).harnesses.omp?.sessions).toEqual([
 			{ ...session("session-child", null, 2), runtimeMs: 360_000 },
 		]);
+	});
+});
+
+/** Waits until the file a case's child creates when its baseline is loaded exists. */
+async function waitForFile(file: string): Promise<void> {
+	const deadline = Date.now() + 20_000;
+	while (!existsSync(file)) {
+		if (Date.now() > deadline) throw new Error(`the file ${file} never appeared`);
+		await Bun.sleep(5);
+	}
+}
+
+/** One record of one root's document, or `undefined` when the document holds none for that id. */
+function recordOf(storeDirectory: string, harness: string, id: string): SessionRecord | undefined {
+	return storedDocument(storeDirectory).harnesses[harness]?.sessions.find(record => record.id === id);
+}
+
+/**
+ * The period's own reading, one harness's own reading, and what a synchronization really did
+ * (P32, P33, P38, P39; S3 — and P57's read-only-refresh item).
+ *
+ * These cases are the multi-process half of the shared-storage contract: two harnesses' processes
+ * writing one file, a batch whose records are adjudicated one at a time, a publication this platform
+ * refuses, and the read-only synchronization a process reaches when it has an event of its own. What
+ * the synchronization cost is counted rather than inferred — the instrument is a preload, and the
+ * child refuses to report counts from a process it was not preloaded into — and the document's own
+ * bytes before and after the operation are compared, so "it wrote nothing" is evidence of no write
+ * call and not of an unchanged-looking value.
+ */
+describe("the shared document across processes, and the read-only synchronization (P32, P33, P38, P39)", () => {
+	test("a synchronization adopts what another process committed while reading nothing but the document", async () => {
+		const run = tempDirectory("sync");
+		const storeDirectory = path.join(run, "store");
+		const config = configRepository("sync-config", storeDirectory);
+		const work = tempDirectory("sync-work");
+
+		// One process commits its own session: the document exists, and it holds a record this reader
+		// never saw.
+		const writer = await runStoreChild(
+			childPlan({ ...config, run, label: "writer", record: session("session-written", null, 1, 0.02) }),
+			{ cwd: work },
+		);
+		expect(writer.commits).toEqual([{ kind: "saved" }]);
+
+		// The reader starts over that document and stops after its own initialization: this case arrays
+		// the interleaving, so what it has to adopt is written after its baseline was really loaded.
+		const ready = path.join(run, "ready");
+		const go = path.join(run, "go");
+		const reading = runStoreChild(
+			{
+				...childPlan({ ...config, run, label: "reader", harness: "omp", syncs: 1, instrumented: true }),
+				readyPath: ready,
+				goPath: go,
+			},
+			{ cwd: work, preload: FS_INSTRUMENT },
+		);
+		await waitForFile(ready);
+
+		// Another process's commit onto the same period: the record the writer already committed, and one
+		// of its own that this reader has never seen.
+		const current = storedDocument(storeDirectory);
+		const published = JSON.stringify({
+			...current,
+			harnesses: {
+				...current.harnesses,
+				omp: { sessions: [...(current.harnesses.omp?.sessions ?? []), session("session-late", "session-written", 5, 0.5)] },
+			},
+		});
+		writeFileSync(path.join(storeDirectory, CONSUMPTION_FILE), published, "utf8");
+		writeFileSync(go, "go", "utf8");
+		const reader = await reading;
+
+		expect(reader.kind).toBe("ran");
+		expect(reader.load).toBe("loaded");
+		// What the file held was adopted, and nothing else happened: no fault was stated, no period moved
+		// and the instance's own reading is the document's own records.
+		expect(reader.syncs).toEqual([{ kind: "adopted", periodChanged: false, changed: true }]);
+		expect(reader.notices).toEqual([]);
+		expect(reader.heldSessions).toEqual(["session-written", "session-late"]);
+
+		// The cost of that adoption: exactly the two reads of the document — the baseline the instance
+		// initialized with and the synchronization's own — and neither a replacement of the file nor any
+		// operation of the lock name the framework's coordination takes beside it.
+		expect(reader.fsOperations).toEqual({ reads: 2, publishes: 0, locks: 0 });
+		// And the file itself is byte for byte what the other process published.
+		expect(readFileSync(path.join(storeDirectory, CONSUMPTION_FILE), "utf8")).toBe(published);
+	});
+
+	test("a batch of processes publishes the valid records, refuses the others, and retries nothing", async () => {
+		const run = tempDirectory("batch");
+		const storeDirectory = path.join(run, "store");
+		const config = configRepository("batch-config", storeDirectory);
+		const work = tempDirectory("batch-work");
+		const current = session("session-main", null, 3, 0.03);
+		seedStore(storeDirectory, JSON.stringify(document([current])));
+
+		// Four processes at once over that document: two sessions it has never held, one snapshot of the
+		// version it holds with other content, and one older snapshot of it.
+		const plans = [
+			{ label: "new-one", record: session("session-new-one", "session-main", 1, 0.04) },
+			{ label: "conflict", record: session("session-main", null, 3, 0.99) },
+			{ label: "new-two", record: session("session-new-two", "session-main", 1, 0.05) },
+			{ label: "stale", record: session("session-main", null, 2, 0.98) },
+		];
+		const startAt = Date.now() + 600;
+		const results = await Promise.all(
+			plans.map((plan, index) =>
+				runStoreChild(
+					childPlan({ ...config, run, label: plan.label, record: plan.record, startAt, instrumented: true }),
+					{ cwd: work, preload: FS_INSTRUMENT },
+				),
+			),
+		);
+
+		// Each record is decided on its own by the process that submitted it, whichever order the four
+		// processes reached the file in.
+		const outcomes = results.map(result => result.commits[0]?.kind);
+		expect(outcomes.filter(kind => kind === "saved")).toHaveLength(2);
+		expect(outcomes.filter(kind => kind === "conflict")).toHaveLength(1);
+		expect(outcomes.filter(kind => kind === "stale-version")).toHaveLength(1);
+		// A refused record is refused once: the process that met a conflict or an older version read the
+		// document and replaced nothing at all, while each accepted one replaced it exactly once.
+		for (const [index, result] of results.entries()) {
+			const accepted = outcomes[index] === "saved";
+			expect(result.fsOperations?.publishes).toBe(accepted ? 1 : 0);
+			expect(result.fsOperations?.locks).toBeGreaterThan(0);
+			expect(result.fsOperations?.reads).toBe(2);
+		}
+
+		// What the file holds is exactly the three records that were accepted: the refused snapshot's
+		// version, name and amount are nowhere in it, and nothing else was added on their behalf.
+		const stored = storedDocument(storeDirectory).harnesses.omp?.sessions ?? [];
+		expect(stored.map(record => record.id).sort()).toEqual(["session-main", "session-new-one", "session-new-two"]);
+		expect(recordOf(storeDirectory, "omp", "session-main")).toEqual(current);
+		expect(stored.find(record => record.id === "session-new-one")?.parent).toBe("session-main");
+		expect(readdirSync(storeDirectory)).toEqual([CONSUMPTION_FILE]);
+	});
+
+	test.skipIf(process.platform !== "win32")(
+		"a publication this platform refuses is reported as that failure and leaves the file as it was",
+		async () => {
+			const run = tempDirectory("publish-failure");
+			const storeDirectory = path.join(run, "store");
+			const config = configRepository("publish-failure-config", storeDirectory);
+			const work = tempDirectory("publish-failure-work");
+			const current = session("session-main", null, 3, 0.03);
+			seedStore(storeDirectory, JSON.stringify(document([current])));
+			const before = readFileSync(path.join(storeDirectory, CONSUMPTION_FILE), "utf8");
+
+			// This platform refuses to replace a name another handle holds open, which is the one step of a
+			// publication a reader can refuse: the update reads the document, decides, and cannot replace it.
+			const handle = openSync(path.join(storeDirectory, CONSUMPTION_FILE), "r");
+			try {
+				const blocked = await runStoreChild(
+					childPlan({
+						...config,
+						run,
+						label: "blocked",
+						record: session("session-blocked", null, 1, 0.06),
+						instrumented: true,
+					}),
+					{ cwd: work, preload: FS_INSTRUMENT },
+				);
+				// The failure is the answer, and it is not a save: the process says the update did not land,
+				// and the document is the bytes it was.
+				expect(blocked.commits).toEqual([{ kind: "failed", failure: "io" }]);
+				expect(blocked.fsOperations?.publishes).toBe(0);
+				expect(readFileSync(path.join(storeDirectory, CONSUMPTION_FILE), "utf8")).toBe(before);
+			} finally {
+				closeSync(handle);
+			}
+
+			// Nothing of the failure is left behind — no lock, no staging directory, no half-written
+			// document — so the next process publishes the same record normally, over the file it read.
+			const recovered = await runStoreChild(
+				childPlan({ ...config, run, label: "recovered", record: session("session-blocked", null, 1, 0.06), instrumented: true }),
+				{ cwd: work, preload: FS_INSTRUMENT },
+			);
+			expect(recovered.commits).toEqual([{ kind: "saved" }]);
+			expect(recovered.fsOperations?.publishes).toBe(1);
+			expect(recordOf(storeDirectory, "omp", "session-blocked")).toEqual(session("session-blocked", null, 1, 0.06));
+			expect(recordOf(storeDirectory, "omp", "session-main")).toEqual(current);
+			expect(readdirSync(storeDirectory)).toEqual([CONSUMPTION_FILE]);
+		},
+	);
+
+	test("two harnesses' processes share the document without merging identity, parent or write permission", async () => {
+		const run = tempDirectory("harnesses");
+		const storeDirectory = path.join(run, "store");
+		const config = configRepository("harnesses-config", storeDirectory);
+		const work = tempDirectory("harnesses-work");
+
+		// The same session id in each harness's own namespace: another direct parent, a far greater
+		// version and other consumption. The pi process also commits a second session of its own.
+		const ompRecord = session("session-shared", null, 1, 0.01);
+		const piRecord = { ...session("session-shared", "pi-parent", 9, 0.5), name: "pi 的会话" };
+		const piOther = session("pi-only", null, 1, 0.02);
+		const [omp, pi] = await Promise.all([
+			runStoreChild(childPlan({ ...config, run, label: "omp", record: ompRecord, harness: "omp" }), { cwd: work }),
+			runStoreChild(
+				{
+					...childPlan({ ...config, run, label: "pi", harness: "pi" }),
+					commits: [
+						{ harness: "pi", record: piRecord },
+						{ harness: "pi", record: piOther },
+					],
+				},
+				{ cwd: work },
+			),
+		]);
+		expect([...omp.commits, ...pi.commits]).toEqual([{ kind: "saved" }, { kind: "saved" }, { kind: "saved" }]);
+
+		// One document, two partitions: each holds its own record of the shared id, with its own direct
+		// parent and its own consumption, and neither was rewritten by the other's commit.
+		expect(storedDocument(storeDirectory).harnesses.omp?.sessions).toEqual([ompRecord]);
+		expect(storedDocument(storeDirectory).harnesses.pi?.sessions).toEqual([piRecord, piOther]);
+
+		// A later omp process sees the whole period and only its own partition: the period's own reading
+		// holds every harness's records, while this harness's own reading holds its one record.
+		const next = await runStoreChild(
+			childPlan({
+				...config,
+				run,
+				label: "next",
+				record: { ...ompRecord, saveVersion: 2, own: ompRecord.own },
+				harness: "omp",
+			}),
+			{ cwd: work },
+		);
+		expect(next.commits).toEqual([{ kind: "saved" }]);
+		expect([...(next.heldSessions ?? [])].sort()).toEqual(["session-shared"]);
+		expect([...(next.periodSessions ?? [])].sort()).toEqual(["pi-only", "session-shared", "session-shared"]);
+
+		// The version it committed is its own partition's successor, however far ahead the other
+		// partition's record of the same id is, and the other partition is exactly what its own process
+		// left: same version, same parent, same consumption.
+		expect(recordOf(storeDirectory, "omp", "session-shared")?.saveVersion).toBe(2);
+		expect(recordOf(storeDirectory, "pi", "session-shared")).toEqual(piRecord);
 	});
 });
