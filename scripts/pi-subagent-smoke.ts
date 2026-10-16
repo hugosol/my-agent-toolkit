@@ -36,6 +36,7 @@
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
+import { MODEL_COST_WIDGET_KEY } from "../extensions/model-cost/harnesses/pi/widget";
 import type { CapturedRequest } from "../tests/harness-dock/capture-server";
 import { PI_MODEL_COST_CONFIG_ROOT_ENV } from "../tests/harness-dock/fixtures/pi-model-cost/env";
 import { PI_SESSION_FACTS_PREFIX } from "../tests/harness-dock/fixtures/pi-session-facts/prefix";
@@ -160,6 +161,7 @@ function writeChildEntry(root: string, options: { readonly present: boolean }): 
 		`import { modelCostPiHarness } from ${JSON.stringify(specifier)};\n\nexport default modelCostPiHarness(${JSON.stringify(root)});\n`,
 		"utf8",
 	);
+
 	return file;
 }
 
@@ -295,11 +297,18 @@ async function savedDocument(
 	}
 }
 
+/** One session file's own first line, as far as this script reads it. */
+interface SessionAnchorHeader {
+	readonly type?: string;
+	readonly id?: string;
+	readonly parentSession?: string;
+}
+
 /** One session file's own first line, as pi writes the header this adapter reads. */
-function sessionHeader(file: string): { readonly type?: string; readonly id?: string; readonly parentSession?: string } | undefined {
+function sessionHeader(file: string): SessionAnchorHeader | undefined {
 	try {
 		const [firstLine] = readFileSync(file, "utf8").split("\n", 1);
-		return JSON.parse(firstLine ?? "") as { readonly type?: string; readonly id?: string; readonly parentSession?: string };
+		return JSON.parse(firstLine ?? "") as SessionAnchorHeader;
 	} catch {
 		return undefined;
 	}
@@ -367,9 +376,52 @@ function delegationCall(task: string, options: { readonly async?: boolean } = {}
 	};
 }
 
+/**
+ * The answer one run's endpoint gives: one delegation, then text.
+ *
+ * A response script that delegated on *every* request carrying the provider's tool would delegate
+ * again on the request that follows the first delegation's tool result, so the run would never
+ * settle and no later observation of the same process would be reachable. The delegation a case
+ * scripts is therefore the run's own first one, and every request after it is answered with text.
+ */
+function delegationOnce(options: { readonly async?: boolean } = {}): (request: CapturedRequest) => { readonly toolCall?: { readonly name: string; readonly arguments: string }; readonly replyText?: string } {
+	let delegated = false;
+	return request => {
+		if (!carriesSubagentTool(request)) return { replyText: REPLY_TEXT };
+		if (delegated) return { replyText: REPLY_TEXT };
+		delegated = true;
+		return { toolCall: delegationCall(PROMPT, options) };
+	};
+}
+
 /** Whether a run's own stderr reports the stale-extension-context fault this host raises on replacement. */
 function staleContextFault(session: PiSession): boolean {
 	return session.stderr().includes("This extension ctx is stale after session replacement or reload");
+}
+
+/**
+ * The child session pi wrote for one run, waited for.
+ *
+ * A background delegation runs in the provider's own detached process, which writes that session's
+ * file when it begins — one process later than the parent's own run settled — so the file is waited
+ * for rather than read out of a directory that is still being set up. The wait is bounded and answers
+ * nothing when the run really produced no child.
+ */
+async function childSessionOf(
+	dock: DockRun,
+	parentFile: string,
+	timeoutMs: number,
+): Promise<{ readonly file: string; readonly header: SessionAnchorHeader | undefined } | undefined> {
+	const deadline = Date.now() + timeoutMs;
+	for (;;) {
+		const found = sessionFiles(dock.run.root.sessionDir)
+			.filter(file => file !== parentFile)
+			.map(file => ({ file, header: sessionHeader(file) }))
+			.find(entry => entry.header?.parentSession !== undefined);
+		if (found !== undefined) return found;
+		if (Date.now() > deadline) return undefined;
+		await Bun.sleep(100);
+	}
 }
 
 // ---------------------------------------------------------------------------
@@ -431,7 +483,7 @@ async function phaseRefusedEntry(cli: PiCli): Promise<void> {
 	console.log("\nphase: a child entry the provider will not load");
 	const dock = startDockRun(cli, "refused-entry", {
 		childEntry: false,
-		respond: request => (carriesSubagentTool(request) ? { toolCall: delegationCall(PROMPT, { async: false }) } : { replyText: REPLY_TEXT }),
+		respond: delegationOnce(),
 	});
 	const session = await openSession(dock, [CONFIG_ENTRYPOINT, PROVIDER_ENTRY, FACTS_PROBE]);
 	await session.run(FIRST_PROMPT, 90_000);
@@ -452,17 +504,18 @@ async function phaseRefusedEntry(cli: PiCli): Promise<void> {
 }
 
 /**
- * A real foreground delegation: what the provider's own launch evidence says about this entry, and
- * what the child session's own file states.
+ * A real foreground delegation — the child session runs *inside* this process — read for the
+ * assembled lifecycle: the entry the provider loaded into the child, the child's own saved record,
+ * the process's single root-side prefetch, the display the child's own binding left alone, and what
+ * the parent's own instance does across the child's end and this run's own quit.
  */
 async function phaseForegroundDelegation(cli: PiCli): Promise<void> {
 	console.log("\nphase: a real delegation in the foreground");
 	const dock = startDockRun(cli, "foreground", {
-		respond: request => (carriesSubagentTool(request) ? { toolCall: delegationCall(PROMPT, { async: false }) } : { replyText: REPLY_TEXT }),
+		respond: delegationOnce({ async: false }),
 	});
-	const session = await openSession(dock, [CONFIG_ENTRYPOINT, PROVIDER_ENTRY, FACTS_PROBE]);
-	const parentFile = await session.sessionFile();
-	const parent = sessionHeader(parentFile);
+	const session = await openSession(dock, [dock.childEntry, PROVIDER_ENTRY, FACTS_PROBE]);
+	const balanceBefore = dock.run.capture.balanceCalls().length;
 	let settled = true;
 	try {
 		await session.run(PROMPT, 90_000);
@@ -470,6 +523,9 @@ async function phaseForegroundDelegation(cli: PiCli): Promise<void> {
 		settled = false;
 		console.log(`  note  the session's own run did not settle: ${error instanceof Error ? error.message.split("\n")[0] : String(error)}`);
 	}
+	// pi writes the session file lazily, so the parent's own file and header are read after its run.
+	const parentFile = await session.sessionFile();
+	const parent = sessionHeader(parentFile);
 
 	const launches = launchMetadata(path.join(dock.run.root.sessionDir, "subagent-artifacts"));
 	const launch = launches[0];
@@ -493,66 +549,159 @@ async function phaseForegroundDelegation(cli: PiCli): Promise<void> {
 		child !== undefined && path.resolve(child.header?.parentSession ?? "") === path.resolve(parentFile),
 		`child: ${JSON.stringify(child?.header)}, parent file: ${JSON.stringify(parentFile)}`,
 	);
-	console.log(`  note  the session's run settled: ${settled}`);
-	if (staleContextFault(session)) {
-		console.log("  note  the extension reported the host's stale-extension-context fault during the delegation");
-	}
+	// The host replaces this process's extension context when it stands the child session up beside
+	// it, so the parent's own Round settling here is what proves the assembled entry survived that
+	// replacement: a frontend or a handler that read the spent context would have taken the Round
+	// down with it (see the evidence record's account of the fault this check regresses).
+	observe(
+		"the parent's own run settles with the child session running in the same process",
+		settled,
+		`session stderr (modelCost lines): ${JSON.stringify(session.stderr().split("\n").filter(line => line.includes("modelCost:")).slice(0, 4))}`,
+	);
+
+	const saved = await savedDocument(
+		dock.home.consumptionFile,
+		candidate => recordOf(candidate, child?.header?.id ?? "<none>") !== undefined,
+	);
+	const parentRecord = recordOf(saved, parent?.id ?? "<none>");
+	observe(
+		"the parent's own Round settled after the delegation, and its accumulation is saved",
+		(parentRecord?.own?.[PROVIDER]?.[MODEL]?.tokens?.input ?? 0) > 0,
+		`parent record: ${JSON.stringify(parentRecord)}`,
+	);
+	const childRecord = recordOf(saved, child?.header?.id ?? "<none>");
+	observe(
+		"the child session's own work is saved under its own identity, with this session as its direct parent",
+		childRecord !== undefined &&
+			childRecord.parent === parent?.id &&
+			(childRecord.own?.[PROVIDER]?.[MODEL]?.tokens?.input ?? 0) > 0,
+		`child record: ${JSON.stringify(childRecord)}, records ${JSON.stringify(recordsOf(saved).map(record => record.id))}`,
+	);
+	// The root-side effects are the owner's own: the child session's own evaluation in this process
+	// starts neither the balance prefetch nor a display, so the process asked the account once. The
+	// second process of another phase states the control: its own owner asks its own once more.
+	observe(
+		"the process asked the provider once: the child session's own evaluation started no second prefetch",
+		dock.run.capture.balanceCalls().length === balanceBefore + 1,
+		`balance calls ${JSON.stringify(dock.run.capture.balanceCalls().map(call => call.url))}`,
+	);
+	const childDrawings = session
+		.frames()
+		.filter(
+			frame =>
+				frame.type === "extension_ui_request" &&
+				frame.method === "setWidget" &&
+				frame.widgetKey === MODEL_COST_WIDGET_KEY,
+		)
+		.map(frame => (Array.isArray(frame.widgetLines) ? frame.widgetLines.map(String) : []))
+		.filter(lines => lines.some(line => line.includes("scout")));
+	observe(
+		"the child session's own binding drew nothing: the display stays this session's",
+		childDrawings.length === 0,
+		`drawings mentioning the child session: ${JSON.stringify(childDrawings.slice(0, 2))}`,
+	);
+
+	// The child's session ended inside this process. The parent's own instance is not the child's to
+	// end: the next exchange is accounted and saved into the same document.
+	const inputAfterDelegation = parentRecord?.own?.[PROVIDER]?.[MODEL]?.tokens?.input ?? 0;
+	await session.run(SECOND_PROMPT, 90_000);
+	const continued = await savedDocument(dock.home.consumptionFile, candidate =>
+		(recordOf(candidate, parent?.id ?? "<none>")?.own?.[PROVIDER]?.[MODEL]?.tokens?.input ?? 0) > inputAfterDelegation,
+	);
+	observe(
+		"a child session's own end did not dispose the live instance: the next exchange is still accounted and saved",
+		(recordOf(continued, parent?.id ?? "<none>")?.own?.[PROVIDER]?.[MODEL]?.tokens?.input ?? 0) > inputAfterDelegation,
+		`record after the next exchange: ${JSON.stringify(recordOf(continued, parent?.id ?? "<none>"))}`,
+	);
+
+	// This run's own quit: the process must exit of its own accord (the assembled entry leaves no
+	// wait that holds it), and the root must gain nothing after the entry's own disposal.
+	const bytesAtQuit = readFileSync(dock.home.consumptionFile, "utf8");
+	const exit = await session.stop({ timeoutMs: 15_000 });
+	await Bun.sleep(1_000);
+	observe(
+		"the entry's own disposal leaves no task behind: the process exits instead of being held open",
+		exit.timedOut === false,
+		`exit ${JSON.stringify(exit.exitCode)}${exit.timedOut ? " (killed after the stop timeout)" : ""}`,
+	);
+	observe(
+		"nothing writes to the storage root after the entry's own disposal",
+		readFileSync(dock.home.consumptionFile, "utf8") === bytesAtQuit,
+		`file after the quit: ${readFileSync(dock.home.consumptionFile, "utf8")}`,
+	);
+	console.log(`  note  the extension reported the host's stale-extension-context fault: ${staleContextFault(session)}`);
 }
 
 /**
- * A real background delegation: the child's own process saves its own session record, which is the
- * public form of that session's identity, direct parent and startup pair.
+ * A real background delegation: the child runs in the provider's own detached process, and what this
+ * phase reads is that process's own work — its saved session record — beside the one provider read
+ * the owner's process made, which the child's process must not repeat.
  */
 async function phaseBackgroundDelegation(cli: PiCli): Promise<void> {
 	console.log("\nphase: a real delegation in the background");
-	let delegated = false;
 	const dock = startDockRun(cli, "background", {
-		respond: request => {
-			if (!carriesSubagentTool(request)) return { replyText: REPLY_TEXT };
-			if (delegated) return { replyText: REPLY_TEXT };
-			delegated = true;
-			return { toolCall: delegationCall(PROMPT, { async: true }) };
-		},
+		respond: delegationOnce({ async: true }),
 	});
-	const session = await openSession(dock, [CONFIG_ENTRYPOINT, PROVIDER_ENTRY, FACTS_PROBE]);
-	const parentFile = await session.sessionFile();
-	const parent = sessionHeader(parentFile);
+	const session = await openSession(dock, [dock.childEntry, PROVIDER_ENTRY, FACTS_PROBE]);
+	const balanceBefore = dock.run.capture.balanceCalls().length;
+	let settled = true;
 	try {
 		await session.run(PROMPT, 90_000);
 	} catch (error) {
+		settled = false;
 		console.log(`  note  the session's own run did not settle: ${error instanceof Error ? error.message.split("\n")[0] : String(error)}`);
 	}
 
-	const launches = launchMetadata(path.join(dock.run.root.sessionDir, "subagent-artifacts"));
-	const launch = launches[0];
-	const childFiles = sessionFiles(dock.run.root.sessionDir)
-		.filter(file => file !== parentFile)
-		.map(file => ({ file, header: sessionHeader(file) }))
-		.filter(entry => entry.header?.parentSession !== undefined);
-	const child = childFiles[0];
-	if (launch === undefined || child?.header?.id === undefined) {
-		console.log(`  note  this path produced no child session to read: launches ${launches.length}, children ${childFiles.length}`);
+	const parentFile = await session.sessionFile();
+	const parent = sessionHeader(parentFile);
+	// A background delegation leaves no launch metadata under the foreground path's artifacts — the
+	// provider's own detached runner writes what it writes beside the child's own session — so what
+	// this phase reads is that session's file and the record its own process saved for it.
+	const child = await childSessionOf(dock, parentFile, 60_000);
+	if (child?.header?.id === undefined) {
+		console.log(
+			`  note  this path produced no child session to read: settled ${settled}, child ${JSON.stringify(child?.header)}`,
+		);
 		return;
 	}
-	const document = await savedDocument(
-		dock.home.consumptionFile,
-		candidate => recordOf(candidate, child.header?.id ?? "<none>") !== undefined,
-	);
+	let document: ConsumptionDocument | undefined;
+	try {
+		document = await savedDocument(
+			dock.home.consumptionFile,
+			candidate => recordOf(candidate, child.header?.id ?? "<none>") !== undefined,
+			45_000,
+		);
+	} catch (error) {
+		// Recorded rather than asserted: this dock's detached runner starts the child but does not
+		// reach a model request, so what a completed background delegation's own process saves is not
+		// observable here (see the evidence record's own account of this path).
+		console.log(
+			`  note  the child session's own process saved no record: ${error instanceof Error ? error.message.split("\n")[0] : String(error)}; artifacts ${JSON.stringify(sessionFiles(path.join(dock.run.root.sessionDir, "subagent-artifacts")).length)}`,
+		);
+		return;
+	}
 	const record = recordOf(document, child.header.id);
 	observe(
-		"the child's own consumption was saved under the child's own identity",
+		"the child's own consumption was saved under the child's own identity by its own process",
 		record !== undefined && record.parent === parent?.id && (record.own?.[PROVIDER]?.[MODEL]?.tokens?.input ?? 0) > 0,
 		`child record: ${JSON.stringify(record)}`,
 	);
 	observe(
-		"the launch's own parent session id, the child's own file and the saved record agree",
-		launch.metadata.parentSessionId === parent?.id && path.resolve(child.header.parentSession ?? "") === path.resolve(parentFile),
-		`launch: ${JSON.stringify(launch.metadata.parentSessionId)}, header: ${JSON.stringify(child.header.parentSession)}, record: ${JSON.stringify(record?.parent)}`,
+		"the child's own file and the saved record agree on the session that spawned it",
+		path.resolve(child.header.parentSession ?? "") === path.resolve(parentFile) && record?.parent === parent?.id,
+		`header: ${JSON.stringify(child.header.parentSession)}, record: ${JSON.stringify(record?.parent)}`,
 	);
 	observe(
 		"the saved startup pair is the one the child's own start stated",
 		record?.startup?.model?.provider !== undefined || record?.startup?.effort !== undefined,
 		`child startup: ${JSON.stringify(record?.startup)}`,
+	);
+	// The child's own process is not the owner of anything: it asked the provider account nothing, so
+	// the one balance read of this run is the owning process's own prefetch.
+	observe(
+		"the child's own process started no root-side prefetch of its own",
+		dock.run.capture.balanceCalls().length === balanceBefore + 1,
+		`balance calls ${JSON.stringify(dock.run.capture.balanceCalls().map(call => call.url))}`,
 	);
 }
 
