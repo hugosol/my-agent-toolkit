@@ -85,7 +85,7 @@ The one directory the framework's own runtime files live in, stated explicitly a
 _Avoid_: storage root, storageDir, temp directory fallback, working directory
 
 **Local access（本机接入）**:
-The framework-managed way one process offers the declared values of an owner it serves to a session the harness runs in another process: one endpoint per serving process, reached by the location record it publishes, over a Windows named pipe or a POSIX local socket. It carries declared values and their changes only — a declared read is answered on demand and a change is pushed one way — and it is not an RPC surface, a remote State write, or an extension's own transport. A session read in the process that serves the seat uses no endpoint at all.
+The framework-managed way one process offers the declared values of an owner it serves to a session the harness runs in another process, and the way a session the harness runs in another process hands that owner's process its own *observation*: one endpoint per serving process, reached by the location record it publishes, over a Windows named pipe or a POSIX local socket. It carries declared values and their changes, and one session's observation — its own facts, the owner it follows and the readings held for it — and nothing else: a declared read is answered on demand, a value change is pushed one way, and a reading is delivered the other way. It is not an RPC surface, a remote State write, or an extension's own transport. A session read in the process that serves the seat uses no endpoint at all.
 _Avoid_: RPC, remote procedure call, message channel through business documents, file queue, directory scan
 
 **Access target（接入目标）**:

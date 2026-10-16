@@ -117,6 +117,13 @@ class SeatConnection implements OwnerAccessCaller {
 		};
 	}
 
+	/**
+	 * The observation direction of this connection: what a session in this process delivers to the
+	 * process that serves the seat. This double models a reading side that delivers nothing, so a
+	 * reading handed over here is dropped exactly as one is over an access that admits none.
+	 */
+	deliver(): void {}
+
 	ended(): boolean {
 		return this.#ended;
 	}

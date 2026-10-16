@@ -14,9 +14,14 @@
  *
  * - One *seat* is one extension's access to one owner: `{ extension, owner }`. A serving process
  *   offers a seat's current declared values and observes that seat's changes; a reading process
- *   asks for a seat's values. Nothing else crosses. There is no write frame, no method name, no
- *   argument list and no business data: this is not an RPC surface, and a frame that is not the
- *   declared `hello` or `read` is refused rather than interpreted.
+ *   asks for a seat's values. The same seat carries one more, opposite direction, and it is the
+ *   only other thing that crosses: a session the harness ran in the reading process delivers the
+ *   *observation* of itself — its own facts, the owner it follows and the readings known for it —
+ *   to the process that serves the seat, which hands it to whoever receives that seat's
+ *   observations. Nothing else crosses. There is no write frame, no method name, no argument list
+ *   and no business data: this is not an RPC surface, a session cannot reach any value or any
+ *   other session through it, and a frame that is not the declared `hello`, `read` or `observed` is
+ *   refused rather than interpreted.
  * - The carrier is a local stream the platform already provides: a Windows named pipe
  *   (`\\.\pipe\my-agent-toolkit-access-<id>`, a kernel-namespace name that is not a disk directory)
  *   or a POSIX socket file governed by the runtime directory. The endpoint's id is random per
@@ -73,6 +78,14 @@ import {
 	type ConfigParser,
 	type ConfigReader,
 } from "../core/config";
+import type {
+	AgentActivity,
+	ObservedSession,
+	OwnerReference,
+	SessionContextReading,
+	SessionFacts,
+	SessionStartup,
+} from "../core/protocol";
 
 /** The declared values of one owner, by field name: the whole payload this access carries. */
 export type OwnerAccessValues = Readonly<Record<string, boolean>>;
@@ -185,6 +198,18 @@ export interface OwnerAccessPublisherSeam extends LocalAccessSource {
 export interface OwnerAccessPublisher {
 	/** Offers one seat's declared values; the returned function withdraws exactly that offer. */
 	offer(target: AccessTarget, source: OwnerAccessSource): () => void;
+	/**
+	 * Receives one seat's observations: every reading a session in another process delivers for the
+	 * sessions that follow that seat's owner is handed to `sink`, and the returned function
+	 * withdraws exactly that reception.
+	 *
+	 * The two halves of one seat are offered separately and live separately — an owner whose values
+	 * this process serves and one whose sessions another process only reports are the same seat with
+	 * one half each — and the seat, its location record and its endpoint are released when the last
+	 * of its halves is withdrawn. A half offered again over a seat that is still there keeps that
+	 * seat's verification, so a reader that already read the record is not locked out by it.
+	 */
+	receive(target: AccessTarget, sink: (reading: ObservedSession) => void): () => void;
 	/** Withdraws every offer, closes the endpoint and refuses every later connection. */
 	dispose(): void;
 }
@@ -197,6 +222,17 @@ export interface OwnerAccessCaller {
 	request(field: string, waitMs?: number): Promise<boolean | undefined>;
 	/** Observations of the seat's values changing, as the access pushed them; the return stops them. */
 	observe(listener: (field: string, value: boolean) => void): () => void;
+	/**
+	 * Delivers one reading of one session this process runs to the process that serves this seat.
+	 *
+	 * It is the other direction of the same access and it carries the session's own observation —
+	 * its facts, the owner it follows and the readings known for it — and nothing else. Nothing is
+	 * answered and nothing is expected back: a reading states what a session was observed to be, so
+	 * there is no acknowledgement to wait for, no value to read and no write of anything anywhere.
+	 * A reading this access does not receive — this caller has ended, or the seat serves values alone
+	 * — is dropped rather than carried.
+	 */
+	deliver(reading: ObservedSession): void;
 	/**
 	 * Whether this caller's access has ended: the seat was withdrawn, the caller was released, or
 	 * the connection closed. It is what tells a reader to stop expecting values, and it is reported
@@ -236,6 +272,19 @@ const LOCATION_PREFIX = "owner-access-";
 
 /** The bytes of one access's verification. */
 const VERIFICATION_BYTES = 32;
+
+/**
+ * One seat as this process is offering it, as a caller in this process reads it: the declared values
+ * another process reads, and where the observations a session in this process delivers are handed.
+ *
+ * It is the same seat a caller in another process reaches, and a caller here uses it directly rather
+ * than opening a connection to itself: the values it reads are the source's own current ones, and a
+ * reading it delivers lands on the sink without a frame.
+ */
+interface ProcessSeat {
+	readonly values?: OwnerAccessSource;
+	readonly readings?: (reading: ObservedSession) => void;
+}
 
 /**
  * The seats this process is serving right now, so a caller in this process reads the same source
@@ -291,6 +340,123 @@ function targetOf(frame: Frame | undefined): AccessTarget | undefined {
 	if (typeof extension !== "string" || extension.length === 0) return undefined;
 	if (typeof owner !== "string" || owner.length === 0) return undefined;
 	return { extension, owner };
+}
+
+/** One non-empty string a frame member states, or `undefined` when it states none this module reads. */
+function textOf(value: unknown): string | undefined {
+	return typeof value === "string" && value.length > 0 ? value : undefined;
+}
+
+/** A frame member as one plain record, or `undefined` when it is not one. */
+function recordOf(value: unknown): Record<string, unknown> | undefined {
+	return typeof value === "object" && value !== null && !Array.isArray(value)
+		? (value as Record<string, unknown>)
+		: undefined;
+}
+
+/** The owner reference one frame member states, or `undefined` when it states none this module reads. */
+function ownerOf(value: unknown): OwnerReference | undefined {
+	const record = recordOf(value);
+	if (record === undefined) return undefined;
+	if (record["kind"] === "unresolved") return { kind: "unresolved" };
+	if (record["kind"] !== "owner" && record["kind"] !== "inherited") return undefined;
+	const key = textOf(record["key"]);
+	return key === undefined ? undefined : { kind: record["kind"], key };
+}
+
+/** The startup facts one frame member states, or `undefined` when it states none this module reads. */
+function startupOf(value: unknown): SessionStartup | undefined {
+	const record = recordOf(value);
+	if (record === undefined) return undefined;
+	let model: SessionStartup["model"];
+	if (record["model"] !== undefined) {
+		const stated = recordOf(record["model"]);
+		const provider = stated === undefined ? undefined : textOf(stated["provider"]);
+		const id = stated === undefined ? undefined : textOf(stated["model"]);
+		if (provider === undefined || id === undefined) return undefined;
+		model = { provider, model: id };
+	}
+	const effort = textOf(record["effort"]);
+	if (record["effort"] !== undefined && effort === undefined) return undefined;
+	if (model === undefined && effort === undefined) return undefined;
+	return { ...(model === undefined ? {} : { model }), ...(effort === undefined ? {} : { effort }) };
+}
+
+/** One session's facts as one frame member states them, or `undefined` when it states none this module reads. */
+function factsOf(value: unknown): SessionFacts | undefined {
+	const record = recordOf(value);
+	if (record === undefined) return undefined;
+	const sessionId = textOf(record["sessionId"]);
+	const kind = record["kind"];
+	const unavailable = record["unavailable"];
+	if (sessionId === undefined || (kind !== "main" && kind !== "sub")) return undefined;
+	if (!Array.isArray(unavailable) || !unavailable.every(one => typeof one === "string")) return undefined;
+	const startup = startupOf(record["startup"]);
+	if (record["startup"] !== undefined && startup === undefined) return undefined;
+	// The facts a host states only sometimes: a member that is there must be a name, and a member
+	// that is absent stays absent rather than being filled in with an empty one.
+	const named: readonly (keyof SessionFacts)[] = ["parentSessionId", "name", "taskName", "agentName", "agentId"];
+	const stated: Record<string, string> = {};
+	for (const member of named) {
+		const raw = record[member];
+		if (raw === undefined) continue;
+		const text = textOf(raw);
+		if (text === undefined) return undefined;
+		stated[member] = text;
+	}
+	return {
+		sessionId,
+		kind,
+		...stated,
+		...(startup === undefined ? {} : { startup }),
+		unavailable: unavailable as readonly string[],
+	};
+}
+
+/** One context reading as one frame member states it, or `undefined` when it states none this module reads. */
+function contextOf(value: unknown): SessionContextReading | undefined {
+	if (value === undefined) return undefined;
+	const record = recordOf(value);
+	if (record === undefined) return undefined;
+	const tokens = record["tokens"];
+	if (typeof tokens !== "number" || !Number.isFinite(tokens) || tokens < 0) return undefined;
+	const provider = textOf(record["provider"]);
+	const model = textOf(record["model"]);
+	if (record["provider"] !== undefined && provider === undefined) return undefined;
+	if (record["model"] !== undefined && model === undefined) return undefined;
+	return {
+		tokens,
+		...(provider === undefined ? {} : { provider }),
+		...(model === undefined ? {} : { model }),
+	};
+}
+
+/** One session's observation as one frame member states it, or `undefined` when it states none this module reads. */
+function readingOf(frame: Frame): ObservedSession | undefined {
+	const session = factsOf(frame["session"]);
+	const owner = ownerOf(frame["owner"]);
+	if (session === undefined || owner === undefined) return undefined;
+	const activity = frame["activity"];
+	if (activity !== undefined && activity !== "working" && activity !== "idle") return undefined;
+	const context = contextOf(frame["context"]);
+	if (frame["context"] !== undefined && context === undefined) return undefined;
+	return {
+		session,
+		owner,
+		...(activity === undefined ? {} : { activity: activity as AgentActivity }),
+		...(context === undefined ? {} : { context }),
+	};
+}
+
+/** One session's observation as the frame this module delivers it in. */
+function encodedReading(reading: ObservedSession): string {
+	return encoded({
+		t: "observed",
+		session: reading.session,
+		owner: reading.owner,
+		...(reading.activity === undefined ? {} : { activity: reading.activity }),
+		...(reading.context === undefined ? {} : { context: reading.context }),
+	});
 }
 
 /** The wait budget one open or one request runs under. */
@@ -363,23 +529,54 @@ export function resolveRuntimeDirectory(source: LocalAccessSource = {}): string 
  * a caller here pays no endpoint, no record and no configuration read.
  */
 export function localOwnerAccess(target: AccessTarget): OwnerAccessSource | undefined {
-	const registry = globalThis as unknown as Record<symbol, Map<string, OwnerAccessSource> | undefined>;
-	return registry[PROCESS_SEATS_KEY]?.get(seatKey(target));
+	return processSeats()?.get(seatKey(target))?.values;
+}
+
+/** The seats this process is offering, as the one process-wide registry holds them. */
+function processSeats(): Map<string, ProcessSeat> | undefined {
+	const registry = globalThis as unknown as Record<symbol, Map<string, ProcessSeat> | undefined>;
+	return registry[PROCESS_SEATS_KEY];
+}
+
+/** Records one seat's half in this process's registry, so a caller here reaches it without a frame. */
+function registerProcessSeat(key: string, half: ProcessSeat): void {
+	const registry = globalThis as unknown as Record<symbol, Map<string, ProcessSeat> | undefined>;
+	const seats = registry[PROCESS_SEATS_KEY] ?? new Map<string, ProcessSeat>();
+	registry[PROCESS_SEATS_KEY] = seats;
+	Object.assign(seats.get(key) ?? {}, half);
+	seats.set(key, seats.get(key) ?? half);
+}
+
+/**
+ * Drops the half one withdrawal owned, and the seat itself once no half is left.
+ *
+ * `held` is the half the withdrawing party was handed, so a seat that was offered again since is
+ * left as the newer offer left it rather than cleared by the stale withdrawal.
+ */
+function releaseProcessSeat(key: string, half: keyof ProcessSeat, held: unknown): void {
+	const seats = processSeats();
+	const seat = seats?.get(key);
+	if (seats === undefined || seat === undefined || seat[half] !== held) return;
+	delete seat[half];
+	if (seat.values === undefined && seat.readings === undefined) seats.delete(key);
 }
 
 /**
  * A caller that reaches a seat without an endpoint: the source itself, in this process.
  *
  * Everything it answers is the source's own current value, so a caller here observes a change
- * because the value changed, not because a frame arrived. That is the whole difference between
- * this process and another one.
+ * because the value changed, not because a frame arrived, and a reading it delivers reaches this
+ * process's own sink the same way. That is the whole difference between this process and another one.
  */
-function directCaller(source: OwnerAccessSource): OwnerAccessCaller {
+function directCaller(seat: ProcessSeat, source: OwnerAccessSource): OwnerAccessCaller {
 	let ended = false;
 	return {
 		values: () => source.values(),
 		request: (field: string) => Promise.resolve(source.values()[field]),
 		observe: listener => source.observe(listener),
+		deliver: reading => {
+			if (!ended) seat.readings?.(reading);
+		},
 		ended: () => ended,
 		dispose: () => {
 			ended = true;
@@ -387,12 +584,18 @@ function directCaller(source: OwnerAccessSource): OwnerAccessCaller {
 	};
 }
 
-/** One seat as the serving process holds it. */
+/** One half of one seat as the serving process holds it. */
+interface ServedValues {
+	readonly source: OwnerAccessSource;
+	readonly stopObserving: () => void;
+}
+
+/** One seat as the serving process holds it: the halves offered on it, and the access they share. */
 interface ServedSeat {
 	readonly target: AccessTarget;
 	readonly verification: string;
-	readonly source: OwnerAccessSource;
-	readonly stopObserving: () => void;
+	values?: ServedValues;
+	readings?: (reading: ObservedSession) => void;
 }
 
 /** One connection the serving process has accepted, and the seat it was admitted for. */
@@ -431,31 +634,50 @@ class OwnerAccessHost {
 
 	offer(target: AccessTarget, source: OwnerAccessSource): () => void {
 		if (this.#disposed || this.#unavailable !== undefined) return () => {};
-
 		const key = seatKey(target);
-		this.#withdraw(key);
-		const seat: ServedSeat = {
-			target,
-			verification: (this.#seam.verification ?? (() => randomBytes(VERIFICATION_BYTES).toString("hex")))(),
+		const seat = this.#seat(key, target);
+		seat.values?.stopObserving();
+		const held: ServedValues = {
 			source,
 			stopObserving: source.observe((field, value) => this.#publishChange(key, field, value)),
 		};
-		this.#seats.set(key, seat);
-		const registry = globalThis as unknown as Record<symbol, Map<string, OwnerAccessSource> | undefined>;
-		const seats = registry[PROCESS_SEATS_KEY] ?? new Map<string, OwnerAccessSource>();
-		registry[PROCESS_SEATS_KEY] = seats;
-		seats.set(key, source);
+		seat.values = held;
+		registerProcessSeat(key, { values: source });
 		// The endpoint is bound in this process's own time; the record is written as soon as it is
 		// bound, and every seat offered before that is written then too.
 		void this.#published();
+		return () => this.#withdrawValues(key, seat, held);
+	}
 
-		return () => this.#withdraw(key, seat);
+	receive(target: AccessTarget, sink: (reading: ObservedSession) => void): () => void {
+		if (this.#disposed || this.#unavailable !== undefined) return () => {};
+		const key = seatKey(target);
+		const seat = this.#seat(key, target);
+		seat.readings = sink;
+		registerProcessSeat(key, { readings: sink });
+		void this.#published();
+		return () => this.#withdrawReadings(key, seat, sink);
+	}
+
+	/** The seat one target is served under, as this host holds it: one that is already there is kept. */
+	#seat(key: string, target: AccessTarget): ServedSeat {
+		const held = this.#seats.get(key);
+		if (held !== undefined) return held;
+		const seat: ServedSeat = {
+			target,
+			// The verification separates this access from a stale record or another seat's, and it is
+			// minted once per seat: a half offered over a seat that is still there keeps the one a
+			// reader already read, rather than locking that reader out of an access that never moved.
+			verification: (this.#seam.verification ?? (() => randomBytes(VERIFICATION_BYTES).toString("hex")))(),
+		};
+		this.#seats.set(key, seat);
+		return seat;
 	}
 
 	dispose(): void {
 		if (this.#disposed) return;
 		this.#disposed = true;
-		for (const [key, seat] of [...this.#seats]) this.#withdraw(key, seat);
+		for (const [key] of [...this.#seats]) this.#dropSeat(key);
 		this.#closeEndpoint();
 	}
 
@@ -467,7 +689,7 @@ class OwnerAccessHost {
 		} catch (error) {
 			if (this.#unavailable !== undefined) return;
 			this.#unavailable = error instanceof Error ? error.message : String(error);
-			for (const [key] of [...this.#seats]) this.#withdraw(key);
+			for (const [key] of [...this.#seats]) this.#dropSeat(key);
 			this.#seam.report?.(this.#unavailable);
 		}
 	}
@@ -513,22 +735,43 @@ class OwnerAccessHost {
 		this.#endpoint = endpoint;
 	}
 
-	/** Withdraws one seat: its record, its observations and its reachability on the endpoint. */
-	#withdraw(key: string, seat?: ServedSeat): void {
-		const current = this.#seats.get(key);
-		if (current === undefined || (seat !== undefined && current !== seat)) return;
+	/** Withdraws every half of one seat, as this host's own endpoint failing does. */
+	#dropSeat(key: string): void {
+		const seat = this.#seats.get(key);
+		if (seat === undefined) return;
+		if (seat.values !== undefined) this.#withdrawValues(key, seat, seat.values);
+		if (seat.readings !== undefined) this.#withdrawReadings(key, seat, seat.readings);
+	}
+
+	/** Withdraws one seat's declared-values half: its observations, and the seat if nothing is left. */
+	#withdrawValues(key: string, seat: ServedSeat, held: ServedValues): void {
+		if (this.#seats.get(key) !== seat || seat.values !== held) return;
+		seat.values = undefined;
+		held.stopObserving();
+		releaseProcessSeat(key, "values", held.source);
+		this.#releaseIfEmpty(key, seat);
+	}
+
+	/** Withdraws one seat's observations half, and the seat with it if nothing is left. */
+	#withdrawReadings(key: string, seat: ServedSeat, held: (reading: ObservedSession) => void): void {
+		if (this.#seats.get(key) !== seat || seat.readings !== held) return;
+		seat.readings = undefined;
+		releaseProcessSeat(key, "readings", held);
+		this.#releaseIfEmpty(key, seat);
+	}
+
+	/** Releases a seat nothing is offered on any more: its record, its readers and its endpoint. */
+	#releaseIfEmpty(key: string, seat: ServedSeat): void {
+		if (this.#seats.get(key) !== seat || seat.values !== undefined || seat.readings !== undefined) return;
 		this.#seats.delete(key);
-		current.stopObserving();
 		for (const connection of this.#connections) {
 			if (connection.seat !== key) continue;
 			// A reader of a seat that is gone is released rather than left listening for a value
 			// that will not come.
 			connection.socket.destroy();
 		}
-		const seats = globalThis as unknown as Record<symbol, Map<string, OwnerAccessSource> | undefined>;
-		if (seats[PROCESS_SEATS_KEY]?.get(key) === current.source) seats[PROCESS_SEATS_KEY].delete(key);
 		if (this.#runtimeDirectory !== undefined) {
-			rmSync(locationFileOf(this.#runtimeDirectory, current.target), { force: true });
+			rmSync(locationFileOf(this.#runtimeDirectory, seat.target), { force: true });
 		}
 		if (this.#seats.size === 0) this.#closeEndpoint();
 	}
@@ -638,24 +881,45 @@ class OwnerAccessHost {
 			connection.seat = key;
 			admitted();
 			connection.socket.write(
-				encoded({ t: "welcome", extension: target.extension, owner: target.owner, values: seat.source.values() }),
+				encoded({
+					t: "welcome",
+					extension: target.extension,
+					owner: target.owner,
+					values: seat.values?.source.values() ?? {},
+				}),
 			);
 			return;
 		}
 
 		const seat = this.#seats.get(connection.seat);
 		if (seat === undefined) {
-			// The seat was withdrawn while this connection was open; `#withdraw` releases it too.
+			// The seat was withdrawn while this connection was open; `#releaseIfEmpty` releases it too.
 			connection.socket.destroy();
 			return;
 		}
 		const id = frame?.["id"];
 		const field = frame?.["field"];
+		if (frame?.["t"] === "observed") {
+			const reading = readingOf(frame);
+			if (reading === undefined || seat.readings === undefined) {
+				refuse(`this access receives no observation for ${describeTarget(seat.target)}`);
+				return;
+			}
+			// A connection enters the observation scope its seat's target allows and nothing else:
+			// the session that delivered this reading has to be one that follows the owner this seat
+			// is, so one seat can never carry another owner's sessions.
+			if (reading.owner.kind !== "inherited" || reading.owner.key !== seat.target.owner) {
+				refuse(`this access carries the sessions that follow ${describeTarget(seat.target)} and no other`);
+				return;
+			}
+			seat.readings(reading);
+			return;
+		}
 		if (frame?.["t"] !== "read" || typeof id !== "number" || !Number.isInteger(id) || typeof field !== "string") {
 			refuse("this access serves one declared read and nothing else");
 			return;
 		}
-		const value = seat.source.values()[field];
+		const value = seat.values?.source.values()[field];
 		connection.socket.write(encoded({ t: "value", id, field, ...(typeof value === "boolean" ? { value } : {}) }));
 	}
 }
@@ -670,6 +934,7 @@ export function createOwnerAccessPublisher(seam: OwnerAccessPublisherSeam = {}):
 	const host = new OwnerAccessHost(seam);
 	return {
 		offer: (target, source) => host.offer(target, source),
+		receive: (target, sink) => host.receive(target, sink),
 		dispose: () => host.dispose(),
 	};
 }
@@ -816,6 +1081,13 @@ class RemoteCaller implements OwnerAccessCaller {
 		};
 	}
 
+	deliver(reading: ObservedSession): void {
+		// Nothing is waited for and nothing is asked back: a reading the seat does not receive closes
+		// the connection on the serving side, and this caller's own end is what reports it.
+		if (this.#closed) return;
+		this.#socket.write(encodedReading(reading));
+	}
+
 	ended(): boolean {
 		return this.#closed;
 	}
@@ -953,8 +1225,8 @@ export async function openOwnerAccess(options: OwnerAccessCallerOptions): Promis
 	// The budget is settled first: a wait the framework cannot schedule is refused the same way
 	// whether the seat is served here or elsewhere.
 	const waitMs = resolveWait(options.waitMs);
-	const local = localOwnerAccess(options.target);
-	if (local !== undefined) return directCaller(local);
+	const local = processSeats()?.get(seatKey(options.target));
+	if (local?.values !== undefined) return directCaller(local, local.values);
 
 	const deadline = Date.now() + waitMs;
 	// The directory is resolved before anything is waited for: a configuration that states none is
@@ -977,4 +1249,113 @@ export async function openOwnerAccess(options: OwnerAccessCallerOptions): Promis
 	);
 	const welcome = await welcomeWithin(socket, options.target, deadline, options.signal);
 	return new RemoteCaller(socket, options.target, welcome.values, welcome.carried);
+}
+
+/** What the delivering half of one process's access is built with. */
+export interface ObservationDelivererSeam extends LocalAccessSource {
+	/** The extension whose seat the readings are delivered to; the same id both ends of the access name. */
+	readonly extension: string;
+	/**
+	 * The readings this process holds right now for the sessions that follow one owner.
+	 *
+	 * It is asked once per owner, when that owner's access has just been reached: what the delivering
+	 * process's first word to that owner carries is this answer, so a reading collected before the
+	 * access was reached — including the one that made this process look for it — is not lost, and
+	 * nothing has to be collected again for it.
+	 */
+	readonly readings: (owner: string) => readonly ObservedSession[];
+	/** The whole budget one of this half's opens may spend, in milliseconds. */
+	readonly waitMs?: number;
+	/**
+	 * Where one configuration failure is reported — once per attempt, in the text the framework
+	 * reports its own failures with. An access that cannot be *reached* is not reported: the owner may
+	 * not be served yet, and the next reading makes the same attempt again.
+	 */
+	readonly report?: (message: string) => void;
+}
+
+/** The delivering half of one process's access: readings on their way to the processes serving their owners. */
+export interface ObservationDeliverer {
+	/**
+	 * Delivers one reading, reaching the seat of the owner it follows first where this process has not
+	 * reached it yet. A reading that arrives while that reach is still in flight is not lost: the
+	 * first word that seat receives is what this process currently holds for that owner's sessions,
+	 * which includes it.
+	 */
+	deliver(reading: ObservedSession): void;
+	/** Releases every access this half reached and holds open. */
+	dispose(): void;
+}
+
+/**
+ * Builds the delivering half of this process's observation access: the one way a reading of a session
+ * this process runs reaches the process that serves the owner it follows.
+ *
+ * The half is built around one fact: reaching a seat is asynchronous and may fail, while a reading
+ * arrives at the moment it moved. So each owner's seat is reached once, on the first reading that has
+ * nowhere to go yet, and every reading after it is written onto the access this process already
+ * holds. A reach that failed is not retried by itself — this is not a poll and holds no timer — but
+ * the next real reading makes the same attempt, which is what a process that starts before the owner
+ * it follows needs. Nothing is reported for an access that is merely not reachable; a runtime
+ * directory this process cannot state is the one failure that is, because it is a configuration
+ * failure rather than an owner that has not arrived.
+ */
+export function createObservationDeliverer(seam: ObservationDelivererSeam): ObservationDeliverer {
+	/** The access this process reached for each owner, once it answered. */
+	const reached = new Map<string, OwnerAccessCaller>();
+	/** The reaches in flight, so one owner is reached once however many readings arrive meanwhile. */
+	const reaching = new Map<string, Promise<void>>();
+	let disposed = false;
+
+	const reach = (owner: string): void => {
+		const attempt = openOwnerAccess({
+			target: { extension: seam.extension, owner },
+			...(seam.configPath === undefined ? {} : { configPath: seam.configPath }),
+			...(seam.reader === undefined ? {} : { reader: seam.reader }),
+			...(seam.parser === undefined ? {} : { parser: seam.parser }),
+			...(seam.waitMs === undefined ? {} : { waitMs: seam.waitMs }),
+		}).then(
+			caller => {
+				if (disposed) {
+					caller.dispose();
+					return;
+				}
+				reached.set(owner, caller);
+				// The first word to this seat: every session this process holds for that owner, with
+				// the readings it holds for each — the state the owner's process could not have had.
+				for (const reading of seam.readings(owner)) caller.deliver(reading);
+			},
+			(error: unknown) => {
+				if (error instanceof LocalAccessConfigurationError) seam.report?.(error.detail);
+			},
+		);
+		reaching.set(owner, attempt);
+		void attempt.finally(() => reaching.delete(owner));
+	};
+
+	return {
+		deliver(reading) {
+			if (disposed || reading.owner.kind !== "inherited") return;
+			const { key } = reading.owner;
+			const caller = reached.get(key);
+			if (caller !== undefined) {
+				if (!caller.ended()) {
+					caller.deliver(reading);
+					return;
+				}
+				// The access this process held for that owner ended — the seat was withdrawn, or the
+				// connection was lost — so this reading is what makes this process reach it again,
+				// with the state it holds now rather than with what it was left holding.
+				reached.delete(key);
+			}
+			if (!reaching.has(key)) reach(key);
+		},
+		dispose() {
+			if (disposed) return;
+			disposed = true;
+			for (const caller of reached.values()) caller.dispose();
+			reached.clear();
+			reaching.clear();
+		},
+	};
 }
