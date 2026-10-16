@@ -27,6 +27,7 @@ import {
 	type PiSurfaceSession,
 	boundPiSurface,
 	forgetSessionLivenessRegistry,
+	publishFrameworkLivenessRegistry,
 	registerProviderLiveness,
 } from "./support/pi-surface-double";
 
@@ -139,6 +140,31 @@ describe("a provider's own statement about background work decides the rest cond
 });
 
 describe("a statement this entry could not read is not the provider's own all-clear (P19)", () => {
+	test("a registry an earlier evaluation of this framework's own graph published is read, not treated as another host's", async () => {
+		// One pi process evaluates each extension entrypoint with its own module registry, so a second
+		// copy of this graph is an ordinary shape here. What it published is this framework's own
+		// registry, and the registration inside it is the provider's one statement for the session.
+		const session = settledSession(sessionIdOf("shared-registry"));
+		let holds = true;
+		publishFrameworkLivenessRegistry({ [session.sessionId]: () => holds });
+		const surface = boundPiSurface({ childEntry: CHILD_ENTRY });
+
+		surface.runStarts(session);
+		surface.runSettles(session);
+		surface.nextTask();
+
+		// The provider's own answer for this session is read: it holds work, so no end is confirmed.
+		expect(surface.edges).toEqual(["round_start"]);
+
+		// And its later answer is read too, which is what separates a registration this entry read from
+		// a registry it could not read at all: a statement it never obtained would keep the round open
+		// however this one changes.
+		holds = false;
+		surface.runSettles(session);
+		surface.nextTask();
+		expect(surface.edges).toEqual(["round_start", "round_end"]);
+	});
+
 	test("a provider that runs without leaving a registration for the session states nothing about it", async () => {
 		const { surface, session } = await surfaceServedByProvider("unregistered");
 
@@ -231,6 +257,21 @@ describe("a statement this entry could not read is not the provider's own all-cl
 });
 
 describe("nothing of this entry's own keeps a round open (P20)", () => {
+	test("a process that runs no provider at all rests on pi's own facts, as it always did", async () => {
+		// No provider: nothing announced itself and nothing registered, so this entry's integration
+		// scope holds no background work and the session's own facts are the whole rest condition.
+		const session = settledSession(sessionIdOf("no-provider"));
+		const surface = boundPiSurface({ childEntry: CHILD_ENTRY });
+		const { stderr } = withCapturedStderr(() => {
+			surface.runStarts(session);
+			surface.runSettles(session);
+			surface.nextTask();
+		});
+
+		expect(surface.edges).toEqual(["round_start", "round_end"]);
+		expect(stderr).not.toContain("background work cannot be read");
+	});
+
 	test("a registration whose own work is a future task, a kept history or an open subscription holds nothing back", async () => {
 		const { surface, session } = await surfaceServedByProvider("future-task");
 		// The provider's published standard is the source of this answer: work that has not been

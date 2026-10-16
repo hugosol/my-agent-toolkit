@@ -202,6 +202,38 @@ export function forgetSessionLivenessRegistry(): void {
 	delete (globalThis as Record<PropertyKey, unknown>)[Symbol.for(SESSION_LIVENESS_REGISTRY_KEY)];
 }
 
+/**
+ * The table this framework publishes inside its own registry, under the process-wide key a second
+ * copy of its module would look for.
+ *
+ * A case states it here because one pi process can evaluate the framework's graph more than once —
+ * each extension entrypoint gets its own module registry — and what two copies share is exactly this
+ * key: a registry carrying one is this framework's, whoever evaluated it, while a registry without
+ * one belongs to another host and is left alone.
+ */
+export const FRAMEWORK_LIVENESS_TABLE_KEY = "model-cost:pi-session-liveness:table";
+
+/**
+ * Publishes the registry one earlier evaluation of this framework's own graph left in this process.
+ *
+ * It is the shape that graph publishes — the provider's protocol members plus its own table keyed by
+ * the session each registration names — so a case can drive the reading a second copy must find
+ * rather than stand in the provider's side of the protocol again.
+ */
+export function publishFrameworkLivenessRegistry(
+	registrations: Readonly<Record<string, () => boolean>>,
+): void {
+	(globalThis as Record<PropertyKey, unknown>)[Symbol.for(SESSION_LIVENESS_REGISTRY_KEY)] = {
+		version: SESSION_LIVENESS_VERSION,
+		register: () => () => {},
+		[Symbol.for(FRAMEWORK_LIVENESS_TABLE_KEY)]: {
+			registrations: new Map(
+				Object.entries(registrations).map(([sessionId, isActive]) => [sessionId, { isActive }]),
+			),
+		},
+	};
+}
+
 /** The pi native surface a loader would hand the adapter, with everything a case observes. */
 export interface PiSurface {
 	readonly api: PiExtensionApi;

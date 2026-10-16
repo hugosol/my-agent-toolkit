@@ -77,8 +77,14 @@ const SUPPORTED_LIVENESS_VERSION = 1;
  * rather than publishing a second registry the provider would not register into. A registry another
  * party published carries no such member, and this entry reads nothing from it — a foreign host's
  * protocol stays that host's, and displacing it would break the host it belongs to.
+ *
+ * The key is process-wide rather than local to this module, because one pi process can evaluate this
+ * graph more than once: each extension entrypoint the loader evaluates has its own module registry,
+ * so a second extension of this framework — the round-facts fixture beside the production assembly,
+ * say — holds a second copy of this module, and a marker that only one copy knew would make the other
+ * copy's registry look like another host's.
  */
-const REGISTRATION_TABLE = Symbol("model-cost:pi-session-liveness");
+const REGISTRATION_TABLE = Symbol.for("model-cost:pi-session-liveness:table");
 
 /** One session's registration: the provider's own answer for it, and the release it handed back. */
 interface LivenessRegistration {
@@ -88,19 +94,17 @@ interface LivenessRegistration {
 
 /**
  * This entry's own half of the registry it publishes: the provider's registrations, by the session
- * each one names, and whether the provider stated itself in this process at all.
+ * each one names.
  */
 interface LivenessTable {
 	/** The one registration the provider holds per session it serves. */
 	readonly registrations: Map<string, LivenessRegistration>;
-	/** Whether the provider stated itself in this process, through its announcement or a query answer. */
-	served: boolean;
 }
 
 /** The liveness table of a registry object, or `undefined` when that registry is another party's. */
 function livenessTableOf(registry: unknown): LivenessTable | undefined {
 	const mapping = mappingOf(registry);
-	const table = mapping?.[REGISTRATION_TABLE as unknown as string];
+	const table = mapping === undefined ? undefined : (mapping as Record<PropertyKey, unknown>)[REGISTRATION_TABLE];
 	return typeof table === "object" && table !== null ? (table as LivenessTable) : undefined;
 }
 
@@ -111,14 +115,15 @@ function livenessTableOf(registry: unknown): LivenessTable | undefined {
  * Publishing is what the protocol requires of a party that wants the provider's answer — the slot
  * carries a `register` and no query — and it happens when the slot is free, never over a registry
  * another host published. The table lives inside the registry object, so this entry's own
- * registrations are exactly as long-lived as the registry that received them.
+ * registrations are exactly as long-lived as the registry that received them, and the provider's own
+ * release is what gives one back: nothing here is released on a binding's behalf.
  */
 function livenessTable(): LivenessTable | undefined {
 	const holder = globalThis as Record<PropertyKey, unknown>;
 	const slot = Symbol.for(SESSION_LIVENESS_REGISTRY_KEY);
 	const existing = holder[slot];
 	if (existing !== undefined) return livenessTableOf(existing);
-	const table: LivenessTable = { registrations: new Map(), served: false };
+	const table: LivenessTable = { registrations: new Map() };
 	holder[slot] = {
 		version: SUPPORTED_LIVENESS_VERSION,
 		register: (value: unknown) => registrationIn(table, value),
