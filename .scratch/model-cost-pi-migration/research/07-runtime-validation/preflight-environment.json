@@ -1,0 +1,165 @@
+{
+  "package": {
+    "name": "pi-subagents",
+    "version": "0.78.0",
+    "dist": {
+      "shasum": "0ea458dd0942d1f37eb25c374b84091cb2ec23f7",
+      "tarball": "https://registry.npmmirror.com/pi-subagents/-/pi-subagents-0.78.0.tgz",
+      "fileCount": 1331,
+      "integrity": "sha512-AsOvPL1xaVFV4bqIlheQKNI2LmAoiAKTPXXxi39/BsWJTdMJIqAkZJ3iLi6bTsh2PZHG7Ur08b7VJOtgAMIAig==",
+      "signatures": [
+        {
+          "sig": "MEUCIQDcFbq3SIZIJBLGXP3uUPNrwKqCPrBdN3XCkaVR8Z2NQAIgLQJVU2unpHTHPZhh1NN7ncmU+PrZQxgl6+SNd7OZ0M4=",
+          "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+        },
+        {
+          "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U",
+          "sig": "MEYCIQDU5GtSPyoUe8qZvYstjNuz5P0zT2vEjKS2NLpWRQUTkgIhAJm/LQxTOzZaasR3uc0Tyfd4ONVnwjHgo9I83+v41NvZ"
+        }
+      ],
+      "attestations": {
+        "url": "https://registry.npmjs.org/-/npm/v1/attestations/pi-subagents@0.78.0",
+        "provenance": {
+          "predicateType": "https://slsa.dev/provenance/v1"
+        }
+      },
+      "unpackedSize": 11950300,
+      "size": 2427031
+    },
+    "pi": {
+      "skills": [
+        "./skills"
+      ],
+      "prompts": [
+        "./prompts"
+      ],
+      "extensions": [
+        "./index.js"
+      ]
+    },
+    "exports": {
+      ".": {
+        "types": "./index.d.ts",
+        "default": "./index.js"
+      },
+      "./agents": {
+        "types": "./src/api/agents.d.ts",
+        "default": "./src/api/agents.js"
+      },
+      "./preflight": {
+        "types": "./src/api/preflight.d.ts",
+        "default": "./src/api/preflight.js"
+      },
+      "./delegation": {
+        "types": "./src/api/delegation.d.ts",
+        "default": "./src/api/delegation.js"
+      },
+      "./inspectors": {
+        "types": "./src/api/inspectors.d.ts",
+        "default": "./src/api/inspectors.js"
+      },
+      "./shared-types": {
+        "types": "./src/api/shared-types.d.ts",
+        "default": "./src/api/shared-types.js"
+      },
+      "./external-runs": {
+        "types": "./src/api/external-runs.d.ts",
+        "default": "./src/api/external-runs.js"
+      },
+      "./project-panes": {
+        "types": "./src/api/project-panes.d.ts",
+        "default": "./src/api/project-panes.js"
+      },
+      "./background-work": {
+        "types": "./src/api/background-work.d.ts",
+        "default": "./src/api/background-work.js"
+      },
+      "./child-tool-plan": {
+        "types": "./src/api/child-tool-plan.d.ts",
+        "default": "./src/api/child-tool-plan.js"
+      },
+      "./control-channel": {
+        "types": "./src/api/control-channel.d.ts",
+        "default": "./src/api/control-channel.js"
+      },
+      "./intercom-bridge": {
+        "types": "./src/api/intercom-bridge.d.ts",
+        "default": "./src/api/intercom-bridge.js"
+      },
+      "./capability-ceiling": {
+        "types": "./src/api/capability-ceiling.d.ts",
+        "default": "./src/api/capability-ceiling.js"
+      },
+      "./workflow-resources": {
+        "types": "./src/api/workflow-resources.d.ts",
+        "default": "./src/api/workflow-resources.js"
+      },
+      "./external-job-provider": {
+        "types": "./src/api/external-job-provider.d.ts",
+        "default": "./src/api/external-job-provider.js"
+      },
+      "./required-child-extensions": {
+        "types": "./src/api/required-child-extensions.d.ts",
+        "default": "./src/api/required-child-extensions.js"
+      }
+    },
+    "dependencies": {
+      "jiti": "2.7.0",
+      "yaml": "2.8.3",
+      "acorn": "8.18.0",
+      "undici": "8.10.2",
+      "@js-temporal/polyfill": "0.5.1"
+    },
+    "peerDependencies": {
+      "typebox": "*",
+      "@earendil-works/pi-ai": ">=0.86.1",
+      "@earendil-works/pi-tui": "*",
+      "@earendil-works/pi-agent-core": "*",
+      "@earendil-works/pi-coding-agent": "*"
+    }
+  },
+  "node": "v24.18.0",
+  "host": "1.2.0",
+  "hostCli": "D:/nvm4w/nodejs/node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js",
+  "isolation": "E:\\Developer\\pi-playground\\wf07-iso",
+  "args": [
+    "D:\\nvm4w\\nodejs\\node.EXE",
+    "D:/nvm4w/nodejs/node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js",
+    "--mode",
+    "rpc",
+    "--no-session",
+    "--no-extensions",
+    "--no-skills",
+    "--no-prompt-templates",
+    "--no-context-files",
+    "--no-mcp",
+    "--session-dir",
+    "E:\\Developer\\pi-playground\\wf07-iso\\sessions",
+    "-e",
+    "E:\\Developer\\pi-playground\\wf07-iso\\install\\node_modules\\pi-subagents\\index.js",
+    "-e",
+    "E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\model-cost-pi-migration\\research\\07-runtime-validation\\harness\\preflight.mjs"
+  ],
+  "install": {
+    "exit": 0,
+    "stdout": "\nadded 7 packages in 6s\n",
+    "stderr": "",
+    "ignoreScripts": true
+  },
+  "dailyAgentSnapshotUnchanged": true,
+  "providerRequests": 0,
+  "credentialsInjected": false,
+  "runs": [
+    {
+      "id": 1,
+      "exit": 0,
+      "error": "probe id wf07-observer/v1 rejected; corrected to wf07-observer"
+    },
+    {
+      "id": 2,
+      "exit": 0,
+      "stderr": "",
+      "extensionErrors": []
+    }
+  ]
+}

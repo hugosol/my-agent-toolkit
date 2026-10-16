@@ -41,7 +41,7 @@ The wall-clock interval from a main session’s first user input in the applicab
 _Avoid_: execution time, model latency, accounting period duration, summed agent time
 
 **Subagent runtime（子代理运行耗时）**:
-The cumulative harness-reported execution duration attributable to one subagent session’s executions in the applicable accounting period, excluding the idle gaps between them. It is distinct from a main session’s wall-clock Session span and from only its latest execution’s duration; an accounting reset begins a fresh runtime accumulation, and an execution the closed period already measured contributes nothing to the new one however late its own readings arrive.
+The cumulative duration attributable to one subagent session’s executions in the applicable accounting period, including work and delegated-result waits within an execution but excluding the idle gaps between executions. It is distinct from a main session’s wall-clock Session span and from only its latest execution’s duration; an accounting reset begins a fresh runtime accumulation, and an execution the closed period already measured contributes nothing to the new one however late its own readings arrive.
 _Avoid_: session span, last execution duration, summed progress readings
 
 **Direct session totals（会话自身累计）**:

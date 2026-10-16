@@ -1,8 +1,8 @@
 # 第三方能力适配的集中组织与公共语义复用
 
 Type: grilling
-Status: open
-Assignee:
+Status: claimed
+Assignee: Codex（本会话）
 Map: [model-cost 迁移到 pi：决策地图](../map.md)
 Blocked by: 01, 03
 

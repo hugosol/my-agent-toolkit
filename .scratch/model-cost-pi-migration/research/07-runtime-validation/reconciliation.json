@@ -1,0 +1,677 @@
+{
+  "observer": {
+    "requests": 59,
+    "tokens": {
+      "input": 32058,
+      "output": 2933,
+      "cacheRead": 357248,
+      "cacheWrite": 0,
+      "totalTokens": 392239
+    },
+    "costUSD": 0.015280488000000002
+  },
+  "transcript": {
+    "requests": 59,
+    "tokens": {
+      "input": 32058,
+      "output": 2933,
+      "cacheRead": 357248,
+      "cacheWrite": 0,
+      "totalTokens": 392239
+    },
+    "costUSD": 0.015280488000000004
+  },
+  "missingObserver": [],
+  "missingTranscript": [],
+  "usageMismatch": [],
+  "inheritedAssistantResponsesExcluded": 18,
+  "duplicateObservationResponses": 0,
+  "sessions": [
+    {
+      "sessionId": "01a140dc-13c9-74e0-8839-a3725b3600b7",
+      "parentSessionIdFromFile": null,
+      "file": "E:\\Developer\\pi-playground\\wf07-iso\\sessions\\live-main.jsonl",
+      "bindings": [
+        {
+          "pid": 26000,
+          "at": 1792089527571,
+          "reason": "startup",
+          "branchEntries": 2
+        }
+      ]
+    },
+    {
+      "sessionId": "01a140dc-5a7c-7532-9625-30cbec5e136b",
+      "parentSessionIdFromFile": "01a140dc-13c9-74e0-8839-a3725b3600b7",
+      "file": "E:\\Developer\\pi-playground\\wf07-iso\\sessions\\live-main\\7211ca7b-be8a-494f-b43d-724582184bbc\\run-0\\session.jsonl",
+      "bindings": [
+        {
+          "pid": 26000,
+          "at": 1792089545347,
+          "reason": "startup",
+          "branchEntries": 2
+        }
+      ]
+    },
+    {
+      "sessionId": "01a140dc-d1ac-7532-9625-30cc84bd3fb1",
+      "parentSessionIdFromFile": "01a140dc-13c9-74e0-8839-a3725b3600b7",
+      "file": "E:\\Developer\\pi-playground\\wf07-iso\\sessions\\live-main\\4c4918cd-ed7e-4fd4-bbb3-a849b31a082c\\run-0\\session.jsonl",
+      "bindings": [
+        {
+          "pid": 26000,
+          "at": 1792089575853,
+          "reason": "startup",
+          "branchEntries": 2
+        }
+      ]
+    },
+    {
+      "sessionId": "01a140dd-0e52-7589-829e-ab59027b217c",
+      "parentSessionIdFromFile": "01a140dc-13c9-74e0-8839-a3725b3600b7",
+      "file": "E:\\Developer\\pi-playground\\wf07-iso\\sessions\\live-main\\516414d7-5cc8-4d29-9deb-e9f47df345c3\\run-0\\session.jsonl",
+      "bindings": [
+        {
+          "pid": 15392,
+          "at": 1792089591383,
+          "reason": "startup",
+          "branchEntries": 2
+        }
+      ]
+    },
+    {
+      "sessionId": "01a140dd-61c8-7532-9625-30ce012096df",
+      "parentSessionIdFromFile": "01a140dc-13c9-74e0-8839-a3725b3600b7",
+      "file": "E:\\Developer\\pi-playground\\wf07-iso\\sessions\\live-main\\1b8b2057-acd2-417b-9a14-69c045f1b320\\run-0\\session.jsonl",
+      "bindings": [
+        {
+          "pid": 26000,
+          "at": 1792089612745,
+          "reason": "startup",
+          "branchEntries": 2
+        }
+      ]
+    },
+    {
+      "sessionId": "01a140dd-668d-7532-9625-30d1ccc8c9ce",
+      "parentSessionIdFromFile": "01a140dd-61c8-7532-9625-30ce012096df",
+      "file": "E:\\Developer\\pi-playground\\wf07-iso\\sessions\\live-main\\1b8b2057-acd2-417b-9a14-69c045f1b320\\run-0\\session\\ab6cd8aa-bee2-4e0d-8163-7e9e63225131\\run-0\\session.jsonl",
+      "bindings": [
+        {
+          "pid": 26000,
+          "at": 1792089613967,
+          "reason": "startup",
+          "branchEntries": 2
+        }
+      ]
+    },
+    {
+      "sessionId": "01a140dd-be06-7532-9625-30d3a8cafa06",
+      "parentSessionIdFromFile": "01a140dc-13c9-74e0-8839-a3725b3600b7",
+      "file": "E:\\Developer\\pi-playground\\wf07-iso\\sessions\\live-main\\a82b4c2b-3956-4993-ad3d-c42dff2964ad\\run-0\\session.jsonl",
+      "bindings": [
+        {
+          "pid": 26000,
+          "at": 1792089636359,
+          "reason": "startup",
+          "branchEntries": 2
+        },
+        {
+          "pid": 22864,
+          "at": 1792089672069,
+          "reason": "startup",
+          "branchEntries": 6
+        }
+      ]
+    },
+    {
+      "sessionId": "01a140dd-be13-7532-9625-30d59cdd9ea1",
+      "parentSessionIdFromFile": "01a140dc-13c9-74e0-8839-a3725b3600b7",
+      "file": "E:\\Developer\\pi-playground\\wf07-iso\\sessions\\live-main\\98b70e09-d1e1-4c5f-bb19-be5912e53eec\\run-0\\session.jsonl",
+      "bindings": [
+        {
+          "pid": 26000,
+          "at": 1792089636374,
+          "reason": "startup",
+          "branchEntries": 2
+        }
+      ]
+    },
+    {
+      "sessionId": "01a140de-7520-74e0-8839-a374ab428152",
+      "parentSessionIdFromFile": "01a140dc-13c9-74e0-8839-a3725b3600b7",
+      "file": "E:\\Developer\\pi-playground\\wf07-iso\\sessions\\live-main\\forks\\2026-10-15T18-41-23-232Z_01a140de-7520-74e0-8839-a374ab428152.jsonl",
+      "bindings": [
+        {
+          "pid": 26000,
+          "at": 1792089683291,
+          "reason": "startup",
+          "branchEntries": 44
+        }
+      ]
+    },
+    {
+      "sessionId": "01a140df-48f9-7532-9625-30d7b1160068",
+      "parentSessionIdFromFile": "01a140dc-13c9-74e0-8839-a3725b3600b7",
+      "file": "E:\\Developer\\pi-playground\\wf07-iso\\sessions\\live-main\\b215dc21-3a4a-42d5-9645-db06426aef6f\\run-0\\session.jsonl",
+      "bindings": [
+        {
+          "pid": 26000,
+          "at": 1792089737468,
+          "reason": "startup",
+          "branchEntries": 2
+        }
+      ]
+    },
+    {
+      "sessionId": "01a140df-9ab9-76cb-92d6-869deb46d206",
+      "parentSessionIdFromFile": "01a140dc-13c9-74e0-8839-a3725b3600b7",
+      "file": "E:\\Developer\\pi-playground\\wf07-iso\\sessions\\live-main\\435d4cb9-f04b-45da-960f-a08b6426cdd5\\run-0\\session.jsonl",
+      "bindings": [
+        {
+          "pid": 37496,
+          "at": 1792089758397,
+          "reason": "startup",
+          "branchEntries": 2
+        }
+      ]
+    },
+    {
+      "sessionId": "01a140df-a006-76cb-92d6-869e3102cb02",
+      "parentSessionIdFromFile": "01a140df-9ab9-76cb-92d6-869deb46d206",
+      "file": "E:\\Developer\\pi-playground\\wf07-iso\\sessions\\live-main\\435d4cb9-f04b-45da-960f-a08b6426cdd5\\run-0\\session\\5ffced7e-a3ff-4530-bca8-1b5ffb5eded4\\run-0\\session.jsonl",
+      "bindings": [
+        {
+          "pid": 37496,
+          "at": 1792089759751,
+          "reason": "startup",
+          "branchEntries": 2
+        }
+      ]
+    },
+    {
+      "sessionId": "01a140e0-24e4-7499-a7a2-307bebfbebbb",
+      "parentSessionIdFromFile": "01a140dc-13c9-74e0-8839-a3725b3600b7",
+      "file": "E:\\Developer\\pi-playground\\wf07-iso\\sessions\\live-main\\6b2af90b-394a-4de5-a698-6ba6539d38da\\run-0\\session.jsonl",
+      "bindings": [
+        {
+          "pid": 9640,
+          "at": 1792089793768,
+          "reason": "startup",
+          "branchEntries": 2
+        }
+      ]
+    },
+    {
+      "sessionId": "01a140e0-e7cc-7110-b794-3cf2f8e54210",
+      "parentSessionIdFromFile": "01a140dc-13c9-74e0-8839-a3725b3600b7",
+      "file": "E:\\Developer\\pi-playground\\wf07-iso\\sessions\\live-main\\6cb51e8d-fda7-484a-a286-b8518ba25616\\run-0\\session.jsonl",
+      "bindings": [
+        {
+          "pid": 32952,
+          "at": 1792089843664,
+          "reason": "startup",
+          "branchEntries": 2
+        }
+      ]
+    }
+  ],
+  "bySession": {
+    "01a140dc-13c9-74e0-8839-a3725b3600b7": {
+      "requests": 42,
+      "tokens": {
+        "input": 19224,
+        "output": 2570,
+        "cacheRead": 343936,
+        "cacheWrite": 0,
+        "totalTokens": 365730
+      },
+      "costUSD": 0.010914816
+    },
+    "01a140dc-5a7c-7532-9625-30cbec5e136b": {
+      "requests": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "totalTokens": 0
+      },
+      "costUSD": 0
+    },
+    "01a140dc-d1ac-7532-9625-30cc84bd3fb1": {
+      "requests": 1,
+      "tokens": {
+        "input": 1003,
+        "output": 2,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "totalTokens": 1005
+      },
+      "costUSD": 0.0003033
+    },
+    "01a140dd-0e52-7589-829e-ab59027b217c": {
+      "requests": 1,
+      "tokens": {
+        "input": 235,
+        "output": 1,
+        "cacheRead": 768,
+        "cacheWrite": 0,
+        "totalTokens": 1004
+      },
+      "costUSD": 7.630799999999999e-05
+    },
+    "01a140dd-61c8-7532-9625-30ce012096df": {
+      "requests": 2,
+      "tokens": {
+        "input": 1900,
+        "output": 144,
+        "cacheRead": 1792,
+        "cacheWrite": 0,
+        "totalTokens": 3836
+      },
+      "costUSD": 0.000753552
+    },
+    "01a140dd-668d-7532-9625-30d1ccc8c9ce": {
+      "requests": 1,
+      "tokens": {
+        "input": 237,
+        "output": 3,
+        "cacheRead": 768,
+        "cacheWrite": 0,
+        "totalTokens": 1008
+      },
+      "costUSD": 7.9308e-05
+    },
+    "01a140dd-be06-7532-9625-30d3a8cafa06": {
+      "requests": 2,
+      "tokens": {
+        "input": 479,
+        "output": 3,
+        "cacheRead": 1664,
+        "cacheWrite": 0,
+        "totalTokens": 2146
+      },
+      "costUSD": 0.000157284
+    },
+    "01a140dd-be13-7532-9625-30d59cdd9ea1": {
+      "requests": 1,
+      "tokens": {
+        "input": 235,
+        "output": 1,
+        "cacheRead": 768,
+        "cacheWrite": 0,
+        "totalTokens": 1004
+      },
+      "costUSD": 7.630799999999999e-05
+    },
+    "01a140de-7520-74e0-8839-a374ab428152": {
+      "requests": 1,
+      "tokens": {
+        "input": 6493,
+        "output": 2,
+        "cacheRead": 640,
+        "cacheWrite": 0,
+        "totalTokens": 7135
+      },
+      "costUSD": 0.00195414
+    },
+    "01a140df-48f9-7532-9625-30d7b1160068": {
+      "requests": 1,
+      "tokens": {
+        "input": 238,
+        "output": 4,
+        "cacheRead": 768,
+        "cacheWrite": 0,
+        "totalTokens": 1010
+      },
+      "costUSD": 8.080799999999999e-05
+    },
+    "01a140df-9ab9-76cb-92d6-869deb46d206": {
+      "requests": 2,
+      "tokens": {
+        "input": 363,
+        "output": 148,
+        "cacheRead": 3328,
+        "cacheWrite": 0,
+        "totalTokens": 3839
+      },
+      "costUSD": 0.00030646799999999995
+    },
+    "01a140df-a006-76cb-92d6-869e3102cb02": {
+      "requests": 1,
+      "tokens": {
+        "input": 238,
+        "output": 4,
+        "cacheRead": 768,
+        "cacheWrite": 0,
+        "totalTokens": 1010
+      },
+      "costUSD": 8.080799999999999e-05
+    },
+    "01a140e0-24e4-7499-a7a2-307bebfbebbb": {
+      "requests": 1,
+      "tokens": {
+        "input": 834,
+        "output": 23,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "totalTokens": 857
+      },
+      "costUSD": 0.00027780000000000003
+    },
+    "01a140e0-e7cc-7110-b794-3cf2f8e54210": {
+      "requests": 3,
+      "tokens": {
+        "input": 579,
+        "output": 28,
+        "cacheRead": 2048,
+        "cacheWrite": 0,
+        "totalTokens": 2655
+      },
+      "costUSD": 0.000219588
+    }
+  },
+  "observedActiveIntervals": [
+    {
+      "sessionId": "01a140dc-13c9-74e0-8839-a3725b3600b7",
+      "pid": 26000,
+      "start": 1792089527772,
+      "end": 1792089546239,
+      "observedActiveMs": 18467,
+      "aborted": false
+    },
+    {
+      "sessionId": "01a140dc-13c9-74e0-8839-a3725b3600b7",
+      "pid": 26000,
+      "start": 1792089574752,
+      "end": 1792089579112,
+      "observedActiveMs": 4360,
+      "aborted": false
+    },
+    {
+      "sessionId": "01a140dc-13c9-74e0-8839-a3725b3600b7",
+      "pid": 26000,
+      "start": 1792089589289,
+      "end": 1792089591381,
+      "observedActiveMs": 2092,
+      "aborted": false
+    },
+    {
+      "sessionId": "01a140dc-13c9-74e0-8839-a3725b3600b7",
+      "pid": 26000,
+      "start": 1792089592355,
+      "end": 1792089593054,
+      "observedActiveMs": 699,
+      "aborted": false
+    },
+    {
+      "sessionId": "01a140dc-13c9-74e0-8839-a3725b3600b7",
+      "pid": 26000,
+      "start": 1792089611489,
+      "end": 1792089615987,
+      "observedActiveMs": 4498,
+      "aborted": false
+    },
+    {
+      "sessionId": "01a140dc-13c9-74e0-8839-a3725b3600b7",
+      "pid": 26000,
+      "start": 1792089635188,
+      "end": 1792089636618,
+      "observedActiveMs": 1430,
+      "aborted": false
+    },
+    {
+      "sessionId": "01a140dc-13c9-74e0-8839-a3725b3600b7",
+      "pid": 26000,
+      "start": 1792089637257,
+      "end": 1792089637836,
+      "observedActiveMs": 579,
+      "aborted": false
+    },
+    {
+      "sessionId": "01a140dc-13c9-74e0-8839-a3725b3600b7",
+      "pid": 26000,
+      "start": 1792089661050,
+      "end": 1792089663171,
+      "observedActiveMs": 2121,
+      "aborted": false
+    },
+    {
+      "sessionId": "01a140dc-13c9-74e0-8839-a3725b3600b7",
+      "pid": 26000,
+      "start": 1792089670027,
+      "end": 1792089671755,
+      "observedActiveMs": 1728,
+      "aborted": false
+    },
+    {
+      "sessionId": "01a140dc-13c9-74e0-8839-a3725b3600b7",
+      "pid": 26000,
+      "start": 1792089673143,
+      "end": 1792089673648,
+      "observedActiveMs": 505,
+      "aborted": false
+    },
+    {
+      "sessionId": "01a140dc-13c9-74e0-8839-a3725b3600b7",
+      "pid": 26000,
+      "start": 1792089682208,
+      "end": 1792089684715,
+      "observedActiveMs": 2507,
+      "aborted": false
+    },
+    {
+      "sessionId": "01a140dc-13c9-74e0-8839-a3725b3600b7",
+      "pid": 26000,
+      "start": 1792089725507,
+      "end": 1792089726845,
+      "observedActiveMs": 1338,
+      "aborted": false
+    },
+    {
+      "sessionId": "01a140dc-13c9-74e0-8839-a3725b3600b7",
+      "pid": 26000,
+      "start": 1792089731283,
+      "end": 1792089733066,
+      "observedActiveMs": 1783,
+      "aborted": false
+    },
+    {
+      "sessionId": "01a140dc-13c9-74e0-8839-a3725b3600b7",
+      "pid": 26000,
+      "start": 1792089738416,
+      "end": 1792089739140,
+      "observedActiveMs": 724,
+      "aborted": false
+    },
+    {
+      "sessionId": "01a140dc-13c9-74e0-8839-a3725b3600b7",
+      "pid": 26000,
+      "start": 1792089744695,
+      "end": 1792089747006,
+      "observedActiveMs": 2311,
+      "aborted": false
+    },
+    {
+      "sessionId": "01a140dc-13c9-74e0-8839-a3725b3600b7",
+      "pid": 26000,
+      "start": 1792089756020,
+      "end": 1792089758424,
+      "observedActiveMs": 2404,
+      "aborted": false
+    },
+    {
+      "sessionId": "01a140dc-13c9-74e0-8839-a3725b3600b7",
+      "pid": 26000,
+      "start": 1792089761303,
+      "end": 1792089762464,
+      "observedActiveMs": 1161,
+      "aborted": false
+    },
+    {
+      "sessionId": "01a140dc-13c9-74e0-8839-a3725b3600b7",
+      "pid": 26000,
+      "start": 1792089791996,
+      "end": 1792089793661,
+      "observedActiveMs": 1665,
+      "aborted": false
+    },
+    {
+      "sessionId": "01a140dc-13c9-74e0-8839-a3725b3600b7",
+      "pid": 26000,
+      "start": 1792089799903,
+      "end": 1792089801743,
+      "observedActiveMs": 1840,
+      "aborted": false
+    },
+    {
+      "sessionId": "01a140dc-13c9-74e0-8839-a3725b3600b7",
+      "pid": 26000,
+      "start": 1792089842009,
+      "end": 1792089843488,
+      "observedActiveMs": 1479,
+      "aborted": false
+    },
+    {
+      "sessionId": "01a140dc-13c9-74e0-8839-a3725b3600b7",
+      "pid": 26000,
+      "start": 1792089847838,
+      "end": 1792089849842,
+      "observedActiveMs": 2004,
+      "aborted": false
+    },
+    {
+      "sessionId": "01a140dc-13c9-74e0-8839-a3725b3600b7",
+      "pid": 26000,
+      "start": 1792089865853,
+      "end": 1792089866393,
+      "observedActiveMs": 540,
+      "aborted": false
+    },
+    {
+      "sessionId": "01a140dc-13c9-74e0-8839-a3725b3600b7",
+      "pid": 26000,
+      "start": 1792089917722,
+      "end": 1792089919219,
+      "observedActiveMs": 1497,
+      "aborted": false
+    },
+    {
+      "sessionId": "01a140dc-5a7c-7532-9625-30cbec5e136b",
+      "pid": 26000,
+      "start": 1792089545353,
+      "end": 1792089545365,
+      "observedActiveMs": 12,
+      "aborted": true
+    },
+    {
+      "sessionId": "01a140dc-d1ac-7532-9625-30cc84bd3fb1",
+      "pid": 26000,
+      "start": 1792089575853,
+      "end": 1792089578413,
+      "observedActiveMs": 2560,
+      "aborted": false
+    },
+    {
+      "sessionId": "01a140dd-0e52-7589-829e-ab59027b217c",
+      "pid": 15392,
+      "start": 1792089591389,
+      "end": 1792089592128,
+      "observedActiveMs": 739,
+      "aborted": false
+    },
+    {
+      "sessionId": "01a140dd-61c8-7532-9625-30ce012096df",
+      "pid": 26000,
+      "start": 1792089612746,
+      "end": 1792089615241,
+      "observedActiveMs": 2495,
+      "aborted": false
+    },
+    {
+      "sessionId": "01a140dd-668d-7532-9625-30d1ccc8c9ce",
+      "pid": 26000,
+      "start": 1792089613967,
+      "end": 1792089614682,
+      "observedActiveMs": 715,
+      "aborted": false
+    },
+    {
+      "sessionId": "01a140dd-be06-7532-9625-30d3a8cafa06",
+      "pid": 26000,
+      "start": 1792089636361,
+      "end": 1792089636879,
+      "observedActiveMs": 518,
+      "aborted": false
+    },
+    {
+      "sessionId": "01a140dd-be06-7532-9625-30d3a8cafa06",
+      "pid": 22864,
+      "start": 1792089672075,
+      "end": 1792089672955,
+      "observedActiveMs": 880,
+      "aborted": false
+    },
+    {
+      "sessionId": "01a140dd-be13-7532-9625-30d59cdd9ea1",
+      "pid": 26000,
+      "start": 1792089636376,
+      "end": 1792089637035,
+      "observedActiveMs": 659,
+      "aborted": false
+    },
+    {
+      "sessionId": "01a140de-7520-74e0-8839-a374ab428152",
+      "pid": 26000,
+      "start": 1792089683293,
+      "end": 1792089683830,
+      "observedActiveMs": 537,
+      "aborted": false
+    },
+    {
+      "sessionId": "01a140df-48f9-7532-9625-30d7b1160068",
+      "pid": 26000,
+      "start": 1792089737469,
+      "end": 1792089738185,
+      "observedActiveMs": 716,
+      "aborted": false
+    },
+    {
+      "sessionId": "01a140df-9ab9-76cb-92d6-869deb46d206",
+      "pid": 37496,
+      "start": 1792089758402,
+      "end": 1792089761078,
+      "observedActiveMs": 2676,
+      "aborted": false
+    },
+    {
+      "sessionId": "01a140df-a006-76cb-92d6-869e3102cb02",
+      "pid": 37496,
+      "start": 1792089759752,
+      "end": 1792089760595,
+      "observedActiveMs": 843,
+      "aborted": false
+    },
+    {
+      "sessionId": "01a140e0-24e4-7499-a7a2-307bebfbebbb",
+      "pid": 9640,
+      "start": 1792089793773,
+      "end": 1792089800516,
+      "observedActiveMs": 6743,
+      "aborted": true
+    },
+    {
+      "sessionId": "01a140e0-e7cc-7110-b794-3cf2f8e54210",
+      "pid": 32952,
+      "start": 1792089843669,
+      "end": 1792089865608,
+      "observedActiveMs": 21939,
+      "aborted": false
+    }
+  ],
+  "requestStartCount": 59,
+  "responseBoundaryCount": 59,
+  "replayIdempotent": true,
+  "replayedDuplicateResponses": 59
+}

@@ -1,0 +1,37 @@
+{
+  "hostExit": 0,
+  "workerPids": [
+    9640,
+    15392,
+    22864,
+    26000,
+    32952,
+    37496
+  ],
+  "workerPidsStillAlive": [],
+  "dailyAgentSnapshotUnchangedBeforeCleanup": true,
+  "archiveFiles": 168,
+  "archiveSHA256": "9d6c0ae7d8c5877f51deb8762db040aaad1fe0fd5cbbb2c6868c62bb56d4c690",
+  "secretScanPassed": true,
+  "removedAsyncDirectories": [
+    "C:\\Users\\hugos\\AppData\\Local\\Temp\\pi-subagents-user-hugos\\async-subagent-runs\\0bd6cc1d-e236-40cd-89d3-2092ace83b52",
+    "C:\\Users\\hugos\\AppData\\Local\\Temp\\pi-subagents-user-hugos\\async-subagent-runs\\74eb83ac-e30a-46a6-af7f-5f5bc23799c8",
+    "C:\\Users\\hugos\\AppData\\Local\\Temp\\pi-subagents-user-hugos\\async-subagent-runs\\81ca0ed4-9502-44b9-bf7d-5f65ae1bace1",
+    "C:\\Users\\hugos\\AppData\\Local\\Temp\\pi-subagents-user-hugos\\async-subagent-runs\\9784f019-6bbd-416a-aee8-bd76ed6157f7",
+    "C:\\Users\\hugos\\AppData\\Local\\Temp\\pi-subagents-user-hugos\\async-subagent-runs\\bab92fb3-c1db-4da2-9594-0e3afe5bc3bb",
+    "C:\\Users\\hugos\\AppData\\Local\\Temp\\pi-subagents-user-hugos\\async-subagent-runs\\c2e9a5da-bc7a-4c08-afac-d8d7260531f4",
+    "C:\\Users\\hugos\\AppData\\Local\\Temp\\pi-subagents-user-hugos\\async-subagent-runs\\c3cf0c2f-9d41-4c3d-8f40-de97b6310f0a"
+  ],
+  "removedIsolation": "E:\\Developer\\pi-playground\\wf07-iso",
+  "removedSchedules": [
+    "09df2b8e"
+  ],
+  "model": "deepseek/deepseek-flash",
+  "actualChildExecutions": 14,
+  "approvedChildExecutions": 16,
+  "providerRequests": 59,
+  "totalObservedCostUSD": 0.015280488000000002,
+  "unknownCostRequests": 0,
+  "allOwnedDirectoriesGone": true,
+  "dailyAgentSnapshotUnchangedAfterCleanup": true
+}

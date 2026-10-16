@@ -4,9 +4,9 @@ Type: grilling
 Status: open
 Assignee:
 Map: [model-cost 迁移到 pi：决策地图](../map.md)
-Blocked by: 01, 03, 04
+Blocked by: 01, 03, 04, 08
 
-Prerequisites: [OMP 子代理能力基线与 model-cost 迁移差距](01-capability-baseline.md)；[选择 pi 子代理扩展及缺口处理路线](03-subagent-provider-choice.md)；[第三方能力适配的集中组织与公共语义复用](04-third-party-adapter-organization.md)。
+Prerequisites: [OMP 子代理能力基线与 model-cost 迁移差距](01-capability-baseline.md)；[选择 pi 子代理扩展及缺口处理路线](03-subagent-provider-choice.md)；[第三方能力适配的集中组织与公共语义复用](04-third-party-adapter-organization.md)；[pi 原生事实到 Round 边界的映射](08-pi-round-boundaries.md)。
 
 ## Handoff
 
