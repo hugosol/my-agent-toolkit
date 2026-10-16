@@ -72,7 +72,7 @@
 
 ## 4. 复现、噪声与可比性
 
-- **重复运行**：同一源状态下连跑两次（`--label run-a` / `run-b`），七条序列的**读取、发布、锁、暂存、元数据、目录、请求、绘制、事件、不变量**完全一致；仅并发序列的 `fail` 列在 15–17 之间波动（Windows 上并发提交的发布 rename 偶发被拒并重试，重试成功后**成功发布数仍是 4**），以及墙钟 ms 波动。比较时用成功计数，不用 `fail` 列。
+- **重复运行**：同一源状态下连跑两次（`--label run-a` / `run-b`），七条序列的**读取、发布、锁、暂存、元数据、目录、请求、绘制、事件与全部不变量**完全一致；只有并发序列的失败结算数（因此该序列的 `总` 列）在 15–17 / 51–52 之间波动——Windows 上并发提交的发布 rename 偶发被拒并重试、以及拆除步骤对“已被前一步移除”的名称再删一次，重试成功后**成功发布数仍是 4**。比较时用成功计数（读/发布/锁/暂存/元数据/请求/绘制/事件），不要用 `fail` 与它带动的 `总`；`ms` 列同样只是参考。
 - **可比的维度**：`S1` 公共消费面上的公共路径成本（框架绑定 + model-cost shared logic + 生产前端组合）。统一实现后重跑同一条目、比较同一窗口即可。
 - **不可比 / 未覆盖**（工件 `notComparableScenarios`，此处不编造任何 pi 数值）：
   1. `native-adapter-fact-mapping`：OMP adapter 的原生读取（Turn、Round、改名、启动模型、context、provider access）是宿主代码，本进程内驱动器用语义交付代替；其成本属真实宿主，由 22 的 dock 运行负责。
@@ -136,4 +136,5 @@ every invariant held.
 - **源状态**：工件 `source` 记录 HEAD = `59a0ed714afb9e2e1ca7370364440d96ea6d3dc5`（分支 `hyper/model-cost-pi-migration/01-efficiency-baseline-...`）、以及当时未提交的路径（`M package.json`、`?? scripts/efficiency-baseline.ts`、`?? scripts/support/efficiency-baseline-fs-instrument.ts`、`?? .scratch/model-cost-pi-migration/evidence/`）——即差异仅为本基线自身新增的文件，被测生产路径与该 HEAD 完全一致。
 - **环境**：win32 / x64 / bun 1.4.2 / node 24.x（工件 `run`）；无 OMP 安装、无通道补丁、无网络依赖：provider 请求全部打到 `127.0.0.1` 上本次运行自己启动的端点，余额响应是记录里写死的样例文档；Codex 账户查询因宿主无凭据而未发出。时钟固定为 `2026-10-14T05:00:00Z`（数据自身 +08:00 时区的 13:00，非高峰），所有金额与时段判断与真实墙钟无关。
 - **未覆盖**：真实 OMP 宿主、真实 pi 宿主、真实 provider 账户、真实终端绘制（见第 4 节不可比清单）。
+- **复现核验（本票完成时实跑）**：按记录交给 22 的同一条命令 `bun run baseline:efficiency` 重跑一次，逐项与冻结工件对比：七条序列的读/发布/锁/暂存/元数据/目录/请求/绘制/事件、每条不变量、以及工件 `notComparableScenarios` 全部一致；差异只有并发序列的失败结算数（15→16，因而该序列 `总` 51→52）与各序列 `ms`，即第 4 节已声明的噪声项。重跑工件写在 `.cache/efficiency-baseline/efficiency-baseline.json`（未纳入提交）。
 - **交给 22 的动作**：在同一源状态与环境下重跑 `bun run baseline:efficiency`，按第 3 节窗口逐项对照（尤其是 `multi-turn/turns` 的逐事件零读盘、`read-only-refresh/refresh` 的零效果、`healthy-idle/idle` 的零轮询、以及根专属效果表的实测列）；`fail` 列仅作噪声参考。最终“明显额外开销/显著复杂度增加是否可接受”的判断属人类验收者（P51）。
