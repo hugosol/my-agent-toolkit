@@ -41,6 +41,7 @@ import type { ConsumptionDocument, SessionRecord } from "../../extensions/model-
 import type { ModelPricingData } from "../../extensions/model-cost/shared-logic/model-data";
 import type { DisplayTarget } from "../../extensions/model-cost/shared-logic/presentation/display";
 import { type ModelCostRuntime, createModelCostRuntime } from "../../extensions/model-cost/shared-logic/runtime";
+import { uiBoundaryTimerOf } from "./support/ui-timer";
 
 const BEIJING_OFFSET_MS = 8 * 60 * 60 * 1000;
 
@@ -468,7 +469,7 @@ function assemble(
 		},
 	});
 	const bound = bind(surface.api);
-	if (bound.bound && runtime !== undefined) releaseFrontend = attachModelCostWidget(surface.api, runtime);
+	if (bound.bound && runtime !== undefined) releaseFrontend = attachModelCostWidget(surface.api, runtime, uiBoundaryTimerOf(runtime));
 	return { surface, runtime: runtime as ModelCostRuntime, root, consumptionFile, queries };
 }
 

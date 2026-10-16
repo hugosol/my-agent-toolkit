@@ -21,13 +21,13 @@
  * redraw nor the boundary itself reaches the network, the consumption document or the accounting.
  */
 import { afterEach, describe, expect, test } from "bun:test";
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
 import type { OmpExtensionApi, OmpSessionContext } from "../../framework/adapters/omp";
 import { MODEL_COST } from "../../extensions/model-cost/definition";
 import { releasingFrontendOnCleanup } from "../../extensions/model-cost/harnesses/omp";
-import type { BoundaryTimer } from "../../extensions/model-cost/harnesses/omp/boundary-timer";
+import type { BoundaryTimer } from "../../extensions/model-cost/harnesses/boundary-timer";
 import { MODEL_COST_WIDGET_KEY, attachModelCostWidget } from "../../extensions/model-cost/harnesses/omp/widget";
 import type { ConsumptionDocument } from "../../extensions/model-cost/shared-logic/consumption-document";
 import type { ModelPricingData } from "../../extensions/model-cost/shared-logic/model-data";
@@ -223,6 +223,8 @@ function controlApi(): { readonly api: OmpExtensionApi; fire(event: string, ctx:
 /** Everything one case works with: the document's root, the runtime it built and what it observed. */
 interface BoundBoundary {
 	readonly runtime: ModelCostRuntime;
+	/** The storage root this run reads and writes. */
+	readonly root: string;
 	readonly double: PortDouble;
 	readonly clock: Clock;
 	readonly timer: BoundaryTimer;
@@ -231,6 +233,8 @@ interface BoundBoundary {
 	requests(): number;
 	/** The consumption document as it stands on disk right now. */
 	documentText(): string;
+	/** The storage root exactly as the file system holds it: its entries, the document, its instant. */
+	storage(): StorageSnapshot;
 }
 
 /**
@@ -272,12 +276,33 @@ async function bindBoundary(options: { readonly holiday?: boolean; readonly from
 	const timer = uiBoundaryTimerOf(built);
 	return {
 		runtime: built,
+		root,
 		double,
 		clock,
 		timer,
 		log,
 		requests: () => requests,
 		documentText: () => readFileSync(file, "utf8"),
+		storage: () => storageSnapshotOf(file),
+	};
+}
+
+/**
+ * One reading of the storage root: the entries it holds beside the document, the document's own bytes,
+ * and the instant it was last written at.
+ */
+interface StorageSnapshot {
+	readonly entries: readonly string[];
+	readonly document: string;
+	readonly modifiedAt: number;
+}
+
+/** The storage root one document sits in, as the file system holds it right now. */
+function storageSnapshotOf(file: string): StorageSnapshot {
+	return {
+		entries: readdirSync(path.dirname(file)).sort(),
+		document: readFileSync(file, "utf8"),
+		modifiedAt: statSync(file).mtimeMs,
 	};
 }
 
@@ -481,17 +506,24 @@ describe("the wait belongs to the UI's lifetime, not to a session's (P41)", () =
 			clock: bound.clock,
 		});
 		attachModelCostWidget(api, bound.runtime, bound.timer, "lines");
-		const before = bound.documentText();
+		const before = bound.storage();
 		const own = bound.runtime.view.own("session-main");
 
 		fire("session_start", host.ctx);
 		bound.clock.now = AFTER_SLEEP_AT;
 		(bound.log.armed[0] as ArmedTimeout).callback();
 
-		// A render and a boundary redraw are reads: no request was made, the document on disk is byte
-		// for byte what it was, and the accounting behind the reading did not move.
+		// A render and a boundary redraw are reads: no request was made, nothing was published — the
+		// document's bytes and modification instant are what they were and the root holds exactly the
+		// entries it held — and the accounting behind the reading did not move.
 		expect(bound.requests()).toBe(0);
-		expect(bound.documentText()).toBe(before);
+		expect(bound.storage()).toEqual(before);
 		expect(bound.runtime.view.own("session-main")).toEqual(own);
+
+		// The comparison above is not one nothing can move: a publish into this root is exactly what it
+		// reports as a change.
+		const published = `${JSON.stringify(DOCUMENT(false))}\n`;
+		writeFileSync(path.join(bound.root, CONSUMPTION_FILE), published, "utf8");
+		expect(bound.storage()).not.toEqual(before);
 	});
 });

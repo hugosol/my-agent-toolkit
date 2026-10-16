@@ -42,6 +42,7 @@ import type {
 	PiWidgetComponentFactory,
 	PiWidgetTheme,
 } from "../../../../framework/adapters/pi";
+import type { BoundaryTimer, BoundaryTimerHost } from "../boundary-timer";
 import {
 	type AgentTreeRow,
 	type ConsumptionDisplay,
@@ -878,21 +879,65 @@ function live(context: PiExtensionContext): boolean {
 }
 
 /**
+ * One armed one-shot of the carrier below: what the wait hands back to `cancel`, and the way the
+ * platform handle it was armed with is cleared.
+ */
+interface ArmedOneShot {
+	clear(): void;
+}
+
+/** Whether one host handle is an armed one-shot of this carrier, which is the only handle it is given. */
+function isArmedOneShot(handle: unknown): handle is ArmedOneShot {
+	return typeof handle === "object" && handle !== null && "clear" in handle && typeof handle.clear === "function";
+}
+
+/**
+ * The one-shot timer surface this frontend owns for the UI's boundary wait.
+ *
+ * pi publishes no timer on its extension context — the harness record's own advice is that an extension
+ * which needs one owns a raw timer and closes it with the session-scoped resources it created — so the
+ * platform's own one-shot is the carrier here, exactly as the extension's own half must supply it. The
+ * handle stays with the frontend that armed it and is cleared with that frontend's release, so nothing
+ * fires into a session that is being torn down. The handle is detached from the event loop — the way a
+ * host-managed timer is — so a pending boundary wait never keeps a pi process alive by itself.
+ */
+const OWNED_ONE_SHOT: BoundaryTimerHost = {
+	schedule(callback, delayMs) {
+		const handle = setTimeout(callback, delayMs);
+		handle.unref();
+		return { clear: () => clearTimeout(handle) };
+	},
+	cancel(armed) {
+		if (isArmedOneShot(armed)) armed.clear();
+	},
+};
+
+/**
  * Attach the usage widget to one pi session binding.
  *
  * Attaching registers the native handler the widget re-reads on and subscribes to the accounting's own
  * change notifications; it creates no widget by itself and reads nothing, so a binding that is refused
  * after this point leaves nothing behind. The returned function releases it: the change subscription is
- * stopped, the native registration is given up and the widget is cleared. That release is the
- * extension's own, and the dispose front-end that reaches it is the framework's — the binding's single
- * `cleanup`, called when the session that initialized the instance ends — so this frontend subscribes
- * no native shutdown hook of its own and nothing of it outlives the session it draws through.
+ * stopped, the native registration is given up, the session is unregistered from the UI's one boundary
+ * wait and the widget is cleared. That release is the extension's own, and the dispose front-end that
+ * reaches it is the framework's — the binding's single `cleanup`, called when the session that
+ * initialized the instance ends — so this frontend subscribes no native shutdown hook of its own and
+ * nothing of it outlives the session it draws through.
  *
- * A session without a UI is never drawn on: the render is a no-op for it and no widget is created,
- * which is what keeps a headless run free of a drawing path.
+ * A session without a UI is never drawn on: the render is a no-op for it, no widget is created and no
+ * boundary wait is armed for it, which is what keeps a headless run — and a spawned session's own
+ * binding, whose context publishes no UI — free of a drawing path and of a timer of its own. The wait
+ * itself is the UI's and arrives composed ({@link attachModelCostWidget} is handed the process's one
+ * timer), because one display shows one season whatever is being viewed.
  */
-export function attachModelCostWidget(pi: PiExtensionApi, runtime: ModelCostRuntime): () => void {
+export function attachModelCostWidget(
+	pi: PiExtensionApi,
+	runtime: ModelCostRuntime,
+	timer: BoundaryTimer,
+): () => void {
 	let context: PiExtensionContext | undefined;
+	/** This binding's own registration with the UI's one boundary wait, while it has one. */
+	let leaveTimer: (() => void) | undefined;
 	/**
 	 * The plain facts this draw's target is made of, read from the live context when the widget was
 	 * handed over.
@@ -971,21 +1016,36 @@ export function attachModelCostWidget(pi: PiExtensionApi, runtime: ModelCostRunt
 			// The host spent this context: there is no session here to draw any more, and no UI of it to
 			// draw on. Whatever the host does with the widget left behind is the host's own.
 			context = undefined;
+			leaveTimer?.();
+			leaveTimer = undefined;
 			return;
 		}
 		target = targetOf(ctx);
 		handOver(ctx, ctx.mode === "tui" ? "component" : "lines");
+		// The season this redraw shows may have changed since the wait was armed — a holiday period that
+		// just opened, or a boundary that passed while the process was blocked — so the wait is
+		// reconsidered here, from the schedule as it reads at this moment.
+		timer.sync();
 	};
 
 	const unwatchConsumption = runtime.view.subscribe(render);
 	const release = pi.on("session_start", (_event, ctx) => {
 		context = ctx;
+		// The wait is the UI's, and this binding is the session that UI draws: a session whose context
+		// publishes no UI — the headless run, and a spawned session's own binding — registers nothing at
+		// all, exactly as it draws nothing. A reload that starts this session again is the same
+		// registration replaced, never a second one.
+		leaveTimer?.();
+		leaveTimer = undefined;
+		if (live(ctx)) leaveTimer = timer.attach(render, OWNED_ONE_SHOT, true);
 		render();
 	});
 
 	return () => {
 		unwatchConsumption();
 		release();
+		leaveTimer?.();
+		leaveTimer = undefined;
 		if (context !== undefined && live(context)) context.ui.setWidget(MODEL_COST_WIDGET_KEY, undefined);
 		context = undefined;
 		target = undefined;

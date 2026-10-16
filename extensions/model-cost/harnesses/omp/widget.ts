@@ -69,7 +69,7 @@ import {
 } from "../../shared-logic/presentation/display";
 import type { ProviderBalanceResult } from "../../shared-logic/provider-balance";
 import type { ModelCostRuntime } from "../../shared-logic/runtime";
-import type { BoundaryTimer } from "./boundary-timer";
+import type { BoundaryTimer } from "../boundary-timer";
 
 /** The native widget key the usage widget is drawn under: this extension's own, not the marker area. */
 export const MODEL_COST_WIDGET_KEY = "z-model-cost";

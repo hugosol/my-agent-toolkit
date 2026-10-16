@@ -19,6 +19,7 @@ import type { PiExtensionApi, PiExtensionContext } from "../../framework/adapter
 import { MODEL_COST_WIDGET_KEY, attachModelCostWidget } from "../../extensions/model-cost/harnesses/pi/widget";
 import type { ModelPricingData } from "../../extensions/model-cost/shared-logic/model-data";
 import { createModelCostRuntime } from "../../extensions/model-cost/shared-logic/runtime";
+import { uiBoundaryTimerOf } from "./support/ui-timer";
 
 /** The self-made pricing data: the official pair the frontend's target runs on, priced monetarily. */
 const DATA: ModelPricingData = {
@@ -132,7 +133,7 @@ function attachedFrontend(): ControlledPiHost {
 		now: () => CLOCK_AT,
 	});
 	const host = controlledPiHost();
-	attachModelCostWidget(host.api, runtime);
+	attachModelCostWidget(host.api, runtime, uiBoundaryTimerOf(runtime));
 	return host;
 }
 

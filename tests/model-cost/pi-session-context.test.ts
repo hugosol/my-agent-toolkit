@@ -36,6 +36,7 @@ import { createModelCostRuntime } from "../../extensions/model-cost/shared-logic
 import { piAdapter } from "../../framework/adapters/pi";
 import type { OwnerReference, SessionFacts } from "../../framework/core/protocol";
 import { type ControlledPiSurface, type HostSession, controlledPiSurface } from "./support/pi-host";
+import { uiBoundaryTimerOf } from "./support/ui-timer";
 
 /** The repository root, from this file's own location, so the adapter resolves the real declaration. */
 const REPOSITORY_ROOT = path.resolve(import.meta.dir, "..", "..");
@@ -165,10 +166,13 @@ function fixture(): Fixture {
 		if (!bind(surface.api).bound) throw new Error("the model-cost binding was refused");
 	}
 	const built = runtime as ModelCostRuntime;
+	// One process, one UI: both bindings register with the same boundary wait, exactly as the shipped
+	// assembly hands the process's one timer to every frontend it attaches.
+	const uiBoundaryTimer = uiBoundaryTimerOf(built);
 	observeSessionContext(main.api, built);
-	attachModelCostWidget(main.api, built);
+	attachModelCostWidget(main.api, built, uiBoundaryTimer);
 	observeSessionContext(child.api, built);
-	attachModelCostWidget(child.api, built);
+	attachModelCostWidget(child.api, built, uiBoundaryTimer);
 	return { runtime: built, main, child };
 }
 

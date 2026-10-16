@@ -43,6 +43,7 @@ import { createModelCostRuntime } from "../../extensions/model-cost/shared-logic
 import type { OwnerReference, SessionFacts, TurnUsage } from "../../framework/core/protocol";
 import { type PortDouble, portDouble } from "../framework/support/harness-port-double";
 import { type ControlledPiSurface, type HostSession, controlledPiSurface } from "./support/pi-host";
+import { uiBoundaryTimerOf } from "./support/ui-timer";
 
 /** The self-made price list: one monetary tier and one pair with no amount policy at all. */
 const DATA: ModelPricingData = {
@@ -267,7 +268,7 @@ describe("the pi frontend draws in the form the run it serves draws in (P43)", (
 	test("a terminal run is handed a component, which draws the same business sample at any width", async () => {
 		const { runtime, double } = await fixture();
 		const host = controlledPiSurface();
-		attachModelCostWidget(host.api, runtime);
+		attachModelCostWidget(host.api, runtime, uiBoundaryTimerOf(runtime));
 		host.sessionStarts(MAIN_HOST);
 		settleTurn(double);
 
@@ -307,7 +308,7 @@ describe("the pi frontend draws in the form the run it serves draws in (P43)", (
 	test("a run that is not a terminal is handed the plain text of the same lines", async () => {
 		const { runtime } = await fixture();
 		const host = controlledPiSurface();
-		attachModelCostWidget(host.api, runtime);
+		attachModelCostWidget(host.api, runtime, uiBoundaryTimerOf(runtime));
 		host.sessionStarts({ ...MAIN_HOST, mode: "rpc" });
 
 		// pi's own RPC mode states that it ignores a component factory, so a component handed there
@@ -323,13 +324,13 @@ describe("the pi frontend draws in the form the run it serves draws in (P43)", (
 		const { runtime } = await fixture();
 		for (const mode of ["rpc", "json", "print"] as const) {
 			const host = controlledPiSurface();
-			attachModelCostWidget(host.api, runtime);
+			attachModelCostWidget(host.api, runtime, uiBoundaryTimerOf(runtime));
 			host.sessionStarts({ ...MAIN_HOST, mode });
 			expect(host.last().factory).toBeUndefined();
 			expect(host.lines()).toBeDefined();
 		}
 		const noMode = controlledPiSurface();
-		attachModelCostWidget(noMode.api, runtime);
+		attachModelCostWidget(noMode.api, runtime, uiBoundaryTimerOf(runtime));
 		// A host that publishes no mode at all is not a host this frontend may hand a component to.
 		noMode.sessionStarts({ ...MAIN_HOST, mode: undefined });
 		expect(noMode.last().factory).toBeUndefined();
@@ -341,7 +342,7 @@ describe("the component form paints the display's own emphases with the host's t
 	test("the budget band, the accrued palette and the effort level are the theme's own colours", async () => {
 		const { runtime } = await fixture();
 		const host = controlledPiSurface();
-		attachModelCostWidget(host.api, runtime);
+		attachModelCostWidget(host.api, runtime, uiBoundaryTimerOf(runtime));
 		host.sessionStarts(MAIN_HOST);
 		drawingOf(host, 200);
 
@@ -361,7 +362,7 @@ describe("the detail tree aligns within a depth and keeps every figure at the wi
 	test("rows of one kind and depth state each field at one column, measured in terminal columns", async () => {
 		const { runtime, double } = await fixture();
 		const host = controlledPiSurface();
-		attachModelCostWidget(host.api, runtime);
+		attachModelCostWidget(host.api, runtime, uiBoundaryTimerOf(runtime));
 		host.sessionStarts(MAIN_HOST);
 		await toDetail(double);
 
@@ -412,7 +413,7 @@ describe("a narrow terminal narrows names and snapshots and keeps the figures wh
 	test("a name and a snapshot are abbreviated, and every figure of the drawing survives", async () => {
 		const { runtime, double } = await fixture();
 		const host = controlledPiSurface();
-		attachModelCostWidget(host.api, runtime);
+		attachModelCostWidget(host.api, runtime, uiBoundaryTimerOf(runtime));
 		host.sessionStarts(MAIN_HOST);
 		await toDetail(double);
 
@@ -445,7 +446,7 @@ describe("a narrow terminal narrows names and snapshots and keeps the figures wh
 	test("a width too narrow for a group's fields wraps them whole rather than cutting a figure", async () => {
 		const { runtime, double } = await fixture();
 		const host = controlledPiSurface();
-		attachModelCostWidget(host.api, runtime);
+		attachModelCostWidget(host.api, runtime, uiBoundaryTimerOf(runtime));
 		host.sessionStarts(MAIN_HOST);
 		await toDetail(double);
 
@@ -462,7 +463,7 @@ describe("a narrow terminal narrows names and snapshots and keeps the figures wh
 	test("the same width draws the same lines again, and a wider one is a fresh layout", async () => {
 		const { runtime, double } = await fixture();
 		const host = controlledPiSurface();
-		attachModelCostWidget(host.api, runtime);
+		attachModelCostWidget(host.api, runtime, uiBoundaryTimerOf(runtime));
 		host.sessionStarts(MAIN_HOST);
 		await toDetail(double);
 
@@ -476,7 +477,7 @@ describe("the context drawn is the session's own public reading against its own 
 	test("a host's context window is not the budget the bar and the rows are read against", async () => {
 		const { runtime, double } = await fixture();
 		const host = controlledPiSurface();
-		attachModelCostWidget(host.api, runtime);
+		attachModelCostWidget(host.api, runtime, uiBoundaryTimerOf(runtime));
 		// This host reports a window of 100K while the monetary channel's own fixed display budget is
 		// 450K: the bar is the display's budget's, never the window the host happens to report.
 		host.sessionStarts(MAIN_HOST);
@@ -493,7 +494,7 @@ describe("the context drawn is the session's own public reading against its own 
 	test("drawing reads no file and writes none: the storage root keeps its own bytes", async () => {
 		const { runtime, double, storageDirectory } = await fixture();
 		const host = controlledPiSurface();
-		attachModelCostWidget(host.api, runtime);
+		attachModelCostWidget(host.api, runtime, uiBoundaryTimerOf(runtime));
 		host.sessionStarts(MAIN_HOST);
 		await toDetail(double);
 		const before = readFileSync(path.join(storageDirectory, CONSUMPTION_FILE));
@@ -516,8 +517,10 @@ describe("the displayed target is the session a binding serves (P46)", () => {
 		const { runtime, double } = await fixture();
 		const main = controlledPiSurface();
 		const child = controlledPiSurface();
-		attachModelCostWidget(main.api, runtime);
-		attachModelCostWidget(child.api, runtime);
+		// One process, one UI: the second binding registers with the same wait rather than a second one.
+		const uiBoundaryTimer = uiBoundaryTimerOf(runtime);
+		attachModelCostWidget(main.api, runtime, uiBoundaryTimer);
+		attachModelCostWidget(child.api, runtime, uiBoundaryTimer);
 		main.sessionStarts(MAIN_HOST);
 		await toDetail(double);
 		const mainLines = drawingOf(main, 200);
@@ -537,7 +540,7 @@ describe("the displayed target is the session a binding serves (P46)", () => {
 	test("a context the host has spent ends the drawing instead of throwing through the accounting", async () => {
 		const { runtime, double } = await fixture();
 		const host = controlledPiSurface();
-		attachModelCostWidget(host.api, runtime);
+		attachModelCostWidget(host.api, runtime, uiBoundaryTimerOf(runtime));
 		host.sessionStarts(MAIN_HOST);
 		settleTurn(double);
 		const handOvers = host.handOvers().length;
