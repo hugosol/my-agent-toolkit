@@ -93,8 +93,8 @@ PROBE session_start 01a14443-f64c-... "startup"  # 子会话，parent=<主会话
 
 1. **独立子进程（后台/分离 runner）形态未取得真实证据**：见 §4.4。该 dock 的 detached runner 在本机不产生模型请求（`subagent-artifacts` 为空、无记录），无法观察“子进程不重复根侧预取/UI”。本票未把它标为通过；同一代码路径由 hermetic 分区覆盖（第二个装配 = 第二个进程的求值）。要补真实证据需要该 runner 在本机真正跑通一次委派（模型端点/凭据/平台条件），不属本票可执行范围。
 2. **适用重载（`session_shutdown reason=reload`）的真实路径未驱动**：pi 的 RPC 入口本票未找到可脚本化的 reload 动作。真实路径覆盖的是 `quit` 与“新进程读同一存储根”；reload 语义由 hermetic 用例（`sessionEnds(MAIN, "reload")` 同 `quit` 走同一条 disposed 分支；`sessionEnds` 与 `sessionStarts` 的其余 reason 在既有 pi 分区覆盖）与 framework 的生命周期分区覆盖。
-3. **OMP 真实宿主（dock）回归本 worktree 无法启动**：`tests/harness-dock/*` 因 `host-patches/omp-18.5.0-viewed-session/patch.diff` 被检出为 CRLF 而报 `patch.diff touches no file`（既有环境条件，本票未改动该文件；19 的记录同样如此）。本票对共享路径的证据是 `tests/framework` 分区（S1 消费者）与 OMP adapter 未被改动；**未**把 dock 通过算作已得。
-4. **`connect-bot` 的 panel 生命周期分区在本 worktree 因缺少 OMP bot 工件而失败 5 例**（`tests/connect-bot/support/omp-bot.ts` 报 “omp bot binary” 不存在），与本票改动无关（本票未改 connect-bot 或其依赖），属既有环境条件。
+3. **OMP 真实宿主（dock）回归本 worktree 无法启动**：`tests/harness-dock/*` 因 `host-patches/omp-18.5.0-viewed-session/patch.diff` 被检出为 CRLF 而报 `patch.diff touches no file`（既有环境条件，本票未改动该文件；19 的记录同样如此）。本票对共享路径的证据是 `tests/framework` 分区（S1 消费者）与 OMP adapter 未被改动；**未**把 dock 通过算作已得。**该前置的更正见 §8**（归一检出下这些 dock 文件在合并后的树上物化并通过）。
+4. **`connect-bot` 的 panel 生命周期分区在本 worktree 因缺少 OMP bot 工件而失败 5 例**（`tests/connect-bot/support/omp-bot.ts` 报 “omp bot binary” 不存在），与本票改动无关（本票未改 connect-bot 或其依赖），属既有环境条件。**该前置的更正见 §8**（设 `OMP_BOT_BINARY` 后同样通过）。
 5. **child 实例自己的 cleanup 不会因它自己的会话结束而运行**：framework 的 cleanup 依旧只在“本实例服务的 owner 会话结束”时运行（公共含义未改）；spawned session 自己的实例在进程内不会走到那一步，其实例的登记随宿主对该会话求值的收回结束。本票未改这一公共语义，也未新增按会话的释放机制（那会与“不新增租约/引用计数/资源池”冲突）。**未观察到由此产生的残留效果**（§2 的处置用例、真实 run 的退出检查），但该形态的长期行为未单独验证。
 6. **POSIX 未运行**；全部真实运行都在 win32。
 
@@ -103,3 +103,46 @@ PROBE session_start 01a14443-f64c-... "startup"  # 子会话，parent=<主会话
 - **P48/P49 之外的条目**：P4/P17/P33/P45/P51 各由 17/07/04/19/22 拥有，本票不复制其断言；本票只补 P57 中 P48、P49 两项。P10/P18 的记账与 Round 语义由 08/03 拥有，本票的第三处修复是**装配/映射线**（session 结束后的迟到读取），不改变它们的公共语义。
 - **既有检查的复核**：`tests/framework/implementation-lifecycle.test.ts`（工厂无副作用、owner 节点初始化、第一请求等待、至多一次 cleanup、处置后不再交付）、`tests/model-cost/runtime-initialization.test.ts`（并行预取、一个 CLI 共享一次初始化、处置后迟到回答不是读数）、`tests/model-cost/pi-season-boundary.test.ts`（每 UI 一个等待、释放取消等待）在本票改动后全部仍绿（§2 命令），本票据此把它们作为有效证据复用，并在新分区里补上真实装配的组合面。
 - **文档同步**：`framework/docs/harness-support.md` 的 `execution.round-main-trunk`（或同域行）补记 pi 侧的“会话自身结束后迟到读取由 adapter 观察到的结束回答”，即本票第三处修复的宿主事实；该行同时保留 pi 不发布 timer 等既有记录。
+
+## 8. 集成同步与合并后全仓回归（本轮由集成 helper 执行）
+
+**同步状态**：宿主把本票分支合进 `pi-adapter`（集成提交 `8c863788d0667271d4a02a076a3c58fd2a6609e5`）后把该提交合回本票开发分支，故本分支 HEAD 即 `8c86378`，
+且 `git rev-parse HEAD pi-adapter` 同为该提交、两侧 tree 同为 `a399742496b14d8a5d4a5c42a8c0d10745459b0c`（`git diff --stat pi-adapter HEAD` 空、`git rev-list --left-right --count pi-adapter...HEAD` = `0 0`）。
+提交关系：`8c86378` 的父为 `b5bda40`（合并前的集成 tip，19 的集成记录合入点）与 `d6d72d4`（本票末提交，父链 `127638a` → `1ccc443`）。
+
+**无冲突可解**：`git ls-files -u` 0 条未合并路径；本 worktree 的 gitdir（`E:/Developer/myhub/my-agent-toolkit/.git/worktrees/hyper-ticket-VR4fLC`）内没有 `MERGE_HEAD`／rebase／cherry-pick 状态。
+
+**合入内容逐项核对**：`git diff --name-status b5bda40 HEAD` 与 `git diff --name-status 1ccc443 d6d72d4`（本票实现自身的 10 个文件：`extensions/model-cost/shared-logic/runtime.ts`、`framework/adapters/pi.ts`、`framework/adapters/pi/round.ts`、`framework/docs/harness-support.md`、`scripts/pi-subagent-smoke.ts`、新增 `tests/model-cost/pi-assembly-lifecycle.test.ts`、本票证据/日志/票据记录）**逐项相同**；
+反方向 `git diff --stat d6d72d4 HEAD` 只有 19 轮在本分支之外记录的集成记录（`evidence/19-season-boundary.md` 与其三份日志、`implementation/19-season-boundary.md`），
+且 `git diff d6d72d4 HEAD -- extensions framework tests scripts entrypoints package.json tsconfig.json` **为空** —— 合入树里本票那 10 个文件的字节与本票分支逐一相同，本票的实现没有在合入时被改写。
+
+**按检出原样运行**（命令 `bun run test`，未设 `OMP_BOT_BINARY`；日志 `logs/20-assembly-lifecycle-integration-ascheckedout.log`）：
+**1151 pass / 17 fail**（127 files / 1168 tests / 230.61s / exit 1）。17 例全为本机检出/布局前置项，且都落在本票合入**未触碰**的文件上
+（`tests/connect-bot/**`、`tests/harness-dock/**` 与本票 10 个文件交集为空），与 [17](17-budget-actions.md)、[18](18-native-presentation.md)、[19](19-season-boundary.md) 各集成轮记录的类别逐条一致：
+
+| 类 | 例数 | 文件 | 事实 |
+| --- | --- | --- | --- |
+| 缺真实面板二进制（未设 `OMP_BOT_BINARY`） | 5 | `budget-regression`、`harness-exit-budget`、`panel-registration-lifecycle` ×3 | 本 worktree 位于 `%TEMP%`，`tests/connect-bot/support/omp-bot.ts` 的默认同级路径 `…\Temp\omp-bot\backend\target\release\omp-bot.exe` 不存在（抛点在 `startOmpBot`） |
+| CRLF 检出使补丁物化失败 | 10 | `codex-response-artifact`、`combined-host-artifact`、`detail-tree`、`model-cost-codex-quota`、`model-cost-modes`、`model-cost-persistence`、`viewed-marker`、`viewed-session-host`、`viewed-session-total`、`viewed-session` | `host-patches/omp-18.5.0-{viewed-session,codex-response-boundary}/patch.diff touches no file`（`tests/harness-dock/host-patch-artifact.ts` 的 `patchTouchedFiles` 按 LF 切行），文件级失败 |
+| 锁文件 sha 按 LF 录制 | 2 | `baseline.test.ts`、`session-driver.test.ts` | 记录值 `a5d37ab2…` 逐字节等于 `HEAD:bun.lock` 的已提交 LF blob（11131 B）；工作区是同一内容的 CRLF 检出（`e7ed487b…`） |
+
+**归一后的全仓回归**（三处工作区文件还原为已提交 LF blob 字节——`bun.lock` `a5d37ab2…`、`viewed-session` `66195465…`、`codex-response-boundary` `4ec9ad0d…`，
+三份 sha256 与 `git cat-file blob HEAD:<path>` 逐一相等；并设 `OMP_BOT_BINARY=E:/Developer/myhub/omp-bot/backend/target/release/omp-bot.exe`）：
+命令 `bun run test` → **1197 pass / 0 fail**（127 files / 6836 expect() calls / 402.36s / **exit 0**，日志 `logs/20-assembly-lifecycle-integration-normalized.log`）。
+比原样多出的 **29** 例正是那 10 个 dock 文件在文件级失败后未注册的用例（与 17、18、19 三轮就同一组文件记录的 +29 相同）。
+`bun run typecheck` → **exit 0**（无诊断，日志 `logs/20-assembly-lifecycle-integration-typecheck.log`）。
+两次运行期间被测源码与夹具未变：归一只改那三处工作区字节，未动 `extensions/**`、`framework/**`、`tests/**`、`scripts/**`。
+
+**本票新增分区的归属**：两轮 pass 数之差都恰为本票新增的 10 例——原样 1151 = 19 轮原样 1141 + 10，归一 1197 = 19 轮归一 1187 + 10（文件数同步 +1 即本票新增的 `tests/model-cost/pi-assembly-lifecycle.test.ts`）；
+两轮中**没有一例失败**来自本票的 10 个文件。
+
+**本轮修复：无源码修复。** 17 例全属本机检出/布局前置项，无一条由本票合入引入；归一后零失败说明没有失败被这些环境例掩盖。
+行尾鲁棒的解析或 `.gitattributes` 属装配/宿主验证范围（同类记录见 [17](17-budget-actions.md)、[18](18-native-presentation.md)、[19](19-season-boundary.md)），不在本票内改动。本轮提交只有本文件、票据状态与三份日志。
+
+**运行后状态**：三处文件按字节恢复原 CRLF 检出状态（sha256 与运行前逐一相同：`bun.lock` `e7ed487b…`、`viewed-session` `057e01f6…`、`codex-response-boundary` `294b3727…`），
+`git status` 只余本轮记录改动；未操作集成工作区（`E:/Developer/myhub/my-agent-toolkit`）、未切换分支、未新建 worktree、未 reset、未调用 retro，也未自行合入 `pi-adapter`。
+
+**本轮对 §6.3、§6.4 的更正**：§6 记的「OMP 真实宿主（dock）回归本 worktree 无法启动」与「`connect-bot` 的 panel 生命周期分区失败 5 例」都是 CRLF 检出与面板二进制默认路径造成的**物化／布局前置**，不是本票行为的问题——
+归一检出后 `tests/harness-dock/**` 的 10 个文件在合并后的树上物化、注册并通过，设 `OMP_BOT_BINARY` 后 `tests/connect-bot/**` 的 5 例也通过（见上表与 §8 归一回归）。
+§6 原文按实现轮记录保留，本轮的更正以本段为准。但这些通过仍**不构成**本票行为在真实 OMP 宿主上的断言（dock 用例不断言本票三处修复的装配寿命），
+也不改变 §6.1、§6.2、§6.5、§6.6 的未覆盖项：独立子进程形态、`reload` 真实路径、child 实例自己的 cleanup 与 POSIX 仍原样未验证，最终整体验收仍归独立门禁（[25](../implementation/25-evidence-scope-audit.md) 与装配验收票）。
