@@ -6,7 +6,7 @@
 
 **Blocked by:** [05：真实子入口接入与可靠会话事实](05-subagent-facts.md)
 
-**Status:** ready-for-agent
+**Status:** ready-for-human
 
 ## Acceptance criteria
 
@@ -27,3 +27,9 @@
 - 本票新增资源必须随功能实现订阅/登记/通信/恢复/等待的释放及失效保护，不能留给后续装配票。共同公共路径变更同步迁移受影响消费者、说明和旧生产路径；不保留兼容别名、重复算法或接线 shim。
 - 验证按仓库 testing 约定：迭代用受影响检查，票完成用所属分区及共同契约消费者，TypeScript 变更执行 `bun run typecheck`；另实际运行本票用户行为。昂贵/真实宿主检查串行且运行期间保持来源不变。文档/基线票运行相应链接、例子或采样入口，不机械跑无关全仓测试。
 - 完成全部可执行实现、自动及真实宿主检查后才进行最终人类验收；仅 P51/P52/P53 的指定判断由人类确认。凭据、许可、平台或人工确认缺失明确记录，不能标成通过，也不暂停其他可执行工作。不擅自正式安装、切换、清理用户数据或付费调用。
+
+## 执行记录（08，首轮）
+
+**已交付**：`tests/model-cost/pi-session-accounting.test.ts`（7 例，S1/S2/S3，全绿）、`scripts/pi-session-accounting.ts`（真实宿主记录）、`evidence/08-session-accounting.md`（完整证据）。`bun test tests/model-cost` = 401 pass / 0 fail；`bun test tests/framework` = 430 pass / 0 fail；`bun run typecheck` 无输出。本票未改 `extensions/**` 与 `framework/**`。
+
+**状态 `ready-for-human` 的原因（真实宿主缺口，需权威决定，不静默补丁）**：pi 上的一次真实后台委派里，子进程**确实加载了本扩展**（provider 自己的启动证据 `launchResolvedExtensions.required=["model-cost"]`）并**确实跑了一次请求**（端点计数、子会话文件、运行元数据三方一致），但子会话**自己的消费从未落进共享文档**：`framework/behaviors/binding.ts:315` 只在 `owner.kind === "owner"` 的会话开始上初始化扩展，而子进程里唯一的会话其 owner 是跨进程解析出的根会话（`inherited`），因此初始化（进而记账周期）不发生。这使 P8/P10 覆盖里的"子自身记账 + 文档同步"这一半在跨进程（后台）委派上完全没有兑现。修法属于公共生命周期语义或 spec §6 的跨进程观察推送（[06] 本机通信），都会影响 OMP 与其它消费者（P50），按票据约束带回权威决定；`scripts/pi-session-accounting.ts` 的该条期望在决定落定前保持 FAIL（未验收）。
