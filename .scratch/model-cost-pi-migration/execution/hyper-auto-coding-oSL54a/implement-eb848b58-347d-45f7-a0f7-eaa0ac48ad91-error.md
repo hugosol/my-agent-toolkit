@@ -1,0 +1,1 @@
+git rev-parse HEAD 执行失败（退出码 128）：fatal: bad boolean config value 'core.eol' for 'core.autocrlf'

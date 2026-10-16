@@ -1,0 +1,194 @@
+{
+  "feature": "model-cost-pi-migration",
+  "ticket": "22-efficiency-acceptance.md",
+  "run_id": "a2979ca9-2e9b-4225-973d-4c5dfaf9b545",
+  "parent_session_id": "01a14319-df1e-77c0-a324-421dfc10d49e",
+  "parent_session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-16T05-05-31-422Z_01a14319-df1e-77c0-a324-421dfc10d49e.jsonl",
+  "workspace": "E:\\Developer\\myhub\\my-agent-toolkit",
+  "tool_call_id": "a05e49e3-77de-440b-812a-fe3cca1131a3",
+  "started_at": "2026-10-16T12:28:44.599Z",
+  "tdd_status": "failed",
+  "retro_status": "completed",
+  "tdd_finished_at": "2026-10-16T12:39:09.046Z",
+  "tdd_result": {
+    "index": 0,
+    "id": "22-efficiency-acceptancemd-a05e49e3-77de-440b-81",
+    "agent": "tdd",
+    "agentSource": "user",
+    "task": "Complete assignment thoroughly:\n\n在当前 worktree 实现唯一票据：C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-toLQo0\\.scratch\\model-cost-pi-migration\\implementation\\22-efficiency-acceptance.md。\n集成分支：pi-adapter\nspec：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\model-cost-pi-migration\\spec.md\ncontract：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\model-cost-pi-migration\\contract.md\n接手此前实现进度，不丢弃已有修改。上次报告：C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-auto-coding-oSL54a\\implement-6d652f3e-04aa-486f-82c4-5f01e889180e.md\n遵守 tdd skill，自行负责本票验收并报告实际验证与未完成事项。完成后尽快提交本票实现，交出 worktree，由独立集成子代理接管。不要修改其他票据或工作流报告，不操作集成分支工作区，不自行合入集成分支，不调用 retro、不派发其他票据。不得 reset 丢弃既有工作。",
+    "assignment": "在当前 worktree 实现唯一票据：C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-toLQo0\\.scratch\\model-cost-pi-migration\\implementation\\22-efficiency-acceptance.md。\n集成分支：pi-adapter\nspec：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\model-cost-pi-migration\\spec.md\ncontract：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\model-cost-pi-migration\\contract.md\n接手此前实现进度，不丢弃已有修改。上次报告：C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-auto-coding-oSL54a\\implement-6d652f3e-04aa-486f-82c4-5f01e889180e.md\n遵守 tdd skill，自行负责本票验收并报告实际验证与未完成事项。完成后尽快提交本票实现，交出 worktree，由独立集成子代理接管。不要修改其他票据或工作流报告，不操作集成分支工作区，不自行合入集成分支，不调用 retro、不派发其他票据。不得 reset 丢弃既有工作。",
+    "description": "Implement efficiency acceptance ticket in worktree",
+    "lastIntent": "Final commit and worktree verification",
+    "exitCode": 0,
+    "output": "{\n  \"ticket\": \"22：效率前后对照与复杂度判断（P51 完整 Coverage S1/S2/S3；P57 的「P51：禁止的重复工作和健康空闲轮询不新增」项）\",\n  \"status\": \"implemented — 第四次接手复核完成：接管期无源码改动，本票全部 Agent 可执行交付与自动/真实宿主检查在冻结树上第一手重跑一致，产品面复杂度已复核到集成分支新尖端；P51 的人类验收（效率/复杂度是否可接受）保持未验收，票内含人类确认的勾选项保持未勾选。工作树已提交交出，未合入集成分支。\",\n  \"takeover\": {\n    \"preserved\": \"未丢弃任何既有修改：efb03e0、6802bef、6420e21、385dd6d、44a4b96、f8b9616、5714ddc 全部原样保留，未做任何 reset。\",\n    \"new_commit\": \"570c7ee 22: 第四次接手复核（无源码改动）— 19 个文件，全部在 .scratch/ 内（证据 §11、票 Status、logs/22-takeover-e-*）\",\n    \"scope\": \"`git show --name-only 570c7ee` 去掉 .scratch/ 为空：本轮未改任何被测源码、fixture、脚本或 package.json；未改其他票据、未操作/未合入集成分支、未调用 retro、未派发票据。\",\n    \"precondition_verified\": \"接手时 HEAD=5714ddc；工作树仅 `bun.lock` 与两份 `host-patches/*/patch.diff` 显示 ` M`，三者带过滤器 hash 与 HEAD blob 逐一相等（core.autocrlf 检出 stat 现象），未 restore（dock 补丁/基线用例需要这份 LF 字节）；移交后同一检查仍 SAME。\"\n  },\n  \"verification_results\": [\n    {\n      \"command\": \"bun run typecheck\",\n      \"exit\": 0,\n      \"result\": \"tsc --noEmit 无诊断\",\n      \"log\": \"evidence/logs/22-takeover-e-typecheck.log\"\n    },\n    {\n      \"command\": \"bun run baseline:efficiency --out logs/22-takeover-e-after.json --label takeover-e\",\n      \"exit\": 0,\n      \"result\": \"七条序列 every invariant held.；probe {\\\"operations\\\":13,\\\"documentReads\\\":2,\\\"documentPublishes\\\":1,\\\"lockOperations\\\":7,\\\"stagingOperations\\\":2,\\\"syncOperations\\\":1}\",\n      \"log\": \"evidence/logs/22-takeover-e-baseline.log\"\n    },\n    {\n      \"command\": \"bun run compare:efficiency -- --before 22-efficiency-after.json --after logs/22-takeover-e-after.json\",\n      \"exit\": 0,\n      \"result\": \"none: every comparable figure of every sequence and window agrees.；deliveries 同；PRODUCT 23773→23773 (+0)；EVIDENCE +43（仅 §10 修正过的 scripts/efficiency-comparison.ts 自身）\",\n      \"log\": \"evidence/logs/22-takeover-e-reproduction.txt\"\n    },\n    {\n      \"command\": \"bun run compare:efficiency -- --before 01-efficiency-baseline.json --after 22-efficiency-after.json --out logs/22-takeover-e-comparison.txt\",\n      \"exit\": 0,\n      \"result\": \"复现 §3/§4：requests 1→2（{/user/balance:1}→{:2}）、draws 30→33、events 24→23（subagent_runtime 1→0）、七序列窗口级文件成本逐列相同、产品面 19287→23773；重生成报告与已提交 logs/22-efficiency-comparison.txt 逐字节相同（diff 空）\",\n      \"log\": \"evidence/logs/22-takeover-e-comparison.txt\"\n    },\n    {\n      \"command\": \"bun run compare:efficiency -- --before 01-… --after 22-… --after-rev pi-adapter\",\n      \"exit\": 0,\n      \"result\": \"集成新尖端 190e1b5：PRODUCT SUBTOTAL 19287→23773 (+4486)，产品面逐族与 efb03e0 相同（28/18/111/1608/10326/158/3890/2142/3248/2244）\",\n      \"log\": \"evidence/logs/22-takeover-e-integration-tip.txt\"\n    },\n    {\n      \"command\": \"独立行计数（python git ls-tree -r + cat-file --batch，不经被测入口）\",\n      \"exit\": 0,\n      \"result\": \"产品面 19287(59a0ed7)/23773(efb03e0)/23773(5714ddc)/23773(pi-adapter 190e1b5)；证据面 54806/79994/80037/80085；facts.ts 290→279；产品面逐族与入口表逐一相同\",\n      \"log\": \"evidence/logs/22-takeover-e-complexity-independent.json\"\n    },\n    {\n      \"command\": \"bun test tests/harness-dock/efficiency-effects.test.ts（真实宿主）\",\n      \"exit\": 0,\n      \"result\": \"3 pass / 0 fail、21 expect()、12.05s；效果 2295/2689、存储根 13 操作（明细相同）、空闲窗口 0 效果、frames 10/18、arrivals [balance,model] 与 [balance,model,model,model]、网络仅一次指向本机 capture endpoint 的 createConnection（无 createServer）\",\n      \"log\": \"evidence/logs/22-takeover-e-effects.log\"\n    },\n    {\n      \"command\": \"记录器两条规则直探（bun --preload effect-instrument.ts）\",\n      \"exit\": 0,\n      \"result\": \"指名 dump：成员被包裹（name=recorded），dump 里恰好只有探针自身那次 readFileSync（记录器自写不进记录）；不指名 dump：成员未包裹、不写任何 dump —— 失效保护成立\",\n      \"log\": \"evidence/logs/22-takeover-e-recorder-probe.txt\"\n    },\n    {\n      \"command\": \"OMP_BOT_BINARY=… bun test tests/harness-dock（所属分区，真实宿主，串行）\",\n      \"exit\": 0,\n      \"result\": \"93 pass / 0 fail、1121 expect()、26 文件 / 219.18s（90 既有 + 本票 3 例）\",\n      \"log\": \"evidence/logs/22-takeover-e-partition-harness-dock.log\"\n    },\n    {\n      \"command\": \"bun test tests/framework（共同路径消费者）\",\n      \"exit\": 0,\n      \"result\": \"481 pass / 0 fail、2250 expect()、39.35s\",\n      \"log\": \"evidence/logs/22-takeover-e-partition-framework.log\"\n    },\n    {\n      \"command\": \"bun test tests/model-cost（共同路径消费者，3 次）\",\n      \"exit\": \"1 / 0 / 0\",\n      \"result\": \"第 1 次 462 pass / 1 fail / 1 error（一次实时期限 flake）；紧接着重跑 463 pass / 0 fail（7.49s）；20 路 CPU 饱和下再跑 463 pass / 0 fail（33.20s）\",\n      \"log\": \"evidence/logs/22-takeover-e-partition-model-cost.log、…-model-cost-rerun.log、…-model-cost-under-load.log\"\n    }\n  ],\n  \"acceptance_evidence\": [\n    {\n      \"criterion\": \"AC1 对照 01 工件与迁移后源状态的读取/锁/发布/请求/事件成本及复杂度变化（可比、不预设百分比、不伪造基线）\",\n      \"evidence\": \"第一手重跑比对：可归属差异只有并发序列 requests 1→2（两条 /user/balance）、draws 30→33、events 24→23；七条序列窗口级文件成本逐列相同；复杂度产品面 19287→23773；重生成报告与已提交报告逐字节相同。集成侧只读核对：39fdc3d..pi-adapter 产品源无变化（只 framework/docs/harness-support.md），scripts/efficiency-baseline.ts SAME，--after-rev pi-adapter(190e1b5) 产品面逐族与 efb03e0 相同；merge-tree 只读核对无冲突。\"\n    },\n    {\n      \"criterion\": \"AC2 OMP 同进程无新增 IPC/逐事件读盘、健康空闲无新增固定轮询、子侧无重复根 UI/查询（外部效果计数拥有 P57 的 P51 项）\",\n      \"evidence\": \"真实宿主 3 例：同进程无 createServer、健康空闲 3s 窗口 0 效果、子代理在侧 arrivals 仍只有一次 balance 根预取、frames 10/18；效果数与 §5/§10 逐条相同。记录器灵敏度与失效保护由第 3 例 + 本轮两条直探证实（不指名 dump 则完全不动）。\"\n    },\n    {\n      \"criterion\": \"AC3 先完成全部可执行自动检查与材料准备，列可归属差异、原因与未覆盖项；不以绿色测试代替复杂度判断\",\n      \"evidence\": \"证据 §3–§6 给差异与归因（provider-balance/provider-refresh 未改、request-accounting roundEnded 的 sub announce()、SubagentRuntimeDelivery 移除）、噪声列口径与未覆盖项；对照入口不设阈值、不因差异失败；§11 追加本轮复核、复杂度逐族表与 flake 记录。\"\n    },\n    {\n      \"criterion\": \"AC4/AC5 人类验收（P51 效率/复杂度是否可接受；P52/P53 范围外）\",\n      \"evidence\": \"未做、不计为通过：Agent 无该判断权限。材料齐备（22-efficiency-after.json、对照报告、§4/§11 复杂度表、§5/§11 外部效果计数）。票内勾选口径：含人类确认的项保持未勾选，状态保持 implemented。\"\n    }\n  ],\n  \"unexpected_failure_investigated\": {\n    \"finding\": \"tests/model-cost 第 1 次运行中 session-recovery.test.ts 的 P46 用例「a record another writer holds is kept, …」5000.96ms 超时，随后 savedDocument 助手抛 no consumption document the case expects was published at …/model-cost-recovery-2uO2tD/consumption.json（session-recovery.test.ts:238）。\",\n    \"mechanism\": \"该助手按 Date.now()+5000 轮询磁盘文档，用例本身即跑在 bun 的 5000ms 单例上限内，且需数次 mkdir+rename 锁阶段发布；win32 上满载时可越界。同签名已在 01（P16/P18 20s 保存期限）、06（storage-processes 撞 5000ms 上限）、21（同一 savedDocument 帮助器）记录为负载敏感的实时期限 flake。\",\n    \"reproduction_attempts\": \"单独重跑该文件 13 pass（313ms）；整分区重跑 463 pass / 0 fail（7.49s）；20 个满载进程压在 20 核机上重跑整分区仍 463 pass / 0 fail（33.20s，墙钟慢 4.4 倍未触发期限）。故纯 CPU 负载不是充分解释，最可能是紧接 219s 真实宿主 dock 分区之后机器尚未静定。\",\n    \"attribution\": \"不归本票：本票无产品代码改动、未改 tests/model-cost；失败路径（本地存储锁与跨进程发布）不经本票任何文件；同一棵树上 §10 的同一分区为 463 pass / 0 fail。仅记为环境性 flake，不据此宣称套件绝对稳定。\"\n  },\n  \"unverified_or_limits\": [\n    \"P51 的人类验收未做（本票不标为通过）；P52（真实终端可读性）、P53（真实账户侧核对）不在本票范围。\",\n    \"并发序列 draws +2 与主子例 frames 33→18 仍只归因到机制层（每子代理 Round 结束 announce() / 显示通知次数），未逐渲染定位；两者只涉前端渲染次数，无请求/落盘/IPC 差异。\",\n    \"对照入口仍无自动化测试覆盖（产品面外的证据工具，仓库也无 scripts/ 测试约定）；其正确性证据是「入口输出 vs 独立计数」与「重生成报告 vs 已提交报告逐字节相同」。\",\n    \"外部效果计数只覆盖 OMP dock 宿主进程；pi 侧本机接入（管道）未注入同一记录器，由 P14/P16/P42/P56 分区与真实 pi 冒烟覆盖。\",\n    \"S1 不覆盖宿主原生半边（OMP adapter 原生事实映射、宿主会话 JSONL/日志、真实终端绘制）；无真实 provider 账户、无付费调用（provider 指向本机 capture endpoint）。\",\n    \"证据范围仅 win32/x64、bun 1.4.2、隔离 OMP 18.5.0（未打 host-patches 补丁）、无 provider 凭据。\"\n  ],\n  \"worktree_handoff\": {\n    \"branch\": \"hyper/model-cost-pi-migration/22-efficiency-acceptance-a73e6b-411dc288ea83\",\n    \"head\": \"570c7ee65b3fb8f7d621b48e0b044cf2502bd800\",\n    \"base_merge_base_with_pi-adapter\": \"39fdc3d\",\n    \"pi_adapter_tip_now\": \"190e1b5（23 合入后的 b57f5a5；本票不自行合入）\",\n    \"product_source_drift\": \"无：`git diff --name-only 39fdc3d pi-adapter -- framework extensions entrypoints` 仅 framework/docs/harness-support.md（文档）；scripts/efficiency-baseline.ts 在 39fdc3d 与 pi-adapter 之间 SAME；package.json 只多 23 的一行 accept:model-cost-tui。\",\n    \"merge_feasibility_readonly\": \"`git merge-tree --write-tree --name-only HEAD pi-adapter` → exit 0、tree 8ed8e09eca1f684d296f21fc4c96ddf12eaed0c2、无冲突列表；未改任何 ref 或工作树（日志 evidence/logs/22-takeover-e-merge-tree.txt）。\",\n    \"clean_state_warning\": \"`git status` 仍显示 ` M bun.lock` 与两份 `host-patches/*/patch.diff`：三者带过滤器 hash 与 HEAD blob 逐一相等，是 core.autocrlf=true 的检出 stat 现象，**不要 checkout/restore**（dock 补丁/基线用例需要这份 LF 字节）。除此之外工作树无未提交内容、0 未跟踪文件。\",\n    \"not_done_by_design\": \"未操作/未合入集成分支、未改其他票据或工作流报告、未 reset 既有工作、未调用 retro、未派发其他票据。\"\n  }\n}",
+    "stderr": "",
+    "truncated": false,
+    "durationMs": 624280,
+    "tokens": 118331,
+    "requests": 56,
+    "contextTokens": 110833,
+    "contextWindow": 1000000,
+    "modelOverride": [
+      "deepseek/deepseek-flash:high"
+    ],
+    "resolvedModel": "deepseek/deepseek-flash:high",
+    "resolvedModelIdentity": "deepseek/deepseek-flash",
+    "resolvedThinkingLevel": "high",
+    "aborted": false,
+    "usage": {
+      "input": 70458,
+      "output": 47873,
+      "cacheRead": 3569152,
+      "cacheWrite": 0,
+      "totalTokens": 3687483,
+      "reasoningTokens": 24466,
+      "cost": {
+        "input": 0.010568699999999999,
+        "output": 0.028723799999999994,
+        "cacheRead": 0.010707456,
+        "cacheWrite": 0,
+        "total": 0.049999956000000005
+      }
+    },
+    "outputPath": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-16T05-05-31-422Z_01a14319-df1e-77c0-a324-421dfc10d49e\\22-efficiency-acceptancemd-a05e49e3-77de-440b-81.md",
+    "extractedToolData": {
+      "yield": [
+        {
+          "data": {
+            "ticket": "22：效率前后对照与复杂度判断（P51 完整 Coverage S1/S2/S3；P57 的「P51：禁止的重复工作和健康空闲轮询不新增」项）",
+            "status": "implemented — 第四次接手复核完成：接管期无源码改动，本票全部 Agent 可执行交付与自动/真实宿主检查在冻结树上第一手重跑一致，产品面复杂度已复核到集成分支新尖端；P51 的人类验收（效率/复杂度是否可接受）保持未验收，票内含人类确认的勾选项保持未勾选。工作树已提交交出，未合入集成分支。",
+            "takeover": {
+              "preserved": "未丢弃任何既有修改：efb03e0、6802bef、6420e21、385dd6d、44a4b96、f8b9616、5714ddc 全部原样保留，未做任何 reset。",
+              "new_commit": "570c7ee 22: 第四次接手复核（无源码改动）— 19 个文件，全部在 .scratch/ 内（证据 §11、票 Status、logs/22-takeover-e-*）",
+              "scope": "`git show --name-only 570c7ee` 去掉 .scratch/ 为空：本轮未改任何被测源码、fixture、脚本或 package.json；未改其他票据、未操作/未合入集成分支、未调用 retro、未派发票据。",
+              "precondition_verified": "接手时 HEAD=5714ddc；工作树仅 `bun.lock` 与两份 `host-patches/*/patch.diff` 显示 ` M`，三者带过滤器 hash 与 HEAD blob 逐一相等（core.autocrlf 检出 stat 现象），未 restore（dock 补丁/基线用例需要这份 LF 字节）；移交后同一检查仍 SAME。"
+            },
+            "verification_results": [
+              {
+                "command": "bun run typecheck",
+                "exit": 0,
+                "result": "tsc --noEmit 无诊断",
+                "log": "evidence/logs/22-takeover-e-typecheck.log"
+              },
+              {
+                "command": "bun run baseline:efficiency --out logs/22-takeover-e-after.json --label takeover-e",
+                "exit": 0,
+                "result": "七条序列 every invariant held.；probe {\"operations\":13,\"documentReads\":2,\"documentPublishes\":1,\"lockOperations\":7,\"stagingOperations\":2,\"syncOperations\":1}",
+                "log": "evidence/logs/22-takeover-e-baseline.log"
+              },
+              {
+                "command": "bun run compare:efficiency -- --before 22-efficiency-after.json --after logs/22-takeover-e-after.json",
+                "exit": 0,
+                "result": "none: every comparable figure of every sequence and window agrees.；deliveries 同；PRODUCT 23773→23773 (+0)；EVIDENCE +43（仅 §10 修正过的 scripts/efficiency-comparison.ts 自身）",
+                "log": "evidence/logs/22-takeover-e-reproduction.txt"
+              },
+              {
+                "command": "bun run compare:efficiency -- --before 01-efficiency-baseline.json --after 22-efficiency-after.json --out logs/22-takeover-e-comparison.txt",
+                "exit": 0,
+                "result": "复现 §3/§4：requests 1→2（{/user/balance:1}→{:2}）、draws 30→33、events 24→23（subagent_runtime 1→0）、七序列窗口级文件成本逐列相同、产品面 19287→23773；重生成报告与已提交 logs/22-efficiency-comparison.txt 逐字节相同（diff 空）",
+                "log": "evidence/logs/22-takeover-e-comparison.txt"
+              },
+              {
+                "command": "bun run compare:efficiency -- --before 01-… --after 22-… --after-rev pi-adapter",
+                "exit": 0,
+                "result": "集成新尖端 190e1b5：PRODUCT SUBTOTAL 19287→23773 (+4486)，产品面逐族与 efb03e0 相同（28/18/111/1608/10326/158/3890/2142/3248/2244）",
+                "log": "evidence/logs/22-takeover-e-integration-tip.txt"
+              },
+              {
+                "command": "独立行计数（python git ls-tree -r + cat-file --batch，不经被测入口）",
+                "exit": 0,
+                "result": "产品面 19287(59a0ed7)/23773(efb03e0)/23773(5714ddc)/23773(pi-adapter 190e1b5)；证据面 54806/79994/80037/80085；facts.ts 290→279；产品面逐族与入口表逐一相同",
+                "log": "evidence/logs/22-takeover-e-complexity-independent.json"
+              },
+              {
+                "command": "bun test tests/harness-dock/efficiency-effects.test.ts（真实宿主）",
+                "exit": 0,
+                "result": "3 pass / 0 fail、21 expect()、12.05s；效果 2295/2689、存储根 13 操作（明细相同）、空闲窗口 0 效果、frames 10/18、arrivals [balance,model] 与 [balance,model,model,model]、网络仅一次指向本机 capture endpoint 的 createConnection（无 createServer）",
+                "log": "evidence/logs/22-takeover-e-effects.log"
+              },
+              {
+                "command": "记录器两条规则直探（bun --preload effect-instrument.ts）",
+                "exit": 0,
+                "result": "指名 dump：成员被包裹（name=recorded），dump 里恰好只有探针自身那次 readFileSync（记录器自写不进记录）；不指名 dump：成员未包裹、不写任何 dump —— 失效保护成立",
+                "log": "evidence/logs/22-takeover-e-recorder-probe.txt"
+              },
+              {
+                "command": "OMP_BOT_BINARY=… bun test tests/harness-dock（所属分区，真实宿主，串行）",
+                "exit": 0,
+                "result": "93 pass / 0 fail、1121 expect()、26 文件 / 219.18s（90 既有 + 本票 3 例）",
+                "log": "evidence/logs/22-takeover-e-partition-harness-dock.log"
+              },
+              {
+                "command": "bun test tests/framework（共同路径消费者）",
+                "exit": 0,
+                "result": "481 pass / 0 fail、2250 expect()、39.35s",
+                "log": "evidence/logs/22-takeover-e-partition-framework.log"
+              },
+              {
+                "command": "bun test tests/model-cost（共同路径消费者，3 次）",
+                "exit": "1 / 0 / 0",
+                "result": "第 1 次 462 pass / 1 fail / 1 error（一次实时期限 flake）；紧接着重跑 463 pass / 0 fail（7.49s）；20 路 CPU 饱和下再跑 463 pass / 0 fail（33.20s）",
+                "log": "evidence/logs/22-takeover-e-partition-model-cost.log、…-model-cost-rerun.log、…-model-cost-under-load.log"
+              }
+            ],
+            "acceptance_evidence": [
+              {
+                "criterion": "AC1 对照 01 工件与迁移后源状态的读取/锁/发布/请求/事件成本及复杂度变化（可比、不预设百分比、不伪造基线）",
+                "evidence": "第一手重跑比对：可归属差异只有并发序列 requests 1→2（两条 /user/balance）、draws 30→33、events 24→23；七条序列窗口级文件成本逐列相同；复杂度产品面 19287→23773；重生成报告与已提交报告逐字节相同。集成侧只读核对：39fdc3d..pi-adapter 产品源无变化（只 framework/docs/harness-support.md），scripts/efficiency-baseline.ts SAME，--after-rev pi-adapter(190e1b5) 产品面逐族与 efb03e0 相同；merge-tree 只读核对无冲突。"
+              },
+              {
+                "criterion": "AC2 OMP 同进程无新增 IPC/逐事件读盘、健康空闲无新增固定轮询、子侧无重复根 UI/查询（外部效果计数拥有 P57 的 P51 项）",
+                "evidence": "真实宿主 3 例：同进程无 createServer、健康空闲 3s 窗口 0 效果、子代理在侧 arrivals 仍只有一次 balance 根预取、frames 10/18；效果数与 §5/§10 逐条相同。记录器灵敏度与失效保护由第 3 例 + 本轮两条直探证实（不指名 dump 则完全不动）。"
+              },
+              {
+                "criterion": "AC3 先完成全部可执行自动检查与材料准备，列可归属差异、原因与未覆盖项；不以绿色测试代替复杂度判断",
+                "evidence": "证据 §3–§6 给差异与归因（provider-balance/provider-refresh 未改、request-accounting roundEnded 的 sub announce()、SubagentRuntimeDelivery 移除）、噪声列口径与未覆盖项；对照入口不设阈值、不因差异失败；§11 追加本轮复核、复杂度逐族表与 flake 记录。"
+              },
+              {
+                "criterion": "AC4/AC5 人类验收（P51 效率/复杂度是否可接受；P52/P53 范围外）",
+                "evidence": "未做、不计为通过：Agent 无该判断权限。材料齐备（22-efficiency-after.json、对照报告、§4/§11 复杂度表、§5/§11 外部效果计数）。票内勾选口径：含人类确认的项保持未勾选，状态保持 implemented。"
+              }
+            ],
+            "unexpected_failure_investigated": {
+              "finding": "tests/model-cost 第 1 次运行中 session-recovery.test.ts 的 P46 用例「a record another writer holds is kept, …」5000.96ms 超时，随后 savedDocument 助手抛 no consumption document the case expects was published at …/model-cost-recovery-2uO2tD/consumption.json（session-recovery.test.ts:238）。",
+              "mechanism": "该助手按 Date.now()+5000 轮询磁盘文档，用例本身即跑在 bun 的 5000ms 单例上限内，且需数次 mkdir+rename 锁阶段发布；win32 上满载时可越界。同签名已在 01（P16/P18 20s 保存期限）、06（storage-processes 撞 5000ms 上限）、21（同一 savedDocument 帮助器）记录为负载敏感的实时期限 flake。",
+              "reproduction_attempts": "单独重跑该文件 13 pass（313ms）；整分区重跑 463 pass / 0 fail（7.49s）；20 个满载进程压在 20 核机上重跑整分区仍 463 pass / 0 fail（33.20s，墙钟慢 4.4 倍未触发期限）。故纯 CPU 负载不是充分解释，最可能是紧接 219s 真实宿主 dock 分区之后机器尚未静定。",
+              "attribution": "不归本票：本票无产品代码改动、未改 tests/model-cost；失败路径（本地存储锁与跨进程发布）不经本票任何文件；同一棵树上 §10 的同一分区为 463 pass / 0 fail。仅记为环境性 flake，不据此宣称套件绝对稳定。"
+            },
+            "unverified_or_limits": [
+              "P51 的人类验收未做（本票不标为通过）；P52（真实终端可读性）、P53（真实账户侧核对）不在本票范围。",
+              "并发序列 draws +2 与主子例 frames 33→18 仍只归因到机制层（每子代理 Round 结束 announce() / 显示通知次数），未逐渲染定位；两者只涉前端渲染次数，无请求/落盘/IPC 差异。",
+              "对照入口仍无自动化测试覆盖（产品面外的证据工具，仓库也无 scripts/ 测试约定）；其正确性证据是「入口输出 vs 独立计数」与「重生成报告 vs 已提交报告逐字节相同」。",
+              "外部效果计数只覆盖 OMP dock 宿主进程；pi 侧本机接入（管道）未注入同一记录器，由 P14/P16/P42/P56 分区与真实 pi 冒烟覆盖。",
+              "S1 不覆盖宿主原生半边（OMP adapter 原生事实映射、宿主会话 JSONL/日志、真实终端绘制）；无真实 provider 账户、无付费调用（provider 指向本机 capture endpoint）。",
+              "证据范围仅 win32/x64、bun 1.4.2、隔离 OMP 18.5.0（未打 host-patches 补丁）、无 provider 凭据。"
+            ],
+            "worktree_handoff": {
+              "branch": "hyper/model-cost-pi-migration/22-efficiency-acceptance-a73e6b-411dc288ea83",
+              "head": "570c7ee65b3fb8f7d621b48e0b044cf2502bd800",
+              "base_merge_base_with_pi-adapter": "39fdc3d",
+              "pi_adapter_tip_now": "190e1b5（23 合入后的 b57f5a5；本票不自行合入）",
+              "product_source_drift": "无：`git diff --name-only 39fdc3d pi-adapter -- framework extensions entrypoints` 仅 framework/docs/harness-support.md（文档）；scripts/efficiency-baseline.ts 在 39fdc3d 与 pi-adapter 之间 SAME；package.json 只多 23 的一行 accept:model-cost-tui。",
+              "merge_feasibility_readonly": "`git merge-tree --write-tree --name-only HEAD pi-adapter` → exit 0、tree 8ed8e09eca1f684d296f21fc4c96ddf12eaed0c2、无冲突列表；未改任何 ref 或工作树（日志 evidence/logs/22-takeover-e-merge-tree.txt）。",
+              "clean_state_warning": "`git status` 仍显示 ` M bun.lock` 与两份 `host-patches/*/patch.diff`：三者带过滤器 hash 与 HEAD blob 逐一相等，是 core.autocrlf=true 的检出 stat 现象，**不要 checkout/restore**（dock 补丁/基线用例需要这份 LF 字节）。除此之外工作树无未提交内容、0 未跟踪文件。",
+              "not_done_by_design": "未操作/未合入集成分支、未改其他票据或工作流报告、未 reset 既有工作、未调用 retro、未派发其他票据。"
+            }
+          },
+          "status": "success"
+        }
+      ]
+    },
+    "outputMeta": {
+      "lineCount": 120,
+      "charCount": 8198
+    }
+  },
+  "agent": "tdd",
+  "agent_id": "22-efficiency-acceptancemd-a05e49e3-77de-440b-81",
+  "tdd_error": "票据工作树不干净（hyper/model-cost-pi-migration/22-efficiency-acceptance-a73e6b-411dc288ea83）：\n M bun.lock\n M host-patches/omp-18.5.0-codex-response-boundary/patch.diff\n M host-patches/omp-18.5.0-viewed-session/patch.diff",
+  "session_id": "01a144af-a702-77f9-8047-adb699834766",
+  "session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-16T05-05-31-422Z_01a14319-df1e-77c0-a324-421dfc10d49e\\22-efficiency-acceptancemd-a05e49e3-77de-440b-81.jsonl",
+  "execution_cwd": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-toLQo0",
+  "retro_document": "E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\model-cost-pi-migration\\retro\\22-efficiency-acceptance.md\\a2979ca9-2e9b-4225-973d-4c5dfaf9b545.md",
+  "retro_finished_at": "2026-10-16T12:40:13.140Z"
+}

@@ -1,0 +1,158 @@
+{
+  "feature": "model-cost-pi-migration",
+  "ticket": "13-deepseek-balance.md",
+  "run_id": "4c544797-4760-413c-9f68-230b37a914b2",
+  "parent_session_id": "01a14319-df1e-77c0-a324-421dfc10d49e",
+  "parent_session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-16T05-05-31-422Z_01a14319-df1e-77c0-a324-421dfc10d49e.jsonl",
+  "workspace": "E:\\Developer\\myhub\\my-agent-toolkit",
+  "tool_call_id": "c26ccb6b-c109-45cd-828f-59fa8a6c7595",
+  "started_at": "2026-10-16T06:15:41.983Z",
+  "tdd_status": "completed",
+  "retro_status": "completed",
+  "tdd_finished_at": "2026-10-16T06:31:24.616Z",
+  "tdd_result": {
+    "index": 0,
+    "id": "13-deepseek-balancemd-c26ccb6b-c109-45cd-828f-59",
+    "agent": "tdd",
+    "agentSource": "user",
+    "task": "Complete assignment thoroughly:\n\n在当前 worktree 实现唯一票据：C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-kSea3G\\.scratch\\model-cost-pi-migration\\implementation\\13-deepseek-balance.md。\n集成分支：pi-adapter\nspec：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\model-cost-pi-migration\\spec.md\ncontract：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\model-cost-pi-migration\\contract.md\n这是本票首次执行。\n遵守 tdd skill，自行负责本票验收并报告实际验证与未完成事项。完成后尽快提交本票实现，交出 worktree，由独立集成子代理接管。不要修改其他票据或工作流报告，不操作集成分支工作区，不自行合入集成分支，不调用 retro、不派发其他票据。不得 reset 丢弃既有工作。",
+    "assignment": "在当前 worktree 实现唯一票据：C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-kSea3G\\.scratch\\model-cost-pi-migration\\implementation\\13-deepseek-balance.md。\n集成分支：pi-adapter\nspec：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\model-cost-pi-migration\\spec.md\ncontract：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\model-cost-pi-migration\\contract.md\n这是本票首次执行。\n遵守 tdd skill，自行负责本票验收并报告实际验证与未完成事项。完成后尽快提交本票实现，交出 worktree，由独立集成子代理接管。不要修改其他票据或工作流报告，不操作集成分支工作区，不自行合入集成分支，不调用 retro、不派发其他票据。不得 reset 丢弃既有工作。",
+    "description": "Implement DeepSeek balance ticket in worktree",
+    "lastIntent": "Sanity-checking the smoke structure",
+    "exitCode": 0,
+    "output": "{\n  \"ticket\": \"13-deepseek-balance (P29, S2)\",\n  \"status\": \"implemented and verified; committed on the ticket branch; worktree handed over\",\n  \"branch\": \"hyper/model-cost-pi-migration/13-deepseek-balance-98a6a9-411dc288ea83\",\n  \"commits\": [\n    \"bd44d2e Prove the DeepSeek balance query's pi wiring, TTL and failure retention (scripts/pi-model-cost-smoke.ts, tests/harness-dock/capture-server.ts, tests/model-cost/provider-balance.test.ts)\",\n    \"8529e4a Record the DeepSeek balance run's evidence and its verification limits (.scratch/model-cost-pi-migration/evidence/13-deepseek-balance.md)\"\n  ],\n  \"deliverable\": {\n    \"production_code\": \"none changed — the pi-side provider-access wiring delivered by ticket 02 (extensions/model-cost/harnesses/pi.ts passing context.providerAccess, framework/adapters/pi.ts harnessProviderAccess) already satisfies P29; this ticket delivered the coverage that proves it, plus the one fixture capability the failure-retention case needed\",\n    \"new_deterministic_coverage\": \"tests/model-cost/provider-balance.test.ts: new case — a credential the host replaced is what the next query sends and the first answer is not cached (the access is asked once per operation); this file's stale balance promise label (P38) corrected to the approved contract's P29\",\n    \"new_real_host_coverage\": \"scripts/pi-model-cost-smoke.ts: new phaseBalance — 6 real pi 1.2.0 runs, 19 checks (wiring/credential, success + shipped 30s TTL, expired reading + no polling, refused refresh keeps the reading, no available credential, one query joined by later triggers, credential replaced between two processes of one storage root)\",\n    \"new_fixture_capability\": \"tests/harness-dock/capture-server.ts: optional balance.respond(call) for per-call scripted balance answers; behavior is byte-identical when it is not supplied\"\n  },\n  \"criteria\": [\n    {\n      \"criterion\": \"可控 endpoint 覆盖成功、过期、并发、换认证、失败、无可用认证；每次操作固定当次资料\",\n      \"evidence\": \"tests/model-cost/provider-balance.test.ts 13 pass — success/TTL boundary/configured TTL/no-timer/concurrency merge/failure retention/no-access/no-CNY/address rules (existing, P29) plus the new credential-replacement case asserting one access.resolve per operation and 'Bearer key-two' on the query that follows the replacement\"\n    },\n    {\n      \"criterion\": \"不持久化认证或新增账号分区\",\n      \"evidence\": \"real host: the synthetic sentinel authenticates only the balance request and appears in none of stderr / session JSONL / serialized model requests / widget frames / every file of the storage root; the saved document's top-level keys are exactly harnesses, holiday, periodId, schemaVersion, start (no account/credential partition); the first process's storage root holds nothing of the key it used and the next process authenticates with its own configuration's key\"\n    },\n    {\n      \"criterion\": \"实际宿主证明 provider access 接线和初始化/请求结算触发\",\n      \"evidence\": \"GET /user/balance with the /v1-stripped host address and Bearer <host-resolved credential>; arrivals ['balance','model','model'] (prefetch strictly before the first model request); with balanceTtlMs=1 a settled request is what refreshes (arrivals ['balance','model','balance']), a 2.5s idle window adds no call, and the next settled request asks again (3 calls)\"\n    },\n    {\n      \"criterion\": \"认证不可用时不发送请求，也不伪称查询失败\",\n      \"evidence\": \"real host with the session on another provider and deepseek declared without a credential (DEEPSEEK_API_KEY cleared): the extension still draws, the model exchange completes, the endpoint received no balance call, no widget rendering carries any Balance line, stderr carries no 余额 failure text and there is no operator notice\"\n    },\n    {\n      \"criterion\": \"不新增固定轮询；失败保留原读数及其时间，成功 TTL 规则不被改写；余额缺失不伪造零\",\n      \"evidence\": \"S2: TTL expiry alone queries nothing (no timer), a configured TTL drives the boundary, a failed query leaves reading+obtainedAt untouched with no cooldown; real host: the shipped 30s TTL is honoured (an exchange inside it asks nothing), an idle run with an expired reading polls nothing, a refused refresh keeps '💰 Balance: ¥110.00' with 'Balance: unavailable' and 'Balance: ¥0' never appearing anywhere, and a query with no reading is shown as 'Balance: unavailable (unreachable)'\"\n    },\n    {\n      \"criterion\": \"真实账户核对由 24 负责\",\n      \"evidence\": \"not attempted here (no paid call, no credential); endpoint answers are the fixture's own documents — recorded as P53/24's\"\n    }\n  ],\n  \"verification_run\": [\n    {\n      \"command\": \"bun run typecheck\",\n      \"result\": \"exit 0\"\n    },\n    {\n      \"command\": \"bun test tests/model-cost\",\n      \"result\": \"354 pass / 0 fail, 27 files (owning partition)\"\n    },\n    {\n      \"command\": \"bun test tests/model-cost/provider-balance.test.ts\",\n      \"result\": \"13 pass / 0 fail\"\n    },\n    {\n      \"command\": \"fault injection in provider-balance.ts (reuse the first resolved facts)\",\n      \"result\": \"10 pass / 3 fail, the new case failing with 'expected Bearer key-two, received Bearer key-one'; injected code reverted, file byte-identical to HEAD, 13 pass again\"\n    },\n    {\n      \"command\": \"bun scripts/pi-model-cost-smoke.ts\",\n      \"result\": \"exit 0 — pi 1.2.0, 44 checks passed / none failed, 13 isolated runs, 27.2s (was 25 checks before this ticket)\"\n    },\n    {\n      \"command\": \"bun test tests/harness-dock/model-cost-balance.test.ts --timeout 900000\",\n      \"result\": \"6 pass / 0 fail (OMP real-host balance partition, direct consumer of the changed capture-server.ts)\"\n    },\n    {\n      \"command\": \"bun test tests/harness-dock --timeout 900000\",\n      \"result\": \"45 pass / 12 fail — all 12 are this machine's core.autocrlf=true checkout, not regressions (see below)\"\n    }\n  ],\n  \"integration_notes\": [\n    \"The 12 dock-partition failures are environmental and pre-existing on this Windows worktree: 10 are 'host-patches/*/patch.diff touches no file' (git ls-files --eol reports i/lf w/crlf for those files and patchTouchedFiles splits on \\\\n, so CRLF lines never match — verified by running the parser directly: both patch files yield []) and 2 are 'bun.lock: recorded 9e9f4833… but found 7f5c82e6…' (the record holds the LF blob hash while the worktree copy is CRLF: git show HEAD:bun.lock | sha256sum = 9e9f4833…). A/B proof: with this ticket's three files stashed, baseline.test.ts / viewed-session.test.ts / model-cost-modes.test.ts fail with the same signatures (5 pass / 3 fail); the stash was popped and the tree is clean. On an LF checkout these should pass, so the integrator's `bun run test` on Linux/CI is expected to be unaffected.\",\n    \"No production source changed by this ticket, so the framework and OMP paths carry no new risk from it; the only shared file touched is the dock's capture-server.ts (additive optional callback), whose OMP consumer test passes in both states.\"\n  ],\n  \"unresolved_or_limited\": [\n    \"Real-account confirmation of the balance/protocol facts: P53 (ticket 24) — no paid call, no real credential used.\",\n    \"The pi host cannot vary a provider's credential inside one running process (pi resolves provider config at startup), so 'a replaced credential is used by the next query' is proven at S2 with a substituted provider access (plus the fault-injection contrast); the real host proves the credential/address of the moment and the cross-process replacement instead.\",\n    \"The real host's TTL cases run on the host's own clock (a configured 1ms TTL, plus a 2.5s idle window); exact boundary arithmetic stays in the S2 suite with a controlled clock. A 30s default-TTL long wait was not run on the real host.\",\n    \"pi adapter hermetic (non-real-host) unit tests remain unwritten — ticket 02's recorded gap, unchanged by this ticket.\",\n    \"The new real-host checks were not fault-injected (only the new S2 case was); their discriminating power comes from count/order/absence assertions.\",\n    \"Not run: tests/framework partition and the repository-wide `bun run test` (no framework/OMP production change; whole-repo regression belongs to final integration).\",\n    \"Scope: Windows x64 + pi 1.2.0 only; POSIX, other versions, other providers and other user environments are not inferred.\",\n    \"No install, switch, account switching, data cleanup or credential rotation performed; no retro called, no other ticket dispatched, no integration-branch worktree touched.\"\n  ]\n}",
+    "stderr": "",
+    "truncated": false,
+    "durationMs": 942521,
+    "tokens": 248960,
+    "requests": 117,
+    "contextTokens": 227737,
+    "contextWindow": 1000000,
+    "modelOverride": [
+      "deepseek/deepseek-flash:high"
+    ],
+    "resolvedModel": "deepseek/deepseek-flash:high",
+    "resolvedModelIdentity": "deepseek/deepseek-flash",
+    "resolvedThinkingLevel": "high",
+    "aborted": false,
+    "usage": {
+      "input": 140335,
+      "output": 108625,
+      "cacheRead": 16398208,
+      "cacheWrite": 0,
+      "totalTokens": 16647168,
+      "reasoningTokens": 69115,
+      "cost": {
+        "input": 0.04210049999999999,
+        "output": 0.13035,
+        "cacheRead": 0.09838924799999998,
+        "cacheWrite": 0,
+        "total": 0.270839748
+      }
+    },
+    "outputPath": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-16T05-05-31-422Z_01a14319-df1e-77c0-a324-421dfc10d49e\\13-deepseek-balancemd-c26ccb6b-c109-45cd-828f-59.md",
+    "extractedToolData": {
+      "yield": [
+        {
+          "data": {
+            "ticket": "13-deepseek-balance (P29, S2)",
+            "status": "implemented and verified; committed on the ticket branch; worktree handed over",
+            "branch": "hyper/model-cost-pi-migration/13-deepseek-balance-98a6a9-411dc288ea83",
+            "commits": [
+              "bd44d2e Prove the DeepSeek balance query's pi wiring, TTL and failure retention (scripts/pi-model-cost-smoke.ts, tests/harness-dock/capture-server.ts, tests/model-cost/provider-balance.test.ts)",
+              "8529e4a Record the DeepSeek balance run's evidence and its verification limits (.scratch/model-cost-pi-migration/evidence/13-deepseek-balance.md)"
+            ],
+            "deliverable": {
+              "production_code": "none changed — the pi-side provider-access wiring delivered by ticket 02 (extensions/model-cost/harnesses/pi.ts passing context.providerAccess, framework/adapters/pi.ts harnessProviderAccess) already satisfies P29; this ticket delivered the coverage that proves it, plus the one fixture capability the failure-retention case needed",
+              "new_deterministic_coverage": "tests/model-cost/provider-balance.test.ts: new case — a credential the host replaced is what the next query sends and the first answer is not cached (the access is asked once per operation); this file's stale balance promise label (P38) corrected to the approved contract's P29",
+              "new_real_host_coverage": "scripts/pi-model-cost-smoke.ts: new phaseBalance — 6 real pi 1.2.0 runs, 19 checks (wiring/credential, success + shipped 30s TTL, expired reading + no polling, refused refresh keeps the reading, no available credential, one query joined by later triggers, credential replaced between two processes of one storage root)",
+              "new_fixture_capability": "tests/harness-dock/capture-server.ts: optional balance.respond(call) for per-call scripted balance answers; behavior is byte-identical when it is not supplied"
+            },
+            "criteria": [
+              {
+                "criterion": "可控 endpoint 覆盖成功、过期、并发、换认证、失败、无可用认证；每次操作固定当次资料",
+                "evidence": "tests/model-cost/provider-balance.test.ts 13 pass — success/TTL boundary/configured TTL/no-timer/concurrency merge/failure retention/no-access/no-CNY/address rules (existing, P29) plus the new credential-replacement case asserting one access.resolve per operation and 'Bearer key-two' on the query that follows the replacement"
+              },
+              {
+                "criterion": "不持久化认证或新增账号分区",
+                "evidence": "real host: the synthetic sentinel authenticates only the balance request and appears in none of stderr / session JSONL / serialized model requests / widget frames / every file of the storage root; the saved document's top-level keys are exactly harnesses, holiday, periodId, schemaVersion, start (no account/credential partition); the first process's storage root holds nothing of the key it used and the next process authenticates with its own configuration's key"
+              },
+              {
+                "criterion": "实际宿主证明 provider access 接线和初始化/请求结算触发",
+                "evidence": "GET /user/balance with the /v1-stripped host address and Bearer <host-resolved credential>; arrivals ['balance','model','model'] (prefetch strictly before the first model request); with balanceTtlMs=1 a settled request is what refreshes (arrivals ['balance','model','balance']), a 2.5s idle window adds no call, and the next settled request asks again (3 calls)"
+              },
+              {
+                "criterion": "认证不可用时不发送请求，也不伪称查询失败",
+                "evidence": "real host with the session on another provider and deepseek declared without a credential (DEEPSEEK_API_KEY cleared): the extension still draws, the model exchange completes, the endpoint received no balance call, no widget rendering carries any Balance line, stderr carries no 余额 failure text and there is no operator notice"
+              },
+              {
+                "criterion": "不新增固定轮询；失败保留原读数及其时间，成功 TTL 规则不被改写；余额缺失不伪造零",
+                "evidence": "S2: TTL expiry alone queries nothing (no timer), a configured TTL drives the boundary, a failed query leaves reading+obtainedAt untouched with no cooldown; real host: the shipped 30s TTL is honoured (an exchange inside it asks nothing), an idle run with an expired reading polls nothing, a refused refresh keeps '💰 Balance: ¥110.00' with 'Balance: unavailable' and 'Balance: ¥0' never appearing anywhere, and a query with no reading is shown as 'Balance: unavailable (unreachable)'"
+              },
+              {
+                "criterion": "真实账户核对由 24 负责",
+                "evidence": "not attempted here (no paid call, no credential); endpoint answers are the fixture's own documents — recorded as P53/24's"
+              }
+            ],
+            "verification_run": [
+              {
+                "command": "bun run typecheck",
+                "result": "exit 0"
+              },
+              {
+                "command": "bun test tests/model-cost",
+                "result": "354 pass / 0 fail, 27 files (owning partition)"
+              },
+              {
+                "command": "bun test tests/model-cost/provider-balance.test.ts",
+                "result": "13 pass / 0 fail"
+              },
+              {
+                "command": "fault injection in provider-balance.ts (reuse the first resolved facts)",
+                "result": "10 pass / 3 fail, the new case failing with 'expected Bearer key-two, received Bearer key-one'; injected code reverted, file byte-identical to HEAD, 13 pass again"
+              },
+              {
+                "command": "bun scripts/pi-model-cost-smoke.ts",
+                "result": "exit 0 — pi 1.2.0, 44 checks passed / none failed, 13 isolated runs, 27.2s (was 25 checks before this ticket)"
+              },
+              {
+                "command": "bun test tests/harness-dock/model-cost-balance.test.ts --timeout 900000",
+                "result": "6 pass / 0 fail (OMP real-host balance partition, direct consumer of the changed capture-server.ts)"
+              },
+              {
+                "command": "bun test tests/harness-dock --timeout 900000",
+                "result": "45 pass / 12 fail — all 12 are this machine's core.autocrlf=true checkout, not regressions (see below)"
+              }
+            ],
+            "integration_notes": [
+              "The 12 dock-partition failures are environmental and pre-existing on this Windows worktree: 10 are 'host-patches/*/patch.diff touches no file' (git ls-files --eol reports i/lf w/crlf for those files and patchTouchedFiles splits on \\n, so CRLF lines never match — verified by running the parser directly: both patch files yield []) and 2 are 'bun.lock: recorded 9e9f4833… but found 7f5c82e6…' (the record holds the LF blob hash while the worktree copy is CRLF: git show HEAD:bun.lock | sha256sum = 9e9f4833…). A/B proof: with this ticket's three files stashed, baseline.test.ts / viewed-session.test.ts / model-cost-modes.test.ts fail with the same signatures (5 pass / 3 fail); the stash was popped and the tree is clean. On an LF checkout these should pass, so the integrator's `bun run test` on Linux/CI is expected to be unaffected.",
+              "No production source changed by this ticket, so the framework and OMP paths carry no new risk from it; the only shared file touched is the dock's capture-server.ts (additive optional callback), whose OMP consumer test passes in both states."
+            ],
+            "unresolved_or_limited": [
+              "Real-account confirmation of the balance/protocol facts: P53 (ticket 24) — no paid call, no real credential used.",
+              "The pi host cannot vary a provider's credential inside one running process (pi resolves provider config at startup), so 'a replaced credential is used by the next query' is proven at S2 with a substituted provider access (plus the fault-injection contrast); the real host proves the credential/address of the moment and the cross-process replacement instead.",
+              "The real host's TTL cases run on the host's own clock (a configured 1ms TTL, plus a 2.5s idle window); exact boundary arithmetic stays in the S2 suite with a controlled clock. A 30s default-TTL long wait was not run on the real host.",
+              "pi adapter hermetic (non-real-host) unit tests remain unwritten — ticket 02's recorded gap, unchanged by this ticket.",
+              "The new real-host checks were not fault-injected (only the new S2 case was); their discriminating power comes from count/order/absence assertions.",
+              "Not run: tests/framework partition and the repository-wide `bun run test` (no framework/OMP production change; whole-repo regression belongs to final integration).",
+              "Scope: Windows x64 + pi 1.2.0 only; POSIX, other versions, other providers and other user environments are not inferred.",
+              "No install, switch, account switching, data cleanup or credential rotation performed; no retro called, no other ticket dispatched, no integration-branch worktree touched."
+            ]
+          },
+          "status": "success"
+        }
+      ]
+    },
+    "outputMeta": {
+      "lineCount": 85,
+      "charCount": 8339
+    }
+  },
+  "agent": "tdd",
+  "agent_id": "13-deepseek-balancemd-c26ccb6b-c109-45cd-828f-59",
+  "session_id": "01a1435a-1eac-769d-97bf-fb799d6a3bdd",
+  "session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-16T05-05-31-422Z_01a14319-df1e-77c0-a324-421dfc10d49e\\13-deepseek-balancemd-c26ccb6b-c109-45cd-828f-59.jsonl",
+  "execution_cwd": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-kSea3G",
+  "retro_document": "E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\model-cost-pi-migration\\retro\\13-deepseek-balance.md\\4c544797-4760-413c-9f68-230b37a914b2.md",
+  "retro_finished_at": "2026-10-16T06:32:49.383Z"
+}

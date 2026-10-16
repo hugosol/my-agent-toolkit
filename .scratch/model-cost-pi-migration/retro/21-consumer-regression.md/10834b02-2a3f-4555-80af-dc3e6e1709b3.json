@@ -1,0 +1,179 @@
+{
+  "feature": "model-cost-pi-migration",
+  "ticket": "21-consumer-regression.md",
+  "run_id": "10834b02-2a3f-4555-80af-dc3e6e1709b3",
+  "parent_session_id": "01a14319-df1e-77c0-a324-421dfc10d49e",
+  "parent_session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-16T05-05-31-422Z_01a14319-df1e-77c0-a324-421dfc10d49e.jsonl",
+  "workspace": "E:\\Developer\\myhub\\my-agent-toolkit",
+  "tool_call_id": "a05cd156-f97d-4708-9bd8-737827095c51",
+  "started_at": "2026-10-16T10:53:33.694Z",
+  "tdd_status": "completed",
+  "retro_status": "completed",
+  "tdd_finished_at": "2026-10-16T11:32:21.654Z",
+  "tdd_result": {
+    "index": 0,
+    "id": "21-consumer-regressionmd-a05cd156-f97d-4708-9bd8",
+    "agent": "tdd",
+    "agentSource": "user",
+    "task": "Complete assignment thoroughly:\n\n在当前 worktree 实现唯一票据：C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-SgtXkc\\.scratch\\model-cost-pi-migration\\implementation\\21-consumer-regression.md。\n集成分支：pi-adapter\nspec：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\model-cost-pi-migration\\spec.md\ncontract：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\model-cost-pi-migration\\contract.md\n这是本票首次执行。\n遵守 tdd skill，自行负责本票验收并报告实际验证与未完成事项。完成后尽快提交本票实现，交出 worktree，由独立集成子代理接管。不要修改其他票据或工作流报告，不操作集成分支工作区，不自行合入集成分支，不调用 retro、不派发其他票据。不得 reset 丢弃既有工作。",
+    "assignment": "在当前 worktree 实现唯一票据：C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-SgtXkc\\.scratch\\model-cost-pi-migration\\implementation\\21-consumer-regression.md。\n集成分支：pi-adapter\nspec：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\model-cost-pi-migration\\spec.md\ncontract：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\model-cost-pi-migration\\contract.md\n这是本票首次执行。\n遵守 tdd skill，自行负责本票验收并报告实际验证与未完成事项。完成后尽快提交本票实现，交出 worktree，由独立集成子代理接管。不要修改其他票据或工作流报告，不操作集成分支工作区，不自行合入集成分支，不调用 retro、不派发其他票据。不得 reset 丢弃既有工作。",
+    "description": "Implement consumer regression ticket in worktree",
+    "lastIntent": "Finalizing commit",
+    "exitCode": 0,
+    "output": "{\n  \"ticket\": \"21-consumer-regression (P50)\",\n  \"status\": \"implemented (committed; not merged into pi-adapter)\",\n  \"commit\": \"55290fc on hyper/model-cost-pi-migration/21-consumer-regression-8e5b8d-411dc288ea83 (parent = integration tip 8c86378)\",\n  \"files\": [\n    \"tests/harness-dock/consumer-regression.test.ts (new, 551 lines)\",\n    \".scratch/model-cost-pi-migration/evidence/21-consumer-regression.md (new)\",\n    \".scratch/model-cost-pi-migration/implementation/21-consumer-regression.md (status + criteria checked)\"\n  ],\n  \"behavior_delivered\": \"A first-in-repo cross-consumer / full-assembly regression on the real OMP host: the run-root copy of the deployed discovery root (framework/ + extensions/{connect-bot,codebase-tools,model-cost} + entrypoints/omp, only connect-bot's config.yaml replaced) is loaded in one isolated patched OMP 18.5.0 session, and the shared path is observed from the consumers' side: (1) the one process-wide marker area carries each bound consumer's own line and the third consumer's marker-less /budget neither adds nor clears a line; (2) one consumer's State is not another's (same field name `enabled` in both extensions); (3) a panel-refused activation of one consumer changes nothing of the others and the session keeps serving; (4) an aborted in-flight exchange reaches the armed consumer as the framework's `round_end` while the other consumer's activation survives; (5) a terminal provider failure (session auto-retry turned off via RPC) likewise reaches the consumer as `round_end` and leaves both activations and the next turn intact.\",\n  \"criteria_evidence\": {\n    \"consumer partitions enumerated + executed (State, observation/permission, marker, init/cleanup, cancel/failure termination, OMP + pi host paths)\": \"evidence §2 table maps each partition to shared implementation, consumers and executed suites\",\n    \"final integration typecheck + test + serial real-host dock/smoke; source/fixtures unchanged during runs\": \"bun run typecheck exit 0; bun run test run#1 1198/2, run#2 1200 pass / 0 fail (128 files, 396.8s); dock partition run serially; pi smokes run serially after the suites; no source/fixture edits during any run\",\n    \"commands/exits/failures/source state recorded; prior failures cited only on matching scenario+signature; no pi-pass substituting OMP regression\": \"evidence §5 table + §6; both hosts evidenced separately (OMP dock/codebase-tools/connect-bot vs pi smokes)\",\n    \"clean-cutover review, all affected consumers migrated, old wiring/aliases/shims removed, no re-pinned internal duration or wiring-copy tests\": \"evidence §1/§3: removed admission/baseline modules have zero references tree-wide, entrypoints are 9-line re-exports, extensions consume the framework via the pre-existing convention; new test asserts only consumer-visible surfaces\",\n    \"reuse of feature tickets' promise tests + this ticket's unique cross-consumer regression; P57 cases untouched\": \"no existing test modified; new file is additive\",\n    \"P50 coverage S1/S2/S3\": \"S1 tests/framework 481/481; S2 dock 90/90 + codebase-tools 24/24 + connect-bot 142/142 + new file 3/3 + pi smoke 100/100; S3 carried by reused model-cost storage partitions 463/463 and dock persistence read-backs\"\n  },\n  \"verification_run\": [\n    {\n      \"command\": \"bun run typecheck\",\n      \"exit\": 0,\n      \"result\": \"no diagnostics\"\n    },\n    {\n      \"command\": \"bun test tests/harness-dock/consumer-regression.test.ts\",\n      \"exit\": 0,\n      \"result\": \"3 pass / 0 fail, 61 expect(), 38.4s\"\n    },\n    {\n      \"command\": \"bun test tests/framework (OMP_BOT_BINARY set)\",\n      \"exit\": 0,\n      \"result\": \"481 pass / 0 fail, 38 files, 39.4s\"\n    },\n    {\n      \"command\": \"bun test tests/model-cost\",\n      \"exit\": 0,\n      \"result\": \"463 pass / 0 fail, 7.5s\"\n    },\n    {\n      \"command\": \"bun test tests/connect-bot (OMP_BOT_BINARY set)\",\n      \"exit\": 0,\n      \"result\": \"142 pass / 0 fail, 76.7s\"\n    },\n    {\n      \"command\": \"bun test tests/codebase-tools\",\n      \"exit\": 0,\n      \"result\": \"24 pass / 0 fail, 46.6s\"\n    },\n    {\n      \"command\": \"bun test tests/harness-dock\",\n      \"exit\": 0,\n      \"result\": \"90 pass / 0 fail, 25 files, 264.0s\"\n    },\n    {\n      \"command\": \"bun run test #1 (OMP_BOT_BINARY, normalized checkout)\",\n      \"exit\": 1,\n      \"result\": \"1198 pass / 2 fail (1200 tests, 128 files, 391.2s)\"\n    },\n    {\n      \"command\": \"bun run test #2 (same tree/env)\",\n      \"exit\": 0,\n      \"result\": \"1200 pass / 0 fail, 128 files, 396.8s\"\n    },\n    {\n      \"command\": \"bun scripts/pi-model-cost-smoke.ts\",\n      \"exit\": 0,\n      \"result\": \"pi 1.2.0: 100 checks passed / none failed, 28 isolated runs, 54.9s\"\n    },\n    {\n      \"command\": \"bun scripts/pi-codebase-tools-smoke.ts\",\n      \"exit\": 1,\n      \"result\": \"pi 1.2.0: 25 checks passed, then stopped on the pre-existing teardown check\"\n    },\n    {\n      \"command\": \"bun scripts/verify-omp-candidate.ts\",\n      \"exit\": 0,\n      \"result\": \"framework suite 481/0 against isolated 18.5.0; record written (baseCommit 8c86378, working-tree digest recorded)\"\n    }\n  ],\n  \"failures\": [\n    {\n      \"where\": \"bun run test #1: tests/model-cost/pi-period-reset.test.ts:888 (P35 case, another ticket's ownership)\",\n      \"signature\": \"savedDocument exhausted 1000 event-loop yields; file held {\\\"harnesses\\\":{}}\",\n      \"classification\": \"load/timing flake — file re-run alone: 15 pass / 0 fail (273ms); absent in run #2\"\n    },\n    {\n      \"where\": \"bun run test #1: tests/model-cost/session-span.test.ts:675 (P8/P14)\",\n      \"signature\": \"readdirSync(root) expected [\\\"consumption.json\\\",\\\"consumption.json.lock\\\"], got [\\\"consumption.json\\\"]\",\n      \"classification\": \"matches the previously recorded platform-timing observation for this expectation shape; file re-run alone: 20 pass / 0 fail (129ms); absent in run #2\"\n    },\n    {\n      \"where\": \"bun scripts/pi-codebase-tools-smoke.ts: 'the session exits cleanly when its input closes'\",\n      \"signature\": \"child exit 9, stderr 'Assertion failed: !(handle->flags & UV_HANDLE_CLOSING), file src\\\\\\\\win\\\\\\\\async.c, line 94'\",\n      \"classification\": \"pre-existing, scenario+signature+platform match the earlier record; listed explicitly, not marked as passing; the smoke's later phases (new_session/resume/switch) therefore did not run and remain unverified on the pi host\"\n    }\n  ],\n  \"unverified_or_limits\": [\n    \"Human-led checks P51 (efficiency/complexity), P52 (terminal readability), P53 (real account provider side) are outside this ticket and untouched\",\n    \"No paid call, no credential read; pi-host codebase-tools phases after the known teardown failure not executed\",\n    \"Real omp-bot panel evidence comes from connect-bot's own partition (OMP_BOT_BINARY = existing local release build); the new test's panel endpoint is a scripted local endpoint, not evidence about omp-bot\",\n    \"Evidence is win32/x64, bun 1.4.2, isolated OMP 18.5.0 + two local patches, pi 1.2.0 only — no POSIX/other-version/cross-user claims\",\n    \"Machine precondition for dock/patch assertions: the three CRLF-normalized files (bun.lock + two patch.diff) were restored to their committed LF blob bytes; they are content-identical to HEAD and were left normalized\"\n  ],\n  \"handoff_notes\": \"Worktree clean at 55290fc; nothing merged, no other ticket or workflow report touched, no reset. Integration agent should rebase/merge this branch and re-run bun run typecheck + bun run test on the merged tree; logs for every run above are under .cache/cr-logs/ (gitignored).\"\n}",
+    "stderr": "",
+    "truncated": false,
+    "durationMs": 2327850,
+    "tokens": 270616,
+    "requests": 151,
+    "contextTokens": 250101,
+    "contextWindow": 1000000,
+    "modelOverride": [
+      "deepseek/deepseek-flash:high"
+    ],
+    "resolvedModel": "deepseek/deepseek-flash:high",
+    "resolvedModelIdentity": "deepseek/deepseek-flash",
+    "resolvedThinkingLevel": "high",
+    "aborted": false,
+    "usage": {
+      "input": 154531,
+      "output": 116085,
+      "cacheRead": 22562432,
+      "cacheWrite": 0,
+      "totalTokens": 22833048,
+      "reasoningTokens": 68661,
+      "cost": {
+        "input": 0.02317965,
+        "output": 0.069651,
+        "cacheRead": 0.06768729600000001,
+        "cacheWrite": 0,
+        "total": 0.16051794600000002
+      }
+    },
+    "outputPath": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-16T05-05-31-422Z_01a14319-df1e-77c0-a324-421dfc10d49e\\21-consumer-regressionmd-a05cd156-f97d-4708-9bd8.md",
+    "extractedToolData": {
+      "yield": [
+        {
+          "data": {
+            "ticket": "21-consumer-regression (P50)",
+            "status": "implemented (committed; not merged into pi-adapter)",
+            "commit": "55290fc on hyper/model-cost-pi-migration/21-consumer-regression-8e5b8d-411dc288ea83 (parent = integration tip 8c86378)",
+            "files": [
+              "tests/harness-dock/consumer-regression.test.ts (new, 551 lines)",
+              ".scratch/model-cost-pi-migration/evidence/21-consumer-regression.md (new)",
+              ".scratch/model-cost-pi-migration/implementation/21-consumer-regression.md (status + criteria checked)"
+            ],
+            "behavior_delivered": "A first-in-repo cross-consumer / full-assembly regression on the real OMP host: the run-root copy of the deployed discovery root (framework/ + extensions/{connect-bot,codebase-tools,model-cost} + entrypoints/omp, only connect-bot's config.yaml replaced) is loaded in one isolated patched OMP 18.5.0 session, and the shared path is observed from the consumers' side: (1) the one process-wide marker area carries each bound consumer's own line and the third consumer's marker-less /budget neither adds nor clears a line; (2) one consumer's State is not another's (same field name `enabled` in both extensions); (3) a panel-refused activation of one consumer changes nothing of the others and the session keeps serving; (4) an aborted in-flight exchange reaches the armed consumer as the framework's `round_end` while the other consumer's activation survives; (5) a terminal provider failure (session auto-retry turned off via RPC) likewise reaches the consumer as `round_end` and leaves both activations and the next turn intact.",
+            "criteria_evidence": {
+              "consumer partitions enumerated + executed (State, observation/permission, marker, init/cleanup, cancel/failure termination, OMP + pi host paths)": "evidence §2 table maps each partition to shared implementation, consumers and executed suites",
+              "final integration typecheck + test + serial real-host dock/smoke; source/fixtures unchanged during runs": "bun run typecheck exit 0; bun run test run#1 1198/2, run#2 1200 pass / 0 fail (128 files, 396.8s); dock partition run serially; pi smokes run serially after the suites; no source/fixture edits during any run",
+              "commands/exits/failures/source state recorded; prior failures cited only on matching scenario+signature; no pi-pass substituting OMP regression": "evidence §5 table + §6; both hosts evidenced separately (OMP dock/codebase-tools/connect-bot vs pi smokes)",
+              "clean-cutover review, all affected consumers migrated, old wiring/aliases/shims removed, no re-pinned internal duration or wiring-copy tests": "evidence §1/§3: removed admission/baseline modules have zero references tree-wide, entrypoints are 9-line re-exports, extensions consume the framework via the pre-existing convention; new test asserts only consumer-visible surfaces",
+              "reuse of feature tickets' promise tests + this ticket's unique cross-consumer regression; P57 cases untouched": "no existing test modified; new file is additive",
+              "P50 coverage S1/S2/S3": "S1 tests/framework 481/481; S2 dock 90/90 + codebase-tools 24/24 + connect-bot 142/142 + new file 3/3 + pi smoke 100/100; S3 carried by reused model-cost storage partitions 463/463 and dock persistence read-backs"
+            },
+            "verification_run": [
+              {
+                "command": "bun run typecheck",
+                "exit": 0,
+                "result": "no diagnostics"
+              },
+              {
+                "command": "bun test tests/harness-dock/consumer-regression.test.ts",
+                "exit": 0,
+                "result": "3 pass / 0 fail, 61 expect(), 38.4s"
+              },
+              {
+                "command": "bun test tests/framework (OMP_BOT_BINARY set)",
+                "exit": 0,
+                "result": "481 pass / 0 fail, 38 files, 39.4s"
+              },
+              {
+                "command": "bun test tests/model-cost",
+                "exit": 0,
+                "result": "463 pass / 0 fail, 7.5s"
+              },
+              {
+                "command": "bun test tests/connect-bot (OMP_BOT_BINARY set)",
+                "exit": 0,
+                "result": "142 pass / 0 fail, 76.7s"
+              },
+              {
+                "command": "bun test tests/codebase-tools",
+                "exit": 0,
+                "result": "24 pass / 0 fail, 46.6s"
+              },
+              {
+                "command": "bun test tests/harness-dock",
+                "exit": 0,
+                "result": "90 pass / 0 fail, 25 files, 264.0s"
+              },
+              {
+                "command": "bun run test #1 (OMP_BOT_BINARY, normalized checkout)",
+                "exit": 1,
+                "result": "1198 pass / 2 fail (1200 tests, 128 files, 391.2s)"
+              },
+              {
+                "command": "bun run test #2 (same tree/env)",
+                "exit": 0,
+                "result": "1200 pass / 0 fail, 128 files, 396.8s"
+              },
+              {
+                "command": "bun scripts/pi-model-cost-smoke.ts",
+                "exit": 0,
+                "result": "pi 1.2.0: 100 checks passed / none failed, 28 isolated runs, 54.9s"
+              },
+              {
+                "command": "bun scripts/pi-codebase-tools-smoke.ts",
+                "exit": 1,
+                "result": "pi 1.2.0: 25 checks passed, then stopped on the pre-existing teardown check"
+              },
+              {
+                "command": "bun scripts/verify-omp-candidate.ts",
+                "exit": 0,
+                "result": "framework suite 481/0 against isolated 18.5.0; record written (baseCommit 8c86378, working-tree digest recorded)"
+              }
+            ],
+            "failures": [
+              {
+                "where": "bun run test #1: tests/model-cost/pi-period-reset.test.ts:888 (P35 case, another ticket's ownership)",
+                "signature": "savedDocument exhausted 1000 event-loop yields; file held {\"harnesses\":{}}",
+                "classification": "load/timing flake — file re-run alone: 15 pass / 0 fail (273ms); absent in run #2"
+              },
+              {
+                "where": "bun run test #1: tests/model-cost/session-span.test.ts:675 (P8/P14)",
+                "signature": "readdirSync(root) expected [\"consumption.json\",\"consumption.json.lock\"], got [\"consumption.json\"]",
+                "classification": "matches the previously recorded platform-timing observation for this expectation shape; file re-run alone: 20 pass / 0 fail (129ms); absent in run #2"
+              },
+              {
+                "where": "bun scripts/pi-codebase-tools-smoke.ts: 'the session exits cleanly when its input closes'",
+                "signature": "child exit 9, stderr 'Assertion failed: !(handle->flags & UV_HANDLE_CLOSING), file src\\\\win\\\\async.c, line 94'",
+                "classification": "pre-existing, scenario+signature+platform match the earlier record; listed explicitly, not marked as passing; the smoke's later phases (new_session/resume/switch) therefore did not run and remain unverified on the pi host"
+              }
+            ],
+            "unverified_or_limits": [
+              "Human-led checks P51 (efficiency/complexity), P52 (terminal readability), P53 (real account provider side) are outside this ticket and untouched",
+              "No paid call, no credential read; pi-host codebase-tools phases after the known teardown failure not executed",
+              "Real omp-bot panel evidence comes from connect-bot's own partition (OMP_BOT_BINARY = existing local release build); the new test's panel endpoint is a scripted local endpoint, not evidence about omp-bot",
+              "Evidence is win32/x64, bun 1.4.2, isolated OMP 18.5.0 + two local patches, pi 1.2.0 only — no POSIX/other-version/cross-user claims",
+              "Machine precondition for dock/patch assertions: the three CRLF-normalized files (bun.lock + two patch.diff) were restored to their committed LF blob bytes; they are content-identical to HEAD and were left normalized"
+            ],
+            "handoff_notes": "Worktree clean at 55290fc; nothing merged, no other ticket or workflow report touched, no reset. Integration agent should rebase/merge this branch and re-run bun run typecheck + bun run test on the merged tree; logs for every run above are under .cache/cr-logs/ (gitignored)."
+          },
+          "status": "success"
+        }
+      ]
+    },
+    "outputMeta": {
+      "lineCount": 106,
+      "charCount": 7505
+    }
+  },
+  "agent": "tdd",
+  "agent_id": "21-consumer-regressionmd-a05cd156-f97d-4708-9bd8",
+  "session_id": "01a14458-8298-77ed-8093-fbbd52d5a892",
+  "session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-16T05-05-31-422Z_01a14319-df1e-77c0-a324-421dfc10d49e\\21-consumer-regressionmd-a05cd156-f97d-4708-9bd8.jsonl",
+  "execution_cwd": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-SgtXkc",
+  "retro_document": "E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\model-cost-pi-migration\\retro\\21-consumer-regression.md\\10834b02-2a3f-4555-80af-dc3e6e1709b3.md",
+  "retro_finished_at": "2026-10-16T11:33:41.900Z"
+}

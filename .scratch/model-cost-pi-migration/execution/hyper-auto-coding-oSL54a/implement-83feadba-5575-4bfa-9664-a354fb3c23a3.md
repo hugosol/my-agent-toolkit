@@ -1,0 +1,66 @@
+# implement
+
+```json
+{
+  "role": "implement",
+  "agent": "tdd",
+  "agent_id": "22-efficiency-acceptancemd-253f8c7f-a976-4846-84",
+  "head": "0d92213437f1fabf07aaa983414fd212f548ceea",
+  "exitCode": 0,
+  "aborted": false,
+  "truncated": false
+}
+```
+
+{
+  "ticket": "22-efficiency-acceptance.md (P51, P57 分区内 P51 项)",
+  "head_before": "78cfbf5",
+  "head_after": "0d92213",
+  "commit_scope": "仅 .scratch/ 下本票证据（24 个新 logs/22-takeover-l-* + §18 + 票状态/勾选口径）；未碰其他票据/工作流报告、未动集成分支、未 reset、未改产品代码",
+  "product_diff": "git diff --name-only 39fdc3d HEAD -- framework extensions entrypoints 为空；request-accounting.ts sha256 a06f1313… 与 §13/§14 记录的原件相同",
+  "delivered": [
+    "关闭 §6/§13–§17 每轮列下的最后一条技术性缺口：并发序列 draws 30→33 的通知→帧配对（临时探针只包住前端那一个订阅 + 每次交帧记到当时的交付上）",
+    "实测：交付态 33 帧/32 条通知；停用 sub 分支 announce() 后 30 帧/29 条通知；全表唯一变化是三个子会话 round_end 交付各少 1 条通知、少 1 帧，其余每个交付的帧数与通知数逐项相同（含 1 条通知 ↔ 1 帧，唯一例外是 fire session_start 的直接 render）",
+    "+2 行临时标记证明被标记的通知正是 extensions/model-cost/shared-logic/request-accounting.ts:1133 的 announce()，它画的帧（21/24/27）与前一帧逐字节相同 —— +3 全部是同内容重绘，无文件/网络/请求/记账效果",
+    "探针（logs/22-takeover-l-notify-frame-probe.diff，98 插入/23 删除）与标记注入（…-subannounce-marker-injection.diff，+2 行）都跑完即删、按 sha256 还原；scripts/ 下无 tmp 文件"
+  ],
+  "criteria_evidence": [
+    {
+      "criterion": "AC1 对照 01 工件采集读取/锁/发布/请求/事件成本及复杂度变化，相同条件可比、不预设百分比/不伪造基线",
+      "evidence": "证据 §3/§4 + §15.2 同一陈述控制实验；本轮第一手：S1 新跑工件 vs 已提交 22-efficiency-after.json 判 none；冻结对照（01 vs 22）重生成报告 sha256 = a486f32712e4314108ef256d0e74a4aefdf7512ffb77e16600c5daab78b1fe72，与已提交 logs/22-efficiency-comparison.txt 逐字节相同；产品面 19287 → 23773 (+4486)"
+    },
+    {
+      "criterion": "AC2 同进程无新增 IPC/逐事件读盘、健康空闲无新增固定轮询、子侧无重复根 UI/查询；用外部效果计数拥有 P57 的 P51 项",
+      "evidence": "证据 §5；本轮第一手真实宿主 efficiency-effects.test.ts 3 pass / 0 fail、21 expect()：整进程效果 2295/2689、存储根 13 次操作（明细逐条相同）、健康空闲窗口 0 效果、无 createServer / 无 my-agent-toolkit-access、网络只有指向本机 capture 端口一次 createConnection、arrivals [balance,model] / [balance,model×3]、frames 10/18"
+    },
+    {
+      "criterion": "AC3 先完成全部可执行自动检查与材料准备，列出可归属差异、原因与未覆盖项；不以绿色测试代替复杂度判断",
+      "evidence": "证据 §3（可归属差异表）/§6（限制与已关闭项，本轮把并发序列一条标为关闭）/§18.4（本轮未覆盖项）；对照入口不因差异失败、无阈值"
+    },
+    {
+      "criterion": "AC4/AC5 人类验收（明显额外开销与复杂度是否可接受）",
+      "evidence": "保持未勾选（票内两处人类项原样未勾）——报告与本文只陈述可归属差值与成本，判断留给人类"
+    }
+  ],
+  "verification_run": [
+    "bun run typecheck → exit 0，无诊断（探针删除后运行，logs/22-takeover-l-typecheck.log）",
+    "bun run baseline:efficiency --label takeover-l → exit 0，七条序列 every invariant held.；并发序列 requests=2 / draws=33 / events=23（logs/22-takeover-l-baseline.log）",
+    "compare:efficiency（新跑 vs 已提交工件）→ exit 0，none: every comparable figure of every sequence and window agrees.；产品面 +0（logs/22-takeover-l-reproduction.txt）",
+    "compare:efficiency（01 vs 22，重生成）→ exit 0，报告与已提交件 sha256 相同 a486f327…（logs/22-takeover-l-frozen-comparison.txt）",
+    "compare:efficiency（标记 run vs 交付态）→ exit 0，none；产品面 +0（logs/22-takeover-l-marked-vs-delivered.txt）",
+    "bun test tests/harness-dock/efficiency-effects.test.ts（真实宿主）→ 3 pass / 0 fail，21 expect()",
+    "OMP_BOT_BINARY=… bun test tests/harness-dock（所属分区，串行）→ 104 pass / 0 fail，1161 expect()，27 文件 / 231.92s",
+    "bun test tests/framework → 481 pass / 0 fail，2250 expect()；bun test tests/model-cost → 463 pass / 0 fail，2524 expect()",
+    "只读集成核对：pi-adapter 仍 190e1b5、origin/pi-adapter 是其祖先；git diff --stat efb03e0 pi-adapter -- '**/*.ts' 产品面无输出；--after-rev pi-adapter 产品面 19287 → 23773 (+4486)；git merge-tree --write-tree HEAD pi-adapter exit 0、无冲突列表",
+    "临时资源核对：OS temp 下 omp-dock-effect-*、efficiency-comparison-*、model-cost-baseline-* 本轮新增残留 0（入口正常收尾清根；现存 4 个 -probe- 残留 mtime 13:26/13:29 早于本轮）"
+  ],
+  "unverified": [
+    "P51 人类验收（效率/复杂度是否可接受）与 P52/P53：票内两个人类项保持未勾选，属人类判断，未标为通过",
+    "主子例（真实宿主）frames 33 → 18 仍只归到内容级（§15.3，§17.1 独立复算一致），逐通知/逐帧机制定位未做；方向上重绘更少，不影响「无新增开销」结论",
+    "每个子 round_end 交付内被视为『非增量』的那两条通知未逐条追到产品调用点；每个子交付 3 条通知且全部同内容，只有第 3 条被标记钉死",
+    "'每条通知恰好一帧' 只是这次采样陈述下前端行为的观察，不是对任意宿主的普遍断言",
+    "pi 侧本机接入未做同样的外部效果记录器注入（该观察面由 pi 分区与真实 pi 冒烟覆盖）",
+    "证据范围仅 win32/x64、bun 1.4.2、隔离 OMP 18.5.0（未打补丁）、无 provider 凭据（模型请求与余额查询由本机 capture endpoint 回答）；不推广到 POSIX/其他版本/真实账户",
+    ".cache/22 未跟踪缓存 scratch 仍按 §17.3 的事实记为丢失（不在任何被测路径）"
+  ]
+}

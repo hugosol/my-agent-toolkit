@@ -1,0 +1,121 @@
+{
+  "feature": "model-cost-pi-migration",
+  "ticket": "14-codex-allowance.md",
+  "run_id": "36fe548f-18f6-4bfe-bc12-d30c30f7d69d",
+  "parent_session_id": "01a14319-df1e-77c0-a324-421dfc10d49e",
+  "parent_session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-16T05-05-31-422Z_01a14319-df1e-77c0-a324-421dfc10d49e.jsonl",
+  "workspace": "E:\\Developer\\myhub\\my-agent-toolkit",
+  "tool_call_id": "2401404f-17aa-4099-99bc-eb8fcde23992",
+  "started_at": "2026-10-16T06:21:28.543Z",
+  "tdd_status": "completed",
+  "retro_status": "completed",
+  "tdd_finished_at": "2026-10-16T06:41:41.953Z",
+  "tdd_result": {
+    "index": 0,
+    "id": "14-codex-allowancemd-2401404f-17aa-4099-99bc-eb8",
+    "agent": "tdd",
+    "agentSource": "user",
+    "task": "Complete assignment thoroughly:\n\n在当前 worktree 实现唯一票据：C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-8kVeiO\\.scratch\\model-cost-pi-migration\\implementation\\14-codex-allowance.md。\n集成分支：pi-adapter\nspec：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\model-cost-pi-migration\\spec.md\ncontract：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\model-cost-pi-migration\\contract.md\n这是本票首次执行。\n遵守 tdd skill，自行负责本票验收并报告实际验证与未完成事项。完成后尽快提交本票实现，交出 worktree，由独立集成子代理接管。不要修改其他票据或工作流报告，不操作集成分支工作区，不自行合入集成分支，不调用 retro、不派发其他票据。不得 reset 丢弃既有工作。",
+    "assignment": "在当前 worktree 实现唯一票据：C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-8kVeiO\\.scratch\\model-cost-pi-migration\\implementation\\14-codex-allowance.md。\n集成分支：pi-adapter\nspec：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\model-cost-pi-migration\\spec.md\ncontract：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\model-cost-pi-migration\\contract.md\n这是本票首次执行。\n遵守 tdd skill，自行负责本票验收并报告实际验证与未完成事项。完成后尽快提交本票实现，交出 worktree，由独立集成子代理接管。不要修改其他票据或工作流报告，不操作集成分支工作区，不自行合入集成分支，不调用 retro、不派发其他票据。不得 reset 丢弃既有工作。",
+    "description": "Implement ticket 14-codex-allowance in worktree",
+    "lastIntent": "Committing the ticket work",
+    "exitCode": 0,
+    "output": "{\n  \"ticket\": \"14: Codex 双窗口与独立比例估计\",\n  \"status\": \"delivered, committed on branch hyper/model-cost-pi-migration/14-codex-allowance-0c0541-411dc288ea83 (1dfb94f); worktree clean\",\n  \"delivered\": {\n    \"production code\": \"none needed — the Codex window/estimate logic is the existing shared business; this ticket delivers the pi-host wiring evidence plus one coverage gap it found\",\n    \"new fixture\": \"tests/harness-dock/fixtures/pi-codex-quota/entrypoint.ts — binds the production definition + createModelCostRuntime through the framework's pi adapter, substituting only the account-query transport (scripted per-run answers + a call log) and writing presentation.quota()/estimate() to stderr\",\n    \"dock driver\": \"tests/harness-dock/pi-session.ts gains writePiCredentials (a run states pi's own stored login credential in its isolated auth.json) — a verified host fact: pi's Codex provider resolves its access token from its own auth store, not from models.json's apiKey\",\n    \"real-host entry\": \"scripts/pi-model-cost-smoke.ts gains phase 5 (18 checks) over four real pi processes sharing one isolated storage root; also hardened its filesUnder walk against a lock directory vanishing mid-walk (pre-existing race, reproduced before the change)\",\n    \"new test\": \"tests/model-cost/codex-quota.test.ts — 'a position whose report carries no usable reading or length is left out rather than completed'\",\n    \"evidence\": \".scratch/model-cost-pi-migration/evidence/14-codex-allowance.md\"\n  },\n  \"criteria\": [\n    {\n      \"criterion\": \"AC1 / P30 — independent reports: position swap, single window, missing reading, failure, reset unknown/expired/invalid/valid; a missing reading is never zero and never re-times the old reading\",\n      \"evidence\": \"tests/model-cost/codex-quota.test.ts (16 tests) — position swap, single-window update keeping the other window's value AND obtainedAt, both failure classes, failed attempt earning no TTL, join of an in-flight query, all four reset states with the instant never rewritten; plus the new missing-reading/-length case. Validated by fault injection: `numberOf(window.usedPercent) ?? 0` in windowsOf made the new case fail with usedPercent 0 and a moved obtainedAt; restored → 16 pass / 0 fail. Real host: phase-5 checks 1–5, 8, 12.\"\n    },\n    {\n      \"criterion\": \"AC2 / P31 — hand-computed numbers: 50-point threshold, both windows growing, saturation, unpaired update, baseline, refinement; merged old/new windows are never paired into a sample\",\n      \"evidence\": \"tests/model-cost/codex-estimate.test.ts — hand-written literals: 50/5 → ratio 10.0, below-threshold/saturation keeping the stored ratio, a one-window report pairing nothing, rollover rebaselining, the five-hour age bound, baseline published at once with ratio unknown, the one-minute refinement throttle, merge by capture instant (newer adopted / older superseded / equal left to the writer), and a restart sampling from the stored baseline. Real host: phase-5 checks 9, 10, 14.\"\n    },\n    {\n      \"criterion\": \"AC3 — baseline saved at once, refinement throttled, newer document merged, restored by a new process; a consumption-period change does not clear the estimate\",\n      \"evidence\": \"the estimate suite's document half (real codex-usage-estimate.json bytes) + tests/model-cost/period-switch.test.ts (the independent estimate survives a reset). Real host: checks 6 (baseline written before any Turn), 9/11 (unpaired and refinement writes suppressed, file bytes unchanged), 16 (a third process continued the stored baseline — document ratio 3.3333 with baseline.capturedAt equal to the first process's instant and percentages still 10/40; a re-anchor would have produced baseline 60/55 and no ratio), 17/18 (a DeepSeek entry's /budget clear over the same root archived the whole document, opened a new non-holiday period, and left codex-usage-estimate.json byte-identical).\"\n    },\n    {\n      \"criterion\": \"AC4 — the real host proves the authentication / endpoint / settlement-trigger wiring\",\n      \"evidence\": \"bun scripts/pi-model-cost-smoke.ts, pi 1.2.0 real RPC runs: recorded calls are exactly GET https://chatgpt.com/backend-api/wham/usage with timeoutMs 10000 and proxy \\\"codex\\\", carrying Authorization: Bearer <the token the run declared> and chatgpt-account-id from that token's claim; one query at initialization and exactly one more per settled Codex Turn while the 1 ms TTL is stale (with call timestamps 55 ms apart), none when the reading is fresh under a 10-minute TTL, and two when the first attempt failed (a failure earns no TTL).\"\n    },\n    {\n      \"criterion\": \"P30/P31 complete-coverage rows (S2/S3)\",\n      \"evidence\": \"as above; the S3 half is real files read back by later real processes (estimate document, consumption document, archives), not memory or widget readings.\"\n    }\n  ],\n  \"verification\": {\n    \"bun run typecheck\": \"exit 0\",\n    \"bun test tests/model-cost\": \"377 pass / 0 fail, 1927 expect, 28 files, 6.96s\",\n    \"bun test tests/framework\": \"378 pass / 0 fail, 1837 expect, 31 files, 37.85s\",\n    \"bun test tests/harness-dock\": \"45 pass / 12 fail, 57 tests / 23 files, 173.60s — all 12 failures are one pre-existing environment class of this worktree: it is checked out CRLF while the dock's host-patch materialiser and lockfile checks are LF-exact (`host-patches/…/patch.diff touches no file` ×10, baseline lockfile/artifact ×2). My change touches neither host-patches/, bun.lock, the materialiser, nor any file that partition loads (only a new export in pi-session.ts and a new fixture), so the failures are not attributable to it; the same fact and counts were recorded by ticket 04.\",\n    \"bun scripts/pi-model-cost-smoke.ts\": \"exit 0 — 'PI MODEL-COST SMOKE SUMMARY: pi 1.2.0 — 43 check(s) passed, none failed', 11 isolated runs, ~10s; four consecutive runs identical after the code was frozen (one earlier run had stopped once on the pre-fix draft, before the observation waits were made condition-based)\"\n  },\n  \"unverified_or_blocked\": [\n    \"Real account-side confirmation (P53 / ticket 24): all account answers here are the fixture's own documents; no real ChatGPT credential, no network call, no paid call. Recorded as a blocker, not a pass.\",\n    \"POSIX and other pi/host versions: Windows x64 with pi 1.2.0 only.\",\n    \"TUI readability (P52) and the efficiency/complexity judgement (P51) stay human-led.\",\n    \"The real 15000 ms TTL duration was not waited out on the host; the duration boundary stays covered by the controlled clock in tests/model-cost/codex-quota.test.ts.\",\n    \"The OMP real-host dock partition produced no usable reading in this worktree (CRLF, see verification); this ticket is pi-side and does not claim OMP coverage.\"\n  ]\n}",
+    "stderr": "",
+    "truncated": false,
+    "durationMs": 1213291,
+    "tokens": 327048,
+    "requests": 205,
+    "contextTokens": 294608,
+    "contextWindow": 1000000,
+    "modelOverride": [
+      "deepseek/deepseek-flash:high"
+    ],
+    "resolvedModel": "deepseek/deepseek-flash:high",
+    "resolvedModelIdentity": "deepseek/deepseek-flash",
+    "resolvedThinkingLevel": "high",
+    "aborted": false,
+    "usage": {
+      "input": 190716,
+      "output": 136332,
+      "cacheRead": 39334400,
+      "cacheWrite": 0,
+      "totalTokens": 39661448,
+      "reasoningTokens": 73959,
+      "cost": {
+        "input": 0.057214799999999975,
+        "output": 0.16359840000000003,
+        "cacheRead": 0.23600639999999987,
+        "cacheWrite": 0,
+        "total": 0.4568196
+      }
+    },
+    "outputPath": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-16T05-05-31-422Z_01a14319-df1e-77c0-a324-421dfc10d49e\\14-codex-allowancemd-2401404f-17aa-4099-99bc-eb8.md",
+    "extractedToolData": {
+      "yield": [
+        {
+          "data": {
+            "ticket": "14: Codex 双窗口与独立比例估计",
+            "status": "delivered, committed on branch hyper/model-cost-pi-migration/14-codex-allowance-0c0541-411dc288ea83 (1dfb94f); worktree clean",
+            "delivered": {
+              "production code": "none needed — the Codex window/estimate logic is the existing shared business; this ticket delivers the pi-host wiring evidence plus one coverage gap it found",
+              "new fixture": "tests/harness-dock/fixtures/pi-codex-quota/entrypoint.ts — binds the production definition + createModelCostRuntime through the framework's pi adapter, substituting only the account-query transport (scripted per-run answers + a call log) and writing presentation.quota()/estimate() to stderr",
+              "dock driver": "tests/harness-dock/pi-session.ts gains writePiCredentials (a run states pi's own stored login credential in its isolated auth.json) — a verified host fact: pi's Codex provider resolves its access token from its own auth store, not from models.json's apiKey",
+              "real-host entry": "scripts/pi-model-cost-smoke.ts gains phase 5 (18 checks) over four real pi processes sharing one isolated storage root; also hardened its filesUnder walk against a lock directory vanishing mid-walk (pre-existing race, reproduced before the change)",
+              "new test": "tests/model-cost/codex-quota.test.ts — 'a position whose report carries no usable reading or length is left out rather than completed'",
+              "evidence": ".scratch/model-cost-pi-migration/evidence/14-codex-allowance.md"
+            },
+            "criteria": [
+              {
+                "criterion": "AC1 / P30 — independent reports: position swap, single window, missing reading, failure, reset unknown/expired/invalid/valid; a missing reading is never zero and never re-times the old reading",
+                "evidence": "tests/model-cost/codex-quota.test.ts (16 tests) — position swap, single-window update keeping the other window's value AND obtainedAt, both failure classes, failed attempt earning no TTL, join of an in-flight query, all four reset states with the instant never rewritten; plus the new missing-reading/-length case. Validated by fault injection: `numberOf(window.usedPercent) ?? 0` in windowsOf made the new case fail with usedPercent 0 and a moved obtainedAt; restored → 16 pass / 0 fail. Real host: phase-5 checks 1–5, 8, 12."
+              },
+              {
+                "criterion": "AC2 / P31 — hand-computed numbers: 50-point threshold, both windows growing, saturation, unpaired update, baseline, refinement; merged old/new windows are never paired into a sample",
+                "evidence": "tests/model-cost/codex-estimate.test.ts — hand-written literals: 50/5 → ratio 10.0, below-threshold/saturation keeping the stored ratio, a one-window report pairing nothing, rollover rebaselining, the five-hour age bound, baseline published at once with ratio unknown, the one-minute refinement throttle, merge by capture instant (newer adopted / older superseded / equal left to the writer), and a restart sampling from the stored baseline. Real host: phase-5 checks 9, 10, 14."
+              },
+              {
+                "criterion": "AC3 — baseline saved at once, refinement throttled, newer document merged, restored by a new process; a consumption-period change does not clear the estimate",
+                "evidence": "the estimate suite's document half (real codex-usage-estimate.json bytes) + tests/model-cost/period-switch.test.ts (the independent estimate survives a reset). Real host: checks 6 (baseline written before any Turn), 9/11 (unpaired and refinement writes suppressed, file bytes unchanged), 16 (a third process continued the stored baseline — document ratio 3.3333 with baseline.capturedAt equal to the first process's instant and percentages still 10/40; a re-anchor would have produced baseline 60/55 and no ratio), 17/18 (a DeepSeek entry's /budget clear over the same root archived the whole document, opened a new non-holiday period, and left codex-usage-estimate.json byte-identical)."
+              },
+              {
+                "criterion": "AC4 — the real host proves the authentication / endpoint / settlement-trigger wiring",
+                "evidence": "bun scripts/pi-model-cost-smoke.ts, pi 1.2.0 real RPC runs: recorded calls are exactly GET https://chatgpt.com/backend-api/wham/usage with timeoutMs 10000 and proxy \"codex\", carrying Authorization: Bearer <the token the run declared> and chatgpt-account-id from that token's claim; one query at initialization and exactly one more per settled Codex Turn while the 1 ms TTL is stale (with call timestamps 55 ms apart), none when the reading is fresh under a 10-minute TTL, and two when the first attempt failed (a failure earns no TTL)."
+              },
+              {
+                "criterion": "P30/P31 complete-coverage rows (S2/S3)",
+                "evidence": "as above; the S3 half is real files read back by later real processes (estimate document, consumption document, archives), not memory or widget readings."
+              }
+            ],
+            "verification": {
+              "bun run typecheck": "exit 0",
+              "bun test tests/model-cost": "377 pass / 0 fail, 1927 expect, 28 files, 6.96s",
+              "bun test tests/framework": "378 pass / 0 fail, 1837 expect, 31 files, 37.85s",
+              "bun test tests/harness-dock": "45 pass / 12 fail, 57 tests / 23 files, 173.60s — all 12 failures are one pre-existing environment class of this worktree: it is checked out CRLF while the dock's host-patch materialiser and lockfile checks are LF-exact (`host-patches/…/patch.diff touches no file` ×10, baseline lockfile/artifact ×2). My change touches neither host-patches/, bun.lock, the materialiser, nor any file that partition loads (only a new export in pi-session.ts and a new fixture), so the failures are not attributable to it; the same fact and counts were recorded by ticket 04.",
+              "bun scripts/pi-model-cost-smoke.ts": "exit 0 — 'PI MODEL-COST SMOKE SUMMARY: pi 1.2.0 — 43 check(s) passed, none failed', 11 isolated runs, ~10s; four consecutive runs identical after the code was frozen (one earlier run had stopped once on the pre-fix draft, before the observation waits were made condition-based)"
+            },
+            "unverified_or_blocked": [
+              "Real account-side confirmation (P53 / ticket 24): all account answers here are the fixture's own documents; no real ChatGPT credential, no network call, no paid call. Recorded as a blocker, not a pass.",
+              "POSIX and other pi/host versions: Windows x64 with pi 1.2.0 only.",
+              "TUI readability (P52) and the efficiency/complexity judgement (P51) stay human-led.",
+              "The real 15000 ms TTL duration was not waited out on the host; the duration boundary stays covered by the controlled clock in tests/model-cost/codex-quota.test.ts.",
+              "The OMP real-host dock partition produced no usable reading in this worktree (CRLF, see verification); this ticket is pi-side and does not claim OMP coverage."
+            ]
+          },
+          "status": "success"
+        }
+      ]
+    },
+    "outputMeta": {
+      "lineCount": 48,
+      "charCount": 6716
+    }
+  },
+  "agent": "tdd",
+  "agent_id": "14-codex-allowancemd-2401404f-17aa-4099-99bc-eb8",
+  "session_id": "01a1435f-686c-77a5-823a-18d73eeea873",
+  "session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-16T05-05-31-422Z_01a14319-df1e-77c0-a324-421dfc10d49e\\14-codex-allowancemd-2401404f-17aa-4099-99bc-eb8.jsonl",
+  "execution_cwd": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-8kVeiO",
+  "retro_document": "E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\model-cost-pi-migration\\retro\\14-codex-allowance.md\\36fe548f-18f6-4bfe-bc12-d30c30f7d69d.md",
+  "retro_finished_at": "2026-10-16T06:42:52.071Z"
+}
