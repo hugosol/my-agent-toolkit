@@ -6,15 +6,25 @@
 
 **Blocked by:** [13：DeepSeek 余额认证与刷新闭环](13-deepseek-balance.md)、[14：Codex 双窗口与独立比例估计](14-codex-allowance.md)
 
-**Status:** ready-for-agent
+**Status:** in-progress（Agent 侧交付完成：自动协议/错误检查已复核，经授权的真实宿主/provider 路径已执行，
+材料见 [evidence/24-provider-account-acceptance.md](../evidence/24-provider-account-acceptance.md)；**P53 人类账户侧核对与
+Codex 凭据仍待进行**；标签 `closed` 随实现合并推进）
 
 ## Acceptance criteria
 
-- [ ] 协议和错误自动检查先完成；获得凭据/许可后尽早准备真实宿主/provider 读数、时间、场景、环境及对照材料，不等待效率人工确认。
-- [ ] 缺凭据、账户、许可或需付费调用时明确报告真实阻塞；不继承研究限额，不打印秘密，不擅自安装/切换正式环境。
-- [ ] Agent 完成所有已授权真实路径，账户侧结果由用户核对；不把余额变化当请求费用真值，不要求实际收费等于模型参考价。
-- [ ] 最终人类验收仅在全部实现及已分配自动检查完成后进行；此前可以完成全部可执行准备。未执行/未确认项目保持未验收，不用 mock 补签。
-- [ ] **P53 完整 Coverage（S2）**：Agent 完成自动协议/错误检查及经授权的真实宿主/provider 路径，准备脱敏读数、时间、场景和对照材料。**人类验收：真实账户侧结果核对**；不把余额变化当请求费用真值，不要求 provider 实际收费等于模型参考价。缺凭据/许可是明确阻塞，付费调用另行授权。
+- [x] 协议和错误自动检查先完成；获得凭据/许可后尽早准备真实宿主/provider 读数、时间、场景、环境及对照材料，不等待效率人工确认。
+- [x] 缺凭据、账户、许可或需付费调用时明确报告真实阻塞；不继承研究限额，不打印秘密，不擅自安装/切换正式环境。
+- [ ] Agent 完成所有已授权真实路径，账户侧结果由用户核对；不把余额变化当请求费用真值，不要求实际收费等于模型参考价。（Agent 侧已完成 DeepSeek 真实路径；**Codex 缺凭据为明确阻塞**，账户侧核对属人类）
+- [x] 最终人类验收仅在全部实现及已分配自动检查完成后进行；此前可以完成全部可执行准备。未执行/未确认项目保持未验收，不用 mock 补签。
+- [ ] **P53 完整 Coverage（S2）**：Agent 完成自动协议/错误检查及经授权的真实宿主/provider 路径，准备脱敏读数、时间、场景和对照材料。**人类验收：真实账户侧结果核对**；不把余额变化当请求费用真值，不要求 provider 实际收费等于模型参考价。缺凭据/许可是明确阻塞，付费调用另行授权。（Agent 侧部分完成，人类核对未完成）
+
+## 本轮执行记录
+
+- 新增 `scripts/pi-provider-account-read.ts` + `scripts/support/provider-account-reading.ts` +
+  `tests/model-cost/provider-account-reading.test.ts`；`bun run verify:provider-account` 为可运行入口。
+- 真实路径：真实 pi 1.2.0 加载 shipped 入口读真实 DeepSeek 账户三次（读数、时间、对照判定与脱敏报告见证据文件）；
+  无 prompt、无模型请求、无付费调用；机器真实存储根前后一致；Codex 场景报告明确阻塞（pi 自身无 `openai-codex` 凭据）。
+- 证据与未验收项见 [evidence/24-provider-account-acceptance.md](../evidence/24-provider-account-acceptance.md)。
 
 ## 执行与证据约束
 
