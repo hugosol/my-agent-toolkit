@@ -87,7 +87,7 @@ export interface ControlledPiSurface {
 	/** Delivers one native session end. */
 	sessionEnds(session: HostSession, reason?: PiSessionShutdownReason): void;
 	/** Delivers one agent-run initiation, which is the node the framework initializes at. */
-	runInitiates(session: HostSession): void;
+	runInitiates(session: HostSession): Promise<void>;
 	/** Delivers one whole settled Turn: the request, its response boundary and the finalized message. */
 	turnSettles(session: HostSession, usage?: { readonly input: number; readonly output: number }): void;
 	/** Delivers pi's own name-change fact for that session. */
@@ -173,9 +173,13 @@ export function controlledPiSurface(): ControlledPiSurface {
 			hasPendingMessages: () => false,
 		} as unknown as PiExtensionContext;
 	};
-	const deliver = (event: string, payload: unknown, session: HostSession): void => {
-		for (const handler of [...(handlers.get(event) ?? [])]) handler(payload, contextOf(session));
-	};
+	/**
+	 * Delivers one native fact to every handler registered for it, exactly as pi reaches an extension's
+	 * own handlers, and answers with what each of them returned: a handler the framework awaits — the
+	 * run initiation's one-time initialization — is awaited by the case that delivers it.
+	 */
+	const deliver = (event: string, payload: unknown, session: HostSession): readonly unknown[] =>
+		[...(handlers.get(event) ?? [])].map(handler => handler(payload, contextOf(session)));
 	return {
 		api,
 		commands,
@@ -191,7 +195,11 @@ export function controlledPiSurface(): ControlledPiSurface {
 		notices: () => notices,
 		sessionStarts: (session, reason = "startup") => deliver("session_start", { type: "session_start", reason }, session),
 		sessionEnds: (session, reason = "quit") => deliver("session_shutdown", { type: "session_shutdown", reason }, session),
-		runInitiates: session => deliver("before_agent_start", { type: "before_agent_start", messageType: "user" }, session),
+		runInitiates: async session => {
+			// The framework's one-time initialization runs on this node and waits for what it returns, so
+			// a case that awaits this delivery has the document really loaded when it continues.
+			await Promise.all(deliver("before_agent_start", { type: "before_agent_start", messageType: "user" }, session));
+		},
 		turnSettles: (session, usage = { input: 10, output: 10 }) => {
 			turns += 1;
 			deliver("before_provider_request", { type: "before_provider_request" }, session);

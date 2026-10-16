@@ -40,6 +40,7 @@ import type { ConsumptionDocument, SessionRecord } from "../../extensions/model-
 import type { ModelPricingData } from "../../extensions/model-cost/shared-logic/model-data";
 import { type ModelCostRuntime, createModelCostRuntime } from "../../extensions/model-cost/shared-logic/runtime";
 import type { DisplayTarget } from "../../extensions/model-cost/shared-logic/presentation/display";
+import { uiBoundaryTimerOf } from "./support/ui-timer";
 
 const BEIJING_OFFSET_MS = 8 * 60 * 60 * 1000;
 
@@ -334,7 +335,7 @@ function assemblePiSurface(clock: { at: number }): PiSurface {
 		},
 	});
 	if (!bind(surface.api).bound) throw new Error("the model-cost pi assembly did not bind");
-	releaseFrontend = attachModelCostWidget(surface.api, surface.runtime);
+	releaseFrontend = attachModelCostWidget(surface.api, surface.runtime, uiBoundaryTimerOf(surface.runtime));
 	return surface;
 }
 

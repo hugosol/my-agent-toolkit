@@ -33,6 +33,7 @@ import { type PiExtensionApi, piAdapter } from "../../../framework/adapters/pi";
 import type { ExtensionImplementation, SubagentIntegration } from "../../../framework/public";
 import { MODEL_COST } from "../definition";
 import { type ModelCostRuntime, createModelCostRuntime } from "../shared-logic/runtime";
+import { createBoundaryTimer } from "./boundary-timer";
 import { attachModelCostWidget } from "./pi/widget";
 
 /**
@@ -126,6 +127,37 @@ export function observeSessionContext(pi: PiExtensionApi, runtime: ModelCostRunt
 
 
 /**
+ * One implementation with every frontend release this process attached composed into its cleanup.
+ *
+ * The dispose front-end is the framework's: a binding runs the one `cleanup` it declared, exactly once,
+ * when the session that initialized the instance ends. Composing the frontends' releases into that one
+ * entry is what keeps each binding's widget, its context observation and its registration with the UI's
+ * one boundary wait bound to the same lifetime — and what keeps this extension from naming a native
+ * shutdown event of its own, which it may not. A process binds this entry more than once (the session it
+ * serves and every session the subagent provider spawns), so each of those bindings' own release is
+ * reached here, and each is forgotten as it is released.
+ *
+ * The implementation's own cleanup still runs, and after those releases: nothing is drawn through an
+ * accumulation that is being closed.
+ */
+export function releasingFrontendsOnCleanup(
+	implementation: ExtensionImplementation,
+	frontendReleases: Set<() => void>,
+): ExtensionImplementation {
+	const cleanup = implementation.cleanup;
+	return {
+		...implementation,
+		cleanup: () => {
+			for (const release of [...frontendReleases]) {
+				frontendReleases.delete(release);
+				release();
+			}
+			return cleanup?.();
+		},
+	};
+}
+
+/**
  * The extension's pi assembly for one repository root: a binding of the shared definition whose
  * declared configuration is resolved under `repositoryRoot`.
  *
@@ -140,14 +172,31 @@ export function modelCostPiHarness(repositoryRoot: string): (pi: PiExtensionApi)
 	/** The process's one business instance, as this assembly built it. */
 	let runtime: ModelCostRuntime | undefined;
 	/**
-	 * The process's one frontend release, as the binding's cleanup reaches it.
+	 * The process's one UI boundary wait, shared by every frontend this assembly attaches.
 	 *
-	 * The factory runs before the frontend can be attached — attaching needs the host's own api and the
-	 * runtime's read-only results — so the two are joined in this one handle: the cleanup composed below
-	 * calls whatever the binding function attached under it, the widget's drawing and the context
-	 * observation it feeds the shared registry with.
+	 * One pi process draws one display, and that display shows one season whatever session is bound, so
+	 * the wait for the season to change belongs to the UI rather than to a session: the schedule it reads
+	 * is the same process-wide presentation result every frontend draws, and reading it through a
+	 * function is what keeps the timer itself free of any pricing rule. A process whose runtime is not
+	 * built yet has no schedule, so nothing is armed for it. What a registering frontend supplies is its
+	 * own timer carrier — pi publishes no timer API, so its frontend owns the raw one-shot and clears it
+	 * with its own release (see `pi/widget.ts`).
 	 */
-	let releaseFrontend: (() => void) | undefined;
+	const uiBoundaryTimer = createBoundaryTimer(() => {
+		const period = runtime?.presentation.period();
+		if (period === undefined) return undefined;
+		return { at: period.at, ...(period.nextChangeAt === undefined ? {} : { nextChangeAt: period.nextChangeAt }) };
+	});
+	/**
+	 * Every frontend release this assembly has attached, as the binding's cleanup reaches them.
+	 *
+	 * The factory runs before a frontend can be attached — attaching needs the host's own api and the
+	 * runtime's read-only results — and every binding of the process attaches its own: the session this
+	 * entry serves and each session the subagent provider spawns run their own binding, so the cleanup
+	 * composed below releases every one of them, so that no widget, no context observation and no
+	 * boundary wait of a session that ended outlives it.
+	 */
+	const frontendReleases = new Set<() => void>();
 
 	const bindModelCost = piAdapter(MODEL_COST, {
 		configBaseDir: repositoryRoot,
@@ -183,12 +232,6 @@ export function modelCostPiHarness(repositoryRoot: string): (pi: PiExtensionApi)
 				...(context.providerAccess === undefined ? {} : { providerAccess: context.providerAccess }),
 			});
 			runtime = built;
-			// The dispose front-end is the framework's: a binding runs the one `cleanup` it declared,
-			// exactly once, when the session that initialized the instance ends. Composing the frontend's
-			// release into that entry is what keeps the widget bound to the same lifetime — and what keeps
-			// this extension from naming a native shutdown event of its own, which it may not. The
-			// implementation's own cleanup still runs, and after the frontend's release.
-			const cleanup = built.implementation.cleanup;
 			const initialize = built.implementation.initialize;
 			const implementation: ExtensionImplementation = {
 				...built.implementation,
@@ -200,13 +243,11 @@ export function modelCostPiHarness(repositoryRoot: string): (pi: PiExtensionApi)
 					subagentIntegrationMode = delivery.subagents.mode;
 					await initialize?.(delivery);
 				},
-				cleanup: () => {
-					releaseFrontend?.();
-					releaseFrontend = undefined;
-					return cleanup?.();
-				},
 			};
-			return implementation;
+			// The dispose front-end is the framework's — the one `cleanup` this instance declares, run when
+			// the session that initialized it ends — and every frontend of this process is released through
+			// it rather than through a native shutdown event of the extension's own, which it may not name.
+			return releasingFrontendsOnCleanup(implementation, frontendReleases);
 		},
 	});
 
@@ -219,14 +260,16 @@ export function modelCostPiHarness(repositoryRoot: string): (pi: PiExtensionApi)
 			const built = runtime;
 			// Every binding — a subagent's as much as the session this entry serves — publishes its own
 			// context reading, so the detail tree can show each descendant session's own context without a
-			// viewed-session outlet; both registrations follow the same cleanup, because both are this
-			// binding's own and nothing of either outlives the session that initialized the instance.
+			// viewed-session outlet; the widget draws that session's own reading through the UI's one
+			// boundary wait. Every registration follows the same cleanup, because every one of them is a
+			// binding's own and nothing of any outlives the session that initialized the instance.
 			const releaseContext = observeSessionContext(pi, built);
-			const releaseWidget = attachModelCostWidget(pi, built);
-			releaseFrontend = () => {
+			const releaseWidget = attachModelCostWidget(pi, built, uiBoundaryTimer);
+			const release = () => {
 				releaseWidget();
 				releaseContext();
 			};
+			frontendReleases.add(release);
 		}
 	};
 }

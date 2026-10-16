@@ -22,7 +22,7 @@ import { type OmpExtensionApi, ompAdapter } from "../../../framework/adapters/om
 import type { ExtensionImplementation } from "../../../framework/public";
 import { MODEL_COST } from "../definition";
 import { type ModelCostRuntime, createModelCostRuntime } from "../shared-logic/runtime";
-import { createBoundaryTimer } from "./omp/boundary-timer";
+import { createBoundaryTimer } from "./boundary-timer";
 import { type WidgetDrawing, attachModelCostWidget } from "./omp/widget";
 
 /**

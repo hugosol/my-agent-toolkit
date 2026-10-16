@@ -43,6 +43,7 @@ import { MODEL_COST_HARNESS } from "../../extensions/model-cost/harnesses/pi";
 import { MODEL_COST_WIDGET_KEY, attachModelCostWidget } from "../../extensions/model-cost/harnesses/pi/widget";
 import { type ModelCostRuntime, createModelCostRuntime } from "../../extensions/model-cost/shared-logic/runtime";
 import type { ConsumptionDocument, SessionRecord } from "../../extensions/model-cost/shared-logic/consumption-document";
+import { uiBoundaryTimerOf } from "./support/ui-timer";
 
 const BEIJING_OFFSET_MS = 8 * 60 * 60 * 1000;
 
@@ -341,7 +342,7 @@ function assemble(): PiSurface {
 		},
 	});
 	const bound = bind(surface.api);
-	if (bound.bound && runtime !== undefined) releaseFrontend = attachModelCostWidget(surface.api, runtime);
+	if (bound.bound && runtime !== undefined) releaseFrontend = attachModelCostWidget(surface.api, runtime, uiBoundaryTimerOf(runtime));
 	return surface;
 }
 

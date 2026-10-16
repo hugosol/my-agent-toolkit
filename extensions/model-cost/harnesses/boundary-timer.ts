@@ -14,6 +14,13 @@
  * holds no season, no window and no clock: it schedules one one-shot timeout for the instant a
  * schedule states, redraws the live frontends when it fires, and then asks for a fresh schedule.
  *
+ * The timer it schedules on is the registering frontend's own carrier, not this module's: a frontend
+ * hands over the one {@link BoundaryTimerHost} its harness leaves it — the CLI's own managed timer
+ * where the host publishes one, and a raw one-shot the frontend owns and clears itself where the
+ * harness documents no timer API at all. This module therefore names no native timer and no harness,
+ * and cancelling goes back through the same host that armed the wait, so a frontend that is released
+ * takes its own handle with it.
+ *
  * The rules that make that one wait rather than a loop:
  *
  * - **Armed once per boundary, not once per redraw.** A redraw that finds the same boundary ahead of
