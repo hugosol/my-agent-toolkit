@@ -36,6 +36,7 @@ import type {
 	CatalogPriceSource,
 	FeedbackLevel,
 	RoundDelivery,
+	SessionContextDelivery,
 	SessionEventDelivery,
 	TurnEndDelivery,
 	TurnStartDelivery,
@@ -96,6 +97,15 @@ export interface PiSurfaceSession {
 	idle?: boolean;
 	/** pi's pending-message fact. Absent models a surface that reports no such fact at all. */
 	pending?: boolean;
+	/**
+	 * The session's own context reading, as pi reports it, and the only member of it this surface
+	 * states.
+	 *
+	 * `tokens` carries pi's own nullable form because pi states an unknown context that way (a `null`
+	 * right after a compaction), which is not a reading: a case models both. Absent models a surface
+	 * that publishes no context reading at all.
+	 */
+	context?: { readonly tokens?: number | null };
 }
 
 /** One registered command, as the adapter handed it to the host. */
@@ -259,6 +269,8 @@ export interface PiSurface {
 	readonly rounds: RoundDelivery[];
 	/** The Round edge kinds, in call order: the open/close sequence one case reads. */
 	readonly edges: Array<RoundDelivery["event"]["kind"]>;
+	/** The context edges the framework dispatched, in call order. */
+	readonly contexts: SessionContextDelivery[];
 	/** The widgets the framework published through this surface's UI, in call order. */
 	readonly widgets: PublishedWidget[];
 	/** The notices the framework published through this surface's UI, in call order. */
@@ -343,6 +355,7 @@ export function boundPiSurface(
 	const ends: TurnEndDelivery[] = [];
 	const rounds: RoundDelivery[] = [];
 	const edges: RoundDelivery["event"]["kind"][] = [];
+	const contexts: SessionContextDelivery[] = [];
 	const widgets: PublishedWidget[] = [];
 	const notices: PublishedNotice[] = [];
 	let implementationContext: ImplementationContext | undefined;
@@ -427,6 +440,7 @@ export function boundPiSurface(
 		if (session.model !== undefined) context.model = session.model;
 		if (session.thinkingLevel !== undefined) context.thinkingLevel = session.thinkingLevel;
 		if (session.catalog !== undefined) context.modelRegistry = registryOf(session);
+		if (session.context !== undefined) context.getContextUsage = () => session.context;
 		return context as unknown as PiExtensionContext;
 	};
 
@@ -484,6 +498,7 @@ export function boundPiSurface(
 								rounds.push(round);
 								edges.push(round.event.kind);
 							},
+							session_context: delivery => void contexts.push(delivery as SessionContextDelivery),
 						},
 					},
 				],
@@ -508,6 +523,7 @@ export function boundPiSurface(
 		ends,
 		rounds,
 		edges,
+		contexts,
 		widgets,
 		notices,
 		implemented: () => {

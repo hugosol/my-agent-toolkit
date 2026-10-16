@@ -1,0 +1,20 @@
+bun test v1.4.2 (744846f84)
+
+tests\harness-dock\efficiency-effects.test.ts:
+effects recorded: 2297 (storage root: 13, idle window: 0)
+storage root detail: ["mkdir consumption.json.lock.30784-2-mvbhnnw6.lock","mkdir cost-archive","readFile codex-usage-estimate.json utf8","readFile consumption.json utf8","realpath cost-archive","rename consumption.json","rename consumption.json.lock","unlink 30784-1-mvbhnnw6","unlink consumption.json.30784-3-mvbhnnw8.tmp","writeFile 30784-1-mvbhnnw6 ","writeFile consumption.json.30784-3-mvbhnnw8.tmp {\"schemaVersion\":1,\"periodId\":\"period-fresh\",\"start\":\"2026-10-16T21:37:27.898Z\",\"holiday\":false,\"harnesses\":{\"omp\":{\"sessions\":[{\"id\":\"01a146a6-02c2-743c-b0e7-ec7605180859\",\"name\":\"main\",\"parent\":null,\"saveVersion\":1,\"own\":{\"deepseek\":{\"deepseek-flash\":{\"tokens\":{\"input\":7,\"cacheRead\":3,\"cacheWrite\":0,\"output\":7},\"costCny\":0.00003506}}},\"span\":{\"start\":1792186647913,\"end\":1792186647980}}]}}}"]
+idle-window ops: []
+net effects: [{"kind":"net","op":"createConnection","targets":["127.0.0.1","12069"],"at":1792186647905,"outcome":"ok"}]
+capture endpoint port: 12069, widget frames: 12, arrivals: ["balance","model"]
+effects recorded: 2691 (idle window: 0)
+arrivals: ["balance","model","model","model"], widget frames: 26, capture port: 12100
+net effects: [{"kind":"net","op":"createConnection","targets":["127.0.0.1","12100"],"at":1792186653494,"outcome":"ok"}]
+
+ 104 pass
+ 0 fail
+ 1161 expect() calls
+Ran 104 tests across 27 files. [217.36s]
+
+real	3m37.402s
+user	0m0.000s
+sys	0m0.000s

@@ -49,6 +49,7 @@
  */
 import type { ExtensionImplementation, InitializationDelivery } from "../../../framework/core/assembly";
 import type { CatalogPriceSource, FeedbackTransport, ProviderAccess, SemanticEventHandlers, SubagentIntegration } from "../../../framework/core/protocol";
+import { SessionObservations } from "../../../framework/core/observations";
 import type { HttpRequestOptions } from "../../../framework/modules/http";
 import { DEFAULT_CODEX_QUOTA_TTL_MS, type CodexQuotaFailure, createCodexQuota } from "./codex-quota";
 import { CodexEstimateStore } from "./codex-estimate-store";
@@ -65,7 +66,7 @@ import { createPeriodSwitch } from "./period-switch";
 import { type ConsumptionPresenter, createPresentation } from "./presentation/display";
 import { createDisplayPreference, displayFormNotice, displayFormUnavailableNotice } from "./presentation/display-preference";
 import { SessionActivityRegistry } from "./presentation/session-activity";
-import { SessionContextRegistry } from "./presentation/session-context";
+import type { SessionContextReading } from "./presentation/session-context";
 import { DEFAULT_BALANCE_TTL_MS, type ProviderBalanceFailure, createProviderBalance } from "./provider-balance";
 import { type ConsumptionView, createRequestAccounting } from "./request-accounting";
 import { resolveStorageRoot } from "./storage-root";
@@ -128,6 +129,17 @@ export interface ModelCostRuntimeInputs {
 	 */
 	readonly providerAccess?: ProviderAccess;
 	/**
+	 * The framework's own session observation source, as the framework handed it to the factory.
+	 *
+	 * It is the one source of every session's activity and context reading this extension consumes:
+	 * the adapter collects a reading where its host moves one, the framework's own Round bookkeeping
+	 * moves the activity, and this extension reads the result rather than subscribing to any host
+	 * event for itself. Omitted means no source was handed over — the framework always hands one —
+	 * and the runtime then reads an empty one, which is what a suite that drives the readings itself
+	 * through {@link ModelCostRuntime.sessionObservations} builds.
+	 */
+	readonly sessionObservations?: SessionObservations;
+	/**
 	 * The instant source this extension's own business reads, on the process's own clock.
 	 *
 	 * Omitted means the process clock (`Date.now`); an explicit value is the same clock as a caller
@@ -175,14 +187,26 @@ export interface ModelCostRuntime {
 	/** The extension's read-only display results, for the frontends that render them. */
 	readonly presentation: ConsumptionPresenter;
 	/**
-	 * The process's per-session context readings, fed by the harness half as each session binding
-	 * reports its own current `getContextUsage()`, and read by the detail tree's descendant rows.
+	 * The framework's own session observation source, as this instance reads it.
 	 *
-	 * It is a reading rather than an accumulation: a session no binding observed has no entry rather
+	 * It is the one place every session's activity and context reading lives: the adapter's own
+	 * collection points record a session's context there with the model it was collected on, and the
+	 * framework's Round bookkeeping moves its activity — for the main session and for each subagent
+	 * alike, whether or not this instance observed the session when the reading arrived. Nothing here
+	 * is written to the storage root, and a session nothing observed has no reading rather than a
+	 * zero one. A caller that drives a reading itself (a suite) writes it here.
+	 */
+	readonly sessionObservations: SessionObservations;
+	/**
+	 * The same source, read one session's context at a time: the narrow read a frontend's display was
+	 * written against, answering the latest reading that session's own host reported and nothing when
+	 * none was observed.
+	 *
+	 * It is a reading rather than an accumulation: a session nothing observed has no entry rather
 	 * than a zero, it is never written to the storage root, and a frontend that reads it sees the
 	 * latest observation whether or not that session is the one being viewed.
 	 */
-	readonly sessionContext: SessionContextRegistry;
+	readonly sessionContext: SessionContextReading;
 	/**
 	 * The process's per-session activity readings, moved by the framework's own Round edges and read by
 	 * the detail tree's working-row emphasis.
@@ -262,10 +286,17 @@ export function createModelCostRuntime(inputs: ModelCostRuntimeInputs): ModelCos
 	// a frontend redraws the form the entry is now in without a channel of its own.
 	const display = createDisplayPreference({ onChange: () => accounting.announceChanged() });
 
-	// The per-session context readings: one process-wide record the harness half feeds from every
-	// session binding's own `getContextUsage()` — the main session's and each subagent's — and the
-	// detail tree reads for its descendant rows. It is a reading, never persisted or fetched.
-	const sessionContext = new SessionContextRegistry();
+	// The per-session context readings are the framework's own, not this extension's: the adapter
+	// collects a session's context where its host moves one, records the model it was collected on
+	// beside the count, and this instance reads what was recorded — including the readings collected
+	// before it was built, which is what makes the first reading after an attach a reading rather
+	// than a blank. What `sessionContext` is, then, is the narrow read the display was written
+	// against: the same source, answering one session's context alone. Nothing is copied here, and
+	// nothing is written to the storage root.
+	const sessionObservations = inputs.sessionObservations ?? new SessionObservations();
+	const sessionContext: SessionContextReading = {
+		read: sessionId => sessionObservations.read(sessionId)?.context,
+	};
 
 	// The per-session activity readings: one process-wide record the framework's own Round edges move —
 	// a start opens a session's Round and a confirmed end closes it, for a main session and for a
@@ -617,6 +648,14 @@ export function createModelCostRuntime(inputs: ModelCostRuntimeInputs): ModelCos
 			stateProviderFailures(delivery);
 			return account(delivery.feedback, () => accounting.sessionFacts(delivery.session));
 		},
+		// One actual session's own context reading moved. The reading is not adopted here because it
+		// has nowhere to be adopted from: this extension reads it from the framework's own observation
+		// source (`sessionObservations`), which already holds the reading this delivery carries — so
+		// what this delivery is for is the one thing a reading that moved costs, the merged redraw of
+		// whatever this extension is drawing.
+		session_context: () => {
+			accounting.announceChanged();
+		},
 		// One actual session's own start. A spawned session's binding announces it once, and it is the
 		// one delivery whose model and level readings are that session's startup facts — the framework
 		// reports them on a start that proves the session was beginning, and on no other delivery, so a
@@ -652,6 +691,7 @@ export function createModelCostRuntime(inputs: ModelCostRuntimeInputs): ModelCos
 			},
 			now,
 		}),
+		sessionObservations,
 		sessionContext,
 		sessionActivity,
 		implementation: {

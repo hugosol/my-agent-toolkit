@@ -4,9 +4,11 @@
  *
  * The seam is the one a pi run really uses: the production definition bound through the framework's
  * real pi adapter, the runtime `createModelCostRuntime` builds from the framework's validated
- * configuration, and the extension's own frontends (`observeSessionContext` and
- * `attachModelCostWidget`) with their releases composed into the framework's one `cleanup` exactly as
- * the shipped assembly composes them. Nothing here reaches inside the extension: what a case drives
+ * configuration, and the extension's own frontend (`attachModelCostWidget`) with its release composed
+ * into the framework's one `cleanup` exactly as the shipped assembly composes it. The context readings
+ * this extension consumes are not one of its own frontends any more: the framework's own collection
+ * (the adapter's points, recorded in its observation source) supplies them, so there is no such
+ * registration here to attach or release. Nothing here reaches inside the extension: what a case drives
  * is the native facts pi publishes, and what it observes is the operator-visible result — the widget
  * hand-overs the host was given, the notice channel, the requests the extension really sent through
  * its own HTTP dependency, the files of the storage root, and the registrations the frontends made
@@ -38,7 +40,6 @@ import { piAdapter } from "../../framework/adapters/pi";
 import { MODEL_COST } from "../../extensions/model-cost/definition";
 import {
 	MODEL_COST_HARNESS,
-	observeSessionContext,
 	releasingFrontendsOnCleanup,
 } from "../../extensions/model-cost/harnesses/pi";
 import { MODEL_COST_WIDGET_KEY, attachModelCostWidget } from "../../extensions/model-cost/harnesses/pi/widget";
@@ -486,11 +487,13 @@ function assemble(options: { readonly root?: string; readonly holdQueries?: bool
 	const bound = bind(api);
 	if (bound.bound && runtime !== undefined) {
 		const built = runtime;
-		const releaseContext = observeSessionContext(api, built);
+		// The widget is this assembly's own frontend, attached per binding and released through the one
+		// cleanup the binding runs. The context reading is not attached here at all: the framework's own
+		// observation source collects it (the adapter's collection points, registered by the framework
+		// when this extension observes a reading), so this half owns no such registration to release.
 		const releaseWidget = attachModelCostWidget(api, built, timer);
 		frontendReleases.add(() => {
 			releaseWidget();
-			releaseContext();
 		});
 	}
 	const evaluation: Process = {

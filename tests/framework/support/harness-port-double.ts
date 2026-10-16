@@ -36,6 +36,8 @@ import type {
 	RoundEvent,
 	RoundObservation,
 	SemanticEventHandlers,
+	SessionContextObservation,
+	SessionContextReading,
 	SessionDelivery,
 	SessionEvent,
 	SessionFacts,
@@ -45,6 +47,7 @@ import type {
 	TurnOutcome,
 	UserInputDelivery,
 } from "../../../framework/core/protocol";
+import { SessionObservations } from "../../../framework/core/observations";
 import { StateStore } from "../../../framework/core/state";
 
 /** The owner key a command invocation or session delivery acts on unless one is named. */
@@ -152,6 +155,14 @@ export interface UserInputBoundary {
 	readonly feedback: readonly FeedbackNotice[];
 }
 
+/** What one context collection observed, and what the framework published through it. */
+export interface ContextBoundary {
+	/** Whether the session had a UI, as the double modelled it. */
+	readonly hasUI: boolean;
+	/** Extension feedback published during the delivery, with its severity. */
+	readonly feedback: readonly FeedbackNotice[];
+}
+
 /** The actual session a delivery from the double is about when a suite names none. */
 const DEFAULT_SESSION: SessionFacts = { sessionId: "port-double", kind: "main", unavailable: [] };
 
@@ -186,14 +197,20 @@ export interface PortDouble {
 	 * the definition it names; a suite reads it after a bind, refused or admitted.
 	 */
 	readonly state: StateStore;
+	/**
+	 * The assembly's one session observation source, which the double shares across its bindings
+	 * exactly as an adapter shares the process's: what a suite reads here is what a consumer
+	 * attaching to a source already observed would read.
+	 */
+	readonly observations: SessionObservations;
 	/** Labels the framework set, in call order. */
 	readonly labels: readonly string[];
 	/** Diagnostics the framework reported on the port's non-model channel. */
 	readonly diagnostics: readonly string[];
 	/**
 	 * Registrations in call order: `label:<name>`, `onSession`, `onRound` (only when the
-	 * assembly injected a round handler), `onTurn`, `onUserInput` (only when one observes input),
-	 * `onRunInitiation`, `command:<name>`.
+	 * assembly injected a round handler), `onSessionContext` (only when one observes a reading),
+	 * `onTurn`, `onUserInput` (only when one observes input), `onRunInitiation`, `command:<name>`.
 	 */
 	readonly registrations: readonly string[];
 	/** The commands the framework registered, in call order, ready to be run. */
@@ -252,6 +269,23 @@ export interface PortDouble {
 			readonly outcome?: TurnOutcome;
 		},
 	): RoundBoundary;
+	/**
+	 * Delivers one collected context reading to every extension bound so far, as an adapter would.
+	 *
+	 * The double frames the collection the way a harness does — the session it was read in, its owner,
+	 * the UI fact and the feedback channel — and states the reading the adapter read there. Whether it
+	 * is a change, which subscribers it reaches and what the framework's own source then holds are the
+	 * framework's rules, not this double's.
+	 */
+	deliverContext(
+		owner: OwnerReference,
+		options: {
+			readonly reading: SessionContextReading;
+			/** The actual session the reading belongs to; omitted models a top-level `port-double` session. */
+			readonly session?: SessionFacts;
+			readonly hasUI?: boolean;
+		},
+	): ContextBoundary;
 	/**
 	 * Delivers one mapped native Turn signal to every extension bound so far, as an adapter would.
 	 *
@@ -315,8 +349,12 @@ export function portDouble(options: PortDoubleOptions = {}): PortDouble {
 	const diagnostics: string[] = [];
 	const registrations: string[] = [];
 	const commands: BoundCommand[] = [];
+	// One source for every binding this double makes, exactly as one adapter holds one per process:
+	// a suite that binds twice is modelling two sessions of one process observing into one record.
+	const observations = new SessionObservations();
 	const sessionHandlers: Array<(session: SessionDelivery) => void> = [];
 	const roundObservers: Array<(observation: RoundObservation) => void> = [];
+	const contextHandlers: Array<(observation: SessionContextObservation) => void> = [];
 	const turnHandlers: Array<(facts: TurnSignalFacts) => void> = [];
 	const userInputHandlers: Array<(delivery: UserInputDelivery) => void> = [];
 	const runHandlers: Array<Parameters<HarnessPort["onRunInitiation"]>[0]> = [];
@@ -426,6 +464,10 @@ export function portDouble(options: PortDoubleOptions = {}): PortDouble {
 			registrations.push("onRound");
 			roundObservers.push(observer);
 		},
+		onSessionContext: handler => {
+			registrations.push("onSessionContext");
+			contextHandlers.push(handler);
+		},
 		nextTask: callback => {
 			// The harness's next task, as a queue the double runs when a suite's delivery reaches it:
 			// the same one-shot arrangement the omp adapter makes with its host's own task primitive.
@@ -456,6 +498,7 @@ export function portDouble(options: PortDoubleOptions = {}): PortDouble {
 			}
 			return state;
 		},
+		observations,
 		labels,
 		diagnostics,
 		registrations,
@@ -467,6 +510,7 @@ export function portDouble(options: PortDoubleOptions = {}): PortDouble {
 				definition,
 				port,
 				stateOf(definition),
+				observations,
 				// One implementation per binding, handed over the way an adapter hands over its
 				// assembly's own: the double does not model a process-shared instance, so a suite that
 				// wants to observe the once-per-implementation lifecycle binds once and drives it.
@@ -546,6 +590,24 @@ export function portDouble(options: PortDoubleOptions = {}): PortDouble {
 			// An end candidate is confirmed on the harness's next task, so a suite driving the edge
 			// runs what that delivery arranged — the host reaching the task the framework asked for.
 			for (const task of pendingTasks.splice(0)) task();
+			return { hasUI, feedback };
+		},
+		deliverContext(owner, options) {
+			const feedback: FeedbackNotice[] = [];
+			const hasUI = options.hasUI ?? true;
+			for (const handler of contextHandlers) {
+				handler({
+					session: options.session ?? DEFAULT_SESSION,
+					owner,
+					reading: options.reading,
+					hasUI,
+					feedback: {
+						notify: (level, message) => {
+							feedback.push({ level, message });
+						},
+					},
+				});
+			}
 			return { hasUI, feedback };
 		},
 		deliverTurn(signal, options = {}) {

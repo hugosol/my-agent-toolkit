@@ -25,6 +25,7 @@ import type {
 	RoundEvent,
 	SemanticEvent,
 	SemanticEventDeliveryMap,
+	SessionContextEvent,
 	SessionEvent,
 	TurnEvent,
 	UserInputEvent,
@@ -42,6 +43,9 @@ export const TURN_EVENT_KINDS: readonly TurnEvent["kind"][] = ["turn_start", "tu
 
 /** The input axis's event kinds. */
 export const USER_INPUT_EVENT_KINDS: readonly UserInputEvent["kind"][] = ["user_input"];
+
+/** The context axis's event kinds. */
+export const SESSION_CONTEXT_EVENT_KINDS: readonly SessionContextEvent["kind"][] = ["session_context"];
 
 /**
  * Whether one group's scope admits a delivery whose owner resolved this way.

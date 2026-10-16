@@ -23,6 +23,7 @@
  * remote request or start a timer, because a definition can still be refused afterwards.
  */
 import type { DeclarableRequiredSemantic } from "./requirements";
+import type { SessionObservations } from "./observations";
 import type {
 	ActionDelivery,
 	CatalogPriceSource,
@@ -91,6 +92,14 @@ export type CommandImplementations = Readonly<Record<string, CommandImplementati
  * facts interface and never a native model, registry or context. An extension whose channel the
  * harness itself prices composes it with its own maintained data (see
  * {@link CatalogPriceSource}); a harness that states no prices hands over no such fact.
+ *
+ * `sessionObservations` is the framework's own source of session observations for this process:
+ * each observed session's activity and its latest context reading, collected by the adapter's own
+ * hooks and moved by the framework's own Round bookkeeping. It is always present — it is the
+ * framework's record rather than a harness capability — and it is what an extension reads for the
+ * readings that arrived before it attached, including the ones collected while it was not bound.
+ * Reading it is a read of the framework's common interface; an extension never subscribes to a
+ * harness's native context events for itself.
  */
 export interface ImplementationContext {
 	readonly config: Readonly<Record<string, unknown>>;
@@ -104,6 +113,8 @@ export interface ImplementationContext {
 	 * that resolves no such access hands over no member at all.
 	 */
 	readonly providerAccess?: ProviderAccess;
+	/** The process's one source of session observations, as the framework collected them (see above). */
+	readonly sessionObservations: SessionObservations;
 }
 
 /**

@@ -1,22 +1,22 @@
 /**
- * The per-session context readings pi's own bindings publish, and what the detail tree does with them
- * (P44; S1).
+ * The per-session context readings the extension reads, and what the detail tree does with them
+ * (S1; contract P4, P11, P12 — ticket 01).
  *
- * A session's context usage is reachable only from that session's own binding, so the extension's pi
- * half observes every binding it gets — the session this entry serves and every session the subagent
- * provider spawns through the same entry — and publishes the reading into the one runtime the process
- * shares. That is what the detail form's descendant rows draw: each session's own context beside its
- * own statistics, against the fixed display budget of *that* session's channel, without a
+ * A session's context usage is reachable only from that session's own binding, so the *adapter*
+ * reads it there — at the framework's own collection points, with the model the session ran at that
+ * instant — and the framework's own observation source holds the result for the process, keyed by
+ * the session id the host reports. This extension subscribes to no native context event of its own:
+ * what it does is read that source (`runtime.sessionContext`) and show each session's own context
+ * beside its own statistics, against the fixed display budget of *that* session's channel, without a
  * viewed-session outlet and without anything reaching the storage root.
  *
  * The seam is the framework's own public consumption: the extension's real definition is bound through
- * the framework's real pi adapter, the runtime is the one `createModelCostRuntime` builds, the
- * observation is the production `observeSessionContext` and the drawing is the production
- * `attachModelCostWidget`. Two bindings share one runtime here because that is what two sessions of one
- * pi process are: each session's own binding publishes into the process's readings, and the reading a
- * descendant published is what the session it belongs to is drawn beside. The storage root is the one
- * fact this file states for itself, because the framework reads one extension's configuration once per
- * process and a suite in a shared process must name its own.
+ * the framework's real pi adapter, the runtime is the one `createModelCostRuntime` builds — handed the
+ * source the framework collected into — the reading arrives because the extension observes the
+ * framework's context deliveries, and the drawing is the production `attachModelCostWidget`. Two
+ * bindings share one runtime here because that is what two sessions of one pi process are: each
+ * session's own binding reports its own facts into the process's readings, and the reading a
+ * descendant reported is what the session it belongs to is drawn beside.
  *
  * What it cannot establish here is a real host's own lineage of an in-process spawned session: the
  * controlled surface states the facts a case delivers. The real process paths — the shipped assembly,
@@ -27,7 +27,7 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
 import { MODEL_COST } from "../../extensions/model-cost/definition";
-import { MODEL_COST_HARNESS, observeSessionContext } from "../../extensions/model-cost/harnesses/pi";
+import { MODEL_COST_HARNESS } from "../../extensions/model-cost/harnesses/pi";
 import { attachModelCostWidget } from "../../extensions/model-cost/harnesses/pi/widget";
 import type { ConsumptionDocument } from "../../extensions/model-cost/shared-logic/consumption-document";
 import type { ModelPricingData } from "../../extensions/model-cost/shared-logic/model-data";
@@ -128,6 +128,8 @@ interface Fixture {
 	readonly runtime: ModelCostRuntime;
 	readonly main: ControlledPiSurface;
 	readonly child: ControlledPiSurface;
+	/** Binds one further surface of this same process, as a later session of it would be. */
+	bindFurther(surface: ControlledPiSurface): void;
 }
 
 /**
@@ -156,6 +158,10 @@ function fixture(): Fixture {
 				harness: HARNESS,
 				data: DATA,
 				now: () => CLOCK_AT,
+				// The source the framework collected into: every binding of this process reports its own
+				// session's readings there, and the runtime reads them instead of subscribing to any native
+				// context event of its own.
+				sessionObservations: context.sessionObservations,
 			});
 			return runtime.implementation;
 		},
@@ -167,13 +173,20 @@ function fixture(): Fixture {
 	}
 	const built = runtime as ModelCostRuntime;
 	// One process, one UI: both bindings register with the same boundary wait, exactly as the shipped
-	// assembly hands the process's one timer to every frontend it attaches.
+	// assembly hands the process's one timer to every frontend it attaches. The readings themselves are
+	// the framework's now — the bindings above registered the collection points because this extension
+	// observes the framework's context deliveries — so this half attaches its own drawing alone.
 	const uiBoundaryTimer = uiBoundaryTimerOf(built);
-	observeSessionContext(main.api, built);
 	attachModelCostWidget(main.api, built, uiBoundaryTimer);
-	observeSessionContext(child.api, built);
 	attachModelCostWidget(child.api, built, uiBoundaryTimer);
-	return { runtime: built, main, child };
+	return {
+		runtime: built,
+		main,
+		child,
+		bindFurther: surface => {
+			if (!bind(surface.api).bound) throw new Error("the model-cost binding was refused");
+		},
+	};
 }
 
 /** Every line of one drawing that carries the given text. */
@@ -185,7 +198,7 @@ afterEach(() => {
 	for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
 });
 
-describe("the extension publishes each session's own context reading into the one process runtime (P44)", () => {
+describe("the extension reads each session's own context from the framework's observation source (P4, P11, P12)", () => {
 	test("every binding of the process publishes its own reading into the one runtime", () => {
 		const { main, child, runtime } = fixture();
 		// The binding of the session this entry serves publishes its own reading when its session starts,
@@ -231,24 +244,22 @@ describe("the extension publishes each session's own context reading into the on
 		});
 	});
 
-	test("the observation is given up with the binding that made it", () => {
-		const { main, child, runtime } = fixture();
-		// This surface's own observation, so the release below is the only registration it has.
-		const observed = controlledPiSurface();
-		const release = observeSessionContext(observed.api, runtime);
-		observed.sessionStarts(CHILD_HOST, "new");
-		expect(runtime.sessionContext.read(CHILD.sessionId)?.tokens).toBe(90_000);
-
-		// The released observation is given up: the registrations it made are gone, so a later reading of
-		// the same session is not observed, and the last one it published stands.
-		release();
-		observed.turnSettles({ ...CHILD_HOST, context: { tokens: 300_000, contextWindow: 1_000_000 } }, { input: 300_000, output: 0 });
-		expect(runtime.sessionContext.read(CHILD.sessionId)?.tokens).toBe(90_000);
-		// A binding that still holds its own observation is untouched by that release.
-		main.sessionStarts(MAIN_HOST, "new");
+	test("a binding that attaches later already reads the reading collected before it (P4)", () => {
+		const { main, runtime, bindFurther } = fixture();
+		// The first binding's session is started and reports its own context there.
+		main.sessionStarts(MAIN_HOST);
 		expect(runtime.sessionContext.read(MAIN.sessionId)?.tokens).toBe(1_000);
-		// The fixture's own binding of the child session is untouched too.
-		child.turnSettles({ ...CHILD_HOST, context: { tokens: 400_000, contextWindow: 1_000_000 } }, { input: 400_000, output: 0 });
-		expect(runtime.sessionContext.read(CHILD.sessionId)?.tokens).toBe(400_000);
+
+		// A further binding of the same process attaches now — a session this entry is bound to after
+		// another one already reported — and it states nothing of its own: no start, no message, no
+		// round. The reading its display reads for the session that was already there is the one the
+		// framework collected, because the source is the framework's rather than the binding's.
+		const late = controlledPiSurface();
+		bindFurther(late);
+		expect(runtime.sessionContext.read(MAIN.sessionId)).toEqual({
+			tokens: 1_000,
+			provider: "official",
+			model: "model-alpha",
+		});
 	});
 });

@@ -53,8 +53,22 @@
  * This module is harness-independent: it reads and writes no State and names no native API.
  */
 import type { ExtensionDefinition } from "../core/definition";
-import type { RoundDelivery, RoundEvent, RoundObservation, SubscriptionGroup } from "../core/protocol";
+import type { SessionObservations } from "../core/observations";
+import type { AgentActivity, RoundDelivery, RoundEvent, RoundObservation, SubscriptionGroup } from "../core/protocol";
 import { dispatchToGroups } from "./subscriptions";
+
+/**
+ * The activity one dispatched round edge leaves its session in.
+ *
+ * The derivation belongs to the activity axis (`behaviors/session-activity.ts`, its
+ * `ACTIVITY_OF_EDGE`) once both axes land together; this inline map is that one rule's placeholder
+ * so that the framework's own observation source can hold the reading today. Only ever one of the
+ * two: an edge moves the source through this map *or* the axis moves it through its own.
+ */
+const ACTIVITY_OF_EDGE: Readonly<Record<RoundEvent["kind"], AgentActivity>> = {
+	round_start: "working",
+	round_end: "idle",
+};
 
 /**
  * The round identities one binding has observed for the actual sessions it serves.
@@ -111,6 +125,15 @@ export interface RoundSynthesisInputs {
 	readonly lives: RoundLives;
 	/** The subscription groups an edge is offered to, in declaration order. */
 	readonly groups: readonly SubscriptionGroup[];
+	/**
+	 * The process's session observation source, when this binding records its edges into it.
+	 *
+	 * A definition that consumes the framework's observations keeps this source's own activity
+	 * current, so a consumer attaching later reads the activity the session is really in rather than
+	 * waiting for a further edge. A binding that observes nothing the source holds passes none, and
+	 * no reading is recorded.
+	 */
+	readonly observations?: SessionObservations;
 	/** Reports a handler's failure or an unarrangeable re-check outside model context. */
 	readonly reportFailure: (message: string) => void;
 	/** Arranges one callback on the harness's next task; see {@link HarnessPort.nextTask}. */
@@ -132,7 +155,7 @@ export interface RoundSynthesisInputs {
  * and an edge is dispatched through it so that bookkeeping and subscribers always agree.
  */
 export function createRoundSynthesis(inputs: RoundSynthesisInputs): RoundSynthesis {
-	const { definition, lives, groups, reportFailure, nextTask, delivering } = inputs;
+	const { definition, lives, groups, reportFailure, nextTask, delivering, observations } = inputs;
 	/** The settle each session is waiting to have confirmed, by that session's identity. */
 	const candidates = new Map<string, RoundObservation>();
 
@@ -150,6 +173,9 @@ export function createRoundSynthesis(inputs: RoundSynthesisInputs): RoundSynthes
 			groups,
 			reportFailure,
 		);
+		// The reading this edge leaves the session in, recorded after the edge was applied so the
+		// source and the subscribers agree on what the edge left behind.
+		observations?.observeActivity(observation.session.sessionId, ACTIVITY_OF_EDGE[kind]);
 	};
 
 	/**
