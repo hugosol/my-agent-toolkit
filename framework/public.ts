@@ -87,6 +87,7 @@ export { HttpConfigurationError, type HttpRequestOptions, request } from "./modu
  */
 export type {
 	ActionDelivery,
+	AgentActivity,
 	CanAcceptInput,
 	CatalogPrice,
 	CatalogPriceSource,
@@ -112,6 +113,11 @@ export type {
 	RoundEventHandlers,
 	SemanticEvent,
 	SemanticEventHandlers,
+	SessionActivityDelivery,
+	SessionActivityEvent,
+	SessionActivityEventHandler,
+	SessionActivityEventHandlers,
+	SessionActivityObservation,
 	SessionEndReason,
 	SessionEvent,
 	SessionEventDelivery,

@@ -189,3 +189,37 @@ describe("the pi adapter's run-cycle facts synthesize the Round axis (P18)", () 
 		expect(surface.edges).toEqual(["round_start", "round_end"]);
 	});
 });
+
+describe("a session's own end is not the same fact as leaving it (S1, S2; P33)", () => {
+	test("switching away from a session that is still working confirms nothing of its pending settle", () => {
+		const surface = boundPiSurface();
+		const left = workingSession({ sessionId: "pi-sess-left", name: "pi left" });
+		const entered = workingSession({ sessionId: "pi-sess-entered", name: "pi entered", idle: true });
+
+		surface.sessionStarts(left, "startup");
+		surface.runStarts(left);
+		// The run settled while the session's own facts still say it is busy: an end candidate, which the
+		// framework holds and re-checks rather than confirming where the native callback returned.
+		surface.runSettles(left);
+
+		// The operator leaves for another session: the session being left ends as a transfer, and the one
+		// entering starts under its own identity.
+		surface.sessionStarts(entered, "startup");
+
+		// The re-check now runs against the session that was left. A transfer is *not* that session's own
+		// end — the host reports its own shutdown separately — so nothing here establishes rest, the
+		// candidate stays unconfirmed and no Round ends. A mapping that read the transfer as the session
+		// being over would end the Round here, while the session it names is still working.
+		surface.nextTask();
+		expect(surface.edges).toEqual(["round_start"]);
+		expect(surface.sessions.map(entry => entry.event.kind)).toEqual(["session_start", "session_end", "session_start"]);
+		expect(surface.sessions[1]?.event).toEqual({ kind: "session_end", reason: "transferred" });
+
+		// The session's own facts coming to rest are what ends its Round: that end arrives after the
+		// switch, exactly once, and the Round it closes is the one the switch never closed.
+		left.idle = true;
+		surface.runSettles(left);
+		surface.nextTask();
+		expect(surface.edges).toEqual(["round_start", "round_end"]);
+	});
+});

@@ -518,6 +518,89 @@ export interface RoundObservation {
 export type RoundEventHandlers = Readonly<Partial<Record<RoundEvent["kind"], RoundEventHandler>>>;
 
 /**
+ * One actual session's current agent activity, in the framework glossary's vocabulary: `working`
+ * while a continuous period of work remains ongoing, `idle` once nothing remains to continue it.
+ *
+ * It is the framework's own answer and never a harness's: an adapter reports run-cycle facts
+ * ({@link RoundObservation}) and the framework's synthesis decides whether a Round is open for that
+ * session, which is the whole of this value. A harness's native run state tells a different story —
+ * it reports a run over before that run's work has unwound — so reading it directly would show a
+ * session idle while it is still retrying, still waiting on a job it holds, or still about to
+ * continue.
+ */
+export type AgentActivity = "working" | "idle";
+
+/**
+ * One activity observation: the reading one actual session is now in, beside the facts that name the
+ * session it belongs to.
+ *
+ * It is an *observation* rather than an edge — it states the reading a session is in instead of a
+ * transition it crossed — so one shape serves both the session this process watched work and one
+ * whose reading was obtained elsewhere, such as through the framework's local access when the
+ * harness ran that session in another process. The reading itself is always the framework's:
+ * whichever path carried it, it is the answer the round axis reached where that session's facts were
+ * observed, and nothing here re-decides it.
+ */
+export interface SessionActivityObservation {
+	/**
+	 * The actual session this reading is about: its identity, its direct parent and its latest name.
+	 *
+	 * It is not the owner below: a subagent's reading names the subagent's own session here while its
+	 * owner is the top-level main session it follows, which is what lets a per-session subscription
+	 * keep the two apart and an owner-scoped one stay unmoved by the child.
+	 */
+	readonly session: SessionFacts;
+	/** The owner whose agent this reading concerns, as the facts that carried it resolved it. */
+	readonly owner: OwnerReference;
+	/** The session's activity, as the framework's round axis states it. */
+	readonly activity: AgentActivity;
+	/** Whether the session this reading is about has a UI, as it was resolved. */
+	readonly hasUI: boolean;
+	/** The transport this reading's extension feedback is published through. */
+	readonly feedback: FeedbackTransport;
+}
+
+/**
+ * The activity axis's one event kind: one actual session's activity, delivered where it moved.
+ *
+ * There is no edge pair here and none is implied. Activity is a *reading* — a session is working or
+ * it is idle — so what is delivered is the reading itself, and only where it changed: a session that
+ * stays in the reading it was already delivered in produces nothing, whether the fact behind it was a
+ * repeated native signal or an observation stating what this process already holds. The transition
+ * that moves it stays the round axis's own: a Round the framework opens for a session is that
+ * session working, and a Round it has ended is that session idle.
+ */
+export type SessionActivityEvent = { readonly kind: "session_activity" };
+
+/**
+ * The facts one activity observation carries to the subscribed handler.
+ *
+ * Like a round edge it withholds nothing an extension may not see, so the same value that moves the
+ * reading is the value that reaches the handler: the reading, the session it belongs to, the owner
+ * scope it concerns, the faithful `hasUI` fact and the unified extension feedback channel — the same
+ * seams every other handler delivery carries — and nothing else. It is no arm path: an observation of
+ * activity grants no capability and drives no effect.
+ */
+export interface SessionActivityDelivery extends SessionActivityObservation {
+	/** The event itself: that this session's activity was observed, carrying the reading above. */
+	readonly event: SessionActivityEvent;
+}
+
+/** One extension handler for the activity axis. */
+export type SessionActivityEventHandler = (delivery: SessionActivityDelivery) => void | Promise<void>;
+
+/**
+ * The activity handlers one assembly injects, keyed by the kind each subscribes to.
+ *
+ * The alias names this axis's half on its own, for an assembly that keeps the axes' subscriptions
+ * apart; it is the same injected-handler surface every other axis uses, so a definition stays plain
+ * data either way.
+ */
+export type SessionActivityEventHandlers = Readonly<
+	Partial<Record<SessionActivityEvent["kind"], SessionActivityEventHandler>>
+>;
+
+/**
  * One semantic Turn event: the two edges of a Turn, one observable model request/response cycle.
  *
  * A `turn_start` is delivered when the harness really begins a model request; a `turn_end` when
@@ -783,14 +866,18 @@ export interface UserInputDelivery {
 export type UserInputEventHandler = (delivery: UserInputDelivery) => void | Promise<void>;
 
 /**
- * Any semantic lifecycle event the framework models: the session axis, the round axis, the Turn
- * axis and the input axis.
+ * Any semantic lifecycle event the framework models: the session axis, the round axis, the activity
+ * axis, the Turn axis and the input axis.
  *
  * The axes are orthogonal and never merged — entering a session is not starting work, starting
  * work does not change which session is current, a Turn is not a Round, and input arriving is not
  * itself work — so this union exists only where one assembly injects its handlers for all of them.
+ * The activity axis is the one *derived* member: it states the reading the round axis's own
+ * transitions leave a session in, so it is never a second decision about which fact is a
+ * transition, and observing activity is not observing a round: it carries no billing lifecycle
+ * fact, dispatches no edge and grants no capability.
  */
-export type SemanticEvent = SessionEvent | RoundEvent | TurnEvent | UserInputEvent;
+export type SemanticEvent = SessionEvent | RoundEvent | SessionActivityEvent | TurnEvent | UserInputEvent;
 
 /** The delivery each semantic event kind carries, so a handler's kind and its facts stay paired. */
 export interface SemanticEventDeliveryMap {
@@ -800,6 +887,8 @@ export interface SemanticEventDeliveryMap {
 	readonly session_facts: SessionEventDelivery;
 	readonly round_start: RoundDelivery;
 	readonly round_end: RoundDelivery;
+	/** The activity axis's one kind: the reading one session is in, delivered where it moved. */
+	readonly session_activity: SessionActivityDelivery;
 	readonly turn_start: TurnStartDelivery;
 	readonly turn_end: TurnEndDelivery;
 	readonly user_input: UserInputDelivery;
@@ -809,20 +898,21 @@ export interface SemanticEventDeliveryMap {
  * The semantic handlers one assembly injects for one subscription group, keyed by the event each
  * subscribes to.
  *
- * This is the whole handler surface of one group: the session axis, the round axis, the Turn axis
- * and the input axis arrive here together, exactly as a directed command's implementations arrive
- * through `CommandActions`. A definition stays plain data either way: it names no handler, and an
- * event kind with no entry subscribes nothing.
+ * This is the whole handler surface of one group: the session axis, the round axis, the activity
+ * axis, the Turn axis and the input axis arrive here together, exactly as a directed command's
+ * implementations arrive through `CommandActions`. A definition stays plain data either way: it
+ * names no handler, and an event kind with no entry subscribes nothing.
  *
  * The session axis is a *reconciliation* trigger as well as a subscription — the framework
  * applies its own behavior for every delivery whether or not a handler arrived — while the round,
- * Turn and input axes are subscription only: three-value agent state is not framework State
- * (contract P6), a Turn changes nothing the framework owns beyond the identity bookkeeping it does
- * before a handler runs, and a user input crosses no boundary at all: it is a fact about the
- * session, not a transition of it. A `session_facts` delivery is subscription only as well,
- * because a session whose facts were re-reported crossed no boundary: nothing of the framework's
- * moves, so its own behavior is skipped and only the handlers that subscribe to that kind are
- * reached.
+ * activity, Turn and input axes are subscription only: three-value agent state is not framework State
+ * (contract P6), an activity reading states that same condition and drives no lifecycle of its own —
+ * not even the one its own Round edge drove — a Turn changes nothing the framework owns beyond the
+ * identity bookkeeping it does before a handler runs, and a user input crosses no boundary at all: it
+ * is a fact about the session, not a transition of it. A `session_facts` delivery is subscription only
+ * as well, because a session whose facts were re-reported crossed no boundary: nothing of the
+ * framework's moves, so its own behavior is skipped and only the handlers that subscribe to that kind
+ * are reached.
  *
  * Which deliveries reach a handler is its group's {@link ObservationScope}, not this type: an
  * `owner` group receives the owner session's own deliveries only, and a `session` group receives

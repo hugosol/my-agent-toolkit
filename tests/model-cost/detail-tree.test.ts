@@ -556,6 +556,43 @@ describe("the detail form's static tree marks the session that is working right 
 	});
 });
 
+describe("leaving a session's position writes nothing and keeps that session's reading (P33)", () => {
+	test("a switch and a view that moved end no Round: no save, no idle reading, the emphasis kept", async () => {
+		const bound = await bind();
+		/** The row the tree draws under one name, or nothing while it draws none. */
+		const rowOf = (name: string): AgentTreeRow | undefined =>
+			(bound.runtime.presentation.of(MAIN_TARGET).agentTree ?? []).find(row => row.name === name);
+		/** The session the switch enters: its own identity under its own owner, unrelated to the one left. */
+		const entered: SessionFacts = { sessionId: "session-other", kind: "main", name: "另一会话", unavailable: [] };
+		const enteredOwner: OwnerReference = { kind: "owner", key: "main:detail-other" };
+
+		// A subagent of this entry is working, then pauses having already scheduled its continuation.
+		bound.double.deliverRound(OWNER, { event: { kind: "round_start" }, session: CHILD });
+		bound.double.deliverRound(OWNER, { event: { kind: "round_end" }, session: CHILD, willContinue: true });
+		expect(rowOf("子代理")?.nameEmphasis).toBe("active");
+		const before = readFileSync(bound.consumptionFile, "utf8");
+
+		// The operator leaves the session that is displayed: an ordinary switch ends it as a transfer, the
+		// session it enters starts under its own owner, and the view publishes the new target's facts.
+		bound.double.deliverSession(OWNER, { event: { kind: "session_end", reason: "transferred" }, session: MAIN });
+		bound.double.deliverSession(enteredOwner, { event: { kind: "session_start", reason: "resume" }, session: entered });
+		bound.double.deliverSession(enteredOwner, { event: { kind: "session_facts" }, session: entered });
+
+		// Nothing ended the subagent's Round, so nothing was measured and nothing was committed: the
+		// document is byte-for-byte what it was, and the reading of the session that was left behind is
+		// still its own working one — a view that moved is not that session's idleness.
+		expect(readFileSync(bound.consumptionFile, "utf8")).toBe(before);
+		expect(bound.runtime.sessionActivity.read("session-child")).toBe("working");
+		expect(rowOf("子代理")?.nameEmphasis).toBe("active");
+
+		// The continuation really comes to rest afterwards: the Round the switch left open is the one that
+		// ends here, and only then does the reading turn idle and the emphasis clear.
+		bound.double.deliverRound(OWNER, { event: { kind: "round_end" }, session: CHILD, quiescent: true });
+		expect(bound.runtime.sessionActivity.read("session-child")).toBe("idle");
+		expect(rowOf("子代理")?.nameEmphasis).toBeUndefined();
+	});
+});
+
 describe("the detail form's static tree: the started-on facts a descendant row states (P26, P27, P28, P29)", () => {
 	test("a descendant row states the one snapshot its session began on, `?` for each part nothing proved", async () => {
 		// Four actual sessions: one child the document recorded as having begun on a model and a level,
