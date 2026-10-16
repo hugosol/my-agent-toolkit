@@ -121,6 +121,8 @@ export interface PiSurfaceEntry {
 	readonly type?: string;
 	readonly message?: { readonly role?: string };
 	readonly customType?: string;
+	/** What a custom entry of this extension carries, as pi recorded it (`SessionManager` branch data). */
+	readonly data?: unknown;
 }
 
 /** One message the adapter published on the host's shared bus, in emission order. */

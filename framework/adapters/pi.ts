@@ -10,13 +10,14 @@ import { isImplementationDisposed } from "../behaviors/lifecycle";
 import type { ExtensionAssembly, ExtensionImplementation, ImplementationContext } from "../core/assembly";
 import { activationField, stateInheritance, statePersistence } from "../core/definition";
 import type { ExtensionDefinition } from "../core/definition";
+import type { FollowedAccessReader } from "../core/followed-owners";
 import type {
 	BindingResult, CatalogPrice, CatalogPriceSource, FeedbackLevel, FeedbackTransport, HarnessPort,
 	MarkerTransport, NoticeTransport, OwnerReference, ProviderAccess, SessionEndReason, SessionEvent,
 	SessionFacts, SessionStartReason, SessionStartup, TurnSignalFacts, UserInputDelivery,
 } from "../core/protocol";
 import { StateStore } from "../core/state";
-import { createOwnerAccessPublisher } from "../modules/local-access";
+import { createOwnerAccessPublisher, openOwnerAccess } from "../modules/local-access";
 import { observeRounds } from "./pi/round";
 import { createPiSubagentIntegration, type PiSubagentIntegration } from "./pi/nicobailon";
 import {
@@ -664,22 +665,33 @@ export interface PiAssembly extends ExtensionAssembly {
 
 /** Uses the same binding and assembly contract as the OMP adapter. */
 export function piAdapter(definition: ExtensionDefinition, options: PiAssembly = {}): PiExtensionFactory {
-	// The owners this process serves are readable from a session pi ran elsewhere, which is the one
-	// thing a subagent provider that spawns `childEntry` out of process needs to follow a declared
-	// value. Two things have to hold for that access to be offered: this assembly states an entry
-	// (so this host spawns sessions at all — a host whose sessions are all bindings here states
-	// none), and the extension declares `follow` (so a subagent reads its owner's value rather than
-	// the declared default). Built here for the process, because the endpoint is the process's;
-	// building it does nothing, and the first owner session that needs it is what offers one.
-	const localAccess = options.childEntry === undefined || stateInheritance(definition) !== "follow"
-		? undefined
-		: createOwnerAccessPublisher({
+	// The two halves of the framework's local access are built together, because they are one thing:
+	// the owners this process serves are readable from a session pi ran elsewhere, and a session pi
+	// ran elsewhere reads the owner it follows from whichever process serves it. Two conditions have
+	// to hold for either to happen — this assembly states an entry (so this host spawns sessions at
+	// all; a host whose sessions are all bindings here states none) and the extension declares
+	// `follow` (so a subagent reads its owner's value rather than the declared default). Built here
+	// for the process, because the endpoint is the process's; building either does nothing, and the
+	// first session that needs one is what offers or reaches it.
+	const spawning = options.childEntry !== undefined && stateInheritance(definition) === "follow";
+	const localAccess = spawning
+		? createOwnerAccessPublisher({
 				report: message => process.stderr.write(`${definition.displayName}: ${message}\n`),
-			});
+			})
+		: undefined;
+	// The reading half is the seat this extension serves in the owner the delivery named: the same
+	// extension id on both ends is what makes the pair a target, and the owner key the adapter
+	// resolved is what makes it this owner's access rather than another's.
+	const follow: FollowedAccessReader | undefined = spawning
+		? {
+				open: (owner, { waitMs }) => openOwnerAccess({ target: { extension: definition.id, owner }, waitMs }),
+			}
+		: undefined;
 	const state = new StateStore({
 		field: activationField(definition),
 		persistence: statePersistence(definition),
 		...(localAccess === undefined ? {} : { localAccess: { extension: definition.id, publisher: localAccess } }),
+		...(follow === undefined ? {} : { follow }),
 	});
 	// pi's own model prices, one set for the whole process: every binding of this assembly records the
 	// registry of the contexts its own deliveries come from, and the query the framework hands an
@@ -710,6 +722,15 @@ export function piAdapter(definition: ExtensionDefinition, options: PiAssembly =
 	};
 	return pi => {
 		const subscriptions: Array<() => void> = [];
+		// The end of this process's own session run releases what this extension's reads keep open: a
+		// followed access is this process's connection to the process serving that owner, and the
+		// session that made these reads is gone. A reload is the same ending — the entry is loaded
+		// again and builds its own store — so both are released here rather than left to the
+		// process's exit. A session switch (`new`, `resume`, `fork`) is not: the process keeps
+		// running and the owner a delivery names next is read through its own access.
+		subscriptions.push(pi.on("session_shutdown", event => {
+			if (event.reason === "quit" || event.reason === "reload") state.dispose();
+		}));
 		const port = piPort(pi, definition, harnessPrices, harnessAccess, positions, integration,
 			release => subscriptions.push(release));
 		integration?.attach(pi, port.reportDiagnostic);

@@ -130,6 +130,20 @@ class MarkerArea {
 		return speaker !== undefined && speaker.active(seat);
 	}
 
+	/**
+	 * Whether the registration answering one seat reads that Owner through the framework's local
+	 * access rather than from a cell this process holds.
+	 *
+	 * It is the one thing that separates a seat whose change a transition *here* already published
+	 * from one whose change happened in the process serving the Owner: the latter has no local
+	 * transition, so a publication this process makes is the first that can carry it.
+	 */
+	follows(id: string, seat: OwnerReference): boolean {
+		if (seat.kind === "unresolved") return false;
+		const speaker = this.#speaker(id, seat);
+		return speaker !== undefined && speaker.state.follows(seat.key);
+	}
+
 	/** The lines the area shows for one seat: active extensions' texts, ordered by id. */
 	lines(seat: OwnerReference): readonly string[] {
 		const lines: Array<{ readonly id: string; readonly text: string }> = [];
@@ -259,7 +273,13 @@ export function publishMarkerOnRun(
 	seat: MarkerSeat,
 ): void {
 	if (definition.marker === undefined) return;
-	if (!markerArea().shows(definition.id, run.owner)) return;
+	// A run this extension is not active in publishes nothing, because the transition that turned it
+	// off already removed its line. That holds for a seat whose value this process holds; for one
+	// another process serves it does not: the change that added or removed the line happened over
+	// there, and no publication of this process carried it. This run is then the first chance this
+	// process has to render what the value now is, so the area is published either way.
+	const area = markerArea();
+	if (!area.shows(definition.id, run.owner) && !area.follows(definition.id, run.owner)) return;
 
 	publishMarkerArea(run.markers, seat(run.owner));
 }

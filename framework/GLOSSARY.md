@@ -173,7 +173,7 @@ The per-field axis deciding whether a declared State value is written to the own
 _Avoid_: extension storage, concrete persistence backend, UI state
 
 **Subagent State inheritance（子代理 State 继承）**:
-The per-field axis deciding how a subagent relates to its owner's declared State value: `follow` — the subagent reads the owner's current value live; `none` (the default) — the subagent reads the field's declared default. Other session-owned values, such as each session's init-injection progress, remain independent.
+The per-field axis deciding how a subagent relates to its owner's declared State value: `follow` — the subagent reads the owner's current value live, which for a session the harness ran in another process means reading it through the framework's local access and answering the field's declared default while that access is not reached; `none` (the default) — the subagent reads the field's declared default. Other session-owned values, such as each session's init-injection progress, remain independent.
 _Avoid_: whole-extension state copy, creation-time snapshot, process-global state, extension loading, MCP inheritance, default inheritance
 
 **Owner（所属主会话 / owning main session）**:
