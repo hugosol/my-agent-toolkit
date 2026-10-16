@@ -161,3 +161,21 @@ OMP_BOT_BINARY="E:/Developer/myhub/omp-bot/backend/target/release/omp-bot.exe" b
 1. **本票改过的那处陈述是确定的，不是竞态**：五次新跑里并发序列每次都得出 `requests=2`、`draws=33`，六次观测（五次新跑 + 已提交工件）无一次不同；同一批六次观测里唯一波动的是「结算失败的调用数」（15/16/17），也就是 §3 归入噪声、`6802bef` 从可比差异移出的那一列——这条经验数据支持该口径修正。
 2. **工作树交给集成方时是干净的**：`bun.lock` 与两份 `host-patches/*/patch.diff` 在 `git status` 里显示为 ` M`，但三者的文件字节数与 `HEAD` blob **相等**（`11131` = `git cat-file -s HEAD:bun.lock`）、带过滤器的 hash 与 `HEAD` blob 逐个相同（`git hash-object --path=…`）、`git add --dry-run` 无任何内容可暂存：是 `core.autocrlf=true` 的检出 stat 缓存现象，**没有未提交内容**，也不是本票改动（§2 说明 1 的同一现象）。
 3. **§3 的三条归属理由逐条对过 diff，不只是推断**：`git diff --stat 59a0ed7 HEAD -- extensions/model-cost/` 列出的 14 个文件里**没有** `provider-balance.ts` 也没有 `provider-refresh.ts`，所以并发序列的 `requests 1→2` 不是提供方代码变化；`request-accounting.ts` 的 `roundEnded` 在 `delivery.session.kind === "sub"` 分支里调用 `announce()`（该文件第 1076 行，与本票 A/B 日志中"同一时间线、同一请求数下 +2 draws"对应），即每个**子代理 Round 结束**都新公告一次，机制归属成立；同一 diff 移除了 `SubagentRuntimeDelivery` 导入，与 `events 24→23` 的交付组合变化一致。仍未做的是把 +2 draws 定位到具体哪几次渲染（§6 已列）。
+
+## 9. 第二次接手复核（源状态 `385dd6d`，无源码改动；只补本票公开入口的第一手观测）
+
+接手方（第三实例）移交前先核对：`git diff --name-only 6420e21 385dd6d` 只列出 `.scratch/` 下的文件，**被测源状态与 §8 那次复核完全相同**，因此按仓库「相同来源状态未变化才复用旧证据」的约定原样复用 §8 的所属分区与共同消费者结果（`tests/harness-dock` 93 pass / 0 fail、`tests/model-cost` 463 pass / 0 fail、`tests/framework` 481 pass / 0 fail，日志见 §8 表），本节只补本票公开入口的第一手重跑，不重复昂贵分区。
+
+条件：win32/x64、bun 1.4.2、隔离精确安装 OMP `18.5.0`（`framework/docs/harness-baseline.json` 的 `version`；`host-patches/` 下的补丁**不适用**于本票的真实宿主检查，dock 用例只用未打补丁的那份安装）、无 provider 凭据——模型请求与余额查询全部由本机 capture endpoint 回答。
+
+| 命令 | 退出 | 结果 | 日志 |
+| --- | --- | --- | --- |
+| `bun run typecheck` | 0 | `tsc --noEmit` 无诊断 | `logs/22-takeover-c-typecheck.log` |
+| `bun run baseline:efficiency --out …/logs/22-takeover-c-after.json --label takeover-c` | 0 | 七条序列 `every invariant held.`；instrument probe `{"operations":13,"documentReads":2,"documentPublishes":1,"lockOperations":7,"stagingOperations":2,"syncOperations":1}` | `logs/22-takeover-c-baseline.log` |
+| `bun run compare:efficiency -- --before 22-efficiency-after.json --after logs/22-takeover-c-after.json` | 0 | `none: every comparable figure of every sequence and window agrees.`；`every sequence delivered the same kinds the same number of times.`；复杂度 `EVIDENCE SUBTOTAL +10`（唯一差异是 `scripts/efficiency-comparison.ts 446 → 456`，即 `6802bef` 的口径说明，**产品面 `23772 → 23772 (+0)`**） | `logs/22-takeover-c-reproduction.txt` |
+| `bun run compare:efficiency -- --before 01-efficiency-baseline.json --after 22-efficiency-after.json` | 0 | 复现 §3/§4：并发序列 `requests 1→2`、`draws 30→33`、`events 24→23`，七条序列窗口级文件成本逐列相同；产品面 `19287 → 23772` | `logs/22-takeover-c-comparison.txt` |
+| `bun test tests/harness-dock/efficiency-effects.test.ts`（真实宿主，跑了两次） | 0 | 两次都是 **3 pass / 0 fail**、21 expect()（12.76s / 12.17s）；记录到的外部效果与 §5 逐个相同（存储根 13 次操作且明细逐条相同、空闲窗口 0 效果、frames 10 / 18、arrivals `["balance","model"]` 与 `["balance","model","model","model"]`、无 `net.createServer`） | `logs/22-takeover-c-effects.log` |
+
+- **两次真实宿主运行互相一致**，也与 §5/§8 的已提交计数一致：§5 的"零"结论（健康空闲 0 效果、同进程无监听端点、子代理在侧无第二次根预取/根 UI）在交接态上重复成立，不是一次性的。
+- 本次新跑工件自报的 `uncommitted paths` 含 `M bun.lock` 与两个 `host-patches/*/patch.diff`：§8 已核对这三者在工作树中的**字节与 `HEAD` blob 逐一相等（LF）**，是 `core.autocrlf=true` 的 stat 缓存现象，也正是 dock 补丁/基线用例所需的字节；除此之外工作树无未提交内容（本次复核只新增本节与 `logs/22-takeover-c-*`）。本次采样工件 `logs/22-takeover-c-after.json` 与那次运行的日志一并保留，供离线复核该 `none` 结论。
+- **未覆盖项与 §6 相同，本节未新增**：`P51`/`P52`/`P53` 的人类判断未做（本票交付时保持未验收）；并发序列 `draws +2` 与主子例 `frames 33→18` 仍未逐渲染归因；pi 侧本机接入未做同样的记录器注入；证据范围仍限 win32/x64、bun 1.4.2、OMP 18.5.0（未打补丁）。
