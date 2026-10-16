@@ -57,7 +57,7 @@
     "revisionAtRecord": "73a76f6cf9091072c85d1fce3df6237b8330d716",
     "lockfile": {
       "path": "bun.lock",
-      "sha256": "9e9f4833eae6956d215f4a3e50a601791fcab43a828d5b263fa3b2e848415da9"
+      "sha256": "a5d37ab28396324eab85bcf6404c7cfb63c968925b7ae58378f8492bbea820e6"
     }
   },
   "oracle": {
