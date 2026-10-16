@@ -76,3 +76,52 @@ B（只去掉 `if (live(ctx))` 这一层、保留绘制路径的撤销）不产�
 - **OMP 真实宿主（dock）回归本 worktree 无法启动**：`tests/harness-dock/*` 在本 worktree 因 `host-patches/omp-18.5.0-viewed-session/patch.diff` 被检出为 CRLF 而报 `patch.diff touches no file`（`tests/harness-dock/host-patch-artifact.ts`）。该文件本票未改动，属既有环境条件；本票对 OMP 侧的证据是同一模块的 hermetic 分区（`boundary-timer.test.ts`，宿主管理 timer 的记录式替身）与 typecheck，未把 dock 通过算作已得。
 - **pi 前端把登记标为 UI 自己的那个会话**（`attach(render, host, true)`）：pi 的 context 不发布会话 kind，框架的 kind 也不到扩展自己的原生半边；本票据「只有发布 UI 的 binding 才登记、而 spawned 会话的 context 不发布 UI」这一宿主事实如此标注，未新增按名称/深度/句柄推断身份的路径。若将来 pi 出现第二个发布 UI 的会话，该标注需要按新的宿主事实重新评估。
 - **人工/外部确认**：真实终端可读性（P52）与真实账户（P53）不在本票；本票无凭据、许可或平台缺口。
+
+## 7. 集成同步与合并后全仓回归（本轮由集成 helper 执行）
+
+**同步状态**：宿主把本票分支合进 `pi-adapter`（集成提交 `1ccc44300ef99d7d9f73569aa59f9f60a8895fd9`）后把该提交合回本票开发分支，故本分支 HEAD 即 `1ccc443`，
+且 `git rev-parse HEAD pi-adapter` 同为该提交、两侧 tree 同为 `a76b095a01425e1417ce1e5a565f1543df131efd`（`git diff --stat pi-adapter HEAD` 空、`git rev-list --left-right --count pi-adapter...HEAD` = `0 0`）。
+提交关系：`1ccc443` 的父为 `140a88c`（合并前的集成 tip，即 18 的集成提交）与 `d060b8d`（本票末提交，父链 `de33c99` → `067c8fa` → `df00a19`）。
+
+**无冲突可解**：`git ls-files -u` 0 条未合并路径；本 worktree 的 gitdir（`E:/Developer/myhub/my-agent-toolkit/.git/worktrees/hyper-ticket-FdwVJ9`）内没有 `MERGE_HEAD`／rebase／cherry-pick 状态。
+
+**合入内容逐项核对**：`git diff --stat 140a88c HEAD` = **22 files / 818 insertions / 77 deletions**，与 `git diff --stat df00a19 d060b8d`（本票实现自身的改动）**逐项相同**；
+反方向 `git diff --stat d060b8d HEAD` 只有 18 轮在本分支之外记录的集成记录（`evidence/18-native-presentation.md` 与其三份日志、`implementation/18-native-presentation.md`），
+且 `git diff d060b8d HEAD -- extensions framework tests scripts entrypoints package.json tsconfig.json` **为空** —— 合入树里本票那 22 个文件的字节与本票分支逐一相同，本票的实现没有在合入时被改写。
+
+**按检出原样运行**（命令 `bun run test`，日志 `logs/19-season-boundary-integration.log`）：
+**1141 pass / 17 fail**（126 files / 1158 tests / 6201 expect() calls / 229.92s / exit 1）。17 例全为本机检出/布局前置项，且都落在本票合入**未触碰**的文件上
+（`tests/connect-bot/**`、`tests/harness-dock/**` 与本票 22 个文件交集为空），与 [17](17-budget-actions.md)、[18](18-native-presentation.md) 各集成轮记录的类别逐条一致：
+
+| 类 | 例数 | 文件 | 事实 |
+| --- | --- | --- | --- |
+| 缺真实面板二进制（未设 `OMP_BOT_BINARY`） | 5 | `budget-regression`、`harness-exit-budget`、`panel-registration-lifecycle` ×3 | 本 worktree 位于 `%TEMP%`，`tests/connect-bot/support/omp-bot.ts` 的默认同级路径 `…\Temp\omp-bot\backend\target\release\omp-bot.exe` 不存在（抛点在 `startOmpBot`） |
+| CRLF 检出使补丁物化失败 | 10 | `codex-response-artifact`、`combined-host-artifact`、`detail-tree`、`model-cost-codex-quota`、`model-cost-modes`、`model-cost-persistence`、`viewed-marker`、`viewed-session-host`、`viewed-session-total`、`viewed-session` | `host-patches/omp-18.5.0-{viewed-session,codex-response-boundary}/patch.diff touches no file`（`tests/harness-dock/host-patch-artifact.ts` 的 `patchTouchedFiles` 按 LF 切行） |
+| 锁文件 sha 按 LF 录制 | 2 | `baseline.test.ts`、`session-driver.test.ts` | 记录值 `a5d37ab2…` 逐字节等于 `HEAD:bun.lock` 的已提交 LF blob（11131 B）；工作区是同一内容的 CRLF 检出（`e7ed487b…`） |
+
+**归一后的全仓回归**（三处工作区文件还原为已提交 LF blob 字节——`bun.lock` `a5d37ab2…`、`viewed-session` `66195465…`、`codex-response-boundary` `4ec9ad0d…`，
+三份 sha256 与 `git cat-file blob HEAD:<path>` 逐一相等；并设 `OMP_BOT_BINARY=E:/Developer/myhub/omp-bot/backend/target/release/omp-bot.exe`）：
+命令 `bun run test` → **1187 pass / 0 fail**（126 files / 6787 expect() calls / 391.09s / **exit 0**，日志 `logs/19-season-boundary-integration-normalized.log`）。
+比原样多出的 **29** 例正是那 10 个 dock 文件在文件级失败后未注册的用例（与 17、18 两轮就同一组文件记录的 +29 相同）——
+即归一检出下这 10 个 dock 文件不再于文件级失败，其用例全部注册并通过；`.cache/omp-baseline/` 下 `18.5.0-codex-response-boundary`（18:28:39）、`18.5.0-viewed-session-codex-response`（18:28:54）、
+`18.5.0-viewed-session`（18:29:09）三个隔离前缀的写入时刻落在本轮运行窗口内（`18.5.0` 目录早于本轮，未被重写）。
+
+`bun run typecheck` → **exit 0**（无诊断，日志 `logs/19-season-boundary-integration-typecheck.log`）。
+两次运行期间被测源码与夹具未变：归一只改那三处工作区字节，未动 `extensions/**`、`framework/**`、`tests/**`、`scripts/**`。
+
+**本票新增分区的归属**：两轮 pass 数之差都恰为本票新增的 10 例——原样 1141 = 18 轮 1131 + 10，归一 1187 = 18 轮归一 1177 + 10；两轮中**没有一例失败**来自本票的 22 个文件（17 例失败全部落在上表三类文件上）。
+
+**本轮修复：无源码修复。** 17 例全属本机检出/布局前置项，无一条由本票合入引入；归一后零失败说明没有失败被这些环境例掩盖。
+行尾鲁棒的解析或 `.gitattributes` 属装配/宿主验证范围（同类记录见 [17](17-budget-actions.md)、[18](18-native-presentation.md)），不在本票内改动。本轮提交只有本文件、票据更新与三份日志。
+
+**运行后状态**：三处文件按字节恢复原 CRLF 检出状态（sha256 与运行前逐一相同：`bun.lock` `e7ed487b…`、`viewed-session` `057e01f6…`、`codex-response-boundary` `294b3727…`），
+`git status` 只余本轮记录改动；未操作集成工作区（`E:/Developer/myhub/my-agent-toolkit`）、未切换分支、未新建 worktree、未 reset、未调用 retro，也未自行合入 `pi-adapter`。
+
+**本轮对 §6 的更正**：§6 记的「OMP 真实宿主（dock）回归本 worktree 无法启动」是 CRLF 检出造成的**物化前置**，不是本票行为的问题——
+归一检出下 `tests/harness-dock/**` 的 10 个文件在合并后的树上物化、注册并通过（见上表与 +29）。§6 原文按实现轮记录保留，本轮的更正以本段为准。
+但本轮的 dock 通过仍**不构成**峰谷边界等待本身在真实 OMP 宿主上的断言（dock 用例不断言该等待的 arming/取消），本票对该行为的证据仍是
+本文 §2 的可控时钟 + 真实前端/生命周期与 `boundary-timer.test.ts` 的记录式托管 timer。
+
+**未因全仓绿而改变的限制**：§4.3 的真实峰谷边界自动重绘未实测、真实 pi TUI 观感（P52）与真实账户（P53）仍属最终独立门禁/人类验收；
+本轮的 `OMP_BOT_BINARY` 指向本机既有 release 构建（`E:/Developer/myhub/omp-bot/backend/target/release/omp-bot.exe`），不是本票构建或安装的产物。
+本票在合入与合并后回归通过后由集成负责置状态；最终整体验收仍归独立门禁（[25](../implementation/25-evidence-scope-audit.md) 与装配验收票）。
