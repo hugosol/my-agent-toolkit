@@ -21,6 +21,7 @@ import { bindExtension } from "../../../framework/behaviors/binding";
 import type { ExtensionFactory, ExtensionImplementation } from "../../../framework/core/assembly";
 import type { ConfigSource } from "../../../framework/core/config";
 import { activationField, statePersistence, type ExtensionDefinition } from "../../../framework/core/definition";
+import type { FollowedAccessReader } from "../../../framework/core/followed-owners";
 import type {
 	HarnessPort,
 	BindingResult,
@@ -300,6 +301,12 @@ export interface PortDoubleOptions {
 	 * being absent rather than a query that always answers nothing.
 	 */
 	readonly providerAccess?: ProviderAccess;
+	/**
+	 * How this double's store reads an owner another process serves, when a suite drives a `follow`
+	 * field the way a harness that spawns sessions out of this process does. Omitted models the
+	 * in-process assembly: every read is this process's own cell or the declared default.
+	 */
+	readonly follow?: FollowedAccessReader;
 }
 
 export function portDouble(options: PortDoubleOptions = {}): PortDouble {
@@ -310,6 +317,7 @@ export function portDouble(options: PortDoubleOptions = {}): PortDouble {
 		state ??= new StateStore({
 			field: activationField(definition),
 			persistence: statePersistence(definition),
+			...(options.follow === undefined ? {} : { follow: options.follow }),
 		});
 		return state;
 	};

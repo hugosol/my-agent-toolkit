@@ -5,8 +5,14 @@
  * semantic session changes. They never pair storage changes with capability revocation.
  * State accepts only its resolved declaration rules; each delivery supplies its own effects.
  * No harness context, extension definition or Marker area layout lives here.
+ *
+ * Reading is scoped like everything else here. An Owner this process holds reads its own cell
+ * (`view`); an Owner another process serves is read through the framework's local access
+ * (`followed`), which answers the declared default until that access is reached and never writes
+ * anything back. A store that follows nothing is the in-process one and reads no access at all.
  */
 import type { StatePersistence } from "./definition";
+import { FollowedOwners, type FollowedAccessReader } from "./followed-owners";
 import { OwnerLives } from "./owner-lives";
 import type { OwnerAccessPublisher, OwnerAccessSource } from "../modules/local-access";
 import type {
@@ -47,6 +53,14 @@ export interface StateRules {
 	 * such a process free of any endpoint.
 	 */
 	readonly localAccess?: StateLocalAccess;
+	/**
+	 * How this store reads the declared values of an Owner another process serves.
+	 *
+	 * A store built without one follows nothing: every read is this process's own cell or the
+	 * declared default, which is what a harness whose sessions are all bindings in this process
+	 * uses, and what keeps an extension that declares no `follow` free of any such read.
+	 */
+	readonly follow?: FollowedAccessReader;
 }
 
 /** The read-only current-value view; observing State grants no mutation authority. */
@@ -85,6 +99,7 @@ export class StateStore {
 	readonly #field: string;
 	readonly #persistence: StatePersistence;
 	readonly #localAccess: StateLocalAccess | undefined;
+	readonly #following: FollowedOwners | undefined;
 	readonly #cells = new Map<string, Map<string, StateValue>>();
 	/** Every Owner this store has served: a boundary it reconciled, or a cell it wrote. */
 	readonly #served = new Set<string>();
@@ -98,12 +113,46 @@ export class StateStore {
 		this.#field = rules.field;
 		this.#persistence = rules.persistence;
 		this.#localAccess = rules.localAccess;
+		this.#following = rules.follow === undefined ? undefined : new FollowedOwners(rules.follow);
 	}
 
 	view(ownerKey: string): StateView {
 		return {
 			read: field => this.#cells.get(ownerKey)?.get(field) ?? DEFAULT_STATE_VALUE,
 		};
+	}
+
+	/**
+	 * The declared value of an owner this process reads through the framework's local access.
+	 *
+	 * A cell this process holds wins, because that is the owner's own value where this process is
+	 * where the owner lives: an ordinary in-process read takes no access at all. Without one, the
+	 * value is what the owner's access last stated, and a field the access states nothing about —
+	 * or an owner no access has been reached for yet — reads as the field's declared default. That
+	 * fallback is a value, not a reading: it is not written anywhere, it is not the Owner's value
+	 * while the access is out of reach, and the read reaches the Owner again as soon as the access
+	 * is back.
+	 */
+	followed(ownerKey: string): StateView {
+		return {
+			read: field => {
+				const local = this.#cells.get(ownerKey)?.get(field);
+				if (local !== undefined) return local;
+				return this.#following?.read(ownerKey, field) ?? DEFAULT_STATE_VALUE;
+			},
+		};
+	}
+
+	/**
+	 * Releases what this store holds open for the owners it follows, and stops following.
+	 *
+	 * A store that has disposed reads the declared default for every followed owner from then on
+	 * and opens nothing again, so a session this process no longer runs holds no connection to the
+	 * process that serves its owner. What this store itself serves is untouched: its cells, their
+	 * owners' lives and its own offer of them are not what a follow is.
+	 */
+	dispose(): void {
+		this.#following?.dispose();
 	}
 
 	/**
@@ -118,9 +167,27 @@ export class StateStore {
 	 * A retired Owner keeps counting. Its values are gone with it, so the store that served it is the
 	 * one that reads the declared default for it — the answer a clear needs — rather than leaving the
 	 * seat to a registration of an earlier session that happened to hold the same key.
+	 *
+	 * A store that follows owners answers for the ones it has read, too, because what the area asks is
+	 * which registration can say what the seat's value *is*: a field that declares `follow` makes this
+	 * the store that can, and it is the store that chased that Owner rather than a registration that
+	 * merely holds a follow reader. A store that neither served nor chased an Owner answers for
+	 * nothing, which is what keeps a session's binding from speaking for a seat that is not its Owner.
 	 */
 	serves(ownerKey: string): boolean {
-		return this.#served.has(ownerKey);
+		return this.#served.has(ownerKey) || this.follows(ownerKey);
+	}
+
+	/**
+	 * Whether this store reads one Owner through the framework's local access rather than holding it.
+	 *
+	 * It is true for an Owner this store has already read — the access was reached, or attempted —
+	 * and false for one nothing was read for. The Marker area asks it about the seat it is about to
+	 * publish: a seat whose value comes from another process has no transition *here* to have
+	 * published its change, so the next publication is the first chance to render it.
+	 */
+	follows(ownerKey: string): boolean {
+		return this.#following?.follows(ownerKey) ?? false;
 	}
 
 	/**
@@ -158,27 +225,6 @@ export class StateStore {
 				notify: (level, message) => {
 					if (live) target.feedback.notify(level, message);
 				},
-			},
-		};
-	}
-
-	/**
-	 * The capability of a delivery whose session resolved no owner at all.
-	 *
-	 * There is no cell for it to read and no life to retain: the declared value is the declared
-	 * default and every write and notice is dropped. That is the `unresolved` rule made concrete —
-	 * no owning main session could be resolved, so the value reads as the declared default and no
-	 * path may write it — and it is deliberately not the capability a retired owner gets, which
-	 * `capability` mints against that owner's own life.
-	 */
-	inertCapability(): OwnerCapabilityHandle {
-		return {
-			state: {
-				read: () => DEFAULT_STATE_VALUE,
-				write: () => {},
-			},
-			feedback: {
-				notify: () => {},
 			},
 		};
 	}

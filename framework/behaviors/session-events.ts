@@ -37,6 +37,7 @@ import type {
 } from "../core/protocol";
 import type { StateStore } from "../core/state";
 import { type MarkerSeat, publishMarkerOnTransition } from "./marker";
+import { stateValueFor } from "./state-scope";
 import { dispatchToGroups } from "./subscriptions";
 
 /**
@@ -112,11 +113,27 @@ export function dispatchSessionEvent(
 	);
 
 	/**
-	 * The owner-scoped capability of one delivery: scoped to the owner it names, and inert for a
-	 * delivery whose session resolved no owner at all.
+	 * The capability of one delivery: an owner-scoped handle for the session that is its own owner,
+	 * and nothing but a read for any other.
+	 *
+	 * A session that is not its own owner owns no cell, and observing it grants no authority over
+	 * the owner it follows: what such a delivery hands out reads the value its own field's
+	 * inheritance rule reads — the owner's current value for a `follow` field, the declared default
+	 * otherwise — and drops every write and every notice. Widening a subscription group to every
+	 * actual session therefore adds observations and nothing else, and a subagent can never drive
+	 * the owner's value or its effects.
 	 */
 	function capabilityOf(delivered: SessionDelivery): OwnerCapabilityHandle {
-		if (delivered.owner.kind === "unresolved") return state.inertCapability();
+		if (delivered.owner.kind !== "owner") {
+			const owner = delivered.owner;
+			return {
+				state: {
+					read: () => stateValueFor(definition, state, owner),
+					write: () => {},
+				},
+				feedback: { notify: () => {} },
+			};
+		}
 		const key = delivered.owner.key;
 		return state.capability({
 			ownerKey: key,

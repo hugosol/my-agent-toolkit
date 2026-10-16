@@ -18,7 +18,16 @@ hidden custom message at run initiation; pi appends it after the user's input, r
 message list and writes it to session history. Later requests retain earlier contributions; disabling
 stops new contributions and does not remove old messages. Existing history is preserved, not a promise
 of provider cache hits. MCP/LSP tool availability remains the user's pi environment's responsibility.
-Subagent integration is outside this adapter's scope.
+
+Subagent integration is the framework's, and this extension's activation reaches its subagents: the
+declaration opts in with `inheritance: "follow"`, and the pi assembly states the entry a subagent
+provider loads into the sessions it spawns (`entrypoints/pi/codebase-tools.ts`), which is what makes a
+spawned session follow the owning session's current activation value instead of reading the declared
+default. Where the session runs in another process, the value is read through the framework's local
+access ([framework capabilities](../../framework/docs/framework-capabilities.md#local-access-adapter-facing)):
+the owning session's process publishes it, the spawned session's process reads it, and while that
+access is not reached the spawned session keeps working on the declared default. The loading itself
+belongs to the pinned provider, not to this assembly.
 
 The repeatable isolated check is `bun scripts/pi-codebase-tools-smoke.ts`; `--pi <CLI path>` or `PI_CLI`
 selects the installed pi and `PI_NODE` selects the Node executable for a script/shim installation.

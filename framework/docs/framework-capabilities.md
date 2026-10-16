@@ -210,7 +210,12 @@ module graph for each session's runner, and each binding keeps its own State ([`
 so a seat is answered by the newest registration whose store *serves* the Owner that seat names. A binding of
 a session nobody is displaying never served that Owner, so it can neither empty the area nor answer with its
 own value, and an Owner whose session ended still belongs to the store that served it rather than to a
-leftover registration of an earlier session that held the same key.
+leftover registration of an earlier session that held the same key. A store that *follows* an Owner answers
+for it too, once it has read it: a value that changes in the process serving that Owner has no transition
+here to publish the change, so the run initiation in the following process publishes the area it would
+render either way — the line appears and disappears with the Owner's value rather than staying at what the
+first publication made it. A store that has not read the Owner answers for nothing, so the first run that
+reads it publishes nothing of its own.
 
 | Parameter | Type | Meaning |
 | --- | --- | --- |
@@ -411,8 +416,10 @@ declares. The handle names the
 session's work rather than the agent definition it runs, which is a kind of agent, and none of these facts is
 an identity: a rename or a handle leaves the session's own id, its direct parent and its Owner exactly as they
 were. Widening a group grants
-nothing else: there is no write path on either subscriber delivery, State inheritance is unchanged, and the
-retainable capability is still scoped to the owner its delivery resolved. The rule is the framework's, expressed
+nothing else: there is no write path on either subscriber delivery, State inheritance is unchanged, and
+the capability a delivery hands out is scoped to *its own* session — an owner-scoped handle for the
+session that is its own owner, and a read of the value its field's inheritance rule reads for any other,
+with every write and notice dropped. The rule is the framework's, expressed
 in `subscriptions.ts`, `dispatchSessionEvent` and `dispatchRoundEvent` and observable at the adapter contract
 (`tests/framework/subscription-scope.test.ts`, `tests/framework/owner-gate.test.ts`); the *resolution* is the
 adapter's, and on `omp` it reads the session's agent identity, the harness's agent registry and its own
@@ -784,9 +791,27 @@ another process reaches it over a name the platform already provides — a Windo
 (`\\.\pipe\my-agent-toolkit-access-<id>`) or a POSIX socket file. It is **not** an extension entry and
 not part of `public.ts`: an extension never touches it. The harness adapter builds the serving half and
 hands it to the State store ([`state.ts`](../core/state.ts), `StateRules.localAccess`), and the reading
-half is used by whatever reads an owner's value from outside its process. A harness whose sessions are
-all bindings in one process supplies none: reads there are the store's own cells, with no endpoint, no
-record and no configuration read.
+half is what the store follows an owner through ([`core/followed-owners.ts`](../core/followed-owners.ts),
+`StateRules.follow`). A harness whose sessions are all bindings in one process supplies neither: reads
+there are the store's own cells, with no endpoint, no record and no configuration read.
+
+**The follow read.** A field that declares `follow` makes a subagent session read its Owner's *current*
+value, and a session this harness ran in another process holds no cell for it. `StateStore.followed`
+is that read: the value is the one the Owner's access last stated, the declared default stands in while
+no access is reached, and the read never waits for another process — the framework's semantic use points
+(read at a run initiation, the Marker area, a capability handed to a handler) read synchronously. The
+statement is deliberately not a value claim: a default read writes nothing to the Owner's cell, records
+nothing in the reader's own persistence medium and is never reported as a read of the Owner's value, and
+the same read reaches the Owner again as soon as the access is back.
+
+**Recovery is per read, spaced and bounded.** The first read of an owner starts one attempt (a second
+read in the same turn shares it), the change of a connected owner arrives by itself over the access —
+nothing polls a healthy one — and a failed attempt is what spaces the next: the delay doubles per
+consecutive failure and stops at the policy's ceiling. An access that reports itself ended is spent and
+never reused, and the read after the spacing opens a fresh one, because a lost connection is not proof
+that the owner ended. Disposal is final: `StateStore.dispose` releases every followed access and stops
+following for good, so a session this process no longer runs holds no connection to the process that
+serves its owner.
 
 **What one access is.** A *seat* is one extension's access to one owner (`{ extension, owner }`) — an
 owner key alone is not unique across extensions, because two extensions of one process serve the same
@@ -960,6 +985,13 @@ retired cell — and feedback is dropped before it reaches the operator, so a se
 for. A capability retained by a `session_end` delivery is inert from birth, because that owner ended before the
 handler ran.
 
+**A delivery whose session is not its own owner hands out no authority.** That session owns no cell, and
+observing it must not grant what the Owner holds: such a delivery's capability reads the value its own
+field's inheritance rule reads — the Owner's current value for a `follow` field, the declared default
+otherwise — and every `write` and every `notify` is dropped, wherever it is used and whatever happens to
+the session afterwards. An extension that subscribes to every actual session therefore gains observations
+and nothing else, and a subagent can never drive the Owner's value, its marker area or its notices.
+
 **The `session_end` delivery keeps a feedback channel of its own.** That dispatch's `feedback`
 ([`protocol.ts#L196`](../core/protocol.ts#L196)) is the one thing that can still speak for the
 boundary: a notice published while the handler runs reaches the operator, which is what lets an extension
@@ -980,10 +1012,13 @@ with the behavior it must preserve, is
 
 | Member | Meaning |
 | --- | --- |
-| `StateRules` | The State one store serves: `{ field, persistence }`, exactly the pair an assembly resolves from the definition through `activationField` ([`definition.ts#L255`](../core/definition.ts#L255)) and `statePersistence` ([`definition.ts#L260`](../core/definition.ts#L260)). The constructor requires it: a store knows its field and persistence and holds no definition. |
-| `new StateStore(rules)` | One store per `ompAdapter` factory call ([`omp.ts`](../adapters/omp.ts)), shared by every session binding of that extension — not a process-global registry keyed by definition id. |
+| `StateRules` | The State one store serves: `{ field, persistence }`, exactly the pair an assembly resolves from the definition through `activationField` ([`definition.ts#L255`](../core/definition.ts#L255)) and `statePersistence` ([`definition.ts#L260`](../core/definition.ts#L260)), plus the two optional access seams an assembly states — `localAccess` (the owner this process serves, offered) and `follow` (the owner another process serves, read). The constructor requires the first two: a store knows its field and persistence and holds no definition. |
+| `new StateStore(rules)` | One store per adapter factory call ([`omp.ts`](../adapters/omp.ts), [`pi.ts`](../adapters/pi.ts)), shared by every session binding of that extension — not a process-global registry keyed by definition id. |
 | `view(ownerKey)` | The read surface, unchanged: `read(field)` is the owner's current value, or the declared default when unset. |
-| `serves(ownerKey)` | Whether this store answers for an Owner: an Owner boundary it reconciled, or a cell it wrote — a fact that survives the Owner's retirement. It is what the process-wide Marker area reads to decide which of one extension's registrations answers for a seat, so a session's binding speaks for its own Owner and nothing else. |
+| `followed(ownerKey)` | The read surface for an owner this process may not hold: the cell first (an in-process read takes no access at all), then what the owner's access last stated, then the declared default. It is what a `follow` field's subagent reads. |
+| `serves(ownerKey)` | Whether this store answers for an Owner: an Owner boundary it reconciled, a cell it wrote — a fact that survives the Owner's retirement — or an Owner it has chased through an access. What the process-wide Marker area reads to decide which of one extension's registrations answers for a seat, so a session's binding speaks for its own Owner — or for the Owner it follows — and for nothing else. |
+| `follows(ownerKey)` | Whether this store reads that Owner through an access rather than holding it: true once it has chased that Owner, reached or not. The Marker area asks it for the seat it is about to publish, because a value that changes in another process had no transition here to publish it. |
+| `dispose()` | Releases every access this store holds and stops following: a disposed store reads the declared default for followed owners and opens nothing again. The cells it serves, their owners' lives and its own offer of them are untouched. |
 | `writer(target)` | The declared-value seam of one delivery (`StateWriteTarget`: `ownerKey`, `persist(values)`, `publishMarker()`), ungated: the value is set first, then recorded best-effort where the field persists (`memory` is never recorded), then the marker area is published. A repeated write of the same value is not deduplicated. |
 | `capability(target)` | The owner-scoped handle (`StateCapabilityTarget` adds `feedback`): `read` is ungated — a handle kept from an earlier life still reads the current value — while `write` and `feedback` work only while its owner's life is open. A handle minted after that life ended is inert from birth; a later start opens a life for newly minted handles and never revives an old one. |
 | `reconcile(change)` | One session boundary (`StateSessionChange`: `owner`, `event`, `statePayloads`, `publishMarker(ownerKey)`): a delivery that is not its own owner is ignored; an end drops the cell then revokes capabilities, publishing only for `disposed`; a start opens the life, seeds a `session-entry` field from the last payload when it declares the field as a boolean (otherwise the declared default) and never seeds `memory`, then publishes. |
