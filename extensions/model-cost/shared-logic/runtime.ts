@@ -357,24 +357,89 @@ export function createModelCostRuntime(inputs: ModelCostRuntimeInputs): ModelCos
 		}
 	};
 
-	const initialize = async (delivery: InitializationDelivery): Promise<BaselineLoad> => {
+	/**
+	 * The common accounting preparation this instance performs once: the baseline document it runs
+	 * on and the independent Codex estimate beside it.
+	 *
+	 * What the accounting needs before it may process a delivery is this and nothing else: the
+	 * configuration was validated by the framework before the factory ran, and the prices travel in
+	 * the catalog. The root-side effects are deliberately not part of it — the provider prefetch and
+	 * the display belong to the owner session's own initialization ({@link initialize}).
+	 */
+	const loadBaseline = async (feedback: FeedbackTransport): Promise<BaselineLoad> => {
 		const load = await storage.load();
 		if (load.kind === "unusable") {
 			const notice = unusableBaselineNotice(storage.consumptionFile, load.reason);
-			delivery.feedback.notify(notice.level, notice.message);
+			feedback.notify(notice.level, notice.message);
 		}
 		if (load.kind === "loaded") {
 			// The document is usable, so an unreadable time fact costs the time reading alone: each one
 			// is stated, and nothing is paused, zeroed or substituted for it.
 			for (const fault of load.faults) {
 				const notice = timeFactFaultNotice(storage.consumptionFile, fault);
-				delivery.feedback.notify(notice.level, notice.message);
+				feedback.notify(notice.level, notice.message);
 			}
 		}
 		// The estimate document is read after the storage root's own load — which is what creates the
 		// root this document lives in — and before any source can report a reading, so the measurement
 		// continues from what the file holds rather than re-anchoring on the first report.
 		await estimate.load();
+		return load;
+	};
+
+	/**
+	 * This instance's one preparation, and the promise every caller of it shares.
+	 *
+	 * It is asked for by the first delivery this instance serves. For the owner session that is the
+	 * node the harness initializes the implementation at; for a session this instance serves without
+	 * being its owner — a spawned session's own binding, in the process the provider ran it in — it is
+	 * that session's own first delivery, which is what lets that session's consumption be accounted
+	 * and saved rather than dropped for a baseline nobody loaded. One result is shared by every
+	 * concurrent caller, so a session's first Round and the request inside it read the file once.
+	 */
+	let preparation: Promise<BaselineLoad> | undefined;
+	/** Whether the one preparation has settled, which is what lets a later delivery run at once. */
+	let prepared = false;
+	const prepare = (feedback: FeedbackTransport): Promise<BaselineLoad> => {
+		if (preparation !== undefined) return preparation;
+		preparation = loadBaseline(feedback).then(load => {
+			prepared = true;
+			return load;
+		});
+		return preparation;
+	};
+
+	/**
+	 * Run one delivery's accounting: now when this instance's preparation has settled, and once it
+	 * settles otherwise.
+	 *
+	 * The order the deliveries were handed over in is the order their work runs in — every
+	 * un-prepared caller waits on the same preparation and is continued in the order it asked — so a
+	 * Round's own edges and the requests inside it keep their order even while the baseline is still
+	 * being read.
+	 */
+	const account = (feedback: FeedbackTransport, work: () => void | Promise<void>): void | Promise<void> =>
+		prepared ? work() : prepare(feedback).then(() => work());
+
+	/**
+	 * Whether this instance began its own root-side start: the owner session's initialization, which
+	 * is what asks the CLI's two provider sources and holds their readings.
+	 *
+	 * It decides one thing here. The balance and the allowance windows are facts of the provider
+	 * account rather than of a session, and this process reads each of them once — at the owner
+	 * session's initialization and, later, refreshed by a settled request of its own provider. An
+	 * instance that serves a session without being the owner of it — a spawned session's own binding,
+	 * in this process or in the child process the provider ran — therefore refreshes nothing: it holds
+	 * no such reading, and starting one there would be a second root-side read of the same account
+	 * rather than the request-triggered refresh of the reading this instance obtained.
+	 */
+	let rootSideStarted = false;
+
+	const initialize = async (delivery: InitializationDelivery): Promise<BaselineLoad> => {
+		// The root-side start is recorded before the preparation is awaited, because what the refresh
+		// above belongs to is this instance's own read of the account rather than the file's readiness.
+		rootSideStarted = true;
+		const load = await prepare(delivery.feedback);
 		// The CLI's one prefetch of its two provider sources, started at the same instant rather than
 		// one after the other: the DeepSeek balance reading and the Codex allowance windows are asked
 		// in parallel, so the initialization is bounded by the slower of the two rather than by their
@@ -486,9 +551,14 @@ export function createModelCostRuntime(inputs: ModelCostRuntimeInputs): ModelCos
 	// monetary pair answers the tier's own off-peak price while the allowance channel answers the
 	// price the harness states for it; a pair neither answers is no price rather than a price of zero.
 	const events: SemanticEventHandlers = {
+		// Every accounting delivery below runs through `account`: this instance's preparation (the
+		// baseline and the estimate) is what the accounting reads, so a delivery this instance serves
+		// while it is still being prepared is processed once it settled rather than dropped as one of a
+		// baseline nobody loaded. The root-side effects are not part of that preparation — see
+		// `rootSideStarted` for the one place the distinction is visible.
 		turn_start: delivery => {
 			stateProviderFailures(delivery);
-			accounting.turnStarted(delivery);
+			return account(delivery.feedback, () => accounting.turnStarted(delivery));
 		},
 		turn_end: delivery => {
 			stateProviderFailures(delivery);
@@ -497,14 +567,22 @@ export function createModelCostRuntime(inputs: ModelCostRuntimeInputs): ModelCos
 			// span too — and its reported usage is accounted once, or the skip is reported. The end is
 			// observed whether or not the accounting has anything to count for this Turn, and a Round
 			// that never ends costs the reading nothing.
-			accounting.turnSettled(delivery);
-			// The usage-driven provider refresh reads the *request's* own provider rather than whatever
-			// is being viewed or is current now, so a subagent's request and a main session's refresh the
-			// same one reading, and a request of another provider reaches nothing here. The balance and
-			// the Codex windows share the policy: each module filters to its own provider and checks its
-			// own success TTL, and an expired reading with no query already out begins one.
-			balance.usageSettled(delivery.turn.provider);
-			quota.usageSettled(delivery.turn.provider);
+			return account(delivery.feedback, () => {
+				accounting.turnSettled(delivery);
+				// The usage-driven provider refresh reads the *request's* own provider rather than whatever
+				// is being viewed or is current now, so a subagent's request and a main session's refresh the
+				// same one reading, and a request of another provider reaches nothing here. The balance and
+				// the Codex windows share the policy: each module filters to its own provider and checks its
+				// own success TTL, and an expired reading with no query already out begins one.
+				//
+				// Only an instance that began its own root-side start refreshes anything: an instance
+				// serving a spawned session without owning it holds no such reading, and asking the account
+				// there would be a second root-side read of the same account rather than a refresh of this
+				// instance's own reading.
+				if (!rootSideStarted) return;
+				balance.usageSettled(delivery.turn.provider);
+				quota.usageSettled(delivery.turn.provider);
+			});
 		},
 		// Both edges of a Round. Each one is that session's own activity fact as well as an accounting
 		// boundary — an open Round is the session working and a confirmed end is the session idle — so
@@ -519,25 +597,25 @@ export function createModelCostRuntime(inputs: ModelCostRuntimeInputs): ModelCos
 		round_start: delivery => {
 			stateProviderFailures(delivery);
 			if (sessionActivity.observe(delivery.session.sessionId, "working")) accounting.announceChanged();
-			accounting.roundStarted(delivery);
+			return account(delivery.feedback, () => accounting.roundStarted(delivery));
 		},
 		round_end: delivery => {
 			stateProviderFailures(delivery);
 			if (sessionActivity.observe(delivery.session.sessionId, "idle")) accounting.announceChanged();
-			return accounting.roundEnded(delivery);
+			return account(delivery.feedback, () => accounting.roundEnded(delivery));
 		},
 		// The one fact that establishes a session's Session span start: input the harness itself
 		// attributed to the user, published for every submission it admitted — an ordinary prompt and a
 		// user-invoked skill alike.
 		user_input: delivery => {
 			stateProviderFailures(delivery);
-			accounting.userInput(delivery);
+			return account(delivery.feedback, () => accounting.userInput(delivery));
 		},
 		// The harness's own name-change fact, which is what keeps a session's identity current
 		// between boundaries — for a subagent nobody is viewing exactly as for the session on screen.
 		session_facts: delivery => {
 			stateProviderFailures(delivery);
-			accounting.sessionFacts(delivery.session);
+			return account(delivery.feedback, () => accounting.sessionFacts(delivery.session));
 		},
 		// One actual session's own start. A spawned session's binding announces it once, and it is the
 		// one delivery whose model and level readings are that session's startup facts — the framework
@@ -545,7 +623,7 @@ export function createModelCostRuntime(inputs: ModelCostRuntimeInputs): ModelCos
 		// session merely recovered here arrives with nothing to record for its startup.
 		session_start: delivery => {
 			stateProviderFailures(delivery);
-			accounting.started(delivery.session);
+			return account(delivery.feedback, () => accounting.started(delivery.session));
 		},
 	};
 

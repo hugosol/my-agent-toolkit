@@ -516,6 +516,18 @@ function piPort(
 	const notices = (ctx: PiExtensionContext): NoticeTransport => ({ warn: message => publishNotice(ctx, "warning", message) });
 	const feedback = (ctx: PiExtensionContext): FeedbackTransport => ({ notify: (level, message) => publishNotice(ctx, level, message) });
 	const persist = (values: Parameters<PiExtensionApi["appendEntry"]>[1]): void => pi.appendEntry(stateEntryType, values);
+	/**
+	 * The sessions this binding has observed end, by identity.
+	 *
+	 * A session's own end is a fact about that session, not about the owner this binding serves: pi
+	 * spends the ended session's context, and the round axis's late re-checks would otherwise have to
+	 * read a context that is no longer there — which is how a spawned session's last exchange could be
+	 * left unclosed, and its consumption unsaved, after the host ended the session the delegation ran
+	 * in. What this set is read for is that one answer: a session that is over is at rest and is held
+	 * by nothing. It holds only identities, is never written anywhere, and lives as long as this
+	 * binding does.
+	 */
+	const endedSessions = new Set<string>();
 
 	// At most one report per native fact, per binding: the first delivery that finds a fact this
 	// mapping does not read says so on the non-model channel, and every later one stays quiet.
@@ -600,6 +612,10 @@ function piPort(
 			}));
 			keepSubscription(pi.on("session_shutdown", (event, ctx) => {
 				const session = sessionFactsOf(ctx);
+				// The session's own end, recorded before anything else reads this delivery: it is what
+				// the round axis's late re-checks answer from once pi has spent the context, and it is
+				// a fact about this session rather than about the owner this binding serves.
+				endedSessions.add(session.sessionId);
 				// Whatever this binding required for the session that is going away is released with
 				// it, so a later session of this process states its own requirement rather than
 				// inheriting a spent one.
@@ -639,6 +655,9 @@ function piPort(
 				// session is waiting on a delegation the provider still holds, the session is not at rest,
 				// and a statement this entry cannot read stays unread rather than being answered as rest.
 				background: sessionId => integration?.backgroundActivity(sessionId) ?? { state: "clear" },
+				// The sessions this binding has seen end: their late re-checks read the fact this binding
+				// observed rather than a context pi has spent.
+				sessionOver: sessionId => endedSessions.has(sessionId),
 				track: keepSubscription,
 			});
 		},

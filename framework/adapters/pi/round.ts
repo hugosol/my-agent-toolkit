@@ -59,6 +59,19 @@ export function observeRounds(
 		 * with.
 		 */
 		readonly background: (sessionId: string) => SessionBackgroundWork;
+		/**
+		 * Whether this binding has observed that session's own end.
+		 *
+		 * The two late reads below are reads of a live session, and pi spends a session's context once
+		 * the session is gone: a session that ended before the re-check ran can no longer be asked
+		 * whether it is working or whether anything is queued. That is not an unread statement about
+		 * work still going — it is the end of the work itself, and the session's own end is a fact this
+		 * binding already observed (its `session_shutdown`), so the re-check answers from it rather
+		 * than from a context that is no longer readable. A Round that could not be closed this way
+		 * would hold a session's last exchange open forever, and nothing would ever settle it: a
+		 * session that is over is at rest, and nothing beyond it can continue it.
+		 */
+		readonly sessionOver: (sessionId: string) => boolean;
 		/** Hands the binding the unsubscriber of one native registration, so a refused binding leaks none. */
 		readonly track: (release: () => void) => void;
 	},
@@ -81,11 +94,13 @@ export function observeRounds(
 	 * still waiting to be taken up.
 	 *
 	 * It is read late — when the framework re-checks an end candidate on its next task, not at the
-	 * native settle that raised it — so it answers for what the session reports *then*. When pi
-	 * reports neither fact, rest cannot be established at all: the answer is nothing rather than a
-	 * value, and an unestablished rest closes no round.
+	 * native settle that raised it — so it answers for what the session reports *then*. A session this
+	 * binding has seen end reports nothing any more: pi spends its context, and a session that is over
+	 * is at rest by definition. When pi reports neither fact, rest cannot be established at all: the
+	 * answer is nothing rather than a value, and an unestablished rest closes no round.
 	 */
-	const quiescent = (ctx: PiExtensionContext): boolean | undefined => {
+	const quiescent = (ctx: PiExtensionContext, sessionId: string): boolean | undefined => {
+		if (context.sessionOver(sessionId)) return true;
 		if (typeof ctx.isIdle !== "function") return reportMissingFact("idle fact (isIdle)");
 		if (typeof ctx.hasPendingMessages !== "function") {
 			return reportMissingFact("pending-message fact (hasPendingMessages)");
@@ -98,11 +113,15 @@ export function observeRounds(
 	 * states, in its own terms.
 	 *
 	 * It is read only for a settle the framework did not read as a cancelled or failed activity, and
-	 * only after pi's own facts already look settled. A statement this entry could not read is
-	 * reported and answered as neither: it is not the provider's own "nothing is held", so a round
-	 * whose end would rest on it is not confirmed.
+	 * only after pi's own facts already look settled. A session this binding has seen end is held by
+	 * nothing: whatever the provider still runs elsewhere will never continue a session that is over,
+	 * so the statement that decides this read is the session's own end rather than a registration the
+	 * provider keeps beside it. A statement this entry could not read is reported and answered as
+	 * neither: it is not the provider's own "nothing is held", so a round whose end would rest on it is
+	 * not confirmed.
 	 */
 	const heldWork = (sessionId: string): boolean | undefined => {
+		if (context.sessionOver(sessionId)) return false;
 		const background = context.background(sessionId);
 		if (background.state === "holds") return true;
 		if (background.state === "clear") return false;
@@ -121,7 +140,7 @@ export function observeRounds(
 		observer({
 			signal,
 			...frame,
-			quiescent: () => quiescent(ctx),
+			quiescent: () => quiescent(ctx, frame.session.sessionId),
 			heldWork: () => heldWork(frame.session.sessionId),
 		});
 	};
