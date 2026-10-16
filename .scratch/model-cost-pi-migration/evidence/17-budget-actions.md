@@ -108,3 +108,33 @@ pi CLI：已安装 1.2.0（`pi --version` → `1.2.0`，`resolvePiCli` 解析到
 - **OMP dock 的补丁工件在本 worktree 需要本地把 `host-patches/*/patch.diff` 归一成 LF 才能跑**：`git config core.autocrlf=true` 让工作树是 CRLF，而 `patchTouchedFiles` 的正则 `^diff --git a/… b/…$(.+)$` 里的 `.` 不匹配 `\r`，于是判成「touches no file」；冻结记录里的 sha256 正是 LF 字节，所以本地归一不会让工件校验失败，但会让 `git status` 显示这两个文件被改（提交前已用 `git checkout --` 还原）。这是环境/工件问题，不是本票改动，未在本票内修 dock 解析器。
 - **未在真实账户侧核对任何 provider 事实**（P53 不属本票）；smoke 的余额/额度答案是脚本自己的文档。
 - **TUI 可读性**（P52）不属本票。
+
+## 集成同步与合并后全仓回归（本轮由集成 helper 执行）
+
+**同步**：宿主把本票分支合进 `pi-adapter`（集成提交 `506a445ad81736798452bce9b53b98a3199d7cb1`）后把该提交合回本票分支，故本分支 HEAD 即 `506a445`（父提交 `99e9578` ＝合并前的集成 tip、`480e50b` ＝本票实现提交），与 `pi-adapter` tip 同一提交。**无冲突可解**：本 worktree 的 gitdir 内没有 `MERGE_HEAD`/rebase/cherry-pick 状态，`git ls-files -u` 空（0 条未合并路径），`git status --porcelain` 空。**合入内容逐项核对**：`git diff --stat 99e9578 HEAD` 正好是本票 14 个文件（`extensions/model-cost/harnesses/pi.ts`、`extensions/model-cost/shared-logic/runtime.ts`、`extensions/model-cost/shared-logic/presentation/display-preference.ts`、`extensions/model-cost/GLOSSARY.md`、`extensions/model-cost/README.md`、`scripts/pi-model-cost-smoke.ts`、`scripts/pi-session-accounting.ts`、`tests/model-cost/{pi-budget-actions,pi-period-reset,pi-session-accounting,pi-session-span}.test.ts` 加本票证据与两份实现日志）；`git diff 480e50b HEAD --`（上述 11 个生产/测试/文档文件）为空，即合并没有改写本票交付面。
+
+**按检出原样运行**（本 worktree 的工具 shell＝Git Bash；日志 `logs/17-budget-actions-integration.log`）：`bun run test` → **1116 pass / 17 fail**（1133 tests / 123 files / 6069 expect() calls / 234.15s / exit 1）。17 例全为本机环境前置项，且都落在本票合入**未触碰**的文件上（`tests/harness-dock/**`、`tests/connect-bot/**` 均不在上面 14 个文件内），与 [15](15-period-reset.md)（以及 01/04/07 各集成轮）记录的类别逐条一致：
+
+| 类 | 例数 | 文件 | 事实 |
+| --- | --- | --- | --- |
+| 缺真实面板二进制 | 5 | `budget-regression`、`harness-exit-budget`、`panel-registration-lifecycle` ×3 | 本 worktree 位于 `%TEMP%`，`tests/connect-bot/support/omp-bot.ts` 的默认同级路径 `…\omp-bot\backend\target\release\omp-bot.exe` 不存在（抛点在 `startOmpBot`） |
+| CRLF 使补丁物化失败 | 10 | `codex-response-artifact`、`combined-host-artifact`、`detail-tree`、`model-cost-codex-quota`、`model-cost-modes`、`model-cost-persistence`、`viewed-marker`、`viewed-session-host`、`viewed-session-total`、`viewed-session` | `host-patches/omp-18.5.0-{viewed-session,codex-response-boundary}/patch.diff touches no file`（`tests/harness-dock/host-patch-artifact.ts` 的 `patchTouchedFiles` 按 LF 切行） |
+| 锁文件 sha 按 LF 录制 | 2 | `baseline.test.ts`、`session-driver.test.ts` | 记录值 `a5d37ab2…` 逐字节等于 `HEAD:bun.lock` 的已提交 LF blob；工作区是同一内容的 CRLF 检出（`e7ed487b…`） |
+
+（[15](15-period-reset.md) 轮出现过的那例真实宿主保存期限时序失败（`session-recovery.test.ts`）本轮未出现；它当时即单独重跑为绿。）
+
+**归一后的全仓回归**（三处工作区文件还原为已提交 LF blob 字节——`bun.lock` `a5d37ab2…`、`viewed-session` `66195465…`、`codex-response-boundary` `4ec9ad0d…`，三份 sha256 与 `git cat-file blob HEAD:<path>` 逐一相等；并设 `OMP_BOT_BINARY=E:/Developer/myhub/omp-bot/backend/target/release/omp-bot.exe`）：
+
+| 运行 | 结果 |
+| --- | --- |
+| `bun run test`（`logs/17-budget-actions-integration-normalized.log`） | **1162 pass / 0 fail**（123 files / 6655 expect() calls / 399.16s / **exit 0**） |
+| `bun run typecheck`（`logs/17-budget-actions-integration-typecheck.log`） | exit 0（无诊断） |
+
+- 归一比原样多出的 29 例（1133 → 1162 tests）正是那 10 个 dock 文件在文件级失败后未注册的用例（与 [15](15-period-reset.md) 轮的 +29 相同）。
+- 两次运行期间被测源码与夹具未变：归一只改这三处工作区字节（`bun.lock` 与两份 `patch.diff`），未动 `extensions/**`、`tests/**`、`scripts/**`。
+
+**本轮修复：无源码修复。** 17 例全属本机检出/布局前置项，无一条由本票合入引入：本票 14 个文件与全部失败文件（`tests/connect-bot/**`、`tests/harness-dock/**`）交集为空；本票的进程内消费者（`tests/model-cost` 全分区，含本票新增 `pi-budget-actions` 的 6 用例与既有 `pi-period-reset`／`pi-session-accounting`／`pi-session-span`／`detail-tree`）在归一后的全仓运行中全绿。归一后零失败说明没有失败被上述环境例掩盖，故不改仓库内容（`.gitattributes` 或按行尾鲁棒的解析属装配/宿主验证票，见 [04](04-shared-storage.md)）。本轮提交只有这份记录、票据更新与本轮三份日志。
+
+**运行后状态**：三处文件按字节恢复原 CRLF 检出状态（sha256 与运行前逐一相同：`bun.lock` `e7ed487b…`、`viewed-session` `057e01f6…`、`codex-response-boundary` `294b3727…`），`git status` 只余本轮的票据/证据改动；未操作集成工作区（`E:/Developer/myhub/my-agent-toolkit`）、未切换分支、未新建 worktree、未 reset、未调用 retro，也未自行合入集成分支。
+
+**未因全仓绿而改变的限制**：上面「未覆盖 / 未验收」各条原样成立——真实 pi 的 `/reload` 未驱动、`scripts/pi-session-accounting.ts` 的 6 条 FAIL 不认领、真实账户侧 provider 事实与 TUI 可读性未核对；实机 smoke（`bun scripts/pi-model-cost-smoke.ts`）、跨票据整体验收与 P51/P52/P53 人类验收仍属最终独立门禁，本轮未执行。
