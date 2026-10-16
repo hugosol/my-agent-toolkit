@@ -251,34 +251,52 @@ export interface PiRun {
 export interface PiRunOptions {
 	/** The provider name the run's models file declares. */
 	readonly provider: string;
-	/** The model id that provider serves. */
+	/** The model id the run's selector names, and the one a session starts on. */
 	readonly model: string;
 	/** The model's declared cost, in pi's USD-per-million-token rates. */
 	readonly cost?: Readonly<Record<string, number>>;
 	readonly contextWindow?: number;
+	readonly maxTokens?: number;
+	/** Other models this provider serves beside the one above, each with its own declared facts. */
+	readonly otherModels?: readonly PiModelDeclaration[];
 	/** The capture endpoint's scripted answer, usage and balance reading. */
 	readonly endpoint?: Omit<CaptureServerOptions, "dir">;
+}
+
+/** One model row of the run's `models.json`, as the run's own declaration states it. */
+function declaredModel(
+	id: string,
+	overrides: Partial<PiModelDeclaration>,
+	fallback: { readonly cost: Readonly<Record<string, number>>; readonly contextWindow: number; readonly maxTokens: number },
+): Readonly<Record<string, unknown>> {
+	return {
+		id,
+		name: overrides.name ?? `pi smoke ${id}`,
+		reasoning: overrides.reasoning ?? false,
+		input: overrides.input ?? ["text"],
+		cost: overrides.cost ?? fallback.cost,
+		contextWindow: overrides.contextWindow ?? fallback.contextWindow,
+		maxTokens: overrides.maxTokens ?? fallback.maxTokens,
+	};
 }
 
 /** One fresh run root with a capture endpoint behind it and its own models file pointing at it. */
 export function startPiRun(cli: PiCli, label: string, options: PiRunOptions): PiRun {
 	const root = createRunRoot(label);
 	const capture = startCaptureServer({ dir: root.captureDir, ...options.endpoint });
+	const fallback = {
+		cost: options.cost ?? { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+		contextWindow: options.contextWindow ?? 128_000,
+		maxTokens: options.maxTokens ?? 8192,
+	};
 	writePiModels(root.agentDir, {
 		[options.provider]: {
 			baseUrl: capture.baseUrl,
 			api: "openai-completions",
 			apiKey: "pi-smoke-key",
 			models: [
-				{
-					id: options.model,
-					name: `pi smoke ${options.model}`,
-					reasoning: false,
-					input: ["text"],
-					cost: options.cost ?? { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
-					contextWindow: options.contextWindow ?? 128_000,
-					maxTokens: 8192,
-				},
+				declaredModel(options.model, { cost: fallback.cost, contextWindow: fallback.contextWindow, maxTokens: fallback.maxTokens }, fallback),
+				...(options.otherModels ?? []).map(declaration => declaredModel(declaration.id, declaration, fallback)),
 			],
 		},
 	});
@@ -297,13 +315,19 @@ export interface PiRpcFrame {
 export interface PiSessionOptions {
 	readonly cli: PiCli;
 	readonly runRoot: RunRoot;
-	/** The one extension path (`-e`) this session loads. */
-	readonly entrypoint: string;
+	/**
+	 * The extension paths (`-e`) this session loads, in load order.
+	 *
+	 * A run that must observe one extension's public consumption beside another's effect states both,
+	 * which is what makes the observation about the harness's own loading rather than about a fixture
+	 * that restates the production assembly.
+	 */
+	readonly entrypoint: string | readonly string[];
 	/** The `provider/model` selector the session runs. */
 	readonly selector: string;
 	readonly extraArgs?: readonly string[];
 	/** Extra environment values, applied over the controlled set. */
-	readonly env?: Readonly<Record<string, string | undefined>>;
+	readonly env?: Record<string, string | undefined>;
 }
 
 export interface PiExitOutcome {
@@ -362,13 +386,14 @@ export class PiSession {
 
 	static async start(options: PiSessionOptions): Promise<PiSession> {
 		const { runRoot } = options;
+		const entrypoints = typeof options.entrypoint === "string" ? [options.entrypoint] : options.entrypoint;
+		const entrypointArguments = entrypoints.flatMap(entrypoint => ["-e", entrypoint]);
 		const argv = [
 			...options.cli.command,
 			"--mode",
 			"rpc",
 			"--no-extensions",
-			"-e",
-			options.entrypoint,
+			...entrypointArguments,
 			"--no-mcp",
 			"--model",
 			options.selector,
