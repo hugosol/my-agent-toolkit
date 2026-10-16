@@ -6,7 +6,7 @@
 
 **Blocked by:** [21：共同路径消费者与真实宿主回归](21-consumer-regression.md)
 
-**Status:** in-progress — Agent 侧实现与自动检查已在本分支完成（`scripts/pi-tui-acceptance.ts` + `scripts/support/{tui-acceptance-fixture,terminal-screen}.ts` + `package.json` 一行；捕获运行 46 ok / 0 failed，`bun test tests/model-cost` 463 pass / 0 fail，`bun run typecheck` exit 0，见[证据](../evidence/23-tui-acceptance.md)）。**人类验收（真终端格式/间距/窄宽度/观感）未确认，不得据此判为通过。** 本分支未合入 `pi-adapter`，交集成子代理接管。
+**Status:** in-progress — Agent 侧实现与自动检查已在本分支完成（`scripts/pi-tui-acceptance.ts` + `scripts/support/{tui-acceptance-fixture,terminal-screen}.ts` + `package.json` 一行；捕获运行 46 ok / 0 failed，`bun test tests/model-cost` 463 pass / 0 fail，`bun run typecheck` exit 0，见[证据](../evidence/23-tui-acceptance.md)）。**人类验收（真终端格式/间距/窄宽度/观感）未确认，不得据此判为通过。** 实现已随集成提交 `8c7256f5bb0529371a4e970b53a6f29b030a56b4` 合入 `pi-adapter` 并由宿主合回本分支，本轮集成验收在同一 HEAD 完成（`bun run typecheck` exit 0；全仓 `bun run test` 在文档化环境下 **1200 pass / 0 fail**），无源码修复，见[证据 §8](../evidence/23-tui-acceptance.md)——**人类验收仍未确认，故 Status 保持 in-progress**。
 
 ## Acceptance criteria
 
@@ -37,3 +37,4 @@
   - “P52 完整 Coverage（S2）”：Agent 半如上；**人类半未确认**。
 - **未因自动检查全绿而改变的限制**：22/21 的结论、OMP 消费端回归、docs 更新与 fault-injection 复核不在本票；`runtimeGap`（持久化的不完整事实）在绘制面无额外标记，本票按下记录，不新增绘制要求。
 - **复核轮（重新派发后，同一 worktree／分支，源与已提交状态逐字节相同）**：重跑了本票的全部可执行检查——`bun run typecheck` exit 0；`bun test tests/model-cost` 463 pass / 0 fail；`bun scripts/pi-tui-acceptance.ts --widths 120,80,60` **46 ok / 0 failed**，`observations` 与已提交 `report.json` 逐条相同（只有运行根随机路径与终端空白尾行的差异）。用两次临时故障注入确认检查灵敏：丢掉每条会话自己的金额 → 6 条 FAIL；窄宽度吞掉行尾（`Balance:`／`Span:`）→ 4 条只落在 60 列的 FAIL；两次注入均已还原（`git status` 干净）并在还原后重跑回复 46/0。捕获运行无残留隔离根与残留进程，工作树未被写入。**本轮无控制台**（shell 无 pty），`--interactive` 只验证到入口建立隔离根并启动 pi 后退出；"交互形态真的画出内容"仍由上一轮真实控制台那次运行与捕获模式的 6 个 PTY 帧支持。**人类验收（格式／间距／窄宽度／观感）仍未确认，不得据此判为通过。** 详见[证据](../evidence/23-tui-acceptance.md) §7 与 `logs/23-tui-acceptance-recheck.log`。
+- **集成轮（同步核对 + 合并后全仓回归）**：宿主已把集成提交 `8c7256f…` merge 回本分支（交接时 HEAD 与 `pi-adapter` 同点、`git log pi-adapter ^HEAD` 为空；之后 `pi-adapter` 前进到 `6164d14`＝25 的合入，本分支不含该提交，由宿主排队）。合入无冲突（`git ls-files -u` 0 条、全树无冲突标记），两侧字节都没被改写：`git diff --stat 69cc246 HEAD -- scripts/ package.json` 为空且四个交付文件 blob 仍为 `bdc7060d…`/`c2e0dcc1…`/`2f0faa25…`/`e05afde5…`；`git diff --stat e45a9ff HEAD -- framework/ extensions/ entrypoints/ tests/ docs/` 为空。`bun run typecheck` exit 0。全仓 `bun run test` 按检出状态为 1153 pass / 18 fail（10 条 `patch.diff touches no file`、2 条 lockfile sha256、5 条 connect-bot 面板二进制缺失、1 条 5s 期限时序——皆为 CRLF 检出与 `%TEMP%` 缺 `omp-bot` 二进制的既有环境条件，与本票内容无关），按各前轮文档化环境（三处冻结文件归一到已提交 LF 字节 + `OMP_BOT_BINARY`）重跑 **1200 pass / 0 fail**（6897 expect()，128 文件，438.44s）。**无源码修复**；行尾文件运行后按 sha256 逐一复原，工作区只余本轮日志与记录。人类验收仍未确认，本票仍不得判为通过。详见[证据](../evidence/23-tui-acceptance.md) §8。
