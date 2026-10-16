@@ -11,6 +11,7 @@ after: uncommitted paths the run recorded: none
 after: invariants all held
 
 a cell is before/after; * marks a difference. Each column is a cost the frozen record fixes, and none of them is a threshold.
+`file total` counts a window's calls that settled as failures as well, so it is reported with the noise columns rather than compared; the steps beside it are the comparison.
 
 == representative sequences: whole sequence ==
 sequence                   reads  publishes  locks  staging  metadata  dirs  other  file total  requests   draws  events  waits  lines
@@ -36,11 +37,9 @@ disposal / disposal                  0/0        0/0    0/0      0/0       0/0   
 disposal / afterDisposal             0/0        0/0    0/0      0/0       0/0   0/0    0/0         0/0
 
 == comparable differences ==
-main-child-concurrency                  file total      51 -> 53
 main-child-concurrency                  requests        1 -> 2
 main-child-concurrency                  draws           30 -> 33
 main-child-concurrency                  events          24 -> 23
-main-child-concurrency / whole          file total      51 -> 53
 provider paths: main-child-concurrency: {"/user/balance":1} -> {"/user/balance":2}
 
 == semantic deliveries ==
@@ -51,6 +50,8 @@ multi-turn                              wall clock ms       7 -> 8
 main-child-concurrency                  failed by operation {"readFile":3,"unlink":8,"rmdir":4} -> {"readFile":3,"unlink":8,"rmdir":4,"rename":2}
 main-child-concurrency                  wall clock ms       16 -> 71
 disposal                                wall clock ms       507 -> 514
+main-child-concurrency                  file total          51 -> 53 (this column counts calls that settled as failures too)
+main-child-concurrency / whole          file total          51 -> 53 (this column counts calls that settled as failures too)
 
 == complexity ==
 revisions measured: before 59a0ed714afb9e2e1ca7370364440d96ea6d3dc5, after efb03e0ddc19c5b1052fea708faee0bd75340d12 (tracked TypeScript, from each revision's own tree)
@@ -61,7 +62,7 @@ product extensions/codebase-tools                            90    111     +21
 product extensions/connect-bot                             1608   1608      +0
 product extensions/model-cost                              8537  10326   +1789
 product framework                                           161    158      -3
-product framework/adapters                                 2571   3889   +1318
+product framework/adapters                                 2571   3890   +1319
 product framework/behaviors                                2070   2142     +72
 product framework/core                                     2949   3248    +299
 product framework/modules                                  1264   2244    +980
@@ -73,7 +74,7 @@ evidence tests/framework                                  12306  16779   +4473
 evidence tests/harness-dock                               13125  15941   +2816
 evidence tests/model-cost                                 16565  25862   +9297
 evidence tests/support                                       68     68      +0
-PRODUCT SUBTOTAL (framework + extensions + entrypoints)   19287  23772   +4485
+PRODUCT SUBTOTAL (framework + extensions + entrypoints)   19287  23773   +4486
 EVIDENCE SUBTOTAL (tests + scripts, not product code)     54806  79994  +25188
 
 modules that changed: 115 of 302 tracked modules; 36 in the product
@@ -106,7 +107,7 @@ framework/behaviors/binding.ts                                            502   
 extensions/model-cost/shared-logic/request-accounting.ts                 1183   1200    +17
 framework/behaviors/session-events.ts                                     128    145    +17
 extensions/model-cost/shared-logic/presentation/display-preference.ts      49     63    +14
-framework/adapters/omp/session/facts.ts                                   290    278    -12
+framework/adapters/omp/session/facts.ts                                   290    279    -11
 framework/core/assembly.ts                                                266    276    +10
 entrypoints/pi/model-cost.ts                                                -      9     +9
 framework/behaviors/state-scope.ts                                         35     44     +9

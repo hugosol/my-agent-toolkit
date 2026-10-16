@@ -8,7 +8,7 @@
 
 **Blocked by:** [21：共同路径消费者与真实宿主回归](21-consumer-regression.md)
 
-**Status:** implemented — Agent 侧实现、自动检查与真实宿主观测已完成（源状态 `efb03e0`，无产品代码改动）；**`P51` 的人类验收（效率/复杂度是否可接受）保持未验收**。证据：`../evidence/22-efficiency-complexity.md`（对照报告 `../evidence/logs/22-efficiency-comparison.txt`，迁移后工件 `../evidence/22-efficiency-after.json`）。接手方在 `6420e21` 上独立重跑了本票全部入口（`bun run typecheck`、S1 采样入口 5 次新跑并覆盖式复现对照、`bun test tests/harness-dock/efficiency-effects.test.ts`、所属分区 `tests/harness-dock`）且无一失败，结论与 §3–§6 一致；复核明细与新增日志见该证据 §8。第二次接手方在 `385dd6d`（源状态与 §8 同一：`git diff --name-only 6420e21 385dd6d` 只含 `.scratch/`）上重跑了本票公开入口（typecheck、S1 采样一次、把"新跑工件 vs 已提交工件"判为 `none` 的对照、`01 vs 22` 对照、真实宿主 3 例两次），结论与 §3–§6/§8 一致；该轮明细与日志见该证据 §9。合并由集成子代理执行，本票不自行合入。
+**Status:** implemented — Agent 侧实现、自动检查与真实宿主观测已完成（源状态 `efb03e0`，无产品代码改动）；**`P51` 的人类验收（效率/复杂度是否可接受）保持未验收**。证据：`../evidence/22-efficiency-complexity.md`（对照报告 `../evidence/logs/22-efficiency-comparison.txt`，迁移后工件 `../evidence/22-efficiency-after.json`）。接手方在 `6420e21` 上独立重跑了本票全部入口（`bun run typecheck`、S1 采样入口 5 次新跑并覆盖式复现对照、`bun test tests/harness-dock/efficiency-effects.test.ts`、所属分区 `tests/harness-dock`）且无一失败，结论与 §3–§6 一致；复核明细与新增日志见该证据 §8。第二次接手方在 `385dd6d`（源状态与 §8 同一：`git diff --name-only 6420e21 385dd6d` 只含 `.scratch/`）上重跑了本票公开入口（typecheck、S1 采样一次、把"新跑工件 vs 已提交工件"判为 `none` 的对照、`01 vs 22` 对照、真实宿主 3 例两次），结论与 §3–§6/§8 一致；该轮明细与日志见该证据 §9。第三次接手方在 `f8b9616` 上重跑了本票公开入口与所属分区（直接测到集成尖端 `pi-adapter` 的产品面复杂度也一致），并**修正了对照入口的行计数口径**（`git grep -c ""` 对以空行结尾的文件少算 1 行：`framework/adapters/omp/session/facts.ts` 290 → 279 被读成 278，产品面 after 由 23772 更正为 23773、差 +4485 → +4486）；修正只用独立计数复核、不改变任何可归属差异与结论，明细见该证据 §10。**该修正只落在证据面 `scripts/efficiency-comparison.ts` 与 `.scratch/` 证据/票文件，产品代码仍无改动。** 合并由集成子代理执行，本票不自行合入。
 
 ## Acceptance criteria
 

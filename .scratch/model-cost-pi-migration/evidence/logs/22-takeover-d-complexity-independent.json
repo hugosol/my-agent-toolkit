@@ -1,0 +1,110 @@
+{
+  "method": "git ls-tree -r <rev> -- framework extensions entrypoints tests scripts + git cat-file --batch over the .ts blobs; a line is every 0x0a plus a final line when the blob does not end on one",
+  "old_ruler": "git grep -c \"\" <rev> -- :(glob)<root>/**/*.ts (what scripts/efficiency-comparison.ts used before this review)",
+  "revisions": {
+    "before 59a0ed7": {
+      "revision": "59a0ed714afb9e2e1ca7370364440d96ea6d3dc5",
+      "files": 237,
+      "lines": 74093,
+      "product": 19287,
+      "evidence": 54806,
+      "by_root": {
+        "entrypoints": 37,
+        "extensions": 10235,
+        "framework": 9015,
+        "scripts": 4181,
+        "tests": 50625
+      }
+    },
+    "after efb03e0 (ticket after)": {
+      "revision": "efb03e0ddc19c5b1052fea708faee0bd75340d12",
+      "files": 299,
+      "lines": 103767,
+      "product": 23773,
+      "evidence": 79994,
+      "by_root": {
+        "entrypoints": 46,
+        "extensions": 12045,
+        "framework": 11682,
+        "scripts": 12774,
+        "tests": 67220
+      }
+    },
+    "HEAD f8b9616": {
+      "revision": "f8b961686c7d945f147e37ea28752dc6067834b8",
+      "files": 299,
+      "lines": 103777,
+      "product": 23773,
+      "evidence": 80004,
+      "by_root": {
+        "entrypoints": 46,
+        "extensions": 12045,
+        "framework": 11682,
+        "scripts": 12784,
+        "tests": 67220
+      }
+    },
+    "pi-adapter 6164d14": {
+      "revision": "190e1b52f322513533bd023a6e1cb6d0f4a6335b",
+      "files": 299,
+      "lines": 103858,
+      "product": 23773,
+      "evidence": 80085,
+      "by_root": {
+        "entrypoints": 46,
+        "extensions": 12045,
+        "framework": 11682,
+        "scripts": 13515,
+        "tests": 66570
+      }
+    }
+  },
+  "comparison_with_old_ruler": {
+    "before 59a0ed7": {
+      "files_old": 237,
+      "files_new": 237,
+      "total_old": 74093,
+      "total_new": 74093,
+      "differing_files": []
+    },
+    "after efb03e0 (ticket after)": {
+      "files_old": 299,
+      "files_new": 299,
+      "total_old": 103766,
+      "total_new": 103767,
+      "differing_files": [
+        {
+          "path": "framework/adapters/omp/session/facts.ts",
+          "old": 278,
+          "new": 279
+        }
+      ]
+    },
+    "HEAD f8b9616": {
+      "files_old": 299,
+      "files_new": 299,
+      "total_old": 103776,
+      "total_new": 103777,
+      "differing_files": [
+        {
+          "path": "framework/adapters/omp/session/facts.ts",
+          "old": 278,
+          "new": 279
+        }
+      ]
+    },
+    "pi-adapter 6164d14": {
+      "files_old": 299,
+      "files_new": 299,
+      "total_old": 103857,
+      "total_new": 103858,
+      "differing_files": [
+        {
+          "path": "framework/adapters/omp/session/facts.ts",
+          "old": 278,
+          "new": 279
+        }
+      ]
+    }
+  }
+}

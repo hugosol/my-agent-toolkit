@@ -21,10 +21,10 @@
  * own trees rather than from one inventory: the sampling entry's inventory covers the common path's
  * families, while the migration's structural change lives in `framework/core`, `framework/behaviors`,
  * `framework/adapters` and `framework/modules`. Families are measured on both revisions with the same
- * one rule (`git grep -c ""`, a count of every tracked line), so a line count is a property of the
- * revision and not of the working tree. Product families (framework, extensions, entrypoints) are
- * reported apart from the evidence surface (tests, scripts), which this migration grew far more than
- * it grew the product.
+ * one rule (every tracked line of every tracked `.ts` blob, read from each revision's own tree), so a
+ * line count is a property of the revision and not of the working tree. Product families (framework,
+ * extensions, entrypoints) are reported apart from the evidence surface (tests, scripts), which this
+ * migration grew far more than it grew the product.
  *
  * Two facts about one side are printed before its figures, because they decide how far its numbers can
  * be read: whether any of its own invariants failed (a run whose invariants failed is a run whose
@@ -187,33 +187,66 @@ function readArtifact(flag: string): { readonly artifact: Artifact; readonly pat
 }
 
 /**
+ * The line count of one blob's content: every line break, plus the last line when the blob does not
+ * end on one. That is the count the file itself holds, which `git grep -c ""` does not give: it drops
+ * the blank line a blob ends on — `framework/adapters/omp/session/facts.ts` read as 278 lines while
+ * holding 279 — and it omits a blob whose every line is blank altogether, so it cannot be the ruler
+ * this side of `P51` is measured with.
+ */
+function countLines(content: Uint8Array): number {
+	let count = 0;
+	for (const byte of content) if (byte === 0x0a) count += 1;
+	return content.length > 0 && content[content.length - 1] !== 0x0a ? count + 1 : count;
+}
+
+/**
  * The tracked line count of every TypeScript file one revision holds, keyed by its repository path.
  *
- * The count comes from the revision's own tree, not from the working tree: `git grep -c "" <rev>` asks
- * git to count the lines of each of that revision's tracked blobs, which is what makes the two sides of
- * the complexity comparison attributable to the source states their artifacts recorded.
+ * The count comes from the revision's own tree, not from the working tree: the blobs that revision
+ * holds are read and counted, which is what makes the two sides of the complexity comparison
+ * attributable to the source states their artifacts recorded. `git ls-tree` names the blobs once, and
+ * `git cat-file --batch` reads them all over one pipe, so one revision costs two git invocations.
  */
 function revisionLines(revision: string): ReadonlyMap<string, number> {
-	const pathspecs = [
-		":(glob)framework/**/*.ts",
-		":(glob)extensions/**/*.ts",
-		":(glob)entrypoints/**/*.ts",
-		":(glob)tests/**/*.ts",
-		":(glob)scripts/**/*.ts",
-	];
-	const result = Bun.spawnSync(["git", "grep", "-c", "", revision, "--", ...pathspecs], { cwd: REPO_ROOT, stdout: "pipe", stderr: "pipe" });
-	if (result.exitCode !== 0) {
-		throw new Error(
-			`git grep found no tracked TypeScript at ${revision} (exit ${result.exitCode}): ${result.stderr.toString().trim()}`,
-		);
+	const roots = ["framework", "extensions", "entrypoints", "tests", "scripts"];
+	const listed = Bun.spawnSync(["git", "ls-tree", "-r", revision, "--", ...roots], { cwd: REPO_ROOT, stdout: "pipe", stderr: "pipe" });
+	if (listed.exitCode !== 0) {
+		throw new Error(`git ls-tree found no tracked files at ${revision} (exit ${listed.exitCode}): ${listed.stderr.toString().trim()}`);
 	}
-	const lines = new Map<string, number>();
-	for (const line of result.stdout.toString().split("\n")) {
-		if (!line.startsWith(`${revision}:`)) continue;
-		const separator = line.indexOf(":", revision.length + 1);
+	const tracked: { readonly path: string; readonly object: string }[] = [];
+	for (const entry of listed.stdout.toString().split("\n")) {
+		const separator = entry.indexOf("\t");
 		if (separator === -1) continue;
-		const count = Number(line.slice(separator + 1));
-		if (Number.isFinite(count)) lines.set(line.slice(revision.length + 1, separator), count);
+		const [mode, type, object] = entry.slice(0, separator).split(" ");
+		if (mode === undefined || type !== "blob" || object === undefined) continue;
+		const path = entry.slice(separator + 1);
+		if (!path.endsWith(".ts")) continue;
+		tracked.push({ path, object });
+	}
+	if (tracked.length === 0) throw new Error(`revision ${revision} holds no tracked TypeScript under ${roots.join(", ")}`);
+
+	const read = Bun.spawnSync(["git", "cat-file", "--batch"], {
+		cwd: REPO_ROOT,
+		stdin: Buffer.from(`${tracked.map(entry => entry.object).join("\n")}\n`),
+		stdout: "pipe",
+		stderr: "pipe",
+	});
+	if (read.exitCode !== 0) {
+		throw new Error(`git cat-file cannot read the tracked blobs of ${revision} (exit ${read.exitCode}): ${read.stderr.toString().trim()}`);
+	}
+	const stream = read.stdout;
+	const lines = new Map<string, number>();
+	let cursor = 0;
+	for (const entry of tracked) {
+		const headerEnd = stream.indexOf(0x0a, cursor);
+		if (headerEnd === -1) throw new Error(`git cat-file answered with fewer blobs than ${revision} tracks (stopped at ${entry.path})`);
+		const header = stream.subarray(cursor, headerEnd).toString();
+		const size = Number(header.split(" ")[2]);
+		const start = headerEnd + 1;
+		if (header.endsWith("missing") || !Number.isFinite(size)) throw new Error(`git cat-file cannot read ${entry.path} at ${revision}: ${header}`);
+		if (start + size > stream.length) throw new Error(`git cat-file answered with a short blob for ${entry.path} at ${revision}`);
+		lines.set(entry.path, countLines(stream.subarray(start, start + size)));
+		cursor = start + size + 1;
 	}
 	return lines;
 }

@@ -63,7 +63,7 @@ disposal / afterDisposal             0/0        0/0    0/0      0/0       0/0   
 
 **可归属差异（仅并发序列）**：
 
-（注：本票提交的对照报告 `logs/22-efficiency-comparison.txt` 由 `efb03e0` 版本的对照入口生成，因此把 `file total` 一并列在"可比差异"里；口径修正 `6802bef` 后该列改列于噪声段并附原因说明，上表数值不变。）
+（注：`logs/22-efficiency-comparison.txt` 已按 §7 的命令由**当前**对照入口重新生成（见 §10），因此 `file total` 与 `6802bef` 的口径一致地列在噪声段；本表数值不变，本次重跑逐项复现。）
 
 | 差异 | 数值 | 原因（可归属） |
 | --- | --- | --- |
@@ -78,10 +78,12 @@ disposal / afterDisposal             0/0        0/0    0/0      0/0       0/0   
 
 | 面 | before (59a0ed7) | after (efb03e0) | 差 |
 | --- | --- | --- | --- |
-| **产品面**（framework + extensions + entrypoints） | **19287** | **23772** | **+4485（+23%）** |
+| **产品面**（framework + extensions + entrypoints） | **19287** | **23773** | **+4486（+23%）** |
 | 证据面（tests + scripts，非产品代码） | 54806 | 79994 | +25188 |
 
-产品面分层：`extensions/model-cost` 8537 → 10326（+1789，业务 + 接线）、`framework/adapters` 2571 → 3889（+1318，pi 适配器新增/`omp/subagents.ts` 移除）、`framework/modules` 1264 → 2244（+980，新增 `local-access.ts` 本机接入）、`framework/core` 2949 → 3248（+299）、`framework/behaviors` 2070 → 2142（+72）、`framework` 顶层 161 → 158、`entrypoints` 37 → 46、`extensions/{connect-bot,codebase-tools}` 1698 → 1719。
+（两张表的数字是 §10 修正行计数口径后的当前值；唯一因此改变的模块是 `framework/adapters/omp/session/facts.ts`（290 → 279，原口径把它读成 278），所以 `framework/adapters` 与产品面合计各比原报告多 1。两者都经 §10 的独立计数复核。）
+
+产品面分层：`extensions/model-cost` 8537 → 10326（+1789，业务 + 接线）、`framework/adapters` 2571 → 3890（+1319，pi 适配器新增/`omp/subagents.ts` 移除）、`framework/modules` 1264 → 2244（+980，新增 `local-access.ts` 本机接入）、`framework/core` 2949 → 3248（+299）、`framework/behaviors` 2070 → 2142（+72）、`framework` 顶层 161 → 158、`entrypoints` 37 → 46、`extensions/{connect-bot,codebase-tools}` 1698 → 1719。
 
 逐模块（对照报告完整列出 36 个产品模块）：最大新增为 `extensions/model-cost/harnesses/pi/widget.ts` 1053（pi 专有绘制接线）、`framework/modules/local-access.ts` 980（本机接入 + 所有权读取）、`framework/adapters/pi.ts` +572、`framework/adapters/pi/nicobailon.ts` 556（第三方接线集中处）、`extensions/model-cost/harnesses/pi.ts` 277；最大移除为 `framework/adapters/omp/subagents.ts` −399（被统一路径替代）与 `harnesses/omp/boundary-timer.ts` −146（移为两端共用）。业务公共逻辑本身 `extensions/model-cost/shared-logic` 增量为 +452（runtime +201、consumption-store +158、其余为小量），其中相当部分是本迁移要求的跨 harness 汇总/合并提交能力。
 
@@ -179,4 +181,40 @@ OMP_BOT_BINARY="E:/Developer/myhub/omp-bot/backend/target/release/omp-bot.exe" b
 - **两次真实宿主运行互相一致**，也与 §5/§8 的已提交计数一致：§5 的"零"结论（健康空闲 0 效果、同进程无监听端点、子代理在侧无第二次根预取/根 UI）在交接态上重复成立，不是一次性的。
 - 本次新跑工件自报的 `uncommitted paths` 含 `M bun.lock` 与两个 `host-patches/*/patch.diff`：§8 已核对这三者在工作树中的**字节与 `HEAD` blob 逐一相等（LF）**，是 `core.autocrlf=true` 的 stat 缓存现象，也正是 dock 补丁/基线用例所需的字节；除此之外工作树无未提交内容（本次复核只新增本节与 `logs/22-takeover-c-*`）。本次采样工件 `logs/22-takeover-c-after.json` 与那次运行的日志一并保留，供离线复核该 `none` 结论。
 - **未覆盖项与 §6 相同，本节未新增**：`P51`/`P52`/`P53` 的人类判断未做（本票交付时保持未验收）；并发序列 `draws +2` 与主子例 `frames 33→18` 仍未逐渲染归因；pi 侧本机接入未做同样的记录器注入；证据范围仍限 win32/x64、bun 1.4.2、OMP 18.5.0（未打补丁）。
-- **交付时的集成分支位置（供集成方核对，不影响本票结论）**：本分支基点是 `39fdc3d`（= 21 合入后的 `pi-adapter`），此刻 `pi-adapter` 尖端已是 `6164d14`（23、25 已合入）。两者之间**产品源没有变化**：`git diff --name-only 39fdc3d pi-adapter -- framework extensions entrypoints` 去掉 `framework/docs/` 后为空；`scripts/efficiency-baseline.ts`、`scripts/efficiency-comparison.ts` 与 `tests/harness-dock/` 也未被改动，`package.json` 只多一行 23 的 TUI 验收脚本。集成侧新增的都是 `.scratch/` 证据/票文件、`framework/docs/harness-support.md` 与 23 的 `scripts/pi-tui-acceptance.ts`、`scripts/support/*`。因此本票的采样序列、效果计数与复杂度判断在合入后仍针对同一产品源；复杂度表是按本票 lineage 的两版 revision（`59a0ed7` → `efb03e0`）计算的，不受集成侧 `scripts/` 增量影响（产品面 subtotal `19287 → 23772` 不变）。
+- **交付时的集成分支位置（供集成方核对，不影响本票结论）**：本分支基点是 `39fdc3d`（= 21 合入后的 `pi-adapter`），此刻 `pi-adapter` 尖端已是 `6164d14`（23、25 已合入）。两者之间**产品源没有变化**：`git diff --name-only 39fdc3d pi-adapter -- framework extensions entrypoints` 去掉 `framework/docs/` 后为空；`scripts/efficiency-baseline.ts`、`scripts/efficiency-comparison.ts` 与 `tests/harness-dock/` 也未被改动，`package.json` 只多一行 23 的 TUI 验收脚本。集成侧新增的都是 `.scratch/` 证据/票文件、`framework/docs/harness-support.md` 与 23 的 `scripts/pi-tui-acceptance.ts`、`scripts/support/*`。因此本票的采样序列、效果计数与复杂度判断在合入后仍针对同一产品源；复杂度表是按本票 lineage 的两版 revision（`59a0ed7` → `efb03e0`）计算的，不受集成侧 `scripts/` 增量影响（产品面 subtotal `19287 → 23772` 不变；该数字是 §10 修正行计数口径**之前**的读数，修正后为 `19287 → 23773`，结论不变）。
+
+## 10. 第三次接手复核（源状态 `f8b9616`；并修正对照入口的行计数口径）
+
+接手时：HEAD `f8b9616`，既有提交 `efb03e0`/`6802bef`/`6420e21`/`385dd6d`/`44a4b96`/`f8b9616` 原样保留，未做任何 reset；工作树除 `bun.lock` 与两份 `host-patches/*/patch.diff` 外干净，而这三者与 `HEAD` blob 的字节数相等、带过滤器的 hash 也逐一相等（`git hash-object --path=`，§8 说明 2 的同一现象），不是未提交内容。本节新增的改动**只在证据面** `scripts/efficiency-comparison.ts` 与 `.scratch/` 的证据/票文件；产品面（`framework`、`extensions`、`entrypoints`）仍无改动。
+
+集成侧只读核对：此刻 `pi-adapter` 尖端为 `6164d14`；`git diff --name-only HEAD pi-adapter -- framework extensions entrypoints` 去掉 `framework/docs/` 后为空，产品源与本节复核的 HEAD 相同。
+
+| 命令 | 退出 | 结果 | 日志 |
+| --- | --- | --- | --- |
+| `bun run typecheck` | 0 | `tsc --noEmit` 无诊断（修正后的入口在内） | `logs/22-takeover-d-typecheck.log` |
+| `bun run baseline:efficiency --out …/logs/22-takeover-d-after.json --label takeover-d` | 0 | 七条序列 `every invariant held.`；instrument probe `{"operations":13,"documentReads":2,"documentPublishes":1,"lockOperations":7,"stagingOperations":2,"syncOperations":1}`（与 §9 相同） | `logs/22-takeover-d-baseline.log`、工件 `logs/22-takeover-d-after.json` |
+| `bun run compare:efficiency -- --before 22-efficiency-after.json --after logs/22-takeover-d-after.json` | 0 | `none: every comparable figure of every sequence and window agrees.`；`every sequence delivered the same kinds the same number of times.`；`PRODUCT SUBTOTAL 23773 → 23773 (+0)`、`EVIDENCE SUBTOTAL +10`（唯一差异是本节修正过的 `scripts/efficiency-comparison.ts` 自身） | `logs/22-takeover-d-reproduction.txt` |
+| `bun run compare:efficiency -- --before 01-efficiency-baseline.json --after 22-efficiency-after.json [--out …/logs/22-efficiency-comparison.txt]` | 0 | 复现 §3/§4：七条序列窗口级文件成本逐列相同；可归属差异仍是并发序列 `requests 1→2`（两条 `/user/balance`）、`draws 30→33`、`events 24→23`；复杂度按本节修正后的口径为产品面 `19287 → 23773`（见下） | `logs/22-takeover-d-comparison-corrected.txt`、重生成的 `logs/22-efficiency-comparison.txt` |
+| `bun run compare:efficiency -- --before 01-efficiency-baseline.json --after 22-efficiency-after.json --after-rev pi-adapter` | 0 | `PRODUCT SUBTOTAL 19287 → 23773 (+4486)` —— 把复杂度侧直接测到集成尖端 `pi-adapter`，产品面与 `efb03e0` 逐族相同，支持上面的"合入后仍针对同一产品源" | `logs/22-takeover-d-integration-tip.txt` |
+| `bun test tests/harness-dock/efficiency-effects.test.ts`（真实宿主） | 0 | **3 pass / 0 fail**、21 expect()、12.02s；记录到的外部效果与 §5 逐个相同：进程内效果数 2295 / 2689、存储根 13 次操作（明细逐条相同）、健康空闲窗口 0 效果、frames 10 / 18、arrivals `["balance","model"]` 与 `["balance","model","model","model"]`、无 `net.createServer` | `logs/22-takeover-d-effects.log` |
+| `OMP_BOT_BINARY=… bun test tests/harness-dock`（所属分区，真实宿主，串行） | 0 | **93 pass / 0 fail**、1121 expect()、26 文件 / 218.54s（90 既有 + 本票 3 例；§8 在更早的同源状态上记录同一组数） | `logs/22-takeover-d-partition-harness-dock.log` |
+| `bun test tests/model-cost`（共同路径消费者） | 0 | **463 pass / 0 fail**、2524 expect()、40 文件 / 7.27s | `logs/22-takeover-d-partition-model-cost.log` |
+| `bun test tests/framework`（共同路径消费者） | 0 | **481 pass / 0 fail**、2250 expect()、38 文件 / 39.84s | `logs/22-takeover-d-partition-framework.log` |
+| 独立行计数复核（不经被测入口） | 0 | 4 个 revision × 302 个 tracked 模块：产品面 `19287`(59a0ed7) / `23773`(efb03e0) / `23773`(HEAD) / `23773`(pi-adapter)，证据面 `54806` / `79994` / `80004` / `80085`；与旧口径的唯一差异见下 | `logs/22-takeover-d-complexity-independent.json` |
+
+- **所属分区与消费者是本节第一手重跑**，不是复用 §8：`93 pass / 0 fail`（1121 expect）、`463 pass / 0 fail`（2524 expect）、`481 pass / 0 fail`（2250 expect）与 §8 记录的同一组数逐项相同，说明 §8 的复用判断成立（那两侧源状态确实同一）。三轮都跑在本节定稿后的树上（修正后的对照入口先定稿、再开跑），运行期间未改动被测源码或 fixture。
+- 本节采样工件自报的 `uncommitted paths` 是 `bun.lock` 与两份 `host-patches/*/patch.diff`（§8 说明 2 的 CRLF stat 现象，字节与 `HEAD` blob 相同）加上本节的 2 个日志文件（`??`）；**产品源码无未提交内容**，本次修正只落在 `scripts/efficiency-comparison.ts`（证据面）与 `.scratch/` 的证据/票文件。
+
+### 10.1 行计数口径修正（`git grep -c ""` → 逐 blob 计数）
+
+**发现**：用一条独立于被测入口的计数复核 §4 —— `git ls-tree -r <rev> -- framework extensions entrypoints tests scripts` 列出该 revision 的 blob，再 `git cat-file --batch` 逐 blob 数 `0x0a`（末行不以换行结尾时补 1）——产品面 after 得到 **23773**，而对照入口当时报 **23772**。
+
+**定位**：对 4 个 revision（`59a0ed7`、`efb03e0`、`HEAD`、`pi-adapter`）逐文件比对两法，文件集合完全一致（237 / 299 / 299 / 299），**唯一差异**是 `framework/adapters/omp/session/facts.ts`：旧口径读成 278，实际 279（文件自 `efb03e0` 起以空行结尾，末两字节为 `}\n\n`）。隔离复现（临时仓库：`a\n\n` → `git grep -c ""` 报 1 行、`wc -l` 报 2 行；内容只有 `\n` 的 blob → `git grep` 完全不出现在输出里）说明这是 `git grep` 空模式的行为，与仓库内容无关，且它还会**整个略过**"每行都空"的 blob。
+
+**修正**：`revisionLines` 改为读该 revision 自己的 `.ts` blob 逐行计数（`git ls-tree -r` 列 blob + `git cat-file --batch` 一次读完，一个 revision 两次 git 调用）；文件集合与旧口径逐一相同，只有上述那一行改变，证据面合计不受影响（`54806`/`79994`/`80004` 与旧口径相同）。修正后的入口在 4 个 revision 上与独立计数**逐一相同**。
+
+**影响**：§4 已更新为产品面 `19287 → 23773`（+4486）、`framework/adapters` `2571 → 3890`（+1319）、`facts.ts` `290 → 279`；§9 记录的 `23772 → 23772 (+0)` 是修正前的读数，其结论（产品面 +0）在修正后仍成立（`23773 → 23773`）。`logs/22-efficiency-comparison-console.log`、`logs/22-takeover-c-*.txt` 是修正前的历史日志，保留原值。
+
+**边界**：这个修正只让数字与独立计数一致，**不改变**任何可归属差异、结论或人类判断的对象（差的是一行计数）；对照入口本身没有自动化测试覆盖（修正前后都没有），本节对该入口的验证是"入口输出 vs 独立计数"与"旧报告 vs 新报告逐行 diff"，不是仓库测试。§3 的表与 §5 的效果计数未受影响（本次重跑逐项复现）。
+
+**本轮未覆盖项**（与 §6 相同，本节未新增）：`P51`/`P52`/`P53` 的人类判断未做（本票交付时保持未验收）；并发序列 `draws +2` 与主子例 `frames 33→18` 仍未逐渲染归因；pi 侧本机接入未做同样的记录器注入；证据范围仍限 win32/x64、bun 1.4.2、OMP 18.5.0（未打补丁）、无 provider 凭据（请求由本机 capture endpoint 回答）。
