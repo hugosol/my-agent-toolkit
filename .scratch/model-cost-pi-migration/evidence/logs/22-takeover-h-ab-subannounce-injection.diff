@@ -1,0 +1,14 @@
+diff --git a/extensions/model-cost/shared-logic/request-accounting.ts b/extensions/model-cost/shared-logic/request-accounting.ts
+index bb5cc5a..81fffcf 100644
+--- a/extensions/model-cost/shared-logic/request-accounting.ts
++++ b/extensions/model-cost/shared-logic/request-accounting.ts
+@@ -1130,7 +1130,8 @@ export function createRequestAccounting(inputs: RequestAccountingInputs): Reques
+ 						`子代理运行耗时采集失败（${fault.fault}）；本次活动的耗时未记录，已保留此前有效值，并标记本周期该 Session 的耗时观测存在缺口。`,
+ 					);
+ 				}
+-				announce();
++				// A/B (ticket 22, temporary): the sub Round-end announce() is disabled here to attribute the
++				// `main-child-concurrency` draws delta to this one path. Restored before this round ended.
+ 			}
+ 			const ledger = ledgers.get(delivery.session.sessionId);
+ 			// Nothing to save when neither the session's own consumption nor its runtime accumulation has
