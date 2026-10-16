@@ -82,3 +82,37 @@ $ bun scripts/pi-tui-acceptance.ts --widths 120,80,60
 - **释放与隔离**：捕获运行在工作树之外进行，运行前后各查一次 `%TEMP%\omp-dock-tui-acceptance-*`，结束**无残留**（只剩 §6 说明保留的那次交互运行根）；工作树未被写入（`git status` 0 条），`*pi-tui-acceptance*` 无残留进程。本轮自己那次交互尝试的运行根已删除。
 - **环境修复（不属仓库内容）**：共享仓库 config 的 `core.autocrlf` 曾被写成非法布尔值 `core.eol`，使本机所有 git 命令失败；已改回 `true`（系统默认值），仓库内容未改动。本轮环境仍为 win32 10.0.26200 / x64 / bun 1.4.2，且本票会话不发任何模型请求。
 - **仍未确认**：人类验收（格式、间距、窄宽度、观感）——本轮不代判、不写通过；本环境无法提供真实控制台，"人在真终端上看"这一步只能由人在自己的终端执行 `bun scripts/pi-tui-acceptance.ts --interactive`。
+
+## 8. 集成同步与合并后全仓回归（本轮集成验收）
+
+**同步状态**：宿主已把集成提交 `8c7256f5bb0529371a4e970b53a6f29b030a56b4` merge 回本票开发分支，交接时本 worktree 的 HEAD 即该提交；同一次读取里 `git rev-parse pi-adapter` 同为 `8c7256f`、`git log --oneline pi-adapter ^HEAD` 为空——本票分支持有集成侧到该点的全部提交。提交关系：`8c7256f` 的父为 `e45a9ff`（合并前的集成 tip，其本身已含 25 的合入）与 `69cc246`（本票末提交，父 `b408c83`）。**交接之后 `pi-adapter` 又前进到 `6164d14`**（`git worktree list` 实录：`E:/Developer/myhub/my-agent-toolkit 6164d14 [pi-adapter]`，即 `Merge ticket branch …/25-evidence-scope-audit-…`），本分支不含该提交；本轮不改动集成分支，由宿主排队合并。
+
+**无冲突可解**：`git ls-files -u` 0 条未合并路径；全树 grep `^(<{7}|={7}|>{7})`（`*.ts`／`*.js`／`*.json`／`*.md`，排除 `node_modules`）0 命中。
+
+**合入内容逐项核对（两侧都没有被改写）**：
+
+- 本票侧：`git diff --stat 69cc246 8c7256f -- scripts/ package.json` **为空**；四个交付文件的 blob 与 §1、§7 复核时的 hash 逐一相同（`git rev-parse HEAD:<path>` = `bdc7060d…`／`c2e0dcc1…`／`2f0faa25…`／`e05afde5…`），即合入树里本票实现的字节与已复核状态一致。
+- 集成侧：`git diff --stat e45a9ff 8c7256f -- framework/ extensions/ entrypoints/ tests/ docs/` **为空**——合入没有回退集成侧任何被测内容。
+- 合成关系：`git diff --stat 8c7256f^1 8c7256f` = 29 文件 +2093 −1（全为本票新增的 `scripts/**`、`package.json` 一行与 `.scratch` 证据/实现记录），`git diff --stat 8c7256f^2 8c7256f` = 18 文件 +830 −12（全为集成侧 25 的证据、`framework/docs/harness-support.md` 与相应实现记录）。两侧各自的变化都只属于自己。
+
+**检出与环境（两次全仓运行的实际条件）**：本 worktree 为 `core.autocrlf=true` 检出（`git config --show-origin --get-all core.autocrlf` = 系统 `D:/Program Files/Git/etc/gitconfig` `true` 与仓库 `…/.git/config` `true`，仓库无 `.gitattributes`），`git ls-files --eol` 报告 523 个路径 `w/crlf i/lf`。三处行尾敏感文件按 15/17/18/19/20/25 的做法归一到已提交 LF blob 字节后运行（`bun.lock` `a5d37ab2…`、viewed-session `66195465…`、codex-response-boundary `4ec9ad0d…`，与 `framework/docs/harness-baseline.json` 记录值及 `git show HEAD:<path> | sha256sum` 逐一相等），运行结束用 `git checkout --` 按字节恢复为运行前的 CRLF 检出（`e7ed487b…`／`057e01f6…`／`294b3727…`，与运行前 sha256 逐一相同）。`tests/connect-bot/support/omp-bot.ts` 的默认同级路径 `C:\Users\hugos\AppData\Local\Temp\omp-bot\backend\target\release\omp-bot.exe` 不存在，真实面板二进制以 `OMP_BOT_BINARY=E:/Developer/myhub/omp-bot/backend/target/release/omp-bot.exe` 显式给名（本机既有 release 构建，2026-10-09，非本票产物）。环境：win32 10.0.26200 / x64 / Bun 1.4.2。
+
+**全仓回归**（同一 HEAD `8c7256f`；第二次即上述文档化环境）：
+
+| 命令 | 退出 | 结果 | 日志 |
+| --- | --- | --- | --- |
+| `bun run typecheck` | 0 | 无诊断（`$ tsc --noEmit`） | `logs/23-tui-acceptance-integration-typecheck.log` |
+| `bun run test`（按检出状态，未给 `OMP_BOT_BINARY`） | 1 | 1153 pass / 18 fail / 1 error，1171 tests，128 文件，289.72s | `logs/23-tui-acceptance-integration.log` |
+| 同上（`OMP_BOT_BINARY` + 三处文件归一为已提交 LF 字节） | 0 | **1200 pass / 0 fail**，6897 expect()，128 文件，438.44s | `logs/23-tui-acceptance-integration-normalized.log` |
+
+- 第一次运行的 18 条失败**没有一条落在本票内容上**，全部可归因于上述环境条件：**10 条** `host-patches/omp-18.5.0-{viewed-session,codex-response-boundary}/patch.diff touches no file`（`patchTouchedFiles` 按 LF 切行，CRLF 检出对不上；命中 `codex-response-artifact`、`combined-host-artifact`、`detail-tree`、`model-cost-codex-quota`、`model-cost-modes`、`model-cost-persistence`、`viewed-marker`、`viewed-session-host`、`viewed-session-total`、`viewed-session`）；**2 条** lockfile 校验（`harness-dock/baseline.test.ts` 与 `harness-dock/session-driver.test.ts`：记录值 `a5d37ab2…` 是已提交 LF blob 的 sha256，CRLF 工作区为 `e7ed487b…`）；**5 条** `connect-bot` 互操作（`budget-regression` P23、`harness-exit-budget` P27、`panel-registration-lifecycle` P24/P25/P26：面板二进制不在默认解析路径）；**1 条** `tests/model-cost/session-recovery.test.ts` 的 5s 期限超时（连同一条同源的未捕获 `savedDocument` 5s 期限错误，即那 1 个 error）。这些签名与 04/13/14/15/16/17/18/19/20 各轮记录的同类现象一致；本轮未改动 `tests/**`、`host-patches/**`、`bun.lock`、`framework/docs/harness-baseline.json` 任何字节（工作树运行后按 sha256 逐一复原）。
+- 其中唯一非行尾类的是 `tests/model-cost/session-recovery.test.ts` 那条 5s 期限（满载时序）：15 的集成归一运行 1 也有同类一条（`harness-dock/model-cost-session-span.test.ts`，3.6s），其 run2 通过；本轮归一运行在同样条件下 1200/0，未复现。
+- 第二次运行的计数与本票实现轮、复核轮所用基线和 25 的集成轮**逐项相同**（1200 pass / 6897 expect() / 128 文件），即合入没有改变任何可观察结果。
+- 第一次运行的 1171 tests 低于 1200，是失败文件提前中止所致，不是用例缺失。
+- **本轮修复：无源码修复**——合入本身没有需要解的冲突，也没有可归因于合入的失败；本轮改动只有本记录、实现文件的状态行与三份日志。
+
+**运行后状态**：`git status --porcelain` 除本轮新增的 `evidence/logs/23-tui-acceptance-integration*.log` 与本记录/实现记录外为空；运行期间未改被测源码与夹具。本轮未操作集成工作区（`E:/Developer/myhub/my-agent-toolkit`）、未切换分支、未新建 worktree、未 reset、未调用 retro，也未自行合入 `pi-adapter`（返回后由宿主排队合并）。
+
+**本轮通过不改变人类验收的地位**：全仓绿只说明合入没有破坏任何已执行检查；§4 与 §7 的未确认项（真终端格式/间距/窄宽度/观感、本环境无真实控制台、覆盖限本机 win32 + bun 1.4.2 + pi 1.2.0 + `--tui-mode regular`）原样保留，本票仍**不得判为通过**。
+
+**环境提示（非仓库内容，供最终门禁知悉）**：本机以 `core.autocrlf=true` 检出且仓库无 `.gitattributes`，故未归一行尾的工作树跑全仓会有上述 12 条行尾类失败、5 条面板二进制类失败（`framework/docs/harness-support.md` 的「pi model-cost migration evidence」已记录该前置）；最终整体门禁若在同一类工作树运行，需要同样给 `OMP_BOT_BINARY` 并把三处冻结文件置于已提交 LF 字节。仓库内容本身不受影响（blob 全为 LF）。
