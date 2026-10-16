@@ -25,9 +25,13 @@
  * the shared document per identity.
  *
  * Coverage this file owns for P28: the timeline (input, idle, a tool tail, the same session resumed
- * from the document, a fork, and the next input of a new period), the reading never taken from a tool
- * end or a Round end, and the three time figures — the main session's span beside two subagents'
- * accumulated runtimes — never standing in for one another across the drawing and the reload.
+ * from the document, and a fork), the reading never taken from a tool end or a Round end, and the three
+ * time figures — the main session's span beside two subagents' accumulated runtimes — never standing in
+ * for one another across the drawing and the reload.
+ *
+ * The reset segment is the switch action's rather than this file's: `period-switch.test.ts` drives the
+ * period change over the framework's own public binding, where the closed period's span leaves the new
+ * document and the new period's span starts at the first input observed in it.
  */
 import { afterAll, afterEach, beforeEach, describe, expect, test, vi } from "bun:test";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
