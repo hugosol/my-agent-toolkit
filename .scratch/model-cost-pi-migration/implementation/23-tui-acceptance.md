@@ -6,7 +6,7 @@
 
 **Blocked by:** [21：共同路径消费者与真实宿主回归](21-consumer-regression.md)
 
-**Status:** ready-for-agent
+**Status:** in-progress — Agent 侧实现与自动检查已在本分支完成（`scripts/pi-tui-acceptance.ts` + `scripts/support/{tui-acceptance-fixture,terminal-screen}.ts` + `package.json` 一行；捕获运行 46 ok / 0 failed，`bun test tests/model-cost` 463 pass / 0 fail，`bun run typecheck` exit 0，见[证据](../evidence/23-tui-acceptance.md)）。**人类验收（真终端格式/间距/窄宽度/观感）未确认，不得据此判为通过。** 本分支未合入 `pi-adapter`，交集成子代理接管。
 
 ## Acceptance criteria
 
@@ -25,3 +25,15 @@
 - 本票新增资源必须随功能实现订阅/登记/通信/恢复/等待的释放及失效保护，不能留给后续装配票。共同公共路径变更同步迁移受影响消费者、说明和旧生产路径；不保留兼容别名、重复算法或接线 shim。
 - 验证按仓库 testing 约定：迭代用受影响检查，票完成用所属分区及共同契约消费者，TypeScript 变更执行 `bun run typecheck`；另实际运行本票用户行为。昂贵/真实宿主检查串行且运行期间保持来源不变。文档/基线票运行相应链接、例子或采样入口，不机械跑无关全仓测试。
 - 完成全部可执行实现、自动及真实宿主检查后才进行最终人类验收；仅 P51/P52/P53 的指定判断由人类确认。凭据、许可、平台或人工确认缺失明确记录，不能标成通过，也不暂停其他可执行工作。不擅自正式安装、切换、清理用户数据或付费调用。
+
+## Comments
+
+- **本轮（首次执行，Agent 半完成）**：交付隔离可运行入口、固定业务场景、宽度输出与内容/布局自动检查，并取得可获得的截图/录屏。全部证据、源 hash、命令与未确认项见[23-tui-acceptance.md](../evidence/23-tui-acceptance.md)，此处不重复。
+- **逐条状态**：
+  - “Agent 完成内容/布局自动检查并准备隔离运行入口、固定业务场景和宽度输出”：**已完成**（`bun scripts/pi-tui-acceptance.ts --widths 120,80,60` → 46 ok / 0 failed；`--interactive` 供人看真 TUI）。
+  - “运行真实 TUI，保存可获得截图/录屏，至少覆盖 brief/detail、树、未知/不完整及宽度退化，RPC 不替代 TUI”：**已完成**（真 pi 终端 UI，PTY 内的 TUI 进程；brief/detail × 120/80/60 六帧；`Run: —`/`Run: 0ms`/`?(?)`/无金额行都已覆盖；录屏＝每帧原始 ANSI 流，截图＝单元格渲染的 PNG）。**未覆盖**：POSIX、fullscreen 形态、真实模型请求（本票会话不发请求）。
+  - “人类确认前必须完成全功能实现及已分配自动检查；格式、间距、窄宽度与观感由用户确认，未确认不得写为通过”：**人类确认未做**——真终端格式/间距/窄宽度/观感仍是用户判断，本票不代判，也不据此写通过。
+  - “不以 22 的人工效率确认作为本票 blocker”：遵守（两处人工判断互不牵连，本票未引用 22 的结论）。
+  - “P52 完整 Coverage（S2）”：Agent 半如上；**人类半未确认**。
+- **未因自动检查全绿而改变的限制**：22/21 的结论、OMP 消费端回归、docs 更新与 fault-injection 复核不在本票；`runtimeGap`（持久化的不完整事实）在绘制面无额外标记，本票按下记录，不新增绘制要求。
+- **复核轮（重新派发后，同一 worktree／分支，源与已提交状态逐字节相同）**：重跑了本票的全部可执行检查——`bun run typecheck` exit 0；`bun test tests/model-cost` 463 pass / 0 fail；`bun scripts/pi-tui-acceptance.ts --widths 120,80,60` **46 ok / 0 failed**，`observations` 与已提交 `report.json` 逐条相同（只有运行根随机路径与终端空白尾行的差异）。用两次临时故障注入确认检查灵敏：丢掉每条会话自己的金额 → 6 条 FAIL；窄宽度吞掉行尾（`Balance:`／`Span:`）→ 4 条只落在 60 列的 FAIL；两次注入均已还原（`git status` 干净）并在还原后重跑回复 46/0。捕获运行无残留隔离根与残留进程，工作树未被写入。**本轮无控制台**（shell 无 pty），`--interactive` 只验证到入口建立隔离根并启动 pi 后退出；"交互形态真的画出内容"仍由上一轮真实控制台那次运行与捕获模式的 6 个 PTY 帧支持。**人类验收（格式／间距／窄宽度／观感）仍未确认，不得据此判为通过。** 详见[证据](../evidence/23-tui-acceptance.md) §7 与 `logs/23-tui-acceptance-recheck.log`。

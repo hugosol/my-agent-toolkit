@@ -1,0 +1,13 @@
+Warning: No project session found with id 'session-main'; creating a new session with that id.
+ ▀▀█  v1.2.0
+ █▀ █ escape interrupt · ctrl+c/ctrl+d clear/exit · / commands · ! bash · ctrl+o more
+ Press ctrl+o to show full startup help and loaded resources.
+ Pi can explain its own features and look up its docs. Ask it how to use or extend Pi.
+[Extensions]
+  model-cost.ts, pi-subagents
+🌙  [░░░░░░░░░░░░░░░░░░░░   0% (0/450.0K)]  Effort: off  💰 Balance: ¥12.34  ⏳ Accrued: ¥0.07 [▏▏▏▏▏]
+Total:  Cache: 67%  ¥Cache/In/Out：0:8:92  Cost: ¥0.07  Span: 0:05:00
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+C:\Users\hugos\AppData\Local\Temp\omp-dock-tui-acceptance-KFqw3d\work
+0.0%/128k (auto)                                                                                          deepseek-flash
