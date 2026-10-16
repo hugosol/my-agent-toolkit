@@ -41,10 +41,17 @@
  *   kept waiting, and an ordinary one keeps waiting exactly as before.
  *
  * The framework has no *State* behavior of its own here, and that is the design rather than an
- * omission: the agent's work condition is a fact of the extension (contract P6), the framework's
- * State holds a declared activation value and nothing else, and no marker or cell follows a round.
- * What it does own is the identity and its lifetime, because a Turn states which round it belongs
- * to and that fact has to be the framework's rather than an adapter's or a consumer's guess.
+ * omission: the framework's State holds a declared activation value and nothing else, and no marker
+ * or cell follows a round. What it does own is the identity and its lifetime, because a Turn states
+ * which round it belongs to and that fact has to be the framework's rather than an adapter's or a
+ * consumer's guess.
+ *
+ * That identity is also where the session's *activity reading* comes from, and it is dispatched here
+ * — from the very transitions above — as this axis's one current-state projection: a round the
+ * framework holds open is that session working, a round it has ended is that session idle. It is an
+ * observation rather than State and rather than a second set of edge rules (`session-activity.ts`),
+ * so an extension consuming it never answers for itself which native fact ends a session's work, and
+ * no reading is ever derived from one of these edges twice.
  *
  * A handler's failure is its own. It is reported on the adapter's diagnostic channel — a channel
  * outside model context — and it changes neither the edge the delivery described nor whether
@@ -54,6 +61,7 @@
  */
 import type { ExtensionDefinition } from "../core/definition";
 import type { RoundDelivery, RoundEvent, RoundObservation, SubscriptionGroup } from "../core/protocol";
+import { ACTIVITY_OF_EDGE, type SessionActivityAxis } from "./session-activity";
 import { dispatchToGroups } from "./subscriptions";
 
 /**
@@ -111,6 +119,15 @@ export interface RoundSynthesisInputs {
 	readonly lives: RoundLives;
 	/** The subscription groups an edge is offered to, in declaration order. */
 	readonly groups: readonly SubscriptionGroup[];
+	/**
+	 * The binding's activity axis, which the edges this synthesis dispatches move.
+	 *
+	 * The reading is stated here rather than derived anywhere else, because this is where the
+	 * framework's own transitions are decided: an edge this synthesis dispatched is what the axis
+	 * reads, so the activity a subscriber observes is the same transition it was delivered and never a
+	 * second interpretation of the native facts.
+	 */
+	readonly activity: SessionActivityAxis;
 	/** Reports a handler's failure or an unarrangeable re-check outside model context. */
 	readonly reportFailure: (message: string) => void;
 	/** Arranges one callback on the harness's next task; see {@link HarnessPort.nextTask}. */
@@ -132,24 +149,29 @@ export interface RoundSynthesisInputs {
  * and an edge is dispatched through it so that bookkeeping and subscribers always agree.
  */
 export function createRoundSynthesis(inputs: RoundSynthesisInputs): RoundSynthesis {
-	const { definition, lives, groups, reportFailure, nextTask, delivering } = inputs;
+	const { definition, lives, groups, activity, reportFailure, nextTask, delivering } = inputs;
 	/** The settle each session is waiting to have confirmed, by that session's identity. */
 	const candidates = new Map<string, RoundObservation>();
 
 	const dispatch = (observation: RoundObservation, kind: RoundEvent["kind"]): void => {
-		dispatchRoundEvent(
-			definition,
-			lives,
-			{
-				event: { kind },
-				session: observation.session,
-				owner: observation.owner,
-				hasUI: observation.hasUI,
-				feedback: observation.feedback,
-			},
-			groups,
-			reportFailure,
-		);
+		const delivery: RoundDelivery = {
+			event: { kind },
+			session: observation.session,
+			owner: observation.owner,
+			hasUI: observation.hasUI,
+			feedback: observation.feedback,
+		};
+		dispatchRoundEvent(definition, lives, delivery, groups, reportFailure);
+		// The edge's own current-state projection, stated after the edge so a subscriber that reads
+		// both axes sees the transition before the reading it left behind. It is dispatched from the
+		// session the edge named, which is why one session's transition never moves another's reading.
+		activity.observe({
+			session: delivery.session,
+			owner: delivery.owner,
+			activity: ACTIVITY_OF_EDGE[kind],
+			hasUI: delivery.hasUI,
+			feedback: delivery.feedback,
+		});
 	};
 
 	/**
@@ -213,7 +235,7 @@ export function createRoundSynthesis(inputs: RoundSynthesisInputs): RoundSynthes
 				return;
 			}
 			if (observation.signal.willContinue) {
-				// The session already scheduled its next piece of work: a pause inside the round.
+				// The run already scheduled its next piece of work: a pause inside the round.
 				candidates.delete(sessionId);
 				return;
 			}

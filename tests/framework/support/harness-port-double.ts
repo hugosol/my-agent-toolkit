@@ -242,14 +242,21 @@ export interface PortDouble {
 			 * Whether work beyond the run still holds the session when the framework re-checks an end
 			 * candidate. Omitted models a session nothing holds, which is what an ordinary settle
 			 * needs to end; `true` models one waiting on delegated work, whose round stays open, and
-			 * `undefined` a harness that established nothing either way.
+			 * `"unstated"` a harness that established nothing either way — which confirms no end.
 			 */
-			readonly heldWork?: boolean;
+			readonly heldWork?: boolean | "unstated";
 			/**
 			 * How the activity that settled ended, as the harness stated it. Omitted models a settle
 			 * that stated no outcome, which is not the same as a completed activity.
 			 */
 			readonly outcome?: TurnOutcome;
+			/**
+			 * Whether the session had already scheduled its next piece of work when the run settled.
+			 * Omitted models a settle that scheduled nothing, which is the candidate an end is
+			 * confirmed from; `true` models the pause inside its round that an automatic
+			 * continuation, a drained queued message or a pending wake is.
+			 */
+			readonly willContinue?: boolean;
 		},
 	): RoundBoundary;
 	/**
@@ -528,7 +535,7 @@ export function portDouble(options: PortDoubleOptions = {}): PortDouble {
 						? { kind: "activity_started" }
 						: {
 								kind: "settled",
-								willContinue: false,
+								willContinue: options.willContinue ?? false,
 								...(options.outcome === undefined ? {} : { outcome: options.outcome }),
 							},
 				session: options.session ?? DEFAULT_SESSION,
@@ -540,7 +547,7 @@ export function portDouble(options: PortDoubleOptions = {}): PortDouble {
 					},
 				},
 				quiescent: () => quiescent,
-				heldWork: () => options.heldWork ?? false,
+				heldWork: () => (options.heldWork === "unstated" ? undefined : options.heldWork ?? false),
 			};
 			for (const observer of roundObservers) observer(observation);
 			// An end candidate is confirmed on the harness's next task, so a suite driving the edge

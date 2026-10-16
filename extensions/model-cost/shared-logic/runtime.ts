@@ -25,13 +25,16 @@
  * What the runtime connects to the framework is {@link ModelCostRuntime.implementation}: the
  * extension's own model catalog — the one query the framework makes at a real request's start, whose
  * answer is snapshotted into that request's own facts — one per-actual-session observation group
- * over the Turn and Round axes plus the harness's own session-facts deliveries, the one-time
- * initialization, and the cleanup that ends this instance. The catalog states the maintained data's
- * own prices (`model-data.ts`) and, for a channel the harness itself prices, the harness's own model
- * prices as the framework hands them over; the observation group hands the deliveries to the request
- * accounting (`request-accounting.ts`), which anchors each request's price at its start, adds its
- * reliable usage once, and keeps each session's latest name and direct parent as the host reports
- * them — including a rename it reports between that session's own boundaries. The DeepSeek balance
+ * over the Turn and Round axes, the framework's own activity readings and the harness's own
+ * session-facts deliveries, the one-time initialization, and the cleanup that ends this instance. The
+ * catalog states the maintained data's own prices (`model-data.ts`) and, for a channel the harness
+ * itself prices, the harness's own model prices as the framework hands them over; the observation group
+ * hands the deliveries to the request accounting (`request-accounting.ts`), which anchors each
+ * request's price at its start, adds its reliable usage once, and keeps each session's latest name and
+ * direct parent as the host reports them — including a rename it reports between that session's own
+ * boundaries. The activity readings move the display's per-session Working/Idle (`presentation/`
+ * `session-activity.ts`) and drive nothing else: they are observations of what the framework's Rounds
+ * already decided, so no Round, no measured runtime and no save follows from one. The DeepSeek balance
  * reading (`provider-balance.ts`) is asked once here, while this instance initializes, and a settled
  * request then refreshes it through the framework's public HTTP module only when that reading has
  * outlived its configured success TTL and no query is already out. The Codex allowance windows
@@ -584,25 +587,41 @@ export function createModelCostRuntime(inputs: ModelCostRuntimeInputs): ModelCos
 				quota.usageSettled(delivery.turn.provider);
 			});
 		},
-		// Both edges of a Round. Each one is that session's own activity fact as well as an accounting
-		// boundary — an open Round is the session working and a confirmed end is the session idle — so
-		// the reading the display draws is moved here, ahead of the accounting's own handling and its
-		// own guards, and a real move is published at once rather than waiting for the next request to
-		// redraw a row whose session just started or stopped working.
+		// Both edges of a Round. Each one is an accounting boundary — the start fixes the snapshot its
+		// own additions are measured from, and the end measures them, saves the session's own snapshot
+		// and becomes the previous Round. A subagent session's own runtime is measured from these same
+		// two facts — its Round is one of its activities — so a Round end is also where the interval
+		// that Round ran for settles.
 		//
-		// The accounting's own half: the start fixes the snapshot its own additions are measured from,
-		// and the end measures them, saves the session's own snapshot and becomes the previous Round. A
-		// subagent session's own runtime is measured from these same two facts — its Round is one of its
-		// activities — so a Round end is also where the interval that Round ran for settles.
+		// The session's *activity* is not moved here, although these edges are the facts behind it:
+		// which fact ends a session's work is the framework's answer, and it states that answer as its
+		// own observation below. Reading it off these edges would be this extension deciding the same
+		// question a second time — and, for a session another process ran, deciding it with no facts at
+		// all.
 		round_start: delivery => {
 			stateProviderFailures(delivery);
-			if (sessionActivity.observe(delivery.session.sessionId, "working")) accounting.announceChanged();
 			return account(delivery.feedback, () => accounting.roundStarted(delivery));
 		},
 		round_end: delivery => {
 			stateProviderFailures(delivery);
-			if (sessionActivity.observe(delivery.session.sessionId, "idle")) accounting.announceChanged();
 			return account(delivery.feedback, () => accounting.roundEnded(delivery));
+		},
+		// One actual session's current activity, as the framework's own Round semantics state it: a
+		// session whose Round is open is working, one whose Round has ended is idle, and the framework
+		// delivers the reading where it moved. It carries the session's own identity — a subagent's
+		// reading is the subagent's, never a parent's or the viewed session's — so the reading the
+		// display draws for a row is that row's session, and a real move is published at once rather
+		// than waiting for the next request to redraw a row whose session just started or stopped
+		// working.
+		//
+		// Nothing of the accounting runs here, and nothing may: the reading is an observation for the
+		// display, and this extension's Rounds, its measured runtimes, its session snapshots and its
+		// saves are driven by the edges above alone. A session whose reading arrives without this
+		// process ever having watched its Round — one another process ran — is therefore shown as
+		// working or idle with nothing accounted, nothing saved and no Round invented for it.
+		session_activity: delivery => {
+			stateProviderFailures(delivery);
+			if (sessionActivity.observe(delivery.session.sessionId, delivery.activity)) accounting.announceChanged();
 		},
 		// The one fact that establishes a session's Session span start: input the harness itself
 		// attributed to the user, published for every submission it admitted — an ordinary prompt and a

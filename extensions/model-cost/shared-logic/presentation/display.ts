@@ -51,12 +51,12 @@
  *   model rows and the Total keep, and it carries the row's own name emphasis while that session is
  *   working — see **The activity** below.
  * - **The activity.** The rows a descendant's name is emphasised against are the per-session activity
- *   readings the framework's own Round edges moved (`session-activity.ts`): a session whose Round is
- *   open is working, and one whose Round has ended is idle — the same reading for a subagent as for
- *   the main session. Only `working` is emphasised: an idle reading, and a session no edge has moved,
- *   both leave the name plain, because an unestablished activity is not idleness. Which of a
- *   frontend's own colours expresses it is that frontend's; that the row *is* emphasised is decided
- *   here.
+ *   readings the framework's own activity observation states (`session-activity.ts`): a session whose
+ *   Round the framework holds open is working, and one whose Round it has ended is idle — the same
+ *   reading for a subagent as for the main session. Only `working` is emphasised: an idle reading, and
+ *   a session no reading has moved, both leave the name plain, because an unestablished activity is
+ *   not idleness. Which of a frontend's own colours expresses it is that frontend's; that the row *is*
+ *   emphasised is decided here.
  * - **The allowance windows.** The Codex 5h/7d readings are provider-account facts rather than parts
  *   of a target's consumption, so they are read beside the target instead of inside it, and what this
  *   seam adds to them is the state their reported reset instant has at the moment of reading.
