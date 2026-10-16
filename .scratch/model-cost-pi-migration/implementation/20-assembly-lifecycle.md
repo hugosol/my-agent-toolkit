@@ -8,7 +8,7 @@
 
 **Blocked by:** [07：Owner State 实时读取、降级与恢复](07-owner-state.md)、[10：两端终止、晚到与恢复边界](10-terminal-rounds.md)、[19：峰谷边界无副作用重绘](19-season-boundary.md)
 
-**Status:** implemented
+**Status:** implemented — 实现已随集成提交 `8c863788d0667271d4a02a076a3c58fd2a6609e5` 合入 `pi-adapter`，宿主已把该提交合回本分支，故本分支 HEAD 即该提交（与 `pi-adapter` 同 tree）；本轮集成验收在同一 HEAD 完成（`bun run typecheck` exit 0、归一检出 + `OMP_BOT_BINARY` 下全仓 `bun run test` 1197 pass / 0 fail / exit 0），本轮无源码修复。集成同步与合并后回归见 [evidence/20-assembly-lifecycle.md](../evidence/20-assembly-lifecycle.md) §8，真实宿主未覆盖项见其 §6。
 
 ## Acceptance criteria
 

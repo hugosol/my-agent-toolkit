@@ -1,0 +1,296 @@
+$ bun test
+bun test v1.4.2 (744846f84)
+
+tests\connect-bot\budget-regression.test.ts:
+227 |  * afterwards.
+228 |  */
+229 | export async function startOmpBot(): Promise<OmpBotPanel> {
+230 | 	const binary = ompBotBinary();
+231 | 	if (!existsSync(binary)) {
+232 | 		throw new Error(
+                  ^
+error: the interop run needs the actual omp-bot panel, but no binary is at C:\Users\hugos\AppData\Local\Temp\omp-bot\backend\target\release\omp-bot.exe; build it with `cargo build --release --manifest-path ../omp-bot/backend/Cargo.toml` or name an existing one in OMP_BOT_BINARY
+      at startOmpBot (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-VR4fLC\tests\connect-bot\support\omp-bot.ts:232:13)
+      at panelAt (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-VR4fLC\tests\connect-bot\budget-regression.test.ts:201:22)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-VR4fLC\tests\connect-bot\budget-regression.test.ts:389:24)
+(fail) the protocol the actual omp-bot panel receives is the frozen one (P23) > a whole session — register, beats, state moves, unregister — is what the real panel records and answers [0.91ms]
+
+tests\connect-bot\harness-exit-budget.test.ts:
+227 |  * afterwards.
+228 |  */
+229 | export async function startOmpBot(): Promise<OmpBotPanel> {
+230 | 	const binary = ompBotBinary();
+231 | 	if (!existsSync(binary)) {
+232 | 		throw new Error(
+                  ^
+error: the interop run needs the actual omp-bot panel, but no binary is at C:\Users\hugos\AppData\Local\Temp\omp-bot\backend\target\release\omp-bot.exe; build it with `cargo build --release --manifest-path ../omp-bot/backend/Cargo.toml` or name an existing one in OMP_BOT_BINARY
+      at startOmpBot (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-VR4fLC\tests\connect-bot\support\omp-bot.ts:232:13)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-VR4fLC\tests\connect-bot\harness-exit-budget.test.ts:85:36)
+(fail) a long request budget does not extend the harness's own exit (P27) > the harness ends on its own lifecycle with a minute-budget unregister still on the wire [0.60ms]
+
+tests\connect-bot\panel-registration-lifecycle.test.ts:
+227 |  * afterwards.
+228 |  */
+229 | export async function startOmpBot(): Promise<OmpBotPanel> {
+230 | 	const binary = ompBotBinary();
+231 | 	if (!existsSync(binary)) {
+232 | 		throw new Error(
+                  ^
+error: the interop run needs the actual omp-bot panel, but no binary is at C:\Users\hugos\AppData\Local\Temp\omp-bot\backend\target\release\omp-bot.exe; build it with `cargo build --release --manifest-path ../omp-bot/backend/Cargo.toml` or name an existing one in OMP_BOT_BINARY
+      at startOmpBot (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-VR4fLC\tests\connect-bot\support\omp-bot.ts:232:13)
+      at panelAt (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-VR4fLC\tests\connect-bot\panel-registration-lifecycle.test.ts:85:22)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-VR4fLC\tests\connect-bot\panel-registration-lifecycle.test.ts:124:23)
+(fail) a server-processed unregister deletes the panel's row (P24) > the panel removes the row the register built, instead of letting it go offline [0.60ms]
+227 |  * afterwards.
+228 |  */
+229 | export async function startOmpBot(): Promise<OmpBotPanel> {
+230 | 	const binary = ompBotBinary();
+231 | 	if (!existsSync(binary)) {
+232 | 		throw new Error(
+                  ^
+error: the interop run needs the actual omp-bot panel, but no binary is at C:\Users\hugos\AppData\Local\Temp\omp-bot\backend\target\release\omp-bot.exe; build it with `cargo build --release --manifest-path ../omp-bot/backend/Cargo.toml` or name an existing one in OMP_BOT_BINARY
+      at startOmpBot (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-VR4fLC\tests\connect-bot\support\omp-bot.ts:232:13)
+      at panelAt (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-VR4fLC\tests\connect-bot\panel-registration-lifecycle.test.ts:85:22)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-VR4fLC\tests\connect-bot\panel-registration-lifecycle.test.ts:157:23)
+(fail) an unregister that never arrives leaves the row to the panel's own window (P25) > the blocked row stays registered and goes offline by the 30s window, never by deletion [0.47ms]
+227 |  * afterwards.
+228 |  */
+229 | export async function startOmpBot(): Promise<OmpBotPanel> {
+230 | 	const binary = ompBotBinary();
+231 | 	if (!existsSync(binary)) {
+232 | 		throw new Error(
+                  ^
+error: the interop run needs the actual omp-bot panel, but no binary is at C:\Users\hugos\AppData\Local\Temp\omp-bot\backend\target\release\omp-bot.exe; build it with `cargo build --release --manifest-path ../omp-bot/backend/Cargo.toml` or name an existing one in OMP_BOT_BINARY
+      at startOmpBot (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-VR4fLC\tests\connect-bot\support\omp-bot.ts:232:13)
+      at panelAt (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-VR4fLC\tests\connect-bot\panel-registration-lifecycle.test.ts:85:22)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-VR4fLC\tests\connect-bot\panel-registration-lifecycle.test.ts:202:23)
+(fail) a client's timeout is not a statement about the panel (P26) > a response held back past the budget: the client timed out and the row is really gone [0.56ms]
+piSurfaceProbe: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions 'pi-surface-probe' is not an importable file: ENOENT: no such file or directory, lstat 'C:\Users\hugos\AppData\Local\Temp\pi-background-rounds-absent-entry.ts'
+piSurfaceProbe: pi-surface-probe: a model response settled with no Turn in flight for its session; no start is fabricated and it is dropped
+piSurfaceProbe: pi-surface-probe: a model response settled with no Turn in flight for its session; no start is fabricated and it is dropped
+piSurfaceProbe: pi-surface-probe: a model response settled with no Turn in flight for its session; no start is fabricated and it is dropped
+piSurfaceProbe: pi-surface-probe: a model response settled with no Turn in flight for its session; no start is fabricated and it is dropped
+piSurfaceProbe: pi-surface-probe: a model response settled with no Turn in flight for its session; no start is fabricated and it is dropped
+piSurfaceProbe: pi-surface-probe: a model response settled with no Turn in flight for its session; no start is fabricated and it is dropped
+piSurfaceProbe: this session reports no identity; the extension stays off for it
+piSurfaceProbe: this session reports no identity; the extension stays off for it
+piSurfaceProbe: this session reports no identity; the extension stays off for it
+codebase-tools: no owning main session resolved for this session; the extension stays off
+codebase-tools: no owning main session resolved for this session; the extension stays off
+codebase-tools: no owning main session resolved for this session; the extension stays off
+codebase-tools: no owning main session resolved for this session; the extension stays off
+codebase-tools: no owning main session resolved for this session; the extension stays off
+
+tests\harness-dock\baseline.test.ts:
+92 | 			.filter(comparison => !comparison.matches)
+93 | 			.map(
+94 | 				comparison =>
+95 | 					`${comparison.path}: recorded ${comparison.recordedSha256} but found ${comparison.actualSha256 ?? "<missing>"} — ${REFRESH_HINT}`,
+96 | 			);
+97 | 		expect(stale).toEqual([]);
+                     ^
+error: expect(received).toEqual(expected)
+
+- []
++ [
++   "bun.lock: recorded a5d37ab28396324eab85bcf6404c7cfb63c968925b7ae58378f8492bbea820e6 but found e7ed487b216f5580aff054118ba241ed3c4877f3327617b8d60bba46c0de7f2f — refresh framework/docs/harness-baseline.json (sourceCombination/oracle lockfile sha256) after a deliberate dependency change",
++ ]
+
+- Expected  - 1
++ Received  + 3
+
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-VR4fLC\tests\harness-dock\baseline.test.ts:97:17)
+(fail) baseline record > records the lockfiles of this repository and of the behavior oracle [0.66ms]
+
+tests\harness-dock\codex-response-artifact.test.ts:
+219 | 	layout: IsolatedHarnessLayout,
+220 | 	repoRoot: string,
+221 | ): ChainStep[] {
+222 | 	return artifact.patchFiles.map(entry => {
+223 | 		const touched = patchTouchedFiles(readFileSync(entry.patchFile, "utf8"));
+224 | 		if (touched.length === 0) throw new Error(`${entry.patchFile} touches no file`);
+                                            ^
+error: C:\Users\hugos\AppData\Local\Temp\hyper-ticket-VR4fLC\host-patches\omp-18.5.0-codex-response-boundary\patch.diff touches no file
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-VR4fLC\tests\harness-dock\host-patch-artifact.ts:224:39)
+      at map (1:11)
+      at ensurePatchArtifact (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-VR4fLC\tests\harness-dock\host-patch-artifact.ts:267:16)
+      at ensureCodexResponseHarness (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-VR4fLC\tests\harness-dock\codex-response-harness.ts:68:9)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-VR4fLC\tests\harness-dock\codex-response-artifact.test.ts:41:18)
+(fail) (unnamed) [1.18ms]
+
+tests\harness-dock\combined-host-artifact.test.ts:
+219 | 	layout: IsolatedHarnessLayout,
+220 | 	repoRoot: string,
+221 | ): ChainStep[] {
+222 | 	return artifact.patchFiles.map(entry => {
+223 | 		const touched = patchTouchedFiles(readFileSync(entry.patchFile, "utf8"));
+224 | 		if (touched.length === 0) throw new Error(`${entry.patchFile} touches no file`);
+                                            ^
+error: C:\Users\hugos\AppData\Local\Temp\hyper-ticket-VR4fLC\host-patches\omp-18.5.0-viewed-session\patch.diff touches no file
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-VR4fLC\tests\harness-dock\host-patch-artifact.ts:224:39)
+      at map (1:11)
+      at ensurePatchArtifact (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-VR4fLC\tests\harness-dock\host-patch-artifact.ts:267:16)
+      at ensureCombinedHostHarness (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-VR4fLC\tests\harness-dock\combined-host-harness.ts:82:9)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-VR4fLC\tests\harness-dock\combined-host-artifact.test.ts:50:18)
+(fail) (unnamed) [0.50ms]
+
+tests\harness-dock\detail-tree.test.ts:
+219 | 	layout: IsolatedHarnessLayout,
+220 | 	repoRoot: string,
+221 | ): ChainStep[] {
+222 | 	return artifact.patchFiles.map(entry => {
+223 | 		const touched = patchTouchedFiles(readFileSync(entry.patchFile, "utf8"));
+224 | 		if (touched.length === 0) throw new Error(`${entry.patchFile} touches no file`);
+                                            ^
+error: C:\Users\hugos\AppData\Local\Temp\hyper-ticket-VR4fLC\host-patches\omp-18.5.0-viewed-session\patch.diff touches no file
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-VR4fLC\tests\harness-dock\host-patch-artifact.ts:224:39)
+      at map (1:11)
+      at ensurePatchArtifact (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-VR4fLC\tests\harness-dock\host-patch-artifact.ts:267:16)
+      at ensureViewedSessionHarness (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-VR4fLC\tests\harness-dock\viewed-session-harness.ts:82:9)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-VR4fLC\tests\harness-dock\detail-tree.test.ts:93:18)
+(fail) (unnamed) [0.41ms]
+
+tests\harness-dock\model-cost-codex-quota.test.ts:
+219 | 	layout: IsolatedHarnessLayout,
+220 | 	repoRoot: string,
+221 | ): ChainStep[] {
+222 | 	return artifact.patchFiles.map(entry => {
+223 | 		const touched = patchTouchedFiles(readFileSync(entry.patchFile, "utf8"));
+224 | 		if (touched.length === 0) throw new Error(`${entry.patchFile} touches no file`);
+                                            ^
+error: C:\Users\hugos\AppData\Local\Temp\hyper-ticket-VR4fLC\host-patches\omp-18.5.0-codex-response-boundary\patch.diff touches no file
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-VR4fLC\tests\harness-dock\host-patch-artifact.ts:224:39)
+      at map (1:11)
+      at ensurePatchArtifact (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-VR4fLC\tests\harness-dock\host-patch-artifact.ts:267:16)
+      at ensureCodexResponseHarness (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-VR4fLC\tests\harness-dock\codex-response-harness.ts:68:9)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-VR4fLC\tests\harness-dock\model-cost-codex-quota.test.ts:114:25)
+(fail) (unnamed) [0.43ms]
+
+tests\harness-dock\model-cost-modes.test.ts:
+219 | 	layout: IsolatedHarnessLayout,
+220 | 	repoRoot: string,
+221 | ): ChainStep[] {
+222 | 	return artifact.patchFiles.map(entry => {
+223 | 		const touched = patchTouchedFiles(readFileSync(entry.patchFile, "utf8"));
+224 | 		if (touched.length === 0) throw new Error(`${entry.patchFile} touches no file`);
+                                            ^
+error: C:\Users\hugos\AppData\Local\Temp\hyper-ticket-VR4fLC\host-patches\omp-18.5.0-viewed-session\patch.diff touches no file
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-VR4fLC\tests\harness-dock\host-patch-artifact.ts:224:39)
+      at map (1:11)
+      at ensurePatchArtifact (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-VR4fLC\tests\harness-dock\host-patch-artifact.ts:267:16)
+      at ensureViewedSessionHarness (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-VR4fLC\tests\harness-dock\viewed-session-harness.ts:82:9)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-VR4fLC\tests\harness-dock\model-cost-modes.test.ts:438:18)
+(fail) (unnamed) [0.61ms]
+
+tests\harness-dock\model-cost-persistence.test.ts:
+219 | 	layout: IsolatedHarnessLayout,
+220 | 	repoRoot: string,
+221 | ): ChainStep[] {
+222 | 	return artifact.patchFiles.map(entry => {
+223 | 		const touched = patchTouchedFiles(readFileSync(entry.patchFile, "utf8"));
+224 | 		if (touched.length === 0) throw new Error(`${entry.patchFile} touches no file`);
+                                            ^
+error: C:\Users\hugos\AppData\Local\Temp\hyper-ticket-VR4fLC\host-patches\omp-18.5.0-viewed-session\patch.diff touches no file
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-VR4fLC\tests\harness-dock\host-patch-artifact.ts:224:39)
+      at map (1:11)
+      at ensurePatchArtifact (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-VR4fLC\tests\harness-dock\host-patch-artifact.ts:267:16)
+      at ensureCombinedHostHarness (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-VR4fLC\tests\harness-dock\combined-host-harness.ts:82:9)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-VR4fLC\tests\harness-dock\model-cost-persistence.test.ts:120:18)
+(fail) (unnamed) [0.47ms]
+
+tests\harness-dock\session-driver.test.ts:
+85 | 			expect(exit.exitCode).toBe(0);
+86 | 
+87 | 			// Agent state landed inside the isolated run root, and the repository's
+88 | 			// dependency lockfile is untouched by a run.
+89 | 			expect(listRunArtifacts(run.runRoot).some(artifact => artifact.startsWith("agent-state/"))).toBe(true);
+90 | 			expect(verifyLockfile(record.sourceCombination.lockfile).matches).toBe(true);
+                                                                          ^
+error: expect(received).toBe(expected)
+
+Expected: true
+Received: false
+
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-VR4fLC\tests\harness-dock\session-driver.test.ts:90:70)
+(fail) controlled session > starts the isolated artifact under a temporary agent state, not the default environment [1155.96ms]
+
+tests\harness-dock\viewed-marker.test.ts:
+219 | 	layout: IsolatedHarnessLayout,
+220 | 	repoRoot: string,
+221 | ): ChainStep[] {
+222 | 	return artifact.patchFiles.map(entry => {
+223 | 		const touched = patchTouchedFiles(readFileSync(entry.patchFile, "utf8"));
+224 | 		if (touched.length === 0) throw new Error(`${entry.patchFile} touches no file`);
+                                            ^
+error: C:\Users\hugos\AppData\Local\Temp\hyper-ticket-VR4fLC\host-patches\omp-18.5.0-viewed-session\patch.diff touches no file
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-VR4fLC\tests\harness-dock\host-patch-artifact.ts:224:39)
+      at map (1:11)
+      at ensurePatchArtifact (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-VR4fLC\tests\harness-dock\host-patch-artifact.ts:267:16)
+      at ensureViewedSessionHarness (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-VR4fLC\tests\harness-dock\viewed-session-harness.ts:82:9)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-VR4fLC\tests\harness-dock\viewed-marker.test.ts:80:18)
+(fail) (unnamed) [0.52ms]
+
+tests\harness-dock\viewed-session-host.test.ts:
+219 | 	layout: IsolatedHarnessLayout,
+220 | 	repoRoot: string,
+221 | ): ChainStep[] {
+222 | 	return artifact.patchFiles.map(entry => {
+223 | 		const touched = patchTouchedFiles(readFileSync(entry.patchFile, "utf8"));
+224 | 		if (touched.length === 0) throw new Error(`${entry.patchFile} touches no file`);
+                                            ^
+error: C:\Users\hugos\AppData\Local\Temp\hyper-ticket-VR4fLC\host-patches\omp-18.5.0-viewed-session\patch.diff touches no file
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-VR4fLC\tests\harness-dock\host-patch-artifact.ts:224:39)
+      at map (1:11)
+      at ensurePatchArtifact (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-VR4fLC\tests\harness-dock\host-patch-artifact.ts:267:16)
+      at ensureViewedSessionHarness (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-VR4fLC\tests\harness-dock\viewed-session-harness.ts:82:9)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-VR4fLC\tests\harness-dock\viewed-session-host.test.ts:138:18)
+(fail) (unnamed) [0.45ms]
+
+tests\harness-dock\viewed-session-total.test.ts:
+219 | 	layout: IsolatedHarnessLayout,
+220 | 	repoRoot: string,
+221 | ): ChainStep[] {
+222 | 	return artifact.patchFiles.map(entry => {
+223 | 		const touched = patchTouchedFiles(readFileSync(entry.patchFile, "utf8"));
+224 | 		if (touched.length === 0) throw new Error(`${entry.patchFile} touches no file`);
+                                            ^
+error: C:\Users\hugos\AppData\Local\Temp\hyper-ticket-VR4fLC\host-patches\omp-18.5.0-viewed-session\patch.diff touches no file
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-VR4fLC\tests\harness-dock\host-patch-artifact.ts:224:39)
+      at map (1:11)
+      at ensurePatchArtifact (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-VR4fLC\tests\harness-dock\host-patch-artifact.ts:267:16)
+      at ensureViewedSessionHarness (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-VR4fLC\tests\harness-dock\viewed-session-harness.ts:82:9)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-VR4fLC\tests\harness-dock\viewed-session-total.test.ts:206:18)
+(fail) (unnamed) [0.38ms]
+
+tests\harness-dock\viewed-session.test.ts:
+219 | 	layout: IsolatedHarnessLayout,
+220 | 	repoRoot: string,
+221 | ): ChainStep[] {
+222 | 	return artifact.patchFiles.map(entry => {
+223 | 		const touched = patchTouchedFiles(readFileSync(entry.patchFile, "utf8"));
+224 | 		if (touched.length === 0) throw new Error(`${entry.patchFile} touches no file`);
+                                            ^
+error: C:\Users\hugos\AppData\Local\Temp\hyper-ticket-VR4fLC\host-patches\omp-18.5.0-viewed-session\patch.diff touches no file
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-VR4fLC\tests\harness-dock\host-patch-artifact.ts:224:39)
+      at map (1:11)
+      at ensurePatchArtifact (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-VR4fLC\tests\harness-dock\host-patch-artifact.ts:267:16)
+      at ensureViewedSessionHarness (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-VR4fLC\tests\harness-dock\viewed-session-harness.ts:82:9)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-VR4fLC\tests\harness-dock\viewed-session.test.ts:142:18)
+(fail) (unnamed) [0.49ms]
+modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions are already registered for session 'assembly-main'; dispose them first.
+modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions are already registered for session 'assembly-main'; dispose them first.
+modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions are already registered for session 'assembly-main'; dispose them first.
+modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions are already registered for session 'assembly-main'; dispose them first.
+modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions are already registered for session 'assembly-main'; dispose them first.
+modelCost: this harness reports no idle fact (isIdle); the framework answers nothing rather than inventing one
+modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions are already registered for session 'pi-terminal-main'; dispose them first.
+modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions are already registered for session 'pi-terminal-main'; dispose them first.
+modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions are already registered for session 'pi-terminal-main'; dispose them first.
+modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions are already registered for session 'pi-terminal-main'; dispose them first.
+modelCost: model-cost: a model response settled with no Turn in flight for its session; no start is fabricated and it is dropped
+
+ 1151 pass
+ 17 fail
+ 6250 expect() calls
+Ran 1168 tests across 127 files. [230.61s]
+error: script "test" exited with code 1
