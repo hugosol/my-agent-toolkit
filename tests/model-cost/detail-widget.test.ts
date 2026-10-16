@@ -27,7 +27,7 @@ import type { ModelPricingData } from "../../extensions/model-cost/shared-logic/
 import { type RoundDisplay, roundColumns } from "../../extensions/model-cost/shared-logic/presentation/display";
 import type { ModelCostRuntime } from "../../extensions/model-cost/shared-logic/runtime";
 import { createModelCostRuntime } from "../../extensions/model-cost/shared-logic/runtime";
-import type { OwnerReference, SessionFacts, SubagentRuntimeFact, TurnSignal, TurnUsage } from "../../framework/core/protocol";
+import type { OwnerReference, SessionFacts, TurnSignal, TurnUsage } from "../../framework/core/protocol";
 import { type PortDouble, portDouble } from "../framework/support/harness-port-double";
 import { uiBoundaryTimerOf } from "./support/ui-timer";
 
@@ -116,6 +116,13 @@ const WIDGET_TREE = {
  * inside the fixture's peak window, and therefore the peak mark the drawn line carries.
  */
 const CLOCK_AT = Date.parse("2026-10-01T03:00:00.000Z");
+
+/**
+ * The process's one clock, as this suite drives it: a case that observes a session's own activity
+ * states the instant each of that Round's edges was seen at, and leaves the clock at `CLOCK_AT` for
+ * everything that reads it as the pricing season.
+ */
+let clock = CLOCK_AT;
 
 /** Every root this file created, removed after each case. */
 const roots: string[] = [];
@@ -253,7 +260,7 @@ async function bindWidget(options: { readonly viewed?: ViewedFacts; readonly has
 				userHomeDirectory: root,
 				harness: HARNESS,
 				data: DATA,
-				now: () => CLOCK_AT,
+				now: () => clock,
 				...(context.modelPrices === undefined ? {} : { modelPrices: context.modelPrices }),
 			});
 			return runtime.implementation;
@@ -291,11 +298,6 @@ function settleTurn(double: PortDouble): void {
 		},
 		{ owner: OWNER },
 	);
-}
-
-/** One native execution-duration reading, as an adapter maps it for one execution of one session. */
-function runtimeReading(executionId: string, runtimeMs: number, status: "running" | "ended"): SubagentRuntimeFact {
-	return { kind: "reading", executionId, runtimeMs, status };
 }
 
 afterEach(() => {
@@ -563,28 +565,32 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 		]);
 	});
 
-	test("the child's own row draws the runtime the host measured, and a measured zero is not the missing marker", async () => {
+	test("the child's own row draws the runtime its own activity ran for, and a measured zero is not the missing marker", async () => {
 		const bound = await bindWidget();
 		await bound.double.runToCompletion("budget", { args: "detail" });
 		const childRow = (): string | undefined => bound.host.lastLines()?.find(line => line.includes("子代理"));
 
-		// Nothing has been measured for the subagent's own executions: its row keeps the runtime field and
-		// states that fact, which is not a zero.
+		// No activity of the subagent has been observed: its row keeps the runtime field and states that
+		// fact, which is not a zero.
 		expect(childRow()).toBe("└─ 子代理  ?(?)  Run: —");
 
-		// The harness states one completed execution's own duration — 480,000 milliseconds, eight whole
-		// minutes, a figure stated here rather than read back from the widget — and the row draws it.
-		bound.double.deliverSubagentRuntime({ runtime: runtimeReading("0-Explore", 480_000, "ended"), session: SUB });
+		// The subagent's own Round: it opens at the instant this suite states and ends 480,000 ms later,
+		// so the interval between those two observations — eight whole minutes — is what its row draws.
+		// No duration is stated anywhere in this case.
+		clock = CLOCK_AT;
+		bound.double.deliverRound(OWNER, { event: { kind: "round_start" }, session: SUB });
+		clock = CLOCK_AT + 480_000;
+		bound.double.deliverRound(OWNER, { event: { kind: "round_end" }, session: SUB });
 		expect(childRow()).toBe("└─ 子代理  ?(?)  Run: 8m");
 
-		// An execution that really took no measurable time is a reading the harness made, so a session
-		// whose only reading is that zero draws the zero — never the marker above.
+		// An activity that opened and ended at one instant really ran for no measurable time: it is an
+		// observation this process made, so a session whose only activity is that zero draws the zero —
+		// never the marker above.
 		const measuredZero = await bindWidget();
 		await measuredZero.double.runToCompletion("budget", { args: "detail" });
-		measuredZero.double.deliverSubagentRuntime({
-			runtime: runtimeReading("0-Explore", 0, "ended"),
-			session: SUB,
-		});
+		clock = CLOCK_AT;
+		measuredZero.double.deliverRound(OWNER, { event: { kind: "round_start" }, session: SUB });
+		measuredZero.double.deliverRound(OWNER, { event: { kind: "round_end" }, session: SUB });
 		expect(measuredZero.host.lastLines()?.find(line => line.includes("子代理"))).toBe(
 			"└─ 子代理  ?(?)  Run: 0ms",
 		);

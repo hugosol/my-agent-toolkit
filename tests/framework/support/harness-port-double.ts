@@ -40,8 +40,6 @@ import type {
 	SessionEvent,
 	SessionFacts,
 	StateValues,
-	SubagentRuntimeDelivery,
-	SubagentRuntimeFact,
 	TurnSignal,
 	TurnSignalFacts,
 	UserInputDelivery,
@@ -145,14 +143,6 @@ export interface TurnBoundary {
 	readonly feedback: readonly FeedbackNotice[];
 }
 
-/** What one subagent-runtime delivery observed. */
-export interface RuntimeBoundary {
-	/** Whether the session the delivery carried had a UI, as the double modelled it. */
-	readonly hasUI: boolean;
-	/** Extension feedback the framework published while dispatching, with its severity. */
-	readonly feedback: readonly FeedbackNotice[];
-}
-
 /** What one user-input delivery observed. */
 export interface UserInputBoundary {
 	/** Whether the session had a UI, as the double modelled it. */
@@ -201,9 +191,8 @@ export interface PortDouble {
 	readonly diagnostics: readonly string[];
 	/**
 	 * Registrations in call order: `label:<name>`, `onSession`, `onRound` (only when the
-	 * assembly injected a round handler), `onTurn`, `onSubagentRuntime` (only when the assembly
-	 * subscribed to that axis), `onUserInput` (only when one observes input), `onRunInitiation`,
-	 * `command:<name>`.
+	 * assembly injected a round handler), `onTurn`, `onUserInput` (only when one observes input),
+	 * `onRunInitiation`, `command:<name>`.
 	 */
 	readonly registrations: readonly string[];
 	/** The commands the framework registered, in call order, ready to be run. */
@@ -258,18 +247,6 @@ export interface PortDouble {
 	 * handler.
 	 */
 	deliverTurn(signal: TurnSignal, options?: { readonly owner?: OwnerReference; readonly hasUI?: boolean }): TurnBoundary;
-	/**
-	 * Delivers one mapped subagent-runtime observation to every extension bound so far, as an
-	 * adapter would: the execution duration the harness stated for one execution of one actual
-	 * session, or the fact that this host could not produce a reading.
-	 */
-	deliverSubagentRuntime(options: {
-		readonly runtime: SubagentRuntimeFact;
-		readonly owner?: OwnerReference;
-		/** The actual session the execution belongs to; omitted models a top-level `port-double` session. */
-		readonly session?: SessionFacts;
-		readonly hasUI?: boolean;
-	}): RuntimeBoundary;
 	/**
 	 * Delivers one user-input fact to every extension bound so far, as an adapter would.
 	 *
@@ -328,7 +305,6 @@ export function portDouble(options: PortDoubleOptions = {}): PortDouble {
 	const sessionHandlers: Array<(session: SessionDelivery) => void> = [];
 	const roundObservers: Array<(observation: RoundObservation) => void> = [];
 	const turnHandlers: Array<(facts: TurnSignalFacts) => void> = [];
-	const runtimeHandlers: Array<(delivery: SubagentRuntimeDelivery) => void> = [];
 	const userInputHandlers: Array<(delivery: UserInputDelivery) => void> = [];
 	const runHandlers: Array<Parameters<HarnessPort["onRunInitiation"]>[0]> = [];
 	const markerUpdates: string[][] = [];
@@ -445,10 +421,6 @@ export function portDouble(options: PortDoubleOptions = {}): PortDouble {
 		onTurn: handler => {
 			registrations.push("onTurn");
 			turnHandlers.push(handler);
-		},
-		onSubagentRuntime: handler => {
-			registrations.push("onSubagentRuntime");
-			runtimeHandlers.push(handler);
 		},
 		onUserInput: handler => {
 			registrations.push("onUserInput");
@@ -574,24 +546,6 @@ export function portDouble(options: PortDoubleOptions = {}): PortDouble {
 			for (const handler of turnHandlers) {
 				handler(facts);
 			}
-			return { hasUI, feedback };
-		},
-		deliverSubagentRuntime(options) {
-			const feedback: FeedbackNotice[] = [];
-			const hasUI = options.hasUI ?? true;
-			const delivery: SubagentRuntimeDelivery = {
-				event: { kind: "subagent_runtime" },
-				owner: options.owner ?? { kind: "owner", key: DEFAULT_OWNER_KEY },
-				session: options.session ?? DEFAULT_SESSION,
-				runtime: options.runtime,
-				hasUI,
-				feedback: {
-					notify: (level, message) => {
-						feedback.push({ level, message });
-					},
-				},
-			};
-			for (const handler of runtimeHandlers) handler(delivery);
 			return { hasUI, feedback };
 		},
 		deliverUserInput(owner, options = {}) {

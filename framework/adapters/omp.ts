@@ -37,7 +37,6 @@ import { StateStore } from "../core/state";
 import { observeRounds } from "./omp/round";
 import {
 	contributionIdentitiesOf,
-	executionOwnerOf,
 	ownerReferenceOf,
 	sessionFactsOf,
 	statePayloadsOf,
@@ -47,7 +46,6 @@ import {
 	type OmpSessionEvent,
 	type OmpSessionEventType,
 } from "./omp/session/lifecycle";
-import { observeSubagentRuntime } from "./omp/subagents";
 import { observeTurns } from "./omp/turn";
 import { createViewedSession, type OmpViewedSessionFacts } from "./omp/viewed-session";
 
@@ -363,28 +361,6 @@ export interface OmpMessageEndEvent {
 }
 
 /**
- * The two native tool-execution facts the subagent-runtime axis is mapped from.
- *
- * The harness states a subagent *execution*'s own measured duration in exactly one place: the
- * payloads its own delegation tool (`task`) publishes while a spawn runs and once it settled. A
- * progress frame carries the running spawn's own elapsed reading and the settled result carries
- * each spawn's final one — neither is a session's creation-to-last-record span, which includes the
- * idle gaps between executions and is a different metric.
- */
-export type OmpToolExecutionEventType = "tool_execution_update" | "tool_execution_end";
-
-/** One native tool-execution event, as the runner delivers it; only the members this mapping reads. */
-export interface OmpToolExecutionEvent {
-	readonly type?: OmpToolExecutionEventType;
-	/** The tool that ran. Only the harness's own delegation tool carries an execution's duration. */
-	readonly toolName?: string;
-	/** The partial result a running tool reported; the delegation tool's progress frames arrive here. */
-	readonly partialResult?: unknown;
-	/** The settled tool result; the delegation tool's own per-spawn results arrive here. */
-	readonly result?: unknown;
-}
-
-/**
  * The native submission event: one input admitted to a session, published before the harness decides
  * what the submission is.
  *
@@ -450,18 +426,6 @@ export interface OmpExtensionApi {
 	on(event: "message_start", handler: (event: OmpMessageStartEvent, ctx: OmpSessionContext) => void): void;
 	on(event: "message_update", handler: (event: OmpMessageUpdateEvent, ctx: OmpSessionContext) => void): void;
 	on(event: "message_end", handler: (event: OmpMessageEndEvent, ctx: OmpSessionContext) => void): void;
-	/**
-	 * Subscribes to the native tool-execution facts the subagent-runtime axis is mapped from.
-	 *
-	 * Both are facts about one tool call rather than about the agent's work: a running tool's
-	 * progress frame and its settled result. The adapter reads the harness's own delegation tool's
-	 * payloads here — the route that states each spawn a call runs — and decides nothing about which
-	 * reading is a replacement, which execution is new or which completion it has already seen. The
-	 * harness's own subagent frames carry the same metric on {@link OmpExtensionApi.events}, for the
-	 * executions this one never carries.
-	 */
-	on(event: "tool_execution_update", handler: (event: OmpToolExecutionEvent, ctx: OmpSessionContext) => void): void;
-	on(event: "tool_execution_end", handler: (event: OmpToolExecutionEvent, ctx: OmpSessionContext) => void): void;
 	/**
 	 * Subscribes to the native submission event: one input admitted to a session, whether the editor
 	 * submitted it, its RPC client did, or an extension did on its own behalf.
@@ -934,18 +898,6 @@ function ompPort(
 				}),
 				session: ctx => sessionFactsOf(pi, ctx),
 				reportMissingFact,
-			});
-		},
-		onSubagentRuntime: handler => {
-			observeSubagentRuntime(pi, handler, {
-				frame: ctx => ({
-					session: sessionFactsOf(pi, ctx),
-					owner: ownerOf(catalogued(ctx)),
-					hasUI: ctx.hasUI,
-					feedback: feedbackTransport(ctx),
-				}),
-				latest: () => newestContext,
-				executionOwner: (ref, sessionId) => executionOwnerOf(pi, ref, sessionId),
 			});
 		},
 		onRunInitiation: handler => {

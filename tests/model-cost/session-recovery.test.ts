@@ -160,6 +160,10 @@ async function bindAccounting(root: string, baseline?: unknown): Promise<BoundAc
 		userHomeDirectory: root,
 		harness: HARNESS,
 		data: DATA,
+		// This file's own clock states one instant, because nothing it asserts is an elapsed time: a
+		// subagent session's Round is one of its activities, so the interval between that Round's edges
+		// is zero here and the figure this instance measured is the known zero it states.
+		now: () => OFF_PEAK_START,
 	});
 	const double = portDouble();
 	double.bind(MODEL_COST, {
@@ -459,7 +463,9 @@ describe("a spawned session's startup facts ride its consumption commits (P19, P
 
 		// The snapshot travels with that consumption rather than through a write of its own: the record is
 		// the session's own, named by the handle its task was given, and carries the startup facts beside
-		// its usage. The root holds the one document and no second file for them.
+		// its usage. The root holds the one document and no second file for them. The runtime beside them
+		// is the one activity its own Round was: an interval of no measurable time, measured because this
+		// instance's clock states the same instant for both of that Round's edges.
 		expect(recordOf(saved, SPAWNED.sessionId)).toEqual({
 			id: SPAWNED.sessionId,
 			name: SPAWNED_NAME,
@@ -467,6 +473,7 @@ describe("a spawned session's startup facts ride its consumption commits (P19, P
 			startup: SPAWNED_STARTUP,
 			saveVersion: 1,
 			own: oneRequest(1),
+			runtimeMs: 0,
 		});
 		expect(readdirSync(root).filter(name => name.endsWith(".json"))).toEqual([CONSUMPTION_FILE]);
 
@@ -484,6 +491,9 @@ describe("a spawned session's startup facts ride its consumption commits (P19, P
 			startup: SPAWNED_STARTUP,
 			saveVersion: 2,
 			own: oneRequest(2),
+			// This session's second Round is its second measured activity, and this file's clock states
+			// the same instant for both of that Round's edges.
+			runtimeMs: 0,
 		});
 	});
 
@@ -560,6 +570,8 @@ describe("a spawned session's startup facts ride its consumption commits (P19, P
 			parent: MAIN.sessionId,
 			saveVersion: 2,
 			own: oneRequest(2),
+			// The second Round's own activity is measured the same way and adds no time to the first's.
+			runtimeMs: 0,
 		});
 		expect(first.runtime.view.startup(SPAWNED.sessionId)).toBeUndefined();
 		expect(readdirSync(root).filter(name => name.endsWith(".json"))).toEqual([CONSUMPTION_FILE]);
@@ -605,6 +617,9 @@ describe("a spawned session's startup facts ride its consumption commits (P19, P
 			parent: MAIN.sessionId,
 			saveVersion: 1,
 			own: oneBetaRequest(1),
+			// The Round it ran is one activity of its own: this instance observed both of its edges, and
+			// its own clock states the same instant for them.
+			runtimeMs: 0,
 		});
 		expect(first.runtime.view.startup(SPAWNED.sessionId)).toBeUndefined();
 		expect(readdirSync(root).filter(name => name.endsWith(".json"))).toEqual([CONSUMPTION_FILE]);

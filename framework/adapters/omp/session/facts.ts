@@ -277,14 +277,3 @@ function startupFactsOf(pi: OmpExtensionApi, ctx: OmpSessionContext, unavailable
 	return { ...(model === undefined ? {} : { model }), ...(effort === undefined ? {} : { effort }) };
 }
 
-/**
- * The owner one *execution's own* session belongs to, resolved from the harness's own agent graph.
- *
- * It is deliberately not the observing binding's owner: an execution a subagent ran belongs to the
- * top-level main session that subagent follows, so a group scoped to an owner is not moved by a
- * child's work — exactly as a subagent's own round edge and Turn are not.
- */
-export function executionOwnerOf(pi: OmpExtensionApi, ref: OmpAgentRef, sessionId: string): OwnerReference {
-	if (ref.kind === "main") return { kind: "owner", key: mainOwnerKey(sessionId) };
-	return mainAncestorOf(pi, ref.parentId);
-}

@@ -1,21 +1,20 @@
 /**
- * One subagent session's accumulated native runtime: how the harness's own per-execution durations
- * become the figure on that session's one detail row and in its own consumption record (S1, S2, S3;
- * contract P11, P12, P13, P14, P15, P16, P17, P18, P19, P22, P24, P35, P36).
+ * One subagent session's accumulated runtime: the coarse estimate of that session's own *working*
+ * time, measured from the framework's public Round edges and carried by the session's ordinary
+ * consumption commit (S1, S2, S3; contract P24, P25, P27).
  *
  * The seams are the production ones throughout: the extension's real definition bound through the
- * framework's public binding (the port double, `tests/framework/support/harness-port-double.ts`),
- * the real runtime built by a factory exactly as the OMP assembly builds it, the real consumption
- * document read back from the disk this extension actually wrote, and `runtime.presentation.of(target)`
- * — the read-only display result a frontend reads. No private field is reached and no formatting
- * helper of the implementation is called to compute an expectation.
+ * framework's public binding (the port double, `tests/framework/support/harness-port-double.ts`), the
+ * real runtime built by a factory exactly as the OMP assembly builds it, the real consumption
+ * document read back from the disk this extension actually wrote, and
+ * `runtime.presentation.of(target)` — the read-only display result a frontend reads. No private field
+ * is reached and no formatting helper of the implementation is called to compute an expectation.
  *
- * Every expectation is a hand-computed literal from this file's own records and readings. The native
- * durations the cases deliver are the host's own measurements, as an adapter would map them: a
- * reading names the execution it belongs to and the milliseconds that execution had run. What the
- * cases never do is stand in for one: no wall-clock span, no self-made timer and no formatted text
- * appears anywhere in an expectation, because a runtime that came from one of those would pass a test
- * written the same way the implementation computed it.
+ * The timeline is this file's own: the extension's clock is the one fact a Round edge has no instant
+ * of, so a case states the instant each edge was observed at and the expectation is the arithmetic of
+ * those instants — never a value the implementation derived. No host-stated duration, no wall-clock
+ * span and no self-made timer appears anywhere in an expectation, because a figure that came from one
+ * of those would pass a case written the same way the implementation computed it.
  */
 import { afterEach, describe, expect, test } from "bun:test";
 import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
@@ -26,7 +25,7 @@ import type { ConsumptionDocument } from "../../extensions/model-cost/shared-log
 import type { ModelPricingData } from "../../extensions/model-cost/shared-logic/model-data";
 import type { ModelCostRuntime } from "../../extensions/model-cost/shared-logic/runtime";
 import { createModelCostRuntime } from "../../extensions/model-cost/shared-logic/runtime";
-import type { OwnerReference, SessionFacts, SubagentRuntimeFact } from "../../framework/core/protocol";
+import type { OwnerReference, SessionFacts } from "../../framework/core/protocol";
 import { type FeedbackNotice, type PortDouble, portDouble } from "../framework/support/harness-port-double";
 
 /** The self-made pricing data: one monetary tier and one token-only pair. */
@@ -67,6 +66,12 @@ const GRAND_OWN = {
 	official: { "model-alpha": { tokens: { input: 7, cacheRead: 3, cacheWrite: 0, output: 4 }, costCny: 0.5 } },
 };
 
+/** One further session of the same tree, with consumption and no runtime at all. */
+const LEGACY: SessionFacts = { sessionId: "session-legacy", kind: "sub", name: "旧会话", unavailable: [] };
+const LEGACY_OWN = {
+	"go-provider": { "model-alpha": { tokens: { input: 5, cacheRead: 0, cacheWrite: 0, output: 6 } } },
+};
+
 /** Every root this file created, removed after each case. */
 const roots: string[] = [];
 
@@ -75,9 +80,18 @@ function record(
 	id: string,
 	parent: string | null,
 	own: Record<string, Record<string, unknown>>,
-	runtimeMs?: number,
+	facts: { readonly runtimeMs?: number; readonly runtimeGap?: true } = {},
 ): Record<string, unknown> {
-	return { id, name: id === "session-child" ? "子代理" : id, parent, saveVersion: 1, own, ...(runtimeMs === undefined ? {} : { runtimeMs }) };
+	const name = id === "session-child" ? "子代理" : id === "session-legacy" ? "旧会话" : id;
+	return {
+		id,
+		name,
+		parent,
+		saveVersion: 1,
+		own,
+		...(facts.runtimeMs === undefined ? {} : { runtimeMs: facts.runtimeMs }),
+		...(facts.runtimeGap === undefined ? {} : { runtimeGap: facts.runtimeGap }),
+	};
 }
 
 /** The three-session tree every case reads, unless it states its own. */
@@ -99,12 +113,19 @@ function baseline(sessions?: readonly Record<string, unknown>[]): ConsumptionDoc
 	} as unknown as ConsumptionDocument;
 }
 
+/** The clock one case drives: the instant every Round edge is observed at. */
+interface Clock {
+	at: number;
+}
+
 /** One bound instance and the double that drives it. */
 interface Bound {
 	readonly runtime: ModelCostRuntime;
 	readonly double: PortDouble;
 	readonly root: string;
 	readonly consumptionFile: string;
+	/** The extension's own clock, which a case sets before every edge it drives. */
+	readonly clock: Clock;
 	/** What this instance's binding was told while it loaded: the load's own notices, if any. */
 	readonly feedback: readonly FeedbackNotice[];
 }
@@ -114,8 +135,10 @@ interface Bound {
  *
  * The runtime is built by a factory — the same shape the OMP assembly uses — from the context the
  * framework hands it, so the framework's public binding and the production factory are both in the
- * path every case observes through. A case that names an existing root binds a second instance over
- * the very storage the first one wrote, which is how a new runtime or process is modelled here.
+ * path every case observes through. The clock is passed in as the extension's own instant source,
+ * which is what lets a case state the instant each Round edge was observed at. A case that names an
+ * existing root binds a second instance over the very storage the first one wrote, which is how a new
+ * runtime or process is modelled here.
  */
 async function bind(
 	options: { readonly document?: ConsumptionDocument; readonly storageRoot?: string } = {},
@@ -126,6 +149,7 @@ async function bind(
 	if (options.storageRoot === undefined) {
 		writeFileSync(consumptionFile, JSON.stringify(options.document ?? baseline()), "utf8");
 	}
+	const clock: Clock = { at: Date.parse("2026-10-01T00:00:00.000Z") };
 	const double = portDouble();
 	let runtime: ModelCostRuntime | undefined;
 	double.bind(MODEL_COST, {
@@ -137,28 +161,32 @@ async function bind(
 				userHomeDirectory: root,
 				harness: HARNESS,
 				data: DATA,
+				now: () => clock.at,
 			});
 			return runtime.implementation;
 		},
 	});
 	const session = double.deliverSession(OWNER, { session: MAIN });
 	await double.initiateRun(OWNER);
-	return { runtime: runtime as ModelCostRuntime, double, root, consumptionFile, feedback: session.feedback };
+	return { runtime: runtime as ModelCostRuntime, double, root, consumptionFile, clock, feedback: session.feedback };
 }
 
-/** One native runtime reading, as an adapter maps it for one execution of one session. */
-function reading(executionId: string, runtimeMs: number, status: "running" | "ended"): SubagentRuntimeFact {
-	return { kind: "reading", executionId, runtimeMs, status };
-}
-
-/** One observation this host could not turn into a reading, as an adapter reports it. */
-function unavailable(reason: string): SubagentRuntimeFact {
-	return { kind: "unavailable", reason };
+/**
+ * One of one session's own activities, as the framework's Round edges state it: the Round opens at
+ * `from` and ends at `to`, and the extension's clock states each of those instants when it observes
+ * the edge that carries it.
+ */
+function activity(bound: Bound, from: number, to: number, session: SessionFacts = CHILD): void {
+	bound.clock.at = from;
+	bound.double.deliverRound(OWNER, { event: { kind: "round_start" }, session });
+	bound.clock.at = to;
+	bound.double.deliverRound(OWNER, { event: { kind: "round_end" }, session });
 }
 
 /** One settled Turn of the child's own session, on the token-only pair that session runs. */
 function settleChildTurn(bound: Bound, at: number): void {
 	const session = CHILD;
+	bound.clock.at = at;
 	bound.double.deliverTurn(
 		{ kind: "request_started", session, at, provider: "go-provider", model: "model-alpha" },
 		{ owner: OWNER },
@@ -175,13 +203,7 @@ function settleChildTurn(bound: Bound, at: number): void {
 	);
 }
 
-/** The child's own Round: its start, one settled request, and its end — the existing commit path. */
-function childRound(bound: Bound, at: number): void {
-	bound.double.deliverRound(OWNER, { event: { kind: "round_start" }, session: CHILD });
-	settleChildTurn(bound, at);
-}
-
-/** The instant every Turn of these cases begins at. */
+/** The instant the first activity of these cases begins at. */
 const CLOCK = Date.parse("2026-10-01T00:00:00.000Z");
 
 /**
@@ -249,407 +271,285 @@ afterEach(() => {
 	while (roots.length > 0) rmSync(roots.pop() as string, { recursive: true, force: true });
 });
 
-describe("a session's executions accumulate onto its own one row, and save as numeric milliseconds (P11, P18)", () => {
-	test("two executions' own durations, both obtained before the commit, save as 480000 beside the session's consumption", async () => {
+describe("the figure is the session's own working intervals, and the idle between them is not (P24)", () => {
+	test("two activities of the one subagent session add their own intervals, not the span that contains them", async () => {
 		const bound = await bind();
 
-		// Two native executions of the one subagent session, each reporting its own duration, both
-		// obtained before the session's next existing commit.
-		childRound(bound, CLOCK);
-		bound.double.deliverSubagentRuntime({ runtime: reading("0-Explore", 360_000, "ended"), session: CHILD });
-		bound.double.deliverSubagentRuntime({ runtime: reading("0-Explore-2", 120_000, "ended"), session: CHILD });
+		// Two activities of the one subagent session, with an idle stretch between them: the first runs
+		// from CLOCK to CLOCK+30000 and the second from CLOCK+90000 to CLOCK+120000. The 60000 that
+		// separates them is idle, and the figure is 30000 + 30000 rather than the 120000 the wall-clock
+		// span would state or the 30000 the last activity alone would.
+		activity(bound, CLOCK, CLOCK + 30_000);
+		activity(bound, CLOCK + 90_000, CLOCK + 120_000);
 
-		// One logical record per actual session: the two executions are on the child's single row, whose
-		// figure is their sum — 360000 + 120000 — and not either execution's own.
+		// One logical record per actual session: both activities are on the child's single row.
 		const rows = sessionRow(bound, "session-child");
 		expect(rows).toHaveLength(1);
-		expect(rows[0]?.runtimeMs).toBe(480_000);
-		expect(bound.runtime.view.runtime("session-child")).toBe(480_000);
+		expect(rows[0]?.runtimeMs).toBe(60_000);
+		expect(bound.runtime.view.runtime("session-child")).toBe(60_000);
 
-		// The existing commit — the child's own Round ending with the consumption it grew — carries the
-		// figure into the same document, as a number of milliseconds rather than as display text.
-		bound.double.deliverRound(OWNER, { event: { kind: "round_end" }, session: CHILD });
-		const document = await savedDocument(bound.consumptionFile, candidate => stored(candidate, "session-child")?.saveVersion === 2);
-		expect(stored(document, "session-child")?.runtimeMs).toBe(480_000);
+		// The existing commit — each activity's own Round ending — carried the growing figure into the
+		// same document, as a number of milliseconds rather than as display text. The second commit
+		// carries both intervals: 60000, and never the last one's 30000.
+		const document = await savedDocument(bound.consumptionFile, candidate => stored(candidate, "session-child")?.saveVersion === 3);
+		expect(stored(document, "session-child")?.runtimeMs).toBe(60_000);
 		expect(typeof stored(document, "session-child")?.runtimeMs).toBe("number");
-		expect(/"runtimeMs"\s*:\s*480000/.test(readFileSync(bound.consumptionFile, "utf8"))).toBe(true);
-		// The other sessions' own records were not rewritten by it.
-		expect(stored(document, "session-main")?.runtimeMs).toBeUndefined();
-		expect(stored(document, "session-grand")?.saveVersion).toBe(1);
-	});
-});
+		expect(/"runtimeMs"\s*:\s*60000/.test(readFileSync(bound.consumptionFile, "utf8"))).toBe(true);
 
-describe("one execution contributes once, however its readings arrive (P12, P35)", () => {
-	test("progress readings replace the open execution, a repeated completion adds nothing, and the next execution adds its own", async () => {
-		const loaded = await bind();
-
-		// The first execution's own running readings: each is a replacement of the one before it, so
-		// 100000 then 200000 is a figure of 200000 and never the 300000 their sum would be.
-		loaded.double.deliverSubagentRuntime({ runtime: reading("run-1", 100_000, "running"), session: CHILD });
-		expect(loaded.runtime.view.runtime("session-child")).toBe(100_000);
-		loaded.double.deliverSubagentRuntime({ runtime: reading("run-1", 200_000, "running"), session: CHILD });
-		expect(loaded.runtime.view.runtime("session-child")).toBe(200_000);
-
-		// The final reading of that execution replaces the running one and closes it; the same final
-		// reported again — a repeated notification, or a second observer — contributes nothing more.
-		loaded.double.deliverSubagentRuntime({ runtime: reading("run-1", 210_000, "ended"), session: CHILD });
-		expect(loaded.runtime.view.runtime("session-child")).toBe(210_000);
-		loaded.double.deliverSubagentRuntime({ runtime: reading("run-1", 210_000, "ended"), session: CHILD });
-		expect(loaded.runtime.view.runtime("session-child")).toBe(210_000);
-
-		// A second execution of the same session is its own contribution: 210000 + 90000.
-		loaded.double.deliverSubagentRuntime({ runtime: reading("run-2", 90_000, "ended"), session: CHILD });
-		expect(loaded.runtime.view.runtime("session-child")).toBe(300_000);
-	});
-
-	test("the accumulated figure is what the next existing commit writes, not the readings' sum", async () => {
-		const bound = await bind();
-		childRound(bound, CLOCK);
-		bound.double.deliverSubagentRuntime({ runtime: reading("run-1", 100_000, "running"), session: CHILD });
-		bound.double.deliverSubagentRuntime({ runtime: reading("run-1", 200_000, "running"), session: CHILD });
-		bound.double.deliverSubagentRuntime({ runtime: reading("run-1", 210_000, "ended"), session: CHILD });
-		bound.double.deliverSubagentRuntime({ runtime: reading("run-1", 210_000, "ended"), session: CHILD });
-		bound.double.deliverSubagentRuntime({ runtime: reading("run-2", 90_000, "ended"), session: CHILD });
-
-		bound.double.deliverRound(OWNER, { event: { kind: "round_end" }, session: CHILD });
-		const document = await savedDocument(bound.consumptionFile, candidate => stored(candidate, "session-child")?.saveVersion === 2);
-		expect(stored(document, "session-child")?.runtimeMs).toBe(300_000);
-	});
-
-	test("an execution the commit already carries is not observed again: the next commit states its own duration once (P12, P35)", async () => {
-		const bound = await bind();
-		childRound(bound, CLOCK);
-		bound.double.deliverSubagentRuntime({ runtime: reading("run-1", 360_000, "ended"), session: CHILD });
-		bound.double.deliverRound(OWNER, { event: { kind: "round_end" }, session: CHILD });
-		const first = await savedDocument(bound.consumptionFile, candidate => stored(candidate, "session-child")?.saveVersion === 2);
-		expect(stored(first, "session-child")?.runtimeMs).toBe(360_000);
-
-		// The host states that same completed execution again — a repeated notification arriving after the
-		// commit that already carries it, which is the observation a second observer of one execution makes
-		// — and then states a stale running reading of it. Neither contributes anything: the accumulation is
-		// still that execution's own 360000 and never 720000.
-		bound.double.deliverSubagentRuntime({ runtime: reading("run-1", 360_000, "ended"), session: CHILD });
-		bound.double.deliverSubagentRuntime({ runtime: reading("run-1", 360_000, "running"), session: CHILD });
-		expect(bound.runtime.view.runtime("session-child")).toBe(360_000);
-
-		// The session's next existing commit writes that same figure: the document's own value is what the
-		// fact-to-accumulation-to-save path carries, not the sum of every reading it was told.
-		childRound(bound, CLOCK + 3_600_000);
-		bound.double.deliverRound(OWNER, { event: { kind: "round_end" }, session: CHILD });
-		const second = await savedDocument(bound.consumptionFile, candidate => stored(candidate, "session-child")?.saveVersion === 3);
-		expect(stored(second, "session-child")?.runtimeMs).toBe(360_000);
-	});
-});
-
-describe("a runtime is a fact about executions and settles nothing (P13, P14)", () => {
-	test("readings write no file of their own, add no write, and leave every session's own record alone", async () => {
-		const bound = await bind();
-		childRound(bound, CLOCK);
-		const before = readFileSync(bound.consumptionFile, "utf8");
-		const filesBefore = rootFiles(bound.root);
-
-		// A running reading, a final one for the same execution, a reading of another execution and a
-		// host that reports none: none of them is a boundary, so none of them writes.
-		bound.double.deliverSubagentRuntime({ runtime: reading("run-1", 360_000, "running"), session: CHILD });
-		bound.double.deliverSubagentRuntime({ runtime: reading("run-1", 360_000, "ended"), session: CHILD });
-		bound.double.deliverSubagentRuntime({ runtime: reading("run-2", 120_000, "running"), session: CHILD });
-		bound.double.deliverSubagentRuntime({ runtime: unavailable("执行「run-3」所属 Session"), session: CHILD });
+		// A main session's own activity is no subagent runtime: its own record carries none and its
+		// commits are its own consumption's.
+		activity(bound, CLOCK, CLOCK + 60_000, MAIN);
 		await nextTick();
-
-		// The document on disk is the very one it was, and the root gained no time-specific file: an
-		// execution's duration rides an existing commit or it waits.
-		expect(readFileSync(bound.consumptionFile, "utf8")).toBe(before);
-		expect(rootFiles(bound.root)).toEqual(filesBefore);
-
-		// The child's own consumption is held in memory from the Turn it settled, and its consumption was
-		// not settled early: no round_end was fabricated for it, so its own record is not in the file.
-		expect(bound.runtime.view.own("session-child")).toEqual({
-			"go-provider": { "model-alpha": { tokens: { input: 40, cacheRead: 20, cacheWrite: 0, output: 70 } } },
-		});
-		expect(JSON.parse(before).harnesses[HARNESS].sessions).toHaveLength(3);
-
-		// The session's own commit — its Round really ending — carries the figure with the consumption
-		// it already saves, in the very same file and with no second write of its own.
-		bound.double.deliverRound(OWNER, { event: { kind: "round_end" }, session: CHILD });
-		const document = await savedDocument(bound.consumptionFile, candidate => stored(candidate, "session-child")?.saveVersion === 2);
-		expect(stored(document, "session-child")?.runtimeMs).toBe(480_000);
-		expect(rootFiles(bound.root)).toEqual(filesBefore);
+		expect(bound.runtime.view.runtime("session-main")).toBeUndefined();
+		expect(stored(JSON.parse(readFileSync(bound.consumptionFile, "utf8")) as ConsumptionDocument, "session-main")?.runtimeMs).toBeUndefined();
 	});
 
-	test("saving one session's runtime changes no other session's own consumption or its direct parent", async () => {
+	test("the interval covers the model work, the tools and the waits inside one activity, not one request's own latency", async () => {
 		const bound = await bind();
-		childRound(bound, CLOCK);
-		bound.double.deliverSubagentRuntime({ runtime: reading("run-1", 480_000, "ended"), session: CHILD });
+
+		// One activity of the child: it settles one request 10000 into it and stops working at 60000. The
+		// figure is the whole activity's 60000 — the request's own latency is not the metric, and neither
+		// is a delegation the session waits on inside its Round.
+		bound.clock.at = CLOCK;
+		bound.double.deliverRound(OWNER, { event: { kind: "round_start" }, session: CHILD });
+		settleChildTurn(bound, CLOCK + 10_000);
+		bound.clock.at = CLOCK + 60_000;
 		bound.double.deliverRound(OWNER, { event: { kind: "round_end" }, session: CHILD });
 
-		const document = await savedDocument(bound.consumptionFile, candidate => stored(candidate, "session-child")?.saveVersion === 2);
-		// The grandchild's own record and its parent link are exactly what the document held, and the main
-		// session's own consumption is untouched: the runtime belongs to the child alone.
-		expect(stored(document, "session-grand")).toEqual(record("session-grand", "session-child", GRAND_OWN));
-		expect(stored(document, "session-main")).toEqual(record("session-main", null, MAIN_OWN));
-		expect(stored(document, "session-child")?.parent).toBe("session-main");
-	});
-
-	test("closing the instance writes nothing: the runtime no commit carried stays in memory (P14)", async () => {
-		const bound = await bind();
-		childRound(bound, CLOCK);
-		let announced = 0;
-		bound.runtime.view.subscribe(() => {
-			announced += 1;
-		});
-
-		// A reading of an execution whose session's Round is still open, while the instance is alive: it
-		// accumulates and the display is told to redraw. Nothing has committed since the child's Turn
-		// settled, so both are this instance's memory alone.
-		bound.double.deliverSubagentRuntime({ runtime: reading("run-1", 360_000, "ended"), session: CHILD });
-		expect(announced).toBe(1);
-		await nextTick();
-		const before = readFileSync(bound.consumptionFile, "utf8");
-		const filesBefore = rootFiles(bound.root);
-
-		// The session this instance serves ends and the framework disposes it. Closing is not a commit:
-		// the root gains no time-specific file, nothing is written on the way out, and the document holds
-		// the very bytes the last real commit left — so the figure is not claimed as saved either.
-		bound.double.deliverSession(OWNER, { event: { kind: "session_end", reason: "disposed" } });
-		await nextTick();
-		expect(readFileSync(bound.consumptionFile, "utf8")).toBe(before);
-		expect(rootFiles(bound.root)).toEqual(filesBefore);
-		expect(stored(JSON.parse(before) as ConsumptionDocument, "session-child")?.runtimeMs).toBeUndefined();
-
-		// The close really happened: a reading arriving after it reaches nobody and redraws nothing, which
-		// is what makes the untouched file above the disposal's own behaviour rather than a case whose
-		// instance was never disposed of at all.
-		bound.double.deliverSubagentRuntime({ runtime: reading("run-2", 600_000, "ended"), session: CHILD });
-		expect(announced).toBe(1);
-	});
-});
-
-describe("an unusable native runtime is reported and blocks nothing (P15, P16)", () => {
-	test("a missing source and an invalid duration each report an error, keep the last valid value, and cost no other feature", async () => {
-		const bound = await bind();
-		childRound(bound, CLOCK);
-		bound.double.deliverSubagentRuntime({ runtime: reading("run-1", 360_000, "ended"), session: CHILD });
-
-		// The host cannot state the next execution's own runtime, and then states one that is not a
-		// duration at all. Both are reported as errors, neither is filled in, and what was already
-		// accumulated stands.
-		const missing = bound.double.deliverSubagentRuntime({ runtime: unavailable("执行「run-2」所属 Session"), session: CHILD });
-		expect(missing.feedback).toHaveLength(1);
-		expect(missing.feedback[0]?.level).toBe("error");
-		expect(missing.feedback[0]?.message).toContain("run-2");
-		const invalid = bound.double.deliverSubagentRuntime({ runtime: reading("run-3", -1, "ended"), session: CHILD });
-		expect(invalid.feedback).toHaveLength(1);
-		expect(invalid.feedback[0]?.level).toBe("error");
-		expect(bound.runtime.view.runtime("session-child")).toBe(360_000);
-
-		// Neither report blocked anything else: the session's request accounting is its own, its existing
-		// commit still lands, and its detail row still carries the consumption and the last valid runtime.
-		expect(bound.runtime.view.own("session-child")).toEqual({
-			"go-provider": { "model-alpha": { tokens: { input: 40, cacheRead: 20, cacheWrite: 0, output: 70 } } },
-		});
-		expect(bound.runtime.presentation.of(MAIN_TARGET).agentTree?.find(row => row.name === "子代理")?.runtimeMs).toBe(360_000);
-
-		// The session's next request is accounted as usual: an unusable runtime is a fact about an
-		// execution, so it neither blocks the work that follows nor stops the session's own consumption
-		// from growing — the baseline's 30 input and 50 output plus each of the two settled Turns' ten
-		// input and twenty output.
-		settleChildTurn(bound, CLOCK + 60_000);
-		expect(bound.runtime.view.own("session-child")).toEqual({
-			"go-provider": { "model-alpha": { tokens: { input: 50, cacheRead: 20, cacheWrite: 0, output: 90 } } },
-		});
-
-		// Its existing commit still lands, carrying the consumption it grew and the last valid runtime
-		// beside it.
-		bound.double.deliverRound(OWNER, { event: { kind: "round_end" }, session: CHILD });
-		const document = await savedDocument(bound.consumptionFile, candidate => stored(candidate, "session-child")?.saveVersion === 2);
-		expect(stored(document, "session-child")?.runtimeMs).toBe(360_000);
+		expect(bound.runtime.view.runtime("session-child")).toBe(60_000);
+		const document = await savedDocument(bound.consumptionFile, candidate => stored(candidate, "session-child")?.runtimeMs === 60_000);
+		expect(stored(document, "session-child")?.runtimeMs).toBe(60_000);
+		// The session's own consumption rode the same commit, unchanged from the harness's own reading.
 		expect(stored(document, "session-child")?.own).toEqual({
-			"go-provider": { "model-alpha": { tokens: { input: 50, cacheRead: 20, cacheWrite: 0, output: 90 } } },
+			"go-provider": { "model-alpha": { tokens: { input: 40, cacheRead: 20, cacheWrite: 0, output: 70 } } },
 		});
-		expect(bound.runtime.storage.pauseReason()).toBeUndefined();
 	});
 
-	test("a host that reports no runtime leaves the value unavailable, and a reported zero is not that absence (P16)", async () => {
+	test("a measured zero is a known figure and no measurement at all stays unavailable (P24)", async () => {
 		const bound = await bind();
-		childRound(bound, CLOCK);
 
-		// Nothing was reported for this session: its row keeps the field and reports it as unavailable,
+		// Nothing was observed for the child yet: its row keeps the field and reports it as unavailable,
 		// and the figure is absent rather than a zero.
-		const absent = sessionRow(bound, "session-child")[0];
-		expect(absent?.runtimeMs).toBeUndefined();
+		expect(sessionRow(bound, "session-child")[0]?.runtimeMs).toBeUndefined();
 		expect(bound.runtime.view.runtime("session-child")).toBeUndefined();
 
-		// A completed execution that really took no measurable time is a reading the host made, so it is
-		// recorded and saved as the zero it is — not as the absence above.
-		bound.double.deliverSubagentRuntime({ runtime: reading("run-1", 0, "ended"), session: CHILD });
-		expect(sessionRow(bound, "session-child")[0]?.runtimeMs).toBe(0);
-		bound.double.deliverRound(OWNER, { event: { kind: "round_end" }, session: CHILD });
-		const document = await savedDocument(bound.consumptionFile, candidate => stored(candidate, "session-child")?.saveVersion === 2);
+		// An activity that opened and ended at the same instant really ran for no measurable time: it is
+		// a reading this observer made, so it is recorded and saved as the zero it is.
+		activity(bound, CLOCK, CLOCK);
+		expect(bound.runtime.view.runtime("session-child")).toBe(0);
+		activity(bound, CLOCK + 1_000, CLOCK + 1_000);
+		const document = await savedDocument(bound.consumptionFile, candidate => stored(candidate, "session-child")?.saveVersion === 3);
 		expect(stored(document, "session-child")?.runtimeMs).toBe(0);
 	});
 });
 
-describe("a late final reading neither delays nor back-fills a commit (P17)", () => {
-	test("the disk keeps what the commit wrote until a later existing commit can carry the reliable value", async () => {
+describe("only the time grew, and the commit still happens (P25)", () => {
+	test("an activity whose session consumed nothing commits the time it added, and the next process continues from it", async () => {
 		const bound = await bind();
-		childRound(bound, CLOCK);
-		// The reading available at the commit: the running one, 359900 of the 360000 the execution will
-		// really have taken.
-		bound.double.deliverSubagentRuntime({ runtime: reading("run-1", 359_900, "running"), session: CHILD });
-		bound.double.deliverRound(OWNER, { event: { kind: "round_end" }, session: CHILD });
+
+		// The child's activity runs for 45000 and its own consumption does not move at all: no request of
+		// it is accounted, so a commit gated on consumption alone would drop the figure.
+		activity(bound, CLOCK, CLOCK + 45_000);
 		const first = await savedDocument(bound.consumptionFile, candidate => stored(candidate, "session-child")?.saveVersion === 2);
-		expect(stored(first, "session-child")?.runtimeMs).toBe(359_900);
-
-		// The execution's final reading arrives after that commit. It updates what the display reads, and
-		// it neither delays anything nor writes: the document on disk is still the one the commit wrote.
-		const afterCommit = readFileSync(bound.consumptionFile, "utf8");
-		bound.double.deliverSubagentRuntime({ runtime: reading("run-1", 360_000, "ended"), session: CHILD });
-		await nextTick();
-		expect(bound.runtime.view.runtime("session-child")).toBe(360_000);
-		expect(readFileSync(bound.consumptionFile, "utf8")).toBe(afterCommit);
-
-		// A later existing commit — the session consuming again — carries the reliable value with it.
-		childRound(bound, CLOCK + 3_600_000);
-		bound.double.deliverRound(OWNER, { event: { kind: "round_end" }, session: CHILD });
+		expect(stored(first, "session-child")?.runtimeMs).toBe(45_000);
+		// Nothing else about that record moved: the consumption is the baseline's own, unchanged.
+		expect(stored(first, "session-child")?.own).toEqual(CHILD_OWN);
+		// A second such activity adds its own 30000: 45000 + 30000, and neither commits the last one alone.
+		activity(bound, CLOCK + 120_000, CLOCK + 150_000);
 		const second = await savedDocument(bound.consumptionFile, candidate => stored(candidate, "session-child")?.saveVersion === 3);
-		expect(stored(second, "session-child")?.runtimeMs).toBe(360_000);
-	});
-});
-
-describe("a restart restores the saved accumulation and continues it (P19)", () => {
-	test("a new runtime reads the saved value back, continues from it, and never claims an unsaved reading was restored", async () => {
-		const first = await bind();
-		childRound(first, CLOCK);
-		first.double.deliverSubagentRuntime({ runtime: reading("run-1", 360_000, "ended"), session: CHILD });
-		first.double.deliverSubagentRuntime({ runtime: reading("run-2", 120_000, "ended"), session: CHILD });
-		first.double.deliverRound(OWNER, { event: { kind: "round_end" }, session: CHILD });
-		await savedDocument(first.consumptionFile, candidate => stored(candidate, "session-child")?.runtimeMs === 480_000);
-
-		// A late reading no commit carried: this instance knows it, the file does not.
-		first.double.deliverSubagentRuntime({ runtime: reading("run-3", 600_000, "ended"), session: CHILD });
-		expect(first.runtime.view.runtime("session-child")).toBe(1_080_000);
+		expect(stored(second, "session-child")?.runtimeMs).toBe(75_000);
 
 		// A new instance over the very same storage — a restart or another process — restores what was
-		// saved (480000) and not the value only the previous instance's memory held.
-		const restarted = await bind({ storageRoot: first.root });
-		expect(restarted.runtime.view.runtime("session-child")).toBe(480_000);
-		expect(sessionRow(restarted, "session-child")[0]?.runtimeMs).toBe(480_000);
+		// saved and continues accumulating from it: 75000 + 15000.
+		const restarted = await bind({ storageRoot: bound.root });
+		expect(restarted.runtime.view.runtime("session-child")).toBe(75_000);
+		expect(sessionRow(restarted, "session-child")[0]?.runtimeMs).toBe(75_000);
+		activity(restarted, CLOCK + 300_000, CLOCK + 315_000);
+		const restored = await savedDocument(restarted.consumptionFile, candidate => stored(candidate, "session-child")?.saveVersion === 4);
+		expect(stored(restored, "session-child")?.runtimeMs).toBe(90_000);
+	});
 
-		// It continues accumulating from there: a further execution's own duration adds to the restored
-		// figure and is what its next existing commit writes.
-		childRound(restarted, CLOCK + 7_200_000);
-		restarted.double.deliverSubagentRuntime({ runtime: reading("run-4", 120_000, "ended"), session: CHILD });
-		restarted.double.deliverRound(OWNER, { event: { kind: "round_end" }, session: CHILD });
-		const document = await savedDocument(restarted.consumptionFile, candidate => stored(candidate, "session-child")?.runtimeMs === 600_000);
-		expect(stored(document, "session-child")?.runtimeMs).toBe(600_000);
+	test("an activity still running when the instance goes away adds nothing, writes nothing and is not counted later (P25)", async () => {
+		const bound = await bind();
+		activity(bound, CLOCK, CLOCK + 45_000);
+		await savedDocument(bound.consumptionFile, candidate => stored(candidate, "session-child")?.saveVersion === 2);
+		const bytes = readFileSync(bound.consumptionFile, "utf8");
+		const filesBefore = rootFiles(bound.root);
+
+		// A further activity opens and never ends while this instance is alive: no interval has settled,
+		// so nothing is added, nothing is written, and no offline time is invented for what follows.
+		bound.clock.at = CLOCK + 600_000;
+		bound.double.deliverRound(OWNER, { event: { kind: "round_start" }, session: CHILD });
+		bound.double.deliverSession(OWNER, { event: { kind: "session_end", reason: "disposed" } });
+		await nextTick();
+		expect(readFileSync(bound.consumptionFile, "utf8")).toBe(bytes);
+		expect(rootFiles(bound.root)).toEqual(filesBefore);
+
+		// The next instance reads the saved figure and nothing more: the interval that never settled was
+		// not restored as consumption and was not filled in from the wall clock.
+		const restarted = await bind({ storageRoot: bound.root });
+		expect(restarted.runtime.view.runtime("session-child")).toBe(45_000);
 	});
 });
 
-describe("an old document without the new field stays ordinary consumption (P22, P36)", () => {
-	test("a record that carries no runtime keeps every field it has and keeps being saved", async () => {
+describe("the figure rides an existing commit and never writes on its own (P25)", () => {
+	test("settling an activity changes no other session's record, and adds no file of its own", async () => {
 		const bound = await bind();
-		// The old document is exactly the approved schema without the optional field: tokens, an amount
-		// and a direct parent, all of them valid.
-		expect(bound.runtime.storage.pauseReason()).toBeUndefined();
-		expect(stored((await savedDocument(bound.consumptionFile, () => true)), "session-child")?.own).toEqual(CHILD_OWN);
+		const filesBefore = rootFiles(bound.root);
+		const before = readFileSync(bound.consumptionFile, "utf8");
 
-		childRound(bound, CLOCK);
+		// The activity's own edges are not boundaries of anything else: the file is written only when the
+		// session's Round ends, and no time-specific file appears beside the document.
+		bound.clock.at = CLOCK;
+		bound.double.deliverRound(OWNER, { event: { kind: "round_start" }, session: CHILD });
+		await nextTick();
+		expect(readFileSync(bound.consumptionFile, "utf8")).toBe(before);
+		expect(rootFiles(bound.root)).toEqual(filesBefore);
+
+		bound.clock.at = CLOCK + 20_000;
 		bound.double.deliverRound(OWNER, { event: { kind: "round_end" }, session: CHILD });
 		const document = await savedDocument(bound.consumptionFile, candidate => stored(candidate, "session-child")?.saveVersion === 2);
-		const saved = stored(document, "session-child");
-		// No runtime was ever reported, so the record carries none — and everything else is intact.
-		expect(saved?.runtimeMs).toBeUndefined();
-		expect(saved?.parent).toBe("session-main");
-		expect(saved?.own).toEqual({
-			"go-provider": {
-				"model-alpha": { tokens: { input: 40, cacheRead: 20, cacheWrite: 0, output: 70 } },
-			},
-		});
-		expect(stored(document, "session-main")?.own).toEqual(MAIN_OWN);
+
+		// Only the child's own record moved, and only in the one optional figure it carries.
+		expect(stored(document, "session-child")?.runtimeMs).toBe(20_000);
+		expect(stored(document, "session-child")?.own).toEqual(CHILD_OWN);
+		expect(stored(document, "session-child")?.parent).toBe("session-main");
+		expect(stored(document, "session-grand")).toEqual(record("session-grand", "session-child", GRAND_OWN));
+		expect(stored(document, "session-main")).toEqual(record("session-main", null, MAIN_OWN));
+		expect(rootFiles(bound.root)).toEqual(filesBefore);
+
+		// The figure is a figure of its own: no token bucket, amount, total or context reading absorbs it.
+		const row = sessionRow(bound, "session-child")[0];
+		expect(row?.runtimeMs).toBe(20_000);
+		// The child's own tokens are the baseline's own — 30 input, 20 cached and 50 output — which is
+		// 100, exactly what it was before the activity settled.
+		expect(row?.fields?.sum).toBe(100);
+		expect(row?.fields?.costCny).toBeUndefined();
+		expect(bound.runtime.view.own("session-child")).toEqual(CHILD_OWN);
+	});
+});
+
+describe("an observation this instance could not measure is a known gap, not a zero (P24, P27)", () => {
+	test("an unusable clock reading reports an error, keeps the last valid figure and marks the period incomplete", async () => {
+		const bound = await bind();
+		activity(bound, CLOCK, CLOCK + 30_000);
+		await savedDocument(bound.consumptionFile, candidate => stored(candidate, "session-child")?.saveVersion === 2);
+
+		// The clock states no instant for the next activity's end: no interval can be measured. The
+		// operator is told, the last valid figure stands, and the period's observation of this session is
+		// known to be incomplete — which is not the same fact as a session whose executions took no time.
+		bound.clock.at = CLOCK + 60_000;
+		bound.double.deliverRound(OWNER, { event: { kind: "round_start" }, session: CHILD });
+		bound.clock.at = Number.NaN;
+		const end = bound.double.deliverRound(OWNER, { event: { kind: "round_end" }, session: CHILD });
+		expect(end.feedback).toHaveLength(1);
+		expect(end.feedback[0]?.level).toBe("error");
+		expect(bound.runtime.view.runtime("session-child")).toBe(30_000);
+
+		// The next snapshot of that session carries what this instance really knows: the subtotal it
+		// measured and the mark that this period's observation has a gap. A later success does not clear
+		// the mark — the period's completeness is a fact about the period.
+		activity(bound, CLOCK + 120_000, CLOCK + 150_000);
+		const document = await savedDocument(bound.consumptionFile, candidate => stored(candidate, "session-child")?.saveVersion === 4);
+		expect(stored(document, "session-child")?.runtimeMs).toBe(60_000);
+		expect(stored(document, "session-child")?.runtimeGap).toBe(true);
 	});
 
-	test("a record whose runtime is not a measurement is not damage to the consumption beside it, while the schema's own rules still hold", async () => {
+	test("a later success does not clear the gap, and a record that names none is not inferred to have had one", async () => {
+		const bound = await bind();
+
+		// An unmeasurable activity marks the period; two further activities that are measured perfectly
+		// add their own intervals and leave the mark exactly where it is, because completeness is a fact
+		// about the period's observations rather than about the last measurement.
+		bound.clock.at = CLOCK;
+		bound.double.deliverRound(OWNER, { event: { kind: "round_start" }, session: CHILD });
+		bound.clock.at = Number.NaN;
+		bound.double.deliverRound(OWNER, { event: { kind: "round_end" }, session: CHILD });
+		activity(bound, CLOCK + 60_000, CLOCK + 90_000);
+		activity(bound, CLOCK + 120_000, CLOCK + 150_000);
+
+		// Three Round ends have each moved the figure: the unmeasurable one that only marked the gap, and
+		// the two measured intervals that added 30000 each. The fourth snapshot carries both.
+		const document = await savedDocument(bound.consumptionFile, candidate => stored(candidate, "session-child")?.saveVersion === 4);
+		expect(stored(document, "session-child")?.runtimeMs).toBe(60_000);
+		expect(stored(document, "session-child")?.runtimeGap).toBe(true);
+
+		// The sessions this instance observed perfectly carry no mark at all: an absent mark is not the
+		// claim that their history was complete, it is the absence of any observed gap.
+		expect(stored(document, "session-grand")?.runtimeGap).toBeUndefined();
+		expect(stored(document, "session-main")?.runtimeGap).toBeUndefined();
+	});
+});
+
+describe("an old document is read, updated and restored (P27)", () => {
+	test("a missing value, a legal zero, an existing figure and a known gap all survive a new version's update", async () => {
+		// The document an older version wrote: one record that carries no runtime at all, one whose host
+		// really reported zero, one whose figure is 480000, and one that already names a known gap. The
+		// absent field is not a fault and proves nothing about the history, and the mark is not a fault
+		// either.
+		const bound = await bind({
+			document: baseline([
+				record("session-main", null, MAIN_OWN),
+				record("session-child", "session-main", CHILD_OWN, { runtimeMs: 480_000, runtimeGap: true }),
+				record("session-grand", "session-child", GRAND_OWN, { runtimeMs: 0 }),
+				record("session-legacy", "session-main", LEGACY_OWN),
+			]),
+		});
+
+		// Read: the document is this extension's format, nothing was marked incomplete by the reader, and
+		// each session's own value is exactly what it carried.
+		expect(bound.runtime.storage.pauseReason()).toBeUndefined();
+		expect(bound.runtime.view.runtime("session-child")).toBe(480_000);
+		expect(bound.runtime.view.runtime("session-grand")).toBe(0);
+		expect(bound.runtime.view.runtime("session-legacy")).toBeUndefined();
+		expect(bound.runtime.view.own("session-legacy")).toEqual(LEGACY_OWN);
+
+		// Updated: the child's own activity adds its own 20000 to the figure the record carried, and the
+		// mark it already carried is still there afterwards.
+		activity(bound, CLOCK, CLOCK + 20_000);
+		const document = await savedDocument(bound.consumptionFile, candidate => stored(candidate, "session-child")?.saveVersion === 2);
+		expect(stored(document, "session-child")?.runtimeMs).toBe(500_000);
+		expect(stored(document, "session-child")?.runtimeGap).toBe(true);
+		// The records this instance observed nothing for are the very records the document held: the
+		// legal zero is still a zero rather than an absence, and the record with no value gained no mark
+		// and no figure.
+		expect(stored(document, "session-grand")).toEqual(record("session-grand", "session-child", GRAND_OWN, { runtimeMs: 0 }));
+		expect(stored(document, "session-legacy")).toEqual(record("session-legacy", "session-main", LEGACY_OWN));
+
+		// Restored: a new instance over the same storage reads the same values back.
+		const restarted = await bind({ storageRoot: bound.root });
+		expect(restarted.runtime.view.runtime("session-child")).toBe(500_000);
+		expect(restarted.runtime.view.runtime("session-grand")).toBe(0);
+		expect(restarted.runtime.view.runtime("session-legacy")).toBeUndefined();
+		expect(restarted.runtime.storage.pauseReason()).toBeUndefined();
+	});
+
+	test("a record whose optional figure is not a measurement costs that figure alone, and the schema still holds", async () => {
 		const bound = await bind({
 			document: baseline([
 				record("session-main", null, MAIN_OWN),
 				{ ...record("session-child", "session-main", CHILD_OWN), runtimeMs: "8 minutes" },
-				record("session-grand", "session-child", GRAND_OWN),
+				{ ...record("session-grand", "session-child", GRAND_OWN), runtimeGap: "yes" },
 			]),
 		});
 
-		// The document read as valid — the invalid optional figure is left out rather than taken for a
+		// The document read as valid — the invalid optional facts are left out rather than taken for a
 		// damaged document — so the instance is not paused and the sessions' own data is all there.
 		expect(bound.runtime.storage.pauseReason()).toBeUndefined();
 		expect(bound.runtime.view.own("session-child")).toEqual(CHILD_OWN);
-		expect(bound.runtime.view.identity("session-child")?.parentSessionId).toBe("session-main");
 		expect(bound.runtime.view.runtime("session-child")).toBeUndefined();
+		expect(bound.runtime.view.runtime("session-grand")).toBeUndefined();
+		expect(bound.feedback.filter(notice => notice.message.includes("runtimeMs"))).toHaveLength(1);
+		expect(bound.feedback.filter(notice => notice.message.includes("runtimeGap"))).toHaveLength(1);
 
-		// The operator is told which figure was dropped, where it sits and what it was: left unstated,
-		// the value would simply disappear from a later commit of a session nobody was warned about.
-		expect(bound.feedback).toHaveLength(1);
-		expect(bound.feedback[0]?.level).toBe("error");
-		expect(bound.feedback[0]?.message).toContain(CONSUMPTION_FILE);
-		expect(bound.feedback[0]?.message).toContain(`harnesses.${HARNESS}.sessions[1].runtimeMs`);
-		expect(bound.feedback[0]?.message).toContain('"8 minutes"');
-		// It is the time notice and not the pause one: the consumption in the same document is valid.
-		expect(bound.feedback[0]?.message).toContain("时间数据无效");
-		expect(bound.feedback[0]?.message).not.toContain("暂停");
-
-		// And the session keeps committing: the next snapshot replaces the unusable value with what this
-		// instance really knows, while every other record survives.
-		childRound(bound, CLOCK);
-		bound.double.deliverRound(OWNER, { event: { kind: "round_end" }, session: CHILD });
-		const document = await savedDocument(bound.consumptionFile, candidate => stored(candidate, "session-child")?.saveVersion === 2);
-		expect(stored(document, "session-child")?.runtimeMs).toBeUndefined();
-		expect(stored(document, "session-child")?.parent).toBe("session-main");
-		expect(stored(document, "session-main")?.own).toEqual(MAIN_OWN);
-		expect(stored(document, "session-grand")?.saveVersion).toBe(1);
-	});
-
-	test("the whole-document rules are unchanged: a record with no usable consumption is still refused whole", async () => {
-		// The same leniency does not widen to the fields the consumption itself is made of: a record
-		// whose own usage is missing is not this schema, and is never read as one.
-		const bound = await bind({
+		// The consumption itself is not lenient: a record whose own usage is missing is never read as one.
+		const refused = await bind({
 			document: baseline([
 				record("session-main", null, MAIN_OWN),
 				{ id: "session-child", name: "子代理", parent: "session-main", saveVersion: 1, runtimeMs: 480_000 },
 			]),
 		});
-		expect(bound.runtime.storage.pauseReason()).toBeDefined();
-		expect(bound.runtime.view.own("session-child")).toBeUndefined();
-	});
-});
-
-describe("adding a runtime changes no other business figure (P24)", () => {
-	test("the own and inclusive totals, the amounts, the cache rate and the context reading are the same with and without it", async () => {
-		const bound = await bind();
-		childRound(bound, CLOCK);
-		const before = bound.runtime.presentation.of(MAIN_TARGET);
-		const childRowBefore = before.agentTree?.find(row => row.name === "子代理");
-		const ownBefore = bound.runtime.view.own("session-child");
-		const inclusiveBefore = bound.runtime.view.inclusiveTotals("session-main");
-
-		// The child's own execution reports 480000 milliseconds — a figure no money or token field may
-		// absorb, and one whose own unit must never be read as another's.
-		bound.double.deliverSubagentRuntime({ runtime: reading("run-1", 480_000, "ended"), session: CHILD });
-		const after = bound.runtime.presentation.of(MAIN_TARGET);
-		const childRowAfter = after.agentTree?.find(row => row.name === "子代理");
-
-		expect(childRowAfter?.fields).toEqual(childRowBefore?.fields);
-		expect(childRowAfter?.fields?.sum).toBe(130);
-		expect(childRowAfter?.fields?.costCny).toBeUndefined();
-		expect(childRowAfter?.fields?.cacheHitRate).toBe(33);
-		expect(childRowAfter?.runtimeMs).toBe(480_000);
-		expect(bound.runtime.view.own("session-child")).toEqual(ownBefore);
-		expect(bound.runtime.view.inclusiveTotals("session-main")).toEqual(inclusiveBefore);
-		expect(after.tree).toEqual(before.tree);
-		expect(after.tree.sum).toBe(3_644);
-		expect(after.tree.costCny).toBe(0.55);
-
-		// The context reading a descendant row may carry is a reading of its own and is unaffected too.
-		bound.runtime.sessionContext.observe("session-child", { tokens: 100_000, provider: "official", model: "model-alpha" });
-		const withContext = bound.runtime.presentation.of(MAIN_TARGET).agentTree?.find(row => row.name === "子代理");
-		expect(withContext?.context).toEqual({ tokens: 100_000, budget: 450_000 });
-		expect(withContext?.runtimeMs).toBe(480_000);
+		expect(refused.runtime.storage.pauseReason()).toBeDefined();
+		expect(refused.runtime.view.own("session-child")).toBeUndefined();
 	});
 });

@@ -170,6 +170,10 @@ async function bindAccounting(options: { readonly baseline?: unknown } = {}): Pr
 		userHomeDirectory: root,
 		harness: HARNESS,
 		data: DATA,
+		// This file's own clock states one instant, because nothing it asserts is an elapsed time: a
+		// subagent session's Round is one of its activities, so the interval between that Round's edges
+		// is zero here and the figure this instance measured is the known zero it states.
+		now: () => OFF_PEAK_START,
 	});
 	const double = portDouble();
 	double.bind(MODEL_COST, {
@@ -278,8 +282,9 @@ describe("a session's latest name is display data that never changes its identit
 		double.deliverRound(ownerOf(RENAMED_CHILD_A), { event: { kind: "round_start" }, session: RENAMED_CHILD_A });
 		double.deliverRound(ownerOf(RENAMED_CHILD_A), { event: { kind: "round_end" }, session: RENAMED_CHILD_A });
 		const document = await savedDocument(file, candidate => recordOf(candidate, CHILD_A_ID) !== undefined);
-		// One record for that identity, carrying the latest name, its real direct parent and the
-		// consumption it had already accounted — the rename neither forked the session nor re-priced it.
+		// One record for that identity, carrying the latest name, its real direct parent, the
+		// consumption it had already accounted and the runtime that Round's own interval is — the rename
+		// neither forked the session nor re-priced it.
 		expect(recordOf(document, CHILD_A_ID)).toEqual({
 			id: CHILD_A_ID,
 			name: "子代理A-改名",
@@ -288,6 +293,7 @@ describe("a session's latest name is display data that never changes its identit
 			own: {
 				official: { "model-beta": { tokens: { input: 1, cacheRead: 2, cacheWrite: 0, output: 2 }, costCny: BETA_AMOUNT } },
 			},
+			runtimeMs: 0,
 		});
 	});
 });
@@ -575,10 +581,16 @@ describe("a request's consumption belongs to the session that issued it (P12)", 
 		double.deliverSession(ownerOf(CHILD_A), { session: CHILD_A, event: { kind: "session_end", reason: "disposed" } });
 
 		expect(runtime.view.own(MAIN_ID)).toBeUndefined();
-		expect(runtime.view.own(CHILD_A_ID)).toBeUndefined();
+		// The child's own Round is one activity of its own — that is what makes this instance account for
+		// the session at all — and its consumption is the empty accumulation a Round edge adds: no
+		// request was settled, so there is nothing to add to it.
+		expect(runtime.view.own(CHILD_A_ID)).toEqual({});
 		expect(runtime.view.inclusiveTotals(MAIN_ID)).toEqual({});
-		await queuedWorkSettled();
-		expect(existsSync(file)).toBe(false);
+		// The record that child's own Round end publishes carries that empty consumption and the
+		// activity's own runtime, and nothing else.
+		const rounds = await savedDocument(file, candidate => recordOf(candidate, CHILD_A_ID) !== undefined);
+		expect(recordOf(rounds, CHILD_A_ID)?.own).toEqual({});
+		expect(recordOf(rounds, CHILD_A_ID)?.runtimeMs).toBe(0);
 
 		// The child's own request is what does add consumption, exactly once.
 		double.deliverTurn(startedAt(CHILD_A, "official", "model-beta"), { owner: ownerOf(CHILD_A) });

@@ -219,7 +219,7 @@ export function unreadableBaselineNotice(file: string, reason: string): StoreNot
 export function timeFactFaultNotice(file: string, fault: string): StoreNotice {
 	return {
 		level: "error",
-		message: `消费数据「${file}」中的时间数据无效（${fault}）；该时间已按未知处理，消费数据、保存与其他字段继续正常使用。`,
+		message: `消费数据「${file}」中的时间数据无效（${fault}）；该项已按未知处理，消费数据、保存与其他字段继续正常使用。`,
 	};
 }
 
