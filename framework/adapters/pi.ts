@@ -1,8 +1,9 @@
 /**
  * pi extension API → framework port. State, controls, prompt planning and marker
  * composition stay in the existing public behaviors; only native facts/effects
- * are mapped here. The observation axes not needed by this consumer are refused
- * explicitly, never accepted as silent subscriptions.
+ * are mapped here. An observation axis this mapping has no fact for is reported as an
+ * absent observation rather than accepted as a silent subscription or invented from
+ * some other fact.
  */
 import { bindExtension } from "../behaviors/binding";
 import { isImplementationDisposed } from "../behaviors/lifecycle";
@@ -10,11 +11,13 @@ import type { ExtensionAssembly, ExtensionImplementation, ImplementationContext 
 import { activationField, statePersistence } from "../core/definition";
 import type { ExtensionDefinition } from "../core/definition";
 import type {
-	BindingResult, FeedbackLevel, FeedbackTransport, HarnessPort, MarkerTransport,
-	NoticeTransport, OwnerReference, SessionEndReason, SessionEvent, SessionFacts,
-	SessionStartReason, SessionStartup,
+	BindingResult, CatalogPrice, CatalogPriceSource, FeedbackLevel, FeedbackTransport, HarnessPort,
+	MarkerTransport, NoticeTransport, OwnerReference, ProviderAccess, SessionEndReason, SessionEvent,
+	SessionFacts, SessionStartReason, SessionStartup, TurnSignalFacts, UserInputDelivery,
 } from "../core/protocol";
 import { StateStore } from "../core/state";
+import { observeRounds } from "./pi/round";
+import { observeTurns } from "./pi/turn";
 
 export type { BindingResult } from "../core/protocol";
 export type { ExtensionAssembly } from "../core/assembly";
@@ -35,6 +38,88 @@ export interface PiModel {
 	readonly id?: string;
 	readonly provider?: string;
 }
+/**
+ * One model as pi's own registry holds it: the identity a request is attributed to, and the cost the
+ * registry states per million tokens.
+ *
+ * Only the members this adapter reads are named — both cost halves and the one place a base URL is
+ * resolved from are pi's own facts, and the framework never sees the registry itself.
+ */
+export interface PiCatalogModel {
+	readonly id?: string;
+	readonly provider?: string;
+	/** The model's address, as the registry resolved it from the provider's configuration. */
+	readonly baseUrl?: string;
+	/** The USD-per-million-token rates this catalog states, when it states any. */
+	readonly cost?: {
+		readonly input?: number;
+		readonly output?: number;
+		readonly cacheRead?: number;
+		readonly cacheWrite?: number;
+	};
+}
+/**
+ * pi's model registry, as the one party that knows a provider's current address and credential.
+ *
+ * Both readings are queried per operation rather than snapshotted: a credential the host has since
+ * replaced is what the next query gets, which is the same rule the framework's own provider-access
+ * fact states.
+ */
+export interface PiModelRegistry {
+	/** Every model the registry currently knows, for the catalog prices and their addresses. */
+	getAll(): readonly PiCatalogModel[];
+	/** The credential pi resolves for one provider, or `undefined` when it has none. */
+	getApiKeyForProvider(provider: string): Promise<string | undefined>;
+	/** The provider's own entry, read for the address it states. */
+	getProvider(provider: string): { readonly baseUrl?: string } | undefined;
+}
+/** The usage one assistant message carried, as pi's own five figures. */
+export interface PiMessageUsage {
+	readonly input?: number;
+	readonly output?: number;
+	readonly cacheRead?: number;
+	readonly cacheWrite?: number;
+	readonly totalTokens?: number;
+}
+/** The finalized assistant message one `message_end` carried, as far as this adapter reads it. */
+export interface PiAssistantMessage {
+	readonly role?: string;
+	readonly stopReason?: string;
+	readonly errorMessage?: string;
+	readonly responseId?: string;
+	readonly usage?: PiMessageUsage;
+}
+/** One message fact, whichever kind of message ended. */
+export interface PiMessageEndEvent {
+	readonly type: "message_end";
+	readonly message: PiAssistantMessage;
+}
+/** The request fact pi publishes before a provider call, whose payload this adapter does not read. */
+export interface PiBeforeProviderRequestEvent {
+	readonly type: "before_provider_request";
+}
+/** The response boundary pi publishes before the response body is consumed. */
+export interface PiAfterProviderResponseEvent {
+	readonly type: "after_provider_response";
+	readonly status: number;
+	readonly headers: Record<string, string>;
+}
+/** The fact that pi's agent loop started. */
+export interface PiAgentStartEvent {
+	readonly type: "agent_start";
+}
+/** The fact that pi's agent run fully settled, with nothing left to continue it. */
+export interface PiAgentSettledEvent {
+	readonly type: "agent_settled";
+	/** Whether the run ended because it was aborted. */
+	readonly aborted: boolean;
+}
+/** One submission pi admitted, published before it decided what the submission is. */
+export interface PiInputEvent {
+	readonly type: "input";
+	/** pi's own attribution of who submitted it. */
+	readonly source: "interactive" | "rpc" | "extension";
+}
 export interface PiWidgetOptions {
 	readonly placement?: "aboveEditor" | "belowEditor";
 }
@@ -48,7 +133,27 @@ export interface PiExtensionContext {
 	readonly thinkingLevel?: string;
 	readonly hasUI: boolean;
 	readonly ui: PiUiContext;
+	/**
+	 * pi's model registry, when this surface publishes one.
+	 *
+	 * Optional because the adapter names only the members its own mapping uses: a registry that is not
+	 * there leaves the harness's model prices unanswered and their provider access unresolved rather
+	 * than being guessed from another source.
+	 */
+	readonly modelRegistry?: PiModelRegistry;
+	/** Whether pi itself is working or compacting right now. */
 	isIdle(): boolean;
+	/** Whether a submitted message is still waiting to be taken up. */
+	hasPendingMessages(): boolean;
+	/**
+	 * The session's own current context reading, as pi reports it, or nothing when this surface
+	 * publishes none.
+	 *
+	 * It is read by an extension's own frontend — the figure it draws beside a session's consumption —
+	 * and never handed to the framework: the framework's own facts are the request, the response and
+	 * the session, not the host's context accounting.
+	 */
+	getContextUsage?(): { readonly tokens?: number; readonly contextWindow?: number } | undefined;
 }
 export type PiSessionStartReason = "startup" | "reload" | "new" | "resume" | "fork";
 export interface PiSessionStartEvent {
@@ -85,6 +190,33 @@ export interface PiExtensionApi {
 	on(event: "session_start", handler: PiSessionEventHandler<PiSessionStartEvent>): () => void;
 	on(event: "session_shutdown", handler: PiSessionEventHandler<PiSessionShutdownEvent>): () => void;
 	on(event: "before_agent_start", handler: PiRunInitiationHandler): () => void;
+	/**
+	 * Subscribes to the native run-cycle facts the round axis is mapped from.
+	 *
+	 * `agent_start` is pi's agent loop beginning, whether from a fresh prompt or from a continuation
+	 * pi scheduled for itself; `agent_settled` is that run fully settled, which pi publishes only once
+	 * no automatic retry, compaction or queued continuation is left to run. A level below them —
+	 * `agent_end` — fires before those continuations are decided and is deliberately not part of this
+	 * surface.
+	 */
+	on(event: "agent_start", handler: PiSessionEventHandler<PiAgentStartEvent>): () => void;
+	on(event: "agent_settled", handler: PiSessionEventHandler<PiAgentSettledEvent>): () => void;
+	/**
+	 * Subscribes to the native model-cycle facts the Turn axis is mapped from: the request about to be
+	 * sent, the response boundary, and the finalized message. pi's own `turn_start`/`turn_end` are
+	 * deliberately absent — its turn ends after the requested tools ran, and tool execution is outside
+	 * a Turn.
+	 */
+	on(event: "before_provider_request", handler: PiSessionEventHandler<PiBeforeProviderRequestEvent>): () => void;
+	on(event: "after_provider_response", handler: PiSessionEventHandler<PiAfterProviderResponseEvent>): () => void;
+	on(event: "message_end", handler: PiSessionEventHandler<PiMessageEndEvent>): () => void;
+	/**
+	 * Subscribes to the native submission fact, published before pi decides what the submission is.
+	 *
+	 * The handler's own result decides pi's handling, so this surface's handler answers nothing: the
+	 * framework observes the fact and never transforms, replaces or absorbs a submission.
+	 */
+	on(event: "input", handler: PiSessionEventHandler<PiInputEvent>): () => void;
 	registerCommand(name: string, options: PiCommandRegistration): void;
 	appendEntry(customType: string, data?: unknown): void;
 }
@@ -133,9 +265,122 @@ function publishNotice(ctx: PiExtensionContext, level: FeedbackLevel, message: s
 	else process.stderr.write(`${message}\n`);
 }
 
+/**
+ * The currency and unit pi states its own model costs in.
+ *
+ * pi's catalog carries the amounts alone, in US dollars per million tokens: the same unit its own
+ * usage readout prints them in, which is the unit the framework's catalog price carries opaquely.
+ */
+const HARNESS_PRICE_CURRENCY = "USD";
+const HARNESS_PRICE_UNIT = "USD/百万 token";
+
+/** The buckets pi states a model's cost in, in the framework's own bucket vocabulary. */
+const HARNESS_COST_BUCKETS = ["input", "cacheRead", "cacheWrite", "output"] as const;
+
+/**
+ * The price pi's own catalog states for one provider and exact model id.
+ *
+ * The mapping is the identity between two statements of the same fact — pi's cost per million tokens
+ * in its four buckets, and the framework's own catalog price — plus the unit that catalog reads in.
+ * A pair the catalog does not carry answers nothing, and so does a model every one of whose stated
+ * amounts is zero: an amount the catalog never stated is not a price of zero, and carrying one would
+ * look like a real, free request.
+ */
+function harnessPriceOf(
+	catalog: PiModelRegistry | undefined,
+	provider: string,
+	model: string,
+): CatalogPrice | undefined {
+	const entry = catalog?.getAll().find(row => row.id === model && row.provider === provider);
+	const cost = entry?.cost;
+	if (cost === undefined) return undefined;
+	const amounts: Record<string, number> = {};
+	for (const bucket of HARNESS_COST_BUCKETS) {
+		const amount = cost[bucket];
+		if (typeof amount === "number" && Number.isFinite(amount)) amounts[bucket] = amount;
+	}
+	if (Object.values(amounts).every(amount => amount === 0)) return undefined;
+	return { currency: HARNESS_PRICE_CURRENCY, unit: HARNESS_PRICE_UNIT, amounts };
+}
+
+/** pi's own model prices, and the live registry reading they are answered from. */
+interface HarnessModelPrices {
+	/** The query the framework hands the implementation factory and snapshots at a request's start. */
+	readonly prices: CatalogPriceSource;
+	/** Records the model registry of the context one delivery came from. */
+	saw(ctx: PiExtensionContext): void;
+}
+
+/**
+ * pi's own model prices, read through the session contexts this process's bindings see.
+ *
+ * The registry is a fact of the process, but the only reading pi offers is the member a live session
+ * context carries, so this keeps the registry of the newest context a delivery came from and answers
+ * every later question from it: the framework snapshots the answer at a request's real start, and the
+ * extension's own frontend asks again when it draws. A price asked for before any context was
+ * reported answers nothing rather than a guess, and what leaves this module is that plain query —
+ * never a native model or registry.
+ */
+function harnessModelPrices(): HarnessModelPrices {
+	let newest: PiModelRegistry | undefined;
+	return {
+		prices: { priceOf: (provider, model) => harnessPriceOf(newest, provider, model) },
+		saw: ctx => {
+			if (ctx.modelRegistry !== undefined) newest = ctx.modelRegistry;
+		},
+	};
+}
+
+/** pi's own provider access, and the live registry reading it is answered from. */
+interface HarnessProviderAccess {
+	/** The query the framework hands the implementation factory and asks once per operation. */
+	readonly access: ProviderAccess;
+	/** Records the model registry of the context one delivery came from. */
+	saw(ctx: PiExtensionContext): void;
+}
+
+/**
+ * pi's own provider access, read through the session contexts this process's bindings see.
+ *
+ * The credential and the provider's address are facts of the host, and the reading pi offers is the
+ * registry a live session context carries, so this keeps the registry of the newest context a
+ * delivery came from and asks *it* at each later operation: a credential the host has since replaced,
+ * or minted on demand, is what the extension gets, because nothing here is snapshot at binding time.
+ * What crosses into the framework is the plain two-member query and never the registry.
+ *
+ * The address is read from the provider's own entry or, when that entry states none, from the first
+ * of its models — both are the registry's own statements — while the credential is awaited, because
+ * pi resolves and refreshes it as the call needs it. A registry that answers neither member leaves
+ * the facts absent: the extension is told the host has no access to that provider rather than being
+ * handed a guess or another provider's credential.
+ */
+function harnessProviderAccess(): HarnessProviderAccess {
+	let newest: PiModelRegistry | undefined;
+	return {
+		access: {
+			resolve: async provider => {
+				if (newest === undefined) return undefined;
+				const baseUrl = newest.getProvider(provider)?.baseUrl
+					?? newest.getAll().find(row => row.provider === provider)?.baseUrl;
+				const credential = await newest.getApiKeyForProvider(provider);
+				if (baseUrl === undefined && credential === undefined) return undefined;
+				return {
+					...(baseUrl === undefined ? {} : { baseUrl }),
+					...(credential === undefined ? {} : { credential }),
+				};
+			},
+		},
+		saw: ctx => {
+			if (ctx.modelRegistry !== undefined) newest = ctx.modelRegistry;
+		},
+	};
+}
+
 function piPort(
 	pi: PiExtensionApi,
 	definition: ExtensionDefinition,
+	harnessPrices: HarnessModelPrices,
+	harnessAccess: HarnessProviderAccess,
 	keepSubscription: (release: () => void) => void,
 ): HarnessPort {
 	const stateEntryType = `${definition.id}:state`;
@@ -151,6 +396,20 @@ function piPort(
 		}
 		return owner;
 	};
+	/**
+	 * Records what one delivery's own context says about the host, and hands that context back.
+	 *
+	 * The model registry is readable only through a live context, while the prices and provider
+	 * accesses asked of it happen later and from outside every delivery: the framework snapshots a
+	 * price at a request's real start, and an extension's provider query reads the moment's
+	 * credential. The newest context is therefore what answers, and this is where each delivery
+	 * reports its own.
+	 */
+	const catalogued = (ctx: PiExtensionContext): PiExtensionContext => {
+		harnessPrices.saw(ctx);
+		harnessAccess.saw(ctx);
+		return ctx;
+	};
 	const markers = (ctx: PiExtensionContext): MarkerTransport => ({
 		publishMarkers: lines => {
 			if (ctx.hasUI) ctx.ui.setWidget("semantic-extensions", lines.length ? [...lines] : undefined, { placement: "aboveEditor" });
@@ -159,8 +418,18 @@ function piPort(
 	const notices = (ctx: PiExtensionContext): NoticeTransport => ({ warn: message => publishNotice(ctx, "warning", message) });
 	const feedback = (ctx: PiExtensionContext): FeedbackTransport => ({ notify: (level, message) => publishNotice(ctx, level, message) });
 	const persist = (values: Parameters<PiExtensionApi["appendEntry"]>[1]): void => pi.appendEntry(stateEntryType, values);
-	const unsupported = (axis: string): never => {
-		throw new Error(`the pi adapter does not implement ${axis} observations`);
+
+	// At most one report per native fact, per binding: the first delivery that finds a fact this
+	// mapping does not read says so on the non-model channel, and every later one stays quiet.
+	const reportedMissingFacts = new Set<string>();
+	const reportMissingFact = (fact: string): undefined => {
+		if (!reportedMissingFacts.has(fact)) {
+			reportedMissingFacts.add(fact);
+			reportDiagnostic(
+				`this harness reports no ${fact}; the framework answers nothing rather than inventing one`,
+			);
+		}
+		return undefined;
 	};
 
 	return {
@@ -168,8 +437,11 @@ function piPort(
 		// diagnostics instead of misusing that unrelated native operation.
 		setLabel: value => { label = value; },
 		reportDiagnostic,
+		modelPrices: harnessPrices.prices,
+		providerAccess: harnessAccess.access,
 		onSession: handler => {
 			const deliver = (event: SessionEvent, owner: OwnerReference, ctx: PiExtensionContext, session: SessionFacts): void => {
+				catalogued(ctx);
 				handler({
 					event, session, owner,
 					statePayloads: ctx.sessionManager.getBranch()
@@ -196,11 +468,61 @@ function piPort(
 				deliver({ kind: "session_end", reason: END_REASON[event.reason] }, { kind: "owner", key: ended.key }, ctx, sessionFactsOf(ctx));
 			}));
 		},
-		nextTask: callback => { setTimeout(callback, 0); },
-		onRound: () => unsupported("round"),
-		onTurn: () => unsupported("Turn"),
-		onSubagentRuntime: () => unsupported("subagent-runtime"),
-		onUserInput: () => unsupported("user-input"),
+		nextTask: callback => {
+			// The harness's next task: a macrotask that runs after this callback returned and after
+			// everything already queued — pi's own unwinding and any message it drained — has had its
+			// turn. Nothing here waits on a duration or repeats.
+			setTimeout(callback, 0);
+		},
+		onRound: observer => {
+			observeRounds(pi, observer, {
+				frame: ctx => ({
+					session: sessionFactsOf(catalogued(ctx)),
+					owner: resolveOwner(ctx),
+					hasUI: ctx.hasUI,
+					feedback: feedback(ctx),
+				}),
+				reportMissingFact,
+				track: keepSubscription,
+			});
+		},
+		onTurn: handler => {
+			observeTurns(pi, handler, {
+				frame: ctx => ({
+					owner: resolveOwner(catalogued(ctx)),
+					hasUI: ctx.hasUI,
+					feedback: feedback(ctx),
+				}),
+				session: ctx => sessionFactsOf(ctx),
+				reportMissingFact,
+				track: keepSubscription,
+			});
+		},
+		onSubagentRuntime: () => {
+			// This mapping reads no execution-duration fact, and pi's own run settles nothing about one:
+			// a runtime reading is the harness's own measurement of an execution, which is not the
+			// session's span and not a Round edge. Nothing is subscribed here — the axis's own contract
+			// states a delivery that never arrives as no reading, never as a zero — and the absence is
+			// reported once on the non-model channel rather than passed off as a silent success.
+			reportMissingFact("execution-duration fact (subagent runtime)");
+		},
+		onUserInput: handler => {
+			// The adapter's whole job on this axis: read the one fact pi states about who submitted the
+			// input, and report the submission as the user's when it is the user's. A submission an
+			// extension made on its own behalf is deliberately not one — pi distinguishes the two, and
+			// reading that distinction is what keeps an agent's own input from being reported as the user's.
+			keepSubscription(pi.on("input", (event, ctx) => {
+				if (event.source === "extension") return;
+				const delivery: UserInputDelivery = {
+					event: { kind: "user_input" },
+					owner: resolveOwner(catalogued(ctx)),
+					session: sessionFactsOf(ctx),
+					hasUI: ctx.hasUI,
+					feedback: feedback(ctx),
+				};
+				handler(delivery);
+			}));
+		},
 		onRunInitiation: handler => {
 			keepSubscription(pi.on("before_agent_start", async (_event, ctx) => {
 				const planned = await handler({
@@ -234,6 +556,16 @@ function piPort(
 /** Uses the same binding and assembly contract as the OMP adapter. */
 export function piAdapter(definition: ExtensionDefinition, options: ExtensionAssembly = {}): PiExtensionFactory {
 	const state = new StateStore({ field: activationField(definition), persistence: statePersistence(definition) });
+	// pi's own model prices, one set for the whole process: every binding of this assembly records the
+	// registry of the contexts its own deliveries come from, and the query the framework hands an
+	// extension's factory answers from the newest of them. It lives here rather than in a port because
+	// a port is one binding, while the catalog it reads is the process's — the same reason the OMP
+	// adapter keeps its own catalog outside the port.
+	const harnessPrices = harnessModelPrices();
+	// pi's own access to the providers it serves, one query for the whole process for the same reason:
+	// the credentials and addresses are the host's, and every binding's deliveries report the registry
+	// they were read from.
+	const harnessAccess = harnessProviderAccess();
 	let implementation: ExtensionImplementation | undefined;
 	const resolveImplementation = (context: ImplementationContext): ExtensionImplementation => {
 		if (implementation === undefined || isImplementationDisposed(implementation)) {
@@ -243,7 +575,8 @@ export function piAdapter(definition: ExtensionDefinition, options: ExtensionAss
 	};
 	return pi => {
 		const subscriptions: Array<() => void> = [];
-		const result = bindExtension(definition, piPort(pi, definition, release => subscriptions.push(release)), state,
+		const result = bindExtension(definition, piPort(pi, definition, harnessPrices, harnessAccess,
+			release => subscriptions.push(release)), state,
 			resolveImplementation, { baseDir: options.configBaseDir });
 		if (!result.bound) for (const release of subscriptions) release();
 		return result;
