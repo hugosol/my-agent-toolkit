@@ -48,6 +48,10 @@ _Avoid_: round, run, response plus tool execution
 The identity of one model request/response cycle, distinct from a provider-issued request identifier and from the identity of its containing Round or session.
 _Avoid_: provider request ID, round ID, message ID
 
+**Session observation（会话观察）**:
+One actual session's current readings as the framework's own source holds them: the agent activity its Round edges last left it in and the latest context reading the adapter collected for it (the tokens its conversation holds, with the model it ran at that instant). It is a reading of the moment rather than an accounting number — nothing of it is persisted, a session nothing observed has no observation rather than an idle one with a context of nothing, and a session that parks or ends keeps its last reading. Its purpose is the *first* observation: a consumer that attaches after a session was already working reads the observation the source already holds, without waiting for a further transition, because a change delivery reaches only whoever was subscribed when it happened.
+_Avoid_: delivery of the moment only, permanent startup snapshot, persisted context, consumption figure, host context window
+
 **Observation scope（观察范围）**:
 The declared extent of one subscription group's observations: `owner` covers only the owner session's own deliveries, `session` covers every actual session the adapter reports, each with its own identity, direct parent and latest name. Widening it changes which deliveries a group receives and nothing else — it grants no State write, no external-effect authority and no change to State inheritance.
 _Avoid_: permission level, owner key filter, execution scope

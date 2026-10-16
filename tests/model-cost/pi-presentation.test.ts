@@ -212,8 +212,8 @@ async function fixture(): Promise<Fixture> {
 	double.deliverSession(OWNER, { event: { kind: "session_facts" }, session: MAIN });
 	await double.initiateRun(OWNER);
 	const built = runtime as ModelCostRuntime;
-	built.sessionContext.observe(CHILD.sessionId, { tokens: 90_000, provider: "official", model: "model-alpha" });
-	built.sessionContext.observe("session-child-b", { tokens: 12_000, provider: "mystery-provider", model: "mystery-model" });
+	built.sessionObservations.observeContext(CHILD.sessionId, { tokens: 90_000, provider: "official", model: "model-alpha" });
+	built.sessionObservations.observeContext("session-child-b", { tokens: 12_000, provider: "mystery-provider", model: "mystery-model" });
 	return { runtime: built, double, storageDirectory: root };
 }
 

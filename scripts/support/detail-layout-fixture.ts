@@ -256,7 +256,7 @@ export async function bindDetailLayout(): Promise<FixtureRun> {
 	const built = runtime as ModelCostRuntime;
 	// One descendant's own context reading, as its binding publishes it, and one session nothing
 	// reported one for: the pair a group has to keep in line.
-	built.sessionContext.observe("session-pricing-check", {
+	built.sessionObservations.observeContext("session-pricing-check", {
 		tokens: 225_000,
 		provider: "deepseek",
 		model: "deepseek-flash",

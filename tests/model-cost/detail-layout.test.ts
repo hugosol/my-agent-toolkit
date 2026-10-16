@@ -333,7 +333,7 @@ async function bindLayout(): Promise<BoundLayout> {
 	// One reading of one descendant's own context, as its binding publishes it: the child under
 	// `session-b` holds half of the monetary channel's own 450K display budget, and the child under
 	// `session-a` never reported one — the pair of rows the missing-field cases below compare.
-	built.sessionContext.observe("session-b1", { tokens: 225_000, provider: "official", model: "model-beta" });
+	built.sessionObservations.observeContext("session-b1", { tokens: 225_000, provider: "official", model: "model-beta" });
 	screen.publish(initial);
 	text.publish(initial);
 	return { runtime: built, double, screen, text, file };

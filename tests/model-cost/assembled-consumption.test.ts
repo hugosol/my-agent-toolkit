@@ -544,7 +544,7 @@ describe("every change assembled survives a commit and a new process (P24)", () 
 
 		const second = await bind({ root: first.root });
 		await second.double.runToCompletion("budget", { args: "detail" });
-		second.runtime.sessionContext.observe(CHILD_A.sessionId, {
+		second.runtime.sessionObservations.observeContext(CHILD_A.sessionId, {
 			tokens: CHILD_A_CONTEXT_TOKENS,
 			provider: "official",
 			model: "model-alpha",

@@ -33,6 +33,7 @@ import type {
 	ProviderAccess,
 	SubagentIntegration,
 } from "../core/protocol";
+import { SessionObservations } from "../core/observations";
 import { StateStore } from "../core/state";
 import { observeRounds } from "./omp/round";
 import {
@@ -250,6 +251,17 @@ export interface OmpSessionContext {
 	 * the agent will resume on them, so the work is not over.
 	 */
 	hasPendingMessages?(): boolean;
+	/**
+	 * The session's own current context reading, as this context reports it.
+	 *
+	 * The adapter reads it at the framework's own collection points — the session's start, a
+	 * finalized message, the run that ended — and never at binding time, because it states how full
+	 * this session's conversation is *at the instant it is read*. Only the used member is named:
+	 * the count of tokens the conversation holds. Optional, because a surface that publishes no
+	 * such reading states none rather than a context of zero, and the framework then records no
+	 * collection for it.
+	 */
+	getContextUsage?(): { readonly tokens?: number } | undefined;
 	/**
 	 * The session's asynchronous jobs, as the harness reports them; `running` names the ones still
 	 * going. A job still running is work the agent has not finished, so it too keeps a round open.
@@ -853,6 +865,40 @@ function ompPort(
 				reportMissingFact,
 			});
 		},
+		onSessionContext: handler => {
+			/**
+			 * One collection: the session's own context as the host reports it now, framed with the
+			 * facts of the delivery it was read in.
+			 *
+			 * A count this surface did not state is no reading at all — "no count" is not a context of
+			 * nothing — so nothing is reported for it, exactly as the framework's own `Unknown` rule
+			 * requires. The model travels with the reading because the figure is displayed against that
+			 * model's channel budget, and never against the host's own context window.
+			 */
+			const collect = (ctx: OmpSessionContext): void => {
+				const usage = ctx.getContextUsage?.();
+				if (usage?.tokens === undefined) return;
+				handler({
+					session: sessionFactsOf(pi, ctx),
+					owner: ownerOf(catalogued(ctx)),
+					reading: {
+						tokens: usage.tokens,
+						...(ctx.model?.provider === undefined ? {} : { provider: ctx.model.provider }),
+						...(ctx.model?.id === undefined ? {} : { model: ctx.model.id }),
+					},
+					hasUI: ctx.hasUI,
+					feedback: feedbackTransport(ctx),
+				});
+			};
+			// The three native facts a session's own context reading really moves at: the start that
+			// establishes the first one, the finalized message the conversation grows by, and the run
+			// that ended — a compaction the run itself decided happens before that end. These are the
+			// adapter's own collection points; nothing here decides which of them is a change, so the
+			// same reading read twice is reported twice and the framework drops the repeat.
+			pi.on("session_start", (_event, ctx) => collect(ctx));
+			pi.on("message_end", (_event, ctx) => collect(ctx));
+			pi.on("agent_end", (_event, ctx) => collect(ctx));
+		},
 		nextTask: callback => {
 			// The harness's next task: a macrotask that runs after this callback returned and after
 			// everything already queued — the session's own unwinding and any input it drained — has
@@ -991,6 +1037,13 @@ export function ompAdapter(definition: ExtensionDefinition, options: ExtensionAs
 		field: activationField(definition),
 		persistence: statePersistence(definition),
 	});
+	// The process's one session observation source, for the same reason and at the same place: every
+	// session this harness runs is a binding in this process, and the readings their adapter hooks
+	// collect belong to one record rather than to the binding that happened to report them. It is
+	// what an extension reads for a session whose delivery it attached after — and it survives a
+	// binding's disposal, so a rebuilt instance reads what this process already observed instead of
+	// starting blind.
+	const observations = new SessionObservations();
 	// The harness's own model prices, one set for the whole process: every binding of this assembly
 	// records the model catalog of the contexts its own deliveries come from, and the query the
 	// framework hands an extension's factory answers from the newest of them. It lives here rather
@@ -1014,6 +1067,7 @@ export function ompAdapter(definition: ExtensionDefinition, options: ExtensionAs
 			definition,
 			ompPort(pi, definition, harnessPrices, harnessAccess),
 			state,
+			observations,
 			resolveImplementation,
 			// The one thing this assembly knows about the configuration that the framework cannot:
 			// the repository its definition's relative declaration is relative to.

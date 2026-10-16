@@ -16,6 +16,7 @@ import type {
 	MarkerTransport, NoticeTransport, OwnerReference, ProviderAccess, SessionEndReason, SessionEvent,
 	SessionFacts, SessionStartReason, SessionStartup, TurnSignalFacts, UserInputDelivery,
 } from "../core/protocol";
+import { SessionObservations } from "../core/observations";
 import { StateStore } from "../core/state";
 import { createOwnerAccessPublisher, openOwnerAccess } from "../modules/local-access";
 import { observeRounds } from "./pi/round";
@@ -666,6 +667,40 @@ function piPort(
 				track: keepSubscription,
 			});
 		},
+		onSessionContext: handler => {
+			/**
+			 * One collection: this session's own context as pi reports it now, framed with the facts of
+			 * the delivery it was read in.
+			 *
+			 * A count pi did not state — absent, or pi's own `null` for an unknown context right after a
+			 * compaction — is no reading at all rather than a context of nothing, so nothing is reported
+			 * for it. The model travels with the reading because the figure is displayed against that
+			 * model's channel budget, and never against the host's own reported context window.
+			 */
+			const collect = (ctx: PiExtensionContext): void => {
+				const usage = ctx.getContextUsage?.();
+				if (typeof usage?.tokens !== "number") return;
+				handler({
+					session: sessionFactsOf(ctx),
+					owner: resolveOwner(catalogued(ctx)),
+					reading: {
+						tokens: usage.tokens,
+						...(ctx.model?.provider === undefined ? {} : { provider: ctx.model.provider }),
+						...(ctx.model?.id === undefined ? {} : { model: ctx.model.id }),
+					},
+					hasUI: ctx.hasUI,
+					feedback: feedback(ctx),
+				});
+			};
+			// The three native facts a session's own context reading really moves at: the start that
+			// establishes the first one, the finalized message the conversation grows by, and the run
+			// that fully settled — a compaction the run itself decided happens before that settle.
+			// These are this adapter's own collection points; which reading is a change is not decided
+			// here, so the same numbers read twice are reported twice and the framework drops the repeat.
+			keepSubscription(pi.on("session_start", (_event, ctx) => collect(ctx)));
+			keepSubscription(pi.on("message_end", (_event, ctx) => collect(ctx)));
+			keepSubscription(pi.on("agent_settled", (_event, ctx) => collect(ctx)));
+		},
 		onTurn: handler => {
 			observeTurns(pi, handler, {
 				frame: ctx => ({
@@ -777,6 +812,12 @@ export function piAdapter(definition: ExtensionDefinition, options: PiAssembly =
 		...(localAccess === undefined ? {} : { localAccess: { extension: definition.id, publisher: localAccess } }),
 		...(follow === undefined ? {} : { follow }),
 	});
+	// The process's one session observation source, for the same reason and at the same place as the
+	// State store: the readings the adapter's hooks collect for every session this process runs —
+	// the one this entry serves and the ones its subagent provider spawns through it — belong to one
+	// record rather than to the binding that happened to report them. It is what an extension reads
+	// for a session whose delivery it attached after, and it survives a binding's disposal.
+	const observations = new SessionObservations();
 	// pi's own model prices, one set for the whole process: every binding of this assembly records the
 	// registry of the contexts its own deliveries come from, and the query the framework hands an
 	// extension's factory answers from the newest of them. It lives here rather than in a port because
@@ -818,7 +859,9 @@ export function piAdapter(definition: ExtensionDefinition, options: PiAssembly =
 		const port = piPort(pi, definition, harnessPrices, harnessAccess, positions, integration,
 			release => subscriptions.push(release));
 		integration?.attach(pi, port.reportDiagnostic);
-		const result = bindExtension(definition, port, state, resolveImplementation, { baseDir: options.configBaseDir });
+		const result = bindExtension(definition, port, state, observations, resolveImplementation, {
+			baseDir: options.configBaseDir,
+		});
 		if (!result.bound) {
 			for (const release of subscriptions) release();
 			integration?.releaseAll();

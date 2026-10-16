@@ -60,6 +60,7 @@
  * This module is harness-independent: it reads and writes no State and names no native API.
  */
 import type { ExtensionDefinition } from "../core/definition";
+import type { SessionObservations } from "../core/observations";
 import type { RoundDelivery, RoundEvent, RoundObservation, SubscriptionGroup } from "../core/protocol";
 import { ACTIVITY_OF_EDGE, type SessionActivityAxis } from "./session-activity";
 import { dispatchToGroups } from "./subscriptions";
@@ -120,6 +121,15 @@ export interface RoundSynthesisInputs {
 	/** The subscription groups an edge is offered to, in declaration order. */
 	readonly groups: readonly SubscriptionGroup[];
 	/**
+	 * The process's session observation source, when this binding records its edges into it.
+	 *
+	 * A definition that consumes the framework's observations keeps this source's own activity
+	 * current, so a consumer attaching later reads the activity the session is really in rather than
+	 * waiting for a further edge. A binding that observes nothing the source holds passes none, and
+	 * no reading is recorded.
+	 */
+	readonly observations?: SessionObservations;
+	/**
 	 * The binding's activity axis, which the edges this synthesis dispatches move.
 	 *
 	 * The reading is stated here rather than derived anywhere else, because this is where the
@@ -149,7 +159,7 @@ export interface RoundSynthesisInputs {
  * and an edge is dispatched through it so that bookkeeping and subscribers always agree.
  */
 export function createRoundSynthesis(inputs: RoundSynthesisInputs): RoundSynthesis {
-	const { definition, lives, groups, activity, reportFailure, nextTask, delivering } = inputs;
+	const { definition, lives, groups, observations, activity, reportFailure, nextTask, delivering } = inputs;
 	/** The settle each session is waiting to have confirmed, by that session's identity. */
 	const candidates = new Map<string, RoundObservation>();
 
@@ -162,6 +172,9 @@ export function createRoundSynthesis(inputs: RoundSynthesisInputs): RoundSynthes
 			feedback: observation.feedback,
 		};
 		dispatchRoundEvent(definition, lives, delivery, groups, reportFailure);
+		// The reading this edge leaves the session in, recorded after the edge was applied so the
+		// source and the subscribers agree on what the edge left behind.
+		observations?.observeActivity(observation.session.sessionId, ACTIVITY_OF_EDGE[kind]);
 		// The edge's own current-state projection, stated after the edge so a subscriber that reads
 		// both axes sees the transition before the reading it left behind. It is dispatched from the
 		// session the edge named, which is why one session's transition never moves another's reading.

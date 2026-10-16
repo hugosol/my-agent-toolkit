@@ -866,8 +866,117 @@ export interface UserInputDelivery {
 export type UserInputEventHandler = (delivery: UserInputDelivery) => void | Promise<void>;
 
 /**
+ * One session's own context reading, as the collection that produced it measured it.
+ *
+ * The tokens are what the host's public context reading reported for that session's conversation
+ * at the instant it was collected, and the model is the one that session ran at that same instant
+ * — the two travel together because the figure is displayed against *that* model's channel budget,
+ * which is the extension's own display data and never the host's reported context window.
+ *
+ * A host that states an unknown context (pi's own `null` right after a compaction, say) states no
+ * reading at all rather than a count of zero, and a reading is a measurement of the moment: it is
+ * never persisted, never derived from a consumption figure, and a later collection replaces it.
+ */
+export interface SessionContextReading {
+	/** The conversation tokens the session's own context held, as its host reported them. */
+	readonly tokens: number;
+	/** The provider of that session's model at the instant the reading was collected. */
+	readonly provider?: string;
+	/** The exact id of that session's model at the instant the reading was collected. */
+	readonly model?: string;
+}
+
+/**
+ * What the framework's own session observation source holds for one actual session: the readings
+ * it has collected for that session, keyed by the session's own identity.
+ *
+ * It is a reading rather than an accounting number — nothing here is written to a storage root,
+ * and a restarted process begins with no entry for any session — and an absent member is the
+ * honest absence: a session nothing observed has no activity and no context rather than an idle
+ * one and a context of nothing.
+ *
+ * The facts and the owner are recorded whenever the session was seen at all, so a consumer that
+ * attached after the session was already working can still name it, place it in the tree and read
+ * what was already collected for it.
+ */
+export interface SessionObservation {
+	/** The actual session's identity within this harness, as the harness reports it. */
+	readonly sessionId: string;
+	/** That session's own facts, when the source has seen a delivery that carried them. */
+	readonly session?: SessionFacts;
+	/** The owner that session follows, when the source has seen a delivery that resolved it. */
+	readonly owner?: OwnerReference;
+	/** The activity the framework's own Round bookkeeping last left this session in. */
+	readonly activity?: AgentActivity;
+	/** The latest context reading collected for this session. */
+	readonly context?: SessionContextReading;
+}
+
+/**
+ * One native context reading an adapter collected for one actual session, before the framework
+ * decided whether it is a change.
+ *
+ * It is a *fact* and not an edge: the adapter reports that it read a session's context at one of
+ * its own collection points — the session's start, a finalized message, the run's own execution
+ * convergence — and the framework owns what that means. Which session a reading belongs to and
+ * whether anything is published for it is decided there, exactly as it is for every other axis.
+ */
+export interface SessionContextObservation {
+	/** The actual session the reading belongs to: its identity, its direct parent and its latest name. */
+	readonly session: SessionFacts;
+	/** The owner that session follows, as the adapter resolved it. */
+	readonly owner: OwnerReference;
+	/** The reading itself, with the model that session ran when it was collected. */
+	readonly reading: SessionContextReading;
+	/** Whether the session this reading came from has a UI, as the adapter resolved it. */
+	readonly hasUI: boolean;
+	/** The transport this delivery's extension feedback is published through. */
+	readonly feedback: FeedbackTransport;
+}
+
+/**
+ * One semantic context event: a session's own context reading moved.
+ *
+ * It is edge-triggered by reading: a collection that states the reading the source already held is
+ * not a change and is delivered to nobody, while a collection that states a different one is. The
+ * event carries the reading rather than leaving a consumer to ask for it, because a consumer that
+ * adopts observations adopts them as they arrive; the source below is what a consumer reads for
+ * the readings that arrived before it attached.
+ */
+export type SessionContextEvent = { readonly kind: "session_context" };
+
+/**
+ * The facts one context edge carries, both to the adapter's hook and to the subscribed handler.
+ *
+ * Nothing here is withheld from an extension: the delivery names the session and its owner, the
+ * reading as it moved, and the same two seams every other subscriber delivery carries — the
+ * faithful `hasUI` fact and the unified extension feedback channel. A wider observation scope
+ * grants no write path, and this delivery has none either.
+ */
+export interface SessionContextDelivery {
+	/** The edge itself: this session's context reading moved. */
+	readonly event: SessionContextEvent;
+	/** The actual session the reading belongs to: its identity, its direct parent and its latest name. */
+	readonly session: SessionFacts;
+	/** The owner that session follows, as the adapter resolved it. */
+	readonly owner: OwnerReference;
+	/** The reading this collection left: the tokens and the model they were collected with. */
+	readonly reading: SessionContextReading;
+	/** Whether the session this reading came from has a UI, as the adapter resolved it. */
+	readonly hasUI: boolean;
+	/** The transport this edge's extension feedback is published through. */
+	readonly feedback: FeedbackTransport;
+}
+
+/** One extension handler for one semantic context edge. */
+export type SessionContextHandler = (delivery: SessionContextDelivery) => void | Promise<void>;
+
+/** The context handlers one assembly injects, keyed by the event it subscribes to. */
+export type SessionContextHandlers = Readonly<Partial<Record<SessionContextEvent["kind"], SessionContextHandler>>>;
+
+/**
  * Any semantic lifecycle event the framework models: the session axis, the round axis, the activity
- * axis, the Turn axis and the input axis.
+ * axis, the Turn axis, the input axis and the context axis.
  *
  * The axes are orthogonal and never merged — entering a session is not starting work, starting
  * work does not change which session is current, a Turn is not a Round, and input arriving is not
@@ -877,7 +986,7 @@ export type UserInputEventHandler = (delivery: UserInputDelivery) => void | Prom
  * transition, and observing activity is not observing a round: it carries no billing lifecycle
  * fact, dispatches no edge and grants no capability.
  */
-export type SemanticEvent = SessionEvent | RoundEvent | SessionActivityEvent | TurnEvent | UserInputEvent;
+export type SemanticEvent = SessionEvent | RoundEvent | SessionActivityEvent | TurnEvent | UserInputEvent | SessionContextEvent;
 
 /** The delivery each semantic event kind carries, so a handler's kind and its facts stay paired. */
 export interface SemanticEventDeliveryMap {
@@ -892,6 +1001,7 @@ export interface SemanticEventDeliveryMap {
 	readonly turn_start: TurnStartDelivery;
 	readonly turn_end: TurnEndDelivery;
 	readonly user_input: UserInputDelivery;
+	readonly session_context: SessionContextDelivery;
 }
 
 /**
@@ -1429,6 +1539,20 @@ export interface HarnessPort {
 	 * contain several runs.
 	 */
 	onRound(observer: (observation: RoundObservation) => void): void;
+	/**
+	 * Registers the framework's context-collection hook: one observation per native context reading
+	 * the adapter collected for the session this binding serves.
+	 *
+	 * The adapter owns *where* a reading is collected — the session's own start, a finalized message,
+	 * the run's own execution convergence — and reads the host's public context reading there,
+	 * together with the model the session ran at that same instant. Which session the reading belongs
+	 * to, whether it is a change, and which subscribers it reaches are the framework's rules, so the
+	 * adapter must not deduplicate, compare or filter readings: a collection that read the same
+	 * numbers as the last one is still reported, and the framework is what decides that it is not a
+	 * change. A reading the host states as unknown (pi's `null`) is reported as no collection at all
+	 * rather than as a reading of zero.
+	 */
+	onSessionContext(handler: (observation: SessionContextObservation) => void): void;
 	/**
 	 * Arranges one callback on the harness's next task: after the callback that is running has
 	 * returned and the host has had its chance to settle.

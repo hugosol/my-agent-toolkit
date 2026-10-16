@@ -696,7 +696,7 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 		// The subagent's own binding publishes its current context on the monetary channel. The row reads
 		// it against that channel's own 450K display budget, as `percent (tokens/budget)` — the same form
 		// and the same figure the bar above uses, not the host's own context window.
-		bound.runtime.sessionContext.observe("session-sub", {
+		bound.runtime.sessionObservations.observeContext("session-sub", {
 			tokens: 381_500,
 			provider: "official",
 			model: "model-alpha",
@@ -708,7 +708,7 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 
 		// A later reading on the allowance channel is read against that channel's own 272K budget, chosen
 		// from the reading's own model rather than from the target being drawn.
-		bound.runtime.sessionContext.observe("session-sub", {
+		bound.runtime.sessionObservations.observeContext("session-sub", {
 			tokens: 136_000,
 			provider: "plan-provider",
 			model: "plan-model",
@@ -720,7 +720,7 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 
 		// A pair the data does not classify has no display budget at all, so the row carries no context
 		// field rather than a figure with nothing to read it against.
-		bound.runtime.sessionContext.observe("session-sub", {
+		bound.runtime.sessionObservations.observeContext("session-sub", {
 			tokens: 1_000,
 			provider: "unlisted-provider",
 			model: "no-such",

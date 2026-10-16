@@ -51,6 +51,7 @@ import {
 	type PromptContribution,
 } from "../core/protocol";
 import type { StateStore } from "../core/state";
+import type { SessionObservations } from "../core/observations";
 import { findConfigFailure, getConfig, type ConfigSource } from "../core/config";
 import { findConfigurationViolations } from "../core/violations";
 import { runCommandActions } from "./actions";
@@ -60,10 +61,12 @@ import { cleanupImplementation, initializeImplementation, servingOwnerKeyOf, ini
 import { publishMarkerOnRun, publishMarkerOnViewChange, registerMarker, markerSeat } from "./marker";
 import { createRoundSynthesis, roundLives } from "./round-events";
 import { createSessionActivityAxis } from "./session-activity";
+import { createContextCollection } from "./session-context";
 import { dispatchSessionEvent } from "./session-events";
 import {
 	ROUND_EVENT_KINDS,
 	SESSION_ACTIVITY_KINDS,
+	SESSION_CONTEXT_EVENT_KINDS,
 	TURN_EVENT_KINDS,
 	USER_INPUT_EVENT_KINDS,
 	dispatchToGroups,
@@ -222,6 +225,7 @@ export function bindExtension(
 	definition: ExtensionDefinition,
 	port: HarnessPort,
 	state: StateStore,
+	observations: SessionObservations,
 	factory?: ExtensionFactory,
 	configSource: ConfigSource = {},
 ): BindingResult {
@@ -259,6 +263,10 @@ export function bindExtension(
 			? {}
 			: factory({
 					config: definition.config === undefined ? {} : getConfig(definition),
+					// The process's own observation source: what this extension may read about the sessions
+					// this process has observed, including the readings collected before it attached. It is a
+					// live source and never a copy taken now, exactly as the two harness facts below are.
+					sessionObservations: observations,
 					...(port.modelPrices === undefined ? {} : { modelPrices: port.modelPrices }),
 					...(port.providerAccess === undefined ? {} : { providerAccess: port.providerAccess }),
 				});
@@ -315,6 +323,10 @@ export function bindExtension(
 		port.setLabel(definition.displayName);
 		port.onSession(session => {
 			if (!delivering) return;
+			// The framework's own record of this session: its identity and the owner it follows are
+			// what a consumer attaching later names it by, and they are recorded before anything this
+			// delivery runs, exactly as the framework's State behavior is applied before a handler.
+			observations.sawSession(session.session, session.owner);
 			// The framework's own behavior runs before the extension's handler, and a handler
 			// that throws is reported rather than allowed to disturb the framework or another
 			// binding: see `session-events.ts` for the order and the isolation.
@@ -359,15 +371,23 @@ export function bindExtension(
 			}
 		});
 		// The round axis is subscribed when this extension observes one of its edges, one of the Turn
-		// axis's, or the activity axis — because a Turn states which round it belongs to and that
-		// identity is this bookkeeping's, and because the activity reading is that same bookkeeping's
-		// own projection and is delivered from the transitions it dispatches. Unlike the session
-		// subscription above there is no framework State behavior to run for a round — the agent's work
-		// state is not framework State — so a definition that subscribed to none of the three asks the
-		// harness for no round deliveries and registers no such hook. The same bookkeeping is what the
-		// Turn hook below reads.
+		// axis's, or one of the readings those transitions state — the activity axis, and a session
+		// reading in the framework's own observation source, whose activity those edges leave behind —
+		// because a Turn states which round it belongs to and that identity is this bookkeeping's, and
+		// because the activity reading is that same bookkeeping's own projection and is delivered from
+		// the transitions it dispatches. Unlike the session subscription above there is no framework
+		// State behavior to run for a round — the agent's work state is not framework State — so a
+		// definition that subscribed to none of them asks the harness for no round deliveries and
+		// registers no such hook. The same bookkeeping is what the Turn hook below reads.
 		const lives = roundLives();
-		if (subscribesAny(groups, [...ROUND_EVENT_KINDS, ...TURN_EVENT_KINDS, ...SESSION_ACTIVITY_KINDS])) {
+		if (
+			subscribesAny(groups, [
+				...ROUND_EVENT_KINDS,
+				...TURN_EVENT_KINDS,
+				...SESSION_ACTIVITY_KINDS,
+				...SESSION_CONTEXT_EVENT_KINDS,
+			])
+		) {
 			// The synthesis is what decides the edges; the framework arranges its end-candidate
 			// re-check on the harness's next task, so a harness that never reports a `nextTask`
 			// capability leaves a candidate unconfirmed rather than being polled for one. The activity
@@ -377,6 +397,7 @@ export function bindExtension(
 				definition,
 				lives,
 				groups,
+				observations,
 				activity: createSessionActivityAxis({ definition, groups, reportFailure: port.reportDiagnostic }),
 				reportFailure: port.reportDiagnostic,
 				nextTask: callback => port.nextTask(callback),
@@ -385,6 +406,23 @@ export function bindExtension(
 			port.onRound(observation => {
 				if (!delivering) return;
 				rounds.observe(observation);
+			});
+		}
+		// The context-collection hook is subscribed only when a group observes a reading, so a
+		// definition that reads no session's context asks the harness to collect none at all. What
+		// the adapter collects where, and what a reading means here, are both above this line: the
+		// adapter reads the host's own public context reading, and the framework records it and
+		// delivers it as the change it is.
+		if (subscribesAny(groups, SESSION_CONTEXT_EVENT_KINDS)) {
+			const context = createContextCollection({
+				definition,
+				observations,
+				groups,
+				reportFailure: port.reportDiagnostic,
+			});
+			port.onSessionContext(observation => {
+				if (!delivering) return;
+				context.observe(observation);
 			});
 		}
 		// The model-cycle hook is subscribed only when a group observes a Turn edge, so a definition

@@ -61,6 +61,16 @@ export type {
 } from "./core/assembly";
 
 /**
+ * The framework's session observation source: the read half an extension consumes — what this
+ * process has observed of each actual session, its activity and its latest context reading alike.
+ *
+ * It is handed to an extension's factory as `ImplementationContext.sessionObservations`; an
+ * extension reads it and never constructs one, because the one source belongs to the process and
+ * the adapter creates it beside the State store (see `core/observations.ts`).
+ */
+export { SessionObservations } from "./core/observations";
+
+/**
  * The configuration failures shared logic may observe, and the reader a suite drives a file
  * through.
  *
@@ -118,12 +128,19 @@ export type {
 	SessionActivityEventHandler,
 	SessionActivityEventHandlers,
 	SessionActivityObservation,
+	SessionContextDelivery,
+	SessionContextEvent,
+	SessionContextHandler,
+	SessionContextHandlers,
+	SessionContextObservation,
+	SessionContextReading,
 	SessionEndReason,
 	SessionEvent,
 	SessionEventDelivery,
 	SessionEventHandler,
 	SessionEventHandlers,
 	SessionFacts,
+	SessionObservation,
 	SessionStartReason,
 	SessionStartup,
 	SubscriptionGroup,

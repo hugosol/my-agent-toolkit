@@ -61,72 +61,6 @@ export const EXTENSION_REPOSITORY_ROOT = resolve(dirname(fileURLToPath(import.me
 export const MODEL_COST_HARNESS = "pi";
 
 /**
- * The native facts one session context observation reads: the session's identity, its current model and
- * its own context reading.
- *
- * Only the members this half adds are named, which is the same widening the widget performs for the
- * reads it owns: the adapter names the members its own mapping uses, and these are not among them.
- */
-interface SessionContextSource {
-	/** The session manager, read only for the session id the reading is keyed by. */
-	readonly sessionManager: { getSessionId(): string };
-	/** The session's current model, read only for the channel its display budget comes from. */
-	readonly model?: { readonly id?: string; readonly provider?: string };
-	/** The session's own context, as its binding reports it; absent when the host reports none. */
-	getContextUsage?(): { readonly tokens?: number | null; readonly contextWindow?: number } | undefined;
-}
-
-/** The native api surface the observation registers through: the one `on` every host publishes. */
-interface SessionContextApi {
-	on(event: string, handler: (event: unknown, ctx: SessionContextSource) => void): () => void;
-}
-
-/**
- * The events that can move a session's own context reading: the start that establishes the first one,
- * the finalized message the conversation grows by, and the run that settles it — a compaction the run
- * decided happens before that settle.
- */
-const SESSION_CONTEXT_EVENTS = ["session_start", "message_end", "agent_settled"] as const;
-
-/**
- * Keep the process's per-session context readings current, and answer the release of the registrations
- * this half made.
- *
- * A session's own context usage is reachable only from its own binding, so every binding this
- * extension gets — the session this entry serves and every session the subagent provider spawns
- * through the same entry — publishes its own reading into the one runtime the process shares, keyed by
- * the session id the host reports. The detail tree then shows each descendant session's own context
- * beside its consumption, which is what lets an operator read how full a subagent's context is from the
- * session they are already on: it needs no viewed-session outlet and no host change, and pi has
- * neither. What is published is a reading of the moment, so it is never written to the storage root.
- *
- * A reading pi states as an unknown token count states nothing and is skipped: `null` is pi's own
- * unknown, not a context of zero. A session that parks or ends keeps the last reading it published,
- * because this half names no native shutdown hook of its own — the bindings' own lifecycle is the
- * framework's, and this release is composed into that same cleanup.
- */
-export function observeSessionContext(pi: PiExtensionApi, runtime: ModelCostRuntime): () => void {
-	const api = pi as unknown as SessionContextApi;
-	const observe = (ctx: SessionContextSource): void => {
-		const usage = ctx.getContextUsage?.();
-		// A count the host did not state — absent, or pi's own null for an unknown one — is no reading.
-		if (usage === undefined || typeof usage.tokens !== "number") return;
-		// The session's own current model travels with the reading: the figure is displayed against that
-		// model's channel budget, and the host's own context window is never what this extension compares.
-		runtime.sessionContext.observe(ctx.sessionManager.getSessionId(), {
-			tokens: usage.tokens,
-			...(ctx.model?.provider === undefined ? {} : { provider: ctx.model.provider }),
-			...(ctx.model?.id === undefined ? {} : { model: ctx.model.id }),
-		});
-	};
-	const releases = SESSION_CONTEXT_EVENTS.map(event => api.on(event, (_event, ctx) => observe(ctx)));
-	return () => {
-		for (const release of releases) release();
-	};
-}
-
-
-/**
  * One implementation with every frontend release this process attached composed into its cleanup.
  *
  * The dispose front-end is the framework's: a binding runs the one `cleanup` it declared, exactly once,
@@ -222,6 +156,11 @@ export function modelCostPiHarness(repositoryRoot: string): (pi: PiExtensionApi)
 				userHomeDirectory: homedir(),
 				harness: MODEL_COST_HARNESS,
 				subagentIntegrationMode: () => subagentIntegrationMode,
+				// The framework's own session observation source: the one place every session's context
+				// reading and activity is collected, in this process and — through local access — across
+				// its process boundary, so this extension reads the common interface and subscribes to no
+				// native context event of its own.
+				sessionObservations: context.sessionObservations,
 				// The harness's own model prices, as the framework mapped them from pi's catalog: the
 				// extension's single price catalog composes them after its maintained data, which is what
 				// makes the allowance channel's own price a real request-time fact on this host.
@@ -258,18 +197,15 @@ export function modelCostPiHarness(repositoryRoot: string): (pi: PiExtensionApi)
 		// and pi's own widget is the only thing it owns. A refused binding subscribes nothing here.
 		if (bound.bound && runtime !== undefined) {
 			const built = runtime;
-			// Every binding — a subagent's as much as the session this entry serves — publishes its own
-			// context reading, so the detail tree can show each descendant session's own context without a
-			// viewed-session outlet; the widget draws that session's own reading through the UI's one
-			// boundary wait. Every registration follows the same cleanup, because every one of them is a
-			// binding's own and nothing of any outlives the session that initialized the instance.
-			const releaseContext = observeSessionContext(pi, built);
+			// The widget draws the displayed session's own reading through the UI's one boundary wait.
+			// The readings themselves are no longer this half's to collect: the framework's own
+			// observation source holds every session's context — the adapter collects it where pi moves
+			// one — so a descendant's context is read from there without a viewed-session outlet and
+			// without this extension subscribing to a native context event at all. Every registration
+			// follows the binding's cleanup, because every one of them is that binding's own and nothing
+			// of any outlives the session that initialized the instance.
 			const releaseWidget = attachModelCostWidget(pi, built, uiBoundaryTimer);
-			const release = () => {
-				releaseWidget();
-				releaseContext();
-			};
-			frontendReleases.add(release);
+			frontendReleases.add(releaseWidget);
 		}
 	};
 }
