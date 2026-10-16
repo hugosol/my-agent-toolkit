@@ -32,6 +32,14 @@
  *   be — so it is dropped rather than closing something that was never opened. That is also what a
  *   restore or a reload leaves behind: this binding starts with no open round, so no completion is
  *   ever fabricated for a round an earlier process was in the middle of.
+ * - A session's own *disposal* closes the round it leaves behind, and it is the one boundary that
+ *   waits for its own effects: an end the session had already stated and never had confirmed is
+ *   confirmed there, and a round left open with no end ever stated is closed as the truncation it
+ *   is. The two are told apart by the edge's `ending` rather than by anything this module keeps: a
+ *   consumer that has to know whether the work finished or merely stopped being observable reads it
+ *   there. The report answers once every handler the edge reached has settled, because the host
+ *   reporting it is at its own exit position and what a session's last round owes — its commit — has
+ *   to be finished before the host lets the session go.
  * - A settle the harness reported as *cancelled or terminally failed* is confirmed by the
  *   session's own rest alone. Such an activity has no continuation left to wait for, so work still
  *   going elsewhere — a delegation whose result will never wake it, an asynchronous job it is no
@@ -61,7 +69,7 @@
  */
 import type { ExtensionDefinition } from "../core/definition";
 import { handOverReading, type ObservationHandOver, type SessionObservations } from "../core/observations";
-import type { RoundDelivery, RoundEvent, RoundObservation, SubscriptionGroup } from "../core/protocol";
+import type { RoundDelivery, RoundEvent, RoundObservation, SessionDisposal, SubscriptionGroup } from "../core/protocol";
 import { ACTIVITY_OF_EDGE, type SessionActivityAxis } from "./session-activity";
 import { dispatchToGroups } from "./subscriptions";
 
@@ -110,6 +118,23 @@ export function roundLives(): RoundLives {
 export interface RoundSynthesis {
 	/** Applies one observed native run-cycle fact. */
 	observe(observation: RoundObservation): void;
+	/**
+	 * Closes the round one actual session's own disposal leaves behind, and answers once every handler
+	 * that closing reached has settled.
+	 *
+	 * The session's end is the whole evidence the close-out needs, and its own two cases are decided
+	 * from what the binding already holds. An end the session had already stated — a settle that
+	 * scheduled no continuation and was still awaiting confirmation — is confirmed here: the disposal
+	 * is what that candidate was waiting for, and a session that is over is at rest, so nothing beyond
+	 * it can continue it and no later read is asked. A round the session left open with no end stated
+	 * is closed as a truncation, because it is one: nothing can continue it any more, and the
+	 * activity's own completion was never established.
+	 *
+	 * A session with no round open and nothing pending — one this binding already closed, or one it
+	 * never opened a round for — is no edge at all, and a second disposal of the same session closes
+	 * nothing again.
+	 */
+	dispose(disposal: SessionDisposal): Promise<void>;
 }
 
 /** What one binding's synthesis arranges itself with. */
@@ -172,22 +197,30 @@ export function createRoundSynthesis(inputs: RoundSynthesisInputs): RoundSynthes
 	/** The settle each session is waiting to have confirmed, by that session's identity. */
 	const candidates = new Map<string, RoundObservation>();
 
-	const dispatch = (observation: RoundObservation, kind: RoundEvent["kind"]): void => {
+	/**
+	 * The frame one edge is built from: what an observed fact and a disposal both carry, and all an
+	 * edge needs besides its own event. Naming the four fields rather than spreading them is also what
+	 * keeps the live reads an observation carries beside them — its quiescence and held-work queries —
+	 * from reaching a handler.
+	 */
+	type EdgeFrame = Pick<RoundDelivery, "session" | "owner" | "hasUI" | "feedback">;
+
+	const dispatch = (frame: EdgeFrame, event: RoundEvent): Promise<void> => {
 		const delivery: RoundDelivery = {
-			event: { kind },
-			session: observation.session,
-			owner: observation.owner,
-			hasUI: observation.hasUI,
-			feedback: observation.feedback,
+			event,
+			session: frame.session,
+			owner: frame.owner,
+			hasUI: frame.hasUI,
+			feedback: frame.feedback,
 		};
-		dispatchRoundEvent(definition, lives, delivery, groups, reportFailure);
+		const settling = dispatchRoundEvent(definition, lives, delivery, groups, reportFailure);
 		// The reading this edge leaves the session in, recorded after the edge was applied so the
 		// source and the subscribers agree on what the edge left behind.
-		const reading = ACTIVITY_OF_EDGE[kind];
-		if (observations?.observeActivity(observation.session.sessionId, reading) === true) {
+		const reading = ACTIVITY_OF_EDGE[event.kind];
+		if (observations?.observeActivity(delivery.session.sessionId, reading) === true) {
 			// A reading this process decided is the reading its owner's process needs, where the owner
 			// is not served here: it leaves with the same edge, carrying the session's own facts.
-			handOverReading(handOver, { session: observation.session, owner: observation.owner, activity: reading });
+			handOverReading(handOver, { session: delivery.session, owner: delivery.owner, activity: reading });
 		}
 		// The edge's own current-state projection, stated after the edge so a subscriber that reads
 		// both axes sees the transition before the reading it left behind. It is dispatched from the
@@ -199,6 +232,10 @@ export function createRoundSynthesis(inputs: RoundSynthesisInputs): RoundSynthes
 			hasUI: delivery.hasUI,
 			feedback: delivery.feedback,
 		});
+		// The edge's own effects are stated before its handlers are waited for, and the answer is the
+		// handlers' settlement: a host that reports a disposal at its own exit position is answered once
+		// everything the close-out reached has settled.
+		return settling;
 	};
 
 	/**
@@ -241,7 +278,7 @@ export function createRoundSynthesis(inputs: RoundSynthesisInputs): RoundSynthes
 		// the next relevant fact re-verifies it rather than this module asking again.
 		if (confirmable !== true) return;
 		candidates.delete(sessionId);
-		dispatch(candidate, "round_end");
+		void dispatch(candidate, { kind: "round_end", ending: "confirmed" });
 	};
 
 	return {
@@ -252,7 +289,7 @@ export function createRoundSynthesis(inputs: RoundSynthesisInputs): RoundSynthes
 				// described a pause the session has now left, so it is dropped rather than confirmed.
 				candidates.delete(sessionId);
 				if (lives.current(sessionId) !== undefined) return;
-				dispatch(observation, "round_start");
+				void dispatch(observation, { kind: "round_start" });
 				return;
 			}
 			// A settle: the run ended. With no round open there is no end this could be evidence of —
@@ -274,6 +311,29 @@ export function createRoundSynthesis(inputs: RoundSynthesisInputs): RoundSynthes
 				reportFailure(`${definition.id}: arranging the round end re-check failed: ${detail}`);
 			}
 		},
+		async dispose(disposal) {
+			const sessionId = disposal.session.sessionId;
+			// Whatever this session had stated and not yet had confirmed is consumed here whether or not
+			// it is confirmed below: the session is going away, so a candidate the close-out does not use
+			// is not kept for a later fact that can no longer arrive — and the re-check already arranged
+			// for it finds a candidate it no longer matches, which is what keeps an end from being
+			// delivered twice.
+			const candidate = candidates.get(sessionId);
+			candidates.delete(sessionId);
+			// A round this binding never opened — one it already closed, or a session whose facts it only
+			// ever read — is no edge at all: there is no round whose end this disposal could be.
+			if (lives.current(sessionId) === undefined) return;
+			if (candidate !== undefined) {
+				// The end this session stated itself, confirmed where the disposal is reported rather than
+				// on a task the disposing host may never reach. No late read is asked for it: a session
+				// that is over is at rest, and nothing beyond it can continue it.
+				await dispatch(candidate, { kind: "round_end", ending: "confirmed" });
+				return;
+			}
+			// A round left open with no end ever stated is closed as the truncation it is: nothing can
+			// continue it any more, and the activity's own completion was never established.
+			await dispatch(disposal, { kind: "round_end", ending: "truncated" });
+		},
 	};
 }
 
@@ -282,6 +342,10 @@ export function createRoundSynthesis(inputs: RoundSynthesisInputs): RoundSynthes
  *
  * The bookkeeping runs first for every delivery whether or not a handler arrived, so a handler
  * observes the identity the edge left behind rather than one an earlier delivery minted.
+ *
+ * The answer is the settlement of every handler this edge reached — a failure included, which is
+ * reported rather than rejected — so a caller that has to wait for the edge's effects can, and a
+ * caller that does not is not delayed by it.
  */
 export function dispatchRoundEvent(
 	definition: ExtensionDefinition,
@@ -289,9 +353,9 @@ export function dispatchRoundEvent(
 	round: RoundDelivery,
 	groups: readonly SubscriptionGroup[],
 	reportFailure: (message: string) => void,
-): void {
+): Promise<void> {
 	lives.observe(round);
-	dispatchToGroups(
+	return dispatchToGroups(
 		definition.id,
 		groups,
 		round.event.kind,

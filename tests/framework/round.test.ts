@@ -54,6 +54,12 @@ const PROBE: ExtensionDefinition = defineExtension({
 	commands: [{ type: "directed", name: "round-probe", state: "enabled" }],
 });
 
+/**
+ * The end this adapter's rounds really reach: a settle the framework re-checked on the host's next task
+ * and confirmed against the session's own facts, so how that end was established is stated as such.
+ */
+const END: RoundEvent = { kind: "round_end", ending: "confirmed" };
+
 // The adapter's one scheduling act is the end candidate's re-check on the host's next task; the
 // suite runs that task on a deterministic clock rather than waiting for wall time to pass.
 beforeEach(() => {
@@ -290,12 +296,12 @@ describe("the round opens and closes on real transitions (F6, P8)", () => {
 
 		surface.nextTask();
 		// On the next task the session reports quiescence, and that is what ends the round.
-		expect(surface.observed).toEqual([{ kind: "round_start" }, { kind: "round_end" }]);
+		expect(surface.observed).toEqual([{ kind: "round_start" }, END]);
 
 		// Already idle: there is no open round left to close, so no second edge is produced.
 		surface.settle(QUIESCENT);
 		surface.nextTask();
-		expect(surface.observed).toEqual([{ kind: "round_start" }, { kind: "round_end" }]);
+		expect(surface.observed).toEqual([{ kind: "round_start" }, END]);
 	});
 
 	test("a session still at work does not end, and a later settle that finds it idle does", () => {
@@ -312,7 +318,7 @@ describe("the round opens and closes on real transitions (F6, P8)", () => {
 		// confirmed: no polling, no duration guessed, just the next fact that could decide it.
 		surface.settle(QUIESCENT);
 		surface.nextTask();
-		expect(surface.observed).toEqual([{ kind: "round_start" }, { kind: "round_end" }]);
+		expect(surface.observed).toEqual([{ kind: "round_start" }, END]);
 	});
 
 	test("a settle that already scheduled its continuation is a pause inside the round", () => {
@@ -328,7 +334,7 @@ describe("the round opens and closes on real transitions (F6, P8)", () => {
 		// The real settle, once nothing is left to continue, is the round's end.
 		surface.settle(QUIESCENT);
 		surface.nextTask();
-		expect(surface.observed).toEqual([{ kind: "round_start" }, { kind: "round_end" }]);
+		expect(surface.observed).toEqual([{ kind: "round_start" }, END]);
 	});
 
 	test("a drained queued message stays inside the round, and supersedes its candidate", () => {
@@ -349,7 +355,7 @@ describe("the round opens and closes on real transitions (F6, P8)", () => {
 
 		surface.settle(QUIESCENT);
 		surface.nextTask();
-		expect(surface.observed).toEqual([{ kind: "round_start" }, { kind: "round_end" }]);
+		expect(surface.observed).toEqual([{ kind: "round_start" }, END]);
 	});
 
 	test("a running asynchronous job keeps the round open until it drains", () => {
@@ -362,7 +368,7 @@ describe("the round opens and closes on real transitions (F6, P8)", () => {
 
 		surface.settle(QUIESCENT);
 		surface.nextTask();
-		expect(surface.observed).toEqual([{ kind: "round_start" }, { kind: "round_end" }]);
+		expect(surface.observed).toEqual([{ kind: "round_start" }, END]);
 	});
 
 	test("one session's settle never closes another session's round, and a child's end is its own", () => {
@@ -376,7 +382,7 @@ describe("the round opens and closes on real transitions (F6, P8)", () => {
 		// parent's Round is its own and nothing about the child's end touches it.
 		surface.settle(child);
 		surface.nextTask();
-		expect(surface.observed).toEqual([{ kind: "round_start" }, { kind: "round_start" }, { kind: "round_end" }]);
+		expect(surface.observed).toEqual([{ kind: "round_start" }, { kind: "round_start" }, END]);
 		expect(surface.owners).toEqual(["main:session-parent", "main:session-child", "main:session-child"]);
 
 		// The parent's own settle, confirmed on the host's next task, is what ends the parent's Round.
@@ -385,8 +391,8 @@ describe("the round opens and closes on real transitions (F6, P8)", () => {
 		expect(surface.observed).toEqual([
 			{ kind: "round_start" },
 			{ kind: "round_start" },
-			{ kind: "round_end" },
-			{ kind: "round_end" },
+			END,
+			END,
 		]);
 		expect(surface.owners).toEqual([
 			"main:session-parent",
@@ -413,24 +419,25 @@ describe("an abrupt terminal state closes the round too (F6, P8, P21)", () => {
 
 		expect(surface.observed).toEqual([
 			{ kind: "round_start" },
-			{ kind: "round_end" },
+			END,
 			{ kind: "round_start" },
-			{ kind: "round_end" },
+			END,
 		]);
 	});
 
-	test("an abrupt end still carries no outcome: the round edge is the edge alone", () => {
+	test("an abrupt end carries no outcome: the round edge states the transition alone", () => {
 		const surface = boundSurface();
 		surface.start(QUIESCENT);
 
 		surface.fail(QUIESCENT);
 		surface.nextTask();
 
-		// How the round ended is the harness's vocabulary, not the framework's: a subscriber that
-		// needs the agent's state asks the idle query rather than reading it off this edge, and what
-		// the activity's own outcome is used for is the framework's rest rule, never a payload.
-		expect(surface.observed).toEqual([{ kind: "round_start" }, { kind: "round_end" }]);
-		expect(Object.keys(surface.observed[1] ?? {})).toEqual(["kind"]);
+		// How the activity came out is the harness's vocabulary, not the framework's: a subscriber that
+		// needs the agent's state asks the idle query rather than reading it off this edge, and what the
+		// activity's own outcome is used for is the framework's rest rule, never a payload. What the end
+		// does state is how the end itself was established.
+		expect(surface.observed).toEqual([{ kind: "round_start" }, END]);
+		expect(Object.keys(surface.observed[1] ?? {})).toEqual(["kind", "ending"]);
 	});
 
 	test("a cancelled run's round ends although this session still owns a running job", () => {
@@ -445,7 +452,7 @@ describe("an abrupt terminal state closes the round too (F6, P8, P21)", () => {
 
 		// Nothing will resume this activity — it was cancelled — so a round held open on the job would
 		// be one nothing could ever close.
-		expect(surface.observed).toEqual([{ kind: "round_start" }, { kind: "round_end" }]);
+		expect(surface.observed).toEqual([{ kind: "round_start" }, END]);
 	});
 
 	test("a terminally failed run's round ends the same way", () => {
@@ -456,7 +463,7 @@ describe("an abrupt terminal state closes the round too (F6, P8, P21)", () => {
 		surface.fail(failed);
 		surface.nextTask();
 
-		expect(surface.observed).toEqual([{ kind: "round_start" }, { kind: "round_end" }]);
+		expect(surface.observed).toEqual([{ kind: "round_start" }, END]);
 	});
 
 	test("the same running job keeps an ordinary answer's round open until the session is at rest", () => {
@@ -472,7 +479,7 @@ describe("an abrupt terminal state closes the round too (F6, P8, P21)", () => {
 
 		surface.settle({ ...waiting, runningJobs: 0 });
 		surface.nextTask();
-		expect(surface.observed).toEqual([{ kind: "round_start" }, { kind: "round_end" }]);
+		expect(surface.observed).toEqual([{ kind: "round_start" }, END]);
 	});
 
 	test("an errored cycle the harness retries is not a terminal failure", () => {
@@ -496,7 +503,7 @@ describe("an abrupt terminal state closes the round too (F6, P8, P21)", () => {
 
 		surface.settle({ ...retrying, runningJobs: 0 });
 		surface.nextTask();
-		expect(surface.observed).toEqual([{ kind: "round_start" }, { kind: "round_end" }]);
+		expect(surface.observed).toEqual([{ kind: "round_start" }, END]);
 	});
 
 	test("ending a cancelled round registers nothing with the host and stops nothing it owns", () => {
@@ -510,7 +517,7 @@ describe("an abrupt terminal state closes the round too (F6, P8, P21)", () => {
 
 		// Closing the round is the framework's bookkeeping: no second registration, no subscription
 		// added, no job cancelled and no queue cleared on this session's behalf.
-		expect(surface.observed).toEqual([{ kind: "round_start" }, { kind: "round_end" }]);
+		expect(surface.observed).toEqual([{ kind: "round_start" }, END]);
 		expect(surface.nativeCalls()).toBe(before);
 	});
 });
@@ -523,7 +530,7 @@ describe("an ended round is not reopened, and only a real execution opens a new 
 		surface.start(session);
 		surface.abort(session);
 		surface.nextTask();
-		expect(surface.observed).toEqual([{ kind: "round_start" }, { kind: "round_end" }]);
+		expect(surface.observed).toEqual([{ kind: "round_start" }, END]);
 
 		// What arrives after the cancellation is a finalized message and a settle for a round that is
 		// no longer open: appending a result is not an execution, so nothing is opened and nothing is
@@ -531,7 +538,7 @@ describe("an ended round is not reopened, and only a real execution opens a new 
 		surface.messageEnds(session, { stopReason: "stop" });
 		surface.settle(session);
 		surface.nextTask();
-		expect(surface.observed).toEqual([{ kind: "round_start" }, { kind: "round_end" }]);
+		expect(surface.observed).toEqual([{ kind: "round_start" }, END]);
 	});
 
 	test("an execution that really starts after the cancellation opens a new round of its own", () => {
@@ -549,15 +556,15 @@ describe("an ended round is not reopened, and only a real execution opens a new 
 		surface.messageEnds(session, { stopReason: "stop" });
 		surface.settle(session);
 		surface.nextTask();
-		expect(surface.observed).toEqual([{ kind: "round_start" }, { kind: "round_end" }, { kind: "round_start" }]);
+		expect(surface.observed).toEqual([{ kind: "round_start" }, END, { kind: "round_start" }]);
 
 		surface.settle({ ...session, runningJobs: 0 });
 		surface.nextTask();
 		expect(surface.observed).toEqual([
 			{ kind: "round_start" },
-			{ kind: "round_end" },
+			END,
 			{ kind: "round_start" },
-			{ kind: "round_end" },
+			END,
 		]);
 	});
 

@@ -384,12 +384,13 @@ export type SessionEventHandlers = Readonly<Partial<Record<SessionEvent["kind"],
  * One semantic round event: the two edges of a `Round`, the period of agent activity that
  * starts when the agent takes up input and ends at quiescence.
  *
- * Both members are transitions, and neither carries a payload. An edge says only that the
- * period began or that it ended with nothing left to do; how it ended is deliberately not
- * part of the model, because the harnesses disagree about that vocabulary (a round that
- * finishes on an ordinary answer, on an error and on an abort ends the same way here) and
- * because the agent's *current* state is a query ({@link CanAcceptInput}) rather than a field
- * of a past transition.
+ * Both members are transitions. An edge says only that the period began or that it ended; *how* the
+ * activity itself came out is deliberately not part of the model, because the harnesses disagree
+ * about that vocabulary (a round that finishes on an ordinary answer, on an error and on an abort
+ * ends the same way here) and because the agent's *current* state is a query
+ * ({@link CanAcceptInput}) rather than a field of a past transition. What an end does state is how
+ * that end was established — see {@link RoundEnding} — which is a fact about the observation rather
+ * than about the work.
  *
  * The edges are edge-triggered by identity within one binding: `round_start` opens a round and
  * `round_end` closes it, an edge that would repeat the state the previous one left is not
@@ -399,7 +400,52 @@ export type SessionEventHandlers = Readonly<Partial<Record<SessionEvent["kind"],
  * (`behaviors/round-events.ts`); the adapter reports what its harness did and nothing about which
  * transition that is.
  */
-export type RoundEvent = { readonly kind: "round_start" } | { readonly kind: "round_end" };
+export type RoundEvent =
+	| { readonly kind: "round_start" }
+	| {
+			readonly kind: "round_end";
+			/**
+			 * How that end was established; see {@link RoundEnding}. An end always states one, so a
+			 * consumer of the axis never has to read an absent field as either case.
+			 */
+			readonly ending: RoundEnding;
+	  };
+
+/**
+ * How a round's end was established, which is the one thing about an end the edge states.
+ *
+ * `confirmed` — the actual session's own end was established: a settle that scheduled no
+ * continuation, confirmed against what that session reports about its own rest, or that same settle
+ * confirmed where the host reported the session's disposal.
+ *
+ * `truncated` — the session went away while its round was still open and no end of the round was
+ * ever stated. The round is closed because nothing can continue it any more, and the end says so:
+ * the activity's own completion is not established, exactly as the framework glossary's truncation
+ * states. A consumer that has to distinguish "this work finished" from "this work stopped being
+ * observable" reads it here rather than guessing from the edge alone.
+ */
+export type RoundEnding = "confirmed" | "truncated";
+
+/**
+ * The facts one actual session's own disposal carries, as the harness reports it at an awaitable
+ * exit position of its own.
+ *
+ * It is not an edge and not a session event. A session that is being disposed has not moved
+ * anywhere: what the harness states is that this actual session is going away, and whether the
+ * framework's round axis moves with that fact — an end stated but not yet confirmed, a round left
+ * open — is the framework's decision (`behaviors/round-events.ts`). A host that reports a transfer,
+ * a rename or a view that moved reports nothing here: only a session really going away does.
+ */
+export interface SessionDisposal {
+	/** The actual session that is going away: its identity, its direct parent and its latest name. */
+	readonly session: SessionFacts;
+	/** The owner whose agent that session belongs to, as the adapter resolved it. */
+	readonly owner: OwnerReference;
+	/** Whether that session has a UI, as the adapter resolved it. */
+	readonly hasUI: boolean;
+	/** The transport any extension feedback published for this fact goes through. */
+	readonly feedback: FeedbackTransport;
+}
 
 /**
  * The facts one round edge carries, both to the adapter's hook and to the subscribed handler.
@@ -1595,6 +1641,28 @@ export interface HarnessPort {
 	 * contain several runs.
 	 */
 	onRound(observer: (observation: RoundObservation) => void): void;
+	/**
+	 * Registers the framework's disposal hook, when this adapter has a position to report one from:
+	 * one call per actual session this harness is disposing, made at the host's own awaitable exit
+	 * position.
+	 *
+	 * The fact is the harness's, the close-out is the framework's: the framework ends the round that
+	 * session still held — confirming the end it had already stated, or truncating the round it left
+	 * open — and answers this call once everything that edge owes has settled, so a host that waits
+	 * for the answer lets a session's last consumption be committed before its process leaves. The
+	 * adapter reports nothing but the fact: it neither decides an edge nor saves anything itself.
+	 *
+	 * Only a session that is really going away is reported, and only the actual session the report
+	 * names: a session the host merely left — a transfer to another session, a name change, a view
+	 * that moved — is no disposal, and no round is closed for one.
+	 *
+	 * The registration happens only for an extension that observes the round or Turn axis, because a
+	 * binding that observes neither holds no such bookkeeping to close. An adapter whose host states
+	 * its disposals only where the framework's own facts already reach — a process-exit fact whose
+	 * observers this framework does not extend past their own semantics — omits the member, and a
+	 * session this host disposes then leaves its round to the facts that binding already publishes.
+	 */
+	onDisposal?(handler: (disposal: SessionDisposal) => void | Promise<void>): void;
 	/**
 	 * Registers the framework's context-collection hook: one observation per native context reading
 	 * the adapter collected for the session this binding serves.

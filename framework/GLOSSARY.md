@@ -68,6 +68,10 @@ _Avoid_: turn, model response, separately billed model request
 One per-session period of agent activity, from starting execution until it has no pending automatic continuation and awaits new input, or its activity terminates by explicit cancellation or terminal failure. It may contain multiple model-response turns, tool executions, retries, queued-input consumption and dedicated approval interactions; known automatic continuations remain in the same round, while a newly observed execution start may truncate an unfinished prior round when its ending or continuation evidence is missing. Recovery or reloading may truncate an unfinished round and begin a new one for observed ongoing activity; truncation does not establish that the activity itself has completed.
 _Avoid_: native agent run, turn (one model-response cycle), per-message interaction, whole task, semantically inferred task boundary
 
+**Session disposal（会话处置）**:
+One actual session's own end, as its host states it at an awaitable exit position of its own, and the fact the framework closes that session's round on: the end the session had already stated is confirmed, and a round it left open with no end of its own is truncated. It is not a session-axis transition — a transfer to another session, a rename and a view that moved are no disposal — and the report is answered only once that edge's subscribers have settled, which is how a session's own commit is finished before its host lets it go.
+_Avoid_: session switch, transferred session, rename, process exit, task completion, observed Round end
+
 **Agent activity state（代理活动状态）**:
 The agent's per-session current activity condition: working while continuous activity remains ongoing, or idle when no current activity or pending automatic continuation remains and it awaits new input. Dedicated approval/interaction waits remain working; this axis does not assert semantic completion of the user's overall task or whether a Round end has been observed since a panel connection began.
 _Avoid_: run, execution unit, panel online status, panel completion history, extension State

@@ -80,7 +80,7 @@ describe("a round edge reaches the handler subscribed to it (F6, P8)", () => {
 		expect(seen).toEqual(["start-handler:round_start", "end-handler:round_end"]);
 	});
 
-	test("the edge carries no payload beyond the fact that it happened", () => {
+	test("the edge carries the transition and, on an end, how it was established", () => {
 		const double = portDouble();
 		const payloads: Array<readonly string[]> = [];
 		double.bind(CODEBASE_TOOLS, {
@@ -91,12 +91,13 @@ describe("a round edge reaches the handler subscribed to it (F6, P8)", () => {
 		});
 
 		// An automatic continuation and an ordinary answer end the same way, so the edge names no
-		// outcome, no model turn, no messages: the kind is all there is. What the agent's state
-		// actually is comes from the idle query, never from here.
+		// outcome, no model turn, no messages: an opening is its kind alone, and an end adds the one
+		// fact about the observation — how that end was established. What the agent's state actually is
+		// comes from the idle query, never from here.
 		double.deliverRound(OWNER, { event: { kind: "round_start" } });
 		double.deliverRound(OWNER, { event: { kind: "round_end" } });
 
-		expect(payloads).toEqual([["kind"], ["kind"]]);
+		expect(payloads).toEqual([["kind"], ["kind", "ending"]]);
 	});
 
 	test("the delivery names the owner scope, the hasUI fact and the feedback channel", () => {
@@ -171,6 +172,7 @@ describe("a definition that observes no round injects no round hook (F6)", () =>
 			"label:codeBaseTools",
 			"onSession",
 			"onRound",
+			"onDisposal",
 			"onRunInitiation",
 			"command:codebase-tools",
 		]);

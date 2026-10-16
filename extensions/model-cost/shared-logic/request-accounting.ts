@@ -1120,15 +1120,34 @@ export function createRequestAccounting(inputs: RequestAccountingInputs): Reques
 			// its end is consumed here and contributes nothing. An interval that could not be measured
 			// adds nothing either, and is reported as the time fact that failed and remembered as a gap
 			// in this period's observation of that session.
+			//
+			// A Round the session's own end never stated is the other case, and the edge itself tells it
+			// apart: the framework truncated it because the session was disposed while that Round was
+			// still open, so the activity's completion was never established and its interval is not a
+			// measurement at all. Nothing is added and nothing is filled in from the wall clock; this
+			// period's observation of that session is marked incomplete, which is what keeps the figure a
+			// subtotal of what this period really measured, and the operator is told rather than left to
+			// read the missing time as a fast activity. Known consumption is unaffected: the snapshot
+			// below carries what the session really reported, and no success is claimed for it.
 			if (delivery.session.kind === "sub" && !closedActivities.delete(sessionId)) {
 				const runtime = ledgerFor(sessionId);
-				const fault = runtime.runtimes.activityEnded(activityInstant());
-				runtime.runtimeRevision += 1;
-				if (fault !== undefined) {
+				const truncated = delivery.event.kind === "round_end" && delivery.event.ending === "truncated";
+				if (truncated) {
+					runtime.runtimes.activityTruncated();
+					runtime.runtimeRevision += 1;
 					delivery.feedback.notify(
-						"error",
-						`子代理运行耗时采集失败（${fault.fault}）；本次活动的耗时未记录，已保留此前有效值，并标记本周期该 Session 的耗时观测存在缺口。`,
+						"warning",
+						"子代理活动在会话处置时仍未结束：本次活动的耗时未记录，已保留此前有效值，并标记本周期该 Session 的耗时观测存在缺口；已确认的消费不受影响。",
 					);
+				} else {
+					const fault = runtime.runtimes.activityEnded(activityInstant());
+					runtime.runtimeRevision += 1;
+					if (fault !== undefined) {
+						delivery.feedback.notify(
+							"error",
+							`子代理运行耗时采集失败（${fault.fault}）；本次活动的耗时未记录，已保留此前有效值，并标记本周期该 Session 的耗时观测存在缺口。`,
+						);
+					}
 				}
 				announce();
 			}

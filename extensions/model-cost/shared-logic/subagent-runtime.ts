@@ -68,6 +68,18 @@ export interface SubagentRuntimes {
 	 */
 	activityEnded(at: number | undefined): { readonly fault: string } | undefined;
 	/**
+	 * The activity this session had open was cut off rather than ended: the session was disposed while
+	 * the Round it was in still had no end of its own.
+	 *
+	 * The activity is settled — a later Round of that session is a new activity rather than this one
+	 * continuing — but its interval is deliberately not added. An activity whose own end was never
+	 * observed is time this period cannot measure, so nothing is filled in from the wall clock and
+	 * this period's observation of the session is marked incomplete instead, exactly as an unreadable
+	 * instant is. That mark is what tells the two apart: a figure the observer really measured stays
+	 * the subtotal it is, and no duration is claimed for work whose completion was never established.
+	 */
+	activityTruncated(): void;
+	/**
 	 * Whether this accumulation is holding an activity open right now.
 	 *
 	 * It is what the surrounding accounting keeps when the period underneath it is closed: an activity
@@ -144,6 +156,13 @@ export function createSubagentRuntimes(saved: number | undefined, savedGap: bool
 			return undefined;
 		},
 		hasOpenActivity: () => activity !== undefined,
+		// A cut-off activity is settled like any other — a later Round of the session is a new activity
+		// rather than this one continuing — but its time is exactly what this period could not measure:
+		// the interval is not filled in from the wall clock, and the mark below is what says so.
+		activityTruncated() {
+			activity = undefined;
+			gap = true;
+		},
 		gap: () => gap,
 		available() {
 			// Nothing was saved and nothing was measured: this session's runtime is unavailable rather

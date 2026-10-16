@@ -40,6 +40,7 @@ import type {
 	SessionContextObservation,
 	SessionContextReading,
 	SessionDelivery,
+	SessionDisposal,
 	SessionEvent,
 	SessionFacts,
 	SessionObservationAccess,
@@ -263,7 +264,12 @@ export interface PortDouble {
 	deliverRound(
 		owner: OwnerReference,
 		options?: {
-			readonly event?: RoundEvent;
+			/**
+			 * Which native run-cycle fact the delivery models, never the edge itself: the framework's
+			 * synthesis decides which edge a fact becomes and how an end was established, so this states
+			 * only the harness's own fact.
+			 */
+			readonly event?: { readonly kind: RoundEvent["kind"] };
 			readonly hasUI?: boolean;
 			readonly session?: SessionFacts;
 			/**
@@ -293,6 +299,18 @@ export interface PortDouble {
 			readonly willContinue?: boolean;
 		},
 	): RoundBoundary;
+	/**
+	 * Reports one actual session's own disposal, as a host does at its awaitable exit position.
+	 *
+	 * The double frames the fact the way an adapter does — the session's own facts, the owner, the UI
+	 * fact and the feedback channel — and hands it to whatever the framework registered for it. What
+	 * the framework makes of the fact, and how long its answer takes, are the framework's rules; the
+	 * answer here is the same settlement a host waits for before letting the session go.
+	 */
+	deliverDisposal(
+		owner: OwnerReference,
+		options?: { readonly session?: SessionFacts; readonly hasUI?: boolean },
+	): Promise<RoundBoundary>;
 	/**
 	 * Delivers one collected context reading to every extension bound so far, as an adapter would.
 	 *
@@ -389,6 +407,7 @@ export function portDouble(options: PortDoubleOptions = {}): PortDouble {
 	const observations = new SessionObservations();
 	const sessionHandlers: Array<(session: SessionDelivery) => void> = [];
 	const roundObservers: Array<(observation: RoundObservation) => void> = [];
+	const disposalHandlers: Array<(disposal: SessionDisposal) => void | Promise<void>> = [];
 	const contextHandlers: Array<(observation: SessionContextObservation) => void> = [];
 	const turnHandlers: Array<(facts: TurnSignalFacts) => void> = [];
 	const userInputHandlers: Array<(delivery: UserInputDelivery) => void> = [];
@@ -515,6 +534,10 @@ export function portDouble(options: PortDoubleOptions = {}): PortDouble {
 		onRound: observer => {
 			registrations.push("onRound");
 			roundObservers.push(observer);
+		},
+		onDisposal: handler => {
+			registrations.push("onDisposal");
+			disposalHandlers.push(handler);
 		},
 		onSessionContext: handler => {
 			registrations.push("onSessionContext");
@@ -653,6 +676,24 @@ export function portDouble(options: PortDoubleOptions = {}): PortDouble {
 			// An end candidate is confirmed on the harness's next task, so a suite driving the edge
 			// runs what that delivery arranged — the host reaching the task the framework asked for.
 			for (const task of pendingTasks.splice(0)) task();
+			return { hasUI, feedback };
+		},
+		async deliverDisposal(owner, options = {}) {
+			const feedback: FeedbackNotice[] = [];
+			const hasUI = options.hasUI ?? true;
+			const disposal: SessionDisposal = {
+				session: options.session ?? DEFAULT_SESSION,
+				owner,
+				hasUI,
+				feedback: {
+					notify: (level, message) => {
+						feedback.push({ level, message });
+					},
+				},
+			};
+			// A host waits for what the framework owes at its own exit position, so the answer here is
+			// every registered handler's own settlement rather than the fact that they were called.
+			for (const handler of disposalHandlers) await handler(disposal);
 			return { hasUI, feedback };
 		},
 		deliverContext(owner, options) {
