@@ -6,18 +6,18 @@
 
 **Blocked by:** [04：共同存储并发提交与只读同步](04-shared-storage.md)、[10：两端终止、晚到与恢复边界](10-terminal-rounds.md)、[13：DeepSeek 余额认证与刷新闭环](13-deepseek-balance.md)
 
-**Status:** ready-for-agent
+**Status:** implemented — 本票可执行实现与全部分配检查（套件、分区、真实 pi 宿主）已通过；合并入集成分支及合并后回归由集成负责，未合并前不置 closed。证据：`../evidence/15-period-reset.md`。
 
 ## Acceptance criteria
 
-- [ ] 混合两个 harness/provider/session 的已保存文档与未提交本地数据，覆盖有效零、并发及归档/发布失败；先归档再发布，失败不声称成功。
-- [ ] 完整归档、新 period、start/end 和当次独立边界余额一致；失败余额不补缓存/零，不改旧归档、独立 Codex 估计或从归档恢复。
-- [ ] 普通 clear 为 holiday=false，首次 holiday 直接发布 true，已有 holiday 幂等不重复归档；不做先 clear 再改字段两步发布。
-- [ ] 逐项验证非 DeepSeek、忙碌、活动未知、自身保存未收口立即拒绝；之后结算不能自动执行被拒动作，入口偏好不改变。
-- [ ] 旧周期未保存/在途数据不得进入新周期，重置不强制提交其他会话。
-- [ ] **P35 完整 Coverage（S2、S3）**：两 harness/provider/session 混合文档、有效零、归档/发布失败及并发；核对完整归档、新 period、start/end 边界、可选同次余额、不改旧归档/Codex 估计且不从归档读回。
-- [ ] **P36 完整 Coverage（S2、S3）**：普通 clear 为 false、首次 holiday 为 true、再次 holiday 幂等；核对归档数量、周期身份及消费，不做先 clear 再改 holiday 的两步发布。
-- [ ] **P37 完整 Coverage（S1、S2、S3）**：从命令入口覆盖每项拒绝条件及满足条件的成功对照；之后结算不能自动执行先前拒绝动作，入口偏好不受重置影响。
+- [x] 混合两个 harness/provider/session 的已保存文档与未提交本地数据，覆盖有效零、并发及归档/发布失败；先归档再发布，失败不声称成功。
+- [x] 完整归档、新 period、start/end 和当次独立边界余额一致；失败余额不补缓存/零，不改旧归档、独立 Codex 估计或从归档恢复。
+- [x] 普通 clear 为 holiday=false，首次 holiday 直接发布 true，已有 holiday 幂等不重复归档；不做先 clear 再改字段两步发布。
+- [x] 逐项验证非 DeepSeek、忙碌、活动未知、自身保存未收口立即拒绝；之后结算不能自动执行被拒动作，入口偏好不改变。
+- [x] 旧周期未保存/在途数据不得进入新周期，重置不强制提交其他会话。
+- [x] **P35 完整 Coverage（S2、S3）**：两 harness/provider/session 混合文档、有效零、归档/发布失败及并发；核对完整归档、新 period、start/end 边界、可选同次余额、不改旧归档/Codex 估计且不从归档读回。
+- [x] **P36 完整 Coverage（S2、S3）**：普通 clear 为 false、首次 holiday 为 true、再次 holiday 幂等；核对归档数量、周期身份及消费，不做先 clear 再改 holiday 的两步发布。
+- [x] **P37 完整 Coverage（S1、S2、S3）**：从命令入口覆盖每项拒绝条件及满足条件的成功对照；之后结算不能自动执行先前拒绝动作，入口偏好不受重置影响。
 
 ## 执行与证据约束
 

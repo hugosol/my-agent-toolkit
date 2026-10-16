@@ -80,6 +80,15 @@
  *      non-zero input and cache reads is stored exactly as reported, and a request of the data's
  *      allowance provider is kept as a USD *reference* at the price the host's own catalog states,
  *      with no consumption amount beside it.
+ *  11. **`clear` and the first `holiday` archive the whole saved file from the real command entry.**
+ *      One storage root holds both harnesses' saved activity — two providers, a main session and its
+ *      child — beside an independent estimate document. The operator's own exchange is saved there
+ *      first; `/budget clear` then archives that whole document (both harnesses, every session, plus
+ *      the instant it ended at and the balance this switch's own query obtained) and publishes one
+ *      ordinary period that starts at that instant and from that same reading, leaving the estimate
+ *      byte for byte as it was; `/budget holiday` opens a holiday period in one commit, a second
+ *      holiday changes nothing at all, the next exchange is saved into the new period alone, and a
+ *      real entry running another provider is refused without writing anything.
  *
  * What it cannot assert here (recorded, not silently skipped):
  *   - the TUI drawing of the widget stays human-led: over RPC this script observes the `setWidget`
@@ -96,7 +105,11 @@
  *   - a subagent's own execution duration is not read by this adapter yet, so this script asserts
  *     nothing about it;
  *   - the DeepSeek endpoint's answers and the Codex account API's answers are this script's own
- *     documents: they are not evidence about a real account, and no paid call is made.
+ *     documents: they are not evidence about a real account, and no paid call is made;
+ *   - the two period refusals that need a fact this host never states here are the in-process suite's:
+ *     pi dispatches a command when its own loop is idle, and a pi extension context always publishes
+ *     its idle fact, so a busy entry and one whose harness reports no activity state are exercised in
+ *     `tests/model-cost/pi-period-reset.test.ts` rather than over RPC.
  *
  * The expected amount is the maintained data's own off-peak flash prices applied by this script's
  * arithmetic, exactly as the OMP dock's accounting suite states them; nothing here is computed by
@@ -562,6 +575,57 @@ async function savedDocument(file: string, accept: (document: ConsumptionDocumen
 		if (document !== undefined && accept(document)) return document;
 		if (Date.now() > deadline) throw new Error(`no consumption document the case expects was published in ${file}`);
 		await queuedWorkSettled();
+	}
+}
+
+/**
+ * Types one operator command on this host and answers with the notices it published.
+ *
+ * It is one real command invocation over pi's own RPC protocol — the same path the operator's own
+ * command takes — and what comes back is every notice the extension published through the host's own
+ * operator channel while it ran.
+ */
+async function commandNotices(session: PiSession, command: string): Promise<string[]> {
+	const mark = session.frameMark();
+	const answer = await session.request({ type: "prompt", message: `/budget ${command}` }, PI_PROMPT_TIMEOUT_MS);
+	if ((answer.data as { disposition?: unknown } | undefined)?.disposition !== "handled") {
+		throw new SmokeFailure(`the /budget ${command} command was not handled by the extension`, JSON.stringify(answer.data));
+	}
+	await queuedWorkSettled();
+	return session
+		.frames()
+		.slice(mark)
+		.filter(frame => frame.type === "extension_ui_request" && frame.method === "notify")
+		.map(frame => String(frame.message ?? ""));
+}
+
+/** The notice a period action is answered with while its own entry's save has not settled yet. */
+const PENDING_SAVE_REFUSAL = "消费保存尚未收口";
+
+/**
+ * Runs one period action as the operator does, typing it again after the one refusal that is about
+ * waiting.
+ *
+ * A reset is refused while a snapshot this entry started is still publishing, and that refusal is the
+ * approved rule rather than a failure: the operator reads the notice, waits for the write to land and
+ * types the command again. A command this file drives right after an exchange can meet that window,
+ * because the bytes reaching the file and the entry's own record of the publication finishing are two
+ * different moments. What the retry covers is exactly that notice — any other answer, including any
+ * other refusal, is returned as it stands — and the second attempt is reported as it happens, so the
+ * run's record says a wait occurred instead of hiding it.
+ */
+async function periodCommand(session: PiSession, command: string): Promise<string[]> {
+	for (let attempt = 1; ; attempt += 1) {
+		const notices = await commandNotices(session, command);
+		if (!notices.some(message => message.includes(PENDING_SAVE_REFUSAL))) return notices;
+		if (attempt >= 3) {
+			throw new SmokeFailure(
+				`the /budget ${command} command was refused on every attempt because the entry's own save had not settled`,
+				JSON.stringify(notices),
+			);
+		}
+		console.log(`  note  the entry's own save had not settled yet; the command is typed again (attempt ${attempt + 1})`);
+		await Bun.sleep(250);
 	}
 }
 
@@ -1825,7 +1889,10 @@ async function phaseCodexAllowance(cli: PiCli): Promise<void> {
 	await resetSession.run(PROMPT_ONE);
 	const saved = await savedDocument(home.consumptionFile, document => sessionsOf(document).length > 0);
 	const estimateBeforeReset = readFileSync(estimateFile, "utf8");
-	await resetSession.request({ type: "prompt", message: "/budget clear" }, 60_000);
+	// The wait above can be satisfied by a record an earlier run of this phase left in the shared
+	// root, so this entry's own save may still be publishing when the command is typed: the helper
+	// types it again after that one refusal rather than racing the very write it closes.
+	await periodCommand(resetSession, "clear");
 	const resetDocument = await savedDocument(home.consumptionFile, document => document.periodId !== saved.periodId);
 	observe(
 		"the period reset archived the saved consumption and opened a non-holiday period",
@@ -2262,6 +2329,325 @@ async function phaseReadingSemantics(cli: PiCli): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
+// Phase 10: the period reset from the real command entry (P35, P36, P37)
+// ---------------------------------------------------------------------------
+
+/** The one harness other than this extension's own whose saved activity sits in the shared file. */
+const OTHER_HARNESS = "omp";
+/** The provider a run declares when the entry must not be a DeepSeek one. */
+const OTHER_PROVIDER = "probe-provider";
+/** The harness this extension's pi assembly stores its own sessions under. */
+const MODEL_COST_HARNESS = "pi";
+/** The directory inside a storage root every closed period is archived into. */
+const ARCHIVE_DIRECTORY = "archives";
+/** The identities the shared file starts with, so the entry's own session is the one that is not one. */
+const SEEDED_IDS = ["pi-seeded-main", "pi-seeded-child", "omp-main"];
+
+/** The document one root of this phase starts from: both harnesses' saved activity in one period. */
+interface ResetDocument extends ConsumptionDocument {
+	readonly start_bal?: number;
+}
+/** One archive as a reader parses it: the closed document plus the two facts of its own end. */
+interface ArchivedDocument extends ResetDocument {
+	readonly end?: string;
+	readonly end_bal?: number;
+}
+
+/**
+ * The mixed activity file this phase's root holds before anything runs: both harnesses, both
+ * providers and a main session with a child of its own, so "the whole file was archived" is
+ * observable as one document rather than as this harness's share of it.
+ *
+ * The period it states is a holiday one, which is what the other phases' baselines state as well: it
+ * fixes the price of the exchange this phase saves there, so the amounts below are this script's own
+ * arithmetic rather than a function of the wall clock the run happens at.
+ */
+function resetBaseline(periodId: string): string {
+	return JSON.stringify({
+		schemaVersion: 1,
+		periodId,
+		start: "2026-10-01T00:00:00.000Z",
+		start_bal: 42.5,
+		holiday: true,
+		harnesses: {
+			[OTHER_HARNESS]: {
+				sessions: [
+					{
+						id: "omp-main",
+						name: "omp 主会话",
+						parent: null,
+						saveVersion: 7,
+						own: {
+							[PROVIDER]: {
+								[MODEL]: {
+									tokens: { input: 111, cacheRead: 22, cacheWrite: 0, output: 33 },
+									costCny: 0.0001,
+								},
+							},
+						},
+					},
+				],
+			},
+			[MODEL_COST_HARNESS]: {
+				sessions: [
+					{
+						id: "pi-seeded-main",
+						name: "pi 既有主会话",
+						parent: null,
+						saveVersion: 3,
+						own: {
+							[PROVIDER]: {
+								[MODEL]: { tokens: { input: 44, cacheRead: 5, cacheWrite: 0, output: 6 }, costCny: 0.00005 },
+							},
+							"openai-codex": { "gpt-6-luna": { tokens: { input: 9, cacheRead: 0, cacheWrite: 0, output: 4 }, referenceCostUsd: 0.02 } },
+						},
+					},
+					{
+						id: "pi-seeded-child",
+						name: "pi 既有子代理",
+						parent: "pi-seeded-main",
+						saveVersion: 2,
+						own: {
+							"openai-codex": { "gpt-6-luna": { tokens: { input: 3, cacheRead: 0, cacheWrite: 0, output: 1 }, referenceCostUsd: 0.004 } },
+						},
+						runtimeMs: 360_000,
+					},
+				],
+			},
+		},
+	});
+}
+
+/** Every archive file one storage root holds, as the relative paths a reader opens them by. */
+function archivesUnder(storageDirectory: string): string[] {
+	return filesUnder(path.join(storageDirectory, ARCHIVE_DIRECTORY)).sort();
+}
+
+/** One archive of one root, parsed as the plain JSON document it is. */
+function archiveDocument(storageDirectory: string, relative: string): ArchivedDocument {
+	return JSON.parse(readFileSync(path.join(storageDirectory, ARCHIVE_DIRECTORY, relative), "utf8")) as ArchivedDocument;
+}
+
+/** The activity document one root holds, or `undefined` while it holds none. */
+function resetDocumentOf(storageDirectory: string): ResetDocument | undefined {
+	return readDocument(path.join(storageDirectory, CONSUMPTION_FILE)) as ResetDocument | undefined;
+}
+
+/**
+ * The period reset on the real pi CLI: the command entry that refuses or performs it, the whole-file
+ * archive it writes and the period it publishes.
+ *
+ * What this phase drives is the production entrypoint over one shared storage root, so the file the
+ * reset closes is one the extension really wrote through the accounting path: the operator's own
+ * exchange is saved there first, and only then does `/budget clear` close it. The balance the archive
+ * and the new period carry is the local capture endpoint's own answer, the independent estimate
+ * beside the activity is this phase's own document, and the refusal is a second real pi process whose
+ * session runs another provider over the same root.
+ *
+ * Not producible here (recorded, not skipped silently): a busy entry and an entry whose harness
+ * reports no activity state at all. pi dispatches a command to an extension when its own loop is
+ * idle, and a pi extension context always publishes the idle fact, so those two refusals are the
+ * in-process suite's (`pi-period-reset.test.ts`), which drives the same production assembly over a
+ * surface that states each fact.
+ */
+async function phasePeriodReset(cli: PiCli): Promise<void> {
+	console.log("\nphase: /budget clear and the first holiday archive the whole file and open the next period");
+	const before = "period-reset-before";
+	const shared = startDockRun(cli, "reset-shared", { baseline: false });
+	writeFileSync(shared.home.consumptionFile, resetBaseline(before), "utf8");
+	// The independent estimate this reset must not touch: an ordinary document of that kind, written
+	// before the entry starts and compared byte for byte afterwards.
+	const estimateFile = path.join(shared.home.storageDirectory, ESTIMATE_FILE);
+	const estimateBytes = JSON.stringify({
+		baseline: { fiveHour: { usedPercent: 10, capturedAt: "2026-10-14T00:00:00.000Z" }, weekly: { usedPercent: 40, capturedAt: "2026-10-14T00:00:00.000Z" } },
+		ratio: 3.5,
+	});
+	writeFileSync(estimateFile, estimateBytes, "utf8");
+
+	const session = await openSession(shared);
+	// The entry's own display preference, switched to the other form before any period action: what
+	// is under test is that a reset is not a display action and does not move this back.
+	const detail = await commandNotices(session, "detail");
+	observe(
+		"the entry's own display preference is switched before the period actions",
+		detail.some(message => message.includes("详细")),
+		`notices ${JSON.stringify(detail)}`,
+	);
+
+	await session.run(PROMPT_ONE);
+	const seeded = await savedDocument(shared.home.consumptionFile, document => sessionsOf(document).length === SEEDED_IDS.length + 1);
+	const ownRecord = sessionsOf(seeded).find(record => !SEEDED_IDS.includes(record.id));
+	// The file really holds this session's saved consumption before the reset closes it: the buckets
+	// and the amount are the same arithmetic the accounting phase states.
+	observe(
+		"the entry's own exchange is saved into the shared file before the reset",
+		ownRecord !== undefined &&
+			JSON.stringify(ownRecord.own[PROVIDER]?.[MODEL]?.tokens) === JSON.stringify(EXCHANGE_TOKENS) &&
+			sameAmount(ownRecord.own[PROVIDER]?.[MODEL]?.costCny, EXCHANGE_COST_CNY),
+		`record ${JSON.stringify(ownRecord)}, expected buckets ${JSON.stringify(EXCHANGE_TOKENS)} and amount ${EXCHANGE_COST_CNY}`,
+	);
+	// The save this session's own Round started has landed by now, and the entry is idle.
+	await Bun.sleep(250);
+
+	// A second real pi process over the same storage root — what two CLIs sharing one root are — runs
+	// its own exchange, so the file this reset closes holds a record another process committed after
+	// the entry's own baseline was loaded. What the archive must hold is the file's document, not the
+	// view this entry happens to have.
+	const peer = startDockRun(cli, "reset-peer", { baseline: false, home: shared.home });
+	const peerSession = await openSession(peer);
+	await peerSession.run(PROMPT_ONE);
+	const withPeer = await savedDocument(
+		shared.home.consumptionFile,
+		document => sessionsOf(document).length === SEEDED_IDS.length + 2,
+	);
+	const peerRecord = sessionsOf(withPeer).find(record => !SEEDED_IDS.includes(record.id) && record.id !== ownRecord?.id);
+	observe(
+		"a second pi process's own exchange is saved into the same file before the reset",
+		peerRecord !== undefined && sameAmount(peerRecord.own[PROVIDER]?.[MODEL]?.costCny, EXCHANGE_COST_CNY),
+		`record ${JSON.stringify(peerRecord)}, expected amount ${EXCHANGE_COST_CNY}`,
+	);
+
+	const queriesBefore = shared.run.capture.balanceCalls().length;
+	const beforeReset = resetDocumentOf(shared.home.storageDirectory);
+
+	const clear = await periodCommand(session, "clear");
+	const closedNames = archivesUnder(shared.home.storageDirectory);
+	const closed = closedNames.length === 1 ? archiveDocument(shared.home.storageDirectory, closedNames[0] as string) : undefined;
+	const opened = resetDocumentOf(shared.home.storageDirectory);
+	observe(
+		"clear archives the whole file it closes: both harnesses, both providers and every session of them",
+		closed !== undefined &&
+			closed.periodId === before &&
+			closed.start === beforeReset?.start &&
+			closed.holiday === true &&
+			JSON.stringify(closed.harnesses) === JSON.stringify(beforeReset?.harnesses) &&
+			sessionsOf(closed).length === SEEDED_IDS.length + 2 &&
+			Object.keys(closed.harnesses).sort().join(",") === [MODEL_COST_HARNESS, OTHER_HARNESS].sort().join(","),
+		`archive ${JSON.stringify(closed)}, file before the reset ${JSON.stringify(beforeReset)}`,
+	);
+	observe(
+		"the record the other process committed is inside the archive rather than lost to this entry's own view",
+		closed !== undefined &&
+			peerRecord !== undefined &&
+			ownRecord !== undefined &&
+			sessionsOf(closed).some(record => record.id === peerRecord.id) &&
+			sessionsOf(closed).some(record => record.id === ownRecord.id) &&
+			closed.harnesses[MODEL_COST_HARNESS]?.sessions.length === 4,
+		`archive sessions ${JSON.stringify(closed === undefined ? undefined : sessionsOf(closed).map(record => record.id))}`,
+	);
+	// The second process has no part in what follows: its record is inside the archive, and the rest
+	// of this phase runs in one process again.
+	await peerSession.stop();
+	observe(
+		"the new period is ordinary, starts at the instant the archive ended and carries the same balance reading",
+		opened !== undefined &&
+			opened.periodId !== before &&
+			opened.start === closed?.end &&
+			opened.holiday === false &&
+			opened.start_bal === Number(BALANCE_TOTAL) &&
+			closed?.end_bal === Number(BALANCE_TOTAL) &&
+			Object.keys(opened.harnesses).length === 0,
+		`closed ${JSON.stringify(closed?.end)} at ${String(closed?.end_bal)}, opened ${JSON.stringify(opened)}`,
+	);
+	observe(
+		"the reset left the independent estimate document exactly as it was",
+		readFileSync(estimateFile, "utf8") === estimateBytes,
+		`estimate after the reset: ${readFileSync(estimateFile, "utf8")}`,
+	);
+	const balanceCalls = shared.run.capture.balanceCalls();
+	observe(
+		"the boundary balance was one read of the entry's own provider account, made outside any file coordination",
+		balanceCalls.length === queriesBefore + 1 && (balanceCalls[balanceCalls.length - 1]?.url ?? "").endsWith("/user/balance"),
+		`balance calls ${JSON.stringify(balanceCalls.map(call => call.url))}`,
+	);
+	observe(
+		"clear announces the archive it wrote only after the new period is published",
+		clear.some(message => message.includes(`${ARCHIVE_DIRECTORY}/`)) && clear.some(message => message.includes("holiday=false")),
+		`notices ${JSON.stringify(clear)}`,
+	);
+
+	const holiday = await periodCommand(session, "holiday");
+	const holidayNames = archivesUnder(shared.home.storageDirectory);
+	const holidayClosed = holidayNames.length === 2 ? archiveDocument(shared.home.storageDirectory, holidayNames.filter(name => name !== closedNames[0])[0] as string) : undefined;
+	const holidayPeriod = resetDocumentOf(shared.home.storageDirectory);
+	observe(
+		"the first holiday opens a holiday period directly, in the one commit its own archive precedes",
+		holiday.some(message => message.includes("holiday=true")) &&
+			holidayNames.length === 2 &&
+			holidayClosed?.periodId === opened?.periodId &&
+			holidayClosed?.end === holidayPeriod?.start &&
+			holidayPeriod?.holiday === true &&
+			holidayPeriod?.periodId !== opened?.periodId &&
+			Object.keys(holidayPeriod?.harnesses ?? {}).length === 0,
+		`archive ${JSON.stringify(holidayClosed?.periodId)} -> period ${JSON.stringify(holidayPeriod)}`,
+	);
+	observe(
+		"the archive the first clear wrote is the same document it was",
+		closedNames[0] !== undefined && archiveDocument(shared.home.storageDirectory, closedNames[0]).periodId === before,
+		`archives ${JSON.stringify(holidayNames)}`,
+	);
+
+	const alreadyHoliday = await commandNotices(session, "holiday");
+	const afterIdempotent = resetDocumentOf(shared.home.storageDirectory);
+	observe(
+		"a holiday asked of a period that already is one archives nothing, switches nothing and queries nothing",
+		alreadyHoliday.length === 1 &&
+			archivesUnder(shared.home.storageDirectory).length === 2 &&
+			JSON.stringify(afterIdempotent) === JSON.stringify(holidayPeriod) &&
+			shared.run.capture.balanceCalls().length === queriesBefore + 2,
+		`notices ${JSON.stringify(alreadyHoliday)}, archives ${JSON.stringify(archivesUnder(shared.home.storageDirectory))}, balance calls ${shared.run.capture.balanceCalls().length}`,
+	);
+
+	const detailAgain = await commandNotices(session, "detail");
+	observe(
+		"the entry's own display preference does not move with the period: it was still the detail form the operator set",
+		detailAgain.some(message => message.includes("简略")),
+		`notices ${JSON.stringify(detailAgain)}`,
+	);
+
+	// The next exchange belongs to the period this switch opened: the closed period's consumption is
+	// not carried into it, and nothing of it came back from the archive.
+	await session.run(PROMPT_TWO);
+	const carried = await savedDocument(shared.home.consumptionFile, document => sessionsOf(document).length === 1);
+	const carriedRecord = sessionsOf(carried)[0];
+	observe(
+		"the new period holds only its own consumption, from the session's own first version",
+		carriedRecord?.id === ownRecord?.id &&
+			carriedRecord?.saveVersion === 1 &&
+			JSON.stringify(carriedRecord?.own[PROVIDER]?.[MODEL]?.tokens) === JSON.stringify(EXCHANGE_TOKENS) &&
+			sameAmount(carriedRecord?.own[PROVIDER]?.[MODEL]?.costCny, EXCHANGE_COST_CNY) &&
+			carried.harnesses[OTHER_HARNESS] === undefined,
+		`document ${JSON.stringify(carried)}`,
+	);
+
+	// A real entry whose own provider is not DeepSeek: the action is refused before anything is read,
+	// archived or written, and the shared root is the same file the entry above just published.
+	const other = startDockRun(cli, "reset-refused", {
+		baseline: false,
+		home: shared.home,
+		provider: OTHER_PROVIDER,
+		model: MODEL,
+	});
+	const otherSession = await openSession(other);
+	const bytesBeforeRefusal = readFileSync(shared.home.consumptionFile, "utf8");
+	const queriesBeforeRefusal = other.run.capture.balanceCalls().length;
+	const refused = await commandNotices(otherSession, "clear");
+	observe(
+		"a period action on an entry running another provider is refused at once and writes nothing",
+		refused.length === 1 &&
+			refused[0]?.includes("DeepSeek") === true &&
+			readFileSync(shared.home.consumptionFile, "utf8") === bytesBeforeRefusal &&
+			archivesUnder(shared.home.storageDirectory).length === 2,
+		`notices ${JSON.stringify(refused)}, archives ${JSON.stringify(archivesUnder(shared.home.storageDirectory))}`,
+	);
+	observe(
+		"the refused action asked the provider nothing: an entry that is not a DeepSeek one never reaches the account",
+		other.run.capture.balanceCalls().length === queriesBeforeRefusal,
+		`balance calls ${other.run.capture.balanceCalls().length - queriesBeforeRefusal}`,
+	);
+}
+
+// ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
 
@@ -2332,6 +2718,7 @@ try {
 	await phaseRoundContinuations(cli);
 	await phaseRequestAnchor(cli);
 	await phaseReadingSemantics(cli);
+	await phasePeriodReset(cli);
 } catch (error) {
 	failure = error;
 	for (const session of sessions) {
@@ -2359,7 +2746,8 @@ console.log(`  ${observations.length} consumer-visible check(s) across ${runs.le
 console.log("  limitations: the TUI's readability stays human-led (this observes the setWidget frames the frontend published);");
 console.log("               the balance cases drive the shipped success TTL through the host's own clock (a configured 1ms TTL), not a controlled one;");
 console.log("               the season boundary's timed redraw and the subagent execution duration are not exercised here;");
-console.log("               the balance and Codex account answers are this script's own documents, never a real account");
+console.log("               the balance and Codex account answers are this script's own documents, never a real account;");
+console.log("               the busy and unreported-activity period refusals are the in-process suite's (see the phase header)");
 console.log(`  rerun: bun scripts/pi-model-cost-smoke.ts${options.pi === undefined ? "" : ` --pi ${options.pi}`}`);
 
 if (failure !== undefined) throw failure;
