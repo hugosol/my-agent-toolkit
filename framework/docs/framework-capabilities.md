@@ -775,6 +775,72 @@ and its lock recovered, every process that races to recover one dead lock commit
 update, the process that recovered a dead lock being a live holder no peer takes it from, independent
 processes that lose no update, and readers that only ever see whole documents.
 
+## Local access (adapter-facing)
+
+The framework's general local-access module ([`modules/local-access.ts`](../modules/local-access.ts))
+is the one way a process offers the *declared values* of an owner it serves to a session this harness
+runs in another process: the serving process publishes where its access is, and a reading process in
+another process reaches it over a name the platform already provides — a Windows named pipe
+(`\\.\pipe\my-agent-toolkit-access-<id>`) or a POSIX socket file. It is **not** an extension entry and
+not part of `public.ts`: an extension never touches it. The harness adapter builds the serving half and
+hands it to the State store ([`state.ts`](../core/state.ts), `StateRules.localAccess`), and the reading
+half is used by whatever reads an owner's value from outside its process. A harness whose sessions are
+all bindings in one process supplies none: reads there are the store's own cells, with no endpoint, no
+record and no configuration read.
+
+**What one access is.** A *seat* is one extension's access to one owner (`{ extension, owner }`) — an
+owner key alone is not unique across extensions, because two extensions of one process serve the same
+session's owner. The serving process offers a seat's current declared values, pushes that seat's
+changes one way, and answers a declared read on demand. Nothing else crosses: there is no write frame,
+no method name and no argument list, so this is not an RPC surface, and a frame that is not the declared
+`hello` or `read` is refused rather than interpreted.
+
+**The location is separate from the messages.** One JSON record per seat lives under the configured
+runtime directory, named from the seat itself, holding the seat, the endpoint, that access's own
+verification and the publishing process's id — no value, no State, no business data. Process id and
+endpoint are recorded as information and are never read as proof that an owner lives. A record that
+cannot be read, states no readable endpoint or verification, or names another seat than the file it is
+filed under, is read as no record at all.
+
+**Both ends are checked before anything crosses.** The reading process states the seat it wants with
+the verification it read from the record; the serving process answers only when that seat is one it
+serves right now and the verification is the one it published, and the reading process checks the seat
+the answer names in turn. The endpoint's id is random per serving process, so it is never guessed and
+never reused by a later process. A refusal closes the connection with no values, which is what keeps a
+stale record, an old endpoint or another seat's record from reaching this seat's values.
+
+**Configuration.** The runtime directory is the shared configuration file's `runtimeDir`
+([`config.yaml`](../config.yaml)), and a relative value is resolved against that file's own directory,
+so two processes that read the same file agree on it whatever their working directories are. No file, no
+`runtimeDir`, an empty or non-string value, and an unreadable or non-mapping file all fail as a
+`LocalAccessConfigurationError` naming the file resolution reached
+([`resolveRuntimeDirectory`](../modules/local-access.ts)): nothing is substituted — no temporary
+directory, no working directory, no extension storage root — and the failure is not a shape a retry
+repairs. A publisher reports that failure once on its own channel and simply offers nothing.
+
+**Outcomes and release.** Everything but a reached access is a `LocalAccessUnavailableError` with one
+reason: `no-location`, `endpoint-absent`, `refused` or `closed`. None of them is evidence about an
+owner's life, and none of them is another. Withdrawing a seat removes its record, stops its
+observations and releases the connections admitted for it; the endpoint closes once no seat is left, and
+`dispose` withdraws every seat and closes the endpoint, removing a POSIX socket file. A caller reports
+`ended()` as soon as its access is released, rather than at its next request. A caller that outlived its
+access is released rather than left listening for a value that will not come.
+
+**What it does not claim.** The endpoint is reachable by any process of this machine that can name it,
+and on Windows the platform exposes no authorization knob to `node:net` to change that. The verification
+separates *which* access a caller reached; it is not an operating-system access control, a cross-user
+boundary or POSIX authentication. On POSIX the record is written `0o600` and the runtime directory is
+created `0o700`, which is the only isolation either file system is asked for here.
+
+**The seam.** The carrier itself is not doubled: [`tests/framework/local-access.test.ts`](../../tests/framework/local-access.test.ts)
+starts real child processes over a real named pipe or socket file, reads the record the serving process
+published, and observes what crossed — a change arriving and a declared read answered; another
+verification, another seat, an old endpoint and an unreadable record all refused without a value; a
+released seat's reader released with it and another seat's reader untouched; a disposed access whose
+endpoint is gone; the same-process read that opens nothing; and the pi assembly that offers an owner
+only for a `follow` field in a host that spawns sessions. The configuration cases drive the real read of
+a real file, with the file's own text as the input.
+
 ## Binding outcome and failure report
 
 The factory returns a `BindingResult` ([`protocol.ts#L665`](../core/protocol.ts#L665)):
