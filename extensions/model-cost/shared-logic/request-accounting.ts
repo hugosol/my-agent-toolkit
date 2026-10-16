@@ -1127,7 +1127,7 @@ export function createRequestAccounting(inputs: RequestAccountingInputs): Reques
 				if (fault !== undefined) {
 					delivery.feedback.notify(
 						"error",
-						`子代理运行耗时采集失败（${fault}）；本次活动的耗时未记录，已保留此前有效值，并标记本周期该 Session 的耗时观测存在缺口。`,
+						`子代理运行耗时采集失败（${fault.fault}）；本次活动的耗时未记录，已保留此前有效值，并标记本周期该 Session 的耗时观测存在缺口。`,
 					);
 				}
 				announce();
