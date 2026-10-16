@@ -1,0 +1,51 @@
+$ bun test
+bun test v1.4.2 (744846f84)
+piSurfaceProbe: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions 'pi-surface-probe' is not an importable file: ENOENT: no such file or directory, lstat 'C:\Users\hugos\AppData\Local\Temp\pi-background-rounds-absent-entry.ts'
+piSurfaceProbe: pi-surface-probe: a model response settled with no Turn in flight for its session; no start is fabricated and it is dropped
+piSurfaceProbe: pi-surface-probe: a model response settled with no Turn in flight for its session; no start is fabricated and it is dropped
+piSurfaceProbe: pi-surface-probe: a model response settled with no Turn in flight for its session; no start is fabricated and it is dropped
+piSurfaceProbe: pi-surface-probe: a model response settled with no Turn in flight for its session; no start is fabricated and it is dropped
+piSurfaceProbe: pi-surface-probe: a model response settled with no Turn in flight for its session; no start is fabricated and it is dropped
+piSurfaceProbe: pi-surface-probe: a model response settled with no Turn in flight for its session; no start is fabricated and it is dropped
+piSurfaceProbe: this session reports no identity; the extension stays off for it
+piSurfaceProbe: this session reports no identity; the extension stays off for it
+piSurfaceProbe: this session reports no identity; the extension stays off for it
+codebase-tools: no owning main session resolved for this session; the extension stays off
+codebase-tools: no owning main session resolved for this session; the extension stays off
+codebase-tools: no owning main session resolved for this session; the extension stays off
+codebase-tools: no owning main session resolved for this session; the extension stays off
+codebase-tools: no owning main session resolved for this session; the extension stays off
+
+tests\harness-dock\model-cost-session-span.test.ts:
+300 | 			expect(span.end).toBeLessThanOrEqual(Date.now());
+301 | 			// The Turn it is measured to is this run's own response: its settle is a real instant of the
+302 | 			// run, and the save that carried the pair is the Round end's commit, which is also the only
+303 | 			// commit this run made — no time-only file, no extra write.
+304 | 			expect(record.saveVersion).toBe(1);
+305 | 			expect(readdirSync(run.storageDirectory).sort()).toEqual([`${CONSUMPTION_FILE}.lock`, CONSUMPTION_FILE].sort());
+                                                          ^
+error: expect(received).toEqual(expected)
+
+@@ -2,3 +2,2 @@
+    "consumption.json",
+-   "consumption.json.lock",
+  ]
+
+- Expected  - 1
++ Received  + 0
+
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-tUXuwG\tests\harness-dock\model-cost-session-span.test.ts:305:53)
+(fail) a real submission establishes and advances the main session's span (P1, P2, P8, P14) > one submission yields a saved span whose start is the submission, and the real widget draws it [3612.59ms]
+modelCost: this harness reports no idle fact (isIdle); the framework answers nothing rather than inventing one
+modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions are already registered for session 'pi-terminal-main'; dispose them first.
+modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions are already registered for session 'pi-terminal-main'; dispose them first.
+modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions are already registered for session 'pi-terminal-main'; dispose them first.
+modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions are already registered for session 'pi-terminal-main'; dispose them first.
+modelCost: model-cost: a model response settled with no Turn in flight for its session; no start is fabricated and it is dropped
+
+ 1147 pass
+ 1 fail
+ 6474 expect() calls
+Ran 1148 tests across 120 files. [386.05s]
+error: script "test" exited with code 1
+EXIT=1

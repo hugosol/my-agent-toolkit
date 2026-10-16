@@ -99,3 +99,33 @@ OMP 基线工件与版本未被本票触碰，也未在本票运行。
 
 `scripts/pi-model-cost-smoke.ts` Phase 6 的等待条件可被共享根里更早 run 的记录满足，从而在 entry 自身保存未收口时敲入 `/budget clear`（第 1 轮真实复现）。
 已按上面的 `periodCommand` 有界重敲修好；本票与 Phase 10 共用同一帮助函数。除此之外脚本其它 phase 未改行为（本轮 97 项全通过）。
+
+## 集成同步与合并后全仓回归（本轮由集成 helper 执行）
+
+**同步**：宿主把本票分支合进 `pi-adapter`（集成提交 `5581010f5fd5f91276897e766224b7815c44fbf0`）后把该提交合回本票分支，故本分支 HEAD 即 `5581010`（父提交 `5aeefe2` ＝合并前的集成 tip、`94651a9` ＝本票实现提交），与 `pi-adapter` tip 同一提交。**无冲突可解**：本 worktree 的 gitdir 内没有 `MERGE_HEAD`/rebase/cherry-pick 状态，`git ls-files -u` 空（0 条未合并路径），`git status --porcelain` 空。**合入内容逐项核对**：`git diff --stat 5aeefe2 HEAD` 正好是本票 7 个文件（`framework/adapters/pi.ts`、`scripts/pi-model-cost-smoke.ts`、`tests/model-cost/pi-period-reset.test.ts`，加本票证据、两份日志与票据文件）；`git diff 94651a9 HEAD -- framework/adapters/pi.ts scripts/pi-model-cost-smoke.ts tests/model-cost/pi-period-reset.test.ts` 为空，即合并没有改写本票交付面。
+
+**按检出原样运行**（本 worktree 的工具 shell＝Git Bash；日志 `logs/15-period-reset-integration.log`）：`bun run test` → **1101 pass / 18 fail**（1119 tests / 120 files / 5879 expect() calls / 243.47s / exit 1）。18 例全为本机环境前置项，且都落在本票合入**未触碰**的文件上（`tests/harness-dock/**`、`tests/connect-bot/**`、`framework/modules/files.ts` 均不在上面 7 个文件内），与 [01](01-efficiency-baseline.md)/[04](04-shared-storage.md)/[07](07-owner-state.md) 各集成轮记录的类别一致：
+
+| 类 | 例数 | 文件 | 事实 |
+| --- | --- | --- | --- |
+| 缺真实面板二进制 | 5 | `budget-regression`、`harness-exit-budget`、`panel-registration-lifecycle` ×3 | 本 worktree 位于 `%TEMP%`，`tests/connect-bot/support/omp-bot.ts` 的默认同级路径 `…\omp-bot\backend\target\release\omp-bot.exe` 不存在（抛点在 `startOmpBot`） |
+| CRLF 使补丁物化失败 | 10 | `codex-response-artifact`、`combined-host-artifact`、`detail-tree`、`model-cost-codex-quota`、`model-cost-modes`、`model-cost-persistence`、`viewed-marker`、`viewed-session-host`、`viewed-session-total`、`viewed-session` | `host-patches/omp-18.5.0-{viewed-session,codex-response-boundary}/patch.diff touches no file`（`tests/harness-dock/host-patch-artifact.ts` 的 `patchTouchedFiles` 按 LF 切行） |
+| 锁文件 sha 按 LF 录制 | 2 | `baseline.test.ts`、`session-driver.test.ts` | 记录值 `a5d37ab2…` 逐字节等于 `HEAD:bun.lock` 的已提交 LF blob；工作区是同一内容的 CRLF 检出（`e7ed487b…`） |
+| 真实宿主保存期限 | 1 | `session-recovery.test.ts`（`navigating the session's own tree does not roll back its consumption`） | 满仓并行负载下 20s 保存期限内没等到该次保存（21.97s 后超时）；同类在 [01](01-efficiency-baseline.md) 的集成轮也出现过，单独重跑即绿 |
+
+**归一后的全仓回归**（三处工作区文件还原为已提交 LF blob 字节——`bun.lock` `a5d37ab2…`、`viewed-session` `66195465…`、`codex-response-boundary` `4ec9ad0d…`，三份 `tr -d '\r' | sha256sum` 与 `git cat-file blob HEAD:<path>` 逐一相等；并设 `OMP_BOT_BINARY=E:/Developer/myhub/omp-bot/backend/target/release/omp-bot.exe`）：
+
+| 运行 | 结果 |
+| --- | --- |
+| 第 1 次（`logs/15-period-reset-integration-normalized.log`） | 1147 pass / 1 fail（1148 tests / 120 files / 6474 expect() calls / 386.05s / exit 1） |
+| 第 2 次（`logs/15-period-reset-integration-normalized-run2.log`） | **1148 pass / 0 fail**（6475 expect() calls / 366.75s / **exit 0**） |
+
+- 第 1 次唯一失败是 `tests/harness-dock/model-cost-session-span.test.ts:305` 的 `expect(readdirSync(run.storageDirectory).sort()).toEqual(["consumption.json", "consumption.json.lock"])`：收尾时该目录只剩 `consumption.json`，锁目录不在场。`framework/modules/files.ts` 的 `releaseLock` 先按持有者名 unlink 条目再 `rmdir` 锁目录；平台当场拒绝（`EPERM`/`EBUSY` 重试 6×25ms 后 `rmdir` 遇 `ENOTEMPTY`）时目录以 leftover 留下，顺利删除时不留——该断言的结果取决于收尾瞬间平台是否已释放句柄，属本机真实宿主时序，与本票改动无关。单独重跑该文件：`OMP_BOT_BINARY=… bun test tests/harness-dock/model-cost-session-span.test.ts` → **3 pass / 0 fail**（31 expect() calls / 13.38s），第 2 次全仓运行也绿。
+- 归一比原样多出的 29 例（1119 → 1148 tests）正是那 10 个 dock 文件在文件级失败后未注册的用例。
+- `bun run typecheck` → exit 0（无诊断；`logs/15-period-reset-integration-typecheck.log`）。
+
+**本轮修复：无源码修复。** 18 例全属本机检出/布局前置项，1 例为真实宿主时序；无一条由本票合入引入——本票只改 `framework/adapters/pi.ts`、`scripts/pi-model-cost-smoke.ts`、`tests/model-cost/pi-period-reset.test.ts`，其中 pi adapter 的进程内消费者（`tests/model-cost` 全分区与 dock 的 5 个 pi fixture：`pi-round-facts`、`pi-session-facts`、`pi-terminal-rounds`、`pi-background-rounds`、`pi-codex-quota`）两次运行全绿。归一后零失败说明没有失败被上述环境例掩盖，故不改仓库内容（`.gitattributes` 或行尾鲁棒解析属装配/宿主验证票，见 [04](04-shared-storage.md) §8）。本轮提交只有这份记录、票据更新与本轮日志。
+
+**运行后状态**：三处文件按字节恢复原 CRLF 检出状态（sha256 与运行前逐一相同：`bun.lock` `e7ed487b…`、`viewed-session` `057e01f6…`、`codex-response-boundary` `294b3727…`），`git status` 只余本轮的票据/证据改动；未操作集成工作区（`E:/Developer/myhub/my-agent-toolkit`）、未切换分支、未新建 worktree、未 reset、未调用 retro，也未自行合入集成分支。
+
+**未因全仓绿而改变的限制**：上面「未覆盖与限制（不声称通过）」各条原样成立——真实 pi 上不可生产的「活动未知/忙碌」只由进程内套件覆盖、边界余额读的是本机 capture endpoint（非真实账户）、POSIX 分支的发布失败注入未运行；实机 smoke、跨票据整体验收与 P51/P52/P53 仍属最终独立门禁。

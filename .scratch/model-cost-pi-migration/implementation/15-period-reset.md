@@ -6,7 +6,7 @@
 
 **Blocked by:** [04：共同存储并发提交与只读同步](04-shared-storage.md)、[10：两端终止、晚到与恢复边界](10-terminal-rounds.md)、[13：DeepSeek 余额认证与刷新闭环](13-deepseek-balance.md)
 
-**Status:** implemented — 本票可执行实现与全部分配检查（套件、分区、真实 pi 宿主）已通过；合并入集成分支及合并后回归由集成负责，未合并前不置 closed。证据：`../evidence/15-period-reset.md`。
+**Status:** in-progress — 实现已随集成提交 `5581010f5fd5f91276897e766224b7815c44fbf0` 合入 `pi-adapter`；本轮集成验收在该提交上完成（`bun run typecheck` exit 0、归一检出 + `OMP_BOT_BINARY` 下全仓 `bun run test` 1148 pass / 0 fail），本轮无源码修复，本记录提交尚未合入 `pi-adapter`。真实宿主未覆盖项见 [evidence/15-period-reset.md](../evidence/15-period-reset.md) 的「未覆盖与限制」，仍原样成立。
 
 ## Acceptance criteria
 
@@ -28,3 +28,11 @@
 - 本票新增资源必须随功能实现订阅/登记/通信/恢复/等待的释放及失效保护，不能留给后续装配票。共同公共路径变更同步迁移受影响消费者、说明和旧生产路径；不保留兼容别名、重复算法或接线 shim。
 - 验证按仓库 testing 约定：迭代用受影响检查，票完成用所属分区及共同契约消费者，TypeScript 变更执行 `bun run typecheck`；另实际运行本票用户行为。昂贵/真实宿主检查串行且运行期间保持来源不变。文档/基线票运行相应链接、例子或采样入口，不机械跑无关全仓测试。
 - 完成全部可执行实现、自动及真实宿主检查后才进行最终人类验收；仅 P51/P52/P53 的指定判断由人类确认。凭据、许可、平台或人工确认缺失明确记录，不能标成通过，也不暂停其他可执行工作。不擅自正式安装、切换、清理用户数据或付费调用。
+
+## Comments
+
+- **集成同步（本轮由集成 helper 执行；本票实现提交 `94651a9`，结果 HEAD `5581010`）**：宿主把本票分支合进 `pi-adapter` 后把该集成提交（`5581010f5fd5f91276897e766224b7815c44fbf0`）合回本分支，故本分支 HEAD 即该集成提交，其父为 `5aeefe2`（前一集成 tip）与 `94651a9`（本票实现提交），与 `pi-adapter` tip 同一提交。**无冲突可解**：本 worktree 的 gitdir 内无 `MERGE_HEAD`/rebase/cherry-pick 状态，`git ls-files -u` 空，`git status --porcelain` 空；`git diff --stat 5aeefe2 HEAD` 正好是本票 7 个文件，且 `git diff 94651a9 HEAD` 对本票三个生产/测试文件为空（合并没有改写交付面）。未操作集成工作区、未切换分支、未新建 worktree、未 reset、未调用 retro，也未自行合入集成分支。
+- **本轮集成验收（HEAD `5581010`）**：`bun run typecheck` → exit 0。`bun run test` 按检出原样 → **1101 pass / 18 fail**（1119 tests / 120 files / 243.47s / exit 1），18 例全为本机环境前置项（5 例缺 `omp-bot.exe` 的默认同级路径、10 例 CRLF 检出使 `patch.diff` 物化失败、2 例锁文件 sha 按 LF blob 录制、1 例真实宿主保存期限），无一落在本票合入的文件上。归一检出（`bun.lock` 与两份 `patch.diff` 还原为已提交 LF 字节，`tr -d '\r' | sha256sum` 与 `git cat-file blob HEAD:<path>` 逐一相等）+ `OMP_BOT_BINARY=E:/Developer/myhub/omp-bot/backend/target/release/omp-bot.exe` 下 `bun run test` → 第 1 次 **1147 pass / 1 fail**（唯一失败是 `tests/harness-dock/model-cost-session-span.test.ts` 的锁目录 leftover 断言，该文件单独重跑 3 pass / 0 fail）、第 2 次 **1148 pass / 0 fail**（6475 expect() calls / 366.75s / exit 0）；`tests/model-cost`、`tests/framework`、`tests/harness-dock`、`tests/connect-bot`、`tests/codebase-tools` 两次运行全绿。
+- **本轮修复：无源码修复。** 无一条失败由本票合入引入（本票只改了 `framework/adapters/pi.ts`、`scripts/pi-model-cost-smoke.ts`、`tests/model-cost/pi-period-reset.test.ts`，其进程内消费者 `tests/model-cost` 与 dock 的 5 个 pi fixture 两次运行全绿）；归一后零失败说明没有失败被上述环境例掩盖，故不改仓库内容（`.gitattributes` 或按行尾鲁棒的解析属装配/宿主验证票）。运行后三处文件按字节恢复 CRLF 检出状态，工作树只余本记录与证据/日志改动。
+- **未验证／限制**：本票 evidence 的「未覆盖与限制（不声称通过）」原样成立——真实 pi 上不可生产的「活动未知/忙碌」只由进程内套件覆盖、边界余额读的是本机 capture endpoint（非真实账户）、POSIX 的发布失败分支未运行；实机 smoke、跨票据整体验收与 P51/P52/P53 人类验收属最终独立门禁，本轮未执行。
+- 详细命令、日志路径与逐条失败归因见 [evidence/15-period-reset.md](../evidence/15-period-reset.md) 的「集成同步与合并后全仓回归」。
