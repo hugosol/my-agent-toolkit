@@ -1052,6 +1052,17 @@ export type AmountField = "cost" | "ref";
  * room it gets.
  */
 export interface DisplayColumn {
+	/**
+	 * Which statistic this column is, told apart from the wording the row's own channel draws it with.
+	 *
+	 * Two rows of one depth group compare the same statistics, and a channel words them for itself: a
+	 * monetary row prices in CNY over three buckets and an allowance row in USD over four, so their
+	 * ratio labels differ while the column they belong in is one and the same. A frontend aligns rows
+	 * of a group by this field rather than by the label it draws, so each row's own ratio and amount
+	 * land in the group's one column for that statistic instead of opening a column of their own —
+	 * the label is drawn from the row, the column is shared by the group.
+	 */
+	readonly field: string;
 	readonly label: string;
 	readonly value: string;
 }
@@ -1089,16 +1100,18 @@ function ratioColumnLabel(currency: string, buckets: readonly string[]): string 
 function structureColumns(fields: ConsumptionFields, ratioField?: RatioField): DisplayColumn[] {
 	const columns: DisplayColumn[] = [];
 	if (fields.cacheShare !== false) {
-		columns.push({ label: "Cache: ", value: fields.sum === 0 ? "-" : `${fields.cacheHitRate ?? 0}%` });
+		columns.push({ field: "cache", label: "Cache: ", value: fields.sum === 0 ? "-" : `${fields.cacheHitRate ?? 0}%` });
 	}
 	if (fields.referenceRatio !== undefined) {
 		const ratio = fields.referenceRatio;
 		columns.push({
+			field: "ratio",
 			label: ratioColumnLabel(ratio.currency, ratio.parts.map(part => part.bucket)),
 			value: ratio.parts.map(part => part.percent).join(":"),
 		});
 	} else if (ratioField !== undefined) {
 		columns.push({
+			field: "ratio",
 			label: ratioColumnLabel(ratioField.currency, ratioField.buckets),
 			value: ratioField.buckets.map(() => "--").join(":"),
 		});
@@ -1112,12 +1125,20 @@ function structureColumns(fields: ConsumptionFields, ratioField?: RatioField): D
  * rather than silently dropping them.
  */
 function amountColumns(fields: ConsumptionFields, shown: readonly AmountField[] = []): DisplayColumn[] {
-	const columns: DisplayColumn[] = [];
-	if (fields.costCny !== undefined) columns.push({ label: "Cost: ", value: formatCny(fields.costCny) });
-	else if (shown.includes("cost")) columns.push({ label: "Cost: ", value: "-" });
-	if (fields.referenceCostUsd !== undefined) columns.push({ label: "Ref: ", value: formatUsd(fields.referenceCostUsd) });
-	else if (shown.includes("ref")) columns.push({ label: "Ref: ", value: "-" });
-	return columns;
+	const amounts: Array<{ readonly label: string; readonly value: string }> = [];
+	if (fields.costCny !== undefined) amounts.push({ label: "Cost: ", value: formatCny(fields.costCny) });
+	else if (shown.includes("cost")) amounts.push({ label: "Cost: ", value: "-" });
+	if (fields.referenceCostUsd !== undefined) amounts.push({ label: "Ref: ", value: formatUsd(fields.referenceCostUsd) });
+	else if (shown.includes("ref")) amounts.push({ label: "Ref: ", value: "-" });
+	// The amounts are the row's own money columns, and the label each draws with is its own channel's:
+	// a monetary row's Cost and an allowance row's Ref are the one amount a row of that kind states, so
+	// they share the group's amount column rather than opening one each. Only a row that really carries
+	// both currencies — a scope that consumed a monetary and an allowance pair — writes a second amount,
+	// in a column of its own.
+	return amounts.map((amount, index) => ({
+		field: index === 0 ? "amount" : `amount-${index + 1}`,
+		...amount,
+	}));
 }
 
 /**
@@ -1145,7 +1166,7 @@ export function formatSpan(elapsedMs: number): string {
  * always a column, so the field keeps its place whether or not a reading exists.
  */
 function spanColumn(display: ConsumptionDisplay): DisplayColumn {
-	return { label: "Span: ", value: display.span === undefined ? "\u2014" : formatSpan(display.span.elapsedMs) };
+	return { field: "span", label: "Span: ", value: display.span === undefined ? "\u2014" : formatSpan(display.span.elapsedMs) };
 }
 
 /**

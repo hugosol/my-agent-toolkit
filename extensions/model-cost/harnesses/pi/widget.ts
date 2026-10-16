@@ -688,9 +688,11 @@ function treeLines(rows: readonly AgentTreeRow[], width: number | undefined): re
 		}
 		if (row.fields !== undefined) {
 			// The scope's own columns, as the display states them: a channel's cache rate and ratio and the
-			// amounts it carries, dashes included, with nothing re-decided on the way into the group.
+			// amounts it carries, dashes included, with nothing re-decided on the way into the group. The
+			// cell is keyed by the statistic the column *is* rather than by the wording this row draws it
+			// with, so two rows of one group put one statistic in one column of it.
 			for (const column of fieldsColumns(row.fields)) {
-				cells.push({ field: column.label, label: column.label, value: column.value, abbreviated: false });
+				cells.push({ field: column.field, label: column.label, value: column.value, abbreviated: false });
 			}
 		}
 		if (row.context !== undefined) {

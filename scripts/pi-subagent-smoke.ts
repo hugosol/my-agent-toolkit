@@ -6,6 +6,9 @@
  *   bun scripts/pi-subagent-smoke.ts                    # resolve the installed pi CLI
  *   bun scripts/pi-subagent-smoke.ts --pi <path>        # or PI_CLI=<path>
  *   bun scripts/pi-subagent-smoke.ts --keep             # keep every run root for inspection
+ *   bun scripts/pi-subagent-smoke.ts --foreground-only  # multi-extension child-loading regression
+ *   bun scripts/pi-subagent-smoke.ts --background-only  # detached child observation
+ *   bun scripts/pi-subagent-smoke.ts --expect-pi-version 1.3.0 # explicit candidate host observation
  *
  * What it drives: the real installed pi as a child process in RPC mode, with an isolated agent state,
  * session directory, working directory and user home under the OS temp root, and a local
@@ -155,7 +158,7 @@ function writeChildEntry(root: string, options: { readonly present: boolean }): 
 	if (!options.present) return file;
 	const harness = path.join(REPO_ROOT, "extensions", "model-cost", "harnesses", "pi.ts");
 	const relative = path.relative(directory, harness).replace(/\\/g, "/");
-	const specifier = relative.startsWith(".") ? relative : `./${relative}`;
+	const specifier = path.isAbsolute(relative) || relative.startsWith(".") ? relative : `./${relative}`;
 	writeFileSync(
 		file,
 		`import { modelCostPiHarness } from ${JSON.stringify(specifier)};\n\nexport default modelCostPiHarness(${JSON.stringify(root)});\n`,
@@ -510,11 +513,12 @@ async function phaseRefusedEntry(cli: PiCli): Promise<void> {
  * the parent's own instance does across the child's end and this run's own quit.
  */
 async function phaseForegroundDelegation(cli: PiCli): Promise<void> {
-	console.log("\nphase: a real delegation in the foreground");
+	console.log("\nphase: a real delegation with codebase-tools and model-cost in the foreground");
 	const dock = startDockRun(cli, "foreground", {
 		respond: delegationOnce({ async: false }),
 	});
-	const session = await openSession(dock, [dock.childEntry, PROVIDER_ENTRY, FACTS_PROBE]);
+	const codebaseEntry = path.join(REPO_ROOT, "entrypoints", "pi", "codebase-tools.ts");
+	const session = await openSession(dock, [codebaseEntry, dock.childEntry, PROVIDER_ENTRY, FACTS_PROBE]);
 	const balanceBefore = dock.run.capture.balanceCalls().length;
 	let settled = true;
 	try {
@@ -530,10 +534,11 @@ async function phaseForegroundDelegation(cli: PiCli): Promise<void> {
 	const launches = launchMetadata(path.join(dock.run.root.sessionDir, "subagent-artifacts"));
 	const launch = launches[0];
 	observe(
-		"the provider's own launch evidence names this extension as a loaded child extension",
+		"the provider's own launch evidence names both framework extensions as loaded child extensions",
 		launch !== undefined &&
 			(launch.metadata.launchResolvedExtensions?.required ?? []).includes("model-cost") &&
-			(launch.metadata.launchResolvedExtensions?.effective ?? []).length >= 2,
+			(launch.metadata.launchResolvedExtensions?.required ?? []).includes("codebase-tools") &&
+			(launch.metadata.launchResolvedExtensions?.effective ?? []).length >= 3,
 		`launch: ${JSON.stringify(launch?.metadata.launchResolvedExtensions)}`,
 	);
 	observe(
@@ -601,6 +606,21 @@ async function phaseForegroundDelegation(cli: PiCli): Promise<void> {
 		`drawings mentioning the child session: ${JSON.stringify(childDrawings.slice(0, 2))}`,
 	);
 
+	// Observe the operator's actual detail widget, not just a successful provider registration.
+	const detailMark = session.frameMark();
+	await session.run("/budget detail");
+	const detailFrame = await session.frameSince(
+		detailMark,
+		frame => frame.type === "extension_ui_request" && frame.method === "setWidget" &&
+			frame.widgetKey === MODEL_COST_WIDGET_KEY &&
+			Array.isArray(frame.widgetLines) &&
+			frame.widgetLines.some(line => String(line).includes(childRecord?.name ?? childRecord?.id ?? "<missing>")),
+		"the detail widget containing the real child session",
+		5_000,
+	);
+	observe("budget detail draws the real child session after a multi-extension delegation", detailFrame !== undefined,
+		JSON.stringify(detailFrame?.widgetLines));
+
 	// The child's session ended inside this process. The parent's own instance is not the child's to
 	// end: the next exchange is accounted and saved into the same document.
 	const inputAfterDelegation = parentRecord?.own?.[PROVIDER]?.[MODEL]?.tokens?.input ?? 0;
@@ -642,7 +662,8 @@ async function phaseBackgroundDelegation(cli: PiCli): Promise<void> {
 	const dock = startDockRun(cli, "background", {
 		respond: delegationOnce({ async: true }),
 	});
-	const session = await openSession(dock, [dock.childEntry, PROVIDER_ENTRY, FACTS_PROBE]);
+	const codebaseEntry = path.join(REPO_ROOT, "entrypoints", "pi", "codebase-tools.ts");
+	const session = await openSession(dock, [codebaseEntry, dock.childEntry, PROVIDER_ENTRY, FACTS_PROBE]);
 	const balanceBefore = dock.run.capture.balanceCalls().length;
 	let settled = true;
 	try {
@@ -659,10 +680,8 @@ async function phaseBackgroundDelegation(cli: PiCli): Promise<void> {
 	// this phase reads is that session's file and the record its own process saved for it.
 	const child = await childSessionOf(dock, parentFile, 60_000);
 	if (child?.header?.id === undefined) {
-		console.log(
-			`  note  this path produced no child session to read: settled ${settled}, child ${JSON.stringify(child?.header)}`,
-		);
-		return;
+		throw new SmokeFailure("the asynchronous delegation produced a child session",
+			`settled ${settled}, child ${JSON.stringify(child?.header)}`);
 	}
 	let document: ConsumptionDocument | undefined;
 	try {
@@ -672,13 +691,9 @@ async function phaseBackgroundDelegation(cli: PiCli): Promise<void> {
 			45_000,
 		);
 	} catch (error) {
-		// Recorded rather than asserted: this dock's detached runner starts the child but does not
-		// reach a model request, so what a completed background delegation's own process saves is not
-		// observable here (see the evidence record's own account of this path).
-		console.log(
-			`  note  the child session's own process saved no record: ${error instanceof Error ? error.message.split("\n")[0] : String(error)}; artifacts ${JSON.stringify(sessionFiles(path.join(dock.run.root.sessionDir, "subagent-artifacts")).length)}`,
-		);
-		return;
+		// Missing accounting after a successful child run is a failed observation, not a green skip.
+		throw new SmokeFailure("the asynchronous child's consumption is saved",
+			error instanceof Error ? error.message.split("\n")[0] : String(error));
 	}
 	const record = recordOf(document, child.header.id);
 	observe(
@@ -712,14 +727,19 @@ async function main(): Promise<void> {
 	const cli = resolvePiCli(explicit);
 	const version = await piVersion(cli);
 	console.log(`pi ${version} (${cli.path})`);
-	observe("the harness under test is the fixed version this script states", version === EXPECTED_PI_VERSION, `reported ${version}`);
+	const expectedVersion = process.argv.includes("--expect-pi-version")
+		? process.argv[process.argv.indexOf("--expect-pi-version") + 1]
+		: EXPECTED_PI_VERSION;
+	observe("the harness under test is the fixed version this run states", version === expectedVersion, `reported ${version}, expected ${expectedVersion}`);
 	observe("the pinned provider artifact this repository installs is present", existsSync(PROVIDER_ENTRY), PROVIDER_ENTRY);
 
 	try {
-		await phaseNoProvider(cli);
-		await phaseRefusedEntry(cli);
-		await phaseForegroundDelegation(cli);
-		await phaseBackgroundDelegation(cli);
+		if (!process.argv.includes("--foreground-only") && !process.argv.includes("--background-only")) {
+			await phaseNoProvider(cli);
+			await phaseRefusedEntry(cli);
+		}
+		if (!process.argv.includes("--background-only")) await phaseForegroundDelegation(cli);
+		if (!process.argv.includes("--foreground-only")) await phaseBackgroundDelegation(cli);
 	} finally {
 		for (const session of sessions) await session.stop({ timeoutMs: 15_000 });
 		for (const dock of runs) {

@@ -34,6 +34,8 @@ import type { SubagentIntegration, SubagentIntegrationFailure } from "../../core
 import type { PiExtensionApi } from "../pi";
 import type { SessionBackgroundWork } from "./round";
 import { loadPiSubagentProvider } from "./subagent-provider";
+import { requirePiChildExtension, type PiSubagentProvider } from "./child-extensions";
+export type { PiSubagentProvider } from "./child-extensions";
 
 /** The provider's announcement channel: its statement that it is serving a session. */
 const PROVIDER_READY_CHANNEL = "subagents:rpc:v1:ready";
@@ -155,15 +157,6 @@ function registrationIn(table: LivenessTable, value: unknown): () => void {
  * provider that is not there is not waited for twice — the mode is settled once and never moves.
  */
 const ANNOUNCEMENT_BUDGET_MS = 300;
-
-/** The public function of the provider this adapter calls. */
-export interface PiSubagentProvider {
-	registerRequiredChildExtensions(input: {
-		readonly sessionId: string;
-		readonly extensions: readonly { readonly id: string; readonly path: string }[];
-		readonly requireForAllRunners?: boolean;
-	}): { dispose(): void };
-}
 
 /**
  * The provider's own statement about itself, as far as this adapter reads it: the interface version
@@ -313,7 +306,7 @@ export function createPiSubagentIntegration(extensionId: string, childEntry: str
 	 * Takes the requirement for one session, once per process per session.
 	 *
 	 * The requirement is the provider's own registration: it fails loudly when this entry's child
-	 * path is not a file the provider can load, when the session already carries one, and when the
+	 * path is not a file the provider can load, when a contribution conflicts, and when the
 	 * module states no such interface. Every one of those is a failed requirement rather than an
 	 * absent provider — the difference the settled answer has to keep.
 	 */
@@ -324,11 +317,7 @@ export function createPiSubagentIntegration(extensionId: string, childEntry: str
 			if (module === undefined) return { taken: false, detail: "the provider's child-extension interface could not be loaded" };
 			if (requirements.has(sessionId)) return { taken: true };
 			try {
-				const registration = module.registerRequiredChildExtensions({
-					sessionId,
-					extensions: [{ id: extensionId, path: childEntry }],
-					requireForAllRunners: true,
-				});
+				const registration = requirePiChildExtension(module, sessionId, { id: extensionId, path: childEntry });
 				requirements.set(sessionId, registration);
 				return { taken: true };
 			} catch (error) {

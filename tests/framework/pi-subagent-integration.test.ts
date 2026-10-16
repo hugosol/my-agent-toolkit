@@ -37,6 +37,7 @@ import {
 	type PiSurface,
 	type PiSurfaceSession,
 	boundPiSurface,
+	PI_SURFACE_PROBE,
 } from "./support/pi-surface-double";
 
 // Read the same public module as production, including an explicitly configured installation.
@@ -245,6 +246,34 @@ describe("a harness with no subagent provider is the normal no-subagent shape (P
 		expect(delivery.subagents).toEqual({ mode: "none" });
 		expect(surface.initializations).toHaveLength(1);
 		expect(diagnosis).toBe("");
+	});
+});
+
+describe("multiple extension entries share the provider's one session registration", () => {
+	test("codebase-tools and model-cost can both require their child entries", async () => {
+		const main = session("pi-int-multiple-entries");
+		const surfaces = ["codebase-tools", "model-cost"].map(id =>
+			boundPiSurface({
+				childEntry: path.join(REPO_ROOT, "entrypoints", "pi", `${id}.ts`),
+				definition: { ...PI_SURFACE_PROBE, id },
+			}),
+		);
+		try {
+			const { stderr, value } = await withCapturedStderrAsync(async () => {
+				for (const surface of surfaces) {
+					surface.bus.publish(PROVIDER_READY_CHANNEL, pingAnswer(main.sessionId));
+					surface.sessionStarts(main, "startup");
+				}
+				return await Promise.all(surfaces.map(surface => surface.initialized()));
+			});
+			expect(value.map(delivery => delivery.subagents)).toEqual([
+				{ mode: "subagents" },
+				{ mode: "subagents" },
+			]);
+			expect(stderr).toBe("");
+		} finally {
+			for (const surface of surfaces) surface.sessionShutsDown(main, "quit");
+		}
 	});
 });
 
