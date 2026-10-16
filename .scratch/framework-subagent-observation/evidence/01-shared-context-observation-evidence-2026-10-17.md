@@ -46,9 +46,11 @@
    `tests/harness-dock/detail-tree.test.ts` 从宿主自己的 `setWidget` 帧读出真实委派子会话的行，断言
    `Ctx: <n>% (<tokens>/450.0K)`，即该渠道自己的显示预算而**非**宿主 context window。pi：实际宿主运行
    （smoke）走通「扩展观察读数轴 → adapter 注册三个采集点 → 框架记录并投递 → 扩展 handler 触发重绘」这条共同
-   interface 路径；显示预算一侧由真实 pi adapter 的确定性用例断言（`tests/model-cost/detail-widget.test.ts`
-   的 `Ctx: 85% (381.5K/450.0K)`，其宿主 `contextWindow` 为 1,000,000，`tests/model-cost/pi-session-context.test.ts`
-   同场景）。**限制**见下节：pi 实际宿主下 detail 的子代理行本轮未取到 Ctx 字段。
+   interface 路径；adapter→框架源一段由真实 pi adapter + 真实 MODEL_COST 定义的确定性用例核对
+   （`tests/model-cost/pi-session-context.test.ts` 逐会话读数，含首次接入用例）；显示预算形式由 pi 表面的确定性
+   用例断言（`tests/model-cost/pi-presentation.test.ts` 子行 `Ctx: 20% (90,000/450.0K)`，其宿主 `contextWindow`
+   为 1,000,000 ⇒ 取该渠道 450K 显示预算；OMP 前端同一规则由 `tests/model-cost/detail-widget.test.ts` 的
+   450.0K/272K 逐渠道断言）。**限制**见下节：pi 实际宿主下 detail 的子代理行本轮未取到 Ctx 字段。
 4. **移除并行原生采集（P12）** — `extensions/model-cost/harnesses/{omp,pi}.ts` 中已无
    `observeSessionContext`、无 `pi.on(...)`、无 `getContextUsage`（本项目本轮 `grep` 复核，两文件只剩把
    `context.sessionObservations` 交给 runtime）；扩展 shared logic 只读 `SessionObservations` /
@@ -67,14 +69,18 @@
    而 `extensions/model-cost/shared-logic/presentation/display.ts` 只在 `sessionContext.read(child.sessionId)`
    有读数且该渠道有显示预算时才写出该字段，所以这一现象等价于「父会话的观察源里没有这个子会话的读数」。
    **A/B 实验（证明非本票引入）**：把同一份 smoke（仅额外加一条断言：子行须带 `Ctx: n% (…/450.0K)`）拿到
-   `git worktree add --detach <temp> HEAD`（基线 `bf4c291`，即本票改动之前）上运行：
+   `git worktree add --detach <temp> HEAD`（基线 `bf4c291`，即本票改动之前）上运行（该临时工作树与其
+   node_modules 联接已在实验后删除，`git worktree list` 无残留）：
    - 改动后（本工作树）：行同上，无 `Ctx` → 断言失败。
-   - 改动前（基线树）：行同上，同样无 `Ctx` → 断言同样失败（`logs/01-experiment-prechange-child-row-ctx.log`；
-     该树首次运行的另一个失败见 `logs/01-experiment-prechange-first-run.log`，是该树一次性的既有不稳定性，重跑即过）。
-   **成因（源码证据）**：OMP 侧的装配是模块级单例（`extensions/model-cost/harnesses/omp.ts` 的模块级
-   `const bindModelCost = ompAdapter(...)`），而 dock 的 OMP 运行让父子会话都经宿主自己的加载器加载**本仓库发行的**
-   `entrypoints/omp/model-cost.ts`（`tests/harness-dock/detail-tree.test.ts` 的 `MODEL_COST_ENTRYPOINT`），
-   于是父、子共用一个 adapter ⇒ 一个观察源 ⇒ dock 能断言到子行读数（实测全绿）。pi 侧 `modelCostPiHarness(root)`
+   - 改动前（基线树）：行同上，同样无 `Ctx` → 断言同样失败（`logs/01-experiment-prechange-child-row-ctx.log`）。
+     同一棵基线树第一次运行在更早的「parent's own Round settled」检查上就失败（`parent record: undefined`，见
+     `logs/01-experiment-prechange-first-run.log`），带 `--keep` 重跑即通过；该现象只出现一次，未进一步归因，
+     故上一条结论以那次通过的运行为准。
+   **成因（源码证据 + 推断）**：OMP 侧的装配是模块级单例（`extensions/model-cost/harnesses/omp.ts` 的模块级
+   `const bindModelCost = ompAdapter(...)`），而 dock 的 OMP 运行让父会话经宿主自己的加载器加载**本仓库发行的**
+   `entrypoints/omp/model-cost.ts`（`tests/harness-dock/detail-tree.test.ts` 的 `MODEL_COST_ENTRYPOINT`，实测该
+   用例全绿并可断言到子行读数）——[INFERENCE] 同一次运行里派生子会话解析到同一个 entry 模块，因而与父会话共用
+   一个 adapter 与一个观察源。pi 侧 `modelCostPiHarness(root)`
    **每次调用**都新建自己的一份 adapter 与观察源，而 pi smoke 的父子走的是两份不同的 entry 模块：父会话用 dock
    fixture entry（`tests/harness-dock/fixtures/pi-model-cost/entrypoint.ts`），派生子会话按装配声明的 `childEntry`
    加载运行根下由 smoke 写出的 `<configRoot>/entrypoints/pi/model-cost.ts`（`scripts/pi-subagent-smoke.ts` 的
@@ -89,7 +95,8 @@
    需一并设计）。本票只记录，不静默降低范围，也不在共享 smoke 脚本上留下会让其他票变红的断言（实验断言已还原，
    `git status` 中该文件无改动）。
 2. **pi 的「实际宿主绘制出的读数」仅到上一条为止**：Ctx 字段在 pi 实际宿主的子代理行上未观察（见上）；
-   pi 的显示预算形式由真实 adapter 的确定性用例覆盖（`detail-widget.test.ts`、`pi-session-context.test.ts`）。
+   pi 侧的显示预算形式由 pi 表面的确定性用例覆盖（`pi-presentation.test.ts`），adapter→框架源由真实 pi adapter
+   的确定性用例覆盖（`pi-session-context.test.ts`），但没有「实际 pi 宿主 + 绘制出该字段」这一条观察。
 3. **POSIX 与其他宿主版本未运行**：全部观察为 win32 / bun 1.4.2 / pi 1.3.0 / OMP 18.5.0；不构成对其他平台或版本的
    认证。
 4. **P14/P15（去重治安、合并重绘）不在本票声明内**：采集路径只在读数变化时投递，但该承诺属票 07，本票未测量；
