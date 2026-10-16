@@ -41,8 +41,8 @@ The wall-clock interval from a main session’s first user input in the applicab
 _Avoid_: execution time, model latency, accounting period duration, summed agent time
 
 **Subagent runtime（子代理运行耗时）**:
-The cumulative duration attributable to one subagent session’s executions in the applicable accounting period, including work and delegated-result waits within an execution but excluding the idle gaps between executions. It is distinct from a main session’s wall-clock Session span and from only its latest execution’s duration; an accounting reset begins a fresh runtime accumulation, and an execution the closed period already measured contributes nothing to the new one however late its own readings arrive.
-_Avoid_: session span, last execution duration, summed progress readings
+A coarse estimate of one subagent session’s cumulative working time in the applicable accounting period, including model work, tools and delegated-result waits within activity but excluding idle gaps. It is not an exact executor end-to-end measurement and need not include queueing, session creation or extension loading. It is distinct from a main session’s wall-clock Session span and from only its latest activity’s duration. Known contributions remain a subtotal when an observation gap makes the period incomplete; approximation and observation completeness are different properties. An accounting reset begins a fresh accumulation, and activity already attributed to the closed period contributes nothing to the new one however late its readings arrive.
+_Avoid_: session span, exact execution duration, last execution duration, summed progress readings
 
 **Direct session totals（会话自身累计）**:
 The usage and cost of requests issued directly by one agent session, excluding requests issued by its subagents.
@@ -133,7 +133,7 @@ The DeepSeek balance an accounting reset reads once for itself — outside the f
 _Avoid_: cached balance, TTL refresh, retried query, zero on failure, balance difference as consumption
 
 **Storage baseline（存储基线）**:
-The document state one instance holds as valid: its accounting period and the session records it last read from the file — the document a normal initialization loaded, or the document a refused snapshot was decided against, which is then what the next snapshot is compared to. An instance without a usable baseline — an unreadable, unparseable or unrecognized document — pauses its consumption accounting and saving rather than starting from zero, and only a later normal initialization reads the file again. A root holding no document at all is not an unusable baseline; it is a fresh period. A session snapshot that did not land is not part of the baseline: it is reported and dropped, and the affected session's own record is the baseline's again.
+The last accepted document state one instance holds as its accounting basis: its accounting period and saved session records, established by normal initialization, a coordinated commit or explicit read synchronization. It is distinct from local changes not yet committed, and a synchronization cannot silently carry those changes into another accounting period. A refused snapshot is decided against the file's actual document, which becomes the basis for the next comparison. An instance without a usable baseline — an unreadable, unparseable or unrecognized document — pauses its consumption accounting and saving rather than starting from zero, and only a later normal initialization reads the file again. A root holding no document at all is not an unusable baseline; it is a fresh period. A session snapshot that did not land is not part of the baseline: it is reported and dropped, and the affected session's own record is the baseline's again.
 _Avoid_: empty statistics, zeroed totals, in-memory fallback
 
 **Allowance window（额度窗口）**:
@@ -161,7 +161,7 @@ The independent `codex-usage-estimate.json` inside the storage root: the baselin
 _Avoid_: account-partitioned estimate, estimate inside the consumption document, ratio ledger, schema version
 
 **Entry display preference（入口展示偏好）**:
-Which form one entry's usage widget is drawn in — `brief` or `detail` — held in that process's memory alone and flipped by `/budget detail`. It belongs to the entry rather than to a session, a model, a viewed target or an account: an ordinary model, session, tree or view change keeps it, a restart or a reload answers `brief` again, nothing on the storage root holds it, and neither a second entry nor a subagent inherits it. The flip is immediate — it consults no provider, no idle fact, no pending save and no UI — while the *form a view is drawn in* also depends on the target: a subagent's own display answers the brief whatever the entry's preference is.
+Which form one entry's usage widget is drawn in — `brief` or `detail` — held in that process's memory alone and flipped by a supported `/budget detail` invocation. It belongs to the entry rather than to a session, a model, a viewed target or an account: an ordinary model, session, tree or view change keeps it, a restart or a reload answers `brief` again, nothing on the storage root holds it, and neither a second entry nor a subagent inherits it. The flip is immediate — it consults no provider, no idle fact, no pending save and no UI — while the *form a view is drawn in* also depends on the target: a subagent's own display answers the brief whatever the entry's preference is.
 _Avoid_: persisted preference, per-session display setting, State field, subagent inheritance, provider-gated or idle-gated toggle
 
 **Startup snapshot（启动快照）**:

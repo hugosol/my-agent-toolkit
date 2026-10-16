@@ -12,6 +12,10 @@ _Avoid_: standalone generated extension, copy-pasted template, native API wrappe
 The program that discovers and runs extensions and exposes the native capability surface they adapt to; the supported harnesses are `pi` and `oh-my-pi`. A harness is distinct from an agent session (`ctx.agent`) and its subagents.
 _Avoid_: agent runtime (legacy name), host (ambiguous with OS/process host), agent, platform
 
+**Subagent integration mode（子代理接入模式）**:
+The supported shape of one extension entry’s session integration: subagent mode includes integrated subagent observations, while no-subagent mode（无子代理模式）provides main-session functionality without that integration. It does not assert that the harness contains no subagents, describe whether an agent is working, or represent an extension State value. An integration failure is not a normal no-subagent mode.
+_Avoid_: installed-package flag, connection-in-progress state, agent activity state, extension activation
+
 **Extension definition（扩展定义）**:
 The configuration and optional shared TypeScript logic describing an extension independently of a particular harness.
 _Avoid_: harness-specific entrypoint, generated extension
@@ -105,7 +109,7 @@ An extension's own `config.yaml` in its source directory, read and validated by 
 _Avoid_: harness settings, environment override, State, defaults embedded in code
 
 **Shared configuration（共享配置）**:
-The framework's own `framework/config.yaml`, beside the general HTTP module: the named proxy entries a request selects by name (`http.proxies.<name>.enabled` and `http.proxies.<name>.url`) and the default wait budget (`http.defaultTimeoutMs`). It belongs to the machine, it is read once per process — a change requires a restart — and a request that names a proxy the file cannot resolve fails as a configuration error instead of connecting directly; an entry that exists without `enabled: true` is an explicitly disabled one and connects directly, so its `url` is never read.
+The framework's own `framework/config.yaml`, beside the general HTTP module: the named proxy entries a request selects by name (`http.proxies.<name>.enabled` and `http.proxies.<name>.url`), the default wait budget (`http.defaultTimeoutMs`), and an explicitly configured directory for framework-owned runtime artifacts. That directory has no code-level fallback when its configuration value is absent; connection-location metadata is not persisted State. It belongs to the machine, it is read once per process — a change requires a restart — and a request that names a proxy the file cannot resolve fails as a configuration error instead of connecting directly; an entry that exists without `enabled: true` is an explicitly disabled one and connects directly, so its `url` is never read.
 _Avoid_: extension configuration, environment variable, harness proxy setting, per-provider proxy field
 
 **Mode selection（模式设置）**:
