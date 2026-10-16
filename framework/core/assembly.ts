@@ -31,6 +31,7 @@ import type {
 	MarkerTransport,
 	OwnerReference,
 	ProviderAccess,
+	SubagentIntegration,
 	SubscriptionGroup,
 } from "./protocol";
 
@@ -122,6 +123,15 @@ export interface InitializationDelivery {
 	readonly feedback: FeedbackTransport;
 	/** The transport this initialization's marker updates are published through. */
 	readonly markers: MarkerTransport;
+	/**
+	 * How this entry's subagent integration stands on this harness, as the adapter settled it at
+	 * this node (see {@link SubagentIntegration}).
+	 *
+	 * It is settled before this delivery is handed over, once per process, and never moves after —
+	 * so an extension that reads it here reads the one answer this process has. A harness with no
+	 * such integration to settle answers `none`, which is a normal shape rather than a failure.
+	 */
+	readonly subagents: SubagentIntegration;
 }
 
 /**

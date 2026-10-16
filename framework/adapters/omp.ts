@@ -31,6 +31,7 @@ import type {
 	OwnerReference,
 	PromptContribution,
 	ProviderAccess,
+	SubagentIntegration,
 } from "../core/protocol";
 import { StateStore } from "../core/state";
 import { observeRounds } from "./omp/round";
@@ -845,6 +846,10 @@ function ompPort(
 		modelPrices: harnessPrices.prices,
 		providerAccess: harnessAccess.access,
 		viewedSession,
+		// This harness integrates subagent observations itself: its own delegation tool and agent
+		// registry are the facts the subagent axes are mapped from, so there is no provider to reach
+		// and none to fail — the answer is the integrated shape itself, and nothing waits for it.
+		subagentIntegration: () => ({ mode: "subagents" }) satisfies SubagentIntegration,
 		onSession: handler => {
 			observeSession((event, owner, ctx) => {
 				catalogued(ctx);

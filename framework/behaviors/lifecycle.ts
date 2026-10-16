@@ -29,6 +29,7 @@
  * reporting callback it was handed, and names no native API.
  */
 import type { ExtensionImplementation, InitializationDelivery } from "../core/assembly";
+import type { SubagentIntegration } from "../core/protocol";
 
 /** The completion of an implementation that declares no initialization: settled before it starts. */
 const SETTLED: Promise<void> = Promise.resolve();
@@ -84,13 +85,22 @@ export function isImplementationDisposed(implementation: ExtensionImplementation
  *
  * An implementation that declares no initialization settles immediately and records nothing
  * more, so a definition that only needs a command pays nothing for this path — and, in
- * particular, no run initiation is ever handed a promise on its behalf.
+ * particular, no run initiation is ever handed a promise on its behalf. The one exception is a
+ * harness integration (`integration`): it is this process's own wiring — requiring the entry in
+ * the sessions the harness spawns, and reading the harness's answer — so it is settled here even
+ * for an implementation that declares no initialization, and a run initiation waits for it
+ * exactly as it waits for an initialization.
+ *
+ * The integration is settled before the delivery is handed over: what the extension reads in its
+ * own initialization is the one answer this process has, and an integration that never settles
+ * would otherwise let a first request be issued with the wiring still open.
  */
 export function initializeImplementation(
 	extensionId: string,
 	implementation: ExtensionImplementation,
-	delivery: InitializationDelivery,
+	delivery: Omit<InitializationDelivery, "subagents">,
 	reportFailure: (message: string) => void,
+	integration?: () => SubagentIntegration | Promise<SubagentIntegration>,
 ): Promise<void> {
 	const record = recordFor(implementation);
 	// The owner being served, recorded before the once-only guard: a session switch starts another
@@ -100,13 +110,27 @@ export function initializeImplementation(
 	record.started = true;
 
 	const initialize = implementation.initialize;
-	if (initialize === undefined) return SETTLED;
+	if (initialize === undefined && integration === undefined) return SETTLED;
+
+	// The harness's own answer is asked once here, before anything is recorded: a harness that
+	// integrates subagent observations itself answers with the value and nothing has to be waited
+	// for, while an answer that is a promise is the wiring this process still has to put in place —
+	// the requirement a provider has to take — and a run initiation waits for it exactly as it
+	// waits for an initialization.
+	const answered = integration?.();
+	if (initialize === undefined && !(answered instanceof Promise)) return SETTLED;
 
 	// Started before the entry runs, so a run initiation that arrives while it is in flight waits
 	// for it rather than racing it; cleared once it settled, so the runs that follow it are not
 	// made to wait for work that is already done.
-	const pending = Promise.resolve()
-		.then(() => initialize(delivery))
+	const pending = Promise.resolve(answered)
+		.then(async (settled: SubagentIntegration | undefined) => {
+			// A harness that reports no integration at all is a harness that offers none: the
+			// extension is told that, rather than the member being absent from the delivery.
+			const subagents: SubagentIntegration = settled ?? { mode: "none" };
+			if (initialize === undefined) return;
+			await initialize({ ...delivery, subagents });
+		})
 		.catch((error: unknown) => {
 			const detail = error instanceof Error ? error.message : String(error);
 			reportFailure(`${extensionId}: initialization failed: ${detail}`);

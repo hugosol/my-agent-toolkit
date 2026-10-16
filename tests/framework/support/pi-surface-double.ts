@@ -20,11 +20,14 @@ import {
 	type PiBeforeAgentStartEvent,
 	type PiBeforeProviderRequestEvent,
 	type PiCommandRegistration,
+	type PiEventBus,
 	type PiExtensionApi,
 	type PiExtensionContext,
 	type PiInputEvent,
 	type PiMessageEndEvent,
 	type PiModelRegistry,
+	type PiSessionHeader,
+	type PiSessionInfoChangedEvent,
 	type PiSessionStartEvent,
 	type PiSessionShutdownEvent,
 	piAdapter,
@@ -33,10 +36,11 @@ import type {
 	CatalogPriceSource,
 	FeedbackLevel,
 	RoundDelivery,
+	SessionEventDelivery,
 	TurnEndDelivery,
 	TurnStartDelivery,
 } from "../../../framework/core/protocol";
-import type { ExtensionDefinition, ImplementationContext } from "../../../framework/public";
+import type { ExtensionDefinition, ImplementationContext, InitializationDelivery } from "../../../framework/public";
 
 /** The definition the double binds: it declares nothing, so every behavior under test is injected. */
 export const PI_SURFACE_PROBE: ExtensionDefinition = { id: "pi-surface-probe", displayName: "piSurfaceProbe" };
@@ -67,10 +71,19 @@ export interface PiSurfaceSession {
 	readonly sessionId: string;
 	/** The name pi reports for the session; absent models a surface that reports none. */
 	readonly name?: string;
+	/**
+	 * The header pi states for this session, when this surface states one.
+	 *
+	 * Absent models a surface that publishes no header at all, which is what leaves a session's
+	 * lineage — and so its direct parent — unobtainable rather than guessed.
+	 */
+	readonly header?: PiSessionHeader | null;
 	/** The session's current model; a case changes it to model a switch between two requests. */
 	model?: { readonly id?: string; readonly provider?: string };
 	/** The effective thinking level at a session's start. */
 	readonly thinkingLevel?: string;
+	/** The entries pi's own branch holds for this session, as the fact a beginning is read from. */
+	readonly branch?: readonly PiSurfaceEntry[];
 	/** pi's own catalog rows, as `modelRegistry.getAll()` answers them. */
 	catalog?: PiNativeModel[];
 	/** The credentials pi resolves per provider, read at each query rather than snapshotted. */
@@ -103,15 +116,53 @@ export interface PublishedNotice {
 	readonly message: string;
 }
 
+/** One entry pi's own branch holds for a session, as the fact a beginning is read from. */
+export interface PiSurfaceEntry {
+	readonly type?: string;
+	readonly message?: { readonly role?: string };
+	readonly customType?: string;
+}
+
+/** One message the adapter published on the host's shared bus, in emission order. */
+export interface PiBusEmission {
+	readonly channel: string;
+	readonly data: unknown;
+}
+
+/** The host's shared bus, as a case drives it: what the adapter published, and what the provider says. */
+export interface PiBusSurface {
+	/** Every emission the adapter made, in order. */
+	readonly emissions: readonly PiBusEmission[];
+	/** Publishes one message *to* the adapter, exactly as another extension in the process would. */
+	publish(channel: string, data: unknown): void;
+}
+
+/**
+ * The subagent provider's own published channels, as its documentation names them.
+ *
+ * A case drives the provider through these rather than through anything of the adapter's: it
+ * announces itself on {@link PROVIDER_READY_CHANNEL} and answers a query published on
+ * {@link PROVIDER_REQUEST_CHANNEL} under {@link PROVIDER_REPLY_PREFIX} plus the request's own id.
+ */
+export const PROVIDER_READY_CHANNEL = "subagents:rpc:v1:ready";
+export const PROVIDER_REQUEST_CHANNEL = "subagents:rpc:v1:request";
+export const PROVIDER_REPLY_PREFIX = "subagents:rpc:v1:reply:";
+
 /** The pi native surface a loader would hand the adapter, with everything a case observes. */
 export interface PiSurface {
 	readonly api: PiExtensionApi;
+	/** The host's shared bus, as this binding's process publishes on it. */
+	readonly bus: PiBusSurface;
 	/** The labels the framework set, in call order. */
 	readonly labels: string[];
 	/** The commands the adapter registered, by name. */
 	readonly commands: Map<string, RegisteredCommand>;
 	/** The non-context entries the framework appended, in call order. */
 	readonly entries: Array<{ readonly customType: string; readonly data: unknown }>;
+	/** The session-axis deliveries the framework dispatched, in call order. */
+	readonly sessions: SessionEventDelivery[];
+	/** The initialization deliveries the framework handed over, in call order. */
+	readonly initializations: InitializationDelivery[];
 	/** The Turn start edges the framework dispatched, in call order. */
 	readonly starts: TurnStartDelivery[];
 	/** The Turn end edges the framework dispatched, in call order. */
@@ -126,6 +177,22 @@ export interface PiSurface {
 	readonly notices: PublishedNotice[];
 	/** The context the framework handed the factory, once the binding ran. */
 	implemented(): ImplementationContext;
+	/**
+	 * The initialization delivery the framework handed the factory, once it settled.
+	 *
+	 * This process's harness integration is settled *before* that delivery is handed over, so
+	 * awaiting this is how a case reads the settled subagent answer an extension is told about — the
+	 * one answer this process has, whatever the surface did after it settled.
+	 */
+	initialized(): Promise<InitializationDelivery>;
+	/**
+	 * The envelope the adapter published on the provider's own request channel, at `index`.
+	 *
+	 * It is how a case reads — and answers — a query the adapter issued without guessing when it was
+	 * issued: the promise settles once that query has been published. What it carries is the envelope
+	 * the provider's own documentation states, so a case replies to the query the adapter really made.
+	 */
+	providerRequest(index: number): Promise<Record<string, unknown>>;
 	/** Delivers one native fact, exactly as the host would, with the session's context beside it. */
 	deliver(event: string, payload: unknown, session: PiSurfaceSession): void;
 	/** A model request starting: pi's `before_provider_request`. */
@@ -140,6 +207,8 @@ export interface PiSurface {
 	runSettles(session: PiSurfaceSession, options?: { readonly aborted?: boolean }): void;
 	/** A session starting: pi's `session_start`. */
 	sessionStarts(session: PiSurfaceSession, reason: PiSessionStartEvent["reason"]): void;
+	/** A session's name changing: pi's `session_info_changed`. */
+	sessionRenames(session: PiSurfaceSession, name: string | undefined): void;
 	/** A session ending: pi's `session_shutdown`. */
 	sessionShutsDown(session: PiSurfaceSession, reason: PiSessionShutdownEvent["reason"]): void;
 	/** A submission: pi's `input`. */
@@ -161,11 +230,19 @@ export interface PiSurface {
  * request's price with — built from the context the framework handed the factory, exactly as the
  * extension's assembly composes the harness's own prices with its data.
  */
-export function boundPiSurface(options: { readonly catalog?: (context: ImplementationContext) => CatalogPriceSource | undefined } = {}): PiSurface {
+export function boundPiSurface(
+	options: {
+		readonly catalog?: (context: ImplementationContext) => CatalogPriceSource | undefined;
+		/** The child entry this assembly requires in spawned sessions; absent models one that declares none. */
+		readonly childEntry?: string;
+	} = {},
+): PiSurface {
 	const handlers = new Map<string, Array<(event: unknown, ctx: PiExtensionContext) => unknown>>();
 	const labels: string[] = [];
 	const commands = new Map<string, RegisteredCommand>();
 	const entries: Array<{ customType: string; data: unknown }> = [];
+	const sessions: SessionEventDelivery[] = [];
+	const initializations: InitializationDelivery[] = [];
 	const starts: TurnStartDelivery[] = [];
 	const ends: TurnEndDelivery[] = [];
 	const rounds: RoundDelivery[] = [];
@@ -173,6 +250,52 @@ export function boundPiSurface(options: { readonly catalog?: (context: Implement
 	const widgets: PublishedWidget[] = [];
 	const notices: PublishedNotice[] = [];
 	let implementationContext: ImplementationContext | undefined;
+
+	// The initialization this binding's factory is handed, and the promise a case awaits it through:
+	// it settles only after this process's harness integration has, so awaiting it is reading the
+	// settled answer an extension is told about.
+	let resolveInitialized: (() => void) | undefined;
+	const initializedOnce = new Promise<void>(resolve => {
+		resolveInitialized = resolve;
+	});
+
+	// The queries the adapter published on the provider's own request channel, and the cases waiting
+	// for one that has not been published yet.
+	const providerRequests: Record<string, unknown>[] = [];
+	const requestWaiters: Array<{ readonly index: number; readonly resolve: (envelope: Record<string, unknown>) => void }> = [];
+	const settleRequestWaiters = (): void => {
+		for (let index = requestWaiters.length - 1; index >= 0; index--) {
+			const waiter = requestWaiters[index];
+			if (waiter.index >= providerRequests.length) continue;
+			requestWaiters.splice(index, 1);
+			waiter.resolve(providerRequests[waiter.index]);
+		}
+	};
+
+	// The host's shared bus: what the adapter publishes is recorded, and what a case publishes reaches
+	// the adapter's own subscriptions exactly as another extension in the process would reach them.
+	const busHandlers = new Map<string, Array<(data: unknown) => void>>();
+	const emissions: PiBusEmission[] = [];
+	const bus: PiEventBus = {
+		on: (channel, handler) => {
+			const list = busHandlers.get(channel) ?? [];
+			list.push(handler);
+			busHandlers.set(channel, list);
+			return () => {
+				const current = busHandlers.get(channel);
+				const index = current?.indexOf(handler) ?? -1;
+				if (current !== undefined && index >= 0) current.splice(index, 1);
+			};
+		},
+		emit: (channel, data) => {
+			emissions.push({ channel, data });
+			if (channel === PROVIDER_REQUEST_CHANNEL && typeof data === "object" && data !== null && !Array.isArray(data)) {
+				providerRequests.push(data as Record<string, unknown>);
+				settleRequestWaiters();
+			}
+			for (const handler of [...(busHandlers.get(channel) ?? [])]) handler(data);
+		},
+	};
 
 	const registryOf = (session: PiSurfaceSession): PiModelRegistry => ({
 		getAll: () => session.catalog ?? [],
@@ -184,17 +307,22 @@ export function boundPiSurface(options: { readonly catalog?: (context: Implement
 	});
 
 	const contextOf = (session: PiSurfaceSession): PiExtensionContext => {
+		const sessionManager: Record<string, unknown> = {
+			getSessionId: () => session.sessionId,
+			getSessionName: () => session.name,
+			getBranch: () => session.branch ?? [],
+		};
+		// The session's own header is present exactly when this surface states one: a case that leaves
+		// it out models a host that reports no lineage rather than one that reports none.
+		if (session.header !== undefined) sessionManager.getHeader = () => session.header ?? null;
 		const context: Record<string, unknown> = {
-			sessionManager: {
-				getSessionId: () => session.sessionId,
-				getSessionName: () => session.name,
-				getBranch: () => [],
-			},
+			sessionManager,
 			hasUI: session.hasUI ?? true,
 			ui: {
 				notify: (message: string, level?: FeedbackLevel) => void notices.push({ level: level ?? "info", message }),
 				setWidget: (key: string, content: readonly string[] | undefined) => void widgets.push({ key, content }),
 			},
+			events: bus,
 		};
 		// The two quiescence facts are present exactly when this surface reports them: a case that
 		// leaves one out models a host that answers nothing rather than one that answers false.
@@ -206,8 +334,11 @@ export function boundPiSurface(options: { readonly catalog?: (context: Implement
 		return context as unknown as PiExtensionContext;
 	};
 
-	// The native surface: the members the adapter registers and appends through, and nothing more.
+	// The native surface: the members the adapter registers and appends through, plus the host's own
+	// shared bus — the one member this adapter reads for the subagent provider's versioned interface,
+	// and the process-scoped one this surface publishes itself.
 	const api = {
+		events: bus,
 		on(event: string, handler: (event: unknown, ctx: PiExtensionContext) => unknown): () => void {
 			const list = handlers.get(event) ?? [];
 			list.push(handler);
@@ -227,15 +358,24 @@ export function boundPiSurface(options: { readonly catalog?: (context: Implement
 	} as unknown as PiExtensionApi;
 
 	const factory = piAdapter(PI_SURFACE_PROBE, {
+		...(options.childEntry === undefined ? {} : { childEntry: options.childEntry }),
 		factory: context => {
 			implementationContext = context;
 			const catalog = options.catalog?.(context);
 			return {
 				...(catalog === undefined ? {} : { catalog }),
+				initialize: delivery => {
+					initializations.push(delivery);
+					resolveInitialized?.();
+					resolveInitialized = undefined;
+				},
 				subscriptions: [
 					{
 						scope: "session",
 						events: {
+							session_start: delivery => void sessions.push(delivery as SessionEventDelivery),
+							session_end: delivery => void sessions.push(delivery as SessionEventDelivery),
+							session_facts: delivery => void sessions.push(delivery as SessionEventDelivery),
 							turn_start: delivery => void starts.push(delivery as TurnStartDelivery),
 							turn_end: delivery => void ends.push(delivery as TurnEndDelivery),
 							round_start: delivery => {
@@ -262,9 +402,12 @@ export function boundPiSurface(options: { readonly catalog?: (context: Implement
 
 	return {
 		api,
+		bus: { emissions, publish: (channel, data) => bus.emit(channel, data) },
 		labels,
 		commands,
 		entries,
+		sessions,
+		initializations,
 		starts,
 		ends,
 		rounds,
@@ -274,6 +417,16 @@ export function boundPiSurface(options: { readonly catalog?: (context: Implement
 		implemented: () => {
 			if (implementationContext === undefined) throw new Error("the probe factory never ran");
 			return implementationContext;
+		},
+		initialized: () => initializedOnce.then(() => initializations[0]),
+		providerRequest: index => {
+			const published = providerRequests[index];
+			if (published !== undefined) return Promise.resolve(published);
+			const waiting = new Promise<Record<string, unknown>>(resolve => {
+				requestWaiters.push({ index, resolve });
+			});
+			settleRequestWaiters();
+			return waiting;
 		},
 		deliver,
 		startRequest: session => deliver("before_provider_request", { type: "before_provider_request" }, session),
@@ -288,6 +441,8 @@ export function boundPiSurface(options: { readonly catalog?: (context: Implement
 		runSettles: (session, options = {}) =>
 			deliver("agent_settled", { type: "agent_settled", aborted: options.aborted ?? false } satisfies PiAgentSettledEvent, session),
 		sessionStarts: (session, reason) => deliver("session_start", { type: "session_start", reason } satisfies PiSessionStartEvent, session),
+		sessionRenames: (session, name) =>
+			deliver("session_info_changed", { type: "session_info_changed", name } satisfies PiSessionInfoChangedEvent, session),
 		sessionShutsDown: (session, reason) =>
 			deliver("session_shutdown", { type: "session_shutdown", reason } satisfies PiSessionShutdownEvent, session),
 		submits: (session, source) => deliver("input", { type: "input", source } satisfies PiInputEvent, session),

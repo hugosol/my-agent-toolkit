@@ -17,6 +17,13 @@ import type {
 } from "../core/protocol";
 import { StateStore } from "../core/state";
 import { observeRounds } from "./pi/round";
+import { createPiSubagentIntegration, type PiSubagentIntegration } from "./pi/nicobailon";
+import {
+	type PiSessionPositions,
+	piSessionFactsOf,
+	piSessionFileAnchors,
+	piSessionPositions,
+} from "./pi/session";
 import { observeTurns } from "./pi/turn";
 
 export type { BindingResult } from "../core/protocol";
@@ -33,6 +40,44 @@ export interface PiSessionManager {
 	getSessionId(): string;
 	getSessionName(): string | undefined;
 	getBranch(): readonly PiSessionEntry[];
+	/**
+	 * The header pi writes for this session, when this surface publishes one.
+	 *
+	 * It is pi's own statement about the session: the identity it was created under and the session
+	 * file it was built from, when it was built from one. A surface that reports none leaves a
+	 * session's lineage, and so its direct parent, unavailable rather than guessed.
+	 */
+	getHeader?(): PiSessionHeader | null;
+}
+/**
+ * The header pi writes for one session, as far as this adapter reads it.
+ *
+ * `parentSession` is the native lineage link pi states for a session it stood up from another one:
+ * the *session file* the session was built from, which is where a direct parent's own identity is
+ * read from. It is a file the way pi states it, never an id, and this adapter resolves the id from
+ * that file's own header rather than from its name.
+ */
+export interface PiSessionHeader {
+	readonly type?: string;
+	readonly id?: string;
+	readonly parentSession?: string;
+}
+/** One session file's own anchor: the identity and the lineage link its header states. */
+export interface PiSessionAnchor {
+	readonly id?: string;
+	readonly parentSession?: string;
+}
+/**
+ * pi's shared event bus: how extensions in one process speak to each other.
+ *
+ * The framework's pi adapter reads one versioned interface from it — the subagent provider's own
+ * announcement and query pair — and publishes nothing of its own on it. A surface that publishes no
+ * bus is a process in which no provider can be reached, which is answered as a provider this entry
+ * does not have rather than as one that failed.
+ */
+export interface PiEventBus {
+	on(channel: string, handler: (data: unknown) => void): () => void;
+	emit(channel: string, data: unknown): void;
 }
 export interface PiModel {
 	readonly id?: string;
@@ -169,6 +214,12 @@ export interface PiSessionShutdownEvent {
 	readonly type: "session_shutdown";
 	readonly reason: PiSessionShutdownReason;
 }
+/** The fact that a session's display name changed, as pi publishes it. */
+export interface PiSessionInfoChangedEvent {
+	readonly type: "session_info_changed";
+	/** The session's current name, absent when pi states that the name was cleared. */
+	readonly name?: string;
+}
 export type PiSessionEventHandler<E> = (event: E, ctx: PiExtensionContext) => void;
 export interface PiBeforeAgentStartEvent {
 	readonly type: "before_agent_start";
@@ -221,8 +272,24 @@ export interface PiExtensionApi {
 	 * framework observes the fact and never transforms, replaces or absorbs a submission.
 	 */
 	on(event: "input", handler: PiSessionEventHandler<PiInputEvent>): () => void;
+	/**
+	 * Subscribes to pi's own name-change fact for a session.
+	 *
+	 * It is not a lifecycle event — nothing about which session is current moved — so it is delivered
+	 * as the session's current facts, exactly as a rename reaches consumers on a harness that
+	 * publishes one. pi states that a name was cleared as a fact of its own, which is a session with
+	 * no name rather than a name that did not change.
+	 */
+	on(event: "session_info_changed", handler: PiSessionEventHandler<PiSessionInfoChangedEvent>): () => void;
 	registerCommand(name: string, options: PiCommandRegistration): void;
 	appendEntry(customType: string, data?: unknown): void;
+	/**
+	 * pi's own shared event bus, when this surface publishes one.
+	 *
+	 * Optional because this adapter names only the members it reads: a surface without a bus is a
+	 * process in which the subagent provider's versioned interface cannot be reached at all.
+	 */
+	readonly events?: PiEventBus;
 }
 export type PiExtensionFactory = (pi: PiExtensionApi) => BindingResult;
 
@@ -232,37 +299,6 @@ const START_REASON: Record<PiSessionStartReason, SessionStartReason> = {
 const END_REASON: Record<PiSessionShutdownReason, SessionEndReason> = {
 	quit: "disposed", reload: "disposed", new: "transferred", resume: "transferred", fork: "transferred",
 };
-
-function ownerOf(ctx: PiExtensionContext): OwnerReference {
-	const id = ctx.sessionManager.getSessionId();
-	return id.length > 0 ? { kind: "owner", key: `main:${id}` } : { kind: "unresolved" };
-}
-
-function sessionFactsOf(ctx: PiExtensionContext, reason?: SessionStartReason): SessionFacts {
-	const unavailable = ["agent name", "agent id"];
-	const reportedName = ctx.sessionManager.getSessionName();
-	const name = reportedName?.trim() ? reportedName : undefined;
-	if (name === undefined) unavailable.push("session name");
-	const beginsHere = reason !== undefined && reason !== "resume" && reason !== "fork"
-		&& !ctx.sessionManager.getBranch().some(entry =>
-			entry.type === "message" && (entry.message?.role === "user" || entry.message?.role === "assistant"));
-	let startup: SessionStartup | undefined;
-	if (beginsHere) {
-		const model = ctx.model?.provider && ctx.model.id
-			? { provider: ctx.model.provider, model: ctx.model.id } : undefined;
-		const effort = ctx.thinkingLevel || undefined;
-		if (model === undefined) unavailable.push("startup model");
-		if (effort === undefined) unavailable.push("startup effort");
-		if (model !== undefined || effort !== undefined) {
-			startup = { ...(model === undefined ? {} : { model }), ...(effort === undefined ? {} : { effort }) };
-		}
-	}
-	return {
-		sessionId: ctx.sessionManager.getSessionId(), kind: "main",
-		...(name === undefined ? {} : { name }),
-		...(startup === undefined ? {} : { startup }), unavailable,
-	};
-}
 
 function publishNotice(ctx: PiExtensionContext, level: FeedbackLevel, message: string): void {
 	if (ctx.hasUI) ctx.ui.notify(message, level);
@@ -385,21 +421,33 @@ function piPort(
 	definition: ExtensionDefinition,
 	harnessPrices: HarnessModelPrices,
 	harnessAccess: HarnessProviderAccess,
+	positions: PiSessionPositions,
+	integration: PiSubagentIntegration | undefined,
 	keepSubscription: (release: () => void) => void,
 ): HarnessPort {
 	const stateEntryType = `${definition.id}:state`;
 	let activeOwner: { key: string; session: SessionFacts } | undefined;
+	let servingSessionId: string | undefined;
 	let reportedOwnerless = false;
 	let label = definition.displayName;
 	const reportDiagnostic = (message: string): void => { process.stderr.write(`${label}: ${message}\n`); };
-	const resolveOwner = (ctx: PiExtensionContext): OwnerReference => {
-		const owner = ownerOf(ctx);
+	const sessionFactsOf = (ctx: PiExtensionContext, reason?: SessionStartReason): SessionFacts =>
+		piSessionFactsOf(positions.positionOf(ctx, reason), ctx, reason);
+	/**
+	 * One session's position reported as the owner a delivery carries.
+	 *
+	 * A session that resolves no owner is named once per binding on the diagnostic channel: the
+	 * extension cannot key anything to an identity this host does not state, and it is told that
+	 * rather than being keyed to a label that only looks like one.
+	 */
+	const resolvedOwner = (owner: OwnerReference): OwnerReference => {
 		if (owner.kind === "unresolved" && !reportedOwnerless) {
 			reportedOwnerless = true;
 			reportDiagnostic("this session reports no identity; the extension stays off for it");
 		}
 		return owner;
 	};
+	const resolveOwner = (ctx: PiExtensionContext): OwnerReference => resolvedOwner(positions.positionOf(ctx).owner);
 	/**
 	 * Records what one delivery's own context says about the host, and hands that context back.
 	 *
@@ -443,6 +491,11 @@ function piPort(
 		reportDiagnostic,
 		modelPrices: harnessPrices.prices,
 		providerAccess: harnessAccess.access,
+		// The process's one settling of this entry's subagent integration, asked at the owner node:
+		// it is the session this binding serves then, and the answer is that process's own.
+		...(integration === undefined
+			? {}
+			: { subagentIntegration: () => integration.settle(servingSessionId) }),
 		onSession: handler => {
 			const deliver = (event: SessionEvent, owner: OwnerReference, ctx: PiExtensionContext, session: SessionFacts): void => {
 				catalogued(ctx);
@@ -455,21 +508,57 @@ function piPort(
 				});
 			};
 			keepSubscription(pi.on("session_start", (event, ctx) => {
-				const owner = resolveOwner(ctx);
-				if (owner.kind === "owner" && owner.key === activeOwner?.key) return;
 				const reason = START_REASON[event.reason];
-				const session = sessionFactsOf(ctx, reason);
-				if (activeOwner !== undefined) {
-					deliver({ kind: "session_end", reason: "transferred" }, { kind: "owner", key: activeOwner.key }, ctx, activeOwner.session);
+				// The one decision this delivery makes: the start is what says whether the session was
+				// spawned, and the facts and the owner below are both read from that decision rather
+				// than from a second reading of the session's lineage link.
+				const position = positions.positionOf(ctx, reason);
+				const owner = resolvedOwner(position.owner);
+				const session = piSessionFactsOf(position, ctx, reason);
+				// The session this binding now serves requires this entry in the sessions it spawns,
+				// whether it is a top-level session or one that was itself spawned: a child's own
+				// children are spawned by the provider exactly as the root's are, and each session's
+				// requirement is released when that session's own life ends.
+				if (owner.kind !== "owner") {
+					// A session that is not its own owner has no life of its own to pair: it is
+					// delivered with the owner it resolved and takes no part in the transfer below.
+					integration?.requireIn(session.sessionId);
+					deliver({ kind: "session_start", reason }, owner, ctx, session);
+					return;
 				}
-				activeOwner = owner.kind === "owner" ? { key: owner.key, session } : undefined;
+				// A native start that leaves the owner this binding already serves alone is not a
+				// transition at all, which is what makes a reload or a same-file resume silent here.
+				if (owner.key === activeOwner?.key) return;
+
+				const ended = activeOwner;
+				integration?.requireIn(session.sessionId);
+				servingSessionId = session.sessionId;
+				activeOwner = { key: owner.key, session };
+				if (ended !== undefined) {
+					integration?.releaseSession(ended.session.sessionId);
+					deliver({ kind: "session_end", reason: "transferred" }, { kind: "owner", key: ended.key }, ctx, ended.session);
+				}
 				deliver({ kind: "session_start", reason }, owner, ctx, session);
 			}));
 			keepSubscription(pi.on("session_shutdown", (event, ctx) => {
+				const session = sessionFactsOf(ctx);
+				// Whatever this binding required for the session that is going away is released with
+				// it, so a later session of this process states its own requirement rather than
+				// inheriting a spent one.
+				integration?.releaseSession(session.sessionId);
+				// Only the owner session this binding serves ends here, by its own identity: a sub
+				// session this process ran is not the owner the extension serves, and its end is not
+				// the owner's end.
 				const ended = activeOwner;
-				if (ended === undefined) return;
+				if (ended === undefined || ended.session.sessionId !== session.sessionId) return;
 				activeOwner = undefined;
-				deliver({ kind: "session_end", reason: END_REASON[event.reason] }, { kind: "owner", key: ended.key }, ctx, sessionFactsOf(ctx));
+				servingSessionId = undefined;
+				deliver({ kind: "session_end", reason: END_REASON[event.reason] }, { kind: "owner", key: ended.key }, ctx, session);
+			}));
+			// pi's own name-change fact: the session's current facts as they now stand, delivered
+			// where the rename happened rather than at the renamed session's next boundary.
+			keepSubscription(pi.on("session_info_changed", (_event, ctx) => {
+				deliver({ kind: "session_facts" }, resolveOwner(catalogued(ctx)), ctx, sessionFactsOf(ctx));
 			}));
 		},
 		nextTask: callback => {
@@ -557,8 +646,21 @@ function piPort(
 	};
 }
 
+/**
+ * What a pi assembly states about itself beyond the generic assembly information.
+ *
+ * `childEntry` is the module pi's loader loads for this extension — the file the extension's own
+ * discovery entrypoint re-exports. A harness that spawns child sessions loads extensions into them
+ * by path, so requiring this entry in those sessions is what makes a spawned session's own facts
+ * reach consumers; an assembly that states no entry declares no child observation to require, which
+ * is the same shape as a host that runs no subagent provider.
+ */
+export interface PiAssembly extends ExtensionAssembly {
+	readonly childEntry?: string;
+}
+
 /** Uses the same binding and assembly contract as the OMP adapter. */
-export function piAdapter(definition: ExtensionDefinition, options: ExtensionAssembly = {}): PiExtensionFactory {
+export function piAdapter(definition: ExtensionDefinition, options: PiAssembly = {}): PiExtensionFactory {
 	const state = new StateStore({ field: activationField(definition), persistence: statePersistence(definition) });
 	// pi's own model prices, one set for the whole process: every binding of this assembly records the
 	// registry of the contexts its own deliveries come from, and the query the framework hands an
@@ -570,6 +672,16 @@ export function piAdapter(definition: ExtensionDefinition, options: ExtensionAss
 	// the credentials and addresses are the host's, and every binding's deliveries report the registry
 	// they were read from.
 	const harnessAccess = harnessProviderAccess();
+	// The sessions this process's deliveries are read through: pi's own lineage links and the session
+	// files they name are facts of the process, and a chain walked for one session is the same chain
+	// another session of this process would walk.
+	const positions = piSessionPositions(piSessionFileAnchors());
+	// The subagent-provider integration of this process, created once for the same reason and attached
+	// at the first binding: what it holds is the process's requirements and the provider's own
+	// announcement, while what each binding releases is the requirement of the sessions it served.
+	const integration = options.childEntry === undefined
+		? undefined
+		: createPiSubagentIntegration(definition.id, options.childEntry);
 	let implementation: ExtensionImplementation | undefined;
 	const resolveImplementation = (context: ImplementationContext): ExtensionImplementation => {
 		if (implementation === undefined || isImplementationDisposed(implementation)) {
@@ -579,10 +691,14 @@ export function piAdapter(definition: ExtensionDefinition, options: ExtensionAss
 	};
 	return pi => {
 		const subscriptions: Array<() => void> = [];
-		const result = bindExtension(definition, piPort(pi, definition, harnessPrices, harnessAccess,
-			release => subscriptions.push(release)), state,
-			resolveImplementation, { baseDir: options.configBaseDir });
-		if (!result.bound) for (const release of subscriptions) release();
+		const port = piPort(pi, definition, harnessPrices, harnessAccess, positions, integration,
+			release => subscriptions.push(release));
+		integration?.attach(pi, port.reportDiagnostic);
+		const result = bindExtension(definition, port, state, resolveImplementation, { baseDir: options.configBaseDir });
+		if (!result.bound) {
+			for (const release of subscriptions) release();
+			integration?.releaseAll();
+		}
 		return result;
 	};
 }

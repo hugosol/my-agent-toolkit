@@ -239,6 +239,9 @@ if (plan.requireUserHome !== undefined && userHomeDirectory !== plan.requireUser
 			hasUI: false,
 			feedback: { notify: (level, message) => notices.push({ level, message }) },
 			markers: { publishMarkers: () => undefined },
+			// This child drives the store directly, so the entry it stands in for is one whose harness
+			// integrates subagent observations; nothing in this suite reads the mode.
+			subagents: { mode: "subagents" },
 		});
 		// The rendezvous a parent arrays an interleaving with: the baseline is loaded by now, and this
 		// process goes no further until the state it is meant to meet is really on disk.
