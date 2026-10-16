@@ -60,10 +60,12 @@ import { planContribution } from "./injection";
 import { cleanupImplementation, initializeImplementation, servingOwnerKeyOf, initializationPending } from "./lifecycle";
 import { publishMarkerOnRun, publishMarkerOnViewChange, registerMarker, markerSeat } from "./marker";
 import { createRoundSynthesis, roundLives } from "./round-events";
+import { createSessionActivityAxis } from "./session-activity";
 import { createContextCollection } from "./session-context";
 import { dispatchSessionEvent } from "./session-events";
 import {
 	ROUND_EVENT_KINDS,
+	SESSION_ACTIVITY_KINDS,
 	SESSION_CONTEXT_EVENT_KINDS,
 	TURN_EVENT_KINDS,
 	USER_INPUT_EVENT_KINDS,
@@ -368,25 +370,35 @@ export function bindExtension(
 				cleanupImplementation(definition.id, implementation, port.reportDiagnostic);
 			}
 		});
-		// The round axis is subscribed when this extension observes one of its edges *or* one of the
-		// Turn axis's, because a Turn states which round it belongs to and that identity is this
-		// bookkeeping's — and when it observes a session reading, because the activity in the
-		// framework's own observation source is what those edges leave behind, so a consumer of the
-		// source is served by the same bookkeeping whether or not it subscribes to an edge itself.
-		// Unlike the session subscription above there is no framework State behavior to run for a
-		// round — the agent's work state is not framework State — so a definition that subscribed to
-		// none of those asks the harness for no round deliveries and registers no such hook. The same
-		// bookkeeping is what the Turn hook below reads.
+		// The round axis is subscribed when this extension observes one of its edges, one of the Turn
+		// axis's, or one of the readings those transitions state — the activity axis, and a session
+		// reading in the framework's own observation source, whose activity those edges leave behind —
+		// because a Turn states which round it belongs to and that identity is this bookkeeping's, and
+		// because the activity reading is that same bookkeeping's own projection and is delivered from
+		// the transitions it dispatches. Unlike the session subscription above there is no framework
+		// State behavior to run for a round — the agent's work state is not framework State — so a
+		// definition that subscribed to none of them asks the harness for no round deliveries and
+		// registers no such hook. The same bookkeeping is what the Turn hook below reads.
 		const lives = roundLives();
-		if (subscribesAny(groups, [...ROUND_EVENT_KINDS, ...TURN_EVENT_KINDS, ...SESSION_CONTEXT_EVENT_KINDS])) {
+		if (
+			subscribesAny(groups, [
+				...ROUND_EVENT_KINDS,
+				...TURN_EVENT_KINDS,
+				...SESSION_ACTIVITY_KINDS,
+				...SESSION_CONTEXT_EVENT_KINDS,
+			])
+		) {
 			// The synthesis is what decides the edges; the framework arranges its end-candidate
 			// re-check on the harness's next task, so a harness that never reports a `nextTask`
-			// capability leaves a candidate unconfirmed rather than being polled for one.
+			// capability leaves a candidate unconfirmed rather than being polled for one. The activity
+			// axis rides along with it, because it is those same transitions that state a session's
+			// reading.
 			const rounds = createRoundSynthesis({
 				definition,
 				lives,
 				groups,
 				observations,
+				activity: createSessionActivityAxis({ definition, groups, reportFailure: port.reportDiagnostic }),
 				reportFailure: port.reportDiagnostic,
 				nextTask: callback => port.nextTask(callback),
 				delivering: () => delivering,

@@ -25,6 +25,7 @@ import type {
 	RoundEvent,
 	SemanticEvent,
 	SemanticEventDeliveryMap,
+	SessionActivityEvent,
 	SessionContextEvent,
 	SessionEvent,
 	TurnEvent,
@@ -37,6 +38,15 @@ export const SESSION_EVENT_KINDS: readonly SessionEvent["kind"][] = ["session_st
 
 /** The round axis's event kinds. */
 export const ROUND_EVENT_KINDS: readonly RoundEvent["kind"][] = ["round_start", "round_end"];
+
+/**
+ * The activity axis's event kinds.
+ *
+ * It has one, and it is derived: a group that observes activity is observing the reading the round
+ * axis's own transitions leave a session in, so a binding that subscribes to this kind needs the
+ * round hook exactly as one that subscribes to an edge does.
+ */
+export const SESSION_ACTIVITY_KINDS: readonly SessionActivityEvent["kind"][] = ["session_activity"];
 
 /** The Turn axis's event kinds. */
 export const TURN_EVENT_KINDS: readonly TurnEvent["kind"][] = ["turn_start", "turn_end"];
