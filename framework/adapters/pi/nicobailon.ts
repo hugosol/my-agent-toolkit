@@ -10,12 +10,14 @@
  * is told about, and the diagnostics an operator reads.
  *
  * The third party reached here is nicobailon's `pi-subagents` at the version this repository pins.
- * Two of its published surfaces are used, both documented: the module
+ * Three of its published surfaces are used, all documented: the module
  * `pi-subagents/required-child-extensions`, whose `registerRequiredChildExtensions` requires a host's
- * extension in every child session a parent session spawns, and its versioned request/announcement
+ * extension in every child session a parent session spawns; its versioned request/announcement
  * pair on pi's shared event bus (`subagents:rpc:v1:...`), whose `ping` states the interface version
- * and the session the provider currently serves. Neither surface is read for anything else, and no
- * private field, file layout or bundling detail is depended on.
+ * and the session the provider currently serves; and its versioned session-liveness registry
+ * (`Symbol.for("@agegr/pi-web/session-liveness/v1")`), through which the provider states, per
+ * session it serves, whether that session still holds work it is waiting on. None of them is read
+ * for anything else, and no private field, file layout or bundling detail is depended on.
  *
  * One settle distinguishes four outcomes, and none of them is read as another: no provider artifact
  * in this process is no subagent facility for this entry (the normal shape); a requirement the
@@ -30,6 +32,7 @@
  */
 import type { SubagentIntegration, SubagentIntegrationFailure } from "../../core/protocol";
 import type { PiExtensionApi } from "../pi";
+import type { SessionBackgroundWork } from "./round";
 
 /**
  * The provider's published child-extension module, as its own documentation names it.
@@ -53,6 +56,100 @@ const PROVIDER_REPLY_PREFIX = "subagents:rpc:v1:reply:";
 
 /** The interface version this integration reads; another version is an interface it cannot read. */
 const SUPPORTED_PROVIDER_VERSION = 1;
+
+/**
+ * The registry slot the provider's published session-liveness protocol is discovered under, and the
+ * one interface version of that protocol this adapter publishes and reads.
+ *
+ * The provider resolves this slot when a session starts and registers one provider for the session
+ * it serves, stating that session's identity and answering, on demand, whether it still holds work
+ * that session is waiting on. A party that wants that answer has to publish the slot — the protocol
+ * states a `register` and no query — so this entry publishes it when the process carries none, which
+ * is what makes the provider's own statement readable here, and reads back what the provider
+ * registers rather than copying the queues behind it.
+ */
+const SESSION_LIVENESS_REGISTRY_KEY = "@agegr/pi-web/session-liveness/v1";
+const SUPPORTED_LIVENESS_VERSION = 1;
+
+/**
+ * The member this entry marks the registry it publishes with, so a second binding of this framework
+ * in one process recognizes that registry as this entry's own and reads the same registrations
+ * rather than publishing a second registry the provider would not register into. A registry another
+ * party published carries no such member, and this entry reads nothing from it — a foreign host's
+ * protocol stays that host's, and displacing it would break the host it belongs to.
+ */
+const REGISTRATION_TABLE = Symbol("model-cost:pi-session-liveness");
+
+/** One session's registration: the provider's own answer for it, and the release it handed back. */
+interface LivenessRegistration {
+	readonly isActive: () => boolean;
+	readonly release: () => void;
+}
+
+/**
+ * This entry's own half of the registry it publishes: the provider's registrations, by the session
+ * each one names, and whether the provider stated itself in this process at all.
+ */
+interface LivenessTable {
+	/** The one registration the provider holds per session it serves. */
+	readonly registrations: Map<string, LivenessRegistration>;
+	/** Whether the provider stated itself in this process, through its announcement or a query answer. */
+	served: boolean;
+}
+
+/** The liveness table of a registry object, or `undefined` when that registry is another party's. */
+function livenessTableOf(registry: unknown): LivenessTable | undefined {
+	const mapping = mappingOf(registry);
+	const table = mapping?.[REGISTRATION_TABLE as unknown as string];
+	return typeof table === "object" && table !== null ? (table as LivenessTable) : undefined;
+}
+
+/**
+ * This process's session-liveness table: this entry's own, published here when the process carries
+ * none, or `undefined` when the slot holds another party's registry.
+ *
+ * Publishing is what the protocol requires of a party that wants the provider's answer — the slot
+ * carries a `register` and no query — and it happens when the slot is free, never over a registry
+ * another host published. The table lives inside the registry object, so this entry's own
+ * registrations are exactly as long-lived as the registry that received them.
+ */
+function livenessTable(): LivenessTable | undefined {
+	const holder = globalThis as Record<PropertyKey, unknown>;
+	const slot = Symbol.for(SESSION_LIVENESS_REGISTRY_KEY);
+	const existing = holder[slot];
+	if (existing !== undefined) return livenessTableOf(existing);
+	const table: LivenessTable = { registrations: new Map(), served: false };
+	holder[slot] = {
+		version: SUPPORTED_LIVENESS_VERSION,
+		register: (value: unknown) => registrationIn(table, value),
+		[REGISTRATION_TABLE]: table,
+	};
+	return table;
+}
+
+/**
+ * Takes one of the provider's registrations, and answers with the release the protocol asks for.
+ *
+ * A registration this adapter cannot read — one that states no session, or no `isActive` to ask —
+ * leaves nothing held: it is the provider stating an interface this entry cannot use, which is a
+ * statement it answers nothing with rather than one it reads as a session at rest. The returned
+ * release removes exactly the registration it belongs to, so a provider that registers for the same
+ * session again is not unregistered by the release of the statement it replaced.
+ */
+function registrationIn(table: LivenessTable, value: unknown): () => void {
+	const provider = mappingOf(value);
+	const sessionId = textOf(provider?.sessionId);
+	const isActive = provider?.isActive;
+	if (sessionId === undefined || typeof isActive !== "function") return () => {};
+	const held: LivenessRegistration = {
+		isActive: isActive as () => boolean,
+		release: () => {
+			if (table.registrations.get(sessionId) === held) table.registrations.delete(sessionId);
+		},
+	};
+	table.registrations.set(sessionId, held);
+	return held.release;
+}
 
 /**
  * How long the settling waits for the provider's announcement or its answer to one query.
@@ -151,6 +248,20 @@ export interface PiSubagentIntegration {
 	releaseAll(): void;
 	/** Settles this process's one answer, having taken the requirement for `sessionId`. */
 	settle(sessionId: string | undefined): Promise<SubagentIntegration>;
+	/**
+	 * What this process's provider states about one session's background work.
+	 *
+	 * It is the provider's own published statement, read through the registry this entry publishes for
+	 * it, and never a reconstruction of the queues behind it: `holds` while it reports live delegated
+	 * work, an undelivered result, a completion notice it has not started or a wake it has not
+	 * delivered; `clear` when it reports none of those; and `unread` whenever this entry cannot
+	 * obtain that answer at all — a provider that runs here with no registration it holds for this
+	 * session, a registration naming another session, a registration whose answer cannot be taken, or
+	 * a registry this entry does not hold. None of those is the provider's own `clear`: this entry
+	 * does not answer a statement it never read, and reading one as rest would close a Round while
+	 * the session was still waiting on work.
+	 */
+	backgroundActivity(sessionId: string): SessionBackgroundWork;
 }
 
 /**
@@ -174,6 +285,8 @@ export function createPiSubagentIntegration(extensionId: string, childEntry: str
 	const taken = new Map<string, Promise<Requirement>>();
 	/** The provider's own announcement, once it has stated itself. */
 	let announced: ProviderAnswer | undefined;
+	/** Whether the provider stated itself in this process at all, by announcement or by an answer. */
+	let serves = false;
 	/** How many settling queries this process issued, for correlating the answers to them. */
 	let queries = 0;
 	/** The one settled answer of this process. */
@@ -259,6 +372,10 @@ export function createPiSubagentIntegration(extensionId: string, childEntry: str
 				clearTimeout(timer);
 				offAnnouncement();
 				offReply();
+				// Anything that answered — a statement, a refusal, an interface this adapter cannot read —
+				// is a provider that is running here, which is what makes a session it did not register
+				// for a session whose background work this entry cannot read rather than one at rest.
+				if (answer !== undefined) serves = true;
 				resolve(answer);
 			};
 			const timer = setTimeout(() => finish(answered), ANNOUNCEMENT_BUDGET_MS);
@@ -354,17 +471,67 @@ export function createPiSubagentIntegration(extensionId: string, childEntry: str
 		return { mode: "subagents" };
 	};
 
+	/**
+	 * What this process's provider states about one session's background work, read from the registry
+	 * this entry publishes for it.
+	 *
+	 * Only the provider's own answer is read: a registration it holds for this exact session, asked
+	 * for its own reading at this instant. Every other shape is answered as the statement this entry
+	 * could not read rather than as a session at rest — a registration naming another session, a
+	 * provider that stated itself without leaving one for this session, a registry another party
+	 * published, and an answer that cannot be taken all leave the question open. A process in which no
+	 * provider stated itself and no registration was left is the one case this entry answers `clear`
+	 * for: there is no provider facility in this process whose work a session could be waiting on, so
+	 * the harness's own facts are the whole rest condition rather than something invented here.
+	 */
+	const backgroundActivity = (sessionId: string): SessionBackgroundWork => {
+		const table = livenessTable();
+		if (table === undefined) {
+			return {
+				state: "unread",
+				reason:
+					"this process already carries a session-liveness registry this entry did not publish, so the subagent provider's own statement about a session cannot be read here",
+			};
+		}
+		const registration = table.registrations.get(sessionId);
+		if (registration !== undefined) {
+			try {
+				return registration.isActive() ? { state: "holds" } : { state: "clear" };
+			} catch (error) {
+				return {
+					state: "unread",
+					reason: `reading whether the subagent provider still holds background work for this session failed: ${error instanceof Error ? error.message : String(error)}`,
+				};
+			}
+		}
+		if (!serves && table.registrations.size === 0) return { state: "clear" };
+		return {
+			state: "unread",
+			reason: table.registrations.size === 0
+				? "the subagent provider serving this process left no session-liveness registration, so it states nothing about this session"
+				: "the subagent provider serving this process registered for another session, so it states nothing about this session",
+		};
+	};
+
 	return {
 		attach: (pi, publish) => {
 			if (host !== undefined) return;
 			host = pi;
 			report = publish;
+			// This entry's own half of the provider's published session-liveness protocol: the registry
+			// is published here, while this binding is being set up and before the host starts any
+			// session, because the provider resolves that slot when a session starts. A process that
+			// already carries one keeps it: what another host published there is that host's protocol.
+			livenessTable();
 			const bus = pi.events;
 			if (bus === undefined) return;
 			// The provider's own announcement, which is the same answer its query replies with: read
 			// when it states itself, so a settle that runs after this session's start needs no query.
 			releases.push(bus.on(PROVIDER_READY_CHANNEL, payload => {
-				announced ??= providerAnswerOf(payload);
+				const answer = providerAnswerOf(payload);
+				if (answer === undefined) return;
+				announced ??= answer;
+				serves = true;
 			}));
 		},
 		requireIn: sessionId => {
@@ -379,5 +546,6 @@ export function createPiSubagentIntegration(extensionId: string, childEntry: str
 			settled ??= settleOnce(sessionId);
 			return settled;
 		},
+		backgroundActivity,
 	};
 }
