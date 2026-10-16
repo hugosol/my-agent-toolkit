@@ -267,6 +267,20 @@ describe("a read-only synchronization adopts another writer's committed records 
 			"session-other",
 		]);
 
+		// The detail form of the session on screen reads both, once each: the target's own accumulation is
+		// this instance's live one (the saved three requests and the uncommitted fourth), and the tree
+		// beside it adds the adopted record's own two — the adopted consumption is a descendant's own
+		// contribution, not a second helping of this session's.
+		const display = bound.runtime.presentation.of({
+			sessionId: MAIN.sessionId,
+			provider: PROVIDER,
+			model: MODEL,
+		});
+		expect(display.current.costCny).toBeCloseTo(OFF_PEAK_AMOUNT * 4, 12);
+		expect(display.current.tokens).toEqual({ input: 8, cacheRead: 16, cacheWrite: 20, output: 12 });
+		expect(display.tree.costCny).toBeCloseTo(OFF_PEAK_AMOUNT * 6, 12);
+		expect(display.tree.tokens).toEqual({ input: 12, cacheRead: 24, cacheWrite: 30, output: 18 });
+
 		// Nothing was written by the synchronization: the file is the other process's own document byte for
 		// byte, no lock or temporary file is left beside it, and the notice stated nothing.
 		expect(fileText(bound.file)).toBe(publishedText);

@@ -41,6 +41,7 @@
 - 另一进程提交的记录在同周期内被采纳后立即出现在 `view.own/identity` 与展示读数里，而本实例**在途**请求（未到 round_end）仍在内存中、文件里没有它；同步前后文件字节一致、通知为空。
 - 外部切周期：文档换成新 generation → `periodChanged:true`，本实例的 ledger、Round 边界与 Session span 全部丢弃；随后 round_end **不产生任何写入**（文件保持新周期文档字节不变），关闭周期的消费没有带进新周期。
 - 同文档再同步 → `changed:false`，订阅者收到 **0 次**通知（不产生无谓重绘）。
+- **detail 形态的读数对照**（同一用例）：目标自身 `current` = 本实例在途的 4 个请求（3 已保存 + 1 未提交），其 `tree` = 6（含被采纳记录那条直接父链子会话的 2）——被采纳的消费以「后代的自身贡献」出现一次，而不是本会话的第二次加总。
 - 完成提示只是提示：同步只采纳文件已保存记录，未保存的会话记录不会因此出现（用例断言文件字节与实例读数两处）。
 
 ## 4. P34 — 坏基线暂停、保留文件、不反复修复、provider 不受影响
@@ -108,22 +109,32 @@ every invariant held.
 5. **写入权限的更广图景**：本票验证「提交只更新本分区记录、跨分区互不影响」；跨用户/跨权限文件系统（只读目录、ACL）未验证。
 6. **口径判断点**：§4 的「运行期不可读 → 报告不暂停」见上，需人工/主代理确认是否与验收意图一致。
 
-## 8. 附：dock 消费者运行（本 worktree 受阻，原因与本票无关）
+## 8. 附：dock 消费者运行（本 worktree 受阻，原因是 CRLF 检出，与本票无关）
 
-`bun test tests/harness-dock` 本次运行：**45 pass / 12 fail**，全部失败发生在**装配阶段**、且都在同一处：
+`bun test tests/harness-dock` 本次运行：**45 pass / 12 fail**（57 tests / 23 files，102s）。12 条失败全部可追溯到同一环境事实——该 worktree 以 **CRLF** 检出（`core.autocrlf`，仓库无 `.gitattributes`），而 dock 自己的解析与哈希按 LF 写死：
+
+1. **10 条 `(unnamed)`**（目录/夹具装配阶段抛出，任何 model-cost 行为运行之前）：
 
 ```
 error: C:\...\host-patches\omp-18.5.0-viewed-session\patch.diff touches no file
   at ensurePatchArtifact (tests/harness-dock/host-patch-artifact.ts:224)
-  at ensureViewedSessionHarness (...)
 ```
-
-**原因（独立探针，本票改动无关）**：该 worktree 以 **CRLF** 检出 `host-patches/**/patch.diff`（`core.autocrlf`，仓库无 `.gitattributes`），而 dock 自己的解析器按 `"\n"` 切分、正则 `^diff --git a/(.+?) b/(.+)$` 的行尾残留 `\r`（`.` 不匹配 `\r`）→ 一个文件都匹配不到。同一探针把行尾规范化为 LF 后立刻得到 8 个文件：
+   独立探针（临时文件，未提交）：
 
 ```
-$ bun .cache/scratch-04/probe4.ts     # 临时探针，未提交
+$ bun .cache/scratch-04/probe4.ts
 CRLF as checked out: 0 files; LF normalised: 8 files
 first LF-file: src/extensibility/extensions/index.ts
 ```
+   即 `patchTouchedFiles`（`split("\n")` + `/^diff --git a/(.+?) b/(.+)$/`）在行尾残留 `\r`（`.` 不匹配 `\r`）时一个文件都匹配不到。
 
-即：**这不是本票行为导致的失败**（本票未改 `tests/harness-dock/**` 与 `host-patches/**`，失败发生在任何 model-cost 行为运行之前的宿主补丁物化阶段）。它会影响任何在 Windows 上以 CRLF 检出运行 dock 的票，建议由装配/宿主验证票（[20](20-assembly-lifecycle.md)/[21](21-consumer-regression.md)）以 `.gitattributes`（如 `*.diff -text`）或按行尾鲁棒的解析修正，本票不越界修改。真实 OMP 宿主上的存储/展示读数因此在本 worktree **未验证**——但存储面的本票承诺由真实独立进程与真实文件证据覆盖，不以宿主运行替代。
+2. **1 条 `baseline record > records the lockfiles of this repository ...`**：磁盘上的 `bun.lock`（CRLF）sha = `7f5c82e6…`，记录值 = `9e9f4833…`，而**把行尾规范化为 LF 后与记录值完全一致**，也正是 `HEAD:bun.lock` 这个 blob 的 sha：
+
+```
+as on disk   : 7f5c82e6c1785f675b9183afbb8d5ee2ecf73278018a2d90857a3da7b1788883
+lf-normalised: 9e9f4833eae6956d215f4a3e50a601791fcab43a828d5b263fa3b2e848415da9   (= HEAD:bun.lock)
+```
+
+3. **1 条 `controlled session > starts the isolated artifact under a temporary agent state ...`**：该用例要先物化被补丁的宿主 artifact，同样卡在上述补丁解析上（1.2s 后失败）。
+
+结论：本票未改 `tests/harness-dock/**`、`host-patches/**`、`framework/docs/harness-baseline.json`、`bun.lock` 中任何一处，失败发生在宿主补丁物化与 lockfile 校验阶段。它会影响任何在 Windows 上以 CRLF 检出运行 dock 的票，建议由装配/宿主验证票（[20](20-assembly-lifecycle.md)/[21](21-consumer-regression.md)）以 `.gitattributes`（如 `*.diff -text`、`bun.lock text eol=lf`）或按行尾鲁棒的解析修正；本票不越界修改。真实 OMP 宿主上的存储/展示读数因此在本 worktree **未验证**——本票承诺由**真实独立进程 + 真实文件 + 调用次数**证据覆盖，不以宿主运行替代，也不声称宿主路径已通过。
