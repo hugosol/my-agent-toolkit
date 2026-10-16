@@ -220,7 +220,7 @@ afterEach(() => {
 	for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
 });
 
-describe("the CLI's prefetch asks once, and a settled request checks its reading's success TTL (P38)", () => {
+describe("the CLI's prefetch asks once, and a settled request checks its reading's success TTL (P29)", () => {
 	test("a settled request past the prefetched reading's TTL queries with the host address, credential and budget", async () => {
 		const bound = await bindBalance();
 
@@ -328,7 +328,52 @@ describe("the CLI's prefetch asks once, and a settled request checks its reading
 	});
 });
 
-describe("one in-flight query serves every trigger, and nothing is re-issued when it completes (P38)", () => {
+describe("the host's current facts are what one query is built from (P29)", () => {
+	test("a credential the host has replaced is what the next query sends, and the first answer is not cached", async () => {
+		let credential = "key-one";
+		const bound = await bindBalance({
+			access: async () => ({ baseUrl: "https://host.example/v1", credential }),
+		});
+		// The CLI's own prefetch authenticated with the credential of its own moment.
+		expect(bound.prefetched).toEqual([
+			{
+				url: "https://host.example/user/balance",
+				options: {
+					method: "GET",
+					headers: { authorization: "Bearer key-one" },
+					timeoutMs: 5_000,
+					proxy: false,
+				},
+			},
+		]);
+
+		// The host replaces the credential — a login, a rotated key — and the query this settled request
+		// begins past the reading's success TTL authenticates with the replaced one: the first answer was
+		// not kept as the credential of later queries. The one operation asked the host exactly once, and
+		// what it was answered is what that whole request was built from.
+		credential = "key-two";
+		bound.clock.now = CLOCK + SPEC_TTL_MS;
+		turnOf(bound.double, bound.clock.now, DEEPSEEK);
+		await drain();
+		expect(bound.sent).toEqual([
+			{
+				url: "https://host.example/user/balance",
+				options: {
+					method: "GET",
+					headers: { authorization: "Bearer key-two" },
+					timeoutMs: 5_000,
+					proxy: false,
+				},
+			},
+		]);
+		expect(bound.resolved).toEqual([DEEPSEEK]);
+		expect(bound.runtime.presentation.balance()).toEqual({
+			reading: { total: 110, currency: "CNY", obtainedAt: CLOCK + SPEC_TTL_MS },
+		});
+	});
+});
+
+describe("one in-flight query serves every trigger, and nothing is re-issued when it completes (P29)", () => {
 	test("triggers arriving while the prefetch is out join it, and the completion re-issues nothing", async () => {
 		const held = heldAnswer();
 		const bound = await bindBalance({ respond: () => held.promise, initiate: false });
@@ -362,7 +407,7 @@ describe("one in-flight query serves every trigger, and nothing is re-issued whe
 	});
 });
 
-describe("a failed query keeps the last reading and its instant, with no cooldown (P38)", () => {
+describe("a failed query keeps the last reading and its instant, with no cooldown (P29)", () => {
 	test("a rejected transport leaves the reading and its obtained instant untouched, and a later usage retries", async () => {
 		let fail = false;
 		const bound = await bindBalance({
@@ -449,7 +494,7 @@ describe("a failed query keeps the last reading and its instant, with no cooldow
 	});
 });
 
-describe("the balance address follows the host and falls back to the provider's own default (P38)", () => {
+describe("the balance address follows the host and falls back to the provider's own default (P29)", () => {
 	test("a host address without a trailing /v1 keeps its own path", async () => {
 		const bound = await bindBalance({ access: async () => ({ baseUrl: "https://relay.example/api/", credential: "k" }) });
 		bound.clock.now += SPEC_TTL_MS;

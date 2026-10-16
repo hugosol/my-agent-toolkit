@@ -30,8 +30,16 @@
  *      it switched to, changes what the widget draws, asks the model for nothing and writes no file;
  *      an argument the declaration does not name is refused by the framework's own routing;
  *   4. **The provider feature this mode needs is wired.** The DeepSeek balance the extension queries
- *      for itself is answered and shown on the widget, and a settled request of that provider is what
- *      refreshes it — all of it with one extension loaded and no subagent provider present;
+ *      for itself is answered and shown on the widget: the query really leaves the process at the
+ *      host's resolved address with the host's current credential and the framework's own business
+ *      budget, the initialization's prefetch reaches the endpoint before the first model request does,
+ *      and a settled request of that provider is the only thing that refreshes a reading past its
+ *      success TTL — an expired reading on its own queries nothing, a refused refresh keeps the
+ *      reading and its amount rather than a zero, a provider the host cannot authenticate is asked
+ *      nothing and accused of nothing, and a query still out is joined by the triggers that follow it
+ *      instead of being issued twice — with the credential it authenticates with being the one the
+ *      host's own configuration states for that process. All of it with one extension loaded and no
+ *      subagent provider present;
  *   5. **`storageDir` keeps its existing interpretation on this host**: an absolute value is used as
  *      it is, a relative one resolves against the extension's own configuration directory rather than
  *      the process's working directory, the field's `~/` means the user's `.omp` home, two runs with
@@ -58,7 +66,8 @@
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
-import { type PiCli, PiSession, type PiRun, piVersion, resolvePiCli, startPiRun } from "../tests/harness-dock/pi-session";
+import { type PiCli, PiSession, type PiRun, piVersion, resolvePiCli, startPiRun, writePiModels } from "../tests/harness-dock/pi-session";
+import type { CaptureServerOptions, CapturedBalanceCall } from "../tests/harness-dock/capture-server";
 import { PI_MODEL_COST_CONFIG_ROOT_ENV } from "../tests/harness-dock/fixtures/pi-model-cost/env";
 
 /** The repository root: this script lives in `scripts/`. */
@@ -105,6 +114,55 @@ const PROMPT_TWO = "a second exchange in the same session";
 
 /** How long a just-issued command's UI frame may take to arrive before it counts as absent. */
 const UI_FRAME_TIMEOUT_MS = 5_000;
+
+/**
+ * The credential the balance phase's `deepseek` provider declares, and the one its other provider carries.
+ *
+ * Both are this smoke's own synthetic literals: the balance phase searches every surface a run produces
+ * for the first one, so nothing real may be used for it, and the second keeps a run's model working when
+ * the balance provider deliberately has no accessible credential.
+ */
+const BALANCE_SENTINEL_KEY = "SYNTHETIC-PI-BALANCE-SENTINEL-6c1a-DO-NOT-LEAK";
+const MODEL_ONLY_CREDENTIAL = "pi-smoke-model-key";
+/** The credential a later process of the same storage root declares for the same provider. */
+const BALANCE_REPLACED_KEY = "SYNTHETIC-PI-BALANCE-REPLACED-9d47-DO-NOT-LEAK";
+
+/**
+ * The one model the balance phase's runs declare in pi's own `models.json`.
+ *
+ * Both providers of a balance run declare it — the one the session's requests reach and the one whose
+ * balance the extension queries — so a case's provider and the balance's provider resolve the same
+ * endpoint when they are the same name and when they are not.
+ */
+const DECLARED_MODEL = {
+	id: MODEL,
+	name: `pi smoke ${MODEL}`,
+	reasoning: false,
+	input: ["text"],
+	cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+	contextWindow: 128_000,
+	maxTokens: 8192,
+};
+
+/** The balance the held case's endpoint answers with: unlike the other cases' amount, so a late answer is recognizable. */
+const BALANCE_JOINED_TOTAL = "77.00";
+
+/** The provider the no-credential case's model requests run on, so `deepseek` itself stays unused. */
+const MODEL_ONLY_PROVIDER = "probe-provider";
+
+/**
+ * How long a real run is left idle to show that one arrival did NOT happen in that time.
+ *
+ * The smoke's only duration of this kind: "an expired reading queries nothing on its own" and "a
+ * trigger that arrives while a query is out issues nothing" are claims about a real child process,
+ * whose progress is real time, and the window is what gives a call that would be made the time to
+ * arrive. Every case that uses it keeps running afterwards, which is what shows the run was idle
+ * rather than stalled.
+ */
+const IDLE_WINDOW_MS = 2_500;
+
+/** The shorter window for one whose call could only be issued immediately: an already-delivered trigger. */
+const SETTLED_WINDOW_MS = 1_000;
 
 // ---------------------------------------------------------------------------
 // Observations
@@ -207,7 +265,7 @@ function startDockRun(cli: PiCli, label: string, options: { readonly baseline?: 
  */
 async function openSession(
 	dock: DockRun,
-	options: { readonly entrypoint?: string; readonly extraEnv?: Record<string, string> } = {},
+	options: { readonly entrypoint?: string; readonly extraEnv?: Record<string, string | undefined> } = {},
 ): Promise<PiSession> {
 	const session = await PiSession.start({
 		cli: dock.run.cli,
@@ -219,6 +277,107 @@ async function openSession(
 	dock.sessions.push(session);
 	sessions.push(session);
 	return session;
+}
+
+// ---------------------------------------------------------------------------
+// The balance phase's own runs
+// ---------------------------------------------------------------------------
+
+/** What one balance-phase run declares: the model's provider and the balance provider's credential. */
+interface BalanceRunOptions {
+	/** The provider the session's model requests run on; `deepseek` unless a case states another. */
+	readonly modelProvider?: string;
+	/** The credential the `deepseek` provider carries; omitted declares it with none at all. */
+	readonly deepseekCredential?: string;
+	/** The capture endpoint's balance answers. */
+	readonly balance?: CaptureServerOptions["balance"];
+}
+
+/**
+ * One run for the balance phase: the capture endpoint behind it, an isolated home, and a `models.json`
+ * this phase states itself.
+ *
+ * The dock's own `startPiRun` declares the one provider the session runs and one built-in credential.
+ * This phase needs two more freedoms, and states both through the same `models.json` the dock's other pi
+ * runs use: a credential of its own synthetic literal, so that its absence everywhere else in a run is
+ * meaningful, and a second provider carrying that credential when the balance's provider must have none —
+ * which is what makes "a host with no access to `deepseek` asks it nothing" an observation about
+ * `deepseek` rather than about a run that has no usable model at all.
+ */
+function startBalanceRun(cli: PiCli, label: string, options: BalanceRunOptions = {}): DockRun {
+	const modelProvider = options.modelProvider ?? PROVIDER;
+	const run = startPiRun(cli, label, {
+		provider: modelProvider,
+		model: MODEL,
+		endpoint: {
+			replyText: REPLY_TEXT,
+			usage: CAPTURE_USAGE,
+			...(options.balance === undefined ? {} : { balance: options.balance }),
+		},
+	});
+	// The provider the session's own requests reach, and — when the balance's provider is another one —
+	// that provider too, with the credential this case states or with none; both declare the one model.
+	const credential = modelProvider === PROVIDER ? options.deepseekCredential : MODEL_ONLY_CREDENTIAL;
+	writePiModels(run.root.agentDir, {
+		[modelProvider]: {
+			baseUrl: run.capture.baseUrl,
+			api: "openai-completions",
+			...(credential === undefined ? {} : { apiKey: credential }),
+			models: [DECLARED_MODEL],
+		},
+		...(modelProvider === PROVIDER
+			? {}
+			: {
+					[PROVIDER]: {
+						baseUrl: run.capture.baseUrl,
+						api: "openai-completions",
+						...(options.deepseekCredential === undefined ? {} : { apiKey: options.deepseekCredential }),
+						models: [DECLARED_MODEL],
+					},
+				}),
+	});
+	const home = isolateHome(run.root.path);
+	const dock: DockRun = { run, home, sessions: [] };
+	runs.push(dock);
+	return dock;
+}
+
+/**
+ * The balance calls one run's endpoint has received once there are at least `atLeast` of them.
+ *
+ * The query is background work: the exchange that triggered it finishes first, so a case waits for the
+ * arrival itself rather than for a duration, and the deadline only keeps an arrival that never happened
+ * from hanging the run.
+ */
+async function waitForBalanceCalls(
+	dock: DockRun,
+	atLeast: number,
+	deadlineMs = 20_000,
+): Promise<readonly CapturedBalanceCall[]> {
+	const deadline = Date.now() + deadlineMs;
+	for (;;) {
+		const calls = dock.run.capture.balanceCalls();
+		if (calls.length >= atLeast) return calls;
+		if (Date.now() > deadline) {
+			throw new Error(
+				`the balance endpoint received ${calls.length} call(s); ${atLeast} were expected (arrivals: ${dock.run.capture.arrivals().join(",")})`,
+			);
+		}
+		await queuedWorkSettled();
+	}
+}
+
+/**
+ * Lets a real run go on for `windowMs` and reports how many balance calls the endpoint had by then.
+ *
+ * This is how a case shows that a call did NOT happen: with a reading the case has just seen obtained —
+ * or with a query the case knows is still out — the window is what gives a call that would be made the
+ * time to reach the endpoint. A run that was merely stalled fails the check that follows instead.
+ */
+async function idleWindow(dock: DockRun, windowMs: number): Promise<number> {
+	const deadline = Date.now() + windowMs;
+	while (Date.now() < deadline) await Bun.sleep(25);
+	return dock.run.capture.balanceCalls().length;
 }
 
 // ---------------------------------------------------------------------------
@@ -306,6 +465,25 @@ function filesUnder(directory: string): string[] {
 	};
 	walk(directory);
 	return found.sort();
+}
+
+/**
+ * Every file under one directory, as the text a case can search for something that must not be there.
+ *
+ * The extension publishes through the framework's coordinated update, whose last step renames a
+ * same-directory temporary document over the target: a name this walk listed can therefore be gone by
+ * the time it is read — the very file the rename published *is* the target, which the same walk reads —
+ * so an entry that disappeared in between is skipped rather than reported as a read failure.
+ */
+function fileTextsUnder(directory: string): string[] {
+	return filesUnder(directory).flatMap(relative => {
+		try {
+			return [readFileSync(path.join(directory, relative), "utf8")];
+		} catch (error) {
+			if ((error as { readonly code?: unknown } | null)?.code !== "ENOENT") throw error;
+			return [];
+		}
+	});
 }
 
 /** The widget lines one frame published, or nothing when the frame carries none. */
@@ -524,7 +702,320 @@ async function phaseCommand(cli: PiCli): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
-// Phase 3: the storage root's own rules, in real processes
+// Phase 3: the DeepSeek balance query's wiring, TTL and outcome
+// ---------------------------------------------------------------------------
+
+/**
+ * The DeepSeek balance at S2: the query the extension makes for itself on this host, and what its
+ * outcome does to the display and to the run.
+ *
+ * The capture endpoint is the account here, and it is a controllable one: each case states the document
+ * it answers, a refusal, or that it holds the answer back, and the endpoint records every call's own
+ * path, headers and arrival order. What the cases observe is therefore the real assembly's own query —
+ * the address it built from the host's resolved facts, the credential the host resolved at that moment,
+ * the business budget and the direct connection — and never a substituted transport.
+ *
+ * The six cases below are one promise's checks (P29): the success TTL the shipped configuration states,
+ * the settled request that is what refreshes an expired reading, a failure that keeps the reading it
+ * already had, a host with no access to the provider (which asks nothing and claims nothing), one query
+ * serving the triggers that arrive while it is still out, and the credential of the moment across two
+ * processes of one storage root. The deterministic cases for the same rules — with a controlled clock,
+ * and with credentials replaced between queries — live in `tests/model-cost/provider-balance.test.ts`
+ * (S2); what these add is that the same rules hold for real requests of the real pi assembly.
+ */
+async function phaseBalance(cli: PiCli): Promise<void> {
+	console.log("\nphase: the DeepSeek balance query is wired to this host and refreshed by its own provider's requests");
+
+	// (1) The query itself, and the credential's confinement. Two exchanges inside the shipped 30000ms
+	// success TTL: the reading the prefetch obtained is what stands, and nothing asks again.
+	const wiring = startBalanceRun(cli, "balance-wiring", {
+		balance: { total: BALANCE_TOTAL },
+		deepseekCredential: BALANCE_SENTINEL_KEY,
+	});
+	const wiringSession = await openSession(wiring);
+	await wiringSession.run(PROMPT_ONE);
+	await wiringSession.run(PROMPT_TWO);
+
+	const calls = wiring.run.capture.balanceCalls();
+	observe(
+		"the extension's own balance query left the process, at the host's resolved address and with the host's current credential",
+		calls.length === 1 &&
+			new URL(calls[0]!.url).pathname === "/user/balance" &&
+			calls[0]!.headers.authorization === `Bearer ${BALANCE_SENTINEL_KEY}`,
+		`balance calls: ${JSON.stringify(calls)}`,
+	);
+	observe(
+		"the reading the endpoint answered reached the widget this host draws",
+		widgetShows(wiringSession, `Balance: \u00A5${BALANCE_TOTAL}`),
+		`last renderings: ${JSON.stringify(widgetRenders(wiringSession).slice(-2))}`,
+	);
+	observe(
+		"the initialization's prefetch arrived before the first model request, and an exchange inside the reading's success TTL asked nothing again",
+		JSON.stringify(wiring.run.capture.arrivals()) === JSON.stringify(["balance", "model", "model"]),
+		`arrivals: ${JSON.stringify(wiring.run.capture.arrivals())}`,
+	);
+
+	// The credential goes where it belongs and nowhere else: this run's stderr, its session log, the model
+	// requests it really serialized, the renderings the host was told to show, and the files the extension
+	// wrote. The key is this smoke's own synthetic literal, so its absence on those surfaces is meaningful.
+	const document = await savedDocument(wiring.home.consumptionFile, candidate => sessionsOf(candidate).length === 1);
+	const surfaces: Record<string, string> = {
+		stderr: wiringSession.stderr(),
+		sessionLog: readFileSync(await wiringSession.sessionFile(), "utf8"),
+		modelRequests: wiring.run.capture.requests().map(request => request.raw).join("\n"),
+		widget: JSON.stringify(widgetRenders(wiringSession)),
+		storage: fileTextsUnder(wiring.home.storageDirectory).join("\n"),
+	};
+	const leaked = Object.entries(surfaces)
+		.filter(([, text]) => text.includes(BALANCE_SENTINEL_KEY))
+		.map(([name]) => name);
+	observe(
+		"the credential authenticates that one query and reaches no other surface of the run",
+		leaked.length === 0,
+		`surfaces carrying it: ${JSON.stringify(leaked)}; stderr ${JSON.stringify(wiringSession.stderr())}`,
+	);
+	observe(
+		"the saved document keeps the schema's own partitions, with no account or credential partition added",
+		JSON.stringify(Object.keys(document).sort()) ===
+			JSON.stringify(["harnesses", "holiday", "periodId", "schemaVersion", "start"]),
+		`document keys: ${JSON.stringify(Object.keys(document))}`,
+	);
+
+	// (2) The success TTL and the settled request. The configuration states a 1ms TTL, so the reading a
+	// settled request finds is already expired and that request is what asks again — while an idle run,
+	// whose reading is expired too, asks nothing at all.
+	const ttl = startBalanceRun(cli, "balance-ttl", {
+		balance: { total: BALANCE_TOTAL },
+		deepseekCredential: BALANCE_SENTINEL_KEY,
+	});
+	const ttlConfig = configRoot("balance-ttl", {
+		storageDir: ttl.home.storageDirectory,
+		balanceTtlMs: 1,
+		codexQuotaTtlMs: 15000,
+	});
+	try {
+		const ttlSession = await openSession(ttl, {
+			entrypoint: CONFIG_ROOT_ENTRYPOINT,
+			extraEnv: { [PI_MODEL_COST_CONFIG_ROOT_ENV]: ttlConfig },
+		});
+		await ttlSession.run(PROMPT_ONE);
+		const refreshed = await waitForBalanceCalls(ttl, 2);
+		observe(
+			"a settled request of the reading's own provider is what refreshes the expired reading it holds",
+			refreshed.length === 2 &&
+				JSON.stringify(ttl.run.capture.arrivals()) === JSON.stringify(["balance", "model", "balance"]),
+			`balance calls ${refreshed.length}, arrivals ${JSON.stringify(ttl.run.capture.arrivals())}`,
+		);
+		const idleCalls = await idleWindow(ttl, IDLE_WINDOW_MS);
+		observe(
+			"an expired reading queries nothing on its own: no timer and no poll is behind the TTL",
+			idleCalls === 2,
+			`balance calls after ${IDLE_WINDOW_MS}ms of an idle run: ${idleCalls}`,
+		);
+		await ttlSession.run(PROMPT_TWO);
+		const askedAgain = await waitForBalanceCalls(ttl, 3);
+		observe(
+			"the next settled request asks again, and the reading stays the endpoint's own amount",
+			askedAgain.length === 3 && widgetShows(ttlSession, `Balance: \u00A5${BALANCE_TOTAL}`),
+			`balance calls ${askedAgain.length}, last rendering ${JSON.stringify(widgetRenders(ttlSession).slice(-1))}`,
+		);
+	} finally {
+		rmSync(ttlConfig, { recursive: true, force: true });
+	}
+
+	// (3) A refresh that fails. The endpoint answers a reading to the prefetch and refuses every later
+	// call, so the second exchange's own settled request is refused: the reading already obtained keeps
+	// its amount on the widget, and neither a zero nor a failure line replaces it.
+	const retained = startBalanceRun(cli, "balance-retained", {
+		balance: {
+			total: BALANCE_TOTAL,
+			respond: call =>
+				call.index === 1
+					? undefined
+					: new Response(
+							JSON.stringify({ error: { message: "dock-injected balance failure", type: "dock_error" } }),
+							{ status: 503, headers: { "content-type": "application/json" } },
+						),
+		},
+		deepseekCredential: BALANCE_SENTINEL_KEY,
+	});
+	const retainedConfig = configRoot("balance-retained", {
+		storageDir: retained.home.storageDirectory,
+		balanceTtlMs: 1,
+		codexQuotaTtlMs: 15000,
+	});
+	try {
+		const retainedSession = await openSession(retained, {
+			entrypoint: CONFIG_ROOT_ENTRYPOINT,
+			extraEnv: { [PI_MODEL_COST_CONFIG_ROOT_ENV]: retainedConfig },
+		});
+		await retainedSession.run(PROMPT_ONE);
+		await waitForBalanceCalls(retained, 2);
+		// The mark is taken before the second exchange, so the rendering read below was published after a
+		// refresh this endpoint refused.
+		const mark = retainedSession.frameMark();
+		await retainedSession.run(PROMPT_TWO);
+		await waitForBalanceCalls(retained, 3);
+		const afterRefusal = await retainedSession.frameSince(
+			mark,
+			frame =>
+				frame.type === "extension_ui_request" &&
+				frame.method === "setWidget" &&
+				(widgetLinesOf(frame) ?? []).some(line => line.includes("Balance")),
+			"the widget redrawn after a refused refresh",
+			UI_FRAME_TIMEOUT_MS,
+		);
+		const refusedLines = afterRefusal === undefined ? [] : (widgetLinesOf(afterRefusal) ?? []);
+		const everUnavailable = widgetRenders(retainedSession).some(rendering =>
+			rendering.some(line => line.includes("Balance: unavailable")),
+		);
+		const everZero = widgetRenders(retainedSession).some(rendering =>
+			rendering.some(line => line.includes("Balance: \u00A50")),
+		);
+		observe(
+			"a refused refresh keeps the reading and its amount, and never becomes a zero or a dropped reading",
+			refusedLines.some(line => line.includes(`Balance: \u00A5${BALANCE_TOTAL}`)) && !everUnavailable && !everZero,
+			`rendering after the refusal: ${JSON.stringify(refusedLines)}, ever unavailable ${String(everUnavailable)}, ever zero ${String(everZero)}`,
+		);
+	} finally {
+		rmSync(retainedConfig, { recursive: true, force: true });
+	}
+
+	// (4) A host with no access to the balance's provider. The session runs on another provider, and
+	// `deepseek` is declared with no credential at all: the prefetch is then not an attempt — nothing is
+	// sent, and no failure is claimed for a provider this process never used.
+	const noAccess = startBalanceRun(cli, "balance-no-access", {
+		modelProvider: MODEL_ONLY_PROVIDER,
+		balance: { total: BALANCE_TOTAL },
+	});
+	const noAccessSession = await openSession(noAccess, { extraEnv: { DEEPSEEK_API_KEY: undefined } });
+	const exchange = await noAccessSession.run(PROMPT_ONE);
+	observe(
+		"the session still works on this host, with the extension drawing and the model exchange completing",
+		exchange === "started" && widgetRenders(noAccessSession).length > 0 && noAccess.run.capture.requests().length === 1,
+		`disposition ${JSON.stringify(exchange)}, renderings ${widgetRenders(noAccessSession).length}, model requests ${noAccess.run.capture.requests().length}`,
+	);
+	observe(
+		"a provider this host cannot authenticate is asked nothing: no balance request reached the endpoint",
+		noAccess.run.capture.balanceCalls().length === 0 && !noAccess.run.capture.arrivals().includes("balance"),
+		`balance calls ${noAccess.run.capture.balanceCalls().length}, arrivals ${JSON.stringify(noAccess.run.capture.arrivals())}`,
+	);
+	observe(
+		"and no failure is claimed for it: no balance line, no zero and no operator notice",
+		!widgetRenders(noAccessSession).some(rendering => rendering.some(line => line.includes("Balance"))) &&
+			!noAccessSession.stderr().includes("余额") &&
+			noAccessSession.notificationsSince(0).length === 0,
+		`renderings ${JSON.stringify(widgetRenders(noAccessSession).slice(-2))}, stderr ${JSON.stringify(noAccessSession.stderr())}, notices ${JSON.stringify(noAccessSession.notificationsSince(0))}`,
+	);
+
+	// (5) One query serves the triggers that arrive while it is out. The endpoint holds every answer, so
+	// the prefetch's own 5000ms budget is what ends the first exchange's wait and the query the settled
+	// request begins is still out while the second exchange runs — and that exchange's own settled request
+	// joins it instead of asking a third time.
+	const joined = startBalanceRun(cli, "balance-join", {
+		balance: { total: BALANCE_JOINED_TOTAL, holdFrom: 1 },
+		deepseekCredential: BALANCE_SENTINEL_KEY,
+	});
+	const joinedConfig = configRoot("balance-join", {
+		storageDir: joined.home.storageDirectory,
+		balanceTtlMs: 1,
+		codexQuotaTtlMs: 15000,
+	});
+	try {
+		const joinedSession = await openSession(joined, {
+			entrypoint: CONFIG_ROOT_ENTRYPOINT,
+			extraEnv: { [PI_MODEL_COST_CONFIG_ROOT_ENV]: joinedConfig },
+		});
+		await joinedSession.run(PROMPT_ONE);
+		await waitForBalanceCalls(joined, 2);
+		observe(
+			"a query that is never answered does not hold the work: the exchange completed and its settled request began the next query",
+			JSON.stringify(joined.run.capture.arrivals()) === JSON.stringify(["balance", "model", "balance"]),
+			`arrivals: ${JSON.stringify(joined.run.capture.arrivals())}`,
+		);
+		observe(
+			"a query with no reading is shown as the failure it is, and never as a zero",
+			widgetShows(joinedSession, "Balance: unavailable (unreachable)"),
+			`last renderings: ${JSON.stringify(widgetRenders(joinedSession).slice(-2))}`,
+		);
+		const mark = joinedSession.frameMark();
+		await joinedSession.run(PROMPT_TWO);
+		const joinedCalls = await idleWindow(joined, SETTLED_WINDOW_MS);
+		observe(
+			"the second exchange's settled request joined the query still out rather than issuing another",
+			joinedCalls === 2 &&
+				JSON.stringify(joined.run.capture.arrivals()) === JSON.stringify(["balance", "model", "balance", "model"]),
+			`balance calls ${joinedCalls}, arrivals ${JSON.stringify(joined.run.capture.arrivals())}`,
+		);
+		// Released, the query answers, and the instance that was holding it accepts the reading: the amount
+		// replaces the failure, and no third query was begun for the answer.
+		joined.run.capture.releaseBalance();
+		const released = await joinedSession.frameSince(
+			mark,
+			frame =>
+				frame.type === "extension_ui_request" &&
+				frame.method === "setWidget" &&
+				(widgetLinesOf(frame) ?? []).some(line => line.includes(`Balance: \u00A5${BALANCE_JOINED_TOTAL}`)),
+			"the reading the joined query obtained",
+			UI_FRAME_TIMEOUT_MS,
+		);
+		observe(
+			"the answer the joined query was holding is accepted by the same instance, and nothing asked again for it",
+			released !== undefined && joined.run.capture.balanceCalls().length === 2,
+			`rendering ${JSON.stringify(released === undefined ? undefined : widgetLinesOf(released))}, balance calls ${joined.run.capture.balanceCalls().length}`,
+		);
+	} finally {
+		rmSync(joinedConfig, { recursive: true, force: true });
+	}
+
+	// (6) The credential of the moment, across two processes of one storage root. The host's own
+	// configuration states another credential for the same provider, and the second process's query is
+	// authenticated with that one: the credential it obtains is the one its own configuration states, not
+	// anything the first process's run left behind in the root they share.
+	const replaced = startBalanceRun(cli, "balance-replaced", {
+		balance: { total: BALANCE_TOTAL },
+		deepseekCredential: BALANCE_SENTINEL_KEY,
+	});
+	const firstProcess = await openSession(replaced);
+	await firstProcess.run(PROMPT_ONE);
+	await waitForBalanceCalls(replaced, 1);
+	observe(
+		"the first process authenticated its query with the credential its own configuration states",
+		replaced.run.capture.balanceCalls()[0]?.headers.authorization === `Bearer ${BALANCE_SENTINEL_KEY}`,
+		`balance calls: ${JSON.stringify(replaced.run.capture.balanceCalls())}`,
+	);
+	// The document that process's Round end saves is what lands in the root before it ends.
+	await savedDocument(replaced.home.consumptionFile, candidate => sessionsOf(candidate).length === 1);
+	await firstProcess.stop({ timeoutMs: 15_000 });
+	// What the first process left behind: its storage root, which must hold no credential of its own.
+	const leftBehind = fileTextsUnder(replaced.home.storageDirectory);
+	observe(
+		"the process left no credential behind it: the files it did leave carry nothing of the key it used",
+		leftBehind.length > 0 && leftBehind.every(text => !text.includes(BALANCE_SENTINEL_KEY)),
+		`files: ${JSON.stringify(filesUnder(replaced.home.storageDirectory))}`,
+	);
+	// The same run root and the same storage root, with the provider's credential replaced as the host's
+	// configuration between processes.
+	writePiModels(replaced.run.root.agentDir, {
+		[PROVIDER]: {
+			baseUrl: replaced.run.capture.baseUrl,
+			api: "openai-completions",
+			apiKey: BALANCE_REPLACED_KEY,
+			models: [DECLARED_MODEL],
+		},
+	});
+	const secondProcess = await openSession(replaced);
+	await secondProcess.run(PROMPT_ONE);
+	const secondCalls = await waitForBalanceCalls(replaced, 2);
+	observe(
+		"the next process's query is authenticated with the credential its own configuration states",
+		secondCalls.length === 2 && secondCalls[1]!.headers.authorization === `Bearer ${BALANCE_REPLACED_KEY}`,
+		`balance calls: ${JSON.stringify(secondCalls.map(call => call.headers.authorization))}`,
+	);
+}
+
+// ---------------------------------------------------------------------------
+// Phase 4: the storage root's own rules, in real processes
 // ---------------------------------------------------------------------------
 
 /** The fixture entrypoint that binds the production assembly to a configuration root this run states. */
@@ -654,7 +1145,7 @@ async function phaseStorageRoot(cli: PiCli): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
-// Phase 4: a configuration the definition refuses
+// Phase 5: a configuration the definition refuses
 // ---------------------------------------------------------------------------
 
 /**
@@ -763,6 +1254,7 @@ try {
 	}
 	await phaseMainSession(cli);
 	await phaseCommand(cli);
+	await phaseBalance(cli);
 	await phaseStorageRoot(cli);
 	await phaseRefusedConfiguration(cli);
 } catch (error) {
@@ -786,6 +1278,7 @@ console.log(
 );
 console.log(`  ${observations.length} consumer-visible check(s) across ${runs.length} isolated run(s)`);
 console.log("  limitations: the TUI's readability stays human-led (this observes the setWidget frames the frontend published);");
+console.log("               the balance cases drive the shipped success TTL through the host's own clock (a configured 1ms TTL), not a controlled one;");
 console.log("               the season boundary's timed redraw and the subagent execution duration are not exercised here");
 console.log(`  rerun: bun scripts/pi-model-cost-smoke.ts${options.pi === undefined ? "" : ` --pi ${options.pi}`}`);
 
