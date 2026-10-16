@@ -1276,7 +1276,7 @@ async function phaseRefusedConfiguration(cli: PiCli): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
-// Phase 5: the Codex allowance windows and the ratio estimate they feed
+// Phase 6: the Codex allowance windows and the ratio estimate they feed
 // ---------------------------------------------------------------------------
 
 /** The fixture that binds the production definition and runtime, with the account query scripted. */
