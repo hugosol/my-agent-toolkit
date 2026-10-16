@@ -1,0 +1,3 @@
+$ git merge-tree --write-tree --name-only 5714ddc pi-adapter   # read-only: no refs or worktree touched
+8ed8e09eca1f684d296f21fc4c96ddf12eaed0c2
+exit=0
