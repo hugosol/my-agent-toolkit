@@ -15,7 +15,7 @@
 
 | 能力 | 落点 | 语义 |
 | --- | --- | --- |
-| 采样入口按自身时间线陈述请求数 | `scripts/efficiency-baseline.ts` | 并发序列把"子代理 Round 结束"的瞬间陈述为一次时钟推进（`CHILD_ACTIVITY_MS`），该瞬间越过条目自己声明的成功 TTL；于是条目把该序列的请求数陈述为「一次启动预取 + 一次已结算请求刷新」，并在读取计数前**等待该到达**（此前是竞态）。序列、采样方法、其他不变量与工件形状不变。 |
+| 采样入口按自身时间线陈述请求数 | `scripts/efficiency-baseline.ts` | 并发序列把"子代理 Round 结束"的瞬间陈述为一次时钟推进（`CHILD_ACTIVITY_MS`），该瞬间越过条目自己声明的成功 TTL；于是条目把该序列的请求数陈述为「一次启动预取 + 一次已结算请求刷新」，并在读取计数前**等待该到达**（此前是竞态；**那处时钟推进本身来自 ticket 11 的适配** `fea87c7`，见 §15.2）。序列、采样方法、其他不变量与工件形状不变。 |
 | 可归属的对照入口 | `scripts/efficiency-comparison.ts`（`bun run compare:efficiency`） | 对齐两份采样工件，按序列与测量窗口逐项比较（读取/发布/锁/暂存/元数据/目录/总数、请求、绘制、事件、等待、行数），列出可归属差异与噪声列；复杂度按两版 revision **自身 tree 的 tracked TypeScript 行数**分产品面/证据面统计，并列出逐模块变化。不设阈值、不因差异失败——判断属人类。 |
 | 真实宿主的外部效果记录器 | `tests/harness-dock/support/effect-instrument.ts` | 通过 `BUN_OPTIONS=--preload` 注入真实宿主进程，在宿主自己的模块图之前包裹 `node:fs`、`node:fs/promises`、`node:net` 的成员并记录每次调用，进程退出时把记录写到运行自己指名的文件。未被指名 dump 文件时**完全不动作**；dump 用包裹前捕获的成员写出，自己的写不进入记录。 |
 | 真实宿主效果检查 | `tests/harness-dock/efficiency-effects.test.ts` | 3 例：单会话一轮的存储成本与健康空闲窗口；带一个真实子代理会话时无第二次根查询/无重复根 UI/无本地 IPC；记录器自身的灵敏度对照。 |
@@ -73,6 +73,8 @@ disposal / afterDisposal             0/0        0/0    0/0      0/0       0/0   
 | `events` | 24 → 23 | 采样器的交付组合变化：`subagent_runtime` 读数交付随 P24 移除（1 次），其余交付计数相同（对照报告 "semantic deliveries" 段）。 |
 | `file total` | 51 → 53 | **噪声列驱动**：该列把结算失败的调用也计入（本次并发序列多了 2 次被平台拒绝的发布 rename 重试），失败列本身已被 01 声明为重复运行就波动的项。成功计数（读/发布/锁/暂存/元数据/请求/绘制/事件）逐个相同。 |
 
+**§15.2 给前两条补了同一陈述下的实测**：把「按 Round 区间陈述耗时的时钟推进」这处采样陈述施加回**迁移前的产品树**后，同一棵树上就单独复现出 `requests 1 → 2` 与 `events 24 → 23`（`subagent_runtime 1 → 0`）这两行；反过来，在**同一陈述**下对照迁移前后的产品，全表只剩 `draws 30 → 33` 一条可比差异（`requests 2/2`、`events 23/23`、七条序列窗口级文件成本逐列相同）。即上表前两条的「原因」是**陈述级**、不是产品级成本；本表仍按 01 的冻结工件原样呈现（票的 AC1 如此要求），冻结工件未被改写。**同一陈述下的对照报告另存为交付名 `logs/22-efficiency-comparison-matched.txt`**（与 `logs/22-efficiency-comparison.txt` 并列，逐字节等于 §15.2 的 `…-matched-conditions-fresh.txt`）。
+
 噪声列（对照报告单独列出，不比较）：`failed by operation`、各序列 `wall clock ms`。01 声明这两个量在同一源状态的重复运行间波动，本次观察一致（如 `ms` 16 → 71 属并发序列的负载噪声）。
 
 ## 4. `P51` 复杂度对照（两版 tree 自身的 tracked TypeScript 行数）
@@ -112,12 +114,12 @@ disposal / afterDisposal             0/0        0/0    0/0      0/0       0/0   
 
 - **人类验收未完成**：`P51` 的最终判断（"明显额外开销与复杂度是否可接受"）属人类验收者，本票只准备材料，**不标为通过**；`P52`（真实终端观感）、`P53`（真实账户侧核对）不在本票范围。
 - **不预设百分比**：报告与本文只陈述可归属的差值与成本，任何"可接受"判断留给人类；`compare:efficiency` 不因差异失败。
-- **未逐步归因的项**：(a) 并发序列 draws 的 +2（机制可归属到 P24 新增的每子代理 Round 结束 `announce()`，但未定位到具体哪几次渲染被合并）；(b) 主子会话例 widget 绘制 33 → 18。两者都只涉及前端渲染次数。
+- **未逐步归因的项**：(a) 并发序列 draws 的 +2（机制可归属到 P24 新增的每子代理 Round 结束 `announce()`，但未定位到具体哪几次渲染被合并）；(b) 主子会话例 widget 绘制 33 → 18 —— **§15.3 已把它归到内容级**：两侧状态推进与内容一致，差异全在同一状态被重复重绘的次数（迁移前 33 帧 = 6 条两行帧 + 27 条三行帧、尾部那组三行帧重绘 26 次；迁移后 18 帧 = 6 + 12、同一组 12 次），同一 run 的非 widget 帧数（38）、provider 到达、存储根操作与网络效果逐项相同，**逐帧/逐通知的机制定位仍未做**。两者都只涉及前端渲染次数。
 - **只覆盖 OMP 侧的"同进程无 IPC"**：pi 的本机接入（管道发布/连接）按其设计存在，其行为由 P14/P16/P42/P56 的分区与真实 pi 冒烟覆盖；本票的记录器只注入 OMP dock 的宿主进程，未对 pi 宿主做同样的外部效果计数。
 - **S1 采样不覆盖宿主原生半边**：OMP adapter 的原生事实映射、宿主自己的会话 JSONL/日志、真实终端绘制仍不可比（01 的 `notComparableScenarios` 原样保留）；本票用真实 OMP 宿主覆盖了其中的存储/请求/IPC/空闲部分，但不覆盖真实终端绘制与真实 provider 账户。
 - **范围限制**：全部证据仅覆盖 win32/x64、bun 1.4.2、隔离 OMP 18.5.0（未打补丁）、以及指向本机 capture endpoint 的 shipped DeepSeek provider；不推广到其他版本、POSIX、跨用户或真实账户。
-- **迁移前 dock 对照的构造**：before 侧是把本票新增的测试文件与记录器复制进 `59a0ed7` 工作树后运行（该文件当时不存在）；两侧使用同一份测试文件与同一份 OMP 18.5.0 安装版本，故计数可比。after 侧表内 `ms`/失败列等噪声项不参与比较。
-- **已关闭的限制**：§8/§11/§12 列出的「对照入口无自动化测试覆盖」已由 §13 的 `tests/harness-dock/efficiency-comparison.test.ts`（11 例，含 4 次目标注入证明灵敏度）关闭；§14 另把 §13 的 A/B 归因改写成可复现形式（原报告引用的临时提交 `3f547df` 在交付分支不可达）；本节其余各条仍然成立。
+- **迁移前 dock 对照的构造**：before 侧是把本票新增的测试文件与记录器复制进 `59a0ed7` 工作树后运行（该文件当时不存在）；两侧使用同一份测试文件与同一份 OMP 18.5.0 安装版本，故计数可比。after 侧表内 `ms`/失败列等噪声项不参与比较。（§15.3 用同一构造在 `9738b5f` 上第一手复现了 `10`/`33`，该 revision 的产品面与 `59a0ed7` 逐文件相同。）
+- **已关闭的限制**：§8/§11/§12 列出的「对照入口无自动化测试覆盖」已由 §13 的 `tests/harness-dock/efficiency-comparison.test.ts`（11 例，含 4 次目标注入证明灵敏度）关闭；§14 另把 §13 的 A/B 归因改写成可复现形式（原报告引用的临时提交 `3f547df` 在交付分支不可达）；§15.2 补上「同一陈述下迁移前产品的实测」（冻结对照里的 `requests`/`events` 两条是陈述级而非产品级），§15.3 把主子例 `frames 33 → 18` 归到内容级；本节其余各条仍然成立。
 
 ## 7. 复现步骤（本票实际执行）
 
@@ -140,9 +142,22 @@ bun test tests/harness-dock/efficiency-effects.test.ts
 
 # 所属分区（真实宿主，串行；运行期间源码与 fixture 未变）
 OMP_BOT_BINARY="E:/Developer/myhub/omp-bot/backend/target/release/omp-bot.exe" bun test tests/harness-dock
+
+# §15.2 同一陈述下的可比性实测（临时 worktree，跑完即删；未被采样的产品树 9738b5f 的产品面 == 59a0ed7）
+git worktree add --detach <tmp> 9738b5f          # 再把 node_modules/.cache 用 junction 指向本工作树
+cd <tmp> && bun --preload ./scripts/support/efficiency-baseline-fs-instrument.ts ./scripts/tmp-efficiency-baseline-01.ts \
+  --out <logs>/22-takeover-i-before-control.json  --label before-control   # 01 自己的采样器（控制）
+cd <tmp> && bun --preload ./scripts/support/efficiency-baseline-fs-instrument.ts ./scripts/efficiency-baseline.ts \
+  --out <logs>/22-takeover-i-before-matched.json  --label before-matched   # 交付态采样器（匹配）
+bun run compare:efficiency -- --before <logs>/22-takeover-i-before-control.json  --after <logs>/22-takeover-i-before-matched.json --out <logs>/22-takeover-i-statement-only.txt
+bun run compare:efficiency -- --before <logs>/22-takeover-i-before-matched.json  --after <logs>/22-takeover-i-after.json         --out <logs>/22-takeover-i-matched-conditions-fresh.txt
+
+# §15.3 主子例帧归因（临时探针副本，两侧同一份字节；跑完即删，日志 `logs/22-takeover-i-frames-*.log`、转储 `…-.NNframes-*.json`）
+MY_DOCK_FRAMES_OUT=<logs>/22-takeover-i-frames-before bun test tests/harness-dock/tmp-frames-probe.test.ts   # 在 <tmp> 上跑
+MY_DOCK_FRAMES_OUT=<logs>/22-takeover-i-frames-after  bun test tests/harness-dock/tmp-frames-probe.test.ts   # 在本工作树跑
 ```
 
-**交给人类验收者的材料**：`22-efficiency-after.json`（迁移后工件）、`logs/22-efficiency-comparison.txt`（对照表）、§3/§4 的差异与复杂度摘要、§5 的真实宿主外部效果计数。判断项：统一路径是否带来**明显额外开销**（本票观察到的可比成本差异只有并发序列的一次已结算请求刷新与前端渲染次数）以及**显著复杂度增加**（产品面 +4485 行 / +23%，其中 pi 接线与适配器是新增能力自身）。
+**交给人类验收者的材料**：`22-efficiency-after.json`（迁移后工件）、`logs/22-efficiency-comparison.txt`（对照表）、§3/§4 的差异与复杂度摘要、§5 的真实宿主外部效果计数、§15.2 的同一陈述对照（`logs/22-efficiency-comparison-matched.txt`，逐字节等于 `logs/22-takeover-i-matched-conditions-fresh.txt`；陈述分离的中间报告 `logs/22-takeover-i-statement-only.txt`）。判断项：统一路径是否带来**明显额外开销**（本票观察到的**产品级**可比成本差异只有并发序列的前端渲染次数——同一陈述下 `requests`/`events`/七条序列文件成本逐列相同，§15.2；冻结对照里的那次"已结算请求刷新"与 `events -1` 是采样陈述级，迁移前的产品在同一声明下同样发出）以及**显著复杂度增加**（产品面 +4486 行 / +23%，其中 pi 接线与适配器是新增能力自身）。
 
 ## 8. 接手后的独立复核（同一源状态 `6420e21`，无源码改动）
 
@@ -372,3 +387,66 @@ OMP_BOT_BINARY="E:/Developer/myhub/omp-bot/backend/target/release/omp-bot.exe" b
 **集成分支只读核对**：`pi-adapter` 尖端仍 `190e1b5`（本轮未推进；未操作、未合入）；`git diff --name-only 39fdc3d pi-adapter -- framework extensions entrypoints` 只有 `framework/docs/harness-support.md`（文档）；`git merge-tree --write-tree --name-only HEAD pi-adapter` exit 0、tree `bc337a0340c6a79403a72311bcfc74aba425572f`、**无冲突列表**（`logs/22-takeover-h-merge-tree.txt`）。
 
 **本轮未覆盖项**：`P51`/`P52`/`P53` 的人类判断未做（票内含人类确认的两个勾选项保持未勾选）；**逐渲染定位**（并发序列 `draws +3` 与主子例 `frames 33 → 18` 具体哪些帧与提交渲染合并）未做——并发序列的增量已两轮 A/B 归因到唯一的 `announce()` 路径，主子例仍是机制级；pi 侧本机接入未做同样的记录器注入；证据范围仍限 win32/x64、bun 1.4.2、隔离 OMP 18.5.0（未打补丁）、无 provider 凭据（模型请求与余额查询由本机 capture endpoint 回答）。§13 的 A/B 报告引用的 `3f547df` 不可达一条**已由本节取代**（同源 A/B、交付 revision、补丁随证据保存）。
+
+## 15. 第八次接手复核（源状态 `62dd204`；把 S1 对照的「可比差异」按同一陈述分离 + 主子例 `frames 33 → 18` 的第一手归因 + 公开入口/分区第一手重跑）
+
+接手时：HEAD `62dd204`（= §14 定稿树；`efb03e0` … `cbfc63c` 的全部既有提交原样保留，**未做任何 reset**）。工作树除 `bun.lock` 与两份 `host-patches/*/patch.diff`（§8/§12/§14 记录的 `core.autocrlf=true` 检出 stat 现象，带过滤器 hash 与 `HEAD` blob 逐字节相等，**未 checkout/restore**）外干净。**产品代码无改动**（`git diff --name-only 39fdc3d HEAD -- framework extensions entrypoints` 仍为空；交付改动仍是 §12 记录的证据面 6 个文件）。本节改动只有 `.scratch/` 下的本文件、票文件与 `logs/22-takeover-i-*`（含本节新增的采样工件、对照报告与帧转储）。
+
+### 15.1 为什么要做本节这件事
+
+§3 的「可归属差异」表把并发序列的 `requests 1 → 2` 与 `events 24 → 23` 已归因到**采样入口自己的陈述**（时钟推进 / `subagent_runtime` 交付移除），但七轮复核里给出的都是**代码层理由**（相关产品文件未改、A/B 去掉时钟推进后回到 1），**从未在同一陈述下实际跑过迁移前的产品**。票的 AC1 要求「相同条件可比」，因此本轮把这两条差异做了一次**控制实验**：把 §11（`fea87c7`，P24 落地）引入的那处采样陈述，施加回**迁移前的产品树**上。
+
+### 15.2 控制实验：同一棵树、只换陈述，再只换产品
+
+**被采样的迁移前树**取 `9738b5f`（= 01 的证据提交；它的产品面与冻结工件同源：`git diff --stat 59a0ed7 9738b5f -- framework extensions entrypoints` **为空**，01 只加了 `scripts/efficiency-baseline.ts` 与 `scripts/support/efficiency-baseline-fs-instrument.ts`）。为运行它，临时建了一棵 worktree（`git worktree add --detach …/22-before-matched 9738b5f`，`node_modules`/`.cache` 用 junction 指向本工作树，**运行后已 `git worktree remove --force` 并确认临时目录消失**；未改任何 ref、未碰 `pi-adapter` 的工作区）。三个采样（都在 win32/x64、bun 1.4.2、无 provider 凭据、本机 capture endpoint 下，串行）：
+
+| 采样 | 命令（cwd） | 退出 | 结果 | 工件/日志 |
+| --- | --- | --- | --- | --- |
+| (a) 控制：迁移前树 + **01 自己的采样器** | `bun --preload ./scripts/support/efficiency-baseline-fs-instrument.ts ./scripts/tmp-efficiency-baseline-01.ts --out … --label before-control`（`…/22-before-matched`，脚本由 `git show 9738b5f:…` 写出） | 0 | 七条序列 `every invariant held.`（并发：`events=24`、`requests=1`、`draws=30`），4.00 s | `logs/22-takeover-i-before-control.json` |
+| (b) 匹配：迁移前树 + **交付态采样器** | 同上，脚本换成 `scripts/efficiency-baseline.ts`（= 交付态），`--label before-matched` | 0 | 并发：`events=23`、`requests=2`（两条 `/user/balance`）、`draws=30`；**唯一失败的不变量**是迁移后才成立的那条「the child's own Round's interval was recorded on its session」（`childA.runtimeMs=undefined`，即产品不声明耗时读数时该字段无值）；3.87 s | `logs/22-takeover-i-before-matched.json` |
+| (c) 交付态新跑 | `bun run baseline:efficiency --out …/22-takeover-i-after.json --label takeover-i`（本工作树） | 0 | 七条序列 `every invariant held.`；与已提交工件逐列相同（见下） | `logs/22-takeover-i-baseline.log`、`…-after.json` |
+
+两个工件自报 `source.head = 9738b5f…`、`changedPaths` = 被换掉的两个采样文件（+ 本节的临时 01 脚本），即**被测产品树写进了工件本身**，读者可回到该 revision 复核。
+
+四个对照（都经对照入口，`logs/22-takeover-i-*.txt`）：
+
+| 对照 | 可比差异 | 结论 |
+| --- | --- | --- |
+| (a) 控制 vs **冻结工件** `01-efficiency-baseline.json` | `none: every comparable figure of every sequence and window agrees.` | 临时树**逐项复现了冻结工件**——(b) 与 (a) 之间的差异只可能来自陈述本身 |
+| (a) 控制 vs (b) 匹配（**同一棵迁移前树，只换陈述**） | `main-child-concurrency requests 1 -> 2`、`events 24 -> 23`（语义交付 `subagent_runtime 1 -> 0`），其余逐列相同 | 冻结对照里那两条「可比差异」**由采样陈述的改变单独产生** |
+| (b) 匹配 vs 已提交 `22-efficiency-after.json`（**同一陈述，只换产品**） | `main-child-concurrency draws 30 -> 33`（**全表唯一一条可比差异**；`requests 2/2`、`events 23/23`、七条序列窗口级文件成本逐列相同） | 同一条件下迁移前后的**请求/事件/读取/锁/发布/暂存成本完全相同** |
+| (b) 匹配 vs (c) 交付态新跑 | 同上（`draws 30 -> 33`） | 该结论不依赖某一份工件：两侧都是本轮第一手新跑 |
+
+**陈述改变的出处**：`git log -S CHILD_ACTIVITY_MS --all -- scripts/efficiency-baseline.ts` → `fea87c7`（2026-10-16，`11：子代理活动耗时改由公共 Round 区间累计，旧 runtimeMs 与缺口标记保留（P24、P25、P27）`）。`git diff 9738b5f 39fdc3d -- scripts/efficiency-baseline.ts` 显示它删掉了 01 的 `declareRuntime(...)`/`CHILD_RUNTIME_MS`、改成 `clock = T0 + CHILD_ACTIVITY_MS`（本票 `efb03e0` 只是在其后加了「等这次到达」与 2 次请求的不变量陈述）。也就是说，这条陈述差是**迁移自身对采样器的适配**，不是本票发明的口径；本票此前把它记为「可归属差异的原因」，本轮补上的是**同一陈述下的实测**：**迁移前的产品在同一声明下同样发出 2 次请求、23 次交付**，并且**通过交付态自己那条请求不变量**（含"等这次到达"）。
+
+**边界（不夸大）**：冻结工件仍是 `P51` 对照的**主材料**（票的 AC1 要求对照 01 的工件），本节不改写它，也不把它替换成 (b)；(b) 是补充的可比性实测，其工件自带 provenance。§3/§6 已按本节更新指针；**第三、四行那份同一陈述的对照报告另存交付名 `logs/22-efficiency-comparison-matched.txt`**（与 `logs/22-efficiency-comparison.txt` 并列，逐字节等于 `logs/22-takeover-i-matched-conditions-fresh.txt`）。
+
+### 15.3 主子会话例 `widget draws 33 → 18` 的第一手归因（§6 的最后一条未归因项）
+
+做法：把本票交付的真实宿主用例 `tests/harness-dock/efficiency-effects.test.ts`（连同 `support/effect-instrument.ts`）复制进 15.2 的临时迁移前树，并在**两侧使用同一份**临时探针副本（只多一段把该 run 的 RPC 帧 dump 出来的代码；探针文件在两侧都不提交，跑完即删，交付态树 `git status` 中已无该文件）。两侧探针 dump 各写一份 JSON 到 `evidence/logs/`。
+
+| 观察 | 迁移前（`9738b5f` + 交付态用例） | 迁移后（本树） | 来源 |
+| --- | --- | --- | --- |
+| 用例结果 | **3 pass / 0 fail**、21 expect()、12.32 s | **3 pass / 0 fail**、21 expect()、12.13 s | `logs/22-takeover-i-frames-before.log`、`…-after.log` |
+| widget 帧（单会话例 / 主子例） | `10` / **`33`** | `10` / **`18`** | 同上（与已提交的 `22-dock-effects-pre-migration.log`、§5/§14 的 `10`/`18` 逐项一致） |
+| 主子例帧构成 | 2 行帧 6 条 + 3 行帧 27 条 | 2 行帧 6 条 + 3 行帧 12 条 | `logs/22-takeover-i-frames-before.33frames-*.json`、`…-after.18frames-*.json` |
+| 非 widget 帧数（同一 run 的全部 RPC 帧） | 71 − 33 = **38** | 56 − 18 = **38** | 同上（`allCount` 字段）——**只有本扩展 widget 的 `setWidget` 帧变少**，其余 RPC 流量逐个数相同 |
+| 帧内容 | 两侧都是同一条状态推进（会话开始 → 余额预取 → Round 开启 → `Total/Round` 计数 → 尾随标记），两侧的首批帧（2 行帧 `2/3/1` 条）逐项相同；差异全在**同一状态被重复重绘的次数**：尾部那组三行 `Total/Round` 帧迁移前重绘 `26` 次（22+4）、迁移后 `12` 次（10+2） | 同左 | 同上，按 `widgetLines` 归一化（数字抹平）后逐帧比对 |
+
+说明与边界：这条差异是**纯展示工作**（`setWidget` 帧），同一 run 里的 provider 到达（`["balance","model","model","model"]`）、存储根 13 次文件操作、健康空闲 0 效果、网络效果逐个相同（`logs/22-takeover-i-frames-before.log` 与 `…-after.log` 的 console 行）。**可观察的部分是**：同一批状态下，迁移后重绘次数更少（少 15 条 `setWidget`，全部是三行 `Total/Round` 帧）。**推断（未逐帧计时，故只作机制级说明）**：迁移前 OMP 侧对每条到达的通知都重绘一次（P24 把"每条读数/每个边缘"的通知改成按 Round 区间累计），因此同一内容被重绘更多次；探针没有记录帧的时刻，**哪一条通知对应哪一帧未定位**。方向上是**更少**的渲染，不构成额外开销。
+
+### 15.4 公开入口第一手重跑（本树，串行；运行期间未改被测源码或 fixture）
+
+| 命令 | 退出 | 结果 | 日志 |
+| --- | --- | --- | --- |
+| `bun run typecheck` | 0 | `tsc --noEmit` 无诊断 | `logs/22-takeover-i-typecheck.log` |
+| `bun run baseline:efficiency --out …/22-takeover-i-after.json --label takeover-i` | 0 | 七条序列 `every invariant held.`；probe `{"operations":13,"documentReads":2,"documentPublishes":1,"lockOperations":7,"stagingOperations":2,"syncOperations":1}`（与 §9–§14 相同） | `logs/22-takeover-i-baseline.log` |
+| 新跑工件 vs 已提交 `22-efficiency-after.json` | 0 | `none: every comparable figure of every sequence and window agrees.`、交付相同（唯一噪声列 `file total` 视运行而定） | `logs/22-takeover-i-reproduction.txt` |
+| 冻结对照重生成（`01` vs `22`） | 0 | 与已提交 `logs/22-efficiency-comparison.txt` **sha256 相同**（`a486f32712e4314108ef256d0e74a4aefdf7512ffb77e16600c5daab78b1fe72`） | `logs/22-takeover-i-frozen-comparison.txt` |
+| `--after-rev pi-adapter`（只读，集成尖端 `190e1b5`） | 0 | 产品面 `19287 → 23773 (+4486)`、证据面 `54806 → 80085`（与 §14 相同） | `logs/22-takeover-i-integration-tip.txt` |
+| `bun test tests/harness-dock/efficiency-effects.test.ts`（真实宿主） | 0 | **3 pass / 0 fail**、21 expect()、12.64 s；效果 `2295`/`2689`、存储根 13 次、健康空闲 0 效果、frames `10`/`18`、arrivals 同 §5、无 `createServer`、未触达 `my-agent-toolkit-access` | `logs/22-takeover-i-effects.log` |
+| `OMP_BOT_BINARY=… bun test tests/harness-dock`（所属分区，真实宿主，串行） | 0 | **104 pass / 0 fail**、27 文件 / 227.73 s（与 §13/§14 逐项相同） | `logs/22-takeover-i-partition-harness-dock.log` |
+| `bun test tests/framework`（共同路径消费者） | 0 | **481 pass / 0 fail**、38 文件 / 40.17 s | `logs/22-takeover-i-partition-framework.log` |
+| `bun test tests/model-cost`（共同路径消费者） | 0 | **463 pass / 0 fail**、40 文件 / 7.46 s（§11 记录的实时期限 flake 本轮未复现） | `logs/22-takeover-i-partition-model-cost.log` |
+
+**本轮未覆盖项**（与 §6/§14 相同，本节新增两处收窄）：`P51`/`P52`/`P53` 的人类判断未做（票内含人类确认的两个勾选项保持未勾选）；并发序列 `draws +3` 仍是**路径级**归因（§14 的 A/B 已收敛到唯一的 `announce()`，逐渲染定位未做）；主子例 `frames 33 → 18` 本轮已归因到**内容级**（15.3），逐帧/逐通知的机制定位仍未做；pi 侧本机接入未做同样的记录器注入；证据范围仍限 win32/x64、bun 1.4.2、隔离 OMP 18.5.0（未打补丁）、无 provider 凭据（模型请求与余额查询由本机 capture endpoint 回答）；15.2 的匹配采样是**补充**可比性材料，不改写 01 的冻结工件。
