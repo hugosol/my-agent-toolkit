@@ -167,17 +167,61 @@ export interface PiInputEvent {
 	/** pi's own attribution of who submitted it. */
 	readonly source: "interactive" | "rpc" | "extension";
 }
+/**
+ * How the run an extension context belongs to draws what an extension hands it.
+ *
+ * pi states it per context and documents `tui` as the mode terminal-only UI has to be guarded by: a
+ * widget handed to a `tui` run is a component the CLI draws itself, at the viewport width and with the
+ * theme of the moment, while a run that is not `tui` takes the plain lines of a widget — and the RPC
+ * mode states outright that it ignores a component factory rather than drawing one.
+ */
+export type PiExtensionMode = "tui" | "rpc" | "json" | "print";
 export interface PiWidgetOptions {
 	readonly placement?: "aboveEditor" | "belowEditor";
 }
+/**
+ * The theme a component factory is handed, as far as this surface names it.
+ *
+ * Only the two members an extension that draws text of its own uses are named: a colour token of the
+ * host's theme, and the colour one thinking level is drawn with. Both are the host's own facts and are
+ * read at drawing time, so a theme change reaches a component the host asks to draw again.
+ */
+export interface PiWidgetTheme {
+	fg(color: string, text: string): string;
+	getThinkingBorderColor(level: string): (text: string) => string;
+}
+/**
+ * The component a widget factory answers with: the lines the host draws at one viewport width, and the
+ * invalidation the host calls when its theme changed.
+ *
+ * A component that draws a read-only result holds nothing to repair — its lines are rebuilt from the
+ * display result of the moment — so `invalidate` is the host's own hook and nothing has to be dropped
+ * behind it. `dispose` is what the host calls when a widget is replaced or cleared.
+ */
+export interface PiWidgetComponent {
+	render(width: number): string[];
+	invalidate(): void;
+	dispose?(): void;
+}
+/**
+ * One widget in the component form: the factory the host calls for a component, handed its own
+ * terminal surface and its own theme.
+ *
+ * The terminal surface is stated as `unknown` because nothing on these lines is read from it: what a
+ * component of this extension needs from the host is the width and the theme it is handed.
+ */
+export type PiWidgetComponentFactory = (tui: unknown, theme: PiWidgetTheme) => PiWidgetComponent;
 export interface PiUiContext {
 	notify(message: string, type?: FeedbackLevel): void;
 	setWidget(key: string, content: readonly string[] | undefined, options?: PiWidgetOptions): void;
+	setWidget(key: string, content: PiWidgetComponentFactory | undefined, options?: PiWidgetOptions): void;
 }
 export interface PiExtensionContext {
 	readonly sessionManager: PiSessionManager;
 	readonly model?: PiModel;
 	readonly thinkingLevel?: string;
+	/** The run mode this context belongs to, when this surface publishes it. */
+	readonly mode?: PiExtensionMode;
 	readonly hasUI: boolean;
 	readonly ui: PiUiContext;
 	/**
