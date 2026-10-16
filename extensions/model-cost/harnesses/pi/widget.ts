@@ -169,16 +169,23 @@ export function attachModelCostWidget(pi: PiExtensionApi, runtime: ModelCostRunt
 	 * pi publishes no viewed-session outlet, so there is no separate view to read and no other
 	 * session's readings to borrow: a context that reports no model answers with empty strings, and a
 	 * context that reports no reading contributes no bar rather than a guessed one.
+	 *
+	 * pi states an unknown context as a null token count — right after a compaction, before the next
+	 * response establishes a reading — which is no reading rather than a confirmed zero: a null that
+	 * reached the display as a number would fail the whole draw, and this frontend's draw runs inside
+	 * the accounting's own change notification.
 	 */
 	const targetOf = (ctx: PiExtensionContext): DisplayTarget => {
 		const usage = ctx.getContextUsage?.();
 		const effort = ctx.thinkingLevel;
+		const tokens = typeof usage?.tokens === "number" ? usage.tokens : undefined;
+		const contextWindow = typeof usage?.contextWindow === "number" ? usage.contextWindow : undefined;
 		return {
 			sessionId: ctx.sessionManager.getSessionId(),
 			provider: ctx.model?.provider ?? "",
 			model: ctx.model?.id ?? "",
-			...(usage?.tokens === undefined ? {} : { contextTokens: usage.tokens }),
-			...(usage?.contextWindow === undefined ? {} : { contextWindow: usage.contextWindow }),
+			...(tokens === undefined ? {} : { contextTokens: tokens }),
+			...(contextWindow === undefined ? {} : { contextWindow }),
 			...(effort === undefined || effort.length === 0 ? {} : { effort }),
 		};
 	};

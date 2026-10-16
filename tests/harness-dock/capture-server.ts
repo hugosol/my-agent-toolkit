@@ -68,6 +68,23 @@ export interface CaptureStep {
 	readonly toolCall?: { readonly name: string; readonly arguments: string };
 	/** Answer with this text instead of the server's reply text. */
 	readonly replyText?: string;
+	/**
+	 * Answer this request with this HTTP status instead of a scripted turn.
+	 *
+	 * The positional {@link CaptureServerOptions.failureStatus} fails *every* completion, which is how a
+	 * run observes a provider that refuses it; this per-request form is how a run observes a provider
+	 * that refuses one attempt and answers the next, which is the shape an automatic retry continues
+	 * from. `200` answers the scripted turn like any request the endpoint serves.
+	 */
+	readonly failureStatus?: number;
+	/**
+	 * Hold this request's answer for this long, after recording the arrival.
+	 *
+	 * A run that must act while the harness is *busy* — submitting a message into a run that is still
+	 * waiting on its provider — needs a request that has arrived and not yet been answered; this is that
+	 * window, stated on the fixture's side rather than guessed from a duration.
+	 */
+	readonly answerDelayMs?: number;
 }
 
 /**
@@ -309,13 +326,6 @@ export function startCaptureServer(options: CaptureServerOptions): CaptureServer
 			const record: CapturedRequest = { index, method: request.method, url: request.url, file, raw, json };
 			captured.push(record);
 
-			if (options.failureStatus !== undefined && options.failureStatus !== 200) {
-				return Response.json(
-					{ error: { message: "dock-injected provider failure", type: "dock_error" } },
-					{ status: options.failureStatus },
-				);
-			}
-
 			const scriptedHeaders =
 				typeof options.responseHeaders === "function" ? options.responseHeaders(record) : options.responseHeaders;
 			const encoder = new TextEncoder();
@@ -329,8 +339,20 @@ export function startCaptureServer(options: CaptureServerOptions): CaptureServer
 					: toolCall !== undefined && index <= (toolCall.times ?? 1)
 						? { toolCall }
 						: {};
+			// A failure this request's own script states is answered before any turn is scripted: it is
+			// this attempt's answer, and the request it names stays recorded like any other.
+			const failureStatus = options.failureStatus ?? scripted.failureStatus;
+			if (failureStatus !== undefined && failureStatus !== 200) {
+				return Response.json(
+					{ error: { message: "dock-injected provider failure", type: "dock_error" } },
+					{ status: failureStatus },
+				);
+			}
 			const scriptedToolCall = scripted.toolCall;
 			const scriptedText = scripted.replyText ?? replyText;
+			// A request whose answer this fixture holds stays recorded and unanswered for that long, so a
+			// run can act on a session that is provably still waiting on its provider.
+			if (scripted.answerDelayMs !== undefined && scripted.answerDelayMs > 0) await Bun.sleep(scripted.answerDelayMs);
 			if (protocolOf(url.pathname) === "openai-codex-responses") {
 				// The Codex transport reads Responses events; the scripted tool call is a
 				// chat-completions shorthand and has no meaning here, so this path answers
