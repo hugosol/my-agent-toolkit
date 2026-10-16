@@ -8,7 +8,7 @@
 
 **Blocked by:** [21：共同路径消费者与真实宿主回归](21-consumer-regression.md)
 
-**Status:** implemented — Agent 侧实现、自动检查与真实宿主观测已完成（源状态 `efb03e0`，无产品代码改动）；**`P51` 的人类验收（效率/复杂度是否可接受）保持未验收**。证据：`../evidence/22-efficiency-complexity.md`（对照报告 `../evidence/logs/22-efficiency-comparison.txt`，迁移后工件 `../evidence/22-efficiency-after.json`）。合并由集成子代理执行，本票不自行合入。
+**Status:** implemented — Agent 侧实现、自动检查与真实宿主观测已完成（源状态 `efb03e0`，无产品代码改动）；**`P51` 的人类验收（效率/复杂度是否可接受）保持未验收**。证据：`../evidence/22-efficiency-complexity.md`（对照报告 `../evidence/logs/22-efficiency-comparison.txt`，迁移后工件 `../evidence/22-efficiency-after.json`）。接手方在 `6420e21` 上独立重跑了本票全部入口（`bun run typecheck`、S1 采样入口 5 次新跑并覆盖式复现对照、`bun test tests/harness-dock/efficiency-effects.test.ts`、所属分区 `tests/harness-dock`）且无一失败，结论与 §3–§6 一致；复核明细与新增日志见该证据 §8。合并由集成子代理执行，本票不自行合入。
 
 ## Acceptance criteria
 

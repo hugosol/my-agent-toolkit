@@ -1,0 +1,21 @@
+ticket 22 — the in-host recorder's own two rules, probed directly (tests/harness-dock/support/effect-instrument.ts)
+
+source: 6420e2147fe3b4e19130b7dcbc989b6f757df1bb (HEAD of hyper/model-cost-pi-migration/22-efficiency-acceptance-a73e6b-411dc288ea83)
+env:    win32 10.0.26200 / x64 / bun 1.4.2 / no dump variable left in the parent environment
+probe:  a child `bun --preload tests/harness-dock/support/effect-instrument.ts probe.ts`, where probe.ts
+        reads one file and does nothing else. Run once with MY_AGENT_TOOLKIT_EFFECT_DUMP named, once
+        with the variable absent.
+
+with the dump variable named:
+  exit 0, stderr ""
+  effects recorded: [["fs", "readFileSync", ["probe.txt", "utf8"]]]
+  the recorder's own dump write appears in the records: false
+
+without the dump variable:
+  exit 0, stderr ""
+  a dump file was written: false
+
+what this shows: the recorder records the process's own calls and not its own write, and a process that
+was not asked for a dump behaves exactly as if the recorder were not loaded — so a "zero" in the dock
+cases is a measurement, not an artefact of the preload. The dock file's own third case drives the other
+half of that control (a process this test knows reads a file and opens an endpoint must appear in a dump).

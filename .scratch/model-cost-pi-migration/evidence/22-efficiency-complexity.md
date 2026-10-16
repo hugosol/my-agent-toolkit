@@ -139,3 +139,25 @@ OMP_BOT_BINARY="E:/Developer/myhub/omp-bot/backend/target/release/omp-bot.exe" b
 ```
 
 **交给人类验收者的材料**：`22-efficiency-after.json`（迁移后工件）、`logs/22-efficiency-comparison.txt`（对照表）、§3/§4 的差异与复杂度摘要、§5 的真实宿主外部效果计数。判断项：统一路径是否带来**明显额外开销**（本票观察到的可比成本差异只有并发序列的一次已结算请求刷新与前端渲染次数）以及**显著复杂度增加**（产品面 +4485 行 / +23%，其中 pi 接线与适配器是新增能力自身）。
+
+## 8. 接手后的独立复核（同一源状态 `6420e21`，无源码改动）
+
+上一轮实现停在 `6420e21`（本票三个提交，工作树除下述三个无内容差异的检出文件外干净）。接手方在同一源状态上重跑了本票的每个入口，结果如下；**本节不改变 §3–§6 的任何结论，只补上"这些数不是一次性的"的证据**。
+
+| 命令 | 退出 | 结果 | 日志 |
+| --- | --- | --- | --- |
+| `bun run typecheck` | 0 | `tsc --noEmit` 无诊断 | — |
+| `bun run baseline:efficiency --out …/logs/22-verify-after-run{N}.json --label verify-run{N}`（**5 次新跑**） | 0 | 每次七条序列的 `every invariant held.`；**五次新跑与已提交的 `22-efficiency-after.json` 在全部可比列上逐列相同**——包括本票改过陈述口径的并发序列（`requests=2`、`/user/balance`×2、`draws=33`） | `logs/22-baseline-stability.txt`、`logs/22-verify-after-run1.json`、`logs/22-verify-run-agreement.log` |
+| `bun run compare:efficiency -- --before 22-efficiency-after.json --after logs/22-verify-after-run1.json` | 0 | `none: every comparable figure of every sequence and window agrees.` —— 一次**新跑**就复现了已提交的迁移后工件（对照入口自身给出该结论，不靠人工比表） | `logs/22-verify-reproduction.txt` |
+| `bun run compare:efficiency -- --before 01-… --after 22-…`（重跑一次） | 0 | 复现 §3/§4；与已提交报告的唯一差异是 `6802bef` 把「文件总数」列移入噪声段（已提交报告早于该提交） | — |
+| `bun test tests/harness-dock/efficiency-effects.test.ts` | 0 | **3 pass / 0 fail**，21 expect()，12.0s；记录到的外部效果与已提交证据逐个相同（存储根 13 次操作、明细逐条相同、widget 帧 10 / 18、arrivals 与 §5 相同） | `logs/22-verify-focused-effects.log` |
+| 记录器自身的两条规则直探（子进程 `bun --preload …/effect-instrument.ts`） | 0 | 指名 dump 时：只记录探针自己的一次读，**记录器写 dump 自身不进记录**；不指名 dump 时：不写任何文件、行为与未加载一致 | `logs/22-verify-recorder-probe.txt` |
+| `OMP_BOT_BINARY=… bun test tests/harness-dock`（所属分区，真实宿主） | 0 | **93 pass / 0 fail**，1121 expect()，26 文件 / 220.8s（90 既有 + 本票 3 例，与 `efb03e0` 时代同分区逐项相同） | `logs/22-verify-partition-harness-dock.log` |
+| `bun test tests/model-cost`（共同路径消费者） | 0 | **463 pass / 0 fail**，2524 expect() | `logs/22-verify-partition-model-cost.log` |
+| `bun test tests/framework`（共同路径消费者） | 0 | **481 pass / 0 fail**，2250 expect() | `logs/22-verify-partition-framework.log` |
+
+**复核得到的四条新事实**：
+
+1. **本票改过的那处陈述是确定的，不是竞态**：五次新跑里并发序列每次都得出 `requests=2`、`draws=33`，六次观测（五次新跑 + 已提交工件）无一次不同；同一批六次观测里唯一波动的是「结算失败的调用数」（15/16/17），也就是 §3 归入噪声、`6802bef` 从可比差异移出的那一列——这条经验数据支持该口径修正。
+2. **工作树交给集成方时是干净的**：`bun.lock` 与两份 `host-patches/*/patch.diff` 在 `git status` 里显示为 ` M`，但三者的文件字节数与 `HEAD` blob **相等**（`11131` = `git cat-file -s HEAD:bun.lock`）、带过滤器的 hash 与 `HEAD` blob 逐个相同（`git hash-object --path=…`）、`git add --dry-run` 无任何内容可暂存：是 `core.autocrlf=true` 的检出 stat 缓存现象，**没有未提交内容**，也不是本票改动（§2 说明 1 的同一现象）。
+3. **§3 的三条归属理由逐条对过 diff，不只是推断**：`git diff --stat 59a0ed7 HEAD -- extensions/model-cost/` 列出的 14 个文件里**没有** `provider-balance.ts` 也没有 `provider-refresh.ts`，所以并发序列的 `requests 1→2` 不是提供方代码变化；`request-accounting.ts` 的 `roundEnded` 在 `delivery.session.kind === "sub"` 分支里调用 `announce()`（该文件第 1076 行，与本票 A/B 日志中"同一时间线、同一请求数下 +2 draws"对应），即每个**子代理 Round 结束**都新公告一次，机制归属成立；同一 diff 移除了 `SubagentRuntimeDelivery` 导入，与 `events 24→23` 的交付组合变化一致。仍未做的是把 +2 draws 定位到具体哪几次渲染（§6 已列）。
