@@ -152,8 +152,12 @@ export interface PiExtensionContext {
 	 * It is read by an extension's own frontend — the figure it draws beside a session's consumption —
 	 * and never handed to the framework: the framework's own facts are the request, the response and
 	 * the session, not the host's context accounting.
+	 *
+	 * `tokens` carries pi's own nullable form because pi states an *unknown* context that way — right
+	 * after a compaction, before the next response establishes a reading — so a caller that draws it
+	 * must treat a null as no reading rather than as a count of zero.
 	 */
-	getContextUsage?(): { readonly tokens?: number; readonly contextWindow?: number } | undefined;
+	getContextUsage?(): { readonly tokens?: number | null; readonly contextWindow?: number } | undefined;
 }
 export type PiSessionStartReason = "startup" | "reload" | "new" | "resume" | "fork";
 export interface PiSessionStartEvent {

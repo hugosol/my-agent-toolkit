@@ -47,13 +47,37 @@
  *      directory the field does not name is ever written;
  *   6. **An illegal configuration refuses the whole extension** instead of silently changing a rule:
  *      the framework's own diagnostic names the extension and the session keeps running without it,
- *      with no widget, no provider query and no file written anywhere.
+ *      with no widget, no provider query and no file written anywhere;
+ *   7. **One Round carries pi's own continuations.** A tool call's follow-up request, an automatic
+ *      retry of a refused attempt, a compaction the crossed context threshold triggers and a message
+ *      pi drained into a run already going each stay inside one Round: a probe extension loaded
+ *      beside the production entrypoint records the public Round and Turn edges (opened once, closed
+ *      once, after the last Turn settled), and the extension's own document holds every request of
+ *      that Round in one save;
+ *   8. **Every request is billed from its own start facts.** The run declares a price of pi's own for
+ *      the models it serves — a third party's cost model, in dollars — and the session switches model
+ *      between two exchanges: each model's stored amount is this script's arithmetic on the
+ *      maintained data's CNY prices, while the cost pi itself computed for the same responses is a
+ *      different number and was never adopted;
+ *   9. **An unmeasurable request and each channel's own amount are expressed as what they are.** A
+ *      provider that reports no usage leaves the session unconsumed and says so — a request nobody
+ *      could measure is not a free one — a reading whose output bucket is a confirmed zero beside
+ *      non-zero input and cache reads is stored exactly as reported, and a request of the data's
+ *      allowance provider is kept as a USD *reference* at the price the host's own catalog states,
+ *      with no consumption amount beside it.
  *
  * What it cannot assert here (recorded, not silently skipped):
  *   - the TUI drawing of the widget stays human-led: over RPC this script observes the `setWidget`
  *     frames the real frontend published, which is the automated face of that surface and not the
  *     terminal's readability;
- *   - the season boundary's redraw over time (a timer's effect) is not exercised;
+ *   - the season boundary's redraw over time (a timer's effect) is not exercised, and the pricing
+ *     season of every case here is the off-peak one its own baseline period states: pi's host clock is
+ *     the wall clock, so a peak-priced exchange is a fact this script cannot state. The season, window
+ *     and holiday boundaries are covered by the accounting suite's own controlled instants;
+ *   - pi's compaction publishes no provider-request fact to extensions: the summarization call it makes
+ *     for itself reaches the endpoint (this script counts it there) but is not on the Turn axis the
+ *     extension is handed, so that one call is neither anchored nor accounted. The Round it happens in
+ *     is unaffected, which is what the compaction case asserts;
  *   - a subagent's own execution duration is not read by this adapter yet, so this script asserts
  *     nothing about it;
  *   - the DeepSeek endpoint's answers are this fixture's own document: they are not evidence about a
@@ -66,9 +90,20 @@
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
-import { type PiCli, PiSession, type PiRun, piVersion, resolvePiCli, startPiRun, writePiModels } from "../tests/harness-dock/pi-session";
+import {
+	type PiCli,
+	PiSession,
+	PI_PROMPT_TIMEOUT_MS,
+	type PiModelDeclaration,
+	type PiRun,
+	piVersion,
+	resolvePiCli,
+	startPiRun,
+	writePiModels,
+} from "../tests/harness-dock/pi-session";
 import type { CaptureServerOptions, CapturedBalanceCall } from "../tests/harness-dock/capture-server";
 import { PI_MODEL_COST_CONFIG_ROOT_ENV } from "../tests/harness-dock/fixtures/pi-model-cost/env";
+import { PI_ROUND_FACTS_PREFIX } from "../tests/harness-dock/fixtures/pi-round-facts/prefix";
 
 /** The repository root: this script lives in `scripts/`. */
 const REPO_ROOT = path.resolve(import.meta.dir, "..");
@@ -239,12 +274,36 @@ function baselineDocument(periodId: string): string {
 	});
 }
 
+/** What one case states about the run it provisions: the endpoint's answers and the model it serves. */
+interface DockRunOptions {
+	/** Whether the run's storage root starts from this script's own baseline document. */
+	readonly baseline?: boolean;
+	/** The provider this run declares, when a case needs a channel other than the official one. */
+	readonly provider?: string;
+	/** The model id this run's selector names, when a case needs another model. */
+	readonly model?: string;
+	/** The run's own model declaration, when a case needs a cost the model states for itself. */
+	readonly cost?: Readonly<Record<string, number>>;
+	readonly contextWindow?: number;
+	/** Other models this provider serves, so a case can switch the session's model. */
+	readonly otherModels?: readonly PiModelDeclaration[];
+	/** The capture endpoint's own answers; stated in full by a case that needs unusual ones. */
+	readonly endpoint?: Omit<CaptureServerOptions, "dir">;
+}
+
 /** One provisioned run: a fresh root, a capture endpoint declared as the provider, and a user home. */
-function startDockRun(cli: PiCli, label: string, options: { readonly baseline?: boolean } = {}): DockRun {
+function startDockRun(cli: PiCli, label: string, options: DockRunOptions = {}): DockRun {
 	const run = startPiRun(cli, label, {
-		provider: PROVIDER,
-		model: MODEL,
-		endpoint: { replyText: REPLY_TEXT, usage: CAPTURE_USAGE, balance: { total: BALANCE_TOTAL } },
+		provider: options.provider ?? PROVIDER,
+		model: options.model ?? MODEL,
+		...(options.cost === undefined ? {} : { cost: options.cost }),
+		...(options.contextWindow === undefined ? {} : { contextWindow: options.contextWindow }),
+		...(options.otherModels === undefined ? {} : { otherModels: options.otherModels }),
+		endpoint: options.endpoint ?? {
+			replyText: REPLY_TEXT,
+			usage: CAPTURE_USAGE,
+			balance: { total: BALANCE_TOTAL },
+		},
 	});
 	const home = isolateHome(run.root.path);
 	// The baseline document is the accounting cases' own setup: it fixes a known period and its holiday
@@ -265,7 +324,7 @@ function startDockRun(cli: PiCli, label: string, options: { readonly baseline?: 
  */
 async function openSession(
 	dock: DockRun,
-	options: { readonly entrypoint?: string; readonly extraEnv?: Record<string, string | undefined> } = {},
+	options: { readonly entrypoint?: string | readonly string[]; readonly extraEnv?: Record<string, string | undefined> } = {},
 ): Promise<PiSession> {
 	const session = await PiSession.start({
 		cli: dock.run.cli,
@@ -388,6 +447,8 @@ async function idleWindow(dock: DockRun, windowMs: number): Promise<number> {
 interface OwnEntry {
 	readonly tokens: Readonly<Record<string, number>>;
 	readonly costCny?: number;
+	/** The allowance channel's own reference estimate in US dollars, when one was produced. */
+	readonly referenceCostUsd?: number;
 }
 
 /** One session record of the extension's consumption document. */
@@ -452,12 +513,24 @@ async function savedDocument(file: string, accept: (document: ConsumptionDocumen
 	}
 }
 
-/** Every file under one directory, relative and sorted; an absent directory answers nothing. */
+/**
+ * Every file under one directory, relative and sorted; an absent directory answers nothing.
+ *
+ * A directory that is gone by the time it is entered is skipped rather than fatal: the extension's own
+ * save coordination publishes and removes its lock while a run is in flight, so a walk that starts
+ * while one exists can reach it after it was removed.
+ */
 function filesUnder(directory: string): string[] {
 	if (!existsSync(directory)) return [];
 	const found: string[] = [];
 	const walk = (current: string): void => {
-		for (const entry of readdirSync(current, { withFileTypes: true })) {
+		let entries;
+		try {
+			entries = readdirSync(current, { withFileTypes: true });
+		} catch {
+			return;
+		}
+		for (const entry of entries) {
 			const full = path.join(current, entry.name);
 			if (entry.isDirectory()) walk(full);
 			else found.push(path.relative(directory, full).replace(/\\/g, "/"));
@@ -1191,6 +1264,426 @@ async function phaseRefusedConfiguration(cli: PiCli): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
+// Phase 5: one Round carries pi's own continuations (P18)
+// ---------------------------------------------------------------------------
+
+/** The dock fixture that records the public Round and Turn edges a case compares its save against. */
+const ROUND_FACTS_ENTRYPOINT = path.join(
+	REPO_ROOT,
+	"tests",
+	"harness-dock",
+	"fixtures",
+	"pi-round-facts",
+	"entrypoint.ts",
+);
+
+/** The output text one scripted tool call prints, which the follow-up request then carries. */
+const TOOL_OUTPUT_TEXT = "pi-smoke-tool-ran";
+
+/** The one tool call a continuation case scripts, as the wire answer of its first completion. */
+const TOOL_STEP: CaptureServerOptions["toolCall"] = {
+	name: "bash",
+	arguments: JSON.stringify({ command: `echo ${TOOL_OUTPUT_TEXT}` }),
+	times: 1,
+};
+
+/** One continuation case's session: the production entrypoint plus the round-facts probe beside it. */
+const CONTINUATION_ENTRYPOINTS = [ENTRYPOINT, ROUND_FACTS_ENTRYPOINT] as const;
+
+/** Every `pi-round-facts` evidence line one session wrote so far, in write order. */
+function roundFacts(session: PiSession): string[] {
+	return session
+		.stderr()
+		.split(/\r?\n/)
+		.filter(line => line.startsWith(`${PI_ROUND_FACTS_PREFIX} `))
+		.map(line => line.slice(PI_ROUND_FACTS_PREFIX.length + 1).trim());
+}
+
+/** Waits until one run's evidence lines satisfy a case, and answers with them. */
+async function roundFactsEventually(session: PiSession, accept: (lines: string[]) => boolean): Promise<string[]> {
+	const deadline = Date.now() + 20_000;
+	for (;;) {
+		const lines = roundFacts(session);
+		if (accept(lines)) return lines;
+		if (Date.now() > deadline) throw new Error(`no round-facts evidence the case expects; saw ${JSON.stringify(lines)}`);
+		await queuedWorkSettled();
+	}
+}
+
+/** Waits until a case's own condition holds, or fails with what it last read. */
+async function waitUntil(read: () => boolean, describe: () => string, timeoutMs = 20_000): Promise<void> {
+	const deadline = Date.now() + timeoutMs;
+	for (;;) {
+		if (read()) return;
+		if (Date.now() > deadline) throw new Error(`nothing the case waits for arrived; last read ${describe()}`);
+		await queuedWorkSettled();
+	}
+}
+
+/** The Round edge kinds one run's evidence carries, in order. */
+function edgesOf(lines: readonly string[]): string[] {
+	return lines.filter(line => /^round_(start|end) /.test(line)).map(line => line.split(" ")[0]);
+}
+
+/** The one session record a document holds, or a failure naming what it held instead. */
+function onlyRecord(document: ConsumptionDocument): SessionRecord {
+	const records = sessionsOf(document);
+	if (records.length !== 1) {
+		throw new Error(`expected one session record, found ${records.length}: ${JSON.stringify(records)}`);
+	}
+	return records[0] as SessionRecord;
+}
+
+/** Whether one stored amount equals another, as this script's own arithmetic states it. */
+function sameAmount(stored: number | undefined, expected: number): boolean {
+	return stored !== undefined && Math.abs(stored - expected) < 1e-12;
+}
+
+/**
+ * One Round across pi's own continuations.
+ *
+ * pi's loop carries four kinds of automatic continuation and only settles when none is left: a tool
+ * call's follow-up request, an automatic retry of a refused request, a compaction the crossed context
+ * threshold triggers, and a message it drained into a run already going. Each case here drives one of
+ * them on the real host and reads the same three things: the public Round and Turn edges a probe
+ * extension received (opened once, closed once, after the last Turn settled), the amount the
+ * extension's own document holds — this script's arithmetic on what the endpoint reported — and the
+ * number of saves, which is one exactly when one Round covered every request.
+ */
+async function phaseRoundContinuations(cli: PiCli): Promise<void> {
+	console.log("\nphase: one Round carries pi's own continuations and saves once at its end");
+
+	// A tool continuation: the first response asks for a tool, pi runs it, and the follow-up request
+	// answers inside the same run.
+	const tool = startDockRun(cli, "round-tool", {
+		endpoint: { replyText: REPLY_TEXT, usage: CAPTURE_USAGE, balance: { total: BALANCE_TOTAL }, toolCall: TOOL_STEP },
+	});
+	const toolSession = await openSession(tool, { entrypoint: CONTINUATION_ENTRYPOINTS });
+	await toolSession.run(PROMPT_ONE);
+	const toolLines = await roundFactsEventually(toolSession, lines => edgesOf(lines).includes("round_end"));
+	const toolRequests = tool.run.capture.requests();
+	observe(
+		"the tool continuation is one Round: two requests, opened once and closed once",
+		toolRequests.length === 2 && JSON.stringify(edgesOf(toolLines)) === JSON.stringify(["round_start", "round_end"]),
+		`requests ${toolRequests.length}, edges ${JSON.stringify(edgesOf(toolLines))}, lines ${JSON.stringify(toolLines)}`,
+	);
+	// The close is the last edge of the sequence: two Turns started, two settled, and only then did the
+	// Round end — which is the whole claim of this axis, since pi's own run end precedes both.
+	const lastTurnEnd = toolLines.reduce((last, line, index) => (line.startsWith("turn_end ") ? index : last), -1);
+	const toolRoundEnd = toolLines.findIndex(line => line.startsWith("round_end "));
+	observe(
+		"the Round closes after the last Turn settled, not at pi's low-level run end",
+		toolRoundEnd > lastTurnEnd &&
+			toolLines.filter(line => line.startsWith("turn_end ")).length === 2 &&
+			toolLines.filter(line => line.startsWith("turn_start ")).length === 2,
+		`lines ${JSON.stringify(toolLines)}`,
+	);
+	observe(
+		"the follow-up request carried the tool's own result",
+		(toolRequests[1]?.raw ?? "").includes(TOOL_OUTPUT_TEXT),
+		`second request: ${(toolRequests[1]?.raw ?? "").slice(0, 400)}`,
+	);
+	const toolSaved = await savedDocument(tool.home.consumptionFile, document =>
+		sessionsOf(document)[0]?.own[PROVIDER]?.[MODEL]?.tokens.input === EXCHANGE_TOKENS.input * 2,
+	);
+	const toolRecord = onlyRecord(toolSaved);
+	observe(
+		"the Round's own save carries both of its requests, written once",
+		toolRecord.saveVersion === 1 && sameAmount(toolRecord.own[PROVIDER]?.[MODEL]?.costCny, EXCHANGE_COST_CNY * 2),
+		`saveVersion ${toolRecord.saveVersion}, amount ${String(toolRecord.own[PROVIDER]?.[MODEL]?.costCny)}, expected ${EXCHANGE_COST_CNY * 2}`,
+	);
+
+	// An automatic retry: the endpoint refuses the first attempt and answers the second, which pi's own
+	// agent-level retry reaches without a further prompt.
+	const retry = startDockRun(cli, "round-retry", {
+		endpoint: {
+			replyText: REPLY_TEXT,
+			usage: CAPTURE_USAGE,
+			balance: { total: BALANCE_TOTAL },
+			respond: request => (request.index === 1 ? { failureStatus: 500 } : undefined),
+		},
+	});
+	const retrySession = await openSession(retry, { entrypoint: CONTINUATION_ENTRYPOINTS });
+	await retrySession.run(PROMPT_ONE);
+	const retryLines = await roundFactsEventually(retrySession, lines => edgesOf(lines).includes("round_end"));
+	const retryRequests = retry.run.capture.requests();
+	observe(
+		"an automatically retried request stays inside its Round: the refused attempt and its retry close one Round",
+		retryRequests.length === 2 && JSON.stringify(edgesOf(retryLines)) === JSON.stringify(["round_start", "round_end"]),
+		`requests ${retryRequests.length}, edges ${JSON.stringify(edgesOf(retryLines))}, lines ${JSON.stringify(retryLines)}`,
+	);
+	observe(
+		"the refused attempt is delivered as a Turn without a reliable reading",
+		retryLines.some(line => line.startsWith("turn_end ") && line.endsWith("usage=<none>")),
+		`lines ${JSON.stringify(retryLines)}`,
+	);
+	const retrySaved = await savedDocument(retry.home.consumptionFile, document =>
+		sessionsOf(document)[0]?.own[PROVIDER]?.[MODEL]?.tokens.input === EXCHANGE_TOKENS.input,
+	);
+	const retryRecord = onlyRecord(retrySaved);
+	observe(
+		"only the answered attempt is accounted, once, in the retried Round's one save",
+		retryRecord.saveVersion === 1 && sameAmount(retryRecord.own[PROVIDER]?.[MODEL]?.costCny, EXCHANGE_COST_CNY),
+		`saveVersion ${retryRecord.saveVersion}, amount ${String(retryRecord.own[PROVIDER]?.[MODEL]?.costCny)}, expected ${EXCHANGE_COST_CNY}`,
+	);
+
+	// A compaction: the tool result pushes the run's context past a threshold this run states, so pi
+	// summarizes inside the run and then continues it.
+	const compaction = startDockRun(cli, "round-compaction", {
+		contextWindow: 1,
+		endpoint: { replyText: REPLY_TEXT, usage: CAPTURE_USAGE, balance: { total: BALANCE_TOTAL }, toolCall: TOOL_STEP },
+	});
+	writeFileSync(
+		path.join(compaction.run.root.agentDir, "settings.json"),
+		`${JSON.stringify({ compaction: { reserveTokens: 0, keepRecentTokens: 1 } })}\n`,
+		"utf8",
+	);
+	const compactionSession = await openSession(compaction, { entrypoint: CONTINUATION_ENTRYPOINTS });
+	await compactionSession.run(PROMPT_ONE);
+	const compactionLines = await roundFactsEventually(compactionSession, lines => edgesOf(lines).includes("round_end"));
+	const compactionRequests = compaction.run.capture.requests().length;
+	const compactionEntries = compactionSession
+		.journal(await compactionSession.sessionFile())
+		.entries.filter(entry => entry.type === "compaction");
+	// What this Round delivered on the Turn axis, as the probe saw it: pi's own compaction-summarization
+	// provider calls are not published as request/response facts to extensions, so the extension can only
+	// account the Turns it was handed — the number the save below has to match.
+	const compactionTurns = compactionLines.filter(line => line.startsWith("turn_end ") && line.endsWith("usage=reported")).length;
+	observe(
+		"pi compacted inside the run, and the Round stayed open across it",
+		compactionEntries.length >= 1 &&
+			JSON.stringify(edgesOf(compactionLines)) === JSON.stringify(["round_start", "round_end"]),
+		`compaction entries ${compactionEntries.length}, provider requests ${compactionRequests}, delivered Turns ${compactionTurns}, edges ${JSON.stringify(edgesOf(compactionLines))}, lines ${JSON.stringify(compactionLines)}`,
+	);
+	const compactionSaved = await savedDocument(compaction.home.consumptionFile, document =>
+		sessionsOf(document)[0]?.own[PROVIDER]?.[MODEL]?.tokens.input === compactionTurns * EXCHANGE_TOKENS.input,
+	);
+	const compactionRecord = onlyRecord(compactionSaved);
+	observe(
+		"every Turn that Round delivered is accounted in its one save",
+		compactionRecord.saveVersion === 1 &&
+			compactionTurns >= 2 &&
+			sameAmount(compactionRecord.own[PROVIDER]?.[MODEL]?.costCny, EXCHANGE_COST_CNY * compactionTurns),
+		`saveVersion ${compactionRecord.saveVersion}, delivered Turns ${compactionTurns} of ${compactionRequests} provider requests, amount ${String(compactionRecord.own[PROVIDER]?.[MODEL]?.costCny)}, expected ${EXCHANGE_COST_CNY * compactionTurns}`,
+	);
+
+	// A queued continuation: a message submitted while pi is provably busy waiting on its provider.
+	const queued = startDockRun(cli, "round-queued", {
+		endpoint: {
+			replyText: REPLY_TEXT,
+			usage: CAPTURE_USAGE,
+			balance: { total: BALANCE_TOTAL },
+			respond: request => (request.index === 1 ? { answerDelayMs: 2_000 } : undefined),
+		},
+	});
+	const queuedSession = await openSession(queued, { entrypoint: CONTINUATION_ENTRYPOINTS });
+	await queuedSession.request({ type: "prompt", message: PROMPT_ONE }, 60_000);
+	// The window is the endpoint's own: the first request has arrived and is unanswered, so pi is still
+	// working in the run the submission below is taken up by.
+	await waitUntil(
+		() => queued.run.capture.requests().length >= 1,
+		() => `provider requests: ${queued.run.capture.requests().length}`,
+	);
+	const queuedMark = queuedSession.frameMark();
+	await queuedSession.request({ type: "prompt", message: PROMPT_TWO, streamingBehavior: "steer" }, 60_000);
+	await queuedSession.frameSince(queuedMark, frame => frame.type === "agent_settled", "the queued run to settle", PI_PROMPT_TIMEOUT_MS);
+	const queuedLines = await roundFactsEventually(queuedSession, lines => edgesOf(lines).includes("round_end"));
+	const queuedRequests = queued.run.capture.requests().length;
+	observe(
+		"a message pi took up inside the run continues that Round rather than opening one",
+		queuedRequests === 2 && JSON.stringify(edgesOf(queuedLines)) === JSON.stringify(["round_start", "round_end"]),
+		`requests ${queuedRequests}, edges ${JSON.stringify(edgesOf(queuedLines))}, lines ${JSON.stringify(queuedLines)}`,
+	);
+	const queuedSaved = await savedDocument(queued.home.consumptionFile, document =>
+		sessionsOf(document)[0]?.own[PROVIDER]?.[MODEL]?.tokens.input === EXCHANGE_TOKENS.input * 2,
+	);
+	const queuedRecord = onlyRecord(queuedSaved);
+	observe(
+		"both submissions of that Round are accounted in its one save",
+		queuedRecord.saveVersion === 1 && sameAmount(queuedRecord.own[PROVIDER]?.[MODEL]?.costCny, EXCHANGE_COST_CNY * 2),
+		`saveVersion ${queuedRecord.saveVersion}, amount ${String(queuedRecord.own[PROVIDER]?.[MODEL]?.costCny)}, expected ${EXCHANGE_COST_CNY * 2}`,
+	);
+}
+
+// ---------------------------------------------------------------------------
+// Phase 6: every request is billed from its own start facts (P7)
+// ---------------------------------------------------------------------------
+
+/**
+ * The price the third party states for the model it serves, in its own USD-per-million-token unit.
+ *
+ * It is deliberately unlike the maintained data's CNY prices in both size and shape: an amount the
+ * extension took from pi's own cost model rather than computing from the maintained data would be
+ * unrecognisable beside these figures, which is what makes "the third party's cost is never adopted"
+ * an observation rather than an assumption.
+ */
+const HARNESS_MODEL_COST = { input: 777, output: 888, cacheRead: 999, cacheWrite: 1_111 };
+
+/** One exchange's amount at the maintained data's second official tier, as this script's arithmetic. */
+const PRO_EXCHANGE_COST_CNY = 0.00012645;
+
+/** The second official model this run declares, whose maintained tier differs from the first's. */
+const SECOND_MODEL = "deepseek-v4-pro";
+
+/** The cost pi itself computed for a session's responses, as its own persisted journal states it. */
+function thirdPartyCostUsd(entries: readonly { readonly [key: string]: unknown }[]): number | undefined {
+	let total: number | undefined;
+	for (const entry of entries) {
+		const message = entry.message as { readonly usage?: { readonly cost?: { readonly total?: number } } } | undefined;
+		const cost = message?.usage?.cost?.total;
+		if (typeof cost === "number") total = (total ?? 0) + cost;
+	}
+	return total;
+}
+
+/**
+ * Each request's own start facts, and what the extension does not take from the host.
+ *
+ * The model the run declares states a price of its own — a third party's cost model, in dollars — and
+ * the session switches to a second model between two exchanges. What the two stored amounts must be is
+ * this script's arithmetic on the maintained data's CNY prices, one per model; what pi itself computed
+ * for the same responses is a different number, read back from the session pi persisted.
+ */
+async function phaseRequestAnchor(cli: PiCli): Promise<void> {
+	console.log("\nphase: each request is billed from its own start facts, never from the third party's cost");
+	const dock = startDockRun(cli, "request-anchor", {
+		cost: HARNESS_MODEL_COST,
+		otherModels: [{ id: SECOND_MODEL, cost: HARNESS_MODEL_COST }],
+	});
+	const session = await openSession(dock);
+	await session.run(PROMPT_ONE);
+	const switched = await session.request({ type: "set_model", provider: PROVIDER, modelId: SECOND_MODEL }, 60_000);
+	observe(
+		"the session's own model switch is accepted before the second exchange",
+		(switched.data as { id?: unknown } | undefined)?.id === SECOND_MODEL,
+		`set_model answered ${JSON.stringify(switched.data)}`,
+	);
+	await session.run(PROMPT_TWO);
+
+	const saved = await savedDocument(dock.home.consumptionFile, document => {
+		const record = sessionsOf(document)[0];
+		return record?.own[PROVIDER]?.[SECOND_MODEL] !== undefined;
+	});
+	const record = onlyRecord(saved);
+	observe(
+		"each model's stored amount is the maintained data's own price of that model's usage",
+		sameAmount(record.own[PROVIDER]?.[MODEL]?.costCny, EXCHANGE_COST_CNY) &&
+			sameAmount(record.own[PROVIDER]?.[SECOND_MODEL]?.costCny, PRO_EXCHANGE_COST_CNY),
+		`flash ${String(record.own[PROVIDER]?.[MODEL]?.costCny)} (expected ${EXCHANGE_COST_CNY}), ${SECOND_MODEL} ${String(record.own[PROVIDER]?.[SECOND_MODEL]?.costCny)} (expected ${PRO_EXCHANGE_COST_CNY})`,
+	);
+	const thirdParty = thirdPartyCostUsd(session.journal(await session.sessionFile()).entries);
+	observe(
+		"the third party's own computed cost is a different number, and not the one that was saved",
+		thirdParty !== undefined &&
+			thirdParty > 0 &&
+			Math.abs(thirdParty - EXCHANGE_COST_CNY) > 1e-9 &&
+			Math.abs(thirdParty - PRO_EXCHANGE_COST_CNY) > 1e-9,
+		`pi's own cost for the session: ${String(thirdParty)}; stored amounts: ${EXCHANGE_COST_CNY} and ${PRO_EXCHANGE_COST_CNY} CNY`,
+	);
+}
+
+// ---------------------------------------------------------------------------
+// Phase 7: an unreliable or partial reading is expressed as what it is (P9)
+// ---------------------------------------------------------------------------
+
+/** The stored buckets and amount one exchange of a prompt-only reading has, as this script's arithmetic. */
+const PROMPT_ONLY_TOKENS = { input: 7, cacheRead: 3, cacheWrite: 0, output: 0 };
+const PROMPT_ONLY_COST_CNY = 0.00000706;
+
+/** The data's own allowance provider, whose price is the one the host's catalog states for it. */
+const ALLOWANCE_PROVIDER = "openai-codex";
+const ALLOWANCE_MODEL = "gpt-5-codex";
+
+/** The host catalog's own USD-per-million-token price for that model, as this run declares it. */
+const ALLOWANCE_MODEL_COST = { input: 3, output: 15, cacheRead: 0.3, cacheWrite: 3.75 };
+
+/**
+ * One allowance exchange's reference amount in US dollars, as this script's own arithmetic: the wire
+ * reading (input 7, cacheRead 3, output 7 after its cached split) at the host's stated price —
+ * (7·3 + 3·0.3 + 7·15)/1e6.
+ */
+const ALLOWANCE_REFERENCE_USD = 0.0001269;
+
+/**
+ * What the extension does with a reading it cannot confirm, with one that is only partly non-zero, and
+ * with a channel whose amount is a reference rather than a charge.
+ *
+ * Three runs of one exchange each: the first answers with no usage at all — pi's own all-zero
+ * default, which its adapter reports as no reading — the second with a reading whose output bucket is
+ * a confirmed zero beside non-zero input and cache reads, and the third on the data's allowance
+ * provider, whose price is the one the host's own catalog states. The first must leave the session
+ * unconsumed and say so, because a request nobody could measure is not a free one; the second must
+ * store exactly the figures it reported, zero buckets included; the third's amount must be the
+ * reference in the host's currency, and no actual consumption amount beside it.
+ */
+async function phaseReadingSemantics(cli: PiCli): Promise<void> {
+	console.log("\nphase: an unmeasurable request is told about, and each channel keeps its own amount");
+	const silent = startDockRun(cli, "reading-silent", {
+		endpoint: { replyText: REPLY_TEXT, balance: { total: BALANCE_TOTAL } },
+	});
+	const silentSession = await openSession(silent, { entrypoint: CONTINUATION_ENTRYPOINTS });
+	await silentSession.run(PROMPT_ONE);
+	await roundFactsEventually(silentSession, lines => edgesOf(lines).includes("round_end"));
+	const silentNotices = silentSession.notificationsSince(0);
+	const silentDocument = documentOf(silent);
+	const silentRecords = silentDocument === undefined ? [] : sessionsOf(silentDocument);
+	observe(
+		"a request whose provider reported no usage is skipped and told about, not counted as free",
+		silentNotices.some(message => message.includes("没有可靠的 usage 读数")) &&
+			silent.run.capture.requests().length === 1 &&
+			silentRecords.length === 0,
+		`notices ${JSON.stringify(silentNotices)}, requests ${silent.run.capture.requests().length}, document ${JSON.stringify(silentDocument)}`,
+	);
+
+	const partial = startDockRun(cli, "reading-partial", {
+		endpoint: {
+			replyText: REPLY_TEXT,
+			usage: { input: 10, output: 0, cacheRead: 3 },
+			balance: { total: BALANCE_TOTAL },
+		},
+	});
+	const partialSession = await openSession(partial);
+	await partialSession.run(PROMPT_ONE);
+	const partialSaved = await savedDocument(partial.home.consumptionFile, document => sessionsOf(document).length === 1);
+	const partialRecord = onlyRecord(partialSaved);
+	observe(
+		"a confirmed zero bucket is stored as the zero it is, beside the reported ones",
+		JSON.stringify(partialRecord.own[PROVIDER]?.[MODEL]?.tokens) === JSON.stringify(PROMPT_ONLY_TOKENS),
+		`stored buckets ${JSON.stringify(partialRecord.own[PROVIDER]?.[MODEL]?.tokens)}, expected ${JSON.stringify(PROMPT_ONLY_TOKENS)}`,
+	);
+	observe(
+		"the amount is those buckets at the maintained price, with the zero bucket adding nothing",
+		sameAmount(partialRecord.own[PROVIDER]?.[MODEL]?.costCny, PROMPT_ONLY_COST_CNY),
+		`stored amount ${String(partialRecord.own[PROVIDER]?.[MODEL]?.costCny)}, expected ${PROMPT_ONLY_COST_CNY}`,
+	);
+
+	// The allowance channel: a model of the data's own allowance provider, whose price the maintained
+	// data does not state at all. The host's catalog is the only price there is, and what this
+	// extension keeps of it is a *reference* in that catalog's own currency — never an amount added to
+	// any actual consumption figure.
+	const allowance = startDockRun(cli, "reading-allowance", {
+		provider: ALLOWANCE_PROVIDER,
+		model: ALLOWANCE_MODEL,
+		cost: ALLOWANCE_MODEL_COST,
+		endpoint: { replyText: REPLY_TEXT, usage: CAPTURE_USAGE, balance: { total: BALANCE_TOTAL } },
+	});
+	const allowanceSession = await openSession(allowance);
+	await allowanceSession.run(PROMPT_ONE);
+	const allowanceSaved = await savedDocument(allowance.home.consumptionFile, document => sessionsOf(document).length === 1);
+	const allowanceEntry = onlyRecord(allowanceSaved).own[ALLOWANCE_PROVIDER]?.[ALLOWANCE_MODEL];
+	observe(
+		"an allowance request's amount is the host's own stated price, kept as a reference in its currency",
+		sameAmount(allowanceEntry?.referenceCostUsd, ALLOWANCE_REFERENCE_USD) && allowanceEntry?.costCny === undefined,
+		`stored entry ${JSON.stringify(allowanceEntry)}, expected reference ${ALLOWANCE_REFERENCE_USD} USD and no consumption amount`,
+	);
+	observe(
+		"its usage is still counted in the same four buckets",
+		JSON.stringify(allowanceEntry?.tokens) === JSON.stringify(EXCHANGE_TOKENS),
+		`stored buckets ${JSON.stringify(allowanceEntry?.tokens)}, expected ${JSON.stringify(EXCHANGE_TOKENS)}`,
+	);
+}
+
+// ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
 
@@ -1257,6 +1750,9 @@ try {
 	await phaseBalance(cli);
 	await phaseStorageRoot(cli);
 	await phaseRefusedConfiguration(cli);
+	await phaseRoundContinuations(cli);
+	await phaseRequestAnchor(cli);
+	await phaseReadingSemantics(cli);
 } catch (error) {
 	failure = error;
 	for (const session of sessions) {
