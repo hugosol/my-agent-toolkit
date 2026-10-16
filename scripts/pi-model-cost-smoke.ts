@@ -13,9 +13,13 @@
  * `--no-extensions -e entrypoints/pi/model-cost.ts --no-mcp`, an isolated agent state, session
  * directory, working directory and user home under the OS temp root, and a local
  * OpenAI-compatible capture endpoint (the dock's `capture-server.ts`) declared as the `deepseek`
- * provider through the run's own `models.json`. The default agent state, the formal configuration and
- * any running agent are never touched, no real credential is read and no repository file is written.
- * Every phase gets its own run root, so the phases are independent and the smoke is repeatable.
+ * provider through the run's own `models.json`. The Codex phase's runs declare pi's own Codex provider
+ * instead, state its credential in the run's own auth file, and load the extension through the
+ * `fixtures/pi-codex-quota` binding — the production definition and runtime with the account API's
+ * transport scripted, because that query reaches an address no run can reach offline. The default
+ * agent state, the formal configuration and any running agent are never touched, no credential of the
+ * machine's is read and no repository file is written. Every phase gets its own run root, so the
+ * phases are independent and the smoke is repeatable.
  *
  * What it asserts (consumer-visible behavior only; no source or wiring inspection):
  *   1. **The set of turns an ordinary session produced is billed from the real loading path.** The
@@ -48,18 +52,29 @@
  *   6. **An illegal configuration refuses the whole extension** instead of silently changing a rule:
  *      the framework's own diagnostic names the extension and the session keeps running without it,
  *      with no widget, no provider query and no file written anywhere;
- *   7. **One Round carries pi's own continuations.** A tool call's follow-up request, an automatic
+ *   7. **The Codex allowance windows and their ratio estimate are wired on this host.** A run of the
+ *      Codex provider asks the account API once while it initializes — at the business address, budget
+ *      and named proxy selection, with the credential pi resolved for that provider and the account
+ *      the credential's own claim names — identifies each window by the length its report states, reads
+ *      each reported reset as the state it has now, and asks again when a settled Codex Turn finds the
+ *      accepted reading older than the configured success TTL. What it reads is published into the
+ *      independent estimate document at once, refined in memory under the minute the document's own
+ *      write holds, and continued by the next process instead of re-anchored; an account reset in a
+ *      DeepSeek entry over the same storage root leaves that document exactly as it was. The account
+ *      API's answers are the fixture's own scripted documents, so this is evidence about the wiring,
+ *      the parser and the save/restore rules and never about a real ChatGPT account.
+ *   8. **One Round carries pi's own continuations.** A tool call's follow-up request, an automatic
  *      retry of a refused attempt, a compaction the crossed context threshold triggers and a message
  *      pi drained into a run already going each stay inside one Round: a probe extension loaded
  *      beside the production entrypoint records the public Round and Turn edges (opened once, closed
  *      once, after the last Turn settled), and the extension's own document holds every request of
  *      that Round in one save;
- *   8. **Every request is billed from its own start facts.** The run declares a price of pi's own for
+ *   9. **Every request is billed from its own start facts.** The run declares a price of pi's own for
  *      the models it serves — a third party's cost model, in dollars — and the session switches model
  *      between two exchanges: each model's stored amount is this script's arithmetic on the
  *      maintained data's CNY prices, while the cost pi itself computed for the same responses is a
  *      different number and was never adopted;
- *   9. **An unmeasurable request and each channel's own amount are expressed as what they are.** A
+ *  10. **An unmeasurable request and each channel's own amount are expressed as what they are.** A
  *      provider that reports no usage leaves the session unconsumed and says so — a request nobody
  *      could measure is not a free one — a reading whose output bucket is a confirmed zero beside
  *      non-zero input and cache reads is stored exactly as reported, and a request of the data's
@@ -80,14 +95,23 @@
  *     is unaffected, which is what the compaction case asserts;
  *   - a subagent's own execution duration is not read by this adapter yet, so this script asserts
  *     nothing about it;
- *   - the DeepSeek endpoint's answers are this fixture's own document: they are not evidence about a
- *     real account, and no paid call is made.
+ *   - the DeepSeek endpoint's answers and the Codex account API's answers are this script's own
+ *     documents: they are not evidence about a real account, and no paid call is made.
  *
  * The expected amount is the maintained data's own off-peak flash prices applied by this script's
  * arithmetic, exactly as the OMP dock's accounting suite states them; nothing here is computed by
  * calling the extension's own pricing code.
  */
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import {
+	type Dirent,
+	existsSync,
+	mkdirSync,
+	mkdtempSync,
+	readFileSync,
+	readdirSync,
+	rmSync,
+	writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
 import {
@@ -96,12 +120,24 @@ import {
 	PI_PROMPT_TIMEOUT_MS,
 	type PiModelDeclaration,
 	type PiRun,
+	type PiStoredCredential,
 	piVersion,
 	resolvePiCli,
 	startPiRun,
+	writePiCredentials,
 	writePiModels,
 } from "../tests/harness-dock/pi-session";
 import type { CaptureServerOptions, CapturedBalanceCall } from "../tests/harness-dock/capture-server";
+import {
+	PI_CODEX_QUOTA_ESTIMATE_LINE,
+	PI_CODEX_QUOTA_LINE,
+	PI_CODEX_QUOTA_SCRIPT_DIR_ENV,
+	PI_CODEX_QUOTA_TTL_MS_ENV,
+	type RecordedAccountQuery,
+	type ScriptedAccountAnswer,
+	recordedAccountQueries,
+	writeAccountAnswer,
+} from "../tests/harness-dock/fixtures/pi-codex-quota/entrypoint";
 import { PI_MODEL_COST_CONFIG_ROOT_ENV } from "../tests/harness-dock/fixtures/pi-model-cost/env";
 import { PI_ROUND_FACTS_PREFIX } from "../tests/harness-dock/fixtures/pi-round-facts/prefix";
 
@@ -211,6 +247,8 @@ interface Observation {
 const observations: Observation[] = [];
 const runs: DockRun[] = [];
 const sessions: PiSession[] = [];
+/** The throwaway directories a phase made for itself — a scripted-answer directory, a shared home. */
+const temporaryRoots: string[] = [];
 
 class SmokeFailure extends Error {
 	constructor(name: string, detail: string) {
@@ -274,13 +312,12 @@ function baselineDocument(periodId: string): string {
 	});
 }
 
-/** What one case states about the run it provisions: the endpoint's answers and the model it serves. */
+/** What one provisioned run states for itself: the accounting pair unless a case says otherwise. */
 interface DockRunOptions {
-	/** Whether the run's storage root starts from this script's own baseline document. */
+	/** Whether the root starts with this script's own baseline document; omitted means it does. */
 	readonly baseline?: boolean;
-	/** The provider this run declares, when a case needs a channel other than the official one. */
+	/** The provider and model this run declares, when a case drives another one than the accounting pair. */
 	readonly provider?: string;
-	/** The model id this run's selector names, when a case needs another model. */
 	readonly model?: string;
 	/** The run's own model declaration, when a case needs a cost the model states for itself. */
 	readonly cost?: Readonly<Record<string, number>>;
@@ -289,6 +326,20 @@ interface DockRunOptions {
 	readonly otherModels?: readonly PiModelDeclaration[];
 	/** The capture endpoint's own answers; stated in full by a case that needs unusual ones. */
 	readonly endpoint?: Omit<CaptureServerOptions, "dir">;
+	/**
+	 * The credentials pi's own auth store holds for this run, when a provider's credential is not the
+	 * declared key. pi's Codex provider resolves its own login credential from that store, so a case
+	 * driving that provider states it here.
+	 */
+	readonly credentials?: Readonly<Record<string, PiStoredCredential>>;
+	/**
+	 * The isolated home this run uses.
+	 *
+	 * Omitted means a fresh one under the run's own root. A case that needs several runs to read and
+	 * write one storage root states the home it already made, which is what makes the shared file the
+	 * same file rather than a copy.
+	 */
+	readonly home?: IsolatedHome;
 }
 
 /** One provisioned run: a fresh root, a capture endpoint declared as the provider, and a user home. */
@@ -305,7 +356,8 @@ function startDockRun(cli: PiCli, label: string, options: DockRunOptions = {}): 
 			balance: { total: BALANCE_TOTAL },
 		},
 	});
-	const home = isolateHome(run.root.path);
+	if (options.credentials !== undefined) writePiCredentials(run.root.agentDir, options.credentials);
+	const home = options.home ?? isolateHome(run.root.path);
 	// The baseline document is the accounting cases' own setup: it fixes a known period and its holiday
 	// season so the expected amount is this script's arithmetic. A case that observes where the storage
 	// root itself lands states no baseline, so that the file it finds is one the extension wrote.
@@ -524,13 +576,7 @@ function filesUnder(directory: string): string[] {
 	if (!existsSync(directory)) return [];
 	const found: string[] = [];
 	const walk = (current: string): void => {
-		let entries;
-		try {
-			entries = readdirSync(current, { withFileTypes: true });
-		} catch {
-			return;
-		}
-		for (const entry of entries) {
+		for (const entry of entriesOf(current)) {
 			const full = path.join(current, entry.name);
 			if (entry.isDirectory()) walk(full);
 			else found.push(path.relative(directory, full).replace(/\\/g, "/"));
@@ -538,6 +584,21 @@ function filesUnder(directory: string): string[] {
 	};
 	walk(directory);
 	return found.sort();
+}
+
+/**
+ * The entries of one directory, or nothing when it went away before this read.
+ *
+ * The store's own coordinated writes hold a lock directory that is created and removed while a caller
+ * walks the root; one that disappeared between the listing and the descent holds no file of the
+ * store's, so the walk of the rest simply continues.
+ */
+function entriesOf(directory: string): Dirent[] {
+	try {
+		return readdirSync(directory, { withFileTypes: true });
+	} catch {
+		return [];
+	}
 }
 
 /**
@@ -1264,7 +1325,524 @@ async function phaseRefusedConfiguration(cli: PiCli): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
-// Phase 5: one Round carries pi's own continuations (P18)
+// Phase 6: the Codex allowance windows and the ratio estimate they feed
+// ---------------------------------------------------------------------------
+
+/** The fixture that binds the production definition and runtime, with the account query scripted. */
+const CODEX_QUOTA_ENTRYPOINT = path.join(
+	REPO_ROOT,
+	"tests",
+	"harness-dock",
+	"fixtures",
+	"pi-codex-quota",
+	"entrypoint.ts",
+);
+
+/** The account API's own address, budget and proxy selection, as the business states them. */
+const CODEX_ACCOUNT_URL = "https://chatgpt.com/backend-api/wham/usage";
+const CODEX_ACCOUNT_TIMEOUT_MS = 10_000;
+const CODEX_ACCOUNT_PROXY = "codex";
+
+/** pi's own Codex provider id, and a model this script declares for that provider. */
+const CODEX_PROVIDER = "openai-codex";
+const CODEX_MODEL = "gpt-6-luna";
+
+/** The account id this phase's own credential states. */
+const CODEX_ACCOUNT_ID = "acct-dock-14";
+
+/** The estimate document beside the consumption document, and the two lengths the account API reports. */
+const ESTIMATE_FILE = "codex-usage-estimate.json";
+const FIVE_HOUR_SECONDS = 5 * 60 * 60;
+const WEEKLY_SECONDS = 7 * 24 * 60 * 60;
+
+/** The success TTL a run that must refresh on a settled Turn is built with. */
+const PROMPT_TTL_MS = 1;
+/** A success TTL that outlives the whole phase: only an attempt that earned no success lets a Turn ask again. */
+const PATIENT_TTL_MS = 10 * 60 * 1000;
+
+/**
+ * A JWT-shaped credential whose claim names a ChatGPT account.
+ *
+ * The extension formats the account id into its request headers from the credential pi resolved,
+ * exactly as it does for a real login token, so the credential this phase declares has to carry one —
+ * and the id asserted below is this script's own literal rather than a value read back from a request.
+ */
+function codexProbeToken(accountId: string): string {
+	const claims = Buffer.from(
+		JSON.stringify({ "https://api.openai.com/auth": { chatgpt_account_id: accountId } }),
+		"utf8",
+	).toBase64();
+	return `aaa.${claims}.bbb`;
+}
+
+const CODEX_TOKEN = codexProbeToken(CODEX_ACCOUNT_ID);
+
+/**
+ * The login credential this phase declares for pi's Codex provider.
+ *
+ * pi's Codex provider authenticates from its own stored login rather than from a key declared in
+ * `models.json`, so a controlled run states the credential in pi's own auth file — with an expiry far
+ * enough ahead that the harness resolves it as it stands instead of trying to refresh it. The access
+ * token is the one whose account claim the extension reads for its own request header.
+ */
+function codexCredentials(): Record<string, PiStoredCredential> {
+	return {
+		[CODEX_PROVIDER]: {
+			type: "oauth",
+			access: CODEX_TOKEN,
+			refresh: "dock-refresh-token",
+			expires: Date.now() + 60 * 60 * 1000,
+		},
+	};
+}
+
+/** One window as the account API's document states it, in the units that document uses. */
+interface AccountWindow {
+	readonly usedPercent: number;
+	/** The window's length, in seconds. */
+	readonly seconds: number;
+	/** The reset instant, in seconds; absent states none. */
+	readonly resetAt?: number;
+}
+
+/** One account API answer body, under the two positions that API states its windows in. */
+function accountDocument(windows: { readonly primary?: AccountWindow; readonly secondary?: AccountWindow }): unknown {
+	const windowOf = (window: AccountWindow): Record<string, unknown> => ({
+		used_percent: window.usedPercent,
+		limit_window_seconds: window.seconds,
+		...(window.resetAt === undefined ? {} : { reset_at: window.resetAt }),
+	});
+	return {
+		plan_type: "pro",
+		rate_limit: {
+			...(windows.primary === undefined ? {} : { primary_window: windowOf(windows.primary) }),
+			...(windows.secondary === undefined ? {} : { secondary_window: windowOf(windows.secondary) }),
+		},
+	};
+}
+
+/** One window as this script reads it back from the fixture's own observation line. */
+interface ObservedWindow {
+	readonly usedPercent: number;
+	readonly resetsAt?: number;
+	readonly resetState: string;
+	readonly obtainedAt: number;
+}
+
+/** The read-only allowance result one observation line carries. */
+interface ObservedQuota {
+	readonly fiveHour?: ObservedWindow;
+	readonly weekly?: ObservedWindow;
+	readonly failure?: { readonly detail: string };
+}
+
+/** The ratio/left segment one observation line carries. */
+interface ObservedEstimate {
+	readonly ratio?: number;
+	readonly left?: number;
+	readonly text: string;
+}
+
+/** The independent estimate document, as this script reads it back. */
+interface EstimateDocument {
+	readonly baseline: {
+		readonly capturedAt: string;
+		readonly fiveHour: { readonly usedPercent: number; readonly resetsAt: string | null };
+		readonly weekly: { readonly usedPercent: number; readonly resetsAt: string | null };
+	};
+	readonly ratio: number | null;
+}
+
+/** Every observation line one prefix carries in this session's stderr, in the order they were written. */
+function observedLines<T>(session: PiSession, prefix: string): T[] {
+	return session
+		.stderr()
+		.split(/\r?\n/)
+		.filter(line => line.startsWith(prefix))
+		.map(line => JSON.parse(line.slice(prefix.length)) as T);
+}
+
+/** The last observation line of one prefix, or nothing while none was written. */
+function lastObservation<T>(session: PiSession, prefix: string): T | undefined {
+	const lines = observedLines<T>(session, prefix);
+	return lines[lines.length - 1];
+}
+
+/** Waits until this session's stderr carries an observation line of one prefix that a case accepts. */
+async function awaitedObservation<T>(
+	session: PiSession,
+	prefix: string,
+	accept: (line: T) => boolean,
+	label: string,
+): Promise<T> {
+	const deadline = Date.now() + 15_000;
+	for (;;) {
+		const lines = observedLines<T>(session, prefix);
+		const accepted = lines.find(accept);
+		if (accepted !== undefined) return accepted;
+		if (Date.now() > deadline) throw new Error(`waited 15000ms for ${label}; observed: ${JSON.stringify(lines)}`);
+		await Bun.sleep(20);
+	}
+}
+
+/**
+ * Waits until one run's script directory records at least `count` account queries, and answers with
+ * the log.
+ *
+ * The count is the observation: the fixture's transport appends each call before it answers it, so a
+ * recorded call is one that really left the runtime.
+ */
+async function awaitedQueries(dir: string, count: number, label: string): Promise<RecordedAccountQuery[]> {
+	const deadline = Date.now() + 15_000;
+	for (;;) {
+		const queries = recordedAccountQueries(dir);
+		if (queries.length >= count) return queries;
+		if (Date.now() > deadline) {
+			throw new Error(`waited 15000ms for ${label} and saw ${queries.length} account query/queries`);
+		}
+		await Bun.sleep(20);
+	}
+}
+
+/** The estimate document one storage root holds right now, or nothing while it holds none or an unreadable one. */
+function readEstimate(file: string): EstimateDocument | undefined {
+	try {
+		return JSON.parse(readFileSync(file, "utf8")) as EstimateDocument;
+	} catch {
+		return undefined;
+	}
+}
+
+/**
+ * Waits until the estimate document holds what a case expects, and answers with it.
+ *
+ * The measurement is in memory the moment a report is folded in, while the write it triggers is
+ * dispatched without anyone waiting for it, so the wait is on the file's own content rather than on a
+ * duration, and the deadline only keeps a write that never happened from hanging the case.
+ */
+async function awaitedEstimate(file: string, accept: (document: EstimateDocument) => boolean): Promise<EstimateDocument> {
+	const deadline = Date.now() + 15_000;
+	for (;;) {
+		const document = readEstimate(file);
+		if (document !== undefined && accept(document)) return document;
+		if (Date.now() > deadline) throw new Error(`no estimate document the case expects was published in ${file}`);
+		await Bun.sleep(20);
+	}
+}
+
+/** One isolated user home several runs of a phase share, so all of them read and write one storage root. */
+function sharedHome(label: string): IsolatedHome {
+	const root = mkdtempSync(path.join(tmpdir(), `pi-model-cost-${label}-home-`));
+	temporaryRoots.push(root);
+	return isolateHome(root);
+}
+
+/**
+ * The Codex allowance windows, their ratio estimate and the reset beside them, in real pi processes.
+ *
+ * Four runs over one isolated user home — hence one storage root, the one the shipped configuration
+ * names — three of them through `fixtures/pi-codex-quota`, which binds the production definition and
+ * runtime with the account API's answers scripted in that run's own directory. Every number an
+ * observation is compared against is this script's own literal or arithmetic on it: the two window
+ * lengths, the reset instants computed from the clock this phase read, and the ratio 50 / 15 that the
+ * first report's baseline and the later reports state. What the runs observe is the read-only result a
+ * frontend would draw, the account queries that really left the process, and the bytes of the
+ * independent estimate document.
+ *
+ * The account API's answers are this phase's own documents: they are evidence about the wiring, the
+ * parser and the save/restore rules, never about a real ChatGPT account, and no request leaves the
+ * machine for the account API — the fixture's transport answers it inside the run.
+ */
+async function phaseCodexAllowance(cli: PiCli): Promise<void> {
+	console.log("\nphase: the Codex allowance windows and the ratio estimate they feed");
+	const home = sharedHome("codex");
+	const estimateFile = path.join(home.storageDirectory, ESTIMATE_FILE);
+	// The instants every scripted report states, computed here rather than read back: the five-hour
+	// window resets a minute behind this clock (expired by the moment it is read) and the weekly one
+	// eight days ahead (further than that window lasts, hence invalid). Both are the same instants in
+	// every report below, so no report of this phase looks like a window rollover.
+	const accountNowSeconds = Math.floor(Date.now() / 1000);
+	const fiveHourResetMs = (accountNowSeconds - 60) * 1000;
+	const weeklyResetMs = (accountNowSeconds + 8 * 24 * 60 * 60) * 1000;
+
+	// Run one: the windows are seeded by the initialization's own answer, whose positions carry the
+	// other window's length than their names suggest, and each settled Turn then refreshes them.
+	const first = startDockRun(cli, "codex-first", {
+		baseline: false,
+		home,
+		provider: CODEX_PROVIDER,
+		model: CODEX_MODEL,
+		credentials: codexCredentials(),
+	});
+	const firstScript = mkdtempSync(path.join(tmpdir(), "pi-codex-answers-first-"));
+	temporaryRoots.push(firstScript);
+	writeAccountAnswer(firstScript, 1, {
+		document: accountDocument({
+			primary: { usedPercent: 40, seconds: WEEKLY_SECONDS, resetAt: weeklyResetMs / 1000 },
+			secondary: { usedPercent: 10, seconds: FIVE_HOUR_SECONDS, resetAt: fiveHourResetMs / 1000 },
+		}),
+	});
+	writeAccountAnswer(firstScript, 2, {
+		document: accountDocument({ secondary: { usedPercent: 60, seconds: FIVE_HOUR_SECONDS } }),
+	});
+	writeAccountAnswer(firstScript, 3, {
+		document: accountDocument({
+			primary: { usedPercent: 55, seconds: WEEKLY_SECONDS, resetAt: weeklyResetMs / 1000 },
+			secondary: { usedPercent: 60, seconds: FIVE_HOUR_SECONDS, resetAt: fiveHourResetMs / 1000 },
+		}),
+	});
+	const firstSession = await openSession(first, {
+		entrypoint: CODEX_QUOTA_ENTRYPOINT,
+		extraEnv: {
+			[PI_CODEX_QUOTA_SCRIPT_DIR_ENV]: firstScript,
+			[PI_CODEX_QUOTA_TTL_MS_ENV]: String(PROMPT_TTL_MS),
+		},
+	});
+	const seededWindows = await awaitedObservation<ObservedQuota>(
+		firstSession,
+		PI_CODEX_QUOTA_LINE,
+		quota => quota.fiveHour?.usedPercent === 10,
+		"the initialization's own window reading",
+	);
+	const startupQueries = await awaitedQueries(firstScript, 1, "the initialization's account query");
+	observe(
+		"the loaded extension asked the account API once while it initialized",
+		startupQueries.length === 1,
+		`account queries: ${JSON.stringify(startupQueries)}`,
+	);
+	const firstQuery = startupQueries[0] as RecordedAccountQuery;
+	observe(
+		"the account query used the business address, budget and named proxy selection",
+		firstQuery.method === "GET" &&
+			firstQuery.url === CODEX_ACCOUNT_URL &&
+			firstQuery.timeoutMs === CODEX_ACCOUNT_TIMEOUT_MS &&
+			firstQuery.proxy === CODEX_ACCOUNT_PROXY,
+		`query: ${JSON.stringify(firstQuery)}`,
+	);
+	observe(
+		"the query authenticated with the credential pi resolved, and the account that credential names",
+		firstQuery.headers["authorization"] === `Bearer ${CODEX_TOKEN}` &&
+			firstQuery.headers["chatgpt-account-id"] === CODEX_ACCOUNT_ID,
+		`headers: ${JSON.stringify(firstQuery.headers)}, credential this script declared: ${JSON.stringify(CODEX_TOKEN)}`,
+	);
+	observe(
+		"the windows are identified by the length each report stated, not by the position that carried them",
+		seededWindows.fiveHour?.usedPercent === 10 && seededWindows.weekly?.usedPercent === 40,
+		`windows: ${JSON.stringify(seededWindows)}`,
+	);
+	observe(
+		"one reported reset is expired and the other invalid, each read at this moment and never rewritten",
+		seededWindows.fiveHour?.resetsAt === fiveHourResetMs &&
+			seededWindows.fiveHour.resetState === "expired" &&
+			seededWindows.weekly?.resetsAt === weeklyResetMs &&
+			seededWindows.weekly.resetState === "invalid",
+		`windows: ${JSON.stringify(seededWindows)}, instants this script stated: ${fiveHourResetMs} / ${weeklyResetMs}`,
+	);
+	const anchored = await awaitedEstimate(estimateFile, document => document.baseline?.fiveHour?.usedPercent === 10);
+	observe(
+		"the first paired report published the baseline into its own document before any Turn",
+		anchored.ratio === null &&
+			anchored.baseline.weekly.usedPercent === 40 &&
+			anchored.baseline.fiveHour.resetsAt !== null &&
+			filesUnder(home.storageDirectory).includes(ESTIMATE_FILE),
+		`document: ${JSON.stringify(anchored)}, storage root: ${JSON.stringify(filesUnder(home.storageDirectory))}`,
+	);
+	const anchoredBytes = readFileSync(estimateFile, "utf8");
+	const anchoredCapturedAt = anchored.baseline.capturedAt;
+
+	// One prompt: its settled Codex Turn is the refresh trigger, and the reading the initialization
+	// accepted is stale by then — this run's success TTL is this script's own one millisecond.
+	await firstSession.run(PROMPT_ONE);
+	const firstTurnQueries = await awaitedQueries(firstScript, 2, "the settled Turn's account query");
+	observe(
+		"a settled Codex Turn asked the account API again once the success TTL had passed",
+		firstTurnQueries.length === 2,
+		`account queries: ${JSON.stringify(firstTurnQueries)}`,
+	);
+	const single = await awaitedObservation<ObservedQuota>(
+		firstSession,
+		PI_CODEX_QUOTA_LINE,
+		quota => quota.fiveHour?.usedPercent === 60,
+		"the settled Turn's own window reading",
+	);
+	observe(
+		"the answer that carried one window updated that one alone, and the other kept its reading and instant",
+		single.fiveHour !== undefined &&
+			single.fiveHour.resetsAt === undefined &&
+			single.fiveHour.resetState === "unknown" &&
+			JSON.stringify(single.weekly) === JSON.stringify(seededWindows.weekly),
+		`windows: ${JSON.stringify(single)}, before that answer: ${JSON.stringify(seededWindows)}`,
+	);
+	const singleEstimate = lastObservation<ObservedEstimate | null>(firstSession, PI_CODEX_QUOTA_ESTIMATE_LINE);
+	observe(
+		"a report that carried one window is no pair, so nothing was measured and nothing was written",
+		singleEstimate?.ratio === undefined && readFileSync(estimateFile, "utf8") === anchoredBytes,
+		`estimate: ${JSON.stringify(singleEstimate)}, document: ${JSON.stringify(readEstimate(estimateFile))}`,
+	);
+
+	// A second prompt: its answer carries both windows, 50 five-hour points above the baseline and 15
+	// weekly points above it, which is the qualification the measurement needs for a sample.
+	await firstSession.run(PROMPT_TWO);
+	await awaitedQueries(firstScript, 3, "the qualifying answer's own account query");
+	const expectedRatio = 50 / 15;
+	const refined = await awaitedObservation<ObservedEstimate | null>(
+		firstSession,
+		PI_CODEX_QUOTA_ESTIMATE_LINE,
+		estimate => estimate?.ratio !== undefined,
+		"the qualifying pair's own reading",
+	);
+	observe(
+		"one report's own pair refined the ratio from the baseline that report followed",
+		refined !== null && Math.abs((refined.ratio ?? Number.NaN) - expectedRatio) < 1e-9,
+		`estimate: ${JSON.stringify(refined)}, expected ratio ${expectedRatio}`,
+	);
+	observe(
+		"the refinement stayed out of the document inside the minute that followed the baseline's own write",
+		readEstimate(estimateFile)?.ratio === null && readFileSync(estimateFile, "utf8") === anchoredBytes,
+		`document: ${JSON.stringify(readEstimate(estimateFile))}, estimate: ${JSON.stringify(refined)}`,
+	);
+
+	// Run two: the same storage root, an answer that fails, and a success TTL that outlives the run —
+	// so only that failure's own lack of a success lets the settled Turn ask again.
+	const refused = startDockRun(cli, "codex-refused", {
+		baseline: false,
+		home,
+		provider: CODEX_PROVIDER,
+		model: CODEX_MODEL,
+		credentials: codexCredentials(),
+	});
+	const refusedScript = mkdtempSync(path.join(tmpdir(), "pi-codex-answers-refused-"));
+	temporaryRoots.push(refusedScript);
+	writeAccountAnswer(refusedScript, 1, { document: { error: "unauthorized" }, status: 403 });
+	writeAccountAnswer(refusedScript, 2, {
+		document: accountDocument({
+			primary: { usedPercent: 4, seconds: WEEKLY_SECONDS, resetAt: weeklyResetMs / 1000 },
+			secondary: { usedPercent: 20, seconds: FIVE_HOUR_SECONDS, resetAt: fiveHourResetMs / 1000 },
+		}),
+	});
+	const refusedSession = await openSession(refused, {
+		entrypoint: CODEX_QUOTA_ENTRYPOINT,
+		extraEnv: {
+			[PI_CODEX_QUOTA_SCRIPT_DIR_ENV]: refusedScript,
+			[PI_CODEX_QUOTA_TTL_MS_ENV]: String(PATIENT_TTL_MS),
+		},
+	});
+	const refusedQueries = (): RecordedAccountQuery[] => recordedAccountQueries(refusedScript);
+	const failed = await awaitedObservation<ObservedQuota>(
+		refusedSession,
+		PI_CODEX_QUOTA_LINE,
+		quota => quota.failure !== undefined,
+		"the failed attempt's own reading",
+	);
+	observe(
+		"a failed account attempt is a failure beside no window, never a window at zero",
+		failed.failure?.detail === "unreadable" && failed.fiveHour === undefined && failed.weekly === undefined,
+		`windows: ${JSON.stringify(failed)}`,
+	);
+	await refusedSession.run(PROMPT_ONE);
+	const refusedTurnQueries = await awaitedQueries(refusedScript, 2, "the answer the settled Turn obtained");
+	observe(
+		"a failed attempt earned no success TTL, so that Turn asked again despite the run's ten-minute TTL",
+		refusedTurnQueries.length === 2,
+		`account queries: ${JSON.stringify(refusedTurnQueries)}, TTL: ${PATIENT_TTL_MS}`,
+	);
+	const unqualified = await awaitedObservation<ObservedQuota>(
+		refusedSession,
+		PI_CODEX_QUOTA_LINE,
+		quota => quota.weekly?.usedPercent === 4,
+		"the answer the settled Turn obtained",
+	);
+	observe(
+		"the answer that followed seeded both windows, and its pair qualified nothing against the stored baseline",
+		unqualified.fiveHour?.usedPercent === 20 &&
+			lastObservation<ObservedEstimate | null>(refusedSession, PI_CODEX_QUOTA_ESTIMATE_LINE)?.ratio === undefined &&
+			readFileSync(estimateFile, "utf8") === anchoredBytes,
+		`windows: ${JSON.stringify(unqualified)}, estimate: ${JSON.stringify(lastObservation(refusedSession, PI_CODEX_QUOTA_ESTIMATE_LINE))}`,
+	);
+	// A second settled Turn with the reading now fresh: the configured TTL is what keeps it from asking.
+	await refusedSession.run(PROMPT_TWO);
+	await Bun.sleep(250);
+	observe(
+		"a fresh reading kept the next settled Turn from asking again",
+		refusedQueries().length === 2,
+		`account queries: ${JSON.stringify(refusedQueries())}, TTL: ${PATIENT_TTL_MS}`,
+	);
+
+	// Run three: a new process over the same document, whose own first report is a pair 50 / 15 above
+	// the stored baseline — so the ratio it learns is that baseline's own, and the baseline's capture
+	// instant is what says it continued that measurement rather than anchoring on its first report.
+	const continued = startDockRun(cli, "codex-continued", {
+		baseline: false,
+		home,
+		provider: CODEX_PROVIDER,
+		model: CODEX_MODEL,
+		credentials: codexCredentials(),
+	});
+	const continuedScript = mkdtempSync(path.join(tmpdir(), "pi-codex-answers-continued-"));
+	temporaryRoots.push(continuedScript);
+	writeAccountAnswer(continuedScript, 1, {
+		document: accountDocument({
+			primary: { usedPercent: 55, seconds: WEEKLY_SECONDS, resetAt: weeklyResetMs / 1000 },
+			secondary: { usedPercent: 60, seconds: FIVE_HOUR_SECONDS, resetAt: fiveHourResetMs / 1000 },
+		}),
+	});
+	const continuedSession = await openSession(continued, {
+		entrypoint: CODEX_QUOTA_ENTRYPOINT,
+		extraEnv: {
+			[PI_CODEX_QUOTA_SCRIPT_DIR_ENV]: continuedScript,
+			[PI_CODEX_QUOTA_TTL_MS_ENV]: String(PATIENT_TTL_MS),
+		},
+	});
+	await awaitedObservation<ObservedQuota>(
+		continuedSession,
+		PI_CODEX_QUOTA_LINE,
+		quota => quota.weekly?.usedPercent === 55,
+		"the new process's own window reading",
+	);
+	const carried = await awaitedEstimate(estimateFile, document => document.ratio !== null);
+	const shown = await awaitedObservation<ObservedEstimate | null>(
+		continuedSession,
+		PI_CODEX_QUOTA_ESTIMATE_LINE,
+		estimate => estimate?.ratio !== undefined,
+		"the continued measurement's own reading",
+	);
+	observe(
+		"a new process continued the measurement the document carries instead of re-anchoring on its first report",
+		Math.abs((carried.ratio ?? Number.NaN) - expectedRatio) < 1e-4 &&
+			carried.baseline.fiveHour.usedPercent === 10 &&
+			carried.baseline.weekly.usedPercent === 40 &&
+			carried.baseline.capturedAt === anchoredCapturedAt &&
+			shown !== null &&
+			Math.abs((shown.ratio ?? Number.NaN) - expectedRatio) < 1e-9,
+		`document: ${JSON.stringify(carried)}, baseline the first run wrote: ${JSON.stringify(anchoredCapturedAt)}, estimate: ${JSON.stringify(shown)}`,
+	);
+
+	// Run four: a DeepSeek entry, because the period actions belong to that entry alone, over the same
+	// storage root — its own Turn saves consumption there, and its reset must leave the independent
+	// estimate exactly as it was.
+	const reset = startDockRun(cli, "codex-reset", { baseline: false, home });
+	const resetSession = await openSession(reset);
+	await resetSession.run(PROMPT_ONE);
+	const saved = await savedDocument(home.consumptionFile, document => sessionsOf(document).length > 0);
+	const estimateBeforeReset = readFileSync(estimateFile, "utf8");
+	await resetSession.request({ type: "prompt", message: "/budget clear" }, 60_000);
+	const resetDocument = await savedDocument(home.consumptionFile, document => document.periodId !== saved.periodId);
+	observe(
+		"the period reset archived the saved consumption and opened a non-holiday period",
+		resetDocument.holiday === false &&
+			resetDocument.start !== saved.start &&
+			filesUnder(path.join(home.storageDirectory, "archives")).length === 1,
+		`period ${JSON.stringify(saved.periodId)} -> ${JSON.stringify(resetDocument.periodId)}, archives: ${JSON.stringify(filesUnder(path.join(home.storageDirectory, "archives")))}`,
+	);
+	observe(
+		"the reset left the independent Codex estimate exactly as it was",
+		readFileSync(estimateFile, "utf8") === estimateBeforeReset,
+		`estimate after the reset: ${readFileSync(estimateFile, "utf8")}`,
+	);
+}
+
+// ---------------------------------------------------------------------------
+// Phase 7: one Round carries pi's own continuations (P18)
 // ---------------------------------------------------------------------------
 
 /** The dock fixture that records the public Round and Turn edges a case compares its save against. */
@@ -1506,7 +2084,7 @@ async function phaseRoundContinuations(cli: PiCli): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
-// Phase 6: every request is billed from its own start facts (P7)
+// Phase 8: every request is billed from its own start facts (P7)
 // ---------------------------------------------------------------------------
 
 /**
@@ -1583,7 +2161,7 @@ async function phaseRequestAnchor(cli: PiCli): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
-// Phase 7: an unreliable or partial reading is expressed as what it is (P9)
+// Phase 9: an unreliable or partial reading is expressed as what it is (P9)
 // ---------------------------------------------------------------------------
 
 /** The stored buckets and amount one exchange of a prompt-only reading has, as this script's arithmetic. */
@@ -1750,6 +2328,7 @@ try {
 	await phaseBalance(cli);
 	await phaseStorageRoot(cli);
 	await phaseRefusedConfiguration(cli);
+	await phaseCodexAllowance(cli);
 	await phaseRoundContinuations(cli);
 	await phaseRequestAnchor(cli);
 	await phaseReadingSemantics(cli);
@@ -1767,6 +2346,10 @@ try {
 		if (failure !== undefined || options.keep) console.error(`kept for inspection: ${dock.run.root.path}`);
 		else rmSync(dock.run.root.path, { recursive: true, force: true });
 	}
+	for (const root of temporaryRoots) {
+		if (failure !== undefined || options.keep) console.error(`kept for inspection: ${root}`);
+		else rmSync(root, { recursive: true, force: true });
+	}
 }
 
 console.log(
@@ -1775,7 +2358,8 @@ console.log(
 console.log(`  ${observations.length} consumer-visible check(s) across ${runs.length} isolated run(s)`);
 console.log("  limitations: the TUI's readability stays human-led (this observes the setWidget frames the frontend published);");
 console.log("               the balance cases drive the shipped success TTL through the host's own clock (a configured 1ms TTL), not a controlled one;");
-console.log("               the season boundary's timed redraw and the subagent execution duration are not exercised here");
+console.log("               the season boundary's timed redraw and the subagent execution duration are not exercised here;");
+console.log("               the balance and Codex account answers are this script's own documents, never a real account");
 console.log(`  rerun: bun scripts/pi-model-cost-smoke.ts${options.pi === undefined ? "" : ` --pi ${options.pi}`}`);
 
 if (failure !== undefined) throw failure;

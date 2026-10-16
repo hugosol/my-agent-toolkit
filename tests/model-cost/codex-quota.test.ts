@@ -519,6 +519,68 @@ describe("the account answer updates each window on its own", () => {
 		await drain();
 		expect(bound.runtime.presentation.quota().fiveHour?.usedPercent).toBe(12);
 	});
+
+	test("a position whose report carries no usable reading or length is left out rather than completed", async () => {
+		let reply: () => Response = () => usageAnswer(DOCUMENT_WINDOWS);
+		const bound = await bindQuota({ respond: () => reply() });
+		expect(bound.runtime.presentation.quota().fiveHour).toEqual({
+			usedPercent: 12.5,
+			resetsAt: 1_700_003_600_000,
+			resetState: "valid",
+			obtainedAt: CLOCK,
+		});
+
+		// The five-hour position states its length and its reset instant but no used percentage at all:
+		// there is no reading to apply, so that window keeps the reading and the instant it already had
+		// rather than being completed with a zero — while the weekly window the same answer carried is
+		// applied.
+		reply = () =>
+			new Response(
+				JSON.stringify({
+					rate_limit: {
+						primary_window: { limit_window_seconds: 18_000, reset_at: (CLOCK + 60_000) / 1000 },
+						secondary_window: {
+							used_percent: 61,
+							limit_window_seconds: 604_800,
+							reset_at: (CLOCK + DAY_MS) / 1000,
+						},
+					},
+				}),
+				{ status: 200 },
+			);
+		bound.clock.now = CLOCK + 20_000;
+		codexTurn(bound.double, bound.clock.now);
+		await drain();
+
+		const afterMissingPercent = bound.runtime.presentation.quota();
+		expect(afterMissingPercent.fiveHour).toEqual({
+			usedPercent: 12.5,
+			resetsAt: 1_700_003_600_000,
+			resetState: "valid",
+			obtainedAt: CLOCK,
+		});
+		expect(afterMissingPercent.weekly?.usedPercent).toBe(61);
+
+		// The other half of the same rule: a position that states a reading but no length states nothing
+		// that identifies it as one of these two windows, so it is left out too.
+		reply = () =>
+			new Response(
+				JSON.stringify({
+					rate_limit: { secondary_window: { used_percent: 99, reset_at: (CLOCK + DAY_MS) / 1000 } },
+				}),
+				{ status: 200 },
+			);
+		bound.clock.now = CLOCK + 40_000;
+		codexTurn(bound.double, bound.clock.now);
+		await drain();
+
+		expect(bound.runtime.presentation.quota().weekly).toEqual({
+			usedPercent: 61,
+			resetsAt: CLOCK + DAY_MS,
+			resetState: "valid",
+			obtainedAt: CLOCK + 20_000,
+		});
+	});
 });
 
 describe("a window's reset instant is read as the state it has now", () => {
