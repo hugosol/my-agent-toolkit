@@ -266,6 +266,10 @@ export interface PiSessionInfoChangedEvent {
 	/** The session's current name, absent when pi states that the name was cleared. */
 	readonly name?: string;
 }
+/** The native notification that the current model selection changed. */
+export interface PiModelSelectEvent {
+	readonly type: "model_select";
+}
 export type PiSessionEventHandler<E> = (event: E, ctx: PiExtensionContext) => void;
 export interface PiBeforeAgentStartEvent {
 	readonly type: "before_agent_start";
@@ -289,6 +293,7 @@ export interface PiCommandRegistration {
 }
 export interface PiExtensionApi {
 	on(event: "session_start", handler: PiSessionEventHandler<PiSessionStartEvent>): () => void;
+	on(event: "model_select", handler: PiSessionEventHandler<PiModelSelectEvent>): () => void;
 	on(event: "session_shutdown", handler: PiSessionEventHandler<PiSessionShutdownEvent>): () => void;
 	on(event: "before_agent_start", handler: PiRunInitiationHandler): () => void;
 	/**

@@ -65,6 +65,7 @@ interface ControlledPiHost {
 	readonly api: PiExtensionApi;
 	readonly drawn: DrawnFrame[];
 	startSession(reading: HostReading | undefined): void;
+	selectModel(provider: string, model: string): void;
 	/** The lines of the last widget this host was told to show, or nothing when it was cleared. */
 	lastLines(): readonly string[] | undefined;
 }
@@ -87,14 +88,14 @@ function controlledPiHost(): ControlledPiHost {
 		registerCommand(): void {},
 		appendEntry(): void {},
 	} as unknown as PiExtensionApi;
-	const context = (reading: HostReading | undefined): PiExtensionContext =>
+	const context = (reading: HostReading | undefined, provider = "official", model = "model-alpha"): PiExtensionContext =>
 		({
 			sessionManager: {
 				getSessionId: () => "pi-widget-session",
 				getSessionName: () => "pi widget session",
 				getBranch: () => [],
 			},
-			model: { id: "model-alpha", provider: "official" },
+			model: { id: model, provider },
 			thinkingLevel: "off",
 			hasUI: true,
 			ui: {
@@ -112,6 +113,11 @@ function controlledPiHost(): ControlledPiHost {
 		drawn,
 		startSession: reading => {
 			for (const handler of handlers.get("session_start") ?? []) handler({ type: "session_start", reason: "startup" }, context(reading));
+		},
+		selectModel: (provider, model) => {
+			for (const handler of handlers.get("model_select") ?? []) {
+				handler({ type: "model_select", source: "set" }, context(undefined, provider, model));
+			}
 		},
 		lastLines: () => {
 			const shown = drawn.filter(frame => frame.key === MODEL_COST_WIDGET_KEY);
@@ -138,6 +144,18 @@ function attachedFrontend(): ControlledPiHost {
 }
 
 describe("the pi frontend reads pi's own context fact as the host states it (P18)", () => {
+	test("model selection clears a hidden model's widget and restores it without another request", () => {
+		const host = attachedFrontend();
+		host.startSession(undefined);
+		expect(host.lastLines()).toBeDefined();
+
+		host.selectModel("unconfigured", "hidden-model");
+		expect(host.lastLines()).toBeUndefined();
+
+		host.selectModel("official", "model-alpha");
+		expect(host.lastLines()?.[0]).toContain("🔥");
+	});
+
 	test("a null token reading is unknown, so no bar is drawn and the widget still draws", () => {
 		const host = attachedFrontend();
 

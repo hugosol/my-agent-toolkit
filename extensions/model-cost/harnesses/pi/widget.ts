@@ -1041,9 +1041,15 @@ export function attachModelCostWidget(
 		render();
 	});
 
+	const releaseModelSelect = pi.on("model_select", (_event, ctx) => {
+		context = ctx;
+		render();
+	});
+
 	return () => {
 		unwatchConsumption();
 		release();
+		releaseModelSelect();
 		leaveTimer?.();
 		leaveTimer = undefined;
 		if (context !== undefined && live(context)) context.ui.setWidget(MODEL_COST_WIDGET_KEY, undefined);
