@@ -39,8 +39,8 @@
  *   same count is what a retried publication paid, and no count here is a failure of the extension's
  *   own business (every sequence states its own expectations beside them).
  * - **events** — the semantic deliveries the driver made into the framework for that sequence (one
- *   per user input, Turn edge, Round edge, session fact, command invocation and subagent-runtime
- *   reading), together with the widget drawings and provider queries the sequence's own work caused.
+ *   per user input, Turn edge, Round edge, session fact and command invocation), together with the
+ *   widget drawings and provider queries the sequence's own work caused.
  *
  * Each sequence's file cost is attributed by path: every recorded operation whose path lies under
  * that sequence's isolated storage root belongs to it, and the path decides the bucket. The sampler's
@@ -143,8 +143,11 @@ const ONE_REQUEST_AMOUNT = 0.03;
 const FIVE_REQUEST_AMOUNT = 0.15;
 /** The token-only channel's own usage, which produces no monetary amount at all. */
 const TOKEN_ONLY_USAGE: TurnUsage = { input: 100, cacheRead: 0, cacheWrite: 0, output: 50, totalTokens: 150 };
-/** What the host measured for one subagent execution, as a reading it states in milliseconds. */
-const CHILD_RUNTIME_MS = 360_000;
+/**
+ * The span this entry's timeline gives one subagent's own Round: the interval between that session's
+ * Round opening and its ending, which is the whole of what its runtime is made of.
+ */
+const CHILD_ACTIVITY_MS = 360_000;
 /** The tolerance every hand-computed amount is compared with: sums of doubles, stated once here. */
 const AMOUNT_TOLERANCE = 1e-9;
 
@@ -760,17 +763,6 @@ function requestPair(
 	countDelivery(bound, "turn_end", `turn_end ${session.sessionId} ${outcome}`);
 }
 
-/** One subagent execution's measured duration, as the host states it. */
-function declareRuntime(bound: BoundProcess, session: SessionFacts, executionId: string, runtimeMs: number): void {
-	bound.double.deliverSubagentRuntime({
-		runtime: { kind: "reading", executionId, runtimeMs, status: "ended" },
-		session,
-		owner: OWNER,
-		hasUI: true,
-	});
-	countDelivery(bound, "subagent_runtime", `subagent_runtime ${session.sessionId} ${runtimeMs}ms`);
-}
-
 /** One document read by this entry for its own evidence, left out of every measured window. */
 function readDocumentEvidence(file: string): ConsumptionDocument | undefined {
 	return asSampler(() => {
@@ -1080,10 +1072,13 @@ async function sequenceConcurrentTree(endpoint: CaptureEndpoint): Promise<Sequen
 	startSession(bound, CHILD_B, STARTUP_CHILD_B);
 	requestPair(bound, MAIN, T0 + 60_000, PRICED_PROVIDER, PRICED_MODEL, MAIN_USAGE);
 	requestPair(bound, CHILD_A, T0 + 100_000, PRICED_PROVIDER, PRICED_MODEL, MAIN_USAGE);
-	declareRuntime(bound, CHILD_A, "baseline-exec-child-a", CHILD_RUNTIME_MS);
 	startSession(bound, GRAND, STARTUP_GRAND);
 	requestPair(bound, CHILD_B, T0 + 200_000, UNREACHABLE_PROVIDER, UNREACHABLE_MODEL, TOKEN_ONLY_USAGE);
 	requestPair(bound, GRAND, T0 + 300_000, PRICED_PROVIDER, PRICED_MODEL, MAIN_USAGE);
+	// The child's own activity runs to the instant this entry's timeline states for its end: the
+	// interval between the two edges of its Round is the whole of the runtime it accumulates, so the
+	// clock is moved before that Round ends rather than a duration being declared beside it.
+	clock = T0 + CHILD_ACTIVITY_MS;
 	endRound(bound, CHILD_A);
 	endRound(bound, CHILD_B);
 	endRound(bound, GRAND);
@@ -1130,9 +1125,9 @@ async function sequenceConcurrentTree(endpoint: CaptureEndpoint): Promise<Sequen
 			`childA.parent=${childA?.parent} grand.parent=${grand?.parent} childB.parent=${childB?.parent}`,
 		),
 		check(
-			"the host's own execution reading was recorded on its session",
-			childA?.runtimeMs === CHILD_RUNTIME_MS,
-			`childA.runtimeMs=${childA?.runtimeMs} expected=${CHILD_RUNTIME_MS}`,
+			"the child's own Round's interval was recorded on its session",
+			childA?.runtimeMs === CHILD_ACTIVITY_MS,
+			`childA.runtimeMs=${childA?.runtimeMs} expected=${CHILD_ACTIVITY_MS}`,
 		),
 	];
 	return sequenceObservation({

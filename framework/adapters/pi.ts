@@ -609,14 +609,6 @@ function piPort(
 				track: keepSubscription,
 			});
 		},
-		onSubagentRuntime: () => {
-			// This mapping reads no execution-duration fact, and pi's own run settles nothing about one:
-			// a runtime reading is the harness's own measurement of an execution, which is not the
-			// session's span and not a Round edge. Nothing is subscribed here — the axis's own contract
-			// states a delivery that never arrives as no reading, never as a zero — and the absence is
-			// reported once on the non-model channel rather than passed off as a silent success.
-			reportMissingFact("execution-duration fact (subagent runtime)");
-		},
 		onUserInput: handler => {
 			// The adapter's whole job on this axis: read the one fact pi states about who submitted the
 			// input, and report the submission as the user's when it is the user's. A submission an

@@ -36,16 +36,20 @@
  *   disk already carried — are never re-priced, re-derived, deleted or rewritten because the price
  *   data, the harness's own catalog, the model or the season changed later. A request's own price was
  *   fixed at its start.
- * - **Time is a fact about executions, not a consumption.** Each subagent session also accumulates
- *   the duration its harness measured for each of its *executions*, once per execution
- *   ({@link createSubagentRuntimes}): a running reading is that execution's own replacement reading
- *   rather than another contribution, a repeated completion is not counted twice, and a host that
- *   states no duration at all leaves the figure unavailable instead of zero. That figure is business
- *   data of its own — it is added to no token bucket, currency or total, and no amount is derived
- *   from it — and it rides the same commit as the session's consumption rather than causing one, so
- *   a reading that arrived after the last commit waits for the next one. An execution's duration
- *   belongs to the period it ran in: an execution the closed period already accounted contributes
- *   nothing to the period that replaced it, however late its own readings arrive.
+ * - **Time is a fact about one session's own activity, not a consumption.** A subagent session also
+ *   accumulates a coarse estimate of its own working time ({@link createSubagentRuntimes}): each of
+ *   its Rounds is one activity, and the interval between the Round's own edges is added once, when
+ *   that Round ends. The idle stretches between two Rounds are therefore not part of it, and neither
+ *   is anything a host states about an execution: the interval is the observer's own reading of the
+ *   framework's public activity facts. That figure is business data of its own — it is added to no
+ *   token bucket, currency or total, and no amount is derived from it — and it rides the same commit
+ *   as the session's consumption, so an interval that settled late waits for the next commit rather
+ *   than causing one. It is also the one figure that can commit on its own: a Round that ends without
+ *   the session having consumed anything still publishes the time it took, because an accumulation
+ *   gated on consumption alone would drop it. An interval that could not be measured is recorded as a
+ *   known gap in that period's observation rather than as a figure, and an activity the closed period
+ *   was in the middle of contributes nothing to the period that replaced it, however late its own end
+ *   arrives.
  *
  * Two derived results read that same authority without adding to it. An actual session's identity
  * ({@link ConsumptionView.identity}) is its latest reported display name and its reliable
@@ -96,7 +100,6 @@ import type {
 	FeedbackTransport,
 	RoundDelivery,
 	SessionFacts,
-	SubagentRuntimeDelivery,
 	TurnEndDelivery,
 	TurnStartDelivery,
 	TurnUsage,
@@ -172,14 +175,14 @@ export interface ConsumptionView {
 	 */
 	startup(sessionId: string): SessionStartup | undefined;
 	/**
-	 * The subagent runtime one actual session's own executions accumulated in this period, in
+	 * The subagent runtime one actual session's own activities accumulated in this period, in
 	 * milliseconds, or `undefined` when nothing reliable is known about it.
 	 *
-	 * It is the harness's own measurement of each execution's duration, summed once per execution:
-	 * not a session's creation-to-last-record span, which counts the idle gaps between executions,
-	 * and not a development of its own from any wall clock. The value is `0` when the host really
-	 * reported no measurable time and absent when it reported nothing at all — a difference the
-	 * display keeps — and a reading that arrived after the last commit is part of what this answers
+	 * It is the coarse estimate of that session's own working time, added up over the activities the
+	 * extension observed: not a session's creation-to-last-record span, which counts the idle gaps
+	 * between activities, and not a duration any host stated. The value is `0` when the activities
+	 * really ran for no measurable time and absent when nothing was observed — a difference the
+	 * display keeps — and an interval that settled after the last commit is part of what this answers
 	 * even though the file does not hold it yet.
 	 */
 	runtime(sessionId: string): number | undefined;
@@ -255,24 +258,13 @@ export interface RequestAccounting {
 	/** One actual session's Round opening: its own accumulation is snapshotted as that Round's base. */
 	roundStarted(delivery: RoundDelivery): void;
 	/**
-	 * One actual session's Round end: its own consumption is saved when it grew.
+	 * One actual session's Round end: its own consumption and its own activity's time are saved when
+	 * either of them grew.
 	 *
 	 * It is a boundary of the Round and of the session's activity, and never one of its Session span:
 	 * the span's end was already observed when the Turn it ends settled.
 	 */
 	roundEnded(delivery: RoundDelivery): Promise<void>;
-	/**
-	 * One native subagent execution's own duration, for the session it belongs to.
-	 *
-	 * It is a fact about the session's work rather than a boundary of it: nothing opens or closes,
-	 * nothing is saved and no commit is started. What the reading contributes is part of the
-	 * session's next existing commit — the one its own Round's end already makes — so an execution's
-	 * duration is persisted beside the consumption it accompanied and never through a write of its
-	 * own, and a reading that arrives after that commit waits for the next one instead of causing
-	 * one. An unusable reading changes no accumulation: the operator is told, and the last valid
-	 * figure stays.
-	 */
-	subagentRuntime(delivery: SubagentRuntimeDelivery): void;
 	/**
 	 * One user input the harness attributed to the user was admitted to one actual session.
 	 *
@@ -377,10 +369,21 @@ interface SessionLedger {
 	/** The revision the last accepted snapshot carried. */
 	savedRevision: number;
 	/**
-	 * The subagent runtime this session's own executions accumulated in this period.
+	 * How many times this session's own runtime accumulation has moved since it seeded the ledger:
+	 * an activity's interval settling, or a gap in the period's observation being established.
+	 *
+	 * It is what lets a Round that consumed nothing still publish the time it took — the figure is
+	 * business data of its own, so a snapshot gated on consumption alone would drop it — while an
+	 * unchanged figure beside an unchanged consumption still causes no write.
+	 */
+	runtimeRevision: number;
+	/** The runtime revision the last accepted snapshot carried. */
+	savedRuntimeRevision: number;
+	/**
+	 * The subagent runtime this session's own activities accumulated in this period.
 	 *
 	 * It is kept beside the consumption rather than inside the model buckets, because it is a fact
-	 * about the session's *executions* and not about any provider or model: nothing adds it to a
+	 * about the session's *own activity* and not about any provider or model: nothing adds it to a
 	 * token bucket, and no amount is ever derived from it. It is seeded from the record's own value
 	 * and written back by the same snapshot, which is what keeps it in the one commit.
 	 */
@@ -523,6 +526,19 @@ export function createRequestAccounting(inputs: RequestAccountingInputs): Reques
 	};
 	/** The instant this extension's own clock answers, for a fact the harness delivers without one. */
 	const observedAt = (feedback: FeedbackTransport): number | undefined => instantOf(now(), "时钟读数", feedback);
+	/**
+	 * The instant this extension's own clock answers for one edge of a session's activity, or nothing
+	 * when it states none.
+	 *
+	 * It is deliberately not {@link observedAt}: an activity's interval is not a Session span's
+	 * instant, and the notice a failed reading deserves — the activity whose time could not be
+	 * recorded, and the gap it leaves in this period's observation — is stated by the accumulation
+	 * that refused the interval rather than by the clock read that produced nothing.
+	 */
+	const activityInstant = (): number | undefined => {
+		const read = now();
+		return Number.isFinite(read) && read >= 0 ? read : undefined;
+	};
 	/** What the host has reported about each actual session, as far as it reported anything. */
 	const reported = new Map<
 		string,
@@ -539,19 +555,17 @@ export function createRequestAccounting(inputs: RequestAccountingInputs): Reques
 	/** The Turns this instance has already accounted for or deliberately skipped, by identity. */
 	const handled = new Set<string>();
 	/**
-	 * The executions each session's accumulation had been told about when the period underneath this
-	 * instance was closed.
+	 * The sessions whose own activity the closed period was in the middle of when it was replaced.
 	 *
-	 * An execution's own duration belongs to the period that execution ran in, so the identity memory
-	 * has to outlive the accumulation the closed period's figure lived in: a harness states an
-	 * execution's duration while that execution runs, so one still running when the period was closed
-	 * can report its next reading — or its own end — after the period that began it is gone. Those
-	 * readings are facts about the closed period's work, and they contribute nothing to the period
-	 * that replaced it. What is kept is the identities alone (see
-	 * {@link SubagentRuntimes.knownExecutions}): never the figures, never a per-execution duration,
-	 * and nothing that is persisted anywhere.
+	 * A working interval belongs to the period it ran in, so the fact that one was still open has to
+	 * outlive the accumulation the closed period's figure lived in: the Round that opened before the
+	 * reset is settled by an end that arrives after it, and that end is a fact about the closed
+	 * period's work. Those ends contribute nothing to the period that replaced it — and they are not a
+	 * gap in the new period's observation either, because they are work the new period never had. What
+	 * is kept is one flag per session, consumed by that session's next Round end: the next Round the
+	 * session opens is a new activity of the period that is running now, and is measured as one.
 	 */
-	const closedExecutions = new Map<string, Set<string>>();
+	const closedActivities = new Set<string>();
 	const listeners = new Set<() => void>();
 	/**
 	 * The snapshot each session's open Round is measured from, with the period that snapshot
@@ -655,7 +669,9 @@ export function createRequestAccounting(inputs: RequestAccountingInputs): Reques
 			saved,
 			revision: 0,
 			savedRevision: 0,
-			runtimes: createSubagentRuntimes(saved?.runtimeMs),
+			runtimeRevision: 0,
+			savedRuntimeRevision: 0,
+			runtimes: createSubagentRuntimes(saved?.runtimeMs, saved?.runtimeGap === true),
 		};
 		for (const [provider, models] of Object.entries(saved?.own ?? {})) {
 			const byModel = new Map<string, ModelLedger>();
@@ -808,23 +824,19 @@ export function createRequestAccounting(inputs: RequestAccountingInputs): Reques
 	 * something again. A period that was replaced or whose baseline is gone is the other case: its
 	 * spans were measured in it, so they go with everything else, and the period that follows begins
 	 * its span at the next user input this instance observes rather than carrying an instant of the
-	 * closed period into a document that holds none of it. The identities of the executions the
-	 * accumulations being dropped were told about are not discarded either: an execution belongs to
-	 * the period it ran in, so those identities are kept outside the accumulation that is going,
-	 * where they keep a late reading of one of them from contributing to the period that replaced it.
+	 * closed period into a document that holds none of it. The activities the accumulations being
+	 * dropped had open are not discarded either: an interval belongs to the period it ran in, so
+	 * those sessions are remembered outside the accumulation that is going, where the end of the
+	 * Round that opened before the switch keeps it from contributing to the period that replaced it.
 	 */
 	const discard = (sessionId: string | undefined): void => {
 		if (sessionId === undefined) {
 			// The period underneath this instance was replaced, so what it accumulated belongs to a
-			// generation that can no longer be written. The executions each accumulation was told about
-			// are moved out of it first: the identities are what keeps a reading of one of them — its own
-			// end included — from contributing to the period that replaced it.
+			// generation that can no longer be written. The activities those accumulations were holding
+			// open are moved out of them first: that end is work of the closed period, and it must not
+			// be charged to the period that replaced it.
 			for (const [id, ledger] of ledgers) {
-				const known = ledger.runtimes.knownExecutions();
-				if (known.length === 0) continue;
-				const closed = closedExecutions.get(id) ?? new Set<string>();
-				for (const executionId of known) closed.add(executionId);
-				closedExecutions.set(id, closed);
+				if (ledger.runtimes.hasOpenActivity()) closedActivities.add(id);
 			}
 			ledgers.clear();
 			openRounds.clear();
@@ -872,6 +884,7 @@ export function createRequestAccounting(inputs: RequestAccountingInputs): Reques
 		// a startup for carries no such field rather than an empty one.
 		const startup = startupOf(session.sessionId);
 		const runtimeMs = ledger.runtimes.available();
+		const runtimeGap = ledger.runtimes.gap();
 		// The span this snapshot carries is the one this instance has observed up to now — the same two
 		// instants its own display reads — and it is written with the consumption rather than through a
 		// write of its own. A session whose span is still unknown writes none: an absent fact is what a
@@ -886,8 +899,11 @@ export function createRequestAccounting(inputs: RequestAccountingInputs): Reques
 			own: snapshotOf(ledger),
 			// The session's accumulated runtime rides this same commit: it is the value available at
 			// the moment the snapshot is built, and it is absent when nothing reliable is known rather
-			// than written as a zero.
+			// than written as a zero. The mark beside it states the one thing a figure cannot: that an
+			// activity of this period could not be measured, so this figure is the subtotal the period
+			// really observed. An absent mark is no claim that the history was complete.
 			...(runtimeMs === undefined ? {} : { runtimeMs }),
+			...(runtimeGap ? { runtimeGap: true as const } : {}),
 			...(span === undefined ? {} : { span }),
 		};
 		ledger.saved = record;
@@ -895,6 +911,9 @@ export function createRequestAccounting(inputs: RequestAccountingInputs): Reques
 		// resolves: a Round that ends while this save is still publishing has nothing new to save,
 		// rather than publishing the same consumption again under the next version.
 		ledger.savedRevision = revision;
+		// The runtime this snapshot carries is the accumulation as it stood here, so a later Round end
+		// saves only what moved after it.
+		ledger.savedRuntimeRevision = ledger.runtimeRevision;
 		const periodOfThisSnapshot = storage.period()?.periodId;
 		// Counted around the commit itself, so the entry's save state is `true` for exactly as long
 		// as this instance's snapshot is on its way to the file: a period switch asks this before it
@@ -1066,6 +1085,13 @@ export function createRequestAccounting(inputs: RequestAccountingInputs): Reques
 			openRounds.delete(sessionId);
 			const period = storage.period();
 			if (period === undefined || storage.pauseReason() !== undefined) return;
+			// A subagent session's Round *is* one of its own activities: this edge is where the working
+			// time that Round will contribute begins, and the interval is settled when that Round ends.
+			// Only a subagent session has a runtime — a main session's own Round is its own work and not
+			// a subagent's — so nothing is opened for one.
+			if (delivery.session.kind === "sub") {
+				ledgerFor(sessionId).runtimes.activityStarted(activityInstant());
+			}
 			openRounds.set(sessionId, { own: ownOf(sessionId), periodId: period.periodId });
 			announce();
 		},
@@ -1089,12 +1115,36 @@ export function createRequestAccounting(inputs: RequestAccountingInputs): Reques
 				announce();
 			}
 			if (storage.pauseReason() !== undefined) return;
+			// The session's own activity ends with its Round, and the interval is what this edge adds to
+			// the estimate. An activity the closed period was in the middle of is not this period's work:
+			// its end is consumed here and contributes nothing. An interval that could not be measured
+			// adds nothing either, and is reported as the time fact that failed and remembered as a gap
+			// in this period's observation of that session.
+			if (delivery.session.kind === "sub" && !closedActivities.delete(sessionId)) {
+				const runtime = ledgerFor(sessionId);
+				const fault = runtime.runtimes.activityEnded(activityInstant());
+				runtime.runtimeRevision += 1;
+				if (fault !== undefined) {
+					delivery.feedback.notify(
+						"error",
+						`子代理运行耗时采集失败（${fault}）；本次活动的耗时未记录，已保留此前有效值，并标记本周期该 Session 的耗时观测存在缺口。`,
+					);
+				}
+				announce();
+			}
 			const ledger = ledgers.get(delivery.session.sessionId);
-			// Nothing to save when the session's own consumption has not grown since the snapshot this
-			// instance last built (or is still publishing): a rename rides along with the next real save
-			// rather than causing a write of its own. A Session span is carried by that same snapshot
-			// and never written for its own sake.
-			if (ledger === undefined || ledger.revision <= ledger.savedRevision) return;
+			// Nothing to save when neither the session's own consumption nor its runtime accumulation has
+			// grown since the snapshot this instance last built (or is still publishing): a rename rides
+			// along with the next real save rather than causing a write of its own, a Session span is
+			// carried by that same snapshot, and a Round that moved neither writes nothing. A Round whose
+			// session consumed nothing at all still saves the time it took, which is what keeps a figure
+			// from being lost to a consumption-only gate.
+			if (
+				ledger === undefined ||
+				(ledger.revision <= ledger.savedRevision && ledger.runtimeRevision <= ledger.savedRuntimeRevision)
+			) {
+				return;
+			}
 			await save(delivery.session, ledger, delivery.feedback);
 		},
 		userInput(delivery) {
@@ -1127,39 +1177,6 @@ export function createRequestAccounting(inputs: RequestAccountingInputs): Reques
 			// new is a change of the read-only result like any other: publishing it is what redraws a
 			// frontend. It starts no save of its own — the snapshot travels with the session's next
 			// consumption commit, exactly as its name does.
-			announce();
-		},
-		subagentRuntime(delivery) {
-			if (disposed) return;
-			remember(delivery.session);
-			// A reading naming an execution the closed period already knew is a fact about that period's
-			// work rather than this one's, so it contributes nothing here: it is dropped before any ledger
-			// is built for it, which is why nothing accumulates, nothing is drawn and nothing is committed
-			// out of it. A reading this host could not turn into one still carries no execution to place
-			// and is reported the same way it always was.
-			const runtime = delivery.runtime;
-			if (
-				runtime.kind === "reading" &&
-				closedExecutions.get(delivery.session.sessionId)?.has(runtime.executionId) === true
-			) {
-				return;
-			}
-			// The reading belongs to the execution the harness reported, so it is applied to the session
-			// that execution ran in — and only there. Nothing else this instance holds moves with it: no
-			// Round is opened or closed, no consumption is settled, no other session's own record or
-			// direct parent is touched, and no commit is started.
-			const ledger = ledgerFor(delivery.session.sessionId);
-			const fault = ledger.runtimes.accept(runtime);
-			if (fault !== undefined) {
-				// A runtime this host could not state is reported rather than filled in: no zero, no
-				// wall-clock span and no other duration stands in for it, and what was already
-				// accumulated stays where it is.
-				delivery.feedback.notify(
-					"error",
-					`子代理原生运行耗时不可用（${fault.fault}）；本次未记录耗时，已保留此前有效值。`,
-				);
-				return;
-			}
 			announce();
 		},
 		announceChanged() {

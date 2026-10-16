@@ -1,8 +1,9 @@
 /**
  * The extension with every change assembled: the main session's own span beside its two parallel
- * subagents' native runtimes as one process really draws them, and the same run read again — document
- * and drawing both — by a new process over the storage the first one committed to (P9; and P24's
- * combination item: all of the changes together, through a normal consumption commit and a reload).
+ * subagents' own activity intervals as one process really draws them, and the same run read again —
+ * document and drawing both — by a new process over the storage the first one committed to (P9; and
+ * P24's combination item: all of the changes together, through a normal consumption commit and a
+ * reload).
  *
  * The seam is production throughout: the extension's real definition bound through the framework's
  * public binding (the port double, `tests/framework/support/harness-port-double.ts`), the runtime
@@ -15,11 +16,12 @@
  * What this file states and no case in a single-feature suite can: the quantities the requirement is
  * *about* are the ones given here by hand, with the whole assembly in the same run. The main session
  * is given ten minutes of wall clock — its own submission, its own Round ending 600,000 ms later —
- * while two subagents each report 360,000 ms of native execution inside that Round, so a Total that
- * added the two 6-minute runtimes to the 10-minute span could not read `0:10:00`. The money, the
+ * while two subagents each run one activity of their own inside that Round, six minutes apiece, so a
+ * Total that added the two intervals to the 10-minute span could not read `0:10:00`. The money, the
  * reference amount and every bucket count come from the self-made usage and price data of this file;
- * the runtime figures are the host's own milliseconds, stated as readings exactly as an adapter maps
- * them. No expectation is read back from the implementation or its formatting helpers.
+ * the intervals are this file's own timeline — the instant each of those sessions' Round opened and
+ * the instant it ended — so every elapsed figure below is arithmetic on two instants written here and
+ * never a duration the implementation derived. 
  *
  * The second process is the reload the storage promises: the same root, a new runtime, a new binding
  * and a new frontend, with nothing but the document the first process committed to read from. A
@@ -42,7 +44,6 @@ import type {
 	CatalogPriceSource,
 	OwnerReference,
 	SessionFacts,
-	SubagentRuntimeFact,
 	TurnSignal,
 	TurnUsage,
 } from "../../framework/core/protocol";
@@ -133,10 +134,10 @@ const T0 = Date.parse("2026-10-01T00:00:00.000Z");
 
 /** The main session's own span this run is given: the input above, and its last Turn's settle ten minutes on. */
 const MAIN_SPAN_MS = 600_000;
-/** What each of the two parallel subagents' executions was really measured at. */
-const PARALLEL_RUNTIME_MS = 360_000;
-/** The grandchild's own execution, one depth down: two minutes. */
-const GRAND_RUNTIME_MS = 120_000;
+/** What each of the two parallel subagents' own activity ran for, between its Round's own two edges. */
+const PARALLEL_ACTIVITY_MS = 360_000;
+/** The grandchild's own activity, one depth down: two minutes. */
+const GRAND_ACTIVITY_MS = 120_000;
 
 /**
  * The usage each request reports, as the harness's own wire numbers: four buckets a case can add up
@@ -313,27 +314,26 @@ interface Subagent {
 	readonly provider: string;
 	readonly model: string;
 	readonly usage: TurnUsage;
-	/** The identity and duration of the execution the host measured for it. */
-	readonly executionId: string;
-	readonly runtimeMs: number;
+	/** The instant this session's own Round opens at: where its one activity begins. */
+	readonly from: number;
+	/** What that activity runs for, which is what its Round's two edges make of it. */
+	readonly activityMs: number;
 }
 
 /**
- * One subagent's start, its own settled request, the host's own reading of its execution, and its own
- * Round ending.
+ * One subagent's start, its own settled request, and its own Round ending — the activity its own
+ * runtime is made of.
  *
  * That Round end is the subagent's own existing commit — the one a spawned session's own binding
  * drives when its work settles — and it is what carries this session's runtime and consumption into
- * the document: the reading is delivered before it, and nothing here writes a file of its own.
+ * the document: the interval is measured from the instant this file opened the Round at to the
+ * instant it states for its end, and nothing here writes a file of its own.
  */
 function runSubagent(bound: Bound, subagent: Subagent): void {
+	clock = subagent.from;
 	announceStart(bound, subagent.session, subagent.startup);
 	settleTurn(bound, subagent.session, subagent.at, subagent.provider, subagent.model, subagent.usage);
-	bound.double.deliverSubagentRuntime({
-		runtime: reading(subagent.executionId, subagent.runtimeMs),
-		session: subagent.session,
-		owner: OWNER,
-	});
+	clock = subagent.from + subagent.activityMs;
 	bound.double.deliverRound(OWNER, { event: { kind: "round_end" }, session: subagent.session });
 }
 
@@ -358,22 +358,16 @@ function settleTurn(
 	bound.double.deliverTurn(settled, { owner: OWNER });
 }
 
-/** One native execution-duration reading, as this host measured one execution of one session. */
-function reading(executionId: string, runtimeMs: number): SubagentRuntimeFact {
-	return { kind: "reading", executionId, runtimeMs, status: "ended" };
-}
-
 /**
  * The one run every case reads: the main session's own submission, its last Turn settling ten minutes
  * later, and its Round ending at that same instant, and — inside that same Round — two parallel
- * subagents whose own executions the host measured at 360,000 ms apiece, plus one grandchild under
- * the first of them.
+ * subagents whose own activities ran 360,000 ms apiece, plus one grandchild under the first of them.
  *
  * Both of the parallel subagents' requests run inside the same wall-clock interval (at +100 s and
  * +200 s of the main Round), which is what makes their 6 minutes *parallel* time rather than two more
  * spans appended to the main session's own. Each of them also ends its own Round, so its runtime and
  * its consumption are committed by its own existing commit; the main session's Round end is the
- * commit that carries the span. Every reading each commit is to carry has been delivered before it.
+ * commit that carries the span. Every interval a commit is to carry has been settled before it.
  */
 function runAssembled(bound: Bound): void {
 	clock = T0;
@@ -391,8 +385,8 @@ function runAssembled(bound: Bound): void {
 		provider: "official",
 		model: "model-alpha",
 		usage: USAGE_CHILD_A,
-		executionId: "exec-child-a",
-		runtimeMs: PARALLEL_RUNTIME_MS,
+		from: T0 + 90_000,
+		activityMs: PARALLEL_ACTIVITY_MS,
 	});
 	runSubagent(bound, {
 		session: CHILD_B,
@@ -401,8 +395,8 @@ function runAssembled(bound: Bound): void {
 		provider: "plan-provider",
 		model: "codex-model",
 		usage: USAGE_CHILD_B,
-		executionId: "exec-child-b",
-		runtimeMs: PARALLEL_RUNTIME_MS,
+		from: T0 + 190_000,
+		activityMs: PARALLEL_ACTIVITY_MS,
 	});
 	runSubagent(bound, {
 		session: GRAND,
@@ -411,8 +405,8 @@ function runAssembled(bound: Bound): void {
 		provider: "go-provider",
 		model: "model-alpha",
 		usage: USAGE_GRAND,
-		executionId: "exec-grand",
-		runtimeMs: GRAND_RUNTIME_MS,
+		from: T0 + 290_000,
+		activityMs: GRAND_ACTIVITY_MS,
 	});
 
 	// The main session's Round ends ten minutes after its own submission, and that end is its commit.
@@ -521,8 +515,9 @@ describe("the Total's time is the main session's span, beside its subagents' own
 		expect(total).toContain("Cache: 89%");
 		expect(total).not.toContain("Sum");
 
-		// The two parallel subagents each state their *own* execution's runtime on their own row — the
-		// 360,000 ms the host measured for each — beside the main session's span rather than inside it.
+		// The two parallel subagents each state their *own* activity's runtime on their own row — the
+		// 360,000 ms between the two edges of each of their Rounds — beside the main session's span
+		// rather than inside it.
 		expect(rowOf(lines, CHILD_A_HANDLE)).toContain("Run: 6m");
 		expect(rowOf(lines, CHILD_B_HANDLE)).toContain("Run: 6m");
 		// The grandchild's row is its own execution's two minutes again, one depth down.
@@ -681,7 +676,7 @@ describe("every change assembled survives a commit and a new process (P24)", () 
 					},
 				},
 			},
-			runtimeMs: PARALLEL_RUNTIME_MS,
+			runtimeMs: PARALLEL_ACTIVITY_MS,
 		});
 		expect(recordOf(restored, CHILD_B.sessionId)).toEqual({
 			id: CHILD_B.sessionId,
@@ -697,7 +692,7 @@ describe("every change assembled survives a commit and a new process (P24)", () 
 					},
 				},
 			},
-			runtimeMs: PARALLEL_RUNTIME_MS,
+			runtimeMs: PARALLEL_ACTIVITY_MS,
 		});
 		expect(recordOf(restored, GRAND.sessionId)).toEqual({
 			id: GRAND.sessionId,
@@ -710,7 +705,7 @@ describe("every change assembled survives a commit and a new process (P24)", () 
 					"model-alpha": { tokens: { input: 30, cacheRead: 20, cacheWrite: 0, output: 50 } },
 				},
 			},
-			runtimeMs: GRAND_RUNTIME_MS,
+			runtimeMs: GRAND_ACTIVITY_MS,
 		});
 	});
 });

@@ -126,17 +126,29 @@ export interface SessionRecord {
 	/** This session's own consumption, excluding anything its subagents issued. */
 	readonly own: OwnConsumption;
 	/**
-	 * The subagent runtime this session's own executions accumulated in this period, in
-	 * milliseconds, or nothing when no reliable reading ever produced one.
+	 * The subagent runtime this session's own activities accumulated in this period, in
+	 * milliseconds, or nothing when no reliable observation ever produced one.
 	 *
-	 * It is the harness's *own* measurement of each execution's duration, summed per execution —
-	 * never a session's creation-to-last-record span, which counts the idle gaps between
-	 * executions, and never a formatted string, so a later statistical tool reads a number.
-	 * Absent is *unavailable* rather than zero: a session whose host reported no such reading and
-	 * one whose executions really took no measurable time are different facts, and the second is
-	 * stored as `0`.
+	 * It is the coarse estimate of this session's own working time, summed over the activities the
+	 * extension observed — never a session's creation-to-last-record span, which counts the idle
+	 * gaps between activities, and never a formatted string, so a later statistical tool reads a
+	 * number. Absent is *unavailable* rather than zero: a session whose activities were never
+	 * observed and one whose activities really took no measurable time are different facts, and the
+	 * second is stored as `0`.
 	 */
 	readonly runtimeMs?: number;
+	/**
+	 * The mark that this period's runtime observation of this session has a known gap.
+	 *
+	 * It is present — and states `true` — only when an activity of this period really could not be
+	 * measured, so the figure beside it is a subtotal rather than a total. An absent mark is the
+	 * ordinary state of a record: it says that no gap was observed, and *not* that the period's
+	 * observations were complete, so nothing reads its absence as a claim about the history. A
+	 * record written before this field existed is not a damaged one, and a record that carries it is
+	 * neither incomplete consumption data nor a fault: the two optional facts are independent of the
+	 * consumption and of each other.
+	 */
+	readonly runtimeGap?: true;
 	/**
 	 * This session's own main-session time facts within the applicable accounting period, when both
 	 * of them have been observed: the instant of its first user input and the instant of its most
@@ -215,6 +227,7 @@ const SESSION_KEYS: ApprovedKeys = {
 	saveVersion: true,
 	own: true,
 	runtimeMs: true,
+	runtimeGap: true,
 	span: true,
 };
 const STARTUP_KEYS: ApprovedKeys = { model: true, effort: true };
@@ -365,12 +378,22 @@ function readSessionRecord(value: unknown, path: string): SessionRecordRead {
 	// disappearing from the next commit without a word.
 	const declaredRuntime = value.runtimeMs;
 	const runtimeFault = declaredRuntime === undefined ? undefined : measurementFault(declaredRuntime);
+	// The gap mark is read the same lenient way and for the same reason: a record that carries none is
+	// the shape this field did not exist in yet, and one that carries something this schema does not
+	// state is a mark that was not recorded rather than damage to the consumption beside it. Only the
+	// one value this field declares is the mark, so an unrecognized one is reported and dropped
+	// instead of being carried on as a gap this extension never established — and its absence is never
+	// read as proof that the period's observations were complete.
+	const declaredGap = value.runtimeGap;
+	const gapFault =
+		declaredGap === undefined || declaredGap === true ? undefined : `不是已知缺口标记（${describeValue(declaredGap)}）`;
 	// The optional time facts of the record: an unreadable time never makes the record unusable, so its
 	// fault is carried beside the record rather than in place of it — each of them, so a record whose
 	// runtime and span are both bad states both places the operator has to look at.
 	const span = readSessionSpan(value.span, `${path}.span`);
 	const timeFaults = [
 		...(runtimeFault === undefined ? [] : [`${path}.runtimeMs ${runtimeFault}`]),
+		...(gapFault === undefined ? [] : [`${path}.runtimeGap ${gapFault}`]),
 		...(span.fault === undefined ? [] : [span.fault]),
 	];
 	return {
@@ -382,6 +405,7 @@ function readSessionRecord(value: unknown, path: string): SessionRecordRead {
 			saveVersion: value.saveVersion,
 			own: own.value,
 			...(isMeasurement(declaredRuntime) ? { runtimeMs: declaredRuntime } : {}),
+			...(declaredGap === true ? { runtimeGap: true as const } : {}),
 			...(span.span === undefined ? {} : { span: span.span }),
 		},
 		...(timeFaults.length === 0 ? {} : { timeFaults }),
@@ -510,16 +534,18 @@ function sameBusinessValue(left: unknown, right: unknown): boolean {
 
 /**
  * Whether two records say the same business thing: the same identity, display name, direct parent,
- * startup facts, snapshot version, own consumption at every level, subagent runtime, and
- * main-session time facts.
+ * startup facts, snapshot version, own consumption at every level, subagent runtime, the mark of a
+ * known gap in that runtime's observation, and main-session time facts.
  *
  * A name is part of the record's content, so a rename at an unchanged version is other content
  * rather than a silent update — names travel with consumption, not through a write of their own —
  * and the startup facts are content in the same way: a snapshot never changes, so two records that
  * disagree about it are other content rather than one overwriting the other. The runtime is content
  * for the same reason: it rides the same commit, and an accumulation that grew is a change the file
- * has to carry rather than a snapshot to drop as idempotent. The span is content for the same
- * reason: a reading that differs from the one the disk holds is a different snapshot, and two
+ * has to carry rather than a snapshot to drop as idempotent. The gap mark is content of its own:
+ * one record naming a gap and one naming none disagree about the period's observation, so the marked
+ * one is not dropped as the same business content as the unmarked one. The span is content for the
+ * same reason: a reading that differs from the one the disk holds is a different snapshot, and two
  * records that disagree about it are a conflict rather than something to settle by taking the later
  * instant.
  */
@@ -531,6 +557,7 @@ export function sameSessionContent(left: SessionRecord, right: SessionRecord): b
 		sameBusinessValue(left.startup, right.startup) &&
 		left.saveVersion === right.saveVersion &&
 		left.runtimeMs === right.runtimeMs &&
+		left.runtimeGap === right.runtimeGap &&
 		sameBusinessValue(left.own, right.own) &&
 		sameBusinessValue(left.span, right.span)
 	);

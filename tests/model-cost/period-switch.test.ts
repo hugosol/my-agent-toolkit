@@ -46,7 +46,7 @@ import type { ModelPricingData } from "../../extensions/model-cost/shared-logic/
 import type { DisplayTarget } from "../../extensions/model-cost/shared-logic/presentation/display";
 import type { ModelCostRuntime } from "../../extensions/model-cost/shared-logic/runtime";
 import { createModelCostRuntime } from "../../extensions/model-cost/shared-logic/runtime";
-import type { OwnerReference, SessionFacts, SubagentRuntimeFact, TurnSignal } from "../../framework/core/protocol";
+import type { OwnerReference, SessionFacts, TurnSignal } from "../../framework/core/protocol";
 import { updateFile } from "../../framework/modules/files";
 import type { HttpRequestOptions } from "../../framework/modules/http";
 import { type CommandRun, type PortDouble, portDouble } from "../framework/support/harness-port-double";
@@ -980,53 +980,35 @@ describe("a switch clears the period's own time with the consumption it closes (
 		expect(bound.runtime.view.runtime(SUB.sessionId)).toBe(360_000);
 	});
 
-	test("an execution the closed period measured is not the new period's time, however late its readings arrive (P21)", async () => {
+	test("an activity the closed period began is not the new period's time, however late its Round ends (P21)", async () => {
 		let clock = SWITCH_AT;
 		const bound = await bind({ document: TIMED_TREE, now: () => clock });
 		bound.double.deliverSession(OWNER, { event: { kind: "session_facts" }, session: SUB });
 		await bound.double.runToCompletion("budget", { args: "detail", provider: "deepseek" });
 
-		// The closed period's own execution, open at 100,000 ms when the period is closed, on top of the
-		// 360,000 ms the session's record already carried.
-		bound.double.deliverSubagentRuntime({
-			runtime: { kind: "reading", executionId: "exec-closed", runtimeMs: 100_000, status: "running" },
-			owner: OWNER,
-			session: SUB,
-		});
-		expect(bound.runtime.view.runtime(SUB.sessionId)).toBe(460_000);
+		// The closed period's own activity: it opens ten minutes before the period is closed, and its
+		// interval is not settled yet, so what the session reads is still the 360,000 ms its record
+		// already carried — an activity in progress contributes nothing until its Round ends.
+		clock = OLD_INPUT;
+		bound.double.deliverRound(OWNER, { event: { kind: "round_start" }, session: SUB });
+		expect(bound.runtime.view.runtime(SUB.sessionId)).toBe(360_000);
 
 		const run = await bound.double.runToCompletion("budget", { args: "clear", provider: "deepseek" });
 		expect(run.feedback[0]?.level).toBe("info");
 		expect(bound.runtime.view.runtime(SUB.sessionId)).toBeUndefined();
 		expect(widgetLinesOf(bound, MAIN_TARGET).find(line => line.startsWith("└─ 子代理"))).toContain("Run: \u2014");
 
-		// That execution reports its own end, and then one more progress reading, after the switch: both
-		// are facts about work the closed period measured, so neither is time of the period that replaced
-		// it — and neither one re-opens the accumulation this instance let go of.
-		bound.double.deliverSubagentRuntime({
-			runtime: { kind: "reading", executionId: "exec-closed", runtimeMs: 210_000, status: "ended" },
-			owner: OWNER,
-			session: SUB,
-		});
-		expect(bound.runtime.view.runtime(SUB.sessionId)).toBeUndefined();
-		bound.double.deliverSubagentRuntime({
-			runtime: { kind: "reading", executionId: "exec-closed", runtimeMs: 220_000, status: "running" },
-			owner: OWNER,
-			session: SUB,
-		});
+		// That activity's own Round ends after the switch: the interval belongs to the work the closed
+		// period was in the middle of, so it contributes nothing to the period that replaced it and does
+		// not re-open the accumulation this instance let go of.
+		clock = SWITCH_AT + 60_000;
+		bound.double.deliverRound(OWNER, { event: { kind: "round_end" }, session: SUB });
 		expect(bound.runtime.view.runtime(SUB.sessionId)).toBeUndefined();
 		expect(widgetLinesOf(bound, MAIN_TARGET).find(line => line.startsWith("└─ 子代理"))).toContain("Run: \u2014");
 
-		// A new execution of that same session is the new period's own work: it is the whole of the
-		// accumulation, and the figure the existing commit path carries is that figure alone.
-		bound.double.deliverSubagentRuntime({
-			runtime: { kind: "reading", executionId: "exec-new", runtimeMs: 120_000, status: "ended" },
-			owner: OWNER,
-			session: SUB,
-		});
-		expect(bound.runtime.view.runtime(SUB.sessionId)).toBe(120_000);
-		expect(widgetLinesOf(bound, MAIN_TARGET).find(line => line.startsWith("└─ 子代理"))).toContain("Run: 2m");
-
+		// A new activity of that same session is the new period's own work: that session's one Round runs
+		// for 120,000 ms of this file's timeline, and the request it issues rides the same Round's end —
+		// the new period's one commit, carrying its consumption and that interval alone.
 		clock = NEW_INPUT;
 		bound.double.deliverRound(OWNER, { event: { kind: "round_start" }, session: SUB });
 		bound.double.deliverTurn(
@@ -1043,12 +1025,15 @@ describe("a switch clears the period's own time with the consumption it closes (
 			},
 			{ owner: OWNER },
 		);
+		clock = NEW_INPUT + 120_000;
 		bound.double.deliverRound(OWNER, { event: { kind: "round_end" }, session: SUB });
+		expect(bound.runtime.view.runtime(SUB.sessionId)).toBe(120_000);
+		expect(widgetLinesOf(bound, MAIN_TARGET).find(line => line.startsWith("└─ 子代理"))).toContain("Run: 2m");
 		await updateFile(bound.consumptionFile, current => current);
 
 		// The new period's own record: this session's first version of it, the one Turn it really ran —
-		// priced at the peak the fixture's 11:00 is in, (10·2 + 10·8)·3 / 1e6 — and the 120,000 ms of the
-		// new execution as the numeric milliseconds the document carries.
+		// priced at the peak the fixture's 11:00 is in, (10·2 + 10·8)·3 / 1e6 — and the 120,000 ms the
+		// new period's own activity ran for, as the numeric milliseconds the document carries.
 		expect(storedRecord(bound.root, "session-sub")).toEqual({
 			id: "session-sub",
 			name: "子代理",

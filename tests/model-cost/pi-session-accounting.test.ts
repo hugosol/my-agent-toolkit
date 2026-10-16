@@ -687,6 +687,11 @@ describe("a Round is one actual session's own requests, and a child's work rides
 			startup: { model: { provider: PROVIDER, model: MODEL }, effort: "medium" },
 			saveVersion: 1,
 			own: { official: { "model-alpha": consumedUsage(SECOND_USAGE, SECOND_AMOUNT) } },
+			// The one activity that session's own Round was: a figure of its own kind, measured between
+			// that Round's two edges rather than stated anywhere. Its arithmetic has its own coverage
+			// (`tests/model-cost/subagent-runtime.test.ts`); this case is about which session the
+			// consumption belongs to, so it states only that the figure is a number of milliseconds.
+			runtimeMs: expect.any(Number),
 		});
 
 		// The main session's own Round end commits its two requests under its own identity, and leaves
@@ -791,6 +796,9 @@ describe("a Round is one actual session's own requests, and a child's work rides
 			startup: { model: { provider: "plan-provider", model: "model-alpha" }, effort: "low" },
 			saveVersion: 1,
 			own: { "plan-provider": { "model-alpha": { tokens: tokensOf(USAGE) } } },
+			// The grandchild's own one activity, measured between the two edges of its Round exactly as
+			// its parent's is (see `tests/model-cost/subagent-runtime.test.ts` for that arithmetic).
+			runtimeMs: expect.any(Number),
 		});
 	});
 });
@@ -981,6 +989,10 @@ describe("one observed request is accounted exactly once (P8)", () => {
 			startup: { model: { provider: PROVIDER, model: MODEL }, effort: "medium" },
 			saveVersion: 2,
 			own: { official: { "model-alpha": consumed(tokensAdded(USAGE, SECOND_USAGE), AMOUNT + SECOND_AMOUNT) } },
+			// The activity this root itself observed, added to the figure the record already carried from
+			// the process before it: that record carried none, so this figure is the whole estimate (see
+			// `tests/model-cost/subagent-runtime.test.ts` for how that figure is measured).
+			runtimeMs: expect.any(Number),
 		});
 		expect(piRecord(document, MAIN.sessionId)).toEqual(storedRecord({ id: MAIN.sessionId, name: MAIN.name, parent: null, saveVersion: 4 }));
 	});

@@ -501,7 +501,9 @@ export function createModelCostRuntime(inputs: ModelCostRuntimeInputs): ModelCos
 		// redraw a row whose session just started or stopped working.
 		//
 		// The accounting's own half: the start fixes the snapshot its own additions are measured from,
-		// and the end measures them, saves the session's own snapshot and becomes the previous Round.
+		// and the end measures them, saves the session's own snapshot and becomes the previous Round. A
+		// subagent session's own runtime is measured from these same two facts — its Round is one of its
+		// activities — so a Round end is also where the interval that Round ran for settles.
 		round_start: delivery => {
 			stateProviderFailures(delivery);
 			if (sessionActivity.observe(delivery.session.sessionId, "working")) accounting.announceChanged();
@@ -532,14 +534,6 @@ export function createModelCostRuntime(inputs: ModelCostRuntimeInputs): ModelCos
 		session_start: delivery => {
 			stateProviderFailures(delivery);
 			accounting.started(delivery.session);
-		},
-		// The harness's own measurement of one subagent *execution*'s duration. It is a fact about the
-		// session's work rather than a boundary of it, so it settles nothing here: what it contributes
-		// rides the same commit the session's own Round end already makes, and it never opens, closes or
-		// saves anything by itself.
-		subagent_runtime: delivery => {
-			stateProviderFailures(delivery);
-			accounting.subagentRuntime(delivery);
 		},
 	};
 

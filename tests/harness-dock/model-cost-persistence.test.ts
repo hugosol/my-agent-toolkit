@@ -409,7 +409,7 @@ function answeredTurns(request: CapturedRequest): number {
 /** The keys the approved activity schema declares, at each level, and nothing else. */
 const DOCUMENT_KEYS = ["schemaVersion", "periodId", "start", "start_bal", "holiday", "harnesses"];
 const HARNESS_KEYS = ["sessions"];
-const SESSION_KEYS = ["id", "name", "parent", "startup", "saveVersion", "own", "runtimeMs", "span"];
+const SESSION_KEYS = ["id", "name", "parent", "startup", "saveVersion", "own", "runtimeMs", "runtimeGap", "span"];
 const STARTUP_KEYS = ["model", "effort"];
 const STARTUP_MODEL_KEYS = ["provider", "model"];
 /** The two instants of one session's own main-session time fact, which are always written together. */
@@ -442,10 +442,16 @@ interface SavedRecord {
 	readonly saveVersion: number;
 	readonly own: Record<string, Record<string, { readonly tokens: Record<string, number>; readonly costCny?: number }>>;
 	/**
-	 * The subagent runtime this session's own executions accumulated in the period, when one was
+	 * The subagent runtime this session's own activities accumulated in the period, when one was
 	 * reliably measured: a count of milliseconds, absent rather than zero when none was.
 	 */
 	readonly runtimeMs?: number;
+	/**
+	 * The mark that this period's observation of that runtime has a known gap: present as `true` only
+	 * when a real activity of the period could not be measured, so the figure beside it is a subtotal.
+	 * An absent mark says that no gap was observed, and never that the period was complete.
+	 */
+	readonly runtimeGap?: true;
 	/**
 	 * The session's own main-session time fact, when the run observed both of its instants: the first
 	 * user input of the period and the latest Round end, in epoch milliseconds. Absent is ordinary —
@@ -588,6 +594,10 @@ function readRecord(value: unknown, where: string): SavedRecord {
 	if (runtime !== undefined && (typeof runtime !== "number" || !Number.isFinite(runtime) || runtime < 0)) {
 		throw new Error(`${where}.runtimeMs is neither absent nor a non-negative finite number`);
 	}
+	const runtimeGap = candidate.runtimeGap;
+	if (runtimeGap !== undefined && runtimeGap !== true) {
+		throw new Error(`${where}.runtimeGap is neither absent nor the mark of a known gap`);
+	}
 	return {
 		id: candidate.id,
 		name: candidate.name,
@@ -596,6 +606,7 @@ function readRecord(value: unknown, where: string): SavedRecord {
 		saveVersion: candidate.saveVersion,
 		own,
 		...(runtime === undefined ? {} : { runtimeMs: runtime as number }),
+		...(runtimeGap === undefined ? {} : { runtimeGap: true as const }),
 		...(span === undefined ? {} : { span }),
 	};
 }
@@ -1158,17 +1169,16 @@ describe("the production documents of one storage root, read back independently 
 				}
 				expect(parent?.own[DEEPSEEK_PROVIDER]?.["deepseek-flash"]?.tokens).toEqual(usageOfRequests(3, DEEPSEEK_USAGE));
 
-				// The subagent runtime: each child's own record carries the duration the host really
-				// measured for its executions, as a positive number of milliseconds, and the parent's record
-				// — the main session's own — carries none. What is committed may be the last reading the
-				// commit caught rather than the settled one (a settled reading that arrived after a child's
-				// own commit is allowed to be unsaved), but a subagent whose executions the host measured is
-				// never left unknown here: the host states each spawn's own duration while it runs.
+				// The subagent runtime: each child's own record carries the time its own activity ran for —
+				// the interval between the two edges of its own Round, which is a positive number of
+				// milliseconds for real work — while the parent's record, the main session's own, carries
+				// none: a main session's rounds are its own work and not a subagent's.
 				expect(children.every(child => typeof child.runtimeMs === "number" && child.runtimeMs > 0)).toBe(true);
 				expect(parent?.runtimeMs).toBeUndefined();
-				// And the run reported no unusable runtime: every execution the host stated was attributed to
-				// the session it ran in and read as a duration, which is what an extension notices when it
-				// cannot (see `tests/framework/subagent-runtime.test.ts` for both failure shapes).
+				// And the run reported no observation it could not measure: every interval it observed was
+				// settled by a Round that this process saw open, so no session's record carries the mark of a
+				// known gap (`tests/model-cost/subagent-runtime.test.ts` covers that mark and the figures).
+				expect(children.every(child => child.runtimeGap === undefined)).toBe(true);
 				expect(noticesOf(session)).toEqual([]);
 
 				// The moment itself: the children's records were on disk while their parent had none, and each
