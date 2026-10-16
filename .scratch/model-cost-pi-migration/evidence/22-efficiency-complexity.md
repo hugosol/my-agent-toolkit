@@ -19,6 +19,7 @@
 | 可归属的对照入口 | `scripts/efficiency-comparison.ts`（`bun run compare:efficiency`） | 对齐两份采样工件，按序列与测量窗口逐项比较（读取/发布/锁/暂存/元数据/目录/总数、请求、绘制、事件、等待、行数），列出可归属差异与噪声列；复杂度按两版 revision **自身 tree 的 tracked TypeScript 行数**分产品面/证据面统计，并列出逐模块变化。不设阈值、不因差异失败——判断属人类。 |
 | 真实宿主的外部效果记录器 | `tests/harness-dock/support/effect-instrument.ts` | 通过 `BUN_OPTIONS=--preload` 注入真实宿主进程，在宿主自己的模块图之前包裹 `node:fs`、`node:fs/promises`、`node:net` 的成员并记录每次调用，进程退出时把记录写到运行自己指名的文件。未被指名 dump 文件时**完全不动作**；dump 用包裹前捕获的成员写出，自己的写不进入记录。 |
 | 真实宿主效果检查 | `tests/harness-dock/efficiency-effects.test.ts` | 3 例：单会话一轮的存储成本与健康空闲窗口；带一个真实子代理会话时无第二次根查询/无重复根 UI/无本地 IPC；记录器自身的灵敏度对照。 |
+| 对照入口自身的覆盖 | `tests/harness-dock/efficiency-comparison.test.ts`（§13 新增，属本票分区） | 11 例，只经入口的命令行 seam（报告文本 + 退出码）观察：相同图不制造差异、差异照印且退出 0（判断属人类）、冻结记录声明的噪声列只观察不比较、缺失窗口/revision 不被填数、复杂度按各 revision 自身 tree 计量（含 §10 的行计数口径）。fixture 工件按字面量手写。 |
 
 ## 2. 自动证据（本票分区与真实宿主，实际运行）
 
@@ -68,7 +69,7 @@ disposal / afterDisposal             0/0        0/0    0/0      0/0       0/0   
 | 差异 | 数值 | 原因（可归属） |
 | --- | --- | --- |
 | `requests` | 1 → 2（两条都是 `/user/balance`） | 条目自身的时间线：该序列把子代理 Round 结束陈述为 `clock = T0 + 360000ms`（ticket 11 / P24 的"按 Round 区间累计耗时"落地后，宿主不再声明耗时读数，只能按时钟推进），越过条目自己声明的 `balanceTtlMs=30000`；于是第一个在该瞬间之后结算的计价 Turn 触发**一次**已结算请求刷新（`provider-balance.ts` 的共享规则，非轮询）。归属证据：`provider-balance.ts` / `provider-refresh.ts` 在 `59a0ed7..efb03e0` **无任何改动**（`git diff --stat 59a0ed7 HEAD -- extensions/model-cost/` 不含这两个文件）；时间线不动时 `requests=1`（`logs/22-ab-no-clock-advance.log`）；TTL 抬到 1e9ms 时 `requests=1`（`logs/22-ab-huge-ttl.log`）。 |
-| `draws` | 30 → 33 | 其中 +1 伴随上面那次刷新的结果变更通知（同一运行里 `requests=1` 时 draws=32）；另 +2 在同一时间线与同一请求数下出现，机制可归属到 P24 的落地：`request-accounting.ts` 的 round_end 为 `kind === "sub"` 新增一次 `announce()`（每个子代理 Round 结束一次；该序列有 3 个子会话 Round 结束，与提交渲染部分合并）。**每渲染级归因未做**，见 §6。 |
+| `draws` | 30 → 33 | 其中 +1 伴随上面那次刷新的结果变更通知（同一运行里 `requests=1` 时 draws=32）；另 +2 在同一时间线与同一请求数下出现，机制可归属到 P24 的落地：`request-accounting.ts` 的 round_end 为 `kind === "sub"` 新增一次 `announce()`（每个子代理 Round 结束一次；该序列有 3 个子会话 Round 结束，与提交渲染部分合并）。**每渲染级归因未做**，见 §6。**§13 已补 A/B 实测**：停用该 `announce()` 后同一 revision、同一配置下 draws `33 → 30`、其余可比图与语义交付逐项不变、不变量全部成立 —— 即该序列的 +3 全部来自这条通知路径；哪一帧与提交渲染合并仍未定位。 |
 | `events` | 24 → 23 | 采样器的交付组合变化：`subagent_runtime` 读数交付随 P24 移除（1 次），其余交付计数相同（对照报告 "semantic deliveries" 段）。 |
 | `file total` | 51 → 53 | **噪声列驱动**：该列把结算失败的调用也计入（本次并发序列多了 2 次被平台拒绝的发布 rename 重试），失败列本身已被 01 声明为重复运行就波动的项。成功计数（读/发布/锁/暂存/元数据/请求/绘制/事件）逐个相同。 |
 
@@ -116,6 +117,7 @@ disposal / afterDisposal             0/0        0/0    0/0      0/0       0/0   
 - **S1 采样不覆盖宿主原生半边**：OMP adapter 的原生事实映射、宿主自己的会话 JSONL/日志、真实终端绘制仍不可比（01 的 `notComparableScenarios` 原样保留）；本票用真实 OMP 宿主覆盖了其中的存储/请求/IPC/空闲部分，但不覆盖真实终端绘制与真实 provider 账户。
 - **范围限制**：全部证据仅覆盖 win32/x64、bun 1.4.2、隔离 OMP 18.5.0（未打补丁）、以及指向本机 capture endpoint 的 shipped DeepSeek provider；不推广到其他版本、POSIX、跨用户或真实账户。
 - **迁移前 dock 对照的构造**：before 侧是把本票新增的测试文件与记录器复制进 `59a0ed7` 工作树后运行（该文件当时不存在）；两侧使用同一份测试文件与同一份 OMP 18.5.0 安装版本，故计数可比。after 侧表内 `ms`/失败列等噪声项不参与比较。
+- **已关闭的限制**：§8/§11/§12 列出的「对照入口无自动化测试覆盖」已由 §13 的 `tests/harness-dock/efficiency-comparison.test.ts`（11 例，含 4 次目标注入证明灵敏度）关闭；本节其余各条仍然成立。
 
 ## 7. 复现步骤（本票实际执行）
 
@@ -283,3 +285,54 @@ OMP_BOT_BINARY="E:/Developer/myhub/omp-bot/backend/target/release/omp-bot.exe" b
 4. 已提交的 A/B 与稳定性日志逐条支持上述归因：去掉时钟推进 → `requests=1`（同时 `childA.runtimeMs=0`）、TTL 抬到 1e9ms → `requests=1`（`logs/22-ab-no-clock-advance.log`、`logs/22-ab-huge-ttl.log`）；`logs/22-baseline-stability.txt` 的六次观测里 `draws=33`、`requests=2` 逐次相同，唯一波动的两列正是噪声列（`failed` 15/16/17、`file total` 51/52/53）。迁移前 dock 侧对照数字也与 §5 一致（`logs/22-dock-effects-pre-migration.log`：2294 / 2688、frames 10 / 33）；故障注入日志同 §5（`consumptionReads 2 → 12`、空闲窗口 6 次读）。
 
 **本轮未覆盖项**（与 §6/§10/§11 相同，本节未新增）：`P51`/`P52`/`P53` 的人类判断未做（本票交付时保持未验收）；并发序列 `draws +2` 与主子例 `frames 33→18` 仍未逐渲染归因；pi 侧本机接入未做同样的记录器注入；证据范围仍限 win32/x64、bun 1.4.2、OMP 18.5.0（未打补丁）、无 provider 凭据（请求由本机 capture endpoint 回答）；对照入口仍无自动化测试覆盖（其正确性证据是 §10 的独立计数、§11 的逐字节相同与本节的第二份独立实现）。
+
+## 13. 第六次接手复核（源状态 `7274cb3`；**补齐对照入口自身的自动化覆盖** + 公开入口第一手重跑）
+
+接手时：HEAD `7274cb3`（= §12 定稿树；`efb03e0` … `570c7ee` 全部原样保留，**未做任何 reset**）。工作树除 `bun.lock` 与两份 `host-patches/*/patch.diff`（§8/§12 记录的 `core.autocrlf=true` 检出 stat 现象，带过滤器 hash 与 `HEAD` blob 逐字节相等，**未 checkout/restore**）外干净。
+
+**本轮唯一的实现改动**：新增 `tests/harness-dock/efficiency-comparison.test.ts`（落在本票所属分区）。此前 §6/§8/§10/§11/§12 每轮都把「对照入口无自动化测试覆盖」列为未覆盖项；而对照入口正是本票 `P51` 材料可归属性的器械（它决定「可比差异 / 噪声列 / 未记录」三者），票内「本票负责人负责核对有效性与**补齐缺口**」要求把它补齐。该文件只经入口的命令行 seam 观察（`bun scripts/efficiency-comparison.ts --before … --after … [--out …]`）：读它打印的报告文本与退出码；fixture 工件是**本文件手写的字面量**（期望不调用被测计算生成），临时目录建在 OS temp 且逐例清理（`afterEach`）。它不驱动宿主、不需要 OMP 构建，与同目录的真实宿主半边 `efficiency-effects.test.ts` 互补。
+
+| 例（一句话 = 一个性质） | 观察 |
+| --- | --- |
+| 两侧图相同 | `none: every comparable figure of every sequence and window agrees.`、两侧 `invariants all held`、退出 0 |
+| 一侧不变量失败 | 先打印 `after: invariants 1 FAILED` 与其 detail（读者能区分被采样入口自己接受的数字与被它否定的数字），退出 0 |
+| 可比图真有差异 | `requests 1 -> 2`、`draws 8 -> 9` 列在「comparable differences」段且**退出 0**（判断属人类：无阈值、不因差异失败） |
+| 只有一侧记录的窗口 | 差异段为 `… window absent -> present`，窗口表该行**没有任何数字**（缺失基线不被填成 0） |
+| 被拒调用数与墙钟差异 | 差异段仍是 `none:`；噪声段逐条列出 `failed by operation …` 与 `wall clock ms 24 -> 71` |
+| 仅文件总数差异 | 差异段仍是 `none:`；噪声段列出 `file total … (this column counts calls that settled as failures too)`（`6802bef` 的口径不会被回退） |
+| 工件未记录 `source.head` 且命令行未给 rev | 打印 `the complexity side cannot be measured` 且**没有** `PRODUCT SUBTOTAL`（缺失基线不被捏造） |
+| 用迁移两版 revision 测复杂度 | `PRODUCT SUBTOTAL 19287 23773 +4486`（= §4 的字面量；行计数口径 §10 不被回退） |
+| `--before-rev/--after-rev HEAD`（覆盖工件自报 revision） | 两侧同行数、`+0`，且行数 `> 0`（不是恒零） |
+| `--out` | 写出的报告与打印的一致，并自建父目录 |
+| 缺 `--before` | 退出 1、stderr 指名 `--before <artifact.json> is required`、stdout 为空（不会「什么都没比对」却成功） |
+
+**灵敏度（目标注入 → 观察到真实失败 → 按 `sha256` 还原）**：`scripts/efficiency-comparison.ts` 原件 sha256 `e513caead321ce2aae43a360b310dd985fb87b0c4213bd58a25b2105877a005c`；注入前与每次还原后逐一相等，且 `git diff -- scripts/` 为空。
+
+| 临时注入（跑完即还原） | 模拟的违规 | 观察到的失败 |
+| --- | --- | --- |
+| `countLines` 退回 `git grep -c ""` 口径（结尾空行少算 1） | §10 修正过的行计数回退 | `measures the migration's product surface from each revision's own tree`：收到 `19207/23685/4478`（期待 `19287/23773/4486`）→ 10 pass / 1 fail（`logs/22-takeover-g-injection-a.log`） |
+| 把 `file total` 从噪声段移回可比差异 | `6802bef` 的口径回退 | `observes a refused call's count and the wall clock instead of comparing them`、`rides the file total with the noise columns…` → 9 pass / 2 fail（`logs/22-takeover-g-injection-b.log`） |
+| 差异非空时 `process.exitCode = 1` | 加入阈值/判定 | `prints a comparable difference and still exits zero…`、`hands a window only one side recorded…` → 9 pass / 2 fail（`logs/22-takeover-g-injection-c.log`） |
+| 缺失 `source.head` 时默认 `HEAD` | 捏造缺失基线 | `states that it cannot measure complexity rather than filling in a missing revision` → 10 pass / 1 fail（`logs/22-takeover-g-injection-d.log`） |
+
+即这些绿色不是断言乏力换来的：每条契约都有一次被注入的真实失败；还原后 11 pass / 0 fail、40 expect()、2.26s（`logs/22-takeover-g-focused.log`）。
+
+**公开入口第一手重跑（本树，串行；运行期间未改被测源码或 fixture）**：
+
+| 命令 | 退出 | 结果 | 日志 |
+| --- | --- | --- | --- |
+| `bun run typecheck` | 0 | `tsc --noEmit` 无诊断（含新增测试文件） | `logs/22-takeover-g-typecheck.log` |
+| `bun run baseline:efficiency --out …/logs/22-takeover-g-after.json --label takeover-g` | 0 | 七条序列 `every invariant held.`；并发序列 `requests=2`（`/user/balance`×2）、`draws=33`、`events=23`；`read-only-refresh`/`healthy-idle`/`disposal` 文件操作 0；instrument probe `{"operations":13,"documentReads":2,"documentPublishes":1,"lockOperations":7,"stagingOperations":2,"syncOperations":1}`（与 §2/§9–§12 相同） | `logs/22-takeover-g-baseline.log` |
+| 新跑工件 vs 已提交 `22-efficiency-after.json` | 0 | `none: every comparable figure of every sequence and window agrees.`、`every sequence delivered the same kinds the same number of times.`；噪声段差异为并发序列被平台拒绝的那次 rename 与各序列墙钟 | `logs/22-takeover-g-reproduction.txt` |
+| `--before 01-… --after 22-… --out logs/22-takeover-g-comparison.txt` | 0 | 复现 §3/§4（`requests 1→2`、`draws 30→33`、`events 24→23`、`19287 → 23773 (+4486)`）；**重生成报告与已提交 `logs/22-efficiency-comparison.txt` 的 sha256 相同**（`a486f32712e4314108ef256d0e74a4aefdf7512ffb77e16600c5daab78b1fe72`） | `logs/22-takeover-g-comparison.txt`、`…-comparison-console.txt` |
+| `--after-rev pi-adapter`（只读，集成尖端复杂度） | 0 | `190e1b5`：`PRODUCT SUBTOTAL 19287 23773 +4486`（产品面逐族与 `efb03e0` 相同）、`EVIDENCE SUBTOTAL 54806 80085` | `logs/22-takeover-g-integration-tip.txt` |
+| `bun test tests/harness-dock/efficiency-effects.test.ts`（真实宿主） | 0 | **3 pass / 0 fail**、21 expect()、12.29s；效果 `2295`/`2689`、存储根 13 次操作、健康空闲窗口 0 效果、frames `10`/`18`、arrivals `["balance","model"]`/`["balance","model","model","model"]`、网络效果只有指向本机 capture 端口的一次 `createConnection`（无 `createServer`、无 `my-agent-toolkit-access`） | `logs/22-takeover-g-effects.log` |
+| `OMP_BOT_BINARY=… bun test tests/harness-dock`（所属分区，真实宿主，串行） | 0 | **104 pass / 0 fail**、1161 expect()、27 文件 / 223.27s（§12 的 93 + 本轮 11；含上面 3 例真实宿主检查） | `logs/22-takeover-g-partition-harness-dock.log` |
+| `bun test tests/framework`（共同路径消费者） | 0 | **481 pass / 0 fail**、2250 expect()、38 文件 / 39.46s（与 §12 逐项相同） | `logs/22-takeover-g-partition-framework.log` |
+| `bun test tests/model-cost`（共同路径消费者） | 0 | **463 pass / 0 fail**、2524 expect()、40 文件 / 7.60s（§11 记录的实时期限 flake 本轮未复现） | `logs/22-takeover-g-partition-model-cost.log` |
+
+**集成分支只读核对**：`pi-adapter` 尖端仍 `190e1b5`（本轮未推进；未操作、未合入）；`git diff --name-only 39fdc3d pi-adapter -- framework extensions entrypoints` 只有 `framework/docs/harness-support.md`（文档）；`git merge-tree --write-tree --name-only HEAD pi-adapter` 只读跑了两次：接手态 `7274cb3` 上 exit 0、tree `fcb61da4a1f92b60676027fa2f9f4dcdd85ea321`、**无冲突列表**（`logs/22-takeover-g-merge-tree.txt`；读者可用 `HEAD^` 复核），本节证据提交上再跑一次同样 exit 0、无冲突列表（该次的 tree 值不落纸：本节证据自身改变 tree，写下它会立刻自指）。两次都未改任何 ref 或工作树。
+
+**`draws +3` 的第一手 A/B 归因（临时注入 product 副本，跑完按 `sha256` 还原；§3/§12 只做到代码层归因的那一项）**：把 `roundEnded` 里 `delivery.session.kind === "sub"` 分支的 `announce()`（`extensions/model-cost/shared-logic/request-accounting.ts:1133`）临时停用，其余（`runtimes.activityEnded`、`runtimeRevision += 1`、失败通知）不动。同一 revision、同一命令行下 `main-child-concurrency` 的 `draws 33 → 30`，而**其余可比图与语义交付逐项相同**（对照报告的可比差异段只有这一行；deliveries 相同；噪声段仍只差失败数与墙钟），且七条序列 `every invariant held.`——即这些不变量不依赖该通知，它是纯展示工作（`logs/22-takeover-g-ab-subannounce.log`、`…-ab-subannounce-comparison.txt`）。结论：迁移后该序列 `draws 30 → 33` 的 +3 **全部落在「每个子代理 Round 结束一次显示通知」这一条路径上**（该序列有 3 个子代理 Round 结束，§12 已核对代码路径），§3 原先「刷新通知 +1 / announce +2」的推断拆分因此被收紧为单一来源；**逐渲染定位（哪一帧与提交渲染合并）仍未做**。还原后 `sha256` 与注入前相同（`a06f1313eddefd808a1875b190652a2deef92b8483db5d8b7eeb51e520042391`）、`git diff -- extensions/ framework/ entrypoints/` 为空，且还原后再采一次样并与已提交工件对照仍为 `none`（`logs/22-takeover-g-after2.json`、`logs/22-takeover-g-reproduction-restored.txt`）。
+
+**本轮未覆盖项**：`P51`/`P52`/`P53` 的人类判断未做（本票交付时保持未验收，票内含人类确认的两个勾选项保持未勾选）；**逐渲染定位**（并发序列那次 `draws +3` 与主子例 `frames 33 → 18` 具体是哪些帧与提交渲染合并）未做——但并发序列的增量本轮已由 A/B 实测归因到唯一的 `announce()` 路径，主子例仍是机制级；pi 侧本机接入未做同样的记录器注入；证据范围仍限 win32/x64、bun 1.4.2、隔离 OMP 18.5.0（未打补丁）、无 provider 凭据（模型请求与余额查询由本机 capture endpoint 回答）。**「对照入口无自动化测试覆盖」一条本轮已关闭**（上表 11 例 + 4 次目标注入），不再列入限制。

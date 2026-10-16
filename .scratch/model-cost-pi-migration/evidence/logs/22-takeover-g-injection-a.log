@@ -1,0 +1,31 @@
+bun test v1.4.2 (744846f84)
+
+tests\harness-dock\efficiency-comparison.test.ts:
+374 | 
+375 | 	test("measures the migration's product surface from each revision's own tree", async () => {
+376 | 		const run = await compare(artifactOf({ label: "before", head: BEFORE_REVISION }), artifactOf({ label: "after", head: AFTER_REVISION }));
+377 | 		expect(run.exitCode).toBe(0);
+378 | 		expect(run.stdout).toContain(`revisions measured: before ${BEFORE_REVISION}, after ${AFTER_REVISION}`);
+379 | 		expect(rowCellsOf(run.stdout, "PRODUCT SUBTOTAL")).toEqual(PRODUCT_SURFACE_LINES);
+                                                           ^
+error: expect(received).toEqual(expected)
+
+  [
+-   19287,
+-   23773,
+-   4486,
++   19207,
++   23685,
++   4478,
+  ]
+
+- Expected  - 3
++ Received  + 3
+
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-toLQo0\tests\harness-dock\efficiency-comparison.test.ts:379:54)
+(fail) the P51 comparison entry (compare:efficiency) > measures the migration's product surface from each revision's own tree [228.92ms]
+
+ 10 pass
+ 1 fail
+ 40 expect() calls
+Ran 11 tests across 1 file. [2.19s]
