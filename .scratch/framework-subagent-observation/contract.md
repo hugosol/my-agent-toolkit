@@ -11,41 +11,41 @@ Human-led coverage: none
 
 |#|Promise (one observable result)|Coverage|Source|Seam|Delivering work|
 |---|---|---|---|---|---|
-|P1|子会话取得可靠实际身份后即登记到 Owner，无须等待第三方完成通知。|实际后台会话在首轮结束前可见；登记身份与独立的宿主会话事实相符。|story 7, 8|S1, S3|待 `/to-tickets` 填入|
-|P2|每个后代直接向 Owner 提供观察，同时保持真实直接父关系。|主、子、孙分处实际进程的场景中，Owner 收到孙读数且树仍为三级，不将孙挂到根。|story 15, 16|S1, S2, S3|待 `/to-tickets` 填入|
-|P3|续跑或重连接入同一实际会话只更新原会话行，不因 run 或进程变化重复建行。|同一 session 经两个 run/来源交付，实际 detail 中始终只有该实际会话的一行。|story 17, 20|S1, S3|待 `/to-tickets` 填入|
-|P4|首次接入提供当时可用的当前观察，不要求接入后再发生状态变化。|会话先 Working、后接入；不产生第二次状态转换仍能读到 Working 及给定上下文。|story 18|S1, S2|待 `/to-tickets` 填入|
-|P5|有效重连恢复当前可用观察，不重放历史 Turn 或 Round。|断开后状态变化再重连，接收最新快照且没有额外计费生命周期交付。|story 19, 28, 37|S1, S2|待 `/to-tickets` 填入|
-|P6|重复、迟到或旧来源退出不能覆盖或撤销更新有效来源的读数。|实际进程交付旧来源关闭及可控迟到序列，最新给定读数保持；不依赖概率性 sleep 排序。|story 20, 38|S1, S2|待 `/to-tickets` 填入|
-|P7|来源正常撤销或接收侧观察到关闭/错误后，该来源实时活动与上下文变为不可用，而不是 Idle 或执行失败。|正常释放与子进程异常退出分别观察；读取不可用、detail 不残留 Working 或实时上下文，也没有伪造失败/完成事件。|story 21, 22|S1, S2, S3|待 `/to-tickets` 填入|
-|P8|观察失效不删除可靠登记的身份、直接父关系和已保存消费。|断连前后对照树与消费；未提交消费的实时身份在本次 Owner 运行中保留，但不新增身份持久化。|story 23, 8|S1, S3|待 `/to-tickets` 填入|
-|P9|首轮尚未提交的会话可展示已有读数，缺失消费不呈现为确认零。|实际 detail 观察首次提交前的行，使用给定非零上下文；消费字段按缺失表达，不显示虚构零消费。|story 8, 9|S3|待 `/to-tickets` 填入|
-|P10|Working/Idle 由共同 Round 语义决定，不因原生执行结束通知而提前 Idle。|自动继续、待处理输入、持有的异步工作和真正静止的独立场景；只有满足结束条件才出现 Idle。|story 10, 11, 37|S1, S3|待 `/to-tickets` 填入|
-|P11|上下文在会话启动、消息结束及宿主可靠的执行收敛位置采集，提供给定 tokens 与采集时对应模型。|同一给定读数序列通过两种 harness 映射获得相同观察；实际宿主运行核对显示与对应模型预算，不将宿主窗口替代显示预算。|story 12, 13, 35|S1, S3|待 `/to-tickets` 填入|
-|P12|extension 通过 framework 共同 interface 消费上下文，不自行订阅宿主原生采集事件。|在共同消费 interface 观察上下文变化；实际 OMP、pi 路径均能提供读数，迁移后没有并行原生采集导致的重复交付。|story 35, 36, 37；第二关职责澄清|S1, S3|待 `/to-tickets` 填入|
-|P13|活动和上下文通知直接携带声明的当前读数，Owner 不为采用它们读取消费文件。|采用独立给定值且消费文档未变化的真实跨进程观察；结合消费存储访问记录区分“无需读文件”与碰巧显示正确。|story 12, 14；spec Implementation Decisions|S1, S2, S3|待 `/to-tickets` 填入|
-|P14|采集与发布按事件发生且相同读数不重复发布，不增加逐 token 或持续轮询流量。|固定事件序列、重复值、静止窗口及流式响应中记录实际通知；不以终端最终画面推断通信频率。|story 14；spec Implementation Decisions|S1, S2, S3|待 `/to-tickets` 填入|
-|P15|同一批可合并的观察更新使展示采用最新结果，不要求为每条消息独立重绘。|交付多个会话/字段的受控更新，验证各最新结果均保留并发生合并重绘；实际终端观察及测量区分通知和绘制成本。|story 14, 39；spec Implementation Decisions|S1, S3|待 `/to-tickets` 填入|
-|P16|原始响应 usage 仅由实际执行会话累计，远端观察与重连不重复记账或使 Owner 代写。|独立给定两会话 usage 的算例核对自身记录与含后代总量；实际子进程提交证据与 Owner 同步行为共同证明写者归属。|story 28, 37|S1, S3|待 `/to-tickets` 填入|
-|P17|仅确认成功的消费提交产生成功提交提示；Owner 随后只读采用文件实际内容。|阻止 Owner 自身提交，完成子保存仍能看到新消费；对照失败提交没有成功提示，接收提示不产生写入。|story 5, 24, 28|S1, S2, S3|待 `/to-tickets` 填入|
-|P18|多个提交提示合并刷新，而同步期间新到达提示仍能使后续实际提交可见。|受控暂停一次同步、期间再提交并通知，最终采用独立给定的最新记录；核对同步次数相对提示合并且无永久漏刷。|story 26, 27|S1, S3|待 `/to-tickets` 填入|
-|P19|重连触发消费只读同步，即使上次成功提交的提示从未到达。|丢弃一次提交提示后断开再接入，Owner 无自身消费或提交仍能看到文件中新记录。|story 25|S2, S3|待 `/to-tickets` 填入|
-|P20|同周期只读同步保护本地未提交累计，外部周期更换不将旧周期在途消费带入新周期。|独立给定旧/新周期及本地未提交量，检查刷新不提交在途量，切周期后仅出现新周期允许记录。|story 29；spec Implementation Decisions|S1, S3|待 `/to-tickets` 填入|
-|P21|State follow 在两种进程模式下均取得 Owner 当前权威值，而非永久启动快照。|Owner 值由 true 改 false，子会话后续语义使用取得 false；初始与后续读取在实际跨进程路径执行，不将不可达默认值误记为成功读取。|story 30, 34, 35|S1, S2, S3|待 `/to-tickets` 填入|
-|P22|观察和 follow 不授予子会话远端写 Owner State 的能力。|读取和观察更新后 Owner 给定值不变；错误方向/未声明操作被拒绝而非写入。|story 31, 38|S1, S2|待 `/to-tickets` 填入|
-|P23|没有 follow 字段的扩展仍可观察子会话，brief/detail 切换不终止采集。|无 follow 的实际进程登记与更新；brief 期间更新后切 detail 仍显示最新读数，重复切换不重复来源。|story 32, 33|S1, S2, S3|待 `/to-tickets` 填入|
-|P24|同进程路径不建立本机端点或执行序列化通信，同时与跨进程保持共同观察含义。|同进程运行观察无接入端点/定位记录创建，给定事实在两种路径得到等价观察；OMP 与 pi 前台实际回归。|story 34, 35, 36|S1, S2, S3|待 `/to-tickets` 填入|
-|P25|接入校验完整目标与有效接入，错误扩展、Owner 或旧接入不可交付读数。|真实子进程使用错误目标/旧校验接入被拒绝；两个并发 Owner 的独立给定值不串接，诊断不泄漏接入校验材料。|story 38；inferred：保护既有目标隔离承诺所必需|S2|待 `/to-tickets` 填入|
-|P26|定位仅用于接入发现且受显式 runtime directory 约束，不存放观察值或 State。|真实定位记录内容与文件变动观察；配置缺失/非法不回退到 cwd、临时目录或消费存储根，不以目录扫描接收观察。|story 38；spec Implementation Decisions|S2|待 `/to-tickets` 填入|
-|P27|正常处置确认已有 settled 但尚待下一 task 的 Round，并等待自身保存结果再成功退出收口。|真实 pi 后台复现短寿命场景，观察 shutdown 前提交成功；不增加固定 sleep 或第二次模型请求来促成保存。|story 1, 2, 39|S1, S3|待 `/to-tickets` 填入|
-|P28|无 settled 的 open Round 在正常处置时按截断收口，保存已知 usage，不把未知消费或耗时补成完整结果。|受控活动中处置，独立给定已知 usage 与测量缺口；公开消费可区分截断，落盘仅含可靠量且不产生任务成功声明。|story 3；第二关截断可观察性发现|S1, S3|待 `/to-tickets` 填入|
-|P29|正常收口顺序为结束/截断、等待 handler 与保存、成功提示、释放来源与 binding；已收口或已保存部分不重复执行。|以可控制完成的异步 handler 验证在完成前不清理，完成后恰好一次；真实宿主记录提交、退出与诊断顺序。|story 1, 2, 5；spec Implementation Decisions|S1, S3|待 `/to-tickets` 填入|
-|P30|默认总收口等待上限为 15 秒，从进入收口起计，不重置在途预算、不叠加固定延迟或额外自动重试。|可控时间验证临界点、已用预算及已完成路径立即收口；真实故障场景记录实际等待和调度误差，不要求 OS 毫秒级硬实时。|story 4；第二关明确批准的截止取舍|S1, S3|待 `/to-tickets` 填入|
-|P31|截止时可靠取消的排队/锁等待报告未提交，已开始但未确认的更新报告保存结果未确认，两者均不冒报成功。|分别控制未取得锁和已进入更新的场景；诊断、成功提示与实际文档共同区分结果，不假定停止等待等于停止写入。|story 4, 5；第二关明确批准的新取舍|S1, S3|待 `/to-tickets` 填入|
-|P32|Owner 不可达或不回应不会阻止子会话本地结算和有界退出。|实际子进程在 Owner 缺失/断开时完成文件提交与退出；无等待 Owner 确认或绘制的依赖。|story 6|S2, S3|待 `/to-tickets` 填入|
-|P33|普通 transferred 或查看位置切换不会仅因离开该位置而强制结束其 Round。|在活动与待继续阶段切换查看/会话，检验没有多余 round_end、保存或 Idle。|story 11, 35；inferred：保持已批准 Round 含义所必需|S1, S3|待 `/to-tickets` 填入|
-|P34|第三个 harness 的接入职责限于其事实映射和子入口接线，不需要另写通信或复制扩展统计规则。|以同进程与跨进程两个实际 adapter 的共同 interface 使用和行为覆盖证明复用；维护性审查确认不存在按 harness 复制的计费或观察规则，不为此实现第三个 harness。|story 36, 37|S1, S2|待 `/to-tickets` 填入|
-|P35|验证报告区分真实宿主、真实进程、确定性检查与视觉观察，缺失平台或版本证据不算通过。|真实 pi 后台、pi 前台、OMP 和实际 detail 表面观察；记录版本、系统、命令、结果、计时及日志，其他平台未运行须显式标注。|story 39；spec Testing Decisions|S3|待 `/to-tickets` 填入|
+|P1|子会话取得可靠实际身份后即登记到 Owner，无须等待第三方完成通知。|实际后台会话在首轮结束前可见；登记身份与独立的宿主会话事实相符。|story 7, 8|S1, S3|[06](implementation/06-early-session-registration-agent-tree.md)|
+|P2|每个后代直接向 Owner 提供观察，同时保持真实直接父关系。|主、子、孙分处实际进程的场景中，Owner 收到孙读数且树仍为三级，不将孙挂到根。|story 15, 16|S1, S2, S3|[06](implementation/06-early-session-registration-agent-tree.md)|
+|P3|续跑或重连接入同一实际会话只更新原会话行，不因 run 或进程变化重复建行。|同一 session 经两个 run/来源交付，实际 detail 中始终只有该实际会话的一行。|story 17, 20|S1, S3|[06](implementation/06-early-session-registration-agent-tree.md)|
+|P4|首次接入提供当时可用的当前观察，不要求接入后再发生状态变化。|会话先 Working、后接入；不产生第二次状态转换仍能读到 Working 及给定上下文。|story 18|S1, S2|[07](implementation/07-current-observation-delivery-both-modes.md)|
+|P5|有效重连恢复当前可用观察，不重放历史 Turn 或 Round。|断开后状态变化再重连，接收最新快照且没有额外计费生命周期交付。|story 19, 28, 37|S1, S2|[08](implementation/08-reconnect-source-lifecycle.md)|
+|P6|重复、迟到或旧来源退出不能覆盖或撤销更新有效来源的读数。|实际进程交付旧来源关闭及可控迟到序列，最新给定读数保持；不依赖概率性 sleep 排序。|story 20, 38|S1, S2|[08](implementation/08-reconnect-source-lifecycle.md)|
+|P7|来源正常撤销或接收侧观察到关闭/错误后，该来源实时活动与上下文变为不可用，而不是 Idle 或执行失败。|正常释放与子进程异常退出分别观察；读取不可用、detail 不残留 Working 或实时上下文，也没有伪造失败/完成事件。|story 21, 22|S1, S2, S3|[08](implementation/08-reconnect-source-lifecycle.md)|
+|P8|观察失效不删除可靠登记的身份、直接父关系和已保存消费。|断连前后对照树与消费；未提交消费的实时身份在本次 Owner 运行中保留，但不新增身份持久化。|story 23, 8|S1, S3|[08](implementation/08-reconnect-source-lifecycle.md)|
+|P9|首轮尚未提交的会话可展示已有读数，缺失消费不呈现为确认零。|实际 detail 观察首次提交前的行，使用给定非零上下文；消费字段按缺失表达，不显示虚构零消费。|story 8, 9|S3|[06](implementation/06-early-session-registration-agent-tree.md)|
+|P10|Working/Idle 由共同 Round 语义决定，不因原生执行结束通知而提前 Idle。|自动继续、待处理输入、持有的异步工作和真正静止的独立场景；只有满足结束条件才出现 Idle。|story 10, 11, 37|S1, S3|[03](implementation/03-shared-round-activity-observation.md)|
+|P11|上下文在会话启动、消息结束及宿主可靠的执行收敛位置采集，提供给定 tokens 与采集时对应模型。|同一给定读数序列通过两种 harness 映射获得相同观察；实际宿主运行核对显示与对应模型预算，不将宿主窗口替代显示预算。|story 12, 13, 35|S1, S3|[04](implementation/04-framework-context-observation.md)|
+|P12|extension 通过 framework 共同 interface 消费上下文，不自行订阅宿主原生采集事件。|在共同消费 interface 观察上下文变化；实际 OMP、pi 路径均能提供读数，迁移后没有并行原生采集导致的重复交付。|story 35, 36, 37；第二关职责澄清|S1, S3|[04](implementation/04-framework-context-observation.md)|
+|P13|活动和上下文通知直接携带声明的当前读数，Owner 不为采用它们读取消费文件。|采用独立给定值且消费文档未变化的真实跨进程观察；结合消费存储访问记录区分“无需读文件”与碰巧显示正确。|story 12, 14；spec Implementation Decisions|S1, S2, S3|[07](implementation/07-current-observation-delivery-both-modes.md)|
+|P14|采集与发布按事件发生且相同读数不重复发布，不增加逐 token 或持续轮询流量。|固定事件序列、重复值、静止窗口及流式响应中记录实际通知；不以终端最终画面推断通信频率。|story 14；spec Implementation Decisions|S1, S2, S3|[09](implementation/09-deduplicate-observations-coalesce-redraw.md)|
+|P15|同一批可合并的观察更新使展示采用最新结果，不要求为每条消息独立重绘。|交付多个会话/字段的受控更新，验证各最新结果均保留并发生合并重绘；实际终端观察及测量区分通知和绘制成本。|story 14, 39；spec Implementation Decisions|S1, S3|[09](implementation/09-deduplicate-observations-coalesce-redraw.md)|
+|P16|原始响应 usage 仅由实际执行会话累计，远端观察与重连不重复记账或使 Owner 代写。|独立给定两会话 usage 的算例核对自身记录与含后代总量；实际子进程提交证据与 Owner 同步行为共同证明写者归属。|story 28, 37|S1, S3|[10](implementation/10-commit-hints-read-only-consumption-sync.md)|
+|P17|仅确认成功的消费提交产生成功提交提示；Owner 随后只读采用文件实际内容。|阻止 Owner 自身提交，完成子保存仍能看到新消费；对照失败提交没有成功提示，接收提示不产生写入。|story 5, 24, 28|S1, S2, S3|[10](implementation/10-commit-hints-read-only-consumption-sync.md)|
+|P18|多个提交提示合并刷新，而同步期间新到达提示仍能使后续实际提交可见。|受控暂停一次同步、期间再提交并通知，最终采用独立给定的最新记录；核对同步次数相对提示合并且无永久漏刷。|story 26, 27|S1, S3|[11](implementation/11-coalesced-sync-reconnect-catchup.md)|
+|P19|重连触发消费只读同步，即使上次成功提交的提示从未到达。|丢弃一次提交提示后断开再接入，Owner 无自身消费或提交仍能看到文件中新记录。|story 25|S2, S3|[11](implementation/11-coalesced-sync-reconnect-catchup.md)|
+|P20|同周期只读同步保护本地未提交累计，外部周期更换不将旧周期在途消费带入新周期。|独立给定旧/新周期及本地未提交量，检查刷新不提交在途量，切周期后仅出现新周期允许记录。|story 29；spec Implementation Decisions|S1, S3|[10](implementation/10-commit-hints-read-only-consumption-sync.md)|
+|P21|State follow 在两种进程模式下均取得 Owner 当前权威值，而非永久启动快照。|Owner 值由 true 改 false，子会话后续语义使用取得 false；初始与后续读取在实际跨进程路径执行，不将不可达默认值误记为成功读取。|story 30, 34, 35|S1, S2, S3|[05](implementation/05-validated-local-access-state-follow.md)|
+|P22|观察和 follow 不授予子会话远端写 Owner State 的能力。|读取和观察更新后 Owner 给定值不变；错误方向/未声明操作被拒绝而非写入。|story 31, 38|S1, S2|[05](implementation/05-validated-local-access-state-follow.md)|
+|P23|没有 follow 字段的扩展仍可观察子会话，brief/detail 切换不终止采集。|无 follow 的实际进程登记与更新；brief 期间更新后切 detail 仍显示最新读数，重复切换不重复来源。|story 32, 33|S1, S2, S3|[07](implementation/07-current-observation-delivery-both-modes.md)|
+|P24|同进程路径不建立本机端点或执行序列化通信，同时与跨进程保持共同观察含义。|同进程运行观察无接入端点/定位记录创建，给定事实在两种路径得到等价观察；OMP 与 pi 前台实际回归。|story 34, 35, 36|S1, S2, S3|[07](implementation/07-current-observation-delivery-both-modes.md)|
+|P25|接入校验完整目标与有效接入，错误扩展、Owner 或旧接入不可交付读数。|真实子进程使用错误目标/旧校验接入被拒绝；两个并发 Owner 的独立给定值不串接，诊断不泄漏接入校验材料。|story 38；inferred：保护既有目标隔离承诺所必需|S2|[05](implementation/05-validated-local-access-state-follow.md)|
+|P26|定位仅用于接入发现且受显式 runtime directory 约束，不存放观察值或 State。|真实定位记录内容与文件变动观察；配置缺失/非法不回退到 cwd、临时目录或消费存储根，不以目录扫描接收观察。|story 38；spec Implementation Decisions|S2|[05](implementation/05-validated-local-access-state-follow.md)|
+|P27|正常处置确认已有 settled 但尚待下一 task 的 Round，并等待自身保存结果再成功退出收口。|真实 pi 后台复现短寿命场景，观察 shutdown 前提交成功；不增加固定 sleep 或第二次模型请求来促成保存。|story 1, 2, 39|S1, S3|[01](implementation/01-normal-disposal-round-close.md)|
+|P28|无 settled 的 open Round 在正常处置时按截断收口，保存已知 usage，不把未知消费或耗时补成完整结果。|受控活动中处置，独立给定已知 usage 与测量缺口；公开消费可区分截断，落盘仅含可靠量且不产生任务成功声明。|story 3；第二关截断可观察性发现|S1, S3|[01](implementation/01-normal-disposal-round-close.md)|
+|P29|正常收口顺序为结束/截断、等待 handler 与保存、成功提示、释放来源与 binding；已收口或已保存部分不重复执行。|以可控制完成的异步 handler 验证在完成前不清理，完成后恰好一次；真实宿主记录提交、退出与诊断顺序。|story 1, 2, 5；spec Implementation Decisions|S1, S3|[10](implementation/10-commit-hints-read-only-consumption-sync.md)|
+|P30|默认总收口等待上限为 15 秒，从进入收口起计，不重置在途预算、不叠加固定延迟或额外自动重试。|可控时间验证临界点、已用预算及已完成路径立即收口；真实故障场景记录实际等待和调度误差，不要求 OS 毫秒级硬实时。|story 4；第二关明确批准的截止取舍|S1, S3|[02](implementation/02-bounded-disposal-save-outcomes.md)|
+|P31|截止时可靠取消的排队/锁等待报告未提交，已开始但未确认的更新报告保存结果未确认，两者均不冒报成功。|分别控制未取得锁和已进入更新的场景；诊断、成功提示与实际文档共同区分结果，不假定停止等待等于停止写入。|story 4, 5；第二关明确批准的新取舍|S1, S3|[02](implementation/02-bounded-disposal-save-outcomes.md)|
+|P32|Owner 不可达或不回应不会阻止子会话本地结算和有界退出。|实际子进程在 Owner 缺失/断开时完成文件提交与退出；无等待 Owner 确认或绘制的依赖。|story 6|S2, S3|[12](implementation/12-owner-unavailable-local-save-exit.md)|
+|P33|普通 transferred 或查看位置切换不会仅因离开该位置而强制结束其 Round。|在活动与待继续阶段切换查看/会话，检验没有多余 round_end、保存或 Idle。|story 11, 35；inferred：保持已批准 Round 含义所必需|S1, S3|[01](implementation/01-normal-disposal-round-close.md)|
+|P34|第三个 harness 的接入职责限于其事实映射和子入口接线，不需要另写通信或复制扩展统计规则。|以同进程与跨进程两个实际 adapter 的共同 interface 使用和行为覆盖证明复用；维护性审查确认不存在按 harness 复制的计费或观察规则，不为此实现第三个 harness。|story 36, 37|S1, S2|[07](implementation/07-current-observation-delivery-both-modes.md)|
+|P35|验证报告区分真实宿主、真实进程、确定性检查与视觉观察，缺失平台或版本证据不算通过。|真实 pi 后台、pi 前台、OMP 和实际 detail 表面观察；记录版本、系统、命令、结果、计时及日志，其他平台未运行须显式标注。|story 39；spec Testing Decisions|S3|[13](implementation/13-real-harness-integration-evidence.md)|
 
 ## Seam decisions
 
