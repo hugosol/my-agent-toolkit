@@ -52,7 +52,14 @@ import type { CatalogPriceSource, FeedbackTransport, ProviderAccess, SemanticEve
 import type { HttpRequestOptions } from "../../../framework/modules/http";
 import { DEFAULT_CODEX_QUOTA_TTL_MS, type CodexQuotaFailure, createCodexQuota } from "./codex-quota";
 import { CodexEstimateStore } from "./codex-estimate-store";
-import { type BaselineLoad, ConsumptionStore, timeFactFaultNotice, unusableBaselineNotice } from "./consumption-store";
+import {
+	type BaselineLoad,
+	type BaselineSync,
+	ConsumptionStore,
+	timeFactFaultNotice,
+	unreadableBaselineNotice,
+	unusableBaselineNotice,
+} from "./consumption-store";
 import { MODEL_PRICING_DATA, type ModelPricingData, dataCatalog } from "./model-data";
 import { createPeriodSwitch } from "./period-switch";
 import { type ConsumptionPresenter, createPresentation } from "./presentation/display";
@@ -62,6 +69,12 @@ import { SessionContextRegistry } from "./presentation/session-context";
 import { DEFAULT_BALANCE_TTL_MS, type ProviderBalanceFailure, createProviderBalance } from "./provider-balance";
 import { type ConsumptionView, createRequestAccounting } from "./request-accounting";
 import { resolveStorageRoot } from "./storage-root";
+
+/**
+ * What one read-only synchronization answers, as the caller observes it: the store's own outcome, or
+ * nothing was done because this instance has already been cleaned up.
+ */
+export type BaselineSyncOutcome = BaselineSync | { readonly kind: "closed" };
 
 /**
  * The failure classifications of a provider request that really failed, as both provider modules
@@ -177,6 +190,24 @@ export interface ModelCostRuntime {
 	 * read-only results' to report and never become this answer, and neither of them can reject it.
 	 */
 	initialize(delivery: InitializationDelivery): Promise<BaselineLoad>;
+	/**
+	 * Adopt what the file holds now, without writing anything, and align this instance with it.
+	 *
+	 * This is what a caller that has an event saying "another writer may have committed" reaches —
+	 * a third-party completion notice, say. Only records the file already holds are adopted: nothing
+	 * this instance accumulated and has not committed is written, no version chain moves, and no
+	 * accumulation of this process is discarded except when the document names a generation the
+	 * instance is not in, which is the same closed-period rule a reset already follows. A document
+	 * whose generation really changed is therefore taken on, and a same-generation document that
+	 * really changed is published to this instance's readers; a document identical to the baseline
+	 * the instance holds changes nothing and redraws nothing.
+	 *
+	 * The optional feedback is where the two baseline faults are stated, each once per reason: a
+	 * document that is not this extension's format pauses this instance (and is left alone), and a
+	 * file that could not be read at all is reported with the baseline it already holds standing.
+	 * After this instance's own cleanup nothing is read and nothing is adopted at all.
+	 */
+	synchronize(inputs?: { readonly feedback?: FeedbackTransport }): Promise<BaselineSyncOutcome>;
 }
 
 /**
@@ -348,6 +379,81 @@ export function createModelCostRuntime(inputs: ModelCostRuntimeInputs): ModelCos
 		return load;
 	};
 
+	/**
+	 * The baseline faults this instance has already stated, each by its own reason: a second
+	 * synchronization that meets the same fault says nothing more about it, and a different one is a
+	 * new fact about the file.
+	 */
+	let statedUnusableBaseline: string | undefined;
+	let statedUnreadableBaseline: string | undefined;
+	/** Whether this instance's own cleanup has run, after which a synchronization does nothing at all. */
+	let closed = false;
+
+	/**
+	 * Adopt what the file holds now — the read-only half of sharing one storage root — and align this
+	 * instance with what was adopted.
+	 *
+	 * The store's own half is described in `consumption-store.ts`: nothing is written, a root holding
+	 * no document is nothing to adopt, and a document that is not this extension's format pauses the
+	 * instance. What this half adds is what the adoption means for the rest of the instance. A
+	 * document naming another generation is a period this instance was not accumulating in, so
+	 * everything measured in the replaced one goes with it — the same rule this instance's own reset
+	 * follows, applied to a reset another process committed — and nothing accumulated in a closed
+	 * period is ever published into the new one. A same-generation document that really differs from
+	 * the held baseline is what this instance's readers have to see, so it is published through the
+	 * one change notification they already hold; a document identical to the baseline changes nothing
+	 * and redraws nothing, which is what keeps a repeated event from costing a redraw.
+	 *
+	 * A fault is stated where the caller has anywhere to state it — the caller's own feedback, the
+	 * same channel this instance's provider failures use — once per reason. The two faults are not
+	 * the same thing: a document that is not this extension's format pauses the instance (accounting
+	 * and saving stop, and the file is left for inspection), while a file that could not be read at
+	 * all is reported with the baseline this instance holds still standing.
+	 *
+	 * The caller's event is not a save and never becomes one: a completion notice, a process exit or a
+	 * third party's own bookkeeping says that the file may have changed, so the records another writer
+	 * really committed are adopted and nothing else happens. Consumption this instance has not
+	 * committed is not written out, no Round boundary is derived and no session is forced to save.
+	 */
+	const synchronize = async (
+		inputs: { readonly feedback?: FeedbackTransport } = {},
+	): Promise<BaselineSyncOutcome> => {
+		// After this instance's own cleanup nothing is read and nothing is adopted: a late notice is
+		// not a reason to touch the file again.
+		if (closed) return { kind: "closed" };
+		const outcome = await storage.synchronize();
+		switch (outcome.kind) {
+			case "adopted":
+				// The document was read whole, so whatever fault a previous attempt met is no longer the
+				// state of this file: a later failure of the same shape is a new fact about it and is stated.
+				statedUnusableBaseline = undefined;
+				statedUnreadableBaseline = undefined;
+				if (outcome.periodChanged) accounting.periodSwitched();
+				else if (outcome.changed) accounting.announceChanged();
+				break;
+			case "unusable": {
+				if (inputs.feedback !== undefined && statedUnusableBaseline !== outcome.reason) {
+					statedUnusableBaseline = outcome.reason;
+					const notice = unusableBaselineNotice(storage.consumptionFile, outcome.reason);
+					inputs.feedback.notify(notice.level, notice.message);
+				}
+				break;
+			}
+			case "unreadable": {
+				if (inputs.feedback !== undefined && statedUnreadableBaseline !== outcome.reason) {
+					statedUnreadableBaseline = outcome.reason;
+					const notice = unreadableBaselineNotice(storage.consumptionFile, outcome.reason);
+					inputs.feedback.notify(notice.level, notice.message);
+				}
+				break;
+			}
+			case "absent":
+			case "paused":
+				break;
+		}
+		return outcome;
+	};
+
 	// The period switch behind `/budget holiday` and `/budget clear`. It reads the entry's own facts
 	// from the delivery (its provider and its idle state) and this instance's own ones (whether a
 	// snapshot it started is still publishing), makes the one boundary balance read outside the file
@@ -451,12 +557,14 @@ export function createModelCostRuntime(inputs: ModelCostRuntimeInputs): ModelCos
 			balance,
 			quota,
 			estimate,
-			// The open period's own facts, as the store holds them: its holiday flag, and the session
-			// records of this harness as the last load or commit left them. Nothing here reads a file, so
-			// a render that asks for the season or the accrued bar never waits on disk.
+			// The open period's own facts, as the store holds them: its holiday flag, and every
+			// harness's session records as the last load or commit left them — the period's consumption
+			// is the whole shared document's, so the accrued bar reads the other harness's saved
+			// records beside this one's. Nothing here reads a file, so a render that asks for the
+			// season or the accrued bar never waits on disk.
 			period: {
 				holiday: () => storage.period()?.holiday ?? false,
-				sessions: () => storage.sessions(inputs.harness),
+				sessions: () => storage.periodSessions(),
 			},
 			now,
 		}),
@@ -495,12 +603,14 @@ export function createModelCostRuntime(inputs: ModelCostRuntimeInputs): ModelCos
 				await initialize(delivery);
 			},
 			cleanup: () => {
+				closed = true;
 				balance.dispose();
 				quota.dispose();
 				accounting.dispose();
 			},
 		},
 		initialize,
+		synchronize,
 	};
 }
 

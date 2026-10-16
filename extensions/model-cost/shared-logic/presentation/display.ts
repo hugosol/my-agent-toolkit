@@ -331,7 +331,13 @@ export interface DisplayPeriod {
 export interface PeriodDisplaySource {
 	/** Whether the open period is a holiday period. */
 	holiday(): boolean;
-	/** The period's own session records of this harness, in the order the document holds them. */
+	/**
+	 * The period's own session records — every harness's, in the order the document holds them.
+	 *
+	 * The period's consumption is the whole shared document's rather than one harness's: a document
+	 * two harnesses have written into holds both harnesses' records, and the accrual below is the
+	 * period's own. A harness partition is an identity namespace, not a filter on the period's total.
+	 */
 	sessions(): readonly SessionRecord[];
 }
 
