@@ -38,6 +38,8 @@ $ bun scripts/pi-tui-acceptance.ts --widths 120,80,60
 
 捕获运行的真实宿主事实（`report.json` 的 `source`）：pi 1.2.0 由 `cli.js` 报告、入口与第三方工件都由 pi 自己的 loader 加载（终端里 `[Extensions]` 一行为 `model-cost.ts, pi-subagents`）、终端无 `error:` 行、四类帧（brief/detail × 3 宽度）全部捕获。
 
+**交互入口实跑（人类验收材料本身也验证过）**：`bun scripts/pi-tui-acceptance.ts --interactive` 在本机以真实控制台启动（进程 11960，随本机 pty 服务运行）：隔离根 `%TEMP%\omp-dock-tui-acceptance-interactive-*` 建立、pi 1.2.0 接管终端、`[Extensions]` 列出 `model-cost.ts, pi-subagents`，brief 形态直接画出固定场景（`Balance: ¥12.34  ⏳ Accrued: ¥0.07`、`Total: … Cost: ¥0.07  Span: 0:05:00`），输入行接受 `/budget detail`（§5 记录了脚本化输入的第二条命令行为）；随后按服务方式结束并保留运行根。
+
 **P52 的 Agent 半（S2）逐条**：
 
 - **brief**：120/80/60 三宽度下都画出账号行（`Effort:`、`Balance: ¥12.34`、`Accrued: ¥0.07`）与 `Total: Cache: 67% ¥Cache/In/Out：0:8:92 Cost: ¥0.07 Span: 0:05:00`，且**没有**任何会话行（树只属 detail）。
