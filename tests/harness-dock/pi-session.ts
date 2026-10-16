@@ -211,6 +211,29 @@ export function writePiModels(agentDir: string, providers: Readonly<Record<strin
 	writeFileSync(path.join(agentDir, "models.json"), `${JSON.stringify(config, null, 2)}\n`);
 }
 
+/** One credential pi's own auth file holds for a provider. */
+export interface PiStoredCredential {
+	readonly type: "oauth";
+	/** The access token pi's own provider authenticates with. */
+	readonly access: string;
+	readonly refresh: string;
+	/** When the access token stops being usable, as epoch milliseconds. */
+	readonly expires: number;
+}
+
+/**
+ * Write the credentials one run's own agent state holds, as pi's own auth file states them.
+ *
+ * A controlled run does not log in, so a provider whose credential pi resolves from its own store
+ * rather than from the run's `models.json` needs the entry written here: `<agentDir>/auth.json` is
+ * that store, and a case states what it expects the harness to resolve. It writes inside the run's own
+ * agent state alone, and no credential of the machine's is read.
+ */
+export function writePiCredentials(agentDir: string, credentials: Readonly<Record<string, PiStoredCredential>>): void {
+	mkdirSync(agentDir, { recursive: true });
+	writeFileSync(path.join(agentDir, "auth.json"), `${JSON.stringify(credentials, null, 2)}\n`);
+}
+
 /** One provisioned run: the isolated root, the capture endpoint behind it and the CLI. */
 export interface PiRun {
 	readonly root: RunRoot;
