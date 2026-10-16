@@ -364,7 +364,9 @@ on. A fact nothing proved stays absent, part by part, rather than being filled i
 
 The run axis is the edge-triggered pair `round_start` and `round_end`
 ([`protocol.ts#L241`](../core/protocol.ts#L241)), where a `Round` is one period of agent activity
-from the agent taking up input to quiescence. Both edges are payload-free by design: how a round ended is a
+from the agent taking up input to quiescence. An opening carries its kind alone, and an end carries one
+fact beside it — `ending`, either `confirmed` or `truncated` — which is how the end was *established*
+rather than how the activity turned out: how a round ended is a
 fact the harnesses disagree about, and the agent's *current* state is the idle query below rather than a
 field of a past transition. An edge is delivered only when the session really crosses it — the first run
 start of a session that has no round open opens one, a start inside an open round is work within it and is
@@ -374,6 +376,17 @@ round and not a `round_end`, and a settle while no round is open closes nothing,
 whose end it could be evidence of. Error and abort terminals end the round the same way an ordinary answer
 does. The framework applies no behavior of its own to a round beyond the identity and its lifetime:
 three-value agent state is not framework State, so a round edge is a subscription and nothing else.
+
+**A session's own disposal closes the round it leaves behind.** A host that is disposing an actual
+session reports that fact at its own awaitable exit position (`onDisposal` on the port, which the `pi`
+mapping is), and the framework closes the round there: a settle the session had already stated and never
+had confirmed is confirmed — the session is over, so it is at rest and nothing beyond it can continue it —
+and a round left open with no end ever stated is truncated, because nothing can continue it any more and
+the activity's own completion was never established. The close-out is what makes a short-lived session's
+last exchange accountable: the framework answers the report only once every handler the edge reached has
+settled, so a host that waits for it — and pi awaits a `session_shutdown` handler — has the session's own
+commit finished before its process may leave. A session the host merely left is no disposal and closes
+nothing: a transfer, a rename and a view that moved report no such fact and produce no `round_end`.
 
 **A settle is an end candidate, not an end.** A harness reports a run as over before its own work has
 unwound, so the session is usually not idle at that instant and may still have queued input or a running
@@ -930,7 +943,7 @@ to one stderr line when the session has no UI ([`omp.ts`](../adapters/omp.ts)).
 | `MarkerTransport` | [`protocol.ts#L324`](../core/protocol.ts#L324) | `{ publishMarkers(lines: readonly string[]): void }` — the transport for the unified marker area. |
 | `ViewedSessionPort` | [`protocol.ts`](../core/protocol.ts) | The session the host is displaying, as its adapter resolves it — the fact behind the one marker area's projection, and never authority: `read(): OwnerReference \| undefined` (the displayed session's position, re-read per publication; `undefined` means this harness publishes no outlet at all, while a resolved `unresolved` means the outlet exists and its owner could not be obtained) and `subscribe(listener: (markers: MarkerTransport) => void): () => void` (one listener per change of the display; the listener re-reads and publishes through the transport it is handed). A harness that publishes no such outlet omits the member on `HarnessPort`, and the framework then projects the position each delivery carries. |
 | `StateValues` | [`protocol.ts#L15`](../core/protocol.ts#L15) | `Readonly<Record<string, boolean>>` — the State values one write path records, by field name. |
-| `HarnessPort` | [`protocol.ts#L590`](../core/protocol.ts#L590) | The registration and feedback surface an adapter provides (`setLabel`, `reportDiagnostic`, `onSession`, `onRound`, `onSessionContext`, `onTurn`, `onUserInput`, `nextTask`, `onRunInitiation`, `registerCommand`), plus the facts it resolves when it can and omits when it cannot: `modelPrices`, `providerAccess` and `viewedSession`. `onRound` is subscribed only when the assembly injected a round handler, and what it receives are the harness's run-cycle observations (`RoundObservation`), not edges: the synthesis above decides which of them is a transition. `onSessionContext` is subscribed only when a group observes a context reading, and what it receives is one collection of one session's own context (with the model that session ran at that instant) — a fact the framework records and decides about, never an edge, and never a reading the adapter deduplicates. `nextTask(callback)` is the harness's own task boundary, which is where the framework re-checks an end candidate — one callback per arrangement, no duration and no repetition. |
+| `HarnessPort` | [`protocol.ts#L590`](../core/protocol.ts#L590) | The registration and feedback surface an adapter provides (`setLabel`, `reportDiagnostic`, `onSession`, `onRound`, `onDisposal` when the harness states its own session disposals, `onSessionContext`, `onTurn`, `onUserInput`, `nextTask`, `onRunInitiation`, `registerCommand`), plus the facts it resolves when it can and omits when it cannot: `modelPrices`, `providerAccess` and `viewedSession`. `onDisposal` is registered with `onRound` — a binding that observes neither the round axis nor the Turn axis holds no bookkeeping to close — and what it receives is one actual session's own end (`SessionDisposal`), whose close-out the framework answers only once the edge it dispatches has settled. `onRound` is subscribed only when the assembly injected a round handler, and what it receives are the harness's run-cycle observations (`RoundObservation`), not edges: the synthesis above decides which of them is a transition. `onSessionContext` is subscribed only when a group observes a context reading, and what it receives is one collection of one session's own context (with the model that session ran at that instant) — a fact the framework records and decides about, never an edge, and never a reading the adapter deduplicates. `nextTask(callback)` is the harness's own task boundary, which is where the framework re-checks an end candidate — one callback per arrangement, no duration and no repetition. |
 | `CanAcceptInput` | [`protocol.ts#L500`](../core/protocol.ts#L500) | `() => boolean \| undefined` — the framework's idle query: `true` when the agent can take input now, `false` when it is working, and `undefined` when the harness reports no idle fact at all (surfaced, never fabricated). It is a query and not a payload, carried by command invocations so the arm path can read the state it starts from without waiting for any event. |
 | `CommandInvocation` | [`protocol.ts#L511`](../core/protocol.ts#L511) | One command invocation's facts: the argument text, the owner, whether the session has a UI (`hasUI`), the idle query (`canAcceptInput`), the provider that session currently runs (`provider`, absent as `undefined` when the surface reports no current model), and the feedback, persistence and marker transports. |
 | `CommandDelivery` | [`protocol.ts#L566`](../core/protocol.ts#L566) | The invocation a handler receives: those facts plus the declared-value seam it writes through and the owner-scoped capability it may retain. |

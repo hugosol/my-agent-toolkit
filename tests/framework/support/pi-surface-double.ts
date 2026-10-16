@@ -309,8 +309,15 @@ export interface PiSurface {
 	sessionStarts(session: PiSurfaceSession, reason: PiSessionStartEvent["reason"]): void;
 	/** A session's name changing: pi's `session_info_changed`. */
 	sessionRenames(session: PiSurfaceSession, name: string | undefined): void;
-	/** A session ending: pi's `session_shutdown`. */
-	sessionShutsDown(session: PiSurfaceSession, reason: PiSessionShutdownEvent["reason"]): void;
+	/**
+	 * A session ending: pi's `session_shutdown`, awaited as pi awaits it.
+	 *
+	 * pi reaches an extension's handlers for this fact one at a time and waits for each one's own
+	 * promise before its teardown continues, so the answer here is the settlement of that delivery
+	 * rather than the fact that the handlers were called. A case that leaves it un-awaited is modelling
+	 * a host that did not wait.
+	 */
+	sessionShutsDown(session: PiSurfaceSession, reason: PiSessionShutdownEvent["reason"]): Promise<void>;
 	/** A submission: pi's `input`. */
 	submits(session: PiSurfaceSession, source: PiInputEvent["source"]): void;
 	/** An agent-run initiation: pi's `before_agent_start`. */
@@ -343,6 +350,15 @@ export function boundPiSurface(
 		 * is a reading of that declaration.
 		 */
 		readonly definition?: ExtensionDefinition;
+		/**
+		 * The work a Round's end does in the extension, when a case states one.
+		 *
+		 * The probe's own handler records the edge first and then runs this, so a case observes the
+		 * order a host really sees: the edge reaches an extension's handler, that handler's own work runs
+		 * — a session's save, which may take as long as it takes — and the host that reported the end is
+		 * answered only once it settled.
+		 */
+		readonly onRoundEnd?: (delivery: RoundDelivery) => void | Promise<void>;
 	} = {},
 ): PiSurface {
 	const handlers = new Map<string, Array<(event: unknown, ctx: PiExtensionContext) => unknown>>();
@@ -493,10 +509,11 @@ export function boundPiSurface(
 								rounds.push(round);
 								edges.push(round.event.kind);
 							},
-							round_end: delivery => {
+							round_end: async delivery => {
 								const round = delivery as RoundDelivery;
 								rounds.push(round);
 								edges.push(round.event.kind);
+								await options.onRoundEnd?.(round);
 							},
 							session_context: delivery => void contexts.push(delivery as SessionContextDelivery),
 						},
@@ -555,8 +572,13 @@ export function boundPiSurface(
 		sessionStarts: (session, reason) => deliver("session_start", { type: "session_start", reason } satisfies PiSessionStartEvent, session),
 		sessionRenames: (session, name) =>
 			deliver("session_info_changed", { type: "session_info_changed", name } satisfies PiSessionInfoChangedEvent, session),
-		sessionShutsDown: (session, reason) =>
-			deliver("session_shutdown", { type: "session_shutdown", reason } satisfies PiSessionShutdownEvent, session),
+		// pi awaits each handler for this fact before its teardown continues, so this delivery is
+		// awaited too: what a case reads afterwards is what the host really had when it moved on.
+		sessionShutsDown: async (session, reason) => {
+			for (const handler of [...(handlers.get("session_shutdown") ?? [])]) {
+				await handler({ type: "session_shutdown", reason } satisfies PiSessionShutdownEvent, contextOf(session));
+			}
+		},
 		submits: (session, source) => deliver("input", { type: "input", source } satisfies PiInputEvent, session),
 		agentStarts: (session, messageType) =>
 			deliver("before_agent_start", { type: "before_agent_start", messageType } satisfies PiBeforeAgentStartEvent, session),

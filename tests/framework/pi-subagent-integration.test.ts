@@ -238,7 +238,9 @@ describe("a harness with no subagent provider is the normal no-subagent shape (P
 			// second settle would be diagnosed, and none is.
 			surface.bus.publish(PROVIDER_READY_CHANNEL, { ...pingAnswer(main.sessionId), version: 2 });
 			surface.sessionStarts(child, "startup");
-			surface.sessionShutsDown(child, "quit");
+			// pi awaits this fact's handler, and the session axis's own end is what follows the round
+			// close-out the handler reports, so the case awaits the delivery as pi does.
+			await surface.sessionShutsDown(child, "quit");
 			expect(surface.sessions.filter(entry => entry.session.sessionId === child.sessionId)).toHaveLength(2);
 			return await surface.initialized();
 		});

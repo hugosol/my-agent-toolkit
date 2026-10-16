@@ -14,7 +14,7 @@ import type { FollowedAccessReader } from "../core/followed-owners";
 import type {
 	BindingResult, CatalogPrice, CatalogPriceSource, FeedbackLevel, FeedbackTransport, HarnessPort,
 	MarkerTransport, NoticeTransport, OwnerReference, ProviderAccess, SessionEndReason, SessionEvent,
-	SessionFacts, SessionObservationAccess, SessionStartReason, SessionStartup, TurnSignalFacts, UserInputDelivery,
+	SessionFacts, SessionObservationAccess, SessionStartReason, SessionStartup, SessionDisposal, TurnSignalFacts, UserInputDelivery,
 } from "../core/protocol";
 import { SessionObservations } from "../core/observations";
 import { StateStore } from "../core/state";
@@ -536,6 +536,17 @@ function piPort(
 	 */
 	const endedSessions = new Set<string>();
 
+	/**
+	 * The framework's disposal hook, once it registered one, and the close-out the native shutdown
+	 * report below is answered with.
+	 *
+	 * It is held as the registration arrives rather than captured where it is reported, because the
+	 * framework registers the hook after this binding's session hook, and the native subscription below
+	 * belongs to that one. A binding that observes neither the round axis nor the Turn axis registers
+	 * none, which is a binding with no bookkeeping of its own to close.
+	 */
+	let reportDisposal: ((disposal: SessionDisposal) => void | Promise<void>) | undefined;
+
 	// At most one report per native fact, per binding: the first delivery that finds a fact this
 	// mapping does not read says so on the non-model channel, and every later one stays quiet.
 	const reportedMissingFacts = new Set<string>();
@@ -618,7 +629,7 @@ function piPort(
 				}
 				deliver({ kind: "session_start", reason }, owner, ctx, session);
 			}));
-			keepSubscription(pi.on("session_shutdown", (event, ctx) => {
+			keepSubscription(pi.on("session_shutdown", async (event, ctx) => {
 				const session = sessionFactsOf(ctx);
 				// The session's own end, recorded before anything else reads this delivery: it is what
 				// the round axis's late re-checks answer from once pi has spent the context, and it is
@@ -628,10 +639,27 @@ function piPort(
 				// it, so a later session of this process states its own requirement rather than
 				// inheriting a spent one.
 				integration?.releaseSession(session.sessionId);
+				// A session really going away, reported where the host waits for it: pi awaits this
+				// handler, so what the framework's close-out owes — the round this session left behind,
+				// and the settlement of everything that edge reaches — is done before pi lets the
+				// session go and long before its process leaves. It is reported *before* the session
+				// axis's own end below, which is what stops this binding from delivering at all: a round
+				// edge reported after that end would never reach a subscriber.
+				//
+				// A session the host left for another one is no such fact — the reason states which of
+				// the two this delivery is — and it closes nothing.
+				const ended = activeOwner;
+				if (END_REASON[event.reason] === "disposed" && reportDisposal !== undefined) {
+					await reportDisposal({
+						session,
+						owner: resolveOwner(catalogued(ctx)),
+						hasUI: ctx.hasUI,
+						feedback: feedback(ctx),
+					});
+				}
 				// Only the owner session this binding serves ends here, by its own identity: a sub
 				// session this process ran is not the owner the extension serves, and its end is not
 				// the owner's end.
-				const ended = activeOwner;
 				if (ended === undefined || ended.session.sessionId !== session.sessionId) return;
 				activeOwner = undefined;
 				servingSessionId = undefined;
@@ -668,6 +696,12 @@ function piPort(
 				sessionOver: sessionId => endedSessions.has(sessionId),
 				track: keepSubscription,
 			});
+		},
+		// The framework's close-out of a session pi is disposing: this adapter reports the fact and waits
+		// for what the framework owes it, and the native shutdown subscription above is where it is
+		// reported — before the session axis's own end, which is what stops this binding delivering.
+		onDisposal: handler => {
+			reportDisposal = handler;
 		},
 		onSessionContext: handler => {
 			/**
@@ -874,23 +908,30 @@ export function piAdapter(definition: ExtensionDefinition, options: PiAssembly =
 	};
 	return pi => {
 		const subscriptions: Array<() => void> = [];
-		// The end of this process's own session run releases what this extension's reads keep open: a
-		// followed access is this process's connection to the process serving that owner, and the
-		// session that made these reads is gone. A reload is the same ending — the entry is loaded
-		// again and builds its own store and its own deliveries — so both are released here rather
-		// than left to the process's exit. A session switch (`new`, `resume`, `fork`) is not: the
-		// process keeps running and the owner a delivery names next is read through its own access.
-		subscriptions.push(pi.on("session_shutdown", event => {
-			if (event.reason !== "quit" && event.reason !== "reload") return;
-			state.dispose();
-			deliverer?.dispose();
-		}));
 		const port = piPort(pi, definition, harnessPrices, harnessAccess, positions, integration,
 			sessionObservationAccess, release => subscriptions.push(release));
 		integration?.attach(pi, port.reportDiagnostic);
 		const result = bindExtension(definition, port, state, observations, resolveImplementation, {
 			baseDir: options.configBaseDir,
 		});
+		// The end of this process's own session run releases what this extension's reads keep open: a
+		// followed access is this process's connection to the process serving that owner, and the
+		// session that made these reads is gone. A reload is the same ending — the entry is loaded
+		// again and builds its own store and its own deliveries — so both are released here rather
+		// than left to the process's exit. A session switch (`new`, `resume`, `fork`) is not: the
+		// process keeps running and the owner a delivery names next is read through its own access.
+		//
+		// It is registered *after* the binding, because both subscriptions answer the same native fact
+		// and pi awaits an extension's handlers in the order they were registered: the binding's own
+		// handler is what reports the disposal and waits for the framework's close-out, so registering
+		// this one first would give up these reads while a session's last round was still being settled
+		// — and a submit notice that close-out publishes would be handed to a carrier that is already
+		// gone.
+		subscriptions.push(pi.on("session_shutdown", event => {
+			if (event.reason !== "quit" && event.reason !== "reload") return;
+			state.dispose();
+			deliverer?.dispose();
+		}));
 		if (!result.bound) {
 			for (const release of subscriptions) release();
 			integration?.releaseAll();

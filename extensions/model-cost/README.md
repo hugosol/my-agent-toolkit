@@ -31,6 +31,14 @@ what a real TUI draws are human-only, and nothing in this repository claims eith
   progress supplies its full execution duration; no synthetic `0ms` or public ready event is added.
   Existing cumulative runtime is retained. Invalid readings after readiness and unresolved terminal
   executions remain errors rather than being silently discarded.
+- A session's own disposal is a Round boundary the framework closes for the extension: a settle the
+  session had already stated is confirmed there, and a Round left open with no end of its own is
+  truncated. A truncated Round's known consumption still commits under that session's own identity
+  before the host lets the session go, and its working time is never filled in — the period's
+  observation of that session is marked incomplete (the record's `runtimeGap`) and the operator is
+  told, because an activity whose own end was never observed is not a duration this extension
+  measured. A session the host merely left — a switch, a resume, a fork — is no disposal and commits
+  nothing for it.
 - `/budget detail` is offered to an entry whose subagent integration took — the OMP entry always is.
   An entry that settled as the no-subagent mode has no descendants of its own to list, so its
   `/budget detail` answers that it was not executed and leaves the preference where it was; every

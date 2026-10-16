@@ -908,7 +908,7 @@ describe("one observed request is accounted exactly once (P8)", () => {
 			feedback: settled.feedback,
 		});
 		await subscribed.round_end?.({
-			event: { kind: "round_end" },
+			event: { kind: "round_end", ending: "confirmed" },
 			owner: OWNER_OF_MAIN,
 			session: MAIN_FACTS,
 			hasUI: true,

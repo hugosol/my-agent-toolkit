@@ -102,6 +102,12 @@ export interface DeliveryStep<K extends SemanticEvent["kind"]> {
  * lifetime belongs to one handler (the session axis's feedback channel and retainable capability)
  * is built per group here, so no group can observe another's closed channel. Either way the same
  * facts reach every admitting group, and no group sees a delivery another was denied.
+ *
+ * The answer is every handler's own settlement, so a caller whose work is not over until the handlers
+ * are can wait for it; a caller that only delivers ignores it. A handler's rejection is reported on
+ * the diagnostic channel and never reaches the caller: the frame contains a handler's failure rather
+ * than propagating it, and a caller waiting for the events it dispatched is waiting for effects it can
+ * rely on either way.
  */
 export function dispatchToGroups<K extends SemanticEvent["kind"]>(
 	extensionId: string,
@@ -110,7 +116,8 @@ export function dispatchToGroups<K extends SemanticEvent["kind"]>(
 	owner: OwnerReference,
 	build: (group: SubscriptionGroup) => DeliveryStep<K>,
 	reportFailure: (message: string) => void,
-): void {
+): Promise<void> {
+	const settling: Promise<unknown>[] = [];
 	for (const group of groups) {
 		if (!admits(group.scope, owner)) continue;
 		// The handler map and the event kind are correlated by `kind`, which TypeScript cannot prove
@@ -127,21 +134,24 @@ export function dispatchToGroups<K extends SemanticEvent["kind"]>(
 				step.settled?.();
 				continue;
 			}
-			// The framework does not wait for a handler's own asynchronous work: it is contained
+			// The framework does not let a handler's own asynchronous work escape it: it is contained
 			// here, and a rejection surfaces once on the diagnostic channel rather than as an
 			// unhandled rejection outside the framework.
-			void Promise.resolve(outcome)
-				.catch((error: unknown) => {
-					const detail = error instanceof Error ? error.message : String(error);
-					reportFailure(`${extensionId}: ${kind} handler failed: ${detail}`);
-				})
-				.finally(() => {
-					step.settled?.();
-				});
+			settling.push(
+				Promise.resolve(outcome)
+					.catch((error: unknown) => {
+						const detail = error instanceof Error ? error.message : String(error);
+						reportFailure(`${extensionId}: ${kind} handler failed: ${detail}`);
+					})
+					.finally(() => {
+						step.settled?.();
+					}),
+			);
 		} catch (error) {
 			const detail = error instanceof Error ? error.message : String(error);
 			reportFailure(`${extensionId}: ${kind} handler failed: ${detail}`);
 			step.settled?.();
 		}
 	}
+	return Promise.all(settling).then(() => undefined);
 }

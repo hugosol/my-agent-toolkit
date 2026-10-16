@@ -523,6 +523,16 @@ export function bindExtension(
 				if (!delivering) return;
 				rounds.observe(observation);
 			});
+			// The disposal fact a harness reports at its own awaitable exit position: what the framework
+			// owes there is this binding's close-out, and the answer the harness waits for is that
+			// close-out's own completion. It is registered with the round hook rather than the session one
+			// because the round axis is what it closes, and a binding that observes neither the round axis
+			// nor the Turn axis installs neither. An adapter that reports no such fact leaves the round to
+			// the facts it does publish.
+			port.onDisposal?.(async disposal => {
+				if (!delivering) return;
+				await rounds.dispose(disposal);
+			});
 		}
 		// The context-collection hook is subscribed only when a group observes a reading, so a
 		// definition that reads no session's context asks the harness to collect none at all. What

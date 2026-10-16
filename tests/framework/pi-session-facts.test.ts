@@ -198,7 +198,7 @@ describe("a session's identity, direct parent and Owner are native facts (P11)",
 		expect(delivery.owner).toEqual({ kind: "unresolved" });
 	});
 
-	test("a child session's own start and end are delivered without ending the session this binding serves", () => {
+	test("a child session's own start and end are delivered without ending the session this binding serves", async () => {
 		const files = sessionFileDir();
 		files.write("parent.jsonl", { type: "session", id: "pi-sess-main" });
 		const surface = boundPiSurface();
@@ -217,10 +217,11 @@ describe("a session's identity, direct parent and Owner are native facts (P11)",
 		expect(surface.sessions[1].owner).toEqual({ kind: "inherited", key: "main:pi-sess-main" });
 
 		// The child's end is its own too, and the main session's own end still ends the session this
-		// binding serves.
-		surface.sessionShutsDown(child, "quit");
+		// binding serves. pi awaits each handler for this fact, so the case awaits the delivery as pi
+		// does: what it reads afterwards is what the host really had when the session was let go.
+		await surface.sessionShutsDown(child, "quit");
 		expect(surface.sessions.map(entry => entry.event.kind)).toEqual(["session_start", "session_start"]);
-		surface.sessionShutsDown(MAIN, "quit");
+		await surface.sessionShutsDown(MAIN, "quit");
 		expect(surface.sessions.map(entry => entry.event.kind)).toEqual(["session_start", "session_start", "session_end"]);
 		expect(surface.sessions[2].event).toEqual({ kind: "session_end", reason: "disposed" });
 		expect(surface.sessions[2].owner).toEqual({ kind: "owner", key: "main:pi-sess-main" });

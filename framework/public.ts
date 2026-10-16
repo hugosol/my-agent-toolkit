@@ -119,6 +119,7 @@ export type {
 	ProviderHttpFacts,
 	RecognizedDirective,
 	RoundDelivery,
+	RoundEnding,
 	RoundEvent,
 	RoundEventHandler,
 	RoundEventHandlers,
