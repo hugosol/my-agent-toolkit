@@ -46,11 +46,58 @@ capabilities listed here**; it does not promote pi to the historical OMP support
   Bun's native text imports need no hook. Hot reload and concurrent main-session instances are not
   certified by these runs.
 
+## pi model-cost migration evidence
+
+Added 2026-10-16 by the model-cost pi migration's final evidence audit (its ticket 25). This section
+records the fixed harness, the pinned third-party artifact, the host-patch conditions and the executed
+real paths behind that migration's pi adapter (`extensions/model-cost/harnesses/pi.ts`, discovered
+through `entrypoints/pi/model-cost.ts`). It changes no support state: the adapter stays outside the
+`verified-supported` row, normal startup reads none of it (see
+[independent compatibility verification](#independent-compatibility-verification)), and every row below
+is scoped to the recorded combination alone.
+
+| Fixed item | Recorded value |
+| --- | --- |
+| Harness | installed `@earendil-works/pi-coding-agent@1.2.0`, exercised as its Node bundle (`<node_modules>/@earendil-works/pi-coding-agent/dist/bundle/cli.js`, reached through the `pi` shim) under `node` v24.18.0 |
+| Third-party provider | `pi-subagents@0.78.0` (nicobailon), this repository's pinned dependency (`package.json`); `bun.lock` records its tarball and integrity `sha512-AsOvPL1xaVFV4bqIlheQKNI2LmAoiAKTPXXxi39/BsWJTdMJIqAkZJ3iLi6bTsh2PZHG7Ur08b7VJOtgAMIAig==` |
+| Platform and tools | Windows x64 (`10.0.26200`), Bun 1.4.2 |
+| Host patches | **none on the pi path.** The OMP side behind the same extension keeps its own recorded conditions: the isolated exact `18.5.0` install (revision anchor `@9348320`) and, for the Viewed-session and Codex response-boundary capabilities, this repository's frozen local patch artifacts under [`host-patches/`](../../host-patches) (`omp-18.5.0-viewed-session`, `omp-18.5.0-codex-response-boundary`, and their combined form). Neither path promotes a support version. |
+
+**What runs, and what it proved.** Every entry below is a repository script or suite, executed against the
+recorded combination with the entry loaded explicitly (pi's `--mode rpc --no-extensions
+-e <repo>/entrypoints/pi/model-cost.ts --no-mcp`, or the run's own equivalent layout) and a throwaway agent
+state, session directory, working directory and user home: the default global install, the formal
+configuration and any running agent are untouched. Except where a row says otherwise, the model endpoint is
+a local OpenAI-compatible capture endpoint that answers the buckets the run itself declares, so those runs
+prove wiring, protocol and failure handling, not real-service delivery.
+
+| Entry | What it exercises | Recorded outcome (2026-10-16, source `39fdc3dab2f19a67f54b096f4164e8ddcc7faaa1`, clean tree) |
+| --- | --- | --- |
+| `bun scripts/pi-model-cost-smoke.ts` | real discovery and loading of the entry, request-anchored pricing, per-Round saving, a second process reading the same storage root, the `/budget` command surface, the `storageDir` rules, the balance query and the Codex window/estimate phases | **100 checks passed, none failed**, 28 isolated runs |
+| `bun scripts/pi-subagent-smoke.ts` | the no-subagent shape, a refused child entry, and a real foreground delegation beside the pinned provider (child identity, direct parent, the parent Round settling, the child's own record saved, no second root-side prefetch) | **20 observations held**; one note records that in the background phase the detached child's own process saved no record (see the next row) |
+| `bun scripts/pi-background-round-smoke.ts` | a real background delegation: the parent's Round stays open while the provider holds work, one open/close per Round, the wake-up continuing the same Round, and that Round's boundary saving the parent's own requests | **13 observations held** |
+| `bun scripts/pi-terminal-round-smoke.ts` | cancel and terminal failure closing the Round after the local settlement, a late result appending without a new Round, a real new execution opening one, and a resumed process inventing no boundary | **17 observations held** |
+| `bun scripts/pi-session-accounting.ts` | one background delegation whose child runs as its own pi process, plus the tree a resumed process draws from the saved document | **incomplete: 12 observations held, 6 required facts missing.** The child process loaded the extension and ran its own request (the endpoint counted it, the child session file names the parent), but no record of that session ever appears in the storage root — so its own amount, its direct parent and its tree row are missing too. The in-process (foreground) form of the same path **is** saved (row above); this cross-process form is recorded here as unverified, never as a pass |
+| `bun run verify:omp-candidate` | the OMP side of the same source: the isolated exact `18.5.0` install and the framework suite on it | exit 0; framework **481 pass / 0 fail**; the result record names the source commit, the clean tree and both lockfile hashes |
+| `bun run verify:provider-account` | the loaded extension's own startup query against the real DeepSeek account — no model request, no paid call | **1 observed, 1 blocked, 0 failed**: the account's own CNY total matched the widget's drawn `💰 Balance:` at the same instant; the Codex scenario is **blocked** because neither credential store holds a usable `openai-codex` credential |
+| `bun run typecheck`; `bun test` | the repository on the assembled tree | typecheck exit 0; **1200 pass / 0 fail** (128 files, 6897 expect() calls), including `tests/harness-dock` against the isolated install and its frozen patch artifacts. A local `core.autocrlf=true` checkout needs the three recorded files at their committed LF bytes and `OMP_BOT_BINARY` set, as the earlier rounds record |
+
+**Not covered / unverified.** This record claims nothing beyond its rows: other pi versions, POSIX, other
+users, and provider paths other than those named remain unverified, and no row is a pi framework
+certification. Human-only items stay open — the interactive TUI's content, spacing and narrow-width
+readability, the efficiency/complexity judgement, and the account-side confirmation (the Codex scenario also
+needs a credential). Unverified here as well: a real peak/off-peak boundary firing on a real clock (the
+behaviour is driven by controlled clocks), pi's `/reload` (no scriptable action), the patched Viewed-session
+artifact's use by this extension, and the detached background child's own accounting (row above). The
+per-ticket source states and uncovered items are collected in
+`.scratch/model-cost-pi-migration/evidence/25-evidence-scope-audit.md`; this section is the durable record of
+what the migration does and does not establish.
+
 ## Harness targets and evidence
 
 | Harness | Package | Source version / checkout | Observed installed harness | Evidence status |
 | --- | --- | --- | --- | --- |
-| pi | `@earendil-works/pi-coding-agent` | Historical research: 1.0.0 at `a276dabe57911253350bffb93cb7d7aff6a73261`; current reference/installed artifact: see [pi adapter evidence](#pi-codebase-tools-adapter-evidence) | Current executed version/environment: see that evidence | codebase-tools adapter implemented and independently smoke-exercised in the recorded scope; not a full pi framework certification or an OMP baseline replacement. |
+| pi | `@earendil-works/pi-coding-agent` | Historical research: 1.0.0 at `a276dabe57911253350bffb93cb7d7aff6a73261`; current reference/installed artifact: see [pi adapter evidence](#pi-codebase-tools-adapter-evidence) | Current executed version/environment: see that evidence | codebase-tools adapter implemented and independently smoke-exercised in the recorded scope; the model-cost adapter is recorded separately in [pi model-cost migration evidence](#pi-model-cost-migration-evidence), with its own pinned `pi-subagents@0.78.0` and its own uncovered items; neither is a full pi framework certification or an OMP baseline replacement. |
 | oh-my-pi | `@oh-my-pi/pi-coding-agent` | 18.5.0; `9348320cc4a30a7195d36a1f05a6c11bcb701a17` | observed installs: `omp/18.4.6` (design time), `18.6.1` (later) | **First-release supported baseline: 18.5.0 (checkout `@9348320`) + Windows x64 + Bun 1.4.2.** Decision 03 runtime-exercised the extension-path behaviors on an isolated exact install of `@18.5.0`. Installed versions outside the enumeration are historical unlisted observations, not additional support evidence. Current target verification is independent of startup. |
 
 Sources: the respective `packages/coding-agent/package.json` files, source-checkout `git log -1`, and direct executable version checks. Checking an executable version is not functional validation. Decision 03 subsequently runtime-exercised OMP 18.5.0 through the extension interface on an isolated exact install; that is the runtime evidence behind the first-release baseline, and it does not certify other versions or provider paths.
@@ -76,8 +123,8 @@ Every support statement in this document uses one of four states, and each row c
 | --- | --- | --- | --- | --- |
 | `verified-supported` | `@oh-my-pi/pi-coding-agent@18.5.0`, checkout `@9348320` + Windows x64 + Bun 1.4.2 | Decision 03 runtime-exercised the extension path on an isolated exact install (byte identity with the anchor `6/6`, re-checked by the baseline record); the migration suites then ran green on that same isolated install — framework 234 pass, codebase-tools 24 pass, connect-bot 103 pass, dock 9 pass (release-gate run RR-01, 2026-10-07 — framework revision `57107c51…` plus the then-uncommitted migration work; post-fix rerun 370 pass / 0 fail overall, and the run's `bun.lock` sha256 is the one `harness-baseline.json` carries) | Exactly this combination; verified provider paths only (`deepseek/deepseek-flash` → `openai-completions`; `openai-codex/gpt-6-luna` → `openai-codex-responses`, shape-only layer 1); every run executes the isolated exact install under a temporary agent state | Framework capabilities only (C1–C15), by isolated candidate verification (see [Upgrade standard and triggering](#upgrade-standard-and-triggering)). No extension capability is part of the long-term standard |
 | `verified-unlisted` | Historical installation observations outside the supported baseline (18.4.6 / 18.6.1) | Installation observation only; no behavior exercised on that version | No new support claim; the former startup warning route is superseded by independent verification | Independently verify the exact source/environment/extension combination; partial candidate alarms alone do not promote support |
-| `unverified` | openai-codex layer-2 real-credential delivery; interactive TUI visual acceptance; real-provider pi delivery and every provider path outside the scoped captures | Dock prepared but not executed (`scripts/capture-codex-outbound.ts`, layer 2); TUI acceptance not performed; a local capture endpoint proves serialization only, never real-service acceptance | Recorded as unverified, never as passing; no inference from a verified path; the ready-to-run steps are in the [README human acceptance runbook](../README.md#human-acceptance-and-cutover) | Not a candidate path: it becomes evidence only when a human supplies the credential or performs the acceptance |
-| `unsupported` | pi capabilities beyond the [codebase-tools scope](#pi-codebase-tools-adapter-evidence) (the historical first release shipped no pi adapter); two main sessions in one process; hot reload or in-process discovery-root swap | The framework suite asserts the supported shape only; the multi-main shape has no test, and a green suite for the supported shape says nothing about it | States that the framework integration is not provided — not that the harness lacks the native feature | Revisit only through an explicit decision, not through a test run |
+| `unverified` | openai-codex layer-2 real-credential delivery; interactive TUI visual acceptance; real-provider pi delivery and every provider path outside the scoped captures; the [model-cost pi migration](#pi-model-cost-migration-evidence)'s human-only checks and its own recorded uncovered items, including the detached background child's own accounting | Dock prepared but not executed (`scripts/capture-codex-outbound.ts`, layer 2); TUI acceptance not performed; a local capture endpoint proves serialization only, never real-service acceptance; for the model-cost migration the executed real paths, the account reading and the uncovered rows are in [that section](#pi-model-cost-migration-evidence) | Recorded as unverified, never as passing; no inference from a verified path; the ready-to-run steps are in the [README human acceptance runbook](../README.md#human-acceptance-and-cutover) | Not a candidate path: it becomes evidence only when a human supplies the credential or performs the acceptance |
+| `unsupported` | pi capabilities beyond the recorded [codebase-tools](#pi-codebase-tools-adapter-evidence) and [model-cost](#pi-model-cost-migration-evidence) scopes (the historical first release shipped no pi adapter); two main sessions in one process; hot reload or in-process discovery-root swap | The framework suite asserts the supported shape only; the multi-main shape has no test, and a green suite for the supported shape says nothing about it | States that the framework integration is not provided — not that the harness lacks the native feature | Revisit only through an explicit decision, not through a test run |
 
 The `verified-supported` row also fixes *what runs*: the revision anchor is the local checkout `@9348320` (= 18.5.0), and the run/acceptance artifact is the isolated exact install at `.cache/omp-baseline/18.5.0` (replaying decision 03's byte-identity conclusion). That correspondence — `harness.revisionAnchor` ↔ `harness.acceptanceArtifact` ↔ the `sourceCombination`/`oracle` lockfiles — is recorded as data in [`harness-baseline.json`](harness-baseline.json), not restated here. Role evidence per provider path has its own table above and keeps its own states ([provider-path role evidence](#provider-path-role-evidence-recorded-facts-not-a-gate)).
 
