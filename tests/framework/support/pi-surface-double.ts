@@ -148,6 +148,92 @@ export const PROVIDER_READY_CHANNEL = "subagents:rpc:v1:ready";
 export const PROVIDER_REQUEST_CHANNEL = "subagents:rpc:v1:request";
 export const PROVIDER_REPLY_PREFIX = "subagents:rpc:v1:reply:";
 
+/**
+ * The provider's own published session-liveness registry key and interface version, as the
+ * provider's documentation names them.
+ *
+ * They are stated here rather than read from the adapter for the same reason the channels above are:
+ * what this double drives is the provider's side of a published protocol, so it resolves and speaks
+ * the version the provider itself speaks, and a case that registers through it is a case about the
+ * provider's real registration rather than about the adapter's reading of one.
+ */
+export const SESSION_LIVENESS_REGISTRY_KEY = "@agegr/pi-web/session-liveness/v1";
+export const SESSION_LIVENESS_VERSION = 1;
+
+/** What the provider's own integration reads back from one registration attempt. */
+export interface ProviderLivenessHandle {
+	/** True only when a compatible host's registry accepted the registration. */
+	readonly registered: boolean;
+	/** Gives the registration back, exactly as the provider's own release does. */
+	readonly release: () => void;
+}
+
+/**
+ * Registers one provider for one session, exactly as the provider's published integration does: it
+ * resolves the versioned slot this process carries, reads the interface version stated there, and
+ * registers one provider naming the session it serves. A slot that is absent, another version, or
+ * states no `register` function leaves the registration untaken — which is what the provider itself
+ * reports as `registered: false` rather than as an inactive session.
+ */
+export function registerProviderLiveness(provider: {
+	readonly sessionId: string;
+	readonly sessionFile?: string;
+	isActive(): boolean;
+}): ProviderLivenessHandle {
+	const registry = (globalThis as Record<PropertyKey, unknown>)[Symbol.for(SESSION_LIVENESS_REGISTRY_KEY)] as
+		| { readonly version?: unknown; readonly register?: unknown }
+		| undefined;
+	if (registry === undefined || typeof registry.register !== "function" || registry.version !== SESSION_LIVENESS_VERSION) {
+		return { registered: false, release: () => {} };
+	}
+	const release = (registry.register as (value: unknown) => unknown)({
+		name: "pi-subagents",
+		sessionId: provider.sessionId,
+		...(provider.sessionFile === undefined ? {} : { sessionFile: provider.sessionFile }),
+		isActive: provider.isActive,
+	});
+	return typeof release === "function"
+		? { registered: true, release: release as () => void }
+		: { registered: false, release: () => {} };
+}
+
+/** Forgets whatever session-liveness registry this process carries, so a case starts from an empty one. */
+export function forgetSessionLivenessRegistry(): void {
+	delete (globalThis as Record<PropertyKey, unknown>)[Symbol.for(SESSION_LIVENESS_REGISTRY_KEY)];
+}
+
+/**
+ * The table this framework publishes inside its own registry, under the process-wide key a second
+ * copy of its module would look for.
+ *
+ * A case states it here because one pi process can evaluate the framework's graph more than once —
+ * each extension entrypoint gets its own module registry — and what two copies share is exactly this
+ * key: a registry carrying one is this framework's, whoever evaluated it, while a registry without
+ * one belongs to another host and is left alone.
+ */
+export const FRAMEWORK_LIVENESS_TABLE_KEY = "model-cost:pi-session-liveness:table";
+
+/**
+ * Publishes the registry one earlier evaluation of this framework's own graph left in this process.
+ *
+ * It is the shape that graph publishes — the provider's protocol members plus its own table keyed by
+ * the session each registration names — so a case can drive the reading a second copy must find
+ * rather than stand in the provider's side of the protocol again.
+ */
+export function publishFrameworkLivenessRegistry(
+	registrations: Readonly<Record<string, () => boolean>>,
+): void {
+	(globalThis as Record<PropertyKey, unknown>)[Symbol.for(SESSION_LIVENESS_REGISTRY_KEY)] = {
+		version: SESSION_LIVENESS_VERSION,
+		register: () => () => {},
+		[Symbol.for(FRAMEWORK_LIVENESS_TABLE_KEY)]: {
+			registrations: new Map(
+				Object.entries(registrations).map(([sessionId, isActive]) => [sessionId, { isActive }]),
+			),
+		},
+	};
+}
+
 /** The pi native surface a loader would hand the adapter, with everything a case observes. */
 export interface PiSurface {
 	readonly api: PiExtensionApi;

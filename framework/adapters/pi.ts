@@ -484,6 +484,18 @@ function piPort(
 		}
 		return undefined;
 	};
+	/**
+	 * Reports one statement about background work this entry could not read, once per reason.
+	 *
+	 * It is a report rather than an answer: a Round whose rest condition depends on a statement that
+	 * never arrived stays open, and an operator reading a session that will not close is told why
+	 * instead of being left to infer it from silence.
+	 */
+	const reportUnread = (reason: string): void => {
+		if (reportedMissingFacts.has(reason)) return;
+		reportedMissingFacts.add(reason);
+		reportDiagnostic(`this session's background work cannot be read: ${reason}`);
+	};
 
 	return {
 		// pi.setLabel labels a history ENTRY, not an extension. Keep this label on
@@ -577,6 +589,11 @@ function piPort(
 					feedback: feedback(ctx),
 				}),
 				reportMissingFact,
+				reportUnread: reportUnread,
+				// This process's subagent provider, as the assembly's own integration reads it: while a
+				// session is waiting on a delegation the provider still holds, the session is not at rest,
+				// and a statement this entry cannot read stays unread rather than being answered as rest.
+				background: sessionId => integration?.backgroundActivity(sessionId) ?? { state: "clear" },
 				track: keepSubscription,
 			});
 		},
