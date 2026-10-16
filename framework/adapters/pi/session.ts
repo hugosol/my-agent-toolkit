@@ -235,6 +235,11 @@ function startupFactsOf(ctx: PiExtensionContext, unavailable: string[]): Session
  * the delivery that announces the session's own start — the model and effective effort it began
  * with.
  *
+ * `position` is the one position this delivery's session sits at, resolved from the decision the
+ * delivery itself makes: the facts and the owner of a delivery are two readings of the same
+ * decision, so deriving the owner from the session's lineage link while the facts derive it from the
+ * start would let the two disagree for the one kind of session whose link is not a spawn.
+ *
  * Identity is the session manager's own session id and the position resolved above. The name is
  * display data read live from the harness, so a rename is picked up without changing identity,
  * parent or ownership: on the next delivery that carries this session, and on the facts delivery
@@ -247,11 +252,10 @@ function startupFactsOf(ctx: PiExtensionContext, unavailable: string[]): Session
  * this host does not have rather than borrowed from a name, a directory or a process label.
  */
 export function piSessionFactsOf(
-	positions: PiSessionPositions,
+	position: PiSessionPosition,
 	ctx: PiExtensionContext,
 	reason?: SessionStartReason,
 ): SessionFacts {
-	const position = positions.positionOf(ctx, reason);
 	const unavailable: string[] = ["agent name", "agent id", ...position.unavailable];
 	const reportedName = ctx.sessionManager.getSessionName();
 	const name = reportedName?.trim() ? reportedName : undefined;

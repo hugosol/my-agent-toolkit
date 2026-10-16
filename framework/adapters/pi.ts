@@ -432,15 +432,22 @@ function piPort(
 	let label = definition.displayName;
 	const reportDiagnostic = (message: string): void => { process.stderr.write(`${label}: ${message}\n`); };
 	const sessionFactsOf = (ctx: PiExtensionContext, reason?: SessionStartReason): SessionFacts =>
-		piSessionFactsOf(positions, ctx, reason);
-	const resolveOwner = (ctx: PiExtensionContext): OwnerReference => {
-		const owner = positions.positionOf(ctx).owner;
+		piSessionFactsOf(positions.positionOf(ctx, reason), ctx, reason);
+	/**
+	 * One session's position reported as the owner a delivery carries.
+	 *
+	 * A session that resolves no owner is named once per binding on the diagnostic channel: the
+	 * extension cannot key anything to an identity this host does not state, and it is told that
+	 * rather than being keyed to a label that only looks like one.
+	 */
+	const resolvedOwner = (owner: OwnerReference): OwnerReference => {
 		if (owner.kind === "unresolved" && !reportedOwnerless) {
 			reportedOwnerless = true;
 			reportDiagnostic("this session reports no identity; the extension stays off for it");
 		}
 		return owner;
 	};
+	const resolveOwner = (ctx: PiExtensionContext): OwnerReference => resolvedOwner(positions.positionOf(ctx).owner);
 	/**
 	 * Records what one delivery's own context says about the host, and hands that context back.
 	 *
@@ -501,29 +508,52 @@ function piPort(
 				});
 			};
 			keepSubscription(pi.on("session_start", (event, ctx) => {
-				const owner = resolveOwner(ctx);
-				if (owner.kind === "owner" && owner.key === activeOwner?.key) return;
 				const reason = START_REASON[event.reason];
-				const session = sessionFactsOf(ctx, reason);
-				servingSessionId = session.sessionId;
+				// The one decision this delivery makes: the start is what says whether the session was
+				// spawned, and the facts and the owner below are both read from that decision rather
+				// than from a second reading of the session's lineage link.
+				const position = positions.positionOf(ctx, reason);
+				const owner = resolvedOwner(position.owner);
+				const session = piSessionFactsOf(position, ctx, reason);
 				// The session this binding now serves requires this entry in the sessions it spawns,
 				// whether it is a top-level session or one that was itself spawned: a child's own
-				// children are spawned by the provider exactly as the root's are.
-				integration?.requireIn(session.sessionId);
-				if (activeOwner !== undefined) {
-					integration?.releaseSession(activeOwner.session.sessionId);
-					deliver({ kind: "session_end", reason: "transferred" }, { kind: "owner", key: activeOwner.key }, ctx, activeOwner.session);
+				// children are spawned by the provider exactly as the root's are, and each session's
+				// requirement is released when that session's own life ends.
+				if (owner.kind !== "owner") {
+					// A session that is not its own owner has no life of its own to pair: it is
+					// delivered with the owner it resolved and takes no part in the transfer below.
+					integration?.requireIn(session.sessionId);
+					deliver({ kind: "session_start", reason }, owner, ctx, session);
+					return;
 				}
-				activeOwner = owner.kind === "owner" ? { key: owner.key, session } : undefined;
+				// A native start that leaves the owner this binding already serves alone is not a
+				// transition at all, which is what makes a reload or a same-file resume silent here.
+				if (owner.key === activeOwner?.key) return;
+
+				const ended = activeOwner;
+				integration?.requireIn(session.sessionId);
+				servingSessionId = session.sessionId;
+				activeOwner = { key: owner.key, session };
+				if (ended !== undefined) {
+					integration?.releaseSession(ended.session.sessionId);
+					deliver({ kind: "session_end", reason: "transferred" }, { kind: "owner", key: ended.key }, ctx, ended.session);
+				}
 				deliver({ kind: "session_start", reason }, owner, ctx, session);
 			}));
 			keepSubscription(pi.on("session_shutdown", (event, ctx) => {
+				const session = sessionFactsOf(ctx);
+				// Whatever this binding required for the session that is going away is released with
+				// it, so a later session of this process states its own requirement rather than
+				// inheriting a spent one.
+				integration?.releaseSession(session.sessionId);
+				// Only the owner session this binding serves ends here, by its own identity: a sub
+				// session this process ran is not the owner the extension serves, and its end is not
+				// the owner's end.
 				const ended = activeOwner;
-				if (ended === undefined) return;
+				if (ended === undefined || ended.session.sessionId !== session.sessionId) return;
 				activeOwner = undefined;
 				servingSessionId = undefined;
-				integration?.releaseSession(ended.session.sessionId);
-				deliver({ kind: "session_end", reason: END_REASON[event.reason] }, { kind: "owner", key: ended.key }, ctx, sessionFactsOf(ctx));
+				deliver({ kind: "session_end", reason: END_REASON[event.reason] }, { kind: "owner", key: ended.key }, ctx, session);
 			}));
 			// pi's own name-change fact: the session's current facts as they now stand, delivered
 			// where the rename happened rather than at the renamed session's next boundary.

@@ -16,8 +16,19 @@
  * pair on pi's shared event bus (`subagents:rpc:v1:...`), whose `ping` states the interface version
  * and the session the provider currently serves. Neither surface is read for anything else, and no
  * private field, file layout or bundling detail is depended on.
+ *
+ * One settle distinguishes four outcomes, and none of them is read as another: no provider artifact
+ * in this process is no subagent facility for this entry (the normal shape); a requirement the
+ * provider's own registration refuses is a **registration** failure; an announcement or answer this
+ * adapter cannot read — refused, or another interface version — is a **protocol** failure; and an
+ * interface that answers for another session than the one this entry serves is an **identity**
+ * failure. No provider running in this process (nothing announced itself and nothing answered) is the
+ * normal shape as well, and it is reported as such: the one thing never done here is answering a
+ * failure, or a missing answer, as the other. An answer that names no session is not read as either:
+ * it is the provider stating its interface without claiming which session it serves, which is the
+ * ordinary shape of a query answered before the provider has a session context.
  */
-import type { SubagentIntegration } from "../../core/protocol";
+import type { SubagentIntegration, SubagentIntegrationFailure } from "../../core/protocol";
 import type { PiExtensionApi } from "../pi";
 
 /**
@@ -217,11 +228,20 @@ export function createPiSubagentIntegration(extensionId: string, childEntry: str
 	};
 
 	/**
-	 * Asks the provider once and reads its answer, within the one budget.
+	 * The provider's own statement about the session it serves, asked within the one budget.
 	 *
-	 * The request is the provider's own versioned query, asked with the version this integration
-	 * reads and correlated by a request id; what an answer states about the session and the version
-	 * is the provider's own statement, never an inference from the question asked.
+	 * Two of the provider's own statements can answer, and both are read here: its *announcement*, which
+	 * it makes when it begins serving a session and which carries that session, and its *reply* to this
+	 * entry's query, correlated by the request id the query carried. Which of the two arrives first is
+	 * not this adapter's to choose — two extensions loading beside each other are started in load order,
+	 * and an entry loaded first settles before a provider loaded second has begun serving — so an answer
+	 * that states no session is kept as the reading of last resort while the wait goes on for a
+	 * statement that does, within the same budget. That ordering is a real one on this host: a query
+	 * issued before the provider has a session context is answered on the versioned interface without
+	 * naming a session, while the announcement that follows it names the session it serves.
+	 *
+	 * A refusal is an answer in its own right and settles at once: what it states is that the interface
+	 * was reached and would not serve this query, which no later statement changes.
 	 */
 	const ask = (): Promise<ProviderAnswer | undefined> =>
 		new Promise<ProviderAnswer | undefined>(resolve => {
@@ -231,52 +251,105 @@ export function createPiSubagentIntegration(extensionId: string, childEntry: str
 				return;
 			}
 			const requestId = `pi-adapter-${process.pid}-${++queries}`;
-			let settle: (answer: ProviderAnswer | undefined) => void = () => {};
-			const timer = setTimeout(() => settle(undefined), ANNOUNCEMENT_BUDGET_MS);
-			const off = bus.on(`${PROVIDER_REPLY_PREFIX}${requestId}`, payload => settle(providerAnswerOf(payload)));
-			settle = (answer: ProviderAnswer | undefined): void => {
+			let answered: ProviderAnswer | undefined;
+			let settled = false;
+			const finish = (answer: ProviderAnswer | undefined): void => {
+				if (settled) return;
+				settled = true;
 				clearTimeout(timer);
-				off();
+				offAnnouncement();
+				offReply();
 				resolve(answer);
 			};
+			const timer = setTimeout(() => finish(answered), ANNOUNCEMENT_BUDGET_MS);
+			const offAnnouncement = bus.on(PROVIDER_READY_CHANNEL, payload => {
+				const answer = providerAnswerOf(payload);
+				if (answer !== undefined) finish(answer);
+			});
+			const offReply = bus.on(`${PROVIDER_REPLY_PREFIX}${requestId}`, payload => {
+				const answer = providerAnswerOf(payload);
+				if (answer === undefined) return;
+				answered = answer;
+				if (answer.sessionId !== undefined || answer.refused !== undefined) finish(answer);
+			});
 			bus.emit(PROVIDER_REQUEST_CHANNEL, { version: 1, requestId, method: "ping", params: {} });
 		});
+
+	/**
+	 * One failed integration: reported on the diagnostic channel and answered as the failure it is.
+	 *
+	 * A failure is never answered as the absence of a provider: an operator has to be able to tell a
+	 * process that runs no subagent facility from one whose integration broke, and the extension is
+	 * told the same thing, so neither is inferred from the other.
+	 */
+	const failed = (failure: SubagentIntegrationFailure, diagnosis: string): SubagentIntegration => {
+		report(diagnosis);
+		return { mode: "failed", failure, diagnosis };
+	};
 
 	const settleOnce = async (sessionId: string | undefined): Promise<SubagentIntegration> => {
 		const module = await provider;
 		const requirement = sessionId === undefined ? undefined : await requireInOnce(sessionId);
-		const answer = announced ?? (await ask()) ?? announced;
-		if (answer === undefined) {
-			// Nothing answered: this process runs no provider, so this entry is not integrated with
-			// one. A requirement that could not be taken is reported — it would bite the moment a
-			// provider did run here — but it does not make a provider this process does not have.
-			if (requirement !== undefined && !requirement.taken) {
-				report(`this entry could not be required in child sessions (${requirement.detail ?? "unknown reason"}); no subagent provider is running in this process`);
-			}
-			return { mode: "none" };
+
+		// No provider artifact in this process: no child-extension interface is reachable at all, so
+		// this entry states none and no subagent facility serves the sessions it spawns. That is the
+		// normal no-subagent shape — a deployment that carries the framework without the provider is
+		// not a failed integration — and the requirement that could not be taken beside it is that
+		// same absence rather than a registration this entry refused.
+		if (module === undefined) return { mode: "none" };
+
+		// The provider's interface is here, and the requirement this entry has to state in the
+		// sessions the provider spawns did not take: the provider's own registration refused it (a
+		// child path it cannot load, a session that already carries one), or the settle ran with no
+		// session to state it for. Either way the wiring this process owes is not in place, and it is
+		// reported as the failure it is rather than hidden as a harness that offers no integration.
+		if (requirement === undefined) {
+			return failed(
+				"registration",
+				"the subagent provider is reachable, and this entry could not be required in the sessions it spawns: the settle ran with no session to require it in",
+			);
 		}
+		if (!requirement.taken) {
+			return failed(
+				"registration",
+				`the subagent provider is reachable, and it did not accept this entry as a required child extension: ${requirement.detail ?? "unknown reason"}`,
+			);
+		}
+
+		// The provider's own statement about the session it serves: its announcement, or the answer to
+		// this entry's one query. A provider artifact is present and nothing announced itself and
+		// nothing answered, so no provider is running in this process — the normal no-subagent shape
+		// rather than a failure. A query that is answered is answered, and a `ready` that arrives
+		// while the query is out is that same answer.
+		const answer = announced ?? (await ask()) ?? announced;
+		if (answer === undefined) return { mode: "none" };
+
+		// From here the provider stated itself, so every reading of that statement is a claim about an
+		// integration that has to hold: an interface this adapter cannot read, and an answer for
+		// another session, are both failures of the integration rather than absent providers.
 		if (answer.refused !== undefined) {
-			const diagnosis = `the subagent provider refused this entry's query for its interface: ${answer.refused}`;
-			report(diagnosis);
-			return { mode: "failed", failure: "protocol", diagnosis };
+			return failed(
+				"protocol",
+				`the subagent provider refused this entry's query for its interface: ${answer.refused}`,
+			);
 		}
 		if (answer.version !== SUPPORTED_PROVIDER_VERSION) {
-			const diagnosis = `the subagent provider speaks interface version ${String(answer.version ?? "<unstated>")}, which this adapter does not read`;
-			report(diagnosis);
-			return { mode: "failed", failure: "protocol", diagnosis };
+			return failed(
+				"protocol",
+				`the subagent provider speaks interface version ${String(answer.version ?? "<unstated>")}, which this adapter does not read`,
+			);
 		}
+		// An answer that states no session made no claim about *which* session the provider serves, and
+		// this adapter reads that as a claim about none rather than as a mismatch: the answer is the
+		// provider's own statement about its interface, the requirement this entry stated is what makes
+		// the sessions it spawns load this entry, and a statement naming another session is what the
+		// check below rejects. Reporting the absence as a failure would make the ordinary ordering in
+		// which a query is answered before the provider has a session context look like a broken one.
 		if (answer.sessionId !== undefined && sessionId !== undefined && answer.sessionId !== sessionId) {
-			const diagnosis = `the subagent provider serves a different session (${answer.sessionId}) than the one this entry serves (${sessionId})`;
-			report(diagnosis);
-			return { mode: "failed", failure: "identity", diagnosis };
-		}
-		if (module === undefined || requirement === undefined || !requirement.taken) {
-			const detail = module === undefined
-				? "the provider's child-extension interface could not be loaded"
-				: (requirement?.detail ?? "this entry's child path was not stated");
-			const diagnosis = `the subagent provider is running, and this entry could not be required in the sessions it spawns: ${detail}`;
-			report(diagnosis);
-			return { mode: "failed", failure: "registration", diagnosis };
+			return failed(
+				"identity",
+				`the subagent provider serves a different session (${answer.sessionId}) than the one this entry serves (${sessionId})`,
+			);
 		}
 		return { mode: "subagents" };
 	};

@@ -137,6 +137,17 @@ export interface PiBusSurface {
 	publish(channel: string, data: unknown): void;
 }
 
+/**
+ * The subagent provider's own published channels, as its documentation names them.
+ *
+ * A case drives the provider through these rather than through anything of the adapter's: it
+ * announces itself on {@link PROVIDER_READY_CHANNEL} and answers a query published on
+ * {@link PROVIDER_REQUEST_CHANNEL} under {@link PROVIDER_REPLY_PREFIX} plus the request's own id.
+ */
+export const PROVIDER_READY_CHANNEL = "subagents:rpc:v1:ready";
+export const PROVIDER_REQUEST_CHANNEL = "subagents:rpc:v1:request";
+export const PROVIDER_REPLY_PREFIX = "subagents:rpc:v1:reply:";
+
 /** The pi native surface a loader would hand the adapter, with everything a case observes. */
 export interface PiSurface {
 	readonly api: PiExtensionApi;
@@ -166,6 +177,22 @@ export interface PiSurface {
 	readonly notices: PublishedNotice[];
 	/** The context the framework handed the factory, once the binding ran. */
 	implemented(): ImplementationContext;
+	/**
+	 * The initialization delivery the framework handed the factory, once it settled.
+	 *
+	 * This process's harness integration is settled *before* that delivery is handed over, so
+	 * awaiting this is how a case reads the settled subagent answer an extension is told about — the
+	 * one answer this process has, whatever the surface did after it settled.
+	 */
+	initialized(): Promise<InitializationDelivery>;
+	/**
+	 * The envelope the adapter published on the provider's own request channel, at `index`.
+	 *
+	 * It is how a case reads — and answers — a query the adapter issued without guessing when it was
+	 * issued: the promise settles once that query has been published. What it carries is the envelope
+	 * the provider's own documentation states, so a case replies to the query the adapter really made.
+	 */
+	providerRequest(index: number): Promise<Record<string, unknown>>;
 	/** Delivers one native fact, exactly as the host would, with the session's context beside it. */
 	deliver(event: string, payload: unknown, session: PiSurfaceSession): void;
 	/** A model request starting: pi's `before_provider_request`. */
@@ -224,6 +251,27 @@ export function boundPiSurface(
 	const notices: PublishedNotice[] = [];
 	let implementationContext: ImplementationContext | undefined;
 
+	// The initialization this binding's factory is handed, and the promise a case awaits it through:
+	// it settles only after this process's harness integration has, so awaiting it is reading the
+	// settled answer an extension is told about.
+	let resolveInitialized: (() => void) | undefined;
+	const initializedOnce = new Promise<void>(resolve => {
+		resolveInitialized = resolve;
+	});
+
+	// The queries the adapter published on the provider's own request channel, and the cases waiting
+	// for one that has not been published yet.
+	const providerRequests: Record<string, unknown>[] = [];
+	const requestWaiters: Array<{ readonly index: number; readonly resolve: (envelope: Record<string, unknown>) => void }> = [];
+	const settleRequestWaiters = (): void => {
+		for (let index = requestWaiters.length - 1; index >= 0; index--) {
+			const waiter = requestWaiters[index];
+			if (waiter.index >= providerRequests.length) continue;
+			requestWaiters.splice(index, 1);
+			waiter.resolve(providerRequests[waiter.index]);
+		}
+	};
+
 	// The host's shared bus: what the adapter publishes is recorded, and what a case publishes reaches
 	// the adapter's own subscriptions exactly as another extension in the process would reach them.
 	const busHandlers = new Map<string, Array<(data: unknown) => void>>();
@@ -241,6 +289,10 @@ export function boundPiSurface(
 		},
 		emit: (channel, data) => {
 			emissions.push({ channel, data });
+			if (channel === PROVIDER_REQUEST_CHANNEL && typeof data === "object" && data !== null && !Array.isArray(data)) {
+				providerRequests.push(data as Record<string, unknown>);
+				settleRequestWaiters();
+			}
 			for (const handler of [...(busHandlers.get(channel) ?? [])]) handler(data);
 		},
 	};
@@ -282,8 +334,11 @@ export function boundPiSurface(
 		return context as unknown as PiExtensionContext;
 	};
 
-	// The native surface: the members the adapter registers and appends through, and nothing more.
+	// The native surface: the members the adapter registers and appends through, plus the host's own
+	// shared bus — the one member this adapter reads for the subagent provider's versioned interface,
+	// and the process-scoped one this surface publishes itself.
 	const api = {
+		events: bus,
 		on(event: string, handler: (event: unknown, ctx: PiExtensionContext) => unknown): () => void {
 			const list = handlers.get(event) ?? [];
 			list.push(handler);
@@ -309,7 +364,11 @@ export function boundPiSurface(
 			const catalog = options.catalog?.(context);
 			return {
 				...(catalog === undefined ? {} : { catalog }),
-				initialize: delivery => void initializations.push(delivery),
+				initialize: delivery => {
+					initializations.push(delivery);
+					resolveInitialized?.();
+					resolveInitialized = undefined;
+				},
 				subscriptions: [
 					{
 						scope: "session",
@@ -358,6 +417,16 @@ export function boundPiSurface(
 		implemented: () => {
 			if (implementationContext === undefined) throw new Error("the probe factory never ran");
 			return implementationContext;
+		},
+		initialized: () => initializedOnce.then(() => initializations[0]),
+		providerRequest: index => {
+			const published = providerRequests[index];
+			if (published !== undefined) return Promise.resolve(published);
+			const waiting = new Promise<Record<string, unknown>>(resolve => {
+				requestWaiters.push({ index, resolve });
+			});
+			settleRequestWaiters();
+			return waiting;
 		},
 		deliver,
 		startRequest: session => deliver("before_provider_request", { type: "before_provider_request" }, session),
