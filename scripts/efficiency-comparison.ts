@@ -118,10 +118,14 @@ interface ScopeFigures {
 }
 
 /**
+ * The one cost column that is not compared: it counts a window's calls that settled as failures too,
+ * which the frozen record states vary between runs of one source, so it rides with the noise columns.
+ * It stays in the tables because it is the one figure that must balance against the steps beside it.
+ */
+const FILE_TOTAL_METRIC = "file total";
+
+/**
  * The comparable steps of one measured window's file cost, each read off the cost it belongs to.
- *
- * A window's `file total` is here beside the steps because it is the one figure that must balance: it
- * counts every operation the window paid for, including the ones no step above accounts for.
  */
 const COST_METRICS: readonly (readonly [string, (cost: FileCost) => number])[] = [
 	["reads", cost => cost.documentReads],
@@ -131,7 +135,7 @@ const COST_METRICS: readonly (readonly [string, (cost: FileCost) => number])[] =
 	["metadata", cost => cost.metadataOperations],
 	["dirs", cost => cost.directoryOperations],
 	["other", cost => cost.otherOperations],
-	["file total", cost => cost.total],
+	[FILE_TOTAL_METRIC, cost => cost.total],
 ];
 
 /** The figures of one sequence beyond its file cost: what its work asked of the provider and the UI. */
@@ -376,6 +380,7 @@ function report(before: { artifact: Artifact; path: string }, after: { artifact:
 	lines.push(...conditionLines(after.artifact, after.path, "after"));
 	lines.push("");
 	lines.push("a cell is before/after; * marks a difference. Each column is a cost the frozen record fixes, and none of them is a threshold.");
+	lines.push(`\`${FILE_TOTAL_METRIC}\` counts a window's calls that settled as failures as well, so it is reported with the noise columns rather than compared; the steps beside it are the comparison.`);
 	lines.push("");
 	lines.push("== representative sequences: whole sequence ==");
 	lines.push(
@@ -400,7 +405,9 @@ function report(before: { artifact: Artifact; path: string }, after: { artifact:
 	);
 	lines.push("");
 	lines.push("== comparable differences ==");
-	const differing = scopes.flatMap(scope => scope.figures.filter(figure => figure.before !== figure.after));
+	const differing = scopes.flatMap(scope =>
+		scope.figures.filter(figure => figure.metric !== FILE_TOTAL_METRIC && figure.before !== figure.after),
+	);
 	if (differing.length === 0) lines.push("none: every comparable figure of every sequence and window agrees.");
 	for (const figure of differing) lines.push(`${figure.scope.padEnd(40)}${figure.metric.padEnd(16)}${figure.before} -> ${figure.after}`);
 	for (const [left, right] of pairs) {
@@ -415,7 +422,10 @@ function report(before: { artifact: Artifact; path: string }, after: { artifact:
 	const noise = pairs.flatMap(([left, right]) =>
 		NOISE_METRICS.filter(([, read]) => read(left) !== read(right)).map(([metric, read]) => `${left.name.padEnd(40)}${metric.padEnd(20)}${read(left)} -> ${read(right)}`),
 	);
-	lines.push(...(noise.length === 0 ? ["no noise column differs."] : noise));
+	const totalNoise = scopes
+		.flatMap(scope => scope.figures.filter(figure => figure.metric === FILE_TOTAL_METRIC && figure.before !== figure.after))
+		.map(figure => `${figure.scope.padEnd(40)}${"file total".padEnd(20)}${figure.before} -> ${figure.after} (this column counts calls that settled as failures too)`);
+	lines.push(...(noise.length === 0 && totalNoise.length === 0 ? ["no noise column differs."] : [...noise, ...totalNoise]));
 	lines.push("");
 	lines.push("== complexity ==");
 	const beforeRevision = argumentOf("--before-rev") ?? before.artifact.source.head;
