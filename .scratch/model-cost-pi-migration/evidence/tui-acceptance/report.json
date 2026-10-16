@@ -11,8 +11,8 @@
   },
   "scenario": {
     "document": "{\"schemaVersion\":1,\"periodId\":\"period-tui-acceptance\",\"start\":\"2026-10-01T00:00:00.000Z\",\"holiday\":false,\"harnesses\":{\"pi\":{\"sessions\":[{\"id\":\"session-main\",\"name\":\"主会话\",\"parent\":null,\"saveVersion\":1,\"startup\":{\"model\":{\"provider\":\"deepseek\",\"model\":\"deepseek-flash\"},\"effort\":\"high\"},\"own\":{\"deepseek\":{\"deepseek-flash\":{\"tokens\":{\"input\":1000,\"cacheRead\":2000,\"cacheWrite\":0,\"output\":3000},\"costCny\":0.05}}},\"span\":{\"start\":1790812800000,\"end\":1790813100000}},{\"id\":\"session-research\",\"name\":\"检索定价核查表\",\"parent\":\"session-main\",\"saveVersion\":1,\"startup\":{\"model\":{\"provider\":\"deepseek\",\"model\":\"deepseek-flash\"},\"effort\":\"high\"},\"runtimeMs\":480000,\"own\":{\"deepseek\":{\"deepseek-flash\":{\"tokens\":{\"input\":30,\"cacheRead\":20,\"cacheWrite\":0,\"output\":50},\"costCny\":0.004}}}},{\"id\":\"session-pricing-scan\",\"name\":\"pricing-scan-of-every-listed-model\",\"parent\":\"session-main\",\"saveVersion\":1,\"runtimeMs\":45000,\"runtimeGap\":true,\"own\":{\"deepseek\":{\"deepseek-flash\":{\"tokens\":{\"input\":100,\"cacheRead\":100,\"cacheWrite\":0,\"output\":100},\"costCny\":0.01}}}},{\"id\":\"session-zero-runtime\",\"name\":\"未测量代理\",\"parent\":\"session-main\",\"saveVersion\":1,\"runtimeMs\":0,\"own\":{\"deepseek\":{\"deepseek-flash\":{\"tokens\":{\"input\":5,\"cacheRead\":0,\"cacheWrite\":0,\"output\":5}}}}},{\"id\":\"session-unmeasured\",\"name\":\"runtime-never-measured\",\"parent\":\"session-main\",\"saveVersion\":1,\"startup\":{\"model\":{\"provider\":\"deepseek\",\"model\":\"deepseek-flash\"},\"effort\":\"medium\"},\"own\":{\"deepseek\":{\"deepseek-flash\":{\"tokens\":{\"input\":7,\"cacheRead\":3,\"cacheWrite\":0,\"output\":7},\"costCny\":0.002}}}},{\"id\":\"session-research-detail\",\"name\":\"details-under-the-first-child\",\"parent\":\"session-research\",\"saveVersion\":1,\"startup\":{\"model\":{\"provider\":\"deepseek\",\"model\":\"deepseek-flash\"},\"effort\":\"medium\"},\"runtimeMs\":30000,\"own\":{\"deepseek\":{\"deepseek-flash\":{\"tokens\":{\"input\":1,\"cacheRead\":1,\"cacheWrite\":0,\"output\":1},\"costCny\":0.001}}}}]}}}",
-    "storageDirectory": "C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-tui-acceptance-HiirZB\\user-home\\.omp\\cost-archive",
-    "agentState": "C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-tui-acceptance-HiirZB\\agent-state",
+    "storageDirectory": "C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-tui-acceptance-KFqw3d\\user-home\\.omp\\cost-archive",
+    "agentState": "C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-tui-acceptance-KFqw3d\\agent-state",
     "widths": [
       120,
       80,
@@ -44,12 +44,12 @@
     {
       "form": "brief",
       "width": 60,
-      "rows": 18
+      "rows": 19
     },
     {
       "form": "detail",
       "width": 60,
-      "rows": 28
+      "rows": 27
     }
   ],
   "observations": [
@@ -67,6 +67,11 @@
       "name": "every width was captured in both forms",
       "held": true,
       "detail": "brief@120, detail@120, brief@80, detail@80, brief@60, detail@60"
+    },
+    {
+      "name": "more than one width was drawn, so narrowing is observable",
+      "held": true,
+      "detail": "widths: 120, 80, 60"
     },
     {
       "name": "the extension and the pinned provider were the extensions this run loaded",

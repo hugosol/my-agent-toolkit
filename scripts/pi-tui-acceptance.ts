@@ -309,6 +309,11 @@ function checkRun(run: CapturedRun, version: string, widths: readonly number[]):
 		run.frames.map(frame => `${frame.form}@${frame.width}`).join(", "),
 	);
 	observations.held(
+		"more than one width was drawn, so narrowing is observable",
+		widths.length > 1,
+		`widths: ${widths.join(", ")}`,
+	);
+	observations.held(
 		"the extension and the pinned provider were the extensions this run loaded",
 		run.recording.includes("model-cost.ts") && run.recording.includes("pi-subagents"),
 		`the run's own terminal named: ${["model-cost.ts", "pi-subagents"].filter(name => run.recording.includes(name)).join(", ") || "neither"}`,

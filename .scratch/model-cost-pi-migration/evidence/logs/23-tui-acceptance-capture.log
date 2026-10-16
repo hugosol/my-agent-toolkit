@@ -1,11 +1,12 @@
 # real pi TUI, 1.2.0 from D:\nvm4w\nodejs\node_modules\@earendil-works\pi-coding-agent\dist\bundle\cli.js, widths 120, 80, 60, rows 40
-# scenario: C:\Users\hugos\AppData\Local\Temp\omp-dock-tui-acceptance-HiirZB\user-home\.omp\cost-archive
+# scenario: C:\Users\hugos\AppData\Local\Temp\omp-dock-tui-acceptance-KFqw3d\user-home\.omp\cost-archive
 # artifacts: C:\Users\hugos\AppData\Local\Temp\hyper-ticket-1MhF6a\.scratch\model-cost-pi-migration\evidence\tui-acceptance
 # images: C:\Users\hugos\AppData\Local\Temp\hyper-ticket-1MhF6a\.scratch\model-cost-pi-migration\evidence\tui-acceptance\screen-brief-120.png,C:\Users\hugos\AppData\Local\Temp\hyper-ticket-1MhF6a\.scratch\model-cost-pi-migration\evidence\tui-acceptance\screen-detail-120.png,C:\Users\hugos\AppData\Local\Temp\hyper-ticket-1MhF6a\.scratch\model-cost-pi-migration\evidence\tui-acceptance\screen-brief-80.png,C:\Users\hugos\AppData\Local\Temp\hyper-ticket-1MhF6a\.scratch\model-cost-pi-migration\evidence\tui-acceptance\screen-detail-80.png,C:\Users\hugos\AppData\Local\Temp\hyper-ticket-1MhF6a\.scratch\model-cost-pi-migration\evidence\tui-acceptance\screen-brief-60.png,C:\Users\hugos\AppData\Local\Temp\hyper-ticket-1MhF6a\.scratch\model-cost-pi-migration\evidence\tui-acceptance\screen-detail-60.png
 
 ok    the run drove the pi version this acceptance states — pi reported 1.2.0, expected 1.2.0
 ok    the pinned provider artifact this repository installs is present — C:\Users\hugos\AppData\Local\Temp\hyper-ticket-1MhF6a\node_modules\pi-subagents\index.js
 ok    every width was captured in both forms — brief@120, detail@120, brief@80, detail@80, brief@60, detail@60
+ok    more than one width was drawn, so narrowing is observable — widths: 120, 80, 60
 ok    the extension and the pinned provider were the extensions this run loaded — the run's own terminal named: model-cost.ts, pi-subagents
 ok    the run's terminal holds no load failure — none
 ok    the account row draws the season, the bar's effort, the balance reading and the accrual (brief, 120 columns) — all of: Effort:, Balance: ¥12.34, Accrued: ¥0.07
@@ -49,7 +50,7 @@ ok    the Total line the brief shows is the line the detail keeps (120 columns) 
 ok    the Total line the brief shows is the line the detail keeps (80 columns) — brief: Total:  Cache: 67%  ¥Cache/In/Out：0:8:92  Cost: ¥0.07  Span: 0:05:00 / detail: Total:  Cache: 67%  ¥Cache/In/Out：0:8:92  Cost: ¥0.07  Span: 0:05:00
 ok    the Total line the brief shows is the line the detail keeps (60 columns) — brief: Total:  Cache: 67%  ¥Cache/In/Out：0:8:92  Cost: ¥0.07 / detail: Total:  Cache: 67%  ¥Cache/In/Out：0:8:92  Cost: ¥0.07
 
-45 ok / 0 failed
+46 ok / 0 failed
 
 # human acceptance (P52) — look at the real terminal yourself: bun scripts/pi-tui-acceptance.ts --interactive
 # the person judges the format, spacing, narrow-width behaviour and readability; this run does not.

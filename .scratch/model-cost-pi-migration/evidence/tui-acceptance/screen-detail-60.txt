@@ -1,5 +1,4 @@
 Warning: No project session found with id 'session-main'; c.
-────────────────────────────────────────────────────────────
  ▀▀█  v1.2.0
  █▀ █ escape interrupt · ctrl+c/ctrl+d clear/exit · /
  commands · ! bash · ctrl+o more

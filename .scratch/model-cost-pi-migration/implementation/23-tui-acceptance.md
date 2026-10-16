@@ -6,7 +6,7 @@
 
 **Blocked by:** [21：共同路径消费者与真实宿主回归](21-consumer-regression.md)
 
-**Status:** in-progress — Agent 侧实现与自动检查已在本分支完成（`scripts/pi-tui-acceptance.ts` + `scripts/support/{tui-acceptance-fixture,terminal-screen}.ts` + `package.json` 一行；捕获运行 45 ok / 0 failed，`bun test tests/model-cost` 463 pass / 0 fail，`bun run typecheck` exit 0，见[证据](../evidence/23-tui-acceptance.md)）。**人类验收（真终端格式/间距/窄宽度/观感）未确认，不得据此判为通过。** 本分支未合入 `pi-adapter`，交集成子代理接管。
+**Status:** in-progress — Agent 侧实现与自动检查已在本分支完成（`scripts/pi-tui-acceptance.ts` + `scripts/support/{tui-acceptance-fixture,terminal-screen}.ts` + `package.json` 一行；捕获运行 46 ok / 0 failed，`bun test tests/model-cost` 463 pass / 0 fail，`bun run typecheck` exit 0，见[证据](../evidence/23-tui-acceptance.md)）。**人类验收（真终端格式/间距/窄宽度/观感）未确认，不得据此判为通过。** 本分支未合入 `pi-adapter`，交集成子代理接管。
 
 ## Acceptance criteria
 
@@ -30,7 +30,7 @@
 
 - **本轮（首次执行，Agent 半完成）**：交付隔离可运行入口、固定业务场景、宽度输出与内容/布局自动检查，并取得可获得的截图/录屏。全部证据、源 hash、命令与未确认项见[23-tui-acceptance.md](../evidence/23-tui-acceptance.md)，此处不重复。
 - **逐条状态**：
-  - “Agent 完成内容/布局自动检查并准备隔离运行入口、固定业务场景和宽度输出”：**已完成**（`bun scripts/pi-tui-acceptance.ts --widths 120,80,60` → 45 ok / 0 failed；`--interactive` 供人看真 TUI）。
+  - “Agent 完成内容/布局自动检查并准备隔离运行入口、固定业务场景和宽度输出”：**已完成**（`bun scripts/pi-tui-acceptance.ts --widths 120,80,60` → 46 ok / 0 failed；`--interactive` 供人看真 TUI）。
   - “运行真实 TUI，保存可获得截图/录屏，至少覆盖 brief/detail、树、未知/不完整及宽度退化，RPC 不替代 TUI”：**已完成**（真 pi 终端 UI，PTY 内的 TUI 进程；brief/detail × 120/80/60 六帧；`Run: —`/`Run: 0ms`/`?(?)`/无金额行都已覆盖；录屏＝每帧原始 ANSI 流，截图＝单元格渲染的 PNG）。**未覆盖**：POSIX、fullscreen 形态、真实模型请求（本票会话不发请求）。
   - “人类确认前必须完成全功能实现及已分配自动检查；格式、间距、窄宽度与观感由用户确认，未确认不得写为通过”：**人类确认未做**——真终端格式/间距/窄宽度/观感仍是用户判断，本票不代判，也不据此写通过。
   - “不以 22 的人工效率确认作为本票 blocker”：遵守（两处人工判断互不牵连，本票未引用 22 的结论）。

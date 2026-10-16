@@ -14,4 +14,4 @@ modelCost: model-cost: a model response settled with no Turn in flight for its s
  463 pass
  0 fail
  2524 expect() calls
-Ran 463 tests across 40 files. [7.94s]
+Ran 463 tests across 40 files. [7.37s]

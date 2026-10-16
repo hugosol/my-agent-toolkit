@@ -9,7 +9,7 @@
   - `bun test tests/model-cost`（所属分区）
   - `bun run typecheck`
 - **源状态**：分支 `hyper/model-cost-pi-migration/23-tui-acceptance-e6bb1a-411dc288ea83`，起点 `39fdc3d`（本票的 blocker 21 合入本分支后的 tip，其实现提交为 `55290fc`）。改动只有四处，全部新增或一行：
-  - `scripts/pi-tui-acceptance.ts`（新增，`sha1 30266289b7af0b2c8fed1414cafaa15c0db8f4dc`）：隔离入口、两种模式、内容/布局检查与报告；
+  - `scripts/pi-tui-acceptance.ts`（新增，`sha1 bdc7060d22a585c76c5bfbffffb006de1a57fec7`）：隔离入口、两种模式、内容/布局检查与报告；
   - `scripts/support/tui-acceptance-fixture.ts`（新增，`c2e0dcc13da499b3889dc4d64eef364ac3d2c50a`）：固定业务场景、隔离运行准备、真实 TUI 逐帧捕获；
   - `scripts/support/terminal-screen.ts`（新增，`2f0faa25e1e078dcce0c90444d3a21461b18b6d4`）：按终端自己的单元格读回被捕获的帧；
   - `package.json`（1 行：`accept:model-cost-tui`，`e05afde5fe32e3a8b8bc87c902e172db635b493d`，与改动前仅多该行）。
@@ -33,7 +33,7 @@
 $ bun run typecheck                     # tsc --noEmit，无输出，exit 0（日志 logs/23-tui-acceptance-typecheck.log）
 $ bun test tests/model-cost             # 463 pass / 0 fail（40 files, 2524 expect, 7.90s，日志 logs/23-tui-acceptance-partition.log）
 $ bun scripts/pi-tui-acceptance.ts --widths 120,80,60
-                                        # 45 ok / 0 failed，exit 0（日志 logs/23-tui-acceptance-capture.log）
+                                        # 46 ok / 0 failed，exit 0（日志 logs/23-tui-acceptance-capture.log）
 ```
 
 捕获运行的真实宿主事实（`report.json` 的 `source`）：pi 1.2.0 由 `cli.js` 报告、入口与第三方工件都由 pi 自己的 loader 加载（终端里 `[Extensions]` 一行为 `model-cost.ts, pi-subagents`）、终端无 `error:` 行、四类帧（brief/detail × 3 宽度）全部捕获。
