@@ -82,5 +82,15 @@
   （P19）及取消/终态失败（P21）——分别属其他承诺或其他票；本票不含待补分支或永久跳过测试。
 - 仅 Windows x64 + pi 1.2.0 + node v24.18.0；capture endpoint 的读数与余额是该 fixture 自己的文书，不是真实账户事实，
   也未做付费调用。未推断 POSIX、其他版本或其他 provider。
-- 全 dock 分区（`bun test tests/harness-dock`，OMP 真实宿主）在本记录成型时仍在后台运行；其结论不并入本节，
-  由集成/最终集成运行单独记录，本票对其只保留“受影响的共享 dock 支持未回归”的两文件证据。
+- 全 dock 分区（`bun test tests/harness-dock`，OMP 真实宿主）已运行：**45 pass / 12 fail / 57 例 / 23 文件 / 154.06s**。12 例失败全部是**装配前的基线/宿主补丁供给失败**，与本票改动无关，本票改动也没有触及其任一文件
+  （`git diff --name-only 5ad9af7..HEAD` 只列出本票的 11 个实现/测试文件 + 本证据文件）：
+  - 11 例为 `host-patches/omp-18.5.0-{viewed-session,codex-response-boundary}/patch.diff touches no file`
+    （`tests/harness-dock/host-patch-artifact.ts` 在构造 18.5.0 补丁工件时抛错，失败文件
+    `codex-response-artifact`、`combined-host-artifact`、`detail-tree`、`model-cost-codex-quota`、
+    `model-cost-modes`、`model-cost-persistence`、`session-driver`、`viewed-marker`、`viewed-session-host`、
+    `viewed-session-total`、`viewed-session`）；
+  - 1 例为 `baseline.test.ts` 的 `bun.lock` 记录哈希与实际不符（`9e9f4833…` vs `7f5c82e6…`），属基线记录本身与当前锁文件不一致；
+  两者都是既有环境/基线条件（本工作树安装的 OMP 为 18.11.1，而记录基线与补丁面向 18.5.0），当前工作树干净（`git status` 无输出）
+  证明本票未改动 `bun.lock`、`host-patches/` 或 `harness-baseline.json`。
+  与共用 dock 支持直接相关的两个文件（`round-facts.test.ts`、`model-cost-accounting.test.ts`）单独运行 **6 pass / 0 fail**。
+  未对上述 12 例做修复：它们属基线供给与其他票的范围，本记录如实标明“失败”而非并入通过。
