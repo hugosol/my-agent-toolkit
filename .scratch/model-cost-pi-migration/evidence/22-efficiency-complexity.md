@@ -1,0 +1,141 @@
+# 22：效率前后对照与复杂度判断（记录）
+
+**本文件是本票交付的验证记录**：`P51` 的完整 Coverage（S1、S2、S3）与 `P57` 中「P51：禁止的重复工作和健康空闲轮询不新增」一项。本文件不改承诺、不改 seam，也不重复认领其他票的条目。`P51` 的最终判断（"明显额外开销与复杂度是否可接受"）属人类验收者，**本票交付时保持未验收**。
+
+- **入口（可重跑）**：
+  - `bun run baseline:efficiency --out <artifact.json> --label <label>`（S1 公共路径的固定七序列采样；前置 preload 由该脚本自带）
+  - `bun run compare:efficiency -- --before <before.json> --after <after.json> [--out <report.txt>]`（对齐两份工件并按序列/窗口逐项比较，另按两版 revision 统计复杂度）
+  - `bun test tests/harness-dock/efficiency-effects.test.ts`（S2/S3 真实 OMP 宿主的外部效果计数；3 例）
+  - `bun run typecheck`
+  - `OMP_BOT_BINARY=<本机既有 release 构建> bun test tests/harness-dock`（所属分区）
+- **源状态**：分支 `hyper/model-cost-pi-migration/22-efficiency-acceptance-a73e6b-411dc288ea83`，起点 `39fdc3d`（= `pi-adapter` 尖端，含 21 的合入），实现提交 `efb03e0`。改动仅为 `scripts/efficiency-baseline.ts`（并发序列的请求数按其自身时间线陈述 + 读计数前等待该到达）、`scripts/efficiency-comparison.ts`（新增）、`package.json`（新增 `compare:efficiency`）、`tests/harness-dock/support/effect-instrument.ts`（新增）、`tests/harness-dock/efficiency-effects.test.ts`（新增）。**本票无产品代码改动**（`git diff --stat 39fdc3d..efb03e0` 的 5 个文件全在 `scripts/` 与 `tests/harness-dock/` 内；未改 `framework/`、`extensions/`、`entrypoints/`）。
+- **环境**：win32 10.0.26200 / x64 / bun 1.4.2（`bun run typecheck` → tsc 无诊断）；真实宿主为隔离精确安装 OMP 18.5.0（`.cache/omp-baseline/18.5.0`，未打补丁——本票不涉及 viewed-session / codex-response 两个补丁条件）；无 provider 凭据、无付费调用：模型请求与余额查询全部由本机 capture endpoint 回答（`127.0.0.1`）。
+
+## 1. 交付的行为（本票实现）
+
+| 能力 | 落点 | 语义 |
+| --- | --- | --- |
+| 采样入口按自身时间线陈述请求数 | `scripts/efficiency-baseline.ts` | 并发序列把"子代理 Round 结束"的瞬间陈述为一次时钟推进（`CHILD_ACTIVITY_MS`），该瞬间越过条目自己声明的成功 TTL；于是条目把该序列的请求数陈述为「一次启动预取 + 一次已结算请求刷新」，并在读取计数前**等待该到达**（此前是竞态）。序列、采样方法、其他不变量与工件形状不变。 |
+| 可归属的对照入口 | `scripts/efficiency-comparison.ts`（`bun run compare:efficiency`） | 对齐两份采样工件，按序列与测量窗口逐项比较（读取/发布/锁/暂存/元数据/目录/总数、请求、绘制、事件、等待、行数），列出可归属差异与噪声列；复杂度按两版 revision **自身 tree 的 tracked TypeScript 行数**分产品面/证据面统计，并列出逐模块变化。不设阈值、不因差异失败——判断属人类。 |
+| 真实宿主的外部效果记录器 | `tests/harness-dock/support/effect-instrument.ts` | 通过 `BUN_OPTIONS=--preload` 注入真实宿主进程，在宿主自己的模块图之前包裹 `node:fs`、`node:fs/promises`、`node:net` 的成员并记录每次调用，进程退出时把记录写到运行自己指名的文件。未被指名 dump 文件时**完全不动作**；dump 用包裹前捕获的成员写出，自己的写不进入记录。 |
+| 真实宿主效果检查 | `tests/harness-dock/efficiency-effects.test.ts` | 3 例：单会话一轮的存储成本与健康空闲窗口；带一个真实子代理会话时无第二次根查询/无重复根 UI/无本地 IPC；记录器自身的灵敏度对照。 |
+
+## 2. 自动证据（本票分区与真实宿主，实际运行）
+
+| 命令 | 退出 | 结果 | 日志 |
+| --- | --- | --- | --- |
+| `bun run typecheck` | 0 | `tsc --noEmit` 无输出 | — |
+| `bun run baseline:efficiency --out …/22-efficiency-after.json --label post-migration` | 0 | 七条序列全部不变量成立（`every invariant held.`）；工件 `../evidence/22-efficiency-after.json` | `logs/22-baseline-post-migration.log` |
+| `bun run compare:efficiency -- --before 01-… --after 22-… --out …` | 0 | 对照报告（下表 §3/§4） | `logs/22-efficiency-comparison.txt`、`logs/22-efficiency-comparison-console.log` |
+| `bun test tests/harness-dock/efficiency-effects.test.ts` | 0 | **3 pass / 0 fail**，21 expect() | `logs/22-dock-effects-post.log` |
+| 同上、在 59a0ed7 工作树（迁移前） | 0 | **3 pass / 0 fail**，21 expect() | `logs/22-dock-effects-pre-migration.log` |
+| 故障注入：宿主内多一个 500ms 读盘轮询（临时、未提交） | 1 | 该例按预期失败：`consumptionReads 2 → 12`、空闲窗口 6 次读 | `logs/22-dock-effects-injected-poll.log` |
+| 对照 A/B：条目时间线不动（去掉时钟推进） | 1 | 并发序列 `requests=1`（原不变量按预期失败），文件成本各列不变 | `logs/22-ab-no-clock-advance.log` |
+| 对照 A/B：TTL 抬到 1e9ms（时钟推进保留） | 1 | 并发序列 `requests=1` | `logs/22-ab-huge-ttl.log` |
+| `OMP_BOT_BINARY=<本机既有构建> bun test tests/harness-dock`（所属分区，真实宿主） | 0 | **93 pass / 0 fail**，1121 expect()，26 文件 / 280.4s（含本票新增 3 例；21 时代同分区为 90 pass，90+3=93） | `logs/22-partition-harness-dock.log` |
+| `bun test tests/model-cost`（共同路径消费者） | 0 | 463 pass / 0 fail，2524 expect() | `logs/22-partition-model-cost.log` |
+| `bun test tests/framework`（共同路径消费者） | 0 | 481 pass / 0 fail，2250 expect() | `logs/22-partition-framework.log` |
+
+**运行环境的两处说明（都不是本票改动）**：
+
+1. 本工作树 `core.autocrlf=true`，`bun.lock` 与两个 `host-patches/*/patch.diff` 在检出时被写成 CRLF，导致 12 个 dock 基线/补丁用例按"patch touches no file"失败。按 21 的做法把三份文件还原成**已提交 blob 的 LF 字节**（`git cat-file blob HEAD:<path>` 重写，sha256 与 blob 逐一相等）后，同一分区 93 pass / 0 fail。三个文件在工作树里与 HEAD 无内容差异（`git diff --stat` 无输出）。
+2. 分区运行期间未改动被测源码或 fixture：源码改动只有本票自己的 `scripts/*` 与 `tests/harness-dock/*` 文件（分区运行前已提交）；运行期间只做只读诊断与文档写作。对照报告与迁移后工件测得的是实现提交 `efb03e0`；其后 `6802bef` 只把对照入口的「文件总数」列从可比差异移入噪声段并加一行口径说明（`scripts/efficiency-comparison.ts`，属证据面 `scripts` family，不影响任何被测路径与上表分区结果）。
+
+`bun run baseline:efficiency` 的采样路径是生产公共路径（真实 `definition` + `createModelCostRuntime` + 框架公共绑定 + 生产前端组合），七条序列的期望值来自手算金额与独立字面量；本票只改其中一个不变量的**陈述口径**与到达等待，未改任何期望的独立来源。
+
+## 3. `P51` 前后对照：固定序列成本（S1）
+
+对照报告 `logs/22-efficiency-comparison.txt` 逐序列、逐窗口给出 before/after。**七条序列的窗口级文件成本全部相同**（读取、发布、锁、暂存、元数据、目录、其他）：
+
+```
+sequence / window                  reads  publishes  locks  staging  metadata  dirs  other
+main-request / initialization        2/2        0/0    0/0      0/0       0/0   1/1    0/0
+main-request / request               1/1        1/1    7/7      2/2       1/1   0/0    0/0
+multi-turn / turns                   0/0        0/0    0/0      0/0       0/0   0/0    0/0     ← 逐事件零读盘
+multi-turn / commit                  1/1        1/1    7/7      2/2       1/1   0/0    0/0
+main-child-concurrency / whole       6/6        4/4  28/28      8/8       4/4   1/1    0/0
+save-onto-shared-document / whole    3/3        1/1    7/7      2/2       1/1   1/1    0/0
+read-only-refresh / refresh          0/0        0/0    0/0      0/0       0/0   0/0    0/0     ← 只读刷新零文件、零请求
+healthy-idle / idle                  0/0        0/0    0/0      0/0       0/0   0/0    0/0     ← 3s 健康空闲零效果
+disposal / disposal                  0/0        0/0    0/0      0/0       0/0   0/0    0/0
+disposal / afterDisposal             0/0        0/0    0/0      0/0       0/0   0/0    0/0     ← 处置后（含迟到请求）零效果
+```
+
+**可归属差异（仅并发序列）**：
+
+（注：本票提交的对照报告 `logs/22-efficiency-comparison.txt` 由 `efb03e0` 版本的对照入口生成，因此把 `file total` 一并列在"可比差异"里；口径修正 `6802bef` 后该列改列于噪声段并附原因说明，上表数值不变。）
+
+| 差异 | 数值 | 原因（可归属） |
+| --- | --- | --- |
+| `requests` | 1 → 2（两条都是 `/user/balance`） | 条目自身的时间线：该序列把子代理 Round 结束陈述为 `clock = T0 + 360000ms`（ticket 11 / P24 的"按 Round 区间累计耗时"落地后，宿主不再声明耗时读数，只能按时钟推进），越过条目自己声明的 `balanceTtlMs=30000`；于是第一个在该瞬间之后结算的计价 Turn 触发**一次**已结算请求刷新（`provider-balance.ts` 的共享规则，非轮询）。归属证据：`provider-balance.ts` / `provider-refresh.ts` 在 `59a0ed7..efb03e0` **无任何改动**（`git diff --stat 59a0ed7 HEAD -- extensions/model-cost/` 不含这两个文件）；时间线不动时 `requests=1`（`logs/22-ab-no-clock-advance.log`）；TTL 抬到 1e9ms 时 `requests=1`（`logs/22-ab-huge-ttl.log`）。 |
+| `draws` | 30 → 33 | 其中 +1 伴随上面那次刷新的结果变更通知（同一运行里 `requests=1` 时 draws=32）；另 +2 在同一时间线与同一请求数下出现，机制可归属到 P24 的落地：`request-accounting.ts` 的 round_end 为 `kind === "sub"` 新增一次 `announce()`（每个子代理 Round 结束一次；该序列有 3 个子会话 Round 结束，与提交渲染部分合并）。**每渲染级归因未做**，见 §6。 |
+| `events` | 24 → 23 | 采样器的交付组合变化：`subagent_runtime` 读数交付随 P24 移除（1 次），其余交付计数相同（对照报告 "semantic deliveries" 段）。 |
+| `file total` | 51 → 53 | **噪声列驱动**：该列把结算失败的调用也计入（本次并发序列多了 2 次被平台拒绝的发布 rename 重试），失败列本身已被 01 声明为重复运行就波动的项。成功计数（读/发布/锁/暂存/元数据/请求/绘制/事件）逐个相同。 |
+
+噪声列（对照报告单独列出，不比较）：`failed by operation`、各序列 `wall clock ms`。01 声明这两个量在同一源状态的重复运行间波动，本次观察一致（如 `ms` 16 → 71 属并发序列的负载噪声）。
+
+## 4. `P51` 复杂度对照（两版 tree 自身的 tracked TypeScript 行数）
+
+| 面 | before (59a0ed7) | after (efb03e0) | 差 |
+| --- | --- | --- | --- |
+| **产品面**（framework + extensions + entrypoints） | **19287** | **23772** | **+4485（+23%）** |
+| 证据面（tests + scripts，非产品代码） | 54806 | 79994 | +25188 |
+
+产品面分层：`extensions/model-cost` 8537 → 10326（+1789，业务 + 接线）、`framework/adapters` 2571 → 3889（+1318，pi 适配器新增/`omp/subagents.ts` 移除）、`framework/modules` 1264 → 2244（+980，新增 `local-access.ts` 本机接入）、`framework/core` 2949 → 3248（+299）、`framework/behaviors` 2070 → 2142（+72）、`framework` 顶层 161 → 158、`entrypoints` 37 → 46、`extensions/{connect-bot,codebase-tools}` 1698 → 1719。
+
+逐模块（对照报告完整列出 36 个产品模块）：最大新增为 `extensions/model-cost/harnesses/pi/widget.ts` 1053（pi 专有绘制接线）、`framework/modules/local-access.ts` 980（本机接入 + 所有权读取）、`framework/adapters/pi.ts` +572、`framework/adapters/pi/nicobailon.ts` 556（第三方接线集中处）、`extensions/model-cost/harnesses/pi.ts` 277；最大移除为 `framework/adapters/omp/subagents.ts` −399（被统一路径替代）与 `harnesses/omp/boundary-timer.ts` −146（移为两端共用）。业务公共逻辑本身 `extensions/model-cost/shared-logic` 增量为 +452（runtime +201、consumption-store +158、其余为小量），其中相当部分是本迁移要求的跨 harness 汇总/合并提交能力。
+
+说明：`scripts/efficiency-baseline.ts` 在 before 列显示 `-`，因为该工件当时是**未提交**的新文件（01 记录里列在未提交路径中），git 的 revision tree 里不存在——这是测量口径，不是删除。
+
+## 5. 真实宿主外部效果计数（S2、S3；`P57` 的 P51 项）
+
+记录器在**宿主进程内**观看效果，测试在**进程外**读它的 dump（§1）；对照例证明记录器真的记录（同一预载下，一个已知读文件并建监听端点的子进程出现在 dump 中：`readFileSync` + `net.createServer` + `net.connect`）。两个真实宿主例的观察（before = 同一测试文件在 59a0ed7 工作树运行）：
+
+| 观察面 | 单会话一轮（before → after） | 主子会话（before → after） | 断言/来源 |
+| --- | --- | --- | --- |
+| 存储根文件操作 | 13 → 13（明细逐条相同：建根、初始化读消费文档与 Codex 估计、建锁暂存、写锁条目、发布 rename（锁）、读消费文档（锁内）、写发布暂存、发布 rename（文档）、两处 staging 清理、realpath） | — | `consumption.json` 读 = 2、`codex-usage-estimate.json` 读 = 1、`consumption.json` 发布 = 1（= 01 冻结记录里 initialization（读 2）与 request（读 1 + 发布 1）两窗的每轮成本） |
+| 健康空闲窗口（3s，真实墙钟） | 0 → 0（**整个宿主进程零文件、零网络、零 provider 到达、零新绘制**） | 0 → 0 | 窗口按自身两个时间界断言，不靠"等够了" |
+| provider 到达 | `["balance","model"]` → 同 | `["balance","model","model","model"]` → 同 | 整进程**恰好一次**余额预取（含子代理请求）；子代理不触发第二次根查询/预取 |
+| widget 绘制帧 | 10 → 10 | 33 → 18 | 帧数差异见下；两次运行都只由根会话产生（无第二次挂载） |
+| 本地 IPC | `net.createServer` = 0、无 `my-agent-toolkit-access` 目标 | 同 | OMP 同进程未开任何监听端点、未触达本机接入管道（`framework/modules/local-access.ts` 的发布方只属 pi 适配器） |
+| 进程内总效果数 | 2294 → 2295 | 2688 → 2689 | 差异为**模块加载期**的 `realpath` 解析（before `subagents.ts`；after `followed-owners.ts` + `local-access.ts`），一次性、非逐事件、不落存储根 |
+
+- **未新增的重复工作与轮询**：并发准备/预取仍是每进程一次（含子代理在侧），健康空闲在两个形态下都是零效果，OMP 同进程无 IPC——before/after 逐项相同（上表）。
+- **差异**：主子会话例的 widget 绘制 33 → 18（变少），单会话例 10 → 10；该量是前端渲染次数（纯展示工作，不涉请求/落盘/IPC），其变化属显示通知次数，**未逐步归因**（见 §6）。
+- **灵敏度**：把宿主内的空闲轮询（临时注入，未提交）加进来后，`consumptionReads` 立刻 2 → 12、空闲窗口出现 6 次读，该例失败；移除注入后同一条目恢复 3 pass（`logs/22-dock-effects-injected-poll.log`）。即"零"不是看不见，而是真的没有。
+- **记录器自身的对照**（同一文件的第 3 例）证明"零"不是"没装上预载"：dump 缺失会被该文件的 `recordedEffects` 明确报错而不是读成零。
+
+## 6. 未覆盖 / 限制
+
+- **人类验收未完成**：`P51` 的最终判断（"明显额外开销与复杂度是否可接受"）属人类验收者，本票只准备材料，**不标为通过**；`P52`（真实终端观感）、`P53`（真实账户侧核对）不在本票范围。
+- **不预设百分比**：报告与本文只陈述可归属的差值与成本，任何"可接受"判断留给人类；`compare:efficiency` 不因差异失败。
+- **未逐步归因的项**：(a) 并发序列 draws 的 +2（机制可归属到 P24 新增的每子代理 Round 结束 `announce()`，但未定位到具体哪几次渲染被合并）；(b) 主子会话例 widget 绘制 33 → 18。两者都只涉及前端渲染次数。
+- **只覆盖 OMP 侧的"同进程无 IPC"**：pi 的本机接入（管道发布/连接）按其设计存在，其行为由 P14/P16/P42/P56 的分区与真实 pi 冒烟覆盖；本票的记录器只注入 OMP dock 的宿主进程，未对 pi 宿主做同样的外部效果计数。
+- **S1 采样不覆盖宿主原生半边**：OMP adapter 的原生事实映射、宿主自己的会话 JSONL/日志、真实终端绘制仍不可比（01 的 `notComparableScenarios` 原样保留）；本票用真实 OMP 宿主覆盖了其中的存储/请求/IPC/空闲部分，但不覆盖真实终端绘制与真实 provider 账户。
+- **范围限制**：全部证据仅覆盖 win32/x64、bun 1.4.2、隔离 OMP 18.5.0（未打补丁）、以及指向本机 capture endpoint 的 shipped DeepSeek provider；不推广到其他版本、POSIX、跨用户或真实账户。
+- **迁移前 dock 对照的构造**：before 侧是把本票新增的测试文件与记录器复制进 `59a0ed7` 工作树后运行（该文件当时不存在）；两侧使用同一份测试文件与同一份 OMP 18.5.0 安装版本，故计数可比。after 侧表内 `ms`/失败列等噪声项不参与比较。
+
+## 7. 复现步骤（本票实际执行）
+
+```sh
+# S1：迁移前基线（冻结工件，01 已交付）与迁移后重跑
+bun run baseline:efficiency --out .scratch/model-cost-pi-migration/evidence/22-efficiency-after.json --label post-migration
+
+# S1：可归属对照（逐序列/窗口 + 复杂度）
+bun run compare:efficiency -- \
+  --before .scratch/model-cost-pi-migration/evidence/01-efficiency-baseline.json \
+  --after  .scratch/model-cost-pi-migration/evidence/22-efficiency-after.json \
+  --out    .scratch/model-cost-pi-migration/evidence/logs/22-efficiency-comparison.txt
+
+# S2/S3：真实 OMP 宿主的外部效果计数（首次运行会先物化隔离安装）
+bun test tests/harness-dock/efficiency-effects.test.ts
+
+# 归属 A/B（临时改副本，跑完即弃；日志见 logs/22-ab-*.log）
+#   (a) 去掉并发序列的时钟推进           → requests=1
+#   (b) 把 balanceTtlMs 抬到 1e9ms        → requests=1
+
+# 所属分区（真实宿主，串行；运行期间源码与 fixture 未变）
+OMP_BOT_BINARY="E:/Developer/myhub/omp-bot/backend/target/release/omp-bot.exe" bun test tests/harness-dock
+```
+
+**交给人类验收者的材料**：`22-efficiency-after.json`（迁移后工件）、`logs/22-efficiency-comparison.txt`（对照表）、§3/§4 的差异与复杂度摘要、§5 的真实宿主外部效果计数。判断项：统一路径是否带来**明显额外开销**（本票观察到的可比成本差异只有并发序列的一次已结算请求刷新与前端渲染次数）以及**显著复杂度增加**（产品面 +4485 行 / +23%，其中 pi 接线与适配器是新增能力自身）。
