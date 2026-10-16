@@ -279,16 +279,6 @@ export function createModelCostRuntime(inputs: ModelCostRuntimeInputs): ModelCos
 	// reading and the Codex windows alike. A Turn's end is not one of them — that instant is the
 	// framework's own fact, stated by the Turn's own delivery — so the clock is not read for it.
 	const now = inputs.now ?? Date.now;
-	// The accounting's own clock is what timestamps a user input, the one Session span fact the
-	// harness publishes with no instant of its own. The span's other fact is a Turn's own settle
-	// instant, which the Turn's own end delivery carries.
-	const accounting = createRequestAccounting({ data, harness: inputs.harness, storage, now });
-
-	// The entry's own display preference: `/budget detail` flips it, and the flip announces the change
-	// through the one notification every reader of this extension's read-only result already holds, so
-	// a frontend redraws the form the entry is now in without a channel of its own.
-	const display = createDisplayPreference({ onChange: () => accounting.announceChanged() });
-
 	// The per-session context readings are the framework's own, not this extension's: the adapter
 	// collects a session's context where its host moves one, records the model it was collected on
 	// beside the count, and this instance reads what was recorded — including the readings collected
@@ -296,7 +286,22 @@ export function createModelCostRuntime(inputs: ModelCostRuntimeInputs): ModelCos
 	// than a blank. What `sessionContext` is, then, is the narrow read the display was written
 	// against: the same source, answering one session's context alone. Nothing is copied here, and
 	// nothing is written to the storage root.
+	//
+	// It is built before the accounting because the accounting reads the same record for the identity
+	// of a session it holds no delivery of its own about — a session another process ran is registered
+	// there by the readings that process delivered — so the sessions this instance can name and the
+	// readings it can show come from one record rather than two.
 	const sessionObservations = inputs.sessionObservations ?? new SessionObservations();
+	// The accounting's own clock is what timestamps a user input, the one Session span fact the
+	// harness publishes with no instant of its own. The span's other fact is a Turn's own settle
+	// instant, which the Turn's own end delivery carries.
+	const accounting = createRequestAccounting({ data, harness: inputs.harness, storage, now, registrations: sessionObservations });
+
+	// The entry's own display preference: `/budget detail` flips it, and the flip announces the change
+	// through the one notification every reader of this extension's read-only result already holds, so
+	// a frontend redraws the form the entry is now in without a channel of its own.
+	const display = createDisplayPreference({ onChange: () => accounting.announceChanged() });
+
 	const sessionContext: SessionContextReading = {
 		read: sessionId => sessionObservations.read(sessionId)?.context,
 	};

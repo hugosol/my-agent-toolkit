@@ -366,6 +366,17 @@ export interface PortDoubleOptions {
 	 * processes over.
 	 */
 	readonly observationsAcrossProcesses?: boolean;
+	/**
+	 * The access this double's harness really carries, when a suite drives the framework's own side of
+	 * that boundary over the carrier itself rather than over the record above.
+	 *
+	 * It is stated whole, so the suite builds the halves it needs — the serving half a case's own
+	 * process offers, and whatever reads it — from the framework's own modules; a suite that states it
+	 * states no {@link observationsAcrossProcesses}, and the port hands over exactly this object. What
+	 * it is for is a case whose *carrier* is part of the thing under test: a reading that really crossed
+	 * a process boundary, delivered by a process that really runs one.
+	 */
+	readonly observationAccess?: SessionObservationAccess;
 }
 
 export function portDouble(options: PortDoubleOptions = {}): PortDouble {
@@ -401,7 +412,8 @@ export function portDouble(options: PortDoubleOptions = {}): PortDouble {
 	/** Where each owner's admitted readings are handed, as the serving end of the access holds them. */
 	const receivingSinks = new Map<string, (reading: ObservedSession) => void>();
 	const observationAccess: SessionObservationAccess | undefined =
-		options.observationsAcrossProcesses !== true
+		options.observationAccess ??
+		(options.observationsAcrossProcesses !== true
 			? undefined
 			: {
 					receive: (owner, sink) => {
@@ -411,7 +423,7 @@ export function portDouble(options: PortDoubleOptions = {}): PortDouble {
 						};
 					},
 					deliver: reading => void deliveredObservations.push(reading),
-				};
+				});
 
 	const commandUnder = (name: string): BoundCommand => {
 		const command = commands.find(candidate => candidate.name === name);

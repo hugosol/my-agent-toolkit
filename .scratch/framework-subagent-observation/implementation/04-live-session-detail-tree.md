@@ -16,3 +16,29 @@
 - [ ] 已保存与实时登记按实际会话身份合并，直接父关系与现有自身／含后代消费口径不被观察交付方向改变。
 - [ ] 不为未提交身份新增持久化或消费 schema 迁移；观察值不落入消费文档。
 - [ ] 按仓库测试规范验证树合并、身份边界及真实嵌套／续跑场景，执行所属分区和受影响展示消费者；TypeScript 变化执行 typecheck，记录实际表面及进程证据。
+
+## Comments
+
+### 2026-10-17 执行记录（P2、P3、P9）
+
+实现与证据见 [证据文件](evidence/04-live-session-detail-tree-evidence-2026-10-17.md) 与
+[真机日志](evidence/logs/04-pi-subagent-smoke-background.log)。要点：
+
+- S1：`request-accounting.ts` 的身份来源接受 framework 的进程观察源（新窄接口 `SessionObservationSource`），
+  `factsOf` 以该记录的事实为优先（它由本进程每次会话交付与另一进程每条读数共同更新，包括只带事实、不带读数的
+  那一条），`identities()` 与 `inclusiveTotalsOf` 都据此把"已保存会话 ∪ 本进程观察到的登记会话"按实际会话
+  身份合并；`runtime.ts` 在构建 accounting 前建立并传入同一个源。
+- S3：`tests/model-cost/detail-tree-live-sessions.test.ts`（6 例，含真实前端绘制的 detail 行）钉住 P2 的三级
+  树与直接父关系、P3 的一会话一行与同名不同会话两行、P9 的"提交前行 + 给定非零上下文 + 缺失消费不写零"；
+  `tests/model-cost/detail-tree-process-sources.test.ts`（1 例）用两个真实子进程经真 named pipe 交付子／孙读数，
+  断言真前端画出的三级 detail 行（S2 载体 + S3 表面）。
+- 判定：`bun run typecheck` exit 0；`bun test tests/model-cost` **473 pass / 0 fail**（+7 新例）；
+  `bun test tests/framework` **538 pass / 0 fail**；真 patched OMP host 的 `tests/harness-dock/detail-tree.test.ts`
+  **3 pass / 0 fail**、`tests/harness-dock/session-ownership-tree.test.ts` **3 pass / 0 fail**；六处变异注入
+  各自被对应用例捕获后还原。
+- 真机：`bun scripts/pi-subagent-smoke.ts --background-only --expect-pi-version 1.3.0` 本票运行（55.6s）：
+  登记、身份与观察源三条断言与票据 03 记录一致地通过，其后仍停在同一处既有失败（子进程自身消费未落盘，
+  P27／票据 05）。
+- 未验证：POSIX 载体与其他宿主版本；真 pi CLI 跑出孙会话（后台阶段停在同一处既有 P27 失败）；只带事实的登记
+  会话要等宿主下一次重绘才出现在画面上（框架不派发该事件，本票不改派发）。
+
