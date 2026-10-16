@@ -1031,6 +1031,10 @@ function ompPort(
  * verification input, and a binding performs no harness-version or capability-shape check.
  */
 export function ompAdapter(definition: ExtensionDefinition, options: ExtensionAssembly = {}): OmpExtensionFactory {
+	// Every session this harness runs — a subagent's included — is a binding in this process, so an
+	// owner's declared values are always read here and the store is built with no local access: no
+	// endpoint is bound and no location record is published. A harness that can run a session in
+	// another process is the one that supplies one (see `piAdapter`).
 	const state = new StateStore({
 		field: activationField(definition),
 		persistence: statePersistence(definition),

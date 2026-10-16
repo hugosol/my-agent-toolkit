@@ -235,6 +235,14 @@ export function boundPiSurface(
 		readonly catalog?: (context: ImplementationContext) => CatalogPriceSource | undefined;
 		/** The child entry this assembly requires in spawned sessions; absent models one that declares none. */
 		readonly childEntry?: string;
+		/**
+		 * The definition this assembly binds; {@link PI_SURFACE_PROBE} when absent.
+		 *
+		 * A case states one when the declaration itself is the thing under test — an extension that
+		 * declares State inheritance, for instance — because what the adapter does with a delivery
+		 * is a reading of that declaration.
+		 */
+		readonly definition?: ExtensionDefinition;
 	} = {},
 ): PiSurface {
 	const handlers = new Map<string, Array<(event: unknown, ctx: PiExtensionContext) => unknown>>();
@@ -357,7 +365,7 @@ export function boundPiSurface(
 		},
 	} as unknown as PiExtensionApi;
 
-	const factory = piAdapter(PI_SURFACE_PROBE, {
+	const factory = piAdapter(options.definition ?? PI_SURFACE_PROBE, {
 		...(options.childEntry === undefined ? {} : { childEntry: options.childEntry }),
 		factory: context => {
 			implementationContext = context;

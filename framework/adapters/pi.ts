@@ -8,7 +8,7 @@
 import { bindExtension } from "../behaviors/binding";
 import { isImplementationDisposed } from "../behaviors/lifecycle";
 import type { ExtensionAssembly, ExtensionImplementation, ImplementationContext } from "../core/assembly";
-import { activationField, statePersistence } from "../core/definition";
+import { activationField, stateInheritance, statePersistence } from "../core/definition";
 import type { ExtensionDefinition } from "../core/definition";
 import type {
 	BindingResult, CatalogPrice, CatalogPriceSource, FeedbackLevel, FeedbackTransport, HarnessPort,
@@ -16,6 +16,7 @@ import type {
 	SessionFacts, SessionStartReason, SessionStartup, TurnSignalFacts, UserInputDelivery,
 } from "../core/protocol";
 import { StateStore } from "../core/state";
+import { createOwnerAccessPublisher } from "../modules/local-access";
 import { observeRounds } from "./pi/round";
 import { createPiSubagentIntegration, type PiSubagentIntegration } from "./pi/nicobailon";
 import {
@@ -653,7 +654,9 @@ function piPort(
  * discovery entrypoint re-exports. A harness that spawns child sessions loads extensions into them
  * by path, so requiring this entry in those sessions is what makes a spawned session's own facts
  * reach consumers; an assembly that states no entry declares no child observation to require, which
- * is the same shape as a host that runs no subagent provider.
+ * is the same shape as a host that runs no subagent provider. It also states that this host can run
+ * a session of this extension outside this process, which is what the framework's local access is
+ * for; see `piAdapter`.
  */
 export interface PiAssembly extends ExtensionAssembly {
 	readonly childEntry?: string;
@@ -661,7 +664,23 @@ export interface PiAssembly extends ExtensionAssembly {
 
 /** Uses the same binding and assembly contract as the OMP adapter. */
 export function piAdapter(definition: ExtensionDefinition, options: PiAssembly = {}): PiExtensionFactory {
-	const state = new StateStore({ field: activationField(definition), persistence: statePersistence(definition) });
+	// The owners this process serves are readable from a session pi ran elsewhere, which is the one
+	// thing a subagent provider that spawns `childEntry` out of process needs to follow a declared
+	// value. Two things have to hold for that access to be offered: this assembly states an entry
+	// (so this host spawns sessions at all — a host whose sessions are all bindings here states
+	// none), and the extension declares `follow` (so a subagent reads its owner's value rather than
+	// the declared default). Built here for the process, because the endpoint is the process's;
+	// building it does nothing, and the first owner session that needs it is what offers one.
+	const localAccess = options.childEntry === undefined || stateInheritance(definition) !== "follow"
+		? undefined
+		: createOwnerAccessPublisher({
+				report: message => process.stderr.write(`${definition.displayName}: ${message}\n`),
+			});
+	const state = new StateStore({
+		field: activationField(definition),
+		persistence: statePersistence(definition),
+		...(localAccess === undefined ? {} : { localAccess: { extension: definition.id, publisher: localAccess } }),
+	});
 	// pi's own model prices, one set for the whole process: every binding of this assembly records the
 	// registry of the contexts its own deliveries come from, and the query the framework hands an
 	// extension's factory answers from the newest of them. It lives here rather than in a port because

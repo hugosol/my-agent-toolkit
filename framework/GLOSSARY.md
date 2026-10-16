@@ -76,6 +76,22 @@ _Avoid_: streaming, native agent run, waiting for new input
 The agent activity state in which no current activity or pending automatic continuation remains and the agent awaits new input. It does not establish that any particular Round end has been observed, and unavailable observations do not establish idleness.
 _Avoid_: completed user goal, observed Round completion, offline, unknown
 
+**Runtime directory（运行目录）**:
+The one directory the framework's own runtime files live in, stated explicitly as the shared configuration file's `runtimeDir`; a relative value is resolved against that file's own directory. It holds the location records a process publishes for its local access, and a POSIX socket file is governed by it. It is separate from an extension's storage root, and no temporary directory, working directory or storage root stands in for it.
+_Avoid_: storage root, storageDir, temp directory fallback, working directory
+
+**Local access（本机接入）**:
+The framework-managed way one process offers the declared values of an owner it serves to a session the harness runs in another process: one endpoint per serving process, reached by the location record it publishes, over a Windows named pipe or a POSIX local socket. It carries declared values and their changes only — a declared read is answered on demand and a change is pushed one way — and it is not an RPC surface, a remote State write, or an extension's own transport. A session read in the process that serves the seat uses no endpoint at all.
+_Avoid_: RPC, remote procedure call, message channel through business documents, file queue, directory scan
+
+**Access target（接入目标）**:
+The seat one access serves: the extension whose declared values it carries and the owner they belong to. Both halves name it because an owner key alone is not unique across extensions, and both ends check the whole target — with that access's own verification — before anything crosses, so a stale record, an old endpoint or another seat's record is refused rather than followed.
+_Avoid_: session id alone, process id, owner key alone, endpoint address
+
+**Access location（接入定位）**:
+The record that says where one access is: the target, the endpoint, that access's own verification and the publishing process's id, published under the runtime directory and holding nothing the access carries. Its endpoint and process id are recorded as information — never as proof that an owner lives — and it is released with the access's own life.
+_Avoid_: State value, business data, liveness proof, connection state
+
 ### Facts and measurement semantics
 
 **Unknown（未知）**:
