@@ -24,9 +24,10 @@
  *   2. **The child's record states the real direct parent**, as the provider's own launch metadata and
  *      the child session's own file agree on it;
  *   3. **The tree a later process draws holds that child and nothing else.** A second pi process
- *      resumes the root session from the same run root, reads the shared document and draws the detail
- *      tree: the child's own row is there at one step of indentation, with its own consumption, and
- *      reading it writes nothing, asks the model for nothing and adds no consumption.
+ *      resumes the root session from the same run root, loads the same provider beside the extension
+ *      (the detail form is the one an integrated entry draws), reads the shared document and draws the
+ *      detail tree: the child's own row is there at one step of indentation, with its own consumption,
+ *      and reading it writes nothing, asks the model for nothing and adds no consumption.
  *
  * The amounts are this script's own arithmetic on the maintained data's flash prices and the usage the
  * endpoint reported: one reading of `{input 1000, output 200, cacheRead 0, cacheWrite 0}` costs
@@ -614,7 +615,10 @@ async function phaseResumedTree(
 	const requestsBefore = completionRequests(dock.run.capture.requests()).length;
 	const rootOwn = recordOf(readDocument(dock.home.consumptionFile), rootId)?.own;
 
-	const extended = await openSession(dock, [CONFIG_ENTRYPOINT], ["--session", rootFile]);
+	// The provider is loaded in this process too, as it is in the first one: `/budget detail` draws the
+	// sessions this entry observed as descendants, so the entry offers that form once a provider is
+	// really there — an entry whose integration is the no-subagent shape answers the notice instead.
+	const extended = await openSession(dock, [CONFIG_ENTRYPOINT, PROVIDER_ENTRY], ["--session", rootFile]);
 	const resumedFile = await extended.sessionFile();
 	observe(
 		"the second process runs the very session the first one left",

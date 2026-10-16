@@ -47,3 +47,17 @@ export function displayFormNotice(form: DisplayForm): string {
 		? "展示已切换为详细（detail）：保留顶部 Total，并在 Round 位置显示静态代理树。"
 		: "展示已切换为简略（brief）：显示 Total 与 Round。";
 }
+
+/**
+ * What one `/budget detail` answers on an entry whose subagent integration settled as the no-subagent
+ * mode.
+ *
+ * The detail form is the listing of the sessions this entry observed as its main session's
+ * descendants, so an entry that integrated no such observations has no form to offer: the action says
+ * so and returns rather than moving a preference no frontend would draw differently. It is a refusal
+ * of the same kind as the period actions' own conditions, and it is reported at the severity one of
+ * those is.
+ */
+export function displayFormUnavailableNotice(): string {
+	return "/budget detail 未执行：本次入口为无子代理模式，未接入子代理观察，没有可展示的代理树；展示保持简略（brief）。";
+}

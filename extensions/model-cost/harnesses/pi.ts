@@ -14,6 +14,13 @@
  * the default export below is this module's own repository. Nothing else differs between deployments:
  * the same definition, the same runtime and the same frontend are bound either way.
  *
+ * The one further harness fact this assembly states is its entry's subagent integration, which the
+ * framework settles once per process and hands over at the entry's initialization node. It declares
+ * the entry a spawned session loads (`childEntry`), so the answer is this assembly's own to record
+ * and shared logic reads it from there: `/budget detail` draws the descendants the entry observed, so
+ * an entry that settled as the no-subagent mode answers a notice instead of switching a form it has
+ * nothing to draw in. The OMP assembly states none, because every entry it binds is integrated.
+ *
  * The supported harness version is not this assembly's to declare: version support belongs to the
  * framework's own Supported harness baseline, and this assembly names only what its extension needs. A
  * binding the harness refuses has already reported why on the non-model channel, and this session then
@@ -23,7 +30,7 @@ import { homedir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { type PiExtensionApi, piAdapter } from "../../../framework/adapters/pi";
-import type { ExtensionImplementation } from "../../../framework/public";
+import type { ExtensionImplementation, SubagentIntegration } from "../../../framework/public";
 import { MODEL_COST } from "../definition";
 import { type ModelCostRuntime, createModelCostRuntime } from "../shared-logic/runtime";
 import { attachModelCostWidget } from "./pi/widget";
@@ -86,11 +93,19 @@ export function modelCostPiHarness(repositoryRoot: string): (pi: PiExtensionApi)
 		// request's price, observes this session's Turns and Rounds, and saves the session's own
 		// consumption at its Round's end. The factory runs at most once per process, on the first binding.
 		factory: context => {
+			/**
+			 * The one answer the framework settles about this entry's subagent integration, recorded
+			 * where the framework hands it over — this entry's initialization node — and read by shared
+			 * logic through the input below. Before that initialization settles, no answer exists and
+			 * `/budget detail` is exactly what the extension delivers.
+			 */
+			let subagentIntegrationMode: SubagentIntegration["mode"] | undefined;
 			const built = createModelCostRuntime({
 				config: context.config,
 				configDirectory,
 				userHomeDirectory: homedir(),
 				harness: MODEL_COST_HARNESS,
+				subagentIntegrationMode: () => subagentIntegrationMode,
 				// The harness's own model prices, as the framework mapped them from pi's catalog: the
 				// extension's single price catalog composes them after its maintained data, which is what
 				// makes the allowance channel's own price a real request-time fact on this host.
@@ -107,8 +122,17 @@ export function modelCostPiHarness(repositoryRoot: string): (pi: PiExtensionApi)
 			// this extension from naming a native shutdown event of its own, which it may not. The
 			// implementation's own cleanup still runs, and after the frontend's release.
 			const cleanup = built.implementation.cleanup;
+			const initialize = built.implementation.initialize;
 			const implementation: ExtensionImplementation = {
 				...built.implementation,
+				// The framework hands this entry's one settled subagent answer over at this node, so it is
+				// recorded here — the entry the provider loads into spawned sessions is required by this
+				// same assembly, and whether that reached a provider is what `/budget detail` is offered
+				// under. The entry's own initialization still runs, with the same delivery.
+				initialize: async delivery => {
+					subagentIntegrationMode = delivery.subagents.mode;
+					await initialize?.(delivery);
+				},
 				cleanup: () => {
 					releaseFrontend?.();
 					releaseFrontend = undefined;

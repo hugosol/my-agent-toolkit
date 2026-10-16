@@ -31,6 +31,12 @@ what a real TUI draws are human-only, and nothing in this repository claims eith
   progress supplies its full execution duration; no synthetic `0ms` or public ready event is added.
   Existing cumulative runtime is retained. Invalid readings after readiness and unresolved terminal
   executions remain errors rather than being silently discarded.
+- `/budget detail` is offered to an entry whose subagent integration took — the OMP entry always is.
+  An entry that settled as the no-subagent mode has no descendants of its own to list, so its
+  `/budget detail` answers that it was not executed and leaves the preference where it was; every
+  other `/budget` action is unaffected. The condition is that settled integration mode, checked when
+  the operator invokes the command, and never the provider, the entry's activity or how many subagent
+  records exist.
 - `/budget detail` combines each child's startup snapshot as `provider/model(effort)`, for example
   `deepseek/deepseek-flash(high)`, without `Model:` or `Effort:` labels. Unknown facts remain `?` and
   a reported `off` remains `off`. Same-depth rows retain aligned columns; model abbreviation keeps

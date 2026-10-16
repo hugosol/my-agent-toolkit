@@ -30,9 +30,12 @@
  *      (see `EXCHANGE_TOKENS` / `EXCHANGE_COST_CNY`);
  *   2. **A later process reads the same root back and continues it.** A second process of the same run
  *      root shows the accumulated total in its own widget and adds to it rather than starting over;
- *   3. **A non-reset operator command keeps its declared effect.** `/budget detail` announces the form
- *      it switched to, changes what the widget draws, asks the model for nothing and writes no file;
- *      an argument the declaration does not name is refused by the framework's own routing;
+ *   3. **The declared command answers for the entry it serves.** With no subagent provider in the
+ *      process — this run's shape — the entry is in the no-subagent mode, so `/budget detail` answers
+ *      that notice instead of switching a form there is nothing to draw in, redraws no widget, asks
+ *      the model for nothing and writes no file; `holiday` and `clear` still act (11), and the empty
+ *      argument is the declaration's own help while an argument it does not name is refused by the
+ *      framework's routing and acts on nothing;
  *   4. **The provider feature this mode needs is wired.** The DeepSeek balance the extension queries
  *      for itself is answered and shown on the widget: the query really leaves the process at the
  *      host's resolved address with the host's current credential and the framework's own business
@@ -81,6 +84,9 @@
  *      allowance provider is kept as a USD *reference* at the price the host's own catalog states,
  *      with no consumption amount beside it.
  *  11. **`clear` and the first `holiday` archive the whole saved file from the real command entry.**
+ *      This run loads the pinned subagent provider beside the extension, so the entry integrated and
+ *      `/budget detail` is the form it draws the tree in: the operator's own preference is switched
+ *      before the period actions and is untouched by them.
  *      One storage root holds both harnesses' saved activity — two providers, a main session and its
  *      child — beside an independent estimate document. The operator's own exchange is saved there
  *      first; `/budget clear` then archives that whole document (both harnesses, every session, plus
@@ -159,6 +165,16 @@ const REPO_ROOT = path.resolve(import.meta.dir, "..");
 
 /** The extension's own pi entrypoint, as pi's loader discovers it. */
 const ENTRYPOINT = path.join(REPO_ROOT, "entrypoints", "pi", "model-cost.ts");
+
+/**
+ * The pinned subagent provider's own extension entry, as this repository installs it.
+ *
+ * Only the period-reset run loads it. `/budget detail` draws the sessions the entry observed as
+ * descendants, so the entry offers that form once a provider is really there: the runs that assert
+ * the form load this artifact beside the extension, and every other run here stays the
+ * no-subagent shape whose command answers instead of switching.
+ */
+const PROVIDER_ENTRY = path.join(REPO_ROOT, "node_modules", "pi-subagents", "index.js");
 
 /** The version this smoke's expectations were written against. */
 const EXPECTED_PI_VERSION = "1.2.0";
@@ -846,41 +862,45 @@ async function phaseCommand(cli: PiCli): Promise<void> {
 	const before = session.frameMark();
 	const requestsBefore = dock.run.capture.requests().length;
 	const documentBefore = JSON.stringify(documentOf(dock));
-	const detail = await session.request({ type: "prompt", message: "/budget detail" }, 60_000);
+
+	// The empty argument is the help the declaration itself states, and no action runs.
+	const help = await commandNotices(session, "");
+	observe(
+		"the empty argument is answered with the declaration's own help",
+		help.length === 1 &&
+			help[0].includes("/budget — 费用统计与展示管理") &&
+			["detail", "holiday", "clear"].every(action => help[0].includes(`${action} — `)),
+		`help: ${JSON.stringify(help)}`,
+	);
+
+	// This run carries no subagent provider, so the entry's integration is the normal no-subagent
+	// shape: `/budget detail` draws the descendants this entry observed, there is nothing for it to
+	// draw, and the action answers the operator instead of switching the form.
+	const notices = await commandNotices(session, "detail");
 	observe(
 		"the command is answered without starting a run or asking the model",
-		(detail.data as { disposition?: unknown } | undefined)?.disposition === "handled" &&
-			dock.run.capture.requests().length === requestsBefore,
-		`disposition ${JSON.stringify((detail.data as { disposition?: unknown } | undefined)?.disposition)}, provider requests ${dock.run.capture.requests().length - requestsBefore}`,
-	);
-	const notice = await session.frameSince(
-		before,
-		frame => frame.type === "extension_ui_request" && frame.method === "notify",
-		"the command's own announcement",
-		UI_FRAME_TIMEOUT_MS,
+		dock.run.capture.requests().length === requestsBefore,
+		`provider requests ${dock.run.capture.requests().length - requestsBefore}`,
 	);
 	observe(
-		"the command announces the form it switched the display to",
-		typeof notice?.message === "string" && String(notice.message).includes("详细"),
-		`announcement: ${JSON.stringify(notice?.message)}`,
+		"the command answers the no-subagent notice instead of switching the display",
+		notices.length === 1 &&
+			notices[0].includes("/budget detail 未执行") &&
+			notices[0].includes("无子代理模式") &&
+			notices[0].includes("brief"),
+		`notices: ${JSON.stringify(notices)}`,
 	);
-	const detailFrame = await session.frameSince(
-		before,
-		frame =>
-			frame.type === "extension_ui_request" &&
-			frame.method === "setWidget" &&
-			frame.widgetKey === WIDGET_KEY &&
-			(widgetLinesOf(frame) ?? []).some(line => line.includes(`${PROVIDER} / ${MODEL}`)),
-		"the widget redrawn in the detail form",
-		UI_FRAME_TIMEOUT_MS,
-	);
-	const detailLines = detailFrame === undefined ? [] : (widgetLinesOf(detailFrame) ?? []);
+	// Nothing redrew the widget into the detail form: the entry published no change for a frontend to
+	// read again, so the frames since the mark carry no tree row and the form stays the brief.
+	const detailRenders = session
+		.frames()
+		.slice(before)
+		.filter(frame => frame.type === "extension_ui_request" && frame.method === "setWidget" && frame.widgetKey === WIDGET_KEY)
+		.filter(frame => (widgetLinesOf(frame) ?? []).some(line => line.includes(`${PROVIDER} / ${MODEL}`)));
 	observe(
-		"the widget switched to the detail form, whose tree carries the model the session consumed",
-		detailLines.some(line => line.startsWith("Total:  ")) &&
-			!detailLines.some(line => line.startsWith("Round:  ")) &&
-			detailLines.some(line => line.includes(`${PROVIDER} / ${MODEL}`)),
-		`rendering: ${JSON.stringify(detailLines)}`,
+		"the widget keeps the brief form: nothing redrew it into the detail tree",
+		detailRenders.length === 0,
+		`renderings: ${JSON.stringify(widgetRenders(session).slice(-3))}`,
 	);
 	observe(
 		"the command changed no persisted consumption",
@@ -889,13 +909,15 @@ async function phaseCommand(cli: PiCli): Promise<void> {
 	);
 
 	// The argument surface is the shared declaration's, not something this host re-invents: a name the
-	// table does not carry is refused by the framework's own routing and runs no action.
-	const refused = await session.request({ type: "prompt", message: "/budget not-an-action" }, 60_000);
+	// table does not carry is refused by the framework's own routing, answered with the same help at
+	// error severity, and runs no action at all.
+	const refused = await commandNotices(session, "not-an-action");
 	observe(
-		"an undeclared argument is refused rather than acting",
-		(detail.data as { disposition?: unknown } | undefined)?.disposition === "handled" &&
-			(refused.data as { disposition?: unknown } | undefined)?.disposition === "handled",
-		`dispositions: ${JSON.stringify((refused.data as { disposition?: unknown } | undefined)?.disposition)}`,
+		"an undeclared argument is refused with the help and acts on nothing",
+		refused.length === 1 &&
+			refused[0] === help[0] &&
+			JSON.stringify(documentOf(dock)) === documentBefore,
+		`notices: ${JSON.stringify(refused)}`,
 	);
 }
 
@@ -2464,7 +2486,9 @@ async function phasePeriodReset(cli: PiCli): Promise<void> {
 	});
 	writeFileSync(estimateFile, estimateBytes, "utf8");
 
-	const session = await openSession(shared);
+	// This run loads the pinned subagent provider beside the extension, so this entry's integration
+	// really took and `/budget detail` is the form the operator asked for.
+	const session = await openSession(shared, { entrypoint: [ENTRYPOINT, PROVIDER_ENTRY] });
 	// The entry's own display preference, switched to the other form before any period action: what
 	// is under test is that a reset is not a display action and does not move this back.
 	const detail = await commandNotices(session, "detail");
@@ -2505,6 +2529,20 @@ async function phasePeriodReset(cli: PiCli): Promise<void> {
 		"a second pi process's own exchange is saved into the same file before the reset",
 		peerRecord !== undefined && sameAmount(peerRecord.own[PROVIDER]?.[MODEL]?.costCny, EXCHANGE_COST_CNY),
 		`record ${JSON.stringify(peerRecord)}, expected amount ${EXCHANGE_COST_CNY}`,
+	);
+
+	// The operator's own process is in the detail form, and its tree names the pair that session
+	// consumed; the process beside it answers the brief over the very same storage root, because the
+	// preference is that process's memory rather than anything the shared root carries.
+	observe(
+		"the operator's own detail form draws the pair the session consumed",
+		widgetShows(session, `${PROVIDER} / ${MODEL}`),
+		`renderings ${JSON.stringify(widgetRenders(session).slice(-2))}`,
+	);
+	observe(
+		"a new process over the same storage root answers the brief: the preference is not persisted",
+		!widgetShows(peerSession, `${PROVIDER} / ${MODEL}`),
+		`renderings ${JSON.stringify(widgetRenders(peerSession).slice(0, 3))}`,
 	);
 
 	const queriesBefore = shared.run.capture.balanceCalls().length;
