@@ -327,6 +327,7 @@ export function bindExtension(
 						markers: session.markers,
 					},
 					port.reportDiagnostic,
+					port.subagentIntegration,
 				);
 				return;
 			}

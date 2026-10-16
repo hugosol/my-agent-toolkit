@@ -77,6 +77,10 @@ export function modelCostPiHarness(repositoryRoot: string): (pi: PiExtensionApi)
 
 	const bindModelCost = piAdapter(MODEL_COST, {
 		configBaseDir: repositoryRoot,
+		// The module pi's loader discovers this extension through, required in every child session the
+		// subagent provider spawns: a spawned session reports its own facts through this same entry, so
+		// the adapter requires it there rather than the provider guessing which extensions to load.
+		childEntry: join(repositoryRoot, "entrypoints", "pi", "model-cost.ts"),
 		// The extension's own half: the framework hands the factory the configuration it validated, and
 		// the runtime resolves the storage root from it, supplies the catalog the framework asks for a
 		// request's price, observes this session's Turns and Rounds, and saves the session's own

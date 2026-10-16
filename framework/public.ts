@@ -121,6 +121,8 @@ export type {
 	SessionStartReason,
 	SessionStartup,
 	SubscriptionGroup,
+	SubagentIntegration,
+	SubagentIntegrationFailure,
 	SubagentRuntimeDelivery,
 	SubagentRuntimeEvent,
 	SubagentRuntimeEventHandler,
