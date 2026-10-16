@@ -249,3 +249,37 @@ OMP_BOT_BINARY="E:/Developer/myhub/omp-bot/backend/target/release/omp-bot.exe" b
 3. **不归本票**：本票没有产品代码改动，也没有改 `tests/model-cost/`；失败用例的路径（本地存储锁与跨进程发布）不经本票任何文件；同一棵树上 §10 的同一分区是 463 pass / 0 fail。故记为**环境性实时期限 flake**，不计为本票回归、也不据此宣称套件绝对稳定。
 
 **本轮未覆盖项**（与 §6/§10 相同，本节未新增）：`P51`/`P52`/`P53` 的人类判断未做（本票交付时保持未验收）；并发序列 `draws +2` 与主子例 `frames 33→18` 仍未逐渲染归因；pi 侧本机接入未做同样的记录器注入；证据范围仍限 win32/x64、bun 1.4.2、OMP 18.5.0（未打补丁）、无 provider 凭据（请求由本机 capture endpoint 回答）；对照入口仍无自动化测试覆盖（其正确性证据是 §10 的"入口输出 vs 独立计数"与本节"重生成报告与已提交报告逐字节相同"）。
+
+## 12. 第五次接手复核（源状态 `570c7ee`，无源码改动；归因机制与行计数口径的第一手复验）
+
+接手时：HEAD `570c7ee`（= §11 定稿的树），`efb03e0`/`6802bef`/`6420e21`/`385dd6d`/`44a4b96`/`f8b9616`/`5714ddc`/`570c7ee` 原样保留，**未做任何 reset**。工作树除 `bun.lock` 与两份 `host-patches/*/patch.diff` 外干净，而这三者的**带过滤器 hash 与 `HEAD` blob 逐一相等、字节数也相等**（`bun.lock` `cc3c49a6…` 11131/11131、`viewed-session` `b652e639…` 26585/26585、`codex-response-boundary` `ff98fd25…` 2213/2213，`git hash-object --path=`）——§8 说明 2 的同一 `core.autocrlf=true` 检出 stat 现象，**不 checkout/restore**（dock 补丁与基线用例需要这份 LF 字节）。本节**不改任何被测源码或 fixture**：改动只有 `.scratch/` 下的本文件、票文件与 `logs/22-takeover-f-*`（15 个新文件）。
+
+**本票改动范围复核**：`git diff --name-status 39fdc3d HEAD` 去掉 `.scratch/` 后恰好 5 个文件 —— `M package.json`、`M scripts/efficiency-baseline.ts`、`A scripts/efficiency-comparison.ts`、`A tests/harness-dock/efficiency-effects.test.ts`、`A tests/harness-dock/support/effect-instrument.ts`；`git diff --name-only 39fdc3d HEAD -- framework extensions entrypoints` 为空（产品面无改动）。
+
+**集成分支只读核对**：`pi-adapter` 尖端仍为 `190e1b5`（与 §11 相同，本节未推进）；`git diff --name-only 39fdc3d pi-adapter -- framework extensions entrypoints` 只有 `framework/docs/harness-support.md`（文档）；`git merge-tree --write-tree --name-only HEAD pi-adapter` → exit 0、无冲突列表（未改任何 ref 或工作树）；本节改动前（`570c7ee`）得 tree `3c84b493645d067ff2a59f528aa1d4c133f7cd73`，本节证据提交后（本节定稿的 HEAD）再核对一次得 `f0d5920b5de4f97236d4ab1ce014437e8f647b3e`，两次都无冲突（`logs/22-takeover-f-merge-tree.txt` 保存的是后一次的输出）。
+
+| 命令 | 退出 | 结果 | 日志 |
+| --- | --- | --- | --- |
+| `bun run typecheck` | 0 | `tsc --noEmit` 无诊断 | `logs/22-takeover-f-typecheck.log` |
+| `bun run baseline:efficiency --out …/logs/22-takeover-f-after.json --label takeover-f` | 0 | 七条序列 `every invariant held.`；并发序列 `requests=2`（路径 `/user/balance`×2）、`draws=33`；instrument probe `{"operations":13,"documentReads":2,"documentPublishes":1,"lockOperations":7,"stagingOperations":2,"syncOperations":1}`（与 §9–§11 相同） | `logs/22-takeover-f-baseline.log`、工件 `logs/22-takeover-f-after.json` |
+| `bun run compare:efficiency -- --before 22-efficiency-after.json --after logs/22-takeover-f-after.json` | 0 | `none: every comparable figure of every sequence and window agrees.`；`every sequence delivered the same kinds the same number of times.`；`PRODUCT SUBTOTAL 23773 → 23773 (+0)`、`EVIDENCE SUBTOTAL +43`（唯一差异是 §10 修正过的 `scripts/efficiency-comparison.ts` 自身） | `logs/22-takeover-f-reproduction.txt` |
+| `bun run compare:efficiency -- --before 01-… --after 22-… --out logs/22-takeover-f-comparison.txt` | 0 | 复现 §3/§4：`requests 1→2`、`draws 30→33`、`events 24→23`、产品面 `19287 → 23773 (+4486)`、证据面 `54806 → 79994`；**重生成的报告与已提交的 `logs/22-efficiency-comparison.txt` 逐字节相同**（`diff` 无输出，diff 文件 0 字节） | `logs/22-takeover-f-comparison.txt`、`logs/22-takeover-f-comparison-console.txt`、`logs/22-takeover-f-report-diff.txt` |
+| `bun run compare:efficiency -- --before 01-… --after 22-… --after-rev pi-adapter` | 0 | `PRODUCT SUBTOTAL 19287 → 23773 (+4486)`，产品面逐族与 `efb03e0` 相同 | `logs/22-takeover-f-integration-tip.txt` |
+| 独立行计数（本节自写的 python：`git ls-tree -r` + `git cat-file --batch`，与 §10 的 JS 实现**各自独立**，不经被测入口） | 0 | 4 revision：产品面 `19287`(59a0ed7) / `23773`(efb03e0) / `23773`(570c7ee) / `23773`(pi-adapter `190e1b5`)；证据面 `54806` / `79994` / `80037` / `80085`；`framework/adapters/omp/session/facts.ts` `290 → 279`；产品面逐族 `28/18/111/1608/10326/158/3890/2142/3248/2244` 与入口表逐一相同 | `logs/22-takeover-f-complexity-independent.json` |
+| `bun test tests/harness-dock/efficiency-effects.test.ts`（真实宿主） | 0 | **3 pass / 0 fail**、21 expect()、12.16s；效果 2295 / 2689、存储根 13 次操作（明细与 §5 逐条相同）、健康空闲窗口 0 效果、frames 10 / 18、arrivals `["balance","model"]` 与 `["balance","model","model","model"]`、网络效果只有指向本机 capture endpoint 的一次 `createConnection`（无 `createServer`、无 `my-agent-toolkit-access`） | `logs/22-takeover-f-effects.log` |
+| 记录器两条规则直探（本节自写探针文件 + `bun --preload …/effect-instrument.ts`） | 0 | 指名 dump：成员被包裹（`readFileSync.name`/`createServer.name` = `recorded`），dump 里恰好只有探针自己的那次 `readFileSync` 与 `createServer`，**没有任何指向 dump 自身的记录**；不指名 dump：成员名仍是 `readFileSync`/`createServer`、不写任何 dump | `logs/22-takeover-f-recorder-probe.txt` |
+| `OMP_BOT_BINARY=… bun test tests/harness-dock`（所属分区，真实宿主，串行，运行期间未改源码/fixture） | 0 | **93 pass / 0 fail**、1121 expect()、26 文件 / 222.44s（90 既有 + 本票 3 例） | `logs/22-takeover-f-partition-harness-dock.log` |
+| `bun test tests/framework`（共同路径消费者） | 0 | **481 pass / 0 fail**、2250 expect()、38 文件 / 39.10s | `logs/22-takeover-f-partition-framework.log` |
+| `bun test tests/model-cost`（共同路径消费者） | 0 | **463 pass / 0 fail**、2524 expect()、40 文件 / 7.38s（本轮首次运行即绿；§11 记录的同签名实时期限 flake 本轮未复现） | `logs/22-takeover-f-partition-model-cost.log` |
+
+- **这三组数与 §8/§10/§11 逐项相同**（93/1121、481/2250、463/2524），说明那一侧的复用判断成立；三组都跑在定稿后的树上，运行期间未改动被测源码或 fixture。
+- 本节采样工件自报的 `uncommitted paths` 是 `bun.lock` 与两份 `host-patches/*/patch.diff`（上面的 CRLF stat 现象，字节与 `HEAD` blob 相同）与本节的日志文件（`??`）；**产品源码无未提交内容**。
+
+**§3 的三条归因机制本轮落到代码（第一手，不改任何结论）**：
+
+1. `SubagentRuntimeDelivery` 在 `extensions/`、`framework/` 中已**完全不存在**（全树 `grep`），且 `git diff 59a0ed7 HEAD -- extensions/model-cost/shared-logic/request-accounting.ts` 显示该导入与 `subagentRuntime(delivery)` 方法一并被删除 —— 与 `events 24 → 23`（semantic deliveries `subagent_runtime 1 → 0`）的交付组合变化一致。
+2. 同一文件的 `roundEnded` 在 `delivery.session.kind === "sub"` 分支里执行 `runtimes.activityEnded(...)` + `runtimeRevision += 1` + `announce()`（`extensions/model-cost/shared-logic/request-accounting.ts:1098` 起的函数体；同一改动此前已给 `roundStarted` 的 sub 分支加上 `activityStarted()`）—— 即**每个子代理 Round 结束公告一次**；并发序列有 3 个子代理 Round 结束（`endRound(CHILD_A/CHILD_B/GRAND)`），与 `draws` 在同一时间线、同一请求数下 +2 的机制归属一致。**仍未逐渲染定位**（§6 已列，本节未新增）。
+3. `provider-balance.ts` 与 `provider-refresh.ts` 在 `59a0ed7..HEAD` 的 `extensions/model-cost/` 14 文件 diff（+2042/−243）中**都不出现** —— 并发序列的 `requests 1 → 2` 不是提供方代码变化。本票采样入口自己的时间线是来源：`scripts/efficiency-baseline.ts:161` 的 `CHILD_ACTIVITY_MS = 360_000`（> 该条目声明的 `balanceTtlMs`）、`:1112` 的 `clock = T0 + CHILD_ACTIVITY_MS`，且该序列的判据是**等这次到达**而非等时长（`:1122-1138`）。
+4. 已提交的 A/B 与稳定性日志逐条支持上述归因：去掉时钟推进 → `requests=1`（同时 `childA.runtimeMs=0`）、TTL 抬到 1e9ms → `requests=1`（`logs/22-ab-no-clock-advance.log`、`logs/22-ab-huge-ttl.log`）；`logs/22-baseline-stability.txt` 的六次观测里 `draws=33`、`requests=2` 逐次相同，唯一波动的两列正是噪声列（`failed` 15/16/17、`file total` 51/52/53）。迁移前 dock 侧对照数字也与 §5 一致（`logs/22-dock-effects-pre-migration.log`：2294 / 2688、frames 10 / 33）；故障注入日志同 §5（`consumptionReads 2 → 12`、空闲窗口 6 次读）。
+
+**本轮未覆盖项**（与 §6/§10/§11 相同，本节未新增）：`P51`/`P52`/`P53` 的人类判断未做（本票交付时保持未验收）；并发序列 `draws +2` 与主子例 `frames 33→18` 仍未逐渲染归因；pi 侧本机接入未做同样的记录器注入；证据范围仍限 win32/x64、bun 1.4.2、OMP 18.5.0（未打补丁）、无 provider 凭据（请求由本机 capture endpoint 回答）；对照入口仍无自动化测试覆盖（其正确性证据是 §10 的独立计数、§11 的逐字节相同与本节的第二份独立实现）。

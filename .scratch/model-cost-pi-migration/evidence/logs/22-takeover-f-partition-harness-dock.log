@@ -1,0 +1,16 @@
+bun test v1.4.2 (744846f84)
+
+tests\harness-dock\efficiency-effects.test.ts:
+effects recorded: 2295 (storage root: 13, idle window: 0)
+storage root detail: ["mkdir consumption.json.lock.37460-2-mvayjeuc.lock","mkdir cost-archive","readFile codex-usage-estimate.json utf8","readFile consumption.json utf8","realpath cost-archive","rename consumption.json","rename consumption.json.lock","unlink 37460-1-mvayjeuc","unlink consumption.json.37460-3-mvayjeud.tmp","writeFile 37460-1-mvayjeuc ","writeFile consumption.json.37460-3-mvayjeud.tmp {\"schemaVersion\":1,\"periodId\":\"period-fresh\",\"start\":\"2026-10-16T12:42:16.840Z\",\"holiday\":false,\"harnesses\":{\"omp\":{\"sessions\":[{\"id\":\"01a144bc-08ed-76ee-86a6-5c18dec9ba01\",\"name\":\"main\",\"parent\":null,\"saveVersion\":1,\"own\":{\"deepseek\":{\"deepseek-flash\":{\"tokens\":{\"input\":7,\"cacheRead\":3,\"cacheWrite\":0,\"output\":7},\"costCny\":0.00003506}}},\"span\":{\"start\":1792154536854,\"end\":1792154536921}}]}}}"]
+idle-window ops: []
+net effects: [{"kind":"net","op":"createConnection","targets":["127.0.0.1","9677"],"at":1792154536844,"outcome":"ok"}]
+capture endpoint port: 9677, widget frames: 10, arrivals: ["balance","model"]
+effects recorded: 2689 (idle window: 0)
+arrivals: ["balance","model","model","model"], widget frames: 18, capture port: 3918
+net effects: [{"kind":"net","op":"createConnection","targets":["127.0.0.1","3918"],"at":1792154544694,"outcome":"ok"}]
+
+ 93 pass
+ 0 fail
+ 1121 expect() calls
+Ran 93 tests across 26 files. [222.44s]
