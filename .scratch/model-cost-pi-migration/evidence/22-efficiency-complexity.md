@@ -337,7 +337,7 @@ MY_DOCK_FRAMES_OUT=<logs>/22-takeover-i-frames-after  bun test tests/harness-doc
 | 命令 | 退出 | 结果 | 日志 |
 | --- | --- | --- | --- |
 | `bun run typecheck` | 0 | `tsc --noEmit` 无诊断（含新增测试文件） | `logs/22-takeover-g-typecheck.log` |
-| `bun run baseline:efficiency --out …/logs/22-takeover-g-after.json --label takeover-g` | 0 | 七条序列 `every invariant held.`；并发序列 `requests=2`（`/user/balance`×2）、`draws=33`、`events=23`；`read-only-refresh`/`healthy-idle`/`disposal` 文件操作 0；instrument probe `{"operations":13,"documentReads":2,"documentPublishes":1,"lockOperations":7,"stagingOperations":2,"syncOperations":1}`（与 §2/§9–§12 相同） | `logs/22-takeover-g-baseline.log` |
+| `bun run baseline:efficiency --out …/logs/22-takeover-g-after.json --label takeover-g` | 0 | 七条序列 `every invariant held.`；并发序列 `requests=2`（`/user/balance`×2）、`draws=33`、`events=23`；`read-only-refresh` 序列级文件操作 0、`healthy-idle`/`disposal` 的**测量窗口**（`idle`/`disposal`/`afterDisposal`）文件操作 0（两条序列**自身**各含一次准备轮，序列级为 3/1/7/2/1/1，两侧逐列相同；见 §16 的措辞修正）；instrument probe `{"operations":13,"documentReads":2,"documentPublishes":1,"lockOperations":7,"stagingOperations":2,"syncOperations":1}`（与 §2/§9–§12 相同） | `logs/22-takeover-g-baseline.log` |
 | 新跑工件 vs 已提交 `22-efficiency-after.json` | 0 | `none: every comparable figure of every sequence and window agrees.`、`every sequence delivered the same kinds the same number of times.`；噪声段差异为并发序列被平台拒绝的那次 rename 与各序列墙钟 | `logs/22-takeover-g-reproduction.txt` |
 | `--before 01-… --after 22-… --out logs/22-takeover-g-comparison.txt` | 0 | 复现 §3/§4（`requests 1→2`、`draws 30→33`、`events 24→23`、`19287 → 23773 (+4486)`）；**重生成报告与已提交 `logs/22-efficiency-comparison.txt` 的 sha256 相同**（`a486f32712e4314108ef256d0e74a4aefdf7512ffb77e16600c5daab78b1fe72`） | `logs/22-takeover-g-comparison.txt`、`…-comparison-console.txt` |
 | `--after-rev pi-adapter`（只读，集成尖端复杂度） | 0 | `190e1b5`：`PRODUCT SUBTOTAL 19287 23773 +4486`（产品面逐族与 `efb03e0` 相同）、`EVIDENCE SUBTOTAL 54806 80085` | `logs/22-takeover-g-integration-tip.txt` |
@@ -373,7 +373,7 @@ MY_DOCK_FRAMES_OUT=<logs>/22-takeover-i-frames-after  bun test tests/harness-doc
 | 命令 | 退出 | 结果 | 日志 |
 | --- | --- | --- | --- |
 | `bun run typecheck` | 0 | `tsc --noEmit` 无诊断（含 §13 的测试文件） | `logs/22-takeover-h-typecheck.log` |
-| `bun run baseline:efficiency --out …/22-takeover-h-after.json --label takeover-h` | 0 | 七条序列 `every invariant held.`；逐行与 §12/§13 相同（并发 `requests=2`/`draws=33`/`events=23`；`read-only-refresh`/`healthy-idle`/`disposal` 文件操作 0）；probe `{"operations":13,"documentReads":2,"documentPublishes":1,"lockOperations":7,"stagingOperations":2,"syncOperations":1}` | `logs/22-takeover-h-baseline.log` |
+| `bun run baseline:efficiency --out …/22-takeover-h-after.json --label takeover-h` | 0 | 七条序列 `every invariant held.`；逐行与 §12/§13 相同（并发 `requests=2`/`draws=33`/`events=23`；`read-only-refresh` 序列级文件操作 0、`healthy-idle`/`disposal` 的**测量窗口**（`idle`/`disposal`/`afterDisposal`）文件操作 0（两条序列**自身**各含一次准备轮，序列级为 3/1/7/2/1/1，两侧逐列相同；见 §16 的措辞修正））；probe `{"operations":13,"documentReads":2,"documentPublishes":1,"lockOperations":7,"stagingOperations":2,"syncOperations":1}` | `logs/22-takeover-h-baseline.log` |
 | 新跑工件 vs 已提交 `22-efficiency-after.json` | 0 | `none: every comparable figure of every sequence and window agrees.`、交付相同；产品面 `23773 23773 +0`；证据面 `79994 → 80455`（= §13 的 `tests/harness-dock/efficiency-comparison.test.ts` 418 行 + 对照入口自身 43 行，后者 §12 已记录同一原因） | `logs/22-takeover-h-reproduction.txt` |
 | `--before 01-… --after 22-… --out …` | 0 | 复现 §3/§4（`requests 1→2`、`draws 30→33`、`events 24→23`、产品面 `19287 → 23773 (+4486)`）；**重生成报告与已提交 `logs/22-efficiency-comparison.txt` 的 sha256 相同**（`a486f327…`） | `logs/22-takeover-h-comparison.txt`、`…-comparison-console.txt` |
 | `--after-rev pi-adapter`（只读，集成尖端） | 0 | `190e1b5`：产品面 `19287 23773 +4486`、证据面 `54806 80085` | `logs/22-takeover-h-integration-tip.txt` |
@@ -450,3 +450,33 @@ MY_DOCK_FRAMES_OUT=<logs>/22-takeover-i-frames-after  bun test tests/harness-doc
 | `bun test tests/model-cost`（共同路径消费者） | 0 | **463 pass / 0 fail**、40 文件 / 7.46 s（§11 记录的实时期限 flake 本轮未复现） | `logs/22-takeover-i-partition-model-cost.log` |
 
 **本轮未覆盖项**（与 §6/§14 相同，本节新增两处收窄）：`P51`/`P52`/`P53` 的人类判断未做（票内含人类确认的两个勾选项保持未勾选）；并发序列 `draws +3` 仍是**路径级**归因（§14 的 A/B 已收敛到唯一的 `announce()`，逐渲染定位未做）；主子例 `frames 33 → 18` 本轮已归因到**内容级**（15.3），逐帧/逐通知的机制定位仍未做；pi 侧本机接入未做同样的记录器注入；证据范围仍限 win32/x64、bun 1.4.2、隔离 OMP 18.5.0（未打补丁）、无 provider 凭据（模型请求与余额查询由本机 capture endpoint 回答）；15.2 的匹配采样是**补充**可比性材料，不改写 01 的冻结工件。
+
+## 16. 第九次接手复核（源状态 `1913dc9`，无源码改动；公开入口、所属分区与共同消费者第一手重跑 + 第二套独立行计数 + 一处措辞修正）
+
+接手时：HEAD `1913dc9`（= §15 定稿树；`efb03e0` … `62dd204` 的既有提交全部原样保留，**未做任何 reset**）。工作树除 `bun.lock` 与两份 `host-patches/*/patch.diff`（§8/§12/§14 记录的 `core.autocrlf=true` 检出 stat 现象）外干净：本轮 `git diff --numstat` 对这三份**不输出任何行**（只有 LF/CRLF 警告），即内容与 `HEAD` blob 相同，**未 checkout/restore**。**产品代码无改动**：`git diff --name-only 39fdc3d HEAD -- framework extensions entrypoints` 为空；非 `.scratch/` 改动仍是 §11/§12 记录的那 5 个文件（`M package.json`、`M scripts/efficiency-baseline.ts`、`A scripts/efficiency-comparison.ts`、`A tests/harness-dock/efficiency-effects.test.ts`、`A tests/harness-dock/support/effect-instrument.ts`）加 §13 的 `A tests/harness-dock/efficiency-comparison.test.ts`。
+
+**集成分支只读核对**：本地 `pi-adapter` 尖端仍 `190e1b5`（未操作、未合入）；`origin/pi-adapter` `212f32a`（13:06）是它的**祖先**（`git merge-base --is-ancestor origin/pi-adapter pi-adapter` 成立），远端落后于本地，因此没有需要重测的漂移。
+
+全部命令在本树串行、运行期间未改被测源码或 fixture（本轮 rev/branch/时间/bun/隔离安装见 `logs/22-takeover-j-context.txt`）：
+
+| 命令 | 退出 | 结果 | 日志 |
+| --- | --- | --- | --- |
+| `bun run typecheck` | 0 | `tsc --noEmit` 无诊断 | `logs/22-takeover-j-typecheck.log` |
+| `bun run baseline:efficiency --out …/logs/22-takeover-j-after.json --label takeover-j` | 0 | 七条序列 `every invariant held.`；序列级逐行与 §2/§9–§15 相同（并发 `requests=2`/`draws=33`/`events=23`；`read-only-refresh` 序列级文件操作 0）；probe `{"operations":13,"documentReads":2,"documentPublishes":1,"lockOperations":7,"stagingOperations":2,"syncOperations":1}` | `logs/22-takeover-j-baseline.log`、工件 `…-after.json` |
+| 新跑工件 vs 已提交 `22-efficiency-after.json` | 0 | `none: every comparable figure of every sequence and window agrees.`、`every sequence delivered the same kinds the same number of times.`；`PRODUCT SUBTOTAL 23773 → 23773 (+0)` | `logs/22-takeover-j-reproduction.txt` |
+| `--before 01-… --after 22-… --out logs/22-takeover-j-frozen-comparison.txt` | 0 | 复现 §3/§4：`requests 1→2`、`draws 30→33`、`events 24→23`；七条序列窗口级文件成本逐列相同；`PRODUCT SUBTOTAL 19287 → 23773 (+4486)`、`EVIDENCE SUBTOTAL 54806 → 79994` | `logs/22-takeover-j-frozen-comparison.txt` |
+| 上一条重生成报告的 sha256 | — | `a486f32712e4314108ef256d0e74a4aefdf7512ffb77e16600c5daab78b1fe72`，与已提交 `logs/22-efficiency-comparison.txt` **相同** | `logs/22-takeover-j-summary.txt` |
+| `--after-rev pi-adapter`（只读） | 0 | `190e1b5`：产品面 `19287 → 23773 (+4486)`、逐族与 `efb03e0` 相同；证据面 `54806 → 80085` | `logs/22-takeover-j-integration-tip.txt` |
+| 第二套独立行计数（`git archive` 导出各 revision 的 tar + 逐 blob 数行；与入口的 `git ls-tree`/`git cat-file` 是不同管线，也与 §14 的字节计数各自独立） | — | 产品面 `19287`(59a0ed7) / `23773`(efb03e0) / `23773`(1913dc9) / `23773`(pi-adapter)、证据面 `54806` / `79994` / `80455` / `80085`；产品面**逐族** `entrypoints 37→46`、`codebase-tools 90→111`、`connect-bot 1608→1608`、`model-cost 8537→10326`、`framework 161→158`、`adapters 2571→3890`、`behaviors 2070→2142`、`core 2949→3248`、`modules 1264→2244`，与 §4/§11 的表逐一相同；`efb03e0`/`1913dc9`/尖端三者的产品面逐族完全相同 | 本节 |
+| `bun test tests/harness-dock/efficiency-effects.test.ts`（真实宿主） | 0 | **3 pass / 0 fail**、21 expect()、12.07s；效果 `2295`/`2689`、存储根 13 次操作（明细与 §5 逐条相同）、健康空闲窗口 0 效果、frames `10`/`18`、arrivals `["balance","model"]`/`["balance","model","model","model"]`、网络效果只有指向本机 capture 端口的一次 `createConnection`（无 `createServer`、无 `my-agent-toolkit-access`） | `logs/22-takeover-j-effects.log` |
+| `OMP_BOT_BINARY=… bun test tests/harness-dock`（所属分区，真实宿主，串行） | 0 | **104 pass / 0 fail**、1161 expect()、27 文件 / 223.69s | `logs/22-takeover-j-partition-harness-dock.log` |
+| `bun test tests/framework`（共同路径消费者） | 0 | **481 pass / 0 fail**、2250 expect()、38 文件 / 39.56s | `logs/22-takeover-j-partition-framework.log` |
+| `bun test tests/model-cost`（共同路径消费者） | 0 | **463 pass / 0 fail**、2524 expect()、40 文件 / 7.44s（§11 记录的实时期限 flake 本轮未复现） | `logs/22-takeover-j-partition-model-cost.log` |
+
+三组数与 §8/§10–§15 逐项相同（104/1161、481/2250、463/2524），即本票的公开入口、所属分区与共同消费者在这一源状态上仍然一致；本轮**首次运行即绿**，无新增失败。
+
+**本票新增资源的释放（本节第一手核对）**：本票两个测试文件可能创建的是 `omp-dock-effect-{idle,child,control}-*`（经 `createRunRoot`，`efficiency-effects.test.ts` 在 `finally` 里 `disposeRun`/`runRoot.dispose()`）与 `efficiency-comparison-<label>-*`（`mkdtempSync` + `afterEach` 的 `rmSync`）。跑完本轮全部命令后在 OS temp 里检索这两个前缀：**0 个残留**（`omp-dock-effect-*` 从未出现过）。顺带观察、**不属本票结论**：该目录下另有 **852** 个 `omp-dock-*` 目录，标签来自其他 dock 文件（如 `omp-dock-model-cost-fresh-*`、`omp-dock-home-fork-*`、`omp-dock-recovery-tree-*`，落在 `tests/harness-dock/model-cost-store.test.ts`、`session-recovery.test.ts` 等），最新几个的 mtime 落在本轮分区运行期间；本票不判定其成因、也不改动它们（超出本票范围）。
+
+**一处措辞修正（不改任何数字、不改任何结论）**：§13/§14 的 `baseline:efficiency` 表格单元格此前写作「`read-only-refresh`/`healthy-idle`/`disposal` 文件操作 0」。按本节第一手读的采样日志，这个"0"对 `healthy-idle` 与 `disposal` 只在**它们自己的测量窗口**（`healthy-idle / idle`、`disposal / disposal`、`disposal / afterDisposal`，见 §3 的窗口表）成立；两条序列**自身**各含一次准备轮，序列级文件成本是 `3 reads / 1 publish / 7 locks / 2 staging / 1 metadata / 1 dir`，两侧逐列相同——`read-only-refresh` 则是序列级就为 0。已把这两处单元格的措辞改成窗口+序列级的准确说法；引用的日志不变，数字与结论不变。
+
+**本节未覆盖项**（与 §6/§14/§15 相同）：`P51`/`P52`/`P53` 的人类判断未做（票内含人类确认的两个勾选项保持未勾选）；并发序列 `draws +3` 仍是**路径级**归因（§14 的 A/B 收敛到唯一的 `announce()`），主子例 `frames 33 → 18` 归到**内容级**（§15.3），两者的逐渲染/逐通知定位未做；pi 侧本机接入未做同样的记录器注入；证据范围仍限 win32/x64、bun 1.4.2、隔离 OMP 18.5.0（未打补丁）、无 provider 凭据（模型请求与余额查询由本机 capture endpoint 回答）；§15.2 的匹配采样是补充可比性材料，不改写 01 的冻结工件。
