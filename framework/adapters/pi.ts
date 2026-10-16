@@ -648,7 +648,14 @@ function piPort(
 				handler: async (args, ctx) => {
 					await command.run({
 						args, owner: resolveOwner(ctx), persist, hasUI: ctx.hasUI,
-						canAcceptInput: () => ctx.isIdle(), provider: ctx.model?.provider,
+						// The idle fact this command's own session reports, answered as nothing when this
+						// surface reports none at all: an unreported activity state is not idleness, and the
+						// framework reports the absence rather than answering for the harness. The command
+						// that reads it — model-cost's period actions — refuses on that answer instead of
+						// reading it as permission.
+						canAcceptInput: () =>
+							typeof ctx.isIdle === "function" ? ctx.isIdle() : reportMissingFact("idle fact (isIdle)"),
+						provider: ctx.model?.provider,
 						feedback: feedback(ctx), markers: markers(ctx),
 					});
 				},
