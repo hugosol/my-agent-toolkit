@@ -1,0 +1,13 @@
+sequence                   events reads pubs locks stage  meta  dirs other  fail   req draws     ms  invariants
+main-request                    6     3     1     7      2      1     1     0     6      1     8     24 ok
+multi-turn                     14     3     1     7      2      1     1     0     6      1    16      7 ok
+main-child-concurrency         23     6     4    28      8      4     1     0    17      1    32   2071 1 FAILED
+save-onto-shared-document       6     3     1     7      2      1     1     0     4      1     8      8 ok
+read-only-refresh               6     0     0     0      0      0     0     0     0      1     8      4 ok
+healthy-idle                    6     3     1     7      2      1     1     0     6      1     8   3009 ok
+disposal                       10     3     1     7      2      1     1     0     6      1     9    526 ok
+FAILED main-child-concurrency: the process asked the provider once at startup and once more when its stated clock passed the reading's success TTL — requests=1 (one startup prefetch, one settled-request refresh due 360000ms after the reading) paths=/user/balance
+
+instrument probe: {"operations":13,"documentReads":2,"documentPublishes":1,"lockOperations":7,"stagingOperations":2,"syncOperations":1}
+artifact: C:\Users\hugos\AppData\Local\Temp\hyper-ticket-toLQo0\.cache\22\ab-huge-ttl.json
+1 invariant(s) failed.

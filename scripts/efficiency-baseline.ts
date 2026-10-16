@@ -3,10 +3,11 @@
  *
  * This entry runs the migration's representative event sequences — a main request, several Turns in
  * one Round, a main session beside concurrent subagents, an ordinary save onto a shared document, a
- * read-only refresh, a healthy idle window and a disposal — over the *pre-migration* production
- * common path, and records what each sequence cost. Those records are the evidence a later comparison
- * reads: `P51` re-runs this same entry after the shared path changes, which is why the sequences, the
- * sampling method and the artifact are fixed here rather than reconstructed afterwards.
+ * read-only refresh, a healthy idle window and a disposal — over whichever production common path runs
+ * it, and records what each sequence cost. The frozen pre-migration run of it is
+ * `evidence/01-efficiency-baseline.json`; those records are the evidence a later comparison reads, and
+ * `P51` re-runs this same entry after the shared path changes, which is why the sequences, the sampling
+ * method and the artifact are fixed here rather than reconstructed afterwards.
  *
  * **The path under measurement is production.** The extension's real definition
  * (`extensions/model-cost/definition.ts`), the runtime `createModelCostRuntime` builds, the
@@ -47,6 +48,16 @@
  * own operations are never charged to a window — its read-back of a document, its polling for a quiet
  * root, and the document a sequence is seeded with — and neither is anything outside a storage root:
  * the artifact write and the run directories.
+ *
+ * **One request count follows the entry's own timeline.** The concurrent sequence states the instant a
+ * subagent's Round ended as a move of the extension's clock (by `CHILD_ACTIVITY_MS`), because the
+ * deadline a subagent's own activity contributes is the interval between its Round's two edges rather
+ * than a duration declared beside it. That instant is past the declared success TTL of the process's
+ * provider reading, so the first priced Turn settling after it begins one balance refresh — the shared
+ * settled-request rule of `provider-balance.ts`, which is not a schedule and is not repeated while a
+ * reading is fresh. The sequence's count is therefore two requests (one startup prefetch, one refresh)
+ * rather than the one a timeline that never moved the clock produces; re-running the entry with that
+ * move removed, or with a TTL above it, sees one.
  *
  * **The sampling method verifies itself.** The instrument is checked against the production file
  * module before any sequence runs: one ordinary coordinated update is performed over a throwaway
@@ -798,6 +809,26 @@ async function waitForCommit(bound: BoundProcess, accept: (document: Consumption
 }
 
 /**
+ * Wait until the loopback endpoint has received `count` requests in this sequence, and answer whether
+ * it did.
+ *
+ * A refresh a settled request begins is background work — the caller that triggered it is not made to
+ * wait for it — so the request is on its way when the sequence's own deliveries are over but may not
+ * have arrived yet. A count read at once would then be a race rather than a measurement; this waits on
+ * the arrival itself, and the deadline only keeps a query that never left from hanging the run.
+ */
+async function waitForRequestArrival(endpoint: CaptureEndpoint, count: number): Promise<boolean> {
+	const deadline = Date.now() + 2_000;
+	while (endpoint.requests.length < count) {
+		if (Date.now() > deadline) return false;
+		const turn = Promise.withResolvers<void>();
+		setImmediate(() => turn.resolve());
+		await turn.promise;
+	}
+	return true;
+}
+
+/**
  * Whether one storage root currently holds no coordination state at all: no lock name (an installed
  * lock or a staging directory prepared for one) and no staging name of a document.
  */
@@ -1087,6 +1118,12 @@ async function sequenceConcurrentTree(endpoint: CaptureEndpoint): Promise<Sequen
 	const document = await waitForCommit(bound, candidate =>
 		[MAIN, CHILD_A, CHILD_B, GRAND].every(session => recordOf(candidate, session) !== undefined),
 	);
+	// This sequence states the instant a subagent's Round ended as a move of the extension's own
+	// clock, and that instant is past the declared success TTL of the process's provider reading. A
+	// priced Turn settling after it therefore begins one balance refresh — the shared settled-request
+	// rule, not a schedule — which is the sequence's second and last request. The wait is on that
+	// arrival rather than on a duration, the same way the commit wait is.
+	const refreshArrived = await waitForRequestArrival(endpoint, requestsBefore + 2);
 	const request = measureSince(start, bound.scope);
 	const mainRecord = recordOf(document, MAIN);
 	const childA = recordOf(document, CHILD_A);
@@ -1094,9 +1131,11 @@ async function sequenceConcurrentTree(endpoint: CaptureEndpoint): Promise<Sequen
 	const grand = recordOf(document, GRAND);
 	const invariants = [
 		check(
-			"four sessions in one process asked the provider once in total",
-			endpoint.requests.length - requestsBefore === 1,
-			`requests=${endpoint.requests.length - requestsBefore} paths=${endpoint.requests
+			"the process asked the provider once at startup and once more when its stated clock passed the reading's success TTL",
+			refreshArrived &&
+				endpoint.requests.length - requestsBefore === 2 &&
+				endpoint.requests.slice(requestsBefore).every(request => request.url === "/user/balance"),
+			`requests=${endpoint.requests.length - requestsBefore} (one startup prefetch, one settled-request refresh due ${CHILD_ACTIVITY_MS}ms after the reading) paths=${endpoint.requests
 				.slice(requestsBefore)
 				.map(request => request.url)
 				.join(",")}`,
@@ -1652,11 +1691,12 @@ async function main(): Promise<number> {
 	const endpoint = await startCaptureEndpoint();
 	const sequences: SequenceObservation[] = [];
 	for (const sequence of SEQUENCES) sequences.push(await sequence(endpoint));
+	const label = argumentOf("--label") ?? "unlabelled";
 	const artifact: BaselineArtifact = {
-		record: "model-cost-pi-migration / 01-efficiency-baseline: the pre-migration efficiency baseline of the model-cost common path",
+		record: `model-cost-pi-migration / the representative efficiency sequences of the model-cost common path, sampled by scripts/efficiency-baseline.ts under the label ${label}`,
 		run: {
 			at: new Date().toISOString(),
-			label: argumentOf("--label") ?? "pre-migration",
+			label,
 			command: process.argv.join(" "),
 			platform: process.platform,
 			arch: process.arch,

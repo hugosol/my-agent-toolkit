@@ -1,0 +1,2994 @@
+{
+  "record": "model-cost-pi-migration / the representative efficiency sequences of the model-cost common path, sampled by scripts/efficiency-baseline.ts under the label takeover-l",
+  "run": {
+    "at": "2026-10-16T13:53:45.962Z",
+    "label": "takeover-l",
+    "command": "D:\\Users\\hugos\\AppData\\Local\\nvm\\v24.18.0\\node_modules\\bun\\bin\\bun.exe C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-toLQo0\\scripts\\efficiency-baseline.ts --out .scratch/model-cost-pi-migration/evidence/logs/22-takeover-l-after.json --label takeover-l",
+    "platform": "win32",
+    "arch": "x64",
+    "bun": "1.4.2",
+    "node": "26.3.0",
+    "cwd": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-toLQo0",
+    "clock": "fixed instants, T0 = 2026-10-14T05:00:00.000Z",
+    "temporaryRoots": [
+      "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-probe-0JQSbk",
+      "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-main-request-ZXbJE8",
+      "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-multi-turn-kgTlfM",
+      "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-concurrent-tree-KkYtaF",
+      "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-save-shared-lAZpRJ",
+      "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-read-only-refresh-r2H4Gd",
+      "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-healthy-idle-oyN1MV",
+      "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-disposal-iOfiA7"
+    ],
+    "temporaryRootsNote": "created for this run and removed when it ended; every storage root was isolated under them"
+  },
+  "source": {
+    "head": "78cfbf58c4c14ddbb94a95bd1776e9eb010b08a8",
+    "branch": "hyper/model-cost-pi-migration/22-efficiency-acceptance-a73e6b-411dc288ea83",
+    "changedPaths": [
+      "M bun.lock",
+      " M host-patches/omp-18.5.0-codex-response-boundary/patch.diff",
+      " M host-patches/omp-18.5.0-viewed-session/patch.diff",
+      "?? .scratch/model-cost-pi-migration/evidence/logs/22-takeover-l-baseline.log"
+    ]
+  },
+  "configuration": {
+    "harness": "baseline-probe",
+    "storageDocument": "consumption.json",
+    "estimateDocument": "codex-usage-estimate.json",
+    "providerAccess": {
+      "deepseek": "loopback capture endpoint",
+      "openai-codex": "no access (the host resolves none)"
+    },
+    "balanceTtlMs": 30000,
+    "codexQuotaTtlMs": 15000,
+    "drawing": "lines",
+    "prices": "self-made data stated in scripts/efficiency-baseline.ts"
+  },
+  "instrumentProbe": {
+    "operations": 13,
+    "documentReads": 2,
+    "documentPublishes": 1,
+    "lockOperations": 7,
+    "stagingOperations": 2,
+    "syncOperations": 1
+  },
+  "sequences": [
+    {
+      "name": "main-request",
+      "title": "主请求：初始化 + 一次主会话请求 + 轮结束保存",
+      "sequence": [
+        "session_start baseline-main (main)",
+        "round_start baseline-main",
+        "user_input baseline-main",
+        "turn_start baseline-main deepseek/deepseek-chat",
+        "turn_end baseline-main completed",
+        "round_end baseline-main"
+      ],
+      "deliveries": {
+        "session_start": 1,
+        "round_start": 1,
+        "user_input": 1,
+        "turn_start": 1,
+        "turn_end": 1,
+        "round_end": 1
+      },
+      "fileCost": {
+        "total": 15,
+        "documentReads": 3,
+        "documentPublishes": 1,
+        "lockOperations": 7,
+        "stagingOperations": 2,
+        "metadataOperations": 1,
+        "directoryOperations": 1,
+        "otherOperations": 0,
+        "failedOperations": 6,
+        "failedByOperation": {
+          "readFile": 3,
+          "unlink": 2,
+          "rmdir": 1
+        },
+        "documents": {
+          "consumption.json": {
+            "reads": 2,
+            "publishes": 1
+          },
+          "codex-usage-estimate.json": {
+            "reads": 1,
+            "publishes": 0
+          }
+        },
+        "byOperation": {
+          "mkdir": 2,
+          "readFile": 3,
+          "realpath": 1,
+          "writeFile": 2,
+          "rename": 2,
+          "unlink": 3,
+          "rmdir": 2
+        },
+        "operations": [
+          {
+            "op": "mkdir",
+            "phase": "async",
+            "path": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-main-request-ZXbJE8\\storage",
+            "outcome": "ok"
+          },
+          {
+            "op": "readFile",
+            "phase": "async",
+            "path": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-main-request-ZXbJE8\\storage\\consumption.json",
+            "outcome": "failed"
+          },
+          {
+            "op": "readFile",
+            "phase": "async",
+            "path": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-main-request-ZXbJE8\\storage\\codex-usage-estimate.json",
+            "outcome": "failed"
+          },
+          {
+            "op": "realpath",
+            "phase": "async",
+            "path": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-main-request-ZXbJE8\\storage",
+            "outcome": "ok"
+          },
+          {
+            "op": "mkdir",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-main-request-zxbje8\\storage\\consumption.json.lock.21764-5-mvb139hn.lock",
+            "outcome": "ok"
+          },
+          {
+            "op": "writeFile",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-main-request-zxbje8\\storage\\consumption.json.lock.21764-5-mvb139hn.lock\\21764-4-mvb139hn",
+            "outcome": "ok"
+          },
+          {
+            "op": "rename",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-main-request-zxbje8\\storage\\consumption.json.lock.21764-5-mvb139hn.lock",
+            "target": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-main-request-zxbje8\\storage\\consumption.json.lock",
+            "outcome": "ok"
+          },
+          {
+            "op": "unlink",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-main-request-zxbje8\\storage\\consumption.json.lock.21764-5-mvb139hn.lock\\21764-4-mvb139hn",
+            "outcome": "failed"
+          },
+          {
+            "op": "rmdir",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-main-request-zxbje8\\storage\\consumption.json.lock.21764-5-mvb139hn.lock",
+            "outcome": "failed"
+          },
+          {
+            "op": "readFile",
+            "phase": "async",
+            "path": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-main-request-ZXbJE8\\storage\\consumption.json",
+            "outcome": "failed"
+          },
+          {
+            "op": "writeFile",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-main-request-zxbje8\\storage\\consumption.json.21764-6-mvb139hp.tmp",
+            "outcome": "ok"
+          },
+          {
+            "op": "rename",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-main-request-zxbje8\\storage\\consumption.json.21764-6-mvb139hp.tmp",
+            "target": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-main-request-ZXbJE8\\storage\\consumption.json",
+            "outcome": "ok"
+          },
+          {
+            "op": "unlink",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-main-request-zxbje8\\storage\\consumption.json.21764-6-mvb139hp.tmp",
+            "outcome": "failed"
+          },
+          {
+            "op": "unlink",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-main-request-zxbje8\\storage\\consumption.json.lock\\21764-4-mvb139hn",
+            "outcome": "ok"
+          },
+          {
+            "op": "rmdir",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-main-request-zxbje8\\storage\\consumption.json.lock",
+            "outcome": "ok"
+          }
+        ]
+      },
+      "windows": {
+        "initialization": {
+          "total": 3,
+          "documentReads": 2,
+          "documentPublishes": 0,
+          "lockOperations": 0,
+          "stagingOperations": 0,
+          "metadataOperations": 0,
+          "directoryOperations": 1,
+          "otherOperations": 0,
+          "failedOperations": 2,
+          "failedByOperation": {
+            "readFile": 2
+          },
+          "documents": {
+            "consumption.json": {
+              "reads": 1,
+              "publishes": 0
+            },
+            "codex-usage-estimate.json": {
+              "reads": 1,
+              "publishes": 0
+            }
+          },
+          "byOperation": {
+            "mkdir": 1,
+            "readFile": 2
+          },
+          "operations": [
+            {
+              "op": "mkdir",
+              "phase": "async",
+              "path": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-main-request-ZXbJE8\\storage",
+              "outcome": "ok"
+            },
+            {
+              "op": "readFile",
+              "phase": "async",
+              "path": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-main-request-ZXbJE8\\storage\\consumption.json",
+              "outcome": "failed"
+            },
+            {
+              "op": "readFile",
+              "phase": "async",
+              "path": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-main-request-ZXbJE8\\storage\\codex-usage-estimate.json",
+              "outcome": "failed"
+            }
+          ]
+        },
+        "request": {
+          "total": 12,
+          "documentReads": 1,
+          "documentPublishes": 1,
+          "lockOperations": 7,
+          "stagingOperations": 2,
+          "metadataOperations": 1,
+          "directoryOperations": 0,
+          "otherOperations": 0,
+          "failedOperations": 4,
+          "failedByOperation": {
+            "unlink": 2,
+            "rmdir": 1,
+            "readFile": 1
+          },
+          "documents": {
+            "consumption.json": {
+              "reads": 1,
+              "publishes": 1
+            },
+            "codex-usage-estimate.json": {
+              "reads": 0,
+              "publishes": 0
+            }
+          },
+          "byOperation": {
+            "realpath": 1,
+            "mkdir": 1,
+            "writeFile": 2,
+            "rename": 2,
+            "unlink": 3,
+            "rmdir": 2,
+            "readFile": 1
+          },
+          "operations": [
+            {
+              "op": "realpath",
+              "phase": "async",
+              "path": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-main-request-ZXbJE8\\storage",
+              "outcome": "ok"
+            },
+            {
+              "op": "mkdir",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-main-request-zxbje8\\storage\\consumption.json.lock.21764-5-mvb139hn.lock",
+              "outcome": "ok"
+            },
+            {
+              "op": "writeFile",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-main-request-zxbje8\\storage\\consumption.json.lock.21764-5-mvb139hn.lock\\21764-4-mvb139hn",
+              "outcome": "ok"
+            },
+            {
+              "op": "rename",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-main-request-zxbje8\\storage\\consumption.json.lock.21764-5-mvb139hn.lock",
+              "target": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-main-request-zxbje8\\storage\\consumption.json.lock",
+              "outcome": "ok"
+            },
+            {
+              "op": "unlink",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-main-request-zxbje8\\storage\\consumption.json.lock.21764-5-mvb139hn.lock\\21764-4-mvb139hn",
+              "outcome": "failed"
+            },
+            {
+              "op": "rmdir",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-main-request-zxbje8\\storage\\consumption.json.lock.21764-5-mvb139hn.lock",
+              "outcome": "failed"
+            },
+            {
+              "op": "readFile",
+              "phase": "async",
+              "path": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-main-request-ZXbJE8\\storage\\consumption.json",
+              "outcome": "failed"
+            },
+            {
+              "op": "writeFile",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-main-request-zxbje8\\storage\\consumption.json.21764-6-mvb139hp.tmp",
+              "outcome": "ok"
+            },
+            {
+              "op": "rename",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-main-request-zxbje8\\storage\\consumption.json.21764-6-mvb139hp.tmp",
+              "target": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-main-request-ZXbJE8\\storage\\consumption.json",
+              "outcome": "ok"
+            },
+            {
+              "op": "unlink",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-main-request-zxbje8\\storage\\consumption.json.21764-6-mvb139hp.tmp",
+              "outcome": "failed"
+            },
+            {
+              "op": "unlink",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-main-request-zxbje8\\storage\\consumption.json.lock\\21764-4-mvb139hn",
+              "outcome": "ok"
+            },
+            {
+              "op": "rmdir",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-main-request-zxbje8\\storage\\consumption.json.lock",
+              "outcome": "ok"
+            }
+          ]
+        }
+      },
+      "providerRequests": 1,
+      "providerRequestPaths": {
+        "/user/balance": 1
+      },
+      "widget": {
+        "draws": 8,
+        "timersArmed": 1,
+        "lastLineCount": 3
+      },
+      "document": {
+        "exists": true,
+        "consumption": {
+          "schemaVersion": 1,
+          "periodId": "period-fresh",
+          "start": "2026-10-16T13:53:42.333Z",
+          "holiday": false,
+          "harnesses": {
+            "baseline-probe": {
+              "sessions": [
+                {
+                  "id": "baseline-main",
+                  "name": "基线主会话",
+                  "parent": null,
+                  "startup": {
+                    "model": {
+                      "provider": "deepseek",
+                      "model": "deepseek-chat"
+                    },
+                    "effort": "high"
+                  },
+                  "saveVersion": 1,
+                  "own": {
+                    "deepseek": {
+                      "deepseek-chat": {
+                        "tokens": {
+                          "input": 1000,
+                          "cacheRead": 8000,
+                          "cacheWrite": 0,
+                          "output": 3000
+                        },
+                        "costCny": 0.03
+                      }
+                    }
+                  },
+                  "span": {
+                    "start": 1791954000000,
+                    "end": 1791954120000
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "estimateExists": false
+      },
+      "wallClockMs": 26,
+      "invariants": [
+        {
+          "name": "the initialization read the baseline and the estimate, and published nothing",
+          "ok": true,
+          "detail": "reads=2 (consumption 1, estimate 1), publishes=0"
+        },
+        {
+          "name": "the initialization asked the provider once and the second source not at all",
+          "ok": true,
+          "detail": "requests=1 on /user/balance"
+        },
+        {
+          "name": "the request itself asked no provider: the reading was inside its success TTL",
+          "ok": true,
+          "detail": "requests=0"
+        },
+        {
+          "name": "the Round's end committed through one read, one lock and one publish",
+          "ok": true,
+          "detail": "reads=1 publishes=1 lockOperations=7 staging=2"
+        },
+        {
+          "name": "the request was priced at its own start, by this file's arithmetic",
+          "ok": true,
+          "detail": "costCny=0.03 expected=0.03"
+        },
+        {
+          "name": "the session's startup snapshot is the model and level it began with",
+          "ok": true,
+          "detail": "startup={\"model\":{\"provider\":\"deepseek\",\"model\":\"deepseek-chat\"},\"effort\":\"high\"}"
+        }
+      ],
+      "evidence": {},
+      "comparability": {
+        "comparable": true,
+        "note": "the common path (framework binding + model-cost shared logic + the production frontend composition): re-run this entry on the unified implementation and compare the same windows."
+      }
+    },
+    {
+      "name": "multi-turn",
+      "title": "多 Turn：一轮内五次请求，轮结束才保存",
+      "sequence": [
+        "session_start baseline-main (main)",
+        "round_start baseline-main",
+        "user_input baseline-main",
+        "turn_start baseline-main deepseek/deepseek-chat",
+        "turn_end baseline-main completed",
+        "turn_start baseline-main deepseek/deepseek-chat",
+        "turn_end baseline-main completed",
+        "turn_start baseline-main deepseek/deepseek-chat",
+        "turn_end baseline-main completed",
+        "turn_start baseline-main deepseek/deepseek-chat",
+        "turn_end baseline-main completed",
+        "turn_start baseline-main deepseek/deepseek-chat",
+        "turn_end baseline-main completed",
+        "round_end baseline-main"
+      ],
+      "deliveries": {
+        "session_start": 1,
+        "round_start": 1,
+        "user_input": 1,
+        "turn_start": 5,
+        "turn_end": 5,
+        "round_end": 1
+      },
+      "fileCost": {
+        "total": 15,
+        "documentReads": 3,
+        "documentPublishes": 1,
+        "lockOperations": 7,
+        "stagingOperations": 2,
+        "metadataOperations": 1,
+        "directoryOperations": 1,
+        "otherOperations": 0,
+        "failedOperations": 6,
+        "failedByOperation": {
+          "readFile": 3,
+          "unlink": 2,
+          "rmdir": 1
+        },
+        "documents": {
+          "consumption.json": {
+            "reads": 2,
+            "publishes": 1
+          },
+          "codex-usage-estimate.json": {
+            "reads": 1,
+            "publishes": 0
+          }
+        },
+        "byOperation": {
+          "mkdir": 2,
+          "readFile": 3,
+          "realpath": 1,
+          "writeFile": 2,
+          "rename": 2,
+          "unlink": 3,
+          "rmdir": 2
+        },
+        "operations": [
+          {
+            "op": "mkdir",
+            "phase": "async",
+            "path": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-multi-turn-kgTlfM\\storage",
+            "outcome": "ok"
+          },
+          {
+            "op": "readFile",
+            "phase": "async",
+            "path": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-multi-turn-kgTlfM\\storage\\consumption.json",
+            "outcome": "failed"
+          },
+          {
+            "op": "readFile",
+            "phase": "async",
+            "path": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-multi-turn-kgTlfM\\storage\\codex-usage-estimate.json",
+            "outcome": "failed"
+          },
+          {
+            "op": "realpath",
+            "phase": "async",
+            "path": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-multi-turn-kgTlfM\\storage",
+            "outcome": "ok"
+          },
+          {
+            "op": "mkdir",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-multi-turn-kgtlfm\\storage\\consumption.json.lock.21764-8-mvb139hw.lock",
+            "outcome": "ok"
+          },
+          {
+            "op": "writeFile",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-multi-turn-kgtlfm\\storage\\consumption.json.lock.21764-8-mvb139hw.lock\\21764-7-mvb139hw",
+            "outcome": "ok"
+          },
+          {
+            "op": "rename",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-multi-turn-kgtlfm\\storage\\consumption.json.lock.21764-8-mvb139hw.lock",
+            "target": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-multi-turn-kgtlfm\\storage\\consumption.json.lock",
+            "outcome": "ok"
+          },
+          {
+            "op": "unlink",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-multi-turn-kgtlfm\\storage\\consumption.json.lock.21764-8-mvb139hw.lock\\21764-7-mvb139hw",
+            "outcome": "failed"
+          },
+          {
+            "op": "rmdir",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-multi-turn-kgtlfm\\storage\\consumption.json.lock.21764-8-mvb139hw.lock",
+            "outcome": "failed"
+          },
+          {
+            "op": "readFile",
+            "phase": "async",
+            "path": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-multi-turn-kgTlfM\\storage\\consumption.json",
+            "outcome": "failed"
+          },
+          {
+            "op": "writeFile",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-multi-turn-kgtlfm\\storage\\consumption.json.21764-9-mvb139hx.tmp",
+            "outcome": "ok"
+          },
+          {
+            "op": "rename",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-multi-turn-kgtlfm\\storage\\consumption.json.21764-9-mvb139hx.tmp",
+            "target": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-multi-turn-kgTlfM\\storage\\consumption.json",
+            "outcome": "ok"
+          },
+          {
+            "op": "unlink",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-multi-turn-kgtlfm\\storage\\consumption.json.21764-9-mvb139hx.tmp",
+            "outcome": "failed"
+          },
+          {
+            "op": "unlink",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-multi-turn-kgtlfm\\storage\\consumption.json.lock\\21764-7-mvb139hw",
+            "outcome": "ok"
+          },
+          {
+            "op": "rmdir",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-multi-turn-kgtlfm\\storage\\consumption.json.lock",
+            "outcome": "ok"
+          }
+        ]
+      },
+      "windows": {
+        "turns": {
+          "total": 0,
+          "documentReads": 0,
+          "documentPublishes": 0,
+          "lockOperations": 0,
+          "stagingOperations": 0,
+          "metadataOperations": 0,
+          "directoryOperations": 0,
+          "otherOperations": 0,
+          "failedOperations": 0,
+          "failedByOperation": {},
+          "documents": {
+            "consumption.json": {
+              "reads": 0,
+              "publishes": 0
+            },
+            "codex-usage-estimate.json": {
+              "reads": 0,
+              "publishes": 0
+            }
+          },
+          "byOperation": {},
+          "operations": []
+        },
+        "commit": {
+          "total": 12,
+          "documentReads": 1,
+          "documentPublishes": 1,
+          "lockOperations": 7,
+          "stagingOperations": 2,
+          "metadataOperations": 1,
+          "directoryOperations": 0,
+          "otherOperations": 0,
+          "failedOperations": 4,
+          "failedByOperation": {
+            "unlink": 2,
+            "rmdir": 1,
+            "readFile": 1
+          },
+          "documents": {
+            "consumption.json": {
+              "reads": 1,
+              "publishes": 1
+            },
+            "codex-usage-estimate.json": {
+              "reads": 0,
+              "publishes": 0
+            }
+          },
+          "byOperation": {
+            "realpath": 1,
+            "mkdir": 1,
+            "writeFile": 2,
+            "rename": 2,
+            "unlink": 3,
+            "rmdir": 2,
+            "readFile": 1
+          },
+          "operations": [
+            {
+              "op": "realpath",
+              "phase": "async",
+              "path": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-multi-turn-kgTlfM\\storage",
+              "outcome": "ok"
+            },
+            {
+              "op": "mkdir",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-multi-turn-kgtlfm\\storage\\consumption.json.lock.21764-8-mvb139hw.lock",
+              "outcome": "ok"
+            },
+            {
+              "op": "writeFile",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-multi-turn-kgtlfm\\storage\\consumption.json.lock.21764-8-mvb139hw.lock\\21764-7-mvb139hw",
+              "outcome": "ok"
+            },
+            {
+              "op": "rename",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-multi-turn-kgtlfm\\storage\\consumption.json.lock.21764-8-mvb139hw.lock",
+              "target": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-multi-turn-kgtlfm\\storage\\consumption.json.lock",
+              "outcome": "ok"
+            },
+            {
+              "op": "unlink",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-multi-turn-kgtlfm\\storage\\consumption.json.lock.21764-8-mvb139hw.lock\\21764-7-mvb139hw",
+              "outcome": "failed"
+            },
+            {
+              "op": "rmdir",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-multi-turn-kgtlfm\\storage\\consumption.json.lock.21764-8-mvb139hw.lock",
+              "outcome": "failed"
+            },
+            {
+              "op": "readFile",
+              "phase": "async",
+              "path": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-multi-turn-kgTlfM\\storage\\consumption.json",
+              "outcome": "failed"
+            },
+            {
+              "op": "writeFile",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-multi-turn-kgtlfm\\storage\\consumption.json.21764-9-mvb139hx.tmp",
+              "outcome": "ok"
+            },
+            {
+              "op": "rename",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-multi-turn-kgtlfm\\storage\\consumption.json.21764-9-mvb139hx.tmp",
+              "target": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-multi-turn-kgTlfM\\storage\\consumption.json",
+              "outcome": "ok"
+            },
+            {
+              "op": "unlink",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-multi-turn-kgtlfm\\storage\\consumption.json.21764-9-mvb139hx.tmp",
+              "outcome": "failed"
+            },
+            {
+              "op": "unlink",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-multi-turn-kgtlfm\\storage\\consumption.json.lock\\21764-7-mvb139hw",
+              "outcome": "ok"
+            },
+            {
+              "op": "rmdir",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-multi-turn-kgtlfm\\storage\\consumption.json.lock",
+              "outcome": "ok"
+            }
+          ]
+        }
+      },
+      "providerRequests": 1,
+      "providerRequestPaths": {
+        "/user/balance": 1
+      },
+      "widget": {
+        "draws": 16,
+        "timersArmed": 1,
+        "lastLineCount": 3
+      },
+      "document": {
+        "exists": true,
+        "consumption": {
+          "schemaVersion": 1,
+          "periodId": "period-fresh",
+          "start": "2026-10-16T13:53:42.352Z",
+          "holiday": false,
+          "harnesses": {
+            "baseline-probe": {
+              "sessions": [
+                {
+                  "id": "baseline-main",
+                  "name": "基线主会话",
+                  "parent": null,
+                  "startup": {
+                    "model": {
+                      "provider": "deepseek",
+                      "model": "deepseek-chat"
+                    },
+                    "effort": "high"
+                  },
+                  "saveVersion": 1,
+                  "own": {
+                    "deepseek": {
+                      "deepseek-chat": {
+                        "tokens": {
+                          "input": 5000,
+                          "cacheRead": 40000,
+                          "cacheWrite": 0,
+                          "output": 15000
+                        },
+                        "costCny": 0.15
+                      }
+                    }
+                  },
+                  "span": {
+                    "start": 1791954000000,
+                    "end": 1791954360000
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "estimateExists": false
+      },
+      "wallClockMs": 8,
+      "invariants": [
+        {
+          "name": "five Turns cost the storage root nothing at all",
+          "ok": true,
+          "detail": "fileOperations=0 (reads=0, metadata=0)"
+        },
+        {
+          "name": "five Turns asked the provider nothing",
+          "ok": true,
+          "detail": "requests=0"
+        },
+        {
+          "name": "the whole Round committed through exactly one publish",
+          "ok": true,
+          "detail": "publishes=1 reads=1 lockOperations=7"
+        },
+        {
+          "name": "the five requests were accumulated once each, at this file's arithmetic",
+          "ok": true,
+          "detail": "costCny=0.15 expected=0.15 tokens={\"input\":5000,\"cacheRead\":40000,\"cacheWrite\":0,\"output\":15000}"
+        }
+      ],
+      "evidence": {},
+      "comparability": {
+        "comparable": true,
+        "note": "the common path (framework binding + model-cost shared logic + the production frontend composition): re-run this entry on the unified implementation and compare the same windows."
+      }
+    },
+    {
+      "name": "main-child-concurrency",
+      "title": "主子并发：主会话 + 两个子代理 + 一个孙会话，各轮独立保存",
+      "sequence": [
+        "session_start baseline-main (main)",
+        "round_start baseline-main",
+        "user_input baseline-main",
+        "session_start baseline-child-a (sub)",
+        "round_start baseline-child-a",
+        "session_start baseline-child-b (sub)",
+        "round_start baseline-child-b",
+        "turn_start baseline-main deepseek/deepseek-chat",
+        "turn_end baseline-main completed",
+        "turn_start baseline-child-a deepseek/deepseek-chat",
+        "turn_end baseline-child-a completed",
+        "session_start baseline-grand (sub)",
+        "round_start baseline-grand",
+        "turn_start baseline-child-b openai-codex/gpt-5-codex",
+        "turn_end baseline-child-b completed",
+        "turn_start baseline-grand deepseek/deepseek-chat",
+        "turn_end baseline-grand completed",
+        "round_end baseline-child-a",
+        "round_end baseline-child-b",
+        "round_end baseline-grand",
+        "turn_start baseline-main deepseek/deepseek-chat",
+        "turn_end baseline-main completed",
+        "round_end baseline-main"
+      ],
+      "deliveries": {
+        "session_start": 4,
+        "round_start": 4,
+        "user_input": 1,
+        "turn_start": 5,
+        "turn_end": 5,
+        "round_end": 4
+      },
+      "fileCost": {
+        "total": 52,
+        "documentReads": 6,
+        "documentPublishes": 4,
+        "lockOperations": 28,
+        "stagingOperations": 8,
+        "metadataOperations": 4,
+        "directoryOperations": 1,
+        "otherOperations": 0,
+        "failedOperations": 16,
+        "failedByOperation": {
+          "readFile": 3,
+          "unlink": 8,
+          "rmdir": 4,
+          "rename": 1
+        },
+        "documents": {
+          "consumption.json": {
+            "reads": 5,
+            "publishes": 4
+          },
+          "codex-usage-estimate.json": {
+            "reads": 1,
+            "publishes": 0
+          }
+        },
+        "byOperation": {
+          "mkdir": 5,
+          "readFile": 6,
+          "realpath": 4,
+          "writeFile": 8,
+          "rename": 9,
+          "unlink": 12,
+          "rmdir": 8
+        },
+        "operations": [
+          {
+            "op": "mkdir",
+            "phase": "async",
+            "path": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-concurrent-tree-KkYtaF\\storage",
+            "outcome": "ok"
+          },
+          {
+            "op": "readFile",
+            "phase": "async",
+            "path": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-concurrent-tree-KkYtaF\\storage\\consumption.json",
+            "outcome": "failed"
+          },
+          {
+            "op": "readFile",
+            "phase": "async",
+            "path": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-concurrent-tree-KkYtaF\\storage\\codex-usage-estimate.json",
+            "outcome": "failed"
+          },
+          {
+            "op": "realpath",
+            "phase": "async",
+            "path": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-concurrent-tree-KkYtaF\\storage",
+            "outcome": "ok"
+          },
+          {
+            "op": "realpath",
+            "phase": "async",
+            "path": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-concurrent-tree-KkYtaF\\storage",
+            "outcome": "ok"
+          },
+          {
+            "op": "mkdir",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.lock.21764-11-mvb139i6.lock",
+            "outcome": "ok"
+          },
+          {
+            "op": "realpath",
+            "phase": "async",
+            "path": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-concurrent-tree-KkYtaF\\storage",
+            "outcome": "ok"
+          },
+          {
+            "op": "writeFile",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.lock.21764-11-mvb139i6.lock\\21764-10-mvb139i6",
+            "outcome": "ok"
+          },
+          {
+            "op": "realpath",
+            "phase": "async",
+            "path": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-concurrent-tree-KkYtaF\\storage",
+            "outcome": "ok"
+          },
+          {
+            "op": "rename",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.lock.21764-11-mvb139i6.lock",
+            "target": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.lock",
+            "outcome": "ok"
+          },
+          {
+            "op": "unlink",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.lock.21764-11-mvb139i6.lock\\21764-10-mvb139i6",
+            "outcome": "failed"
+          },
+          {
+            "op": "rmdir",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.lock.21764-11-mvb139i6.lock",
+            "outcome": "failed"
+          },
+          {
+            "op": "readFile",
+            "phase": "async",
+            "path": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-concurrent-tree-KkYtaF\\storage\\consumption.json",
+            "outcome": "failed"
+          },
+          {
+            "op": "writeFile",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.21764-12-mvb139i7.tmp",
+            "outcome": "ok"
+          },
+          {
+            "op": "rename",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.21764-12-mvb139i7.tmp",
+            "target": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-concurrent-tree-KkYtaF\\storage\\consumption.json",
+            "outcome": "ok"
+          },
+          {
+            "op": "unlink",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.21764-12-mvb139i7.tmp",
+            "outcome": "failed"
+          },
+          {
+            "op": "unlink",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.lock\\21764-10-mvb139i6",
+            "outcome": "ok"
+          },
+          {
+            "op": "rmdir",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.lock",
+            "outcome": "ok"
+          },
+          {
+            "op": "mkdir",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.lock.21764-14-mvb139i9.lock",
+            "outcome": "ok"
+          },
+          {
+            "op": "writeFile",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.lock.21764-14-mvb139i9.lock\\21764-13-mvb139i9",
+            "outcome": "ok"
+          },
+          {
+            "op": "rename",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.lock.21764-14-mvb139i9.lock",
+            "target": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.lock",
+            "outcome": "ok"
+          },
+          {
+            "op": "unlink",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.lock.21764-14-mvb139i9.lock\\21764-13-mvb139i9",
+            "outcome": "failed"
+          },
+          {
+            "op": "rmdir",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.lock.21764-14-mvb139i9.lock",
+            "outcome": "failed"
+          },
+          {
+            "op": "readFile",
+            "phase": "async",
+            "path": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-concurrent-tree-KkYtaF\\storage\\consumption.json",
+            "outcome": "ok"
+          },
+          {
+            "op": "writeFile",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.21764-15-mvb139ib.tmp",
+            "outcome": "ok"
+          },
+          {
+            "op": "rename",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.21764-15-mvb139ib.tmp",
+            "target": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-concurrent-tree-KkYtaF\\storage\\consumption.json",
+            "outcome": "ok"
+          },
+          {
+            "op": "unlink",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.21764-15-mvb139ib.tmp",
+            "outcome": "failed"
+          },
+          {
+            "op": "unlink",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.lock\\21764-13-mvb139i9",
+            "outcome": "ok"
+          },
+          {
+            "op": "rmdir",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.lock",
+            "outcome": "ok"
+          },
+          {
+            "op": "mkdir",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.lock.21764-17-mvb139ig.lock",
+            "outcome": "ok"
+          },
+          {
+            "op": "writeFile",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.lock.21764-17-mvb139ig.lock\\21764-16-mvb139ig",
+            "outcome": "ok"
+          },
+          {
+            "op": "rename",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.lock.21764-17-mvb139ig.lock",
+            "target": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.lock",
+            "outcome": "ok"
+          },
+          {
+            "op": "unlink",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.lock.21764-17-mvb139ig.lock\\21764-16-mvb139ig",
+            "outcome": "failed"
+          },
+          {
+            "op": "rmdir",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.lock.21764-17-mvb139ig.lock",
+            "outcome": "failed"
+          },
+          {
+            "op": "readFile",
+            "phase": "async",
+            "path": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-concurrent-tree-KkYtaF\\storage\\consumption.json",
+            "outcome": "ok"
+          },
+          {
+            "op": "writeFile",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.21764-18-mvb139ih.tmp",
+            "outcome": "ok"
+          },
+          {
+            "op": "rename",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.21764-18-mvb139ih.tmp",
+            "target": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-concurrent-tree-KkYtaF\\storage\\consumption.json",
+            "outcome": "failed"
+          },
+          {
+            "op": "rename",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.21764-18-mvb139ih.tmp",
+            "target": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-concurrent-tree-KkYtaF\\storage\\consumption.json",
+            "outcome": "ok"
+          },
+          {
+            "op": "unlink",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.21764-18-mvb139ih.tmp",
+            "outcome": "failed"
+          },
+          {
+            "op": "unlink",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.lock\\21764-16-mvb139ig",
+            "outcome": "ok"
+          },
+          {
+            "op": "rmdir",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.lock",
+            "outcome": "ok"
+          },
+          {
+            "op": "mkdir",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.lock.21764-20-mvb139j9.lock",
+            "outcome": "ok"
+          },
+          {
+            "op": "writeFile",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.lock.21764-20-mvb139j9.lock\\21764-19-mvb139j9",
+            "outcome": "ok"
+          },
+          {
+            "op": "rename",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.lock.21764-20-mvb139j9.lock",
+            "target": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.lock",
+            "outcome": "ok"
+          },
+          {
+            "op": "unlink",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.lock.21764-20-mvb139j9.lock\\21764-19-mvb139j9",
+            "outcome": "failed"
+          },
+          {
+            "op": "rmdir",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.lock.21764-20-mvb139j9.lock",
+            "outcome": "failed"
+          },
+          {
+            "op": "readFile",
+            "phase": "async",
+            "path": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-concurrent-tree-KkYtaF\\storage\\consumption.json",
+            "outcome": "ok"
+          },
+          {
+            "op": "writeFile",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.21764-21-mvb139ja.tmp",
+            "outcome": "ok"
+          },
+          {
+            "op": "rename",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.21764-21-mvb139ja.tmp",
+            "target": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-concurrent-tree-KkYtaF\\storage\\consumption.json",
+            "outcome": "ok"
+          },
+          {
+            "op": "unlink",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.21764-21-mvb139ja.tmp",
+            "outcome": "failed"
+          },
+          {
+            "op": "unlink",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.lock\\21764-19-mvb139j9",
+            "outcome": "ok"
+          },
+          {
+            "op": "rmdir",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.lock",
+            "outcome": "ok"
+          }
+        ]
+      },
+      "windows": {
+        "whole": {
+          "total": 52,
+          "documentReads": 6,
+          "documentPublishes": 4,
+          "lockOperations": 28,
+          "stagingOperations": 8,
+          "metadataOperations": 4,
+          "directoryOperations": 1,
+          "otherOperations": 0,
+          "failedOperations": 16,
+          "failedByOperation": {
+            "readFile": 3,
+            "unlink": 8,
+            "rmdir": 4,
+            "rename": 1
+          },
+          "documents": {
+            "consumption.json": {
+              "reads": 5,
+              "publishes": 4
+            },
+            "codex-usage-estimate.json": {
+              "reads": 1,
+              "publishes": 0
+            }
+          },
+          "byOperation": {
+            "mkdir": 5,
+            "readFile": 6,
+            "realpath": 4,
+            "writeFile": 8,
+            "rename": 9,
+            "unlink": 12,
+            "rmdir": 8
+          },
+          "operations": [
+            {
+              "op": "mkdir",
+              "phase": "async",
+              "path": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-concurrent-tree-KkYtaF\\storage",
+              "outcome": "ok"
+            },
+            {
+              "op": "readFile",
+              "phase": "async",
+              "path": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-concurrent-tree-KkYtaF\\storage\\consumption.json",
+              "outcome": "failed"
+            },
+            {
+              "op": "readFile",
+              "phase": "async",
+              "path": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-concurrent-tree-KkYtaF\\storage\\codex-usage-estimate.json",
+              "outcome": "failed"
+            },
+            {
+              "op": "realpath",
+              "phase": "async",
+              "path": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-concurrent-tree-KkYtaF\\storage",
+              "outcome": "ok"
+            },
+            {
+              "op": "realpath",
+              "phase": "async",
+              "path": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-concurrent-tree-KkYtaF\\storage",
+              "outcome": "ok"
+            },
+            {
+              "op": "mkdir",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.lock.21764-11-mvb139i6.lock",
+              "outcome": "ok"
+            },
+            {
+              "op": "realpath",
+              "phase": "async",
+              "path": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-concurrent-tree-KkYtaF\\storage",
+              "outcome": "ok"
+            },
+            {
+              "op": "writeFile",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.lock.21764-11-mvb139i6.lock\\21764-10-mvb139i6",
+              "outcome": "ok"
+            },
+            {
+              "op": "realpath",
+              "phase": "async",
+              "path": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-concurrent-tree-KkYtaF\\storage",
+              "outcome": "ok"
+            },
+            {
+              "op": "rename",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.lock.21764-11-mvb139i6.lock",
+              "target": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.lock",
+              "outcome": "ok"
+            },
+            {
+              "op": "unlink",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.lock.21764-11-mvb139i6.lock\\21764-10-mvb139i6",
+              "outcome": "failed"
+            },
+            {
+              "op": "rmdir",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.lock.21764-11-mvb139i6.lock",
+              "outcome": "failed"
+            },
+            {
+              "op": "readFile",
+              "phase": "async",
+              "path": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-concurrent-tree-KkYtaF\\storage\\consumption.json",
+              "outcome": "failed"
+            },
+            {
+              "op": "writeFile",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.21764-12-mvb139i7.tmp",
+              "outcome": "ok"
+            },
+            {
+              "op": "rename",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.21764-12-mvb139i7.tmp",
+              "target": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-concurrent-tree-KkYtaF\\storage\\consumption.json",
+              "outcome": "ok"
+            },
+            {
+              "op": "unlink",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.21764-12-mvb139i7.tmp",
+              "outcome": "failed"
+            },
+            {
+              "op": "unlink",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.lock\\21764-10-mvb139i6",
+              "outcome": "ok"
+            },
+            {
+              "op": "rmdir",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.lock",
+              "outcome": "ok"
+            },
+            {
+              "op": "mkdir",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.lock.21764-14-mvb139i9.lock",
+              "outcome": "ok"
+            },
+            {
+              "op": "writeFile",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.lock.21764-14-mvb139i9.lock\\21764-13-mvb139i9",
+              "outcome": "ok"
+            },
+            {
+              "op": "rename",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.lock.21764-14-mvb139i9.lock",
+              "target": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.lock",
+              "outcome": "ok"
+            },
+            {
+              "op": "unlink",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.lock.21764-14-mvb139i9.lock\\21764-13-mvb139i9",
+              "outcome": "failed"
+            },
+            {
+              "op": "rmdir",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.lock.21764-14-mvb139i9.lock",
+              "outcome": "failed"
+            },
+            {
+              "op": "readFile",
+              "phase": "async",
+              "path": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-concurrent-tree-KkYtaF\\storage\\consumption.json",
+              "outcome": "ok"
+            },
+            {
+              "op": "writeFile",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.21764-15-mvb139ib.tmp",
+              "outcome": "ok"
+            },
+            {
+              "op": "rename",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.21764-15-mvb139ib.tmp",
+              "target": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-concurrent-tree-KkYtaF\\storage\\consumption.json",
+              "outcome": "ok"
+            },
+            {
+              "op": "unlink",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.21764-15-mvb139ib.tmp",
+              "outcome": "failed"
+            },
+            {
+              "op": "unlink",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.lock\\21764-13-mvb139i9",
+              "outcome": "ok"
+            },
+            {
+              "op": "rmdir",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.lock",
+              "outcome": "ok"
+            },
+            {
+              "op": "mkdir",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.lock.21764-17-mvb139ig.lock",
+              "outcome": "ok"
+            },
+            {
+              "op": "writeFile",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.lock.21764-17-mvb139ig.lock\\21764-16-mvb139ig",
+              "outcome": "ok"
+            },
+            {
+              "op": "rename",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.lock.21764-17-mvb139ig.lock",
+              "target": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.lock",
+              "outcome": "ok"
+            },
+            {
+              "op": "unlink",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.lock.21764-17-mvb139ig.lock\\21764-16-mvb139ig",
+              "outcome": "failed"
+            },
+            {
+              "op": "rmdir",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.lock.21764-17-mvb139ig.lock",
+              "outcome": "failed"
+            },
+            {
+              "op": "readFile",
+              "phase": "async",
+              "path": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-concurrent-tree-KkYtaF\\storage\\consumption.json",
+              "outcome": "ok"
+            },
+            {
+              "op": "writeFile",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.21764-18-mvb139ih.tmp",
+              "outcome": "ok"
+            },
+            {
+              "op": "rename",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.21764-18-mvb139ih.tmp",
+              "target": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-concurrent-tree-KkYtaF\\storage\\consumption.json",
+              "outcome": "failed"
+            },
+            {
+              "op": "rename",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.21764-18-mvb139ih.tmp",
+              "target": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-concurrent-tree-KkYtaF\\storage\\consumption.json",
+              "outcome": "ok"
+            },
+            {
+              "op": "unlink",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.21764-18-mvb139ih.tmp",
+              "outcome": "failed"
+            },
+            {
+              "op": "unlink",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.lock\\21764-16-mvb139ig",
+              "outcome": "ok"
+            },
+            {
+              "op": "rmdir",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.lock",
+              "outcome": "ok"
+            },
+            {
+              "op": "mkdir",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.lock.21764-20-mvb139j9.lock",
+              "outcome": "ok"
+            },
+            {
+              "op": "writeFile",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.lock.21764-20-mvb139j9.lock\\21764-19-mvb139j9",
+              "outcome": "ok"
+            },
+            {
+              "op": "rename",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.lock.21764-20-mvb139j9.lock",
+              "target": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.lock",
+              "outcome": "ok"
+            },
+            {
+              "op": "unlink",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.lock.21764-20-mvb139j9.lock\\21764-19-mvb139j9",
+              "outcome": "failed"
+            },
+            {
+              "op": "rmdir",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.lock.21764-20-mvb139j9.lock",
+              "outcome": "failed"
+            },
+            {
+              "op": "readFile",
+              "phase": "async",
+              "path": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-concurrent-tree-KkYtaF\\storage\\consumption.json",
+              "outcome": "ok"
+            },
+            {
+              "op": "writeFile",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.21764-21-mvb139ja.tmp",
+              "outcome": "ok"
+            },
+            {
+              "op": "rename",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.21764-21-mvb139ja.tmp",
+              "target": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-concurrent-tree-KkYtaF\\storage\\consumption.json",
+              "outcome": "ok"
+            },
+            {
+              "op": "unlink",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.21764-21-mvb139ja.tmp",
+              "outcome": "failed"
+            },
+            {
+              "op": "unlink",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.lock\\21764-19-mvb139j9",
+              "outcome": "ok"
+            },
+            {
+              "op": "rmdir",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-concurrent-tree-kkytaf\\storage\\consumption.json.lock",
+              "outcome": "ok"
+            }
+          ]
+        }
+      },
+      "providerRequests": 2,
+      "providerRequestPaths": {
+        "/user/balance": 2
+      },
+      "widget": {
+        "draws": 33,
+        "timersArmed": 1,
+        "lastLineCount": 3
+      },
+      "document": {
+        "exists": true,
+        "consumption": {
+          "schemaVersion": 1,
+          "periodId": "period-fresh",
+          "start": "2026-10-16T13:53:42.360Z",
+          "holiday": false,
+          "harnesses": {
+            "baseline-probe": {
+              "sessions": [
+                {
+                  "id": "baseline-child-a",
+                  "name": "基线检索",
+                  "parent": "baseline-main",
+                  "startup": {
+                    "model": {
+                      "provider": "deepseek",
+                      "model": "deepseek-chat"
+                    },
+                    "effort": "medium"
+                  },
+                  "saveVersion": 1,
+                  "own": {
+                    "deepseek": {
+                      "deepseek-chat": {
+                        "tokens": {
+                          "input": 1000,
+                          "cacheRead": 8000,
+                          "cacheWrite": 0,
+                          "output": 3000
+                        },
+                        "costCny": 0.03
+                      }
+                    }
+                  },
+                  "runtimeMs": 360000
+                },
+                {
+                  "id": "baseline-child-b",
+                  "name": "基线核查",
+                  "parent": "baseline-main",
+                  "startup": {
+                    "model": {
+                      "provider": "openai-codex",
+                      "model": "gpt-5-codex"
+                    },
+                    "effort": "low"
+                  },
+                  "saveVersion": 1,
+                  "own": {
+                    "openai-codex": {
+                      "gpt-5-codex": {
+                        "tokens": {
+                          "input": 100,
+                          "cacheRead": 0,
+                          "cacheWrite": 0,
+                          "output": 50
+                        }
+                      }
+                    }
+                  },
+                  "runtimeMs": 360000
+                },
+                {
+                  "id": "baseline-grand",
+                  "name": "基线复核",
+                  "parent": "baseline-child-a",
+                  "startup": {
+                    "model": {
+                      "provider": "deepseek",
+                      "model": "deepseek-chat"
+                    },
+                    "effort": "medium"
+                  },
+                  "saveVersion": 1,
+                  "own": {
+                    "deepseek": {
+                      "deepseek-chat": {
+                        "tokens": {
+                          "input": 1000,
+                          "cacheRead": 8000,
+                          "cacheWrite": 0,
+                          "output": 3000
+                        },
+                        "costCny": 0.03
+                      }
+                    }
+                  },
+                  "runtimeMs": 360000
+                },
+                {
+                  "id": "baseline-main",
+                  "name": "基线主会话",
+                  "parent": null,
+                  "startup": {
+                    "model": {
+                      "provider": "deepseek",
+                      "model": "deepseek-chat"
+                    },
+                    "effort": "high"
+                  },
+                  "saveVersion": 1,
+                  "own": {
+                    "deepseek": {
+                      "deepseek-chat": {
+                        "tokens": {
+                          "input": 2000,
+                          "cacheRead": 16000,
+                          "cacheWrite": 0,
+                          "output": 6000
+                        },
+                        "costCny": 0.06
+                      }
+                    }
+                  },
+                  "span": {
+                    "start": 1791954000000,
+                    "end": 1791954600000
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "estimateExists": false
+      },
+      "wallClockMs": 49,
+      "invariants": [
+        {
+          "name": "the process asked the provider once at startup and once more when its stated clock passed the reading's success TTL",
+          "ok": true,
+          "detail": "requests=2 (one startup prefetch, one settled-request refresh due 360000ms after the reading) paths=/user/balance,/user/balance"
+        },
+        {
+          "name": "each session's own Round end published one record",
+          "ok": true,
+          "detail": "publishes=4 reads=5 (one initialization load plus one inside each of the four commits) lockOperations=28"
+        },
+        {
+          "name": "a subagent's consumption is its own, and the parent's own record excludes it",
+          "ok": true,
+          "detail": "main=0.06 (two requests of its own) childA=0.03 grand=0.03"
+        },
+        {
+          "name": "the token-only channel's request carries tokens and no monetary amount",
+          "ok": true,
+          "detail": "costCny=undefined tokens={\"input\":100,\"cacheRead\":0,\"cacheWrite\":0,\"output\":50}"
+        },
+        {
+          "name": "the direct parent chains are what the host reported, not by name or depth",
+          "ok": true,
+          "detail": "childA.parent=baseline-main grand.parent=baseline-child-a childB.parent=baseline-main"
+        },
+        {
+          "name": "the child's own Round's interval was recorded on its session",
+          "ok": true,
+          "detail": "childA.runtimeMs=360000 expected=360000"
+        }
+      ],
+      "evidence": {},
+      "comparability": {
+        "comparable": true,
+        "note": "the common path (framework binding + model-cost shared logic + the production frontend composition): re-run this entry on the unified implementation and compare the same windows. Its native half in a real host — the spawned session's own binding, the native disposal — is driven here as semantic facts, and a comparison of that half belongs to the real-host dock runs ticket 22 owns."
+      }
+    },
+    {
+      "name": "save-onto-shared-document",
+      "title": "保存：在另一个 harness 的文档上做一次普通合并提交",
+      "sequence": [
+        "session_start baseline-main (main)",
+        "round_start baseline-main",
+        "user_input baseline-main",
+        "turn_start baseline-main deepseek/deepseek-chat",
+        "turn_end baseline-main completed",
+        "round_end baseline-main"
+      ],
+      "deliveries": {
+        "session_start": 1,
+        "round_start": 1,
+        "user_input": 1,
+        "turn_start": 1,
+        "turn_end": 1,
+        "round_end": 1
+      },
+      "fileCost": {
+        "total": 16,
+        "documentReads": 3,
+        "documentPublishes": 1,
+        "lockOperations": 7,
+        "stagingOperations": 2,
+        "metadataOperations": 1,
+        "directoryOperations": 1,
+        "otherOperations": 0,
+        "failedOperations": 5,
+        "failedByOperation": {
+          "readFile": 1,
+          "unlink": 2,
+          "rmdir": 1,
+          "rename": 1
+        },
+        "documents": {
+          "consumption.json": {
+            "reads": 2,
+            "publishes": 1
+          },
+          "codex-usage-estimate.json": {
+            "reads": 1,
+            "publishes": 0
+          }
+        },
+        "byOperation": {
+          "mkdir": 2,
+          "readFile": 3,
+          "realpath": 1,
+          "writeFile": 2,
+          "rename": 3,
+          "unlink": 3,
+          "rmdir": 2
+        },
+        "operations": [
+          {
+            "op": "mkdir",
+            "phase": "async",
+            "path": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-save-shared-lAZpRJ\\storage",
+            "outcome": "ok"
+          },
+          {
+            "op": "readFile",
+            "phase": "async",
+            "path": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-save-shared-lAZpRJ\\storage\\consumption.json",
+            "outcome": "ok"
+          },
+          {
+            "op": "readFile",
+            "phase": "async",
+            "path": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-save-shared-lAZpRJ\\storage\\codex-usage-estimate.json",
+            "outcome": "failed"
+          },
+          {
+            "op": "realpath",
+            "phase": "async",
+            "path": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-save-shared-lAZpRJ\\storage",
+            "outcome": "ok"
+          },
+          {
+            "op": "mkdir",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-save-shared-lazprj\\storage\\consumption.json.lock.21764-23-mvb139jg.lock",
+            "outcome": "ok"
+          },
+          {
+            "op": "writeFile",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-save-shared-lazprj\\storage\\consumption.json.lock.21764-23-mvb139jg.lock\\21764-22-mvb139jg",
+            "outcome": "ok"
+          },
+          {
+            "op": "rename",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-save-shared-lazprj\\storage\\consumption.json.lock.21764-23-mvb139jg.lock",
+            "target": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-save-shared-lazprj\\storage\\consumption.json.lock",
+            "outcome": "ok"
+          },
+          {
+            "op": "unlink",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-save-shared-lazprj\\storage\\consumption.json.lock.21764-23-mvb139jg.lock\\21764-22-mvb139jg",
+            "outcome": "failed"
+          },
+          {
+            "op": "rmdir",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-save-shared-lazprj\\storage\\consumption.json.lock.21764-23-mvb139jg.lock",
+            "outcome": "failed"
+          },
+          {
+            "op": "readFile",
+            "phase": "async",
+            "path": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-save-shared-lAZpRJ\\storage\\consumption.json",
+            "outcome": "ok"
+          },
+          {
+            "op": "writeFile",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-save-shared-lazprj\\storage\\consumption.json.21764-24-mvb139ji.tmp",
+            "outcome": "ok"
+          },
+          {
+            "op": "rename",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-save-shared-lazprj\\storage\\consumption.json.21764-24-mvb139ji.tmp",
+            "target": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-save-shared-lAZpRJ\\storage\\consumption.json",
+            "outcome": "failed"
+          },
+          {
+            "op": "rename",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-save-shared-lazprj\\storage\\consumption.json.21764-24-mvb139ji.tmp",
+            "target": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-save-shared-lAZpRJ\\storage\\consumption.json",
+            "outcome": "ok"
+          },
+          {
+            "op": "unlink",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-save-shared-lazprj\\storage\\consumption.json.21764-24-mvb139ji.tmp",
+            "outcome": "failed"
+          },
+          {
+            "op": "unlink",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-save-shared-lazprj\\storage\\consumption.json.lock\\21764-22-mvb139jg",
+            "outcome": "ok"
+          },
+          {
+            "op": "rmdir",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-save-shared-lazprj\\storage\\consumption.json.lock",
+            "outcome": "ok"
+          }
+        ]
+      },
+      "windows": {
+        "whole": {
+          "total": 16,
+          "documentReads": 3,
+          "documentPublishes": 1,
+          "lockOperations": 7,
+          "stagingOperations": 2,
+          "metadataOperations": 1,
+          "directoryOperations": 1,
+          "otherOperations": 0,
+          "failedOperations": 5,
+          "failedByOperation": {
+            "readFile": 1,
+            "unlink": 2,
+            "rmdir": 1,
+            "rename": 1
+          },
+          "documents": {
+            "consumption.json": {
+              "reads": 2,
+              "publishes": 1
+            },
+            "codex-usage-estimate.json": {
+              "reads": 1,
+              "publishes": 0
+            }
+          },
+          "byOperation": {
+            "mkdir": 2,
+            "readFile": 3,
+            "realpath": 1,
+            "writeFile": 2,
+            "rename": 3,
+            "unlink": 3,
+            "rmdir": 2
+          },
+          "operations": [
+            {
+              "op": "mkdir",
+              "phase": "async",
+              "path": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-save-shared-lAZpRJ\\storage",
+              "outcome": "ok"
+            },
+            {
+              "op": "readFile",
+              "phase": "async",
+              "path": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-save-shared-lAZpRJ\\storage\\consumption.json",
+              "outcome": "ok"
+            },
+            {
+              "op": "readFile",
+              "phase": "async",
+              "path": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-save-shared-lAZpRJ\\storage\\codex-usage-estimate.json",
+              "outcome": "failed"
+            },
+            {
+              "op": "realpath",
+              "phase": "async",
+              "path": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-save-shared-lAZpRJ\\storage",
+              "outcome": "ok"
+            },
+            {
+              "op": "mkdir",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-save-shared-lazprj\\storage\\consumption.json.lock.21764-23-mvb139jg.lock",
+              "outcome": "ok"
+            },
+            {
+              "op": "writeFile",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-save-shared-lazprj\\storage\\consumption.json.lock.21764-23-mvb139jg.lock\\21764-22-mvb139jg",
+              "outcome": "ok"
+            },
+            {
+              "op": "rename",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-save-shared-lazprj\\storage\\consumption.json.lock.21764-23-mvb139jg.lock",
+              "target": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-save-shared-lazprj\\storage\\consumption.json.lock",
+              "outcome": "ok"
+            },
+            {
+              "op": "unlink",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-save-shared-lazprj\\storage\\consumption.json.lock.21764-23-mvb139jg.lock\\21764-22-mvb139jg",
+              "outcome": "failed"
+            },
+            {
+              "op": "rmdir",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-save-shared-lazprj\\storage\\consumption.json.lock.21764-23-mvb139jg.lock",
+              "outcome": "failed"
+            },
+            {
+              "op": "readFile",
+              "phase": "async",
+              "path": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-save-shared-lAZpRJ\\storage\\consumption.json",
+              "outcome": "ok"
+            },
+            {
+              "op": "writeFile",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-save-shared-lazprj\\storage\\consumption.json.21764-24-mvb139ji.tmp",
+              "outcome": "ok"
+            },
+            {
+              "op": "rename",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-save-shared-lazprj\\storage\\consumption.json.21764-24-mvb139ji.tmp",
+              "target": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-save-shared-lAZpRJ\\storage\\consumption.json",
+              "outcome": "failed"
+            },
+            {
+              "op": "rename",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-save-shared-lazprj\\storage\\consumption.json.21764-24-mvb139ji.tmp",
+              "target": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-save-shared-lAZpRJ\\storage\\consumption.json",
+              "outcome": "ok"
+            },
+            {
+              "op": "unlink",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-save-shared-lazprj\\storage\\consumption.json.21764-24-mvb139ji.tmp",
+              "outcome": "failed"
+            },
+            {
+              "op": "unlink",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-save-shared-lazprj\\storage\\consumption.json.lock\\21764-22-mvb139jg",
+              "outcome": "ok"
+            },
+            {
+              "op": "rmdir",
+              "phase": "async",
+              "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-save-shared-lazprj\\storage\\consumption.json.lock",
+              "outcome": "ok"
+            }
+          ]
+        }
+      },
+      "providerRequests": 1,
+      "providerRequestPaths": {
+        "/user/balance": 1
+      },
+      "widget": {
+        "draws": 8,
+        "timersArmed": 1,
+        "lastLineCount": 3
+      },
+      "document": {
+        "exists": true,
+        "consumption": {
+          "schemaVersion": 1,
+          "periodId": "period-baseline-seeded",
+          "start": "2026-10-13T16:00:00.000Z",
+          "holiday": false,
+          "harnesses": {
+            "other-harness": {
+              "sessions": [
+                {
+                  "id": "other-1",
+                  "name": "另一个 harness 的会话",
+                  "parent": null,
+                  "saveVersion": 4,
+                  "own": {
+                    "deepseek": {
+                      "deepseek-chat": {
+                        "tokens": {
+                          "input": 10,
+                          "cacheRead": 0,
+                          "cacheWrite": 0,
+                          "output": 20
+                        },
+                        "costCny": 0.0005
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "baseline-probe": {
+              "sessions": [
+                {
+                  "id": "baseline-main",
+                  "name": "基线主会话",
+                  "parent": null,
+                  "startup": {
+                    "model": {
+                      "provider": "deepseek",
+                      "model": "deepseek-chat"
+                    },
+                    "effort": "high"
+                  },
+                  "saveVersion": 1,
+                  "own": {
+                    "deepseek": {
+                      "deepseek-chat": {
+                        "tokens": {
+                          "input": 1000,
+                          "cacheRead": 8000,
+                          "cacheWrite": 0,
+                          "output": 3000
+                        },
+                        "costCny": 0.03
+                      }
+                    }
+                  },
+                  "span": {
+                    "start": 1791954000000,
+                    "end": 1791954120000
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "estimateExists": false
+      },
+      "wallClockMs": 34,
+      "invariants": [
+        {
+          "name": "the document another harness wrote was adopted as the baseline, not replaced",
+          "ok": true,
+          "detail": "periodId=period-baseline-seeded expected=period-baseline-seeded"
+        },
+        {
+          "name": "the save cost one coordinated read-modify-publish after the initialization's own load",
+          "ok": true,
+          "detail": "reads=2 (one initialization load, one inside the update) publishes=1 lockOperations=7"
+        },
+        {
+          "name": "the other harness's record survived the save unchanged",
+          "ok": true,
+          "detail": "other-1={\"deepseek\":{\"deepseek-chat\":{\"tokens\":{\"input\":10,\"cacheRead\":0,\"cacheWrite\":0,\"output\":20},\"costCny\":0.0005}}} saveVersion=4"
+        },
+        {
+          "name": "the save added this harness's record only",
+          "ok": true,
+          "detail": "harnesses=other-harness,baseline-probe own=1"
+        }
+      ],
+      "evidence": {},
+      "comparability": {
+        "comparable": true,
+        "note": "the common path (framework binding + model-cost shared logic + the production frontend composition): re-run this entry on the unified implementation and compare the same windows."
+      }
+    },
+    {
+      "name": "read-only-refresh",
+      "title": "只读刷新：展示/读数/命令/改名，均不落盘、不请求",
+      "sequence": [
+        "session_start baseline-main (main)",
+        "round_start baseline-main",
+        "user_input baseline-main",
+        "turn_start baseline-main deepseek/deepseek-chat",
+        "turn_end baseline-main completed",
+        "session_facts baseline-main rename"
+      ],
+      "deliveries": {
+        "session_start": 1,
+        "round_start": 1,
+        "user_input": 1,
+        "turn_start": 1,
+        "turn_end": 1,
+        "session_facts": 1
+      },
+      "fileCost": {
+        "total": 0,
+        "documentReads": 0,
+        "documentPublishes": 0,
+        "lockOperations": 0,
+        "stagingOperations": 0,
+        "metadataOperations": 0,
+        "directoryOperations": 0,
+        "otherOperations": 0,
+        "failedOperations": 0,
+        "failedByOperation": {},
+        "documents": {
+          "consumption.json": {
+            "reads": 0,
+            "publishes": 0
+          },
+          "codex-usage-estimate.json": {
+            "reads": 0,
+            "publishes": 0
+          }
+        },
+        "byOperation": {},
+        "operations": []
+      },
+      "windows": {
+        "refresh": {
+          "total": 0,
+          "documentReads": 0,
+          "documentPublishes": 0,
+          "lockOperations": 0,
+          "stagingOperations": 0,
+          "metadataOperations": 0,
+          "directoryOperations": 0,
+          "otherOperations": 0,
+          "failedOperations": 0,
+          "failedByOperation": {},
+          "documents": {
+            "consumption.json": {
+              "reads": 0,
+              "publishes": 0
+            },
+            "codex-usage-estimate.json": {
+              "reads": 0,
+              "publishes": 0
+            }
+          },
+          "byOperation": {},
+          "operations": []
+        }
+      },
+      "providerRequests": 1,
+      "providerRequestPaths": {
+        "/user/balance": 1
+      },
+      "widget": {
+        "draws": 8,
+        "timersArmed": 1,
+        "lastLineCount": 4
+      },
+      "document": {
+        "exists": false,
+        "estimateExists": false
+      },
+      "wallClockMs": 4,
+      "invariants": [
+        {
+          "name": "the whole read-only refresh cost the storage root nothing",
+          "ok": true,
+          "detail": "fileOperations=0 (reads=0, metadata=0, locks=0)"
+        },
+        {
+          "name": "the whole read-only refresh asked the provider nothing",
+          "ok": true,
+          "detail": "requests=0"
+        },
+        {
+          "name": "the refresh did not commit the request that was still uncommitted",
+          "ok": true,
+          "detail": "consumption.json exists=false (the Round is still open, so nothing may write it)"
+        },
+        {
+          "name": "the entry's own detail action was reached and answered",
+          "ok": true,
+          "detail": "feedback=info:展示已切换为详细（detail）：保留顶部 Total，并在 Round 位置显示静态代理树。"
+        },
+        {
+          "name": "the rename fact did not create a second identity",
+          "ok": true,
+          "detail": "session_facts=1 session_start=1"
+        }
+      ],
+      "evidence": {},
+      "comparability": {
+        "comparable": true,
+        "note": "the common path (framework binding + model-cost shared logic + the production frontend composition): re-run this entry on the unified implementation and compare the same windows."
+      }
+    },
+    {
+      "name": "healthy-idle",
+      "title": "健康空闲：3 秒窗口内无文件、无请求、无重绘、无重建等待",
+      "sequence": [
+        "session_start baseline-main (main)",
+        "round_start baseline-main",
+        "user_input baseline-main",
+        "turn_start baseline-main deepseek/deepseek-chat",
+        "turn_end baseline-main completed",
+        "round_end baseline-main"
+      ],
+      "deliveries": {
+        "session_start": 1,
+        "round_start": 1,
+        "user_input": 1,
+        "turn_start": 1,
+        "turn_end": 1,
+        "round_end": 1
+      },
+      "fileCost": {
+        "total": 15,
+        "documentReads": 3,
+        "documentPublishes": 1,
+        "lockOperations": 7,
+        "stagingOperations": 2,
+        "metadataOperations": 1,
+        "directoryOperations": 1,
+        "otherOperations": 0,
+        "failedOperations": 6,
+        "failedByOperation": {
+          "readFile": 3,
+          "unlink": 2,
+          "rmdir": 1
+        },
+        "documents": {
+          "consumption.json": {
+            "reads": 2,
+            "publishes": 1
+          },
+          "codex-usage-estimate.json": {
+            "reads": 1,
+            "publishes": 0
+          }
+        },
+        "byOperation": {
+          "mkdir": 2,
+          "readFile": 3,
+          "realpath": 1,
+          "writeFile": 2,
+          "rename": 2,
+          "unlink": 3,
+          "rmdir": 2
+        },
+        "operations": [
+          {
+            "op": "mkdir",
+            "phase": "async",
+            "path": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-healthy-idle-oyN1MV\\storage",
+            "outcome": "ok"
+          },
+          {
+            "op": "readFile",
+            "phase": "async",
+            "path": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-healthy-idle-oyN1MV\\storage\\consumption.json",
+            "outcome": "failed"
+          },
+          {
+            "op": "readFile",
+            "phase": "async",
+            "path": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-healthy-idle-oyN1MV\\storage\\codex-usage-estimate.json",
+            "outcome": "failed"
+          },
+          {
+            "op": "realpath",
+            "phase": "async",
+            "path": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-healthy-idle-oyN1MV\\storage",
+            "outcome": "ok"
+          },
+          {
+            "op": "mkdir",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-healthy-idle-oyn1mv\\storage\\consumption.json.lock.21764-26-mvb139kh.lock",
+            "outcome": "ok"
+          },
+          {
+            "op": "writeFile",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-healthy-idle-oyn1mv\\storage\\consumption.json.lock.21764-26-mvb139kh.lock\\21764-25-mvb139kh",
+            "outcome": "ok"
+          },
+          {
+            "op": "rename",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-healthy-idle-oyn1mv\\storage\\consumption.json.lock.21764-26-mvb139kh.lock",
+            "target": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-healthy-idle-oyn1mv\\storage\\consumption.json.lock",
+            "outcome": "ok"
+          },
+          {
+            "op": "unlink",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-healthy-idle-oyn1mv\\storage\\consumption.json.lock.21764-26-mvb139kh.lock\\21764-25-mvb139kh",
+            "outcome": "failed"
+          },
+          {
+            "op": "rmdir",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-healthy-idle-oyn1mv\\storage\\consumption.json.lock.21764-26-mvb139kh.lock",
+            "outcome": "failed"
+          },
+          {
+            "op": "readFile",
+            "phase": "async",
+            "path": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-healthy-idle-oyN1MV\\storage\\consumption.json",
+            "outcome": "failed"
+          },
+          {
+            "op": "writeFile",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-healthy-idle-oyn1mv\\storage\\consumption.json.21764-27-mvb139ki.tmp",
+            "outcome": "ok"
+          },
+          {
+            "op": "rename",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-healthy-idle-oyn1mv\\storage\\consumption.json.21764-27-mvb139ki.tmp",
+            "target": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-healthy-idle-oyN1MV\\storage\\consumption.json",
+            "outcome": "ok"
+          },
+          {
+            "op": "unlink",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-healthy-idle-oyn1mv\\storage\\consumption.json.21764-27-mvb139ki.tmp",
+            "outcome": "failed"
+          },
+          {
+            "op": "unlink",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-healthy-idle-oyn1mv\\storage\\consumption.json.lock\\21764-25-mvb139kh",
+            "outcome": "ok"
+          },
+          {
+            "op": "rmdir",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-healthy-idle-oyn1mv\\storage\\consumption.json.lock",
+            "outcome": "ok"
+          }
+        ]
+      },
+      "windows": {
+        "idle": {
+          "total": 0,
+          "documentReads": 0,
+          "documentPublishes": 0,
+          "lockOperations": 0,
+          "stagingOperations": 0,
+          "metadataOperations": 0,
+          "directoryOperations": 0,
+          "otherOperations": 0,
+          "failedOperations": 0,
+          "failedByOperation": {},
+          "documents": {
+            "consumption.json": {
+              "reads": 0,
+              "publishes": 0
+            },
+            "codex-usage-estimate.json": {
+              "reads": 0,
+              "publishes": 0
+            }
+          },
+          "byOperation": {},
+          "operations": []
+        }
+      },
+      "providerRequests": 1,
+      "providerRequestPaths": {
+        "/user/balance": 1
+      },
+      "widget": {
+        "draws": 8,
+        "timersArmed": 1,
+        "lastLineCount": 3
+      },
+      "document": {
+        "exists": true,
+        "consumption": {
+          "schemaVersion": 1,
+          "periodId": "period-fresh",
+          "start": "2026-10-16T13:53:42.447Z",
+          "holiday": false,
+          "harnesses": {
+            "baseline-probe": {
+              "sessions": [
+                {
+                  "id": "baseline-main",
+                  "name": "基线主会话",
+                  "parent": null,
+                  "startup": {
+                    "model": {
+                      "provider": "deepseek",
+                      "model": "deepseek-chat"
+                    },
+                    "effort": "high"
+                  },
+                  "saveVersion": 1,
+                  "own": {
+                    "deepseek": {
+                      "deepseek-chat": {
+                        "tokens": {
+                          "input": 1000,
+                          "cacheRead": 8000,
+                          "cacheWrite": 0,
+                          "output": 3000
+                        },
+                        "costCny": 0.03
+                      }
+                    }
+                  },
+                  "span": {
+                    "start": 1791954000000,
+                    "end": 1791954120000
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "estimateExists": false
+      },
+      "wallClockMs": 3007,
+      "invariants": [
+        {
+          "name": "an idle window opened no file at all",
+          "ok": true,
+          "detail": "fileOperations=0 over 3001ms"
+        },
+        {
+          "name": "an idle window asked the provider nothing",
+          "ok": true,
+          "detail": "requests=0 over 3001ms"
+        },
+        {
+          "name": "an idle window redrew nothing",
+          "ok": true,
+          "detail": "draws=8 before=8 over 3001ms"
+        },
+        {
+          "name": "the UI's one boundary wait stayed armed and was not rebuilt",
+          "ok": true,
+          "detail": "armedBefore=1 armedAfter=1"
+        }
+      ],
+      "evidence": {},
+      "comparability": {
+        "comparable": true,
+        "note": "the common path (framework binding + model-cost shared logic + the production frontend composition): re-run this entry on the unified implementation and compare the same windows."
+      }
+    },
+    {
+      "name": "disposal",
+      "title": "处置：会话结束释放等待，之后不再有文件、请求或重绘效果",
+      "sequence": [
+        "session_start baseline-main (main)",
+        "round_start baseline-main",
+        "user_input baseline-main",
+        "turn_start baseline-main deepseek/deepseek-chat",
+        "turn_end baseline-main completed",
+        "round_end baseline-main",
+        "session_end baseline-main disposed",
+        "turn_start baseline-main deepseek/deepseek-chat",
+        "turn_end baseline-main completed",
+        "round_end baseline-main"
+      ],
+      "deliveries": {
+        "session_start": 1,
+        "round_start": 1,
+        "user_input": 1,
+        "turn_start": 2,
+        "turn_end": 2,
+        "round_end": 2,
+        "session_end": 1
+      },
+      "fileCost": {
+        "total": 15,
+        "documentReads": 3,
+        "documentPublishes": 1,
+        "lockOperations": 7,
+        "stagingOperations": 2,
+        "metadataOperations": 1,
+        "directoryOperations": 1,
+        "otherOperations": 0,
+        "failedOperations": 6,
+        "failedByOperation": {
+          "readFile": 3,
+          "unlink": 2,
+          "rmdir": 1
+        },
+        "documents": {
+          "consumption.json": {
+            "reads": 2,
+            "publishes": 1
+          },
+          "codex-usage-estimate.json": {
+            "reads": 1,
+            "publishes": 0
+          }
+        },
+        "byOperation": {
+          "mkdir": 2,
+          "readFile": 3,
+          "realpath": 1,
+          "writeFile": 2,
+          "rename": 2,
+          "unlink": 3,
+          "rmdir": 2
+        },
+        "operations": [
+          {
+            "op": "mkdir",
+            "phase": "async",
+            "path": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-disposal-iOfiA7\\storage",
+            "outcome": "ok"
+          },
+          {
+            "op": "readFile",
+            "phase": "async",
+            "path": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-disposal-iOfiA7\\storage\\consumption.json",
+            "outcome": "failed"
+          },
+          {
+            "op": "readFile",
+            "phase": "async",
+            "path": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-disposal-iOfiA7\\storage\\codex-usage-estimate.json",
+            "outcome": "failed"
+          },
+          {
+            "op": "realpath",
+            "phase": "async",
+            "path": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-disposal-iOfiA7\\storage",
+            "outcome": "ok"
+          },
+          {
+            "op": "mkdir",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-disposal-iofia7\\storage\\consumption.json.lock.21764-29-mvb13bw1.lock",
+            "outcome": "ok"
+          },
+          {
+            "op": "writeFile",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-disposal-iofia7\\storage\\consumption.json.lock.21764-29-mvb13bw1.lock\\21764-28-mvb13bw1",
+            "outcome": "ok"
+          },
+          {
+            "op": "rename",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-disposal-iofia7\\storage\\consumption.json.lock.21764-29-mvb13bw1.lock",
+            "target": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-disposal-iofia7\\storage\\consumption.json.lock",
+            "outcome": "ok"
+          },
+          {
+            "op": "unlink",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-disposal-iofia7\\storage\\consumption.json.lock.21764-29-mvb13bw1.lock\\21764-28-mvb13bw1",
+            "outcome": "failed"
+          },
+          {
+            "op": "rmdir",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-disposal-iofia7\\storage\\consumption.json.lock.21764-29-mvb13bw1.lock",
+            "outcome": "failed"
+          },
+          {
+            "op": "readFile",
+            "phase": "async",
+            "path": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-disposal-iOfiA7\\storage\\consumption.json",
+            "outcome": "failed"
+          },
+          {
+            "op": "writeFile",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-disposal-iofia7\\storage\\consumption.json.21764-30-mvb13bw3.tmp",
+            "outcome": "ok"
+          },
+          {
+            "op": "rename",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-disposal-iofia7\\storage\\consumption.json.21764-30-mvb13bw3.tmp",
+            "target": "C:\\Users\\hugos\\AppData\\Local\\Temp\\model-cost-baseline-disposal-iOfiA7\\storage\\consumption.json",
+            "outcome": "ok"
+          },
+          {
+            "op": "unlink",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-disposal-iofia7\\storage\\consumption.json.21764-30-mvb13bw3.tmp",
+            "outcome": "failed"
+          },
+          {
+            "op": "unlink",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-disposal-iofia7\\storage\\consumption.json.lock\\21764-28-mvb13bw1",
+            "outcome": "ok"
+          },
+          {
+            "op": "rmdir",
+            "phase": "async",
+            "path": "c:\\users\\hugos\\appdata\\local\\temp\\model-cost-baseline-disposal-iofia7\\storage\\consumption.json.lock",
+            "outcome": "ok"
+          }
+        ]
+      },
+      "windows": {
+        "disposal": {
+          "total": 0,
+          "documentReads": 0,
+          "documentPublishes": 0,
+          "lockOperations": 0,
+          "stagingOperations": 0,
+          "metadataOperations": 0,
+          "directoryOperations": 0,
+          "otherOperations": 0,
+          "failedOperations": 0,
+          "failedByOperation": {},
+          "documents": {
+            "consumption.json": {
+              "reads": 0,
+              "publishes": 0
+            },
+            "codex-usage-estimate.json": {
+              "reads": 0,
+              "publishes": 0
+            }
+          },
+          "byOperation": {},
+          "operations": []
+        },
+        "afterDisposal": {
+          "total": 0,
+          "documentReads": 0,
+          "documentPublishes": 0,
+          "lockOperations": 0,
+          "stagingOperations": 0,
+          "metadataOperations": 0,
+          "directoryOperations": 0,
+          "otherOperations": 0,
+          "failedOperations": 0,
+          "failedByOperation": {},
+          "documents": {
+            "consumption.json": {
+              "reads": 0,
+              "publishes": 0
+            },
+            "codex-usage-estimate.json": {
+              "reads": 0,
+              "publishes": 0
+            }
+          },
+          "byOperation": {},
+          "operations": []
+        }
+      },
+      "providerRequests": 1,
+      "providerRequestPaths": {
+        "/user/balance": 1
+      },
+      "widget": {
+        "draws": 9,
+        "timersArmed": 0,
+        "lastLineCount": 0
+      },
+      "document": {
+        "exists": true,
+        "consumption": {
+          "schemaVersion": 1,
+          "periodId": "period-fresh",
+          "start": "2026-10-16T13:53:45.455Z",
+          "holiday": false,
+          "harnesses": {
+            "baseline-probe": {
+              "sessions": [
+                {
+                  "id": "baseline-main",
+                  "name": "基线主会话",
+                  "parent": null,
+                  "startup": {
+                    "model": {
+                      "provider": "deepseek",
+                      "model": "deepseek-chat"
+                    },
+                    "effort": "high"
+                  },
+                  "saveVersion": 1,
+                  "own": {
+                    "deepseek": {
+                      "deepseek-chat": {
+                        "tokens": {
+                          "input": 1000,
+                          "cacheRead": 8000,
+                          "cacheWrite": 0,
+                          "output": 3000
+                        },
+                        "costCny": 0.03
+                      }
+                    }
+                  },
+                  "span": {
+                    "start": 1791954000000,
+                    "end": 1791954120000
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "estimateExists": false
+      },
+      "wallClockMs": 508,
+      "invariants": [
+        {
+          "name": "the disposal released the frontend's own wait",
+          "ok": true,
+          "detail": "armedTimers=0 (one armed wait at the start, none left after the cleanup)"
+        },
+        {
+          "name": "the disposal itself wrote nothing and asked nothing",
+          "ok": true,
+          "detail": "fileOperations=0 requests=0"
+        },
+        {
+          "name": "work arriving after the disposal had no effect at all",
+          "ok": true,
+          "detail": "fileOperations=0 requests=0 draws=0"
+        },
+        {
+          "name": "the document the session had committed was left exactly as it was",
+          "ok": true,
+          "detail": "before=[1] after=[1]"
+        }
+      ],
+      "evidence": {
+        "lateCommandOutcome": "answered",
+        "widgetLinesAfterDisposal": "0"
+      },
+      "comparability": {
+        "comparable": true,
+        "note": "the common path (framework binding + model-cost shared logic + the production frontend composition): re-run this entry on the unified implementation and compare the same windows. Its native half in a real host — the spawned session's own binding, the native disposal — is driven here as semantic facts, and a comparison of that half belongs to the real-host dock runs ticket 22 owns."
+      }
+    }
+  ],
+  "notComparableScenarios": [
+    {
+      "name": "native-adapter-fact-mapping",
+      "reason": "the OMP adapter's own native reads (Turn, Round, rename, startup model, context, provider access) are host code this in-process driver replaces with semantic deliveries; their cost is the host's, and the real-host numbers belong to the dock runs ticket 22 owns."
+    },
+    {
+      "name": "omp-viewed-session-display",
+      "reason": "the OMP viewed-session path is an OMP-only display fact (pi keeps its own session's display), so a comparison has no shared behaviour to compare."
+    },
+    {
+      "name": "real-terminal-drawing",
+      "reason": "the widget's real drawing, its widths and its layout are the human acceptance check (P52); this entry measures drawings, not terminal rendering."
+    },
+    {
+      "name": "native-session-storage",
+      "reason": "the host's own session JSONL and logs are outside the storage root this baseline attributes costs to."
+    },
+    {
+      "name": "codex-account-query",
+      "reason": "the account query's own endpoint needs a real credential and its proxy entry; this baseline holds no access to that provider, so its request count is an absence, not a cost."
+    },
+    {
+      "name": "external-document-adoption-refresh",
+      "reason": "adopting another writer's committed document on a read refresh has no implementation on either harness at this baseline; only the read-only work's own cost is recorded."
+    }
+  ],
+  "complexity": {
+    "modules": [
+      {
+        "path": "entrypoints/omp/model-cost.ts",
+        "lines": 9
+      },
+      {
+        "path": "extensions/model-cost/harnesses/boundary-timer.ts",
+        "lines": 153
+      },
+      {
+        "path": "extensions/model-cost/harnesses/omp.ts",
+        "lines": 223
+      },
+      {
+        "path": "extensions/model-cost/harnesses/omp/widget.ts",
+        "lines": 1051
+      },
+      {
+        "path": "extensions/model-cost/harnesses/pi.ts",
+        "lines": 277
+      },
+      {
+        "path": "extensions/model-cost/harnesses/pi/widget.ts",
+        "lines": 1053
+      },
+      {
+        "path": "extensions/model-cost/shared-logic/codex-estimate-store.ts",
+        "lines": 328
+      },
+      {
+        "path": "extensions/model-cost/shared-logic/codex-estimate.ts",
+        "lines": 204
+      },
+      {
+        "path": "extensions/model-cost/shared-logic/codex-quota.ts",
+        "lines": 519
+      },
+      {
+        "path": "extensions/model-cost/shared-logic/consumption-archive.ts",
+        "lines": 70
+      },
+      {
+        "path": "extensions/model-cost/shared-logic/consumption-document.ts",
+        "lines": 603
+      },
+      {
+        "path": "extensions/model-cost/shared-logic/consumption-store.ts",
+        "lines": 684
+      },
+      {
+        "path": "extensions/model-cost/shared-logic/model-data.ts",
+        "lines": 190
+      },
+      {
+        "path": "extensions/model-cost/shared-logic/period-switch.ts",
+        "lines": 169
+      },
+      {
+        "path": "extensions/model-cost/shared-logic/presentation/display-preference.ts",
+        "lines": 63
+      },
+      {
+        "path": "extensions/model-cost/shared-logic/presentation/display.ts",
+        "lines": 1664
+      },
+      {
+        "path": "extensions/model-cost/shared-logic/presentation/session-activity.ts",
+        "lines": 61
+      },
+      {
+        "path": "extensions/model-cost/shared-logic/presentation/session-context.ts",
+        "lines": 48
+      },
+      {
+        "path": "extensions/model-cost/shared-logic/provider-balance.ts",
+        "lines": 328
+      },
+      {
+        "path": "extensions/model-cost/shared-logic/provider-refresh.ts",
+        "lines": 67
+      },
+      {
+        "path": "extensions/model-cost/shared-logic/request-accounting.ts",
+        "lines": 1200
+      },
+      {
+        "path": "extensions/model-cost/shared-logic/request-price.ts",
+        "lines": 179
+      },
+      {
+        "path": "extensions/model-cost/shared-logic/runtime.ts",
+        "lines": 749
+      },
+      {
+        "path": "extensions/model-cost/shared-logic/session-span.ts",
+        "lines": 188
+      },
+      {
+        "path": "extensions/model-cost/shared-logic/storage-root.ts",
+        "lines": 59
+      },
+      {
+        "path": "extensions/model-cost/shared-logic/subagent-runtime.ts",
+        "lines": 155
+      },
+      {
+        "path": "framework/adapters/omp.ts",
+        "lines": 1022
+      },
+      {
+        "path": "framework/adapters/pi.ts",
+        "lines": 823
+      },
+      {
+        "path": "framework/modules/files.ts",
+        "lines": 671
+      },
+      {
+        "path": "framework/modules/http.ts",
+        "lines": 593
+      }
+    ],
+    "totals": {
+      "extensions/model-cost/shared-logic": 7528,
+      "extensions/model-cost/harnesses": 2757,
+      "entrypoints/omp/model-cost.ts": 9,
+      "framework/adapters/omp.ts": 1022,
+      "framework/adapters/pi.ts": 823,
+      "framework/modules/files.ts": 671,
+      "framework/modules/http.ts": 593,
+      "total": 13403
+    }
+  }
+}

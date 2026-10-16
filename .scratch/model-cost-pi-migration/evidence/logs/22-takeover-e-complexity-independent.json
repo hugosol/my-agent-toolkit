@@ -1,0 +1,134 @@
+{
+  "5714ddc": {
+    "by_root": {
+      "entrypoints": 46,
+      "extensions": 12045,
+      "framework": 11682,
+      "scripts": 12817,
+      "tests": 67220
+    },
+    "evidence": 80037,
+    "facts_ts": 279,
+    "fams": {
+      "entrypoints/omp": 28,
+      "entrypoints/pi": 18,
+      "extensions/codebase-tools": 111,
+      "extensions/connect-bot": 1608,
+      "extensions/model-cost": 10326,
+      "framework": 158,
+      "framework/adapters": 3890,
+      "framework/behaviors": 2142,
+      "framework/core": 3248,
+      "framework/modules": 2244,
+      "scripts": 11921,
+      "scripts/support": 896,
+      "tests/codebase-tools": 1984,
+      "tests/connect-bot": 6586,
+      "tests/framework": 16779,
+      "tests/harness-dock": 15941,
+      "tests/model-cost": 25862,
+      "tests/support": 68
+    },
+    "files": 299,
+    "product": 23773
+  },
+  "59a0ed7": {
+    "by_root": {
+      "entrypoints": 37,
+      "extensions": 10235,
+      "framework": 9015,
+      "scripts": 4181,
+      "tests": 50625
+    },
+    "evidence": 54806,
+    "facts_ts": 290,
+    "fams": {
+      "entrypoints/omp": 28,
+      "entrypoints/pi": 9,
+      "extensions/codebase-tools": 90,
+      "extensions/connect-bot": 1608,
+      "extensions/model-cost": 8537,
+      "framework": 161,
+      "framework/adapters": 2571,
+      "framework/behaviors": 2070,
+      "framework/core": 2949,
+      "framework/modules": 1264,
+      "scripts": 3840,
+      "scripts/support": 341,
+      "tests/codebase-tools": 1984,
+      "tests/connect-bot": 6577,
+      "tests/framework": 12306,
+      "tests/harness-dock": 13125,
+      "tests/model-cost": 16565,
+      "tests/support": 68
+    },
+    "files": 237,
+    "product": 19287
+  },
+  "efb03e0": {
+    "by_root": {
+      "entrypoints": 46,
+      "extensions": 12045,
+      "framework": 11682,
+      "scripts": 12774,
+      "tests": 67220
+    },
+    "evidence": 79994,
+    "facts_ts": 279,
+    "fams": {
+      "entrypoints/omp": 28,
+      "entrypoints/pi": 18,
+      "extensions/codebase-tools": 111,
+      "extensions/connect-bot": 1608,
+      "extensions/model-cost": 10326,
+      "framework": 158,
+      "framework/adapters": 3890,
+      "framework/behaviors": 2142,
+      "framework/core": 3248,
+      "framework/modules": 2244,
+      "scripts": 11878,
+      "scripts/support": 896,
+      "tests/codebase-tools": 1984,
+      "tests/connect-bot": 6586,
+      "tests/framework": 16779,
+      "tests/harness-dock": 15941,
+      "tests/model-cost": 25862,
+      "tests/support": 68
+    },
+    "files": 299,
+    "product": 23773
+  },
+  "pi-adapter": {
+    "by_root": {
+      "entrypoints": 46,
+      "extensions": 12045,
+      "framework": 11682,
+      "scripts": 13515,
+      "tests": 66570
+    },
+    "evidence": 80085,
+    "facts_ts": 279,
+    "fams": {
+      "entrypoints/omp": 28,
+      "entrypoints/pi": 18,
+      "extensions/codebase-tools": 111,
+      "extensions/connect-bot": 1608,
+      "extensions/model-cost": 10326,
+      "framework": 158,
+      "framework/adapters": 3890,
+      "framework/behaviors": 2142,
+      "framework/core": 3248,
+      "framework/modules": 2244,
+      "scripts": 11878,
+      "scripts/support": 1637,
+      "tests/codebase-tools": 1984,
+      "tests/connect-bot": 6586,
+      "tests/framework": 16779,
+      "tests/harness-dock": 15291,
+      "tests/model-cost": 25862,
+      "tests/support": 68
+    },
+    "files": 299,
+    "product": 23773
+  }
+}

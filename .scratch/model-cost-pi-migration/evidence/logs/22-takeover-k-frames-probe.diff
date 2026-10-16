@@ -1,0 +1,44 @@
+--- scripts/efficiency-baseline.ts	2026-10-16 19:50:03.683331100 +0800
++++ scripts/tmp-frames-probe.ts	2026-10-16 21:41:49.951166900 +0800
+@@ -536,7 +536,14 @@
+  * really scheduled and a cleared one really cancelled), so a disposal that leaves a wait behind is
+  * observable rather than assumed, and the widget surface counts what the extension handed over.
+  */
+-function controlledHost(session: SessionFacts, provider: string, model: string): ControlledHost {
++/**
++ * Temporary probe (not part of the delivery): every widget frame this run handed to a controlled host,
++ * in the order it was handed over, so a reader can see which redraws carry which content. Written out
++ * only when `MY_BASELINE_FRAMES_OUT` names a file.
++ */
++const FRAME_LOG: { readonly sequence: string; readonly index: number; readonly lines: readonly string[] | undefined }[] = [];
++
++function controlledHost(session: SessionFacts, provider: string, model: string, sequenceLabel: string): ControlledHost {
+ 	const timers = new Map<unknown, ScheduledTimeout>();
+ 	let draws = 0;
+ 	let shown: readonly string[] | undefined;
+@@ -549,6 +556,7 @@
+ 				if (key !== MODEL_COST_WIDGET_KEY) return;
+ 				draws += 1;
+ 				shown = content;
++				FRAME_LOG.push({ sequence: sequenceLabel, index: draws, lines: content === undefined ? undefined : [...content] });
+ 			},
+ 		},
+ 		sessionManager: { getSessionId: () => session.sessionId, getBranch: () => [] },
+@@ -706,7 +714,7 @@
+ 	// baseline read it performs — has settled when this returns.
+ 	await double.initiateRun(OWNER);
+ 	const built = runtime as ModelCostRuntime;
+-	const host = controlledHost(options.session, options.provider, options.model);
++	const host = controlledHost(options.session, options.provider, options.model, options.label);
+ 	const { api, fire } = controlApi();
+ 	releaseFrontend = attachModelCostWidget(api, built, uiBoundaryTimerOf(built), "lines");
+ 	fire("session_start", host.ctx);
+@@ -1731,6 +1739,8 @@
+ 	};
+ 	mkdirSync(dirname(out), { recursive: true });
+ 	writeFileSync(out, `${JSON.stringify(artifact, null, 2)}\n`, "utf8");
++	const framesOut = process.env.MY_BASELINE_FRAMES_OUT;
++	if (framesOut !== undefined) writeFileSync(framesOut, `${JSON.stringify(FRAME_LOG, null, 1)}\n`, "utf8");
+ 	await endpoint.close();
+ 	for (const root of runRoots.splice(0)) rmSync(root, { recursive: true, force: true });
+ 

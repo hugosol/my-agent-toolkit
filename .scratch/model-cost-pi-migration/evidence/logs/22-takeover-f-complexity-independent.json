@@ -1,0 +1,74 @@
+{
+ "before-59a0ed7": {
+  "product": 19287,
+  "evidence": 54806,
+  "modules": 80,
+  "families": {
+   "entrypoints/omp": 28,
+   "entrypoints/pi": 9,
+   "extensions/codebase-tools": 90,
+   "extensions/connect-bot": 1608,
+   "extensions/model-cost": 8537,
+   "framework": 161,
+   "framework/adapters": 2571,
+   "framework/behaviors": 2070,
+   "framework/core": 2949,
+   "framework/modules": 1264
+  },
+  "facts_ts": 290
+ },
+ "after-efb03e0": {
+  "product": 23773,
+  "evidence": 79994,
+  "modules": 88,
+  "families": {
+   "entrypoints/omp": 28,
+   "entrypoints/pi": 18,
+   "extensions/codebase-tools": 111,
+   "extensions/connect-bot": 1608,
+   "extensions/model-cost": 10326,
+   "framework": 158,
+   "framework/adapters": 3890,
+   "framework/behaviors": 2142,
+   "framework/core": 3248,
+   "framework/modules": 2244
+  },
+  "facts_ts": 279
+ },
+ "head-570c7ee": {
+  "product": 23773,
+  "evidence": 80037,
+  "modules": 88,
+  "families": {
+   "entrypoints/omp": 28,
+   "entrypoints/pi": 18,
+   "extensions/codebase-tools": 111,
+   "extensions/connect-bot": 1608,
+   "extensions/model-cost": 10326,
+   "framework": 158,
+   "framework/adapters": 3890,
+   "framework/behaviors": 2142,
+   "framework/core": 3248,
+   "framework/modules": 2244
+  },
+  "facts_ts": 279
+ },
+ "pi-adapter-190e1b5": {
+  "product": 23773,
+  "evidence": 80085,
+  "modules": 88,
+  "families": {
+   "entrypoints/omp": 28,
+   "entrypoints/pi": 18,
+   "extensions/codebase-tools": 111,
+   "extensions/connect-bot": 1608,
+   "extensions/model-cost": 10326,
+   "framework": 158,
+   "framework/adapters": 3890,
+   "framework/behaviors": 2142,
+   "framework/core": 3248,
+   "framework/modules": 2244
+  },
+  "facts_ts": 279
+ }
+}

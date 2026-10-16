@@ -1,0 +1,87 @@
+P51 efficiency comparison — the representative sequences and the complexity of two source states
+before: model-cost-pi-migration / 01-efficiency-baseline: the pre-migration efficiency baseline of the model-cost common path
+before: source 59a0ed714afb9e2e1ca7370364440d96ea6d3dc5 on hyper/model-cost-pi-migration/01-efficiency-baseline-9092eb-411dc288ea83 | run pre-migration at 2026-10-16T05:33:12.698Z | win32/x64 bun 1.4.2
+before: command D:\Users\hugos\AppData\Local\nvm\v24.18.0\node_modules\bun\bin\bun.exe C:\Users\hugos\AppData\Local\Temp\hyper-ticket-LMyfyZ\scripts\efficiency-baseline.ts --out .scratch/model-cost-pi-migration/evidence/01-efficiency-baseline.json --label pre-migration
+before: uncommitted paths the run recorded: 4 (M package.json, ?? .scratch/model-cost-pi-migration/evidence/, ?? scripts/efficiency-baseline.ts, ?? scripts/support/efficiency-baseline-fs-instrument.ts)
+before: invariants all held
+after: model-cost-pi-migration / 01-efficiency-baseline: the pre-migration efficiency baseline of the model-cost common path
+after: source 9738b5f78750b372f04ce6e2d7edb201cab0df0f on HEAD | run before-control at 2026-10-16T13:15:03.886Z | win32/x64 bun 1.4.2
+after: command D:\Users\hugos\AppData\Local\nvm\v24.18.0\node_modules\bun\bin\bun.exe C:\Users\hugos\AppData\Local\Temp\22-before-matched\scripts\tmp-efficiency-baseline-01.ts --out C:/Users/hugos/AppData/Local/Temp/hyper-ticket-toLQo0/.scratch/model-cost-pi-migration/evidence/logs/22-takeover-i-before-control.json --label before-control
+after: uncommitted paths the run recorded: 3 (M scripts/efficiency-baseline.ts,  M scripts/support/efficiency-baseline-fs-instrument.ts, ?? scripts/tmp-efficiency-baseline-01.ts)
+after: invariants all held
+
+a cell is before/after; * marks a difference. Each column is a cost the frozen record fixes, and none of them is a threshold.
+`file total` counts a window's calls that settled as failures as well, so it is reported with the noise columns rather than compared; the steps beside it are the comparison.
+
+== representative sequences: whole sequence ==
+sequence                   reads  publishes  locks  staging  metadata  dirs  other  file total  requests  draws  events  waits  lines
+main-request                 3/3        1/1    7/7      2/2       1/1   1/1    0/0       15/15       1/1    8/8     6/6    1/1    3/3
+multi-turn                   3/3        1/1    7/7      2/2       1/1   1/1    0/0       15/15       1/1  16/16   14/14    1/1    3/3
+main-child-concurrency       6/6        4/4  28/28      8/8       4/4   1/1    0/0       51/51       1/1  30/30   24/24    1/1    3/3
+save-onto-shared-document    3/3        1/1    7/7      2/2       1/1   1/1    0/0      15/16*       1/1    8/8     6/6    1/1    3/3
+read-only-refresh            0/0        0/0    0/0      0/0       0/0   0/0    0/0         0/0       1/1    8/8     6/6    1/1    4/4
+healthy-idle                 3/3        1/1    7/7      2/2       1/1   1/1    0/0       15/15       1/1    8/8     6/6    1/1    3/3
+disposal                     3/3        1/1    7/7      2/2       1/1   1/1    0/0       15/15       1/1    9/9   10/10    0/0    0/0
+
+== representative sequences: measured windows ==
+sequence / window                  reads  publishes  locks  staging  metadata  dirs  other  file total
+main-request / initialization        2/2        0/0    0/0      0/0       0/0   1/1    0/0         3/3
+main-request / request               1/1        1/1    7/7      2/2       1/1   0/0    0/0       12/12
+multi-turn / turns                   0/0        0/0    0/0      0/0       0/0   0/0    0/0         0/0
+multi-turn / commit                  1/1        1/1    7/7      2/2       1/1   0/0    0/0       12/12
+main-child-concurrency / whole       6/6        4/4  28/28      8/8       4/4   1/1    0/0       51/51
+save-onto-shared-document / whole    3/3        1/1    7/7      2/2       1/1   1/1    0/0      15/16*
+read-only-refresh / refresh          0/0        0/0    0/0      0/0       0/0   0/0    0/0         0/0
+healthy-idle / idle                  0/0        0/0    0/0      0/0       0/0   0/0    0/0         0/0
+disposal / disposal                  0/0        0/0    0/0      0/0       0/0   0/0    0/0         0/0
+disposal / afterDisposal             0/0        0/0    0/0      0/0       0/0   0/0    0/0         0/0
+
+== comparable differences ==
+none: every comparable figure of every sequence and window agrees.
+
+== semantic deliveries ==
+every sequence delivered the same kinds the same number of times.
+
+== noise columns the frozen record states vary between runs of one source (observed, not compared) ==
+main-request                            wall clock ms       24 -> 25
+multi-turn                              wall clock ms       7 -> 8
+main-child-concurrency                  wall clock ms       16 -> 17
+save-onto-shared-document               failed by operation {"readFile":1,"unlink":2,"rmdir":1} -> {"readFile":1,"unlink":2,"rmdir":1,"rename":1}
+save-onto-shared-document               wall clock ms       7 -> 33
+read-only-refresh                       wall clock ms       4 -> 7
+healthy-idle                            wall clock ms       3006 -> 3008
+disposal                                wall clock ms       507 -> 512
+save-onto-shared-document               file total          15 -> 16 (this column counts calls that settled as failures too)
+save-onto-shared-document / whole       file total          15 -> 16 (this column counts calls that settled as failures too)
+
+== complexity ==
+revisions measured: before 59a0ed714afb9e2e1ca7370364440d96ea6d3dc5, after 9738b5f78750b372f04ce6e2d7edb201cab0df0f (tracked TypeScript, from each revision's own tree)
+family                                                   before  after  delta
+product entrypoints/omp                                      28     28     +0
+product entrypoints/pi                                        9      9     +0
+product extensions/codebase-tools                            90     90     +0
+product extensions/connect-bot                             1608   1608     +0
+product extensions/model-cost                              8537   8537     +0
+product framework                                           161    161     +0
+product framework/adapters                                 2571   2571     +0
+product framework/behaviors                                2070   2070     +0
+product framework/core                                     2949   2949     +0
+product framework/modules                                  1264   1264     +0
+evidence scripts                                           3840   5556  +1716
+evidence scripts/support                                    341    571   +230
+evidence tests/codebase-tools                              1984   1984     +0
+evidence tests/connect-bot                                 6577   6577     +0
+evidence tests/framework                                  12306  12306     +0
+evidence tests/harness-dock                               13125  13125     +0
+evidence tests/model-cost                                 16565  16565     +0
+evidence tests/support                                       68     68     +0
+PRODUCT SUBTOTAL (framework + extensions + entrypoints)   19287  19287     +0
+EVIDENCE SUBTOTAL (tests + scripts, not product code)     54806  56752  +1946
+
+modules that changed: 2 of 239 tracked modules; 0 in the product
+product module  before  after  delta
+
+evidence-surface modules that changed: 2 (ten largest below; the evidence surface is not product code)
+evidence module                                       before  after  delta
+scripts/efficiency-baseline.ts                             -   1716  +1716
+scripts/support/efficiency-baseline-fs-instrument.ts       -    230   +230
