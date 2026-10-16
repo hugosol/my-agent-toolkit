@@ -8,7 +8,7 @@
 
 **Status:** implemented（本票交付完成：本轮真实验证 + [evidence/25-evidence-scope-audit.md](../evidence/25-evidence-scope-audit.md) +
 [`framework/docs/harness-support.md`](../../../framework/docs/harness-support.md) 的「pi model-cost migration evidence」；
-AC5 **不勾选**——§8.2/§8.3 的可执行缺口仍在，整体迁移不得宣称完成；合并由集成子代理执行）
+AC5 **不勾选**——§8.2/§8.3 的可执行缺口仍在，整体迁移不得宣称完成；实现已随集成提交 `e45a9ffcbb071ea18d937c660dab38cf5f8e2db6` 合入 `pi-adapter` 并由宿主合回本分支，本轮集成验收在同一 HEAD 完成（`bun run typecheck` exit 0、全仓 `bun run test` exit 0 = 1200 pass / 0 fail），无源码修复，见 [evidence/25-evidence-scope-audit.md](../evidence/25-evidence-scope-audit.md) §10）
 
 ## Acceptance criteria
 
