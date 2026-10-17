@@ -605,6 +605,46 @@ export function createModelCostRuntime(inputs: ModelCostRuntimeInputs): ModelCos
 		return outcome;
 	};
 
+	/** The read-only synchronization this turn's commit notices owe, and the notice it was asked by. */
+	let commitSynchronization: Promise<void> | undefined;
+	let owedSynchronization: { readonly feedback: FeedbackTransport } | undefined;
+
+	/**
+	 * The read-only synchronization one or more commit notices cost together.
+	 *
+	 * A notice is one event saying the shared document may hold something this instance has not read;
+	 * what it owes is a read, not a read of its own. The first notice of a turn arranges that read at
+	 * the turn's end, so every notice delivered with it joins the same one; notices delivered while
+	 * that read is under way mark the one read that follows — because a write confirmed after this
+	 * read began is not in the document the read saw. Nothing is cleared before the promise it belongs
+	 * to: a notice arriving at any point either shares the read in flight or is the reason for the
+	 * next one, so a turn's last notice is never dropped.
+	 *
+	 * The handler's settlement is the read, which is a scheduling difference alone: it settles after
+	 * the file has been adopted, so a caller waiting for the deliveries it dispatched waits for that
+	 * adoption rather than racing it.
+	 */
+	const synchronizeOnCommit = (feedback: FeedbackTransport): Promise<void> => {
+		owedSynchronization = { feedback };
+		if (commitSynchronization !== undefined) return commitSynchronization;
+		commitSynchronization = (async () => {
+			// The turn's remaining notices join this run here rather than each starting its own read.
+			await Promise.resolve();
+			try {
+				while (owedSynchronization !== undefined) {
+					const owed = owedSynchronization;
+					owedSynchronization = undefined;
+					await synchronize({ feedback: owed.feedback });
+				}
+			} finally {
+				// Cleared in the same continuation that decided the run was over, so a notice delivered
+				// afterwards starts its own read rather than joining one that has already finished.
+				commitSynchronization = undefined;
+			}
+		})();
+		return commitSynchronization;
+	};
+
 	// The period switch behind `/budget holiday` and `/budget clear`. It reads the entry's own facts
 	// from the delivery (its provider and its idle state) and this instance's own ones (whether a
 	// snapshot it started is still publishing), makes the one boundary balance read outside the file
@@ -725,12 +765,14 @@ export function createModelCostRuntime(inputs: ModelCostRuntimeInputs): ModelCos
 		// a forced save and not a poll: a notice is one event, a refused or unreadable baseline is
 		// reported exactly as a save meeting the same file reports it, and a session this instance never
 		// committed for is still saved by its own process alone.
-		session_commit: async delivery => {
+		session_commit: delivery => {
 			stateProviderFailures(delivery);
 			// The handler's own settlement is the read: the framework contains a rejection exactly as it
 			// contains a synchronous throw, and a caller waiting for the deliveries it dispatched — the
-			// session-disposal close-out, say — waits for this read rather than racing it.
-			await synchronize({ feedback: delivery.feedback });
+			// session-disposal close-out, say — waits for this read rather than racing it. Which read it
+			// settles on is the coalescer's answer above: this turn's notices share one, and a notice
+			// delivered while that read runs is the reason for the next one.
+			return synchronizeOnCommit(delivery.feedback);
 		},
 		// One actual session's observation became unavailable: the source that carried its readings ended,
 		// and the framework's own source has already withdrawn them. What is left to do here is this
