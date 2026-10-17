@@ -55,7 +55,9 @@ what a real TUI draws are human-only, and nothing in this repository claims eith
   — so a subagent another process ran appears in the owner's own statistics although the owner
   committed nothing itself. A notice whose count the owner already took costs nothing, and a notice
   that never arrived is recovered by the next connection's first word, which states the count the
-  owner has not seen. A session whose process both runs it and serves its owner — every OMP session,
+  owner has not seen. Notices delivered together cost one read, and a notice that arrives while a read
+  is under way is the reason for the read after it — the last confirmed write is not left unread. A
+  session whose process both runs it and serves its owner — every OMP session,
   and pi's foreground path — records the notice and hands it to nobody, because that process already
   shares the document with the session.
 - `/budget detail` is offered to an entry whose subagent integration took — the OMP entry always is.
