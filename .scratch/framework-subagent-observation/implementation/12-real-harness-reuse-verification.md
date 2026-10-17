@@ -6,7 +6,7 @@
 
 **Blocked by:** 06 — State follow 与会话观察独立运行；07 — 观察按事件去重，展示合并采用最新值；09 — 合并同步不漏更新，并保护周期与在途累计；11 — 退出总截止有界，准确报告保存结果。
 
-**Status:** in-progress — 验收、测试与真实宿主证据已完成并提交在本票分支；实现与记录提交尚未合入 `hyper-tdd`（合入由宿主排队执行），故不置 `closed`。
+**Status:** in-progress — 实现与证据已随集成提交 `43da6c591f2d221f95211af5255fc05a08bf4bf0` 合入 `hyper-tdd`（宿主已把该提交合回本分支，故本分支 HEAD 即该提交）；本轮集成验收在同一 HEAD 上完成（归一检出 + `OMP_BOT_BINARY` 全仓 `bun run test` → 1364 pass / 0 fail）。本轮的记录提交尚未再合回 `hyper-tdd`，该记录合入后方可置 `closed`。
 
 依据：[已批准 contract](../contract.md)、[spec](../spec.md)。本票为 P24、P34、P35 的唯一完整验收与测试所有者，阻塞关系传递覆盖全部实现贡献。前序票仍拥有各自 promises 的全部测试和真实运行验收，不得把缺失 coverage 转移到本票；本票不是补齐未完成实现的兜底票。
 
@@ -39,3 +39,32 @@
   两个前端仍保留近似重复的终端布局辅助实现，作为绘制层债务记录，不宣称展示层完全无复制。
 - **未验证**：POSIX、其他 OMP/pi 版本、真实 pi 截断场景、真实 OMP 嵌套/并发单独运行、人类终端可读性
   判断；Windows 证据不认证其他平台。实现与记录提交尚未合入 `hyper-tdd`，故状态保持 `in-progress`。
+
+## Comments
+
+### 2026-10-17 集成同步与合并树验收（本轮由集成 helper 执行）
+
+- **同步结果（本 worktree 即现场）**：分支 `hyper/framework-subagent-observation/12-real-harness-reuse-verificati-f0bd4a-e98ea402077c`，
+  HEAD = `43da6c591f2d221f95211af5255fc05a08bf4bf0`，即宿主已合回本分支的集成提交（首次合入成功）。
+  该提交的两个父为 `3b0a1f7c2cd892516af163ff1f5d191a48ea9759`（合入前的 `hyper-tdd` 尖端，含 09 的合并提交）
+  与 `ce7ba1b50b70b00bd95f483fbf536ff465197485`（本票实现 head）。
+  `git diff --name-status 3b0a1f7 43da6c5` 恰为本票 27 个路径（与本票实现提交逐条对应，无本票之外的路径）。
+  检查时 `hyper-tdd` 尖端为 `35ecd5c`（其上仅有 09 的本轮记录提交 `9c90a37`）；`43da6c5` 是其祖先，
+  `git diff --name-status hyper-tdd HEAD` 只有 09 的记录文档一个路径，无源码差异。
+  无冲突残留：`git status --porcelain` 干净、`git ls-files -u` 0 条未合并路径、冲突标记扫描无命中。
+- **本轮集成验收（同一 HEAD `43da6c5`，只运行全仓测试）**：
+  - 归一检出（`core.autocrlf=true` 的 CRLF 检出，三份行尾敏感文件临时还原为已提交 LF blob 字节：`bun.lock`
+    `a5d37ab2…`、`host-patches/omp-18.5.0-viewed-session/patch.diff` `66195465…`、
+    `host-patches/omp-18.5.0-codex-response-boundary/patch.diff` `4ec9ad0d…`，运行前逐一等于
+    `git cat-file blob HEAD:<path>` 的 sha256）+ `OMP_BOT_BINARY=E:/Developer/myhub/omp-bot/backend/target/release/omp-bot.exe`
+    （本机既有 release 构建，2026-10-09，非本轮构建产物）下：
+    `bun run test` → **1364 pass / 0 fail / 7702 expect() / 153 files / 431.70s**
+    （`evidence/logs/12-integration-fulltest-normalized.log`）。
+  - 文件数归因：运行的 153 files 等于树内 `tests/**/*.test.ts` 文件数
+    （`git ls-tree -r --name-only HEAD -- tests | grep -c '\.test\.ts$'` = 153），故没有文件在加载失败后被跳过。
+  - 运行后三份文件以 `git checkout --` 还原为检出原样，sha256 与运行前逐一相同
+    （`e7ed487b216f5580…`、`057e01f615c7a9ed…`、`294b37277539486f…`），`git status` 只余本轮的记录改动。
+- **本轮无冲突、无源码/测试修复**：合并树全仓测试一次通过；未修改产品源码、测试或 fixture。
+  按本轮任务边界，`bun run typecheck`、真机 smoke（OMP/pi）与跨票据整体验收留给最终独立门禁，未在本轮重复执行。
+- **未验证（留给最终独立门禁）**：POSIX、其他 OMP/pi 版本、真实宿主 smoke 的本轮重跑结果未取得；本记录只声称
+  `43da6c5` 合并树上的全仓测试结果，不认证其他平台或环境。
