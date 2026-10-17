@@ -1,0 +1,26 @@
+bun test v1.4.2 (744846f84)
+piSurfaceProbe: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions 'pi-surface-probe' is not an importable file: ENOENT: no such file or directory, lstat 'C:\Users\hugos\AppData\Local\Temp\pi-background-rounds-absent-entry.ts'
+piSurfaceProbe: pi-surface-probe: a model response settled with no Turn in flight for its session; no start is fabricated and it is dropped
+piSurfaceProbe: pi-surface-probe: a model response settled with no Turn in flight for its session; no start is fabricated and it is dropped
+piSurfaceProbe: pi-surface-probe: a model response settled with no Turn in flight for its session; no start is fabricated and it is dropped
+piSurfaceProbe: pi-surface-probe: a model response settled with no Turn in flight for its session; no start is fabricated and it is dropped
+piSurfaceProbe: pi-surface-probe: a model response settled with no Turn in flight for its session; no start is fabricated and it is dropped
+piSurfaceProbe: pi-surface-probe: a model response settled with no Turn in flight for its session; no start is fabricated and it is dropped
+piSurfaceProbe: this session reports no identity; the extension stays off for it
+piSurfaceProbe: this session reports no identity; the extension stays off for it
+piSurfaceProbe: this session reports no identity; the extension stays off for it
+piSurfaceProbe: this session reports no identity; the extension stays off for it
+piSurfaceProbe: pi-surface-probe: a model response settled with no Turn in flight for its session; no start is fabricated and it is dropped
+piSurfaceProbe: pi-surface-probe: a model response settled with no Turn in flight for its session; no start is fabricated and it is dropped
+piSurfaceProbe: pi-surface-probe: a model response settled with no Turn in flight for its session; no start is fabricated and it is dropped
+piSurfaceProbe: pi-surface-probe: a model response settled with no Turn in flight for its session; no start is fabricated and it is dropped
+codebase-tools: no owning main session resolved for this session; the extension stays off
+codebase-tools: no owning main session resolved for this session; the extension stays off
+codebase-tools: no owning main session resolved for this session; the extension stays off
+codebase-tools: no owning main session resolved for this session; the extension stays off
+codebase-tools: no owning main session resolved for this session; the extension stays off
+
+ 559 pass
+ 0 fail
+ 2504 expect() calls
+Ran 559 tests across 47 files. [40.92s]
