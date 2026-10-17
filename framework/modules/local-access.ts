@@ -603,8 +603,15 @@ function releaseProcessSeat(key: string, half: keyof ProcessSeat, held: unknown)
  * reading it delivers is still one delivering party's word about one session. What it never does is
  * state that source's end: a caller released here was this process's own reading of a session this
  * process runs, and releasing the caller changes nothing about what that session was observed to be.
+ *
+ * Life is the same rule it is over the carrier, and it is this caller's own to report because nothing
+ * else can report it: one seat is one offer, and an offer this process has replaced or withdrawn —
+ * the Owner's life ended, or was entered again with the access being this life's — is a seat this
+ * caller can no longer stand behind. It then answers `ended`, exactly as a connection the serving
+ * host closed does, so the read that finds it so lets it go and opens the seat's current offer
+ * instead of answering the value of a life that is over.
  */
-function directCaller(seat: ProcessSeat, source: OwnerAccessSource): OwnerAccessCaller {
+function directCaller(target: AccessTarget, seat: ProcessSeat, source: OwnerAccessSource): OwnerAccessCaller {
 	const asSource = nextSource();
 	let ended = false;
 	return {
@@ -614,7 +621,7 @@ function directCaller(seat: ProcessSeat, source: OwnerAccessSource): OwnerAccess
 		deliver: reading => {
 			if (!ended) seat.readings?.adopt(asSource, reading);
 		},
-		ended: () => ended,
+		ended: () => ended || processSeats()?.get(seatKey(target))?.values !== source,
 		dispose: () => {
 			ended = true;
 		},
@@ -1280,7 +1287,7 @@ export async function openOwnerAccess(options: OwnerAccessCallerOptions): Promis
 	// whether the seat is served here or elsewhere.
 	const waitMs = resolveWait(options.waitMs);
 	const local = processSeats()?.get(seatKey(options.target));
-	if (local?.values !== undefined) return directCaller(local, local.values);
+	if (local?.values !== undefined) return directCaller(options.target, local, local.values);
 
 	const deadline = Date.now() + waitMs;
 	// The directory is resolved before anything is waited for: a configuration that states none is
