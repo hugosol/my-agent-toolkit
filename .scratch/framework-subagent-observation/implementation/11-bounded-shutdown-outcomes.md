@@ -55,4 +55,5 @@
   而这三例在投递/失联后同步读帧——07 在同文件其它帧读取处已采用同一 await（`b4b1d69`），这三例是其遗漏；在 `d139d18`（本票合入前）单独运行该文件即为此 3 例红。
   证据：`logs/11-integration-detail-tree-before.log`（修复前 6 pass / 3 fail）、`logs/11-integration-detail-tree-after.log`（修复后 9 pass / 0 fail）。
   该变更与 07 的集成方（integrate-07）在其分支提交的同一处修复逐字节相同（五个插入点逐一对齐、无注释），两侧合并为同一变更，不产生冲突；已在会话中与其确认归属与位置。
+- **交叉核对（另一分支独立复核）**：07 的集成方在其分支上以同一回归方法（`d139d18` + 同样 5 处 await，提交 `0a58716`；`bun run typecheck` exit 0、归一检出 + `OMP_BOT_BINARY` 全仓 `bun run test` → 1337 pass / 0 fail / 7491 expect / 148 文件 / exit 0，记录提交 `9077f0c`）独立得到同一结论。两侧计数互相闭合：1345 − 1337 = 8，恰为本票新增的两个测试文件（`tests/framework/close-out-deadline.test.ts`、`tests/model-cost/close-out-deadline.test.ts`）的用例数；150 − 148 = 2 即这两个文件。
 - **未验证（留给最终独立门禁）**：本票新增的真机 smoke 脚本、跨票据整体验收与实机门禁未在本轮重复执行（本轮只做全仓测试与必需修复）；POSIX 未运行。
