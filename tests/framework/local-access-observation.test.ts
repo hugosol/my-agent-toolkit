@@ -19,7 +19,7 @@ import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, 
 import { connect } from "node:net";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
-import type { ObservedSession } from "../../framework/core/protocol";
+import type { ObservationSource, ObservedSession, SessionObservationSink } from "../../framework/core/protocol";
 import {
 	type AccessLocation,
 	type AccessTarget,
@@ -74,6 +74,36 @@ async function until(condition: () => boolean, message: string, timeoutMs = 1000
 		/* The observed event belongs to another process; there is no clock to advance for it. */
 		await Bun.sleep(10);
 	}
+}
+
+/** What one seat's receiving half recorded: every reading it adopted, and every source that ended. */
+interface Receiving {
+	readonly sink: SessionObservationSink;
+	/** The readings the seat adopted, in the order they arrived. */
+	readonly readings: ObservedSession[];
+	/** The source each of those readings arrived over, index for index with {@link Receiving.readings}. */
+	readonly sources: ObservationSource[];
+	/** The sources whose end the seat was told about, in the order it was told. */
+	readonly lost: ObservationSource[];
+}
+
+/** One seat's receiving half, recording what the access hands it. */
+function receiving(): Receiving {
+	const readings: ObservedSession[] = [];
+	const sources: ObservationSource[] = [];
+	const lost: ObservationSource[] = [];
+	return {
+		readings,
+		sources,
+		lost,
+		sink: {
+			adopt: (source, reading) => {
+				sources.push(source);
+				readings.push(reading);
+			},
+			lost: source => void lost.push(source),
+		},
+	};
 }
 
 /** Ends one child this case started, whichever way the case went. */
@@ -186,10 +216,10 @@ describe("a session in another process registers with the owner's own process (P
 		const first: AccessTarget = { extension: "probe-extension", owner: "main:first-owner" };
 		const second: AccessTarget = { extension: "probe-extension", owner: "main:second-owner" };
 		const publisher: OwnerAccessPublisher = createOwnerAccessPublisher({ configPath: ws.configPath });
-		const arrivedFirst: ObservedSession[] = [];
-		const arrivedSecond: ObservedSession[] = [];
-		publisher.receive(first, one => void arrivedFirst.push(one));
-		publisher.receive(second, one => void arrivedSecond.push(one));
+		const acceptedFirst = receiving();
+		const acceptedSecond = receiving();
+		publisher.receive(first, acceptedFirst.sink);
+		publisher.receive(second, acceptedSecond.sink);
 		// The given values: the sessions and readings two independent processes observed.
 		const one = reading("first-child", first.owner, { activity: "working" });
 		const change = reading("first-child", first.owner, { tokens: 4242 });
@@ -201,11 +231,11 @@ describe("a session in another process registers with the owner's own process (P
 			child.send({ t: "deliver", index: 0 });
 			concurrent.send({ t: "deliver", index: 0 });
 			child.send({ t: "deliver", index: 1 });
-			await until(() => arrivedFirst.length === 2 && arrivedSecond.length === 1, "the readings never arrived");
+			await until(() => acceptedFirst.readings.length === 2 && acceptedSecond.readings.length === 1, "the readings never arrived");
 
 			// Each seat carries its own owner's sessions: two owners served at once never cross.
-			expect(arrivedFirst).toEqual([one, change]);
-			expect(arrivedSecond).toEqual([other]);
+			expect(acceptedFirst.readings).toEqual([one, change]);
+			expect(acceptedSecond.readings).toEqual([other]);
 			const finished = await child.finish();
 			expect(finished.report.reached).toBe(true);
 			expect(finished.report.delivered).toEqual(["first-child", "first-child"]);
@@ -226,8 +256,8 @@ describe("a session in another process registers with the owner's own process (P
 		const cwd = elsewhere();
 		const target: AccessTarget = { extension: "probe-extension", owner: "main:served-owner" };
 		const publisher = createOwnerAccessPublisher({ configPath: ws.configPath });
-		const arrived: ObservedSession[] = [];
-		publisher.receive(target, one => void arrived.push(one));
+		const accepted = receiving();
+		publisher.receive(target, accepted.sink);
 		// A real process with the right seat, delivering one reading under an owner that seat is not.
 		const child = startObservationChild(
 			planFor(ws, "foreign-owner", target, [reading("child", "main:another-owner", { activity: "working" })], cwd.directory),
@@ -242,7 +272,7 @@ describe("a session in another process registers with the owner's own process (P
 			const report = await child.report();
 			expect(report.reached).toBe(true);
 			expect(report.ended).toBe(true);
-			expect(arrived).toEqual([]);
+			expect(accepted.readings).toEqual([]);
 		} finally {
 			await ended(child);
 			publisher.dispose();
@@ -256,7 +286,7 @@ describe("a session in another process registers with the owner's own process (P
 		const cwd = elsewhere();
 		const target: AccessTarget = { extension: "probe-extension", owner: "main:served-owner" };
 		const publisher = createOwnerAccessPublisher({ configPath: ws.configPath });
-		publisher.receive(target, () => {});
+		publisher.receive(target, receiving().sink);
 		const synthetic = "synthetic-verification-1f8c4a5e9d1b";
 		const child = startObservationChild(
 			planFor(ws, "stale-record", target, [reading("child", target.owner, { activity: "working" })], cwd.directory),
@@ -317,8 +347,8 @@ describe("the access carries its declared directions and nothing else (P25, P26)
 		const ws = workspace();
 		const target: AccessTarget = { extension: "probe-extension", owner: "main:admitted" };
 		const publisher = createOwnerAccessPublisher({ configPath: ws.configPath });
-		const arrived: ObservedSession[] = [];
-		publisher.receive(target, one => void arrived.push(one));
+		const accepted = receiving();
+		publisher.receive(target, accepted.sink);
 		try {
 			await until(() => recordsIn(ws.runtimeDirectory).length === 1, "the seat published no record");
 			const record = onlyRecord(ws.runtimeDirectory);
@@ -329,7 +359,7 @@ describe("the access carries its declared directions and nothing else (P25, P26)
 				{ t: "observed", owner: { kind: "inherited", key: target.owner }, activity: "working" },
 			]);
 			expect(refused).toContain('"refused"');
-			expect(arrived).toEqual([]);
+			expect(accepted.readings).toEqual([]);
 		} finally {
 			publisher.dispose();
 			ws.dispose();
@@ -343,8 +373,8 @@ describe("the location record is where the access is, and nothing else (P26)", (
 		const cwd = elsewhere();
 		const target: AccessTarget = { extension: "probe-extension", owner: "main:record-owner" };
 		const publisher = createOwnerAccessPublisher({ configPath: ws.configPath });
-		const arrived: ObservedSession[] = [];
-		publisher.receive(target, one => void arrived.push(one));
+		const accepted = receiving();
+		publisher.receive(target, accepted.sink);
 		const delivered = reading("child-of-record", target.owner, { activity: "working", tokens: 4242 });
 		const child = startObservationChild(planFor(ws, "record", target, [delivered], cwd.directory), { cwd: cwd.directory });
 		try {
@@ -354,7 +384,7 @@ describe("the location record is where the access is, and nothing else (P26)", (
 
 			await child.ready();
 			child.send({ t: "deliver", index: 0 });
-			await until(() => arrived.length === 1, "the reading never arrived");
+			await until(() => accepted.readings.length === 1, "the reading never arrived");
 
 			// The record says where the access is and nothing about what crosses it: the seat, the
 			// endpoint, this access's verification and the process that published it.
@@ -382,7 +412,7 @@ describe("the location record is where the access is, and nothing else (P26)", (
 		// endpoint it would have bound is never written anywhere.
 		const reported: string[] = [];
 		const publisher = createOwnerAccessPublisher({ configPath: ws.configPath, report: message => void reported.push(message) });
-		publisher.receive(target, () => {});
+		publisher.receive(target, receiving().sink);
 		// The delivering half: the same configuration failure, stated as its own failure rather than
 		// as an owner that has not arrived.
 		const deliverer = createObservationDeliverer({
@@ -514,6 +544,176 @@ describe("the delivering half reaches one seat and sends what the process holds 
 		} finally {
 			await ended(serving);
 			deliverer.dispose();
+			cwd.dispose();
+			ws.dispose();
+		}
+	});
+});
+
+describe("one source's end is this side's own reading of it (P6, P7)", () => {
+	test("a real process releasing its access ends one source, with nothing said to the seat about it", async () => {
+		const ws = workspace();
+		const cwd = elsewhere();
+		const target: AccessTarget = { extension: "probe-extension", owner: "main:released-owner" };
+		const publisher = createOwnerAccessPublisher({ configPath: ws.configPath });
+		const accepted = receiving();
+		publisher.receive(target, accepted.sink);
+		const delivered = reading("child-of-release", target.owner, { activity: "working", tokens: 10 });
+		const child = startObservationChild(planFor(ws, "release", target, [delivered], cwd.directory), { cwd: cwd.directory });
+		try {
+			await child.ready();
+			child.send({ t: "deliver", index: 0 });
+			await until(() => accepted.readings.length === 1, "the reading never arrived");
+			expect(accepted.readings).toEqual([delivered]);
+			expect(accepted.lost).toEqual([]);
+
+			// This process releases the access it held while it lives on: the connection ends here, no
+			// frame states its end, and what the serving side learns of it is the connection closing.
+			child.send({ t: "release" });
+			await until(() => accepted.lost.length === 1, "the ended source was never stated to the seat");
+			// The source whose end is stated is the one the reading arrived over, and nothing else of the
+			// connection crosses: what the seat is told is that this source is gone.
+			expect(accepted.lost).toEqual(accepted.sources);
+			expect(accepted.readings).toEqual([delivered]);
+			// The process itself states that its access ended, and that it reached the seat first.
+			const finished = await child.finish();
+			expect(finished.report.reached).toBe(true);
+			expect(finished.report.ended).toBe(true);
+		} finally {
+			await ended(child);
+			publisher.dispose();
+			cwd.dispose();
+			ws.dispose();
+		}
+	});
+
+	test("a real process ended abruptly ends one source just as well", async () => {
+		const ws = workspace();
+		const cwd = elsewhere();
+		const target: AccessTarget = { extension: "probe-extension", owner: "main:killed-owner" };
+		const publisher = createOwnerAccessPublisher({ configPath: ws.configPath });
+		const accepted = receiving();
+		publisher.receive(target, accepted.sink);
+		const delivered = reading("child-of-kill", target.owner, { activity: "working", tokens: 11 });
+		const child = startObservationChild(planFor(ws, "killed", target, [delivered], cwd.directory), { cwd: cwd.directory });
+		try {
+			await child.ready();
+			child.send({ t: "deliver", index: 0 });
+			await until(() => accepted.readings.length === 1, "the reading never arrived");
+			expect(accepted.lost).toEqual([]);
+
+			// The process is killed where it stands: it releases nothing, sends nothing and states
+			// nothing, and the connection ending is still what the serving side observes.
+			child.kill();
+			await until(() => accepted.lost.length === 1, "the killed process's source was never stated to the seat");
+			expect(accepted.lost).toEqual(accepted.sources);
+		} finally {
+			await ended(child);
+			publisher.dispose();
+			cwd.dispose();
+			ws.dispose();
+		}
+	});
+
+	test("a process that reaches the seat again delivers over a later source, as one connection's word", async () => {
+		const ws = workspace();
+		const cwd = elsewhere();
+		const target: AccessTarget = { extension: "probe-extension", owner: "main:reconnected-owner" };
+		const publisher = createOwnerAccessPublisher({ configPath: ws.configPath });
+		const accepted = receiving();
+		publisher.receive(target, accepted.sink);
+		const before = reading("child-of-reconnect", target.owner, { activity: "working", tokens: 12 });
+		const after = reading("child-of-reconnect", target.owner, { activity: "working", tokens: 13 });
+		const child = startObservationChild(planFor(ws, "reconnect", target, [before, after], cwd.directory), { cwd: cwd.directory });
+		try {
+			await child.ready();
+			child.send({ t: "deliver", index: 0 });
+			await until(() => accepted.readings.length === 1, "the first reading never arrived");
+
+			// The connection ends, and the process reaches the seat again: what it holds now is what the
+			// later connection's first word carries, and the seat is handed it as a word of its own.
+			child.send({ t: "release" });
+			await until(() => accepted.lost.length === 1, "the ended source was never stated to the seat");
+			child.send({ t: "reconnect" });
+			child.send({ t: "deliver", index: 1 });
+			await until(() => accepted.readings.length === 2, "the reading after the reach never arrived");
+
+			// The two words arrived over two sources this process took up in that order, so a word of the
+			// first one's can never be taken for the second one's: the later source is the newer one. And
+			// the one end the seat was told about is the connection that ended, not the one that reached
+			// it again.
+			expect(accepted.sources).toHaveLength(2);
+			expect(accepted.sources[1]).toBeGreaterThan(accepted.sources[0]);
+			expect(accepted.readings).toEqual([before, after]);
+			expect(accepted.lost).toEqual([accepted.sources[0]]);
+			// What this process states of itself: it reached the seat again, and the access it holds now
+			// is the later one rather than the one it released.
+			const finished = await child.finish();
+			expect(finished.report.reached).toBe(true);
+			expect(finished.report.ended).toBe(false);
+			expect(finished.report.delivered).toEqual(["child-of-reconnect", "child-of-reconnect"]);
+		} finally {
+			await ended(child);
+			publisher.dispose();
+			cwd.dispose();
+			ws.dispose();
+		}
+	});
+
+	test("two real processes' words about one session are ordered, and the earlier source's end takes none of them", async () => {
+		const ws = workspace();
+		const cwd = elsewhere();
+		const target: AccessTarget = { extension: "probe-extension", owner: "main:ordered-owner" };
+		const publisher = createOwnerAccessPublisher({ configPath: ws.configPath });
+		const accepted = receiving();
+		publisher.receive(target, accepted.sink);
+		// The session both processes state, and the values each of them holds for it.
+		const early = reading("child-of-order", target.owner, { activity: "working", tokens: 100 });
+		const later = reading("child-of-order", target.owner, { activity: "idle", tokens: 200 });
+		// The earlier connection's word, written before that connection ends and read after this case has
+		// seen the later one's: exactly the late word the order decides the fate of.
+		const late = reading("child-of-order", target.owner, { activity: "working", tokens: 300 });
+		const first = startObservationChild(planFor(ws, "ordered-first", target, [early, late], cwd.directory), { cwd: cwd.directory });
+		const second = startObservationChild(planFor(ws, "ordered-second", target, [later], cwd.directory), { cwd: cwd.directory });
+		try {
+			// Both connections are admitted here in this order: the first process reaches the seat first,
+			// so the word it sends is the one of the earlier source.
+			await first.ready();
+			await second.ready();
+			first.send({ t: "deliver", index: 0 });
+			await until(() => accepted.readings.length === 1, "the earlier process's reading never arrived");
+			// The same word again: a repeat crosses the carrier, and what this case reads is that the seat
+			// is handed it — the framework's own answer to a word it already holds is the bare source's
+			// subject, and the suite that drives one seat's readings without a carrier asserts it.
+			first.send({ t: "deliver", index: 0 });
+			await until(() => accepted.readings.length === 2, "the repeated word never arrived");
+			expect(accepted.readings).toEqual([early, early]);
+			second.send({ t: "deliver", index: 0 });
+			await until(() => accepted.readings.length === 3, "the later process's reading never arrived");
+
+			// The earlier source's late word is written before that connection ends, so this case reads it
+			// as read: the connection's own end is what proves the word was processed before it, since a
+			// connection's bytes are read before its close.
+			first.send({ t: "deliver", index: 1 });
+			first.send({ t: "release" });
+			await until(() => accepted.lost.length === 1, "the earlier source's end was never stated to the seat");
+			await until(() => accepted.readings.length === 4, "the earlier source's late word never arrived");
+
+			// Every word crossed and each one is attributed to the connection it came over: the two words
+			// of the first process over the source this side admitted first, the later process's over the
+			// one it admitted second, and the end it stated is the earlier source's alone.
+			expect(accepted.sources[1]).toBe(accepted.sources[0]);
+			expect(accepted.sources[2]).toBeGreaterThan(accepted.sources[0]);
+			expect(accepted.sources[3]).toBe(accepted.sources[0]);
+			expect(accepted.lost).toEqual([accepted.sources[0]]);
+			expect(accepted.readings).toEqual([early, early, later, late]);
+			// The order the case controlled is what the seat saw: the earlier source's late word was read
+			// after the later source's word, which is the one a newer source is judged against.
+			expect(accepted.sources.slice(2)).toEqual([accepted.sources[2], accepted.sources[0]]);
+		} finally {
+			await ended(first);
+			await ended(second);
+			publisher.dispose();
 			cwd.dispose();
 			ws.dispose();
 		}

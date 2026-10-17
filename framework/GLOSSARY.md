@@ -100,6 +100,10 @@ _Avoid_: session id alone, process id, owner key alone, endpoint address
 The record that says where one access is: the target, the endpoint, that access's own verification and the publishing process's id, published under the runtime directory and holding nothing the access carries. Its endpoint and process id are recorded as information — never as proof that an owner lives — and it is released with the access's own life.
 _Avoid_: State value, business data, liveness proof, connection state
 
+**Observation source（观察来源）**:
+One connection the process serving an owner's seat admitted, numbered by that process in the order it accepted its connections — the delivering process's own access to that seat. It is an ordering and never an identity: the session that delivered is named by the readings themselves, a source number says nothing about a process's life, and a number one process handed out is only ever compared with one it handed to the same seat. What it decides is which of two words about one session is the newer: a reading is the word of the source that stated it, so a word from an older source neither overwrites nor withdraws what a later one stated, and a source's end — the connection closing, whether the process released the access, ended or was killed — withdraws exactly the live readings that source stated, while the session's own identity, its direct parent and everything already saved stay. An unavailable observation is not idleness and states nothing about the work: no Round, Turn or accounting fact is minted for a loss.
+_Avoid_: liveness proof, process identity, connection state as agent state, reading as accounting fact
+
 ### Facts and measurement semantics
 
 **Unknown（未知）**:

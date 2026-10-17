@@ -57,6 +57,20 @@ export class SessionActivityRegistry implements SessionActivityReading {
 		return true;
 	}
 
+	/**
+	 * Drops one session's reading, as that session's observation became unavailable: the source that
+	 * stated it is gone and what it said is no longer live.
+	 *
+	 * An unavailable observation establishes nothing about the session's activity — it is not idleness —
+	 * so the reading this registry held is forgotten rather than replaced, and a session the display
+	 * asks about afterwards reads as nothing, exactly as one no reading has moved does. A reading that
+	 * arrives later — a session whose access was reached again — is then a reading rather than a repeat
+	 * of the one already delivered.
+	 */
+	forget(sessionId: string): void {
+		this.#bySession.delete(sessionId);
+	}
+
 	read(sessionId: string): SessionActivity | undefined {
 		return this.#bySession.get(sessionId);
 	}

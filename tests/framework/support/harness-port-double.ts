@@ -31,6 +31,7 @@ import type {
 	FeedbackLevel,
 	MarkerTransport,
 	ObservedSession,
+	ObservationSource,
 	OwnerReference,
 	PromptContribution,
 	ProviderAccess,
@@ -44,6 +45,7 @@ import type {
 	SessionEvent,
 	SessionFacts,
 	SessionObservationAccess,
+	SessionObservationSink,
 	StateValues,
 	TurnSignal,
 	TurnSignalFacts,
@@ -55,6 +57,15 @@ import { StateStore } from "../../../framework/core/state";
 
 /** The owner key a command invocation or session delivery acts on unless one is named. */
 export const DEFAULT_OWNER_KEY = "main:port-double";
+
+/**
+ * The source this double's access starts at: the first connection a serving process admitted.
+ *
+ * A case that delivers without naming one speaks for that connection, and one that wants the word a
+ * later connection's delivery carries states a higher number — which is how a case drives two
+ * connections' words about one session, and the end of either, without a real access.
+ */
+export const FIRST_SOURCE: ObservationSource = 1;
 
 /** One extension feedback notice the framework published, with the severity it carried. */
 export interface FeedbackNotice {
@@ -237,8 +248,18 @@ export interface PortDouble {
 	 * access does: whoever receives that seat's observations is handed it, and a reading for an owner
 	 * this process receives nothing for reaches nobody — the same silence the real access answers a
 	 * delivery with when the seat is not served here.
+	 *
+	 * `source` is the connection the reading arrived over, numbered by the serving process as the real
+	 * access numbers them: a case that wants a later connection's word — a session whose access was
+	 * reached again — states a higher number, and one that states none speaks for the first
+	 * connection, which is the one this double starts at.
 	 */
-	deliverObserved(reading: ObservedSession): void;
+	deliverObserved(reading: ObservedSession, source?: ObservationSource): void;
+	/**
+	 * States that one source's connection ended, as the serving end observes a real one: the access was
+	 * released by the process that delivered, that process ended, or the connection failed.
+	 */
+	loseObservedSource(source?: ObservationSource): void;
 	bind(definition: ExtensionDefinition, options?: PortBindingOptions): BindingResult;
 	/** Runs one registered command as a user of `owner` would; throws when it was never registered. */
 	run(command: string, options?: CommandRunOptions): CommandRun;
@@ -429,7 +450,7 @@ export function portDouble(options: PortDoubleOptions = {}): PortDouble {
 	/** What this process handed over for the sessions whose owners it does not serve, in order. */
 	const deliveredObservations: ObservedSession[] = [];
 	/** Where each owner's admitted readings are handed, as the serving end of the access holds them. */
-	const receivingSinks = new Map<string, (reading: ObservedSession) => void>();
+	const receivingSinks = new Map<string, SessionObservationSink>();
 	const observationAccess: SessionObservationAccess | undefined =
 		options.observationAccess ??
 		(options.observationsAcrossProcesses !== true
@@ -595,12 +616,18 @@ export function portDouble(options: PortDoubleOptions = {}): PortDouble {
 		get receivingOwners(): readonly string[] {
 			return [...receivingSinks.keys()];
 		},
-		deliverObserved(reading) {
+		deliverObserved(reading, source = FIRST_SOURCE) {
 			// The serving end hands one seat's readings to whoever receives that seat, and nothing to
 			// anyone else: an owner this process receives nothing for is handed nothing, exactly as the
 			// real access answers a seat it does not serve.
 			if (reading.owner.kind !== "inherited") return;
-			receivingSinks.get(reading.owner.key)?.(reading);
+			receivingSinks.get(reading.owner.key)?.adopt(source, reading);
+		},
+		loseObservedSource(source = FIRST_SOURCE) {
+			// A loss is stated to every seat this double receives for, as one connection's end is stated
+			// to the one seat it was admitted for: a case modelling that connection states the same source
+			// it delivered over, and a seat that never saw the source states nothing about it.
+			for (const sink of receivingSinks.values()) sink.lost(source);
 		},
 		bind(definition, options = {}) {
 			const { config, factory, ...implementation } = options;

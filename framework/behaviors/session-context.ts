@@ -21,7 +21,7 @@
  */
 import type { ExtensionDefinition } from "../core/definition";
 import { handOverReading, type ObservationHandOver, type SessionObservations } from "../core/observations";
-import type { SessionContextObservation, SubscriptionGroup } from "../core/protocol";
+import type { ObservationSource, SessionContextObservation, SubscriptionGroup } from "../core/protocol";
 import { dispatchToGroups } from "./subscriptions";
 
 /** What one binding's context collection arranges itself with. */
@@ -47,17 +47,23 @@ export interface ContextCollectionInputs {
 
 /** One binding's context collection: the one entry point a collected reading arrives through. */
 export interface ContextCollection {
-	/** Applies one collected reading: the source's own record, then the subscribed handlers. */
-	observe(observation: SessionContextObservation): void;
+	/**
+	 * Applies one collected reading: the source's own record, then the subscribed handlers.
+	 *
+	 * `source` is the connection whose word stated the reading, for a session the harness ran in
+	 * another process, and it decides what an older connection's word may still state (see
+	 * {@link SessionObservations.observeContext}); a reading this process collected itself carries none.
+	 */
+	observe(observation: SessionContextObservation, source?: ObservationSource): void;
 }
 
 /** Build one binding's context collection. */
 export function createContextCollection(inputs: ContextCollectionInputs): ContextCollection {
 	const { definition, observations, groups, handOver, reportFailure } = inputs;
 	return {
-		observe(observation) {
+		observe(observation, source) {
 			const { session, owner, reading, hasUI, feedback } = observation;
-			if (!observations.observeContext(session.sessionId, reading)) return;
+			if (!observations.observeContext(session.sessionId, reading, source)) return;
 			// A reading that moved is the owner's process's business where the owner is not served
 			// here: it leaves with the facts that name the session it was read in.
 			handOverReading(handOver, { session, owner, context: reading });

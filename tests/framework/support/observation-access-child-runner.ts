@@ -30,6 +30,11 @@ export interface RunningObservationChild {
 	report(): Promise<ObservationChildReport>;
 	/** Asks the child to finish and answers what it reported, plus the stderr it wrote. */
 	finish(): Promise<{ readonly report: ObservationChildReport; readonly stderr: string }>;
+	/**
+	 * Ends the child's process abruptly, as a host that is killed or crashes does: no command is sent,
+	 * nothing it held is released first, and it states nothing about its own end.
+	 */
+	kill(): void;
 }
 
 /** Start one delivering child process over a plan. */
@@ -54,6 +59,8 @@ export function startObservationChild(
 	const waiting: Array<(report: ObservationChildReport) => void> = [];
 	const ready: Array<() => void> = [];
 	let readyOnce = false;
+	/** Whether this child's process was ended abruptly, so it states nothing of its own end any more. */
+	let killed = false;
 	void (async () => {
 		let buffer = "";
 		const decoder = new TextDecoder();
@@ -98,6 +105,7 @@ export function startObservationChild(
 			return settled.promise;
 		},
 		async finish() {
+			if (killed) throw new Error("this child's process was ended abruptly: it states nothing of its own end");
 			child.stdin.write(`${JSON.stringify({ t: "quit" })}\n`);
 			child.stdin.flush();
 			const [written, exitCode] = await Promise.all([stderr, child.exited]);
@@ -105,6 +113,10 @@ export function startObservationChild(
 				throw new Error(`the observation child exited ${String(exitCode)} without reporting: ${written}`);
 			}
 			return { report: JSON.parse(readFileSync(plan.resultPath, "utf8")) as ObservationChildReport, stderr: written };
+		},
+		kill() {
+			killed = true;
+			child.kill();
 		},
 	};
 }
