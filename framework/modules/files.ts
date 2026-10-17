@@ -123,6 +123,18 @@ const DEFAULT_WAIT_MS = 15000;
 /** How often the wait re-checks the queue, the lock and the signal. */
 const WAIT_POLL_MS = 25;
 
+/**
+ * How long this module's own waits take to observe a condition, stated for a caller that bounds work
+ * by a deadline of its own.
+ *
+ * A wait re-checks its budget, the queue, the lock and the signal on this interval, so a wait whose
+ * budget ends this long before a caller's deadline is refused — and that refusal observed — inside the
+ * caller's deadline rather than a moment after it. The framework's session close-out is that caller:
+ * it hands a commit what is left of its budget less this resolution, so a wait the close-out gives up
+ * is reported as the uncommitted save it is while the host is still being held.
+ */
+export const WAIT_RESOLUTION_MS = WAIT_POLL_MS;
+
 /** How many times one step steps over this platform's refusal of a name another process has open. */
 const IN_USE_ATTEMPTS = 6;
 

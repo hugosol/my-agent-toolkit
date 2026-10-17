@@ -443,8 +443,53 @@ export interface SessionDisposal {
 	readonly owner: OwnerReference;
 	/** Whether that session has a UI, as the adapter resolved it. */
 	readonly hasUI: boolean;
+	/**
+	 * The wait this host's own exit position allows the close-out, in milliseconds, when the host
+	 * states a bound of its own.
+	 *
+	 * It is a fact about the *position the report is made from* rather than about the session: a host
+	 * whose teardown will not be held past a certain point states it, so the framework knows how much
+	 * of the close-out the position can really wait for. Omitted — what every adapter of this release
+	 * states, pi's teardown waiting for a handler without a bound of its own — takes the framework's
+	 * built-in default, which is also this close-out's ceiling: a stated wait tightens it and never
+	 * lengthens it (see {@link CloseOutWait}).
+	 */
+	readonly closeOutWaitMs?: number;
 	/** The transport any extension feedback published for this fact goes through. */
 	readonly feedback: FeedbackTransport;
+}
+
+/**
+ * The wait a session's close-out has, as the edge dispatched from the disposal carries it.
+ *
+ * A session's disposal is reported where the host is waiting for what the close-out owes — the round
+ * the session left behind, and the commit that round's end publishes — so the framework bounds that
+ * wait and tells the edge what it may spend. The budget is counted from the instant the close-out was
+ * entered, and it is the *whole* budget there is: work that owes an asynchronous effect (a session's
+ * own save) bounds that effect's wait by what is left of it ({@link remaining}) rather than taking a
+ * fresh budget of its own, so an effect that had already spent part of the time is not handed a full
+ * one again, and the host is never held past the position it reported from. Nothing is retried, and
+ * no fixed delay is added between the deadline and the answer.
+ *
+ * The deadline stops this framework's *waiting*; it does not stop work that has already begun. For
+ * every edge that does not come from a disposal there is no such wait at all, and the field is absent.
+ */
+export interface CloseOutWait {
+	/** The whole budget this close-out was given, in milliseconds, counted from entering it. */
+	readonly budgetMs: number;
+	/** The instant this close-out's wait ends, on the reading {@link remaining} is measured from. */
+	readonly deadline: number;
+	/**
+	 * How many whole milliseconds of the budget this close-out's work may spend; `0` once that is over.
+	 *
+	 * It is what is left of the budget, less the resolution this framework's own coordinated waits take
+	 * to observe anything (`WAIT_RESOLUTION_MS`): a wait that declares this as its budget therefore
+	 * ends, and is refused, *inside* the close-out rather than a moment after the host was answered —
+	 * which is what lets a wait the deadline gives up be reported as the uncommitted save it is. It is
+	 * rounded down, so what it states is never more than the deadline really leaves; a caller whose own
+	 * budget must be at least one millisecond decides what to do with a `0` of its own.
+	 */
+	remaining(): number;
 }
 
 /**
@@ -471,6 +516,17 @@ export interface RoundDelivery {
 	readonly session: SessionFacts;
 	/** Whether the session this edge came from has a UI, as the adapter resolved it. */
 	readonly hasUI: boolean;
+	/**
+	 * The wait this edge's own close-out has, when the host reported the session's disposal and is
+	 * waiting for what that close-out owes; absent on every edge that is not a close-out.
+	 *
+	 * It is on the edge rather than on the session because it belongs to *this* report: a handler that
+	 * owes an asynchronous effect — the commit a session's last round publishes — bounds that effect's
+	 * wait by {@link CloseOutWait.remaining} instead of a budget of its own, which is what keeps a host
+	 * at its exit position from being held longer than the position itself allows, and what makes the
+	 * close-out's deadline the reason a wait that can be given up was given up.
+	 */
+	readonly closeOut?: CloseOutWait;
 	/** The transport this edge's extension feedback is published through. */
 	readonly feedback: FeedbackTransport;
 }

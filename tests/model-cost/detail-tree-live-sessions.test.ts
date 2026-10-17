@@ -199,6 +199,20 @@ afterEach(() => {
 	while (roots.length > 0) rmSync(roots.pop() as string, { recursive: true, force: true });
 });
 
+/**
+ * Lets the turn an arriving reading was adopted in finish, so the redraw that turn owes has been drawn.
+ *
+ * Adoption is not the drawing: the process's observation source holds a reading the moment its delivery
+ * returned, while the redraw a moved reading costs is the turn's own and is served at that turn's end
+ * (the merged redraw of `extensions/model-cost/shared-logic/presentation/coalesced-redraw.ts`, ticket
+ * 07). A case that reads a *frame* therefore reads it after the turn; a case reading the source or the
+ * display result reads it at once.
+ */
+async function readingTurnEnded(): Promise<void> {
+	await Promise.resolve();
+	await Promise.resolve();
+}
+
 describe("a descendant another process ran is drawn where its own direct parent puts it (P2)", () => {
 	test("the child's and the grandchild's readings arrive at the owner's seat, and the tree stays three levels", async () => {
 		const bound = await bind();
@@ -244,6 +258,7 @@ describe("a descendant another process ran is drawn where its own direct parent 
 		// child's branch, where a tree that hung every delivered session from the root would have drawn
 		// the two connectors at the same step. A drawn agent row is the one line carrying both the
 		// runtime field and a name of its own.
+		await readingTurnEnded();
 		const drawn = (bound.lines() ?? []).filter(line => line.includes("  Run: "));
 		expect(drawn).toHaveLength(2);
 		expect(drawn[0]).toContain("├─ 子代理A");
@@ -337,6 +352,7 @@ describe("a session whose first consumption is not committed yet is drawn with w
 
 		// The drawn line says the same: the context reading and the unavailable-runtime marker, and no
 		// amount, no cached share and no zero standing in for the consumption that is not known yet.
+		await readingTurnEnded();
 		const line = (bound.lines() ?? []).find(drawn => drawn.includes("子代理A")) as string;
 		expect(line).toContain("?(?)");
 		expect(line).toContain("Ctx: 10% (45,000/450.0K)");
@@ -402,6 +418,7 @@ describe("one actual session is one row, whatever run or process delivered it (P
 		// The union the tree is drawn from is merged the same way: a session the document holds and a
 		// registration names is one identity, not one identity per source.
 		expect(sessions.map(row => [row.name, row.depth])).toEqual([["改名后的子代理", 1]]);
+		await readingTurnEnded();
 		expect((bound.lines() ?? []).filter(drawn => drawn.includes("  Run: "))).toHaveLength(1);
 		const listed = bound.runtime.view.identities().map(identity => identity.sessionId);
 		expect(listed.filter(id => id === CHILD.sessionId)).toHaveLength(1);

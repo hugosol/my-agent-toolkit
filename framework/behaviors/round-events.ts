@@ -69,9 +69,68 @@
  */
 import type { ExtensionDefinition } from "../core/definition";
 import { handOverReading, type ObservationHandOver, type SessionObservations } from "../core/observations";
-import type { RoundDelivery, RoundEvent, RoundObservation, SessionDisposal, SubscriptionGroup } from "../core/protocol";
+import type {
+	CloseOutWait,
+	RoundDelivery,
+	RoundEvent,
+	RoundObservation,
+	SessionDisposal,
+	SubscriptionGroup,
+} from "../core/protocol";
+import { WAIT_RESOLUTION_MS } from "../modules/files";
 import { ACTIVITY_OF_EDGE, type SessionActivityAxis } from "./session-activity";
 import { dispatchToGroups } from "./subscriptions";
+
+/**
+ * The wait a session's close-out gets when the host states none of its own: fifteen seconds, counted
+ * from entering the close-out.
+ *
+ * It is the same 15000ms the framework's coordinated file update gives its own wait, which is what the
+ * ticket's approved trade-off turns on: the close-out is bounded by that budget rather than by an
+ * unbounded wait for slow I/O, and a wait the deadline gives up may leave an update that had already
+ * begun unconfirmed rather than pretending it was cancelled. It is a ceiling as well as a default: a
+ * host that states a shorter wait of its own tightens it, and none lengthens it.
+ */
+export const DEFAULT_CLOSE_OUT_MS = 15_000;
+
+/**
+ * The wait one close-out has, as the edge it dispatches carries it.
+ *
+ * The deadline is counted from the instant the close-out was entered — before the edge was built — so
+ * a handler that is reached a moment later already finds part of the budget spent, which is exactly
+ * what "no fresh budget of its own" means for work that had been running before the disposal. What the
+ * work is offered is that much less the framework's own wait resolution, so a wait bounded by it is
+ * refused *and observed as refused* inside the close-out: that is what makes a wait which can be given
+ * up report itself as the uncommitted save it is, rather than leaving the host's own answer to state
+ * an outcome the wait was about to settle. Whole milliseconds, because that is what this framework's
+ * timers schedule and what a budget declared to the coordinated update has to be.
+ */
+function closeOutWait(enteredAt: number, budgetMs: number): CloseOutWait {
+	const deadline = enteredAt + budgetMs;
+	return {
+		budgetMs,
+		deadline,
+		remaining: () => Math.max(0, Math.floor(deadline - performance.now()) - WAIT_RESOLUTION_MS),
+	};
+}
+
+/**
+ * The settlement of one close-out, or `false` once its deadline has passed.
+ *
+ * One timer, armed at the deadline itself, and nothing else: no retry, no polling and no added delay
+ * between the deadline and the answer. A settlement that arrives first clears the timer, so a
+ * close-out that concluded holds the host for as long as its work really took and not a millisecond
+ * longer.
+ */
+function settledByDeadline(settling: Promise<void>, deadline: number): Promise<boolean> {
+	return new Promise<boolean>(resolve => {
+		const timer = setTimeout(() => resolve(false), Math.max(1, deadline - performance.now()));
+		void settling.then(() => {
+			clearTimeout(timer);
+			resolve(true);
+		});
+	});
+}
 
 /**
  * The round identities one binding has observed for the actual sessions it serves.
@@ -120,7 +179,7 @@ export interface RoundSynthesis {
 	observe(observation: RoundObservation): void;
 	/**
 	 * Closes the round one actual session's own disposal leaves behind, and answers once every handler
-	 * that closing reached has settled.
+	 * that closing reached has settled or the close-out's own wait has run out.
 	 *
 	 * The session's end is the whole evidence the close-out needs, and its own two cases are decided
 	 * from what the binding already holds. An end the session had already stated — a settle that
@@ -133,6 +192,13 @@ export interface RoundSynthesis {
 	 * A session with no round open and nothing pending — one this binding already closed, or one it
 	 * never opened a round for — is no edge at all, and a second disposal of the same session closes
 	 * nothing again.
+	 *
+	 * The wait is bounded: the budget is counted from entering this call (the host's own, when the
+	 * report states one, never longer than {@link DEFAULT_CLOSE_OUT_MS}), the edge carries what is left
+	 * of it, and this answers at that deadline whether or not the work it owed concluded. A close-out
+	 * that is over before the deadline answers as soon as it is over; one that is not states on the
+	 * diagnostic channel that its work is unconfirmed, claims no outcome for it, and leaves the
+	 * document on disk as the authority.
 	 */
 	dispose(disposal: SessionDisposal): Promise<void>;
 }
@@ -203,7 +269,7 @@ export function createRoundSynthesis(inputs: RoundSynthesisInputs): RoundSynthes
 	 * keeps the live reads an observation carries beside them — its quiescence and held-work queries —
 	 * from reaching a handler.
 	 */
-	type EdgeFrame = Pick<RoundDelivery, "session" | "owner" | "hasUI" | "feedback">;
+	type EdgeFrame = Pick<RoundDelivery, "session" | "owner" | "hasUI" | "feedback" | "closeOut">;
 
 	const dispatch = (frame: EdgeFrame, event: RoundEvent): Promise<void> => {
 		const delivery: RoundDelivery = {
@@ -212,6 +278,10 @@ export function createRoundSynthesis(inputs: RoundSynthesisInputs): RoundSynthes
 			owner: frame.owner,
 			hasUI: frame.hasUI,
 			feedback: frame.feedback,
+			// The close-out wait is stated only where a host is really waiting for an answer: an edge
+			// dispatched from an observed fact carries none, so no handler borrows a budget that belongs
+			// to a host position nobody is standing at.
+			...(frame.closeOut === undefined ? {} : { closeOut: frame.closeOut }),
 		};
 		const settling = dispatchRoundEvent(definition, lives, delivery, groups, reportFailure);
 		// The reading this edge leaves the session in, recorded after the edge was applied so the
@@ -321,18 +391,43 @@ export function createRoundSynthesis(inputs: RoundSynthesisInputs): RoundSynthes
 			const candidate = candidates.get(sessionId);
 			candidates.delete(sessionId);
 			// A round this binding never opened — one it already closed, or a session whose facts it only
-			// ever read — is no edge at all: there is no round whose end this disposal could be.
+			// ever read — is no edge at all: there is no round whose end this disposal could be. Nothing
+			// is owed, so nothing is waited for either.
 			if (lives.current(sessionId) === undefined) return;
-			if (candidate !== undefined) {
-				// The end this session stated itself, confirmed where the disposal is reported rather than
-				// on a task the disposing host may never reach. No late read is asked for it: a session
-				// that is over is at rest, and nothing beyond it can continue it.
-				await dispatch(candidate, { kind: "round_end", ending: "confirmed" });
-				return;
-			}
-			// A round left open with no end ever stated is closed as the truncation it is: nothing can
-			// continue it any more, and the activity's own completion was never established.
-			await dispatch(disposal, { kind: "round_end", ending: "truncated" });
+			// The wait this close-out has. It is entered here, before the edge is built, so the budget is
+			// counted from the instant the host reported its position rather than from wherever a handler
+			// happens to be reached; the host's own bound, when it states one, is what that position
+			// really allows and the framework's default is the ceiling of what it promises either way.
+			const budgetMs = Math.min(disposal.closeOutWaitMs ?? DEFAULT_CLOSE_OUT_MS, DEFAULT_CLOSE_OUT_MS);
+			const closeOut = closeOutWait(performance.now(), budgetMs);
+			const frame: EdgeFrame = {
+				session: disposal.session,
+				owner: disposal.owner,
+				hasUI: disposal.hasUI,
+				feedback: disposal.feedback,
+				closeOut,
+			};
+			// The two cases of a session's own end, and both are the close-out: an end it had already
+			// stated is confirmed where the disposal is reported rather than on a task the disposing host
+			// may never reach — no late read is asked for it, because a session that is over is at rest
+			// and nothing beyond it can continue it — and a round left open with no end ever stated is
+			// closed as the truncation it is, because nothing can continue it any more and the activity's
+			// own completion was never established.
+			const settling = candidate !== undefined
+				? dispatch(frame, { kind: "round_end", ending: "confirmed" })
+				: dispatch(frame, { kind: "round_end", ending: "truncated" });
+			if (await settledByDeadline(settling, closeOut.deadline)) return;
+			// The deadline passed with that edge's work still owed. What is stated is exactly that much:
+			// the wait is over and the work's outcome is not known here — an update that had already
+			// begun may still be publishing, and a wait that could be given up is given up by the budget
+			// it was handed rather than by this line. Claiming a cancellation, a document that was not
+			// written, or a save would each be a statement this framework cannot make; the document on
+			// disk is what decides, and whoever reads it later sees what really happened.
+			reportFailure(
+				`${definition.id}: the close-out of session "${sessionId}" was not answered within its ${budgetMs}ms budget, ` +
+					"so whatever work that edge still owed is unconfirmed: this states neither that it was cancelled, " +
+					"nor that nothing was written, nor that it was saved, and the document on disk remains the authority.",
+			);
 		},
 	};
 }

@@ -9,7 +9,9 @@
  * safe-file entry (`updateFile`), which serializes same-document writes in this process and takes
  * the cross-process lock, re-reads the document inside that scope and publishes the returned
  * document atomically. There is no second write path, no synchronous twin, and no
- * consumption-specific lock, timeout or per-file path configuration.
+ * consumption-specific lock, timeout of its own or per-file path configuration: the only wait a
+ * commit has is the one its caller declares — what is left of a session's close-out, when the save
+ * is owed to one — and that declaration is passed through rather than interpreted here.
  *
  * The instance's state is the baseline it last loaded and the records it last committed, which is
  * what its read-only answers are served from; the file stays the authority rather than a cache in
@@ -466,8 +468,18 @@ export class ConsumptionStore {
 	 * becomes this instance's baseline: a record another writer holds, an older version and a period
 	 * a reset replaced are each a fact about the file, so the instance goes on from the file's own
 	 * snapshot rather than from the one it held when it built the refused snapshot.
+	 *
+	 * `wait` is the *caller's* budget for the coordination this commit needs — what is left of a
+	 * session's close-out, say — and it reaches the framework's update unchanged: this store keeps no
+	 * budget of its own, so a caller that is at its own deadline does not hand its save a fresh
+	 * fifteen seconds. What the budget bounds is still only the waiting: an update that has begun runs
+	 * to its real outcome, and a wait that runs out writes nothing.
 	 */
-	async commit(harness: string, record: SessionRecord): Promise<SessionCommit> {
+	async commit(
+		harness: string,
+		record: SessionRecord,
+		wait: { readonly timeoutMs?: number } = {},
+	): Promise<SessionCommit> {
 		if (this.#pauseReason !== undefined) return { kind: "paused" };
 		const period = this.#period;
 		if (period === undefined) {
@@ -478,20 +490,24 @@ export class ConsumptionStore {
 		/** The document the coordinated scope read, which a refusal makes this instance's baseline. */
 		let current: unknown;
 		try {
-			const document = await updateFile<ConsumptionDocument>(this.consumptionFile, read => {
-				current = read;
-				const decision = this.#decide(read, period, harness, record);
-				if (
-					decision.kind === "conflict" ||
-					decision.kind === "stale-period" ||
-					decision.kind === "stale-version" ||
-					decision.kind === "unusable"
-				) {
-					throw new CommitRefusal(decision);
-				}
-				unchanged = decision.kind === "unchanged";
-				return decision.document;
-			});
+			const document = await updateFile<ConsumptionDocument>(
+				this.consumptionFile,
+				read => {
+					current = read;
+					const decision = this.#decide(read, period, harness, record);
+					if (
+						decision.kind === "conflict" ||
+						decision.kind === "stale-period" ||
+						decision.kind === "stale-version" ||
+						decision.kind === "unusable"
+					) {
+						throw new CommitRefusal(decision);
+					}
+					unchanged = decision.kind === "unchanged";
+					return decision.document;
+				},
+				wait,
+			);
 			this.#adopt(document);
 			return unchanged ? { kind: "unchanged" } : { kind: "saved" };
 		} catch (error) {
