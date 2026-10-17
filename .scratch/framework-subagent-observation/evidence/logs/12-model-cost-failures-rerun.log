@@ -1,0 +1,10 @@
+bun test v1.4.2 (744846f84)
+modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions id 'model-cost' is duplicated.
+modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions id 'model-cost' is duplicated.
+modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions id 'model-cost' is duplicated.
+modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions id 'model-cost' is duplicated.
+
+ 12 pass
+ 0 fail
+ 91 expect() calls
+Ran 12 tests across 2 files. [1.68s]
