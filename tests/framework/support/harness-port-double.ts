@@ -330,7 +330,16 @@ export interface PortDouble {
 	 */
 	deliverDisposal(
 		owner: OwnerReference,
-		options?: { readonly session?: SessionFacts; readonly hasUI?: boolean },
+		options?: {
+			readonly session?: SessionFacts;
+			readonly hasUI?: boolean;
+			/**
+			 * The wait this host's own exit position allows the close-out, as a harness that bounds its
+			 * own position states it; omitted models the host whose position states none of its own,
+			 * which is what every adapter of this release states.
+			 */
+			readonly closeOutWaitMs?: number;
+		},
 	): Promise<RoundBoundary>;
 	/**
 	 * Delivers one collected context reading to every extension bound so far, as an adapter would.
@@ -724,6 +733,7 @@ export function portDouble(options: PortDoubleOptions = {}): PortDouble {
 				session: options.session ?? DEFAULT_SESSION,
 				owner,
 				hasUI,
+				...(options.closeOutWaitMs === undefined ? {} : { closeOutWaitMs: options.closeOutWaitMs }),
 				feedback: {
 					notify: (level, message) => {
 						feedback.push({ level, message });

@@ -101,6 +101,7 @@ export type {
 	CanAcceptInput,
 	CatalogPrice,
 	CatalogPriceSource,
+	CloseOutWait,
 	CommandDelivery,
 	CommandInvocation,
 	DeclaredValueSeam,
