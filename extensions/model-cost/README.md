@@ -56,6 +56,14 @@ what a real TUI draws are human-only, and nothing in this repository claims eith
   (its context, its activity) and with no consumption figure at all rather than a zero. A later run
   or process that continues the same session updates that row instead of adding a second one, and
   nothing of an observation is written to the storage root.
+- Observation readings are published where the host's own events are read — a session's start, a
+  finalized message, the run's execution convergence — and a reading that states what the framework's
+  source already holds is published to nobody, so a streamed response's per-chunk facts add no reading
+  traffic and a quiet process adds none either. What a moved reading costs is a drawing, and a turn's
+  readings are drawn together from their latest values: a frontend attached to this extension's
+  read-only result is handed one frame per turn however many sessions and fields moved in it, while
+  every reading is adopted where it arrives and every fact that settled a Round, counted a response or
+  saved a session is processed and published exactly as before.
 
 Verification of these updates: the startup-progress replay reproduced three unattributable creation
 readings before the fix, then passed the creation, first-attributed-reading and post-readiness-loss
@@ -65,6 +73,17 @@ console-device smoke passed all 44 checks at 120/85/60/40/120 columns, including
 widths, retained figures and unchanged storage. Final integration passed `bun run typecheck` and
 `bun run test` (983 tests across 106 files, no failures). These observations do not certify a real provider
 account or replace the human readability judgement below.
+
+Verification of the publication and merged-redraw behavior (2026-10-17): `bun test tests/model-cost`
+491 pass / 0 fail, `bun test tests/framework` 555 pass / 0 fail, and the real-host dock partition
+(`OMP_BOT_BINARY`, with `bun.lock` and the host patches normalized to LF) 107 pass / 0 fail. Real
+hosts: a pi 1.3.0 background smoke passed 10/10 observations, and a real-terminal pi TUI capture was
+34 ok / 1 failed — the failure is that script's own `pi 1.2.0` version check against this machine's
+1.3.0 install. Counted apart rather than inferred: one response's 40 streamed chunks were 2
+collections and 0 publications; six deliveries in one turn were one frame; a three-reading batch over
+the real named pipe was two frames; a minute of the host's own clock with nothing happening was 0
+publications and 0 frames. The Win32 console-device layout smoke was not run in that shell (no console
+device); no per-frame cost was profiled, so no efficiency claim is made here.
 
 ## Human acceptance
 

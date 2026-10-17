@@ -66,6 +66,7 @@ import {
 } from "./consumption-store";
 import { MODEL_PRICING_DATA, type ModelPricingData, dataCatalog } from "./model-data";
 import { createPeriodSwitch } from "./period-switch";
+import { createCoalescedRedraw } from "./presentation/coalesced-redraw";
 import { type ConsumptionPresenter, createPresentation } from "./presentation/display";
 import { createDisplayPreference, displayFormNotice, displayFormUnavailableNotice } from "./presentation/display-preference";
 import { SessionActivityRegistry } from "./presentation/session-activity";
@@ -312,6 +313,15 @@ export function createModelCostRuntime(inputs: ModelCostRuntimeInputs): ModelCos
 	// now. It is a reading of the moment: nothing here is persisted, and a session no edge has moved
 	// stays unestablished rather than being assumed idle.
 	const sessionActivity = new SessionActivityRegistry();
+
+	// The display's own redraw, merged (see `presentation/coalesced-redraw.ts`): a reading that moved
+	// asks for a redraw rather than drawing itself, so a turn's readings — several sessions', and both
+	// of a session's own readings — are drawn together from their latest values. The reading itself is
+	// adopted where it arrives, as it always was; what waits for the end of the turn is the drawing.
+	const redraw = createCoalescedRedraw({
+		redraw: () => accounting.announceChanged(),
+		published: listener => accounting.view.subscribe(listener),
+	});
 
 	// The provider balance reading: one per process, refreshed only by a settled request of its own
 	// provider when the reading it holds has outlived the configured success TTL. Its changes are
@@ -657,7 +667,7 @@ export function createModelCostRuntime(inputs: ModelCostRuntimeInputs): ModelCos
 		// working or idle with nothing accounted, nothing saved and no Round invented for it.
 		session_activity: delivery => {
 			stateProviderFailures(delivery);
-			if (sessionActivity.observe(delivery.session.sessionId, delivery.activity)) accounting.announceChanged();
+			if (sessionActivity.observe(delivery.session.sessionId, delivery.activity)) redraw.request();
 		},
 		// The one fact that establishes a session's Session span start: input the harness itself
 		// attributed to the user, published for every submission it admitted — an ordinary prompt and a
@@ -675,10 +685,11 @@ export function createModelCostRuntime(inputs: ModelCostRuntimeInputs): ModelCos
 		// One actual session's own context reading moved. The reading is not adopted here because it
 		// has nowhere to be adopted from: this extension reads it from the framework's own observation
 		// source (`sessionObservations`), which already holds the reading this delivery carries — so
-		// what this delivery is for is the one thing a reading that moved costs, the merged redraw of
-		// whatever this extension is drawing.
+		// what this delivery is for is the one thing a reading that moved costs, a redraw of whatever
+		// this extension is drawing. That redraw is the turn's own (`redraw` above): the readings that
+		// arrived in this turn are drawn together rather than one frame per delivery.
 		session_context: () => {
-			accounting.announceChanged();
+			redraw.request();
 		},
 		// One actual session's own start. A spawned session's binding announces it once, and it is the
 		// one delivery whose model and level readings are that session's startup facts — the framework
@@ -759,6 +770,7 @@ export function createModelCostRuntime(inputs: ModelCostRuntimeInputs): ModelCos
 			},
 			cleanup: () => {
 				closed = true;
+				redraw.dispose();
 				balance.dispose();
 				quota.dispose();
 				accounting.dispose();
