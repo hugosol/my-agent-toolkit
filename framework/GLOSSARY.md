@@ -266,6 +266,14 @@ _Avoid_: test runtime, test harness, fixture
 A semantic a binding's behavior rests on — history preservation, the two semantic lifecycle axes — recorded as contract metadata rather than as a runtime switch: the framework's own requirements, and the ones an extension's assembly adds through `ExtensionAssembly.requiredSemantics`. What holds in a given harness scope is established by the independent verification, never decided at binding.
 _Avoid_: runtime feature flag, fallback route, startup gate
 
+**Subagent integration checklist（子代理接入清单）**:
+The two-sided declaration of an extension's required subagent capabilities and a harness adapter's supplied capabilities for each subagent execution mode it supports. Execution modes belong to the harness declaration, not to the extension's requirements; declared coverage is not evidence of correct behavior.
+_Avoid_: runtime capability negotiation, feature switch, compatibility certificate
+
+**Integration completeness check（接入完整性检查）**:
+An independently invoked comparison of extension requirements with declared harness integration coverage, identifying missing capabilities for each supported execution mode. It neither exercises behavior nor affects extension loading, startup or feature availability; behavior verification is a separate stage.
+_Avoid_: behavior test, startup gate, automatic feature downgrade
+
 **Independent compatibility verification（独立兼容性验证）**:
 The separately executed verification of one exact harness version, environment and source combination, recorded as a scoped report of executed, passed, failed and unverified coverage. A support claim rests on it; normal startup carries no version, capability-shape or report check of its own.
 _Avoid_: startup version check, runtime compatibility warning, a green suite as certification

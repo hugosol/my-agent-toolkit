@@ -25,6 +25,14 @@ import { defineExtension } from "../../framework/public";
 export const MODEL_COST = defineExtension({
 	id: "model-cost",
 	displayName: "modelCost",
+	subagentRequirements: [
+		"extension-loading",
+		"session-facts",
+		"turn-usage",
+		"session-lifecycle",
+		"session-observations",
+		"storage-commit",
+	],
 	config: { fields: { storageDir: "non-empty-string", balanceTtlMs: "milliseconds", codexQuotaTtlMs: "milliseconds" } },
 	commands: [
 		{

@@ -299,6 +299,35 @@ spaced recovery; later runs do not wait again. Local cells and fields declaring 
 no access wait. This intentionally changes only first-use waiting; it does not make every synchronous
 handler read asynchronous or add a public readiness protocol.
 
+## Two-sided subagent integration checklist (2026-10-17)
+
+Extension authors declare the framework-owned subagent semantics needed for complete integration;
+harness adapter authors declare their supported execution modes and supplied semantics per mode.
+The extension does not choose or enumerate execution modes. An adapter is responsible for every mode
+it declares: coverage in one cannot fill a gap in another, and no adapter is required to implement
+both modes. The first checklist covers subagent integration only, not a general capability registry.
+
+Keep two independently invoked stages separate. The integration completeness command compares these
+declarations for actual extension/harness discovery entries and reports which extension lacks which
+capability in which mode. It does not install or start a harness, inspect compatibility, run tests,
+exercise an implementation or claim that the declared wiring behaves correctly. Behavior verification
+remains in the existing test/dock/candidate paths and is not invoked by the completeness command.
+An incomplete checklist can return a failing command status for developers without refusing an
+extension, changing a supported baseline, publishing a user notice or affecting any runtime feature.
+
+`ExtensionDefinition.subagentRequirements` is additive, declaration-only metadata. Each adapter owns
+its offline inventory; the independently invoked script owns the catalog and discovers only actual
+entrypoints, rather than demanding every extension support every harness. Missing catalog entries
+are reported, never silently treated as complete. Declared coverage is maintained by the adapter
+author, not inferred by scanning function names; behavioral correctness remains a separate obligation.
+For pi, the declaration describes its integrated provider path with the extension's required child
+entry, not the presence or health of a provider in a particular run.
+
+This preserves the independent-verification/startup separation. Runtime negotiation, warning policy,
+feature gating, `/budget detail` availability and subagent accounting behavior are intentionally
+unchanged and are not abstracted by this checklist. Its terms live in the framework glossary and its
+command, declarations and capability vocabulary in the capability index.
+
 ## Behavior orchestration around State
 
 Treat State as the shared current-value source connecting control, commands, harness events, persistence, instruction contribution, feedback, and ongoing lifecycle effects. Ongoing effects depend on both State and their owning scope: entering an active condition may start work, leaving it or losing the scope must stop work, and restoring State alone does not prove earlier effects are still active. One-shot command actions remain distinct from ongoing effects; neither every State update nor every restore automatically replays side effects. Framework-managed model-context behavior observes the same State but is additionally bound by the mandatory history-preservation contract.

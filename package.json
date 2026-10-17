@@ -14,6 +14,7 @@
     "smoke:model-cost-detail-layout": "bun scripts/model-cost-detail-layout-smoke.ts",
     "smoke:model-cost-detail-layout-terminal": "bun scripts/model-cost-detail-layout-terminal-smoke.ts",
     "accept:model-cost-tui": "bun scripts/pi-tui-acceptance.ts",
+    "check:integrations": "bun scripts/check-adapter-integrations.ts",
     "verify:omp-candidate": "bun scripts/verify-omp-candidate.ts",
     "verify:provider-account": "bun scripts/pi-provider-account-read.ts",
     "typecheck": "tsc --noEmit"

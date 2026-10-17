@@ -43,6 +43,9 @@ export {
 	defineExtension,
 } from "./core/definition";
 
+/** Offline checklist declarations; the checker is a separate tooling entry, never a startup hook. */
+export type { HarnessIntegrationDeclaration, SubagentCapability, SubagentExecutionMode } from "./core/integration";
+
 /**
  * The assembly surface: the implementation factory, what it builds, and the generic assembly
  * information a harness adapter binds. All of it is type-level — an implementation is data the

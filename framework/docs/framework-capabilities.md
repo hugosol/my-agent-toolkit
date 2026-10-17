@@ -66,8 +66,8 @@ surface: the binding label is used for diagnostics, not pi's unrelated session-e
 ## `defineExtension(definition)`
 
 `definition` is an `ExtensionDefinition` ([`definition.ts#L267`](../core/definition.ts#L267)): plain data,
-no builder and no handler. All fields are described below. `state`, `commands`, `prompts`, `marker` and `config`
-are optional; `id` and `displayName` are required.
+no builder and no handler. All fields are described below. `state`, `commands`, `prompts`, `marker`, `config`
+and `subagentRequirements` are optional; `id` and `displayName` are required.
 
 ### `id: string`
 
@@ -78,6 +78,73 @@ identity is `${id}:${tag}` ([`definition.ts#L155`](../core/definition.ts#L155)).
 
 Human-readable name used for the extension's label and the text of its notifications (for example the
 toggle's enabled/disabled notice).
+
+### `subagentRequirements?: readonly SubagentCapability[]`
+
+The extension author's declaration of the subagent semantics needed for complete integration.
+Omitted or empty means no subagent obligation. It names no execution mode and is never read by normal
+binding, command dispatch or accounting. See the independent checklist below.
+
+### Independent subagent integration checklist
+
+**Stage 1 is declaration matching, not behavior verification.** Run it explicitly:
+
+```sh
+bun run check:integrations
+bun run check:integrations --json
+```
+
+The command is resolved from its own repository location, not the working directory. It discovers
+actual `entrypoints/<harness>/<extension>.ts` pairs, loads only definition/inventory modules and compares
+requirements against every execution mode declared by the matching adapter. It does not load the
+discovery entries or native assemblies, read extension configuration, install a harness or run tests.
+Exit codes: `0` matching declarations, `1` missing integration, `2` invalid command arguments.
+The JSON report marks `stage: "integration-completeness"` and `behaviorTestsRun: false`.
+
+| Capability | Required meaning of the supplied integration |
+| --- | --- |
+| `extension-loading` | The subagent loads the extension logic needed to participate. |
+| `session-facts` | Actual session identity, direct parent and Owner relationships. |
+| `turn-usage` | Each actual session's own response usage without duplicate accounting. |
+| `session-lifecycle` | Per-actual-session lifecycle, Round edges and awaitable disposal. |
+| `session-observations` | Per-session activity, context and startup observations. |
+| `storage-commit` | Confirmed storage commits are observable where the Owner is served. |
+| `state-follow` | A declared following State field reads its Owner's value. |
+
+The types are exported from `framework/public.ts` and defined in
+[`core/integration.ts`](../core/integration.ts). The checker is the separate tooling entry
+[`framework/integration-check.ts`](../integration-check.ts), not a runtime export from `public.ts`.
+
+- **Extension author:** declare `subagentRequirements` in `extensions/<id>/definition.ts`.
+  model-cost requires the first six capabilities above; codebase-tools requires loading, facts and
+  following State. connect-bot declares no subagent requirement.
+- **Harness adapter author:** maintain `HarnessIntegrationDeclaration` in the adapter's
+  `integration.ts` ([OMP](../adapters/omp/integration.ts), [pi](../adapters/pi/integration.ts)).
+  `subagents` keys name the supported modes (`in-process`, `cross-process`); each value explicitly lists
+  supplied capabilities. List one or both modes according to the actual implementation, not an
+  extension policy. An empty mapping supplies no subagent integration; an empty capability list still
+  declares its mode and therefore reports each missing requirement.
+- **Catalog maintainer:** register new definition and inventory exports in
+  [`scripts/check-adapter-integrations.ts`](../../scripts/check-adapter-integrations.ts).
+  Newly discovered entries absent from that catalog are reported when their declarations are needed.
+  Extension ids match their discovery filenames; harness ids match their discovery directory names.
+
+Coverage cannot be pooled between modes. If pi declares both modes and only its in-process declaration
+supplies `storage-commit`, the report names `pi / model-cost: cross-process: missing storage-commit`.
+A harness declaring only in-process coverage owes no cross-process implementation. Missing adapter
+coverage is not a startup failure, and a disconnected process is not a declaration gap.
+
+**A complete checklist proves only that the declarations match.** The script does not inspect function
+bodies or prove extension-specific assembly wiring (such as pi's required `childEntry`), provider
+presence, delivery correctness or a particular installed harness version. Adapter authors must keep
+coverage declarations truthful; tests/dock scenarios verify their implementations separately. For pi,
+the inventory describes the integrated provider path with a child entry, not the no-provider path.
+Run the existing behavior tests and, when appropriate, `bun run verify:omp-candidate` as a separate
+stage; the completeness command does not invoke them or consume their results.
+
+No startup check, user-facing mode notice, feature gate, `/budget detail` change, or accounting change
+is introduced. Those runtime policies are outside this checklist's scope. Architecture rationale:
+[ADR 0002](../../docs/adr/0002-semantic-extension-framework.md#two-sided-subagent-integration-checklist-2026-10-17).
 
 ### `state?: StateDeclaration`
 

@@ -310,6 +310,20 @@ This file owns harness/package version evidence and compatibility policy, not wh
 
 The first release requires strict history preservation: no mutation or reordering of existing conversation entries, and no alteration of their history-derived request content. Request-context filtering, even of the extension's own earlier messages, is deferred. It permits new messages to be appended through the harness's normal recording path; once recorded, they receive the same protection. Non-persisted request contributions are not included in the first release, so their placement remains undecided. Mechanism availability in the table above does not by itself establish policy compliance.
 
+### Integration completeness is a separate stage
+
+`bun run check:integrations` (or `bun run check:integrations --json`) compares only the two-sided
+subagent checklist: extension requirements and each adapter's declared per-mode coverage. It reports
+missing declarations, modes or capabilities and exits nonzero for an incomplete checklist. It does
+not install a harness, read a candidate verification report or invoke behavior tests; it establishes
+neither behavioral correctness nor version support. Developers run it independently of the test/dock
+and candidate commands. See the [checklist vocabulary and authoring instructions](framework-capabilities.md#independent-subagent-integration-checklist)
+and the [decision](../../docs/adr/0002-semantic-extension-framework.md#two-sided-subagent-integration-checklist-2026-10-17).
+
+Normal startup never invokes this command or consumes its results. User notices, feature availability,
+accounting and extension loading are unchanged. A pi coverage declaration describes its integrated
+subagent path, not a runtime probe for provider presence, successful child loading or connection health.
+
 ### Independent compatibility verification
 
 Confirmed old-to-new ruling: assembly Q10a and Q19 (2026-10-13) — the user required taking the verification stage out into an independently runnable script (or another independently executable form) producing a report, and adding no verification logic beyond business needs at normal startup; Q19 confirmed the resulting organization. Former policy evaluated installed-version membership during execution, warned about unlisted versions, and checked required native Interface shape at binding. The user explicitly replaced this with independently runnable verification and reports so normal startup carries no compatibility verification unrelated to business.
