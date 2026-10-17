@@ -1,7 +1,8 @@
 /**
- * The observation direction of the framework's local access (P1, P13, P25, P26): the seat one
- * process serves for an owner, and the readings a session the harness runs in another process
- * delivers for the sessions that follow it.
+ * The observation direction of the framework's local access (P1, P13, P16, P17, P19, P25, P26): the
+ * seat one process serves for an owner, and the readings a session the harness runs in another
+ * process delivers for the sessions that follow it — including the notice that one of those sessions
+ * confirmed a write of its own extension data.
  *
  * The seam under test is the carrier's own public surface — `createOwnerAccessPublisher`'s `receive`,
  * `openOwnerAccess`'s `deliver`, `createObservationDeliverer`, `resolveRuntimeDirectory` and the
@@ -714,6 +715,86 @@ describe("one source's end is this side's own reading of it (P6, P7)", () => {
 			await ended(first);
 			await ended(second);
 			publisher.dispose();
+			cwd.dispose();
+			ws.dispose();
+		}
+	});
+});
+
+describe("a session's own confirmed write crosses the real access (P17, P19)", () => {
+	/** One session's own confirmed write, as the process that confirmed it states it: the count and no content. */
+	function notice(sessionId: string, owner: string, commits: number): ObservedSession {
+		return { ...reading(sessionId, owner), commits };
+	}
+
+	test("a real process's count arrives over the seat as the notice it is, with no content of the storage", async () => {
+		const ws = workspace();
+		const cwd = elsewhere();
+		const target: AccessTarget = { extension: "probe-extension", owner: "main:committed-owner" };
+		const publisher = createOwnerAccessPublisher({ configPath: ws.configPath });
+		const accepted = receiving();
+		publisher.receive(target, accepted.sink);
+		// Independently given values: the session that confirmed a write, and how many it has confirmed.
+		const stated = notice("committed-child", target.owner, 1);
+		const child = startObservationChild(planFor(ws, "committed", target, [stated], cwd.directory), { cwd: cwd.directory });
+		try {
+			await child.ready();
+			child.send({ t: "deliver", index: 0 });
+			await until(() => accepted.readings.length === 1, "the notice never crossed the access");
+
+			// What arrives is the session's own facts, the seat and the count: the member the framework
+			// adopts as a notice, rather than a value any consumer could account from.
+			expect(accepted.readings).toEqual([stated]);
+			expect(Object.keys(accepted.readings[0]!).sort()).toEqual(["commits", "owner", "session"]);
+			expect(accepted.readings[0]!.commits).toBe(1);
+			const finished = await child.finish();
+			expect(finished.report.delivered).toEqual(["committed-child"]);
+			expect(finished.stderr).toBe("");
+		} finally {
+			await ended(child);
+			publisher.dispose();
+			cwd.dispose();
+			ws.dispose();
+		}
+	});
+
+	test("the delivering half's first word carries the count this process holds, so a lost notice is recoverable", async () => {
+		const ws = workspace();
+		const cwd = elsewhere();
+		const target: AccessTarget = { extension: "probe-extension", owner: "main:late-commit-owner" };
+		// The count this process holds for the session it runs, while nothing serves the seat it follows.
+		const held = notice("late-committed-child", target.owner, 3);
+		const deliverer = createObservationDeliverer({
+			extension: target.extension,
+			configPath: ws.configPath,
+			readings: () => [held],
+			waitMs: 300,
+		});
+		const serving = startObservationChild(
+			{
+				target: { extension: "probe-extension", owner: "" },
+				readings: [],
+				resultPath: path.join(cwd.directory, "committed-serving-report.json"),
+				configPath: ws.configPath,
+				serve: target,
+			},
+			{ cwd: cwd.directory },
+		);
+		try {
+			// The notice is delivered while nothing serves that owner: it reaches nowhere, and no record
+			// or directory is created for it.
+			deliverer.deliver(held);
+			expect(existsSync(ws.runtimeDirectory)).toBe(false);
+
+			await serving.ready();
+			// The session's own next confirmed write is what makes this process reach the seat again, and
+			// what that seat receives first is what this process holds now: the count, together with the
+			// facts that name the session it belongs to.
+			deliverer.deliver(notice("late-committed-child", target.owner, 4));
+			expect(await receivedBy(serving, 1)).toEqual([held]);
+		} finally {
+			await ended(serving);
+			deliverer.dispose();
 			cwd.dispose();
 			ws.dispose();
 		}

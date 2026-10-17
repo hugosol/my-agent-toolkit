@@ -161,6 +161,12 @@ export function modelCostPiHarness(repositoryRoot: string): (pi: PiExtensionApi)
 				// its process boundary, so this extension reads the common interface and subscribes to no
 				// native context event of its own.
 				sessionObservations: context.sessionObservations,
+				// The framework's own statement channel: this process's sessions state each write they
+				// confirmed, and the framework carries it to the process serving their owner — the one
+				// other process that has to read the shared document again. This process serves a spawned
+				// session's owner only when it is the session that owns it, and nothing is stated for a
+				// session whose owner is served here.
+				recordSessionCommit: context.recordSessionCommit,
 				// The harness's own model prices, as the framework mapped them from pi's catalog: the
 				// extension's single price catalog composes them after its maintained data, which is what
 				// makes the allowance channel's own price a real request-time fact on this host.

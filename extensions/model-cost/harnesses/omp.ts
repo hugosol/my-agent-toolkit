@@ -148,6 +148,11 @@ const bindModelCost = ompAdapter(MODEL_COST, {
 			// process runs — so this extension reads the common interface and subscribes to no native
 			// context event of its own.
 			sessionObservations: context.sessionObservations,
+			// The framework's own statement channel, as this harness's adapter supplied it: on OMP every
+			// session of the process is bound here and the owner is served here, so a confirmed write is
+			// recorded in this process's own observation source and carried to no other process — the
+			// session that wrote and the owner that reads share this process's memory and document.
+			recordSessionCommit: context.recordSessionCommit,
 			// The harness's own model prices, as the framework mapped them from the host's catalog: the
 			// extension's single price catalog composes them after its maintained data, which is what
 			// makes the allowance channel's own price a real request-time fact on this host.
