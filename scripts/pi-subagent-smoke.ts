@@ -632,9 +632,15 @@ async function phaseForegroundDelegation(cli: PiCli): Promise<void> {
 		`session stderr (modelCost lines): ${JSON.stringify(session.stderr().split("\n").filter(line => line.includes("modelCost:")).slice(0, 4))}`,
 	);
 
+	// Both records are waited for as the facts they are: the child's own save and the parent's own
+	// Round end are two commits, and which one the document publishes first is not this check's to
+	// decide. A parent that never commits is still a failure — the wait is bounded — while a parent
+	// whose commit lands a task after the child's is the ordering the host really had.
 	const saved = await savedDocument(
 		dock.home.consumptionFile,
-		candidate => recordOf(candidate, child?.header?.id ?? "<none>") !== undefined,
+		candidate =>
+			recordOf(candidate, child?.header?.id ?? "<none>") !== undefined &&
+			recordOf(candidate, parent?.id ?? "<none>") !== undefined,
 	);
 	const parentRecord = recordOf(saved, parent?.id ?? "<none>");
 	observe(
