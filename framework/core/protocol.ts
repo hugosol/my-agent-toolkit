@@ -956,6 +956,17 @@ export interface SessionObservation {
 	readonly activity?: AgentActivity;
 	/** The latest context reading collected for this session. */
 	readonly context?: SessionContextReading;
+	/**
+	 * How many writes of this session's own extension data have been confirmed for it, when any have.
+	 *
+	 * It is the notice {@link ObservedSession.commits} states, as this process's own source holds it: a
+	 * count of confirmed writes and never a value read from the storage they were written to. It is what
+	 * a consumer reads to see that a session has committed something since it last looked, and unlike
+	 * the two readings above it does not become unavailable when the connection that stated it ends: a
+	 * write that really landed does not become untrue, and what a source's loss withdraws is the live
+	 * readings alone.
+	 */
+	readonly commits?: number;
 }
 
 /**
@@ -1039,6 +1050,23 @@ export interface ObservedSession {
 	readonly activity?: AgentActivity;
 	/** The latest context reading that process collected for the session, when it has one. */
 	readonly context?: SessionContextReading;
+	/**
+	 * How many writes of the session's own extension data that process has confirmed in the storage it
+	 * shares with the process serving this owner, when it has confirmed any.
+	 *
+	 * It is a *notice* rather than a reading of the session: what it states is that the storage the two
+	 * processes share holds something this session committed, so a process whose basis of that storage
+	 * predates it knows it has something to read again. Nothing of the file crosses with it — what
+	 * travels is a count and never a figure from the document — and it is not a Round, a Turn or a
+	 * request: the receiving process mints none of them for it, and a consumer that adopts it reads the
+	 * storage itself rather than any value carried here.
+	 *
+	 * The process that really confirmed the writes is what counts them, so the same count stated again
+	 * is the same notice rather than a new one, and a count a later connection states is that process's
+	 * own count rather than a continuation of an earlier one. An absent member is the honest absence: a
+	 * session nothing has confirmed a write for states none rather than a zero.
+	 */
+	readonly commits?: number;
 }
 
 /**
@@ -1117,6 +1145,57 @@ export type SessionContextHandler = (delivery: SessionContextDelivery) => void |
 export type SessionContextHandlers = Readonly<Partial<Record<SessionContextEvent["kind"], SessionContextHandler>>>;
 
 /**
+ * One semantic event: one actual session's own write of its extension data was confirmed.
+ *
+ * It is the one fact a session can state about itself that no harness adapter can state for it: the
+ * process that *runs* the session confirmed a write into the storage both processes share. What the
+ * event is *not* is a reading of that storage: it carries no content, no figure and no consumption
+ * statistic, so a consumer that adopts it reads the storage itself and takes what the file really
+ * holds. Nothing of the framework's own bookkeeping moves for it — no Round is opened or ended, no
+ * Turn is attributed and no request is accounted — exactly as nothing moves for an activity reading
+ * that arrived from another process.
+ *
+ * It is delivered where the count moved, once per real move: a word stating a count this process
+ * already took states nothing, which is what keeps a repeated delivery — a notice that arrived twice,
+ * or a connection stating what it stated before — from costing a consumer a second read.
+ */
+export type SessionCommitEvent = { readonly kind: "session_commit" };
+
+/**
+ * The facts one commit notice carries: the session whose write was confirmed, and the count itself.
+ *
+ * The identity is the session's own, as the process that ran it resolved it, and the owner it follows
+ * is the seat this notice belongs to — the same pair every other reading of that session carried, so
+ * a consumer places the session in the tree it already went into. The count is the notice rather than
+ * a measurement: it is the running total of confirmed writes that process states, and what a consumer
+ * does with a move is read the storage, never compute anything from the number.
+ */
+export interface SessionCommitObservation {
+	/** The actual session whose own write was confirmed: its identity, its direct parent and its latest name. */
+	readonly session: SessionFacts;
+	/** The owner whose agent this notice concerns, as the deliveries that carried the session resolved it. */
+	readonly owner: OwnerReference;
+	/** How many writes of that session's own extension data its own process has confirmed. */
+	readonly commits: number;
+	/** Whether the session this notice is about has a UI, as it was resolved. */
+	readonly hasUI: boolean;
+	/** The transport this notice's extension feedback is published through. */
+	readonly feedback: FeedbackTransport;
+}
+
+/** The facts one commit notice carries to the subscribed handler. */
+export interface SessionCommitDelivery extends SessionCommitObservation {
+	/** The event itself: that the count of this session's own confirmed writes moved. */
+	readonly event: SessionCommitEvent;
+}
+
+/** One extension handler for one session's own confirmed storage write. */
+export type SessionCommitHandler = (delivery: SessionCommitDelivery) => void | Promise<void>;
+
+/** The commit handlers one assembly injects, keyed by the event it subscribes to. */
+export type SessionCommitHandlers = Readonly<Partial<Record<SessionCommitEvent["kind"], SessionCommitHandler>>>;
+
+/**
  * One semantic event: one actual session's observation ceasing to be available.
  *
  * It is what the framework states when the source the readings came from is gone — the connection a
@@ -1165,8 +1244,8 @@ export type SessionUnobservedHandlers = Readonly<
 
 /**
  * Any semantic lifecycle event the framework models: the session axis, the round axis, the activity
- * axis, the Turn axis, the input axis, the context axis and one session's observation becoming
- * unavailable.
+ * axis, the Turn axis, the input axis, the context axis, one session's own confirmed storage write
+ * and one session's observation becoming unavailable.
  *
  * The axes are orthogonal and never merged — entering a session is not starting work, starting
  * work does not change which session is current, a Turn is not a Round, and input arriving is not
@@ -1174,7 +1253,10 @@ export type SessionUnobservedHandlers = Readonly<
  * The activity axis is the one *derived* member: it states the reading the round axis's own
  * transitions leave a session in, so it is never a second decision about which fact is a
  * transition, and observing activity is not observing a round: it carries no billing lifecycle
- * fact, dispatches no edge and grants no capability. An unavailability is the one member that states
+ * fact, dispatches no edge and grants no capability. A commit notice is the one member that states
+ * something about a storage rather than about the session's work: it names the session whose own
+ * write was confirmed and counts confirmed writes, carries nothing the storage holds, and mints no
+ * Round, Turn or accounting fact either. An unavailability is the one member that states
  * an *absence*: the readings a source delivered are gone, and nothing about the session's work is
  * stated by it at all.
  */
@@ -1185,6 +1267,7 @@ export type SemanticEvent =
 	| TurnEvent
 	| UserInputEvent
 	| SessionContextEvent
+	| SessionCommitEvent
 	| SessionUnobservedEvent;
 
 /** The delivery each semantic event kind carries, so a handler's kind and its facts stay paired. */
@@ -1201,6 +1284,8 @@ export interface SemanticEventDeliveryMap {
 	readonly turn_end: TurnEndDelivery;
 	readonly user_input: UserInputDelivery;
 	readonly session_context: SessionContextDelivery;
+	/** The commit axis's one kind: a session's own confirmed write of its extension data. */
+	readonly session_commit: SessionCommitDelivery;
 	/** The observation's own kind: the readings a source held for one session are gone. */
 	readonly session_unobserved: SessionUnobservedDelivery;
 }
@@ -1210,15 +1295,17 @@ export interface SemanticEventDeliveryMap {
  * subscribes to.
  *
  * This is the whole handler surface of one group: the session axis, the round axis, the activity
- * axis, the Turn axis and the input axis arrive here together, exactly as a directed command's
- * implementations arrive through `CommandActions`. A definition stays plain data either way: it
- * names no handler, and an event kind with no entry subscribes nothing.
+ * axis, the Turn axis, the input axis, the context axis, the commit axis and the unavailability
+ * member arrive here together, exactly as a directed command's implementations arrive through
+ * `CommandActions`. A definition stays plain data either way: it names no handler, and an event kind
+ * with no entry subscribes nothing.
  *
  * The session axis is a *reconciliation* trigger as well as a subscription — the framework
  * applies its own behavior for every delivery whether or not a handler arrived — while the round,
- * activity, Turn and input axes are subscription only: three-value agent state is not framework State
- * (contract P6), an activity reading states that same condition and drives no lifecycle of its own —
- * not even the one its own Round edge drove — a Turn changes nothing the framework owns beyond the
+ * activity, Turn, input, context and commit axes are subscription only: three-value agent state is
+ * not framework State (contract P6), an activity reading states that same condition and drives no
+ * lifecycle of its own — not even the one its own Round edge drove — a commit notice states that a
+ * storage grew and drives nothing at all, a Turn changes nothing the framework owns beyond the
  * identity bookkeeping it does before a handler runs, and a user input crosses no boundary at all: it
  * is a fact about the session, not a transition of it. A `session_facts` delivery is subscription only
  * as well, because a session whose facts were re-reported crossed no boundary: nothing of the

@@ -39,6 +39,19 @@ what a real TUI draws are human-only, and nothing in this repository claims eith
   told, because an activity whose own end was never observed is not a duration this extension
   measured. A session the host merely left — a switch, a resume, a fork — is no disposal and commits
   nothing for it.
+- A session's response usage is accumulated and saved by the process that ran it, and a save that
+  really landed states a consumption commit notice on the framework's observation direction: the
+  count of writes that session's own process has confirmed, and nothing the document holds. A commit
+  that was refused, that paused the instance or that failed states no notice, and nothing is stated
+  before the coordinated commit has answered. The process serving that session's owner answers the
+  notice with a read-only synchronization of the same storage root — adopting what the file really
+  holds without writing anything of its own, deriving no Round, Turn or accumulation from the notice
+  — so a subagent another process ran appears in the owner's own statistics although the owner
+  committed nothing itself. A notice whose count the owner already took costs nothing, and a notice
+  that never arrived is recovered by the next connection's first word, which states the count the
+  owner has not seen. A session whose process both runs it and serves its owner — every OMP session,
+  and pi's foreground path — records the notice and hands it to nobody, because that process already
+  shares the document with the session.
 - `/budget detail` is offered to an entry whose subagent integration took — the OMP entry always is.
   An entry that settled as the no-subagent mode has no descendants of its own to list, so its
   `/budget detail` answers that it was not executed and leaves the preference where it was; every

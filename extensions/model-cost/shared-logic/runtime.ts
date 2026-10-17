@@ -143,6 +143,20 @@ export interface ModelCostRuntimeInputs {
 	 */
 	readonly sessionObservations?: SessionObservations;
 	/**
+	 * The framework's own statement channel for one session's confirmed write of its extension data, as
+	 * the factory was handed it (`ImplementationContext.recordSessionCommit`).
+	 *
+	 * It is the one thing this extension states rather than reads about the storage root: when a
+	 * session's snapshot really landed, the save states that fact and the framework carries it to the
+	 * process serving the owner that session follows — which is the process that has to read the
+	 * document again. What travels is the fact that a write was confirmed and never the record, the
+	 * figure or the file, so no consume-on-notification path exists here.
+	 *
+	 * Omitted means nothing is stated, which is what a suite driving the store alone builds: a harness
+	 * whose sessions all run in the process that serves their owner has no other process to tell.
+	 */
+	readonly recordSessionCommit?: (sessionId: string) => void;
+	/**
 	 * The instant source this extension's own business reads, on the process's own clock.
 	 *
 	 * Omitted means the process clock (`Date.now`); an explicit value is the same clock as a caller
@@ -295,7 +309,18 @@ export function createModelCostRuntime(inputs: ModelCostRuntimeInputs): ModelCos
 	// The accounting's own clock is what timestamps a user input, the one Session span fact the
 	// harness publishes with no instant of its own. The span's other fact is a Turn's own settle
 	// instant, which the Turn's own end delivery carries.
-	const accounting = createRequestAccounting({ data, harness: inputs.harness, storage, now, registrations: sessionObservations });
+	const accounting = createRequestAccounting({
+		data,
+		harness: inputs.harness,
+		storage,
+		now,
+		registrations: sessionObservations,
+		// This instance's own half of the write notice: the save states that a snapshot really landed in
+		// the shared document, and the framework carries that statement to the process serving the owner
+		// the session follows. It is handed on exactly as the framework supplied it — nothing of the
+		// consumption, the record or the file travels with it.
+		...(inputs.recordSessionCommit === undefined ? {} : { recordCommit: inputs.recordSessionCommit }),
+	});
 
 	// The entry's own display preference: `/budget detail` flips it, and the flip announces the change
 	// through the one notification every reader of this extension's read-only result already holds, so
@@ -679,6 +704,22 @@ export function createModelCostRuntime(inputs: ModelCostRuntimeInputs): ModelCos
 		// whatever this extension is drawing.
 		session_context: () => {
 			accounting.announceChanged();
+		},
+		// One actual session's own confirmed write of its extension data, as the process that ran it
+		// counted it: another writer put consumption into the storage root this instance reads, so what
+		// this instance holds as its basis may be behind the file. The delivery carries no figure from
+		// that file, and nothing of this instance's accounting is accumulated from it — what it costs is
+		// the read-only synchronization, which reads the document the file really holds and adopts it
+		// without writing anything of this instance's own. It is deliberately not an initialization, not
+		// a forced save and not a poll: a notice is one event, a refused or unreadable baseline is
+		// reported exactly as a save meeting the same file reports it, and a session this instance never
+		// committed for is still saved by its own process alone.
+		session_commit: async delivery => {
+			stateProviderFailures(delivery);
+			// The handler's own settlement is the read: the framework contains a rejection exactly as it
+			// contains a synchronous throw, and a caller waiting for the deliveries it dispatched — the
+			// session-disposal close-out, say — waits for this read rather than racing it.
+			await synchronize({ feedback: delivery.feedback });
 		},
 		// One actual session's observation became unavailable: the source that carried its readings ended,
 		// and the framework's own source has already withdrawn them. What is left to do here is this

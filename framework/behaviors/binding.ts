@@ -253,6 +253,24 @@ export function bindExtension(
 		return { bound: false, failures };
 	}
 
+	// The framework's cross-process half of session observation, as this binding's harness adapter
+	// built it: the access whose one seat is this binding's own owner seat, and whose other direction
+	// carries a reading of a session this process runs to the owner it follows. A harness whose
+	// sessions are all bindings in this process supplies none, and everything below then stays
+	// exactly as it was: this process's own source, observed here and delivered here.
+	//
+	// It is set up before the factory runs because the extension's own half of it is one of the facts
+	// the factory is handed: an extension whose sessions write into a storage another process reads
+	// states its confirmed writes through it, and the notice that statement produces has to leave from
+	// the same access the readings below do.
+	const observationAccess = port.sessionObservationAccess;
+	/** The owner keys this process serves, as this binding's own deliveries named them. */
+	const servedOwners = new Set<string>();
+	/** Whether this process serves that owner, which is the one question a reading's direction turns on. */
+	const handOver: ObservationHandOver | undefined = observationAccess === undefined
+		? undefined
+		: { serves: ownerKey => servedOwners.has(ownerKey), changed: reading => observationAccess.deliver(reading) };
+
 	// The extension's own half, and the first point at which its code runs. It is reached only
 	// after the configuration validated, so the values handed over are the ones the definition
 	// declared and nothing is read from the file twice; a factory that throws is a refused
@@ -270,6 +288,15 @@ export function bindExtension(
 					// this process has observed, including the readings collected before it attached. It is a
 					// live source and never a copy taken now, exactly as the two harness facts below are.
 					sessionObservations: observations,
+					// The one statement this extension makes about itself rather than reading: that a write of
+					// one of this process's sessions really landed. The count is recorded in the process's own
+					// source — where the session's own facts and owner already are — and the word that states it
+					// takes the same path a reading does, so a session whose owner this process serves is
+					// recorded here and handed to nobody, and one whose owner is served elsewhere crosses.
+					recordSessionCommit: sessionId => {
+						const stated = observations.recordCommit(sessionId);
+						if (stated !== undefined) handOverReading(handOver, stated);
+					},
 					...(port.modelPrices === undefined ? {} : { modelPrices: port.modelPrices }),
 					...(port.providerAccess === undefined ? {} : { providerAccess: port.providerAccess }),
 				});
@@ -282,18 +309,6 @@ export function bindExtension(
 
 	let delivering = true;
 
-	// The framework's cross-process half of session observation, as this binding's harness adapter
-	// built it: the access whose one seat is this binding's own owner seat, and whose other direction
-	// carries a reading of a session this process runs to the owner it follows. A harness whose
-	// sessions are all bindings in this process supplies none, and everything below then stays
-	// exactly as it was: this process's own source, observed here and delivered here.
-	const observationAccess = port.sessionObservationAccess;
-	/** The owner keys this process serves, as this binding's own deliveries named them. */
-	const servedOwners = new Set<string>();
-	/** Whether this process serves that owner, which is the one question a reading's direction turns on. */
-	const handOver: ObservationHandOver | undefined = observationAccess === undefined
-		? undefined
-		: { serves: ownerKey => servedOwners.has(ownerKey), changed: reading => observationAccess.deliver(reading) };
 	/** The owner seat this binding is receiving observations for, and the owner it is for. */
 	let receiving: (() => void) | undefined;
 	let receivingFor: string | undefined;
@@ -320,6 +335,12 @@ export function bindExtension(
 	 * reading that states what this process already holds moves nothing, exactly as a repeated local
 	 * collection does, so a re-delivered word is not published twice, and a word from a connection
 	 * older than the one a reading already came from (`source`) is not taken at all.
+	 *
+	 * A word may also state that the session's own process confirmed a write of its extension data. That
+	 * is a notice rather than a reading — nothing of it is accounted, and the storage it names is not
+	 * this process's to read here — so what it costs is the one delivery that says the count moved: a
+	 * subscriber that cares reads the storage itself, and a count this process already took states
+	 * nothing.
 	 */
 	const adoptReading = (source: ObservationSource, reading: ObservedSession): void => {
 		if (!delivering) return;
@@ -335,6 +356,25 @@ export function bindExtension(
 				hasUI: transport.hasUI,
 				feedback: transport.feedback,
 			});
+		}
+		if (reading.commits !== undefined && observations.observeCommits(sessionId, reading.commits, source)) {
+			void dispatchToGroups(
+				definition.id,
+				groups,
+				"session_commit",
+				reading.owner,
+				() => ({
+					delivery: {
+						event: { kind: "session_commit" },
+						session: reading.session,
+						owner: reading.owner,
+						commits: reading.commits as number,
+						hasUI: transport.hasUI,
+						feedback: transport.feedback,
+					},
+				}),
+				port.reportDiagnostic,
+			);
 		}
 		if (reading.context === undefined) return;
 		const collection = {

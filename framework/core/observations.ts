@@ -11,11 +11,14 @@
  * {@link handOverReading} is the framework's rule for which readings are the ones that cross in the
  * other direction — out of this process, to the owner they follow.
  *
- * Two readings are recorded and nothing else: the activity the framework's own Round bookkeeping
- * last left a session in, and the latest context reading an adapter collected for it. Neither is
- * derived here — the Round axis owns which edge moves a session to which activity, and the adapter
- * owns where a host's context reading is collected — so this module holds current values and the
- * change question a caller asks of them, and no rule of its own.
+ * Two readings are recorded and nothing else, beside the one count: the activity the framework's own
+ * Round bookkeeping last left a session in, and the latest context reading an adapter collected for
+ * it. Neither is derived here — the Round axis owns which edge moves a session to which activity, and
+ * the adapter owns where a host's context reading is collected — so this module holds current values
+ * and the change question a caller asks of them, and no rule of its own. The count is the one entry
+ * that is not a reading at all: how many writes of its own extension data a session was confirmed to
+ * have made ({@link SessionObservations.observeCommits}), counted where the write really landed,
+ * which is the framework's own notice to a process that shares the storage the write went into.
  *
  * What it is for, above all, is the *first* observation a consumer gets: an extension that attaches
  * after a session is already working reads the source and finds that session's activity and context
@@ -104,6 +107,17 @@ interface Entry {
 	readonly context?: SessionContextReading;
 	/** The source whose word stated the context above, when one did. See {@link Entry.activitySource}. */
 	readonly contextSource?: ObservationSource;
+	/**
+	 * How many writes of this session's own extension data have been confirmed for it, when any have.
+	 *
+	 * It is the one entry here that is not a *reading*: a confirmed write is a fact that stays true, so
+	 * the count survives the withdrawal of the source that stated it — what a source's end withdraws is
+	 * the live readings it stated. It is counted where the write was confirmed, which is why a word
+	 * stating a count this process already holds is not a change.
+	 */
+	readonly commits?: number;
+	/** The source whose word stated the count above, when one did. See {@link Entry.activitySource}. */
+	readonly commitsSource?: ObservationSource;
 }
 
 /**
@@ -112,9 +126,11 @@ interface Entry {
  * The read half is what a consumer attaches to ({@link SessionObservations.read} and
  * {@link SessionObservations.snapshot}); the write half is the framework's own — a session delivery
  * registers the facts it carried, a dispatched round edge moves the activity, a collected context
- * reading replaces the last one, and a source that ends withdraws the readings it stated — and each
- * write answers whether it moved anything, which is what keeps a repeated reading from being
- * published as a change.
+ * reading replaces the last one, a session's own process records each write it confirmed
+ * ({@link SessionObservations.recordCommit}), and a source that ends withdraws the readings it stated
+ * — and each write answers whether it moved anything, which is what keeps a repeated reading from being
+ * published as a change. The confirmed-write count is the one thing a source's end does not withdraw:
+ * a write that landed does not become untrue when the connection that stated it goes away.
  */
 export class SessionObservations {
 	#bySession = new Map<string, Entry>();
@@ -191,6 +207,51 @@ export class SessionObservations {
 	}
 
 	/**
+	 * Records the count of writes one session's own extension data has been confirmed for, and answers
+	 * whether that count moved.
+	 *
+	 * It is the one entry here that is a *notice* rather than a reading of the session: what it states is
+	 * that the storage the two processes share holds something this session committed, counted where the
+	 * write was really confirmed. A word stating the count this process already holds is therefore not a
+	 * change — the count is a running total rather than a value that drifts — and `source` carries the
+	 * same rule it does on {@link SessionObservations.observeActivity}: a word from an older source than
+	 * the one that stated the held count is not this process's to take, while a newer source stating it
+	 * again only takes over the stamp. Nothing here is withdrawn by a source's end: the count stays true
+	 * after the connection that stated it is gone, and a count a later process starts again is that
+	 * process's own count rather than a correction of the one held.
+	 */
+	observeCommits(sessionId: string, commits: number, source?: ObservationSource): boolean {
+		const held: Entry = this.#bySession.get(sessionId) ?? { sessionId };
+		if (source !== undefined && held.commitsSource !== undefined && held.commitsSource > source) return false;
+		if (held.commits === commits) {
+			if (source !== undefined && held.commitsSource !== source) {
+				this.#bySession.set(sessionId, { ...held, commitsSource: source });
+			}
+			return false;
+		}
+		this.#bySession.set(sessionId, { ...held, commits, commitsSource: source });
+		return true;
+	}
+
+	/**
+	 * Records one confirmed write of one session's own extension data, and answers the word that states
+	 * it — the session's own facts and owner with the count this source now holds — for a caller that
+	 * has to hand the notice over to the process serving that owner.
+	 *
+	 * Nothing is answered for a session this source holds no facts for: a notice with no identity cannot
+	 * be placed anywhere, and `undefined` is what says so rather than a word nobody could key. The
+	 * count starts at one, and a session whose own facts are recorded later does not carry an earlier
+	 * count with them: what this source counts is what it was really told about the session it names.
+	 */
+	recordCommit(sessionId: string): ObservedSession | undefined {
+		const held = this.#bySession.get(sessionId);
+		if (held?.session === undefined || held.owner === undefined) return undefined;
+		const commits = (held.commits ?? 0) + 1;
+		this.#bySession.set(sessionId, { ...held, commits });
+		return { session: held.session, owner: held.owner, commits };
+	}
+
+	/**
 	 * Withdraws one source's readings: what this process no longer holds once that source is gone.
 	 *
 	 * A source is gone when the connection it delivered over ended, and what that costs is exactly the
@@ -246,6 +307,7 @@ export class SessionObservations {
 			...(entry.owner === undefined ? {} : { owner: entry.owner }),
 			...(entry.activity === undefined ? {} : { activity: entry.activity }),
 			...(entry.context === undefined ? {} : { context: entry.context }),
+			...(entry.commits === undefined ? {} : { commits: entry.commits }),
 		};
 	}
 
@@ -269,6 +331,7 @@ export class SessionObservations {
 				owner,
 				...(entry.activity === undefined ? {} : { activity: entry.activity }),
 				...(entry.context === undefined ? {} : { context: entry.context }),
+				...(entry.commits === undefined ? {} : { commits: entry.commits }),
 			});
 		}
 		return readings;

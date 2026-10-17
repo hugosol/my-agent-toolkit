@@ -356,6 +356,19 @@ export interface RequestAccountingInputs {
 	 */
 	readonly registrations?: SessionObservationSource;
 	/**
+	 * Where this instance states that one session's own snapshot really landed in the storage root.
+	 *
+	 * It is the framework's own statement channel (`ImplementationContext.recordSessionCommit`): this
+	 * instance is the only party that can say a write was confirmed, because it is the one that read the
+	 * document, built the snapshot and saw the coordinated commit answer. What it states is *that* the
+	 * write landed and never what it held — no record, no figure and no path crosses — so a process
+	 * serving the owner that session follows learns the storage grew and reads it itself.
+	 *
+	 * Omitted means nothing is stated, which is what a suite driving this instance over a storage root of
+	 * its own alone wants: there is no other process to tell.
+	 */
+	readonly recordCommit?: (sessionId: string) => void;
+	/**
 	 * The instant source this instance's own clock readings are taken from: the Session span start,
 	 * which is the one span fact the harness publishes with no instant of its own.
 	 *
@@ -549,6 +562,9 @@ export function createRequestAccounting(inputs: RequestAccountingInputs): Reques
 	// own ever delivered: a session another process ran is registered there from the readings that
 	// process sent, and its facts are what let this instance name and place it at all.
 	const registrations = inputs.registrations;
+	// The framework's statement channel, as this instance's own save reaches it: the one thing this
+	// instance says about a write rather than reading from the storage root.
+	const recordCommit = inputs.recordCommit;
 	const now = inputs.now ?? Date.now;
 	const ledgers = new Map<string, SessionLedger>();
 	/**
@@ -952,6 +968,12 @@ export function createRequestAccounting(inputs: RequestAccountingInputs): Reques
 	 * instance did not have to discard keep their own accumulations. When the period underneath the
 	 * instance was replaced, the affected state is everything it accumulated: nothing from a period
 	 * a reset already closed may be published into the new one.
+	 *
+	 * A snapshot that did land is also the one thing worth telling the process serving this session's
+	 * owner: that the shared document now holds consumption it may not have read. The notice is stated
+	 * after the commit answered and never before it, and only for the two outcomes that mean the
+	 * snapshot is in the file — a refusal, a pause and a failure state nothing, because a write that did
+	 * not land is not a notice an owner could act on.
 	 */
 	const save = async (session: SessionFacts, ledger: SessionLedger, feedback: FeedbackTransport): Promise<void> => {
 		const facts = identityOf(session.sessionId) ?? {
@@ -1007,7 +1029,18 @@ export function createRequestAccounting(inputs: RequestAccountingInputs): Reques
 		} finally {
 			savesPublishing -= 1;
 		}
-		if (outcome.kind === "saved" || outcome.kind === "unchanged") return;
+		if (outcome.kind === "saved" || outcome.kind === "unchanged") {
+			// The snapshot is in the file — the coordinated commit really published it, or the document
+			// already held exactly it — so this is the one moment this instance knows something the
+			// process serving the session's owner may not: that the shared document holds this session's
+			// consumption. The notice says exactly that and nothing more: no record, no figure and no
+			// path travels with it, because the owner's own process reads the file itself. Nothing is
+			// stated for a refusal or a failure below — a write that did not land is not a notice — and
+			// nothing is stated before the commit answered, so a save that has only begun publishes
+			// nothing.
+			recordCommit?.(session.sessionId);
+			return;
+		}
 		// Whether the snapshot failed under the period it was built for: a period replaced underneath
 		// this instance makes everything it accumulated un-publishable, not just this session's part.
 		const samePeriod = storage.period()?.periodId === periodOfThisSnapshot;

@@ -471,11 +471,19 @@ function readingOf(frame: Frame): ObservedSession | undefined {
 	if (activity !== undefined && activity !== "working" && activity !== "idle") return undefined;
 	const context = contextOf(frame["context"]);
 	if (frame["context"] !== undefined && context === undefined) return undefined;
+	// The count of one session's own confirmed writes, as the process that ran it stated it: a whole
+	// number of writes and never a figure the storage holds. A member that states anything else is not a
+	// count this module reads, so the word carries none rather than a guessed one.
+	const commits = frame["commits"];
+	if (commits !== undefined && (typeof commits !== "number" || !Number.isInteger(commits) || commits < 0)) {
+		return undefined;
+	}
 	return {
 		session,
 		owner,
 		...(activity === undefined ? {} : { activity: activity as AgentActivity }),
 		...(context === undefined ? {} : { context }),
+		...(commits === undefined ? {} : { commits: commits as number }),
 	};
 }
 
@@ -487,6 +495,7 @@ function encodedReading(reading: ObservedSession): string {
 		owner: reading.owner,
 		...(reading.activity === undefined ? {} : { activity: reading.activity }),
 		...(reading.context === undefined ? {} : { context: reading.context }),
+		...(reading.commits === undefined ? {} : { commits: reading.commits }),
 	});
 }
 

@@ -100,6 +100,13 @@ export type CommandImplementations = Readonly<Record<string, CommandImplementati
  * readings that arrived before it attached, including the ones collected while it was not bound.
  * Reading it is a read of the framework's common interface; an extension never subscribes to a
  * harness's native context events for itself.
+ *
+ * `recordSessionCommit` is the one thing an extension *states* through it, and the only fact here the
+ * extension is the sole party able to state: that a write of one of this process's sessions really
+ * landed in the storage another process also reads. It is a statement rather than a write path — what
+ * it takes is a session id and what it carries is that a write was confirmed, never what was written
+ * — and the framework does the rest: the count is recorded in this process's own source and the notice
+ * crosses to the process serving that session's owner.
  */
 export interface ImplementationContext {
 	readonly config: Readonly<Record<string, unknown>>;
@@ -115,6 +122,27 @@ export interface ImplementationContext {
 	readonly providerAccess?: ProviderAccess;
 	/** The process's one source of session observations, as the framework collected them (see above). */
 	readonly sessionObservations: SessionObservations;
+	/**
+	 * Records one confirmed write of one of this process's sessions, as that session's own process is the
+	 * only party that can state it.
+	 *
+	 * A session's own process is where its writes are really confirmed — it is the process that read the
+	 * document, built the write and saw it land — so an extension whose sessions share a storage root
+	 * with the process serving their owner calls this once per write it confirmed. The framework records
+	 * a count against that session in this process's own observation source and hands the notice over to
+	 * the process serving the owner the session follows; a session this process serves itself, and one
+	 * whose owner it cannot name, are recorded here and handed to nobody, because their owner's process
+	 * is this one.
+	 *
+	 * What the caller states is *that* a write landed, never what it wrote: no value, no document, no
+	 * figure and no path crosses here, and a call is not a notification of anything the framework
+	 * accounts. A session id this process holds no facts for records nothing: a notice with no identity
+	 * has nowhere to be placed.
+	 *
+	 * The caller is responsible for calling this only after a write was really confirmed — a failed or
+	 * refused write is not a confirmed one — because nothing here can tell the two apart.
+	 */
+	readonly recordSessionCommit: (sessionId: string) => void;
 }
 
 /**
