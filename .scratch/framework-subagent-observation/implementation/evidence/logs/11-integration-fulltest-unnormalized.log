@@ -1,0 +1,286 @@
+$ bun test
+bun test v1.4.2 (744846f84)
+piSurfaceProbe: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions 'pi-surface-probe' is not an importable file: ENOENT: no such file or directory, lstat 'C:\Users\hugos\AppData\Local\Temp\pi-background-rounds-absent-entry.ts'
+piSurfaceProbe: pi-surface-probe: a model response settled with no Turn in flight for its session; no start is fabricated and it is dropped
+piSurfaceProbe: pi-surface-probe: a model response settled with no Turn in flight for its session; no start is fabricated and it is dropped
+piSurfaceProbe: pi-surface-probe: a model response settled with no Turn in flight for its session; no start is fabricated and it is dropped
+piSurfaceProbe: pi-surface-probe: a model response settled with no Turn in flight for its session; no start is fabricated and it is dropped
+piSurfaceProbe: pi-surface-probe: a model response settled with no Turn in flight for its session; no start is fabricated and it is dropped
+piSurfaceProbe: pi-surface-probe: a model response settled with no Turn in flight for its session; no start is fabricated and it is dropped
+piSurfaceProbe: this session reports no identity; the extension stays off for it
+piSurfaceProbe: this session reports no identity; the extension stays off for it
+piSurfaceProbe: this session reports no identity; the extension stays off for it
+piSurfaceProbe: this session reports no identity; the extension stays off for it
+piSurfaceProbe: pi-surface-probe: a model response settled with no Turn in flight for its session; no start is fabricated and it is dropped
+piSurfaceProbe: pi-surface-probe: a model response settled with no Turn in flight for its session; no start is fabricated and it is dropped
+piSurfaceProbe: pi-surface-probe: a model response settled with no Turn in flight for its session; no start is fabricated and it is dropped
+piSurfaceProbe: pi-surface-probe: a model response settled with no Turn in flight for its session; no start is fabricated and it is dropped
+codebase-tools: no owning main session resolved for this session; the extension stays off
+codebase-tools: no owning main session resolved for this session; the extension stays off
+codebase-tools: no owning main session resolved for this session; the extension stays off
+codebase-tools: no owning main session resolved for this session; the extension stays off
+codebase-tools: no owning main session resolved for this session; the extension stays off
+
+tests\harness-dock\baseline.test.ts:
+92 | 			.filter(comparison => !comparison.matches)
+93 | 			.map(
+94 | 				comparison =>
+95 | 					`${comparison.path}: recorded ${comparison.recordedSha256} but found ${comparison.actualSha256 ?? "<missing>"} — ${REFRESH_HINT}`,
+96 | 			);
+97 | 		expect(stale).toEqual([]);
+                     ^
+error: expect(received).toEqual(expected)
+
+- []
++ [
++   "bun.lock: recorded a5d37ab28396324eab85bcf6404c7cfb63c968925b7ae58378f8492bbea820e6 but found e7ed487b216f5580aff054118ba241ed3c4877f3327617b8d60bba46c0de7f2f — refresh framework/docs/harness-baseline.json (sourceCombination/oracle lockfile sha256) after a deliberate dependency change",
++ ]
+
+- Expected  - 1
++ Received  + 3
+
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-itmB8H\tests\harness-dock\baseline.test.ts:97:17)
+(fail) baseline record > records the lockfiles of this repository and of the behavior oracle [0.72ms]
+
+tests\harness-dock\codex-response-artifact.test.ts:
+219 | 	layout: IsolatedHarnessLayout,
+220 | 	repoRoot: string,
+221 | ): ChainStep[] {
+222 | 	return artifact.patchFiles.map(entry => {
+223 | 		const touched = patchTouchedFiles(readFileSync(entry.patchFile, "utf8"));
+224 | 		if (touched.length === 0) throw new Error(`${entry.patchFile} touches no file`);
+                                            ^
+error: C:\Users\hugos\AppData\Local\Temp\hyper-ticket-itmB8H\host-patches\omp-18.5.0-codex-response-boundary\patch.diff touches no file
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-itmB8H\tests\harness-dock\host-patch-artifact.ts:224:39)
+      at map (1:11)
+      at ensurePatchArtifact (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-itmB8H\tests\harness-dock\host-patch-artifact.ts:267:16)
+      at ensureCodexResponseHarness (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-itmB8H\tests\harness-dock\codex-response-harness.ts:68:9)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-itmB8H\tests\harness-dock\codex-response-artifact.test.ts:41:18)
+(fail) (unnamed) [1.20ms]
+
+tests\harness-dock\combined-host-artifact.test.ts:
+219 | 	layout: IsolatedHarnessLayout,
+220 | 	repoRoot: string,
+221 | ): ChainStep[] {
+222 | 	return artifact.patchFiles.map(entry => {
+223 | 		const touched = patchTouchedFiles(readFileSync(entry.patchFile, "utf8"));
+224 | 		if (touched.length === 0) throw new Error(`${entry.patchFile} touches no file`);
+                                            ^
+error: C:\Users\hugos\AppData\Local\Temp\hyper-ticket-itmB8H\host-patches\omp-18.5.0-viewed-session\patch.diff touches no file
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-itmB8H\tests\harness-dock\host-patch-artifact.ts:224:39)
+      at map (1:11)
+      at ensurePatchArtifact (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-itmB8H\tests\harness-dock\host-patch-artifact.ts:267:16)
+      at ensureCombinedHostHarness (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-itmB8H\tests\harness-dock\combined-host-harness.ts:82:9)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-itmB8H\tests\harness-dock\combined-host-artifact.test.ts:50:18)
+(fail) (unnamed) [0.56ms]
+
+tests\harness-dock\detail-tree.test.ts:
+219 | 	layout: IsolatedHarnessLayout,
+220 | 	repoRoot: string,
+221 | ): ChainStep[] {
+222 | 	return artifact.patchFiles.map(entry => {
+223 | 		const touched = patchTouchedFiles(readFileSync(entry.patchFile, "utf8"));
+224 | 		if (touched.length === 0) throw new Error(`${entry.patchFile} touches no file`);
+                                            ^
+error: C:\Users\hugos\AppData\Local\Temp\hyper-ticket-itmB8H\host-patches\omp-18.5.0-viewed-session\patch.diff touches no file
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-itmB8H\tests\harness-dock\host-patch-artifact.ts:224:39)
+      at map (1:11)
+      at ensurePatchArtifact (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-itmB8H\tests\harness-dock\host-patch-artifact.ts:267:16)
+      at ensureViewedSessionHarness (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-itmB8H\tests\harness-dock\viewed-session-harness.ts:82:9)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-itmB8H\tests\harness-dock\detail-tree.test.ts:93:18)
+(fail) (unnamed) [0.37ms]
+
+tests\harness-dock\efficiency-effects.test.ts:
+effects recorded: 2299 (storage root: 13, idle window: 0)
+storage root detail: ["mkdir consumption.json.lock.29840-2-mvbpod43.lock","mkdir cost-archive","readFile codex-usage-estimate.json utf8","readFile consumption.json utf8","realpath cost-archive","rename consumption.json","rename consumption.json.lock","unlink 29840-1-mvbpod43","unlink consumption.json.29840-3-mvbpod45.tmp","writeFile 29840-1-mvbpod43 ","writeFile consumption.json.29840-3-mvbpod45.tmp {\"schemaVersion\":1,\"periodId\":\"period-fresh\",\"start\":\"2026-10-17T01:21:57.499Z\",\"holiday\":false,\"harnesses\":{\"omp\":{\"sessions\":[{\"id\":\"01a14773-89fd-74cb-b672-e1265db77b8c\",\"name\":\"main\",\"parent\":null,\"saveVersion\":1,\"own\":{\"deepseek\":{\"deepseek-flash\":{\"tokens\":{\"input\":7,\"cacheRead\":3,\"cacheWrite\":0,\"output\":7},\"costCny\":0.00003506}}},\"span\":{\"start\":1792200117521,\"end\":1792200117593}}]}}}"]
+idle-window ops: []
+net effects: [{"kind":"net","op":"createConnection","targets":["127.0.0.1","12829"],"at":1792200117511,"outcome":"ok"}]
+capture endpoint port: 12829, widget frames: 12, arrivals: ["balance","model"]
+effects recorded: 2693 (idle window: 0)
+arrivals: ["balance","model","model","model"], widget frames: 26, capture port: 12925
+net effects: [{"kind":"net","op":"createConnection","targets":["127.0.0.1","12925"],"at":1792200123558,"outcome":"ok"}]
+
+tests\harness-dock\model-cost-codex-quota.test.ts:
+219 | 	layout: IsolatedHarnessLayout,
+220 | 	repoRoot: string,
+221 | ): ChainStep[] {
+222 | 	return artifact.patchFiles.map(entry => {
+223 | 		const touched = patchTouchedFiles(readFileSync(entry.patchFile, "utf8"));
+224 | 		if (touched.length === 0) throw new Error(`${entry.patchFile} touches no file`);
+                                            ^
+error: C:\Users\hugos\AppData\Local\Temp\hyper-ticket-itmB8H\host-patches\omp-18.5.0-codex-response-boundary\patch.diff touches no file
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-itmB8H\tests\harness-dock\host-patch-artifact.ts:224:39)
+      at map (1:11)
+      at ensurePatchArtifact (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-itmB8H\tests\harness-dock\host-patch-artifact.ts:267:16)
+      at ensureCodexResponseHarness (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-itmB8H\tests\harness-dock\codex-response-harness.ts:68:9)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-itmB8H\tests\harness-dock\model-cost-codex-quota.test.ts:114:25)
+(fail) (unnamed) [0.26ms]
+
+tests\harness-dock\model-cost-modes.test.ts:
+219 | 	layout: IsolatedHarnessLayout,
+220 | 	repoRoot: string,
+221 | ): ChainStep[] {
+222 | 	return artifact.patchFiles.map(entry => {
+223 | 		const touched = patchTouchedFiles(readFileSync(entry.patchFile, "utf8"));
+224 | 		if (touched.length === 0) throw new Error(`${entry.patchFile} touches no file`);
+                                            ^
+error: C:\Users\hugos\AppData\Local\Temp\hyper-ticket-itmB8H\host-patches\omp-18.5.0-viewed-session\patch.diff touches no file
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-itmB8H\tests\harness-dock\host-patch-artifact.ts:224:39)
+      at map (1:11)
+      at ensurePatchArtifact (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-itmB8H\tests\harness-dock\host-patch-artifact.ts:267:16)
+      at ensureViewedSessionHarness (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-itmB8H\tests\harness-dock\viewed-session-harness.ts:82:9)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-itmB8H\tests\harness-dock\model-cost-modes.test.ts:438:18)
+(fail) (unnamed) [0.38ms]
+
+tests\harness-dock\model-cost-persistence.test.ts:
+219 | 	layout: IsolatedHarnessLayout,
+220 | 	repoRoot: string,
+221 | ): ChainStep[] {
+222 | 	return artifact.patchFiles.map(entry => {
+223 | 		const touched = patchTouchedFiles(readFileSync(entry.patchFile, "utf8"));
+224 | 		if (touched.length === 0) throw new Error(`${entry.patchFile} touches no file`);
+                                            ^
+error: C:\Users\hugos\AppData\Local\Temp\hyper-ticket-itmB8H\host-patches\omp-18.5.0-viewed-session\patch.diff touches no file
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-itmB8H\tests\harness-dock\host-patch-artifact.ts:224:39)
+      at map (1:11)
+      at ensurePatchArtifact (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-itmB8H\tests\harness-dock\host-patch-artifact.ts:267:16)
+      at ensureCombinedHostHarness (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-itmB8H\tests\harness-dock\combined-host-harness.ts:82:9)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-itmB8H\tests\harness-dock\model-cost-persistence.test.ts:120:18)
+(fail) (unnamed) [0.26ms]
+
+tests\harness-dock\session-driver.test.ts:
+85 | 			expect(exit.exitCode).toBe(0);
+86 |
+87 | 			// Agent state landed inside the isolated run root, and the repository's
+88 | 			// dependency lockfile is untouched by a run.
+89 | 			expect(listRunArtifacts(run.runRoot).some(artifact => artifact.startsWith("agent-state/"))).toBe(true);
+90 | 			expect(verifyLockfile(record.sourceCombination.lockfile).matches).toBe(true);
+                                                                          ^
+error: expect(received).toBe(expected)
+
+Expected: true
+Received: false
+
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-itmB8H\tests\harness-dock\session-driver.test.ts:90:70)
+(fail) controlled session > starts the isolated artifact under a temporary agent state, not the default environment [1196.46ms]
+
+tests\harness-dock\viewed-marker.test.ts:
+219 | 	layout: IsolatedHarnessLayout,
+220 | 	repoRoot: string,
+221 | ): ChainStep[] {
+222 | 	return artifact.patchFiles.map(entry => {
+223 | 		const touched = patchTouchedFiles(readFileSync(entry.patchFile, "utf8"));
+224 | 		if (touched.length === 0) throw new Error(`${entry.patchFile} touches no file`);
+                                            ^
+error: C:\Users\hugos\AppData\Local\Temp\hyper-ticket-itmB8H\host-patches\omp-18.5.0-viewed-session\patch.diff touches no file
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-itmB8H\tests\harness-dock\host-patch-artifact.ts:224:39)
+      at map (1:11)
+      at ensurePatchArtifact (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-itmB8H\tests\harness-dock\host-patch-artifact.ts:267:16)
+      at ensureViewedSessionHarness (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-itmB8H\tests\harness-dock\viewed-session-harness.ts:82:9)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-itmB8H\tests\harness-dock\viewed-marker.test.ts:80:18)
+(fail) (unnamed) [0.45ms]
+
+tests\harness-dock\viewed-session-host.test.ts:
+219 | 	layout: IsolatedHarnessLayout,
+220 | 	repoRoot: string,
+221 | ): ChainStep[] {
+222 | 	return artifact.patchFiles.map(entry => {
+223 | 		const touched = patchTouchedFiles(readFileSync(entry.patchFile, "utf8"));
+224 | 		if (touched.length === 0) throw new Error(`${entry.patchFile} touches no file`);
+                                            ^
+error: C:\Users\hugos\AppData\Local\Temp\hyper-ticket-itmB8H\host-patches\omp-18.5.0-viewed-session\patch.diff touches no file
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-itmB8H\tests\harness-dock\host-patch-artifact.ts:224:39)
+      at map (1:11)
+      at ensurePatchArtifact (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-itmB8H\tests\harness-dock\host-patch-artifact.ts:267:16)
+      at ensureViewedSessionHarness (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-itmB8H\tests\harness-dock\viewed-session-harness.ts:82:9)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-itmB8H\tests\harness-dock\viewed-session-host.test.ts:138:18)
+(fail) (unnamed) [0.24ms]
+
+tests\harness-dock\viewed-session-total.test.ts:
+219 | 	layout: IsolatedHarnessLayout,
+220 | 	repoRoot: string,
+221 | ): ChainStep[] {
+222 | 	return artifact.patchFiles.map(entry => {
+223 | 		const touched = patchTouchedFiles(readFileSync(entry.patchFile, "utf8"));
+224 | 		if (touched.length === 0) throw new Error(`${entry.patchFile} touches no file`);
+                                            ^
+error: C:\Users\hugos\AppData\Local\Temp\hyper-ticket-itmB8H\host-patches\omp-18.5.0-viewed-session\patch.diff touches no file
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-itmB8H\tests\harness-dock\host-patch-artifact.ts:224:39)
+      at map (1:11)
+      at ensurePatchArtifact (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-itmB8H\tests\harness-dock\host-patch-artifact.ts:267:16)
+      at ensureViewedSessionHarness (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-itmB8H\tests\harness-dock\viewed-session-harness.ts:82:9)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-itmB8H\tests\harness-dock\viewed-session-total.test.ts:206:18)
+(fail) (unnamed) [0.23ms]
+
+tests\harness-dock\viewed-session.test.ts:
+219 | 	layout: IsolatedHarnessLayout,
+220 | 	repoRoot: string,
+221 | ): ChainStep[] {
+222 | 	return artifact.patchFiles.map(entry => {
+223 | 		const touched = patchTouchedFiles(readFileSync(entry.patchFile, "utf8"));
+224 | 		if (touched.length === 0) throw new Error(`${entry.patchFile} touches no file`);
+                                            ^
+error: C:\Users\hugos\AppData\Local\Temp\hyper-ticket-itmB8H\host-patches\omp-18.5.0-viewed-session\patch.diff touches no file
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-itmB8H\tests\harness-dock\host-patch-artifact.ts:224:39)
+      at map (1:11)
+      at ensurePatchArtifact (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-itmB8H\tests\harness-dock\host-patch-artifact.ts:267:16)
+      at ensureViewedSessionHarness (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-itmB8H\tests\harness-dock\viewed-session-harness.ts:82:9)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-itmB8H\tests\harness-dock\viewed-session.test.ts:142:18)
+(fail) (unnamed) [0.29ms]
+
+tests\model-cost\detail-tree-live-sessions.test.ts:
+511 | 			}),
+512 | 			1,
+513 | 		);
+514 | 		expect(rowOf(bound, CHILD)?.nameEmphasis).toBe("active");
+515 | 		expect(rowOf(bound, CHILD)?.context).toEqual({ tokens: 45_000, budget: DEEPSEEK_DISPLAY_BUDGET });
+516 | 		expect((bound.lines() ?? []).find(line => line.includes(CHILD_NAME))).toContain("Ctx: 10% (45,000/450.0K)");
+                                                                              ^
+error: Received value must be an array type, or both received and expected values must be strings.
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-itmB8H\tests\model-cost\detail-tree-live-sessions.test.ts:516:73)
+(fail) a source's end withdraws what the detail was drawn from, and nothing else (P5–P8) > the row stops being drawn as working and loses its context reading, while the session keeps its place and its record [1.81ms]
+558 | 		expect(row?.context).toEqual({ tokens: 200, budget: DEEPSEEK_DISPLAY_BUDGET });
+559 | 		// The later word is the one this process holds, so nothing the earlier source's end withdrew
+560 | 		// touches it — and the reading it states is idle, which no loss is allowed to overwrite either.
+561 | 		expect(row?.nameEmphasis).toBeUndefined();
+562 | 		const drawn = (bound.lines() ?? []).find(line => line.includes(CHILD_NAME)) as string;
+563 | 		expect(drawn).toContain("Ctx: 0% (200/450.0K)");
+                      ^
+error: Received value must be an array type, or both received and expected values must be strings.
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-itmB8H\tests\model-cost\detail-tree-live-sessions.test.ts:563:17)
+(fail) a source's end withdraws what the detail was drawn from, and nothing else (P5–P8) > a word a later source delivered keeps standing after the earlier source's end [2.07ms]
+591 |
+592 | 		const row = rowOf(bound, CHILD);
+593 | 		expect(row?.nameEmphasis).toBe("active");
+594 | 		expect(row?.context).toEqual({ tokens: 50_000, budget: DEEPSEEK_DISPLAY_BUDGET });
+595 | 		const drawn = (bound.lines() ?? []).find(line => line.includes(CHILD_NAME)) as string;
+596 | 		expect(drawn).toContain("Ctx:");
+                      ^
+error: expect(received).toContain(expected)
+
+Expected to contain: "Ctx:"
+Received: "└─ 子代理A  ?(?)  Run: —"
+
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-itmB8H\tests\model-cost\detail-tree-live-sessions.test.ts:596:17)
+(fail) a source's end withdraws what the detail was drawn from, and nothing else (P5–P8) > a source that reaches the seat again restores what was withdrawn, with no further change needed [2.03ms]
+modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions id 'model-cost' is duplicated.
+modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions id 'model-cost' is duplicated.
+modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions id 'model-cost' is duplicated.
+modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions id 'model-cost' is duplicated.
+modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions id 'model-cost' is duplicated.
+modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions id 'model-cost' is duplicated.
+modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions id 'model-cost' is duplicated.
+modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions id 'model-cost' is duplicated.
+modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions id 'model-cost' is duplicated.
+modelCost: this harness reports no idle fact (isIdle); the framework answers nothing rather than inventing one
+modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions id 'model-cost' is duplicated.
+modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions id 'model-cost' is duplicated.
+modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions id 'model-cost' is duplicated.
+modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions id 'model-cost' is duplicated.
+modelCost: model-cost: a model response settled with no Turn in flight for its session; no start is fabricated and it is dropped
+
+ 1301 pass
+ 15 fail
+ 7023 expect() calls
+Ran 1316 tests across 150 files. [390.11s]
+error: script "test" exited with code 1
