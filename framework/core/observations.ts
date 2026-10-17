@@ -147,7 +147,11 @@ export class SessionObservations {
 	 */
 	sawSession(facts: SessionFacts, owner: OwnerReference): void {
 		const held: Entry = this.#bySession.get(facts.sessionId) ?? { sessionId: facts.sessionId };
-		this.#bySession.set(facts.sessionId, { ...held, session: facts, owner });
+		// Startup is a fact about the beginning, not a current reading. Ordinary context,
+		// activity and rename deliveries omit it; those deliveries must not erase it.
+		const startup = held.session?.startup ?? facts.startup;
+		const session = startup === undefined ? facts : { ...facts, startup };
+		this.#bySession.set(facts.sessionId, { ...held, session, owner });
 	}
 
 	/**

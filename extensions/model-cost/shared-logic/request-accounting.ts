@@ -709,14 +709,16 @@ export function createRequestAccounting(inputs: RequestAccountingInputs): Reques
 	/**
 	 * The startup facts this instance holds for one actual session: what its own start reported, or —
 	 * for a session this instance observed no start of — what the loaded document recorded when it
-	 * began.
+	 * began, then what the framework's observation source received from that session's own start.
+	 * The last source makes an uncommitted background session's startup visible without inventing
+	 * a local start or waiting for its first consumption commit.
 	 *
 	 * It is never what the session runs now: nothing here reads the session's current model or level,
 	 * so a model switch or a level change after the start leaves the answer exactly as it was, and a
 	 * session nothing proved a startup for answers `undefined` rather than the current settings.
 	 */
 	const startupOf = (sessionId: string): SessionStartup | undefined =>
-		startups.get(sessionId) ?? storage.session(harness, sessionId)?.startup;
+		startups.get(sessionId) ?? storage.session(harness, sessionId)?.startup ?? registrations?.read(sessionId)?.session?.startup;
 
 	/**
 	 * Keeps the latest name, task handle, agent name, agent id and direct parent the host reported for

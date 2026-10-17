@@ -820,7 +820,11 @@ edges and collections that moved them ran, and only for a session whose owner th
 serve (`core/observations.ts`, `handOverReading`). On the other end the receiving process records the
 reading in its own observation source and dispatches it to the subscribers of the session that follows
 that owner (`behaviors/binding.ts`, `adoptReading`), so an extension reads a session it never ran
-exactly as it reads its own. One member travels the same way but is a statement rather than a reading:
+exactly as it reads its own. The observation source retains the first reliably reported startup
+snapshot for each actual session: later facts refresh its name and position but neither erase that
+snapshot when omitted nor replace it with a later model or effort. Consumers can therefore read the
+startup facts before any extension data has been committed.
+One member travels the same way but is a statement rather than a reading:
 a session's own process records each write it confirmed (`ImplementationContext.recordSessionCommit`,
 `SessionObservations.recordCommit`) and the count crosses as a notice — no content of the storage, no
 Round, Turn or accounting fact — reaching a subscriber as `session_commit` where the count moved, so a

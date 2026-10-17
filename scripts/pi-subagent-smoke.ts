@@ -744,6 +744,8 @@ async function phaseBackgroundDelegation(cli: PiCli): Promise<void> {
 	});
 	const codebaseEntry = path.join(REPO_ROOT, "entrypoints", "pi", "codebase-tools.ts");
 	const session = await openSession(dock, [codebaseEntry, dock.childEntry, PROVIDER_ENTRY, FACTS_PROBE, writeObservationProbeEntry(dock.configRoot)]);
+	await session.run("/budget detail");
+	const liveDetailMark = session.frameMark();
 	const balanceBefore = dock.run.capture.balanceCalls().length;
 	let settled = true;
 	try {
@@ -769,7 +771,18 @@ async function phaseBackgroundDelegation(cli: PiCli): Promise<void> {
 	// and what the owner process already holds is what the spawned process delivered — its identity,
 	// its activity and its context — adopted into the framework's own observation source.
 	const observed = await observationLinesFor(session, childId, 30_000);
+	const liveDetail = await session.frameSince(liveDetailMark,
+		frame => frame.type === "extension_ui_request" && frame.method === "setWidget" &&
+			frame.widgetKey === MODEL_COST_WIDGET_KEY && Array.isArray(frame.widgetLines) &&
+			frame.widgetLines.some(line => String(line).includes("subagent-scout-") &&
+				String(line).includes("deepseek/deepseek-flash(")),
+		"the background child's startup model in the live detail widget", 2_000);
 	const beforeAnySave = readDocument(dock.home.consumptionFile);
+	observe(
+		"the real detail widget shows the background child's startup model before its first consumption commit",
+		liveDetail !== undefined && recordOf(beforeAnySave, childId) === undefined,
+		`widget: ${JSON.stringify(liveDetail?.widgetLines)}, saved: ${JSON.stringify(recordOf(beforeAnySave, childId))}`,
+	);
 	observe(
 		"the spawned session registered with the owner's process before its first Round ended",
 		observed.length > 0 && recordOf(beforeAnySave, childId) === undefined,

@@ -22,6 +22,10 @@ what a real TUI draws are human-only, and nothing in this repository claims eith
 
 ## Timing and detail behavior
 
+- A descendant's `Run` is accumulated working time from activities whose own Round end was observed,
+  not a live stopwatch. An open first activity has no measured duration yet (`—`); a measured zero
+  is `0ms`. Distinct actual child sessions remain distinct rows, including a failed foreground
+  launch followed by a new background attempt; a row does not by itself prove a model request ran.
 - The main session's span runs from its first user input in the accounting period to the latest
   framework `turn_end`, regardless of success, failure or cancellation. It refreshes while a Round
   is still open, excludes the tool tail after that response, and stays fixed between Turn ends.
@@ -68,7 +72,9 @@ what a real TUI draws are human-only, and nothing in this repository claims eith
   records exist.
 - `/budget detail` combines each child's startup snapshot as `provider/model(effort)`, for example
   `deepseek/deepseek-flash(high)`, without `Model:` or `Effort:` labels. Unknown facts remain `?` and
-  a reported `off` remains `off`. Same-depth rows retain aligned columns; model abbreviation keeps
+  a reported `off` remains `off`. A background session's reliably reported startup pair is visible
+  before its first consumption commit; later context, activity and rename readings do not erase it.
+  Same-depth rows retain aligned columns; model abbreviation keeps
   the effort suffix where it fits, with the existing wrapping and final clipping at extreme widths.
 - The tree lists the union of the sessions the document holds and the sessions this process observed,
   merged by the session's own identity: a subagent another process runs takes its row at the direct

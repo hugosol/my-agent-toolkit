@@ -312,6 +312,27 @@ describe("a descendant another process ran is drawn where its own direct parent 
 });
 
 describe("a session whose first consumption is not committed yet is drawn with what is known (P9)", () => {
+	test("a background child's reported startup pair is visible before its first commit and survives later context changes", async () => {
+		const bound = await bind();
+		const before = readFileSync(bound.file, "utf8");
+		const session: SessionFacts = {
+			...CHILD,
+			startup: { model: { provider: "official", model: "model-alpha" }, effort: "high" },
+		};
+		bound.double.deliverObserved(readingOf(session, { activity: "working" }));
+		await readingTurnEnded();
+		expect((bound.lines() ?? []).find(line => line.includes("子代理A"))).toContain("official/model-alpha(high)");
+
+		// Later readings describe the current model, not a new beginning.
+		bound.double.deliverObserved(readingOf(CHILD, {
+			activity: "working",
+			context: { tokens: 1000, provider: "go-provider", model: "other-model" },
+		}));
+		await readingTurnEnded();
+		expect((bound.lines() ?? []).find(line => line.includes("子代理A"))).toContain("official/model-alpha(high)");
+		expect(readFileSync(bound.file, "utf8")).toBe(before);
+	});
+
 	test("its row and its given context reading appear while its consumption stays missing", async () => {
 		const bound = await bind();
 		const before = readFileSync(bound.file, "utf8");
