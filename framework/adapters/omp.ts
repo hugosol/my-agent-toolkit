@@ -35,6 +35,7 @@ import type {
 } from "../core/protocol";
 import { SessionObservations } from "../core/observations";
 import { StateStore } from "../core/state";
+import { createSubagentAccess } from "../core/subagent-access";
 import { observeRounds } from "./omp/round";
 import {
 	contributionIdentitiesOf,
@@ -1033,17 +1034,13 @@ export function ompAdapter(definition: ExtensionDefinition, options: ExtensionAs
 	// owner's declared values are always read here and the store is built with no local access: no
 	// endpoint is bound and no location record is published. A harness that can run a session in
 	// another process is the one that supplies one (see `piAdapter`).
+	const observations = new SessionObservations();
+	const access = createSubagentAccess(definition, observations, "in-process");
 	const state = new StateStore({
 		field: activationField(definition),
 		persistence: statePersistence(definition),
+		access,
 	});
-	// The process's one session observation source, for the same reason and at the same place: every
-	// session this harness runs is a binding in this process, and the readings their adapter hooks
-	// collect belong to one record rather than to the binding that happened to report them. It is
-	// what an extension reads for a session whose delivery it attached after — and it survives a
-	// binding's disposal, so a rebuilt instance reads what this process already observed instead of
-	// starting blind.
-	const observations = new SessionObservations();
 	// The harness's own model prices, one set for the whole process: every binding of this assembly
 	// records the model catalog of the contexts its own deliveries come from, and the query the
 	// framework hands an extension's factory answers from the newest of them. It lives here rather

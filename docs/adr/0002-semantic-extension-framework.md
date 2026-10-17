@@ -274,6 +274,31 @@ The refactor moves the same behavior behind that one interface; it does not revi
 
 The extension-authoring contract is untouched: no definition, assembly option, delivery type or shared-logic call changes, and the read surface is the same `view`. What changes is `StateStore`'s own surface — `applyTransition`, `seed`, `retire` and the public `ownerLives` give way to `writer`, `capability` and `reconcile` — and that internal surface carries no extension compatibility promise; this section is the explicit decision for it. This records the agreed shape and the behavior it must preserve, not runtime verification of the implementation: the framework suites that pin those behaviors — [`declared-value-write.test.ts`](../../tests/framework/declared-value-write.test.ts), [`owner-capability.test.ts`](../../tests/framework/owner-capability.test.ts), [`session-events.test.ts`](../../tests/framework/session-events.test.ts) and [`owner-gate.test.ts`](../../tests/framework/owner-gate.test.ts) — remain the regression alarm for it.
 
+## Subagent access lifetime and first-use readiness (2026-10-17)
+
+Harness adapters select subagent access capability, not an exclusive process topology: OMP uses the
+in-process implementation; pi permits cross-process access when its assembly states a child entry,
+while owners served in the same process retain their direct path. This is not a general communication
+mode, subagent scheduler or replacement provider. Native provider discovery, child loading, identity
+and background-work mapping remain adapter-owned; extension accounting and storage stay extension-owned.
+
+One internal framework module, `core/subagent-access.ts`, owns the assembly's value offers, followed
+accesses, observation admissions, hand-over routing and release. State retains values, restoration and
+write authority; binding retains observation adoption and semantic dispatch. They report lifecycle
+facts to that module rather than owning separate communication lifetimes. The State constructor's
+internal rules now accept this access instead of separate publisher/follow inputs; extension interfaces
+and the explicit child-entry requirement are unchanged. Access ends after the harness's awaitable
+session close-out, never before the last save and its commit notice; transfer does not end it.
+
+The accepted State tradeoff preserves synchronous reads and cross-process initial-value-plus-push
+following, not per-use remote confirmation or instantaneous visibility. At the awaitable pre-request
+position, first prompt planning and Marker publication wait for the owner's first bounded access
+attempt (joining an attempt a prior synchronous read started). Failure keeps the declared default,
+without writing it back or treating it as the owner's confirmed value. Later reads retain existing
+spaced recovery; later runs do not wait again. Local cells and fields declaring no inheritance need
+no access wait. This intentionally changes only first-use waiting; it does not make every synchronous
+handler read asynchronous or add a public readiness protocol.
+
 ## Behavior orchestration around State
 
 Treat State as the shared current-value source connecting control, commands, harness events, persistence, instruction contribution, feedback, and ongoing lifecycle effects. Ongoing effects depend on both State and their owning scope: entering an active condition may start work, leaving it or losing the scope must stop work, and restoring State alone does not prove earlier effects are still active. One-shot command actions remain distinct from ongoing effects; neither every State update nor every restore automatically replays side effects. Framework-managed model-context behavior observes the same State but is additionally bound by the mandatory history-preservation contract.

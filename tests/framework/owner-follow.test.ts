@@ -14,6 +14,10 @@
  * socket file. The policy this suite injects is the production mechanism run at test speed — a
  * bounded open, a delay that doubles per consecutive failure and a ceiling — and the clock is the
  * suite's own, so the shape of the recovery is asserted exactly rather than waited for.
+ *
+ * A run initiation is the framework's one awaitable semantic use: its first use of a followed
+ * owner waits for that owner's one bounded open before it plans the contribution, while every
+ * later read stays synchronous and picks up a recovered access on a later read.
  */
 import { afterEach, beforeEach, describe, expect, test, vi } from "bun:test";
 import * as path from "node:path";
@@ -155,9 +159,25 @@ class ServedSeat {
 	value: boolean;
 	/** Whether the seat is being served at all: an open is refused while it is not. */
 	reachable = true;
+	/**
+	 * Whether an unreachable open stays pending until a case expires it, which is how a bounded wait
+	 * that ran out is observed: the run cannot answer while the first open is still in flight, and
+	 * the case settles it exactly when the wait would have.
+	 */
+	holdsOpen = false;
+	#heldOpen: { reject(error: LocalAccessUnavailableError): void } | undefined;
 
 	constructor(value: boolean) {
 		this.value = value;
+	}
+
+	/** Ends the held open as an expired bounded wait. */
+	expireOpen(): boolean {
+		const held = this.#heldOpen;
+		this.#heldOpen = undefined;
+		if (held === undefined) return false;
+		held.reject(new LocalAccessUnavailableError("no-location", "the bounded wait expired"));
+		return true;
 	}
 
 	/** The reading half one assembly hands its store, with the policy a case states. */
@@ -168,7 +188,11 @@ class ServedSeat {
 				this.opens.push({ owner, waitMs: options.waitMs, at: Date.now() });
 				const attempt = this.reachable
 					? Promise.resolve(new SeatConnection(this.value))
-					: Promise.reject(new LocalAccessUnavailableError("no-location", `no record for "${owner}"`));
+					: this.holdsOpen
+						? new Promise<SeatConnection>((_, reject) => {
+								this.#heldOpen = { reject };
+							})
+						: Promise.reject(new LocalAccessUnavailableError("no-location", `no record for "${owner}"`));
 				attempt.catch(() => {});
 				this.attempts.push(attempt);
 				if (this.reachable) {
@@ -217,8 +241,8 @@ function followedRead(reader: PortDouble): boolean {
 }
 
 describe("a followed field reads the Owner's current value, not a copy taken earlier (P14)", () => {
-	test("a subagent reads what the process serving its owner states, then and after a change", async () => {
-		const seat = new ServedSeat(false);
+	test("a subagent reads what the process serving its owner states, from its first run and after a change", async () => {
+		const seat = new ServedSeat(true);
 		const double = portDouble({ follow: seat.reader() });
 		double.bind(FOLLOW_PROBE, {});
 
@@ -226,35 +250,53 @@ describe("a followed field reads the Owner's current value, not a copy taken ear
 		// follows is not one of them, so the run below reads the seat and not that payload.
 		const start = double.deliverSession(FOLLOWED, {
 			session: CHILD_SESSION,
-			statePayloads: [{ [FIELD]: true }],
+			statePayloads: [{ [FIELD]: false }],
 		});
 		expect(start.persisted).toEqual([]);
 
-		// The seat states `false`: the run contributes nothing, and the read that established the
-		// access reached it on the one bounded budget the assembly gives it.
-		const off = await double.initiateRun(FOLLOWED);
-		expect(off.contribution).toBeUndefined();
-		expect(seat.opens).toEqual([{ owner: FOLLOWED.key, waitMs: 2000, at: Date.now() }]);
-		await seat.concluded();
-
-		// The Owner changes after the subagent started. The next consumption reads the new value,
-		// not the one the access was opened with.
-		seat.set(true);
-		const on = await double.initiateRun(FOLLOWED);
-		expect(on.contribution).toEqual({
+		// The first semantic use is what establishes the access: the run waits for its one bounded
+		// open, so it is planned from the Owner's current value rather than the declared default.
+		const first = await double.initiateRun(FOLLOWED);
+		expect(first.contribution).toEqual({
 			identity: "follow-probe:init",
 			content: "the probe's contribution",
 			display: false,
 			attribution: "agent",
 		});
+		expect(seat.opens).toEqual([{ owner: FOLLOWED.key, waitMs: 2000, at: Date.now() }]);
+		await seat.concluded();
+
+		// The Owner changes after the subagent started. The next consumption reads the new value,
+		// not the one the access was opened with.
+		seat.set(false);
+		const off = await double.initiateRun(FOLLOWED);
+		expect(off.contribution).toBeUndefined();
 		// The same value is what the marker area projects for that seat.
-		expect(on.markers[on.markers.length - 1]).toEqual(["◈ followProbe"]);
+		expect(off.markers[off.markers.length - 1]).toEqual([]);
 
 		// And the change back is followed just the same — including by the area, whose change arrived
 		// from the process serving the owner and so had no transition here to publish it.
-		seat.set(false);
-		expect((await double.initiateRun(FOLLOWED)).contribution).toBeUndefined();
-		expect((await double.initiateRun(FOLLOWED)).markers[0]).toEqual([]);
+		seat.set(true);
+		const on = await double.initiateRun(FOLLOWED);
+		expect(on.contribution).toBeDefined();
+		expect(on.markers[on.markers.length - 1]).toEqual(["◈ followProbe"]);
+	});
+
+	test("concurrent first uses share one open and each reads the Owner's value", async () => {
+		const seat = new ServedSeat(true);
+		const double = portDouble({ follow: seat.reader() });
+		double.bind(FOLLOW_PROBE, {});
+
+		// Two semantic uses reach the same fresh owner in one turn. The second joins the first
+		// open rather than spending another bounded budget, and both runs are planned from the
+		// value that open states.
+		const [left, right] = await Promise.all([
+			double.initiateRun(FOLLOWED),
+			double.initiateRun(FOLLOWED),
+		]);
+		expect(seat.opens).toHaveLength(1);
+		expect(left.contribution).toBeDefined();
+		expect(right.contribution).toBeDefined();
 	});
 
 	test("an owner this process holds is read from its cell, with no access at all", async () => {
@@ -310,14 +352,15 @@ describe("a read that cannot be taken uses the declared default and claims nothi
 		const double = portDouble({ follow: seat.reader() });
 		double.bind(FOLLOW_PROBE, {});
 
-		// The seat is on, and no access reaches it: the consumption is the declared default. That
-		// reading is not taken as the Owner's value — nothing is written for it, recorded, or pushed
-		// anywhere — and the seat's own value is untouched by it.
+		// The seat is on, and no access reaches it. The first run waits for the one bounded attempt
+		// — here it fails at once rather than spending its budget — and the consumption is then the
+		// declared default. That reading is not taken as the Owner's value — nothing is written for
+		// it, recorded, or pushed anywhere — and the seat's own value is untouched by it.
 		const unreached = await double.initiateRun(FOLLOWED);
 		expect(unreached.contribution).toBeUndefined();
-		// The area carries no line for a seat this process cannot say anything about yet: the read that
-		// reaches the Owner is what makes this store the one that answers for it.
-		expect(unreached.markers).toEqual([]);
+		// No line is rendered for the seat: the failed attempt claims no value, so the area this store
+		// answers for carries the declared default.
+		expect(unreached.markers[unreached.markers.length - 1] ?? []).toEqual([]);
 		expect(seat.value).toBe(true);
 		expect(followedRead(double)).toBe(false);
 
@@ -327,10 +370,47 @@ describe("a read that cannot be taken uses the declared default and claims nothi
 		double.deliverSession(FOLLOWED, { session: CHILD_SESSION, statePayloads: [{ [FIELD]: true }] });
 		expect((await double.initiateRun(FOLLOWED)).contribution).toBeUndefined();
 
-		// Once the seat is reached again, the read is the Owner's own current value: the default read
-		// was never a measurement of it. The attempt that reaches it is the one the spacing allows.
+		// Once the seat is reached again, recovery stays read-driven: the first run past the spacing
+		// starts the attempt and answers the default while it is in flight, and the run after it is
+		// the Owner's own current value. The default read was never a measurement of the Owner.
 		seat.reachable = true;
 		vi.advanceTimersByTime(500);
+		expect((await double.initiateRun(FOLLOWED)).contribution).toBeUndefined();
+		await seat.concluded();
+		expect((await double.initiateRun(FOLLOWED)).contribution).toBeDefined();
+	});
+
+	test("a first run that exhausts its bounded wait reads the declared default", async () => {
+		const seat = new ServedSeat(true);
+		seat.reachable = false;
+		seat.holdsOpen = true;
+		const policy: FollowedAccessPolicy = { waitMs: 50, baseMs: 20, maxMs: 60 };
+		const double = portDouble({ follow: seat.reader(policy) });
+		double.bind(FOLLOW_PROBE, {});
+
+		// The first semantic use is underway but has not answered: it is waiting for the one bounded
+		// open, and that open has not concluded.
+		let answered = false;
+		const first = double.initiateRun(FOLLOWED).then(run => {
+			answered = true;
+			return run;
+		});
+		for (let tick = 0; tick < 20; tick += 1) await Promise.resolve();
+		expect(seat.opens).toEqual([{ owner: FOLLOWED.key, waitMs: policy.waitMs, at: Date.now() }]);
+		expect(answered).toBe(false);
+
+		// The budget runs out without the seat answering: the run concludes on the declared default
+		// rather than waiting past what the policy allows.
+		expect(seat.expireOpen()).toBe(true);
+		const unreached = await first;
+		expect(unreached.contribution).toBeUndefined();
+		expect(followedRead(double)).toBe(false);
+
+		// The failure is spaced like any other, and recovery stays read-driven: the first read past
+		// the spacing starts the next attempt and answers the default while it is in flight, and the
+		// read after it is the Owner's value.
+		seat.reachable = true;
+		vi.advanceTimersByTime(policy.baseMs);
 		expect((await double.initiateRun(FOLLOWED)).contribution).toBeUndefined();
 		await seat.concluded();
 		expect((await double.initiateRun(FOLLOWED)).contribution).toBeDefined();
@@ -518,13 +598,8 @@ describe("the pi assembly reads a followed Owner a session this process serves h
 
 		// The spawned session's own run projects the displayed seat, and the Owner's line is what the
 		// area carries: in this process the store that served the Owner answers the seat from its cell,
-		// which is the registration the following binding's delivery is rendered by.
-		following.agentStarts(child, "user");
-		expect(following.widgets[following.widgets.length - 1]?.content).toEqual([MARKER_LINE]);
-
-		// The reads after it are the extension's own public consumption of the followed value: a field
-		// that declares `follow` is what makes this process the one that answers for that seat, and it
-		// keeps carrying the Owner's line.
+		// which is the registration the following binding's delivery is rendered by. The first use may
+		// have to wait for that access, so the rendering is awaited rather than assumed synchronous.
 		const renderings: Array<readonly string[] | undefined> = [];
 		for (let turn = 0; turn < 8; turn += 1) {
 			following.agentStarts(child, "user");
@@ -534,6 +609,12 @@ describe("the pi assembly reads a followed Owner a session this process serves h
 			await Promise.resolve();
 		}
 		expect(renderings[renderings.length - 1]).toEqual([MARKER_LINE]);
+
+		// The reads after it are the extension's own public consumption of the followed value: a field
+		// that declares `follow` is what makes this process the one that answers for that seat, and it
+		// keeps carrying the Owner's line without another wait.
+		following.agentStarts(child, "user");
+		expect(following.widgets[following.widgets.length - 1]?.content).toEqual([MARKER_LINE]);
 	});
 
 	test("a field that declares no follow reads the declared default and offers nothing", () => {

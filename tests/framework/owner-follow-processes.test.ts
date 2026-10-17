@@ -126,12 +126,13 @@ describe("a session another process runs reads the Owner's current value (P14, P
 		try {
 			await Promise.all([server.child.ready(), follower.child.ready()]);
 
-			// The read that establishes the access answers the declared default — the framework's
-			// semantic use point never waits for another process — and the run after it is the Owner's
-			// own value.
+			// The first run is the semantic use that establishes the access: it waits for the bounded
+			// open, so it already contributes the Owner's value rather than the declared default.
 			const first = await follower.child.read();
-			expect(first.active).toBe(false);
-			const reached = await readUntil(follower.child, true, "the value the serving process holds");
+			expect(first.active).toBe(true);
+			// Over the access the first run established, the next run re-asserts the Owner's line.
+			const reached = await follower.child.read();
+			expect(reached.active).toBe(true);
 			expect(reached.markers).toEqual(["◈ followedOwnerProbe"]);
 
 			// The same value is what a session delivery this process receives reads, and the follow

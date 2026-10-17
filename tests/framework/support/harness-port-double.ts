@@ -54,6 +54,7 @@ import type {
 } from "../../../framework/core/protocol";
 import { SessionObservations } from "../../../framework/core/observations";
 import { StateStore } from "../../../framework/core/state";
+import { SubagentAccess } from "../../../framework/core/subagent-access";
 
 /** The owner key a command invocation or session delivery acts on unless one is named. */
 export const DEFAULT_OWNER_KEY = "main:port-double";
@@ -435,7 +436,7 @@ export function portDouble(options: PortDoubleOptions = {}): PortDouble {
 		state ??= new StateStore({
 			field: activationField(definition),
 			persistence: statePersistence(definition),
-			...(options.follow === undefined ? {} : { follow: options.follow }),
+			access: new SubagentAccess({ extension: definition.id, follow: options.follow }),
 		});
 		return state;
 	};

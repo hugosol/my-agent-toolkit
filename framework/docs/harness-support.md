@@ -273,6 +273,37 @@ Keep three dimensions separate: native mechanism availability, framework integra
 
 Per-feature strategies need not share an implementation. A future harness representation should be driven by actual checks and diagnostics required by these entries, not by inventing a universal fallback language. A new entry must not convert an unknown condition into permission to proceed. This register organizes the first-release decisions and the remaining research gaps; it does not certify additional harness versions beyond the declared baseline.
 
+## Subagent access deepening observation (2026-10-17)
+
+On the working tree implementing the [subagent access lifetime revision](../../docs/adr/0002-semantic-extension-framework.md#subagent-access-lifetime-and-first-use-readiness-2026-10-17),
+Windows x64 / Bun 1.4.2, installed pi 1.3.0 and the repository-installed pinned `pi-subagents` 0.78.0:
+
+- `bun scripts/pi-subagent-smoke.ts --foreground-only --expect-pi-version 1.3.0` exited 0:
+  14 observations held. The real same-process delegation loaded codebase-tools and model-cost;
+  parent/child identity and consumption were saved, detail drew the child, a later parent exchange
+  still saved, and disposal left neither a running task nor later storage writes.
+- `bun scripts/pi-subagent-smoke.ts --background-only --expect-pi-version 1.3.0` exited 0:
+  11 observations held. The real background process registered before its first Round ended,
+  published its context and startup model to the owner, and saved its own consumption under its
+  actual identity and direct parent. It started no root-side prefetch.
+- `bun test tests/harness-dock/model-cost-runtime-gap.test.ts` exited 0 (1 test, 15 assertions):
+  the isolated recorded OMP harness saved a completed child's runtime, added no consumption for a child
+  interrupted by process death, and a fresh process continued without rewriting the earlier child's record.
+
+The pi smokes drive the real loader and subagent provider using isolated directories and a local
+model-response fixture; the OMP test covers only its stated runtime/save scenario. Neither certifies
+live-provider behavior, POSIX sockets, nested background delegation or simultaneous mixed topology. The first-read readiness/failure cases are
+separately covered at the framework's semantic consumption seam, not claimed from these smokes.
+`bun run typecheck` passed, and `bun test tests/framework tests/model-cost tests/codebase-tools tests/connect-bot`
+exited 0 (1269 tests, 126 files). The full `bun run test` attempt did not pass: it reported the recorded
+`bun.lock` hash differing from the current file, a materialised Codex-response patch artifact missing
+`pi-ai/src/providers/openai-codex-responses.ts`, and dock model-cost-mode startup/cleanup failures
+(`EBUSY`); the run reached its 600-second command deadline without a final suite summary. Those
+results are not a full-repository green claim, and no lockfile baseline or cached host was rewritten
+to conceal them.
+This scoped working-tree observation does not change the supported baseline or erase historical
+failures recorded for earlier source combinations.
+
 ## Meaning of the support list
 
 This file owns harness/package version evidence and compatibility policy, not which tools an agent may call. The fixed supported record stays unchanged; normal startup no longer evaluates version membership, emits compatibility/version warnings, checks required native Interface availability or dynamically chooses a capability subset. The current decision is [independent compatibility verification](#independent-compatibility-verification), and the framework's former admission route has been cut over: no production module declares a supported-version list, publishes a version notice or judges a capability surface at binding (2026-10-13; that cutover handed off the residual independent-verification summary, the human checks and the manual switch/rollback checklist as human work, never auto-certified).

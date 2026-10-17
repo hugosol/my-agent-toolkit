@@ -14,6 +14,7 @@
  */
 import { readFileSync, writeFileSync } from "node:fs";
 import { StateStore } from "../../../framework/core/state";
+import { SubagentAccess } from "../../../framework/core/subagent-access";
 import {
 	createOwnerAccessPublisher,
 	LocalAccessUnavailableError,
@@ -127,7 +128,7 @@ if (plan.offer !== false) {
 	store = new StateStore({
 		field: "enabled",
 		persistence: "session-entry",
-		localAccess: { extension: plan.extension, publisher },
+		access: new SubagentAccess({ extension: plan.extension, publisher }),
 	});
 	store.reconcile({
 		owner: { kind: "owner", key: plan.owner },

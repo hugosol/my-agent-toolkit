@@ -8,17 +8,16 @@
 import { bindExtension } from "../behaviors/binding";
 import { isImplementationDisposed } from "../behaviors/lifecycle";
 import type { ExtensionAssembly, ExtensionImplementation, ImplementationContext } from "../core/assembly";
-import { activationField, stateInheritance, statePersistence } from "../core/definition";
+import { activationField, statePersistence } from "../core/definition";
 import type { ExtensionDefinition } from "../core/definition";
-import type { FollowedAccessReader } from "../core/followed-owners";
 import type {
 	BindingResult, CatalogPrice, CatalogPriceSource, FeedbackLevel, FeedbackTransport, HarnessPort,
 	MarkerTransport, NoticeTransport, OwnerReference, ProviderAccess, SessionEndReason, SessionEvent,
-	SessionFacts, SessionObservationAccess, SessionStartReason, SessionStartup, SessionDisposal, TurnSignalFacts, UserInputDelivery,
+	SessionFacts, SessionStartReason, SessionStartup, SessionDisposal, TurnSignalFacts, UserInputDelivery,
 } from "../core/protocol";
 import { SessionObservations } from "../core/observations";
 import { StateStore } from "../core/state";
-import { createObservationDeliverer, createOwnerAccessPublisher, openOwnerAccess } from "../modules/local-access";
+import { createSubagentAccess } from "../core/subagent-access";
 import { observeRounds } from "./pi/round";
 import { createPiSubagentIntegration, type PiSubagentIntegration } from "./pi/nicobailon";
 import {
@@ -475,7 +474,6 @@ function piPort(
 	harnessAccess: HarnessProviderAccess,
 	positions: PiSessionPositions,
 	integration: PiSubagentIntegration | undefined,
-	sessionObservationAccess: SessionObservationAccess | undefined,
 	keepSubscription: (release: () => void) => void,
 ): HarnessPort {
 	const stateEntryType = `${definition.id}:state`;
@@ -579,7 +577,6 @@ function piPort(
 		reportDiagnostic,
 		modelPrices: harnessPrices.prices,
 		providerAccess: harnessAccess.access,
-		...(sessionObservationAccess === undefined ? {} : { sessionObservationAccess }),
 		// The process's one settling of this entry's subagent integration, asked at the owner node:
 		// it is the session this binding serves then, and the answer is that process's own.
 		...(integration === undefined
@@ -820,65 +817,16 @@ export interface PiAssembly extends ExtensionAssembly {
 
 /** Uses the same binding and assembly contract as the OMP adapter. */
 export function piAdapter(definition: ExtensionDefinition, options: PiAssembly = {}): PiExtensionFactory {
-	// The two halves of the framework's local access are built together, because they are one thing:
-	// the owners this process serves are readable from a session pi ran elsewhere, and a session pi
-	// ran elsewhere reads the owner it follows from whichever process serves it. The observation
-	// direction of the same access is what makes a session a spawned process runs visible to the
-	// owner's own process at all: that session's binding delivers what it observes to the process
-	// serving the owner it follows, and the owner's process serves that seat for as long as it serves
-	// that owner. So the carrier is built whenever this assembly states a child entry — a host whose
-	// sessions are all bindings in this process has nothing to carry and offers nothing — while the
-	// *values* half is still offered only where the extension declares `follow` (a field that declares
-	// none is never read as another session's value, so no owner of one is offered). Built here for
-	// the process, because the endpoint is the process's; building it does nothing, and the first
-	// session that needs one is what offers or reaches it.
-	const spawning = options.childEntry !== undefined;
-	const following = stateInheritance(definition) === "follow";
-	const localAccess = spawning
-		? createOwnerAccessPublisher({
-				report: message => process.stderr.write(`${definition.displayName}: ${message}\n`),
-			})
-		: undefined;
-	// The reading half is the seat this extension serves in the owner the delivery named: the same
-	// extension id on both ends is what makes the pair a target, and the owner key the adapter
-	// resolved is what makes it this owner's access rather than another's.
-	const follow: FollowedAccessReader | undefined = localAccess === undefined || !following
-		? undefined
-		: {
-				open: (owner, { waitMs }) => openOwnerAccess({ target: { extension: definition.id, owner }, waitMs }),
-			};
+	// pi can run children here or in a background process. The framework owns the access lifetime
+	// and chooses the direct path for each owner served here; childEntry states cross-process support.
+	const observations = new SessionObservations();
+	const access = createSubagentAccess(definition, observations,
+		options.childEntry === undefined ? "in-process" : "cross-process");
 	const state = new StateStore({
 		field: activationField(definition),
 		persistence: statePersistence(definition),
-		...(localAccess === undefined || !following
-			? {}
-			: { localAccess: { extension: definition.id, publisher: localAccess } }),
-		...(follow === undefined ? {} : { follow }),
+		access,
 	});
-	// The process's one session observation source, for the same reason and at the same place as the
-	// State store: the readings the adapter's hooks collect for every session this process runs —
-	// the one this entry serves and the ones its subagent provider spawns through it — belong to one
-	// record rather than to the binding that happened to report them. It is what an extension reads
-	// for a session whose delivery it attached after, and it survives a binding's disposal.
-	const observations = new SessionObservations();
-	// The delivering half of that access: the readings of the sessions this process runs, on their way
-	// to the process that serves the owner each of them follows. The first word to one of those seats
-	// is what this source currently holds for that owner's sessions, which is why the readings are
-	// asked for here rather than buffered: nothing is copied, and a reading taken before the access was
-	// reached travels with the first one that was.
-	const deliverer = localAccess === undefined
-		? undefined
-		: createObservationDeliverer({
-				extension: definition.id,
-				readings: owner => observations.readingsFor(owner),
-			});
-	const sessionObservationAccess: SessionObservationAccess | undefined =
-		localAccess === undefined || deliverer === undefined
-			? undefined
-			: {
-					receive: (owner, sink) => localAccess.receive({ extension: definition.id, owner }, sink),
-					deliver: reading => deliverer.deliver(reading),
-				};
 	// pi's own model prices, one set for the whole process: every binding of this assembly records the
 	// registry of the contexts its own deliveries come from, and the query the framework hands an
 	// extension's factory answers from the newest of them. It lives here rather than in a port because
@@ -909,7 +857,7 @@ export function piAdapter(definition: ExtensionDefinition, options: PiAssembly =
 	return pi => {
 		const subscriptions: Array<() => void> = [];
 		const port = piPort(pi, definition, harnessPrices, harnessAccess, positions, integration,
-			sessionObservationAccess, release => subscriptions.push(release));
+			release => subscriptions.push(release));
 		integration?.attach(pi, port.reportDiagnostic);
 		const result = bindExtension(definition, port, state, observations, resolveImplementation, {
 			baseDir: options.configBaseDir,
@@ -929,8 +877,7 @@ export function piAdapter(definition: ExtensionDefinition, options: PiAssembly =
 		// gone.
 		subscriptions.push(pi.on("session_shutdown", event => {
 			if (event.reason !== "quit" && event.reason !== "reload") return;
-			state.dispose();
-			deliverer?.dispose();
+			access.dispose();
 		}));
 		if (!result.bound) {
 			for (const release of subscriptions) release();

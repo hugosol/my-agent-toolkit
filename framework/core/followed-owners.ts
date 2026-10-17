@@ -13,9 +13,12 @@
  * access is offered or withdrawn by it. A read never waits: the framework's semantic use points
  * read synchronously, so an owner whose access is not there yet reads as the field's declared
  * default and is picked up on a later read — the degraded read is not a measurement of the Owner's
- * value and is not presented as one. And nothing polls: an access that is connected is left alone
- * (its changes arrive by themselves), while one that is not is tried again only when a later read
- * asks, with a spacing that grows to a ceiling so an owner that is not served is not hammered.
+ * value and is not presented as one. A use point that can afford to wait may ask for the *first*
+ * attempt explicitly with `prepare`; that waits for the one bounded opening the policy already
+ * allows, joins an opening a synchronous read already started, and adds no attempt of its own after
+ * the first has settled. Nothing polls either way: an access that is connected is left alone (its
+ * changes arrive by themselves), while one that is not is tried again only when a later read asks,
+ * with a spacing that grows to a ceiling so an owner that is not served is not hammered.
  *
  * Life is explicit. An access that reports itself ended is spent and never reused, and the next
  * read (past the spacing) opens a fresh one; a read through a spent access answers nothing rather
@@ -65,6 +68,12 @@ interface FollowedOwner {
 	stopObserving?: () => void;
 	/** Whether an attempt is in flight: concurrent reads of one owner share it rather than add one. */
 	opening: boolean;
+	/** The first attempt's completion while it is still running: what `prepare` joins. */
+	firstAttempt?: Promise<void>;
+	/** Whether the first attempt was ever started, so `prepare` never starts another one. */
+	firstStarted: boolean;
+	/** Whether the first attempt has finished its bookkeeping, including a synchronous opener throw. */
+	firstSettled: boolean;
 	/** Consecutive failed attempts, which is what the spacing is derived from. */
 	failures: number;
 	/** The earliest moment a later attempt may start; zero while nothing failed. */
@@ -105,6 +114,27 @@ export class FollowedOwners {
 	}
 
 	/**
+	 * Waits for one owner's *first* attempt at its access, if that attempt is still in flight or has
+	 * not started yet; `undefined` once it has settled, or after this module is disposed.
+	 *
+	 * A synchronous read may already have started the attempt; this joins it rather than opening a
+	 * second one, and concurrent calls share the same completion. With no attempt started yet it
+	 * starts exactly one, spending the policy's bounded `waitMs`. Success means the values are now
+	 * ready to be read; failure is not surfaced as an error — the read keeps answering the declared
+	 * default, and every later attempt remains the read's own spaced recovery. Prepare never retries,
+	 * never waits a second time once the first attempt has settled, and never adds another attempt; a
+	 * late resolution after `dispose` is released instead of becoming the store's values.
+	 */
+	prepare(owner: string): Promise<void> | undefined {
+		if (this.#disposed) return undefined;
+		const followed = this.#owners.get(owner);
+		if (followed !== undefined) return followed.firstSettled ? undefined : followed.firstAttempt;
+		const started = this.#follow(owner);
+		this.#attempt(owner, started);
+		return started.firstSettled ? undefined : started.firstAttempt;
+	}
+
+	/**
 	 * Whether this store has read one owner through an access: the owners it chased, reached or not.
 	 *
 	 * A failed attempt counts, because what the question is about is whether this value comes from
@@ -128,9 +158,16 @@ export class FollowedOwners {
 		this.#owners.clear();
 	}
 
-	/** The record one owner is followed through, created on its first read. */
+	/** The record one owner is followed through, created on its first read or prepare. */
 	#follow(owner: string): FollowedOwner {
-		const followed: FollowedOwner = { values: {}, opening: false, failures: 0, waitingUntil: 0 };
+		const followed: FollowedOwner = {
+			values: {},
+			opening: false,
+			firstStarted: false,
+			firstSettled: false,
+			failures: 0,
+			waitingUntil: 0,
+		};
 		this.#owners.set(owner, followed);
 		return followed;
 	}
@@ -148,11 +185,15 @@ export class FollowedOwners {
 		}
 		if (followed.opening || Date.now() < followed.waitingUntil) return;
 		followed.opening = true;
-		void this.#open(owner, followed);
+		const first = !followed.firstStarted;
+		if (first) followed.firstStarted = true;
+		const attempt = this.#open(owner, followed, first);
+		if (first && !followed.firstSettled) followed.firstAttempt = attempt;
+		void attempt;
 	}
 
 	/** One attempt: the access it reaches is kept and observed, and its failure is what spaces the next. */
-	async #open(owner: string, followed: FollowedOwner): Promise<void> {
+	async #open(owner: string, followed: FollowedOwner, first: boolean): Promise<void> {
 		try {
 			const caller = await this.#reader.open(owner, { waitMs: this.#policy.waitMs });
 			if (this.#disposed || !this.#owners.has(owner)) {
@@ -177,6 +218,12 @@ export class FollowedOwners {
 			followed.waitingUntil = Date.now() + this.#spacing(followed.failures);
 		} finally {
 			followed.opening = false;
+			// Only the first attempt is what `prepare` can wait for; once it has settled, recovery is
+			// the reads' own and a prepare adds neither a wait nor another attempt.
+			if (first) {
+				followed.firstSettled = true;
+				followed.firstAttempt = undefined;
+			}
 		}
 	}
 

@@ -12,9 +12,9 @@
  * anything back. A store that follows nothing is the in-process one and reads no access at all.
  */
 import type { StatePersistence } from "./definition";
-import { FollowedOwners, type FollowedAccessReader } from "./followed-owners";
+import { SubagentAccess } from "./subagent-access";
 import { OwnerLives } from "./owner-lives";
-import type { OwnerAccessPublisher, OwnerAccessSource } from "../modules/local-access";
+import type { OwnerAccessSource } from "../modules/local-access";
 import type {
 	DeclaredValueSeam,
 	FeedbackTransport,
@@ -30,37 +30,11 @@ export type StateValue = boolean;
 /** The value a field reads as before the write path has ever set it. */
 export const DEFAULT_STATE_VALUE: StateValue = false;
 
-/**
- * The local access one store offers the owners it serves through.
- *
- * A seat needs both halves: an owner key alone is not unique across extensions, because two
- * extensions of one process serve the same session's owner.
- */
-export interface StateLocalAccess {
-	readonly extension: string;
-	/** The access the offer goes through; the store withdraws exactly what it offered. */
-	readonly publisher: OwnerAccessPublisher;
-}
-
-/** The declaration rules this module needs, resolved by the assembly. */
+/** The declaration rules and assembly-owned subagent access this module needs. */
 export interface StateRules {
 	readonly field: string;
 	readonly persistence: StatePersistence;
-	/**
-	 * How this store offers the owners it serves to a session the harness runs in another process.
-	 * A store built without one offers nothing: every reader of an owner's value is in this process,
-	 * which is what a harness whose sessions are all bindings in this process uses, and what keeps
-	 * such a process free of any endpoint.
-	 */
-	readonly localAccess?: StateLocalAccess;
-	/**
-	 * How this store reads the declared values of an Owner another process serves.
-	 *
-	 * A store built without one follows nothing: every read is this process's own cell or the
-	 * declared default, which is what a harness whose sessions are all bindings in this process
-	 * uses, and what keeps an extension that declares no `follow` free of any such read.
-	 */
-	readonly follow?: FollowedAccessReader;
+	readonly access?: SubagentAccess;
 }
 
 /** The read-only current-value view; observing State grants no mutation authority. */
@@ -98,22 +72,19 @@ export interface StateSessionChange {
 export class StateStore {
 	readonly #field: string;
 	readonly #persistence: StatePersistence;
-	readonly #localAccess: StateLocalAccess | undefined;
-	readonly #following: FollowedOwners | undefined;
+	/** The assembly's access owns communication; State owns values and their observers. */
+	readonly access: SubagentAccess;
 	readonly #cells = new Map<string, Map<string, StateValue>>();
 	/** Every Owner this store has served: a boundary it reconciled, or a cell it wrote. */
 	readonly #served = new Set<string>();
 	readonly #ownerLives = new OwnerLives();
-	/** What this store offered, per owner, so the offer ends with exactly that owner's life. */
-	readonly #offers = new Map<string, () => void>();
 	/** Who is observing one owner's declared values changing, per owner. */
 	readonly #watchers = new Map<string, Set<(field: string, value: StateValue) => void>>();
 
 	constructor(rules: StateRules) {
 		this.#field = rules.field;
 		this.#persistence = rules.persistence;
-		this.#localAccess = rules.localAccess;
-		this.#following = rules.follow === undefined ? undefined : new FollowedOwners(rules.follow);
+		this.access = rules.access ?? new SubagentAccess();
 	}
 
 	view(ownerKey: string): StateView {
@@ -138,21 +109,20 @@ export class StateStore {
 			read: field => {
 				const local = this.#cells.get(ownerKey)?.get(field);
 				if (local !== undefined) return local;
-				return this.#following?.read(ownerKey, field) ?? DEFAULT_STATE_VALUE;
+				return this.access.read(ownerKey, field) ?? DEFAULT_STATE_VALUE;
 			},
 		};
 	}
 
-	/**
-	 * Releases what this store holds open for the owners it follows, and stops following.
-	 *
-	 * A store that has disposed reads the declared default for every followed owner from then on
-	 * and opens nothing again, so a session this process no longer runs holds no connection to the
-	 * process that serves its owner. What this store itself serves is untouched: its cells, their
-	 * owners' lives and its own offer of them are not what a follow is.
-	 */
+	/** First semantic use waits only where this process holds no owner cell. */
+	prepareFollowed(ownerKey: string): Promise<void> | undefined {
+		if (this.#cells.has(ownerKey)) return undefined;
+		return this.access.prepare(ownerKey);
+	}
+
+	/** Releases communication after session close-out, without rewriting State values. */
 	dispose(): void {
-		this.#following?.dispose();
+		this.access.dispose();
 	}
 
 	/**
@@ -187,7 +157,7 @@ export class StateStore {
 	 * published its change, so the next publication is the first chance to render it.
 	 */
 	follows(ownerKey: string): boolean {
-		return this.#following?.follows(ownerKey) ?? false;
+		return this.access.follows(ownerKey);
 	}
 
 	/**
@@ -267,9 +237,6 @@ export class StateStore {
 	 */
 	#offerAccess(ownerKey: string): void {
 		this.#withdrawOffer(ownerKey);
-		const access = this.#localAccess;
-		if (access === undefined) return;
-
 		const source: OwnerAccessSource = {
 			values: () => ({ [this.#field]: this.view(ownerKey).read(this.#field) }),
 			observe: listener => {
@@ -286,15 +253,12 @@ export class StateStore {
 				};
 			},
 		};
-		this.#offers.set(ownerKey, access.publisher.offer({ extension: access.extension, owner: ownerKey }, source));
+		this.access.offer(ownerKey, source);
 	}
 
 	/** Withdraws one owner's offer: what a reader of that owner's access was told stops here. */
 	#withdrawOffer(ownerKey: string): void {
-		const release = this.#offers.get(ownerKey);
-		if (release === undefined) return;
-		this.#offers.delete(ownerKey);
-		release();
+		this.access.withdraw(ownerKey);
 		this.#watchers.delete(ownerKey);
 	}
 

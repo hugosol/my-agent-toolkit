@@ -772,20 +772,26 @@ runs in another process, and the one way such a session hands the process that s
 *observation* of itself: the serving process publishes where its access is, and a session in
 another process reaches it over a name the platform already provides — a Windows named pipe
 (`\\.\pipe\my-agent-toolkit-access-<id>`) or a POSIX socket file. It is **not** an extension entry and
-not part of `public.ts`: an extension never touches it. The harness adapter builds the serving half and
-hands it to the State store ([`state.ts`](../core/state.ts), `StateRules.localAccess`), and the reading
-half is what the store follows an owner through ([`core/followed-owners.ts`](../core/followed-owners.ts),
-`StateRules.follow`). A harness whose sessions are all bindings in one process supplies neither: reads
-there are the store's own cells, with no endpoint, no record and no configuration read.
+not part of `public.ts`: an extension never touches it. The harness adapter selects the subagent
+access capability through [`core/subagent-access.ts`](../core/subagent-access.ts): OMP selects
+`in-process`; pi selects `cross-process` when its assembly states a `childEntry`, while retaining the
+same-process direct path for owners served here. This is only subagent access, not general communication
+or a scheduler. `SubagentAccess` owns value offers, followed reads, observation admissions, hand-over
+routing and their release; State supplies current values and binding supplies semantic facts and sinks.
+The assembly hands State one `StateRules.access`, not separate publisher and follower lifetimes.
+A harness whose sessions are all bindings in one process creates no endpoint, record or configuration read.
 
 **The follow read.** A field that declares `follow` makes a subagent session read its Owner's *current*
 value, and a session this harness ran in another process holds no cell for it. `StateStore.followed`
-is that read: the value is the one the Owner's access last stated, the declared default stands in while
-no access is reached, and the read never waits for another process — the framework's semantic use points
-(read at a run initiation, the Marker area, a capability handed to a handler) read synchronously. The
-statement is deliberately not a value claim: a default read writes nothing to the Owner's cell, records
-nothing in the reader's own persistence medium and is never reported as a read of the Owner's value, and
-the same read reaches the Owner again as soon as the access is back.
+is that synchronous read: the value is the one the Owner's access last stated, and the declared default
+stands in while no access is reached. Before the first run's prompt planning and Marker publication,
+the framework's awaitable run-initiation position joins the first bounded access attempt; if an earlier
+synchronous read already started it, both share that attempt. Failure retains the default and the existing
+read-driven recovery. Later runs do not wait again or request a value per use: connected values arrive
+by push, so cross-process propagation is not instantaneous. Same-process cells need no wait.
+A default read writes nothing to the Owner's cell or the reader's persistence medium and is not a
+confirmed reading of the Owner's value. Synchronous State reads, including a handler's read capability,
+remain synchronous; the readiness wait belongs to the framework's pre-request position, not to that interface.
 
 **Recovery is per read, spaced and bounded.** The first read of an owner starts one attempt (a second
 read in the same turn shares it), the change of a connected owner arrives by itself over the access —
@@ -793,8 +799,10 @@ nothing polls a healthy one — and a failed attempt is what spaces the next: th
 consecutive failure and stops at the policy's ceiling. An access that reports itself ended is spent and
 never reused, and the read after the spacing opens a fresh one, because a lost connection is not proof
 that the owner ended. Disposal is final: `StateStore.dispose` releases every followed access and stops
-following for good, so a session this process no longer runs holds no connection to the process that
-serves its owner.
+following for good. It delegates to the assembly's `SubagentAccess`, which also withdraws its value
+offers and observation admissions and releases outgoing observation connections. The pi adapter reports
+quit/reload only after the awaitable session close-out, so the final save and its commit notice finish
+before communication is released; a session transfer does not dispose the assembly's access.
 
 **What one access is.** A *seat* is one extension's access to one owner (`{ extension, owner }`) — an
 owner key alone is not unique across extensions, because two extensions of one process serve the same
@@ -809,10 +817,11 @@ or `observed` is refused rather than interpreted.
 declared values and `OwnerAccessPublisher.receive` receives its observations; the seat, its location
 record and its endpoint live while either half is offered and are released with the last of them, and
 a half offered again over a seat that is still there keeps that seat's verification, so a reader that
-already read the record is not locked out by it. An adapter builds the serving half once per process
-and hands the framework the two directions it uses: `HarnessPort.sessionObservationAccess` carries
-`receive` (the owner this process serves admits the readings delivered for it) and `deliver` (a reading
-of a session this process runs whose owner it does not serve, carried to the process that serves it).
+already read the record is not locked out by it. `SubagentAccess` builds and owns these halves once per
+assembly, tracks the bindings serving each owner and releases each binding's admission on transfer or
+end. An inherited session whose owner any binding serves here stays local. `HarnessPort.sessionObservationAccess`
+remains an internal carrier seam for a harness supplying its own observation bridge: its `receive` and
+`deliver` join the same admission and hand-over rules rather than a second dispatcher.
 
 **Observation delivery.** The framework decides *which* readings cross, not the adapter: a session's
 facts are handed over where the delivery that named it arrived, its activity and its context where the

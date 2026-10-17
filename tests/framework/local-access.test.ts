@@ -27,6 +27,7 @@ import { connect } from "node:net";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
 import { StateStore } from "../../framework/core/state";
+import { SubagentAccess } from "../../framework/core/subagent-access";
 import { defineExtension } from "../../framework/public";
 import {
 	type AccessLocation,
@@ -753,7 +754,7 @@ describe("the framework offers an owner's access with the owner's life (S1)", ()
 		const store = new StateStore({
 			field: "enabled",
 			persistence: "session-entry",
-			localAccess: { extension: "probe-extension", publisher },
+			access: new SubagentAccess({ extension: "probe-extension", publisher }),
 		});
 		const target: AccessTarget = { extension: "probe-extension", owner: "main:store-session" };
 		try {

@@ -40,6 +40,7 @@ import {
 	BOUND_STATE_INHERITANCES,
 	BOUND_STATE_PERSISTENCES,
 	activationField,
+	stateInheritance,
 	type ExtensionDefinition,
 } from "../core/definition";
 import {
@@ -54,7 +55,7 @@ import {
 	type PromptContribution,
 } from "../core/protocol";
 import type { StateStore } from "../core/state";
-import { handOverReading, type ObservationHandOver, type SessionObservations } from "../core/observations";
+import { handOverReading, type SessionObservations } from "../core/observations";
 import { findConfigFailure, getConfig, type ConfigSource } from "../core/config";
 import { findConfigurationViolations } from "../core/violations";
 import { runCommandActions } from "./actions";
@@ -263,13 +264,11 @@ export function bindExtension(
 	// the factory is handed: an extension whose sessions write into a storage another process reads
 	// states its confirmed writes through it, and the notice that statement produces has to leave from
 	// the same access the readings below do.
-	const observationAccess = port.sessionObservationAccess;
-	/** The owner keys this process serves, as this binding's own deliveries named them. */
-	const servedOwners = new Set<string>();
-	/** Whether this process serves that owner, which is the one question a reading's direction turns on. */
-	const handOver: ObservationHandOver | undefined = observationAccess === undefined
-		? undefined
-		: { serves: ownerKey => servedOwners.has(ownerKey), changed: reading => observationAccess.deliver(reading) };
+	const observationBinding = state.access.bind({
+		adopt: (source, reading) => adoptReading(source, reading),
+		lost: source => loseSource(source),
+	}, port.sessionObservationAccess);
+	const handOver = observationBinding.handOver;
 
 	// The extension's own half, and the first point at which its code runs. It is reached only
 	// after the configuration validated, so the values handed over are the ones the definition
@@ -301,6 +300,7 @@ export function bindExtension(
 					...(port.providerAccess === undefined ? {} : { providerAccess: port.providerAccess }),
 				});
 	} catch (error) {
+		observationBinding.dispose();
 		const detail = error instanceof Error ? error.message : String(error);
 		const failure: BindingFailure = { kind: "initialization", detail: `the implementation factory failed: ${detail}` };
 		port.reportDiagnostic(describeBindingFailure(definition.id, failure));
@@ -309,9 +309,6 @@ export function bindExtension(
 
 	let delivering = true;
 
-	/** The owner seat this binding is receiving observations for, and the owner it is for. */
-	let receiving: (() => void) | undefined;
-	let receivingFor: string | undefined;
 	/**
 	 * The transports an arriving reading is dispatched with: the served owner's own session delivery.
 	 *
@@ -440,9 +437,7 @@ export function bindExtension(
 	 * owner that is gone deliver to nothing, which is what a released seat reports to them.
 	 */
 	const releaseSeat = (): void => {
-		receiving?.();
-		receiving = undefined;
-		receivingFor = undefined;
+		observationBinding.dispose();
 		ownerTransport = undefined;
 	};
 
@@ -512,15 +507,8 @@ export function bindExtension(
 				// serves a session that can hold its business instance, and therefore where its
 				// one-time initialization runs. The run-initiation hook waits for the promise this
 				// creates, so the first model request is issued after the initialization settled.
-				servedOwners.add(session.owner.key);
-				if (receivingFor !== session.owner.key) {
-					// The seat is the owner's own, and it begins receiving before the initialization is
-					// started: a session the harness runs elsewhere may be spawned the moment that
-					// request is issued, and what it delivers has to have somewhere to land.
-					releaseSeat();
-					receivingFor = session.owner.key;
-					receiving = observationAccess?.receive(session.owner.key, { adopt: adoptReading, lost: loseSource });
-				}
+				// Admission precedes initialization: a child may report as soon as its first request starts.
+				observationBinding.enter(session.owner.key);
 				ownerTransport = { hasUI: session.hasUI, feedback: session.feedback };
 				void initializeImplementation(
 					definition.id,
@@ -542,8 +530,7 @@ export function bindExtension(
 				// this process's seat for it goes with it: the sessions that followed that owner are
 				// the ones its observation was for, and the seat comes back with the owner entered
 				// next rather than being kept for a session that no longer exists.
-				servedOwners.delete(session.owner.key);
-				if (receivingFor === session.owner.key) releaseSeat();
+				if (observationBinding.leave(session.owner.key)) ownerTransport = undefined;
 			}
 
 			if (
@@ -670,16 +657,19 @@ export function bindExtension(
 		if (contributes || definition.marker !== undefined || awaitsInitialization) {
 			port.onRunInitiation(run => {
 				if (!delivering) return undefined;
-				publishMarkerOnRun(definition, run, seat);
-				const plan = contributes
-					? (): PromptContribution | undefined => planContribution(definition, state, run)
+				const plan = (): PromptContribution | undefined => {
+					if (!delivering) return undefined;
+					publishMarkerOnRun(definition, run, seat);
+					return contributes ? planContribution(definition, state, run) : undefined;
+				};
+				const initialized = initializationPending(implementation);
+				const followed = run.owner.kind === "inherited" && stateInheritance(definition) === "follow"
+					? state.prepareFollowed(run.owner.key)
 					: undefined;
-				const pending = initializationPending(implementation);
-				if (pending === undefined) return plan === undefined ? undefined : plan();
-				// This is the framework's awaitable position before a model request: the request the
-				// run is about to issue waits for the initialization the session node started, and
-				// the contribution is planned with the facts as they stand once it settled.
-				return pending.then(() => (plan === undefined ? undefined : plan()));
+				if (initialized === undefined && followed === undefined) return plan();
+				// First use joins the bounded initial access, not a per-read request. After it settles,
+				// State keeps answering the pushed value (or the existing default on failure).
+				return Promise.all([initialized, followed]).then(plan);
 			});
 		}
 		registerMarker(definition, state);

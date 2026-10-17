@@ -28,6 +28,7 @@ import * as path from "node:path";
 import type { SessionObservations } from "../../framework/core/observations";
 import type { ObservedSession, OwnerReference, SessionFacts } from "../../framework/core/protocol";
 import { StateStore } from "../../framework/core/state";
+import { SubagentAccess } from "../../framework/core/subagent-access";
 import {
 	type AccessTarget,
 	createOwnerAccessPublisher,
@@ -155,7 +156,7 @@ describe("a followed field reads the Owner this process serves, and follows its 
 		const serving = new StateStore({
 			field: FIELD,
 			persistence: "session-entry",
-			localAccess: { extension: FOLLOW_PROBE.id, publisher },
+			access: new SubagentAccess({ extension: FOLLOW_PROBE.id, publisher }),
 		});
 		// The reading half of the same framework module, as an assembly wires it — pointed at a
 		// configuration file that is not there. A read answered in this process never resolves a runtime
@@ -188,11 +189,8 @@ describe("a followed field reads the Owner this process serves, and follows its 
 			expect(localOwnerAccess(target)).toBeDefined();
 			following.bind(FOLLOW_PROBE, {});
 
-			// The first consumption is the field's declared default — the framework's semantic use point
-			// never waits for another process — and the ones after the reach are the Owner's current value.
-			expect((await following.initiateRun(FOLLOWED)).contribution).toBeUndefined();
-			await Promise.allSettled(reached);
-			await Promise.resolve();
+			// First semantic use waits for the initial value, even when the access answers directly
+			// from another store in this process without a location record or configuration read.
 			const on = await following.initiateRun(FOLLOWED);
 			expect(on.contribution).toEqual({
 				identity: "follow-independence-probe:init",
@@ -232,7 +230,7 @@ describe("a followed field reads the Owner this process serves, and follows its 
 		const serving = new StateStore({
 			field: FIELD,
 			persistence: "session-entry",
-			localAccess: { extension: FOLLOW_PROBE.id, publisher },
+			access: new SubagentAccess({ extension: FOLLOW_PROBE.id, publisher }),
 		});
 		const target: AccessTarget = { extension: FOLLOW_PROBE.id, owner: OWNER.key };
 		const reached: Array<Promise<unknown>> = [];
