@@ -27,9 +27,14 @@ what a real TUI draws are human-only, and nothing in this repository claims eith
   is `0ms`. Distinct actual child sessions remain distinct rows, including a failed foreground
   launch followed by a new background attempt; a row does not by itself prove a model request ran.
 - The main session's span runs from its first user input in the accounting period to the latest
-  framework `turn_end`, regardless of success, failure or cancellation. It refreshes while a Round
-  is still open, excludes the tool tail after that response, and stays fixed between Turn ends.
-  Consumption still saves through the existing `round_end` path; time changes add no writes.
+  of its framework `turn_end` and receipt of a terminal subagent-result notification. Success,
+  failure and cancellation all count. Each result advances the span while the main session waits
+  for a batch, without waiting for the whole batch or another main-session Turn to finish; this
+  applies to same-process and multi-process subagents alike. Result receipts use the main process's
+  clock, and late Turn ends cannot move the span backwards. Progress reports, storage commits and
+  descendant completions not delivered to the main session do not advance it. No timer is added:
+  the span stays fixed between these events, even when the main session is idle. Consumption still
+  saves through the existing `round_end` path; time changes add no writes.
 - On OMP, startup progress before the real child Session is attached produces no runtime delivery
   or timing error. Once the adapter can resolve the actual Session identity, the next valid native
   progress supplies its full execution duration; no synthetic `0ms` or public ready event is added.

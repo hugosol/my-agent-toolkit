@@ -212,8 +212,32 @@ export function modelCostPiHarness(repositoryRoot: string): (pi: PiExtensionApi)
 			// of any outlives the session that initialized the instance.
 			const releaseWidget = attachModelCostWidget(pi, built, uiBoundaryTimer);
 			frontendReleases.add(releaseWidget);
+			frontendReleases.add(observePiSubagentResults(pi, built));
 		}
 	};
+}
+
+/** Watch results appended to the receiving main session, including detached-process results. */
+export function observePiSubagentResults(pi: PiExtensionApi, runtime: ModelCostRuntime): () => void {
+	return pi.on("message_end", async (event, ctx) => {
+		const message = event.message as {
+			readonly role?: string;
+			readonly customType?: string;
+			readonly details?: { readonly runs?: readonly { readonly status?: string }[] };
+		};
+		if (message.role !== "custom" || message.customType !== "subagent-notify") return;
+		const sessionId = ctx.sessionManager.getSessionId();
+		if (runtime.sessionObservations.read(sessionId)?.session?.kind !== "main") return;
+		for (const run of message.details?.runs ?? []) {
+			if (!["completed", "failed", "stopped", "paused"].includes(run.status ?? "")) continue;
+			await runtime.subagentResultReceived(sessionId, {
+				notify: (level, text) => {
+					if (ctx.hasUI) ctx.ui.notify(text, level);
+					else process.stderr.write(`${text}\n`);
+				},
+			});
+		}
+	});
 }
 
 export default modelCostPiHarness(EXTENSION_REPOSITORY_ROOT);

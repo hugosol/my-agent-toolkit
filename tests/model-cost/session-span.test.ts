@@ -28,6 +28,10 @@ import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSy
 import { tmpdir } from "node:os";
 import * as path from "node:path";
 import { MODEL_COST } from "../../extensions/model-cost/definition";
+import { observeOmpSubagentResults } from "../../extensions/model-cost/harnesses/omp";
+import { observePiSubagentResults } from "../../extensions/model-cost/harnesses/pi";
+import type { OmpExtensionApi, OmpSessionContext } from "../../framework/adapters/omp";
+import type { PiExtensionApi, PiExtensionContext } from "../../framework/adapters/pi";
 import type {
 	ConsumptionDocument,
 	OwnConsumption,
@@ -398,6 +402,137 @@ describe("a fork starts from its own first new input (P3)", () => {
 		});
 		// The source session's own span is untouched by the fork's.
 		expect(runtime.view.sessionSpan(MAIN.sessionId)).toEqual(sourceSpan);
+	});
+});
+
+describe("native terminal notifications advance only their receiving main session", () => {
+	for (const harness of ["omp", "pi"] as const) {
+		test(`${harness}: each delivered result advances the span, but progress and descendant-side results do not`, async () => {
+			const { runtime, double, file } = await bindAccounting(freshRoot());
+			const child: SessionFacts = { sessionId: "nested-parent", kind: "sub", parentSessionId: MAIN.sessionId, unavailable: [] };
+			runtime.sessionObservations.sawSession(MAIN, OWNER);
+			runtime.sessionObservations.sawSession(child, OWNER);
+			clock = atBeijing(10);
+			double.deliverUserInput(OWNER, { session: MAIN });
+			deliverTurnEndingAt(double, MAIN, atBeijing(10, 1));
+			const handlers = new Set<(event: unknown, ctx: unknown) => void | Promise<void>>();
+			const api = { on: (_event: string, handler: (event: unknown, ctx: unknown) => void | Promise<void>) => {
+				handlers.add(handler);
+				return () => { handlers.delete(handler); };
+			} };
+			const release = harness === "omp"
+				? observeOmpSubagentResults(api as unknown as OmpExtensionApi, runtime)
+				: observePiSubagentResults(api as unknown as PiExtensionApi, runtime);
+			const context = (session: SessionFacts) => ({
+				agent: { kind: session.kind },
+				sessionManager: { getSessionId: () => session.sessionId },
+				hasUI: false,
+			}) as unknown as OmpSessionContext | PiExtensionContext;
+			const deliver = async (customType: string, status: string | undefined, session = MAIN, type = "task") => {
+				const message = {
+					role: "custom", customType,
+					details: harness === "omp" ? { jobs: [{ type, status }] } : { runs: [{ status }] },
+				};
+				for (const handler of handlers) await handler({ type: "message_end", message }, context(session));
+			};
+			const customType = harness === "omp" ? "async-result" : "subagent-notify";
+			const statuses = harness === "omp" ? [undefined, "completed", "failed", "cancelled"] : ["completed", "failed", "stopped", "paused"];
+			for (const [index, status] of statuses.entries()) {
+				clock = atBeijing(10, index + 2);
+				await deliver(customType, status);
+				expect(runtime.view.sessionSpan(MAIN.sessionId)?.endAt).toBe(clock);
+			}
+			const end = clock;
+			clock = atBeijing(11);
+			await deliver("subagent-incremental-child-notify", "completed");
+			if (harness === "pi") await deliver(customType, "running");
+			await deliver(customType, "completed", child);
+			if (harness === "omp") await deliver(customType, "completed", MAIN, "bash");
+			expect(runtime.view.sessionSpan(MAIN.sessionId)?.endAt).toBe(end);
+			expect(runtime.view.sessionSpan(child.sessionId)).toBeUndefined();
+			expect(existsSync(file)).toBe(false);
+			release();
+			await deliver(customType, "completed");
+			expect(runtime.view.sessionSpan(MAIN.sessionId)?.endAt).toBe(end);
+		});
+	}
+});
+
+describe("terminal subagent results advance the main span without another main Turn", () => {
+	test("each receipt advances an open or idle main session, without consumption, writes or backwards ends", async () => {
+		const { runtime, double, file } = await bindAccounting(freshRoot());
+		const feedback = { notify: () => {} };
+		clock = atBeijing(10);
+		double.deliverUserInput(OWNER, { session: MAIN });
+		deliverEdge(double, MAIN, "round_start");
+		deliverTurnEndingAt(double, MAIN, atBeijing(10, 1));
+		const own = runtime.view.own(MAIN.sessionId);
+		let changes = 0;
+		const release = runtime.view.subscribe(() => { changes += 1; });
+
+		for (const minute of [2, 5, 8]) {
+			clock = atBeijing(10, minute);
+			await runtime.subagentResultReceived(MAIN.sessionId, feedback);
+			expect(runtime.view.sessionSpan(MAIN.sessionId)).toEqual({
+				startAt: atBeijing(10), endAt: clock, elapsedMs: minute * 60_000,
+			});
+			expect(totalText(runtime.presentation.of({ sessionId: MAIN.sessionId, provider: PROVIDER, model: MODEL })))
+				.toContain(`Span: 0:0${minute}:00`);
+		}
+		expect(changes).toBe(3);
+		expect(runtime.view.own(MAIN.sessionId)).toEqual(own);
+		expect(existsSync(file)).toBe(false);
+
+		// An older response settling late cannot undo the latest receipt.
+		double.deliverTurn(settled(MAIN, atBeijing(10, 3)), { owner: OWNER });
+		expect(runtime.view.sessionSpan(MAIN.sessionId)?.endAt).toBe(atBeijing(10, 8));
+		deliverEdge(double, MAIN, "round_end");
+		await savedDocument(file, document => recordOf(document, MAIN.sessionId)?.span?.end === atBeijing(10, 8));
+		const saved = readFileSync(file, "utf8");
+		expect(recordOf(JSON.parse(saved), MAIN.sessionId)?.span).toEqual({ start: atBeijing(10), end: atBeijing(10, 8) });
+		clock = atBeijing(10, 9);
+		await runtime.subagentResultReceived(MAIN.sessionId, feedback);
+		expect(runtime.view.sessionSpan(MAIN.sessionId)?.elapsedMs).toBe(540_000);
+		expect(readFileSync(file, "utf8")).toBe(saved);
+		release();
+	});
+
+	test("restoring a later saved end ignores older receipts and Turns, then advances on a newer receipt", async () => {
+		const { runtime, double } = await bindAccounting(freshRoot(), {
+			schemaVersion: 1, periodId: "restored-receipt-period", start: "2026-10-14T00:00:00.000Z", holiday: false,
+			harnesses: { [HARNESS]: { sessions: [{
+				id: MAIN.sessionId, name: MAIN_NAME, parent: null, own: {}, saveVersion: 1,
+				span: { start: atBeijing(10), end: atBeijing(10, 5) },
+			}] } },
+		} satisfies ConsumptionDocument);
+		clock = atBeijing(10, 4);
+		await runtime.subagentResultReceived(MAIN.sessionId, { notify: () => {} });
+		double.deliverTurn(settled(MAIN, atBeijing(10, 3)), { owner: OWNER });
+		expect(runtime.view.sessionSpan(MAIN.sessionId)).toEqual({
+			startAt: atBeijing(10), endAt: atBeijing(10, 5), elapsedMs: 300_000,
+		});
+		clock = atBeijing(10, 8);
+		await runtime.subagentResultReceived(MAIN.sessionId, { notify: () => {} });
+		expect(runtime.view.sessionSpan(MAIN.sessionId)).toEqual({
+			startAt: atBeijing(10), endAt: atBeijing(10, 8), elapsedMs: 480_000,
+		});
+	});
+
+	test("a receipt does not invent a first input, and cleanup ignores late receipts", async () => {
+		const { runtime, double } = await bindAccounting(freshRoot());
+		const feedback = { notify: () => {} };
+		clock = atBeijing(10, 2);
+		await runtime.subagentResultReceived(MAIN.sessionId, feedback);
+		expect(runtime.view.sessionSpan(MAIN.sessionId)).toBeUndefined();
+		clock = atBeijing(10, 3);
+		double.deliverUserInput(OWNER, { session: MAIN });
+		clock = atBeijing(10, 5);
+		await runtime.subagentResultReceived(MAIN.sessionId, feedback);
+		expect(runtime.view.sessionSpan(MAIN.sessionId)?.elapsedMs).toBe(120_000);
+		await runtime.implementation.cleanup?.();
+		clock = atBeijing(11);
+		await runtime.subagentResultReceived(MAIN.sessionId, feedback);
+		expect(runtime.view.sessionSpan(MAIN.sessionId)?.endAt).toBe(atBeijing(10, 5));
 	});
 });
 

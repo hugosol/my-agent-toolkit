@@ -1,39 +1,15 @@
 /**
- * Session span: the one wall-clock interval a session's own time facts add up to — from the first
- * user input this extension observed for that session in the applicable accounting period, up to the
- * latest Turn end it observed for it.
+ * Session span: the wall-clock interval from this period's first user input to the latest observed
+ * Turn end or receipt of a terminal subagent result. The caller supplies the actual session's own
+ * instants; child runtimes are never summed here.
  *
- * The rules it implements are the approved ones:
+ * A start is taken once, with a saved start winning over later input. Ends only advance, so delayed
+ * responses cannot undo a newer result receipt or saved end. Both facts must exist for a reading;
+ * equal instants mean known zero, while a missing fact means unavailable. A reset clears this period's
+ * observations. Forked history establishes neither fact.
  *
- * - **The start is the first user input, and it is taken once.** The first input observed for a
- *   session fixes its start; every later input leaves it where it is, and a session whose start the
- *   loaded document already carries keeps that one rather than taking a later instant. Nothing else
- *   can establish a start: not the session's creation, not the first model request, not the last
- *   transcript entry, and not a copied history — a session this extension has only just begun to
- *   observe has *no* start until the user really puts something in, which is why a fork's copied
- *   messages establish nothing and the waiting period before its first new input reads as unknown
- *   rather than as zero.
- * - **The end is the latest observed Turn end.** Every Turn end this instance observes replaces the
- *   end with that Turn's own instant — the moment its response settled, as the delivery itself states
- *   it — so the span grows across the idle time between Turns and Rounds, and across an interruption
- *   in which the program was closed. Every outcome delivers one: a completed Turn, a failed one and a
- *   cancelled one alike end the work the session did, and each ends this span at its own instant.
- *   Nothing else can establish an end: the last transcript time is not one, a Round's own end is not
- *   one — a Round may never end at all — and the instant some later handler read its clock is not one
- *   either, which is why a Turn that settled before an accounting reset is never stamped with an
- *   instant of the period that replaced it. A session whose Turns all settled keeps the latest of
- *   them, and one that has never had a Turn end stays unknown.
- * - **Both instants or nothing.** A span is read only when both of its own facts are known, so a
- *   session that has taken up input but has not had a Turn end yet is *unavailable* rather than a
- *   span of nothing. A reliable reading of exactly zero milliseconds is a real value and is not this
- *   case: two observed instants that happen to be equal are a span of zero, and they are told apart
- *   from a missing fact by the fact that they are there at all.
- * - **A period's own spans.** What this holds belongs to the accounting period it was observed in;
- *   clearing it is what a reset does, and nothing reconstructs it from an earlier period's records.
- *
- * This module reads the session record's own optional fact and holds only what this instance observed
- * itself. It writes nothing, reads no file and starts no timer, and it never adds one session's time
- * to another's.
+ * This module reads the record's optional fact and holds observations only: no writes, file reads,
+ * timers, inferred Round boundaries or continuous wall-clock updates.
  */
 import type { SessionSpanFact } from "./consumption-document";
 
@@ -49,7 +25,7 @@ import type { SessionSpanFact } from "./consumption-document";
 export interface SessionSpanReading {
 	/** When this session's first user input of the period was observed. */
 	readonly startAt: number;
-	/** When this session's most recent observed Turn end was. */
+	/** The latest observed Turn end or terminal-result receipt for this session. */
 	readonly endAt: number;
 	/** The interval between them, in milliseconds. */
 	readonly elapsedMs: number;
@@ -64,8 +40,8 @@ export interface SessionSpans {
 	 */
 	input(sessionId: string, at: number): boolean;
 	/**
-	 * A Turn end was observed for one session, at `at`, which is that Turn's own instant. Answers
-	 * whether that changed its reading.
+	 * A Turn ended or a terminal subagent result reached this session at `at`. Only a newer
+	 * instant advances the end. Answers whether that changed its reading.
 	 */
 	ended(sessionId: string, at: number): boolean;
 	/** One session's span reading, or `undefined` while either of its own facts is unknown. */
@@ -123,15 +99,14 @@ export function createSessionSpans(inputs: SessionSpanInputs): SessionSpans {
 	 * The start resolves towards the document's own instant rather than this instance's observation:
 	 * a start is taken once for a session and a resume must not take a second one, so an input this
 	 * instance observed after the document already carried a start is an input like any other and
-	 * moves nothing. The end resolves the other way — this instance's own observation is the later
-	 * one, because every observed Turn end replaces it — and the document's end is what a session
-	 * that has not ended a Turn since this instance started still has.
+	 * moves nothing. The end is the maximum of the saved and locally observed instants: a delayed Turn end
+	 * never replaces a newer terminal-result receipt, and a newer baseline never moves backwards.
 	 */
 	const instantsOf = (sessionId: string): SessionSpanFact | undefined => {
 		const facts = observed.get(sessionId);
 		const record = saved(sessionId);
 		const start = record?.start ?? facts?.start;
-		const end = facts?.end ?? record?.end;
+		const end = facts?.end === undefined ? record?.end : Math.max(facts.end, record?.end ?? facts.end);
 		if (start === undefined || end === undefined) return undefined;
 		return { start, end };
 	};
@@ -173,9 +148,8 @@ export function createSessionSpans(inputs: SessionSpanInputs): SessionSpans {
 		},
 		ended(sessionId, at) {
 			const facts = factsOf(sessionId);
-			// Every observed Turn end replaces the end: the latest one is the span's own end, and a
-			// later Turn is what makes the span grow rather than a second fact being added beside it.
-			facts.end = at;
+			// A delayed Turn end must not undo a newer terminal-result receipt (or another Turn end).
+			facts.end = Math.max(facts.end ?? at, at);
 			return changedReading(sessionId);
 		},
 		of: readingOf,

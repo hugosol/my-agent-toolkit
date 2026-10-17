@@ -95,14 +95,14 @@ export interface SessionStartup {
  * is the difference of, in epoch milliseconds.
  *
  * Both are always present together. An instant is only ever written once it has really been
- * observed — the first user input, the latest Turn end — so a pair here is a pair of observations
+ * observed — the first user input, the latest Turn end or terminal-result receipt — so a pair here is a pair of observations
  * and never one observation with a placeholder beside it: a session whose end is still unknown keeps
  * no span at all rather than a span whose end is a guess, a zero or the last transcript time.
  */
 export interface SessionSpanFact {
 	/** The instant this session's first user input of the period was observed. */
 	readonly start: number;
-	/** The instant this session's most recent observed Turn end was, as that Turn's own delivery stated it. */
+	/** The latest observed Turn end or terminal subagent-result receipt for this session. */
 	readonly end: number;
 }
 
@@ -152,7 +152,7 @@ export interface SessionRecord {
 	/**
 	 * This session's own main-session time facts within the applicable accounting period, when both
 	 * of them have been observed: the instant of its first user input and the instant of its most
-	 * recent observed Turn end, in epoch milliseconds.
+	 * recent observed Turn end or terminal subagent-result receipt, in epoch milliseconds.
 	 *
 	 * Absent is the ordinary state — a session that has not taken up input yet, one whose Turns have
 	 * not settled yet, and every record written before this field existed. An absent span is unknown

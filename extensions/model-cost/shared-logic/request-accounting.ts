@@ -84,13 +84,11 @@
  *
  * A session's Session span is the second thing this module owns, and it is a fact rather than a
  * difference: the instant of the first user input the harness attributed to the user
- * ({@link RequestAccounting.userInput}) and the instant of the latest Turn end observed
- * ({@link RequestAccounting.turnSettled}), kept by `session-span.ts` as what this instance saw plus
- * what the loaded document already carried. The end is a Turn's own instant, taken from the
- * delivery that settled it rather than from a clock read here, and every outcome delivers one: a
- * failed or cancelled Turn ends the session's span exactly as a completed one does, and a missing
- * usage reading, an unanchored request or a replaced period costs that Turn's consumption and never
- * its time. A Round's own end is no part of it — a Round that never ended costs the reading nothing.
+ * ({@link RequestAccounting.userInput}) and the latest observed Turn end or terminal subagent result
+ * receipt, kept by `session-span.ts` with the loaded document's facts. A Turn contributes its own
+ * settle instant, whatever its outcome or reported usage; a terminal result contributes the main
+ * session's receipt instant, not the child's runtime. Ends only advance, even when deliveries arrive
+ * out of order. A Round's own end is no part of it — a Round that never ended costs the reading nothing.
  * It never sums anything — no descendant's time, no other session's — and it is read through
  * {@link ConsumptionView.sessionSpan}. Like a name, an observed instant is not an accumulation: it
  * survives a snapshot that did not land and travels with the next one that does, and a period switch
@@ -200,11 +198,9 @@ export interface ConsumptionView {
 	runtime(sessionId: string): number | undefined;
 	/**
 	 * One actual session's Session span as this instance has it: the first user input it observed for
-	 * that session in this period, and the latest Turn end it observed, or `undefined` while either
-	 * of those facts is unknown.
-	 *
-	 * The end is a Turn's own: the instant the framework stated for the response that settled that
-	 * Turn, whatever its outcome, and never the clock read when this instance handled the delivery.
+	 * that session in this period, and its latest observed Turn end or terminal subagent result
+	 * receipt, or `undefined` while either fact is unknown. A Turn contributes its stated settle
+	 * instant; a terminal result contributes the main session's receipt-clock instant.
 	 *
 	 * It is the session's own time — what a display reads for the main session of the tree a target
 	 * belongs to — and never an inclusive one: no descendant's time is added to it. A reading that the
@@ -267,6 +263,8 @@ export interface RequestAccounting {
 	 * time and its consumption are different facts about the same Turn.
 	 */
 	turnSettled(delivery: TurnEndDelivery): void;
+	/** A terminal subagent result reached this main session; time only, with no billing or save. */
+	subagentResultReceived(sessionId: string, receivedAt: number, feedback: FeedbackTransport): void;
 	/** One actual session's Round opening: its own accumulation is snapshotted as that Round's base. */
 	roundStarted(delivery: RoundDelivery): void;
 	/**
@@ -370,8 +368,8 @@ export interface RequestAccountingInputs {
 	 */
 	readonly recordCommit?: (sessionId: string) => void;
 	/**
-	 * The instant source this instance's own clock readings are taken from: the Session span start,
-	 * which is the one span fact the harness publishes with no instant of its own.
+	 * The instant source for this accounting's user-input and activity observations. Terminal-result
+	 * receipt is timestamped by the runtime with the same clock before preparation can wait.
 	 *
 	 * Omitted means the process clock (`Date.now`). The framework delivers a user input without an
 	 * instant, so when the input was observed is the observer's own fact — which is exactly what the
@@ -569,8 +567,8 @@ export function createRequestAccounting(inputs: RequestAccountingInputs): Reques
 	const now = inputs.now ?? Date.now;
 	const ledgers = new Map<string, SessionLedger>();
 	/**
-	 * This instance's Session spans: the first user input it observed per session and the latest Turn
-	 * end, seeded from the record the document already carries. They belong to the accounting period
+	 * This instance's Session spans: the first user input and latest Turn end or terminal-result
+	 * receipt per session, seeded from the record the document already carries. They belong to the accounting period
 	 * the instance is accumulating in, which is why a period switch clears them with everything else.
 	 */
 	const spans = createSessionSpans({
@@ -1192,7 +1190,7 @@ export function createRequestAccounting(inputs: RequestAccountingInputs): Reques
 			const turn = delivery.turn;
 			const session = turn.session;
 			remember(session);
-			// The one instant a Session span's end moves on: the Turn's own end, taken from the instant
+			// A Turn advances its Session span with its own end, taken from the instant
 			// the framework's delivery carries — the moment that Turn's response settled — rather than
 			// from this extension's clock read here, so a Turn that really ended before the period now
 			// underneath this instance is not stamped with an instant of the period that replaced it.
@@ -1323,6 +1321,11 @@ export function createRequestAccounting(inputs: RequestAccountingInputs): Reques
 				return;
 			}
 			await save(delivery.session, ledger, delivery.feedback, delivery.closeOut);
+		},
+		subagentResultReceived(sessionId, receivedAt, feedback) {
+			if (disposed) return;
+			const at = instantOf(receivedAt, "子代理终止结果接收时刻", feedback);
+			if (at !== undefined && spans.ended(sessionId, at)) announce();
 		},
 		userInput(delivery) {
 			if (disposed) return;

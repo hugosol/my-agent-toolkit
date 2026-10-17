@@ -37,7 +37,7 @@ The aggregate usage and cost attributed to one agent session within the applicab
 _Avoid_: round totals, provider account balance, lifetime session totals
 
 **Session span（会话跨度）**:
-The wall-clock interval from a main session’s first user input in the applicable accounting period to its most recent observed Turn end, including idle gaps and interruptions before the same session is resumed within that period. It does not sum subagent time; a forked session starts with its own first new input, and an accounting reset starts a new span at the next new input rather than retaining historical input times.
+The wall-clock interval from a main session’s first user input in the applicable accounting period to the latest of its observed Turn ends and its receipt of a subagent terminal-result notification, including successful, failed and cancelled results, idle gaps and interruptions before the same session is resumed within that period. It does not sum subagent time or advance merely because a descendant ended without notifying the main session; a forked session starts with its own first new input, and an accounting reset starts a new span at the next new input rather than retaining historical input times.
 _Avoid_: execution time, model latency, accounting period duration, summed agent time
 
 **Subagent runtime（子代理运行耗时）**:

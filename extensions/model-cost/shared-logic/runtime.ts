@@ -262,6 +262,8 @@ export interface ModelCostRuntime {
 	 * After this instance's own cleanup nothing is read and nothing is adopted at all.
 	 */
 	synchronize(inputs?: { readonly feedback?: FeedbackTransport }): Promise<BaselineSyncOutcome>;
+	/** Record a terminal result received by a main session, using this process's receipt clock. */
+	subagentResultReceived(sessionId: string, feedback: FeedbackTransport): void | Promise<void>;
 }
 
 /**
@@ -307,9 +309,8 @@ export function createModelCostRuntime(inputs: ModelCostRuntimeInputs): ModelCos
 	// there by the readings that process delivered — so the sessions this instance can name and the
 	// readings it can show come from one record rather than two.
 	const sessionObservations = inputs.sessionObservations ?? new SessionObservations();
-	// The accounting's own clock is what timestamps a user input, the one Session span fact the
-	// harness publishes with no instant of its own. The span's other fact is a Turn's own settle
-	// instant, which the Turn's own end delivery carries.
+	// User input and terminal subagent-result receipt use this process's observation clock.
+	// A Turn end instead carries the response's own settle instant.
 	const accounting = createRequestAccounting({
 		data,
 		harness: inputs.harness,
@@ -876,6 +877,12 @@ export function createModelCostRuntime(inputs: ModelCostRuntimeInputs): ModelCos
 		},
 		initialize,
 		synchronize,
+		subagentResultReceived(sessionId, feedback) {
+			if (closed) return;
+			// Capture receipt before preparation can wait on disk; it is not the later handler time.
+			const receivedAt = (inputs.now ?? Date.now)();
+			return account(feedback, () => accounting.subagentResultReceived(sessionId, receivedAt, feedback));
+		},
 	};
 }
 

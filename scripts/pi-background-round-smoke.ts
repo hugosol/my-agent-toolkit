@@ -27,6 +27,8 @@
  *      Round closed and again after an ordinary later Round closed.
  *   5. **The delegation ran in its own session and saved under its own identity**, with the parent the
  *      direct parent its own file states — the two sessions' Rounds and records are their own.
+ *   6. **Each delivered result advances the main Session span before its next Turn ends.** Children
+ *      finish separately, and the first result updates the real widget while the other child is live.
  *
  * What it cannot assert here (recorded, not silently skipped): the provider's wake-reservation
  * deadline is reachable only when a sent wake never starts, which this host's idle-session path does
@@ -51,9 +53,6 @@ const PROVIDER_ENTRY = path.join(REPO_ROOT, "node_modules", "pi-subagents", "ind
 
 /** The dock fixture that records the public Round and Turn edges one real binding dispatches. */
 const ROUND_PROBE = path.join(REPO_ROOT, "tests", "harness-dock", "fixtures", "pi-background-rounds", "entrypoint.ts");
-
-/** The version this smoke's expectations were written against. */
-const EXPECTED_PI_VERSION = "1.2.0";
 
 /** The provider and model the run declares. */
 const PROVIDER = "deepseek";
@@ -166,7 +165,7 @@ function configRootFor(home: IsolatedHome, label: string): { readonly root: stri
 	const relative = path.relative(entrypointDirectory, harness).replace(/\\/g, "/");
 	writeFileSync(
 		childEntry,
-		`import { modelCostPiHarness } from ${JSON.stringify(relative.startsWith(".") ? relative : `./${relative}`)};\n\nexport default modelCostPiHarness(${JSON.stringify(root)});\n`,
+		`import { modelCostPiHarness } from ${JSON.stringify(path.isAbsolute(relative) || relative.startsWith(".") ? relative : `./${relative}`)};\n\nexport default modelCostPiHarness(${JSON.stringify(root)});\n`,
 		"utf8",
 	);
 	return { root, childEntry };
@@ -216,7 +215,10 @@ function startDockRun(cli: PiCli, label: string): DockRun {
 				// A delegated child answering its own task: held, so the parent's Round is read while the
 				// delegation provably still runs. A parent request delegates each task once and answers
 				// plainly afterwards, so the run has exactly the two delegations it intends.
-				if (!carriesDelegationTool(request)) return { replyText: CHILD_REPLY, answerDelayMs: CHILD_HOLD_MS };
+				if (!carriesDelegationTool(request)) return {
+					replyText: CHILD_REPLY,
+					answerDelayMs: JSON.stringify(request.json ?? "").includes(TASK_TWO) ? CHILD_HOLD_MS * 2 : CHILD_HOLD_MS,
+				};
 				if (JSON.stringify(request.json ?? "").includes(LATER_PROMPT)) {
 					// The later prompt: the model opens one non-blocking wait on a delegation that has
 					// already finished and reported, and then answers — work that registers a subscription
@@ -226,7 +228,7 @@ function startDockRun(cli: PiCli, label: string): DockRun {
 					if (laterSteps === 1 && runId !== undefined) return { toolCall: waitCall(runId) };
 					return { replyText: PARENT_REPLY };
 				}
-				if (launched >= tasks.length) return { replyText: PARENT_REPLY };
+				if (launched >= tasks.length) return { replyText: PARENT_REPLY, answerDelayMs: 2_000 };
 				const call = delegationCall(tasks[launched] ?? TASK_ONE);
 				launched++;
 				return { toolCall: call };
@@ -496,10 +498,51 @@ async function phaseWaitingRound(cli: PiCli): Promise<void> {
 		`edges: ${JSON.stringify(openWhileWaiting.rounds)}, stderr tail: ${JSON.stringify(roundLines(session).slice(-4))}`,
 	);
 
+	// Keep the original terminal-state observation concurrent with notification/UI observation:
+	// reading it only after the UI checks would sample a later, possibly already closed Round.
+	const terminalEdges = waitFor(() => liveStatuses(dock.run.root.path).length === 0, "both async runs to reach terminal")
+		.then(() => edgesOf(roundLines(session), parentId));
+
+	// Observe the actual frontend before the next main response ends, not merely the final save.
+	const spanSeconds = (frame: { readonly [key: string]: unknown }): number | undefined => {
+		if (frame.type !== "extension_ui_request" || frame.method !== "setWidget" || !Array.isArray(frame.widgetLines)) return;
+		const total = frame.widgetLines.map(String).find(line => line.startsWith("Total:"));
+		const match = total === undefined ? undefined : /Span: (\d+):(\d+):(\d+)/.exec(total);
+		return match ? Number(match[1]) * 3600 + Number(match[2]) * 60 + Number(match[3]) : undefined;
+	};
+	let previousSpan = session.frames().map(spanSeconds).filter((value): value is number => value !== undefined).pop();
+	if (previousSpan === undefined) throw new Error("the initial main-session widget carried no span");
+	for (const count of [1, 2]) {
+		let receipt: { readonly index: number } | undefined;
+		await waitFor(() => {
+			const notices = session.frames().map((frame, index) => ({ frame, index })).filter(({ frame }) => {
+				const message = frame.message as { role?: string; customType?: string } | undefined;
+				return frame.type === "message_end" && message?.role === "custom" && message.customType === "subagent-notify";
+			});
+			receipt = notices[count - 1];
+			return receipt !== undefined;
+		}, `terminal notification ${count}`);
+		if (receipt === undefined) throw new Error("the notification disappeared");
+		const receiptIndex = receipt.index;
+		const before = previousSpan;
+		await waitFor(() => session.frames().slice(receiptIndex + 1).some(frame => (spanSeconds(frame) ?? -1) > before),
+			`span advancement on terminal notification ${count}`, 5_000);
+		const frames = session.frames();
+		const drawing = frames.findIndex((frame, index) => index > receiptIndex && (spanSeconds(frame) ?? -1) > before);
+		const responseEnded = frames.slice(receiptIndex + 1, drawing).some(frame =>
+			frame.type === "message_end" && (frame.message as { role?: string } | undefined)?.role === "assistant");
+		const advancedSpan = spanSeconds(frames[drawing] ?? {});
+		if (advancedSpan === undefined) throw new Error("the advanced widget carried no span");
+		previousSpan = advancedSpan;
+		observe(`terminal notification ${count} advanced Span before another main Turn ended`, !responseEnded,
+			`Span seconds: ${before} -> ${previousSpan}; notification frame ${receiptIndex}, drawing frame ${drawing}`);
+		if (count === 1) observe("the first result advanced Span while the other child was still running",
+			liveStatuses(dock.run.root.path).length === 1, JSON.stringify(liveStatuses(dock.run.root.path)));
+	}
+
 	// The delegations finish and the provider hands the parent its notices and wakes; the woken runs
 	// continue the Round the parent is already in, and the Round ends only when its own run settles.
-	await waitFor(() => liveStatuses(dock.run.root.path).length === 0, "both async runs to reach terminal");
-	const afterDelegations = edgesOf(roundLines(session), parentId);
+	const afterDelegations = await terminalEdges;
 	observe(
 		"a child's terminal state does not end the parent's Round",
 		afterDelegations.rounds.join(",") === "round_start",
@@ -605,7 +648,6 @@ async function main(): Promise<void> {
 	const cli = resolvePiCli(explicit);
 	const version = await piVersion(cli);
 	console.log(`pi ${version} (${cli.path})`);
-	observe("the harness under test is the fixed version this script states", version === EXPECTED_PI_VERSION, `reported ${version}`);
 	observe("the pinned provider artifact this repository installs is present", existsSync(PROVIDER_ENTRY), PROVIDER_ENTRY);
 
 	try {

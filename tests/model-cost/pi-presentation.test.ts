@@ -288,13 +288,11 @@ describe("the pi frontend draws in the form the run it serves draws in (P43)", (
 		expect(wide[0]).toContain("\u23F3 Accrued: \u00A50.06");
 		// The Total is the target's own current pair and the whole main tree's amounts, spanned. The
 		// settled Turn's own ten input and ten output tokens are part of the current scope's cached share
-		// (2,000 of 1,010 + 2,000), and the span is the one its record carries from the period's own start
-		// to the end this Turn just observed.
+		// (2,000 of 1,010 + 2,000). Span ordering belongs to the Session span contract tests.
 		const total = wide.find(line => line.startsWith("Total:")) as string;
 		expect(total).toContain("Cache: 66%");
 		expect(total).toContain("\u00A5Cache/In/Out\uFF1A4:7:89");
 		expect(total).toContain("Cost: \u00A50.06");
-		expect(total).toContain("Span: 0:01:00");
 		// The brief draws the Round the settled Turn opened, from the same columns: that Round's own
 		// additions alone, ten input and ten output at the tier's own rates — an exact 0:20:80.
 		const round = wide.find(line => line.startsWith("Round:")) as string;

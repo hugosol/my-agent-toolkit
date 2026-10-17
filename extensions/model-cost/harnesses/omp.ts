@@ -179,5 +179,35 @@ export default function modelCost(pi: OmpExtensionApi): void {
 	// framework's now: the adapter reads the session's own context where the host moves one and the
 	// framework's own observation source holds the result, so the detail tree reads a subagent's
 	// context from the common interface with no native subscription of this extension's at all.
-	if (bound.bound && runtime !== undefined) releaseFrontend = attachModelCostWidget(pi, runtime, uiBoundaryTimer, MODEL_COST_WIDGET_DRAWING);
+	if (bound.bound && runtime !== undefined) {
+		const releaseWidget = attachModelCostWidget(pi, runtime, uiBoundaryTimer, MODEL_COST_WIDGET_DRAWING);
+		const releaseResults = observeOmpSubagentResults(pi, runtime);
+		releaseFrontend = () => { releaseResults(); releaseWidget(); };
+	}
+}
+
+/** Observe terminal task results actually delivered to a main session, never global child activity. */
+export function observeOmpSubagentResults(pi: OmpExtensionApi, runtime: ModelCostRuntime): () => void {
+	let active = true;
+	pi.on("message_end", async (event, ctx) => {
+		if (!active || ctx.agent.kind !== "main") return;
+		// These custom-message fields belong to this extension's native integration, not the
+		// framework's assistant-response accounting surface.
+		const message = event.message as {
+			readonly role?: string;
+			readonly customType?: string;
+			readonly details?: { readonly jobs?: readonly { readonly type?: string }[] };
+		};
+		if (message.role !== "custom" || message.customType !== "async-result") return;
+		// async-result is the terminal delivery. Its task entries need no status metadata;
+		// the supported host can omit that field even for a successful result.
+		if (!(message.details?.jobs ?? []).some(job => job.type === "task")) return;
+		await runtime.subagentResultReceived(ctx.sessionManager.getSessionId(), {
+			notify: (level, text) => {
+				if (ctx.hasUI) ctx.ui.notify(text, level);
+				else process.stderr.write(`${text}\n`);
+			},
+		});
+	});
+	return () => { active = false; };
 }
