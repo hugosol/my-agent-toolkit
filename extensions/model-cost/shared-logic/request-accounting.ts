@@ -97,6 +97,7 @@
  * clears it with everything else measured in the period it is closing.
  */
 import type {
+	CloseOutWait,
 	FeedbackTransport,
 	RoundDelivery,
 	SessionFacts,
@@ -952,8 +953,20 @@ export function createRequestAccounting(inputs: RequestAccountingInputs): Reques
 	 * instance did not have to discard keep their own accumulations. When the period underneath the
 	 * instance was replaced, the affected state is everything it accumulated: nothing from a period
 	 * a reset already closed may be published into the new one.
+	 *
+	 * `closeOut` is the wait the framework's close-out handed this save, when the Round that ended is
+	 * the one a disposing host is waiting for: the commit then spends what is *left* of it rather
+	 * than the fifteen seconds an unbothered save would take, so the host is never held past the
+	 * position it reported from. What that bounds is the waiting alone — an update that has begun runs
+	 * to its real outcome whatever the deadline does, which is why a save that concludes after the
+	 * deadline reports the outcome it really got and not a cancellation this extension cannot claim.
 	 */
-	const save = async (session: SessionFacts, ledger: SessionLedger, feedback: FeedbackTransport): Promise<void> => {
+	const save = async (
+		session: SessionFacts,
+		ledger: SessionLedger,
+		feedback: FeedbackTransport,
+		closeOut?: CloseOutWait,
+	): Promise<void> => {
 		const facts = identityOf(session.sessionId) ?? {
 			sessionId: session.sessionId,
 			name: session.sessionId,
@@ -1003,7 +1016,15 @@ export function createRequestAccounting(inputs: RequestAccountingInputs): Reques
 		savesPublishing += 1;
 		let outcome: SessionCommit;
 		try {
-			outcome = await storage.commit(harness, record);
+			// The wait this commit may spend: what is left of the close-out that owes it, never more, and
+			// at least the one millisecond the framework's update declares as a wait at all — a save
+			// reached at the very end of the budget still attempts its commit at once rather than a
+			// moment later, which is the difference between a record that lands and one that is refused.
+			outcome = await storage.commit(
+				harness,
+				record,
+				closeOut === undefined ? {} : { timeoutMs: Math.max(1, closeOut.remaining()) },
+			);
 		} finally {
 			savesPublishing -= 1;
 		}
@@ -1021,9 +1042,19 @@ export function createRequestAccounting(inputs: RequestAccountingInputs): Reques
 			const recovery = samePeriod
 				? "该 Session 的累计与版本已按磁盘当前有效快照重新初始化"
 				: "磁盘属于另一个周期，本实例已按磁盘当前有效快照重新初始化";
+			// A wait the close-out ended is reported as what it is: the budget it was given is what ran
+			// out, so the deadline the host's own position stated is the reason this save was refused —
+			// and the consumption really was not written. A refusal for any other reason inside a
+			// close-out (an I/O failure, say) names its own kind alone, because nothing there ran out of
+			// time.
+			const failure = outcome.kind === "failed" ? outcome.failure : undefined;
+			const because =
+				closeOut !== undefined && (failure === "timeout" || failure === "cancelled")
+					? `${failure}：会话处置收口等待 ${closeOut.budgetMs}ms 已到`
+					: outcome.kind;
 			feedback.notify(
 				"error",
-				`本次消费累计没有写入「${storage.consumptionFile}」（${outcome.kind}）；本次未保存的消费已丢弃，${recovery}。`,
+				`本次消费累计没有写入「${storage.consumptionFile}」（${because}）；本次未保存的消费已丢弃，${recovery}。`,
 			);
 		}
 		discard(samePeriod ? session.sessionId : undefined);
@@ -1256,7 +1287,7 @@ export function createRequestAccounting(inputs: RequestAccountingInputs): Reques
 			) {
 				return;
 			}
-			await save(delivery.session, ledger, delivery.feedback);
+			await save(delivery.session, ledger, delivery.feedback, delivery.closeOut);
 		},
 		userInput(delivery) {
 			if (disposed) return;

@@ -1,0 +1,21 @@
+bun test v1.4.2 (744846f84)
+modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions id 'model-cost' is duplicated.
+modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions id 'model-cost' is duplicated.
+modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions id 'model-cost' is duplicated.
+modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions id 'model-cost' is duplicated.
+modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions id 'model-cost' is duplicated.
+modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions id 'model-cost' is duplicated.
+modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions id 'model-cost' is duplicated.
+modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions id 'model-cost' is duplicated.
+modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions id 'model-cost' is duplicated.
+modelCost: this harness reports no idle fact (isIdle); the framework answers nothing rather than inventing one
+modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions id 'model-cost' is duplicated.
+modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions id 'model-cost' is duplicated.
+modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions id 'model-cost' is duplicated.
+modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions id 'model-cost' is duplicated.
+modelCost: model-cost: a model response settled with no Turn in flight for its session; no start is fabricated and it is dropped
+
+ 480 pass
+ 0 fail
+ 2626 expect() calls
+Ran 480 tests across 45 files. [16.14s]

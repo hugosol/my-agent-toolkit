@@ -38,7 +38,13 @@ what a real TUI draws are human-only, and nothing in this repository claims eith
   observation of that session is marked incomplete (the record's `runtimeGap`) and the operator is
   told, because an activity whose own end was never observed is not a duration this extension
   measured. A session the host merely left — a switch, a resume, a fork — is no disposal and commits
-  nothing for it.
+  nothing for it. That commit spends what is *left* of the disposal's own close-out wait rather than a
+  fifteen-second budget of its own, so the host is never held past the position it reported from: a
+  wait the deadline gives up is reported as consumption that was **not written** — under the deadline
+  that ended it — and nothing of it is on disk. An update that had already begun is not stopped by that
+  deadline, and its own outcome (and the document it publishes) is what the extension then reports; the
+  deadline itself claims no cancellation and no unwritten document. Nothing here waits for the owner's
+  process: a session whose owner is not served by this one commits and closes just the same.
 - `/budget detail` is offered to an entry whose subagent integration took — the OMP entry always is.
   An entry that settled as the no-subagent mode has no descendants of its own to list, so its
   `/budget detail` answers that it was not executed and leaves the preference where it was; every
