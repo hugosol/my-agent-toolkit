@@ -33,8 +33,8 @@
  * with the action's own name.
  */
 import type { ActionDelivery } from "../../../framework/core/protocol";
-import { DEEPSEEK_PROVIDER } from "./provider-balance";
-import type { ConsumptionStore } from "./consumption-store";
+import { DEEPSEEK_PROVIDER } from "./provider-account/provider-balance";
+import type { ConsumptionStore } from "./storage/consumption-store";
 
 /** The two period actions, as the declared command names them. */
 type PeriodAction = "holiday" | "clear";

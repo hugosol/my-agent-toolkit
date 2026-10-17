@@ -32,8 +32,8 @@ import type {
 	ConsumptionDocument,
 	OwnConsumption,
 	SessionRecord,
-} from "../../extensions/model-cost/shared-logic/consumption-document";
-import type { ModelPricingData } from "../../extensions/model-cost/shared-logic/model-data";
+} from "../../extensions/model-cost/shared-logic/accounting/consumption-document";
+import type { ModelPricingData } from "../../extensions/model-cost/shared-logic/pricing/model-data";
 import { type ModelCostRuntime, createModelCostRuntime } from "../../extensions/model-cost/shared-logic/runtime";
 import type { OwnerReference, SessionFacts, TurnSignal, TurnUsage } from "../../framework/core/protocol";
 import { type PortDouble, type RoundBoundary, portDouble } from "../framework/support/harness-port-double";

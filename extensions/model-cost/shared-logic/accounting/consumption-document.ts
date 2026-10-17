@@ -41,7 +41,7 @@
  * whatever order the keys happened to be written in — never as JSON text, and a conflict is never
  * resolved by adding, taking a maximum or letting the last writer win.
  */
-import { describeValue } from "../../../framework/core/config";
+import { describeValue } from "../../../../framework/core/config";
 
 /** The document format this extension reads and writes; an ordinary save never steps it. */
 export const CONSUMPTION_SCHEMA_VERSION = 1;

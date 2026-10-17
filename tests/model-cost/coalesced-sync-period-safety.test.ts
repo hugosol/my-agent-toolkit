@@ -23,8 +23,8 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, 
 import { tmpdir } from "node:os";
 import * as path from "node:path";
 import { MODEL_COST } from "../../extensions/model-cost/definition";
-import type { ConsumptionDocument, OwnConsumption, SessionRecord } from "../../extensions/model-cost/shared-logic/consumption-document";
-import type { ModelPricingData } from "../../extensions/model-cost/shared-logic/model-data";
+import type { ConsumptionDocument, OwnConsumption, SessionRecord } from "../../extensions/model-cost/shared-logic/accounting/consumption-document";
+import type { ModelPricingData } from "../../extensions/model-cost/shared-logic/pricing/model-data";
 import { type ModelCostRuntime, createModelCostRuntime } from "../../extensions/model-cost/shared-logic/runtime";
 import type {
 	ObservedSession,

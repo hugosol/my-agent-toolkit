@@ -18,7 +18,7 @@
 import { randomUUID } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import type { ConsumptionDocument } from "./consumption-document";
+import type { ConsumptionDocument } from "../accounting/consumption-document";
 
 /** The directory inside the storage root every archive of this extension is written into. */
 const ARCHIVE_DIRECTORY = "archives";

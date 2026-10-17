@@ -35,8 +35,8 @@ import * as path from "node:path";
 import type { OmpExtensionApi, OmpSessionContext } from "../../framework/adapters/omp";
 import { MODEL_COST } from "../../extensions/model-cost/definition";
 import { MODEL_COST_WIDGET_KEY, attachModelCostWidget, textColumns } from "../../extensions/model-cost/harnesses/omp/widget";
-import type { ConsumptionDocument, SessionRecord } from "../../extensions/model-cost/shared-logic/consumption-document";
-import type { ModelPricingData } from "../../extensions/model-cost/shared-logic/model-data";
+import type { ConsumptionDocument, SessionRecord } from "../../extensions/model-cost/shared-logic/accounting/consumption-document";
+import type { ModelPricingData } from "../../extensions/model-cost/shared-logic/pricing/model-data";
 import { totalColumns, totalText } from "../../extensions/model-cost/shared-logic/presentation/display";
 import { type ModelCostRuntime, createModelCostRuntime } from "../../extensions/model-cost/shared-logic/runtime";
 import type {

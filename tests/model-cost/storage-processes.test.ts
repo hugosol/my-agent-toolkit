@@ -29,7 +29,7 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
-import type { ConsumptionDocument, SessionRecord } from "../../extensions/model-cost/shared-logic/consumption-document";
+import type { ConsumptionDocument, SessionRecord } from "../../extensions/model-cost/shared-logic/accounting/consumption-document";
 import type { ChildPlan, ChildResult } from "./support/store-child";
 import { FS_INSTRUMENT, runStoreChild } from "./support/store-child-runner";
 

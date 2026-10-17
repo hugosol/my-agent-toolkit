@@ -44,8 +44,8 @@ import {
 } from "../../extensions/model-cost/harnesses/pi";
 import { MODEL_COST_WIDGET_KEY, attachModelCostWidget } from "../../extensions/model-cost/harnesses/pi/widget";
 import type { BoundaryTimer } from "../../extensions/model-cost/harnesses/boundary-timer";
-import type { ConsumptionDocument, SessionRecord } from "../../extensions/model-cost/shared-logic/consumption-document";
-import type { ModelPricingData } from "../../extensions/model-cost/shared-logic/model-data";
+import type { ConsumptionDocument, SessionRecord } from "../../extensions/model-cost/shared-logic/accounting/consumption-document";
+import type { ModelPricingData } from "../../extensions/model-cost/shared-logic/pricing/model-data";
 import { createModelCostRuntime, type ModelCostRuntime } from "../../extensions/model-cost/shared-logic/runtime";
 import type { ProviderAccess, ProviderAccessFacts } from "../../framework/core/protocol";
 import type { HttpRequestOptions } from "../../framework/modules/http";

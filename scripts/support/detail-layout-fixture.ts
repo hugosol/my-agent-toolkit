@@ -23,8 +23,8 @@ import {
 	attachModelCostWidget,
 	textColumns,
 } from "../../extensions/model-cost/harnesses/omp/widget";
-import type { ConsumptionDocument } from "../../extensions/model-cost/shared-logic/consumption-document";
-import { MODEL_PRICING_DATA } from "../../extensions/model-cost/shared-logic/model-data";
+import type { ConsumptionDocument } from "../../extensions/model-cost/shared-logic/accounting/consumption-document";
+import { MODEL_PRICING_DATA } from "../../extensions/model-cost/shared-logic/pricing/model-data";
 import type { ModelCostRuntime } from "../../extensions/model-cost/shared-logic/runtime";
 import { createModelCostRuntime } from "../../extensions/model-cost/shared-logic/runtime";
 import { portDouble } from "../../tests/framework/support/harness-port-double";

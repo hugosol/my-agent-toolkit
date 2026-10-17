@@ -17,7 +17,7 @@ import { tmpdir } from "node:os";
 import * as path from "node:path";
 import type { PiExtensionApi, PiExtensionContext } from "../../framework/adapters/pi";
 import { MODEL_COST_WIDGET_KEY, attachModelCostWidget } from "../../extensions/model-cost/harnesses/pi/widget";
-import type { ModelPricingData } from "../../extensions/model-cost/shared-logic/model-data";
+import type { ModelPricingData } from "../../extensions/model-cost/shared-logic/pricing/model-data";
 import { createModelCostRuntime } from "../../extensions/model-cost/shared-logic/runtime";
 import { uiBoundaryTimerOf } from "./support/ui-timer";
 

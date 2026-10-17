@@ -52,7 +52,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { MODEL_COST } from "../../../../extensions/model-cost/definition";
 import { MODEL_COST_HARNESS } from "../../../../extensions/model-cost/harnesses/pi";
-import { CODEX_USAGE_URL } from "../../../../extensions/model-cost/shared-logic/codex-quota";
+import { CODEX_USAGE_URL } from "../../../../extensions/model-cost/shared-logic/provider-account/codex-quota";
 import { type ModelCostRuntime, createModelCostRuntime } from "../../../../extensions/model-cost/shared-logic/runtime";
 import { type PiExtensionApi, piAdapter } from "../../../../framework/adapters/pi";
 import { createHttpModule, type HttpRequestOptions } from "../../../../framework/modules/http";

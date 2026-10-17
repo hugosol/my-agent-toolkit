@@ -17,7 +17,7 @@
 import { describe, expect, test } from "bun:test";
 import * as path from "node:path";
 import { MODEL_COST } from "../../extensions/model-cost/definition";
-import { resolveStorageRoot } from "../../extensions/model-cost/shared-logic/storage-root";
+import { resolveStorageRoot } from "../../extensions/model-cost/shared-logic/storage/storage-root";
 import { readConfig } from "../../framework/core/config";
 import { REPO_ROOT } from "../harness-dock/baseline";
 

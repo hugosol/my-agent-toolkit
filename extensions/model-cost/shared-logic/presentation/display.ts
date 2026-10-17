@@ -67,22 +67,22 @@
  *   nothing yet it reads `estimating…` rather than looking like an exhausted allowance.
  */
 import type { CatalogPrice } from "../../../../framework/core/protocol";
-import type { CodexEstimate } from "../codex-estimate";
-import { remainingBudget } from "../codex-estimate";
+import type { CodexEstimate } from "../provider-account/codex-estimate";
+import { remainingBudget } from "../provider-account/codex-estimate";
 import type {
 	CodexQuota,
 	CodexQuotaFailure,
 	CodexQuotaWindow,
 	CodexResetState,
 	CodexWindowKind,
-} from "../codex-quota";
-import { CODEX_WINDOW_DURATION_MS, resetStateOf } from "../codex-quota";
-import type { OwnConsumption, SessionRecord, TokenBuckets } from "../consumption-document";
-import { type ModelPricingData, classify } from "../model-data";
-import type { ProviderBalance, ProviderBalanceResult } from "../provider-balance";
-import { type Season, nextSeasonChange, seasonAt } from "../request-price";
-import type { ConsumptionView, SessionIdentity } from "../request-accounting";
-import type { SessionSpanReading } from "../session-span";
+} from "../provider-account/codex-quota";
+import { CODEX_WINDOW_DURATION_MS, resetStateOf } from "../provider-account/codex-quota";
+import type { OwnConsumption, SessionRecord, TokenBuckets } from "../accounting/consumption-document";
+import { type ModelPricingData, classify } from "../pricing/model-data";
+import type { ProviderBalance, ProviderBalanceResult } from "../provider-account/provider-balance";
+import { type Season, nextSeasonChange, seasonAt } from "../pricing/request-price";
+import type { ConsumptionView, SessionIdentity } from "../accounting/request-accounting";
+import type { SessionSpanReading } from "../accounting/session-span";
 import type { DisplayForm, DisplayPreference } from "./display-preference";
 import type { SessionContextReading } from "./session-context";
 import type { SessionActivityReading } from "./session-activity";

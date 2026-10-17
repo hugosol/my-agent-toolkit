@@ -1,6 +1,6 @@
 # model-cost 的模型与价格数据：来源与维护
 
-本扩展的模型覆盖、谷价与峰价系数只存在于一个地方：[`shared-logic/model-data.ts`](../shared-logic/model-data.ts)（`MODEL_PRICING_DATA`）。本文件记录这些取值从哪来、怎么更新、以及更新时还有哪些东西必须一起改。它不重复价格表本身。
+本扩展的模型覆盖、谷价与峰价系数只存在于一个地方：[`shared-logic/pricing/model-data.ts`](../shared-logic/pricing/model-data.ts)（`MODEL_PRICING_DATA`）。本文件记录这些取值从哪来、怎么更新、以及更新时还有哪些东西必须一起改。它不重复价格表本身。
 
 维护是**显式**的：数据随扩展源码更新，下一个进程用更新后的数据。运行期不查 `/models`、不抓价、不热更新、不自动接受未来模型，也不读取用户价格配置。已经锚过的请求与已经累计的金额不因数据更新而重算、补算或删除。
 

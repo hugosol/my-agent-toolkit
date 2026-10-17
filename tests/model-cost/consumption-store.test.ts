@@ -13,8 +13,8 @@ import { afterEach, describe, expect, test } from "bun:test";
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
-import type { ConsumptionDocument, SessionRecord } from "../../extensions/model-cost/shared-logic/consumption-document";
-import { ConsumptionStore } from "../../extensions/model-cost/shared-logic/consumption-store";
+import type { ConsumptionDocument, SessionRecord } from "../../extensions/model-cost/shared-logic/accounting/consumption-document";
+import { ConsumptionStore } from "../../extensions/model-cost/shared-logic/storage/consumption-store";
 
 /** Every root this file created, removed after each case. */
 const roots: string[] = [];

@@ -31,8 +31,8 @@ import { tmpdir } from "node:os";
 import * as path from "node:path";
 import { setImmediate as immediate } from "node:timers/promises";
 import { MODEL_COST } from "../../extensions/model-cost/definition";
-import type { CodexPairedReading } from "../../extensions/model-cost/shared-logic/codex-estimate";
-import type { ModelPricingData } from "../../extensions/model-cost/shared-logic/model-data";
+import type { CodexPairedReading } from "../../extensions/model-cost/shared-logic/provider-account/codex-estimate";
+import type { ModelPricingData } from "../../extensions/model-cost/shared-logic/pricing/model-data";
 import { type ModelCostRuntime, createModelCostRuntime } from "../../extensions/model-cost/shared-logic/runtime";
 import type {
 	ProviderAccess,

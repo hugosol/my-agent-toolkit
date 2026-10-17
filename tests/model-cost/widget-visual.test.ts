@@ -37,9 +37,9 @@ import type { OmpExtensionApi, OmpSessionContext } from "../../framework/adapter
 import { MODEL_COST } from "../../extensions/model-cost/definition";
 import type { WidgetDrawing, WidgetTheme } from "../../extensions/model-cost/harnesses/omp/widget";
 import { MODEL_COST_WIDGET_KEY, attachModelCostWidget } from "../../extensions/model-cost/harnesses/omp/widget";
-import { CODEX_USAGE_URL } from "../../extensions/model-cost/shared-logic/codex-quota";
-import type { ConsumptionDocument } from "../../extensions/model-cost/shared-logic/consumption-document";
-import type { ModelPricingData } from "../../extensions/model-cost/shared-logic/model-data";
+import { CODEX_USAGE_URL } from "../../extensions/model-cost/shared-logic/provider-account/codex-quota";
+import type { ConsumptionDocument } from "../../extensions/model-cost/shared-logic/accounting/consumption-document";
+import type { ModelPricingData } from "../../extensions/model-cost/shared-logic/pricing/model-data";
 import { type ModelCostRuntime, createModelCostRuntime } from "../../extensions/model-cost/shared-logic/runtime";
 import type {
 	OwnerReference,

@@ -23,7 +23,7 @@ import { setImmediate as immediate } from "node:timers/promises";
 import { MODEL_COST } from "../../extensions/model-cost/definition";
 import type { DisplayLine } from "../../extensions/model-cost/shared-logic/presentation/display";
 import { lineText } from "../../extensions/model-cost/shared-logic/presentation/display";
-import type { ModelPricingData } from "../../extensions/model-cost/shared-logic/model-data";
+import type { ModelPricingData } from "../../extensions/model-cost/shared-logic/pricing/model-data";
 import { type ModelCostRuntime, createModelCostRuntime } from "../../extensions/model-cost/shared-logic/runtime";
 import type { ProviderAccess, ProviderAccessFacts, SessionFacts, TurnOutcome, TurnSignal } from "../../framework/core/protocol";
 import type { HttpRequestOptions } from "../../framework/modules/http";

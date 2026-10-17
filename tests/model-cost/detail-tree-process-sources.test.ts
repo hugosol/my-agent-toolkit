@@ -23,9 +23,9 @@ import * as path from "node:path";
 import type { OmpSessionContext } from "../../framework/adapters/omp";
 import { MODEL_COST } from "../../extensions/model-cost/definition";
 import { MODEL_COST_WIDGET_KEY, attachModelCostWidget } from "../../extensions/model-cost/harnesses/omp/widget";
-import type { ConsumptionDocument } from "../../extensions/model-cost/shared-logic/consumption-document";
+import type { ConsumptionDocument } from "../../extensions/model-cost/shared-logic/accounting/consumption-document";
 import { DEEPSEEK_DISPLAY_BUDGET } from "../../extensions/model-cost/shared-logic/presentation/display";
-import type { ModelPricingData } from "../../extensions/model-cost/shared-logic/model-data";
+import type { ModelPricingData } from "../../extensions/model-cost/shared-logic/pricing/model-data";
 import type { ModelCostRuntime } from "../../extensions/model-cost/shared-logic/runtime";
 import { createModelCostRuntime } from "../../extensions/model-cost/shared-logic/runtime";
 import type {

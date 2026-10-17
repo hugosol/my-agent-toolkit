@@ -36,7 +36,7 @@
  */
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { updateFile } from "../../../framework/modules/files";
+import { updateFile } from "../../../../framework/modules/files";
 import {
 	BASELINE_FUTURE_TOLERANCE_MS,
 	type CodexBaseline,

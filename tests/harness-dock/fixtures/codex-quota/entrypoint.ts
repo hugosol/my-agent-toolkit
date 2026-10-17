@@ -46,7 +46,7 @@ import { homedir, tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { MODEL_COST } from "../../../../extensions/model-cost/definition";
-import { CODEX_USAGE_URL } from "../../../../extensions/model-cost/shared-logic/codex-quota";
+import { CODEX_USAGE_URL } from "../../../../extensions/model-cost/shared-logic/provider-account/codex-quota";
 import { type ModelCostRuntime, createModelCostRuntime } from "../../../../extensions/model-cost/shared-logic/runtime";
 import { type OmpExtensionApi, ompAdapter } from "../../../../framework/adapters/omp";
 import { createHttpModule, type HttpRequestOptions } from "../../../../framework/modules/http";

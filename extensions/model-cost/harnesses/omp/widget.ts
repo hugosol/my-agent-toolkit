@@ -67,7 +67,7 @@ import {
 	seasonMark,
 	totalColumns,
 } from "../../shared-logic/presentation/display";
-import type { ProviderBalanceResult } from "../../shared-logic/provider-balance";
+import type { ProviderBalanceResult } from "../../shared-logic/provider-account/provider-balance";
 import type { ModelCostRuntime } from "../../shared-logic/runtime";
 import type { BoundaryTimer } from "../boundary-timer";
 

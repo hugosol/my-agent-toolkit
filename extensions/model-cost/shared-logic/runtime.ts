@@ -54,8 +54,8 @@ import type { ExtensionImplementation, InitializationDelivery } from "../../../f
 import type { CatalogPriceSource, FeedbackTransport, ProviderAccess, SemanticEventHandlers, SubagentIntegration } from "../../../framework/core/protocol";
 import { SessionObservations } from "../../../framework/core/observations";
 import type { HttpRequestOptions } from "../../../framework/modules/http";
-import { DEFAULT_CODEX_QUOTA_TTL_MS, type CodexQuotaFailure, createCodexQuota } from "./codex-quota";
-import { CodexEstimateStore } from "./codex-estimate-store";
+import { DEFAULT_CODEX_QUOTA_TTL_MS, type CodexQuotaFailure, createCodexQuota } from "./provider-account/codex-quota";
+import { CodexEstimateStore } from "./provider-account/codex-estimate-store";
 import {
 	type BaselineLoad,
 	type BaselineSync,
@@ -63,17 +63,17 @@ import {
 	timeFactFaultNotice,
 	unreadableBaselineNotice,
 	unusableBaselineNotice,
-} from "./consumption-store";
-import { MODEL_PRICING_DATA, type ModelPricingData, dataCatalog } from "./model-data";
+} from "./storage/consumption-store";
+import { MODEL_PRICING_DATA, type ModelPricingData, dataCatalog } from "./pricing/model-data";
 import { createPeriodSwitch } from "./period-switch";
 import { createCoalescedRedraw } from "./presentation/coalesced-redraw";
 import { type ConsumptionPresenter, createPresentation } from "./presentation/display";
 import { createDisplayPreference, displayFormNotice, displayFormUnavailableNotice } from "./presentation/display-preference";
 import { SessionActivityRegistry } from "./presentation/session-activity";
 import type { SessionContextReading } from "./presentation/session-context";
-import { DEFAULT_BALANCE_TTL_MS, type ProviderBalanceFailure, createProviderBalance } from "./provider-balance";
-import { type ConsumptionView, createRequestAccounting } from "./request-accounting";
-import { resolveStorageRoot } from "./storage-root";
+import { DEFAULT_BALANCE_TTL_MS, type ProviderBalanceFailure, createProviderBalance } from "./provider-account/provider-balance";
+import { type ConsumptionView, createRequestAccounting } from "./accounting/request-accounting";
+import { resolveStorageRoot } from "./storage/storage-root";
 
 /**
  * What one read-only synchronization answers, as the caller observes it: the store's own outcome, or

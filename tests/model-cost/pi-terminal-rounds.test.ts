@@ -34,8 +34,8 @@ import {
 import { MODEL_COST } from "../../extensions/model-cost/definition";
 import { MODEL_COST_HARNESS } from "../../extensions/model-cost/harnesses/pi";
 import { MODEL_COST_WIDGET_KEY, attachModelCostWidget } from "../../extensions/model-cost/harnesses/pi/widget";
-import type { ConsumptionDocument, SessionRecord, TokenBuckets } from "../../extensions/model-cost/shared-logic/consumption-document";
-import type { ModelPricingData } from "../../extensions/model-cost/shared-logic/model-data";
+import type { ConsumptionDocument, SessionRecord, TokenBuckets } from "../../extensions/model-cost/shared-logic/accounting/consumption-document";
+import type { ModelPricingData } from "../../extensions/model-cost/shared-logic/pricing/model-data";
 import { type ModelCostRuntime, createModelCostRuntime } from "../../extensions/model-cost/shared-logic/runtime";
 import { PROVIDER_READY_CHANNEL, forgetSessionLivenessRegistry, registerProviderLiveness } from "../framework/support/pi-surface-double";
 import { uiBoundaryTimerOf } from "./support/ui-timer";

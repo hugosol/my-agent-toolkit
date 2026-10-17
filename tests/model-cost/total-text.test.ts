@@ -15,7 +15,7 @@
  */
 import { describe, expect, test } from "bun:test";
 import type { CatalogPrice } from "../../framework/core/protocol";
-import { MODEL_PRICING_DATA, catalogPriceOf } from "../../extensions/model-cost/shared-logic/model-data";
+import { MODEL_PRICING_DATA, catalogPriceOf } from "../../extensions/model-cost/shared-logic/pricing/model-data";
 import {
 	type ConsumptionFields,
 	type ConsumptionMode,

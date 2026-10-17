@@ -23,7 +23,7 @@
  * bun run smoke:model-cost-data
  * ```
  */
-import { MODEL_PRICING_DATA, catalogPriceOf, classify } from "../extensions/model-cost/shared-logic/model-data";
+import { MODEL_PRICING_DATA, catalogPriceOf, classify } from "../extensions/model-cost/shared-logic/pricing/model-data";
 
 /** One check's outcome, with the observation that decided it. */
 interface Observation {

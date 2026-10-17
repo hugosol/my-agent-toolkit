@@ -55,9 +55,9 @@ import type {
 	ConsumptionDocument,
 	SessionRecord,
 	TokenBuckets,
-} from "../../extensions/model-cost/shared-logic/consumption-document";
+} from "../../extensions/model-cost/shared-logic/accounting/consumption-document";
 import type { DisplayTarget } from "../../extensions/model-cost/shared-logic/presentation/display";
-import type { ModelPricingData } from "../../extensions/model-cost/shared-logic/model-data";
+import type { ModelPricingData } from "../../extensions/model-cost/shared-logic/pricing/model-data";
 import { type ModelCostRuntime, createModelCostRuntime } from "../../extensions/model-cost/shared-logic/runtime";
 import { uiBoundaryTimerOf } from "./support/ui-timer";
 

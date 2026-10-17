@@ -62,8 +62,8 @@
 import { randomUUID } from "node:crypto";
 import { mkdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
-import type { FeedbackLevel } from "../../../framework/core/protocol";
-import { SafeFileUpdateError, type SafeFileUpdateFailureKind, updateFile } from "../../../framework/modules/files";
+import type { FeedbackLevel } from "../../../../framework/core/protocol";
+import { SafeFileUpdateError, type SafeFileUpdateFailureKind, updateFile } from "../../../../framework/modules/files";
 import { ArchiveFailure, publishArchive } from "./consumption-archive";
 import {
 	CONSUMPTION_SCHEMA_VERSION,
@@ -72,7 +72,7 @@ import {
 	mergeSession,
 	readConsumptionDocument,
 	sameSessionContent,
-} from "./consumption-document";
+} from "../accounting/consumption-document";
 
 /** The document's fixed file name inside the configured storage root. */
 const CONSUMPTION_FILE_NAME = "consumption.json";

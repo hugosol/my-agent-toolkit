@@ -18,7 +18,7 @@ import {
 	mergeSession,
 	readConsumptionDocument,
 	sameSessionContent,
-} from "../../extensions/model-cost/shared-logic/consumption-document";
+} from "../../extensions/model-cost/shared-logic/accounting/consumption-document";
 
 /** One session record, as the approved schema writes it: a main session with two providers. */
 const MAIN_SESSION: SessionRecord = {
