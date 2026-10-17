@@ -18,11 +18,13 @@
 | `bun scripts/pi-close-out-smoke.ts`（本票新增，真机 pi 1.3.0） | exit 0：11/11 观测通过，61.8s；连续两次运行结果一致（`logs/11-pi-close-out-smoke.log`） |
 | `bun test tests/framework` | 561 pass / 0 fail（47 文件，2513 expect，41.7s；含新增 `close-out-deadline.test.ts` 6 例）（`logs/11-framework-partition.log`） |
 | `bun test tests/model-cost` | 480 pass / 0 fail（45 文件，2626 expect，16.1s；含新增 `close-out-deadline.test.ts` 2 例）（`logs/11-model-cost-partition.log`） |
+| `bun test tests/codebase-tools` | 24 pass / 0 fail（7 文件，334 expect，53.5s）（`logs/11-codebase-tools-partition.log`） |
+| `OMP_BOT_BINARY=E:/Developer/myhub/omp-bot/backend/target/release/omp-bot.exe bun test tests/connect-bot` | 142 pass / 0 fail（18 文件，689 expect，76.9s）（`logs/11-connect-bot-partition.log`） |
 | `bun run typecheck` | exit 0 |
 
 真机脚本两相（命令、环境与限制见文末）：
 
-- **阶段 1（Owner 缺失，正常处置）**：会话是 pi 自己记录为由一个**无人服务**的会话文件派生（`parentSession` 指向本 run 内、没有任何进程服务的文件）。其自身请求被自身进程记账并提交（`own` 为 input 1000 / output 200，1 次真实请求），关闭进程后 **12ms** 即退出（exit 0，未超时），且没有任何“未写入/未确认”通知——本地结算与退出不等待 Owner，也不依赖 Owner 的确认、同步或绘制。
+- **阶段 1（Owner 缺失，正常处置）**：会话是 pi 自己记录为由一个会话文件派生（`parentSession` 指向本 run 内、写下但没有任何进程服务的文件），因此 adapter 沿 pi 自己的血缘锚点把它解析为 `inherited` owner——owner 是被**具名**解析出来的（不靠名称/目录形状/PID 猜测），而服务它的进程并不存在：这正是“spawned 会话的 Owner 进程已经消失”的生产形态。其自身请求被自身进程记账并提交（`own` 为 input 1000 / output 200，1 次真实请求），关闭进程后 **12ms** 即退出（exit 0，未超时），且没有任何“未写入/未确认”通知——本地结算与退出不等待 Owner，也不依赖 Owner 的确认、同步或绘制。
 - **阶段 2（真机故障：文档锁被另一进程真实持有）**：Round 在会话被停止时仍打开、消费已记账未提交（2 次真实请求，文档中该会话无记录）。从“告诉 pi 停止”到进程离开两次实测为 **14997ms** 与 **15002ms**，对照契约的 15000ms 应用截止为 **−3ms / +2ms**：等待由应用截止（15 秒）计量，本平台的调度与拆卸开销在数毫秒级、且两侧都出现，因此不把毫秒级精度当作承诺（区分了应用截止与 OS 调度）。操作者收到“没有写入…（timeout：会话处置收口等待 15000ms 已到）…未保存的消费已丢弃”，没有任何成功提示；文档中该会话仍无任何记录；持有锁的写入方其锁从未被提前释放，它自己发布的文档成为文件内容。
 
 ## 确定性证据对应的验收面
@@ -43,6 +45,6 @@
 ## 未验证 / 限制
 
 - **真机“更新已开始但未确认”无法从宿主外部安排**：冻结一次 rename 不是脚本能从外部造成的状态。该分支由确定性用例覆盖（真实 `updateFile`、真实锁、真实文档、真实跨进程持有者），真机只覆盖可可靠取消的锁等待。
-- **POSIX、其他 pi／宿主版本、真机 OMP 未运行**；`tests/harness-dock` 分区与全仓 `bun run test` 未执行（本票只要求所属分区与受影响消费者）。OMP adapter 不报告 disposal（`framework/adapters/omp.ts` 无 `onDisposal`），因此本次收口截止对 OMP 无行为变化，其回归由 framework 分区覆盖。
-- **真机阶段 1 的 Owner 形态**是“会话被记录为由无人服务的会话文件派生”（owner 无法在本进程被服务），并非“Owner 进程曾经在线随后断开”；两者对本地保存与退出的要求一致，但“曾经连接随后断开”的载体路径属于票据 05/06 的范围，本票未驱动。
+- **POSIX、其他 pi／宿主版本未运行**；`tests/harness-dock` 分区与全仓 `bun run test` 未执行（本票只要求所属分区与受影响消费者）。connect-bot 分区未设 `OMP_BOT_BINARY` 时为 137 pass / 5 fail：五例都是真机 omp-bot 面板用例在 setup 处失败（面板二进制不在），在任何框架代码运行前即失败；指明该变量后同分区 142 pass / 0 fail。OMP adapter 不报告 disposal（`framework/adapters/omp.ts` 无 `onDisposal`），因此本次收口截止对 OMP 无行为变化，其回归由 framework 分区覆盖。
+- **真机阶段 1 的 Owner 形态**是“owner 由 pi 自身血缘解析为 inherited，但服务它的进程不存在”（`framework/adapters/pi/session.ts` 的血缘锚点解析），并非“Owner 进程曾经在线随后断开”；两者对本地保存与退出的要求一致，但“曾经连接随后断开”的载体路径属于票据 05/06 的范围，本票未驱动。
 - 真实等待上限为**15 秒级**，本票不要求毫秒级硬实时：实测的 −3ms / +2ms 是本平台两次运行的调度与拆卸读数，不是对每次运行的承诺。
