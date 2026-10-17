@@ -513,6 +513,7 @@ describe("a source's end withdraws what the detail was drawn from, and nothing e
 		);
 		expect(rowOf(bound, CHILD)?.nameEmphasis).toBe("active");
 		expect(rowOf(bound, CHILD)?.context).toEqual({ tokens: 45_000, budget: DEEPSEEK_DISPLAY_BUDGET });
+		await readingTurnEnded();
 		expect((bound.lines() ?? []).find(line => line.includes(CHILD_NAME))).toContain("Ctx: 10% (45,000/450.0K)");
 
 		// The connection that carried the reading ends — the process that ran the session released its
@@ -559,6 +560,7 @@ describe("a source's end withdraws what the detail was drawn from, and nothing e
 		// The later word is the one this process holds, so nothing the earlier source's end withdrew
 		// touches it — and the reading it states is idle, which no loss is allowed to overwrite either.
 		expect(row?.nameEmphasis).toBeUndefined();
+		await readingTurnEnded();
 		const drawn = (bound.lines() ?? []).find(line => line.includes(CHILD_NAME)) as string;
 		expect(drawn).toContain("Ctx: 0% (200/450.0K)");
 		expect(JSON.parse(readFileSync(bound.file, "utf8"))).toEqual(JSON.parse(before));
@@ -592,6 +594,7 @@ describe("a source's end withdraws what the detail was drawn from, and nothing e
 		const row = rowOf(bound, CHILD);
 		expect(row?.nameEmphasis).toBe("active");
 		expect(row?.context).toEqual({ tokens: 50_000, budget: DEEPSEEK_DISPLAY_BUDGET });
+		await readingTurnEnded();
 		const drawn = (bound.lines() ?? []).find(line => line.includes(CHILD_NAME)) as string;
 		expect(drawn).toContain("Ctx:");
 		expect(drawn).toContain("50,000/450.0K");
