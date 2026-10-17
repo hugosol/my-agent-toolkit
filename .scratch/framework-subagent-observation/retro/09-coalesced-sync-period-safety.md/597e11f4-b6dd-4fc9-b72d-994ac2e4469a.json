@@ -1,0 +1,151 @@
+{
+  "feature": "framework-subagent-observation",
+  "ticket": "09-coalesced-sync-period-safety.md",
+  "run_id": "597e11f4-b6dd-4fc9-b72d-994ac2e4469a",
+  "parent_session_id": "01a14739-a39a-75a7-9316-a54811534a2a",
+  "parent_session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-17T00-18-42-202Z_01a14739-a39a-75a7-9316-a54811534a2a.jsonl",
+  "workspace": "E:/Developer/myhub/my-agent-toolkit",
+  "tool_call_id": "f07fad11-1856-470e-8a60-0d4a213e055f",
+  "started_at": "2026-10-17T01:52:04.312Z",
+  "tdd_status": "completed",
+  "retro_status": "completed",
+  "tdd_finished_at": "2026-10-17T02:00:08.326Z",
+  "tdd_result": {
+    "index": 0,
+    "id": "09-coalesced-sync-period-safetymd-f07fad11-1856-",
+    "agent": "tdd",
+    "agentSource": "user",
+    "task": "Complete assignment thoroughly:\n\n在当前 worktree 实现唯一票据：C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-j4KD5V\\.scratch\\framework-subagent-observation\\implementation\\09-coalesced-sync-period-safety.md。\n集成分支：hyper-tdd\nspec：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\framework-subagent-observation\\spec.md\ncontract：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\framework-subagent-observation\\contract.md\n这是本票首次执行。\n遵守 tdd skill，自行负责本票验收并报告实际验证与未完成事项。完成后尽快提交本票实现，交出 worktree，由独立集成子代理接管。不要修改其他票据或工作流报告，不操作集成分支工作区，不自行合入集成分支，不调用 retro、不派发其他票据。不得 reset 丢弃既有工作。",
+    "assignment": "在当前 worktree 实现唯一票据：C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-j4KD5V\\.scratch\\framework-subagent-observation\\implementation\\09-coalesced-sync-period-safety.md。\n集成分支：hyper-tdd\nspec：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\framework-subagent-observation\\spec.md\ncontract：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\framework-subagent-observation\\contract.md\n这是本票首次执行。\n遵守 tdd skill，自行负责本票验收并报告实际验证与未完成事项。完成后尽快提交本票实现，交出 worktree，由独立集成子代理接管。不要修改其他票据或工作流报告，不操作集成分支工作区，不自行合入集成分支，不调用 retro、不派发其他票据。不得 reset 丢弃既有工作。",
+    "description": "Implement coalesced sync period safety ticket",
+    "lastIntent": "Verifying clean handoff state",
+    "exitCode": 0,
+    "output": "{\n  \"ticket\": \"09-coalesced-sync-period-safety\",\n  \"status\": \"implemented, tested, committed on ticket branch (merge/close left to integration per triage policy)\",\n  \"commit\": \"1a9b74f\",\n  \"branch\": \"hyper/framework-subagent-observation/09-coalesced-sync-period-safety-ef5a9e-e98ea402077c\",\n  \"behavior_delivered\": \"Session-commit hints now coalesce: the first hint of a turn schedules one read-only synchronization at the turn's end, same-turn hints join it, and hints arriving while that read is under way mark exactly one follow-up read after it (nothing is cleared before the promise it belongs to). The handler still settles after adoption, so close-out/disposal waits keep their meaning. Every read remains the existing synchronize: no write, lock, temp commit or re-initialization; same-period documents adopt only the disk baseline; an external period change still goes through accounting.periodSwitched(), dropping the closed period's in-flight consumption.\",\n  \"files_changed\": [\n    \"extensions/model-cost/shared-logic/runtime.ts\",\n    \"extensions/model-cost/README.md\",\n    \"tests/model-cost/coalesced-sync-period-safety.test.ts (new, 6 tests)\",\n    \".scratch/framework-subagent-observation/implementation/09-coalesced-sync-period-safety.md\",\n    \".scratch/framework-subagent-observation/implementation/evidence/09-coalesced-sync-period-safety-evidence-2026-10-17.md\",\n    \".scratch/framework-subagent-observation/implementation/evidence/logs/09-*.log (4)\"\n  ],\n  \"acceptance_evidence\": [\n    {\n      \"criterion\": \"multiple mergeable hints reduce syncs; final adopts independently given latest record; hints and syncs counted separately\",\n      \"test\": \"coalesced-sync-period-safety.test.ts: several notices in one turn are one synchronization...\",\n      \"evidence\": \"3 hints -> exactly 1 storage.synchronize call (call counter on runtime.storage), all three latest file records readable via runtime.view, storage.commit/load calls 0, file bytes and root entries unchanged\"\n    },\n    {\n      \"criterion\": \"controlled pause of one sync; another real process commits and notifies; final record visible; no permanent miss\",\n      \"test\": \"coalesced-sync-period-safety.test.ts: a notice delivered while a synchronization is paused...\",\n      \"evidence\": \"real child process (tests/model-cost/support/store-child.ts, framework safe-file/lock) commits during the paused first read; second hint delivered while paused; after release exactly 2 reads occur and the child's record is visible in Owner view; file remains the child's bytes\"\n    },\n    {\n      \"criterion\": \"same-period refresh adopts disk baseline only, no commit/discard/duplicate of local in-flight\",\n      \"test\": \"coalesced-sync-period-safety.test.ts: the disk baseline is adopted while the in-flight amount stays local...\",\n      \"evidence\": \"local saved 1 + in-flight 1; external 6; after refresh own(main)=2, inclusiveTotals=8, disk record stays 1, storage.commit calls 0, file bytes unchanged\"\n    },\n    {\n      \"criterion\": \"external period switch keeps only new-period records; late hint does not bring back old accumulation\",\n      \"test\": \"coalesced-sync-period-safety.test.ts: the closed period's in-flight consumption is dropped...\",\n      \"evidence\": \"old-period in-flight 2; new document period-replaced with 3; after sync own(main)/roundTotals empty, accrued only new 3, file unchanged; late hint re-read still does not restore it; old Round end writes nothing (0 commits)\"\n    },\n    {\n      \"criterion\": \"read-only sync takes no write lock, creates no temp commit, modifies no document; missing/invalid policy reused without re-initialization\",\n      \"test\": \"read-only tests: real process reads with instrument; notice over absent/unusable document\",\n      \"evidence\": \"instrumented child FS ops {reads: 2, publishes: 0, locks: 0}, file and directory unchanged; absent root notice creates no file and keeps original period; unusable document pauses and is left untouched; storage.load calls stay 0 across all hint-driven syncs\"\n    },\n    {\n      \"criterion\": \"controlled concurrency/period boundaries, owning partition and affected consumers, typecheck, real process write + Owner-visible result\",\n      \"test\": \"all 6 cases plus partition runs\",\n      \"evidence\": \"real child-process commit adopted by Owner in the paused-sync case; see verification below\"\n    }\n  ],\n  \"verification\": [\n    {\n      \"command\": \"bun test tests/model-cost/coalesced-sync-period-safety.test.ts\",\n      \"result\": \"6 pass / 0 fail, 64 expect() calls (logs/09-focused-suite.log)\"\n    },\n    {\n      \"command\": \"bun test tests/model-cost\",\n      \"result\": \"509 pass / 0 fail, 51 files, ~19.1s (logs/09-model-cost-partition.log)\"\n    },\n    {\n      \"command\": \"bun test tests/framework\",\n      \"result\": \"579 pass / 0 fail, 48 files, ~58.7s (logs/09-framework-partition.log)\"\n    },\n    {\n      \"command\": \"bun run typecheck\",\n      \"result\": \"exit 0 (logs/09-typecheck.log)\"\n    }\n  ],\n  \"fault_injections\": [\n    \"removed end-of-turn deferral -> test 1 failed (3 same-batch hints became 2 reads)\",\n    \"loop while -> if (drop in-flight hint) -> paused-sync test 2 failed (second read never happened)\",\n    \"periodChanged no longer calls periodSwitched -> period test 4 failed on own(main) assertion\",\n    \"same-period changed document wrongly calls periodSwitched -> test 3 failed on in-flight amount assertion\",\n    \"all injections restored; final suite green and re-run after restore\"\n  ],\n  \"not_verified\": [\n    \"No real pi/OMP host end-to-end session run; P18/P20's notice axis is covered in-process plus an independent real bun child process through the same safe-file/lock entry, not a harness adapter process. Harness disposal/rendering belongs to other tickets.\",\n    \"Windows only; POSIX lock/rename behavior not exercised.\",\n    \"Full-repository bun run test not run; left to integration stage per repo testing policy.\"\n  ],\n  \"ticket_status\": \"Set to in-progress in the ticket file; evidence/logs and Comments added. Closing on merge belongs to the integration step.\"\n}",
+    "stderr": "",
+    "truncated": false,
+    "durationMs": 483917,
+    "tokens": 171252,
+    "requests": 91,
+    "contextTokens": 155503,
+    "contextWindow": 1000000,
+    "modelOverride": [
+      "deepseek/deepseek-flash:high"
+    ],
+    "resolvedModel": "deepseek/deepseek-flash:high",
+    "resolvedModelIdentity": "deepseek/deepseek-flash",
+    "resolvedThinkingLevel": "high",
+    "aborted": false,
+    "usage": {
+      "input": 104747,
+      "output": 66505,
+      "cacheRead": 9662080,
+      "cacheWrite": 0,
+      "totalTokens": 9833332,
+      "reasoningTokens": 31285,
+      "cost": {
+        "input": 0.015712049999999998,
+        "output": 0.03990300000000001,
+        "cacheRead": 0.028986239999999996,
+        "cacheWrite": 0,
+        "total": 0.08460129000000001
+      }
+    },
+    "outputPath": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-17T00-18-42-202Z_01a14739-a39a-75a7-9316-a54811534a2a\\09-coalesced-sync-period-safetymd-f07fad11-1856-.md",
+    "extractedToolData": {
+      "yield": [
+        {
+          "data": {
+            "ticket": "09-coalesced-sync-period-safety",
+            "status": "implemented, tested, committed on ticket branch (merge/close left to integration per triage policy)",
+            "commit": "1a9b74f",
+            "branch": "hyper/framework-subagent-observation/09-coalesced-sync-period-safety-ef5a9e-e98ea402077c",
+            "behavior_delivered": "Session-commit hints now coalesce: the first hint of a turn schedules one read-only synchronization at the turn's end, same-turn hints join it, and hints arriving while that read is under way mark exactly one follow-up read after it (nothing is cleared before the promise it belongs to). The handler still settles after adoption, so close-out/disposal waits keep their meaning. Every read remains the existing synchronize: no write, lock, temp commit or re-initialization; same-period documents adopt only the disk baseline; an external period change still goes through accounting.periodSwitched(), dropping the closed period's in-flight consumption.",
+            "files_changed": [
+              "extensions/model-cost/shared-logic/runtime.ts",
+              "extensions/model-cost/README.md",
+              "tests/model-cost/coalesced-sync-period-safety.test.ts (new, 6 tests)",
+              ".scratch/framework-subagent-observation/implementation/09-coalesced-sync-period-safety.md",
+              ".scratch/framework-subagent-observation/implementation/evidence/09-coalesced-sync-period-safety-evidence-2026-10-17.md",
+              ".scratch/framework-subagent-observation/implementation/evidence/logs/09-*.log (4)"
+            ],
+            "acceptance_evidence": [
+              {
+                "criterion": "multiple mergeable hints reduce syncs; final adopts independently given latest record; hints and syncs counted separately",
+                "test": "coalesced-sync-period-safety.test.ts: several notices in one turn are one synchronization...",
+                "evidence": "3 hints -> exactly 1 storage.synchronize call (call counter on runtime.storage), all three latest file records readable via runtime.view, storage.commit/load calls 0, file bytes and root entries unchanged"
+              },
+              {
+                "criterion": "controlled pause of one sync; another real process commits and notifies; final record visible; no permanent miss",
+                "test": "coalesced-sync-period-safety.test.ts: a notice delivered while a synchronization is paused...",
+                "evidence": "real child process (tests/model-cost/support/store-child.ts, framework safe-file/lock) commits during the paused first read; second hint delivered while paused; after release exactly 2 reads occur and the child's record is visible in Owner view; file remains the child's bytes"
+              },
+              {
+                "criterion": "same-period refresh adopts disk baseline only, no commit/discard/duplicate of local in-flight",
+                "test": "coalesced-sync-period-safety.test.ts: the disk baseline is adopted while the in-flight amount stays local...",
+                "evidence": "local saved 1 + in-flight 1; external 6; after refresh own(main)=2, inclusiveTotals=8, disk record stays 1, storage.commit calls 0, file bytes unchanged"
+              },
+              {
+                "criterion": "external period switch keeps only new-period records; late hint does not bring back old accumulation",
+                "test": "coalesced-sync-period-safety.test.ts: the closed period's in-flight consumption is dropped...",
+                "evidence": "old-period in-flight 2; new document period-replaced with 3; after sync own(main)/roundTotals empty, accrued only new 3, file unchanged; late hint re-read still does not restore it; old Round end writes nothing (0 commits)"
+              },
+              {
+                "criterion": "read-only sync takes no write lock, creates no temp commit, modifies no document; missing/invalid policy reused without re-initialization",
+                "test": "read-only tests: real process reads with instrument; notice over absent/unusable document",
+                "evidence": "instrumented child FS ops {reads: 2, publishes: 0, locks: 0}, file and directory unchanged; absent root notice creates no file and keeps original period; unusable document pauses and is left untouched; storage.load calls stay 0 across all hint-driven syncs"
+              },
+              {
+                "criterion": "controlled concurrency/period boundaries, owning partition and affected consumers, typecheck, real process write + Owner-visible result",
+                "test": "all 6 cases plus partition runs",
+                "evidence": "real child-process commit adopted by Owner in the paused-sync case; see verification below"
+              }
+            ],
+            "verification": [
+              {
+                "command": "bun test tests/model-cost/coalesced-sync-period-safety.test.ts",
+                "result": "6 pass / 0 fail, 64 expect() calls (logs/09-focused-suite.log)"
+              },
+              {
+                "command": "bun test tests/model-cost",
+                "result": "509 pass / 0 fail, 51 files, ~19.1s (logs/09-model-cost-partition.log)"
+              },
+              {
+                "command": "bun test tests/framework",
+                "result": "579 pass / 0 fail, 48 files, ~58.7s (logs/09-framework-partition.log)"
+              },
+              {
+                "command": "bun run typecheck",
+                "result": "exit 0 (logs/09-typecheck.log)"
+              }
+            ],
+            "fault_injections": [
+              "removed end-of-turn deferral -> test 1 failed (3 same-batch hints became 2 reads)",
+              "loop while -> if (drop in-flight hint) -> paused-sync test 2 failed (second read never happened)",
+              "periodChanged no longer calls periodSwitched -> period test 4 failed on own(main) assertion",
+              "same-period changed document wrongly calls periodSwitched -> test 3 failed on in-flight amount assertion",
+              "all injections restored; final suite green and re-run after restore"
+            ],
+            "not_verified": [
+              "No real pi/OMP host end-to-end session run; P18/P20's notice axis is covered in-process plus an independent real bun child process through the same safe-file/lock entry, not a harness adapter process. Harness disposal/rendering belongs to other tickets.",
+              "Windows only; POSIX lock/rename behavior not exercised.",
+              "Full-repository bun run test not run; left to integration stage per repo testing policy."
+            ],
+            "ticket_status": "Set to in-progress in the ticket file; evidence/logs and Comments added. Closing on merge belongs to the integration step."
+          },
+          "status": "success"
+        }
+      ]
+    },
+    "outputMeta": {
+      "lineCount": 78,
+      "charCount": 6050
+    }
+  },
+  "agent": "tdd",
+  "agent_id": "09-coalesced-sync-period-safetymd-f07fad11-1856-",
+  "session_id": "01a1478f-1eeb-77dc-960c-90b3cbe96fdf",
+  "session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-17T00-18-42-202Z_01a14739-a39a-75a7-9316-a54811534a2a\\09-coalesced-sync-period-safetymd-f07fad11-1856-.jsonl",
+  "execution_cwd": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-j4KD5V",
+  "retro_document": "E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\framework-subagent-observation\\retro\\09-coalesced-sync-period-safety.md\\597e11f4-b6dd-4fc9-b72d-994ac2e4469a.md",
+  "retro_finished_at": "2026-10-17T02:00:54.560Z"
+}

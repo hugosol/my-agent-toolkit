@@ -1,0 +1,1266 @@
+{
+  "branch": "hyper-tdd",
+  "baseline": "e50c574e6d3e63a676d5aaf696c5f8856fb6d9cc",
+  "attempts": [
+    {
+      "ticket": "05-reconnect-source-lifecycle.md",
+      "id": "53508336-6477-43e0-a64a-dd5855a5fe3c",
+      "report": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-auto-coding-recovered-ad30da02-d359-4ae7-92ae-0332b9799ee3\\implement-3f7f4ede-83f3-4bfb-bd8a-64e049b62ce2.md"
+    },
+    {
+      "ticket": "06-follow-observation-independence.md",
+      "id": "1ad68365-f314-45d2-9c70-17d50aaecf37",
+      "report": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-auto-coding-recovered-ad30da02-d359-4ae7-92ae-0332b9799ee3\\implement-b84667cb-52d8-46d9-b2ce-475ee6a9ba1a.md"
+    },
+    {
+      "ticket": "07-event-driven-coalesced-display.md",
+      "id": "0c612433-f9b0-4402-a73e-26b326bbf73a",
+      "report": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-auto-coding-recovered-ad30da02-d359-4ae7-92ae-0332b9799ee3\\implement-e5f6c781-4370-4e75-96a5-3cdc5484472b.md"
+    },
+    {
+      "ticket": "11-bounded-shutdown-outcomes.md",
+      "id": "9e431692-94b1-4124-b034-b861eab68be2",
+      "report": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-auto-coding-recovered-ad30da02-d359-4ae7-92ae-0332b9799ee3\\implement-c6b06f25-0a98-46e3-b78b-066144200fb8.md"
+    },
+    {
+      "ticket": "08-local-accounting-owner-sync.md",
+      "id": "92176b38-710e-40c0-92cc-2c5e07eb9c74",
+      "report": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-auto-coding-recovered-ad30da02-d359-4ae7-92ae-0332b9799ee3\\implement-1d4c9243-b105-4687-a9b4-3fc5d8963e7c.md"
+    },
+    {
+      "ticket": "09-coalesced-sync-period-safety.md",
+      "id": "f07fad11-1856-470e-8a60-0d4a213e055f",
+      "report": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-auto-coding-recovered-ad30da02-d359-4ae7-92ae-0332b9799ee3\\implement-f942e5ab-efbc-4f94-b252-4a4a5ed366a0.md"
+    },
+    {
+      "ticket": "12-real-harness-reuse-verification.md",
+      "id": "6f9e69a5-172d-4feb-99d9-b21f7a616a29",
+      "report": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-auto-coding-recovered-ad30da02-d359-4ae7-92ae-0332b9799ee3\\implement-ed061400-2e15-4b04-bf52-fc8a3df5ee99.md"
+    }
+  ],
+  "tickets": {
+    "mode": "running",
+    "planned": true,
+    "paused": false,
+    "pausing": false,
+    "checkpoint": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-auto-coding-pause-01a14739-a39a-75a7-9316-a5481153-cb335bd8f27eb1b7.json",
+    "branch": "hyper-tdd",
+    "baseline": "e50c574e6d3e63a676d5aaf696c5f8856fb6d9cc",
+    "temporaryDir": "E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\framework-subagent-observation\\execution\\hyper-auto-coding-recovered-ad30da02-d359-4ae7-92ae-0332b9799ee3",
+    "maxParallelTickets": 4,
+    "active": [],
+    "integrating": [],
+    "ready": [],
+    "tickets": [
+      {
+        "ticket": "01-shared-context-observation.md",
+        "blockedBy": [],
+        "status": "integrated",
+        "mergedHead": "c7fd3c89812ef5da6cdbae11b7be20e8aeae6edd"
+      },
+      {
+        "ticket": "02-round-activity-observation.md",
+        "blockedBy": [],
+        "status": "integrated",
+        "mergedHead": "31e1509a6238f5f6f7080ee40b4a1b09171cc234"
+      },
+      {
+        "ticket": "03-secure-process-registration.md",
+        "blockedBy": [
+          "01-shared-context-observation.md",
+          "02-round-activity-observation.md"
+        ],
+        "status": "integrated",
+        "mergedHead": "cf2303a940538ff24a1c3903c3b7fe26a5a44dcc"
+      },
+      {
+        "ticket": "04-live-session-detail-tree.md",
+        "blockedBy": [
+          "03-secure-process-registration.md"
+        ],
+        "status": "integrated",
+        "mergedHead": "e23af1224b48955f66280c88f642c8f318033f5d"
+      },
+      {
+        "ticket": "05-reconnect-source-lifecycle.md",
+        "blockedBy": [
+          "04-live-session-detail-tree.md"
+        ],
+        "status": "integrated",
+        "worktree": {
+          "branch": "hyper/framework-subagent-observation/05-reconnect-source-lifecycle-b03b39-e98ea402077c",
+          "cwd": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-8YWf31"
+        },
+        "mergedHead": "89ebaa273d5c32832eaca49f33cb188bcc461d52",
+        "integrationReport": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-auto-coding-recovered-ad30da02-d359-4ae7-92ae-0332b9799ee3\\integrate-a9747edc-c4d6-493f-9b58-7615dd6d25e8.md",
+        "integrationAgentId": "integrate-05-reconnect-source-lifecyclemd-936dcc",
+        "report": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-auto-coding-recovered-ad30da02-d359-4ae7-92ae-0332b9799ee3\\implement-3f7f4ede-83f3-4bfb-bd8a-64e049b62ce2.md",
+        "reportSuccessful": true
+      },
+      {
+        "ticket": "06-follow-observation-independence.md",
+        "blockedBy": [
+          "04-live-session-detail-tree.md"
+        ],
+        "status": "integrated",
+        "worktree": {
+          "branch": "hyper/framework-subagent-observation/06-follow-observation-independen-ed2819-e98ea402077c",
+          "cwd": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-56m4wV"
+        },
+        "mergedHead": "2bbf22b75e8dcee080215e43318d4c78320178c4",
+        "integrationReport": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-auto-coding-recovered-ad30da02-d359-4ae7-92ae-0332b9799ee3\\integrate-3186510b-1e34-4031-9392-105b22dff32c.md",
+        "integrationAgentId": "integrate-06-follow-observation-independencemd-8",
+        "report": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-auto-coding-recovered-ad30da02-d359-4ae7-92ae-0332b9799ee3\\implement-b84667cb-52d8-46d9-b2ce-475ee6a9ba1a.md",
+        "reportSuccessful": true
+      },
+      {
+        "ticket": "07-event-driven-coalesced-display.md",
+        "blockedBy": [
+          "04-live-session-detail-tree.md"
+        ],
+        "status": "integrated",
+        "worktree": {
+          "branch": "hyper/framework-subagent-observation/07-event-driven-coalesced-displa-cac1cc-e98ea402077c",
+          "cwd": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-HXXVq1"
+        },
+        "mergedHead": "d139d18acee12daa0c98f4167f91fa6bd36e487e",
+        "integrationReport": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-auto-coding-recovered-ad30da02-d359-4ae7-92ae-0332b9799ee3\\integrate-33f562d5-bb1b-4435-a852-9fa75f1bb929.md",
+        "integrationAgentId": "integrate-07-event-driven-coalesced-displaymd-2a",
+        "report": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-auto-coding-recovered-ad30da02-d359-4ae7-92ae-0332b9799ee3\\implement-e5f6c781-4370-4e75-96a5-3cdc5484472b.md",
+        "reportSuccessful": true
+      },
+      {
+        "ticket": "08-local-accounting-owner-sync.md",
+        "blockedBy": [
+          "05-reconnect-source-lifecycle.md"
+        ],
+        "status": "integrated",
+        "worktree": {
+          "branch": "hyper/framework-subagent-observation/08-local-accounting-owner-sync-a9eed4-e98ea402077c",
+          "cwd": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-02HisO"
+        },
+        "mergedHead": "0fd2ef8d45f50997425aa6f1de073a68c8f1145c",
+        "integrationReport": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-auto-coding-recovered-ad30da02-d359-4ae7-92ae-0332b9799ee3\\integrate-3ec69ce2-3c2c-4bfc-8d35-39e07d92e08e.md",
+        "integrationAgentId": "integrate-08-local-accounting-owner-syncmd-d0b53",
+        "report": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-auto-coding-recovered-ad30da02-d359-4ae7-92ae-0332b9799ee3\\implement-1d4c9243-b105-4687-a9b4-3fc5d8963e7c.md",
+        "reportSuccessful": true
+      },
+      {
+        "ticket": "09-coalesced-sync-period-safety.md",
+        "blockedBy": [
+          "08-local-accounting-owner-sync.md"
+        ],
+        "status": "integrated",
+        "worktree": {
+          "branch": "hyper/framework-subagent-observation/09-coalesced-sync-period-safety-ef5a9e-e98ea402077c",
+          "cwd": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-j4KD5V"
+        },
+        "mergedHead": "3b0a1f7c2cd892516af163ff1f5d191a48ea9759",
+        "integrationReport": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-auto-coding-recovered-ad30da02-d359-4ae7-92ae-0332b9799ee3\\integrate-0f4854e4-9580-4238-95c5-1f3dad85d917.md",
+        "integrationAgentId": "integrate-09-coalesced-sync-period-safetymd-a3f4",
+        "report": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-auto-coding-recovered-ad30da02-d359-4ae7-92ae-0332b9799ee3\\implement-f942e5ab-efbc-4f94-b252-4a4a5ed366a0.md",
+        "reportSuccessful": true
+      },
+      {
+        "ticket": "10-awaited-round-disposal.md",
+        "blockedBy": [
+          "03-secure-process-registration.md"
+        ],
+        "status": "integrated",
+        "mergedHead": "5bd64ce220cd3873ac7aa7126b3dcf1a7b4a7074"
+      },
+      {
+        "ticket": "11-bounded-shutdown-outcomes.md",
+        "blockedBy": [
+          "10-awaited-round-disposal.md"
+        ],
+        "status": "integrated",
+        "worktree": {
+          "branch": "hyper/framework-subagent-observation/11-bounded-shutdown-outcomes-4808b2-e98ea402077c",
+          "cwd": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-itmB8H"
+        },
+        "mergedHead": "bc550a25d0e4d192405d34404b0bb5fa95f2cf43",
+        "integrationReport": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-auto-coding-recovered-ad30da02-d359-4ae7-92ae-0332b9799ee3\\integrate-a5964b1f-1203-48b4-b6ae-aa0244b55667.md",
+        "integrationAgentId": "integrate-11-bounded-shutdown-outcomesmd-ffb7bbf",
+        "report": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-auto-coding-recovered-ad30da02-d359-4ae7-92ae-0332b9799ee3\\implement-c6b06f25-0a98-46e3-b78b-066144200fb8.md",
+        "reportSuccessful": true
+      },
+      {
+        "ticket": "12-real-harness-reuse-verification.md",
+        "blockedBy": [
+          "06-follow-observation-independence.md",
+          "07-event-driven-coalesced-display.md",
+          "09-coalesced-sync-period-safety.md",
+          "11-bounded-shutdown-outcomes.md"
+        ],
+        "status": "integrated",
+        "worktree": {
+          "branch": "hyper/framework-subagent-observation/12-real-harness-reuse-verificati-f0bd4a-e98ea402077c",
+          "cwd": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-Jq0PSO"
+        },
+        "mergedHead": "43da6c591f2d221f95211af5255fc05a08bf4bf0",
+        "integrationReport": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-auto-coding-recovered-ad30da02-d359-4ae7-92ae-0332b9799ee3\\integrate-bbc83a29-8f79-4cd2-a6f3-b5ad4668d29b.md",
+        "integrationAgentId": "integrate-12-real-harness-reuse-verificationmd-c",
+        "report": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-auto-coding-recovered-ad30da02-d359-4ae7-92ae-0332b9799ee3\\implement-ed061400-2e15-4b04-bf52-fc8a3df5ee99.md",
+        "reportSuccessful": true
+      }
+    ],
+    "finished": false,
+    "lastReport": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-auto-coding-recovered-ad30da02-d359-4ae7-92ae-0332b9799ee3\\integrate-bbc83a29-8f79-4cd2-a6f3-b5ad4668d29b.md"
+  },
+  "executions": [
+    {
+      "feature": "framework-subagent-observation",
+      "ticket": "05-reconnect-source-lifecycle.md",
+      "run_id": "462e9690-971e-4dad-ad8c-cd372ace4a67",
+      "parent_session_id": "01a14739-a39a-75a7-9316-a54811534a2a",
+      "parent_session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-17T00-18-42-202Z_01a14739-a39a-75a7-9316-a54811534a2a.jsonl",
+      "workspace": "E:/Developer/myhub/my-agent-toolkit",
+      "tool_call_id": "53508336-6477-43e0-a64a-dd5855a5fe3c",
+      "started_at": "2026-10-17T00:39:26.741Z",
+      "tdd_status": "completed",
+      "retro_status": "completed",
+      "tdd_finished_at": "2026-10-17T01:00:38.267Z",
+      "tdd_result": {
+        "index": 0,
+        "id": "05-reconnect-source-lifecyclemd-53508336-6477-43",
+        "agent": "tdd",
+        "agentSource": "user",
+        "task": "Complete assignment thoroughly:\n\n在当前 worktree 实现唯一票据：C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-8YWf31\\.scratch\\framework-subagent-observation\\implementation\\05-reconnect-source-lifecycle.md。\n集成分支：hyper-tdd\nspec：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\framework-subagent-observation\\spec.md\ncontract：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\framework-subagent-observation\\contract.md\n这是本票首次执行。\n遵守 tdd skill，自行负责本票验收并报告实际验证与未完成事项。完成后尽快提交本票实现，交出 worktree，由独立集成子代理接管。不要修改其他票据或工作流报告，不操作集成分支工作区，不自行合入集成分支，不调用 retro、不派发其他票据。不得 reset 丢弃既有工作。",
+        "assignment": "在当前 worktree 实现唯一票据：C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-8YWf31\\.scratch\\framework-subagent-observation\\implementation\\05-reconnect-source-lifecycle.md。\n集成分支：hyper-tdd\nspec：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\framework-subagent-observation\\spec.md\ncontract：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\framework-subagent-observation\\contract.md\n这是本票首次执行。\n遵守 tdd skill，自行负责本票验收并报告实际验证与未完成事项。完成后尽快提交本票实现，交出 worktree，由独立集成子代理接管。不要修改其他票据或工作流报告，不操作集成分支工作区，不自行合入集成分支，不调用 retro、不派发其他票据。不得 reset 丢弃既有工作。",
+        "description": "<tooltitle>Implement reconnect source lifecycle ticket",
+        "lastIntent": "Committing the ticket implementation",
+        "exitCode": 0,
+        "output": "{\n  \"ticket\": \"05-reconnect-source-lifecycle (P5, P6, P7, P8)\",\n  \"branch\": \"hyper/framework-subagent-observation/05-reconnect-source-lifecycle-b03b39-e98ea402077c\",\n  \"commit\": \"874a00c\",\n  \"head_before\": \"e50c574\",\n  \"worktree_state\": \"clean, all 26 changed files committed, no other ticket's files touched\",\n  \"behavior_delivered\": [\n    \"观察来源 (ObservationSource): 服务端进程按接受顺序为其每个连接编号；接收入口从裸函数改为 SessionObservationSink { adopt(source, reading), lost(source) } (framework/core/protocol.ts, framework/modules/local-access.ts)。\",\n    \"读数按来源归属 (framework/core/observations.ts): 活动与上下文各记录陈述它的最新来源；更旧的词既不覆盖也不撤销；来源结束只撤销它陈述过的实时读数，保留会话身份、直接父关系与已保存消费；被撤销字段的来源戳保留，旧来源无法复活它；read()/snapshot() 投影出公开读数形状，不泄漏来源戳。\",\n    \"失效对消费者的表达：新增语义事件 session_unobserved (delivery + handler 类型)，binding 在来源失效时按会话投递；活动轴 forget 使重连后同一读数再次投递 (framework/behaviors/{binding,session-activity,session-context}.ts)。\",\n    \"接收侧自行观察连接结束 (#accepted 的 close 覆盖正常释放/进程退出/被 kill)，不依赖将退出进程发出任何收尾帧。\",\n    \"受影响消费者：model-cost 处理 session_unobserved → 忘记本实例活动读数并重绘；detail 行失去 Working 强调与 Ctx:，行/位置/树总量/消费文档不变 (extensions/model-cost/**)。\",\n    \"文档：framework/GLOSSARY.md 新增 Observation source；framework/docs/framework-capabilities.md、extensions/model-cost/GLOSSARY.md 与 README.md 更新 detail 不可用语义。\"\n  ],\n  \"criteria_evidence\": [\n    {\n      \"criterion\": \"断开后状态变化再重连立即接收最新快照，无额外 Turn/Round/计费交付\",\n      \"evidence\": \"tests/framework/session-observation-access.test.ts「a source that reaches the seat again restores what was withdrawn…」(投递序列恰为 activity/context/unobserved/activity/context)；tests/model-cost/detail-tree-live-sessions.test.ts 同名用例 (重连后 detail 恢复 Working 与 Ctx: 50,000/450.0K，消费文档字节不变)\"\n    },\n    {\n      \"criterion\": \"真实进程 + 可控交付顺序验证重复/迟到/旧来源退出，新来源读数保持，不用概率性 sleep\",\n      \"evidence\": \"tests/framework/local-access-observation.test.ts「two real processes' words about one session are ordered…」(两个真实子进程；断言每个词所属来源、重复词、迟到词、lost 只属于旧来源；顺序由子进程应答链 + 有界 until 等待保证)；tests/model-cost/detail-tree-process-sources.test.ts「an earlier process's end takes none of a later process's readings…」\"\n    },\n    {\n      \"criterion\": \"正常释放与异常退出分别触发所属来源不可用；interface 读取不可用；实际 detail 不残留 Working/实时上下文\",\n      \"evidence\": \"local-access-observation.test.ts「a real process releasing its access ends one source…」「a real process ended abruptly ends one source just as well」(release 与 kill 两条路径)；detail-tree-process-sources.test.ts「a killed process's reading is withdrawn and the row keeps its place…」(绘制行丢 Ctx:，行模型 nameEmphasis undefined，身份/深度保留)\"\n    },\n    {\n      \"criterion\": \"不可用不冒充 Idle/失败/完成，不伪造计费生命周期\",\n      \"evidence\": \"同一 S1 用例断言该次失效中订阅者收到的投递种类恰为 [session_activity, session_context, session_unobserved]；detail 用例断言消费文档字节不变、行数不变\"\n    },\n    {\n      \"criterion\": \"断连前后树与消费保留：身份、直接父关系、已保存消费；实时登记身份仅内存保留\",\n      \"evidence\": \"session-observation-access.test.ts「the readings a source's end withdraws are gone for a reader, and its identity is not」(read/snapshot 仍有 session+owner)；detail 用例失效后仍读同名同深度行、文档不变、无新增登记行\"\n    },\n    {\n      \"criterion\": \"旧连接关闭不清除新连接读数；正常撤销不依赖退出进程的最后一条通知\",\n      \"evidence\": \"session-observation-access.test.ts「a word a later source stated survives the earlier source's end…」；真实进程用例（被 kill 的进程未发任何收尾帧仍被观察为结束）\"\n    },\n    {\n      \"criterion\": \"受控时序/真实关闭/异常退出/实际 detail 观察，覆盖分区与消费者；typecheck；可归因日志\",\n      \"evidence\": \"见下的 verification\"\n    }\n  ],\n  \"verification\": [\n    {\n      \"command\": \"bun run typecheck\",\n      \"result\": \"exit 0 (log 05-typecheck.log)\"\n    },\n    {\n      \"command\": \"bun test tests/framework\",\n      \"result\": \"exit 0, 563 pass / 0 fail, 46 files, 62.45s\"\n    },\n    {\n      \"command\": \"bun test tests/model-cost\",\n      \"result\": \"重跑 exit 0, 483 pass / 0 fail, 44 files, 17.13s；第一次运行 exit 1 (482 pass / 1 fail，见 unresolved)\"\n    },\n    {\n      \"command\": \"基线对照 git worktree add ../tc05-baseline HEAD + bun test tests/model-cost\",\n      \"result\": \"exit 0, 478 pass / 0 fail；对照后已删除该 worktree\"\n    },\n    {\n      \"command\": \"故障注入（临时改坏→红→复原→绿，5 项：binding 不 withdrawSource / observeActivity 去掉来源新旧判定 / 去掉 activityAxis.forget / close 不陈述 lost / model-cost 缺 sessionActivity.forget）\",\n      \"result\": \"每项都被对应断言检出并变红，复原后全绿；注入未保留\"\n    }\n  ],\n  \"evidence_files\": [\n    \".scratch/framework-subagent-observation/implementation/evidence/05-reconnect-source-lifecycle-evidence-2026-10-17.md\",\n    \"evidence/logs/05-typecheck.log\",\n    \"evidence/logs/05-framework-partition.log\",\n    \"evidence/logs/05-model-cost-partition.log\",\n    \"evidence/logs/05-model-cost-partition-first-run.log\"\n  ],\n  \"unresolved\": [\n    \"真实 harness 未运行：本票的真实进程证据是「真实 bun 子进程 + 真实命名管道 + 生产前端/详情模型」，未执行 pi/OMP smoke，真实宿主上「子进程退出后 Owner 收到 session_unobserved」仍未验证（宿主版本/平台证据缺失，显式标注为实现限制，不折算为通过）。\",\n    \"POSIX 未验证：仅 Windows 10.0.26200；命名管道与套接字文件差异未取得运行证据。\",\n    \"第一次 model-cost 分区运行出现 1 例失败，非本票断言：tests/model-cost/pi-disposal-round-close.test.ts（票据 10）「leaving a session for another one closes no Round…」报 no record for pi-disposal-child was published；该文件单独运行、与本票新增文件三者合跑、以及整个分区重跑均通过，基线 worktree 同分区亦通过 → 判定为本票新增的多进程文件带来并行负载下该用例自身时序假设的偶发失败，未被本票修改也未修复；两份日志（红/绿）都保留。\",\n    \"未运行 tests/codebase-tools、tests/connect-bot、tests/harness-dock 分区（票据范围外；session_unobserved 为新增事件种类，对既有扩展声明是增量）。\",\n    \"与票据 06 的 shared-file 协调：对方在独立 worktree 改同一函数 directCaller（加 target 参数与 ended() 判定），本票在该函数体内新增的 const asSource = nextSource() 与 seat.readings?.adopt(asSource, reading) 需在合并时保留；已通过 agent:// 消息告知对方与集成要点。\"\n  ]\n}",
+        "stderr": "",
+        "truncated": false,
+        "durationMs": 1271398,
+        "tokens": 374677,
+        "requests": 217,
+        "contextTokens": 343345,
+        "contextWindow": 1000000,
+        "modelOverride": [
+          "deepseek/deepseek-flash:high"
+        ],
+        "resolvedModel": "deepseek/deepseek-flash:high",
+        "resolvedModelIdentity": "deepseek/deepseek-flash",
+        "resolvedThinkingLevel": "high",
+        "aborted": false,
+        "usage": {
+          "input": 194654,
+          "output": 180023,
+          "cacheRead": 47126016,
+          "cacheWrite": 0,
+          "totalTokens": 47500693,
+          "reasoningTokens": 102680,
+          "cost": {
+            "input": 0.029198099999999994,
+            "output": 0.10801380000000001,
+            "cacheRead": 0.141378048,
+            "cacheWrite": 0,
+            "total": 0.2785899480000001
+          }
+        },
+        "outputPath": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-17T00-18-42-202Z_01a14739-a39a-75a7-9316-a54811534a2a\\05-reconnect-source-lifecyclemd-53508336-6477-43.md",
+        "extractedToolData": {
+          "yield": [
+            {
+              "data": {
+                "ticket": "05-reconnect-source-lifecycle (P5, P6, P7, P8)",
+                "branch": "hyper/framework-subagent-observation/05-reconnect-source-lifecycle-b03b39-e98ea402077c",
+                "commit": "874a00c",
+                "head_before": "e50c574",
+                "worktree_state": "clean, all 26 changed files committed, no other ticket's files touched",
+                "behavior_delivered": [
+                  "观察来源 (ObservationSource): 服务端进程按接受顺序为其每个连接编号；接收入口从裸函数改为 SessionObservationSink { adopt(source, reading), lost(source) } (framework/core/protocol.ts, framework/modules/local-access.ts)。",
+                  "读数按来源归属 (framework/core/observations.ts): 活动与上下文各记录陈述它的最新来源；更旧的词既不覆盖也不撤销；来源结束只撤销它陈述过的实时读数，保留会话身份、直接父关系与已保存消费；被撤销字段的来源戳保留，旧来源无法复活它；read()/snapshot() 投影出公开读数形状，不泄漏来源戳。",
+                  "失效对消费者的表达：新增语义事件 session_unobserved (delivery + handler 类型)，binding 在来源失效时按会话投递；活动轴 forget 使重连后同一读数再次投递 (framework/behaviors/{binding,session-activity,session-context}.ts)。",
+                  "接收侧自行观察连接结束 (#accepted 的 close 覆盖正常释放/进程退出/被 kill)，不依赖将退出进程发出任何收尾帧。",
+                  "受影响消费者：model-cost 处理 session_unobserved → 忘记本实例活动读数并重绘；detail 行失去 Working 强调与 Ctx:，行/位置/树总量/消费文档不变 (extensions/model-cost/**)。",
+                  "文档：framework/GLOSSARY.md 新增 Observation source；framework/docs/framework-capabilities.md、extensions/model-cost/GLOSSARY.md 与 README.md 更新 detail 不可用语义。"
+                ],
+                "criteria_evidence": [
+                  {
+                    "criterion": "断开后状态变化再重连立即接收最新快照，无额外 Turn/Round/计费交付",
+                    "evidence": "tests/framework/session-observation-access.test.ts「a source that reaches the seat again restores what was withdrawn…」(投递序列恰为 activity/context/unobserved/activity/context)；tests/model-cost/detail-tree-live-sessions.test.ts 同名用例 (重连后 detail 恢复 Working 与 Ctx: 50,000/450.0K，消费文档字节不变)"
+                  },
+                  {
+                    "criterion": "真实进程 + 可控交付顺序验证重复/迟到/旧来源退出，新来源读数保持，不用概率性 sleep",
+                    "evidence": "tests/framework/local-access-observation.test.ts「two real processes' words about one session are ordered…」(两个真实子进程；断言每个词所属来源、重复词、迟到词、lost 只属于旧来源；顺序由子进程应答链 + 有界 until 等待保证)；tests/model-cost/detail-tree-process-sources.test.ts「an earlier process's end takes none of a later process's readings…」"
+                  },
+                  {
+                    "criterion": "正常释放与异常退出分别触发所属来源不可用；interface 读取不可用；实际 detail 不残留 Working/实时上下文",
+                    "evidence": "local-access-observation.test.ts「a real process releasing its access ends one source…」「a real process ended abruptly ends one source just as well」(release 与 kill 两条路径)；detail-tree-process-sources.test.ts「a killed process's reading is withdrawn and the row keeps its place…」(绘制行丢 Ctx:，行模型 nameEmphasis undefined，身份/深度保留)"
+                  },
+                  {
+                    "criterion": "不可用不冒充 Idle/失败/完成，不伪造计费生命周期",
+                    "evidence": "同一 S1 用例断言该次失效中订阅者收到的投递种类恰为 [session_activity, session_context, session_unobserved]；detail 用例断言消费文档字节不变、行数不变"
+                  },
+                  {
+                    "criterion": "断连前后树与消费保留：身份、直接父关系、已保存消费；实时登记身份仅内存保留",
+                    "evidence": "session-observation-access.test.ts「the readings a source's end withdraws are gone for a reader, and its identity is not」(read/snapshot 仍有 session+owner)；detail 用例失效后仍读同名同深度行、文档不变、无新增登记行"
+                  },
+                  {
+                    "criterion": "旧连接关闭不清除新连接读数；正常撤销不依赖退出进程的最后一条通知",
+                    "evidence": "session-observation-access.test.ts「a word a later source stated survives the earlier source's end…」；真实进程用例（被 kill 的进程未发任何收尾帧仍被观察为结束）"
+                  },
+                  {
+                    "criterion": "受控时序/真实关闭/异常退出/实际 detail 观察，覆盖分区与消费者；typecheck；可归因日志",
+                    "evidence": "见下的 verification"
+                  }
+                ],
+                "verification": [
+                  {
+                    "command": "bun run typecheck",
+                    "result": "exit 0 (log 05-typecheck.log)"
+                  },
+                  {
+                    "command": "bun test tests/framework",
+                    "result": "exit 0, 563 pass / 0 fail, 46 files, 62.45s"
+                  },
+                  {
+                    "command": "bun test tests/model-cost",
+                    "result": "重跑 exit 0, 483 pass / 0 fail, 44 files, 17.13s；第一次运行 exit 1 (482 pass / 1 fail，见 unresolved)"
+                  },
+                  {
+                    "command": "基线对照 git worktree add ../tc05-baseline HEAD + bun test tests/model-cost",
+                    "result": "exit 0, 478 pass / 0 fail；对照后已删除该 worktree"
+                  },
+                  {
+                    "command": "故障注入（临时改坏→红→复原→绿，5 项：binding 不 withdrawSource / observeActivity 去掉来源新旧判定 / 去掉 activityAxis.forget / close 不陈述 lost / model-cost 缺 sessionActivity.forget）",
+                    "result": "每项都被对应断言检出并变红，复原后全绿；注入未保留"
+                  }
+                ],
+                "evidence_files": [
+                  ".scratch/framework-subagent-observation/implementation/evidence/05-reconnect-source-lifecycle-evidence-2026-10-17.md",
+                  "evidence/logs/05-typecheck.log",
+                  "evidence/logs/05-framework-partition.log",
+                  "evidence/logs/05-model-cost-partition.log",
+                  "evidence/logs/05-model-cost-partition-first-run.log"
+                ],
+                "unresolved": [
+                  "真实 harness 未运行：本票的真实进程证据是「真实 bun 子进程 + 真实命名管道 + 生产前端/详情模型」，未执行 pi/OMP smoke，真实宿主上「子进程退出后 Owner 收到 session_unobserved」仍未验证（宿主版本/平台证据缺失，显式标注为实现限制，不折算为通过）。",
+                  "POSIX 未验证：仅 Windows 10.0.26200；命名管道与套接字文件差异未取得运行证据。",
+                  "第一次 model-cost 分区运行出现 1 例失败，非本票断言：tests/model-cost/pi-disposal-round-close.test.ts（票据 10）「leaving a session for another one closes no Round…」报 no record for pi-disposal-child was published；该文件单独运行、与本票新增文件三者合跑、以及整个分区重跑均通过，基线 worktree 同分区亦通过 → 判定为本票新增的多进程文件带来并行负载下该用例自身时序假设的偶发失败，未被本票修改也未修复；两份日志（红/绿）都保留。",
+                  "未运行 tests/codebase-tools、tests/connect-bot、tests/harness-dock 分区（票据范围外；session_unobserved 为新增事件种类，对既有扩展声明是增量）。",
+                  "与票据 06 的 shared-file 协调：对方在独立 worktree 改同一函数 directCaller（加 target 参数与 ended() 判定），本票在该函数体内新增的 const asSource = nextSource() 与 seat.readings?.adopt(asSource, reading) 需在合并时保留；已通过 agent:// 消息告知对方与集成要点。"
+                ]
+              },
+              "status": "success"
+            }
+          ]
+        },
+        "outputMeta": {
+          "lineCount": 81,
+          "charCount": 5339
+        }
+      },
+      "agent": "tdd",
+      "agent_id": "05-reconnect-source-lifecyclemd-53508336-6477-43",
+      "session_id": "01a1474c-a125-740d-a7a2-4826b250f381",
+      "session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-17T00-18-42-202Z_01a14739-a39a-75a7-9316-a54811534a2a\\05-reconnect-source-lifecyclemd-53508336-6477-43.jsonl",
+      "execution_cwd": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-8YWf31",
+      "retro_document": "E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\framework-subagent-observation\\retro\\05-reconnect-source-lifecycle.md\\462e9690-971e-4dad-ad8c-cd372ace4a67.md",
+      "retro_finished_at": "2026-10-17T01:01:42.380Z"
+    },
+    {
+      "feature": "framework-subagent-observation",
+      "ticket": "06-follow-observation-independence.md",
+      "run_id": "0be9e088-9f74-40f2-a8b4-cb605685c969",
+      "parent_session_id": "01a14739-a39a-75a7-9316-a54811534a2a",
+      "parent_session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-17T00-18-42-202Z_01a14739-a39a-75a7-9316-a54811534a2a.jsonl",
+      "workspace": "E:/Developer/myhub/my-agent-toolkit",
+      "tool_call_id": "1ad68365-f314-45d2-9c70-17d50aaecf37",
+      "started_at": "2026-10-17T00:39:27.341Z",
+      "tdd_status": "completed",
+      "retro_status": "completed",
+      "tdd_finished_at": "2026-10-17T00:57:00.370Z",
+      "tdd_result": {
+        "index": 0,
+        "id": "06-follow-observation-independencemd-1ad68365-f3",
+        "agent": "tdd",
+        "agentSource": "user",
+        "task": "Complete assignment thoroughly:\n\n在当前 worktree 实现唯一票据：C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-56m4wV\\.scratch\\framework-subagent-observation\\implementation\\06-follow-observation-independence.md。\n集成分支：hyper-tdd\nspec：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\framework-subagent-observation\\spec.md\ncontract：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\framework-subagent-observation\\contract.md\n这是本票首次执行。\n遵守 tdd skill，自行负责本票验收并报告实际验证与未完成事项。完成后尽快提交本票实现，交出 worktree，由独立集成子代理接管。不要修改其他票据或工作流报告，不操作集成分支工作区，不自行合入集成分支，不调用 retro、不派发其他票据。不得 reset 丢弃既有工作。",
+        "assignment": "在当前 worktree 实现唯一票据：C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-56m4wV\\.scratch\\framework-subagent-observation\\implementation\\06-follow-observation-independence.md。\n集成分支：hyper-tdd\nspec：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\framework-subagent-observation\\spec.md\ncontract：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\framework-subagent-observation\\contract.md\n这是本票首次执行。\n遵守 tdd skill，自行负责本票验收并报告实际验证与未完成事项。完成后尽快提交本票实现，交出 worktree，由独立集成子代理接管。不要修改其他票据或工作流报告，不操作集成分支工作区，不自行合入集成分支，不调用 retro、不派发其他票据。不得 reset 丢弃既有工作。",
+        "description": "Implement observation independence ticket in worktree",
+        "lastIntent": "Verifying committed state",
+        "exitCode": 0,
+        "output": "{\n  \"ticket\": \"06-follow-observation-independence（P21、P22、P23）\",\n  \"status\": \"complete\",\n  \"commit\": \"f0e0d8c（分支 hyper/framework-subagent-observation/06-follow-observation-independen-ed2819-e98ea402077c，基于 hyper-tdd 的 e50c574）\",\n  \"delivered\": {\n    \"behavior\": \"P21（follow 在两种进程模式取得 Owner 当前权威值）在执行 checklist 时暴露一处进程模式不一致并已修复：进程内被跟随的读取走 framework/modules/local-access.ts 的 openOwnerAccess → directCaller，而 directCaller 的 ended() 只在自身 dispose() 时置位，于是 Owner 生命结束（cell 退休、offer 撤回）或同一 owner 被重新进入（#offerAccess 换出新 source）后，该 access 继续回答旧生命的值——即另一种形态的永久快照；跨进程路径不受影响（seat 两个半边在边界处释放后 #releaseIfEmpty 销毁连接，远端调用方据连接关闭失效并重连）。修复（framework/modules/local-access.ts，3 处，共 10+/3-）：directCaller(target, seat, source) 增加 target 参数，ended() 扩为 `ended || processSeats()?.get(seatKey(target))?.values !== source`，调用点传 options.target。修复后两种模式含义一致：退休 seat 只答声明默认值，重新进入后的读取取得新生命当前值。P21–P23 其余语义由既有实现承载（state.ts 的 followed/view、followed-owners.ts 读取半边、binding.ts 的 owner seat 接收、observations.ts 进程观察源），未新增 State 权威、公开接口、协议帧或来源存储；brief/detail 与观察互不影响的既有实现（display-preference 逐 entry 内存偏好 + 框架进程观察源按需读取）经验证成立。\",\n    \"new_tests\": [\n      \"tests/framework/follow-observation-independence.test.ts（4 例：P21 进程内直读与 true→false→true 语义读取；P21 access 随 Owner 生命耗尽且新生命数值可读；P23 无 follow 字段的真实进程登记+更新；P22 远端读数采纳不写 Owner 值）\",\n      \"tests/model-cost/form-observation-independence.test.ts（1 例：P23 brief 期间采集、切 detail 显示最新读数、重复切换不重复来源/不停止采集/不重建接入）\"\n    ]\n  },\n  \"criteria\": [\n    {\n      \"criterion\": \"两种进程模式分别验证初始读取及 Owner 值 true→false 后的后续语义读取；跨进程实际取得 false，不把不可达默认值计为成功读取\",\n      \"evidence\": \"同进程：新用例 1（首读默认未达 → 到达后 true + marker 行；Owner 写 false 后注入 prompt 与 marker 区同为 false；写回 true 又为 true；读取指向不存在的配置文件，排除定位/端点路径）＋新用例 2（生命结束→声明默认；以 false 重新进入→不携带旧值；新生命写 true/false 即读得 true/false）；owner-follow.test.ts 的 cell 直读 true→false（seat.opens 为空）。跨进程：owner-follow-processes.test.ts『the follower reads what the serving process holds, then follows its change』真两进程 true→false→true，marker 行为独立证据；owner-follow.test.ts『an owner that cannot be reached…』钉住默认值不算成功读取。\"\n    },\n    {\n      \"criterion\": \"一次语义处理内相关读取使用所取得的一致快照，不要求每个 getter 分别通信；同进程直接读取，跨进程复用 framework Local access\",\n      \"evidence\": \"新用例 1：同一 handling 内注入 prompt 与 marker 区同时为开/关；owner-follow.test.ts『reads before the access is reached answer the default, and one attempt is shared』（三次 getter → seat.opens 长度 1）；新用例 1 的读取在配置不存在时仍读得真值＝进程内 seat 直读；local-access.test.ts『reading in the process that serves the seat opens nothing…』；跨进程复用见 owner-follow-processes.test.ts 与 local-access-observation.test.ts（真 record/端点）。\"\n    },\n    {\n      \"criterion\": \"读取及观察更新后 Owner 的独立给定值不被修改；错误方向、未声明操作及远端 State 写入被拒绝\",\n      \"evidence\": \"新用例 1 读后与写入后 serving.view(OWNER).read(FIELD) 仍为 Owner 自己的值；新用例 3（采纳远端读数后 Owner 值仍为 boundary 给定 true、marker 区无新增渲染、无诊断）；无 follow 真实进程用例同样断言 Owner 值不变；owner-follow.test.ts『a widened observation grants no write or effect authority』；local-access.test.ts『the endpoint serves its own seat and refuses a frame for any other』（真实进程 {t:\\\"write\\\"} 帧被 refused、服务进程值不变）；local-access-observation.test.ts 的『receives no observations refuses one』『a reading that names another owner is refused』。\"\n    },\n    {\n      \"criterion\": \"无 follow 字段扩展在实际进程中仍可完成登记与更新，观察启用不依赖 follow 字段存在\",\n      \"evidence\": \"新用例 3：state 只声明字段（继承默认 none），真实子进程经真 location record/端点两次 deliver，本进程观察源先后读得 tokens 4242→8888，且该 seat 无 values 半边（localOwnerAccess undefined）；model-cost 用例断言 stateInheritance(MODEL_COST) === \\\"none\\\" 且真实进程读数进入该扩展观察源并画入 detail；local-access.test.ts『the pi assembly offers an owner's values only for a follow field, and its observation seat wherever it spawns』。\"\n    },\n    {\n      \"criterion\": \"brief 期间更新后切 detail，实际表面显示最新读数；重复切换不重复来源、不停止采集、不重建观察连接\",\n      \"evidence\": \"model-cost 新用例：brief（默认）期间交付 45,000 tokens 读数→已采集而不画树；/budget detail 后真前端行含 Ctx: 10% (45,000/450.0K)；detail 期间再交付 90,000，两次切换后行含 Ctx: 20% (90,000/450.0K)；再交付 120,000 仍被采集，两次切换后行含 Ctx: 27% (120.0K/450.0K)；会话行恒 1 行；交付进程报告 reached: true、ended: false、3 条读数均经同一接入送达。\"\n    },\n    {\n      \"criterion\": \"覆盖 State 消费者、真实进程读取与实际展示切换，执行所属分区 + typecheck，记录证据与未验证限制\",\n      \"evidence\": \"见 verification 与 unverified；证据文件 .scratch/framework-subagent-observation/implementation/evidence/06-follow-observation-independence-evidence-2026-10-17.md 及 logs/06-*.log。\"\n    }\n  ],\n  \"verification\": [\n    {\n      \"command\": \"bun run typecheck\",\n      \"result\": \"exit 0\",\n      \"log\": \"evidence/logs/06-typecheck.log\"\n    },\n    {\n      \"command\": \"bun test tests/framework\",\n      \"result\": \"559 pass / 0 fail（47 文件，2504 expect）exit 0\",\n      \"log\": \"evidence/logs/06-partition-framework.log\"\n    },\n    {\n      \"command\": \"bun test tests/model-cost\",\n      \"result\": \"479 pass / 0 fail（45 文件，2630 expect）exit 0\",\n      \"log\": \"evidence/logs/06-partition-model-cost.log\"\n    },\n    {\n      \"command\": \"bun test tests/framework/owner-follow.test.ts tests/framework/owner-follow-processes.test.ts tests/framework/session-observation-access.test.ts\",\n      \"result\": \"22 pass / 0 fail（110 expect）exit 0\",\n      \"log\": \"evidence/logs/06-follow-suites.log\"\n    },\n    {\n      \"command\": \"bun test tests/framework/follow-observation-independence.test.ts tests/model-cost/form-observation-independence.test.ts\",\n      \"result\": \"5 pass / 0 fail（55 expect）exit 0（提交后在提交内容上复跑）\"\n    }\n  ],\n  \"mutations\": [\n    \"followed-owners.#open 丢弃 caller.observe（退回启动快照）→ 新用例 1 捕获；还原后绿。\",\n    \"OwnerAccessHost.receive 只在有 values 半边时接收 → 无 follow 真实进程用例与 model-cost 展示用例同时捕获；还原后绿。\",\n    \"directCaller 的 ended 改成 () => true → 新用例 1 与 owner-follow.test.ts 的 pi assembly 同进程用例捕获；还原后绿。\",\n    \"修复自身的红：修复前新用例 2 失败于『Owner 生命结束后仍读得退休值 true』。\"\n  ],\n  \"unverified\": [\n    \"未跑真机 pi CLI 与 OMP 真机：S3 证据为生产前端（attachModelCostWidget）经真实 framework 本机接入 + 真实子进程读数；真宿主/版本证据属票据 12（P34/P35）。未跑 scripts/pi-subagent-smoke.ts 与 tests/harness-dock（dock 需 materialise patched host，共享工作树内代价过高）。\",\n    \"未跑 POSIX 载体；未验证 pi 1.3.0 之外版本；未跑 tests/harness-dock、tests/codebase-tools、tests/connect-bot 分区。\",\n    \"『seat 两个半边都持有时（真实 pi 主进程）连接也在 Owner 边界被销毁』为代码推断（#withdrawValues/#withdrawReadings → #releaseIfEmpty → socket.destroy()），未构造同时持有两个半边的 serving 子进程用例。\",\n    \"新用例 1 的『不看定位/不开端点』由“配置不存在仍读得真值”推出，未对端点创建计数。\"\n  ],\n  \"merge_note_for_integration\": \"framework/modules/local-access.ts 的 directCaller 与票据 05 的同函数改动重叠（两票不同 worktree 各自改同一函数）。整合时：取本票的 directCaller(target, seat, source) 签名、ended: () => ended || processSeats()?.get(seatKey(target))?.values !== source 与调用点 directCaller(options.target, local, local.values)；保留票据 05 在 deliver 内的 const asSource = nextSource(); 与 seat.readings?.adopt(asSource, reading)。票据 05 的 ObservationSource/SessionObservationSink（protocol.ts、OwnerAccessPublisher.receive、ProcessSeat.readings、#accepted 的 lost(source)）不可退回裸函数 sink，否则无法通过类型检查。\",\n  \"notes\": \"本票未改其他票据文件或工作流报告；未操作集成分支工作区；未合入集成分支；无 reset。\"\n}",
+        "stderr": "",
+        "truncated": false,
+        "durationMs": 1052921,
+        "tokens": 308065,
+        "requests": 160,
+        "contextTokens": 291331,
+        "contextWindow": 1000000,
+        "modelOverride": [
+          "deepseek/deepseek-flash:high"
+        ],
+        "resolvedModel": "deepseek/deepseek-flash:high",
+        "resolvedModelIdentity": "deepseek/deepseek-flash",
+        "resolvedThinkingLevel": "high",
+        "aborted": false,
+        "usage": {
+          "input": 157301,
+          "output": 150764,
+          "cacheRead": 26750208,
+          "cacheWrite": 0,
+          "totalTokens": 27058273,
+          "reasoningTokens": 91691,
+          "cost": {
+            "input": 0.023595149999999974,
+            "output": 0.09045840000000004,
+            "cacheRead": 0.08025062400000003,
+            "cacheWrite": 0,
+            "total": 0.19430417399999994
+          }
+        },
+        "outputPath": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-17T00-18-42-202Z_01a14739-a39a-75a7-9316-a54811534a2a\\06-follow-observation-independencemd-1ad68365-f3.md",
+        "extractedToolData": {
+          "yield": [
+            {
+              "data": {
+                "ticket": "06-follow-observation-independence（P21、P22、P23）",
+                "status": "complete",
+                "commit": "f0e0d8c（分支 hyper/framework-subagent-observation/06-follow-observation-independen-ed2819-e98ea402077c，基于 hyper-tdd 的 e50c574）",
+                "delivered": {
+                  "behavior": "P21（follow 在两种进程模式取得 Owner 当前权威值）在执行 checklist 时暴露一处进程模式不一致并已修复：进程内被跟随的读取走 framework/modules/local-access.ts 的 openOwnerAccess → directCaller，而 directCaller 的 ended() 只在自身 dispose() 时置位，于是 Owner 生命结束（cell 退休、offer 撤回）或同一 owner 被重新进入（#offerAccess 换出新 source）后，该 access 继续回答旧生命的值——即另一种形态的永久快照；跨进程路径不受影响（seat 两个半边在边界处释放后 #releaseIfEmpty 销毁连接，远端调用方据连接关闭失效并重连）。修复（framework/modules/local-access.ts，3 处，共 10+/3-）：directCaller(target, seat, source) 增加 target 参数，ended() 扩为 `ended || processSeats()?.get(seatKey(target))?.values !== source`，调用点传 options.target。修复后两种模式含义一致：退休 seat 只答声明默认值，重新进入后的读取取得新生命当前值。P21–P23 其余语义由既有实现承载（state.ts 的 followed/view、followed-owners.ts 读取半边、binding.ts 的 owner seat 接收、observations.ts 进程观察源），未新增 State 权威、公开接口、协议帧或来源存储；brief/detail 与观察互不影响的既有实现（display-preference 逐 entry 内存偏好 + 框架进程观察源按需读取）经验证成立。",
+                  "new_tests": [
+                    "tests/framework/follow-observation-independence.test.ts（4 例：P21 进程内直读与 true→false→true 语义读取；P21 access 随 Owner 生命耗尽且新生命数值可读；P23 无 follow 字段的真实进程登记+更新；P22 远端读数采纳不写 Owner 值）",
+                    "tests/model-cost/form-observation-independence.test.ts（1 例：P23 brief 期间采集、切 detail 显示最新读数、重复切换不重复来源/不停止采集/不重建接入）"
+                  ]
+                },
+                "criteria": [
+                  {
+                    "criterion": "两种进程模式分别验证初始读取及 Owner 值 true→false 后的后续语义读取；跨进程实际取得 false，不把不可达默认值计为成功读取",
+                    "evidence": "同进程：新用例 1（首读默认未达 → 到达后 true + marker 行；Owner 写 false 后注入 prompt 与 marker 区同为 false；写回 true 又为 true；读取指向不存在的配置文件，排除定位/端点路径）＋新用例 2（生命结束→声明默认；以 false 重新进入→不携带旧值；新生命写 true/false 即读得 true/false）；owner-follow.test.ts 的 cell 直读 true→false（seat.opens 为空）。跨进程：owner-follow-processes.test.ts『the follower reads what the serving process holds, then follows its change』真两进程 true→false→true，marker 行为独立证据；owner-follow.test.ts『an owner that cannot be reached…』钉住默认值不算成功读取。"
+                  },
+                  {
+                    "criterion": "一次语义处理内相关读取使用所取得的一致快照，不要求每个 getter 分别通信；同进程直接读取，跨进程复用 framework Local access",
+                    "evidence": "新用例 1：同一 handling 内注入 prompt 与 marker 区同时为开/关；owner-follow.test.ts『reads before the access is reached answer the default, and one attempt is shared』（三次 getter → seat.opens 长度 1）；新用例 1 的读取在配置不存在时仍读得真值＝进程内 seat 直读；local-access.test.ts『reading in the process that serves the seat opens nothing…』；跨进程复用见 owner-follow-processes.test.ts 与 local-access-observation.test.ts（真 record/端点）。"
+                  },
+                  {
+                    "criterion": "读取及观察更新后 Owner 的独立给定值不被修改；错误方向、未声明操作及远端 State 写入被拒绝",
+                    "evidence": "新用例 1 读后与写入后 serving.view(OWNER).read(FIELD) 仍为 Owner 自己的值；新用例 3（采纳远端读数后 Owner 值仍为 boundary 给定 true、marker 区无新增渲染、无诊断）；无 follow 真实进程用例同样断言 Owner 值不变；owner-follow.test.ts『a widened observation grants no write or effect authority』；local-access.test.ts『the endpoint serves its own seat and refuses a frame for any other』（真实进程 {t:\"write\"} 帧被 refused、服务进程值不变）；local-access-observation.test.ts 的『receives no observations refuses one』『a reading that names another owner is refused』。"
+                  },
+                  {
+                    "criterion": "无 follow 字段扩展在实际进程中仍可完成登记与更新，观察启用不依赖 follow 字段存在",
+                    "evidence": "新用例 3：state 只声明字段（继承默认 none），真实子进程经真 location record/端点两次 deliver，本进程观察源先后读得 tokens 4242→8888，且该 seat 无 values 半边（localOwnerAccess undefined）；model-cost 用例断言 stateInheritance(MODEL_COST) === \"none\" 且真实进程读数进入该扩展观察源并画入 detail；local-access.test.ts『the pi assembly offers an owner's values only for a follow field, and its observation seat wherever it spawns』。"
+                  },
+                  {
+                    "criterion": "brief 期间更新后切 detail，实际表面显示最新读数；重复切换不重复来源、不停止采集、不重建观察连接",
+                    "evidence": "model-cost 新用例：brief（默认）期间交付 45,000 tokens 读数→已采集而不画树；/budget detail 后真前端行含 Ctx: 10% (45,000/450.0K)；detail 期间再交付 90,000，两次切换后行含 Ctx: 20% (90,000/450.0K)；再交付 120,000 仍被采集，两次切换后行含 Ctx: 27% (120.0K/450.0K)；会话行恒 1 行；交付进程报告 reached: true、ended: false、3 条读数均经同一接入送达。"
+                  },
+                  {
+                    "criterion": "覆盖 State 消费者、真实进程读取与实际展示切换，执行所属分区 + typecheck，记录证据与未验证限制",
+                    "evidence": "见 verification 与 unverified；证据文件 .scratch/framework-subagent-observation/implementation/evidence/06-follow-observation-independence-evidence-2026-10-17.md 及 logs/06-*.log。"
+                  }
+                ],
+                "verification": [
+                  {
+                    "command": "bun run typecheck",
+                    "result": "exit 0",
+                    "log": "evidence/logs/06-typecheck.log"
+                  },
+                  {
+                    "command": "bun test tests/framework",
+                    "result": "559 pass / 0 fail（47 文件，2504 expect）exit 0",
+                    "log": "evidence/logs/06-partition-framework.log"
+                  },
+                  {
+                    "command": "bun test tests/model-cost",
+                    "result": "479 pass / 0 fail（45 文件，2630 expect）exit 0",
+                    "log": "evidence/logs/06-partition-model-cost.log"
+                  },
+                  {
+                    "command": "bun test tests/framework/owner-follow.test.ts tests/framework/owner-follow-processes.test.ts tests/framework/session-observation-access.test.ts",
+                    "result": "22 pass / 0 fail（110 expect）exit 0",
+                    "log": "evidence/logs/06-follow-suites.log"
+                  },
+                  {
+                    "command": "bun test tests/framework/follow-observation-independence.test.ts tests/model-cost/form-observation-independence.test.ts",
+                    "result": "5 pass / 0 fail（55 expect）exit 0（提交后在提交内容上复跑）"
+                  }
+                ],
+                "mutations": [
+                  "followed-owners.#open 丢弃 caller.observe（退回启动快照）→ 新用例 1 捕获；还原后绿。",
+                  "OwnerAccessHost.receive 只在有 values 半边时接收 → 无 follow 真实进程用例与 model-cost 展示用例同时捕获；还原后绿。",
+                  "directCaller 的 ended 改成 () => true → 新用例 1 与 owner-follow.test.ts 的 pi assembly 同进程用例捕获；还原后绿。",
+                  "修复自身的红：修复前新用例 2 失败于『Owner 生命结束后仍读得退休值 true』。"
+                ],
+                "unverified": [
+                  "未跑真机 pi CLI 与 OMP 真机：S3 证据为生产前端（attachModelCostWidget）经真实 framework 本机接入 + 真实子进程读数；真宿主/版本证据属票据 12（P34/P35）。未跑 scripts/pi-subagent-smoke.ts 与 tests/harness-dock（dock 需 materialise patched host，共享工作树内代价过高）。",
+                  "未跑 POSIX 载体；未验证 pi 1.3.0 之外版本；未跑 tests/harness-dock、tests/codebase-tools、tests/connect-bot 分区。",
+                  "『seat 两个半边都持有时（真实 pi 主进程）连接也在 Owner 边界被销毁』为代码推断（#withdrawValues/#withdrawReadings → #releaseIfEmpty → socket.destroy()），未构造同时持有两个半边的 serving 子进程用例。",
+                  "新用例 1 的『不看定位/不开端点』由“配置不存在仍读得真值”推出，未对端点创建计数。"
+                ],
+                "merge_note_for_integration": "framework/modules/local-access.ts 的 directCaller 与票据 05 的同函数改动重叠（两票不同 worktree 各自改同一函数）。整合时：取本票的 directCaller(target, seat, source) 签名、ended: () => ended || processSeats()?.get(seatKey(target))?.values !== source 与调用点 directCaller(options.target, local, local.values)；保留票据 05 在 deliver 内的 const asSource = nextSource(); 与 seat.readings?.adopt(asSource, reading)。票据 05 的 ObservationSource/SessionObservationSink（protocol.ts、OwnerAccessPublisher.receive、ProcessSeat.readings、#accepted 的 lost(source)）不可退回裸函数 sink，否则无法通过类型检查。",
+                "notes": "本票未改其他票据文件或工作流报告；未操作集成分支工作区；未合入集成分支；无 reset。"
+              },
+              "status": "success"
+            }
+          ]
+        },
+        "outputMeta": {
+          "lineCount": 78,
+          "charCount": 6739
+        }
+      },
+      "agent": "tdd",
+      "agent_id": "06-follow-observation-independencemd-1ad68365-f3",
+      "session_id": "01a1474c-a379-747b-8965-4029edd9d802",
+      "session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-17T00-18-42-202Z_01a14739-a39a-75a7-9316-a54811534a2a\\06-follow-observation-independencemd-1ad68365-f3.jsonl",
+      "execution_cwd": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-56m4wV",
+      "retro_document": "E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\framework-subagent-observation\\retro\\06-follow-observation-independence.md\\0be9e088-9f74-40f2-a8b4-cb605685c969.md",
+      "retro_finished_at": "2026-10-17T00:58:11.095Z"
+    },
+    {
+      "feature": "framework-subagent-observation",
+      "ticket": "07-event-driven-coalesced-display.md",
+      "run_id": "674170a9-d496-469f-9af5-239e59a5afd4",
+      "parent_session_id": "01a14739-a39a-75a7-9316-a54811534a2a",
+      "parent_session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-17T00-18-42-202Z_01a14739-a39a-75a7-9316-a54811534a2a.jsonl",
+      "workspace": "E:/Developer/myhub/my-agent-toolkit",
+      "tool_call_id": "0c612433-f9b0-4402-a73e-26b326bbf73a",
+      "started_at": "2026-10-17T00:39:27.925Z",
+      "tdd_status": "completed",
+      "retro_status": "completed",
+      "tdd_finished_at": "2026-10-17T01:14:25.620Z",
+      "tdd_result": {
+        "index": 0,
+        "id": "07-event-driven-coalesced-displaymd-0c612433-f9b",
+        "agent": "tdd",
+        "agentSource": "user",
+        "task": "Complete assignment thoroughly:\n\n在当前 worktree 实现唯一票据：C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-HXXVq1\\.scratch\\framework-subagent-observation\\implementation\\07-event-driven-coalesced-display.md。\n集成分支：hyper-tdd\nspec：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\framework-subagent-observation\\spec.md\ncontract：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\framework-subagent-observation\\contract.md\n这是本票首次执行。\n遵守 tdd skill，自行负责本票验收并报告实际验证与未完成事项。完成后尽快提交本票实现，交出 worktree，由独立集成子代理接管。不要修改其他票据或工作流报告，不操作集成分支工作区，不自行合入集成分支，不调用 retro、不派发其他票据。不得 reset 丢弃既有工作。",
+        "assignment": "在当前 worktree 实现唯一票据：C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-HXXVq1\\.scratch\\framework-subagent-observation\\implementation\\07-event-driven-coalesced-display.md。\n集成分支：hyper-tdd\nspec：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\framework-subagent-observation\\spec.md\ncontract：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\framework-subagent-observation\\contract.md\n这是本票首次执行。\n遵守 tdd skill，自行负责本票验收并报告实际验证与未完成事项。完成后尽快提交本票实现，交出 worktree，由独立集成子代理接管。不要修改其他票据或工作流报告，不操作集成分支工作区，不自行合入集成分支，不调用 retro、不派发其他票据。不得 reset 丢弃既有工作。",
+        "description": "Implement event-driven coalesced display ticket",
+        "lastIntent": "Reporting the ticket result",
+        "exitCode": 0,
+        "output": "{\n  \"ticket\": \"07-event-driven-coalesced-display（P14、P15）\",\n  \"status\": \"implementation committed on the ticket branch; integration left to the independent integrator agent\",\n  \"commit\": \"b4b1d69 — 07: 观察按事件发布，展示改为 turn 级合并重绘（P14、P15）\",\n  \"delivered\": {\n    \"P14_publication_frequency\": \"核对既有采集/去重路径后未发现需要改动的采集点（OMP 只在 session_start/message_end/agent_end 采集，pi 只在 session_start/message_end/agent_settled 采集；SessionObservations.observeContext/observeActivity 对未变化读数返回 false 因而不派发、不交付；OMP 的 message_update 只映射 Turn 轴的 usage_streamed 且按读数去重）。本票的交付是把这三条以实际计数钉住并证明合并重绘没有引入轮询或逐 chunk 流量。\",\n    \"P15_merged_redraw\": \"新增 extensions/model-cost/shared-logic/presentation/coalesced-redraw.ts：移动的读数只 request() 重绘，一个 turn 的首次请求把重绘安排在该 turn 结束（queueMicrotask 边界），同 turn 后续请求并入同一次；读数在交付返回时即被采纳（不延后到绘制）；本 turn 已发生的只读结果发布会花掉欠下的重绘（published 订阅 accounting.view.subscribe），因此同一批读数只画一次，而 Round 边界/Turn settle/会话保存仍就地立即处理与发布。runtime.ts 的 session_activity/session_context 两个观察通道改走它，cleanup 里 dispose；结算与 provider 发布路径未改。无 timer/窗口/重复尝试。\",\n    \"consumer_update\": \"tests/model-cost/detail-tree-live-sessions.test.ts（票据 04）在读取**帧**前插入 await readingTurnEnded()（读观察源与展示结果处不变），原因是一个 turn 的重绘发生在该 turn 结束；已复跑绿。\",\n    \"docs\": \"extensions/model-cost/GLOSSARY.md 新增 Merged redraw（合并重绘）词条；README 的 Timing and detail behavior 增加一条行为说明与一段实测验证；本票 ticket 文件追加证据指针（未改 Status）。\"\n  },\n  \"acceptance\": {\n    \"criterion_1_fixed_sequence_duplicates\": \"tests/model-cost/observation-notice-frequency.test.ts：pi 真 adapter 四个采集点（1000/1000/2000/2000）只发布 [1000, 2000]；extension 侧同形状每变化通知 1 次、重复 0 次。pass\",\n    \"criterion_2_streaming_quiescence\": \"同文件：OMP 真 adapter 上 40 个 chunk 事实（宿主读数随流增长）→ 零发布、零 Turn 边；伪宿主时钟 1 分钟静止窗口 → 0 发布 0 绘制。变异注入（每 chunk 采集；5s 轮询）均被捕获。pass\",\n    \"criterion_3_merged_redraw_latest_values\": \"tests/model-cost/observation-redraw-merge.test.ts：同 turn 3 会话 × 2 轴共 6 次交付 → 1 帧，行上分别是最新 10,000/20,000/30,000；同会话同 turn 两次读数 → 1 帧且画最新值。pass\",\n    \"criterion_4_merging_only_display\": \"同文件：交付后同步断言观察源与 activity registry 已持有；Round start / Turn settle 在同 turn 立即处理并发布，带读数与不带读数的对照帧数相等（该等式在去掉'已发布即花掉欠下重绘'规则时变红）。pass\",\n    \"criterion_5_real_process_terminal_measurement\": \"真进程：tests/model-cost/observation-redraw-merge-processes.test.ts（真子进程 + 真 named pipe，3 条读数实测 2 帧，重复交付 0 帧）；真机：pi 1.3.0 后台 smoke exit 0、10/10 观察项；真终端：pi TUI 捕获（--widths 120,80，真 PTY）34 ok / 1 failed（脚本自钉 pi 1.2.0 与本机 1.3.0 不符）。三个计数分开记录（采集/通信/绘制）见证据文件。未声明未测量的零开销或最优效率。pass（限制见下）\",\n    \"criterion_6_partitions_typecheck\": \"见 verification。\"\n  },\n  \"verification\": {\n    \"commands_run\": [\n      \"bun run typecheck → exit 0\",\n      \"bun test tests/model-cost → 491 pass / 0 fail（47 files；改前 478，本票新增 13 例）\",\n      \"bun test tests/framework → 555 pass / 0 fail（46 files）\",\n      \"OMP_BOT_BINARY=E:/Developer/myhub/omp-bot/backend/target/release/omp-bot.exe bun test tests/harness-dock → 107 pass / 0 fail（28 files，278s，exit 0；日志 evidence/logs/07-dock-normalized.log）\",\n      \"bun scripts/pi-subagent-smoke.ts --background-only --expect-pi-version 1.3.0 → exit 0，10/10 观察项（25.4s）\",\n      \"bun scripts/pi-tui-acceptance.ts --widths 120,80 --out <temp> → 34 ok / 1 failed（12.7s；唯一失败是脚本自钉 1.2.0 的版本检查）\",\n      \"变异注入 5 种：立即重绘（5/7 红）、去掉已发布花掉欠下重绘（1 红）、取消框架去重（5 红）、每 chunk 采集（1 红）、轮询 interval（1 红），均还原并复跑绿\"\n    ],\n    \"normalization_note\": \"dock 基线记录的是冻结文件的 LF 内容哈希；本 worktree core.autocrlf=true 检出为 CRLF，逐字未归一时 dock 为 105 pass / 2 fail（baseline.test.ts 与 session-driver.test.ts 的 bun.lock 哈希）。按既有做法把 bun.lock 与 host-patches/*/patch.diff **临时**归一为 LF（未提交，内容与 git cat-file blob HEAD:<path> 相同）后运行；运行结束已还原，提交中不含这些换行变化。\",\n    \"flake_observed\": \"tests/model-cost 分区运行中两次出现 1 例失败（session-span.test.ts 的既有用例 'an unsettled Turn fabricates no end, and time moving or waiting writes nothing'），单独与随后 3 次完整分区均通过；该用例只断言文件字节与目录不随等待变化，与本票改动（只移动绘制通知）无因果路径。另 pi 后台 smoke 首次运行在既有断言 'the spawned session registered with the owner's process before its first Round ended' 上失败（子会话当时已有落盘记录），同树复跑两次与未含本票改动的 git archive HEAD 干净副本上均 10/10 通过，属该断言的时序竞争。两处均已如实记入证据文件，未隐去。\"\n  },\n  \"unverified\": [\n    \"POSIX 载体与其他 pi/OMP 宿主版本未运行（仅 Windows 10.0.26200 + pi 1.3.0 + patched OMP 18.5.0）。\",\n    \"bun run smoke:model-cost-detail-layout-terminal（真 Win32 控制台设备）未运行：本 shell 无控制台设备，脚本按设计拒绝执行；真终端观察由 pi TUI 捕获（真 PTY）承担。\",\n    \"scripts/pi-tui-acceptance.ts 的版本检查项因脚本自钉 pi 1.2.0、本机为 1.3.0 而失败（既有环境不符），该脚本未改动。\",\n    \"未测量单帧 CPU/内存成本与跨平台开销，故不作效率声明。\",\n    \"未做全仓 bun run test（留给最终集成）；本票范围为其所属分区、受影响消费者与真宿主运行。\"\n  ],\n  \"artifacts\": {\n    \"evidence\": \".scratch/framework-subagent-observation/implementation/evidence/07-event-driven-coalesced-display-evidence-2026-10-17.md\",\n    \"logs\": [\n      \".scratch/framework-subagent-observation/implementation/evidence/logs/07-dock-normalized.log\",\n      \".scratch/framework-subagent-observation/implementation/evidence/logs/07-pi-subagent-smoke-background.log\",\n      \".scratch/framework-subagent-observation/implementation/evidence/logs/07-pi-tui-acceptance.log\"\n    ],\n    \"source\": [\n      \"extensions/model-cost/shared-logic/presentation/coalesced-redraw.ts\",\n      \"extensions/model-cost/shared-logic/runtime.ts\",\n      \"tests/model-cost/observation-redraw-merge.test.ts\",\n      \"tests/model-cost/observation-redraw-merge-processes.test.ts\",\n      \"tests/model-cost/observation-notice-frequency.test.ts\",\n      \"tests/model-cost/detail-tree-live-sessions.test.ts\",\n      \"extensions/model-cost/GLOSSARY.md\",\n      \"extensions/model-cost/README.md\"\n    ]\n  }\n}",
+        "stderr": "",
+        "truncated": false,
+        "durationMs": 2097606,
+        "tokens": 397224,
+        "requests": 204,
+        "contextTokens": 358023,
+        "contextWindow": 1000000,
+        "modelOverride": [
+          "deepseek/deepseek-flash:high"
+        ],
+        "resolvedModel": "deepseek/deepseek-flash:high",
+        "resolvedModelIdentity": "deepseek/deepseek-flash",
+        "resolvedThinkingLevel": "high",
+        "aborted": false,
+        "usage": {
+          "input": 210837,
+          "output": 186387,
+          "cacheRead": 44531712,
+          "cacheWrite": 0,
+          "totalTokens": 44928936,
+          "reasoningTokens": 104324,
+          "cost": {
+            "input": 0.031625549999999995,
+            "output": 0.11183220000000002,
+            "cacheRead": 0.13359513600000006,
+            "cacheWrite": 0,
+            "total": 0.27705288599999983
+          }
+        },
+        "outputPath": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-17T00-18-42-202Z_01a14739-a39a-75a7-9316-a54811534a2a\\07-event-driven-coalesced-displaymd-0c612433-f9b.md",
+        "extractedToolData": {
+          "yield": [
+            {
+              "data": {
+                "ticket": "07-event-driven-coalesced-display（P14、P15）",
+                "status": "implementation committed on the ticket branch; integration left to the independent integrator agent",
+                "commit": "b4b1d69 — 07: 观察按事件发布，展示改为 turn 级合并重绘（P14、P15）",
+                "delivered": {
+                  "P14_publication_frequency": "核对既有采集/去重路径后未发现需要改动的采集点（OMP 只在 session_start/message_end/agent_end 采集，pi 只在 session_start/message_end/agent_settled 采集；SessionObservations.observeContext/observeActivity 对未变化读数返回 false 因而不派发、不交付；OMP 的 message_update 只映射 Turn 轴的 usage_streamed 且按读数去重）。本票的交付是把这三条以实际计数钉住并证明合并重绘没有引入轮询或逐 chunk 流量。",
+                  "P15_merged_redraw": "新增 extensions/model-cost/shared-logic/presentation/coalesced-redraw.ts：移动的读数只 request() 重绘，一个 turn 的首次请求把重绘安排在该 turn 结束（queueMicrotask 边界），同 turn 后续请求并入同一次；读数在交付返回时即被采纳（不延后到绘制）；本 turn 已发生的只读结果发布会花掉欠下的重绘（published 订阅 accounting.view.subscribe），因此同一批读数只画一次，而 Round 边界/Turn settle/会话保存仍就地立即处理与发布。runtime.ts 的 session_activity/session_context 两个观察通道改走它，cleanup 里 dispose；结算与 provider 发布路径未改。无 timer/窗口/重复尝试。",
+                  "consumer_update": "tests/model-cost/detail-tree-live-sessions.test.ts（票据 04）在读取**帧**前插入 await readingTurnEnded()（读观察源与展示结果处不变），原因是一个 turn 的重绘发生在该 turn 结束；已复跑绿。",
+                  "docs": "extensions/model-cost/GLOSSARY.md 新增 Merged redraw（合并重绘）词条；README 的 Timing and detail behavior 增加一条行为说明与一段实测验证；本票 ticket 文件追加证据指针（未改 Status）。"
+                },
+                "acceptance": {
+                  "criterion_1_fixed_sequence_duplicates": "tests/model-cost/observation-notice-frequency.test.ts：pi 真 adapter 四个采集点（1000/1000/2000/2000）只发布 [1000, 2000]；extension 侧同形状每变化通知 1 次、重复 0 次。pass",
+                  "criterion_2_streaming_quiescence": "同文件：OMP 真 adapter 上 40 个 chunk 事实（宿主读数随流增长）→ 零发布、零 Turn 边；伪宿主时钟 1 分钟静止窗口 → 0 发布 0 绘制。变异注入（每 chunk 采集；5s 轮询）均被捕获。pass",
+                  "criterion_3_merged_redraw_latest_values": "tests/model-cost/observation-redraw-merge.test.ts：同 turn 3 会话 × 2 轴共 6 次交付 → 1 帧，行上分别是最新 10,000/20,000/30,000；同会话同 turn 两次读数 → 1 帧且画最新值。pass",
+                  "criterion_4_merging_only_display": "同文件：交付后同步断言观察源与 activity registry 已持有；Round start / Turn settle 在同 turn 立即处理并发布，带读数与不带读数的对照帧数相等（该等式在去掉'已发布即花掉欠下重绘'规则时变红）。pass",
+                  "criterion_5_real_process_terminal_measurement": "真进程：tests/model-cost/observation-redraw-merge-processes.test.ts（真子进程 + 真 named pipe，3 条读数实测 2 帧，重复交付 0 帧）；真机：pi 1.3.0 后台 smoke exit 0、10/10 观察项；真终端：pi TUI 捕获（--widths 120,80，真 PTY）34 ok / 1 failed（脚本自钉 pi 1.2.0 与本机 1.3.0 不符）。三个计数分开记录（采集/通信/绘制）见证据文件。未声明未测量的零开销或最优效率。pass（限制见下）",
+                  "criterion_6_partitions_typecheck": "见 verification。"
+                },
+                "verification": {
+                  "commands_run": [
+                    "bun run typecheck → exit 0",
+                    "bun test tests/model-cost → 491 pass / 0 fail（47 files；改前 478，本票新增 13 例）",
+                    "bun test tests/framework → 555 pass / 0 fail（46 files）",
+                    "OMP_BOT_BINARY=E:/Developer/myhub/omp-bot/backend/target/release/omp-bot.exe bun test tests/harness-dock → 107 pass / 0 fail（28 files，278s，exit 0；日志 evidence/logs/07-dock-normalized.log）",
+                    "bun scripts/pi-subagent-smoke.ts --background-only --expect-pi-version 1.3.0 → exit 0，10/10 观察项（25.4s）",
+                    "bun scripts/pi-tui-acceptance.ts --widths 120,80 --out <temp> → 34 ok / 1 failed（12.7s；唯一失败是脚本自钉 1.2.0 的版本检查）",
+                    "变异注入 5 种：立即重绘（5/7 红）、去掉已发布花掉欠下重绘（1 红）、取消框架去重（5 红）、每 chunk 采集（1 红）、轮询 interval（1 红），均还原并复跑绿"
+                  ],
+                  "normalization_note": "dock 基线记录的是冻结文件的 LF 内容哈希；本 worktree core.autocrlf=true 检出为 CRLF，逐字未归一时 dock 为 105 pass / 2 fail（baseline.test.ts 与 session-driver.test.ts 的 bun.lock 哈希）。按既有做法把 bun.lock 与 host-patches/*/patch.diff **临时**归一为 LF（未提交，内容与 git cat-file blob HEAD:<path> 相同）后运行；运行结束已还原，提交中不含这些换行变化。",
+                  "flake_observed": "tests/model-cost 分区运行中两次出现 1 例失败（session-span.test.ts 的既有用例 'an unsettled Turn fabricates no end, and time moving or waiting writes nothing'），单独与随后 3 次完整分区均通过；该用例只断言文件字节与目录不随等待变化，与本票改动（只移动绘制通知）无因果路径。另 pi 后台 smoke 首次运行在既有断言 'the spawned session registered with the owner's process before its first Round ended' 上失败（子会话当时已有落盘记录），同树复跑两次与未含本票改动的 git archive HEAD 干净副本上均 10/10 通过，属该断言的时序竞争。两处均已如实记入证据文件，未隐去。"
+                },
+                "unverified": [
+                  "POSIX 载体与其他 pi/OMP 宿主版本未运行（仅 Windows 10.0.26200 + pi 1.3.0 + patched OMP 18.5.0）。",
+                  "bun run smoke:model-cost-detail-layout-terminal（真 Win32 控制台设备）未运行：本 shell 无控制台设备，脚本按设计拒绝执行；真终端观察由 pi TUI 捕获（真 PTY）承担。",
+                  "scripts/pi-tui-acceptance.ts 的版本检查项因脚本自钉 pi 1.2.0、本机为 1.3.0 而失败（既有环境不符），该脚本未改动。",
+                  "未测量单帧 CPU/内存成本与跨平台开销，故不作效率声明。",
+                  "未做全仓 bun run test（留给最终集成）；本票范围为其所属分区、受影响消费者与真宿主运行。"
+                ],
+                "artifacts": {
+                  "evidence": ".scratch/framework-subagent-observation/implementation/evidence/07-event-driven-coalesced-display-evidence-2026-10-17.md",
+                  "logs": [
+                    ".scratch/framework-subagent-observation/implementation/evidence/logs/07-dock-normalized.log",
+                    ".scratch/framework-subagent-observation/implementation/evidence/logs/07-pi-subagent-smoke-background.log",
+                    ".scratch/framework-subagent-observation/implementation/evidence/logs/07-pi-tui-acceptance.log"
+                  ],
+                  "source": [
+                    "extensions/model-cost/shared-logic/presentation/coalesced-redraw.ts",
+                    "extensions/model-cost/shared-logic/runtime.ts",
+                    "tests/model-cost/observation-redraw-merge.test.ts",
+                    "tests/model-cost/observation-redraw-merge-processes.test.ts",
+                    "tests/model-cost/observation-notice-frequency.test.ts",
+                    "tests/model-cost/detail-tree-live-sessions.test.ts",
+                    "extensions/model-cost/GLOSSARY.md",
+                    "extensions/model-cost/README.md"
+                  ]
+                }
+              },
+              "status": "success"
+            }
+          ]
+        },
+        "outputMeta": {
+          "lineCount": 57,
+          "charCount": 5371
+        }
+      },
+      "agent": "tdd",
+      "agent_id": "07-event-driven-coalesced-displaymd-0c612433-f9b",
+      "session_id": "01a1474c-a5c0-7400-b4f1-7eec7b50024b",
+      "session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-17T00-18-42-202Z_01a14739-a39a-75a7-9316-a54811534a2a\\07-event-driven-coalesced-displaymd-0c612433-f9b.jsonl",
+      "execution_cwd": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-HXXVq1",
+      "retro_document": "E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\framework-subagent-observation\\retro\\07-event-driven-coalesced-display.md\\674170a9-d496-469f-9af5-239e59a5afd4.md",
+      "retro_finished_at": "2026-10-17T01:15:20.254Z"
+    },
+    {
+      "feature": "framework-subagent-observation",
+      "ticket": "11-bounded-shutdown-outcomes.md",
+      "run_id": "5314134f-c9fa-4db7-897d-c94a81789b29",
+      "parent_session_id": "01a14739-a39a-75a7-9316-a54811534a2a",
+      "parent_session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-17T00-18-42-202Z_01a14739-a39a-75a7-9316-a54811534a2a.jsonl",
+      "workspace": "E:/Developer/myhub/my-agent-toolkit",
+      "tool_call_id": "9e431692-94b1-4124-b034-b861eab68be2",
+      "started_at": "2026-10-17T00:39:28.515Z",
+      "tdd_status": "completed",
+      "retro_status": "completed",
+      "tdd_finished_at": "2026-10-17T01:17:40.127Z",
+      "tdd_result": {
+        "index": 0,
+        "id": "11-bounded-shutdown-outcomesmd-9e431692-94b1-412",
+        "agent": "tdd",
+        "agentSource": "user",
+        "task": "Complete assignment thoroughly:\n\n在当前 worktree 实现唯一票据：C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-itmB8H\\.scratch\\framework-subagent-observation\\implementation\\11-bounded-shutdown-outcomes.md。\n集成分支：hyper-tdd\nspec：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\framework-subagent-observation\\spec.md\ncontract：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\framework-subagent-observation\\contract.md\n这是本票首次执行。\n遵守 tdd skill，自行负责本票验收并报告实际验证与未完成事项。完成后尽快提交本票实现，交出 worktree，由独立集成子代理接管。不要修改其他票据或工作流报告，不操作集成分支工作区，不自行合入集成分支，不调用 retro、不派发其他票据。不得 reset 丢弃既有工作。",
+        "assignment": "在当前 worktree 实现唯一票据：C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-itmB8H\\.scratch\\framework-subagent-observation\\implementation\\11-bounded-shutdown-outcomes.md。\n集成分支：hyper-tdd\nspec：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\framework-subagent-observation\\spec.md\ncontract：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\framework-subagent-observation\\contract.md\n这是本票首次执行。\n遵守 tdd skill，自行负责本票验收并报告实际验证与未完成事项。完成后尽快提交本票实现，交出 worktree，由独立集成子代理接管。不要修改其他票据或工作流报告，不操作集成分支工作区，不自行合入集成分支，不调用 retro、不派发其他票据。不得 reset 丢弃既有工作。",
+        "description": "Implement bounded shutdown outcomes ticket",
+        "lastIntent": "Reporting the completed ticket",
+        "exitCode": 0,
+        "output": "{\n  \"ticket\": \"11 — 退出总截止有界，准确报告保存结果 (P30, P31, P32)\",\n  \"branch\": \"hyper/framework-subagent-observation/11-bounded-shutdown-outcomes-4808b2-e98ea402077c\",\n  \"commits\": [\n    \"96b693a 11: 处置收口 15 秒有界，截止结果按真实事实报告（P30、P31、P32）\",\n    \"b535436 11: 记录分区与真机证据（含 connect-bot 面板分区、owner 解析口径）\"\n  ],\n  \"delivered\": {\n    \"framework\": \"处置收口从进入收口起有界：RoundDelivery.closeOut（CloseOutWait: budgetMs/deadline/remaining()）只出现在处置派发的 round_end 边；SessionDisposal.closeOutWaitMs? 让宿主自己的退出位置只收紧默认 15000ms 上限、绝不放大；RoundSynthesis.dispose 随其工作结束即回答（并清掉计时器），到截止仍未收口则在诊断通道声明该工作结果未确认、不声明取消/必然未写/已保存，磁盘上实际发布的文档为准；无重试、无固定延迟、不重置在途预算。remaining() 向下取整到整毫秒并预留 framework/modules/files.ts 的 WAIT_RESOLUTION_MS（等待观测分辨率），使可被取消的排队/锁等待在收口内部被拒并完成报告；通用文件更新的既有取消语义未改（预算/信号只作用于等待，更新一旦开始等真实结果），锁不提前释放，未新增存储协议。CloseOutWait 经 framework/public.ts 导出。\",\n    \"model-cost\": \"ConsumptionStore.commit(harness, record, wait?) 把调用方声明的等待原样交给 updateFile（自身不再持有预算）；Round 末保存把收口的 remaining()（下限 1ms）作为自己的等待上限，不再领取新的 15 秒；等待被收口截止结束时通知为「没有写入…（timeout：会话处置收口等待 <budgetMs>ms 已到）…未保存的消费已丢弃」，不产生任何成功提示。\",\n    \"docs\": \"framework/docs/framework-capabilities.md（新增收口有界语义段 + 两条类型表）、framework/GLOSSARY.md（Session disposal）、framework/docs/harness-support.md（lifecycle.session-disposal 行）、extensions/model-cost/README.md。\"\n  },\n  \"criteria_evidence\": [\n    {\n      \"criterion\": \"1 — 可控时间验证 15 秒总截止/临界点/在途已用预算；已完成路径立即收口，不重置预算、不叠加固定延迟或额外自动重试\",\n      \"evidence\": \"tests/framework/close-out-deadline.test.ts（平台假时钟）：deadline === 进入收口 + budgetMs；remaining() 只被给出剩余量（<budget，预留分辨率）并随时钟逐毫秒下降；宿主声明只收紧（400→400、4×15000→15000、未声明→15000）；已收口路径随工作立即回答且回答后 vi.getTimerCount() === 0（无固定延迟/无重试）。真机两次实测 14997ms / 15002ms 对照 15000ms 应用截止。\"\n    },\n    {\n      \"criterion\": \"2 — 排队/锁等待可可靠取消时，截止诊断为未提交且无成功提示；以实际文档证明\",\n      \"evidence\": \"tests/model-cost/close-out-deadline.test.ts（真实跨进程持有锁）：heldFor ≈ 300ms 截止、通知包含「没有写入」「timeout：会话处置收口等待 300ms 已到」「未保存的消费已丢弃」、无任何成功类通知、double.diagnostics 为空（无需框架的未确认声明）、磁盘上该会话无记录。tests/framework/close-out-deadline.test.ts 同场景真实 updateFile：failure kind = timeout、文档未变。真机阶段 2 同上（15000ms）。\"\n    },\n    {\n      \"criterion\": \"3 — 已进入实际更新但截止前未确认时报告保存结果未确认，不声称必然未写/已取消/提交成功；诊断与文档共同呈现\",\n      \"evidence\": \"tests/framework/close-out-deadline.test.ts：真实 updateFile 停在更新函数内（锁已持有、文档已被读取），截止到时旧文档仍在、另一写入者仍 timeout、解除后发布的完整文档落盘；框架诊断含 session id、'<budget>ms budget'、'unconfirmed'、'remains the authority'。\"\n    },\n    {\n      \"criterion\": \"4 — 不提前释放仍由更新持有的锁、不以停止 await 假装停止写入；其后以成功发布的完整文档为权威；不增加事务日志/强杀恢复/新存储协议\",\n      \"evidence\": \"同上用例（截止后竞争写入者仍 timeout；解除后 {version:2} 落盘覆盖 cutoff 时的 {version:1}）；framework/modules/files.ts 仅新增 WAIT_RESOLUTION_MS 导出，取消语义与锁协议未改。\"\n    },\n    {\n      \"criterion\": \"5 — 实际子进程在 Owner 缺失/断开/不回应时仍完成本地文件提交与有界退出；保存与 shutdown 无等待 Owner 的依赖\",\n      \"evidence\": \"bun scripts/pi-close-out-smoke.ts 阶段 1（真机 pi 1.3.0）：会话由无人服务的会话文件派生（adapter 沿 pi 血缘解析出 inherited owner，服务它的进程不存在），自身请求记账并提交（own input 1000/output 200 = 1 次真实请求），关闭进程 12ms 内退出 exit 0，无「未写入/未确认」通知。保存路径只写本地文档；观察交付是非阻塞投递。\"\n    },\n    {\n      \"criterion\": \"6 — 真实故障运行记录等待时间与调度误差，区分应用截止与 OS 调度；不要求毫秒级硬实时；不把保证扩张到强杀/崩溃/断电\",\n      \"evidence\": \"阶段 2：另一进程真实持有文档锁时，从「告诉 pi 停止」到进程退出两次实测 14997ms / 15002ms（应用截止 15000ms，偏差 −3ms/+2ms，两侧都出现 → 记录调度误差而非承诺毫秒精度）；文档同述保证止于正常处置。\"\n    },\n    {\n      \"criterion\": \"7 — 按仓库测试规范执行受控截止/锁等待/更新中场景，覆盖所属分区与受影响消费者；TypeScript 变化执行 typecheck；记录命令/环境/限制\",\n      \"evidence\": \"bun test tests/framework 561 pass / 0 fail（47 文件）；bun test tests/model-cost 480 pass / 0 fail（45 文件）；bun test tests/codebase-tools 24 pass / 0 fail；OMP_BOT_BINARY=… 时 bun test tests/connect-bot 142 pass / 0 fail；bun run typecheck exit 0；真机脚本 11/11 观测通过（61.8s，连续两次一致）。日志：evidence/logs/11-*.log；记录：evidence/11-bounded-shutdown-outcomes-evidence-2026-10-17.md。\"\n    }\n  ],\n  \"fault_injections\": [\n    \"去掉收口上界（直接 await settling）→ 「未收口」用例 5002ms 超时失败，恢复后通过。\",\n    \"WAIT_RESOLUTION_MS = 0 → model-cost 可靠取消用例失败（收口回答时通知尚未产生），恢复后通过。\",\n    \"实现之前该 model-cost 用例即为红（收口 0.3ms 内回答、无通知），证明它真的要求按调用方剩余预算等待。\"\n  ],\n  \"verification_commands\": [\n    {\n      \"command\": \"bun test tests/framework\",\n      \"result\": \"561 pass / 0 fail（2513 expect，41.7s，冻结树）\"\n    },\n    {\n      \"command\": \"bun test tests/model-cost\",\n      \"result\": \"480 pass / 0 fail（2626 expect，16.1s，冻结树）\"\n    },\n    {\n      \"command\": \"bun test tests/codebase-tools\",\n      \"result\": \"24 pass / 0 fail（334 expect，53.5s）\"\n    },\n    {\n      \"command\": \"OMP_BOT_BINARY=E:/Developer/myhub/omp-bot/backend/target/release/omp-bot.exe bun test tests/connect-bot\",\n      \"result\": \"142 pass / 0 fail（689 expect，76.9s）；未设该变量时 137 pass / 5 fail，五例均在真机面板 setup 处因缺二进制失败（与本改动无关）\"\n    },\n    {\n      \"command\": \"bun run typecheck\",\n      \"result\": \"exit 0\"\n    },\n    {\n      \"command\": \"bun scripts/pi-close-out-smoke.ts\",\n      \"result\": \"exit 0，11/11 观测，61.8s（连续两次）；pi 1.3.0，Windows 10.0.26200，bun 1.4.2\"\n    }\n  ],\n  \"unverified\": [\n    \"真机「更新已开始但截止前未确认」分支无法从宿主外部安排（无法冻结 rename）；该分支由确定性用例以真实 updateFile/真实锁/真实文档/真实跨进程持有者覆盖\",\n    \"POSIX 与其他 pi/宿主版本未运行\",\n    \"tests/harness-dock 分区与全仓 bun run test 未执行（集成分区按项目约定执行）\",\n    \"真机 Owner 形态为「inherited owner 但服务它的进程不存在」，未驱动「曾经连接随后断开」的载体路径（属票据 05/06 范围）\"\n  ],\n  \"handoff\": \"worktree 树干净；未触碰集成分支、其他票据文件或工作流报告；未调用 retro、未派发其他票据。\"\n}",
+        "stderr": "",
+        "truncated": false,
+        "durationMs": 2291499,
+        "tokens": 443998,
+        "requests": 188,
+        "contextTokens": 408024,
+        "contextWindow": 1000000,
+        "modelOverride": [
+          "deepseek/deepseek-flash:high"
+        ],
+        "resolvedModel": "deepseek/deepseek-flash:high",
+        "resolvedModelIdentity": "deepseek/deepseek-flash",
+        "resolvedThinkingLevel": "high",
+        "aborted": false,
+        "usage": {
+          "input": 216489,
+          "output": 227509,
+          "cacheRead": 48908672,
+          "cacheWrite": 0,
+          "totalTokens": 49352670,
+          "reasoningTokens": 139617,
+          "cost": {
+            "input": 0.03247334999999999,
+            "output": 0.13650539999999997,
+            "cacheRead": 0.146726016,
+            "cacheWrite": 0,
+            "total": 0.315704766
+          }
+        },
+        "outputPath": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-17T00-18-42-202Z_01a14739-a39a-75a7-9316-a54811534a2a\\11-bounded-shutdown-outcomesmd-9e431692-94b1-412.md",
+        "extractedToolData": {
+          "yield": [
+            {
+              "data": {
+                "ticket": "11 — 退出总截止有界，准确报告保存结果 (P30, P31, P32)",
+                "branch": "hyper/framework-subagent-observation/11-bounded-shutdown-outcomes-4808b2-e98ea402077c",
+                "commits": [
+                  "96b693a 11: 处置收口 15 秒有界，截止结果按真实事实报告（P30、P31、P32）",
+                  "b535436 11: 记录分区与真机证据（含 connect-bot 面板分区、owner 解析口径）"
+                ],
+                "delivered": {
+                  "framework": "处置收口从进入收口起有界：RoundDelivery.closeOut（CloseOutWait: budgetMs/deadline/remaining()）只出现在处置派发的 round_end 边；SessionDisposal.closeOutWaitMs? 让宿主自己的退出位置只收紧默认 15000ms 上限、绝不放大；RoundSynthesis.dispose 随其工作结束即回答（并清掉计时器），到截止仍未收口则在诊断通道声明该工作结果未确认、不声明取消/必然未写/已保存，磁盘上实际发布的文档为准；无重试、无固定延迟、不重置在途预算。remaining() 向下取整到整毫秒并预留 framework/modules/files.ts 的 WAIT_RESOLUTION_MS（等待观测分辨率），使可被取消的排队/锁等待在收口内部被拒并完成报告；通用文件更新的既有取消语义未改（预算/信号只作用于等待，更新一旦开始等真实结果），锁不提前释放，未新增存储协议。CloseOutWait 经 framework/public.ts 导出。",
+                  "model-cost": "ConsumptionStore.commit(harness, record, wait?) 把调用方声明的等待原样交给 updateFile（自身不再持有预算）；Round 末保存把收口的 remaining()（下限 1ms）作为自己的等待上限，不再领取新的 15 秒；等待被收口截止结束时通知为「没有写入…（timeout：会话处置收口等待 <budgetMs>ms 已到）…未保存的消费已丢弃」，不产生任何成功提示。",
+                  "docs": "framework/docs/framework-capabilities.md（新增收口有界语义段 + 两条类型表）、framework/GLOSSARY.md（Session disposal）、framework/docs/harness-support.md（lifecycle.session-disposal 行）、extensions/model-cost/README.md。"
+                },
+                "criteria_evidence": [
+                  {
+                    "criterion": "1 — 可控时间验证 15 秒总截止/临界点/在途已用预算；已完成路径立即收口，不重置预算、不叠加固定延迟或额外自动重试",
+                    "evidence": "tests/framework/close-out-deadline.test.ts（平台假时钟）：deadline === 进入收口 + budgetMs；remaining() 只被给出剩余量（<budget，预留分辨率）并随时钟逐毫秒下降；宿主声明只收紧（400→400、4×15000→15000、未声明→15000）；已收口路径随工作立即回答且回答后 vi.getTimerCount() === 0（无固定延迟/无重试）。真机两次实测 14997ms / 15002ms 对照 15000ms 应用截止。"
+                  },
+                  {
+                    "criterion": "2 — 排队/锁等待可可靠取消时，截止诊断为未提交且无成功提示；以实际文档证明",
+                    "evidence": "tests/model-cost/close-out-deadline.test.ts（真实跨进程持有锁）：heldFor ≈ 300ms 截止、通知包含「没有写入」「timeout：会话处置收口等待 300ms 已到」「未保存的消费已丢弃」、无任何成功类通知、double.diagnostics 为空（无需框架的未确认声明）、磁盘上该会话无记录。tests/framework/close-out-deadline.test.ts 同场景真实 updateFile：failure kind = timeout、文档未变。真机阶段 2 同上（15000ms）。"
+                  },
+                  {
+                    "criterion": "3 — 已进入实际更新但截止前未确认时报告保存结果未确认，不声称必然未写/已取消/提交成功；诊断与文档共同呈现",
+                    "evidence": "tests/framework/close-out-deadline.test.ts：真实 updateFile 停在更新函数内（锁已持有、文档已被读取），截止到时旧文档仍在、另一写入者仍 timeout、解除后发布的完整文档落盘；框架诊断含 session id、'<budget>ms budget'、'unconfirmed'、'remains the authority'。"
+                  },
+                  {
+                    "criterion": "4 — 不提前释放仍由更新持有的锁、不以停止 await 假装停止写入；其后以成功发布的完整文档为权威；不增加事务日志/强杀恢复/新存储协议",
+                    "evidence": "同上用例（截止后竞争写入者仍 timeout；解除后 {version:2} 落盘覆盖 cutoff 时的 {version:1}）；framework/modules/files.ts 仅新增 WAIT_RESOLUTION_MS 导出，取消语义与锁协议未改。"
+                  },
+                  {
+                    "criterion": "5 — 实际子进程在 Owner 缺失/断开/不回应时仍完成本地文件提交与有界退出；保存与 shutdown 无等待 Owner 的依赖",
+                    "evidence": "bun scripts/pi-close-out-smoke.ts 阶段 1（真机 pi 1.3.0）：会话由无人服务的会话文件派生（adapter 沿 pi 血缘解析出 inherited owner，服务它的进程不存在），自身请求记账并提交（own input 1000/output 200 = 1 次真实请求），关闭进程 12ms 内退出 exit 0，无「未写入/未确认」通知。保存路径只写本地文档；观察交付是非阻塞投递。"
+                  },
+                  {
+                    "criterion": "6 — 真实故障运行记录等待时间与调度误差，区分应用截止与 OS 调度；不要求毫秒级硬实时；不把保证扩张到强杀/崩溃/断电",
+                    "evidence": "阶段 2：另一进程真实持有文档锁时，从「告诉 pi 停止」到进程退出两次实测 14997ms / 15002ms（应用截止 15000ms，偏差 −3ms/+2ms，两侧都出现 → 记录调度误差而非承诺毫秒精度）；文档同述保证止于正常处置。"
+                  },
+                  {
+                    "criterion": "7 — 按仓库测试规范执行受控截止/锁等待/更新中场景，覆盖所属分区与受影响消费者；TypeScript 变化执行 typecheck；记录命令/环境/限制",
+                    "evidence": "bun test tests/framework 561 pass / 0 fail（47 文件）；bun test tests/model-cost 480 pass / 0 fail（45 文件）；bun test tests/codebase-tools 24 pass / 0 fail；OMP_BOT_BINARY=… 时 bun test tests/connect-bot 142 pass / 0 fail；bun run typecheck exit 0；真机脚本 11/11 观测通过（61.8s，连续两次一致）。日志：evidence/logs/11-*.log；记录：evidence/11-bounded-shutdown-outcomes-evidence-2026-10-17.md。"
+                  }
+                ],
+                "fault_injections": [
+                  "去掉收口上界（直接 await settling）→ 「未收口」用例 5002ms 超时失败，恢复后通过。",
+                  "WAIT_RESOLUTION_MS = 0 → model-cost 可靠取消用例失败（收口回答时通知尚未产生），恢复后通过。",
+                  "实现之前该 model-cost 用例即为红（收口 0.3ms 内回答、无通知），证明它真的要求按调用方剩余预算等待。"
+                ],
+                "verification_commands": [
+                  {
+                    "command": "bun test tests/framework",
+                    "result": "561 pass / 0 fail（2513 expect，41.7s，冻结树）"
+                  },
+                  {
+                    "command": "bun test tests/model-cost",
+                    "result": "480 pass / 0 fail（2626 expect，16.1s，冻结树）"
+                  },
+                  {
+                    "command": "bun test tests/codebase-tools",
+                    "result": "24 pass / 0 fail（334 expect，53.5s）"
+                  },
+                  {
+                    "command": "OMP_BOT_BINARY=E:/Developer/myhub/omp-bot/backend/target/release/omp-bot.exe bun test tests/connect-bot",
+                    "result": "142 pass / 0 fail（689 expect，76.9s）；未设该变量时 137 pass / 5 fail，五例均在真机面板 setup 处因缺二进制失败（与本改动无关）"
+                  },
+                  {
+                    "command": "bun run typecheck",
+                    "result": "exit 0"
+                  },
+                  {
+                    "command": "bun scripts/pi-close-out-smoke.ts",
+                    "result": "exit 0，11/11 观测，61.8s（连续两次）；pi 1.3.0，Windows 10.0.26200，bun 1.4.2"
+                  }
+                ],
+                "unverified": [
+                  "真机「更新已开始但截止前未确认」分支无法从宿主外部安排（无法冻结 rename）；该分支由确定性用例以真实 updateFile/真实锁/真实文档/真实跨进程持有者覆盖",
+                  "POSIX 与其他 pi/宿主版本未运行",
+                  "tests/harness-dock 分区与全仓 bun run test 未执行（集成分区按项目约定执行）",
+                  "真机 Owner 形态为「inherited owner 但服务它的进程不存在」，未驱动「曾经连接随后断开」的载体路径（属票据 05/06 范围）"
+                ],
+                "handoff": "worktree 树干净；未触碰集成分支、其他票据文件或工作流报告；未调用 retro、未派发其他票据。"
+              },
+              "status": "success"
+            }
+          ]
+        },
+        "outputMeta": {
+          "lineCount": 81,
+          "charCount": 5112
+        }
+      },
+      "agent": "tdd",
+      "agent_id": "11-bounded-shutdown-outcomesmd-9e431692-94b1-412",
+      "session_id": "01a1474c-a81e-761d-bba0-304d023b1bfa",
+      "session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-17T00-18-42-202Z_01a14739-a39a-75a7-9316-a54811534a2a\\11-bounded-shutdown-outcomesmd-9e431692-94b1-412.jsonl",
+      "execution_cwd": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-itmB8H",
+      "retro_document": "E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\framework-subagent-observation\\retro\\11-bounded-shutdown-outcomes.md\\5314134f-c9fa-4db7-897d-c94a81789b29.md",
+      "retro_finished_at": "2026-10-17T01:19:04.986Z"
+    },
+    {
+      "feature": "framework-subagent-observation",
+      "ticket": "08-local-accounting-owner-sync.md",
+      "run_id": "5bc56b75-2e82-4d12-9bb3-d7ce756e5d6e",
+      "parent_session_id": "01a14739-a39a-75a7-9316-a54811534a2a",
+      "parent_session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-17T00-18-42-202Z_01a14739-a39a-75a7-9316-a54811534a2a.jsonl",
+      "workspace": "E:/Developer/myhub/my-agent-toolkit",
+      "tool_call_id": "92176b38-710e-40c0-92cc-2c5e07eb9c74",
+      "started_at": "2026-10-17T01:11:49.856Z",
+      "tdd_status": "completed",
+      "retro_status": "completed",
+      "tdd_finished_at": "2026-10-17T01:32:51.057Z",
+      "tdd_result": {
+        "index": 0,
+        "id": "08-local-accounting-owner-syncmd-92176b38-710e-4",
+        "agent": "tdd",
+        "agentSource": "user",
+        "task": "Complete assignment thoroughly:\n\n在当前 worktree 实现唯一票据：C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-02HisO\\.scratch\\framework-subagent-observation\\implementation\\08-local-accounting-owner-sync.md。\n集成分支：hyper-tdd\nspec：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\framework-subagent-observation\\spec.md\ncontract：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\framework-subagent-observation\\contract.md\n这是本票首次执行。\n遵守 tdd skill，自行负责本票验收并报告实际验证与未完成事项。完成后尽快提交本票实现，交出 worktree，由独立集成子代理接管。不要修改其他票据或工作流报告，不操作集成分支工作区，不自行合入集成分支，不调用 retro、不派发其他票据。不得 reset 丢弃既有工作。",
+        "assignment": "在当前 worktree 实现唯一票据：C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-02HisO\\.scratch\\framework-subagent-observation\\implementation\\08-local-accounting-owner-sync.md。\n集成分支：hyper-tdd\nspec：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\framework-subagent-observation\\spec.md\ncontract：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\framework-subagent-observation\\contract.md\n这是本票首次执行。\n遵守 tdd skill，自行负责本票验收并报告实际验证与未完成事项。完成后尽快提交本票实现，交出 worktree，由独立集成子代理接管。不要修改其他票据或工作流报告，不操作集成分支工作区，不自行合入集成分支，不调用 retro、不派发其他票据。不得 reset 丢弃既有工作。",
+        "description": "Implement local accounting owner sync ticket",
+        "lastIntent": "Confirming the committed hand-off state",
+        "exitCode": 0,
+        "output": "{\n  \"ticket\": \"08 — 子会话自行记账，Owner 按成功提示或重连同步 (P16, P17, P19)\",\n  \"status\": \"implemented, tested, committed on the ticket branch; not merged into hyper-tdd (host queues the merge)\",\n  \"branch\": \"hyper/framework-subagent-observation/08-local-accounting-owner-sync-a9eed4-e98ea402077c\",\n  \"commit\": \"10fa407 (based on hyper-tdd 89ebaa2); working tree clean\",\n  \"delivered\": {\n    \"gap\": \"Existing code already had the session's own coordinated commit (ConsumptionStore.commit), the read-only synchronization (runtime.synchronize) and the Round-end save, but nothing told the process serving a session's owner that a write of that session had really landed — the Owner could only see another process's records via a manual synchronize or a restart.\",\n    \"framework\": [\n      \"protocol.ts: ObservedSession.commits / SessionObservation.commits, new session_commit axis (SessionCommitEvent/Observation/Delivery/Handler(s)), SemanticEvent + SemanticEventDeliveryMap\",\n      \"observations.ts: Entry.commits/commitsSource, observeCommits (source-ordered, no publish when the count did not move), recordCommit (records one confirmed write and answers the translatable word), commits in #readable/readingsFor, and a source's end does NOT withdraw the count\",\n      \"local-access.ts: the observation frame carries commits (non-negative integer; anything else is an unread member)\",\n      \"assembly.ts/binding.ts: ImplementationContext.recordSessionCommit — the extension's one statement channel; the binding records it in the process source and hands it over (handOverReading) when the session's owner is served elsewhere; adoptReading adopts an arriving count and dispatches session_commit where it moved\",\n      \"public.ts exports\"\n    ],\n    \"extension\": [\n      \"request-accounting.ts: RequestAccountingInputs.recordCommit; save() states the notice only after a confirmed commit (saved/unchanged) — never on refusal/pause/failure and never before the commit answered\",\n      \"runtime.ts: ModelCostRuntimeInputs.recordSessionCommit pass-through; new session_commit handler awaiting synchronize({feedback})\",\n      \"harnesses/pi.ts and harnesses/omp.ts wire context.recordSessionCommit\"\n    ],\n    \"docs\": [\n      \"framework/GLOSSARY.md (Storage commit notice)\",\n      \"framework/docs/framework-capabilities.md (commit axis row, ImplementationContext row, handler aliases row, observation-delivery paragraph)\",\n      \"extensions/model-cost/GLOSSARY.md (Consumption commit notice + Read-only synchronization trigger)\",\n      \"extensions/model-cost/README.md (timing/detail behavior bullet)\"\n    ]\n  },\n  \"tests\": {\n    \"tests/framework/session-observation-access.test.ts\": \"+4 (S1): count adopted/delivered once, repeated count silent, source end withdraws live readings only, owner served here recorded and handed to nobody, owner elsewhere handed over per write, readingsFor snapshot carries the count\",\n    \"tests/framework/local-access-observation.test.ts\": \"+2 (S2, real child processes over the real named pipe): a real process's count crosses the seat; the delivering half's first word carries the count this process holds (lost notice recoverable by reconnect)\",\n    \"tests/model-cost/local-accounting-owner-sync.test.ts\": \"+4 (new file, S1/S2/S3): a confirmed save states the notice and a save that did not land states none; the owner adopts the document the notice names read-only and rewrites nothing of the writer's; a notice for a root holding no document adopts nothing and creates nothing; two real child processes' commits + the owner's read-only adoption account each request once (own 2 / child 5 then 6; inclusiveTotals 7 then 8; files byte-identical)\"\n  },\n  \"verification_run\": [\n    {\n      \"command\": \"bun run typecheck\",\n      \"result\": \"exit 0\",\n      \"log\": \"evidence/logs/08-typecheck.log\"\n    },\n    {\n      \"command\": \"bun test tests/framework/session-observation-access.test.ts tests/framework/local-access-observation.test.ts tests/model-cost/local-accounting-owner-sync.test.ts\",\n      \"result\": \"34 pass / 0 fail (183 expect)\",\n      \"log\": \"evidence/logs/08-owner-sync-suites.log\"\n    },\n    {\n      \"command\": \"bun test tests/model-cost\",\n      \"result\": \"488 pass / 0 fail (46 files, 2707 expect)\",\n      \"log\": \"evidence/logs/08-model-cost-partition.log\"\n    },\n    {\n      \"command\": \"bun test tests/framework\",\n      \"result\": \"573 pass / 0 fail (47 files, 2580 expect)\",\n      \"log\": \"evidence/logs/08-framework-partition.log\"\n    },\n    {\n      \"command\": \"bun test tests/connect-bot tests/codebase-tools\",\n      \"result\": \"161 pass / 5 fail — all 5 fail inside startOmpBot's own environment precondition (no real omp-bot panel binary; needs OMP_BOT_BINARY), unrelated to this ticket; codebase-tools green\",\n      \"log\": \"evidence/logs/08-other-consumer-partitions.log\"\n    },\n    {\n      \"command\": \"fault injection (6 items, each red then restored and re-run green)\",\n      \"result\": \"notice withheld; notice stated before the commit answered; repeated count re-published; count dropped by the frame codec; arriving count not adopted; notice not handed over — each detected by the named suites\"\n    }\n  ],\n  \"criteria_evidence\": {\n    \"1 usage once / no double count\": \"local-accounting-owner-sync.test.ts 'each request is accounted once...' (independent literals; own = file's record, inclusive = 2+5 then 2+6, not summed), plus repeated adoption leaves totals and file bytes unchanged\",\n    \"2 writer attribution\": \"a real child process reports commits:[{kind:saved}], fsOperations.publishes=1, locks>0 (preloaded fs instrument over the real safe-file path and lock) while the Owner's file text is byte-identical before/after its adoption\",\n    \"3 owner sees it without committing\": \"test 2: the owner's own accumulation stays uncommitted and unwritten while the writer's record appears through view/presentation.of; test 3: same via two real child processes\",\n    \"4 only a confirmed commit notifies\": \"test 1: nothing while the Round is open, count 1 only after the record is on disk, and still 1 after a refused (paused) save; the premature-notice injection is caught\",\n    \"5 dropped notice recovered by reconnect\": \"S2 carrier cases + S1 'a count this process never took is what a connection that reached the seat again states'; extension-level adoption after the later connection's word\",\n    \"6 sync reuses baseline/failure policy, no init/forced save/polling, no Turn/Round replay\": \"absent root stays absent and creates no file; files byte-identical; unusable document pauses via the existing policy; the watching() probe records only session_commit (no round/turn/session edges)\",\n    \"7 partitions + typecheck + real processes/storage evidence\": \"see verification_run; real child processes, real named pipe, real store commits, Owner surface = runtime.view + runtime.presentation.of(target) (what a frontend draws)\"\n  },\n  \"unverified_or_limits\": [\n    \"No real host CLI (OMP/pi) and no tests/harness-dock run: the dock needs a ../oh-my-pi checkout plus an isolated install this worktree does not have; ticket 12 covers the real-host verification (P34/P35)\",\n    \"No POSIX carrier evidence: all real-process evidence is Windows named pipes\",\n    \"No other harness/provider versions\",\n    \"Sync-count-per-notice is not directly instrumented (the parent process carries no fs preload); 'no polling / no redundant re-read' is supported indirectly (one delivery per moved count, changed:false second adoption, byte-identical files, no doubled totals)\",\n    \"Explicit design note: reconnect triggers the sync because the count the owner never took is stated by the later connection — an already-taken count restated by a reconnect does not re-trigger; if the contract is read as 'every reconnect syncs unconditionally', that requires a contract revision first (change point: observeCommits' source rule + adoptReading's dispatch condition)\",\n    \"Notice coalescing and period safety (P18, P20) are ticket 09's; no coalescing exists here (the handler awaits synchronize directly)\",\n    \"Not run in this ticket: tests/harness-dock, full-repo bun run test (integration's job)\"\n  ],\n  \"handoff_notes\": [\n    \"node_modules was absent; bun install --frozen-lockfile installed 13 packages (needed for typecheck/tests; bun.lock untouched)\",\n    \"Merge overlap: tickets 07 (display coalescing) and 09 (notice coalescing + period safety) touch the same files; keep this ticket's commits member, recordSessionCommit channel and session_commit axis, and attach 09's coalescing at runtime.ts's session_commit handler\",\n    \"Suggested post-merge checks for the integration stage: bun run typecheck; bun test tests/framework tests/model-cost; then the normalized full-repo run (with OMP_BOT_BINARY for the connect-bot dock)\"\n  ],\n  \"process\": \"no reset, no work on the integration branch/worktree, no merge into hyper-tdd, no retro, no other tickets dispatched or modified; only this ticket's branch, ticket file and evidence were written\"\n}",
+        "stderr": "",
+        "truncated": false,
+        "durationMs": 1261076,
+        "tokens": 401857,
+        "requests": 181,
+        "contextTokens": 371096,
+        "contextWindow": 1000000,
+        "modelOverride": [
+          "deepseek/deepseek-flash:high"
+        ],
+        "resolvedModel": "deepseek/deepseek-flash:high",
+        "resolvedModelIdentity": "deepseek/deepseek-flash",
+        "resolvedThinkingLevel": "high",
+        "aborted": false,
+        "usage": {
+          "input": 233882,
+          "output": 167975,
+          "cacheRead": 41277824,
+          "cacheWrite": 0,
+          "totalTokens": 41679681,
+          "reasoningTokens": 88136,
+          "cost": {
+            "input": 0.03508230000000001,
+            "output": 0.10078499999999996,
+            "cacheRead": 0.12383347200000003,
+            "cacheWrite": 0,
+            "total": 0.259700772
+          }
+        },
+        "outputPath": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-17T00-18-42-202Z_01a14739-a39a-75a7-9316-a54811534a2a\\08-local-accounting-owner-syncmd-92176b38-710e-4.md",
+        "extractedToolData": {
+          "yield": [
+            {
+              "data": {
+                "ticket": "08 — 子会话自行记账，Owner 按成功提示或重连同步 (P16, P17, P19)",
+                "status": "implemented, tested, committed on the ticket branch; not merged into hyper-tdd (host queues the merge)",
+                "branch": "hyper/framework-subagent-observation/08-local-accounting-owner-sync-a9eed4-e98ea402077c",
+                "commit": "10fa407 (based on hyper-tdd 89ebaa2); working tree clean",
+                "delivered": {
+                  "gap": "Existing code already had the session's own coordinated commit (ConsumptionStore.commit), the read-only synchronization (runtime.synchronize) and the Round-end save, but nothing told the process serving a session's owner that a write of that session had really landed — the Owner could only see another process's records via a manual synchronize or a restart.",
+                  "framework": [
+                    "protocol.ts: ObservedSession.commits / SessionObservation.commits, new session_commit axis (SessionCommitEvent/Observation/Delivery/Handler(s)), SemanticEvent + SemanticEventDeliveryMap",
+                    "observations.ts: Entry.commits/commitsSource, observeCommits (source-ordered, no publish when the count did not move), recordCommit (records one confirmed write and answers the translatable word), commits in #readable/readingsFor, and a source's end does NOT withdraw the count",
+                    "local-access.ts: the observation frame carries commits (non-negative integer; anything else is an unread member)",
+                    "assembly.ts/binding.ts: ImplementationContext.recordSessionCommit — the extension's one statement channel; the binding records it in the process source and hands it over (handOverReading) when the session's owner is served elsewhere; adoptReading adopts an arriving count and dispatches session_commit where it moved",
+                    "public.ts exports"
+                  ],
+                  "extension": [
+                    "request-accounting.ts: RequestAccountingInputs.recordCommit; save() states the notice only after a confirmed commit (saved/unchanged) — never on refusal/pause/failure and never before the commit answered",
+                    "runtime.ts: ModelCostRuntimeInputs.recordSessionCommit pass-through; new session_commit handler awaiting synchronize({feedback})",
+                    "harnesses/pi.ts and harnesses/omp.ts wire context.recordSessionCommit"
+                  ],
+                  "docs": [
+                    "framework/GLOSSARY.md (Storage commit notice)",
+                    "framework/docs/framework-capabilities.md (commit axis row, ImplementationContext row, handler aliases row, observation-delivery paragraph)",
+                    "extensions/model-cost/GLOSSARY.md (Consumption commit notice + Read-only synchronization trigger)",
+                    "extensions/model-cost/README.md (timing/detail behavior bullet)"
+                  ]
+                },
+                "tests": {
+                  "tests/framework/session-observation-access.test.ts": "+4 (S1): count adopted/delivered once, repeated count silent, source end withdraws live readings only, owner served here recorded and handed to nobody, owner elsewhere handed over per write, readingsFor snapshot carries the count",
+                  "tests/framework/local-access-observation.test.ts": "+2 (S2, real child processes over the real named pipe): a real process's count crosses the seat; the delivering half's first word carries the count this process holds (lost notice recoverable by reconnect)",
+                  "tests/model-cost/local-accounting-owner-sync.test.ts": "+4 (new file, S1/S2/S3): a confirmed save states the notice and a save that did not land states none; the owner adopts the document the notice names read-only and rewrites nothing of the writer's; a notice for a root holding no document adopts nothing and creates nothing; two real child processes' commits + the owner's read-only adoption account each request once (own 2 / child 5 then 6; inclusiveTotals 7 then 8; files byte-identical)"
+                },
+                "verification_run": [
+                  {
+                    "command": "bun run typecheck",
+                    "result": "exit 0",
+                    "log": "evidence/logs/08-typecheck.log"
+                  },
+                  {
+                    "command": "bun test tests/framework/session-observation-access.test.ts tests/framework/local-access-observation.test.ts tests/model-cost/local-accounting-owner-sync.test.ts",
+                    "result": "34 pass / 0 fail (183 expect)",
+                    "log": "evidence/logs/08-owner-sync-suites.log"
+                  },
+                  {
+                    "command": "bun test tests/model-cost",
+                    "result": "488 pass / 0 fail (46 files, 2707 expect)",
+                    "log": "evidence/logs/08-model-cost-partition.log"
+                  },
+                  {
+                    "command": "bun test tests/framework",
+                    "result": "573 pass / 0 fail (47 files, 2580 expect)",
+                    "log": "evidence/logs/08-framework-partition.log"
+                  },
+                  {
+                    "command": "bun test tests/connect-bot tests/codebase-tools",
+                    "result": "161 pass / 5 fail — all 5 fail inside startOmpBot's own environment precondition (no real omp-bot panel binary; needs OMP_BOT_BINARY), unrelated to this ticket; codebase-tools green",
+                    "log": "evidence/logs/08-other-consumer-partitions.log"
+                  },
+                  {
+                    "command": "fault injection (6 items, each red then restored and re-run green)",
+                    "result": "notice withheld; notice stated before the commit answered; repeated count re-published; count dropped by the frame codec; arriving count not adopted; notice not handed over — each detected by the named suites"
+                  }
+                ],
+                "criteria_evidence": {
+                  "1 usage once / no double count": "local-accounting-owner-sync.test.ts 'each request is accounted once...' (independent literals; own = file's record, inclusive = 2+5 then 2+6, not summed), plus repeated adoption leaves totals and file bytes unchanged",
+                  "2 writer attribution": "a real child process reports commits:[{kind:saved}], fsOperations.publishes=1, locks>0 (preloaded fs instrument over the real safe-file path and lock) while the Owner's file text is byte-identical before/after its adoption",
+                  "3 owner sees it without committing": "test 2: the owner's own accumulation stays uncommitted and unwritten while the writer's record appears through view/presentation.of; test 3: same via two real child processes",
+                  "4 only a confirmed commit notifies": "test 1: nothing while the Round is open, count 1 only after the record is on disk, and still 1 after a refused (paused) save; the premature-notice injection is caught",
+                  "5 dropped notice recovered by reconnect": "S2 carrier cases + S1 'a count this process never took is what a connection that reached the seat again states'; extension-level adoption after the later connection's word",
+                  "6 sync reuses baseline/failure policy, no init/forced save/polling, no Turn/Round replay": "absent root stays absent and creates no file; files byte-identical; unusable document pauses via the existing policy; the watching() probe records only session_commit (no round/turn/session edges)",
+                  "7 partitions + typecheck + real processes/storage evidence": "see verification_run; real child processes, real named pipe, real store commits, Owner surface = runtime.view + runtime.presentation.of(target) (what a frontend draws)"
+                },
+                "unverified_or_limits": [
+                  "No real host CLI (OMP/pi) and no tests/harness-dock run: the dock needs a ../oh-my-pi checkout plus an isolated install this worktree does not have; ticket 12 covers the real-host verification (P34/P35)",
+                  "No POSIX carrier evidence: all real-process evidence is Windows named pipes",
+                  "No other harness/provider versions",
+                  "Sync-count-per-notice is not directly instrumented (the parent process carries no fs preload); 'no polling / no redundant re-read' is supported indirectly (one delivery per moved count, changed:false second adoption, byte-identical files, no doubled totals)",
+                  "Explicit design note: reconnect triggers the sync because the count the owner never took is stated by the later connection — an already-taken count restated by a reconnect does not re-trigger; if the contract is read as 'every reconnect syncs unconditionally', that requires a contract revision first (change point: observeCommits' source rule + adoptReading's dispatch condition)",
+                  "Notice coalescing and period safety (P18, P20) are ticket 09's; no coalescing exists here (the handler awaits synchronize directly)",
+                  "Not run in this ticket: tests/harness-dock, full-repo bun run test (integration's job)"
+                ],
+                "handoff_notes": [
+                  "node_modules was absent; bun install --frozen-lockfile installed 13 packages (needed for typecheck/tests; bun.lock untouched)",
+                  "Merge overlap: tickets 07 (display coalescing) and 09 (notice coalescing + period safety) touch the same files; keep this ticket's commits member, recordSessionCommit channel and session_commit axis, and attach 09's coalescing at runtime.ts's session_commit handler",
+                  "Suggested post-merge checks for the integration stage: bun run typecheck; bun test tests/framework tests/model-cost; then the normalized full-repo run (with OMP_BOT_BINARY for the connect-bot dock)"
+                ],
+                "process": "no reset, no work on the integration branch/worktree, no merge into hyper-tdd, no retro, no other tickets dispatched or modified; only this ticket's branch, ticket file and evidence were written"
+              },
+              "status": "success",
+              "type": "result"
+            }
+          ]
+        },
+        "outputMeta": {
+          "lineCount": 87,
+          "charCount": 8966
+        }
+      },
+      "agent": "tdd",
+      "agent_id": "08-local-accounting-owner-syncmd-92176b38-710e-4",
+      "session_id": "01a1476a-4777-7305-baec-e8c936b78694",
+      "session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-17T00-18-42-202Z_01a14739-a39a-75a7-9316-a54811534a2a\\08-local-accounting-owner-syncmd-92176b38-710e-4.jsonl",
+      "execution_cwd": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-02HisO",
+      "retro_document": "E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\framework-subagent-observation\\retro\\08-local-accounting-owner-sync.md\\5bc56b75-2e82-4d12-9bb3-d7ce756e5d6e.md",
+      "retro_finished_at": "2026-10-17T01:34:22.235Z"
+    },
+    {
+      "feature": "framework-subagent-observation",
+      "ticket": "09-coalesced-sync-period-safety.md",
+      "run_id": "597e11f4-b6dd-4fc9-b72d-994ac2e4469a",
+      "parent_session_id": "01a14739-a39a-75a7-9316-a54811534a2a",
+      "parent_session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-17T00-18-42-202Z_01a14739-a39a-75a7-9316-a54811534a2a.jsonl",
+      "workspace": "E:/Developer/myhub/my-agent-toolkit",
+      "tool_call_id": "f07fad11-1856-470e-8a60-0d4a213e055f",
+      "started_at": "2026-10-17T01:52:04.312Z",
+      "tdd_status": "completed",
+      "retro_status": "completed",
+      "tdd_finished_at": "2026-10-17T02:00:08.326Z",
+      "tdd_result": {
+        "index": 0,
+        "id": "09-coalesced-sync-period-safetymd-f07fad11-1856-",
+        "agent": "tdd",
+        "agentSource": "user",
+        "task": "Complete assignment thoroughly:\n\n在当前 worktree 实现唯一票据：C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-j4KD5V\\.scratch\\framework-subagent-observation\\implementation\\09-coalesced-sync-period-safety.md。\n集成分支：hyper-tdd\nspec：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\framework-subagent-observation\\spec.md\ncontract：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\framework-subagent-observation\\contract.md\n这是本票首次执行。\n遵守 tdd skill，自行负责本票验收并报告实际验证与未完成事项。完成后尽快提交本票实现，交出 worktree，由独立集成子代理接管。不要修改其他票据或工作流报告，不操作集成分支工作区，不自行合入集成分支，不调用 retro、不派发其他票据。不得 reset 丢弃既有工作。",
+        "assignment": "在当前 worktree 实现唯一票据：C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-j4KD5V\\.scratch\\framework-subagent-observation\\implementation\\09-coalesced-sync-period-safety.md。\n集成分支：hyper-tdd\nspec：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\framework-subagent-observation\\spec.md\ncontract：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\framework-subagent-observation\\contract.md\n这是本票首次执行。\n遵守 tdd skill，自行负责本票验收并报告实际验证与未完成事项。完成后尽快提交本票实现，交出 worktree，由独立集成子代理接管。不要修改其他票据或工作流报告，不操作集成分支工作区，不自行合入集成分支，不调用 retro、不派发其他票据。不得 reset 丢弃既有工作。",
+        "description": "Implement coalesced sync period safety ticket",
+        "lastIntent": "Verifying clean handoff state",
+        "exitCode": 0,
+        "output": "{\n  \"ticket\": \"09-coalesced-sync-period-safety\",\n  \"status\": \"implemented, tested, committed on ticket branch (merge/close left to integration per triage policy)\",\n  \"commit\": \"1a9b74f\",\n  \"branch\": \"hyper/framework-subagent-observation/09-coalesced-sync-period-safety-ef5a9e-e98ea402077c\",\n  \"behavior_delivered\": \"Session-commit hints now coalesce: the first hint of a turn schedules one read-only synchronization at the turn's end, same-turn hints join it, and hints arriving while that read is under way mark exactly one follow-up read after it (nothing is cleared before the promise it belongs to). The handler still settles after adoption, so close-out/disposal waits keep their meaning. Every read remains the existing synchronize: no write, lock, temp commit or re-initialization; same-period documents adopt only the disk baseline; an external period change still goes through accounting.periodSwitched(), dropping the closed period's in-flight consumption.\",\n  \"files_changed\": [\n    \"extensions/model-cost/shared-logic/runtime.ts\",\n    \"extensions/model-cost/README.md\",\n    \"tests/model-cost/coalesced-sync-period-safety.test.ts (new, 6 tests)\",\n    \".scratch/framework-subagent-observation/implementation/09-coalesced-sync-period-safety.md\",\n    \".scratch/framework-subagent-observation/implementation/evidence/09-coalesced-sync-period-safety-evidence-2026-10-17.md\",\n    \".scratch/framework-subagent-observation/implementation/evidence/logs/09-*.log (4)\"\n  ],\n  \"acceptance_evidence\": [\n    {\n      \"criterion\": \"multiple mergeable hints reduce syncs; final adopts independently given latest record; hints and syncs counted separately\",\n      \"test\": \"coalesced-sync-period-safety.test.ts: several notices in one turn are one synchronization...\",\n      \"evidence\": \"3 hints -> exactly 1 storage.synchronize call (call counter on runtime.storage), all three latest file records readable via runtime.view, storage.commit/load calls 0, file bytes and root entries unchanged\"\n    },\n    {\n      \"criterion\": \"controlled pause of one sync; another real process commits and notifies; final record visible; no permanent miss\",\n      \"test\": \"coalesced-sync-period-safety.test.ts: a notice delivered while a synchronization is paused...\",\n      \"evidence\": \"real child process (tests/model-cost/support/store-child.ts, framework safe-file/lock) commits during the paused first read; second hint delivered while paused; after release exactly 2 reads occur and the child's record is visible in Owner view; file remains the child's bytes\"\n    },\n    {\n      \"criterion\": \"same-period refresh adopts disk baseline only, no commit/discard/duplicate of local in-flight\",\n      \"test\": \"coalesced-sync-period-safety.test.ts: the disk baseline is adopted while the in-flight amount stays local...\",\n      \"evidence\": \"local saved 1 + in-flight 1; external 6; after refresh own(main)=2, inclusiveTotals=8, disk record stays 1, storage.commit calls 0, file bytes unchanged\"\n    },\n    {\n      \"criterion\": \"external period switch keeps only new-period records; late hint does not bring back old accumulation\",\n      \"test\": \"coalesced-sync-period-safety.test.ts: the closed period's in-flight consumption is dropped...\",\n      \"evidence\": \"old-period in-flight 2; new document period-replaced with 3; after sync own(main)/roundTotals empty, accrued only new 3, file unchanged; late hint re-read still does not restore it; old Round end writes nothing (0 commits)\"\n    },\n    {\n      \"criterion\": \"read-only sync takes no write lock, creates no temp commit, modifies no document; missing/invalid policy reused without re-initialization\",\n      \"test\": \"read-only tests: real process reads with instrument; notice over absent/unusable document\",\n      \"evidence\": \"instrumented child FS ops {reads: 2, publishes: 0, locks: 0}, file and directory unchanged; absent root notice creates no file and keeps original period; unusable document pauses and is left untouched; storage.load calls stay 0 across all hint-driven syncs\"\n    },\n    {\n      \"criterion\": \"controlled concurrency/period boundaries, owning partition and affected consumers, typecheck, real process write + Owner-visible result\",\n      \"test\": \"all 6 cases plus partition runs\",\n      \"evidence\": \"real child-process commit adopted by Owner in the paused-sync case; see verification below\"\n    }\n  ],\n  \"verification\": [\n    {\n      \"command\": \"bun test tests/model-cost/coalesced-sync-period-safety.test.ts\",\n      \"result\": \"6 pass / 0 fail, 64 expect() calls (logs/09-focused-suite.log)\"\n    },\n    {\n      \"command\": \"bun test tests/model-cost\",\n      \"result\": \"509 pass / 0 fail, 51 files, ~19.1s (logs/09-model-cost-partition.log)\"\n    },\n    {\n      \"command\": \"bun test tests/framework\",\n      \"result\": \"579 pass / 0 fail, 48 files, ~58.7s (logs/09-framework-partition.log)\"\n    },\n    {\n      \"command\": \"bun run typecheck\",\n      \"result\": \"exit 0 (logs/09-typecheck.log)\"\n    }\n  ],\n  \"fault_injections\": [\n    \"removed end-of-turn deferral -> test 1 failed (3 same-batch hints became 2 reads)\",\n    \"loop while -> if (drop in-flight hint) -> paused-sync test 2 failed (second read never happened)\",\n    \"periodChanged no longer calls periodSwitched -> period test 4 failed on own(main) assertion\",\n    \"same-period changed document wrongly calls periodSwitched -> test 3 failed on in-flight amount assertion\",\n    \"all injections restored; final suite green and re-run after restore\"\n  ],\n  \"not_verified\": [\n    \"No real pi/OMP host end-to-end session run; P18/P20's notice axis is covered in-process plus an independent real bun child process through the same safe-file/lock entry, not a harness adapter process. Harness disposal/rendering belongs to other tickets.\",\n    \"Windows only; POSIX lock/rename behavior not exercised.\",\n    \"Full-repository bun run test not run; left to integration stage per repo testing policy.\"\n  ],\n  \"ticket_status\": \"Set to in-progress in the ticket file; evidence/logs and Comments added. Closing on merge belongs to the integration step.\"\n}",
+        "stderr": "",
+        "truncated": false,
+        "durationMs": 483917,
+        "tokens": 171252,
+        "requests": 91,
+        "contextTokens": 155503,
+        "contextWindow": 1000000,
+        "modelOverride": [
+          "deepseek/deepseek-flash:high"
+        ],
+        "resolvedModel": "deepseek/deepseek-flash:high",
+        "resolvedModelIdentity": "deepseek/deepseek-flash",
+        "resolvedThinkingLevel": "high",
+        "aborted": false,
+        "usage": {
+          "input": 104747,
+          "output": 66505,
+          "cacheRead": 9662080,
+          "cacheWrite": 0,
+          "totalTokens": 9833332,
+          "reasoningTokens": 31285,
+          "cost": {
+            "input": 0.015712049999999998,
+            "output": 0.03990300000000001,
+            "cacheRead": 0.028986239999999996,
+            "cacheWrite": 0,
+            "total": 0.08460129000000001
+          }
+        },
+        "outputPath": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-17T00-18-42-202Z_01a14739-a39a-75a7-9316-a54811534a2a\\09-coalesced-sync-period-safetymd-f07fad11-1856-.md",
+        "extractedToolData": {
+          "yield": [
+            {
+              "data": {
+                "ticket": "09-coalesced-sync-period-safety",
+                "status": "implemented, tested, committed on ticket branch (merge/close left to integration per triage policy)",
+                "commit": "1a9b74f",
+                "branch": "hyper/framework-subagent-observation/09-coalesced-sync-period-safety-ef5a9e-e98ea402077c",
+                "behavior_delivered": "Session-commit hints now coalesce: the first hint of a turn schedules one read-only synchronization at the turn's end, same-turn hints join it, and hints arriving while that read is under way mark exactly one follow-up read after it (nothing is cleared before the promise it belongs to). The handler still settles after adoption, so close-out/disposal waits keep their meaning. Every read remains the existing synchronize: no write, lock, temp commit or re-initialization; same-period documents adopt only the disk baseline; an external period change still goes through accounting.periodSwitched(), dropping the closed period's in-flight consumption.",
+                "files_changed": [
+                  "extensions/model-cost/shared-logic/runtime.ts",
+                  "extensions/model-cost/README.md",
+                  "tests/model-cost/coalesced-sync-period-safety.test.ts (new, 6 tests)",
+                  ".scratch/framework-subagent-observation/implementation/09-coalesced-sync-period-safety.md",
+                  ".scratch/framework-subagent-observation/implementation/evidence/09-coalesced-sync-period-safety-evidence-2026-10-17.md",
+                  ".scratch/framework-subagent-observation/implementation/evidence/logs/09-*.log (4)"
+                ],
+                "acceptance_evidence": [
+                  {
+                    "criterion": "multiple mergeable hints reduce syncs; final adopts independently given latest record; hints and syncs counted separately",
+                    "test": "coalesced-sync-period-safety.test.ts: several notices in one turn are one synchronization...",
+                    "evidence": "3 hints -> exactly 1 storage.synchronize call (call counter on runtime.storage), all three latest file records readable via runtime.view, storage.commit/load calls 0, file bytes and root entries unchanged"
+                  },
+                  {
+                    "criterion": "controlled pause of one sync; another real process commits and notifies; final record visible; no permanent miss",
+                    "test": "coalesced-sync-period-safety.test.ts: a notice delivered while a synchronization is paused...",
+                    "evidence": "real child process (tests/model-cost/support/store-child.ts, framework safe-file/lock) commits during the paused first read; second hint delivered while paused; after release exactly 2 reads occur and the child's record is visible in Owner view; file remains the child's bytes"
+                  },
+                  {
+                    "criterion": "same-period refresh adopts disk baseline only, no commit/discard/duplicate of local in-flight",
+                    "test": "coalesced-sync-period-safety.test.ts: the disk baseline is adopted while the in-flight amount stays local...",
+                    "evidence": "local saved 1 + in-flight 1; external 6; after refresh own(main)=2, inclusiveTotals=8, disk record stays 1, storage.commit calls 0, file bytes unchanged"
+                  },
+                  {
+                    "criterion": "external period switch keeps only new-period records; late hint does not bring back old accumulation",
+                    "test": "coalesced-sync-period-safety.test.ts: the closed period's in-flight consumption is dropped...",
+                    "evidence": "old-period in-flight 2; new document period-replaced with 3; after sync own(main)/roundTotals empty, accrued only new 3, file unchanged; late hint re-read still does not restore it; old Round end writes nothing (0 commits)"
+                  },
+                  {
+                    "criterion": "read-only sync takes no write lock, creates no temp commit, modifies no document; missing/invalid policy reused without re-initialization",
+                    "test": "read-only tests: real process reads with instrument; notice over absent/unusable document",
+                    "evidence": "instrumented child FS ops {reads: 2, publishes: 0, locks: 0}, file and directory unchanged; absent root notice creates no file and keeps original period; unusable document pauses and is left untouched; storage.load calls stay 0 across all hint-driven syncs"
+                  },
+                  {
+                    "criterion": "controlled concurrency/period boundaries, owning partition and affected consumers, typecheck, real process write + Owner-visible result",
+                    "test": "all 6 cases plus partition runs",
+                    "evidence": "real child-process commit adopted by Owner in the paused-sync case; see verification below"
+                  }
+                ],
+                "verification": [
+                  {
+                    "command": "bun test tests/model-cost/coalesced-sync-period-safety.test.ts",
+                    "result": "6 pass / 0 fail, 64 expect() calls (logs/09-focused-suite.log)"
+                  },
+                  {
+                    "command": "bun test tests/model-cost",
+                    "result": "509 pass / 0 fail, 51 files, ~19.1s (logs/09-model-cost-partition.log)"
+                  },
+                  {
+                    "command": "bun test tests/framework",
+                    "result": "579 pass / 0 fail, 48 files, ~58.7s (logs/09-framework-partition.log)"
+                  },
+                  {
+                    "command": "bun run typecheck",
+                    "result": "exit 0 (logs/09-typecheck.log)"
+                  }
+                ],
+                "fault_injections": [
+                  "removed end-of-turn deferral -> test 1 failed (3 same-batch hints became 2 reads)",
+                  "loop while -> if (drop in-flight hint) -> paused-sync test 2 failed (second read never happened)",
+                  "periodChanged no longer calls periodSwitched -> period test 4 failed on own(main) assertion",
+                  "same-period changed document wrongly calls periodSwitched -> test 3 failed on in-flight amount assertion",
+                  "all injections restored; final suite green and re-run after restore"
+                ],
+                "not_verified": [
+                  "No real pi/OMP host end-to-end session run; P18/P20's notice axis is covered in-process plus an independent real bun child process through the same safe-file/lock entry, not a harness adapter process. Harness disposal/rendering belongs to other tickets.",
+                  "Windows only; POSIX lock/rename behavior not exercised.",
+                  "Full-repository bun run test not run; left to integration stage per repo testing policy."
+                ],
+                "ticket_status": "Set to in-progress in the ticket file; evidence/logs and Comments added. Closing on merge belongs to the integration step."
+              },
+              "status": "success"
+            }
+          ]
+        },
+        "outputMeta": {
+          "lineCount": 78,
+          "charCount": 6050
+        }
+      },
+      "agent": "tdd",
+      "agent_id": "09-coalesced-sync-period-safetymd-f07fad11-1856-",
+      "session_id": "01a1478f-1eeb-77dc-960c-90b3cbe96fdf",
+      "session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-17T00-18-42-202Z_01a14739-a39a-75a7-9316-a54811534a2a\\09-coalesced-sync-period-safetymd-f07fad11-1856-.jsonl",
+      "execution_cwd": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-j4KD5V",
+      "retro_document": "E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\framework-subagent-observation\\retro\\09-coalesced-sync-period-safety.md\\597e11f4-b6dd-4fc9-b72d-994ac2e4469a.md",
+      "retro_finished_at": "2026-10-17T02:00:54.560Z"
+    },
+    {
+      "feature": "framework-subagent-observation",
+      "ticket": "12-real-harness-reuse-verification.md",
+      "run_id": "e3ac69d8-1683-4e7f-a573-9dee229694b5",
+      "parent_session_id": "01a14739-a39a-75a7-9316-a54811534a2a",
+      "parent_session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-17T00-18-42-202Z_01a14739-a39a-75a7-9316-a54811534a2a.jsonl",
+      "workspace": "E:/Developer/myhub/my-agent-toolkit",
+      "tool_call_id": "6f9e69a5-172d-4feb-99d9-b21f7a616a29",
+      "started_at": "2026-10-17T02:00:17.427Z",
+      "tdd_status": "completed",
+      "retro_status": "completed",
+      "tdd_finished_at": "2026-10-17T02:30:25.632Z",
+      "tdd_result": {
+        "index": 0,
+        "id": "12-real-harness-reuse-verificationmd-6f9e69a5-17",
+        "agent": "tdd",
+        "agentSource": "user",
+        "task": "Complete assignment thoroughly:\n\n在当前 worktree 实现唯一票据：C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-Jq0PSO\\.scratch\\framework-subagent-observation\\implementation\\12-real-harness-reuse-verification.md。\n集成分支：hyper-tdd\nspec：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\framework-subagent-observation\\spec.md\ncontract：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\framework-subagent-observation\\contract.md\n这是本票首次执行。\n遵守 tdd skill，自行负责本票验收并报告实际验证与未完成事项。完成后尽快提交本票实现，交出 worktree，由独立集成子代理接管。不要修改其他票据或工作流报告，不操作集成分支工作区，不自行合入集成分支，不调用 retro、不派发其他票据。不得 reset 丢弃既有工作。",
+        "assignment": "在当前 worktree 实现唯一票据：C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-Jq0PSO\\.scratch\\framework-subagent-observation\\implementation\\12-real-harness-reuse-verification.md。\n集成分支：hyper-tdd\nspec：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\framework-subagent-observation\\spec.md\ncontract：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\framework-subagent-observation\\contract.md\n这是本票首次执行。\n遵守 tdd skill，自行负责本票验收并报告实际验证与未完成事项。完成后尽快提交本票实现，交出 worktree，由独立集成子代理接管。不要修改其他票据或工作流报告，不操作集成分支工作区，不自行合入集成分支，不调用 retro、不派发其他票据。不得 reset 丢弃既有工作。",
+        "description": "Implement real harness reuse verification ticket",
+        "lastIntent": "Amending evidence note",
+        "exitCode": 0,
+        "output": "{\n  \"ticket\": \"12-real-harness-reuse-verification\",\n  \"status\": \"in-progress (implementation + evidence committed; not merged into hyper-tdd)\",\n  \"branch\": \"hyper/framework-subagent-observation/12-real-harness-reuse-verificati-f0bd4a-e98ea402077c\",\n  \"commit\": \"ce7ba1b50b70b00bd95f483fbf536ff465197485\",\n  \"base\": \"3b0a1f7 (hyper-tdd tip at start)\",\n  \"delivered\": [\n    \"tests/framework/process-mode-reuse.test.ts: real OMP adapter proves no runtime dir/location record while given facts still reach the common observation interface; same given facts over the real local access adopt to the identical ObservedSession; real OMP and real pi adapters leave the same ObservedSession and session_context delivery (P24, P34).\",\n    \"scripts/pi-subagent-smoke.ts: foreground check now waits (bounded) for both parent and child consumption records instead of assuming parent committed when the child record appears; no fixed sleep. Root-caused by bisecting ticket 10 trees; product commit ordering is intact.\",\n    \"Evidence report: .scratch/framework-subagent-observation/evidence/12-real-harness-reuse-verification-evidence-2026-10-17.md plus logs/12-*.\",\n    \"Ticket checklist and in-progress record updated.\"\n  ],\n  \"acceptance\": [\n    {\n      \"criterion\": \"same-process no endpoint/locator + equivalent observation on in-process and real cross-process paths\",\n      \"evidence\": \"process-mode-reuse.test.ts (3 pass) + session-observation-access.test.ts handed-to-nobody case; real OMP + pi foreground runs\"\n    },\n    {\n      \"criterion\": \"actual OMP, pi foreground, pi background evidence incl. detail surface, pre-first-round reading, background pre-exit commit\",\n      \"evidence\": \"OMP dock 107/107 real setWidget frames; pi foreground 14/14 incl. real detail widget; pi background 10/10 registration before first Round end + child-owned consumption record with provider exitCode 0\"\n    },\n    {\n      \"criterion\": \"P34 behavior + maintainability audit, no third harness\",\n      \"evidence\": \"new common-interface tests; audit: native mapping in adapters, communication/sources in framework, billing + business display rules in shared logic; no third harness. Finding recorded: both frontends retain near-duplicate terminal layout helpers (drawing-layer debt); not claimed as fully de-duplicated.\"\n    },\n    {\n      \"criterion\": \"contract scenario matrix (normal exit, reconnect, disconnect, nesting, concurrency, billing, failure/deadline)\",\n      \"evidence\": \"mapped per promise to named deterministic cases in the report; real close-out smoke covers normal exit and 15s deadline/unwritten reporting; nested/concurrent real OMP/pi runs not separately run (marked unverified; deterministic coverage cited)\"\n    },\n    {\n      \"criterion\": \"separate collection/notification, drawing and exit-wait measurements\",\n      \"evidence\": \"publication/frame counts from observation-notice-frequency and redraw-merge suites (21 pass); real exit waits 12ms normal and 14,998ms at the 15,000ms deadline; front/background smokes 42.30s combined\"\n    },\n    {\n      \"criterion\": \"source/env state, versions, OS, commands, exits, results, timings, logs; Windows != POSIX\",\n      \"evidence\": \"report environment table + logs/12-environment.txt; POSIX and other versions explicitly unverified\"\n    },\n    {\n      \"criterion\": \"isolated endpoints/storage, no paid model, no operator data\",\n      \"evidence\": \"all real runs used isolated temp roots, capture endpoints and isolated OMP install\"\n    },\n    {\n      \"criterion\": \"coordinated final gate: typecheck, full tests, real-host smokes\",\n      \"evidence\": \"typecheck exit 0; dock 107 pass/0 fail/249.03s; OMP_BOT_BINARY bun run test 1364 pass/0 fail/7702 expect/153 files/441.82s; frozen files restored byte-identically; final pi foreground 14 obs and background 10 obs\"\n    }\n  ],\n  \"verification\": {\n    \"commands\": [\n      \"bun run typecheck -> exit 0\",\n      \"bun test tests/framework -> 582 pass / 0 fail / 2639 expect / 49 files\",\n      \"bun test tests/model-cost -> 507 pass / 2 transient fail under load; failed files rerun alone 12/12 pass\",\n      \"bun test tests/harness-dock (normalized frozen files) -> 107 pass / 0 fail / 1185 expect / 28 files / 249.03s / exit 0\",\n      \"OMP_BOT_BINARY=... bun run test -> 1364 pass / 0 fail / 7702 expect / 153 files / 441.82s / exit 0\",\n      \"bun scripts/pi-subagent-smoke.ts --foreground-only --expect-pi-version 1.3.0 -> 14 observations / exit 0\",\n      \"bun scripts/pi-subagent-smoke.ts --background-only --expect-pi-version 1.3.0 -> 10 observations / exit 0\",\n      \"bun scripts/pi-close-out-smoke.ts -> 11 observations / exit 0; 12ms normal, 14998ms deadline\"\n    ],\n    \"frozen_files_restored\": {\n      \"bun.lock\": \"e7ed487b...\",\n      \"viewed-session patch.diff\": \"057e01f6...\",\n      \"codex-response patch.diff\": \"294b3727...\"\n    }\n  },\n  \"unverified\": [\n    \"POSIX carriers and other OMP/pi versions not run\",\n    \"real pi truncation (open Round at disposal) not reproduced on a real host; deterministic coverage only\",\n    \"real OMP nested/concurrent runs not separately executed\",\n    \"human terminal readability judgement not performed\",\n    \"P34 display-layer layout helper duplication remains as recorded debt\",\n    \"final gate ran while another worktree's full suite was active (different .cache); both runs were 0 fail but a strictly exclusive quiet-window rerun is left to integration\"\n  ],\n  \"hygiene\": [\n    \"no product source changed\",\n    \"diagnostic worktree removed; no reset used\",\n    \"other tickets/workflow reports untouched\",\n    \"worktree clean after commit; handed off for integration\"\n  ]\n}",
+        "stderr": "",
+        "truncated": false,
+        "durationMs": 1808110,
+        "tokens": 369578,
+        "requests": 221,
+        "contextTokens": 340210,
+        "contextWindow": 1000000,
+        "modelOverride": [
+          "deepseek/deepseek-flash:high"
+        ],
+        "resolvedModel": "deepseek/deepseek-flash:high",
+        "resolvedModelIdentity": "deepseek/deepseek-flash",
+        "resolvedThinkingLevel": "high",
+        "aborted": false,
+        "usage": {
+          "input": 237437,
+          "output": 132141,
+          "cacheRead": 47849344,
+          "cacheWrite": 0,
+          "totalTokens": 48218922,
+          "reasoningTokens": 59090,
+          "cost": {
+            "input": 0.035615549999999996,
+            "output": 0.07928459999999996,
+            "cacheRead": 0.14354803200000008,
+            "cacheWrite": 0,
+            "total": 0.25844818199999997
+          }
+        },
+        "outputPath": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-17T00-18-42-202Z_01a14739-a39a-75a7-9316-a54811534a2a\\12-real-harness-reuse-verificationmd-6f9e69a5-17.md",
+        "extractedToolData": {
+          "yield": [
+            {
+              "data": {
+                "ticket": "12-real-harness-reuse-verification",
+                "status": "in-progress (implementation + evidence committed; not merged into hyper-tdd)",
+                "branch": "hyper/framework-subagent-observation/12-real-harness-reuse-verificati-f0bd4a-e98ea402077c",
+                "commit": "ce7ba1b50b70b00bd95f483fbf536ff465197485",
+                "base": "3b0a1f7 (hyper-tdd tip at start)",
+                "delivered": [
+                  "tests/framework/process-mode-reuse.test.ts: real OMP adapter proves no runtime dir/location record while given facts still reach the common observation interface; same given facts over the real local access adopt to the identical ObservedSession; real OMP and real pi adapters leave the same ObservedSession and session_context delivery (P24, P34).",
+                  "scripts/pi-subagent-smoke.ts: foreground check now waits (bounded) for both parent and child consumption records instead of assuming parent committed when the child record appears; no fixed sleep. Root-caused by bisecting ticket 10 trees; product commit ordering is intact.",
+                  "Evidence report: .scratch/framework-subagent-observation/evidence/12-real-harness-reuse-verification-evidence-2026-10-17.md plus logs/12-*.",
+                  "Ticket checklist and in-progress record updated."
+                ],
+                "acceptance": [
+                  {
+                    "criterion": "same-process no endpoint/locator + equivalent observation on in-process and real cross-process paths",
+                    "evidence": "process-mode-reuse.test.ts (3 pass) + session-observation-access.test.ts handed-to-nobody case; real OMP + pi foreground runs"
+                  },
+                  {
+                    "criterion": "actual OMP, pi foreground, pi background evidence incl. detail surface, pre-first-round reading, background pre-exit commit",
+                    "evidence": "OMP dock 107/107 real setWidget frames; pi foreground 14/14 incl. real detail widget; pi background 10/10 registration before first Round end + child-owned consumption record with provider exitCode 0"
+                  },
+                  {
+                    "criterion": "P34 behavior + maintainability audit, no third harness",
+                    "evidence": "new common-interface tests; audit: native mapping in adapters, communication/sources in framework, billing + business display rules in shared logic; no third harness. Finding recorded: both frontends retain near-duplicate terminal layout helpers (drawing-layer debt); not claimed as fully de-duplicated."
+                  },
+                  {
+                    "criterion": "contract scenario matrix (normal exit, reconnect, disconnect, nesting, concurrency, billing, failure/deadline)",
+                    "evidence": "mapped per promise to named deterministic cases in the report; real close-out smoke covers normal exit and 15s deadline/unwritten reporting; nested/concurrent real OMP/pi runs not separately run (marked unverified; deterministic coverage cited)"
+                  },
+                  {
+                    "criterion": "separate collection/notification, drawing and exit-wait measurements",
+                    "evidence": "publication/frame counts from observation-notice-frequency and redraw-merge suites (21 pass); real exit waits 12ms normal and 14,998ms at the 15,000ms deadline; front/background smokes 42.30s combined"
+                  },
+                  {
+                    "criterion": "source/env state, versions, OS, commands, exits, results, timings, logs; Windows != POSIX",
+                    "evidence": "report environment table + logs/12-environment.txt; POSIX and other versions explicitly unverified"
+                  },
+                  {
+                    "criterion": "isolated endpoints/storage, no paid model, no operator data",
+                    "evidence": "all real runs used isolated temp roots, capture endpoints and isolated OMP install"
+                  },
+                  {
+                    "criterion": "coordinated final gate: typecheck, full tests, real-host smokes",
+                    "evidence": "typecheck exit 0; dock 107 pass/0 fail/249.03s; OMP_BOT_BINARY bun run test 1364 pass/0 fail/7702 expect/153 files/441.82s; frozen files restored byte-identically; final pi foreground 14 obs and background 10 obs"
+                  }
+                ],
+                "verification": {
+                  "commands": [
+                    "bun run typecheck -> exit 0",
+                    "bun test tests/framework -> 582 pass / 0 fail / 2639 expect / 49 files",
+                    "bun test tests/model-cost -> 507 pass / 2 transient fail under load; failed files rerun alone 12/12 pass",
+                    "bun test tests/harness-dock (normalized frozen files) -> 107 pass / 0 fail / 1185 expect / 28 files / 249.03s / exit 0",
+                    "OMP_BOT_BINARY=... bun run test -> 1364 pass / 0 fail / 7702 expect / 153 files / 441.82s / exit 0",
+                    "bun scripts/pi-subagent-smoke.ts --foreground-only --expect-pi-version 1.3.0 -> 14 observations / exit 0",
+                    "bun scripts/pi-subagent-smoke.ts --background-only --expect-pi-version 1.3.0 -> 10 observations / exit 0",
+                    "bun scripts/pi-close-out-smoke.ts -> 11 observations / exit 0; 12ms normal, 14998ms deadline"
+                  ],
+                  "frozen_files_restored": {
+                    "bun.lock": "e7ed487b...",
+                    "viewed-session patch.diff": "057e01f6...",
+                    "codex-response patch.diff": "294b3727..."
+                  }
+                },
+                "unverified": [
+                  "POSIX carriers and other OMP/pi versions not run",
+                  "real pi truncation (open Round at disposal) not reproduced on a real host; deterministic coverage only",
+                  "real OMP nested/concurrent runs not separately executed",
+                  "human terminal readability judgement not performed",
+                  "P34 display-layer layout helper duplication remains as recorded debt",
+                  "final gate ran while another worktree's full suite was active (different .cache); both runs were 0 fail but a strictly exclusive quiet-window rerun is left to integration"
+                ],
+                "hygiene": [
+                  "no product source changed",
+                  "diagnostic worktree removed; no reset used",
+                  "other tickets/workflow reports untouched",
+                  "worktree clean after commit; handed off for integration"
+                ]
+              },
+              "status": "success",
+              "type": "result"
+            }
+          ]
+        },
+        "outputMeta": {
+          "lineCount": 78,
+          "charCount": 5610
+        }
+      },
+      "agent": "tdd",
+      "agent_id": "12-real-harness-reuse-verificationmd-6f9e69a5-17",
+      "session_id": "01a14796-a523-70e6-9043-d04d4ff44df5",
+      "session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-17T00-18-42-202Z_01a14739-a39a-75a7-9316-a54811534a2a\\12-real-harness-reuse-verificationmd-6f9e69a5-17.jsonl",
+      "execution_cwd": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-Jq0PSO",
+      "retro_document": "E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\framework-subagent-observation\\retro\\12-real-harness-reuse-verification.md\\e3ac69d8-1683-4e7f-a573-9dee229694b5.md",
+      "retro_finished_at": "2026-10-17T02:31:26.839Z"
+    }
+  ]
+}

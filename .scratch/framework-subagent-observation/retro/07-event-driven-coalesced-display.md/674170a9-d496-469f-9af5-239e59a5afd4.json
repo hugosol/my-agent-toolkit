@@ -1,0 +1,130 @@
+{
+  "feature": "framework-subagent-observation",
+  "ticket": "07-event-driven-coalesced-display.md",
+  "run_id": "674170a9-d496-469f-9af5-239e59a5afd4",
+  "parent_session_id": "01a14739-a39a-75a7-9316-a54811534a2a",
+  "parent_session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-17T00-18-42-202Z_01a14739-a39a-75a7-9316-a54811534a2a.jsonl",
+  "workspace": "E:/Developer/myhub/my-agent-toolkit",
+  "tool_call_id": "0c612433-f9b0-4402-a73e-26b326bbf73a",
+  "started_at": "2026-10-17T00:39:27.925Z",
+  "tdd_status": "completed",
+  "retro_status": "completed",
+  "tdd_finished_at": "2026-10-17T01:14:25.620Z",
+  "tdd_result": {
+    "index": 0,
+    "id": "07-event-driven-coalesced-displaymd-0c612433-f9b",
+    "agent": "tdd",
+    "agentSource": "user",
+    "task": "Complete assignment thoroughly:\n\n在当前 worktree 实现唯一票据：C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-HXXVq1\\.scratch\\framework-subagent-observation\\implementation\\07-event-driven-coalesced-display.md。\n集成分支：hyper-tdd\nspec：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\framework-subagent-observation\\spec.md\ncontract：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\framework-subagent-observation\\contract.md\n这是本票首次执行。\n遵守 tdd skill，自行负责本票验收并报告实际验证与未完成事项。完成后尽快提交本票实现，交出 worktree，由独立集成子代理接管。不要修改其他票据或工作流报告，不操作集成分支工作区，不自行合入集成分支，不调用 retro、不派发其他票据。不得 reset 丢弃既有工作。",
+    "assignment": "在当前 worktree 实现唯一票据：C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-HXXVq1\\.scratch\\framework-subagent-observation\\implementation\\07-event-driven-coalesced-display.md。\n集成分支：hyper-tdd\nspec：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\framework-subagent-observation\\spec.md\ncontract：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\framework-subagent-observation\\contract.md\n这是本票首次执行。\n遵守 tdd skill，自行负责本票验收并报告实际验证与未完成事项。完成后尽快提交本票实现，交出 worktree，由独立集成子代理接管。不要修改其他票据或工作流报告，不操作集成分支工作区，不自行合入集成分支，不调用 retro、不派发其他票据。不得 reset 丢弃既有工作。",
+    "description": "Implement event-driven coalesced display ticket",
+    "lastIntent": "Reporting the ticket result",
+    "exitCode": 0,
+    "output": "{\n  \"ticket\": \"07-event-driven-coalesced-display（P14、P15）\",\n  \"status\": \"implementation committed on the ticket branch; integration left to the independent integrator agent\",\n  \"commit\": \"b4b1d69 — 07: 观察按事件发布，展示改为 turn 级合并重绘（P14、P15）\",\n  \"delivered\": {\n    \"P14_publication_frequency\": \"核对既有采集/去重路径后未发现需要改动的采集点（OMP 只在 session_start/message_end/agent_end 采集，pi 只在 session_start/message_end/agent_settled 采集；SessionObservations.observeContext/observeActivity 对未变化读数返回 false 因而不派发、不交付；OMP 的 message_update 只映射 Turn 轴的 usage_streamed 且按读数去重）。本票的交付是把这三条以实际计数钉住并证明合并重绘没有引入轮询或逐 chunk 流量。\",\n    \"P15_merged_redraw\": \"新增 extensions/model-cost/shared-logic/presentation/coalesced-redraw.ts：移动的读数只 request() 重绘，一个 turn 的首次请求把重绘安排在该 turn 结束（queueMicrotask 边界），同 turn 后续请求并入同一次；读数在交付返回时即被采纳（不延后到绘制）；本 turn 已发生的只读结果发布会花掉欠下的重绘（published 订阅 accounting.view.subscribe），因此同一批读数只画一次，而 Round 边界/Turn settle/会话保存仍就地立即处理与发布。runtime.ts 的 session_activity/session_context 两个观察通道改走它，cleanup 里 dispose；结算与 provider 发布路径未改。无 timer/窗口/重复尝试。\",\n    \"consumer_update\": \"tests/model-cost/detail-tree-live-sessions.test.ts（票据 04）在读取**帧**前插入 await readingTurnEnded()（读观察源与展示结果处不变），原因是一个 turn 的重绘发生在该 turn 结束；已复跑绿。\",\n    \"docs\": \"extensions/model-cost/GLOSSARY.md 新增 Merged redraw（合并重绘）词条；README 的 Timing and detail behavior 增加一条行为说明与一段实测验证；本票 ticket 文件追加证据指针（未改 Status）。\"\n  },\n  \"acceptance\": {\n    \"criterion_1_fixed_sequence_duplicates\": \"tests/model-cost/observation-notice-frequency.test.ts：pi 真 adapter 四个采集点（1000/1000/2000/2000）只发布 [1000, 2000]；extension 侧同形状每变化通知 1 次、重复 0 次。pass\",\n    \"criterion_2_streaming_quiescence\": \"同文件：OMP 真 adapter 上 40 个 chunk 事实（宿主读数随流增长）→ 零发布、零 Turn 边；伪宿主时钟 1 分钟静止窗口 → 0 发布 0 绘制。变异注入（每 chunk 采集；5s 轮询）均被捕获。pass\",\n    \"criterion_3_merged_redraw_latest_values\": \"tests/model-cost/observation-redraw-merge.test.ts：同 turn 3 会话 × 2 轴共 6 次交付 → 1 帧，行上分别是最新 10,000/20,000/30,000；同会话同 turn 两次读数 → 1 帧且画最新值。pass\",\n    \"criterion_4_merging_only_display\": \"同文件：交付后同步断言观察源与 activity registry 已持有；Round start / Turn settle 在同 turn 立即处理并发布，带读数与不带读数的对照帧数相等（该等式在去掉'已发布即花掉欠下重绘'规则时变红）。pass\",\n    \"criterion_5_real_process_terminal_measurement\": \"真进程：tests/model-cost/observation-redraw-merge-processes.test.ts（真子进程 + 真 named pipe，3 条读数实测 2 帧，重复交付 0 帧）；真机：pi 1.3.0 后台 smoke exit 0、10/10 观察项；真终端：pi TUI 捕获（--widths 120,80，真 PTY）34 ok / 1 failed（脚本自钉 pi 1.2.0 与本机 1.3.0 不符）。三个计数分开记录（采集/通信/绘制）见证据文件。未声明未测量的零开销或最优效率。pass（限制见下）\",\n    \"criterion_6_partitions_typecheck\": \"见 verification。\"\n  },\n  \"verification\": {\n    \"commands_run\": [\n      \"bun run typecheck → exit 0\",\n      \"bun test tests/model-cost → 491 pass / 0 fail（47 files；改前 478，本票新增 13 例）\",\n      \"bun test tests/framework → 555 pass / 0 fail（46 files）\",\n      \"OMP_BOT_BINARY=E:/Developer/myhub/omp-bot/backend/target/release/omp-bot.exe bun test tests/harness-dock → 107 pass / 0 fail（28 files，278s，exit 0；日志 evidence/logs/07-dock-normalized.log）\",\n      \"bun scripts/pi-subagent-smoke.ts --background-only --expect-pi-version 1.3.0 → exit 0，10/10 观察项（25.4s）\",\n      \"bun scripts/pi-tui-acceptance.ts --widths 120,80 --out <temp> → 34 ok / 1 failed（12.7s；唯一失败是脚本自钉 1.2.0 的版本检查）\",\n      \"变异注入 5 种：立即重绘（5/7 红）、去掉已发布花掉欠下重绘（1 红）、取消框架去重（5 红）、每 chunk 采集（1 红）、轮询 interval（1 红），均还原并复跑绿\"\n    ],\n    \"normalization_note\": \"dock 基线记录的是冻结文件的 LF 内容哈希；本 worktree core.autocrlf=true 检出为 CRLF，逐字未归一时 dock 为 105 pass / 2 fail（baseline.test.ts 与 session-driver.test.ts 的 bun.lock 哈希）。按既有做法把 bun.lock 与 host-patches/*/patch.diff **临时**归一为 LF（未提交，内容与 git cat-file blob HEAD:<path> 相同）后运行；运行结束已还原，提交中不含这些换行变化。\",\n    \"flake_observed\": \"tests/model-cost 分区运行中两次出现 1 例失败（session-span.test.ts 的既有用例 'an unsettled Turn fabricates no end, and time moving or waiting writes nothing'），单独与随后 3 次完整分区均通过；该用例只断言文件字节与目录不随等待变化，与本票改动（只移动绘制通知）无因果路径。另 pi 后台 smoke 首次运行在既有断言 'the spawned session registered with the owner's process before its first Round ended' 上失败（子会话当时已有落盘记录），同树复跑两次与未含本票改动的 git archive HEAD 干净副本上均 10/10 通过，属该断言的时序竞争。两处均已如实记入证据文件，未隐去。\"\n  },\n  \"unverified\": [\n    \"POSIX 载体与其他 pi/OMP 宿主版本未运行（仅 Windows 10.0.26200 + pi 1.3.0 + patched OMP 18.5.0）。\",\n    \"bun run smoke:model-cost-detail-layout-terminal（真 Win32 控制台设备）未运行：本 shell 无控制台设备，脚本按设计拒绝执行；真终端观察由 pi TUI 捕获（真 PTY）承担。\",\n    \"scripts/pi-tui-acceptance.ts 的版本检查项因脚本自钉 pi 1.2.0、本机为 1.3.0 而失败（既有环境不符），该脚本未改动。\",\n    \"未测量单帧 CPU/内存成本与跨平台开销，故不作效率声明。\",\n    \"未做全仓 bun run test（留给最终集成）；本票范围为其所属分区、受影响消费者与真宿主运行。\"\n  ],\n  \"artifacts\": {\n    \"evidence\": \".scratch/framework-subagent-observation/implementation/evidence/07-event-driven-coalesced-display-evidence-2026-10-17.md\",\n    \"logs\": [\n      \".scratch/framework-subagent-observation/implementation/evidence/logs/07-dock-normalized.log\",\n      \".scratch/framework-subagent-observation/implementation/evidence/logs/07-pi-subagent-smoke-background.log\",\n      \".scratch/framework-subagent-observation/implementation/evidence/logs/07-pi-tui-acceptance.log\"\n    ],\n    \"source\": [\n      \"extensions/model-cost/shared-logic/presentation/coalesced-redraw.ts\",\n      \"extensions/model-cost/shared-logic/runtime.ts\",\n      \"tests/model-cost/observation-redraw-merge.test.ts\",\n      \"tests/model-cost/observation-redraw-merge-processes.test.ts\",\n      \"tests/model-cost/observation-notice-frequency.test.ts\",\n      \"tests/model-cost/detail-tree-live-sessions.test.ts\",\n      \"extensions/model-cost/GLOSSARY.md\",\n      \"extensions/model-cost/README.md\"\n    ]\n  }\n}",
+    "stderr": "",
+    "truncated": false,
+    "durationMs": 2097606,
+    "tokens": 397224,
+    "requests": 204,
+    "contextTokens": 358023,
+    "contextWindow": 1000000,
+    "modelOverride": [
+      "deepseek/deepseek-flash:high"
+    ],
+    "resolvedModel": "deepseek/deepseek-flash:high",
+    "resolvedModelIdentity": "deepseek/deepseek-flash",
+    "resolvedThinkingLevel": "high",
+    "aborted": false,
+    "usage": {
+      "input": 210837,
+      "output": 186387,
+      "cacheRead": 44531712,
+      "cacheWrite": 0,
+      "totalTokens": 44928936,
+      "reasoningTokens": 104324,
+      "cost": {
+        "input": 0.031625549999999995,
+        "output": 0.11183220000000002,
+        "cacheRead": 0.13359513600000006,
+        "cacheWrite": 0,
+        "total": 0.27705288599999983
+      }
+    },
+    "outputPath": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-17T00-18-42-202Z_01a14739-a39a-75a7-9316-a54811534a2a\\07-event-driven-coalesced-displaymd-0c612433-f9b.md",
+    "extractedToolData": {
+      "yield": [
+        {
+          "data": {
+            "ticket": "07-event-driven-coalesced-display（P14、P15）",
+            "status": "implementation committed on the ticket branch; integration left to the independent integrator agent",
+            "commit": "b4b1d69 — 07: 观察按事件发布，展示改为 turn 级合并重绘（P14、P15）",
+            "delivered": {
+              "P14_publication_frequency": "核对既有采集/去重路径后未发现需要改动的采集点（OMP 只在 session_start/message_end/agent_end 采集，pi 只在 session_start/message_end/agent_settled 采集；SessionObservations.observeContext/observeActivity 对未变化读数返回 false 因而不派发、不交付；OMP 的 message_update 只映射 Turn 轴的 usage_streamed 且按读数去重）。本票的交付是把这三条以实际计数钉住并证明合并重绘没有引入轮询或逐 chunk 流量。",
+              "P15_merged_redraw": "新增 extensions/model-cost/shared-logic/presentation/coalesced-redraw.ts：移动的读数只 request() 重绘，一个 turn 的首次请求把重绘安排在该 turn 结束（queueMicrotask 边界），同 turn 后续请求并入同一次；读数在交付返回时即被采纳（不延后到绘制）；本 turn 已发生的只读结果发布会花掉欠下的重绘（published 订阅 accounting.view.subscribe），因此同一批读数只画一次，而 Round 边界/Turn settle/会话保存仍就地立即处理与发布。runtime.ts 的 session_activity/session_context 两个观察通道改走它，cleanup 里 dispose；结算与 provider 发布路径未改。无 timer/窗口/重复尝试。",
+              "consumer_update": "tests/model-cost/detail-tree-live-sessions.test.ts（票据 04）在读取**帧**前插入 await readingTurnEnded()（读观察源与展示结果处不变），原因是一个 turn 的重绘发生在该 turn 结束；已复跑绿。",
+              "docs": "extensions/model-cost/GLOSSARY.md 新增 Merged redraw（合并重绘）词条；README 的 Timing and detail behavior 增加一条行为说明与一段实测验证；本票 ticket 文件追加证据指针（未改 Status）。"
+            },
+            "acceptance": {
+              "criterion_1_fixed_sequence_duplicates": "tests/model-cost/observation-notice-frequency.test.ts：pi 真 adapter 四个采集点（1000/1000/2000/2000）只发布 [1000, 2000]；extension 侧同形状每变化通知 1 次、重复 0 次。pass",
+              "criterion_2_streaming_quiescence": "同文件：OMP 真 adapter 上 40 个 chunk 事实（宿主读数随流增长）→ 零发布、零 Turn 边；伪宿主时钟 1 分钟静止窗口 → 0 发布 0 绘制。变异注入（每 chunk 采集；5s 轮询）均被捕获。pass",
+              "criterion_3_merged_redraw_latest_values": "tests/model-cost/observation-redraw-merge.test.ts：同 turn 3 会话 × 2 轴共 6 次交付 → 1 帧，行上分别是最新 10,000/20,000/30,000；同会话同 turn 两次读数 → 1 帧且画最新值。pass",
+              "criterion_4_merging_only_display": "同文件：交付后同步断言观察源与 activity registry 已持有；Round start / Turn settle 在同 turn 立即处理并发布，带读数与不带读数的对照帧数相等（该等式在去掉'已发布即花掉欠下重绘'规则时变红）。pass",
+              "criterion_5_real_process_terminal_measurement": "真进程：tests/model-cost/observation-redraw-merge-processes.test.ts（真子进程 + 真 named pipe，3 条读数实测 2 帧，重复交付 0 帧）；真机：pi 1.3.0 后台 smoke exit 0、10/10 观察项；真终端：pi TUI 捕获（--widths 120,80，真 PTY）34 ok / 1 failed（脚本自钉 pi 1.2.0 与本机 1.3.0 不符）。三个计数分开记录（采集/通信/绘制）见证据文件。未声明未测量的零开销或最优效率。pass（限制见下）",
+              "criterion_6_partitions_typecheck": "见 verification。"
+            },
+            "verification": {
+              "commands_run": [
+                "bun run typecheck → exit 0",
+                "bun test tests/model-cost → 491 pass / 0 fail（47 files；改前 478，本票新增 13 例）",
+                "bun test tests/framework → 555 pass / 0 fail（46 files）",
+                "OMP_BOT_BINARY=E:/Developer/myhub/omp-bot/backend/target/release/omp-bot.exe bun test tests/harness-dock → 107 pass / 0 fail（28 files，278s，exit 0；日志 evidence/logs/07-dock-normalized.log）",
+                "bun scripts/pi-subagent-smoke.ts --background-only --expect-pi-version 1.3.0 → exit 0，10/10 观察项（25.4s）",
+                "bun scripts/pi-tui-acceptance.ts --widths 120,80 --out <temp> → 34 ok / 1 failed（12.7s；唯一失败是脚本自钉 1.2.0 的版本检查）",
+                "变异注入 5 种：立即重绘（5/7 红）、去掉已发布花掉欠下重绘（1 红）、取消框架去重（5 红）、每 chunk 采集（1 红）、轮询 interval（1 红），均还原并复跑绿"
+              ],
+              "normalization_note": "dock 基线记录的是冻结文件的 LF 内容哈希；本 worktree core.autocrlf=true 检出为 CRLF，逐字未归一时 dock 为 105 pass / 2 fail（baseline.test.ts 与 session-driver.test.ts 的 bun.lock 哈希）。按既有做法把 bun.lock 与 host-patches/*/patch.diff **临时**归一为 LF（未提交，内容与 git cat-file blob HEAD:<path> 相同）后运行；运行结束已还原，提交中不含这些换行变化。",
+              "flake_observed": "tests/model-cost 分区运行中两次出现 1 例失败（session-span.test.ts 的既有用例 'an unsettled Turn fabricates no end, and time moving or waiting writes nothing'），单独与随后 3 次完整分区均通过；该用例只断言文件字节与目录不随等待变化，与本票改动（只移动绘制通知）无因果路径。另 pi 后台 smoke 首次运行在既有断言 'the spawned session registered with the owner's process before its first Round ended' 上失败（子会话当时已有落盘记录），同树复跑两次与未含本票改动的 git archive HEAD 干净副本上均 10/10 通过，属该断言的时序竞争。两处均已如实记入证据文件，未隐去。"
+            },
+            "unverified": [
+              "POSIX 载体与其他 pi/OMP 宿主版本未运行（仅 Windows 10.0.26200 + pi 1.3.0 + patched OMP 18.5.0）。",
+              "bun run smoke:model-cost-detail-layout-terminal（真 Win32 控制台设备）未运行：本 shell 无控制台设备，脚本按设计拒绝执行；真终端观察由 pi TUI 捕获（真 PTY）承担。",
+              "scripts/pi-tui-acceptance.ts 的版本检查项因脚本自钉 pi 1.2.0、本机为 1.3.0 而失败（既有环境不符），该脚本未改动。",
+              "未测量单帧 CPU/内存成本与跨平台开销，故不作效率声明。",
+              "未做全仓 bun run test（留给最终集成）；本票范围为其所属分区、受影响消费者与真宿主运行。"
+            ],
+            "artifacts": {
+              "evidence": ".scratch/framework-subagent-observation/implementation/evidence/07-event-driven-coalesced-display-evidence-2026-10-17.md",
+              "logs": [
+                ".scratch/framework-subagent-observation/implementation/evidence/logs/07-dock-normalized.log",
+                ".scratch/framework-subagent-observation/implementation/evidence/logs/07-pi-subagent-smoke-background.log",
+                ".scratch/framework-subagent-observation/implementation/evidence/logs/07-pi-tui-acceptance.log"
+              ],
+              "source": [
+                "extensions/model-cost/shared-logic/presentation/coalesced-redraw.ts",
+                "extensions/model-cost/shared-logic/runtime.ts",
+                "tests/model-cost/observation-redraw-merge.test.ts",
+                "tests/model-cost/observation-redraw-merge-processes.test.ts",
+                "tests/model-cost/observation-notice-frequency.test.ts",
+                "tests/model-cost/detail-tree-live-sessions.test.ts",
+                "extensions/model-cost/GLOSSARY.md",
+                "extensions/model-cost/README.md"
+              ]
+            }
+          },
+          "status": "success"
+        }
+      ]
+    },
+    "outputMeta": {
+      "lineCount": 57,
+      "charCount": 5371
+    }
+  },
+  "agent": "tdd",
+  "agent_id": "07-event-driven-coalesced-displaymd-0c612433-f9b",
+  "session_id": "01a1474c-a5c0-7400-b4f1-7eec7b50024b",
+  "session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-17T00-18-42-202Z_01a14739-a39a-75a7-9316-a54811534a2a\\07-event-driven-coalesced-displaymd-0c612433-f9b.jsonl",
+  "execution_cwd": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-HXXVq1",
+  "retro_document": "E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\framework-subagent-observation\\retro\\07-event-driven-coalesced-display.md\\674170a9-d496-469f-9af5-239e59a5afd4.md",
+  "retro_finished_at": "2026-10-17T01:15:20.254Z"
+}

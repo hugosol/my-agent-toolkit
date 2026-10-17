@@ -1,0 +1,152 @@
+{
+  "feature": "framework-subagent-observation",
+  "ticket": "12-real-harness-reuse-verification.md",
+  "run_id": "e3ac69d8-1683-4e7f-a573-9dee229694b5",
+  "parent_session_id": "01a14739-a39a-75a7-9316-a54811534a2a",
+  "parent_session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-17T00-18-42-202Z_01a14739-a39a-75a7-9316-a54811534a2a.jsonl",
+  "workspace": "E:/Developer/myhub/my-agent-toolkit",
+  "tool_call_id": "6f9e69a5-172d-4feb-99d9-b21f7a616a29",
+  "started_at": "2026-10-17T02:00:17.427Z",
+  "tdd_status": "completed",
+  "retro_status": "completed",
+  "tdd_finished_at": "2026-10-17T02:30:25.632Z",
+  "tdd_result": {
+    "index": 0,
+    "id": "12-real-harness-reuse-verificationmd-6f9e69a5-17",
+    "agent": "tdd",
+    "agentSource": "user",
+    "task": "Complete assignment thoroughly:\n\n在当前 worktree 实现唯一票据：C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-Jq0PSO\\.scratch\\framework-subagent-observation\\implementation\\12-real-harness-reuse-verification.md。\n集成分支：hyper-tdd\nspec：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\framework-subagent-observation\\spec.md\ncontract：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\framework-subagent-observation\\contract.md\n这是本票首次执行。\n遵守 tdd skill，自行负责本票验收并报告实际验证与未完成事项。完成后尽快提交本票实现，交出 worktree，由独立集成子代理接管。不要修改其他票据或工作流报告，不操作集成分支工作区，不自行合入集成分支，不调用 retro、不派发其他票据。不得 reset 丢弃既有工作。",
+    "assignment": "在当前 worktree 实现唯一票据：C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-Jq0PSO\\.scratch\\framework-subagent-observation\\implementation\\12-real-harness-reuse-verification.md。\n集成分支：hyper-tdd\nspec：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\framework-subagent-observation\\spec.md\ncontract：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\framework-subagent-observation\\contract.md\n这是本票首次执行。\n遵守 tdd skill，自行负责本票验收并报告实际验证与未完成事项。完成后尽快提交本票实现，交出 worktree，由独立集成子代理接管。不要修改其他票据或工作流报告，不操作集成分支工作区，不自行合入集成分支，不调用 retro、不派发其他票据。不得 reset 丢弃既有工作。",
+    "description": "Implement real harness reuse verification ticket",
+    "lastIntent": "Amending evidence note",
+    "exitCode": 0,
+    "output": "{\n  \"ticket\": \"12-real-harness-reuse-verification\",\n  \"status\": \"in-progress (implementation + evidence committed; not merged into hyper-tdd)\",\n  \"branch\": \"hyper/framework-subagent-observation/12-real-harness-reuse-verificati-f0bd4a-e98ea402077c\",\n  \"commit\": \"ce7ba1b50b70b00bd95f483fbf536ff465197485\",\n  \"base\": \"3b0a1f7 (hyper-tdd tip at start)\",\n  \"delivered\": [\n    \"tests/framework/process-mode-reuse.test.ts: real OMP adapter proves no runtime dir/location record while given facts still reach the common observation interface; same given facts over the real local access adopt to the identical ObservedSession; real OMP and real pi adapters leave the same ObservedSession and session_context delivery (P24, P34).\",\n    \"scripts/pi-subagent-smoke.ts: foreground check now waits (bounded) for both parent and child consumption records instead of assuming parent committed when the child record appears; no fixed sleep. Root-caused by bisecting ticket 10 trees; product commit ordering is intact.\",\n    \"Evidence report: .scratch/framework-subagent-observation/evidence/12-real-harness-reuse-verification-evidence-2026-10-17.md plus logs/12-*.\",\n    \"Ticket checklist and in-progress record updated.\"\n  ],\n  \"acceptance\": [\n    {\n      \"criterion\": \"same-process no endpoint/locator + equivalent observation on in-process and real cross-process paths\",\n      \"evidence\": \"process-mode-reuse.test.ts (3 pass) + session-observation-access.test.ts handed-to-nobody case; real OMP + pi foreground runs\"\n    },\n    {\n      \"criterion\": \"actual OMP, pi foreground, pi background evidence incl. detail surface, pre-first-round reading, background pre-exit commit\",\n      \"evidence\": \"OMP dock 107/107 real setWidget frames; pi foreground 14/14 incl. real detail widget; pi background 10/10 registration before first Round end + child-owned consumption record with provider exitCode 0\"\n    },\n    {\n      \"criterion\": \"P34 behavior + maintainability audit, no third harness\",\n      \"evidence\": \"new common-interface tests; audit: native mapping in adapters, communication/sources in framework, billing + business display rules in shared logic; no third harness. Finding recorded: both frontends retain near-duplicate terminal layout helpers (drawing-layer debt); not claimed as fully de-duplicated.\"\n    },\n    {\n      \"criterion\": \"contract scenario matrix (normal exit, reconnect, disconnect, nesting, concurrency, billing, failure/deadline)\",\n      \"evidence\": \"mapped per promise to named deterministic cases in the report; real close-out smoke covers normal exit and 15s deadline/unwritten reporting; nested/concurrent real OMP/pi runs not separately run (marked unverified; deterministic coverage cited)\"\n    },\n    {\n      \"criterion\": \"separate collection/notification, drawing and exit-wait measurements\",\n      \"evidence\": \"publication/frame counts from observation-notice-frequency and redraw-merge suites (21 pass); real exit waits 12ms normal and 14,998ms at the 15,000ms deadline; front/background smokes 42.30s combined\"\n    },\n    {\n      \"criterion\": \"source/env state, versions, OS, commands, exits, results, timings, logs; Windows != POSIX\",\n      \"evidence\": \"report environment table + logs/12-environment.txt; POSIX and other versions explicitly unverified\"\n    },\n    {\n      \"criterion\": \"isolated endpoints/storage, no paid model, no operator data\",\n      \"evidence\": \"all real runs used isolated temp roots, capture endpoints and isolated OMP install\"\n    },\n    {\n      \"criterion\": \"coordinated final gate: typecheck, full tests, real-host smokes\",\n      \"evidence\": \"typecheck exit 0; dock 107 pass/0 fail/249.03s; OMP_BOT_BINARY bun run test 1364 pass/0 fail/7702 expect/153 files/441.82s; frozen files restored byte-identically; final pi foreground 14 obs and background 10 obs\"\n    }\n  ],\n  \"verification\": {\n    \"commands\": [\n      \"bun run typecheck -> exit 0\",\n      \"bun test tests/framework -> 582 pass / 0 fail / 2639 expect / 49 files\",\n      \"bun test tests/model-cost -> 507 pass / 2 transient fail under load; failed files rerun alone 12/12 pass\",\n      \"bun test tests/harness-dock (normalized frozen files) -> 107 pass / 0 fail / 1185 expect / 28 files / 249.03s / exit 0\",\n      \"OMP_BOT_BINARY=... bun run test -> 1364 pass / 0 fail / 7702 expect / 153 files / 441.82s / exit 0\",\n      \"bun scripts/pi-subagent-smoke.ts --foreground-only --expect-pi-version 1.3.0 -> 14 observations / exit 0\",\n      \"bun scripts/pi-subagent-smoke.ts --background-only --expect-pi-version 1.3.0 -> 10 observations / exit 0\",\n      \"bun scripts/pi-close-out-smoke.ts -> 11 observations / exit 0; 12ms normal, 14998ms deadline\"\n    ],\n    \"frozen_files_restored\": {\n      \"bun.lock\": \"e7ed487b...\",\n      \"viewed-session patch.diff\": \"057e01f6...\",\n      \"codex-response patch.diff\": \"294b3727...\"\n    }\n  },\n  \"unverified\": [\n    \"POSIX carriers and other OMP/pi versions not run\",\n    \"real pi truncation (open Round at disposal) not reproduced on a real host; deterministic coverage only\",\n    \"real OMP nested/concurrent runs not separately executed\",\n    \"human terminal readability judgement not performed\",\n    \"P34 display-layer layout helper duplication remains as recorded debt\",\n    \"final gate ran while another worktree's full suite was active (different .cache); both runs were 0 fail but a strictly exclusive quiet-window rerun is left to integration\"\n  ],\n  \"hygiene\": [\n    \"no product source changed\",\n    \"diagnostic worktree removed; no reset used\",\n    \"other tickets/workflow reports untouched\",\n    \"worktree clean after commit; handed off for integration\"\n  ]\n}",
+    "stderr": "",
+    "truncated": false,
+    "durationMs": 1808110,
+    "tokens": 369578,
+    "requests": 221,
+    "contextTokens": 340210,
+    "contextWindow": 1000000,
+    "modelOverride": [
+      "deepseek/deepseek-flash:high"
+    ],
+    "resolvedModel": "deepseek/deepseek-flash:high",
+    "resolvedModelIdentity": "deepseek/deepseek-flash",
+    "resolvedThinkingLevel": "high",
+    "aborted": false,
+    "usage": {
+      "input": 237437,
+      "output": 132141,
+      "cacheRead": 47849344,
+      "cacheWrite": 0,
+      "totalTokens": 48218922,
+      "reasoningTokens": 59090,
+      "cost": {
+        "input": 0.035615549999999996,
+        "output": 0.07928459999999996,
+        "cacheRead": 0.14354803200000008,
+        "cacheWrite": 0,
+        "total": 0.25844818199999997
+      }
+    },
+    "outputPath": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-17T00-18-42-202Z_01a14739-a39a-75a7-9316-a54811534a2a\\12-real-harness-reuse-verificationmd-6f9e69a5-17.md",
+    "extractedToolData": {
+      "yield": [
+        {
+          "data": {
+            "ticket": "12-real-harness-reuse-verification",
+            "status": "in-progress (implementation + evidence committed; not merged into hyper-tdd)",
+            "branch": "hyper/framework-subagent-observation/12-real-harness-reuse-verificati-f0bd4a-e98ea402077c",
+            "commit": "ce7ba1b50b70b00bd95f483fbf536ff465197485",
+            "base": "3b0a1f7 (hyper-tdd tip at start)",
+            "delivered": [
+              "tests/framework/process-mode-reuse.test.ts: real OMP adapter proves no runtime dir/location record while given facts still reach the common observation interface; same given facts over the real local access adopt to the identical ObservedSession; real OMP and real pi adapters leave the same ObservedSession and session_context delivery (P24, P34).",
+              "scripts/pi-subagent-smoke.ts: foreground check now waits (bounded) for both parent and child consumption records instead of assuming parent committed when the child record appears; no fixed sleep. Root-caused by bisecting ticket 10 trees; product commit ordering is intact.",
+              "Evidence report: .scratch/framework-subagent-observation/evidence/12-real-harness-reuse-verification-evidence-2026-10-17.md plus logs/12-*.",
+              "Ticket checklist and in-progress record updated."
+            ],
+            "acceptance": [
+              {
+                "criterion": "same-process no endpoint/locator + equivalent observation on in-process and real cross-process paths",
+                "evidence": "process-mode-reuse.test.ts (3 pass) + session-observation-access.test.ts handed-to-nobody case; real OMP + pi foreground runs"
+              },
+              {
+                "criterion": "actual OMP, pi foreground, pi background evidence incl. detail surface, pre-first-round reading, background pre-exit commit",
+                "evidence": "OMP dock 107/107 real setWidget frames; pi foreground 14/14 incl. real detail widget; pi background 10/10 registration before first Round end + child-owned consumption record with provider exitCode 0"
+              },
+              {
+                "criterion": "P34 behavior + maintainability audit, no third harness",
+                "evidence": "new common-interface tests; audit: native mapping in adapters, communication/sources in framework, billing + business display rules in shared logic; no third harness. Finding recorded: both frontends retain near-duplicate terminal layout helpers (drawing-layer debt); not claimed as fully de-duplicated."
+              },
+              {
+                "criterion": "contract scenario matrix (normal exit, reconnect, disconnect, nesting, concurrency, billing, failure/deadline)",
+                "evidence": "mapped per promise to named deterministic cases in the report; real close-out smoke covers normal exit and 15s deadline/unwritten reporting; nested/concurrent real OMP/pi runs not separately run (marked unverified; deterministic coverage cited)"
+              },
+              {
+                "criterion": "separate collection/notification, drawing and exit-wait measurements",
+                "evidence": "publication/frame counts from observation-notice-frequency and redraw-merge suites (21 pass); real exit waits 12ms normal and 14,998ms at the 15,000ms deadline; front/background smokes 42.30s combined"
+              },
+              {
+                "criterion": "source/env state, versions, OS, commands, exits, results, timings, logs; Windows != POSIX",
+                "evidence": "report environment table + logs/12-environment.txt; POSIX and other versions explicitly unverified"
+              },
+              {
+                "criterion": "isolated endpoints/storage, no paid model, no operator data",
+                "evidence": "all real runs used isolated temp roots, capture endpoints and isolated OMP install"
+              },
+              {
+                "criterion": "coordinated final gate: typecheck, full tests, real-host smokes",
+                "evidence": "typecheck exit 0; dock 107 pass/0 fail/249.03s; OMP_BOT_BINARY bun run test 1364 pass/0 fail/7702 expect/153 files/441.82s; frozen files restored byte-identically; final pi foreground 14 obs and background 10 obs"
+              }
+            ],
+            "verification": {
+              "commands": [
+                "bun run typecheck -> exit 0",
+                "bun test tests/framework -> 582 pass / 0 fail / 2639 expect / 49 files",
+                "bun test tests/model-cost -> 507 pass / 2 transient fail under load; failed files rerun alone 12/12 pass",
+                "bun test tests/harness-dock (normalized frozen files) -> 107 pass / 0 fail / 1185 expect / 28 files / 249.03s / exit 0",
+                "OMP_BOT_BINARY=... bun run test -> 1364 pass / 0 fail / 7702 expect / 153 files / 441.82s / exit 0",
+                "bun scripts/pi-subagent-smoke.ts --foreground-only --expect-pi-version 1.3.0 -> 14 observations / exit 0",
+                "bun scripts/pi-subagent-smoke.ts --background-only --expect-pi-version 1.3.0 -> 10 observations / exit 0",
+                "bun scripts/pi-close-out-smoke.ts -> 11 observations / exit 0; 12ms normal, 14998ms deadline"
+              ],
+              "frozen_files_restored": {
+                "bun.lock": "e7ed487b...",
+                "viewed-session patch.diff": "057e01f6...",
+                "codex-response patch.diff": "294b3727..."
+              }
+            },
+            "unverified": [
+              "POSIX carriers and other OMP/pi versions not run",
+              "real pi truncation (open Round at disposal) not reproduced on a real host; deterministic coverage only",
+              "real OMP nested/concurrent runs not separately executed",
+              "human terminal readability judgement not performed",
+              "P34 display-layer layout helper duplication remains as recorded debt",
+              "final gate ran while another worktree's full suite was active (different .cache); both runs were 0 fail but a strictly exclusive quiet-window rerun is left to integration"
+            ],
+            "hygiene": [
+              "no product source changed",
+              "diagnostic worktree removed; no reset used",
+              "other tickets/workflow reports untouched",
+              "worktree clean after commit; handed off for integration"
+            ]
+          },
+          "status": "success",
+          "type": "result"
+        }
+      ]
+    },
+    "outputMeta": {
+      "lineCount": 78,
+      "charCount": 5610
+    }
+  },
+  "agent": "tdd",
+  "agent_id": "12-real-harness-reuse-verificationmd-6f9e69a5-17",
+  "session_id": "01a14796-a523-70e6-9043-d04d4ff44df5",
+  "session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-17T00-18-42-202Z_01a14739-a39a-75a7-9316-a54811534a2a\\12-real-harness-reuse-verificationmd-6f9e69a5-17.jsonl",
+  "execution_cwd": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-Jq0PSO",
+  "retro_document": "E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\framework-subagent-observation\\retro\\12-real-harness-reuse-verification.md\\e3ac69d8-1683-4e7f-a573-9dee229694b5.md",
+  "retro_finished_at": "2026-10-17T02:31:26.839Z"
+}
