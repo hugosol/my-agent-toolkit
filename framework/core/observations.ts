@@ -25,13 +25,23 @@
  *
  * Nothing here is persisted, and a disposed binding erases nothing: a session that parks or ends
  * keeps the last reading it reported, because the source states what was observed in this process
- * and never claims the session is over. Deciding that a reading is no longer live — an unavailable
- * source, a session no longer observed — belongs to the consumer of that reading (see the
- * contract's observation-unavailable semantics), not to this record.
+ * and never claims the session is over.
+ *
+ * A reading of a session this process does not run arrives from a *source* — one connection the
+ * process serving the owner admitted — and the source is what makes two of those words orderable.
+ * Every reading an entry holds is stamped with the source that stated it, and the stamp is what
+ * {@link SessionObservations.adoptFromSource} judges a later word by and what
+ * {@link SessionObservations.withdrawSource} withdraws when that source is gone: a word from a
+ * source older than the one a reading already came from is not this process's to take, and a source
+ * that ends withdraws the readings it stated and nothing a later source stated instead. Deciding
+ * that a reading is no longer live — an unavailable source, a session no longer observed — is what
+ * that withdrawal is; this record keeps the identity, so the session is still named and still placed
+ * where its direct parent puts it.
  */
 import type {
 	AgentActivity,
 	ObservedSession,
+	ObservationSource,
 	OwnerReference,
 	SessionContextReading,
 	SessionFacts,
@@ -82,7 +92,18 @@ interface Entry {
 	readonly session?: SessionFacts;
 	readonly owner?: OwnerReference;
 	readonly activity?: AgentActivity;
+	/**
+	 * The source whose word stated the activity above, when one did.
+	 *
+	 * Absent means the reading is this process's own observation — the round axis's, taken where the
+	 * session really ran here — which no source's loss withdraws. It stays stated after the reading it
+	 * stamped was withdrawn, so a word from a source older than the one that stated a reading can never
+	 * put it back.
+	 */
+	readonly activitySource?: ObservationSource;
 	readonly context?: SessionContextReading;
+	/** The source whose word stated the context above, when one did. See {@link Entry.activitySource}. */
+	readonly contextSource?: ObservationSource;
 }
 
 /**
@@ -90,9 +111,10 @@ interface Entry {
  *
  * The read half is what a consumer attaches to ({@link SessionObservations.read} and
  * {@link SessionObservations.snapshot}); the write half is the framework's own — a session delivery
- * registers the facts it carried, a dispatched round edge moves the activity, and a collected
- * context reading replaces the last one — and each write answers whether it moved anything, which
- * is what keeps a repeated reading from being published as a change.
+ * registers the facts it carried, a dispatched round edge moves the activity, a collected context
+ * reading replaces the last one, and a source that ends withdraws the readings it stated — and each
+ * write answers whether it moved anything, which is what keeps a repeated reading from being
+ * published as a change.
  */
 export class SessionObservations {
 	#bySession = new Map<string, Entry>();
@@ -102,7 +124,10 @@ export class SessionObservations {
 	 *
 	 * A session's identity is what every reading of it is keyed by, so this is recorded from the
 	 * first delivery that names the session, before any reading of it arrives; later deliveries
-	 * refresh what they carry — a rename, a changed chain — and leave the readings untouched.
+	 * refresh what they carry — a rename, a changed chain — and leave the readings untouched. The
+	 * identity is the session's own rather than any source's, so nothing here is withdrawn with a
+	 * source: a session whose readings are gone is still named and still placed where its direct
+	 * parent puts it.
 	 */
 	sawSession(facts: SessionFacts, owner: OwnerReference): void {
 		const held: Entry = this.#bySession.get(facts.sessionId) ?? { sessionId: facts.sessionId };
@@ -116,11 +141,24 @@ export class SessionObservations {
 	 * nothing and answers `false`, which is what keeps a consumer from publishing or redrawing for a
 	 * state that did not change. Whether an edge *should* move the reading at all is the Round axis's
 	 * rule; this answers only what it left behind.
+	 *
+	 * `source` is the connection whose word stated the reading, for a session the harness ran in
+	 * another process. A word from a source older than the one the reading already came from is not
+	 * this process's to take, and answers `false` without touching the reading; a word from a newer
+	 * source states the reading from then on even where it repeats it, because that source is what a
+	 * later loss of the older one is judged by. A reading this process observed itself carries no
+	 * source, and no source's loss withdraws it.
 	 */
-	observeActivity(sessionId: string, activity: AgentActivity): boolean {
+	observeActivity(sessionId: string, activity: AgentActivity, source?: ObservationSource): boolean {
 		const held: Entry = this.#bySession.get(sessionId) ?? { sessionId };
-		if (held.activity === activity) return false;
-		this.#bySession.set(sessionId, { ...held, activity });
+		if (source !== undefined && held.activitySource !== undefined && held.activitySource > source) return false;
+		if (held.activity === activity) {
+			if (source !== undefined && held.activitySource !== source) {
+				this.#bySession.set(sessionId, { ...held, activitySource: source });
+			}
+			return false;
+		}
+		this.#bySession.set(sessionId, { ...held, activity, activitySource: source });
 		return true;
 	}
 
@@ -129,10 +167,13 @@ export class SessionObservations {
 	 *
 	 * A collection that read the numbers the source already holds is not a change: it answers `false`
 	 * and stores nothing new, so a change delivery is published once per real movement rather than
-	 * once per collection point the adapter collected at.
+	 * once per collection point the adapter collected at. `source` carries the same rule it does on
+	 * {@link SessionObservations.observeActivity}: a reading a source stated is that source's until a
+	 * newer one states it, and one this process collected itself belongs to no source at all.
 	 */
-	observeContext(sessionId: string, reading: SessionContextReading): boolean {
+	observeContext(sessionId: string, reading: SessionContextReading, source?: ObservationSource): boolean {
 		const held: Entry = this.#bySession.get(sessionId) ?? { sessionId };
+		if (source !== undefined && held.contextSource !== undefined && held.contextSource > source) return false;
 		const previous = held.context;
 		if (
 			previous !== undefined &&
@@ -140,15 +181,72 @@ export class SessionObservations {
 			previous.provider === reading.provider &&
 			previous.model === reading.model
 		) {
+			if (source !== undefined && held.contextSource !== source) {
+				this.#bySession.set(sessionId, { ...held, contextSource: source });
+			}
 			return false;
 		}
-		this.#bySession.set(sessionId, { ...held, context: reading });
+		this.#bySession.set(sessionId, { ...held, context: reading, contextSource: source });
 		return true;
+	}
+
+	/**
+	 * Withdraws one source's readings: what this process no longer holds once that source is gone.
+	 *
+	 * A source is gone when the connection it delivered over ended, and what that costs is exactly the
+	 * live readings *it* stated: the activity and the context an entry's own source stamp names are
+	 * dropped with it, while a reading a newer source stated in their place, and one this process
+	 * observed itself, are untouched — an old connection ending cannot take away what a later one
+	 * delivered. The session's own facts and the owner it follows stay, so the answer carries them:
+	 * that identity is what a consumer still names the session by, and what keeps it in the tree its
+	 * direct parent puts it in. No reading is inferred in place of the withdrawn one — an unavailable
+	 * observation is not idleness, and nothing here states that the session stopped, failed or
+	 * finished.
+	 *
+	 * The withdrawn reading's stamp is kept rather than cleared: the source that stated it is still the
+	 * newest one that has, so a word from a source at or below it — the same connection's, were it
+	 * still there — cannot state it again.
+	 */
+	withdrawSource(source: ObservationSource): readonly ObservedSession[] {
+		const lost: ObservedSession[] = [];
+		for (const [sessionId, held] of this.#bySession) {
+			const activity = held.activitySource === source && held.activity !== undefined;
+			const context = held.contextSource === source && held.context !== undefined;
+			if (!activity && !context) continue;
+			this.#bySession.set(sessionId, {
+				...held,
+				...(activity ? { activity: undefined } : {}),
+				...(context ? { context: undefined } : {}),
+			});
+			if (held.session !== undefined && held.owner !== undefined) {
+				lost.push({ session: held.session, owner: held.owner });
+			}
+		}
+		return lost;
 	}
 
 	/** One session's current observation, or nothing when this process has observed none of it. */
 	read(sessionId: string): SessionObservation | undefined {
-		return this.#bySession.get(sessionId);
+		const held = this.#bySession.get(sessionId);
+		return held === undefined ? undefined : this.#readable(held);
+	}
+
+	/**
+	 * One entry as a consumer reads it: the session, the owner it follows and the readings this process
+	 * holds, with nothing of which source stated them.
+	 *
+	 * The source a reading came from is the framework's own bookkeeping — what a word is judged by, and
+	 * what a source's loss withdraws — and a consumer reads an observation rather than the provenance
+	 * of one, exactly as it reads a reading rather than the connection it crossed on.
+	 */
+	#readable(entry: Entry): SessionObservation {
+		return {
+			sessionId: entry.sessionId,
+			...(entry.session === undefined ? {} : { session: entry.session }),
+			...(entry.owner === undefined ? {} : { owner: entry.owner }),
+			...(entry.activity === undefined ? {} : { activity: entry.activity }),
+			...(entry.context === undefined ? {} : { context: entry.context }),
+		};
 	}
 
 	/**
@@ -183,6 +281,6 @@ export class SessionObservations {
 	 * for sessions it has not seen a delivery for, activity and context alike.
 	 */
 	snapshot(): readonly SessionObservation[] {
-		return [...this.#bySession.values()];
+		return [...this.#bySession.values()].map(entry => this.#readable(entry));
 	}
 }

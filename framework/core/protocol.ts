@@ -1042,20 +1042,60 @@ export interface ObservedSession {
 }
 
 /**
+ * One source of another process's readings: the one connection a serving process admitted for a
+ * seat, numbered by that process in the order it admitted them.
+ *
+ * It is an ordering and nothing else — never the identity of the session that delivered, never a
+ * liveness proof, and never a value anything is keyed by beyond the process that numbered it. What
+ * it answers is which of two words about one session is the newer one: a word carried by a
+ * connection admitted later is the newer reading, so a connection that ends late, or a word that
+ * arrives late over a connection admitted earlier, neither overwrites nor withdraws what a later
+ * admission already stated. Each serving process numbers its own sources, and a source is only ever
+ * compared with one that same process handed to the same sink.
+ */
+export type ObservationSource = number;
+
+/**
+ * Where the readings one seat receives arrive, and how the source each of them came over is named.
+ *
+ * It is the receiving half of the access, as the framework's own rules need it: the sink itself
+ * decides nothing about adopting a reading — {@link SessionObservationAccess.receive}'s whole
+ * surface is this pair.
+ */
+export interface SessionObservationSink {
+	/** Adopts one word one source delivered: one session's facts and the readings that came with it. */
+	adopt(source: ObservationSource, reading: ObservedSession): void;
+	/**
+	 * States that one source's readings are no longer available.
+	 *
+	 * The source is gone because the connection is: the process that delivered over it released its
+	 * access or ended, or this side observed the connection close or fail. Nothing is stated about the
+	 * sessions themselves — their identity, their direct parent and whatever they saved are the
+	 * session's own facts and not the connection's — so what a loss withdraws is the live readings
+	 * that source was carrying.
+	 */
+	lost(source: ObservationSource): void;
+}
+
+/**
  * The framework's cross-process half of session observation, as one adapter's local access supplies
  * it: the process that serves an owner's seat and the process that runs a session following that
  * owner, each with the one direction it speaks.
  *
  * `receive` is the serving half. The process that serves a seat offers it here for exactly as long as
  * it serves that owner, and the readings a session the harness ran in another process delivers are
- * handed to the sink. Nothing else crosses: the carrying, the connection, the target check and the
- * access's own verification are the adapter's, and what the framework does with a reading that
- * arrived is the framework's own rules (see `core/observations.ts` and `behaviors/binding.ts`).
+ * handed to the sink together with the source they arrived over. Nothing else crosses: the carrying,
+ * the connection, the target check, the access's own verification and the numbering of the
+ * connections it admits are the adapter's, and what the framework does with a reading that arrived —
+ * and with the source that carried it — is the framework's own rules (see `core/observations.ts` and
+ * `behaviors/binding.ts`).
  *
  * `deliver` is the reading half. A reading of a session this process runs whose owner it does not
  * serve is handed here, and the adapter carries it to the process serving that owner over the same
  * access — the first word it sends to a seat carries the readings that process currently holds for
- * the owner's sessions, so a reading collected before the access was reached is not lost.
+ * the owner's sessions, so a reading collected before the access was reached is not lost, and an
+ * access reached again after it ended states the readings it holds now rather than waiting for them
+ * to move once more.
  *
  * Neither half is a write path to anything: a reading states what a session was observed to be, and
  * a seat's declared State values are read and never written from here.
@@ -1065,7 +1105,7 @@ export interface SessionObservationAccess {
 	 * Admits the readings delivered for one owner this process serves: `ownerKey` is that owner's
 	 * key — the seat's own owner half — and the returned function withdraws exactly this admission.
 	 */
-	receive(ownerKey: string, sink: (reading: ObservedSession) => void): () => void;
+	receive(ownerKey: string, sink: SessionObservationSink): () => void;
 	/** Delivers one reading of one session this process runs to the process that serves its owner. */
 	deliver(reading: ObservedSession): void;
 }
@@ -1077,8 +1117,56 @@ export type SessionContextHandler = (delivery: SessionContextDelivery) => void |
 export type SessionContextHandlers = Readonly<Partial<Record<SessionContextEvent["kind"], SessionContextHandler>>>;
 
 /**
+ * One semantic event: one actual session's observation ceasing to be available.
+ *
+ * It is what the framework states when the source the readings came from is gone — the connection a
+ * session the harness ran in another process delivered over has ended, however it ended. What it is
+ * *not* is a statement about the session: nothing here says the session stopped working, failed or
+ * finished, because a lost connection is evidence of nothing about the work itself. The reading the
+ * framework held is withdrawn (see {@link SessionObservation}), the session's identity with it stays,
+ * and no Round, Turn or billing fact is minted for the loss: a consumer that had drawn the session as
+ * working draws it as unobserved rather than as idle.
+ */
+export type SessionUnobservedEvent = { readonly kind: "session_unobserved" };
+
+/**
+ * The facts one unavailability delivery carries: the session whose readings are gone, and the seams
+ * every other handler delivery carries.
+ *
+ * The identity is the same one every reading carried — the session's own facts as the process that
+ * ran it resolved them, and the owner it follows — so a tree that placed the session keeps placing it
+ * where its direct parent puts it after the readings are withdrawn. The `hasUI` fact and the feedback
+ * channel are the served owner's, exactly as they are for a reading that arrived.
+ */
+export interface SessionUnobservedObservation {
+	/** The actual session whose observation is no longer available: its identity and latest name. */
+	readonly session: SessionFacts;
+	/** The owner whose agent this loss concerns, as the deliveries that carried the session resolved it. */
+	readonly owner: OwnerReference;
+	/** Whether the session this loss is about has a UI, as it was resolved. */
+	readonly hasUI: boolean;
+	/** The transport this loss's extension feedback is published through. */
+	readonly feedback: FeedbackTransport;
+}
+
+/** The facts one unavailability delivery carries to the subscribed handler. */
+export interface SessionUnobservedDelivery extends SessionUnobservedObservation {
+	/** The event itself: that this session's observation is no longer available. */
+	readonly event: SessionUnobservedEvent;
+}
+
+/** One extension handler for one session's observation becoming unavailable. */
+export type SessionUnobservedHandler = (delivery: SessionUnobservedDelivery) => void | Promise<void>;
+
+/** The unavailability handlers one assembly injects, keyed by the event it subscribes to. */
+export type SessionUnobservedHandlers = Readonly<
+	Partial<Record<SessionUnobservedEvent["kind"], SessionUnobservedHandler>>
+>;
+
+/**
  * Any semantic lifecycle event the framework models: the session axis, the round axis, the activity
- * axis, the Turn axis, the input axis and the context axis.
+ * axis, the Turn axis, the input axis, the context axis and one session's observation becoming
+ * unavailable.
  *
  * The axes are orthogonal and never merged — entering a session is not starting work, starting
  * work does not change which session is current, a Turn is not a Round, and input arriving is not
@@ -1086,9 +1174,18 @@ export type SessionContextHandlers = Readonly<Partial<Record<SessionContextEvent
  * The activity axis is the one *derived* member: it states the reading the round axis's own
  * transitions leave a session in, so it is never a second decision about which fact is a
  * transition, and observing activity is not observing a round: it carries no billing lifecycle
- * fact, dispatches no edge and grants no capability.
+ * fact, dispatches no edge and grants no capability. An unavailability is the one member that states
+ * an *absence*: the readings a source delivered are gone, and nothing about the session's work is
+ * stated by it at all.
  */
-export type SemanticEvent = SessionEvent | RoundEvent | SessionActivityEvent | TurnEvent | UserInputEvent | SessionContextEvent;
+export type SemanticEvent =
+	| SessionEvent
+	| RoundEvent
+	| SessionActivityEvent
+	| TurnEvent
+	| UserInputEvent
+	| SessionContextEvent
+	| SessionUnobservedEvent;
 
 /** The delivery each semantic event kind carries, so a handler's kind and its facts stay paired. */
 export interface SemanticEventDeliveryMap {
@@ -1104,6 +1201,8 @@ export interface SemanticEventDeliveryMap {
 	readonly turn_end: TurnEndDelivery;
 	readonly user_input: UserInputDelivery;
 	readonly session_context: SessionContextDelivery;
+	/** The observation's own kind: the readings a source held for one session are gone. */
+	readonly session_unobserved: SessionUnobservedDelivery;
 }
 
 /**

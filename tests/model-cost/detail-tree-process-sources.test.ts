@@ -17,13 +17,14 @@
  */
 import { afterEach, describe, expect, test } from "bun:test";
 import { randomUUID } from "node:crypto";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
 import type { OmpSessionContext } from "../../framework/adapters/omp";
 import { MODEL_COST } from "../../extensions/model-cost/definition";
 import { MODEL_COST_WIDGET_KEY, attachModelCostWidget } from "../../extensions/model-cost/harnesses/omp/widget";
 import type { ConsumptionDocument } from "../../extensions/model-cost/shared-logic/consumption-document";
+import { DEEPSEEK_DISPLAY_BUDGET } from "../../extensions/model-cost/shared-logic/presentation/display";
 import type { ModelPricingData } from "../../extensions/model-cost/shared-logic/model-data";
 import type { ModelCostRuntime } from "../../extensions/model-cost/shared-logic/runtime";
 import { createModelCostRuntime } from "../../extensions/model-cost/shared-logic/runtime";
@@ -225,7 +226,7 @@ async function bind(): Promise<Bound> {
 }
 
 /** One independent process that delivers one session's reading, started over the real access. */
-async function deliverInProcess(readings: readonly ObservedSession[], where: string): Promise<void> {
+async function deliverInProcess(readings: readonly ObservedSession[], where: string): Promise<RunningObservationChild> {
 	const plan: ObservationChildPlan = {
 		target: { extension: MODEL_COST.id, owner: SEAT_OWNER.key },
 		readings,
@@ -236,6 +237,7 @@ async function deliverInProcess(readings: readonly ObservedSession[], where: str
 	children.push(child);
 	await child.ready();
 	for (let index = 0; index < readings.length; index += 1) child.send({ t: "deliver", index });
+	return child;
 }
 
 afterEach(async () => {
@@ -293,5 +295,105 @@ describe("sessions another process runs reach the detail form over the real acce
 		expect(drawn[1]).toContain("│  └─ 孙代理B");
 		expect(drawn.every(line => !line.includes("Cost:"))).toBe(true);
 		expect(drawn.every(line => line.includes("Run: \u2014"))).toBe(true);
+	});
+});
+
+describe("a real process's end withdraws what its readings drew, and nothing else (P6–P8)", () => {
+	/** The child session's own display name, as the tree draws it and as the drawn line carries it. */
+	const CHILD_NAME = "\u5B50\u4EE3\u7406A";
+
+	/** The read-only detail result's session rows, as the tree the case reads carries them. */
+	const sessionsOf = (bound: Bound) =>
+		(bound.runtime.presentation.of(MAIN_TARGET).agentTree ?? []).filter(row => row.kind === "session");
+
+	/** The drawn line of the session under test, as the frontend's own lines carry it. */
+	const drawnRow = (bound: Bound): string | undefined => (bound.lines() ?? []).find(line => line.includes(CHILD_NAME));
+
+	test("a killed process's reading is withdrawn and the row keeps its place while it loses every live reading", async () => {
+		const bound = await bind();
+		const where = roots[roots.length - 1] as string;
+		const before = readFileSync(path.join(where, CONSUMPTION_FILE), "utf8");
+
+		// One real process states the session it runs, and the detail form draws what arrived: the row for
+		// that session, its own context reading and the working emphasis the activity reading carries.
+		const child = await deliverInProcess(
+			[readingOf(CHILD, { tokens: 45_000, provider: "official", model: "model-alpha" })],
+			where,
+		);
+		await until(
+			() => drawnRow(bound)?.includes("Ctx: 10% (45,000/450.0K)") === true,
+			"the reading the other process stated was never drawn",
+		);
+		expect(sessionsOf(bound).map(row => [row.name, row.depth])).toEqual([[CHILD_NAME, 1]]);
+		expect(sessionsOf(bound)[0]?.nameEmphasis).toBe("active");
+
+		// The process is killed where it stands: it releases nothing and states nothing of its own end, and
+		// what this side reads is the connection ending. The watcher below is the drawn detail itself, so
+		// what the case waits for is the redraw an operator would see.
+		child.kill();
+		await until(() => {
+			const line = drawnRow(bound);
+			return line !== undefined && !line.includes("Ctx:");
+		}, "the drawn detail never dropped the withdrawn context reading");
+
+		// The row is still there, under its own name and at its own direct parent's depth, and nothing live
+		// about it is drawn any more: no context and no working emphasis. What is *not* drawn is the point:
+		// the session is not shown as idle, as failed or as finished, because a lost connection says
+		// nothing about the work itself.
+		expect(sessionsOf(bound).map(row => [row.name, row.depth])).toEqual([[CHILD_NAME, 1]]);
+		expect(sessionsOf(bound)[0]?.nameEmphasis).toBeUndefined();
+		expect(sessionsOf(bound)[0]?.context).toBeUndefined();
+		expect(drawnRow(bound)).toMatch(/[\u251C\u2514]\u2500 \u5B50\u4EE3\u7406A/u);
+		expect(drawnRow(bound)).toContain("Run: \u2014");
+
+		// Nothing of the loss was accounted: a lost connection is no Round end, no Turn and no saving.
+		expect(readFileSync(path.join(where, CONSUMPTION_FILE), "utf8")).toBe(before);
+	});
+
+	test("an earlier process's end takes none of a later process's readings, and the later end takes its own", async () => {
+		const bound = await bind();
+		const where = roots[roots.length - 1] as string;
+		const before = readFileSync(path.join(where, CONSUMPTION_FILE), "utf8");
+
+		// Two real processes state the same session: the one admitted first states it working on one
+		// context, and the later one states it idle on another. Each reading is read as drawn before the
+		// next step, so the order this case asserts is the order the seat really saw.
+		const first = await deliverInProcess(
+			[readingOf(CHILD, { tokens: 45_000, provider: "official", model: "model-alpha" })],
+			where,
+		);
+		await until(
+			() => drawnRow(bound)?.includes("Ctx: 10% (45,000/450.0K)") === true,
+			"the first process's reading was never drawn",
+		);
+		const second = await deliverInProcess(
+			[readingOf(CHILD, { tokens: 50_000, provider: "official", model: "model-alpha" })],
+			where,
+		);
+		await until(
+			() => drawnRow(bound)?.includes("50,000/450.0K") === true,
+			"the later process's reading was never drawn",
+		);
+
+		// The earlier process releases the access it held while it lives on: the source it delivered over
+		// ends, and the reading this process holds is the later process's, so nothing of the end reaches
+		// the drawn row. The child's own answer is what says the release really ran, and that this run
+		// reads a source's end as it should is what the step below shows, where the end withdraws a
+		// reading this side does hold.
+		first.send({ t: "release" });
+		const released = await first.report();
+		expect(released.ended).toBe(true);
+		expect(sessionsOf(bound)[0]?.context).toEqual({ tokens: 50_000, budget: DEEPSEEK_DISPLAY_BUDGET });
+		expect(drawnRow(bound)).toContain("Ctx: 11% (50,000/450.0K)");
+
+		// The later process ends too, and that end is the one that withdraws the reading — the same rule,
+		// from the other side.
+		second.send({ t: "release" });
+		await until(() => {
+			const line = drawnRow(bound);
+			return line !== undefined && !line.includes("Ctx:");
+		}, "the drawn detail never dropped the later process's reading");
+		expect(sessionsOf(bound).map(row => [row.name, row.depth])).toEqual([[CHILD_NAME, 1]]);
+		expect(readFileSync(path.join(where, CONSUMPTION_FILE), "utf8")).toBe(before);
 	});
 });

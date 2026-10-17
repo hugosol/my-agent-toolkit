@@ -470,3 +470,118 @@ describe("one actual session is one row, whatever run or process delivered it (P
 		expect(drawn.filter(line => line.includes("同名子代理"))).toHaveLength(2);
 	});
 });
+
+describe("a source's end withdraws what the detail was drawn from, and nothing else (P5–P8)", () => {
+	/** The child session's own display name, as the tree draws it and as the drawn line carries it. */
+	const CHILD_NAME = "子代理A";
+
+	/** The drawn agent row of one session, out of the tree the detail form shows. */
+	const rowOf = (bound: Bound, session: SessionFacts): AgentTreeRow | undefined =>
+		(bound.runtime.presentation.of(MAIN_TARGET).agentTree ?? []).find(
+			row => row.kind === "session" && row.name === session.name,
+		);
+
+	test("the row stops being drawn as working and loses its context reading, while the session keeps its place and its record", async () => {
+		const bound = await bind();
+		const before = readFileSync(bound.file, "utf8");
+
+		// The session is running in another process, and what arrived is the reading that process held:
+		// the activity its own Round left it in and the context its own host measured.
+		bound.double.deliverObserved(
+			readingOf(CHILD, {
+				activity: "working",
+				context: { tokens: 45_000, provider: "official", model: "model-alpha" },
+			}),
+			1,
+		);
+		expect(rowOf(bound, CHILD)?.nameEmphasis).toBe("active");
+		expect(rowOf(bound, CHILD)?.context).toEqual({ tokens: 45_000, budget: DEEPSEEK_DISPLAY_BUDGET });
+		expect((bound.lines() ?? []).find(line => line.includes(CHILD_NAME))).toContain("Ctx: 10% (45,000/450.0K)");
+
+		// The connection that carried the reading ends — the process that ran the session released its
+		// access, or this side observed the connection close — and what that withdraws is its readings.
+		bound.double.loseObservedSource(1);
+
+		// The session is still drawn, under its own name and at its own direct parent's depth, because
+		// that identity is the session's own fact rather than the connection's.
+		const row = rowOf(bound, CHILD);
+		expect(row?.name).toBe(CHILD.name);
+		expect(row?.depth).toBe(1);
+		// And nothing live about it is drawn: no working emphasis and no context reading. What is *not*
+		// drawn matters as much as what is: the session is not shown as idle, as failed or as finished.
+		expect(row?.nameEmphasis).toBeUndefined();
+		expect(row?.context).toBeUndefined();
+		const drawn = (bound.lines() ?? []).find(line => line.includes(CHILD_NAME)) as string;
+		expect(drawn).toMatch(/[├└]─ 子代理A/u);
+		expect(drawn).not.toContain("Ctx:");
+		expect(drawn).toContain("Run: \u2014");
+
+		// A lost connection minted no billing lifecycle either: no Round ended, no Turn was attributed
+		// and no consumption was written, so the document is byte-for-byte what it was.
+		expect(JSON.parse(readFileSync(bound.file, "utf8"))).toEqual(JSON.parse(before));
+	});
+
+	test("a word a later source delivered keeps standing after the earlier source's end", async () => {
+		const bound = await bind();
+		const before = readFileSync(bound.file, "utf8");
+
+		// Two connections about one session, the second admitted after the first: the later one's word is
+		// the reading this process holds, and the earlier one's end is what follows it.
+		bound.double.deliverObserved(
+			readingOf(CHILD, { activity: "working", context: { tokens: 100, provider: "official", model: "model-alpha" } }),
+			1,
+		);
+		bound.double.deliverObserved(
+			readingOf(CHILD, { activity: "idle", context: { tokens: 200, provider: "official", model: "model-alpha" } }),
+			2,
+		);
+		bound.double.loseObservedSource(1);
+
+		const row = rowOf(bound, CHILD);
+		expect(row?.context).toEqual({ tokens: 200, budget: DEEPSEEK_DISPLAY_BUDGET });
+		// The later word is the one this process holds, so nothing the earlier source's end withdrew
+		// touches it — and the reading it states is idle, which no loss is allowed to overwrite either.
+		expect(row?.nameEmphasis).toBeUndefined();
+		const drawn = (bound.lines() ?? []).find(line => line.includes(CHILD_NAME)) as string;
+		expect(drawn).toContain("Ctx: 0% (200/450.0K)");
+		expect(JSON.parse(readFileSync(bound.file, "utf8"))).toEqual(JSON.parse(before));
+	});
+
+	test("a source that reaches the seat again restores what was withdrawn, with no further change needed", async () => {
+		const bound = await bind();
+		const before = readFileSync(bound.file, "utf8");
+
+		bound.double.deliverObserved(
+			readingOf(CHILD, {
+				activity: "working",
+				context: { tokens: 45_000, provider: "official", model: "model-alpha" },
+			}),
+			1,
+		);
+		bound.double.loseObservedSource(1);
+		expect(rowOf(bound, CHILD)?.context).toBeUndefined();
+		expect((bound.lines() ?? []).find(line => line.includes(CHILD_NAME))).not.toContain("Ctx:");
+
+		// The access is reached again — a connection this process admits later — and its first word
+		// carries what that process holds now, including a context that moved while this access was gone.
+		bound.double.deliverObserved(
+			readingOf(CHILD, {
+				activity: "working",
+				context: { tokens: 50_000, provider: "official", model: "model-alpha" },
+			}),
+			2,
+		);
+
+		const row = rowOf(bound, CHILD);
+		expect(row?.nameEmphasis).toBe("active");
+		expect(row?.context).toEqual({ tokens: 50_000, budget: DEEPSEEK_DISPLAY_BUDGET });
+		const drawn = (bound.lines() ?? []).find(line => line.includes(CHILD_NAME)) as string;
+		expect(drawn).toContain("Ctx:");
+		expect(drawn).toContain("50,000/450.0K");
+		// Nothing of the return was accounted: the same document, and the same one row.
+		expect(JSON.parse(readFileSync(bound.file, "utf8"))).toEqual(JSON.parse(before));
+		expect(
+			(bound.runtime.presentation.of(MAIN_TARGET).agentTree ?? []).filter(one => one.kind === "session"),
+		).toHaveLength(1);
+	});
+});

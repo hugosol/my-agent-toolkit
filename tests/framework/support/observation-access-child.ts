@@ -83,10 +83,12 @@ if (plan.serve !== undefined) {
 		...(plan.configPath === undefined ? {} : { configPath: plan.configPath }),
 		report: message => process.stderr.write(`${message}\n`),
 	});
-	publisher.receive(plan.serve, reading => void received.push(reading));
+	publisher.receive(plan.serve, { adopt: (_source, reading) => void received.push(reading), lost: () => {} });
 }
 
-if (plan.target.owner.length > 0) {
+/** Reaches the seat's access, as this process does at its start and whenever it is asked to again. */
+async function reach(): Promise<void> {
+	failure = undefined;
 	try {
 		caller = await openOwnerAccess({
 			target: plan.target,
@@ -97,6 +99,8 @@ if (plan.target.owner.length > 0) {
 		failure = `${error instanceof Error ? error.name : "error"}: ${error instanceof Error ? error.message : String(error)}`;
 	}
 }
+
+if (plan.target.owner.length > 0) await reach();
 
 /** The reading one command names, as this process holds it. */
 function readingAt(index: number | undefined): ObservedSession | undefined {
@@ -137,10 +141,16 @@ function resolvedDirectory(): { readonly runtimeDirectory?: string; readonly run
 function act(command: ChildCommand): void {
 	if (command.t === "deliver") {
 		commands.push(`deliver:${command.index ?? -1}`);
-		const reading = readingAt(command.index);
-		if (reading === undefined || caller === undefined) return;
-		caller.deliver(reading);
-		delivered.push(reading.session.sessionId);
+		// A delivery is applied on the same chain as everything else this process is asked to do, so a
+		// reading asked for after a reach is delivered over that reach rather than over the access this
+		// process released before it.
+		answering = answering.then(() => {
+			const reading = readingAt(command.index);
+			// A reading an access this process no longer holds is dropped rather than carried.
+			if (reading === undefined || caller === undefined || caller.ended()) return;
+			caller.deliver(reading);
+			delivered.push(reading.session.sessionId);
+		});
 		return;
 	}
 	// What this process states goes through one chain, so the answers a parent reads are in the order
@@ -157,6 +167,28 @@ function act(command: ChildCommand): void {
 		answering = answering.then(async () => {
 			const deadline = Date.now() + 5000;
 			while (caller !== undefined && !caller.ended() && Date.now() < deadline) await Bun.sleep(10);
+			stateReport();
+		});
+		return;
+	}
+	if (command.t === "release") {
+		// This process releasing the access it held while it lives on, as one that stops delivering
+		// does: the connection ends here, and nothing about its end is stated to the serving process —
+		// what that side learns of it is the connection closing, and nothing else. What this process
+		// held is kept as the released access it is, so a report still states that its access ended.
+		commands.push("release");
+		answering = answering.then(() => {
+			caller?.dispose();
+			stateReport();
+		});
+		return;
+	}
+	if (command.t === "reconnect") {
+		// This process reaching the seat again, as one does when it has something to deliver after its
+		// access ended: what it holds now is what the first word of this later connection carries.
+		commands.push("reconnect");
+		answering = answering.then(async () => {
+			await reach();
 			stateReport();
 		});
 		return;

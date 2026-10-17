@@ -49,6 +49,7 @@ import {
 	describeBindingFailure,
 	type DirectedCommandImplementation,
 	type FeedbackTransport,
+	type ObservationSource,
 	type ObservedSession,
 	type PromptContribution,
 } from "../core/protocol";
@@ -310,22 +311,23 @@ export function bindExtension(
 	let contextCollection: ContextCollection | undefined;
 
 	/**
-	 * Adopts one reading a session in another process delivered: this process's own record first, then
-	 * the same axes the local collections move, and never anything of the billing lifecycle.
+	 * Adopts one word a source delivered: this process's own record first, then the same axes the
+	 * local collections move, and never anything of the billing lifecycle.
 	 *
-	 * The reading states what that session was observed to be — its activity and its context, under
-	 * the identity the process that ran it resolved — so adopting it is recording it and delivering
-	 * it as the change it is; no Round is opened for it, no Turn is attributed and no request is
-	 * accounted. A reading that states the reading this process already holds moves nothing, exactly
-	 * as a repeated local collection does, so a re-delivered word is not published twice.
+	 * The word states what that session was observed to be — its activity and its context, under the
+	 * identity the process that ran it resolved — so adopting it is recording it and delivering it as
+	 * the change it is; no Round is opened for it, no Turn is attributed and no request is accounted. A
+	 * reading that states what this process already holds moves nothing, exactly as a repeated local
+	 * collection does, so a re-delivered word is not published twice, and a word from a connection
+	 * older than the one a reading already came from (`source`) is not taken at all.
 	 */
-	const adoptReading = (reading: ObservedSession): void => {
+	const adoptReading = (source: ObservationSource, reading: ObservedSession): void => {
 		if (!delivering) return;
 		observations.sawSession(reading.session, reading.owner);
 		const transport = ownerTransport;
 		if (transport === undefined) return;
-		if (reading.activity !== undefined) {
-			observations.observeActivity(reading.session.sessionId, reading.activity);
+		const sessionId = reading.session.sessionId;
+		if (reading.activity !== undefined && observations.observeActivity(sessionId, reading.activity, source)) {
 			activityAxis?.observe({
 				session: reading.session,
 				owner: reading.owner,
@@ -345,8 +347,49 @@ export function bindExtension(
 		// The collection is what records a context reading where this binding observes one; a binding
 		// that observes none still holds the reading in the framework's own source for whoever reads
 		// it later.
-		if (contextCollection === undefined) observations.observeContext(reading.session.sessionId, reading.context);
-		else contextCollection.observe(collection);
+		if (contextCollection === undefined) observations.observeContext(sessionId, reading.context, source);
+		else contextCollection.observe(collection, source);
+	};
+
+	/**
+	 * Withdraws the readings one source held, as that source is gone: the connection it delivered over
+	 * ended, whether the process that held it released the access or the receiving side observed the
+	 * connection close or fail.
+	 *
+	 * What this leaves is the session's identity and nothing live about it: the readings that source
+	 * stated are withdrawn from the process's own record — a newer source's readings, and this
+	 * process's own observations, are untouched — and the subscribers that observe a session are told
+	 * the observation is unavailable. Nothing else is delivered: the loss is not idleness, not a
+	 * finished task and not a failure, so no Round edge, Turn or accounting fact is minted for it, and
+	 * the session's saved consumption is not this record's to touch.
+	 */
+	const loseSource = (source: ObservationSource): void => {
+		if (!delivering) return;
+		const lost = observations.withdrawSource(source);
+		const transport = ownerTransport;
+		if (transport === undefined) return;
+		for (const reading of lost) {
+			// The axis's own reading for that session is the one just withdrawn: it is forgotten here so
+			// that the same reading stated again — by a source that reached the seat after this one
+			// ended — is delivered rather than read as the reading already delivered.
+			activityAxis?.forget(reading.session.sessionId);
+			void dispatchToGroups(
+				definition.id,
+				groups,
+				"session_unobserved",
+				reading.owner,
+				() => ({
+					delivery: {
+						event: { kind: "session_unobserved" },
+						session: reading.session,
+						owner: reading.owner,
+						hasUI: transport.hasUI,
+						feedback: transport.feedback,
+					},
+				}),
+				port.reportDiagnostic,
+			);
+		}
 	};
 
 	/**
@@ -436,7 +479,7 @@ export function bindExtension(
 					// request is issued, and what it delivers has to have somewhere to land.
 					releaseSeat();
 					receivingFor = session.owner.key;
-					receiving = observationAccess?.receive(session.owner.key, adoptReading);
+					receiving = observationAccess?.receive(session.owner.key, { adopt: adoptReading, lost: loseSource });
 				}
 				ownerTransport = { hasUI: session.hasUI, feedback: session.feedback };
 				void initializeImplementation(

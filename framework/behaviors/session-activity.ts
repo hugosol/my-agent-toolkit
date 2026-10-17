@@ -56,6 +56,17 @@ export interface SessionActivityAxis {
 	 * nothing.
 	 */
 	observe(observation: SessionActivityObservation): void;
+	/**
+	 * Drops the reading this axis holds for one session, as that session's observation became
+	 * unavailable: an unavailable observation is not idleness, so nothing is delivered here.
+	 *
+	 * It is what keeps a session's return from being silent. A reading that did not move is not
+	 * delivered, and a session whose live readings were withdrawn — the source that delivered them
+	 * ended — and is then stated again by a source that reached the seat after it, states a reading no
+	 * consumer still holds. The axis forgets the withdrawn one here, so that reading reaches the
+	 * subscriber rather than being read as the one already delivered.
+	 */
+	forget(sessionId: string): void;
 }
 
 /** What one binding's activity axis arranges itself with. */
@@ -93,6 +104,9 @@ export function createSessionActivityAxis(inputs: SessionActivityAxisInputs): Se
 				() => ({ delivery: { event: { kind: "session_activity" }, ...observation } }),
 				reportFailure,
 			);
+		},
+		forget(sessionId) {
+			delivered.delete(sessionId);
 		},
 	};
 }

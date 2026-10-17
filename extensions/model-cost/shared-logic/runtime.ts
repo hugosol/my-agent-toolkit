@@ -680,6 +680,21 @@ export function createModelCostRuntime(inputs: ModelCostRuntimeInputs): ModelCos
 		session_context: () => {
 			accounting.announceChanged();
 		},
+		// One actual session's observation became unavailable: the source that carried its readings ended,
+		// and the framework's own source has already withdrawn them. What is left to do here is this
+		// instance's own half of the same reading — the activity registry the detail form emphasises a
+		// row's name with — and the redraw that drops the row's context beside it. An unavailable
+		// observation is not idleness: the reading is forgotten rather than replaced, so the row reverts to
+		// the unestablished state a session no edge has moved is drawn in and never to an idle one. Nothing
+		// of the accounting runs here, exactly as nothing of it runs for a reading that arrived: no Round
+		// ends, no Turn is attributed and nothing is saved, because a lost connection is evidence of
+		// nothing about the work itself. A source's end is one fact rather than a stream of them, so it
+		// costs the one redraw the row needs.
+		session_unobserved: delivery => {
+			stateProviderFailures(delivery);
+			sessionActivity.forget(delivery.session.sessionId);
+			accounting.announceChanged();
+		},
 		// One actual session's own start. A spawned session's binding announces it once, and it is the
 		// one delivery whose model and level readings are that session's startup facts — the framework
 		// reports them on a start that proves the session was beginning, and on no other delivery, so a

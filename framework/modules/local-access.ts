@@ -80,10 +80,12 @@ import {
 } from "../core/config";
 import type {
 	AgentActivity,
+	ObservationSource,
 	ObservedSession,
 	OwnerReference,
 	SessionContextReading,
 	SessionFacts,
+	SessionObservationSink,
 	SessionStartup,
 } from "../core/protocol";
 
@@ -194,14 +196,23 @@ export interface OwnerAccessPublisherSeam extends LocalAccessSource {
 	readonly verification?: () => string;
 }
 
-/** The serving half: the process offers seats, and every offer is withdrawn with the access's life. */
+/**
+ * The serving half: the process offers seats, and every offer is withdrawn with the access's life.
+ */
 export interface OwnerAccessPublisher {
 	/** Offers one seat's declared values; the returned function withdraws exactly that offer. */
 	offer(target: AccessTarget, source: OwnerAccessSource): () => void;
 	/**
-	 * Receives one seat's observations: every reading a session in another process delivers for the
-	 * sessions that follow that seat's owner is handed to `sink`, and the returned function
-	 * withdraws exactly that reception.
+	 * Receives one seat's observations: every word a session in another process delivers for the
+	 * sessions that follow that seat's owner is handed to `sink` with the source it arrived over, and
+	 * the returned function withdraws exactly that reception.
+	 *
+	 * A source is one connection this process admitted, numbered in the order it accepted them, and its
+	 * end is stated to the same sink: an access that ends — the process that delivered released it, its
+	 * connection failed, or this process closed it — is `lost` to the sink, which is what makes the
+	 * readings it carried no longer available rather than silently last-known. The recognition is this
+	 * side's own: a process that is about to end owes nothing, and a connection that merely stops
+	 * delivering is not a loss until it really ends.
 	 *
 	 * The two halves of one seat are offered separately and live separately — an owner whose values
 	 * this process serves and one whose sessions another process only reports are the same seat with
@@ -209,7 +220,7 @@ export interface OwnerAccessPublisher {
 	 * of its halves is withdrawn. A half offered again over a seat that is still there keeps that
 	 * seat's verification, so a reader that already read the record is not locked out by it.
 	 */
-	receive(target: AccessTarget, sink: (reading: ObservedSession) => void): () => void;
+	receive(target: AccessTarget, sink: SessionObservationSink): () => void;
 	/** Withdraws every offer, closes the endpoint and refuses every later connection. */
 	dispose(): void;
 }
@@ -283,7 +294,7 @@ const VERIFICATION_BYTES = 32;
  */
 interface ProcessSeat {
 	readonly values?: OwnerAccessSource;
-	readonly readings?: (reading: ObservedSession) => void;
+	readonly readings?: SessionObservationSink;
 }
 
 /**
@@ -296,9 +307,29 @@ interface ProcessSeat {
  */
 const PROCESS_SEATS_KEY: unique symbol = Symbol.for("my-agent-toolkit.semantic-extensions.owner-access");
 
+/**
+ * The next source number this process hands out, wherever in it the module graph asking stands.
+ *
+ * A source has to be ordered against every other source whose readings reach the same seat, and the
+ * seat itself is process-wide (see {@link PROCESS_SEATS_KEY}): an in-process caller of one module
+ * graph delivers into the sink a host of another graph offered, so the numbering cannot be each
+ * graph's own. It is parked on `globalThis` for that reason, and it only ever grows — a number is
+ * never reused, so an ended source can never be confused with the next one.
+ */
+const SOURCE_COUNTER_KEY: unique symbol = Symbol.for("my-agent-toolkit.semantic-extensions.observation-source");
+
 /** The one name a seat is keyed by, in the process registry and in its location record's file name. */
 function seatKey(target: AccessTarget): string {
 	return `${target.extension}\u0000${target.owner}`;
+}
+
+/** The next source number this process hands out, so sources are ordered by when this process took them up. */
+function nextSource(): ObservationSource {
+	const registry = globalThis as unknown as Record<symbol, { value: number } | undefined>;
+	const counter = registry[SOURCE_COUNTER_KEY] ?? { value: 0 };
+	registry[SOURCE_COUNTER_KEY] = counter;
+	counter.value += 1;
+	return counter.value;
 }
 
 /** How one seat is named in failure text: both halves, never the verification. */
@@ -568,6 +599,11 @@ function releaseProcessSeat(key: string, half: keyof ProcessSeat, held: unknown)
  * because the value changed, not because a frame arrived, and a reading it delivers reaches this
  * process's own sink the same way. That is the whole difference between this process and another one.
  *
+ * It is a source like any other — one this process took up, numbered in the same order — because a
+ * reading it delivers is still one delivering party's word about one session. What it never does is
+ * state that source's end: a caller released here was this process's own reading of a session this
+ * process runs, and releasing the caller changes nothing about what that session was observed to be.
+ *
  * Life is the same rule it is over the carrier, and it is this caller's own to report because nothing
  * else can report it: one seat is one offer, and an offer this process has replaced or withdrawn —
  * the Owner's life ended, or was entered again with the access being this life's — is a seat this
@@ -576,13 +612,14 @@ function releaseProcessSeat(key: string, half: keyof ProcessSeat, held: unknown)
  * instead of answering the value of a life that is over.
  */
 function directCaller(target: AccessTarget, seat: ProcessSeat, source: OwnerAccessSource): OwnerAccessCaller {
+	const asSource = nextSource();
 	let ended = false;
 	return {
 		values: () => source.values(),
 		request: (field: string) => Promise.resolve(source.values()[field]),
 		observe: listener => source.observe(listener),
 		deliver: reading => {
-			if (!ended) seat.readings?.(reading);
+			if (!ended) seat.readings?.adopt(asSource, reading);
 		},
 		ended: () => ended || processSeats()?.get(seatKey(target))?.values !== source,
 		dispose: () => {
@@ -602,12 +639,21 @@ interface ServedSeat {
 	readonly target: AccessTarget;
 	readonly verification: string;
 	values?: ServedValues;
-	readings?: (reading: ObservedSession) => void;
+	readings?: SessionObservationSink;
 }
 
 /** One connection the serving process has accepted, and the seat it was admitted for. */
 interface AcceptedConnection {
 	readonly socket: Socket;
+	/**
+	 * The source this connection is, numbered where this process accepted it.
+	 *
+	 * Every accepted connection is a source from the moment it arrives rather than from its hello: what
+	 * the number is for is ordering the readings that reach one seat, and a connection that is refused
+	 * or never states a hello delivers none. Its end is reported for exactly the connections that were
+	 * admitted for a seat.
+	 */
+	readonly source: ObservationSource;
 	seat: string | undefined;
 }
 
@@ -656,7 +702,7 @@ class OwnerAccessHost {
 		return () => this.#withdrawValues(key, seat, held);
 	}
 
-	receive(target: AccessTarget, sink: (reading: ObservedSession) => void): () => void {
+	receive(target: AccessTarget, sink: SessionObservationSink): () => void {
 		if (this.#disposed || this.#unavailable !== undefined) return () => {};
 		const key = seatKey(target);
 		const seat = this.#seat(key, target);
@@ -760,7 +806,7 @@ class OwnerAccessHost {
 	}
 
 	/** Withdraws one seat's observations half, and the seat with it if nothing is left. */
-	#withdrawReadings(key: string, seat: ServedSeat, held: (reading: ObservedSession) => void): void {
+	#withdrawReadings(key: string, seat: ServedSeat, held: SessionObservationSink): void {
 		if (this.#seats.get(key) !== seat || seat.readings !== held) return;
 		seat.readings = undefined;
 		releaseProcessSeat(key, "readings", held);
@@ -774,7 +820,9 @@ class OwnerAccessHost {
 		for (const connection of this.#connections) {
 			if (connection.seat !== key) continue;
 			// A reader of a seat that is gone is released rather than left listening for a value
-			// that will not come.
+			// that will not come. Its end states nothing to the seat: the half that would have received
+			// it is the one being withdrawn here.
+			connection.seat = undefined;
 			connection.socket.destroy();
 		}
 		if (this.#runtimeDirectory !== undefined) {
@@ -841,7 +889,7 @@ class OwnerAccessHost {
 	/** One accepted connection: its hello decides which seat it may read, or it is refused. */
 	#accepted(socket: Socket): void {
 		socket.setEncoding("utf8");
-		const connection: AcceptedConnection = { socket, seat: undefined };
+		const connection: AcceptedConnection = { socket, source: nextSource(), seat: undefined };
 		this.#connections.add(connection);
 		let buffer = "";
 		let refused = false;
@@ -867,6 +915,12 @@ class OwnerAccessHost {
 		socket.on("close", () => {
 			clearTimeout(budget);
 			this.#connections.delete(connection);
+			// This side's own recognition of the source's end, and the whole of it: a process about to
+			// end owes no goodbye, and a connection that failed ends exactly as one that was closed. A
+			// connection that was never admitted, and a seat that is no longer offered, hold nothing to
+			// state it to.
+			const seat = connection.seat === undefined ? undefined : this.#seats.get(connection.seat);
+			seat?.readings?.lost(connection.source);
 		});
 	}
 
@@ -919,7 +973,7 @@ class OwnerAccessHost {
 				refuse(`this access carries the sessions that follow ${describeTarget(seat.target)} and no other`);
 				return;
 			}
-			seat.readings(reading);
+			seat.readings.adopt(connection.source, reading);
 			return;
 		}
 		if (frame?.["t"] !== "read" || typeof id !== "number" || !Number.isInteger(id) || typeof field !== "string") {
