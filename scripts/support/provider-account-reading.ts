@@ -8,7 +8,7 @@
  * thinks its own reading means. Importing the extension's parsers here would make the comparison
  * circular — the same parser on both sides would agree with itself — so every reader below is a
  * second, independent reading of a documented wire shape, scoped to what that comparison needs. The
- * suite that covers it is `tests/model-cost/provider-account-reading.test.ts`.
+ * suite that covers it is `tests/model-cost/integration/provider-account-reading.test.ts`.
  *
  * Three rules follow from that and are kept by the rest of this file:
  *

@@ -94,8 +94,8 @@ import { MODEL_COST_WIDGET_KEY, attachModelCostWidget } from "../extensions/mode
 import { updateFile } from "../framework/modules/files";
 import { createModelCostRuntime, type ModelCostRuntime } from "../extensions/model-cost/shared-logic/runtime";
 import type { OmpSessionContext } from "../framework/adapters/omp";
-import type { ConsumptionDocument, SessionRecord, TokenBuckets } from "../extensions/model-cost/shared-logic/accounting/consumption-document";
-import type { ModelPricingData } from "../extensions/model-cost/shared-logic/pricing/model-data";
+import type { ConsumptionDocument, SessionRecord, TokenBuckets } from "../extensions/model-cost/shared-logic/foundation/session/consumption-document"
+import type { ModelPricingData } from "../extensions/model-cost/shared-logic/business/pricing/model-data";
 import type { OwnerReference, SessionFacts, TurnOutcome, TurnSignal, TurnUsage } from "../framework/core/protocol";
 
 /** This repository's root: `scripts/` -> the checkout the run is attributable to. */

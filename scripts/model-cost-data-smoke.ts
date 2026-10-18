@@ -2,7 +2,7 @@
  * Maintenance smoke: this extension's maintained model and price data against the approved coverage.
  *
  * The permanent suite never names a real model id or a real price. The pricing rules are driven at
- * the production seam by `tests/model-cost/request-accounting.test.ts` with a self-made list, self-
+ * the production seam by `tests/model-cost/foundation/session/request-accounting.test.ts` with a self-made list, self-
  * made prices and a self-made multiplier, so a business price update cannot re-pin an expectation
  * there. This script is the other half, and it is deliberately not a test: a maintainer runs it
  * together with the data edit — step 4 of
@@ -23,7 +23,7 @@
  * bun run smoke:model-cost-data
  * ```
  */
-import { MODEL_PRICING_DATA, catalogPriceOf, classify } from "../extensions/model-cost/shared-logic/pricing/model-data";
+import { MODEL_PRICING_DATA, catalogPriceOf, classify } from "../extensions/model-cost/shared-logic/business/pricing/model-data";
 
 /** One check's outcome, with the observation that decided it. */
 interface Observation {

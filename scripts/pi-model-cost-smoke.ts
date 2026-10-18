@@ -115,7 +115,7 @@
  *   - the two period refusals that need a fact this host never states here are the in-process suite's:
  *     pi dispatches a command when its own loop is idle, and a pi extension context always publishes
  *     its idle fact, so a busy entry and one whose harness reports no activity state are exercised in
- *     `tests/model-cost/pi-period-reset.test.ts` rather than over RPC.
+ *     `tests/model-cost/harnesses/pi/pi-period-reset.test.ts` rather than over RPC.
  *
  * The expected amount is the maintained data's own off-peak flash prices applied by this script's
  * arithmetic, exactly as the OMP dock's accounting suite states them; nothing here is computed by
@@ -940,7 +940,7 @@ async function phaseCommand(cli: PiCli): Promise<void> {
  * already had, a host with no access to the provider (which asks nothing and claims nothing), one query
  * serving the triggers that arrive while it is still out, and the credential of the moment across two
  * processes of one storage root. The deterministic cases for the same rules — with a controlled clock,
- * and with credentials replaced between queries — live in `tests/model-cost/provider-balance.test.ts`
+ * and with credentials replaced between queries — live in `tests/model-cost/business/pricing/provider-balance.test.ts`
  * (S2); what these add is that the same rules hold for real requests of the real pi assembly.
  */
 async function phaseBalance(cli: PiCli): Promise<void> {

@@ -64,7 +64,7 @@ import {
 	seasonMark,
 	totalColumns,
 } from "../../shared-logic/presentation/display";
-import type { ProviderBalanceResult } from "../../shared-logic/provider-account/provider-balance";
+import type { ProviderBalanceResult } from "../../shared-logic/business/pricing/provider-balance";
 import type { ModelCostRuntime } from "../../shared-logic/runtime";
 
 /** The native widget key the usage widget is drawn under: this extension's own, not the marker area. */

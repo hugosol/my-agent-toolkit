@@ -32,7 +32,7 @@ import { startCaptureServer } from "../../tests/harness-dock/capture-server";
 import { buildSessionEnv } from "../../tests/harness-dock/env";
 import { type PiCli, piVersion, startPiRun } from "../../tests/harness-dock/pi-session";
 import type { RunRoot } from "../../tests/harness-dock/run-root";
-import type { ConsumptionDocument } from "../../extensions/model-cost/shared-logic/accounting/consumption-document";
+import type { ConsumptionDocument } from "../../extensions/model-cost/shared-logic/foundation/session/consumption-document";
 import { WIDE_TAIL, terminalScreen } from "./terminal-screen";
 
 /** The harness partition this scenario's records belong to: the extension's own pi harness name. */

@@ -9,6 +9,50 @@ business rules are under [`shared-logic/`](shared-logic), the OMP assembly is
 [`GLOSSARY.md`](GLOSSARY.md), and the maintained model/price data is documented in
 [`docs/model-data-maintenance.md`](docs/model-data-maintenance.md).
 
+## Shared-logic architecture
+
+The extension has three responsibility groups, composed by `shared-logic/runtime.ts`:
+
+- **`business/`** owns pricing (including request-start anchors and consumption contributions),
+  allowance windows and estimates, context display budgets, and subagent read-only composition.
+- **`foundation/`** is this extension's inward support, not the public `framework/`: session
+  consumption, identity/descendant relations, period-scoped state, coordinated consumption storage,
+  and the success-TTL/in-flight policy shared by provider readings. It imports no business module.
+- **`presentation/`** owns read-only display results, text/field formatting, display preference and
+  merged redraws. Native drawing remains in `harnesses/`; business modules import no presentation.
+
+Pricing captures one request's policy in a settlement function; foundation retains it by Turn and
+applies its contribution once. Subagent composition reads the same session authority and descendant
+relations as inclusive totals, never a second ledger. Tokens, amounts, startup, span and runtime still
+share one Session snapshot and the existing Round-end save. Codex estimates keep their independent
+file, immediate baseline writes, refinement interval and best-effort failure policy.
+
+Tests are grouped by responsibility under `tests/model-cost/{business,foundation,presentation}`;
+`integration/` retains cross-module scenarios and `harnesses/pi/` retains pi assembly scenarios.
+This is not a requirement to mirror every source file. Existing behavior cases and combination
+coverage survive changes to internal imports and wiring.
+
+This refactor does **not** change file schemas, command behavior, save timing or adapter declarations.
+Deriving adapter requirements from composed modules is explicitly deferred; the current
+`subagentRequirements` and integration checklist are unchanged. Architecture rationale and scope:
+[capability layering](../../framework/docs/capability-layering.md).
+
+### Architecture refactor verification (2026-10-18)
+
+- Before and after: `bun run typecheck` passed; `bun test tests/model-cost` retained all 515 cases
+  across 51 files and 2,891 assertions, with no failures.
+- `smoke:model-cost-data`: 20 checks passed. Production layout smoke passed at 160/120/85/60/40
+  columns. A separately launched real Windows console passed all 44 device checks at
+  120/85/60/40/120 columns; this does not replace human readability or real-account acceptance.
+- Final `bun run test`: 1,376 passed, 4 failed. Two failures concern the baseline lockfile hash:
+  the working `bun.lock` uses CRLF, while its LF-normalized bytes match both HEAD and the recorded
+  SHA-256. Two before-all failures concern the existing
+  `.cache/omp-baseline/18.5.0-codex-response-boundary` prefix, which lacks the frozen
+  `pi-ai/src/providers/openai-codex-responses.ts`. The failing test/support sources and baseline
+  record match HEAD; no baseline hash, lockfile or cached host was changed to mask these failures.
+- `bun run check:integrations --json` passed (`complete: true`, `behaviorTestsRun: false`), for the
+  unchanged existing declaration checklist only.
+
 ## What runs automatically
 
 | command | what it covers |
@@ -161,7 +205,7 @@ real value" from "unavailable".
 | P23 | `/budget detail` shows the Total block plus the static agent tree with a row per session and its own model — each row named by its session name, else the task handle its spawn was given, else the name the document holds, else its agent's own name (a category), and only by an id when nothing else named it — each subagent row beside the model and effective level that session *began* on (`provider/model(level)`, each `?` when nothing proved it), its own current context (`Ctx: percent (tokens/budget)`, read against that channel's fixed display budget) and its own statistics without the cached share of its conversation input, with the name of a session that is *working* right now drawn in the theme's activity colour, and no `Round:` row. A session whose own access ended — the process that ran it released it or ended, so its readings are gone — keeps its row, its name, its place and every figure already saved, and loses what was live about it: the name is drawn plain and no `Ctx:` field is written, and neither the loss nor the session's later return is accounted as a Round, a Turn or a save. | `/budget detail` keeps the context bar and the `Total:` line byte-identical, then replaces the Round rows with the static tree: the root name alone, a `│  provider / model` model row per model the root itself consumed (carrying that model's own fields; session rows carry no single-model ratio and no cached share of their own), and one `├─`/`└─`-indented row per own session. Recorded dock example (Main 6,000 tokens / `Cost: ¥0.01`; child 3,000 / `¥0.0050`; tree 9,000 / `¥0.02`): `dock-detail-main` / `│  deepseek / deepseek-flash  Cache: 50%  ¥Cache/In/Out：0:20:80  Sum: 6,000  Cost: ¥0.01` / `└─ dock-detail-child  Model: deepseek / deepseek-flash  Effort: <resolved level>  Cache: 50%  Sum: 3,000  Cost: ¥0.0050`. A subagent's own process releases its access, or is killed: its row loses the running name's colour and its `Ctx:` field while the row itself, the tree's total and the document on the storage root stay exactly as they were. |
 | P26 | Viewing a subagent shows that subagent's own context and Round in the fixed brief form; moving back restores the main preference | Focus a subagent: it must show the fixed brief form — its own Effort, context, current-model fields and its own Round — with no tree; `Cost`/`Ref` remain the whole main tree (no row writes the `Sum` column the earlier round was recorded with). Returning to the main session restores the detail tree, and a subagent row reflects consumption recorded while you were away; `/budget detail` typed while focused only flips the entry preference, visible after returning; restarting the CLI returns to brief. |
 | P27 | The one marker line follows the session you are viewing (main ↔ subagent), and viewing never grants write authority | With two marker fixtures (`◈ followMarker` = follow, `◐ noneMarker` = none) enabled in the main session: the main view shows both lines sorted by id inside the one framework marker area; focusing the subagent shows only the follow row, reading the owner's current value live (turning the follow extension off while focused removes the row); losing the view target falls back to the main session and both lines return. Viewing never grants write authority, and the main area is never blanked by the subagent's own publication — the delegation regression the recorded run fixed. |
-| P30–P33 | The detail tree lines one depth group up: the fields a row states start at the same terminal column on every row of that depth, whatever the rows' name lengths, their parents, or the fields one of them has none of, and each depth has columns of its own | `/budget detail` with a Chinese-named child and an ASCII-named child at one depth and a grandchild under each: the combined startup snapshot and `Cost:`/`Ctx:`/`Run:` columns of a depth start at the same terminal column on every row of it and at a different one at the other depth (the cached share is the root's own model rows' column, not a session depth's); a row with no amount, no context reading or no runtime leaves that column's blanks in place instead of pulling the fields after it left. Narrowing the window cuts a long name or model with `…` and, narrower still, wraps the whole group at one break — every line still starts its fields at the group's own columns and none overruns the width, and drawing the original width again answers it again. Prepared evidence: `bun run smoke:model-cost-detail-layout` prints those frames with each line's display width and each field's observed column at 160/120/100/80/60/40 columns and checks them, `tests/model-cost/detail-layout.test.ts` covers the columns, the slots, the Chinese widths, the cuts, the wraps and the resize, and the whole names, models and figures are read back from the display result and the document. Only `…`'s and the wrap's readability is this round's own judgement. |
+| P30–P33 | The detail tree lines one depth group up: the fields a row states start at the same terminal column on every row of that depth, whatever the rows' name lengths, their parents, or the fields one of them has none of, and each depth has columns of its own | `/budget detail` with a Chinese-named child and an ASCII-named child at one depth and a grandchild under each: the combined startup snapshot and `Cost:`/`Ctx:`/`Run:` columns of a depth start at the same terminal column on every row of it and at a different one at the other depth (the cached share is the root's own model rows' column, not a session depth's); a row with no amount, no context reading or no runtime leaves that column's blanks in place instead of pulling the fields after it left. Narrowing the window cuts a long name or model with `…` and, narrower still, wraps the whole group at one break — every line still starts its fields at the group's own columns and none overruns the width, and drawing the original width again answers it again. Prepared evidence: `bun run smoke:model-cost-detail-layout` prints those frames with each line's display width and each field's observed column at 160/120/100/80/60/40 columns and checks them, `tests/model-cost/presentation/detail-layout.test.ts` covers the columns, the slots, the Chinese widths, the cuts, the wraps and the resize, and the whole names, models and figures are read back from the display result and the document. Only `…`'s and the wrap's readability is this round's own judgement. |
 | P41 | Crossing a peak/off-peak boundary — and the holiday marker on the first holiday period — redraws the block once, with no request issued | At a Beijing-time peak/off-peak boundary — and on the first holiday period — the marker and the whole block redraw once, and the boundary itself issues no request. Recorded automatic cross-checks: one one-shot timer per UI process; the boundary is endpoint-inclusive (12:00:00.000 is still peak, so the next change answers 12:00:00.001); after a sleep or block it re-arms from the actual clock; holiday periods do not arm; no UI does not arm; the callback touches no network, file or ledger. |
 | P67 | The approved visual form: the old single monetary account row (season marker, bar bands, `💰 Balance:` and `Accrued` segment colours together), the balance warning thresholds (a token-only or allowance view draws no balance at all), Codex pacing rows, and the four-step narrow-width degradation | One monetary account row: season marker + budget bar + `Effort:` + `💰 Balance:` + `⏳ Accrued:` (with its segment bar) on a single line — the form restored after the H1 review feedback of 2026-10-14 rejected the split balance/accrued rows — then `Total:` and, in detail, the tree. A token-only or allowance view draws no balance and no accrued row. Thresholds and colours: budget bands `<36%` dim / `36–63%` success / `64–81%` warning / `≥82%` error; balance `<5` error / `5–9.99` warning / `≥10` plain; accrued fine blocks ≤ ¥20 (5-fen granularity) and coarse > ¥20 (¥1) with the eight-colour cycle; Effort colours only the value, via the host theme. Codex 5h row narrow-width degradation: 200 → 20-cell bar + time marker + `85.0% / 80.0% · resets in 1h (dd/HH:MM)`; 50 → `5h 85.0% / 80.0% · resets in 1h (dd/HH:MM)`; 40 → `5h 85.0% / 80.0% · resets in 1h`; 20 → `5h 85.0% / 80.0%`; 10 → `5h 85.0% …`. Host-theme colours, fonts and the real narrow-width rendering are the remaining visual judgement. |
 
@@ -171,7 +215,7 @@ what you see, and the limitation is recorded rather than worked around. Everythi
 material, not a result: P10, P11, P18, P19, P23, P26, P27, P41 and P67 stay unverified until you
 record this round. Of P30–P33 only the readability of an abbreviation and of a wrapped group is yours
 to judge: their column alignment, their reserved slots, their measurement of Chinese names in terminal
-columns, their cuts, their wraps and their resize are checked by `tests/model-cost/detail-layout.test.ts`
+columns, their cuts, their wraps and their resize are checked by `tests/model-cost/presentation/detail-layout.test.ts`
 and by two smokes — `bun run smoke:model-cost-detail-layout`, which measures the lines the frontend
 hands a host, and `bun run smoke:model-cost-detail-layout-terminal`, which draws those lines on a real
 Windows console and reads the *device's* own cells back: the column each field landed in, the colour

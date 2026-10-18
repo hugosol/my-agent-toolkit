@@ -35,10 +35,8 @@ import { beforeAll, describe, expect, test } from "bun:test";
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
 import { MODEL_COST_WIDGET_KEY } from "../../extensions/model-cost/harnesses/omp/widget";
-import {
-	DEEPSEEK_DISPLAY_BUDGET,
-	formatTokens,
-} from "../../extensions/model-cost/shared-logic/presentation/display";
+import { DEEPSEEK_DISPLAY_BUDGET } from "../../extensions/model-cost/shared-logic/business/context/session-context";
+import { formatTokens } from "../../extensions/model-cost/shared-logic/presentation/display";
 import { writeAgentSettings, writeProviderOverride } from "./agent-config";
 import { type IsolatedHarness, REPO_ROOT, readBaselineRecord } from "./baseline";
 import { type CaptureServer, type CaptureStep, type CapturedRequest, startCaptureServer } from "./capture-server";

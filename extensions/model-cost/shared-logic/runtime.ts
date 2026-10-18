@@ -54,8 +54,8 @@ import type { ExtensionImplementation, InitializationDelivery } from "../../../f
 import type { CatalogPriceSource, FeedbackTransport, ProviderAccess, SemanticEventHandlers, SubagentIntegration } from "../../../framework/core/protocol";
 import { SessionObservations } from "../../../framework/core/observations";
 import type { HttpRequestOptions } from "../../../framework/modules/http";
-import { DEFAULT_CODEX_QUOTA_TTL_MS, type CodexQuotaFailure, createCodexQuota } from "./provider-account/codex-quota";
-import { CodexEstimateStore } from "./provider-account/codex-estimate-store";
+import { DEFAULT_CODEX_QUOTA_TTL_MS, type CodexQuotaFailure, createCodexQuota } from "./business/allowance/codex-quota";
+import { CodexEstimateStore } from "./business/allowance/codex-estimate-store";
 import {
 	type BaselineLoad,
 	type BaselineSync,
@@ -63,17 +63,18 @@ import {
 	timeFactFaultNotice,
 	unreadableBaselineNotice,
 	unusableBaselineNotice,
-} from "./storage/consumption-store";
-import { MODEL_PRICING_DATA, type ModelPricingData, dataCatalog } from "./pricing/model-data";
-import { createPeriodSwitch } from "./period-switch";
+} from "./foundation/storage/consumption-store";
+import { MODEL_PRICING_DATA, type ModelPricingData, dataCatalog } from "./business/pricing/model-data";
+import { createPeriodSwitch } from "./business/pricing/period-switch";
+import { createRequestContribution } from "./business/pricing/request-contribution";
 import { createCoalescedRedraw } from "./presentation/coalesced-redraw";
 import { type ConsumptionPresenter, createPresentation } from "./presentation/display";
 import { createDisplayPreference, displayFormNotice, displayFormUnavailableNotice } from "./presentation/display-preference";
-import { SessionActivityRegistry } from "./presentation/session-activity";
-import type { SessionContextReading } from "./presentation/session-context";
-import { DEFAULT_BALANCE_TTL_MS, type ProviderBalanceFailure, createProviderBalance } from "./provider-account/provider-balance";
-import { type ConsumptionView, createRequestAccounting } from "./accounting/request-accounting";
-import { resolveStorageRoot } from "./storage/storage-root";
+import { SessionActivityRegistry } from "./foundation/session/session-activity";
+import type { SessionContextReading } from "./business/context/session-context";
+import { DEFAULT_BALANCE_TTL_MS, type ProviderBalanceFailure, createProviderBalance } from "./business/pricing/provider-balance";
+import { type ConsumptionView, createRequestAccounting } from "./foundation/session/request-accounting";
+import { resolveStorageRoot } from "./foundation/storage/storage-root";
 
 /**
  * What one read-only synchronization answers, as the caller observes it: the store's own outcome, or
@@ -312,7 +313,9 @@ export function createModelCostRuntime(inputs: ModelCostRuntimeInputs): ModelCos
 	// User input and terminal subagent-result receipt use this process's observation clock.
 	// A Turn end instead carries the response's own settle instant.
 	const accounting = createRequestAccounting({
-		data,
+		// The accounting owns session attribution and commits; this business policy alone decides
+		// what each request contributes, from the same maintained data its catalog reads.
+		contribution: createRequestContribution(data),
 		harness: inputs.harness,
 		storage,
 		now,
