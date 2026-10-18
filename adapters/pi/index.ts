@@ -5,19 +5,19 @@
  * subscription or invented from some other fact.
  *
  * This entry is assembly only: the process-scoped readings this host offers are built once, the
- * binding life is the framework's shared assembly helper, and each axis of the port lives in its own
- * module under this directory.
+ * binding life is the framework's shared assembly helper, and each axis of the port lives in a
+ * capability domain under `domain/`; `internal/` holds this entry's binding support.
  */
 import { createAssemblyBinding } from "../../framework/behaviors/assembly";
 import type { ExtensionAssembly } from "../../framework/core/assembly";
 import type { ExtensionDefinition } from "../../framework/core/definition";
 import type { PiExtensionApi, PiExtensionFactory } from "./internal/native";
-import { createPiPort } from "./port";
-import { harnessModelPrices } from "./pricing";
-import { harnessProviderAccess } from "./provider";
-import { piSessionPositions } from "./session/queries";
-import { piSessionFileAnchors } from "./subagent/queries";
-import { createPiSubagentIntegration } from "./subagent/integration";
+import { createPiPort } from "./internal/port";
+import { harnessModelPrices } from "./domain/pricing";
+import { harnessProviderAccess } from "./domain/provider";
+import { piSessionPositions } from "./domain/session/queries";
+import { piSessionFileAnchors } from "./domain/subagent/queries";
+import { createPiSubagentIntegration } from "./domain/subagent/integration";
 
 export * from "./internal/native";
 export type { BindingResult } from "../../framework/core/protocol";

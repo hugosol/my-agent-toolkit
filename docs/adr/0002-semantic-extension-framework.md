@@ -59,11 +59,17 @@ my-agent-toolkit/
     behaviors/
     modules/                    # Harness-independent HTTP/files, not adapter-dependent
 
-  adapters/                     # Framework contract mappings, grouped by harness and capability domain
+  adapters/                     # Framework contract mappings, grouped by harness
     pi/
-      session/                  # Session facts and lifecycle, including Turn and Round mappings
+      index.ts                  # Public assembly entry
+      internal/                 # Native types, loader support and the binding port
+      domain/                   # Capability domains: Session, Context, Subagent, Pricing, ...
+        session/                # Session facts and lifecycle, including Turn and Round mappings
     omp/
-      session/
+      index.ts
+      internal/
+      domain/
+        session/
 
   extensions/                   # Independent extension implementations
     codebase-tools/
@@ -151,8 +157,11 @@ its native allow-list paths, not its responsibility rule. There are no forwardin
 paths. Extension-specific presentation and other non-unified native implementations remain under
 `extensions/<id>/harnesses/`.
 
-Within each harness, organize directly by shared capability domain, not by consumer extension or by
-`business`/`foundation` tiers. Prefer an existing business domain when it and a support domain both
+Within each harness, the adapter root has exactly three entries: `index.ts` is the public assembly
+entry, `internal/` is private native/loader and binding-port support, and `domain/` contains the
+capability domains. Organize `domain/` directly by shared capability domain, not by consumer
+extension or by `business`/`foundation` tiers. `domain/` is a navigation grouping, not a runtime
+module or a new interface. Prefer an existing business domain when it and a support domain both
 fit; keep genuinely shared support in one place. Framework-owned concepts supplement business
 vocabulary: Session owns its Turn and Round mappings, while context and catalog pricing have their
 own domains. A native object's location does not decide capability ownership. Framework Marker area
@@ -173,10 +182,11 @@ Owner mapping. Ordinary child Session/Turn/Round events remain Session events; O
 second child-event pipeline just to populate a Subagent `events.ts`. pi's provider announcements and
 replies, liveness queries, and child-extension registration effects are organized within Subagent;
 the third-party provider is its internal implementation, not the primary navigation category.
-The offline inventory lives in `subagent/declaration.ts` and is distinct from runtime queries.
+The offline inventory lives in `domain/subagent/declaration.ts` and is distinct from runtime queries.
 Feedback and Marker are separate effect domains on both harnesses. Native types and loader hooks
-live under each harness's `internal/`; `index.ts` and `port.ts` are assembly support, not capability
-domains. The authoritative path map is the adapter navigation in the framework capability index.
+live under each harness's `internal/`; `index.ts` is the public assembly entry and
+`internal/port.ts` is per-binding assembly support, not a capability domain. Capability domains live
+only under `domain/`. The authoritative path map is the adapter navigation in the framework capability index.
 This refines the approved domain-first organization; it does not introduce a generic delivery module,
 change framework interfaces, or unify commands, prompt effects and observation deliveries.
 

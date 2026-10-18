@@ -119,7 +119,7 @@ The types are exported from `framework/public.ts` and defined in
   model-cost requires the first six capabilities above; codebase-tools requires loading, facts and
   following State. connect-bot declares no subagent requirement.
 - **Harness adapter author:** maintain `HarnessIntegrationDeclaration` in the adapter's
-  `subagent/declaration.ts` ([OMP](../../adapters/omp/subagent/declaration.ts), [pi](../../adapters/pi/subagent/declaration.ts)).
+  `domain/subagent/declaration.ts` ([OMP](../../adapters/omp/domain/subagent/declaration.ts), [pi](../../adapters/pi/domain/subagent/declaration.ts)).
   `subagents` keys name the supported modes (`in-process`, `cross-process`); each value explicitly lists
   supplied capabilities. List one or both modes according to the actual implementation, not an
   extension policy. An empty mapping supplies no subagent integration; an empty capability list still
@@ -154,11 +154,11 @@ one-capability/one-file rule. Shared logic consumes framework interfaces, never 
 
 | Existing requirement | Native implementation neighbourhood | Framework-owned implementation |
 | --- | --- | --- |
-| `extension-loading` | pi [`subagent/effects.ts`](../../adapters/pi/subagent/effects.ts) and the assembly's child entry; OMP uses its native integrated loading path | Declaration matching stays offline; loading a child is not a second extension business implementation. |
-| `session-facts` | OMP [`session/queries.ts`](../../adapters/omp/session/queries.ts), pi [`session/queries.ts`](../../adapters/pi/session/queries.ts) | Owner/State and observation consumers use the common fact vocabulary. |
-| `turn-usage` | [`omp/session/turn.ts`](../../adapters/omp/session/turn.ts), [`pi/session/turn.ts`](../../adapters/pi/session/turn.ts) | [`behaviors/turn-events.ts`](../behaviors/turn-events.ts) owns Turn association and deduplication. |
-| `session-lifecycle` | OMP [`session/events.ts`](../../adapters/omp/session/events.ts), pi [`session/events.ts`](../../adapters/pi/session/events.ts), each harness's `session/round.ts` | [`behaviors/binding.ts`](../behaviors/binding.ts) and [`round-events.ts`](../behaviors/round-events.ts) own delivery and Round transitions. |
-| `session-observations` | OMP [`context/events.ts`](../../adapters/omp/context/events.ts) and [`context/queries.ts`](../../adapters/omp/context/queries.ts), pi [`context.ts`](../../adapters/pi/context.ts), `session/` and necessary native subagent facts | [`core/observations.ts`](../core/observations.ts) and the activity/context behaviors own unified readings. |
+| `extension-loading` | pi [`domain/subagent/effects.ts`](../../adapters/pi/domain/subagent/effects.ts) and the assembly's child entry; OMP uses its native integrated loading path | Declaration matching stays offline; loading a child is not a second extension business implementation. |
+| `session-facts` | OMP [`domain/session/queries.ts`](../../adapters/omp/domain/session/queries.ts), pi [`domain/session/queries.ts`](../../adapters/pi/domain/session/queries.ts) | Owner/State and observation consumers use the common fact vocabulary. |
+| `turn-usage` | [`omp/domain/session/turn.ts`](../../adapters/omp/domain/session/turn.ts), [`pi/domain/session/turn.ts`](../../adapters/pi/domain/session/turn.ts) | [`behaviors/turn-events.ts`](../behaviors/turn-events.ts) owns Turn association and deduplication. |
+| `session-lifecycle` | OMP [`domain/session/events.ts`](../../adapters/omp/domain/session/events.ts), pi [`domain/session/events.ts`](../../adapters/pi/domain/session/events.ts), each harness's `domain/session/round.ts` | [`behaviors/binding.ts`](../behaviors/binding.ts) and [`round-events.ts`](../behaviors/round-events.ts) own delivery and Round transitions. |
+| `session-observations` | OMP [`domain/context/events.ts`](../../adapters/omp/domain/context/events.ts) and [`domain/context/queries.ts`](../../adapters/omp/domain/context/queries.ts), pi [`domain/context.ts`](../../adapters/pi/domain/context.ts), `domain/session/` and necessary native subagent facts | [`core/observations.ts`](../core/observations.ts) and the activity/context behaviors own unified readings. |
 | `storage-commit` | Actual-session facts and the selected native subagent access mode, connected in the harness entry | [`core/subagent-access.ts`](../core/subagent-access.ts) and [`modules/local-access.ts`](../modules/local-access.ts) carry confirmed notices; business storage stays extension-owned. |
 | `state-follow` | Session/Owner facts; pi's child integration when applicable | [`core/state.ts`](../core/state.ts), [`subagent-access.ts`](../core/subagent-access.ts) and [`followed-owners.ts`](../core/followed-owners.ts) own live following. |
 
@@ -168,32 +168,33 @@ need a directory. Extension-specific presentation stays outside these adapters.
 
 | Domain | Mapping responsibility | OMP | pi |
 | --- | --- | --- | --- |
-| Session | Events, identity/startup/branch queries, native State entry effects; owns Turn and Round | [`session/`](../../adapters/omp/session/) | [`session/`](../../adapters/pi/session/) |
-| Context | Context-reading observations; current-context and idle reads where needed | [`context/events.ts`](../../adapters/omp/context/events.ts), [`queries.ts`](../../adapters/omp/context/queries.ts) | [`context.ts`](../../adapters/pi/context.ts) |
-| Subagent | Native parent/ancestor relations and integration-state queries; provider protocol events and registration effects where needed | [`subagent/queries.ts`](../../adapters/omp/subagent/queries.ts) | [`subagent/events.ts`](../../adapters/pi/subagent/events.ts), [`queries.ts`](../../adapters/pi/subagent/queries.ts), [`effects.ts`](../../adapters/pi/subagent/effects.ts); [`integration.ts`](../../adapters/pi/subagent/integration.ts) owns their shared lifetime |
-| Pricing | Catalog price queries, mapped to framework price facts | [`pricing.ts`](../../adapters/omp/pricing.ts) | [`pricing.ts`](../../adapters/pi/pricing.ts) |
-| Provider | Current provider address and credential queries | [`provider.ts`](../../adapters/omp/provider.ts) | [`provider.ts`](../../adapters/pi/provider.ts) |
-| Control | Native command registration and invocation mapping | [`control.ts`](../../adapters/omp/control.ts) | [`control.ts`](../../adapters/pi/control.ts) |
-| Prompt | Native run-initiation mapping and injected-message result | [`prompt.ts`](../../adapters/omp/prompt.ts) | [`prompt.ts`](../../adapters/pi/prompt.ts) |
-| Feedback | Extension feedback and framework notice effects; UI or stderr | [`feedback.ts`](../../adapters/omp/feedback.ts) | [`feedback.ts`](../../adapters/pi/feedback.ts) |
-| Marker | Marker area widget effect; absent on surfaces without UI | [`marker.ts`](../../adapters/omp/marker.ts) | [`marker.ts`](../../adapters/pi/marker.ts) |
+| Session | Events, identity/startup/branch queries, native State entry effects; owns Turn and Round | [`domain/session/`](../../adapters/omp/domain/session/) | [`domain/session/`](../../adapters/pi/domain/session/) |
+| Context | Context-reading observations; current-context and idle reads where needed | [`domain/context/events.ts`](../../adapters/omp/domain/context/events.ts), [`domain/context/queries.ts`](../../adapters/omp/domain/context/queries.ts) | [`domain/context.ts`](../../adapters/pi/domain/context.ts) |
+| Subagent | Native parent/ancestor relations and integration-state queries; provider protocol events and registration effects where needed | [`domain/subagent/queries.ts`](../../adapters/omp/domain/subagent/queries.ts) | [`domain/subagent/events.ts`](../../adapters/pi/domain/subagent/events.ts), [`domain/subagent/queries.ts`](../../adapters/pi/domain/subagent/queries.ts), [`domain/subagent/effects.ts`](../../adapters/pi/domain/subagent/effects.ts); [`domain/subagent/integration.ts`](../../adapters/pi/domain/subagent/integration.ts) owns their shared lifetime |
+| Pricing | Catalog price queries, mapped to framework price facts | [`domain/pricing.ts`](../../adapters/omp/domain/pricing.ts) | [`domain/pricing.ts`](../../adapters/pi/domain/pricing.ts) |
+| Provider | Current provider address and credential queries | [`domain/provider.ts`](../../adapters/omp/domain/provider.ts) | [`domain/provider.ts`](../../adapters/pi/domain/provider.ts) |
+| Control | Native command registration and invocation mapping | [`domain/control.ts`](../../adapters/omp/domain/control.ts) | [`domain/control.ts`](../../adapters/pi/domain/control.ts) |
+| Prompt | Native run-initiation mapping and injected-message result | [`domain/prompt.ts`](../../adapters/omp/domain/prompt.ts) | [`domain/prompt.ts`](../../adapters/pi/domain/prompt.ts) |
+| Feedback | Extension feedback and framework notice effects; UI or stderr | [`domain/feedback.ts`](../../adapters/omp/domain/feedback.ts) | [`domain/feedback.ts`](../../adapters/pi/domain/feedback.ts) |
+| Marker | Marker area widget effect; absent on surfaces without UI | [`domain/marker.ts`](../../adapters/omp/domain/marker.ts) | [`domain/marker.ts`](../../adapters/pi/domain/marker.ts) |
 
 Subagent relations are not Session identity: Session consumes those relations for its own facts and
 Owner mapping. OMP observes child Session/Turn/Round through the same subscriptions as main sessions,
 so it has no separate Subagent `events.ts`; pi additionally reads its provider's announcements and
 replies. Both offline inventories live in `subagent/declaration.ts`, not in the runtime query path.
-The third-party loader under pi `subagent/internal/` is private provider-resolution implementation.
+The third-party loader under pi `domain/subagent/internal/` is private provider-resolution implementation.
 
-The root `index.ts`, `port.ts` and `internal/` are **not capability domains** and must not be added
-to the nine-domain list:
+Each adapter root has exactly three entries: `index.ts`, `internal/`, and `domain/`. Only
+`domain/` holds capability domains; the other two are structural support.
 
 - `index.ts` is the adapter's public assembly entry. It exports `ompAdapter`/`piAdapter`, builds the
   process-scoped readers and creates the shared binding; extension assemblies import this module.
-- `port.ts` is the per-binding implementation of the framework's `HarnessPort`. It connects the
+- `internal/port.ts` is the per-binding implementation of the framework's `HarnessPort`. It connects the
   domain mappings to the framework hooks and owns binding-scoped cross-cutting state (newest native
   context, diagnostic deduplication, owner resolution). It carries no capability of its own.
-- `internal/` is private native-boundary support: host API type declarations, pi's Node text loader,
-  and pi's third-party provider loader. It is implementation support, not a capability surface.
+- `internal/` is private adapter implementation support: host API type declarations, pi's Node text
+  loader, pi's third-party provider loader, and the per-binding `port.ts` composition. It is not a
+  capability surface.
 
 Only the nine domain rows above are capability domains. A simple domain may be one file; a domain
 with collaborating mappings gets a directory. `index.ts` remains at the adapter root because it is
@@ -378,23 +379,23 @@ Assembles an `ExtensionDefinition` for the `omp` harness
 re-exports as its default factory and the loader calls once per binding.
 
 Its private OMP observation modules keep native subscriptions together with the implementation
-that interprets their facts: [`adapters/omp/session/turn.ts`](../../adapters/omp/session/turn.ts) owns request/response
+that interprets their facts: [`adapters/omp/domain/session/turn.ts`](../../adapters/omp/domain/session/turn.ts) owns request/response
 mapping, usage availability and per-subscription streaming-reading deduplication;
-[`adapters/omp/session/round.ts`](../../adapters/omp/session/round.ts) owns activity signals, continuation flags and
-late quiescence reads. The private [`adapters/omp/session/`](../../adapters/omp/session/) module
-keeps Session knowledge local: [`queries.ts`](../../adapters/omp/session/queries.ts) reads Session identity,
+[`adapters/omp/domain/session/round.ts`](../../adapters/omp/domain/session/round.ts) owns activity signals, continuation flags and
+late quiescence reads. The private [`adapters/omp/domain/session/`](../../adapters/omp/domain/session/) module
+keeps Session knowledge local: [`queries.ts`](../../adapters/omp/domain/session/queries.ts) reads Session identity,
 startup facts, persisted State payloads and injected-prompt identities, and maps the parent/ancestor
-identities supplied by [`subagent/queries.ts`](../../adapters/omp/subagent/queries.ts) into direct-parent
+identities supplied by [`subagent/queries.ts`](../../adapters/omp/domain/subagent/queries.ts) into direct-parent
 facts and Owner references; native registry traversal is owned by Subagent, not duplicated in Session;
-[`events.ts`](../../adapters/omp/session/events.ts) owns native Session event types, transition
+[`events.ts`](../../adapters/omp/domain/session/events.ts) owns native Session event types, transition
 pairing and rename observations. Its active Owner key lives once per binding, while rename tracking
 lives once per observation subscription. Owner is the State-owning main session (a main session owns
 itself), not the immediate Parent agent.
 
-[`adapters/omp/session/viewed-session.ts`](../../adapters/omp/session/viewed-session.ts) owns the Viewed session native
+[`adapters/omp/domain/session/viewed-session.ts`](../../adapters/omp/domain/session/viewed-session.ts) owns the Viewed session native
 facts, subscription re-pointing and last-listener release. The assembly keeps one latest actual
 delivery context: both this module and context-free Subagent observations read that same source.
-Viewing grants no State-write authority. `port.ts` connects the native mappings and owns binding-scoped
+Viewing grants no State-write authority. `internal/port.ts` connects the native mappings and owns binding-scoped
 diagnostic deduplication; `context/queries.ts` keeps the binding's newest context and reads idle facts,
 while `context/events.ts` subscribes and constructs context observations. `session/effects.ts` appends
 the State entry that `session/queries.ts` reads; the same write is shared with commands. Session event

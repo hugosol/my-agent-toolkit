@@ -7,8 +7,8 @@
  * the port the assembly builds from them. They live here rather than in the entry because every
  * feature module reads the same facts and none of them may depend on the assembly that wires them.
  */
-import type { OmpViewedSessionFacts } from "../session/viewed-session";
-import type { OmpSessionEvent, OmpSessionEventType } from "../session/events";
+import type { OmpViewedSessionFacts } from "../domain/session/viewed-session";
+import type { OmpSessionEvent, OmpSessionEventType } from "../domain/session/events";
 
 /**
  * One session entry as the native session manager holds it.
