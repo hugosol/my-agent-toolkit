@@ -3,3 +3,4 @@ node_modules/
 .codebase-memory/
 .cache/
 framework/.runtime/
+*.log
