@@ -25,7 +25,8 @@ bun install                 # once
 bun run typecheck
 bun run test:framework      # framework capabilities C1–C15 (the upgrade alarm)
 bun run test:codebase-tools # extension behavior (permanent)
-bun run test:dock        # the dock and the fixed baseline record
+bun run test:dock        # the dock and the fixed baseline record, four isolated files at a time
+bun run test:dock:serial # the same dock serially, for diagnosing shared state or constrained machines
 ```
 
 The suites that drive a real session materialise the isolated exact install of the supported

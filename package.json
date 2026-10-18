@@ -4,7 +4,8 @@
   "type": "module",
   "scripts": {
     "test": "bun test",
-    "test:dock": "bun test tests/harness-dock",
+    "test:dock": "bun test tests/harness-dock --parallel=4",
+    "test:dock:serial": "bun test tests/harness-dock",
     "test:framework": "bun test tests/framework",
     "test:codebase-tools": "bun test tests/codebase-tools",
     "smoke:http-transport": "bun scripts/http-transport-smoke.ts",

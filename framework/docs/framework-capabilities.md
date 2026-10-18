@@ -183,8 +183,21 @@ Owner mapping. OMP observes child Session/Turn/Round through the same subscripti
 so it has no separate Subagent `events.ts`; pi additionally reads its provider's announcements and
 replies. Both offline inventories live in `subagent/declaration.ts`, not in the runtime query path.
 The third-party loader under pi `subagent/internal/` is private provider-resolution implementation.
-Harness `internal/native.ts` and pi `internal/text-imports.ts` are native types and text-loading support;
-`index.ts` and `port.ts` assemble domains. These are not extra capability domains.
+
+The root `index.ts`, `port.ts` and `internal/` are **not capability domains** and must not be added
+to the nine-domain list:
+
+- `index.ts` is the adapter's public assembly entry. It exports `ompAdapter`/`piAdapter`, builds the
+  process-scoped readers and creates the shared binding; extension assemblies import this module.
+- `port.ts` is the per-binding implementation of the framework's `HarnessPort`. It connects the
+  domain mappings to the framework hooks and owns binding-scoped cross-cutting state (newest native
+  context, diagnostic deduplication, owner resolution). It carries no capability of its own.
+- `internal/` is private native-boundary support: host API type declarations, pi's Node text loader,
+  and pi's third-party provider loader. It is implementation support, not a capability surface.
+
+Only the nine domain rows above are capability domains. A simple domain may be one file; a domain
+with collaborating mappings gets a directory. `index.ts` remains at the adapter root because it is
+the import path extension assemblies use; it is a structural entry, not a missing domain.
 Prefer domain locality over the native object's name. Turn and Round belong under Session. Within a domain, `events.ts` owns event mappings, `queries.ts` owns native reads,
 and `effects.ts` owns native effects when these responsibilities need separate implementation files.
 Session event construction stays in its event mapping rather than being rebuilt in the port; State

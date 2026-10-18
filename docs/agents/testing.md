@@ -15,7 +15,7 @@ Read `package.json` for existing script names. Use a direct test-directory comma
 ## Keep runs attributable
 
 1. Complete focused runs and any fault injection; restore injected changes before starting final regression.
-2. Run expensive suites sequentially in a shared working tree. Agree on a quiet window with peers for real-host or full-repository runs.
+2. Run expensive suites sequentially in a shared working tree. Agree on a quiet window with peers for real-host or full-repository runs. Inside one run, `bun run test:dock` uses four isolated Bun workers because every dock file owns its temporary state and capture directories; use `bun run test:dock:serial` to diagnose cross-file interference or when four real sessions exceed the machine's budget. This intra-run parallelism does not relax the quiet-window rule for multiple people or agents.
 3. Keep tested source and fixtures unchanged until the run finishes. To continue editing, use an isolated snapshot that includes the changes under test. Treat results from a tree changed mid-run as non-final evidence.
 4. Save long-run output to a run-specific log so truncated terminal output does not require another suite run just to recover failures or counts.
 
