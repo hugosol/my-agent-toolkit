@@ -15,6 +15,10 @@ individual extension.
 | `modules/` | The harness-independent capabilities shared logic imports directly rather than receiving through a delivery: `http.ts` (the one `request`, the per-request proxy choice and the wait budget), `files.ts` (the one `updateFile`, the coordination it takes and the publication it makes) and `local-access.ts` (the one way a process offers the declared values of an owner it serves to a session this harness runs in another process, and the way such a session delivers its own observation back to that owner's process — adapter-facing, since an extension never touches it; see [the general HTTP module](docs/framework-capabilities.md#general-http-module), [the general safe-file module](docs/framework-capabilities.md#general-safe-file-module) and [local access](docs/framework-capabilities.md#local-access-adapter-facing)). |
 | `public.ts` | The authoring door: `defineExtension`, plus the general HTTP module's `request` and `HttpConfigurationError`, the general safe-file module's `updateFile` and `SafeFileUpdateError`, and the definition, configuration and assembly types an extension may name. |
 
+**Proposed direction (not implemented):** a single extension-facing capability interface under
+`framework/interface/`, with the adapter seam kept internal in `framework/runtime/port.ts`. See
+[capability-interface-architecture.md](docs/capability-interface-architecture.md).
+
 [`docs/framework-capabilities.md`](docs/framework-capabilities.md) is the symbol → meaning → source
 index of that public surface; the source it cites is authoritative for behavior, ordering and errors.
 The native boundary is enforced by
