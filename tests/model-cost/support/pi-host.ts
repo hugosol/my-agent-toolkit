@@ -24,7 +24,7 @@ import type {
 	PiSessionStartReason,
 	PiWidgetComponentFactory,
 	PiWidgetTheme,
-} from "../../../framework/adapters/pi";
+} from "../../../adapters/pi";
 
 /** One colour the frontend asked its host's theme for, as the theme recorded the call. */
 export interface Paint {

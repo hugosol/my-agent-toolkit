@@ -8,7 +8,7 @@
  * independent smoke and the dock fixture all drive the production frontend over the same surface
  * instead of each keeping a copy of it.
  */
-import type { OmpExtensionApi, OmpSessionContext } from "../../../framework/adapters/omp";
+import type { OmpExtensionApi, OmpSessionContext } from "../../../adapters/omp";
 
 /** One controlled API, with the way to fire the events the extension registered for. */
 export interface ControlApi {

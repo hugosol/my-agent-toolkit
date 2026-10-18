@@ -7,9 +7,9 @@ import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { readConfigDocument } from "../../core/config";
+import { readConfigDocument } from "../../../framework/core/config";
 
-const SHARED_CONFIGURATION_PATH = resolve(dirname(fileURLToPath(import.meta.url)), "../../config.yaml");
+const SHARED_CONFIGURATION_PATH = resolve(dirname(fileURLToPath(import.meta.url)), "../../../framework/config.yaml");
 const PROVIDER_MODULE = "pi-subagents/required-child-extensions";
 
 /** Loads once for an integration; an absent unconfigured dependency retains the no-provider mode. */

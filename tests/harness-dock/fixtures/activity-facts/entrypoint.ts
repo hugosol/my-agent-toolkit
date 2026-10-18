@@ -17,7 +17,7 @@
  * The fixture does no work of its own beyond reporting: no network, no file, no timer. What it prints
  * is the framework's dispatch, never a behavior of its own.
  */
-import { type OmpExtensionApi, ompAdapter } from "../../../../framework/adapters/omp";
+import { type OmpExtensionApi, ompAdapter } from "../../../../adapters/omp";
 import {
 	type ExtensionDefinition,
 	type RoundDelivery,

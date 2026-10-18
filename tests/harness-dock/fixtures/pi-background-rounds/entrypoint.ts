@@ -16,7 +16,7 @@
  * whole body is the one subscription below, so what it prints is the framework's dispatch and never a
  * behavior of its own.
  */
-import { piAdapter } from "../../../../framework/adapters/pi";
+import { piAdapter } from "../../../../adapters/pi";
 import type { ExtensionDefinition, SemanticEventHandlers } from "../../../../framework/public";
 import { PI_BACKGROUND_ROUNDS_CHILD_ENTRY_ENV, PI_BACKGROUND_ROUNDS_PREFIX } from "./prefix";
 

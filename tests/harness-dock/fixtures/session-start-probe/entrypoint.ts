@@ -21,7 +21,7 @@
  * session's own processing depends on. Its lines go to stderr, the channel the dock already
  * captures.
  */
-import type { OmpExtensionApi, OmpSessionContext } from "../../../../framework/adapters/omp";
+import type { OmpExtensionApi, OmpSessionContext } from "../../../../adapters/omp";
 
 /** The extension id whose stderr lines the dock reads. */
 export const SESSION_START_PROBE_ID = "session-start-probe";

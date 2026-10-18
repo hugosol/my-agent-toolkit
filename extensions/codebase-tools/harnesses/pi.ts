@@ -1,9 +1,9 @@
 // Initialize Node text imports before loading the unchanged shared definition.
-import "../../../framework/adapters/pi-text-imports";
+import "../../../adapters/pi/text-imports";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { piAdapter } from "../../../framework/adapters/pi";
-import type { PiExtensionApi } from "../../../framework/adapters/pi";
+import { piAdapter } from "../../../adapters/pi";
+import type { PiExtensionApi } from "../../../adapters/pi";
 import { CODEBASE_TOOLS } from "../definition";
 
 /**

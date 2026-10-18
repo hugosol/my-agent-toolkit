@@ -11,7 +11,7 @@
  * report — and the fact that the two scopes were driven by the one mechanism. The fixture does no
  * work of its own beyond reporting: no network, no file, no timer.
  */
-import { type OmpExtensionApi, ompAdapter } from "../../../../framework/adapters/omp";
+import { type OmpExtensionApi, ompAdapter } from "../../../../adapters/omp";
 import {
 	type CatalogPriceSource,
 	type ExtensionDefinition,

@@ -41,7 +41,7 @@ import type {
 	PiWidgetComponent,
 	PiWidgetComponentFactory,
 	PiWidgetTheme,
-} from "../../../../framework/adapters/pi";
+} from "../../../../adapters/pi";
 import type { BoundaryTimer, BoundaryTimerHost } from "../boundary-timer";
 import {
 	type AgentTreeRow,

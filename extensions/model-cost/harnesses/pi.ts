@@ -29,7 +29,7 @@
 import { homedir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { type PiExtensionApi, piAdapter } from "../../../framework/adapters/pi";
+import { type PiExtensionApi, piAdapter } from "../../../adapters/pi";
 import type { ExtensionImplementation, SubagentIntegration } from "../../../framework/public";
 import { MODEL_COST } from "../definition";
 import { type ModelCostRuntime, createModelCostRuntime } from "../shared-logic/runtime";

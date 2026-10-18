@@ -26,8 +26,8 @@ import { describe, expect, test } from "bun:test";
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
-import type { OmpExtensionApi, OmpSessionContext } from "../../framework/adapters/omp";
-import * as frameworkOmp from "../../framework/adapters/omp";
+import type { OmpExtensionApi, OmpSessionContext } from "../../adapters/omp";
+import * as frameworkOmp from "../../adapters/omp";
 import type { ExtensionFactory } from "../../framework/core/assembly";
 import type { SessionObservations } from "../../framework/core/observations";
 import type {

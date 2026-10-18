@@ -22,8 +22,8 @@ import type {
 	OmpCommandContext,
 	OmpExtensionApi,
 	OmpSessionContext,
-} from "../../framework/adapters/omp";
-import * as frameworkOmp from "../../framework/adapters/omp";
+} from "../../adapters/omp";
+import * as frameworkOmp from "../../adapters/omp";
 import type {
 	CatalogPriceSource,
 	OwnerReference,

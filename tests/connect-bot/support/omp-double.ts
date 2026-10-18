@@ -27,7 +27,7 @@ import type {
 	OmpSessionContext,
 	OmpSessionEvent,
 	OmpSessionEventType,
-} from "../../../framework/adapters/omp";
+} from "../../../adapters/omp";
 import type { ControlledClock } from "./controlled-clock";
 
 /** One session lifecycle handler as the loader registers it. */

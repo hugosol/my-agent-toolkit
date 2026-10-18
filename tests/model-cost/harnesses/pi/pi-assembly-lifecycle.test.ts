@@ -35,8 +35,8 @@ import type {
 	PiExtensionApi,
 	PiExtensionContext,
 	PiSessionHeader,
-} from "../../../../framework/adapters/pi";
-import { piAdapter } from "../../../../framework/adapters/pi";
+} from "../../../../adapters/pi";
+import { piAdapter } from "../../../../adapters/pi";
 import { MODEL_COST } from "../../../../extensions/model-cost/definition";
 import {
 	MODEL_COST_HARNESS,

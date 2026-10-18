@@ -1,6 +1,6 @@
 /**
  * pi Turn observations: native model-cycle subscriptions and the mapping of their payloads to the
- * framework's own signals. The assembly supplies the Session/Owner facts from `../pi` and keeps the
+ * framework's own signals. The assembly supplies the Session/Owner facts from `../native` and keeps the
  * binding-wide diagnostics; Turn identity, in-flight association and which reading is final stay
  * with the shared framework.
  *
@@ -9,8 +9,8 @@
  * `turn_start`/`turn_end`, whose end fires only after the requested tools have run: tool execution is
  * outside a model cycle, so a Turn ends when its response settled, not when pi's turn did.
  */
-import type { SessionFacts, TurnOutcome, TurnSignalFacts, TurnUsage } from "../../core/protocol";
-import type { PiAssistantMessage, PiExtensionApi, PiExtensionContext } from "../pi";
+import type { SessionFacts, TurnOutcome, TurnSignalFacts, TurnUsage } from "../../../framework/core/protocol";
+import type { PiAssistantMessage, PiExtensionApi, PiExtensionContext } from "../native";
 
 /** The all-zero reading pi's message carries until a provider reports one. */
 const ZERO_READING: TurnUsage = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, totalTokens: 0 };

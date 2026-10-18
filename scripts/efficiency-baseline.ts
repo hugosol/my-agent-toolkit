@@ -93,7 +93,7 @@ import { releasingFrontendOnCleanup } from "../extensions/model-cost/harnesses/o
 import { MODEL_COST_WIDGET_KEY, attachModelCostWidget } from "../extensions/model-cost/harnesses/omp/widget";
 import { updateFile } from "../framework/modules/files";
 import { createModelCostRuntime, type ModelCostRuntime } from "../extensions/model-cost/shared-logic/runtime";
-import type { OmpSessionContext } from "../framework/adapters/omp";
+import type { OmpSessionContext } from "../adapters/omp";
 import type { ConsumptionDocument, SessionRecord, TokenBuckets } from "../extensions/model-cost/shared-logic/foundation/session/consumption-document"
 import type { ModelPricingData } from "../extensions/model-cost/shared-logic/business/pricing/model-data";
 import type { OwnerReference, SessionFacts, TurnOutcome, TurnSignal, TurnUsage } from "../framework/core/protocol";
@@ -1589,8 +1589,9 @@ const COMPLEXITY_ROOTS: readonly string[] = [
 	"extensions/model-cost/shared-logic",
 	"extensions/model-cost/harnesses",
 	"entrypoints/omp/model-cost.ts",
-	"framework/adapters/omp.ts",
-	"framework/adapters/pi.ts",
+	"adapters/omp",
+	"adapters/pi",
+	"framework/behaviors/assembly.ts",
 	"framework/modules/files.ts",
 	"framework/modules/http.ts",
 ];

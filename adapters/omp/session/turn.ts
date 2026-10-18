@@ -1,11 +1,17 @@
 /**
  * OMP Turn observations: native subscriptions, response mapping and per-subscription
- * streaming readings. The assembly supplies Session/Owner facts from `./session` and
- * keeps binding-wide diagnostics;
- * the shared framework owns Turn identity, association and lifecycle semantics.
+ * streaming readings. The port supplies Session/Owner facts from `./facts` and the
+ * binding's diagnostics; the shared framework owns Turn identity, association and
+ * lifecycle semantics.
  */
-import type { HarnessPort, SessionFacts, TurnOutcome, TurnSignalFacts, TurnUsage } from "../../core/protocol";
-import type { OmpAgentMessage, OmpExtensionApi, OmpSessionContext } from "../omp";
+import type {
+	HarnessPort,
+	SessionFacts,
+	TurnOutcome,
+	TurnSignalFacts,
+	TurnUsage,
+} from "../../../framework/core/protocol";
+import type { OmpAgentMessage, OmpExtensionApi, OmpSessionContext } from "../native-types";
 
 /** The all-zero reading a message carries when the provider reported no usage at all. */
 const ZERO_READING: TurnUsage = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, totalTokens: 0 };

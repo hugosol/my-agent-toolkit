@@ -13,7 +13,7 @@
  * codebase-tools entrypoint — is the discovery test in deployment.test.ts.
  */
 import { describe, expect, test } from "bun:test";
-import { type OmpExtensionApi, ompAdapter } from "../../framework/adapters/omp";
+import { type OmpExtensionApi, ompAdapter } from "../../adapters/omp";
 import { defineExtension } from "../../framework/public";
 
 const SHARED_ID = "codebase-tools";

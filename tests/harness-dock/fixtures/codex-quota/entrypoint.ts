@@ -48,7 +48,7 @@ import { fileURLToPath } from "node:url";
 import { MODEL_COST } from "../../../../extensions/model-cost/definition";
 import { CODEX_USAGE_URL } from "../../../../extensions/model-cost/shared-logic/business/allowance/codex-quota";
 import { type ModelCostRuntime, createModelCostRuntime } from "../../../../extensions/model-cost/shared-logic/runtime";
-import { type OmpExtensionApi, ompAdapter } from "../../../../framework/adapters/omp";
+import { type OmpExtensionApi, ompAdapter } from "../../../../adapters/omp";
 import { createHttpModule, type HttpRequestOptions } from "../../../../framework/modules/http";
 import type { ExtensionImplementation, SubscriptionGroup, TurnEndDelivery } from "../../../../framework/public";
 

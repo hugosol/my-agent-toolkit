@@ -45,7 +45,7 @@ import type {
 	OmpSessionContext,
 	OmpSessionEvent,
 	OmpViewedSessionFacts,
-} from "../../../../framework/adapters/omp";
+} from "../../../../adapters/omp";
 import {
 	type AgentTreeRow,
 	type ConsumptionDisplay,

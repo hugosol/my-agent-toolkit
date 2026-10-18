@@ -35,7 +35,7 @@ import { afterAll, afterEach, beforeEach, describe, expect, test, vi } from "bun
 import { mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
-import { piAdapter } from "../../../../framework/adapters/pi";
+import { piAdapter } from "../../../../adapters/pi";
 import type { ExtensionImplementation } from "../../../../framework/public";
 import { MODEL_COST } from "../../../../extensions/model-cost/definition";
 import { MODEL_COST_HARNESS, releasingFrontendsOnCleanup } from "../../../../extensions/model-cost/harnesses/pi";

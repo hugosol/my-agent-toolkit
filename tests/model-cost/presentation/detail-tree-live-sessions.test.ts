@@ -22,7 +22,7 @@ import { tmpdir } from "node:os";
 import * as path from "node:path";
 import { MODEL_COST } from "../../../extensions/model-cost/definition";
 import { MODEL_COST_WIDGET_KEY, attachModelCostWidget } from "../../../extensions/model-cost/harnesses/omp/widget";
-import type { OmpSessionContext } from "../../../framework/adapters/omp";
+import type { OmpSessionContext } from "../../../adapters/omp";
 import type { ConsumptionDocument } from "../../../extensions/model-cost/shared-logic/foundation/session/consumption-document"
 import type { ModelPricingData } from "../../../extensions/model-cost/shared-logic/business/pricing/model-data";
 import { DEEPSEEK_DISPLAY_BUDGET } from "../../../extensions/model-cost/shared-logic/business/context/session-context";

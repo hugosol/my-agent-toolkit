@@ -33,7 +33,7 @@ import type { ConsumptionDocument } from "../../../../extensions/model-cost/shar
 import type { ModelPricingData } from "../../../../extensions/model-cost/shared-logic/business/pricing/model-data";
 import type { ModelCostRuntime } from "../../../../extensions/model-cost/shared-logic/runtime";
 import { createModelCostRuntime } from "../../../../extensions/model-cost/shared-logic/runtime";
-import { piAdapter } from "../../../../framework/adapters/pi";
+import { piAdapter } from "../../../../adapters/pi";
 import type { OwnerReference, SessionFacts } from "../../../../framework/core/protocol";
 import { type ControlledPiSurface, type HostSession, controlledPiSurface } from "../../support/pi-host";
 import { uiBoundaryTimerOf } from "../../support/ui-timer";

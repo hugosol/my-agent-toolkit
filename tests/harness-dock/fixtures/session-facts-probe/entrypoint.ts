@@ -11,7 +11,7 @@
  * its own — the fact it observes is the adapter's, and this is the same public subscription any
  * per-session frontend declares.
  */
-import { type OmpExtensionApi, ompAdapter } from "../../../../framework/adapters/omp";
+import { type OmpExtensionApi, ompAdapter } from "../../../../adapters/omp";
 import {
 	type ExtensionDefinition,
 	type SessionEventDelivery,

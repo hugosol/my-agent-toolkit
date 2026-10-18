@@ -16,8 +16,8 @@
  * the dock's, not this file's.
  */
 import { describe, expect, test } from "bun:test";
-import type { OmpCommandContext, OmpExtensionApi, OmpSessionContext } from "../../framework/adapters/omp";
-import * as frameworkOmp from "../../framework/adapters/omp";
+import type { OmpCommandContext, OmpExtensionApi, OmpSessionContext } from "../../adapters/omp";
+import * as frameworkOmp from "../../adapters/omp";
 import {
 	type ExtensionDefinition,
 	type SemanticEventHandlers,

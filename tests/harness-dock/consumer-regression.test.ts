@@ -108,6 +108,7 @@ const DEPLOYMENT_ROOT = path.join(REPO_ROOT, ".cache", `consumer-regression-${pr
 
 /** The trees the deployed discovery root needs: the framework, the three consumers, the entrypoints. */
 const DEPLOYED_TREES = [
+	"adapters",
 	"framework",
 	path.join("extensions", "connect-bot"),
 	path.join("extensions", "codebase-tools"),

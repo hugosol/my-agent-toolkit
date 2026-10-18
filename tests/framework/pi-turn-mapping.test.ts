@@ -20,7 +20,7 @@
  *   extension neither computed nor prices in.
  */
 import { describe, expect, test } from "bun:test";
-import type { PiAssistantMessage, PiMessageUsage } from "../../framework/adapters/pi";
+import type { PiAssistantMessage, PiMessageUsage } from "../../adapters/pi";
 import type { CatalogPriceSource, TurnOutcome } from "../../framework/core/protocol";
 import type { ImplementationContext } from "../../framework/public";
 import { withCapturedStderr } from "./support/captured-stderr";

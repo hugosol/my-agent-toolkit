@@ -30,9 +30,9 @@ import type { ConsumptionDocument } from "../../../extensions/model-cost/shared-
 import type { ModelPricingData } from "../../../extensions/model-cost/shared-logic/business/pricing/model-data";
 import type { ModelCostRuntime } from "../../../extensions/model-cost/shared-logic/runtime";
 import { createModelCostRuntime } from "../../../extensions/model-cost/shared-logic/runtime";
-import type { OmpExtensionApi, OmpSessionContext } from "../../../framework/adapters/omp";
-import * as frameworkOmp from "../../../framework/adapters/omp";
-import { piAdapter } from "../../../framework/adapters/pi";
+import type { OmpExtensionApi, OmpSessionContext } from "../../../adapters/omp";
+import * as frameworkOmp from "../../../adapters/omp";
+import { piAdapter } from "../../../adapters/pi";
 import type { OwnerReference, SessionFacts } from "../../../framework/core/protocol";
 import { defineExtension, type ExtensionDefinition, type SessionContextDelivery } from "../../../framework/public";
 import { type PortDouble, portDouble } from "../../framework/support/harness-port-double";

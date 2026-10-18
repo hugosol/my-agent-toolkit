@@ -21,17 +21,25 @@
 | Framework `core` | 公共契约、类型及宿主无关的基础语义机制 | 这是多个扩展共同使用的语义，还是某个扩展的领域规则？ |
 | Framework `behaviors` | 基于公共契约实现的可复用行为：绑定、状态控制、贡献、生命周期与派发 | 这是框架应该统一兑现的行为，还是扩展自己的处理逻辑？ |
 | Framework `modules` | 不依赖宿主与具体扩展的通用基础能力 | 去掉 Session、Owner 和业务概念，这项能力是否仍独立成立？ |
-| Framework `adapters` | 宿主原生事实、触发位置与能力到框架契约的映射 | 这是公共语义在此宿主上的实现机制吗？ |
+| 顶层 `adapters/<harness>` | 宿主原生事实、触发位置与能力到框架契约的映射 | 这是公共语义在此宿主上的实现机制吗？ |
 | Extension `harnesses` | 本扩展的宿主专属实现及薄装配：原生绘制、专属能力接线、选择实现并连接业务 | 这是此扩展的宿主接入，而非框架通用映射吗？ |
 | Discovery entrypoint | 供宿主发现并导出对应扩展装配 | 是否只承担发现入口，而没有业务或装配过程？ |
 
 `shared-logic` 中的“shared”指**同一扩展跨宿主共享**，不意味着所有扩展共用一个业务层。独立扩展拥有自己的业务；framework 不依赖具体扩展。
 
+### Adapter 按共享能力领域导航
+
+公共接入位于仓库顶层 `adapters/<harness>/`，直接按能力领域组织，不按消费它的 extension 分组，也不增加 business/foundation 中间目录。领域归属有歧义时，业务领域优先；只有真正公共的支撑能力才独立共享。按能力含义归类，不按原生对象的数据来源归类。framework 公共领域补充业务词汇：Turn、Round 收入 Session；context、pricing 保持自己的职责。
+
+这是帮助从 requirement 定位到相关 module 附近的导航约定，不要求一项声明一份文件，也不扩展当前 `subagentRequirements` 范围。具体落点见[能力到实现的导航](framework-capabilities.md#adapter-implementation-navigation)。简单能力优先一个文件，确有协作才增加目录；不要求不同 Harness 文件对称。
+
+装配连接各领域 module，公共事实保留单一来源；跨领域通过明确 interface 协作，不重复维护身份、当前读数或寿命规则。已有 seam 上的 adapter 兑现统一契约，公共 implementation 留在 framework；用 deletion test 衡量 depth，追求 locality 与 leverage，不增加 shallow 转发。interface 是 test surface，验证不按新文件逐一镜像。
+
 ### Framework adapter 与 extension 宿主实现不是同一层
 
 Framework adapter 服务于公共契约，extension 的宿主实现服务于这个扩展。不能因为两者都接触原生能力，就把它们合并。
 
-例如，公共事件的原生映射属于 framework adapter；某个扩展如何使用宿主 widget 绘制自己的界面，属于该扩展的宿主实现。业务计算不属于这两者。
+例如，公共事件的原生映射属于 framework adapter；某个扩展如何使用宿主 widget 绘制自己的界面，属于该扩展的宿主实现。业务计算不属于这两者。extension 的 presentation 不在公共 adapter 分类下；framework 的 Marker area、Extension feedback 仍由公共 adapter 映射到原生输出。
 
 ## 三、需要功能时，先沿公共能力查找
 

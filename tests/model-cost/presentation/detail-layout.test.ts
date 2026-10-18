@@ -23,7 +23,7 @@ import { afterEach, describe, expect, test } from "bun:test";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
-import type { OmpExtensionApi, OmpSessionContext } from "../../../framework/adapters/omp";
+import type { OmpExtensionApi, OmpSessionContext } from "../../../adapters/omp";
 import { MODEL_COST } from "../../../extensions/model-cost/definition";
 import {
 	MODEL_COST_WIDGET_KEY,

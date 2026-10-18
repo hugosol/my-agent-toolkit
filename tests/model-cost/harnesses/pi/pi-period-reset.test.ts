@@ -31,7 +31,7 @@ import { afterAll, afterEach, beforeEach, describe, expect, test, vi } from "bun
 import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
-import { type PiAssistantMessage, type PiExtensionApi, type PiExtensionContext, piAdapter } from "../../../../framework/adapters/pi";
+import { type PiAssistantMessage, type PiExtensionApi, type PiExtensionContext, piAdapter } from "../../../../adapters/pi";
 import { updateFile } from "../../../../framework/modules/files";
 import type { HttpRequestOptions } from "../../../../framework/modules/http";
 import { MODEL_COST } from "../../../../extensions/model-cost/definition";

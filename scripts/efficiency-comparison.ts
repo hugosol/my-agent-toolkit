@@ -20,7 +20,7 @@
  * The complexity half answers `P51`'s "no significant complexity increase" from the two revisions'
  * own trees rather than from one inventory: the sampling entry's inventory covers the common path's
  * families, while the migration's structural change lives in `framework/core`, `framework/behaviors`,
- * `framework/adapters` and `framework/modules`. Families are measured on both revisions with the same
+ * `adapters` (historically `framework/adapters`) and `framework/modules`. Families are measured on both revisions with the same
  * one rule (every tracked line of every tracked `.ts` blob, read from each revision's own tree), so a
  * line count is a property of the revision and not of the working tree. Product families (framework,
  * extensions, entrypoints) are reported apart from the evidence surface (tests, scripts), which this
@@ -208,7 +208,7 @@ function countLines(content: Uint8Array): number {
  * `git cat-file --batch` reads them all over one pipe, so one revision costs two git invocations.
  */
 function revisionLines(revision: string): ReadonlyMap<string, number> {
-	const roots = ["framework", "extensions", "entrypoints", "tests", "scripts"];
+	const roots = ["adapters", "framework", "extensions", "entrypoints", "tests", "scripts"];
 	const listed = Bun.spawnSync(["git", "ls-tree", "-r", revision, "--", ...roots], { cwd: REPO_ROOT, stdout: "pipe", stderr: "pipe" });
 	if (listed.exitCode !== 0) {
 		throw new Error(`git ls-tree found no tracked files at ${revision} (exit ${listed.exitCode}): ${listed.stderr.toString().trim()}`);
@@ -369,13 +369,13 @@ function complexityLines(beforeRevision: string, afterRevision: string): readonl
 	};
 	for (const family of [...families.keys()].sort()) {
 		const entry = families.get(family) as { before: number; after: number };
-		const surface = family.startsWith("framework") || family.startsWith("extensions") || family.startsWith("entrypoints") ? "product" : "evidence";
+		const surface = family.startsWith("adapters") || family.startsWith("framework") || family.startsWith("extensions") || family.startsWith("entrypoints") ? "product" : "evidence";
 		subtotals[surface].before += entry.before;
 		subtotals[surface].after += entry.after;
 		rows.push([`${surface} ${family}`, [String(entry.before), String(entry.after), `${entry.after - entry.before >= 0 ? "+" : ""}${entry.after - entry.before}`]]);
 	}
 	const delta = (entry: { before: number; after: number }): string => `${entry.after - entry.before >= 0 ? "+" : ""}${entry.after - entry.before}`;
-	rows.push(["PRODUCT SUBTOTAL (framework + extensions + entrypoints)", [String(subtotals.product.before), String(subtotals.product.after), delta(subtotals.product)]]);
+	rows.push(["PRODUCT SUBTOTAL (adapters + framework + extensions + entrypoints)", [String(subtotals.product.before), String(subtotals.product.after), delta(subtotals.product)]]);
 	rows.push(["EVIDENCE SUBTOTAL (tests + scripts, not product code)", [String(subtotals.evidence.before), String(subtotals.evidence.after), delta(subtotals.evidence)]]);
 	lines.push(...table("family", ["before", "after", "delta"], rows));
 
@@ -383,7 +383,7 @@ function complexityLines(beforeRevision: string, afterRevision: string): readonl
 		.map(path => [path, before.get(path) ?? 0, after.get(path) ?? 0] as [string, number, number])
 		.filter(([, left, right]) => left !== right)
 		.sort((left, right) => Math.abs(right[2] - right[1]) - Math.abs(left[2] - left[1]) || left[0].localeCompare(right[0]));
-	const productPaths = new Set(changed.map(([path]) => path).filter(path => path.startsWith("framework/") || path.startsWith("extensions/") || path.startsWith("entrypoints/")));
+	const productPaths = new Set(changed.map(([path]) => path).filter(path => path.startsWith("adapters/") || path.startsWith("framework/") || path.startsWith("extensions/") || path.startsWith("entrypoints/")));
 	const productChanged = changed.filter(([path]) => productPaths.has(path));
 	const evidenceChanged = changed.filter(([path]) => !productPaths.has(path));
 	const rowOf = ([path, left, right]: readonly [string, number, number]): [string, string[]] => [

@@ -2,12 +2,17 @@
  * OMP session identity, ancestry, ownership and startup fact mappings.
  *
  * Reads native facts only: `lifecycle.ts` owns the native Session subscriptions and
- * transition state. Delivery assembly, shared context tracking and diagnostics stay
- * in the adapter assembly; State semantics stay in the framework.
+ * transition state. Delivery framing, the newest-context tracker and diagnostics stay
+ * with the port that composes them; State semantics stay in the framework.
  */
-import type { OwnerReference, SessionFacts, SessionStartReason, SessionStartup } from "../../../core/protocol";
-import type { OmpAgentRef, OmpExtensionApi, OmpSessionContext } from "../../omp";
-import type { OmpViewedSessionFacts } from "../viewed-session";
+import type {
+	OwnerReference,
+	SessionFacts,
+	SessionStartReason,
+	SessionStartup,
+} from "../../../framework/core/protocol";
+import type { OmpAgentRef, OmpExtensionApi, OmpSessionContext } from "../native-types";
+import type { OmpViewedSessionFacts } from "./viewed-session";
 import type { OmpSessionEvent, OmpSessionReason } from "./lifecycle";
 
 /**

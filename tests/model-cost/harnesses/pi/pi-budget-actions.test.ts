@@ -24,7 +24,7 @@ import {
 	type PiExtensionContext,
 	type PiSessionHeader,
 	piAdapter,
-} from "../../../../framework/adapters/pi";
+} from "../../../../adapters/pi";
 import type { HttpRequestOptions } from "../../../../framework/modules/http";
 import type { SubagentIntegration } from "../../../../framework/public";
 import { MODEL_COST } from "../../../../extensions/model-cost/definition";

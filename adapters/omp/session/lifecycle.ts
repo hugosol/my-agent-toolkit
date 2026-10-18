@@ -8,8 +8,8 @@
  * the binding's State entry — stays in the adapter assembly, which hands this observation the owner
  * resolution it already reports through and the delivery it already assembles.
  */
-import type { OwnerReference, SessionEvent, SessionStartReason } from "../../../core/protocol";
-import type { OmpExtensionApi, OmpSessionContext } from "../../omp";
+import type { OwnerReference, SessionEvent, SessionStartReason } from "../../../framework/core/protocol";
+import type { OmpExtensionApi, OmpSessionContext } from "../native-types";
 import { startReasonOf } from "./facts";
 
 /**

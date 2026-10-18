@@ -39,7 +39,7 @@ import {
 	type PiExtensionContext,
 	type PiSessionHeader,
 	piAdapter,
-} from "../../../../framework/adapters/pi";
+} from "../../../../adapters/pi";
 import type {
 	OwnerReference,
 	SessionFacts,

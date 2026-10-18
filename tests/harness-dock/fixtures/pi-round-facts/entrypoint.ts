@@ -11,7 +11,7 @@
  * The lines are deliberately plain: one fact per line, in dispatch order, prefixed so the driver can
  * pick them out of a stream it shares with the extension's own diagnostics.
  */
-import { piAdapter } from "../../../../framework/adapters/pi";
+import { piAdapter } from "../../../../adapters/pi";
 import type { ExtensionDefinition, SemanticEventHandlers } from "../../../../framework/public";
 import { PI_ROUND_FACTS_PREFIX } from "./prefix";
 

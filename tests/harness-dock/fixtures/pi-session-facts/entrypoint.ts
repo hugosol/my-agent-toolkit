@@ -12,7 +12,7 @@
  * than omitted, so "this host stated none" is a reading the driver can distinguish from "the fixture
  * never saw the delivery".
  */
-import { piAdapter } from "../../../../framework/adapters/pi";
+import { piAdapter } from "../../../../adapters/pi";
 import type { ExtensionDefinition, SessionEventDelivery } from "../../../../framework/public";
 import { PI_SESSION_FACTS_PREFIX } from "./prefix";
 

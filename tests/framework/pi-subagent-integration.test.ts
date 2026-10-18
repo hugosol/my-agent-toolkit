@@ -25,7 +25,7 @@
 import { realpathSync } from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
-import { loadPiSubagentProvider } from "../../framework/adapters/pi/subagent-provider";
+import { loadPiSubagentProvider } from "../../adapters/pi/subagents/subagent-provider";
 import { describe, expect, test } from "bun:test";
 import type { InitializationDelivery, SubagentIntegrationFailure } from "../../framework/public";
 import { withCapturedStderrAsync } from "./support/captured-stderr";

@@ -33,7 +33,7 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
 import { setImmediate as immediate } from "node:timers/promises";
-import type { OmpExtensionApi, OmpSessionContext } from "../../../framework/adapters/omp";
+import type { OmpExtensionApi, OmpSessionContext } from "../../../adapters/omp";
 import { MODEL_COST } from "../../../extensions/model-cost/definition";
 import type { WidgetDrawing, WidgetTheme } from "../../../extensions/model-cost/harnesses/omp/widget";
 import { MODEL_COST_WIDGET_KEY, attachModelCostWidget } from "../../../extensions/model-cost/harnesses/omp/widget";

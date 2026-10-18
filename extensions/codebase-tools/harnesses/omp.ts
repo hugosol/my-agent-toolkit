@@ -13,7 +13,7 @@
  */
 import { logger } from "@oh-my-pi/pi-utils";
 import { CODEBASE_TOOLS } from "../definition";
-import { type OmpExtensionApi, ompAdapter } from "../../../framework/adapters/omp";
+import { type OmpExtensionApi, ompAdapter } from "../../../adapters/omp";
 
 /** The framework's OMP binding for the codebase-tools definition. */
 const bindCodebaseTools = ompAdapter(CODEBASE_TOOLS);

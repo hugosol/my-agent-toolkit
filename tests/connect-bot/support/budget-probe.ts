@@ -29,7 +29,7 @@
  *              `beat-timeout-follow-up`, `interop`
  */
 import { writeFileSync } from "node:fs";
-import { ompAdapter } from "../../../framework/adapters/omp";
+import { ompAdapter } from "../../../adapters/omp";
 import type { ExtensionDefinition } from "../../../framework/core/definition";
 import { CONNECT_BOT } from "../../../extensions/connect-bot/definition";
 import { connectBotConfig } from "../../../extensions/connect-bot/shared-logic/panel/config";
@@ -37,7 +37,7 @@ import { setPanelRequestForTest } from "../../../extensions/connect-bot/shared-l
 import { type HttpRequestOptions, request } from "../../../framework/public";
 import connectBot from "../../../extensions/connect-bot/harnesses/omp";
 import { botSessions } from "../../../extensions/connect-bot/shared-logic/session/session";
-import type { OmpCommandContext } from "../../../framework/adapters/omp";
+import type { OmpCommandContext } from "../../../adapters/omp";
 import { ControlledClock } from "./controlled-clock";
 import { ompDouble, type ContextOptions, type TimerMode } from "./omp-double";
 

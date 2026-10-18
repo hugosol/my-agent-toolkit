@@ -15,7 +15,7 @@ import { afterEach, describe, expect, test } from "bun:test";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
-import type { PiExtensionApi, PiExtensionContext } from "../../../../framework/adapters/pi";
+import type { PiExtensionApi, PiExtensionContext } from "../../../../adapters/pi";
 import { MODEL_COST_WIDGET_KEY, attachModelCostWidget } from "../../../../extensions/model-cost/harnesses/pi/widget";
 import type { ModelPricingData } from "../../../../extensions/model-cost/shared-logic/business/pricing/model-data";
 import { createModelCostRuntime } from "../../../../extensions/model-cost/shared-logic/runtime";

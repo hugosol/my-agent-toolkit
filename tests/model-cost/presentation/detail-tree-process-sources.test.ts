@@ -20,7 +20,7 @@ import { randomUUID } from "node:crypto";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
-import type { OmpSessionContext } from "../../../framework/adapters/omp";
+import type { OmpSessionContext } from "../../../adapters/omp";
 import { MODEL_COST } from "../../../extensions/model-cost/definition";
 import { MODEL_COST_WIDGET_KEY, attachModelCostWidget } from "../../../extensions/model-cost/harnesses/omp/widget";
 import type { ConsumptionDocument } from "../../../extensions/model-cost/shared-logic/foundation/session/consumption-document"

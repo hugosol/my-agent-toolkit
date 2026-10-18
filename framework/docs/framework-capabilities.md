@@ -28,8 +28,8 @@ still describes the implemented surface, not the planned input seam or a complet
 | `SubscriptionGroup`, `ObservationScope` | [`framework/core/protocol.ts#L175`](../core/protocol.ts#L175), [`#L165`](../core/protocol.ts#L165) | The one-time declaration of what a subscription observes: a group carries the scope it covers (`owner` — the owner session's own deliveries; `session` — every actual session the adapter reports, with that session's own identity, direct parent, latest name, the handle of the task it was spawned for, the name and id of the agent it runs and, on the delivery that announces its own start, the model and effective level it began on) and the handlers for the event kinds it subscribes. Both scopes run through the one dispatch, and widening a group to `session` grants no State write and no external-effect authority. |
 | `SessionFacts`, `SessionStartup`, `TurnEvent`, `TurnStartDelivery`, `TurnEndDelivery`, `TurnStartFacts`, `TurnEndFacts`, `TurnUsage`, `TurnOutcome`, `ProviderHttpFacts`, `TurnSignal`, `TurnSignalFacts`, `CatalogPrice`, `CatalogPriceSource`, `ProviderAccess`, `ProviderAccessFacts` | [`framework/core/protocol.ts#L130`](../core/protocol.ts#L130), [`#L376`](../core/protocol.ts#L376), [`#L511`](../core/protocol.ts#L511), [`#L527`](../core/protocol.ts#L527) | The per-actual-session facts and the Turn axis: a session's identity, direct parent, latest name, the handle of the task it was spawned for (a subagent's own name for its work, which is neither the agent definition it runs nor the id its registry uses), the name and id of the agent it runs, and the optional `SessionStartup` — the model and effective level the session began on, reported on its own start alone and never rewritten; the two Turn edges with the request-time facts fixed at the first and repeated at the second; the reliable-or-unavailable usage, outcome, HTTP facts and the two provider reference ids; the mapped native signals a harness adapter reports, and the extension's own catalog the framework queries at each request's start. See [The Turn axis and the two observation scopes](#the-turn-axis-and-the-two-observation-scopes). |
 | `CommandImplementations`, `CommandImplementation`, `CommandAction`, `ActionsCommandImplementation`, `ActionDelivery` | [`framework/core/assembly.ts#L50`](../core/assembly.ts#L50), [`framework/core/protocol.ts#L591`](../core/protocol.ts#L591) | What an implementation delivers for one command: a directed implementation under its command name, or an `actions` command's table of named actions. An action may return a promise the host's command chain waits for, and its delivery is the invocation facts alone — the argument, the owner, `hasUI`, the idle query, the running session's `provider` and the feedback and marker transports — with no declared-value seam, because an `actions` command drives no State. |
-| `ompAdapter(definition, options?)` | [`framework/adapters/omp.ts`](../adapters/omp.ts) | Assembles a definition for the `omp` harness; returns an `OmpExtensionFactory`. Also re-exports `BindingResult`, which is what that factory returns. |
-| `piAdapter(definition, options?)` | [`framework/adapters/pi.ts`](../adapters/pi.ts) | Uses the same `ExtensionAssembly`, `StateStore` and binding behaviors for pi. Maps the session boundaries, the run-cycle facts the Round axis is synthesized from, Turn signals, user input, commands, hidden persisted prompt messages, marker and feedback. Catalog, provider-access and viewed-session outlets are provided only where pi's own surface states them. |
+| `ompAdapter(definition, options?)` | [`adapters/omp/index.ts`](../../adapters/omp/index.ts) | Assembles a definition for the `omp` harness; returns an `OmpExtensionFactory`. Also re-exports `BindingResult`, which is what that factory returns. |
+| `piAdapter(definition, options?)` | [`adapters/pi/index.ts`](../../adapters/pi/index.ts) | Uses the same `ExtensionAssembly`, `StateStore` and binding behaviors for pi. Maps the session boundaries, the run-cycle facts the Round axis is synthesized from, Turn signals, user input, commands, hidden persisted prompt messages, marker and feedback. Catalog, provider-access and viewed-session outlets are provided only where pi's own surface states them. |
 | `ExtensionAssembly` | [`framework/core/assembly.ts#L178`](../core/assembly.ts#L178) | The harness-independent assembly information, every member optional (`factory`, `requiredSemantics`, `configBaseDir`). Harness version support is deliberately not one of them either: support is an evidence claim recorded in the repository's support record ([`harness-support.md`](harness-support.md)), and no assembly supplies or widens it. |
 | `BindingResult`, `BindingFailure` | [`framework/core/protocol.ts#L680`](../core/protocol.ts#L680) | What a binding concluded, and why it was refused. |
 | `CommandActions`, `DirectedCommandImplementation`, `CommandDelivery`, `DeclaredValueSeam` | [`protocol.ts#L484`](../core/protocol.ts#L484), [`#L447`](../core/protocol.ts#L447), [`#L566`](../core/protocol.ts#L566), [`#L398`](../core/protocol.ts#L398) | The implementations an assembly injects for a definition's directed commands, keyed by command name — each with a `run` member and an optional `unrecognized` member for an argument that parsed to no directive — and the delivery and declared-value seam each one writes through. |
@@ -119,7 +119,7 @@ The types are exported from `framework/public.ts` and defined in
   model-cost requires the first six capabilities above; codebase-tools requires loading, facts and
   following State. connect-bot declares no subagent requirement.
 - **Harness adapter author:** maintain `HarnessIntegrationDeclaration` in the adapter's
-  `integration.ts` ([OMP](../adapters/omp/integration.ts), [pi](../adapters/pi/integration.ts)).
+  `integration.ts` ([OMP](../../adapters/omp/integration.ts), [pi](../../adapters/pi/integration.ts)).
   `subagents` keys name the supported modes (`in-process`, `cross-process`); each value explicitly lists
   supplied capabilities. List one or both modes according to the actual implementation, not an
   extension policy. An empty mapping supplies no subagent integration; an empty capability list still
@@ -145,6 +145,35 @@ stage; the completeness command does not invoke them or consume their results.
 No startup check, user-facing mode notice, feature gate, `/budget detail` change, or accounting change
 is introduced. Those runtime policies are outside this checklist's scope. Architecture rationale:
 [ADR 0002](../../docs/adr/0002-semantic-extension-framework.md#two-sided-subagent-integration-checklist-2026-10-17).
+
+### Adapter implementation navigation
+
+Start with the capability meaning above, then the matching `adapters/<harness>/integration.ts`
+for mode-specific supply. The following is a navigation convention, not executable metadata or a
+one-capability/one-file rule. Shared logic consumes framework interfaces, never these native modules.
+
+| Existing requirement | Native implementation neighbourhood | Framework-owned implementation |
+| --- | --- | --- |
+| `extension-loading` | pi [`subagents/`](../../adapters/pi/subagents/) and the assembly's child entry; OMP uses its native integrated loading path | Declaration matching stays offline; loading a child is not a second extension business implementation. |
+| `session-facts` | OMP [`session/facts.ts`](../../adapters/omp/session/facts.ts), pi [`session/facts.ts`](../../adapters/pi/session/facts.ts) | Owner/State and observation consumers use the common fact vocabulary. |
+| `turn-usage` | [`omp/session/turn.ts`](../../adapters/omp/session/turn.ts), [`pi/session/turn.ts`](../../adapters/pi/session/turn.ts) | [`behaviors/turn-events.ts`](../behaviors/turn-events.ts) owns Turn association and deduplication. |
+| `session-lifecycle` | OMP [`session/lifecycle.ts`](../../adapters/omp/session/lifecycle.ts), pi [`session/events.ts`](../../adapters/pi/session/events.ts), each harness's `session/round.ts` | [`behaviors/binding.ts`](../behaviors/binding.ts) and [`round-events.ts`](../behaviors/round-events.ts) own delivery and Round transitions. |
+| `session-observations` | Each harness's `context.ts`, `session/` and necessary native subagent facts | [`core/observations.ts`](../core/observations.ts) and the activity/context behaviors own unified readings. |
+| `storage-commit` | Actual-session facts and the selected native subagent access mode, connected in the harness entry | [`core/subagent-access.ts`](../core/subagent-access.ts) and [`modules/local-access.ts`](../modules/local-access.ts) carry confirmed notices; business storage stays extension-owned. |
+| `state-follow` | Session/Owner facts; pi's child integration when applicable | [`core/state.ts`](../core/state.ts), [`subagent-access.ts`](../core/subagent-access.ts) and [`followed-owners.ts`](../core/followed-owners.ts) own live following. |
+
+Other existing mappings follow the same domains without adding new requirements: `pricing.ts` reads
+native catalog prices, `provider.ts` reads the shared credential/address source, `control.ts` maps
+commands, and `injection.ts` maps prompt delivery. Framework marker/feedback effects stay in the
+adapter (`marker.ts`/`feedback.ts` on OMP, `feedback.ts` on pi); extension-specific presentation stays
+outside it. Prefer business-domain locality over the native object's name. Turn and Round belong
+under Session. Use simple files until a domain needs several collaborating modules, without making
+both harnesses structurally identical.
+
+The shared [`behaviors/assembly.ts`](../behaviors/assembly.ts) creates the observation source and
+State store and reuses an implementation until disposal. Harness entries assemble native modules;
+pi retains native shutdown release ordering after binding. This adds no capability registry,
+automatic requirement inference or runtime negotiation. Configuration remains `framework/config.yaml`.
 
 ### `state?: StateDeclaration`
 
@@ -309,28 +338,29 @@ it names is what `getConfig` hands the extension's shared logic. See
 ## `ompAdapter(definition, options)`
 
 Assembles an `ExtensionDefinition` for the `omp` harness
-([`framework/adapters/omp.ts`](../adapters/omp.ts)). It returns an `OmpExtensionFactory`
-([`omp.ts`](../adapters/omp.ts)) — `(api) => BindingResult` — which each thin entrypoint
+([`adapters/omp/index.ts`](../../adapters/omp/index.ts)). It returns an `OmpExtensionFactory`
+([`omp.ts`](../../adapters/omp/index.ts)) — `(api) => BindingResult` — which each thin entrypoint
 re-exports as its default factory and the loader calls once per binding.
 
 Its private OMP observation modules keep native subscriptions together with the implementation
-that interprets their facts: [`adapters/omp/turn.ts`](../adapters/omp/turn.ts) owns request/response
+that interprets their facts: [`adapters/omp/session/turn.ts`](../../adapters/omp/session/turn.ts) owns request/response
 mapping, usage availability and per-subscription streaming-reading deduplication;
-[`adapters/omp/round.ts`](../adapters/omp/round.ts) owns activity signals, continuation flags and
-late quiescence reads. The private [`adapters/omp/session/`](../adapters/omp/session/) module
-keeps Session knowledge local: [`facts.ts`](../adapters/omp/session/facts.ts) reads Session identity,
+[`adapters/omp/session/round.ts`](../../adapters/omp/session/round.ts) owns activity signals, continuation flags and
+late quiescence reads. The private [`adapters/omp/session/`](../../adapters/omp/session/) module
+keeps Session knowledge local: [`facts.ts`](../../adapters/omp/session/facts.ts) reads Session identity,
 direct parent, Owner ancestry, startup facts, persisted State payloads and injected-prompt identities;
-[`lifecycle.ts`](../adapters/omp/session/lifecycle.ts) owns native Session event types, transition
+[`lifecycle.ts`](../../adapters/omp/session/lifecycle.ts) owns native Session event types, transition
 pairing and rename observations. Its active Owner key lives once per binding, while rename tracking
 lives once per observation subscription. Owner is the State-owning main session (a main session owns
 itself), not the immediate Parent agent.
 
-[`adapters/omp/viewed-session.ts`](../adapters/omp/viewed-session.ts) owns the Viewed session native
+[`adapters/omp/session/viewed-session.ts`](../../adapters/omp/session/viewed-session.ts) owns the Viewed session native
 facts, subscription re-pointing and last-listener release. The assembly keeps one latest actual
 delivery context: both this module and context-free Subagent observations read that same source.
-Viewing grants no State-write authority. Shared native shapes, delivery assembly, transport mapping,
-context tracking, binding-wide diagnostic deduplication and next-task scheduling remain in `omp.ts`.
-Feature-owned native types remain available through the existing adapter entry. State seeding,
+Viewing grants no State-write authority. `port.ts` connects the native mappings, `context.ts` keeps
+the binding's newest context, `diagnostic.ts` owns diagnostic deduplication, and capability modules
+own their effects. The entry `index.ts` assembles the process-level readers and the shared
+framework binding life; native types remain available through that adapter entry. State seeding,
 implementation reuse and cleanup, Turn identity and Round transitions retain their framework
 semantics. These modules add no public interface: tests continue to drive native events through
 `ompAdapter`, not internal helpers.
@@ -375,7 +405,7 @@ behind ([`binding.ts#L234`](../behaviors/binding.ts#L281)).
 
 **One implementation per adapter.** The `omp` adapter calls the factory once — the first binding hands it the
 validated configuration, and every later binding (another session's, a subagent's) reuses what it built
-([`omp.ts`](../adapters/omp.ts)) — with one exception: an implementation whose cleanup has already
+([`omp.ts`](../../adapters/omp/index.ts)) — with one exception: an implementation whose cleanup has already
 run is spent, so the binding that comes after it builds a fresh instance rather than delivering to a closed
 one. An assembly that wants the instance to be the *process's* creates its adapter once, at module load, as
 the entrypoints do; that is what makes an ordinary model, session, tree or view change harmless.
@@ -1034,7 +1064,7 @@ these facts.
 These are resolved by a harness adapter, not authored by an extension, and are cited here so the
 option/feedback surface is complete. Both feedback channels travel the session's own UI channel on the `omp`
 harness — the framework's notice as a `warning`, an extension's feedback at the level it chose — and fall back
-to one stderr line when the session has no UI ([`omp.ts`](../adapters/omp.ts)).
+to one stderr line when the session has no UI ([`omp.ts`](../../adapters/omp/index.ts)).
 
 | Symbol | Source | Shape and meaning |
 | --- | --- | --- |
@@ -1105,7 +1135,7 @@ with the behavior it must preserve, is
 | Member | Meaning |
 | --- | --- |
 | `StateRules` | The State one store serves: `{ field, persistence }`, exactly the pair an assembly resolves from the definition through `activationField` ([`definition.ts#L255`](../core/definition.ts#L255)) and `statePersistence` ([`definition.ts#L260`](../core/definition.ts#L260)), plus the two optional access seams an assembly states — `localAccess` (the owner this process serves, offered) and `follow` (the owner another process serves, read). The constructor requires the first two: a store knows its field and persistence and holds no definition. |
-| `new StateStore(rules)` | One store per adapter factory call ([`omp.ts`](../adapters/omp.ts), [`pi.ts`](../adapters/pi.ts)), shared by every session binding of that extension — not a process-global registry keyed by definition id. |
+| `new StateStore(rules)` | One store per adapter factory call ([`omp.ts`](../../adapters/omp/index.ts), [`pi.ts`](../../adapters/pi/index.ts)), shared by every session binding of that extension — not a process-global registry keyed by definition id. |
 | `view(ownerKey)` | The read surface, unchanged: `read(field)` is the owner's current value, or the declared default when unset. |
 | `followed(ownerKey)` | The read surface for an owner this process may not hold: the cell first (an in-process read takes no access at all), then what the owner's access last stated, then the declared default. It is what a `follow` field's subagent reads. |
 | `serves(ownerKey)` | Whether this store answers for an Owner: an Owner boundary it reconciled, a cell it wrote — a fact that survives the Owner's retirement — or an Owner it has chased through an access. What the process-wide Marker area reads to decide which of one extension's registrations answers for a seat, so a session's binding speaks for its own Owner — or for the Owner it follows — and for nothing else. |

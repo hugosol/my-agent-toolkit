@@ -23,10 +23,10 @@ import { REPO_ROOT } from "../harness-dock/baseline";
 const EXTENSION_ROOT = "extensions/connect-bot";
 
 /** The source trees a native lifecycle subscription could legally appear in. */
-const SCANNED_ROOTS = ["framework", "extensions", "entrypoints"] as const;
+const SCANNED_ROOTS = ["adapters", "framework", "extensions", "entrypoints"] as const;
 
 /** Where naming the harness's own session events is the adapter's job: the native escape hatch. */
-const ADAPTER_DIRECTORY = "framework/adapters/";
+const ADAPTER_DIRECTORY = "adapters/";
 
 /**
  * The harness's own lifecycle vocabulary, as its extension API spells it.

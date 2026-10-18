@@ -21,8 +21,8 @@ import type {
 	OmpSessionContext,
 	OmpSessionEvent,
 	OmpSessionEventType,
-} from "../../framework/adapters/omp";
-import * as frameworkOmp from "../../framework/adapters/omp";
+} from "../../adapters/omp";
+import * as frameworkOmp from "../../adapters/omp";
 import type { OwnerReference, SessionEvent, SessionStartReason } from "../../framework/core/protocol";
 import {
 	type CommandImplementations,

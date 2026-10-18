@@ -9,7 +9,7 @@
  * (`resolveRuntimeDirectory`, `createOwnerAccessPublisher`, `openOwnerAccess`, `localOwnerAccess`
  * in `framework/modules/local-access.ts`), the State store that offers an owner with its life
  * (`framework/core/state.ts`), and the pi assembly that decides whether an owner is offered at all
- * (`framework/adapters/pi.ts`, driven through the pi surface double — the S1 consumption path).
+ * (`adapters/pi/index.ts`, driven through the pi surface double — the S1 consumption path).
  *
  * What is deliberately not doubled: the carrier. A case that says two processes reach each other
  * starts a real child process (`support/local-access-child.ts`) over a real named pipe or socket

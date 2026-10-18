@@ -4,7 +4,7 @@
  *
  * This is the whole authoring surface: declare an extension with
  * {@link defineExtension} and the exported configuration types, build its implementation in the
- * factory an assembly hands a harness adapter (`framework/adapters/omp.ts`), and subscribe to
+ * factory an assembly hands a harness adapter (`adapters/omp/index.ts`), and subscribe to
  * the semantic events that implementation reacts to. Nothing here names a harness, and no type
  * here is one a harness could add to.
  *

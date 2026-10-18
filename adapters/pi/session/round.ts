@@ -17,8 +17,8 @@
  * activity begins, so a round ended by cancellation states that cancellation and a later activity
  * never inherits it.
  */
-import type { RoundObservation, RoundSignal, TurnOutcome } from "../../core/protocol";
-import type { PiExtensionApi, PiExtensionContext } from "../pi";
+import type { RoundObservation, RoundSignal, TurnOutcome } from "../../../framework/core/protocol";
+import type { PiExtensionApi, PiExtensionContext } from "../native";
 import { outcomeOf } from "./turn";
 
 /**

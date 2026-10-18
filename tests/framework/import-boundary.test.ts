@@ -19,13 +19,13 @@ import * as path from "node:path";
 import { REPO_ROOT } from "../harness-dock/baseline";
 
 /** The source trees whose module graph the boundary covers. */
-const SCANNED_ROOTS = ["framework", "extensions", "entrypoints"] as const;
+const SCANNED_ROOTS = ["adapters", "framework", "extensions", "entrypoints"] as const;
 
 /** Packages the harness loader resolves for an extension: naming one — by import or by declaration — is an escape hatch. */
 const HARNESS_PACKAGE = /^@(?:oh-my-pi|earendil-works)\//;
 
 /** Where the native surface may be touched: the OMP adapter and extension harness assemblies. */
-const ESCAPE_HATCH = [/^framework\/adapters\//, /^extensions\/[^/]+\/harnesses\//];
+const ESCAPE_HATCH = [/^adapters\//, /^extensions\/[^/]+\/harnesses\//];
 
 /**
  * Every way this repository writes a module specifier: an import, a re-export, a dynamic
@@ -57,7 +57,7 @@ function specifiersOf(file: string): string[] {
 
 /**
  * Shared source: every scanned module that is neither an escape hatch nor a discovery
- * entrypoint — the framework tree outside `adapters/`, and every extension module outside its
+ * entrypoint — the entire framework tree, and every extension module outside its
  * `harnesses/`. Entrypoints are their own class (reaching the escape hatch is exactly what a
  * thin entrypoint does), so the entrypoint assertion below governs them instead, and no scanned
  * module is left unclassified.
@@ -117,8 +117,8 @@ describe("shared source imports no harness types (C1)", () => {
 	 * imported one would make the general surface depend on a particular consumer, and the
 	 * extensions that do not exist yet could not be added without changing it.
 	 */
-	test("the framework's own source depends on no extension", () => {
-		const frameworkFiles = sourceFiles.filter(file => file.startsWith("framework/"));
+	test("the framework and its adapters depend on no extension", () => {
+		const frameworkFiles = sourceFiles.filter(file => file.startsWith("framework/") || file.startsWith("adapters/"));
 		expect(frameworkFiles.length).toBeGreaterThan(0);
 
 		const crossings: string[] = [];

@@ -17,7 +17,7 @@ import {
 	type OmpExtensionApi,
 	type OmpSessionContext,
 	ompAdapter,
-} from "../../framework/adapters/omp";
+} from "../../adapters/omp";
 import type { OwnerReference } from "../../framework/core/protocol";
 import { portDouble } from "./support/harness-port-double";
 

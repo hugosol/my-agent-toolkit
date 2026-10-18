@@ -3,7 +3,7 @@
  * harness-independent half of the framework.
  *
  * This module is adapter-facing, not an author entry: extension authors declare with
- * `framework/public.ts`, and a harness adapter (for OMP, `framework/adapters/omp.ts`)
+ * `framework/public.ts`, and a harness adapter (for OMP, `adapters/omp/index.ts`)
  * calls into this.
  *
  * Ordering is the contract: every fallible step (configuration rules, the definition's file, the

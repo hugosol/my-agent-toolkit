@@ -10,8 +10,8 @@
  * double command context, exactly as the runner would.
  */
 import { describe, expect, test } from "bun:test";
-import type { OmpCommandContext, OmpExtensionApi } from "../../framework/adapters/omp";
-import * as frameworkOmp from "../../framework/adapters/omp";
+import type { OmpCommandContext, OmpExtensionApi } from "../../adapters/omp";
+import * as frameworkOmp from "../../adapters/omp";
 import type { StateValues } from "../../framework/core/protocol";
 import { StateStore } from "../../framework/core/state";
 import { CODEBASE_TOOLS } from "../../extensions/codebase-tools/definition";

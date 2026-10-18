@@ -10,7 +10,7 @@
 import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
-import type { PiSessionHeader } from "../../../framework/adapters/pi";
+import type { PiSessionHeader } from "../../../adapters/pi";
 
 /** One temporary directory of pi's own session files, written by the case that needs a chain. */
 export interface PiSessionFileDir {

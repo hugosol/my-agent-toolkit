@@ -16,7 +16,7 @@
  * written as `none` rather than omitted, so "this host stated none" is distinguishable from "the
  * fixture never saw the delivery".
  */
-import { piAdapter } from "../../../../framework/adapters/pi";
+import { piAdapter } from "../../../../adapters/pi";
 import type { ExtensionDefinition, SessionObservation } from "../../../../framework/public";
 import { PI_SUBAGENT_OBSERVATION_PREFIX } from "./prefix";
 

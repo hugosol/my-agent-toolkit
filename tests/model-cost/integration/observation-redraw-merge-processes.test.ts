@@ -30,7 +30,7 @@ import type { ConsumptionDocument } from "../../../extensions/model-cost/shared-
 import type { ModelPricingData } from "../../../extensions/model-cost/shared-logic/business/pricing/model-data";
 import type { ModelCostRuntime } from "../../../extensions/model-cost/shared-logic/runtime";
 import { createModelCostRuntime } from "../../../extensions/model-cost/shared-logic/runtime";
-import type { OmpSessionContext } from "../../../framework/adapters/omp";
+import type { OmpSessionContext } from "../../../adapters/omp";
 import type { ObservedSession, SessionFacts, SessionObservationAccess } from "../../../framework/core/protocol";
 import { createOwnerAccessPublisher } from "../../../framework/modules/local-access";
 import { type PortDouble, portDouble } from "../../framework/support/harness-port-double";

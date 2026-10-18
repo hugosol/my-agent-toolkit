@@ -30,8 +30,8 @@ import * as path from "node:path";
 import { MODEL_COST } from "../../../../extensions/model-cost/definition";
 import { observeOmpSubagentResults } from "../../../../extensions/model-cost/harnesses/omp";
 import { observePiSubagentResults } from "../../../../extensions/model-cost/harnesses/pi";
-import type { OmpExtensionApi, OmpSessionContext } from "../../../../framework/adapters/omp";
-import type { PiExtensionApi, PiExtensionContext } from "../../../../framework/adapters/pi";
+import type { OmpExtensionApi, OmpSessionContext } from "../../../../adapters/omp";
+import type { PiExtensionApi, PiExtensionContext } from "../../../../adapters/pi";
 import type {
 	ConsumptionDocument,
 	OwnConsumption,

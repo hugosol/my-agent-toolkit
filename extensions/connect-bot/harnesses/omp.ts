@@ -23,7 +23,7 @@
  */
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { type OmpExtensionApi, ompAdapter } from "../../../framework/adapters/omp";
+import { type OmpExtensionApi, ompAdapter } from "../../../adapters/omp";
 import { createConnectBotCommand } from "../shared-logic/command/command";
 import { CONNECT_BOT } from "../definition";
 import type { ManagedTimers } from "../shared-logic/managed-timer";

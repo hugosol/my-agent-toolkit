@@ -4,3 +4,4 @@ node_modules/
 .cache/
 framework/.runtime/
 *.log
+.idea/

@@ -30,7 +30,7 @@ import {
 	type PiExtensionContext,
 	type PiSessionHeader,
 	piAdapter,
-} from "../../../../framework/adapters/pi";
+} from "../../../../adapters/pi";
 import { MODEL_COST } from "../../../../extensions/model-cost/definition";
 import { MODEL_COST_HARNESS } from "../../../../extensions/model-cost/harnesses/pi";
 import { MODEL_COST_WIDGET_KEY, attachModelCostWidget } from "../../../../extensions/model-cost/harnesses/pi/widget";

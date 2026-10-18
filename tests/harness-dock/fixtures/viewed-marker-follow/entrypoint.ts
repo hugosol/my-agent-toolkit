@@ -6,7 +6,7 @@
  * reads the one framework-owned marker area the host was told to render. A field that follows is what
  * makes a displayed subagent's line come from the Owner's *current* value.
  */
-import { type OmpExtensionApi, ompAdapter } from "../../../../framework/adapters/omp";
+import { type OmpExtensionApi, ompAdapter } from "../../../../adapters/omp";
 import { type ExtensionDefinition, defineExtension } from "../../../../framework/public";
 
 /** The extension id whose marker line the dock reads. */

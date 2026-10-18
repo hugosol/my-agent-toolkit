@@ -1,8 +1,8 @@
 /**
  * OMP Round observations: native activity subscriptions, the outcome of the activity they describe,
  * and the late reads an end candidate is confirmed by. The shared framework owns Round transitions
- * and schedules their confirmation; binding-wide diagnostic deduplication stays with the adapter
- * assembly.
+ * and schedules their confirmation; binding-wide diagnostic deduplication stays with the port's
+ * diagnostics.
  *
  * This harness states both halves the framework's rest condition needs in its own vocabulary: its
  * settle carries whether the session already scheduled its next piece of work, and the finalized
@@ -11,8 +11,8 @@
  * activity was cancelled or failed, and its late reads say whether the session's own work has
  * unwound and whether anything beyond the run still holds it.
  */
-import type { HarnessPort, RoundObservation, RoundSignal, TurnOutcome } from "../../core/protocol";
-import type { OmpExtensionApi, OmpSessionContext } from "../omp";
+import type { HarnessPort, RoundObservation, RoundSignal, TurnOutcome } from "../../../framework/core/protocol";
+import type { OmpExtensionApi, OmpSessionContext } from "../native-types";
 import { outcomeOf } from "./turn";
 
 /** Observes native run facts; automatic continuations are reported, never synthesized here. */

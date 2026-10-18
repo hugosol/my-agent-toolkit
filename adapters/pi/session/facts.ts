@@ -12,8 +12,8 @@
  * handles are none of these facts and are never read as if they were.
  */
 import { readFileSync } from "node:fs";
-import type { OwnerReference, SessionFacts, SessionStartReason, SessionStartup } from "../../core/protocol";
-import type { PiExtensionContext, PiSessionAnchor, PiSessionHeader } from "../pi";
+import type { OwnerReference, SessionFacts, SessionStartReason, SessionStartup } from "../../../framework/core/protocol";
+import type { PiExtensionContext, PiSessionAnchor, PiSessionHeader } from "../native";
 
 /**
  * The State cell key of a session that owns its own State.

@@ -30,9 +30,9 @@
  * it is the provider stating its interface without claiming which session it serves, which is the
  * ordinary shape of a query answered before the provider has a session context.
  */
-import type { SubagentIntegration, SubagentIntegrationFailure } from "../../core/protocol";
-import type { PiExtensionApi } from "../pi";
-import type { SessionBackgroundWork } from "./round";
+import type { SubagentIntegration, SubagentIntegrationFailure } from "../../../framework/core/protocol";
+import type { PiExtensionApi } from "../native";
+import type { SessionBackgroundWork } from "../session/round";
 import { loadPiSubagentProvider } from "./subagent-provider";
 import { requirePiChildExtension, type PiSubagentProvider } from "./child-extensions";
 export type { PiSubagentProvider } from "./child-extensions";

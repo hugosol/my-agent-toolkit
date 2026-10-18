@@ -11,7 +11,7 @@
  * The fixture does no work beyond reporting: no network, no file, no timer, and no native call of
  * its own. Its lines go to stderr, the channel the dock already captures.
  */
-import { type OmpExtensionApi, ompAdapter } from "../../../../framework/adapters/omp";
+import { type OmpExtensionApi, ompAdapter } from "../../../../adapters/omp";
 import {
 	type ExtensionDefinition,
 	type SessionEventDelivery,
