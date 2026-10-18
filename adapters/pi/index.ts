@@ -11,14 +11,15 @@
 import { createAssemblyBinding } from "../../framework/behaviors/assembly";
 import type { ExtensionAssembly } from "../../framework/core/assembly";
 import type { ExtensionDefinition } from "../../framework/core/definition";
-import type { PiExtensionApi, PiExtensionFactory } from "./native";
+import type { PiExtensionApi, PiExtensionFactory } from "./internal/native";
 import { createPiPort } from "./port";
 import { harnessModelPrices } from "./pricing";
 import { harnessProviderAccess } from "./provider";
-import { piSessionFileAnchors, piSessionPositions } from "./session/facts";
-import { createPiSubagentIntegration } from "./subagents/nicobailon";
+import { piSessionPositions } from "./session/queries";
+import { piSessionFileAnchors } from "./subagent/queries";
+import { createPiSubagentIntegration } from "./subagent/integration";
 
-export * from "./native";
+export * from "./internal/native";
 export type { BindingResult } from "../../framework/core/protocol";
 export type { ExtensionAssembly } from "../../framework/core/assembly";
 

@@ -1,9 +1,14 @@
 /**
- * OMP session identity, ancestry, ownership and startup fact mappings.
+ * OMP session reads: identity, ownership, branch facts and startup fact mappings.
  *
- * Reads native facts only: `lifecycle.ts` owns the native Session subscriptions and
- * transition state. Delivery framing, the newest-context tracker and diagnostics stay
- * with the port that composes them; State semantics stay in the framework.
+ * Native registry relations — the direct parent link and the nearest main ancestor — are the
+ * Subagent domain's reads (`subagent/queries.ts`). This module owns the session's own identity and
+ * the mapping of those relation facts into the framework's owner positions and session facts, so a
+ * chain that leaves the process still answers `unresolved` here rather than being guessed.
+ *
+ * Reads native facts only: `events.ts` owns the native Session subscriptions, transition state and
+ * delivery framing, and `effects.ts` owns the one persisted State entry's native append. The
+ * newest-context tracker stays in `context/queries.ts`; State semantics stay in the framework.
  */
 import type {
 	OwnerReference,
@@ -11,9 +16,10 @@ import type {
 	SessionStartReason,
 	SessionStartup,
 } from "../../../framework/core/protocol";
-import type { OmpAgentRef, OmpExtensionApi, OmpSessionContext } from "../native-types";
+import type { OmpExtensionApi, OmpSessionContext } from "../internal/native";
+import { directParentSessionIdOf, mainAncestorSessionIdOf } from "../subagent/queries";
 import type { OmpViewedSessionFacts } from "./viewed-session";
-import type { OmpSessionEvent, OmpSessionReason } from "./lifecycle";
+import type { OmpSessionEvent, OmpSessionReason } from "./events";
 
 /**
  * The State cell key of a session that owns its own State.
@@ -31,12 +37,11 @@ function mainOwnerKey(sessionId: string): string {
  * The owner a session's State belongs to: the nearest ancestor session that is itself a
  * top-level main session (a main session is its own owner).
  *
- * The walk uses the harness's own facts — `ctx.agent.parentId` and the official agent
- * registry the harness injects — and never a nesting depth or a process-level label, so a
- * nested subagent resolves level by level to the same root owner and a background fork
- * that carries a parent link follows the same rule. A chain that leaves the process (an
- * ancestor the registry does not hold, a link that loops, an owner whose session is gone)
- * resolves to nothing rather than to a guessed owner.
+ * A session that is itself main owns its own cell. Otherwise the ancestor identity is the Subagent
+ * domain's registry walk over `ctx.agent.parentId`, and this mapping turns exactly that fact into
+ * the owner position — never a nesting depth or a process-level label. A chain that leaves the
+ * process (an ancestor the registry does not hold, a link that loops, an owner whose session is
+ * gone) resolves to nothing rather than to a guessed owner.
  */
 export function ownerReferenceOf(pi: OmpExtensionApi, ctx: OmpSessionContext): OwnerReference {
 	if (ctx.agent.kind === "main") {
@@ -44,36 +49,10 @@ export function ownerReferenceOf(pi: OmpExtensionApi, ctx: OmpSessionContext): O
 		return sessionId.length > 0 ? { kind: "owner", key: mainOwnerKey(sessionId) } : { kind: "unresolved" };
 	}
 
-	return mainAncestorOf(pi, ctx.agent.parentId);
-}
-
-/**
- * The nearest top-level main session above one spawning agent id, as the harness's own agent
- * registry holds it.
- *
- * The walk is the same one a delivery's owner resolution uses, and it is shared because a session's
- * owner is one fact however the session was reached — the session a delivery came from, or the
- * session an operator is displaying. A chain that leaves the process (an ancestor the registry does
- * not hold, a link that loops, an owner whose session is gone) resolves to nothing rather than to a
- * guessed owner.
- */
-function mainAncestorOf(pi: OmpExtensionApi, spawningId: string | undefined): OwnerReference {
-	const registry = pi.pi?.AgentRegistry?.global();
-	if (registry === undefined) return { kind: "unresolved" };
-
-	const visited = new Set<string>();
-	let cursor = spawningId;
-	while (cursor !== undefined && !visited.has(cursor)) {
-		visited.add(cursor);
-		const ref = registry.get(cursor);
-		if (ref === undefined) break;
-		if (ref.kind === "main") {
-			const sessionId = ref.session?.sessionManager?.getSessionId() ?? "";
-			return sessionId.length > 0 ? { kind: "inherited", key: mainOwnerKey(sessionId) } : { kind: "unresolved" };
-		}
-		cursor = ref.parentId;
-	}
-	return { kind: "unresolved" };
+	const ownerSessionId = mainAncestorSessionIdOf(pi, ctx.agent.parentId);
+	return ownerSessionId === undefined
+		? { kind: "unresolved" }
+		: { kind: "inherited", key: mainOwnerKey(ownerSessionId) };
 }
 
 /**
@@ -92,7 +71,10 @@ export function viewedOwnerOf(pi: OmpExtensionApi, facts: OmpViewedSessionFacts)
 		return sessionId.length > 0 ? { kind: "owner", key: mainOwnerKey(sessionId) } : { kind: "unresolved" };
 	}
 
-	return mainAncestorOf(pi, facts.agent.parentId);
+	const ownerSessionId = mainAncestorSessionIdOf(pi, facts.agent.parentId);
+	return ownerSessionId === undefined
+		? { kind: "unresolved" }
+		: { kind: "inherited", key: mainOwnerKey(ownerSessionId) };
 }
 
 /**
@@ -100,7 +82,8 @@ export function viewedOwnerOf(pi: OmpExtensionApi, facts: OmpViewedSessionFacts)
  *
  * The adapter resolves *which* entries carry this extension's State; whether a payload
  * declares a usable value is the framework's rule, so payloads cross the seam unread, in
- * branch order, with the session's current record last.
+ * branch order, with the session's current record last. The entry type is the one the write
+ * path appends to (`effects.ts`), so the read and the write cannot name different entries.
  */
 export function statePayloadsOf(ctx: OmpSessionContext, stateEntryType: string): readonly unknown[] {
 	return ctx.sessionManager
@@ -155,11 +138,11 @@ export function startReasonOf(event: OmpSessionEvent): SessionStartReason {
  * effective effort it began with.
  *
  * Identity is the session manager's own session id and the harness's agent kind. The direct parent
- * is resolved exactly one hop — the registry entry the spawning id names, then that agent's live
- * session — and never by string shape, nesting depth or an agent-name hierarchy: a parent that is
- * parked (its live session gone), a spawning id the registry does not hold, and a session the
- * harness spawned from outside the process are all reported as the fact this host could not obtain,
- * and a top-level session simply has none.
+ * is the Subagent domain's one-hop relation — the registry entry the spawning id names, then that
+ * agent's live session — and never a string shape, nesting depth or an agent-name hierarchy: a
+ * parent that is parked (its live session gone), a spawning id the registry does not hold, and a
+ * session the harness spawned from outside the process are all reported as the fact this host could
+ * not obtain, and a top-level session simply has none.
  *
  * The name is display data read live from the harness, so a rename is picked up without changing
  * identity, parent or ownership: on the next delivery that carries this session, and — where the
@@ -182,15 +165,8 @@ export function startReasonOf(event: OmpSessionEvent): SessionStartReason {
 export function sessionFactsOf(pi: OmpExtensionApi, ctx: OmpSessionContext, startReason?: SessionStartReason): SessionFacts {
 	const unavailable: string[] = [];
 	const kind = ctx.agent.kind === "main" ? "main" : "sub";
-	let parentSessionId: string | undefined;
-	if (kind === "sub") {
-		const spawningId = ctx.agent.parentId;
-		const parentSession =
-			spawningId === undefined ? undefined : pi.pi?.AgentRegistry?.global()?.get(spawningId)?.session;
-		const parentId = parentSession?.sessionManager?.getSessionId();
-		if (parentId === undefined || parentId.length === 0) unavailable.push("direct parent session");
-		else parentSessionId = parentId;
-	}
+	const parentSessionId = kind === "sub" ? directParentSessionIdOf(pi, ctx.agent.parentId) : undefined;
+	if (kind === "sub" && parentSessionId === undefined) unavailable.push("direct parent session");
 	const reportedName = ctx.sessionManager.getSessionName?.();
 	const name = reportedName === undefined || reportedName.trim().length === 0 ? undefined : reportedName;
 	if (name === undefined) unavailable.push("session name");

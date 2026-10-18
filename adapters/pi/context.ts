@@ -8,9 +8,9 @@
  * than a context of nothing, so nothing is reported for it.
  */
 import type { HarnessPort } from "../../framework/core/protocol";
-import type { PiExtensionContext } from "./native";
-import type { PiPortContext } from "./port-context";
-import { feedbackChannelsOf } from "./feedback";
+import type { PiExtensionContext } from "./internal/native";
+import type { PiPortContext } from "./port";
+import { feedbackTransport } from "./feedback";
 
 /** The context-reading axis of one binding's port. */
 export function onPiSessionContext(context: PiPortContext): NonNullable<HarnessPort["onSessionContext"]> {
@@ -25,7 +25,7 @@ export function onPiSessionContext(context: PiPortContext): NonNullable<HarnessP
 		const collect = (ctx: PiExtensionContext): void => {
 			const usage = ctx.getContextUsage?.();
 			if (typeof usage?.tokens !== "number") return;
-			const channels = feedbackChannelsOf(ctx);
+			const feedback = feedbackTransport(ctx);
 			handler({
 				session: context.sessionFactsOf(ctx),
 				owner: context.resolveOwner(context.catalogued(ctx)),
@@ -35,7 +35,7 @@ export function onPiSessionContext(context: PiPortContext): NonNullable<HarnessP
 					...(ctx.model?.id === undefined ? {} : { model: ctx.model.id }),
 				},
 				hasUI: ctx.hasUI,
-				feedback: channels.feedback,
+				feedback,
 			});
 		};
 		// The three native facts a session's own context reading really moves at: the start that

@@ -6,8 +6,8 @@
  * made. What to contribute, and whether to contribute at all, stays with the framework's planning.
  */
 import type { HarnessPort } from "../../framework/core/protocol";
-import { feedbackChannelsOf } from "./feedback";
-import type { PiPortContext } from "./port-context";
+import { markerTransport } from "./marker";
+import type { PiPortContext } from "./port";
 
 /** The run-initiation axis of one binding's port. */
 export function onPiRunInitiation(context: PiPortContext): NonNullable<HarnessPort["onRunInitiation"]> {
@@ -20,7 +20,7 @@ export function onPiRunInitiation(context: PiPortContext): NonNullable<HarnessPo
 						entry.type === "custom_message" && typeof entry.customType === "string"
 							? [entry.customType]
 							: []),
-				markers: feedbackChannelsOf(ctx).markers,
+				markers: markerTransport(ctx),
 			});
 			// pi's custom-message form carries the identity and display decision the plan stated.
 			return planned === undefined ? undefined : {

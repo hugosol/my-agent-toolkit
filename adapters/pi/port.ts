@@ -3,24 +3,34 @@
  * binding state that makes the slices agree.
  *
  * The composition below only connects the slices. Session events, context collection, Turn, Round,
- * user input, commands, prompt injection and public effects each own a complete native
+ * user input, commands, prompt planning and public effects each own a complete native
  * responsibility in their own module; no slice reaches into another axis's facts.
  */
 import type { ExtensionDefinition } from "../../framework/core/definition";
-import type { HarnessPort, UserInputDelivery } from "../../framework/core/protocol";
+import type {
+	HarnessPort,
+	OwnerReference,
+	SessionDisposal,
+	SessionFacts,
+	SessionStartReason,
+} from "../../framework/core/protocol";
 import { onPiSessionContext } from "./context";
 import { registerPiCommand } from "./control";
-import { feedbackChannelsOf } from "./feedback";
-import { onPiRunInitiation } from "./injection";
-import type { PiExtensionApi } from "./native";
-import type { PiPortContext } from "./port-context";
+import type { PiExtensionApi, PiExtensionContext } from "./internal/native";
+import { onPiRunInitiation } from "./prompt";
 import type { HarnessModelPrices } from "./pricing";
 import type { HarnessProviderAccess } from "./provider";
-import { onPiSession } from "./session/events";
-import { piSessionFactsOf, type PiSessionPositions } from "./session/facts";
-import { observeRounds } from "./session/round";
-import { observeTurns } from "./session/turn";
-import type { PiSubagentIntegration } from "./subagents/nicobailon";
+import { piStatePersistence, type PiStatePersistence } from "./session/effects";
+import { onPiDisposal, onPiSession, onPiUserInput } from "./session/events";
+import {
+	piSessionFactsOf,
+	piStateEntryType,
+	type PiSessionPosition,
+	type PiSessionPositions,
+} from "./session/queries";
+import { onPiRound } from "./session/round";
+import { onPiTurn } from "./session/turn";
+import type { PiSubagentIntegration } from "./subagent/integration";
 
 /** What the assembly supplies to build one binding's port. */
 export interface PiPortInput {
@@ -37,6 +47,41 @@ export interface PiPortInput {
 export interface PiPort {
 	readonly port: HarnessPort;
 	readonly reportDiagnostic: (message: string) => void;
+}
+
+/** The mutable life of one binding: the owner it serves and the diagnostics reported once. */
+export interface PiPortState {
+	/** The label diagnostics are prefixed with; `setLabel` moves it without touching the host. */
+	label: string;
+	/** The owner this binding currently serves, and its facts. */
+	activeOwner?: { readonly key: string; readonly session: SessionFacts };
+	/** The session whose subagent requirement this binding's owner node is asking about. */
+	servingSessionId?: string;
+	/** Whether the unresolved-owner diagnostic was already reported for this binding. */
+	reportedOwnerless: boolean;
+	/** The framework's close-out hook, once the binding registered one. */
+	reportDisposal?: (disposal: SessionDisposal) => void | Promise<void>;
+}
+
+/** Everything the port slices of one binding read from each other. */
+export interface PiPortContext {
+	readonly pi: PiExtensionApi;
+	readonly state: PiPortState;
+	/** The one native branch entry used by both Session restoration and command writes. */
+	readonly stateEntryType: string;
+	readonly statePersistence: PiStatePersistence;
+	readonly integration: PiSubagentIntegration | undefined;
+	/** Sessions this binding has observed end, by identity; deltas read it late. */
+	readonly endedSessions: Set<string>;
+	readonly keepSubscription: (release: () => void) => void;
+	reportDiagnostic(message: string): void;
+	reportMissingFact(fact: string): undefined;
+	reportUnread(reason: string): void;
+	catalogued(ctx: PiExtensionContext): PiExtensionContext;
+	resolvedOwner(owner: OwnerReference): OwnerReference;
+	resolveOwner(ctx: PiExtensionContext): OwnerReference;
+	positionOf(ctx: PiExtensionContext, reason?: SessionStartReason): PiSessionPosition;
+	sessionFactsOf(ctx: PiExtensionContext, reason?: SessionStartReason): SessionFacts;
 }
 
 /** Builds one binding's port from the assembly's process-scoped readings. */
@@ -64,69 +109,14 @@ export function createPiPort(input: PiPortInput): PiPort {
 				// turn. Nothing here waits on a duration or repeats.
 				setTimeout(callback, 0);
 			},
-			onRound: observer => {
-				observeRounds(input.pi, observer, {
-					frame: ctx => {
-						const channels = feedbackChannelsOf(ctx);
-						return {
-							session: context.sessionFactsOf(context.catalogued(ctx)),
-							owner: context.resolveOwner(ctx),
-							hasUI: ctx.hasUI,
-							feedback: channels.feedback,
-						};
-					},
-					reportMissingFact: context.reportMissingFact,
-					reportUnread: context.reportUnread,
-					// This process's subagent provider, as the assembly's own integration reads it: while a
-					// session is waiting on a delegation the provider still holds, the session is not at rest,
-					// and a statement this entry cannot read stays unread rather than being answered as rest.
-					background: sessionId => input.integration?.backgroundActivity(sessionId) ?? { state: "clear" },
-					// The sessions this binding has seen end: their late re-checks read the fact this binding
-					// observed rather than a context pi has spent.
-					sessionOver: sessionId => context.endedSessions.has(sessionId),
-					track: input.keepSubscription,
-				});
-			},
+			onRound: onPiRound(context),
 			// The framework's close-out of a session pi is disposing: this adapter reports the fact and
 			// waits for what the framework owes it, and the native shutdown subscription is where it is
 			// reported — before the session axis's own end, which is what stops this binding delivering.
-			onDisposal: handler => {
-				context.state.reportDisposal = handler;
-			},
+			onDisposal: onPiDisposal(context),
 			onSessionContext: onPiSessionContext(context),
-			onTurn: handler => {
-				observeTurns(input.pi, handler, {
-					frame: ctx => {
-						const channels = feedbackChannelsOf(ctx);
-						return {
-							owner: context.resolveOwner(context.catalogued(ctx)),
-							hasUI: ctx.hasUI,
-							feedback: channels.feedback,
-						};
-					},
-					session: ctx => context.sessionFactsOf(ctx),
-					reportMissingFact: context.reportMissingFact,
-					track: input.keepSubscription,
-				});
-			},
-			onUserInput: handler => {
-				// The adapter's whole job on this axis: read the one fact pi states about who submitted the
-				// input, and report the submission as the user's when it is the user's. A submission an
-				// extension made on its own behalf is deliberately not one — pi distinguishes the two, and
-				// reading that distinction is what keeps an agent's own input from being reported as the user's.
-				input.keepSubscription(input.pi.on("input", (event, ctx) => {
-					if (event.source === "extension") return;
-					const channels = feedbackChannelsOf(ctx);
-					const delivery: UserInputDelivery = {
-						event: { kind: "user_input" },
-						owner: context.resolveOwner(context.catalogued(ctx)),
-						session: context.sessionFactsOf(ctx),
-						hasUI: ctx.hasUI,
-						feedback: channels.feedback,
-					};
-					handler(delivery);
-				}));
-			},
+			onTurn: onPiTurn(context),
+			onUserInput: onPiUserInput(context),
 			onRunInitiation: onPiRunInitiation(context),
 			registerCommand: registerPiCommand(context),
 		},
@@ -134,7 +124,6 @@ export function createPiPort(input: PiPortInput): PiPort {
 }
 
 function createPiPortContext(input: PiPortInput): PiPortContext {
-	const stateEntryType = `${input.definition.id}:state`;
 	const state: PiPortContext["state"] = { label: input.definition.displayName, reportedOwnerless: false };
 	const endedSessions = new Set<string>();
 	const reportedMissingFacts = new Set<string>();
@@ -149,10 +138,9 @@ function createPiPortContext(input: PiPortInput): PiPortContext {
 	};
 	return {
 		pi: input.pi,
-		definition: input.definition,
 		state,
-		stateEntryType,
-		persist: values => input.pi.appendEntry(stateEntryType, values),
+		stateEntryType: piStateEntryType(input.definition),
+		statePersistence: piStatePersistence(input.pi, input.definition),
 		integration: input.integration,
 		endedSessions,
 		keepSubscription: input.keepSubscription,

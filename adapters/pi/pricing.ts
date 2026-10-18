@@ -10,7 +10,7 @@
  * plain query — never a native model or registry.
  */
 import type { CatalogPrice, CatalogPriceSource } from "../../framework/core/protocol";
-import type { PiExtensionContext, PiModelRegistry } from "./native";
+import type { PiExtensionContext, PiModelRegistry } from "./internal/native";
 
 /**
  * The currency and unit pi states its own model costs in.

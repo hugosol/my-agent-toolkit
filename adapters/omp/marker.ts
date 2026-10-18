@@ -7,7 +7,7 @@
  * shows is the framework's business; this module only writes the native widget the lines go to.
  */
 import type { MarkerTransport } from "../../framework/core/protocol";
-import type { OmpSessionContext } from "./native-types";
+import type { OmpSessionContext } from "./internal/native";
 
 /**
  * The one native widget key the framework owns for its unified marker area.

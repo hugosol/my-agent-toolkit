@@ -1,5 +1,5 @@
 /** Offline integration inventory owned by the OMP adapter author; not runtime configuration. */
-import type { HarnessIntegrationDeclaration } from "../../framework/core/integration";
+import type { HarnessIntegrationDeclaration } from "../../../framework/core/integration";
 
 export const OMP_INTEGRATION = {
 	harness: "omp",

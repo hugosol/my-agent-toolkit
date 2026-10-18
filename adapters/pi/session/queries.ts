@@ -1,19 +1,20 @@
 /**
  * pi session identity, ancestry, ownership and startup fact mappings.
  *
- * Reads native facts only: the session manager's own header, the session manager's branch, and —
- * for an ancestor this process does not host — the anchor pi's own session file states. Which
- * native registration carries those facts, and the delivery they arrive on, stay in the adapter
- * assembly.
+ * Reads the session manager's own header and branch. Subagent queries own parent-file reads and
+ * ancestry traversal; this module decides whether a start is a spawn or a new/forked main session,
+ * and maps the resulting relation identities to Session facts and Owner references. Native
+ * subscriptions and their deliveries stay in Session event mappings.
  *
  * Nothing here is guessed from anything else: a parent is the session pi's own lineage link names,
  * its identity is the id that session's own header states, the owner is the nearest top-level
  * session above it, and a name is display data. Depth, process ids, directory names and task
  * handles are none of these facts and are never read as if they were.
  */
-import { readFileSync } from "node:fs";
+import { piSpawnedRelationsOf, type PiAnchorReader } from "../subagent/queries";
+import type { ExtensionDefinition } from "../../../framework/core/definition";
 import type { OwnerReference, SessionFacts, SessionStartReason, SessionStartup } from "../../../framework/core/protocol";
-import type { PiExtensionContext, PiSessionAnchor, PiSessionHeader } from "../native";
+import type { PiExtensionContext, PiSessionHeader } from "../internal/native";
 
 /**
  * The State cell key of a session that owns its own State.
@@ -23,6 +24,32 @@ import type { PiExtensionContext, PiSessionAnchor, PiSessionHeader } from "../na
  */
 export function piOwnerKey(sessionId: string): string {
 	return `main:${sessionId}`;
+}
+
+/**
+ * The native entry type this extension's State is persisted under.
+ *
+ * One name serves both sides of the contract: the payloads a session restores from and the entry a
+ * command appends. Nothing else states it.
+ */
+export function piStateEntryType(definition: ExtensionDefinition): string {
+	return `${definition.id}:state`;
+}
+
+/**
+ * The State payloads one session's branch carries, in branch order.
+ *
+ * The branch is pi's own session material: only entries this extension wrote under its State entry
+ * type are State, and each is reported as it was persisted. Which payload is the current value is
+ * the framework's reconciliation, not a choice made while reading.
+ */
+export function piStatePayloadsOf(
+	ctx: PiExtensionContext,
+	entryType: string,
+): readonly unknown[] {
+	return ctx.sessionManager.getBranch()
+		.filter(entry => entry.type === "custom" && entry.customType === entryType)
+		.map(entry => entry.data);
 }
 
 /** Where one actual session sits among the sessions this harness runs. */
@@ -37,9 +64,6 @@ export interface PiSessionPosition {
 	readonly unavailable: readonly string[];
 }
 
-/** Reads one session file's own anchor: `undefined` when the file states none this adapter can read. */
-export type PiAnchorReader = (sessionFile: string) => PiSessionAnchor | undefined;
-
 /** Where the sessions one binding's deliveries are about sit among the sessions this harness runs. */
 export interface PiSessionPositions {
 	/**
@@ -50,43 +74,6 @@ export interface PiSessionPositions {
 	 * every later delivery reports the decision that start made.
 	 */
 	positionOf(ctx: PiExtensionContext, reason?: SessionStartReason): PiSessionPosition;
-}
-
-/**
- * pi's session files, read for the anchors of sessions this process does not host.
- *
- * A session's direct parent is a *file* in pi's own lineage link, so a chain that leaves this
- * process is followed by opening the files pi states. The header of a session file is fixed when
- * the file is created (a resumed or forked file keeps its own), so one reading per path is kept for
- * the process's life: a chain is walked once per session that needs it and never re-read on a
- * delivery, and nothing here polls.
- */
-export function piSessionFileAnchors(): PiAnchorReader {
-	const read = new Map<string, PiSessionAnchor | undefined>();
-	return sessionFile => {
-		const known = read.get(sessionFile);
-		if (known !== undefined || read.has(sessionFile)) return known;
-		let anchor: PiSessionAnchor | undefined;
-		try {
-			const [firstLine] = readFileSync(sessionFile, "utf8").split("\n", 1);
-			const parsed: unknown = JSON.parse(firstLine ?? "");
-			const header = parsed as PiSessionHeader | null;
-			if (header !== null && typeof header === "object" && header.type === "session") {
-				anchor = {
-					...(typeof header.id === "string" && header.id.length > 0 ? { id: header.id } : {}),
-					...(typeof header.parentSession === "string" && header.parentSession.length > 0
-						? { parentSession: header.parentSession }
-						: {}),
-				};
-			}
-		} catch {
-			// A file this process cannot read, or whose first line is not a session header, states no
-			// anchor: the chain ends there rather than continuing along a guess.
-			anchor = undefined;
-		}
-		read.set(sessionFile, anchor);
-		return anchor;
-	};
 }
 
 /** The header pi states for one context's session, when this surface states one. */
@@ -147,49 +134,15 @@ export function piSessionPositions(readAnchor: PiAnchorReader): PiSessionPositio
 				unavailable: [],
 			};
 		}
-		return { kind: "sub", ...spawnedPositionOf(link, readAnchor) };
+		const { mainSessionId, ...relations } = piSpawnedRelationsOf(link, readAnchor);
+		return {
+			kind: "sub",
+			...relations,
+			owner: mainSessionId === undefined ? { kind: "unresolved" } : { kind: "inherited", key: piOwnerKey(mainSessionId) },
+		};
 	};
 
 	return { positionOf };
-}
-
-/**
- * The parent and owner of a session spawned from the file pi's lineage link names.
- *
- * The link is a session *file*; the identity of the session that spawned this one is the id that
- * file's own header states, and the owner is the first session up that chain with no lineage link
- * of its own — a session that is itself a top-level main session. A file that cannot be read, a
- * header that states no id, and a chain that loops all end the walk where it stands: the position
- * is reported as the fact this host could not obtain rather than continued along a guess.
- */
-function spawnedPositionOf(
-	link: string,
-	readAnchor: PiAnchorReader,
-): { readonly parentSessionId?: string; readonly owner: OwnerReference; readonly unavailable: readonly string[] } {
-	const unavailable: string[] = [];
-	const parent = readAnchor(link);
-	const parentSessionId = parent?.id;
-	if (parentSessionId === undefined) unavailable.push("direct parent session");
-
-	const visited = new Set<string>();
-	let file: string | undefined = link;
-	while (file !== undefined && !visited.has(file)) {
-		visited.add(file);
-		const anchor = readAnchor(file);
-		if (anchor === undefined) break;
-		if (anchor.parentSession === undefined) {
-			const top = anchor.id;
-			return {
-				...(parentSessionId === undefined ? {} : { parentSessionId }),
-				owner: top === undefined ? { kind: "unresolved" } : { kind: "inherited", key: piOwnerKey(top) },
-				unavailable,
-			};
-		}
-		file = anchor.parentSession;
-	}
-	// The chain leaves what this host can read: this session follows an owner this process cannot
-	// name, which is not the same as following the one above it.
-	return { ...(parentSessionId === undefined ? {} : { parentSessionId }), owner: { kind: "unresolved" }, unavailable };
 }
 
 /**

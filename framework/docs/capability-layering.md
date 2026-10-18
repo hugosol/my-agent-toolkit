@@ -32,7 +32,7 @@ foundation 不是仓库根目录的 framework，也不是零碎代码收容处�
 | presentation | 字段选择、文本和显示形式、只读结果与重绘通知 | 权威累计、provider 查询、文件写入 |
 | runtime.ts | 创建并连接 module、framework 事件接线与实例初始化/清理 | 新能力注册表或 adapter 需求推导 |
 
-以上是职责分类，不要求一个概念一份文件，也不为目录对称创建转发 module。同一能力同时适合 business 与 foundation 时，业务领域优先；只有确有稳定共享需求的内向支撑才放 foundation。顶层 `adapters/<harness>/` 同样采用业务领域优先、framework 公共领域补充的导航规则，但直接按能力领域组织，不镜像 business/foundation 目录；Turn、Round 归 Session，extension presentation 不进入公共 adapter 分类。业务可以单向组合其他业务能力；禁止的是循环依赖与重复权威，而不是一切业务间协作。foundation 不 import business；business 不 import presentation；公共 framework 不 import extension；原生访问位置仍遵循 ADR-0002。
+以上是职责分类，不要求一个概念一份文件，也不为目录对称创建转发 module。同一能力同时适合 business 与 foundation 时，业务领域优先；只有确有稳定共享需求的内向支撑才放 foundation。顶层 `adapters/<harness>/` 同样采用业务领域优先、framework 公共领域补充的导航规则，但直接按能力领域组织，不镜像 business/foundation 目录；Turn、Round 归 Session，领域内部按事件映射（events）、信息读取（queries）、效果执行（effects）组织，仅在有实际内容时拆文件，复杂原生协议可保留内部 implementation；extension presentation 不进入公共 adapter 分类。业务可以单向组合其他业务能力；禁止的是循环依赖与重复权威，而不是一切业务间协作。foundation 不 import business；business 不 import presentation；公共 framework 不 import extension；原生访问位置仍遵循 ADR-0002。
 
 ## 3. 为什么不是只搬目录
 

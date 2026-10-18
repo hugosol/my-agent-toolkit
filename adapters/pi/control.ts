@@ -8,8 +8,9 @@
  * state is not idleness, and the framework reports the absence rather than answering for the host.
  */
 import type { HarnessPort } from "../../framework/core/protocol";
-import { feedbackChannelsOf } from "./feedback";
-import type { PiPortContext } from "./port-context";
+import { feedbackTransport } from "./feedback";
+import { markerTransport } from "./marker";
+import type { PiPortContext } from "./port";
 
 /** The command axis of one binding's port. */
 export function registerPiCommand(context: PiPortContext): NonNullable<HarnessPort["registerCommand"]> {
@@ -17,11 +18,11 @@ export function registerPiCommand(context: PiPortContext): NonNullable<HarnessPo
 		context.pi.registerCommand(command.name, {
 			description: command.description,
 			handler: async (args, ctx) => {
-				const channels = feedbackChannelsOf(ctx);
+				const feedback = feedbackTransport(ctx);
 				await command.run({
 					args,
 					owner: context.resolveOwner(ctx),
-					persist: context.persist,
+					persist: context.statePersistence.persist,
 					hasUI: ctx.hasUI,
 					// The idle fact this command's own session reports, answered as nothing when this
 					// surface reports none at all: the command that reads it refuses on that answer
@@ -29,8 +30,8 @@ export function registerPiCommand(context: PiPortContext): NonNullable<HarnessPo
 					canAcceptInput: () =>
 						typeof ctx.isIdle === "function" ? ctx.isIdle() : context.reportMissingFact("idle fact (isIdle)"),
 					provider: ctx.model?.provider,
-					feedback: channels.feedback,
-					markers: channels.markers,
+					feedback,
+					markers: markerTransport(ctx),
 				});
 			},
 		});

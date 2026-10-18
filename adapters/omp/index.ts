@@ -3,8 +3,8 @@
  *
  * This module only assembles: the process-level readers an extension's factory is handed and the
  * harness-independent binding life shared by both adapters. The native mappings live beside it —
- * `port.ts` composes the seam, `context.ts` and the session mappings own Session/Turn/Round facts,
- * and `pricing.ts`, `provider.ts`, `feedback.ts`, `marker.ts`, `control.ts` and `injection.ts` own
+ * `port.ts` composes the seam, `context/` and `session/` own their own reads and event mappings,
+ * and `pricing.ts`, `provider.ts`, `feedback.ts`, `marker.ts`, `control.ts` and `prompt.ts` own
  * the native facts they translate.
  *
  * It carries no extension semantics: what to register comes from the definition, whether it may be
@@ -15,7 +15,7 @@ import { createAssemblyBinding } from "../../framework/behaviors/assembly";
 import type { ExtensionAssembly } from "../../framework/core/assembly";
 import type { ExtensionDefinition } from "../../framework/core/definition";
 import type { BindingResult } from "../../framework/core/protocol";
-import type { OmpExtensionApi } from "./native-types";
+import type { OmpExtensionApi } from "./internal/native";
 import { createOmpPort } from "./port";
 import { createModelPrices } from "./pricing";
 import { createProviderAccess } from "./provider";
@@ -44,8 +44,8 @@ export type {
 	OmpSessionContext,
 	OmpSessionEntry,
 	OmpUiContext,
-} from "./native-types";
-export type { OmpSessionEvent, OmpSessionEventType, OmpSessionReason } from "./session/lifecycle";
+} from "./internal/native";
+export type { OmpSessionEvent, OmpSessionEventType, OmpSessionReason } from "./session/events";
 export type { OmpViewedSessionFacts } from "./session/viewed-session";
 
 /**

@@ -1,8 +1,9 @@
 /**
- * pi's session axis: the native start, shutdown and rename facts, mapped to one delivery each.
+ * pi's session axis: the native start, shutdown, rename and input facts, mapped to one delivery
+ * each, plus the disposal registration pi awaits at a session's own exit.
  *
  * Which session a binding serves, when one owner is transferred to another, and what a session's
- * own end closes stay here; the facts themselves are read by `facts.ts`. A start is the one
+ * own end closes stay here; the facts themselves are read by `queries.ts`. A start is the one
  * delivery that decides whether a session was spawned, so the facts and the owner of that delivery
  * are both read from the same position rather than from a second reading of the lineage link.
  */
@@ -13,11 +14,13 @@ import type {
 	SessionEvent,
 	SessionFacts,
 	SessionStartReason,
+	UserInputDelivery,
 } from "../../../framework/core/protocol";
-import { feedbackChannelsOf } from "../feedback";
-import type { PiExtensionContext, PiSessionShutdownReason, PiSessionStartReason } from "../native";
-import type { PiPortContext } from "../port-context";
-import { piSessionFactsOf } from "./facts";
+import { feedbackTransport, noticeTransport } from "../feedback";
+import { markerTransport } from "../marker";
+import type { PiExtensionContext, PiSessionShutdownReason, PiSessionStartReason } from "../internal/native";
+import type { PiPortContext } from "../port";
+import { piSessionFactsOf, piStatePayloadsOf } from "./queries";
 
 const START_REASON: Record<PiSessionStartReason, SessionStartReason> = {
 	startup: "initial", reload: "initial", new: "new", resume: "resume", fork: "fork",
@@ -28,7 +31,6 @@ const END_REASON: Record<PiSessionShutdownReason, SessionEndReason> = {
 
 /** The session axis of one binding's port. */
 export function onPiSession(context: PiPortContext): NonNullable<HarnessPort["onSession"]> {
-	const stateEntryType = context.stateEntryType;
 	return handler => {
 		const deliver = (
 			event: SessionEvent,
@@ -37,17 +39,15 @@ export function onPiSession(context: PiPortContext): NonNullable<HarnessPort["on
 			session: SessionFacts,
 		): void => {
 			context.catalogued(ctx);
-			const channels = feedbackChannelsOf(ctx);
+			const feedback = feedbackTransport(ctx);
 			handler({
 				event, session, owner,
-				statePayloads: ctx.sessionManager.getBranch()
-					.filter(entry => entry.type === "custom" && entry.customType === stateEntryType)
-					.map(entry => entry.data),
-				persist: context.persist,
+				statePayloads: piStatePayloadsOf(ctx, context.stateEntryType),
+				persist: context.statePersistence.persist,
 				hasUI: ctx.hasUI,
-				feedback: channels.feedback,
-				notices: channels.notices,
-				markers: channels.markers,
+				feedback,
+				notices: noticeTransport(ctx),
+				markers: markerTransport(ctx),
 			});
 		};
 		context.keepSubscription(context.pi.on("session_start", (event, ctx) => {
@@ -104,12 +104,12 @@ export function onPiSession(context: PiPortContext): NonNullable<HarnessPort["on
 			// the two this delivery is — and it closes nothing.
 			const ended = context.state.activeOwner;
 			if (END_REASON[event.reason] === "disposed" && context.state.reportDisposal !== undefined) {
-				const channels = feedbackChannelsOf(ctx);
+				const feedback = feedbackTransport(ctx);
 				await context.state.reportDisposal({
 					session,
 					owner: context.resolveOwner(context.catalogued(ctx)),
 					hasUI: ctx.hasUI,
-					feedback: channels.feedback,
+					feedback,
 				});
 			}
 			// Only the owner session this binding serves ends here, by its own identity: a sub
@@ -125,5 +125,34 @@ export function onPiSession(context: PiPortContext): NonNullable<HarnessPort["on
 		context.keepSubscription(context.pi.on("session_info_changed", (_event, ctx) => {
 			deliver({ kind: "session_facts" }, context.resolveOwner(context.catalogued(ctx)), ctx, context.sessionFactsOf(ctx));
 		}));
+	};
+}
+
+/** The input axis of one binding's port: the submissions pi itself attributed to the user. */
+export function onPiUserInput(context: PiPortContext): NonNullable<HarnessPort["onUserInput"]> {
+	return handler => {
+		// The adapter's whole job on this axis: read the one fact pi states about who submitted the
+		// input, and report the submission as the user's when it is the user's. A submission an
+		// extension made on its own behalf is deliberately not one — pi distinguishes the two, and
+		// reading that distinction is what keeps an agent's own input from being reported as the user's.
+		context.keepSubscription(context.pi.on("input", (event, ctx) => {
+			if (event.source === "extension") return;
+			const feedback = feedbackTransport(ctx);
+			const delivery: UserInputDelivery = {
+				event: { kind: "user_input" },
+				owner: context.resolveOwner(context.catalogued(ctx)),
+				session: context.sessionFactsOf(ctx),
+				hasUI: ctx.hasUI,
+				feedback,
+			};
+			handler(delivery);
+		}));
+	};
+}
+
+/** The disposal axis of one binding's port: pi waits for this handler at a session's own exit. */
+export function onPiDisposal(context: PiPortContext): NonNullable<HarnessPort["onDisposal"]> {
+	return handler => {
+		context.state.reportDisposal = handler;
 	};
 }

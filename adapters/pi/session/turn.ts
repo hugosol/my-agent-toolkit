@@ -9,8 +9,16 @@
  * `turn_start`/`turn_end`, whose end fires only after the requested tools have run: tool execution is
  * outside a model cycle, so a Turn ends when its response settled, not when pi's turn did.
  */
-import type { SessionFacts, TurnOutcome, TurnSignalFacts, TurnUsage } from "../../../framework/core/protocol";
-import type { PiAssistantMessage, PiExtensionApi, PiExtensionContext } from "../native";
+import type {
+	HarnessPort,
+	SessionFacts,
+	TurnOutcome,
+	TurnSignalFacts,
+	TurnUsage,
+} from "../../../framework/core/protocol";
+import { feedbackTransport } from "../feedback";
+import type { PiAssistantMessage, PiExtensionApi, PiExtensionContext } from "../internal/native";
+import type { PiPortContext } from "../port";
 
 /** The all-zero reading pi's message carries until a provider reports one. */
 const ZERO_READING: TurnUsage = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, totalTokens: 0 };
@@ -134,4 +142,23 @@ export function observeTurns(
 			},
 		});
 	}));
+}
+
+/** The Turn axis of one binding's port: the native facts framed with the session they came from. */
+export function onPiTurn(context: PiPortContext): NonNullable<HarnessPort["onTurn"]> {
+	return handler => {
+		observeTurns(context.pi, handler, {
+			frame: ctx => {
+				const feedback = feedbackTransport(ctx);
+				return {
+					owner: context.resolveOwner(context.catalogued(ctx)),
+					hasUI: ctx.hasUI,
+					feedback,
+				};
+			},
+			session: ctx => context.sessionFactsOf(ctx),
+			reportMissingFact: context.reportMissingFact,
+			track: context.keepSubscription,
+		});
+	};
 }

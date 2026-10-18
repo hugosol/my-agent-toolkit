@@ -12,7 +12,7 @@
  * reports the contexts its own deliveries came from through `saw`.
  */
 import type { CatalogPrice, CatalogPriceSource } from "../../framework/core/protocol";
-import type { OmpSessionContext } from "./native-types";
+import type { OmpSessionContext } from "./internal/native";
 
 /**
  * The currency and unit the harness states its own model costs in.

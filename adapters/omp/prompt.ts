@@ -8,8 +8,8 @@
  * request, so the promise is handed back rather than settled here.
  */
 import type { HarnessPort, MarkerTransport, OwnerReference, PromptContribution } from "../../framework/core/protocol";
-import { contributionIdentitiesOf } from "./session/facts";
-import type { OmpExtensionApi, OmpRunInitiationResult, OmpSessionContext } from "./native-types";
+import { contributionIdentitiesOf } from "./session/queries";
+import type { OmpExtensionApi, OmpRunInitiationResult, OmpSessionContext } from "./internal/native";
 
 /** The per-delivery references one run initiation resolves before the handler runs. */
 export interface RunInitiationContext {

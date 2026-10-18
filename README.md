@@ -3,6 +3,11 @@
 Shared semantic-extension framework plus its `codebase-tools` and `connect-bot` extensions,
 deployed into the `oh-my-pi` (`omp`) harness. The framework lives once under
 [`framework/`](framework), with native capability mappings under sibling [`adapters/`](adapters).
+Adapters are grouped by harness, then domain; within a domain, event mappings, information queries
+and native effects stay together as `events.ts`, `queries.ts` and `effects.ts` when needed. Simple
+domains remain single files; this is not a three-file template for every capability. The complete
+[nine-domain navigation](framework/docs/framework-capabilities.md#adapter-implementation-navigation)
+distinguishes capability mappings from assembly, native types and loader support.
 Extensions import the shared framework source directly; `omp` discovers the thin
 entrypoints under [`entrypoints/omp/`](entrypoints/omp), which in turn use the implementations under
 [`extensions/`](extensions). The architecture decision is

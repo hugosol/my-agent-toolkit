@@ -11,7 +11,7 @@
  * the contexts its own deliveries came from through `saw`.
  */
 import type { ProviderAccess } from "../../framework/core/protocol";
-import type { OmpSessionContext } from "./native-types";
+import type { OmpSessionContext } from "./internal/native";
 
 /**
  * The credential the harness reports for a provider that needs none.

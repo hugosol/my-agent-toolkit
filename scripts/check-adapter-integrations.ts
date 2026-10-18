@@ -8,8 +8,8 @@ import { fileURLToPath } from "node:url";
 import { CODEBASE_TOOLS } from "../extensions/codebase-tools/definition";
 import { CONNECT_BOT } from "../extensions/connect-bot/definition";
 import { MODEL_COST } from "../extensions/model-cost/definition";
-import { OMP_INTEGRATION } from "../adapters/omp/integration";
-import { PI_INTEGRATION } from "../adapters/pi/integration";
+import { OMP_INTEGRATION } from "../adapters/omp/subagent/declaration";
+import { PI_INTEGRATION } from "../adapters/pi/subagent/declaration";
 import type { ExtensionHarnessEntry } from "../framework/core/integration";
 import { checkAdapterIntegrations, type IntegrationGap } from "../framework/integration-check";
 

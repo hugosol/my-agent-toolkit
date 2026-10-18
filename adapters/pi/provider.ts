@@ -15,7 +15,7 @@
  * handed a guess or another provider's credential.
  */
 import type { ProviderAccess } from "../../framework/core/protocol";
-import type { PiExtensionContext, PiModelRegistry } from "./native";
+import type { PiExtensionContext, PiModelRegistry } from "./internal/native";
 
 /** pi's own provider access, and the live registry reading it is answered from. */
 export interface HarnessProviderAccess {

@@ -158,6 +158,28 @@ vocabulary: Session owns its Turn and Round mappings, while context and catalog 
 own domains. A native object's location does not decide capability ownership. Framework Marker area
 and Extension feedback mappings remain adapter responsibilities; extension presentation does not.
 
+Within a capability domain, organize native mappings by their direction: `events.ts` converts
+native observations to framework events, `queries.ts` reads native facts into framework values,
+and `effects.ts` performs framework-requested native effects. Create only the mappings the domain
+actually needs: a simple domain stays a single file, and complex Turn or Round protocols may remain
+private implementation files within Session. Do not create forwarding-only entry files or split every
+method into a module. Keep the domain's event construction near its native event mapping rather than
+reassembling it in the harness port. Shared context types, diagnostics and other implementation
+support belong with the code that owns their lifetime, not in a parallel capability taxonomy.
+The complete domain map is Session, Context, Subagent, Pricing, Provider, Control, Prompt, Feedback
+and Marker. Both harnesses expose their Subagent domain: native parent/ancestor relationships and
+integration-state reads belong there, while Session consumes those relations for its own facts and
+Owner mapping. Ordinary child Session/Turn/Round events remain Session events; OMP does not add a
+second child-event pipeline just to populate a Subagent `events.ts`. pi's provider announcements and
+replies, liveness queries, and child-extension registration effects are organized within Subagent;
+the third-party provider is its internal implementation, not the primary navigation category.
+The offline inventory lives in `subagent/declaration.ts` and is distinct from runtime queries.
+Feedback and Marker are separate effect domains on both harnesses. Native types and loader hooks
+live under each harness's `internal/`; `index.ts` and `port.ts` are assembly support, not capability
+domains. The authoritative path map is the adapter navigation in the framework capability index.
+This refines the approved domain-first organization; it does not introduce a generic delivery module,
+change framework interfaces, or unify commands, prompt effects and observation deliveries.
+
 This is a navigation convention, not a one-requirement/one-file mechanism. The definition and harness
 inventory retain the existing subagent capability vocabulary and per-execution-mode coverage. A new
 harness implements what its selected consumers require, not automatically every framework capability;

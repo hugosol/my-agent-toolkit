@@ -9,7 +9,7 @@
  * do.
  */
 import type { FeedbackTransport, NoticeTransport } from "../../framework/core/protocol";
-import type { OmpSessionContext } from "./native-types";
+import type { OmpSessionContext } from "./internal/native";
 
 /**
  * Publishes one operator-facing line on the session's own channel: the UI notification

@@ -1,5 +1,5 @@
 // Initialize Node text imports before loading the unchanged shared definition.
-import "../../../adapters/pi/text-imports";
+import "../../../adapters/pi/internal/text-imports";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { piAdapter } from "../../../adapters/pi";

@@ -2,8 +2,8 @@ import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, expect, test } from "bun:test";
-import { loadPiSubagentProvider } from "../../adapters/pi/subagents/subagent-provider";
-import { createPiSubagentIntegration } from "../../adapters/pi/subagents/nicobailon";
+import { loadPiSubagentProvider } from "../../adapters/pi/subagent/internal/provider";
+import { createPiSubagentIntegration } from "../../adapters/pi/subagent/integration";
 
 const roots: string[] = [];
 afterEach(() => {

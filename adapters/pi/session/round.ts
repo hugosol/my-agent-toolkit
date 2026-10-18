@@ -17,30 +17,12 @@
  * activity begins, so a round ended by cancellation states that cancellation and a later activity
  * never inherits it.
  */
-import type { RoundObservation, RoundSignal, TurnOutcome } from "../../../framework/core/protocol";
-import type { PiExtensionApi, PiExtensionContext } from "../native";
+import type { HarnessPort, RoundObservation, RoundSignal, TurnOutcome } from "../../../framework/core/protocol";
+import { feedbackTransport } from "../feedback";
+import type { PiExtensionApi, PiExtensionContext } from "../internal/native";
+import type { PiPortContext } from "../port";
+import type { SessionBackgroundWork } from "../subagent/queries";
 import { outcomeOf } from "./turn";
-
-/**
- * What this entry can state about one session's background work: the fact that decides whether a
- * settled session has really come to rest.
- *
- * A session can be idle with nothing queued and still be waiting — on a delegation running
- * elsewhere, on a result that has not arrived, on a wake that has not started — and the provider that
- * runs that work is the party that states it, in its own published terms.
- *
- * - `holds`: the provider states it still holds work this session waits on. The session is not at
- *   rest; the Round stays open.
- * - `clear`: the provider states it holds none. This is the provider's own answer, and the only one
- *   that lets the rest condition hold.
- * - `unread`: no such statement was obtained. Nothing is established either way, so it is answered as
- *   nothing: a candidate that reads it stays unconfirmed rather than closing a Round on a statement
- *   this entry never read.
- */
-export type SessionBackgroundWork =
-	| { readonly state: "holds" }
-	| { readonly state: "clear" }
-	| { readonly state: "unread"; readonly reason: string };
 
 /** Observes pi's run-cycle facts; automatic continuations are reported by pi, never synthesized here. */
 export function observeRounds(
@@ -170,4 +152,31 @@ export function observeRounds(
 		const outcome = event.aborted ? "cancelled" : activityOutcome.get(sessionId);
 		report({ kind: "settled", willContinue: false, ...(outcome === undefined ? {} : { outcome }) }, ctx);
 	}));
+}
+
+/** The Round axis of one binding's port: the native run-cycle facts, framed for the framework. */
+export function onPiRound(context: PiPortContext): NonNullable<HarnessPort["onRound"]> {
+	return observer => {
+		observeRounds(context.pi, observer, {
+			frame: ctx => {
+				const feedback = feedbackTransport(ctx);
+				return {
+					session: context.sessionFactsOf(context.catalogued(ctx)),
+					owner: context.resolveOwner(ctx),
+					hasUI: ctx.hasUI,
+					feedback,
+				};
+			},
+			reportMissingFact: context.reportMissingFact,
+			reportUnread: context.reportUnread,
+			// This process's subagent provider, as the assembly's own integration reads it: while a
+			// session is waiting on a delegation the provider still holds, the session is not at rest,
+			// and a statement this entry cannot read stays unread rather than being answered as rest.
+			background: sessionId => context.integration?.backgroundActivity(sessionId) ?? { state: "clear" },
+			// The sessions this binding has seen end: their late re-checks read the fact this binding
+			// observed rather than a context pi has spent.
+			sessionOver: sessionId => context.endedSessions.has(sessionId),
+			track: context.keepSubscription,
+		});
+	};
 }

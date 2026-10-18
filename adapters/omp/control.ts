@@ -7,8 +7,8 @@
  * and feedback is user-visible only.
  */
 import type { BoundCommand, FeedbackTransport, MarkerTransport, OwnerReference, StateValues } from "../../framework/core/protocol";
-import { canAcceptInputOf } from "./context";
-import type { OmpExtensionApi, OmpSessionContext } from "./native-types";
+import { canAcceptInputOf } from "./context/queries";
+import type { OmpExtensionApi, OmpSessionContext } from "./internal/native";
 
 /** The per-delivery references one command invocation resolves before the command runs. */
 export interface ControlContext {
