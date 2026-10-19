@@ -1,0 +1,63 @@
+{
+  "harness": {
+    "version": "18.5.0",
+    "prefix": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-iyrAW9\\.cache\\omp-baseline\\18.5.0-viewed-session"
+  },
+  "provider": "openai/gpt-4o",
+  "checks": [
+    {
+      "name": "the command completes",
+      "expected": "completed",
+      "actual": "completed",
+      "pass": true
+    },
+    {
+      "name": "a warning notice reaches the host",
+      "expected": "truthy",
+      "actual": [
+        {
+          "level": "warning",
+          "message": "/budget holiday 仅适用于当前 provider 为 DeepSeek 的入口；本次入口的 provider 「openai」，未执行。"
+        }
+      ],
+      "pass": true
+    },
+    {
+      "name": "the notice level is warning",
+      "expected": "warning",
+      "actual": "warning",
+      "pass": true
+    },
+    {
+      "name": "the notice is the period switch's provider warning",
+      "expected": "truthy",
+      "actual": "/budget holiday 仅适用于当前 provider 为 DeepSeek 的入口；本次入口的 provider 「openai」，未执行。",
+      "pass": true
+    },
+    {
+      "name": "the notice names the run's own provider",
+      "expected": "truthy",
+      "actual": "/budget holiday 仅适用于当前 provider 为 DeepSeek 的入口；本次入口的 provider 「openai」，未执行。",
+      "pass": true
+    },
+    {
+      "name": "the command made no model request",
+      "expected": 0,
+      "actual": 0,
+      "pass": true
+    },
+    {
+      "name": "the run exits cleanly",
+      "expected": 0,
+      "actual": 0,
+      "pass": true
+    }
+  ],
+  "observedNotices": [
+    {
+      "level": "warning",
+      "message": "/budget holiday 仅适用于当前 provider 为 DeepSeek 的入口；本次入口的 provider 「openai」，未执行。"
+    }
+  ],
+  "humanAcceptance": "unconfirmed: ticket 14's human readability judgement"
+}
