@@ -41,7 +41,7 @@ import { CODEX_USAGE_URL } from "../../../extensions/model-cost/shared-logic/bus
 import type { ConsumptionDocument } from "../../../extensions/model-cost/shared-logic/foundation/session/consumption-document";
 import type { ModelPricingData } from "../../../extensions/model-cost/shared-logic/business/pricing/model-data";
 import { type ModelCostRuntime, createModelCostRuntime } from "../../../extensions/model-cost/shared-logic/runtime";
-import type { ProviderAccess, ProviderAccessFacts } from "../../../framework/interface/host-facts";
+import type { ProviderAccess, ProviderAccessFacts } from "../../../framework/interface/provider";
 import type { SessionFacts, TurnOutcome } from "../../../framework/interface/session";
 import type { OwnerReference } from "../../../framework/interface/state";
 import type { TurnSignal } from "../../../framework/runtime/port";

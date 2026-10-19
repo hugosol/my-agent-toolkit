@@ -1,5 +1,5 @@
 /**
- * OMP host facts: the harness's own model prices and its current provider access, mapped to the
+ * OMP provider facts: the harness's own model prices and its current provider access, mapped to the
  * framework's plain queries.
  *
  * Both facts are readable only through a live session context — the model catalog and the model
@@ -14,7 +14,7 @@
  * separate facts with their own timing and missing meanings; sharing the file is locality, not a
  * manager, a cache or a unified lookup.
  */
-import type { CatalogPrice, CatalogPriceSource, ProviderAccess } from "../../../framework/interface/host-facts";
+import type { CatalogPrice, CatalogPriceSource, ProviderAccess } from "../../../framework/interface/provider";
 import type { OmpSessionContext } from "../internal/native";
 
 /**
@@ -66,8 +66,8 @@ function harnessPriceOf(
 	return { currency: HARNESS_PRICE_CURRENCY, unit: HARNESS_PRICE_UNIT, amounts };
 }
 
-/** The harness's own host facts, and the live context readings they are answered from. */
-export interface OmpHostFacts {
+/** The harness's own provider facts, and the live context readings they are answered from. */
+export interface OmpProviderFacts {
 	/** The query the framework hands the implementation factory and snapshots at a request's start. */
 	readonly prices: CatalogPriceSource;
 	/** The query the framework hands the implementation factory and asks once per operation. */
@@ -77,7 +77,7 @@ export interface OmpHostFacts {
 }
 
 /**
- * The harness's own host facts, read through the session contexts this process's bindings see.
+ * The harness's own provider facts, read through the session contexts this process's bindings see.
  *
  * The harness's model catalog and provider registry are facts of the process, but the only reading
  * the extension surface offers is what a live session context carries, so this keeps those sources
@@ -95,7 +95,7 @@ export interface OmpHostFacts {
  * What leaves this module is the two plain queries. The contexts they were read from stay here: no
  * native model, registry or context is handed to the framework or to an extension.
  */
-export function createHostFacts(): OmpHostFacts {
+export function createProviderFacts(): OmpProviderFacts {
 	let newestCatalog: OmpSessionContext["models"];
 	let newestRegistry: OmpSessionContext["modelRegistry"];
 	return {

@@ -1,6 +1,6 @@
 # Capability interface architecture
 
-**Status:** Session, State, Prompt/Marker, Feedback, Host facts, Subagent, the root authoring contract, Command and General are implemented, including Command's narrowed runtime delivery and General's three direct entries. The single framework/adapter interaction contract is implemented in [`framework/runtime/port.ts`](../runtime/port.ts).
+**Status:** Session, State, Prompt/Marker, Feedback, Provider, Subagent, the root authoring contract, Command and General are implemented, including Command's narrowed runtime delivery and General's three direct entries. The single framework/adapter interaction contract is implemented in [`framework/runtime/port.ts`](../runtime/port.ts).
 **Scope:** the dependency seam between `framework/`, `adapters/`, and `extensions/`.
 **Decision status:** ADR-0002's Session amendment accepts the first complete capability, its Command amendment the next, and the [full-capability cutover amendment](../../docs/adr/0002-semantic-extension-framework.md#full-capability-interface-cutover-2026-10-19) records the completed non-additive switch. The direction below is the implemented one; §9 keeps the decisions that remain open and the candidates that were deliberately not adopted.
 
@@ -19,7 +19,7 @@ State's own capability interface now owns its declarations (`StateDeclaration`, 
 Prompt and Marker entries own only their declarations (`PromptDeclaration`, `PromptStrategy` and
 `MarkerDeclaration`): the run facts, contribution result, selection rules and the unified area's
 transport stay internal, and the initialization, directed and action deliveries no longer carry a
-marker transport. The Feedback and Host facts leaf contracts required by Session also live beside
+marker transport. The Feedback and Provider leaf contracts required by Session also live beside
 it. The root authoring entry (`framework/interface/index.ts`) now owns `defineExtension` and the
 whole definition/implementation contract in its public `details/` files; `SubagentIntegration`,
 `SubagentIntegrationFailure` and `SubagentCapability` live in `framework/interface/subagent.ts`, and
@@ -154,7 +154,7 @@ framework/interface/
   marker.ts
   feedback/
     index.ts
-  host-facts/
+  provider/
     index.ts
   general/
     http.ts
@@ -177,7 +177,7 @@ The directory names are navigation. The capability boundaries are the important 
 | **Prompt** | prompt declaration and strategy | run facts, contribution result, contribution selection, branch-progress matching | Prompt domain |
 | **Marker** | marker declaration text | marker area transport, process-global area, line order, viewed-session projection, publication triggers | Marker domain |
 | **Feedback** | notification level and feedback transport | delivery wiring; no standalone behaviour module | Feedback domain |
-| **Host facts** | provider access, catalog price, provider HTTP facts | factory hand-over and adapter query mapping; no framework policy | Host facts domain |
+| **Provider** | provider access, catalog price, provider HTTP facts | factory hand-over and adapter query mapping; no framework policy | Provider domain |
 | **Subagent** | the settled initialization integration result (`subagents` / `none` / `failed`) and the requirement vocabulary | execution modes, adapter coverage inventory, provider protocol and registration | Subagent domains |
 | **General modules** (a navigation group, not an adapter-backed capability) | `request`, `updateFile`, `getConfig` and their option/error types | HTTP transport, coordinated file update, configuration document reading | none |
 
@@ -414,7 +414,7 @@ The capability interface makes structural evidence reliable:
 
 - an extension imports capability-specific paths such as `framework/interface/session`, `framework/interface/command`, and `framework/interface/marker`;
 - Session event-kind imports distinguish Turn, Round, Activity, Context, Commit, and Unobserved use;
-- the implementation context keeps `context.session` for the capability object and passes the validated `config`, `modelPrices` and `providerAccess` facts under their own names; a capability-grouped `context.hostFacts` or `context.config` was considered and not adopted, because it would break every factory without hiding anything the flat members do not;
+- the implementation context keeps `context.session` for the capability object and passes the validated `config`, `modelPrices` and `providerAccess` facts under their own names; a capability-grouped `context.provider` or `context.config` was considered and not adopted, because it would break every factory without hiding anything the flat members do not;
 - adapter domains and `framework/runtime/port.ts` expose the same capability vocabulary on the supply side.
 
 The evidence model therefore uses the same capability names as the interface inventory. It is a tooling layer over the interface, not a runtime capability registry. It does not introduce runtime negotiation, a startup gate, or a second dispatcher.
@@ -472,7 +472,7 @@ current tests green.
 
 - The extension-facing Session read surface is read-only; the concrete observation source and its
   mutation methods remain internal. This part was implemented.
-- Grouping the whole implementation context by capability (`context.session`, `context.hostFacts`,
+- Grouping the whole implementation context by capability (`context.session`, `context.provider`,
   `context.config`) was considered and deliberately not adopted: it would break every extension
   factory for classification only. `context.session` remains the capability object, while the
   validated configuration, model prices and provider access stay under their own names.
@@ -482,7 +482,7 @@ current tests green.
 
 - State and Session implementations sit behind their interfaces first.
 - Round, Turn, Activity, Context, observation, access, and disposal remain internal Session modules.
-- Command, Prompt, Marker, Feedback, Host facts, and General followed.
+- Command, Prompt, Marker, Feedback, Provider, and General followed.
 - Composition (`assembly`, `binding`, `lifecycle`) connects capabilities and the adapter port; it does not own capability rules.
 - Verification: capability contract tests through `framework/interface` and a port double; internal module tests remain for implementation seams.
 
@@ -515,7 +515,7 @@ Candidates considered and not adopted:
 | Candidate | Why it is not current policy |
 | --- | --- |
 | Separate public `definition/` and `assembly/` directory layers, or a pure classification `extension.ts` entry | The authoring contract is one root entry plus its public `details/` files. The separate layers duplicated the same declarations and added shallow modules without changing extension leverage. |
-| A capability-grouped implementation context (`context.hostFacts`, `context.config`) | It would break every extension factory for classification only. The context keeps `session` plus the flat `config`, `modelPrices` and `providerAccess` facts. |
+| A capability-grouped implementation context (`context.provider`, `context.config`) | It would break every extension factory for classification only. The context keeps `session` plus the flat `config`, `modelPrices` and `providerAccess` facts. |
 | General as an adapter-backed capability or an aggregate `general/index.ts` entry | General is a navigation group of three independent, harness-independent modules. Each has its own direct entry; there is no registry, adapter or aggregate entry. |
 | A public Marker transport on deliveries, or extension-level marker-area operations | The marker area is process-global and framework-owned. Deliveries carry no transport, and an extension declares text and affects display only through managed State. |
 

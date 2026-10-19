@@ -32,7 +32,7 @@ import { setImmediate as immediate } from "node:timers/promises";
 import { MODEL_COST } from "../../../../extensions/model-cost/definition";
 import type { ModelPricingData } from "../../../../extensions/model-cost/shared-logic/business/pricing/model-data";
 import { type ModelCostRuntime, createModelCostRuntime } from "../../../../extensions/model-cost/shared-logic/runtime";
-import type { ProviderAccess, ProviderAccessFacts } from "../../../../framework/interface/host-facts";
+import type { ProviderAccess, ProviderAccessFacts } from "../../../../framework/interface/provider";
 import type { SessionFacts, TurnOutcome } from "../../../../framework/interface/session";
 import type { TurnSignal } from "../../../../framework/runtime/port";
 import { HttpConfigurationError, type HttpRequestOptions } from "../../../../framework/interface/general/http";

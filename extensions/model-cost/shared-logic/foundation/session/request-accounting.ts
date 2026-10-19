@@ -92,7 +92,7 @@
  * clears it with everything else measured in the period it is closing.
  */
 import type { FeedbackTransport } from "../../../../../framework/interface/feedback";
-import type { CatalogPrice } from "../../../../../framework/interface/host-facts";
+import type { CatalogPrice } from "../../../../../framework/interface/provider";
 import type {
 	CloseOutWait,
 	RoundDelivery,

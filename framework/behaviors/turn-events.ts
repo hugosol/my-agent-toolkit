@@ -46,7 +46,7 @@
  */
 import type { ExtensionDefinition } from "../interface/details/definition";
 import type { FeedbackTransport } from "../interface/feedback";
-import type { CatalogPriceSource, ProviderHttpFacts } from "../interface/host-facts";
+import type { CatalogPriceSource, ProviderHttpFacts } from "../interface/provider";
 import type {
 	SessionFacts,
 	SubscriptionGroup,

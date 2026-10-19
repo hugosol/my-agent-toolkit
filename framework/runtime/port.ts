@@ -7,7 +7,7 @@
  * Failures travel as data, so an adapter can report them on whatever non-model
  * channel its harness offers without deciding what counts as a conflict.
  *
- * The contracts it refers to — Session, State, Feedback, Host facts, Subagent, Command
+ * The contracts it refers to — Session, State, Feedback, Provider, Subagent, Command
  * and the authoring declaration — are canonical in `framework/interface`; this module
  * refers to them rather than restating or re-exporting them. It is framework/adapter
  * internal: extensions never import it.
@@ -15,7 +15,7 @@
 import type { CanAcceptInput } from "../interface/command";
 import type { ExtensionDefinition } from "../interface/details/definition";
 import type { FeedbackTransport } from "../interface/feedback";
-import type { CatalogPriceSource, ProviderAccess, ProviderHttpFacts } from "../interface/host-facts";
+import type { CatalogPriceSource, ProviderAccess, ProviderHttpFacts } from "../interface/provider";
 import type {
 	AgentActivity,
 	SessionContextReading,

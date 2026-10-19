@@ -26,7 +26,7 @@ import type { ConsumptionDocument } from "../../../extensions/model-cost/shared-
 import type { ModelPricingData } from "../../../extensions/model-cost/shared-logic/business/pricing/model-data";
 import type { ModelCostRuntime } from "../../../extensions/model-cost/shared-logic/runtime";
 import { createModelCostRuntime } from "../../../extensions/model-cost/shared-logic/runtime";
-import type { CatalogPriceSource } from "../../../framework/interface/host-facts";
+import type { CatalogPriceSource } from "../../../framework/interface/provider";
 import type { SessionFacts } from "../../../framework/interface/session";
 import type { OwnerReference } from "../../../framework/interface/state";
 import { portDouble } from "../../framework/support/harness-port-double";

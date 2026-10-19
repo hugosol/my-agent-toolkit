@@ -24,7 +24,7 @@ import { activationField, statePersistence } from "../../../framework/core/defin
 import type { ExtensionDefinition } from "../../../framework/interface/details/definition";
 import type { FollowedAccessReader } from "../../../framework/core/followed-owners";
 import type { FeedbackLevel } from "../../../framework/interface/feedback";
-import type { CatalogPriceSource, ProviderAccess } from "../../../framework/interface/host-facts";
+import type { CatalogPriceSource, ProviderAccess } from "../../../framework/interface/provider";
 import type {
 	RoundEvent,
 	SemanticEventHandlers,

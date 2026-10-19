@@ -14,7 +14,7 @@ import { onPiSessionContext } from "../domain/context";
 import { registerPiCommand } from "../domain/control";
 import type { PiExtensionApi, PiExtensionContext } from "./native";
 import { onPiRunInitiation } from "../domain/prompt";
-import type { PiHostFacts } from "../domain/host-facts";
+import type { PiProviderFacts } from "../domain/provider";
 import { piStatePersistence, type PiStatePersistence } from "../domain/session/effects";
 import { onPiDisposal, onPiSession, onPiUserInput } from "../domain/session/events";
 import {
@@ -33,7 +33,7 @@ export interface PiPortInput {
 	readonly definition: ExtensionDefinition;
 	readonly positions: PiSessionPositions;
 	readonly integration: PiSubagentIntegration | undefined;
-	readonly hostFacts: PiHostFacts;
+	readonly providerFacts: PiProviderFacts;
 	readonly keepSubscription: (release: () => void) => void;
 }
 
@@ -89,8 +89,8 @@ export function createPiPort(input: PiPortInput): PiPort {
 			// diagnostics instead of misusing that unrelated native operation.
 			setLabel: value => { context.state.label = value; },
 			reportDiagnostic: context.reportDiagnostic,
-			modelPrices: input.hostFacts.prices,
-			providerAccess: input.hostFacts.access,
+			modelPrices: input.providerFacts.prices,
+			providerAccess: input.providerFacts.access,
 			// The process's one settling of this entry's subagent integration, asked at the owner node:
 			// it is the session this binding serves then, and the answer is that process's own.
 			...(integration === undefined
@@ -159,7 +159,7 @@ function createPiPortContext(input: PiPortInput): PiPortContext {
 			// a price at a request's real start, and an extension's provider query reads the moment's
 			// credential. The newest context is therefore what answers, and this is where each delivery
 			// reports its own.
-			input.hostFacts.saw(ctx);
+			input.providerFacts.saw(ctx);
 			return ctx;
 		},
 		resolvedOwner,

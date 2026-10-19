@@ -16,7 +16,7 @@
  */
 import { describe, expect, test } from "bun:test";
 import { CODEBASE_TOOLS } from "../../extensions/codebase-tools/definition";
-import type { CatalogPrice } from "../../framework/interface/host-facts";
+import type { CatalogPrice } from "../../framework/interface/provider";
 import type {
 	SessionFacts,
 	SubscriptionGroup,

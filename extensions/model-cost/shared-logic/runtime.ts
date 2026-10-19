@@ -52,7 +52,7 @@
  */
 import type { ExtensionImplementation, InitializationDelivery } from "../../../framework/interface/details/implementation";
 import type { FeedbackTransport } from "../../../framework/interface/feedback";
-import type { CatalogPriceSource, ProviderAccess } from "../../../framework/interface/host-facts";
+import type { CatalogPriceSource, ProviderAccess } from "../../../framework/interface/provider";
 import type { SemanticEventHandlers, SessionCapability } from "../../../framework/interface/session";
 import type { SubagentIntegration } from "../../../framework/interface/subagent";
 import type { HttpRequestOptions } from "../../../framework/interface/general/http";

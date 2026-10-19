@@ -1,5 +1,5 @@
 /**
- * The host-facts capability's extension-facing leaf declarations.
+ * The Provider capability's extension-facing leaf declarations.
  *
  * These are the plain facts a host supplies to an extension — a catalog price, the provider access
  * an operation resolves, and the HTTP facts a Turn's response carried. They are values and queries,

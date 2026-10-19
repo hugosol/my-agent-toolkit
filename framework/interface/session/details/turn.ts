@@ -7,7 +7,7 @@
  * event, which fires after the requested tools ran, is not this edge.
  */
 import type { FeedbackTransport } from "../../feedback";
-import type { CatalogPrice, ProviderHttpFacts } from "../../host-facts";
+import type { CatalogPrice, ProviderHttpFacts } from "../../provider";
 import type { OwnerReference } from "../../state";
 import type { SessionFacts } from "./facts";
 

@@ -14,7 +14,7 @@
  * while no interval has been observed yet.
  */
 import { describe, expect, test } from "bun:test";
-import type { CatalogPrice } from "../../../framework/interface/host-facts";
+import type { CatalogPrice } from "../../../framework/interface/provider";
 import { MODEL_PRICING_DATA, catalogPriceOf } from "../../../extensions/model-cost/shared-logic/business/pricing/model-data";
 import type { ConsumptionMode } from "../../../extensions/model-cost/shared-logic/business/context/session-context";
 import {

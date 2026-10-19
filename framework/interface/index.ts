@@ -11,7 +11,7 @@
  *   owned by `details/implementation.ts`.
  *
  * This entry does not aggregate the capability interfaces: State, Session, Prompt, Marker,
- * Feedback, Host facts, Subagent and Command each own their declarations and are imported from
+ * Feedback, Provider, Subagent and Command each own their declarations and are imported from
  * their own entries. It also names no harness; an adapter consumes the assembly types unchanged.
  */
 import type { ExtensionDefinition } from "./details/definition";

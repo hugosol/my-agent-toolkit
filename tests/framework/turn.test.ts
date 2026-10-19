@@ -24,7 +24,7 @@ import type {
 	OmpSessionContext,
 } from "../../adapters/omp";
 import * as frameworkOmp from "../../adapters/omp";
-import type { CatalogPriceSource } from "../../framework/interface/host-facts";
+import type { CatalogPriceSource } from "../../framework/interface/provider";
 import type {
 	RoundDelivery,
 	SessionFacts,

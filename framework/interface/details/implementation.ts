@@ -17,7 +17,7 @@
  */
 import type { CommandImplementations } from "../command";
 import type { FeedbackTransport } from "../feedback";
-import type { CatalogPriceSource, ProviderAccess } from "../host-facts";
+import type { CatalogPriceSource, ProviderAccess } from "../provider";
 import type { SessionCapability, SubscriptionGroup } from "../session";
 import type { OwnerReference } from "../state";
 import type { SubagentIntegration } from "../subagent";

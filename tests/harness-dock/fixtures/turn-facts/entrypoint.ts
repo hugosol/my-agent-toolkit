@@ -14,7 +14,7 @@
 import { type OmpExtensionApi, ompAdapter } from "../../../../adapters/omp";
 import { type ExtensionDefinition, defineExtension } from "../../../../framework/interface";
 import type { SubscriptionGroup, TurnEndDelivery, TurnStartDelivery } from "../../../../framework/interface/session";
-import type { CatalogPriceSource } from "../../../../framework/interface/host-facts";
+import type { CatalogPriceSource } from "../../../../framework/interface/provider";
 
 /** The extension id whose stderr lines the dock reads. */
 export const TURN_FACTS_ID = "turn-facts-probe";

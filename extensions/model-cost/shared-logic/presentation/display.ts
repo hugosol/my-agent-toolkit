@@ -61,7 +61,7 @@
  *   not zero — while one of the two windows is unreadable, and while the measurement has learned
  *   nothing yet it reads `estimating…` rather than looking like an exhausted allowance.
  */
-import type { CatalogPrice } from "../../../../framework/interface/host-facts";
+import type { CatalogPrice } from "../../../../framework/interface/provider";
 import type { CodexEstimate } from "../business/allowance/codex-estimate";
 import { remainingBudget } from "../business/allowance/codex-estimate";
 import type {

@@ -31,7 +31,7 @@
  * session's model or of the current season do not re-price a request that was already anchored, and
  * nothing here is ever asked to recompute an amount that was already accumulated.
  */
-import type { CatalogPrice } from "../../../../../framework/interface/host-facts";
+import type { CatalogPrice } from "../../../../../framework/interface/provider";
 import { type ModelPricingData, catalogPriceOf, classify } from "./model-data";
 
 /** Which of the two prices of a pricing zone's day an instant falls in. */

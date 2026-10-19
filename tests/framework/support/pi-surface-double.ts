@@ -33,7 +33,7 @@ import {
 	piAdapter,
 } from "../../../adapters/pi";
 import type { FeedbackLevel } from "../../../framework/interface/feedback";
-import type { CatalogPriceSource } from "../../../framework/interface/host-facts";
+import type { CatalogPriceSource } from "../../../framework/interface/provider";
 import type {
 	RoundDelivery,
 	SessionContextDelivery,

@@ -1,6 +1,6 @@
 # Capability interfaces
 
-Every capability is encapsulated here. State, Session, Prompt, Marker, Feedback, Host facts,
+Every capability is encapsulated here. State, Session, Prompt, Marker, Feedback, Provider,
 Subagent and Command each own their canonical extension-facing declarations, and General's three
 modules have direct entries. An interface is the canonical extension-facing contract, not a re-export
 of an implementation directory. Start with the capability entry the extension needs — for example
@@ -24,7 +24,7 @@ not aggregate the capability entries below.
 Session's type dependencies live beside it: [State](state/index.ts) owns the declared State axes
 (`StateDeclaration`, `StatePersistence`, `StateInheritance`), the owner reference and the managed
 operations (`DeclaredValueSeam`, `OwnerCapabilityHandle`); [Feedback](feedback/index.ts) owns the
-operator notice contract; and [Host facts](host-facts/index.ts) owns provider/catalog facts used by
+operator notice contract; and [Provider](provider/index.ts) owns provider/catalog facts used by
 Turn. The declaration-only capabilities are their own entries: [Prompt](prompt.ts) owns
 `PromptDeclaration` and `PromptStrategy`, [Marker](marker.ts) owns `MarkerDeclaration`, and
 [Subagent](subagent.ts) owns the initialization integration result and requirement vocabulary. The
@@ -49,7 +49,7 @@ the root authoring contract. There is deliberately no `general/index.ts` aggrega
 authoring entry does not aggregate them. These are exact entries, not permission to import
 arbitrary framework internals: no reader, parser, source, `readConfig`, shared-configuration
 reader or validation helper is published. Authoring, State, Session, Prompt, Marker, Feedback,
-Host facts, Subagent, Command and all three general modules have no compatibility exports
+Provider, Subagent, Command and all three general modules have no compatibility exports
 anywhere else; the import check protects those seams. The framework/adapter interaction contract is
 one internal port at [`runtime/port.ts`](../runtime/port.ts); it refers to these canonical
 declarations and is never imported by an extension. See the

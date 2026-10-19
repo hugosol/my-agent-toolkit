@@ -64,11 +64,11 @@ describe("the factory is called with the validated configuration, before anythin
 		expect(seen).toHaveLength(1);
 		expect(seen[0]?.config).toEqual({ greeting: "hello" });
 		// The actual context the framework built: the validated configuration and the Session
-		// capability, with no grouped host-facts member or builder added beside them.
+		// capability, with no grouped provider member or builder added beside them.
 		expect(Object.keys(seen[0] ?? {}).sort()).toEqual(["config", "session"]);
 	});
 
-	test("the factory context carries the harness facts under their own names, without a grouped host-facts member", () => {
+	test("the factory context carries the provider facts under their own names, without a grouped provider member", () => {
 		const seen: ImplementationContext[] = [];
 		const modelPrices = { priceOf: () => undefined };
 		const providerAccess = { resolve: async () => undefined };
@@ -83,11 +83,11 @@ describe("the factory is called with the validated configuration, before anythin
 
 		expect(bound.bound).toBe(true);
 		// The same queries the adapter mapped, handed over as themselves rather than wrapped in a
-		// `hostFacts` object: an extension reads `context.modelPrices` and `context.providerAccess`.
+		// `provider` object: an extension reads `context.modelPrices` and `context.providerAccess`.
 		expect(seen[0]?.modelPrices).toBe(modelPrices);
 		expect(seen[0]?.providerAccess).toBe(providerAccess);
 		expect(Object.keys(seen[0] ?? {}).sort()).toEqual(["config", "modelPrices", "providerAccess", "session"]);
-		expect("hostFacts" in (seen[0] ?? {})).toBe(false);
+		expect("provider" in (seen[0] ?? {})).toBe(false);
 	});
 
 	test("a definition whose configuration is illegal never reaches a factory", () => {

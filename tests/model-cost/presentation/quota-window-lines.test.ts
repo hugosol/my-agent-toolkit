@@ -25,7 +25,7 @@ import type { DisplayLine } from "../../../extensions/model-cost/shared-logic/pr
 import { lineText } from "../../../extensions/model-cost/shared-logic/presentation/display";
 import type { ModelPricingData } from "../../../extensions/model-cost/shared-logic/business/pricing/model-data";
 import { type ModelCostRuntime, createModelCostRuntime } from "../../../extensions/model-cost/shared-logic/runtime";
-import type { ProviderAccess, ProviderAccessFacts } from "../../../framework/interface/host-facts";
+import type { ProviderAccess, ProviderAccessFacts } from "../../../framework/interface/provider";
 import type { SessionFacts, TurnOutcome } from "../../../framework/interface/session";
 import type { TurnSignal } from "../../../framework/runtime/port";
 import type { HttpRequestOptions } from "../../../framework/interface/general/http";

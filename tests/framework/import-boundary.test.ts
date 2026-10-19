@@ -223,13 +223,13 @@ describe("shared source imports no harness types (C1)", () => {
 		expect(crossings).toEqual([]);
 	});
 
-	test("Host facts' declarations are published only by the Host facts capability interface", () => {
+	test("Provider's declarations are published only by the Provider capability interface", () => {
 		// CatalogPrice, CatalogPriceSource, ProviderHttpFacts, ProviderAccessFacts and ProviderAccess
-		// are the whole extension-facing host-fact contract. A declaration or an export block naming
+		// are the whole extension-facing Provider contract. A declaration or an export block naming
 		// one of them anywhere else would give the capability a second owner (or a compatibility
 		// copy), which type checking alone cannot see. The adapters map the native sources; their
 		// native registry, credential store and context stay outside this contract.
-		const canonical = "framework/interface/host-facts/index.ts";
+		const canonical = "framework/interface/provider/index.ts";
 		const owned = [
 			"CatalogPrice",
 			"CatalogPriceSource",
@@ -255,15 +255,15 @@ describe("shared source imports no harness types (C1)", () => {
 			const source = readFileSync(path.join(REPO_ROOT, file), "utf8");
 			for (const name of owned) {
 				if (declaredEverywhere(source).includes(name)) {
-					crossings.push(`${file} declares ${name} outside the Host facts capability interface`);
+					crossings.push(`${file} declares ${name} outside the Provider capability interface`);
 				}
 				if (exportedInBlocks(source).includes(name)) {
-					crossings.push(`${file} exports ${name} outside the Host facts capability interface`);
+					crossings.push(`${file} exports ${name} outside the Provider capability interface`);
 				}
 			}
 			for (const match of source.matchAll(/\bexport\s+\*\s*(?:as\s+\w+\s*)?from\s*["']([^"']+)["']/g)) {
-				if (resolvesInto(file, match[1]!, [/^framework\/interface\/host-facts(?:\/|\.|$)/])) {
-					crossings.push(`${file} re-exports the Host facts capability through "${match[1]}"`);
+				if (resolvesInto(file, match[1]!, [/^framework\/interface\/provider(?:\/|\.|$)/])) {
+					crossings.push(`${file} re-exports the Provider capability through "${match[1]}"`);
 				}
 			}
 		}

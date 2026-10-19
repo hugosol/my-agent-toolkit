@@ -1,5 +1,5 @@
 /**
- * pi's own host facts: the model prices and the current provider access its registry states, read
+ * pi's own provider facts: the model prices and the current provider access its registry states, read
  * through the session contexts this process's bindings see.
  *
  * Both facts are readable only through the registry a live session context carries, while the
@@ -14,7 +14,7 @@
  * facts with their own timing and missing meanings; sharing the file is locality, not a manager, a
  * cache or a unified lookup.
  */
-import type { CatalogPrice, CatalogPriceSource, ProviderAccess } from "../../../framework/interface/host-facts";
+import type { CatalogPrice, CatalogPriceSource, ProviderAccess } from "../../../framework/interface/provider";
 import type { PiExtensionContext, PiModelRegistry } from "../internal/native";
 
 /**
@@ -55,8 +55,8 @@ function harnessPriceOf(
 	return { currency: HARNESS_PRICE_CURRENCY, unit: HARNESS_PRICE_UNIT, amounts };
 }
 
-/** pi's own host facts, and the live registry reading they are answered from. */
-export interface PiHostFacts {
+/** pi's own provider facts, and the live registry reading they are answered from. */
+export interface PiProviderFacts {
 	/** The query the framework hands the implementation factory and snapshots at a request's start. */
 	readonly prices: CatalogPriceSource;
 	/** The query the framework hands the implementation factory and asks once per operation. */
@@ -66,7 +66,7 @@ export interface PiHostFacts {
 }
 
 /**
- * pi's own host facts, read through the session contexts this process's bindings see.
+ * pi's own provider facts, read through the session contexts this process's bindings see.
  *
  * The credential, the provider's address and the model catalog are facts of the host, and the reading
  * pi offers is the registry a live session context carries, so this keeps the registry of the newest
@@ -81,7 +81,7 @@ export interface PiHostFacts {
  * the facts absent: the extension is told the host has no access to that provider rather than being
  * handed a guess or another provider's credential.
  */
-export function piHostFacts(): PiHostFacts {
+export function piProviderFacts(): PiProviderFacts {
 	let newest: PiModelRegistry | undefined;
 	return {
 		prices: { priceOf: (provider, model) => harnessPriceOf(newest, provider, model) },

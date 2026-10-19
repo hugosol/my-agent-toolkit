@@ -13,7 +13,7 @@ import type { ExtensionAssembly } from "../../framework/interface/details/implem
 import type { ExtensionDefinition } from "../../framework/interface/details/definition";
 import type { PiExtensionApi, PiExtensionFactory } from "./internal/native";
 import { createPiPort } from "./internal/port";
-import { piHostFacts } from "./domain/host-facts";
+import { piProviderFacts } from "./domain/provider";
 import { piSessionPositions } from "./domain/session/queries";
 import { piSessionFileAnchors } from "./domain/subagent/queries";
 import { createPiSubagentIntegration } from "./domain/subagent/integration";
@@ -42,11 +42,11 @@ export function piAdapter(definition: ExtensionDefinition, options: PiAssembly =
 	// and chooses the direct path for each owner served here; childEntry states cross-process support.
 	const mode = options.childEntry === undefined ? "in-process" : "cross-process";
 	const binding = createAssemblyBinding(definition, options, mode);
-	// pi's own host facts — the model prices and the provider access the registry states — as one set
+	// pi's own provider facts — the model prices and the provider access the registry states — as one set
 	// for the whole process: every binding of this assembly records the registry of the contexts its
 	// own deliveries come from, and the queries the framework hands an extension's factory answer from
 	// the newest of them.
-	const hostFacts = piHostFacts();
+	const providerFacts = piProviderFacts();
 	// The sessions this process's deliveries are read through: pi's own lineage links and the session
 	// files they name are facts of the process, and a chain walked for one session is the same chain
 	// another session of this process would walk.
@@ -64,7 +64,7 @@ export function piAdapter(definition: ExtensionDefinition, options: PiAssembly =
 			definition,
 			positions,
 			integration,
-			hostFacts,
+			providerFacts,
 			keepSubscription: release => subscriptions.push(release),
 		});
 		integration?.attach(pi, reportDiagnostic);

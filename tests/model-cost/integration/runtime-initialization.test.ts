@@ -37,7 +37,7 @@ import * as path from "node:path";
 import { MODEL_COST } from "../../../extensions/model-cost/definition";
 import type { ModelPricingData } from "../../../extensions/model-cost/shared-logic/business/pricing/model-data";
 import { type ModelCostRuntime, createModelCostRuntime } from "../../../extensions/model-cost/shared-logic/runtime";
-import type { ProviderAccess, ProviderAccessFacts } from "../../../framework/interface/host-facts";
+import type { ProviderAccess, ProviderAccessFacts } from "../../../framework/interface/provider";
 import type { SessionFacts, TurnOutcome, TurnUsage } from "../../../framework/interface/session";
 import type { TurnSignal } from "../../../framework/runtime/port";
 import type { HttpRequestOptions } from "../../../framework/interface/general/http";

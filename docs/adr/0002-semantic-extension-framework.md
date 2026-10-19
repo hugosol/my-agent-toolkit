@@ -63,7 +63,7 @@ my-agent-toolkit/
     pi/
       index.ts                  # Public assembly entry
       internal/                 # Native types, loader support and the binding port
-      domain/                   # Capability domains: Session, Context, Subagent, Host facts, ...
+      domain/                   # Capability domains: Session, Context, Subagent, Provider, ...
         session/                # Session facts and lifecycle, including Turn and Round mappings
     omp/
       index.ts
@@ -164,7 +164,7 @@ extension or by `business`/`foundation` tiers. `domain/` is a navigation groupin
 module or a new interface. Prefer an existing business domain when it and a support domain both
 fit; keep genuinely shared support in one place. Framework-owned concepts supplement business
 vocabulary: Session owns its Turn and Round mappings, context keeps its own domain, and provider
-access and catalog pricing share the Host facts domain. A native object's location does not decide
+access and catalog pricing share the Provider domain. A native object's location does not decide
 capability ownership. Framework Marker area and Extension feedback mappings remain adapter
 responsibilities; extension presentation does not.
 
@@ -176,7 +176,7 @@ private implementation files within Session. Do not create forwarding-only entry
 method into a module. Keep the domain's event construction near its native event mapping rather than
 reassembling it in the harness port. Shared context types, diagnostics and other implementation
 support belong with the code that owns their lifetime, not in a parallel capability taxonomy.
-The complete domain map is Session, Context, Subagent, Host facts, Control, Prompt, Feedback and
+The complete domain map is Session, Context, Subagent, Provider, Control, Prompt, Feedback and
 Marker. Both harnesses expose their Subagent domain: native parent/ancestor relationships and
 integration-state reads belong there, while Session consumes those relations for its own facts and
 Owner mapping. Ordinary child Session/Turn/Round events remain Session events; OMP does not add a
@@ -288,7 +288,7 @@ not merely a read facade or a directory move. That directory owns the extension-
 facts, observations, event deliveries and Subscription group contracts; internal framework modules
 and native adapters import those canonical declarations. Session declarations are removed from
 `core/protocol.ts` and `public.ts`, without compatibility re-exports. Other capabilities retain their
-existing authoring entries until their own migration; the small State, Feedback and Host facts
+existing authoring entries until their own migration; the small State, Feedback and Provider
 contracts needed by Session are canonical interface dependencies, not permission to expose engines.
 
 The implementation factory receives `context.session`: a Session observation reader and the
@@ -341,7 +341,7 @@ amendment.
 ## Full capability interface cutover (2026-10-19)
 
 The maintainer approved, and the implementation completed, the non-additive public-contract switch
-across all remaining capabilities: State, Prompt, Marker, Feedback, Host facts, Subagent, the root
+across all remaining capabilities: State, Prompt, Marker, Feedback, Provider, Subagent, the root
 authoring contract, Command (recorded above) and General. This is the explicit decision the
 "stable contract surface" rule requires. It supersedes the Session amendment's sentence that other
 capabilities retain their existing authoring entries until their own migration: every approved
@@ -371,7 +371,7 @@ deleted with no alias, re-export or forwarding shell.
   `modules/files` — are cleared for extension consumers. Internal files that retain real duties stay
   internal; internal test seams remain available to tests and scripts.
 - **Candidates not adopted.** Separate public `definition/` and `assembly/` runtime layers; a
-  capability-grouped implementation context (`context.hostFacts`, `context.config`); General as a
+  capability-grouped implementation context (`context.provider`, `context.config`); General as a
   capability or aggregate entry; a public Marker transport or extension-level marker-area
   operations.
 - **Preserved semantics.** No change to Owner, session-entry recovery, history preservation, the
@@ -533,7 +533,7 @@ The user confirmed the complete assembly specification in Q19 of the model-cost 
 - **Code placement:** separate common semantic core/behaviors, adapter-independent framework/modules, native framework adapters, extension shared logic, extension harness-specific implementation directories, thin harness assembly files and thin loader entrypoints. The first-release tree above remains historical context; the current target layout is the assembly revision recorded in this section. No pi implementation or unused scaffold is authorized.
 - **Public binding seam:** common authoring contracts no longer belong to OMP-specific types. The framework owns required configuration processing, factory creation, binding failure cleanup, one-time initialization/first-request waiting and disposal; the extension factory connects business and selected native presentation. It does not create a DI container, public internal dispatch protocol, autodetection or duplicate registration system.
 - **Scopes and async:** scoped groups provide Owner-only effects and actual-Session observation. Promise completion/rejection is received without making a save a Session-wide event barrier. Old owner-only dispatch assumptions apply only to Owner subscriptions; connect-bot keeps its behavior and model-cost observes children.
-- **Presentation and host facts:** read-only business views plus invalidation subscriptions separate shared computation from native drawing. A minimal public host Viewed session read/notification prerequisite precedes adapter integration; no private fields or UI-text inference. The framework projects the viewed effective State into its one Marker area without changing Owner.
+- **Presentation and provider facts:** read-only business views plus invalidation subscriptions separate shared computation from native drawing. A minimal public host Viewed session read/notification prerequisite precedes adapter integration; no private fields or UI-text inference. The framework projects the viewed effective State into its one Marker area without changing Owner.
 - **Existing consumers:** migrate connect-bot, codebase-tools and Marker area affected seams together; no legacy production assembly/dispatch/transport shim. Reuse consumer-visible behavior tests, migrate necessary test wiring, retire implementation-detail and superseded-policy assertions rather than repinning them. HTTP consumer scope follows the approved HTTP contract stated above.
 - **Compatibility:** the original support topic [independent compatibility verification](../../framework/docs/harness-support.md#independent-compatibility-verification) is the authority for moving native capability and version checks out of normal startup. Required-contract metadata, if retained, is development/verification input only. Reports never become startup gates; configuration/business error handling is not removed.
 

@@ -21,7 +21,7 @@
  */
 import { describe, expect, test } from "bun:test";
 import type { PiAssistantMessage, PiMessageUsage } from "../../adapters/pi";
-import type { CatalogPriceSource } from "../../framework/interface/host-facts";
+import type { CatalogPriceSource } from "../../framework/interface/provider";
 import type { TurnOutcome } from "../../framework/interface/session";
 import type { ImplementationContext } from "../../framework/interface";
 import { withCapturedStderr } from "./support/captured-stderr";

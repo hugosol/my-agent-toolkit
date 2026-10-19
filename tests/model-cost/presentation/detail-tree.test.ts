@@ -23,7 +23,7 @@ import type { ModelPricingData } from "../../../extensions/model-cost/shared-log
 import { type AgentTreeRow, type ConsumptionFields, fieldsColumns } from "../../../extensions/model-cost/shared-logic/presentation/display";
 import type { ModelCostRuntime } from "../../../extensions/model-cost/shared-logic/runtime";
 import { createModelCostRuntime } from "../../../extensions/model-cost/shared-logic/runtime";
-import type { CatalogPrice, CatalogPriceSource } from "../../../framework/interface/host-facts";
+import type { CatalogPrice, CatalogPriceSource } from "../../../framework/interface/provider";
 import type { SessionFacts } from "../../../framework/interface/session";
 import type { OwnerReference } from "../../../framework/interface/state";
 import { type PortDouble, portDouble } from "../../framework/support/harness-port-double";

@@ -38,7 +38,7 @@
  * when the host resolved none; the protocol's own `/user/balance` path and its CNY reading are
  * stated here, in the extension, not in the transport.
  */
-import type { ProviderAccess } from "../../../../../framework/interface/host-facts";
+import type { ProviderAccess } from "../../../../../framework/interface/provider";
 import { type HttpRequestOptions, request } from "../../../../../framework/interface/general/http";
 import { createProviderRefresh } from "../../foundation/provider-refresh";
 
