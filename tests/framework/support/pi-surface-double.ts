@@ -359,6 +359,11 @@ export function boundPiSurface(
 		 * answered only once it settled.
 		 */
 		readonly onRoundEnd?: (delivery: RoundDelivery) => void | Promise<void>;
+		/**
+		 * The work a case drives inside a session delivery, when it must observe a dispatch-scoped
+		 * channel — feedback, for instance — while the dispatch is still open.
+		 */
+		readonly onSession?: (delivery: SessionEventDelivery) => void;
 	} = {},
 ): PiSurface {
 	const handlers = new Map<string, Array<(event: unknown, ctx: PiExtensionContext) => unknown>>();
@@ -499,9 +504,21 @@ export function boundPiSurface(
 					{
 						scope: "session",
 						events: {
-							session_start: delivery => void sessions.push(delivery as SessionEventDelivery),
-							session_end: delivery => void sessions.push(delivery as SessionEventDelivery),
-							session_facts: delivery => void sessions.push(delivery as SessionEventDelivery),
+							session_start: delivery => {
+								const observed = delivery as SessionEventDelivery;
+								sessions.push(observed);
+								options.onSession?.(observed);
+							},
+							session_end: delivery => {
+								const observed = delivery as SessionEventDelivery;
+								sessions.push(observed);
+								options.onSession?.(observed);
+							},
+							session_facts: delivery => {
+								const observed = delivery as SessionEventDelivery;
+								sessions.push(observed);
+								options.onSession?.(observed);
+							},
 							turn_start: delivery => void starts.push(delivery as TurnStartDelivery),
 							turn_end: delivery => void ends.push(delivery as TurnEndDelivery),
 							round_start: delivery => {

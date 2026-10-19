@@ -4,19 +4,21 @@
  *
  * Both channels are outside model context — this is feedback for the operator, never an injected
  * prompt, a conversation entry or tool output — so the framework's own notices (a warning) and an
- * extension's feedback (an `info` or an `error`) travel the same way and differ only in the
- * severity the UI shows. Nothing here decides what to say or when; the framework and the extension
- * do.
+ * extension's feedback (any of the three severities) travel the same actual output and differ only
+ * in the severity the UI shows. Their upper-level responsibilities and lifetimes stay distinct; this
+ * module decides neither what to say nor when.
  */
-import type { FeedbackTransport } from "../../../framework/interface/feedback";
+import type { FeedbackLevel, FeedbackTransport } from "../../../framework/interface/feedback";
 import type { NoticeTransport } from "../../../framework/core/protocol";
 import type { OmpSessionContext } from "../internal/native";
 
 /**
  * Publishes one operator-facing line on the session's own channel: the UI notification
- * when the session has a UI, and one stderr line when it does not.
+ * when the session has a UI, and one stderr line when it does not. Both transports in this
+ * module reach this one function, so the framework notice and extension feedback cannot
+ * drift into two different outputs.
  */
-function publishNotice(ctx: OmpSessionContext, level: "info" | "warning" | "error", message: string): void {
+function publishNotice(ctx: OmpSessionContext, level: FeedbackLevel, message: string): void {
 	if (ctx.hasUI) ctx.ui.notify(message, level);
 	else process.stderr.write(`${message}\n`);
 }

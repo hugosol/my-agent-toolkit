@@ -1,7 +1,10 @@
 /**
  * pi's Extension feedback and framework notices: operator-facing native notifications,
- * with stderr when UI is absent. Marker area effects belong to `marker.ts` and State
- * persistence belongs to `session/effects.ts`; none of these channels enters model context.
+ * with stderr when UI is absent. Both transports below reach the one `publishNotice`
+ * implementation, so the framework notice and extension feedback cannot drift into two
+ * different outputs; their upper-level responsibilities and lifetimes stay distinct.
+ * Marker area effects belong to `marker.ts` and State persistence belongs to
+ * `session/effects.ts`; none of these channels enters model context.
  */
 import type { FeedbackLevel, FeedbackTransport } from "../../../framework/interface/feedback";
 import type { NoticeTransport } from "../../../framework/core/protocol";

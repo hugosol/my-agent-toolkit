@@ -85,6 +85,15 @@ import { resolveStorageRoot } from "./foundation/storage/storage-root";
 export type BaselineSyncOutcome = BaselineSync | { readonly kind: "closed" };
 
 /**
+ * Where a native receipt states its notice before this instance's initialization handed over the
+ * adapter's real channel.
+ *
+ * The harness attaches its native message hook before the first model request, but a receipt that
+ * somehow arrives earlier still has its time recorded; there is simply no operator channel yet.
+ */
+const SILENT_FEEDBACK: FeedbackTransport = { notify: () => {} };
+
+/**
  * The failure classifications of a provider request that really failed, as both provider modules
  * state them: a transport failure or a wait that ran out (`unreachable`), and an answer that carried
  * no usable reading (`unreadable`).
@@ -241,8 +250,14 @@ export interface ModelCostRuntime {
 	 * After this instance's own cleanup nothing is read and nothing is adopted at all.
 	 */
 	synchronize(inputs?: { readonly feedback?: FeedbackTransport }): Promise<BaselineSyncOutcome>;
-	/** Record a terminal result received by a main session, using this process's receipt clock. */
-	subagentResultReceived(sessionId: string, feedback: FeedbackTransport): void | Promise<void>;
+	/**
+	 * Record a terminal result received by a main session, using this process's receipt clock.
+	 *
+	 * A native message hook has no framework delivery of its own, so a notice this receipt has to
+	 * state uses the feedback channel the framework handed this instance at initialization — the
+	 * adapter's actual operator output, never a second UI/stderr implementation.
+	 */
+	subagentResultReceived(sessionId: string): void | Promise<void>;
 }
 
 /**
@@ -491,10 +506,20 @@ export function createModelCostRuntime(inputs: ModelCostRuntimeInputs): ModelCos
 	 */
 	let rootSideStarted = false;
 
+	/**
+	 * The one operator feedback channel this process's native callbacks use.
+	 *
+	 * It is the channel the framework handed the implementation at initialization, mapped by the
+	 * selected adapter through its actual UI/stderr output. A native message hook has no delivery
+	 * of its own, so it reuses this one rather than constructing a second output implementation.
+	 */
+	let operatorFeedback: FeedbackTransport | undefined;
+
 	const initialize = async (delivery: InitializationDelivery): Promise<BaselineLoad> => {
 		// The root-side start is recorded before the preparation is awaited, because what the refresh
 		// above belongs to is this instance's own read of the account rather than the file's readiness.
 		rootSideStarted = true;
+		operatorFeedback = delivery.feedback;
 		const load = await prepare(delivery.feedback);
 		// The CLI's one prefetch of its two provider sources, started at the same instant rather than
 		// one after the other: the DeepSeek balance reading and the Codex allowance windows are asked
@@ -857,10 +882,11 @@ export function createModelCostRuntime(inputs: ModelCostRuntimeInputs): ModelCos
 		},
 		initialize,
 		synchronize,
-		subagentResultReceived(sessionId, feedback) {
+		subagentResultReceived(sessionId) {
 			if (closed) return;
 			// Capture receipt before preparation can wait on disk; it is not the later handler time.
 			const receivedAt = (inputs.now ?? Date.now)();
+			const feedback = operatorFeedback ?? SILENT_FEEDBACK;
 			return account(feedback, () => accounting.subagentResultReceived(sessionId, receivedAt, feedback));
 		},
 	};

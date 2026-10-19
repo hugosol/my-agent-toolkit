@@ -466,9 +466,26 @@ describe("native terminal notifications advance only their receiving main sessio
 });
 
 describe("terminal subagent results advance the main span without another main Turn", () => {
+	test("a receipt with no usable clock time states one error on the initialization feedback channel", async () => {
+		// A native message hook has no delivery of its own: the only operator channel it can use is
+		// the one the framework handed this instance at initialization, which the adapter maps
+		// through the same actual UI/stderr output as every other extension notice.
+		const { runtime, feedback } = await bindAccounting(freshRoot());
+		clock = Number.NaN;
+
+		await runtime.subagentResultReceived(MAIN.sessionId);
+
+		expect(feedback).toEqual([
+			{
+				level: "error",
+				message:
+					"主会话时间采集失败（子代理终止结果接收时刻不是有效时刻：NaN）；本次未记录该时间，已保留上一次有效读数或不可用状态，消费统计、既有提交与其他字段不受影响。",
+			},
+		]);
+	});
+
 	test("each receipt advances an open or idle main session, without consumption, writes or backwards ends", async () => {
 		const { runtime, double, file } = await bindAccounting(freshRoot());
-		const feedback = { notify: () => {} };
 		clock = atBeijing(10);
 		double.deliverUserInput(OWNER, { session: MAIN });
 		deliverEdge(double, MAIN, "round_start");
@@ -479,7 +496,7 @@ describe("terminal subagent results advance the main span without another main T
 
 		for (const minute of [2, 5, 8]) {
 			clock = atBeijing(10, minute);
-			await runtime.subagentResultReceived(MAIN.sessionId, feedback);
+			await runtime.subagentResultReceived(MAIN.sessionId);
 			expect(runtime.view.sessionSpan(MAIN.sessionId)).toEqual({
 				startAt: atBeijing(10), endAt: clock, elapsedMs: minute * 60_000,
 			});
@@ -498,7 +515,7 @@ describe("terminal subagent results advance the main span without another main T
 		const saved = readFileSync(file, "utf8");
 		expect(recordOf(JSON.parse(saved), MAIN.sessionId)?.span).toEqual({ start: atBeijing(10), end: atBeijing(10, 8) });
 		clock = atBeijing(10, 9);
-		await runtime.subagentResultReceived(MAIN.sessionId, feedback);
+		await runtime.subagentResultReceived(MAIN.sessionId);
 		expect(runtime.view.sessionSpan(MAIN.sessionId)?.elapsedMs).toBe(540_000);
 		expect(readFileSync(file, "utf8")).toBe(saved);
 		release();
@@ -513,13 +530,13 @@ describe("terminal subagent results advance the main span without another main T
 			}] } },
 		} satisfies ConsumptionDocument);
 		clock = atBeijing(10, 4);
-		await runtime.subagentResultReceived(MAIN.sessionId, { notify: () => {} });
+		await runtime.subagentResultReceived(MAIN.sessionId);
 		double.deliverTurn(settled(MAIN, atBeijing(10, 3)), { owner: OWNER });
 		expect(runtime.view.sessionSpan(MAIN.sessionId)).toEqual({
 			startAt: atBeijing(10), endAt: atBeijing(10, 5), elapsedMs: 300_000,
 		});
 		clock = atBeijing(10, 8);
-		await runtime.subagentResultReceived(MAIN.sessionId, { notify: () => {} });
+		await runtime.subagentResultReceived(MAIN.sessionId);
 		expect(runtime.view.sessionSpan(MAIN.sessionId)).toEqual({
 			startAt: atBeijing(10), endAt: atBeijing(10, 8), elapsedMs: 480_000,
 		});
@@ -527,18 +544,17 @@ describe("terminal subagent results advance the main span without another main T
 
 	test("a receipt does not invent a first input, and cleanup ignores late receipts", async () => {
 		const { runtime, double } = await bindAccounting(freshRoot());
-		const feedback = { notify: () => {} };
 		clock = atBeijing(10, 2);
-		await runtime.subagentResultReceived(MAIN.sessionId, feedback);
+		await runtime.subagentResultReceived(MAIN.sessionId);
 		expect(runtime.view.sessionSpan(MAIN.sessionId)).toBeUndefined();
 		clock = atBeijing(10, 3);
 		double.deliverUserInput(OWNER, { session: MAIN });
 		clock = atBeijing(10, 5);
-		await runtime.subagentResultReceived(MAIN.sessionId, feedback);
+		await runtime.subagentResultReceived(MAIN.sessionId);
 		expect(runtime.view.sessionSpan(MAIN.sessionId)?.elapsedMs).toBe(120_000);
 		await runtime.implementation.cleanup?.();
 		clock = atBeijing(11);
-		await runtime.subagentResultReceived(MAIN.sessionId, feedback);
+		await runtime.subagentResultReceived(MAIN.sessionId);
 		expect(runtime.view.sessionSpan(MAIN.sessionId)?.endAt).toBe(atBeijing(10, 5));
 	});
 });

@@ -67,12 +67,13 @@ describe("the toggle's feedback goes out on the unified channel (F14)", () => {
 	});
 });
 
-describe("a handler's own notices keep the severity they chose (F10)", () => {
-	test("an implementation's error and info notices reach the operator unchanged, in call order", () => {
+describe("a handler's own notices keep the severity they chose (F10, P31)", () => {
+	test("an implementation's error, warning and info notices reach the operator unchanged, in call order", () => {
 		const double = portDouble();
 		const seenHasUI: boolean[] = [];
 		const notices = [
 			{ level: "error" as const, message: "register rejected: the panel did not answer" },
+			{ level: "warning" as const, message: "the panel answered with one of two writes" },
 			{ level: "info" as const, message: "disconnected from session-1" },
 		];
 		double.bind(feedbackDefinition("directed-feedback"), {
@@ -84,7 +85,7 @@ describe("a handler's own notices keep the severity they chose (F10)", () => {
 		expect(run.feedback).toEqual(notices);
 		// Nothing was added, downgraded or upgraded on the way out: a mixed sequence arrives
 		// in the order it was made in.
-		expect(run.feedback.map(notice => notice.level)).toEqual(["error", "info"]);
+		expect(run.feedback.map(notice => notice.level)).toEqual(["error", "warning", "info"]);
 	});
 });
 
