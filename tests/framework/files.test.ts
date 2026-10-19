@@ -3,13 +3,13 @@
  * document under real coordination, hands it to a business update function and publishes what
  * that function returns.
  *
- * The seam under test is S4, the framework's public safe-file Interface: the call `updateFile`
- * exports through `framework/public.ts`, observed as the document its update function is handed,
- * the value it resolves with, the target's real bytes, and the coordination an independent
- * process really meets. Nothing here is simulated: every case runs on a temporary local directory
- * of its own, cross-process cases drive real child processes through the same public entry, and
- * liveness and death are real processes with real process ids. An in-process lock simulation
- * could not stand in for that, so none is used.
+ * The seam under test is S3, the framework's public safe-file interface: the call `updateFile`
+ * exports through `framework/interface/general/files.ts`, observed as the document its update
+ * function is handed, the value it resolves with, the target's real bytes, and the coordination
+ * an independent process really meets. Nothing here is simulated: every case runs on a temporary
+ * local directory of its own, cross-process cases drive real child processes through the same
+ * public entry, and liveness and death are real processes with real process ids. An in-process
+ * lock simulation could not stand in for that, so none is used.
  *
  * Expected values come from the contract's own terms (the default 15000ms budget, the failure
  * kinds, "readers see a complete old or new document") and from literals and counters written
@@ -22,7 +22,7 @@ import { mkdir, mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises"
 import { tmpdir } from "node:os";
 import * as path from "node:path";
 import { createInterface } from "node:readline";
-import { SafeFileUpdateError, updateFile } from "../../framework/public";
+import { SafeFileUpdateError, updateFile } from "../../framework/interface/general/files";
 
 /** The child entry that performs one update in its own process. */
 const CHILD = path.join(import.meta.dir, "support", "file-update-child.ts");
@@ -174,11 +174,13 @@ describe("the published entry", () => {
 		const root = await isolatedRoot();
 		const absent = failureOf(await outcomeOf(updateFile(path.join(root, "absent", "doc.json"), () => ({}))));
 		expect(absent.kind).toBe("io");
+		expect(absent.detail).toContain(path.join(root, "absent", "doc.json"));
 
 		const relative = failureOf(
 			await outcomeOf(updateFile(path.join("relative", "doc.json"), () => ({}))),
 		);
 		expect(relative.kind).toBe("io");
+		expect(relative.detail).toContain(path.join("relative", "doc.json"));
 	});
 });
 
@@ -222,17 +224,28 @@ describe("one document in one process", () => {
 		const target = path.join(root, "counter.json");
 		await writeFile(target, JSON.stringify({ count: 7 }));
 		const refusal = new Error("the document's period is not this instance's period");
+		const syncRefusal = new Error("the document's schema is not this instance's schema");
 
+		// Both ways an update function can refuse — a synchronous throw and a rejected promise —
+		// reach the caller as that same error object: coordination never wraps a business failure
+		// in its own class.
 		const outcomes = await Promise.all([
 			outcomeOf(updateFile(target, current => ({ count: countOf(current) + 1 }))),
+			outcomeOf(
+				updateFile(target, () => {
+					throw syncRefusal;
+				}),
+			),
 			outcomeOf(updateFile(target, () => Promise.reject(refusal))),
 			outcomeOf(updateFile(target, current => ({ count: countOf(current) + 1 }))),
 		]);
 
 		expect(outcomes[1]!.ok).toBe(false);
-		expect(errorOf(outcomes[1]!)).toBe(refusal);
+		expect(errorOf(outcomes[1]!)).toBe(syncRefusal);
+		expect(outcomes[2]!.ok).toBe(false);
+		expect(errorOf(outcomes[2]!)).toBe(refusal);
 		expect(valueOf(outcomes[0]!)).toEqual({ count: 8 });
-		expect(valueOf(outcomes[2]!)).toEqual({ count: 9 });
+		expect(valueOf(outcomes[3]!)).toEqual({ count: 9 });
 		expect(await documentAt(target)).toEqual({ count: 9 });
 	});
 
@@ -264,6 +277,7 @@ describe("one document in one process", () => {
 		);
 
 		expect(queued.kind).toBe("timeout");
+		expect(queued.detail).toContain(target);
 		expect(late).toEqual([]);
 		finishSlow.resolve();
 		await slow;
@@ -395,6 +409,7 @@ describe("a document another process writes", () => {
 			const waited = Date.now() - started;
 
 			expect(blocked.kind).toBe("timeout");
+			expect(blocked.detail).toContain(target);
 			expect(waited).toBeGreaterThanOrEqual(500);
 			expect(waited).toBeLessThan(3000);
 			expect(late).toEqual([]);
@@ -433,6 +448,7 @@ describe("a document another process writes", () => {
 			const cancelled = failureOf(await outcomeOf(call));
 
 			expect(cancelled.kind).toBe("cancelled");
+			expect(cancelled.detail).toContain(target);
 			expect(Date.now() - started).toBeLessThan(2500);
 			expect(late).toEqual([]);
 			await holder.waitFor("done");
@@ -456,6 +472,8 @@ describe("a document another process writes", () => {
 			await victim.exited;
 			// The holder is really gone; the lock it left behind names a process that no longer exists.
 			expect(fs.existsSync(lockPath)).toBe(true);
+			// It died before publishing, so the reader-visible document is still the complete old one.
+			expect(await documentAt(target)).toEqual({ count: 0 });
 
 			const value = await updateFile(
 				target,
@@ -635,6 +653,7 @@ describe("the target document itself", () => {
 		);
 
 		expect(corrupt.kind).toBe("corrupt");
+		expect(corrupt.detail).toContain(target);
 		expect(seen).toEqual([]);
 		expect(await readFile(target, "utf8")).toBe("{ this is not json");
 

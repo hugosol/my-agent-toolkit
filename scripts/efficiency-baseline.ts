@@ -91,7 +91,7 @@ import { uiBoundaryTimerOf } from "../tests/model-cost/support/ui-timer";
 import { MODEL_COST } from "../extensions/model-cost/definition";
 import { releasingFrontendOnCleanup } from "../extensions/model-cost/harnesses/omp";
 import { MODEL_COST_WIDGET_KEY, attachModelCostWidget } from "../extensions/model-cost/harnesses/omp/widget";
-import { updateFile } from "../framework/modules/files";
+import { updateFile } from "../framework/interface/general/files";
 import { createModelCostRuntime, type ModelCostRuntime } from "../extensions/model-cost/shared-logic/runtime";
 import type { OmpSessionContext } from "../adapters/omp";
 import type { ConsumptionDocument, SessionRecord, TokenBuckets } from "../extensions/model-cost/shared-logic/foundation/session/consumption-document"

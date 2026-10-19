@@ -1,14 +1,14 @@
 /**
- * The framework's general safe-file module: the one coordinated read-modify-publish shared logic
- * imports directly, instead of every extension carrying its own locking, queueing and atomic
- * publication.
+ * The general safe-file module's implementation: the one coordinated read-modify-publish call
+ * behind the extension-facing entry
+ * [`framework/interface/general/files.ts`](../interface/general/files.ts).
  *
  * It is harness-independent and delivery-free: an extension's shared logic imports `updateFile`
- * through the framework's public entry, and a suite drives it over real files rather than
- * receiving a file capability through a command or event delivery. What makes it more than a
- * rename of the platform's write is what it owns: the in-process queue per document, the
- * cross-process lock, the re-read inside that lock, the atomic publication, and the wait budget
- * that bounds the first two.
+ * through that interface entry, and a suite drives it over real files rather than receiving a
+ * file capability through a command or event delivery. What makes it more than a rename of the
+ * platform's write is what it owns: the in-process queue per document, the cross-process lock,
+ * the re-read inside that lock, the atomic publication, and the wait budget that bounds the first
+ * two.
  *
  * The shape is deliberately small — one asynchronous entry — and the meaning fixed:
  *
@@ -78,44 +78,11 @@
 import * as fs from "node:fs/promises";
 import { basename, dirname, isAbsolute, join } from "node:path";
 import { describeValue, isScheduledWait, SCHEDULED_WAIT_TEXT } from "../core/config";
-
-/** Why a call did not get as far as publishing a document. */
-export type SafeFileUpdateFailureKind = "timeout" | "cancelled" | "io" | "corrupt";
-
-/**
- * One failure of the framework's file coordination, as the caller observes it.
- *
- * `timeout` is a wait budget that ran out before coordination was acquired; `cancelled` is a
- * caller's own abort during that wait; `io` is a file the module could not read, create, replace
- * or lock, or a call it could not start at all (a target that is not an absolute path, a budget
- * that is not a wait this framework schedules); `corrupt` is an existing target whose text is not
- * a JSON document. None of them is a business decision — an update function that refuses rejects
- * with its own error, which reaches the caller unchanged — and none of them is retried.
- */
-export class SafeFileUpdateError extends Error {
-	readonly kind: SafeFileUpdateFailureKind;
-	readonly detail: string;
-
-	constructor(kind: SafeFileUpdateFailureKind, detail: string) {
-		super(detail);
-		this.name = "SafeFileUpdateError";
-		this.kind = kind;
-		this.detail = detail;
-	}
-}
-
-/** What one update declares beyond its target and its update function. */
-export interface SafeFileUpdateOptions {
-	/**
-	 * The whole wait budget, in milliseconds: in-process queueing plus cross-process lock
-	 * acquisition. Omitted takes the default {@link DEFAULT_WAIT_MS}. A declared budget must be a
-	 * whole number of milliseconds this harness's timer schedules; an illegal one is refused
-	 * rather than replaced.
-	 */
-	readonly timeoutMs?: number;
-	/** Aborts the *wait*: the call fails as cancelled and never writes afterwards. Ignored once the update has begun. */
-	readonly signal?: AbortSignal;
-}
+import {
+	SafeFileUpdateError,
+	type SafeFileUpdateFailureKind,
+	type SafeFileUpdateOptions,
+} from "../interface/general/files-contract";
 
 /** The wait a call with no declared budget gets: in-process queueing plus lock acquisition. */
 const DEFAULT_WAIT_MS = 15000;
