@@ -16,7 +16,8 @@ import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
 import type { OmpExtensionApi, OmpSessionContext } from "../../adapters/omp";
-import type { OwnerReference, SessionFacts } from "../../framework/core/protocol";
+import type { OwnerReference } from "../../framework/interface/state";
+import type { SessionFacts } from "../../framework/interface/session";
 import { MODEL_COST } from "../../extensions/model-cost/definition";
 import {
 	type WidgetTheme,
@@ -33,7 +34,8 @@ import { uiBoundaryTimerOf } from "../../tests/model-cost/support/ui-timer";
 
 export const HARNESS = "smoke-harness";
 export const CONSUMPTION_FILE = "consumption.json";
-export const OWNER: OwnerReference = { kind: "owner", key: "main:detail-layout-smoke" };
+const OWNER_KEY = "main:detail-layout-smoke";
+export const OWNER: OwnerReference = { kind: "owner", key: OWNER_KEY };
 export const MAIN: SessionFacts = { sessionId: "session-main", kind: "main", name: "主会话", unavailable: [] };
 export const MAIN_TARGET = { sessionId: "session-main", provider: "deepseek", model: "deepseek-flash" } as const;
 
@@ -240,12 +242,13 @@ export async function bindDetailLayout(): Promise<FixtureRun> {
 	let runtime: ModelCostRuntime | undefined;
 	double.bind(MODEL_COST, {
 		config: { reader: () => `storageDir: ${root}\nbalanceTtlMs: 30000\ncodexQuotaTtlMs: 15000\n` },
-		factory: () =>
+		factory: context =>
 			(runtime = createModelCostRuntime({
 				config: { storageDir: root },
 				configDirectory: root,
 				userHomeDirectory: root,
 				harness: HARNESS,
+				session: context.session,
 				data: MODEL_PRICING_DATA,
 			})).implementation,
 	});
@@ -256,10 +259,9 @@ export async function bindDetailLayout(): Promise<FixtureRun> {
 	const built = runtime as ModelCostRuntime;
 	// One descendant's own context reading, as its binding publishes it, and one session nothing
 	// reported one for: the pair a group has to keep in line.
-	built.sessionObservations.observeContext("session-pricing-check", {
-		tokens: 225_000,
-		provider: "deepseek",
-		model: "deepseek-flash",
+	double.deliverContext({ kind: "inherited", key: OWNER_KEY }, {
+		session: { sessionId: "session-pricing-check", kind: "sub", parentSessionId: "session-pricing", unavailable: [] },
+		reading: { tokens: 225_000, provider: "deepseek", model: "deepseek-flash" },
 	});
 	const host = recordingHost();
 	const { api, fire } = controlApi();

@@ -33,8 +33,9 @@ import { createModelCostRuntime } from "../../../extensions/model-cost/shared-lo
 import type { OmpExtensionApi, OmpSessionContext } from "../../../adapters/omp";
 import * as frameworkOmp from "../../../adapters/omp";
 import { piAdapter } from "../../../adapters/pi";
-import type { OwnerReference, SessionFacts } from "../../../framework/core/protocol";
-import { defineExtension, type ExtensionDefinition, type SessionContextDelivery } from "../../../framework/public";
+import type { SessionContextDelivery, SessionFacts } from "../../../framework/interface/session";
+import type { OwnerReference } from "../../../framework/interface/state";
+import { defineExtension, type ExtensionDefinition } from "../../../framework/public";
 import { type PortDouble, portDouble } from "../../framework/support/harness-port-double";
 import { boundPiSurface, type PiSurfaceSession } from "../../framework/support/pi-surface-double";
 import { controlledPiSurface, type ControlledPiSurface, type HostSession } from "../support/pi-host";
@@ -178,7 +179,7 @@ describe("publication follows the events, and a repeated reading is not one (P14
 		reading(1000);
 		await Promise.resolve();
 		expect(notified).toBe(1);
-		expect(bound.runtime.sessionObservations.read(MAIN.sessionId)?.context?.tokens).toBe(1000);
+		expect(bound.double.observations.read(MAIN.sessionId)?.context?.tokens).toBe(1000);
 
 		// The same count again, twice, in one turn and in the next: the framework records no reading and
 		// delivers none, so nothing is published and nothing is drawn.
@@ -269,7 +270,7 @@ describe("a quiet process publishes nothing and arranges no repeated wait (P14)"
 
 		expect(bound.host.handOvers().length).toBe(handOvers);
 		expect(notified).toBe(published);
-		expect(bound.runtime.sessionObservations.read(MAIN.sessionId)?.context?.tokens).toBe(2000);
+		expect(bound.double.observations.read(MAIN.sessionId)?.context?.tokens).toBe(2000);
 	});
 });
 
@@ -302,7 +303,7 @@ async function bindRuntime(options: { readonly withFrontend?: boolean } = {}): P
 				harness: HARNESS,
 				data: DATA,
 				now: () => CLOCK_AT,
-				sessionObservations: context.sessionObservations,
+				session: context.session,
 			});
 			return runtime.implementation;
 		},

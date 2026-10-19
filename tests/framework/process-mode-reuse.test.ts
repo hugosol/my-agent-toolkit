@@ -29,13 +29,13 @@ import * as path from "node:path";
 import type { OmpExtensionApi, OmpSessionContext } from "../../adapters/omp";
 import * as frameworkOmp from "../../adapters/omp";
 import type { ExtensionFactory } from "../../framework/core/assembly";
-import type { SessionObservations } from "../../framework/core/observations";
 import type {
-	ObservedSession,
-	OwnerReference,
 	SessionContextDelivery,
 	SessionFacts,
-} from "../../framework/core/protocol";
+	SessionObservationReader,
+} from "../../framework/interface/session";
+import type { OwnerReference } from "../../framework/interface/state";
+import type { ObservedSession } from "../../framework/core/protocol";
 import { type ExtensionDefinition, defineExtension } from "../../framework/public";
 import { createObservationDeliverer, createOwnerAccessPublisher } from "../../framework/modules/local-access";
 import { portDouble } from "./support/harness-port-double";
@@ -64,7 +64,7 @@ const GIVEN_CONTEXT = { tokens: 12_345, provider: "official", model: "model-alph
  */
 function observingProbe(): {
 	readonly factory: ExtensionFactory;
-	readonly observations: () => SessionObservations;
+	readonly observations: () => SessionObservationReader;
 	readonly activity: ObservedSession[];
 	readonly context: SessionContextDelivery[];
 	/** Settles on the first context delivery to reach this extension's group. */
@@ -73,7 +73,7 @@ function observingProbe(): {
 	const activity: ObservedSession[] = [];
 	const context: SessionContextDelivery[] = [];
 	const delivered = Promise.withResolvers<void>();
-	let handed: SessionObservations | undefined;
+	let handed: SessionObservationReader | undefined;
 	return {
 		activity,
 		context,
@@ -83,7 +83,7 @@ function observingProbe(): {
 			return handed;
 		},
 		factory: implementation => {
-			handed = implementation.sessionObservations;
+			handed = implementation.session.observations;
 			return {
 				subscriptions: [
 					{
@@ -330,7 +330,7 @@ describe("both actual adapters map their own facts onto the same common observat
 		pi.messageEnds(piView, { role: "assistant", stopReason: "stop" });
 
 		const ompReading = ompProbe.observations().read(MAIN.sessionId);
-		const piReading = pi.implemented().sessionObservations.read(MAIN.sessionId);
+		const piReading = pi.implemented().session.observations.read(MAIN.sessionId);
 
 		// The common meaning: the activity and the context reading are equal, although each adapter
 		// mapped a different native vocabulary onto them.

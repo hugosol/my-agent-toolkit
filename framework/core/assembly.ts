@@ -22,18 +22,16 @@
  * Creation is not an effect: neither the factory nor returning an implementation may send a
  * remote request or start a timer, because a definition can still be refused afterwards.
  */
+import type { FeedbackTransport } from "../interface/feedback";
+import type { CatalogPriceSource, ProviderAccess } from "../interface/host-facts";
+import type { SessionCapability, SubscriptionGroup } from "../interface/session";
+import type { OwnerReference } from "../interface/state";
 import type { DeclarableRequiredSemantic } from "./requirements";
-import type { SessionObservations } from "./observations";
 import type {
 	ActionDelivery,
-	CatalogPriceSource,
 	DirectedCommandImplementation,
-	FeedbackTransport,
 	MarkerTransport,
-	OwnerReference,
-	ProviderAccess,
 	SubagentIntegration,
-	SubscriptionGroup,
 } from "./protocol";
 
 /**
@@ -93,20 +91,17 @@ export type CommandImplementations = Readonly<Record<string, CommandImplementati
  * harness itself prices composes it with its own maintained data (see
  * {@link CatalogPriceSource}); a harness that states no prices hands over no such fact.
  *
- * `sessionObservations` is the framework's own source of session observations for this process:
- * each observed session's activity and its latest context reading, collected by the adapter's own
- * hooks and moved by the framework's own Round bookkeeping. It is always present — it is the
- * framework's record rather than a harness capability — and it is what an extension reads for the
- * readings that arrived before it attached, including the ones collected while it was not bound.
- * Reading it is a read of the framework's common interface; an extension never subscribes to a
- * harness's native context events for itself.
+ * `session` is the framework's Session capability for this process: the live read surface an
+ * extension attaches to for the readings that arrived before it, including the ones collected while
+ * it was not bound, and the one statement it may make about its own sessions. It is always present
+ * because it is the framework's own record rather than a harness capability.
  *
- * `recordSessionCommit` is the one thing an extension *states* through it, and the only fact here the
- * extension is the sole party able to state: that a write of one of this process's sessions really
- * landed in the storage another process also reads. It is a statement rather than a write path — what
- * it takes is a session id and what it carries is that a write was confirmed, never what was written
- * — and the framework does the rest: the count is recorded in this process's own source and the notice
- * crosses to the process serving that session's owner.
+ * The read surface hands out isolated copies: changing a value a read returned never changes the
+ * framework's authoritative record or a later read. The statement takes a session id and says only
+ * that a write really landed — never what was written — and the framework records the count in this
+ * process's own source and hands the notice to the process serving that session's owner. A session
+ * id this process holds no facts for records nothing. The caller must call it only after a write
+ * was really confirmed, because nothing here can tell a confirmed write from a failed one.
  */
 export interface ImplementationContext {
 	readonly config: Readonly<Record<string, unknown>>;
@@ -120,29 +115,8 @@ export interface ImplementationContext {
 	 * that resolves no such access hands over no member at all.
 	 */
 	readonly providerAccess?: ProviderAccess;
-	/** The process's one source of session observations, as the framework collected them (see above). */
-	readonly sessionObservations: SessionObservations;
-	/**
-	 * Records one confirmed write of one of this process's sessions, as that session's own process is the
-	 * only party that can state it.
-	 *
-	 * A session's own process is where its writes are really confirmed — it is the process that read the
-	 * document, built the write and saw it land — so an extension whose sessions share a storage root
-	 * with the process serving their owner calls this once per write it confirmed. The framework records
-	 * a count against that session in this process's own observation source and hands the notice over to
-	 * the process serving the owner the session follows; a session this process serves itself, and one
-	 * whose owner it cannot name, are recorded here and handed to nobody, because their owner's process
-	 * is this one.
-	 *
-	 * What the caller states is *that* a write landed, never what it wrote: no value, no document, no
-	 * figure and no path crosses here, and a call is not a notification of anything the framework
-	 * accounts. A session id this process holds no facts for records nothing: a notice with no identity
-	 * has nowhere to be placed.
-	 *
-	 * The caller is responsible for calling this only after a write was really confirmed — a failed or
-	 * refused write is not a confirmed one — because nothing here can tell the two apart.
-	 */
-	readonly recordSessionCommit: (sessionId: string) => void;
+	/** The process's Session capability: the live read surface and the confirmed-write statement. */
+	readonly session: SessionCapability;
 }
 
 /**

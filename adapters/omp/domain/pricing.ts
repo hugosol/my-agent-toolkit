@@ -11,7 +11,7 @@
  * The query is created once per assembly, because the catalog is the process's; each binding
  * reports the contexts its own deliveries came from through `saw`.
  */
-import type { CatalogPrice, CatalogPriceSource } from "../../../framework/core/protocol";
+import type { CatalogPrice, CatalogPriceSource } from "../../../framework/interface/host-facts";
 import type { OmpSessionContext } from "../internal/native";
 
 /**

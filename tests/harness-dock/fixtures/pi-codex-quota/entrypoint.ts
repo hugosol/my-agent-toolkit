@@ -194,6 +194,7 @@ export default function piCodexQuotaProbe(pi: PiExtensionApi): void {
 				configDirectory: CONFIG_DIRECTORY,
 				userHomeDirectory: homedir(),
 				harness: MODEL_COST_HARNESS,
+				session: context.session,
 				httpRequest: accountRequest,
 				...(context.providerAccess === undefined ? {} : { providerAccess: context.providerAccess }),
 			});

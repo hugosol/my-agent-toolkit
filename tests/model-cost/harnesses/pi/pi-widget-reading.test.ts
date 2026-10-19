@@ -20,6 +20,7 @@ import { MODEL_COST_WIDGET_KEY, attachModelCostWidget } from "../../../../extens
 import type { ModelPricingData } from "../../../../extensions/model-cost/shared-logic/business/pricing/model-data";
 import { createModelCostRuntime } from "../../../../extensions/model-cost/shared-logic/runtime";
 import { uiBoundaryTimerOf } from "../../support/ui-timer";
+import { testSessionCapability } from "../../support/session-capability";
 
 /** The self-made pricing data: the official pair the frontend's target runs on, priced monetarily. */
 const DATA: ModelPricingData = {
@@ -136,6 +137,7 @@ function attachedFrontend(): ControlledPiHost {
 		userHomeDirectory: root,
 		harness: "pi-widget-probe",
 		data: DATA,
+		session: testSessionCapability(),
 		now: () => CLOCK_AT,
 	});
 	const host = controlledPiHost();

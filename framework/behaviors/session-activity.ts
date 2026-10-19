@@ -29,7 +29,7 @@ import type {
 	RoundEvent,
 	SessionActivityObservation,
 	SubscriptionGroup,
-} from "../core/protocol";
+} from "../interface/session";
 import { dispatchToGroups } from "./subscriptions";
 
 /**

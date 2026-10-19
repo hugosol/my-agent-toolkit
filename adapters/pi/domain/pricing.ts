@@ -9,7 +9,7 @@
  * context was reported answers nothing rather than a guess, and what leaves this module is that
  * plain query — never a native model or registry.
  */
-import type { CatalogPrice, CatalogPriceSource } from "../../../framework/core/protocol";
+import type { CatalogPrice, CatalogPriceSource } from "../../../framework/interface/host-facts";
 import type { PiExtensionContext, PiModelRegistry } from "../internal/native";
 
 /**

@@ -23,7 +23,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "bun:test";
 import * as path from "node:path";
 import { CODEBASE_TOOLS } from "../../extensions/codebase-tools/definition";
 import type { FollowedAccessPolicy, FollowedAccessReader } from "../../framework/core/followed-owners";
-import type { OwnerCapabilityHandle } from "../../framework/core/protocol";
+import type { OwnerCapabilityHandle } from "../../framework/interface/state";
 import {
 	LocalAccessUnavailableError,
 	localOwnerAccess,

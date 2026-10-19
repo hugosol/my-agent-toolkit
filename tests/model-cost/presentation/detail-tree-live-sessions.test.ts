@@ -32,7 +32,9 @@ import {
 } from "../../../extensions/model-cost/shared-logic/presentation/display";
 import type { ModelCostRuntime } from "../../../extensions/model-cost/shared-logic/runtime";
 import { createModelCostRuntime } from "../../../extensions/model-cost/shared-logic/runtime";
-import type { ObservedSession, OwnerReference, SessionFacts } from "../../../framework/core/protocol";
+import type { SessionFacts } from "../../../framework/interface/session";
+import type { OwnerReference } from "../../../framework/interface/state";
+import type { ObservedSession } from "../../../framework/core/protocol";
 import { type PortDouble, portDouble } from "../../framework/support/harness-port-double";
 import { controlApi } from "../support/control-api";
 import { uiBoundaryTimerOf } from "../support/ui-timer";
@@ -156,9 +158,9 @@ async function bind(options: { readonly document?: ConsumptionDocument } = {}): 
 				userHomeDirectory: root,
 				harness: HARNESS,
 				data: DATA,
-				// The process's own source, as the production assemblies hand it over: a reading another
+				// The Session capability, as the production assemblies receive it: a reading another
 				// process delivered is adopted into *this* record, and the extension reads it there.
-				sessionObservations: context.sessionObservations,
+				session: context.session,
 			})).implementation,
 	});
 	double.deliverSession(OWNER, { session: MAIN });
@@ -240,8 +242,8 @@ describe("a descendant another process ran is drawn where its own direct parent 
 		// The readings really reached this process's own observation source — the seat this process
 		// serves admitted them, with the facts and the context their own process resolved — so what the
 		// tree itself draws below is the question, not whether anything arrived at all.
-		expect(bound.runtime.sessionObservations.read(CHILD.sessionId)?.context?.tokens).toBe(1000);
-		expect(bound.runtime.sessionObservations.read(GRANDCHILD.sessionId)?.session?.parentSessionId).toBe(
+		expect(bound.double.observations.read(CHILD.sessionId)?.context?.tokens).toBe(1000);
+		expect(bound.double.observations.read(GRANDCHILD.sessionId)?.session?.parentSessionId).toBe(
 			CHILD.sessionId,
 		);
 

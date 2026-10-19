@@ -25,8 +25,9 @@ import { afterEach, describe, expect, test, vi } from "bun:test";
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
-import type { SessionObservations } from "../../framework/core/observations";
-import type { ObservedSession, OwnerReference, SessionFacts } from "../../framework/core/protocol";
+import type { SessionFacts, SessionObservationReader } from "../../framework/interface/session";
+import type { OwnerReference } from "../../framework/interface/state";
+import type { ObservedSession } from "../../framework/core/protocol";
 import { StateStore } from "../../framework/core/state";
 import { SubagentAccess } from "../../framework/core/subagent-access";
 import {
@@ -324,10 +325,10 @@ describe("a field that declares no follow is observed all the same (P23)", () =>
 			},
 		});
 		// The extension's own half: what a consumer of this process's observations reads.
-		let source: SessionObservations | undefined;
+		let source: SessionObservationReader | undefined;
 		following.bind(PLAIN_PROBE, {
 			factory: context => {
-				source = context.sessionObservations;
+				source = context.session.observations;
 				return {};
 			},
 		});

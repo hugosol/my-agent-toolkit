@@ -13,7 +13,8 @@
  * framework's control behavior.
  */
 import type { ExtensionDefinition } from "../../../framework/core/definition";
-import type { HarnessPort, OwnerReference } from "../../../framework/core/protocol";
+import type { OwnerReference } from "../../../framework/interface/state";
+import type { HarnessPort } from "../../../framework/core/protocol";
 import { observeSessionContext } from "../domain/context/events";
 import { createContextTracker } from "../domain/context/queries";
 import { registerControl } from "../domain/control";

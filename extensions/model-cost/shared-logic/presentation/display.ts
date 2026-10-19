@@ -61,7 +61,7 @@
  *   not zero — while one of the two windows is unreadable, and while the measurement has learned
  *   nothing yet it reads `estimating…` rather than looking like an exhausted allowance.
  */
-import type { CatalogPrice } from "../../../../framework/core/protocol";
+import type { CatalogPrice } from "../../../../framework/interface/host-facts";
 import type { CodexEstimate } from "../business/allowance/codex-estimate";
 import { remainingBudget } from "../business/allowance/codex-estimate";
 import type {
@@ -86,7 +86,7 @@ import type { SessionSpanReading } from "../foundation/session/session-span";
 import type { DisplayForm, DisplayPreference } from "./display-preference";
 import {
 	type ConsumptionMode,
-	type SessionContextReading,
+	type SessionContextReader,
 	contextBudgetOf,
 } from "../business/context/session-context";
 import type { SessionActivityReading } from "../foundation/session/session-activity";
@@ -496,7 +496,7 @@ export interface PresentationInputs {
 	 * The process's per-session context readings, as each session's own binding published them: what a
 	 * descendant session row shows. A session no binding reported reads as nothing, never as zero.
 	 */
-	readonly sessionContext: SessionContextReading;
+	readonly sessionContext: SessionContextReader;
 	/**
 	 * The process's per-session activity readings, as the framework's own Round edges moved them: which
 	 * descendant session rows carry the working emphasis. A session no edge has moved reads as nothing,

@@ -15,14 +15,10 @@ import type { StatePersistence } from "./definition";
 import { SubagentAccess } from "./subagent-access";
 import { OwnerLives } from "./owner-lives";
 import type { OwnerAccessSource } from "../modules/local-access";
-import type {
-	DeclaredValueSeam,
-	FeedbackTransport,
-	OwnerCapabilityHandle,
-	OwnerReference,
-	SessionEvent,
-	StateValues,
-} from "./protocol";
+import type { FeedbackTransport } from "../interface/feedback";
+import type { SessionEvent } from "../interface/session";
+import type { DeclaredValueSeam, OwnerCapabilityHandle, OwnerReference } from "../interface/state";
+import type { StateValues } from "./protocol";
 
 /** The State values v1 holds: the declared boolean activation field. */
 export type StateValue = boolean;

@@ -40,8 +40,11 @@ import type {
 import type { ModelPricingData } from "../../../../extensions/model-cost/shared-logic/business/pricing/model-data";
 import { type ModelCostRuntime, createModelCostRuntime } from "../../../../extensions/model-cost/shared-logic/runtime";
 import { totalText } from "../../../../extensions/model-cost/shared-logic/presentation/display";
-import type { OwnerReference, SessionFacts, TurnOutcome, TurnSignal, TurnUsage } from "../../../../framework/core/protocol";
+import type { SessionFacts, TurnOutcome, TurnUsage } from "../../../../framework/interface/session";
+import type { OwnerReference } from "../../../../framework/interface/state";
+import type { TurnSignal } from "../../../../framework/core/protocol";
 import { type PortDouble, portDouble } from "../../../framework/support/harness-port-double";
+import { type TestSessionCapability, testSessionCapability } from "../../support/session-capability";
 
 const BEIJING_OFFSET_MS = 8 * 60 * 60 * 1000;
 
@@ -166,6 +169,8 @@ interface BoundAccounting {
 	readonly runtime: ModelCostRuntime;
 	readonly double: PortDouble;
 	readonly file: string;
+	/** The Session capability this instance consumes, and the write side this case drives readings through. */
+	readonly session: TestSessionCapability;
 	/**
 	 * The feedback the bound session's own deliveries carried, which is where the one-time
 	 * initialization's notices land (the framework publishes the initialization on the session
@@ -184,6 +189,7 @@ interface BoundAccounting {
 async function bindAccounting(root: string, baseline?: unknown): Promise<BoundAccounting> {
 	const file = path.join(root, CONSUMPTION_FILE);
 	if (baseline !== undefined) writeFileSync(file, typeof baseline === "string" ? baseline : JSON.stringify(baseline), "utf8");
+	const sessionCapability = testSessionCapability();
 	const runtime = createModelCostRuntime({
 		config: { storageDir: root },
 		configDirectory: root,
@@ -191,6 +197,7 @@ async function bindAccounting(root: string, baseline?: unknown): Promise<BoundAc
 		harness: HARNESS,
 		data: DATA,
 		now: () => clock,
+		session: sessionCapability,
 	});
 	const double = portDouble();
 	double.bind(MODEL_COST, {
@@ -201,7 +208,7 @@ async function bindAccounting(root: string, baseline?: unknown): Promise<BoundAc
 	});
 	const session = double.deliverSession(OWNER, { session: MAIN });
 	await double.initiateRun(OWNER);
-	return { runtime, double, file, feedback: session.feedback };
+	return { runtime, double, file, session: sessionCapability, feedback: session.feedback };
 }
 
 /**
@@ -408,10 +415,10 @@ describe("a fork starts from its own first new input (P3)", () => {
 describe("native terminal notifications advance only their receiving main session", () => {
 	for (const harness of ["omp", "pi"] as const) {
 		test(`${harness}: each delivered result advances the span, but progress and descendant-side results do not`, async () => {
-			const { runtime, double, file } = await bindAccounting(freshRoot());
+			const { runtime, double, file, session } = await bindAccounting(freshRoot());
 			const child: SessionFacts = { sessionId: "nested-parent", kind: "sub", parentSessionId: MAIN.sessionId, unavailable: [] };
-			runtime.sessionObservations.sawSession(MAIN, OWNER);
-			runtime.sessionObservations.sawSession(child, OWNER);
+			session.sawSession(MAIN, OWNER);
+			session.sawSession(child, OWNER);
 			clock = atBeijing(10);
 			double.deliverUserInput(OWNER, { session: MAIN });
 			deliverTurnEndingAt(double, MAIN, atBeijing(10, 1));
@@ -422,7 +429,7 @@ describe("native terminal notifications advance only their receiving main sessio
 			} };
 			const release = harness === "omp"
 				? observeOmpSubagentResults(api as unknown as OmpExtensionApi, runtime)
-				: observePiSubagentResults(api as unknown as PiExtensionApi, runtime);
+				: observePiSubagentResults(api as unknown as PiExtensionApi, runtime, session.observations);
 			const context = (session: SessionFacts) => ({
 				agent: { kind: session.kind },
 				sessionManager: { getSessionId: () => session.sessionId },

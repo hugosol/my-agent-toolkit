@@ -13,7 +13,8 @@
  */
 import { piSpawnedRelationsOf, type PiAnchorReader } from "../subagent/queries";
 import type { ExtensionDefinition } from "../../../../framework/core/definition";
-import type { OwnerReference, SessionFacts, SessionStartReason, SessionStartup } from "../../../../framework/core/protocol";
+import type { SessionFacts, SessionStartReason, SessionStartup } from "../../../../framework/interface/session";
+import type { OwnerReference } from "../../../../framework/interface/state";
 import type { PiExtensionContext, PiSessionHeader } from "../../internal/native";
 
 /**

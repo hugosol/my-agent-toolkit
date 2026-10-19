@@ -16,16 +16,16 @@
  */
 import { describe, expect, test } from "bun:test";
 import { CODEBASE_TOOLS } from "../../extensions/codebase-tools/definition";
+import type { CatalogPrice } from "../../framework/interface/host-facts";
 import type {
-	CatalogPrice,
-	OwnerReference,
 	SessionFacts,
 	SubscriptionGroup,
 	TurnEndDelivery,
-	TurnSignal,
 	TurnStartDelivery,
 	TurnUsage,
-} from "../../framework/core/protocol";
+} from "../../framework/interface/session";
+import type { OwnerReference } from "../../framework/interface/state";
+import type { TurnSignal } from "../../framework/core/protocol";
 import type { ExtensionDefinition } from "../../framework/public";
 import { type PortDouble, portDouble } from "./support/harness-port-double";
 

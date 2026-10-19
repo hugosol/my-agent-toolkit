@@ -29,7 +29,8 @@
  * adapter supplied, and it names no native API.
  */
 import type { ExtensionDefinition } from "../core/definition";
-import type { HarnessPort, MarkerTransport, OwnerReference, RunDelivery } from "../core/protocol";
+import type { OwnerReference } from "../interface/state";
+import type { HarnessPort, MarkerTransport, RunDelivery } from "../core/protocol";
 import type { StateStore } from "../core/state";
 import { stateValueFor } from "./state-scope";
 

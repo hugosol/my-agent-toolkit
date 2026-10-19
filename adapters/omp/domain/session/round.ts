@@ -11,7 +11,8 @@
  * activity was cancelled or failed, and its late reads say whether the session's own work has
  * unwound and whether anything beyond the run still holds it.
  */
-import type { HarnessPort, RoundObservation, RoundSignal, TurnOutcome } from "../../../../framework/core/protocol";
+import type { TurnOutcome } from "../../../../framework/interface/session";
+import type { HarnessPort, RoundObservation, RoundSignal } from "../../../../framework/core/protocol";
 import type { OmpExtensionApi, OmpSessionContext } from "../../internal/native";
 import { outcomeOf } from "./turn";
 

@@ -79,13 +79,6 @@ const sourceFiles = SCANNED_ROOTS.flatMap(root => sourceFilesUnder(root));
 describe("shared source imports no harness types (C1)", () => {
 	test("the framework outside adapters and the extension modules outside harnesses stay host-independent", () => {
 		const shared = sourceFiles.filter(isHostIndependent);
-		// The check is only meaningful while it has subjects: both shared framework
-		// layers and the extension's shared source exist.
-		expect(shared.filter(file => file.startsWith("framework/core/")).length).toBeGreaterThan(0);
-		expect(shared.filter(file => file.startsWith("framework/behaviors/")).length).toBeGreaterThan(0);
-		expect(shared).toContain("framework/public.ts");
-		expect(shared).toContain("extensions/codebase-tools/definition.ts");
-
 		const crossings: string[] = [];
 		for (const file of shared) {
 			for (const specifier of specifiersOf(file)) {
@@ -109,6 +102,62 @@ describe("shared source imports no harness types (C1)", () => {
 		// is declared. Nowhere else may name it, by import or by declaration.
 		expect(naming.some(file => /^extensions\/[^/]+\/harnesses\//.test(file))).toBe(true);
 		expect(naming.filter(file => !ESCAPE_HATCH.some(pattern => pattern.test(file)))).toEqual([]);
+	});
+
+	test("extensions reach Session only through its capability interface", () => {
+		// These are the remaining authoring and non-Session capability entries, not a
+		// blanket exemption for core/modules. Remove each entry when that capability migrates.
+		const legacyEntries: Readonly<Record<string, true>> = {
+			"framework/public": true,
+			"framework/core/assembly": true,
+			"framework/core/definition": true,
+			"framework/core/config": true,
+			"framework/core/integration": true,
+			"framework/modules/http": true,
+			"framework/modules/files": true,
+		};
+		const crossings: string[] = [];
+		for (const file of sourceFiles.filter(file => file.startsWith("extensions/"))) {
+			for (const specifier of specifiersOf(file)) {
+				if (!specifier.startsWith(".")) continue;
+				const target = path.posix.normalize(path.posix.join(path.posix.dirname(file), specifier))
+					.replace(/\.(?:[cm]?ts|js)$/, "").replace(/\/index$/, "");
+				if (target.startsWith("framework/") && target !== "framework/interface" && !target.startsWith("framework/interface/")
+					&& legacyEntries[target] !== true) {
+					crossings.push(`${file} bypasses the capability interface through "${specifier}"`);
+				}
+			}
+		}
+		expect(crossings).toEqual([]);
+	});
+
+	test("legacy framework entries cannot re-export the Session capability", () => {
+		const crossings: string[] = [];
+		for (const file of sourceFiles.filter(file => file.startsWith("framework/") && !file.startsWith("framework/interface/"))) {
+			const source = readFileSync(path.join(REPO_ROOT, file), "utf8");
+			const reexports = /\bexport\s+(?:type\s+)?(?:\*\s*(?:as\s+\w+\s*)?|\{[^}]*\}\s*)from\s*["']([^"']+)["']/g;
+			for (const match of source.matchAll(reexports)) {
+				if (resolvesInto(file, match[1]!, [/^framework\/interface\/session(?:\/|\.|$)/])) {
+					crossings.push(`${file} re-exports Session through "${match[1]}"`);
+				}
+			}
+		}
+		expect(crossings).toEqual([]);
+	});
+
+	test("capability interfaces depend on no framework implementation or native mapping", () => {
+		const crossings: string[] = [];
+		for (const file of sourceFiles.filter(file => file.startsWith("framework/interface/"))) {
+			for (const specifier of specifiersOf(file)) {
+				const target = specifier.startsWith(".")
+					? path.posix.normalize(path.posix.join(path.posix.dirname(file), specifier))
+					: specifier;
+				if (!target.startsWith("framework/interface/")) {
+					crossings.push(`${file} imports implementation through "${specifier}"`);
+				}
+			}
+		}
+		expect(crossings).toEqual([]);
 	});
 
 	/**

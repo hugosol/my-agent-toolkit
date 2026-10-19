@@ -33,7 +33,7 @@ import type {
 import type { SessionActivity, SessionActivityReading } from "../../foundation/session/session-activity";
 import {
 	type ContextUsage,
-	type SessionContextReading,
+	type SessionContextReader,
 	contextUsageOf,
 } from "../context/session-context";
 import type { ModelPricingData } from "../pricing/model-data";
@@ -86,7 +86,7 @@ export interface AgentTree {
 
 /** The session-scoped readings and model data a tree is read with. */
 export interface AgentTreeSources {
-	readonly context: SessionContextReading;
+	readonly context: SessionContextReader;
 	readonly activity: SessionActivityReading;
 	readonly data: ModelPricingData;
 }

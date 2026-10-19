@@ -26,7 +26,8 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "bun:test";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
-import type { CloseOutWait, OwnerReference, RoundDelivery } from "../../framework/core/protocol";
+import type { CloseOutWait, RoundDelivery } from "../../framework/interface/session";
+import type { OwnerReference } from "../../framework/interface/state";
 import { SafeFileUpdateError, type ExtensionDefinition, defineExtension, updateFile } from "../../framework/public";
 import { type PortDouble, portDouble } from "./support/harness-port-double";
 

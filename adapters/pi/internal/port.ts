@@ -7,13 +7,9 @@
  * responsibility in their own module; no slice reaches into another axis's facts.
  */
 import type { ExtensionDefinition } from "../../../framework/core/definition";
-import type {
-	HarnessPort,
-	OwnerReference,
-	SessionDisposal,
-	SessionFacts,
-	SessionStartReason,
-} from "../../../framework/core/protocol";
+import type { SessionFacts, SessionStartReason } from "../../../framework/interface/session";
+import type { OwnerReference } from "../../../framework/interface/state";
+import type { HarnessPort, SessionDisposal } from "../../../framework/core/protocol";
 import { onPiSessionContext } from "../domain/context";
 import { registerPiCommand } from "../domain/control";
 import type { PiExtensionApi, PiExtensionContext } from "./native";

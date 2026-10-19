@@ -17,7 +17,8 @@
  * behavior of its own.
  */
 import { piAdapter } from "../../../../adapters/pi";
-import type { ExtensionDefinition, SemanticEventHandlers } from "../../../../framework/public";
+import type { ExtensionDefinition } from "../../../../framework/public";
+import type { SemanticEventHandlers } from "../../../../framework/interface/session";
 import { PI_BACKGROUND_ROUNDS_CHILD_ENTRY_ENV, PI_BACKGROUND_ROUNDS_PREFIX } from "./prefix";
 
 /** The definition this fixture binds: identity and a label, with every behavior injected below. */

@@ -28,12 +28,8 @@ import { DEEPSEEK_DISPLAY_BUDGET } from "../../../extensions/model-cost/shared-l
 import type { ModelPricingData } from "../../../extensions/model-cost/shared-logic/business/pricing/model-data";
 import type { ModelCostRuntime } from "../../../extensions/model-cost/shared-logic/runtime";
 import { createModelCostRuntime } from "../../../extensions/model-cost/shared-logic/runtime";
-import type {
-	ObservedSession,
-	OwnerReference,
-	SessionFacts,
-	SessionObservationAccess,
-} from "../../../framework/core/protocol";
+import type { SessionFacts } from "../../../framework/interface/session";
+import type { ObservedSession, SessionObservationAccess } from "../../../framework/core/protocol";
 import { createOwnerAccessPublisher } from "../../../framework/modules/local-access";
 import { type PortDouble, portDouble } from "../../framework/support/harness-port-double";
 import {
@@ -190,7 +186,7 @@ async function bind(): Promise<Bound> {
 				userHomeDirectory: root,
 				harness: HARNESS,
 				data: DATA,
-				sessionObservations: context.sessionObservations,
+				session: context.session,
 			})).implementation,
 	});
 	double.deliverSession(SEAT_OWNER, { session: MAIN });
@@ -255,7 +251,7 @@ describe("sessions another process runs reach the detail form over the real acce
 		// other — both connect to the seat this process published — and each states its own reading.
 		await deliverInProcess([readingOf(CHILD, { tokens: 45_000, provider: "official", model: "model-alpha" })], where);
 		await until(
-			() => bound.runtime.sessionObservations.read(CHILD.sessionId) !== undefined,
+			() => bound.double.observations.read(CHILD.sessionId) !== undefined,
 			"the child's own process delivered nothing to the seat this process serves",
 		);
 		await deliverInProcess(
@@ -263,7 +259,7 @@ describe("sessions another process runs reach the detail form over the real acce
 			where,
 		);
 		await until(
-			() => bound.runtime.sessionObservations.read(GRANDCHILD.sessionId) !== undefined,
+			() => bound.double.observations.read(GRANDCHILD.sessionId) !== undefined,
 			"the grandchild's own process delivered nothing to the seat this process serves",
 		);
 

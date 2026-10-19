@@ -41,13 +41,13 @@ import {
 	piAdapter,
 } from "../../../../adapters/pi";
 import type {
-	OwnerReference,
 	SessionFacts,
 	TurnEndDelivery,
 	TurnEndFacts,
 	TurnStartDelivery,
 	TurnStartFacts,
-} from "../../../../framework/core/protocol";
+} from "../../../../framework/interface/session";
+import type { OwnerReference } from "../../../../framework/interface/state";
 import { MODEL_COST } from "../../../../extensions/model-cost/definition";
 import { MODEL_COST_HARNESS } from "../../../../extensions/model-cost/harnesses/pi";
 import { MODEL_COST_WIDGET_KEY, attachModelCostWidget } from "../../../../extensions/model-cost/harnesses/pi/widget";
@@ -380,6 +380,7 @@ function assemblePiSurface(): PiSurface {
 				// own initialization delivery (see `harnesses/pi.ts`).
 				subagentIntegrationMode: () => "subagents",
 				data: DATA,
+				session: context.session,
 			});
 			runtime = built;
 			const cleanup = built.implementation.cleanup;

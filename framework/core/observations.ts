@@ -41,15 +41,36 @@
  * that withdrawal is; this record keeps the identity, so the session is still named and still placed
  * where its direct parent puts it.
  */
+import type { OwnerReference } from "../interface/state";
 import type {
 	AgentActivity,
-	ObservedSession,
-	ObservationSource,
-	OwnerReference,
 	SessionContextReading,
 	SessionFacts,
 	SessionObservation,
-} from "./protocol";
+	SessionObservationReader,
+} from "../interface/session";
+import type { ObservedSession, ObservationSource } from "./protocol";
+
+/**
+ * One session's facts as a consumer may hold them: the framework's own record is copied, including
+ * the list and nested model it carries, so a caller cannot change what a later read observes.
+ */
+function readableFacts(facts: SessionFacts): SessionFacts {
+	const startup = facts.startup;
+	const model = startup?.model;
+	return {
+		...facts,
+		...(startup === undefined
+			? {}
+			: {
+					startup: {
+						...startup,
+						...(model === undefined ? {} : { model: { ...model } }),
+					},
+				}),
+		unavailable: [...facts.unavailable],
+	};
+}
 
 /**
  * Where this process's readings of the sessions a process elsewhere serves go: the one rule that
@@ -132,7 +153,7 @@ interface Entry {
  * published as a change. The confirmed-write count is the one thing a source's end does not withdraw:
  * a write that landed does not become untrue when the connection that stated it goes away.
  */
-export class SessionObservations {
+export class SessionObservations implements SessionObservationReader {
 	#bySession = new Map<string, Entry>();
 
 	/**
@@ -150,8 +171,10 @@ export class SessionObservations {
 		// Startup is a fact about the beginning, not a current reading. Ordinary context,
 		// activity and rename deliveries omit it; those deliveries must not erase it.
 		const startup = held.session?.startup ?? facts.startup;
-		const session = startup === undefined ? facts : { ...facts, startup };
-		this.#bySession.set(facts.sessionId, { ...held, session, owner });
+		// The source owns its facts rather than a delivery's object: a handler that mutates the
+		// envelope it was given cannot change what this process later reads.
+		const session = readableFacts(startup === undefined ? facts : { ...facts, startup });
+		this.#bySession.set(facts.sessionId, { ...held, session, owner: { ...owner } });
 	}
 
 	/**
@@ -206,7 +229,7 @@ export class SessionObservations {
 			}
 			return false;
 		}
-		this.#bySession.set(sessionId, { ...held, context: reading, contextSource: source });
+		this.#bySession.set(sessionId, { ...held, context: { ...reading }, contextSource: source });
 		return true;
 	}
 
@@ -251,8 +274,15 @@ export class SessionObservations {
 		const held = this.#bySession.get(sessionId);
 		if (held?.session === undefined || held.owner === undefined) return undefined;
 		const commits = (held.commits ?? 0) + 1;
-		this.#bySession.set(sessionId, { ...held, commits });
-		return { session: held.session, owner: held.owner, commits };
+		const updated: Entry = { ...held, commits };
+		this.#bySession.set(sessionId, updated);
+		// The notice states the session, its owner and the confirmed count — never the readings the
+		// source also holds, which this statement did not observe again.
+		return {
+			session: readableFacts(held.session),
+			owner: { ...held.owner },
+			commits,
+		};
 	}
 
 	/**
@@ -284,7 +314,7 @@ export class SessionObservations {
 				...(context ? { context: undefined } : {}),
 			});
 			if (held.session !== undefined && held.owner !== undefined) {
-				lost.push({ session: held.session, owner: held.owner });
+				lost.push({ session: readableFacts(held.session), owner: { ...held.owner } });
 			}
 		}
 		return lost;
@@ -302,15 +332,31 @@ export class SessionObservations {
 	 *
 	 * The source a reading came from is the framework's own bookkeeping — what a word is judged by, and
 	 * what a source's loss withdraws — and a consumer reads an observation rather than the provenance
-	 * of one, exactly as it reads a reading rather than the connection it crossed on.
+	 * of one, exactly as it reads a reading rather than the connection it crossed on. Every nested
+	 * value is copied, so a consumer changing what it was given cannot change what a later read sees.
 	 */
 	#readable(entry: Entry): SessionObservation {
 		return {
 			sessionId: entry.sessionId,
-			...(entry.session === undefined ? {} : { session: entry.session }),
-			...(entry.owner === undefined ? {} : { owner: entry.owner }),
+			...(entry.session === undefined ? {} : { session: readableFacts(entry.session) }),
+			...(entry.owner === undefined ? {} : { owner: { ...entry.owner } }),
 			...(entry.activity === undefined ? {} : { activity: entry.activity }),
-			...(entry.context === undefined ? {} : { context: entry.context }),
+			...(entry.context === undefined ? {} : { context: { ...entry.context } }),
+			...(entry.commits === undefined ? {} : { commits: entry.commits }),
+		};
+	}
+
+	/**
+	 * One entry as it crosses to the framework's own access: a copy of every fact, so the adapter
+	 * that carries it cannot write through to this source's authoritative record.
+	 */
+	#observed(entry: Entry): ObservedSession | undefined {
+		if (entry.session === undefined || entry.owner === undefined) return undefined;
+		return {
+			session: readableFacts(entry.session),
+			owner: { ...entry.owner },
+			...(entry.activity === undefined ? {} : { activity: entry.activity }),
+			...(entry.context === undefined ? {} : { context: { ...entry.context } }),
 			...(entry.commits === undefined ? {} : { commits: entry.commits }),
 		};
 	}
@@ -328,15 +374,10 @@ export class SessionObservations {
 	readingsFor(ownerKey: string): readonly ObservedSession[] {
 		const readings: ObservedSession[] = [];
 		for (const entry of this.#bySession.values()) {
-			const { session, owner } = entry;
-			if (session === undefined || owner?.kind !== "inherited" || owner.key !== ownerKey) continue;
-			readings.push({
-				session,
-				owner,
-				...(entry.activity === undefined ? {} : { activity: entry.activity }),
-				...(entry.context === undefined ? {} : { context: entry.context }),
-				...(entry.commits === undefined ? {} : { commits: entry.commits }),
-			});
+			const { owner } = entry;
+			if (owner?.kind !== "inherited" || owner.key !== ownerKey) continue;
+			const observed = this.#observed(entry);
+			if (observed !== undefined) readings.push(observed);
 		}
 		return readings;
 	}

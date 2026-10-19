@@ -41,16 +41,13 @@ import { CODEX_USAGE_URL } from "../../../extensions/model-cost/shared-logic/bus
 import type { ConsumptionDocument } from "../../../extensions/model-cost/shared-logic/foundation/session/consumption-document";
 import type { ModelPricingData } from "../../../extensions/model-cost/shared-logic/business/pricing/model-data";
 import { type ModelCostRuntime, createModelCostRuntime } from "../../../extensions/model-cost/shared-logic/runtime";
-import type {
-	OwnerReference,
-	ProviderAccess,
-	ProviderAccessFacts,
-	SessionFacts,
-	TurnOutcome,
-	TurnSignal,
-} from "../../../framework/core/protocol";
+import type { ProviderAccess, ProviderAccessFacts } from "../../../framework/interface/host-facts";
+import type { SessionFacts, TurnOutcome } from "../../../framework/interface/session";
+import type { OwnerReference } from "../../../framework/interface/state";
+import type { TurnSignal } from "../../../framework/core/protocol";
 import type { HttpRequestOptions } from "../../../framework/modules/http";
 import { type PortDouble, portDouble } from "../../framework/support/harness-port-double";
+import { testSessionCapability } from "../support/session-capability";
 import { uiBoundaryTimerOf } from "../support/ui-timer";
 
 /** The self-made price list: a monetary pair, a token-only pair and the allowance channel's provider. */
@@ -365,6 +362,7 @@ async function bindVisual(
 		userHomeDirectory: root,
 		harness: HARNESS,
 		data: DATA,
+		session: testSessionCapability(),
 		providerAccess: access,
 		now: () => clock.now,
 		httpRequest: async (url, httpOptions) => {

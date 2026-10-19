@@ -7,7 +7,8 @@
  * initialization returns a promise, and the harness awaits this hook before issuing the model
  * request, so the promise is handed back rather than settled here.
  */
-import type { HarnessPort, MarkerTransport, OwnerReference, PromptContribution } from "../../../framework/core/protocol";
+import type { OwnerReference } from "../../../framework/interface/state";
+import type { HarnessPort, MarkerTransport, PromptContribution } from "../../../framework/core/protocol";
 import { contributionIdentitiesOf } from "./session/queries";
 import type { OmpExtensionApi, OmpRunInitiationResult, OmpSessionContext } from "../internal/native";
 

@@ -23,14 +23,10 @@ import type { ConsumptionDocument } from "../../../extensions/model-cost/shared-
 import type { ModelPricingData } from "../../../extensions/model-cost/shared-logic/business/pricing/model-data";
 import type { ModelCostRuntime } from "../../../extensions/model-cost/shared-logic/runtime";
 import { createModelCostRuntime } from "../../../extensions/model-cost/shared-logic/runtime";
-import type {
-	CatalogPrice,
-	CatalogPriceSource,
-	OwnerReference,
-	SessionFacts,
-	TurnSignal,
-	TurnUsage,
-} from "../../../framework/core/protocol";
+import type { CatalogPrice, CatalogPriceSource } from "../../../framework/interface/host-facts";
+import type { SessionFacts, TurnUsage } from "../../../framework/interface/session";
+import type { OwnerReference } from "../../../framework/interface/state";
+import type { TurnSignal } from "../../../framework/core/protocol";
 import { type PortDouble, portDouble } from "../../framework/support/harness-port-double";
 
 /** The self-made pricing data every case drives; `gamma` is named by a model and priced nowhere. */
@@ -155,6 +151,7 @@ async function bindDisplay(options: {
 				userHomeDirectory: root,
 				harness: HARNESS,
 				data: DATA,
+				session: context.session,
 				// The harness's own model prices travel the production route: the port reports them, the
 				// framework hands them to this factory, and the factory hands them to the runtime.
 				...(context.modelPrices === undefined ? {} : { modelPrices: context.modelPrices }),

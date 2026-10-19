@@ -40,7 +40,8 @@ import type { ConsumptionDocument } from "../../../../extensions/model-cost/shar
 import type { ModelPricingData } from "../../../../extensions/model-cost/shared-logic/business/pricing/model-data";
 import type { ModelCostRuntime } from "../../../../extensions/model-cost/shared-logic/runtime";
 import { createModelCostRuntime } from "../../../../extensions/model-cost/shared-logic/runtime";
-import type { OwnerReference, SessionFacts, TurnUsage } from "../../../../framework/core/protocol";
+import type { SessionFacts, TurnUsage } from "../../../../framework/interface/session";
+import type { OwnerReference } from "../../../../framework/interface/state";
 import { type PortDouble, portDouble } from "../../../framework/support/harness-port-double";
 import { type ControlledPiSurface, type HostSession, controlledPiSurface } from "../../support/pi-host";
 import { uiBoundaryTimerOf } from "../../support/ui-timer";
@@ -201,6 +202,7 @@ async function fixture(): Promise<Fixture> {
 				userHomeDirectory: root,
 				harness: HARNESS,
 				data: DATA,
+				session: context.session,
 				now: () => CLOCK_AT,
 				...(context.modelPrices === undefined ? {} : { modelPrices: context.modelPrices }),
 			});
@@ -212,8 +214,8 @@ async function fixture(): Promise<Fixture> {
 	double.deliverSession(OWNER, { event: { kind: "session_facts" }, session: MAIN });
 	await double.initiateRun(OWNER);
 	const built = runtime as ModelCostRuntime;
-	built.sessionObservations.observeContext(CHILD.sessionId, { tokens: 90_000, provider: "official", model: "model-alpha" });
-	built.sessionObservations.observeContext("session-child-b", { tokens: 12_000, provider: "mystery-provider", model: "mystery-model" });
+	double.observations.observeContext(CHILD.sessionId, { tokens: 90_000, provider: "official", model: "model-alpha" });
+	double.observations.observeContext("session-child-b", { tokens: 12_000, provider: "mystery-provider", model: "mystery-model" });
 	return { runtime: built, double, storageDirectory: root };
 }
 

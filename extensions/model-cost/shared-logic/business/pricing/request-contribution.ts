@@ -3,7 +3,7 @@
  * Session accounting retains the returned settlement function by Turn identity and applies its
  * result once; it never needs to inspect the captured price or know a pricing tier or season.
  */
-import type { TurnUsage } from "../../../../../framework/core/protocol";
+import type { TurnUsage } from "../../../../../framework/interface/session";
 import type { RequestContribution, RequestSettlement } from "../../foundation/session/request-accounting";
 import type { ModelPricingData } from "./model-data";
 import { requestPriceOf } from "./request-price";

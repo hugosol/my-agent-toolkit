@@ -39,14 +39,10 @@ import type { ConsumptionDocument, SessionRecord } from "../../../extensions/mod
 import type { ModelPricingData } from "../../../extensions/model-cost/shared-logic/business/pricing/model-data";
 import { totalColumns, totalText } from "../../../extensions/model-cost/shared-logic/presentation/display";
 import { type ModelCostRuntime, createModelCostRuntime } from "../../../extensions/model-cost/shared-logic/runtime";
-import type {
-	CatalogPrice,
-	CatalogPriceSource,
-	OwnerReference,
-	SessionFacts,
-	TurnSignal,
-	TurnUsage,
-} from "../../../framework/core/protocol";
+import type { CatalogPrice, CatalogPriceSource } from "../../../framework/interface/host-facts";
+import type { SessionFacts, TurnUsage } from "../../../framework/interface/session";
+import type { OwnerReference } from "../../../framework/interface/state";
+import type { TurnSignal } from "../../../framework/core/protocol";
 import { type PortDouble, portDouble } from "../../framework/support/harness-port-double";
 import { controlApi } from "../support/control-api";
 import { uiBoundaryTimerOf } from "../support/ui-timer";
@@ -274,6 +270,7 @@ async function bind(options: { readonly root?: string } = {}): Promise<Bound> {
 				userHomeDirectory: root,
 				harness: HARNESS,
 				data: DATA,
+				session: context.session,
 				now: () => clock,
 				...(context.modelPrices === undefined ? {} : { modelPrices: context.modelPrices }),
 			});
@@ -544,7 +541,7 @@ describe("every change assembled survives a commit and a new process (P24)", () 
 
 		const second = await bind({ root: first.root });
 		await second.double.runToCompletion("budget", { args: "detail" });
-		second.runtime.sessionObservations.observeContext(CHILD_A.sessionId, {
+		second.double.observations.observeContext(CHILD_A.sessionId, {
 			tokens: CHILD_A_CONTEXT_TOKENS,
 			provider: "official",
 			model: "model-alpha",

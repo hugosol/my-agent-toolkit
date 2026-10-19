@@ -29,12 +29,9 @@
  * narrows with is `subscriptions.ts`'s one mechanism.
  */
 import type { ExtensionDefinition } from "../core/definition";
-import type {
-	OwnerCapabilityHandle,
-	SessionDelivery,
-	SessionEventDelivery,
-	SubscriptionGroup,
-} from "../core/protocol";
+import type { SessionEventDelivery, SubscriptionGroup } from "../interface/session";
+import type { OwnerCapabilityHandle } from "../interface/state";
+import type { SessionDelivery } from "../core/protocol";
 import type { StateStore } from "../core/state";
 import { type MarkerSeat, publishMarkerOnTransition } from "./marker";
 import { stateValueFor } from "./state-scope";

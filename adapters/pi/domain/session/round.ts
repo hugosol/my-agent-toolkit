@@ -17,7 +17,8 @@
  * activity begins, so a round ended by cancellation states that cancellation and a later activity
  * never inherits it.
  */
-import type { HarnessPort, RoundObservation, RoundSignal, TurnOutcome } from "../../../../framework/core/protocol";
+import type { TurnOutcome } from "../../../../framework/interface/session";
+import type { HarnessPort, RoundObservation, RoundSignal } from "../../../../framework/core/protocol";
 import { feedbackTransport } from "../feedback";
 import type { PiExtensionApi, PiExtensionContext } from "../../internal/native";
 import type { PiPortContext } from "../../internal/port";

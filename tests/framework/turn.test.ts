@@ -24,15 +24,15 @@ import type {
 	OmpSessionContext,
 } from "../../adapters/omp";
 import * as frameworkOmp from "../../adapters/omp";
+import type { CatalogPriceSource } from "../../framework/interface/host-facts";
 import type {
-	CatalogPriceSource,
-	OwnerReference,
 	RoundDelivery,
 	SessionFacts,
 	TurnEndDelivery,
-	TurnSignal,
 	TurnStartDelivery,
-} from "../../framework/core/protocol";
+} from "../../framework/interface/session";
+import type { OwnerReference } from "../../framework/interface/state";
+import type { TurnSignal } from "../../framework/core/protocol";
 import type { ExtensionDefinition, ImplementationContext } from "../../framework/public";
 import { withCapturedStderr } from "./support/captured-stderr";
 

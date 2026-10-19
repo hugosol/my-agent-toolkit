@@ -18,7 +18,8 @@ import type {
 } from "../../adapters/omp";
 import * as frameworkOmp from "../../adapters/omp";
 import type { ImplementationContext } from "../../framework/core/assembly";
-import type { OwnerReference, SessionEvent, SessionStartReason } from "../../framework/core/protocol";
+import type { SessionEvent, SessionStartReason } from "../../framework/interface/session";
+import type { OwnerReference } from "../../framework/interface/state";
 import { type ExtensionDefinition, defineExtension } from "../../framework/public";
 import { portDouble } from "./support/harness-port-double";
 

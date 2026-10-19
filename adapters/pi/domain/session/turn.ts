@@ -9,13 +9,8 @@
  * `turn_start`/`turn_end`, whose end fires only after the requested tools have run: tool execution is
  * outside a model cycle, so a Turn ends when its response settled, not when pi's turn did.
  */
-import type {
-	HarnessPort,
-	SessionFacts,
-	TurnOutcome,
-	TurnSignalFacts,
-	TurnUsage,
-} from "../../../../framework/core/protocol";
+import type { SessionFacts, TurnOutcome, TurnUsage } from "../../../../framework/interface/session";
+import type { HarnessPort, TurnSignalFacts } from "../../../../framework/core/protocol";
 import { feedbackTransport } from "../feedback";
 import type { PiAssistantMessage, PiExtensionApi, PiExtensionContext } from "../../internal/native";
 import type { PiPortContext } from "../../internal/port";

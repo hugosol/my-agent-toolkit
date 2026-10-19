@@ -143,16 +143,15 @@ const bindModelCost = ompAdapter(MODEL_COST, {
 			configDirectory: EXTENSION_CONFIG_DIRECTORY,
 			userHomeDirectory: homedir(),
 			harness: MODEL_COST_HARNESS,
-			// The framework's own session observation source: the one place every session's context
-			// reading and activity is collected — each binding's own session and each subagent this
-			// process runs — so this extension reads the common interface and subscribes to no native
-			// context event of its own.
-			sessionObservations: context.sessionObservations,
-			// The framework's own statement channel, as this harness's adapter supplied it: on OMP every
-			// session of the process is bound here and the owner is served here, so a confirmed write is
-			// recorded in this process's own observation source and carried to no other process — the
-			// session that wrote and the owner that reads share this process's memory and document.
-			recordSessionCommit: context.recordSessionCommit,
+			// The framework's Session capability: its observation reader is the one place every
+			// session's context reading and activity is collected — each binding's own session and each
+			// subagent this process runs — so this extension reads the common interface and subscribes
+			// to no native context event of its own. Its `recordCommit` is the one statement this
+			// extension makes: on OMP every session of the process is bound here and the owner is served
+			// here, so a confirmed write is recorded in this process's own observation source and
+			// carried to no other process — the session that wrote and the owner that reads share this
+			// process's memory and document.
+			session: context.session,
 			// The harness's own model prices, as the framework mapped them from the host's catalog: the
 			// extension's single price catalog composes them after its maintained data, which is what
 			// makes the allowance channel's own price a real request-time fact on this host.
@@ -177,7 +176,7 @@ export default function modelCost(pi: OmpExtensionApi): void {
 	// and the host's native widget is the only thing it owns. A refused binding subscribes nothing
 	// here — no widget, no drawing timer. The context readings this half used to collect itself are the
 	// framework's now: the adapter reads the session's own context where the host moves one and the
-	// framework's own observation source holds the result, so the detail tree reads a subagent's
+	// Session capability's observation reader holds the result, so the detail tree reads a subagent's
 	// context from the common interface with no native subscription of this extension's at all.
 	if (bound.bound && runtime !== undefined) {
 		const releaseWidget = attachModelCostWidget(pi, runtime, uiBoundaryTimer, MODEL_COST_WIDGET_DRAWING);

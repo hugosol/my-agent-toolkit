@@ -328,6 +328,7 @@ function assemble(): PiSurface {
 				// observations integrated — the shipped assembly records that answer from the framework's
 				// own initialization delivery (see `harnesses/pi.ts`).
 				subagentIntegrationMode: () => "subagents",
+				session: context.session,
 			});
 			runtime = built;
 			const cleanup = built.implementation.cleanup;

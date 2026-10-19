@@ -32,17 +32,12 @@ import * as path from "node:path";
 import { MODEL_COST } from "../../../extensions/model-cost/definition";
 import type { ModelPricingData } from "../../../extensions/model-cost/shared-logic/business/pricing/model-data";
 import { type ModelCostRuntime, createModelCostRuntime } from "../../../extensions/model-cost/shared-logic/runtime";
-import type {
-	OwnerReference,
-	ProviderAccess,
-	ProviderAccessFacts,
-	SessionEvent,
-	SessionFacts,
-	TurnOutcome,
-	TurnSignal,
-	TurnUsage,
-} from "../../../framework/core/protocol";
+import type { ProviderAccess, ProviderAccessFacts } from "../../../framework/interface/host-facts";
+import type { SessionEvent, SessionFacts, TurnOutcome, TurnUsage } from "../../../framework/interface/session";
+import type { OwnerReference } from "../../../framework/interface/state";
+import type { TurnSignal } from "../../../framework/core/protocol";
 import { HttpConfigurationError, type HttpRequestOptions } from "../../../framework/modules/http";
+import { testSessionCapability } from "../support/session-capability";
 import {
 	type FeedbackNotice,
 	type PortDouble,
@@ -185,6 +180,7 @@ async function bind(
 		userHomeDirectory: root,
 		harness: HARNESS,
 		data: DATA,
+		session: testSessionCapability(),
 		providerAccess: options.access === undefined ? ACCESS : { resolve: options.access },
 		now: () => clock.now,
 		httpRequest: async (url, httpOptions) => {

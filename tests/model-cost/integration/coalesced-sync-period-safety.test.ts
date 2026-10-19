@@ -26,13 +26,9 @@ import { MODEL_COST } from "../../../extensions/model-cost/definition";
 import type { ConsumptionDocument, OwnConsumption, SessionRecord } from "../../../extensions/model-cost/shared-logic/foundation/session/consumption-document";
 import type { ModelPricingData } from "../../../extensions/model-cost/shared-logic/business/pricing/model-data";
 import { type ModelCostRuntime, createModelCostRuntime } from "../../../extensions/model-cost/shared-logic/runtime";
-import type {
-	ObservedSession,
-	OwnerReference,
-	SessionFacts,
-	TurnSignal,
-	TurnUsage,
-} from "../../../framework/core/protocol";
+import type { SessionFacts, TurnUsage } from "../../../framework/interface/session";
+import type { OwnerReference } from "../../../framework/interface/state";
+import type { ObservedSession, TurnSignal } from "../../../framework/core/protocol";
 import { type PortDouble, portDouble } from "../../framework/support/harness-port-double";
 import type { ChildPlan, ChildResult } from "../support/store-child";
 import { FS_INSTRUMENT, runStoreChild } from "../support/store-child-runner";
@@ -232,8 +228,7 @@ async function bind(root: string, baseline: ConsumptionDocument): Promise<Bound>
 				userHomeDirectory: root,
 				harness: HARNESS,
 				data: DATA,
-				sessionObservations: context.sessionObservations,
-				recordSessionCommit: context.recordSessionCommit,
+				session: context.session,
 			})).implementation,
 	});
 	expect(result.bound).toBe(true);

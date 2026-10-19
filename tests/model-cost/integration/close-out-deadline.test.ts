@@ -24,7 +24,9 @@ import { MODEL_COST } from "../../../extensions/model-cost/definition";
 import type { ConsumptionDocument } from "../../../extensions/model-cost/shared-logic/foundation/session/consumption-document"
 import type { ModelPricingData } from "../../../extensions/model-cost/shared-logic/business/pricing/model-data";
 import { createModelCostRuntime } from "../../../extensions/model-cost/shared-logic/runtime";
-import type { OwnerReference, SessionFacts, TurnSignal, TurnUsage } from "../../../framework/core/protocol";
+import type { SessionFacts, TurnUsage } from "../../../framework/interface/session";
+import type { OwnerReference } from "../../../framework/interface/state";
+import type { TurnSignal } from "../../../framework/core/protocol";
 import { updateFile } from "../../../framework/public";
 import { type PortDouble, portDouble } from "../../framework/support/harness-port-double";
 
@@ -97,13 +99,14 @@ async function boundSession(file: string): Promise<PortDouble> {
 	const double = portDouble();
 	double.bind(MODEL_COST, {
 		config: { reader: () => `storageDir: ${root}\nbalanceTtlMs: 30000\ncodexQuotaTtlMs: 15000\n` },
-		factory: () =>
+		factory: context =>
 			createModelCostRuntime({
 				config: { storageDir: root },
 				configDirectory: root,
 				userHomeDirectory: root,
 				harness: HARNESS,
 				data: DATA,
+				session: context.session,
 				now: () => T0,
 			}).implementation,
 	});

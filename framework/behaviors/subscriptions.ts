@@ -21,17 +21,17 @@
  */
 import type {
 	ObservationScope,
-	OwnerReference,
 	RoundEvent,
 	SemanticEvent,
 	SemanticEventDeliveryMap,
 	SessionActivityEvent,
 	SessionContextEvent,
 	SessionEvent,
+	SubscriptionGroup,
 	TurnEvent,
 	UserInputEvent,
-	SubscriptionGroup,
-} from "../core/protocol";
+} from "../interface/session";
+import type { OwnerReference } from "../interface/state";
 
 /** The session axis's event kinds, for a binding that must know which axis a group observes. */
 export const SESSION_EVENT_KINDS: readonly SessionEvent["kind"][] = ["session_start", "session_end", "session_facts"];

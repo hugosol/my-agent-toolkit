@@ -1,8 +1,26 @@
 # Capability interface architecture
 
-**Status:** proposed direction. Implementation has not started.
-**Scope:** the boundary between `framework/`, `adapters/`, and `extensions/`.
-**Decision status:** this document records the direction agreed in discussion. It changes the extension-facing import path and the adapter-facing seam, so it requires an explicit ADR amendment before cutover. The open decisions are listed at the end.
+**Status:** Session capability cutover implemented; the remaining capability and runtime-port migration is proposed.
+**Scope:** the dependency seam between `framework/`, `adapters/`, and `extensions/`.
+**Decision status:** [ADR-0002's Session amendment](../../docs/adr/0002-semantic-extension-framework.md#session-capability-interface-cutover-2026-10-19) accepts the first complete capability. The overall target below still contains future work and open decisions; it is not a claim that every capability or `framework/runtime/port` has moved.
+
+## Current Session cutover
+
+`framework/interface/session` owns the canonical extension-facing Session facts, event deliveries,
+Subscription group, observation reader and confirmed-write contract. The factory supplies
+`context.session.observations` and `context.session.recordCommit`; the old top-level
+`sessionObservations` / `recordSessionCommit` fields and public concrete class are removed. A reader
+is a separate runtime object, and returned readings cannot write into the source. Session consumer
+types have no compatibility re-export from `public.ts` or `core/protocol.ts`.
+
+Only the State, Feedback and Host facts leaf contracts required by Session were moved beside it.
+Other capability entries stay in place; the adapter port remains internal in `core/protocol.ts`
+until its own cutover. The import check uses an explicit list of remaining non-Session entries,
+not a blanket allowance for framework internals. No new disposal event, second dispatch, runtime
+registry or second adapter abstraction is introduced. Read [the complete Session consumption
+contract](../interface/session/README.md) before reading its implementation.
+
+The following sections describe the overall target, not a directory-by-directory completion report.
 
 ## 1. Purpose
 
@@ -131,7 +149,7 @@ The directory names are navigation. The capability boundaries are the important 
 | Capability | What the extension sees | Hidden implementation | Adapter source |
 | --- | --- | --- | --- |
 | **State** | declared-value seam, retained capability, owner-scoped read | owner lives, persistence, followed-owner read, access lifetime | session boundaries and subagent relations |
-| **Session** | one read surface (`SessionObservation`) and the session-scoped event kinds: session, Round, Turn, Activity, Context, Input, Commit, Unobserved; disposal | session identity, Round synthesis, Turn association/dedup, activity derivation, context collection, subscription dispatch, observation source, cross-process access, close-out | Session, Context, Subagent domains |
+| **Session** | `SessionCapability` with `SessionObservationReader` yielding `SessionObservation`, confirmed-write statements, and the session-scoped event kinds: session, Round, Turn, Activity, Context, Input, Commit, Unobserved; disposal | session identity, Round synthesis, Turn association/dedup, activity derivation, context collection, subscription dispatch, observation source, cross-process access, close-out | Session, Context, Subagent domains |
 | **Command** | command declaration, invocation facts, action delivery, directed implementation | toggle/directed/actions routing, State transition, feedback | Control domain |
 | **Prompt** | prompt declaration, run delivery, prompt contribution | contribution selection, branch-progress matching | Prompt domain |
 | **Marker** | marker declaration, marker transport | process-global area, line order, viewed-session projection, publication triggers | Marker domain |
@@ -147,7 +165,7 @@ Session is a deep capability. The extension sees:
 
 - one read surface for the current observation of an actual session;
 - one subscription surface carrying the session-scoped event kinds;
-- one disposal surface for the session's own end.
+- the existing session-end and Round close-out contracts for the session's own end; adapter disposal facts are not a new extension event.
 
 Round, Turn, Activity, Context, Input, Commit, Unobserved, observation, access, and close-out are implementation modules behind that interface. They remain separate internal modules because they have different rules, different lifetimes, and different tests. They are not separately imported by extensions.
 
@@ -248,8 +266,8 @@ From the implementation and shared logic:
 | --- | --- |
 | subscriptions to `turn_start` / `turn_end` | `turn-usage` |
 | subscriptions to `session_start` / `session_end` / `round_start` / `round_end` | `session-lifecycle` |
-| subscriptions to `session_activity` / `session_context`, or `context.sessionObservations` use | `session-observations` |
-| `context.recordSessionCommit` use | `storage-commit` |
+| subscriptions to `session_activity` / `session_context`, or `context.session.observations` use | `session-observations` |
+| `context.session.recordCommit` use | `storage-commit` |
 | actual session identity, parent, or owner fact use | `session-facts` (partial) |
 | session-scoped subscription or a subagent-visible prompt/marker/state-follow need | `extension-loading` (partial) |
 

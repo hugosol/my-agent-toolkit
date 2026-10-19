@@ -11,11 +11,11 @@
  * newest-context tracker stays in `context/queries.ts`; State semantics stay in the framework.
  */
 import type {
-	OwnerReference,
 	SessionFacts,
 	SessionStartReason,
 	SessionStartup,
-} from "../../../../framework/core/protocol";
+} from "../../../../framework/interface/session";
+import type { OwnerReference } from "../../../../framework/interface/state";
 import type { OmpExtensionApi, OmpSessionContext } from "../../internal/native";
 import { directParentSessionIdOf, mainAncestorSessionIdOf } from "../subagent/queries";
 import type { OmpViewedSessionFacts } from "./viewed-session";

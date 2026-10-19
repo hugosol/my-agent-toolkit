@@ -23,7 +23,9 @@ import type { ModelPricingData } from "../../../extensions/model-cost/shared-log
 import { type AgentTreeRow, type ConsumptionFields, fieldsColumns } from "../../../extensions/model-cost/shared-logic/presentation/display";
 import type { ModelCostRuntime } from "../../../extensions/model-cost/shared-logic/runtime";
 import { createModelCostRuntime } from "../../../extensions/model-cost/shared-logic/runtime";
-import type { CatalogPrice, CatalogPriceSource, OwnerReference, SessionFacts } from "../../../framework/core/protocol";
+import type { CatalogPrice, CatalogPriceSource } from "../../../framework/interface/host-facts";
+import type { SessionFacts } from "../../../framework/interface/session";
+import type { OwnerReference } from "../../../framework/interface/state";
 import { type PortDouble, portDouble } from "../../framework/support/harness-port-double";
 
 /** The self-made pricing data: one monetary tier, one token-only pair and one allowance provider. */
@@ -209,6 +211,7 @@ async function bind(
 				userHomeDirectory: root,
 				harness: HARNESS,
 				data: DATA,
+				session: context.session,
 				...(context.modelPrices === undefined ? {} : { modelPrices: context.modelPrices }),
 				...(options.watched === true
 					? {

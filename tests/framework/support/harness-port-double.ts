@@ -22,35 +22,36 @@ import type { ExtensionFactory, ExtensionImplementation } from "../../../framewo
 import type { ConfigSource } from "../../../framework/core/config";
 import { activationField, statePersistence, type ExtensionDefinition } from "../../../framework/core/definition";
 import type { FollowedAccessReader } from "../../../framework/core/followed-owners";
+import type { FeedbackLevel } from "../../../framework/interface/feedback";
+import type { CatalogPriceSource, ProviderAccess } from "../../../framework/interface/host-facts";
+import type {
+	RoundEvent,
+	SemanticEventHandlers,
+	SessionContextReading,
+	SessionEvent,
+	SessionFacts,
+	TurnOutcome,
+	UserInputDelivery,
+} from "../../../framework/interface/session";
+import type { OwnerReference } from "../../../framework/interface/state";
 import type {
 	HarnessPort,
 	BindingResult,
 	BoundCommand,
-	CatalogPriceSource,
 	CommandInvocation,
-	FeedbackLevel,
 	MarkerTransport,
 	ObservedSession,
 	ObservationSource,
-	OwnerReference,
 	PromptContribution,
-	ProviderAccess,
-	RoundEvent,
 	RoundObservation,
-	SemanticEventHandlers,
 	SessionContextObservation,
-	SessionContextReading,
 	SessionDelivery,
 	SessionDisposal,
-	SessionEvent,
-	SessionFacts,
 	SessionObservationAccess,
 	SessionObservationSink,
 	StateValues,
 	TurnSignal,
 	TurnSignalFacts,
-	TurnOutcome,
-	UserInputDelivery,
 } from "../../../framework/core/protocol";
 import { SessionObservations } from "../../../framework/core/observations";
 import { StateStore } from "../../../framework/core/state";

@@ -27,7 +27,8 @@ import type { ModelPricingData } from "../../../extensions/model-cost/shared-log
 import { type RoundDisplay, roundColumns } from "../../../extensions/model-cost/shared-logic/presentation/display";
 import type { ModelCostRuntime } from "../../../extensions/model-cost/shared-logic/runtime";
 import { createModelCostRuntime } from "../../../extensions/model-cost/shared-logic/runtime";
-import type { OwnerReference, SessionFacts, TurnSignal, TurnUsage } from "../../../framework/core/protocol";
+import type { SessionFacts, TurnUsage } from "../../../framework/interface/session";
+import type { OwnerReference } from "../../../framework/interface/state";
 import { type PortDouble, portDouble } from "../../framework/support/harness-port-double";
 import { uiBoundaryTimerOf } from "../support/ui-timer";
 
@@ -260,6 +261,7 @@ async function bindWidget(options: { readonly viewed?: ViewedFacts; readonly has
 				userHomeDirectory: root,
 				harness: HARNESS,
 				data: DATA,
+				session: context.session,
 				now: () => clock,
 				...(context.modelPrices === undefined ? {} : { modelPrices: context.modelPrices }),
 			});
@@ -696,7 +698,7 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 		// The subagent's own binding publishes its current context on the monetary channel. The row reads
 		// it against that channel's own 450K display budget, as `percent (tokens/budget)` — the same form
 		// and the same figure the bar above uses, not the host's own context window.
-		bound.runtime.sessionObservations.observeContext("session-sub", {
+		bound.double.observations.observeContext("session-sub", {
 			tokens: 381_500,
 			provider: "official",
 			model: "model-alpha",
@@ -708,7 +710,7 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 
 		// A later reading on the allowance channel is read against that channel's own 272K budget, chosen
 		// from the reading's own model rather than from the target being drawn.
-		bound.runtime.sessionObservations.observeContext("session-sub", {
+		bound.double.observations.observeContext("session-sub", {
 			tokens: 136_000,
 			provider: "plan-provider",
 			model: "plan-model",
@@ -720,7 +722,7 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 
 		// A pair the data does not classify has no display budget at all, so the row carries no context
 		// field rather than a figure with nothing to read it against.
-		bound.runtime.sessionObservations.observeContext("session-sub", {
+		bound.double.observations.observeContext("session-sub", {
 			tokens: 1_000,
 			provider: "unlisted-provider",
 			model: "no-such",

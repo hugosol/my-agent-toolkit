@@ -4,13 +4,8 @@
  * `queries.ts` reads the Session/Owner facts. The shared framework owns Turn identity,
  * association and lifecycle semantics.
  */
-import type {
-	HarnessPort,
-	SessionFacts,
-	TurnOutcome,
-	TurnSignalFacts,
-	TurnUsage,
-} from "../../../../framework/core/protocol";
+import type { SessionFacts, TurnOutcome, TurnUsage } from "../../../../framework/interface/session";
+import type { HarnessPort, TurnSignalFacts } from "../../../../framework/core/protocol";
 import type { OmpAgentMessage, OmpExtensionApi, OmpSessionContext } from "../../internal/native";
 
 /** The all-zero reading a message carries when the provider reported no usage at all. */

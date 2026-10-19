@@ -18,7 +18,9 @@
  *
  * The framework's port, its internal dispatch and its State store are not part of this surface:
  * an extension observes State and effects through the delivery its own command or handler
- * receives, never by asking the framework for a writer or a subscriber.
+ * receives, never by asking the framework for a writer or a subscriber. Session vocabulary is
+ * imported from `framework/interface/session`; this entry carries the definition/assembly surface
+ * and the capability types that have not yet moved.
  *
  * The configuration one extension declares is part of its definition, so its types are
  * here; the configuration API the extension's shared logic reads through — `getConfig`,
@@ -64,16 +66,6 @@ export type {
 } from "./core/assembly";
 
 /**
- * The framework's session observation source: the read half an extension consumes — what this
- * process has observed of each actual session, its activity and its latest context reading alike.
- *
- * It is handed to an extension's factory as `ImplementationContext.sessionObservations`; an
- * extension reads it and never constructs one, because the one source belongs to the process and
- * the adapter creates it beside the State store (see `core/observations.ts`).
- */
-export { SessionObservations } from "./core/observations";
-
-/**
  * The configuration failures shared logic may observe, and the reader a suite drives a file
  * through.
  *
@@ -95,88 +87,24 @@ export type { ConfigReader, ConfigSource } from "./core/config";
 export { HttpConfigurationError, type HttpRequestOptions, request } from "./modules/http";
 
 /**
- * The delivery types one implementation's commands and handlers are written against, re-exported
- * from the protocol because they are the *facts* an extension reads — never a port it calls.
+ * The remaining command and assembly-adjacent facts still exported from the protocol.
+ *
+ * Session vocabulary and its support leaves are imported from `framework/interface/session`,
+ * `framework/interface/state`, `framework/interface/feedback` and `framework/interface/host-facts`;
+ * this entry no longer re-exports the Session implementation or any adapter-only type.
  */
 export type {
 	ActionDelivery,
-	AgentActivity,
 	CanAcceptInput,
-	CatalogPrice,
-	CatalogPriceSource,
-	CloseOutWait,
 	CommandDelivery,
 	CommandInvocation,
-	DeclaredValueSeam,
 	DirectedCommandImplementation,
 	DirectedDirective,
-	FeedbackLevel,
-	FeedbackTransport,
 	MarkerTransport,
-	ObservationScope,
-	ObservationSource,
-	ObservedSession,
-	OwnerCapabilityHandle,
-	OwnerReference,
 	PromptContribution,
-	ProviderAccess,
-	ProviderAccessFacts,
-	ProviderHttpFacts,
 	RecognizedDirective,
-	RoundDelivery,
-	RoundEnding,
-	RoundEvent,
-	RoundEventHandler,
-	RoundEventHandlers,
-	SemanticEvent,
-	SemanticEventHandlers,
-	SessionActivityDelivery,
-	SessionActivityEvent,
-	SessionActivityEventHandler,
-	SessionActivityEventHandlers,
-	SessionActivityObservation,
-	SessionCommitDelivery,
-	SessionCommitEvent,
-	SessionCommitHandler,
-	SessionCommitHandlers,
-	SessionCommitObservation,
-	SessionContextDelivery,
-	SessionContextEvent,
-	SessionContextHandler,
-	SessionContextHandlers,
-	SessionContextObservation,
-	SessionContextReading,
-	SessionEndReason,
-	SessionEvent,
-	SessionEventDelivery,
-	SessionEventHandler,
-	SessionEventHandlers,
-	SessionFacts,
-	SessionObservation,
-	SessionObservationAccess,
-	SessionObservationSink,
-	SessionStartReason,
-	SessionStartup,
-	SessionUnobservedDelivery,
-	SessionUnobservedEvent,
-	SessionUnobservedHandler,
-	SessionUnobservedHandlers,
-	SubscriptionGroup,
 	SubagentIntegration,
 	SubagentIntegrationFailure,
-	TurnEndDelivery,
-	TurnEndFacts,
-	TurnEvent,
-	TurnEventHandler,
-	TurnEventHandlers,
-	TurnOutcome,
-	TurnSignal,
-	TurnStartDelivery,
-	TurnStartFacts,
-	TurnUsage,
-	UserInputDelivery,
-	UserInputEvent,
-	UserInputEventHandler,
 } from "./core/protocol";
 
 /** The semantics an assembly may declare its extension additional dependency on. */

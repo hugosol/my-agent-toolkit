@@ -12,7 +12,8 @@
  * pick them out of a stream it shares with the extension's own diagnostics.
  */
 import { piAdapter } from "../../../../adapters/pi";
-import type { ExtensionDefinition, SemanticEventHandlers } from "../../../../framework/public";
+import type { ExtensionDefinition } from "../../../../framework/public";
+import type { SemanticEventHandlers } from "../../../../framework/interface/session";
 import { PI_ROUND_FACTS_PREFIX } from "./prefix";
 
 /** The definition this fixture binds: identity and a label, with every behavior injected below. */

@@ -91,18 +91,18 @@
  * survives a snapshot that did not land and travels with the next one that does, and a period switch
  * clears it with everything else measured in the period it is closing.
  */
+import type { FeedbackTransport } from "../../../../../framework/interface/feedback";
+import type { CatalogPrice } from "../../../../../framework/interface/host-facts";
 import type {
-	CatalogPrice,
 	CloseOutWait,
-	FeedbackTransport,
 	RoundDelivery,
 	SessionFacts,
-	SessionObservation,
+	SessionObservationReader,
 	TurnEndDelivery,
 	TurnStartDelivery,
 	TurnUsage,
 	UserInputDelivery,
-} from "../../../../../framework/core/protocol";
+} from "../../../../../framework/interface/session";
 import type { ModelConsumption, OwnConsumption, SessionRecord, SessionStartup, TokenBuckets } from "./consumption-document";
 import { type ConsumptionStore, type SessionCommit, unusableBaselineNotice } from "../storage/consumption-store";
 import { type SubagentRuntimes, createSubagentRuntimes } from "./subagent-runtime";
@@ -380,27 +380,23 @@ export interface RequestAccountingInputs {
 	 * The process's own record of the sessions it observed, as this instance reads it for the ones it
 	 * holds no delivery of its own about.
 	 *
-	 * It is the framework's session observation source (`framework/core/observations.ts`) — one per
-	 * extension in one process — and what this instance takes from it is identity alone: the facts a
-	 * session's own process resolved for it, never an accumulation. A session the harness ran in
-	 * another process is observed into that record from the readings that process delivered, which is
-	 * how a session nothing of this instance's own ever named is still a session this instance can
-	 * name, place and draw. Omitted means this instance knows only what it was delivered itself.
+	 * It is the Session capability's observation reader — one per extension in one process — and what
+	 * this instance takes from it is identity alone: the facts a session's own process resolved for
+	 * it, never an accumulation. A session the harness ran in another process is observed into that
+	 * record from the readings that process delivered, which is how a session nothing of this
+	 * instance's own ever named is still a session this instance can name, place and draw.
 	 */
-	readonly registrations?: SessionObservationSource;
+	readonly registrations: SessionObservationReader;
 	/**
 	 * Where this instance states that one session's own snapshot really landed in the storage root.
 	 *
-	 * It is the framework's own statement channel (`ImplementationContext.recordSessionCommit`): this
+	 * It is the Session capability's own statement channel (`SessionCapability.recordCommit`): this
 	 * instance is the only party that can say a write was confirmed, because it is the one that read the
 	 * document, built the snapshot and saw the coordinated commit answer. What it states is *that* the
 	 * write landed and never what it held — no record, no figure and no path crosses — so a process
 	 * serving the owner that session follows learns the storage grew and reads it itself.
-	 *
-	 * Omitted means nothing is stated, which is what a suite driving this instance over a storage root of
-	 * its own alone wants: there is no other process to tell.
 	 */
-	readonly recordCommit?: (sessionId: string) => void;
+	readonly recordCommit: (sessionId: string) => void;
 	/**
 	 * The instant source for this accounting's user-input and activity observations. Terminal-result
 	 * receipt is timestamped by the runtime with the same clock before preparation can wait.
@@ -412,23 +408,6 @@ export interface RequestAccountingInputs {
 	 * own delivery.
 	 */
 	readonly now?: () => number;
-}
-
-/**
- * The half of the process's session observation record this instance reads: what each session the
- * process observed was, by that session's own identity.
- *
- * It is the framework's own source, and the two reads below are the whole of what this instance uses
- * it for: one session's observation, and every session the record holds something for, in the order
- * the process first observed each. A session an extension never had a delivery of its own about — one
- * another process ran, and reported only through the readings it delivered — is exactly what the
- * second read is for, and an entry that never saw a session's own facts carries no identity to name.
- */
-export interface SessionObservationSource {
-	/** One session's current observation, or nothing when this process has observed none of it. */
-	read(sessionId: string): SessionObservation | undefined;
-	/** Every session this record holds something for, in the order the process first observed each. */
-	snapshot(): readonly SessionObservation[];
 }
 
 /** The facts of one request's start that its contribution policy may decide it by. */
@@ -749,7 +728,7 @@ export function createRequestAccounting(inputs: RequestAccountingInputs): Reques
 	 * resolved for the session, and `undefined` means neither holder has ever heard of it.
 	 */
 	const factsOf = (sessionId: string): ReportedFacts | undefined => {
-		const registered = registrations?.read(sessionId)?.session;
+		const registered = registrations.read(sessionId)?.session;
 		const own = reported.get(sessionId);
 		if (registered === undefined) return own;
 		const name = registered.name ?? own?.name;
@@ -804,7 +783,7 @@ export function createRequestAccounting(inputs: RequestAccountingInputs): Reques
 	 * session nothing proved a startup for answers `undefined` rather than the current settings.
 	 */
 	const startupOf = (sessionId: string): SessionStartup | undefined =>
-		startups.get(sessionId) ?? storage.session(harness, sessionId)?.startup ?? registrations?.read(sessionId)?.session?.startup;
+		startups.get(sessionId) ?? storage.session(harness, sessionId)?.startup ?? registrations.read(sessionId)?.session?.startup;
 
 	/**
 	 * Keeps the latest name, task handle, agent name, agent id and direct parent the host reported for
@@ -927,7 +906,7 @@ export function createRequestAccounting(inputs: RequestAccountingInputs): Reques
 		for (const record of storage.sessions(harness)) include(record.id);
 		for (const id of reported.keys()) include(id);
 		for (const id of ledgers.keys()) include(id);
-		for (const entry of registrations?.snapshot() ?? []) include(entry.sessionId);
+		for (const entry of registrations.snapshot()) include(entry.sessionId);
 		return ids;
 	};
 
@@ -1202,7 +1181,7 @@ export function createRequestAccounting(inputs: RequestAccountingInputs): Reques
 			// stated for a refusal or a failure below — a write that did not land is not a notice — and
 			// nothing is stated before the commit answered, so a save that has only begun publishes
 			// nothing.
-			recordCommit?.(session.sessionId);
+			recordCommit(session.sessionId);
 			return;
 		}
 		// Whether the snapshot failed under the period it was built for: a period replaced underneath

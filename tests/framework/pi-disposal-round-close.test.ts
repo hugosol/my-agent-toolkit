@@ -12,7 +12,7 @@
  * observed at the harness-neutral seam in `round-disposal.test.ts`. Here the facts are pi's own.
  */
 import { afterEach, beforeEach, describe, expect, test, vi } from "bun:test";
-import type { RoundDelivery } from "../../framework/core/protocol";
+import type { RoundDelivery } from "../../framework/interface/session";
 import type { PiSurface, PiSurfaceSession } from "./support/pi-surface-double";
 import { boundPiSurface } from "./support/pi-surface-double";
 

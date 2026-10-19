@@ -24,14 +24,12 @@ import { MODEL_COST } from "../../../extensions/model-cost/definition";
 import type { ConsumptionDocument, OwnConsumption, SessionRecord } from "../../../extensions/model-cost/shared-logic/foundation/session/consumption-document";
 import type { ModelPricingData } from "../../../extensions/model-cost/shared-logic/business/pricing/model-data";
 import { type ModelCostRuntime, createModelCostRuntime } from "../../../extensions/model-cost/shared-logic/runtime";
-import type {
-	OwnerReference,
-	ProviderAccess,
-	SessionFacts,
-	TurnSignal,
-	TurnUsage,
-} from "../../../framework/core/protocol";
+import type { ProviderAccess } from "../../../framework/interface/host-facts";
+import type { SessionFacts, TurnUsage } from "../../../framework/interface/session";
+import type { OwnerReference } from "../../../framework/interface/state";
+import type { TurnSignal } from "../../../framework/core/protocol";
 import type { HttpRequestOptions } from "../../../framework/modules/http";
+import { testSessionCapability } from "../support/session-capability";
 import { type PortDouble, type RoundBoundary, portDouble } from "../../framework/support/harness-port-double";
 import { until } from "../../support/pending-query";
 
@@ -176,6 +174,7 @@ async function bindInstance(
 		userHomeDirectory: root,
 		harness: HARNESS,
 		data: DATA,
+		session: testSessionCapability(),
 		// The provider side of this instance, only for the case that observes it: this file's subject is
 		// the consumption baseline, so a case that does not state these drives no provider query at all.
 		...(options.providerAccess === undefined ? {} : { providerAccess: options.providerAccess }),

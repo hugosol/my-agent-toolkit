@@ -12,12 +12,8 @@
  * per-session frontend declares.
  */
 import { type OmpExtensionApi, ompAdapter } from "../../../../adapters/omp";
-import {
-	type ExtensionDefinition,
-	type SessionEventDelivery,
-	type SubscriptionGroup,
-	defineExtension,
-} from "../../../../framework/public";
+import { type ExtensionDefinition, defineExtension } from "../../../../framework/public";
+import type { SessionEventDelivery, SubscriptionGroup } from "../../../../framework/interface/session";
 
 /** The extension id whose stderr lines the dock reads. */
 export const SESSION_FACTS_ID = "session-facts-probe";

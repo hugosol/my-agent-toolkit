@@ -31,7 +31,8 @@ import type { ModelPricingData } from "../../../extensions/model-cost/shared-log
 import type { ModelCostRuntime } from "../../../extensions/model-cost/shared-logic/runtime";
 import { createModelCostRuntime } from "../../../extensions/model-cost/shared-logic/runtime";
 import type { OmpSessionContext } from "../../../adapters/omp";
-import type { ObservedSession, SessionFacts, SessionObservationAccess } from "../../../framework/core/protocol";
+import type { SessionFacts } from "../../../framework/interface/session";
+import type { ObservedSession, SessionObservationAccess } from "../../../framework/core/protocol";
 import { createOwnerAccessPublisher } from "../../../framework/modules/local-access";
 import { type PortDouble, portDouble } from "../../framework/support/harness-port-double";
 import {
@@ -186,7 +187,7 @@ async function bind(): Promise<Bound> {
 				userHomeDirectory: root,
 				harness: HARNESS,
 				data: DATA,
-				sessionObservations: context.sessionObservations,
+				session: context.session,
 			})).implementation,
 	});
 	double.deliverSession(SEAT_OWNER, { session: MAIN });
@@ -253,7 +254,7 @@ describe("a batch of readings that crossed a process boundary is drawn from its 
 
 		const child = await startDeliveringProcess(where, BATCH);
 		await until(
-			() => BATCH.every(reading => bound.runtime.sessionObservations.read(reading.session.sessionId) !== undefined),
+			() => BATCH.every(reading => bound.double.observations.read(reading.session.sessionId) !== undefined),
 			"the delivering process's readings never reached the seat this process serves",
 		);
 		// The readings really crossed a process boundary: the process that ran those sessions reached the
@@ -265,9 +266,9 @@ describe("a batch of readings that crossed a process boundary is drawn from its 
 
 		// Each reading is adopted where it arrived: the process's own source holds every one of them, with
 		// the count its own host measured — before anything is drawn.
-		expect(bound.runtime.sessionObservations.read(CHILD.sessionId)?.context?.tokens).toBe(10_000);
-		expect(bound.runtime.sessionObservations.read(GRANDCHILD.sessionId)?.context?.tokens).toBe(20_000);
-		expect(bound.runtime.sessionObservations.read(SECOND.sessionId)?.context?.tokens).toBe(30_000);
+		expect(bound.double.observations.read(CHILD.sessionId)?.context?.tokens).toBe(10_000);
+		expect(bound.double.observations.read(GRANDCHILD.sessionId)?.context?.tokens).toBe(20_000);
+		expect(bound.double.observations.read(SECOND.sessionId)?.context?.tokens).toBe(30_000);
 
 		// Every session's own latest reading is in the display result and on the frame, at the depth its
 		// direct parent puts it.
@@ -295,7 +296,7 @@ describe("a batch of readings that crossed a process boundary is drawn from its 
 		const where = roots[roots.length - 1] as string;
 		await startDeliveringProcess(where, BATCH);
 		await until(
-			() => bound.runtime.sessionObservations.read(SECOND.sessionId) !== undefined,
+			() => bound.double.observations.read(SECOND.sessionId) !== undefined,
 			"the delivering process's readings never reached the seat this process serves",
 		);
 		await until(() => drawnRow(bound.lines(), "子代理C") !== undefined, "the arrival was never drawn");
@@ -310,6 +311,6 @@ describe("a batch of readings that crossed a process boundary is drawn from its 
 		await Bun.sleep(50);
 
 		expect(bound.frames()).toBe(settled);
-		expect(bound.runtime.sessionObservations.read(SECOND.sessionId)?.context?.tokens).toBe(30_000);
+		expect(bound.double.observations.read(SECOND.sessionId)?.context?.tokens).toBe(30_000);
 	});
 });

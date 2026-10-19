@@ -24,12 +24,9 @@
  * moved — so it maps to `session_facts`, the one session delivery that is not a boundary and
  * carries the session's facts alone.
  */
-import type {
-	HarnessPort,
-	OwnerReference,
-	SessionEvent,
-	SessionStartReason,
-} from "../../../../framework/core/protocol";
+import type { SessionEvent, SessionStartReason } from "../../../../framework/interface/session";
+import type { OwnerReference } from "../../../../framework/interface/state";
+import type { HarnessPort } from "../../../../framework/core/protocol";
 import { feedbackTransport, noticeTransport } from "../feedback";
 import { markerTransport } from "../marker";
 import type { OmpExtensionApi, OmpSessionContext } from "../../internal/native";

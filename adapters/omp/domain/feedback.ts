@@ -8,7 +8,8 @@
  * severity the UI shows. Nothing here decides what to say or when; the framework and the extension
  * do.
  */
-import type { FeedbackTransport, NoticeTransport } from "../../../framework/core/protocol";
+import type { FeedbackTransport } from "../../../framework/interface/feedback";
+import type { NoticeTransport } from "../../../framework/core/protocol";
 import type { OmpSessionContext } from "../internal/native";
 
 /**

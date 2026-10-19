@@ -25,8 +25,11 @@ import { MODEL_COST } from "../../../../extensions/model-cost/definition";
 import type { ConsumptionDocument, SessionRecord } from "../../../../extensions/model-cost/shared-logic/foundation/session/consumption-document";
 import type { ModelPricingData } from "../../../../extensions/model-cost/shared-logic/business/pricing/model-data";
 import { type ModelCostRuntime, createModelCostRuntime } from "../../../../extensions/model-cost/shared-logic/runtime";
-import type { OwnerReference, SessionFacts, TurnSignal, TurnUsage } from "../../../../framework/core/protocol";
+import type { SessionFacts, TurnUsage } from "../../../../framework/interface/session";
+import type { OwnerReference } from "../../../../framework/interface/state";
+import type { TurnSignal } from "../../../../framework/core/protocol";
 import { type PortDouble, portDouble } from "../../../framework/support/harness-port-double";
+import { testSessionCapability } from "../../support/session-capability";
 
 const BEIJING_OFFSET_MS = 8 * 60 * 60 * 1000;
 
@@ -174,6 +177,7 @@ async function bindAccounting(options: { readonly baseline?: unknown } = {}): Pr
 		// subagent session's Round is one of its activities, so the interval between that Round's edges
 		// is zero here and the figure this instance measured is the known zero it states.
 		now: () => OFF_PEAK_START,
+		session: testSessionCapability(),
 	});
 	const double = portDouble();
 	double.bind(MODEL_COST, {

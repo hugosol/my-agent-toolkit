@@ -280,6 +280,34 @@ Existing model-cost tests exercise multiple tracker instances sharing a file but
 
 The framework should offer extension-owned code injection at meaningful agent lifecycle points as well as declarative behaviors. Examples such as agent start and message completion are candidate concepts, not yet a published event inventory or a claim of equivalent timing across pi and OMP. The first release fixes one semantic hook mapping (agent-run initiation, at most once per user turn); the broader hook set, its payloads and ordering still belong to detailed design against existing extensions and both harnesses. An extension supplies one shared TypeScript implementation for each chosen semantic hook; harness adapters bind that same implementation at the corresponding harness lifecycle point and expose harness-independent inputs and framework capabilities. Thin pi/OMP entrypoints must not require maintaining two copies of the feature logic. Treat source-code text splicing into harness-specific templates as a different, fragile approach, not the intended meaning of "injection." Do not confuse message completion with an entire agent run settling.
 
+## Session capability interface cutover (2026-10-19)
+
+The maintainer approved Session as the first complete capability under `framework/interface/`,
+not merely a read facade or a directory move. That directory owns the extension-facing Session
+facts, observations, event deliveries and Subscription group contracts; internal framework modules
+and native adapters import those canonical declarations. Session declarations are removed from
+`core/protocol.ts` and `public.ts`, without compatibility re-exports. Other capabilities retain their
+existing authoring entries until their own migration; the small State, Feedback and Host facts
+contracts needed by Session are canonical interface dependencies, not permission to expose engines.
+
+The implementation factory receives `context.session`: a Session observation reader and the
+statement of a confirmed storage write. It no longer receives a concrete `SessionObservations`
+instance or the separate `recordSessionCommit` member. The delivered reader has no observation
+mutation, source withdrawal, owner-wide transport projection or constructor; its returned readings
+cannot mutate the framework's retained observations. Extensions neither construct a replacement
+source nor reach Session implementation through another capability. Source admission, deduplication,
+Round/Turn identity, Local access and close-out remain behind the seam. Existing semantic
+subscriptions keep one dispatch and their existing scope/ordering rules.
+
+Session disposal remains an adapter-reported fact, not a new extension event or an alias for
+`session_end`. Its extension-visible close-out contract stays with Round end. Native mappings remain
+in the two existing harness adapters; this decision introduces no second adapter abstraction and
+does not pre-split `HarnessPort`. The interface is the test surface: consumer behavior and actual
+harness loading validate depth and leverage, while import checks protect locality. This is
+engineering encapsulation, not a same-process security sandbox. It explicitly supersedes the earlier
+public Session exports and factory fields; it does not revise State ownership, observed lifecycle
+semantics, extension business rules, or harness support claims.
+
 ## Semantic lifecycle model
 
 The framework owns one harness-independent lifecycle vocabulary for extensions. Its target places reusable semantic processing in the shared framework, with harness adapters supplying native fact mappings and necessary bridges; the model-cost migration explicitly permits refactoring existing placement and accepting reviewed edge-case accuracy tradeoffs to avoid repeating lifecycle logic per harness. That observation contract is happy-flow-first — normal request/response, tool continuation, per-actual-session Round and parent/child consumption are the design spine, and only reproducible gaps reopen it — with the accepted limits that missing or reordered signal combinations may mis-split or truncate a round and may leave an end undetected (no polling, no timeout guessing, no replay or backfill, and mismatched final usage counts as unavailable rather than guessed). Its feasibility evidence is probe-level on the OMP 18.5.0 baseline (request identification/usage/headers, subagent identity and direct-parent relations, and two normal happy-path runs in which the public settle and the awaited save follow the native callback); closing that planning work certifies neither a production adapter nor the refactor, and none of it is a support claim. The connect-bot migration fixed the first implemented model:

@@ -34,15 +34,12 @@ import { MODEL_COST } from "../../../../extensions/model-cost/definition";
 import type { CodexPairedReading } from "../../../../extensions/model-cost/shared-logic/business/allowance/codex-estimate";
 import type { ModelPricingData } from "../../../../extensions/model-cost/shared-logic/business/pricing/model-data";
 import { type ModelCostRuntime, createModelCostRuntime } from "../../../../extensions/model-cost/shared-logic/runtime";
-import type {
-	ProviderAccess,
-	ProviderAccessFacts,
-	SessionFacts,
-	TurnOutcome,
-	TurnSignal,
-} from "../../../../framework/core/protocol";
+import type { ProviderAccess, ProviderAccessFacts } from "../../../../framework/interface/host-facts";
+import type { SessionFacts, TurnOutcome } from "../../../../framework/interface/session";
+import type { TurnSignal } from "../../../../framework/core/protocol";
 import type { HttpRequestOptions } from "../../../../framework/modules/http";
 import { type PortDouble, portDouble } from "../../../framework/support/harness-port-double";
+import { testSessionCapability } from "../../support/session-capability";
 
 /** The self-made pricing data every case binds with: nothing here reads a real price or model list. */
 const DATA: ModelPricingData = {
@@ -216,6 +213,7 @@ async function bindEstimate(
 		userHomeDirectory: root,
 		harness: HARNESS,
 		data: DATA,
+		session: testSessionCapability(),
 		providerAccess: access,
 		now: () => clock.now,
 		httpRequest: async (url, httpOptions) => {

@@ -191,6 +191,7 @@ function fixture(options: { readonly holiday?: boolean; readonly at?: number; re
 				userHomeDirectory: root,
 				harness: MODEL_COST_HARNESS,
 				data: DATA,
+				session: context.session,
 				now: () => clock.now,
 				httpRequest: () => {
 					requests += 1;

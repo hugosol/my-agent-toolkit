@@ -37,15 +37,11 @@ import * as path from "node:path";
 import { MODEL_COST } from "../../../extensions/model-cost/definition";
 import type { ModelPricingData } from "../../../extensions/model-cost/shared-logic/business/pricing/model-data";
 import { type ModelCostRuntime, createModelCostRuntime } from "../../../extensions/model-cost/shared-logic/runtime";
-import type {
-	ProviderAccess,
-	ProviderAccessFacts,
-	SessionFacts,
-	TurnOutcome,
-	TurnSignal,
-	TurnUsage,
-} from "../../../framework/core/protocol";
+import type { ProviderAccess, ProviderAccessFacts } from "../../../framework/interface/host-facts";
+import type { SessionFacts, TurnOutcome, TurnUsage } from "../../../framework/interface/session";
+import type { TurnSignal } from "../../../framework/core/protocol";
 import type { HttpRequestOptions } from "../../../framework/modules/http";
+import { testSessionCapability } from "../support/session-capability";
 import { type PortDouble, type SessionBoundary, portDouble } from "../../framework/support/harness-port-double";
 import { type HeldAnswer, drain, heldAnswer, settled, until } from "../../support/pending-query";
 
@@ -223,6 +219,7 @@ async function bindRuntime(
 		userHomeDirectory: root,
 		harness: HARNESS,
 		data: DATA,
+		session: testSessionCapability(),
 		providerAccess: access,
 		now: () => clock.now,
 		httpRequest: async (url, httpOptions) => {

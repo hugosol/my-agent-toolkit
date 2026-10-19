@@ -19,7 +19,7 @@
  * no native API.
  */
 import { activationField, stateInheritance, type ExtensionDefinition } from "../core/definition";
-import type { OwnerReference } from "../core/protocol";
+import type { OwnerReference } from "../interface/state";
 import { DEFAULT_STATE_VALUE, type StateStore, type StateValue } from "../core/state";
 
 /**

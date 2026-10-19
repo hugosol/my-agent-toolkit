@@ -32,15 +32,15 @@ import {
 	type PiSessionShutdownEvent,
 	piAdapter,
 } from "../../../adapters/pi";
+import type { FeedbackLevel } from "../../../framework/interface/feedback";
+import type { CatalogPriceSource } from "../../../framework/interface/host-facts";
 import type {
-	CatalogPriceSource,
-	FeedbackLevel,
 	RoundDelivery,
 	SessionContextDelivery,
 	SessionEventDelivery,
 	TurnEndDelivery,
 	TurnStartDelivery,
-} from "../../../framework/core/protocol";
+} from "../../../framework/interface/session";
 import type { ExtensionDefinition, ImplementationContext, InitializationDelivery } from "../../../framework/public";
 
 /** The definition the double binds: it declares nothing, so every behavior under test is injected. */

@@ -11,7 +11,7 @@
  */
 import { describe, expect, test } from "bun:test";
 import { CODEBASE_TOOLS } from "../../extensions/codebase-tools/definition";
-import type { OwnerReference } from "../../framework/core/protocol";
+import type { OwnerReference } from "../../framework/interface/state";
 import type { ExtensionDefinition } from "../../framework/public";
 import { portDouble } from "./support/harness-port-double";
 

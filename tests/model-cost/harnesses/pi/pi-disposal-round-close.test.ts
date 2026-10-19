@@ -277,6 +277,7 @@ function assemblePiSurface(): PiSurface {
 				userHomeDirectory: STORAGE_ROOT,
 				harness: MODEL_COST_HARNESS,
 				data: DATA,
+				session: context.session,
 			});
 			runtime = built;
 			const cleanup = built.implementation.cleanup;

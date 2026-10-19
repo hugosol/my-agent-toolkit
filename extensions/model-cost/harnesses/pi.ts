@@ -30,6 +30,7 @@ import { homedir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { type PiExtensionApi, piAdapter } from "../../../adapters/pi";
+import type { SessionCapability, SessionObservationReader } from "../../../framework/interface/session";
 import type { ExtensionImplementation, SubagentIntegration } from "../../../framework/public";
 import { MODEL_COST } from "../definition";
 import { type ModelCostRuntime, createModelCostRuntime } from "../shared-logic/runtime";
@@ -105,6 +106,8 @@ export function modelCostPiHarness(repositoryRoot: string): (pi: PiExtensionApi)
 	const configDirectory = join(repositoryRoot, "extensions", MODEL_COST.id);
 	/** The process's one business instance, as this assembly built it. */
 	let runtime: ModelCostRuntime | undefined;
+	/** The Session capability that instance consumes, as its factory received it. */
+	let session: SessionCapability | undefined;
 	/**
 	 * The process's one UI boundary wait, shared by every frontend this assembly attaches.
 	 *
@@ -150,23 +153,22 @@ export function modelCostPiHarness(repositoryRoot: string): (pi: PiExtensionApi)
 			 * `/budget detail` is exactly what the extension delivers.
 			 */
 			let subagentIntegrationMode: SubagentIntegration["mode"] | undefined;
+			session = context.session;
 			const built = createModelCostRuntime({
 				config: context.config,
 				configDirectory,
 				userHomeDirectory: homedir(),
 				harness: MODEL_COST_HARNESS,
 				subagentIntegrationMode: () => subagentIntegrationMode,
-				// The framework's own session observation source: the one place every session's context
-				// reading and activity is collected, in this process and — through local access — across
-				// its process boundary, so this extension reads the common interface and subscribes to no
-				// native context event of its own.
-				sessionObservations: context.sessionObservations,
-				// The framework's own statement channel: this process's sessions state each write they
-				// confirmed, and the framework carries it to the process serving their owner — the one
-				// other process that has to read the shared document again. This process serves a spawned
-				// session's owner only when it is the session that owns it, and nothing is stated for a
-				// session whose owner is served here.
-				recordSessionCommit: context.recordSessionCommit,
+				// The framework's Session capability: its observation reader is the one place every
+				// session's context reading and activity is collected, in this process and — through local
+				// access — across its process boundary, so this extension reads the common interface and
+				// subscribes to no native context event of its own. Its `recordCommit` is the one statement
+				// this process makes: each session states each write it confirmed, and the framework
+				// carries it to the process serving its owner — the one other process that has to read the
+				// shared document again. This process serves a spawned session's owner only when it is the
+				// session that owns it, and nothing is stated for a session whose owner is served here.
+				session: context.session,
 				// The harness's own model prices, as the framework mapped them from pi's catalog: the
 				// extension's single price catalog composes them after its maintained data, which is what
 				// makes the allowance channel's own price a real request-time fact on this host.
@@ -198,27 +200,32 @@ export function modelCostPiHarness(repositoryRoot: string): (pi: PiExtensionApi)
 
 	return pi => {
 		const bound = bindModelCost(pi);
+		const capability = session;
 		// The extension's own frontend, attached after the binding it draws beside and only when that
 		// binding was admitted: it reads the same read-only display result the framework's binding feeds,
 		// and pi's own widget is the only thing it owns. A refused binding subscribes nothing here.
-		if (bound.bound && runtime !== undefined) {
+		if (bound.bound && runtime !== undefined && capability !== undefined) {
 			const built = runtime;
 			// The widget draws the displayed session's own reading through the UI's one boundary wait.
-			// The readings themselves are no longer this half's to collect: the framework's own
-			// observation source holds every session's context — the adapter collects it where pi moves
+			// The readings themselves are no longer this half's to collect: the Session capability's
+			// observation reader holds every session's context — the adapter collects it where pi moves
 			// one — so a descendant's context is read from there without a viewed-session outlet and
 			// without this extension subscribing to a native context event at all. Every registration
 			// follows the binding's cleanup, because every one of them is that binding's own and nothing
 			// of any outlives the session that initialized the instance.
 			const releaseWidget = attachModelCostWidget(pi, built, uiBoundaryTimer);
 			frontendReleases.add(releaseWidget);
-			frontendReleases.add(observePiSubagentResults(pi, built));
+			frontendReleases.add(observePiSubagentResults(pi, built, capability.observations));
 		}
 	};
 }
 
 /** Watch results appended to the receiving main session, including detached-process results. */
-export function observePiSubagentResults(pi: PiExtensionApi, runtime: ModelCostRuntime): () => void {
+export function observePiSubagentResults(
+	pi: PiExtensionApi,
+	runtime: ModelCostRuntime,
+	observations: SessionObservationReader,
+): () => void {
 	return pi.on("message_end", async (event, ctx) => {
 		const message = event.message as {
 			readonly role?: string;
@@ -227,7 +234,7 @@ export function observePiSubagentResults(pi: PiExtensionApi, runtime: ModelCostR
 		};
 		if (message.role !== "custom" || message.customType !== "subagent-notify") return;
 		const sessionId = ctx.sessionManager.getSessionId();
-		if (runtime.sessionObservations.read(sessionId)?.session?.kind !== "main") return;
+		if (observations.read(sessionId)?.session?.kind !== "main") return;
 		for (const run of message.details?.runs ?? []) {
 			if (!["completed", "failed", "stopped", "paused"].includes(run.status ?? "")) continue;
 			await runtime.subagentResultReceived(sessionId, {

@@ -46,7 +46,9 @@ import type { ModelPricingData } from "../../../../extensions/model-cost/shared-
 import type { DisplayTarget } from "../../../../extensions/model-cost/shared-logic/presentation/display";
 import type { ModelCostRuntime } from "../../../../extensions/model-cost/shared-logic/runtime";
 import { createModelCostRuntime } from "../../../../extensions/model-cost/shared-logic/runtime";
-import type { OwnerReference, SessionFacts, TurnSignal } from "../../../../framework/core/protocol";
+import type { SessionFacts } from "../../../../framework/interface/session";
+import type { OwnerReference } from "../../../../framework/interface/state";
+import type { TurnSignal } from "../../../../framework/core/protocol";
 import { updateFile } from "../../../../framework/modules/files";
 import type { HttpRequestOptions } from "../../../../framework/modules/http";
 import { type CommandRun, type PortDouble, portDouble } from "../../../framework/support/harness-port-double";
@@ -275,13 +277,14 @@ async function bind(
 	let runtime: ModelCostRuntime | undefined;
 	double.bind(MODEL_COST, {
 		config: { reader: () => `storageDir: ${root}\nbalanceTtlMs: 30000\ncodexQuotaTtlMs: 15000\n` },
-		factory: () => {
+		factory: context => {
 			runtime = createModelCostRuntime({
 				config: { storageDir: root },
 				configDirectory: root,
 				userHomeDirectory: root,
 				harness: HARNESS,
 				data: DATA,
+				session: context.session,
 				providerAccess: {
 					resolve: async (provider: string) =>
 						provider === "deepseek" ? { baseUrl: "https://host.example/v1", credential: "probe-key" } : undefined,

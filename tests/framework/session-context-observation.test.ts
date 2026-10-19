@@ -32,13 +32,13 @@ import { describe, expect, test } from "bun:test";
 import type { OmpExtensionApi, OmpSessionContext } from "../../adapters/omp";
 import * as frameworkOmp from "../../adapters/omp";
 import type { ExtensionFactory } from "../../framework/core/assembly";
-import type { SessionObservations } from "../../framework/core/observations";
 import type {
-	OwnerReference,
 	SessionContextDelivery,
 	SessionContextReading,
 	SessionFacts,
-} from "../../framework/core/protocol";
+	SessionObservationReader,
+} from "../../framework/interface/session";
+import type { OwnerReference } from "../../framework/interface/state";
 import { type ExtensionDefinition, defineExtension } from "../../framework/public";
 import { portDouble } from "./support/harness-port-double";
 import { boundPiSurface } from "./support/pi-surface-double";
@@ -61,11 +61,11 @@ const GIVEN: SessionContextReading = { tokens: 12_345, provider: "official", mod
  */
 function contextProbe(): {
 	readonly factory: ExtensionFactory;
-	readonly observations: () => SessionObservations;
+	readonly observations: () => SessionObservationReader;
 	readonly deliveries: SessionContextDelivery[];
 } {
 	const deliveries: SessionContextDelivery[] = [];
-	let handed: SessionObservations | undefined;
+	let handed: SessionObservationReader | undefined;
 	return {
 		deliveries,
 		observations: () => {
@@ -73,7 +73,7 @@ function contextProbe(): {
 			return handed;
 		},
 		factory: context => {
-			handed = context.sessionObservations;
+			handed = context.session.observations;
 			return {
 				subscriptions: [{ scope: "session", events: { session_context: delivery => void deliveries.push(delivery) } }],
 			};
@@ -259,7 +259,7 @@ describe("the same given sequence leaves the same observation on either harness 
 		surface.sessionStarts(session, "startup");
 		surface.messageEnds(session, { role: "assistant", stopReason: "stop" });
 		surface.runSettles(session);
-		return surface.implemented().sessionObservations.read(sessionId)?.context;
+		return surface.implemented().session.observations.read(sessionId)?.context;
 	}
 
 	/** The same reading on OMP, collected at that harness's own three facts. */
@@ -308,7 +308,7 @@ describe("the same given sequence leaves the same observation on either harness 
 		};
 		pi.sessionStarts(piSession, "startup");
 		pi.runStarts({ ...piSession, context: { tokens: 99_999 } });
-		expect(pi.implemented().sessionObservations.read("session-pi-timing")?.context).toEqual(GIVEN);
+		expect(pi.implemented().session.observations.read("session-pi-timing")?.context).toEqual(GIVEN);
 
 		const omp = ompSurface();
 		const probe = contextProbe();

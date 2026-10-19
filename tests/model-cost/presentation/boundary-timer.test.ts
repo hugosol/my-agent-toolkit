@@ -33,7 +33,8 @@ import type { ConsumptionDocument } from "../../../extensions/model-cost/shared-
 import type { ModelPricingData } from "../../../extensions/model-cost/shared-logic/business/pricing/model-data";
 import type { ModelCostRuntime } from "../../../extensions/model-cost/shared-logic/runtime";
 import { createModelCostRuntime } from "../../../extensions/model-cost/shared-logic/runtime";
-import type { OwnerReference, SessionFacts } from "../../../framework/core/protocol";
+import type { SessionFacts } from "../../../framework/interface/session";
+import type { OwnerReference } from "../../../framework/interface/state";
 import { type PortDouble, portDouble } from "../../framework/support/harness-port-double";
 import { uiBoundaryTimerOf } from "../support/ui-timer";
 
@@ -253,13 +254,14 @@ async function bindBoundary(options: { readonly holiday?: boolean; readonly from
 	let runtime: ModelCostRuntime | undefined;
 	double.bind(MODEL_COST, {
 		config: { reader: () => `storageDir: ${root}\nbalanceTtlMs: 30000\ncodexQuotaTtlMs: 15000\n` },
-		factory: () => {
+		factory: context => {
 			runtime = createModelCostRuntime({
 				config: { storageDir: root },
 				configDirectory: root,
 				userHomeDirectory: root,
 				harness: HARNESS,
 				data: DATA,
+				session: context.session,
 				now: () => clock.now,
 				httpRequest: () => {
 					requests += 1;

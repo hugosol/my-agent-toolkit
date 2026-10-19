@@ -18,7 +18,8 @@
 | --- | --- | --- |
 | Extension definition | 与宿主无关的纯声明：扩展身份、控制方式、状态、贡献内容与配置要求 | 这是“声明需要什么”，还是“执行时如何实现”？ |
 | Extension `shared-logic` | 扩展业务及其组合：业务规则、外部业务协议、业务数据模型、缓存与刷新策略、业务持久化、展示计算 | 换一个宿主，这条业务规则是否仍然成立？ |
-| Framework `core` | 公共契约、类型及宿主无关的基础语义机制 | 这是多个扩展共同使用的语义，还是某个扩展的领域规则？ |
+| Framework `interface` | 已封装 capability 的 canonical 消费契约及使用约定；Session 是第一个完整示例 | extension 能否只读这里就正确使用该 capability？ |
+| Framework `core` | 尚未迁移的契约、内部 adapter protocol 与宿主无关的语义 implementation | 这是应藏在 capability seam 后面的规则，还是尚未迁移的声明？ |
 | Framework `behaviors` | 基于公共契约实现的可复用行为：绑定、状态控制、贡献、生命周期与派发 | 这是框架应该统一兑现的行为，还是扩展自己的处理逻辑？ |
 | Framework `modules` | 不依赖宿主与具体扩展的通用基础能力 | 去掉 Session、Owner 和业务概念，这项能力是否仍独立成立？ |
 | 顶层 `adapters/<harness>` | 宿主原生事实、触发位置与能力到框架契约的映射 | 这是公共语义在此宿主上的实现机制吗？ |
@@ -49,7 +50,7 @@ Framework adapter 服务于公共契约，extension 的宿主实现服务于这�
 
 1. **先明确业务含义。** 阅读目标扩展的领域文档与术语，区分业务需求和宿主实现方式，不从熟悉的原生 API 反推设计。
 2. **先查框架能力索引。** 判断需求是否已有声明、公共事实、生命周期、效果能力或通用基础能力可以承接。能用声明解决的，不另写一套运行逻辑。
-3. **再读公共接口与实现。** 沿能力索引进入源码，确认输入、输出与职责边界。不要因为框架内部某个对象“能做到”，就让 extension 直接依赖内部实现。
+3. **读取 capability interface，而不是追读 implementation。** Session 已完成首个封装：从 [`framework/interface/session`](../interface/session/README.md) 阅读事实、观察、订阅、提交提示与 close-out 约定，工厂使用 `context.session`；不导入 `core/protocol`、具体观察来源或内部派发。其他 capability 尚未全部迁移，沿能力索引查其现有入口。不要因为框架内部某个对象“能做到”，就让 extension 依赖它。
 4. **只有涉及宿主机制时，才进入 adapter 或 extension 的宿主实现。** 先判断它是公共映射还是扩展专属接入。缺少宿主事实，不应让 shared logic 猜测或读取私有字段。
 5. **最后决定新增代码的归属。** 已有能力就组合使用；业务缺口补在 extension；通用契约或基础能力缺口才考虑补在 framework。
 

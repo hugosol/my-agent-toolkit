@@ -3,7 +3,8 @@
  * with stderr when UI is absent. Marker area effects belong to `marker.ts` and State
  * persistence belongs to `session/effects.ts`; none of these channels enters model context.
  */
-import type { FeedbackLevel, FeedbackTransport, NoticeTransport } from "../../../framework/core/protocol";
+import type { FeedbackLevel, FeedbackTransport } from "../../../framework/interface/feedback";
+import type { NoticeTransport } from "../../../framework/core/protocol";
 import type { PiExtensionContext } from "../internal/native";
 
 /** One line on the session's UI, or stderr when it has no UI. */

@@ -395,6 +395,7 @@ function assemble(options: { readonly document?: ConsumptionDocument } = {}): Bo
 				userHomeDirectory: root,
 				harness: MODEL_COST_HARNESS,
 				data: DATA,
+				session: context.session,
 				subagentIntegrationMode: () => settledIntegration,
 				httpRequest: async (url: string, httpOptions?: HttpRequestOptions) => {
 					queries.push({ url, options: httpOptions });

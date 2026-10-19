@@ -96,7 +96,9 @@ import { createModelCostRuntime, type ModelCostRuntime } from "../extensions/mod
 import type { OmpSessionContext } from "../adapters/omp";
 import type { ConsumptionDocument, SessionRecord, TokenBuckets } from "../extensions/model-cost/shared-logic/foundation/session/consumption-document"
 import type { ModelPricingData } from "../extensions/model-cost/shared-logic/business/pricing/model-data";
-import type { OwnerReference, SessionFacts, TurnOutcome, TurnSignal, TurnUsage } from "../framework/core/protocol";
+import type { OwnerReference } from "../framework/interface/state";
+import type { SessionFacts, TurnOutcome, TurnUsage } from "../framework/interface/session";
+import type { TurnSignal } from "../framework/core/protocol";
 
 /** This repository's root: `scripts/` -> the checkout the run is attributable to. */
 const REPO_ROOT = resolve(import.meta.dir, "..");
@@ -680,6 +682,7 @@ async function bindProcess(options: {
 		},
 		factory: context => {
 			runtime = createModelCostRuntime({
+				session: context.session,
 				config: { storageDir: storageRoot, balanceTtlMs: BALANCE_TTL_MS, codexQuotaTtlMs: CODEX_QUOTA_TTL_MS },
 				configDirectory: runRoot,
 				userHomeDirectory: runRoot,

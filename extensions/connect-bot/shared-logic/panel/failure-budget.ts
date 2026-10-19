@@ -22,7 +22,7 @@
  * baseline counted — while the notice and the stop around it are the extension's own effects.
  * This module names no harness and reaches no native API.
  */
-import type { OwnerCapabilityHandle } from "../../../../framework/core/protocol";
+import type { OwnerCapabilityHandle } from "../../../../framework/interface/state";
 import { disarmLocally } from "./disarm";
 import { publishFeedback } from "../feedback";
 import type { PushResultObserver, SettledPush } from "./outbox";

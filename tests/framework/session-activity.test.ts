@@ -30,16 +30,15 @@
  */
 import { describe, expect, test } from "bun:test";
 import { createSessionActivityAxis, type SessionActivityAxis } from "../../framework/behaviors/session-activity";
+import type { FeedbackTransport } from "../../framework/interface/feedback";
 import type {
-	ExtensionDefinition,
-	FeedbackTransport,
-	OwnerReference,
 	RoundDelivery,
 	SessionActivityDelivery,
 	SessionFacts,
 	SubscriptionGroup,
-} from "../../framework/public";
-import { defineExtension } from "../../framework/public";
+} from "../../framework/interface/session";
+import type { OwnerReference } from "../../framework/interface/state";
+import { type ExtensionDefinition, defineExtension } from "../../framework/public";
 import { type PortDouble, portDouble } from "./support/harness-port-double";
 
 /** The definition under test: no command and no declaration — the activity axis is a subscription. */

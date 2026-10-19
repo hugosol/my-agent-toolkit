@@ -47,7 +47,7 @@ import type { BoundaryTimer } from "../../../../extensions/model-cost/harnesses/
 import type { ConsumptionDocument, SessionRecord } from "../../../../extensions/model-cost/shared-logic/foundation/session/consumption-document"
 import type { ModelPricingData } from "../../../../extensions/model-cost/shared-logic/business/pricing/model-data";
 import { createModelCostRuntime, type ModelCostRuntime } from "../../../../extensions/model-cost/shared-logic/runtime";
-import type { ProviderAccess, ProviderAccessFacts } from "../../../../framework/core/protocol";
+import type { ProviderAccess, ProviderAccessFacts } from "../../../../framework/interface/host-facts";
 import type { HttpRequestOptions } from "../../../../framework/modules/http";
 import { drain, until } from "../../../support/pending-query";
 
@@ -466,6 +466,7 @@ function assemble(options: { readonly root?: string; readonly holdQueries?: bool
 				userHomeDirectory: root,
 				harness: MODEL_COST_HARNESS,
 				data: DATA,
+				session: context.session,
 				providerAccess: context.providerAccess ?? access,
 				now: () => clock.now,
 				httpRequest: async (url: string, httpOptions?: HttpRequestOptions) => {

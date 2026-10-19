@@ -32,7 +32,9 @@ import type { ModelPricingData } from "../../../extensions/model-cost/shared-log
 import type { ModelCostRuntime } from "../../../extensions/model-cost/shared-logic/runtime";
 import { createModelCostRuntime } from "../../../extensions/model-cost/shared-logic/runtime";
 import type { OmpSessionContext } from "../../../adapters/omp";
-import type { ObservedSession, OwnerReference, SessionFacts } from "../../../framework/core/protocol";
+import type { SessionFacts } from "../../../framework/interface/session";
+import type { OwnerReference } from "../../../framework/interface/state";
+import type { ObservedSession } from "../../../framework/core/protocol";
 import { type PortDouble, portDouble } from "../../framework/support/harness-port-double";
 import { controlApi } from "../support/control-api";
 import { uiBoundaryTimerOf } from "../support/ui-timer";
@@ -169,7 +171,7 @@ async function bind(): Promise<Bound> {
 				userHomeDirectory: root,
 				harness: HARNESS,
 				data: DATA,
-				sessionObservations: context.sessionObservations,
+				session: context.session,
 			})).implementation,
 	});
 	double.deliverSession(OWNER, { session: MAIN });
@@ -244,9 +246,9 @@ describe("a turn's observation readings are drawn together, from their latest va
 
 		// Adoption is not the drawing's: the process's own source holds every reading already, and the
 		// activity the readings stated is the activity this instance reads — before any redraw is due.
-		expect(bound.runtime.sessionObservations.read(CHILD_A.sessionId)?.context?.tokens).toBe(10_000);
-		expect(bound.runtime.sessionObservations.read(CHILD_B.sessionId)?.context?.tokens).toBe(30_000);
-		expect(bound.runtime.sessionObservations.read(GRANDCHILD.sessionId)?.context?.tokens).toBe(20_000);
+		expect(bound.double.observations.read(CHILD_A.sessionId)?.context?.tokens).toBe(10_000);
+		expect(bound.double.observations.read(CHILD_B.sessionId)?.context?.tokens).toBe(30_000);
+		expect(bound.double.observations.read(GRANDCHILD.sessionId)?.context?.tokens).toBe(20_000);
 		expect(bound.runtime.sessionActivity.read(CHILD_A.sessionId)).toBe("working");
 		expect(bound.runtime.sessionActivity.read(GRANDCHILD.sessionId)).toBe("idle");
 
@@ -283,7 +285,7 @@ describe("a turn's observation readings are drawn together, from their latest va
 		expect(bound.frames()).toBe(before + 1);
 		expect(drawnRow(bound.lines(), "子代理A")).toContain("25,000");
 		expect(drawnRow(bound.lines(), "子代理A")).not.toContain("10,000");
-		expect(bound.runtime.sessionObservations.read(CHILD_A.sessionId)?.context?.tokens).toBe(25_000);
+		expect(bound.double.observations.read(CHILD_A.sessionId)?.context?.tokens).toBe(25_000);
 	});
 
 	test("a reading that states what the source already holds asks for no redraw at all", async () => {
@@ -448,6 +450,6 @@ describe("merging is the drawing's business and not the lifecycle's (P15)", () =
 		expect(bound.runtime.sessionActivity.read(MAIN.sessionId)).toBe("idle");
 		await turnEnded();
 		expect(drawnRow(bound.lines(), "子代理A")).toContain("10,000");
-		expect(bound.runtime.sessionObservations.read(CHILD_A.sessionId)?.context?.tokens).toBe(10_000);
+		expect(bound.double.observations.read(CHILD_A.sessionId)?.context?.tokens).toBe(10_000);
 	});
 });

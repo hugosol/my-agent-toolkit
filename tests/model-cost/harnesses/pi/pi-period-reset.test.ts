@@ -446,6 +446,7 @@ function assemble(
 				// own initialization delivery (see `harnesses/pi.ts`).
 				subagentIntegrationMode: () => "subagents",
 				data: DATA,
+				session: context.session,
 				...(context.modelPrices === undefined ? {} : { modelPrices: context.modelPrices }),
 				...(context.providerAccess === undefined ? {} : { providerAccess: context.providerAccess }),
 				httpRequest: async (url: string, httpOptions?: HttpRequestOptions) => {

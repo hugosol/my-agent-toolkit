@@ -25,8 +25,10 @@ import type { ConsumptionDocument } from "../../../../extensions/model-cost/shar
 import type { ModelPricingData } from "../../../../extensions/model-cost/shared-logic/business/pricing/model-data";
 import type { ModelCostRuntime } from "../../../../extensions/model-cost/shared-logic/runtime";
 import { createModelCostRuntime } from "../../../../extensions/model-cost/shared-logic/runtime";
-import type { OwnerReference, SessionFacts } from "../../../../framework/core/protocol";
+import type { SessionFacts } from "../../../../framework/interface/session";
+import type { OwnerReference } from "../../../../framework/interface/state";
 import { type FeedbackNotice, type PortDouble, portDouble } from "../../../framework/support/harness-port-double";
+import { testSessionCapability } from "../../support/session-capability";
 
 /** The self-made pricing data: one monetary tier and one token-only pair. */
 const DATA: ModelPricingData = {
@@ -162,6 +164,7 @@ async function bind(
 				harness: HARNESS,
 				data: DATA,
 				now: () => clock.at,
+				session: testSessionCapability(),
 			});
 			return runtime.implementation;
 		},

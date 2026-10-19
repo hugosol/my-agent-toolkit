@@ -17,7 +17,8 @@
  * fixture never saw the delivery".
  */
 import { piAdapter } from "../../../../adapters/pi";
-import type { ExtensionDefinition, SessionObservation } from "../../../../framework/public";
+import type { ExtensionDefinition } from "../../../../framework/public";
+import type { SessionObservation } from "../../../../framework/interface/session";
 import { PI_SUBAGENT_OBSERVATION_PREFIX } from "./prefix";
 
 /** The definition this fixture binds: identity and a label, with every behavior injected below. */
@@ -61,7 +62,7 @@ export function piSubagentObservationProbe(childEntry: string) {
 				scope: "session",
 				events: {
 					session_activity: delivery => {
-						const held = context.sessionObservations.read(delivery.session.sessionId);
+						const held = context.session.observations.read(delivery.session.sessionId);
 						note(
 							[
 								"activity",
@@ -75,7 +76,7 @@ export function piSubagentObservationProbe(childEntry: string) {
 						);
 					},
 					session_context: delivery => {
-						const held = context.sessionObservations.read(delivery.session.sessionId);
+						const held = context.session.observations.read(delivery.session.sessionId);
 						note(
 							[
 								"context",

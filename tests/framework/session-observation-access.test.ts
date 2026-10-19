@@ -13,7 +13,8 @@
  */
 import { describe, expect, test } from "bun:test";
 import type { ExtensionImplementation } from "../../framework/core/assembly";
-import type { AgentActivity, ObservedSession, SessionFacts } from "../../framework/core/protocol";
+import type { AgentActivity, SessionFacts } from "../../framework/interface/session";
+import type { ObservedSession } from "../../framework/core/protocol";
 import { defineExtension } from "../../framework/public";
 import { DEFAULT_OWNER_KEY, type PortDouble, portDouble } from "./support/harness-port-double";
 
@@ -509,7 +510,7 @@ describe("a session's own confirmed write leaves from the process that ran it (P
 		expect(
 			double.bind(PROBE, {
 				factory: context => {
-					stated = context.recordSessionCommit;
+					stated = context.session.recordCommit;
 					return {};
 				},
 			}).bound,

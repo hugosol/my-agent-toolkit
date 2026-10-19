@@ -6,7 +6,9 @@
  * synchronously and returns nothing. Persistence writes through this binding's own State entry,
  * and feedback is user-visible only.
  */
-import type { BoundCommand, FeedbackTransport, MarkerTransport, OwnerReference, StateValues } from "../../../framework/core/protocol";
+import type { FeedbackTransport } from "../../../framework/interface/feedback";
+import type { OwnerReference } from "../../../framework/interface/state";
+import type { BoundCommand, MarkerTransport, StateValues } from "../../../framework/core/protocol";
 import { canAcceptInputOf } from "./context/queries";
 import type { OmpExtensionApi, OmpSessionContext } from "../internal/native";
 

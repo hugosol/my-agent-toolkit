@@ -19,7 +19,8 @@
 import { describe, expect, test } from "bun:test";
 import type * as MarkerBehavior from "../../framework/behaviors/marker";
 import { activationField, statePersistence, type ExtensionDefinition, defineExtension } from "../../framework/core/definition";
-import type { MarkerTransport, OwnerReference } from "../../framework/core/protocol";
+import type { OwnerReference } from "../../framework/interface/state";
+import type { MarkerTransport } from "../../framework/core/protocol";
 import { StateStore } from "../../framework/core/state";
 
 /** One module instance of the marker behavior: what one extension's duplicated graph evaluates. */

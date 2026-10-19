@@ -20,12 +20,10 @@
  * This module is harness-independent — it names no native session event, timer or transport
  * and reaches the panel only through the wire client's injected seam.
  */
-import type {
-	CommandDelivery,
-	FeedbackTransport,
-	OwnerCapabilityHandle,
-	SessionEventDelivery,
-} from "../../../../framework/core/protocol";
+import type { FeedbackTransport } from "../../../../framework/interface/feedback";
+import type { SessionEventDelivery } from "../../../../framework/interface/session";
+import type { OwnerCapabilityHandle } from "../../../../framework/interface/state";
+import type { CommandDelivery } from "../../../../framework/public";
 import { pushEvent, readRegisterOutcome, type PushEnvelope } from "./client";
 import { connectBotConfig } from "./config";
 import { disarmLocally } from "./disarm";

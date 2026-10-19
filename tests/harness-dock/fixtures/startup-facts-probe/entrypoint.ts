@@ -12,11 +12,8 @@
  * its own. Its lines go to stderr, the channel the dock already captures.
  */
 import { type OmpExtensionApi, ompAdapter } from "../../../../adapters/omp";
-import {
-	type ExtensionDefinition,
-	type SessionEventDelivery,
-	defineExtension,
-} from "../../../../framework/public";
+import { type ExtensionDefinition, defineExtension } from "../../../../framework/public";
+import type { SessionEventDelivery } from "../../../../framework/interface/session";
 
 /** The extension id whose stderr lines the dock reads. */
 export const STARTUP_FACTS_ID = "startup-facts-probe";

@@ -21,7 +21,8 @@
  */
 import type { ExtensionDefinition } from "../core/definition";
 import { handOverReading, type ObservationHandOver, type SessionObservations } from "../core/observations";
-import type { ObservationSource, SessionContextObservation, SubscriptionGroup } from "../core/protocol";
+import type { SubscriptionGroup } from "../interface/session";
+import type { ObservationSource, SessionContextObservation } from "../core/protocol";
 import { dispatchToGroups } from "./subscriptions";
 
 /** What one binding's context collection arranges itself with. */

@@ -24,7 +24,9 @@ import type { ConsumptionDocument } from "../../../extensions/model-cost/shared-
 import type { ModelPricingData } from "../../../extensions/model-cost/shared-logic/business/pricing/model-data";
 import type { ModelCostRuntime } from "../../../extensions/model-cost/shared-logic/runtime";
 import { createModelCostRuntime } from "../../../extensions/model-cost/shared-logic/runtime";
-import type { CatalogPrice, CatalogPriceSource, OwnerReference, SessionFacts } from "../../../framework/core/protocol";
+import type { CatalogPrice, CatalogPriceSource } from "../../../framework/interface/host-facts";
+import type { SessionFacts } from "../../../framework/interface/session";
+import type { OwnerReference } from "../../../framework/interface/state";
 import { portDouble } from "../../framework/support/harness-port-double";
 
 /** The self-made pricing data every case drives. */
@@ -191,6 +193,7 @@ async function bindView(options: {
 				userHomeDirectory: root,
 				harness: HARNESS,
 				data: DATA,
+				session: context.session,
 				...(context.modelPrices === undefined ? {} : { modelPrices: context.modelPrices }),
 			});
 			return runtime.implementation;

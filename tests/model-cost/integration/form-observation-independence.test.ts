@@ -29,7 +29,8 @@ import type { ModelPricingData } from "../../../extensions/model-cost/shared-log
 import type { ModelCostRuntime } from "../../../extensions/model-cost/shared-logic/runtime";
 import { createModelCostRuntime } from "../../../extensions/model-cost/shared-logic/runtime";
 import { stateInheritance } from "../../../framework/core/definition";
-import type { ObservedSession, SessionFacts, SessionObservationAccess } from "../../../framework/core/protocol";
+import type { SessionFacts } from "../../../framework/interface/session";
+import type { ObservedSession, SessionObservationAccess } from "../../../framework/core/protocol";
 import { createOwnerAccessPublisher } from "../../../framework/modules/local-access";
 import { type PortDouble, portDouble } from "../../framework/support/harness-port-double";
 import {
@@ -179,7 +180,7 @@ async function bind(): Promise<Bound> {
 				userHomeDirectory: root,
 				harness: HARNESS,
 				data: DATA,
-				sessionObservations: context.sessionObservations,
+				session: context.session,
 			})).implementation,
 	});
 	double.deliverSession(SEAT_OWNER, { session: MAIN });
@@ -262,7 +263,7 @@ describe("the display form decides what is drawn, not what is observed (P23)", (
 		await child.ready();
 		child.send({ t: "deliver", index: 0 });
 		await until(
-			() => bound.runtime.sessionObservations.read(CHILD.sessionId)?.context?.tokens === 45_000,
+			() => bound.double.observations.read(CHILD.sessionId)?.context?.tokens === 45_000,
 			"the reading delivered during the brief never reached the entry's own observation record",
 		);
 		// The brief is still the brief: the observation is collected, not drawn.
@@ -286,7 +287,7 @@ describe("the display form decides what is drawn, not what is observed (P23)", (
 		// the same session, the same seat, the same delivering process's own access.
 		child.send({ t: "deliver", index: 1 });
 		await until(
-			() => bound.runtime.sessionObservations.read(CHILD.sessionId)?.context?.tokens === 90_000,
+			() => bound.double.observations.read(CHILD.sessionId)?.context?.tokens === 90_000,
 			"the update delivered while the detail was drawn never reached the entry's own observation record",
 		);
 		await bound.double.runToCompletion("budget", { args: "detail" });
@@ -300,7 +301,7 @@ describe("the display form decides what is drawn, not what is observed (P23)", (
 		// before any of the flips — a reading it states now is adopted and drawn just the same.
 		child.send({ t: "deliver", index: 2 });
 		await until(
-			() => bound.runtime.sessionObservations.read(CHILD.sessionId)?.context?.tokens === 120_000,
+			() => bound.double.observations.read(CHILD.sessionId)?.context?.tokens === 120_000,
 			"a reading delivered after the flips was no longer collected",
 		);
 		await bound.double.runToCompletion("budget", { args: "detail" });

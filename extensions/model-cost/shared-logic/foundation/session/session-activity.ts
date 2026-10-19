@@ -21,7 +21,7 @@
  * not idleness, and a display that had to choose would be inventing the one fact the framework's own
  * quiescence gate exists to establish.
  */
-import type { AgentActivity } from "../../../../../framework/core/protocol";
+import type { AgentActivity } from "../../../../../framework/interface/session";
 
 /**
  * One session's own current agent activity, in the framework glossary's vocabulary: `working` while

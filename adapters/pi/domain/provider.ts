@@ -14,7 +14,7 @@
  * the facts absent: the extension is told the host has no access to that provider rather than being
  * handed a guess or another provider's credential.
  */
-import type { ProviderAccess } from "../../../framework/core/protocol";
+import type { ProviderAccess } from "../../../framework/interface/host-facts";
 import type { PiExtensionContext, PiModelRegistry } from "../internal/native";
 
 /** pi's own provider access, and the live registry reading it is answered from. */

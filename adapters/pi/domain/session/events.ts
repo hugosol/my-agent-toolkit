@@ -8,14 +8,14 @@
  * are both read from the same position rather than from a second reading of the lineage link.
  */
 import type {
-	HarnessPort,
-	OwnerReference,
 	SessionEndReason,
 	SessionEvent,
 	SessionFacts,
 	SessionStartReason,
 	UserInputDelivery,
-} from "../../../../framework/core/protocol";
+} from "../../../../framework/interface/session";
+import type { OwnerReference } from "../../../../framework/interface/state";
+import type { HarnessPort } from "../../../../framework/core/protocol";
 import { feedbackTransport, noticeTransport } from "../feedback";
 import { markerTransport } from "../marker";
 import type { PiExtensionContext, PiSessionShutdownReason, PiSessionStartReason } from "../../internal/native";

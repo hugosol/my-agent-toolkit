@@ -27,6 +27,7 @@ import type { SessionRecord } from "../../../extensions/model-cost/shared-logic/
 import { createModelCostRuntime } from "../../../extensions/model-cost/shared-logic/runtime";
 import { findConfigFailure, getConfig } from "../../../framework/core/config";
 import { namespaceInstrumented, recordedFsOperations } from "../../../scripts/support/efficiency-baseline-fs-instrument";
+import { testSessionCapability } from "./session-capability";
 
 /**
  * What one file-system instrument recorded for one document, as this process read the document it
@@ -231,8 +232,10 @@ if (plan.requireUserHome !== undefined && userHomeDirectory !== plan.requireUser
 			configDirectory: plan.configDirectory,
 			userHomeDirectory,
 			// This child drives the store directly rather than through Turn facts; the harness identity
-			// is the one its snapshots are committed under.
+			// is the one its snapshots are committed under. It observes no session, so its Session
+			// capability is the empty in-memory one.
 			harness: plan.harness ?? plan.commits?.[0]?.harness ?? "omp",
+			session: testSessionCapability(),
 		});
 		const load = await runtime.initialize({
 			owner: { kind: "owner", key: "store-child" },

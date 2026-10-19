@@ -10,7 +10,7 @@
  * The query is created once per assembly, because the registry is the host's; each binding reports
  * the contexts its own deliveries came from through `saw`.
  */
-import type { ProviderAccess } from "../../../framework/core/protocol";
+import type { ProviderAccess } from "../../../framework/interface/host-facts";
 import type { OmpSessionContext } from "../internal/native";
 
 /**

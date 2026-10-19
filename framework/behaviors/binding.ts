@@ -43,13 +43,14 @@ import {
 	stateInheritance,
 	type ExtensionDefinition,
 } from "../core/definition";
+import type { FeedbackTransport } from "../interface/feedback";
+import type { SessionCapability } from "../interface/session";
 import {
 	type HarnessPort,
 	type BindingFailure,
 	type BindingResult,
 	describeBindingFailure,
 	type DirectedCommandImplementation,
-	type FeedbackTransport,
 	type ObservationSource,
 	type ObservedSession,
 	type PromptContribution,
@@ -269,6 +270,19 @@ export function bindExtension(
 		lost: source => loseSource(source),
 	}, port.sessionObservationAccess);
 	const handOver = observationBinding.handOver;
+	// The extension's whole Session capability: a frozen read surface over the process's one source,
+	// and the one statement it may make. The source's mutation methods are never handed out, and the
+	// notice a confirmed write produces takes the same hand-over path a reading does.
+	const session: SessionCapability = Object.freeze({
+		observations: Object.freeze({
+			read: (sessionId: string) => observations.read(sessionId),
+			snapshot: () => observations.snapshot(),
+		}),
+		recordCommit: (sessionId: string) => {
+			const stated = observations.recordCommit(sessionId);
+			if (stated !== undefined) handOverReading(handOver, stated);
+		},
+	});
 
 	// The extension's own half, and the first point at which its code runs. It is reached only
 	// after the configuration validated, so the values handed over are the ones the definition
@@ -283,19 +297,9 @@ export function bindExtension(
 			? {}
 			: factory({
 					config: definition.config === undefined ? {} : getConfig(definition),
-					// The process's own observation source: what this extension may read about the sessions
-					// this process has observed, including the readings collected before it attached. It is a
-					// live source and never a copy taken now, exactly as the two harness facts below are.
-					sessionObservations: observations,
-					// The one statement this extension makes about itself rather than reading: that a write of
-					// one of this process's sessions really landed. The count is recorded in the process's own
-					// source — where the session's own facts and owner already are — and the word that states it
-					// takes the same path a reading does, so a session whose owner this process serves is
-					// recorded here and handed to nobody, and one whose owner is served elsewhere crosses.
-					recordSessionCommit: sessionId => {
-						const stated = observations.recordCommit(sessionId);
-						if (stated !== undefined) handOverReading(handOver, stated);
-					},
+					// The process's Session capability: the live read surface (including readings collected
+					// before the extension attached) and the one statement it makes about a confirmed write.
+					session,
 					...(port.modelPrices === undefined ? {} : { modelPrices: port.modelPrices }),
 					...(port.providerAccess === undefined ? {} : { providerAccess: port.providerAccess }),
 				});

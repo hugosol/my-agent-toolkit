@@ -35,7 +35,8 @@ import type { ConsumptionDocument } from "../../../extensions/model-cost/shared-
 import type { ModelPricingData } from "../../../extensions/model-cost/shared-logic/business/pricing/model-data";
 import type { ModelCostRuntime } from "../../../extensions/model-cost/shared-logic/runtime";
 import { createModelCostRuntime } from "../../../extensions/model-cost/shared-logic/runtime";
-import type { OwnerReference, SessionFacts } from "../../../framework/core/protocol";
+import type { SessionFacts } from "../../../framework/interface/session";
+import type { OwnerReference } from "../../../framework/interface/state";
 import { type PortDouble, portDouble } from "../../framework/support/harness-port-double";
 import { controlApi } from "../support/control-api";
 import { uiBoundaryTimerOf } from "../support/ui-timer";
@@ -306,13 +307,14 @@ async function bindLayout(): Promise<BoundLayout> {
 	let runtime: ModelCostRuntime | undefined;
 	double.bind(MODEL_COST, {
 		config: { reader: () => `storageDir: ${root}\nbalanceTtlMs: 30000\ncodexQuotaTtlMs: 15000\n` },
-		factory: () =>
+		factory: context =>
 			(runtime = createModelCostRuntime({
 				config: { storageDir: root },
 				configDirectory: root,
 				userHomeDirectory: root,
 				harness: HARNESS,
 				data: DATA,
+				session: context.session,
 				now: () => CLOCK_AT,
 			})).implementation,
 	});
@@ -333,7 +335,7 @@ async function bindLayout(): Promise<BoundLayout> {
 	// One reading of one descendant's own context, as its binding publishes it: the child under
 	// `session-b` holds half of the monetary channel's own 450K display budget, and the child under
 	// `session-a` never reported one — the pair of rows the missing-field cases below compare.
-	built.sessionObservations.observeContext("session-b1", { tokens: 225_000, provider: "official", model: "model-beta" });
+	double.observations.observeContext("session-b1", { tokens: 225_000, provider: "official", model: "model-beta" });
 	screen.publish(initial);
 	text.publish(initial);
 	return { runtime: built, double, screen, text, file };

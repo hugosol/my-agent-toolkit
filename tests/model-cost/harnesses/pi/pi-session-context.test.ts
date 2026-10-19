@@ -4,16 +4,17 @@
  *
  * A session's context usage is reachable only from that session's own binding, so the *adapter*
  * reads it there — at the framework's own collection points, with the model the session ran at that
- * instant — and the framework's own observation source holds the result for the process, keyed by
- * the session id the host reports. This extension subscribes to no native context event of its own:
- * what it does is read that source (`runtime.sessionContext`) and show each session's own context
+ * instant — and the framework's Session capability holds the result for the process, keyed by the
+ * session id the host reports. This extension subscribes to no native context event of its own:
+ * what it does is read that capability (`runtime.sessionContext`) and show each session's context
  * beside its own statistics, against the fixed display budget of *that* session's channel, without a
  * viewed-session outlet and without anything reaching the storage root.
  *
  * The seam is the framework's own public consumption: the extension's real definition is bound through
  * the framework's real pi adapter, the runtime is the one `createModelCostRuntime` builds — handed the
- * source the framework collected into — the reading arrives because the extension observes the
- * framework's context deliveries, and the drawing is the production `attachModelCostWidget`. Two
+ * Session capability the framework collected into — the reading arrives because the extension
+ * observes the framework's context deliveries, and the drawing is the production
+ * `attachModelCostWidget`. Two
  * bindings share one runtime here because that is what two sessions of one pi process are: each
  * session's own binding reports its own facts into the process's readings, and the reading a
  * descendant reported is what the session it belongs to is drawn beside.
@@ -34,7 +35,8 @@ import type { ModelPricingData } from "../../../../extensions/model-cost/shared-
 import type { ModelCostRuntime } from "../../../../extensions/model-cost/shared-logic/runtime";
 import { createModelCostRuntime } from "../../../../extensions/model-cost/shared-logic/runtime";
 import { piAdapter } from "../../../../adapters/pi";
-import type { OwnerReference, SessionFacts } from "../../../../framework/core/protocol";
+import type { SessionFacts } from "../../../../framework/interface/session";
+import type { OwnerReference } from "../../../../framework/interface/state";
 import { type ControlledPiSurface, type HostSession, controlledPiSurface } from "../../support/pi-host";
 import { uiBoundaryTimerOf } from "../../support/ui-timer";
 
@@ -158,10 +160,10 @@ function fixture(): Fixture {
 				harness: HARNESS,
 				data: DATA,
 				now: () => CLOCK_AT,
-				// The source the framework collected into: every binding of this process reports its own
-				// session's readings there, and the runtime reads them instead of subscribing to any native
-				// context event of its own.
-				sessionObservations: context.sessionObservations,
+				// The Session capability the framework handed this binding: every binding of this process
+				// reports its own session's readings into the capability's observation reader, and the
+				// runtime reads them instead of subscribing to any native context event of its own.
+				session: context.session,
 			});
 			return runtime.implementation;
 		},
