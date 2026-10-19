@@ -13,7 +13,10 @@ Subscription group, observation reader and confirmed-write contract. The factory
 is a separate runtime object, and returned readings cannot write into the source. Session consumer
 types have no compatibility re-export from `public.ts` or `core/protocol.ts`.
 
-Only the State, Feedback and Host facts leaf contracts required by Session were moved beside it.
+State's own capability interface now owns its declarations (`StateDeclaration`, `StatePersistence`,
+`StateInheritance`) and managed operations (`OwnerReference`, `DeclaredValueSeam`,
+`OwnerCapabilityHandle`); the definition entry refers to them without re-publishing them. The
+Feedback and Host facts leaf contracts required by Session also live beside it.
 Other capability entries stay in place; the adapter port remains internal in `core/protocol.ts`
 until its own cutover. The import check uses an explicit list of remaining non-Session entries,
 not a blanket allowance for framework internals. No new disposal event, second dispatch, runtime
@@ -151,7 +154,7 @@ The directory names are navigation. The capability boundaries are the important 
 
 | Capability | What the extension sees | Hidden implementation | Adapter source |
 | --- | --- | --- | --- |
-| **State** | declared-value seam, retained capability, owner-scoped read | owner lives, persistence, followed-owner read, access lifetime | session boundaries and subagent relations |
+| **State** | State declaration axes, owner reference, declared-value seam, retained capability | store, cells, owner lives, persistence, followed-owner read, access lifetime | session boundaries and subagent relations |
 | **Session** | `SessionCapability` with `SessionObservationReader` yielding `SessionObservation`, confirmed-write statements, and the session-scoped event kinds: session, Round, Turn, Activity, Context, Input, Commit, Unobserved; disposal | session identity, Round synthesis, Turn association/dedup, activity derivation, context collection, subscription dispatch, observation source, cross-process access, close-out | Session, Context, Subagent domains |
 | **Command** | command declaration, invocation facts, action delivery, directed implementation | toggle/directed/actions routing, State transition, feedback | Control domain |
 | **Prompt** | prompt declaration, run delivery, prompt contribution | contribution selection, branch-progress matching | Prompt domain |

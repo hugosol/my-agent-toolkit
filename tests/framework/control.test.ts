@@ -191,6 +191,9 @@ describe("best-effort persistence (N3, P6)", () => {
 
 		expect(double.notifications).toEqual(["codeBaseTools enabled", "codeBaseTools disabled"]);
 		expect(double.appended).toEqual([]);
+		// The refused record did not stop the rest of the write path: the marker and the
+		// feedback that follow it still ran, in their existing order.
+		expect(double.effects).toEqual(["persist", "marker", "notify", "persist", "marker", "notify"]);
 	});
 });
 

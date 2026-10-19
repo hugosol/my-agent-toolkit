@@ -89,6 +89,37 @@ describe("a start seeds the owner its event names (F5, P7)", () => {
 		expect(boundary.markers).toEqual([[]]);
 		expect(double.run("codebase-tools", { owner: OWNER }).persisted).toEqual([{ enabled: true }]);
 	});
+
+	test("only the last persisted payload's legal boolean seeds the owner; anything else is the default", () => {
+		const double = portDouble();
+		double.bind(CODEBASE_TOOLS);
+
+		// The last payload decides, even when an earlier record held a different legal value.
+		const lastWins = { kind: "owner", key: "main:session-events-last" } as const;
+		double.deliverSession(lastWins, { statePayloads: [{ enabled: true }, { enabled: false }] });
+		expect(double.state.view(lastWins.key).read("enabled")).toBe(false);
+		// The toggle's record reports the value the session started from: it enabled, so the
+		// seeded value really was the last payload's `false`, not the earlier `true`.
+		expect(double.run("codebase-tools", { owner: lastWins }).persisted).toEqual([{ enabled: true }]);
+
+		const lastTrue = { kind: "owner", key: "main:session-events-last-true" } as const;
+		double.deliverSession(lastTrue, { statePayloads: [{ enabled: false }, { enabled: true }] });
+		expect(double.state.view(lastTrue.key).read("enabled")).toBe(true);
+
+		// A last payload that is not a legal boolean is not coerced: the declared default stands,
+		// whatever an earlier payload said.
+		const illegalLast = { kind: "owner", key: "main:session-events-illegal" } as const;
+		double.deliverSession(illegalLast, { statePayloads: [{ enabled: true }, { enabled: "yes" }] });
+		expect(double.state.view(illegalLast.key).read("enabled")).toBe(false);
+
+		const nonObjectLast = { kind: "owner", key: "main:session-events-non-object" } as const;
+		double.deliverSession(nonObjectLast, { statePayloads: [{ enabled: true }, null] });
+		expect(double.state.view(nonObjectLast.key).read("enabled")).toBe(false);
+
+		// The illegal last records did not silently enable their owners either.
+		expect(double.run("codebase-tools", { owner: illegalLast }).persisted).toEqual([{ enabled: true }]);
+		expect(double.run("codebase-tools", { owner: nonObjectLast }).persisted).toEqual([{ enabled: true }]);
+	});
 });
 
 describe("a transition is an end followed by a start (F5, P7)", () => {

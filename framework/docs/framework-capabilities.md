@@ -29,8 +29,8 @@ explicitly not extension-facing exports.
 
 | Entry point | Source | Role |
 | --- | --- | --- |
-| `defineExtension(definition)` | [`framework/public.ts`](../public.ts), defined at [`framework/core/definition.ts#L287`](../core/definition.ts#L287) | Declares an extension. Returns its argument typed; nothing is validated or copied here. |
-| `ExtensionDefinition` and its member types (`StateDeclaration`, `StatePersistence`, `StateInheritance`, `CommandDeclaration`, `CommandToggleDeclaration`, `CommandDirectedDeclaration`, `CommandActionsDeclaration`, `ControlKind`, `PromptDeclaration`, `PromptStrategy`, `MarkerDeclaration`, `ExtensionConfigDeclaration`, `ConfigFieldType`) | [`framework/core/definition.ts#L267`](../core/definition.ts#L267) | The definition shape and its configuration types. |
+| `defineExtension(definition)` | [`framework/public.ts`](../public.ts), defined at [`framework/core/definition.ts#L249`](../core/definition.ts#L249) | Declares an extension. Returns its argument typed; nothing is validated or copied here. |
+| `ExtensionDefinition` and its member types (`CommandDeclaration`, `CommandToggleDeclaration`, `CommandDirectedDeclaration`, `CommandActionsDeclaration`, `ControlKind`, `PromptDeclaration`, `PromptStrategy`, `MarkerDeclaration`, `ExtensionConfigDeclaration`, `ConfigFieldType`) | [`framework/core/definition.ts#L223`](../core/definition.ts#L223) | The definition shape and its configuration types. The State axis (`StateDeclaration`, `StatePersistence`, `StateInheritance`) is owned by the [State capability interface](../interface/state/index.ts). |
 | `ExtensionAssembly`, `ExtensionFactory`, `ImplementationContext`, `ExtensionImplementation`, `InitializationDelivery` | [`framework/public.ts`](../public.ts), defined at [`framework/core/assembly.ts`](../core/assembly.ts) | The assembly surface an extension's implementation is written against: the factory a harness adapter calls once the configuration validated, the context it is handed (the validated configuration, the harness's model prices and provider access, the Session capability (`context.session.observations` for reads and `context.session.recordCommit` for stating that a session's own write really landed)), what it returns (`commands`, `subscriptions`, `catalog`, the one-time `initialize` and `cleanup`), and the facts the initialization runs with. These authoring contracts are type-only; Session consumer contracts import from `framework/interface/session`. |
 | `SubscriptionGroup`, `ObservationScope` | [`Session subscriptions`](../interface/session/subscriptions.ts) | The one-time declaration of what a subscription observes: a group carries the scope it covers (`owner` — the owner session's own deliveries; `session` — every actual session the adapter reports, with that session's own identity, direct parent, latest name, the handle of the task it was spawned for, the name and id of the agent it runs and, on the delivery that announces its own start, the model and effective level it began on) and the handlers for the event kinds it subscribes. Both scopes run through the one dispatch, and widening a group to `session` grants no State write and no external-effect authority. |
 | `SessionFacts`, `SessionStartup`, `TurnEvent`, `TurnStartDelivery`, `TurnEndDelivery`, `TurnStartFacts`, `TurnEndFacts`, `TurnUsage`, `TurnOutcome`, `ProviderHttpFacts`, `CatalogPrice`, `CatalogPriceSource`, `ProviderAccess`, `ProviderAccessFacts` | [`Session facts`](../interface/session/details/facts.ts), [`Turn`](../interface/session/details/turn.ts), [`Host facts`](../interface/host-facts/index.ts) | The per-actual-session facts and the Turn axis: a session's identity, direct parent, latest name, the handle of the task it was spawned for (a subagent's own name for its work, which is neither the agent definition it runs nor the id its registry uses), the name and id of the agent it runs, and the optional `SessionStartup` — the model and effective level the session began on, reported on its own start alone and never rewritten; the two Turn edges with the request-time facts fixed at the first and repeated at the second; the reliable-or-unavailable usage, outcome, HTTP facts and the two provider reference ids; and the extension's own catalog the framework queries at each request's start. Native `TurnSignal` / `TurnSignalFacts` remain internal adapter contracts, not Session consumer exports. See [The Turn axis and the two observation scopes](#the-turn-axis-and-the-two-observation-scopes). |
@@ -52,12 +52,12 @@ explicitly not extension-facing exports.
 | `SessionEventHandlers`, `SessionEventHandler`, `SessionEventDelivery`, `RoundEventHandlers`, `RoundEventHandler`, `SessionActivityEventHandler`, `SessionActivityEventHandlers`, `TurnEventHandlers`, `TurnEventHandler`, `UserInputEventHandler`, `UserInputDelivery`, `SessionContextHandler`, `SessionContextDelivery`, `SessionCommitHandler`, `SessionCommitHandlers` | [`Session events and per-kind contracts`](../interface/session/index.ts) | The per-axis handler aliases, keyed by event, and the delivery each one receives — the session axis's delivery carries the actual session's facts and the owner-scoped capability, while the round, activity, Turn, input, context and commit deliveries carry their own facts and no capability. A handler may return a promise: the framework contains its rejection the way it contains a synchronous throw, and does not wait for it. All of these are public authoring types ([`framework/interface/session`](../interface/session/index.ts)), not adapter exports. |
 | Requirement types (`RequiredSemantic`, `DeclarableRequiredSemantic`, `FRAMEWORK_REQUIRED_SEMANTICS`) | [`framework/core/requirements.ts`](../core/requirements.ts) | The semantics a binding's behavior rests on: the framework's own, and the ones an assembly may declare its extension additionally depends on. Contract metadata for the independent verification — no runtime switch. |
 | `ConfigurationViolation` | [`framework/core/violations.ts`](../core/violations.ts) | The report of one broken configuration rule, carried by a `configuration` binding failure: a `ConfigurationViolationKind` and the deterministic `detail`. |
-| `ExtensionConfigDeclaration`, `ConfigFieldType`, `BOUND_CONFIG_FIELD_TYPES` | [`framework/core/definition.ts#L255`](../core/definition.ts#L255) | The configuration an extension requires of its own `config.yaml`: the file's path, and the keys the file must carry with the type each must match. See [Extension configuration](#extension-configuration-declaration--file). |
+| `ExtensionConfigDeclaration`, `ConfigFieldType`, `BOUND_CONFIG_FIELD_TYPES` | [`framework/core/definition.ts#L211`](../core/definition.ts#L211) | The configuration an extension requires of its own `config.yaml`: the file's path, and the keys the file must carry with the type each must match. See [Extension configuration](#extension-configuration-declaration--file). |
 | `readConfig`, `getConfig`, `ConfigSource`, `ConfigReadOptions`, `ConfigReader`, `ConfigParser`, `ConfigLoadError`, `ExtensionConfigError` | [`framework/core/config.ts`](../core/config.ts) | The one reading, parsing and validating implementation, the values shared logic reads, the injectable seam it runs through, and the two error classes that keep a loading-time failure apart from a misuse. See [Extension configuration](#extension-configuration-declaration--file). |
 | `readConfigDocument`, `isScheduledWait`, `SCHEDULED_WAIT_TEXT`, `describeValue` | [`framework/core/config.ts`](../core/config.ts) | The same reading and parsing seam used for a document the framework interprets itself rather than validating against a declaration — the shared configuration file, where a missing file is an answer rather than a failure — and the shared vocabulary for a value that is not what a configuration requires and for a wait this harness's timer schedules. |
 | `request`, `HttpRequestOptions`, `HttpConfigurationError` | [`framework/public.ts`](../public.ts), defined at [`framework/modules/http.ts`](../modules/http.ts) | The framework's general HTTP module: the one call shared logic imports directly, what a request declares (method, headers, body, `timeoutMs`, `proxy`), and the configuration failure a request may reject with before anything is sent. These are values — `defineExtension` and `request` are the entry's runtime exports. See [General HTTP module](#general-http-module). |
 | `updateFile`, `SafeFileUpdateOptions`, `SafeFileUpdateError`, `SafeFileUpdateFailureKind` | [`framework/public.ts`](../public.ts), defined at [`framework/modules/files.ts`](../modules/files.ts) | The framework's general safe-file module: the one coordinated read-modify-publish call shared logic imports directly, the absolute target and update function it takes, the wait budget and abort it accepts, and the distinguishable failure a refused coordination rejects with. These are values too — `defineExtension`, `request` and `updateFile` are the entry's runtime exports. See [General safe-file module](#general-safe-file-module). |
-| Adapter-facing delivery types (`OwnerReference`, `NoticeTransport`, `FeedbackLevel`, `FeedbackTransport`, `MarkerTransport`, `StateValues`, `TurnSignal`, `TurnSignalFacts`) | [`framework/core/protocol.ts#L15`](../core/protocol.ts), [`#L907`](../core/protocol.ts) | The facts and transports a harness adapter resolves; not authored by an extension. `HarnessPort.onTurn` ([`protocol.ts#L1023`](../core/protocol.ts)) is the hook an adapter reports its mapped model-cycle facts through, and `HarnessPort.onRound` ([`protocol.ts#L1000`](../core/protocol.ts)) the hook it reports its run-cycle facts through for the round axis's own synthesis. |
+| Adapter-facing delivery types (`NoticeTransport`, `FeedbackLevel`, `FeedbackTransport`, `MarkerTransport`, `StateValues`, `TurnSignal`, `TurnSignalFacts`); the canonical `OwnerReference` is imported from the [State interface](../interface/state/index.ts) | [`framework/core/protocol.ts#L15`](../core/protocol.ts), [`#L907`](../core/protocol.ts) | The facts and transports a harness adapter resolves; not authored by an extension. `HarnessPort.onTurn` ([`protocol.ts#L1023`](../core/protocol.ts)) is the hook an adapter reports its mapped model-cycle facts through, and `HarnessPort.onRound` ([`protocol.ts#L1000`](../core/protocol.ts)) the hook it reports its run-cycle facts through for the round axis's own synthesis. |
 
 A real, minimal consumer is the codebase-tools extension: the shared declaration is
 [`extensions/codebase-tools/definition.ts`](../../extensions/codebase-tools/definition.ts), its OMP assembly is
@@ -72,14 +72,14 @@ surface: the binding label is used for diagnostics, not pi's unrelated session-e
 
 ## `defineExtension(definition)`
 
-`definition` is an `ExtensionDefinition` ([`definition.ts#L267`](../core/definition.ts#L267)): plain data,
+`definition` is an `ExtensionDefinition` ([`definition.ts#L223`](../core/definition.ts#L223)): plain data,
 no builder and no handler. All fields are described below. `state`, `commands`, `prompts`, `marker`, `config`
 and `subagentRequirements` are optional; `id` and `displayName` are required.
 
 ### `id: string`
 
 Stable extension identity. It is also the prefix of every contribution identity: a prompt slot's framework
-identity is `${id}:${tag}` ([`definition.ts#L155`](../core/definition.ts#L155)).
+identity is `${id}:${tag}` ([`definition.ts#L151`](../core/definition.ts#L151)).
 
 ### `displayName: string`
 
@@ -220,7 +220,7 @@ automatic requirement inference or runtime negotiation. Configuration remains `f
 
 ### `state?: StateDeclaration`
 
-The State the extension declares ([`definition.ts#L48`](../core/definition.ts#L48)). v1 owns exactly one
+The State the extension declares ([`State interface`](../interface/state/index.ts#L47)). v1 owns exactly one
 boolean activation field per extension, and the field name is also the persistence key for its value whenever the
 field is persisted. The declared axes are independent: the control kind decides how a command drives the field,
 persistence decides whether the value is recorded in the owner's medium and seeded from a branch, and inheritance
@@ -228,19 +228,19 @@ decides whether a subagent reads the owner's current value or the field's declar
 
 | Parameter | Type | Meaning |
 | --- | --- | --- |
-| `field?` | `string` | The activation field name. Defaults to `DEFAULT_ACTIVATION_FIELD` = `"enabled"` when `state` is omitted ([`definition.ts#L81`](../core/definition.ts#L81), resolved by `activationField` at [`definition.ts#L255`](../core/definition.ts#L255)). |
-| `persistence?` | `"session-entry"` \| `"memory"` | Whether the value is recorded in the owner's persistence medium and seeded from the target branch at a session boundary (`session-entry`, the default, [`definition.ts#L58`](../core/definition.ts#L58)) or kept in memory only (`memory`: never recorded, never seeded; a boundary that replaces the owner drops it to the declared default, while navigation that keeps the owner keeps the value). Resolved by `statePersistence` ([`definition.ts#L260`](../core/definition.ts#L260)). |
-| `inheritance?` | `"follow"` \| `"none"` | How a subagent session reads the value: `none` (the default, [`definition.ts#L61`](../core/definition.ts#L61)) reads the field's declared default, `follow` reads the owner's current value live. Resolved by `stateInheritance` ([`definition.ts#L265`](../core/definition.ts#L265)); codebase-tools declares `follow` ([`extensions/codebase-tools/definition.ts`](../../extensions/codebase-tools/definition.ts)). |
+| `field?` | `string` | The activation field name. Defaults to `DEFAULT_ACTIVATION_FIELD` = `"enabled"` when `state` is omitted ([`definition.ts#L37`](../core/definition.ts#L37), resolved by `activationField` at [`definition.ts#L254`](../core/definition.ts#L254)). |
+| `persistence?` | `"session-entry"` \| `"memory"` | Whether the value is recorded in the owner's persistence medium and seeded from the target branch at a session boundary (`session-entry`, the default, [`definition.ts#L14`](../core/definition.ts#L14)) or kept in memory only (`memory`: never recorded, never seeded; a boundary that replaces the owner drops it to the declared default, while navigation that keeps the owner keeps the value). Resolved by `statePersistence` ([`definition.ts#L259`](../core/definition.ts#L259)). |
+| `inheritance?` | `"follow"` \| `"none"` | How a subagent session reads the value: `none` (the default, [`definition.ts#L17`](../core/definition.ts#L17)) reads the field's declared default, `follow` reads the owner's current value live. Resolved by `stateInheritance` ([`definition.ts#L264`](../core/definition.ts#L264)); codebase-tools declares `follow` ([`extensions/codebase-tools/definition.ts`](../../extensions/codebase-tools/definition.ts)). |
 
 **Bound set.** `BOUND_STATE_PERSISTENCES = ["session-entry", "memory"]`
-([`definition.ts#L70`](../core/definition.ts#L70)) and `BOUND_STATE_INHERITANCES = ["follow", "none"]`
-([`definition.ts#L78`](../core/definition.ts#L78)): a value outside them is refused at binding as an
+([`definition.ts#L26`](../core/definition.ts#L26)) and `BOUND_STATE_INHERITANCES = ["follow", "none"]`
+([`definition.ts#L34`](../core/definition.ts#L34)): a value outside them is refused at binding as an
 `initialization` failure, never silently read as the default one.
 
 ### `commands?: readonly CommandDeclaration[]`
 
 The extension's control commands. `CommandDeclaration` is the closed union of the three bound control kinds
-([`definition.ts#L162`](../core/definition.ts#L162)); `ControlKind` is its discriminant. The control kinds
+([`definition.ts#L118`](../core/definition.ts#L118)); `ControlKind` is its discriminant. The control kinds
 share a name, a description and a command surface; what they drive differs:
 
 | Parameter | Type | Meaning |
@@ -253,12 +253,12 @@ share a name, a description and a command surface; what they drive differs:
 
 | `type` | Behavior | Source |
 | --- | --- | --- |
-| `"toggle"` | Alternates the field between its two values on successive executions, and publishes the extension's activation feedback (`<displayName> enabled`/`disabled`) on the delivery's extension feedback channel at `info` severity. | [`definition.ts#L84`](../core/definition.ts#L84) |
-| `"directed"` | Names its target value explicitly and repeats its side effect on every execution: the framework never deduplicates, short-circuits or serializes it, so idempotence is the extension's, and the write is its injected implementation's. | [`definition.ts#L113`](../core/definition.ts#L113) |
-| `"actions"` | Offers a declared table of named actions. The framework trims the argument, ignores case and matches it **whole**: empty prints the help, a match runs that action and waits for it, and anything else prints the same help at `error` severity and runs nothing. No abbreviation, no extra argument, no default action, and the directed kind's `unrecognized` member is deliberately not consulted. An `actions` command drives no declared State. | [`definition.ts#L144`](../core/definition.ts#L144) |
+| `"toggle"` | Alternates the field between its two values on successive executions, and publishes the extension's activation feedback (`<displayName> enabled`/`disabled`) on the delivery's extension feedback channel at `info` severity. | [`definition.ts#L40`](../core/definition.ts#L40) |
+| `"directed"` | Names its target value explicitly and repeats its side effect on every execution: the framework never deduplicates, short-circuits or serializes it, so idempotence is the extension's, and the write is its injected implementation's. | [`definition.ts#L69`](../core/definition.ts#L69) |
+| `"actions"` | Offers a declared table of named actions. The framework trims the argument, ignores case and matches it **whole**: empty prints the help, a match runs that action and waits for it, and anything else prints the same help at `error` severity and runs nothing. No abbreviation, no extra argument, no default action, and the directed kind's `unrecognized` member is deliberately not consulted. An `actions` command drives no declared State. | [`definition.ts#L100`](../core/definition.ts#L100) |
 
 **Bound set.** `BOUND_CONTROL_KINDS = ["toggle", "directed", "actions"]`
-([`definition.ts#L182`](../core/definition.ts#L182)); deeper argument grammars, flags, numeric arguments
+([`definition.ts#L138`](../core/definition.ts#L138)); deeper argument grammars, flags, numeric arguments
 and aliases remain deferred. A kind outside the bound set is refused at binding, not silently dropped. (One
 extension, one command name, one declared writer per State field — see `ConfigurationViolation` below.)
 
@@ -292,14 +292,15 @@ channel. Its delivery ([`protocol.ts#L591`](../core/protocol.ts)) is the invocat
 argument, the owner scope, `hasUI`, the idle query and the two effect transports — because an `actions`
 command drives no declared State and therefore has no seam or capability to carry.
 
-**The implementation owns the write.** The delivery carries the declared-value seam
-([`State interface`](../interface/state/index.ts)): `read()` observes the value the invocation started
-from, and `write(value)` is the only path that records the field — the framework writes nothing before, after
-or instead of it, so an action that fails leaves the value alone. Each write is recorded in the owner's
-persistence medium best-effort and followed by an update of the framework-owned marker area
-([`protocol.ts#L324`](../core/protocol.ts)), which is why a write of `false` removes the
-extension's line. The same seam serves every handler delivery, so the write authority has one implementation
-whatever the control kind.
+**The implementation owns the write.** A delivery that carries the declared-value seam
+([`State interface`](../interface/state/index.ts)) reads the owner's current value on every call: `read()` is
+live, so a read after a write observes that write, and a handler that needs the value it saw before writing
+keeps it itself. `write(value)` is the only path that records the field — the framework writes nothing before,
+after or instead of it, so a handler that never writes leaves the value alone. The write becomes the owner's
+current value first, is then recorded best-effort in the owner's persistence medium (never for a `memory`
+field), and finally publishes the framework-owned marker area ([`protocol.ts#L324`](../core/protocol.ts)),
+which is why a write of `false` removes the extension's line. The same seam serves every handler delivery that
+carries one, so the write authority has one implementation whatever the control kind.
 
 **The delivery also carries a capability the handler may retain.** `delivery.capability`
 ([`protocol.ts#L578`](../core/protocol.ts)) is the same declared-value write and the same
@@ -312,7 +313,7 @@ a no-op that neither recreates State nor republishes the marker area and its fee
 
 ### `prompts?: readonly PromptDeclaration[]`
 
-The injected-prompt slots ([`definition.ts#L158`](../core/definition.ts#L158)). A slot's framework
+The injected-prompt slots ([`definition.ts#L151`](../core/definition.ts#L151)). A slot's framework
 identity is `${definition.id}:${tag}`; its visibility, delivery position and retention are framework-owned
 and are not parameters.
 
@@ -322,8 +323,8 @@ and are not parameters.
 | `strategy` | `PromptStrategy` | When the slot contributes (see below). |
 | `content` | `string` | The text the slot contributes. |
 
-`PromptStrategy` ([`definition.ts#L151`](../core/definition.ts#L151)) — both members are bound
-(`BOUND_PROMPT_STRATEGIES`, [`definition.ts#L172`](../core/definition.ts#L172)):
+`PromptStrategy` ([`definition.ts#L144`](../core/definition.ts#L144)) — both members are bound
+(`BOUND_PROMPT_STRATEGIES`, [`definition.ts#L165`](../core/definition.ts#L165)):
 
 | Value | Meaning |
 | --- | --- |
@@ -332,7 +333,7 @@ and are not parameters.
 
 ### `marker?: MarkerDeclaration`
 
-The extension's status-marker text ([`definition.ts#L175`](../core/definition.ts#L175)). Placement,
+The extension's status-marker text ([`definition.ts#L168`](../core/definition.ts#L168)). Placement,
 ordering and lifecycle are framework-owned; the extension supplies only the text. The area is one per
 process rather than one per module instance: it is registered on the process global under a well-known
 symbol, so it stays single even when the adapter layer's loader evaluates its own copy of the framework
@@ -366,13 +367,13 @@ reads it publishes nothing of its own.
 ### `config?: ExtensionConfigDeclaration`
 
 The configuration the extension requires of its own file
-([`definition.ts#L218`](../core/definition.ts#L218)). Omitted — the case for every extension so far —
+([`definition.ts#L211`](../core/definition.ts#L211)). Omitted — the case for every extension so far —
 means the extension reads no configuration at all and the capability is invisible to it.
 
 | Parameter | Type | Meaning |
 | --- | --- | --- |
 | `path?` | `string` | The file's path, relative to the **configuration base directory** the assembly supplies (`ExtensionAssembly.configBaseDir`); the convention `extensions/<definition.id>/config.yaml` when omitted. An absolute path is used as declared, and with no base directory a relative path resolves against the process's working directory. |
-| `fields` | `Readonly<Record<string, ConfigFieldType>>` | Every key the file must declare, with the type it must match: `"string"`, `"non-empty-string"`, `"number"`, `"boolean"` or `"milliseconds"` (`BOUND_CONFIG_FIELD_TYPES`, [`definition.ts#L193`](../core/definition.ts#L193)). A `milliseconds` field is a whole number of milliseconds this harness's timer schedules — 1 through 2^31-1, the longest delay it waits for before clamping a value to 1ms — so a wait budget is never read as a delay the extension would not be given. |
+| `fields` | `Readonly<Record<string, ConfigFieldType>>` | Every key the file must declare, with the type it must match: `"string"`, `"non-empty-string"`, `"number"`, `"boolean"` or `"milliseconds"` (`BOUND_CONFIG_FIELD_TYPES`, [`definition.ts#L189`](../core/definition.ts#L189)). A `milliseconds` field is a whole number of milliseconds this harness's timer schedules — 1 through 2^31-1, the longest delay it waits for before clamping a value to 1ms — so a wait budget is never read as a delay the extension would not be given. |
 
 The declaration is plain data and stays that way: nothing is read or validated at declaration time, and the file
 it names is what `getConfig` hands the extension's shared logic. See
@@ -416,7 +417,7 @@ semantics. These modules add no public interface: tests continue to drive native
 
 The same plain definition `defineExtension` returns. The adapter is the point at which declared conflicts
 are reported and the binding is decided; declaration itself validates nothing
-([`definition.ts#L250`](../core/definition.ts#L250)).
+([`definition.ts#L249`](../core/definition.ts#L249)).
 
 ### `options: ExtensionAssembly`
 
@@ -1181,7 +1182,7 @@ with the behavior it must preserve, is
 
 | Member | Meaning |
 | --- | --- |
-| `StateRules` | The State one store serves: `{ field, persistence }`, exactly the pair an assembly resolves from the definition through `activationField` ([`definition.ts#L255`](../core/definition.ts#L255)) and `statePersistence` ([`definition.ts#L260`](../core/definition.ts#L260)), plus the two optional access seams an assembly states — `localAccess` (the owner this process serves, offered) and `follow` (the owner another process serves, read). The constructor requires the first two: a store knows its field and persistence and holds no definition. |
+| `StateRules` | The State one store serves: `{ field, persistence }`, exactly the pair an assembly resolves from the definition through `activationField` ([`definition.ts#L254`](../core/definition.ts#L254)) and `statePersistence` ([`definition.ts#L259`](../core/definition.ts#L259)), plus the two optional access seams an assembly states — `localAccess` (the owner this process serves, offered) and `follow` (the owner another process serves, read). The constructor requires the first two: a store knows its field and persistence and holds no definition. |
 | `new StateStore(rules)` | One store per adapter factory call ([`omp.ts`](../../adapters/omp/index.ts), [`pi.ts`](../../adapters/pi/index.ts)), shared by every session binding of that extension — not a process-global registry keyed by definition id. |
 | `view(ownerKey)` | The read surface, unchanged: `read(field)` is the owner's current value, or the declared default when unset. |
 | `followed(ownerKey)` | The read surface for an owner this process may not hold: the cell first (an in-process read takes no access at all), then what the owner's access last stated, then the declared default. It is what a `follow` field's subagent reads. |

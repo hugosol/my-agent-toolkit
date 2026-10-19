@@ -130,6 +130,27 @@ describe("the handler runs before the write and owns it (F4, P5)", () => {
 		expect(double.state.view(owner.key).read("enabled")).toBe(false);
 	});
 
+	test("the seam is the managed read/write pair and carries no store", () => {
+		const double = portDouble();
+		const owner = { kind: "owner", key: "main:seam-shape" } as const;
+		const shaped: Array<{ readonly keys: readonly string[]; readonly read: unknown }> = [];
+		double.bind(directedExtension("directed-shape"), {
+			commands: {
+				"directed-shape": {
+					run: (_directive, delivery: CommandDelivery) => {
+						shaped.push({ keys: Object.keys(delivery.state).sort(), read: delivery.state.read() });
+					},
+				},
+			},
+		});
+
+		double.run("directed-shape", { owner });
+
+		// The delivery hands out the declared-value seam, not the store: two operations, and a
+		// read that answers the value itself rather than a live cell or map.
+		expect(shaped).toEqual([{ keys: ["read", "write"], read: false }]);
+	});
+
 	test("two identical writes are two writes: nothing is deduplicated", () => {
 		const double = portDouble();
 		const owner = { kind: "owner", key: "main:twice" } as const;
