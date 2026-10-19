@@ -63,7 +63,7 @@ extension-facing exports.
 | `readConfig`, `getConfig`, `ConfigSource`, `ConfigReadOptions`, `ConfigReader`, `ConfigParser`, `ConfigLoadError`, `ExtensionConfigError` | [`framework/core/config.ts`](../core/config.ts) | The one reading, parsing and validating implementation, the values shared logic reads, the injectable seam it runs through, and the two error classes that keep a loading-time failure apart from a misuse. See [Extension configuration](#extension-configuration-declaration--file). |
 | `readConfigDocument`, `isScheduledWait`, `SCHEDULED_WAIT_TEXT`, `describeValue` | [`framework/core/config.ts`](../core/config.ts) | The same reading and parsing seam used for a document the framework interprets itself rather than validating against a declaration — the shared configuration file, where a missing file is an answer rather than a failure — and the shared vocabulary for a value that is not what a configuration requires and for a wait this harness's timer schedules. |
 | `request`, `HttpRequestOptions`, `HttpConfigurationError` | [`framework/interface/general/http.ts`](../interface/general/http.ts), implemented at [`framework/modules/http.ts`](../modules/http.ts) | The framework's general HTTP module: the one call shared logic imports directly, what a request declares (method, headers, body, `timeoutMs`, `proxy`), and the configuration failure a request may reject with before anything is sent. It is a value — `request` is one of the entry's runtime exports. See [General HTTP module](#general-http-module). |
-| `updateFile`, `SafeFileUpdateOptions`, `SafeFileUpdateError`, `SafeFileUpdateFailureKind` | [`framework/public.ts`](../public.ts), defined at [`framework/modules/files.ts`](../modules/files.ts) | The framework's general safe-file module: the one coordinated read-modify-publish call shared logic imports directly, the absolute target and update function it takes, the wait budget and abort it accepts, and the distinguishable failure a refused coordination rejects with. `updateFile` is a runtime export of that entry. See [General safe-file module](#general-safe-file-module). |
+| `updateFile`, `SafeFileUpdateOptions`, `SafeFileUpdateError`, `SafeFileUpdateFailureKind` | [`framework/interface/general/files.ts`](../interface/general/files.ts), implemented at [`framework/modules/files.ts`](../modules/files.ts) | The framework's general safe-file module: the one coordinated read-modify-publish call shared logic imports directly, the absolute target and update function it takes, the wait budget and abort it accepts, and the distinguishable failure a refused coordination rejects with. `updateFile` and `SafeFileUpdateError` are the entry's runtime exports. See [General safe-file module](#general-safe-file-module). |
 | Adapter-facing delivery types (`NoticeTransport`, `MarkerTransport`, `StateValues`, `TurnSignal`, `TurnSignalFacts`); `FeedbackLevel` and `FeedbackTransport` are canonical in the [Feedback interface](../interface/feedback/index.ts), and `OwnerReference` in the [State interface](../interface/state/index.ts) | [`framework/core/protocol.ts#L34`](../core/protocol.ts), [`#L619`](../core/protocol.ts) | The facts and transports a harness adapter resolves; not authored by an extension. `HarnessPort.onTurn` ([`protocol.ts#L740`](../core/protocol.ts)) is the hook an adapter reports its mapped model-cycle facts through, and `HarnessPort.onRound` ([`protocol.ts#L650`](../core/protocol.ts)) the hook it reports its run-cycle facts through for the round axis's own synthesis. |
 
 A real, minimal consumer is the codebase-tools extension: the shared declaration is
@@ -841,9 +841,9 @@ that the whole run — including a separate process driving the published `reque
 
 ## General safe-file module
 
-`updateFile(target, update, options?)` ([`framework/modules/files.ts`](../modules/files.ts)) is the
+`updateFile(target, update, options?)` ([`framework/interface/general/files.ts`](../interface/general/files.ts)) is the
 framework's one coordinated read-modify-publish call, imported directly by shared logic through
-[`framework/public.ts`](../public.ts) rather than injected through a command or event delivery. It is
+that interface entry rather than injected through a command or event delivery. It is
 deliberately not a business API: it knows no schema, no version and no period, it never interprets the
 document, and what it publishes is exactly what the update function returned.
 
@@ -855,7 +855,7 @@ document, and what it publishes is exactly what the update function returned.
 | `options.signal?` | `AbortSignal` | Aborts the *wait*. Once the update has begun it is ignored: the call waits for the real result rather than pretending to have stopped. |
 
 **What comes back.** The promise resolves with the update function's own return value, after that
-document is really on disk; a rejection is either a [`SafeFileUpdateError`](../modules/files.ts) naming
+document is really on disk; a rejection is either a [`SafeFileUpdateError`](../interface/general/files.ts) naming
 its kind or the update function's own error, unchanged. The failure kinds are closed: `timeout` (the
 budget ran out before coordination was acquired), `cancelled` (the caller's own abort during that wait),
 `io` (a document, a lock or a directory the module could not read, create, replace or lock, or a

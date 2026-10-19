@@ -49,7 +49,7 @@ import { createModelCostRuntime } from "../../../../extensions/model-cost/shared
 import type { SessionFacts } from "../../../../framework/interface/session";
 import type { OwnerReference } from "../../../../framework/interface/state";
 import type { TurnSignal } from "../../../../framework/core/protocol";
-import { updateFile } from "../../../../framework/modules/files";
+import { updateFile } from "../../../../framework/interface/general/files";
 import type { HttpRequestOptions } from "../../../../framework/interface/general/http";
 import { type CommandRun, type PortDouble, portDouble } from "../../../framework/support/harness-port-double";
 

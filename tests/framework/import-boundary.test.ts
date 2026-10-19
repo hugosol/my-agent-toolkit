@@ -110,7 +110,6 @@ describe("shared source imports no harness types (C1)", () => {
 		const legacyEntries: Readonly<Record<string, true>> = {
 			"framework/public": true,
 			"framework/core/config": true,
-			"framework/modules/files": true,
 		};
 		const crossings: string[] = [];
 		for (const file of sourceFiles.filter(file => file.startsWith("extensions/"))) {
@@ -566,11 +565,12 @@ describe("shared source imports no harness types (C1)", () => {
 	});
 
 	test("capability interfaces depend on no framework implementation or native mapping", () => {
-		// One approved runtime connection exists: the general HTTP entry re-exports the
-		// implementation's one published call. It is exact — this file and this specifier — so the
-		// exception cannot widen into a general import of the implementation tree.
+		// Two approved runtime connections exist: the general HTTP and safe-file entries re-export
+		// their implementation's one published call. Each is exact — this file and this specifier —
+		// so the exception cannot widen into a general import of the implementation tree.
 		const runtimeConnections: Readonly<Record<string, readonly string[]>> = {
 			"framework/interface/general/http.ts": ["../../modules/http"],
+			"framework/interface/general/files.ts": ["../../modules/files"],
 		};
 		const crossings: string[] = [];
 		for (const file of sourceFiles.filter(file => file.startsWith("framework/interface/"))) {

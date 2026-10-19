@@ -35,13 +35,15 @@ migrated.
 writes commands against: its declaration group in `details/definition.ts`, and its implementation,
 delivery and directive group in `details/implementation.ts`. The actual delivery the framework
 constructs carries only those approved members; the persistence callback, the area transport and the
-internal invocation stay out of it. General's HTTP call is its own entry:
+internal invocation stay out of it. General's HTTP and safe-file calls are their own entries:
 [general/http.ts](general/http.ts) publishes `request`, `HttpRequestOptions` and
-`HttpConfigurationError`, while the implementation stays in `framework/modules/http.ts`. General's
-`getConfig` and `updateFile` remain at `framework/public`, `core/config` and `modules/files` as
-needed. These are explicit remaining entries, not permission to import arbitrary framework
-internals. Authoring, State, Session, Prompt, Marker, Feedback, Host facts, Subagent, Command and
-general HTTP declarations have no compatibility exports there; the import check protects those
+`HttpConfigurationError`, and [general/files.ts](general/files.ts) publishes `updateFile`,
+`SafeFileUpdateOptions`, `SafeFileUpdateError` and `SafeFileUpdateFailureKind`, while their
+implementations stay in `framework/modules/http.ts` and `framework/modules/files.ts`. General's
+`getConfig` remains at `framework/public` and `core/config` as needed. These are explicit
+remaining entries, not permission to import arbitrary framework internals. Authoring, State,
+Session, Prompt, Marker, Feedback, Host facts, Subagent, Command and the general HTTP and
+safe-file declarations have no compatibility exports there; the import check protects those
 seams. The later runtime-port relocation in the
 [overall direction](../docs/capability-interface-architecture.md) is not part of these cutovers.
 
