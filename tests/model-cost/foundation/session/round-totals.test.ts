@@ -27,7 +27,7 @@ import type { ModelPricingData } from "../../../../extensions/model-cost/shared-
 import { type ModelCostRuntime, createModelCostRuntime } from "../../../../extensions/model-cost/shared-logic/runtime";
 import type { SessionFacts, TurnUsage } from "../../../../framework/interface/session";
 import type { OwnerReference } from "../../../../framework/interface/state";
-import type { TurnSignal } from "../../../../framework/core/protocol";
+import type { TurnSignal } from "../../../../framework/runtime/port";
 import { type PortDouble, portDouble } from "../../../framework/support/harness-port-double";
 import { testSessionCapability } from "../../support/session-capability";
 

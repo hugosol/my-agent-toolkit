@@ -37,7 +37,7 @@ import type { ModelPricingData } from "../../../../extensions/model-cost/shared-
 import { type ModelCostRuntime, createModelCostRuntime } from "../../../../extensions/model-cost/shared-logic/runtime";
 import type { ProviderAccess, ProviderAccessFacts } from "../../../../framework/interface/host-facts";
 import type { SessionFacts, TurnOutcome, TurnUsage } from "../../../../framework/interface/session";
-import type { TurnSignal } from "../../../../framework/core/protocol";
+import type { TurnSignal } from "../../../../framework/runtime/port";
 import type { HttpRequestOptions } from "../../../../framework/interface/general/http";
 import { type PortDouble, portDouble } from "../../../framework/support/harness-port-double";
 import { testSessionCapability } from "../../support/session-capability";

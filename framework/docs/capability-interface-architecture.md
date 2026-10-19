@@ -1,8 +1,8 @@
 # Capability interface architecture
 
-**Status:** Session, State, Prompt/Marker, Feedback, Host facts, Subagent, the root authoring contract, Command and General are implemented, including Command's narrowed runtime delivery and General's three direct entries; the runtime-port migration remains proposed.
+**Status:** Session, State, Prompt/Marker, Feedback, Host facts, Subagent, the root authoring contract, Command and General are implemented, including Command's narrowed runtime delivery and General's three direct entries. The single framework/adapter interaction contract is implemented in [`framework/runtime/port.ts`](../runtime/port.ts).
 **Scope:** the dependency seam between `framework/`, `adapters/`, and `extensions/`.
-**Decision status:** [ADR-0002's Session amendment](../../docs/adr/0002-semantic-extension-framework.md#session-capability-interface-cutover-2026-10-19) accepts the first complete capability. The overall target below still contains future work and open decisions; it is not a claim that every capability or `framework/runtime/port` has moved.
+**Decision status:** [ADR-0002's Session amendment](../../docs/adr/0002-semantic-extension-framework.md#session-capability-interface-cutover-2026-10-19) accepts the first complete capability. The overall target below still contains proposed future work and open decisions; it is not a claim that those later phases are implemented.
 
 ## Current Session cutover
 
@@ -11,7 +11,7 @@ Subscription group, observation reader and confirmed-write contract. The factory
 `context.session.observations` and `context.session.recordCommit`; the old top-level
 `sessionObservations` / `recordSessionCommit` fields and public concrete class are removed. A reader
 is a separate runtime object, and returned readings cannot write into the source. Session consumer
-types have no compatibility re-export from any mixed entry or `core/protocol.ts`.
+types have no compatibility re-export from any mixed entry or the internal [`runtime/port.ts`](../runtime/port.ts).
 
 State's own capability interface now owns its declarations (`StateDeclaration`, `StatePersistence`,
 `StateInheritance`) and managed operations (`OwnerReference`, `DeclaredValueSeam`,
@@ -29,8 +29,9 @@ explicitly constructed from the approved members: the adapter's persistence call
 transport and the internal invocation are not reachable from an extension. General's HTTP, safe-file
 and configuration functions are published by their three direct entries (`general/http.ts`,
 `general/files.ts`, `general/config.ts`), with no aggregate `general/index.ts`; the former mixed
-`framework/public.ts` entry is removed. The adapter port remains internal in `core/protocol.ts`
-until its own cutover. The import check requires every extension import under `framework/` to
+`framework/public.ts` entry is removed. The one adapter port now lives in `framework/runtime/port.ts`,
+referring to the canonical interface declarations instead of restating them; the former
+`core/protocol.ts` no longer exists. The import check requires every extension import under `framework/` to
 resolve inside `framework/interface`, with no remaining-entry exemption list. No new disposal
 event, second dispatch, runtime registry or second adapter abstraction is introduced. Start at the [Session capability entry](../interface/session/index.ts) before reading its implementation.
 The root owns capability, current-observation and subscription entries; `details/` owns public domain
@@ -445,12 +446,15 @@ The direction should be implemented in stages. Each stage should leave the repos
 - `framework/public.ts` is removed as a public path; the root authoring entry and the capability/general entries are the only extension-facing paths.
 - Verification: typecheck and the framework suite; behavior should not change.
 
-### Phase 2 - Runtime port
+### Phase 2 - Runtime port (implemented)
 
-- Create `framework/runtime/port.ts` with the framework-shaped adapter contract.
-- Move `HarnessPort`, `RoundObservation`, `TurnSignal`, `SessionObservationAccess/Sink`, `BindingResult`, and `BindingFailure` there.
+- [`framework/runtime/port.ts`](../runtime/port.ts) carries the framework-shaped adapter contract:
+  `HarnessPort`, the semantic deliveries and observations, the adapter-facing transports, the
+  command invocation and the binding outcomes.
+- It refers to the canonical declarations in `framework/interface` and restates none of them; the
+  former `core/protocol.ts` is removed rather than left as a forwarding entry.
 - Adapters import the port from `framework/runtime/port`; extensions never do.
-- Keep the port as one interface for now. Splitting it by capability is a later decision.
+- The port stays one interface. Splitting it by capability is a later decision.
 
 ### Phase 3 - Capability context and read surface
 

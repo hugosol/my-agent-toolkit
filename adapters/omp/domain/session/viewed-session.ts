@@ -7,7 +7,7 @@
  * this module is pointed at it; the marker area's transport is injected per delivery so nothing
  * in this module names a native widget.
  */
-import type { MarkerTransport, ViewedSessionPort } from "../../../../framework/core/protocol";
+import type { MarkerTransport, ViewedSessionPort } from "../../../../framework/runtime/port";
 import type { ContextTracker } from "../context/queries";
 import type { OmpExtensionApi, OmpSessionContext } from "../../internal/native";
 import { viewedOwnerOf } from "./queries";

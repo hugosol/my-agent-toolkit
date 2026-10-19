@@ -7,7 +7,7 @@ import { stateInheritance } from "./definition";
 import type { ExtensionDefinition } from "../interface/details/definition";
 import { FollowedOwners, type FollowedAccessReader } from "./followed-owners";
 import type { ObservationHandOver, SessionObservations } from "./observations";
-import type { SessionObservationAccess, SessionObservationSink } from "./protocol";
+import type { SessionObservationAccess, SessionObservationSink } from "../runtime/port";
 import {
 	createObservationDeliverer,
 	createOwnerAccessPublisher,

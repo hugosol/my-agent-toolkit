@@ -34,7 +34,7 @@ import { createModelCostRuntime } from "../../../extensions/model-cost/shared-lo
 import type { OmpSessionContext } from "../../../adapters/omp";
 import type { SessionFacts } from "../../../framework/interface/session";
 import type { OwnerReference } from "../../../framework/interface/state";
-import type { ObservedSession } from "../../../framework/core/protocol";
+import type { ObservedSession } from "../../../framework/runtime/port";
 import { type PortDouble, portDouble } from "../../framework/support/harness-port-double";
 import { controlApi } from "../support/control-api";
 import { uiBoundaryTimerOf } from "../support/ui-timer";

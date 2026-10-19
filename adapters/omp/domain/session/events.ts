@@ -26,7 +26,7 @@
  */
 import type { SessionEvent, SessionStartReason } from "../../../../framework/interface/session";
 import type { OwnerReference } from "../../../../framework/interface/state";
-import type { HarnessPort } from "../../../../framework/core/protocol";
+import type { HarnessPort } from "../../../../framework/runtime/port";
 import { feedbackTransport, noticeTransport } from "../feedback";
 import { markerTransport } from "../marker";
 import type { OmpExtensionApi, OmpSessionContext } from "../../internal/native";

@@ -5,7 +5,7 @@
  * association and lifecycle semantics.
  */
 import type { SessionFacts, TurnOutcome, TurnUsage } from "../../../../framework/interface/session";
-import type { HarnessPort, TurnSignalFacts } from "../../../../framework/core/protocol";
+import type { HarnessPort, TurnSignalFacts } from "../../../../framework/runtime/port";
 import type { OmpAgentMessage, OmpExtensionApi, OmpSessionContext } from "../../internal/native";
 
 /** The all-zero reading a message carries when the provider reported no usage at all. */

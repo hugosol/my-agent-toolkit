@@ -7,7 +7,7 @@
  * they live beside the mapping rather than inside the assembly entry.
  */
 import type { FeedbackLevel } from "../../../framework/interface/feedback";
-import type { BindingResult } from "../../../framework/core/protocol";
+import type { BindingResult } from "../../../framework/runtime/port";
 
 // Structural native types keep the harness a loader-provided runtime dependency.
 export interface PiSessionEntry {

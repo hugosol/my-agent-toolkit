@@ -556,10 +556,11 @@ describe("shared source imports no harness types (C1)", () => {
 	});
 
 	test("capability interfaces depend on no framework implementation or native mapping", () => {
-		// Three approved runtime connections exist: the general HTTP, safe-file and configuration
-		// entries re-export their implementation's one published call. Each is exact — this file and
-		// this specifier — so the exception cannot widen into a general import of the implementation
-		// tree.
+		// The approved runtime connections are defineExtension, request, updateFile and getConfig.
+		// The root authoring entry owns defineExtension itself and imports no implementation; the
+		// general HTTP, safe-file and configuration entries re-export their implementation's one
+		// published call. Each connection is exact — this file and this specifier — so the exception
+		// cannot widen into a general import of the implementation tree.
 		const runtimeConnections: Readonly<Record<string, readonly string[]>> = {
 			"framework/interface/general/http.ts": ["../../modules/http"],
 			"framework/interface/general/files.ts": ["../../modules/files"],

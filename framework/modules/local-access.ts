@@ -85,7 +85,7 @@ import type {
 	SessionStartup,
 } from "../interface/session";
 import type { OwnerReference } from "../interface/state";
-import type { ObservationSource, ObservedSession, SessionObservationSink } from "../core/protocol";
+import type { ObservationSource, ObservedSession, SessionObservationSink } from "../runtime/port";
 
 /** The declared values of one owner, by field name: the whole payload this access carries. */
 export type OwnerAccessValues = Readonly<Record<string, boolean>>;

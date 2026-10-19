@@ -14,7 +14,7 @@
 import { createAssemblyBinding } from "../../framework/behaviors/assembly";
 import type { ExtensionAssembly } from "../../framework/interface/details/implementation";
 import type { ExtensionDefinition } from "../../framework/interface/details/definition";
-import type { BindingResult } from "../../framework/core/protocol";
+import type { BindingResult } from "../../framework/runtime/port";
 import type { OmpExtensionApi } from "./internal/native";
 import { createOmpPort } from "./internal/port";
 import { createHostFacts } from "./domain/host-facts";

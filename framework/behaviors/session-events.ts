@@ -31,7 +31,7 @@
 import type { ExtensionDefinition } from "../interface/details/definition";
 import type { SessionEventDelivery, SubscriptionGroup } from "../interface/session";
 import type { OwnerCapabilityHandle } from "../interface/state";
-import type { SessionDelivery } from "../core/protocol";
+import type { SessionDelivery } from "../runtime/port";
 import type { StateStore } from "../core/state";
 import { type MarkerSeat, publishMarkerOnTransition } from "./marker";
 import { stateValueFor } from "./state-scope";

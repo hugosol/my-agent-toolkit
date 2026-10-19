@@ -35,7 +35,7 @@ import type {
 	OmpSessionEventType,
 } from "../../adapters/omp";
 import * as frameworkOmp from "../../adapters/omp";
-import type { BindingResult } from "../../framework/core/protocol";
+import type { BindingResult } from "../../framework/runtime/port";
 import type { DeclarableRequiredSemantic, ExtensionDefinition } from "../../framework/interface";
 import { REPO_ROOT, readBaselineRecord } from "../harness-dock/baseline";
 import { withCapturedStderr } from "./support/captured-stderr";

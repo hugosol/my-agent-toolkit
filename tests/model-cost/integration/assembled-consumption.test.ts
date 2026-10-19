@@ -42,7 +42,7 @@ import { type ModelCostRuntime, createModelCostRuntime } from "../../../extensio
 import type { CatalogPrice, CatalogPriceSource } from "../../../framework/interface/host-facts";
 import type { SessionFacts, TurnUsage } from "../../../framework/interface/session";
 import type { OwnerReference } from "../../../framework/interface/state";
-import type { TurnSignal } from "../../../framework/core/protocol";
+import type { TurnSignal } from "../../../framework/runtime/port";
 import { type PortDouble, portDouble } from "../../framework/support/harness-port-double";
 import { controlApi } from "../support/control-api";
 import { uiBoundaryTimerOf } from "../support/ui-timer";

@@ -7,7 +7,7 @@
  * cannot drift from the entry restoration reads.
  */
 import type { ExtensionDefinition } from "../../../../framework/interface/details/definition";
-import type { StateValues } from "../../../../framework/core/protocol";
+import type { StateValues } from "../../../../framework/runtime/port";
 import type { PiExtensionApi } from "../../internal/native";
 import { piStateEntryType } from "./queries";
 

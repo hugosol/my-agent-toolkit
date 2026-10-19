@@ -9,7 +9,7 @@
  * module decides neither what to say nor when.
  */
 import type { FeedbackLevel, FeedbackTransport } from "../../../framework/interface/feedback";
-import type { NoticeTransport } from "../../../framework/core/protocol";
+import type { NoticeTransport } from "../../../framework/runtime/port";
 import type { OmpSessionContext } from "../internal/native";
 
 /**

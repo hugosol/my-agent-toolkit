@@ -48,7 +48,7 @@ import type { ModelCostRuntime } from "../../../../extensions/model-cost/shared-
 import { createModelCostRuntime } from "../../../../extensions/model-cost/shared-logic/runtime";
 import type { SessionFacts } from "../../../../framework/interface/session";
 import type { OwnerReference } from "../../../../framework/interface/state";
-import type { TurnSignal } from "../../../../framework/core/protocol";
+import type { TurnSignal } from "../../../../framework/runtime/port";
 import { updateFile } from "../../../../framework/interface/general/files";
 import type { HttpRequestOptions } from "../../../../framework/interface/general/http";
 import { type CommandRun, type PortDouble, portDouble } from "../../../framework/support/harness-port-double";

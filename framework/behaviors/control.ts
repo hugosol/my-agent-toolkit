@@ -15,13 +15,9 @@
  * This module is harness-independent: it reads and writes State and calls the
  * adapter-supplied effect transports, and names no native API.
  */
-import type { CommandDelivery, DirectedCommandImplementation } from "../interface/command";
+import type { CommandDelivery, DirectedCommandImplementation, RecognizedDirective } from "../interface/command";
 import type { ExtensionDefinition } from "../interface/details/definition";
-import type {
-	CommandInvocation,
-	DirectedDirective,
-	StateValues,
-} from "../core/protocol";
+import type { CommandInvocation, StateValues } from "../runtime/port";
 import type { StateStore } from "../core/state";
 import { type MarkerSeat, publishMarkerOnTransition } from "./marker";
 
@@ -65,6 +61,17 @@ export function runCommandToggle(
 
 	invocation.feedback.notify("info", activationFeedback(definition, next));
 }
+
+/** The framework's normalization of a directed command's argument.
+ *
+ * `activate` — the empty argument names `on`; `deactivate` — `off` names `off`;
+ * `unrecognized` — any other text, carried verbatim. Normalizing in the framework keeps
+ * the command surface's one vocabulary in one place, so an assembly never re-implements
+ * it and an extension reads one shape whatever surface the user typed on.
+ */
+export type DirectedDirective =
+	| RecognizedDirective
+	| { readonly kind: "unrecognized"; readonly argument: string };
 
 /**
  * Normalizes a directed command's argument into a directive.

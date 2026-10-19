@@ -98,7 +98,7 @@ import type { ConsumptionDocument, SessionRecord, TokenBuckets } from "../extens
 import type { ModelPricingData } from "../extensions/model-cost/shared-logic/business/pricing/model-data";
 import type { OwnerReference } from "../framework/interface/state";
 import type { SessionFacts, TurnOutcome, TurnUsage } from "../framework/interface/session";
-import type { TurnSignal } from "../framework/core/protocol";
+import type { TurnSignal } from "../framework/runtime/port";
 
 /** This repository's root: `scripts/` -> the checkout the run is attributable to. */
 const REPO_ROOT = resolve(import.meta.dir, "..");

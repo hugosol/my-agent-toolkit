@@ -7,7 +7,7 @@
  * pi's own `null` for an unknown context right after a compaction — is no reading at all rather
  * than a context of nothing, so nothing is reported for it.
  */
-import type { HarnessPort } from "../../../framework/core/protocol";
+import type { HarnessPort } from "../../../framework/runtime/port";
 import type { PiExtensionContext } from "../internal/native";
 import type { PiPortContext } from "../internal/port";
 import { feedbackTransport } from "./feedback";

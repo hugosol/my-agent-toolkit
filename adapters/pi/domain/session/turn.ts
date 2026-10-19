@@ -10,7 +10,7 @@
  * outside a model cycle, so a Turn ends when its response settled, not when pi's turn did.
  */
 import type { SessionFacts, TurnOutcome, TurnUsage } from "../../../../framework/interface/session";
-import type { HarnessPort, TurnSignalFacts } from "../../../../framework/core/protocol";
+import type { HarnessPort, TurnSignalFacts } from "../../../../framework/runtime/port";
 import { feedbackTransport } from "../feedback";
 import type { PiAssistantMessage, PiExtensionApi, PiExtensionContext } from "../../internal/native";
 import type { PiPortContext } from "../../internal/port";

@@ -14,7 +14,7 @@
  * what it prints is in the order it was asked.
  */
 import { readFileSync, writeFileSync } from "node:fs";
-import type { ObservedSession } from "../../../framework/core/protocol";
+import type { ObservedSession } from "../../../framework/runtime/port";
 import {
 	createOwnerAccessPublisher,
 	openOwnerAccess,
