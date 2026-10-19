@@ -6,6 +6,7 @@
  *   bun scripts/pi-session-accounting.ts                 # resolve the installed pi CLI
  *   bun scripts/pi-session-accounting.ts --pi <path>     # or PI_CLI=<path>
  *   bun scripts/pi-session-accounting.ts --keep          # keep every run root for inspection
+ *   bun scripts/pi-session-accounting.ts --expect-pi-version 1.3.0 # explicit candidate host observation
  *
  * What it drives: the real installed pi as a child process in RPC mode, with an isolated agent state,
  * session directory, working directory and user home under the OS temp root, and a local
@@ -628,10 +629,13 @@ async function phaseResumedTree(
 
 	const mark = extended.frameMark();
 	await extended.request({ type: "prompt", message: "/budget detail" }, UI_FRAME_TIMEOUT_MS);
+	// The entry draws before its initialization's provider prefetch and store read have settled, so the
+	// first Total line can be the empty reading. What this case is about is the tree the saved document
+	// produces, so the frame waited for is the one that really draws the child row.
 	const drawn = await extended.frameSince(
 		mark,
-		frame => (widgetLinesOf(frame) ?? []).some(line => line.startsWith("Total:  ")),
-		"a widget drawing the detail form",
+		frame => (widgetLinesOf(frame) ?? []).some(line => line.startsWith(`  ${childName}`)),
+		"a widget drawing the child session in the detail tree",
 		UI_FRAME_TIMEOUT_MS,
 	);
 	const lines = drawn === undefined ? [] : (widgetLinesOf(drawn) ?? []);
@@ -667,7 +671,10 @@ async function main(): Promise<void> {
 	const cli = resolvePiCli(explicit);
 	const version = await piVersion(cli);
 	console.log(`pi ${version} (${cli.path})`);
-	observe("the harness under test is the fixed version this script states", version === EXPECTED_PI_VERSION, `reported ${version}`);
+	const expectedVersion = process.argv.includes("--expect-pi-version")
+		? process.argv[process.argv.indexOf("--expect-pi-version") + 1]
+		: EXPECTED_PI_VERSION;
+	observe("the harness under test is the fixed version this run states", version === expectedVersion, `reported ${version}, expected ${expectedVersion}`);
 	observe("the pinned provider artifact this repository installs is present", existsSync(PROVIDER_ENTRY), PROVIDER_ENTRY);
 
 	try {

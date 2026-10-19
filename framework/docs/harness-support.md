@@ -93,6 +93,24 @@ per-ticket source states and uncovered items are collected in
 `.scratch/model-cost-pi-migration/evidence/25-evidence-scope-audit.md`; this section is the durable record of
 what the migration does and does not establish.
 
+### Ticket 13 re-run — pi entries (2026-10-19)
+
+Ticket 13 re-ran the pi entries on the merged cutover (`8aa4d15a4c46648ea17a04b557417eded5ba3f27`),
+installed pi 1.3.0, Node 22.19.0 and Bun 1.4.2, with every run isolated and every entry loaded
+explicitly. Current results supersede the stale session-accounting row above for this source state:
+pi codebase-tools 52/0 checks; pi model-cost 100/0 checks (28 runs); pi subagent 30 observations;
+background round 15; terminal round 17; close-out 11; session accounting 18 with 0 required facts
+missing; a new real-child probe for codebase-tools' `follow` inheritance 14/14; and the real-TUI
+marker/notice probe 12/12 at 120 and 60 columns. The TUI acceptance passed 34 content/layout checks
+at both widths and failed only its fixed version assertion (expects 1.2.0). Two smoke corrections
+made those scenes trustworthy rather than timing-dependent: terminal-round holds the parent's own
+record fixed instead of the whole shared document (the child's own save lands in the same window),
+and session-accounting waits for the detail frame that really draws the child row instead of the
+first `Total:` frame the entry draws before initialization settles. Both scripts accept an explicit
+`--expect-pi-version` for a candidate-host observation; their default expectation is unchanged.
+Evidence, commands, P48 material and the unverified list:
+`.scratch/framework-capability-cutover/evidence/13-pi-real-entry-regression/README.md`.
+
 ## Harness targets and evidence
 
 | Harness | Package | Source version / checkout | Observed installed harness | Evidence status |

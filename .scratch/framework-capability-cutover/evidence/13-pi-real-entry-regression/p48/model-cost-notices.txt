@@ -1,0 +1,18 @@
+# model-cost — real pi TUI notices (ticket 13, for ticket 14)
+
+Source run: `scripts/pi-tui-acceptance.ts --widths 120,60 --rows 40`, frames under
+`p48/model-cost-tui/`. The only notice the fixed acceptance scenario produces is the one the
+extension's own `/budget detail` action publishes (an info notice). Content verified on the
+actual frames:
+
+| Width | Actual notice lines |
+| --- | --- |
+| 120 columns | ` 展示已切换为详细（detail）：保留顶部 Total，并在 Round 位置显示静态代理树。` |
+| 60 columns | ` 展示已切换为详细（detail）：保留顶部 Total，并在 Round 位`<br>` 置显示静态代理树。` |
+
+The 60-column frame wraps the same message across two lines; no text is dropped. The notice is
+drawn below the `[Extensions]` row and above the account row. Its severity (`info`) is the
+extension's own selection; the TUI shows it through the host's notification channel.
+
+This is content/field evidence only. The readability judgement remains ticket 14's human
+confirmation; this file does not make it.
