@@ -21,9 +21,8 @@ import { registerControl } from "../domain/control";
 import { feedbackTransport } from "../domain/feedback";
 import { markerTransport } from "../domain/marker";
 import type { OmpExtensionApi, OmpSessionContext } from "./native";
-import type { ModelPrices } from "../domain/pricing";
+import type { OmpHostFacts } from "../domain/host-facts";
 import { observeRunInitiation } from "../domain/prompt";
-import type { ProviderAccessSource } from "../domain/provider";
 import { stateEntryOf } from "../domain/session/effects";
 import {
 	observeRoundEvents,
@@ -37,8 +36,7 @@ import { subagentIntegrationOf } from "../domain/subagent/queries";
 
 /** The process-level readers every binding of one assembly answers through. */
 export interface PortDependencies {
-	readonly prices: ModelPrices;
-	readonly access: ProviderAccessSource;
+	readonly hostFacts: OmpHostFacts;
 }
 
 /** Builds the framework's port onto OMP, bound to one session and the extension's State key. */
@@ -47,9 +45,9 @@ export function createOmpPort(
 	definition: ExtensionDefinition,
 	dependencies: PortDependencies,
 ): HarnessPort {
-	// One tracker per binding: prices and provider access are the process's readers, but the
-	// newest context is the one this binding's own deliveries reported.
-	const context = createContextTracker([dependencies.prices.saw, dependencies.access.saw]);
+	// One tracker per binding: the host facts are the process's readers, but the newest context is
+	// the one this binding's own deliveries reported.
+	const context = createContextTracker([dependencies.hostFacts.saw]);
 	const record = context.record;
 	// One State entry per binding: session restoration and commands are two uses of it.
 	const stateEntry = stateEntryOf(pi, definition);
@@ -103,8 +101,8 @@ export function createOmpPort(
 	return {
 		setLabel: label => pi.setLabel(label),
 		reportDiagnostic,
-		modelPrices: dependencies.prices.prices,
-		providerAccess: dependencies.access.access,
+		modelPrices: dependencies.hostFacts.prices,
+		providerAccess: dependencies.hostFacts.access,
 		viewedSession,
 		// This harness integrates subagent observations itself; the Subagent domain answers how that
 		// integration stands, so the port carries no inline capability fact of its own.

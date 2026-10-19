@@ -63,7 +63,7 @@ my-agent-toolkit/
     pi/
       index.ts                  # Public assembly entry
       internal/                 # Native types, loader support and the binding port
-      domain/                   # Capability domains: Session, Context, Subagent, Pricing, ...
+      domain/                   # Capability domains: Session, Context, Subagent, Host facts, ...
         session/                # Session facts and lifecycle, including Turn and Round mappings
     omp/
       index.ts
@@ -163,9 +163,10 @@ capability domains. Organize `domain/` directly by shared capability domain, not
 extension or by `business`/`foundation` tiers. `domain/` is a navigation grouping, not a runtime
 module or a new interface. Prefer an existing business domain when it and a support domain both
 fit; keep genuinely shared support in one place. Framework-owned concepts supplement business
-vocabulary: Session owns its Turn and Round mappings, while context and catalog pricing have their
-own domains. A native object's location does not decide capability ownership. Framework Marker area
-and Extension feedback mappings remain adapter responsibilities; extension presentation does not.
+vocabulary: Session owns its Turn and Round mappings, context keeps its own domain, and provider
+access and catalog pricing share the Host facts domain. A native object's location does not decide
+capability ownership. Framework Marker area and Extension feedback mappings remain adapter
+responsibilities; extension presentation does not.
 
 Within a capability domain, organize native mappings by their direction: `events.ts` converts
 native observations to framework events, `queries.ts` reads native facts into framework values,
@@ -175,8 +176,8 @@ private implementation files within Session. Do not create forwarding-only entry
 method into a module. Keep the domain's event construction near its native event mapping rather than
 reassembling it in the harness port. Shared context types, diagnostics and other implementation
 support belong with the code that owns their lifetime, not in a parallel capability taxonomy.
-The complete domain map is Session, Context, Subagent, Pricing, Provider, Control, Prompt, Feedback
-and Marker. Both harnesses expose their Subagent domain: native parent/ancestor relationships and
+The complete domain map is Session, Context, Subagent, Host facts, Control, Prompt, Feedback and
+Marker. Both harnesses expose their Subagent domain: native parent/ancestor relationships and
 integration-state reads belong there, while Session consumes those relations for its own facts and
 Owner mapping. Ordinary child Session/Turn/Round events remain Session events; OMP does not add a
 second child-event pipeline just to populate a Subagent `events.ts`. pi's provider announcements and
