@@ -1,0 +1,264 @@
+{
+	"harness": {
+		"version": "18.5.0",
+		"prefix": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-fAyvCW\\.cache\\omp-baseline\\18.5.0-viewed-session"
+	},
+	"checks": [
+		{
+			"name": "/budget help completes",
+			"expected": "completed",
+			"actual": "completed",
+			"pass": true
+		},
+		{
+			"name": "the help notice is info",
+			"expected": "info",
+			"actual": "info",
+			"pass": true
+		},
+		{
+			"name": "the help names the detail action",
+			"expected": "truthy",
+			"actual": "/budget — 费用统计与展示管理\n  detail — 切换简略／详细展示\n  holiday — 开启假日计价\n  clear — 归档并重置统计",
+			"pass": true
+		},
+		{
+			"name": "the help names the clear action",
+			"expected": "truthy",
+			"actual": "/budget — 费用统计与展示管理\n  detail — 切换简略／详细展示\n  holiday — 开启假日计价\n  clear — 归档并重置统计",
+			"pass": true
+		},
+		{
+			"name": "the priced exchange completes",
+			"expected": "completed",
+			"actual": "completed",
+			"pass": true
+		},
+		{
+			"name": "the widget carries the balance line",
+			"expected": "truthy",
+			"actual": [
+				"🏖️  [░░░░░░░░░░░░░░░░░░░░   0% (2,000/450.0K)]  Effort: high  💰 Balance: ¥110.00  ⏳ Accrued: ¥0.0000",
+				"Total:  Cache: 50%  ¥Cache/In/Out：0:20:80  Cost: ¥0.0050  Span: 0:00:00",
+				"Round:  Cache: 50%  ¥Cache/In/Out：0:20:80  Cost: ¥0.0050"
+			],
+			"pass": true
+		},
+		{
+			"name": "the accounted amount is drawn",
+			"expected": "truthy",
+			"actual": "🏖️  [░░░░░░░░░░░░░░░░░░░░   0% (2,000/450.0K)]  Effort: high  💰 Balance: ¥110.00  ⏳ Accrued: ¥0.0000\nTotal:  Cache: 50%  ¥Cache/In/Out：0:20:80  Cost: ¥0.0050  Span: 0:00:00\nRound:  Cache: 50%  ¥Cache/In/Out：0:20:80  Cost: ¥0.0050",
+			"pass": true
+		},
+		{
+			"name": "the fixed budget is drawn",
+			"expected": "truthy",
+			"actual": "🏖️  [░░░░░░░░░░░░░░░░░░░░   0% (2,000/450.0K)]  Effort: high  💰 Balance: ¥110.00  ⏳ Accrued: ¥0.0000\nTotal:  Cache: 50%  ¥Cache/In/Out：0:20:80  Cost: ¥0.0050  Span: 0:00:00\nRound:  Cache: 50%  ¥Cache/In/Out：0:20:80  Cost: ¥0.0050",
+			"pass": true
+		},
+		{
+			"name": "the cache ratio is drawn",
+			"expected": "truthy",
+			"actual": "🏖️  [░░░░░░░░░░░░░░░░░░░░   0% (2,000/450.0K)]  Effort: high  💰 Balance: ¥110.00  ⏳ Accrued: ¥0.0000\nTotal:  Cache: 50%  ¥Cache/In/Out：0:20:80  Cost: ¥0.0050  Span: 0:00:00\nRound:  Cache: 50%  ¥Cache/In/Out：0:20:80  Cost: ¥0.0050",
+			"pass": true
+		},
+		{
+			"name": "the fee structure is drawn",
+			"expected": "truthy",
+			"actual": "🏖️  [░░░░░░░░░░░░░░░░░░░░   0% (2,000/450.0K)]  Effort: high  💰 Balance: ¥110.00  ⏳ Accrued: ¥0.0000\nTotal:  Cache: 50%  ¥Cache/In/Out：0:20:80  Cost: ¥0.0050  Span: 0:00:00\nRound:  Cache: 50%  ¥Cache/In/Out：0:20:80  Cost: ¥0.0050",
+			"pass": true
+		},
+		{
+			"name": "the balance reading is drawn",
+			"expected": "truthy",
+			"actual": "🏖️  [░░░░░░░░░░░░░░░░░░░░   0% (2,000/450.0K)]  Effort: high  💰 Balance: ¥110.00  ⏳ Accrued: ¥0.0000\nTotal:  Cache: 50%  ¥Cache/In/Out：0:20:80  Cost: ¥0.0050  Span: 0:00:00\nRound:  Cache: 50%  ¥Cache/In/Out：0:20:80  Cost: ¥0.0050",
+			"pass": true
+		},
+		{
+			"name": "the brief layout is the header and Round rows",
+			"expected": 3,
+			"actual": 3,
+			"pass": true
+		},
+		{
+			"name": "the first line carries the budget and effort",
+			"expected": "truthy",
+			"actual": "🏖️  [░░░░░░░░░░░░░░░░░░░░   0% (2,000/450.0K)]  Effort: high  💰 Balance: ¥110.00  ⏳ Accrued: ¥0.0000",
+			"pass": true
+		},
+		{
+			"name": "the second line carries the labelled total row",
+			"expected": "truthy",
+			"actual": "Total:  Cache: 50%  ¥Cache/In/Out：0:20:80  Cost: ¥0.0050  Span: 0:00:00",
+			"pass": true
+		},
+		{
+			"name": "the third line carries the Round row",
+			"expected": "truthy",
+			"actual": "Round:  Cache: 50%  ¥Cache/In/Out：0:20:80  Cost: ¥0.0050",
+			"pass": true
+		},
+		{
+			"name": "/budget detail completes",
+			"expected": "completed",
+			"actual": "completed",
+			"pass": true
+		},
+		{
+			"name": "the detail notice is info",
+			"expected": "info",
+			"actual": "info",
+			"pass": true
+		},
+		{
+			"name": "the detail-mode exchange completes",
+			"expected": "completed",
+			"actual": "completed",
+			"pass": true
+		},
+		{
+			"name": "the detail total carries both accounted exchanges",
+			"expected": "truthy",
+			"actual": "Total:  Cache: 50%  ¥Cache/In/Out：0:20:80  Cost:   ¥0.01  Span: 0:00:00",
+			"pass": true
+		},
+		{
+			"name": "the detail tree names the model and its amount",
+			"expected": "truthy",
+			"actual": "🏖️  [░░░░░░░░░░░░░░░░░░░░   0% (2,000/450.0K)]  Effort: high  💰 Balance: ¥110.00  ⏳ Accrued: ¥0.0050 [▏]\nTotal:  Cache: 50%  ¥Cache/In/Out：0:20:80  Cost:   ¥0.01  Span: 0:00:00\nmain\n│  deepseek / deepseek-flash  Cache: 50%  ¥Cache/In/Out：0:20:80  Cost: ¥0.01",
+			"pass": true
+		},
+		{
+			"name": "the detail tree keeps the fee structure",
+			"expected": "truthy",
+			"actual": "🏖️  [░░░░░░░░░░░░░░░░░░░░   0% (2,000/450.0K)]  Effort: high  💰 Balance: ¥110.00  ⏳ Accrued: ¥0.0050 [▏]\nTotal:  Cache: 50%  ¥Cache/In/Out：0:20:80  Cost:   ¥0.01  Span: 0:00:00\nmain\n│  deepseek / deepseek-flash  Cache: 50%  ¥Cache/In/Out：0:20:80  Cost: ¥0.01",
+			"pass": true
+		},
+		{
+			"name": "the detail layout adds the tree rows",
+			"expected": "truthy",
+			"actual": [
+				"🏖️  [░░░░░░░░░░░░░░░░░░░░   0% (2,000/450.0K)]  Effort: high  💰 Balance: ¥110.00  ⏳ Accrued: ¥0.0050 [▏]",
+				"Total:  Cache: 50%  ¥Cache/In/Out：0:20:80  Cost:   ¥0.01  Span: 0:00:00",
+				"main",
+				"│  deepseek / deepseek-flash  Cache: 50%  ¥Cache/In/Out：0:20:80  Cost: ¥0.01"
+			],
+			"pass": true
+		},
+		{
+			"name": "the widget uses the extension's one key",
+			"expected": "truthy",
+			"actual": [
+				"z-model-cost"
+			],
+			"pass": true
+		},
+		{
+			"name": "the extension leaves placement to the host default",
+			"expected": "truthy",
+			"pass": true
+		},
+		{
+			"name": "the balance query was answered before the first model request",
+			"expected": [
+				"balance",
+				"model",
+				"model"
+			],
+			"actual": [
+				"balance",
+				"model",
+				"model"
+			],
+			"pass": true
+		},
+		{
+			"name": "exactly one balance query answered the prefetch",
+			"expected": 1,
+			"actual": 1,
+			"pass": true
+		},
+		{
+			"name": "the run saved its consumption document",
+			"expected": "truthy",
+			"actual": "C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-ticket12-model-cost-presentation-HvzeTW\\user-home\\.omp\\cost-archive\\consumption.json",
+			"pass": true
+		},
+		{
+			"name": "the saved session holds both scripted requests' four buckets",
+			"expected": {
+				"input": 2000,
+				"cacheRead": 2000,
+				"cacheWrite": 0,
+				"output": 2000
+			},
+			"actual": {
+				"input": 2000,
+				"cacheRead": 2000,
+				"cacheWrite": 0,
+				"output": 2000
+			},
+			"pass": true
+		},
+		{
+			"name": "the run exits cleanly",
+			"expected": 0,
+			"actual": 0,
+			"pass": true
+		}
+	],
+	"observations": {
+		"help": {
+			"level": "info",
+			"message": "/budget — 费用统计与展示管理\n  detail — 切换简略／详细展示\n  holiday — 开启假日计价\n  clear — 归档并重置统计"
+		},
+		"briefLines": [
+			"🏖️  [░░░░░░░░░░░░░░░░░░░░   0% (2,000/450.0K)]  Effort: high  💰 Balance: ¥110.00  ⏳ Accrued: ¥0.0000",
+			"Total:  Cache: 50%  ¥Cache/In/Out：0:20:80  Cost: ¥0.0050  Span: 0:00:00",
+			"Round:  Cache: 50%  ¥Cache/In/Out：0:20:80  Cost: ¥0.0050"
+		],
+		"detailNotice": {
+			"level": "info",
+			"message": "展示已切换为详细（detail）：保留顶部 Total，并在 Round 位置显示静态代理树。"
+		},
+		"detailLines": [
+			"🏖️  [░░░░░░░░░░░░░░░░░░░░   0% (2,000/450.0K)]  Effort: high  💰 Balance: ¥110.00  ⏳ Accrued: ¥0.0050 [▏]",
+			"Total:  Cache: 50%  ¥Cache/In/Out：0:20:80  Cost:   ¥0.01  Span: 0:00:00",
+			"main",
+			"│  deepseek / deepseek-flash  Cache: 50%  ¥Cache/In/Out：0:20:80  Cost: ¥0.01"
+		],
+		"widgetKeys": [
+			"z-model-cost"
+		],
+		"arrivals": [
+			"balance",
+			"model",
+			"model"
+		],
+		"savedSession": {
+			"id": "01a15443-5e77-7640-9f3a-013b19c6346f",
+			"name": "main",
+			"parent": null,
+			"saveVersion": 2,
+			"own": {
+				"deepseek": {
+					"deepseek-flash": {
+						"tokens": {
+							"input": 2000,
+							"cacheRead": 2000,
+							"cacheWrite": 0,
+							"output": 2000
+						},
+						"costCny": 0.01004
+					}
+				}
+			},
+			"span": {
+				"start": 1792415064399,
+				"end": 1792415064516
+			}
+		},
+		"exitCode": 0,
+		"stderr": ""
+	}
+}
