@@ -1,0 +1,5 @@
+[info] /budget — 费用统计与展示管理
+  detail — 切换简略／详细展示
+  holiday — 开启假日计价
+  clear — 归档并重置统计
+[info] 展示已切换为详细（detail）：保留顶部 Total，并在 Round 位置显示静态代理树。
