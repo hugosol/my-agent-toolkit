@@ -1,6 +1,6 @@
 # Capability interface architecture
 
-**Status:** Session, State, Prompt/Marker, Feedback, Host facts, Subagent, the root authoring contract and Command's declarations are implemented; the Command runtime delivery narrowing, General and the runtime-port migration remain proposed.
+**Status:** Session, State, Prompt/Marker, Feedback, Host facts, Subagent, the root authoring contract and Command are implemented, including Command's narrowed runtime delivery; General and the runtime-port migration remain proposed.
 **Scope:** the dependency seam between `framework/`, `adapters/`, and `extensions/`.
 **Decision status:** [ADR-0002's Session amendment](../../docs/adr/0002-semantic-extension-framework.md#session-capability-interface-cutover-2026-10-19) accepts the first complete capability. The overall target below still contains future work and open decisions; it is not a claim that every capability or `framework/runtime/port` has moved.
 
@@ -23,9 +23,12 @@ marker transport. The Feedback and Host facts leaf contracts required by Session
 it. The root authoring entry (`framework/interface/index.ts`) now owns `defineExtension` and the
 whole definition/implementation contract in its public `details/` files; `SubagentIntegration`,
 `SubagentIntegrationFailure` and `SubagentCapability` live in `framework/interface/subagent.ts`, and
-Command's public declarations/implementations/deliveries in `framework/interface/command.ts`.
-Command's runtime delivery construction and General's public functions remain in place until their
-batch; the adapter port remains internal in `core/protocol.ts` until its own cutover. The import
+Command's declarations, implementations and deliveries in `framework/interface/command/` (its
+`details/definition.ts` and `details/implementation.ts`). The actual command and action deliveries are
+explicitly constructed from the approved members: the adapter's persistence callback, the marker-area
+transport and the internal invocation are not reachable from an extension. General's public functions
+remain in place until their batch; the adapter port remains internal in `core/protocol.ts` until its
+own cutover. The import
 check uses an explicit list of remaining non-Session entries, not a blanket allowance for framework
 internals. No new disposal event, second dispatch, runtime
 registry or second adapter abstraction is introduced. Start at the [Session capability entry](../interface/session/index.ts) before reading its implementation.
@@ -138,7 +141,11 @@ framework/interface/
       input.ts
       commit.ts
       unobserved.ts
-  command.ts
+  command/
+    index.ts
+    details/
+      definition.ts
+      implementation.ts
   subagent.ts
   prompt.ts
   marker.ts

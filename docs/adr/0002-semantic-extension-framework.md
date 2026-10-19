@@ -243,7 +243,7 @@ The connect-bot migration adds an additive capability for an extension's own con
 
 ### Directed control and per-field State lifecycle (additive; connect-bot migration, decision 02)
 
-The connect-bot migration adds a second bound control kind, **directed**: a command that names its target state explicitly with a fixed word form (empty argument = on, `off` = off; no `offline` alias — an unrecognized word is an error that changes nothing), repeats its side effect on every invocation, and is never deduplicated or short-circuited by the framework — idempotence is the extension's responsibility. The declaration only names the field the command owns; the extension's handler runs before the framework records the value and decides it from the action's outcome (a successful register sets `true`, a failed one `false`, `off` sets `false` whether or not the panel is reachable). `off` is filtered against the current value while arm is not, so a re-arm deliberately re-registers, and concurrency or late receipts are the handler's concern because the framework neither serializes nor collects in-flight actions. It is distinct from the deferred mode-selection, mixed-control and command-action kinds.
+The connect-bot migration adds a second bound control kind, **directed**: a command that names its target state explicitly with a fixed word form (empty argument = on, `off` = off; no `offline` alias — an unrecognized word is an error that changes nothing), repeats its side effect on every invocation, and is never deduplicated or short-circuited by the framework — idempotence is the extension's responsibility. The declaration only names the field the command owns; the extension's handler owns the write and decides it from the action's outcome (a successful register sets `true`, a failed one `false`, `off` sets `false` whether or not the panel is reachable), writing through the delivery's managed seam. The framework writes nothing before, after or instead of that write, so a handler that never writes leaves the value alone. `off` is filtered against the current value while arm is not, so a re-arm deliberately re-registers, and concurrency or late receipts are the handler's concern because the framework neither serializes nor collects in-flight actions. It is distinct from the deferred mode-selection, mixed-control and command-action kinds.
 
 It also makes the State lifecycle **per field**, on three orthogonal axes:
 
@@ -251,7 +251,7 @@ It also makes the State lifecycle **per field**, on three orthogonal axes:
 - **Persistence** — `session-entry` (default: written to the owner's persistence medium, seeded from the target branch at session boundaries) or `memory` (never written and never seeded; an owner-identity change drops the value to the declared default, while navigation that keeps the identity preserves it).
 - **Inheritance** — `follow` or `none` (default `none`: a subagent reads the declared default unless the field declares `follow`).
 
-The framework's write authority is unchanged: the extension's handler runs before the framework records the value and owns the write, so a command can read the pre-invocation value. `memory` is the choice for a value that declares a live external effect, because a restored value does not prove the effect is running (see [State and recovery seam](#state-and-recovery-seam)).
+The framework's write authority is unchanged: the extension's handler owns the write through the delivery's managed seam and can read the pre-invocation value, and the framework records nothing on its behalf. `memory` is the choice for a value that declares a live external effect, because a restored value does not prove the effect is running (see [State and recovery seam](#state-and-recovery-seam)).
 
 ## Shared behavior scope
 
@@ -308,6 +308,35 @@ harness loading validate depth and leverage, while import checks protect localit
 engineering encapsulation, not a same-process security sandbox. It explicitly supersedes the earlier
 public Session exports and factory fields; it does not revise State ownership, observed lifecycle
 semantics, extension business rules, or harness support claims.
+
+## Command capability interface cutover (2026-10-19)
+
+Command follows Session as a complete capability under `framework/interface/command/`. Its public
+`details/definition.ts` owns the closed control-kind declarations and `details/implementation.ts`
+owns the implementation contracts, deliveries, `RecognizedDirective` and `CanAcceptInput`; internal
+framework modules and both adapters import those same declarations. `CommandInvocation`,
+`BoundCommand`, the internal `DirectedDirective`, argument parsing, binding validation and help
+tooling stay internal, and the old mixed entry re-publishes none of them.
+
+The actual delivery is explicitly constructed from the approved members rather than spread from the
+invocation. A directed handler — on `run` and on the optional `unrecognized` path alike — receives
+`args`, `owner`, `hasUI`, `canAcceptInput`, `provider`, `feedback`, the managed `state` seam and the
+`capability` it may retain. An `actions` action receives only the first six: it owns no declared
+State, so it has no seam, retained capability, persistence path or marker transport to reach. The
+adapter's `persist` callback and the marker-area transport leave the extension-facing surface
+entirely (the internal environment still records through the managed State write path), and the
+old `CommandActions` combination type is deleted after its last consumer check. No compatibility
+alias or forwarding shell is kept.
+
+This is a non-additive public-contract change accepted by the capability-cutover spec: it removes
+members an extension could previously observe. It preserves the three controls' existing semantics —
+toggle owner scope and feedback, directed owner scope with empty-argument activation, `off`
+deactivation and repeat execution without framework inference, optional `unrecognized` with no
+automatic write/publication/feedback, actions routing/help/await/one-report failure without an Owner
+gate, and the live three-valued idle query. It does not add a generic delivery factory, filter,
+proxy or revocation system, and it does not revise State ownership, marker area ownership, extension
+business rules, or harness support claims. Verification is the Command evidence record, not this
+amendment.
 
 ## Semantic lifecycle model
 

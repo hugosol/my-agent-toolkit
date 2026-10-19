@@ -79,7 +79,7 @@ describe("an action is selected by the whole argument, after trimming and ignori
 		expect(run.feedback).toEqual([]);
 	});
 
-	test("the action delivery carries no marker area transport", async () => {
+	test("the action delivery is exactly the approved facts and no capability", async () => {
 		const double = portDouble();
 		const deliveries: Array<Record<string, unknown>> = [];
 		double.bind(BUDGET, {
@@ -93,12 +93,24 @@ describe("an action is selected by the whole argument, after trimming and ignori
 		await double.runToCompletion("budget", { args: "holiday" });
 
 		// The object the framework handed the selected action: the invocation's approved facts and
-		// its feedback channel, never the marker area transport the framework publishes through.
+		// its feedback channel, never the persistence callback, the marker area transport, the
+		// declared-value seam or a retainable capability.
 		expect(deliveries).toHaveLength(1);
+		expect(Object.keys(deliveries[0]!).sort()).toEqual([
+			"args",
+			"canAcceptInput",
+			"feedback",
+			"hasUI",
+			"owner",
+			"provider",
+		]);
 		const keys = (value: unknown): string[] => {
 			if (typeof value !== "object" || value === null) return [];
 			return Object.entries(value).flatMap(([key, child]) => [key, ...keys(child)]);
 		};
+		expect(keys(deliveries[0])).not.toContain("persist");
+		expect(keys(deliveries[0])).not.toContain("state");
+		expect(keys(deliveries[0])).not.toContain("capability");
 		expect(keys(deliveries[0])).not.toContain("markers");
 		expect(keys(deliveries[0])).not.toContain("publishMarkers");
 	});

@@ -621,6 +621,23 @@ describe("the idle query at the native seam (F6, P9)", () => {
 		expect(surface.answers).toEqual([true, false]);
 	});
 
+	test("the query re-reads the session's fact instead of delivering a snapshot", () => {
+		const surface = boundSurface();
+		// One context whose own fact moves: the adapter's query closes over the live native read,
+		// so asking again answers what the session reports now, not what it reported at binding or
+		// at the previous invocation.
+		const facts = { sessionId: "session-live", idle: true as boolean | undefined, queued: false, runningJobs: 0 };
+		const context = surface.commandContext(facts);
+
+		surface.runCommand(context);
+		facts.idle = false;
+		surface.runCommand(context);
+		facts.idle = undefined;
+		surface.runCommand(context);
+
+		expect(surface.answers).toEqual([true, false, undefined]);
+	});
+
 	test("a context that reports no idle fact answers nothing, and says so once", () => {
 		const surface = boundSurface();
 		const bare: SessionFacts = { sessionId: "session-1" };

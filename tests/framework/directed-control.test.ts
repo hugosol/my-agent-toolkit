@@ -184,7 +184,7 @@ describe("directed control: a named target and a repeated implementation (F1)", 
 		expect(seen).toHaveLength(1);
 	});
 
-	test("the delivery carries no marker area transport, on `run` and `unrecognized` alike", () => {
+	test("the delivery is exactly the approved surface, on `run` and `unrecognized` alike", () => {
 		const double: PortDouble = portDouble();
 		const command = "directed-surface";
 		const deliveries: Array<Record<string, unknown>> = [];
@@ -204,17 +204,30 @@ describe("directed control: a named target and a repeated implementation (F1)", 
 		double.run(command, { owner });
 		double.run(command, { args: "unexpected", owner });
 
-		// The actual objects the framework constructed — one per path — expose no area transport:
-		// the extension affects its line through the declared-value seam and nothing else.
+		// The actual objects the framework constructed — one per path — expose the approved facts,
+		// the managed seam and the retainable capability, and nothing that reaches the adapter's
+		// persistence callback, the area transport or another capability.
 		expect(deliveries).toHaveLength(2);
 		const keys = (value: unknown): string[] => {
 			if (typeof value !== "object" || value === null) return [];
 			return Object.entries(value).flatMap(([key, child]) => [key, ...keys(child)]);
 		};
 		for (const delivery of deliveries) {
+			expect(Object.keys(delivery).sort()).toEqual([
+				"args",
+				"canAcceptInput",
+				"capability",
+				"feedback",
+				"hasUI",
+				"owner",
+				"provider",
+				"state",
+			]);
+			expect(keys(delivery)).not.toContain("persist");
 			expect(keys(delivery)).not.toContain("markers");
 			expect(keys(delivery)).not.toContain("publishMarkers");
 			expect(Object.keys(delivery.state as object).sort()).toEqual(["read", "write"]);
+			expect(Object.keys(delivery.capability as object).sort()).toEqual(["feedback", "state"]);
 		}
 	});
 
