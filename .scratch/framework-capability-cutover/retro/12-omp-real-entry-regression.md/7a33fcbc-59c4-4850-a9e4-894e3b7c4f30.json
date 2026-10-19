@@ -1,0 +1,198 @@
+{
+  "feature": "framework-capability-cutover",
+  "ticket": "12-omp-real-entry-regression.md",
+  "run_id": "7a33fcbc-59c4-4850-a9e4-894e3b7c4f30",
+  "parent_session_id": "01a1539d-639e-70ea-9249-f5515c657de5",
+  "parent_session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-19T10-03-06-014Z_01a1539d-639e-70ea-9249-f5515c657de5.jsonl",
+  "workspace": "E:\\Developer\\myhub\\my-agent-toolkit",
+  "tool_call_id": "56f67056-6072-466d-b4da-f60a23bf89b8",
+  "started_at": "2026-10-19T12:50:31.932Z",
+  "tdd_status": "completed",
+  "retro_status": "completed",
+  "tdd_finished_at": "2026-10-19T13:09:57.985Z",
+  "tdd_result": {
+    "index": 0,
+    "id": "12-omp-real-entry-regressionmd-56f67056-6072-466",
+    "agent": "tdd",
+    "agentSource": "user",
+    "task": "Complete assignment thoroughly:\n\n在当前 worktree 实现唯一票据：C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-fAyvCW\\.scratch\\framework-capability-cutover\\implementation\\12-omp-real-entry-regression.md。\n集成分支：hyper-tdd\nspec：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\framework-capability-cutover\\spec.md\ncontract：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\framework-capability-cutover\\contract.md\n这是本票首次执行。\n遵守 tdd skill，自行负责本票验收并报告实际验证与未完成事项。完成后尽快提交本票实现，交出 worktree，由独立集成子代理接管。不要修改其他票据或工作流报告，不操作集成分支工作区，不自行合入集成分支，不调用 retro、不派发其他票据。不得 reset 丢弃既有工作。",
+    "assignment": "在当前 worktree 实现唯一票据：C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-fAyvCW\\.scratch\\framework-capability-cutover\\implementation\\12-omp-real-entry-regression.md。\n集成分支：hyper-tdd\nspec：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\framework-capability-cutover\\spec.md\ncontract：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\framework-capability-cutover\\contract.md\n这是本票首次执行。\n遵守 tdd skill，自行负责本票验收并报告实际验证与未完成事项。完成后尽快提交本票实现，交出 worktree，由独立集成子代理接管。不要修改其他票据或工作流报告，不操作集成分支工作区，不自行合入集成分支，不调用 retro、不派发其他票据。不得 reset 丢弃既有工作。",
+    "description": "Implement OMP real entry regression ticket",
+    "lastIntent": "Amending source wording",
+    "exitCode": 0,
+    "output": "{\n  \"ticket\": \"12-omp-real-entry-regression\",\n  \"status\": \"ready-for-integration\",\n  \"branch\": \"hyper/framework-capability-cutover/12-omp-real-entry-regression-9d4725-e1e098c5b064\",\n  \"baseRevision\": \"a3166c51e4dd14240dd4d9e0017d58fba1f3e410\",\n  \"commit\": \"baf2ae6\",\n  \"sourceChanges\": \"Evidence only under .scratch/framework-capability-cutover/evidence/12-omp-real-entry-regression/. No production, test, docs or loading-config changes; no source fix was needed.\",\n  \"delivered\": [\n    \"Current-run OMP evidence for P46 codebase-tools/connect-bot/model-cost and the OMP P47 session partition, with P52 handoff.\",\n    \"Three temporary actual-path probes (committed as evidence, not permanent tests) closing real-delivery gaps: connect-bot unrecognized/heartbeat/retained-feedback/armed-exit; codebase-tools Viewed session projection; model-cost brief/detail presentation and save.\",\n    \"P48 material: actual marker-area frames, notify frames, model-cost brief/detail widget frames, content/layout assertions, and a 01-baseline comparison note.\"\n  ],\n  \"verification\": [\n    {\n      \"command\": \"bun install --frozen-lockfile\",\n      \"exit\": 0,\n      \"result\": \"13 packages; bun.lock unchanged (raw sha256 e7ed487b...; normalized digest matches the baseline record)\"\n    },\n    {\n      \"command\": \"bun run typecheck\",\n      \"exit\": 0,\n      \"result\": \"no diagnostics (run before and after the evidence work)\"\n    },\n    {\n      \"command\": \"bun test tests/codebase-tools\",\n      \"exit\": 0,\n      \"result\": \"24 pass / 0 fail, 334 expects, 7 files (real OMP loader, entrypoints/omp)\"\n    },\n    {\n      \"command\": \"OMP_BOT_BINARY=E:/Developer/myhub/omp-bot/backend/target/release/omp-bot.exe bun test tests/connect-bot\",\n      \"exit\": 0,\n      \"result\": \"142 pass / 0 fail, 689 expects, 18 files, real omp-bot panel\"\n    },\n    {\n      \"command\": \"bun test tests/model-cost\",\n      \"exit\": 0,\n      \"result\": \"518 pass / 0 fail, 2899 expects, 51 files\"\n    },\n    {\n      \"command\": \"bun run test:dock:serial\",\n      \"exit\": 0,\n      \"result\": \"115 pass / 0 fail, 1200 expects, 29 files, 330.12s; includes consumer-regression, session-recovery, viewed-marker, binding-lifecycle, all model-cost docks, viewed-session*, activity-facts, turn-facts, round-facts, session-ownership-tree, detail-tree and artifact/baseline checks\"\n    },\n    {\n      \"command\": \"bun run verify:omp-candidate\",\n      \"exit\": 0,\n      \"result\": \"framework suite 633 pass / 0 fail, 3325 expects, 53 files; regression alarm green; final record source.dirty=false\"\n    },\n    {\n      \"command\": \"bun run check:integrations\",\n      \"exit\": 0,\n      \"result\": \"all five declared pairs COMPLETE/NOT REQUIRED; behavior not assessed\"\n    },\n    {\n      \"command\": \"connect-bot-smoke.ts probe\",\n      \"exit\": 0,\n      \"result\": \"26/26 checks; harness 18.5.0 unpatched; config validated at binding, directed/unrecognized, State idle, heartbeat ~11.6s, off cancellation, armed exit 50ms, no shutdown unregister or late heartbeat\"\n    },\n    {\n      \"command\": \"codebase-tools-viewed-smoke.ts probe\",\n      \"exit\": 0,\n      \"result\": \"15/15 checks; harness 18.5.0-viewed-session patch; marker projection across new_session/switch_session, A/B isolation, no codebase-tools widget\"\n    },\n    {\n      \"command\": \"model-cost-presentation-smoke.ts probe\",\n      \"exit\": 0,\n      \"result\": \"29/29 checks; harness 18.5.0-viewed-session patch; /budget help/detail, brief 3-line and detail 4-line widgets, balance-before-first-request, one balance query, saved buckets\"\n    }\n  ],\n  \"acceptance\": [\n    {\n      \"criterion\": \"Isolated explicit entry set, frozen install, existing patch conditions, exact harness/patch recorded, loader not replaced by doubles/history\",\n      \"result\": \"pass\",\n      \"evidence\": \"consumer-regression loads all three via entrypoints/omp; codebase-tools suite loads entrypoints/omp; model-cost docks load entrypoints/omp/model-cost.ts; probes use the isolated loader. 18.5.0 unpatched and 18.5.0-viewed-session / combined patches recorded with sha256.\"\n    },\n    {\n      \"criterion\": \"codebase-tools toggle, State restore/inheritance, Prompt, Feedback, Marker coexistence and Viewed session projection\",\n      \"result\": \"pass\",\n      \"evidence\": \"tests/codebase-tools 24/0 (command-toggle, session-boundaries, subagent-owner, init/reminder/outbound-role, marker-lifecycle); consumer-regression coexistence; probe 15/15 viewed projection.\"\n    },\n    {\n      \"criterion\": \"connect-bot directed/unrecognized, initialization, State/retained Feedback, exit and timer/registration lifecycle\",\n      \"result\": \"pass\",\n      \"evidence\": \"consumer-regression; tests/connect-bot 142/0 (harness-exit-budget, panel-registration-lifecycle, registration-lifecycle); probe 26/26.\"\n    },\n    {\n      \"criterion\": \"model-cost actions, initialization, provider/catalog, Session save/recordCommit, headless Feedback, presentation\",\n      \"result\": \"pass\",\n      \"evidence\": \"model-cost-headless, balance, accounting, modes, round-facts, persistence, detail-tree and related docks; tests/model-cost 518/0; probe 29/29; candidate check used only as regression alarm.\"\n    },\n    {\n      \"criterion\": \"OMP Session save, end and applicable subagent: commit/content, read-only observation/isolation, single dispatch, scope, close-out\",\n      \"result\": \"pass\",\n      \"evidence\": \"round-facts, model-cost-persistence, session-ownership-tree, session-recovery, model-cost-session-span, turn-facts, viewed-session*, viewed-marker, binding-lifecycle, activity-facts (115/0 dock). Ticket 11 framework partition not substituted.\"\n    },\n    {\n      \"criterion\": \"Reuse applicable docks; candidate check/serial warm; verify actual coverage\",\n      \"result\": \"pass\",\n      \"evidence\": \"full dock 115/0 serial; verify:omp-candidate 633/0 green; check:integrations 0.\"\n    },\n    {\n      \"criterion\": \"P48 material prepared with marker, notifications and model-cost frames; content/layout checked; 01 baseline linked; human judgment to 14\",\n      \"result\": \"prepared, human pending\",\n      \"evidence\": \"evidence/12.../p48/ (README, marker-area, notices, model-cost widget, report). OMP RPC frames carry no terminal width; 01 baseline's width captures are pi TUI.\"\n    },\n    {\n      \"criterion\": \"Current-run evidence for all required scenarios; missing credentials/TUI/environment stated unverified and blocking; no support certification claimed\",\n      \"result\": \"pass for executed scope; limits stated\",\n      \"evidence\": \"README limits: no real provider credentials/remote responses, no interactive OMP TUI, isolated 18.5.0 not global install, P48 pending, pi entries are ticket 13, candidate check is not certification.\"\n    }\n  ],\n  \"handoff\": [\n    \"Evidence record: .scratch/framework-capability-cutover/evidence/12-omp-real-entry-regression/README.md\",\n    \"Probe scripts and raw reports: evidence/12-omp-real-entry-regression/probes/\",\n    \"P48 material: evidence/12-omp-real-entry-regression/p48/\",\n    \"Logs (gitignored): .cache/ticket12-logs/\"\n  ],\n  \"unverified\": [\n    \"Real provider credentials and remote provider responses; capture endpoint is a local fixture.\",\n    \"Interactive OMP TUI/terminal width; P48 readability remains for ticket 14.\",\n    \"The machine's global OMP install; only the isolated 18.5.0 exact install was run.\",\n    \"pi entries and pi P47 scenarios (ticket 13); framework/global retirement partitions (ticket 11).\"\n  ],\n  \"blockers\": []\n}",
+    "stderr": "",
+    "truncated": false,
+    "durationMs": 1165948,
+    "tokens": 289345,
+    "requests": 127,
+    "contextTokens": 268407,
+    "contextWindow": 1000000,
+    "modelOverride": [
+      "deepseek/deepseek-flash:max"
+    ],
+    "resolvedModel": "deepseek/deepseek-flash:max",
+    "resolvedModelIdentity": "deepseek/deepseek-flash",
+    "resolvedThinkingLevel": "max",
+    "aborted": false,
+    "usage": {
+      "input": 191232,
+      "output": 98113,
+      "cacheRead": 20765056,
+      "cacheWrite": 0,
+      "totalTokens": 21054401,
+      "reasoningTokens": 43439,
+      "cost": {
+        "input": 0.028684800000000007,
+        "output": 0.058867800000000005,
+        "cacheRead": 0.06229516799999999,
+        "cacheWrite": 0,
+        "total": 0.14984776800000002
+      }
+    },
+    "outputPath": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-19T10-03-06-014Z_01a1539d-639e-70ea-9249-f5515c657de5\\12-omp-real-entry-regressionmd-56f67056-6072-466.md",
+    "extractedToolData": {
+      "yield": [
+        {
+          "data": {
+            "ticket": "12-omp-real-entry-regression",
+            "status": "ready-for-integration",
+            "branch": "hyper/framework-capability-cutover/12-omp-real-entry-regression-9d4725-e1e098c5b064",
+            "baseRevision": "a3166c51e4dd14240dd4d9e0017d58fba1f3e410",
+            "commit": "baf2ae6",
+            "sourceChanges": "Evidence only under .scratch/framework-capability-cutover/evidence/12-omp-real-entry-regression/. No production, test, docs or loading-config changes; no source fix was needed.",
+            "delivered": [
+              "Current-run OMP evidence for P46 codebase-tools/connect-bot/model-cost and the OMP P47 session partition, with P52 handoff.",
+              "Three temporary actual-path probes (committed as evidence, not permanent tests) closing real-delivery gaps: connect-bot unrecognized/heartbeat/retained-feedback/armed-exit; codebase-tools Viewed session projection; model-cost brief/detail presentation and save.",
+              "P48 material: actual marker-area frames, notify frames, model-cost brief/detail widget frames, content/layout assertions, and a 01-baseline comparison note."
+            ],
+            "verification": [
+              {
+                "command": "bun install --frozen-lockfile",
+                "exit": 0,
+                "result": "13 packages; bun.lock unchanged (raw sha256 e7ed487b...; normalized digest matches the baseline record)"
+              },
+              {
+                "command": "bun run typecheck",
+                "exit": 0,
+                "result": "no diagnostics (run before and after the evidence work)"
+              },
+              {
+                "command": "bun test tests/codebase-tools",
+                "exit": 0,
+                "result": "24 pass / 0 fail, 334 expects, 7 files (real OMP loader, entrypoints/omp)"
+              },
+              {
+                "command": "OMP_BOT_BINARY=E:/Developer/myhub/omp-bot/backend/target/release/omp-bot.exe bun test tests/connect-bot",
+                "exit": 0,
+                "result": "142 pass / 0 fail, 689 expects, 18 files, real omp-bot panel"
+              },
+              {
+                "command": "bun test tests/model-cost",
+                "exit": 0,
+                "result": "518 pass / 0 fail, 2899 expects, 51 files"
+              },
+              {
+                "command": "bun run test:dock:serial",
+                "exit": 0,
+                "result": "115 pass / 0 fail, 1200 expects, 29 files, 330.12s; includes consumer-regression, session-recovery, viewed-marker, binding-lifecycle, all model-cost docks, viewed-session*, activity-facts, turn-facts, round-facts, session-ownership-tree, detail-tree and artifact/baseline checks"
+              },
+              {
+                "command": "bun run verify:omp-candidate",
+                "exit": 0,
+                "result": "framework suite 633 pass / 0 fail, 3325 expects, 53 files; regression alarm green; final record source.dirty=false"
+              },
+              {
+                "command": "bun run check:integrations",
+                "exit": 0,
+                "result": "all five declared pairs COMPLETE/NOT REQUIRED; behavior not assessed"
+              },
+              {
+                "command": "connect-bot-smoke.ts probe",
+                "exit": 0,
+                "result": "26/26 checks; harness 18.5.0 unpatched; config validated at binding, directed/unrecognized, State idle, heartbeat ~11.6s, off cancellation, armed exit 50ms, no shutdown unregister or late heartbeat"
+              },
+              {
+                "command": "codebase-tools-viewed-smoke.ts probe",
+                "exit": 0,
+                "result": "15/15 checks; harness 18.5.0-viewed-session patch; marker projection across new_session/switch_session, A/B isolation, no codebase-tools widget"
+              },
+              {
+                "command": "model-cost-presentation-smoke.ts probe",
+                "exit": 0,
+                "result": "29/29 checks; harness 18.5.0-viewed-session patch; /budget help/detail, brief 3-line and detail 4-line widgets, balance-before-first-request, one balance query, saved buckets"
+              }
+            ],
+            "acceptance": [
+              {
+                "criterion": "Isolated explicit entry set, frozen install, existing patch conditions, exact harness/patch recorded, loader not replaced by doubles/history",
+                "result": "pass",
+                "evidence": "consumer-regression loads all three via entrypoints/omp; codebase-tools suite loads entrypoints/omp; model-cost docks load entrypoints/omp/model-cost.ts; probes use the isolated loader. 18.5.0 unpatched and 18.5.0-viewed-session / combined patches recorded with sha256."
+              },
+              {
+                "criterion": "codebase-tools toggle, State restore/inheritance, Prompt, Feedback, Marker coexistence and Viewed session projection",
+                "result": "pass",
+                "evidence": "tests/codebase-tools 24/0 (command-toggle, session-boundaries, subagent-owner, init/reminder/outbound-role, marker-lifecycle); consumer-regression coexistence; probe 15/15 viewed projection."
+              },
+              {
+                "criterion": "connect-bot directed/unrecognized, initialization, State/retained Feedback, exit and timer/registration lifecycle",
+                "result": "pass",
+                "evidence": "consumer-regression; tests/connect-bot 142/0 (harness-exit-budget, panel-registration-lifecycle, registration-lifecycle); probe 26/26."
+              },
+              {
+                "criterion": "model-cost actions, initialization, provider/catalog, Session save/recordCommit, headless Feedback, presentation",
+                "result": "pass",
+                "evidence": "model-cost-headless, balance, accounting, modes, round-facts, persistence, detail-tree and related docks; tests/model-cost 518/0; probe 29/29; candidate check used only as regression alarm."
+              },
+              {
+                "criterion": "OMP Session save, end and applicable subagent: commit/content, read-only observation/isolation, single dispatch, scope, close-out",
+                "result": "pass",
+                "evidence": "round-facts, model-cost-persistence, session-ownership-tree, session-recovery, model-cost-session-span, turn-facts, viewed-session*, viewed-marker, binding-lifecycle, activity-facts (115/0 dock). Ticket 11 framework partition not substituted."
+              },
+              {
+                "criterion": "Reuse applicable docks; candidate check/serial warm; verify actual coverage",
+                "result": "pass",
+                "evidence": "full dock 115/0 serial; verify:omp-candidate 633/0 green; check:integrations 0."
+              },
+              {
+                "criterion": "P48 material prepared with marker, notifications and model-cost frames; content/layout checked; 01 baseline linked; human judgment to 14",
+                "result": "prepared, human pending",
+                "evidence": "evidence/12.../p48/ (README, marker-area, notices, model-cost widget, report). OMP RPC frames carry no terminal width; 01 baseline's width captures are pi TUI."
+              },
+              {
+                "criterion": "Current-run evidence for all required scenarios; missing credentials/TUI/environment stated unverified and blocking; no support certification claimed",
+                "result": "pass for executed scope; limits stated",
+                "evidence": "README limits: no real provider credentials/remote responses, no interactive OMP TUI, isolated 18.5.0 not global install, P48 pending, pi entries are ticket 13, candidate check is not certification."
+              }
+            ],
+            "handoff": [
+              "Evidence record: .scratch/framework-capability-cutover/evidence/12-omp-real-entry-regression/README.md",
+              "Probe scripts and raw reports: evidence/12-omp-real-entry-regression/probes/",
+              "P48 material: evidence/12-omp-real-entry-regression/p48/",
+              "Logs (gitignored): .cache/ticket12-logs/"
+            ],
+            "unverified": [
+              "Real provider credentials and remote provider responses; capture endpoint is a local fixture.",
+              "Interactive OMP TUI/terminal width; P48 readability remains for ticket 14.",
+              "The machine's global OMP install; only the isolated 18.5.0 exact install was run.",
+              "pi entries and pi P47 scenarios (ticket 13); framework/global retirement partitions (ticket 11)."
+            ],
+            "blockers": []
+          },
+          "status": "success"
+        }
+      ]
+    },
+    "outputMeta": {
+      "lineCount": 125,
+      "charCount": 7426
+    }
+  },
+  "agent": "tdd",
+  "agent_id": "12-omp-real-entry-regressionmd-56f67056-6072-466",
+  "session_id": "01a15436-ad93-76a5-85be-fd8253799041",
+  "session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-19T10-03-06-014Z_01a1539d-639e-70ea-9249-f5515c657de5\\12-omp-real-entry-regressionmd-56f67056-6072-466.jsonl",
+  "execution_cwd": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-fAyvCW",
+  "retro_document": "E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\framework-capability-cutover\\retro\\12-omp-real-entry-regression.md\\7a33fcbc-59c4-4850-a9e4-894e3b7c4f30.md",
+  "retro_finished_at": "2026-10-19T13:12:49.720Z"
+}
