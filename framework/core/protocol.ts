@@ -7,7 +7,7 @@
  * Failures travel as data, so an adapter can report them on whatever non-model
  * channel its harness offers without deciding what counts as a conflict.
  */
-import type { CanAcceptInput, DirectedCommandImplementation, RecognizedDirective } from "../interface/command";
+import type { CanAcceptInput, RecognizedDirective } from "../interface/command";
 import type { ExtensionDefinition } from "../interface/details/definition";
 import type { FeedbackTransport } from "../interface/feedback";
 import type { CatalogPriceSource, ProviderAccess, ProviderHttpFacts } from "../interface/host-facts";
@@ -447,15 +447,6 @@ export interface PromptContribution {
 export type DirectedDirective =
 	| RecognizedDirective
 	| { readonly kind: "unrecognized"; readonly argument: string };
-
-/**
- * The implementations one assembly injects, keyed by the name of the directed command
- * each implements.
- *
- * Binding refuses a directed declaration with no matching implementation; an
- * implementation with no declaration implements nothing and is ignored.
- */
-export type CommandActions = Readonly<Record<string, DirectedCommandImplementation>>;
 
 /**
  * The facts a harness adapter supplies for one command invocation.

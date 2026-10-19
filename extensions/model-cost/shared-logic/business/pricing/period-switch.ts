@@ -32,7 +32,7 @@
  * and by throwing for everything the store answered, which the framework reports at error severity
  * with the action's own name.
  */
-import type { ActionDelivery } from "../../../../../framework/public";
+import type { ActionDelivery } from "../../../../../framework/interface/command";
 import { DEEPSEEK_PROVIDER } from "./provider-balance";
 import type { ConsumptionStore } from "../../foundation/storage/consumption-store";
 

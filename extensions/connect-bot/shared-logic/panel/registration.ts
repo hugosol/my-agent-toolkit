@@ -23,7 +23,7 @@
 import type { FeedbackTransport } from "../../../../framework/interface/feedback";
 import type { SessionEventDelivery } from "../../../../framework/interface/session";
 import type { OwnerCapabilityHandle } from "../../../../framework/interface/state";
-import type { CommandDelivery } from "../../../../framework/public";
+import type { CommandDelivery } from "../../../../framework/interface/command";
 import { pushEvent, readRegisterOutcome, type PushEnvelope } from "./client";
 import { connectBotConfig } from "./config";
 import { disarmLocally } from "./disarm";

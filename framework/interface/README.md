@@ -14,7 +14,7 @@ not aggregate the capability entries below.
 | --- | --- | --- |
 | Extension author consuming Session | [Session contract](session/README.md), its types and the root authoring entry | Observation constructors, source mutation, Local access, internal dispatch |
 | Extension author declaring an extension | [Root authoring entry](index.ts) and its [definition](details/definition.ts) / [implementation](details/implementation.ts) details | Internal defaults, bound sets, validation helpers or assembly wiring |
-| Extension author declaring commands | [Command contract](command.ts) | Invocation construction, argument parsing, help tooling or marker transport |
+| Extension author declaring commands | [Command contract](command/index.ts) and its [declaration](command/details/definition.ts) / [implementation](command/details/implementation.ts) details | Invocation construction, argument parsing, help tooling, persistence callback or marker transport |
 | Extension author declaring subagent needs | [Subagent contract](subagent.ts) | Execution modes, adapter coverage inventories or provider protocols |
 | Adapter author supplying facts | Internal `core/protocol` port plus canonical interface facts, and the native harness | Extension business logic |
 | Framework maintainer | Interface plus internal capability modules and composition | No extension-owned policy belongs in the capability |
@@ -31,15 +31,16 @@ entry refers to all of these declarations but does not re-publish them: an exten
 imports it here. This is not a claim that every capability's authoring and runtime entries have been
 migrated.
 
-[Command](command.ts) owns the declaration, implementation and delivery groups an extension writes
-commands against. Its runtime construction is still being narrowed, so the old mixed entry remains
-the path for that part until its batch completes. General's `getConfig`, `request` and `updateFile`
-remain at `framework/public`, `core/config`, `modules/http` and `modules/files` as needed. These are
-explicit remaining entries, not permission to import arbitrary framework internals. Authoring,
-State, Session, Prompt, Marker, Feedback, Host facts, Subagent and Command declarations have no
-compatibility exports there; the import check protects those seams. The later runtime-port relocation
-in the [overall direction](../docs/capability-interface-architecture.md) is not part of these
-cutovers.
+[Command](command/index.ts) owns the declaration, implementation and delivery groups an extension
+writes commands against: its declaration group in `details/definition.ts`, and its implementation,
+delivery and directive group in `details/implementation.ts`. The actual delivery the framework
+constructs carries only those approved members; the persistence callback, the area transport and the
+internal invocation stay out of it. General's `getConfig`, `request` and `updateFile` remain at
+`framework/public`, `core/config`, `modules/http` and `modules/files` as needed. These are explicit
+remaining entries, not permission to import arbitrary framework internals. Authoring, State, Session,
+Prompt, Marker, Feedback, Host facts, Subagent and Command declarations have no compatibility exports
+there; the import check protects those seams. The later runtime-port relocation in the
+[overall direction](../docs/capability-interface-architecture.md) is not part of these cutovers.
 
 A deep module gives leverage through a small interface, while the implementation keeps rule changes
 local. Session hides its source, Round/Turn processing and cross-process coordination behind this

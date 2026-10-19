@@ -1,111 +1,18 @@
 /**
- * The Command capability's canonical extension-facing declarations.
+ * The Command capability's implementation and delivery group: what an assembly implements, what a
+ * handler is handed, and the directive vocabulary it reads.
  *
- * One entry, three groups: what an extension declares, what its assembly implements for those
- * declarations, and what a command handler receives when the framework runs it. The framework's
- * invocation construction, argument parsing, declaration validation, help tooling and the
- * unrecognized-path directive vocabulary stay internal; an extension reads the delivery and the
+ * This is a public details file of the Command entry, not an internal implementation module. The
+ * framework's invocation construction, argument parsing, declaration validation, help tooling and
+ * the unrecognized-path directive vocabulary stay internal; an extension reads the delivery and the
  * parsed directive it is handed and never builds either.
  *
  * A command delivery is the invocation facts plus the managed State operations a handler owns. It
  * is not a view over an internal invocation: no member here reaches the adapter's persistence
  * callback, the process-global marker area or the framework's own dispatch.
  */
-import type { FeedbackTransport } from "./feedback";
-import type { DeclaredValueSeam, OwnerCapabilityHandle, OwnerReference } from "./state";
-
-/**
- * A command that alternates a State field between its two values.
- *
- * The framework owns the transition: it reads the owner's current value, writes the other one
- * through the same managed path a handler uses, and publishes feedback. The command runs only in
- * the session that is its own owner; a subagent's session never toggles it.
- */
-export interface CommandToggleDeclaration {
-	/** Discriminant of the closed control-kind union. */
-	readonly type: "toggle";
-	/** Command name, without the leading slash. */
-	readonly name: string;
-	/** The State field this command transitions. */
-	readonly state: string;
-	/** Human-readable description, shown wherever the harness lists commands. */
-	readonly description?: string;
-}
-
-/**
- * A command that names its target value explicitly and repeats its side effect on
- * every execution.
- *
- * The argument names the target: an empty argument names `on` and `off` names `off`,
- * which the framework normalizes into a directive. The declaration is plain data like
- * every other field — the action the command runs is injected by a harness
- * assembly at binding, and the framework refuses a directed declaration whose action
- * was not injected rather than registering a command that does nothing.
- *
- * Unlike a toggle, a directed command is never deduplicated, short-circuited or
- * serialized: every invocation runs the action again, and both idempotence and any
- * operator-facing text belong to the extension. The action also owns the write: it
- * records the field's new value through the declared-value seam its delivery carries,
- * so the framework derives no value from the directive and a failed action leaves the
- * value alone. An argument the framework does not recognize is not a directive at all,
- * so it runs no action and records no value.
- */
-export interface CommandDirectedDeclaration {
-	/** Discriminant of the closed control-kind union. */
-	readonly type: "directed";
-	/** Command name, without the leading slash. */
-	readonly name: string;
-	/** The State field this command's implementation writes through its delivery's seam. */
-	readonly state: string;
-	/** Human-readable description, shown wherever the harness lists commands. */
-	readonly description?: string;
-}
-
-/**
- * A command whose argument names one action out of a declared table.
- *
- * The declaration is plain data like every other field: it names the command and lists the
- * actions it offers, each with the words the operator reads when the command is asked for help.
- * The action implementations arrive at binding, injected by the extension's own assembly, so the
- * declaration carries no handler and this module names no harness.
- *
- * The framework owns the whole argument surface: the argument is trimmed, lowercased and matched
- * whole against the declared action names, an empty argument prints the help derived from this
- * table, and any other text prints the same help at `error` severity and runs nothing. There is
- * no abbreviation, no fuzzy match, no extra argument and no default action — a command whose
- * argument is not exactly one of these names never reaches the extension's shared logic — and
- * the unrecognized-argument path of a directed command is deliberately not involved.
- *
- * A declared action name is matched after the same normalization the argument receives, so two
- * names that differ only in case or surrounding whitespace are one action, and a declaration that
- * lists the same normalized name twice, or a name that normalizes to nothing, is refused rather
- * than silently shadowed.
- */
-export interface CommandActionsDeclaration {
-	/** Discriminant of the closed control-kind union. */
-	readonly type: "actions";
-	/** Command name, without the leading slash. */
-	readonly name: string;
-	/** Human-readable description, shown wherever the harness lists commands and in the help. */
-	readonly description?: string;
-	/** The actions this command offers: declared action name to the words the help shows for it. */
-	readonly actions: Readonly<Record<string, string>>;
-}
-
-/**
- * Every control kind the framework binds.
- *
- * The union is closed on purpose: it carries the kinds this version implements, and a
- * future control kind is an additive member here plus the behavior that honors it —
- * never a raw native handler handed to an extension.
- */
-export type CommandDeclaration =
-	| CommandToggleDeclaration
-	| CommandDirectedDeclaration
-	| CommandActionsDeclaration;
-
-/** The declared control kind of a command. */
-export type ControlKind = CommandDeclaration["type"];
+import type { FeedbackTransport } from "../../feedback";
+import type { DeclaredValueSeam, OwnerCapabilityHandle, OwnerReference } from "../../state";
 
 /**
  * One named action of an `actions` command.
@@ -157,6 +64,7 @@ export type CommandImplementations = Readonly<Record<string, CommandImplementati
  * It is the framework's normalization of the argument: `activate` — the empty argument names
  * `on`; `deactivate` — `off` names `off`. Any other text is not a directive and never reaches a
  * handler's `run`; the implementation's optional `unrecognized` member sees that text instead.
+ * The internal normalization result that also carries that text stays in the framework's port.
  */
 export type RecognizedDirective =
 	| { readonly kind: "activate" }
@@ -222,8 +130,9 @@ export type CanAcceptInput = () => boolean | undefined;
  * An adapter supplies the invocation facts; the framework adds the seam and the capability, so
  * the seam is the framework's own read/write path to the extension's declared value and a
  * handler never reaches a State store. The delivery is constructed from the approved members
- * rather than spread from the invocation: the marker area transport stays internal, and a
- * handler affects its own line only through the seam's managed write.
+ * rather than spread from the invocation: the adapter's persistence callback and the marker area
+ * transport stay internal, and a handler affects its own line only through the seam's managed
+ * write.
  */
 export interface CommandDelivery {
 	/** The argument text the user supplied after the command name; `""` when there is none. */
@@ -240,14 +149,6 @@ export interface CommandDelivery {
 	readonly provider: string | undefined;
 	/** The owner whose State this command acts on, as the adapter resolved it. */
 	readonly owner: OwnerReference;
-	/**
-	 * Records the extension's new State values in the owner's persistence medium.
-	 *
-	 * Best-effort by contract: the extension side cannot observe a persistence failure, the
-	 * declared value is already the in-memory current value, and a throw here must not change
-	 * the command's feedback.
-	 */
-	persist(values: Readonly<Record<string, boolean>>): void;
 	/**
 	 * Publishes user-visible feedback outside model context, at the severity the notice
 	 * carries (see {@link FeedbackTransport}).
@@ -277,8 +178,9 @@ export interface CommandDelivery {
  * alone: the argument that matched, the owner scope, the faithful `hasUI` fact, the idle query,
  * the running provider and the feedback channel. Neither the declared-value seam nor a
  * retainable capability is here, because there is no field for either to be scoped to, and the
- * extension's own business data is its own rather than framework State. The marker area
- * transport stays internal: an action has no line to manage.
+ * extension's own business data is its own rather than framework State. The persistence callback
+ * and the marker area transport stay internal: an action writes through no framework State path
+ * and has no line to manage.
  */
 export interface ActionDelivery {
 	/** The argument text the user supplied after the command name. */

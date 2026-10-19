@@ -324,6 +324,90 @@ describe("shared source imports no harness types (C1)", () => {
 		expect(crossings).toEqual([]);
 	});
 
+	test("Command declarations are published only by the Command capability interface", () => {
+		// The Command entry owns exactly the approved extension-facing declarations, implementation
+		// contracts and deliveries. The internal invocation, bound command, parsing/help tooling and
+		// the unrecognized-path directive stay out of it, and the old mixed entry re-publishes none
+		// of them. As with the other checks in this suite, this is a lexical alarm, not a proof.
+		const canonical = [
+			"framework/interface/command/index.ts",
+			"framework/interface/command/details/definition.ts",
+			"framework/interface/command/details/implementation.ts",
+		];
+		const owned = [
+			"CommandToggleDeclaration",
+			"CommandDirectedDeclaration",
+			"CommandActionsDeclaration",
+			"CommandDeclaration",
+			"ControlKind",
+			"DirectedCommandImplementation",
+			"CommandAction",
+			"ActionsCommandImplementation",
+			"CommandImplementation",
+			"CommandImplementations",
+			"CommandDelivery",
+			"ActionDelivery",
+			"RecognizedDirective",
+			"CanAcceptInput",
+		] as const;
+		const internal = [
+			"CommandInvocation",
+			"BoundCommand",
+			"DirectedDirective",
+			"parseDirectedArgument",
+			"actionsHelp",
+			"normalizeCommandArgument",
+		] as const;
+		const declaredEverywhere = (source: string): string[] =>
+			[...source.matchAll(/\bexport\s+(?:type|interface|const|class|function)\s+([A-Za-z_$][\w$]*)/g)]
+				.map(match => match[1]!);
+		const exportedInBlocks = (source: string): string[] =>
+			[...source.matchAll(/\bexport\s+(?:type\s+)?\{([^}]*)\}/g)]
+				.flatMap(match => match[1]!.split(",").map(entry => entry.trim().replace(/^type\s+/, "").split(/\s+as\s+/)[0]!.trim()));
+
+		const canonicalNames = canonical.flatMap(file => {
+			const source = readFileSync(path.join(REPO_ROOT, file), "utf8");
+			return [...declaredEverywhere(source), ...exportedInBlocks(source)];
+		});
+		for (const name of owned) {
+			expect(canonicalNames).toContain(name);
+		}
+
+		const crossings: string[] = [];
+		for (const file of sourceFiles.filter(file => !canonical.includes(file))) {
+			const source = readFileSync(path.join(REPO_ROOT, file), "utf8");
+			for (const name of owned) {
+				if (declaredEverywhere(source).includes(name)) {
+					crossings.push(`${file} declares ${name} outside the Command capability interface`);
+				}
+				if (exportedInBlocks(source).includes(name)) {
+					crossings.push(`${file} exports ${name} outside the Command capability interface`);
+				}
+			}
+			for (const match of source.matchAll(/\bexport\s+\*\s*(?:as\s+\w+\s*)?from\s*["']([^"']+)["']/g)) {
+				if (resolvesInto(file, match[1]!, [/^framework\/interface\/command(?:\/|\.|$)/])) {
+					crossings.push(`${file} re-exports the Command capability through "${match[1]}"`);
+				}
+			}
+		}
+		expect(crossings).toEqual([]);
+
+		// The framework's invocation/binding/parsing vocabulary is internal: no interface file may
+		// publish it, and the old mixed entry may not hand it out either.
+		for (const file of sourceFiles.filter(file => file.startsWith("framework/interface/"))) {
+			const source = readFileSync(path.join(REPO_ROOT, file), "utf8");
+			for (const name of internal) {
+				expect(declaredEverywhere(source)).not.toContain(name);
+				expect(exportedInBlocks(source)).not.toContain(name);
+			}
+		}
+		const publicSource = readFileSync(path.join(REPO_ROOT, "framework/public.ts"), "utf8");
+		for (const name of [...owned, ...internal]) {
+			expect(exportedInBlocks(publicSource)).not.toContain(name);
+			expect(declaredEverywhere(publicSource)).not.toContain(name);
+		}
+	});
+
 	test("Authoring declarations are published only by the root authoring interface", () => {
 		// The root entry composes the whole definition/implementation contract from the two details
 		// files it owns. A declaration or an export block naming one of these anywhere else would
