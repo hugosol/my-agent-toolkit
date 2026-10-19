@@ -3,15 +3,15 @@
  * the panel protocol's constants live.
  *
  * The protocol is frozen and never configuration: one route, one envelope shape, one request
- * shape. The call that performs a request is the framework's own general HTTP module
- * (`framework/public.ts`), imported here rather than installed by the harness assembly: the
+ * shape. The call that performs a request is the framework's own general HTTP interface
+ * (`framework/interface/general/http.ts`), imported here rather than installed by the harness assembly: the
  * extension states the direct connection it means (`proxy: false`) and its own configured wait
  * (`timeoutMs`), and the framework's client makes the connection and imposes the budget. The
  * extension therefore carries no transport of its own, and a suite replaces the framework's one
  * call with a fake of the same interface to observe the production URL, request options and
  * response parsing without touching `globalThis`.
  */
-import { type HttpRequestOptions, request } from "../../../../framework/public";
+import { type HttpRequestOptions, request } from "../../../../framework/interface/general/http";
 
 /** Closed kind enum of the wire contract; each kind carries its own `data` shape. */
 export type PushKind = "register" | "heartbeat" | "state" | "unregister";

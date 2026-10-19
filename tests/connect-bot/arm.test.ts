@@ -20,7 +20,7 @@ import {
 } from "../../extensions/connect-bot/shared-logic/panel/client";
 import { connectBotConfig } from "../../extensions/connect-bot/shared-logic/panel/config";
 import { botSessions } from "../../extensions/connect-bot/shared-logic/session/session";
-import type { HttpRequestOptions } from "../../framework/public";
+import type { HttpRequestOptions } from "../../framework/interface/general/http";
 import connectBot from "../../extensions/connect-bot/harnesses/omp";
 import { type OmpDouble, ompDouble } from "./support/omp-double";
 

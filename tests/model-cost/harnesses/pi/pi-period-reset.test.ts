@@ -33,7 +33,7 @@ import { tmpdir } from "node:os";
 import * as path from "node:path";
 import { type PiAssistantMessage, type PiExtensionApi, type PiExtensionContext, piAdapter } from "../../../../adapters/pi";
 import { updateFile } from "../../../../framework/modules/files";
-import type { HttpRequestOptions } from "../../../../framework/modules/http";
+import type { HttpRequestOptions } from "../../../../framework/interface/general/http";
 import { MODEL_COST } from "../../../../extensions/model-cost/definition";
 import { MODEL_COST_HARNESS } from "../../../../extensions/model-cost/harnesses/pi";
 import { MODEL_COST_WIDGET_KEY, attachModelCostWidget } from "../../../../extensions/model-cost/harnesses/pi/widget";

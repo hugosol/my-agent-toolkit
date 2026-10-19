@@ -64,7 +64,7 @@
 import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import * as path from "node:path";
-import { request } from "../framework/modules/http";
+import { request } from "../framework/interface/general/http";
 import { type PiCli, PiSession, piVersion, resolvePiCli } from "../tests/harness-dock/pi-session";
 import { createRunRoot } from "../tests/harness-dock/run-root";
 import {

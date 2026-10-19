@@ -55,7 +55,8 @@ import { MODEL_COST_HARNESS } from "../../../../extensions/model-cost/harnesses/
 import { CODEX_USAGE_URL } from "../../../../extensions/model-cost/shared-logic/business/allowance/codex-quota";
 import { type ModelCostRuntime, createModelCostRuntime } from "../../../../extensions/model-cost/shared-logic/runtime";
 import { type PiExtensionApi, piAdapter } from "../../../../adapters/pi";
-import { createHttpModule, type HttpRequestOptions } from "../../../../framework/modules/http";
+import type { HttpRequestOptions } from "../../../../framework/interface/general/http";
+import { createHttpModule } from "../../../../framework/modules/http";
 
 /** This repository, which is where the extension's own declared configuration is resolved from. */
 const REPOSITORY_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "..");

@@ -39,7 +39,7 @@
  * stated here, in the extension, not in the transport.
  */
 import type { ProviderAccess } from "../../../../../framework/interface/host-facts";
-import { type HttpRequestOptions, request } from "../../../../../framework/modules/http";
+import { type HttpRequestOptions, request } from "../../../../../framework/interface/general/http";
 import { createProviderRefresh } from "../../foundation/provider-refresh";
 
 /** The provider whose balance this extension tracks, as this extension's own data names it. */

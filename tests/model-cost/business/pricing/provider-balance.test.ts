@@ -10,7 +10,7 @@
  * takes: the harness's provider access (`ProviderAccess`) and the framework's HTTP call.
  *
  * The HTTP call is the same single-request interface production runs on
- * (`framework/modules/http.ts`), substituted here so no permanent case reaches a provider; the mock
+ * (`framework/interface/general/http.ts`), substituted here so no permanent case reaches a provider; the mock
  * records every call with the exact URL and options the query built, which is what makes the address,
  * the credential header, the direct-connection choice and the 5000ms business budget observable
  * rather than asserted about. This host resolves access for the balance's own provider alone, so the
@@ -38,7 +38,7 @@ import { type ModelCostRuntime, createModelCostRuntime } from "../../../../exten
 import type { ProviderAccess, ProviderAccessFacts } from "../../../../framework/interface/host-facts";
 import type { SessionFacts, TurnOutcome, TurnUsage } from "../../../../framework/interface/session";
 import type { TurnSignal } from "../../../../framework/core/protocol";
-import type { HttpRequestOptions } from "../../../../framework/modules/http";
+import type { HttpRequestOptions } from "../../../../framework/interface/general/http";
 import { type PortDouble, portDouble } from "../../../framework/support/harness-port-double";
 import { testSessionCapability } from "../../support/session-capability";
 import { drain, heldAnswer, settled, until } from "../../../support/pending-query";
