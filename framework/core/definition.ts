@@ -3,57 +3,14 @@
  *
  * A definition is plain data: an extension declares its identity, its State, its
  * control commands, its injected-prompt slots and its status marker, and the
- * framework supplies the behavior behind each declaration. There is no builder, no
- * plugin bus and no raw handler — everything an extension asks the framework to do
- * is expressed here, and nothing in this module names a harness.
+ * framework supplies the behavior behind each declaration. The State vocabulary itself is owned
+ * by `framework/interface/state`; this module refers to it and keeps only the internal defaults,
+ * bound sets and resolution helpers. There is no builder, no plugin bus and no raw handler —
+ * everything an extension asks the framework to do is expressed here, and nothing in this module
+ * names a harness.
  */
 import type { SubagentCapability } from "./integration";
-
-/**
- * Whether a declared State value outlives the memory of the session that wrote it.
- *
- * `session-entry` — the value is recorded in the owner's persistence medium, and a
- * session boundary seeds it from that session's target branch. `memory` — the value is
- * never recorded and never seeded: it exists only as the owner cell's current value, so
- * a boundary that replaces the owner drops it to the declared default while navigation
- * that keeps the same owner identity keeps it. `memory` is the choice for a value that
- * declares a live external effect, because a restored value would not prove that effect
- * is still running.
- */
-export type StatePersistence = "session-entry" | "memory";
-
-/**
- * How a subagent session relates to its owner's declared State value.
- *
- * `follow` — the subagent reads the owner's current value live. `none` — the subagent
- * reads the field's declared default, so the value an owner holds never reaches a
- * subagent on its own. Values that are not this declared field, such as each session's
- * own injected-prompt progress, stay per-session whatever this axis says.
- */
-export type StateInheritance = "follow" | "none";
-
-/**
- * The State an extension declares.
- *
- * v1 owns exactly one boolean activation field per extension, and the field name is also
- * the persistence key for its value whenever the field is persisted. Omitting `state`
- * selects the default field {@link DEFAULT_ACTIVATION_FIELD}, the default persistence
- * {@link DEFAULT_STATE_PERSISTENCE} and the default inheritance
- * {@link DEFAULT_STATE_INHERITANCE}.
- *
- * The three declared axes are independent, and every framework behavior branches on the
- * axis it belongs to: the control kind decides how a command drives the field, the
- * persistence decides whether the value is recorded and seeded, and the inheritance
- * decides whether a subagent reads the owner's value or the declared default.
- */
-export interface StateDeclaration {
-	/** The activation field name; defaults to `enabled`. */
-	readonly field?: string;
-	/** How the value is persisted; defaults to `session-entry`. */
-	readonly persistence?: StatePersistence;
-	/** Whether a subagent reads the owner's current value; defaults to `none`. */
-	readonly inheritance?: StateInheritance;
-}
+import type { StateDeclaration, StateInheritance, StatePersistence } from "../interface/state";
 
 /** The State persistence a field declares when it declares none. */
 export const DEFAULT_STATE_PERSISTENCE: StatePersistence = "session-entry";

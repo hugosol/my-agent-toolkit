@@ -145,6 +145,53 @@ describe("shared source imports no harness types (C1)", () => {
 		expect(crossings).toEqual([]);
 	});
 
+	test("State's declarations are published only by the State capability interface", () => {
+		// The capability interface is the one canonical source for these names. A declaration or
+		// an export block naming one of them anywhere else would give the capability a second
+		// owner (or a compatibility copy), which type checking alone cannot see. As with the other
+		// checks in this suite, this is a lexical alarm, not a proof.
+		const canonical = "framework/interface/state/index.ts";
+		const owned = [
+			"StateDeclaration",
+			"StatePersistence",
+			"StateInheritance",
+			"OwnerReference",
+			"DeclaredValueSeam",
+			"OwnerCapabilityHandle",
+		] as const;
+		const canonicalSource = readFileSync(path.join(REPO_ROOT, canonical), "utf8");
+		const declaredEverywhere = (source: string): string[] =>
+			[...source.matchAll(/\bexport\s+(?:type|interface|const|class|function)\s+([A-Za-z_$][\w$]*)/g)]
+				.map(match => match[1]!);
+		const exportedInBlocks = (source: string): string[] =>
+			[...source.matchAll(/\bexport\s+(?:type\s+)?\{([^}]*)\}/g)]
+				.flatMap(match => match[1]!.split(",").map(entry => entry.trim().split(/\s+as\s+/)[0]!.trim()));
+
+		const canonicalNames = [...declaredEverywhere(canonicalSource), ...exportedInBlocks(canonicalSource)];
+		for (const name of owned) {
+			expect(canonicalNames.includes(name)).toBe(true);
+		}
+
+		const crossings: string[] = [];
+		for (const file of sourceFiles.filter(file => file !== canonical)) {
+			const source = readFileSync(path.join(REPO_ROOT, file), "utf8");
+			for (const name of owned) {
+				if (declaredEverywhere(source).includes(name)) {
+					crossings.push(`${file} declares ${name} outside the State capability interface`);
+				}
+				if (exportedInBlocks(source).includes(name)) {
+					crossings.push(`${file} exports ${name} outside the State capability interface`);
+				}
+			}
+			for (const match of source.matchAll(/\bexport\s+\*\s*(?:as\s+\w+\s*)?from\s*["']([^"']+)["']/g)) {
+				if (resolvesInto(file, match[1]!, [/^framework\/interface\/state(?:\/|\.|$)/])) {
+					crossings.push(`${file} re-exports the State capability through "${match[1]}"`);
+				}
+			}
+		}
+		expect(crossings).toEqual([]);
+	});
+
 	test("capability interfaces depend on no framework implementation or native mapping", () => {
 		const crossings: string[] = [];
 		for (const file of sourceFiles.filter(file => file.startsWith("framework/interface/"))) {
