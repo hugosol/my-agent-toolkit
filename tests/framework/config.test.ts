@@ -13,7 +13,7 @@
  * package, which is what the file-side cases exercise.
  */
 import { describe, expect, test } from "bun:test";
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
 import type { BindingResult } from "../../framework/core/protocol";
@@ -21,11 +21,14 @@ import {
 	ConfigLoadError,
 	type ConfigReadOptions,
 	type ConfigSource,
-	ExtensionConfigError,
-	getConfig,
 	readConfig,
 } from "../../framework/core/config";
-import { type ExtensionDefinition, defineExtension } from "../../framework/interface";
+import {
+	type ExtensionDefinition,
+	type ImplementationContext,
+	defineExtension,
+} from "../../framework/interface";
+import { ExtensionConfigError, getConfig } from "../../framework/interface/general/config";
 import { portDouble } from "./support/harness-port-double";
 import { REPO_ROOT } from "../harness-dock/baseline";
 
@@ -647,6 +650,132 @@ describe("a declared configuration is read, validated and recorded at binding (P
 
 		expect(reads).toBe(1);
 		expect(getConfig(definition)).toEqual({ endpoint: "first" });
+	});
+});
+
+describe("the General configuration entry is the extension-facing seam (P43, P44)", () => {
+	/**
+	 * Writes a real configuration repository for one extension and returns both the directory a
+	 * binding resolves a relative declaration against and the file it reaches. The binding below
+	 * uses the framework's own reader and YAML parser: no in-memory document stands in for the file.
+	 */
+	function realRepository(id: string, document: string): { readonly repository: string; readonly file: string } {
+		const repository = mkdtempSync(path.join(tmpdir(), `config-real-${id}-`));
+		const file = path.join(repository, "extensions", id, "config.yaml");
+		mkdirSync(path.dirname(file), { recursive: true });
+		writeFileSync(file, document);
+		return { repository, file };
+	}
+
+	test("a real configuration file drives the binding, and getConfig and context.config hand over the same validated object", () => {
+		const id = "real-file-success";
+		const { repository } = realRepository(
+			id,
+			"endpoint: http://omp-bot.local:8787\nrequestTimeoutMs: 2000\n",
+		);
+		try {
+			const definition = declaringConfig(id, {
+				fields: { endpoint: "non-empty-string", requestTimeoutMs: "milliseconds" },
+			});
+			const delivered: ImplementationContext[] = [];
+			const port = portDouble();
+
+			const result = port.bind(definition, {
+				config: { baseDir: repository },
+				factory: context => {
+					delivered.push(context);
+					return {};
+				},
+			});
+
+			expect(result.bound).toBe(true);
+			expect(port.diagnostics).toEqual([]);
+			expect(delivered).toHaveLength(1);
+
+			// The values are the file's declared keys, validated by the framework, and both paths hand
+			// over the same recorded object — the one cache entry, not a copy per reader or delivery.
+			const values = getConfig(definition);
+			expect(values).toEqual({ endpoint: "http://omp-bot.local:8787", requestTimeoutMs: 2000 });
+			expect(delivered[0]!.config).toBe(values);
+			expect(getConfig(definition)).toBe(values);
+		} finally {
+			rmSync(repository, { recursive: true, force: true });
+		}
+	});
+
+	test("the real file is read once per extension per process, so a changed value waits for the next process", () => {
+		const id = "real-file-cache";
+		const { repository, file } = realRepository(id, "endpoint: first\n");
+		try {
+			const definition = declaringConfig(id, { fields: { endpoint: "non-empty-string" } });
+			const delivered: ImplementationContext[] = [];
+			const port = portDouble();
+			const factory = (context: ImplementationContext) => {
+				delivered.push(context);
+				return {};
+			};
+
+			expect(port.bind(definition, { config: { baseDir: repository }, factory }).bound).toBe(true);
+			// The file really changed between the two bindings; the process's validated values did not.
+			writeFileSync(file, "endpoint: second\n");
+
+			expect(port.bind(definition, { config: { baseDir: repository }, factory }).bound).toBe(true);
+
+			expect(delivered).toHaveLength(2);
+			expect(delivered[1]!.config).toBe(delivered[0]!.config);
+			expect(delivered[1]!.config).toEqual({ endpoint: "first" });
+			expect(getConfig(definition)).toEqual({ endpoint: "first" });
+		} finally {
+			rmSync(repository, { recursive: true, force: true });
+		}
+	});
+
+	test("an illegal real file refuses the binding, and getConfig reports a misuse rather than the loading failure", () => {
+		const id = "real-file-refused";
+		const { repository } = realRepository(id, 'endpoint: ""\n');
+		try {
+			const definition = declaringConfig(id, { fields: { endpoint: "non-empty-string" } });
+			let factories = 0;
+			const port = portDouble();
+
+			const result = port.bind(definition, {
+				config: { baseDir: repository },
+				factory: () => {
+					factories += 1;
+					return {};
+				},
+			});
+
+			// The file is a loading-time failure: one configuration failure, reported once, nothing
+			// registered and no implementation built, so the extension is never loaded.
+			expect(result.bound).toBe(false);
+			expect(result.bound ? [] : result.failures.map(failure => failure.kind)).toEqual(["configuration"]);
+			expect(port.diagnostics).toHaveLength(1);
+			expect(port.registrations).toEqual([]);
+			expect(factories).toBe(0);
+
+			const failure = thrownBy(() => getConfig(definition));
+			expect(failure).toBeInstanceOf(ExtensionConfigError);
+			expect(failure).not.toBeInstanceOf(ConfigLoadError);
+			expect((failure as Error).message).toContain("no validated values are recorded in this process");
+		} finally {
+			rmSync(repository, { recursive: true, force: true });
+		}
+	});
+
+	test("the delivered configuration is Readonly in the type system", () => {
+		// Compile-time only: `bun run typecheck` checks these two @ts-expect-error lines, and neither
+		// function runs. The runtime contract deliberately adds no freeze or copy on top.
+		const rejectWrite = (values: ImplementationContext["config"]): void => {
+			// @ts-expect-error the delivered configuration is Readonly
+			values.endpoint = "changed";
+		};
+		const rejectContextWrite = (config: ImplementationContext["config"]): void => {
+			// @ts-expect-error context.config is Readonly
+			config.endpoint = "changed";
+		};
+		expect(typeof rejectWrite).toBe("function");
+		expect(typeof rejectContextWrite).toBe("function");
 	});
 });
 

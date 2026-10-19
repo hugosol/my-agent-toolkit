@@ -60,8 +60,8 @@ extension-facing exports.
 | Requirement types (`RequiredSemantic`, `DeclarableRequiredSemantic`, `FRAMEWORK_REQUIRED_SEMANTICS`) | [`DeclarableRequiredSemantic`](../interface/details/implementation.ts); the complete vocabulary in [`framework/core/requirements.ts`](../core/requirements.ts) | The declarable half — `session-lifecycle-events` and `round-lifecycle-events` — is authoring contract metadata. The complete vocabulary and the framework's own `history-preservation` invariant stay internal: history preservation is not an author option or a startup gate. No runtime switch. |
 | `ConfigurationViolation` | [`framework/core/violations.ts`](../core/violations.ts) | The report of one broken configuration rule, carried by a `configuration` binding failure: a `ConfigurationViolationKind` and the deterministic `detail`. |
 | `ExtensionConfigDeclaration`, `ConfigFieldType`, `BOUND_CONFIG_FIELD_TYPES` | [`framework/interface/details/definition.ts`](../interface/details/definition.ts) for the declarations; [`framework/core/definition.ts#L66`](../core/definition.ts#L66) for the internal bound set | The configuration an extension requires of its own `config.yaml`: the file's path, and the keys the file must carry with the type each must match. See [Extension configuration](#extension-configuration-declaration--file). |
-| `readConfig`, `getConfig`, `ConfigSource`, `ConfigReadOptions`, `ConfigReader`, `ConfigParser`, `ConfigLoadError`, `ExtensionConfigError` | [`framework/core/config.ts`](../core/config.ts) | The one reading, parsing and validating implementation, the values shared logic reads, the injectable seam it runs through, and the two error classes that keep a loading-time failure apart from a misuse. See [Extension configuration](#extension-configuration-declaration--file). |
-| `readConfigDocument`, `isScheduledWait`, `SCHEDULED_WAIT_TEXT`, `describeValue` | [`framework/core/config.ts`](../core/config.ts) | The same reading and parsing seam used for a document the framework interprets itself rather than validating against a declaration — the shared configuration file, where a missing file is an answer rather than a failure — and the shared vocabulary for a value that is not what a configuration requires and for a wait this harness's timer schedules. |
+| `getConfig`, `ExtensionConfigError` | [`framework/interface/general/config.ts`](../interface/general/config.ts), implemented at [`framework/core/config.ts`](../core/config.ts) | The framework's general configuration module: the one call shared logic imports directly, which reads the values the definition's own file was validated to carry in this process, and the misuse failure it may recognize. `getConfig` and `ExtensionConfigError` are the entry's runtime exports; the error class is canonical in the adjacent `config-contract.ts`, so the implementation throws the same identity a consumer checks. See [Extension configuration](#extension-configuration-declaration--file). |
+| `readConfig`, `ConfigSource`, `ConfigReadOptions`, `ConfigReader`, `ConfigParser`, `ConfigLoadError`, `readConfigDocument`, `isScheduledWait`, `SCHEDULED_WAIT_TEXT`, `describeValue` | [`framework/core/config.ts`](../core/config.ts) | The internal loading implementation: the injectable reader/parser/base-directory seam, the one reading and validating code path, the shared-configuration document reader, the waiting-budget vocabulary and the value-description helper. None of them is extension-facing; a loading-time failure is a `ConfigLoadError` whose `detail` binding turns into a configuration failure. |
 | `request`, `HttpRequestOptions`, `HttpConfigurationError` | [`framework/interface/general/http.ts`](../interface/general/http.ts), implemented at [`framework/modules/http.ts`](../modules/http.ts) | The framework's general HTTP module: the one call shared logic imports directly, what a request declares (method, headers, body, `timeoutMs`, `proxy`), and the configuration failure a request may reject with before anything is sent. It is a value — `request` is one of the entry's runtime exports. See [General HTTP module](#general-http-module). |
 | `updateFile`, `SafeFileUpdateOptions`, `SafeFileUpdateError`, `SafeFileUpdateFailureKind` | [`framework/interface/general/files.ts`](../interface/general/files.ts), implemented at [`framework/modules/files.ts`](../modules/files.ts) | The framework's general safe-file module: the one coordinated read-modify-publish call shared logic imports directly, the absolute target and update function it takes, the wait budget and abort it accepts, and the distinguishable failure a refused coordination rejects with. `updateFile` and `SafeFileUpdateError` are the entry's runtime exports. See [General safe-file module](#general-safe-file-module). |
 | Adapter-facing delivery types (`NoticeTransport`, `MarkerTransport`, `StateValues`, `TurnSignal`, `TurnSignalFacts`); `FeedbackLevel` and `FeedbackTransport` are canonical in the [Feedback interface](../interface/feedback/index.ts), and `OwnerReference` in the [State interface](../interface/state/index.ts) | [`framework/core/protocol.ts#L34`](../core/protocol.ts), [`#L619`](../core/protocol.ts) | The facts and transports a harness adapter resolves; not authored by an extension. `HarnessPort.onTurn` ([`protocol.ts#L740`](../core/protocol.ts)) is the hook an adapter reports its mapped model-cycle facts through, and `HarnessPort.onRound` ([`protocol.ts#L650`](../core/protocol.ts)) the hook it reports its run-cycle facts through for the round axis's own synthesis. |
@@ -742,7 +742,7 @@ the non-model channel exactly once. The extension does not load; the extensions 
 | the document is not a mapping at its top level | the file and the value it declares instead |
 | a declared key is missing, or its value has the wrong type | the file, the key, the value it declares, and the type the declaration requires |
 
-`readConfig(path, options)` ([`framework/core/config.ts#L296`](../core/config.ts#L296)) is the one
+`readConfig(path, options)` ([`framework/core/config.ts`](../core/config.ts)) is the one
 reading, parsing and validating implementation, and it is harness-neutral: the text is read through `node:fs`
 and parsed as YAML by the pure-JS `yaml` package, and the reader, the parser and the base directory a relative
 path is resolved against are all injectable through `ConfigSource`, so the framework's own suite covers every
@@ -750,12 +750,21 @@ failure path without a file. Every file-side failure is a `ConfigLoadError`
 whose `detail` is the same deterministic text the binding reports.
 
 **Shared logic reads the validated values, never the file.** `getConfig(definition)`
-([`framework/core/config.ts#L379`](../core/config.ts#L379)) returns the values the declaration named —
-exactly those keys, in declaration order; a key the declaration does not name is ignored — in whichever session,
-command or lifecycle handler the extension runs. It is not a way to read a configuration that is not there: an
-extension that declared no configuration, or whose values were never validated in this process, gets an
-`ExtensionConfigError` ([`framework/core/config.ts#L96`](../core/config.ts#L96)), which is deliberately
-neither a `BindingFailure` nor a `ConfigLoadError`.
+([`framework/interface/general/config.ts`](../interface/general/config.ts), implemented at
+[`framework/core/config.ts`](../core/config.ts)) returns the values the declaration named — exactly those
+keys, in declaration order; a key the declaration does not name is ignored — in whichever session, command or
+lifecycle handler the extension runs. It is not a way to read a configuration that is not there: an extension
+that declared no configuration, or whose values were never validated in this process, gets an
+`ExtensionConfigError` ([`framework/interface/general/config.ts`](../interface/general/config.ts)) — the same
+class identity the implementation throws — which is deliberately neither a `BindingFailure` nor a
+`ConfigLoadError`.
+
+The configuration entry publishes exactly those two names. `ConfigLoadError`, the reader/parser/source seam,
+`readConfig`, `readConfigDocument`, the declaration/validation helpers and the framework's Shared configuration
+stay internal; an extension asked for a configuration its binding never validated cannot use this entry to read
+one. The `ExtensionConfigDeclaration` and `ConfigFieldType` it consumes remain owned by the root authoring
+contract, and the value is delivered as the same recorded object in `context.config` and `getConfig` — TypeScript
+`Readonly`, with no freeze, copy or runtime write protection added by this migration.
 
 The file belongs to the machine: there is no environment or command-line override, and a validated configuration
 is read once per extension per process, so a changed value takes effect with the next process rather than with
@@ -930,7 +939,7 @@ runs in another process, and the one way such a session hands the process that s
 *observation* of itself: the serving process publishes where its access is, and a session in
 another process reaches it over a name the platform already provides — a Windows named pipe
 (`\\.\pipe\my-agent-toolkit-access-<id>`) or a POSIX socket file. It is **not** an extension entry and
-not part of `public.ts`: an extension never touches it. The harness adapter selects the subagent
+not part of any extension-facing interface: an extension never touches it. The harness adapter selects the subagent
 access capability through [`core/subagent-access.ts`](../core/subagent-access.ts): OMP selects
 `in-process`; pi selects `cross-process` when its assembly states a `childEntry`, while retaining the
 same-process direct path for owners served here. This is only subagent access, not general communication

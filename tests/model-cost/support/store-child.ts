@@ -25,7 +25,8 @@ import type { ConsumptionPeriod, SessionCommit, StoreNotice } from "../../../ext
 import type { BaselineSyncOutcome } from "../../../extensions/model-cost/shared-logic/runtime";
 import type { SessionRecord } from "../../../extensions/model-cost/shared-logic/foundation/session/consumption-document";
 import { createModelCostRuntime } from "../../../extensions/model-cost/shared-logic/runtime";
-import { findConfigFailure, getConfig } from "../../../framework/core/config";
+import { findConfigFailure } from "../../../framework/core/config";
+import { getConfig } from "../../../framework/interface/general/config";
 import { namespaceInstrumented, recordedFsOperations } from "../../../scripts/support/efficiency-baseline-fs-instrument";
 import { testSessionCapability } from "./session-capability";
 

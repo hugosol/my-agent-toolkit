@@ -199,6 +199,41 @@ describe("the consumption document's schema", () => {
 	});
 });
 
+describe("the consumption document's diagnostics name the value the schema refused", () => {
+	/** The reason a document with the given `own` value is unusable, as the operator reads it. */
+	const reasonForOwn = (own: unknown): string | undefined => {
+		const outcome = readConsumptionDocument({
+			...approvedDocument(),
+			harnesses: { omp: { sessions: [{ ...MAIN_SESSION, own } as SessionRecord] } },
+		});
+		return outcome.kind === "unusable" ? outcome.reason : undefined;
+	};
+
+	test("a value that is not a mapping is named the way the operator has always been told", () => {
+		// Each expected text is the consumer-visible diagnostic written independently of the helper
+		// that produces it: the schema's own vocabulary for the value it found.
+		const cases: readonly { readonly value: unknown; readonly reason: string }[] = [
+			{ value: "not a mapping", reason: 'harnesses.omp.sessions[0].own 不是映射（"not a mapping"）' },
+			{ value: 7, reason: "harnesses.omp.sessions[0].own 不是映射（a number）" },
+			{ value: Number.NaN, reason: "harnesses.omp.sessions[0].own 不是映射（a non-finite number）" },
+			{ value: null, reason: "harnesses.omp.sessions[0].own 不是映射（null）" },
+			{ value: [], reason: "harnesses.omp.sessions[0].own 不是映射（an array）" },
+			{ value: false, reason: "harnesses.omp.sessions[0].own 不是映射（false）" },
+		];
+
+		for (const { value, reason } of cases) {
+			expect(reasonForOwn(value)).toBe(reason);
+		}
+	});
+
+	test("a document whose top level is not a mapping names that value too", () => {
+		expect(readConsumptionDocument("not a document")).toEqual({
+			kind: "unusable",
+			reason: '顶层不是映射（"not a document"）',
+		});
+	});
+});
+
 describe("the consumption document's startup facts", () => {
 	/** The same child record carrying what a spawned session's own start reported. */
 	const WITH_STARTUP: SessionRecord = {

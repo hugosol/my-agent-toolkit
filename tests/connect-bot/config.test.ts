@@ -27,7 +27,8 @@ import type { HttpRequestOptions } from "../../framework/interface/general/http"
 import { connectBotConfig } from "../../extensions/connect-bot/shared-logic/panel/config";
 import { CONNECT_BOT } from "../../extensions/connect-bot/definition";
 import connectBot from "../../entrypoints/omp/connect-bot";
-import { getConfig, readConfig } from "../../framework/core/config";
+import { readConfig } from "../../framework/core/config";
+import { getConfig } from "../../framework/interface/general/config";
 import type { ExtensionDefinition } from "../../framework/interface/details/definition";
 import type { BindingResult } from "../../framework/core/protocol";
 import { portDouble } from "../framework/support/harness-port-double";
