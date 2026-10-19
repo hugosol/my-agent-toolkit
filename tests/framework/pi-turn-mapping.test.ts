@@ -21,9 +21,9 @@
  */
 import { describe, expect, test } from "bun:test";
 import type { PiAssistantMessage, PiMessageUsage } from "../../adapters/pi";
-import type { CatalogPriceSource } from "../../framework/interface/host-facts";
+import type { CatalogPriceSource } from "../../framework/interface/provider";
 import type { TurnOutcome } from "../../framework/interface/session";
-import type { ImplementationContext } from "../../framework/public";
+import type { ImplementationContext } from "../../framework/interface";
 import { withCapturedStderr } from "./support/captured-stderr";
 import { type PiNativeModel, type PiSurfaceSession, boundPiSurface } from "./support/pi-surface-double";
 
@@ -290,5 +290,66 @@ describe("a settled response is delivered as its own facts (P9)", () => {
 		surface.startRequest(MAIN);
 		expect(surface.starts).toHaveLength(2);
 		expect(surface.starts[1].turn.turnId).not.toBe(surface.starts[0].turn.turnId);
+	});
+});
+
+describe("the harness's own provider access reaches the factory as a per-operation query (P28)", () => {
+	test("a credential replaced or withdrawn between operations is what the next query sees", async () => {
+		const baseUrl = "https://api.deepseek.com/v1";
+		const credentials: Record<string, string | undefined> = { deepseek: "sk-pi-one" };
+		const session: PiSurfaceSession = {
+			...MAIN,
+			catalog: planCatalog(),
+			credentials,
+			providerBaseUrls: { deepseek: baseUrl },
+		};
+		const surface = boundPiSurface();
+		surface.startRequest(session);
+		const context = surface.implemented();
+		const access = context.providerAccess;
+
+		// The factory receives the plain queries alone: the registry they read stays outside the contract.
+		expect(Object.keys(access ?? {})).toEqual(["resolve"]);
+		expect(Object.keys(context.modelPrices ?? {})).toEqual(["priceOf"]);
+
+		const first = await access?.resolve("deepseek");
+		expect(first).toEqual({ baseUrl, credential: "sk-pi-one" });
+
+		// A credential pi replaces is what the next operation uses, not a binding-time snapshot.
+		credentials.deepseek = "sk-pi-two";
+		expect(await access?.resolve("deepseek")).toEqual({ baseUrl, credential: "sk-pi-two" });
+
+		// Withdrawing the credential leaves the fact absent. It is never an empty string, another
+		// provider's credential or a default address; a provider pi says nothing about is no access.
+		credentials.deepseek = undefined;
+		expect(await access?.resolve("deepseek")).toEqual({ baseUrl });
+		expect(await access?.resolve("another-provider")).toBeUndefined();
+
+		// A fact handed out earlier is a plain copy: changing it does not change the host's answer.
+		Object.assign(first ?? {}, { credential: "tampered" });
+		expect(await access?.resolve("deepseek")).toEqual({ baseUrl });
+
+		// A later delivery reports the registry again, as a login or a key replacement makes it: the query
+		// follows the newest reading rather than the one it was bound with.
+		surface.startRequest({
+			...session,
+			credentials: { deepseek: "sk-pi-three" },
+			providerBaseUrls: { deepseek: "https://api.deepseek.com/v2" },
+		});
+		expect(await access?.resolve("deepseek")).toEqual({
+			baseUrl: "https://api.deepseek.com/v2",
+			credential: "sk-pi-three",
+		});
+	});
+
+	test("a session whose registry states no fact answers nothing, and the query exposes no native reading", async () => {
+		const surface = boundPiSurface();
+		// An empty catalog still means a registry exists; it simply has nothing to say about a provider.
+		surface.startRequest({ ...MAIN, catalog: [] });
+		const access = surface.implemented().providerAccess;
+
+		expect(access).toBeDefined();
+		expect(Object.keys(access ?? {})).toEqual(["resolve"]);
+		expect(await access?.resolve("deepseek")).toBeUndefined();
 	});
 });

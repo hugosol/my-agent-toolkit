@@ -19,7 +19,7 @@ import { describe, expect, test } from "bun:test";
 import type { OmpCommandContext, OmpExtensionApi, OmpSessionContext } from "../../adapters/omp";
 import * as frameworkOmp from "../../adapters/omp";
 import type { SemanticEventHandlers, UserInputDelivery } from "../../framework/interface/session";
-import { type ExtensionDefinition, defineExtension } from "../../framework/public";
+import { type ExtensionDefinition, defineExtension } from "../../framework/interface";
 
 /** The definition under test: a command, so the suite can tell a refused binding from an unbound one. */
 const PROBE: ExtensionDefinition = defineExtension({

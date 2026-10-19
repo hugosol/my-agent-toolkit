@@ -38,9 +38,10 @@ import type {
 	OmpSessionContext,
 } from "../../adapters/omp";
 import * as frameworkOmp from "../../adapters/omp";
-import type { CommandDelivery } from "../../framework/core/protocol";
+import type { CommandDelivery } from "../../framework/interface/command";
 import type { RoundDelivery, RoundEvent } from "../../framework/interface/session";
-import { type CommandImplementations, type ExtensionDefinition, defineExtension } from "../../framework/public";
+import type { CommandImplementations } from "../../framework/interface/command";
+import { type ExtensionDefinition, defineExtension } from "../../framework/interface";
 
 /** The definition under test: one directed command, so the arm path can be driven too. */
 const PROBE: ExtensionDefinition = defineExtension({
@@ -618,6 +619,23 @@ describe("the idle query at the native seam (F6, P9)", () => {
 		surface.runCommand(surface.commandContext({ ...QUIESCENT, idle: false }));
 
 		expect(surface.answers).toEqual([true, false]);
+	});
+
+	test("the query re-reads the session's fact instead of delivering a snapshot", () => {
+		const surface = boundSurface();
+		// One context whose own fact moves: the adapter's query closes over the live native read,
+		// so asking again answers what the session reports now, not what it reported at binding or
+		// at the previous invocation.
+		const facts = { sessionId: "session-live", idle: true as boolean | undefined, queued: false, runningJobs: 0 };
+		const context = surface.commandContext(facts);
+
+		surface.runCommand(context);
+		facts.idle = false;
+		surface.runCommand(context);
+		facts.idle = undefined;
+		surface.runCommand(context);
+
+		expect(surface.answers).toEqual([true, false, undefined]);
 	});
 
 	test("a context that reports no idle fact answers nothing, and says so once", () => {

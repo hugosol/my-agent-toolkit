@@ -26,8 +26,8 @@ import type { ModelPricingData } from "../../../extensions/model-cost/shared-log
 import { createModelCostRuntime } from "../../../extensions/model-cost/shared-logic/runtime";
 import type { SessionFacts, TurnUsage } from "../../../framework/interface/session";
 import type { OwnerReference } from "../../../framework/interface/state";
-import type { TurnSignal } from "../../../framework/core/protocol";
-import { updateFile } from "../../../framework/public";
+import type { TurnSignal } from "../../../framework/runtime/port";
+import { updateFile } from "../../../framework/interface/general/files";
 import { type PortDouble, portDouble } from "../../framework/support/harness-port-double";
 
 /** The self-made pricing data: one monetary provider with one tier, and no allowance channel. */

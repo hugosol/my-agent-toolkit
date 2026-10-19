@@ -1,0 +1,149 @@
+{
+  "feature": "framework-capability-cutover",
+  "ticket": "05-authoring-subagent-cutover.md",
+  "run_id": "ab6382cc-fd36-4529-82d9-c0092fd290a4",
+  "parent_session_id": "01a1539d-639e-70ea-9249-f5515c657de5",
+  "parent_session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-19T10-03-06-014Z_01a1539d-639e-70ea-9249-f5515c657de5.jsonl",
+  "workspace": "E:\\Developer\\myhub\\my-agent-toolkit",
+  "tool_call_id": "37374238-79e7-4eaa-b4b7-f8680a456446",
+  "started_at": "2026-10-19T11:10:49.931Z",
+  "tdd_status": "completed",
+  "retro_status": "completed",
+  "tdd_finished_at": "2026-10-19T11:32:32.809Z",
+  "tdd_result": {
+    "index": 0,
+    "id": "05-authoring-subagent-cutovermd-37374238-79e7-4e",
+    "agent": "tdd",
+    "agentSource": "user",
+    "task": "Complete assignment thoroughly:\n\n在当前 worktree 实现唯一票据：C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-VX8uyv\\.scratch\\framework-capability-cutover\\implementation\\05-authoring-subagent-cutover.md。\n集成分支：hyper-tdd\nspec：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\framework-capability-cutover\\spec.md\ncontract：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\framework-capability-cutover\\contract.md\n这是本票首次执行。\n遵守 tdd skill，自行负责本票验收并报告实际验证与未完成事项。完成后尽快提交本票实现，交出 worktree，由独立集成子代理接管。不要修改其他票据或工作流报告，不操作集成分支工作区，不自行合入集成分支，不调用 retro、不派发其他票据。不得 reset 丢弃既有工作。",
+    "assignment": "在当前 worktree 实现唯一票据：C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-VX8uyv\\.scratch\\framework-capability-cutover\\implementation\\05-authoring-subagent-cutover.md。\n集成分支：hyper-tdd\nspec：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\framework-capability-cutover\\spec.md\ncontract：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\framework-capability-cutover\\contract.md\n这是本票首次执行。\n遵守 tdd skill，自行负责本票验收并报告实际验证与未完成事项。完成后尽快提交本票实现，交出 worktree，由独立集成子代理接管。不要修改其他票据或工作流报告，不操作集成分支工作区，不自行合入集成分支，不调用 retro、不派发其他票据。不得 reset 丢弃既有工作。",
+    "description": "Implement authoring subagent cutover ticket",
+    "lastIntent": "Committing ticket implementation",
+    "exitCode": 0,
+    "output": "{\n  \"ticket\": \"05-authoring-subagent-cutover\",\n  \"status\": \"complete\",\n  \"commit\": \"b1e0bca (branch hyper/framework-capability-cutover/05-authoring-subagent-cutover-3cce09-e1e098c5b064, base a806c8f)\",\n  \"delivered\": [\n    \"framework/interface/index.ts now owns defineExtension and composes the definition/implementation authoring contract; it exports no capability.\",\n    \"framework/interface/details/definition.ts owns ExtensionDefinition, ExtensionConfigDeclaration, ConfigFieldType.\",\n    \"framework/interface/details/implementation.ts owns ExtensionAssembly, ExtensionFactory, ImplementationContext, ExtensionImplementation, InitializationDelivery and DeclarableRequiredSemantic; ImplementationContext remains config + optional modelPrices/providerAccess + session.\",\n    \"framework/interface/subagent.ts owns SubagentIntegration, SubagentIntegrationFailure, SubagentCapability; SubagentExecutionMode / HarnessIntegrationDeclaration / ExtensionHarnessEntry / complete RequiredSemantic stay internal.\",\n    \"framework/interface/command.ts canonically owns the Command public declarations/implementations/deliveries required by the authoring references; framework/public keeps re-exporting them only until ticket 06.\",\n    \"Internal core modules now reference the canonical declarations; core/definition keeps defaults/bound sets/helpers, core/assembly keeps guards, core/protocol keeps adapter-facing/internal invocation types.\",\n    \"Migrated consumers: framework, both adapters, all three extensions, the integration-check script path, framework/model-cost/connect-bot tests and all harness-dock fixtures. Removed authoring/Subagent exports from framework/public and removed core/assembly, core/definition and core/integration from the import-check legacy exceptions.\",\n    \"Updated framework/README.md, interface READMEs, framework-capabilities.md, capability-interface-architecture.md, ADR-0002 status note and ADR-0003 link.\"\n  ],\n  \"acceptance_evidence\": {\n    \"root authoring ownership and selectivity\": \"import-boundary.test.ts new ownership/root-set/Subagent tests, green; one canonical declaration per name found by repository search; typecheck exit 0\",\n    \"ImplementationContext surface\": \"implementation-lifecycle.test.ts exact context keys with and without harness facts; existing extension construction and real dock\",\n    \"initialize delivery surface and usable operations\": \"implementation-lifecycle.test.ts exact four keys, resolved owner/hasUI, subagents none, feedback notify observed, recursive no-markers scan; pi-subagent reads subagents\",\n    \"Subagent modes, stability, no mode exposure\": \"pi-subagent-integration.test.ts drives none/subagents/failed and stability; new OMP case observes the real adapter's subagents answer; import check forbids SubagentExecutionMode in the interface\",\n    \"config-before-factory, init timing, no re-init\": \"implementation-lifecycle.test.ts validated/rejected config, quiet binding, init-once, first-request wait, later-request no wait, identity reuse\",\n    \"cleanup/transfer/disposal/new instance\": \"implementation-lifecycle.test.ts refused-binding cleanup, transfer no cleanup, disposal stops delivery, fresh instance on later binding; real binding-lifecycle dock 2 pass\",\n    \"two declarable semantics only\": \"DeclarableRequiredSemantic is exactly the two lifecycle literals; full vocabulary internal; startup-requirements suite unchanged\",\n    \"consumer migration and retirements\": \"repository search + reduced legacy exceptions + all partitions green\"\n  },\n  \"commands\": [\n    {\n      \"cmd\": \"bun run typecheck\",\n      \"exit\": 0\n    },\n    {\n      \"cmd\": \"bun run test:framework\",\n      \"exit\": 0,\n      \"result\": \"626 pass / 0 fail, 2880 expect, 53 files\"\n    },\n    {\n      \"cmd\": \"bun run test:codebase-tools\",\n      \"exit\": 0,\n      \"result\": \"24 pass / 0 fail, 334 expect, 7 files\"\n    },\n    {\n      \"cmd\": \"bun test tests/model-cost\",\n      \"exit\": 0,\n      \"result\": \"516 pass / 0 fail, 2892 expect, 51 files\"\n    },\n    {\n      \"cmd\": \"OMP_BOT_BINARY=... bun test tests/connect-bot\",\n      \"exit\": 0,\n      \"result\": \"142 pass / 0 fail, 689 expect, 18 files\"\n    },\n    {\n      \"cmd\": \"bun test tests/harness-dock/binding-lifecycle.test.ts\",\n      \"exit\": 0,\n      \"result\": \"2 pass / 0 fail, 24 expect; isolated real OMP 18.5.0 baseline\"\n    },\n    {\n      \"cmd\": \"bun run check:integrations\",\n      \"exit\": 0,\n      \"result\": \"all five discovery declarations complete or not required; declaration matching only\"\n    }\n  ],\n  \"fault_injection\": [\n    \"Added markers:{} to the initialization delivery -> surface test failed; restored and green.\",\n    \"Added hostFacts:{} to the factory context -> both context tests failed; restored and green.\"\n  ],\n  \"environment\": \"Windows 10.0.26200 x64; Bun 1.4.2 (744846f84); Node v24.18.0; TypeScript 7.0.2; bun.lock sha256 e7ed487b... unchanged; OMP 18.5.0 isolated baseline\",\n  \"evidence_record\": \".scratch/framework-capability-cutover/evidence/05-authoring-subagent-verification/README.md (run logs local under logs/, ignored by *.log)\",\n  \"unverified\": [\n    \"P48 terminal readability not judged.\",\n    \"Full bun run test and the five-entry real regression remain tickets 12/14; this ticket does not claim full-repository green or harness support.\",\n    \"factory no-remote/no-timer is a contract on extension code, not a general runtime detector; the framework timing/validation is proven.\",\n    \"Execution-mode non-exposure is lexical for the interface plus observed for the initialization result, matching the existing import-check limitation.\",\n    \"framework/public still carries Command runtime types and General HTTP/file/config functions with their import exceptions for later tickets.\"\n  ],\n  \"blocked\": null\n}",
+    "stderr": "",
+    "truncated": false,
+    "durationMs": 1302773,
+    "tokens": 385447,
+    "requests": 189,
+    "contextTokens": 358579,
+    "contextWindow": 1000000,
+    "modelOverride": [
+      "deepseek/deepseek-flash:max"
+    ],
+    "resolvedModel": "deepseek/deepseek-flash:max",
+    "resolvedModelIdentity": "deepseek/deepseek-flash",
+    "resolvedThinkingLevel": "max",
+    "aborted": false,
+    "usage": {
+      "input": 247056,
+      "output": 138391,
+      "cacheRead": 43328768,
+      "cacheWrite": 0,
+      "totalTokens": 43714215,
+      "reasoningTokens": 56802,
+      "cost": {
+        "input": 0.037058399999999964,
+        "output": 0.08303460000000001,
+        "cacheRead": 0.129986304,
+        "cacheWrite": 0,
+        "total": 0.250079304
+      }
+    },
+    "outputPath": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-19T10-03-06-014Z_01a1539d-639e-70ea-9249-f5515c657de5\\05-authoring-subagent-cutovermd-37374238-79e7-4e.md",
+    "extractedToolData": {
+      "yield": [
+        {
+          "data": {
+            "ticket": "05-authoring-subagent-cutover",
+            "status": "complete",
+            "commit": "b1e0bca (branch hyper/framework-capability-cutover/05-authoring-subagent-cutover-3cce09-e1e098c5b064, base a806c8f)",
+            "delivered": [
+              "framework/interface/index.ts now owns defineExtension and composes the definition/implementation authoring contract; it exports no capability.",
+              "framework/interface/details/definition.ts owns ExtensionDefinition, ExtensionConfigDeclaration, ConfigFieldType.",
+              "framework/interface/details/implementation.ts owns ExtensionAssembly, ExtensionFactory, ImplementationContext, ExtensionImplementation, InitializationDelivery and DeclarableRequiredSemantic; ImplementationContext remains config + optional modelPrices/providerAccess + session.",
+              "framework/interface/subagent.ts owns SubagentIntegration, SubagentIntegrationFailure, SubagentCapability; SubagentExecutionMode / HarnessIntegrationDeclaration / ExtensionHarnessEntry / complete RequiredSemantic stay internal.",
+              "framework/interface/command.ts canonically owns the Command public declarations/implementations/deliveries required by the authoring references; framework/public keeps re-exporting them only until ticket 06.",
+              "Internal core modules now reference the canonical declarations; core/definition keeps defaults/bound sets/helpers, core/assembly keeps guards, core/protocol keeps adapter-facing/internal invocation types.",
+              "Migrated consumers: framework, both adapters, all three extensions, the integration-check script path, framework/model-cost/connect-bot tests and all harness-dock fixtures. Removed authoring/Subagent exports from framework/public and removed core/assembly, core/definition and core/integration from the import-check legacy exceptions.",
+              "Updated framework/README.md, interface READMEs, framework-capabilities.md, capability-interface-architecture.md, ADR-0002 status note and ADR-0003 link."
+            ],
+            "acceptance_evidence": {
+              "root authoring ownership and selectivity": "import-boundary.test.ts new ownership/root-set/Subagent tests, green; one canonical declaration per name found by repository search; typecheck exit 0",
+              "ImplementationContext surface": "implementation-lifecycle.test.ts exact context keys with and without harness facts; existing extension construction and real dock",
+              "initialize delivery surface and usable operations": "implementation-lifecycle.test.ts exact four keys, resolved owner/hasUI, subagents none, feedback notify observed, recursive no-markers scan; pi-subagent reads subagents",
+              "Subagent modes, stability, no mode exposure": "pi-subagent-integration.test.ts drives none/subagents/failed and stability; new OMP case observes the real adapter's subagents answer; import check forbids SubagentExecutionMode in the interface",
+              "config-before-factory, init timing, no re-init": "implementation-lifecycle.test.ts validated/rejected config, quiet binding, init-once, first-request wait, later-request no wait, identity reuse",
+              "cleanup/transfer/disposal/new instance": "implementation-lifecycle.test.ts refused-binding cleanup, transfer no cleanup, disposal stops delivery, fresh instance on later binding; real binding-lifecycle dock 2 pass",
+              "two declarable semantics only": "DeclarableRequiredSemantic is exactly the two lifecycle literals; full vocabulary internal; startup-requirements suite unchanged",
+              "consumer migration and retirements": "repository search + reduced legacy exceptions + all partitions green"
+            },
+            "commands": [
+              {
+                "cmd": "bun run typecheck",
+                "exit": 0
+              },
+              {
+                "cmd": "bun run test:framework",
+                "exit": 0,
+                "result": "626 pass / 0 fail, 2880 expect, 53 files"
+              },
+              {
+                "cmd": "bun run test:codebase-tools",
+                "exit": 0,
+                "result": "24 pass / 0 fail, 334 expect, 7 files"
+              },
+              {
+                "cmd": "bun test tests/model-cost",
+                "exit": 0,
+                "result": "516 pass / 0 fail, 2892 expect, 51 files"
+              },
+              {
+                "cmd": "OMP_BOT_BINARY=... bun test tests/connect-bot",
+                "exit": 0,
+                "result": "142 pass / 0 fail, 689 expect, 18 files"
+              },
+              {
+                "cmd": "bun test tests/harness-dock/binding-lifecycle.test.ts",
+                "exit": 0,
+                "result": "2 pass / 0 fail, 24 expect; isolated real OMP 18.5.0 baseline"
+              },
+              {
+                "cmd": "bun run check:integrations",
+                "exit": 0,
+                "result": "all five discovery declarations complete or not required; declaration matching only"
+              }
+            ],
+            "fault_injection": [
+              "Added markers:{} to the initialization delivery -> surface test failed; restored and green.",
+              "Added hostFacts:{} to the factory context -> both context tests failed; restored and green."
+            ],
+            "environment": "Windows 10.0.26200 x64; Bun 1.4.2 (744846f84); Node v24.18.0; TypeScript 7.0.2; bun.lock sha256 e7ed487b... unchanged; OMP 18.5.0 isolated baseline",
+            "evidence_record": ".scratch/framework-capability-cutover/evidence/05-authoring-subagent-verification/README.md (run logs local under logs/, ignored by *.log)",
+            "unverified": [
+              "P48 terminal readability not judged.",
+              "Full bun run test and the five-entry real regression remain tickets 12/14; this ticket does not claim full-repository green or harness support.",
+              "factory no-remote/no-timer is a contract on extension code, not a general runtime detector; the framework timing/validation is proven.",
+              "Execution-mode non-exposure is lexical for the interface plus observed for the initialization result, matching the existing import-check limitation.",
+              "framework/public still carries Command runtime types and General HTTP/file/config functions with their import exceptions for later tickets."
+            ],
+            "blocked": null
+          },
+          "status": "success",
+          "type": "result"
+        }
+      ]
+    },
+    "outputMeta": {
+      "lineCount": 75,
+      "charCount": 5739
+    }
+  },
+  "agent": "tdd",
+  "agent_id": "05-authoring-subagent-cutovermd-37374238-79e7-4e",
+  "session_id": "01a153db-6662-71df-a235-9f97c9111a42",
+  "session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-19T10-03-06-014Z_01a1539d-639e-70ea-9249-f5515c657de5\\05-authoring-subagent-cutovermd-37374238-79e7-4e.jsonl",
+  "execution_cwd": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-VX8uyv",
+  "retro_document": "E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\framework-capability-cutover\\retro\\05-authoring-subagent-cutover.md\\ab6382cc-fd36-4529-82d9-c0092fd290a4.md",
+  "retro_finished_at": "2026-10-19T11:35:19.433Z"
+}

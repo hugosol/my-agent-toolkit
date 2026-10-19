@@ -12,6 +12,14 @@ _Avoid_: standalone generated extension, copy-pasted template, native API wrappe
 The program that discovers and runs extensions and exposes the native capability surface they adapt to; the supported harnesses are `pi` and `oh-my-pi`. A harness is distinct from an agent session (`ctx.agent`) and its subagents.
 _Avoid_: agent runtime (legacy name), host (ambiguous with OS/process host), agent, platform
 
+**Framework capability（框架能力）**:
+An extension-facing ability whose harness facts, effects or lifecycle integration depend on an adapter. A framework-owned implementation can supply its semantics; dependence on adapter integration, rather than the existence of a public interface, distinguishes it from a framework general module.
+_Avoid_: every public function, General capability, native harness API
+
+**Framework general module（框架通用模块）**:
+A framework-provided function module whose implementation does not depend on a harness adapter, such as HTTP requests or coordinated file updates. General groups these modules for navigation; it is not itself a capability.
+_Avoid_: adapter-backed capability, injected General capability
+
 **Subagent integration mode（子代理接入模式）**:
 The supported shape of one extension entry’s session integration: subagent mode includes integrated subagent observations, while no-subagent mode（无子代理模式）provides main-session functionality without that integration. It does not assert that the harness contains no subagents, describe whether an agent is working, or represent an extension State value. An integration failure is not a normal no-subagent mode.
 _Avoid_: installed-package flag, connection-in-progress state, agent activity state, extension activation

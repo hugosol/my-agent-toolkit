@@ -28,10 +28,10 @@
  * while this module owns handler dispatch and its feedback lifetime, and the scope rule it
  * narrows with is `subscriptions.ts`'s one mechanism.
  */
-import type { ExtensionDefinition } from "../core/definition";
+import type { ExtensionDefinition } from "../interface/details/definition";
 import type { SessionEventDelivery, SubscriptionGroup } from "../interface/session";
 import type { OwnerCapabilityHandle } from "../interface/state";
-import type { SessionDelivery } from "../core/protocol";
+import type { SessionDelivery } from "../runtime/port";
 import type { StateStore } from "../core/state";
 import { type MarkerSeat, publishMarkerOnTransition } from "./marker";
 import { stateValueFor } from "./state-scope";

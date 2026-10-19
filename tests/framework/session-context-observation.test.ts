@@ -31,7 +31,7 @@
 import { describe, expect, test } from "bun:test";
 import type { OmpExtensionApi, OmpSessionContext } from "../../adapters/omp";
 import * as frameworkOmp from "../../adapters/omp";
-import type { ExtensionFactory } from "../../framework/core/assembly";
+import type { ExtensionFactory } from "../../framework/interface/details/implementation";
 import type {
 	SessionContextDelivery,
 	SessionContextReading,
@@ -39,7 +39,7 @@ import type {
 	SessionObservationReader,
 } from "../../framework/interface/session";
 import type { OwnerReference } from "../../framework/interface/state";
-import { type ExtensionDefinition, defineExtension } from "../../framework/public";
+import { type ExtensionDefinition, defineExtension } from "../../framework/interface";
 import { portDouble } from "./support/harness-port-double";
 import { boundPiSurface } from "./support/pi-surface-double";
 

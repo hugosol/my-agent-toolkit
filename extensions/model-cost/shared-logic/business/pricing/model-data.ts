@@ -22,7 +22,7 @@
  * below are the whole of the official coverage: a provider serving the same id is not the official
  * provider unless the provider itself is.
  */
-import type { CatalogPrice, CatalogPriceSource } from "../../../../../framework/interface/host-facts";
+import type { CatalogPrice, CatalogPriceSource } from "../../../../../framework/interface/provider";
 
 /** One monetary tier's off-peak unit price, in the data's currency per the data's unit. */
 export interface TierPrice {

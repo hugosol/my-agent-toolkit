@@ -5,8 +5,8 @@ Joins an agent session to the omp-bot panel; `/connect-bot` registers the curren
 harness-independent logic is under [`shared-logic/`](shared-logic), and its OMP assembly is
 [`harnesses/omp.ts`](harnesses/omp.ts).
 
-The extension's outbound call is the framework's general HTTP module — `request` from
-[`framework/public.ts`](../../framework/public.ts) — rather than a transport of its own: each panel
+The extension's outbound call is the framework's general HTTP interface — `request` from
+[`framework/interface/general/http.ts`](../../framework/interface/general/http.ts) — rather than a transport of its own: each panel
 request states a direct connection (`proxy: false`) and the extension's own configured wait, and the
 framework's client makes the connection and imposes the budget, over the whole exchange the body read
 included. The protocol on the wire is unchanged: one route (`/api/sessions/events`), one

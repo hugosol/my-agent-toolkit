@@ -10,7 +10,7 @@
  */
 import { describe, expect, test } from "bun:test";
 import * as frameworkOmp from "../../adapters/omp";
-import * as frameworkDefinition from "../../framework/public";
+import * as frameworkDefinition from "../../framework/interface";
 import { CODEBASE_TOOLS } from "../../extensions/codebase-tools/definition";
 
 type OmpExtensionApi = frameworkOmp.OmpExtensionApi;

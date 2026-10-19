@@ -18,8 +18,9 @@
 | --- | --- | --- |
 | Extension definition | 与宿主无关的纯声明：扩展身份、控制方式、状态、贡献内容与配置要求 | 这是“声明需要什么”，还是“执行时如何实现”？ |
 | Extension `shared-logic` | 扩展业务及其组合：业务规则、外部业务协议、业务数据模型、缓存与刷新策略、业务持久化、展示计算 | 换一个宿主，这条业务规则是否仍然成立？ |
-| Framework `interface` | 已封装 capability 的 canonical 消费契约及使用约定；Session 是第一个完整示例 | extension 能否只读这里就正确使用该 capability？ |
-| Framework `core` | 尚未迁移的契约、内部 adapter protocol 与宿主无关的语义 implementation | 这是应藏在 capability seam 后面的规则，还是尚未迁移的声明？ |
+| Framework `interface` | 已封装 capability 的 canonical 消费契约及使用约定；State、Session、Prompt、Marker、Feedback、Provider、Subagent、Command 及三个 General 模块均已迁移，Session 是最深的示例 | extension 能否只读这里就正确使用该 capability？ |
+| Framework `runtime` | 单一 framework / adapter 内部 port 与交付契约 | 这是 adapter 必须实现/提供的框架事实，还是扩展可见的能力？ |
+| Framework `core` | 尚属内部的契约与宿主无关的语义 implementation | 这是应藏在 capability seam 后面的规则，还是内部 helper？ |
 | Framework `behaviors` | 基于公共契约实现的可复用行为：绑定、状态控制、贡献、生命周期与派发 | 这是框架应该统一兑现的行为，还是扩展自己的处理逻辑？ |
 | Framework `modules` | 不依赖宿主与具体扩展的通用基础能力 | 去掉 Session、Owner 和业务概念，这项能力是否仍独立成立？ |
 | 顶层 `adapters/<harness>` | 宿主原生事实、触发位置与能力到框架契约的映射 | 这是公共语义在此宿主上的实现机制吗？ |
@@ -30,13 +31,13 @@
 
 ### Adapter 按共享能力领域导航
 
-公共接入位于仓库顶层 `adapters/<harness>/`。每个 adapter 根目录只有 `index.ts`、`internal/`、`domain/`：`index.ts` 是公共装配入口，`internal/` 是私有原生支撑与 binding port，`domain/` 集中放置能力领域。`domain/` 内直接按能力领域组织，不按消费它的 extension 分组，也不增加 business/foundation 中间目录。领域归属有歧义时，业务领域优先；只有真正公共的支撑能力才独立共享。按能力含义归类，不按原生对象的数据来源归类。framework 公共领域补充业务词汇：Turn、Round 收入 Session；context、pricing 保持自己的职责。
+公共接入位于仓库顶层 `adapters/<harness>/`。每个 adapter 根目录只有 `index.ts`、`internal/`、`domain/`：`index.ts` 是公共装配入口，`internal/` 是私有原生支撑与 binding port，`domain/` 集中放置能力领域。`domain/` 内直接按能力领域组织，不按消费它的 extension 分组，也不增加 business/foundation 中间目录。领域归属有歧义时，业务领域优先；只有真正公共的支撑能力才独立共享。按能力含义归类，不按原生对象的数据来源归类。framework 公共领域补充业务词汇：Turn、Round 收入 Session；context 保持自己的职责，provider/catalog 查询集中在 Provider。
 
 领域内部默认按映射方式组织：`events.ts` 把原生观察转成 framework 事件，`queries.ts` 把原生读取转成 framework 数据，`effects.ts` 执行 framework 请求的原生效果。先找领域，再找映射方式；只创建实际需要的文件，简单领域仍用单文件。复杂 Turn、Round 原生协议可留作 Session 内部 implementation，不增加纯转发入口。事件 delivery 的领域构造靠近事件映射，不留给 port 逐项拼装；共享类型、诊断和状态靠近其寿命拥有者，不另建一套支撑能力分类。
 
 这是帮助从 requirement 定位到相关 module 附近的导航约定，不要求一项声明一份文件，也不扩展当前 `subagentRequirements` 范围。具体落点见[能力到实现的导航](framework-capabilities.md#adapter-implementation-navigation)。简单能力优先一个文件，确有协作才增加目录；不要求不同 Harness 文件对称。
 
-完整领域包括 Session、Context、Subagent、Pricing、Provider、Control、Prompt、Feedback、Marker；每个领域先明确归属，再决定单文件或目录，不能把原生数据来源或第三方接入名称当作主要领域。Subagent 拥有原生父子/祖先关系、接入状态与必要的接入协议；子会话通用的 Session、Turn、Round 事件仍归 Session，不复制第二条事件路径。Feedback 与 Marker 各自拥有原生效果。能力领域全部放在 `domain/` 下；原生类型、文本加载和 binding 端口放在 `internal/`，`index.ts` 负责公共装配入口，均不当作领域；完整路径对照只维护在[能力导航](framework-capabilities.md#adapter-implementation-navigation)。
+完整领域包括 Session、Context、Subagent、Provider、Control、Prompt、Feedback、Marker；每个领域先明确归属，再决定单文件或目录，不能把原生数据来源或第三方接入名称当作主要领域。Subagent 拥有原生父子/祖先关系、接入状态与必要的接入协议；子会话通用的 Session、Turn、Round 事件仍归 Session，不复制第二条事件路径。Feedback 与 Marker 各自拥有原生效果。能力领域全部放在 `domain/` 下；原生类型、文本加载和 binding 端口放在 `internal/`，`index.ts` 负责公共装配入口，均不当作领域；完整路径对照只维护在[能力导航](framework-capabilities.md#adapter-implementation-navigation)。
 
 装配连接各领域 module，公共事实保留单一来源；跨领域通过明确 interface 协作，不重复维护身份、当前读数或寿命规则。已有 seam 上的 adapter 兑现统一契约，公共 implementation 留在 framework；用 deletion test 衡量 depth，追求 locality 与 leverage，不增加 shallow 转发。interface 是 test surface，验证不按新文件逐一镜像。
 
@@ -50,7 +51,7 @@ Framework adapter 服务于公共契约，extension 的宿主实现服务于这�
 
 1. **先明确业务含义。** 阅读目标扩展的领域文档与术语，区分业务需求和宿主实现方式，不从熟悉的原生 API 反推设计。
 2. **先查框架能力索引。** 判断需求是否已有声明、公共事实、生命周期、效果能力或通用基础能力可以承接。能用声明解决的，不另写一套运行逻辑。
-3. **读取 capability interface，而不是追读 implementation。** Session 已完成首个封装：从 [`framework/interface/session`](../interface/session/index.ts) 阅读事实、观察、订阅、提交提示与 close-out 约定，工厂使用 `context.session`；不导入 `core/protocol`、具体观察来源或内部派发。其他 capability 尚未全部迁移，沿能力索引查其现有入口。不要因为框架内部某个对象“能做到”，就让 extension 依赖它。
+3. **读取 capability interface，而不是追读 implementation。** 从 [`framework/interface`](../interface/index.ts) 及其各 capability 入口阅读声明与交付约定；不导入 `framework/runtime/port`、具体观察来源或内部派发。Session 工厂使用 `context.session`。不要因为框架内部某个对象“能做到”，就让 extension 依赖它。
 4. **只有涉及宿主机制时，才进入 adapter 或 extension 的宿主实现。** 先判断它是公共映射还是扩展专属接入。缺少宿主事实，不应让 shared logic 猜测或读取私有字段。
 5. **最后决定新增代码的归属。** 已有能力就组合使用；业务缺口补在 extension；通用契约或基础能力缺口才考虑补在 framework。
 

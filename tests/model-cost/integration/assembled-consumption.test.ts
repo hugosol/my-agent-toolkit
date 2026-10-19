@@ -39,10 +39,10 @@ import type { ConsumptionDocument, SessionRecord } from "../../../extensions/mod
 import type { ModelPricingData } from "../../../extensions/model-cost/shared-logic/business/pricing/model-data";
 import { totalColumns, totalText } from "../../../extensions/model-cost/shared-logic/presentation/display";
 import { type ModelCostRuntime, createModelCostRuntime } from "../../../extensions/model-cost/shared-logic/runtime";
-import type { CatalogPrice, CatalogPriceSource } from "../../../framework/interface/host-facts";
+import type { CatalogPrice, CatalogPriceSource } from "../../../framework/interface/provider";
 import type { SessionFacts, TurnUsage } from "../../../framework/interface/session";
 import type { OwnerReference } from "../../../framework/interface/state";
-import type { TurnSignal } from "../../../framework/core/protocol";
+import type { TurnSignal } from "../../../framework/runtime/port";
 import { type PortDouble, portDouble } from "../../framework/support/harness-port-double";
 import { controlApi } from "../support/control-api";
 import { uiBoundaryTimerOf } from "../support/ui-timer";

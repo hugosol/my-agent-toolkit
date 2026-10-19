@@ -24,7 +24,7 @@ import type {
 	OmpSessionEventType,
 } from "../../adapters/omp";
 import * as frameworkOmp from "../../adapters/omp";
-import { type ExtensionDefinition, defineExtension } from "../../framework/public";
+import { type ExtensionDefinition, defineExtension } from "../../framework/interface";
 
 /**
  * The single native widget key the framework owns for its marker area, and the
@@ -202,6 +202,40 @@ describe("State drives the area: show, remove, clear when empty (P13, B6)", () =
 			{ key: MARKER_AREA_KEY, lines: ["◈ aaa", "◈ zzz"], placement: MARKER_AREA_PLACEMENT },
 			{ key: MARKER_AREA_KEY, lines: ["◈ aaa"], placement: MARKER_AREA_PLACEMENT },
 			// The area is empty now: the framework clears the widget rather than leaving it empty.
+			{ key: MARKER_AREA_KEY, lines: undefined, placement: MARKER_AREA_PLACEMENT },
+		]);
+	});
+
+	test("two marked extensions and an unmarked consumer coexist, and each step renders exactly its lines", () => {
+		const double = nativeDouble();
+		double.bind(ZZZ);
+		double.bind(AAA);
+		double.bind(promptExtension("no-marker-extension"));
+
+		// Binding renders nothing: the area is first drawn by an effect, not by a declaration.
+		expect(double.widgets).toEqual([]);
+
+		double.toggle("marker-coexist", "zzz-extension-toggle");
+		double.toggle("marker-coexist", "aaa-extension-toggle");
+		// The unmarked consumer's own activation writes no area line and no error.
+		double.toggle("marker-coexist", "no-marker-extension-toggle");
+		// One enabled run re-asserts the once-per-process area: both marked bindings publish the
+		// same complete set, and the unmarked one publishes nothing.
+		double.deliverRun("marker-coexist");
+
+		// Turning aaa off removes exactly its line; the unmarked consumer is still enabled.
+		double.toggle("marker-coexist", "aaa-extension-toggle");
+		// Turning zzz off leaves no line at all, so the framework clears the area.
+		double.toggle("marker-coexist", "zzz-extension-toggle");
+		// Neither of the unmarked consumer's transitions touches the area.
+		double.toggle("marker-coexist", "no-marker-extension-toggle");
+
+		expect(double.widgets).toEqual([
+			{ key: MARKER_AREA_KEY, lines: ["◈ zzz"], placement: MARKER_AREA_PLACEMENT },
+			{ key: MARKER_AREA_KEY, lines: ["◈ aaa", "◈ zzz"], placement: MARKER_AREA_PLACEMENT },
+			{ key: MARKER_AREA_KEY, lines: ["◈ aaa", "◈ zzz"], placement: MARKER_AREA_PLACEMENT },
+			{ key: MARKER_AREA_KEY, lines: ["◈ aaa", "◈ zzz"], placement: MARKER_AREA_PLACEMENT },
+			{ key: MARKER_AREA_KEY, lines: ["◈ zzz"], placement: MARKER_AREA_PLACEMENT },
 			{ key: MARKER_AREA_KEY, lines: undefined, placement: MARKER_AREA_PLACEMENT },
 		]);
 	});

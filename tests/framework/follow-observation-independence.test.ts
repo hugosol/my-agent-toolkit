@@ -27,7 +27,7 @@ import { tmpdir } from "node:os";
 import * as path from "node:path";
 import type { SessionFacts, SessionObservationReader } from "../../framework/interface/session";
 import type { OwnerReference } from "../../framework/interface/state";
-import type { ObservedSession } from "../../framework/core/protocol";
+import type { ObservedSession } from "../../framework/runtime/port";
 import { StateStore } from "../../framework/core/state";
 import { SubagentAccess } from "../../framework/core/subagent-access";
 import {
@@ -36,7 +36,7 @@ import {
 	localOwnerAccess,
 	openOwnerAccess,
 } from "../../framework/modules/local-access";
-import { type ExtensionDefinition, defineExtension } from "../../framework/public";
+import { type ExtensionDefinition, defineExtension } from "../../framework/interface";
 import { type PortDouble, portDouble } from "./support/harness-port-double";
 import {
 	type ObservationChildPlan,

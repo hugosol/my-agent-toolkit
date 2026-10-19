@@ -21,7 +21,7 @@ import {
 	EVENTS_PATH,
 	setPanelRequestForTest,
 } from "../../extensions/connect-bot/shared-logic/panel/client";
-import type { HttpRequestOptions } from "../../framework/public";
+import type { HttpRequestOptions } from "../../framework/interface/general/http";
 import { CONNECT_BOT } from "../../extensions/connect-bot/definition";
 import { readConfig } from "../../framework/core/config";
 import { OUTBOX_LIMIT } from "../../extensions/connect-bot/shared-logic/panel/outbox";

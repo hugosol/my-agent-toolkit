@@ -1,23 +1,39 @@
 # Capability interface architecture
 
-**Status:** Session capability cutover implemented; the remaining capability and runtime-port migration is proposed.
+**Status:** Session, State, Prompt/Marker, Feedback, Provider, Subagent, the root authoring contract, Command and General are implemented, including Command's narrowed runtime delivery and General's three direct entries. The single framework/adapter interaction contract is implemented in [`framework/runtime/port.ts`](../runtime/port.ts).
 **Scope:** the dependency seam between `framework/`, `adapters/`, and `extensions/`.
-**Decision status:** [ADR-0002's Session amendment](../../docs/adr/0002-semantic-extension-framework.md#session-capability-interface-cutover-2026-10-19) accepts the first complete capability. The overall target below still contains future work and open decisions; it is not a claim that every capability or `framework/runtime/port` has moved.
+**Decision status:** ADR-0002's Session amendment accepts the first complete capability, its Command amendment the next, and the [full-capability cutover amendment](../../docs/adr/0002-semantic-extension-framework.md#full-capability-interface-cutover-2026-10-19) records the completed non-additive switch. The direction below is the implemented one; §9 keeps the decisions that remain open and the candidates that were deliberately not adopted.
 
-## Current Session cutover
+## Current capability interface cutover
 
 `framework/interface/session` owns the canonical extension-facing Session facts, event deliveries,
 Subscription group, observation reader and confirmed-write contract. The factory supplies
 `context.session.observations` and `context.session.recordCommit`; the old top-level
 `sessionObservations` / `recordSessionCommit` fields and public concrete class are removed. A reader
 is a separate runtime object, and returned readings cannot write into the source. Session consumer
-types have no compatibility re-export from `public.ts` or `core/protocol.ts`.
+types have no compatibility re-export from any mixed entry or the internal [`runtime/port.ts`](../runtime/port.ts).
 
-Only the State, Feedback and Host facts leaf contracts required by Session were moved beside it.
-Other capability entries stay in place; the adapter port remains internal in `core/protocol.ts`
-until its own cutover. The import check uses an explicit list of remaining non-Session entries,
-not a blanket allowance for framework internals. No new disposal event, second dispatch, runtime
-registry or second adapter abstraction is introduced. Start at the [Session capability entry](../interface/session/index.ts) before reading its implementation.
+State's own capability interface now owns its declarations (`StateDeclaration`, `StatePersistence`,
+`StateInheritance`) and managed operations (`OwnerReference`, `DeclaredValueSeam`,
+`OwnerCapabilityHandle`); the definition entry refers to them without re-publishing them. The
+Prompt and Marker entries own only their declarations (`PromptDeclaration`, `PromptStrategy` and
+`MarkerDeclaration`): the run facts, contribution result, selection rules and the unified area's
+transport stay internal, and the initialization, directed and action deliveries no longer carry a
+marker transport. The Feedback and Provider leaf contracts required by Session also live beside
+it. The root authoring entry (`framework/interface/index.ts`) now owns `defineExtension` and the
+whole definition/implementation contract in its public `details/` files; `SubagentIntegration`,
+`SubagentIntegrationFailure` and `SubagentCapability` live in `framework/interface/subagent.ts`, and
+Command's declarations, implementations and deliveries in `framework/interface/command/` (its
+`details/definition.ts` and `details/implementation.ts`). The actual command and action deliveries are
+explicitly constructed from the approved members: the adapter's persistence callback, the marker-area
+transport and the internal invocation are not reachable from an extension. General's HTTP, safe-file
+and configuration functions are published by their three direct entries (`general/http.ts`,
+`general/files.ts`, `general/config.ts`), with no aggregate `general/index.ts`; the former mixed
+`framework/public.ts` entry is removed. The one adapter port now lives in `framework/runtime/port.ts`,
+referring to the canonical interface declarations instead of restating them; the former
+`core/protocol.ts` no longer exists. The import check requires every extension import under `framework/` to
+resolve inside `framework/interface`, with no remaining-entry exemption list. No new disposal
+event, second dispatch, runtime registry or second adapter abstraction is introduced. Start at the [Session capability entry](../interface/session/index.ts) before reading its implementation.
 The root owns capability, current-observation and subscription entries; `details/` owns public domain
 contracts. This is navigation within one interface, not another capability or implementation layer.
 
@@ -31,7 +47,8 @@ The framework is one shared source tree used across multiple harnesses. The arch
 - adapter developers see one framework-defined port and keep native translation code in the adapter tree;
 - framework maintainers see the deep modules and the composition between them, without extension business logic leaking into the framework.
 
-This document describes the direction, not the completed implementation. It is the reference for the restructuring work that follows.
+This document describes the implemented direction and the rules that keep it true. The sections on
+deferred tooling and open decisions mark explicitly what is not implemented.
 
 ## 2. Principles
 
@@ -108,10 +125,9 @@ The goal is that each role can answer "where do I look?" without reconstructing 
 ```text
 framework/interface/
   index.ts
-  definition/
-    index.ts
-  assembly/
-    index.ts
+  details/
+    definition.ts
+    implementation.ts
   state/
     index.ts
   session/
@@ -130,20 +146,24 @@ framework/interface/
       unobserved.ts
   command/
     index.ts
-  prompt/
-    index.ts
-  marker/
-    index.ts
+    details/
+      definition.ts
+      implementation.ts
+  subagent.ts
+  prompt.ts
+  marker.ts
   feedback/
     index.ts
-  host-facts/
+  provider/
     index.ts
   general/
     http.ts
     files.ts
     config.ts
-    index.ts
 ```
+
+General deliberately has no `index.ts`: each general module is a direct entry, and the root
+authoring entry does not aggregate them.
 
 The directory names are navigation. The capability boundaries are the important part; a capability can move to another file or directory without changing what the extension knows.
 
@@ -151,16 +171,17 @@ The directory names are navigation. The capability boundaries are the important 
 
 | Capability | What the extension sees | Hidden implementation | Adapter source |
 | --- | --- | --- | --- |
-| **State** | declared-value seam, retained capability, owner-scoped read | owner lives, persistence, followed-owner read, access lifetime | session boundaries and subagent relations |
+| **State** | State declaration axes, owner reference, declared-value seam, retained capability | store, cells, owner lives, persistence, followed-owner read, access lifetime | session boundaries and subagent relations |
 | **Session** | `SessionCapability` with `SessionObservationReader` yielding `SessionObservation`, confirmed-write statements, and the session-scoped event kinds: session, Round, Turn, Activity, Context, Input, Commit, Unobserved; disposal | session identity, Round synthesis, Turn association/dedup, activity derivation, context collection, subscription dispatch, observation source, cross-process access, close-out | Session, Context, Subagent domains |
 | **Command** | command declaration, invocation facts, action delivery, directed implementation | toggle/directed/actions routing, State transition, feedback | Control domain |
-| **Prompt** | prompt declaration, run delivery, prompt contribution | contribution selection, branch-progress matching | Prompt domain |
-| **Marker** | marker declaration, marker transport | process-global area, line order, viewed-session projection, publication triggers | Marker domain |
+| **Prompt** | prompt declaration and strategy | run facts, contribution result, contribution selection, branch-progress matching | Prompt domain |
+| **Marker** | marker declaration text | marker area transport, process-global area, line order, viewed-session projection, publication triggers | Marker domain |
 | **Feedback** | notification level and feedback transport | delivery wiring; no standalone behaviour module | Feedback domain |
-| **Host facts** | provider access, catalog price, idle query, subagent integration result | factory hand-over and adapter query mapping; no framework policy | Pricing, Provider, Subagent domains |
-| **General** | `request`, `updateFile`, `getConfig` and their option/error types | HTTP transport, coordinated file update, configuration document reading | none |
+| **Provider** | provider access, catalog price, provider HTTP facts | factory hand-over and adapter query mapping; no framework policy | Provider domain |
+| **Subagent** | the settled initialization integration result (`subagents` / `none` / `failed`) and the requirement vocabulary | execution modes, adapter coverage inventory, provider protocol and registration | Subagent domains |
+| **General modules** (a navigation group, not an adapter-backed capability) | `request`, `updateFile`, `getConfig` and their option/error types | HTTP transport, coordinated file update, configuration document reading | none |
 
-`definition/` and `assembly/` are the authoring layer. They are not capabilities themselves; they describe how an extension declares a capability and supplies an implementation.
+The root `index.ts` and its public `details/` files are the authoring layer. They are not capabilities themselves; they describe how an extension declares a capability and supplies an implementation, and they compose the capability declarations without re-publishing them.
 
 ### 4.2 Session is one capability, not one module
 
@@ -198,11 +219,18 @@ The framework runtime owns one adapter-facing port module:
 
 ```text
 framework/runtime/
-  port.ts          # HarnessPort and adapter-facing framework facts
-  binding.ts       # definition -> port
-  assembly.ts      # capability composition and implementation reuse
-  lifecycle.ts     # implementation initialize / cleanup
+  port.ts          # HarnessPort and adapter-facing framework facts; the only runtime module
+framework/
+  core/            # harness-independent contracts and engines
+  behaviors/       # binding, assembly, lifecycle, dispatch and capability behaviors
 ```
+
+The port is one module rather than a runtime directory tree. Composition stays where its real
+responsibilities live: `behaviors/binding.ts` connects a definition to the port,
+`behaviors/assembly.ts` owns the per-assembly State store and observation source, and
+`behaviors/lifecycle.ts` owns one-time initialization and cleanup. Splitting a second
+`runtime/binding`, `runtime/assembly` or `runtime/lifecycle` layer was not adopted; it would move
+names without changing the adapter seam.
 
 `port.ts` contains framework-shaped facts, not native types:
 
@@ -236,9 +264,12 @@ If the port later proves too wide for a real consumer, the correct move is to sp
 
 ### 6.1 Purpose
 
-Coverage checking is a **manual, offline diagnostic**, not a runtime gate. An extension developer should be able to run one script against a selected harness and see which capabilities that harness adapter has not declared or has no structural evidence for.
+Coverage checking is a **manual, offline diagnostic**, not a runtime gate. This section records a
+proposed tooling direction; it is not implemented and no `check:capabilities` command exists.
+An extension developer would be able to run one script against a selected harness and see which
+capabilities that harness adapter has not declared or has no structural evidence for.
 
-The current `bun run check:integrations` is the seed of this mechanism. It already compares the extension's declared subagent requirements with the adapter's declared supply, per execution mode, and reports missing capabilities. It does not install a harness, run behavior tests, load an extension implementation, or admit an extension at startup. The next step is to add structural evidence to the same diagnostic.
+The current `bun run check:integrations` is the seed of this mechanism. It already compares the extension's declared subagent requirements with the adapter's declared supply, per execution mode, and reports missing capabilities. It does not install a harness, run behavior tests, load an extension implementation, or admit an extension at startup. The next step, if pursued, would add structural evidence to the same diagnostic; the cutover did not add a scanner or diagnostics command.
 
 The purpose is not to build a strict automatic alarm. It is a deliberate developer tool: fast, deterministic, explicit, and separate from runtime behavior.
 
@@ -383,7 +414,7 @@ The capability interface makes structural evidence reliable:
 
 - an extension imports capability-specific paths such as `framework/interface/session`, `framework/interface/command`, and `framework/interface/marker`;
 - Session event-kind imports distinguish Turn, Round, Activity, Context, Commit, and Unobserved use;
-- a capability-grouped implementation context (`context.session`, `context.hostFacts`, `context.config`) makes access visible in source;
+- the implementation context keeps `context.session` for the capability object and passes the validated `config`, `modelPrices` and `providerAccess` facts under their own names; a capability-grouped `context.provider` or `context.config` was considered and not adopted, because it would break every factory without hiding anything the flat members do not;
 - adapter domains and `framework/runtime/port.ts` expose the same capability vocabulary on the supply side.
 
 The evidence model therefore uses the same capability names as the interface inventory. It is a tooling layer over the interface, not a runtime capability registry. It does not introduce runtime negotiation, a startup gate, or a second dispatcher.
@@ -414,64 +445,79 @@ The boundary test is the upgrade alarm for this architecture. Without it, `frame
 
 ## 8. Refactor sequence
 
-The direction should be implemented in stages. Each stage should leave the repository typechecking and its current tests green.
+The cutover was implemented in stages. Each stage left the repository typechecking and its
+current tests green.
 
-### Phase 1 - Interface becomes canonical
+### Phase 1 - Interface becomes canonical (implemented)
 
-- Move extension-facing types from `core/definition`, `core/assembly`, `core/protocol`, `core/config`, `modules/http`, and `modules/files` into `framework/interface/`.
-- Make internal modules import those types from the interface.
-- Move adapter-facing types into `framework/runtime/port.ts`.
-- Migrate extension imports to `framework/interface` and adapter assembly entries.
-- Add the import-boundary rules above.
-- Remove `framework/public.ts` as a public path, or keep it only as a temporary migration aid that is removed in the same change series.
-- Verification: typecheck and the framework suite; behavior should not change.
+- Extension-facing types moved from `core/definition`, `core/assembly`, `core/protocol`, `core/config`, `modules/http`, and `modules/files` into `framework/interface/`.
+- Internal modules import those types from the interface.
+- Adapter-facing types moved into `framework/runtime/port.ts`.
+- Extension imports migrated to `framework/interface` and adapter assembly entries.
+- The import-boundary rules above are enforced.
+- `framework/public.ts` is removed as a public path; the root authoring entry and the capability/general entries are the only extension-facing paths. No alias, re-export or forwarding shell remains.
+- Verification: typecheck, the import-boundary suite and the framework suite; behavior did not change.
 
-### Phase 2 - Runtime port
+### Phase 2 - Runtime port (implemented)
 
-- Create `framework/runtime/port.ts` with the framework-shaped adapter contract.
-- Move `HarnessPort`, `RoundObservation`, `TurnSignal`, `SessionObservationAccess/Sink`, `BindingResult`, and `BindingFailure` there.
+- [`framework/runtime/port.ts`](../runtime/port.ts) carries the framework-shaped adapter contract:
+  `HarnessPort`, the semantic deliveries and observations, the adapter-facing transports, the
+  command invocation and the binding outcomes.
+- It refers to the canonical declarations in `framework/interface` and restates none of them; the
+  former `core/protocol.ts` is removed rather than left as a forwarding entry.
 - Adapters import the port from `framework/runtime/port`; extensions never do.
-- Keep the port as one interface for now. Splitting it by capability is a later decision.
+- The port stays one interface. Splitting it by capability is a later decision.
 
-### Phase 3 - Capability context and read surface
+### Phase 3 - Session read surface (implemented; context grouping not adopted)
 
-- Group the implementation context by capability: `context.session`, `context.hostFacts`, `context.config`.
-- Make the extension-facing Session read surface read-only; the concrete observation source and its mutation methods remain internal.
-- Migrate all extension factories and tests.
-- This is a breaking change to the extension authoring surface and requires an ADR amendment.
+- The extension-facing Session read surface is read-only; the concrete observation source and its
+  mutation methods remain internal. This part was implemented.
+- Grouping the whole implementation context by capability (`context.session`, `context.provider`,
+  `context.config`) was considered and deliberately not adopted: it would break every extension
+  factory for classification only. `context.session` remains the capability object, while the
+  validated configuration, model prices and provider access stay under their own names.
+- All extension factories and tests were migrated to the approved members.
 
-### Phase 4 - Deep modules behind the interface
+### Phase 4 - Deep modules behind the interface (implemented)
 
-- Put the State and Session implementations behind their interfaces first.
-- Keep Round, Turn, Activity, Context, observation, access, and disposal as internal Session modules.
-- Then move Command, Prompt, Marker, Feedback, Host facts, and General.
+- State and Session implementations sit behind their interfaces first.
+- Round, Turn, Activity, Context, observation, access, and disposal remain internal Session modules.
+- Command, Prompt, Marker, Feedback, Provider, and General followed.
 - Composition (`assembly`, `binding`, `lifecycle`) connects capabilities and the adapter port; it does not own capability rules.
 - Verification: capability contract tests through `framework/interface` and a port double; internal module tests remain for implementation seams.
 
-### Phase 5 - Documentation and decision record
+### Phase 5 - Documentation and decision record (implemented)
 
-- Add `framework/interface/README.md` with the capability-to-import map.
-- Update `framework/README.md`, `framework-capabilities.md`, and `extension-development-map.md` after the implementation catches up.
-- Record the accepted architecture in an ADR amendment, including the final open decisions.
-- Remove the old public path and any temporary re-exports.
+- `framework/interface/README.md` carries the capability-to-import map.
+- `framework/README.md`, `framework-capabilities.md`, and `extension-development-map.md` follow the implementation.
+- The accepted architecture is recorded in ADR-0002 amendments, including the candidates that were not adopted.
+- The old public path and the former extension import exceptions are removed.
 
-## 9. Open decisions
+## 9. Open decisions and candidates not adopted
 
-These are deliberately not settled by this document.
+These are deliberately not settled by this document. The second table records the candidates the
+cutover considered and rejected, so they are not read as current policy.
 
 | Decision | Current recommendation | Why it is open |
 | --- | --- | --- |
-| `ImplementationContext` grouping | group by capability: `context.session`, `context.hostFacts`, `context.config` | it changes every extension factory and is an authoring-surface break |
 | `HarnessPort` granularity | keep one port for now | splitting by capability is useful only if a real adapter or test double needs a narrower port |
-| Internal layout | keep `core` / `behaviors` / `modules` behind `framework/interface` initially; move to capability directories only when the interface is stable | a large directory move before the interface settles adds churn without changing the extension-facing seam |
-| `framework/public.ts` | remove after migrating all imports | keeping it as a re-export preserves a second extension-facing path |
+| Internal layout | keep `core` / `behaviors` / `modules` behind `framework/interface`; move to capability directories only when the interface is stable | a large directory move before the interface settles adds churn without changing the extension-facing seam |
 | `BindingResult` / `BindingFailure` | stay in `framework/runtime/port.ts` | they are adapter factory results, not extension capability calls |
 | Session observation | part of the Session capability, with a read interface distinct from event subscription | the read surface and event surface are different interfaces even though they share Session identity |
-| Coverage script shape | extend the existing offline `check:integrations` checker first; add a dedicated `check:capabilities` command only if the output or filters outgrow it | the current command already owns discovery and declaration comparison |
+| Coverage script shape | extend the existing offline `check:integrations` checker first, if the tooling is pursued; no `check:capabilities` command exists | the current command already owns discovery and declaration comparison |
 | Structural evidence extraction | start with import-graph and declaration/event-map scanning, with an explicit evidence table; add TypeScript AST analysis only where the import graph is too coarse | source scanning must stay deterministic and must not execute extension factories or read configuration |
 | Coverage default strictness | advisory by default; `--strict` opt-in for a non-zero exit on declared/structural gaps | the check is a developer diagnostic, not a startup or CI gate |
 | Verified status source | consume existing verification reports when available; never derive `verified` from structural evidence | behavior correctness is independent verification, not a static claim |
 | Declaration generation | keep `subagentRequirements` and `HarnessIntegrationDeclaration` as manual intent; derive and compare structural evidence only | some capabilities express business intent and cannot be inferred reliably from syntax |
+
+Candidates considered and not adopted:
+
+| Candidate | Why it is not current policy |
+| --- | --- |
+| Separate public `definition/` and `assembly/` directory layers, or a pure classification `extension.ts` entry | The authoring contract is one root entry plus its public `details/` files. The separate layers duplicated the same declarations and added shallow modules without changing extension leverage. |
+| A capability-grouped implementation context (`context.provider`, `context.config`) | It would break every extension factory for classification only. The context keeps `session` plus the flat `config`, `modelPrices` and `providerAccess` facts. |
+| General as an adapter-backed capability or an aggregate `general/index.ts` entry | General is a navigation group of three independent, harness-independent modules. Each has its own direct entry; there is no registry, adapter or aggregate entry. |
+| A public Marker transport on deliveries, or extension-level marker-area operations | The marker area is process-global and framework-owned. Deliveries carry no transport, and an extension declares text and affects display only through managed State. |
 
 ## 10. Non-goals
 

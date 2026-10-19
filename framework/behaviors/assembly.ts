@@ -3,10 +3,11 @@
  * so observation ownership, State and implementation reuse cannot drift between harnesses.
  * Native subscriptions and their release order remain with the adapter that registered them.
  */
-import type { ExtensionAssembly, ExtensionImplementation, ImplementationContext } from "../core/assembly";
-import { activationField, statePersistence, type ExtensionDefinition } from "../core/definition";
+import type { ExtensionAssembly, ExtensionImplementation, ImplementationContext } from "../interface/details/implementation";
+import { activationField, statePersistence } from "../core/definition";
+import type { ExtensionDefinition } from "../interface/details/definition";
 import { SessionObservations } from "../core/observations";
-import type { BindingResult, HarnessPort } from "../core/protocol";
+import type { BindingResult, HarnessPort } from "../runtime/port";
 import { StateStore } from "../core/state";
 import { createSubagentAccess } from "../core/subagent-access";
 import { bindExtension } from "./binding";

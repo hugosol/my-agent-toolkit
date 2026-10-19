@@ -17,7 +17,7 @@
 import { describe, expect, test } from "bun:test";
 import type { RoundDelivery } from "../../framework/interface/session";
 import type { OwnerReference } from "../../framework/interface/state";
-import { type ExtensionDefinition, defineExtension } from "../../framework/public";
+import { type ExtensionDefinition, defineExtension } from "../../framework/interface";
 import { type PortDouble, portDouble } from "./support/harness-port-double";
 
 /** The owner a delivery acts on unless one is named. */

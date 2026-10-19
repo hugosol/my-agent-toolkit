@@ -1,0 +1,207 @@
+{
+  "feature": "framework-capability-cutover",
+  "ticket": "08-files-interface-cutover.md",
+  "run_id": "3eedbb3b-3241-4b96-8557-38b69b9667ba",
+  "parent_session_id": "01a1539d-639e-70ea-9249-f5515c657de5",
+  "parent_session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-19T10-03-06-014Z_01a1539d-639e-70ea-9249-f5515c657de5.jsonl",
+  "workspace": "E:\\Developer\\myhub\\my-agent-toolkit",
+  "tool_call_id": "2328e186-ac02-4f01-bfa5-b0f45d518377",
+  "started_at": "2026-10-19T12:07:35.109Z",
+  "tdd_status": "completed",
+  "retro_status": "completed",
+  "tdd_finished_at": "2026-10-19T12:17:50.727Z",
+  "tdd_result": {
+    "index": 0,
+    "id": "08-files-interface-cutovermd-2328e186-ac02-4f01-",
+    "agent": "tdd",
+    "agentSource": "user",
+    "task": "Complete assignment thoroughly:\n\n在当前 worktree 实现唯一票据：C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-PFGN1C\\.scratch\\framework-capability-cutover\\implementation\\08-files-interface-cutover.md。\n集成分支：hyper-tdd\nspec：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\framework-capability-cutover\\spec.md\ncontract：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\framework-capability-cutover\\contract.md\n这是本票首次执行。\n遵守 tdd skill，自行负责本票验收并报告实际验证与未完成事项。完成后尽快提交本票实现，交出 worktree，由独立集成子代理接管。不要修改其他票据或工作流报告，不操作集成分支工作区，不自行合入集成分支，不调用 retro、不派发其他票据。不得 reset 丢弃既有工作。",
+    "assignment": "在当前 worktree 实现唯一票据：C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-PFGN1C\\.scratch\\framework-capability-cutover\\implementation\\08-files-interface-cutover.md。\n集成分支：hyper-tdd\nspec：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\framework-capability-cutover\\spec.md\ncontract：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\framework-capability-cutover\\contract.md\n这是本票首次执行。\n遵守 tdd skill，自行负责本票验收并报告实际验证与未完成事项。完成后尽快提交本票实现，交出 worktree，由独立集成子代理接管。不要修改其他票据或工作流报告，不操作集成分支工作区，不自行合入集成分支，不调用 retro、不派发其他票据。不得 reset 丢弃既有工作。",
+    "description": "Implement files interface cutover ticket",
+    "lastIntent": "Committing ticket implementation",
+    "exitCode": 0,
+    "output": "{\n  \"ticket\": \"08-files-interface-cutover\",\n  \"status\": \"complete\",\n  \"branch\": \"hyper/framework-capability-cutover/08-files-interface-cutover-f9f984-e1e098c5b064\",\n  \"commit\": \"57213f7\",\n  \"base\": \"d4d664d65157ea261393eb6100f3b7157a1924ad\",\n  \"worktree_clean\": true,\n  \"evidence\": [\n    \".scratch/framework-capability-cutover/evidence/08-files-verification/README.md\"\n  ],\n  \"delivered\": [\n    \"framework/interface/general/files.ts is the one extension-facing entry; runtime exports exactly updateFile and SafeFileUpdateError, type exports exactly SafeFileUpdateOptions and SafeFileUpdateFailureKind\",\n    \"canonical declarations in framework/interface/general/files-contract.ts; modules/files imports the same SafeFileUpdateError class and the entry re-exports it (one identity, no copy)\",\n    \"lock, queue, recovery, temporary-file/rename publication and retry constants stay private in modules/files; WAIT_RESOLUTION_MS remains only an internal module export used by behaviors/round-events\",\n    \"framework/public.ts no longer exports any safe-file declaration (only the config reader/source types remain; runtime exports []); framework/modules/files removed from the extension legacy import exceptions\",\n    \"all consumers migrated: model-cost codex-estimate-store and consumption-store, framework/model-cost close-out tests, model-cost period-switch and pi-period-reset tests, files suite and child, scripts pi-close-out-smoke and efficiency-baseline; docs referencing the old source updated\",\n    \"permanent coverage added only for consumer-visible error gaps: synchronous business throw keeps its own identity beside the rejected promise; io/corrupt/timeout/cancelled assert detail identifies the target; killed holder asserts the complete old document remains\"\n  ],\n  \"acceptance\": [\n    {\n      \"criterion\": \"only updateFile/SafeFileUpdateOptions/SafeFileUpdateError/SafeFileUpdateFailureKind public; same public error identity; internal mechanisms\",\n      \"promise\": \"P01/P49/P51 (files partition), P42\",\n      \"evidence\": \"runtime import of entry printed [SafeFileUpdateError, updateFile]; identity probe printed sameClassAsCanonical=true, instanceOfPublic=true, sameConstructor=true; declarations lexically only in files-contract + implementation's single export; public runtime exports []; typecheck 0; import-boundary 16/16\",\n      \"result\": \"pass\"\n    },\n    {\n      \"criterion\": \"real temp dir and independent child processes; updater sees latest; no lost updates\",\n      \"promise\": \"P39\",\n      \"evidence\": \"files.test: 2 child processes x 10 increments with 20ms hold -> {count:20}; 4 rounds of dead holder + 12 racing children commit with no loss; injected lock-free fault produced {count:10} and failed the case\",\n      \"result\": \"pass\"\n    },\n    {\n      \"criterion\": \"readers see complete old/new document; updateFile returns published next; interruption case\",\n      \"promise\": \"P40\",\n      \"evidence\": \"files.test: 20 republishes of 20KB document read 300x concurrently, every read whole, inode changes (rename); every resolved value and bytes asserted; killed holder leaves complete old document; injected copyFile publication failed with EBUSY\",\n      \"result\": \"pass\"\n    },\n    {\n      \"criterion\": \"budget covers in-process queue and cross-process lock; wait timeout, wait signal cancel, post-begin cancel\",\n      \"promise\": \"P41\",\n      \"evidence\": \"files.test: queue timeout (300ms, updater never called, predecessor publishes), lock timeout (>=500ms, no write), abort while waiting -> cancelled <2500ms with no late write, abort after begin ignored and call resolves/publishes, default 15000ms measured\",\n      \"result\": \"pass\"\n    },\n    {\n      \"criterion\": \"timeout/cancelled/io/corrupt kind/detail/public class; sync+async business errors keep identity\",\n      \"promise\": \"P42\",\n      \"evidence\": \"files.test failureOf asserts instanceof for all four kinds; each detail contains target; sync throw and rejected promise arrive as the exact same error objects; injected wrap into SafeFileUpdateError(io) failed the sync identity assertion\",\n      \"result\": \"pass\"\n    },\n    {\n      \"criterion\": \"migrate all consumers incl model-cost storage; retire old declarations/exception; reuse file coverage + storage-processes; data smoke; real cross-process evidence\",\n      \"promise\": \"P51/P52 (08 handoff)\",\n      \"evidence\": \"repository search: no files import from framework/public or modules/files outside framework internals; import-boundary legacy list reduced; test:framework 628/0, model-cost 516/0, storage-processes 16/0, close-out pair 8/0, smoke:model-cost-data 20/0\",\n      \"result\": \"pass\"\n    }\n  ],\n  \"commands\": [\n    {\n      \"command\": \"bun install --frozen-lockfile\",\n      \"exit\": 0,\n      \"result\": \"13 packages; bun.lock sha256 e7ed487b... unchanged\"\n    },\n    {\n      \"command\": \"bun run typecheck\",\n      \"exit\": 0,\n      \"result\": \"no diagnostics\"\n    },\n    {\n      \"command\": \"bun test tests/framework/files.test.ts tests/framework/import-boundary.test.ts\",\n      \"exit\": 0,\n      \"result\": \"33 pass / 0 fail, 1202 expect()\"\n    },\n    {\n      \"command\": \"bun run test:framework\",\n      \"exit\": 0,\n      \"result\": \"628 pass / 0 fail, 3303 expect(), 53 files (incl isolated OMP 18.5.0 deployment test)\"\n    },\n    {\n      \"command\": \"bun test tests/model-cost\",\n      \"exit\": 0,\n      \"result\": \"516 pass / 0 fail, 2892 expect(), 51 files\"\n    },\n    {\n      \"command\": \"bun test tests/model-cost/foundation/storage/storage-processes.test.ts\",\n      \"exit\": 0,\n      \"result\": \"16 pass / 0 fail, 118 expect() (real child processes, shared temp root)\"\n    },\n    {\n      \"command\": \"bun test tests/framework/close-out-deadline.test.ts tests/model-cost/integration/close-out-deadline.test.ts\",\n      \"exit\": 0,\n      \"result\": \"8 pass / 0 fail, 60 expect()\"\n    },\n    {\n      \"command\": \"bun run smoke:model-cost-data\",\n      \"exit\": 0,\n      \"result\": \"20 passed / 0 failed\"\n    },\n    {\n      \"command\": \"runtime export probes for interface/files, modules/files, public\",\n      \"exit\": 0,\n      \"result\": \"[\\\"SafeFileUpdateError\\\",\\\"updateFile\\\"]; [\\\"WAIT_RESOLUTION_MS\\\",\\\"updateFile\\\"]; []\"\n    }\n  ],\n  \"fault_injections\": [\n    {\n      \"fault\": \"cross-process lock installation skipped (OMP_FAULT_NO_LOCK=1)\",\n      \"observation\": \"two-process counter case failed count 10 vs expected 20\",\n      \"restored\": true\n    },\n    {\n      \"fault\": \"update-function errors wrapped into SafeFileUpdateError(io)\",\n      \"observation\": \"sync business-error identity case failed\",\n      \"restored\": true\n    },\n    {\n      \"fault\": \"publication changed from rename to copyFile\",\n      \"observation\": \"reader-integrity case failed with EBUSY\",\n      \"restored\": true\n    }\n  ],\n  \"unverified\": [\n    \"P48 terminal readability not judged\",\n    \"no harness dock/real-host/provider run; no adapter, harness assembly or discovery entry changed; cross-process evidence is the real child-process suites\",\n    \"codebase-tools and connect-bot partitions not run because no consumer of theirs changed\",\n    \"global P01/P49/P51 and full-repository green remain for tickets 09-14; this is the files partition only\"\n  ],\n  \"recommended_main_checks\": [\n    \"bun run typecheck\",\n    \"bun run test\",\n    \"bun run check:integrations at final integration\",\n    \"five real discovery entry regressions remain tickets 12-13\"\n  ]\n}",
+    "stderr": "",
+    "truncated": false,
+    "durationMs": 615508,
+    "tokens": 180176,
+    "requests": 74,
+    "contextTokens": 167712,
+    "contextWindow": 1000000,
+    "modelOverride": [
+      "deepseek/deepseek-flash:max"
+    ],
+    "resolvedModel": "deepseek/deepseek-flash:max",
+    "resolvedModelIdentity": "deepseek/deepseek-flash",
+    "resolvedThinkingLevel": "max",
+    "aborted": false,
+    "usage": {
+      "input": 122885,
+      "output": 57291,
+      "cacheRead": 8350464,
+      "cacheWrite": 0,
+      "totalTokens": 8530640,
+      "reasoningTokens": 26833,
+      "cost": {
+        "input": 0.01843275,
+        "output": 0.03437459999999999,
+        "cacheRead": 0.025051392000000006,
+        "cacheWrite": 0,
+        "total": 0.07785874199999998
+      }
+    },
+    "outputPath": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-19T10-03-06-014Z_01a1539d-639e-70ea-9249-f5515c657de5\\08-files-interface-cutovermd-2328e186-ac02-4f01-.md",
+    "extractedToolData": {
+      "yield": [
+        {
+          "data": {
+            "ticket": "08-files-interface-cutover",
+            "status": "complete",
+            "branch": "hyper/framework-capability-cutover/08-files-interface-cutover-f9f984-e1e098c5b064",
+            "commit": "57213f7",
+            "base": "d4d664d65157ea261393eb6100f3b7157a1924ad",
+            "worktree_clean": true,
+            "evidence": [
+              ".scratch/framework-capability-cutover/evidence/08-files-verification/README.md"
+            ],
+            "delivered": [
+              "framework/interface/general/files.ts is the one extension-facing entry; runtime exports exactly updateFile and SafeFileUpdateError, type exports exactly SafeFileUpdateOptions and SafeFileUpdateFailureKind",
+              "canonical declarations in framework/interface/general/files-contract.ts; modules/files imports the same SafeFileUpdateError class and the entry re-exports it (one identity, no copy)",
+              "lock, queue, recovery, temporary-file/rename publication and retry constants stay private in modules/files; WAIT_RESOLUTION_MS remains only an internal module export used by behaviors/round-events",
+              "framework/public.ts no longer exports any safe-file declaration (only the config reader/source types remain; runtime exports []); framework/modules/files removed from the extension legacy import exceptions",
+              "all consumers migrated: model-cost codex-estimate-store and consumption-store, framework/model-cost close-out tests, model-cost period-switch and pi-period-reset tests, files suite and child, scripts pi-close-out-smoke and efficiency-baseline; docs referencing the old source updated",
+              "permanent coverage added only for consumer-visible error gaps: synchronous business throw keeps its own identity beside the rejected promise; io/corrupt/timeout/cancelled assert detail identifies the target; killed holder asserts the complete old document remains"
+            ],
+            "acceptance": [
+              {
+                "criterion": "only updateFile/SafeFileUpdateOptions/SafeFileUpdateError/SafeFileUpdateFailureKind public; same public error identity; internal mechanisms",
+                "promise": "P01/P49/P51 (files partition), P42",
+                "evidence": "runtime import of entry printed [SafeFileUpdateError, updateFile]; identity probe printed sameClassAsCanonical=true, instanceOfPublic=true, sameConstructor=true; declarations lexically only in files-contract + implementation's single export; public runtime exports []; typecheck 0; import-boundary 16/16",
+                "result": "pass"
+              },
+              {
+                "criterion": "real temp dir and independent child processes; updater sees latest; no lost updates",
+                "promise": "P39",
+                "evidence": "files.test: 2 child processes x 10 increments with 20ms hold -> {count:20}; 4 rounds of dead holder + 12 racing children commit with no loss; injected lock-free fault produced {count:10} and failed the case",
+                "result": "pass"
+              },
+              {
+                "criterion": "readers see complete old/new document; updateFile returns published next; interruption case",
+                "promise": "P40",
+                "evidence": "files.test: 20 republishes of 20KB document read 300x concurrently, every read whole, inode changes (rename); every resolved value and bytes asserted; killed holder leaves complete old document; injected copyFile publication failed with EBUSY",
+                "result": "pass"
+              },
+              {
+                "criterion": "budget covers in-process queue and cross-process lock; wait timeout, wait signal cancel, post-begin cancel",
+                "promise": "P41",
+                "evidence": "files.test: queue timeout (300ms, updater never called, predecessor publishes), lock timeout (>=500ms, no write), abort while waiting -> cancelled <2500ms with no late write, abort after begin ignored and call resolves/publishes, default 15000ms measured",
+                "result": "pass"
+              },
+              {
+                "criterion": "timeout/cancelled/io/corrupt kind/detail/public class; sync+async business errors keep identity",
+                "promise": "P42",
+                "evidence": "files.test failureOf asserts instanceof for all four kinds; each detail contains target; sync throw and rejected promise arrive as the exact same error objects; injected wrap into SafeFileUpdateError(io) failed the sync identity assertion",
+                "result": "pass"
+              },
+              {
+                "criterion": "migrate all consumers incl model-cost storage; retire old declarations/exception; reuse file coverage + storage-processes; data smoke; real cross-process evidence",
+                "promise": "P51/P52 (08 handoff)",
+                "evidence": "repository search: no files import from framework/public or modules/files outside framework internals; import-boundary legacy list reduced; test:framework 628/0, model-cost 516/0, storage-processes 16/0, close-out pair 8/0, smoke:model-cost-data 20/0",
+                "result": "pass"
+              }
+            ],
+            "commands": [
+              {
+                "command": "bun install --frozen-lockfile",
+                "exit": 0,
+                "result": "13 packages; bun.lock sha256 e7ed487b... unchanged"
+              },
+              {
+                "command": "bun run typecheck",
+                "exit": 0,
+                "result": "no diagnostics"
+              },
+              {
+                "command": "bun test tests/framework/files.test.ts tests/framework/import-boundary.test.ts",
+                "exit": 0,
+                "result": "33 pass / 0 fail, 1202 expect()"
+              },
+              {
+                "command": "bun run test:framework",
+                "exit": 0,
+                "result": "628 pass / 0 fail, 3303 expect(), 53 files (incl isolated OMP 18.5.0 deployment test)"
+              },
+              {
+                "command": "bun test tests/model-cost",
+                "exit": 0,
+                "result": "516 pass / 0 fail, 2892 expect(), 51 files"
+              },
+              {
+                "command": "bun test tests/model-cost/foundation/storage/storage-processes.test.ts",
+                "exit": 0,
+                "result": "16 pass / 0 fail, 118 expect() (real child processes, shared temp root)"
+              },
+              {
+                "command": "bun test tests/framework/close-out-deadline.test.ts tests/model-cost/integration/close-out-deadline.test.ts",
+                "exit": 0,
+                "result": "8 pass / 0 fail, 60 expect()"
+              },
+              {
+                "command": "bun run smoke:model-cost-data",
+                "exit": 0,
+                "result": "20 passed / 0 failed"
+              },
+              {
+                "command": "runtime export probes for interface/files, modules/files, public",
+                "exit": 0,
+                "result": "[\"SafeFileUpdateError\",\"updateFile\"]; [\"WAIT_RESOLUTION_MS\",\"updateFile\"]; []"
+              }
+            ],
+            "fault_injections": [
+              {
+                "fault": "cross-process lock installation skipped (OMP_FAULT_NO_LOCK=1)",
+                "observation": "two-process counter case failed count 10 vs expected 20",
+                "restored": true
+              },
+              {
+                "fault": "update-function errors wrapped into SafeFileUpdateError(io)",
+                "observation": "sync business-error identity case failed",
+                "restored": true
+              },
+              {
+                "fault": "publication changed from rename to copyFile",
+                "observation": "reader-integrity case failed with EBUSY",
+                "restored": true
+              }
+            ],
+            "unverified": [
+              "P48 terminal readability not judged",
+              "no harness dock/real-host/provider run; no adapter, harness assembly or discovery entry changed; cross-process evidence is the real child-process suites",
+              "codebase-tools and connect-bot partitions not run because no consumer of theirs changed",
+              "global P01/P49/P51 and full-repository green remain for tickets 09-14; this is the files partition only"
+            ],
+            "recommended_main_checks": [
+              "bun run typecheck",
+              "bun run test",
+              "bun run check:integrations at final integration",
+              "five real discovery entry regressions remain tickets 12-13"
+            ]
+          },
+          "status": "success",
+          "type": "result"
+        }
+      ]
+    },
+    "outputMeta": {
+      "lineCount": 133,
+      "charCount": 7358
+    }
+  },
+  "agent": "tdd",
+  "agent_id": "08-files-interface-cutovermd-2328e186-ac02-4f01-",
+  "session_id": "01a1540f-5bf3-73e8-b6bc-65afba0eac2c",
+  "session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-19T10-03-06-014Z_01a1539d-639e-70ea-9249-f5515c657de5\\08-files-interface-cutovermd-2328e186-ac02-4f01-.jsonl",
+  "execution_cwd": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-PFGN1C",
+  "retro_document": "E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\framework-capability-cutover\\retro\\08-files-interface-cutover.md\\3eedbb3b-3241-4b96-8557-38b69b9667ba.md",
+  "retro_finished_at": "2026-10-19T12:19:15.721Z"
+}

@@ -28,7 +28,8 @@ import { tmpdir } from "node:os";
 import * as path from "node:path";
 import type { CloseOutWait, RoundDelivery } from "../../framework/interface/session";
 import type { OwnerReference } from "../../framework/interface/state";
-import { SafeFileUpdateError, type ExtensionDefinition, defineExtension, updateFile } from "../../framework/public";
+import { SafeFileUpdateError, updateFile } from "../../framework/interface/general/files";
+import { type ExtensionDefinition, defineExtension } from "../../framework/interface";
 import { type PortDouble, portDouble } from "./support/harness-port-double";
 
 /** The owner a delivery acts on unless one is named. */

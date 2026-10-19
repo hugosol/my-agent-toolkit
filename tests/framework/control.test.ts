@@ -12,7 +12,7 @@
 import { describe, expect, test } from "bun:test";
 import type { OmpCommandContext, OmpExtensionApi } from "../../adapters/omp";
 import * as frameworkOmp from "../../adapters/omp";
-import type { StateValues } from "../../framework/core/protocol";
+import type { StateValues } from "../../framework/runtime/port";
 import { StateStore } from "../../framework/core/state";
 import { CODEBASE_TOOLS } from "../../extensions/codebase-tools/definition";
 
@@ -191,6 +191,9 @@ describe("best-effort persistence (N3, P6)", () => {
 
 		expect(double.notifications).toEqual(["codeBaseTools enabled", "codeBaseTools disabled"]);
 		expect(double.appended).toEqual([]);
+		// The refused record did not stop the rest of the write path: the marker and the
+		// feedback that follow it still ran, in their existing order.
+		expect(double.effects).toEqual(["persist", "marker", "notify", "persist", "marker", "notify"]);
 	});
 });
 

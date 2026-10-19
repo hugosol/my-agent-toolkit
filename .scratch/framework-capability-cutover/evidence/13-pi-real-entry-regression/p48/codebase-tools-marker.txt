@@ -1,0 +1,21 @@
+# codebase-tools — real pi TUI marker and notices (ticket 13, for ticket 14)
+
+Source run: `probes/pi-tui-marker.ts`, real pi terminal UI v1.3.0 at 120×40 and 60×40,
+isolated agent state/session directory/user home, local capture endpoint, production
+`entrypoints/pi/codebase-tools.ts` loaded with `--no-extensions -e`.
+Raw frames and ANSI recordings: `p48/codebase-tools-marker/` (report.json, screen-<width>-<step>.txt,
+recording-<width>-<step>.ansi). The probe's 12 checks passed at both widths.
+
+| Step | 120 columns | 60 columns |
+| --- | --- | --- |
+| initial (off) | no `◈ codeBaseTools` line | no `◈ codeBaseTools` line |
+| after `/codebase-tools` (enable) | ` codeBaseTools enabled` then ` ◈ codeBaseTools` | ` codeBaseTools enabled` then ` ◈ codeBaseTools` |
+| after `/codebase-tools` again (disable) | ` codeBaseTools disabled`, no marker line | ` codeBaseTools disabled`, no marker line |
+
+The marker is drawn on its own line below the enable/disable notice line and above the
+framework's two separator rules. The notice is the operator-facing info text at both widths;
+the marker line is the extension's declared text, unchanged by width (60 columns still fits it
+whole).
+
+This is content/field evidence only. The readability judgement remains ticket 14's human
+confirmation; this file does not make it.

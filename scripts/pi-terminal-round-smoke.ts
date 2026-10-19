@@ -7,6 +7,7 @@
  *   bun scripts/pi-terminal-round-smoke.ts                 # resolve the installed pi CLI
  *   bun scripts/pi-terminal-round-smoke.ts --pi <path>     # or PI_CLI=<path>
  *   bun scripts/pi-terminal-round-smoke.ts --keep          # keep every run root for inspection
+ *   bun scripts/pi-terminal-round-smoke.ts --expect-pi-version 1.3.0 # explicit candidate host observation
  *
  * What it drives: the real installed pi as a child process in RPC mode, with an isolated agent state,
  * session directory, working directory and user home under the OS temp root, and a local
@@ -522,7 +523,7 @@ async function phaseLateArrival(facts: InterruptedFacts): Promise<void> {
 	console.log("\nphase: the delegation's result after the interruption, and the next real execution");
 
 	const afterInterruption = edgesOf(roundLines(session), parentId);
-	const savedBytes = readFileSync(dock.home.consumptionFile, "utf8");
+	const savedParent = recordOf(readDocument(dock.home.consumptionFile), parentId);
 
 	// The delegation reaches its own terminal state, and the provider appends its result to the
 	// session: the session's own journal is where that arrival is written down.
@@ -545,10 +546,14 @@ async function phaseLateArrival(facts: InterruptedFacts): Promise<void> {
 			afterAppend.roundIds.length === afterInterruption.roundIds.length,
 		`edges: ${JSON.stringify(afterAppend.rounds)}, turns: ${afterAppend.roundIds.length}, appended results: ${customMessages(session.journal(parentFile).entries, "subagent-notify").length}`,
 	);
+	// The child's own process may publish its own record in this same window — the delegation it was
+	// running is the session that just reached terminal — so what this check holds fixed is this
+	// session's own record, which is the saved consumption the append itself must not move.
+	const currentParent = recordOf(readDocument(dock.home.consumptionFile), parentId);
 	observe(
-		"the append left the session's saved consumption exactly as it was",
-		readFileSync(dock.home.consumptionFile, "utf8") === savedBytes,
-		`record: ${JSON.stringify(recordOf(readDocument(dock.home.consumptionFile), parentId))}`,
+		"the append left this session's saved consumption exactly as it was",
+		savedParent !== undefined && JSON.stringify(currentParent) === JSON.stringify(savedParent),
+		`before: ${JSON.stringify(savedParent)}, after: ${JSON.stringify(currentParent)}`,
 	);
 
 	// The user's own next prompt really starts execution: that is the fact that opens a Round, and it
@@ -655,7 +660,10 @@ async function main(): Promise<void> {
 	const cli = resolvePiCli(explicit);
 	const version = await piVersion(cli);
 	console.log(`pi ${version} (${cli.path})`);
-	observe("the harness under test is the fixed version this script states", version === EXPECTED_PI_VERSION, `reported ${version}`);
+	const expectedVersion = process.argv.includes("--expect-pi-version")
+		? process.argv[process.argv.indexOf("--expect-pi-version") + 1]
+		: EXPECTED_PI_VERSION;
+	observe("the harness under test is the fixed version this run states", version === expectedVersion, `reported ${version}, expected ${expectedVersion}`);
 	observe("the pinned provider artifact this repository installs is present", existsSync(PROVIDER_ENTRY), PROVIDER_ENTRY);
 
 	try {

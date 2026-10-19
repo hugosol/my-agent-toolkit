@@ -63,7 +63,7 @@ import { randomUUID } from "node:crypto";
 import { mkdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { FeedbackLevel } from "../../../../../framework/interface/feedback";
-import { SafeFileUpdateError, type SafeFileUpdateFailureKind, updateFile } from "../../../../../framework/modules/files";
+import { SafeFileUpdateError, type SafeFileUpdateFailureKind, updateFile } from "../../../../../framework/interface/general/files";
 import { ArchiveFailure, publishArchive } from "./consumption-archive";
 import {
 	CONSUMPTION_SCHEMA_VERSION,

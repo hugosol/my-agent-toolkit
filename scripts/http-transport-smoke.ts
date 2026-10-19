@@ -15,7 +15,9 @@
  * - the ambient proxy environment decides nothing: `HTTP_PROXY`, `HTTPS_PROXY` and their
  *   lowercase spellings point at a real listening trap for the whole run, and the trap records
  *   zero requests — including in a *separate process* started with that environment, which
- *   drives the published `request` and nothing else;
+ *   drives the published `request` and nothing else: a direct GET, `proxy: false`, an HTTPS
+ *   target, a POST whose method, headers and body the target records, and a non-2xx answer whose
+ *   status and body the caller reads;
  * - both proxy connection protocols work: `http://` over plain TCP, `https://` over TLS;
  * - an HTTPS target goes through a proxy's CONNECT tunnel, over both protocols, which is the
  *   path a provider endpoint takes through a named proxy;
@@ -23,10 +25,12 @@
  *   direct: the target records nothing new;
  * - the wait budget covers reading the body, not only waiting for the response head (a target
  *   that sends its head at once and its body late), while the same body arrives under a budget
- *   large enough for it; and the built-in 30000ms is what a hung request really waits;
- * - a non-2xx answer comes back as a response, a body that stops before its end fails the read,
- *   and a proxy selection the shared file cannot satisfy is refused instead of quietly going
- *   direct.
+ *   large enough for it; the budget also ends a proxied exchange whose target never answers its
+ *   head; and the built-in 30000ms is what a hung request really waits;
+ * - a disabled named entry connects directly with its real proxy untouched; an enabled entry
+ *   whose address is not an HTTP proxy, an undeclared name and a missing shared file are all
+ *   refused before anything is sent, with the target recording no new request; a non-2xx answer
+ *   comes back as a response, and a body that stops before its end fails the read.
  *
  * Everything runs on `127.0.0.1` with a temporary configuration root of its own; no repository
  * file is written, no harness is started, no credential is read and no real provider is
@@ -44,8 +48,12 @@ import * as http from "node:http";
 import { connect as netConnect, type Socket } from "node:net";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
-import { createHttpModule, HttpConfigurationError, type HttpRequestOptions } from "../framework/modules/http";
-import { request as publishedRequest } from "../framework/public";
+import {
+	HttpConfigurationError,
+	type HttpRequestOptions,
+	request as publishedRequest,
+} from "../framework/interface/general/http";
+import { createHttpModule } from "../framework/modules/http";
 
 /**
  * The isolated child's own run: the published `request`, in a process started with the proxy
@@ -68,6 +76,12 @@ async function directProbe(args: readonly string[]): Promise<void> {
 	await show("omitted", `${plainTarget}/ok`);
 	await show("proxy: false", `${plainTarget}/ok`, { proxy: false });
 	await show("omitted, an HTTPS target", `${secureTarget}/ok`);
+	await show("method, headers and body", `${plainTarget}/echo`, {
+		method: "POST",
+		headers: { "content-type": "application/json", "x-smoke-sentinel": "sentinel-value" },
+		body: '{"sessionId":"one"}',
+	});
+	await show("a non-2xx answer", `${plainTarget}/missing`);
 	// Written and awaited rather than printed, so the parent is handed the whole report even
 	// though this process ends right after saying it.
 	await Bun.write(Bun.stdout, `${report.join("\n")}\n`);
@@ -478,11 +492,37 @@ writeFileSync(
 );
 writeFileSync(path.join(root, "no-default.yaml"), "http:\n  proxies: {}\n");
 writeFileSync(path.join(root, "short-default.yaml"), "http:\n  defaultTimeoutMs: 300\n");
+writeFileSync(
+	path.join(root, "disabled-proxy.yaml"),
+	[
+		"http:",
+		"  proxies:",
+		"    loopback:",
+		"      enabled: false",
+		`      url: "http://127.0.0.1:${proxy.port}"`,
+		"",
+	].join("\n"),
+);
+writeFileSync(
+	path.join(root, "invalid-proxy.yaml"),
+	[
+		"http:",
+		"  proxies:",
+		"    loopback:",
+		"      enabled: true",
+		'      url: "socks5://127.0.0.1:1080"',
+		"",
+	].join("\n"),
+);
+writeFileSync(path.join(root, "empty-proxies.yaml"), "http:\n  proxies: {}\n");
 
 const shared = createHttpModule({ configPath: path.join(root, "shared.yaml") });
 const noDefault = createHttpModule({ configPath: path.join(root, "no-default.yaml") });
 const shortDefault = createHttpModule({ configPath: path.join(root, "short-default.yaml") });
 const unconfigured = createHttpModule({ configPath: path.join(root, "absent.yaml") });
+const disabledProxy = createHttpModule({ configPath: path.join(root, "disabled-proxy.yaml") });
+const invalidProxy = createHttpModule({ configPath: path.join(root, "invalid-proxy.yaml") });
+const undeclaredProxy = createHttpModule({ configPath: path.join(root, "empty-proxies.yaml") });
 
 /** The sightings both proxies have made, cleared before each case that counts them. */
 function clearSightings(): void {
@@ -693,6 +733,29 @@ if (tlsTarget === undefined) {
 }
 
 {
+	// 10b — the budget ends an exchange carried through a selected proxy too: the target never
+	//       answers the head, so the wait is the client's own deadline rather than the proxy's.
+	const before = target.hits.length;
+	clearSightings();
+	const started = Date.now();
+	const settled = await timed(started, () =>
+		shared.request(`${targetUrl}/hang`, { proxy: "loopback", timeoutMs: 200 }),
+	);
+	const hit = lastHit();
+	observe(
+		"the wait budget ends a proxied exchange waiting for the response head",
+		settled.outcome.includes("TimeoutError") &&
+			settled.elapsedMs >= 150 &&
+			settled.elapsedMs < 800 &&
+			proxy.sightings.length === 1 &&
+			target.hits.length === before + 1 &&
+			hit?.path === "/hang" &&
+			hit?.hop === `http-proxy:${proxy.port}`,
+		`${settled.outcome} after ${settled.elapsedMs}ms; the proxy was handed ${proxy.sightings.length} request(s) and the target recorded "/hang" through hop ${String(hit?.hop)}`,
+	);
+}
+
+{
 	// 11 — the budget covers the body: the head is answered at once, the body late, and the read
 	//      fails when the budget runs out.
 	const started = Date.now();
@@ -772,6 +835,48 @@ if (tlsTarget === undefined) {
 	);
 }
 
+{
+	// 16b — an explicitly disabled named entry connects directly even though a real proxy listens
+	//       at its declared url: the target records the direct hit and the proxy sees nothing.
+	const before = target.hits.length;
+	clearSightings();
+	const response = await disabledProxy.request(`${targetUrl}/ok`, { proxy: "loopback" });
+	const hit = lastHit();
+	observe(
+		"a disabled named entry connects directly, with its real proxy untouched",
+		response.status === 200 &&
+			proxy.sightings.length === 0 &&
+			target.hits.length === before + 1 &&
+			hit?.hop === null,
+		`status ${response.status}; the target recorded hop ${String(hit?.hop)}; the real proxy recorded ${proxy.sightings.length} request(s)`,
+	);
+}
+
+{
+	// 16c — an enabled entry whose address is not an HTTP proxy is refused before anything is
+	//       sent: the target records nothing new.
+	const before = target.hits.length;
+	const started = Date.now();
+	const settled = await timed(started, () => invalidProxy.request(`${targetUrl}/ok`, { proxy: "loopback" }));
+	observe(
+		"an invalid named entry is refused before anything is sent",
+		settled.outcome.includes(HttpConfigurationError.name) && target.hits.length === before,
+		`${settled.outcome} after ${settled.elapsedMs}ms; the target recorded ${target.hits.length - before} new request(s)`,
+	);
+}
+
+{
+	// 16d — a name the existing table does not declare is refused before anything is sent.
+	const before = target.hits.length;
+	const started = Date.now();
+	const settled = await timed(started, () => undeclaredProxy.request(`${targetUrl}/ok`, { proxy: "loopback" }));
+	observe(
+		"an undeclared named entry is refused before anything is sent",
+		settled.outcome.includes(HttpConfigurationError.name) && target.hits.length === before,
+		`${settled.outcome} after ${settled.elapsedMs}ms; the target recorded ${target.hits.length - before} new request(s)`,
+	);
+}
+
 if (tlsTarget === undefined) {
 	// The spawn-time check needs the HTTPS target; the certificate failure is already reported.
 	observe(
@@ -811,15 +916,27 @@ if (tlsTarget === undefined) {
 		child.exited,
 	]);
 	const recorded = target.hits.slice(hitsBefore);
+	const okHits = recorded.filter(hit => hit.path === "/ok" && hit.method === "GET");
+	const echoHit = recorded.find(hit => hit.path === "/echo");
+	const missingHit = recorded.find(hit => hit.path === "/missing");
 	const printed = childOut.trim().split("\n").join(" | ") || childErr.trim().split("\n")[0] || "nothing";
 	observe(
 		"a separate process under a spawn-time proxy environment still reaches the target directly",
 		exitCode === 0 &&
-			recorded.length === 2 &&
+			recorded.length === 4 &&
+			okHits.length === 2 &&
 			recorded.every(hit => hit.hop === null) &&
+			echoHit?.method === "POST" &&
+			echoHit.body === '{"sessionId":"one"}' &&
+			echoHit.sentinel === "sentinel-value" &&
+			missingHit?.method === "GET" &&
 			trap.sightings.length === trapBefore &&
-			childOut.includes("omitted, an HTTPS target: status 200"),
-		`the child exited ${exitCode}, the target recorded ${recorded.length} request(s) with hops ${recorded.map(hit => String(hit.hop)).join("/")}, the ambient trap recorded ${trap.sightings.length - trapBefore} request(s), and it printed: ${printed}`,
+			childOut.includes("omitted: status 200 body") &&
+			childOut.includes("proxy: false: status 200 body") &&
+			childOut.includes("omitted, an HTTPS target: status 200") &&
+			childOut.includes("method, headers and body: status 200 body {") &&
+			childOut.includes("a non-2xx answer: status 404 body no such account"),
+		`the child exited ${exitCode}, the target recorded ${recorded.length} request(s) with hops ${recorded.map(hit => String(hit.hop)).join("/")} (${recorded.map(hit => `${hit.method} ${hit.path}`).join(", ")}), the ambient trap recorded ${trap.sightings.length - trapBefore} request(s), and it printed: ${printed}`,
 	);
 }
 

@@ -1,0 +1,6 @@
+{"type":"extension_ui_request","id":"15ac66fb4407a789","method":"setWidget","widgetKey":"z-model-cost"}
+{"type":"extension_ui_request","id":"15ac66fb4407a78a","method":"setWidget","widgetKey":"autoresearch"}
+{"type":"extension_ui_request","id":"15ac66fb45c7a78b","method":"setWidget","widgetKey":"z-model-cost"}
+{"type":"extension_ui_request","id":"15ac66fb4707a78c","method":"notify","message":"/budget holiday 仅适用于当前 provider 为 DeepSeek 的入口；本次入口的 provider 「openai」，未执行。","notifyType":"warning"}
+{"type":"extension_ui_request","id":"15ac66fb4807a78d","method":"setWidget","widgetKey":"z-model-cost"}
+{"type":"extension_ui_request","id":"15ac66fb4807a78e","method":"setWidget","widgetKey":"autoresearch"}

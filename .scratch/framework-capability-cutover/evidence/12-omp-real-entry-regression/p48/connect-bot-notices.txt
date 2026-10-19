@@ -1,0 +1,4 @@
+[info] 已接入 omp-bot 面板（当前 1 个在线会话）
+[error] 未知参数「bogus」；用法：/connect-bot（接入 omp-bot 面板）或 /connect-bot off（断开）。
+[info] 已断开 omp-bot 面板
+[info] 已接入 omp-bot 面板（当前 1 个在线会话）

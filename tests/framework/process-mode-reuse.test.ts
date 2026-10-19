@@ -28,15 +28,15 @@ import { tmpdir } from "node:os";
 import * as path from "node:path";
 import type { OmpExtensionApi, OmpSessionContext } from "../../adapters/omp";
 import * as frameworkOmp from "../../adapters/omp";
-import type { ExtensionFactory } from "../../framework/core/assembly";
+import type { ExtensionFactory } from "../../framework/interface/details/implementation";
 import type {
 	SessionContextDelivery,
 	SessionFacts,
 	SessionObservationReader,
 } from "../../framework/interface/session";
 import type { OwnerReference } from "../../framework/interface/state";
-import type { ObservedSession } from "../../framework/core/protocol";
-import { type ExtensionDefinition, defineExtension } from "../../framework/public";
+import type { ObservedSession } from "../../framework/runtime/port";
+import { type ExtensionDefinition, defineExtension } from "../../framework/interface";
 import { createObservationDeliverer, createOwnerAccessPublisher } from "../../framework/modules/local-access";
 import { portDouble } from "./support/harness-port-double";
 import { boundPiSurface } from "./support/pi-surface-double";

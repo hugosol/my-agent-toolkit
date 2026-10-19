@@ -7,7 +7,7 @@
  * The idle fact is answered as nothing when the host reports none at all: an unreported activity
  * state is not idleness, and the framework reports the absence rather than answering for the host.
  */
-import type { HarnessPort } from "../../../framework/core/protocol";
+import type { HarnessPort } from "../../../framework/runtime/port";
 import { feedbackTransport } from "./feedback";
 import { markerTransport } from "./marker";
 import type { PiPortContext } from "../internal/port";

@@ -1,0 +1,189 @@
+{
+	"harness": {
+		"version": "18.5.0",
+		"prefix": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-fAyvCW\\.cache\\omp-baseline\\18.5.0"
+	},
+	"panel": "http://127.0.0.1:1768",
+	"checks": [
+		{
+			"name": "directed empty argument does not invoke the model",
+			"expected": false,
+			"actual": false,
+			"pass": true
+		},
+		{
+			"name": "directed empty argument completes",
+			"expected": "completed",
+			"actual": "completed",
+			"pass": true
+		},
+		{
+			"name": "panel holds one registered row",
+			"expected": 1,
+			"actual": 1,
+			"pass": true
+		},
+		{
+			"name": "arm notice level is info",
+			"expected": "info",
+			"actual": "info",
+			"pass": true
+		},
+		{
+			"name": "marker area reaches [\"◐ connectBot\"]",
+			"expected": [
+				"◐ connectBot"
+			],
+			"actual": [
+				"◐ connectBot"
+			],
+			"pass": true
+		},
+		{
+			"name": "the panel received the extension's State value",
+			"expected": "truthy",
+			"actual": "idle",
+			"pass": true
+		},
+		{
+			"name": "the heartbeat reached the panel",
+			"expected": true,
+			"actual": true,
+			"pass": true
+		},
+		{
+			"name": "unrecognized argument does not invoke the model",
+			"expected": false,
+			"actual": false,
+			"pass": true
+		},
+		{
+			"name": "unrecognized argument completes",
+			"expected": "completed",
+			"actual": "completed",
+			"pass": true
+		},
+		{
+			"name": "the usage error names the parsed text and the one word form",
+			"expected": "未知参数「bogus」；用法：/connect-bot（接入 omp-bot 面板）或 /connect-bot off（断开）。",
+			"actual": "未知参数「bogus」；用法：/connect-bot（接入 omp-bot 面板）或 /connect-bot off（断开）。",
+			"pass": true
+		},
+		{
+			"name": "unrecognized argument sent no register",
+			"expected": 1,
+			"actual": 1,
+			"pass": true
+		},
+		{
+			"name": "unrecognized argument sent no unregister",
+			"expected": 0,
+			"actual": 0,
+			"pass": true
+		},
+		{
+			"name": "unrecognized argument left the marker line standing",
+			"expected": [
+				"◐ connectBot"
+			],
+			"actual": [
+				"◐ connectBot"
+			],
+			"pass": true
+		},
+		{
+			"name": "directed off completes",
+			"expected": "completed",
+			"actual": "completed",
+			"pass": true
+		},
+		{
+			"name": "the unregister reached the panel",
+			"expected": true,
+			"actual": true,
+			"pass": true
+		},
+		{
+			"name": "off notice level is info",
+			"expected": "info",
+			"actual": "info",
+			"pass": true
+		},
+		{
+			"name": "marker area reaches undefined",
+			"pass": true
+		},
+		{
+			"name": "no heartbeat was scheduled after the disarm",
+			"expected": 1,
+			"actual": 1,
+			"pass": true
+		},
+		{
+			"name": "re-arm completes",
+			"expected": "completed",
+			"actual": "completed",
+			"pass": true
+		},
+		{
+			"name": "marker area reaches [\"◐ connectBot\"]",
+			"expected": [
+				"◐ connectBot"
+			],
+			"actual": [
+				"◐ connectBot"
+			],
+			"pass": true
+		},
+		{
+			"name": "an armed session exits with code 0",
+			"expected": 0,
+			"actual": 0,
+			"pass": true
+		},
+		{
+			"name": "an armed session is not killed after the timeout",
+			"expected": false,
+			"actual": false,
+			"pass": true
+		},
+		{
+			"name": "the exit is not held by the managed heartbeat",
+			"expected": "truthy",
+			"actual": 49.86209999999846,
+			"pass": true
+		},
+		{
+			"name": "shutdown sent no unregister of its own",
+			"expected": 1,
+			"actual": 1,
+			"pass": true
+		},
+		{
+			"name": "no heartbeat outlived the session",
+			"expected": 1,
+			"actual": 1,
+			"pass": true
+		},
+		{
+			"name": "the shutdown registered nothing further",
+			"expected": 2,
+			"actual": 2,
+			"pass": true
+		}
+	],
+	"observations": {
+		"armedNotice": "已接入 omp-bot 面板（当前 1 个在线会话）",
+		"armedArea": [
+			"◐ connectBot"
+		],
+		"armState": "idle",
+		"heartbeatArrivedAtMs": 11635,
+		"heartbeatsBeforeUnknown": 1,
+		"registersAtStop": 2,
+		"heartbeatsAtStop": 1,
+		"unregistersAtStop": 1,
+		"exitTookMs": 50,
+		"stderr": ""
+	}
+}

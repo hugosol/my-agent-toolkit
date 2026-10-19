@@ -48,7 +48,7 @@ import {
 	resolvePiCli,
 	startPiRun,
 } from "../tests/harness-dock/pi-session";
-import { updateFile } from "../framework/public";
+import { updateFile } from "../framework/interface/general/files";
 
 /** The repository root: this script lives in `scripts/`. */
 const REPO_ROOT = path.resolve(import.meta.dir, "..");

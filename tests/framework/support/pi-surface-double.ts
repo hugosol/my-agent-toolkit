@@ -33,7 +33,7 @@ import {
 	piAdapter,
 } from "../../../adapters/pi";
 import type { FeedbackLevel } from "../../../framework/interface/feedback";
-import type { CatalogPriceSource } from "../../../framework/interface/host-facts";
+import type { CatalogPriceSource } from "../../../framework/interface/provider";
 import type {
 	RoundDelivery,
 	SessionContextDelivery,
@@ -41,7 +41,7 @@ import type {
 	TurnEndDelivery,
 	TurnStartDelivery,
 } from "../../../framework/interface/session";
-import type { ExtensionDefinition, ImplementationContext, InitializationDelivery } from "../../../framework/public";
+import type { ExtensionDefinition, ImplementationContext, InitializationDelivery } from "../../../framework/interface";
 
 /** The definition the double binds: it declares nothing, so every behavior under test is injected. */
 export const PI_SURFACE_PROBE: ExtensionDefinition = { id: "pi-surface-probe", displayName: "piSurfaceProbe" };
@@ -359,6 +359,11 @@ export function boundPiSurface(
 		 * answered only once it settled.
 		 */
 		readonly onRoundEnd?: (delivery: RoundDelivery) => void | Promise<void>;
+		/**
+		 * The work a case drives inside a session delivery, when it must observe a dispatch-scoped
+		 * channel — feedback, for instance — while the dispatch is still open.
+		 */
+		readonly onSession?: (delivery: SessionEventDelivery) => void;
 	} = {},
 ): PiSurface {
 	const handlers = new Map<string, Array<(event: unknown, ctx: PiExtensionContext) => unknown>>();
@@ -499,9 +504,21 @@ export function boundPiSurface(
 					{
 						scope: "session",
 						events: {
-							session_start: delivery => void sessions.push(delivery as SessionEventDelivery),
-							session_end: delivery => void sessions.push(delivery as SessionEventDelivery),
-							session_facts: delivery => void sessions.push(delivery as SessionEventDelivery),
+							session_start: delivery => {
+								const observed = delivery as SessionEventDelivery;
+								sessions.push(observed);
+								options.onSession?.(observed);
+							},
+							session_end: delivery => {
+								const observed = delivery as SessionEventDelivery;
+								sessions.push(observed);
+								options.onSession?.(observed);
+							},
+							session_facts: delivery => {
+								const observed = delivery as SessionEventDelivery;
+								sessions.push(observed);
+								options.onSession?.(observed);
+							},
 							turn_start: delivery => void starts.push(delivery as TurnStartDelivery),
 							turn_end: delivery => void ends.push(delivery as TurnEndDelivery),
 							round_start: delivery => {

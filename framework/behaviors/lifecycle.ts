@@ -28,8 +28,8 @@
  * This module is harness-independent: it calls the implementation's own entries and the
  * reporting callback it was handed, and names no native API.
  */
-import type { ExtensionImplementation, InitializationDelivery } from "../core/assembly";
-import type { SubagentIntegration } from "../core/protocol";
+import type { ExtensionImplementation, InitializationDelivery } from "../interface/details/implementation";
+import type { SubagentIntegration } from "../interface/subagent";
 
 /** The completion of an implementation that declares no initialization: settled before it starts. */
 const SETTLED: Promise<void> = Promise.resolve();
@@ -129,7 +129,14 @@ export function initializeImplementation(
 			// extension is told that, rather than the member being absent from the delivery.
 			const subagents: SubagentIntegration = settled ?? { mode: "none" };
 			if (initialize === undefined) return;
-			await initialize({ ...delivery, subagents });
+			// Explicitly the approved surface, not the internal facts: the delivery the extension
+			// receives carries no transport beyond the feedback channel it was given.
+			await initialize({
+				owner: delivery.owner,
+				hasUI: delivery.hasUI,
+				feedback: delivery.feedback,
+				subagents,
+			});
 		})
 		.catch((error: unknown) => {
 			const detail = error instanceof Error ? error.message : String(error);

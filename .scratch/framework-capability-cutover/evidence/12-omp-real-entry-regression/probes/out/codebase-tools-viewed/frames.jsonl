@@ -1,0 +1,34 @@
+{"type":"extension_ui_request","id":"15ac5e8d2b71a63f","method":"setWidget","widgetKey":"semantic-extensions","widgetPlacement":"aboveEditor"}
+{"type":"extension_ui_request","id":"15ac5e8d2b71a640","method":"setWidget","widgetKey":"autoresearch"}
+{"type":"extension_ui_request","id":"15ac5e8d3131a641","method":"setWidget","widgetKey":"semantic-extensions","widgetLines":["◈ codeBaseTools"],"widgetPlacement":"aboveEditor"}
+{"type":"extension_ui_request","id":"15ac5e8d3131a642","method":"notify","message":"codeBaseTools enabled","notifyType":"info"}
+{"type":"extension_ui_request","id":"15ac5e8d32f1a643","method":"setWidget","widgetKey":"semantic-extensions","widgetLines":["◈ codeBaseTools"],"widgetPlacement":"aboveEditor"}
+{"type":"extension_ui_request","id":"15ac5e8d3c31a644","method":"setWidget","widgetKey":"semantic-extensions","widgetLines":["◈ codeBaseTools"],"widgetPlacement":"aboveEditor"}
+{"type":"extension_ui_request","id":"15ac5e8d3c31a645","method":"setWidget","widgetKey":"semantic-extensions","widgetLines":["◈ codeBaseTools"],"widgetPlacement":"aboveEditor"}
+{"type":"extension_ui_request","id":"15ac5e8d3d31a646","method":"setWidget","widgetKey":"semantic-extensions","widgetLines":["◈ codeBaseTools"],"widgetPlacement":"aboveEditor"}
+{"type":"extension_ui_request","id":"15ac5e8d3f31a647","method":"setWidget","widgetKey":"semantic-extensions","widgetLines":["◈ codeBaseTools"],"widgetPlacement":"aboveEditor"}
+{"type":"extension_ui_request","id":"15ac5e8d40b1a648","method":"setWidget","widgetKey":"semantic-extensions","widgetLines":["◈ codeBaseTools"],"widgetPlacement":"aboveEditor"}
+{"type":"extension_ui_request","id":"15ac5e8d4131a649","method":"setWidget","widgetKey":"semantic-extensions","widgetLines":["◈ codeBaseTools"],"widgetPlacement":"aboveEditor"}
+{"type":"extension_ui_request","id":"15ac5e8d43f1a64b","method":"setWidget","widgetKey":"autoresearch"}
+{"type":"extension_ui_request","id":"15ac5e8d4431a64c","method":"setWidget","widgetKey":"semantic-extensions","widgetLines":["◈ codeBaseTools"],"widgetPlacement":"aboveEditor"}
+{"type":"extension_ui_request","id":"15ac5e8d4971a64e","method":"setWidget","widgetKey":"semantic-extensions","widgetPlacement":"aboveEditor"}
+{"type":"extension_ui_request","id":"15ac5e8d4971a64f","method":"setWidget","widgetKey":"autoresearch"}
+{"type":"extension_ui_request","id":"15ac5e8d4a31a650","method":"setWidget","widgetKey":"semantic-extensions","widgetLines":["◈ codeBaseTools"],"widgetPlacement":"aboveEditor"}
+{"type":"extension_ui_request","id":"15ac5e8d4a31a651","method":"notify","message":"codeBaseTools enabled","notifyType":"info"}
+{"type":"extension_ui_request","id":"15ac5e8d4a71a652","method":"setWidget","widgetKey":"semantic-extensions","widgetLines":["◈ codeBaseTools"],"widgetPlacement":"aboveEditor"}
+{"type":"extension_ui_request","id":"15ac5e8d50b1a653","method":"setWidget","widgetKey":"semantic-extensions","widgetLines":["◈ codeBaseTools"],"widgetPlacement":"aboveEditor"}
+{"type":"extension_ui_request","id":"15ac5e8d50b1a654","method":"setWidget","widgetKey":"semantic-extensions","widgetLines":["◈ codeBaseTools"],"widgetPlacement":"aboveEditor"}
+{"type":"extension_ui_request","id":"15ac5e8d50f1a655","method":"setWidget","widgetKey":"semantic-extensions","widgetLines":["◈ codeBaseTools"],"widgetPlacement":"aboveEditor"}
+{"type":"extension_ui_request","id":"15ac5e8d50f1a656","method":"setWidget","widgetKey":"semantic-extensions","widgetLines":["◈ codeBaseTools"],"widgetPlacement":"aboveEditor"}
+{"type":"extension_ui_request","id":"15ac5e8d5171a657","method":"setWidget","widgetKey":"semantic-extensions","widgetLines":["◈ codeBaseTools"],"widgetPlacement":"aboveEditor"}
+{"type":"extension_ui_request","id":"15ac5e8d5171a658","method":"setWidget","widgetKey":"semantic-extensions","widgetLines":["◈ codeBaseTools"],"widgetPlacement":"aboveEditor"}
+{"type":"extension_ui_request","id":"15ac5e8d51b1a659","method":"setWidget","widgetKey":"autoresearch"}
+{"type":"extension_ui_request","id":"15ac5e8d51f1a65a","method":"setWidget","widgetKey":"semantic-extensions","widgetLines":["◈ codeBaseTools"],"widgetPlacement":"aboveEditor"}
+{"type":"extension_ui_request","id":"15ac5e8d52f1a65b","method":"setWidget","widgetKey":"semantic-extensions","widgetLines":["◈ codeBaseTools"],"widgetPlacement":"aboveEditor"}
+{"type":"extension_ui_request","id":"15ac5e8d52f1a65c","method":"setWidget","widgetKey":"autoresearch"}
+{"type":"extension_ui_request","id":"15ac5e8d5531a65d","method":"setWidget","widgetKey":"semantic-extensions","widgetPlacement":"aboveEditor"}
+{"type":"extension_ui_request","id":"15ac5e8d5531a65e","method":"notify","message":"codeBaseTools disabled","notifyType":"info"}
+{"type":"extension_ui_request","id":"15ac5e8d5571a65f","method":"setWidget","widgetKey":"semantic-extensions","widgetLines":["◈ codeBaseTools"],"widgetPlacement":"aboveEditor"}
+{"type":"extension_ui_request","id":"15ac5e8d5571a660","method":"setWidget","widgetKey":"autoresearch"}
+{"type":"extension_ui_request","id":"15ac5e8d5871a661","method":"setWidget","widgetKey":"semantic-extensions","widgetPlacement":"aboveEditor"}
+{"type":"extension_ui_request","id":"15ac5e8d58b1a662","method":"setWidget","widgetKey":"autoresearch"}

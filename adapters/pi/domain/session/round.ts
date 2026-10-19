@@ -18,7 +18,7 @@
  * never inherits it.
  */
 import type { TurnOutcome } from "../../../../framework/interface/session";
-import type { HarnessPort, RoundObservation, RoundSignal } from "../../../../framework/core/protocol";
+import type { HarnessPort, RoundObservation, RoundSignal } from "../../../../framework/runtime/port";
 import { feedbackTransport } from "../feedback";
 import type { PiExtensionApi, PiExtensionContext } from "../../internal/native";
 import type { PiPortContext } from "../../internal/port";

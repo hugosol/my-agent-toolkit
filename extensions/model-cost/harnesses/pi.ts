@@ -31,7 +31,8 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { type PiExtensionApi, piAdapter } from "../../../adapters/pi";
 import type { SessionCapability, SessionObservationReader } from "../../../framework/interface/session";
-import type { ExtensionImplementation, SubagentIntegration } from "../../../framework/public";
+import type { ExtensionImplementation } from "../../../framework/interface/details/implementation";
+import type { SubagentIntegration } from "../../../framework/interface/subagent";
 import { MODEL_COST } from "../definition";
 import { type ModelCostRuntime, createModelCostRuntime } from "../shared-logic/runtime";
 import { createBoundaryTimer } from "./boundary-timer";
@@ -237,12 +238,10 @@ export function observePiSubagentResults(
 		if (observations.read(sessionId)?.session?.kind !== "main") return;
 		for (const run of message.details?.runs ?? []) {
 			if (!["completed", "failed", "stopped", "paused"].includes(run.status ?? "")) continue;
-			await runtime.subagentResultReceived(sessionId, {
-				notify: (level, text) => {
-					if (ctx.hasUI) ctx.ui.notify(text, level);
-					else process.stderr.write(`${text}\n`);
-				},
-			});
+			// The runtime reports through the feedback channel the framework handed it at
+			// initialization — this native hook has no delivery of its own, and the adapter maps
+			// that channel through the same actual output as every other extension notice.
+			await runtime.subagentResultReceived(sessionId);
 		}
 	});
 }

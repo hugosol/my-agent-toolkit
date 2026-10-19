@@ -3,7 +3,7 @@
  * harness-independent half of the framework.
  *
  * This module is adapter-facing, not an author entry: extension authors declare with
- * `framework/public.ts`, and a harness adapter (for OMP, `adapters/omp/index.ts`)
+ * `framework/interface`, and a harness adapter (for OMP, `adapters/omp/index.ts`)
  * calls into this.
  *
  * Ordering is the contract: every fallible step (configuration rules, the definition's file, the
@@ -28,33 +28,34 @@
  * cleanup when the session the instance *serves* is disposed — an ordinary switch only moves that
  * owner — and this module only decides which binding observes which boundary.
  */
-import {
-	type ActionsCommandImplementation,
-	type CommandImplementations,
-	type ExtensionFactory,
-	type ExtensionImplementation,
-	isPlainMapping,
-} from "../core/assembly";
+import { isPlainMapping } from "../core/assembly";
+import type {
+	ActionsCommandImplementation,
+	CommandImplementations,
+	DirectedCommandImplementation,
+} from "../interface/command";
+import type {
+	ExtensionFactory,
+	ExtensionImplementation,
+} from "../interface/details/implementation";
 import {
 	BOUND_CONTROL_KINDS,
 	BOUND_STATE_INHERITANCES,
 	BOUND_STATE_PERSISTENCES,
 	activationField,
 	stateInheritance,
-	type ExtensionDefinition,
 } from "../core/definition";
+import type { ExtensionDefinition } from "../interface/details/definition";
 import type { FeedbackTransport } from "../interface/feedback";
 import type { SessionCapability } from "../interface/session";
 import {
 	type HarnessPort,
 	type BindingFailure,
 	type BindingResult,
-	describeBindingFailure,
-	type DirectedCommandImplementation,
 	type ObservationSource,
 	type ObservedSession,
 	type PromptContribution,
-} from "../core/protocol";
+} from "../runtime/port";
 import type { StateStore } from "../core/state";
 import { handOverReading, type SessionObservations } from "../core/observations";
 import { findConfigFailure, getConfig, type ConfigSource } from "../core/config";
@@ -78,6 +79,17 @@ import {
 	subscribesAny,
 } from "./subscriptions";
 import { turnLives } from "./turn-events";
+
+/** The deterministic text of one binding failure, independent of where it is reported. */
+function describeBindingFailure(extensionId: string, failure: BindingFailure): string {
+	const owner = extensionId.length > 0 ? extensionId : "<unnamed extension>";
+	switch (failure.kind) {
+		case "configuration":
+			return `${owner}: configuration error (${failure.violation.kind}): ${failure.violation.detail}`;
+		case "initialization":
+			return `${owner}: initialization failed, extension not bound: ${failure.detail}`;
+	}
+}
 
 /** Whether one injected implementation is the directed half of a directed command. */
 function isDirectedImplementation(value: unknown): value is DirectedCommandImplementation {
@@ -521,7 +533,6 @@ export function bindExtension(
 						owner: session.owner,
 						hasUI: session.hasUI,
 						feedback: session.feedback,
-						markers: session.markers,
 					},
 					port.reportDiagnostic,
 					port.subagentIntegration,

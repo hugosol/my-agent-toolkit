@@ -15,14 +15,9 @@
  * This module is harness-independent: it reads and writes State and calls the
  * adapter-supplied effect transports, and names no native API.
  */
-import type { ExtensionDefinition } from "../core/definition";
-import type {
-	CommandDelivery,
-	CommandInvocation,
-	DirectedCommandImplementation,
-	DirectedDirective,
-	StateValues,
-} from "../core/protocol";
+import type { CommandDelivery, DirectedCommandImplementation, RecognizedDirective } from "../interface/command";
+import type { ExtensionDefinition } from "../interface/details/definition";
+import type { CommandInvocation, StateValues } from "../runtime/port";
 import type { StateStore } from "../core/state";
 import { type MarkerSeat, publishMarkerOnTransition } from "./marker";
 
@@ -66,6 +61,17 @@ export function runCommandToggle(
 
 	invocation.feedback.notify("info", activationFeedback(definition, next));
 }
+
+/** The framework's normalization of a directed command's argument.
+ *
+ * `activate` — the empty argument names `on`; `deactivate` — `off` names `off`;
+ * `unrecognized` — any other text, carried verbatim. Normalizing in the framework keeps
+ * the command surface's one vocabulary in one place, so an assembly never re-implements
+ * it and an extension reads one shape whatever surface the user typed on.
+ */
+export type DirectedDirective =
+	| RecognizedDirective
+	| { readonly kind: "unrecognized"; readonly argument: string };
 
 /**
  * Normalizes a directed command's argument into a directive.
@@ -129,8 +135,17 @@ export function runCommandDirected(
 		feedback: invocation.feedback,
 	};
 
+	// Explicitly the approved delivery surface, never a spread of the invocation: the invocation
+	// carries the adapter's persistence callback and the marker area transport the framework
+	// publishes through, and the extension has no path to either. The seam and the capability are
+	// the framework's own managed write path, not the invocation's effects.
 	const delivery: CommandDelivery = {
-		...invocation,
+		args: invocation.args,
+		canAcceptInput: invocation.canAcceptInput,
+		provider: invocation.provider,
+		owner: invocation.owner,
+		feedback: invocation.feedback,
+		hasUI: invocation.hasUI,
 		state: state.writer(target),
 		capability: state.capability(target),
 	};

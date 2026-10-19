@@ -9,7 +9,7 @@
  * file, no timer and no native call of its own.
  */
 import { ompAdapter } from "../../../../adapters/omp";
-import { type ExtensionDefinition, defineExtension } from "../../../../framework/public";
+import { type ExtensionDefinition, defineExtension } from "../../../../framework/interface";
 
 /** The extension id whose stderr line the dock reads. */
 export const SECOND_EXTENSION_ID = "second-extension-probe";

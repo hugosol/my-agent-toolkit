@@ -63,7 +63,7 @@ my-agent-toolkit/
     pi/
       index.ts                  # Public assembly entry
       internal/                 # Native types, loader support and the binding port
-      domain/                   # Capability domains: Session, Context, Subagent, Pricing, ...
+      domain/                   # Capability domains: Session, Context, Subagent, Provider, ...
         session/                # Session facts and lifecycle, including Turn and Round mappings
     omp/
       index.ts
@@ -163,9 +163,10 @@ capability domains. Organize `domain/` directly by shared capability domain, not
 extension or by `business`/`foundation` tiers. `domain/` is a navigation grouping, not a runtime
 module or a new interface. Prefer an existing business domain when it and a support domain both
 fit; keep genuinely shared support in one place. Framework-owned concepts supplement business
-vocabulary: Session owns its Turn and Round mappings, while context and catalog pricing have their
-own domains. A native object's location does not decide capability ownership. Framework Marker area
-and Extension feedback mappings remain adapter responsibilities; extension presentation does not.
+vocabulary: Session owns its Turn and Round mappings, context keeps its own domain, and provider
+access and catalog pricing share the Provider domain. A native object's location does not decide
+capability ownership. Framework Marker area and Extension feedback mappings remain adapter
+responsibilities; extension presentation does not.
 
 Within a capability domain, organize native mappings by their direction: `events.ts` converts
 native observations to framework events, `queries.ts` reads native facts into framework values,
@@ -175,8 +176,8 @@ private implementation files within Session. Do not create forwarding-only entry
 method into a module. Keep the domain's event construction near its native event mapping rather than
 reassembling it in the harness port. Shared context types, diagnostics and other implementation
 support belong with the code that owns their lifetime, not in a parallel capability taxonomy.
-The complete domain map is Session, Context, Subagent, Pricing, Provider, Control, Prompt, Feedback
-and Marker. Both harnesses expose their Subagent domain: native parent/ancestor relationships and
+The complete domain map is Session, Context, Subagent, Provider, Control, Prompt, Feedback and
+Marker. Both harnesses expose their Subagent domain: native parent/ancestor relationships and
 integration-state reads belong there, while Session consumes those relations for its own facts and
 Owner mapping. Ordinary child Session/Turn/Round events remain Session events; OMP does not add a
 second child-event pipeline just to populate a Subagent `events.ts`. pi's provider announcements and
@@ -242,7 +243,7 @@ The connect-bot migration adds an additive capability for an extension's own con
 
 ### Directed control and per-field State lifecycle (additive; connect-bot migration, decision 02)
 
-The connect-bot migration adds a second bound control kind, **directed**: a command that names its target state explicitly with a fixed word form (empty argument = on, `off` = off; no `offline` alias — an unrecognized word is an error that changes nothing), repeats its side effect on every invocation, and is never deduplicated or short-circuited by the framework — idempotence is the extension's responsibility. The declaration only names the field the command owns; the extension's handler runs before the framework records the value and decides it from the action's outcome (a successful register sets `true`, a failed one `false`, `off` sets `false` whether or not the panel is reachable). `off` is filtered against the current value while arm is not, so a re-arm deliberately re-registers, and concurrency or late receipts are the handler's concern because the framework neither serializes nor collects in-flight actions. It is distinct from the deferred mode-selection, mixed-control and command-action kinds.
+The connect-bot migration adds a second bound control kind, **directed**: a command that names its target state explicitly with a fixed word form (empty argument = on, `off` = off; no `offline` alias — an unrecognized word is an error that changes nothing), repeats its side effect on every invocation, and is never deduplicated or short-circuited by the framework — idempotence is the extension's responsibility. The declaration only names the field the command owns; the extension's handler owns the write and decides it from the action's outcome (a successful register sets `true`, a failed one `false`, `off` sets `false` whether or not the panel is reachable), writing through the delivery's managed seam. The framework writes nothing before, after or instead of that write, so a handler that never writes leaves the value alone. `off` is filtered against the current value while arm is not, so a re-arm deliberately re-registers, and concurrency or late receipts are the handler's concern because the framework neither serializes nor collects in-flight actions. It is distinct from the deferred mode-selection, mixed-control and command-action kinds.
 
 It also makes the State lifecycle **per field**, on three orthogonal axes:
 
@@ -250,7 +251,7 @@ It also makes the State lifecycle **per field**, on three orthogonal axes:
 - **Persistence** — `session-entry` (default: written to the owner's persistence medium, seeded from the target branch at session boundaries) or `memory` (never written and never seeded; an owner-identity change drops the value to the declared default, while navigation that keeps the identity preserves it).
 - **Inheritance** — `follow` or `none` (default `none`: a subagent reads the declared default unless the field declares `follow`).
 
-The framework's write authority is unchanged: the extension's handler runs before the framework records the value and owns the write, so a command can read the pre-invocation value. `memory` is the choice for a value that declares a live external effect, because a restored value does not prove the effect is running (see [State and recovery seam](#state-and-recovery-seam)).
+The framework's write authority is unchanged: the extension's handler owns the write through the delivery's managed seam and can read the pre-invocation value, and the framework records nothing on its behalf. `memory` is the choice for a value that declares a live external effect, because a restored value does not prove the effect is running (see [State and recovery seam](#state-and-recovery-seam)).
 
 ## Shared behavior scope
 
@@ -287,7 +288,7 @@ not merely a read facade or a directory move. That directory owns the extension-
 facts, observations, event deliveries and Subscription group contracts; internal framework modules
 and native adapters import those canonical declarations. Session declarations are removed from
 `core/protocol.ts` and `public.ts`, without compatibility re-exports. Other capabilities retain their
-existing authoring entries until their own migration; the small State, Feedback and Host facts
+existing authoring entries until their own migration; the small State, Feedback and Provider
 contracts needed by Session are canonical interface dependencies, not permission to expose engines.
 
 The implementation factory receives `context.session`: a Session observation reader and the
@@ -307,6 +308,75 @@ harness loading validate depth and leverage, while import checks protect localit
 engineering encapsulation, not a same-process security sandbox. It explicitly supersedes the earlier
 public Session exports and factory fields; it does not revise State ownership, observed lifecycle
 semantics, extension business rules, or harness support claims.
+
+## Command capability interface cutover (2026-10-19)
+
+Command follows Session as a complete capability under `framework/interface/command/`. Its public
+`details/definition.ts` owns the closed control-kind declarations and `details/implementation.ts`
+owns the implementation contracts, deliveries, `RecognizedDirective` and `CanAcceptInput`; internal
+framework modules and both adapters import those same declarations. `CommandInvocation`,
+`BoundCommand`, the internal `DirectedDirective`, argument parsing, binding validation and help
+tooling stay internal, and the old mixed entry re-publishes none of them.
+
+The actual delivery is explicitly constructed from the approved members rather than spread from the
+invocation. A directed handler — on `run` and on the optional `unrecognized` path alike — receives
+`args`, `owner`, `hasUI`, `canAcceptInput`, `provider`, `feedback`, the managed `state` seam and the
+`capability` it may retain. An `actions` action receives only the first six: it owns no declared
+State, so it has no seam, retained capability, persistence path or marker transport to reach. The
+adapter's `persist` callback and the marker-area transport leave the extension-facing surface
+entirely (the internal environment still records through the managed State write path), and the
+old `CommandActions` combination type is deleted after its last consumer check. No compatibility
+alias or forwarding shell is kept.
+
+This is a non-additive public-contract change accepted by the capability-cutover spec: it removes
+members an extension could previously observe. It preserves the three controls' existing semantics —
+toggle owner scope and feedback, directed owner scope with empty-argument activation, `off`
+deactivation and repeat execution without framework inference, optional `unrecognized` with no
+automatic write/publication/feedback, actions routing/help/await/one-report failure without an Owner
+gate, and the live three-valued idle query. It does not add a generic delivery factory, filter,
+proxy or revocation system, and it does not revise State ownership, marker area ownership, extension
+business rules, or harness support claims. Verification is the Command evidence record, not this
+amendment.
+
+## Full capability interface cutover (2026-10-19)
+
+The maintainer approved, and the implementation completed, the non-additive public-contract switch
+across all remaining capabilities: State, Prompt, Marker, Feedback, Provider, Subagent, the root
+authoring contract, Command (recorded above) and General. This is the explicit decision the
+"stable contract surface" rule requires. It supersedes the Session amendment's sentence that other
+capabilities retain their existing authoring entries until their own migration: every approved
+capability now has its canonical interface entry, and the old mixed `framework/public.ts` entry is
+deleted with no alias, re-export or forwarding shell.
+
+- **Ownership.** Each capability owns its declarations at its approved interface entry; internal
+  framework modules and both adapters import the same declarations. The root authoring entry
+  composes its own definition/implementation contract and publishes no capability. The single
+  [`framework/runtime/port.ts`](../../framework/runtime/port.ts) is the framework/adapter interaction
+  contract and refers to the canonical declarations instead of restating them.
+- **Actual delivery.** Initialization carries only `owner`, `hasUI`, `feedback` and `subagents`;
+  directed `run`/`unrecognized` carries `args`, `owner`, `hasUI`, `canAcceptInput`, `provider`,
+  `feedback`, `state` and `capability`; an `actions` action carries the first six and no State writer
+  or retained capability. No delivery carries the adapter's persistence callback, the marker-area
+  transport or the internal invocation.
+- **State and Session.** Managed State writes and retained capabilities keep their existing owner
+  lifecycle. Session keeps its read-only observation reader, isolated readings, `recordCommit`, one
+  dispatch, scope and close-out rules. Extension configuration keeps its approved limited exception
+  (TypeScript `Readonly`, no runtime write protection); the exception is not extended to any other
+  capability.
+- **General.** HTTP, safe files and configuration are three direct, harness-independent entries with
+  canonical error identities. There is no General aggregate entry, and General is not an
+  adapter-backed capability.
+- **Retirement.** The seven former extension import exceptions — `framework/public`,
+  `core/assembly`, `core/definition`, `core/config`, `core/integration`, `modules/http` and
+  `modules/files` — are cleared for extension consumers. Internal files that retain real duties stay
+  internal; internal test seams remain available to tests and scripts.
+- **Candidates not adopted.** Separate public `definition/` and `assembly/` runtime layers; a
+  capability-grouped implementation context (`context.provider`, `context.config`); General as a
+  capability or aggregate entry; a public Marker transport or extension-level marker-area
+  operations.
+- **Preserved semantics.** No change to Owner, session-entry recovery, history preservation, the
+  marker area, extension business, storage contracts or harness support. Verification is the
+  ticket-11 evidence record, not this amendment.
 
 ## Semantic lifecycle model
 
@@ -353,7 +423,7 @@ Call the unified per-extension current-value source **State**, borrowing React's
 
 This records the module shape State is implemented with and refines the write-path and reconciliation notes above; it changes nothing an extension authors. [`StateStore`](../../framework/core/state.ts) owns the extension's declared State end to end — the owner-keyed cells (field name → current value), the owner lives a retained capability is gated by, the declared-value write path, and session-boundary restoration — and keeps the read surface `view(ownerKey).read(field)` unchanged. The separate behavior modules that used to hold the declared-value seam, the retained capability and the session reconciliation are deleted rather than kept as pass-through wrappers.
 
-- **Only State rules are accepted.** The constructor requires the resolved `StateRules` (`{ field, persistence }`) — exactly the pair `activationField(definition)` and `statePersistence(definition)` ([`definition.ts#L255`](../../framework/core/definition.ts#L255), [`#L260`](../../framework/core/definition.ts#L260)) already resolve for the definition an assembly serves. The store holds no definition, reaches into none, and applies no default of its own: what a definition leaves out is resolved where the defaults live. The effect shapes it consumes are exported beside it: `StateWriteTarget` (`ownerKey`, `persist(values)`, `publishMarker()`), `StateCapabilityTarget` (that plus `feedback`), and `StateSessionChange` (`owner`, `event`, `statePayloads`, `publishMarker(ownerKey)`) — the publication receives the owner key the boundary resolved, so the dispatcher does not repeat the owner gate.
+- **Only State rules are accepted.** The constructor requires the resolved `StateRules` (`{ field, persistence }`) — exactly the pair `activationField(definition)` and `statePersistence(definition)` ([`definition.ts#L75`](../../framework/core/definition.ts#L75), [`#L80`](../../framework/core/definition.ts#L80)) already resolve for the definition an assembly serves. The store holds no definition, reaches into none, and applies no default of its own: what a definition leaves out is resolved where the defaults live. The effect shapes it consumes are exported beside it: `StateWriteTarget` (`ownerKey`, `persist(values)`, `publishMarker()`), `StateCapabilityTarget` (that plus `feedback`), and `StateSessionChange` (`owner`, `event`, `statePayloads`, `publishMarker(ownerKey)`) — the publication receives the owner key the boundary resolved, so the dispatcher does not repeat the owner gate.
 - **Effects are supplied per delivery, not remembered by the store.** `writer(target)` returns the delivery's declared-value seam, `capability(target)` returns the owner-scoped handle, and `reconcile(change)` applies one boundary. No transport is resolved inside the store, and the store has no mutable current-session target: each writer or capability closes over the effects its own delivery supplied.
 - **One store per assembly, not a process-global registry.** The store is constructed by [`createAssemblyBinding`](../../framework/behaviors/assembly.ts), once per adapter factory call, and shared by every session binding of that extension, so those bindings agree on one current value per owner and two extensions never share a store. State is deliberately not resolved from a process global keyed by definition id: the process-scoped resources remain the ones a duplicated framework module graph must still share — the unified marker area (see [Extension feedback, marker, and declared-value writes](#extension-feedback-marker-and-declared-value-writes-additive-connect-bot-migration-decision-04)) and the version judgement — and State is not one of them.
 - **Owner lives stay private.** `OwnerLives` remains the implementation of "a capability lives exactly as long as its owner's cell", kept as the store's private `#ownerLives` composition rather than a member a behavior reaches. A start opens the life, the end that retires the cell revokes what was retained for it, and a handle asked for after that owner's life has ended is inert from birth; an owner not yet seen by a session event keeps the existing command-before-start behavior.
@@ -428,7 +498,9 @@ Treat State as the shared current-value source connecting control, commands, har
 
 The connect-bot migration fixes the user-visible feedback and status surface so the extension's shared logic names no native UI type and its behavior can be exercised with mocks:
 
-- **One feedback channel.** Extensions publish operator-facing notices through a single harness-independent channel with an `info | error` severity, available on command and semantic-event handlers; the adapter maps it to a UI notification, or to a stderr line when the session has no UI. It is never model-visible — not an injected prompt, a conversation entry, or tool output — and the framework's own notices (session warnings) are not merged into it. The channel **replaces** the delivery's earlier plain `notify(message)` member, which is removed rather than kept beside it, so an extension says everything it says to the operator in one place at one severity; that replacement is a non-additive interface change and is decided here. The existing toggle feedback keeps its two texts and is published on the new channel, and a `directed` command publishes no framework feedback of its own.
+The severity and shared-output wording below was clarified during the [Feedback, Host facts and authoring decision](../../.scratch/framework-capability-cutover/lighthouse/04-host-feedback-authoring.md): the user chose the current three-level code contract (Q4), shared adapter output with separate upper-level wrappers (Q11), and approved publication (Q18). This corrects the earlier two-level wording and clarifies “not merged”; it is not evidence that the planned interface migration or harness verification has completed.
+
+- **One feedback channel.** Extensions publish operator-facing notices through a single harness-independent channel with an `info | warning | error` severity, available on command and semantic-event handlers; the adapter maps it to a UI notification, or to a stderr line when the session has no UI. It is never model-visible — not an injected prompt, a conversation entry, or tool output. Framework notices (such as session warnings) may retain their own upper-level wrapper, while both wrappers share the adapter's single underlying UI/stderr notification implementation. Sharing that output does not merge their lifecycle or grant extensions the framework's internal notice interface. The channel **replaces** the delivery's earlier plain `notify(message)` member, which is removed rather than kept beside it, so an extension says everything it says to the operator in one place at one severity; that replacement is a non-additive interface change and is decided here. The existing toggle feedback keeps its two texts and is published on the new channel, and a `directed` command publishes no framework feedback of its own.
 - **`hasUI` on deliveries.** A delivery states whether the session has a UI, so the extension's shared logic enforces its own main-session + UI gate rather than the framework silently refusing on its behalf. Subagent refusals remain the framework's owner-scope concern.
 - **Marker ownership.** The unified marker area stays framework-owned (placement, line order, publication, clearing); an extension contributes only its text. The migrated markers are `◈ codeBaseTools` and `◐ connectBot`, published only while their activation value is true. Both are East Asian Width Ambiguous symbols from the Geometric Shapes block, so they render from one font at one advance and the two area lines stay aligned. The area is one per process, resolved from the process global rather than from the module instance, so every extension's line renders in the one widget even when the loader evaluates a separate framework module graph per extension.
 - **Declared-value write seam.** Every injected handler delivery carries a write seam limited to the extension's declared fields, and the framework publishes the marker after each write. Auto-disarm uses it to write its activation field `false`.
@@ -461,13 +533,13 @@ The user confirmed the complete assembly specification in Q19 of the model-cost 
 - **Code placement:** separate common semantic core/behaviors, adapter-independent framework/modules, native framework adapters, extension shared logic, extension harness-specific implementation directories, thin harness assembly files and thin loader entrypoints. The first-release tree above remains historical context; the current target layout is the assembly revision recorded in this section. No pi implementation or unused scaffold is authorized.
 - **Public binding seam:** common authoring contracts no longer belong to OMP-specific types. The framework owns required configuration processing, factory creation, binding failure cleanup, one-time initialization/first-request waiting and disposal; the extension factory connects business and selected native presentation. It does not create a DI container, public internal dispatch protocol, autodetection or duplicate registration system.
 - **Scopes and async:** scoped groups provide Owner-only effects and actual-Session observation. Promise completion/rejection is received without making a save a Session-wide event barrier. Old owner-only dispatch assumptions apply only to Owner subscriptions; connect-bot keeps its behavior and model-cost observes children.
-- **Presentation and host facts:** read-only business views plus invalidation subscriptions separate shared computation from native drawing. A minimal public host Viewed session read/notification prerequisite precedes adapter integration; no private fields or UI-text inference. The framework projects the viewed effective State into its one Marker area without changing Owner.
+- **Presentation and provider facts:** read-only business views plus invalidation subscriptions separate shared computation from native drawing. A minimal public host Viewed session read/notification prerequisite precedes adapter integration; no private fields or UI-text inference. The framework projects the viewed effective State into its one Marker area without changing Owner.
 - **Existing consumers:** migrate connect-bot, codebase-tools and Marker area affected seams together; no legacy production assembly/dispatch/transport shim. Reuse consumer-visible behavior tests, migrate necessary test wiring, retire implementation-detail and superseded-policy assertions rather than repinning them. HTTP consumer scope follows the approved HTTP contract stated above.
 - **Compatibility:** the original support topic [independent compatibility verification](../../framework/docs/harness-support.md#independent-compatibility-verification) is the authority for moving native capability and version checks out of normal startup. Required-contract metadata, if retained, is development/verification input only. Reports never become startup gates; configuration/business error handling is not removed.
 
 The assembly revision leaves interface/error/lifetime detail with the migration's decision records rather than duplicating it here. Acceptance and cutover are decided but unexecuted: a real host patch providing the minimal public Viewed-session outlet must be frozen to an exact revision/artifact before verification; scripted acceptance covers normal host flows (requests, multi-turn and tool execution, Round event correlation, pricing boundaries, model switches, mode commands, headless updates, renderer without business side-effects, cross-process storage, safe failures) and human acceptance covers real services, balance/quota values and the visual TUI; new statistics start from empty with old files kept; load-source mutual exclusion applies during the transition; backup, configuration and restart stay user-performed actions; completion is recorded lightly rather than in an evidence platform; and a support statement is an explicit maintainer decision, never inferred from passing tests. None of this has been executed, and the stored support record is unchanged.
 
-**Implementation status (additive record, not a support claim).** One slice of this approved target now exists in the framework, delivered by the `02-public-binding-actions` implementation ticket: the generic assembly information moved out of the OMP-specific option type into the public authoring surface ([`framework/core/assembly.ts`](../../framework/core/assembly.ts), re-exported through [`framework/public.ts`](../../framework/public.ts)); the implementation factory the adapter calls once after the declared configuration validated; the one-time initialization at the owner session node, waited for by the first model request; the single cleanup on binding failure and on the disposal of the session the instance is serving — an ordinary session switch only moves that owner and cleans nothing — after which that binding delivers nothing, including through the injected implementations of commands the host still holds registrations for, and a binding that arrives after the cleanup builds a fresh instance; contained synchronous throws and promise rejections from handlers that are not awaited; and the `actions` control kind with the framework's routing, help, awaiting and one-report failure policy. Connect-bot's assembly was migrated to the same surface in the same change. A second slice — the general HTTP module ([`framework/modules/http.ts`](../../framework/modules/http.ts), published through the same entry) — exists as of the `03-http-proxy-body-timeout` implementation ticket: one `request` carrying the caller's method, headers, body, wait budget and proxy choice; the framework's own shared `framework/config.yaml` holding `http.proxies` and `http.defaultTimeoutMs`; a proxy selection the shared file cannot satisfy refused before anything is sent instead of falling back to a direct connection; the budget taking the request's value, then the shared default, then the built-in 30000ms, covering the response body as well as the response head; and the runtime's own response, its failures and the configuration refusals passed through without a business envelope. The request is made over the runtime's own `node:http`/`node:https` client rather than the process's `fetch`, whose process-level proxy environment redirects even a request that states a direct connection: a named proxy is connected to at its own address (an absolute request-target for a plain-HTTP target, a CONNECT tunnel for an HTTPS one, over TLS when the proxy's own address is `https://`), and a direct request reaches the target whatever the ambient environment says. The rest of the target — the file module, the HTTP consumers (model-cost's queries and connect-bot's transport), range subscriptions, the Viewed session projection, the pi adapter and the remaining consumer migration — is still unimplemented, and none of this records a real-host, provider or visual acceptance: the [support record](../../framework/docs/harness-support.md) is unchanged.
+**Implementation status (additive record, not a support claim).** One slice of this approved target now exists in the framework, delivered by the `02-public-binding-actions` implementation ticket: the generic assembly information moved out of the OMP-specific option type into the public authoring surface (then [`framework/core/assembly.ts`](../../framework/core/assembly.ts), re-exported through `framework/public.ts`; the authoring contract now lives in [`framework/interface`](../../framework/interface/index.ts)); the implementation factory the adapter calls once after the declared configuration validated; the one-time initialization at the owner session node, waited for by the first model request; the single cleanup on binding failure and on the disposal of the session the instance is serving — an ordinary session switch only moves that owner and cleans nothing — after which that binding delivers nothing, including through the injected implementations of commands the host still holds registrations for, and a binding that arrives after the cleanup builds a fresh instance; contained synchronous throws and promise rejections from handlers that are not awaited; and the `actions` control kind with the framework's routing, help, awaiting and one-report failure policy. Connect-bot's assembly was migrated to the same surface in the same change. A second slice — the general HTTP module ([`framework/modules/http.ts`](../../framework/modules/http.ts), published through the same entry) — exists as of the `03-http-proxy-body-timeout` implementation ticket: one `request` carrying the caller's method, headers, body, wait budget and proxy choice; the framework's own shared `framework/config.yaml` holding `http.proxies` and `http.defaultTimeoutMs`; a proxy selection the shared file cannot satisfy refused before anything is sent instead of falling back to a direct connection; the budget taking the request's value, then the shared default, then the built-in 30000ms, covering the response body as well as the response head; and the runtime's own response, its failures and the configuration refusals passed through without a business envelope. The request is made over the runtime's own `node:http`/`node:https` client rather than the process's `fetch`, whose process-level proxy environment redirects even a request that states a direct connection: a named proxy is connected to at its own address (an absolute request-target for a plain-HTTP target, a CONNECT tunnel for an HTTPS one, over TLS when the proxy's own address is `https://`), and a direct request reaches the target whatever the ambient environment says. The rest of the target — the file module, the HTTP consumers (model-cost's queries and connect-bot's transport), range subscriptions, the Viewed session projection, the pi adapter and the remaining consumer migration — is still unimplemented, and none of this records a real-host, provider or visual acceptance: the [support record](../../framework/docs/harness-support.md) is unchanged.
 
 ## Framework verification as a separate concern
 

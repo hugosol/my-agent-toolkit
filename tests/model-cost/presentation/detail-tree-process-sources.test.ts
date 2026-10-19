@@ -29,7 +29,7 @@ import type { ModelPricingData } from "../../../extensions/model-cost/shared-log
 import type { ModelCostRuntime } from "../../../extensions/model-cost/shared-logic/runtime";
 import { createModelCostRuntime } from "../../../extensions/model-cost/shared-logic/runtime";
 import type { SessionFacts } from "../../../framework/interface/session";
-import type { ObservedSession, SessionObservationAccess } from "../../../framework/core/protocol";
+import type { ObservedSession, SessionObservationAccess } from "../../../framework/runtime/port";
 import { createOwnerAccessPublisher } from "../../../framework/modules/local-access";
 import { type PortDouble, portDouble } from "../../framework/support/harness-port-double";
 import {

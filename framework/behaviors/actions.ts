@@ -20,13 +20,14 @@
  * This module is harness-independent: it reads the invocation facts and the declaration, and
  * names no native API.
  */
-import {
-	type ActionsCommandImplementation,
-	type CommandAction,
-	normalizeCommandArgument,
-} from "../core/assembly";
-import type { CommandActionsDeclaration } from "../core/definition";
-import type { ActionDelivery, CommandInvocation } from "../core/protocol";
+import { normalizeCommandArgument } from "../core/assembly";
+import type {
+	ActionsCommandImplementation,
+	ActionDelivery,
+	CommandAction,
+	CommandActionsDeclaration,
+} from "../interface/command";
+import type { CommandInvocation } from "../runtime/port";
 
 /**
  * The help one `actions` command prints: the command's own line, then one line per declared
@@ -76,7 +77,16 @@ export function runCommandActions(
 		return;
 	}
 
-	const delivery: ActionDelivery = invocation;
+	// Explicitly the approved delivery surface, never the invocation itself: the invocation also
+	// carries the persistence path and the marker area transport, which an action never uses.
+	const delivery: ActionDelivery = {
+		args: invocation.args,
+		owner: invocation.owner,
+		hasUI: invocation.hasUI,
+		canAcceptInput: invocation.canAcceptInput,
+		provider: invocation.provider,
+		feedback: invocation.feedback,
+	};
 	return Promise.resolve()
 		.then(() => action(delivery))
 		.catch((error: unknown) => {

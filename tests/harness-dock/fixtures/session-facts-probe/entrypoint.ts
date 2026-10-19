@@ -12,7 +12,7 @@
  * per-session frontend declares.
  */
 import { type OmpExtensionApi, ompAdapter } from "../../../../adapters/omp";
-import { type ExtensionDefinition, defineExtension } from "../../../../framework/public";
+import { type ExtensionDefinition, defineExtension } from "../../../../framework/interface";
 import type { SessionEventDelivery, SubscriptionGroup } from "../../../../framework/interface/session";
 
 /** The extension id whose stderr lines the dock reads. */

@@ -22,7 +22,7 @@
  * - `hold-forever <target> <document-json>` — take the lock, announce it, and never publish, so
  *   the parent can kill the holder while it holds the lock.
  */
-import { SafeFileUpdateError, updateFile } from "../../../framework/public";
+import { SafeFileUpdateError, updateFile } from "../../../framework/interface/general/files";
 
 /** One event this child reports, exactly as the parent reads it. */
 type ChildEvent = Record<string, unknown>;

@@ -26,9 +26,9 @@ export interface ContextTracker {
 /**
  * Builds one binding's tracker over the context readers this assembly owns.
  *
- * `sinks` are the process-level readings that report a context (`pricing` and `provider`), each
- * keeping its own newest source; they run before the binding's own follow-ups so a follow-up sees
- * the same recorded context the framework will.
+ * `sinks` are the process-level readings that report a context (the provider facts' price and access
+ * sources), each keeping its own newest source; they run before the binding's own follow-ups so a
+ * follow-up sees the same recorded context the framework will.
  */
 export function createContextTracker(sinks: readonly ((ctx: OmpSessionContext) => void)[]): ContextTracker {
 	let newest: OmpSessionContext | undefined;

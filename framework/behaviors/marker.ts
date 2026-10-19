@@ -28,9 +28,9 @@
  * seat from the port's own viewed-session fact, and publishes through a transport an
  * adapter supplied, and it names no native API.
  */
-import type { ExtensionDefinition } from "../core/definition";
+import type { ExtensionDefinition } from "../interface/details/definition";
 import type { OwnerReference } from "../interface/state";
-import type { HarnessPort, MarkerTransport, RunDelivery } from "../core/protocol";
+import type { HarnessPort, MarkerTransport, RunDelivery } from "../runtime/port";
 import type { StateStore } from "../core/state";
 import { stateValueFor } from "./state-scope";
 

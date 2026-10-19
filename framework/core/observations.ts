@@ -49,7 +49,7 @@ import type {
 	SessionObservation,
 	SessionObservationReader,
 } from "../interface/session";
-import type { ObservedSession, ObservationSource } from "./protocol";
+import type { ObservedSession, ObservationSource } from "../runtime/port";
 
 /**
  * One session's facts as a consumer may hold them: the framework's own record is copied, including

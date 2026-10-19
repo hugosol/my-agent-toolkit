@@ -26,7 +26,9 @@ export type FeedbackLevel = "info" | "warning" | "error";
  * carrying the notice's own severity when the session has a UI, and one stderr line when it does
  * not. Feedback is never an injected prompt, a conversation entry, tool output, or anything else a
  * model could read. The framework publishes no notice of its own on this channel and never filters
- * one it was handed, so what an extension says is what the operator sees.
+ * one it was handed, so what an extension says is what the operator sees. The adapter's actual
+ * output implementation is shared with the framework's own notices; sharing it changes neither
+ * upper-level responsibility nor lifetime, and does not give an extension the notice channel.
  */
 export interface FeedbackTransport {
 	/** Publishes one notice at the given severity, verbatim. */

@@ -54,7 +54,7 @@ The rename that follows is mechanical, and this ADR is its explicit decision:
   `SUPPORTED_AGENT_RUNTIME_VERSIONS` are renamed rather than re-exported beside their old names. ADR
   [0002](./0002-semantic-extension-framework.md) permits a non-additive change to the framework's
   interfaces only through an explicit decision; this is that decision. Neither symbol is part of the
-  extension-authoring surface declared in [`framework/public.ts`](../../framework/public.ts).
+  extension-authoring surface declared in [`framework/interface`](../../framework/interface/index.ts).
 - Accepted ADR [0002](./0002-semantic-extension-framework.md) was written under the old vocabulary.
   Its prose was rewritten to the new term and carries a migration note at its head, so it stays the
   authoritative design document instead of drifting from the glossary.

@@ -10,7 +10,7 @@
  * takes: the harness's provider access (`ProviderAccess`) and the framework's HTTP call.
  *
  * The HTTP call is the same single-request interface production runs on
- * (`framework/modules/http.ts`), substituted here so no permanent case reaches a provider; the mock
+ * (`framework/interface/general/http.ts`), substituted here so no permanent case reaches a provider; the mock
  * records every call with the exact URL and options the query built, which is what makes the account
  * address, the authentication headers, the named proxy selection and the 10000ms business budget
  * observable rather than asserted about. It also carries every answer the account API gives: a
@@ -32,10 +32,10 @@ import { setImmediate as immediate } from "node:timers/promises";
 import { MODEL_COST } from "../../../../extensions/model-cost/definition";
 import type { ModelPricingData } from "../../../../extensions/model-cost/shared-logic/business/pricing/model-data";
 import { type ModelCostRuntime, createModelCostRuntime } from "../../../../extensions/model-cost/shared-logic/runtime";
-import type { ProviderAccess, ProviderAccessFacts } from "../../../../framework/interface/host-facts";
+import type { ProviderAccess, ProviderAccessFacts } from "../../../../framework/interface/provider";
 import type { SessionFacts, TurnOutcome } from "../../../../framework/interface/session";
-import type { TurnSignal } from "../../../../framework/core/protocol";
-import { HttpConfigurationError, type HttpRequestOptions } from "../../../../framework/modules/http";
+import type { TurnSignal } from "../../../../framework/runtime/port";
+import { HttpConfigurationError, type HttpRequestOptions } from "../../../../framework/interface/general/http";
 import { type PortDouble, portDouble } from "../../../framework/support/harness-port-double";
 import { testSessionCapability } from "../../support/session-capability";
 

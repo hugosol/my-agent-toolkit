@@ -47,8 +47,8 @@ import type { BoundaryTimer } from "../../../../extensions/model-cost/harnesses/
 import type { ConsumptionDocument, SessionRecord } from "../../../../extensions/model-cost/shared-logic/foundation/session/consumption-document"
 import type { ModelPricingData } from "../../../../extensions/model-cost/shared-logic/business/pricing/model-data";
 import { createModelCostRuntime, type ModelCostRuntime } from "../../../../extensions/model-cost/shared-logic/runtime";
-import type { ProviderAccess, ProviderAccessFacts } from "../../../../framework/interface/host-facts";
-import type { HttpRequestOptions } from "../../../../framework/modules/http";
+import type { ProviderAccess, ProviderAccessFacts } from "../../../../framework/interface/provider";
+import type { HttpRequestOptions } from "../../../../framework/interface/general/http";
 import { drain, until } from "../../../support/pending-query";
 
 /** The repository root every binding resolves the declared configuration against, and its file. */

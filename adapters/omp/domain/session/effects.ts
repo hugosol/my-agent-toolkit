@@ -6,8 +6,8 @@
  * the same entry, so neither can name a different one. Reading that entry's payloads is a session
  * branch read and lives in `queries.ts`; this module owns the native append only.
  */
-import type { ExtensionDefinition } from "../../../../framework/core/definition";
-import type { StateValues } from "../../../../framework/core/protocol";
+import type { ExtensionDefinition } from "../../../../framework/interface/details/definition";
+import type { StateValues } from "../../../../framework/runtime/port";
 import type { OmpExtensionApi } from "../../internal/native";
 
 /** The one State entry a binding restores from and writes to. */

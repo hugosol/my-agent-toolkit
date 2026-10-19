@@ -18,7 +18,8 @@
  * This module is harness-independent: it reads State through the store's read surfaces and names
  * no native API.
  */
-import { activationField, stateInheritance, type ExtensionDefinition } from "../core/definition";
+import { activationField, stateInheritance } from "../core/definition";
+import type { ExtensionDefinition } from "../interface/details/definition";
 import type { OwnerReference } from "../interface/state";
 import { DEFAULT_STATE_VALUE, type StateStore, type StateValue } from "../core/state";
 

@@ -9,7 +9,7 @@
  * The newest-context tracker and the idle read live in `queries.ts`; this module subscribes and
  * assembles the delivery frame from the binding's own references.
  */
-import type { SessionContextObservation } from "../../../../framework/core/protocol";
+import type { SessionContextObservation } from "../../../../framework/runtime/port";
 import type { OwnerReference } from "../../../../framework/interface/state";
 import { feedbackTransport } from "../feedback";
 import type { OmpExtensionApi, OmpSessionContext } from "../../internal/native";

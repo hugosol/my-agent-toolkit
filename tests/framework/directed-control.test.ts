@@ -16,8 +16,9 @@
  * and a value the framework "would have" derived from the argument is never recorded.
  */
 import { describe, expect, test } from "bun:test";
-import type { CommandDelivery, RecognizedDirective } from "../../framework/core/protocol";
-import { type CommandImplementations, type ExtensionDefinition, defineExtension } from "../../framework/public";
+import type { CommandDelivery, RecognizedDirective } from "../../framework/interface/command";
+import type { CommandImplementations } from "../../framework/interface/command";
+import { type ExtensionDefinition, defineExtension } from "../../framework/interface";
 import { type PortDouble, portDouble } from "./support/harness-port-double";
 
 /** One implementation call, as the injected implementation saw it. */
@@ -181,6 +182,53 @@ describe("directed control: a named target and a repeated implementation (F1)", 
 		// A subagent never reaches the member either: the same owner scope that gates `run` gates it.
 		double.run("directed-hint", { args: "offline", owner: { kind: "inherited", key: "main:runner-up" } });
 		expect(seen).toHaveLength(1);
+	});
+
+	test("the delivery is exactly the approved surface, on `run` and `unrecognized` alike", () => {
+		const double: PortDouble = portDouble();
+		const command = "directed-surface";
+		const deliveries: Array<Record<string, unknown>> = [];
+		const commands: CommandImplementations = {
+			[command]: {
+				run: (_directive, delivery: CommandDelivery) => {
+					deliveries.push(delivery as unknown as Record<string, unknown>);
+				},
+				unrecognized: (_argument, delivery: CommandDelivery) => {
+					deliveries.push(delivery as unknown as Record<string, unknown>);
+				},
+			},
+		};
+		double.bind(directedDefinition(command), { commands });
+		const owner = { kind: "owner", key: "main:surface" } as const;
+
+		double.run(command, { owner });
+		double.run(command, { args: "unexpected", owner });
+
+		// The actual objects the framework constructed — one per path — expose the approved facts,
+		// the managed seam and the retainable capability, and nothing that reaches the adapter's
+		// persistence callback, the area transport or another capability.
+		expect(deliveries).toHaveLength(2);
+		const keys = (value: unknown): string[] => {
+			if (typeof value !== "object" || value === null) return [];
+			return Object.entries(value).flatMap(([key, child]) => [key, ...keys(child)]);
+		};
+		for (const delivery of deliveries) {
+			expect(Object.keys(delivery).sort()).toEqual([
+				"args",
+				"canAcceptInput",
+				"capability",
+				"feedback",
+				"hasUI",
+				"owner",
+				"provider",
+				"state",
+			]);
+			expect(keys(delivery)).not.toContain("persist");
+			expect(keys(delivery)).not.toContain("markers");
+			expect(keys(delivery)).not.toContain("publishMarkers");
+			expect(Object.keys(delivery.state as object).sort()).toEqual(["read", "write"]);
+			expect(Object.keys(delivery.capability as object).sort()).toEqual(["feedback", "state"]);
+		}
 	});
 
 	test("an unrecognized argument runs no implementation and changes no State", () => {

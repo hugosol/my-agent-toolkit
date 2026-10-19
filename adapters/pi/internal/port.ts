@@ -6,16 +6,15 @@
  * user input, commands, prompt planning and public effects each own a complete native
  * responsibility in their own module; no slice reaches into another axis's facts.
  */
-import type { ExtensionDefinition } from "../../../framework/core/definition";
+import type { ExtensionDefinition } from "../../../framework/interface/details/definition";
 import type { SessionFacts, SessionStartReason } from "../../../framework/interface/session";
 import type { OwnerReference } from "../../../framework/interface/state";
-import type { HarnessPort, SessionDisposal } from "../../../framework/core/protocol";
+import type { HarnessPort, SessionDisposal } from "../../../framework/runtime/port";
 import { onPiSessionContext } from "../domain/context";
 import { registerPiCommand } from "../domain/control";
 import type { PiExtensionApi, PiExtensionContext } from "./native";
 import { onPiRunInitiation } from "../domain/prompt";
-import type { HarnessModelPrices } from "../domain/pricing";
-import type { HarnessProviderAccess } from "../domain/provider";
+import type { PiProviderFacts } from "../domain/provider";
 import { piStatePersistence, type PiStatePersistence } from "../domain/session/effects";
 import { onPiDisposal, onPiSession, onPiUserInput } from "../domain/session/events";
 import {
@@ -34,8 +33,7 @@ export interface PiPortInput {
 	readonly definition: ExtensionDefinition;
 	readonly positions: PiSessionPositions;
 	readonly integration: PiSubagentIntegration | undefined;
-	readonly prices: HarnessModelPrices;
-	readonly access: HarnessProviderAccess;
+	readonly providerFacts: PiProviderFacts;
 	readonly keepSubscription: (release: () => void) => void;
 }
 
@@ -91,8 +89,8 @@ export function createPiPort(input: PiPortInput): PiPort {
 			// diagnostics instead of misusing that unrelated native operation.
 			setLabel: value => { context.state.label = value; },
 			reportDiagnostic: context.reportDiagnostic,
-			modelPrices: input.prices.prices,
-			providerAccess: input.access.access,
+			modelPrices: input.providerFacts.prices,
+			providerAccess: input.providerFacts.access,
 			// The process's one settling of this entry's subagent integration, asked at the owner node:
 			// it is the session this binding serves then, and the answer is that process's own.
 			...(integration === undefined
@@ -161,8 +159,7 @@ function createPiPortContext(input: PiPortInput): PiPortContext {
 			// a price at a request's real start, and an extension's provider query reads the moment's
 			// credential. The newest context is therefore what answers, and this is where each delivery
 			// reports its own.
-			input.prices.saw(ctx);
-			input.access.saw(ctx);
+			input.providerFacts.saw(ctx);
 			return ctx;
 		},
 		resolvedOwner,

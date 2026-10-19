@@ -17,7 +17,7 @@
  * fixture never saw the delivery".
  */
 import { piAdapter } from "../../../../adapters/pi";
-import type { ExtensionDefinition } from "../../../../framework/public";
+import type { ExtensionDefinition } from "../../../../framework/interface";
 import type { SessionObservation } from "../../../../framework/interface/session";
 import { PI_SUBAGENT_OBSERVATION_PREFIX } from "./prefix";
 

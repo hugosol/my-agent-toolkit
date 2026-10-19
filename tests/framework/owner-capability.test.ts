@@ -19,8 +19,9 @@
 import { describe, expect, test } from "bun:test";
 import type { FeedbackTransport } from "../../framework/interface/feedback";
 import type { OwnerCapabilityHandle } from "../../framework/interface/state";
-import type { CommandDelivery } from "../../framework/core/protocol";
-import { type CommandImplementations, type ExtensionDefinition, defineExtension } from "../../framework/public";
+import type { CommandDelivery } from "../../framework/interface/command";
+import type { CommandImplementations } from "../../framework/interface/command";
+import { type ExtensionDefinition, defineExtension } from "../../framework/interface";
 import { type PortDouble, portDouble } from "./support/harness-port-double";
 
 /** A directed extension whose whole behavior is one command plus the marker it drives. */

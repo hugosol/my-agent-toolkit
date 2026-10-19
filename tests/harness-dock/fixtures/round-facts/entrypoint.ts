@@ -12,7 +12,7 @@
  * no work of its own beyond reporting: no network, no file, no timer.
  */
 import { type OmpExtensionApi, ompAdapter } from "../../../../adapters/omp";
-import { type ExtensionDefinition, defineExtension } from "../../../../framework/public";
+import { type ExtensionDefinition, defineExtension } from "../../../../framework/interface";
 import type { RoundDelivery, SubscriptionGroup, TurnStartDelivery } from "../../../../framework/interface/session";
 
 /** The extension id whose stderr lines the dock reads. */

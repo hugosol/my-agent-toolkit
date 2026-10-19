@@ -6,7 +6,7 @@
  * equivalent, so its whole path is a no-op there rather than a diagnostic. Which lines an area
  * shows is the framework's business; this module only writes the native widget the lines go to.
  */
-import type { MarkerTransport } from "../../../framework/core/protocol";
+import type { MarkerTransport } from "../../../framework/runtime/port";
 import type { OmpSessionContext } from "../internal/native";
 
 /**

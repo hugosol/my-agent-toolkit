@@ -25,7 +25,7 @@ import {
 	type PanelRequest,
 	setPanelRequestForTest,
 } from "../../extensions/connect-bot/shared-logic/panel/client";
-import type { HttpRequestOptions } from "../../framework/public";
+import type { HttpRequestOptions } from "../../framework/interface/general/http";
 import { CONNECT_BOT } from "../../extensions/connect-bot/definition";
 import { botSessions } from "../../extensions/connect-bot/shared-logic/session/session";
 import connectBot from "../../extensions/connect-bot/harnesses/omp";

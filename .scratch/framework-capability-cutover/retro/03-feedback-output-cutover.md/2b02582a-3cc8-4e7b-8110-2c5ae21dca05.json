@@ -1,0 +1,188 @@
+{
+  "feature": "framework-capability-cutover",
+  "ticket": "03-feedback-output-cutover.md",
+  "run_id": "2b02582a-3cc8-4e7b-8110-2c5ae21dca05",
+  "parent_session_id": "01a1539d-639e-70ea-9249-f5515c657de5",
+  "parent_session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-19T10-03-06-014Z_01a1539d-639e-70ea-9249-f5515c657de5.jsonl",
+  "workspace": "E:\\Developer\\myhub\\my-agent-toolkit",
+  "tool_call_id": "0d087142-4d2e-4e06-984a-edead851e301",
+  "started_at": "2026-10-19T10:41:18.058Z",
+  "tdd_status": "completed",
+  "retro_status": "completed",
+  "tdd_finished_at": "2026-10-19T10:58:36.002Z",
+  "tdd_result": {
+    "index": 0,
+    "id": "03-feedback-output-cutovermd-0d087142-4d2e-4e06-",
+    "agent": "tdd",
+    "agentSource": "user",
+    "task": "Complete assignment thoroughly:\n\n在当前 worktree 实现唯一票据：C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-5SKFsV\\.scratch\\framework-capability-cutover\\implementation\\03-feedback-output-cutover.md。\n集成分支：hyper-tdd\nspec：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\framework-capability-cutover\\spec.md\ncontract：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\framework-capability-cutover\\contract.md\n这是本票首次执行。\n遵守 tdd skill，自行负责本票验收并报告实际验证与未完成事项。完成后尽快提交本票实现，交出 worktree，由独立集成子代理接管。不要修改其他票据或工作流报告，不操作集成分支工作区，不自行合入集成分支，不调用 retro、不派发其他票据。不得 reset 丢弃既有工作。",
+    "assignment": "在当前 worktree 实现唯一票据：C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-5SKFsV\\.scratch\\framework-capability-cutover\\implementation\\03-feedback-output-cutover.md。\n集成分支：hyper-tdd\nspec：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\framework-capability-cutover\\spec.md\ncontract：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\framework-capability-cutover\\contract.md\n这是本票首次执行。\n遵守 tdd skill，自行负责本票验收并报告实际验证与未完成事项。完成后尽快提交本票实现，交出 worktree，由独立集成子代理接管。不要修改其他票据或工作流报告，不操作集成分支工作区，不自行合入集成分支，不调用 retro、不派发其他票据。不得 reset 丢弃既有工作。",
+    "description": "Implement feedback output cutover ticket",
+    "lastIntent": "Checking docs for changed signature",
+    "exitCode": 0,
+    "output": "{\n  \"ticket\": \"03-feedback-output-cutover\",\n  \"status\": \"complete\",\n  \"branch\": \"hyper/framework-capability-cutover/03-feedback-output-cutover-0257c1-e1e098c5b064\",\n  \"commit\": \"11cab0b\",\n  \"base_revision\": \"c6ccf83f7c2a03d9f8e944e07d2039917bd76d5e\",\n  \"worktree\": \"clean\",\n  \"delivered\": [\n    \"FeedbackLevel/FeedbackTransport.notify remain canonical in framework/interface/feedback/index.ts; the OMP mapping now references FeedbackLevel instead of repeating the union.\",\n    \"Each adapter keeps one actual UI/stderr output implementation: both noticeTransport and feedbackTransport reach the same publishNotice in adapters/omp/domain/feedback.ts and adapters/pi/domain/feedback.ts; NoticeTransport stays internal.\",\n    \"model-cost's native terminal-result hook no longer constructs its own { notify } UI/stderr implementation. It uses the feedback channel handed to the implementation at initialization (InitializationDelivery.feedback), avoiding a new adapter public export; a no-init process records the receipt but has no operator channel.\",\n    \"Feedback ownership check added to import-boundary.test.ts; framework docs/interface docs updated to state shared actual output with distinct responsibilities/lifetimes.\",\n    \"Added OMP and pi actual-delivery tests for info/warning/error on UI and stderr, exact message/level/channel assertions, feedback key surface, and model-context invisibility.\"\n  ],\n  \"acceptance\": [\n    {\n      \"criterion\": \"canonical Feedback ownership + info/warning/error through actual UI/stderr path\",\n      \"evidence\": \"tests/framework/feedback-harness.test.ts, feedback-pi-harness.test.ts, extension-feedback.test.ts, import-boundary.test.ts; typecheck\",\n      \"result\": \"pass\"\n    },\n    {\n      \"criterion\": \"notifications absent from actual request/history; public feedback leaks no native transport or management\",\n      \"evidence\": \"OMP feedback-harness 'a notice is never model context'; feedback keys [\\\"notify\\\"] in OMP and pi tests; pi entries remain empty\",\n      \"result\": \"pass\"\n    },\n    {\n      \"criterion\": \"framework notices and extension feedback use the same actual output per adapter, not a new forwarding entry\",\n      \"evidence\": \"single publishNotice per adapter driven by both transports in OMP/pi tests; adapter-entry export attempt was rejected by definition.test.ts and reverted; model-cost reuses initialization feedback\",\n      \"result\": \"pass\"\n    },\n    {\n      \"criterion\": \"retained notice discarded at owner end while session_end dispatch notice remains visible\",\n      \"evidence\": \"tests/framework/owner-capability.test.ts retained/dispatch cases; session-events.test.ts dispatch channel\",\n      \"result\": \"pass\"\n    },\n    {\n      \"criterion\": \"all notification consumers migrated; old exports retired; P52 handoff record\",\n      \"evidence\": \"model-cost OMP/pi harnesses and runtime migrated; repository search finds no remaining inline extension UI/stderr notification producer; evidence/03-feedback-verification/README.md\",\n      \"result\": \"pass for this partition\"\n    }\n  ],\n  \"verification\": [\n    {\n      \"command\": \"bun install --frozen-lockfile\",\n      \"exit\": 0,\n      \"result\": \"13 packages; bun.lock unchanged\"\n    },\n    {\n      \"command\": \"bun run typecheck\",\n      \"exit\": 0,\n      \"result\": \"no diagnostics\"\n    },\n    {\n      \"command\": \"bun test tests/framework/{feedback-harness,feedback-pi-harness,extension-feedback,owner-capability,session-events,import-boundary}.test.ts\",\n      \"exit\": 0,\n      \"result\": \"47 pass / 0 fail, 159 expect calls\"\n    },\n    {\n      \"command\": \"bun run test:framework\",\n      \"exit\": 0,\n      \"result\": \"616 pass / 0 fail, 2766 expect calls, 53 files\"\n    },\n    {\n      \"command\": \"bun test tests/model-cost\",\n      \"exit\": 0,\n      \"result\": \"516 pass / 0 fail, 2892 expect calls, 51 files\"\n    },\n    {\n      \"command\": \"bun run test:codebase-tools\",\n      \"exit\": 0,\n      \"result\": \"24 pass / 0 fail, 334 expect calls\"\n    },\n    {\n      \"command\": \"OMP_BOT_BINARY=... bun test tests/connect-bot\",\n      \"exit\": 0,\n      \"result\": \"142 pass / 0 fail, 689 expect calls\"\n    },\n    {\n      \"command\": \"bun test tests/harness-dock/model-cost-session-span.test.ts\",\n      \"exit\": 0,\n      \"result\": \"4 pass / 0 fail, 37 expect calls; real OMP 18.5.0, async-result notices\"\n    },\n    {\n      \"command\": \"bun test tests/harness-dock/{model-cost-headless,binding-lifecycle}.test.ts\",\n      \"exit\": 0,\n      \"result\": \"9 pass / 0 fail, 90 expect calls; real OMP 18.5.0\"\n    },\n    {\n      \"command\": \"bun scripts/pi-model-cost-smoke.ts\",\n      \"exit\": 0,\n      \"result\": \"100 checks passed, none failed; 28 isolated real pi 1.3.0 runs\"\n    },\n    {\n      \"command\": \"bun scripts/pi-background-round-smoke.ts\",\n      \"exit\": 0,\n      \"result\": \"15 observations held; real pi 1.3.0; both subagent-notify results advanced Span\"\n    },\n    {\n      \"command\": \"bun run check:integrations\",\n      \"exit\": 0,\n      \"result\": \"all five declarations complete; declaration matching only\"\n    }\n  ],\n  \"fault_injection\": [\n    \"Removing operatorFeedback assignment failed the model-cost native notice test with received [] (0 pass/1 fail); restored, 26 pass in that file.\",\n    \"Adding a duplicate FeedbackLevel export to framework/core/protocol.ts failed the ownership check; restored, import-boundary 11 pass.\",\n    \"The adapter-entry feedbackTransport export attempt failed definition.test.ts public-surface test; reverted in favor of the existing initialization feedback channel.\"\n  ],\n  \"unverified\": [\n    \"P48 terminal readability remains human-led for ticket 14; not claimed.\",\n    \"No full bun run test, final five-entry regression, physical OMP/pi TUI, real provider/credential, or production loader configuration.\",\n    \"The no-owner-initialization process path for model-cost native result notices was not driven by a real host run; receipt time is still recorded and no notice is stated there.\"\n  ],\n  \"evidence_record\": \".scratch/framework-capability-cutover/evidence/03-feedback-verification/README.md\"\n}",
+    "stderr": "",
+    "truncated": false,
+    "durationMs": 1037827,
+    "tokens": 337961,
+    "requests": 152,
+    "contextTokens": 323804,
+    "contextWindow": 1000000,
+    "modelOverride": [
+      "deepseek/deepseek-flash:max"
+    ],
+    "resolvedModel": "deepseek/deepseek-flash:max",
+    "resolvedModelIdentity": "deepseek/deepseek-flash",
+    "resolvedThinkingLevel": "max",
+    "aborted": false,
+    "usage": {
+      "input": 227837,
+      "output": 110124,
+      "cacheRead": 32355584,
+      "cacheWrite": 0,
+      "totalTokens": 32693545,
+      "reasoningTokens": 56183,
+      "cost": {
+        "input": 0.03417555000000001,
+        "output": 0.0660744,
+        "cacheRead": 0.09706675199999999,
+        "cacheWrite": 0,
+        "total": 0.19731670200000012
+      }
+    },
+    "outputPath": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-19T10-03-06-014Z_01a1539d-639e-70ea-9249-f5515c657de5\\03-feedback-output-cutovermd-0d087142-4d2e-4e06-.md",
+    "extractedToolData": {
+      "yield": [
+        {
+          "data": {
+            "ticket": "03-feedback-output-cutover",
+            "status": "complete",
+            "branch": "hyper/framework-capability-cutover/03-feedback-output-cutover-0257c1-e1e098c5b064",
+            "commit": "11cab0b",
+            "base_revision": "c6ccf83f7c2a03d9f8e944e07d2039917bd76d5e",
+            "worktree": "clean",
+            "delivered": [
+              "FeedbackLevel/FeedbackTransport.notify remain canonical in framework/interface/feedback/index.ts; the OMP mapping now references FeedbackLevel instead of repeating the union.",
+              "Each adapter keeps one actual UI/stderr output implementation: both noticeTransport and feedbackTransport reach the same publishNotice in adapters/omp/domain/feedback.ts and adapters/pi/domain/feedback.ts; NoticeTransport stays internal.",
+              "model-cost's native terminal-result hook no longer constructs its own { notify } UI/stderr implementation. It uses the feedback channel handed to the implementation at initialization (InitializationDelivery.feedback), avoiding a new adapter public export; a no-init process records the receipt but has no operator channel.",
+              "Feedback ownership check added to import-boundary.test.ts; framework docs/interface docs updated to state shared actual output with distinct responsibilities/lifetimes.",
+              "Added OMP and pi actual-delivery tests for info/warning/error on UI and stderr, exact message/level/channel assertions, feedback key surface, and model-context invisibility."
+            ],
+            "acceptance": [
+              {
+                "criterion": "canonical Feedback ownership + info/warning/error through actual UI/stderr path",
+                "evidence": "tests/framework/feedback-harness.test.ts, feedback-pi-harness.test.ts, extension-feedback.test.ts, import-boundary.test.ts; typecheck",
+                "result": "pass"
+              },
+              {
+                "criterion": "notifications absent from actual request/history; public feedback leaks no native transport or management",
+                "evidence": "OMP feedback-harness 'a notice is never model context'; feedback keys [\"notify\"] in OMP and pi tests; pi entries remain empty",
+                "result": "pass"
+              },
+              {
+                "criterion": "framework notices and extension feedback use the same actual output per adapter, not a new forwarding entry",
+                "evidence": "single publishNotice per adapter driven by both transports in OMP/pi tests; adapter-entry export attempt was rejected by definition.test.ts and reverted; model-cost reuses initialization feedback",
+                "result": "pass"
+              },
+              {
+                "criterion": "retained notice discarded at owner end while session_end dispatch notice remains visible",
+                "evidence": "tests/framework/owner-capability.test.ts retained/dispatch cases; session-events.test.ts dispatch channel",
+                "result": "pass"
+              },
+              {
+                "criterion": "all notification consumers migrated; old exports retired; P52 handoff record",
+                "evidence": "model-cost OMP/pi harnesses and runtime migrated; repository search finds no remaining inline extension UI/stderr notification producer; evidence/03-feedback-verification/README.md",
+                "result": "pass for this partition"
+              }
+            ],
+            "verification": [
+              {
+                "command": "bun install --frozen-lockfile",
+                "exit": 0,
+                "result": "13 packages; bun.lock unchanged"
+              },
+              {
+                "command": "bun run typecheck",
+                "exit": 0,
+                "result": "no diagnostics"
+              },
+              {
+                "command": "bun test tests/framework/{feedback-harness,feedback-pi-harness,extension-feedback,owner-capability,session-events,import-boundary}.test.ts",
+                "exit": 0,
+                "result": "47 pass / 0 fail, 159 expect calls"
+              },
+              {
+                "command": "bun run test:framework",
+                "exit": 0,
+                "result": "616 pass / 0 fail, 2766 expect calls, 53 files"
+              },
+              {
+                "command": "bun test tests/model-cost",
+                "exit": 0,
+                "result": "516 pass / 0 fail, 2892 expect calls, 51 files"
+              },
+              {
+                "command": "bun run test:codebase-tools",
+                "exit": 0,
+                "result": "24 pass / 0 fail, 334 expect calls"
+              },
+              {
+                "command": "OMP_BOT_BINARY=... bun test tests/connect-bot",
+                "exit": 0,
+                "result": "142 pass / 0 fail, 689 expect calls"
+              },
+              {
+                "command": "bun test tests/harness-dock/model-cost-session-span.test.ts",
+                "exit": 0,
+                "result": "4 pass / 0 fail, 37 expect calls; real OMP 18.5.0, async-result notices"
+              },
+              {
+                "command": "bun test tests/harness-dock/{model-cost-headless,binding-lifecycle}.test.ts",
+                "exit": 0,
+                "result": "9 pass / 0 fail, 90 expect calls; real OMP 18.5.0"
+              },
+              {
+                "command": "bun scripts/pi-model-cost-smoke.ts",
+                "exit": 0,
+                "result": "100 checks passed, none failed; 28 isolated real pi 1.3.0 runs"
+              },
+              {
+                "command": "bun scripts/pi-background-round-smoke.ts",
+                "exit": 0,
+                "result": "15 observations held; real pi 1.3.0; both subagent-notify results advanced Span"
+              },
+              {
+                "command": "bun run check:integrations",
+                "exit": 0,
+                "result": "all five declarations complete; declaration matching only"
+              }
+            ],
+            "fault_injection": [
+              "Removing operatorFeedback assignment failed the model-cost native notice test with received [] (0 pass/1 fail); restored, 26 pass in that file.",
+              "Adding a duplicate FeedbackLevel export to framework/core/protocol.ts failed the ownership check; restored, import-boundary 11 pass.",
+              "The adapter-entry feedbackTransport export attempt failed definition.test.ts public-surface test; reverted in favor of the existing initialization feedback channel."
+            ],
+            "unverified": [
+              "P48 terminal readability remains human-led for ticket 14; not claimed.",
+              "No full bun run test, final five-entry regression, physical OMP/pi TUI, real provider/credential, or production loader configuration.",
+              "The no-owner-initialization process path for model-cost native result notices was not driven by a real host run; receipt time is still recorded and no notice is stated there."
+            ],
+            "evidence_record": ".scratch/framework-capability-cutover/evidence/03-feedback-verification/README.md"
+          },
+          "status": "success"
+        }
+      ]
+    },
+    "outputMeta": {
+      "lineCount": 115,
+      "charCount": 6028
+    }
+  },
+  "agent": "tdd",
+  "agent_id": "03-feedback-output-cutovermd-0d087142-4d2e-4e06-",
+  "session_id": "01a153c0-5cfc-7014-8b40-6b6ff7b9cb2e",
+  "session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-19T10-03-06-014Z_01a1539d-639e-70ea-9249-f5515c657de5\\03-feedback-output-cutovermd-0d087142-4d2e-4e06-.jsonl",
+  "execution_cwd": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-5SKFsV",
+  "retro_document": "E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\framework-capability-cutover\\retro\\03-feedback-output-cutover.md\\2b02582a-3cc8-4e7b-8110-2c5ae21dca05.md",
+  "retro_finished_at": "2026-10-19T11:01:19.798Z"
+}

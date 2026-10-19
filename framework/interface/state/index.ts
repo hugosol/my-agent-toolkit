@@ -1,11 +1,57 @@
 /**
- * The State capability's extension-facing leaf declarations.
+ * The State capability's canonical extension-facing declarations.
  *
- * This file owns only the vocabulary a session-scoped delivery needs to name an owner and to offer
- * the extension's declared-value seam. The State implementation — the store, owner lives,
- * persistence, followed-owner reads and access lifetime — remains behind the capability interface.
+ * This file owns the vocabulary an extension declares and the managed operations a session
+ * delivery hands out: the declared State axes, the owner a framework effect acts on, the
+ * declared-value seam, and the owner-scoped capability handle. The State implementation — the
+ * store, owner lives, persistence, followed-owner reads and access lifetime — remains behind the
+ * capability interface, and no declaration here lets a consumer reach it.
  */
 import type { FeedbackTransport } from "../feedback";
+
+/**
+ * Whether a declared State value outlives the memory of the session that wrote it.
+ *
+ * `session-entry` — the value is recorded in the owner's persistence medium, and a
+ * session boundary seeds it from that session's target branch. `memory` — the value is
+ * never recorded and never seeded: it exists only as the owner cell's current value, so
+ * a boundary that replaces the owner drops it to the declared default while navigation
+ * that keeps the same owner identity keeps it. `memory` is the choice for a value that
+ * declares a live external effect, because a restored value would not prove that effect
+ * is still running.
+ */
+export type StatePersistence = "session-entry" | "memory";
+
+/**
+ * How a subagent session relates to its owner's declared State value.
+ *
+ * `follow` — the subagent reads the owner's current value live. `none` — the subagent
+ * reads the field's declared default, so the value an owner holds never reaches a
+ * subagent on its own. Values that are not this declared field, such as each session's
+ * own injected-prompt progress, stay per-session whatever this axis says.
+ */
+export type StateInheritance = "follow" | "none";
+
+/**
+ * The State an extension declares.
+ *
+ * v1 owns exactly one boolean activation field per extension, and the field name is also
+ * the persistence key for its value whenever the field is persisted. Omitting `state`
+ * selects the framework's default field, persistence and inheritance.
+ *
+ * The three declared axes are independent, and every framework behavior branches on the
+ * axis it belongs to: the control kind decides how a command drives the field, the
+ * persistence decides whether the value is recorded and seeded, and the inheritance
+ * decides whether a subagent reads the owner's value or the declared default.
+ */
+export interface StateDeclaration {
+	/** The activation field name; defaults to `enabled`. */
+	readonly field?: string;
+	/** How the value is persisted; defaults to `session-entry`. */
+	readonly persistence?: StatePersistence;
+	/** Whether a subagent reads the owner's current value; defaults to `none`. */
+	readonly inheritance?: StateInheritance;
+}
 
 /**
  * The owner a framework effect acts on: the session whose State the effect concerns.
@@ -32,9 +78,11 @@ export type OwnerReference =
  *
  * A handler owns its write. The framework never writes a declared value on a handler's behalf,
  * never overwrites one the handler decided, and never deduplicates two identical writes, so the
- * value a handler leaves is the value State holds. `read` is what the handler runs against: it
- * observes the value the delivery started from — which is what lets an extension filter on whether
- * it was already active before the invocation — and `write` is the only path that changes it.
+ * value a handler leaves is the value State holds. `read` is the owner's current value at the
+ * moment it is called: a read after a write observes that write, and a read in a later delivery
+ * or retained capability observes whatever the value is then. A handler that needs the value it
+ * saw before it wrote keeps that value itself; the seam is not a snapshot. `write` is the only
+ * path that changes it.
  *
  * A seam is bound to one declared field, and to the owner the delivery resolved. The framework
  * publishes the marker area after each write, so a write of `false` removes this extension's line

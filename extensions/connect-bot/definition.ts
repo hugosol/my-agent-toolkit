@@ -12,7 +12,7 @@
  * queue and the armed session id are the extension's own working data — they are not a second
  * authoritative value the framework would have to reconcile.
  */
-import { defineExtension } from "../../framework/public";
+import { defineExtension } from "../../framework/interface";
 
 /**
  * connect-bot's declaration: one directed command whose two argument forms the panel contract

@@ -11,14 +11,18 @@
  * (`followed`), which answers the declared default until that access is reached and never writes
  * anything back. A store that follows nothing is the in-process one and reads no access at all.
  */
-import type { StatePersistence } from "./definition";
 import { SubagentAccess } from "./subagent-access";
 import { OwnerLives } from "./owner-lives";
 import type { OwnerAccessSource } from "../modules/local-access";
 import type { FeedbackTransport } from "../interface/feedback";
 import type { SessionEvent } from "../interface/session";
-import type { DeclaredValueSeam, OwnerCapabilityHandle, OwnerReference } from "../interface/state";
-import type { StateValues } from "./protocol";
+import type {
+	DeclaredValueSeam,
+	OwnerCapabilityHandle,
+	OwnerReference,
+	StatePersistence,
+} from "../interface/state";
+import type { StateValues } from "../runtime/port";
 
 /** The State values v1 holds: the declared boolean activation field. */
 export type StateValue = boolean;

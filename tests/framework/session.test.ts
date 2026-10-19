@@ -31,7 +31,8 @@ import type {
 	SessionStartReason,
 } from "../../framework/interface/session";
 import type { OwnerReference } from "../../framework/interface/state";
-import { type CommandImplementations, type ExtensionDefinition, defineExtension } from "../../framework/public";
+import type { CommandImplementations } from "../../framework/interface/command";
+import { type ExtensionDefinition, defineExtension } from "../../framework/interface";
 
 /** The State entry the framework persists for the codebase-tools definition. */
 const STATE_ENTRY_TYPE = "codebase-tools:state";

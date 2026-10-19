@@ -67,7 +67,7 @@
  *
  * This module is harness-independent: it reads and writes no State and names no native API.
  */
-import type { ExtensionDefinition } from "../core/definition";
+import type { ExtensionDefinition } from "../interface/details/definition";
 import { handOverReading, type ObservationHandOver, type SessionObservations } from "../core/observations";
 import type {
 	CloseOutWait,
@@ -75,7 +75,7 @@ import type {
 	RoundEvent,
 	SubscriptionGroup,
 } from "../interface/session";
-import type { RoundObservation, SessionDisposal } from "../core/protocol";
+import type { RoundObservation, SessionDisposal } from "../runtime/port";
 import { WAIT_RESOLUTION_MS } from "../modules/files";
 import { ACTIVITY_OF_EDGE, type SessionActivityAxis } from "./session-activity";
 import { dispatchToGroups } from "./subscriptions";

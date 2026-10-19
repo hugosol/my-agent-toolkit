@@ -12,18 +12,17 @@
  * registered is decided by the harness-independent behavior, and what a command does is the
  * framework's control behavior.
  */
-import type { ExtensionDefinition } from "../../../framework/core/definition";
+import type { ExtensionDefinition } from "../../../framework/interface/details/definition";
 import type { OwnerReference } from "../../../framework/interface/state";
-import type { HarnessPort } from "../../../framework/core/protocol";
+import type { HarnessPort } from "../../../framework/runtime/port";
 import { observeSessionContext } from "../domain/context/events";
 import { createContextTracker } from "../domain/context/queries";
 import { registerControl } from "../domain/control";
 import { feedbackTransport } from "../domain/feedback";
 import { markerTransport } from "../domain/marker";
 import type { OmpExtensionApi, OmpSessionContext } from "./native";
-import type { ModelPrices } from "../domain/pricing";
+import type { OmpProviderFacts } from "../domain/provider";
 import { observeRunInitiation } from "../domain/prompt";
-import type { ProviderAccessSource } from "../domain/provider";
 import { stateEntryOf } from "../domain/session/effects";
 import {
 	observeRoundEvents,
@@ -37,8 +36,7 @@ import { subagentIntegrationOf } from "../domain/subagent/queries";
 
 /** The process-level readers every binding of one assembly answers through. */
 export interface PortDependencies {
-	readonly prices: ModelPrices;
-	readonly access: ProviderAccessSource;
+	readonly providerFacts: OmpProviderFacts;
 }
 
 /** Builds the framework's port onto OMP, bound to one session and the extension's State key. */
@@ -47,9 +45,9 @@ export function createOmpPort(
 	definition: ExtensionDefinition,
 	dependencies: PortDependencies,
 ): HarnessPort {
-	// One tracker per binding: prices and provider access are the process's readers, but the
-	// newest context is the one this binding's own deliveries reported.
-	const context = createContextTracker([dependencies.prices.saw, dependencies.access.saw]);
+	// One tracker per binding: the provider facts are the process's readers, but the newest context is
+	// the one this binding's own deliveries reported.
+	const context = createContextTracker([dependencies.providerFacts.saw]);
 	const record = context.record;
 	// One State entry per binding: session restoration and commands are two uses of it.
 	const stateEntry = stateEntryOf(pi, definition);
@@ -103,8 +101,8 @@ export function createOmpPort(
 	return {
 		setLabel: label => pi.setLabel(label),
 		reportDiagnostic,
-		modelPrices: dependencies.prices.prices,
-		providerAccess: dependencies.access.access,
+		modelPrices: dependencies.providerFacts.prices,
+		providerAccess: dependencies.providerFacts.access,
 		viewedSession,
 		// This harness integrates subagent observations itself; the Subagent domain answers how that
 		// integration stands, so the port carries no inline capability fact of its own.

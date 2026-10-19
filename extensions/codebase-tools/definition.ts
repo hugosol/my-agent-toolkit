@@ -13,7 +13,7 @@
  * subagent reading the owning main session's current activation value. Inheritance is
  * `none` by default, so the opt-in is declared here rather than implied.
  */
-import { defineExtension } from "../../framework/public";
+import { defineExtension } from "../../framework/interface";
 import { INIT_PROMPT, REMINDER_PROMPT } from "./shared-logic/prompts";
 
 export const CODEBASE_TOOLS = defineExtension({

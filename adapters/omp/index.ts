@@ -4,21 +4,20 @@
  * This module only assembles: the process-level readers an extension's factory is handed and the
  * harness-independent binding life shared by both adapters. The native mappings live under `domain/` —
  * `internal/port.ts` composes the seam, `domain/context/` and `domain/session/` own their own reads and
- * event mappings, and `domain/pricing.ts`, `domain/provider.ts`, `domain/feedback.ts`,
- * `domain/marker.ts`, `domain/control.ts` and `domain/prompt.ts` own the native facts they translate.
+ * event mappings, and `domain/provider.ts`, `domain/feedback.ts`, `domain/marker.ts`,
+ * `domain/control.ts` and `domain/prompt.ts` own the native facts they translate.
  *
  * It carries no extension semantics: what to register comes from the definition, whether it may be
  * registered is decided by the harness-independent behavior, and what a command does is the
  * framework's control behavior — the adapter only resolves the native facts that behavior needs.
  */
 import { createAssemblyBinding } from "../../framework/behaviors/assembly";
-import type { ExtensionAssembly } from "../../framework/core/assembly";
-import type { ExtensionDefinition } from "../../framework/core/definition";
-import type { BindingResult } from "../../framework/core/protocol";
+import type { ExtensionAssembly } from "../../framework/interface/details/implementation";
+import type { ExtensionDefinition } from "../../framework/interface/details/definition";
+import type { BindingResult } from "../../framework/runtime/port";
 import type { OmpExtensionApi } from "./internal/native";
 import { createOmpPort } from "./internal/port";
-import { createModelPrices } from "./domain/pricing";
-import { createProviderAccess } from "./domain/provider";
+import { createProviderFacts } from "./domain/provider";
 
 // Native types remain available through the adapter entry consumed by harness assemblies.
 export type {
@@ -51,22 +50,10 @@ export type { OmpViewedSessionFacts } from "./domain/session/viewed-session";
 /**
  * Re-exported because it is what {@link OmpExtensionFactory} returns.
  *
- * Everything an *assembly* declares lives on the public authoring surface instead
- * (`framework/public.ts`), so this module offers no assembly type of its own.
+ * Everything an *assembly* declares lives on the root authoring interface instead, so this
+ * module offers no assembly type of its own.
  */
 export type { BindingResult };
-
-/**
- * The assembly information the OMP adapter accepts: the harness-independent
- * {@link ExtensionAssembly}, unchanged.
- *
- * The adapter adds no member of its own — what an extension builds, which framework semantics it
- * depends on and where its declared configuration sits mean the same thing on any harness — and
- * an assembly therefore names no harness when it states them. Version support is deliberately not
- * among them either: support is a claim about a verified combination, recorded in the repository's
- * support record, and no assembly supplies or widens it.
- */
-export type { ExtensionAssembly };
 
 /** The OMP extension factory an entrypoint re-exports; the loader calls it per binding. */
 export type OmpExtensionFactory = (pi: OmpExtensionApi) => BindingResult;
@@ -95,8 +82,7 @@ export type OmpExtensionFactory = (pi: OmpExtensionApi) => BindingResult;
  */
 export function ompAdapter(definition: ExtensionDefinition, options: ExtensionAssembly = {}): OmpExtensionFactory {
 	const binding = createAssemblyBinding(definition, options, "in-process");
-	const prices = createModelPrices();
-	const access = createProviderAccess();
+	const providerFacts = createProviderFacts();
 	return (pi: OmpExtensionApi): BindingResult =>
-		binding.bind(createOmpPort(pi, definition, { prices, access }));
+		binding.bind(createOmpPort(pi, definition, { providerFacts }));
 }

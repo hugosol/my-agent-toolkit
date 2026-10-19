@@ -19,7 +19,7 @@ import { homedir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { type OmpExtensionApi, ompAdapter } from "../../../adapters/omp";
-import type { ExtensionImplementation } from "../../../framework/public";
+import type { ExtensionImplementation } from "../../../framework/interface/details/implementation";
 import { MODEL_COST } from "../definition";
 import { type ModelCostRuntime, createModelCostRuntime } from "../shared-logic/runtime";
 import { createBoundaryTimer } from "./boundary-timer";
@@ -201,12 +201,10 @@ export function observeOmpSubagentResults(pi: OmpExtensionApi, runtime: ModelCos
 		// async-result is the terminal delivery. Its task entries need no status metadata;
 		// the supported host can omit that field even for a successful result.
 		if (!(message.details?.jobs ?? []).some(job => job.type === "task")) return;
-		await runtime.subagentResultReceived(ctx.sessionManager.getSessionId(), {
-			notify: (level, text) => {
-				if (ctx.hasUI) ctx.ui.notify(text, level);
-				else process.stderr.write(`${text}\n`);
-			},
-		});
+		// The runtime reports through the feedback channel the framework handed it at
+		// initialization — this native hook has no delivery of its own, and the adapter maps
+		// that channel through the same actual output as every other extension notice.
+		await runtime.subagentResultReceived(ctx.sessionManager.getSessionId());
 	});
 	return () => { active = false; };
 }

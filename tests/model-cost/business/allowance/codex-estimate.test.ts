@@ -26,7 +26,8 @@
  * written from rather than produced by the code under test.
  */
 import { afterEach, describe, expect, test } from "bun:test";
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
 import { setImmediate as immediate } from "node:timers/promises";
@@ -34,10 +35,10 @@ import { MODEL_COST } from "../../../../extensions/model-cost/definition";
 import type { CodexPairedReading } from "../../../../extensions/model-cost/shared-logic/business/allowance/codex-estimate";
 import type { ModelPricingData } from "../../../../extensions/model-cost/shared-logic/business/pricing/model-data";
 import { type ModelCostRuntime, createModelCostRuntime } from "../../../../extensions/model-cost/shared-logic/runtime";
-import type { ProviderAccess, ProviderAccessFacts } from "../../../../framework/interface/host-facts";
+import type { ProviderAccess, ProviderAccessFacts } from "../../../../framework/interface/provider";
 import type { SessionFacts, TurnOutcome } from "../../../../framework/interface/session";
-import type { TurnSignal } from "../../../../framework/core/protocol";
-import type { HttpRequestOptions } from "../../../../framework/modules/http";
+import type { TurnSignal } from "../../../../framework/runtime/port";
+import type { HttpRequestOptions } from "../../../../framework/interface/general/http";
 import { type PortDouble, portDouble } from "../../../framework/support/harness-port-double";
 import { testSessionCapability } from "../../support/session-capability";
 
@@ -368,10 +369,13 @@ const BASELINE = {
 	weeklyResetsAt: RESET_WEEKLY_SECONDS * 1000,
 };
 
-afterEach(() => {
-	// A report-driven case may have left a best-effort write in flight; the retries let the platform's
-	// short-lived refusals pass rather than turning them into a removal failure.
-	for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true, maxRetries: 5, retryDelay: 20 });
+afterEach(async () => {
+	// A report-driven case may have left a best-effort write in flight. Awaiting each removal yields
+	// to that write, and the platform's own short retries let its handle close rather than turning a
+	// synchronous retry loop — which cannot let the pending write settle — into a removal failure.
+	for (const root of roots.splice(0)) {
+		await rm(root, { recursive: true, force: true, maxRetries: 20, retryDelay: 20 });
+	}
 });
 
 describe("a report's own pair is the only thing a sample may come from (P66)", () => {

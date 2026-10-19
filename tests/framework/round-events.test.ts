@@ -16,8 +16,9 @@
 import { describe, expect, test } from "bun:test";
 import { CODEBASE_TOOLS } from "../../extensions/codebase-tools/definition";
 import type { OwnerReference } from "../../framework/interface/state";
-import type { CommandDelivery } from "../../framework/core/protocol";
-import { type CommandImplementations, type ExtensionDefinition, defineExtension } from "../../framework/public";
+import type { CommandDelivery } from "../../framework/interface/command";
+import type { CommandImplementations } from "../../framework/interface/command";
+import { type ExtensionDefinition, defineExtension } from "../../framework/interface";
 import { type PortDouble, portDouble } from "./support/harness-port-double";
 
 /** The owner a delivery acts on unless one is named. */

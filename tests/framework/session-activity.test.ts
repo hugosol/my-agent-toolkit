@@ -38,7 +38,7 @@ import type {
 	SubscriptionGroup,
 } from "../../framework/interface/session";
 import type { OwnerReference } from "../../framework/interface/state";
-import { type ExtensionDefinition, defineExtension } from "../../framework/public";
+import { type ExtensionDefinition, defineExtension } from "../../framework/interface";
 import { type PortDouble, portDouble } from "./support/harness-port-double";
 
 /** The definition under test: no command and no declaration — the activity axis is a subscription. */

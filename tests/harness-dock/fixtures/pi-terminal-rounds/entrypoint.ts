@@ -17,7 +17,7 @@
  * behavior of its own.
  */
 import { piAdapter } from "../../../../adapters/pi";
-import type { ExtensionDefinition } from "../../../../framework/public";
+import type { ExtensionDefinition } from "../../../../framework/interface";
 import type { SemanticEventHandlers } from "../../../../framework/interface/session";
 import { PI_TERMINAL_ROUNDS_CHILD_ENTRY_ENV, PI_TERMINAL_ROUNDS_PREFIX } from "./prefix";
 

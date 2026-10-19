@@ -16,7 +16,7 @@
  */
 import { describe, expect, test } from "bun:test";
 import { CODEBASE_TOOLS } from "../../extensions/codebase-tools/definition";
-import type { CatalogPrice } from "../../framework/interface/host-facts";
+import type { CatalogPrice } from "../../framework/interface/provider";
 import type {
 	SessionFacts,
 	SubscriptionGroup,
@@ -25,8 +25,8 @@ import type {
 	TurnUsage,
 } from "../../framework/interface/session";
 import type { OwnerReference } from "../../framework/interface/state";
-import type { TurnSignal } from "../../framework/core/protocol";
-import type { ExtensionDefinition } from "../../framework/public";
+import type { TurnSignal } from "../../framework/runtime/port";
+import type { ExtensionDefinition } from "../../framework/interface";
 import { type PortDouble, portDouble } from "./support/harness-port-double";
 
 /** The main session's owner, as an adapter resolves it. */

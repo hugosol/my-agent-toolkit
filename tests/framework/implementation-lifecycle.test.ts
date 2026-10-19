@@ -17,10 +17,11 @@ import type {
 	OmpSessionEventType,
 } from "../../adapters/omp";
 import * as frameworkOmp from "../../adapters/omp";
-import type { ImplementationContext } from "../../framework/core/assembly";
+import type { ImplementationContext, InitializationDelivery } from "../../framework/interface/details/implementation";
 import type { SessionEvent, SessionStartReason } from "../../framework/interface/session";
 import type { OwnerReference } from "../../framework/interface/state";
-import { type ExtensionDefinition, defineExtension } from "../../framework/public";
+import type { SubagentIntegration } from "../../framework/interface/subagent";
+import { type ExtensionDefinition, defineExtension } from "../../framework/interface";
 import { portDouble } from "./support/harness-port-double";
 
 /** The owner every delivery in this suite acts on unless one is named. */
@@ -62,6 +63,31 @@ describe("the factory is called with the validated configuration, before anythin
 		expect(bound.bound).toBe(true);
 		expect(seen).toHaveLength(1);
 		expect(seen[0]?.config).toEqual({ greeting: "hello" });
+		// The actual context the framework built: the validated configuration and the Session
+		// capability, with no grouped provider member or builder added beside them.
+		expect(Object.keys(seen[0] ?? {}).sort()).toEqual(["config", "session"]);
+	});
+
+	test("the factory context carries the provider facts under their own names, without a grouped provider member", () => {
+		const seen: ImplementationContext[] = [];
+		const modelPrices = { priceOf: () => undefined };
+		const providerAccess = { resolve: async () => undefined };
+		const double = portDouble({ modelPrices, providerAccess });
+		const bound = double.bind(probe("factory-facts"), {
+			config: reading("greeting: hello\n"),
+			factory: context => {
+				seen.push(context);
+				return {};
+			},
+		});
+
+		expect(bound.bound).toBe(true);
+		// The same queries the adapter mapped, handed over as themselves rather than wrapped in a
+		// `provider` object: an extension reads `context.modelPrices` and `context.providerAccess`.
+		expect(seen[0]?.modelPrices).toBe(modelPrices);
+		expect(seen[0]?.providerAccess).toBe(providerAccess);
+		expect(Object.keys(seen[0] ?? {}).sort()).toEqual(["config", "modelPrices", "providerAccess", "session"]);
+		expect("provider" in (seen[0] ?? {})).toBe(false);
 	});
 
 	test("a definition whose configuration is illegal never reaches a factory", () => {
@@ -117,6 +143,40 @@ describe("the one-time initialization runs at the owner session node, and the fi
 		await Promise.resolve();
 
 		expect(owners).toEqual([OWNER.key]);
+	});
+
+	test("the initialization delivery carries the approved surface and no internal transport", async () => {
+		const deliveries: InitializationDelivery[] = [];
+		const double = portDouble();
+		double.bind(probe("init-surface"), {
+			config: reading("greeting: hello\n"),
+			factory: () => ({
+				initialize: delivery => {
+					deliveries.push(delivery);
+					delivery.feedback.notify("info", "initialized");
+				},
+			}),
+		});
+
+		const boundary = double.deliverSession(OWNER, { event: start(), hasUI: false });
+		await Promise.resolve();
+
+		// The actual delivery the framework constructed, not a type: it is exactly the four approved
+		// members, and each is usable as the extension's own. A fifth member — the marker area
+		// transport, an internal engine or anything else — would be visible here.
+		expect(deliveries).toHaveLength(1);
+		expect(Object.keys(deliveries[0]!).sort()).toEqual(["feedback", "hasUI", "owner", "subagents"]);
+		expect(deliveries[0]!.owner).toEqual(OWNER);
+		expect(deliveries[0]!.hasUI).toBe(false);
+		expect(deliveries[0]!.subagents).toEqual({ mode: "none" });
+		expect(boundary.feedback).toEqual([{ level: "info", message: "initialized" }]);
+
+		const keys = (value: unknown): string[] => {
+			if (typeof value !== "object" || value === null) return [];
+			return Object.entries(value).flatMap(([key, child]) => [key, ...keys(child)]);
+		};
+		expect(keys(deliveries[0])).not.toContain("markers");
+		expect(keys(deliveries[0])).not.toContain("publishMarkers");
 	});
 
 	test("the first model request is handed the contribution only after the initialization settled", async () => {
@@ -523,6 +583,25 @@ describe("one implementation serves every binding of one adapter (P56)", () => {
 		expect(first.bound).toBe(true);
 		expect(second.bound).toBe(true);
 		expect(built).toBe(1);
+	});
+
+	test("the OMP initialization is handed the adapter's settled subagent integration", async () => {
+		const seen: SubagentIntegration[] = [];
+		const adapter = frameworkOmp.ompAdapter(
+			defineExtension({ id: "adapter-subagents", displayName: "adapterSubagents" }),
+			{ factory: () => ({ initialize: delivery => {
+				seen.push(delivery.subagents);
+			} }) },
+		);
+
+		// The real adapter's answer, not a double's: OMP integrates the subagent observations
+		// itself, so the extension is told that once, at its initialization.
+		const session = loadedSession("18.5.0", "session-subagents", "unused-command");
+		expect(adapter(session.api).bound).toBe(true);
+		session.start();
+		await Promise.resolve();
+
+		expect(seen).toEqual([{ mode: "subagents" }]);
 	});
 
 	test("a binding after the instance's disposal builds and initializes a fresh one", async () => {

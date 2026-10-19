@@ -104,26 +104,17 @@ describe("shared source imports no harness types (C1)", () => {
 		expect(naming.filter(file => !ESCAPE_HATCH.some(pattern => pattern.test(file)))).toEqual([]);
 	});
 
-	test("extensions reach Session only through its capability interface", () => {
-		// These are the remaining authoring and non-Session capability entries, not a
-		// blanket exemption for core/modules. Remove each entry when that capability migrates.
-		const legacyEntries: Readonly<Record<string, true>> = {
-			"framework/public": true,
-			"framework/core/assembly": true,
-			"framework/core/definition": true,
-			"framework/core/config": true,
-			"framework/core/integration": true,
-			"framework/modules/http": true,
-			"framework/modules/files": true,
-		};
+	test("extensions reach framework contracts only through their capability interfaces", () => {
+		// Every capability and general module has its own interface entry now, so an extension that
+		// resolves a `framework/` specifier outside `framework/interface` is reaching an internal
+		// engine, a native mapping or the old mixed entry. There is deliberately no exemption list.
 		const crossings: string[] = [];
 		for (const file of sourceFiles.filter(file => file.startsWith("extensions/"))) {
 			for (const specifier of specifiersOf(file)) {
 				if (!specifier.startsWith(".")) continue;
 				const target = path.posix.normalize(path.posix.join(path.posix.dirname(file), specifier))
 					.replace(/\.(?:[cm]?ts|js)$/, "").replace(/\/index$/, "");
-				if (target.startsWith("framework/") && target !== "framework/interface" && !target.startsWith("framework/interface/")
-					&& legacyEntries[target] !== true) {
+				if (target.startsWith("framework/") && target !== "framework/interface" && !target.startsWith("framework/interface/")) {
 					crossings.push(`${file} bypasses the capability interface through "${specifier}"`);
 				}
 			}
@@ -145,19 +136,483 @@ describe("shared source imports no harness types (C1)", () => {
 		expect(crossings).toEqual([]);
 	});
 
+	test("Feedback's declarations are published only by the Feedback capability interface", () => {
+		// FeedbackLevel and FeedbackTransport are the whole extension-facing feedback contract. A
+		// declaration or an export block naming either elsewhere would give the capability a second
+		// owner (or a compatibility copy), which type checking alone cannot see. The framework's
+		// internal NoticeTransport stays outside it by design.
+		const canonical = "framework/interface/feedback/index.ts";
+		const owned = ["FeedbackLevel", "FeedbackTransport"] as const;
+		const canonicalSource = readFileSync(path.join(REPO_ROOT, canonical), "utf8");
+		const declaredEverywhere = (source: string): string[] =>
+			[...source.matchAll(/\bexport\s+(?:type|interface|const|class|function)\s+([A-Za-z_$][\w$]*)/g)]
+				.map(match => match[1]!);
+		const exportedInBlocks = (source: string): string[] =>
+			[...source.matchAll(/\bexport\s+(?:type\s+)?\{([^}]*)\}/g)]
+				.flatMap(match => match[1]!.split(",").map(entry => entry.trim().split(/\s+as\s+/)[0]!.trim()));
+
+		const canonicalNames = [...declaredEverywhere(canonicalSource), ...exportedInBlocks(canonicalSource)];
+		for (const name of owned) {
+			expect(canonicalNames.includes(name)).toBe(true);
+		}
+
+		const crossings: string[] = [];
+		for (const file of sourceFiles.filter(file => file !== canonical)) {
+			const source = readFileSync(path.join(REPO_ROOT, file), "utf8");
+			for (const name of owned) {
+				if (declaredEverywhere(source).includes(name)) {
+					crossings.push(`${file} declares ${name} outside the Feedback capability interface`);
+				}
+				if (exportedInBlocks(source).includes(name)) {
+					crossings.push(`${file} exports ${name} outside the Feedback capability interface`);
+				}
+			}
+			for (const match of source.matchAll(/\bexport\s+\*\s*(?:as\s+\w+\s*)?from\s*["']([^"']+)["']/g)) {
+				if (resolvesInto(file, match[1]!, [/^framework\/interface\/feedback(?:\/|\.|$)/])) {
+					crossings.push(`${file} re-exports the Feedback capability through "${match[1]}"`);
+				}
+			}
+		}
+		expect(crossings).toEqual([]);
+	});
+
+	test("State's declarations are published only by the State capability interface", () => {
+		// The capability interface is the one canonical source for these names. A declaration or
+		// an export block naming one of them anywhere else would give the capability a second
+		// owner (or a compatibility copy), which type checking alone cannot see. As with the other
+		// checks in this suite, this is a lexical alarm, not a proof.
+		const canonical = "framework/interface/state/index.ts";
+		const owned = [
+			"StateDeclaration",
+			"StatePersistence",
+			"StateInheritance",
+			"OwnerReference",
+			"DeclaredValueSeam",
+			"OwnerCapabilityHandle",
+		] as const;
+		const canonicalSource = readFileSync(path.join(REPO_ROOT, canonical), "utf8");
+		const declaredEverywhere = (source: string): string[] =>
+			[...source.matchAll(/\bexport\s+(?:type|interface|const|class|function)\s+([A-Za-z_$][\w$]*)/g)]
+				.map(match => match[1]!);
+		const exportedInBlocks = (source: string): string[] =>
+			[...source.matchAll(/\bexport\s+(?:type\s+)?\{([^}]*)\}/g)]
+				.flatMap(match => match[1]!.split(",").map(entry => entry.trim().split(/\s+as\s+/)[0]!.trim()));
+
+		const canonicalNames = [...declaredEverywhere(canonicalSource), ...exportedInBlocks(canonicalSource)];
+		for (const name of owned) {
+			expect(canonicalNames.includes(name)).toBe(true);
+		}
+
+		const crossings: string[] = [];
+		for (const file of sourceFiles.filter(file => file !== canonical)) {
+			const source = readFileSync(path.join(REPO_ROOT, file), "utf8");
+			for (const name of owned) {
+				if (declaredEverywhere(source).includes(name)) {
+					crossings.push(`${file} declares ${name} outside the State capability interface`);
+				}
+				if (exportedInBlocks(source).includes(name)) {
+					crossings.push(`${file} exports ${name} outside the State capability interface`);
+				}
+			}
+			for (const match of source.matchAll(/\bexport\s+\*\s*(?:as\s+\w+\s*)?from\s*["']([^"']+)["']/g)) {
+				if (resolvesInto(file, match[1]!, [/^framework\/interface\/state(?:\/|\.|$)/])) {
+					crossings.push(`${file} re-exports the State capability through "${match[1]}"`);
+				}
+			}
+		}
+		expect(crossings).toEqual([]);
+	});
+
+	test("Provider's declarations are published only by the Provider capability interface", () => {
+		// CatalogPrice, CatalogPriceSource, ProviderHttpFacts, ProviderAccessFacts and ProviderAccess
+		// are the whole extension-facing Provider contract. A declaration or an export block naming
+		// one of them anywhere else would give the capability a second owner (or a compatibility
+		// copy), which type checking alone cannot see. The adapters map the native sources; their
+		// native registry, credential store and context stay outside this contract.
+		const canonical = "framework/interface/provider/index.ts";
+		const owned = [
+			"CatalogPrice",
+			"CatalogPriceSource",
+			"ProviderHttpFacts",
+			"ProviderAccessFacts",
+			"ProviderAccess",
+		] as const;
+		const canonicalSource = readFileSync(path.join(REPO_ROOT, canonical), "utf8");
+		const declaredEverywhere = (source: string): string[] =>
+			[...source.matchAll(/\bexport\s+(?:type|interface|const|class|function)\s+([A-Za-z_$][\w$]*)/g)]
+				.map(match => match[1]!);
+		const exportedInBlocks = (source: string): string[] =>
+			[...source.matchAll(/\bexport\s+(?:type\s+)?\{([^}]*)\}/g)]
+				.flatMap(match => match[1]!.split(",").map(entry => entry.trim().replace(/^type\s+/, "").split(/\s+as\s+/)[0]!.trim()));
+
+		const canonicalNames = [...declaredEverywhere(canonicalSource), ...exportedInBlocks(canonicalSource)];
+		for (const name of owned) {
+			expect(canonicalNames.includes(name)).toBe(true);
+		}
+
+		const crossings: string[] = [];
+		for (const file of sourceFiles.filter(file => file !== canonical)) {
+			const source = readFileSync(path.join(REPO_ROOT, file), "utf8");
+			for (const name of owned) {
+				if (declaredEverywhere(source).includes(name)) {
+					crossings.push(`${file} declares ${name} outside the Provider capability interface`);
+				}
+				if (exportedInBlocks(source).includes(name)) {
+					crossings.push(`${file} exports ${name} outside the Provider capability interface`);
+				}
+			}
+			for (const match of source.matchAll(/\bexport\s+\*\s*(?:as\s+\w+\s*)?from\s*["']([^"']+)["']/g)) {
+				if (resolvesInto(file, match[1]!, [/^framework\/interface\/provider(?:\/|\.|$)/])) {
+					crossings.push(`${file} re-exports the Provider capability through "${match[1]}"`);
+				}
+			}
+		}
+		expect(crossings).toEqual([]);
+	});
+
+	test("Prompt and Marker declarations are published only by their capability interfaces", () => {
+		// Each capability owns exactly its approved declarations: Prompt publishes the slot
+		// declaration and its strategy vocabulary, Marker publishes the text declaration. The
+		// bound sets, defaults, selection tools and runtime deliveries deliberately stay internal,
+		// so a declaration or an export block naming one of these names anywhere else would give
+		// the capability a second owner (or a compatibility copy).
+		const interfaces = [
+			{ file: "framework/interface/prompt.ts", owns: ["PromptDeclaration", "PromptStrategy"] },
+			{ file: "framework/interface/marker.ts", owns: ["MarkerDeclaration"] },
+		] as const;
+		const interfaceFiles: Readonly<Record<string, true>> = Object.fromEntries(
+			interfaces.map(entry => [entry.file, true]),
+		);
+		const owned = interfaces.flatMap(entry => entry.owns);
+		const declaredEverywhere = (source: string): string[] =>
+			[...source.matchAll(/\bexport\s+(?:type|interface|const|class|function)\s+([A-Za-z_$][\w$]*)/g)]
+				.map(match => match[1]!);
+		const exportedInBlocks = (source: string): string[] =>
+			[...source.matchAll(/\bexport\s+(?:type\s+)?\{([^}]*)\}/g)]
+				.flatMap(match =>
+					match[1]!.split(",").map(entry => entry.trim().replace(/^type\s+/, "").split(/\s+as\s+/)[0]!.trim()),
+				);
+
+		for (const { file, owns } of interfaces) {
+			const source = readFileSync(path.join(REPO_ROOT, file), "utf8");
+			expect(declaredEverywhere(source).sort()).toEqual([...owns].sort());
+		}
+
+		const crossings: string[] = [];
+		for (const file of sourceFiles.filter(file => interfaceFiles[file] !== true)) {
+			const source = readFileSync(path.join(REPO_ROOT, file), "utf8");
+			for (const name of owned) {
+				if (declaredEverywhere(source).includes(name)) {
+					crossings.push(`${file} declares ${name} outside its capability interface`);
+				}
+				if (exportedInBlocks(source).includes(name)) {
+					crossings.push(`${file} exports ${name} outside its capability interface`);
+				}
+			}
+			for (const match of source.matchAll(/\bexport\s+\*\s*(?:as\s+\w+\s*)?from\s*["']([^"']+)["']/g)) {
+				if (resolvesInto(file, match[1]!, [/^framework\/interface\/prompt(?:\.|$)/, /^framework\/interface\/marker(?:\.|$)/])) {
+					crossings.push(`${file} re-exports a Prompt or Marker capability through "${match[1]}"`);
+				}
+			}
+		}
+		expect(crossings).toEqual([]);
+	});
+
+	test("Command declarations are published only by the Command capability interface", () => {
+		// The Command entry owns exactly the approved extension-facing declarations, implementation
+		// contracts and deliveries. The internal invocation, bound command, parsing/help tooling and
+		// the unrecognized-path directive stay out of it, and the old mixed entry re-publishes none
+		// of them. As with the other checks in this suite, this is a lexical alarm, not a proof.
+		const canonical = [
+			"framework/interface/command/index.ts",
+			"framework/interface/command/details/definition.ts",
+			"framework/interface/command/details/implementation.ts",
+		];
+		const owned = [
+			"CommandToggleDeclaration",
+			"CommandDirectedDeclaration",
+			"CommandActionsDeclaration",
+			"CommandDeclaration",
+			"ControlKind",
+			"DirectedCommandImplementation",
+			"CommandAction",
+			"ActionsCommandImplementation",
+			"CommandImplementation",
+			"CommandImplementations",
+			"CommandDelivery",
+			"ActionDelivery",
+			"RecognizedDirective",
+			"CanAcceptInput",
+		] as const;
+		const internal = [
+			"CommandInvocation",
+			"BoundCommand",
+			"DirectedDirective",
+			"parseDirectedArgument",
+			"actionsHelp",
+			"normalizeCommandArgument",
+		] as const;
+		const declaredEverywhere = (source: string): string[] =>
+			[...source.matchAll(/\bexport\s+(?:type|interface|const|class|function)\s+([A-Za-z_$][\w$]*)/g)]
+				.map(match => match[1]!);
+		const exportedInBlocks = (source: string): string[] =>
+			[...source.matchAll(/\bexport\s+(?:type\s+)?\{([^}]*)\}/g)]
+				.flatMap(match => match[1]!.split(",").map(entry => entry.trim().replace(/^type\s+/, "").split(/\s+as\s+/)[0]!.trim()));
+
+		const canonicalNames = canonical.flatMap(file => {
+			const source = readFileSync(path.join(REPO_ROOT, file), "utf8");
+			return [...declaredEverywhere(source), ...exportedInBlocks(source)];
+		});
+		for (const name of owned) {
+			expect(canonicalNames).toContain(name);
+		}
+
+		const crossings: string[] = [];
+		for (const file of sourceFiles.filter(file => !canonical.includes(file))) {
+			const source = readFileSync(path.join(REPO_ROOT, file), "utf8");
+			for (const name of owned) {
+				if (declaredEverywhere(source).includes(name)) {
+					crossings.push(`${file} declares ${name} outside the Command capability interface`);
+				}
+				if (exportedInBlocks(source).includes(name)) {
+					crossings.push(`${file} exports ${name} outside the Command capability interface`);
+				}
+			}
+			for (const match of source.matchAll(/\bexport\s+\*\s*(?:as\s+\w+\s*)?from\s*["']([^"']+)["']/g)) {
+				if (resolvesInto(file, match[1]!, [/^framework\/interface\/command(?:\/|\.|$)/])) {
+					crossings.push(`${file} re-exports the Command capability through "${match[1]}"`);
+				}
+			}
+		}
+		expect(crossings).toEqual([]);
+
+		// The framework's invocation/binding/parsing vocabulary is internal: no interface file may
+		// publish it, and the old mixed entry may not hand it out either.
+		for (const file of sourceFiles.filter(file => file.startsWith("framework/interface/"))) {
+			const source = readFileSync(path.join(REPO_ROOT, file), "utf8");
+			for (const name of internal) {
+				expect(declaredEverywhere(source)).not.toContain(name);
+				expect(exportedInBlocks(source)).not.toContain(name);
+			}
+		}
+	});
+
+	test("Authoring declarations are published only by the root authoring interface", () => {
+		// The root entry composes the whole definition/implementation contract from the two details
+		// files it owns. A declaration or an export block naming one of these anywhere else would
+		// give the authoring layer a second owner, which type checking alone cannot see. As with the
+		// other checks in this suite, this is a lexical alarm, not a proof.
+		const canonical = [
+			"framework/interface/index.ts",
+			"framework/interface/details/definition.ts",
+			"framework/interface/details/implementation.ts",
+		];
+		const owned = [
+			"ExtensionDefinition",
+			"ExtensionConfigDeclaration",
+			"ConfigFieldType",
+			"ExtensionAssembly",
+			"ExtensionFactory",
+			"ImplementationContext",
+			"ExtensionImplementation",
+			"InitializationDelivery",
+			"DeclarableRequiredSemantic",
+			"defineExtension",
+		] as const;
+		const declaredEverywhere = (source: string): string[] =>
+			[...source.matchAll(/\bexport\s+(?:type|interface|const|class|function)\s+([A-Za-z_$][\w$]*)/g)]
+				.map(match => match[1]!);
+		const exportedInBlocks = (source: string): string[] =>
+			[...source.matchAll(/\bexport\s+(?:type\s+)?\{([^}]*)\}/g)]
+				.flatMap(match => match[1]!.split(",").map(entry => entry.trim().replace(/^type\s+/, "").split(/\s+as\s+/)[0]!.trim()));
+
+		const canonicalNames = canonical.flatMap(file => {
+			const source = readFileSync(path.join(REPO_ROOT, file), "utf8");
+			return [...declaredEverywhere(source), ...exportedInBlocks(source)];
+		});
+		for (const name of owned) {
+			expect(canonicalNames).toContain(name);
+		}
+
+		const crossings: string[] = [];
+		for (const file of sourceFiles.filter(file => !canonical.includes(file))) {
+			const source = readFileSync(path.join(REPO_ROOT, file), "utf8");
+			for (const name of owned) {
+				if (declaredEverywhere(source).includes(name)) {
+					crossings.push(`${file} declares ${name} outside the root authoring interface`);
+				}
+				if (exportedInBlocks(source).includes(name)) {
+					crossings.push(`${file} exports ${name} outside the root authoring interface`);
+				}
+			}
+			for (const match of source.matchAll(/\bexport\s+\*\s*(?:as\s+\w+\s*)?from\s*["']([^"']+)["']/g)) {
+				if (resolvesInto(file, match[1]!, [/^framework\/interface(?:\/details)?(?:\/|\.|$)/])) {
+					crossings.push(`${file} re-publishes the authoring contract through "${match[1]}"`);
+				}
+			}
+		}
+		expect(crossings).toEqual([]);
+	});
+
+	test("the root authoring entry composes its own contract and no capability", () => {
+		// The root entry either declares or re-exports exactly the authoring names above. A capability
+		// declaration named here — even re-exported unchanged — would make the root a second path to
+		// that capability instead of organising only the extension's definition/implementation form.
+		const source = readFileSync(path.join(REPO_ROOT, "framework/interface/index.ts"), "utf8");
+		const declared = [...source.matchAll(/\bexport\s+(?:type|interface|const|class|function)\s+([A-Za-z_$][\w$]*)/g)]
+			.map(match => match[1]!);
+		const reexported = [...source.matchAll(/\bexport\s+(?:type\s+)?\{([^}]*)\}/g)]
+			.flatMap(match => match[1]!.split(",").map(entry => entry.trim().replace(/^type\s+/, "").split(/\s+as\s+/)[0]!.trim()))
+			.filter(name => name.length > 0);
+		expect([...declared, ...reexported].sort()).toEqual([
+			"ConfigFieldType",
+			"DeclarableRequiredSemantic",
+			"ExtensionAssembly",
+			"ExtensionConfigDeclaration",
+			"ExtensionDefinition",
+			"ExtensionFactory",
+			"ExtensionImplementation",
+			"ImplementationContext",
+			"InitializationDelivery",
+			"defineExtension",
+		].sort());
+
+		const capabilityNames = [
+			"StateDeclaration",
+			"PromptDeclaration",
+			"MarkerDeclaration",
+			"FeedbackLevel",
+			"FeedbackTransport",
+			"CatalogPrice",
+			"ProviderAccess",
+			"SubagentIntegration",
+			"SubagentCapability",
+			"CommandDeclaration",
+			"CommandDelivery",
+		];
+		for (const name of capabilityNames) {
+			expect([...declared, ...reexported]).not.toContain(name);
+		}
+	});
+
+	test("Subagent declarations are published only by the Subagent capability interface", () => {
+		// The initialization integration result and the requirement declaration are the whole
+		// extension-facing Subagent contract. The execution mode is a harness author's fact: it stays
+		// internal, so no interface file may name it.
+		const canonical = "framework/interface/subagent.ts";
+		const owned = ["SubagentIntegration", "SubagentIntegrationFailure", "SubagentCapability"] as const;
+		const declaredEverywhere = (source: string): string[] =>
+			[...source.matchAll(/\bexport\s+(?:type|interface|const|class|function)\s+([A-Za-z_$][\w$]*)/g)]
+				.map(match => match[1]!);
+		const exportedInBlocks = (source: string): string[] =>
+			[...source.matchAll(/\bexport\s+(?:type\s+)?\{([^}]*)\}/g)]
+				.flatMap(match => match[1]!.split(",").map(entry => entry.trim().replace(/^type\s+/, "").split(/\s+as\s+/)[0]!.trim()));
+
+		const canonicalNames = [...declaredEverywhere(readFileSync(path.join(REPO_ROOT, canonical), "utf8")), ...exportedInBlocks(readFileSync(path.join(REPO_ROOT, canonical), "utf8"))];
+		for (const name of owned) {
+			expect(canonicalNames).toContain(name);
+		}
+
+		const crossings: string[] = [];
+		for (const file of sourceFiles.filter(file => file !== canonical)) {
+			const source = readFileSync(path.join(REPO_ROOT, file), "utf8");
+			for (const name of owned) {
+				if (declaredEverywhere(source).includes(name)) {
+					crossings.push(`${file} declares ${name} outside the Subagent capability interface`);
+				}
+				if (exportedInBlocks(source).includes(name)) {
+					crossings.push(`${file} exports ${name} outside the Subagent capability interface`);
+				}
+			}
+			for (const match of source.matchAll(/\bexport\s+\*\s*(?:as\s+\w+\s*)?from\s*["']([^"']+)["']/g)) {
+				if (resolvesInto(file, match[1]!, [/^framework\/interface\/subagent(?:\.|$)/])) {
+					crossings.push(`${file} re-exports the Subagent capability through "${match[1]}"`);
+				}
+			}
+		}
+		expect(crossings).toEqual([]);
+
+		for (const file of sourceFiles.filter(file => file.startsWith("framework/interface/"))) {
+			const source = readFileSync(path.join(REPO_ROOT, file), "utf8");
+			expect(declaredEverywhere(source)).not.toContain("SubagentExecutionMode");
+			expect(exportedInBlocks(source)).not.toContain("SubagentExecutionMode");
+		}
+	});
+
+	test("the authoring entry publishes no Prompt or Marker runtime transport", () => {
+		// RunDelivery, PromptContribution and MarkerTransport are framework/adapter internals: an
+		// extension declares a slot or a marker text and never names the branch facts, the
+		// contribution result or the area transport. The bound strategy list is a framework
+		// validation set, not part of the extension-facing declaration.
+		const source = readFileSync(path.join(REPO_ROOT, "framework/interface/index.ts"), "utf8");
+		const exported = [
+			...source.matchAll(/\bexport\s+(?:type\s+)?\{([^}]*)\}/g),
+		].flatMap(match =>
+			match[1]!.split(",").map(entry => entry.trim().replace(/^type\s+/, "").split(/\s+as\s+/)[0]!.trim()),
+		);
+		for (const name of ["RunDelivery", "PromptContribution", "MarkerTransport", "BOUND_PROMPT_STRATEGIES"]) {
+			expect(exported).not.toContain(name);
+		}
+	});
+
 	test("capability interfaces depend on no framework implementation or native mapping", () => {
+		// The approved runtime connections are defineExtension, request, updateFile and getConfig.
+		// The root authoring entry owns defineExtension itself and imports no implementation; the
+		// general HTTP, safe-file and configuration entries re-export their implementation's one
+		// published call. Each connection is exact — this file and this specifier — so the exception
+		// cannot widen into a general import of the implementation tree.
+		const runtimeConnections: Readonly<Record<string, readonly string[]>> = {
+			"framework/interface/general/http.ts": ["../../modules/http"],
+			"framework/interface/general/files.ts": ["../../modules/files"],
+			"framework/interface/general/config.ts": ["../../core/config"],
+		};
 		const crossings: string[] = [];
 		for (const file of sourceFiles.filter(file => file.startsWith("framework/interface/"))) {
 			for (const specifier of specifiersOf(file)) {
 				const target = specifier.startsWith(".")
 					? path.posix.normalize(path.posix.join(path.posix.dirname(file), specifier))
 					: specifier;
-				if (!target.startsWith("framework/interface/")) {
+				if (!target.startsWith("framework/interface/") && runtimeConnections[file]?.includes(specifier) !== true) {
 					crossings.push(`${file} imports implementation through "${specifier}"`);
 				}
 			}
 		}
 		expect(crossings).toEqual([]);
+	});
+
+	test("the General configuration entry publishes only getConfig and ExtensionConfigError", () => {
+		// The entry is the General module's whole extension-facing surface. `ConfigLoadError`, the
+		// reader/parser/source seam, `readConfig`, the shared-configuration reader and the validation
+		// helpers stay internal: exporting any of them here would hand an extension the loading
+		// machinery instead of the values its binding already validated. As with the other checks in
+		// this suite, this is a lexical alarm, not a proof.
+		const entry = "framework/interface/general/config.ts";
+		const source = readFileSync(path.join(REPO_ROOT, entry), "utf8");
+		const declared = [...source.matchAll(/\bexport\s+(?:type|interface|const|class|function)\s+([A-Za-z_$][\w$]*)/g)]
+			.map(match => match[1]!);
+		const reexported = [...source.matchAll(/\bexport\s+(?:type\s+)?\{([^}]*)\}/g)]
+			.flatMap(match =>
+				match[1]!.split(",").map(item => item.trim().replace(/^type\s+/, "").split(/\s+as\s+/)[0]!.trim()),
+			)
+			.filter(name => name.length > 0);
+		const exported = [...declared, ...reexported];
+		expect(exported.sort()).toEqual(["ExtensionConfigError", "getConfig"]);
+
+		for (const name of [
+			"ConfigLoadError",
+			"ConfigReader",
+			"ConfigParser",
+			"ConfigSource",
+			"ConfigReadOptions",
+			"readConfig",
+			"readConfigDocument",
+			"findConfigFailure",
+			"describeValue",
+			"isScheduledWait",
+			"SCHEDULED_WAIT_TEXT",
+		]) {
+			expect(exported).not.toContain(name);
+		}
 	});
 
 	/**

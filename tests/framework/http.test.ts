@@ -2,11 +2,12 @@
  * The framework's general HTTP module (P54, P55): one public `request` that states its own
  * path and its own wait, and returns the platform's own response.
  *
- * The seam under test is S3, the framework's public HTTP Interface: the call `request` makes
- * through `framework/modules/http.ts`, observed as the exact outbound call it hands the
- * platform and the exact value it returns. No network is used: the platform call is the
- * module's injectable seam, so every case observes the request the module built and answers
- * with the response it wants — a real answer, a non-2xx answer, or a failure. The shared
+ * The seam under test is S3, the framework's public HTTP interface: the call `request` makes
+ * through `framework/modules/http.ts` behind `framework/interface/general/http.ts`, observed as
+ * the exact outbound call it hands the platform and the exact value it returns. No network is
+ * used: the platform call is the module's injectable seam, so every case observes the request the
+ * module built and answers with the response it wants — a real answer, a non-2xx answer, or a
+ * failure. The shared
  * configuration file is driven the same way (its text through the same reader the
  * configuration module takes), except where the case's point is the real file: a path with no
  * file at all, which is what an unconfigured process has.
@@ -21,9 +22,9 @@ import { describe, expect, test } from "bun:test";
 import * as path from "node:path";
 import { tmpdir } from "node:os";
 import type { ConfigReader } from "../../framework/core/config";
+import { HttpConfigurationError } from "../../framework/interface/general/http";
 import {
 	createHttpModule,
-	HttpConfigurationError,
 	type HttpModule,
 	type HttpModuleSeam,
 	type HttpTransport,

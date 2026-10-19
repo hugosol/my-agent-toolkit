@@ -50,12 +50,12 @@
  * document is read while this instance initializes, beside the consumption baseline, so a restart
  * continues the same measurement instead of re-anchoring on its first report.
  */
-import type { ExtensionImplementation, InitializationDelivery } from "../../../framework/core/assembly";
+import type { ExtensionImplementation, InitializationDelivery } from "../../../framework/interface/details/implementation";
 import type { FeedbackTransport } from "../../../framework/interface/feedback";
-import type { CatalogPriceSource, ProviderAccess } from "../../../framework/interface/host-facts";
+import type { CatalogPriceSource, ProviderAccess } from "../../../framework/interface/provider";
 import type { SemanticEventHandlers, SessionCapability } from "../../../framework/interface/session";
-import type { SubagentIntegration } from "../../../framework/public";
-import type { HttpRequestOptions } from "../../../framework/modules/http";
+import type { SubagentIntegration } from "../../../framework/interface/subagent";
+import type { HttpRequestOptions } from "../../../framework/interface/general/http";
 import { DEFAULT_CODEX_QUOTA_TTL_MS, type CodexQuotaFailure, createCodexQuota } from "./business/allowance/codex-quota";
 import { CodexEstimateStore } from "./business/allowance/codex-estimate-store";
 import {
@@ -83,6 +83,15 @@ import { resolveStorageRoot } from "./foundation/storage/storage-root";
  * nothing was done because this instance has already been cleaned up.
  */
 export type BaselineSyncOutcome = BaselineSync | { readonly kind: "closed" };
+
+/**
+ * Where a native receipt states its notice before this instance's initialization handed over the
+ * adapter's real channel.
+ *
+ * The harness attaches its native message hook before the first model request, but a receipt that
+ * somehow arrives earlier still has its time recorded; there is simply no operator channel yet.
+ */
+const SILENT_FEEDBACK: FeedbackTransport = { notify: () => {} };
 
 /**
  * The failure classifications of a provider request that really failed, as both provider modules
@@ -157,7 +166,7 @@ export interface ModelCostRuntimeInputs {
 	/**
 	 * The outbound HTTP call this extension's provider queries make.
 	 *
-	 * Omitted means the framework's public HTTP module (`framework/modules/http.ts`), which is what
+	 * Omitted means the framework's public HTTP interface (`framework/interface/general/http.ts`), which is what
 	 * production runs on; an explicit value is that same single-request call as a caller substitutes
 	 * it, so a permanent case can exercise the whole balance query — its address, its credential
 	 * header, its budget and its connection path — without reaching a provider.
@@ -241,8 +250,14 @@ export interface ModelCostRuntime {
 	 * After this instance's own cleanup nothing is read and nothing is adopted at all.
 	 */
 	synchronize(inputs?: { readonly feedback?: FeedbackTransport }): Promise<BaselineSyncOutcome>;
-	/** Record a terminal result received by a main session, using this process's receipt clock. */
-	subagentResultReceived(sessionId: string, feedback: FeedbackTransport): void | Promise<void>;
+	/**
+	 * Record a terminal result received by a main session, using this process's receipt clock.
+	 *
+	 * A native message hook has no framework delivery of its own, so a notice this receipt has to
+	 * state uses the feedback channel the framework handed this instance at initialization — the
+	 * adapter's actual operator output, never a second UI/stderr implementation.
+	 */
+	subagentResultReceived(sessionId: string): void | Promise<void>;
 }
 
 /**
@@ -491,10 +506,20 @@ export function createModelCostRuntime(inputs: ModelCostRuntimeInputs): ModelCos
 	 */
 	let rootSideStarted = false;
 
+	/**
+	 * The one operator feedback channel this process's native callbacks use.
+	 *
+	 * It is the channel the framework handed the implementation at initialization, mapped by the
+	 * selected adapter through its actual UI/stderr output. A native message hook has no delivery
+	 * of its own, so it reuses this one rather than constructing a second output implementation.
+	 */
+	let operatorFeedback: FeedbackTransport | undefined;
+
 	const initialize = async (delivery: InitializationDelivery): Promise<BaselineLoad> => {
 		// The root-side start is recorded before the preparation is awaited, because what the refresh
 		// above belongs to is this instance's own read of the account rather than the file's readiness.
 		rootSideStarted = true;
+		operatorFeedback = delivery.feedback;
 		const load = await prepare(delivery.feedback);
 		// The CLI's one prefetch of its two provider sources, started at the same instant rather than
 		// one after the other: the DeepSeek balance reading and the Codex allowance windows are asked
@@ -857,10 +882,11 @@ export function createModelCostRuntime(inputs: ModelCostRuntimeInputs): ModelCos
 		},
 		initialize,
 		synchronize,
-		subagentResultReceived(sessionId, feedback) {
+		subagentResultReceived(sessionId) {
 			if (closed) return;
 			// Capture receipt before preparation can wait on disk; it is not the later handler time.
 			const receivedAt = (inputs.now ?? Date.now)();
+			const feedback = operatorFeedback ?? SILENT_FEEDBACK;
 			return account(feedback, () => accounting.subagentResultReceived(sessionId, receivedAt, feedback));
 		},
 	};

@@ -203,7 +203,7 @@ export function sessionFactsOf(pi: OmpExtensionApi, ctx: OmpSessionContext, star
  * Whether one start delivery proves the session it announces *began* there, so that what this
  * context reports at that instant is what the session started on.
  *
- * Two host facts have to agree, because the harness's own start signal is the same one a fresh spawn
+ * Two provider facts have to agree, because the harness's own start signal is the same one a fresh spawn
  * and a session it merely reloaded both make. The transition has to be a creation rather than a way
  * into a session that already exists — a `resume` enters one, and a `fork` stands one up from
  * another session's entries, whose model and level are not this session's own beginning. And the

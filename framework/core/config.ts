@@ -26,7 +26,9 @@
 import { readFileSync } from "node:fs";
 import { isAbsolute, resolve } from "node:path";
 import { parse } from "yaml";
-import { BOUND_CONFIG_FIELD_TYPES, type ConfigFieldType, type ExtensionDefinition } from "./definition";
+import { BOUND_CONFIG_FIELD_TYPES } from "./definition";
+import type { ConfigFieldType, ExtensionDefinition } from "../interface/details/definition";
+import { ExtensionConfigError } from "../interface/general/config-contract";
 
 /** Reads the text of the configuration file at `path`; throws when it cannot be read. */
 export type ConfigReader = (path: string) => string;
@@ -81,22 +83,6 @@ export class ConfigLoadError extends Error {
 		super(detail);
 		this.name = "ConfigLoadError";
 		this.detail = detail;
-	}
-}
-
-/**
- * The misuse of the configuration API by a bound extension: shared logic asked for a
- * configuration its extension never declared, or for one whose values were never
- * validated in this process.
- *
- * It is a programming error, not a loading-time one — binding has already guaranteed that
- * a bound extension which declared a configuration has validated values — so it is an
- * escape hatch of its own and is never part of a binding failure.
- */
-export class ExtensionConfigError extends Error {
-	constructor(message: string) {
-		super(message);
-		this.name = "ExtensionConfigError";
 	}
 }
 

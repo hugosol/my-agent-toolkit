@@ -44,9 +44,9 @@
  * the request-time price through the extension's own catalog query rather than by knowing anything
  * about pricing.
  */
-import type { ExtensionDefinition } from "../core/definition";
+import type { ExtensionDefinition } from "../interface/details/definition";
 import type { FeedbackTransport } from "../interface/feedback";
-import type { CatalogPriceSource, ProviderHttpFacts } from "../interface/host-facts";
+import type { CatalogPriceSource, ProviderHttpFacts } from "../interface/provider";
 import type {
 	SessionFacts,
 	SubscriptionGroup,
@@ -57,7 +57,7 @@ import type {
 	TurnUsage,
 } from "../interface/session";
 import type { OwnerReference } from "../interface/state";
-import type { TurnSignal, TurnSignalFacts } from "../core/protocol";
+import type { TurnSignal, TurnSignalFacts } from "../runtime/port";
 import { dispatchToGroups } from "./subscriptions";
 import type { RoundLives } from "./round-events";
 

@@ -6,8 +6,8 @@
  * the native append. Both sides name the same entry through `piStateEntryType`, so the write path
  * cannot drift from the entry restoration reads.
  */
-import type { ExtensionDefinition } from "../../../../framework/core/definition";
-import type { StateValues } from "../../../../framework/core/protocol";
+import type { ExtensionDefinition } from "../../../../framework/interface/details/definition";
+import type { StateValues } from "../../../../framework/runtime/port";
 import type { PiExtensionApi } from "../../internal/native";
 import { piStateEntryType } from "./queries";
 

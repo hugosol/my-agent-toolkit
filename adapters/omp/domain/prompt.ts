@@ -8,7 +8,7 @@
  * request, so the promise is handed back rather than settled here.
  */
 import type { OwnerReference } from "../../../framework/interface/state";
-import type { HarnessPort, MarkerTransport, PromptContribution } from "../../../framework/core/protocol";
+import type { HarnessPort, MarkerTransport, PromptContribution } from "../../../framework/runtime/port";
 import { contributionIdentitiesOf } from "./session/queries";
 import type { OmpExtensionApi, OmpRunInitiationResult, OmpSessionContext } from "../internal/native";
 
