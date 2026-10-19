@@ -586,10 +586,40 @@ export interface CommandInvocation {
  *
  * An adapter supplies the invocation facts; the framework adds the seam and the capability, so
  * the seam is the framework's own read/write path to the extension's declared value and a
- * handler never reaches a State store. `persist` and `markers` stay on the delivery because the
- * seam publishes and records through them — a handler uses them only through the seam.
+ * handler never reaches a State store. The delivery is constructed from the approved members
+ * rather than spread from the invocation: the marker area transport stays internal, and a
+ * handler affects its own line only through the seam's managed write.
  */
-export interface CommandDelivery extends CommandInvocation {
+export interface CommandDelivery {
+	/** The argument text the user supplied after the command name; `""` when there is none. */
+	readonly args: string;
+	/**
+	 * The framework's idle query for the session this command runs in (see
+	 * {@link CanAcceptInput}).
+	 */
+	readonly canAcceptInput: CanAcceptInput;
+	/**
+	 * The provider the session this command runs in currently runs, or `undefined` when the
+	 * harness reports no current model (see {@link CommandInvocation.provider}).
+	 */
+	readonly provider: string | undefined;
+	/** The owner whose State this command acts on, as the adapter resolved it. */
+	readonly owner: OwnerReference;
+	/**
+	 * Records the extension's new State values in the owner's persistence medium.
+	 *
+	 * Best-effort by contract: the extension side cannot observe a persistence failure, the
+	 * declared value is already the in-memory current value, and a throw here must not change
+	 * the command's feedback.
+	 */
+	persist(values: StateValues): void;
+	/**
+	 * Publishes user-visible feedback outside model context, at the severity the notice
+	 * carries (see {@link FeedbackTransport}).
+	 */
+	readonly feedback: FeedbackTransport;
+	/** Whether the session this command runs in has a UI, as the adapter resolved it. */
+	readonly hasUI: boolean;
 	/** The seam through which this handler reads and writes the extension's declared value. */
 	readonly state: DeclaredValueSeam;
 	/**
@@ -610,9 +640,10 @@ export interface CommandDelivery extends CommandInvocation {
  * An `actions` command drives no declared State — it is a named business action, not a
  * transition of the extension's activation value — so its delivery is the invocation facts
  * alone: the argument that matched, the owner scope, the faithful `hasUI` fact, the idle query,
- * and the two effect transports. Neither the declared-value seam nor a retainable capability is
- * here, because there is no field for either to be scoped to, and the extension's own business
- * data is its own rather than framework State.
+ * the running provider and the feedback channel. Neither the declared-value seam nor a
+ * retainable capability is here, because there is no field for either to be scoped to, and the
+ * extension's own business data is its own rather than framework State. The marker area
+ * transport stays internal: an action has no line to manage.
  */
 export interface ActionDelivery {
 	/** The argument text the user supplied after the command name. */
@@ -630,8 +661,6 @@ export interface ActionDelivery {
 	readonly provider: string | undefined;
 	/** The unified extension feedback channel of this invocation. */
 	readonly feedback: FeedbackTransport;
-	/** The transport this invocation's marker updates are published through. */
-	readonly markers: MarkerTransport;
 }
 
 /** One command the framework bound from a definition, ready for native registration. */

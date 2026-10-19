@@ -83,6 +83,30 @@ describe("an action is selected by the whole argument, after trimming and ignori
 		expect(run.feedback).toEqual([]);
 	});
 
+	test("the action delivery carries no marker area transport", async () => {
+		const double = portDouble();
+		const deliveries: Array<Record<string, unknown>> = [];
+		double.bind(BUDGET, {
+			commands: recordingImplementation([], {
+				holiday: delivery => {
+					deliveries.push(delivery as unknown as Record<string, unknown>);
+				},
+			}),
+		});
+
+		await double.runToCompletion("budget", { args: "holiday" });
+
+		// The object the framework handed the selected action: the invocation's approved facts and
+		// its feedback channel, never the marker area transport the framework publishes through.
+		expect(deliveries).toHaveLength(1);
+		const keys = (value: unknown): string[] => {
+			if (typeof value !== "object" || value === null) return [];
+			return Object.entries(value).flatMap(([key, child]) => [key, ...keys(child)]);
+		};
+		expect(keys(deliveries[0])).not.toContain("markers");
+		expect(keys(deliveries[0])).not.toContain("publishMarkers");
+	});
+
 	test("surrounding whitespace and letter case are not part of the action name", async () => {
 		const double = portDouble();
 		const ran: string[] = [];

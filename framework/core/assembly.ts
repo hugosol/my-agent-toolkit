@@ -27,12 +27,7 @@ import type { CatalogPriceSource, ProviderAccess } from "../interface/host-facts
 import type { SessionCapability, SubscriptionGroup } from "../interface/session";
 import type { OwnerReference } from "../interface/state";
 import type { DeclarableRequiredSemantic } from "./requirements";
-import type {
-	ActionDelivery,
-	DirectedCommandImplementation,
-	MarkerTransport,
-	SubagentIntegration,
-} from "./protocol";
+import type { ActionDelivery, DirectedCommandImplementation, SubagentIntegration } from "./protocol";
 
 /**
  * One named action of an `actions` command.
@@ -123,9 +118,11 @@ export interface ImplementationContext {
  * The facts one one-time initialization runs with.
  *
  * It is a command-shaped delivery, not a session event: the initialization belongs to the owner
- * the node resolved, and what it produces — an immediate notice, a marker refresh, a retained
- * capability — travels through the same transports a command uses. The framework calls it once,
- * so the extension's own prefetch is stated once rather than repeated per session.
+ * the node resolved, and what it produces — an immediate notice or a retained capability — travels
+ * through the same transports a command uses. It carries no marker area transport: the extension's
+ * own line is rendered from its declared text and managed State, and the area stays the
+ * framework's. The framework calls it once, so the extension's own prefetch is stated once rather
+ * than repeated per session.
  */
 export interface InitializationDelivery {
 	/** The owner whose work the initialization serves, as the adapter resolved it. */
@@ -134,8 +131,6 @@ export interface InitializationDelivery {
 	readonly hasUI: boolean;
 	/** The unified extension feedback channel of this initialization. */
 	readonly feedback: FeedbackTransport;
-	/** The transport this initialization's marker updates are published through. */
-	readonly markers: MarkerTransport;
 	/**
 	 * How this entry's subagent integration stands on this harness, as the adapter settled it at
 	 * this node (see {@link SubagentIntegration}).

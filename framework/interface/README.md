@@ -16,9 +16,12 @@ Session's type dependencies live beside it: [State](state/index.ts) owns the dec
 (`StateDeclaration`, `StatePersistence`, `StateInheritance`), the owner reference and the managed
 operations (`DeclaredValueSeam`, `OwnerCapabilityHandle`); [Feedback](feedback/index.ts) owns the
 operator notice contract; and [Host facts](host-facts/index.ts) owns provider/catalog facts used by
-Turn. The definition entry refers to the State declarations but does not re-publish them: an
-extension that names one imports it here. This is not a claim that every capability's authoring and
-runtime entries have been migrated.
+Turn. The two declaration-only capabilities are their own entries: [Prompt](prompt.ts) owns
+`PromptDeclaration` and `PromptStrategy`, and [Marker](marker.ts) owns `MarkerDeclaration`; the
+selection tools, run facts, contribution result and area transport stay internal. The definition
+entry refers to all of these declarations but does not re-publish them: an extension that names one
+imports it here. This is not a claim that every capability's authoring and runtime entries have been
+migrated.
 
 Other capability authoring/runtime entries remain at `framework/public`, `core/assembly`,
 `core/definition`, `core/config`, `core/integration`, `modules/http` and `modules/files` as needed.

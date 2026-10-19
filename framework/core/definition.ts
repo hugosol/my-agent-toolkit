@@ -4,12 +4,15 @@
  * A definition is plain data: an extension declares its identity, its State, its
  * control commands, its injected-prompt slots and its status marker, and the
  * framework supplies the behavior behind each declaration. The State vocabulary itself is owned
- * by `framework/interface/state`; this module refers to it and keeps only the internal defaults,
- * bound sets and resolution helpers. There is no builder, no plugin bus and no raw handler —
- * everything an extension asks the framework to do is expressed here, and nothing in this module
- * names a harness.
+ * by `framework/interface/state`, the prompt slot and its strategy by `framework/interface/prompt`,
+ * and the marker text by `framework/interface/marker`; this module refers to them and keeps only
+ * the internal defaults, bound sets and resolution helpers. There is no builder, no plugin bus and
+ * no raw handler — everything an extension asks the framework to do is expressed here, and nothing
+ * in this module names a harness.
  */
 import type { SubagentCapability } from "./integration";
+import type { MarkerDeclaration } from "../interface/marker";
+import type { PromptDeclaration, PromptStrategy } from "../interface/prompt";
 import type { StateDeclaration, StateInheritance, StatePersistence } from "../interface/state";
 
 /** The State persistence a field declares when it declares none. */
@@ -140,23 +143,6 @@ export type ControlKind = CommandDeclaration["type"];
 export const BOUND_CONTROL_KINDS: readonly ControlKind[] = ["toggle", "directed", "actions"];
 
 /**
- * When an injected-prompt slot contributes. One rule per slot; a second rule for the
- * same slot is a configuration error, not a precedence question.
- */
-export type PromptStrategy = "first-enabled-run" | "every-enabled-run";
-
-/**
- * One injected-prompt slot: its identity (`tag`), its activation rule (`strategy`)
- * and its text. The slot's framework identity is `${definition.id}:${tag}`; visibility,
- * delivery position and retention are framework-owned and not parameters.
- */
-export interface PromptDeclaration {
-	readonly tag: string;
-	readonly strategy: PromptStrategy;
-	readonly content: string;
-}
-
-/**
  * The injected-prompt strategies this framework version honors.
  *
  * Both declared strategies are bound: `first-enabled-run` contributes while the current
@@ -165,11 +151,6 @@ export interface PromptDeclaration {
  * contributes nothing rather than being bound to a different rule.
  */
 export const BOUND_PROMPT_STRATEGIES: readonly PromptStrategy[] = ["first-enabled-run", "every-enabled-run"];
-
-/** The extension's status-marker text; placement, ordering and lifecycle are framework-owned. */
-export interface MarkerDeclaration {
-	readonly text: string;
-}
 
 /**
  * The value type one declared configuration key must match.
