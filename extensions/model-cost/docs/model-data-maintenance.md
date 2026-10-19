@@ -1,6 +1,6 @@
 # model-cost 的模型与价格数据：来源与维护
 
-本扩展的模型覆盖、谷价与峰价系数只存在于一个地方：[`shared-logic/model-data.ts`](../shared-logic/model-data.ts)（`MODEL_PRICING_DATA`）。本文件记录这些取值从哪来、怎么更新、以及更新时还有哪些东西必须一起改。它不重复价格表本身。
+本扩展的模型覆盖、谷价与峰价系数只存在于一个地方：[`shared-logic/business/pricing/model-data.ts`](../shared-logic/business/pricing/model-data.ts)（`MODEL_PRICING_DATA`）。本文件记录这些取值从哪来、怎么更新、以及更新时还有哪些东西必须一起改。它不重复价格表本身。
 
 维护是**显式**的：数据随扩展源码更新，下一个进程用更新后的数据。运行期不查 `/models`、不抓价、不热更新、不自动接受未来模型，也不读取用户价格配置。已经锚过的请求与已经累计的金额不因数据更新而重算、补算或删除。
 
@@ -43,7 +43,7 @@
 1. **取事实**：按上表的来源重新发现名单（官方接口需当次鉴权，秘密只用于该次请求、不打印、不写进仓库或证据）；价格只从官方价格文档读，不从模型名推断。记录获取时点、精确 ID、来源，以及与该文档不一致之处。
 2. **明确决定范围**：新增／删除哪个精确 ID、属于哪个计价档或 token-only，是显式决定，不是自动跟随发现结果。新模型不会自动套用某一档。
 3. **改数据**：只改 `model-data.ts` 里对应的条目。谷价变化就改 `tiers`；若未来峰价不再各项同比例变化，`peakMultiplier` 这一表达必须显式改掉（改成新的数据结构），不能继续乘同一个系数。
-4. **改数据检查**：同步 `scripts/model-cost-data-smoke.ts` 的批准覆盖表（它是数据的隔离核对，随数据一起走；它是维护脚本，不是永久测试）。算法测试（`tests/model-cost/request-accounting.test.ts`）使用自造数据，**不要**把真实单价或真实名单写进去。
+4. **改数据检查**：同步 `scripts/model-cost-data-smoke.ts` 的批准覆盖表（它是数据的隔离核对，随数据一起走；它是维护脚本，不是永久测试）。算法测试（`tests/model-cost/foundation/session/request-accounting.test.ts`）使用自造数据，**不要**把真实单价或真实名单写进去。
 5. **改本文件**：更新上表的来源、时点与范围。
 6. **跑**：`bun run smoke:model-cost-data`（数据与批准覆盖的核对）、`bun test tests/model-cost`、`bun test tests/harness-dock/model-cost-accounting.test.ts`、`bun run typecheck`。
 

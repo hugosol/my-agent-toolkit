@@ -11,15 +11,10 @@
  * report — and the fact that the two scopes were driven by the one mechanism. The fixture does no
  * work of its own beyond reporting: no network, no file, no timer.
  */
-import { type OmpExtensionApi, ompAdapter } from "../../../../framework/adapters/omp";
-import {
-	type CatalogPriceSource,
-	type ExtensionDefinition,
-	type SubscriptionGroup,
-	type TurnEndDelivery,
-	type TurnStartDelivery,
-	defineExtension,
-} from "../../../../framework/public";
+import { type OmpExtensionApi, ompAdapter } from "../../../../adapters/omp";
+import { type ExtensionDefinition, defineExtension } from "../../../../framework/public";
+import type { SubscriptionGroup, TurnEndDelivery, TurnStartDelivery } from "../../../../framework/interface/session";
+import type { CatalogPriceSource } from "../../../../framework/interface/host-facts";
 
 /** The extension id whose stderr lines the dock reads. */
 export const TURN_FACTS_ID = "turn-facts-probe";

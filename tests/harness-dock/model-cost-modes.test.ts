@@ -38,7 +38,7 @@ const PROVIDER_FIXTURE = path.join(import.meta.dir, "fixtures", "extension-root"
  *
  * The production entrypoint resolves `framework/config.yaml` from its own module location, and this
  * suite's own `apiKey: "dock-key"` is a resolvable credential, so a machine that has enabled the
- * `codex` proxy there would make every Codex run here issue a real account query. Copying the three
+ * `codex` proxy there would make every Codex run here issue a real account query. Copying the source
  * trees the entrypoint needs and dropping the copied shared config keeps these runs loading the
  * production source verbatim while the Codex startup query stays refused as `misconfigured`, exactly
  * as it is on a machine with no such entry. The copy lives under the run root, so the run's own
@@ -46,7 +46,7 @@ const PROVIDER_FIXTURE = path.join(import.meta.dir, "fixtures", "extension-root"
  */
 function materializeModelCostSource(runRoot: RunRoot): string {
 	const source = path.join(runRoot.path, "source");
-	for (const relative of ["framework", "extensions/model-cost", "entrypoints/omp"]) {
+	for (const relative of ["adapters", "framework", "extensions/model-cost", "entrypoints/omp"]) {
 		cpSync(path.join(REPO_ROOT, relative), path.join(source, relative), { recursive: true });
 	}
 	rmSync(path.join(source, "framework", "config.yaml"), { force: true });

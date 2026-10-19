@@ -12,6 +12,10 @@ _Avoid_: standalone generated extension, copy-pasted template, native API wrappe
 The program that discovers and runs extensions and exposes the native capability surface they adapt to; the supported harnesses are `pi` and `oh-my-pi`. A harness is distinct from an agent session (`ctx.agent`) and its subagents.
 _Avoid_: agent runtime (legacy name), host (ambiguous with OS/process host), agent, platform
 
+**Subagent integration mode（子代理接入模式）**:
+The supported shape of one extension entry’s session integration: subagent mode includes integrated subagent observations, while no-subagent mode（无子代理模式）provides main-session functionality without that integration. It does not assert that the harness contains no subagents, describe whether an agent is working, or represent an extension State value. An integration failure is not a normal no-subagent mode.
+_Avoid_: installed-package flag, connection-in-progress state, agent activity state, extension activation
+
 **Extension definition（扩展定义）**:
 The configuration and optional shared TypeScript logic describing an extension independently of a particular harness.
 _Avoid_: harness-specific entrypoint, generated extension
@@ -44,6 +48,10 @@ _Avoid_: round, run, response plus tool execution
 The identity of one model request/response cycle, distinct from a provider-issued request identifier and from the identity of its containing Round or session.
 _Avoid_: provider request ID, round ID, message ID
 
+**Session observation（会话观察）**:
+One actual session's current readings as the framework's own source holds them: the agent activity its Round edges last left it in and the latest context reading the adapter collected for it (the tokens its conversation holds, with the model it ran at that instant). It is a reading of the moment rather than an accounting number — nothing of it is persisted, a session nothing observed has no observation rather than an idle one with a context of nothing, and a session that parks or ends keeps its last reading. Its purpose is the *first* observation: a consumer that attaches after a session was already working reads the observation the source already holds, without waiting for a further transition, because a change delivery reaches only whoever was subscribed when it happened.
+_Avoid_: delivery of the moment only, permanent startup snapshot, persisted context, consumption figure, host context window
+
 **Observation scope（观察范围）**:
 The declared extent of one subscription group's observations: `owner` covers only the owner session's own deliveries, `session` covers every actual session the adapter reports, each with its own identity, direct parent and latest name. Widening it changes which deliveries a group receives and nothing else — it grants no State write, no external-effect authority and no change to State inheritance.
 _Avoid_: permission level, owner key filter, execution scope
@@ -60,6 +68,10 @@ _Avoid_: turn, model response, separately billed model request
 One per-session period of agent activity, from starting execution until it has no pending automatic continuation and awaits new input, or its activity terminates by explicit cancellation or terminal failure. It may contain multiple model-response turns, tool executions, retries, queued-input consumption and dedicated approval interactions; known automatic continuations remain in the same round, while a newly observed execution start may truncate an unfinished prior round when its ending or continuation evidence is missing. Recovery or reloading may truncate an unfinished round and begin a new one for observed ongoing activity; truncation does not establish that the activity itself has completed.
 _Avoid_: native agent run, turn (one model-response cycle), per-message interaction, whole task, semantically inferred task boundary
 
+**Session disposal（会话处置）**:
+One actual session's own end, as its host states it at an awaitable exit position of its own, and the fact the framework closes that session's round on: the end the session had already stated is confirmed, and a round it left open with no end of its own is truncated. It is not a session-axis transition — a transfer to another session, a rename and a view that moved are no disposal — and the report is answered once that edge's subscribers have settled or the close-out's own wait has run out, which is how a session's own commit is finished before its host lets it go. That wait is bounded (fifteen seconds by default, from entering the close-out, never a fresh budget for work already running): a wait it gives up is reported as the uncommitted write it is, and an update that had already begun is left to its real outcome, whose published document stays the authority.
+_Avoid_: session switch, transferred session, rename, process exit, task completion, observed Round end
+
 **Agent activity state（代理活动状态）**:
 The agent's per-session current activity condition: working while continuous activity remains ongoing, or idle when no current activity or pending automatic continuation remains and it awaits new input. Dedicated approval/interaction waits remain working; this axis does not assert semantic completion of the user's overall task or whether a Round end has been observed since a panel connection began.
 _Avoid_: run, execution unit, panel online status, panel completion history, extension State
@@ -71,6 +83,30 @@ _Avoid_: streaming, native agent run, waiting for new input
 **Idle（空闲）**:
 The agent activity state in which no current activity or pending automatic continuation remains and the agent awaits new input. It does not establish that any particular Round end has been observed, and unavailable observations do not establish idleness.
 _Avoid_: completed user goal, observed Round completion, offline, unknown
+
+**Runtime directory（运行目录）**:
+The one directory the framework's own runtime files live in, stated explicitly as the shared configuration file's `runtimeDir`; a relative value is resolved against that file's own directory. It holds the location records a process publishes for its local access, and a POSIX socket file is governed by it. It is separate from an extension's storage root, and no temporary directory, working directory or storage root stands in for it.
+_Avoid_: storage root, storageDir, temp directory fallback, working directory
+
+**Local access（本机接入）**:
+The framework-managed way one process offers the declared values of an owner it serves to a session the harness runs in another process, and the way a session the harness runs in another process hands that owner's process its own *observation*: one endpoint per serving process, reached by the location record it publishes, over a Windows named pipe or a POSIX local socket. It carries declared values and their changes, and one session's observation — its own facts, the owner it follows and the readings held for it — and nothing else: a declared read is answered on demand, a value change is pushed one way, and a reading is delivered the other way. It is not an RPC surface, a remote State write, or an extension's own transport. A session read in the process that serves the seat uses no endpoint at all.
+_Avoid_: RPC, remote procedure call, message channel through business documents, file queue, directory scan
+
+**Access target（接入目标）**:
+The seat one access serves: the extension whose declared values it carries and the owner they belong to. Both halves name it because an owner key alone is not unique across extensions, and both ends check the whole target — with that access's own verification — before anything crosses, so a stale record, an old endpoint or another seat's record is refused rather than followed.
+_Avoid_: session id alone, process id, owner key alone, endpoint address
+
+**Access location（接入定位）**:
+The record that says where one access is: the target, the endpoint, that access's own verification and the publishing process's id, published under the runtime directory and holding nothing the access carries. Its endpoint and process id are recorded as information — never as proof that an owner lives — and it is released with the access's own life.
+_Avoid_: State value, business data, liveness proof, connection state
+
+**Observation source（观察来源）**:
+One connection the process serving an owner's seat admitted, numbered by that process in the order it accepted its connections — the delivering process's own access to that seat. It is an ordering and never an identity: the session that delivered is named by the readings themselves, a source number says nothing about a process's life, and a number one process handed out is only ever compared with one it handed to the same seat. What it decides is which of two words about one session is the newer: a reading is the word of the source that stated it, so a word from an older source neither overwrites nor withdraws what a later one stated, and a source's end — the connection closing, whether the process released the access, ended or was killed — withdraws exactly the live readings that source stated, while the session's own identity, its direct parent and everything already saved stay. An unavailable observation is not idleness and states nothing about the work: no Round, Turn or accounting fact is minted for a loss.
+_Avoid_: liveness proof, process identity, connection state as agent state, reading as accounting fact
+
+**Storage commit notice（存储提交提示）**:
+One actual session's own confirmed write of the extension data it holds in a storage another process also reads, as the process that ran that session states it: the count of confirmed writes an observation word carries, the `session_commit` delivery that reaches a process serving the session's owner where that count moved, and nothing else. It is a *notice* and never a reading of the storage — what it states is that the file both processes share holds something this session committed, it carries no content, figure or path from that file, and a consumer that adopts it reads the storage itself — and it is not a Round, a Turn or a request: nothing of the framework's bookkeeping and nothing of an extension's accounting is accumulated from it. It is stated by the extension through `ImplementationContext.recordSessionCommit` where its own write really landed, counted by the process that confirmed the writes, so a count this process already took is the same notice rather than a new one; a count a source's end does not withdraw, because a write that landed does not become untrue; and a session whose owner the stating process serves itself is recorded there and handed to nobody.
+_Avoid_: consumption figure, record of the document, Round or Turn fact, forced save, polling, remote write path, second accounting authority
 
 ### Facts and measurement semantics
 
@@ -105,7 +141,7 @@ An extension's own `config.yaml` in its source directory, read and validated by 
 _Avoid_: harness settings, environment override, State, defaults embedded in code
 
 **Shared configuration（共享配置）**:
-The framework's own `framework/config.yaml`, beside the general HTTP module: the named proxy entries a request selects by name (`http.proxies.<name>.enabled` and `http.proxies.<name>.url`) and the default wait budget (`http.defaultTimeoutMs`). It belongs to the machine, it is read once per process — a change requires a restart — and a request that names a proxy the file cannot resolve fails as a configuration error instead of connecting directly; an entry that exists without `enabled: true` is an explicitly disabled one and connects directly, so its `url` is never read.
+The framework's own `framework/config.yaml`, beside the general HTTP module: the named proxy entries a request selects by name (`http.proxies.<name>.enabled` and `http.proxies.<name>.url`), the default wait budget (`http.defaultTimeoutMs`), and an explicitly configured directory for framework-owned runtime artifacts. That directory has no code-level fallback when its configuration value is absent; connection-location metadata is not persisted State. It belongs to the machine, it is read once per process — a change requires a restart — and a request that names a proxy the file cannot resolve fails as a configuration error instead of connecting directly; an entry that exists without `enabled: true` is an explicitly disabled one and connects directly, so its `url` is never read.
 _Avoid_: extension configuration, environment variable, harness proxy setting, per-provider proxy field
 
 **Mode selection（模式设置）**:
@@ -153,7 +189,7 @@ The per-field axis deciding whether a declared State value is written to the own
 _Avoid_: extension storage, concrete persistence backend, UI state
 
 **Subagent State inheritance（子代理 State 继承）**:
-The per-field axis deciding how a subagent relates to its owner's declared State value: `follow` — the subagent reads the owner's current value live; `none` (the default) — the subagent reads the field's declared default. Other session-owned values, such as each session's init-injection progress, remain independent.
+The per-field axis deciding how a subagent relates to its owner's declared State value: `follow` — the subagent reads the owner's current value live, which for a session the harness ran in another process means reading it through the framework's local access and answering the field's declared default while that access is not reached; `none` (the default) — the subagent reads the field's declared default. Other session-owned values, such as each session's init-injection progress, remain independent.
 _Avoid_: whole-extension state copy, creation-time snapshot, process-global state, extension loading, MCP inheritance, default inheritance
 
 **Owner（所属主会话 / owning main session）**:
@@ -229,6 +265,14 @@ _Avoid_: test runtime, test harness, fixture
 **Declared requirement（声明要求）**:
 A semantic a binding's behavior rests on — history preservation, the two semantic lifecycle axes — recorded as contract metadata rather than as a runtime switch: the framework's own requirements, and the ones an extension's assembly adds through `ExtensionAssembly.requiredSemantics`. What holds in a given harness scope is established by the independent verification, never decided at binding.
 _Avoid_: runtime feature flag, fallback route, startup gate
+
+**Subagent integration checklist（子代理接入清单）**:
+The two-sided declaration of an extension's required subagent capabilities and a harness adapter's supplied capabilities for each subagent execution mode it supports. Execution modes belong to the harness declaration, not to the extension's requirements; declared coverage is not evidence of correct behavior.
+_Avoid_: runtime capability negotiation, feature switch, compatibility certificate
+
+**Integration completeness check（接入完整性检查）**:
+An independently invoked comparison of extension requirements with declared harness integration coverage, identifying missing capabilities for each supported execution mode. It neither exercises behavior nor affects extension loading, startup or feature availability; behavior verification is a separate stage.
+_Avoid_: behavior test, startup gate, automatic feature downgrade
 
 **Independent compatibility verification（独立兼容性验证）**:
 The separately executed verification of one exact harness version, environment and source combination, recorded as a scoped report of executed, passed, failed and unverified coverage. A support claim rests on it; normal startup carries no version, capability-shape or report check of its own.

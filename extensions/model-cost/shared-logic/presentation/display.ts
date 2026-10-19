@@ -15,9 +15,10 @@
  *   no fee-structure ratio and no budget, even if a record were to carry one; the mixed scopes —
  *   the whole main tree — keep every known contribution, and the two currencies stay two fields
  *   that are never added together, converted or replaced by each other.
- * - **The fixed display budget.** DeepSeek and its Go ids compare against 450K, Codex against 272K,
- *   and nothing else against anything. It is a display fact only: exceeding it warns, and it never
- *   becomes a request, output, context-window or compaction limit.
+ * - **The fixed display budget.** Which fixed figure a channel compares against is the context
+ *   business rule's (`business/context`); this seam only states the budget and whether the reported
+ *   usage crossed it. It is a display fact only: exceeding it warns, and it never becomes a request,
+ *   output, context-window or compaction limit.
  * - **The fee-structure reference ratio.** The proportions of one model's token buckets valued at
  *   *that model's own current price* and normalized. DeepSeek's price is the data's off-peak tier
  *   (the shared multiplier cancels in normalization, so peak and holiday do not change the ratio);
@@ -43,20 +44,14 @@
  *   saw end between two of its own boundaries — a Round that only began does not replace the previous
  *   reading with zeroes. It carries the target's current-model structure beside that Round's own Cost
  *   and Ref; a boundary pair this instance does not hold writes no Round at all.
- * - **The agent tree.** The detail form's rows are derived from the relations and own accumulations
- *   this instance already holds: the root by name, its own provider/model pairs one row each, and one
- *   row per descendant session's own accumulation, each with its distance from the root. No inclusive
- *   figure, aggregate node or per-agent query is added, and a model row is never an agent node. A
- *   descendant's own row states the consumption it accumulated without the cached-share column the
- *   model rows and the Total keep, and it carries the row's own name emphasis while that session is
- *   working — see **The activity** below.
- * - **The activity.** The rows a descendant's name is emphasised against are the per-session activity
- *   readings the framework's own Round edges moved (`session-activity.ts`): a session whose Round is
- *   open is working, and one whose Round has ended is idle — the same reading for a subagent as for
- *   the main session. Only `working` is emphasised: an idle reading, and a session no edge has moved,
- *   both leave the name plain, because an unestablished activity is not idleness. Which of a
- *   frontend's own colours expresses it is that frontend's; that the row *is* emphasised is decided
- *   here.
+ * - **The agent tree.** Which sessions are in the tree, their distance from the root and each one's
+ *   own figures are the subagent business reading's (`business/subagent`); this seam words each row
+ *   and maps its activity to an emphasis. No inclusive figure, aggregate node or per-agent query is
+ *   added, and a model row is never an agent node.
+ * - **The activity.** A descendant's name is emphasised from that session's own activity reading: only
+ *   `working` is emphasised, while an idle reading and a session no reading has moved leave the name
+ *   plain, because an unestablished activity is not idleness. Which of a frontend's own colours
+ *   expresses it is that frontend's; that the row *is* emphasised is decided here.
  * - **The allowance windows.** The Codex 5h/7d readings are provider-account facts rather than parts
  *   of a target's consumption, so they are read beside the target instead of inside it, and what this
  *   seam adds to them is the state their reported reset instant has at the moment of reading.
@@ -66,54 +61,42 @@
  *   not zero — while one of the two windows is unreadable, and while the measurement has learned
  *   nothing yet it reads `estimating…` rather than looking like an exhausted allowance.
  */
-import type { CatalogPrice } from "../../../../framework/core/protocol";
-import type { CodexEstimate } from "../codex-estimate";
-import { remainingBudget } from "../codex-estimate";
+import type { CatalogPrice } from "../../../../framework/interface/host-facts";
+import type { CodexEstimate } from "../business/allowance/codex-estimate";
+import { remainingBudget } from "../business/allowance/codex-estimate";
 import type {
 	CodexQuota,
 	CodexQuotaFailure,
 	CodexQuotaWindow,
 	CodexResetState,
 	CodexWindowKind,
-} from "../codex-quota";
-import { CODEX_WINDOW_DURATION_MS, resetStateOf } from "../codex-quota";
-import type { OwnConsumption, SessionRecord, TokenBuckets } from "../consumption-document";
-import { type ModelPricingData, classify } from "../model-data";
-import type { ProviderBalance, ProviderBalanceResult } from "../provider-balance";
-import { type Season, nextSeasonChange, seasonAt } from "../request-price";
-import type { ConsumptionView, SessionIdentity } from "../request-accounting";
-import type { SessionSpanReading } from "../session-span";
+} from "../business/allowance/codex-quota";
+import { CODEX_WINDOW_DURATION_MS, resetStateOf } from "../business/allowance/codex-quota";
+import type {
+	OwnConsumption,
+	SessionRecord,
+	SessionStartup,
+	TokenBuckets,
+} from "../foundation/session/consumption-document";
+import { type ModelPricingData, classify } from "../business/pricing/model-data";
+import type { ProviderBalance, ProviderBalanceResult } from "../business/pricing/provider-balance";
+import { type Season, nextSeasonChange, seasonAt } from "../business/pricing/request-price";
+import type { ConsumptionView } from "../foundation/session/request-accounting";
+import type { SessionSpanReading } from "../foundation/session/session-span";
 import type { DisplayForm, DisplayPreference } from "./display-preference";
-import type { SessionContextReading } from "./session-context";
-import type { SessionActivityReading } from "./session-activity";
-
-/** The accounting channel a display target's model belongs to, as the maintained data classifies it. */
-export type ConsumptionMode = "monetary" | "allowance" | "token-only" | "hidden";
-
-/**
- * The fixed display budget of DeepSeek and its OpenCode Go ids, in tokens.
- *
- * The figure is a displayed reference the bar and its warning compare against; the host's own
- * context window is a different fact and this number never becomes a limit of the request, the
- * output or the compaction.
- */
-export const DEEPSEEK_DISPLAY_BUDGET = 450_000;
-
-/** The fixed display budget of the Codex channel, in tokens, with the same display-only meaning. */
-export const CODEX_DISPLAY_BUDGET = 272_000;
+import {
+	type ConsumptionMode,
+	type SessionContextReader,
+	contextBudgetOf,
+} from "../business/context/session-context";
+import type { SessionActivityReading } from "../foundation/session/session-activity";
+import { agentTreeOf, isTreeRoot, mainSessionOf } from "../business/subagent/agent-tree";
 
 /** The bucket order every ratio is displayed in; a bucket the price does not state is left out. */
 const RATIO_BUCKETS = ["cacheRead", "input", "cacheWrite", "output"] as const;
 
 /** The token buckets a consumed amount is summed over, in one place. */
 const TOKEN_BUCKETS = ["input", "cacheRead", "cacheWrite", "output"] as const;
-
-/** The fixed display budget of one mode, or nothing for a mode whose display has no budget at all. */
-export function displayBudgetOf(mode: ConsumptionMode): number | undefined {
-	if (mode === "allowance") return CODEX_DISPLAY_BUDGET;
-	if (mode === "monetary" || mode === "token-only") return DEEPSEEK_DISPLAY_BUDGET;
-	return undefined;
-}
 
 /** One bucket's share of a scope's priced tokens, as a whole percent of the scope. */
 export interface RatioPart {
@@ -201,17 +184,16 @@ export type AgentTreeRowKind = "root" | "model" | "session";
 
 /**
  * One descendant session's own current context as the detail tree draws it: the tokens its
- * conversation holds, and the fixed display budget the same channel's bar compares them against.
+ * conversation holds, and the fixed display budget its channel's bar compares them against.
  *
- * The budget is {@link displayBudgetOf}'s own figure for the session's current model — 450K for the
- * monetary and token-only channels and 272K for the allowance one — and never the host's reported
- * context window. A mode with no budget at all carries no context field, so a row that has one always
- * states both the figure and the budget it is read against.
+ * Both figures are the business context rule's (`business/context`): the budget comes from the
+ * session's current model channel and is never the host's reported context window. A channel with no
+ * budget carries no context field, so a row that has one always states both figures.
  */
 export interface AgentTreeContext {
 	/** Estimated tokens the session's conversation holds, as its own binding reported them. */
 	readonly tokens: number;
-	/** The fixed display budget that session's mode compares against, from the one {@link displayBudgetOf}. */
+	/** The fixed display budget that session's channel compares against. */
 	readonly budget: number;
 }
 
@@ -331,7 +313,13 @@ export interface DisplayPeriod {
 export interface PeriodDisplaySource {
 	/** Whether the open period is a holiday period. */
 	holiday(): boolean;
-	/** The period's own session records of this harness, in the order the document holds them. */
+	/**
+	 * The period's own session records — every harness's, in the order the document holds them.
+	 *
+	 * The period's consumption is the whole shared document's rather than one harness's: a document
+	 * two harnesses have written into holds both harnesses' records, and the accrual below is the
+	 * period's own. A harness partition is an identity namespace, not a filter on the period's total.
+	 */
 	sessions(): readonly SessionRecord[];
 }
 
@@ -356,7 +344,7 @@ export interface ConsumptionDisplay {
 	 * It is present for a target that is the root of its own tree and absent for every other, because
 	 * the detail form belongs to that session alone: what the frontend draws it in is
 	 * {@link ConsumptionDisplay.form}, so the rows are readable from the same result in either form.
-	 * It is a derived view of the relations and own accumulations this instance already holds — no
+	 * It is a derived view of the relations and own accumulations the view already holds — no
 	 * aggregate node, no expansion and no second accumulation is added for it.
 	 */
 	readonly agentTree?: readonly AgentTreeRow[];
@@ -508,7 +496,7 @@ export interface PresentationInputs {
 	 * The process's per-session context readings, as each session's own binding published them: what a
 	 * descendant session row shows. A session no binding reported reads as nothing, never as zero.
 	 */
-	readonly sessionContext: SessionContextReading;
+	readonly sessionContext: SessionContextReader;
 	/**
 	 * The process's per-session activity readings, as the framework's own Round edges moved them: which
 	 * descendant session rows carry the working emphasis. A session no edge has moved reads as nothing,
@@ -640,6 +628,17 @@ export function fieldsOf(
 }
 
 /**
+ * The startup snapshot as one descendant row writes it: `provider/model(effort)`, with `?` for a
+ * part nothing proved and the parenthesised effort as the tail a narrowed row keeps whole. It is
+ * written from what the session began with, never from what it runs now.
+ */
+function startupRowOf(startup: SessionStartup | undefined): AgentTreeStartup {
+	const model = startup?.model === undefined ? "\u003F" : `${startup.model.provider}/${startup.model.model}`;
+	const effort = startup?.effort ?? "\u003F";
+	return { text: `${model}(${effort})`, tail: `(${effort})` };
+}
+
+/**
  * Build the process's display presenter over the results it reads.
  *
  * Building has no effect of its own: nothing is read and no listener is added. Each `of` call reads
@@ -659,21 +658,6 @@ export function createPresentation(inputs: PresentationInputs): ConsumptionPrese
 		sessionContext,
 		sessionActivity,
 	} = inputs;
-
-	/**
-	 * The top-level session one session belongs to, walked through the reliable direct parents this
-	 * instance holds: the main tree's aggregates cover that whole tree, not the session's own subtree.
-	 */
-	const rootOf = (sessionId: string): string => {
-		const seen = new Set<string>([sessionId]);
-		let cursor = sessionId;
-		for (;;) {
-			const parent = view.identity(cursor)?.parentSessionId;
-			if (parent === undefined || parent === null || seen.has(parent)) return cursor;
-			seen.add(parent);
-			cursor = parent;
-		}
-	};
 
 	/**
 	 * One provider/model pair's own fields inside a session's own accumulation: the amount policy of
@@ -699,94 +683,40 @@ export function createPresentation(inputs: PresentationInputs): ConsumptionPrese
 	});
 
 	/**
-	 * The static agent tree of one session that is the root of its own tree: the root by name, that
-	 * session's own provider/model pairs one row each, then one row per descendant session, in the
-	 * order the relations put them (depth-first from the root, children in the order this instance
-	 * learned them), each row carrying how far it sits from the root.
+	 * The detail form's rows, worded here and read from the business agent tree: the root by its name,
+	 * that root's own model pairs one row each, then one row per descendant session in the order the
+	 * business traversal states.
 	 *
-	 * What it draws from is exactly what every other read draws from: the reliable direct parents and
-	 * the own accumulations this instance holds. A descendant contributes its own accumulation alone —
-	 * nothing of *its* descendants' — which is why no row here is an inclusive figure and no row is
-	 * added for one; the root's own figure is its model rows rather than a row of its own; and a
-	 * relation that happens to describe a circle terminates at the session it already added instead of
-	 * walking forever. A session carries one row whether it is a child or a grandchild of the root, and
-	 * a pair the root consumed that this extension does not display is still one of the root's own rows,
-	 * with the usage alone that its policy allows.
-	 *
-	 * Each descendant row also carries that session's own current context reading when this process
-	 * observed one — a reading its own binding published, not a consumption figure — so the tree shows
-	 * what each subagent's context holds beside what it has spent. A row with no observed reading
-	 * carries no such field.
+	 * Which sessions the tree holds, each session's distance from the root, and each one's own
+	 * consumption, startup, runtime, activity and context are `business/subagent`'s reading; this
+	 * function only decides how a row is written and emphasised. The root's model rows read the root's
+	 * one own accumulation through the same pair gate the Total uses, so no second accumulation exists.
 	 */
-	const agentTreeOf = (rootId: string): readonly AgentTreeRow[] => {
-		const children = new Map<string, SessionIdentity[]>();
-		for (const identity of view.identities()) {
-			const parent = identity.parentSessionId;
-			if (parent === null) continue;
-			const siblings = children.get(parent);
-			if (siblings === undefined) children.set(parent, [identity]);
-			else siblings.push(identity);
+	const agentTreeRowsOf = (rootId: string): readonly AgentTreeRow[] => {
+		const tree = agentTreeOf(view, rootId, { context: sessionContext, activity: sessionActivity, data });
+		const rows: AgentTreeRow[] = [{ kind: "root", name: tree.root.name, depth: 0 }];
+		for (const pair of tree.root.pairs) {
+			rows.push({
+				kind: "model",
+				name: `${pair.provider} / ${pair.model}`,
+				depth: 1,
+				fields: pairFieldsOf(tree.root.own, pair.provider, pair.model),
+			});
 		}
-		const rows: AgentTreeRow[] = [{ kind: "root", name: view.identity(rootId)?.name ?? rootId, depth: 0 }];
-		const own = view.own(rootId) ?? {};
-		for (const [provider, models] of Object.entries(own)) {
-			for (const model of Object.keys(models)) {
-				rows.push({
-					kind: "model",
-					name: `${provider} / ${model}`,
-					depth: 1,
-					fields: pairFieldsOf(own, provider, model),
-				});
-			}
+		for (const node of tree.descendants) {
+			rows.push({
+				kind: "session",
+				name: node.identity.name,
+				depth: node.depth,
+				// The descendant's own statistics without the cached share of its conversation input: the
+				// tree compares what each session consumed, so that one column is dropped from this row.
+				fields: fieldsOf(node.own, { cacheShare: false }),
+				...(node.activity === "working" ? { nameEmphasis: "active" } : {}),
+				startup: startupRowOf(node.startup),
+				...(node.runtimeMs === undefined ? {} : { runtimeMs: node.runtimeMs }),
+				...(node.context === undefined ? {} : { context: node.context }),
+			});
 		}
-		const included = new Set<string>([rootId]);
-		const walk = (parentId: string, depth: number): void => {
-			for (const child of children.get(parentId) ?? []) {
-				if (included.has(child.sessionId)) continue;
-				included.add(child.sessionId);
-				// The descendant's own current context, as this process observed its binding publish it, read
-				// against the same fixed display budget the bar uses for that session's own channel — chosen
-				// from the model the reading was taken on, never from the host's context window. A mode with
-				// no budget and an unobserved session both carry no field rather than a zero.
-				const observed = sessionContext.read(child.sessionId);
-				const budget =
-					observed === undefined
-						? undefined
-						: displayBudgetOf(classify(data, observed.provider ?? "", observed.model ?? "").mode);
-				// The startup facts as a row writes them: what the session began on, or `?` for a part
-				// nothing proved — the row keeps the one snapshot rather than borrowing the model or level
-				// anything else is running now.
-				const started = view.startup(child.sessionId);
-				const startedModel =
-					started?.model === undefined ? "\u003F" : `${started.model.provider}/${started.model.model}`;
-				const startedEffort = started?.effort ?? "\u003F";
-				const runtimeMs = view.runtime(child.sessionId);
-				// This session's own activity, as the framework's Round edges moved it: a session whose Round
-				// is open is working, and its name is the one thing on the row that says so. An idle reading
-				// and a session no edge has moved both leave the name exactly as it was drawn.
-				const activity = sessionActivity.read(child.sessionId);
-				rows.push({
-					kind: "session",
-					name: child.name,
-					depth,
-					// The descendant's own statistics, without the cached share of its conversation input: what
-					// the tree compares between sessions is what each of them consumed, so the column is
-					// dropped from this row rather than written empty. Its own model rows above keep theirs.
-					fields: fieldsOf(view.own(child.sessionId) ?? {}, { cacheShare: false }),
-					...(activity === "working" ? { nameEmphasis: "active" } : {}),
-					startup: { text: `${startedModel}(${startedEffort})`, tail: `(${startedEffort})` },
-					// The runtime is absent when nothing reliable is known about this session's executions:
-					// the row keeps the field and the display shows it as unavailable, which is not the
-					// same fact as an execution that really took no measurable time.
-					...(runtimeMs === undefined ? {} : { runtimeMs }),
-					...(observed === undefined || budget === undefined
-						? {}
-						: { context: { tokens: observed.tokens, budget } }),
-				});
-				walk(child.sessionId, depth + 1);
-			}
-		};
-		walk(rootId, 1);
 		return rows;
 	};
 
@@ -808,16 +738,13 @@ export function createPresentation(inputs: PresentationInputs): ConsumptionPrese
 			// The main session this target belongs to: the root of its own tree, which is the session the
 			// tree beside the target is aggregated over and the session whose Session span the Total
 			// carries. For a target that is itself that root the two are the same session.
-			const mainSessionId = rootOf(target.sessionId);
+			const mainSessionId = mainSessionOf(view, target.sessionId);
 			const tree = fieldsOf(view.inclusiveTotals(mainSessionId));
 			const span = view.sessionSpan(mainSessionId);
-			// The detail form belongs to the main session alone, and a session with no direct parent is
-			// the root of its own tree: a subagent's view answers the brief however the entry's own
-			// preference stands, which is what keeps that display fixed while the operator is focused on
-			// it and what the main session answers with again when the focus returns.
-			const root = view.identity(target.sessionId);
-			const isTreeRoot = root !== undefined && root.parentSessionId === null;
-			const form: DisplayForm = isTreeRoot ? display.form() : "brief";
+			// The detail form belongs to the main session alone: a subagent's view answers the brief
+			// however the entry's own preference stands.
+			const ownsTree = isTreeRoot(view, target.sessionId);
+			const form: DisplayForm = ownsTree ? display.form() : "brief";
 			const rounds = view.roundTotals(target.sessionId);
 			// The brief keeps the last completed Round on screen while the open Round holds no addition
 			// of its own yet — a Round that only began (or whose first settled Turn carried zero usage)
@@ -827,11 +754,9 @@ export function createPresentation(inputs: PresentationInputs): ConsumptionPrese
 			const open = rounds?.current;
 			const latest = open !== undefined && holdsConsumption(open) ? open : rounds?.previous;
 			const round = latest === undefined ? undefined : roundOf(target, latest);
-			const budgetTokens = displayBudgetOf(mode);
-			const budget =
-				budgetTokens === undefined
-					? undefined
-					: { tokens: budgetTokens, exceeded: target.contextTokens !== undefined && target.contextTokens > budgetTokens };
+			// The channel's fixed display budget and whether the reported usage crossed it; the host's
+			// context window is shown as its own fact below and is never this figure.
+			const budget = contextBudgetOf(mode, target.contextTokens);
 			return {
 				mode,
 				form,
@@ -839,7 +764,7 @@ export function createPresentation(inputs: PresentationInputs): ConsumptionPrese
 				tree,
 				// The detail form's content, read for the one target it belongs to: a subagent's display
 				// has no tree of its own in this form, which is what keeps that view the brief.
-				...(isTreeRoot ? { agentTree: agentTreeOf(target.sessionId) } : {}),
+				...(ownsTree ? { agentTree: agentTreeRowsOf(target.sessionId) } : {}),
 				...(round === undefined ? {} : { round }),
 				...(span === undefined ? {} : { span }),
 				...(budget === undefined ? {} : { budget }),
@@ -1046,6 +971,17 @@ export type AmountField = "cost" | "ref";
  * room it gets.
  */
 export interface DisplayColumn {
+	/**
+	 * Which statistic this column is, told apart from the wording the row's own channel draws it with.
+	 *
+	 * Two rows of one depth group compare the same statistics, and a channel words them for itself: a
+	 * monetary row prices in CNY over three buckets and an allowance row in USD over four, so their
+	 * ratio labels differ while the column they belong in is one and the same. A frontend aligns rows
+	 * of a group by this field rather than by the label it draws, so each row's own ratio and amount
+	 * land in the group's one column for that statistic instead of opening a column of their own —
+	 * the label is drawn from the row, the column is shared by the group.
+	 */
+	readonly field: string;
 	readonly label: string;
 	readonly value: string;
 }
@@ -1083,16 +1019,18 @@ function ratioColumnLabel(currency: string, buckets: readonly string[]): string 
 function structureColumns(fields: ConsumptionFields, ratioField?: RatioField): DisplayColumn[] {
 	const columns: DisplayColumn[] = [];
 	if (fields.cacheShare !== false) {
-		columns.push({ label: "Cache: ", value: fields.sum === 0 ? "-" : `${fields.cacheHitRate ?? 0}%` });
+		columns.push({ field: "cache", label: "Cache: ", value: fields.sum === 0 ? "-" : `${fields.cacheHitRate ?? 0}%` });
 	}
 	if (fields.referenceRatio !== undefined) {
 		const ratio = fields.referenceRatio;
 		columns.push({
+			field: "ratio",
 			label: ratioColumnLabel(ratio.currency, ratio.parts.map(part => part.bucket)),
 			value: ratio.parts.map(part => part.percent).join(":"),
 		});
 	} else if (ratioField !== undefined) {
 		columns.push({
+			field: "ratio",
 			label: ratioColumnLabel(ratioField.currency, ratioField.buckets),
 			value: ratioField.buckets.map(() => "--").join(":"),
 		});
@@ -1106,12 +1044,20 @@ function structureColumns(fields: ConsumptionFields, ratioField?: RatioField): D
  * rather than silently dropping them.
  */
 function amountColumns(fields: ConsumptionFields, shown: readonly AmountField[] = []): DisplayColumn[] {
-	const columns: DisplayColumn[] = [];
-	if (fields.costCny !== undefined) columns.push({ label: "Cost: ", value: formatCny(fields.costCny) });
-	else if (shown.includes("cost")) columns.push({ label: "Cost: ", value: "-" });
-	if (fields.referenceCostUsd !== undefined) columns.push({ label: "Ref: ", value: formatUsd(fields.referenceCostUsd) });
-	else if (shown.includes("ref")) columns.push({ label: "Ref: ", value: "-" });
-	return columns;
+	const amounts: Array<{ readonly label: string; readonly value: string }> = [];
+	if (fields.costCny !== undefined) amounts.push({ label: "Cost: ", value: formatCny(fields.costCny) });
+	else if (shown.includes("cost")) amounts.push({ label: "Cost: ", value: "-" });
+	if (fields.referenceCostUsd !== undefined) amounts.push({ label: "Ref: ", value: formatUsd(fields.referenceCostUsd) });
+	else if (shown.includes("ref")) amounts.push({ label: "Ref: ", value: "-" });
+	// The amounts are the row's own money columns, and the label each draws with is its own channel's:
+	// a monetary row's Cost and an allowance row's Ref are the one amount a row of that kind states, so
+	// they share the group's amount column rather than opening one each. Only a row that really carries
+	// both currencies — a scope that consumed a monetary and an allowance pair — writes a second amount,
+	// in a column of its own.
+	return amounts.map((amount, index) => ({
+		field: index === 0 ? "amount" : `amount-${index + 1}`,
+		...amount,
+	}));
 }
 
 /**
@@ -1139,7 +1085,7 @@ export function formatSpan(elapsedMs: number): string {
  * always a column, so the field keeps its place whether or not a reading exists.
  */
 function spanColumn(display: ConsumptionDisplay): DisplayColumn {
-	return { label: "Span: ", value: display.span === undefined ? "\u2014" : formatSpan(display.span.elapsedMs) };
+	return { field: "span", label: "Span: ", value: display.span === undefined ? "\u2014" : formatSpan(display.span.elapsedMs) };
 }
 
 /**

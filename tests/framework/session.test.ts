@@ -21,17 +21,17 @@ import type {
 	OmpSessionContext,
 	OmpSessionEvent,
 	OmpSessionEventType,
-} from "../../framework/adapters/omp";
-import * as frameworkOmp from "../../framework/adapters/omp";
-import type { OwnerReference, SessionEvent, SessionStartReason } from "../../framework/core/protocol";
-import {
-	type CommandImplementations,
-	type ExtensionDefinition,
-	type ObservationScope,
-	type SessionEventDelivery,
-	type SessionEventHandlers,
-	defineExtension,
-} from "../../framework/public";
+} from "../../adapters/omp";
+import * as frameworkOmp from "../../adapters/omp";
+import type {
+	ObservationScope,
+	SessionEvent,
+	SessionEventDelivery,
+	SessionEventHandlers,
+	SessionStartReason,
+} from "../../framework/interface/session";
+import type { OwnerReference } from "../../framework/interface/state";
+import { type CommandImplementations, type ExtensionDefinition, defineExtension } from "../../framework/public";
 
 /** The State entry the framework persists for the codebase-tools definition. */
 const STATE_ENTRY_TYPE = "codebase-tools:state";

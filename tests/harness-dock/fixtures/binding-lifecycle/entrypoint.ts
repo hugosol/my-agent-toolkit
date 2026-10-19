@@ -12,7 +12,7 @@
  * channel the dock already captures and the one a headless session's operator reads.
  */
 import { type ExtensionDefinition, defineExtension } from "../../../../framework/public";
-import { type OmpExtensionApi, ompAdapter } from "../../../../framework/adapters/omp";
+import { type OmpExtensionApi, ompAdapter } from "../../../../adapters/omp";
 
 /** The command the dock drives, and the one asynchronous action among its actions. */
 export const LIFECYCLE_COMMAND = "lifecycle-probe";

@@ -46,11 +46,12 @@ import { homedir, tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { MODEL_COST } from "../../../../extensions/model-cost/definition";
-import { CODEX_USAGE_URL } from "../../../../extensions/model-cost/shared-logic/codex-quota";
+import { CODEX_USAGE_URL } from "../../../../extensions/model-cost/shared-logic/business/allowance/codex-quota";
 import { type ModelCostRuntime, createModelCostRuntime } from "../../../../extensions/model-cost/shared-logic/runtime";
-import { type OmpExtensionApi, ompAdapter } from "../../../../framework/adapters/omp";
+import { type OmpExtensionApi, ompAdapter } from "../../../../adapters/omp";
 import { createHttpModule, type HttpRequestOptions } from "../../../../framework/modules/http";
-import type { ExtensionImplementation, SubscriptionGroup, TurnEndDelivery } from "../../../../framework/public";
+import type { ExtensionImplementation } from "../../../../framework/public";
+import type { SubscriptionGroup, TurnEndDelivery } from "../../../../framework/interface/session";
 
 /** This repository, which is where the extension's own declared configuration is resolved from. */
 const REPOSITORY_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "..");
@@ -253,6 +254,7 @@ export default function codexQuotaProbe(pi: OmpExtensionApi): void {
 				configDirectory: CONFIG_DIRECTORY,
 				userHomeDirectory: homedir(),
 				harness: "omp",
+				session: context.session,
 				httpRequest: accountRequest,
 				...(context.providerAccess === undefined ? {} : { providerAccess: context.providerAccess }),
 			});

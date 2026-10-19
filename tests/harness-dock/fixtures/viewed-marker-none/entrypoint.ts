@@ -5,7 +5,7 @@
  * real host: a displayed subagent renders the following line from the Owner's current value and this
  * one from its own declared default — never a copy of every line the Owner's session shows.
  */
-import { type OmpExtensionApi, ompAdapter } from "../../../../framework/adapters/omp";
+import { type OmpExtensionApi, ompAdapter } from "../../../../adapters/omp";
 import { type ExtensionDefinition, defineExtension } from "../../../../framework/public";
 
 /** The extension id whose marker line the dock reads. */

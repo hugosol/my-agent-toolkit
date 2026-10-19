@@ -25,8 +25,8 @@ import type {
 	OmpSessionEntry,
 	OmpSessionEvent,
 	OmpSessionEventType,
-} from "../../framework/adapters/omp";
-import * as frameworkOmp from "../../framework/adapters/omp";
+} from "../../adapters/omp";
+import * as frameworkOmp from "../../adapters/omp";
 import { type ExtensionDefinition, defineExtension } from "../../framework/public";
 import { REPO_ROOT } from "../harness-dock/baseline";
 

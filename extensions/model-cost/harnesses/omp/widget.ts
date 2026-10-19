@@ -45,7 +45,7 @@ import type {
 	OmpSessionContext,
 	OmpSessionEvent,
 	OmpViewedSessionFacts,
-} from "../../../../framework/adapters/omp";
+} from "../../../../adapters/omp";
 import {
 	type AgentTreeRow,
 	type ConsumptionDisplay,
@@ -67,9 +67,9 @@ import {
 	seasonMark,
 	totalColumns,
 } from "../../shared-logic/presentation/display";
-import type { ProviderBalanceResult } from "../../shared-logic/provider-balance";
+import type { ProviderBalanceResult } from "../../shared-logic/business/pricing/provider-balance";
 import type { ModelCostRuntime } from "../../shared-logic/runtime";
-import type { BoundaryTimer } from "./boundary-timer";
+import type { BoundaryTimer } from "../boundary-timer";
 
 /** The native widget key the usage widget is drawn under: this extension's own, not the marker area. */
 export const MODEL_COST_WIDGET_KEY = "z-model-cost";
@@ -320,8 +320,10 @@ function treeLines(rows: readonly AgentTreeRow[], width: number | undefined): Di
 		if (row.fields !== undefined) {
 			// The scope's own columns, as the display states them: a channel's cache rate and ratio and
 			// the amounts it carries, dashes included, with nothing re-decided on the way into the grid.
+			// The cell is keyed by the statistic the column *is* rather than by the wording this row draws
+			// it with, so two rows of one group put one statistic in one column of it.
 			for (const column of fieldsColumns(row.fields)) {
-				cells.push({ field: column.label, label: column.label, value: column.value, abbreviated: false });
+				cells.push({ field: column.field, label: column.label, value: column.value, abbreviated: false });
 			}
 		}
 		if (row.context !== undefined) {

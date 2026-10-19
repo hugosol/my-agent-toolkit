@@ -15,7 +15,7 @@
  * subagent session is the seventh shape, guarded below.
  */
 import { afterEach, describe, expect, jest, test } from "bun:test";
-import type { OmpCommandContext } from "../../framework/adapters/omp";
+import type { OmpCommandContext } from "../../adapters/omp";
 import {
 	type PanelRequest,
 	EVENTS_PATH,

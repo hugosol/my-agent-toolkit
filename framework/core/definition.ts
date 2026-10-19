@@ -7,6 +7,7 @@
  * plugin bus and no raw handler — everything an extension asks the framework to do
  * is expressed here, and nothing in this module names a harness.
  */
+import type { SubagentCapability } from "./integration";
 
 /**
  * Whether a declared State value outlives the memory of the session that wrote it.
@@ -269,6 +270,12 @@ export interface ExtensionDefinition {
 	readonly id: string;
 	/** Display name used for the extension's label and its notifications. */
 	readonly displayName: string;
+	/**
+	 * Subagent semantics required for this extension's complete integration. Execution modes
+	 * are the harness author's declaration, not this extension's choice. Only the independent
+	 * integration completeness check reads this metadata; startup and feature behavior do not.
+	 */
+	readonly subagentRequirements?: readonly SubagentCapability[];
 	readonly state?: StateDeclaration;
 	readonly commands?: readonly CommandDeclaration[];
 	readonly prompts?: readonly PromptDeclaration[];

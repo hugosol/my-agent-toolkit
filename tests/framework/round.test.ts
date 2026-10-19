@@ -9,15 +9,21 @@
  * synthesis the framework performs over them: the round opens at the first start, and it closes
  * only once a settle that scheduled nothing has been *confirmed* — the settle itself is an end
  * candidate, held while the native callback returns so the host can settle, and re-checked on the
- * harness's next task, where the session must report quiescence: idle, nothing queued, no
- * asynchronous job still running. The round stays open through everything that continues the work
+ * harness's next task, where the session must report that its own work has come to rest — idle,
+ * with nothing queued — and, unless the activity ended cancelled or failed, that nothing beyond
+ * the run still holds it. The round stays open through everything that continues the work
  * inside it, whether that is an automatic continuation, a drained queued message or a job that has
  * not drained yet.
  *
  * The abrupt ends are the interesting case. A run that fails closed and a run a user interrupted
- * end through the same native settle an ordinary answer ends through, with no continuation flag
- * and no outcome the framework would have to interpret, so they end the round too: a panel that
- * kept showing "working" after an error would be describing a run that will never resume.
+ * end through the same native settle an ordinary answer ends through, with no continuation flag,
+ * so they end the round too: a panel that kept showing "working" after an error would be
+ * describing a run that will never resume. What the settle *does* carry is the outcome the
+ * harness stated for the cycle — the finalized message's own stop reason, in the same
+ * three-valued vocabulary this adapter's Turn mapping already reads — and a cancelled or failed
+ * activity ends its round on the session's own rest alone: nothing beyond it will resume it, so a
+ * job still running elsewhere cannot be what its round waits for. An ordinary answer keeps
+ * waiting, exactly as before, and a cycle the harness retries is not an end candidate at all.
  *
  * The idle query the arm path asks is one of the same synthesis's inputs, and it is observed here
  * the same way: the adapter answers the session's own fact, and answers nothing at all for a
@@ -30,16 +36,11 @@ import type {
 	OmpCommandContext,
 	OmpExtensionApi,
 	OmpSessionContext,
-} from "../../framework/adapters/omp";
-import * as frameworkOmp from "../../framework/adapters/omp";
+} from "../../adapters/omp";
+import * as frameworkOmp from "../../adapters/omp";
 import type { CommandDelivery } from "../../framework/core/protocol";
-import {
-	type CommandImplementations,
-	type ExtensionDefinition,
-	type RoundDelivery,
-	type RoundEvent,
-	defineExtension,
-} from "../../framework/public";
+import type { RoundDelivery, RoundEvent } from "../../framework/interface/session";
+import { type CommandImplementations, type ExtensionDefinition, defineExtension } from "../../framework/public";
 
 /** The definition under test: one directed command, so the arm path can be driven too. */
 const PROBE: ExtensionDefinition = defineExtension({
@@ -47,6 +48,12 @@ const PROBE: ExtensionDefinition = defineExtension({
 	displayName: "roundProbe",
 	commands: [{ type: "directed", name: "round-probe", state: "enabled" }],
 });
+
+/**
+ * The end this adapter's rounds really reach: a settle the framework re-checked on the host's next task
+ * and confirmed against the session's own facts, so how that end was established is stated as such.
+ */
+const END: RoundEvent = { kind: "round_end", ending: "confirmed" };
 
 // The adapter's one scheduling act is the end candidate's re-check on the host's next task; the
 // suite runs that task on a deterministic clock rather than waiting for wall time to pass.
@@ -105,10 +112,17 @@ interface NativeSurface {
 	start(facts: SessionFacts): void;
 	/** A run settling: the native `agent_end`, with the continuation flag it carries. */
 	settle(facts: SessionFacts, options?: { readonly willContinue?: boolean }): void;
+	/**
+	 * One finalized assistant response: the native `message_end`, which is what states how a cycle
+	 * ended (`stopReason`), exactly as the Turn axis reads it.
+	 */
+	messageEnds(facts: SessionFacts, options?: { readonly stopReason?: string }): void;
 	/** A run failing: the native settle an errored run reaches the adapter through. */
 	fail(facts: SessionFacts): void;
 	/** A run the user interrupted: the native settle an aborted run reaches the adapter through. */
 	abort(facts: SessionFacts): void;
+	/** How many times this surface was asked to register or publish anything. */
+	nativeCalls(): number;
 	/** The host's next task: the moment the framework's own re-check of an end candidate runs. */
 	nextTask(): void;
 	/** A command context as the runner builds it for one session. */
@@ -127,6 +141,8 @@ function boundSurface(): NativeSurface {
 		agent_start: [],
 		agent_end: [],
 	};
+	/** The native subscriptions this adapter registers that are not round-cycle ones (the message fact). */
+	const otherHandlers = new Map<string, Array<(event: unknown, ctx: OmpSessionContext) => void>>();
 	const registrations = new Map<
 		string,
 		{ readonly handler: (args: string, ctx: OmpCommandContext) => void | Promise<void> }
@@ -160,7 +176,11 @@ function boundSurface(): NativeSurface {
 		on(event: string, handler: never): void {
 			if (event === "agent_start" || event === "agent_end") {
 				roundHandlers[event].push(handler as RoundHandler);
+				return;
 			}
+			const listeners = otherHandlers.get(event) ?? [];
+			listeners.push(handler as (event: unknown, ctx: OmpSessionContext) => void);
+			otherHandlers.set(event, listeners);
 		},
 	};
 
@@ -195,6 +215,18 @@ function boundSurface(): NativeSurface {
 		for (const handler of roundHandlers[event.type]) handler(event, contextOf(facts));
 	};
 
+	/** One native fact outside the run-cycle pair, delivered the way the harness delivers it. */
+	const deliverOther = (event: string, payload: unknown, facts: SessionFacts): void => {
+		for (const listener of [...(otherHandlers.get(event) ?? [])]) listener(payload, contextOf(facts));
+	};
+
+	/** Everything this adapter has asked the host to register or publish so far. */
+	const nativeCalls = (): number => {
+		let total = registrations.size + roundHandlers.agent_start.length + roundHandlers.agent_end.length;
+		for (const listeners of otherHandlers.values()) total += listeners.length;
+		return total;
+	};
+
 	return {
 		api,
 		observed,
@@ -204,10 +236,20 @@ function boundSurface(): NativeSurface {
 		start: facts => deliverRound({ type: "agent_start" }, facts),
 		settle: (facts, options = {}) =>
 			deliverRound({ type: "agent_end", willContinue: options.willContinue }, facts),
-		// The error path and the abort path reach the adapter as the same native settle an ordinary
-		// answer reaches it through, which is exactly why neither needs a shape of its own here.
-		fail: facts => deliverRound({ type: "agent_end" }, facts),
-		abort: facts => deliverRound({ type: "agent_end" }, facts),
+		messageEnds: (facts, options = {}) =>
+			deliverOther("message_end", { type: "message_end", message: { role: "assistant", stopReason: options.stopReason } }, facts),
+		// The error path and the abort path reach the adapter as an ordinary settle, preceded by the
+		// finalized message whose own stop reason says how that cycle ended — the same material the
+		// Turn axis reads its outcome from, and what tells a terminal cancellation from an answer.
+		fail: facts => {
+			deliverOther("message_end", { type: "message_end", message: { role: "assistant", stopReason: "error" } }, facts);
+			deliverRound({ type: "agent_end" }, facts);
+		},
+		abort: facts => {
+			deliverOther("message_end", { type: "message_end", message: { role: "assistant", stopReason: "aborted" } }, facts);
+			deliverRound({ type: "agent_end" }, facts);
+		},
+		nativeCalls,
 		// The adapter arranges the re-check with the host's own task primitive; on the suite's
 		// deterministic clock, arriving at that task is running the callback the adapter arranged.
 		nextTask: () => {
@@ -249,12 +291,12 @@ describe("the round opens and closes on real transitions (F6, P8)", () => {
 
 		surface.nextTask();
 		// On the next task the session reports quiescence, and that is what ends the round.
-		expect(surface.observed).toEqual([{ kind: "round_start" }, { kind: "round_end" }]);
+		expect(surface.observed).toEqual([{ kind: "round_start" }, END]);
 
 		// Already idle: there is no open round left to close, so no second edge is produced.
 		surface.settle(QUIESCENT);
 		surface.nextTask();
-		expect(surface.observed).toEqual([{ kind: "round_start" }, { kind: "round_end" }]);
+		expect(surface.observed).toEqual([{ kind: "round_start" }, END]);
 	});
 
 	test("a session still at work does not end, and a later settle that finds it idle does", () => {
@@ -271,7 +313,7 @@ describe("the round opens and closes on real transitions (F6, P8)", () => {
 		// confirmed: no polling, no duration guessed, just the next fact that could decide it.
 		surface.settle(QUIESCENT);
 		surface.nextTask();
-		expect(surface.observed).toEqual([{ kind: "round_start" }, { kind: "round_end" }]);
+		expect(surface.observed).toEqual([{ kind: "round_start" }, END]);
 	});
 
 	test("a settle that already scheduled its continuation is a pause inside the round", () => {
@@ -287,7 +329,7 @@ describe("the round opens and closes on real transitions (F6, P8)", () => {
 		// The real settle, once nothing is left to continue, is the round's end.
 		surface.settle(QUIESCENT);
 		surface.nextTask();
-		expect(surface.observed).toEqual([{ kind: "round_start" }, { kind: "round_end" }]);
+		expect(surface.observed).toEqual([{ kind: "round_start" }, END]);
 	});
 
 	test("a drained queued message stays inside the round, and supersedes its candidate", () => {
@@ -308,7 +350,7 @@ describe("the round opens and closes on real transitions (F6, P8)", () => {
 
 		surface.settle(QUIESCENT);
 		surface.nextTask();
-		expect(surface.observed).toEqual([{ kind: "round_start" }, { kind: "round_end" }]);
+		expect(surface.observed).toEqual([{ kind: "round_start" }, END]);
 	});
 
 	test("a running asynchronous job keeps the round open until it drains", () => {
@@ -321,7 +363,7 @@ describe("the round opens and closes on real transitions (F6, P8)", () => {
 
 		surface.settle(QUIESCENT);
 		surface.nextTask();
-		expect(surface.observed).toEqual([{ kind: "round_start" }, { kind: "round_end" }]);
+		expect(surface.observed).toEqual([{ kind: "round_start" }, END]);
 	});
 
 	test("one session's settle never closes another session's round, and a child's end is its own", () => {
@@ -335,7 +377,7 @@ describe("the round opens and closes on real transitions (F6, P8)", () => {
 		// parent's Round is its own and nothing about the child's end touches it.
 		surface.settle(child);
 		surface.nextTask();
-		expect(surface.observed).toEqual([{ kind: "round_start" }, { kind: "round_start" }, { kind: "round_end" }]);
+		expect(surface.observed).toEqual([{ kind: "round_start" }, { kind: "round_start" }, END]);
 		expect(surface.owners).toEqual(["main:session-parent", "main:session-child", "main:session-child"]);
 
 		// The parent's own settle, confirmed on the host's next task, is what ends the parent's Round.
@@ -344,8 +386,8 @@ describe("the round opens and closes on real transitions (F6, P8)", () => {
 		expect(surface.observed).toEqual([
 			{ kind: "round_start" },
 			{ kind: "round_start" },
-			{ kind: "round_end" },
-			{ kind: "round_end" },
+			END,
+			END,
 		]);
 		expect(surface.owners).toEqual([
 			"main:session-parent",
@@ -356,12 +398,13 @@ describe("the round opens and closes on real transitions (F6, P8)", () => {
 	});
 });
 
-describe("an abrupt terminal state closes the round too (F6, P8)", () => {
+describe("an abrupt terminal state closes the round too (F6, P8, P21)", () => {
 	test("a failed run and an interrupted run end the round as an ordinary answer does", () => {
 		const surface = boundSurface();
 
 		// The error path and the abort path both reach the adapter as the same native settle an
-		// ordinary answer reaches it through, with no continuation scheduled.
+		// ordinary answer reaches it through, with no continuation scheduled, and the message that
+		// preceded each states how the cycle ended.
 		surface.start(QUIESCENT);
 		surface.fail(QUIESCENT);
 		surface.nextTask();
@@ -371,23 +414,165 @@ describe("an abrupt terminal state closes the round too (F6, P8)", () => {
 
 		expect(surface.observed).toEqual([
 			{ kind: "round_start" },
-			{ kind: "round_end" },
+			END,
 			{ kind: "round_start" },
-			{ kind: "round_end" },
+			END,
 		]);
 	});
 
-	test("an abrupt end still carries no outcome: the round edge is the edge alone", () => {
+	test("an abrupt end carries no outcome: the round edge states the transition alone", () => {
 		const surface = boundSurface();
 		surface.start(QUIESCENT);
 
 		surface.fail(QUIESCENT);
 		surface.nextTask();
 
-		// How the round ended is the harness's vocabulary, not the framework's: a subscriber that
-		// needs the agent's state asks the idle query rather than reading it off this edge.
-		expect(surface.observed).toEqual([{ kind: "round_start" }, { kind: "round_end" }]);
-		expect(Object.keys(surface.observed[1] ?? {})).toEqual(["kind"]);
+		// How the activity came out is the harness's vocabulary, not the framework's: a subscriber that
+		// needs the agent's state asks the idle query rather than reading it off this edge, and what the
+		// activity's own outcome is used for is the framework's rest rule, never a payload. What the end
+		// does state is how the end itself was established.
+		expect(surface.observed).toEqual([{ kind: "round_start" }, END]);
+		expect(Object.keys(surface.observed[1] ?? {})).toEqual(["kind", "ending"]);
+	});
+
+	test("a cancelled run's round ends although this session still owns a running job", () => {
+		const surface = boundSurface();
+		// The work whose result would resume an ordinary session: a job this session owns, still
+		// running when its run was interrupted.
+		const interrupted: SessionFacts = { sessionId: "session-cancelled", idle: true, queued: false, runningJobs: 1 };
+
+		surface.start(interrupted);
+		surface.abort(interrupted);
+		surface.nextTask();
+
+		// Nothing will resume this activity — it was cancelled — so a round held open on the job would
+		// be one nothing could ever close.
+		expect(surface.observed).toEqual([{ kind: "round_start" }, END]);
+	});
+
+	test("a terminally failed run's round ends the same way", () => {
+		const surface = boundSurface();
+		const failed: SessionFacts = { sessionId: "session-failed", idle: true, queued: false, runningJobs: 2 };
+
+		surface.start(failed);
+		surface.fail(failed);
+		surface.nextTask();
+
+		expect(surface.observed).toEqual([{ kind: "round_start" }, END]);
+	});
+
+	test("the same running job keeps an ordinary answer's round open until the session is at rest", () => {
+		const surface = boundSurface();
+		const waiting: SessionFacts = { sessionId: "session-waiting", idle: true, queued: false, runningJobs: 1 };
+
+		surface.start(waiting);
+		surface.messageEnds(waiting, { stopReason: "stop" });
+		surface.settle(waiting);
+		surface.nextTask();
+		// The activity answered: the job it launched is what will resume it, so its round stays open.
+		expect(surface.observed).toEqual([{ kind: "round_start" }]);
+
+		surface.settle({ ...waiting, runningJobs: 0 });
+		surface.nextTask();
+		expect(surface.observed).toEqual([{ kind: "round_start" }, END]);
+	});
+
+	test("an errored cycle the harness retries is not a terminal failure", () => {
+		const surface = boundSurface();
+		const retrying: SessionFacts = { sessionId: "session-retrying", idle: true, queued: false, runningJobs: 1 };
+
+		surface.start(retrying);
+		// The cycle errored, and the harness scheduled its own retry: the settle says so, so it is a
+		// pause inside the round rather than an end candidate at all.
+		surface.messageEnds(retrying, { stopReason: "error" });
+		surface.settle(retrying, { willContinue: true });
+		surface.nextTask();
+		expect(surface.observed).toEqual([{ kind: "round_start" }]);
+
+		// The retry ran and answered, and the job is still running: the round waits on it, so the
+		// error the *earlier* cycle stated did not become this activity's end.
+		surface.messageEnds(retrying, { stopReason: "stop" });
+		surface.settle(retrying);
+		surface.nextTask();
+		expect(surface.observed).toEqual([{ kind: "round_start" }]);
+
+		surface.settle({ ...retrying, runningJobs: 0 });
+		surface.nextTask();
+		expect(surface.observed).toEqual([{ kind: "round_start" }, END]);
+	});
+
+	test("ending a cancelled round registers nothing with the host and stops nothing it owns", () => {
+		const surface = boundSurface();
+		const interrupted: SessionFacts = { sessionId: "session-untouched", idle: true, queued: false, runningJobs: 1 };
+
+		surface.start(interrupted);
+		const before = surface.nativeCalls();
+		surface.abort(interrupted);
+		surface.nextTask();
+
+		// Closing the round is the framework's bookkeeping: no second registration, no subscription
+		// added, no job cancelled and no queue cleared on this session's behalf.
+		expect(surface.observed).toEqual([{ kind: "round_start" }, END]);
+		expect(surface.nativeCalls()).toBe(before);
+	});
+});
+
+describe("an ended round is not reopened, and only a real execution opens a new one (P22)", () => {
+	test("a cancelled round stays closed, and work arriving after it opens no round of its own", () => {
+		const surface = boundSurface();
+		const session: SessionFacts = { sessionId: "session-late", idle: true, queued: false, runningJobs: 1 };
+
+		surface.start(session);
+		surface.abort(session);
+		surface.nextTask();
+		expect(surface.observed).toEqual([{ kind: "round_start" }, END]);
+
+		// What arrives after the cancellation is a finalized message and a settle for a round that is
+		// no longer open: appending a result is not an execution, so nothing is opened and nothing is
+		// closed — no completion is fabricated for the round that already ended.
+		surface.messageEnds(session, { stopReason: "stop" });
+		surface.settle(session);
+		surface.nextTask();
+		expect(surface.observed).toEqual([{ kind: "round_start" }, END]);
+	});
+
+	test("an execution that really starts after the cancellation opens a new round of its own", () => {
+		const surface = boundSurface();
+		const session: SessionFacts = { sessionId: "session-resumed", idle: true, queued: false, runningJobs: 1 };
+
+		surface.start(session);
+		surface.abort(session);
+		surface.nextTask();
+
+		// The wake that really runs: the harness states an activity beginning, which is the fact that
+		// opens a round. The cancelled activity's outcome belongs to the round that ended with it, so
+		// this new activity waits on the work it can still be resumed by.
+		surface.start(session);
+		surface.messageEnds(session, { stopReason: "stop" });
+		surface.settle(session);
+		surface.nextTask();
+		expect(surface.observed).toEqual([{ kind: "round_start" }, END, { kind: "round_start" }]);
+
+		surface.settle({ ...session, runningJobs: 0 });
+		surface.nextTask();
+		expect(surface.observed).toEqual([
+			{ kind: "round_start" },
+			END,
+			{ kind: "round_start" },
+			END,
+		]);
+	});
+
+	test("a restored session's settle closes nothing", () => {
+		const surface = boundSurface();
+		const restored: SessionFacts = { sessionId: "session-restored", idle: true, queued: false, runningJobs: 0 };
+
+		// A process that starts with no open round and is handed a settle has no round whose end this
+		// could be: the boundary a previous process was in the middle of is not fabricated here.
+		surface.fail(restored);
+		surface.nextTask();
+
+		expect(surface.observed).toEqual([]);
 	});
 });
 

@@ -20,11 +20,12 @@
  * baseline wrote `offline`. The severities are the baseline's as well: `info` reports an effect that
  * happened, `error` one that did not.
  *
- * The channel itself is the framework's (see `framework/core/protocol.ts`): a UI notification at
+ * The channel itself is the framework's (see `framework/interface/feedback`): a UI notification at
  * the severity chosen here when the session has a UI, one stderr line when it has not, and never
  * model context. This module owns the wording alone.
  */
-import type { FeedbackLevel, FeedbackTransport, SessionEndReason } from "../../../framework/core/protocol";
+import type { FeedbackLevel, FeedbackTransport } from "../../../framework/interface/feedback";
+import type { SessionEndReason } from "../../../framework/interface/session";
 import type { FailureAction } from "./panel/failure-budget";
 
 /** One text this extension publishes, at the severity the outcome carries. */

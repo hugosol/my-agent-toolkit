@@ -272,7 +272,19 @@ async function savedDocument(
 	for (;;) {
 		const document = readDocument(run);
 		if (document !== undefined && accept(document)) return document;
-		if (Date.now() > deadline) throw new Error(`no consumption document the case expects was published in ${run.home.consumptionFile}`);
+		if (Date.now() > deadline) {
+			// Preserve the last observation before disposeRun removes the isolated run root.
+			const observation = {
+				document: document ?? null,
+				exit: run.session.exited(),
+				stderr: run.session.stderr().split(DOCK_CREDENTIAL).join("<REDACTED>"),
+				arrivals: run.capture.arrivals(),
+			};
+			throw new Error(
+				`no consumption document the case expects was published in ${run.home.consumptionFile}; ` +
+					`last observation: ${JSON.stringify(observation)}`,
+			);
+		}
 		await queuedWorkSettled();
 	}
 }

@@ -25,7 +25,7 @@
  * semantic kind, and the two facts a report needs — the real session id and the queue — are read
  * from the extension's own record.
  */
-import type { OwnerReference } from "../../../../framework/core/protocol";
+import type { OwnerReference } from "../../../../framework/interface/state";
 import type { AgentState } from "./agent-state";
 import { botSessions } from "./session";
 

@@ -15,7 +15,7 @@
  * extension handler at all; restating the rule here is what makes the gate this command's own
  * decision rather than an assumption about the binding.
  */
-import type { OwnerReference } from "../../../../framework/core/protocol";
+import type { OwnerReference } from "../../../../framework/interface/state";
 
 /** What the gate concluded for one invocation. */
 export type CommandGate =

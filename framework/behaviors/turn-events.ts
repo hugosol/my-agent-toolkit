@@ -45,21 +45,19 @@
  * about pricing.
  */
 import type { ExtensionDefinition } from "../core/definition";
+import type { FeedbackTransport } from "../interface/feedback";
+import type { CatalogPriceSource, ProviderHttpFacts } from "../interface/host-facts";
 import type {
-	CatalogPriceSource,
-	FeedbackTransport,
-	OwnerReference,
-	ProviderHttpFacts,
 	SessionFacts,
 	SubscriptionGroup,
 	TurnEndDelivery,
 	TurnEndFacts,
-	TurnSignal,
-	TurnSignalFacts,
 	TurnStartDelivery,
 	TurnStartFacts,
 	TurnUsage,
-} from "../core/protocol";
+} from "../interface/session";
+import type { OwnerReference } from "../interface/state";
+import type { TurnSignal, TurnSignalFacts } from "../core/protocol";
 import { dispatchToGroups } from "./subscriptions";
 import type { RoundLives } from "./round-events";
 

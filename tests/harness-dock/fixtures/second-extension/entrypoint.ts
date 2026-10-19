@@ -8,7 +8,7 @@
  * tells the case that a second extension was loaded and bound in that process. No network, no
  * file, no timer and no native call of its own.
  */
-import { ompAdapter } from "../../../../framework/adapters/omp";
+import { ompAdapter } from "../../../../adapters/omp";
 import { type ExtensionDefinition, defineExtension } from "../../../../framework/public";
 
 /** The extension id whose stderr line the dock reads. */

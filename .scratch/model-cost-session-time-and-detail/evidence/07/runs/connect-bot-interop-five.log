@@ -1,8 +1,0 @@
-$ OMP_BOT_BINARY=E:/Developer/myhub/omp-bot/backend/target/release/omp-bot.exe bun test tests/connect-bot/budget-regression.test.ts tests/connect-bot/harness-exit-budget.test.ts tests/connect-bot/panel-registration-lifecycle.test.ts   # revision c7ad7e8, 2026-10-14T21:18:37+08:00
-bun test v1.4.2 (744846f84)
-
- 12 pass
- 0 fail
- 120 expect() calls
-Ran 12 tests across 3 files. [61.09s]
-exit=0

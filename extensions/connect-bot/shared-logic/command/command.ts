@@ -19,7 +19,7 @@
  * The session facts it sends are read by the harness assembly and injected as plain data, so
  * this module names no harness and reaches no native API.
  */
-import type { CommandDelivery, DirectedCommandImplementation, RecognizedDirective } from "../../../../framework/core/protocol";
+import type { CommandDelivery, DirectedCommandImplementation, RecognizedDirective } from "../../../../framework/public";
 import { publishFeedback } from "../feedback";
 import { commandGate } from "./guard";
 import type { ManagedTimers } from "../managed-timer";

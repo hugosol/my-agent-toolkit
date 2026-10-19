@@ -18,8 +18,8 @@ import type {
 	OmpRunInitiationHandler,
 	OmpRunInitiationResult,
 	OmpSessionEventType,
-} from "../../framework/adapters/omp";
-import * as frameworkOmp from "../../framework/adapters/omp";
+} from "../../adapters/omp";
+import * as frameworkOmp from "../../adapters/omp";
 import type { CommandDelivery } from "../../framework/core/protocol";
 import { type CommandImplementations, defineExtension } from "../../framework/public";
 

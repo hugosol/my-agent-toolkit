@@ -2,7 +2,15 @@
 
 Shared semantic-extension framework plus its `codebase-tools` and `connect-bot` extensions,
 deployed into the `oh-my-pi` (`omp`) harness. The framework lives once under
-[`framework/`](framework) and extensions import that source directly; `omp` discovers the thin
+[`framework/`](framework), with native capability mappings under sibling [`adapters/`](adapters).
+Each adapter root has exactly three entries: `index.ts` (public entry), `internal/` (private native
+support and binding port), and `domain/` (the nine capability domains). Within a domain, event
+mappings, information queries and native effects stay together as `events.ts`, `queries.ts` and
+`effects.ts` when needed. Simple domains remain single files; this is not a three-file template for
+every capability. The complete
+[nine-domain navigation](framework/docs/framework-capabilities.md#adapter-implementation-navigation)
+distinguishes capability mappings from assembly, native types and loader support.
+Extensions import the shared framework source directly; `omp` discovers the thin
 entrypoints under [`entrypoints/omp/`](entrypoints/omp), which in turn use the implementations under
 [`extensions/`](extensions). The architecture decision is
 [ADR 0002](docs/adr/0002-semantic-extension-framework.md).
@@ -19,7 +27,8 @@ bun install                 # once
 bun run typecheck
 bun run test:framework      # framework capabilities C1–C15 (the upgrade alarm)
 bun run test:codebase-tools # extension behavior (permanent)
-bun run test:dock        # the dock and the fixed baseline record
+bun run test:dock        # the dock and the fixed baseline record, four isolated files at a time
+bun run test:dock:serial # the same dock serially, for diagnosing shared state or constrained machines
 ```
 
 The suites that drive a real session materialise the isolated exact install of the supported
@@ -45,7 +54,7 @@ glossary.
 | Document | What it is | Read it when |
 | --- | --- | --- |
 | [`framework/docs/extension-development-map.md`](framework/docs/extension-development-map.md) | Long-lived principles for extension layering and finding existing framework capabilities; a Chinese guide, not an API or implementation inventory. | You are adding or changing an extension and deciding where its responsibilities belong. |
-| [`framework/README.md`](framework/README.md) | The framework's layout guide and runbook: `core/` / `behaviors/` / `adapters/`, the framework suite, candidate verification, the human acceptance index, and the supported-version upgrade standard. | You are working on framework code or upgrading the supported harness. |
+| [`framework/README.md`](framework/README.md) | The framework's layout guide and runbook: `core/` / `behaviors/` / `modules/` and sibling `adapters/`, the framework suite, candidate verification, the human acceptance index, and the supported-version upgrade standard. | You are working on framework code or upgrading the supported harness. |
 | [`framework/docs/harness-support.md`](framework/docs/harness-support.md) | **Authority** for harness version compatibility: the four-state support record (`verified-supported` / `verified-unlisted` / `unverified` / `unsupported`), its evidence and conditions, the provider-path role evidence, and the long-term upgrade standard and its triggers. | You need to know what is supported, what is not, and how a version becomes supported. |
 | [`framework/docs/harness-baseline.json`](framework/docs/harness-baseline.json) | Data record of the fixed baseline: the revision anchor, the artifact that actually runs, and the dependency lockfiles. Re-checked by `tests/harness-dock/baseline.test.ts`. | You need the machine-checkable correspondence behind the supported row; refresh it after a deliberate dependency or version change. |
 | [`framework/docs/framework-capabilities.md`](framework/docs/framework-capabilities.md) | Index of the framework's public authoring surface: what every `defineExtension` / `ompAdapter` parameter means, each symbol cited to source. | You are writing or reading framework code and need to find an entry point. |
@@ -60,6 +69,7 @@ glossary.
 | [`tests/harness-dock/`](tests/harness-dock) | The shared dock (isolated install, controlled session, capture) and its self-test. | You are writing a test that drives a real session. |
 | [`scripts/verify-omp-candidate.ts`](scripts/verify-omp-candidate.ts) | On-demand independent verification of one exact harness version: isolated exact install + framework suite + a scoped result record (version, revision anchor, source revision, lockfiles, environment, coverage). | You are verifying another harness version. |
 | [`scripts/capture-codex-outbound.ts`](scripts/capture-codex-outbound.ts) | Prepared layer-2 capture of a real `openai-codex` round trip; needs a human-supplied credential. | You are recording the real-credential role evidence. |
+| [`scripts/pi-provider-account-read.ts`](scripts/pi-provider-account-read.ts) | The real account-side reading for the pi migration: runs the loaded extension on the real host against a real provider account and publishes a desensitized, timestamped reading beside what the host drew. Reads the machine's own credential, prints it only as a fingerprint, makes no model request, and reports a missing credential as a blocker. | You are recording or replaying the account-side acceptance evidence (P53). |
 
 The durable documentation is self-contained: migration decisions, constraints and recorded
 evidence are stated in the per-extension READMEs, framework documents and ADRs rather than

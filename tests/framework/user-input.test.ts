@@ -16,14 +16,10 @@
  * the dock's, not this file's.
  */
 import { describe, expect, test } from "bun:test";
-import type { OmpCommandContext, OmpExtensionApi, OmpSessionContext } from "../../framework/adapters/omp";
-import * as frameworkOmp from "../../framework/adapters/omp";
-import {
-	type ExtensionDefinition,
-	type SemanticEventHandlers,
-	type UserInputDelivery,
-	defineExtension,
-} from "../../framework/public";
+import type { OmpCommandContext, OmpExtensionApi, OmpSessionContext } from "../../adapters/omp";
+import * as frameworkOmp from "../../adapters/omp";
+import type { SemanticEventHandlers, UserInputDelivery } from "../../framework/interface/session";
+import { type ExtensionDefinition, defineExtension } from "../../framework/public";
 
 /** The definition under test: a command, so the suite can tell a refused binding from an unbound one. */
 const PROBE: ExtensionDefinition = defineExtension({

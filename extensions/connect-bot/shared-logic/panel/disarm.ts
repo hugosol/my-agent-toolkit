@@ -19,7 +19,7 @@
  * that callback retained. Both are the same declared-value write path, so what ends a connection
  * is one function either way.
  */
-import type { DeclaredValueSeam } from "../../../../framework/core/protocol";
+import type { DeclaredValueSeam } from "../../../../framework/interface/state";
 import { stopLocalEffects } from "../session/session";
 
 /**

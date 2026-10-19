@@ -19,6 +19,7 @@ import { INIT_PROMPT, REMINDER_PROMPT } from "./shared-logic/prompts";
 export const CODEBASE_TOOLS = defineExtension({
 	id: "codebase-tools",
 	displayName: "codeBaseTools",
+	subagentRequirements: ["extension-loading", "session-facts", "state-follow"],
 	state: { inheritance: "follow" },
 	commands: [
 		{

@@ -3,7 +3,7 @@
  * harness-independent half of the framework.
  *
  * This module is adapter-facing, not an author entry: extension authors declare with
- * `framework/public.ts`, and a harness adapter (for OMP, `framework/adapters/omp.ts`)
+ * `framework/public.ts`, and a harness adapter (for OMP, `adapters/omp/index.ts`)
  * calls into this.
  *
  * Ordering is the contract: every fallible step (configuration rules, the definition's file, the
@@ -40,17 +40,23 @@ import {
 	BOUND_STATE_INHERITANCES,
 	BOUND_STATE_PERSISTENCES,
 	activationField,
+	stateInheritance,
 	type ExtensionDefinition,
 } from "../core/definition";
+import type { FeedbackTransport } from "../interface/feedback";
+import type { SessionCapability } from "../interface/session";
 import {
 	type HarnessPort,
 	type BindingFailure,
 	type BindingResult,
 	describeBindingFailure,
 	type DirectedCommandImplementation,
+	type ObservationSource,
+	type ObservedSession,
 	type PromptContribution,
 } from "../core/protocol";
 import type { StateStore } from "../core/state";
+import { handOverReading, type SessionObservations } from "../core/observations";
 import { findConfigFailure, getConfig, type ConfigSource } from "../core/config";
 import { findConfigurationViolations } from "../core/violations";
 import { runCommandActions } from "./actions";
@@ -59,8 +65,18 @@ import { planContribution } from "./injection";
 import { cleanupImplementation, initializeImplementation, servingOwnerKeyOf, initializationPending } from "./lifecycle";
 import { publishMarkerOnRun, publishMarkerOnViewChange, registerMarker, markerSeat } from "./marker";
 import { createRoundSynthesis, roundLives } from "./round-events";
+import { createSessionActivityAxis, type SessionActivityAxis } from "./session-activity";
+import { createContextCollection, type ContextCollection } from "./session-context";
 import { dispatchSessionEvent } from "./session-events";
-import { ROUND_EVENT_KINDS, SUBAGENT_RUNTIME_EVENT_KINDS, TURN_EVENT_KINDS, USER_INPUT_EVENT_KINDS, dispatchToGroups, subscribesAny } from "./subscriptions";
+import {
+	ROUND_EVENT_KINDS,
+	SESSION_ACTIVITY_KINDS,
+	SESSION_CONTEXT_EVENT_KINDS,
+	TURN_EVENT_KINDS,
+	USER_INPUT_EVENT_KINDS,
+	dispatchToGroups,
+	subscribesAny,
+} from "./subscriptions";
 import { turnLives } from "./turn-events";
 
 /** Whether one injected implementation is the directed half of a directed command. */
@@ -214,6 +230,7 @@ export function bindExtension(
 	definition: ExtensionDefinition,
 	port: HarnessPort,
 	state: StateStore,
+	observations: SessionObservations,
 	factory?: ExtensionFactory,
 	configSource: ConfigSource = {},
 ): BindingResult {
@@ -238,6 +255,35 @@ export function bindExtension(
 		return { bound: false, failures };
 	}
 
+	// The framework's cross-process half of session observation, as this binding's harness adapter
+	// built it: the access whose one seat is this binding's own owner seat, and whose other direction
+	// carries a reading of a session this process runs to the owner it follows. A harness whose
+	// sessions are all bindings in this process supplies none, and everything below then stays
+	// exactly as it was: this process's own source, observed here and delivered here.
+	//
+	// It is set up before the factory runs because the extension's own half of it is one of the facts
+	// the factory is handed: an extension whose sessions write into a storage another process reads
+	// states its confirmed writes through it, and the notice that statement produces has to leave from
+	// the same access the readings below do.
+	const observationBinding = state.access.bind({
+		adopt: (source, reading) => adoptReading(source, reading),
+		lost: source => loseSource(source),
+	}, port.sessionObservationAccess);
+	const handOver = observationBinding.handOver;
+	// The extension's whole Session capability: a frozen read surface over the process's one source,
+	// and the one statement it may make. The source's mutation methods are never handed out, and the
+	// notice a confirmed write produces takes the same hand-over path a reading does.
+	const session: SessionCapability = Object.freeze({
+		observations: Object.freeze({
+			read: (sessionId: string) => observations.read(sessionId),
+			snapshot: () => observations.snapshot(),
+		}),
+		recordCommit: (sessionId: string) => {
+			const stated = observations.recordCommit(sessionId);
+			if (stated !== undefined) handOverReading(handOver, stated);
+		},
+	});
+
 	// The extension's own half, and the first point at which its code runs. It is reached only
 	// after the configuration validated, so the values handed over are the ones the definition
 	// declared and nothing is read from the file twice; a factory that throws is a refused
@@ -251,20 +297,161 @@ export function bindExtension(
 			? {}
 			: factory({
 					config: definition.config === undefined ? {} : getConfig(definition),
+					// The process's Session capability: the live read surface (including readings collected
+					// before the extension attached) and the one statement it makes about a confirmed write.
+					session,
 					...(port.modelPrices === undefined ? {} : { modelPrices: port.modelPrices }),
 					...(port.providerAccess === undefined ? {} : { providerAccess: port.providerAccess }),
 				});
 	} catch (error) {
+		observationBinding.dispose();
 		const detail = error instanceof Error ? error.message : String(error);
 		const failure: BindingFailure = { kind: "initialization", detail: `the implementation factory failed: ${detail}` };
 		port.reportDiagnostic(describeBindingFailure(definition.id, failure));
 		return { bound: false, failures: [failure] };
 	}
 
+	let delivering = true;
+
+	/**
+	 * The transports an arriving reading is dispatched with: the served owner's own session delivery.
+	 *
+	 * A reading that arrived from another process is delivered to the subscribers of the owner that
+	 * session follows — the owner this process serves — so the UI fact and the feedback channel it
+	 * travels with are that owner's, taken from the delivery that began serving the owner's seat. Nothing is
+	 * invented for a session this process never saw a delivery about.
+	 */
+	let ownerTransport: { readonly hasUI: boolean; readonly feedback: FeedbackTransport } | undefined;
+	/** The axes an arriving reading moves, as the collections above move them for a local one. */
+	let activityAxis: SessionActivityAxis | undefined;
+	let contextCollection: ContextCollection | undefined;
+
+	/**
+	 * Adopts one word a source delivered: this process's own record first, then the same axes the
+	 * local collections move, and never anything of the billing lifecycle.
+	 *
+	 * The word states what that session was observed to be — its activity and its context, under the
+	 * identity the process that ran it resolved — so adopting it is recording it and delivering it as
+	 * the change it is; no Round is opened for it, no Turn is attributed and no request is accounted. A
+	 * reading that states what this process already holds moves nothing, exactly as a repeated local
+	 * collection does, so a re-delivered word is not published twice, and a word from a connection
+	 * older than the one a reading already came from (`source`) is not taken at all.
+	 *
+	 * A word may also state that the session's own process confirmed a write of its extension data. That
+	 * is a notice rather than a reading — nothing of it is accounted, and the storage it names is not
+	 * this process's to read here — so what it costs is the one delivery that says the count moved: a
+	 * subscriber that cares reads the storage itself, and a count this process already took states
+	 * nothing.
+	 */
+	const adoptReading = (source: ObservationSource, reading: ObservedSession): void => {
+		if (!delivering) return;
+		observations.sawSession(reading.session, reading.owner);
+		const transport = ownerTransport;
+		if (transport === undefined) return;
+		const sessionId = reading.session.sessionId;
+		if (reading.activity !== undefined && observations.observeActivity(sessionId, reading.activity, source)) {
+			activityAxis?.observe({
+				session: reading.session,
+				owner: reading.owner,
+				activity: reading.activity,
+				hasUI: transport.hasUI,
+				feedback: transport.feedback,
+			});
+		}
+		if (reading.commits !== undefined && observations.observeCommits(sessionId, reading.commits, source)) {
+			void dispatchToGroups(
+				definition.id,
+				groups,
+				"session_commit",
+				reading.owner,
+				() => ({
+					delivery: {
+						event: { kind: "session_commit" },
+						session: reading.session,
+						owner: reading.owner,
+						commits: reading.commits as number,
+						hasUI: transport.hasUI,
+						feedback: transport.feedback,
+					},
+				}),
+				port.reportDiagnostic,
+			);
+		}
+		if (reading.context === undefined) return;
+		const collection = {
+			session: reading.session,
+			owner: reading.owner,
+			reading: reading.context,
+			hasUI: transport.hasUI,
+			feedback: transport.feedback,
+		};
+		// The collection is what records a context reading where this binding observes one; a binding
+		// that observes none still holds the reading in the framework's own source for whoever reads
+		// it later.
+		if (contextCollection === undefined) observations.observeContext(sessionId, reading.context, source);
+		else contextCollection.observe(collection, source);
+	};
+
+	/**
+	 * Withdraws the readings one source held, as that source is gone: the connection it delivered over
+	 * ended, whether the process that held it released the access or the receiving side observed the
+	 * connection close or fail.
+	 *
+	 * What this leaves is the session's identity and nothing live about it: the readings that source
+	 * stated are withdrawn from the process's own record — a newer source's readings, and this
+	 * process's own observations, are untouched — and the subscribers that observe a session are told
+	 * the observation is unavailable. Nothing else is delivered: the loss is not idleness, not a
+	 * finished task and not a failure, so no Round edge, Turn or accounting fact is minted for it, and
+	 * the session's saved consumption is not this record's to touch.
+	 */
+	const loseSource = (source: ObservationSource): void => {
+		if (!delivering) return;
+		const lost = observations.withdrawSource(source);
+		const transport = ownerTransport;
+		if (transport === undefined) return;
+		for (const reading of lost) {
+			// The axis's own reading for that session is the one just withdrawn: it is forgotten here so
+			// that the same reading stated again — by a source that reached the seat after this one
+			// ended — is delivered rather than read as the reading already delivered.
+			activityAxis?.forget(reading.session.sessionId);
+			void dispatchToGroups(
+				definition.id,
+				groups,
+				"session_unobserved",
+				reading.owner,
+				() => ({
+					delivery: {
+						event: { kind: "session_unobserved" },
+						session: reading.session,
+						owner: reading.owner,
+						hasUI: transport.hasUI,
+						feedback: transport.feedback,
+					},
+				}),
+				port.reportDiagnostic,
+			);
+		}
+	};
+
+	/**
+	 * Withdraws the seat this binding is receiving observations for, as that owner leaves or the binding ends.
+	 *
+	 * The sessions that followed that owner are the ones its observation was for, and the seat goes
+	 * with the owner's own life rather than with a later session's: the provider's children of an
+	 * owner that is gone deliver to nothing, which is what a released seat reports to them.
+	 */
+	const releaseSeat = (): void => {
+		observationBinding.dispose();
+		ownerTransport = undefined;
+	};
+
 	// From here on the extension has built something, so every remaining refusal runs its one
 	// cleanup before it is reported: a failed binding never leaves a business instance running.
 	const refuse = (failure: BindingFailure): BindingResult => {
 		cleanupImplementation(definition.id, implementation, port.reportDiagnostic);
+		// A refused binding delivers nothing, so the seat it received observations on — if a delivery
+		// reached it before the registration failed — is withdrawn with it.
+		releaseSeat();
 		port.reportDiagnostic(describeBindingFailure(definition.id, failure));
 		return { bound: false, failures: [failure] };
 	};
@@ -285,7 +472,6 @@ export function bindExtension(
 	// it, so an invocation that arrives afterwards reaches neither an injected implementation nor a
 	// retained capability of the instance that was disposed. The framework's own local State path
 	// (`toggle`) is not the extension's code and stays reachable, exactly as the session suite shows.
-	let delivering = true;
 
 	// The seat every marker publication of this binding projects: the session the harness is
 	// displaying, re-read per publication, or the position the delivery itself carries when this
@@ -307,6 +493,14 @@ export function bindExtension(
 		port.setLabel(definition.displayName);
 		port.onSession(session => {
 			if (!delivering) return;
+			// The framework's own record of this session: its identity and the owner it follows are
+			// what a consumer attaching later names it by, and they are recorded before anything this
+			// delivery runs, exactly as the framework's State behavior is applied before a handler.
+			observations.sawSession(session.session, session.owner);
+			// This process's own reading of that session leaves here where the owner it follows is
+			// served in another process: it is the registration that owner's process gets, and it is
+			// made from the same delivery that recorded the session here.
+			handOverReading(handOver, { session: session.session, owner: session.owner });
 			// The framework's own behavior runs before the extension's handler, and a handler
 			// that throws is reported rather than allowed to disturb the framework or another
 			// binding: see `session-events.ts` for the order and the isolation.
@@ -317,6 +511,9 @@ export function bindExtension(
 				// serves a session that can hold its business instance, and therefore where its
 				// one-time initialization runs. The run-initiation hook waits for the promise this
 				// creates, so the first model request is issued after the initialization settled.
+				// Admission precedes initialization: a child may report as soon as its first request starts.
+				observationBinding.enter(session.owner.key);
+				ownerTransport = { hasUI: session.hasUI, feedback: session.feedback };
 				void initializeImplementation(
 					definition.id,
 					implementation,
@@ -327,8 +524,17 @@ export function bindExtension(
 						markers: session.markers,
 					},
 					port.reportDiagnostic,
+					port.subagentIntegration,
 				);
 				return;
+			}
+
+			if (session.event.kind === "session_end" && session.owner.kind === "owner") {
+				// The owner's own life ends — it is disposed, or another session takes its place — and
+				// this process's seat for it goes with it: the sessions that followed that owner are
+				// the ones its observation was for, and the seat comes back with the owner entered
+				// next rather than being kept for a session that no longer exists.
+				if (observationBinding.leave(session.owner.key)) ownerTransport = undefined;
 			}
 
 			if (
@@ -344,26 +550,45 @@ export function bindExtension(
 				// view subscription is given up here too: this binding's part in the area is over,
 				// and a listener kept past it would speak for an extension that no longer delivers.
 				delivering = false;
+				releaseSeat();
 				releaseViewed?.();
 				releaseViewed = undefined;
 				cleanupImplementation(definition.id, implementation, port.reportDiagnostic);
 			}
 		});
-		// The round axis is subscribed when this extension observes one of its edges *or* one of the
-		// Turn axis's, because a Turn states which round it belongs to and that identity is this
-		// bookkeeping's. Unlike the session subscription above there is no framework State behavior
-		// to run for a round — the agent's work state is not framework State — so a definition that
-		// subscribed to neither axis asks the harness for no round deliveries and registers no such
-		// hook. The same bookkeeping is what the Turn hook below reads.
+		// The round axis is subscribed when this extension observes one of its edges, one of the Turn
+		// axis's, or one of the readings those transitions state — the activity axis, and a session
+		// reading in the framework's own observation source, whose activity those edges leave behind —
+		// because a Turn states which round it belongs to and that identity is this bookkeeping's, and
+		// because the activity reading is that same bookkeeping's own projection and is delivered from
+		// the transitions it dispatches. Unlike the session subscription above there is no framework
+		// State behavior to run for a round — the agent's work state is not framework State — so a
+		// definition that subscribed to none of them asks the harness for no round deliveries and
+		// registers no such hook. The same bookkeeping is what the Turn hook below reads.
 		const lives = roundLives();
-		if (subscribesAny(groups, [...ROUND_EVENT_KINDS, ...TURN_EVENT_KINDS])) {
+		if (
+			subscribesAny(groups, [
+				...ROUND_EVENT_KINDS,
+				...TURN_EVENT_KINDS,
+				...SESSION_ACTIVITY_KINDS,
+				...SESSION_CONTEXT_EVENT_KINDS,
+			])
+		) {
 			// The synthesis is what decides the edges; the framework arranges its end-candidate
 			// re-check on the harness's next task, so a harness that never reports a `nextTask`
-			// capability leaves a candidate unconfirmed rather than being polled for one.
+			// capability leaves a candidate unconfirmed rather than being polled for one. The activity
+			// axis rides along with it, because it is those same transitions that state a session's
+			// reading.
+			// The activity axis: the reading those transitions leave a session in, and the same axis an
+			// arriving reading of another process's session moves below.
+			activityAxis = createSessionActivityAxis({ definition, groups, reportFailure: port.reportDiagnostic });
 			const rounds = createRoundSynthesis({
 				definition,
 				lives,
 				groups,
+				observations,
+				handOver,
+				activity: activityAxis,
 				reportFailure: port.reportDiagnostic,
 				nextTask: callback => port.nextTask(callback),
 				delivering: () => delivering,
@@ -371,6 +596,34 @@ export function bindExtension(
 			port.onRound(observation => {
 				if (!delivering) return;
 				rounds.observe(observation);
+			});
+			// The disposal fact a harness reports at its own awaitable exit position: what the framework
+			// owes there is this binding's close-out, and the answer the harness waits for is that
+			// close-out's own completion. It is registered with the round hook rather than the session one
+			// because the round axis is what it closes, and a binding that observes neither the round axis
+			// nor the Turn axis installs neither. An adapter that reports no such fact leaves the round to
+			// the facts it does publish.
+			port.onDisposal?.(async disposal => {
+				if (!delivering) return;
+				await rounds.dispose(disposal);
+			});
+		}
+		// The context-collection hook is subscribed only when a group observes a reading, so a
+		// definition that reads no session's context asks the harness to collect none at all. What
+		// the adapter collects where, and what a reading means here, are both above this line: the
+		// adapter reads the host's own public context reading, and the framework records it and
+		// delivers it as the change it is.
+		if (subscribesAny(groups, SESSION_CONTEXT_EVENT_KINDS)) {
+			contextCollection = createContextCollection({
+				definition,
+				observations,
+				groups,
+				handOver,
+				reportFailure: port.reportDiagnostic,
+			});
+			port.onSessionContext(observation => {
+				if (!delivering) return;
+				contextCollection?.observe(observation);
 			});
 		}
 		// The model-cycle hook is subscribed only when a group observes a Turn edge, so a definition
@@ -380,25 +633,6 @@ export function bindExtension(
 			port.onTurn(facts => {
 				if (!delivering) return;
 				turns.observe(facts);
-			});
-		}
-		// The subagent-runtime hook is subscribed only when a group observes that axis, so a
-		// definition that does not care about an execution's own duration asks the harness for no
-		// such facts. Nothing of the framework's runs for a delivery — the axis owns no state the
-		// framework holds: no State is reconciled, no Round is opened or closed, no consumption is
-		// settled and no file is written — so the observation goes straight to the subscribed
-		// handlers, unchanged, exactly as the adapter mapped it.
-		if (subscribesAny(groups, SUBAGENT_RUNTIME_EVENT_KINDS)) {
-			port.onSubagentRuntime(delivery => {
-				if (!delivering) return;
-				dispatchToGroups(
-					definition.id,
-					groups,
-					delivery.event.kind,
-					delivery.owner,
-					() => ({ delivery }),
-					port.reportDiagnostic,
-				);
 			});
 		}
 		// The input hook is subscribed only when a group observes it. There is no framework behavior
@@ -427,16 +661,19 @@ export function bindExtension(
 		if (contributes || definition.marker !== undefined || awaitsInitialization) {
 			port.onRunInitiation(run => {
 				if (!delivering) return undefined;
-				publishMarkerOnRun(definition, run, seat);
-				const plan = contributes
-					? (): PromptContribution | undefined => planContribution(definition, state, run)
+				const plan = (): PromptContribution | undefined => {
+					if (!delivering) return undefined;
+					publishMarkerOnRun(definition, run, seat);
+					return contributes ? planContribution(definition, state, run) : undefined;
+				};
+				const initialized = initializationPending(implementation);
+				const followed = run.owner.kind === "inherited" && stateInheritance(definition) === "follow"
+					? state.prepareFollowed(run.owner.key)
 					: undefined;
-				const pending = initializationPending(implementation);
-				if (pending === undefined) return plan === undefined ? undefined : plan();
-				// This is the framework's awaitable position before a model request: the request the
-				// run is about to issue waits for the initialization the session node started, and
-				// the contribution is planned with the facts as they stand once it settled.
-				return pending.then(() => (plan === undefined ? undefined : plan()));
+				if (initialized === undefined && followed === undefined) return plan();
+				// First use joins the bounded initial access, not a per-read request. After it settles,
+				// State keeps answering the pushed value (or the existing default on failure).
+				return Promise.all([initialized, followed]).then(plan);
 			});
 		}
 		registerMarker(definition, state);

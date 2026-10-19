@@ -25,13 +25,16 @@
  * What the runtime connects to the framework is {@link ModelCostRuntime.implementation}: the
  * extension's own model catalog — the one query the framework makes at a real request's start, whose
  * answer is snapshotted into that request's own facts — one per-actual-session observation group
- * over the Turn and Round axes plus the harness's own session-facts deliveries, the one-time
- * initialization, and the cleanup that ends this instance. The catalog states the maintained data's
- * own prices (`model-data.ts`) and, for a channel the harness itself prices, the harness's own model
- * prices as the framework hands them over; the observation group hands the deliveries to the request
- * accounting (`request-accounting.ts`), which anchors each request's price at its start, adds its
- * reliable usage once, and keeps each session's latest name and direct parent as the host reports
- * them — including a rename it reports between that session's own boundaries. The DeepSeek balance
+ * over the Turn and Round axes, the framework's own activity readings and the harness's own
+ * session-facts deliveries, the one-time initialization, and the cleanup that ends this instance. The
+ * catalog states the maintained data's own prices (`model-data.ts`) and, for a channel the harness
+ * itself prices, the harness's own model prices as the framework hands them over; the observation group
+ * hands the deliveries to the request accounting (`request-accounting.ts`), which anchors each
+ * request's price at its start, adds its reliable usage once, and keeps each session's latest name and
+ * direct parent as the host reports them — including a rename it reports between that session's own
+ * boundaries. The activity readings move the display's per-session Working/Idle (`presentation/`
+ * `session-activity.ts`) and drive nothing else: they are observations of what the framework's Rounds
+ * already decided, so no Round, no measured runtime and no save follows from one. The DeepSeek balance
  * reading (`provider-balance.ts`) is asked once here, while this instance initializes, and a settled
  * request then refreshes it through the framework's public HTTP module only when that reading has
  * outlived its configured success TTL and no query is already out. The Codex allowance windows
@@ -48,20 +51,38 @@
  * continues the same measurement instead of re-anchoring on its first report.
  */
 import type { ExtensionImplementation, InitializationDelivery } from "../../../framework/core/assembly";
-import type { CatalogPriceSource, FeedbackTransport, ProviderAccess, SemanticEventHandlers } from "../../../framework/core/protocol";
+import type { FeedbackTransport } from "../../../framework/interface/feedback";
+import type { CatalogPriceSource, ProviderAccess } from "../../../framework/interface/host-facts";
+import type { SemanticEventHandlers, SessionCapability } from "../../../framework/interface/session";
+import type { SubagentIntegration } from "../../../framework/public";
 import type { HttpRequestOptions } from "../../../framework/modules/http";
-import { DEFAULT_CODEX_QUOTA_TTL_MS, type CodexQuotaFailure, createCodexQuota } from "./codex-quota";
-import { CodexEstimateStore } from "./codex-estimate-store";
-import { type BaselineLoad, ConsumptionStore, timeFactFaultNotice, unusableBaselineNotice } from "./consumption-store";
-import { MODEL_PRICING_DATA, type ModelPricingData, dataCatalog } from "./model-data";
-import { createPeriodSwitch } from "./period-switch";
+import { DEFAULT_CODEX_QUOTA_TTL_MS, type CodexQuotaFailure, createCodexQuota } from "./business/allowance/codex-quota";
+import { CodexEstimateStore } from "./business/allowance/codex-estimate-store";
+import {
+	type BaselineLoad,
+	type BaselineSync,
+	ConsumptionStore,
+	timeFactFaultNotice,
+	unreadableBaselineNotice,
+	unusableBaselineNotice,
+} from "./foundation/storage/consumption-store";
+import { MODEL_PRICING_DATA, type ModelPricingData, dataCatalog } from "./business/pricing/model-data";
+import { createPeriodSwitch } from "./business/pricing/period-switch";
+import { createRequestContribution } from "./business/pricing/request-contribution";
+import { createCoalescedRedraw } from "./presentation/coalesced-redraw";
 import { type ConsumptionPresenter, createPresentation } from "./presentation/display";
-import { createDisplayPreference, displayFormNotice } from "./presentation/display-preference";
-import { SessionActivityRegistry } from "./presentation/session-activity";
-import { SessionContextRegistry } from "./presentation/session-context";
-import { DEFAULT_BALANCE_TTL_MS, type ProviderBalanceFailure, createProviderBalance } from "./provider-balance";
-import { type ConsumptionView, createRequestAccounting } from "./request-accounting";
-import { resolveStorageRoot } from "./storage-root";
+import { createDisplayPreference, displayFormNotice, displayFormUnavailableNotice } from "./presentation/display-preference";
+import { SessionActivityRegistry } from "./foundation/session/session-activity";
+import type { SessionContextReader } from "./business/context/session-context";
+import { DEFAULT_BALANCE_TTL_MS, type ProviderBalanceFailure, createProviderBalance } from "./business/pricing/provider-balance";
+import { type ConsumptionView, createRequestAccounting } from "./foundation/session/request-accounting";
+import { resolveStorageRoot } from "./foundation/storage/storage-root";
+
+/**
+ * What one read-only synchronization answers, as the caller observes it: the store's own outcome, or
+ * nothing was done because this instance has already been cleaned up.
+ */
+export type BaselineSyncOutcome = BaselineSync | { readonly kind: "closed" };
 
 /**
  * The failure classifications of a provider request that really failed, as both provider modules
@@ -115,6 +136,18 @@ export interface ModelCostRuntimeInputs {
 	 */
 	readonly providerAccess?: ProviderAccess;
 	/**
+	 * The framework's Session capability, as the factory received it (`ImplementationContext.session`).
+	 *
+	 * Its observation reader is the one source of every session's activity and context reading this
+	 * extension consumes: the adapter collects a reading where its host moves one, the framework's own
+	 * Round bookkeeping moves the activity, and this extension reads the result rather than subscribing
+	 * to any host event for itself. Its `recordCommit` is the one thing this extension states rather
+	 * than reads about the storage root: when a session's snapshot really landed, the save states that
+	 * fact and the framework carries it to the process serving the owner that session follows. What
+	 * travels is that a write was confirmed and never the record, the figure or the file.
+	 */
+	readonly session: SessionCapability;
+	/**
 	 * The instant source this extension's own business reads, on the process's own clock.
 	 *
 	 * Omitted means the process clock (`Date.now`); an explicit value is the same clock as a caller
@@ -130,6 +163,18 @@ export interface ModelCostRuntimeInputs {
 	 * header, its budget and its connection path — without reaching a provider.
 	 */
 	readonly httpRequest?: (url: string, options?: HttpRequestOptions) => Promise<Response>;
+	/**
+	 * The answer this entry's subagent integration settled as, as the harness assembly states it, or a
+	 * function answering nothing while no such answer exists.
+	 *
+	 * It decides one thing here: `/budget detail` draws the sessions this entry observed as its main
+	 * session's descendants, so an entry whose integration settled as the no-subagent mode has no such
+	 * form to offer and the action answers the operator instead of moving the preference. Every other
+	 * answer — an integrated entry, and an integration that failed rather than being absent — keeps the
+	 * action exactly as the extension delivers it, and so does an assembly that states none: the OMP
+	 * assembly states none because every entry it binds is integrated.
+	 */
+	readonly subagentIntegrationMode?: () => SubagentIntegration["mode"] | undefined;
 }
 
 /** The extension's business instance: the storage it saves consumption through and its initialization. */
@@ -150,14 +195,15 @@ export interface ModelCostRuntime {
 	/** The extension's read-only display results, for the frontends that render them. */
 	readonly presentation: ConsumptionPresenter;
 	/**
-	 * The process's per-session context readings, fed by the harness half as each session binding
-	 * reports its own current `getContextUsage()`, and read by the detail tree's descendant rows.
+	 * The framework's Session capability's observation reader, read one session's context at a time:
+	 * the narrow read a frontend's display was written against, answering the latest reading that
+	 * session's own host reported and nothing when none was observed.
 	 *
-	 * It is a reading rather than an accumulation: a session no binding observed has no entry rather
+	 * It is a reading rather than an accumulation: a session nothing observed has no entry rather
 	 * than a zero, it is never written to the storage root, and a frontend that reads it sees the
 	 * latest observation whether or not that session is the one being viewed.
 	 */
-	readonly sessionContext: SessionContextRegistry;
+	readonly sessionContext: SessionContextReader;
 	/**
 	 * The process's per-session activity readings, moved by the framework's own Round edges and read by
 	 * the detail tree's working-row emphasis.
@@ -177,6 +223,26 @@ export interface ModelCostRuntime {
 	 * read-only results' to report and never become this answer, and neither of them can reject it.
 	 */
 	initialize(delivery: InitializationDelivery): Promise<BaselineLoad>;
+	/**
+	 * Adopt what the file holds now, without writing anything, and align this instance with it.
+	 *
+	 * This is what a caller that has an event saying "another writer may have committed" reaches —
+	 * a third-party completion notice, say. Only records the file already holds are adopted: nothing
+	 * this instance accumulated and has not committed is written, no version chain moves, and no
+	 * accumulation of this process is discarded except when the document names a generation the
+	 * instance is not in, which is the same closed-period rule a reset already follows. A document
+	 * whose generation really changed is therefore taken on, and a same-generation document that
+	 * really changed is published to this instance's readers; a document identical to the baseline
+	 * the instance holds changes nothing and redraws nothing.
+	 *
+	 * The optional feedback is where the two baseline faults are stated, each once per reason: a
+	 * document that is not this extension's format pauses this instance (and is left alone), and a
+	 * file that could not be read at all is reported with the baseline it already holds standing.
+	 * After this instance's own cleanup nothing is read and nothing is adopted at all.
+	 */
+	synchronize(inputs?: { readonly feedback?: FeedbackTransport }): Promise<BaselineSyncOutcome>;
+	/** Record a terminal result received by a main session, using this process's receipt clock. */
+	subagentResultReceived(sessionId: string, feedback: FeedbackTransport): void | Promise<void>;
 }
 
 /**
@@ -209,20 +275,44 @@ export function createModelCostRuntime(inputs: ModelCostRuntimeInputs): ModelCos
 	// reading and the Codex windows alike. A Turn's end is not one of them — that instant is the
 	// framework's own fact, stated by the Turn's own delivery — so the clock is not read for it.
 	const now = inputs.now ?? Date.now;
-	// The accounting's own clock is what timestamps a user input, the one Session span fact the
-	// harness publishes with no instant of its own. The span's other fact is a Turn's own settle
-	// instant, which the Turn's own end delivery carries.
-	const accounting = createRequestAccounting({ data, harness: inputs.harness, storage, now });
+	// The per-session context readings are the framework's own, not this extension's: the adapter
+	// collects a session's context where its host moves one, records the model it was collected on
+	// beside the count, and this instance reads what was recorded — including the readings collected
+	// before it was built, which is what makes the first reading after an attach a reading rather
+	// than a blank. What `sessionContext` is, then, is the narrow read the display was written
+	// against: the capability's observation reader, answering one session's context alone. Nothing is
+	// copied here, and nothing is written to the storage root.
+	//
+	// It is read before the accounting because the accounting reads the same record for the identity
+	// of a session it holds no delivery of its own about — a session another process ran is registered
+	// there by the readings that process delivered — so the sessions this instance can name and the
+	// readings it can show come from one record rather than two.
+	const observations = inputs.session.observations;
+	// User input and terminal subagent-result receipt use this process's observation clock.
+	// A Turn end instead carries the response's own settle instant.
+	const accounting = createRequestAccounting({
+		// The accounting owns session attribution and commits; this business policy alone decides
+		// what each request contributes, from the same maintained data its catalog reads.
+		contribution: createRequestContribution(data),
+		harness: inputs.harness,
+		storage,
+		now,
+		registrations: observations,
+		// This instance's own half of the write notice: the save states that a snapshot really landed in
+		// the shared document, and the framework carries that statement to the process serving the owner
+		// the session follows. It is handed on exactly as the framework supplied it — nothing of the
+		// consumption, the record or the file travels with it.
+		recordCommit: sessionId => inputs.session.recordCommit(sessionId),
+	});
 
 	// The entry's own display preference: `/budget detail` flips it, and the flip announces the change
 	// through the one notification every reader of this extension's read-only result already holds, so
 	// a frontend redraws the form the entry is now in without a channel of its own.
 	const display = createDisplayPreference({ onChange: () => accounting.announceChanged() });
 
-	// The per-session context readings: one process-wide record the harness half feeds from every
-	// session binding's own `getContextUsage()` — the main session's and each subagent's — and the
-	// detail tree reads for its descendant rows. It is a reading, never persisted or fetched.
-	const sessionContext = new SessionContextRegistry();
+	const sessionContext: SessionContextReader = {
+		read: sessionId => observations.read(sessionId)?.context,
+	};
 
 	// The per-session activity readings: one process-wide record the framework's own Round edges move —
 	// a start opens a session's Round and a confirmed end closes it, for a main session and for a
@@ -230,6 +320,15 @@ export function createModelCostRuntime(inputs: ModelCostRuntimeInputs): ModelCos
 	// now. It is a reading of the moment: nothing here is persisted, and a session no edge has moved
 	// stays unestablished rather than being assumed idle.
 	const sessionActivity = new SessionActivityRegistry();
+
+	// The display's own redraw, merged (see `presentation/coalesced-redraw.ts`): a reading that moved
+	// asks for a redraw rather than drawing itself, so a turn's readings — several sessions', and both
+	// of a session's own readings — are drawn together from their latest values. The reading itself is
+	// adopted where it arrives, as it always was; what waits for the end of the turn is the drawing.
+	const redraw = createCoalescedRedraw({
+		redraw: () => accounting.announceChanged(),
+		published: listener => accounting.view.subscribe(listener),
+	});
 
 	// The provider balance reading: one per process, refreshed only by a settled request of its own
 	// provider when the reading it holds has outlived the configured success TTL. Its changes are
@@ -314,24 +413,89 @@ export function createModelCostRuntime(inputs: ModelCostRuntimeInputs): ModelCos
 		}
 	};
 
-	const initialize = async (delivery: InitializationDelivery): Promise<BaselineLoad> => {
+	/**
+	 * The common accounting preparation this instance performs once: the baseline document it runs
+	 * on and the independent Codex estimate beside it.
+	 *
+	 * What the accounting needs before it may process a delivery is this and nothing else: the
+	 * configuration was validated by the framework before the factory ran, and the prices travel in
+	 * the catalog. The root-side effects are deliberately not part of it — the provider prefetch and
+	 * the display belong to the owner session's own initialization ({@link initialize}).
+	 */
+	const loadBaseline = async (feedback: FeedbackTransport): Promise<BaselineLoad> => {
 		const load = await storage.load();
 		if (load.kind === "unusable") {
 			const notice = unusableBaselineNotice(storage.consumptionFile, load.reason);
-			delivery.feedback.notify(notice.level, notice.message);
+			feedback.notify(notice.level, notice.message);
 		}
 		if (load.kind === "loaded") {
 			// The document is usable, so an unreadable time fact costs the time reading alone: each one
 			// is stated, and nothing is paused, zeroed or substituted for it.
 			for (const fault of load.faults) {
 				const notice = timeFactFaultNotice(storage.consumptionFile, fault);
-				delivery.feedback.notify(notice.level, notice.message);
+				feedback.notify(notice.level, notice.message);
 			}
 		}
 		// The estimate document is read after the storage root's own load — which is what creates the
 		// root this document lives in — and before any source can report a reading, so the measurement
 		// continues from what the file holds rather than re-anchoring on the first report.
 		await estimate.load();
+		return load;
+	};
+
+	/**
+	 * This instance's one preparation, and the promise every caller of it shares.
+	 *
+	 * It is asked for by the first delivery this instance serves. For the owner session that is the
+	 * node the harness initializes the implementation at; for a session this instance serves without
+	 * being its owner — a spawned session's own binding, in the process the provider ran it in — it is
+	 * that session's own first delivery, which is what lets that session's consumption be accounted
+	 * and saved rather than dropped for a baseline nobody loaded. One result is shared by every
+	 * concurrent caller, so a session's first Round and the request inside it read the file once.
+	 */
+	let preparation: Promise<BaselineLoad> | undefined;
+	/** Whether the one preparation has settled, which is what lets a later delivery run at once. */
+	let prepared = false;
+	const prepare = (feedback: FeedbackTransport): Promise<BaselineLoad> => {
+		if (preparation !== undefined) return preparation;
+		preparation = loadBaseline(feedback).then(load => {
+			prepared = true;
+			return load;
+		});
+		return preparation;
+	};
+
+	/**
+	 * Run one delivery's accounting: now when this instance's preparation has settled, and once it
+	 * settles otherwise.
+	 *
+	 * The order the deliveries were handed over in is the order their work runs in — every
+	 * un-prepared caller waits on the same preparation and is continued in the order it asked — so a
+	 * Round's own edges and the requests inside it keep their order even while the baseline is still
+	 * being read.
+	 */
+	const account = (feedback: FeedbackTransport, work: () => void | Promise<void>): void | Promise<void> =>
+		prepared ? work() : prepare(feedback).then(() => work());
+
+	/**
+	 * Whether this instance began its own root-side start: the owner session's initialization, which
+	 * is what asks the CLI's two provider sources and holds their readings.
+	 *
+	 * It decides one thing here. The balance and the allowance windows are facts of the provider
+	 * account rather than of a session, and this process reads each of them once — at the owner
+	 * session's initialization and, later, refreshed by a settled request of its own provider. An
+	 * instance that serves a session without being the owner of it — a spawned session's own binding,
+	 * in this process or in the child process the provider ran — therefore refreshes nothing: it holds
+	 * no such reading, and starting one there would be a second root-side read of the same account
+	 * rather than the request-triggered refresh of the reading this instance obtained.
+	 */
+	let rootSideStarted = false;
+
+	const initialize = async (delivery: InitializationDelivery): Promise<BaselineLoad> => {
+		// The root-side start is recorded before the preparation is awaited, because what the refresh
+		// above belongs to is this instance's own read of the account rather than the file's readiness.
+		rootSideStarted = true;
+		const load = await prepare(delivery.feedback);
 		// The CLI's one prefetch of its two provider sources, started at the same instant rather than
 		// one after the other: the DeepSeek balance reading and the Codex allowance windows are asked
 		// in parallel, so the initialization is bounded by the slower of the two rather than by their
@@ -346,6 +510,121 @@ export function createModelCostRuntime(inputs: ModelCostRuntimeInputs): ModelCos
 		// already a fact — and this is the one delivery whose own initialization waited for them.
 		stateProviderFailures(delivery);
 		return load;
+	};
+
+	/**
+	 * The baseline faults this instance has already stated, each by its own reason: a second
+	 * synchronization that meets the same fault says nothing more about it, and a different one is a
+	 * new fact about the file.
+	 */
+	let statedUnusableBaseline: string | undefined;
+	let statedUnreadableBaseline: string | undefined;
+	/** Whether this instance's own cleanup has run, after which a synchronization does nothing at all. */
+	let closed = false;
+
+	/**
+	 * Adopt what the file holds now — the read-only half of sharing one storage root — and align this
+	 * instance with what was adopted.
+	 *
+	 * The store's own half is described in `consumption-store.ts`: nothing is written, a root holding
+	 * no document is nothing to adopt, and a document that is not this extension's format pauses the
+	 * instance. What this half adds is what the adoption means for the rest of the instance. A
+	 * document naming another generation is a period this instance was not accumulating in, so
+	 * everything measured in the replaced one goes with it — the same rule this instance's own reset
+	 * follows, applied to a reset another process committed — and nothing accumulated in a closed
+	 * period is ever published into the new one. A same-generation document that really differs from
+	 * the held baseline is what this instance's readers have to see, so it is published through the
+	 * one change notification they already hold; a document identical to the baseline changes nothing
+	 * and redraws nothing, which is what keeps a repeated event from costing a redraw.
+	 *
+	 * A fault is stated where the caller has anywhere to state it — the caller's own feedback, the
+	 * same channel this instance's provider failures use — once per reason. The two faults are not
+	 * the same thing: a document that is not this extension's format pauses the instance (accounting
+	 * and saving stop, and the file is left for inspection), while a file that could not be read at
+	 * all is reported with the baseline this instance holds still standing.
+	 *
+	 * The caller's event is not a save and never becomes one: a completion notice, a process exit or a
+	 * third party's own bookkeeping says that the file may have changed, so the records another writer
+	 * really committed are adopted and nothing else happens. Consumption this instance has not
+	 * committed is not written out, no Round boundary is derived and no session is forced to save.
+	 */
+	const synchronize = async (
+		inputs: { readonly feedback?: FeedbackTransport } = {},
+	): Promise<BaselineSyncOutcome> => {
+		// After this instance's own cleanup nothing is read and nothing is adopted: a late notice is
+		// not a reason to touch the file again.
+		if (closed) return { kind: "closed" };
+		const outcome = await storage.synchronize();
+		switch (outcome.kind) {
+			case "adopted":
+				// The document was read whole, so whatever fault a previous attempt met is no longer the
+				// state of this file: a later failure of the same shape is a new fact about it and is stated.
+				statedUnusableBaseline = undefined;
+				statedUnreadableBaseline = undefined;
+				if (outcome.periodChanged) accounting.periodSwitched();
+				else if (outcome.changed) accounting.announceChanged();
+				break;
+			case "unusable": {
+				if (inputs.feedback !== undefined && statedUnusableBaseline !== outcome.reason) {
+					statedUnusableBaseline = outcome.reason;
+					const notice = unusableBaselineNotice(storage.consumptionFile, outcome.reason);
+					inputs.feedback.notify(notice.level, notice.message);
+				}
+				break;
+			}
+			case "unreadable": {
+				if (inputs.feedback !== undefined && statedUnreadableBaseline !== outcome.reason) {
+					statedUnreadableBaseline = outcome.reason;
+					const notice = unreadableBaselineNotice(storage.consumptionFile, outcome.reason);
+					inputs.feedback.notify(notice.level, notice.message);
+				}
+				break;
+			}
+			case "absent":
+			case "paused":
+				break;
+		}
+		return outcome;
+	};
+
+	/** The read-only synchronization this turn's commit notices owe, and the notice it was asked by. */
+	let commitSynchronization: Promise<void> | undefined;
+	let owedSynchronization: { readonly feedback: FeedbackTransport } | undefined;
+
+	/**
+	 * The read-only synchronization one or more commit notices cost together.
+	 *
+	 * A notice is one event saying the shared document may hold something this instance has not read;
+	 * what it owes is a read, not a read of its own. The first notice of a turn arranges that read at
+	 * the turn's end, so every notice delivered with it joins the same one; notices delivered while
+	 * that read is under way mark the one read that follows — because a write confirmed after this
+	 * read began is not in the document the read saw. Nothing is cleared before the promise it belongs
+	 * to: a notice arriving at any point either shares the read in flight or is the reason for the
+	 * next one, so a turn's last notice is never dropped.
+	 *
+	 * The handler's settlement is the read, which is a scheduling difference alone: it settles after
+	 * the file has been adopted, so a caller waiting for the deliveries it dispatched waits for that
+	 * adoption rather than racing it.
+	 */
+	const synchronizeOnCommit = (feedback: FeedbackTransport): Promise<void> => {
+		owedSynchronization = { feedback };
+		if (commitSynchronization !== undefined) return commitSynchronization;
+		commitSynchronization = (async () => {
+			// The turn's remaining notices join this run here rather than each starting its own read.
+			await Promise.resolve();
+			try {
+				while (owedSynchronization !== undefined) {
+					const owed = owedSynchronization;
+					owedSynchronization = undefined;
+					await synchronize({ feedback: owed.feedback });
+				}
+			} finally {
+				// Cleared in the same continuation that decided the run was over, so a notice delivered
+				// afterwards starts its own read rather than joining one that has already finished.
+				commitSynchronization = undefined;
+			}
+		})();
+		return commitSynchronization;
 	};
 
 	// The period switch behind `/budget holiday` and `/budget clear`. It reads the entry's own facts
@@ -368,9 +647,14 @@ export function createModelCostRuntime(inputs: ModelCostRuntimeInputs): ModelCos
 	// monetary pair answers the tier's own off-peak price while the allowance channel answers the
 	// price the harness states for it; a pair neither answers is no price rather than a price of zero.
 	const events: SemanticEventHandlers = {
+		// Every accounting delivery below runs through `account`: this instance's preparation (the
+		// baseline and the estimate) is what the accounting reads, so a delivery this instance serves
+		// while it is still being prepared is processed once it settled rather than dropped as one of a
+		// baseline nobody loaded. The root-side effects are not part of that preparation — see
+		// `rootSideStarted` for the one place the distinction is visible.
 		turn_start: delivery => {
 			stateProviderFailures(delivery);
-			accounting.turnStarted(delivery);
+			return account(delivery.feedback, () => accounting.turnStarted(delivery));
 		},
 		turn_end: delivery => {
 			stateProviderFailures(delivery);
@@ -379,45 +663,113 @@ export function createModelCostRuntime(inputs: ModelCostRuntimeInputs): ModelCos
 			// span too — and its reported usage is accounted once, or the skip is reported. The end is
 			// observed whether or not the accounting has anything to count for this Turn, and a Round
 			// that never ends costs the reading nothing.
-			accounting.turnSettled(delivery);
-			// The usage-driven provider refresh reads the *request's* own provider rather than whatever
-			// is being viewed or is current now, so a subagent's request and a main session's refresh the
-			// same one reading, and a request of another provider reaches nothing here. The balance and
-			// the Codex windows share the policy: each module filters to its own provider and checks its
-			// own success TTL, and an expired reading with no query already out begins one.
-			balance.usageSettled(delivery.turn.provider);
-			quota.usageSettled(delivery.turn.provider);
+			return account(delivery.feedback, () => {
+				accounting.turnSettled(delivery);
+				// The usage-driven provider refresh reads the *request's* own provider rather than whatever
+				// is being viewed or is current now, so a subagent's request and a main session's refresh the
+				// same one reading, and a request of another provider reaches nothing here. The balance and
+				// the Codex windows share the policy: each module filters to its own provider and checks its
+				// own success TTL, and an expired reading with no query already out begins one.
+				//
+				// Only an instance that began its own root-side start refreshes anything: an instance
+				// serving a spawned session without owning it holds no such reading, and asking the account
+				// there would be a second root-side read of the same account rather than a refresh of this
+				// instance's own reading.
+				if (!rootSideStarted) return;
+				balance.usageSettled(delivery.turn.provider);
+				quota.usageSettled(delivery.turn.provider);
+			});
 		},
-		// Both edges of a Round. Each one is that session's own activity fact as well as an accounting
-		// boundary — an open Round is the session working and a confirmed end is the session idle — so
-		// the reading the display draws is moved here, ahead of the accounting's own handling and its
-		// own guards, and a real move is published at once rather than waiting for the next request to
-		// redraw a row whose session just started or stopped working.
+		// Both edges of a Round. Each one is an accounting boundary — the start fixes the snapshot its
+		// own additions are measured from, and the end measures them, saves the session's own snapshot
+		// and becomes the previous Round. A subagent session's own runtime is measured from these same
+		// two facts — its Round is one of its activities — so a Round end is also where the interval
+		// that Round ran for settles.
 		//
-		// The accounting's own half: the start fixes the snapshot its own additions are measured from,
-		// and the end measures them, saves the session's own snapshot and becomes the previous Round.
+		// The session's *activity* is not moved here, although these edges are the facts behind it:
+		// which fact ends a session's work is the framework's answer, and it states that answer as its
+		// own observation below. Reading it off these edges would be this extension deciding the same
+		// question a second time — and, for a session another process ran, deciding it with no facts at
+		// all.
 		round_start: delivery => {
 			stateProviderFailures(delivery);
-			if (sessionActivity.observe(delivery.session.sessionId, "working")) accounting.announceChanged();
-			accounting.roundStarted(delivery);
+			return account(delivery.feedback, () => accounting.roundStarted(delivery));
 		},
 		round_end: delivery => {
 			stateProviderFailures(delivery);
-			if (sessionActivity.observe(delivery.session.sessionId, "idle")) accounting.announceChanged();
-			return accounting.roundEnded(delivery);
+			return account(delivery.feedback, () => accounting.roundEnded(delivery));
+		},
+		// One actual session's current activity, as the framework's own Round semantics state it: a
+		// session whose Round is open is working, one whose Round has ended is idle, and the framework
+		// delivers the reading where it moved. It carries the session's own identity — a subagent's
+		// reading is the subagent's, never a parent's or the viewed session's — so the reading the
+		// display draws for a row is that row's session, and a real move is published at once rather
+		// than waiting for the next request to redraw a row whose session just started or stopped
+		// working.
+		//
+		// Nothing of the accounting runs here, and nothing may: the reading is an observation for the
+		// display, and this extension's Rounds, its measured runtimes, its session snapshots and its
+		// saves are driven by the edges above alone. A session whose reading arrives without this
+		// process ever having watched its Round — one another process ran — is therefore shown as
+		// working or idle with nothing accounted, nothing saved and no Round invented for it.
+		session_activity: delivery => {
+			stateProviderFailures(delivery);
+			if (sessionActivity.observe(delivery.session.sessionId, delivery.activity)) redraw.request();
 		},
 		// The one fact that establishes a session's Session span start: input the harness itself
 		// attributed to the user, published for every submission it admitted — an ordinary prompt and a
 		// user-invoked skill alike.
 		user_input: delivery => {
 			stateProviderFailures(delivery);
-			accounting.userInput(delivery);
+			return account(delivery.feedback, () => accounting.userInput(delivery));
 		},
 		// The harness's own name-change fact, which is what keeps a session's identity current
 		// between boundaries — for a subagent nobody is viewing exactly as for the session on screen.
 		session_facts: delivery => {
 			stateProviderFailures(delivery);
-			accounting.sessionFacts(delivery.session);
+			return account(delivery.feedback, () => accounting.sessionFacts(delivery.session));
+		},
+		// One actual session's own context reading moved. The reading is not adopted here because it
+		// has nowhere to be adopted from: this extension reads it from the framework's Session
+		// capability, whose observation reader already holds the reading this delivery carries — so
+		// what this delivery is for is the one thing a reading that moved costs, a redraw of whatever
+		// this extension is drawing. That redraw is the turn's own (`redraw` above): the readings that
+		// arrived in this turn are drawn together rather than one frame per delivery.
+		session_context: () => {
+			redraw.request();
+		},
+		// One actual session's own confirmed write of its extension data, as the process that ran it
+		// counted it: another writer put consumption into the storage root this instance reads, so what
+		// this instance holds as its basis may be behind the file. The delivery carries no figure from
+		// that file, and nothing of this instance's accounting is accumulated from it — what it costs is
+		// the read-only synchronization, which reads the document the file really holds and adopts it
+		// without writing anything of this instance's own. It is deliberately not an initialization, not
+		// a forced save and not a poll: a notice is one event, a refused or unreadable baseline is
+		// reported exactly as a save meeting the same file reports it, and a session this instance never
+		// committed for is still saved by its own process alone.
+		session_commit: delivery => {
+			stateProviderFailures(delivery);
+			// The handler's own settlement is the read: the framework contains a rejection exactly as it
+			// contains a synchronous throw, and a caller waiting for the deliveries it dispatched — the
+			// session-disposal close-out, say — waits for this read rather than racing it. Which read it
+			// settles on is the coalescer's answer above: this turn's notices share one, and a notice
+			// delivered while that read runs is the reason for the next one.
+			return synchronizeOnCommit(delivery.feedback);
+		},
+		// One actual session's observation became unavailable: the source that carried its readings ended,
+		// and the framework's own source has already withdrawn them. What is left to do here is this
+		// instance's own half of the same reading — the activity registry the detail form emphasises a
+		// row's name with — and the redraw that drops the row's context beside it. An unavailable
+		// observation is not idleness: the reading is forgotten rather than replaced, so the row reverts to
+		// the unestablished state a session no edge has moved is drawn in and never to an idle one. Nothing
+		// of the accounting runs here, exactly as nothing of it runs for a reading that arrived: no Round
+		// ends, no Turn is attributed and nothing is saved, because a lost connection is evidence of
+		// nothing about the work itself. A source's end is one fact rather than a stream of them, so it
+		// costs the one redraw the row needs.
+		session_unobserved: delivery => {
+			stateProviderFailures(delivery);
+			sessionActivity.forget(delivery.session.sessionId);
+			accounting.announceChanged();
 		},
 		// One actual session's own start. A spawned session's binding announces it once, and it is the
 		// one delivery whose model and level readings are that session's startup facts — the framework
@@ -425,15 +777,7 @@ export function createModelCostRuntime(inputs: ModelCostRuntimeInputs): ModelCos
 		// session merely recovered here arrives with nothing to record for its startup.
 		session_start: delivery => {
 			stateProviderFailures(delivery);
-			accounting.started(delivery.session);
-		},
-		// The harness's own measurement of one subagent *execution*'s duration. It is a fact about the
-		// session's work rather than a boundary of it, so it settles nothing here: what it contributes
-		// rides the same commit the session's own Round end already makes, and it never opens, closes or
-		// saves anything by itself.
-		subagent_runtime: delivery => {
-			stateProviderFailures(delivery);
-			accounting.subagentRuntime(delivery);
+			return account(delivery.feedback, () => accounting.started(delivery.session));
 		},
 	};
 
@@ -451,12 +795,14 @@ export function createModelCostRuntime(inputs: ModelCostRuntimeInputs): ModelCos
 			balance,
 			quota,
 			estimate,
-			// The open period's own facts, as the store holds them: its holiday flag, and the session
-			// records of this harness as the last load or commit left them. Nothing here reads a file, so
-			// a render that asks for the season or the accrued bar never waits on disk.
+			// The open period's own facts, as the store holds them: its holiday flag, and every
+			// harness's session records as the last load or commit left them — the period's consumption
+			// is the whole shared document's, so the accrued bar reads the other harness's saved
+			// records beside this one's. Nothing here reads a file, so a render that asks for the
+			// season or the accrued bar never waits on disk.
 			period: {
 				holiday: () => storage.period()?.holiday ?? false,
-				sessions: () => storage.sessions(inputs.harness),
+				sessions: () => storage.periodSessions(),
 			},
 			now,
 		}),
@@ -471,13 +817,20 @@ export function createModelCostRuntime(inputs: ModelCostRuntimeInputs): ModelCos
 			// framework's routing reaches and whose effects and words are business decisions. `detail`
 			// flips the entry's preference and says which form the entry is now in; it checks no
 			// provider, no idle fact, no pending save and no UI, and it never creates a widget — a
-			// frontend draws what the changed preference now reads as, if it has anywhere to draw.
+			// frontend draws what the changed preference now reads as, if it has anywhere to draw. An
+			// entry whose subagent integration settled as the no-subagent mode is the one exception: the
+			// form lists the descendants this entry observed, so there is nothing for it to draw and the
+			// action answers the operator instead (see `subagentIntegrationMode` above).
 			// The two period actions are the entry's own conditions and the store's own close, and
 			// each says exactly how far it got.
 			commands: {
 				budget: {
 					detail: delivery => {
 						stateProviderFailures(delivery);
+						if (inputs.subagentIntegrationMode?.() === "none") {
+							delivery.feedback.notify("warning", displayFormUnavailableNotice());
+							return;
+						}
 						const form = display.toggle();
 						delivery.feedback.notify("info", displayFormNotice(form));
 					},
@@ -495,12 +848,21 @@ export function createModelCostRuntime(inputs: ModelCostRuntimeInputs): ModelCos
 				await initialize(delivery);
 			},
 			cleanup: () => {
+				closed = true;
+				redraw.dispose();
 				balance.dispose();
 				quota.dispose();
 				accounting.dispose();
 			},
 		},
 		initialize,
+		synchronize,
+		subagentResultReceived(sessionId, feedback) {
+			if (closed) return;
+			// Capture receipt before preparation can wait on disk; it is not the later handler time.
+			const receivedAt = (inputs.now ?? Date.now)();
+			return account(feedback, () => accounting.subagentResultReceived(sessionId, receivedAt, feedback));
+		},
 	};
 }
 

@@ -17,8 +17,8 @@ import {
 	type OmpExtensionApi,
 	type OmpSessionContext,
 	ompAdapter,
-} from "../../framework/adapters/omp";
-import type { OwnerReference } from "../../framework/core/protocol";
+} from "../../adapters/omp";
+import type { OwnerReference } from "../../framework/interface/state";
 import { portDouble } from "./support/harness-port-double";
 
 /** The owner a delivery acts on unless one is named. */

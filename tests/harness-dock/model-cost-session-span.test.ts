@@ -17,6 +17,9 @@
  * than the session's creation, and a second submission moves the end and not the start — instead of
  * hard-coded values.
  *
+ * A batch case launches two real same-process background subagents with separate completion times;
+ * each result must advance the actual widget before the next main-session response ends.
+ *
  * One case submits a skill rather than prose: the run writes its own `SKILL.md` into its isolated
  * agent state, the user invokes it as `/skill:<name>`, and the harness's request is read back for the
  * skill's own body. That makes the skill half of `P2` an observation about a submission the harness
@@ -33,7 +36,7 @@ import * as path from "node:path";
 import { MODEL_COST_WIDGET_KEY } from "../../extensions/model-cost/harnesses/omp/widget";
 import { writeProviderOverride } from "./agent-config";
 import { type IsolatedHarness, REPO_ROOT, ensureIsolatedHarness, readBaselineRecord } from "./baseline";
-import { type CaptureServer, startCaptureServer } from "./capture-server";
+import { type CaptureServer, type CaptureServerOptions, startCaptureServer } from "./capture-server";
 import { DOCK_CAPTURE_BASE_URL_ENV } from "./fixtures/extension-root/provider";
 import { type RunRoot, createRunRoot } from "./run-root";
 import { ControlledSession } from "./session";
@@ -147,6 +150,8 @@ interface DockRun {
 interface StartRunOptions {
 	/** A user-invoked skill to make discoverable in this run's own agent state. */
 	readonly skill?: { readonly name: string; readonly body: string };
+	/** Responses for real delegated sessions and their parent's continuation. */
+	readonly respond?: CaptureServerOptions["respond"];
 }
 
 /**
@@ -174,7 +179,9 @@ async function startRun(label: string, options?: StartRunOptions): Promise<DockR
 	const storageDirectory = path.join(home, ".omp", "cost-archive");
 	mkdirSync(storageDirectory, { recursive: true });
 	if (options?.skill !== undefined) writeSkillFixture(runRoot.agentDir, options.skill);
-	const capture = startCaptureServer({ dir: runRoot.captureDir, replyText: "dock model-cost reply", usage: CAPTURE_USAGE });
+	const capture = startCaptureServer({ dir: runRoot.captureDir, replyText: "dock model-cost reply", usage: CAPTURE_USAGE,
+		...(options?.respond === undefined ? {} : { respond: options.respond }),
+	});
 	writeProviderOverride(runRoot.agentDir, PROVIDER, { baseUrl: capture.baseUrl, apiKey: "dock-key" });
 	const startedAt = Date.now();
 	try {
@@ -272,6 +279,61 @@ function displayedSpan(elapsedMs: number): string {
 }
 
 describe("a real submission establishes and advances the main session's span (P1, P2, P8, P14)", () => {
+	test("each background task result advances the real widget before the next main Turn ends", async () => {
+		let launched = false;
+		const run = await startRun("model-cost-span-batch", { respond: request => {
+			const messages = (request.json as { messages?: { role?: string; content?: unknown }[] } | undefined)?.messages ?? [];
+			const prompt = JSON.stringify(messages.filter(message => message.role === "user").pop()?.content ?? "");
+			if (prompt.includes("span-child-one-assignment") || prompt.includes("span-child-two-assignment")) return {
+				toolCall: { name: "yield", arguments: JSON.stringify({ data: "span child result" }) },
+				answerDelayMs: prompt.includes("span-child-two-assignment") ? 12_000 : 5_000,
+			};
+			if (!launched) {
+				launched = true;
+				return { toolCall: { name: "task", arguments: JSON.stringify({ context: "Measure main-session span while waiting.", tasks: [
+					{ name: "SpanOne", agent: "task", task: "span-child-one-assignment", solutionSpace: "one fixed result" },
+					{ name: "SpanTwo", agent: "task", task: "span-child-two-assignment", solutionSpace: "one fixed result" },
+				] }) } };
+			}
+			// Keep a woken main request in flight so a result-only widget change is observable.
+			return { replyText: "Waiting for background results.", answerDelayMs: 2_000 };
+		} });
+		try {
+			expect((await run.session.prompt("Start two background tasks for the span check.")).status).toBe("completed");
+			const secondsOf = (line: string): number => {
+				const match = /Span: (\d+):(\d+):(\d+)/.exec(line);
+				return match ? Number(match[1]) * 3600 + Number(match[2]) * 60 + Number(match[3]) : -1;
+			};
+			let seconds = secondsOf(await totalLineUntil(run.session, line => secondsOf(line) >= 0));
+			for (const count of [1, 2]) {
+				const notices = () => run.session.frames().map((frame, index) => ({ frame, index })).filter(({ frame }) => {
+					const message = frame.message as { customType?: string } | undefined;
+					return frame.type === "message_end" && message?.customType === "async-result";
+				});
+				const deadline = Date.now() + 45_000;
+				while (notices().length < count) {
+					if (Date.now() > deadline) throw new Error(`no task result ${count}: ${run.session.diagnostics()}`);
+					await queuedWorkSettled();
+				}
+				const receipt = notices()[count - 1];
+				if (receipt === undefined) throw new Error("the result notification disappeared");
+				const line = await totalLineUntil(run.session, line => secondsOf(line) > seconds);
+				const frames = run.session.frames();
+				const drawing = frames.findIndex((frame, index) => index > receipt.index && frame.type === "extension_ui_request" &&
+					frame.method === "setWidget" && Array.isArray(frame.widgetLines) &&
+					frame.widgetLines.some(text => String(text).startsWith("Total:") && secondsOf(String(text)) > seconds));
+				expect(drawing).toBeGreaterThan(receipt.index);
+				const responseEnded = frames.slice(receipt.index + 1, drawing).some(frame => frame.type === "message_end" &&
+					(frame.message as { role?: string } | undefined)?.role === "assistant");
+				expect(responseEnded).toBe(false);
+				seconds = secondsOf(line);
+				if (count === 1) expect(notices()).toHaveLength(1);
+			}
+		} finally {
+			await disposeRun(run);
+		}
+	}, 240_000);
+
 	test("one submission yields a saved span whose start is the submission, and the real widget draws it", async () => {
 		const run = await startRun("model-cost-span");
 		try {
@@ -300,9 +362,12 @@ describe("a real submission establishes and advances the main session's span (P1
 			expect(span.end).toBeLessThanOrEqual(Date.now());
 			// The Turn it is measured to is this run's own response: its settle is a real instant of the
 			// run, and the save that carried the pair is the Round end's commit, which is also the only
-			// commit this run made — no time-only file, no extra write.
+			// commit this run made — no time-only file, no extra write. The coordination lock is the
+			// framework's own name, held only while a write is in flight, so a listing taken after the save
+			// may or may not catch it: what the run must leave is the document and no artifact of its own.
 			expect(record.saveVersion).toBe(1);
-			expect(readdirSync(run.storageDirectory).sort()).toEqual([`${CONSUMPTION_FILE}.lock`, CONSUMPTION_FILE].sort());
+			const written = readdirSync(run.storageDirectory).filter(name => name !== `${CONSUMPTION_FILE}.lock`);
+			expect(written.sort()).toEqual([CONSUMPTION_FILE]);
 
 			// The widget the host was told to draw shows the same reading in the Total row, as a duration
 			// rather than the unknown marker: the interval from the submission to the Round's end.

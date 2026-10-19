@@ -15,3 +15,21 @@ http:
     codex:
       enabled: true
       url: "http://127.0.0.1:10808"
+
+# The directory the framework's own runtime files live in: the location records one process
+# publishes for the local access another process reads. It is explicit — a process that needs it and
+# finds no usable value here fails with that stated rather than falling back to a temporary
+# directory, to its own working directory or to an extension's storage root. A relative value is
+# resolved against this file's own directory, so two processes that read this file agree on it
+# whatever their working directories are. A Windows pipe name carries no directory: only the
+# location record and a POSIX socket file are files, and they live here.
+runtimeDir: ".runtime"
+
+# Optional pi-subagents package root, reusing the installation Pi itself loads.
+# This affects integration only; Pi must still load the pi-subagents extension.
+# Omit packagePath to use normal repository dependency resolution. Relative paths are
+# relative to this file. An invalid explicit path is an integration failure, not none-mode.
+# Read once per assembly; restart Pi after changing it.
+pi:
+  subagents:
+    packagePath: "C:/Users/hugos/.pi/agent/npm/node_modules/pi-subagents"

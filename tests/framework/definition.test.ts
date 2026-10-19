@@ -9,7 +9,7 @@
  * test are built through the same public entry an extension uses.
  */
 import { describe, expect, test } from "bun:test";
-import * as frameworkOmp from "../../framework/adapters/omp";
+import * as frameworkOmp from "../../adapters/omp";
 import * as frameworkDefinition from "../../framework/public";
 import { CODEBASE_TOOLS } from "../../extensions/codebase-tools/definition";
 

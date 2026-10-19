@@ -5,17 +5,20 @@
  * semantic session changes. They never pair storage changes with capability revocation.
  * State accepts only its resolved declaration rules; each delivery supplies its own effects.
  * No harness context, extension definition or Marker area layout lives here.
+ *
+ * Reading is scoped like everything else here. An Owner this process holds reads its own cell
+ * (`view`); an Owner another process serves is read through the framework's local access
+ * (`followed`), which answers the declared default until that access is reached and never writes
+ * anything back. A store that follows nothing is the in-process one and reads no access at all.
  */
 import type { StatePersistence } from "./definition";
+import { SubagentAccess } from "./subagent-access";
 import { OwnerLives } from "./owner-lives";
-import type {
-	DeclaredValueSeam,
-	FeedbackTransport,
-	OwnerCapabilityHandle,
-	OwnerReference,
-	SessionEvent,
-	StateValues,
-} from "./protocol";
+import type { OwnerAccessSource } from "../modules/local-access";
+import type { FeedbackTransport } from "../interface/feedback";
+import type { SessionEvent } from "../interface/session";
+import type { DeclaredValueSeam, OwnerCapabilityHandle, OwnerReference } from "../interface/state";
+import type { StateValues } from "./protocol";
 
 /** The State values v1 holds: the declared boolean activation field. */
 export type StateValue = boolean;
@@ -23,10 +26,11 @@ export type StateValue = boolean;
 /** The value a field reads as before the write path has ever set it. */
 export const DEFAULT_STATE_VALUE: StateValue = false;
 
-/** The declaration rules this module needs, resolved by the assembly. */
+/** The declaration rules and assembly-owned subagent access this module needs. */
 export interface StateRules {
 	readonly field: string;
 	readonly persistence: StatePersistence;
+	readonly access?: SubagentAccess;
 }
 
 /** The read-only current-value view; observing State grants no mutation authority. */
@@ -64,20 +68,57 @@ export interface StateSessionChange {
 export class StateStore {
 	readonly #field: string;
 	readonly #persistence: StatePersistence;
+	/** The assembly's access owns communication; State owns values and their observers. */
+	readonly access: SubagentAccess;
 	readonly #cells = new Map<string, Map<string, StateValue>>();
 	/** Every Owner this store has served: a boundary it reconciled, or a cell it wrote. */
 	readonly #served = new Set<string>();
 	readonly #ownerLives = new OwnerLives();
+	/** Who is observing one owner's declared values changing, per owner. */
+	readonly #watchers = new Map<string, Set<(field: string, value: StateValue) => void>>();
 
 	constructor(rules: StateRules) {
 		this.#field = rules.field;
 		this.#persistence = rules.persistence;
+		this.access = rules.access ?? new SubagentAccess();
 	}
 
 	view(ownerKey: string): StateView {
 		return {
 			read: field => this.#cells.get(ownerKey)?.get(field) ?? DEFAULT_STATE_VALUE,
 		};
+	}
+
+	/**
+	 * The declared value of an owner this process reads through the framework's local access.
+	 *
+	 * A cell this process holds wins, because that is the owner's own value where this process is
+	 * where the owner lives: an ordinary in-process read takes no access at all. Without one, the
+	 * value is what the owner's access last stated, and a field the access states nothing about —
+	 * or an owner no access has been reached for yet — reads as the field's declared default. That
+	 * fallback is a value, not a reading: it is not written anywhere, it is not the Owner's value
+	 * while the access is out of reach, and the read reaches the Owner again as soon as the access
+	 * is back.
+	 */
+	followed(ownerKey: string): StateView {
+		return {
+			read: field => {
+				const local = this.#cells.get(ownerKey)?.get(field);
+				if (local !== undefined) return local;
+				return this.access.read(ownerKey, field) ?? DEFAULT_STATE_VALUE;
+			},
+		};
+	}
+
+	/** First semantic use waits only where this process holds no owner cell. */
+	prepareFollowed(ownerKey: string): Promise<void> | undefined {
+		if (this.#cells.has(ownerKey)) return undefined;
+		return this.access.prepare(ownerKey);
+	}
+
+	/** Releases communication after session close-out, without rewriting State values. */
+	dispose(): void {
+		this.access.dispose();
 	}
 
 	/**
@@ -92,9 +133,27 @@ export class StateStore {
 	 * A retired Owner keeps counting. Its values are gone with it, so the store that served it is the
 	 * one that reads the declared default for it — the answer a clear needs — rather than leaving the
 	 * seat to a registration of an earlier session that happened to hold the same key.
+	 *
+	 * A store that follows owners answers for the ones it has read, too, because what the area asks is
+	 * which registration can say what the seat's value *is*: a field that declares `follow` makes this
+	 * the store that can, and it is the store that chased that Owner rather than a registration that
+	 * merely holds a follow reader. A store that neither served nor chased an Owner answers for
+	 * nothing, which is what keeps a session's binding from speaking for a seat that is not its Owner.
 	 */
 	serves(ownerKey: string): boolean {
-		return this.#served.has(ownerKey);
+		return this.#served.has(ownerKey) || this.follows(ownerKey);
+	}
+
+	/**
+	 * Whether this store reads one Owner through the framework's local access rather than holding it.
+	 *
+	 * It is true for an Owner this store has already read — the access was reached, or attempted —
+	 * and false for one nothing was read for. The Marker area asks it about the seat it is about to
+	 * publish: a seat whose value comes from another process has no transition *here* to have
+	 * published its change, so the next publication is the first chance to render it.
+	 */
+	follows(ownerKey: string): boolean {
+		return this.access.follows(ownerKey);
 	}
 
 	/**
@@ -137,27 +196,6 @@ export class StateStore {
 	}
 
 	/**
-	 * The capability of a delivery whose session resolved no owner at all.
-	 *
-	 * There is no cell for it to read and no life to retain: the declared value is the declared
-	 * default and every write and notice is dropped. That is the `unresolved` rule made concrete —
-	 * no owning main session could be resolved, so the value reads as the declared default and no
-	 * path may write it — and it is deliberately not the capability a retired owner gets, which
-	 * `capability` mints against that owner's own life.
-	 */
-	inertCapability(): OwnerCapabilityHandle {
-		return {
-			state: {
-				read: () => DEFAULT_STATE_VALUE,
-				write: () => {},
-			},
-			feedback: {
-				notify: () => {},
-			},
-		};
-	}
-
-	/**
 	 * Cell retirement and capability revocation are one operation before any handler.
 	 * Every start reopens the life, including memory fields that must never be seeded.
 	 * Only the final branch payload supplies a persisted value; invalid payloads use the
@@ -171,6 +209,7 @@ export class StateStore {
 		if (event.kind === "session_end") {
 			this.#cells.delete(owner.key);
 			this.#ownerLives.end(owner.key);
+			this.#withdrawOffer(owner.key);
 			if (event.reason === "disposed") change.publishMarker(owner.key);
 			return;
 		}
@@ -181,7 +220,49 @@ export class StateStore {
 			const value = this.#restoredValue(payload);
 			this.#cells.set(owner.key, new Map([[this.#field, value]]));
 		}
+		// The access is offered for exactly this owner's life: it begins where the cell does and is
+		// withdrawn at the boundary that retires the cell, so a session this store serves is
+		// readable from another process for as long as it lives and not one moment longer.
+		this.#offerAccess(owner.key);
 		change.publishMarker(owner.key);
+	}
+
+	/**
+	 * Offers one owner's declared values through this store's access, replacing whatever was
+	 * offered for that owner before — a start re-enters the owner, and its access is this life's.
+	 */
+	#offerAccess(ownerKey: string): void {
+		this.#withdrawOffer(ownerKey);
+		const source: OwnerAccessSource = {
+			values: () => ({ [this.#field]: this.view(ownerKey).read(this.#field) }),
+			observe: listener => {
+				let watchers = this.#watchers.get(ownerKey);
+				if (watchers === undefined) {
+					watchers = new Set();
+					this.#watchers.set(ownerKey, watchers);
+				}
+				watchers.add(listener);
+				return () => {
+					const current = this.#watchers.get(ownerKey);
+					current?.delete(listener);
+					if (current !== undefined && current.size === 0) this.#watchers.delete(ownerKey);
+				};
+			},
+		};
+		this.access.offer(ownerKey, source);
+	}
+
+	/** Withdraws one owner's offer: what a reader of that owner's access was told stops here. */
+	#withdrawOffer(ownerKey: string): void {
+		this.access.withdraw(ownerKey);
+		this.#watchers.delete(ownerKey);
+	}
+
+	/** Tells one owner's observers that a declared value changed: the access pushes it on. */
+	#announce(ownerKey: string, value: StateValue): void {
+		const watchers = this.#watchers.get(ownerKey);
+		if (watchers === undefined) return;
+		for (const watcher of [...watchers]) watcher(this.#field, value);
 	}
 
 	#restoredValue(payload: unknown): StateValue {
@@ -200,6 +281,7 @@ export class StateStore {
 			this.#served.add(target.ownerKey);
 		}
 		cell.set(this.#field, value);
+		this.#announce(target.ownerKey, value);
 
 		if (this.#persistence === "session-entry") {
 			try {

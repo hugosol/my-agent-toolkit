@@ -22,16 +22,16 @@
  * Creation is not an effect: neither the factory nor returning an implementation may send a
  * remote request or start a timer, because a definition can still be refused afterwards.
  */
+import type { FeedbackTransport } from "../interface/feedback";
+import type { CatalogPriceSource, ProviderAccess } from "../interface/host-facts";
+import type { SessionCapability, SubscriptionGroup } from "../interface/session";
+import type { OwnerReference } from "../interface/state";
 import type { DeclarableRequiredSemantic } from "./requirements";
 import type {
 	ActionDelivery,
-	CatalogPriceSource,
 	DirectedCommandImplementation,
-	FeedbackTransport,
 	MarkerTransport,
-	OwnerReference,
-	ProviderAccess,
-	SubscriptionGroup,
+	SubagentIntegration,
 } from "./protocol";
 
 /**
@@ -90,6 +90,18 @@ export type CommandImplementations = Readonly<Record<string, CommandImplementati
  * facts interface and never a native model, registry or context. An extension whose channel the
  * harness itself prices composes it with its own maintained data (see
  * {@link CatalogPriceSource}); a harness that states no prices hands over no such fact.
+ *
+ * `session` is the framework's Session capability for this process: the live read surface an
+ * extension attaches to for the readings that arrived before it, including the ones collected while
+ * it was not bound, and the one statement it may make about its own sessions. It is always present
+ * because it is the framework's own record rather than a harness capability.
+ *
+ * The read surface hands out isolated copies: changing a value a read returned never changes the
+ * framework's authoritative record or a later read. The statement takes a session id and says only
+ * that a write really landed — never what was written — and the framework records the count in this
+ * process's own source and hands the notice to the process serving that session's owner. A session
+ * id this process holds no facts for records nothing. The caller must call it only after a write
+ * was really confirmed, because nothing here can tell a confirmed write from a failed one.
  */
 export interface ImplementationContext {
 	readonly config: Readonly<Record<string, unknown>>;
@@ -103,6 +115,8 @@ export interface ImplementationContext {
 	 * that resolves no such access hands over no member at all.
 	 */
 	readonly providerAccess?: ProviderAccess;
+	/** The process's Session capability: the live read surface and the confirmed-write statement. */
+	readonly session: SessionCapability;
 }
 
 /**
@@ -122,6 +136,15 @@ export interface InitializationDelivery {
 	readonly feedback: FeedbackTransport;
 	/** The transport this initialization's marker updates are published through. */
 	readonly markers: MarkerTransport;
+	/**
+	 * How this entry's subagent integration stands on this harness, as the adapter settled it at
+	 * this node (see {@link SubagentIntegration}).
+	 *
+	 * It is settled before this delivery is handed over, once per process, and never moves after —
+	 * so an extension that reads it here reads the one answer this process has. A harness with no
+	 * such integration to settle answers `none`, which is a normal shape rather than a failure.
+	 */
+	readonly subagents: SubagentIntegration;
 }
 
 /**

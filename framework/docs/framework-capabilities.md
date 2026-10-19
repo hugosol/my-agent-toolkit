@@ -1,7 +1,7 @@
 # Semantic extension framework — capability and options index
 
 This is the index of the framework's public authoring surface: the entry points, and the meaning and
-accepted value of every parameter `defineExtension` and `ompAdapter` take. It is written for a human or
+accepted value of every parameter `defineExtension`, `ompAdapter` and the scoped `piAdapter` take. It is written for a human or
 an agent that has to *find* an entry point and then read the source for detail — every symbol below is
 cited to its defining file and line, and that source is authoritative for behavior, ordering and errors.
 
@@ -20,25 +20,36 @@ still describes the implemented surface, not the planned input seam or a complet
 
 ## Entry points
 
+Session is the first fully encapsulated capability: start with the
+[Session capability entry](../interface/session/index.ts) and import from
+`framework/interface/session`. The factory hands out `context.session`, not an observation source.
+The supporting State, Feedback and Host facts declarations live in neighboring interface modules.
+Other capability authoring entries remain in place; internal adapter contracts in this index are
+explicitly not extension-facing exports.
+
 | Entry point | Source | Role |
 | --- | --- | --- |
 | `defineExtension(definition)` | [`framework/public.ts`](../public.ts), defined at [`framework/core/definition.ts#L287`](../core/definition.ts#L287) | Declares an extension. Returns its argument typed; nothing is validated or copied here. |
 | `ExtensionDefinition` and its member types (`StateDeclaration`, `StatePersistence`, `StateInheritance`, `CommandDeclaration`, `CommandToggleDeclaration`, `CommandDirectedDeclaration`, `CommandActionsDeclaration`, `ControlKind`, `PromptDeclaration`, `PromptStrategy`, `MarkerDeclaration`, `ExtensionConfigDeclaration`, `ConfigFieldType`) | [`framework/core/definition.ts#L267`](../core/definition.ts#L267) | The definition shape and its configuration types. |
-| `ExtensionAssembly`, `ExtensionFactory`, `ImplementationContext`, `ExtensionImplementation`, `InitializationDelivery` | [`framework/public.ts`](../public.ts), defined at [`framework/core/assembly.ts`](../core/assembly.ts) | The assembly surface an extension's implementation is written against: the factory a harness adapter calls once the configuration validated, the context it is handed, what it returns (`commands`, `subscriptions`, `catalog`, the one-time `initialize` and `cleanup`), and the facts the initialization runs with. Types only — the entry keeps `defineExtension` as its one runtime export. |
-| `SubscriptionGroup`, `ObservationScope` | [`framework/core/protocol.ts#L175`](../core/protocol.ts#L175), [`#L165`](../core/protocol.ts#L165) | The one-time declaration of what a subscription observes: a group carries the scope it covers (`owner` — the owner session's own deliveries; `session` — every actual session the adapter reports, with that session's own identity, direct parent, latest name, the handle of the task it was spawned for, the name and id of the agent it runs and, on the delivery that announces its own start, the model and effective level it began on) and the handlers for the event kinds it subscribes. Both scopes run through the one dispatch, and widening a group to `session` grants no State write and no external-effect authority. |
-| `SessionFacts`, `SessionStartup`, `TurnEvent`, `TurnStartDelivery`, `TurnEndDelivery`, `TurnStartFacts`, `TurnEndFacts`, `TurnUsage`, `TurnOutcome`, `ProviderHttpFacts`, `TurnSignal`, `TurnSignalFacts`, `CatalogPrice`, `CatalogPriceSource`, `ProviderAccess`, `ProviderAccessFacts` | [`framework/core/protocol.ts#L130`](../core/protocol.ts#L130), [`#L376`](../core/protocol.ts#L376), [`#L511`](../core/protocol.ts#L511), [`#L527`](../core/protocol.ts#L527) | The per-actual-session facts and the Turn axis: a session's identity, direct parent, latest name, the handle of the task it was spawned for (a subagent's own name for its work, which is neither the agent definition it runs nor the id its registry uses), the name and id of the agent it runs, and the optional `SessionStartup` — the model and effective level the session began on, reported on its own start alone and never rewritten; the two Turn edges with the request-time facts fixed at the first and repeated at the second; the reliable-or-unavailable usage, outcome, HTTP facts and the two provider reference ids; the mapped native signals a harness adapter reports, and the extension's own catalog the framework queries at each request's start. See [The Turn axis and the two observation scopes](#the-turn-axis-and-the-two-observation-scopes). |
-| `CommandImplementations`, `CommandImplementation`, `CommandAction`, `ActionsCommandImplementation`, `ActionDelivery` | [`framework/core/assembly.ts#L50`](../core/assembly.ts#L50), [`framework/core/protocol.ts#L591`](../core/protocol.ts#L591) | What an implementation delivers for one command: a directed implementation under its command name, or an `actions` command's table of named actions. An action may return a promise the host's command chain waits for, and its delivery is the invocation facts alone — the argument, the owner, `hasUI`, the idle query, the running session's `provider` and the feedback and marker transports — with no declared-value seam, because an `actions` command drives no State. |
-| `ompAdapter(definition, options?)` | [`framework/adapters/omp.ts#L789`](../adapters/omp.ts#L789) | Assembles a definition for the `omp` harness; returns an `OmpExtensionFactory`. Also re-exports `BindingResult`, which is what that factory returns. |
+| `ExtensionAssembly`, `ExtensionFactory`, `ImplementationContext`, `ExtensionImplementation`, `InitializationDelivery` | [`framework/public.ts`](../public.ts), defined at [`framework/core/assembly.ts`](../core/assembly.ts) | The assembly surface an extension's implementation is written against: the factory a harness adapter calls once the configuration validated, the context it is handed (the validated configuration, the harness's model prices and provider access, the Session capability (`context.session.observations` for reads and `context.session.recordCommit` for stating that a session's own write really landed)), what it returns (`commands`, `subscriptions`, `catalog`, the one-time `initialize` and `cleanup`), and the facts the initialization runs with. These authoring contracts are type-only; Session consumer contracts import from `framework/interface/session`. |
+| `SubscriptionGroup`, `ObservationScope` | [`Session subscriptions`](../interface/session/subscriptions.ts) | The one-time declaration of what a subscription observes: a group carries the scope it covers (`owner` — the owner session's own deliveries; `session` — every actual session the adapter reports, with that session's own identity, direct parent, latest name, the handle of the task it was spawned for, the name and id of the agent it runs and, on the delivery that announces its own start, the model and effective level it began on) and the handlers for the event kinds it subscribes. Both scopes run through the one dispatch, and widening a group to `session` grants no State write and no external-effect authority. |
+| `SessionFacts`, `SessionStartup`, `TurnEvent`, `TurnStartDelivery`, `TurnEndDelivery`, `TurnStartFacts`, `TurnEndFacts`, `TurnUsage`, `TurnOutcome`, `ProviderHttpFacts`, `CatalogPrice`, `CatalogPriceSource`, `ProviderAccess`, `ProviderAccessFacts` | [`Session facts`](../interface/session/details/facts.ts), [`Turn`](../interface/session/details/turn.ts), [`Host facts`](../interface/host-facts/index.ts) | The per-actual-session facts and the Turn axis: a session's identity, direct parent, latest name, the handle of the task it was spawned for (a subagent's own name for its work, which is neither the agent definition it runs nor the id its registry uses), the name and id of the agent it runs, and the optional `SessionStartup` — the model and effective level the session began on, reported on its own start alone and never rewritten; the two Turn edges with the request-time facts fixed at the first and repeated at the second; the reliable-or-unavailable usage, outcome, HTTP facts and the two provider reference ids; and the extension's own catalog the framework queries at each request's start. Native `TurnSignal` / `TurnSignalFacts` remain internal adapter contracts, not Session consumer exports. See [The Turn axis and the two observation scopes](#the-turn-axis-and-the-two-observation-scopes). |
+| `CommandImplementations`, `CommandImplementation`, `CommandAction`, `ActionsCommandImplementation`, `ActionDelivery` | [`framework/core/assembly.ts#L50`](../core/assembly.ts#L50), [`framework/core/protocol.ts#L591`](../core/protocol.ts) | What an implementation delivers for one command: a directed implementation under its command name, or an `actions` command's table of named actions. An action may return a promise the host's command chain waits for, and its delivery is the invocation facts alone — the argument, the owner, `hasUI`, the idle query, the running session's `provider` and the feedback and marker transports — with no declared-value seam, because an `actions` command drives no State. |
+| `ompAdapter(definition, options?)` | [`adapters/omp/index.ts`](../../adapters/omp/index.ts) | Assembles a definition for the `omp` harness; returns an `OmpExtensionFactory`. Also re-exports `BindingResult`, which is what that factory returns. |
+| `piAdapter(definition, options?)` | [`adapters/pi/index.ts`](../../adapters/pi/index.ts) | Uses the same `ExtensionAssembly`, `StateStore` and binding behaviors for pi. Maps the session boundaries, the run-cycle facts the Round axis is synthesized from, Turn signals, user input, commands, hidden persisted prompt messages, marker and feedback. Catalog, provider-access and viewed-session outlets are provided only where pi's own surface states them. |
 | `ExtensionAssembly` | [`framework/core/assembly.ts#L178`](../core/assembly.ts#L178) | The harness-independent assembly information, every member optional (`factory`, `requiredSemantics`, `configBaseDir`). Harness version support is deliberately not one of them either: support is an evidence claim recorded in the repository's support record ([`harness-support.md`](harness-support.md)), and no assembly supplies or widens it. |
-| `BindingResult`, `BindingFailure` | [`framework/core/protocol.ts#L680`](../core/protocol.ts#L680) | What a binding concluded, and why it was refused. |
-| `CommandActions`, `DirectedCommandImplementation`, `CommandDelivery`, `DeclaredValueSeam` | [`protocol.ts#L484`](../core/protocol.ts#L484), [`#L447`](../core/protocol.ts#L447), [`#L566`](../core/protocol.ts#L566), [`#L398`](../core/protocol.ts#L398) | The implementations an assembly injects for a definition's directed commands, keyed by command name — each with a `run` member and an optional `unrecognized` member for an argument that parsed to no directive — and the delivery and declared-value seam each one writes through. |
-| `RecognizedDirective`, `DirectedDirective` | [`framework/core/protocol.ts#L367`](../core/protocol.ts#L367) | The directive the framework normalizes a directed command's argument into, and the two members it acts on. |
-| `OwnerCapabilityHandle` | [`protocol.ts#L432`](../core/protocol.ts#L432) | The owner-scoped capability a handler may retain — the declared-value seam plus the unified feedback channel, bound to the owner its delivery resolved — for the effects it drives after the delivery is over (a heartbeat timer, an outbound flusher). Valid while its owner lives, inert afterwards; carries no `hasUI`. See [Owner-scoped effect capabilities](#owner-scoped-effect-capabilities). |
-| `SessionEvent`, `SessionStartReason`, `SessionEndReason` | [`framework/core/protocol.ts#L76`](../core/protocol.ts#L76), [`#L44`](../core/protocol.ts#L44), [`#L54`](../core/protocol.ts#L54) | The session axis of the semantic lifecycle: the symmetric `session_start`/`session_end` pair and the reason vocabulary each member carries, plus `session_facts` — the one session delivery that is not a boundary, reporting a session's own facts where the harness learned they changed (a rename, most often) and reconciling nothing. |
-| `RoundEvent`, `RoundDelivery`, `RoundObservation` | [`framework/core/protocol.ts#L331`](../core/protocol.ts#L331) | The round axis of the semantic lifecycle: the edge-triggered `round_start`/`round_end` pair (no payload), the facts one edge carries, and the actual session (`SessionFacts`) it came from — plus the native run-cycle observation an adapter reports instead of an edge, which carries the harness's continuation flag and the live quiescence read the re-check asks. The framework mints and retires the round's identity per actual session from the edges its own synthesis dispatches; the identity is what a Turn's start facts name as the round it belongs to. |
-| `SemanticEvent`, `SemanticEventHandlers`, `SemanticEventDeliveryMap` | [`protocol.ts#L550`](../core/protocol.ts#L550), [`#L582`](../core/protocol.ts#L582), [`#L553`](../core/protocol.ts#L553) | All four axes as one handler surface: the event union (session, round, Turn and subagent-runtime), the handler map an implementation delivers for one subscription group keyed by event, and the map that keeps each kind paired with the delivery it carries. Which deliveries reach a handler is the group's declared `ObservationScope`, not this type. |
-| `SessionEventHandlers`, `SessionEventHandler`, `SessionEventDelivery`, `RoundEventHandlers`, `RoundEventHandler`, `TurnEventHandlers`, `TurnEventHandler`, `SubagentRuntimeEventHandlers`, `SubagentRuntimeEventHandler`, `SubagentRuntimeDelivery` | [`protocol.ts#L266`](../core/protocol.ts#L266) | The per-axis handler aliases, keyed by event, and the delivery each one receives — the session axis's delivery carries the actual session's facts and the owner-scoped capability, the round axis's carries the session facts and no capability, the Turn axis's carries the Turn's facts and no capability either, and the subagent-runtime axis's carries the actual session the execution ran in, the reading and no capability. A handler may return a promise: the framework contains its rejection the way it contains a synchronous throw, and does not wait for it. All of these are public authoring types ([`framework/public.ts`](../public.ts)), not adapter exports. |
-| `SubagentRuntimeEvent`, `SubagentRuntimeFact`, `SubagentRuntimeDelivery` | [`framework/core/protocol.ts#L680`](../core/protocol.ts#L680) | The subagent-runtime axis of the semantic lifecycle: the one `subagent_runtime` kind, the reading it carries — the duration the harness itself measured for one *execution* of one actual session, or the reason this host produced none — and the actual session that execution ran in. A fact, never an edge: the final reading of an execution is not the end of that session's Round, and a session's creation-to-last-record span is a different metric that must never stand in for a runtime. See [The subagent-runtime axis](#the-subagent-runtime-axis-the-harnesss-own-per-execution-duration). |
+| `BindingResult`, `BindingFailure` | [`framework/core/protocol.ts#L680`](../core/protocol.ts) | What a binding concluded, and why it was refused. |
+| `CommandActions`, `DirectedCommandImplementation`, `CommandDelivery`, `DeclaredValueSeam` | [`protocol.ts#L484`](../core/protocol.ts), [`#L447`](../core/protocol.ts), [`#L566`](../core/protocol.ts), [`#L398`](../interface/state/index.ts) | The implementations an assembly injects for a definition's directed commands, keyed by command name — each with a `run` member and an optional `unrecognized` member for an argument that parsed to no directive — and the delivery and declared-value seam each one writes through. |
+| `RecognizedDirective`, `DirectedDirective` | [`framework/core/protocol.ts#L367`](../core/protocol.ts) | The directive the framework normalizes a directed command's argument into, and the two members it acts on. |
+| `OwnerCapabilityHandle` | [`State interface`](../interface/state/index.ts) | The owner-scoped capability a handler may retain — the declared-value seam plus the unified feedback channel, bound to the owner its delivery resolved — for the effects it drives after the delivery is over (a heartbeat timer, an outbound flusher). Valid while its owner lives, inert afterwards; carries no `hasUI`. See [Owner-scoped effect capabilities](#owner-scoped-effect-capabilities). |
+| `SessionEvent`, `SessionStartReason`, `SessionEndReason` | [`Session facts`](../interface/session/details/facts.ts), [`events`](../interface/session/details/session.ts) | The session axis of the semantic lifecycle: the symmetric `session_start`/`session_end` pair and the reason vocabulary each member carries, plus `session_facts` — the one session delivery that is not a boundary, reporting a session's own facts where the harness learned they changed (a rename, most often) and reconciling nothing. |
+| `RoundEvent`, `RoundDelivery`, `RoundObservation` | [`Round interface`](../interface/session/details/round.ts), internal [`adapter observations`](../core/protocol.ts) | The round axis of the semantic lifecycle: the edge-triggered `round_start`/`round_end` pair (with confirmed/truncated ending), the facts one edge carries, and the actual session (`SessionFacts`) it came from — plus the native run-cycle observation an adapter reports instead of an edge, which carries the harness's continuation flag and the live quiescence read the re-check asks. The framework mints and retires the round's identity per actual session from the edges its own synthesis dispatches; the identity is what a Turn's start facts name as the round it belongs to. An edge a session's disposal closed carries the close-out's own wait (`CloseOutWait`: the budget, its deadline and what is left of it, fifteen seconds by default), which is what a consumer owing an asynchronous effect bounds that effect's wait by. |
+| `SemanticEvent`, `SemanticEventHandlers`, `SemanticEventDeliveryMap` | [`Session subscriptions`](../interface/session/subscriptions.ts) | All session-scoped event kinds as one handler surface: the event union (session, round, activity, Turn, input, context and a session's own confirmed storage write), the handler map an implementation delivers for one subscription group keyed by event, and the map that keeps each kind paired with the delivery it carries. Which deliveries reach a handler is the group's declared `ObservationScope`, not this type. |
+| `AgentActivity`, `SessionActivityEvent`, `SessionActivityObservation`, `SessionActivityDelivery` | [`Session activity`](../interface/session/details/activity.ts) | The activity axis of the semantic lifecycle: one actual session's current agent activity (`working`/`idle`), the one event kind `session_activity`, the observation that states it — the session's own facts, the owner scope it concerns, the reading, `hasUI` and the feedback channel — and the delivery that carries the reading to a handler. It is *derived*: the framework states it from the round transitions its own synthesis dispatches (a Round it holds open is that session working, a Round it confirmed ended is idle), delivering it only where the reading moved, and the same shape is what a reading obtained elsewhere (another process's session, through the framework's local access) arrives in. See [The activity axis](#the-activity-axis). |
+| `SessionContextEvent`, `SessionContextDelivery`, `SessionContextHandler(s)`, `SessionContextReading` | [`Session context`](../interface/session/details/context.ts); internal adapter observation in [`protocol`](../core/protocol.ts) | The context axis of the semantic lifecycle: one *collected* reading of one session's own context — the tokens its conversation held and the provider/exact model it ran at that instant — reported by an adapter at its own collection points (the session's start, a finalized message, the run's own execution convergence) and delivered to a subscribing group as the change it is. A host that states an unknown count (pi's `null`) reports no collection rather than a reading of zero. |
+| `SessionCommitEvent`, `SessionCommitObservation`, `SessionCommitDelivery`, `SessionCommitHandler(s)` | [`Session commit`](../interface/session/details/commit.ts) | The commit axis of the semantic lifecycle: one actual session's own confirmed write of its extension data, as the process that ran it states it. The observation carries the session's own facts, the owner, the running count of confirmed writes, `hasUI` and the feedback channel — and nothing the storage holds, so a subscriber that adopts it reads the storage itself. It is delivered where the count moved, mints no Round, Turn or accounting fact, and is stated by the extension through `ImplementationContext.session.recordCommit`. |
+| `SessionCapability`, `SessionObservationReader`, `SessionObservation` | [`Session capability`](../interface/session/index.ts), [`current observations`](../interface/session/observation.ts) | The factory supplies `context.session`, never an observation source constructor. `observations.read` and `snapshot` return isolated current readings, including observations collected before attaching. Missing observations are not Idle or zero. `recordCommit` states a confirmed write without saving or carrying business content. Source mutation, ordering and withdrawal stay internal; a lost source withdraws live readings but not a confirmed write. See the [Session capability entry](../interface/session/index.ts). |
+| `SessionEventHandlers`, `SessionEventHandler`, `SessionEventDelivery`, `RoundEventHandlers`, `RoundEventHandler`, `SessionActivityEventHandler`, `SessionActivityEventHandlers`, `TurnEventHandlers`, `TurnEventHandler`, `UserInputEventHandler`, `UserInputDelivery`, `SessionContextHandler`, `SessionContextDelivery`, `SessionCommitHandler`, `SessionCommitHandlers` | [`Session events and per-kind contracts`](../interface/session/index.ts) | The per-axis handler aliases, keyed by event, and the delivery each one receives — the session axis's delivery carries the actual session's facts and the owner-scoped capability, while the round, activity, Turn, input, context and commit deliveries carry their own facts and no capability. A handler may return a promise: the framework contains its rejection the way it contains a synchronous throw, and does not wait for it. All of these are public authoring types ([`framework/interface/session`](../interface/session/index.ts)), not adapter exports. |
 | Requirement types (`RequiredSemantic`, `DeclarableRequiredSemantic`, `FRAMEWORK_REQUIRED_SEMANTICS`) | [`framework/core/requirements.ts`](../core/requirements.ts) | The semantics a binding's behavior rests on: the framework's own, and the ones an assembly may declare its extension additionally depends on. Contract metadata for the independent verification — no runtime switch. |
 | `ConfigurationViolation` | [`framework/core/violations.ts`](../core/violations.ts) | The report of one broken configuration rule, carried by a `configuration` binding failure: a `ConfigurationViolationKind` and the deterministic `detail`. |
 | `ExtensionConfigDeclaration`, `ConfigFieldType`, `BOUND_CONFIG_FIELD_TYPES` | [`framework/core/definition.ts#L255`](../core/definition.ts#L255) | The configuration an extension requires of its own `config.yaml`: the file's path, and the keys the file must carry with the type each must match. See [Extension configuration](#extension-configuration-declaration--file). |
@@ -46,18 +57,24 @@ still describes the implemented surface, not the planned input seam or a complet
 | `readConfigDocument`, `isScheduledWait`, `SCHEDULED_WAIT_TEXT`, `describeValue` | [`framework/core/config.ts`](../core/config.ts) | The same reading and parsing seam used for a document the framework interprets itself rather than validating against a declaration — the shared configuration file, where a missing file is an answer rather than a failure — and the shared vocabulary for a value that is not what a configuration requires and for a wait this harness's timer schedules. |
 | `request`, `HttpRequestOptions`, `HttpConfigurationError` | [`framework/public.ts`](../public.ts), defined at [`framework/modules/http.ts`](../modules/http.ts) | The framework's general HTTP module: the one call shared logic imports directly, what a request declares (method, headers, body, `timeoutMs`, `proxy`), and the configuration failure a request may reject with before anything is sent. These are values — `defineExtension` and `request` are the entry's runtime exports. See [General HTTP module](#general-http-module). |
 | `updateFile`, `SafeFileUpdateOptions`, `SafeFileUpdateError`, `SafeFileUpdateFailureKind` | [`framework/public.ts`](../public.ts), defined at [`framework/modules/files.ts`](../modules/files.ts) | The framework's general safe-file module: the one coordinated read-modify-publish call shared logic imports directly, the absolute target and update function it takes, the wait budget and abort it accepts, and the distinguishable failure a refused coordination rejects with. These are values too — `defineExtension`, `request` and `updateFile` are the entry's runtime exports. See [General safe-file module](#general-safe-file-module). |
-| Adapter-facing delivery types (`OwnerReference`, `NoticeTransport`, `FeedbackLevel`, `FeedbackTransport`, `MarkerTransport`, `StateValues`, `TurnSignal`, `TurnSignalFacts`, `SubagentRuntimeDelivery`, `SubagentRuntimeFact`) | [`framework/core/protocol.ts#L15`](../core/protocol.ts#L15), [`#L907`](../core/protocol.ts#L907) | The facts and transports a harness adapter resolves; not authored by an extension. `HarnessPort.onTurn` ([`protocol.ts#L1023`](../core/protocol.ts#L1023)) is the hook an adapter reports its mapped model-cycle facts through, and `HarnessPort.onSubagentRuntime` ([`protocol.ts#L1324`](../core/protocol.ts#L1324)) the hook it reports one execution's own measured duration through. |
+| Adapter-facing delivery types (`OwnerReference`, `NoticeTransport`, `FeedbackLevel`, `FeedbackTransport`, `MarkerTransport`, `StateValues`, `TurnSignal`, `TurnSignalFacts`) | [`framework/core/protocol.ts#L15`](../core/protocol.ts), [`#L907`](../core/protocol.ts) | The facts and transports a harness adapter resolves; not authored by an extension. `HarnessPort.onTurn` ([`protocol.ts#L1023`](../core/protocol.ts)) is the hook an adapter reports its mapped model-cycle facts through, and `HarnessPort.onRound` ([`protocol.ts#L1000`](../core/protocol.ts)) the hook it reports its run-cycle facts through for the round axis's own synthesis. |
 
 A real, minimal consumer is the codebase-tools extension: the shared declaration is
 [`extensions/codebase-tools/definition.ts`](../../extensions/codebase-tools/definition.ts), its OMP assembly is
 [`extensions/codebase-tools/harnesses/omp.ts`](../../extensions/codebase-tools/harnesses/omp.ts), and the discovery
 entrypoint that re-exports it is [`entrypoints/omp/codebase-tools.ts`](../../entrypoints/omp/codebase-tools.ts).
+The same declaration is connected to `piAdapter` by
+[`extensions/codebase-tools/harnesses/pi.ts`](../../extensions/codebase-tools/harnesses/pi.ts), exposed through
+[`entrypoints/pi/codebase-tools.ts`](../../entrypoints/pi/codebase-tools.ts). Its first import initializes the
+adapter's scoped Node Markdown loader before loading the shared definition. pi has no native extension-label
+surface: the binding label is used for diagnostics, not pi's unrelated session-entry labels. See the
+[pi support evidence](harness-support.md#pi-codebase-tools-adapter-evidence) for verified scope and runtime limits.
 
 ## `defineExtension(definition)`
 
 `definition` is an `ExtensionDefinition` ([`definition.ts#L267`](../core/definition.ts#L267)): plain data,
-no builder and no handler. All fields are described below. `state`, `commands`, `prompts`, `marker` and `config`
-are optional; `id` and `displayName` are required.
+no builder and no handler. All fields are described below. `state`, `commands`, `prompts`, `marker`, `config`
+and `subagentRequirements` are optional; `id` and `displayName` are required.
 
 ### `id: string`
 
@@ -68,6 +85,138 @@ identity is `${id}:${tag}` ([`definition.ts#L155`](../core/definition.ts#L155)).
 
 Human-readable name used for the extension's label and the text of its notifications (for example the
 toggle's enabled/disabled notice).
+
+### `subagentRequirements?: readonly SubagentCapability[]`
+
+The extension author's declaration of the subagent semantics needed for complete integration.
+Omitted or empty means no subagent obligation. It names no execution mode and is never read by normal
+binding, command dispatch or accounting. See the independent checklist below.
+
+### Independent subagent integration checklist
+
+**Stage 1 is declaration matching, not behavior verification.** Run it explicitly:
+
+```sh
+bun run check:integrations
+bun run check:integrations --json
+```
+
+The command is resolved from its own repository location, not the working directory. It discovers
+actual `entrypoints/<harness>/<extension>.ts` pairs, loads only definition/inventory modules and compares
+requirements against every execution mode declared by the matching adapter. It does not load the
+discovery entries or native assemblies, read extension configuration, install a harness or run tests.
+Exit codes: `0` matching declarations, `1` missing integration, `2` invalid command arguments.
+The JSON report marks `stage: "integration-completeness"` and `behaviorTestsRun: false`.
+
+| Capability | Required meaning of the supplied integration |
+| --- | --- |
+| `extension-loading` | The subagent loads the extension logic needed to participate. |
+| `session-facts` | Actual session identity, direct parent and Owner relationships. |
+| `turn-usage` | Each actual session's own response usage without duplicate accounting. |
+| `session-lifecycle` | Per-actual-session lifecycle, Round edges and awaitable disposal. |
+| `session-observations` | Per-session activity, context and startup observations. |
+| `storage-commit` | Confirmed storage commits are observable where the Owner is served. |
+| `state-follow` | A declared following State field reads its Owner's value. |
+
+The types are exported from `framework/public.ts` and defined in
+[`core/integration.ts`](../core/integration.ts). The checker is the separate tooling entry
+[`framework/integration-check.ts`](../integration-check.ts), not a runtime export from `public.ts`.
+
+- **Extension author:** declare `subagentRequirements` in `extensions/<id>/definition.ts`.
+  model-cost requires the first six capabilities above; codebase-tools requires loading, facts and
+  following State. connect-bot declares no subagent requirement.
+- **Harness adapter author:** maintain `HarnessIntegrationDeclaration` in the adapter's
+  `domain/subagent/declaration.ts` ([OMP](../../adapters/omp/domain/subagent/declaration.ts), [pi](../../adapters/pi/domain/subagent/declaration.ts)).
+  `subagents` keys name the supported modes (`in-process`, `cross-process`); each value explicitly lists
+  supplied capabilities. List one or both modes according to the actual implementation, not an
+  extension policy. An empty mapping supplies no subagent integration; an empty capability list still
+  declares its mode and therefore reports each missing requirement.
+- **Catalog maintainer:** register new definition and inventory exports in
+  [`scripts/check-adapter-integrations.ts`](../../scripts/check-adapter-integrations.ts).
+  Newly discovered entries absent from that catalog are reported when their declarations are needed.
+  Extension ids match their discovery filenames; harness ids match their discovery directory names.
+
+Coverage cannot be pooled between modes. If pi declares both modes and only its in-process declaration
+supplies `storage-commit`, the report names `pi / model-cost: cross-process: missing storage-commit`.
+A harness declaring only in-process coverage owes no cross-process implementation. Missing adapter
+coverage is not a startup failure, and a disconnected process is not a declaration gap.
+
+**A complete checklist proves only that the declarations match.** The script does not inspect function
+bodies or prove extension-specific assembly wiring (such as pi's required `childEntry`), provider
+presence, delivery correctness or a particular installed harness version. Adapter authors must keep
+coverage declarations truthful; tests/dock scenarios verify their implementations separately. For pi,
+the inventory describes the integrated provider path with a child entry, not the no-provider path.
+Run the existing behavior tests and, when appropriate, `bun run verify:omp-candidate` as a separate
+stage; the completeness command does not invoke them or consume their results.
+
+No startup check, user-facing mode notice, feature gate, `/budget detail` change, or accounting change
+is introduced. Those runtime policies are outside this checklist's scope. Architecture rationale:
+[ADR 0002](../../docs/adr/0002-semantic-extension-framework.md#two-sided-subagent-integration-checklist-2026-10-17).
+
+### Adapter implementation navigation
+
+Start with the capability meaning above, then the matching `adapters/<harness>/subagent/declaration.ts`
+for mode-specific supply. The following is a navigation convention, not executable metadata or a
+one-capability/one-file rule. Shared logic consumes framework interfaces, never these native modules.
+
+| Existing requirement | Native implementation neighbourhood | Framework-owned implementation |
+| --- | --- | --- |
+| `extension-loading` | pi [`domain/subagent/effects.ts`](../../adapters/pi/domain/subagent/effects.ts) and the assembly's child entry; OMP uses its native integrated loading path | Declaration matching stays offline; loading a child is not a second extension business implementation. |
+| `session-facts` | OMP [`domain/session/queries.ts`](../../adapters/omp/domain/session/queries.ts), pi [`domain/session/queries.ts`](../../adapters/pi/domain/session/queries.ts) | Owner/State and observation consumers use the common fact vocabulary. |
+| `turn-usage` | [`omp/domain/session/turn.ts`](../../adapters/omp/domain/session/turn.ts), [`pi/domain/session/turn.ts`](../../adapters/pi/domain/session/turn.ts) | [`behaviors/turn-events.ts`](../behaviors/turn-events.ts) owns Turn association and deduplication. |
+| `session-lifecycle` | OMP [`domain/session/events.ts`](../../adapters/omp/domain/session/events.ts), pi [`domain/session/events.ts`](../../adapters/pi/domain/session/events.ts), each harness's `domain/session/round.ts` | [`behaviors/binding.ts`](../behaviors/binding.ts) and [`round-events.ts`](../behaviors/round-events.ts) own delivery and Round transitions. |
+| `session-observations` | OMP [`domain/context/events.ts`](../../adapters/omp/domain/context/events.ts) and [`domain/context/queries.ts`](../../adapters/omp/domain/context/queries.ts), pi [`domain/context.ts`](../../adapters/pi/domain/context.ts), `domain/session/` and necessary native subagent facts | [`core/observations.ts`](../core/observations.ts) and the activity/context behaviors own unified readings. |
+| `storage-commit` | Actual-session facts and the selected native subagent access mode, connected in the harness entry | [`core/subagent-access.ts`](../core/subagent-access.ts) and [`modules/local-access.ts`](../modules/local-access.ts) carry confirmed notices; business storage stays extension-owned. |
+| `state-follow` | Session/Owner facts; pi's child integration when applicable | [`core/state.ts`](../core/state.ts), [`subagent-access.ts`](../core/subagent-access.ts) and [`followed-owners.ts`](../core/followed-owners.ts) own live following. |
+
+The complete domain map below applies to both harnesses. A root-level domain file is a simple
+mapping, not an alternative technical taxonomy; only domains with collaborating implementations
+need a directory. Extension-specific presentation stays outside these adapters.
+
+| Domain | Mapping responsibility | OMP | pi |
+| --- | --- | --- | --- |
+| Session | Events, identity/startup/branch queries, native State entry effects; owns Turn and Round | [`domain/session/`](../../adapters/omp/domain/session/) | [`domain/session/`](../../adapters/pi/domain/session/) |
+| Context | Context-reading observations; current-context and idle reads where needed | [`domain/context/events.ts`](../../adapters/omp/domain/context/events.ts), [`domain/context/queries.ts`](../../adapters/omp/domain/context/queries.ts) | [`domain/context.ts`](../../adapters/pi/domain/context.ts) |
+| Subagent | Native parent/ancestor relations and integration-state queries; provider protocol events and registration effects where needed | [`domain/subagent/queries.ts`](../../adapters/omp/domain/subagent/queries.ts) | [`domain/subagent/events.ts`](../../adapters/pi/domain/subagent/events.ts), [`domain/subagent/queries.ts`](../../adapters/pi/domain/subagent/queries.ts), [`domain/subagent/effects.ts`](../../adapters/pi/domain/subagent/effects.ts); [`domain/subagent/integration.ts`](../../adapters/pi/domain/subagent/integration.ts) owns their shared lifetime |
+| Pricing | Catalog price queries, mapped to framework price facts | [`domain/pricing.ts`](../../adapters/omp/domain/pricing.ts) | [`domain/pricing.ts`](../../adapters/pi/domain/pricing.ts) |
+| Provider | Current provider address and credential queries | [`domain/provider.ts`](../../adapters/omp/domain/provider.ts) | [`domain/provider.ts`](../../adapters/pi/domain/provider.ts) |
+| Control | Native command registration and invocation mapping | [`domain/control.ts`](../../adapters/omp/domain/control.ts) | [`domain/control.ts`](../../adapters/pi/domain/control.ts) |
+| Prompt | Native run-initiation mapping and injected-message result | [`domain/prompt.ts`](../../adapters/omp/domain/prompt.ts) | [`domain/prompt.ts`](../../adapters/pi/domain/prompt.ts) |
+| Feedback | Extension feedback and framework notice effects; UI or stderr | [`domain/feedback.ts`](../../adapters/omp/domain/feedback.ts) | [`domain/feedback.ts`](../../adapters/pi/domain/feedback.ts) |
+| Marker | Marker area widget effect; absent on surfaces without UI | [`domain/marker.ts`](../../adapters/omp/domain/marker.ts) | [`domain/marker.ts`](../../adapters/pi/domain/marker.ts) |
+
+Subagent relations are not Session identity: Session consumes those relations for its own facts and
+Owner mapping. OMP observes child Session/Turn/Round through the same subscriptions as main sessions,
+so it has no separate Subagent `events.ts`; pi additionally reads its provider's announcements and
+replies. Both offline inventories live in `subagent/declaration.ts`, not in the runtime query path.
+The third-party loader under pi `domain/subagent/internal/` is private provider-resolution implementation.
+
+Each adapter root has exactly three entries: `index.ts`, `internal/`, and `domain/`. Only
+`domain/` holds capability domains; the other two are structural support.
+
+- `index.ts` is the adapter's public assembly entry. It exports `ompAdapter`/`piAdapter`, builds the
+  process-scoped readers and creates the shared binding; extension assemblies import this module.
+- `internal/port.ts` is the per-binding implementation of the framework's `HarnessPort`. It connects the
+  domain mappings to the framework hooks and owns binding-scoped cross-cutting state (newest native
+  context, diagnostic deduplication, owner resolution). It carries no capability of its own.
+- `internal/` is private adapter implementation support: host API type declarations, pi's Node text
+  loader, pi's third-party provider loader, and the per-binding `port.ts` composition. It is not a
+  capability surface.
+
+Only the nine domain rows above are capability domains. A simple domain may be one file; a domain
+with collaborating mappings gets a directory. `index.ts` remains at the adapter root because it is
+the import path extension assemblies use; it is a structural entry, not a missing domain.
+Prefer domain locality over the native object's name. Turn and Round belong under Session. Within a domain, `events.ts` owns event mappings, `queries.ts` owns native reads,
+and `effects.ts` owns native effects when these responsibilities need separate implementation files.
+Session event construction stays in its event mapping rather than being rebuilt in the port; State
+entry writes are a Session effect, not a second State implementation. Keep simple domains as single
+files, retain complex Turn/Round protocols internally, and create no forwarding-only entry files or
+empty three-file templates. The two harnesses need not be structurally identical.
+
+The shared [`behaviors/assembly.ts`](../behaviors/assembly.ts) creates the observation source and
+State store and reuses an implementation until disposal. Harness entries assemble native modules;
+pi retains native shutdown release ordering after binding. This adds no capability registry,
+automatic requirement inference or runtime negotiation. Configuration remains `framework/config.yaml`.
 
 ### `state?: StateDeclaration`
 
@@ -120,11 +269,11 @@ implementation was not injected — an `initialization` failure, with nothing re
 can run always has something to run.
 
 The framework then normalizes the argument into a `DirectedDirective`
-([`protocol.ts#L367`](../core/protocol.ts#L367)): `{ kind: "activate" }` for the empty argument,
+([`protocol.ts#L367`](../core/protocol.ts)): `{ kind: "activate" }` for the empty argument,
 `{ kind: "deactivate" }` for `off`, and `{ kind: "unrecognized"; argument }` for anything else. A recognized
 directive runs `DirectedCommandImplementation.run` with a `CommandDelivery`. An unrecognized argument is not a
 directive: the framework records no value and publishes nothing, and hands the text verbatim to the
-implementation's optional `unrecognized` member ([`protocol.ts#L474`](../core/protocol.ts#L474)) so the
+implementation's optional `unrecognized` member ([`protocol.ts#L474`](../core/protocol.ts)) so the
 extension that owns the words can answer a mistyped argument. An implementation that injects no such member
 leaves the argument inert, which is what makes the addition compatible with implementations that predate it. A
 directed command publishes no framework feedback at all — its operator-facing text belongs to the extension,
@@ -139,21 +288,21 @@ command concludes only when it settles — the host's command chain receives tha
 command finishes with the effect rather than beside it — and a synchronous throw or a rejected promise is
 reported once, at `error` severity, as `/<name> <action> failed: <detail>`. The framework retries nothing,
 rolls nothing back and reports no success: an action that succeeded says so itself on the delivery's feedback
-channel. Its delivery ([`protocol.ts#L591`](../core/protocol.ts#L591)) is the invocation facts alone — the
+channel. Its delivery ([`protocol.ts#L591`](../core/protocol.ts)) is the invocation facts alone — the
 argument, the owner scope, `hasUI`, the idle query and the two effect transports — because an `actions`
 command drives no declared State and therefore has no seam or capability to carry.
 
 **The implementation owns the write.** The delivery carries the declared-value seam
-([`protocol.ts#L398`](../core/protocol.ts#L398)): `read()` observes the value the invocation started
+([`State interface`](../interface/state/index.ts)): `read()` observes the value the invocation started
 from, and `write(value)` is the only path that records the field — the framework writes nothing before, after
 or instead of it, so an action that fails leaves the value alone. Each write is recorded in the owner's
 persistence medium best-effort and followed by an update of the framework-owned marker area
-([`protocol.ts#L324`](../core/protocol.ts#L324)), which is why a write of `false` removes the
+([`protocol.ts#L324`](../core/protocol.ts)), which is why a write of `false` removes the
 extension's line. The same seam serves every handler delivery, so the write authority has one implementation
 whatever the control kind.
 
 **The delivery also carries a capability the handler may retain.** `delivery.capability`
-([`protocol.ts#L578`](../core/protocol.ts#L578)) is the same declared-value write and the same
+([`protocol.ts#L578`](../core/protocol.ts)) is the same declared-value write and the same
 feedback channel this delivery uses, bound to the owner it resolved, so an extension whose effects outlive the
 delivery — the heartbeat timer that disarms it, the outbound flusher — keeps that handle in its own owner-keyed
 record instead of asking the framework for an owner-resolving write or feedback API. It is valid for the
@@ -203,7 +352,12 @@ module graph for each session's runner, and each binding keeps its own State ([`
 so a seat is answered by the newest registration whose store *serves* the Owner that seat names. A binding of
 a session nobody is displaying never served that Owner, so it can neither empty the area nor answer with its
 own value, and an Owner whose session ended still belongs to the store that served it rather than to a
-leftover registration of an earlier session that held the same key.
+leftover registration of an earlier session that held the same key. A store that *follows* an Owner answers
+for it too, once it has read it: a value that changes in the process serving that Owner has no transition
+here to publish the change, so the run initiation in the following process publishes the area it would
+render either way — the line appears and disappears with the Owner's value rather than staying at what the
+first publication made it. A store that has not read the Owner answers for nothing, so the first run that
+reads it publishes nothing of its own.
 
 | Parameter | Type | Meaning |
 | --- | --- | --- |
@@ -227,9 +381,36 @@ it names is what `getConfig` hands the extension's shared logic. See
 ## `ompAdapter(definition, options)`
 
 Assembles an `ExtensionDefinition` for the `omp` harness
-([`framework/adapters/omp.ts#L789`](../adapters/omp.ts#L789)). It returns an `OmpExtensionFactory`
-([`omp.ts#L279`](../adapters/omp.ts#L279)) — `(api) => BindingResult` — which each thin entrypoint
+([`adapters/omp/index.ts`](../../adapters/omp/index.ts)). It returns an `OmpExtensionFactory`
+([`omp.ts`](../../adapters/omp/index.ts)) — `(api) => BindingResult` — which each thin entrypoint
 re-exports as its default factory and the loader calls once per binding.
+
+Its private OMP observation modules keep native subscriptions together with the implementation
+that interprets their facts: [`adapters/omp/domain/session/turn.ts`](../../adapters/omp/domain/session/turn.ts) owns request/response
+mapping, usage availability and per-subscription streaming-reading deduplication;
+[`adapters/omp/domain/session/round.ts`](../../adapters/omp/domain/session/round.ts) owns activity signals, continuation flags and
+late quiescence reads. The private [`adapters/omp/domain/session/`](../../adapters/omp/domain/session/) module
+keeps Session knowledge local: [`queries.ts`](../../adapters/omp/domain/session/queries.ts) reads Session identity,
+startup facts, persisted State payloads and injected-prompt identities, and maps the parent/ancestor
+identities supplied by [`subagent/queries.ts`](../../adapters/omp/domain/subagent/queries.ts) into direct-parent
+facts and Owner references; native registry traversal is owned by Subagent, not duplicated in Session;
+[`events.ts`](../../adapters/omp/domain/session/events.ts) owns native Session event types, transition
+pairing and rename observations. Its active Owner key lives once per binding, while rename tracking
+lives once per observation subscription. Owner is the State-owning main session (a main session owns
+itself), not the immediate Parent agent.
+
+[`adapters/omp/domain/session/viewed-session.ts`](../../adapters/omp/domain/session/viewed-session.ts) owns the Viewed session native
+facts, subscription re-pointing and last-listener release. The assembly keeps one latest actual
+delivery context: both this module and context-free Subagent observations read that same source.
+Viewing grants no State-write authority. `internal/port.ts` connects the native mappings and owns binding-scoped
+diagnostic deduplication; `context/queries.ts` keeps the binding's newest context and reads idle facts,
+while `context/events.ts` subscribes and constructs context observations. `session/effects.ts` appends
+the State entry that `session/queries.ts` reads; the same write is shared with commands. Session event
+construction lives in `session/events.ts`, with complex Turn/Round protocols kept in their own files. The entry `index.ts` assembles the process-level readers and the shared
+framework binding life; native types remain available through that adapter entry. State seeding,
+implementation reuse and cleanup, Turn identity and Round transitions retain their framework
+semantics. These modules add no public interface: tests continue to drive native events through
+`ompAdapter`, not internal helpers.
 
 ### `definition: ExtensionDefinition`
 
@@ -271,7 +452,7 @@ behind ([`binding.ts#L234`](../behaviors/binding.ts#L281)).
 
 **One implementation per adapter.** The `omp` adapter calls the factory once — the first binding hands it the
 validated configuration, and every later binding (another session's, a subagent's) reuses what it built
-([`omp.ts#L795`](../adapters/omp.ts#L795)) — with one exception: an implementation whose cleanup has already
+([`omp.ts`](../../adapters/omp/index.ts)) — with one exception: an implementation whose cleanup has already
 run is spent, so the binding that comes after it builds a fresh instance rather than delivering to a closed
 one. An assembly that wants the instance to be the *process's* creates its adapter once, at module load, as
 the entrypoints do; that is what makes an ordinary model, session, tree or view change harmless.
@@ -305,10 +486,10 @@ follow it. A synchronous throw and a rejected promise are both contained and rep
 changing what the framework already did for the event or keeping another subscriber from running.
 
 **The semantic lifecycle subscription pairs a definition with injected handlers.** The framework's session
-axis is the symmetric pair `session_start` ([`protocol.ts#L76`](../core/protocol.ts#L76)) and
+axis is the symmetric pair `session_start` ([`protocol.ts#L76`](../interface/session/details/session.ts)) and
 `session_end`: a start seeds the owner's State from the branch the delivery names, an end retires the owner it
 names, and both refresh the framework-owned marker area
-([`protocol.ts#L324`](../core/protocol.ts#L324)). A transition that changes which session is current
+([`protocol.ts#L324`](../core/protocol.ts)). A transition that changes which session is current
 is an end marked `transferred` naming the owner being left, followed by a start naming the owner being entered;
 a navigation that leaves the current owner alone — a tree jump, a same-file resume or reload, an in-place
 context reset — is not a transition and produces no event at all. The axis carries one member that is not a
@@ -318,7 +499,7 @@ boundary, so a session nobody is viewing is as current as the one on screen; it 
 nothing and publishes no marker area, and a harness that reports no such change simply never delivers it.
 
 A start delivery is also the one delivery whose facts include the pair the session *began* on — the model and
-the effective level the harness resolved for it ([`SessionStartup`](../core/protocol.ts#L137)) — and only where
+the effective level the harness resolved for it ([`SessionStartup`](../interface/session/details/facts.ts)) — and only where
 that start proves the session was beginning: a creation rather than a way into a session that already exists
 (no `resume`, no `fork`), over a session whose own transcript carries no conversation yet. A fresh spawn is that
 case; a session the host reloaded and re-bound — a parked subagent revived, a session re-entered in another
@@ -327,8 +508,10 @@ reports none as well, because what it could read is the session's *current* pair
 on. A fact nothing proved stays absent, part by part, rather than being filled in from the settings in effect.
 
 The run axis is the edge-triggered pair `round_start` and `round_end`
-([`protocol.ts#L241`](../core/protocol.ts#L241)), where a `Round` is one period of agent activity
-from the agent taking up input to quiescence. Both edges are payload-free by design: how a round ended is a
+([`protocol.ts#L241`](../interface/session/details/round.ts)), where a `Round` is one period of agent activity
+from the agent taking up input to quiescence. An opening carries its kind alone, and an end carries one
+fact beside it — `ending`, either `confirmed` or `truncated` — which is how the end was *established*
+rather than how the activity turned out: how a round ended is a
 fact the harnesses disagree about, and the agent's *current* state is the idle query below rather than a
 field of a past transition. An edge is delivered only when the session really crosses it — the first run
 start of a session that has no round open opens one, a start inside an open round is work within it and is
@@ -338,6 +521,32 @@ round and not a `round_end`, and a settle while no round is open closes nothing,
 whose end it could be evidence of. Error and abort terminals end the round the same way an ordinary answer
 does. The framework applies no behavior of its own to a round beyond the identity and its lifetime:
 three-value agent state is not framework State, so a round edge is a subscription and nothing else.
+
+**A session's own disposal closes the round it leaves behind.** A host that is disposing an actual
+session reports that fact at its own awaitable exit position (`onDisposal` on the port, which the `pi`
+mapping is), and the framework closes the round there: a settle the session had already stated and never
+had confirmed is confirmed — the session is over, so it is at rest and nothing beyond it can continue it —
+and a round left open with no end ever stated is truncated, because nothing can continue it any more and
+the activity's own completion was never established. The close-out is what makes a short-lived session's
+last exchange accountable: the framework answers the report once every handler the edge reached has
+settled, so a host that waits for it — and pi awaits a `session_shutdown` handler — has the session's own
+commit finished before its process may leave. A session the host merely left is no disposal and closes
+nothing: a transfer, a rename and a view that moved report no such fact and produce no `round_end`.
+
+**That close-out is bounded, and what it states about its own work is what the work really did.** The
+budget is the host's own wait when the report states one, and the framework's built-in fifteen seconds
+otherwise — counted from entering the close-out, never reset for work that had already been running, with
+no retry and no added delay (`DEFAULT_CLOSE_OUT_MS`). The edge carries what is left of it (`CloseOutWait`
+on the delivery), and a consumer that owes an asynchronous effect bounds that effect's *wait* by it: a
+session's own save declares the remainder to `updateFile` rather than a budget of its own, so a document
+another writer holds is refused at the close-out's own deadline and the refusal is on the record before the
+host is answered. Two cases are therefore told apart in what is reported rather than assumed: a wait that
+can be given up is reported as the uncommitted write it is — the file holds nothing of it — while an update
+that had already begun is not stopped by the deadline at all, and the deadline's own statement is that its
+outcome is unconfirmed, claiming neither a cancellation nor an unwritten document. The file that really
+gets published stays the authority. Nothing waits for the owner of another process here: a session this
+process runs commits and closes within the bound whatever the process serving its owner is doing, and the
+whole guarantee ends at ordinary disposal — a killed process, a crash and a power loss are outside it.
 
 **A settle is an end candidate, not an end.** A harness reports a run as over before its own work has
 unwound, so the session is usually not idle at that instant and may still have queued input or a running
@@ -350,18 +559,45 @@ The adapter contributes the harness's own run-cycle facts and that live read (se
 [harness-support.md](harness-support.md)); which of them is an edge, and when, is the framework's
 synthesis ([`behaviors/round-events.ts`](../behaviors/round-events.ts)).
 
+### The activity axis
+
+**Working/Idle is the framework's answer, and it is derived from the round axis.** An extension that
+has to know whether a session is still working — to emphasise the row of a session that is running, to
+refuse an action from a busy session — subscribes to `session_activity` instead of reading a harness's
+run state. The framework states the reading from the transitions its own synthesis dispatches: a Round
+it holds open for a session is that session working, a Round it confirmed ended is idle. The one rule
+lives in [`behaviors/session-activity.ts`](../behaviors/session-activity.ts) (`ACTIVITY_OF_EDGE`), and
+it reads a transition the framework already decided rather than interpreting a native fact — which is
+why it is not a second set of edge rules, and why an automatic continuation, a drained queued message
+and a job the session is still waiting on all keep reading as working: none of them crosses an edge.
+
+**The reading is delivered where it moved, after the edge that moved it.** A delivery carries the
+reading itself beside the session's own facts, its owner scope, `hasUI` and the feedback channel, and
+a session that stays in the reading it was already delivered in produces nothing — so a pause inside a
+Round states no reading at all, and nothing here polls, follows a stream or repeats what a subscriber
+already holds. A session no reading has moved reads as nothing rather than as idle: an unestablished
+activity is not idleness. The axis is not an arm path: it carries no capability, and the framework's
+own behavior for it is nothing — the billing lifecycle a `round_end` drives belongs to the edges above,
+and no Round, Turn or save follows from a reading.
+
+**The same shape is what a reading obtained elsewhere arrives in.** Which process ran the session is
+not part of the reading: a session another process ran is observed there and handed in as
+`SessionActivityObservation`, and the framework delivers it as what it is. Applying one drives no
+Round identity, no edge and no attribution, so the round axis stays the one owner of the Round, its
+identity and its end — see [framework/docs/harness-support.md](harness-support.md) and the local-access
+direction of the contract's observation work.
+
 An implementation subscribes through `subscriptions`: one `SubscriptionGroup` per group it declares,
 each stating once the `ObservationScope` it observes under and the handlers for the event kinds it
 subscribes. The delivery each handler receives
-([`protocol.ts#L266`](../core/protocol.ts#L266)) carries the event, the owner scope it concerns, the
+([`protocol.ts#L266`](../interface/session/details/session.ts)) carries the event, the owner scope it concerns, the
 faithful `hasUI` fact, the unified extension feedback channel
-([`protocol.ts#L111`](../core/protocol.ts#L111)) — the same two seams a command delivery carries, so
+([`Feedback interface`](../interface/feedback/index.ts)) — the same two seams a command delivery carries, so
 one shared gate and one notice path serve both handler kinds and every axis — and the owner-scoped capability a
 handler may retain for the effects it drives outside the delivery
-([`protocol.ts#L703`](../core/protocol.ts#L703)), because a `session_start` is an arm path like a
-command. A round or Turn delivery carries the first three and the feedback channel, and no capability:
-neither edge is an arm path. A subagent-runtime delivery carries the same four and no capability
-either: it observes an execution the extension did not start and grants no authority over any session. The framework's
+([`protocol.ts#L703`](../interface/state/index.ts)), because a `session_start` is an arm path like a
+command. A round, activity or Turn delivery carries the first three and the feedback channel, and no capability:
+a round edge and a Turn edge are not arm paths, and an activity reading is not one either. The framework's
 own behavior for a session event always runs first — the one exception is `session_facts`, which crossed no
 boundary and therefore runs no framework behavior at all — and a handler that throws — or returns a promise that
 rejects — is reported on the adapter's diagnostic channel without changing what the framework already did or
@@ -372,7 +608,7 @@ synthesis above decides the transition; shared logic names no native event eithe
 **The scope is the group's, and it is declared once.** An `owner` group is dispatched only for a delivery
 whose owner is `{ kind: "owner" }` — the session that is its own owner. A subagent session's boundaries,
 rounds and Turns, and those of a session whose parent chain leaves the process, resolve to `inherited`
-or `unresolved` ([`protocol.ts#L31`](../core/protocol.ts#L31)) and reach no `owner` handler: those
+or `unresolved` ([`State interface`](../interface/state/index.ts)) and reach no `owner` handler: those
 deliveries belong to the owner that session follows, and the effect body an extension drives from them
 belongs to the session that armed it, which is why a subagent can never report or stop the owner's effects.
 A `session` group is dispatched every actual session's deliveries, each naming that session's own identity,
@@ -382,8 +618,10 @@ declares. The handle names the
 session's work rather than the agent definition it runs, which is a kind of agent, and none of these facts is
 an identity: a rename or a handle leaves the session's own id, its direct parent and its Owner exactly as they
 were. Widening a group grants
-nothing else: there is no write path on either subscriber delivery, State inheritance is unchanged, and the
-retainable capability is still scoped to the owner its delivery resolved. The rule is the framework's, expressed
+nothing else: there is no write path on either subscriber delivery, State inheritance is unchanged, and
+the capability a delivery hands out is scoped to *its own* session — an owner-scoped handle for the
+session that is its own owner, and a read of the value its field's inheritance rule reads for any other,
+with every write and notice dropped. The rule is the framework's, expressed
 in `subscriptions.ts`, `dispatchSessionEvent` and `dispatchRoundEvent` and observable at the adapter contract
 (`tests/framework/subscription-scope.test.ts`, `tests/framework/owner-gate.test.ts`); the *resolution* is the
 adapter's, and on `omp` it reads the session's agent identity, the harness's agent registry and its own
@@ -397,7 +635,7 @@ cell, retires none and renders no area).
 
 A **Turn** is one observable model request/response cycle (see [GLOSSARY.md](../GLOSSARY.md)). The framework
 owns its identity and the rules that join its facts; the adapter maps the harness's native facts and nothing
-more. The two edges are `turn_start` and `turn_end` ([`protocol.ts#L376`](../core/protocol.ts#L376)), and the
+more. The two edges are `turn_start` and `turn_end` ([`protocol.ts#L376`](../interface/session/details/turn.ts)), and the
 harness's own `turn_end` — which fires once the requested tools have run — is deliberately not this axis's end,
 because tool execution is outside the Turn.
 
@@ -428,7 +666,7 @@ because tool execution is outside the Turn.
   business data — it never interprets a price, a currency or a bucket key, and an implementation that supplies
   no catalog has every Turn name the price as unavailable.
 - **The harness's own model prices are a fact the factory receives.** A harness whose model catalog states
-  what a model costs reports it as `HarnessPort.modelPrices` ([`protocol.ts#L1029`](../core/protocol.ts#L1029)),
+  what a model costs reports it as `HarnessPort.modelPrices` ([`protocol.ts#L1029`](../core/protocol.ts)),
   the same query shape and never a native model, registry or context; binding hands it to the extension's
   factory as `ImplementationContext.modelPrices` ([`assembly.ts#L93`](../core/assembly.ts#L93)). The framework
   never queries it itself — whether a channel is priced from the extension's own data or from the harness's
@@ -437,7 +675,7 @@ because tool execution is outside the Turn.
   million tokens, answering nothing for a pair the catalog does not carry or prices at zero on every bucket.
 - **The harness's own provider access is a per-operation query the factory receives.** A harness whose host
   can resolve a provider's credential and address reports it as `HarnessPort.providerAccess`
-  ([`protocol.ts#L1160`](../core/protocol.ts#L1160)), the small `ProviderAccess` query of
+  ([`protocol.ts#L1160`](../core/protocol.ts)), the small `ProviderAccess` query of
   `{ baseUrl?, credential? }` facts and never a native registry or credential store; binding hands it to the
   extension's factory as `ImplementationContext.providerAccess`
   ([`assembly.ts#L96`](../core/assembly.ts#L96)). The framework asks it for nothing and caches nothing: a
@@ -463,73 +701,6 @@ main session spawns a real subagent that spawns a real grandchild, so all three 
 own identity, direct parent and Turn while the owner-scoped group is driven by the main session alone; and one
 run in which a real tool executes, where the harness's own `turn_end` — the one carrying that tool's result —
 is observed falling between two Turns rather than ending one.
-
-## The subagent-runtime axis: the harness's own per-execution duration
-
-A **subagent execution** is one spawn of one subagent session — one row of such a session however many times it
-ran (see [GLOSSARY.md](../GLOSSARY.md)). The axis carries one fact about such an execution: **the duration the
-harness itself measured for it**, which the host states while the execution runs and once it is over. The one
-event kind is `subagent_runtime`
-([`protocol.ts#L680`](../core/protocol.ts#L680)) and the delivery's `runtime` member is either a *reading* —
-the harness's own identity for the execution, the milliseconds it had run, and whether the harness reported it
-as over — or the fact that this host produced none, with the reason it could not.
-
-- **It is not the session's span.** A harness may persist the wall-clock distance from a session's creation to
-  its last record. That number counts the idle gaps between executions, so an adapter that reported one here
-  would be reporting pauses as work; what crosses this seam is only what the harness measured for the execution
-  it ran.
-- **It is not a Round edge and not a Turn.** A reading arrives while the session it belongs to is still working,
-  and the final reading of an execution is not the end of that session's Round. The framework therefore
-  synthesizes nothing on this axis and owns no state of its own.
-- **Which reading is what is the consumer's rule.** Whether a reading replaces an earlier reading of the same
-  execution, whether it is another execution's own contribution, and whether it merely repeats a completion
-  already accounted depend on the accumulation being kept — and the framework keeps none. It delivers every
-  fact exactly as the adapter mapped it, including a repeated one.
-- **Nothing persists a runtime here.** An extension that has to record one does so with the commit it already
-  makes for its own business, which is what keeps an execution's duration from causing a write of its own; a
-  reading that arrives after such a commit waits for the next one rather than delaying or re-writing it.
-- **Absence is named, and zero is a reading.** A host that reports no duration, or one that cannot be
-  attributed to a session, is delivered as `unavailable` — never as a zero and never as a span — while a
-  duration the harness really reported as `0` is a reading.
-- **A spawn's creation is not an absence.** While the session an execution runs in is still being
-  established, the host states no delivery for the readings it publishes in that window rather than an
-  `unavailable` one: nothing could be attributed yet, and because its readings are cumulative the first
-  delivery that names a session carries the whole duration that elapsed. That window is the axis's one
-  silence: an execution the host *has* attributed and can no longer attribute — and every reading that
-  reports an execution over without an attributable session, even one published during the creation — is
-  `unavailable`, so an execution that was lost or that failed to settle is named rather than quietly
-  swallowed.
-- **The scope is the execution's own session.** A delivery names that session's identity, direct parent and
-  latest name, and resolves its owner through the session graph, so an `owner`-scoped group is not moved by a
-  child's work while a `session`-scoped group observes it — exactly as a subagent's own round edge and Turn are
-  scoped.
-- **It is subscribed only when an assembly asks for it.** `HarnessPort.onSubagentRuntime`
-  ([`protocol.ts#L1324`](../core/protocol.ts#L1324)) is registered only for the groups whose handlers cover
-  `subagent_runtime`, so a definition that does not care about an execution's duration asks its harness for no
-  such facts, and no ordering or pagination promise attaches to the ones it does ask for.
-
-On `omp` the adapter maps these facts from two native routes, because neither one carries every execution. The
-harness's own delegation tool (`task`) states the spawns one call runs — a progress frame carries a running
-spawn's own elapsed reading and the settled result carries its final one — and the harness's own subagent
-channels (`task:subagent:progress` for the readings, `task:subagent:lifecycle` for the frames that open and
-settle an execution) state every execution of every agent, which is the only route that carries the follow-up
-turns a kept-alive subagent runs: those run in an existing session with no delegation call of their own. An
-execution's identity is the harness's own agent id, and because that id is reused by an agent's later executions
-the adapter brackets them by the openings that channel states — the first execution observed under an agent keeps
-the agent's own id, later ones are reported as `<agent id>#<execution number>` — so a consumer accumulates each
-execution instead of reading a follow-up as a repeat of the first. The execution's session and its direct parent
-are read from the harness's agent registry rather than from a name, a depth or anything that merely looks
-hierarchical. A spawn's readings begin before the session it will run in exists — on the delegation route,
-before the registry holds its agent at all — so the adapter states nothing for the running readings
-published in that window (a session's creation, not a reading an operator lost), and states an `unavailable`
-reading as soon as an execution it has already attributed becomes unattributable again, or one of its
-readings reports the execution over without an attributable session.
-The rules above are observable at the adapter contract in
-`tests/framework/subagent-runtime.test.ts` — the two readings against the same agent record's much longer
-registered span, the attribution through the registry, the unavailable shapes, and a follow-up execution's own
-bracketed identity against the spawn's — and in a running harness in
-`tests/harness-dock/detail-tree.test.ts` and `tests/harness-dock/model-cost-persistence.test.ts`, where a real
-`task` call's children carry a duration the host really measured.
 
 ## Extension configuration (declaration + file)
 
@@ -737,9 +908,136 @@ and its lock recovered, every process that races to recover one dead lock commit
 update, the process that recovered a dead lock being a live holder no peer takes it from, independent
 processes that lose no update, and readers that only ever see whole documents.
 
+## Local access (adapter-facing)
+
+The framework's general local-access module ([`modules/local-access.ts`](../modules/local-access.ts))
+is the one way a process offers the *declared values* of an owner it serves to a session this harness
+runs in another process, and the one way such a session hands the process that serves its owner the
+*observation* of itself: the serving process publishes where its access is, and a session in
+another process reaches it over a name the platform already provides — a Windows named pipe
+(`\\.\pipe\my-agent-toolkit-access-<id>`) or a POSIX socket file. It is **not** an extension entry and
+not part of `public.ts`: an extension never touches it. The harness adapter selects the subagent
+access capability through [`core/subagent-access.ts`](../core/subagent-access.ts): OMP selects
+`in-process`; pi selects `cross-process` when its assembly states a `childEntry`, while retaining the
+same-process direct path for owners served here. This is only subagent access, not general communication
+or a scheduler. `SubagentAccess` owns value offers, followed reads, observation admissions, hand-over
+routing and their release; State supplies current values and binding supplies semantic facts and sinks.
+The assembly hands State one `StateRules.access`, not separate publisher and follower lifetimes.
+A harness whose sessions are all bindings in one process creates no endpoint, record or configuration read.
+
+**The follow read.** A field that declares `follow` makes a subagent session read its Owner's *current*
+value, and a session this harness ran in another process holds no cell for it. `StateStore.followed`
+is that synchronous read: the value is the one the Owner's access last stated, and the declared default
+stands in while no access is reached. Before the first run's prompt planning and Marker publication,
+the framework's awaitable run-initiation position joins the first bounded access attempt; if an earlier
+synchronous read already started it, both share that attempt. Failure retains the default and the existing
+read-driven recovery. Later runs do not wait again or request a value per use: connected values arrive
+by push, so cross-process propagation is not instantaneous. Same-process cells need no wait.
+A default read writes nothing to the Owner's cell or the reader's persistence medium and is not a
+confirmed reading of the Owner's value. Synchronous State reads, including a handler's read capability,
+remain synchronous; the readiness wait belongs to the framework's pre-request position, not to that interface.
+
+**Recovery is per read, spaced and bounded.** The first read of an owner starts one attempt (a second
+read in the same turn shares it), the change of a connected owner arrives by itself over the access —
+nothing polls a healthy one — and a failed attempt is what spaces the next: the delay doubles per
+consecutive failure and stops at the policy's ceiling. An access that reports itself ended is spent and
+never reused, and the read after the spacing opens a fresh one, because a lost connection is not proof
+that the owner ended. Disposal is final: `StateStore.dispose` releases every followed access and stops
+following for good. It delegates to the assembly's `SubagentAccess`, which also withdraws its value
+offers and observation admissions and releases outgoing observation connections. The pi adapter reports
+quit/reload only after the awaitable session close-out, so the final save and its commit notice finish
+before communication is released; a session transfer does not dispose the assembly's access.
+
+**What one access is.** A *seat* is one extension's access to one owner (`{ extension, owner }`) — an
+owner key alone is not unique across extensions, because two extensions of one process serve the same
+session's owner. The serving process offers a seat's current declared values, pushes that seat's
+changes one way, and answers a declared read on demand; the same seat carries one direction more, and
+it is the observation a session the harness ran elsewhere holds of itself. Nothing else crosses: there
+is no write frame, no method name and no argument list, so this is not an RPC surface, a session cannot
+reach any value or any other session through it, and a frame that is not the declared `hello`, `read`
+or `observed` is refused rather than interpreted.
+
+**The two halves of one seat are offered separately.** `OwnerAccessPublisher.offer` offers a seat's
+declared values and `OwnerAccessPublisher.receive` receives its observations; the seat, its location
+record and its endpoint live while either half is offered and are released with the last of them, and
+a half offered again over a seat that is still there keeps that seat's verification, so a reader that
+already read the record is not locked out by it. `SubagentAccess` builds and owns these halves once per
+assembly, tracks the bindings serving each owner and releases each binding's admission on transfer or
+end. An inherited session whose owner any binding serves here stays local. `HarnessPort.sessionObservationAccess`
+remains an internal carrier seam for a harness supplying its own observation bridge: its `receive` and
+`deliver` join the same admission and hand-over rules rather than a second dispatcher.
+
+**Observation delivery.** The framework decides *which* readings cross, not the adapter: a session's
+facts are handed over where the delivery that named it arrived, its activity and its context where the
+edges and collections that moved them ran, and only for a session whose owner this process does not
+serve (`core/observations.ts`, `handOverReading`). On the other end the receiving process records the
+reading in its own observation source and dispatches it to the subscribers of the session that follows
+that owner (`behaviors/binding.ts`, `adoptReading`), so an extension reads a session it never ran
+exactly as it reads its own. The observation source retains the first reliably reported startup
+snapshot for each actual session: later facts refresh its name and position but neither erase that
+snapshot when omitted nor replace it with a later model or effort. Consumers can therefore read the
+startup facts before any extension data has been committed.
+One member travels the same way but is a statement rather than a reading:
+a session's own process records each write it confirmed (`ImplementationContext.session.recordCommit`,
+`SessionObservations.recordCommit`) and the count crosses as a notice — no content of the storage, no
+Round, Turn or accounting fact — reaching a subscriber as `session_commit` where the count moved, so a
+process serving that session's owner learns the shared storage grew and reads it itself; a session
+whose owner is served here is recorded and handed to nobody. `createObservationDeliverer` is the
+delivering half as an adapter uses it: one reach per owner, the state this process holds (the count
+included) sent as the access's first word, later readings written straight onto the connection, a miss
+reported as nothing at all, and a runtime directory this process cannot state reported as its own
+configuration failure. Nothing here is persisted and nothing is polled: a reading arrives because a
+session's own observation moved.
+
+**The location is separate from the messages.** One JSON record per seat lives under the configured
+runtime directory, named from the seat itself, holding the seat, the endpoint, that access's own
+verification and the publishing process's id — no value, no State, no business data. Process id and
+endpoint are recorded as information and are never read as proof that an owner lives. A record that
+cannot be read, states no readable endpoint or verification, or names another seat than the file it is
+filed under, is read as no record at all.
+
+**Both ends are checked before anything crosses.** The reading process states the seat it wants with
+the verification it read from the record; the serving process answers only when that seat is one it
+serves right now and the verification is the one it published, and the reading process checks the seat
+the answer names in turn. The endpoint's id is random per serving process, so it is never guessed and
+never reused by a later process. A refusal closes the connection with no values, which is what keeps a
+stale record, an old endpoint or another seat's record from reaching this seat's values.
+
+**Configuration.** The runtime directory is the shared configuration file's `runtimeDir`
+([`config.yaml`](../config.yaml)), and a relative value is resolved against that file's own directory,
+so two processes that read the same file agree on it whatever their working directories are. No file, no
+`runtimeDir`, an empty or non-string value, and an unreadable or non-mapping file all fail as a
+`LocalAccessConfigurationError` naming the file resolution reached
+([`resolveRuntimeDirectory`](../modules/local-access.ts)): nothing is substituted — no temporary
+directory, no working directory, no extension storage root — and the failure is not a shape a retry
+repairs. A publisher reports that failure once on its own channel and simply offers nothing.
+
+**Outcomes and release.** Everything but a reached access is a `LocalAccessUnavailableError` with one
+reason: `no-location`, `endpoint-absent`, `refused` or `closed`. None of them is evidence about an
+owner's life, and none of them is another. Withdrawing a seat removes its record, stops its
+observations and releases the connections admitted for it; the endpoint closes once no seat is left, and
+`dispose` withdraws every seat and closes the endpoint, removing a POSIX socket file. A caller reports
+`ended()` as soon as its access is released, rather than at its next request. A caller that outlived its
+access is released rather than left listening for a value that will not come.
+
+**What it does not claim.** The endpoint is reachable by any process of this machine that can name it,
+and on Windows the platform exposes no authorization knob to `node:net` to change that. The verification
+separates *which* access a caller reached; it is not an operating-system access control, a cross-user
+boundary or POSIX authentication. On POSIX the record is written `0o600` and the runtime directory is
+created `0o700`, which is the only isolation either file system is asked for here.
+
+**The seam.** The carrier itself is not doubled: [`tests/framework/local-access.test.ts`](../../tests/framework/local-access.test.ts)
+starts real child processes over a real named pipe or socket file, reads the record the serving process
+published, and observes what crossed — a change arriving and a declared read answered; another
+verification, another seat, an old endpoint and an unreadable record all refused without a value; a
+released seat's reader released with it and another seat's reader untouched; a disposed access whose
+endpoint is gone; the same-process read that opens nothing; and the pi assembly that offers an owner
+only for a `follow` field in a host that spawns sessions. The configuration cases drive the real read of
+a real file, with the file's own text as the input.
+
 ## Binding outcome and failure report
 
-The factory returns a `BindingResult` ([`protocol.ts#L665`](../core/protocol.ts#L665)):
+The factory returns a `BindingResult` ([`protocol.ts#L665`](../core/protocol.ts)):
 
 ```ts
 type BindingResult =
@@ -748,7 +1046,7 @@ type BindingResult =
 ```
 
 An unbound result carries its `BindingFailure[]`. `BindingFailure`
-([`protocol.ts#L635`](../core/protocol.ts#L635)) is a closed union of three kinds:
+([`protocol.ts#L635`](../core/protocol.ts)) is a closed union of three kinds:
 
 | `kind` | Payload | Meaning |
 | --- | --- | --- |
@@ -769,7 +1067,7 @@ rule), or `"config"` (the extension's declared configuration — its declaration
 `detail` distinguishes the failure class, see
 [Extension configuration](#extension-configuration-declaration--file)).
 
-`describeBindingFailure(extensionId, failure)` ([`protocol.ts#L670`](../core/protocol.ts#L670)) produces
+`describeBindingFailure(extensionId, failure)` ([`protocol.ts#L670`](../core/protocol.ts)) produces
 the deterministic text of one failure, independent of where it is reported.
 
 ## Declared requirements (verification input)
@@ -800,9 +1098,9 @@ rewritten — which is why it is required of every binding and no assembly decla
 Conflating them is the mistake the removed startup route made. A `RequiredSemantic` is a property of the
 *harness scope*: whether it holds is established by the independent verification, for the whole supported
 combination. The facts a *delivery* needs are per-context facts of one session, unknowable at binding time:
-the session's idle fact behind `canAcceptInput()` ([`protocol.ts#L500`](../core/protocol.ts#L500)), and the
+the session's idle fact behind `canAcceptInput()` ([`protocol.ts#L500`](../core/protocol.ts)), and the
 pending-message and asynchronous-job facts behind the quiescence gate
-([`protocol.ts#L241`](../core/protocol.ts#L241)). The framework reports one of those on the non-model channel
+([`protocol.ts#L241`](../interface/session/details/round.ts)). The framework reports one of those on the non-model channel
 when the read finds it missing and fabricates no value in its place (the read answers nothing, which is not a
 confirmation, so the round stays open; the query answers `undefined`). See
 [harness-support.md](harness-support.md#capability-difference-register) for which harness reports which of
@@ -813,23 +1111,23 @@ these facts.
 These are resolved by a harness adapter, not authored by an extension, and are cited here so the
 option/feedback surface is complete. Both feedback channels travel the session's own UI channel on the `omp`
 harness — the framework's notice as a `warning`, an extension's feedback at the level it chose — and fall back
-to one stderr line when the session has no UI ([`omp.ts#L546`](../adapters/omp.ts#L546)).
+to one stderr line when the session has no UI ([`omp.ts`](../../adapters/omp/index.ts)).
 
 | Symbol | Source | Shape and meaning |
 | --- | --- | --- |
-| `OwnerReference` | [`protocol.ts#L31`](../core/protocol.ts#L31) | `{ kind: "owner"; key }` \| `{ kind: "inherited"; key }` \| `{ kind: "unresolved" }` — the owner a framework effect acts on. An `inherited` session owns no cell: it never writes one and reads its owner's value only when the declared field opts in with `follow` (see `state.inheritance`), and neither it nor an `unresolved` session reaches an extension's subscription (see the owner scope above). |
-| `NoticeTransport` | [`protocol.ts#L78`](../core/protocol.ts#L78) | `{ warn(message): void }` — the framework's own notice channel (session warnings), outside model context (a UI notification, or a stderr line when the session has no UI). It is **not** extension feedback and is never merged into it. |
-| `FeedbackLevel` | [`protocol.ts#L92`](../core/protocol.ts#L92) | `"info"` \| `"warning"` \| `"error"` — the severity one extension notice carries. `info` reports an effect that happened, `warning` reports something to notice about an effect that only partly happened or did not happen at all, and `error` reports one that did not; the level names how serious a notice is, not which channel carries it. |
-| `FeedbackTransport` | [`protocol.ts#L111`](../core/protocol.ts#L111) | `{ notify(level, message): void }` — the single harness-independent channel through which an extension tells the operator about an effect, carried by every handler delivery. Outside model context, never filtered or reordered by the framework: a UI notification at the notice's own severity when the session has a UI, and one stderr line when it does not. |
-| `MarkerTransport` | [`protocol.ts#L324`](../core/protocol.ts#L324) | `{ publishMarkers(lines: readonly string[]): void }` — the transport for the unified marker area. |
+| `OwnerReference` | [`State interface`](../interface/state/index.ts) | `{ kind: "owner"; key }` \| `{ kind: "inherited"; key }` \| `{ kind: "unresolved" }` — the owner a framework effect acts on. An `inherited` session owns no cell: it never writes one and reads its owner's value only when the declared field opts in with `follow` (see `state.inheritance`), and neither it nor an `unresolved` session reaches an owner-scoped subscription (a session-scoped group still observes actual sessions). |
+| `NoticeTransport` | [`protocol.ts#L78`](../core/protocol.ts) | `{ warn(message): void }` — the framework's own notice channel (session warnings), outside model context (a UI notification, or a stderr line when the session has no UI). It is **not** extension feedback and is never merged into it. |
+| `FeedbackLevel` | [`Feedback interface`](../interface/feedback/index.ts) | `"info"` \| `"warning"` \| `"error"` — the severity one extension notice carries. `info` reports an effect that happened, `warning` reports something to notice about an effect that only partly happened or did not happen at all, and `error` reports one that did not; the level names how serious a notice is, not which channel carries it. |
+| `FeedbackTransport` | [`Feedback interface`](../interface/feedback/index.ts) | `{ notify(level, message): void }` — the single harness-independent channel through which an extension tells the operator about an effect, carried by every handler delivery. Outside model context, never filtered or reordered by the framework: a UI notification at the notice's own severity when the session has a UI, and one stderr line when it does not. |
+| `MarkerTransport` | [`protocol.ts#L324`](../core/protocol.ts) | `{ publishMarkers(lines: readonly string[]): void }` — the transport for the unified marker area. |
 | `ViewedSessionPort` | [`protocol.ts`](../core/protocol.ts) | The session the host is displaying, as its adapter resolves it — the fact behind the one marker area's projection, and never authority: `read(): OwnerReference \| undefined` (the displayed session's position, re-read per publication; `undefined` means this harness publishes no outlet at all, while a resolved `unresolved` means the outlet exists and its owner could not be obtained) and `subscribe(listener: (markers: MarkerTransport) => void): () => void` (one listener per change of the display; the listener re-reads and publishes through the transport it is handed). A harness that publishes no such outlet omits the member on `HarnessPort`, and the framework then projects the position each delivery carries. |
-| `StateValues` | [`protocol.ts#L15`](../core/protocol.ts#L15) | `Readonly<Record<string, boolean>>` — the State values one write path records, by field name. |
-| `HarnessPort` | [`protocol.ts#L590`](../core/protocol.ts#L590) | The registration and feedback surface an adapter provides (`setLabel`, `reportDiagnostic`, `onSession`, `onRound`, `onTurn`, `onSubagentRuntime`, `nextTask`, `onRunInitiation`, `registerCommand`), plus the facts it resolves when it can and omits when it cannot: `modelPrices`, `providerAccess` and `viewedSession`. `onRound` is subscribed only when the assembly injected a round handler, and what it receives are the harness's run-cycle observations (`RoundObservation`), not edges: the synthesis above decides which of them is a transition. `onSubagentRuntime` is subscribed only when a group observes that axis, and what it receives is one execution's own duration as the harness measured it (`SubagentRuntimeDelivery`), never a session's span. `nextTask(callback)` is the harness's own task boundary, which is where the framework re-checks an end candidate — one callback per arrangement, no duration and no repetition. |
-| `CanAcceptInput` | [`protocol.ts#L500`](../core/protocol.ts#L500) | `() => boolean \| undefined` — the framework's idle query: `true` when the agent can take input now, `false` when it is working, and `undefined` when the harness reports no idle fact at all (surfaced, never fabricated). It is a query and not a payload, carried by command invocations so the arm path can read the state it starts from without waiting for any event. |
-| `CommandInvocation` | [`protocol.ts#L511`](../core/protocol.ts#L511) | One command invocation's facts: the argument text, the owner, whether the session has a UI (`hasUI`), the idle query (`canAcceptInput`), the provider that session currently runs (`provider`, absent as `undefined` when the surface reports no current model), and the feedback, persistence and marker transports. |
-| `CommandDelivery` | [`protocol.ts#L566`](../core/protocol.ts#L566) | The invocation a handler receives: those facts plus the declared-value seam it writes through and the owner-scoped capability it may retain. |
-| `SessionDelivery` | [`protocol.ts#L126`](../core/protocol.ts#L126) | The facts one semantic session event carries: the event itself, the owner the event concerns (the session being entered on a start, the one being left on an end), the target branch's persisted payloads, the persistence medium a retained capability records through, the same `hasUI` fact and feedback transport a command delivery carries, the framework's own notice transport, and the transport the boundary's marker-area update is published through. |
-| `DeclaredValueSeam` | [`protocol.ts#L398`](../core/protocol.ts#L398) | `{ read(): boolean; write(value: boolean): void }` — the extension's declared value for one owner. A handler owns the write: the framework writes nothing on its behalf, records each write best-effort where the field persists there (a `memory` field is never recorded), and republishes the framework-owned marker area after every write (so `false` clears the extension's line). Writes are not deduplicated — a repeated write of the same value records and republishes again — and the seam and a retained capability reach that one write implementation through `StateStore.writer` ([`framework/core/state.ts`](../core/state.ts); see [State module](#state-module)). |
+| `StateValues` | [`protocol.ts#L15`](../core/protocol.ts) | `Readonly<Record<string, boolean>>` — the State values one write path records, by field name. |
+| `HarnessPort` | [`protocol.ts#L590`](../core/protocol.ts) | The registration and feedback surface an adapter provides (`setLabel`, `reportDiagnostic`, `onSession`, `onRound`, `onDisposal` when the harness states its own session disposals, `onSessionContext`, `onTurn`, `onUserInput`, `nextTask`, `onRunInitiation`, `registerCommand`), plus the facts it resolves when it can and omits when it cannot: `modelPrices`, `providerAccess` and `viewedSession`. `onDisposal` is registered with `onRound` — a binding that observes neither the round axis nor the Turn axis holds no bookkeeping to close — and what it receives is one actual session's own end (`SessionDisposal`), whose close-out the framework answers once the edge it dispatches has settled or the close-out's own wait has run out — the host's stated wait, or fifteen seconds by default — and a close-out whose work had not concluded is stated on the diagnostic channel as unconfirmed rather than claimed either way. `onRound` is subscribed only when the assembly injected a round handler, and what it receives are the harness's run-cycle observations (`RoundObservation`), not edges: the synthesis above decides which of them is a transition. `onSessionContext` is subscribed only when a group observes a context reading, and what it receives is one collection of one session's own context (with the model that session ran at that instant) — a fact the framework records and decides about, never an edge, and never a reading the adapter deduplicates. `nextTask(callback)` is the harness's own task boundary, which is where the framework re-checks an end candidate — one callback per arrangement, no duration and no repetition. |
+| `CanAcceptInput` | [`protocol.ts#L500`](../core/protocol.ts) | `() => boolean \| undefined` — the framework's idle query: `true` when the agent can take input now, `false` when it is working, and `undefined` when the harness reports no idle fact at all (surfaced, never fabricated). It is a query and not a payload, carried by command invocations so the arm path can read the state it starts from without waiting for any event. |
+| `CommandInvocation` | [`protocol.ts#L511`](../core/protocol.ts) | One command invocation's facts: the argument text, the owner, whether the session has a UI (`hasUI`), the idle query (`canAcceptInput`), the provider that session currently runs (`provider`, absent as `undefined` when the surface reports no current model), and the feedback, persistence and marker transports. |
+| `CommandDelivery` | [`protocol.ts#L566`](../core/protocol.ts) | The invocation a handler receives: those facts plus the declared-value seam it writes through and the owner-scoped capability it may retain. |
+| `SessionDelivery` | [`protocol.ts#L126`](../core/protocol.ts) | The facts one semantic session event carries: the event itself, the owner the event concerns (the session being entered on a start, the one being left on an end), the target branch's persisted payloads, the persistence medium a retained capability records through, the same `hasUI` fact and feedback transport a command delivery carries, the framework's own notice transport, and the transport the boundary's marker-area update is published through. |
+| `DeclaredValueSeam` | [`State interface`](../interface/state/index.ts) | `{ read(): boolean; write(value: boolean): void }` — the extension's declared value for one owner. A handler owns the write: the framework writes nothing on its behalf, records each write best-effort where the field persists there (a `memory` field is never recorded), and republishes the framework-owned marker area after every write (so `false` clears the extension's line). Writes are not deduplicated — a repeated write of the same value records and republishes again — and the seam and a retained capability reach that one write implementation through `StateStore.writer` ([`framework/core/state.ts`](../core/state.ts); see [State module](#state-module)). |
 
 ## Owner-scoped effect capabilities
 
@@ -844,8 +1142,8 @@ authorized it.
 
 | Member | Source | Meaning |
 | --- | --- | --- |
-| `OwnerCapabilityHandle.state` | [`protocol.ts#L432`](../core/protocol.ts#L432), [`#L398`](../core/protocol.ts#L398) | The owner's declared-value seam: `read()` is ungated — a handle kept past its owner's life still observes the current value, never a frozen copy — while `write(value)` is the one write path (`DeclaredValueSeam`) and works only while that life is open: the new value becomes current, is recorded best-effort in the owner's medium where the field persists there, and the marker area is republished. |
-| `OwnerCapabilityHandle.feedback` | [`protocol.ts#L432`](../core/protocol.ts#L432), [`#L111`](../core/protocol.ts#L111) | The owner's unified extension feedback channel (`FeedbackTransport`), so a failure the background effect observes still reaches the operator at the severity the extension chose. |
+| `OwnerCapabilityHandle.state` | [`protocol.ts#L432`](../interface/state/index.ts), [`#L398`](../interface/state/index.ts) | The owner's declared-value seam: `read()` is ungated — a handle kept past its owner's life still observes the current value, never a frozen copy — while `write(value)` is the one write path (`DeclaredValueSeam`) and works only while that life is open: the new value becomes current, is recorded best-effort in the owner's medium where the field persists there, and the marker area is republished. |
+| `OwnerCapabilityHandle.feedback` | [`protocol.ts#L432`](../interface/state/index.ts), [`#L111`](../interface/feedback/index.ts) | The owner's unified extension feedback channel (`FeedbackTransport`), so a failure the background effect observes still reaches the operator at the severity the extension chose. |
 
 **The capability is valid for its owner's life and no longer.** The framework's own behavior runs before any
 handler sees a session event, so the boundary that ends an owner has already retired that owner's cell by the
@@ -856,8 +1154,15 @@ retired cell — and feedback is dropped before it reaches the operator, so a se
 for. A capability retained by a `session_end` delivery is inert from birth, because that owner ended before the
 handler ran.
 
+**A delivery whose session is not its own owner hands out no authority.** That session owns no cell, and
+observing it must not grant what the Owner holds: such a delivery's capability reads the value its own
+field's inheritance rule reads — the Owner's current value for a `follow` field, the declared default
+otherwise — and every `write` and every `notify` is dropped, wherever it is used and whatever happens to
+the session afterwards. An extension that subscribes to every actual session therefore gains observations
+and nothing else, and a subagent can never drive the Owner's value, its marker area or its notices.
+
 **The `session_end` delivery keeps a feedback channel of its own.** That dispatch's `feedback`
-([`protocol.ts#L196`](../core/protocol.ts#L196)) is the one thing that can still speak for the
+([`protocol.ts#L196`](../interface/session/details/session.ts)) is the one thing that can still speak for the
 boundary: a notice published while the handler runs reaches the operator, which is what lets an extension
 announce the session switch while it stops its local effects. The channel is the dispatch's own and closes when
 the dispatch ends — a timer that kept that channel instead of the capability is heard by nobody — so the two
@@ -876,10 +1181,13 @@ with the behavior it must preserve, is
 
 | Member | Meaning |
 | --- | --- |
-| `StateRules` | The State one store serves: `{ field, persistence }`, exactly the pair an assembly resolves from the definition through `activationField` ([`definition.ts#L255`](../core/definition.ts#L255)) and `statePersistence` ([`definition.ts#L260`](../core/definition.ts#L260)). The constructor requires it: a store knows its field and persistence and holds no definition. |
-| `new StateStore(rules)` | One store per `ompAdapter` factory call ([`omp.ts#L789`](../adapters/omp.ts#L789)), shared by every session binding of that extension — not a process-global registry keyed by definition id. |
+| `StateRules` | The State one store serves: `{ field, persistence }`, exactly the pair an assembly resolves from the definition through `activationField` ([`definition.ts#L255`](../core/definition.ts#L255)) and `statePersistence` ([`definition.ts#L260`](../core/definition.ts#L260)), plus the two optional access seams an assembly states — `localAccess` (the owner this process serves, offered) and `follow` (the owner another process serves, read). The constructor requires the first two: a store knows its field and persistence and holds no definition. |
+| `new StateStore(rules)` | One store per adapter factory call ([`omp.ts`](../../adapters/omp/index.ts), [`pi.ts`](../../adapters/pi/index.ts)), shared by every session binding of that extension — not a process-global registry keyed by definition id. |
 | `view(ownerKey)` | The read surface, unchanged: `read(field)` is the owner's current value, or the declared default when unset. |
-| `serves(ownerKey)` | Whether this store answers for an Owner: an Owner boundary it reconciled, or a cell it wrote — a fact that survives the Owner's retirement. It is what the process-wide Marker area reads to decide which of one extension's registrations answers for a seat, so a session's binding speaks for its own Owner and nothing else. |
+| `followed(ownerKey)` | The read surface for an owner this process may not hold: the cell first (an in-process read takes no access at all), then what the owner's access last stated, then the declared default. It is what a `follow` field's subagent reads. |
+| `serves(ownerKey)` | Whether this store answers for an Owner: an Owner boundary it reconciled, a cell it wrote — a fact that survives the Owner's retirement — or an Owner it has chased through an access. What the process-wide Marker area reads to decide which of one extension's registrations answers for a seat, so a session's binding speaks for its own Owner — or for the Owner it follows — and for nothing else. |
+| `follows(ownerKey)` | Whether this store reads that Owner through an access rather than holding it: true once it has chased that Owner, reached or not. The Marker area asks it for the seat it is about to publish, because a value that changes in another process had no transition here to publish it. |
+| `dispose()` | Releases every access this store holds and stops following: a disposed store reads the declared default for followed owners and opens nothing again. The cells it serves, their owners' lives and its own offer of them are untouched. |
 | `writer(target)` | The declared-value seam of one delivery (`StateWriteTarget`: `ownerKey`, `persist(values)`, `publishMarker()`), ungated: the value is set first, then recorded best-effort where the field persists (`memory` is never recorded), then the marker area is published. A repeated write of the same value is not deduplicated. |
 | `capability(target)` | The owner-scoped handle (`StateCapabilityTarget` adds `feedback`): `read` is ungated — a handle kept from an earlier life still reads the current value — while `write` and `feedback` work only while its owner's life is open. A handle minted after that life ended is inert from birth; a later start opens a life for newly minted handles and never revives an old one. |
 | `reconcile(change)` | One session boundary (`StateSessionChange`: `owner`, `event`, `statePayloads`, `publishMarker(ownerKey)`): a delivery that is not its own owner is ignored; an end drops the cell then revokes capabilities, publishing only for `disposed`; a start opens the life, seeds a `session-entry` field from the last payload when it declares the field as a boolean (otherwise the declared default) and never seeds `memory`, then publishes. |

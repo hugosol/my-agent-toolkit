@@ -4,7 +4,7 @@
  *
  * This is the whole authoring surface: declare an extension with
  * {@link defineExtension} and the exported configuration types, build its implementation in the
- * factory an assembly hands a harness adapter (`framework/adapters/omp.ts`), and subscribe to
+ * factory an assembly hands a harness adapter (`adapters/omp/index.ts`), and subscribe to
  * the semantic events that implementation reacts to. Nothing here names a harness, and no type
  * here is one a harness could add to.
  *
@@ -18,7 +18,9 @@
  *
  * The framework's port, its internal dispatch and its State store are not part of this surface:
  * an extension observes State and effects through the delivery its own command or handler
- * receives, never by asking the framework for a writer or a subscriber.
+ * receives, never by asking the framework for a writer or a subscriber. Session vocabulary is
+ * imported from `framework/interface/session`; this entry carries the definition/assembly surface
+ * and the capability types that have not yet moved.
  *
  * The configuration one extension declares is part of its definition, so its types are
  * here; the configuration API the extension's shared logic reads through — `getConfig`,
@@ -42,6 +44,9 @@ export {
 	type StatePersistence,
 	defineExtension,
 } from "./core/definition";
+
+/** Offline checklist declarations; the checker is a separate tooling entry, never a startup hook. */
+export type { HarnessIntegrationDeclaration, SubagentCapability, SubagentExecutionMode } from "./core/integration";
 
 /**
  * The assembly surface: the implementation factory, what it builds, and the generic assembly
@@ -82,63 +87,24 @@ export type { ConfigReader, ConfigSource } from "./core/config";
 export { HttpConfigurationError, type HttpRequestOptions, request } from "./modules/http";
 
 /**
- * The delivery types one implementation's commands and handlers are written against, re-exported
- * from the protocol because they are the *facts* an extension reads — never a port it calls.
+ * The remaining command and assembly-adjacent facts still exported from the protocol.
+ *
+ * Session vocabulary and its support leaves are imported from `framework/interface/session`,
+ * `framework/interface/state`, `framework/interface/feedback` and `framework/interface/host-facts`;
+ * this entry no longer re-exports the Session implementation or any adapter-only type.
  */
 export type {
 	ActionDelivery,
 	CanAcceptInput,
-	CatalogPrice,
-	CatalogPriceSource,
 	CommandDelivery,
 	CommandInvocation,
-	DeclaredValueSeam,
 	DirectedCommandImplementation,
 	DirectedDirective,
-	FeedbackLevel,
-	FeedbackTransport,
 	MarkerTransport,
-	ObservationScope,
-	OwnerCapabilityHandle,
-	OwnerReference,
 	PromptContribution,
-	ProviderAccess,
-	ProviderAccessFacts,
-	ProviderHttpFacts,
 	RecognizedDirective,
-	RoundDelivery,
-	RoundEvent,
-	RoundEventHandler,
-	RoundEventHandlers,
-	SemanticEvent,
-	SemanticEventHandlers,
-	SessionEndReason,
-	SessionEvent,
-	SessionEventDelivery,
-	SessionEventHandler,
-	SessionEventHandlers,
-	SessionFacts,
-	SessionStartReason,
-	SessionStartup,
-	SubscriptionGroup,
-	SubagentRuntimeDelivery,
-	SubagentRuntimeEvent,
-	SubagentRuntimeEventHandler,
-	SubagentRuntimeEventHandlers,
-	SubagentRuntimeFact,
-	TurnEndDelivery,
-	TurnEndFacts,
-	TurnEvent,
-	TurnEventHandler,
-	TurnEventHandlers,
-	TurnOutcome,
-	TurnSignal,
-	TurnStartDelivery,
-	TurnStartFacts,
-	TurnUsage,
-	UserInputDelivery,
-	UserInputEvent,
-	UserInputEventHandler,
+	SubagentIntegration,
+	SubagentIntegrationFailure,
 } from "./core/protocol";
 
 /** The semantics an assembly may declare its extension additional dependency on. */

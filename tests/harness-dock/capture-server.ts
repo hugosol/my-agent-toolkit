@@ -68,6 +68,23 @@ export interface CaptureStep {
 	readonly toolCall?: { readonly name: string; readonly arguments: string };
 	/** Answer with this text instead of the server's reply text. */
 	readonly replyText?: string;
+	/**
+	 * Answer this request with this HTTP status instead of a scripted turn.
+	 *
+	 * The positional {@link CaptureServerOptions.failureStatus} fails *every* completion, which is how a
+	 * run observes a provider that refuses it; this per-request form is how a run observes a provider
+	 * that refuses one attempt and answers the next, which is the shape an automatic retry continues
+	 * from. `200` answers the scripted turn like any request the endpoint serves.
+	 */
+	readonly failureStatus?: number;
+	/**
+	 * Hold this request's answer for this long, after recording the arrival.
+	 *
+	 * A run that must act while the harness is *busy* — submitting a message into a run that is still
+	 * waiting on its provider — needs a request that has arrived and not yet been answered; this is that
+	 * window, stated on the fixture's side rather than guessed from a duration.
+	 */
+	readonly answerDelayMs?: number;
 }
 
 /**
@@ -148,10 +165,19 @@ export interface CaptureServerOptions {
 		 *
 		 * This is how a run observes a query that is still out: the request has arrived — the endpoint
 		 * recorded it — and no answer has been given, so what the harness does next cannot be an effect of
-		 * one. `holdFrom: 1` holds the CLI's own startup prefetch, and a later number holds the query a
+		 * `holdFrom: 1` holds the CLI's own startup prefetch, and a later number holds the query a
 		 * settled request begins while the prefetch itself answers. Omitted means nothing is held.
 		 */
 		readonly holdFrom?: number;
+		/**
+		 * Per-call script, chosen from the call this endpoint is answering.
+		 *
+		 * The fields above state one answer for every call; a run that must observe what an extension
+		 * does with a *sequence* of answers — a reading followed by a refusal, say — needs the call
+		 * itself. It is asked once the call has arrived and any held answer has been released, and
+		 * before `failureStatus`/`total` are read; answering `undefined` leaves the call to them.
+		 */
+		readonly respond?: (call: CapturedBalanceCall) => Response | undefined;
 	};
 	/**
 	 * Extra headers this endpoint attaches to a completion answer, or a function choosing them from
@@ -255,17 +281,22 @@ export function startCaptureServer(options: CaptureServerOptions): CaptureServer
 			if (url.pathname === "/user/balance") {
 				// The arrival is recorded before any answer is built, so a held query is visibly *out*.
 				arrivals.push("balance");
-				balanceCaptured.push({
+				const call: CapturedBalanceCall = {
 					index: balanceCaptured.length + 1,
 					method: request.method,
 					url: request.url,
 					headers: Object.fromEntries(request.headers.entries()),
-				});
+				};
+				balanceCaptured.push(call);
 				const balance = options.balance;
 				if (balance === undefined) return Response.json({ error: "not found", path: url.pathname }, { status: 404 });
 				// A call this option holds is answered only once the case releases it: the query is then
 				// provably still out while the run continues.
 				if (balanceCaptured.length >= (balance.holdFrom ?? Number.POSITIVE_INFINITY)) await heldBalance.promise;
+				// The call's own answer, when the case scripts one: it is read after the hold above, so a
+				// scripted answer is the one a released query receives.
+				const scripted = balance.respond?.(call);
+				if (scripted !== undefined) return scripted;
 				if (balance.failureStatus !== undefined) {
 					return Response.json(
 						{ error: { message: "dock-injected balance failure", type: "dock_error" } },
@@ -309,13 +340,6 @@ export function startCaptureServer(options: CaptureServerOptions): CaptureServer
 			const record: CapturedRequest = { index, method: request.method, url: request.url, file, raw, json };
 			captured.push(record);
 
-			if (options.failureStatus !== undefined && options.failureStatus !== 200) {
-				return Response.json(
-					{ error: { message: "dock-injected provider failure", type: "dock_error" } },
-					{ status: options.failureStatus },
-				);
-			}
-
 			const scriptedHeaders =
 				typeof options.responseHeaders === "function" ? options.responseHeaders(record) : options.responseHeaders;
 			const encoder = new TextEncoder();
@@ -329,8 +353,20 @@ export function startCaptureServer(options: CaptureServerOptions): CaptureServer
 					: toolCall !== undefined && index <= (toolCall.times ?? 1)
 						? { toolCall }
 						: {};
+			// A failure this request's own script states is answered before any turn is scripted: it is
+			// this attempt's answer, and the request it names stays recorded like any other.
+			const failureStatus = options.failureStatus ?? scripted.failureStatus;
+			if (failureStatus !== undefined && failureStatus !== 200) {
+				return Response.json(
+					{ error: { message: "dock-injected provider failure", type: "dock_error" } },
+					{ status: failureStatus },
+				);
+			}
 			const scriptedToolCall = scripted.toolCall;
 			const scriptedText = scripted.replyText ?? replyText;
+			// A request whose answer this fixture holds stays recorded and unanswered for that long, so a
+			// run can act on a session that is provably still waiting on its provider.
+			if (scripted.answerDelayMs !== undefined && scripted.answerDelayMs > 0) await Bun.sleep(scripted.answerDelayMs);
 			if (protocolOf(url.pathname) === "openai-codex-responses") {
 				// The Codex transport reads Responses events; the scripted tool call is a
 				// chat-completions shorthand and has no meaning here, so this path answers

@@ -16,7 +16,8 @@
  */
 import { describe, expect, test } from "bun:test";
 import { CODEBASE_TOOLS } from "../../extensions/codebase-tools/definition";
-import type { OwnerReference, SessionEvent } from "../../framework/core/protocol";
+import type { SessionEvent } from "../../framework/interface/session";
+import type { OwnerReference } from "../../framework/interface/state";
 import { type CommandImplementations, type ExtensionDefinition, defineExtension } from "../../framework/public";
 import { portDouble } from "./support/harness-port-double";
 

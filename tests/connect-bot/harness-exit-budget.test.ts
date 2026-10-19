@@ -66,7 +66,7 @@ const DEPLOYMENT_ROOT = path.join(REPO_ROOT, ".cache", `connect-bot-exit-budget-
 function materializeDeployment(label: string, endpoint: string, requestTimeoutMs: number): string {
 	const root = path.join(DEPLOYMENT_ROOT, label);
 	mkdirSync(root, { recursive: true });
-	for (const source of ["framework", path.join("extensions", "connect-bot")]) {
+	for (const source of ["adapters", "framework", path.join("extensions", "connect-bot")]) {
 		cpSync(path.join(REPO_ROOT, source), path.join(root, source), { recursive: true });
 	}
 	writeFileSync(

@@ -11,14 +11,9 @@
  * actual session, and which round identity its Turns were told they belonged to. The fixture does
  * no work of its own beyond reporting: no network, no file, no timer.
  */
-import { type OmpExtensionApi, ompAdapter } from "../../../../framework/adapters/omp";
-import {
-	type ExtensionDefinition,
-	type RoundDelivery,
-	type SubscriptionGroup,
-	type TurnStartDelivery,
-	defineExtension,
-} from "../../../../framework/public";
+import { type OmpExtensionApi, ompAdapter } from "../../../../adapters/omp";
+import { type ExtensionDefinition, defineExtension } from "../../../../framework/public";
+import type { RoundDelivery, SubscriptionGroup, TurnStartDelivery } from "../../../../framework/interface/session";
 
 /** The extension id whose stderr lines the dock reads. */
 export const ROUND_FACTS_ID = "round-facts-probe";

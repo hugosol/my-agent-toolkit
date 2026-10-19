@@ -14,7 +14,8 @@
  */
 import { describe, expect, test } from "bun:test";
 import { CODEBASE_TOOLS } from "../../extensions/codebase-tools/definition";
-import type { CommandDelivery, FeedbackLevel } from "../../framework/core/protocol";
+import type { FeedbackLevel } from "../../framework/interface/feedback";
+import type { CommandDelivery } from "../../framework/core/protocol";
 import { type CommandImplementations, type ExtensionDefinition, defineExtension } from "../../framework/public";
 import { DEFAULT_OWNER_KEY, portDouble } from "./support/harness-port-double";
 

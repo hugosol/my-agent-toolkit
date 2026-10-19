@@ -24,6 +24,7 @@ export interface ByteIdentityFileRecord {
 
 export interface LockfileRecord {
 	readonly path: string;
+	/** SHA-256 of the UTF-8 lockfile with CRLF normalized to LF. */
 	readonly sha256: string;
 }
 
@@ -368,12 +369,15 @@ export function verifyArtifactByteIdentity(
 	});
 }
 
+/** Compare lockfile contents independently of the checkout's LF/CRLF convention. */
 export function verifyLockfile(
 	lockfile: LockfileRecord,
 	repoRoot: string = REPO_ROOT,
 ): LockfileComparison {
 	const file = path.resolve(repoRoot, lockfile.path);
-	const actualSha256 = existsSync(file) ? sha256File(file) : null;
+	const actualSha256 = existsSync(file)
+		? createHash("sha256").update(readFileSync(file, "utf8").replace(/\r\n/g, "\n")).digest("hex")
+		: null;
 	return { path: lockfile.path, recordedSha256: lockfile.sha256, actualSha256, matches: actualSha256 === lockfile.sha256 };
 }
 

@@ -17,11 +17,9 @@
  * the semantic events and the deliveries themselves.
  */
 import { describe, expect, test } from "bun:test";
-import type {
-	CommandDelivery,
-	FeedbackTransport,
-	OwnerCapabilityHandle,
-} from "../../framework/core/protocol";
+import type { FeedbackTransport } from "../../framework/interface/feedback";
+import type { OwnerCapabilityHandle } from "../../framework/interface/state";
+import type { CommandDelivery } from "../../framework/core/protocol";
 import { type CommandImplementations, type ExtensionDefinition, defineExtension } from "../../framework/public";
 import { type PortDouble, portDouble } from "./support/harness-port-double";
 

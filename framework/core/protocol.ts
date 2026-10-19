@@ -7,75 +7,23 @@
  * Failures travel as data, so an adapter can report them on whatever non-model
  * channel its harness offers without deciding what counts as a conflict.
  */
+import type { FeedbackTransport } from "../interface/feedback";
+import type { CatalogPriceSource, ProviderAccess, ProviderHttpFacts } from "../interface/host-facts";
+import type {
+	AgentActivity,
+	SessionContextReading,
+	SessionEvent,
+	SessionFacts,
+	TurnOutcome,
+	TurnUsage,
+	UserInputDelivery,
+} from "../interface/session";
+import type { DeclaredValueSeam, OwnerCapabilityHandle, OwnerReference } from "../interface/state";
 import type { ExtensionDefinition } from "./definition";
 import type { ConfigurationViolation } from "./violations";
 
 /** The State values one write path records, by field name. */
 export type StateValues = Readonly<Record<string, boolean>>;
-
-/**
- * The owner a framework effect acts on: the session whose State the effect concerns.
- *
- * `owner` — the session this delivery names is itself the owner (a top-level main
- * session). It is the only session that seeds or transitions the value. `inherited` — the
- * delivery names a subagent session, which owns no cell: it never writes one, and it reads
- * its owner's value only when the field declares `follow`, otherwise the declared default.
- * `unresolved` — no owning main session could be resolved (the parent chain leaves the
- * process), so the value reads as the declared default and no path may write it.
- *
- * The key is the adapter's opaque identity for the owning session. The framework never
- * derives or interprets it; two sessions in one process that share a registry label are
- * still different owners when their session identities differ.
- */
-export type OwnerReference =
-	| { readonly kind: "owner"; readonly key: string }
-	| { readonly kind: "inherited"; readonly key: string }
-	| { readonly kind: "unresolved" };
-
-/**
- * Why a session became the current owner.
- *
- * `initial` — the session this binding first served in this process, which is the session
- * the harness loaded at startup and which carries no transition reason of its own.
- * `new` — a session stood up from nothing. `resume` — an existing session restored.
- * `fork` — a session derived from another one's branch or transcript.
- */
-export type SessionStartReason = "initial" | "new" | "resume" | "fork";
-
-/**
- * Why the current owner stopped being current.
- *
- * `transferred` — another session took its place (a switch, a branch or a fork), so what
- * that session held is the extension's to wind down and its remote identity's to release.
- * `disposed` — the session itself went away, so only local state is wound down and the
- * session's own disappearance covers the rest.
- */
-export type SessionEndReason = "transferred" | "disposed";
-
-/**
- * One semantic session event: which way the session axis moved, and why — or, for a fact that
- * moved nothing, the session's own facts as the harness now reports them.
- *
- * `session_start` and `session_end` are a symmetric pair. A `session_start` opens one owner's
- * life as the current session and an `session_end` closes it, and a transition that changes which
- * session is current is one of each — `session_end(transferred)` for the owner being left,
- * followed by `session_start(reason)` for the owner being entered. A navigation that leaves
- * the current owner alone (a tree jump, a reload, a same-file resume, an in-place context
- * reset) is not a transition at all: it produces no event, so nothing downstream can
- * mistake it for one.
- *
- * `session_facts` is neither a transition nor a boundary. The harness reported that a fact it
- * holds about one actual session — its identity, its direct parent or its latest name — has
- * changed since the delivery that carried it last, and it says so as it changes rather than
- * waiting for the session's next boundary. Nothing the framework owns moves for it: no owner's
- * life begins or ends, no State reconciles, and no marker area is published. It is the one
- * session delivery whose content is taken as the session's current facts, and a harness that
- * reports no such change delivers none.
- */
-export type SessionEvent =
-	| { readonly kind: "session_start"; readonly reason: SessionStartReason }
-	| { readonly kind: "session_end"; readonly reason: SessionEndReason }
-	| { readonly kind: "session_facts" };
 
 /**
  * The transport a session delivery publishes user-visible notices through.
@@ -87,175 +35,6 @@ export type SessionEvent =
 export interface NoticeTransport {
 	/** Publishes one warning-level notice. */
 	warn(message: string): void;
-}
-
-/**
- * The severity one extension feedback notice carries.
- *
- * Three levels, because what an extension says to the operator differs in kind: `info` reports an
- * effect that happened, `warning` reports something the operator should notice about an effect that
- * only partly happened or did not happen at all, and `error` reports one that did not happen. The
- * framework carries a level through unchanged — it neither reinterprets nor upgrades it — and a
- * session without a UI gets the message on stderr whatever its level, so a level is a
- * severity, never a channel selector.
- */
-export type FeedbackLevel = "info" | "warning" | "error";
-
-/**
- * The transport one delivery's extension feedback is published through.
- *
- * This is the single harness-independent channel through which an extension tells the
- * operator about an effect, and every handler delivery carries it: a command's outcome and
- * — through the same seam — an effect a semantic-event handler observed.
- *
- * Implementations must use a channel outside model context: a UI notification carrying the
- * notice's own severity when the session has a UI, and one stderr line when it does not.
- * Feedback is never an injected prompt, a conversation entry, tool output, or anything
- * else a model could read. The framework publishes no notice of its own on this channel
- * and never filters one it was handed, so what an extension says is what the operator sees.
- *
- * Distinct from {@link NoticeTransport}, which carries the framework's own notices
- * (session warnings). The two are not merged: framework warnings are not
- * extension feedback, and an extension never publishes on the framework's channel.
- */
-export interface FeedbackTransport {
-	/** Publishes one notice at the given severity, verbatim. */
-	notify(level: FeedbackLevel, message: string): void;
-}
-
-/**
- * The model and effective effort one session began with, as its harness reported them at the start
- * that proved the session was beginning — the two readings a display shows a subagent's row by, and
- * nothing a later setting, a later model switch or a later execution may rewrite.
- *
- * It is a *startup* fact rather than the session's current one: the model it was started on, and the
- * level it really runs there. The level is the harness's resolved effective effort, never the
- * configured selector behind it (an `auto` setting is not a level a row may show). Each member is
- * absent when this host could not report it, and named in `unavailable`; a start that proved no
- * beginning carries neither rather than reading the pair the session happens to run now.
- */
-export interface SessionStartup {
-	/** The model the session began on, both parts as the harness reported them. */
-	readonly model?: {
-		/** The provider the harness serves that model under. */
-		readonly provider: string;
-		/** The exact model id, as the harness resolves it. */
-		readonly model: string;
-	};
-	/** The effective thinking level the session began with. */
-	readonly effort?: string;
-}
-
-/**
- * The actual session one delivery concerns: its identity, its direct parent and its latest
- * display name, as the adapter resolved them.
- *
- * This is the fact set a per-actual-session subscription observes. The session's `kind` and its
- * `parentSessionId` are *positions*, never the Owner a State value belongs to: a subagent's
- * direct parent is the session that spawned it — which may itself be a subagent — while its
- * Owner is the nearest top-level main session above it. A name is display data: a renamed session
- * keeps its `sessionId`, its direct parent and its Owner, so a name is never an identity.
- *
- * Every fact a delivery carries here was either obtained or named in `unavailable`; nothing is
- * guessed from the session currently being viewed, from a process-level label, or from a string
- * that merely looks like a hierarchy.
- */
-export interface SessionFacts {
-	/** The actual session's identity within this harness, as the harness reports it. */
-	readonly sessionId: string;
-	/** Whether this session is a top-level main session or one spawned by another session. */
-	readonly kind: "main" | "sub";
-	/**
-	 * The identity of the actual session that directly spawned this one.
-	 *
-	 * Absent for a top-level session (there is no parent) and for a session whose direct parent's
-	 * identity could not be resolved — the two cases are distinguished by `unavailable`, which
-	 * names the fact when this host could not obtain it.
-	 */
-	readonly parentSessionId?: string;
-	/** The session's latest display name, as the harness reports it; display data, never an identity. */
-	readonly name?: string;
-	/**
-	 * The name the harness reported for the task this session was spawned to carry out — the
-	 * handle the spawning call gave that work — when this harness names one.
-	 *
-	 * It names the *work*, not the agent that runs it: the agent definition a session runs is a
-	 * kind of agent (see {@link SessionFacts.agentName}), which is not a task's name however much
-	 * either looks like a label, and it is not the same fact as the identity `agentId` indexes. A
-	 * display that has to name a subagent's row uses this name before the agent's own, because it
-	 * is the one fact that says which piece of work the row accounts for. Only a spawned session
-	 * has one: absent for a top-level session, and — on a host whose handle for a task *is* the
-	 * registry identity its spawn was allocated, as every surface this framework adapts reports it
-	 * — absent exactly where that identity is, which `unavailable` names in its place.
-	 */
-	readonly taskName?: string;
-	/**
-	 * The name of the agent this session runs, as its harness registers it.
-	 *
-	 * It is the harness's own name for the agent *definition* — which kind of agent this session is
-	 * (a `task`, an `explore`, a `scout`) — and so a category rather than a name for the work; and it
-	 * is what lets a session the harness never named be shown by a kind of agent rather than by an id.
-	 * Absent when the harness reports none, and named in `unavailable`.
-	 */
-	readonly agentName?: string;
-	/**
-	 * The identity of the agent this session runs, as its harness registers it.
-	 *
-	 * It is the harness's own handle for the agent — the id its roster, its messaging and its history
-	 * index use — and it is the fallback a display takes only when neither the session nor the agent
-	 * has a name. For a session an agent was spawned to run, it is also the identity that spawn was
-	 * allocated, which is the fact {@link SessionFacts.taskName} reports; absent when the harness
-	 * reports none, and named in `unavailable`.
-	 */
-	readonly agentId?: string;
-	/**
-	 * The model and effective effort this session began with, as the harness reported them on a start
-	 * that proved the session was beginning — and absent on every other delivery.
-	 *
-	 * A start proves a beginning only where the host can show that the session was not already there:
-	 * the delivery is a creation rather than a way into an existing session (no `resume`, no `fork`),
-	 * and the session's own transcript carries no conversation of its own yet. A session the harness
-	 * reloaded and re-bound — a parked subagent revived, a session re-entered in another process —
-	 * fires the same start signal as a fresh spawn while replaying the conversation it was built from,
-	 * so it reports none: what a delivery reads for it is the session's *current* model and level,
-	 * which is not what it started on. A harness that cannot show a beginning reports none either,
-	 * rather than filling the pair in from the settings in effect.
-	 */
-	readonly startup?: SessionStartup;
-	/** Every fact above this host could not obtain, named as the delivery names it. */
-	readonly unavailable: readonly string[];
-}
-
-/**
- * The observation scope one subscription group declares.
- *
- * `owner` — the group observes the owner session's own deliveries only: a boundary, a round edge
- * or a Turn of a subagent session belongs to the owner that session follows, so a group that
- * drives an owner-scoped effect is never moved by a subagent's work. `session` — the group
- * observes every actual session the adapter reports, main or sub, with that session's own
- * identity, its direct parent, its latest name, the handle of the task it was spawned for and — on
- * the start alone that proves the session was beginning — the model and effective effort it began
- * on; it is the scope a per-session observation view declares.
- *
- * The two scopes share one dispatch mechanism and differ only in which deliveries a group admits.
- * Widening a subscription to `session` grants no State write and no external-effect authority:
- * the framework's own owner-scoped behavior — State reconciliation, seeding and retirement, the
- * retainable capability, the marker area — runs exactly as before, and neither subscriber
- * delivery carries a write path.
- */
-export type ObservationScope = "owner" | "session";
-
-/**
- * One subscription group: the scope its observations cover and the handlers it subscribes.
- *
- * An assembly delivers one of these per group it declares, and the scope is declared once for the
- * whole group — not per event kind and not per handler. A group with no entry for an event kind
- * subscribes nothing for it, and a definition whose delivery carries no group subscribes nothing
- * at all.
- */
-export interface SubscriptionGroup {
-	readonly scope: ObservationScope;
-	readonly events: SemanticEventHandlers;
 }
 
 /**
@@ -321,116 +100,37 @@ export interface SessionDelivery {
 }
 
 /**
- * The facts one subscribed extension handler receives for a semantic session event.
+ * The facts one actual session's own disposal carries, as the harness reports it at an awaitable
+ * exit position of its own.
  *
- * This is the extension-facing half of the session subscription: the event, the owner scope
- * it concerns, and the same two seams every other handler delivery carries — the faithful
- * `hasUI` fact and the unified extension feedback channel. It carries no branch payloads
- * and no notice channel, because an extension reacts to a transition rather than reading
- * persistence, and it never publishes on the framework's own notice channel.
- *
- * It also carries the owner-scoped capability, because a start is an arm path: an extension
- * that arms in a `session_start` handler retains that handle for the background effects the
- * session it just entered will drive, exactly as a command handler does.
+ * It is not an edge and not a session event. A session that is being disposed has not moved
+ * anywhere: what the harness states is that this actual session is going away, and whether the
+ * framework's round axis moves with that fact — an end stated but not yet confirmed, a round left
+ * open — is the framework's decision (`behaviors/round-events.ts`). A host that reports a transfer,
+ * a rename or a view that moved reports nothing here: only a session really going away does.
  */
-export interface SessionEventDelivery {
-	readonly event: SessionEvent;
-	/**
-	 * The actual session this event is about: its identity, its direct parent and its latest name.
-	 *
-	 * A per-session group reads each session's own work from it, and it is never the owner above: a
-	 * subagent's boundary names the subagent's own session here.
-	 */
+export interface SessionDisposal {
+	/** The actual session that is going away: its identity, its direct parent and its latest name. */
 	readonly session: SessionFacts;
+	/** The owner whose agent that session belongs to, as the adapter resolved it. */
 	readonly owner: OwnerReference;
+	/** Whether that session has a UI, as the adapter resolved it. */
 	readonly hasUI: boolean;
 	/**
-	 * The unified extension feedback channel of this dispatch.
+	 * The wait this host's own exit position allows the close-out, in milliseconds, when the host
+	 * states a bound of its own.
 	 *
-	 * It is the dispatch's own: a notice published while this event's handler runs reaches the
-	 * operator unchanged, and the channel is closed when the dispatch ends. That is what makes it
-	 * the one thing a `session_end` handler can still speak through — the owner it names is
-	 * retired before the handler runs — and it is deliberately not the way to report an effect
-	 * later: an extension that needs that keeps the capability below.
+	 * It is a fact about the *position the report is made from* rather than about the session: a host
+	 * whose teardown will not be held past a certain point states it, so the framework knows how much
+	 * of the close-out the position can really wait for. Omitted — what every adapter of this release
+	 * states, pi's teardown waiting for a handler without a bound of its own — takes the framework's
+	 * built-in default, which is also this close-out's ceiling: a stated wait tightens it and never
+	 * lengthens it (see {@link CloseOutWait}).
 	 */
-	readonly feedback: FeedbackTransport;
-	/**
-	 * The owner-scoped capability this handler may retain for the effects it drives outside this
-	 * delivery (see {@link OwnerCapabilityHandle}).
-	 *
-	 * On a `session_end` delivery the capability is inert from birth: the owner it names has
-	 * already been retired by the time the handler runs, so what that delivery can still say goes
-	 * through its own feedback channel, and nothing retained here can act for the session that
-	 * just ended.
-	 */
-	readonly capability: OwnerCapabilityHandle;
-}
-
-/** One extension handler for one semantic session event. */
-export type SessionEventHandler = (delivery: SessionEventDelivery) => void | Promise<void>;
-
-/**
- * The session-event handlers one assembly injects, keyed by the event each subscribes to.
- *
- * A definition stays plain data: it names no handler, and what runs on a boundary arrives
- * here, at assembly time, exactly as a directed command's implementation does. An event
- * kind with no entry subscribes nothing. A handler that throws is reported on the adapter's
- * diagnostic channel — a channel outside model context — and neither changes what the
- * framework already did for the event nor keeps another subscriber from running.
- */
-export type SessionEventHandlers = Readonly<Partial<Record<SessionEvent["kind"], SessionEventHandler>>>;
-
-/**
- * One semantic round event: the two edges of a `Round`, the period of agent activity that
- * starts when the agent takes up input and ends at quiescence.
- *
- * Both members are transitions, and neither carries a payload. An edge says only that the
- * period began or that it ended with nothing left to do; how it ended is deliberately not
- * part of the model, because the harnesses disagree about that vocabulary (a round that
- * finishes on an ordinary answer, on an error and on an abort ends the same way here) and
- * because the agent's *current* state is a query ({@link CanAcceptInput}) rather than a field
- * of a past transition.
- *
- * The edges are edge-triggered by identity within one binding: `round_start` opens a round and
- * `round_end` closes it, an edge that would repeat the state the previous one left is not
- * delivered at all, and work that continues inside a round — an automatic continuation, a drained
- * queued message — produces no edge. Synthesizing those edges from the adapter's run-cycle facts,
- * and suppressing the one that is not a transition, is the framework's own behavior
- * (`behaviors/round-events.ts`); the adapter reports what its harness did and nothing about which
- * transition that is.
- */
-export type RoundEvent = { readonly kind: "round_start" } | { readonly kind: "round_end" };
-
-/**
- * The facts one round edge carries, both to the adapter's hook and to the subscribed handler.
- *
- * A round edge has nothing an extension may not see, so unlike a session delivery there is no
- * withheld half: the same value an adapter hands the framework's hook is the value that reaches
- * the handler. It carries the edge, the owner scope it concerns, the faithful `hasUI` fact and
- * the unified extension feedback channel — the same seams every other handler delivery carries
- * — and nothing else.
- */
-export interface RoundDelivery {
-	/** The edge itself: which way the round axis moved. */
-	readonly event: RoundEvent;
-	/** The owner whose agent this edge concerns, as the adapter resolved it. */
-	readonly owner: OwnerReference;
-	/**
-	 * The actual session this edge came from: its identity, its direct parent and its latest name.
-	 *
-	 * It is not the owner above: a subagent's edge names the subagent's own session here while its
-	 * owner is the top-level main session it follows, which is what lets a per-session
-	 * subscription keep the two apart and an owner-scoped one stay unmoved by the child.
-	 */
-	readonly session: SessionFacts;
-	/** Whether the session this edge came from has a UI, as the adapter resolved it. */
-	readonly hasUI: boolean;
-	/** The transport this edge's extension feedback is published through. */
+	readonly closeOutWaitMs?: number;
+	/** The transport any extension feedback published for this fact goes through. */
 	readonly feedback: FeedbackTransport;
 }
-
-/** One extension handler for one semantic round event. */
-export type RoundEventHandler = (delivery: RoundDelivery) => void | Promise<void>;
 
 /**
  * One native run-cycle fact the adapter observed, before the framework decides which round edge,
@@ -440,7 +140,15 @@ export type RoundEventHandler = (delivery: RoundDelivery) => void | Promise<void
  * a fresh prompt or from a continuation the session scheduled for itself. `settled` is a run
  * reaching its native end, carrying the harness's own continuation flag mapped to its two-valued
  * form: `willContinue` is `true` only when the session has already scheduled its next piece of
- * work, and a settle that says nothing is a settle that scheduled nothing.
+ * work, and a settle that says nothing is a settle that scheduled nothing, plus — when the
+ * surface states one — how the activity that settled ended.
+ *
+ * The outcome is the same three-valued fact a Turn's end states, read from the same native
+ * material: nothing about it is part of the edge, and an adapter that established none states
+ * none. It is on the *signal* rather than on the round edge because how a round ended is
+ * deliberately not part of the public model — a round that finishes on an ordinary answer, on an
+ * error and on an abort ends the same way there — while an activity that was cancelled or failed
+ * is exactly the one whose settlement the framework confirms without waiting for work beyond it.
  *
  * Neither is an edge. Which of them opens a round, which continues one, and which ends one is the
  * framework's synthesis ({@link createRoundSynthesis}); an adapter reports facts and decides
@@ -448,19 +156,28 @@ export type RoundEventHandler = (delivery: RoundDelivery) => void | Promise<void
  */
 export type RoundSignal =
 	| { readonly kind: "activity_started" }
-	| { readonly kind: "settled"; readonly willContinue: boolean };
+	| {
+			readonly kind: "settled";
+			readonly willContinue: boolean;
+			/**
+			 * How the activity that settled ended, when this surface established it: the harness's
+			 * own stopping fact read in the framework's three-valued vocabulary. Absent when no
+			 * native fact established one, which is not the same as a completed activity.
+			 */
+			readonly outcome?: TurnOutcome;
+	  };
 
 /**
  * One mapped round-cycle fact together with the per-delivery facts its own harness context
- * carries, plus the one live read a round's end is confirmed by.
+ * carries, plus the two live reads a round's end is confirmed by.
  *
- * The `quiescent` read is a query rather than a field because it has to be asked *later* than the
- * fact that raises the question. A harness reports a run as over before its own work has unwound
- * — its session is not idle at that instant, and a queued message or a running asynchronous job
- * may still continue the work — so the framework submits the settle as an end candidate, lets the
- * adapter return so the host can settle, and re-checks this read on its next task. A read that
- * answers anything but `true` is not a confirmation: `false` is a session with work left, and
- * `undefined` is a surface that does not report one of the facts at all, which closes no round.
+ * Both reads are queries rather than fields because they have to be asked *later* than the fact
+ * that raises the question. A harness reports a run as over before its own work has unwound — its
+ * session is not idle at that instant, and a queued message or a running asynchronous job may
+ * still continue the work — so the framework submits the settle as an end candidate, lets the
+ * adapter return so the host can settle, and re-checks them on its next task. A read that answers
+ * anything but `true` is not a confirmation: `false` is a session with work left, and `undefined`
+ * is a surface that does not report one of those facts at all, which closes no round.
  */
 export interface RoundObservation {
 	/** The native run-cycle fact this observation is. */
@@ -474,441 +191,157 @@ export interface RoundObservation {
 	/** The transport this fact's extension feedback is published through. */
 	readonly feedback: FeedbackTransport;
 	/**
-	 * Reads, now, whether that actual session is at quiescence: idle, with nothing queued and no
-	 * asynchronous job still running. `undefined` when this surface does not report one of those
-	 * facts — an unestablished quiescence, which is not one.
+	 * Reads, now, whether that actual session's own activity has come to rest: idle, with nothing
+	 * queued and no work of the run that just settled still going. `undefined` when this surface
+	 * does not report one of those facts — an unestablished quiescence, which is not one.
 	 */
 	quiescent(): boolean | undefined;
-}
-
-/**
- * The round-event handlers one assembly injects, keyed by the edge each subscribes to.
- *
- * A round handler is a subscriber like a session one and arrives the same way: the definition
- * stays plain data, and what runs on an edge is injected at assembly time. This alias names the
- * round half on its own, for an assembly that keeps the two axes' subscriptions apart.
- */
-export type RoundEventHandlers = Readonly<Partial<Record<RoundEvent["kind"], RoundEventHandler>>>;
-
-/**
- * One semantic Turn event: the two edges of a Turn, one observable model request/response cycle.
- *
- * A `turn_start` is delivered when the harness really begins a model request; a `turn_end` when
- * that same cycle's response settled. Tool execution is outside the Turn: the harness's own
- * `turn_end` event, which fires after the requested tools ran, is not this edge and an adapter
- * must not copy it (see the observation contract's delivery table).
- *
- * The two edges share one identity. The framework mints it — an opaque value, never a
- * provider-issued request or response id — and carries it on both edges, so a consumer never has
- * to reconstruct which end belongs to which start; an end whose start is not reliably known is
- * reported and dropped rather than attributed to whatever session, model or request happened to
- * be current.
- */
-export type TurnEvent = { readonly kind: "turn_start" } | { readonly kind: "turn_end" };
-
-/**
- * One Turn's reported model usage, as its response carried it.
- *
- * The four buckets are the ones a provider reports and the harness exposes; an absent report is
- * not this value with zeros in it (see the Turn's `unavailable`). A source that cannot tell its
- * own default from a reported zero reports no reading at all, so a zero carried here is the zero
- * its own source reported.
- */
-export interface TurnUsage {
-	/** Non-cached conversation input tokens. */
-	readonly input: number;
-	/** Conversation output tokens, thinking and tool-call arguments included. */
-	readonly output: number;
-	/** Conversation tokens read from the prompt cache. */
-	readonly cacheRead: number;
-	/** Conversation tokens written to the prompt cache. */
-	readonly cacheWrite: number;
-	/** The reported total, as the harness reported it. */
-	readonly totalTokens: number;
-}
-
-/** How one Turn's request/response cycle ended. */
-export type TurnOutcome = "completed" | "failed" | "cancelled";
-
-/**
- * The HTTP facts one Turn's provider response carried, as the adapter could obtain them.
- *
- * `requestId` is the transport's own reference id when the response exposed one; it is reference
- * information like the assistant message's response id and is never the Turn's identity — the two
- * external ids are not assumed equal and neither is used to associate a delivery.
- */
-export interface ProviderHttpFacts {
-	readonly status: number;
-	readonly headers: Readonly<Record<string, string>>;
-	readonly metadata?: Readonly<Record<string, unknown>>;
-	/** The transport-level request id the response exposed, when it exposed one. */
-	readonly requestId?: string;
-}
-
-/**
- * One provider/model's catalog price, as the extension's own catalog reported it at a request's
- * start.
- *
- * The framework carries this value and never interprets it: the currency, the unit and the
- * bucket keys are the extension's own business vocabulary, and a catalog that has no entry for
- * the model answers with nothing, which the delivery reports as an unavailable fact instead of a
- * fabricated price. Snapshotting it at the request's start is what keeps a later model or price
- * change from re-pricing a request that has already been issued.
- */
-export interface CatalogPrice {
-	/** The currency the amounts are expressed in, as the extension's catalog states it. */
-	readonly currency: string;
-	/** The unit the amounts are expressed per, as the extension's catalog states it. */
-	readonly unit: string;
-	/** The amounts, keyed by the extension's own token buckets. */
-	readonly amounts: Readonly<Record<string, number>>;
-}
-
-/**
- * A model catalog, as the one party that owns it states its prices: the extension's own maintained
- * data or the harness's own model catalog.
- *
- * The framework asks the extension's own catalog ({@link ExtensionImplementation.catalog}) once per
- * model request — at the request's real start — and snapshots the answer into that Turn's start
- * facts. The harness's own catalog comes the other way, as a fact its adapter maps
- * ({@link HarnessPort.modelPrices}) and the framework hands the implementation factory, so an
- * extension that prices a channel from the harness's catalog composes it with its own data instead
- * of reading a native model.
- *
- * Both readings are queries and not subscriptions: there is no runtime catalog refresh, no cached
- * copy inside the framework, and a model a catalog does not carry is answered with nothing rather
- * than with a default.
- */
-export interface CatalogPriceSource {
-	/** The price this catalog states for one provider and exact model id, or nothing when it states none. */
-	priceOf(provider: string, model: string): CatalogPrice | undefined;
-}
-
-/**
- * One provider's current access facts, as the harness resolved them for one operation.
- *
- * Both members are facts the host holds and this framework never interprets: the address the
- * provider's own protocol is reached at, and the credential material that protocol authenticates
- * with. A member the host has nothing to say about is absent rather than empty, and the caller —
- * the extension that owns the query — decides what a missing address means for it.
- */
-export interface ProviderAccessFacts {
-	/** The provider's applicable base URL, when the host resolved one. */
-	readonly baseUrl?: string;
 	/**
-	 * The credential material one operation authenticates with, when the host has one.
+	 * Reads, now, whether work beyond the run that just settled still holds this actual session:
+	 * a third party's delegated work, an asynchronous job whose result will resume it — anything
+	 * whose own completion is what will continue the session rather than the run's own loop.
 	 *
-	 * It is the material itself — an API key or an access token — and never a header: formatting
-	 * the request's authentication is the calling extension's business, exactly as every other
-	 * request header is.
+	 * `false` is the statement that nothing is held and is the only answer that lets a round end
+	 * on it; `true` is work the session is still waiting on; `undefined` is a statement this
+	 * surface did not establish, which is answered as neither.
 	 */
-	readonly credential?: string;
+	heldWork(): boolean | undefined;
 }
 
 /**
- * The harness's current access to one provider, as its adapter resolves it per operation.
+ * One native context reading an adapter collected for one actual session, before the framework
+ * decided whether it is a change.
  *
- * The query reads the host's state at the moment it is called — the credential a login or a key
- * replacement has since made effective included — rather than binding the first answer: the
- * framework hands the query to the implementation factory and asks it again for each later
- * operation, so nothing here is a snapshot and nothing is cached by the framework.
- *
- * An answer of nothing is the host having no access to that provider at all — no credential it
- * could use — and is deliberately not an empty credential: a caller that needs one fails its own
- * query rather than borrowing another provider's, guessing an account or sending nothing.
+ * It is a *fact* and not an edge: the adapter reports that it read a session's context at one of
+ * its own collection points — the session's start, a finalized message, the run's own execution
+ * convergence — and the framework owns what that means. Which session a reading belongs to and
+ * whether anything is published for it is decided there, exactly as it is for every other axis.
  */
-export interface ProviderAccess {
-	/** The current access facts for one provider, or nothing when the host has none. */
-	resolve(provider: string): Promise<ProviderAccessFacts | undefined>;
-}
-
-/**
- * The facts one Turn fixed when its request really began, delivered on both of its edges.
- *
- * `startedAt` is the request's own start on the process's clock, and the model, the provider and
- * the price are the ones holding at that moment: a later change of the session's model does not
- * re-price or re-attribute the Turn, which is why the end delivery carries this same record
- * rather than a fresh one.
- */
-export interface TurnStartFacts {
-	/** The framework's opaque identity for this Turn; never a provider-issued id. */
-	readonly turnId: string;
-	/** The actual session that issued the request, as the adapter resolved it. */
+export interface SessionContextObservation {
+	/** The actual session the reading belongs to: its identity, its direct parent and its latest name. */
 	readonly session: SessionFacts;
+	/** The owner that session follows, as the adapter resolved it. */
+	readonly owner: OwnerReference;
+	/** The reading itself, with the model that session ran when it was collected. */
+	readonly reading: SessionContextReading;
+	/** Whether the session this reading came from has a UI, as the adapter resolved it. */
+	readonly hasUI: boolean;
+	/** The transport this delivery's extension feedback is published through. */
+	readonly feedback: FeedbackTransport;
+}
+
+/**
+ * One actual session's observation as it crosses a process boundary: the session's own facts, the
+ * owner it follows, and the readings currently known for it.
+ *
+ * It is what the process that *runs* a session hands the process that serves the owner that session
+ * follows, and it travels in the observation direction of the framework's local access. The facts
+ * are the ones the running process resolved from its own host — never a name, a path or a process id
+ * read as an identity on the way — and the two readings are the same ones the framework's own
+ * observation source holds: the activity the running process's Round bookkeeping last left the
+ * session in, and the latest context reading its adapter collected for it. An absent reading is the
+ * honest absence rather than a zero, exactly as it is in the source.
+ *
+ * A session's identity travels with every reading of it, so the receiving process records the facts
+ * and the owner from the same word it takes readings from, and an arriving word is adopted as the
+ * reading it is: nothing here drives a Round, mints a Turn or accounts a request.
+ */
+export interface ObservedSession {
+	/** The actual session's own facts, as the process that runs it resolved them. */
+	readonly session: SessionFacts;
+	/** The owner that session follows — the seat this observation belongs to. */
+	readonly owner: OwnerReference;
+	/** The activity the running process's Round bookkeeping last left that session in, when it has one. */
+	readonly activity?: AgentActivity;
+	/** The latest context reading that process collected for the session, when it has one. */
+	readonly context?: SessionContextReading;
 	/**
-	 * The Round this Turn belongs to, as the framework minted it.
+	 * How many writes of the session's own extension data that process has confirmed in the storage it
+	 * shares with the process serving this owner, when it has confirmed any.
 	 *
-	 * Absent when no round is open for that session — a signal gap the delivery names in
-	 * `unavailable` rather than filling with a guessed identity.
+	 * It is a *notice* rather than a reading of the session: what it states is that the storage the two
+	 * processes share holds something this session committed, so a process whose basis of that storage
+	 * predates it knows it has something to read again. Nothing of the file crosses with it — what
+	 * travels is a count and never a figure from the document — and it is not a Round, a Turn or a
+	 * request: the receiving process mints none of them for it, and a consumer that adopts it reads the
+	 * storage itself rather than any value carried here.
+	 *
+	 * The process that really confirmed the writes is what counts them, so the same count stated again
+	 * is the same notice rather than a new one, and a count a later connection states is that process's
+	 * own count rather than a continuation of an earlier one. An absent member is the honest absence: a
+	 * session nothing has confirmed a write for states none rather than a zero.
 	 */
-	readonly roundId?: string;
-	/** When the request really started, on the process's own clock. */
-	readonly startedAt: number;
-	readonly provider: string;
-	readonly model: string;
-	/** The catalog price holding at the request's start, when the extension's catalog carried one. */
-	readonly price?: CatalogPrice;
-	/** Every fact above that could not be obtained, named as the delivery names it. */
-	readonly unavailable: readonly string[];
+	readonly commits?: number;
 }
 
 /**
- * The facts one Turn delivered when its response settled.
+ * One source of another process's readings: the one connection a serving process admitted for a
+ * seat, numbered by that process in the order it admitted them.
  *
- * `usage` is absent when no reliable reading existed: an unreported usage and a set of final
- * readings whose valid source could not be determined are unavailable rather than zero, which
- * `unavailable` names. An all-zero reading a host default could equally have produced is never
- * reported as a reading by its adapter, so a reading here is its source's own. Nothing here is a
- * post-hoc correction: a Turn is delivered once, and a later reading never re-opens or rewrites it.
+ * It is an ordering and nothing else — never the identity of the session that delivered, never a
+ * liveness proof, and never a value anything is keyed by beyond the process that numbered it. What
+ * it answers is which of two words about one session is the newer one: a word carried by a
+ * connection admitted later is the newer reading, so a connection that ends late, or a word that
+ * arrives late over a connection admitted earlier, neither overwrites nor withdraws what a later
+ * admission already stated. Each serving process numbers its own sources, and a source is only ever
+ * compared with one that same process handed to the same sink.
  */
-export interface TurnEndFacts {
-	/** When the response settled, on the process's own clock. */
-	readonly endedAt: number;
-	readonly outcome: TurnOutcome;
-	/** The reliable usage this Turn's response reported, when one existed. */
-	readonly usage?: TurnUsage;
-	/** The HTTP facts of this Turn's provider response, when the adapter could obtain them. */
-	readonly http?: ProviderHttpFacts;
-	/** The transport-level request id the response exposed, when it exposed one. */
-	readonly providerRequestId?: string;
-	/** The provider-issued response id the assistant message carried, when it carried one. */
-	readonly providerResponseId?: string;
-	/** Every fact above that could not be obtained, named as the delivery names it. */
-	readonly unavailable: readonly string[];
-}
+export type ObservationSource = number;
 
 /**
- * The facts one Turn's start edge carries, both to the adapter's hook and to subscribed handlers.
+ * Where the readings one seat receives arrive, and how the source each of them came over is named.
  *
- * A start delivery carries the recorded request facts and the two seams every subscriber delivery
- * carries — the faithful `hasUI` fact and the unified extension feedback channel — and no write
- * path: a per-session observation grants no owner-scoped authority.
+ * It is the receiving half of the access, as the framework's own rules need it: the sink itself
+ * decides nothing about adopting a reading — {@link SessionObservationAccess.receive}'s whole
+ * surface is this pair.
  */
-export interface TurnStartDelivery {
-	readonly event: { readonly kind: "turn_start" };
-	/** The owner whose session issued the request, as the adapter resolved it. */
-	readonly owner: OwnerReference;
-	readonly turn: TurnStartFacts;
-	readonly hasUI: boolean;
-	readonly feedback: FeedbackTransport;
-}
-
-/**
- * The facts one Turn's end edge carries.
- *
- * It repeats the Turn's start facts, so a consumer correlates the two edges by the delivery
- * itself rather than by keeping its own in-flight record: the same `turnId`, the same session,
- * the same round and the same request-price anchor.
- */
-export interface TurnEndDelivery {
-	readonly event: { readonly kind: "turn_end" };
-	readonly owner: OwnerReference;
-	readonly turn: TurnStartFacts;
-	readonly end: TurnEndFacts;
-	readonly hasUI: boolean;
-	readonly feedback: FeedbackTransport;
-}
-
-/** One extension handler for one semantic Turn edge. */
-export type TurnEventHandler = (delivery: TurnStartDelivery | TurnEndDelivery) => void | Promise<void>;
-
-/** The Turn handlers one assembly injects, keyed by the edge each subscribes to. */
-export type TurnEventHandlers = Readonly<Partial<Record<TurnEvent["kind"], TurnEventHandler>>>;
-
-/**
- * One semantic subagent-runtime fact: the execution duration a harness itself measured and
- * reported for one subagent execution of one actual session.
- *
- * It is a *fact*, never an edge, and it is deliberately not a Round edge either: an execution's
- * duration arrives while the session it belongs to is still working — a harness reports its
- * progress while the work runs — and the final reading arrives when the execution is over, which
- * is not the same moment as the session's Round ending and must never be treated as one. Which
- * readings are a replacement of an earlier reading of the same execution, which are a new
- * execution's own contribution, and which repeat a reading already accounted are the consumer's
- * rules; the framework carries the harness's own facts and decides nothing about them.
- *
- * It is also *not* the same metric as the wall-clock span a harness may persist for a session
- * (creation to last record): that span includes the idle gaps between executions, so it can never
- * stand in for a runtime. What crosses this seam is only what the harness itself measured for the
- * execution it ran.
- */
-export type SubagentRuntimeEvent = { readonly kind: "subagent_runtime" };
-
-/**
- * The reading one subagent-runtime delivery carries, or the fact that this host produced none.
- *
- * `unavailable` is not an absent observation: the harness did report an execution, and the
- * duration this host could not read, could not trust or could not attribute to a session is a
- * fact an operator has to be told about. A reading of `0` is therefore a reading the harness
- * really reported — a completed execution that consumed no measurable time — and never the
- * placeholder an unavailable runtime leaves behind.
- *
- * Nor is `unavailable` the same fact as a reading that never arrived. A host that is still
- * establishing the session an execution runs in has nothing to attribute the readings it publishes
- * in that window to, so it states no delivery for them instead: the readings of an execution are
- * cumulative, which is why the first delivery that does name a session carries the whole duration
- * that elapsed, and why nothing an operator could have seen is lost by waiting. That window is this
- * axis's one silence. Once an execution has been attributed, a reading of it this host can no longer
- * attribute to a session is `unavailable` — and so is *every* reading that reports an execution
- * over, even one published before any session was established — so an execution that was lost or
- * that failed to settle is always named rather than quietly dropped. A consumer therefore reads the
- * two apart: no delivery means no reading exists yet, `unavailable` means one was due and could not
- * be produced.
- */
-export type SubagentRuntimeFact =
-	| {
-			/** Whether this reading is a replacement of the same execution's own earlier one, or its final one. */
-			readonly kind: "reading";
-			/** The harness's own identity for the execution this reading belongs to. */
-			readonly executionId: string;
-			/** The milliseconds that execution had run when the harness reported this reading. */
-			readonly runtimeMs: number;
-			/**
-			 * Whether the harness reported the execution as over at that instant.
-			 *
-			 * A later reading of the *same* execution replaces this one; an execution this host
-			 * reports as ended only once, however many times the same completion is observed.
-			 */
-			readonly status: "running" | "ended";
-	  }
-	| {
-			readonly kind: "unavailable";
-			/** Why this host could not produce a reading, as this host states it. */
-			readonly reason: string;
-	  };
-
-/**
- * The facts one subagent-runtime observation carries, both to the adapter's hook and to the
- * subscribed handler.
- *
- * Unlike a session delivery there is no withheld half: what the adapter mapped is what a handler
- * receives. It carries the actual session the reported execution belongs to, the owner scope it
- * concerns, the reading, the faithful `hasUI` fact and the unified extension feedback channel —
- * the same seams every other handler delivery carries — and no write path, because observing a
- * runtime grants no authority over the session it belongs to.
- */
-export interface SubagentRuntimeDelivery {
-	readonly event: SubagentRuntimeEvent;
-	/** The owner whose agent this observation concerns, as the adapter resolved it. */
-	readonly owner: OwnerReference;
+export interface SessionObservationSink {
+	/** Adopts one word one source delivered: one session's facts and the readings that came with it. */
+	adopt(source: ObservationSource, reading: ObservedSession): void;
 	/**
-	 * The actual session the reported execution belongs to, as the adapter resolved it.
+	 * States that one source's readings are no longer available.
 	 *
-	 * A reading is only ever accumulated for a session a delivery names here, and this is never
-	 * the owner above: an execution a subagent ran names the subagent's own session.
-	 *
-	 * A runtime this host could not attribute to any session — the fact is then `unavailable` —
-	 * carries the session the observation was *made* in instead, which is the session whose own
-	 * work reported the execution.
+	 * The source is gone because the connection is: the process that delivered over it released its
+	 * access or ended, or this side observed the connection close or fail. Nothing is stated about the
+	 * sessions themselves — their identity, their direct parent and whatever they saved are the
+	 * session's own facts and not the connection's — so what a loss withdraws is the live readings
+	 * that source was carrying.
 	 */
-	readonly session: SessionFacts;
-	/** The reading, or the reason this host produced none. */
-	readonly runtime: SubagentRuntimeFact;
-	/** Whether the session this observation carries has a UI, as the adapter resolved it. */
-	readonly hasUI: boolean;
-	/** The transport this observation's extension feedback is published through. */
-	readonly feedback: FeedbackTransport;
-}
-
-/** One extension handler for one semantic subagent-runtime fact. */
-export type SubagentRuntimeEventHandler = (delivery: SubagentRuntimeDelivery) => void | Promise<void>;
-
-/** The subagent-runtime handlers one assembly injects, keyed by the event each subscribes to. */
-export type SubagentRuntimeEventHandlers = Readonly<Partial<Record<SubagentRuntimeEvent["kind"], SubagentRuntimeEventHandler>>>;
-
-/**
- * One semantic input event: the one fact that a session took up input the harness itself attributed
- * to the user.
- *
- * It is deliberately one edge and no pair. The harness publishes exactly one such fact — a
- * submission admitted to a session — and it publishes it before it decides what the submission is,
- * so an ordinary prompt, a queued steer, a follow-up and a user-invoked skill are the same fact
- * here. Nothing about the text, the images or what the submission turned out to be is part of it:
- * those are the harness's own material, and the fact a consumer acts on is only that the user, and
- * not the agent, put something in. Input an extension itself submits is not this fact.
- */
-export type UserInputEvent = { readonly kind: "user_input" };
-
-/**
- * The facts one user-input edge carries, both to the adapter's hook and to the subscribed handler.
- *
- * Like a round edge it has nothing an extension may not see, so there is no withheld half: the edge
- * itself, the session it belongs to (a subagent's submission names the subagent, never its owner
- * above it), the owner scope it concerns, the faithful `hasUI` fact and the unified extension
- * feedback channel.
- *
- * It carries no instant, because the harness publishes none: when the fact is observed is the
- * observer's own fact, exactly as it is for every other harness fact.
- */
-export interface UserInputDelivery {
-	/** The edge itself: that this session took up user input. */
-	readonly event: UserInputEvent;
-	/** The owner whose agent this submission concerns, as the adapter resolved it. */
-	readonly owner: OwnerReference;
-	/** The actual session the submission was admitted to: its identity, direct parent and latest name. */
-	readonly session: SessionFacts;
-	/** Whether the session this submission belongs to has a UI, as the adapter resolved it. */
-	readonly hasUI: boolean;
-	/** The transport this edge's extension feedback is published through. */
-	readonly feedback: FeedbackTransport;
-}
-
-/** One extension handler for one semantic input edge. */
-export type UserInputEventHandler = (delivery: UserInputDelivery) => void | Promise<void>;
-
-/**
- * Any semantic lifecycle event the framework models: the session axis, the round axis, the Turn
- * axis, the subagent-runtime axis and the input axis.
- *
- * The axes are orthogonal and never merged — entering a session is not starting work, starting
- * work does not change which session is current, a Turn is not a Round, an execution's own
- * duration is not the session's span nor the end of a Round, and input arriving is not itself
- * work — so this union exists only where one assembly injects its handlers for all of them.
- */
-export type SemanticEvent = SessionEvent | RoundEvent | TurnEvent | SubagentRuntimeEvent | UserInputEvent;
-
-/** The delivery each semantic event kind carries, so a handler's kind and its facts stay paired. */
-export interface SemanticEventDeliveryMap {
-	readonly session_start: SessionEventDelivery;
-	readonly session_end: SessionEventDelivery;
-	/** A facts delivery carries the session's current facts and no branch payload of its own. */
-	readonly session_facts: SessionEventDelivery;
-	readonly round_start: RoundDelivery;
-	readonly round_end: RoundDelivery;
-	readonly turn_start: TurnStartDelivery;
-	readonly turn_end: TurnEndDelivery;
-	readonly subagent_runtime: SubagentRuntimeDelivery;
-	readonly user_input: UserInputDelivery;
+	lost(source: ObservationSource): void;
 }
 
 /**
- * The semantic handlers one assembly injects for one subscription group, keyed by the event each
- * subscribes to.
+ * The framework's cross-process half of session observation, as one adapter's local access supplies
+ * it: the process that serves an owner's seat and the process that runs a session following that
+ * owner, each with the one direction it speaks.
  *
- * This is the whole handler surface of one group: the session axis, the round axis, the Turn axis
- * and the subagent-runtime axis and the input axis arrive here together, exactly as a directed
- * command's implementations arrive through `CommandActions`. A definition stays plain data either
- * way: it names no handler, and an event kind with no entry subscribes nothing.
+ * `receive` is the serving half. The process that serves a seat offers it here for exactly as long as
+ * it serves that owner, and the readings a session the harness ran in another process delivers are
+ * handed to the sink together with the source they arrived over. Nothing else crosses: the carrying,
+ * the connection, the target check, the access's own verification and the numbering of the
+ * connections it admits are the adapter's, and what the framework does with a reading that arrived —
+ * and with the source that carried it — is the framework's own rules (see `core/observations.ts` and
+ * `behaviors/binding.ts`).
  *
- * The session axis is a *reconciliation* trigger as well as a subscription — the framework
- * applies its own behavior for every delivery whether or not a handler arrived — while the round,
- * Turn, subagent-runtime and input axes are subscription only: three-value agent state is not
- * framework State (contract P6), a Turn changes nothing the framework owns beyond the identity
- * bookkeeping it does before a handler runs, an execution's own duration changes nothing the
- * framework owns at all — it is the extension's business to accumulate and to persist with its own
- * next commit — and a user input crosses no boundary at all: it is a fact about the session, not a
- * transition of it. A `session_facts` delivery is subscription only as well, because a
- * session whose facts were re-reported crossed no boundary: nothing of the framework's moves, so
- * its own behavior is skipped and only the handlers that subscribe to that kind are reached.
+ * `deliver` is the reading half. A reading of a session this process runs whose owner it does not
+ * serve is handed here, and the adapter carries it to the process serving that owner over the same
+ * access — the first word it sends to a seat carries the readings that process currently holds for
+ * the owner's sessions, so a reading collected before the access was reached is not lost, and an
+ * access reached again after it ended states the readings it holds now rather than waiting for them
+ * to move once more.
  *
- * Which deliveries reach a handler is its group's {@link ObservationScope}, not this type: an
- * `owner` group receives the owner session's own deliveries only, and a `session` group receives
- * every actual session's, each carrying that session's own identity. The framework's own
- * owner-scoped behavior is unaffected by either scope.
+ * Neither half is a write path to anything: a reading states what a session was observed to be, and
+ * a seat's declared State values are read and never written from here.
  */
-export type SemanticEventHandlers = Readonly<{
-	readonly [K in SemanticEvent["kind"]]?: (delivery: SemanticEventDeliveryMap[K]) => void | Promise<void>;
-}>;
+export interface SessionObservationAccess {
+	/**
+	 * Admits the readings delivered for one owner this process serves: `ownerKey` is that owner's
+	 * key — the seat's own owner half — and the returned function withdraws exactly this admission.
+	 */
+	receive(ownerKey: string, sink: SessionObservationSink): () => void;
+	/** Delivers one reading of one session this process runs to the process that serves its owner. */
+	deliver(reading: ObservedSession): void;
+}
 
 /**
  * The transport the framework publishes its unified marker area through.
@@ -1018,62 +451,6 @@ export type RecognizedDirective =
 export type DirectedDirective =
 	| RecognizedDirective
 	| { readonly kind: "unrecognized"; readonly argument: string };
-
-/**
- * The declared-value seam: the surface every injected handler delivery carries for the
- * extension's declared State value.
- *
- * A handler owns its write. The framework never writes a declared value on a handler's
- * behalf, never overwrites one the handler decided, and never deduplicates two identical
- * writes, so the value a handler leaves is the value State holds. `read` is what the
- * handler runs against: it observes the value the delivery started from — which is what
- * lets an extension filter on whether it was already active before the invocation —
- * and `write` is the only path that changes it.
- *
- * A seam is bound to one declared field, and to the owner the delivery resolved. The
- * framework publishes the marker area after each write, so a write of `false` removes
- * this extension's line as surely as a write of `true` adds it.
- */
-export interface DeclaredValueSeam {
-	/** The owner's current value for the seam's declared field, as it stands now. */
-	read(): boolean;
-	/**
-	 * Records a new value for the seam's declared field.
-	 *
-	 * The write is the framework's: it becomes the owner's current value, is recorded
-	 * best-effort in the owner's persistence medium when the field persists there, and is
-	 * followed by an area update. A field that declares `memory` is never recorded. A
-	 * handler that never writes changes nothing.
-	 */
-	write(value: boolean): void;
-}
-
-/**
- * The owner-scoped capability handle: what a handler retains so an effect it drives outside
- * its own delivery — a heartbeat timer, an outbound flusher — can still write the extension's
- * declared value and publish operator feedback.
- *
- * It is the same write and the same feedback channel the delivery carries, scoped to the owner
- * that delivery resolved, and it changes nothing about who owns the write: the delivery is what
- * authorizes it, the framework resolves no owner for a caller and exposes no owner-key write or
- * feedback API, and an extension that drives a background effect keeps the capability in its own
- * owner-keyed record rather than asking the framework for one.
- *
- * It is valid for the owner's life and no longer. The framework's own behavior runs before a
- * session event's handler, so by the time any handler observes the boundary that ends an owner,
- * that owner's cell is already retired — and a capability retained earlier is inert from then
- * on: a write is a no-op that neither recreates State nor republishes the marker area, and
- * feedback is dropped, so a late callback cannot speak for a session that is gone.
- *
- * It carries no `hasUI`: whether the session has a UI is a fact a delivery decides its own gate
- * on, while a background effect publishes on this feedback channel whatever the session's UI is.
- */
-export interface OwnerCapabilityHandle {
-	/** The declared-value seam of the owner this capability is scoped to. */
-	readonly state: DeclaredValueSeam;
-	/** The unified extension feedback channel of the owner this capability is scoped to. */
-	readonly feedback: FeedbackTransport;
-}
 
 /**
  * The implementation a harness assembly injects for one declared directed
@@ -1343,6 +720,46 @@ export interface TurnSignalFacts {
 	readonly feedback: FeedbackTransport;
 }
 
+/**
+ * Why an entry's subagent integration did not take effect on a harness that has such an
+ * integration to settle.
+ *
+ * `registration` — the party that loads this entry into the sessions it spawns was reached, and it
+ * did not accept the requirement this entry has to state there. `identity` — the reached party
+ * answered for another session than the one this entry serves, so nothing it loads serves this
+ * session. `protocol` — the reached party answered, and not on the versioned interface this entry
+ * reads. The three are different failures with different remedies, which is why none of them is
+ * reported as the others and none of them is reported as a harness that offers no such integration.
+ */
+export type SubagentIntegrationFailure = "registration" | "identity" | "protocol";
+
+/**
+ * How one extension entry's subagent integration stands on the harness that bound it, as the
+ * adapter settled it once at the process's initialization node.
+ *
+ * `subagents` — this entry is integrated with the harness's subagent facility: the sessions that
+ * facility spawns are observed with this entry, and the facts of those sessions reach consumers.
+ * `none` — this harness has no such facility for this entry, or it is not enabled in this process.
+ * That is a supported, normal shape: the entry serves the main session without integrated child
+ * observations, and it asserts nothing about subagents the harness may run without it.
+ *
+ * `failed` — this entry's integration was attempted and did not take effect. It is deliberately not
+ * `none`: an operator has to be able to tell a harness that offers no integration from one whose
+ * integration broke, and neither may be inferred from the other. The failure carries which part
+ * failed and the diagnosis the adapter reported for it.
+ *
+ * The mode is settled when initialization completes and never moves afterwards: it is not decided
+ * by how many child sessions exist, and no later observation, registration or discovery changes it.
+ */
+export type SubagentIntegration =
+	| { readonly mode: "subagents" }
+	| { readonly mode: "none" }
+	| {
+			readonly mode: "failed";
+			readonly failure: SubagentIntegrationFailure;
+			readonly diagnosis: string;
+	  };
+
 /** The registration and feedback surface a harness adapter must provide. */
 export interface HarnessPort {
 	/** Sets the extension's display label for this binding. */
@@ -1376,6 +793,54 @@ export interface HarnessPort {
 	 * contain several runs.
 	 */
 	onRound(observer: (observation: RoundObservation) => void): void;
+	/**
+	 * Registers the framework's disposal hook, when this adapter has a position to report one from:
+	 * one call per actual session this harness is disposing, made at the host's own awaitable exit
+	 * position.
+	 *
+	 * The fact is the harness's, the close-out is the framework's: the framework ends the round that
+	 * session still held — confirming the end it had already stated, or truncating the round it left
+	 * open — and answers this call once everything that edge owes has settled, so a host that waits
+	 * for the answer lets a session's last consumption be committed before its process leaves. The
+	 * adapter reports nothing but the fact: it neither decides an edge nor saves anything itself.
+	 *
+	 * Only a session that is really going away is reported, and only the actual session the report
+	 * names: a session the host merely left — a transfer to another session, a name change, a view
+	 * that moved — is no disposal, and no round is closed for one.
+	 *
+	 * The registration happens only for an extension that observes the round or Turn axis, because a
+	 * binding that observes neither holds no such bookkeeping to close. An adapter whose host states
+	 * its disposals only where the framework's own facts already reach — a process-exit fact whose
+	 * observers this framework does not extend past their own semantics — omits the member, and a
+	 * session this host disposes then leaves its round to the facts that binding already publishes.
+	 */
+	onDisposal?(handler: (disposal: SessionDisposal) => void | Promise<void>): void;
+	/**
+	 * Registers the framework's context-collection hook: one observation per native context reading
+	 * the adapter collected for the session this binding serves.
+	 *
+	 * The adapter owns *where* a reading is collected — the session's own start, a finalized message,
+	 * the run's own execution convergence — and reads the host's public context reading there,
+	 * together with the model the session ran at that same instant. Which session the reading belongs
+	 * to, whether it is a change, and which subscribers it reaches are the framework's rules, so the
+	 * adapter must not deduplicate, compare or filter readings: a collection that read the same
+	 * numbers as the last one is still reported, and the framework is what decides that it is not a
+	 * change. A reading the host states as unknown (pi's `null`) is reported as no collection at all
+	 * rather than as a reading of zero.
+	 */
+	onSessionContext(handler: (observation: SessionContextObservation) => void): void;
+	/**
+	 * The framework's local access to the sessions this harness runs in another process, when this
+	 * adapter can carry observations across that boundary (see {@link SessionObservationAccess}).
+	 *
+	 * It is the adapter's own business — offering the seat of an owner this process serves, carrying
+	 * a reading to the process that serves the owner a session follows, and everything about the
+	 * connection — and what crosses this member is only the two directions the framework uses. An
+	 * adapter whose harness runs every session in this process omits it, and the framework then
+	 * observes into this process's own source alone: a reading is delivered across processes only
+	 * where the harness itself can have a session elsewhere.
+	 */
+	sessionObservationAccess?: SessionObservationAccess;
 	/**
 	 * Arranges one callback on the harness's next task: after the callback that is running has
 	 * returned and the host has had its chance to settle.
@@ -1418,19 +883,6 @@ export interface HarnessPort {
 	 * maps the request hook, the response-boundary hook and the finalized assistant message.
 	 */
 	onTurn(handler: (facts: TurnSignalFacts) => void): void;
-	/**
-	 * Registers the framework's subagent-runtime hook: one observation per native execution-duration
-	 * reading the adapter mapped, for the session this binding serves.
-	 *
-	 * The hook reports the harness's own measurement of one *execution* — a subagent's own run, whose
-	 * duration the harness states while it is running and once it is over — together with the actual
-	 * session that execution belongs to. It is neither a Round edge nor a Turn, the final reading of
-	 * an execution is not the end of the session's Round, and a session's persisted wall-clock span
-	 * is a different metric that must never be reported here in a runtime's place. An adapter that
-	 * cannot read the duration, or cannot attribute the execution to a session, reports that fact
-	 * rather than dropping the observation or reporting a zero.
-	 */
-	onSubagentRuntime(handler: (delivery: SubagentRuntimeDelivery) => void): void;
 	/**
 	 * Registers the framework's input hook: one delivery per submission the harness itself
 	 * attributed to the user and admitted to the session this binding serves.
@@ -1483,6 +935,26 @@ export interface HarnessPort {
 	 * before such an outlet existed.
 	 */
 	viewedSession?: ViewedSessionPort;
+	/**
+	 * Settles this entry's subagent integration once per process, when this harness has such an
+	 * integration to settle.
+	 *
+	 * It is the adapter's private business — locating whatever party loads this entry into the
+	 * sessions it spawns, requiring the entry there, and reading the party's own answer for the
+	 * version, the session and the outcome — and what crosses this member is only the settled
+	 * {@link SubagentIntegration} the extension is told about.
+	 *
+	 * The framework calls it at the process's initialization node, at most once per implementation,
+	 * and hands its result to the extension's own initialization. A harness whose integration is a
+	 * fact of the harness itself — nothing to reach, nothing to read — answers the value directly,
+	 * and nothing then waits for the answer; an answer that is a promise is one with work behind it
+	 * (a requirement to take, a party to read), and the first model request waits for that work, so
+	 * the entry is in place before a request that could spawn a child session is issued. A
+	 * rejection is not a failure of the integration either: the adapter answers `failed` with its
+	 * own diagnosis, and an adapter with nothing to settle omits the member and the delivery
+	 * carries `none`.
+	 */
+	subagentIntegration?: () => SubagentIntegration | Promise<SubagentIntegration>;
 	/** Registers one bound command with the harness's command surface. */
 	registerCommand(command: BoundCommand): void;
 }

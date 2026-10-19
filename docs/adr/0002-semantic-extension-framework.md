@@ -16,6 +16,21 @@ Keep the semantic core separate from reusable behaviors, feature templates, and 
 
 This chooses direct source debugging and atomic framework/extension changes in one repository over independent package releases and standalone installability. The tested repository revision and dependency lockfile identify the deployed source combination. An actual installed harness loader must be exercised with an entrypoint importing extension and framework TypeScript from outside its discovery directory before claiming the organization works; the first release exercises the OMP loader, with the pi loader deferred. Direct source imports do not imply automatic hot reload or working source breakpoints; reload/cache behavior and debugger mapping require their own verification.
 
+## pi adapter scope revision (2026-10-15)
+
+The maintainer approved adding only the pi extension-layer mechanisms consumed by codebase-tools,
+with no change to its definition, shared logic or the framework's behavior rules. Reuse the public
+binding and State contracts; keep pi native calls and text-resource loading in framework adapters,
+and the extension assembly/discovery entrypoint thin. This supersedes the historical “no pi
+implementation authorized” scope below, not the separation of responsibilities.
+
+Injected messages use pi's native hidden, persisted custom-message path after the user's input;
+the adapter does not choose prompt frequency or rewrite history/system instructions. The maintainer
+accepts the native delivered role. Subagent integration is explicitly excluded, so the historical
+future pi first-activation inheritance notice is not added for this implementation. No MCP/LSP
+supply, pi source modification, full observation adapter or automatic compatibility gate is included.
+Executed evidence and limitations belong solely to [the support record](../../framework/docs/harness-support.md#pi-codebase-tools-adapter-evidence).
+
 ## Repository ownership and migration references
 
 The framework's authoritative design and implementation live in my-agent-toolkit. The original independent extensions remain in [my-omp-toolkit](../../../my-omp-toolkit/), which is the source of existing business contracts, proven implementations, and selectable rollback baselines. Replacements are developed here incrementally; this document's source layout describes the target, not a migration already performed.
@@ -43,9 +58,18 @@ my-agent-toolkit/
     core/
     behaviors/
     modules/                    # Harness-independent HTTP/files, not adapter-dependent
-    adapters/
-      pi/
-      omp/
+
+  adapters/                     # Framework contract mappings, grouped by harness
+    pi/
+      index.ts                  # Public assembly entry
+      internal/                 # Native types, loader support and the binding port
+      domain/                   # Capability domains: Session, Context, Subagent, Pricing, ...
+        session/                # Session facts and lifecycle, including Turn and Round mappings
+    omp/
+      index.ts
+      internal/
+      domain/
+        session/
 
   extensions/                   # Independent extension implementations
     codebase-tools/
@@ -97,7 +121,7 @@ OMP scans entrypoints/omp/ -> independent OMP extension entrypoints
                          extensions/<extension>/harnesses/<harness>
                            |                         |
                            v                         v
-                  shared extension logic     framework/adapters/<harness>
+                  shared extension logic     adapters/<harness>
                            |                         |
                            +------------+------------+
                                         v
@@ -107,23 +131,78 @@ OMP scans entrypoints/omp/ -> independent OMP extension entrypoints
 
 Arrows represent loading/import dependencies, not shared in-memory State or the order of all harness events. Both harnesses use the same framework source tree and shared extension source; only the selected harness assembly and native integration differ. Actual loader resolution, reload behavior, and debugging remain deployment verification requirements.
 
-Keep framework source in `framework/`, with semantic core, reusable behaviors, and harness adapters separated internally. Keep each independent extension's shared definition and logic plus its harness-specific implementations in `extensions/<extension>/`. Provide separate discovery roots `entrypoints/pi/` and `entrypoints/omp/`, each containing one thin entrypoint per supported extension. Configure each harness to scan only its own discovery root, not the shared implementation directories. Entrypoints import or re-export their extension's harness-specific assembly; they do not copy framework or business code and do not aggregate all extensions into one factory. Do not add a root `index.ts` that changes a discovery root into a single extension.
+Keep harness-independent framework source in `framework/`, with semantic core, reusable behaviors and general modules separated internally. Keep its native mappings in the sibling `adapters/<harness>/`, grouped directly by capability domain. Keep each independent extension's shared definition and logic plus its harness-specific implementations in `extensions/<extension>/`. Provide separate discovery roots `entrypoints/pi/` and `entrypoints/omp/`, each containing one thin entrypoint per supported extension. Configure each harness to scan only its own discovery root, not the shared implementation directories. Entrypoints import or re-export their extension's harness-specific assembly; they do not copy framework or business code and do not aggregate all extensions into one factory. Do not add a root `index.ts` that changes a discovery root into a single extension.
 
 Extensions cross the framework's small public interfaces even though the code lives in the same repository. The framework must not depend on individual extension implementations, and shared logic must not import native harness types merely because both are locally available. Harness-specific code may use native capabilities directly. One source tree does not imply one harness instance or shared in-memory State between harness processes. This records the target layout, not a completed migration or a reason to create empty directories before implementation. The framework's small public interfaces are a stable contract surface; non-additive changes require an explicit decision here. The [model-cost assembly revision](#model-cost-assembly-revision) authorizes the clean-cut public binding/lifecycle changes and consumer migration, without a second legacy interface.
 
 ### Enforcement of the native boundary
 
-The shared/native split above is enforced mechanically by [`tests/framework/import-boundary.test.ts`](../../tests/framework/import-boundary.test.ts). The test scans every `.ts` under `framework/`, `extensions/` and `entrypoints/` and puts each module in exactly one class:
+The shared/native split above is enforced mechanically by [`tests/framework/import-boundary.test.ts`](../../tests/framework/import-boundary.test.ts). The test scans every `.ts` under `adapters/`, `framework/`, `extensions/` and `entrypoints/` and puts each module in exactly one class:
 
-- **Escape hatch** — `framework/adapters/**` and `extensions/<id>/harnesses/**`. Native access is permitted here and nowhere else.
+- **Escape hatch** — `adapters/**` and `extensions/<id>/harnesses/**`. Native access is permitted here and nowhere else.
 - **Discovery entrypoint** — every module under `entrypoints/`. Each is a single re-export of its extension's harness assembly and nothing else, so reaching the escape hatch is what it is for, and the entrypoint assertion governs it.
-- **Shared source** — everything else: the framework tree outside `adapters/`, and every extension module outside its `harnesses/` (conventionally under the extension's `shared-logic/`).
+- **Shared source** — everything else: the entire `framework/` tree, and every extension module outside its `harnesses/` (conventionally under the extension's `shared-logic/`).
 
-No module outside the escape hatch may **name** a harness package (`@oh-my-pi/*`, `@earendil-works/*`) — an import, a dynamic import and an ambient `declare module` alike — and shared source may in addition not reach an escape-hatch module by relative import. The harness package's ambient declaration therefore sits with the adapter (`framework/adapters/modules.d.ts`), beside the code allowed to import it.
+No module outside the escape hatch may **name** a harness package (`@oh-my-pi/*`, `@earendil-works/*`) — an import, a dynamic import and an ambient `declare module` alike — and shared source may in addition not reach an escape-hatch module by relative import. The harness package's ambient declaration therefore sits with the adapter (`adapters/modules.d.ts`), beside the code allowed to import it.
 
-The native escape hatch is exactly two locations: `framework/adapters/**` and `extensions/<id>/harnesses/**`. The check reads specifiers lexically rather than through an AST, and only from `.ts` files: it is an alarm for the ordinary crossing, and the principle above is what binds. `require(...)`, computed or concatenated specifiers, aliasing, and a non-`.ts` module sit outside it, so a green run does not establish the boundary — it means only that the alarm found nothing to contradict it. A case the alarm cannot see is decided by the principle, and a case it flags is fixed rather than exempted.
+The native escape hatch is exactly two locations: `adapters/**` and `extensions/<id>/harnesses/**`. The check reads specifiers lexically rather than through an AST, and only from `.ts` files: it is an alarm for the ordinary crossing, and the principle above is what binds. `require(...)`, computed or concatenated specifiers, aliasing, and a non-`.ts` module sit outside it, so a green run does not establish the boundary — it means only that the alarm found nothing to contradict it. A case the alarm cannot see is decided by the principle, and a case it flags is fixed rather than exempted.
 
-Widening the escape hatch, adding an equivalent bypass, or moving native access outside these two locations is a non-additive architecture change and requires an explicit decision in this document, not an implementation detail. The connect-bot migration fixed the extension-side allow-list — that extension's only direct native use is its OMP harness assembly, limited to a managed interval timer for the 10-second heartbeat and the real session id, cwd and model read as plain data, with shared logic importing no native types and registering no native hooks — and restated the invariant in exactly the mechanical terms the test above checks: framework shared source (core, behaviors, definition) and extension modules outside `harnesses/` must not name native APIs, and native access lives only under `framework/adapters/**` and `extensions/<id>/harnesses/**`.
+Widening the escape hatch, adding an equivalent bypass, or moving native access outside these two locations is a non-additive architecture change and requires an explicit decision in this document, not an implementation detail. The connect-bot migration fixed the extension-side allow-list — that extension's only direct native use is its OMP harness assembly, limited to a managed interval timer for the 10-second heartbeat and the real session id, cwd and model read as plain data, with shared logic importing no native types and registering no native hooks — and restated the invariant in exactly the mechanical terms the test above checks: framework shared source (core, behaviors, definition) and extension modules outside `harnesses/` must not name native APIs, and native access lives only under `adapters/**` and `extensions/<id>/harnesses/**`.
+
+### Capability-domain adapter organization (2026-10-19)
+
+The maintainer approved moving the framework's native mappings to top-level `adapters/`, beside
+`framework/` and `extensions/`. This explicitly replaces the earlier internal adapter placement and
+its native allow-list paths, not its responsibility rule. There are no forwarding modules at the old
+paths. Extension-specific presentation and other non-unified native implementations remain under
+`extensions/<id>/harnesses/`.
+
+Within each harness, the adapter root has exactly three entries: `index.ts` is the public assembly
+entry, `internal/` is private native/loader and binding-port support, and `domain/` contains the
+capability domains. Organize `domain/` directly by shared capability domain, not by consumer
+extension or by `business`/`foundation` tiers. `domain/` is a navigation grouping, not a runtime
+module or a new interface. Prefer an existing business domain when it and a support domain both
+fit; keep genuinely shared support in one place. Framework-owned concepts supplement business
+vocabulary: Session owns its Turn and Round mappings, while context and catalog pricing have their
+own domains. A native object's location does not decide capability ownership. Framework Marker area
+and Extension feedback mappings remain adapter responsibilities; extension presentation does not.
+
+Within a capability domain, organize native mappings by their direction: `events.ts` converts
+native observations to framework events, `queries.ts` reads native facts into framework values,
+and `effects.ts` performs framework-requested native effects. Create only the mappings the domain
+actually needs: a simple domain stays a single file, and complex Turn or Round protocols may remain
+private implementation files within Session. Do not create forwarding-only entry files or split every
+method into a module. Keep the domain's event construction near its native event mapping rather than
+reassembling it in the harness port. Shared context types, diagnostics and other implementation
+support belong with the code that owns their lifetime, not in a parallel capability taxonomy.
+The complete domain map is Session, Context, Subagent, Pricing, Provider, Control, Prompt, Feedback
+and Marker. Both harnesses expose their Subagent domain: native parent/ancestor relationships and
+integration-state reads belong there, while Session consumes those relations for its own facts and
+Owner mapping. Ordinary child Session/Turn/Round events remain Session events; OMP does not add a
+second child-event pipeline just to populate a Subagent `events.ts`. pi's provider announcements and
+replies, liveness queries, and child-extension registration effects are organized within Subagent;
+the third-party provider is its internal implementation, not the primary navigation category.
+The offline inventory lives in `domain/subagent/declaration.ts` and is distinct from runtime queries.
+Feedback and Marker are separate effect domains on both harnesses. Native types and loader hooks
+live under each harness's `internal/`; `index.ts` is the public assembly entry and
+`internal/port.ts` is per-binding assembly support, not a capability domain. Capability domains live
+only under `domain/`. The authoritative path map is the adapter navigation in the framework capability index.
+This refines the approved domain-first organization; it does not introduce a generic delivery module,
+change framework interfaces, or unify commands, prompt effects and observation deliveries.
+
+This is a navigation convention, not a one-requirement/one-file mechanism. The definition and harness
+inventory retain the existing subagent capability vocabulary and per-execution-mode coverage. A new
+harness implements what its selected consumers require, not automatically every framework capability;
+this revision adds no general requirement expansion, registration system, runtime negotiation or
+startup gate. Independent verification remains separate from declaration matching.
+
+Each harness entry assembles its domain modules. Cross-domain collaboration uses explicit interfaces
+and a single source for each shared fact, without circular dependencies. The harness-independent
+`behaviors/assembly.ts` owns observation/State creation and implementation reuse after disposal;
+native shutdown and subscription-release ordering remain with the adapter. Apply the deletion test:
+extract only a module whose depth gives leverage and locality, not a shallow forwarding layer.
+The interface is the test surface; preserve consumer behavior and real-loader verification rather
+than mirroring each file with a test.
 
 ### Responsibility test for harness differences
 
@@ -201,12 +280,41 @@ Existing model-cost tests exercise multiple tracker instances sharing a file but
 
 The framework should offer extension-owned code injection at meaningful agent lifecycle points as well as declarative behaviors. Examples such as agent start and message completion are candidate concepts, not yet a published event inventory or a claim of equivalent timing across pi and OMP. The first release fixes one semantic hook mapping (agent-run initiation, at most once per user turn); the broader hook set, its payloads and ordering still belong to detailed design against existing extensions and both harnesses. An extension supplies one shared TypeScript implementation for each chosen semantic hook; harness adapters bind that same implementation at the corresponding harness lifecycle point and expose harness-independent inputs and framework capabilities. Thin pi/OMP entrypoints must not require maintaining two copies of the feature logic. Treat source-code text splicing into harness-specific templates as a different, fragile approach, not the intended meaning of "injection." Do not confuse message completion with an entire agent run settling.
 
+## Session capability interface cutover (2026-10-19)
+
+The maintainer approved Session as the first complete capability under `framework/interface/`,
+not merely a read facade or a directory move. That directory owns the extension-facing Session
+facts, observations, event deliveries and Subscription group contracts; internal framework modules
+and native adapters import those canonical declarations. Session declarations are removed from
+`core/protocol.ts` and `public.ts`, without compatibility re-exports. Other capabilities retain their
+existing authoring entries until their own migration; the small State, Feedback and Host facts
+contracts needed by Session are canonical interface dependencies, not permission to expose engines.
+
+The implementation factory receives `context.session`: a Session observation reader and the
+statement of a confirmed storage write. It no longer receives a concrete `SessionObservations`
+instance or the separate `recordSessionCommit` member. The delivered reader has no observation
+mutation, source withdrawal, owner-wide transport projection or constructor; its returned readings
+cannot mutate the framework's retained observations. Extensions neither construct a replacement
+source nor reach Session implementation through another capability. Source admission, deduplication,
+Round/Turn identity, Local access and close-out remain behind the seam. Existing semantic
+subscriptions keep one dispatch and their existing scope/ordering rules.
+
+Session disposal remains an adapter-reported fact, not a new extension event or an alias for
+`session_end`. Its extension-visible close-out contract stays with Round end. Native mappings remain
+in the two existing harness adapters; this decision introduces no second adapter abstraction and
+does not pre-split `HarnessPort`. The interface is the test surface: consumer behavior and actual
+harness loading validate depth and leverage, while import checks protect locality. This is
+engineering encapsulation, not a same-process security sandbox. It explicitly supersedes the earlier
+public Session exports and factory fields; it does not revise State ownership, observed lifecycle
+semantics, extension business rules, or harness support claims.
+
 ## Semantic lifecycle model
 
 The framework owns one harness-independent lifecycle vocabulary for extensions. Its target places reusable semantic processing in the shared framework, with harness adapters supplying native fact mappings and necessary bridges; the model-cost migration explicitly permits refactoring existing placement and accepting reviewed edge-case accuracy tradeoffs to avoid repeating lifecycle logic per harness. That observation contract is happy-flow-first — normal request/response, tool continuation, per-actual-session Round and parent/child consumption are the design spine, and only reproducible gaps reopen it — with the accepted limits that missing or reordered signal combinations may mis-split or truncate a round and may leave an end undetected (no polling, no timeout guessing, no replay or backfill, and mismatched final usage counts as unavailable rather than guessed). Its feasibility evidence is probe-level on the OMP 18.5.0 baseline (request identification/usage/headers, subagent identity and direct-parent relations, and two normal happy-path runs in which the public settle and the awaited save follow the native callback); closing that planning work certifies neither a production adapter nor the refactor, and none of it is a support claim. The connect-bot migration fixed the first implemented model:
 
 - **Session axis.** `session_start` (a session became the current owner; reason `initial`, `new`, `resume` or `fork`) and `session_end` (the current owner ceased; reason `transferred` or `disposed`) form a symmetric pair. A switch, branch or fork is `session_end(transferred)` followed by `session_start`; navigation that keeps the same owner emits neither. The framework seeds and retires State and refreshes the marker area on these boundaries; an extension may subscribe, and the migrating extension uses `session_end` to stop its own effect. The delivery carries this event rather than the earlier session `position`/`reason` pair: the event **replaces** those two fields, and the `SessionPosition`/`SessionChangeReason` types with them, instead of traveling beside them, because a position-described delivery can express neither a symmetric pair nor a start that carries no reason. That replacement is a non-additive interface change and is decided here; the delivery's redundant `previousOwnerKey` is removed with it and recorded in the capability section below.
 - **Round axis.** A **Round** is one period of agent activity, from starting work to quiescence — no automatic work remains and it is waiting for the user. A round may contain several model-response turns and several low-level agent runs. `round_start` and `round_end` are edge-triggered transitions; `round_end` has no payload and fires only at quiescence (automatic continuations stay inside the round, while error and abort still reach it).
+- **Activity axis.** `session_activity` states one actual session's current **Agent activity state** — `working` while its Round is open, `idle` once the framework confirmed that Round ended — and it is delivered only where the reading moved. It is *derived* rather than a third set of edge rules: the framework computes it from the transitions its own round synthesis dispatches (one rule, `ACTIVITY_OF_EDGE`), so an extension never answers for itself which native fact ends a session's work and two surfaces cannot answer it differently. The delivery is an observation and not an arm path: it grants no capability, dispatches no edge, and drives no Round, Turn or save — the same shape a reading obtained from another process's session arrives in. A session no reading has moved reads as nothing rather than as idle.
 - **Idle is a query, not an event.** `canAcceptInput()` exposes the harness's idle fact independently of the events and supplies the initial value at activation.
 - **Ownership and dispatch.** Public semantics and reusable lifecycle processing remain framework-owned; adapters map native facts. The assembly revision replaces the universal owner-only subscriber restriction with subscriptions declared per group: Owner subscriptions carry main-session effects only, while actual-Session subscriptions follow real main/child/grandchild session identity and never substitute the Owner key, a display name or agent nesting for the session id or its direct parent relation — both groups route through one public dispatch Module. Owner effects remain isolated; observing a child never grants Owner write or external-effect authority, and State `follow`/`none` is unchanged. Framework processing precedes handlers. Development must satisfy the complete required contract; normal startup no longer negotiates/refuses partial capability sets (see [independent compatibility verification](../../framework/docs/harness-support.md#independent-compatibility-verification)).
 - **Effects stay with the extension.** Ongoing work such as timers, outbound queues, retry/failure budgets and network protocol remains the extension's business; the framework emits semantic events and does not add a continuous-task contract.
@@ -247,7 +355,7 @@ This records the module shape State is implemented with and refines the write-pa
 
 - **Only State rules are accepted.** The constructor requires the resolved `StateRules` (`{ field, persistence }`) — exactly the pair `activationField(definition)` and `statePersistence(definition)` ([`definition.ts#L255`](../../framework/core/definition.ts#L255), [`#L260`](../../framework/core/definition.ts#L260)) already resolve for the definition an assembly serves. The store holds no definition, reaches into none, and applies no default of its own: what a definition leaves out is resolved where the defaults live. The effect shapes it consumes are exported beside it: `StateWriteTarget` (`ownerKey`, `persist(values)`, `publishMarker()`), `StateCapabilityTarget` (that plus `feedback`), and `StateSessionChange` (`owner`, `event`, `statePayloads`, `publishMarker(ownerKey)`) — the publication receives the owner key the boundary resolved, so the dispatcher does not repeat the owner gate.
 - **Effects are supplied per delivery, not remembered by the store.** `writer(target)` returns the delivery's declared-value seam, `capability(target)` returns the owner-scoped handle, and `reconcile(change)` applies one boundary. No transport is resolved inside the store, and the store has no mutable current-session target: each writer or capability closes over the effects its own delivery supplied.
-- **One store per assembly, not a process-global registry.** The store is constructed inside [`ompAdapter`](../../framework/adapters/omp.ts#L848), once per factory call, and shared by every session binding of that extension, so those bindings agree on one current value per owner and two extensions never share a store. State is deliberately not resolved from a process global keyed by definition id: the process-scoped resources remain the ones a duplicated framework module graph must still share — the unified marker area (see [Extension feedback, marker, and declared-value writes](#extension-feedback-marker-and-declared-value-writes-additive-connect-bot-migration-decision-04)) and the version judgement — and State is not one of them.
+- **One store per assembly, not a process-global registry.** The store is constructed by [`createAssemblyBinding`](../../framework/behaviors/assembly.ts), once per adapter factory call, and shared by every session binding of that extension, so those bindings agree on one current value per owner and two extensions never share a store. State is deliberately not resolved from a process global keyed by definition id: the process-scoped resources remain the ones a duplicated framework module graph must still share — the unified marker area (see [Extension feedback, marker, and declared-value writes](#extension-feedback-marker-and-declared-value-writes-additive-connect-bot-migration-decision-04)) and the version judgement — and State is not one of them.
 - **Owner lives stay private.** `OwnerLives` remains the implementation of "a capability lives exactly as long as its owner's cell", kept as the store's private `#ownerLives` composition rather than a member a behavior reaches. A start opens the life, the end that retires the cell revokes what was retained for it, and a handle asked for after that owner's life has ended is inert from birth; an owner not yet seen by a session event keeps the existing command-before-start behavior.
 
 The refactor moves the same behavior behind that one interface; it does not revisit it:
@@ -257,6 +365,60 @@ The refactor moves the same behavior behind that one interface; it does not revi
 - **Reconciliation.** A delivery whose session is not its own owner is ignored. An end drops the owner's cell and then revokes its retained capabilities, so a late write cannot recreate the cell, and publishes the marker area only for `disposed`. A start opens the life first, then, for a `session-entry` field only, seeds the cell from the **last** payload when that payload declares the field as a boolean — any other payload yields the declared default — and publishes the area; a `memory` field is never seeded, so navigation that keeps the owner keeps its value.
 
 The extension-authoring contract is untouched: no definition, assembly option, delivery type or shared-logic call changes, and the read surface is the same `view`. What changes is `StateStore`'s own surface — `applyTransition`, `seed`, `retire` and the public `ownerLives` give way to `writer`, `capability` and `reconcile` — and that internal surface carries no extension compatibility promise; this section is the explicit decision for it. This records the agreed shape and the behavior it must preserve, not runtime verification of the implementation: the framework suites that pin those behaviors — [`declared-value-write.test.ts`](../../tests/framework/declared-value-write.test.ts), [`owner-capability.test.ts`](../../tests/framework/owner-capability.test.ts), [`session-events.test.ts`](../../tests/framework/session-events.test.ts) and [`owner-gate.test.ts`](../../tests/framework/owner-gate.test.ts) — remain the regression alarm for it.
+
+## Subagent access lifetime and first-use readiness (2026-10-17)
+
+Harness adapters select subagent access capability, not an exclusive process topology: OMP uses the
+in-process implementation; pi permits cross-process access when its assembly states a child entry,
+while owners served in the same process retain their direct path. This is not a general communication
+mode, subagent scheduler or replacement provider. Native provider discovery, child loading, identity
+and background-work mapping remain adapter-owned; extension accounting and storage stay extension-owned.
+
+One internal framework module, `core/subagent-access.ts`, owns the assembly's value offers, followed
+accesses, observation admissions, hand-over routing and release. State retains values, restoration and
+write authority; binding retains observation adoption and semantic dispatch. They report lifecycle
+facts to that module rather than owning separate communication lifetimes. The State constructor's
+internal rules now accept this access instead of separate publisher/follow inputs; extension interfaces
+and the explicit child-entry requirement are unchanged. Access ends after the harness's awaitable
+session close-out, never before the last save and its commit notice; transfer does not end it.
+
+The accepted State tradeoff preserves synchronous reads and cross-process initial-value-plus-push
+following, not per-use remote confirmation or instantaneous visibility. At the awaitable pre-request
+position, first prompt planning and Marker publication wait for the owner's first bounded access
+attempt (joining an attempt a prior synchronous read started). Failure keeps the declared default,
+without writing it back or treating it as the owner's confirmed value. Later reads retain existing
+spaced recovery; later runs do not wait again. Local cells and fields declaring no inheritance need
+no access wait. This intentionally changes only first-use waiting; it does not make every synchronous
+handler read asynchronous or add a public readiness protocol.
+
+## Two-sided subagent integration checklist (2026-10-17)
+
+Extension authors declare the framework-owned subagent semantics needed for complete integration;
+harness adapter authors declare their supported execution modes and supplied semantics per mode.
+The extension does not choose or enumerate execution modes. An adapter is responsible for every mode
+it declares: coverage in one cannot fill a gap in another, and no adapter is required to implement
+both modes. The first checklist covers subagent integration only, not a general capability registry.
+
+Keep two independently invoked stages separate. The integration completeness command compares these
+declarations for actual extension/harness discovery entries and reports which extension lacks which
+capability in which mode. It does not install or start a harness, inspect compatibility, run tests,
+exercise an implementation or claim that the declared wiring behaves correctly. Behavior verification
+remains in the existing test/dock/candidate paths and is not invoked by the completeness command.
+An incomplete checklist can return a failing command status for developers without refusing an
+extension, changing a supported baseline, publishing a user notice or affecting any runtime feature.
+
+`ExtensionDefinition.subagentRequirements` is additive, declaration-only metadata. Each adapter owns
+its offline inventory; the independently invoked script owns the catalog and discovers only actual
+entrypoints, rather than demanding every extension support every harness. Missing catalog entries
+are reported, never silently treated as complete. Declared coverage is maintained by the adapter
+author, not inferred by scanning function names; behavioral correctness remains a separate obligation.
+For pi, the declaration describes its integrated provider path with the extension's required child
+entry, not the presence or health of a provider in a particular run.
+
+This preserves the independent-verification/startup separation. Runtime negotiation, warning policy,
+feature gating, `/budget detail` availability and subagent accounting behavior are intentionally
+unchanged and are not abstracted by this checklist. Its terms live in the framework glossary and its
+command, declarations and capability vocabulary in the capability index.
 
 ## Behavior orchestration around State
 

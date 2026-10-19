@@ -33,8 +33,8 @@ import type {
 	OmpSessionContext,
 	OmpSessionEvent,
 	OmpSessionEventType,
-} from "../../framework/adapters/omp";
-import * as frameworkOmp from "../../framework/adapters/omp";
+} from "../../adapters/omp";
+import * as frameworkOmp from "../../adapters/omp";
 import type { BindingResult } from "../../framework/core/protocol";
 import type { DeclarableRequiredSemantic, ExtensionDefinition } from "../../framework/public";
 import { REPO_ROOT, readBaselineRecord } from "../harness-dock/baseline";
@@ -354,7 +354,7 @@ describe("what startup still owes an extension (P60)", () => {
  * not been reintroduced somewhere the cases do not reach. It reads `.ts` text lexically, so it
  * proves absence of the former names rather than the absence of every conceivable gate.
  */
-const SCANNED_ROOTS = ["framework", "extensions", "entrypoints"] as const;
+const SCANNED_ROOTS = ["adapters", "framework", "extensions", "entrypoints"] as const;
 
 /** The names the clean cutover removed from production source. */
 const REMOVED_ROUTE = [

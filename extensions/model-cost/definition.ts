@@ -11,7 +11,7 @@
  * data lives under, one `balanceTtlMs` whose value is the success TTL of the DeepSeek balance
  * reading, and one `codexQuotaTtlMs` whose value is the success TTL of the Codex allowance-window
  * query — and the operator surface it offers. The `storageDir` field's own `~/` rule is
- * the extension's (see `shared-logic/storage-root.ts`); the framework only reads and validates the
+ * the extension's (see `shared-logic/foundation/storage/storage-root.ts`); the framework only reads and validates the
  * declared values.
  *
  * `/budget` is one named-action command, and its whole vocabulary is the action table below: the
@@ -25,6 +25,14 @@ import { defineExtension } from "../../framework/public";
 export const MODEL_COST = defineExtension({
 	id: "model-cost",
 	displayName: "modelCost",
+	subagentRequirements: [
+		"extension-loading",
+		"session-facts",
+		"turn-usage",
+		"session-lifecycle",
+		"session-observations",
+		"storage-commit",
+	],
 	config: { fields: { storageDir: "non-empty-string", balanceTtlMs: "milliseconds", codexQuotaTtlMs: "milliseconds" } },
 	commands: [
 		{

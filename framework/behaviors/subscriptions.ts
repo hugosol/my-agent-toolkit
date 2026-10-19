@@ -21,16 +21,17 @@
  */
 import type {
 	ObservationScope,
-	OwnerReference,
 	RoundEvent,
 	SemanticEvent,
 	SemanticEventDeliveryMap,
+	SessionActivityEvent,
+	SessionContextEvent,
 	SessionEvent,
-	SubagentRuntimeEvent,
 	SubscriptionGroup,
 	TurnEvent,
 	UserInputEvent,
-} from "../core/protocol";
+} from "../interface/session";
+import type { OwnerReference } from "../interface/state";
 
 /** The session axis's event kinds, for a binding that must know which axis a group observes. */
 export const SESSION_EVENT_KINDS: readonly SessionEvent["kind"][] = ["session_start", "session_end", "session_facts"];
@@ -38,14 +39,23 @@ export const SESSION_EVENT_KINDS: readonly SessionEvent["kind"][] = ["session_st
 /** The round axis's event kinds. */
 export const ROUND_EVENT_KINDS: readonly RoundEvent["kind"][] = ["round_start", "round_end"];
 
+/**
+ * The activity axis's event kinds.
+ *
+ * It has one, and it is derived: a group that observes activity is observing the reading the round
+ * axis's own transitions leave a session in, so a binding that subscribes to this kind needs the
+ * round hook exactly as one that subscribes to an edge does.
+ */
+export const SESSION_ACTIVITY_KINDS: readonly SessionActivityEvent["kind"][] = ["session_activity"];
+
 /** The Turn axis's event kinds. */
 export const TURN_EVENT_KINDS: readonly TurnEvent["kind"][] = ["turn_start", "turn_end"];
 
-/** The subagent-runtime axis's event kinds. */
-export const SUBAGENT_RUNTIME_EVENT_KINDS: readonly SubagentRuntimeEvent["kind"][] = ["subagent_runtime"];
-
 /** The input axis's event kinds. */
 export const USER_INPUT_EVENT_KINDS: readonly UserInputEvent["kind"][] = ["user_input"];
+
+/** The context axis's event kinds. */
+export const SESSION_CONTEXT_EVENT_KINDS: readonly SessionContextEvent["kind"][] = ["session_context"];
 
 /**
  * Whether one group's scope admits a delivery whose owner resolved this way.
@@ -92,6 +102,12 @@ export interface DeliveryStep<K extends SemanticEvent["kind"]> {
  * lifetime belongs to one handler (the session axis's feedback channel and retainable capability)
  * is built per group here, so no group can observe another's closed channel. Either way the same
  * facts reach every admitting group, and no group sees a delivery another was denied.
+ *
+ * The answer is every handler's own settlement, so a caller whose work is not over until the handlers
+ * are can wait for it; a caller that only delivers ignores it. A handler's rejection is reported on
+ * the diagnostic channel and never reaches the caller: the frame contains a handler's failure rather
+ * than propagating it, and a caller waiting for the events it dispatched is waiting for effects it can
+ * rely on either way.
  */
 export function dispatchToGroups<K extends SemanticEvent["kind"]>(
 	extensionId: string,
@@ -100,7 +116,8 @@ export function dispatchToGroups<K extends SemanticEvent["kind"]>(
 	owner: OwnerReference,
 	build: (group: SubscriptionGroup) => DeliveryStep<K>,
 	reportFailure: (message: string) => void,
-): void {
+): Promise<void> {
+	const settling: Promise<unknown>[] = [];
 	for (const group of groups) {
 		if (!admits(group.scope, owner)) continue;
 		// The handler map and the event kind are correlated by `kind`, which TypeScript cannot prove
@@ -117,21 +134,24 @@ export function dispatchToGroups<K extends SemanticEvent["kind"]>(
 				step.settled?.();
 				continue;
 			}
-			// The framework does not wait for a handler's own asynchronous work: it is contained
+			// The framework does not let a handler's own asynchronous work escape it: it is contained
 			// here, and a rejection surfaces once on the diagnostic channel rather than as an
 			// unhandled rejection outside the framework.
-			void Promise.resolve(outcome)
-				.catch((error: unknown) => {
-					const detail = error instanceof Error ? error.message : String(error);
-					reportFailure(`${extensionId}: ${kind} handler failed: ${detail}`);
-				})
-				.finally(() => {
-					step.settled?.();
-				});
+			settling.push(
+				Promise.resolve(outcome)
+					.catch((error: unknown) => {
+						const detail = error instanceof Error ? error.message : String(error);
+						reportFailure(`${extensionId}: ${kind} handler failed: ${detail}`);
+					})
+					.finally(() => {
+						step.settled?.();
+					}),
+			);
 		} catch (error) {
 			const detail = error instanceof Error ? error.message : String(error);
 			reportFailure(`${extensionId}: ${kind} handler failed: ${detail}`);
 			step.settled?.();
 		}
 	}
+	return Promise.all(settling).then(() => undefined);
 }
