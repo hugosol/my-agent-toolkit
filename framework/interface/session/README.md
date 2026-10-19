@@ -17,5 +17,5 @@ engineering encapsulation, not a security sandbox for arbitrary code in the same
 
 Other capability authoring contracts have not all moved: the root authoring entry is
 `framework/interface` (with `defineExtension` and the definition/implementation contract), while
-General's HTTP and safe-file calls live at their own `framework/interface/general` entries and
-`getConfig` remains at `framework/public`. Neither entry exports Session types.
+General's HTTP, safe-file and configuration calls live at their own
+`framework/interface/general` entries. No capability or general entry exports Session types.

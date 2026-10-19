@@ -104,21 +104,17 @@ describe("shared source imports no harness types (C1)", () => {
 		expect(naming.filter(file => !ESCAPE_HATCH.some(pattern => pattern.test(file)))).toEqual([]);
 	});
 
-	test("extensions reach Session only through its capability interface", () => {
-		// These are the remaining authoring and non-Session capability entries, not a
-		// blanket exemption for core/modules. Remove each entry when that capability migrates.
-		const legacyEntries: Readonly<Record<string, true>> = {
-			"framework/public": true,
-			"framework/core/config": true,
-		};
+	test("extensions reach framework contracts only through their capability interfaces", () => {
+		// Every capability and general module has its own interface entry now, so an extension that
+		// resolves a `framework/` specifier outside `framework/interface` is reaching an internal
+		// engine, a native mapping or the old mixed entry. There is deliberately no exemption list.
 		const crossings: string[] = [];
 		for (const file of sourceFiles.filter(file => file.startsWith("extensions/"))) {
 			for (const specifier of specifiersOf(file)) {
 				if (!specifier.startsWith(".")) continue;
 				const target = path.posix.normalize(path.posix.join(path.posix.dirname(file), specifier))
 					.replace(/\.(?:[cm]?ts|js)$/, "").replace(/\/index$/, "");
-				if (target.startsWith("framework/") && target !== "framework/interface" && !target.startsWith("framework/interface/")
-					&& legacyEntries[target] !== true) {
+				if (target.startsWith("framework/") && target !== "framework/interface" && !target.startsWith("framework/interface/")) {
 					crossings.push(`${file} bypasses the capability interface through "${specifier}"`);
 				}
 			}
@@ -399,11 +395,6 @@ describe("shared source imports no harness types (C1)", () => {
 				expect(exportedInBlocks(source)).not.toContain(name);
 			}
 		}
-		const publicSource = readFileSync(path.join(REPO_ROOT, "framework/public.ts"), "utf8");
-		for (const name of [...owned, ...internal]) {
-			expect(exportedInBlocks(publicSource)).not.toContain(name);
-			expect(declaredEverywhere(publicSource)).not.toContain(name);
-		}
 	});
 
 	test("Authoring declarations are published only by the root authoring interface", () => {
@@ -553,7 +544,7 @@ describe("shared source imports no harness types (C1)", () => {
 		// extension declares a slot or a marker text and never names the branch facts, the
 		// contribution result or the area transport. The bound strategy list is a framework
 		// validation set, not part of the extension-facing declaration.
-		const source = readFileSync(path.join(REPO_ROOT, "framework/public.ts"), "utf8");
+		const source = readFileSync(path.join(REPO_ROOT, "framework/interface/index.ts"), "utf8");
 		const exported = [
 			...source.matchAll(/\bexport\s+(?:type\s+)?\{([^}]*)\}/g),
 		].flatMap(match =>
@@ -565,12 +556,14 @@ describe("shared source imports no harness types (C1)", () => {
 	});
 
 	test("capability interfaces depend on no framework implementation or native mapping", () => {
-		// Two approved runtime connections exist: the general HTTP and safe-file entries re-export
-		// their implementation's one published call. Each is exact — this file and this specifier —
-		// so the exception cannot widen into a general import of the implementation tree.
+		// Three approved runtime connections exist: the general HTTP, safe-file and configuration
+		// entries re-export their implementation's one published call. Each is exact — this file and
+		// this specifier — so the exception cannot widen into a general import of the implementation
+		// tree.
 		const runtimeConnections: Readonly<Record<string, readonly string[]>> = {
 			"framework/interface/general/http.ts": ["../../modules/http"],
 			"framework/interface/general/files.ts": ["../../modules/files"],
+			"framework/interface/general/config.ts": ["../../core/config"],
 		};
 		const crossings: string[] = [];
 		for (const file of sourceFiles.filter(file => file.startsWith("framework/interface/"))) {
@@ -584,6 +577,41 @@ describe("shared source imports no harness types (C1)", () => {
 			}
 		}
 		expect(crossings).toEqual([]);
+	});
+
+	test("the General configuration entry publishes only getConfig and ExtensionConfigError", () => {
+		// The entry is the General module's whole extension-facing surface. `ConfigLoadError`, the
+		// reader/parser/source seam, `readConfig`, the shared-configuration reader and the validation
+		// helpers stay internal: exporting any of them here would hand an extension the loading
+		// machinery instead of the values its binding already validated. As with the other checks in
+		// this suite, this is a lexical alarm, not a proof.
+		const entry = "framework/interface/general/config.ts";
+		const source = readFileSync(path.join(REPO_ROOT, entry), "utf8");
+		const declared = [...source.matchAll(/\bexport\s+(?:type|interface|const|class|function)\s+([A-Za-z_$][\w$]*)/g)]
+			.map(match => match[1]!);
+		const reexported = [...source.matchAll(/\bexport\s+(?:type\s+)?\{([^}]*)\}/g)]
+			.flatMap(match =>
+				match[1]!.split(",").map(item => item.trim().replace(/^type\s+/, "").split(/\s+as\s+/)[0]!.trim()),
+			)
+			.filter(name => name.length > 0);
+		const exported = [...declared, ...reexported];
+		expect(exported.sort()).toEqual(["ExtensionConfigError", "getConfig"]);
+
+		for (const name of [
+			"ConfigLoadError",
+			"ConfigReader",
+			"ConfigParser",
+			"ConfigSource",
+			"ConfigReadOptions",
+			"readConfig",
+			"readConfigDocument",
+			"findConfigFailure",
+			"describeValue",
+			"isScheduledWait",
+			"SCHEDULED_WAIT_TEXT",
+		]) {
+			expect(exported).not.toContain(name);
+		}
 	});
 
 	/**

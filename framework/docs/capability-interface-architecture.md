@@ -1,6 +1,6 @@
 # Capability interface architecture
 
-**Status:** Session, State, Prompt/Marker, Feedback, Host facts, Subagent, the root authoring contract and Command are implemented, including Command's narrowed runtime delivery; General and the runtime-port migration remain proposed.
+**Status:** Session, State, Prompt/Marker, Feedback, Host facts, Subagent, the root authoring contract, Command and General are implemented, including Command's narrowed runtime delivery and General's three direct entries; the runtime-port migration remains proposed.
 **Scope:** the dependency seam between `framework/`, `adapters/`, and `extensions/`.
 **Decision status:** [ADR-0002's Session amendment](../../docs/adr/0002-semantic-extension-framework.md#session-capability-interface-cutover-2026-10-19) accepts the first complete capability. The overall target below still contains future work and open decisions; it is not a claim that every capability or `framework/runtime/port` has moved.
 
@@ -11,7 +11,7 @@ Subscription group, observation reader and confirmed-write contract. The factory
 `context.session.observations` and `context.session.recordCommit`; the old top-level
 `sessionObservations` / `recordSessionCommit` fields and public concrete class are removed. A reader
 is a separate runtime object, and returned readings cannot write into the source. Session consumer
-types have no compatibility re-export from `public.ts` or `core/protocol.ts`.
+types have no compatibility re-export from any mixed entry or `core/protocol.ts`.
 
 State's own capability interface now owns its declarations (`StateDeclaration`, `StatePersistence`,
 `StateInheritance`) and managed operations (`OwnerReference`, `DeclaredValueSeam`,
@@ -26,12 +26,13 @@ whole definition/implementation contract in its public `details/` files; `Subage
 Command's declarations, implementations and deliveries in `framework/interface/command/` (its
 `details/definition.ts` and `details/implementation.ts`). The actual command and action deliveries are
 explicitly constructed from the approved members: the adapter's persistence callback, the marker-area
-transport and the internal invocation are not reachable from an extension. General's public functions
-remain in place until their batch; the adapter port remains internal in `core/protocol.ts` until its
-own cutover. The import
-check uses an explicit list of remaining non-Session entries, not a blanket allowance for framework
-internals. No new disposal event, second dispatch, runtime
-registry or second adapter abstraction is introduced. Start at the [Session capability entry](../interface/session/index.ts) before reading its implementation.
+transport and the internal invocation are not reachable from an extension. General's HTTP, safe-file
+and configuration functions are published by their three direct entries (`general/http.ts`,
+`general/files.ts`, `general/config.ts`), with no aggregate `general/index.ts`; the former mixed
+`framework/public.ts` entry is removed. The adapter port remains internal in `core/protocol.ts`
+until its own cutover. The import check requires every extension import under `framework/` to
+resolve inside `framework/interface`, with no remaining-entry exemption list. No new disposal
+event, second dispatch, runtime registry or second adapter abstraction is introduced. Start at the [Session capability entry](../interface/session/index.ts) before reading its implementation.
 The root owns capability, current-observation and subscription entries; `details/` owns public domain
 contracts. This is navigation within one interface, not another capability or implementation layer.
 
@@ -157,8 +158,10 @@ framework/interface/
     http.ts
     files.ts
     config.ts
-    index.ts
 ```
+
+General deliberately has no `index.ts`: each general module is a direct entry, and the root
+authoring entry does not aggregate them.
 
 The directory names are navigation. The capability boundaries are the important part; a capability can move to another file or directory without changing what the extension knows.
 
@@ -439,7 +442,7 @@ The direction should be implemented in stages. Each stage should leave the repos
 - Move adapter-facing types into `framework/runtime/port.ts`.
 - Migrate extension imports to `framework/interface` and adapter assembly entries.
 - Add the import-boundary rules above.
-- Remove `framework/public.ts` as a public path, or keep it only as a temporary migration aid that is removed in the same change series.
+- `framework/public.ts` is removed as a public path; the root authoring entry and the capability/general entries are the only extension-facing paths.
 - Verification: typecheck and the framework suite; behavior should not change.
 
 ### Phase 2 - Runtime port
@@ -480,7 +483,6 @@ These are deliberately not settled by this document.
 | `ImplementationContext` grouping | group by capability: `context.session`, `context.hostFacts`, `context.config` | it changes every extension factory and is an authoring-surface break |
 | `HarnessPort` granularity | keep one port for now | splitting by capability is useful only if a real adapter or test double needs a narrower port |
 | Internal layout | keep `core` / `behaviors` / `modules` behind `framework/interface` initially; move to capability directories only when the interface is stable | a large directory move before the interface settles adds churn without changing the extension-facing seam |
-| `framework/public.ts` | remove after migrating all imports | keeping it as a re-export preserves a second extension-facing path |
 | `BindingResult` / `BindingFailure` | stay in `framework/runtime/port.ts` | they are adapter factory results, not extension capability calls |
 | Session observation | part of the Session capability, with a read interface distinct from event subscription | the read surface and event surface are different interfaces even though they share Session identity |
 | Coverage script shape | extend the existing offline `check:integrations` checker first; add a dedicated `check:capabilities` command only if the output or filters outgrow it | the current command already owns discovery and declaration comparison |
