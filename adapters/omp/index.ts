@@ -4,8 +4,8 @@
  * This module only assembles: the process-level readers an extension's factory is handed and the
  * harness-independent binding life shared by both adapters. The native mappings live under `domain/` —
  * `internal/port.ts` composes the seam, `domain/context/` and `domain/session/` own their own reads and
- * event mappings, and `domain/pricing.ts`, `domain/provider.ts`, `domain/feedback.ts`,
- * `domain/marker.ts`, `domain/control.ts` and `domain/prompt.ts` own the native facts they translate.
+ * event mappings, and `domain/host-facts.ts`, `domain/feedback.ts`, `domain/marker.ts`,
+ * `domain/control.ts` and `domain/prompt.ts` own the native facts they translate.
  *
  * It carries no extension semantics: what to register comes from the definition, whether it may be
  * registered is decided by the harness-independent behavior, and what a command does is the
@@ -17,8 +17,7 @@ import type { ExtensionDefinition } from "../../framework/core/definition";
 import type { BindingResult } from "../../framework/core/protocol";
 import type { OmpExtensionApi } from "./internal/native";
 import { createOmpPort } from "./internal/port";
-import { createModelPrices } from "./domain/pricing";
-import { createProviderAccess } from "./domain/provider";
+import { createHostFacts } from "./domain/host-facts";
 
 // Native types remain available through the adapter entry consumed by harness assemblies.
 export type {
@@ -95,8 +94,7 @@ export type OmpExtensionFactory = (pi: OmpExtensionApi) => BindingResult;
  */
 export function ompAdapter(definition: ExtensionDefinition, options: ExtensionAssembly = {}): OmpExtensionFactory {
 	const binding = createAssemblyBinding(definition, options, "in-process");
-	const prices = createModelPrices();
-	const access = createProviderAccess();
+	const hostFacts = createHostFacts();
 	return (pi: OmpExtensionApi): BindingResult =>
-		binding.bind(createOmpPort(pi, definition, { prices, access }));
+		binding.bind(createOmpPort(pi, definition, { hostFacts }));
 }

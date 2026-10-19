@@ -232,6 +232,53 @@ describe("shared source imports no harness types (C1)", () => {
 		expect(crossings).toEqual([]);
 	});
 
+	test("Host facts' declarations are published only by the Host facts capability interface", () => {
+		// CatalogPrice, CatalogPriceSource, ProviderHttpFacts, ProviderAccessFacts and ProviderAccess
+		// are the whole extension-facing host-fact contract. A declaration or an export block naming
+		// one of them anywhere else would give the capability a second owner (or a compatibility
+		// copy), which type checking alone cannot see. The adapters map the native sources; their
+		// native registry, credential store and context stay outside this contract.
+		const canonical = "framework/interface/host-facts/index.ts";
+		const owned = [
+			"CatalogPrice",
+			"CatalogPriceSource",
+			"ProviderHttpFacts",
+			"ProviderAccessFacts",
+			"ProviderAccess",
+		] as const;
+		const canonicalSource = readFileSync(path.join(REPO_ROOT, canonical), "utf8");
+		const declaredEverywhere = (source: string): string[] =>
+			[...source.matchAll(/\bexport\s+(?:type|interface|const|class|function)\s+([A-Za-z_$][\w$]*)/g)]
+				.map(match => match[1]!);
+		const exportedInBlocks = (source: string): string[] =>
+			[...source.matchAll(/\bexport\s+(?:type\s+)?\{([^}]*)\}/g)]
+				.flatMap(match => match[1]!.split(",").map(entry => entry.trim().replace(/^type\s+/, "").split(/\s+as\s+/)[0]!.trim()));
+
+		const canonicalNames = [...declaredEverywhere(canonicalSource), ...exportedInBlocks(canonicalSource)];
+		for (const name of owned) {
+			expect(canonicalNames.includes(name)).toBe(true);
+		}
+
+		const crossings: string[] = [];
+		for (const file of sourceFiles.filter(file => file !== canonical)) {
+			const source = readFileSync(path.join(REPO_ROOT, file), "utf8");
+			for (const name of owned) {
+				if (declaredEverywhere(source).includes(name)) {
+					crossings.push(`${file} declares ${name} outside the Host facts capability interface`);
+				}
+				if (exportedInBlocks(source).includes(name)) {
+					crossings.push(`${file} exports ${name} outside the Host facts capability interface`);
+				}
+			}
+			for (const match of source.matchAll(/\bexport\s+\*\s*(?:as\s+\w+\s*)?from\s*["']([^"']+)["']/g)) {
+				if (resolvesInto(file, match[1]!, [/^framework\/interface\/host-facts(?:\/|\.|$)/])) {
+					crossings.push(`${file} re-exports the Host facts capability through "${match[1]}"`);
+				}
+			}
+		}
+		expect(crossings).toEqual([]);
+	});
+
 	test("Prompt and Marker declarations are published only by their capability interfaces", () => {
 		// Each capability owns exactly its approved declarations: Prompt publishes the slot
 		// declaration and its strategy vocabulary, Marker publishes the text declaration. The

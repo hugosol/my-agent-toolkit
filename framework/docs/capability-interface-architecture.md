@@ -161,7 +161,7 @@ The directory names are navigation. The capability boundaries are the important 
 | **Prompt** | prompt declaration and strategy | run facts, contribution result, contribution selection, branch-progress matching | Prompt domain |
 | **Marker** | marker declaration text | marker area transport, process-global area, line order, viewed-session projection, publication triggers | Marker domain |
 | **Feedback** | notification level and feedback transport | delivery wiring; no standalone behaviour module | Feedback domain |
-| **Host facts** | provider access, catalog price, idle query, subagent integration result | factory hand-over and adapter query mapping; no framework policy | Pricing, Provider, Subagent domains |
+| **Host facts** | provider access, catalog price, idle query, subagent integration result | factory hand-over and adapter query mapping; no framework policy | Host facts and Subagent domains |
 | **General** | `request`, `updateFile`, `getConfig` and their option/error types | HTTP transport, coordinated file update, configuration document reading | none |
 
 `definition/` and `assembly/` are the authoring layer. They are not capabilities themselves; they describe how an extension declares a capability and supplies an implementation.

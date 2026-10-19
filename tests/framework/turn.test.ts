@@ -86,7 +86,8 @@ interface SessionSurface {
 	 */
 	readonly registry?: {
 		readonly baseUrls?: Readonly<Record<string, string>>;
-		readonly credentials?: Readonly<Record<string, string>>;
+		/** A provider absent here is a provider the host has no credential for. */
+		readonly credentials?: Readonly<Record<string, string | undefined>>;
 	};
 }
 
@@ -551,6 +552,44 @@ describe("the harness's own model prices reach the factory and the request-start
 		expect(surface.starts[0].turn.price).toBeUndefined();
 		expect(surface.starts[0].turn.unavailable).toContain("catalog price");
 	});
+
+	test("a catalog changed between requests prices each request at its own start, not at its end", () => {
+		// The mutable rows are this case's own catalog: the host states another price for the same pair
+		// after the first request has been issued.
+		const models: NativeModelRow[] = [
+			{ id: "plan-luna", provider: "plan-provider", cost: { input: 1, output: 2, cacheRead: 3, cacheWrite: 4 } },
+		];
+		const plan: SessionSurface = { ...PLAN, models };
+		const surface = boundSurface([], harnessPriced);
+
+		surface.startRequest(plan);
+		const first = surface.starts[0].turn.price;
+		expect(first).toEqual({
+			currency: "USD",
+			unit: "USD/百万 token",
+			amounts: { input: 1, output: 2, cacheRead: 3, cacheWrite: 4 },
+		});
+
+		models[0] = { id: "plan-luna", provider: "plan-provider", cost: { input: 9, output: 9, cacheRead: 9, cacheWrite: 9 } };
+		surface.responseArrives(plan, { status: 200, requestId: "req-wire-7" });
+		surface.messageEnds(plan, assistantMessage());
+
+		// The issued request keeps the price its own start fixed, even though the catalog moved while it
+		// was in flight; the end repeats the start's record rather than reading the catalog again.
+		expect(surface.ends[0].turn.price).toEqual(first);
+		// The transport's own reference id is carried apart and is not the Turn's identity.
+		expect(surface.ends[0].end.providerRequestId).toBe("req-wire-7");
+		expect(surface.ends[0].turn.turnId).not.toBe("req-wire-7");
+
+		// A request issued after the change is priced from the catalog as it stands then, which is what
+		// makes the first snapshot an observation about the start rather than a frozen first answer.
+		surface.startRequest(plan);
+		expect(surface.starts[1].turn.price).toEqual({
+			currency: "USD",
+			unit: "USD/百万 token",
+			amounts: { input: 9, output: 9, cacheRead: 9, cacheWrite: 9 },
+		});
+	});
 });
 
 describe("the harness's own provider access reaches the factory as a per-operation query", () => {
@@ -593,5 +632,50 @@ describe("the harness's own provider access reaches the factory as a per-operati
 		surface.startRequest(MAIN);
 		const access = surface.implementationContext().providerAccess;
 		expect(await access?.resolve("deepseek")).toBeUndefined();
+	});
+
+	test("a credential replaced or withdrawn between operations is what the next query sees", async () => {
+		const baseUrl = "https://api.deepseek.com/v1";
+		const credentials: Record<string, string | undefined> = { deepseek: "sk-live-one" };
+		const surface = boundSurface();
+		surface.startRequest({ ...MAIN, registry: { baseUrls: { deepseek: baseUrl }, credentials } });
+		const access = surface.implementationContext().providerAccess;
+
+		// The factory receives the plain queries alone: the registry and catalog they read stay outside
+		// the contract.
+		expect(Object.keys(access ?? {})).toEqual(["resolve"]);
+		expect(Object.keys(surface.implementationContext().modelPrices ?? {})).toEqual(["priceOf"]);
+
+		const first = await access?.resolve("deepseek");
+		expect(first).toEqual({ baseUrl, credential: "sk-live-one" });
+
+		// A credential the host replaces is what the next operation uses, not a binding-time snapshot.
+		credentials.deepseek = "sk-live-two";
+		expect(await access?.resolve("deepseek")).toEqual({ baseUrl, credential: "sk-live-two" });
+
+		// Withdrawing the credential leaves the fact absent. It is never an empty string, another
+		// provider's credential or a default address; a provider the host says nothing about is no
+		// access at all.
+		credentials.deepseek = undefined;
+		expect(await access?.resolve("deepseek")).toEqual({ baseUrl });
+		expect(await access?.resolve("another-provider")).toBeUndefined();
+
+		// A fact handed out earlier is a plain copy: changing it does not change the host's answer.
+		Object.assign(first ?? {}, { credential: "tampered" });
+		expect(await access?.resolve("deepseek")).toEqual({ baseUrl });
+
+		// A later delivery reports the host's registry again, as a login or a key replacement makes it:
+		// the query follows the newest reading rather than the one it was bound with.
+		surface.startRequest({
+			...MAIN,
+			registry: {
+				baseUrls: { deepseek: "https://api.deepseek.com/v2" },
+				credentials: { deepseek: "sk-live-three" },
+			},
+		});
+		expect(await access?.resolve("deepseek")).toEqual({
+			baseUrl: "https://api.deepseek.com/v2",
+			credential: "sk-live-three",
+		});
 	});
 });

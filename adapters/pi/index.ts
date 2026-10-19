@@ -13,8 +13,7 @@ import type { ExtensionAssembly } from "../../framework/core/assembly";
 import type { ExtensionDefinition } from "../../framework/core/definition";
 import type { PiExtensionApi, PiExtensionFactory } from "./internal/native";
 import { createPiPort } from "./internal/port";
-import { harnessModelPrices } from "./domain/pricing";
-import { harnessProviderAccess } from "./domain/provider";
+import { piHostFacts } from "./domain/host-facts";
 import { piSessionPositions } from "./domain/session/queries";
 import { piSessionFileAnchors } from "./domain/subagent/queries";
 import { createPiSubagentIntegration } from "./domain/subagent/integration";
@@ -44,14 +43,11 @@ export function piAdapter(definition: ExtensionDefinition, options: PiAssembly =
 	// and chooses the direct path for each owner served here; childEntry states cross-process support.
 	const mode = options.childEntry === undefined ? "in-process" : "cross-process";
 	const binding = createAssemblyBinding(definition, options, mode);
-	// pi's own model prices, one set for the whole process: every binding of this assembly records the
-	// registry of the contexts its own deliveries come from, and the query the framework hands an
-	// extension's factory answers from the newest of them.
-	const prices = harnessModelPrices();
-	// pi's own access to the providers it serves, one query for the whole process for the same reason:
-	// the credentials and addresses are the host's, and every binding's deliveries report the registry
-	// they were read from.
-	const access = harnessProviderAccess();
+	// pi's own host facts — the model prices and the provider access the registry states — as one set
+	// for the whole process: every binding of this assembly records the registry of the contexts its
+	// own deliveries come from, and the queries the framework hands an extension's factory answer from
+	// the newest of them.
+	const hostFacts = piHostFacts();
 	// The sessions this process's deliveries are read through: pi's own lineage links and the session
 	// files they name are facts of the process, and a chain walked for one session is the same chain
 	// another session of this process would walk.
@@ -69,8 +65,7 @@ export function piAdapter(definition: ExtensionDefinition, options: PiAssembly =
 			definition,
 			positions,
 			integration,
-			prices,
-			access,
+			hostFacts,
 			keepSubscription: release => subscriptions.push(release),
 		});
 		integration?.attach(pi, reportDiagnostic);
