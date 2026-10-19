@@ -25,7 +25,7 @@ import type {
 	TurnUsage,
 } from "../../framework/interface/session";
 import type { OwnerReference } from "../../framework/interface/state";
-import type { TurnSignal } from "../../framework/core/protocol";
+import type { TurnSignal } from "../../framework/runtime/port";
 import type { ExtensionDefinition } from "../../framework/interface";
 import { type PortDouble, portDouble } from "./support/harness-port-double";
 

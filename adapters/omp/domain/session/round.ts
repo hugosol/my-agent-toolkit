@@ -12,7 +12,7 @@
  * unwound and whether anything beyond the run still holds it.
  */
 import type { TurnOutcome } from "../../../../framework/interface/session";
-import type { HarnessPort, RoundObservation, RoundSignal } from "../../../../framework/core/protocol";
+import type { HarnessPort, RoundObservation, RoundSignal } from "../../../../framework/runtime/port";
 import type { OmpExtensionApi, OmpSessionContext } from "../../internal/native";
 import { outcomeOf } from "./turn";
 

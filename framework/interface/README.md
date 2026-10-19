@@ -16,7 +16,7 @@ not aggregate the capability entries below.
 | Extension author declaring an extension | [Root authoring entry](index.ts) and its [definition](details/definition.ts) / [implementation](details/implementation.ts) details | Internal defaults, bound sets, validation helpers or assembly wiring |
 | Extension author declaring commands | [Command contract](command/index.ts) and its [declaration](command/details/definition.ts) / [implementation](command/details/implementation.ts) details | Invocation construction, argument parsing, help tooling, persistence callback or marker transport |
 | Extension author declaring subagent needs | [Subagent contract](subagent.ts) | Execution modes, adapter coverage inventories or provider protocols |
-| Adapter author supplying facts | Internal `core/protocol` port plus canonical interface facts, and the native harness | Extension business logic |
+| Adapter author supplying facts | The internal [`runtime/port`](../runtime/port.ts) plus canonical interface facts, and the native harness | Extension business logic |
 | Framework maintainer | Interface plus internal capability modules and composition | No extension-owned policy belongs in the capability |
 
 Session's type dependencies live beside it: [State](state/index.ts) owns the declared State axes
@@ -47,8 +47,10 @@ authoring entry does not aggregate them. These are exact entries, not permission
 arbitrary framework internals: no reader, parser, source, `readConfig`, shared-configuration
 reader or validation helper is published. Authoring, State, Session, Prompt, Marker, Feedback,
 Host facts, Subagent, Command and all three general modules have no compatibility exports
-anywhere else; the import check protects those seams. The later runtime-port relocation in the
-[overall direction](../docs/capability-interface-architecture.md) is not part of these cutovers.
+anywhere else; the import check protects those seams. The framework/adapter interaction contract is
+one internal port at [`runtime/port.ts`](../runtime/port.ts); it refers to these canonical
+declarations and is never imported by an extension. See the
+[overall direction](../docs/capability-interface-architecture.md).
 
 A deep module gives leverage through a small interface, while the implementation keeps rule changes
 local. Session hides its source, Round/Turn processing and cross-process coordination behind this

@@ -42,7 +42,7 @@ import { type ModelCostRuntime, createModelCostRuntime } from "../../../../exten
 import { totalText } from "../../../../extensions/model-cost/shared-logic/presentation/display";
 import type { SessionFacts, TurnOutcome, TurnUsage } from "../../../../framework/interface/session";
 import type { OwnerReference } from "../../../../framework/interface/state";
-import type { TurnSignal } from "../../../../framework/core/protocol";
+import type { TurnSignal } from "../../../../framework/runtime/port";
 import { type PortDouble, portDouble } from "../../../framework/support/harness-port-double";
 import { type TestSessionCapability, testSessionCapability } from "../../support/session-capability";
 

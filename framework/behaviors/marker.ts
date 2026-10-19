@@ -30,7 +30,7 @@
  */
 import type { ExtensionDefinition } from "../interface/details/definition";
 import type { OwnerReference } from "../interface/state";
-import type { HarnessPort, MarkerTransport, RunDelivery } from "../core/protocol";
+import type { HarnessPort, MarkerTransport, RunDelivery } from "../runtime/port";
 import type { StateStore } from "../core/state";
 import { stateValueFor } from "./state-scope";
 

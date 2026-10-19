@@ -19,7 +19,7 @@ import { piSessionFileAnchors } from "./domain/subagent/queries";
 import { createPiSubagentIntegration } from "./domain/subagent/integration";
 
 export * from "./internal/native";
-export type { BindingResult } from "../../framework/core/protocol";
+export type { BindingResult } from "../../framework/runtime/port";
 
 /**
  * What a pi assembly states about itself beyond the generic assembly information.

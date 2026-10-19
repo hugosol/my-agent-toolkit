@@ -5,7 +5,7 @@
  * user's input, and its custom-message path supplies the native role, so no system override is
  * made. What to contribute, and whether to contribute at all, stays with the framework's planning.
  */
-import type { HarnessPort } from "../../../framework/core/protocol";
+import type { HarnessPort } from "../../../framework/runtime/port";
 import { markerTransport } from "./marker";
 import type { PiPortContext } from "../internal/port";
 

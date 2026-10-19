@@ -12,7 +12,7 @@
 import { describe, expect, test } from "bun:test";
 import type { OmpCommandContext, OmpExtensionApi } from "../../adapters/omp";
 import * as frameworkOmp from "../../adapters/omp";
-import type { StateValues } from "../../framework/core/protocol";
+import type { StateValues } from "../../framework/runtime/port";
 import { StateStore } from "../../framework/core/state";
 import { CODEBASE_TOOLS } from "../../extensions/codebase-tools/definition";
 

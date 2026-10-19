@@ -7,7 +7,7 @@
  * `session/effects.ts`; none of these channels enters model context.
  */
 import type { FeedbackLevel, FeedbackTransport } from "../../../framework/interface/feedback";
-import type { NoticeTransport } from "../../../framework/core/protocol";
+import type { NoticeTransport } from "../../../framework/runtime/port";
 import type { PiExtensionContext } from "../internal/native";
 
 /** One line on the session's UI, or stderr when it has no UI. */

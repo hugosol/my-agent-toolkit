@@ -7,7 +7,7 @@ import type { ExtensionAssembly, ExtensionImplementation, ImplementationContext 
 import { activationField, statePersistence } from "../core/definition";
 import type { ExtensionDefinition } from "../interface/details/definition";
 import { SessionObservations } from "../core/observations";
-import type { BindingResult, HarnessPort } from "../core/protocol";
+import type { BindingResult, HarnessPort } from "../runtime/port";
 import { StateStore } from "../core/state";
 import { createSubagentAccess } from "../core/subagent-access";
 import { bindExtension } from "./binding";

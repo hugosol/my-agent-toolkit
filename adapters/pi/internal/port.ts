@@ -9,7 +9,7 @@
 import type { ExtensionDefinition } from "../../../framework/interface/details/definition";
 import type { SessionFacts, SessionStartReason } from "../../../framework/interface/session";
 import type { OwnerReference } from "../../../framework/interface/state";
-import type { HarnessPort, SessionDisposal } from "../../../framework/core/protocol";
+import type { HarnessPort, SessionDisposal } from "../../../framework/runtime/port";
 import { onPiSessionContext } from "../domain/context";
 import { registerPiCommand } from "../domain/control";
 import type { PiExtensionApi, PiExtensionContext } from "./native";

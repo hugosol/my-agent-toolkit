@@ -22,7 +22,7 @@ import type {
 	OwnerReference,
 	StatePersistence,
 } from "../interface/state";
-import type { StateValues } from "./protocol";
+import type { StateValues } from "../runtime/port";
 
 /** The State values v1 holds: the declared boolean activation field. */
 export type StateValue = boolean;

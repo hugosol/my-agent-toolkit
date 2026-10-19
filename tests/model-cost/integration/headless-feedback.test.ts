@@ -35,7 +35,7 @@ import { type ModelCostRuntime, createModelCostRuntime } from "../../../extensio
 import type { ProviderAccess, ProviderAccessFacts } from "../../../framework/interface/host-facts";
 import type { SessionEvent, SessionFacts, TurnOutcome, TurnUsage } from "../../../framework/interface/session";
 import type { OwnerReference } from "../../../framework/interface/state";
-import type { TurnSignal } from "../../../framework/core/protocol";
+import type { TurnSignal } from "../../../framework/runtime/port";
 import { HttpConfigurationError, type HttpRequestOptions } from "../../../framework/interface/general/http";
 import { testSessionCapability } from "../support/session-capability";
 import {

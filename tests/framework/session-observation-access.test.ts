@@ -14,7 +14,7 @@
 import { describe, expect, test } from "bun:test";
 import type { ExtensionImplementation } from "../../framework/interface/details/implementation";
 import type { AgentActivity, SessionFacts } from "../../framework/interface/session";
-import type { ObservedSession } from "../../framework/core/protocol";
+import type { ObservedSession } from "../../framework/runtime/port";
 import { defineExtension } from "../../framework/interface";
 import { DEFAULT_OWNER_KEY, type PortDouble, portDouble } from "./support/harness-port-double";
 

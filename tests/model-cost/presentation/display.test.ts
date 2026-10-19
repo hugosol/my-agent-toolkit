@@ -26,7 +26,7 @@ import { createModelCostRuntime } from "../../../extensions/model-cost/shared-lo
 import type { CatalogPrice, CatalogPriceSource } from "../../../framework/interface/host-facts";
 import type { SessionFacts, TurnUsage } from "../../../framework/interface/session";
 import type { OwnerReference } from "../../../framework/interface/state";
-import type { TurnSignal } from "../../../framework/core/protocol";
+import type { TurnSignal } from "../../../framework/runtime/port";
 import { type PortDouble, portDouble } from "../../framework/support/harness-port-double";
 
 /** The self-made pricing data every case drives; `gamma` is named by a model and priced nowhere. */

@@ -20,7 +20,7 @@ import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, 
 import { connect } from "node:net";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
-import type { ObservationSource, ObservedSession, SessionObservationSink } from "../../framework/core/protocol";
+import type { ObservationSource, ObservedSession, SessionObservationSink } from "../../framework/runtime/port";
 import {
 	type AccessLocation,
 	type AccessTarget,

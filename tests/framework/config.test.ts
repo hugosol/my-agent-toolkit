@@ -16,7 +16,7 @@ import { describe, expect, test } from "bun:test";
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
-import type { BindingResult } from "../../framework/core/protocol";
+import type { BindingResult } from "../../framework/runtime/port";
 import {
 	ConfigLoadError,
 	type ConfigReadOptions,

@@ -28,7 +28,7 @@ import type { ModelPricingData } from "../../../extensions/model-cost/shared-log
 import { type ModelCostRuntime, createModelCostRuntime } from "../../../extensions/model-cost/shared-logic/runtime";
 import type { SessionFacts, TurnUsage } from "../../../framework/interface/session";
 import type { OwnerReference } from "../../../framework/interface/state";
-import type { ObservedSession, TurnSignal } from "../../../framework/core/protocol";
+import type { ObservedSession, TurnSignal } from "../../../framework/runtime/port";
 import { type PortDouble, portDouble } from "../../framework/support/harness-port-double";
 import type { ChildPlan, ChildResult } from "../support/store-child";
 import { FS_INSTRUMENT, runStoreChild } from "../support/store-child-runner";

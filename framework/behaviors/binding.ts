@@ -52,11 +52,10 @@ import {
 	type HarnessPort,
 	type BindingFailure,
 	type BindingResult,
-	describeBindingFailure,
 	type ObservationSource,
 	type ObservedSession,
 	type PromptContribution,
-} from "../core/protocol";
+} from "../runtime/port";
 import type { StateStore } from "../core/state";
 import { handOverReading, type SessionObservations } from "../core/observations";
 import { findConfigFailure, getConfig, type ConfigSource } from "../core/config";
@@ -80,6 +79,17 @@ import {
 	subscribesAny,
 } from "./subscriptions";
 import { turnLives } from "./turn-events";
+
+/** The deterministic text of one binding failure, independent of where it is reported. */
+function describeBindingFailure(extensionId: string, failure: BindingFailure): string {
+	const owner = extensionId.length > 0 ? extensionId : "<unnamed extension>";
+	switch (failure.kind) {
+		case "configuration":
+			return `${owner}: configuration error (${failure.violation.kind}): ${failure.violation.detail}`;
+		case "initialization":
+			return `${owner}: initialization failed, extension not bound: ${failure.detail}`;
+	}
+}
 
 /** Whether one injected implementation is the directed half of a directed command. */
 function isDirectedImplementation(value: unknown): value is DirectedCommandImplementation {

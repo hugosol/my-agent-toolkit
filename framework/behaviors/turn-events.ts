@@ -57,7 +57,7 @@ import type {
 	TurnUsage,
 } from "../interface/session";
 import type { OwnerReference } from "../interface/state";
-import type { TurnSignal, TurnSignalFacts } from "../core/protocol";
+import type { TurnSignal, TurnSignalFacts } from "../runtime/port";
 import { dispatchToGroups } from "./subscriptions";
 import type { RoundLives } from "./round-events";
 

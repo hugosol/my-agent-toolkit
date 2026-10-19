@@ -30,7 +30,7 @@ import connectBot from "../../entrypoints/omp/connect-bot";
 import { readConfig } from "../../framework/core/config";
 import { getConfig } from "../../framework/interface/general/config";
 import type { ExtensionDefinition } from "../../framework/interface/details/definition";
-import type { BindingResult } from "../../framework/core/protocol";
+import type { BindingResult } from "../../framework/runtime/port";
 import { portDouble } from "../framework/support/harness-port-double";
 import { REPO_ROOT } from "../harness-dock/baseline";
 import { ompDouble } from "./support/omp-double";

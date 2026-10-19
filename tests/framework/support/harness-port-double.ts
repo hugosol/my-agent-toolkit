@@ -53,7 +53,7 @@ import type {
 	StateValues,
 	TurnSignal,
 	TurnSignalFacts,
-} from "../../../framework/core/protocol";
+} from "../../../framework/runtime/port";
 import { SessionObservations } from "../../../framework/core/observations";
 import { StateStore } from "../../../framework/core/state";
 import { SubagentAccess } from "../../../framework/core/subagent-access";

@@ -75,7 +75,7 @@ import type {
 	RoundEvent,
 	SubscriptionGroup,
 } from "../interface/session";
-import type { RoundObservation, SessionDisposal } from "../core/protocol";
+import type { RoundObservation, SessionDisposal } from "../runtime/port";
 import { WAIT_RESOLUTION_MS } from "../modules/files";
 import { ACTIVITY_OF_EDGE, type SessionActivityAxis } from "./session-activity";
 import { dispatchToGroups } from "./subscriptions";

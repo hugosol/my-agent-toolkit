@@ -27,7 +27,7 @@ import type {
 	CommandAction,
 	CommandActionsDeclaration,
 } from "../interface/command";
-import type { CommandInvocation } from "../core/protocol";
+import type { CommandInvocation } from "../runtime/port";
 
 /**
  * The help one `actions` command prints: the command's own line, then one line per declared

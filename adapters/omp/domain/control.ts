@@ -8,7 +8,7 @@
  */
 import type { FeedbackTransport } from "../../../framework/interface/feedback";
 import type { OwnerReference } from "../../../framework/interface/state";
-import type { BoundCommand, MarkerTransport, StateValues } from "../../../framework/core/protocol";
+import type { BoundCommand, MarkerTransport, StateValues } from "../../../framework/runtime/port";
 import { canAcceptInputOf } from "./context/queries";
 import type { OmpExtensionApi, OmpSessionContext } from "../internal/native";
 

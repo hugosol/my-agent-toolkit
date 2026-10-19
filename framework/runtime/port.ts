@@ -1,13 +1,18 @@
 /**
- * The protocol between the framework's harness-independent behavior and an
- * harness adapter.
+ * The single internal port between the framework's harness-independent behavior and
+ * a harness adapter.
  *
  * Adapters translate native capabilities into this port and translate framework
  * outcomes back into native effects; the behavior itself never sees a native API.
  * Failures travel as data, so an adapter can report them on whatever non-model
  * channel its harness offers without deciding what counts as a conflict.
+ *
+ * The contracts it refers to — Session, State, Feedback, Host facts, Subagent, Command
+ * and the authoring declaration — are canonical in `framework/interface`; this module
+ * refers to them rather than restating or re-exporting them. It is framework/adapter
+ * internal: extensions never import it.
  */
-import type { CanAcceptInput, RecognizedDirective } from "../interface/command";
+import type { CanAcceptInput } from "../interface/command";
 import type { ExtensionDefinition } from "../interface/details/definition";
 import type { FeedbackTransport } from "../interface/feedback";
 import type { CatalogPriceSource, ProviderAccess, ProviderHttpFacts } from "../interface/host-facts";
@@ -22,7 +27,7 @@ import type {
 } from "../interface/session";
 import type { DeclaredValueSeam, OwnerCapabilityHandle, OwnerReference } from "../interface/state";
 import type { SubagentIntegration } from "../interface/subagent";
-import type { ConfigurationViolation } from "./violations";
+import type { ConfigurationViolation } from "../core/violations";
 
 /** The State values one write path records, by field name. */
 export type StateValues = Readonly<Record<string, boolean>>;
@@ -437,17 +442,6 @@ export interface PromptContribution {
 	readonly attribution: "agent";
 }
 
-/** The framework's normalization of a directed command's argument.
- *
- * `activate` — the empty argument names `on`; `deactivate` — `off` names `off`;
- * `unrecognized` — any other text, carried verbatim. Normalizing in the framework keeps
- * the command surface's one vocabulary in one place, so an assembly never re-implements
- * it and an extension reads one shape whatever surface the user typed on.
- */
-export type DirectedDirective =
-	| RecognizedDirective
-	| { readonly kind: "unrecognized"; readonly argument: string };
-
 /**
  * The facts a harness adapter supplies for one command invocation.
  *
@@ -825,14 +819,3 @@ export type BindingFailure =
 export type BindingResult =
 	| { readonly bound: true; readonly definition: ExtensionDefinition }
 	| { readonly bound: false; readonly failures: readonly BindingFailure[] };
-
-/** The deterministic text of one binding failure, independent of where it is reported. */
-export function describeBindingFailure(extensionId: string, failure: BindingFailure): string {
-	const owner = extensionId.length > 0 ? extensionId : "<unnamed extension>";
-	switch (failure.kind) {
-		case "configuration":
-			return `${owner}: configuration error (${failure.violation.kind}): ${failure.violation.detail}`;
-		case "initialization":
-			return `${owner}: initialization failed, extension not bound: ${failure.detail}`;
-	}
-}

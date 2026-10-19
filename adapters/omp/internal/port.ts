@@ -14,7 +14,7 @@
  */
 import type { ExtensionDefinition } from "../../../framework/interface/details/definition";
 import type { OwnerReference } from "../../../framework/interface/state";
-import type { HarnessPort } from "../../../framework/core/protocol";
+import type { HarnessPort } from "../../../framework/runtime/port";
 import { observeSessionContext } from "../domain/context/events";
 import { createContextTracker } from "../domain/context/queries";
 import { registerControl } from "../domain/control";

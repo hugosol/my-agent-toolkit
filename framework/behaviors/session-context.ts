@@ -22,7 +22,7 @@
 import type { ExtensionDefinition } from "../interface/details/definition";
 import { handOverReading, type ObservationHandOver, type SessionObservations } from "../core/observations";
 import type { SubscriptionGroup } from "../interface/session";
-import type { ObservationSource, SessionContextObservation } from "../core/protocol";
+import type { ObservationSource, SessionContextObservation } from "../runtime/port";
 import { dispatchToGroups } from "./subscriptions";
 
 /** What one binding's context collection arranges itself with. */
