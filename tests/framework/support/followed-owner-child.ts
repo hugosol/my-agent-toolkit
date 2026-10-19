@@ -18,7 +18,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { type FollowedAccessReader } from "../../../framework/core/followed-owners";
 import { openOwnerAccess } from "../../../framework/modules/local-access";
-import { type ExtensionDefinition, defineExtension } from "../../../framework/public";
+import { type ExtensionDefinition, defineExtension } from "../../../framework/interface";
 import { portDouble } from "./harness-port-double";
 
 /** What one following process is asked to do. */

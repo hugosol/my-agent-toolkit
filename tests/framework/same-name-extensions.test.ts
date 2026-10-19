@@ -14,7 +14,7 @@
  */
 import { describe, expect, test } from "bun:test";
 import { type OmpExtensionApi, ompAdapter } from "../../adapters/omp";
-import { defineExtension } from "../../framework/public";
+import { defineExtension } from "../../framework/interface";
 
 const SHARED_ID = "codebase-tools";
 const SHARED_COMMAND = "codebase-tools";

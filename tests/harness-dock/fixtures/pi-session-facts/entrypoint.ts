@@ -13,7 +13,7 @@
  * never saw the delivery".
  */
 import { piAdapter } from "../../../../adapters/pi";
-import type { ExtensionDefinition } from "../../../../framework/public";
+import type { ExtensionDefinition } from "../../../../framework/interface";
 import type { SessionEventDelivery } from "../../../../framework/interface/session";
 import { PI_SESSION_FACTS_PREFIX } from "./prefix";
 

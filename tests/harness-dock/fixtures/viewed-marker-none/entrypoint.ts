@@ -6,7 +6,7 @@
  * one from its own declared default — never a copy of every line the Owner's session shows.
  */
 import { type OmpExtensionApi, ompAdapter } from "../../../../adapters/omp";
-import { type ExtensionDefinition, defineExtension } from "../../../../framework/public";
+import { type ExtensionDefinition, defineExtension } from "../../../../framework/interface";
 
 /** The extension id whose marker line the dock reads. */
 export const NONE_MARKER_ID = "marker-none-probe";

@@ -23,8 +23,9 @@ import type {
 } from "../../adapters/omp";
 import * as frameworkOmp from "../../adapters/omp";
 import { feedbackTransport, noticeTransport } from "../../adapters/omp/domain/feedback";
-import type { CommandDelivery } from "../../framework/core/protocol";
-import { type CommandImplementations, defineExtension } from "../../framework/public";
+import type { CommandDelivery } from "../../framework/interface/command";
+import type { CommandImplementations } from "../../framework/interface/command";
+import { defineExtension } from "../../framework/interface";
 
 /** A definition whose whole behavior is one directed command the assembly implements. */
 const PROBE = defineExtension({

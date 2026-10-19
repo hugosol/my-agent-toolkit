@@ -9,7 +9,7 @@
  * operator what to fix, and the whole definition is rejected anyway.
  */
 import { isPlainMapping, normalizeCommandArgument } from "./assembly";
-import type { ExtensionDefinition } from "./definition";
+import type { ExtensionDefinition } from "../interface/details/definition";
 
 /** The configuration rules the framework refuses to resolve implicitly. */
 export type ConfigurationViolationKind =

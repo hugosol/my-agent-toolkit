@@ -8,13 +8,9 @@
  * out, and which action ran is what the implementation recorded.
  */
 import { describe, expect, test } from "bun:test";
-import type { ActionDelivery } from "../../framework/core/protocol";
-import {
-	type CommandAction,
-	type CommandImplementations,
-	type ExtensionDefinition,
-	defineExtension,
-} from "../../framework/public";
+import type { ActionDelivery } from "../../framework/interface/command";
+import type { CommandAction, CommandImplementations } from "../../framework/interface/command";
+import { type ExtensionDefinition, defineExtension } from "../../framework/interface";
 import { portDouble } from "./support/harness-port-double";
 
 /** The command under test, with the three actions `/budget` declares. */

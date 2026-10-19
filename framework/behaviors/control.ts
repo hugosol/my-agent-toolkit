@@ -15,11 +15,10 @@
  * This module is harness-independent: it reads and writes State and calls the
  * adapter-supplied effect transports, and names no native API.
  */
-import type { ExtensionDefinition } from "../core/definition";
+import type { CommandDelivery, DirectedCommandImplementation } from "../interface/command";
+import type { ExtensionDefinition } from "../interface/details/definition";
 import type {
-	CommandDelivery,
 	CommandInvocation,
-	DirectedCommandImplementation,
 	DirectedDirective,
 	StateValues,
 } from "../core/protocol";

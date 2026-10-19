@@ -26,7 +26,7 @@ import {
 	piAdapter,
 } from "../../../../adapters/pi";
 import type { HttpRequestOptions } from "../../../../framework/modules/http";
-import type { SubagentIntegration } from "../../../../framework/public";
+import type { SubagentIntegration } from "../../../../framework/interface/subagent";
 import { MODEL_COST } from "../../../../extensions/model-cost/definition";
 import { MODEL_COST_HARNESS } from "../../../../extensions/model-cost/harnesses/pi";
 import { MODEL_COST_WIDGET_KEY, attachModelCostWidget } from "../../../../extensions/model-cost/harnesses/pi/widget";

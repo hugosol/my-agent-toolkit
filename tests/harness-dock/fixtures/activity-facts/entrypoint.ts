@@ -18,7 +18,7 @@
  * is the framework's dispatch, never a behavior of its own.
  */
 import { type OmpExtensionApi, ompAdapter } from "../../../../adapters/omp";
-import { type ExtensionDefinition, defineExtension } from "../../../../framework/public";
+import { type ExtensionDefinition, defineExtension } from "../../../../framework/interface";
 import type { RoundDelivery, SessionActivityDelivery, SessionEventDelivery } from "../../../../framework/interface/session";
 
 /** The extension id whose stderr lines the dock reads. */

@@ -18,7 +18,8 @@ import { describe, expect, test } from "bun:test";
 import { CODEBASE_TOOLS } from "../../extensions/codebase-tools/definition";
 import type { SessionEvent } from "../../framework/interface/session";
 import type { OwnerReference } from "../../framework/interface/state";
-import { type CommandImplementations, type ExtensionDefinition, defineExtension } from "../../framework/public";
+import type { CommandImplementations } from "../../framework/interface/command";
+import { type ExtensionDefinition, defineExtension } from "../../framework/interface";
 import { portDouble } from "./support/harness-port-double";
 
 /** The owner a delivery acts on unless one is named. */

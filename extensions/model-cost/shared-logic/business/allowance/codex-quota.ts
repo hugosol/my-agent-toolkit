@@ -251,7 +251,7 @@ export function createCodexQuota(inputs: CodexQuotaInputs): CodexQuota {
 		if (fiveHour !== undefined && weekly !== undefined) {
 			// The measurement is folded in as the batch is applied, and the write it may start is
 			// deliberately not waited for: a handler's promise is no barrier for the framework
-			// (`framework/core/assembly.ts`), and nothing about this report depends on the file.
+			// (`framework/interface/details/implementation.ts`), and nothing about this report depends on the file.
 			void inputs.estimate.observe({
 				fiveHour: {
 					usedPercent: fiveHour.usedPercent,

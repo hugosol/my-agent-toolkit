@@ -3,7 +3,7 @@
  * harness-independent half of the framework.
  *
  * This module is adapter-facing, not an author entry: extension authors declare with
- * `framework/public.ts`, and a harness adapter (for OMP, `adapters/omp/index.ts`)
+ * `framework/interface`, and a harness adapter (for OMP, `adapters/omp/index.ts`)
  * calls into this.
  *
  * Ordering is the contract: every fallible step (configuration rules, the definition's file, the
@@ -28,21 +28,24 @@
  * cleanup when the session the instance *serves* is disposed — an ordinary switch only moves that
  * owner — and this module only decides which binding observes which boundary.
  */
-import {
-	type ActionsCommandImplementation,
-	type CommandImplementations,
-	type ExtensionFactory,
-	type ExtensionImplementation,
-	isPlainMapping,
-} from "../core/assembly";
+import { isPlainMapping } from "../core/assembly";
+import type {
+	ActionsCommandImplementation,
+	CommandImplementations,
+	DirectedCommandImplementation,
+} from "../interface/command";
+import type {
+	ExtensionFactory,
+	ExtensionImplementation,
+} from "../interface/details/implementation";
 import {
 	BOUND_CONTROL_KINDS,
 	BOUND_STATE_INHERITANCES,
 	BOUND_STATE_PERSISTENCES,
 	activationField,
 	stateInheritance,
-	type ExtensionDefinition,
 } from "../core/definition";
+import type { ExtensionDefinition } from "../interface/details/definition";
 import type { FeedbackTransport } from "../interface/feedback";
 import type { SessionCapability } from "../interface/session";
 import {
@@ -50,7 +53,6 @@ import {
 	type BindingFailure,
 	type BindingResult,
 	describeBindingFailure,
-	type DirectedCommandImplementation,
 	type ObservationSource,
 	type ObservedSession,
 	type PromptContribution,

@@ -1,73 +1,44 @@
 /**
- * The definition entry of the semantic extension framework, and the assembly surface an
- * extension's implementation is written against.
+ * The remaining mixed framework entry: the capability declarations and general functions whose
+ * own cutover has not completed yet.
  *
- * This is the whole authoring surface: declare an extension with
- * {@link defineExtension} and the exported configuration types, build its implementation in the
- * factory an assembly hands a harness adapter (`adapters/omp/index.ts`), and subscribe to
- * the semantic events that implementation reacts to. Nothing here names a harness, and no type
- * here is one a harness could add to.
+ * The authoring contract — `defineExtension`, its definition and implementation types — is
+ * canonical in `framework/interface`. State, Session, Prompt, Marker, Feedback, Host facts,
+ * Subagent, configuration and Command each own their declarations and are imported from their own
+ * entries; this module re-publishes only what this migration has not moved yet, so that existing
+ * consumers keep exactly one temporary path. It will be reduced as each remaining capability lands
+ * and removed with the final retirement; no compatibility alias or forwarding module is added.
  *
- * Two layers are deliberately visible and no third one:
- *
- * - the *declaration* — the definition, its State, its commands, its prompts, its marker and its
- *   configuration — which is plain data;
- * - the *assembly* — the factory that builds the implementation, the semantics the extension
- *   depends on, and the directory its relative configuration path is resolved against — which is
- *   what an entrance module hands its harness adapter.
- *
- * The framework's port, its internal dispatch and its State store are not part of this surface:
- * an extension observes State and effects through the delivery its own command or handler
- * receives, never by asking the framework for a writer or a subscriber. Session vocabulary is
- * imported from `framework/interface/session`, State's declarations and managed operations from
- * `framework/interface/state`, the prompt slot and its strategy from `framework/interface/prompt`,
- * and the marker text from `framework/interface/marker`; this entry carries the definition/assembly
- * surface and the capability types that have not yet moved.
- *
- * The configuration one extension declares is part of its definition, so its types are
- * here; the configuration API the extension's shared logic reads through — `getConfig`,
- * `readConfig` and the two error classes — lives in `framework/core/config.ts`, which is
- * host-independent exactly as this entry is.
+ * Nothing here names a harness, and no type here is one a harness could add to.
  */
-export {
-	type CommandDeclaration,
-	type CommandActionsDeclaration,
-	type CommandDirectedDeclaration,
-	type CommandToggleDeclaration,
-	type ConfigFieldType,
-	type ControlKind,
-	type ExtensionConfigDeclaration,
-	type ExtensionDefinition,
-	defineExtension,
-} from "./core/definition";
-
-/** Offline checklist declarations; the checker is a separate tooling entry, never a startup hook. */
-export type { HarnessIntegrationDeclaration, SubagentCapability, SubagentExecutionMode } from "./core/integration";
-
 /**
- * The assembly surface: the implementation factory, what it builds, and the generic assembly
- * information a harness adapter binds. All of it is type-level — an implementation is data the
- * framework connects, never a function this entry hands back.
+ * The Command contract: what an extension declares and implements for its commands, and what a
+ * command delivery carries. It is canonically owned by `framework/interface/command`; this
+ * temporary export block is the path existing consumers still read.
  */
 export type {
 	ActionsCommandImplementation,
+	ActionDelivery,
+	CanAcceptInput,
 	CommandAction,
+	CommandActionsDeclaration,
+	CommandDeclaration,
+	CommandDelivery,
+	CommandDirectedDeclaration,
 	CommandImplementation,
 	CommandImplementations,
-	ExtensionAssembly,
-	ExtensionFactory,
-	ExtensionImplementation,
-	ImplementationContext,
-	InitializationDelivery,
-} from "./core/assembly";
+	CommandToggleDeclaration,
+	ControlKind,
+	DirectedCommandImplementation,
+	RecognizedDirective,
+} from "./interface/command";
 
 /**
  * The configuration failures shared logic may observe, and the reader a suite drives a file
  * through.
  *
  * They are types and errors, not values this entry hands out: `getConfig`, `readConfig` and the
- * two error classes stay in `framework/core/config.ts`, which shared logic imports directly — the
- * entry hands out the declaration function and the HTTP request below, and nothing else.
+ * two error classes stay in `framework/core/config.ts`, which shared logic imports directly.
  */
 export type { ConfigReader, ConfigSource } from "./core/config";
 
@@ -83,26 +54,13 @@ export type { ConfigReader, ConfigSource } from "./core/config";
 export { HttpConfigurationError, type HttpRequestOptions, request } from "./modules/http";
 
 /**
- * The remaining command and assembly-adjacent facts still exported from the protocol.
+ * The remaining command-adjacent facts still exported from the protocol.
  *
  * Session vocabulary and its support leaves are imported from `framework/interface/session`,
  * `framework/interface/state`, `framework/interface/feedback` and `framework/interface/host-facts`;
  * this entry no longer re-exports the Session implementation or any adapter-only type.
  */
-export type {
-	ActionDelivery,
-	CanAcceptInput,
-	CommandDelivery,
-	CommandInvocation,
-	DirectedCommandImplementation,
-	DirectedDirective,
-	RecognizedDirective,
-	SubagentIntegration,
-	SubagentIntegrationFailure,
-} from "./core/protocol";
-
-/** The semantics an assembly may declare its extension additional dependency on. */
-export type { DeclarableRequiredSemantic, RequiredSemantic } from "./core/requirements";
+export type { CommandInvocation, DirectedDirective } from "./core/protocol";
 
 /**
  * The framework's general safe-file module: the one coordinated read-modify-publish shared logic

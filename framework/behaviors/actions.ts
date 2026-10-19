@@ -20,13 +20,14 @@
  * This module is harness-independent: it reads the invocation facts and the declaration, and
  * names no native API.
  */
-import {
-	type ActionsCommandImplementation,
-	type CommandAction,
-	normalizeCommandArgument,
-} from "../core/assembly";
-import type { CommandActionsDeclaration } from "../core/definition";
-import type { ActionDelivery, CommandInvocation } from "../core/protocol";
+import { normalizeCommandArgument } from "../core/assembly";
+import type {
+	ActionsCommandImplementation,
+	ActionDelivery,
+	CommandAction,
+	CommandActionsDeclaration,
+} from "../interface/command";
+import type { CommandInvocation } from "../core/protocol";
 
 /**
  * The help one `actions` command prints: the command's own line, then one line per declared

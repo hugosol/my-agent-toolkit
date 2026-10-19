@@ -35,7 +35,7 @@ import * as frameworkOmp from "../../../adapters/omp";
 import { piAdapter } from "../../../adapters/pi";
 import type { SessionContextDelivery, SessionFacts } from "../../../framework/interface/session";
 import type { OwnerReference } from "../../../framework/interface/state";
-import { defineExtension, type ExtensionDefinition } from "../../../framework/public";
+import { defineExtension, type ExtensionDefinition } from "../../../framework/interface";
 import { type PortDouble, portDouble } from "../../framework/support/harness-port-double";
 import { boundPiSurface, type PiSurfaceSession } from "../../framework/support/pi-surface-double";
 import { controlledPiSurface, type ControlledPiSurface, type HostSession } from "../support/pi-host";

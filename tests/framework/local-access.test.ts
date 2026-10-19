@@ -28,7 +28,7 @@ import { tmpdir } from "node:os";
 import * as path from "node:path";
 import { StateStore } from "../../framework/core/state";
 import { SubagentAccess } from "../../framework/core/subagent-access";
-import { defineExtension } from "../../framework/public";
+import { defineExtension } from "../../framework/interface";
 import {
 	type AccessLocation,
 	type AccessTarget,

@@ -26,7 +26,7 @@ import type {
 } from "../../framework/interface/session";
 import type { OwnerReference } from "../../framework/interface/state";
 import type { TurnSignal } from "../../framework/core/protocol";
-import type { ExtensionDefinition } from "../../framework/public";
+import type { ExtensionDefinition } from "../../framework/interface";
 import { type PortDouble, portDouble } from "./support/harness-port-double";
 
 /** The main session's owner, as an adapter resolves it. */

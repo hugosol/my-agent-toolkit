@@ -15,5 +15,6 @@ Round end confirmation, Local access and close-out coordination stay behind this
 cross the same interface as extensions; internal tests may drive internal seams. Import checks enforce
 engineering encapsulation, not a security sandbox for arbitrary code in the same process.
 
-Other capability authoring contracts have not all moved: `framework/public` remains the authoring
-entry, but does not export Session types.
+Other capability authoring contracts have not all moved: the root authoring entry is
+`framework/interface` (with `defineExtension` and the definition/implementation contract), while
+General's public functions remain at `framework/public`. Neither entry exports Session types.

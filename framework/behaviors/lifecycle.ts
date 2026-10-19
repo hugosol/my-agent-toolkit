@@ -28,8 +28,8 @@
  * This module is harness-independent: it calls the implementation's own entries and the
  * reporting callback it was handed, and names no native API.
  */
-import type { ExtensionImplementation, InitializationDelivery } from "../core/assembly";
-import type { SubagentIntegration } from "../core/protocol";
+import type { ExtensionImplementation, InitializationDelivery } from "../interface/details/implementation";
+import type { SubagentIntegration } from "../interface/subagent";
 
 /** The completion of an implementation that declares no initialization: settled before it starts. */
 const SETTLED: Promise<void> = Promise.resolve();

@@ -2,11 +2,11 @@
  * Offline declaration matching, not behavior verification or runtime admission.
  * No adapter, extension implementation, configuration or harness is loaded by this module.
  */
-import type { ExtensionDefinition } from "./core/definition";
+import type { ExtensionDefinition } from "./interface/details/definition";
+import type { SubagentCapability } from "./interface/subagent";
 import type {
 	ExtensionHarnessEntry,
 	HarnessIntegrationDeclaration,
-	SubagentCapability,
 	SubagentExecutionMode,
 } from "./core/integration";
 

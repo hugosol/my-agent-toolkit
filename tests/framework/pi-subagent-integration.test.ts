@@ -27,7 +27,8 @@ import { tmpdir } from "node:os";
 import * as path from "node:path";
 import { loadPiSubagentProvider } from "../../adapters/pi/domain/subagent/internal/provider";
 import { describe, expect, test } from "bun:test";
-import type { InitializationDelivery, SubagentIntegrationFailure } from "../../framework/public";
+import type { InitializationDelivery } from "../../framework/interface";
+import type { SubagentIntegrationFailure } from "../../framework/interface/subagent";
 import { withCapturedStderrAsync } from "./support/captured-stderr";
 import { sessionFileDir } from "./support/pi-session-files";
 import {

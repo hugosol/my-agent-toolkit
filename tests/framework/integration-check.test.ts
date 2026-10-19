@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import type { ExtensionDefinition } from "../../framework/core/definition";
+import type { ExtensionDefinition } from "../../framework/interface/details/definition";
 import type { HarnessIntegrationDeclaration } from "../../framework/core/integration";
 import { checkAdapterIntegrations } from "../../framework/integration-check";
 

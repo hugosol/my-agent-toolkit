@@ -23,7 +23,7 @@
  *   minted, no edge is dispatched and no Turn is attributed. The round axis stays the one owner of the
  *   Round, its identity and its end.
  */
-import type { ExtensionDefinition } from "../core/definition";
+import type { ExtensionDefinition } from "../interface/details/definition";
 import type {
 	AgentActivity,
 	RoundEvent,

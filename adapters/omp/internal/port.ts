@@ -12,7 +12,7 @@
  * registered is decided by the harness-independent behavior, and what a command does is the
  * framework's control behavior.
  */
-import type { ExtensionDefinition } from "../../../framework/core/definition";
+import type { ExtensionDefinition } from "../../../framework/interface/details/definition";
 import type { OwnerReference } from "../../../framework/interface/state";
 import type { HarnessPort } from "../../../framework/core/protocol";
 import { observeSessionContext } from "../domain/context/events";

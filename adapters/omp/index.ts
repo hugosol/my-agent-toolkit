@@ -12,8 +12,8 @@
  * framework's control behavior — the adapter only resolves the native facts that behavior needs.
  */
 import { createAssemblyBinding } from "../../framework/behaviors/assembly";
-import type { ExtensionAssembly } from "../../framework/core/assembly";
-import type { ExtensionDefinition } from "../../framework/core/definition";
+import type { ExtensionAssembly } from "../../framework/interface/details/implementation";
+import type { ExtensionDefinition } from "../../framework/interface/details/definition";
 import type { BindingResult } from "../../framework/core/protocol";
 import type { OmpExtensionApi } from "./internal/native";
 import { createOmpPort } from "./internal/port";
@@ -50,22 +50,10 @@ export type { OmpViewedSessionFacts } from "./domain/session/viewed-session";
 /**
  * Re-exported because it is what {@link OmpExtensionFactory} returns.
  *
- * Everything an *assembly* declares lives on the public authoring surface instead
- * (`framework/public.ts`), so this module offers no assembly type of its own.
+ * Everything an *assembly* declares lives on the root authoring interface instead, so this
+ * module offers no assembly type of its own.
  */
 export type { BindingResult };
-
-/**
- * The assembly information the OMP adapter accepts: the harness-independent
- * {@link ExtensionAssembly}, unchanged.
- *
- * The adapter adds no member of its own — what an extension builds, which framework semantics it
- * depends on and where its declared configuration sits mean the same thing on any harness — and
- * an assembly therefore names no harness when it states them. Version support is deliberately not
- * among them either: support is a claim about a verified combination, recorded in the repository's
- * support record, and no assembly supplies or widens it.
- */
-export type { ExtensionAssembly };
 
 /** The OMP extension factory an entrypoint re-exports; the loader calls it per binding. */
 export type OmpExtensionFactory = (pi: OmpExtensionApi) => BindingResult;

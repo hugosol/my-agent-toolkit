@@ -50,11 +50,11 @@
  * document is read while this instance initializes, beside the consumption baseline, so a restart
  * continues the same measurement instead of re-anchoring on its first report.
  */
-import type { ExtensionImplementation, InitializationDelivery } from "../../../framework/core/assembly";
+import type { ExtensionImplementation, InitializationDelivery } from "../../../framework/interface/details/implementation";
 import type { FeedbackTransport } from "../../../framework/interface/feedback";
 import type { CatalogPriceSource, ProviderAccess } from "../../../framework/interface/host-facts";
 import type { SemanticEventHandlers, SessionCapability } from "../../../framework/interface/session";
-import type { SubagentIntegration } from "../../../framework/public";
+import type { SubagentIntegration } from "../../../framework/interface/subagent";
 import type { HttpRequestOptions } from "../../../framework/modules/http";
 import { DEFAULT_CODEX_QUOTA_TTL_MS, type CodexQuotaFailure, createCodexQuota } from "./business/allowance/codex-quota";
 import { CodexEstimateStore } from "./business/allowance/codex-estimate-store";

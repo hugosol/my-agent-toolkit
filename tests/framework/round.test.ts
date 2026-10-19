@@ -38,9 +38,10 @@ import type {
 	OmpSessionContext,
 } from "../../adapters/omp";
 import * as frameworkOmp from "../../adapters/omp";
-import type { CommandDelivery } from "../../framework/core/protocol";
+import type { CommandDelivery } from "../../framework/interface/command";
 import type { RoundDelivery, RoundEvent } from "../../framework/interface/session";
-import { type CommandImplementations, type ExtensionDefinition, defineExtension } from "../../framework/public";
+import type { CommandImplementations } from "../../framework/interface/command";
+import { type ExtensionDefinition, defineExtension } from "../../framework/interface";
 
 /** The definition under test: one directed command, so the arm path can be driven too. */
 const PROBE: ExtensionDefinition = defineExtension({

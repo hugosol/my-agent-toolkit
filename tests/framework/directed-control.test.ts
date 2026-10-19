@@ -16,8 +16,9 @@
  * and a value the framework "would have" derived from the argument is never recorded.
  */
 import { describe, expect, test } from "bun:test";
-import type { CommandDelivery, RecognizedDirective } from "../../framework/core/protocol";
-import { type CommandImplementations, type ExtensionDefinition, defineExtension } from "../../framework/public";
+import type { CommandDelivery, RecognizedDirective } from "../../framework/interface/command";
+import type { CommandImplementations } from "../../framework/interface/command";
+import { type ExtensionDefinition, defineExtension } from "../../framework/interface";
 import { type PortDouble, portDouble } from "./support/harness-port-double";
 
 /** One implementation call, as the injected implementation saw it. */

@@ -26,7 +26,8 @@
 import { readFileSync } from "node:fs";
 import { isAbsolute, resolve } from "node:path";
 import { parse } from "yaml";
-import { BOUND_CONFIG_FIELD_TYPES, type ConfigFieldType, type ExtensionDefinition } from "./definition";
+import { BOUND_CONFIG_FIELD_TYPES } from "./definition";
+import type { ConfigFieldType, ExtensionDefinition } from "../interface/details/definition";
 
 /** Reads the text of the configuration file at `path`; throws when it cannot be read. */
 export type ConfigReader = (path: string) => string;

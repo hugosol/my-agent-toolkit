@@ -13,7 +13,7 @@
  * no separate native event vocabulary to map and therefore no `events.ts`. The integration answer
  * below is the runtime fact, not the offline capability inventory in `declaration.ts`.
  */
-import type { SubagentIntegration } from "../../../../framework/core/protocol";
+import type { SubagentIntegration } from "../../../../framework/interface/subagent";
 import type { OmpExtensionApi } from "../../internal/native";
 
 /**
