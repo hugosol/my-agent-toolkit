@@ -26,7 +26,8 @@
  * written from rather than produced by the code under test.
  */
 import { afterEach, describe, expect, test } from "bun:test";
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
 import { setImmediate as immediate } from "node:timers/promises";
@@ -368,10 +369,13 @@ const BASELINE = {
 	weeklyResetsAt: RESET_WEEKLY_SECONDS * 1000,
 };
 
-afterEach(() => {
-	// A report-driven case may have left a best-effort write in flight; the retries let the platform's
-	// short-lived refusals pass rather than turning them into a removal failure.
-	for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true, maxRetries: 5, retryDelay: 20 });
+afterEach(async () => {
+	// A report-driven case may have left a best-effort write in flight. Awaiting each removal yields
+	// to that write, and the platform's own short retries let its handle close rather than turning a
+	// synchronous retry loop — which cannot let the pending write settle — into a removal failure.
+	for (const root of roots.splice(0)) {
+		await rm(root, { recursive: true, force: true, maxRetries: 20, retryDelay: 20 });
+	}
 });
 
 describe("a report's own pair is the only thing a sample may come from (P66)", () => {
