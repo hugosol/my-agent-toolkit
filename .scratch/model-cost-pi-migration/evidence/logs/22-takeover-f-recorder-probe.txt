@@ -1,7 +1,0 @@
-[named dump] exit=0 stdout={"readFileSync":"recorded","createServer":"recorded"} stderr=
-[named dump] dump exists=True
-[named dump] effect kinds/ops=["fs:readFileSync", "net:createServer"]
-[named dump] any effect targeting the dump path=[]
---- second run, dump variable unset ---
-[unnamed dump] exit=0 stdout={"readFileSync":"readFileSync","createServer":"createServer"} stderr=
-[unnamed dump] dump2 exists=False

@@ -1,8 +1,0 @@
-# integration TypeScript check — ticket 23
-# tree: C:/Users/hugos/AppData/Local/Temp/hyper-ticket-1MhF6a
-# HEAD: 8c7256f5bb0529371a4e970b53a6f29b030a56b4
-# date: 2026-10-16T12:15:22Z
-# cmd: bun run typecheck
-
-$ tsc --noEmit
-EXIT=0

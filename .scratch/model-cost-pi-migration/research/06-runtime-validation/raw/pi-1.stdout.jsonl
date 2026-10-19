@@ -1,3 +1,0 @@
-{"id":"s1","type":"response","command":"get_state","success":true,"data":{"model":{"id":"unknown","name":"unknown","api":"unknown","provider":"unknown","baseUrl":"","reasoning":false,"input":[],"cost":{"input":0,"output":0,"cacheRead":0,"cacheWrite":0},"contextWindow":0,"maxTokens":0},"thinkingLevel":"off","isStreaming":false,"isCompacting":false,"steeringMode":"one-at-a-time","followUpMode":"one-at-a-time","sessionId":"01a1406f-f210-76a6-b4be-b33f1ae6aa50","autoCompactionEnabled":true,"messageCount":0,"pendingMessageCount":0}}
-{"type":"extension_ui_request","id":"9acf1e1a-dc9e-4196-a83d-8ab17439d408","method":"setWidget","widgetKey":"agents"}
-{"type":"extension_ui_request","id":"0f2936f6-2391-434f-b9d4-69bfe9d3ed37","method":"setStatus","statusKey":"subagents"}

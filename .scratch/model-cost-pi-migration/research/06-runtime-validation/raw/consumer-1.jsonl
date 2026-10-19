@@ -1,8 +1,0 @@
-{"ts":"2026-10-15T16:40:43.535Z","at":"factory","tools":{"error":"Error: Extension runtime not initialized. Action methods cannot be called during extension loading."},"registry":["getRecord","hasRunning","spawn","waitForAll"]}
-{"ts":"2026-10-15T16:40:43.545Z","at":"bus.event","channel":"subagents:ready","data":{}}
-{"ts":"2026-10-15T16:40:43.545Z","at":"bus.event","channel":"subagents:scheduler_ready","data":{"sessionId":"01a1406f-f210-76a6-b4be-b33f1ae6aa50","jobCount":0}}
-{"ts":"2026-10-15T16:40:43.545Z","at":"session_start","reason":"startup","tools":[{"name":"read","exposure":"direct"},{"name":"bash","exposure":"direct"},{"name":"powershell","exposure":"direct"},{"name":"edit","exposure":"direct"},{"name":"write","exposure":"direct"},{"name":"grep","exposure":"direct"},{"name":"find","exposure":"direct"},{"name":"ls","exposure":"direct"},{"name":"Agent","exposure":"direct"},{"name":"SubagentWorkflow","exposure":"direct"},{"name":"get_subagent_result","exposure":"direct"},{"name":"steer_subagent","exposure":"direct"}],"registry":["getRecord","hasRunning","spawn","waitForAll"]}
-{"ts":"2026-10-15T16:40:43.548Z","at":"ping.send","why":"session_start","requestId":"wf06-session_start-1-1792082443548","registry":["getRecord","hasRunning","spawn","waitForAll"]}
-{"ts":"2026-10-15T16:40:43.549Z","at":"ping.reply","why":"session_start","requestId":"wf06-session_start-1-1792082443548","data":{"success":true,"data":{"version":2}}}
-{"ts":"2026-10-15T16:40:43.807Z","at":"ping.done","gotReply":true,"tries":0}
-{"ts":"2026-10-15T16:40:44.568Z","at":"session_shutdown","reason":"quit","registry":null}

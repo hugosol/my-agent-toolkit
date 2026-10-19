@@ -1,9 +1,0 @@
-rev: 1913dc91c21fd355025bcc421d0c472525a8845f
-branch: hyper/model-cost-pi-migration/22-efficiency-acceptance-a73e6b-411dc288ea83
-when(utc): 2026-10-16T13:29:22Z
-bun: 1.4.2 platform: MINGW64_NT-10.0-26200/x86_64
-OMP isolation installs: 18.5.0 18.5.0-codex-response-boundary 18.5.0-viewed-session 18.5.0-viewed-session-codex-response 
-worktree-vs-HEAD numstat:
-warning: in the working copy of 'bun.lock', LF will be replaced by CRLF the next time Git touches it
-warning: in the working copy of 'host-patches/omp-18.5.0-codex-response-boundary/patch.diff', LF will be replaced by CRLF the next time Git touches it
-warning: in the working copy of 'host-patches/omp-18.5.0-viewed-session/patch.diff', LF will be replaced by CRLF the next time Git touches it

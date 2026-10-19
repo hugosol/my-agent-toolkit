@@ -1,4 +1,0 @@
-A (dump named) exit=0 stdout={"readFileSync":"recorded","createServer":"recorded","data":"probe-subject"}
-A dump={"pid": 41108, "platform": "win32", "wroteAt": 1792154270691, "effects": [{"kind": "fs", "op": "readFileSync", "targets": ["C:\\Users\\hugos\\AppData\\Local\\Temp\\recorder-probe-jlap3ck2\\subject.txt", "utf8"], "at": 1792154270691, "outcome": "ok"}]}
-B (no dump named) exit=0 stdout={"readFileSync":"readFileSync","createServer":"createServer","data":"probe-subject"}
-B files=['dump-with-name.json', 'subject.txt']
