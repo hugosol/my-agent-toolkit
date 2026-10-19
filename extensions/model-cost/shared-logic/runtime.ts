@@ -55,7 +55,7 @@ import type { FeedbackTransport } from "../../../framework/interface/feedback";
 import type { CatalogPriceSource, ProviderAccess } from "../../../framework/interface/host-facts";
 import type { SemanticEventHandlers, SessionCapability } from "../../../framework/interface/session";
 import type { SubagentIntegration } from "../../../framework/interface/subagent";
-import type { HttpRequestOptions } from "../../../framework/modules/http";
+import type { HttpRequestOptions } from "../../../framework/interface/general/http";
 import { DEFAULT_CODEX_QUOTA_TTL_MS, type CodexQuotaFailure, createCodexQuota } from "./business/allowance/codex-quota";
 import { CodexEstimateStore } from "./business/allowance/codex-estimate-store";
 import {
@@ -166,7 +166,7 @@ export interface ModelCostRuntimeInputs {
 	/**
 	 * The outbound HTTP call this extension's provider queries make.
 	 *
-	 * Omitted means the framework's public HTTP module (`framework/modules/http.ts`), which is what
+	 * Omitted means the framework's public HTTP interface (`framework/interface/general/http.ts`), which is what
 	 * production runs on; an explicit value is that same single-request call as a caller substitutes
 	 * it, so a permanent case can exercise the whole balance query — its address, its credential
 	 * header, its budget and its connection path — without reaching a provider.

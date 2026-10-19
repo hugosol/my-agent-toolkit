@@ -28,7 +28,7 @@ import type { ProviderAccess } from "../../../framework/interface/host-facts";
 import type { SessionFacts, TurnUsage } from "../../../framework/interface/session";
 import type { OwnerReference } from "../../../framework/interface/state";
 import type { TurnSignal } from "../../../framework/core/protocol";
-import type { HttpRequestOptions } from "../../../framework/modules/http";
+import type { HttpRequestOptions } from "../../../framework/interface/general/http";
 import { testSessionCapability } from "../support/session-capability";
 import { type PortDouble, type RoundBoundary, portDouble } from "../../framework/support/harness-port-double";
 import { until } from "../../support/pending-query";

@@ -37,7 +37,7 @@ import { type ModelCostRuntime, createModelCostRuntime } from "../../../../exten
 import type { ProviderAccess, ProviderAccessFacts } from "../../../../framework/interface/host-facts";
 import type { SessionFacts, TurnOutcome } from "../../../../framework/interface/session";
 import type { TurnSignal } from "../../../../framework/core/protocol";
-import type { HttpRequestOptions } from "../../../../framework/modules/http";
+import type { HttpRequestOptions } from "../../../../framework/interface/general/http";
 import { type PortDouble, portDouble } from "../../../framework/support/harness-port-double";
 import { testSessionCapability } from "../../support/session-capability";
 

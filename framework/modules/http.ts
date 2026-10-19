@@ -1,11 +1,12 @@
 /**
- * The framework's general HTTP module: the one outbound request shared logic imports
- * directly, instead of every extension carrying its own transport.
+ * The general HTTP module's implementation: the one outbound request, the shared proxy table and
+ * the native client behind the extension-facing entry
+ * [`framework/interface/general/http.ts`](../interface/general/http.ts).
  *
  * It is harness-independent and delivery-free: an extension's shared logic imports `request`
- * through the framework's public entry, and a suite builds its own module over the injectable
- * seam inside this file rather than receiving an HTTP capability through a command or event
- * delivery. What makes it more than a rename of the platform's call is what it owns: the
+ * through that interface entry, and a suite builds its own module over the injectable seam inside
+ * this file rather than receiving an HTTP capability through a command or event delivery. What
+ * makes it more than a rename of the platform's call is what it owns: the
  * shared proxy table, the per-request choice among its entries, the precedence of the wait
  * budget, and the one place the framework's own configuration file is read and a request is
  * really made.
@@ -81,42 +82,7 @@ import {
 	type ConfigParser,
 	type ConfigReader,
 } from "../core/config";
-
-/** The whole of one request: what the caller prepares, and nothing the framework decides for it. */
-export interface HttpRequestOptions {
-	/** The HTTP method; `GET` when omitted. */
-	readonly method?: string;
-	/** The request headers, exactly as the caller prepared them. */
-	readonly headers?: Readonly<Record<string, string>>;
-	/** The request body, exactly as the caller prepared it; nothing is serialized. */
-	readonly body?: string;
-	/**
-	 * The wait budget for the whole exchange, in milliseconds. Omitted takes the shared
-	 * `http.defaultTimeoutMs`, and with that absent the built-in {@link BUILT_IN_TIMEOUT_MS}.
-	 */
-	readonly timeoutMs?: number;
-	/** `false` (or omitted) connects directly; a string names one shared proxy entry. */
-	readonly proxy?: false | string;
-}
-
-/**
- * One configuration failure that refuses a request before anything is sent: the shared file
- * cannot be read, or it does not declare what this request needs, or a declared wait budget is
- * not a wait this framework schedules.
- *
- * It is deliberately not a transport failure: nothing left the process, and no other path —
- * in particular no direct connection — was tried instead. Its `detail` is the deterministic
- * text of the failure.
- */
-export class HttpConfigurationError extends Error {
-	readonly detail: string;
-
-	constructor(detail: string) {
-		super(detail);
-		this.name = "HttpConfigurationError";
-		this.detail = detail;
-	}
-}
+import { HttpConfigurationError, type HttpRequestOptions } from "../interface/general/http-contract";
 
 /** One outbound call, as this module makes it. */
 export interface HttpTransportInit {
@@ -584,9 +550,10 @@ const sharedModule = createHttpModule();
 /**
  * Send one request through the framework's general HTTP module.
  *
- * This is the call shared logic imports; `createHttpModule` is the module's own test seam and
- * is not part of the public surface. See the module comment above for the request's meaning,
- * the proxy selection rules and the wait budget.
+ * The extension-facing entry ([`framework/interface/general/http.ts`](../interface/general/http.ts))
+ * re-exports this call; `createHttpModule` is the module's own test seam and is not part of the
+ * public surface. See the module comment above for the request's meaning, the proxy selection
+ * rules and the wait budget.
  */
 export function request(url: string, options: HttpRequestOptions = {}): Promise<Response> {
 	return sharedModule.request(url, options);

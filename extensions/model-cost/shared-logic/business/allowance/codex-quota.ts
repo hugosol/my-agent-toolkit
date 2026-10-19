@@ -52,7 +52,7 @@
  * a stale held value from being paired with a fresh report.
  */
 import type { ProviderAccess } from "../../../../../framework/interface/host-facts";
-import { HttpConfigurationError, type HttpRequestOptions, request } from "../../../../../framework/modules/http";
+import { HttpConfigurationError, type HttpRequestOptions, request } from "../../../../../framework/interface/general/http";
 import type { CodexEstimateSink } from "./codex-estimate";
 import { createProviderRefresh } from "../../foundation/provider-refresh";
 

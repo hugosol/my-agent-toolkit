@@ -45,7 +45,7 @@ import type { ProviderAccess, ProviderAccessFacts } from "../../../framework/int
 import type { SessionFacts, TurnOutcome } from "../../../framework/interface/session";
 import type { OwnerReference } from "../../../framework/interface/state";
 import type { TurnSignal } from "../../../framework/core/protocol";
-import type { HttpRequestOptions } from "../../../framework/modules/http";
+import type { HttpRequestOptions } from "../../../framework/interface/general/http";
 import { type PortDouble, portDouble } from "../../framework/support/harness-port-double";
 import { testSessionCapability } from "../support/session-capability";
 import { uiBoundaryTimerOf } from "../support/ui-timer";

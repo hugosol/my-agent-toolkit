@@ -62,7 +62,7 @@ extension-facing exports.
 | `ExtensionConfigDeclaration`, `ConfigFieldType`, `BOUND_CONFIG_FIELD_TYPES` | [`framework/interface/details/definition.ts`](../interface/details/definition.ts) for the declarations; [`framework/core/definition.ts#L66`](../core/definition.ts#L66) for the internal bound set | The configuration an extension requires of its own `config.yaml`: the file's path, and the keys the file must carry with the type each must match. See [Extension configuration](#extension-configuration-declaration--file). |
 | `readConfig`, `getConfig`, `ConfigSource`, `ConfigReadOptions`, `ConfigReader`, `ConfigParser`, `ConfigLoadError`, `ExtensionConfigError` | [`framework/core/config.ts`](../core/config.ts) | The one reading, parsing and validating implementation, the values shared logic reads, the injectable seam it runs through, and the two error classes that keep a loading-time failure apart from a misuse. See [Extension configuration](#extension-configuration-declaration--file). |
 | `readConfigDocument`, `isScheduledWait`, `SCHEDULED_WAIT_TEXT`, `describeValue` | [`framework/core/config.ts`](../core/config.ts) | The same reading and parsing seam used for a document the framework interprets itself rather than validating against a declaration — the shared configuration file, where a missing file is an answer rather than a failure — and the shared vocabulary for a value that is not what a configuration requires and for a wait this harness's timer schedules. |
-| `request`, `HttpRequestOptions`, `HttpConfigurationError` | [`framework/public.ts`](../public.ts), defined at [`framework/modules/http.ts`](../modules/http.ts) | The framework's general HTTP module: the one call shared logic imports directly, what a request declares (method, headers, body, `timeoutMs`, `proxy`), and the configuration failure a request may reject with before anything is sent. It is a value — `request` is one of the entry's runtime exports. See [General HTTP module](#general-http-module). |
+| `request`, `HttpRequestOptions`, `HttpConfigurationError` | [`framework/interface/general/http.ts`](../interface/general/http.ts), implemented at [`framework/modules/http.ts`](../modules/http.ts) | The framework's general HTTP module: the one call shared logic imports directly, what a request declares (method, headers, body, `timeoutMs`, `proxy`), and the configuration failure a request may reject with before anything is sent. It is a value — `request` is one of the entry's runtime exports. See [General HTTP module](#general-http-module). |
 | `updateFile`, `SafeFileUpdateOptions`, `SafeFileUpdateError`, `SafeFileUpdateFailureKind` | [`framework/public.ts`](../public.ts), defined at [`framework/modules/files.ts`](../modules/files.ts) | The framework's general safe-file module: the one coordinated read-modify-publish call shared logic imports directly, the absolute target and update function it takes, the wait budget and abort it accepts, and the distinguishable failure a refused coordination rejects with. `updateFile` is a runtime export of that entry. See [General safe-file module](#general-safe-file-module). |
 | Adapter-facing delivery types (`NoticeTransport`, `MarkerTransport`, `StateValues`, `TurnSignal`, `TurnSignalFacts`); `FeedbackLevel` and `FeedbackTransport` are canonical in the [Feedback interface](../interface/feedback/index.ts), and `OwnerReference` in the [State interface](../interface/state/index.ts) | [`framework/core/protocol.ts#L34`](../core/protocol.ts), [`#L619`](../core/protocol.ts) | The facts and transports a harness adapter resolves; not authored by an extension. `HarnessPort.onTurn` ([`protocol.ts#L740`](../core/protocol.ts)) is the hook an adapter reports its mapped model-cycle facts through, and `HarnessPort.onRound` ([`protocol.ts#L650`](../core/protocol.ts)) the hook it reports its run-cycle facts through for the round axis's own synthesis. |
 
@@ -763,10 +763,12 @@ the next session.
 
 ## General HTTP module
 
-`request(url, options)` ([`framework/modules/http.ts`](../modules/http.ts)) is the framework's one
-outbound HTTP call, imported directly by shared logic through [`framework/public.ts`](../public.ts)
-rather than injected through a command or event delivery. It is deliberately not a business API: the
-caller prepares everything it means and interprets everything it gets back.
+`request(url, options)` ([`framework/interface/general/http.ts`](../interface/general/http.ts)) is
+the framework's one outbound HTTP call, imported directly by shared logic rather than injected
+through a command or event delivery. The deep implementation — the shared proxy table, the native
+client and the wait budget — remains in [`framework/modules/http.ts`](../modules/http.ts). It is
+deliberately not a business API: the caller prepares everything it means and interprets everything
+it gets back.
 
 | Parameter | Type | Meaning |
 | --- | --- | --- |
@@ -828,8 +830,10 @@ been read is outside it.
 
 **The seam.** `createHttpModule({ transport, configPath, reader, parser })`
 ([`http.ts`](../modules/http.ts)) builds a module over an injected call and shared file. It is
-the module's own seam, not part of the published surface; `tests/framework/http.test.ts` drives it so
-that no permanent case uses a network, and `scripts/http-transport-smoke.ts` proves the real transport
+the implementation's own seam, not part of the published surface; the
+[interface entry](../interface/general/http.ts) re-exports the module's one published call.
+`tests/framework/http.test.ts` drives it so that no permanent case uses a network, and
+`scripts/http-transport-smoke.ts` proves the real transport
 against loopback servers — a plain target and a TLS target, a plain proxy and an HTTPS proxy (both
 absolute-form and CONNECT), a body that stops before its end, a delayed body under a short budget and
 under a longer one, a refused proxy, a hung target for the built-in budget, and a proxy-environment trap
