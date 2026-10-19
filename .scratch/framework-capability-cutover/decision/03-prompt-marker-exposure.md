@@ -1,18 +1,20 @@
 # 确定 Prompt 与 Marker 的最小扩展可见范围
 
 Type: grilling
-Status: open
+Status: resolved
 Assignee: unassigned
 Blocked by: 01
 Parent: ../map.md
 
 ## Handoff
 
-- 已确认的努力范围与限制见地图 Notes；本票尚无 Lighthouse，没有具体设计获批。
-- 当前恢复点：从下方 Question 开始；依赖票存在时，先读取其已发布 Lighthouse，并确认其结果满足前置条件。
-- 候选方案与源码事实不是政策批准；只读调研不能替代实际行为验收。
-- 证据入口：framework/docs/capability-interface-architecture.md:151-161；framework/core/definition.ts:189-215；framework/core/protocol.ts:355-436；framework/core/assembly.ts:130-148；behaviors/injection.ts、marker.ts；上一轮只读调研未发现扩展直接消费 markers，非删除批准。
-- 本票只作决策，不修改生产代码；发布遵循 Wayfinder，普通讨论先留在对话，整票完成或暂停/保存/切换时再发布。
+- 完整结论与可恢复确认来源：[Prompt 与 Marker 最小扩展可见范围 Lighthouse](../lighthouse/03-prompt-marker-exposure.md)。Q1–Q4 分别确认范围、沿用语义与单文件入口，Q5 用户「同意，请继续」确认完整迁移验收要求并授权发布。
+- 本票问题已全部决定，无未回答的访谈分支。后续会话读取上述权威，不从原 Question 重新推定候选为未决。
+- 理由与排除分支见 Lighthouse：interface 面向扩展作者；没有现有消费者不是自动删除授权；不新增动态 Marker 操作、不增加浅转发 module，也不只靠类型隐藏内部字段。
+- 下游由 Command 票完成交付整体形状，Feedback / Host facts 与 authoring 票完成初始化/组合落点，整合票完成消费者清单、文档/ADR 更新、旧入口排程与真实 harness 验证矩阵；这些票仍须作自身决策，不表示实现完成。
+- 紧接发布的 Backtracer 追溯结果与下一前沿见下方 Comments；未发现新缺口时不新建追溯报告或重复下游票。
+- 证据入口：framework/core/definition.ts:189-215、core/protocol.ts:350-436 及命令交付、core/assembly.ts:130-148、behaviors/marker.ts:203-224、extensions/codebase-tools/definition.ts 与 connect-bot/definition.ts；完整证据限制见 Lighthouse。
+- 本票只作规划，未修改生产代码、未执行行为测试或 harness smoke；发布检查仅覆盖文档链接、tracker 状态与前沿。
 
 ## Question
 
@@ -26,4 +28,10 @@ Parent: ../map.md
 
 ## Comments
 
-尚未认领或开始访谈。
+### 完成发布与追溯（2026-10-19）
+
+- 本轮 Q1–Q5 的确认已发布至本票 Lighthouse；整票 resolved，认领已释放。用户明确要求沿用当前语义与调用方式、不扩展功能。
+- Backtracer 已按已发布变更回查统一 interface 原则与 State Lighthouse，并核对地图及当前决策票范围。意图信号（扩展作者最小知识、自己的标记/整区管理、实际对象无 transport 旁路、旧入口退役）分别由共同原则、State、Command、authoring 与整合票承接；模式信号（canonical 公开声明、受限实际对象、内部 seam 和外部效果组合）与上游一致。
+- 下游覆盖：Command 票已问及 markers 按本权威退出及 spread 泄漏；Feedback / Host facts 与 authoring 票已覆盖初始化交付与组合职责；整合票已覆盖消费者清单、文档/ADR、旧入口和真实扩展/两种 harness 验证。未发现新意图缺口、层级缺口、同类不对称或上游冲突，无需新增票或修改下游 Handoff。开放提供者不是已完成的设计或实现证据。
+- 尚未清晰的验证 seam / 最小宿主驱动仍归地图现有 fog，当前没有足够新事实使其毕业为独立问题；没有新确认的缺口待分派。
+- 下一前沿是 [确定 Feedback、Host facts 与 authoring 契约归属](04-host-feedback-authoring.md)；[确定 General 操作与内部配置 seam 的隔离](06-general-interface-cutover.md) 同样可开始。Command 仍等待 Feedback / Host facts 的决定。本会话不认领下一张票。
