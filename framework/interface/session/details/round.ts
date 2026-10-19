@@ -8,8 +8,8 @@
  * field of a past transition. What an end does state is how that end was established (see
  * {@link RoundEnding}), which is a fact about the observation rather than about the work.
  */
-import type { FeedbackTransport } from "../feedback";
-import type { OwnerReference } from "../state";
+import type { FeedbackTransport } from "../../feedback";
+import type { OwnerReference } from "../../state";
 import type { SessionFacts } from "./facts";
 
 /**

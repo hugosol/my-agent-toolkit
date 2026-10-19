@@ -5,8 +5,8 @@
  * reading reported and the provider/exact model the session ran at that same instant. It is never
  * persisted and never derived from a consumption figure; a later collection replaces it.
  */
-import type { FeedbackTransport } from "../feedback";
-import type { OwnerReference } from "../state";
+import type { FeedbackTransport } from "../../feedback";
+import type { OwnerReference } from "../../state";
 import type { SessionFacts } from "./facts";
 
 /**

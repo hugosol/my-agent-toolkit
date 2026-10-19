@@ -6,8 +6,8 @@
  * user-invoked skill are the same fact here; nothing about the text, the images or what the
  * submission turned out to be is part of it. Input an extension itself submits is not this fact.
  */
-import type { FeedbackTransport } from "../feedback";
-import type { OwnerReference } from "../state";
+import type { FeedbackTransport } from "../../feedback";
+import type { OwnerReference } from "../../state";
 import type { SessionFacts } from "./facts";
 
 /** One semantic input event: a session took up input the harness attributed to the user. */

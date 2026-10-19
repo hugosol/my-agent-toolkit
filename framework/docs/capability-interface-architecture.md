@@ -17,8 +17,9 @@ Only the State, Feedback and Host facts leaf contracts required by Session were 
 Other capability entries stay in place; the adapter port remains internal in `core/protocol.ts`
 until its own cutover. The import check uses an explicit list of remaining non-Session entries,
 not a blanket allowance for framework internals. No new disposal event, second dispatch, runtime
-registry or second adapter abstraction is introduced. Read [the complete Session consumption
-contract](../interface/session/README.md) before reading its implementation.
+registry or second adapter abstraction is introduced. Start at the [Session capability entry](../interface/session/index.ts) before reading its implementation.
+The root owns capability, current-observation and subscription entries; `details/` owns public domain
+contracts. This is navigation within one interface, not another capability or implementation layer.
 
 The following sections describe the overall target, not a directory-by-directory completion report.
 
@@ -116,15 +117,17 @@ framework/interface/
   session/
     index.ts
     observation.ts
-    events.ts
-    round.ts
-    turn.ts
-    activity.ts
-    context.ts
-    input.ts
-    commit.ts
-    unobserved.ts
-    disposal.ts
+    subscriptions.ts
+    details/
+      facts.ts
+      session.ts
+      round.ts
+      turn.ts
+      activity.ts
+      context.ts
+      input.ts
+      commit.ts
+      unobserved.ts
   command/
     index.ts
   prompt/
@@ -167,7 +170,11 @@ Session is a deep capability. The extension sees:
 - one subscription surface carrying the session-scoped event kinds;
 - the existing session-end and Round close-out contracts for the session's own end; adapter disposal facts are not a new extension event.
 
-Round, Turn, Activity, Context, Input, Commit, Unobserved, observation, access, and close-out are implementation modules behind that interface. They remain separate internal modules because they have different rules, different lifetimes, and different tests. They are not separately imported by extensions.
+The facts and deliveries for Round, Turn, Activity, Context, Input, Commit and Unobserved are public
+domain contracts under `session/details/`, exported through the Session entry. Their processing,
+observation sources, access and close-out coordination are implementation modules behind the
+interface. Those internal modules remain separate where their rules, lifetimes and tests differ;
+extensions do not import them.
 
 This follows the same shape as State: the extension sees the declared-value seam and retained capability; `StateStore`, owner lives, persistence, followed-owner read, and access are hidden behind it.
 

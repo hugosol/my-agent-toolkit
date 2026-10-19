@@ -8,8 +8,8 @@
  * holds. Nothing of the framework's own bookkeeping moves for it — no Round is opened or ended, no
  * Turn is attributed and no request is accounted.
  */
-import type { FeedbackTransport } from "../feedback";
-import type { OwnerReference } from "../state";
+import type { FeedbackTransport } from "../../feedback";
+import type { OwnerReference } from "../../state";
 import type { SessionFacts } from "./facts";
 
 /** One semantic event: one actual session's own write of its extension data was confirmed. */

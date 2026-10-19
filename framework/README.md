@@ -17,7 +17,7 @@ individual extension.
 | `public.ts` | The authoring door: `defineExtension`, plus the general HTTP module's `request` and `HttpConfigurationError`, the general safe-file module's `updateFile` and `SafeFileUpdateError`, and the definition, configuration and assembly types an extension may name. |
 
 **Session capability cutover:** Session's canonical consumer contracts now live under
-[`framework/interface/session`](interface/session/README.md). Factories receive `context.session`
+[`framework/interface/session`](interface/session/index.ts). Factories receive `context.session`
 with isolated observation reads and confirmed-write statements, never the concrete observation
 source. Session types are no longer exported by `public.ts` or `core/protocol.ts`; extension imports
 cannot reach Session internals. Small supporting State, Feedback and Host facts contracts live in

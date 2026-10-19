@@ -50,7 +50,7 @@ Framework adapter 服务于公共契约，extension 的宿主实现服务于这�
 
 1. **先明确业务含义。** 阅读目标扩展的领域文档与术语，区分业务需求和宿主实现方式，不从熟悉的原生 API 反推设计。
 2. **先查框架能力索引。** 判断需求是否已有声明、公共事实、生命周期、效果能力或通用基础能力可以承接。能用声明解决的，不另写一套运行逻辑。
-3. **读取 capability interface，而不是追读 implementation。** Session 已完成首个封装：从 [`framework/interface/session`](../interface/session/README.md) 阅读事实、观察、订阅、提交提示与 close-out 约定，工厂使用 `context.session`；不导入 `core/protocol`、具体观察来源或内部派发。其他 capability 尚未全部迁移，沿能力索引查其现有入口。不要因为框架内部某个对象“能做到”，就让 extension 依赖它。
+3. **读取 capability interface，而不是追读 implementation。** Session 已完成首个封装：从 [`framework/interface/session`](../interface/session/index.ts) 阅读事实、观察、订阅、提交提示与 close-out 约定，工厂使用 `context.session`；不导入 `core/protocol`、具体观察来源或内部派发。其他 capability 尚未全部迁移，沿能力索引查其现有入口。不要因为框架内部某个对象“能做到”，就让 extension 依赖它。
 4. **只有涉及宿主机制时，才进入 adapter 或 extension 的宿主实现。** 先判断它是公共映射还是扩展专属接入。缺少宿主事实，不应让 shared logic 猜测或读取私有字段。
 5. **最后决定新增代码的归属。** 已有能力就组合使用；业务缺口补在 extension；通用契约或基础能力缺口才考虑补在 framework。
 

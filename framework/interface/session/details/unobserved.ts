@@ -8,8 +8,8 @@
  * framework held is withdrawn, the session's identity stays, and no Round, Turn or billing fact is
  * minted for the loss.
  */
-import type { FeedbackTransport } from "../feedback";
-import type { OwnerReference } from "../state";
+import type { FeedbackTransport } from "../../feedback";
+import type { OwnerReference } from "../../state";
 import type { SessionFacts } from "./facts";
 
 /** One semantic event: one actual session's observation ceasing to be available. */

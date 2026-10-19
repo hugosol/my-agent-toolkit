@@ -7,8 +7,8 @@
  * that stays in the reading it was already delivered in produces nothing, whether the fact behind it
  * was a repeated native signal or an observation stating what this process already holds.
  */
-import type { FeedbackTransport } from "../feedback";
-import type { OwnerReference } from "../state";
+import type { FeedbackTransport } from "../../feedback";
+import type { OwnerReference } from "../../state";
 import type { SessionFacts } from "./facts";
 
 /**

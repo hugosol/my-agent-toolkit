@@ -1,20 +1,10 @@
 /**
- * The Session capability's read surface: what this process currently knows about each actual
- * session it has observed, and the one statement an extension may make about its own sessions.
- *
- * The read half is a *reading*, never a mutation path: an extension that attaches after a session is
- * already working reads what was already collected for it, without waiting for a further transition.
- * The returned values are isolated from the framework's authoritative record — a consumer may read
- * and pass them on, but changing one cannot change what a later read observes.
- *
- * The one write the extension states is that a write of one of this process's sessions really
- * landed in a storage another process also reads. It is a statement about a confirmed write, never
- * what was written, and the framework records it and hands the notice to the process serving the
- * session's owner.
+ * Read the current observations, including readings collected before the extension attached.
+ * Returned values are isolated: changing a reading cannot mutate the framework source.
  */
-import type { AgentActivity } from "./activity";
-import type { SessionContextReading } from "./context";
-import type { SessionFacts } from "./facts";
+import type { AgentActivity } from "./details/activity";
+import type { SessionContextReading } from "./details/context";
+import type { SessionFacts } from "./details/facts";
 import type { OwnerReference } from "../state";
 
 /**
@@ -65,15 +55,3 @@ export interface SessionObservationReader {
 	snapshot(): readonly SessionObservation[];
 }
 
-/**
- * The Session capability as an extension's factory receives it.
- *
- * `observations` is the live read surface above. `recordCommit` is the one statement an extension
- * makes rather than reads: that a write of one of this process's sessions really landed in a
- * storage another process also reads. It takes a session id and carries no content of the write.
- * The caller is responsible for calling it only after a write was really confirmed.
- */
-export interface SessionCapability {
-	readonly observations: SessionObservationReader;
-	readonly recordCommit: (sessionId: string) => void;
-}
