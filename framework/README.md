@@ -16,19 +16,19 @@ individual extension.
 | [`../adapters/`](../adapters/) | Each adapter root has exactly three entries: `index.ts` (public assembly entry), `internal/` (private native types, loaders and the per-binding `port.ts`), and `domain/` (the eight capability domains). `index.ts` assembles the port; `domain/session/events.ts` owns event mappings, `domain/session/queries.ts` reads identity and Session facts, and `domain/session/effects.ts` writes native State entries. Complex Turn and Round protocols remain internal to Session. OMP uses `domain/context/events.ts` and `domain/context/queries.ts`; pi keeps its simple context collection in `domain/context.ts`. `domain/host-facts.ts` reads the harness model catalog and its current provider credentials/addresses. Control, prompt, marker and feedback stay simple single-file mappings under `domain/`; both harnesses expose `domain/subagent/` for their native relationships and integration mappings, with pi's provider protocol kept inside that domain. `internal/native.ts` holds native types and pi's `internal/text-imports.ts` owns Node text loading. These internal files and the assembly are support, not capability domains: `index.ts` is the public adapter entry and `internal/port.ts` is the per-binding `HarnessPort` composition/wiring; neither is a capability. The complete eight-domain path map is in the [adapter navigation](docs/framework-capabilities.md#adapter-implementation-navigation). Extension presentation stays in `extensions/<id>/harnesses/`. |
 | `modules/` | The harness-independent implementations behind the general functions shared logic imports directly rather than receiving through a delivery: `http.ts` (the deep implementation behind [`interface/general/http.ts`](interface/general/http.ts): the shared proxy table, the per-request choice and the wait budget), `files.ts` (the deep implementation behind [`interface/general/files.ts`](interface/general/files.ts): the one `updateFile`, the coordination it takes and the publication it makes) and `local-access.ts` (the one way a process offers the declared values of an owner it serves to a session this harness runs in another process, and the way such a session delivers its own observation back to that owner's process — adapter-facing, since an extension never touches it; see [the general HTTP module](docs/framework-capabilities.md#general-http-module), [the general safe-file module](docs/framework-capabilities.md#general-safe-file-module) and [local access](docs/framework-capabilities.md#local-access-adapter-facing)). |
 
-**Session capability cutover:** Session's canonical consumer contracts now live under
-[`framework/interface/session`](interface/session/index.ts). Factories receive `context.session`
+**Capability interface cutover:** Every capability's canonical consumer contracts now live under
+[`framework/interface`](interface/index.ts). Factories receive `context.session`
 with isolated observation reads and confirmed-write statements, never the concrete observation
-source. Session types have no compatibility re-export from any mixed entry or the internal [`runtime/port.ts`](runtime/port.ts); extension imports
-cannot reach Session internals. Small supporting State, Prompt, Marker, Feedback and Host facts
-contracts live in neighboring interface entries; the Prompt and Marker entries publish declarations
-only, and the runtime deliveries no longer carry a marker transport. The root authoring entry now
-owns `defineExtension` and the whole definition/implementation contract, and Subagent and Command
-have their own canonical entries. Command's runtime delivery is now narrowed to its approved members:
+source. State, Prompt, Marker, Feedback, Host facts, Subagent and Command each own their
+declarations; the Prompt and Marker entries publish declarations only, and the runtime deliveries
+carry no marker transport. The root authoring entry owns `defineExtension` and the whole
+definition/implementation contract. Command's runtime delivery is narrowed to its approved members:
 the adapter's persistence callback and the marker-area transport are not reachable from a handler.
-General's HTTP, safe-file and configuration calls now live at their own direct interface entries,
-and the former temporary `public.ts` mixed entry is removed. See the
-[interface reading map](interface/README.md) and
+General's HTTP, safe-file and configuration calls live at their own direct interface entries.
+Session, State, authoring, Subagent, Command and General types have no compatibility re-export from
+any mixed entry or the internal [`runtime/port.ts`](runtime/port.ts); extension imports cannot reach
+framework internals. The former temporary `public.ts` mixed entry is removed, and the seven former
+extension import exceptions are cleared. See the [interface reading map](interface/README.md) and
 [overall direction and scope](docs/capability-interface-architecture.md).
 
 [`docs/framework-capabilities.md`](docs/framework-capabilities.md) is the symbol → meaning → source

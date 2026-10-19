@@ -1,7 +1,7 @@
 # my-agent-toolkit
 
-Shared semantic-extension framework plus its `codebase-tools` and `connect-bot` extensions,
-deployed into the `oh-my-pi` (`omp`) harness. The framework lives once under
+Shared semantic-extension framework plus its `codebase-tools`, `connect-bot` and `model-cost`
+extensions, deployed into the `oh-my-pi` (`omp`) and `pi` harnesses. The framework lives once under
 [`framework/`](framework), with native capability mappings under sibling [`adapters/`](adapters).
 Each adapter root has exactly three entries: `index.ts` (public entry), `internal/` (private native
 support and binding port), and `domain/` (the eight capability domains). Within a domain, event
@@ -34,7 +34,7 @@ bun run test:dock:serial # the same dock serially, for diagnosing shared state o
 The suites that drive a real session materialise the isolated exact install of the supported
 version into the gitignored `.cache/omp-baseline/18.5.0` on first run and reuse it afterwards.
 Every run uses a temporary agent state directory, so the default global install, the formal
-configuration and any running agent are untouched. `bun run test` runs all three suites.
+configuration and any running agent are untouched. `bun run test` runs the whole test tree.
 
 ## Contexts
 
