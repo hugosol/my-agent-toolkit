@@ -30,7 +30,7 @@
  */
 import { writeFileSync } from "node:fs";
 import { ompAdapter } from "../../../adapters/omp";
-import type { ExtensionDefinition } from "../../../framework/core/definition";
+import type { ExtensionDefinition } from "../../../framework/interface/details/definition";
 import { CONNECT_BOT } from "../../../extensions/connect-bot/definition";
 import { connectBotConfig } from "../../../extensions/connect-bot/shared-logic/panel/config";
 import { setPanelRequestForTest } from "../../../extensions/connect-bot/shared-logic/panel/client";

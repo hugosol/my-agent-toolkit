@@ -12,7 +12,7 @@
  * handles are none of these facts and are never read as if they were.
  */
 import { piSpawnedRelationsOf, type PiAnchorReader } from "../subagent/queries";
-import type { ExtensionDefinition } from "../../../../framework/core/definition";
+import type { ExtensionDefinition } from "../../../../framework/interface/details/definition";
 import type { SessionFacts, SessionStartReason, SessionStartup } from "../../../../framework/interface/session";
 import type { OwnerReference } from "../../../../framework/interface/state";
 import type { PiExtensionContext, PiSessionHeader } from "../../internal/native";

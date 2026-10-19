@@ -20,7 +20,7 @@
  * preference; the period actions are added where their business lives, never as a declared action
  * with nothing behind it.
  */
-import { defineExtension } from "../../framework/public";
+import { defineExtension } from "../../framework/interface";
 
 export const MODEL_COST = defineExtension({
 	id: "model-cost",

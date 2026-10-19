@@ -67,7 +67,7 @@
  *
  * This module is harness-independent: it reads and writes no State and names no native API.
  */
-import type { ExtensionDefinition } from "../core/definition";
+import type { ExtensionDefinition } from "../interface/details/definition";
 import { handOverReading, type ObservationHandOver, type SessionObservations } from "../core/observations";
 import type {
 	CloseOutWait,

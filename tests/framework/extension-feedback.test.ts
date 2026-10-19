@@ -15,8 +15,9 @@
 import { describe, expect, test } from "bun:test";
 import { CODEBASE_TOOLS } from "../../extensions/codebase-tools/definition";
 import type { FeedbackLevel } from "../../framework/interface/feedback";
-import type { CommandDelivery } from "../../framework/core/protocol";
-import { type CommandImplementations, type ExtensionDefinition, defineExtension } from "../../framework/public";
+import type { CommandDelivery } from "../../framework/interface/command";
+import type { CommandImplementations } from "../../framework/interface/command";
+import { type ExtensionDefinition, defineExtension } from "../../framework/interface";
 import { DEFAULT_OWNER_KEY, portDouble } from "./support/harness-port-double";
 
 /** The owner a run acts on; the double resolves one main session per key. */

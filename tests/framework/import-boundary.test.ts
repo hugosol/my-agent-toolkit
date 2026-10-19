@@ -109,10 +109,7 @@ describe("shared source imports no harness types (C1)", () => {
 		// blanket exemption for core/modules. Remove each entry when that capability migrates.
 		const legacyEntries: Readonly<Record<string, true>> = {
 			"framework/public": true,
-			"framework/core/assembly": true,
-			"framework/core/definition": true,
 			"framework/core/config": true,
-			"framework/core/integration": true,
 			"framework/modules/http": true,
 			"framework/modules/files": true,
 		};
@@ -325,6 +322,148 @@ describe("shared source imports no harness types (C1)", () => {
 			}
 		}
 		expect(crossings).toEqual([]);
+	});
+
+	test("Authoring declarations are published only by the root authoring interface", () => {
+		// The root entry composes the whole definition/implementation contract from the two details
+		// files it owns. A declaration or an export block naming one of these anywhere else would
+		// give the authoring layer a second owner, which type checking alone cannot see. As with the
+		// other checks in this suite, this is a lexical alarm, not a proof.
+		const canonical = [
+			"framework/interface/index.ts",
+			"framework/interface/details/definition.ts",
+			"framework/interface/details/implementation.ts",
+		];
+		const owned = [
+			"ExtensionDefinition",
+			"ExtensionConfigDeclaration",
+			"ConfigFieldType",
+			"ExtensionAssembly",
+			"ExtensionFactory",
+			"ImplementationContext",
+			"ExtensionImplementation",
+			"InitializationDelivery",
+			"DeclarableRequiredSemantic",
+			"defineExtension",
+		] as const;
+		const declaredEverywhere = (source: string): string[] =>
+			[...source.matchAll(/\bexport\s+(?:type|interface|const|class|function)\s+([A-Za-z_$][\w$]*)/g)]
+				.map(match => match[1]!);
+		const exportedInBlocks = (source: string): string[] =>
+			[...source.matchAll(/\bexport\s+(?:type\s+)?\{([^}]*)\}/g)]
+				.flatMap(match => match[1]!.split(",").map(entry => entry.trim().replace(/^type\s+/, "").split(/\s+as\s+/)[0]!.trim()));
+
+		const canonicalNames = canonical.flatMap(file => {
+			const source = readFileSync(path.join(REPO_ROOT, file), "utf8");
+			return [...declaredEverywhere(source), ...exportedInBlocks(source)];
+		});
+		for (const name of owned) {
+			expect(canonicalNames).toContain(name);
+		}
+
+		const crossings: string[] = [];
+		for (const file of sourceFiles.filter(file => !canonical.includes(file))) {
+			const source = readFileSync(path.join(REPO_ROOT, file), "utf8");
+			for (const name of owned) {
+				if (declaredEverywhere(source).includes(name)) {
+					crossings.push(`${file} declares ${name} outside the root authoring interface`);
+				}
+				if (exportedInBlocks(source).includes(name)) {
+					crossings.push(`${file} exports ${name} outside the root authoring interface`);
+				}
+			}
+			for (const match of source.matchAll(/\bexport\s+\*\s*(?:as\s+\w+\s*)?from\s*["']([^"']+)["']/g)) {
+				if (resolvesInto(file, match[1]!, [/^framework\/interface(?:\/details)?(?:\/|\.|$)/])) {
+					crossings.push(`${file} re-publishes the authoring contract through "${match[1]}"`);
+				}
+			}
+		}
+		expect(crossings).toEqual([]);
+	});
+
+	test("the root authoring entry composes its own contract and no capability", () => {
+		// The root entry either declares or re-exports exactly the authoring names above. A capability
+		// declaration named here — even re-exported unchanged — would make the root a second path to
+		// that capability instead of organising only the extension's definition/implementation form.
+		const source = readFileSync(path.join(REPO_ROOT, "framework/interface/index.ts"), "utf8");
+		const declared = [...source.matchAll(/\bexport\s+(?:type|interface|const|class|function)\s+([A-Za-z_$][\w$]*)/g)]
+			.map(match => match[1]!);
+		const reexported = [...source.matchAll(/\bexport\s+(?:type\s+)?\{([^}]*)\}/g)]
+			.flatMap(match => match[1]!.split(",").map(entry => entry.trim().replace(/^type\s+/, "").split(/\s+as\s+/)[0]!.trim()))
+			.filter(name => name.length > 0);
+		expect([...declared, ...reexported].sort()).toEqual([
+			"ConfigFieldType",
+			"DeclarableRequiredSemantic",
+			"ExtensionAssembly",
+			"ExtensionConfigDeclaration",
+			"ExtensionDefinition",
+			"ExtensionFactory",
+			"ExtensionImplementation",
+			"ImplementationContext",
+			"InitializationDelivery",
+			"defineExtension",
+		].sort());
+
+		const capabilityNames = [
+			"StateDeclaration",
+			"PromptDeclaration",
+			"MarkerDeclaration",
+			"FeedbackLevel",
+			"FeedbackTransport",
+			"CatalogPrice",
+			"ProviderAccess",
+			"SubagentIntegration",
+			"SubagentCapability",
+			"CommandDeclaration",
+			"CommandDelivery",
+		];
+		for (const name of capabilityNames) {
+			expect([...declared, ...reexported]).not.toContain(name);
+		}
+	});
+
+	test("Subagent declarations are published only by the Subagent capability interface", () => {
+		// The initialization integration result and the requirement declaration are the whole
+		// extension-facing Subagent contract. The execution mode is a harness author's fact: it stays
+		// internal, so no interface file may name it.
+		const canonical = "framework/interface/subagent.ts";
+		const owned = ["SubagentIntegration", "SubagentIntegrationFailure", "SubagentCapability"] as const;
+		const declaredEverywhere = (source: string): string[] =>
+			[...source.matchAll(/\bexport\s+(?:type|interface|const|class|function)\s+([A-Za-z_$][\w$]*)/g)]
+				.map(match => match[1]!);
+		const exportedInBlocks = (source: string): string[] =>
+			[...source.matchAll(/\bexport\s+(?:type\s+)?\{([^}]*)\}/g)]
+				.flatMap(match => match[1]!.split(",").map(entry => entry.trim().replace(/^type\s+/, "").split(/\s+as\s+/)[0]!.trim()));
+
+		const canonicalNames = [...declaredEverywhere(readFileSync(path.join(REPO_ROOT, canonical), "utf8")), ...exportedInBlocks(readFileSync(path.join(REPO_ROOT, canonical), "utf8"))];
+		for (const name of owned) {
+			expect(canonicalNames).toContain(name);
+		}
+
+		const crossings: string[] = [];
+		for (const file of sourceFiles.filter(file => file !== canonical)) {
+			const source = readFileSync(path.join(REPO_ROOT, file), "utf8");
+			for (const name of owned) {
+				if (declaredEverywhere(source).includes(name)) {
+					crossings.push(`${file} declares ${name} outside the Subagent capability interface`);
+				}
+				if (exportedInBlocks(source).includes(name)) {
+					crossings.push(`${file} exports ${name} outside the Subagent capability interface`);
+				}
+			}
+			for (const match of source.matchAll(/\bexport\s+\*\s*(?:as\s+\w+\s*)?from\s*["']([^"']+)["']/g)) {
+				if (resolvesInto(file, match[1]!, [/^framework\/interface\/subagent(?:\.|$)/])) {
+					crossings.push(`${file} re-exports the Subagent capability through "${match[1]}"`);
+				}
+			}
+		}
+		expect(crossings).toEqual([]);
+
+		for (const file of sourceFiles.filter(file => file.startsWith("framework/interface/"))) {
+			const source = readFileSync(path.join(REPO_ROOT, file), "utf8");
+			expect(declaredEverywhere(source)).not.toContain("SubagentExecutionMode");
+			expect(exportedInBlocks(source)).not.toContain("SubagentExecutionMode");
+		}
 	});
 
 	test("the authoring entry publishes no Prompt or Marker runtime transport", () => {

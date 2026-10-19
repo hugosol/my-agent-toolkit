@@ -43,7 +43,7 @@ import type {
 	OmpSessionEventType,
 } from "../../adapters/omp";
 import * as frameworkOmp from "../../adapters/omp";
-import { type ExtensionDefinition, defineExtension } from "../../framework/public";
+import { type ExtensionDefinition, defineExtension } from "../../framework/interface";
 
 /** The identities the migration fixes: the State record and one slot's custom type. */
 const STATE_ENTRY_TYPE = "codebase-tools:state";

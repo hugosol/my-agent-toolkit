@@ -18,9 +18,10 @@
  * assembly at all — one process holds it per Owner, whichever extension published for it.
  */
 import { bindExtension } from "../../../framework/behaviors/binding";
-import type { ExtensionFactory, ExtensionImplementation } from "../../../framework/core/assembly";
+import type { ExtensionFactory, ExtensionImplementation } from "../../../framework/interface/details/implementation";
 import type { ConfigSource } from "../../../framework/core/config";
-import { activationField, statePersistence, type ExtensionDefinition } from "../../../framework/core/definition";
+import { activationField, statePersistence } from "../../../framework/core/definition";
+import type { ExtensionDefinition } from "../../../framework/interface/details/definition";
 import type { FollowedAccessReader } from "../../../framework/core/followed-owners";
 import type { FeedbackLevel } from "../../../framework/interface/feedback";
 import type { CatalogPriceSource, ProviderAccess } from "../../../framework/interface/host-facts";
@@ -187,7 +188,7 @@ const DEFAULT_SESSION: SessionFacts = { sessionId: "port-double", kind: "main", 
  *
  * The implementation members are the double's own model of what an assembly's factory returns:
  * a suite states the commands, subscriptions, initialization and cleanup a binding runs with,
- * exactly as `framework/core/assembly.ts` defines them, and the double wraps them in the one
+ * exactly as `framework/interface/details/implementation.ts` defines them, and the double wraps them in the one
  * factory a binding calls.
  */
 export interface PortBindingOptions extends Partial<ExtensionImplementation> {

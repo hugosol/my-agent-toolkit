@@ -36,7 +36,7 @@ import { mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync
 import { tmpdir } from "node:os";
 import * as path from "node:path";
 import { piAdapter } from "../../../../adapters/pi";
-import type { ExtensionImplementation } from "../../../../framework/public";
+import type { ExtensionImplementation } from "../../../../framework/interface";
 import { MODEL_COST } from "../../../../extensions/model-cost/definition";
 import { MODEL_COST_HARNESS, releasingFrontendsOnCleanup } from "../../../../extensions/model-cost/harnesses/pi";
 import { attachModelCostWidget } from "../../../../extensions/model-cost/harnesses/pi/widget";

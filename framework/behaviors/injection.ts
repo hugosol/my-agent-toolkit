@@ -15,7 +15,8 @@
  * This module is harness-independent: it reads State through the read view and the
  * branch facts an adapter resolved, and names no native API.
  */
-import { BOUND_PROMPT_STRATEGIES, type ExtensionDefinition } from "../core/definition";
+import { BOUND_PROMPT_STRATEGIES } from "../core/definition";
+import type { ExtensionDefinition } from "../interface/details/definition";
 import type { PromptContribution, RunDelivery } from "../core/protocol";
 import type { StateStore } from "../core/state";
 import { stateValueFor } from "./state-scope";

@@ -11,7 +11,7 @@
  * Every observation is one stderr line prefixed with the extension id, because stderr is the
  * channel the dock already captures and the one a headless session's operator reads.
  */
-import { type ExtensionDefinition, defineExtension } from "../../../../framework/public";
+import { type ExtensionDefinition, defineExtension } from "../../../../framework/interface";
 import { type OmpExtensionApi, ompAdapter } from "../../../../adapters/omp";
 
 /** The command the dock drives, and the one asynchronous action among its actions. */

@@ -14,7 +14,7 @@ import type {
 	SessionObservationReader,
 } from "../../framework/interface/session";
 import type { OwnerReference } from "../../framework/interface/state";
-import { type ExtensionDefinition, defineExtension } from "../../framework/public";
+import { type ExtensionDefinition, defineExtension } from "../../framework/interface";
 import { portDouble } from "./support/harness-port-double";
 
 const PROBE: ExtensionDefinition = defineExtension({

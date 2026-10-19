@@ -3,7 +3,8 @@
  * Adapters choose whether sessions can run elsewhere; State and binding supply semantic facts,
  * not publisher/follower/deliverer wiring. Same-process owners always keep their direct path.
  */
-import { stateInheritance, type ExtensionDefinition } from "./definition";
+import { stateInheritance } from "./definition";
+import type { ExtensionDefinition } from "../interface/details/definition";
 import { FollowedOwners, type FollowedAccessReader } from "./followed-owners";
 import type { ObservationHandOver, SessionObservations } from "./observations";
 import type { SessionObservationAccess, SessionObservationSink } from "./protocol";

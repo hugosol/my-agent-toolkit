@@ -36,7 +36,7 @@ import {
 	localOwnerAccess,
 	openOwnerAccess,
 } from "../../framework/modules/local-access";
-import { type ExtensionDefinition, defineExtension } from "../../framework/public";
+import { type ExtensionDefinition, defineExtension } from "../../framework/interface";
 import { type PortDouble, portDouble } from "./support/harness-port-double";
 import {
 	type ObservationChildPlan,

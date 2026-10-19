@@ -19,7 +19,7 @@ import { homedir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { type OmpExtensionApi, ompAdapter } from "../../../adapters/omp";
-import type { ExtensionImplementation } from "../../../framework/public";
+import type { ExtensionImplementation } from "../../../framework/interface/details/implementation";
 import { MODEL_COST } from "../definition";
 import { type ModelCostRuntime, createModelCostRuntime } from "../shared-logic/runtime";
 import { createBoundaryTimer } from "./boundary-timer";

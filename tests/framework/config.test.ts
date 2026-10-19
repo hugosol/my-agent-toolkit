@@ -25,7 +25,7 @@ import {
 	getConfig,
 	readConfig,
 } from "../../framework/core/config";
-import { type ExtensionDefinition, defineExtension } from "../../framework/public";
+import { type ExtensionDefinition, defineExtension } from "../../framework/interface";
 import { portDouble } from "./support/harness-port-double";
 import { REPO_ROOT } from "../harness-dock/baseline";
 

@@ -7,7 +7,7 @@
  * makes a displayed subagent's line come from the Owner's *current* value.
  */
 import { type OmpExtensionApi, ompAdapter } from "../../../../adapters/omp";
-import { type ExtensionDefinition, defineExtension } from "../../../../framework/public";
+import { type ExtensionDefinition, defineExtension } from "../../../../framework/interface";
 
 /** The extension id whose marker line the dock reads. */
 export const FOLLOW_MARKER_ID = "marker-follow-probe";

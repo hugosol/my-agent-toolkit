@@ -12,7 +12,7 @@
  * work of its own beyond reporting: no network, no file, no timer.
  */
 import { type OmpExtensionApi, ompAdapter } from "../../../../adapters/omp";
-import { type ExtensionDefinition, defineExtension } from "../../../../framework/public";
+import { type ExtensionDefinition, defineExtension } from "../../../../framework/interface";
 import type { SubscriptionGroup, TurnEndDelivery, TurnStartDelivery } from "../../../../framework/interface/session";
 import type { CatalogPriceSource } from "../../../../framework/interface/host-facts";
 

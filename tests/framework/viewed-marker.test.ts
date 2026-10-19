@@ -28,7 +28,7 @@ import type {
 	OmpViewedSessionFacts,
 } from "../../adapters/omp";
 import * as frameworkOmp from "../../adapters/omp";
-import { type ExtensionDefinition, defineExtension } from "../../framework/public";
+import { type ExtensionDefinition, defineExtension } from "../../framework/interface";
 
 /**
  * The single native widget key the framework owns for its marker area, and the placement it

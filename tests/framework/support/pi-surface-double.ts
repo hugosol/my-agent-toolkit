@@ -41,7 +41,7 @@ import type {
 	TurnEndDelivery,
 	TurnStartDelivery,
 } from "../../../framework/interface/session";
-import type { ExtensionDefinition, ImplementationContext, InitializationDelivery } from "../../../framework/public";
+import type { ExtensionDefinition, ImplementationContext, InitializationDelivery } from "../../../framework/interface";
 
 /** The definition the double binds: it declares nothing, so every behavior under test is injected. */
 export const PI_SURFACE_PROBE: ExtensionDefinition = { id: "pi-surface-probe", displayName: "piSurfaceProbe" };

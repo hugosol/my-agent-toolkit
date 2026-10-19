@@ -7,6 +7,8 @@
  * Failures travel as data, so an adapter can report them on whatever non-model
  * channel its harness offers without deciding what counts as a conflict.
  */
+import type { CanAcceptInput, DirectedCommandImplementation, RecognizedDirective } from "../interface/command";
+import type { ExtensionDefinition } from "../interface/details/definition";
 import type { FeedbackTransport } from "../interface/feedback";
 import type { CatalogPriceSource, ProviderAccess, ProviderHttpFacts } from "../interface/host-facts";
 import type {
@@ -19,7 +21,7 @@ import type {
 	UserInputDelivery,
 } from "../interface/session";
 import type { DeclaredValueSeam, OwnerCapabilityHandle, OwnerReference } from "../interface/state";
-import type { ExtensionDefinition } from "./definition";
+import type { SubagentIntegration } from "../interface/subagent";
 import type { ConfigurationViolation } from "./violations";
 
 /** The State values one write path records, by field name. */
@@ -435,13 +437,7 @@ export interface PromptContribution {
 	readonly attribution: "agent";
 }
 
-/** The directives a directed command acts on; an unrecognized argument is not one. */
-export type RecognizedDirective =
-	| { readonly kind: "activate" }
-	| { readonly kind: "deactivate" };
-
-/**
- * The framework's normalization of a directed command's argument.
+/** The framework's normalization of a directed command's argument.
  *
  * `activate` — the empty argument names `on`; `deactivate` — `off` names `off`;
  * `unrecognized` — any other text, carried verbatim. Normalizing in the framework keeps
@@ -453,44 +449,6 @@ export type DirectedDirective =
 	| { readonly kind: "unrecognized"; readonly argument: string };
 
 /**
- * The implementation a harness assembly injects for one declared directed
- * command.
- *
- * The value is an object rather than a bare function because this is assembly-surface
- * contract: the command's remaining members — the unrecognized-argument path among them
- * — arrive by addition, and a bare function would leave no room for one.
- */
-export interface DirectedCommandImplementation {
-	/**
-	 * Runs the command's effect for one recognized directive, for the session that is
-	 * itself an owner.
-	 *
-	 * The framework neither deduplicates nor short-circuits a repeated invocation, and
-	 * publishes no feedback for a directed command: this member owns both the effect and
-	 * whatever the operator is told about it. It also owns the write: the value State
-	 * holds afterwards is the one this member wrote through the delivery's seam. An
-	 * unrecognized argument is not a directive, so it never reaches this member.
-	 */
-	run(directive: RecognizedDirective, delivery: CommandDelivery): void;
-	/**
-	 * Runs for the one thing the command surface does not recognize: the argument text
-	 * that normalized to no directive (see {@link DirectedDirective}).
-	 *
-	 * The framework still concludes nothing from it — no value is recorded, no marker is
-	 * published and nothing is said — and this member is what lets the extension answer the
-	 * mistyped argument with words the extension owns, on the same delivery `run` receives.
-	 * An implementation that injects no such member leaves an unrecognized argument as inert
-	 * as it has always been: a member that is absent is simply not called, which is what makes
-	 * this addition compatible with every implementation that predates it.
-	 *
-	 * The argument arrives exactly as the framework normalized it, so the extension says what
-	 * it saw without parsing the command line a second time. The same owner scope gates this
-	 * member as gates `run`: a delivery that is not the owner never reaches it.
-	 */
-	unrecognized?(argument: string, delivery: CommandDelivery): void;
-}
-
-/**
  * The implementations one assembly injects, keyed by the name of the directed command
  * each implements.
  *
@@ -498,22 +456,6 @@ export interface DirectedCommandImplementation {
  * implementation with no declaration implements nothing and is ignored.
  */
 export type CommandActions = Readonly<Record<string, DirectedCommandImplementation>>;
-
-/**
- * The framework's idle query: whether the agent can take input now.
- *
- * `true` — the agent is idle and can accept input; `false` — it is working and cannot;
- * `undefined` — this harness reports no idle fact at all, which is surfaced rather than
- * answered with a value the harness never gave. The three-valued answer is the honest one: a
- * harness whose session context exposes no idle fact cannot be read as either state, and an
- * extension that needs the fact decides for itself what an unreported one means (the framework
- * does not decide it for the extension by inventing `false`).
- *
- * It is a question, never a field: the caller asks when it needs the answer — the arm path asks
- * it for the state it reports — so no earlier event has to have happened, and neither axis's
- * delivery carries the fact as a payload.
- */
-export type CanAcceptInput = () => boolean | undefined;
 
 /**
  * The facts a harness adapter supplies for one command invocation.
@@ -579,88 +521,6 @@ export interface CommandInvocation {
 	 * refuse.
 	 */
 	readonly markers: MarkerTransport;
-}
-
-/**
- * The facts, the declared-value seam and the retainable capability one command handler receives.
- *
- * An adapter supplies the invocation facts; the framework adds the seam and the capability, so
- * the seam is the framework's own read/write path to the extension's declared value and a
- * handler never reaches a State store. The delivery is constructed from the approved members
- * rather than spread from the invocation: the marker area transport stays internal, and a
- * handler affects its own line only through the seam's managed write.
- */
-export interface CommandDelivery {
-	/** The argument text the user supplied after the command name; `""` when there is none. */
-	readonly args: string;
-	/**
-	 * The framework's idle query for the session this command runs in (see
-	 * {@link CanAcceptInput}).
-	 */
-	readonly canAcceptInput: CanAcceptInput;
-	/**
-	 * The provider the session this command runs in currently runs, or `undefined` when the
-	 * harness reports no current model (see {@link CommandInvocation.provider}).
-	 */
-	readonly provider: string | undefined;
-	/** The owner whose State this command acts on, as the adapter resolved it. */
-	readonly owner: OwnerReference;
-	/**
-	 * Records the extension's new State values in the owner's persistence medium.
-	 *
-	 * Best-effort by contract: the extension side cannot observe a persistence failure, the
-	 * declared value is already the in-memory current value, and a throw here must not change
-	 * the command's feedback.
-	 */
-	persist(values: StateValues): void;
-	/**
-	 * Publishes user-visible feedback outside model context, at the severity the notice
-	 * carries (see {@link FeedbackTransport}).
-	 */
-	readonly feedback: FeedbackTransport;
-	/** Whether the session this command runs in has a UI, as the adapter resolved it. */
-	readonly hasUI: boolean;
-	/** The seam through which this handler reads and writes the extension's declared value. */
-	readonly state: DeclaredValueSeam;
-	/**
-	 * The owner-scoped capability this handler may retain for the effects it drives outside this
-	 * delivery (see {@link OwnerCapabilityHandle}).
-	 *
-	 * Retaining it is what lets an extension's own background callback — the heartbeat timer that
-	 * disarms it, the outbound flusher — keep writing this owner's declared value and keep
-	 * publishing feedback after the delivery is over, without the framework exposing an
-	 * owner-resolving write or feedback API. It stops working when the owner's session ends.
-	 */
-	readonly capability: OwnerCapabilityHandle;
-}
-
-/**
- * The facts one routed `actions` command hands to the action it selected.
- *
- * An `actions` command drives no declared State — it is a named business action, not a
- * transition of the extension's activation value — so its delivery is the invocation facts
- * alone: the argument that matched, the owner scope, the faithful `hasUI` fact, the idle query,
- * the running provider and the feedback channel. Neither the declared-value seam nor a
- * retainable capability is here, because there is no field for either to be scoped to, and the
- * extension's own business data is its own rather than framework State. The marker area
- * transport stays internal: an action has no line to manage.
- */
-export interface ActionDelivery {
-	/** The argument text the user supplied after the command name. */
-	readonly args: string;
-	/** The owner whose extension this action runs for, as the adapter resolved it. */
-	readonly owner: OwnerReference;
-	/** Whether the session this command runs in has a UI, as the adapter resolved it. */
-	readonly hasUI: boolean;
-	/** The framework's idle query for the session this command runs in. */
-	readonly canAcceptInput: CanAcceptInput;
-	/**
-	 * The provider the session this command runs in currently runs, or `undefined` when the
-	 * harness reports no current model (see {@link CommandInvocation.provider}).
-	 */
-	readonly provider: string | undefined;
-	/** The unified extension feedback channel of this invocation. */
-	readonly feedback: FeedbackTransport;
 }
 
 /** One command the framework bound from a definition, ready for native registration. */
@@ -748,46 +608,6 @@ export interface TurnSignalFacts {
 	readonly hasUI: boolean;
 	readonly feedback: FeedbackTransport;
 }
-
-/**
- * Why an entry's subagent integration did not take effect on a harness that has such an
- * integration to settle.
- *
- * `registration` — the party that loads this entry into the sessions it spawns was reached, and it
- * did not accept the requirement this entry has to state there. `identity` — the reached party
- * answered for another session than the one this entry serves, so nothing it loads serves this
- * session. `protocol` — the reached party answered, and not on the versioned interface this entry
- * reads. The three are different failures with different remedies, which is why none of them is
- * reported as the others and none of them is reported as a harness that offers no such integration.
- */
-export type SubagentIntegrationFailure = "registration" | "identity" | "protocol";
-
-/**
- * How one extension entry's subagent integration stands on the harness that bound it, as the
- * adapter settled it once at the process's initialization node.
- *
- * `subagents` — this entry is integrated with the harness's subagent facility: the sessions that
- * facility spawns are observed with this entry, and the facts of those sessions reach consumers.
- * `none` — this harness has no such facility for this entry, or it is not enabled in this process.
- * That is a supported, normal shape: the entry serves the main session without integrated child
- * observations, and it asserts nothing about subagents the harness may run without it.
- *
- * `failed` — this entry's integration was attempted and did not take effect. It is deliberately not
- * `none`: an operator has to be able to tell a harness that offers no integration from one whose
- * integration broke, and neither may be inferred from the other. The failure carries which part
- * failed and the diagnosis the adapter reported for it.
- *
- * The mode is settled when initialization completes and never moves afterwards: it is not decided
- * by how many child sessions exist, and no later observation, registration or discovery changes it.
- */
-export type SubagentIntegration =
-	| { readonly mode: "subagents" }
-	| { readonly mode: "none" }
-	| {
-			readonly mode: "failed";
-			readonly failure: SubagentIntegrationFailure;
-			readonly diagnosis: string;
-	  };
 
 /** The registration and feedback surface a harness adapter must provide. */
 export interface HarnessPort {

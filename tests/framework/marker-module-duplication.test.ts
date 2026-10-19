@@ -18,7 +18,8 @@
  */
 import { describe, expect, test } from "bun:test";
 import type * as MarkerBehavior from "../../framework/behaviors/marker";
-import { activationField, statePersistence, type ExtensionDefinition, defineExtension } from "../../framework/core/definition";
+import { activationField, statePersistence } from "../../framework/core/definition";
+import { type ExtensionDefinition, defineExtension } from "../../framework/interface";
 import type { OwnerReference } from "../../framework/interface/state";
 import type { MarkerTransport } from "../../framework/core/protocol";
 import { StateStore } from "../../framework/core/state";

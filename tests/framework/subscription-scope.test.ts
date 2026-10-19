@@ -12,7 +12,7 @@
 import { describe, expect, test } from "bun:test";
 import { CODEBASE_TOOLS } from "../../extensions/codebase-tools/definition";
 import type { OwnerReference } from "../../framework/interface/state";
-import type { ExtensionDefinition } from "../../framework/public";
+import type { ExtensionDefinition } from "../../framework/interface";
 import { portDouble } from "./support/harness-port-double";
 
 /** The main session's owner, as an adapter resolves it. */

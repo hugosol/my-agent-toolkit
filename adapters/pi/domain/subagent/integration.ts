@@ -26,7 +26,7 @@
  * it is the provider stating its interface without claiming which session it serves, which is the
  * ordinary shape of a query answered before the provider has a session context.
  */
-import type { SubagentIntegration, SubagentIntegrationFailure } from "../../../../framework/core/protocol";
+import type { SubagentIntegration, SubagentIntegrationFailure } from "../../../../framework/interface/subagent";
 import type { PiExtensionApi } from "../../internal/native";
 import { publishPiSessionLiveness, requirePiChildExtension, type PiSubagentProvider } from "./effects";
 import {

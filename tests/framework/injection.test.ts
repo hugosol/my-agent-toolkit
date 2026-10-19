@@ -27,7 +27,7 @@ import type {
 	OmpSessionEventType,
 } from "../../adapters/omp";
 import * as frameworkOmp from "../../adapters/omp";
-import { type ExtensionDefinition, defineExtension } from "../../framework/public";
+import { type ExtensionDefinition, defineExtension } from "../../framework/interface";
 import { REPO_ROOT } from "../harness-dock/baseline";
 
 /** The identities the migration fixes: one State entry and both slots' custom types. */

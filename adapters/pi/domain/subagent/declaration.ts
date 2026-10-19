@@ -3,7 +3,8 @@
  * The provider can run children in-process or cross-process. Neither declaration certifies behavior,
  * discovers a provider, nor changes the runtime no-subagent path when no provider is available.
  */
-import type { HarnessIntegrationDeclaration, SubagentCapability } from "../../../../framework/core/integration";
+import type { SubagentCapability } from "../../../../framework/interface/subagent";
+import type { HarnessIntegrationDeclaration } from "../../../../framework/core/integration";
 
 const CAPABILITIES = [
 	"extension-loading",

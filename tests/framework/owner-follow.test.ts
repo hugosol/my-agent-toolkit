@@ -30,7 +30,7 @@ import {
 	type OwnerAccessCaller,
 	type OwnerAccessValues,
 } from "../../framework/modules/local-access";
-import { type ExtensionDefinition, defineExtension } from "../../framework/public";
+import { type ExtensionDefinition, defineExtension } from "../../framework/interface";
 import { REPO_ROOT } from "../harness-dock/baseline";
 import { type PortDouble, portDouble } from "./support/harness-port-double";
 import { boundPiSurface } from "./support/pi-surface-double";

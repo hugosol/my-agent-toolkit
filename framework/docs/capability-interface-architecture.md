@@ -1,6 +1,6 @@
 # Capability interface architecture
 
-**Status:** Session capability cutover implemented; the remaining capability and runtime-port migration is proposed.
+**Status:** Session, State, Prompt/Marker, Feedback, Host facts, Subagent, the root authoring contract and Command's declarations are implemented; the Command runtime delivery narrowing, General and the runtime-port migration remain proposed.
 **Scope:** the dependency seam between `framework/`, `adapters/`, and `extensions/`.
 **Decision status:** [ADR-0002's Session amendment](../../docs/adr/0002-semantic-extension-framework.md#session-capability-interface-cutover-2026-10-19) accepts the first complete capability. The overall target below still contains future work and open decisions; it is not a claim that every capability or `framework/runtime/port` has moved.
 
@@ -20,9 +20,14 @@ Prompt and Marker entries own only their declarations (`PromptDeclaration`, `Pro
 `MarkerDeclaration`): the run facts, contribution result, selection rules and the unified area's
 transport stay internal, and the initialization, directed and action deliveries no longer carry a
 marker transport. The Feedback and Host facts leaf contracts required by Session also live beside
-it. Other capability entries stay in place; the adapter port remains internal in `core/protocol.ts`
-until its own cutover. The import check uses an explicit list of remaining non-Session entries,
-not a blanket allowance for framework internals. No new disposal event, second dispatch, runtime
+it. The root authoring entry (`framework/interface/index.ts`) now owns `defineExtension` and the
+whole definition/implementation contract in its public `details/` files; `SubagentIntegration`,
+`SubagentIntegrationFailure` and `SubagentCapability` live in `framework/interface/subagent.ts`, and
+Command's public declarations/implementations/deliveries in `framework/interface/command.ts`.
+Command's runtime delivery construction and General's public functions remain in place until their
+batch; the adapter port remains internal in `core/protocol.ts` until its own cutover. The import
+check uses an explicit list of remaining non-Session entries, not a blanket allowance for framework
+internals. No new disposal event, second dispatch, runtime
 registry or second adapter abstraction is introduced. Start at the [Session capability entry](../interface/session/index.ts) before reading its implementation.
 The root owns capability, current-observation and subscription entries; `details/` owns public domain
 contracts. This is navigation within one interface, not another capability or implementation layer.
@@ -114,10 +119,9 @@ The goal is that each role can answer "where do I look?" without reconstructing 
 ```text
 framework/interface/
   index.ts
-  definition/
-    index.ts
-  assembly/
-    index.ts
+  details/
+    definition.ts
+    implementation.ts
   state/
     index.ts
   session/
@@ -134,8 +138,8 @@ framework/interface/
       input.ts
       commit.ts
       unobserved.ts
-  command/
-    index.ts
+  command.ts
+  subagent.ts
   prompt.ts
   marker.ts
   feedback/
@@ -161,10 +165,11 @@ The directory names are navigation. The capability boundaries are the important 
 | **Prompt** | prompt declaration and strategy | run facts, contribution result, contribution selection, branch-progress matching | Prompt domain |
 | **Marker** | marker declaration text | marker area transport, process-global area, line order, viewed-session projection, publication triggers | Marker domain |
 | **Feedback** | notification level and feedback transport | delivery wiring; no standalone behaviour module | Feedback domain |
-| **Host facts** | provider access, catalog price, idle query, subagent integration result | factory hand-over and adapter query mapping; no framework policy | Host facts and Subagent domains |
+| **Host facts** | provider access, catalog price, provider HTTP facts | factory hand-over and adapter query mapping; no framework policy | Host facts domain |
+| **Subagent** | the settled initialization integration result (`subagents` / `none` / `failed`) and the requirement vocabulary | execution modes, adapter coverage inventory, provider protocol and registration | Subagent domains |
 | **General** | `request`, `updateFile`, `getConfig` and their option/error types | HTTP transport, coordinated file update, configuration document reading | none |
 
-`definition/` and `assembly/` are the authoring layer. They are not capabilities themselves; they describe how an extension declares a capability and supplies an implementation.
+The root `index.ts` and its public `details/` files are the authoring layer. They are not capabilities themselves; they describe how an extension declares a capability and supplies an implementation, and they compose the capability declarations without re-publishing them.
 
 ### 4.2 Session is one capability, not one module
 

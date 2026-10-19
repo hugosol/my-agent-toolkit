@@ -28,7 +28,7 @@ import { connectBotConfig } from "../../extensions/connect-bot/shared-logic/pane
 import { CONNECT_BOT } from "../../extensions/connect-bot/definition";
 import connectBot from "../../entrypoints/omp/connect-bot";
 import { getConfig, readConfig } from "../../framework/core/config";
-import type { ExtensionDefinition } from "../../framework/core/definition";
+import type { ExtensionDefinition } from "../../framework/interface/details/definition";
 import type { BindingResult } from "../../framework/core/protocol";
 import { portDouble } from "../framework/support/harness-port-double";
 import { REPO_ROOT } from "../harness-dock/baseline";

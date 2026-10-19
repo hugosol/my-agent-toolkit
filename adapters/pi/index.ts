@@ -9,8 +9,8 @@
  * capability domain under `domain/`; `internal/` holds this entry's binding support.
  */
 import { createAssemblyBinding } from "../../framework/behaviors/assembly";
-import type { ExtensionAssembly } from "../../framework/core/assembly";
-import type { ExtensionDefinition } from "../../framework/core/definition";
+import type { ExtensionAssembly } from "../../framework/interface/details/implementation";
+import type { ExtensionDefinition } from "../../framework/interface/details/definition";
 import type { PiExtensionApi, PiExtensionFactory } from "./internal/native";
 import { createPiPort } from "./internal/port";
 import { piHostFacts } from "./domain/host-facts";
@@ -20,7 +20,6 @@ import { createPiSubagentIntegration } from "./domain/subagent/integration";
 
 export * from "./internal/native";
 export type { BindingResult } from "../../framework/core/protocol";
-export type { ExtensionAssembly } from "../../framework/core/assembly";
 
 /**
  * What a pi assembly states about itself beyond the generic assembly information.

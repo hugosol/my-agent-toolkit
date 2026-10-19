@@ -23,7 +23,7 @@ import { describe, expect, test } from "bun:test";
 import type { PiAssistantMessage, PiMessageUsage } from "../../adapters/pi";
 import type { CatalogPriceSource } from "../../framework/interface/host-facts";
 import type { TurnOutcome } from "../../framework/interface/session";
-import type { ImplementationContext } from "../../framework/public";
+import type { ImplementationContext } from "../../framework/interface";
 import { withCapturedStderr } from "./support/captured-stderr";
 import { type PiNativeModel, type PiSurfaceSession, boundPiSurface } from "./support/pi-surface-double";
 

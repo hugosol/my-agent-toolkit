@@ -12,10 +12,10 @@
  * reading once an adapter's access has handed it over.
  */
 import { describe, expect, test } from "bun:test";
-import type { ExtensionImplementation } from "../../framework/core/assembly";
+import type { ExtensionImplementation } from "../../framework/interface/details/implementation";
 import type { AgentActivity, SessionFacts } from "../../framework/interface/session";
 import type { ObservedSession } from "../../framework/core/protocol";
-import { defineExtension } from "../../framework/public";
+import { defineExtension } from "../../framework/interface";
 import { DEFAULT_OWNER_KEY, type PortDouble, portDouble } from "./support/harness-port-double";
 
 /** The extension every case binds: identity, a label and a per-session observation view. */

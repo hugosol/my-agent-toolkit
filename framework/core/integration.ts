@@ -1,27 +1,8 @@
 /** Declaration-only vocabulary for the independently invoked integration completeness check. */
+import type { SubagentCapability } from "../interface/subagent";
 
 /** How a harness runs a subagent, never an extension-selected policy. */
 export type SubagentExecutionMode = "in-process" | "cross-process";
-
-/**
- * Framework semantics an extension needs from its subagent integration.
- * These declarations carry no runtime check, implementation or behavior-test evidence.
- */
-export type SubagentCapability =
-	/** The subagent loads the extension logic needed to participate. */
-	| "extension-loading"
-	/** Actual session identity, direct parent and Owner relationships. */
-	| "session-facts"
-	/** Each actual session's own response usage, without duplicate accounting. */
-	| "turn-usage"
-	/** Each actual session's lifecycle, Round edges and awaitable disposal. */
-	| "session-lifecycle"
-	/** Per-session activity, context and startup observations. */
-	| "session-observations"
-	/** Confirmed storage commits can be observed where the Owner is served. */
-	| "storage-commit"
-	/** A declared following field reads its Owner's value. */
-	| "state-follow";
 
 /**
  * The harness author's supplied integration coverage, not a support/version claim.

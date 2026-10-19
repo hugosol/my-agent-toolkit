@@ -44,7 +44,7 @@
  * the request-time price through the extension's own catalog query rather than by knowing anything
  * about pricing.
  */
-import type { ExtensionDefinition } from "../core/definition";
+import type { ExtensionDefinition } from "../interface/details/definition";
 import type { FeedbackTransport } from "../interface/feedback";
 import type { CatalogPriceSource, ProviderHttpFacts } from "../interface/host-facts";
 import type {
