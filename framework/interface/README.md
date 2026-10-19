@@ -1,10 +1,12 @@
 # Capability interfaces
 
-Session is the first capability encapsulated here. Its interface is the canonical extension-facing
-contract, not a re-export of an implementation directory. Start with [Session](session/README.md)
-and import its types from `framework/interface/session`; the implementation factory hands the
-extension `context.session`. The selected `adapters/<harness>` assembly entry connects the same
-shared implementation to pi or oh-my-pi.
+Every capability is encapsulated here. State, Session, Prompt, Marker, Feedback, Host facts,
+Subagent and Command each own their canonical extension-facing declarations, and General's three
+modules have direct entries. An interface is the canonical extension-facing contract, not a re-export
+of an implementation directory. Start with the capability entry the extension needs — for example
+[Session](session/README.md), imported from `framework/interface/session` — and the implementation
+factory hands the extension `context.session`. The selected `adapters/<harness>` assembly entry
+connects the same shared implementation to pi or oh-my-pi.
 
 The root entry is [`index.ts`](index.ts): it owns `defineExtension` and composes the whole
 definition/implementation authoring contract from its public [`details/`](details/) files. It does
@@ -28,8 +30,9 @@ Turn. The declaration-only capabilities are their own entries: [Prompt](prompt.t
 [Subagent](subagent.ts) owns the initialization integration result and requirement vocabulary. The
 selection tools, run facts, contribution result and area transport stay internal. The definition
 entry refers to all of these declarations but does not re-publish them: an extension that names one
-imports it here. This is not a claim that every capability's authoring and runtime entries have been
-migrated.
+imports it here. Every approved capability's authoring and runtime entries are migrated; the old
+mixed `framework/public.ts` entry and the former internal import paths are gone, with no compatibility
+alias or forwarding shell.
 
 [Command](command/index.ts) owns the declaration, implementation and delivery groups an extension
 writes commands against: its declaration group in `details/definition.ts`, and its implementation,

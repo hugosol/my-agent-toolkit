@@ -12,24 +12,25 @@ terminology lives in [GLOSSARY.md](../GLOSSARY.md); the architecture decision is
 [ADR 0002](../../docs/adr/0002-semantic-extension-framework.md). Only the first-release ("v1") surface is
 listed: the unions below are closed, and a kind outside them is not bound.
 
-The in-progress model-cost observation decisions (2026-10-11) revise the target placement of reusable
+The model-cost observation decisions (2026-10-11) revised the target placement of reusable
 lifecycle logic — identity and in-flight association, generic dedup/conflict handling, and Round
 open/close with the deferred end-candidate re-check belong to the framework as far as possible, while
-the adapter keeps native subscriptions, field/signal mapping and capability clues; the index below
-still describes the implemented surface, not the planned input seam or a completed refactor.
+the adapter keeps native subscriptions, field/signal mapping and capability clues. The index below
+describes the implemented surface: the migration is complete, and the decisions remain the record of
+why the input seam is shaped as it is.
 
 ## Entry points
 
-Session is the first fully encapsulated capability: start with the
-[Session capability entry](../interface/session/index.ts) and import from
+All capabilities are fully encapsulated. Start with the capability entry the extension needs — for
+example the [Session capability entry](../interface/session/index.ts), imported from
 `framework/interface/session`. The factory hands out `context.session`, not an observation source.
-The supporting State, Feedback and Host facts declarations live in neighboring interface modules,
-Prompt and Marker own their declarations in `framework/interface/prompt.ts` and
-`framework/interface/marker.ts`, and the root authoring entry (`framework/interface/index.ts`) owns
-`defineExtension` plus the definition/implementation contract. Subagent and Command each own their
-declarations too, and Command's runtime deliveries are narrowed to the approved members. General's
-public functions remain in place; internal adapter contracts in this index are explicitly not
-extension-facing exports.
+State, Feedback and Host facts declarations live in their own interface modules, Prompt and Marker
+own their declarations in `framework/interface/prompt.ts` and `framework/interface/marker.ts`, and
+the root authoring entry (`framework/interface/index.ts`) owns `defineExtension` plus the
+definition/implementation contract. Subagent and Command each own their declarations too, and
+Command's runtime deliveries are narrowed to the approved members. General's three modules are
+direct public entries; internal adapter contracts in this index are explicitly not extension-facing
+exports.
 
 | Entry point | Source | Role |
 | --- | --- | --- |
@@ -496,7 +497,7 @@ follow it. A synchronous throw and a rejected promise are both contained and rep
 changing what the framework already did for the event or keeping another subscriber from running.
 
 **The semantic lifecycle subscription pairs a definition with injected handlers.** The framework's session
-axis is the symmetric pair `session_start` ([`protocol.ts#L76`](../interface/session/details/session.ts)) and
+axis is the symmetric pair `session_start` ([`session.ts#L22`](../interface/session/details/session.ts#L22)) and
 `session_end`: a start seeds the owner's State from the branch the delivery names, an end retires the owner it
 names, and both refresh the framework-owned marker area
 ([`port.ts`](../runtime/port.ts)). A transition that changes which session is current
@@ -518,7 +519,7 @@ reports none as well, because what it could read is the session's *current* pair
 on. A fact nothing proved stays absent, part by part, rather than being filled in from the settings in effect.
 
 The run axis is the edge-triggered pair `round_start` and `round_end`
-([`protocol.ts#L241`](../interface/session/details/round.ts)), where a `Round` is one period of agent activity
+([`round.ts#L23`](../interface/session/details/round.ts#L23)), where a `Round` is one period of agent activity
 from the agent taking up input to quiescence. An opening carries its kind alone, and an end carries one
 fact beside it — `ending`, either `confirmed` or `truncated` — which is how the end was *established*
 rather than how the activity turned out: how a round ended is a
@@ -600,12 +601,12 @@ direction of the contract's observation work.
 An implementation subscribes through `subscriptions`: one `SubscriptionGroup` per group it declares,
 each stating once the `ObservationScope` it observes under and the handlers for the event kinds it
 subscribes. The delivery each handler receives
-([`protocol.ts#L266`](../interface/session/details/session.ts)) carries the event, the owner scope it concerns, the
+([`session.ts#L36`](../interface/session/details/session.ts#L36)) carries the event, the owner scope it concerns, the
 faithful `hasUI` fact, the unified extension feedback channel
 ([`Feedback interface`](../interface/feedback/index.ts)) — the same two seams a command delivery carries, so
 one shared gate and one notice path serve both handler kinds and every axis — and the owner-scoped capability a
 handler may retain for the effects it drives outside the delivery
-([`protocol.ts#L703`](../interface/state/index.ts)), because a `session_start` is an arm path like a
+([`state/index.ts#L118`](../interface/state/index.ts#L118)), because a `session_start` is an arm path like a
 command. A round, activity or Turn delivery carries the first three and the feedback channel, and no capability:
 a round edge and a Turn edge are not arm paths, and an activity reading is not one either. The framework's
 own behavior for a session event always runs first — the one exception is `session_facts`, which crossed no
@@ -645,7 +646,7 @@ cell, retires none and renders no area).
 
 A **Turn** is one observable model request/response cycle (see [GLOSSARY.md](../GLOSSARY.md)). The framework
 owns its identity and the rules that join its facts; the adapter maps the harness's native facts and nothing
-more. The two edges are `turn_start` and `turn_end` ([`protocol.ts#L376`](../interface/session/details/turn.ts)), and the
+more. The two edges are `turn_start` and `turn_end` ([`turn.ts#L21`](../interface/session/details/turn.ts#L21)), and the
 harness's own `turn_end` — which fires once the requested tools have run — is deliberately not this axis's end,
 because tool execution is outside the Turn.
 
@@ -1123,7 +1124,7 @@ Conflating them is the mistake the removed startup route made. A `RequiredSemant
 combination. The facts a *delivery* needs are per-context facts of one session, unknowable at binding time:
 the session's idle fact behind `canAcceptInput()` ([`port.ts`](../runtime/port.ts)), and the
 pending-message and asynchronous-job facts behind the quiescence gate
-([`protocol.ts#L241`](../interface/session/details/round.ts)). The framework reports one of those on the non-model channel
+([`round.ts#L86`](../interface/session/details/round.ts#L86)). The framework reports one of those on the non-model channel
 when the read finds it missing and fabricates no value in its place (the read answers nothing, which is not a
 confirmation, so the round stays open; the query answers `undefined`). See
 [harness-support.md](harness-support.md#capability-difference-register) for which harness reports which of
@@ -1166,8 +1167,8 @@ authorized it.
 
 | Member | Source | Meaning |
 | --- | --- | --- |
-| `OwnerCapabilityHandle.state` | [`protocol.ts#L432`](../interface/state/index.ts), [`#L398`](../interface/state/index.ts) | The owner's declared-value seam: `read()` is ungated — a handle kept past its owner's life still observes the current value, never a frozen copy — while `write(value)` is the one write path (`DeclaredValueSeam`) and works only while that life is open: the new value becomes current, is recorded best-effort in the owner's medium where the field persists there, and the marker area is republished. |
-| `OwnerCapabilityHandle.feedback` | [`protocol.ts#L432`](../interface/state/index.ts), [`#L111`](../interface/feedback/index.ts) | The owner's unified extension feedback channel (`FeedbackTransport`), so a failure the background effect observes still reaches the operator at the severity the extension chose. |
+| `OwnerCapabilityHandle.state` | [`state/index.ts#L118`](../interface/state/index.ts#L118), [`#L91`](../interface/state/index.ts#L91) | The owner's declared-value seam: `read()` is ungated — a handle kept past its owner's life still observes the current value, never a frozen copy — while `write(value)` is the one write path (`DeclaredValueSeam`) and works only while that life is open: the new value becomes current, is recorded best-effort in the owner's medium where the field persists there, and the marker area is republished. |
+| `OwnerCapabilityHandle.feedback` | [`state/index.ts#L118`](../interface/state/index.ts#L118), [`feedback/index.ts#L33`](../interface/feedback/index.ts#L33) | The owner's unified extension feedback channel (`FeedbackTransport`), so a failure the background effect observes still reaches the operator at the severity the extension chose. |
 
 **The capability is valid for its owner's life and no longer.** The framework's own behavior runs before any
 handler sees a session event, so the boundary that ends an owner has already retired that owner's cell by the
@@ -1186,7 +1187,7 @@ the session afterwards. An extension that subscribes to every actual session the
 and nothing else, and a subagent can never drive the Owner's value, its marker area or its notices.
 
 **The `session_end` delivery keeps a feedback channel of its own.** That dispatch's `feedback`
-([`protocol.ts#L196`](../interface/session/details/session.ts)) is the one thing that can still speak for the
+([`session.ts#L43`](../interface/session/details/session.ts#L43)) is the one thing that can still speak for the
 boundary: a notice published while the handler runs reaches the operator, which is what lets an extension
 announce the session switch while it stops its local effects. The channel is the dispatch's own and closes when
 the dispatch ends — a timer that kept that channel instead of the capability is heard by nobody — so the two
@@ -1219,6 +1220,7 @@ with the behavior it must preserve, is
 ## Maintaining this index
 
 When a public symbol gains a parameter, update the cited row here and the source line it points to; the
-source stays authoritative, this file stays an index. The framework's public interface is additive-only
-([ADR 0002](../../docs/adr/0002-semantic-extension-framework.md)), so a removal or rename is a new explicit decision,
-not an edit to this document alone.
+source stays authoritative, this file stays an index. The framework's public interface is stable: a
+removal or rename is a new explicit decision recorded in [ADR 0002](../../docs/adr/0002-semantic-extension-framework.md),
+not an edit to this document alone. The capability cutover was one such explicitly accepted
+non-additive change.

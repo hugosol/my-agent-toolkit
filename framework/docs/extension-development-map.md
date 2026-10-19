@@ -18,7 +18,7 @@
 | --- | --- | --- |
 | Extension definition | 与宿主无关的纯声明：扩展身份、控制方式、状态、贡献内容与配置要求 | 这是“声明需要什么”，还是“执行时如何实现”？ |
 | Extension `shared-logic` | 扩展业务及其组合：业务规则、外部业务协议、业务数据模型、缓存与刷新策略、业务持久化、展示计算 | 换一个宿主，这条业务规则是否仍然成立？ |
-| Framework `interface` | 已封装 capability 的 canonical 消费契约及使用约定；Session 是第一个完整示例 | extension 能否只读这里就正确使用该 capability？ |
+| Framework `interface` | 已封装 capability 的 canonical 消费契约及使用约定；State、Session、Prompt、Marker、Feedback、Host facts、Subagent、Command 及三个 General 模块均已迁移，Session 是最深的示例 | extension 能否只读这里就正确使用该 capability？ |
 | Framework `runtime` | 单一 framework / adapter 内部 port 与交付契约 | 这是 adapter 必须实现/提供的框架事实，还是扩展可见的能力？ |
 | Framework `core` | 尚属内部的契约与宿主无关的语义 implementation | 这是应藏在 capability seam 后面的规则，还是内部 helper？ |
 | Framework `behaviors` | 基于公共契约实现的可复用行为：绑定、状态控制、贡献、生命周期与派发 | 这是框架应该统一兑现的行为，还是扩展自己的处理逻辑？ |
