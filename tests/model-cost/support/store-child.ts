@@ -241,7 +241,6 @@ if (plan.requireUserHome !== undefined && userHomeDirectory !== plan.requireUser
 			owner: { kind: "owner", key: "store-child" },
 			hasUI: false,
 			feedback: { notify: (level, message) => notices.push({ level, message }) },
-			markers: { publishMarkers: () => undefined },
 			// This child drives the store directly, so the entry it stands in for is one whose harness
 			// integrates subagent observations; nothing in this suite reads the mode.
 			subagents: { mode: "subagents" },

@@ -19,9 +19,10 @@
  * The framework's port, its internal dispatch and its State store are not part of this surface:
  * an extension observes State and effects through the delivery its own command or handler
  * receives, never by asking the framework for a writer or a subscriber. Session vocabulary is
- * imported from `framework/interface/session`, and State's declarations and managed operations
- * from `framework/interface/state`; this entry carries the definition/assembly surface and the
- * capability types that have not yet moved.
+ * imported from `framework/interface/session`, State's declarations and managed operations from
+ * `framework/interface/state`, the prompt slot and its strategy from `framework/interface/prompt`,
+ * and the marker text from `framework/interface/marker`; this entry carries the definition/assembly
+ * surface and the capability types that have not yet moved.
  *
  * The configuration one extension declares is part of its definition, so its types are
  * here; the configuration API the extension's shared logic reads through — `getConfig`,
@@ -37,9 +38,6 @@ export {
 	type ControlKind,
 	type ExtensionConfigDeclaration,
 	type ExtensionDefinition,
-	type MarkerDeclaration,
-	type PromptDeclaration,
-	type PromptStrategy,
 	defineExtension,
 } from "./core/definition";
 
@@ -98,8 +96,6 @@ export type {
 	CommandInvocation,
 	DirectedCommandImplementation,
 	DirectedDirective,
-	MarkerTransport,
-	PromptContribution,
 	RecognizedDirective,
 	SubagentIntegration,
 	SubagentIntegrationFailure,

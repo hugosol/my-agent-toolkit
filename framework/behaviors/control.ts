@@ -129,8 +129,17 @@ export function runCommandDirected(
 		feedback: invocation.feedback,
 	};
 
+	// Explicitly the approved delivery surface, never a spread of the invocation: the invocation
+	// carries the marker area transport the framework publishes through, and the extension has no
+	// path to the area it does not own.
 	const delivery: CommandDelivery = {
-		...invocation,
+		args: invocation.args,
+		canAcceptInput: invocation.canAcceptInput,
+		provider: invocation.provider,
+		owner: invocation.owner,
+		persist: values => invocation.persist(values),
+		feedback: invocation.feedback,
+		hasUI: invocation.hasUI,
 		state: state.writer(target),
 		capability: state.capability(target),
 	};

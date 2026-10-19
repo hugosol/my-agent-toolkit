@@ -129,7 +129,14 @@ export function initializeImplementation(
 			// extension is told that, rather than the member being absent from the delivery.
 			const subagents: SubagentIntegration = settled ?? { mode: "none" };
 			if (initialize === undefined) return;
-			await initialize({ ...delivery, subagents });
+			// Explicitly the approved surface, not the internal facts: the delivery the extension
+			// receives carries no transport beyond the feedback channel it was given.
+			await initialize({
+				owner: delivery.owner,
+				hasUI: delivery.hasUI,
+				feedback: delivery.feedback,
+				subagents,
+			});
 		})
 		.catch((error: unknown) => {
 			const detail = error instanceof Error ? error.message : String(error);

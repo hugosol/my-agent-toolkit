@@ -192,6 +192,70 @@ describe("shared source imports no harness types (C1)", () => {
 		expect(crossings).toEqual([]);
 	});
 
+	test("Prompt and Marker declarations are published only by their capability interfaces", () => {
+		// Each capability owns exactly its approved declarations: Prompt publishes the slot
+		// declaration and its strategy vocabulary, Marker publishes the text declaration. The
+		// bound sets, defaults, selection tools and runtime deliveries deliberately stay internal,
+		// so a declaration or an export block naming one of these names anywhere else would give
+		// the capability a second owner (or a compatibility copy).
+		const interfaces = [
+			{ file: "framework/interface/prompt.ts", owns: ["PromptDeclaration", "PromptStrategy"] },
+			{ file: "framework/interface/marker.ts", owns: ["MarkerDeclaration"] },
+		] as const;
+		const interfaceFiles: Readonly<Record<string, true>> = Object.fromEntries(
+			interfaces.map(entry => [entry.file, true]),
+		);
+		const owned = interfaces.flatMap(entry => entry.owns);
+		const declaredEverywhere = (source: string): string[] =>
+			[...source.matchAll(/\bexport\s+(?:type|interface|const|class|function)\s+([A-Za-z_$][\w$]*)/g)]
+				.map(match => match[1]!);
+		const exportedInBlocks = (source: string): string[] =>
+			[...source.matchAll(/\bexport\s+(?:type\s+)?\{([^}]*)\}/g)]
+				.flatMap(match =>
+					match[1]!.split(",").map(entry => entry.trim().replace(/^type\s+/, "").split(/\s+as\s+/)[0]!.trim()),
+				);
+
+		for (const { file, owns } of interfaces) {
+			const source = readFileSync(path.join(REPO_ROOT, file), "utf8");
+			expect(declaredEverywhere(source).sort()).toEqual([...owns].sort());
+		}
+
+		const crossings: string[] = [];
+		for (const file of sourceFiles.filter(file => interfaceFiles[file] !== true)) {
+			const source = readFileSync(path.join(REPO_ROOT, file), "utf8");
+			for (const name of owned) {
+				if (declaredEverywhere(source).includes(name)) {
+					crossings.push(`${file} declares ${name} outside its capability interface`);
+				}
+				if (exportedInBlocks(source).includes(name)) {
+					crossings.push(`${file} exports ${name} outside its capability interface`);
+				}
+			}
+			for (const match of source.matchAll(/\bexport\s+\*\s*(?:as\s+\w+\s*)?from\s*["']([^"']+)["']/g)) {
+				if (resolvesInto(file, match[1]!, [/^framework\/interface\/prompt(?:\.|$)/, /^framework\/interface\/marker(?:\.|$)/])) {
+					crossings.push(`${file} re-exports a Prompt or Marker capability through "${match[1]}"`);
+				}
+			}
+		}
+		expect(crossings).toEqual([]);
+	});
+
+	test("the authoring entry publishes no Prompt or Marker runtime transport", () => {
+		// RunDelivery, PromptContribution and MarkerTransport are framework/adapter internals: an
+		// extension declares a slot or a marker text and never names the branch facts, the
+		// contribution result or the area transport. The bound strategy list is a framework
+		// validation set, not part of the extension-facing declaration.
+		const source = readFileSync(path.join(REPO_ROOT, "framework/public.ts"), "utf8");
+		const exported = [
+			...source.matchAll(/\bexport\s+(?:type\s+)?\{([^}]*)\}/g),
+		].flatMap(match =>
+			match[1]!.split(",").map(entry => entry.trim().replace(/^type\s+/, "").split(/\s+as\s+/)[0]!.trim()),
+		);
+		for (const name of ["RunDelivery", "PromptContribution", "MarkerTransport", "BOUND_PROMPT_STRATEGIES"]) {
+			expect(exported).not.toContain(name);
+		}
+	});
+
 	test("capability interfaces depend on no framework implementation or native mapping", () => {
 		const crossings: string[] = [];
 		for (const file of sourceFiles.filter(file => file.startsWith("framework/interface/"))) {

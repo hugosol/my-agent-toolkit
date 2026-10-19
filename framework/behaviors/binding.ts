@@ -521,7 +521,6 @@ export function bindExtension(
 						owner: session.owner,
 						hasUI: session.hasUI,
 						feedback: session.feedback,
-						markers: session.markers,
 					},
 					port.reportDiagnostic,
 					port.subagentIntegration,

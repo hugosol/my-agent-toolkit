@@ -76,7 +76,16 @@ export function runCommandActions(
 		return;
 	}
 
-	const delivery: ActionDelivery = invocation;
+	// Explicitly the approved delivery surface, never the invocation itself: the invocation also
+	// carries the persistence path and the marker area transport, which an action never uses.
+	const delivery: ActionDelivery = {
+		args: invocation.args,
+		owner: invocation.owner,
+		hasUI: invocation.hasUI,
+		canAcceptInput: invocation.canAcceptInput,
+		provider: invocation.provider,
+		feedback: invocation.feedback,
+	};
 	return Promise.resolve()
 		.then(() => action(delivery))
 		.catch((error: unknown) => {

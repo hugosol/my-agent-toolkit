@@ -119,6 +119,32 @@ describe("the one-time initialization runs at the owner session node, and the fi
 		expect(owners).toEqual([OWNER.key]);
 	});
 
+	test("the initialization delivery carries no marker area transport", async () => {
+		const deliveries: Array<Record<string, unknown>> = [];
+		const double = portDouble();
+		double.bind(probe("init-surface"), {
+			config: reading("greeting: hello\n"),
+			factory: () => ({
+				initialize: delivery => {
+					deliveries.push(delivery as unknown as Record<string, unknown>);
+				},
+			}),
+		});
+
+		double.deliverSession(OWNER, { event: start() });
+		await Promise.resolve();
+
+		// The actual delivery the framework constructed, not a type: an extension cannot reach the
+		// unified area's transport, so it cannot publish, clear or manage another extension's line.
+		expect(deliveries).toHaveLength(1);
+		const keys = (value: unknown): string[] => {
+			if (typeof value !== "object" || value === null) return [];
+			return Object.entries(value).flatMap(([key, child]) => [key, ...keys(child)]);
+		};
+		expect(keys(deliveries[0])).not.toContain("markers");
+		expect(keys(deliveries[0])).not.toContain("publishMarkers");
+	});
+
 	test("the first model request is handed the contribution only after the initialization settled", async () => {
 		const order: string[] = [];
 		let release: (() => void) | undefined;

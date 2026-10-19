@@ -16,8 +16,11 @@ types have no compatibility re-export from `public.ts` or `core/protocol.ts`.
 State's own capability interface now owns its declarations (`StateDeclaration`, `StatePersistence`,
 `StateInheritance`) and managed operations (`OwnerReference`, `DeclaredValueSeam`,
 `OwnerCapabilityHandle`); the definition entry refers to them without re-publishing them. The
-Feedback and Host facts leaf contracts required by Session also live beside it.
-Other capability entries stay in place; the adapter port remains internal in `core/protocol.ts`
+Prompt and Marker entries own only their declarations (`PromptDeclaration`, `PromptStrategy` and
+`MarkerDeclaration`): the run facts, contribution result, selection rules and the unified area's
+transport stay internal, and the initialization, directed and action deliveries no longer carry a
+marker transport. The Feedback and Host facts leaf contracts required by Session also live beside
+it. Other capability entries stay in place; the adapter port remains internal in `core/protocol.ts`
 until its own cutover. The import check uses an explicit list of remaining non-Session entries,
 not a blanket allowance for framework internals. No new disposal event, second dispatch, runtime
 registry or second adapter abstraction is introduced. Start at the [Session capability entry](../interface/session/index.ts) before reading its implementation.
@@ -133,10 +136,8 @@ framework/interface/
       unobserved.ts
   command/
     index.ts
-  prompt/
-    index.ts
-  marker/
-    index.ts
+  prompt.ts
+  marker.ts
   feedback/
     index.ts
   host-facts/
@@ -157,8 +158,8 @@ The directory names are navigation. The capability boundaries are the important 
 | **State** | State declaration axes, owner reference, declared-value seam, retained capability | store, cells, owner lives, persistence, followed-owner read, access lifetime | session boundaries and subagent relations |
 | **Session** | `SessionCapability` with `SessionObservationReader` yielding `SessionObservation`, confirmed-write statements, and the session-scoped event kinds: session, Round, Turn, Activity, Context, Input, Commit, Unobserved; disposal | session identity, Round synthesis, Turn association/dedup, activity derivation, context collection, subscription dispatch, observation source, cross-process access, close-out | Session, Context, Subagent domains |
 | **Command** | command declaration, invocation facts, action delivery, directed implementation | toggle/directed/actions routing, State transition, feedback | Control domain |
-| **Prompt** | prompt declaration, run delivery, prompt contribution | contribution selection, branch-progress matching | Prompt domain |
-| **Marker** | marker declaration, marker transport | process-global area, line order, viewed-session projection, publication triggers | Marker domain |
+| **Prompt** | prompt declaration and strategy | run facts, contribution result, contribution selection, branch-progress matching | Prompt domain |
+| **Marker** | marker declaration text | marker area transport, process-global area, line order, viewed-session projection, publication triggers | Marker domain |
 | **Feedback** | notification level and feedback transport | delivery wiring; no standalone behaviour module | Feedback domain |
 | **Host facts** | provider access, catalog price, idle query, subagent integration result | factory hand-over and adapter query mapping; no framework policy | Pricing, Provider, Subagent domains |
 | **General** | `request`, `updateFile`, `getConfig` and their option/error types | HTTP transport, coordinated file update, configuration document reading | none |
