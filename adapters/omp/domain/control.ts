@@ -8,6 +8,7 @@
  */
 import type { FeedbackTransport } from "../../../framework/interface/feedback";
 import type { OwnerReference } from "../../../framework/interface/state";
+import { defineAdapterDelivery } from "../../../framework/runtime/adapter-authoring";
 import type { BoundCommand, MarkerTransport, StateValues } from "../../../framework/runtime/port";
 import { canAcceptInputOf } from "./context/queries";
 import type { OmpExtensionApi, OmpSessionContext } from "../internal/native";
@@ -32,7 +33,7 @@ export function registerControl(
 	pi.registerCommand(command.name, {
 		description: command.description,
 		handler: (args, ctx) => {
-			return command.run({
+			return command.run(defineAdapterDelivery("command", {
 				args,
 				owner: context.owner(context.record(ctx)),
 				// Only the owner's own session reaches the write path, so persisting through this
@@ -47,7 +48,7 @@ export function registerControl(
 				provider: ctx.model?.provider,
 				feedback: context.feedback(ctx),
 				markers: context.markers(ctx),
-			});
+			}));
 		},
 	});
 }

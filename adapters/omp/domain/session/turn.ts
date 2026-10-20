@@ -5,6 +5,7 @@
  * association and lifecycle semantics.
  */
 import type { SessionFacts, TurnOutcome, TurnUsage } from "../../../../framework/interface/session";
+import { defineAdapterDelivery } from "../../../../framework/runtime/adapter-authoring";
 import type { HarnessPort, TurnSignalFacts } from "../../../../framework/runtime/port";
 import type { OmpAgentMessage, OmpExtensionApi, OmpSessionContext } from "../../internal/native";
 
@@ -88,7 +89,7 @@ export function observeTurns(
 			context.reportMissingFact("model identity at a request start");
 			return;
 		}
-		handler({
+		handler(defineAdapterDelivery("turn", {
 			...context.frame(ctx),
 			signal: {
 				kind: "request_started",
@@ -97,10 +98,10 @@ export function observeTurns(
 				provider: model.provider,
 				model: model.id,
 			},
-		});
+		}));
 	});
 	pi.on("after_provider_response", (event, ctx) => {
-		handler({
+		handler(defineAdapterDelivery("turn", {
 			...context.frame(ctx),
 			signal: {
 				kind: "response_received",
@@ -114,7 +115,7 @@ export function observeTurns(
 						: {}),
 				},
 			},
-		});
+		}));
 	});
 	pi.on("message_start", (_event, ctx) => {
 		// A new message begins: the next response's streaming readings are its own.
@@ -128,17 +129,17 @@ export function observeTurns(
 		const previous = streamed.get(sessionId);
 		if (previous !== undefined && sameReading(previous, usage)) return;
 		streamed.set(sessionId, usage);
-		handler({
+		handler(defineAdapterDelivery("turn", {
 			...context.frame(ctx),
 			signal: { kind: "usage_streamed", session: context.session(ctx), usage },
-		});
+		}));
 	});
 	pi.on("message_end", (event, ctx) => {
 		// Only the finalized assistant response settles a Turn; every other message kind this
 		// hook also fires for is not a model cycle's end.
 		if (event.message.role !== "assistant") return;
 		const usage = usageOf(event.message);
-		handler({
+		handler(defineAdapterDelivery("turn", {
 			...context.frame(ctx),
 			signal: {
 				kind: "response_settled",
@@ -148,6 +149,6 @@ export function observeTurns(
 				readings: usage === undefined ? [] : [usage],
 				...(event.message.responseId === undefined ? {} : { responseId: event.message.responseId }),
 			},
-		});
+		}));
 	});
 }

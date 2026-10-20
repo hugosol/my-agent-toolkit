@@ -10,6 +10,7 @@
  * outside a model cycle, so a Turn ends when its response settled, not when pi's turn did.
  */
 import type { SessionFacts, TurnOutcome, TurnUsage } from "../../../../framework/interface/session";
+import { defineAdapterDelivery } from "../../../../framework/runtime/adapter-authoring";
 import type { HarnessPort, TurnSignalFacts } from "../../../../framework/runtime/port";
 import { feedbackTransport } from "../feedback";
 import type { PiAssistantMessage, PiExtensionApi, PiExtensionContext } from "../../internal/native";
@@ -96,7 +97,7 @@ export function observeTurns(
 			context.reportMissingFact("model identity at a request start");
 			return;
 		}
-		handler({
+		handler(defineAdapterDelivery("turn", {
 			...context.frame(ctx),
 			signal: {
 				kind: "request_started",
@@ -105,10 +106,10 @@ export function observeTurns(
 				provider: model.provider,
 				model: model.id,
 			},
-		});
+		}));
 	}));
 	context.track(pi.on("after_provider_response", (event, ctx) => {
-		handler({
+		handler(defineAdapterDelivery("turn", {
 			...context.frame(ctx),
 			signal: {
 				kind: "response_received",
@@ -117,7 +118,7 @@ export function observeTurns(
 				// transport-level request id beside them, so nothing else is claimed here.
 				http: { status: event.status, headers: event.headers },
 			},
-		});
+		}));
 	}));
 	context.track(pi.on("message_end", (event, ctx) => {
 		// Only the finalized assistant response settles a cycle: this hook fires for every message
@@ -125,7 +126,7 @@ export function observeTurns(
 		const message = event.message;
 		if (message.role !== "assistant") return;
 		const usage = usageOf(message);
-		handler({
+		handler(defineAdapterDelivery("turn", {
 			...context.frame(ctx),
 			signal: {
 				kind: "response_settled",
@@ -135,7 +136,7 @@ export function observeTurns(
 				readings: usage === undefined ? [] : [usage],
 				...(message.responseId === undefined ? {} : { responseId: message.responseId }),
 			},
-		});
+		}));
 	}));
 }
 

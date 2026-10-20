@@ -260,6 +260,14 @@ A separate top-level adapter abstraction would:
 
 If the port later proves too wide for a real consumer, the correct move is to split the port by capability at the existing seam, not to add another layer above it. That decision is deliberately open.
 
+### 5.2 Inspectable adapter assembly (2026-10-20)
+
+The single `HarnessPort` remains the seam; [`runtime/adapter-authoring.ts`](../runtime/adapter-authoring.ts) adds an internal construction convention, not a second translation interface. Each adapter's module-level `OMP_PORT` or `PI_PORT` is defined with `defineAdapterPort<Context>`. Its complete mapped key set accounts for every port member. Required members supply factories; optional members supply factories (which may return `undefined` for an assembly-disabled path) or explicitly record `unavailablePortMember(reason)`. The factories are the actual runtime assembly source, exposed as `bindings` and evaluated only by `.create(context)` per native binding. No parallel capability manifest or global registry is introduced.
+
+Native translation and lifecycle ownership stay in the existing domain modules. `defineAdapterDelivery(kind, payload)` marks their final protocol payload construction, including embedded effects and late queries, using canonical existing types without changing payload identity or callback timing. Domain grouping is semantic, not a directory split by event/query/effect interaction mode.
+
+The compiler checks complete assembly keys and contract types. An adapter source-expression gate and full wiring/dependency analyzer are not implemented by this refactor: arbitrary dynamic bodies, assertions and semantic correctness are not proved. The extension-only `check:authoring` gate must not be presented as adapter verification. Explicit absence describes current adapter supply, not proof of native harness unavailability. Runtime loading, optional fallbacks and independent behavior verification are unchanged. Implementation and executed evidence are recorded in [the refactor summary](integration-contract-refactor.md#35-adapter-侧可检查组装后续已完成).
+
 ## 6. Capability coverage and evidence
 
 ### Inspectable authoring and shared planning (2026-10-20)

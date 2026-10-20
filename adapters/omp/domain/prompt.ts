@@ -8,6 +8,7 @@
  * request, so the promise is handed back rather than settled here.
  */
 import type { OwnerReference } from "../../../framework/interface/state";
+import { defineAdapterDelivery } from "../../../framework/runtime/adapter-authoring";
 import type { HarnessPort, MarkerTransport, PromptContribution } from "../../../framework/runtime/port";
 import { contributionIdentitiesOf } from "./session/queries";
 import type { OmpExtensionApi, OmpRunInitiationResult, OmpSessionContext } from "../internal/native";
@@ -28,11 +29,11 @@ export function observeRunInitiation(
 ): void {
 	pi.on("before_agent_start", (_event, ctx) => {
 		const recorded = context.record(ctx);
-		const contribution = handler({
+		const contribution = handler(defineAdapterDelivery("run", {
 			owner: context.owner(recorded),
 			contributionIdentities: contributionIdentitiesOf(ctx),
 			markers: context.markers(ctx),
-		});
+		}));
 		const commit = (planned: PromptContribution | undefined): OmpRunInitiationResult | undefined =>
 			planned === undefined
 				? undefined

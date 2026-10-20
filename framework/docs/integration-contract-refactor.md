@@ -85,6 +85,20 @@ extension 对 interface 的调用、声明、订阅、读取
 - 受影响的 framework 测试、model-cost 测试、真实宿主 fixtures 和辅助脚本均已迁移。
 - 删除了一项绑定旧代码表达形式的源码断言，没有将旧表达重新固定到新写法上。
 
+### 3.5 Adapter 侧可检查组装（后续已完成）
+
+新增内部 authoring 辅助 [`framework/runtime/adapter-authoring.ts`](../runtime/adapter-authoring.ts)，没有增加第二套 adapter 接口。共同契约仍是 `HarnessPort`，原生映射仍按各自 `domain/` 分类组织。
+
+- OMP、pi 的 `internal/port.ts` 分别导出 `OMP_PORT`、`PI_PORT`，由 `defineAdapterPort<Context>({...})` 定义实际组装。
+- 组装必须明确列出全部 `HarnessPort` 成员，包括可选项。必需成员只能提供符合契约的工厂；静态不提供的可选项使用 `unavailablePortMember(reason)`，不使用空函数冒充实现。
+- `bindings` 是 `.create(context)` 真正消费的工厂集合，不是平行的人工供给清单。定义创建时不执行工厂；每次 native binding 创建时，按定义顺序调用工厂。原生上下文、tracker、State entry、诊断与订阅的生命周期仍由原来的 adapter/domain 实现管理。
+- 条件可用性不等于静态不支持：例如 pi 未配置子代理 integration 时，其工厂返回 `undefined`，物化结果不含该可选成员；已提供的查询在某次调用时读不到事实，也不等于缺少查询实现。
+- 不提供的原因描述当前 adapter 接入，不应据此推断 harness 原生功能一定不存在。
+- Session、Round、Turn、Context、Input、Run、Command 及 pi Disposal 的原生最终交付构造使用 `defineAdapterDelivery(kind, payload)`。该入口引用原有规范类型，使 delivery 内的效果与查询回调有明确的构造落点；不复制、冻结或改变 payload，也不增加第二次分发。
+- 保留所有既有 domain 目录和原生语义，不按“事件／查询／效果”等交互方式重排目录，不为每个方法创建独立模块。
+
+**当前限制：** TypeScript 约束组装的完整键集合、工厂结果及 delivery 类型；本轮没有新增 adapter AST 表达门禁。受支持的约定是模块级静态组装键、可定位工厂与明确的可选可用性，工厂和原生业务函数体仍是普通 TypeScript。现有 `check:authoring` 只约束 extension authoring，不能据其通过声称 adapter 的任意动态构造已被检查，也不能仅凭交付构造标记证明回调正确接线。完整供给分析、缺口比较、未实现项生成及代码生成命令仍未实现，不影响正常加载。
+
 ## 4. 保持的运行时行为
 
 - 配置先验证，业务状态再创建；声明本身不启动定时器或远程请求。
@@ -146,6 +160,22 @@ agent 可以先筛选风险，但不得编造历史理由，也不能把“未�
 中间验证发现并修正了 handler 从单参数改为 state-first 后的调用方迁移错误。首次 serial dock 运行另有两项因本地冻结补丁宿主缓存不完整而无法开始；补齐固定版本依赖并应用已有冻结补丁后，受影响的两个文件共 7 项测试通过，随后全套测试通过。未修改版本基线或冻结补丁记录。
 
 独立 smoke 使用本地 capture provider，不是实际外部服务或视觉 TUI 验收；临时脚本已删除。文档目标路径已检查。
+
+### 7.1 Adapter 组装重构验证（2026-10-20）
+
+在上述 adapter 迁移后的源码上执行：
+
+| 验证 | 结果 |
+| --- | --- |
+| `bun run typecheck` | 退出码 0；TypeScript 7 与 extension authoring 门禁通过，50 个文件、3 个声明、0 条诊断 |
+| `bun run test` | 退出码 0；**1470 通过、0 失败**，161 个文件、8765 次断言，包含现有真实宿主 dock 场景 |
+| 独立类型边界 smoke | TypeScript 7 使用 `--ignoreConfig` 编译临时负例；缺必需成员、漏记可选成员、额外成员、把必需项声明为 unavailable、必需工厂返回 undefined，以及 Round 缺 `heldWork` 均被拒绝；合法可选缺失表达通过 |
+| 独立真实 OMP loader/RPC smoke | 首个请求等待初始化 **1571 ms**，异步命令等待 **262 ms**，同一业务实例、一次清理、正常退出 |
+| 独立真实 pi 1.3.0 loader/RPC smoke | 一次本地 capture 模型请求，观察 Turn 开始与完成交付；异步命令等待 **194 ms**，同一业务实例、一次清理、正常退出 |
+
+两项独立真实宿主 smoke 均使用本地 capture endpoint，不是外部模型服务或视觉 TUI 验收。临时 smoke 与类型负例文件已移除。未新增仅断言包装/转发的永久测试，现有行为套件验证消费方可见行为。
+
+验证限制：原有 `pi-terminal-round-smoke.ts` 默认要求 pi 1.2.0，当前安装为 1.3.0；显式指定 `--expect-pi-version 1.3.0` 后，又在加载前因临时入口生成的 Windows 导入路径 `./E:/...` 无法解析而失败。本轮没有修改该脚本；以上通过的独立 pi smoke 使用仓库内真实临时入口避开此路径问题，不能替代 terminal-round 专项场景的验收。adapter AST 表达门禁与完整供给分析尚未实现。
 
 ## 8. 相关记录
 

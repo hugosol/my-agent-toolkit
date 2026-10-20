@@ -12,6 +12,7 @@
  * unwound and whether anything beyond the run still holds it.
  */
 import type { TurnOutcome } from "../../../../framework/interface/session";
+import { defineAdapterDelivery } from "../../../../framework/runtime/adapter-authoring";
 import type { HarnessPort, RoundObservation, RoundSignal } from "../../../../framework/runtime/port";
 import type { OmpExtensionApi, OmpSessionContext } from "../../internal/native";
 import { outcomeOf } from "./turn";
@@ -75,7 +76,7 @@ export function observeRounds(
 	// settle is reported whether or not the session looks idle at this instant, because the
 	// session it belongs to is only read for quiescence when the framework re-checks.
 	const report = (signal: RoundSignal, ctx: OmpSessionContext): void => {
-		observer({
+		observer(defineAdapterDelivery("round", {
 			signal,
 			...context.frame(ctx),
 			// The live reads the framework's re-checks ask for, at its own next task: what the
@@ -83,7 +84,7 @@ export function observeRounds(
 			// reported while this native callback was still running.
 			quiescent: () => quiescent(ctx),
 			heldWork: () => heldWork(ctx),
-		});
+		}));
 	};
 
 	pi.on("agent_start", (_event, ctx) => {
