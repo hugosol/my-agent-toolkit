@@ -45,6 +45,8 @@ export interface SupplyOptions {
 	readonly root: string;
 	readonly adapter: string;
 	readonly contracts: readonly IntegrationContract[];
+	/** Selected extension sources; supplied for assembly-specific output contracts, never executed. */
+	readonly assemblyFiles?: readonly string[];
 }
 export interface GenerationOptions extends SupplyOptions {
 	readonly supply: SupplyResult;

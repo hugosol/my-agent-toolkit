@@ -223,6 +223,45 @@ agent 可以先筛选风险，但不得编造历史理由，也不能把“未�
 执行上限中断，后续用于边界修正的运行被主动取消；以上 1492 项结果来自最终固定源码的完整运行。
 现有文档中的旧测试计数属于各次重构当时的记录，不覆盖此处最终结果。
 
+### 7.3 具体 assembly 的工厂输出契约（2026-10-20）
+
+前一阶段把 pi 通用 port 工厂的 `undefined` 返回分支直接报告为 conditional，没有结合
+具体 extension 已经提供 `childEntry` 的事实。本次将检查点放到 adapter 声明的具体工厂出口，
+不要求扫描器证明整个 provider 接入实现，也不把可选接入改成必选。
+
+**本次增量范围：**
+
+- 8 个生产文件：`framework/runtime/adapter-authoring.ts`、`adapters/pi/index.ts`、
+  `adapters/pi/internal/port.ts`、`scripts/integrations/model.ts`、
+  新增 `scripts/integrations/assembly.ts`、`scripts/integrations/supply.ts`、
+  `scripts/integrations/check.ts`、`scripts/generate-adapter-integrations.ts`。
+- 4 个测试文件：新增 assembly 输出与 pi 输出契约测试，扩展现有 fixture 与 CLI 验收。
+- 更新本汇总及公开工具指南；未修改任何 extension 调用、第三方 provider 实现或运行时接线。
+
+`AdapterFactory<Port, Factory>` 是保留 native 可调用类型的纯类型输出凭据，不创建运行时属性或
+第二份 capability 清单。pi 的重载把参数选择关联到具体 port：明确 `childEntry` 对应必有
+`subagentIntegration`，明确不提供对应无此成员，宽泛 `PiAssembly` 对应可选成员。
+`AdapterPortDefinition.create` 的通用实现仍保留，未为所有 adapter 引入条件类型。
+
+检查器把 demand 的源文件范围传入供给分析，读取实际 adapter 调用的 TypeScript resolved
+signature 及规范输出凭据；只收窄原有 conditional 绑定，不能掩盖缺失实现、错误类型或 payload
+缺口。无凭据、无法读取的输出、可能不返回 assembly 的工厂均保留 unresolved。普通 native
+API 调用不被当作 assembly。生成器仍拒绝覆盖条件工厂，不会因为未选择接入而擅自启用它。
+
+**信任前提：**输出契约由 adapter 作者保证；重载本身不是实现正确性的证明。adapter 的实际
+输出有值/无值分支由形状测试验证，provider 注册及真实子代理加载仍由独立行为验证负责。
+本次没有增加运行时断言、启动门禁或原生行为检查。
+
+已观察的验证：
+
+- `bun run typecheck` 退出 0，包含输出关联的编译期正反例；authoring 50 个文件、3 个声明、0 条诊断。
+- `bun test tests/integrations tests/framework/pi-adapter-output.test.ts`：52 通过、0 失败，7 个文件、325 次断言。
+- 最终固定源码的 `bun run test`：退出 0；1508 通过、0 失败，167 个文件、8975 次断言，475.48 秒，包含现有真实宿主场景。
+- 实际 `check:integrations --json`：六个组合全部结构通过、退出 0；model-cost/pi 与 codebase-tools/pi 的加载供给为 provided，证据定位到各自 assembly 调用。
+- 实际 model-cost/pi 生成预览：退出 0、0 个文件、0 条诊断。
+- 使用真实 pi 工厂签名、临时 assembly 源码的独立进程 smoke：明确传入为 provided、不传为 unavailable、`string | undefined` 为 conditional，均无解析诊断；临时源码已移除。
+- 补充了“工厂本身可能返回 undefined”的失败前/修复后回归，避免丢弃空 assembly 分支而错误报告 provided。
+
 ## 8. 相关记录
 
 - [总体架构及本轮重构边界](capability-interface-architecture.md#inspectable-authoring-and-shared-planning-2026-10-20)

@@ -344,6 +344,14 @@ const AUTHORING_SOURCE = `import type {
 	UserInputDelivery,
 } from "./port";
 
+declare const adapterFactoryPort: unique symbol;
+
+export interface AdapterFactoryOutput<Port extends HarnessPort> {
+	readonly [adapterFactoryPort]?: Port;
+}
+
+export type AdapterFactory<Port extends HarnessPort, Factory> = Factory & AdapterFactoryOutput<Port>;
+
 export interface UnavailablePortMember {
 	readonly kind: "unavailable";
 	readonly reason: string;

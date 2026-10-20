@@ -132,6 +132,36 @@ data is not subject to those capability-structure restrictions. Exit codes are `
 unresolved analysis, and `2` invocation/infrastructure failure. JSON uses `stage: "integration-contracts"`
 and `behaviorTestsRun: false`.
 
+#### Assembly-specific factory outputs
+
+A generic adapter factory may legitimately return an optional member according to assembly inputs.
+The checker must not treat that generic optionality as uncertainty for every concrete extension.
+`AdapterFactory<Port, Factory>` in the internal adapter authoring module retains the native factory's
+callable shape and carries a **type-only** `AdapterFactoryOutput<Port>` witness. It adds no runtime
+property, capability inventory, or loading decision. The witness is an adapter output contract,
+trusted subject to adapter verification; it does not prove provider registration or native behavior.
+
+Pi preserves the correlation through `piAdapter` and `createPiPort` overloads:
+
+| Assembly input | Declared port output | Conditional member's selected supply |
+| --- | --- | --- |
+| `childEntry: string` | Required `subagentIntegration` function | `provided` |
+| Omitted or explicitly `undefined` `childEntry` | Absent `subagentIntegration` member | `unavailable` (intentionally not selected) |
+| General `PiAssembly`, including `string \| undefined` | Optional `subagentIntegration` function | `conditional` |
+
+The checker uses TypeScript's resolved call signature in selected extension sources and recognizes
+only the canonical output witness on factories belonging to the selected adapter. Ordinary native
+API calls are not assembly evidence. Multiple possible assemblies are combined conservatively;
+unsupported output types, missing evidence, or a factory that might return no assembly remain
+`unresolved`, not `provided`. Bare adapter analysis without extension sources retains its generic
+answer. Refinement cannot hide a missing implementation, incompatible binding or delivery payload gap.
+
+An intentionally unselected integration is not itself a broken adapter. It still fails coverage if
+the extension requires that integration; optional demand remains a reported risk. Provider availability,
+registration acceptance and actual child loading remain separate runtime results. Current model-cost/pi
+and codebase-tools/pi explicitly provide `childEntry`, so their loading supply is `provided`, rather
+than a warning based solely on the generic port factory's optional return type.
+
 Generation analyzes current source again. It selects confirmed missing required contracts by default;
 `--include-optional` also selects known optional absences. It preserves supplied implementations and
 refuses unsafe/ambiguous edits. Preview is read-only. Generated code references missing implementation

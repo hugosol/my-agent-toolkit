@@ -19,6 +19,16 @@ import type {
 	TurnSignalFacts,
 } from "./port";
 
+/** Type-only witness of the port a native extension factory assembles; no runtime property is added. */
+declare const adapterFactoryPort: unique symbol;
+
+export interface AdapterFactoryOutput<Port extends HarnessPort> {
+	readonly [adapterFactoryPort]?: Port;
+}
+
+/** Keeps the native loader's callable shape while retaining its assembly-specific port contract. */
+export type AdapterFactory<Port extends HarnessPort, Factory> = Factory & AdapterFactoryOutput<Port>;
+
 /** A deliberately unavailable optional outlet, not a fake implementation or an unknown reading. */
 export interface UnavailablePortMember {
 	readonly kind: "unavailable";

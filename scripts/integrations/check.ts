@@ -53,7 +53,7 @@ export function checkIntegrations(options: CheckOptions): IntegrationReport {
 	for (const extension of extensions) {
 		const demand = analyzeDemand({ root: options.root, extension });
 		if (options.demandOnly) results.push(compareDemand(demand));
-		else for (const adapter of adapters) results.push(compareDemand(demand, analyzeSupply({ root: options.root, adapter, contracts: demand.contracts })));
+		else for (const adapter of adapters) results.push(compareDemand(demand, analyzeSupply({ root: options.root, adapter, contracts: demand.contracts, assemblyFiles: demand.files })));
 	}
 	return { stage: "integration-contracts", behaviorTestsRun: false, complete: results.every(result => result.complete), results };
 }

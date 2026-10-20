@@ -23,6 +23,16 @@ describe("integration command contract", () => {
 		expect(demand.contracts.find((item: { id: string }) => item.id === "port:onTurn").origins[0]).toMatchObject({ file: expect.stringContaining("extensions/model-cost/"), line: expect.any(Number) });
 	});
 
+	test("model-cost pi uses its selected assembly output rather than the generic optional factory", () => {
+		const result = run("check-adapter-integrations.ts", "--extension", "model-cost", "--adapter", "pi", "--json");
+		expect(result.error).toBeUndefined();
+		const report = JSON.parse(result.stdout);
+		expect(report.results[0].contracts.find((item: { id: string }) => item.id === "framework:extension-loading").supply.status).toBe("provided");
+		expect(report.results[0].diagnostics).toEqual([]);
+		expect(report.complete).toBe(true);
+		expect(result.status).toBe(0);
+	});
+
 	test("missing adapter is a located dependency gap, not an invocation failure", () => {
 		const result = run("check-adapter-integrations.ts", "--extension", "codebase-tools", "--adapter", "integration-cli-absent-harness", "--json");
 		expect(result.error).toBeUndefined();

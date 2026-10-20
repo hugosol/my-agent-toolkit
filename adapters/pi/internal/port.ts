@@ -10,6 +10,7 @@ import { defineAdapterPort, unavailablePortMember } from "../../../framework/run
 import type { ExtensionDefinition } from "../../../framework/interface/details/definition";
 import type { SessionFacts, SessionStartReason } from "../../../framework/interface/session";
 import type { OwnerReference } from "../../../framework/interface/state";
+import type { SubagentIntegration } from "../../../framework/interface/subagent";
 import type { HarnessPort, SessionDisposal } from "../../../framework/runtime/port";
 import { onPiSessionContext } from "../domain/context";
 import { registerPiCommand } from "../domain/control";
@@ -38,9 +39,32 @@ export interface PiPortInput {
 	readonly keepSubscription: (release: () => void) => void;
 }
 
+/**
+ * The port one pi binding assembles when the assembly states a child entry.
+ *
+ * `subagentIntegration` is required rather than optional because the process's integration object
+ * exists for such an assembly: the member settles that object's one answer, and an absent value is
+ * never one of its outcomes. This is the assembly's own output contract — the shape its binding
+ * constructs — not a statement that a third-party provider is installed or answers correctly.
+ */
+export interface PiPortWithSubagents extends HarnessPort {
+	readonly subagentIntegration: () => SubagentIntegration | Promise<SubagentIntegration>;
+}
+
+/**
+ * The port one pi binding assembles when the assembly states no child entry.
+ *
+ * There is nothing to require in spawned sessions and nothing to settle, so the member is declared
+ * deliberately absent rather than left as the generic optional function. An undefined reading here
+ * means "this assembly has no such integration", never "the framework did not check".
+ */
+export interface PiPortWithoutSubagents extends HarnessPort {
+	readonly subagentIntegration?: undefined;
+}
+
 /** One pi binding's complete port, plus the diagnostics its assembly publishes. */
-export interface PiPort {
-	readonly port: HarnessPort;
+export interface PiPortResult<Port extends HarnessPort = HarnessPort> {
+	readonly port: Port;
 	readonly reportDiagnostic: (message: string) => void;
 }
 
@@ -133,13 +157,27 @@ export const PI_PORT = defineAdapterPort<PiPortContext>({
 	),
 });
 
-/** Builds one binding's port from the assembly's process-scoped readings. */
-export function createPiPort(input: PiPortInput): PiPort {
+/**
+ * Builds one binding's port from the assembly's process-scoped readings.
+ *
+ * The overloads state the contract the assembly declared: an integration present produces the
+ * enabled port, an explicitly absent one produces the port that declares the member unavailable,
+ * and an unresolved input (`PiSubagentIntegration | undefined`) keeps the union because neither
+ * outcome is known from the type. This is a trusted output contract, covered by adapter shape tests;
+ * overloads do not independently prove the implementation or third-party provider behavior.
+ */
+export function createPiPort(
+	input: PiPortInput & { readonly integration: PiSubagentIntegration },
+): PiPortResult<PiPortWithSubagents>;
+export function createPiPort(
+	input: PiPortInput & { readonly integration?: undefined },
+): PiPortResult<PiPortWithoutSubagents>;
+export function createPiPort(
+	input: PiPortInput,
+): PiPortResult<PiPortWithSubagents | PiPortWithoutSubagents>;
+export function createPiPort(input: PiPortInput): PiPortResult {
 	const context = createPiPortContext(input);
-	return {
-		reportDiagnostic: context.reportDiagnostic,
-		port: PI_PORT.create(context),
-	};
+	return { reportDiagnostic: context.reportDiagnostic, port: PI_PORT.create(context) };
 }
 
 function createPiPortContext(input: PiPortInput): PiPortContext {

@@ -8,11 +8,20 @@
  * members are present in the constructed payload's typed shape.
  *
  * Structural presence is not semantic correctness: an implementation can still be wrong after this
- * analysis reports it provided.
+ * analysis reports it provided. Selected extension assembly sources may carry the canonical
+ * `AdapterFactoryOutput` witness on an actual adapter factory call; that concrete output contract
+ * refines a conditionally bound member for the assembly actually written. The witness is a trusted
+ * declaration, not proof that a native provider registered, that a factory body ran, or that the
+ * adapter is semantically correct.
  */
 import { existsSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
 import ts from "typescript-compiler";
+import {
+	analyzeAssemblyOutputs,
+	evaluateAssemblyPortMember,
+	type AssemblyAnalysis,
+} from "./assembly";
 import type {
 	ContractSupply,
 	IntegrationContract,
@@ -306,6 +315,8 @@ export interface AdapterInspection {
 	readonly definition?: AdapterDefinitionModel;
 	readonly bindings: ReadonlyMap<string, AdapterBindingEntry>;
 	readonly bindingsDynamic: boolean;
+	/** Concrete output evidence from selected extension sources; absent for bare adapter analysis. */
+	readonly assembly?: AssemblyAnalysis;
 	readonly diagnostics: readonly IntegrationDiagnostic[];
 }
 
@@ -344,6 +355,27 @@ function collectSourceFiles(directory: string): string[] {
 	};
 	walk(directory);
 	return files;
+}
+
+/** Selected extension sources join the analysis program as roots, never as adapter sources. */
+function resolveAssemblyFiles(root: string, files: readonly string[] | undefined): string[] {
+	if (files === undefined || files.length === 0) return [];
+	const seen = new Set<string>();
+	const resolved: string[] = [];
+	for (const file of files) {
+		const absolute = path.resolve(root, file);
+		if (!/\.tsx?$/.test(absolute) || absolute.endsWith(".d.ts")) continue;
+		try {
+			if (!existsSync(absolute) || !statSync(absolute).isFile()) continue;
+		} catch {
+			continue;
+		}
+		const key = pathKey(absolute);
+		if (seen.has(key)) continue;
+		seen.add(key);
+		resolved.push(absolute);
+	}
+	return resolved;
 }
 
 function createProgram(rootNames: readonly string[]): { program: ts.Program; checker: ts.TypeChecker } | undefined {
@@ -868,7 +900,11 @@ function readBindings(
  * Reads one adapter's source structure. Exported because generation edits the same bounded assembly
  * expression this analysis reads; it is not a second integration API.
  */
-export function inspectAdapterSource(rootInput: string, adapter: string): AdapterInspection {
+export function inspectAdapterSource(
+	rootInput: string,
+	adapter: string,
+	assemblyFiles?: readonly string[],
+): AdapterInspection {
 	const root = path.resolve(rootInput);
 	const adaptersRoot = path.resolve(root, "adapters");
 	const selected = path.isAbsolute(adapter) || adapter.includes("/") || adapter.includes("\\")
@@ -905,7 +941,8 @@ export function inspectAdapterSource(rootInput: string, adapter: string): Adapte
 	};
 	const adapterFiles = exists ? collectSourceFiles(adapterDir) : [];
 	const canonicalFiles = [path.resolve(root, ADAPTER_AUTHORING_RELATIVE), path.resolve(root, PORT_RELATIVE)].filter(file => existsSync(file));
-	const sourceFiles = [...new Set([...adapterFiles, ...canonicalFiles])];
+	const selectedAssemblyFiles = resolveAssemblyFiles(root, assemblyFiles);
+	const sourceFiles = [...new Set([...adapterFiles, ...canonicalFiles, ...selectedAssemblyFiles])];
 	if (sourceFiles.length === 0) {
 		return {
 			root,
@@ -1055,6 +1092,9 @@ export function inspectAdapterSource(rootInput: string, adapter: string): Adapte
 	}
 	const bindingRead = readBindings(bindings, checker, builder, port, expectedFactoryTypes);
 	const context = readContextType(checker, found.call);
+	const assembly = selectedAssemblyFiles.length === 0
+		? undefined
+		: analyzeAssemblyOutputs(program, checker, adapterDir, selectedAssemblyFiles, authoringPathKey);
 	return {
 		root,
 		adapter,
@@ -1075,6 +1115,7 @@ export function inspectAdapterSource(rootInput: string, adapter: string): Adapte
 		},
 		bindings: bindingRead.entries,
 		bindingsDynamic: bindingRead.dynamic,
+		...(assembly === undefined ? {} : { assembly }),
 		diagnostics,
 	};
 }
@@ -1442,6 +1483,27 @@ export function evaluatePortSupply(inspection: AdapterInspection, name: string):
 	return evaluatePortMember(inspection, name);
 }
 
+/**
+ * A conditional adapter factory states possibility, not the selected assembly's actual output. When
+ * selected extension sources carry the canonical factory-output witness, the concrete promise of the
+ * assembly that was actually written decides the member. Missing or unsupported witness evidence is
+ * unresolved rather than treated as an absence the assembly never stated.
+ */
+function evaluateConditionalPortMember(
+	inspection: AdapterInspection,
+	name: string,
+	entry: AdapterBindingEntry,
+): Evaluation {
+	const fallback: Evaluation = { status: "conditional", reason: entry.reason ?? "The factory is conditionally available." };
+	if (inspection.assembly === undefined || inspection.checker === undefined) return fallback;
+	const assembled = evaluateAssemblyPortMember(inspection.assembly, inspection.checker, name);
+	return {
+		status: assembled.status,
+		...(assembled.reason === undefined ? {} : { reason: assembled.reason }),
+		...(assembled.call === undefined ? {} : { implementation: locationOf(inspection.root, assembled.call) }),
+	};
+}
+
 function evaluatePortMember(inspection: AdapterInspection, name: string): Evaluation {
 	if (inspection.checker === undefined || inspection.port === undefined) {
 		return { status: "unresolved", reason: "The canonical HarnessPort contract could not be read." };
@@ -1463,7 +1525,7 @@ function evaluatePortMember(inspection: AdapterInspection, name: string): Evalua
 				implementation: entry.implementation === undefined ? undefined : locationOf(inspection.root, entry.implementation),
 			};
 		case "conditional":
-			return { status: "conditional", reason: entry.reason ?? "The factory is conditionally available." };
+			return evaluateConditionalPortMember(inspection, name, entry);
 		case "unavailable":
 			return { status: "unavailable", reason: entry.reason ?? "The adapter declares this member unavailable." };
 		case "generated-missing":
@@ -1656,7 +1718,7 @@ function addUnresolvedDiagnostic(
 /** Analyzes one adapter against the supplied contracts. Source-only; nothing is imported or run. */
 export function analyzeSupply(options: SupplyOptions): SupplyResult {
 	const root = path.resolve(options.root);
-	const inspection = inspectAdapterSource(root, options.adapter);
+	const inspection = inspectAdapterSource(root, options.adapter, options.assemblyFiles);
 	const diagnostics: IntegrationDiagnostic[] = [...inspection.diagnostics];
 	const diagnosticKeys = new Set(diagnostics.map(item => `${item.code}|${item.file}|${item.line}|${item.column}|${item.message}`));
 	const supplies: ContractSupply[] = [];

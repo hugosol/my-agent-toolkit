@@ -16,7 +16,7 @@ try {
 		console.log("Generated source intentionally fails compilation until implementations are supplied. Existing implementations are preserved.");
 	} else {
 		const demand = analyzeDemand({ root: options.root, extension: options.extension! });
-		const supply = analyzeSupply({ root: options.root, adapter: options.adapter!, contracts: demand.contracts });
+		const supply = analyzeSupply({ root: options.root, adapter: options.adapter!, contracts: demand.contracts, assemblyFiles: demand.files });
 		const analysis = compareDemand(demand, supply);
 		const unresolved = demand.diagnostics.length > 0 || supply.diagnostics.length > 0 || supply.supplies.some(item => item.status === "unresolved");
 		if (unresolved) {
@@ -28,7 +28,7 @@ try {
 			}
 			process.exitCode = 1;
 		} else {
-			const result = generateAdapter({ root: options.root, adapter: options.adapter!, contracts: demand.contracts, supply, includeOptional: options.includeOptional, dryRun: options.dryRun });
+			const result = generateAdapter({ root: options.root, adapter: options.adapter!, contracts: demand.contracts, assemblyFiles: demand.files, supply, includeOptional: options.includeOptional, dryRun: options.dryRun });
 			const complete = result.diagnostics.length === 0;
 			if (options.json) console.log(JSON.stringify({ stage: "adapter-generation", complete, dryRun: options.dryRun, ...result }, null, 2));
 			else {
