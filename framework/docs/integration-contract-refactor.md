@@ -1,7 +1,7 @@
 # 接入契约架构重构汇总
 
 日期：2026-10-20  
-状态：本轮代码重构与后续静态表达检查器已完成；完整依赖检查器尚未实现。
+状态：接入结构重构、静态 authoring 门禁、源码依赖检查与缺失实现引用生成已实现。行为正确性仍由审阅与独立验证负责。
 
 ## 1. 背景与目标
 
@@ -97,15 +97,34 @@ extension 对 interface 的调用、声明、订阅、读取
 - Session、Round、Turn、Context、Input、Run、Command 及 pi Disposal 的原生最终交付构造使用 `defineAdapterDelivery(kind, payload)`。该入口引用原有规范类型，使 delivery 内的效果与查询回调有明确的构造落点；不复制、冻结或改变 payload，也不增加第二次分发。
 - 保留所有既有 domain 目录和原生语义，不按“事件／查询／效果”等交互方式重排目录，不为每个方法创建独立模块。
 
-**当前限制：** TypeScript 约束组装的完整键集合、工厂结果及 delivery 类型；本轮没有新增 adapter AST 表达门禁。受支持的约定是模块级静态组装键、可定位工厂与明确的可选可用性，工厂和原生业务函数体仍是普通 TypeScript。现有 `check:authoring` 只约束 extension authoring，不能据其通过声称 adapter 的任意动态构造已被检查，也不能仅凭交付构造标记证明回调正确接线。完整供给分析、缺口比较、未实现项生成及代码生成命令仍未实现，不影响正常加载。
+**检查边界：** TypeScript 约束组装的完整键集合、工厂结果及 delivery 类型。后续供给分析器识别静态组装键、可定位工厂、明确可用性及可达 delivery 构造；无法解析的结构必须报告，不能猜测。工厂和原生业务函数体仍是普通 TypeScript。`check:authoring` 仍只约束 extension authoring，不能据其通过声称 adapter 已通过检查；`check:integrations` 才消费 adapter 的静态结构。交付构造标记和类型符合都不证明原生语义实现正确。
 
-### 3.6 后续生成器的完成度边界（设计共识，尚未实现）
+### 3.6 生成器的完成度边界
 
 生成器只生成共享契约的类型约束及实际组装所需的实现引用，不生成具体原生实现，也不生成空函数、抛出未实现错误的函数或伪造的声明来满足契约。生成后的代码必须因缺少实现而无法通过编译；后续由人类或 agent 提供所需实现及导出，并满足类型和组装约束。优先引用现有规范类型，不复制一套接口签名。
 
 这里的编译失败是生成结果的有意开发状态，不是新增运行时能力拒载机制。仅声明一个未被使用的 interface 不会产生该效果；生成的约束和引用必须进入被检查的实际组装路径，不能用 `declare`、仅类型声明或类型断言冒充存在的实现。
 
 检查器负责可静态确定的需求、契约覆盖、类型与结构接线，不负责根据函数体猜测原生功能是否真正实现。后续代码即使通过编译和结构检查，也可能仍是空实现或错误映射；实际语义接入与逻辑正确性由人类和 agent 审阅，并结合行为验证负责。生成后缺少实现、结构契约满足、行为正确是不同状态，不能把后两者混为一谈。
+
+### 3.7 源码检查与生成命令
+
+```sh
+bun run check:integrations --extension model-cost --demand-only --json
+bun run check:integrations --extension model-cost --adapter omp --json
+bun run generate:integrations --extension codebase-tools --adapter new-harness --dry-run --json
+bun run generate:integrations --extension codebase-tools --adapter new-harness
+```
+
+`--root` 可选择独立源码根；无需已有目标 discovery entry 或成功运行的参考 harness。检查默认分析所有 extension/adapter 目录组合。adapter 源文件路径解析到其所属的 `adapters/<name>/`，生成目标不得越出该目录树。脚本复用 authoring 静态解析器、共享 framework 规划与显式语义规则，不导入执行扩展或 adapter。能力对象上的动态成员访问、缺少映射的 context/Session 成员及超出函数追溯界限均报告分析未完成；普通业务数据动态索引不因此受限。
+
+报告提供 `port:*`、`delivery:*`、`framework:*` 契约、源位置、依赖路径及必需/可选政策；所选 port 中显式构造的 delivery，其必需字段从规范 `AdapterDeliveryMap` 类型展开，不要求 extension 直接读取后才检查。供给区分 provided、unavailable、conditional、missing 与 unresolved。必需缺口、无法完成的分析或不能保证必需可用性的条件供给返回非零；明确可选的缺失只报告风险。命令错误返回 2，分析缺口返回 1，结构完整返回 0。
+
+生成器只修改可确定的缺失接线，保留已有实现，默认不生成可选缺口，`--include-optional` 可显式包含它们。新 adapter 获得完整 port 组装；已有 adapter 的确定缺失绑定或可定位 delivery 属性引用未提供的实现导出。生成器不创建 `missing-implementations.ts`，因此生成后编译必须失败，直到人类或 agent 提供实际导出。动态/歧义结构、现有错误值或不能安全定位的嵌套修改返回诊断而不冒险覆盖；预检失败不写任何计划文件。重复生成不重复插入引用。
+
+移除旧的 `subagentRequirements`、assembly `requiredSemantics`、公开的重复 requirement 类型、adapter inventory 和旧声明比较器。需求来自实际结构，不再要求扩展作者同步第二份列表。内部行为验证词汇保留，不变成加载政策。
+
+完整参数、状态解释和使用边界见[工具指南](framework-capabilities.md#source-derived-integration-contracts)。
 
 ## 4. 保持的运行时行为
 
@@ -135,11 +154,11 @@ extension 对 interface 的调用、声明、订阅、读取
 
 静态表达检查作为开发期门禁：被检查的最终源码必须满足启用的规则，无法解析的接入结构不能静默算作通过。通过仅表示检查范围内满足这些静态表达约束，不证明业务语义、完整接入依赖或行为兼容性；修复不能通过删除必要功能、隐藏结构或压制诊断来冒充完成，相关行为仍需验证。该门禁不改变 extension 的运行时加载行为。
 
-`bun run check:authoring` 现已通过 AST 和符号解析检查这些约束；支持静态常量、导入引用、可解析展开和受限共享包装，不执行 extension 模块。`--json` 提供精简诊断，`--rules` 输出同一份完整规则库。`bun run typecheck` 在原 TypeScript 7 类型检查后运行该门禁。检查失败不会改变运行时加载。使用方式、支持边界及 agent 修复循环见[静态表达检查指南](static-authoring-check.md)。上述第 5 项已交付；其余完整依赖分析任务仍未实现。
+`bun run check:authoring` 现已通过 AST 和符号解析检查这些约束；支持静态常量、导入引用、可解析展开和受限共享包装，不执行 extension 模块。`--json` 提供精简诊断，`--rules` 输出同一份完整规则库。`bun run typecheck` 在原 TypeScript 7 类型检查后运行该门禁。检查失败不会改变运行时加载。使用方式、支持边界及 agent 修复循环见[静态表达检查指南](static-authoring-check.md)。上述静态门禁已交付；完整需求提取、供给比较及生成命令已在后续实现，见 §3.7。
 
-现有 `bun run check:integrations` **仍然只是子代理声明匹配**，不能将其通过理解为完整依赖分析已经完成。
+`bun run check:integrations` 已从旧的子代理声明匹配切换到源码推导；通过只表示受支持的静态分析范围内契约与结构满足，不表示原生逻辑正确。
 
-本轮也未实现代码生成、编辑器插件、自动升级审阅工具、语义兼容认证或多版本 interface 管理。
+已实现的生成仅创建契约引用，不生成具体原生实现。本轮不包含编辑器插件、自动升级审阅工具、语义兼容认证或多版本 interface 管理。
 
 ## 6. 契约与语义漂移审阅
 
@@ -184,6 +203,25 @@ agent 可以先筛选风险，但不得编造历史理由，也不能把“未�
 两项独立真实宿主 smoke 均使用本地 capture endpoint，不是外部模型服务或视觉 TUI 验收。临时 smoke 与类型负例文件已移除。未新增仅断言包装/转发的永久测试，现有行为套件验证消费方可见行为。
 
 验证限制：原有 `pi-terminal-round-smoke.ts` 默认要求 pi 1.2.0，当前安装为 1.3.0；显式指定 `--expect-pi-version 1.3.0` 后，又在加载前因临时入口生成的 Windows 导入路径 `./E:/...` 无法解析而失败。本轮没有修改该脚本；以上通过的独立 pi smoke 使用仓库内真实临时入口避开此路径问题，不能替代 terminal-round 专项场景的验收。adapter AST 表达门禁与完整供给分析尚未实现。
+
+### 7.2 检查与生成工具最终验证（2026-10-20）
+
+在最终检查器/生成器源码上执行：
+
+| 验证 | 结果 |
+| --- | --- |
+| `bun run typecheck` | 退出码 0；TypeScript 7 与 authoring 门禁通过，50 个文件、3 个声明、0 条诊断 |
+| 集成工具、authoring、规划、startup 与 import-boundary 相关测试 | **94 通过、0 失败**；10 个文件、1065 次断言 |
+| `bun run test` | 退出码 0；**1492 通过、0 失败**，165 个文件、8936 次断言，435.48 秒，包含现有真实宿主场景 |
+| 默认源码接入检查 | 6 个组合均无解析诊断；3 个 OMP 组合及 connect-bot/pi 结构通过；codebase-tools/pi 与 model-cost/pi 的必需 `framework:extension-loading` 为 conditional，命令按政策退出 1 |
+| 新 adapter 的 CLI/TypeScript 7 smoke | 检查先报告缺口；生成实际 port 引用后因缺 `missing-implementations` 模块产生 TS2307；提供符合契约的导出后编译与检查均退出 0；再次生成不写文件 |
+| 隐式 delivery 义务的 CLI/TypeScript 7 smoke | extension 只订阅 Round，无直接 feedback 读取；检查仍发现所选 port 的规范 payload 缺字段；生成缺失值引用后 TS2307；补齐导出后编译与检查均退出 0 |
+| 分析边界 smoke | 动态能力成员不再静默通过：定位诊断并退出 1；adapter 源文件选择正确解析到已有 adapter；越出 adapters 树的生成请求被拒绝且不写文件 |
+
+临时 smoke 根与实现文件均已移除，没有生成或覆盖仓库中 OMP/pi 的原生实现。编译 smoke
+只证明缺失导出与类型/结构完成的转换，不证明 native 行为正确。早期全套运行一次在 300 秒
+执行上限中断，后续用于边界修正的运行被主动取消；以上 1492 项结果来自最终固定源码的完整运行。
+现有文档中的旧测试计数属于各次重构当时的记录，不覆盖此处最终结果。
 
 ## 8. 相关记录
 

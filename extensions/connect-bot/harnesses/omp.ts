@@ -213,16 +213,6 @@ export default function connectBot(pi: OmpExtensionApi): void {
 		// repository this assembly's own module lives in, so the extension's declared
 		// `extensions/connect-bot/config.yaml` is read wherever the process was started.
 		configBaseDir: EXTENSION_REPOSITORY_ROOT,
-		// This extension's panel state is driven by the round axis: without those edges the value
-		// it reports could never move off what the arm read, so the axis is declared as a
-		// dependency and a harness that cannot deliver it refuses this binding rather than
-		// leaving a session that looks connected and reports a frozen state.
-		//
-		// The session axis is declared for the same reason: a session this extension armed must be
-		// wound down when another identity takes its place, and a harness that delivered no boundary
-		// would leave a heartbeat beating for a session that is no longer current — with no way for
-		// the extension to learn that it should stop.
-		requiredSemantics: ["session-lifecycle-events", "round-lifecycle-events"],
 		implementation,
 	})(observed.api);
 }

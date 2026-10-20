@@ -35,7 +35,7 @@
 
 领域内部默认按映射方式组织：`events.ts` 把原生观察转成 framework 事件，`queries.ts` 把原生读取转成 framework 数据，`effects.ts` 执行 framework 请求的原生效果。先找领域，再找映射方式；只创建实际需要的文件，简单领域仍用单文件。复杂 Turn、Round 原生协议可留作 Session 内部 implementation，不增加纯转发入口。事件 delivery 的领域构造靠近事件映射，不留给 port 逐项拼装；共享类型、诊断和状态靠近其寿命拥有者，不另建一套支撑能力分类。
 
-这是帮助从 requirement 定位到相关 module 附近的导航约定，不要求一项声明一份文件，也不扩展当前 `subagentRequirements` 范围。具体落点见[能力到实现的导航](framework-capabilities.md#adapter-implementation-navigation)。简单能力优先一个文件，确有协作才增加目录；不要求不同 Harness 文件对称。
+这是帮助从推导出的接入契约定位到相关 module 附近的导航约定，不要求一项契约一份文件，也不需要另写 requirements 列表。具体落点见[能力到实现的导航](framework-capabilities.md#adapter-implementation-navigation)。简单能力优先一个文件，确有协作才增加目录；不要求不同 Harness 文件对称。
 
 完整领域包括 Session、Context、Subagent、Provider、Control、Prompt、Feedback、Marker；每个领域先明确归属，再决定单文件或目录，不能把原生数据来源或第三方接入名称当作主要领域。Subagent 拥有原生父子/祖先关系、接入状态与必要的接入协议；子会话通用的 Session、Turn、Round 事件仍归 Session，不复制第二条事件路径。Feedback 与 Marker 各自拥有原生效果。能力领域全部放在 `domain/` 下；原生类型、文本加载和 binding 端口放在 `internal/`，`index.ts` 负责公共装配入口，均不当作领域；完整路径对照只维护在[能力导航](framework-capabilities.md#adapter-implementation-navigation)。
 

@@ -15,7 +15,7 @@ bun run typecheck
 
 The default source scope is `extensions/`; framework helper implementations and test fixtures are not themselves extension authoring roots. Source references needed to resolve declarations are followed without importing or executing them. A selected-file scan checks that selection, not the entire repository. `--root <directory>` selects another project root, particularly for isolated fixtures; positional files are relative to that root.
 
-Exit codes are **0** for a clean scan, **1** for rule diagnostics, and **2** for invocation or infrastructure failure. Unsupported or unresolved integration structure must not silently count as clean. This development gate does not alter extension runtime loading. Existing `check:integrations` still performs its separate subagent declaration comparison.
+Exit codes are **0** for a clean scan, **1** for rule diagnostics, and **2** for invocation or infrastructure failure. Unsupported or unresolved integration structure must not silently count as clean. This development gate does not alter extension runtime loading. `check:integrations` separately derives interface dependencies and compares actual adapter supply; `generate:integrations` creates missing implementation references. Neither result follows merely from an authoring-lint pass.
 
 `typecheck` runs the repository's TypeScript 7 compiler explicitly, followed by the authoring linter. The linter uses the pinned `typescript-compiler` alias for the TypeScript 5.9 Compiler API, because the installed TypeScript 7 package does not export that API. The explicit compiler path prevents the alias package's `tsc` binary from changing the project's compiler selection.
 
@@ -35,7 +35,7 @@ Shared wrappers use simple identifier parameters and one unconditional final ret
 
 The dependency lockfile fingerprint in `harness-baseline.json` was refreshed for the added parser alias only; the harness version, frozen artifacts and support scope are unchanged.
 
-This is a restricted source-language checker, not a JavaScript interpreter or a sandbox. TypeScript still owns ordinary type checking. Neither brands nor this checker promise to defeat arbitrary adversarial code; source coverage and unresolved paths remain explicit. Future full dependency analysis must not interpret an expression-lint pass as proof that all interface usage or port obligations were analyzed.
+This is a restricted source-language checker, not a JavaScript interpreter or a sandbox. TypeScript still owns ordinary type checking. Neither brands nor this checker promise to defeat arbitrary adversarial code; source coverage and unresolved paths remain explicit. The dependency checker reuses the static resolver but must not interpret an expression-lint pass alone as proof that all interface usage or port obligations were analyzed.
 
 ## Agent repair loop
 

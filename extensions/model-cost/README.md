@@ -32,10 +32,10 @@ Tests are grouped by responsibility under `tests/model-cost/{business,foundation
 This is not a requirement to mirror every source file. Existing behavior cases and combination
 coverage survive changes to internal imports and wiring.
 
-This refactor does **not** change file schemas, command behavior, save timing or adapter declarations.
-Deriving adapter requirements from composed modules is explicitly deferred; the current
-`subagentRequirements` and integration checklist are unchanged. Architecture rationale and scope:
-[capability layering](../../framework/docs/capability-layering.md).
+This refactor does **not** change file schemas, command behavior or save timing.
+The subsequent integration tooling derives framework-mediated demand from actual source and adapter
+assembly instead of a manual `subagentRequirements` list. See [integration checks and generation](../../framework/docs/framework-capabilities.md#source-derived-integration-contracts).
+Architecture rationale: [capability layering](../../framework/docs/capability-layering.md).
 
 ### Architecture refactor verification (2026-10-18)
 

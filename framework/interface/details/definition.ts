@@ -3,7 +3,7 @@
  *
  * This is a public details file of the root authoring entry, not an internal implementation
  * module. It composes the declarations each capability owns — State, commands, prompts, markers,
- * configuration and the subagent requirements — without re-publishing their rules. A definition
+ * and configuration — without re-publishing their rules. Integration demands are derived from use. A definition
  * has no builder, no handler and no harness member: the framework connects the behavior behind
  * each declaration when an adapter binds it.
  */
@@ -11,7 +11,6 @@ import type { CommandDeclaration } from "../command";
 import type { MarkerDeclaration } from "../marker";
 import type { PromptDeclaration } from "../prompt";
 import type { StateDeclaration } from "../state";
-import type { SubagentCapability } from "../subagent";
 
 /**
  * The value type one declared configuration key must match.
@@ -60,12 +59,6 @@ export interface ExtensionDefinition {
 	readonly id: string;
 	/** Display name used for the extension's label and its notifications. */
 	readonly displayName: string;
-	/**
-	 * Subagent semantics required for this extension's complete integration. Execution modes
-	 * are the harness author's declaration, not this extension's choice. Only the independent
-	 * integration completeness check reads this metadata; startup and feature behavior do not.
-	 */
-	readonly subagentRequirements?: readonly SubagentCapability[];
 	readonly state?: StateDeclaration;
 	readonly commands?: readonly CommandDeclaration[];
 	readonly prompts?: readonly PromptDeclaration[];

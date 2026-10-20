@@ -37,19 +37,6 @@ import type { OwnerReference } from "../state";
 import type { SubagentIntegration } from "../subagent";
 
 /**
- * A semantic an extension's assembly may declare its extension depends on: the lifecycle
- * semantics a supported scope must be verified for, beyond the one every binding already
- * requires.
- *
- * `history-preservation` is the framework's own invariant — it appends new material through the
- * harness's own recording path and rewrites no existing conversation entry — so it is required of
- * every binding and is deliberately not declarable here. A declaration states verification input,
- * never a runtime switch: a binding neither refuses nor downgrades for a harness that cannot honor
- * one.
- */
-export type DeclarableRequiredSemantic = "session-lifecycle-events" | "round-lifecycle-events";
-
-/**
  * What the framework hands an extension's factory.
  *
  * `config` is the validated configuration the definition declared: the values its `config.yaml`
@@ -425,9 +412,9 @@ export function defineImplementation<State>(
  * The generic assembly information one harness adapter binds a definition with.
  *
  * Everything an extension declares about how it is assembled lives here, host-independently: the
- * authored implementation, the framework semantics its extension additionally depends on (contract
- * metadata for the independent verification, never a startup switch), and the directory its
- * declared configuration path is relative to. A harness adapter consumes this type
+ * authored implementation and the directory its declared configuration path is relative to.
+ * Integration dependencies are derived from actual authoring and interface use, not duplicated
+ * in an assembly requirement list. A harness adapter consumes this type
  * unchanged, so an assembly never states anything about a harness and a new harness adds no
  * assembly vocabulary of its own.
  */
@@ -441,18 +428,6 @@ export interface ExtensionAssembly {
 	 * initialization failure as before.
 	 */
 	readonly implementation?: AuthoredImplementationFactory;
-	/**
-	 * The framework semantics this extension depends on beyond the ones every binding already
-	 * requires, as the extension's own assembly declares them.
-	 *
-	 * This is contract metadata: it states what the supported harness scope must be independently
-	 * verified for, and it is the input a verification run reports its coverage against. Normal
-	 * startup consults none of it — a binding neither refuses nor downgrades for a harness that
-	 * cannot honor a declared semantic, and the framework checks no harness version membership —
-	 * so an extension that declares one runs on whatever harness loaded it, exactly as one that
-	 * declares none does.
-	 */
-	readonly requiredSemantics?: readonly DeclarableRequiredSemantic[];
 	/**
 	 * The directory the definition's declared configuration paths are relative to, as plain data.
 	 *

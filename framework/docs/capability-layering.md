@@ -79,7 +79,7 @@ tests/model-cost/
 
 presentation 的字段和原生绘制不是 definition.ts 要求 framework adapter 提供的业务能力；其输入所需的公共事实应另外追溯。主/子会话、in-process/cross-process、硬需求/可降级需求需要分别考虑，不可跨模式拼凑供给。
 
-本次不增加 selected requirements、capability.ts、运行时业务注册表、递归依赖清单或 checker；definition.ts 的现有 subagentRequirements 与 adapter inventory 保持不变。现有 `check:integrations` 只检查当前声明匹配，不证明业务行为或未来机制已实现。
+本次分层重构没有引入运行时业务注册表。后续接入检查已改为从静态 authoring、interface 使用与实际 adapter 组装推导契约，不再维护重复的 definition requirements 或 adapter inventory。检查与生成的使用方式见[接入契约工具](framework-capabilities.md#source-derived-integration-contracts)；结构检查不证明业务语义正确。
 
 ## 7. 术语与决策归属
 

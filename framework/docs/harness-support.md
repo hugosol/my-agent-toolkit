@@ -369,23 +369,24 @@ The first release requires strict history preservation: no mutation or reorderin
 
 ### Integration completeness is a separate stage
 
-`bun run check:integrations` (or `bun run check:integrations --json`) compares only the two-sided
-subagent checklist: extension requirements and each adapter's declared per-mode coverage. It reports
-missing declarations, modes or capabilities and exits nonzero for an incomplete checklist. It does
-not install a harness, read a candidate verification report or invoke behavior tests; it establishes
-neither behavioral correctness nor version support. Developers run it independently of the test/dock
-and candidate commands. See the [checklist vocabulary and authoring instructions](framework-capabilities.md#independent-subagent-integration-checklist)
-and the [decision](../../docs/adr/0002-semantic-extension-framework.md#two-sided-subagent-integration-checklist-2026-10-17).
+`bun run check:integrations` derives extension demand from source and the framework plan, then
+compares actual adapter bindings and reachable delivery construction. Demand-only analysis needs no
+adapter or discovery entry. Required gaps and unresolved analysis return nonzero; explicit optional
+absences remain reported risks. `generate:integrations` creates missing implementation references,
+not implementations, and intentionally leaves compilation failing until real exports are supplied.
+Neither command installs a harness, reads verification reports, executes extension code or establishes
+behavioral correctness/version support. See [the tooling guide](framework-capabilities.md#source-derived-integration-contracts).
+The former two-sided subagent arrays and manual supply catalogs are removed.
 
 Normal startup never invokes this command or consumes its results. User notices, feature availability,
-accounting and extension loading are unchanged. A pi coverage declaration describes its integrated
-subagent path, not a runtime probe for provider presence, successful child loading or connection health.
+accounting and extension loading are unchanged. Conditional pi child integration is reported as
+conditional supply, not a runtime probe for provider presence, successful child loading or connection health.
 
 ### Independent compatibility verification
 
 Confirmed old-to-new ruling: assembly Q10a and Q19 (2026-10-13) — the user required taking the verification stage out into an independently runnable script (or another independently executable form) producing a report, and adding no verification logic beyond business needs at normal startup; Q19 confirmed the resulting organization. Former policy evaluated installed-version membership during execution, warned about unlisted versions, and checked required native Interface shape at binding. The user explicitly replaced this with independently runnable verification and reports so normal startup carries no compatibility verification unrelated to business.
 
-- Development defines the complete contract needed by an extension/harness integration; the adapter and harness-specific implementation must satisfy it before support is advertised. Contract metadata (including requiredSemantics if retained) is verification input, not a runtime switch or fallback route.
+- Development defines the complete contract needed by an extension/harness integration; the adapter and harness-specific implementation must satisfy it before support is advertised. Source-derived contract demand is verification input, not a runtime switch or fallback route.
 - An independent entrypoint checks declared/implemented interfaces and exercises actual framework contract and extension integration/behavior scenarios on the selected harness; checking method existence is insufficient semantic evidence. Reuse the existing candidate script/dock rather than building a parallel verifier.
 - The report names exact harness version/revision, framework and extension source revision, dependency version/lockfile and environment; it records executed scenarios and passed/failed/unverified coverage. A missing credential, skipped UI, shape-only network fixture or absent platform test is unverified, not full passing. A pass is scoped to that combination and coverage, never a guarantee for later source or harness changes.
 - Only complete verification of the declared supported scope, followed by explicit maintainer support declaration, establishes support. A narrow framework alarm alone cannot do this; final verification coverage, host patch revision and cutover belong to the acceptance decision (resolved 2026-10-13): patch the minimal public Viewed-session outlet on the existing supported baseline first, freeze the exact revision/artifact, run the split verification, and keep the support record unchanged until the maintainer declares support.

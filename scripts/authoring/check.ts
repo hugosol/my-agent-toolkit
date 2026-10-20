@@ -99,7 +99,7 @@ const REFLECT_MUTATING_METHODS: Readonly<Record<string, true>> = {
 };
 
 /** A static value, or the reason the expression cannot be understood without running it. */
-type StaticValue =
+export type StaticValue =
 	| { readonly kind: "absent"; readonly node: ts.Node }
 	| { readonly kind: "literal"; readonly value: string | number | boolean | null; readonly node: ts.Node }
 	| { readonly kind: "function"; readonly node: ts.Node }
@@ -107,7 +107,7 @@ type StaticValue =
 	| { readonly kind: "array"; readonly node: ts.Node; readonly items: readonly StaticValue[]; readonly issues: readonly StaticIssue[] }
 	| { readonly kind: "object"; readonly node: ts.Node; readonly properties: ReadonlyMap<string, StaticProperty>; readonly issues: readonly StaticIssue[] };
 
-interface StaticProperty {
+export interface StaticProperty {
 	readonly key: string;
 	readonly keyNode: ts.Node;
 	/** The expression as written where the declaration names this property; used for diagnostics. */
@@ -115,7 +115,7 @@ interface StaticProperty {
 	readonly value: StaticValue;
 }
 
-interface StaticIssue {
+export interface StaticIssue {
 	readonly ruleId: AuthoringRuleId;
 	readonly node: ts.Node;
 	readonly message: string;
@@ -148,11 +148,110 @@ interface WrapperInfo {
 
 type WrapperFunction = ts.FunctionDeclaration | ts.FunctionExpression | ts.ArrowFunction;
 
+/** One source position in the same repo-relative shape integration diagnostics use. */
+export interface AuthoringSourceLocation {
+	/** Repository-relative path with forward slashes. */
+	readonly file: string;
+	/** One-based line. */
+	readonly line: number;
+	/** One-based column. */
+	readonly column: number;
+}
+
+/** One statically recovered event entry in an authored subscription group. */
+export interface AuthoredEventView {
+	readonly kind: string;
+	readonly origin: AuthoringSourceLocation;
+	/** The handler function body when the entry resolves to one; absent for a dynamic handler. */
+	readonly handler?: ts.FunctionLikeDeclaration;
+}
+
+/** One statically recovered subscription group. */
+export interface AuthoredSubscriptionView {
+	readonly scope?: "owner" | "session";
+	readonly events: readonly AuthoredEventView[];
+	readonly origin: AuthoringSourceLocation;
+}
+
+/** One handler role inside an authored command table. */
+export interface AuthoredCommandHandlerView {
+	/** `run`, `unrecognized`, or the declared action name. */
+	readonly role: string;
+	readonly node?: ts.FunctionLikeDeclaration;
+	readonly origin: AuthoringSourceLocation;
+}
+
+/** One statically recovered command implementation entry. */
+export interface AuthoredCommandView {
+	readonly name: string;
+	readonly kind?: "directed" | "actions";
+	readonly actions: readonly string[];
+	readonly handlers: readonly AuthoredCommandHandlerView[];
+	readonly origin: AuthoringSourceLocation;
+}
+
+/**
+ * One statically recovered authored implementation declaration. It is the source structure the
+ * runtime materializes, recovered through the same resolver the authoring checker uses — no
+ * factory, `create` or handler has run.
+ */
+export interface AuthoredImplementationView {
+	readonly origin: AuthoringSourceLocation;
+	readonly create?: ts.FunctionLikeDeclaration;
+	readonly subscriptions: readonly AuthoredSubscriptionView[];
+	readonly commands: readonly AuthoredCommandView[];
+	readonly catalog?: ts.FunctionLikeDeclaration;
+	readonly initialize?: ts.FunctionLikeDeclaration;
+	readonly cleanup?: ts.FunctionLikeDeclaration;
+}
+
+/**
+ * The reusable source analysis behind {@link checkAuthoring}. It exposes the checker's canonical
+ * symbol/static-expression resolution so a demand analyzer can inspect the same declarations and
+ * function bodies without importing or executing the extension.
+ */
+export interface AuthoringSourceAnalysis {
+	readonly program: ts.Program;
+	readonly checker: ts.TypeChecker;
+	readonly root: string;
+	/** Selected repository-relative source files. */
+	readonly files: readonly string[];
+	readonly filesChecked: number;
+	readonly declarationsChecked: number;
+	readonly implementations: readonly AuthoredImplementationView[];
+	readonly diagnostics: readonly AuthoringDiagnostic[];
+	evaluate(expression: ts.Expression): StaticValue;
+	isCanonicalEntryCall(call: ts.CallExpression): boolean;
+	/** Whether the call resolves to the named canonical function in the named interface file. */
+	isCanonicalFunctionCall(call: ts.CallExpression, functionName: string, entryRelativePath: string): boolean;
+	symbolAt(node: ts.Node): ts.Symbol | undefined;
+	resolveSymbol(symbol: ts.Symbol | undefined): ts.Symbol | undefined;
+	/** The function body/declaration a handler expression really names, when it resolves to one. */
+	resolveFunction(node: ts.Node): ts.FunctionLikeDeclaration | undefined;
+	location(node: ts.Node): AuthoringSourceLocation;
+	isRepositoryFile(sourceFile: ts.SourceFile): boolean;
+	propertyName(name: ts.PropertyName | ts.BindingName | ts.Expression): string | undefined;
+}
+
 /**
  * Scan the selected authoring sources. Deterministic for the same tree and options; diagnostics
  * are sorted by file, line, column, rule and message, and exact duplicates are removed.
  */
 export function checkAuthoring(options: AuthoringCheckOptions): AuthoringCheckResult {
+	const analysis = analyzeAuthoringSources(options);
+	return {
+		filesChecked: analysis.filesChecked,
+		declarationsChecked: analysis.declarationsChecked,
+		diagnostics: analysis.diagnostics,
+	};
+}
+
+/**
+ * Recover the static authored declarations of the selected sources and the checker's diagnostics.
+ * The returned methods reuse the checker's own symbol resolution and restricted evaluator; none of
+ * them imports, calls or otherwise executes the analyzed modules.
+ */
+export function analyzeAuthoringSources(options: AuthoringCheckOptions): AuthoringSourceAnalysis {
 	const root = path.resolve(options.root);
 	const selection = selectSourceFiles(root, options.files);
 	const diagnostics: AuthoringDiagnostic[] = [];
@@ -168,28 +267,23 @@ export function checkAuthoring(options: AuthoringCheckOptions): AuthoringCheckRe
 		});
 	}
 
-	if (selection.files.length === 0) {
-		return finishResult(0, 0, diagnostics);
-	}
+	const compilerOptions: ts.CompilerOptions = {
+		target: ts.ScriptTarget.ES2020,
+		module: ts.ModuleKind.ESNext,
+		moduleResolution: ts.ModuleResolutionKind.Bundler,
+		jsx: ts.JsxEmit.Preserve,
+		strict: false,
+		noEmit: true,
+		skipLibCheck: true,
+		allowJs: false,
+		checkJs: false,
+		resolveJsonModule: true,
+		types: [],
+	};
 
 	let program: ts.Program;
 	try {
-		program = ts.createProgram({
-			rootNames: selection.files,
-			options: {
-				target: ts.ScriptTarget.ES2020,
-				module: ts.ModuleKind.ESNext,
-				moduleResolution: ts.ModuleResolutionKind.Bundler,
-				jsx: ts.JsxEmit.Preserve,
-				strict: false,
-				noEmit: true,
-				skipLibCheck: true,
-				allowJs: false,
-				checkJs: false,
-				resolveJsonModule: true,
-				types: [],
-			},
-		});
+		program = ts.createProgram({ rootNames: selection.files, options: compilerOptions });
 	} catch (error) {
 		diagnostics.push({
 			ruleId: "authoring/parse",
@@ -199,7 +293,8 @@ export function checkAuthoring(options: AuthoringCheckOptions): AuthoringCheckRe
 			message: `The TypeScript program could not be created: ${error instanceof Error ? error.message : String(error)}`,
 			suggestion: suggestionFor("authoring/parse"),
 		});
-		return finishResult(selection.files.length, 0, diagnostics);
+		// Keep the analysis shape usable for the diagnostic path; no selected source can be read.
+		program = ts.createProgram({ rootNames: [], options: compilerOptions });
 	}
 
 	const checker = program.getTypeChecker();
@@ -266,6 +361,7 @@ export function checkAuthoring(options: AuthoringCheckOptions): AuthoringCheckRe
 
 	const declarationRefs = new Set<ts.Symbol>();
 	const authoredResults = new Set<ts.Symbol>();
+	const implementations: AuthoredImplementationView[] = [];
 	let declarationsChecked = 0;
 
 	for (const sourceFile of selectedSources) {
@@ -274,13 +370,15 @@ export function checkAuthoring(options: AuthoringCheckOptions): AuthoringCheckRe
 			if (isCanonicalEntryCall(node, state)) {
 				if (wrapperCalls.has(node)) return;
 				declarationsChecked += 1;
-				analyzeDirectDeclaration(node, state, declarationRefs);
+				const view = analyzeDirectDeclaration(node, state, declarationRefs);
+				if (view) implementations.push(view);
 				return;
 			}
 			const wrapper = resolveWrapperForCallee(node.expression, wrappers, state);
 			if (wrapper) {
 				declarationsChecked += 1;
-				analyzeWrapperInstantiation(wrapper, node, state, declarationRefs);
+				const view = analyzeWrapperInstantiation(wrapper, node, state, declarationRefs);
+				if (view) implementations.push(view);
 				return;
 			}
 			if (looksLikeFalseEntryPoint(node.expression, state)) {
@@ -309,7 +407,27 @@ export function checkAuthoring(options: AuthoringCheckOptions): AuthoringCheckRe
 
 	collectMutationDiagnostics(repositorySources, state, declarationRefs, authoredResults, wrappers);
 
-	return finishResult(selectedSources.length, declarationsChecked, diagnostics);
+	const finished = finishResult(selectedSources.length, declarationsChecked, diagnostics);
+	return {
+		program,
+		checker,
+		root,
+		files: selection.files.map(file => relativeFile(root, file)),
+		filesChecked: finished.filesChecked,
+		declarationsChecked: finished.declarationsChecked,
+		implementations,
+		diagnostics: finished.diagnostics,
+		evaluate: expression => evaluate(expression, EMPTY_ENV, state),
+		isCanonicalEntryCall: call => isCanonicalEntryCall(call, state),
+		isCanonicalFunctionCall: (call, functionName, entryRelativePath) =>
+			isCanonicalNamedCall(call, functionName, entryRelativePath, state),
+		symbolAt: node => rawSymbolAt(node, state),
+		resolveSymbol: symbol => resolveAliasedSymbol(symbol, state),
+		resolveFunction: node => resolveFunctionNode(node, state),
+		location: node => sourceLocation(state, node),
+		isRepositoryFile: sourceFile => isRepositorySource(sourceFile, root),
+		propertyName: name => propertyNameText(name),
+	};
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -499,12 +617,25 @@ function isUndefinedExpression(expression: ts.Expression): boolean {
 // -------------------------------------------------------------------------------------------------
 
 function isCanonicalEntryCall(call: ts.CallExpression, state: CheckState): boolean {
+	return isCanonicalNamedCall(call, "defineImplementation", CANONICAL_ENTRY_RELATIVE, state);
+}
+
+/** Whether a call resolves to the named canonical function declared in one framework interface file. */
+function isCanonicalNamedCall(
+	call: ts.CallExpression,
+	functionName: string,
+	entryRelativePath: string,
+	state: CheckState,
+): boolean {
 	const symbol = resolveCalleeSymbol(call.expression, state);
 	if (!symbol?.declarations) return false;
+	const expected = path.isAbsolute(entryRelativePath)
+		? path.normalize(entryRelativePath)
+		: path.resolve(state.root, entryRelativePath);
 	return symbol.declarations.some(declaration => {
 		if (!ts.isFunctionDeclaration(declaration)) return false;
-		if (declaration.name?.text !== "defineImplementation") return false;
-		return pathKey(declaration.getSourceFile().fileName) === pathKey(state.canonicalEntryPath);
+		if (declaration.name?.text !== functionName) return false;
+		return pathKey(declaration.getSourceFile().fileName) === pathKey(expected);
 	});
 }
 
@@ -1041,27 +1172,32 @@ function dynamic(node: ts.Node, reason: string): StaticValue {
 // Declaration validation
 // -------------------------------------------------------------------------------------------------
 
-function analyzeDirectDeclaration(call: ts.CallExpression, state: CheckState, refs: Set<ts.Symbol>): void {
+function analyzeDirectDeclaration(
+	call: ts.CallExpression,
+	state: CheckState,
+	refs: Set<ts.Symbol>,
+): AuthoredImplementationView | undefined {
 	if (call.arguments.some(ts.isSpreadElement)) {
 		report(state, "authoring/static-structure", call, "A spread argument cannot be resolved to the single authored declaration.");
-		return;
+		return undefined;
 	}
 	const argument = call.arguments[0];
 	if (!argument) {
 		report(state, "authoring/static-structure", call, "defineImplementation requires one static declaration object.");
-		return;
+		return undefined;
 	}
 	collectStaticRefs(argument, EMPTY_ENV, state, refs);
 	const value = evaluate(argument, EMPTY_ENV, state);
 	if (value.kind === "dynamic") {
 		report(state, "authoring/static-structure", argument, `Declaration is not statically resolvable: ${value.reason}.`);
-		return;
+		return undefined;
 	}
 	if (value.kind !== "object") {
 		report(state, "authoring/static-structure", argument, "Declaration must be a static object literal or a const/import reference to one.");
-		return;
+		return undefined;
 	}
 	validateDeclarationObject(value, state);
+	return implementationView(value, call, state);
 }
 
 function analyzeWrapperInstantiation(
@@ -1069,7 +1205,7 @@ function analyzeWrapperInstantiation(
 	call: ts.CallExpression,
 	state: CheckState,
 	refs: Set<ts.Symbol>,
-): void {
+): AuthoredImplementationView | undefined {
 	const body = wrapper.fn.body;
 	if (body && ts.isBlock(body)) {
 		const unsupported = body.statements.find(statement =>
@@ -1153,9 +1289,172 @@ function analyzeWrapperInstantiation(
 	}
 	if (value.kind !== "object") {
 		report(state, "authoring/static-structure", call, "Wrapper declaration must resolve to a static object literal.");
-		return;
+		return undefined;
 	}
 	validateDeclarationObject(value, state);
+	return implementationView(value, call, state);
+}
+
+/** The function declaration a handler expression really names, following aliases and initializers. */
+function resolveFunctionNode(node: ts.Node, state: CheckState): ts.FunctionLikeDeclaration | undefined {
+	let target = unwrapNode(node);
+	if (isAnyFunctionLike(target)) return target as ts.FunctionLikeDeclaration;
+	for (let depth = 0; depth < MAX_ALIAS_DEPTH; depth += 1) {
+		let symbol: ts.Symbol | undefined;
+		if (ts.isPropertyAccessExpression(target)) symbol = rawSymbolAt(target.name, state);
+		else if (ts.isIdentifier(target) || ts.isShorthandPropertyAssignment(target)) symbol = rawSymbolAt(target, state);
+		const resolved = resolveAliasedSymbol(symbol, state);
+		const declaration = resolved?.valueDeclaration ?? resolved?.declarations?.[0];
+		if (!declaration) return undefined;
+		if (isAnyFunctionLike(declaration)) return declaration as ts.FunctionLikeDeclaration;
+		if (ts.isVariableDeclaration(declaration) && declaration.initializer) {
+			target = unwrapNode(declaration.initializer);
+			if (isAnyFunctionLike(target)) return target as ts.FunctionLikeDeclaration;
+			continue;
+		}
+		if (ts.isPropertyAssignment(declaration) && declaration.initializer) {
+			target = unwrapNode(declaration.initializer);
+			if (isAnyFunctionLike(target)) return target as ts.FunctionLikeDeclaration;
+			continue;
+		}
+		if (ts.isShorthandPropertyAssignment(declaration)) {
+			target = declaration.name;
+			continue;
+		}
+		return undefined;
+	}
+	return undefined;
+}
+
+function unwrapNode(node: ts.Node): ts.Node {
+	let current = node;
+	for (;;) {
+		if (
+			ts.isParenthesizedExpression(current) ||
+			ts.isAsExpression(current) ||
+			ts.isTypeAssertionExpression(current) ||
+			ts.isSatisfiesExpression(current) ||
+			ts.isNonNullExpression(current)
+		) {
+			current = current.expression;
+			continue;
+		}
+		return current;
+	}
+}
+
+function functionFromStatic(value: StaticValue | undefined, state: CheckState): ts.FunctionLikeDeclaration | undefined {
+	if (value === undefined || value.kind !== "function") return undefined;
+	return resolveFunctionNode(value.node, state);
+}
+
+function subscriptionViews(property: StaticProperty | undefined, state: CheckState): AuthoredSubscriptionView[] {
+	const groups = property?.value;
+	if (groups?.kind !== "array") return [];
+	const views: AuthoredSubscriptionView[] = [];
+	for (const item of groups.items) {
+		if (item.kind !== "object") continue;
+		const scopeValue = item.properties.get("scope")?.value;
+		const scope =
+			scopeValue !== undefined &&
+			scopeValue.kind === "literal" &&
+			(scopeValue.value === "owner" || scopeValue.value === "session")
+				? scopeValue.value
+				: undefined;
+		const eventsValue = item.properties.get("events")?.value;
+		const events: AuthoredEventView[] = [];
+		if (eventsValue !== undefined && eventsValue.kind === "object") {
+			for (const [kind, eventProperty] of eventsValue.properties) {
+				const handler = functionFromStatic(eventProperty.value, state);
+				events.push({
+					kind,
+					origin: sourceLocation(state, eventProperty.keyNode),
+					...(handler === undefined ? {} : { handler }),
+				});
+			}
+		}
+		views.push({ ...(scope === undefined ? {} : { scope }), events, origin: sourceLocation(state, item.node) });
+	}
+	return views;
+}
+
+function commandViews(property: StaticProperty | undefined, state: CheckState): AuthoredCommandView[] {
+	const commands = property?.value;
+	if (commands?.kind !== "object") return [];
+	const views: AuthoredCommandView[] = [];
+	for (const [name, commandProperty] of commands.properties) {
+		const origin = sourceLocation(state, commandProperty.keyNode);
+		const value = commandProperty.value;
+		if (value.kind !== "object") {
+			views.push({ name, actions: [], handlers: [], origin });
+			continue;
+		}
+		const run = value.properties.get("run");
+		const unrecognized = value.properties.get("unrecognized");
+		const handlers: AuthoredCommandHandlerView[] = [];
+		if (run !== undefined || unrecognized !== undefined) {
+			for (const [role, handlerProperty] of [["run", run], ["unrecognized", unrecognized]] as const) {
+				if (handlerProperty === undefined) continue;
+				const handler = functionFromStatic(handlerProperty.value, state);
+				handlers.push({
+					role,
+					origin: sourceLocation(state, handlerProperty.valueNode),
+					...(handler === undefined ? {} : { node: handler }),
+				});
+			}
+			views.push({ name, kind: "directed", actions: [], handlers, origin });
+			continue;
+		}
+		const actions: string[] = [];
+		for (const [actionName, actionProperty] of value.properties) {
+			actions.push(actionName);
+			const handler = functionFromStatic(actionProperty.value, state);
+			handlers.push({
+				role: actionName,
+				origin: sourceLocation(state, actionProperty.valueNode),
+				...(handler === undefined ? {} : { node: handler }),
+			});
+		}
+		views.push({ name, kind: "actions", actions, handlers, origin });
+	}
+	return views;
+}
+
+function implementationView(
+	declaration: Extract<StaticValue, { kind: "object" }>,
+	originNode: ts.Node,
+	state: CheckState,
+): AuthoredImplementationView {
+	const create = functionFromStatic(declaration.properties.get("create")?.value, state);
+	const catalog = functionFromStatic(declaration.properties.get("catalog")?.value, state);
+	const initialize = functionFromStatic(declaration.properties.get("initialize")?.value, state);
+	const cleanup = functionFromStatic(declaration.properties.get("cleanup")?.value, state);
+	return {
+		origin: sourceLocation(state, originNode),
+		...(create === undefined ? {} : { create }),
+		subscriptions: subscriptionViews(declaration.properties.get("subscriptions"), state),
+		commands: commandViews(declaration.properties.get("commands"), state),
+		...(catalog === undefined ? {} : { catalog }),
+		...(initialize === undefined ? {} : { initialize }),
+		...(cleanup === undefined ? {} : { cleanup }),
+	};
+}
+
+/** One source position, in the same repo-relative shape the integration model uses. */
+function sourceLocation(state: CheckState, node: ts.Node): AuthoringSourceLocation {
+	const sourceFile = ts.isSourceFile(node) ? node : node.getSourceFile();
+	if (!sourceFile) return { file: relativeFile(state.root, state.root), line: 1, column: 1 };
+	let start = 0;
+	if (!ts.isSourceFile(node)) {
+		try {
+			start = node.getStart(sourceFile);
+		} catch {
+			start = node.pos;
+		}
+	}
+	start = Math.max(0, Math.min(start, sourceFile.text.length));
+	const position = sourceFile.getLineAndCharacterOfPosition(start);
+	return { file: relativeFile(state.root, sourceFile.fileName), line: position.line + 1, column: position.character + 1 };
 }
 
 function validateDeclarationObject(declaration: Extract<StaticValue, { kind: "object" }>, state: CheckState): void {

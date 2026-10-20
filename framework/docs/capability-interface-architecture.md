@@ -22,7 +22,7 @@ transport stay internal, and the initialization, directed and action deliveries 
 marker transport. The Feedback and Provider leaf contracts required by Session also live beside
 it. The root authoring entry (`framework/interface/index.ts`) now owns `defineExtension`,
 `defineImplementation` and the whole definition/implementation contract in its public `details/` files; `SubagentIntegration`,
-`SubagentIntegrationFailure` and `SubagentCapability` live in `framework/interface/subagent.ts`, and
+`SubagentIntegrationFailure` live in `framework/interface/subagent.ts`, and
 Command's declarations, implementations and deliveries in `framework/interface/command/` (its
 `details/definition.ts` and `details/implementation.ts`). The actual command and action deliveries are
 explicitly constructed from the approved members: the adapter's persistence callback, the marker-area
@@ -266,7 +266,7 @@ The single `HarnessPort` remains the seam; [`runtime/adapter-authoring.ts`](../r
 
 Native translation and lifecycle ownership stay in the existing domain modules. `defineAdapterDelivery(kind, payload)` marks their final protocol payload construction, including embedded effects and late queries, using canonical existing types without changing payload identity or callback timing. Domain grouping is semantic, not a directory split by event/query/effect interaction mode.
 
-The compiler checks complete assembly keys and contract types. An adapter source-expression gate and full wiring/dependency analyzer are not implemented by this refactor: arbitrary dynamic bodies, assertions and semantic correctness are not proved. The extension-only `check:authoring` gate must not be presented as adapter verification. Explicit absence describes current adapter supply, not proof of native harness unavailability. Runtime loading, optional fallbacks and independent behavior verification are unchanged. Implementation and executed evidence are recorded in [the refactor summary](integration-contract-refactor.md#35-adapter-侧可检查组装后续已完成).
+The compiler checks complete assembly keys and contract types. The subsequent supply analyzer checks bounded static assembly and delivery construction; arbitrary dynamic structure is unresolved, and handler behavior or semantic correctness is not proved. The extension-only `check:authoring` gate must not be presented as adapter verification. Explicit absence describes current adapter supply, not proof of native harness unavailability. Runtime loading, optional fallbacks and independent behavior verification are unchanged. Implementation and executed evidence are recorded in [the refactor summary](integration-contract-refactor.md#35-adapter-侧可检查组装后续已完成).
 
 ## 6. Capability coverage and evidence
 
@@ -295,10 +295,10 @@ full maintained rule catalog via `--rules`. Statically resolvable computed keys 
 allowed; dynamic or unresolved integration structure is diagnosed. Business handler bodies remain
 outside the expression rules. See [the expression-check guide](static-authoring-check.md) and
 [the refactor and deferred dependency-checker plan](../../.scratch/integration-contract-refactor/spec.md).
-The existing `check:integrations` still performs only subagent declaration matching; no full
-interface-to-adapter dependency analyzer or runtime loading gate is added.
+`check:integrations` now consumes this static structure and shared plan for source-derived dependency
+analysis. `generate:integrations` creates missing implementation references; neither adds a runtime loading gate.
 
-### Agreed dependency-analysis direction (2026-10-20; checker not implemented)
+### Source-derived dependency analysis and generation (2026-10-20)
 
 The next diagnostic is intended to cover all framework-mediated extension dependencies, not only the subagent example. It derives the extension's demand and compares it with a target adapter's implemented and wired supply. Direct extension-to-harness integrations, such as native widgets, are outside this inventory. No working reference harness or target discovery entry is a prerequisite: demand can be listed without an adapter, and a target with no implementation has the full required set outstanding.
 
@@ -306,20 +306,17 @@ Analysis starts from extension calls, declarations, subscriptions and reads. It 
 
 A minimal integration contract identifies a semantic obligation and its complete interaction protocol, not just a capability group, method signature or generic “event” category. Existing `HarnessPort` remains the common adapter seam; extension consumers continue to use `framework/interface`. A supplied method or generated function body alone does not prove wiring or correct semantics. Report known missing implementations separately from dependencies or wiring the analyzer cannot resolve; unresolved analysis must not silently count as complete.
 
-The agreed first direction is an explicitly invoked offline diagnostic with demand-only and target-comparison output, showing requirement origins, dependency paths and missing implementation locations. This is not a code-generation, editor-plugin, startup-admission or semantic-certification project. Collect all possible dependencies without evaluating runtime configurations or expanding path-sensitive branch combinations. Retain explicit required/optional distinctions: a port member's optional syntax alone does not determine an extension's dependency policy. Report optional absences without failing; missing required integration obligations or unresolved analysis return a nonzero status, with unresolved analysis distinguished from confirmed absence. A successful check requires complete analysis and no required gaps. These are developer diagnostics, not restrictions on extension loading: extension authors decide whether to accept the reported risks. Exact extraction representation and command options still require implementation design. Automatic inventories replace repeated manual calculation where rules suffice; this revisits §6.5's earlier manual-intent-only recommendation without claiming that the existing declarations or checker have already changed. The rest of §6 describes the previous proposal and current declaration-only seed where not superseded here.
+The diagnostic is explicitly invoked with demand-only or target-comparison output, showing requirement origins, dependency paths and implementation locations. It collects possible dependencies without evaluating runtime configurations or exploring branch combinations. Framework rules retain required/optional distinctions rather than inferring business policy from a port member's `?` or a conditional branch. Required gaps and unresolved analysis return nonzero; explicit optional absences remain reported risks. Source-derived inventories replace the old duplicated requirement and supply arrays. The generator consumes the same analysis and creates real assembly references to missing implementation exports, never concrete native implementations or fake stubs. Generated code intentionally fails compilation until those exports exist and satisfy the shared types. Neither tool introduces an editor plugin, startup gate or semantic certification. Usage and exit policy are documented in [the capability guide](framework-capabilities.md#source-derived-integration-contracts).
 
 Structural completeness remains distinct from semantic correctness. Maintainers define and review semantic promises and accepted native approximations; agent-assisted upgrade review examines whether their assumptions still hold. See [contract-driven agent pre-review](harness-support.md#contract-driven-agent-pre-review). Future semantic evolution and version coexistence are background considerations, not this diagnostic's scope.
 
 ### 6.1 Purpose
 
-Coverage checking is a **manual, offline diagnostic**, not a runtime gate. This section records a
-proposed tooling direction; it is not implemented and no `check:capabilities` command exists.
-An extension developer would be able to run one script against a selected harness and see which
-capabilities that harness adapter has not declared or has no structural evidence for.
-
-The current `bun run check:integrations` is the seed of this mechanism. It already compares the extension's declared subagent requirements with the adapter's declared supply, per execution mode, and reports missing capabilities. It does not install a harness, run behavior tests, load an extension implementation, or admit an extension at startup. The next step, if pursued, would add structural evidence to the same diagnostic; the cutover did not add a scanner or diagnostics command.
-
-The purpose is not to build a strict automatic alarm. It is a deliberate developer tool: fast, deterministic, explicit, and separate from runtime behavior.
+Coverage checking is an explicitly invoked **offline diagnostic**, not a runtime gate.
+`bun run check:integrations` reads source to derive extension demand and compare actual adapter
+assembly. `--demand-only` needs no target; `--adapter` can name an adapter that does not exist yet.
+The command neither executes extension code nor installs or starts a harness. A nonzero exit is a
+developer diagnostic, separate from runtime behavior and independent behavior verification.
 
 ### 6.2 Three evidence levels
 
@@ -392,69 +389,29 @@ The correct claim is therefore **structural evidence**, not "the capability is c
 
 ### 6.4 Capability evidence matrix
 
-The diagnostic should print a matrix per actual extension/harness entry. A shape such as:
+Run the source-derived diagnostic for any selected combination, including one without a discovery entry:
 
-```bash
-bun run check:capabilities --harness omp --extension model-cost
+```sh
+bun run check:integrations --extension model-cost --adapter omp --json
+bun run check:integrations --extension model-cost --demand-only
 ```
 
-```text
-omp / model-cost
-  turn-usage
-    declared:          yes (extension)
-    supplied:          yes (adapter declaration)
-    structural:        yes (subscription: turn_start, turn_end;
-                            adapter: domain/session/turn)
-    verified:          unverified
+Each result carries contract IDs, required/optional policy, source origins, dependency paths and
+structural supply status. Missing, unavailable, conditional and unresolved are distinct. The report
+explicitly states that behavior tests were not run. Required conditional supply is not a guarantee
+of availability; optional absence remains visible without failing the check. A missing target
+adapter reports implementation gaps rather than requiring a reference harness or a catalog entry.
 
-  state-follow
-    declared:          no
-    supplied:          yes (adapter declaration)
-    structural:        no
-    verified:          n/a
-
-MISSING: none
-WARNINGS:
-  - session-facts declared, but no structural evidence found in extension source
-```
-
-For a missing adapter capability:
-
-```text
-omp / model-cost
-  storage-commit
-    declared:          yes
-    supplied:          no
-    structural:        no (no local access / observation access wiring)
-    verified:          n/a
-
-MISSING omp / model-cost: storage-commit
-```
-
-The script should:
-
-- scan source, import graph, subscription maps, adapter domain modules, and the runtime port implementation;
-- not start a harness, load an extension factory, read extension configuration, or run behavior tests;
-- default to advisory output, not a startup or CI gate;
-- offer `--strict` for a non-zero exit on declared/structural gaps;
-- offer `--json` for tooling and review.
+`generate:integrations` reuses this analysis to create real assembly references to missing exports;
+it does not turn structural output into behavioral certification.
 
 ### 6.5 Relationship to declarations
 
-The declarations remain the **intent**:
-
-- `ExtensionDefinition.subagentRequirements` states what the extension needs for complete subagent integration;
-- `HarnessIntegrationDeclaration` states what the adapter supplies per execution mode.
-
-The diagnostic must not silently generate those declarations from code. It may:
-
-- derive structural evidence and compare it with the declarations;
-- report **declared but not structurally evidenced**;
-- report **structurally evidenced but not declared**;
-- report **declared and supplied but structurally unevidenced**;
-- report **verified** only from a separate behavior-verification source.
-
-A mismatch is a review signal, not a runtime verdict. The extension author and adapter author decide whether the declaration or the code is wrong.
+Canonical authoring is the runtime structure, and adapter `bindings` is the actual assembly source.
+The checker derives inventories from them; `subagentRequirements`, assembly `requiredSemantics`
+and separately maintained adapter supply arrays are removed. Maintainers still define the semantic
+dependency rules and required/optional policy that code alone cannot establish. Unresolved analysis
+is distinct from confirmed absence. Structural completeness is not a behavior-verification verdict.
 
 ### 6.6 Relationship to the capability interface
 
@@ -467,13 +424,12 @@ The capability interface makes structural evidence reliable:
 
 The evidence model therefore uses the same capability names as the interface inventory. It is a tooling layer over the interface, not a runtime capability registry. It does not introduce runtime negotiation, a startup gate, or a second dispatcher.
 
-### 6.7 Open implementation choices
+### 6.7 Implementation ownership
 
-- Extend `check:integrations` or add a separate `check:capabilities` command.
-- Use TypeScript AST/import-graph analysis, an explicit evidence manifest, or a combination.
-- Keep the default advisory or make structural mismatches fail by default (`--strict` is the recommended opt-in).
-- Decide where the evidence rules live: framework tooling or `scripts/`.
-- Decide how the verified column consumes existing verification reports without inventing a new certification process.
+`scripts/integrations/` owns source demand, supply and generation; the static authoring resolver is
+reused, and runtime selection rules remain in the framework planner. The check command returns
+nonzero for required gaps or unresolved analysis without an opt-in strict mode. Behavior verification
+and support reports remain independent and are not interpreted as static supply or startup policy.
 
 ## 7. Dependency rules
 
@@ -552,11 +508,11 @@ cutover considered and rejected, so they are not read as current policy.
 | Internal layout | keep `core` / `behaviors` / `modules` behind `framework/interface`; move to capability directories only when the interface is stable | a large directory move before the interface settles adds churn without changing the extension-facing seam |
 | `BindingResult` / `BindingFailure` | stay in `framework/runtime/port.ts` | they are adapter factory results, not extension capability calls |
 | Session observation | part of the Session capability, with a read interface distinct from event subscription | the read surface and event surface are different interfaces even though they share Session identity |
-| Coverage script shape | extend the existing offline `check:integrations` checker first, if the tooling is pursued; no `check:capabilities` command exists | the current command already owns discovery and declaration comparison |
-| Structural evidence extraction | start with import-graph and declaration/event-map scanning, with an explicit evidence table; add TypeScript AST analysis only where the import graph is too coarse | source scanning must stay deterministic and must not execute extension factories or read configuration |
-| Coverage default strictness | advisory by default; `--strict` opt-in for a non-zero exit on declared/structural gaps | the check is a developer diagnostic, not a startup or CI gate |
-| Verified status source | consume existing verification reports when available; never derive `verified` from structural evidence | behavior correctness is independent verification, not a static claim |
-| Declaration generation | keep `subagentRequirements` and `HarnessIntegrationDeclaration` as manual intent; derive and compare structural evidence only | some capabilities express business intent and cannot be inferred reliably from syntax |
+| Coverage tools (implemented) | `check:integrations` and `generate:integrations` | source-derived demand, actual assembly supply and missing implementation references share one model |
+| Structural extraction (implemented) | reuse the restricted authoring resolver, canonical TypeScript symbols, framework rules and bounded adapter traversal | no extension/adapter execution or configuration evaluation |
+| Diagnostic policy (settled) | required gaps and unresolved analysis return nonzero; explicit optional absences are reported | developer output does not alter loading |
+| Verified status source | independent behavior verification; never inferred from structural evidence | behavioral correctness remains outside the checker |
+| Requirement inventories (settled) | derive them from actual source; remove duplicated public arrays and manual supply catalogs | semantic dependency rules remain framework-owned |
 
 Candidates considered and not adopted:
 
@@ -573,7 +529,7 @@ Candidates considered and not adopted:
 - This is not a second adapter abstraction above `HarnessPort`.
 - This is not a move of extension business logic into the framework.
 - This is not a change to harness semantics, supported-version policy, or verification scope.
-- This is not a code generator, a runtime capability registry, or a general dependency-injection container.
+- This is not a standalone extension generator, a runtime capability registry, or a general dependency-injection container. Adapter tooling generates only required type/assembly references, not native implementations.
 - This is not a promise that every capability becomes a separate directory; a capability may be one file or several modules, depending on its real implementation.
 
 ## 11. Relationship to existing decisions

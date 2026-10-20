@@ -275,7 +275,7 @@ Repository-owned test infrastructure that verifies a harness. It materialises an
 _Avoid_: test runtime, test harness, fixture
 
 **Declared requirement（声明要求）**:
-A semantic a binding's behavior rests on — history preservation, the two semantic lifecycle axes — recorded as contract metadata rather than as a runtime switch: the framework's own requirements, and the ones an extension's assembly adds through `ExtensionAssembly.requiredSemantics`. What holds in a given harness scope is established by the independent verification, never decided at binding.
+A semantic obligation on which a binding's behavior rests, distinct from a runtime feature switch. Integration obligations are derived from extension use and framework contracts; whether their behavior holds in a harness scope is established by independent verification, not decided at binding.
 _Avoid_: runtime feature flag, fallback route, startup gate
 
 **Semantic drift（语义漂移）**:
@@ -291,11 +291,11 @@ The framework-mediated capabilities an extension depends on or a harness adapter
 _Avoid_: behavior certificate, native harness feature inventory, subagent-only checklist
 
 **Subagent integration checklist（子代理接入清单）**:
-The two-sided declaration of an extension's required subagent capabilities and a harness adapter's supplied capabilities for each subagent execution mode it supports. Execution modes belong to the harness declaration, not to the extension's requirements; declared coverage is not evidence of correct behavior.
+The earlier subagent-only comparison of manually declared extension demand and adapter supply, superseded by the framework capability inventory derived from source. Its historical coverage statements are not evidence of correct behavior.
 _Avoid_: runtime capability negotiation, feature switch, compatibility certificate
 
 **Integration completeness check（接入完整性检查）**:
-An independently invoked comparison of extension requirements with declared harness integration coverage, identifying missing capabilities for each supported execution mode. It neither exercises behavior nor affects extension loading, startup or feature availability; behavior verification is a separate stage.
+An independently invoked comparison of an extension's framework-mediated integration obligations with a target adapter's structural supply, identifying gaps and unresolved analysis. It neither exercises behavior nor affects extension loading, startup or feature availability; behavior verification is separate.
 _Avoid_: behavior test, startup gate, automatic feature downgrade
 
 **Independent compatibility verification（独立兼容性验证）**:

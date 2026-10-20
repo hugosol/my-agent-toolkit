@@ -4,8 +4,8 @@
  * An extension declares itself here and builds its implementation in the shape this entry
  * describes. It is the one path for the authoring contract, organised in two groups:
  *
- * - the *definition* — plain data: identity, State, commands, prompts, marker, configuration and
- *   subagent requirements — owned by `details/definition.ts`;
+ * - the *definition* — plain data: identity, State, commands, prompts, marker and configuration —
+ *   owned by `details/definition.ts`; integration requirements are derived from source use;
  * - the *implementation* — the authored declaration a harness assembly supplies, the context its
  *   state is built from, the one-time initialization and cleanup, and the generic assembly
  *   information — owned by `details/implementation.ts`.
@@ -45,7 +45,6 @@ export type {
 	ActionsImplementationHandlers,
 	AuthoredImplementation,
 	CommandImplementationHandlers,
-	DeclarableRequiredSemantic,
 	DirectedImplementationHandlers,
 	ExtensionAssembly,
 	ImplementationAction,

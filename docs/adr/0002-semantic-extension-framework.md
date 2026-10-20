@@ -557,6 +557,30 @@ Preserve the existing adapter domain organization and one common `HarnessPort`, 
 
 The implementation uses `defineAdapterPort`, `unavailablePortMember` and `defineAdapterDelivery` in the internal runtime authoring helper. It does not add capability negotiation, per-extension interfaces, a generic dispatcher or a new translation layer. Native behavior, setup lifetime, handler waiting and release ordering remain unchanged. This round delivers the typed structure and migration, not an adapter AST gate, full dependency checker or generator; the existing extension expression gate is not evidence that arbitrary adapter source has been analyzed. Detailed boundaries and verification are in [the refactor summary](../../framework/docs/integration-contract-refactor.md).
 
+## Source-derived integration checks and missing-export generation (2026-10-20)
+
+The two-sided subagent declaration checklist is superseded by source-derived integration contracts.
+Extension authoring and actual framework-interface use determine demand; the shared framework plan
+and explicit semantic rules expand it into port and delivery obligations. Adapter `bindings` and
+canonical delivery construction are the structural supply source, not a parallel capability manifest.
+Remove the public `subagentRequirements`/`requiredSemantics` arrays, their duplicate public vocabulary,
+the manual adapter inventories and the old declaration comparator rather than retaining shims.
+Internal behavior-verification vocabulary and independent support policy remain separate.
+
+The trade-off is a bounded source language and explicit unresolved diagnostics rather than arbitrary
+JavaScript interpretation or repeated manual inventories. Analysis never executes extension/adapter
+modules or reads live configuration. It collects possible uses without path-sensitive branch
+exploration, reports required/optional/conditional distinctions and returns nonzero for required gaps
+or unresolved analysis. It never becomes a startup gate or a semantic-correctness claim.
+
+Generation consumes the same analysis and writes only shared type constraints and actual assembly
+references to absent implementation exports. It deliberately leaves compilation failing until a
+human or agent supplies those exports. Do not generate concrete native implementations, empty or
+throwing stubs, `declare` values or unsafe rewrites merely to satisfy the types. Type/structural
+completion and genuine native behavior are different responsibilities; function-body correctness
+belongs to review and behavior verification. Generation preserves existing implementations and
+refuses unresolved or unsafe edits. See [the tool guide](../../framework/docs/framework-capabilities.md#source-derived-integration-contracts).
+
 ## Framework verification as a separate concern
 
 Treat framework verification as a ninth scope area alongside definition/configuration, control/commands, semantic events and State orchestration, storage/recovery, ongoing lifecycle work, instruction contribution, status feedback, and harness adaptation. Shared semantic contract scenarios serve as upgrade regression alarms; the maintainer, not a green test run, decides when a harness version is supported. The first release fixes the scenarios and dock as two separated suites (extension acceptance and framework capability, the latter doubling as the upgrade alarm); later scenarios still belong to detailed design.

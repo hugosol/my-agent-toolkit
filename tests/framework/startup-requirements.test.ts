@@ -4,10 +4,9 @@
  * The approved policy
  * ([harness-support.md § Independent compatibility verification](../../framework/docs/harness-support.md#independent-compatibility-verification))
  * replaced startup version membership and native-interface shape checks with separately executed
- * verification and scoped reports. Contract metadata — the semantics an assembly declares through
- * `ExtensionAssembly.requiredSemantics` — stays as *verification input*: what a supported scope
- * must be checked for independently, never a runtime switch, a refusal or a fallback route. What
- * startup keeps is what it always owed an extension: its declared configuration is validated
+ * verification and scoped reports. Source-derived integration contracts remain development and
+ * verification inputs, never runtime switches, refusals or fallback routes. What startup keeps
+ * is what it always owed an extension: its declared configuration is validated
  * before anything registers, an implementation that cannot be built is refused whole, and the
  * harness keeps running.
  *
@@ -19,7 +18,7 @@
  * is a literal chosen here — never a value read back from the framework.
  */
 import { describe, expect, test } from "bun:test";
-import { mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
+import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
 import connectBot from "../../entrypoints/omp/connect-bot";
@@ -36,8 +35,8 @@ import type {
 } from "../../adapters/omp";
 import * as frameworkOmp from "../../adapters/omp";
 import type { BindingResult } from "../../framework/runtime/port";
-import type { DeclarableRequiredSemantic, ExtensionDefinition } from "../../framework/interface";
-import { REPO_ROOT, readBaselineRecord } from "../harness-dock/baseline";
+import type { ExtensionDefinition } from "../../framework/interface";
+import { readBaselineRecord } from "../harness-dock/baseline";
 import { withCapturedStderr } from "./support/captured-stderr";
 import { portDouble } from "./support/harness-port-double";
 
@@ -77,8 +76,8 @@ interface SurfaceDouble {
 	readonly notifications: ReadonlyArray<{ readonly message: string; readonly type: string | undefined }>;
 	/** Appended session entries: a startup judgement must never write one. */
 	readonly appended: ReadonlyArray<{ readonly customType: string; readonly data: unknown }>;
-	/** Binds a definition through one factory per declaration, as one process binds one assembly. */
-	bind(definition: ExtensionDefinition, declared?: readonly DeclarableRequiredSemantic[]): BindingResult;
+	/** Binds a definition through one reused factory, as one process binds one assembly. */
+	bind(definition: ExtensionDefinition): BindingResult;
 	/** Delivers one main-session boundary for `sessionId`. */
 	deliverMain(sessionId: string, event?: OmpSessionEventType): void;
 	/** Delivers one run initiation for a main session; what the run hook committed. */
@@ -149,17 +148,11 @@ function surfaceDouble(options: SurfaceOptions = {}): SurfaceDouble {
 		commands,
 		notifications,
 		appended,
-		bind(definition, declared = []) {
-			// One factory per declared set, so two assemblies that differ in their declaration are
-			// two assemblies rather than one factory reused.
-			const key = `${definition.id}|${declared.join(",")}`;
-			let factory = factories.get(key);
+		bind(definition) {
+			let factory = factories.get(definition.id);
 			if (factory === undefined) {
-				factory = frameworkOmp.ompAdapter(
-					definition,
-					declared.length === 0 ? {} : { requiredSemantics: declared },
-				);
-				factories.set(key, factory);
+				factory = frameworkOmp.ompAdapter(definition);
+				factories.set(definition.id, factory);
 			}
 			return factory(api);
 		},
@@ -244,11 +237,9 @@ describe("normal startup performs no native-interface shape judgement (P60)", ()
 		expect(stderr).toBe("");
 	});
 
-	test("a declared semantic the surface cannot honor is metadata, not a refusal", () => {
-		// connect-bot's deployed assembly declares both lifecycle axes; this surface subscribes to
-		// no lifecycle event at all. The declaration states what the supported scope must be
-		// verified for — startup neither reports a verdict about it nor refuses anything for it, so
-		// the only failure is the registration's own, naming the member the surface really lacks.
+	test("a native registration failure is reported without a compatibility verdict", () => {
+		// This surface cannot subscribe at all. Startup reports the operation's real failure,
+		// rather than introducing a separate source-analysis or compatibility gate.
 		const double = surfaceDouble({ version: RECORDED_SUPPORTED_VERSION, withoutSubscription: true });
 
 		// The entrypoint is a loader door: it is called for effect, so what the binding concluded
@@ -265,25 +256,6 @@ describe("normal startup performs no native-interface shape judgement (P60)", ()
 		expect(stderr).toContain("registration failed");
 		expect(stderr).not.toContain("required semantics");
 		expect(double.notifications).toEqual([]);
-	});
-
-	test("an assembly may state the semantics it depends on, and nothing judges the statement", () => {
-		const declared = ["session-lifecycle-events", "round-lifecycle-events"] as const;
-		const declaring = surfaceDouble({ version: RECORDED_SUPPORTED_VERSION });
-		const silent = surfaceDouble({ version: RECORDED_SUPPORTED_VERSION });
-
-		const { stderr, value: withDeclaration } = withCapturedStderr(() => declaring.bind(CODEBASE_TOOLS, declared));
-		const { value: withoutDeclaration } = withCapturedStderr(() => silent.bind(CODEBASE_TOOLS));
-
-		// The declaration is contract metadata: the same harness, the same registrations, no notice
-		// and no verdict — an assembly that declares its dependencies is bound exactly as one that
-		// declares none.
-		expect(withDeclaration.bound).toBe(true);
-		expect(withoutDeclaration.bound).toBe(true);
-		expect(declaring.labels).toEqual(silent.labels);
-		expect(declaring.commands).toEqual(silent.commands);
-		expect(declaring.notifications).toEqual([]);
-		expect(stderr).toBe("");
 	});
 });
 
@@ -346,59 +318,4 @@ describe("what startup still owes an extension (P60)", () => {
 	});
 });
 
-/**
- * The source-tree half of the cutover (P60): the production trees name no version judgement, no
- * interface-shape refusal and no verification report.
- *
- * The behavioural cases above are the contract; this scan is the alarm that the removed route has
- * not been reintroduced somewhere the cases do not reach. It reads `.ts` text lexically, so it
- * proves absence of the former names rather than the absence of every conceivable gate.
- */
-const SCANNED_ROOTS = ["adapters", "framework", "extensions", "entrypoints"] as const;
 
-/** The names the clean cutover removed from production source. */
-const REMOVED_ROUTE = [
-	"SUPPORTED_HARNESS_VERSIONS",
-	"announceUnlistedVersion",
-	"unlisted-version",
-	"required-semantics",
-	"missingRequiredSemantics",
-	/\badmit\b/,
-] as const;
-
-/** The verification report a startup path must never read. */
-const VERIFICATION_REPORT = "candidate-verification";
-
-function sourceFilesUnder(directory: string): string[] {
-	const found: string[] = [];
-	for (const entry of readdirSync(path.join(REPO_ROOT, directory), { withFileTypes: true })) {
-		const relative = path.join(directory, entry.name).split(path.sep).join("/");
-		if (entry.isDirectory()) found.push(...sourceFilesUnder(relative));
-		else if (entry.name.endsWith(".ts")) found.push(relative);
-	}
-	return found;
-}
-
-const productionFiles = SCANNED_ROOTS.flatMap(root => sourceFilesUnder(root));
-
-describe("the removed startup route is absent from production source (P60)", () => {
-	test("no production module names the version list, the notice or the shape refusal", () => {
-		const offenders = productionFiles.flatMap(file => {
-			const text = readFileSync(path.join(REPO_ROOT, file), "utf8");
-			return REMOVED_ROUTE.filter(name => new RegExp(name instanceof RegExp ? name.source : name).test(text)).map(
-				name => `${file}: ${name instanceof RegExp ? name.source : name}`,
-			);
-		});
-
-		expect(offenders).toEqual([]);
-	});
-
-	test("no production module reads the candidate verification report", () => {
-		const offenders = productionFiles.filter(file =>
-			readFileSync(path.join(REPO_ROOT, file), "utf8").includes(VERIFICATION_REPORT),
-		);
-
-		// The report is evidence for a maintainer's decision; nothing in a startup path reads it.
-		expect(offenders).toEqual([]);
-	});
-});
