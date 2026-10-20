@@ -41,7 +41,12 @@ import type {
 	TurnEndDelivery,
 	TurnStartDelivery,
 } from "../../../framework/interface/session";
-import type { ExtensionDefinition, ImplementationContext, InitializationDelivery } from "../../../framework/interface";
+import {
+	type ExtensionDefinition,
+	type ImplementationContext,
+	type InitializationDelivery,
+	defineImplementation,
+} from "../../../framework/interface";
 
 /** The definition the double binds: it declares nothing, so every behavior under test is injected. */
 export const PI_SURFACE_PROBE: ExtensionDefinition = { id: "pi-surface-probe", displayName: "piSurfaceProbe" };
@@ -490,54 +495,54 @@ export function boundPiSurface(
 
 	const factory = piAdapter(options.definition ?? PI_SURFACE_PROBE, {
 		...(options.childEntry === undefined ? {} : { childEntry: options.childEntry }),
-		factory: context => {
-			implementationContext = context;
-			const catalog = options.catalog?.(context);
-			return {
-				...(catalog === undefined ? {} : { catalog }),
-				initialize: delivery => {
-					initializations.push(delivery);
-					resolveInitialized?.();
-					resolveInitialized = undefined;
-				},
-				subscriptions: [
-					{
-						scope: "session",
-						events: {
-							session_start: delivery => {
-								const observed = delivery as SessionEventDelivery;
-								sessions.push(observed);
-								options.onSession?.(observed);
-							},
-							session_end: delivery => {
-								const observed = delivery as SessionEventDelivery;
-								sessions.push(observed);
-								options.onSession?.(observed);
-							},
-							session_facts: delivery => {
-								const observed = delivery as SessionEventDelivery;
-								sessions.push(observed);
-								options.onSession?.(observed);
-							},
-							turn_start: delivery => void starts.push(delivery as TurnStartDelivery),
-							turn_end: delivery => void ends.push(delivery as TurnEndDelivery),
-							round_start: delivery => {
-								const round = delivery as RoundDelivery;
-								rounds.push(round);
-								edges.push(round.event.kind);
-							},
-							round_end: async delivery => {
-								const round = delivery as RoundDelivery;
-								rounds.push(round);
-								edges.push(round.event.kind);
-								await options.onRoundEnd?.(round);
-							},
-							session_context: delivery => void contexts.push(delivery as SessionContextDelivery),
+		implementation: defineImplementation<{ readonly catalog?: CatalogPriceSource }>({
+			create: context => {
+				implementationContext = context;
+				return options.catalog === undefined ? {} : { catalog: options.catalog(context) };
+			},
+			initialize: (_state, delivery) => {
+				initializations.push(delivery);
+				resolveInitialized?.();
+				resolveInitialized = undefined;
+			},
+			subscriptions: [
+				{
+					scope: "session",
+					events: {
+						session_start: (_state, delivery) => {
+							sessions.push(delivery);
+							options.onSession?.(delivery);
 						},
+						session_end: (_state, delivery) => {
+							sessions.push(delivery);
+							options.onSession?.(delivery);
+						},
+						session_facts: (_state, delivery) => {
+							sessions.push(delivery);
+							options.onSession?.(delivery);
+						},
+						turn_start: (_state, delivery) => void starts.push(delivery),
+						turn_end: (_state, delivery) => void ends.push(delivery),
+						round_start: (_state, delivery) => {
+							rounds.push(delivery);
+							edges.push(delivery.event.kind);
+						},
+						round_end: async (_state, delivery) => {
+							rounds.push(delivery);
+							edges.push(delivery.event.kind);
+							await options.onRoundEnd?.(delivery);
+						},
+						session_context: (_state, delivery) => void contexts.push(delivery),
 					},
-				],
-			};
-		},
+				},
+			],
+			...(options.catalog === undefined
+				? {}
+				: {
+						catalog: (state: { readonly catalog?: CatalogPriceSource }) =>
+							state.catalog ?? { priceOf: () => undefined },
+					}),
+		}),
 	});
 	if (!factory(api).bound) throw new Error("the pi surface probe definition did not bind");
 

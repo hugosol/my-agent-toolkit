@@ -12,8 +12,13 @@
  * no work of its own beyond reporting: no network, no file, no timer.
  */
 import { type OmpExtensionApi, ompAdapter } from "../../../../adapters/omp";
-import { type ExtensionDefinition, defineExtension } from "../../../../framework/interface";
-import type { RoundDelivery, SubscriptionGroup, TurnStartDelivery } from "../../../../framework/interface/session";
+import {
+	type ExtensionDefinition,
+	type ImplementationEventHandlers,
+	defineExtension,
+	defineImplementation,
+} from "../../../../framework/interface";
+import type { RoundDelivery, TurnStartDelivery } from "../../../../framework/interface/session";
 
 /** The extension id whose stderr lines the dock reads. */
 export const ROUND_FACTS_ID = "round-facts-probe";
@@ -47,10 +52,15 @@ function turnLine(delivery: TurnStartDelivery): void {
 export default function roundFactsProbe(pi: OmpExtensionApi): void {
 	// One group over every actual session: a run's own round is its own, and a subagent's edges and
 	// Turns are never confused with its parent's.
-	const events: SubscriptionGroup["events"] = {
-		round_start: roundLine,
-		round_end: roundLine,
-		turn_start: turnLine,
+	const events: ImplementationEventHandlers<Record<string, never>> = {
+		round_start: (_state, delivery) => roundLine(delivery),
+		round_end: (_state, delivery) => roundLine(delivery),
+		turn_start: (_state, delivery) => turnLine(delivery),
 	};
-	ompAdapter(definition, { factory: () => ({ subscriptions: [{ scope: "session", events }] }) })(pi);
+	ompAdapter(definition, {
+		implementation: defineImplementation<Record<string, never>>({
+			create: () => ({}),
+			subscriptions: [{ scope: "session", events }],
+		}),
+	})(pi);
 }

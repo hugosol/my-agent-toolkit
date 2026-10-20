@@ -24,8 +24,7 @@ import type {
 import * as frameworkOmp from "../../adapters/omp";
 import { feedbackTransport, noticeTransport } from "../../adapters/omp/domain/feedback";
 import type { CommandDelivery } from "../../framework/interface/command";
-import type { CommandImplementations } from "../../framework/interface/command";
-import { defineExtension } from "../../framework/interface";
+import { defineExtension, defineImplementation } from "../../framework/interface";
 
 /** A definition whose whole behavior is one directed command the assembly implements. */
 const PROBE = defineExtension({
@@ -119,19 +118,23 @@ function nativeDouble(): NativeDouble {
  * publishes one notice per severity.
  */
 function bindProbe(double: NativeDouble, seenHasUI: boolean[], seenFeedbackKeys: string[][] = []): void {
-	const commands: CommandImplementations = {
-		"feedback-probe": {
-			run: (_directive, delivery: CommandDelivery) => {
-				seenHasUI.push(delivery.hasUI);
-				seenFeedbackKeys.push(Object.keys(delivery.feedback).sort());
-				delivery.state.write(true);
-				delivery.feedback.notify("info", "probe info");
-				delivery.feedback.notify("warning", "probe warning");
-				delivery.feedback.notify("error", "probe error");
+	const factory = frameworkOmp.ompAdapter(PROBE, {
+		implementation: defineImplementation({
+			create: () => ({}),
+			commands: {
+				"feedback-probe": {
+					run: (_state, _directive, delivery: CommandDelivery) => {
+						seenHasUI.push(delivery.hasUI);
+						seenFeedbackKeys.push(Object.keys(delivery.feedback).sort());
+						delivery.state.write(true);
+						delivery.feedback.notify("info", "probe info");
+						delivery.feedback.notify("warning", "probe warning");
+						delivery.feedback.notify("error", "probe error");
+					},
+				},
 			},
-		},
-	};
-	const factory = frameworkOmp.ompAdapter(PROBE, { factory: () => ({ commands }) });
+		}),
+	});
 	if (!factory(double.api).bound) throw new Error("the feedback probe definition did not bind");
 }
 

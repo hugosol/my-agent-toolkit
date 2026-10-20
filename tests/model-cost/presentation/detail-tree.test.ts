@@ -22,7 +22,7 @@ import type { ConsumptionDocument } from "../../../extensions/model-cost/shared-
 import type { ModelPricingData } from "../../../extensions/model-cost/shared-logic/business/pricing/model-data";
 import { type AgentTreeRow, type ConsumptionFields, fieldsColumns } from "../../../extensions/model-cost/shared-logic/presentation/display";
 import type { ModelCostRuntime } from "../../../extensions/model-cost/shared-logic/runtime";
-import { createModelCostRuntime } from "../../../extensions/model-cost/shared-logic/runtime";
+import { createModelCostRuntime, modelCostImplementation } from "../../../extensions/model-cost/shared-logic/runtime";
 import type { CatalogPrice, CatalogPriceSource } from "../../../framework/interface/provider";
 import type { SessionFacts } from "../../../framework/interface/session";
 import type { OwnerReference } from "../../../framework/interface/state";
@@ -203,7 +203,7 @@ async function bind(
 	let runtime: ModelCostRuntime | undefined;
 	double.bind(MODEL_COST, {
 		config: { reader: () => `storageDir: ${root}\nbalanceTtlMs: 30000\ncodexQuotaTtlMs: 15000\n` },
-		factory: context => {
+		factory: modelCostImplementation(context => {
 			builds.count += 1;
 			runtime = createModelCostRuntime({
 				config: { storageDir: root },
@@ -231,8 +231,8 @@ async function bind(
 						}
 					: {}),
 			});
-			return runtime.implementation;
-		},
+			return runtime;
+		}),
 	});
 	double.deliverSession(OWNER, { session: MAIN });
 	// The host re-states the session's own facts — its latest name and direct parent — as a delivery of

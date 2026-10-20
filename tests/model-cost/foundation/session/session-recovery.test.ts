@@ -34,7 +34,11 @@ import type {
 	SessionRecord,
 } from "../../../../extensions/model-cost/shared-logic/foundation/session/consumption-document";
 import type { ModelPricingData } from "../../../../extensions/model-cost/shared-logic/business/pricing/model-data";
-import { type ModelCostRuntime, createModelCostRuntime } from "../../../../extensions/model-cost/shared-logic/runtime";
+import {
+	type ModelCostRuntime,
+	createModelCostRuntime,
+	modelCostImplementation,
+} from "../../../../extensions/model-cost/shared-logic/runtime";
 import type { SessionFacts, TurnUsage } from "../../../../framework/interface/session";
 import type { OwnerReference } from "../../../../framework/interface/state";
 import type { TurnSignal } from "../../../../framework/runtime/port";
@@ -171,7 +175,7 @@ async function bindAccounting(root: string, baseline?: unknown): Promise<BoundAc
 	});
 	const double = portDouble();
 	double.bind(MODEL_COST, {
-		factory: () => runtime.implementation,
+		factory: modelCostImplementation(() => runtime),
 		// The declared configuration is read once per extension per process; this reader answers the
 		// declaration so the binding validates without touching the repository's own file.
 		config: { reader: () => `storageDir: ${root}\nbalanceTtlMs: 30000\ncodexQuotaTtlMs: 15000\n` },

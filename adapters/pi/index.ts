@@ -44,7 +44,7 @@ export function piAdapter(definition: ExtensionDefinition, options: PiAssembly =
 	const binding = createAssemblyBinding(definition, options, mode);
 	// pi's own provider facts — the model prices and the provider access the registry states — as one set
 	// for the whole process: every binding of this assembly records the registry of the contexts its
-	// own deliveries come from, and the queries the framework hands an extension's factory answer from
+	// own deliveries come from, and the queries the framework hands an extension's `create` answer from
 	// the newest of them.
 	const providerFacts = piProviderFacts();
 	// The sessions this process's deliveries are read through: pi's own lineage links and the session

@@ -18,6 +18,7 @@ import {
 	type OmpSessionContext,
 	ompAdapter,
 } from "../../adapters/omp";
+import { defineImplementation } from "../../framework/interface";
 import type { OwnerReference } from "../../framework/interface/state";
 import { portDouble } from "./support/harness-port-double";
 
@@ -236,13 +237,21 @@ function gateSurface(): GateSurface {
 	};
 
 	const factory = ompAdapter(CODEBASE_TOOLS, {
-		factory: () => ({
-			subscriptions: [{ scope: "owner", events: {
-				session_start: delivery => void observed.push(`${delivery.event.kind} ${ownerLabelOf(delivery.owner)}`),
-				session_end: delivery => void observed.push(`${delivery.event.kind} ${ownerLabelOf(delivery.owner)}`),
-				round_start: delivery => void observed.push(`${delivery.event.kind} ${ownerLabelOf(delivery.owner)}`),
-				round_end: delivery => void observed.push(`${delivery.event.kind} ${ownerLabelOf(delivery.owner)}`),
-			} }],
+		implementation: defineImplementation({
+			create: () => ({}),
+			subscriptions: [{
+				scope: "owner",
+				events: {
+					session_start: (_state, delivery) =>
+						void observed.push(`${delivery.event.kind} ${ownerLabelOf(delivery.owner)}`),
+					session_end: (_state, delivery) =>
+						void observed.push(`${delivery.event.kind} ${ownerLabelOf(delivery.owner)}`),
+					round_start: (_state, delivery) =>
+						void observed.push(`${delivery.event.kind} ${ownerLabelOf(delivery.owner)}`),
+					round_end: (_state, delivery) =>
+						void observed.push(`${delivery.event.kind} ${ownerLabelOf(delivery.owner)}`),
+				},
+			}],
 		}),
 	});
 	if (!factory(api).bound) throw new Error("the codebase-tools definition did not bind");

@@ -40,7 +40,11 @@ import { MODEL_COST_WIDGET_KEY, attachModelCostWidget } from "../../../extension
 import { CODEX_USAGE_URL } from "../../../extensions/model-cost/shared-logic/business/allowance/codex-quota";
 import type { ConsumptionDocument } from "../../../extensions/model-cost/shared-logic/foundation/session/consumption-document";
 import type { ModelPricingData } from "../../../extensions/model-cost/shared-logic/business/pricing/model-data";
-import { type ModelCostRuntime, createModelCostRuntime } from "../../../extensions/model-cost/shared-logic/runtime";
+import {
+	type ModelCostRuntime,
+	createModelCostRuntime,
+	modelCostImplementation,
+} from "../../../extensions/model-cost/shared-logic/runtime";
 import type { ProviderAccess, ProviderAccessFacts } from "../../../framework/interface/provider";
 import type { SessionFacts, TurnOutcome } from "../../../framework/interface/session";
 import type { OwnerReference } from "../../../framework/interface/state";
@@ -377,7 +381,7 @@ async function bindVisual(
 	});
 	const double = portDouble();
 	double.bind(MODEL_COST, {
-		factory: () => runtime.implementation,
+		factory: modelCostImplementation(() => runtime),
 		config: { reader: () => `storageDir: ${root}\nbalanceTtlMs: 30000\ncodexQuotaTtlMs: 15000\n` },
 	});
 	double.deliverSession(OWNER, { session: MAIN });

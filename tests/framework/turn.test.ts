@@ -33,7 +33,11 @@ import type {
 } from "../../framework/interface/session";
 import type { OwnerReference } from "../../framework/interface/state";
 import type { TurnSignal } from "../../framework/runtime/port";
-import type { ExtensionDefinition, ImplementationContext } from "../../framework/interface";
+import {
+	type ExtensionDefinition,
+	type ImplementationContext,
+	defineImplementation,
+} from "../../framework/interface";
 import { withCapturedStderr } from "./support/captured-stderr";
 
 /** The definition under test: it declares nothing beyond what the assembly injects. */
@@ -188,30 +192,36 @@ function boundSurface(
 	};
 
 	const factory = frameworkOmp.ompAdapter(PROBE, {
-		factory: context => {
-			implementationContext = context;
-			const catalog = catalogFor?.(context);
-			return {
-				...(catalog === undefined ? {} : { catalog }),
-				subscriptions: [
-					{
-						scope: "session",
-						events: {
-							turn_start: delivery => {
-								const start = delivery as TurnStartDelivery;
-								starts.push(start);
-								turnSessions.push(start.turn.session);
-							},
-							turn_end: delivery => void ends.push(delivery as TurnEndDelivery),
-							round_start: delivery => {
-								rounds.push(delivery as RoundDelivery);
-								roundSessions.push((delivery as RoundDelivery).session);
-							},
+		implementation: defineImplementation<{ readonly catalog?: CatalogPriceSource }>({
+			create: context => {
+				implementationContext = context;
+				return {
+					...(catalogFor === undefined ? {} : { catalog: catalogFor(context) }),
+				};
+			},
+			subscriptions: [
+				{
+					scope: "session",
+					events: {
+						turn_start: (_state, delivery) => {
+							starts.push(delivery);
+							turnSessions.push(delivery.turn.session);
+						},
+						turn_end: (_state, delivery) => void ends.push(delivery),
+						round_start: (_state, delivery) => {
+							rounds.push(delivery);
+							roundSessions.push(delivery.session);
 						},
 					},
-				],
-			};
-		},
+				},
+			],
+			...(catalogFor === undefined
+				? {}
+				: {
+						catalog: (state: { readonly catalog?: CatalogPriceSource }) =>
+							state.catalog ?? { priceOf: () => undefined },
+					}),
+		}),
 	});
 	if (!factory(api).bound) throw new Error("the turn probe definition did not bind");
 

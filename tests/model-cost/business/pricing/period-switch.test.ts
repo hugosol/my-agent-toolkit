@@ -45,7 +45,7 @@ import type { ConsumptionDocument } from "../../../../extensions/model-cost/shar
 import type { ModelPricingData } from "../../../../extensions/model-cost/shared-logic/business/pricing/model-data";
 import type { DisplayTarget } from "../../../../extensions/model-cost/shared-logic/presentation/display";
 import type { ModelCostRuntime } from "../../../../extensions/model-cost/shared-logic/runtime";
-import { createModelCostRuntime } from "../../../../extensions/model-cost/shared-logic/runtime";
+import { createModelCostRuntime, modelCostImplementation } from "../../../../extensions/model-cost/shared-logic/runtime";
 import type { SessionFacts } from "../../../../framework/interface/session";
 import type { OwnerReference } from "../../../../framework/interface/state";
 import type { TurnSignal } from "../../../../framework/runtime/port";
@@ -277,7 +277,7 @@ async function bind(
 	let runtime: ModelCostRuntime | undefined;
 	double.bind(MODEL_COST, {
 		config: { reader: () => `storageDir: ${root}\nbalanceTtlMs: 30000\ncodexQuotaTtlMs: 15000\n` },
-		factory: context => {
+		factory: modelCostImplementation(context => {
 			runtime = createModelCostRuntime({
 				config: { storageDir: root },
 				configDirectory: root,
@@ -297,8 +297,8 @@ async function bind(
 					return (options.answer ?? (() => balanceAnswer("12.50")))(queries.length);
 				},
 			});
-			return runtime.implementation;
-		},
+			return runtime;
+		}),
 	});
 	double.deliverSession(OWNER, { session: MAIN });
 	double.deliverSession(OWNER, { event: { kind: "session_facts" }, session: MAIN });

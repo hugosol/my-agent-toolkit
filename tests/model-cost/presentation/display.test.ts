@@ -22,7 +22,7 @@ import { MODEL_COST } from "../../../extensions/model-cost/definition";
 import type { ConsumptionDocument } from "../../../extensions/model-cost/shared-logic/foundation/session/consumption-document";
 import type { ModelPricingData } from "../../../extensions/model-cost/shared-logic/business/pricing/model-data";
 import type { ModelCostRuntime } from "../../../extensions/model-cost/shared-logic/runtime";
-import { createModelCostRuntime } from "../../../extensions/model-cost/shared-logic/runtime";
+import { createModelCostRuntime, modelCostImplementation } from "../../../extensions/model-cost/shared-logic/runtime";
 import type { CatalogPrice, CatalogPriceSource } from "../../../framework/interface/provider";
 import type { SessionFacts, TurnUsage } from "../../../framework/interface/session";
 import type { OwnerReference } from "../../../framework/interface/state";
@@ -144,7 +144,7 @@ async function bindDisplay(options: {
 		// The declared configuration is read once per extension per process — the framework's own rule —
 		// so this reader only answers the declaration; each case's runtime reads its own root below.
 		config: { reader: () => `storageDir: ${root}\nbalanceTtlMs: 30000\ncodexQuotaTtlMs: 15000\n` },
-		factory: context => {
+		factory: modelCostImplementation(context => {
 			runtime = createModelCostRuntime({
 				config: { storageDir: root },
 				configDirectory: root,
@@ -156,8 +156,8 @@ async function bindDisplay(options: {
 				// framework hands them to this factory, and the factory hands them to the runtime.
 				...(context.modelPrices === undefined ? {} : { modelPrices: context.modelPrices }),
 			});
-			return runtime.implementation;
-		},
+			return runtime;
+		}),
 	});
 	double.deliverSession(OWNER, { session: MAIN });
 	await double.initiateRun(OWNER);

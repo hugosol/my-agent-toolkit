@@ -31,10 +31,8 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { type PiExtensionApi, piAdapter } from "../../../adapters/pi";
 import type { SessionCapability, SessionObservationReader } from "../../../framework/interface/session";
-import type { ExtensionImplementation } from "../../../framework/interface/details/implementation";
-import type { SubagentIntegration } from "../../../framework/interface/subagent";
 import { MODEL_COST } from "../definition";
-import { type ModelCostRuntime, createModelCostRuntime } from "../shared-logic/runtime";
+import { type ModelCostRuntime, createModelCostRuntime, modelCostImplementation } from "../shared-logic/runtime";
 import { createBoundaryTimer } from "./boundary-timer";
 import { attachModelCostWidget } from "./pi/widget";
 
@@ -63,51 +61,35 @@ export const EXTENSION_REPOSITORY_ROOT = resolve(dirname(fileURLToPath(import.me
 export const MODEL_COST_HARNESS = "pi";
 
 /**
- * One implementation with every frontend release this process attached composed into its cleanup.
+ * Releases every frontend this process attached, then the runtime's own resources.
  *
- * The dispose front-end is the framework's: a binding runs the one `cleanup` it declared, exactly once,
- * when the session that initialized the instance ends. Composing the frontends' releases into that one
- * entry is what keeps each binding's widget, its context observation and its registration with the UI's
- * one boundary wait bound to the same lifetime — and what keeps this extension from naming a native
- * shutdown event of its own, which it may not. A process binds this entry more than once (the session it
- * serves and every session the subagent provider spawns), so each of those bindings' own release is
- * reached here, and each is forgotten as it is released.
- *
- * The implementation's own cleanup still runs, and after those releases: nothing is drawn through an
- * accumulation that is being closed.
+ * The pi binding's one cleanup runs this: a process binds this entry more than once (the session
+ * it serves and every session the subagent provider spawns), so each binding's own release is
+ * reached and forgotten here, in this order, before the accumulation it drew through is closed.
  */
-export function releasingFrontendsOnCleanup(
-	implementation: ExtensionImplementation,
-	frontendReleases: Set<() => void>,
-): ExtensionImplementation {
-	const cleanup = implementation.cleanup;
-	return {
-		...implementation,
-		cleanup: () => {
-			for (const release of [...frontendReleases]) {
-				frontendReleases.delete(release);
-				release();
-			}
-			return cleanup?.();
-		},
-	};
+export function cleanupModelCostPi(runtime: ModelCostRuntime, frontendReleases: Set<() => void>): void {
+	for (const release of [...frontendReleases]) {
+		frontendReleases.delete(release);
+		release();
+	}
+	runtime.cleanup();
 }
 
 /**
  * The extension's pi assembly for one repository root: a binding of the shared definition whose
  * declared configuration is resolved under `repositoryRoot`.
  *
- * The returned factory carries the process's single business instance: the framework's factory runs
- * once and hands the same implementation to every later binding, so every binding of this process
- * reads one accumulation. A binding that rebuilds the instance after a disposal replaces it, and the
- * frontend attached around that binding draws the new one.
+ * The returned factory carries the process's single business instance: the authored implementation's
+ * `create` runs once and hands the same runtime to every later binding, so every binding of this
+ * process reads one accumulation. A binding that rebuilds the instance after a disposal replaces it,
+ * and the frontend attached around that binding draws the new one.
  */
 export function modelCostPiHarness(repositoryRoot: string): (pi: PiExtensionApi) => void {
 	/** The directory the extension's own `config.yaml` lives in, inside that repository. */
 	const configDirectory = join(repositoryRoot, "extensions", MODEL_COST.id);
 	/** The process's one business instance, as this assembly built it. */
 	let runtime: ModelCostRuntime | undefined;
-	/** The Session capability that instance consumes, as its factory received it. */
+	/** The Session capability that instance consumes, as its `create` received it. */
 	let session: SessionCapability | undefined;
 	/**
 	 * The process's one UI boundary wait, shared by every frontend this assembly attaches.
@@ -128,7 +110,7 @@ export function modelCostPiHarness(repositoryRoot: string): (pi: PiExtensionApi)
 	/**
 	 * Every frontend release this assembly has attached, as the binding's cleanup reaches them.
 	 *
-	 * The factory runs before a frontend can be attached — attaching needs the host's own api and the
+	 * `create` runs before a frontend can be attached — attaching needs the host's own api and the
 	 * runtime's read-only results — and every binding of the process attaches its own: the session this
 	 * entry serves and each session the subagent provider spawns run their own binding, so the cleanup
 	 * composed below releases every one of them, so that no widget, no context observation and no
@@ -142,61 +124,55 @@ export function modelCostPiHarness(repositoryRoot: string): (pi: PiExtensionApi)
 		// subagent provider spawns: a spawned session reports its own facts through this same entry, so
 		// the adapter requires it there rather than the provider guessing which extensions to load.
 		childEntry: join(repositoryRoot, "entrypoints", "pi", "model-cost.ts"),
-		// The extension's own half: the framework hands the factory the configuration it validated, and
-		// the runtime resolves the storage root from it, supplies the catalog the framework asks for a
+		// The extension's own half: the framework hands `create` the configuration it validated, and the
+		// runtime resolves the storage root from it, supplies the catalog the framework asks for a
 		// request's price, observes this session's Turns and Rounds, and saves the session's own
-		// consumption at its Round's end. The factory runs at most once per process, on the first binding.
-		factory: context => {
-			/**
-			 * The one answer the framework settles about this entry's subagent integration, recorded
-			 * where the framework hands it over — this entry's initialization node — and read by shared
-			 * logic through the input below. Before that initialization settles, no answer exists and
-			 * `/budget detail` is exactly what the extension delivers.
-			 */
-			let subagentIntegrationMode: SubagentIntegration["mode"] | undefined;
-			session = context.session;
-			const built = createModelCostRuntime({
-				config: context.config,
-				configDirectory,
-				userHomeDirectory: homedir(),
-				harness: MODEL_COST_HARNESS,
-				subagentIntegrationMode: () => subagentIntegrationMode,
-				// The framework's Session capability: its observation reader is the one place every
-				// session's context reading and activity is collected, in this process and — through local
-				// access — across its process boundary, so this extension reads the common interface and
-				// subscribes to no native context event of its own. Its `recordCommit` is the one statement
-				// this process makes: each session states each write it confirmed, and the framework
-				// carries it to the process serving its owner — the one other process that has to read the
-				// shared document again. This process serves a spawned session's owner only when it is the
-				// session that owns it, and nothing is stated for a session whose owner is served here.
-				session: context.session,
-				// The harness's own model prices, as the framework mapped them from pi's catalog: the
-				// extension's single price catalog composes them after its maintained data, which is what
-				// makes the allowance channel's own price a real request-time fact on this host.
-				...(context.modelPrices === undefined ? {} : { modelPrices: context.modelPrices }),
-				// The harness's own access to the providers it serves, as the framework mapped it from pi's
-				// registry: the balance query reads the address and the credential of the moment from it, so a
-				// host-side replacement is what the next query uses.
-				...(context.providerAccess === undefined ? {} : { providerAccess: context.providerAccess }),
-			});
-			runtime = built;
-			const initialize = built.implementation.initialize;
-			const implementation: ExtensionImplementation = {
-				...built.implementation,
+		// consumption at its Round's end. The authored declaration's scopes, event keys, command slots
+		// and lifecycle are static; `create` runs at most once per process, on the first binding.
+		implementation: modelCostImplementation(
+			context => {
+				session = context.session;
+				const built = createModelCostRuntime({
+					config: context.config,
+					configDirectory,
+					userHomeDirectory: homedir(),
+					harness: MODEL_COST_HARNESS,
+					// The framework's Session capability: its observation reader is the one place every
+					// session's context reading and activity is collected, in this process and — through local
+					// access — across its process boundary, so this extension reads the common interface and
+					// subscribes to no native context event of its own. Its `recordCommit` is the one statement
+					// this process makes: each session states each write it confirmed, and the framework
+					// carries it to the process serving its owner — the one other process that has to read the
+					// shared document again. This process serves a spawned session's owner only when it is the
+					// session that owns it, and nothing is stated for a session whose owner is served here.
+					session: context.session,
+					// The harness's own model prices, as the framework mapped them from pi's catalog: the
+					// extension's single price catalog composes them after its maintained data, which is what
+					// makes the allowance channel's own price a real request-time fact on this host.
+					...(context.modelPrices === undefined ? {} : { modelPrices: context.modelPrices }),
+					// The harness's own access to the providers it serves, as the framework mapped it from pi's
+					// registry: the balance query reads the address and the credential of the moment from it, so a
+					// host-side replacement is what the next query uses.
+					...(context.providerAccess === undefined ? {} : { providerAccess: context.providerAccess }),
+				});
+				runtime = built;
+				return built;
+			},
+			{
 				// The framework hands this entry's one settled subagent answer over at this node, so it is
 				// recorded here — the entry the provider loads into spawned sessions is required by this
 				// same assembly, and whether that reached a provider is what `/budget detail` is offered
 				// under. The entry's own initialization still runs, with the same delivery.
-				initialize: async delivery => {
-					subagentIntegrationMode = delivery.subagents.mode;
-					await initialize?.(delivery);
+				initialize: async (built, delivery) => {
+					built.recordSubagentIntegrationMode(delivery.subagents.mode);
+					await built.initialize(delivery);
 				},
-			};
-			// The dispose front-end is the framework's — the one `cleanup` this instance declares, run when
-			// the session that initialized it ends — and every frontend of this process is released through
-			// it rather than through a native shutdown event of the extension's own, which it may not name.
-			return releasingFrontendsOnCleanup(implementation, frontendReleases);
-		},
+				// The dispose front-end is the framework's one authored cleanup: every frontend of this
+				// process is released first, then the runtime's own resources, so nothing is drawn through
+				// an accumulation that is being closed.
+				cleanup: built => cleanupModelCostPi(built, frontendReleases),
+			},
+		),
 	});
 
 	return pi => {

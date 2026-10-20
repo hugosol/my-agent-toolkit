@@ -162,6 +162,45 @@ The `verified-supported` row also fixes *what runs*: the revision anchor is the 
 
 **Isolation conditions.** Candidate work never touches the default global install, the formal configuration, or a running agent: installation is confined to `.cache/omp-baseline/<version>` (gitignored), every controlled session runs the isolated install under a temporary agent state directory, and the dock strips the resolution offsets (`OMP_PROFILE`, `PI_PROFILE`, `OMPCODE`, `PI_CONFIG_FILES`, `XDG_*`, `PI_CODING_AGENT_DIR`, `OMP_AUTH_BROKER_*`) before starting one.
 
+### Contract-driven agent pre-review
+
+An upgrade review must examine whether the assumptions behind an adapter's semantic mappings still hold, not merely whether native method names and types remain unchanged. An accepted approximation can cease to satisfy a framework contract as native behavior evolves. Agent pre-review filters evidence and risks for a maintainer; it does not certify compatibility, promote support or replace behavior verification.
+
+#### Review inputs and mapping rationale
+
+Provide the exact old and candidate harness revisions/artifacts, the current framework and adapter source, relevant dependency/provider revisions, and the framework contracts and decision records. Use the actual source diff and relevant callers, dispatch and teardown paths, not release notes alone. Record unavailable source and unexamined paths as review limitations.
+
+For each relevant minimal integration contract, locate or document:
+
+- the framework's semantic promise and interaction mode, including ordering, await and result-handling obligations;
+- the native facts, events, queries or effects used to satisfy it;
+- accepted differences between the native meaning and the framework meaning, and their applicable conditions;
+- the assumptions that make those differences acceptable within the promised scope;
+- the rationale and alternatives behind significant trade-offs, linking existing decisions rather than duplicating the contract;
+- changes that would invalidate those assumptions, together with existing source or behavioral evidence and its limits.
+
+Do not infer historical approval from an implementation's existence. If rationale or assumptions cannot be recovered, report them as missing and request maintainer judgment; do not invent a justification. Keep shared semantics in the framework contract and harness-specific approximations in their mapping rationale.
+
+#### Review checklist
+
+For each affected mapping, ask whether the candidate changes:
+
+- **Trigger and coverage:** when facts are emitted, which native paths emit them, or whether a formerly covered path is omitted.
+- **Ordering, waiting and results:** whether handlers are awaited, what runs before/after them, who applies their results, and whether required resources survive until completion.
+- **Identity and scope:** actual session, parent and Owner attribution, process topology, and observation versus effect authority.
+- **Data meaning:** measurement basis, units, timestamps, completeness, missing/unknown values and distinctions from known zero.
+- **Multiplicity and continuation:** duplicate delivery, retries, queued work, automatic continuation and the assumptions behind deduplication or settled-state decisions.
+- **Lifetime:** registration and release, disposal, binding replacement and resource ownership.
+- **Failure and cancellation:** propagation, final facts and cleanup on success, cancellation, terminal failure and interrupted execution.
+
+Apply these questions to the mapping's recorded assumptions and accepted differences. A change in an upstream caller, event dispatcher or downstream teardown can matter even when the adapter's imported symbol is unchanged. Interaction mode alone does not establish semantic equivalence.
+
+#### Required pre-review output
+
+Name the compared revisions, adapter/framework source and reviewed scope. For each finding, provide the affected contract, old/new source locations and concrete change evidence, the assumption or promise potentially invalidated, the impacted adapter path, and a proposed human check or focused behavioral observation. Separate observed source changes from inferred semantic risks and confirmed violations. List unresolved rationale, unavailable evidence and unreviewed paths explicitly.
+
+“No risk found in the reviewed scope” is not a compatibility proof. A maintainer reviews the findings and selects further verification under the existing upgrade process; source inspection, executed behavior and support approval remain separate. This guide introduces no automatic upgrade runner, scheduled review, startup check or multi-version interface mechanism.
+
 ## Shared-source deployment prerequisite
 
 The framework lives once in `my-agent-toolkit/framework/`; extensions import that source directly instead of depending on a separately published framework package. The first release configures only OMP to scan `entrypoints/omp/`; the pi discovery root is deferred with the pi adapter. The OMP root contains independent thin extension entrypoints importing implementations under `extensions/`, which in turn use the shared framework source. The implementation and framework directories are not extension discovery roots.

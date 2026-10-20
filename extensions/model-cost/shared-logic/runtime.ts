@@ -22,12 +22,12 @@
  * signal that consumption is not being recorded: nothing writes over a document that could not be
  * read, and no provider measurement elsewhere in the extension is disabled by the pause.
  *
- * What the runtime connects to the framework is {@link ModelCostRuntime.implementation}: the
- * extension's own model catalog — the one query the framework makes at a real request's start, whose
- * answer is snapshotted into that request's own facts — one per-actual-session observation group
- * over the Turn and Round axes, the framework's own activity readings and the harness's own
- * session-facts deliveries, the one-time initialization, and the cleanup that ends this instance. The
- * catalog states the maintained data's own prices (`model-data.ts`) and, for a channel the harness
+ * What the runtime exposes to its assembly is the business state the authored implementation
+ * declaration delegates to: the extension's own model catalog — the one query the framework makes at
+ * a real request's start, whose answer is snapshotted into that request's own facts — one
+ * per-actual-session observation surface over the Turn and Round axes, the framework's own activity
+ * readings and the harness's own session-facts deliveries, the one-time initialization, and the
+ * cleanup that ends this instance. The catalog states the maintained data's own prices (`model-data.ts`) and, for a channel the harness
  * itself prices, the harness's own model prices as the framework hands them over; the observation group
  * hands the deliveries to the request accounting (`request-accounting.ts`), which anchors each
  * request's price at its start, adds its reliable usage once, and keeps each session's latest name and
@@ -50,10 +50,27 @@
  * document is read while this instance initializes, beside the consumption baseline, so a restart
  * continues the same measurement instead of re-anchoring on its first report.
  */
-import type { ExtensionImplementation, InitializationDelivery } from "../../../framework/interface/details/implementation";
+import {
+	type AuthoredImplementation,
+	type ImplementationSubscription,
+	defineImplementation,
+} from "../../../framework/interface";
+import type { ActionDelivery } from "../../../framework/interface/command";
+import type { ImplementationContext, InitializationDelivery } from "../../../framework/interface/details/implementation";
 import type { FeedbackTransport } from "../../../framework/interface/feedback";
 import type { CatalogPriceSource, ProviderAccess } from "../../../framework/interface/provider";
-import type { SemanticEventHandlers, SessionCapability } from "../../../framework/interface/session";
+import type {
+	RoundDelivery,
+	SessionActivityDelivery,
+	SessionCapability,
+	SessionCommitDelivery,
+	SessionContextDelivery,
+	SessionEventDelivery,
+	SessionUnobservedDelivery,
+	TurnEndDelivery,
+	TurnStartDelivery,
+	UserInputDelivery,
+} from "../../../framework/interface/session";
 import type { SubagentIntegration } from "../../../framework/interface/subagent";
 import type { HttpRequestOptions } from "../../../framework/interface/general/http";
 import { DEFAULT_CODEX_QUOTA_TTL_MS, type CodexQuotaFailure, createCodexQuota } from "./business/allowance/codex-quota";
@@ -222,8 +239,52 @@ export interface ModelCostRuntime {
 	 * frontend that reads it sees what each session is doing now rather than what it accumulated.
 	 */
 	readonly sessionActivity: SessionActivityRegistry;
-	/** The half the framework connects: the catalog, the observation group and the lifecycle. */
-	readonly implementation: ExtensionImplementation;
+	/**
+	 * The extension's own price catalog, selected by the authored implementation's `catalog` slot.
+	 *
+	 * It is the same query the framework snapshots at a request's real start and the display reads
+	 * for its fee-structure reference ratio; this member is how the authored declaration exposes it.
+	 */
+	readonly catalog: CatalogPriceSource;
+	/** One Turn's start: provider-failure notices, then the accounting's request anchor. */
+	handleTurnStart(delivery: TurnStartDelivery): void | Promise<void>;
+	/** One Turn's settled response: usage, Session span end and the usage-driven provider refresh. */
+	handleTurnEnd(delivery: TurnEndDelivery): void | Promise<void>;
+	/** One Round's start: the accounting boundary its own additions are measured from. */
+	handleRoundStart(delivery: RoundDelivery): void | Promise<void>;
+	/** One Round's end: measure, save this session's own snapshot and become the previous Round. */
+	handleRoundEnd(delivery: RoundDelivery): void | Promise<void>;
+	/** One session's current activity reading, as the framework's Round semantics state it. */
+	handleSessionActivity(delivery: SessionActivityDelivery): void;
+	/** One harness-attributed user submission, the Session span's start fact. */
+	handleUserInput(delivery: UserInputDelivery): void | Promise<void>;
+	/** One session's renamed facts, delivered where the host reported the change. */
+	handleSessionFacts(delivery: SessionEventDelivery): void | Promise<void>;
+	/** One session's context reading moved; the coalesced redraw is the delivery's only cost. */
+	handleSessionContext(delivery: SessionContextDelivery): void;
+	/** One session's confirmed storage write; the coalesced read-only synchronization. */
+	handleSessionCommit(delivery: SessionCommitDelivery): void | Promise<void>;
+	/** One session's observation became unavailable; forget its activity and redraw. */
+	handleSessionUnobserved(delivery: SessionUnobservedDelivery): void;
+	/** One actual session's start, whose startup facts are recorded once. */
+	handleSessionStart(delivery: SessionEventDelivery): void | Promise<void>;
+	/** `/budget detail`: flip the display form, or answer the operator under a no-subagent entry. */
+	showBudgetDetail(delivery: ActionDelivery): void;
+	/** `/budget holiday`: close the period under the holiday rule. */
+	toggleBudgetHoliday(delivery: ActionDelivery): void | Promise<void>;
+	/** `/budget clear`: archive and reset the period. */
+	clearBudgetPeriod(delivery: ActionDelivery): void | Promise<void>;
+	/**
+	 * Records the one settled subagent integration answer this instance's initialization received.
+	 *
+	 * The pi entry calls this at its initialization node, because `/budget detail` is offered only
+	 * where the provider's child entry reached a subagent provider; the OMP entry, whose every entry
+	 * is integrated, does not. A runtime built by a suite may instead supply the answer through its
+	 * input getter, which stays the fallback before any record exists.
+	 */
+	recordSubagentIntegrationMode(mode: SubagentIntegration["mode"]): void;
+	/** End this instance's resources; the authored cleanup slot's default implementation. */
+	cleanup(): void;
 	/**
 	 * Load the baseline this process runs on, and ask the CLI's two provider sources once.
 	 *
@@ -365,6 +426,8 @@ export function createModelCostRuntime(inputs: ModelCostRuntimeInputs): ModelCos
 	// single report carried and persisted independently of the consumption document, so a consumption
 	// reset never touches it and a restart continues measuring from the same baseline.
 	const estimate = new CodexEstimateStore(storage.storageDirectory, now);
+	/** The one subagent integration answer this instance recorded at its initialization node. */
+	let recordedSubagentIntegrationMode: SubagentIntegration["mode"] | undefined;
 	const quota = createCodexQuota({
 		...(inputs.providerAccess === undefined ? {} : { access: inputs.providerAccess }),
 		now,
@@ -671,139 +734,173 @@ export function createModelCostRuntime(inputs: ModelCostRuntimeInputs): ModelCos
 	// harness's own model prices answering the pairs it does not (see `composedCatalog`), so a
 	// monetary pair answers the tier's own off-peak price while the allowance channel answers the
 	// price the harness states for it; a pair neither answers is no price rather than a price of zero.
-	const events: SemanticEventHandlers = {
-		// Every accounting delivery below runs through `account`: this instance's preparation (the
-		// baseline and the estimate) is what the accounting reads, so a delivery this instance serves
-		// while it is still being prepared is processed once it settled rather than dropped as one of a
-		// baseline nobody loaded. The root-side effects are not part of that preparation — see
-		// `rootSideStarted` for the one place the distinction is visible.
-		turn_start: delivery => {
-			stateProviderFailures(delivery);
-			return account(delivery.feedback, () => accounting.turnStarted(delivery));
-		},
-		turn_end: delivery => {
-			stateProviderFailures(delivery);
-			// The settled response's own two facts: it ends that session's Session span at the instant
-			// this delivery states — every outcome delivers one, so a failed or cancelled Turn ends the
-			// span too — and its reported usage is accounted once, or the skip is reported. The end is
-			// observed whether or not the accounting has anything to count for this Turn, and a Round
-			// that never ends costs the reading nothing.
-			return account(delivery.feedback, () => {
-				accounting.turnSettled(delivery);
-				// The usage-driven provider refresh reads the *request's* own provider rather than whatever
-				// is being viewed or is current now, so a subagent's request and a main session's refresh the
-				// same one reading, and a request of another provider reaches nothing here. The balance and
-				// the Codex windows share the policy: each module filters to its own provider and checks its
-				// own success TTL, and an expired reading with no query already out begins one.
-				//
-				// Only an instance that began its own root-side start refreshes anything: an instance
-				// serving a spawned session without owning it holds no such reading, and asking the account
-				// there would be a second root-side read of the same account rather than a refresh of this
-				// instance's own reading.
-				if (!rootSideStarted) return;
-				balance.usageSettled(delivery.turn.provider);
-				quota.usageSettled(delivery.turn.provider);
-			});
-		},
-		// Both edges of a Round. Each one is an accounting boundary — the start fixes the snapshot its
-		// own additions are measured from, and the end measures them, saves the session's own snapshot
-		// and becomes the previous Round. A subagent session's own runtime is measured from these same
-		// two facts — its Round is one of its activities — so a Round end is also where the interval
-		// that Round ran for settles.
-		//
-		// The session's *activity* is not moved here, although these edges are the facts behind it:
-		// which fact ends a session's work is the framework's answer, and it states that answer as its
-		// own observation below. Reading it off these edges would be this extension deciding the same
-		// question a second time — and, for a session another process ran, deciding it with no facts at
-		// all.
-		round_start: delivery => {
-			stateProviderFailures(delivery);
-			return account(delivery.feedback, () => accounting.roundStarted(delivery));
-		},
-		round_end: delivery => {
-			stateProviderFailures(delivery);
-			return account(delivery.feedback, () => accounting.roundEnded(delivery));
-		},
-		// One actual session's current activity, as the framework's own Round semantics state it: a
-		// session whose Round is open is working, one whose Round has ended is idle, and the framework
-		// delivers the reading where it moved. It carries the session's own identity — a subagent's
-		// reading is the subagent's, never a parent's or the viewed session's — so the reading the
-		// display draws for a row is that row's session, and a real move is published at once rather
-		// than waiting for the next request to redraw a row whose session just started or stopped
-		// working.
-		//
-		// Nothing of the accounting runs here, and nothing may: the reading is an observation for the
-		// display, and this extension's Rounds, its measured runtimes, its session snapshots and its
-		// saves are driven by the edges above alone. A session whose reading arrives without this
-		// process ever having watched its Round — one another process ran — is therefore shown as
-		// working or idle with nothing accounted, nothing saved and no Round invented for it.
-		session_activity: delivery => {
-			stateProviderFailures(delivery);
-			if (sessionActivity.observe(delivery.session.sessionId, delivery.activity)) redraw.request();
-		},
-		// The one fact that establishes a session's Session span start: input the harness itself
-		// attributed to the user, published for every submission it admitted — an ordinary prompt and a
-		// user-invoked skill alike.
-		user_input: delivery => {
-			stateProviderFailures(delivery);
-			return account(delivery.feedback, () => accounting.userInput(delivery));
-		},
-		// The harness's own name-change fact, which is what keeps a session's identity current
-		// between boundaries — for a subagent nobody is viewing exactly as for the session on screen.
-		session_facts: delivery => {
-			stateProviderFailures(delivery);
-			return account(delivery.feedback, () => accounting.sessionFacts(delivery.session));
-		},
-		// One actual session's own context reading moved. The reading is not adopted here because it
-		// has nowhere to be adopted from: this extension reads it from the framework's Session
-		// capability, whose observation reader already holds the reading this delivery carries — so
-		// what this delivery is for is the one thing a reading that moved costs, a redraw of whatever
-		// this extension is drawing. That redraw is the turn's own (`redraw` above): the readings that
-		// arrived in this turn are drawn together rather than one frame per delivery.
-		session_context: () => {
-			redraw.request();
-		},
-		// One actual session's own confirmed write of its extension data, as the process that ran it
-		// counted it: another writer put consumption into the storage root this instance reads, so what
-		// this instance holds as its basis may be behind the file. The delivery carries no figure from
-		// that file, and nothing of this instance's accounting is accumulated from it — what it costs is
-		// the read-only synchronization, which reads the document the file really holds and adopts it
-		// without writing anything of this instance's own. It is deliberately not an initialization, not
-		// a forced save and not a poll: a notice is one event, a refused or unreadable baseline is
-		// reported exactly as a save meeting the same file reports it, and a session this instance never
-		// committed for is still saved by its own process alone.
-		session_commit: delivery => {
-			stateProviderFailures(delivery);
-			// The handler's own settlement is the read: the framework contains a rejection exactly as it
-			// contains a synchronous throw, and a caller waiting for the deliveries it dispatched — the
-			// session-disposal close-out, say — waits for this read rather than racing it. Which read it
-			// settles on is the coalescer's answer above: this turn's notices share one, and a notice
-			// delivered while that read runs is the reason for the next one.
-			return synchronizeOnCommit(delivery.feedback);
-		},
-		// One actual session's observation became unavailable: the source that carried its readings ended,
-		// and the framework's own source has already withdrawn them. What is left to do here is this
-		// instance's own half of the same reading — the activity registry the detail form emphasises a
-		// row's name with — and the redraw that drops the row's context beside it. An unavailable
-		// observation is not idleness: the reading is forgotten rather than replaced, so the row reverts to
-		// the unestablished state a session no edge has moved is drawn in and never to an idle one. Nothing
-		// of the accounting runs here, exactly as nothing of it runs for a reading that arrived: no Round
-		// ends, no Turn is attributed and nothing is saved, because a lost connection is evidence of
-		// nothing about the work itself. A source's end is one fact rather than a stream of them, so it
-		// costs the one redraw the row needs.
-		session_unobserved: delivery => {
-			stateProviderFailures(delivery);
-			sessionActivity.forget(delivery.session.sessionId);
-			accounting.announceChanged();
-		},
-		// One actual session's own start. A spawned session's binding announces it once, and it is the
-		// one delivery whose model and level readings are that session's startup facts — the framework
-		// reports them on a start that proves the session was beginning, and on no other delivery, so a
-		// session merely recovered here arrives with nothing to record for its startup.
-		session_start: delivery => {
-			stateProviderFailures(delivery);
-			return account(delivery.feedback, () => accounting.started(delivery.session));
-		},
+	// Every accounting delivery below runs through `account`: this instance's preparation (the
+	// baseline and the estimate) is what the accounting reads, so a delivery this instance serves
+	// while it is still being prepared is processed once it settled rather than dropped as one of a
+	// baseline nobody loaded. The root-side effects are not part of that preparation — see
+	// `rootSideStarted` for the one place the distinction is visible.
+	const handleTurnStart = (delivery: TurnStartDelivery): void | Promise<void> => {
+		stateProviderFailures(delivery);
+		return account(delivery.feedback, () => accounting.turnStarted(delivery));
+	};
+	const handleTurnEnd = (delivery: TurnEndDelivery): void | Promise<void> => {
+		stateProviderFailures(delivery);
+		// The settled response's own two facts: it ends that session's Session span at the instant
+		// this delivery states — every outcome delivers one, so a failed or cancelled Turn ends the
+		// span too — and its reported usage is accounted once, or the skip is reported. The end is
+		// observed whether or not the accounting has anything to count for this Turn, and a Round
+		// that never ends costs the reading nothing.
+		return account(delivery.feedback, () => {
+			accounting.turnSettled(delivery);
+			// The usage-driven provider refresh reads the *request's* own provider rather than whatever
+			// is being viewed or is current now, so a subagent's request and a main session's refresh the
+			// same one reading, and a request of another provider reaches nothing here. The balance and
+			// the Codex windows share the policy: each module filters to its own provider and checks its
+			// own success TTL, and an expired reading with no query already out begins one.
+			//
+			// Only an instance that began its own root-side start refreshes anything: an instance
+			// serving a spawned session without owning it holds no such reading, and asking the account
+			// there would be a second root-side read of the same account rather than a refresh of this
+			// instance's own reading.
+			if (!rootSideStarted) return;
+			balance.usageSettled(delivery.turn.provider);
+			quota.usageSettled(delivery.turn.provider);
+		});
+	};
+	// Both edges of a Round. Each one is an accounting boundary — the start fixes the snapshot its
+	// own additions are measured from, and the end measures them, saves the session's own snapshot
+	// and becomes the previous Round. A subagent session's own runtime is measured from these same
+	// two facts — its Round is one of its activities — so a Round end is also where the interval
+	// that Round ran for settles.
+	//
+	// The session's *activity* is not moved here, although these edges are the facts behind it:
+	// which fact ends a session's work is the framework's answer, and it states that answer as its
+	// own observation below. Reading it off these edges would be this extension deciding the same
+	// question a second time — and, for a session another process ran, deciding it with no facts at
+	// all.
+	const handleRoundStart = (delivery: RoundDelivery): void | Promise<void> => {
+		stateProviderFailures(delivery);
+		return account(delivery.feedback, () => accounting.roundStarted(delivery));
+	};
+	const handleRoundEnd = (delivery: RoundDelivery): void | Promise<void> => {
+		stateProviderFailures(delivery);
+		return account(delivery.feedback, () => accounting.roundEnded(delivery));
+	};
+	// One actual session's current activity, as the framework's own Round semantics state it: a
+	// session whose Round is open is working, one whose Round has ended is idle, and the framework
+	// delivers the reading where it moved. It carries the session's own identity — a subagent's
+	// reading is the subagent's, never a parent's or the viewed session's — so the reading the
+	// display draws for a row is that row's session, and a real move is published at once rather
+	// than waiting for the next request to redraw a row whose session just started or stopped
+	// working.
+	//
+	// Nothing of the accounting runs here, and nothing may: the reading is an observation for the
+	// display, and this extension's Rounds, its measured runtimes, its session snapshots and its
+	// saves are driven by the edges above alone. A session whose reading arrives without this
+	// process ever having watched its Round — one another process ran — is therefore shown as
+	// working or idle with nothing accounted, nothing saved and no Round invented for it.
+	const handleSessionActivity = (delivery: SessionActivityDelivery): void => {
+		stateProviderFailures(delivery);
+		if (sessionActivity.observe(delivery.session.sessionId, delivery.activity)) redraw.request();
+	};
+	// The one fact that establishes a session's Session span start: input the harness itself
+	// attributed to the user, published for every submission it admitted — an ordinary prompt and a
+	// user-invoked skill alike.
+	const handleUserInput = (delivery: UserInputDelivery): void | Promise<void> => {
+		stateProviderFailures(delivery);
+		return account(delivery.feedback, () => accounting.userInput(delivery));
+	};
+	// The harness's own name-change fact, which is what keeps a session's identity current
+	// between boundaries — for a subagent nobody is viewing exactly as for the session on screen.
+	const handleSessionFacts = (delivery: SessionEventDelivery): void | Promise<void> => {
+		stateProviderFailures(delivery);
+		return account(delivery.feedback, () => accounting.sessionFacts(delivery.session));
+	};
+	// One actual session's own context reading moved. The reading is not adopted here because it
+	// has nowhere to be adopted from: this extension reads it from the framework's Session
+	// capability, whose observation reader already holds the reading this delivery carries — so
+	// what this delivery is for is the one thing a reading that moved costs, a redraw of whatever
+	// this extension is drawing. That redraw is the turn's own (`redraw` above): the readings that
+	// arrived in this turn are drawn together rather than one frame per delivery.
+	const handleSessionContext = (): void => {
+		redraw.request();
+	};
+	// One actual session's own confirmed write of its extension data, as the process that ran it
+	// counted it: another writer put consumption into the storage root this instance reads, so what
+	// this instance holds as its basis may be behind the file. The delivery carries no figure from
+	// that file, and nothing of this instance's accounting is accumulated from it — what it costs is
+	// the read-only synchronization, which reads the document the file really holds and adopts it
+	// without writing anything of this instance's own. It is deliberately not an initialization, not
+	// a forced save and not a poll: a notice is one event, a refused or unreadable baseline is
+	// reported exactly as a save meeting the same file reports it, and a session this instance never
+	// committed for is still saved by its own process alone.
+	const handleSessionCommit = (delivery: SessionCommitDelivery): void | Promise<void> => {
+		stateProviderFailures(delivery);
+		// The handler's own settlement is the read: the framework contains a rejection exactly as it
+		// contains a synchronous throw, and a caller waiting for the deliveries it dispatched — the
+		// session-disposal close-out, say — waits for this read rather than racing it. Which read it
+		// settles on is the coalescer's answer above: this turn's notices share one, and a notice
+		// delivered while that read runs is the reason for the next one.
+		return synchronizeOnCommit(delivery.feedback);
+	};
+	// One actual session's observation became unavailable: the source that carried its readings ended,
+	// and the framework's own source has already withdrawn them. What is left to do here is this
+	// instance's own half of the same reading — the activity registry the detail form emphasises a
+	// row's name with — and the redraw that drops the row's context beside it. An unavailable
+	// observation is not idleness: the reading is forgotten rather than replaced, so the row reverts to
+	// the unestablished state a session no edge has moved is drawn in and never to an idle one. Nothing
+	// of the accounting runs here, exactly as nothing of it runs for a reading that arrived: no Round
+	// ends, no Turn is attributed and nothing is saved, because a lost connection is evidence of
+	// nothing about the work itself. A source's end is one fact rather than a stream of them, so it
+	// costs the one redraw the row needs.
+	const handleSessionUnobserved = (delivery: SessionUnobservedDelivery): void => {
+		stateProviderFailures(delivery);
+		sessionActivity.forget(delivery.session.sessionId);
+		accounting.announceChanged();
+	};
+	// One actual session's own start. A spawned session's binding announces it once, and it is the
+	// one delivery whose model and level readings are that session's startup facts — the framework
+	// reports them on a start that proves the session was beginning, and on no other delivery, so a
+	// session merely recovered here arrives with nothing to record for its startup.
+	const handleSessionStart = (delivery: SessionEventDelivery): void | Promise<void> => {
+		stateProviderFailures(delivery);
+		return account(delivery.feedback, () => accounting.started(delivery.session));
+	};
+	// The extension's own half of `/budget`: the action table's implementations, which the
+	// framework's routing reaches and whose effects and words are business decisions. `detail`
+	// flips the entry's preference and says which form the entry is now in; it checks no provider,
+	// no idle fact, no pending save and no UI, and it never creates a widget — a frontend draws what
+	// the changed preference now reads as, if it has anywhere to draw. An entry whose subagent
+	// integration settled as the no-subagent mode is the one exception: the form lists the
+	// descendants this entry observed, so there is nothing for it to draw and the action answers the
+	// operator instead (see `subagentIntegrationMode` above). The two period actions are the entry's
+	// own conditions and the store's own close, and each says exactly how far it got.
+	const showBudgetDetail = (delivery: ActionDelivery): void => {
+		stateProviderFailures(delivery);
+		if ((recordedSubagentIntegrationMode ?? inputs.subagentIntegrationMode?.()) === "none") {
+			delivery.feedback.notify("warning", displayFormUnavailableNotice());
+			return;
+		}
+		const form = display.toggle();
+		delivery.feedback.notify("info", displayFormNotice(form));
+	};
+	const toggleBudgetHoliday = (delivery: ActionDelivery): void | Promise<void> => {
+		stateProviderFailures(delivery);
+		return periodSwitch.holiday(delivery);
+	};
+	const clearBudgetPeriod = (delivery: ActionDelivery): void | Promise<void> => {
+		stateProviderFailures(delivery);
+		return periodSwitch.clear(delivery);
+	};
+	const recordSubagentIntegrationMode = (mode: SubagentIntegration["mode"]): void => {
+		recordedSubagentIntegrationMode = mode;
+	};
+	const cleanup = (): void => {
+		closed = true;
+		redraw.dispose();
+		balance.dispose();
+		quota.dispose();
+		accounting.dispose();
 	};
 
 	return {
@@ -833,53 +930,23 @@ export function createModelCostRuntime(inputs: ModelCostRuntimeInputs): ModelCos
 		}),
 		sessionContext,
 		sessionActivity,
-		implementation: {
-			catalog,
-			// One group over every actual session, main or subagent: a request's consumption belongs to
-			// the session that issued it, and a subagent's own Rounds are its own.
-			subscriptions: [{ scope: "session", events }],
-			// The extension's own half of `/budget`: the action table's implementations, which the
-			// framework's routing reaches and whose effects and words are business decisions. `detail`
-			// flips the entry's preference and says which form the entry is now in; it checks no
-			// provider, no idle fact, no pending save and no UI, and it never creates a widget — a
-			// frontend draws what the changed preference now reads as, if it has anywhere to draw. An
-			// entry whose subagent integration settled as the no-subagent mode is the one exception: the
-			// form lists the descendants this entry observed, so there is nothing for it to draw and the
-			// action answers the operator instead (see `subagentIntegrationMode` above).
-			// The two period actions are the entry's own conditions and the store's own close, and
-			// each says exactly how far it got.
-			commands: {
-				budget: {
-					detail: delivery => {
-						stateProviderFailures(delivery);
-						if (inputs.subagentIntegrationMode?.() === "none") {
-							delivery.feedback.notify("warning", displayFormUnavailableNotice());
-							return;
-						}
-						const form = display.toggle();
-						delivery.feedback.notify("info", displayFormNotice(form));
-					},
-					holiday: delivery => {
-						stateProviderFailures(delivery);
-						return periodSwitch.holiday(delivery);
-					},
-					clear: delivery => {
-						stateProviderFailures(delivery);
-						return periodSwitch.clear(delivery);
-					},
-				},
-			},
-			initialize: async delivery => {
-				await initialize(delivery);
-			},
-			cleanup: () => {
-				closed = true;
-				redraw.dispose();
-				balance.dispose();
-				quota.dispose();
-				accounting.dispose();
-			},
-		},
+		catalog,
+		handleTurnStart,
+		handleTurnEnd,
+		handleRoundStart,
+		handleRoundEnd,
+		handleSessionActivity,
+		handleUserInput,
+		handleSessionFacts,
+		handleSessionContext,
+		handleSessionCommit,
+		handleSessionUnobserved,
+		handleSessionStart,
+		showBudgetDetail,
+		toggleBudgetHoliday,
+		clearBudgetPeriod,
+		recordSubagentIntegrationMode,
+		cleanup,
 		initialize,
 		synchronize,
 		subagentResultReceived(sessionId) {
@@ -890,6 +957,72 @@ export function createModelCostRuntime(inputs: ModelCostRuntimeInputs): ModelCos
 			return account(feedback, () => accounting.subagentResultReceived(sessionId, receivedAt, feedback));
 		},
 	};
+}
+
+/**
+ * The harness-specific lifecycle entries a model-cost assembly may replace around the shared
+ * authored declaration: the pi entry records its settled subagent integration at initialization,
+ * and both harnesses release their native frontends at cleanup. Everything else — scopes, event
+ * keys, the command table and the catalog slot — stays in {@link modelCostImplementation}.
+ */
+export interface ModelCostImplementationOptions {
+	readonly initialize?: (runtime: ModelCostRuntime, delivery: InitializationDelivery) => void | Promise<void>;
+	readonly cleanup?: (runtime: ModelCostRuntime) => void | Promise<void>;
+	/**
+	 * Extra static subscription groups a harness or a dock probe composes beside the extension's
+	 * own. They append to the canonical group rather than replacing any of its event keys.
+	 */
+	readonly subscriptions?: readonly ImplementationSubscription<ModelCostRuntime>[];
+}
+
+/**
+ * The extension's one authored implementation declaration, shared by both harness assemblies.
+ *
+ * Every scope, event key, command slot and lifecycle entry is static here; the runtime is the
+ * business state the handlers delegate to, and is created lazily by the assembly's own `create`.
+ * A harness passes only its own `create` (native paths, HTTP transport, harness identity) and the
+ * frontend lifecycle entries that belong to its host, never a second handler inventory.
+ */
+export function modelCostImplementation(
+	create: (context: ImplementationContext) => ModelCostRuntime,
+	options: ModelCostImplementationOptions = {},
+): AuthoredImplementation<ModelCostRuntime> {
+	return defineImplementation<ModelCostRuntime>({
+		create,
+		// One group over every actual session, main or subagent: a request's consumption belongs to
+		// the session that issued it, and a subagent's own Rounds are its own.
+		subscriptions: [
+			{
+				scope: "session",
+				events: {
+					turn_start: (runtime, delivery) => runtime.handleTurnStart(delivery),
+					turn_end: (runtime, delivery) => runtime.handleTurnEnd(delivery),
+					round_start: (runtime, delivery) => runtime.handleRoundStart(delivery),
+					round_end: (runtime, delivery) => runtime.handleRoundEnd(delivery),
+					session_activity: (runtime, delivery) => runtime.handleSessionActivity(delivery),
+					user_input: (runtime, delivery) => runtime.handleUserInput(delivery),
+					session_facts: (runtime, delivery) => runtime.handleSessionFacts(delivery),
+					session_context: (runtime, delivery) => runtime.handleSessionContext(delivery),
+					session_commit: (runtime, delivery) => runtime.handleSessionCommit(delivery),
+					session_unobserved: (runtime, delivery) => runtime.handleSessionUnobserved(delivery),
+					session_start: (runtime, delivery) => runtime.handleSessionStart(delivery),
+				},
+			},
+			...(options.subscriptions ?? []),
+		],
+		commands: {
+			budget: {
+				detail: (runtime, delivery) => runtime.showBudgetDetail(delivery),
+				holiday: (runtime, delivery) => runtime.toggleBudgetHoliday(delivery),
+				clear: (runtime, delivery) => runtime.clearBudgetPeriod(delivery),
+			},
+		},
+		catalog: runtime => runtime.catalog,
+		initialize: options.initialize ?? (async (runtime, delivery) => {
+			await runtime.initialize(delivery);
+		}),
+		cleanup: options.cleanup ?? (runtime => runtime.cleanup()),
+	});
 }
 
 /**

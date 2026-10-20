@@ -26,13 +26,13 @@ import { tmpdir } from "node:os";
 import * as path from "node:path";
 import type { OmpExtensionApi, OmpSessionContext } from "../../../adapters/omp";
 import { MODEL_COST } from "../../../extensions/model-cost/definition";
-import { releasingFrontendOnCleanup } from "../../../extensions/model-cost/harnesses/omp";
+import { cleanupModelCostOmp } from "../../../extensions/model-cost/harnesses/omp";
 import type { BoundaryTimer } from "../../../extensions/model-cost/harnesses/boundary-timer";
 import { MODEL_COST_WIDGET_KEY, attachModelCostWidget } from "../../../extensions/model-cost/harnesses/omp/widget";
 import type { ConsumptionDocument } from "../../../extensions/model-cost/shared-logic/foundation/session/consumption-document";
 import type { ModelPricingData } from "../../../extensions/model-cost/shared-logic/business/pricing/model-data";
 import type { ModelCostRuntime } from "../../../extensions/model-cost/shared-logic/runtime";
-import { createModelCostRuntime } from "../../../extensions/model-cost/shared-logic/runtime";
+import { createModelCostRuntime, modelCostImplementation } from "../../../extensions/model-cost/shared-logic/runtime";
 import type { SessionFacts } from "../../../framework/interface/session";
 import type { OwnerReference } from "../../../framework/interface/state";
 import { type PortDouble, portDouble } from "../../framework/support/harness-port-double";
@@ -254,7 +254,7 @@ async function bindBoundary(options: { readonly holiday?: boolean; readonly from
 	let runtime: ModelCostRuntime | undefined;
 	double.bind(MODEL_COST, {
 		config: { reader: () => `storageDir: ${root}\nbalanceTtlMs: 30000\ncodexQuotaTtlMs: 15000\n` },
-		factory: context => {
+		factory: modelCostImplementation(context => {
 			runtime = createModelCostRuntime({
 				config: { storageDir: root },
 				configDirectory: root,
@@ -268,8 +268,8 @@ async function bindBoundary(options: { readonly holiday?: boolean; readonly from
 					return Promise.reject(new Error("this suite makes no request"));
 				},
 			});
-			return runtime.implementation;
-		},
+			return runtime;
+		}),
 	});
 	double.deliverSession(OWNER, { session: MAIN });
 	double.deliverSession(OWNER, { event: { kind: "session_facts" }, session: MAIN });
@@ -484,12 +484,10 @@ describe("the wait belongs to the UI's lifetime, not to a session's (P41)", () =
 
 	test("the binding's own cleanup releases the frontend, and then runs the instance's own", () => {
 		const calls: string[] = [];
-		const implementation = releasingFrontendOnCleanup(
-			{ cleanup: () => void calls.push("instance") },
-			() => void calls.push("frontend"),
-		);
+		// Only the cleanup slot is exercised; the rest of the runtime's surface is not reached.
+		const runtime = { cleanup: () => void calls.push("instance") } as unknown as ModelCostRuntime;
 
-		implementation.cleanup?.();
+		cleanupModelCostOmp(runtime, () => void calls.push("frontend"));
 
 		// The dispose front-end is the framework's — its one cleanup, run when the session that
 		// initialized the instance ends — so this is the whole of what reaches the frontend: the

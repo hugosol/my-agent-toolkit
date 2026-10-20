@@ -36,15 +36,17 @@ index of that public surface; the source it cites is authoritative for behavior,
 The native boundary is enforced by
 [`../tests/framework/import-boundary.test.ts`](../tests/framework/import-boundary.test.ts).
 
-**The assembly the authoring entry leads to.** An extension declares plain data with `defineExtension`, and
-what the framework connects to that declaration is an `ExtensionAssembly`: a factory called once the
-declared configuration validated — handed the validated values, expected to build the extension's business
-instance without sending a remote request or starting a timer — plus the semantics the extension
-additionally depends on and the directory its relative configuration path is resolved against. A harness
-adapter consumes that value unchanged, so an assembly names no harness. What the factory returns carries
-the commands and lifecycle handlers the declarations need and, optionally, the one-time `initialize` the
-first model request waits for and the one `cleanup` the disposal of the session the instance serves runs. See
-[the implementation factory and its lifecycle](docs/framework-capabilities.md#the-implementation-factory-and-its-lifecycle).
+**The assembly the authoring entry leads to.** An extension declares plain data with `defineExtension` and
+its implementation with `defineImplementation`: `create(context)` builds the one business state, while
+the declaration's static subscription groups, command slots, catalog selector and lifecycle entries name
+handlers that receive that state. The authored declaration is inspectable before `create` runs, so the
+framework can select a binding's requirements without executing extension code; it is the only requirement
+inventory — there is no parallel list. An `ExtensionAssembly` supplies that authored implementation plus
+the semantics the extension additionally depends on and the directory its relative configuration path is
+resolved against. A harness adapter consumes the value unchanged, so an assembly names no harness. The
+one-time `initialize` is still what the first model request waits for, and the one `cleanup` is still what
+the disposal of the session the instance serves runs. See
+[the authored implementation and its lifecycle](docs/framework-capabilities.md#the-authored-implementation-and-its-lifecycle).
 
 ## Quick start
 

@@ -31,7 +31,7 @@ export function createAssemblyBinding(
 		// Cleanup spends an implementation. A later binding starts a fresh instance rather than
 		// delivering to the resources the previous instance already closed.
 		if (implementation === undefined || isImplementationDisposed(implementation)) {
-			implementation = options.factory === undefined ? {} : options.factory(context);
+			implementation = options.implementation === undefined ? {} : options.implementation(context);
 		}
 		return implementation;
 	};

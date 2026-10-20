@@ -33,7 +33,11 @@ import { MODEL_COST_WIDGET_KEY, attachModelCostWidget } from "../../../../extens
 import type { ConsumptionDocument, SessionRecord } from "../../../../extensions/model-cost/shared-logic/foundation/session/consumption-document"
 import type { ModelPricingData } from "../../../../extensions/model-cost/shared-logic/business/pricing/model-data";
 import type { DisplayTarget } from "../../../../extensions/model-cost/shared-logic/presentation/display";
-import { type ModelCostRuntime, createModelCostRuntime } from "../../../../extensions/model-cost/shared-logic/runtime";
+import {
+	type ModelCostRuntime,
+	createModelCostRuntime,
+	modelCostImplementation,
+} from "../../../../extensions/model-cost/shared-logic/runtime";
 import { uiBoundaryTimerOf } from "../../support/ui-timer";
 
 /** The repository root: this suite lives in `tests/model-cost/harnesses/pi/`. */
@@ -388,39 +392,39 @@ function assemble(options: { readonly document?: ConsumptionDocument } = {}): Bo
 	const bind = piAdapter(MODEL_COST, {
 		configBaseDir: REPOSITORY_ROOT,
 		childEntry: CHILD_ENTRY,
-		factory: context => {
-			const built = createModelCostRuntime({
-				config: { ...context.config, storageDir: root },
-				configDirectory: path.join(REPOSITORY_ROOT, "extensions", MODEL_COST.id),
-				userHomeDirectory: root,
-				harness: MODEL_COST_HARNESS,
-				data: DATA,
-				session: context.session,
-				subagentIntegrationMode: () => settledIntegration,
-				httpRequest: async (url: string, httpOptions?: HttpRequestOptions) => {
-					queries.push({ url, options: httpOptions });
-					return Response.json({
-						is_available: true,
-						balance_infos: [{ currency: "CNY", total_balance: "12.34", granted_balance: "0.00", topped_up_balance: "12.34" }],
-					});
-				},
-			});
-			runtime = built;
-			const cleanup = built.implementation.cleanup;
-			const initialize = built.implementation.initialize;
-			return {
-				...built.implementation,
-				initialize: async delivery => {
+		implementation: modelCostImplementation(
+			context => {
+				const built = createModelCostRuntime({
+					config: { ...context.config, storageDir: root },
+					configDirectory: path.join(REPOSITORY_ROOT, "extensions", MODEL_COST.id),
+					userHomeDirectory: root,
+					harness: MODEL_COST_HARNESS,
+					data: DATA,
+					session: context.session,
+					subagentIntegrationMode: () => settledIntegration,
+					httpRequest: async (url: string, httpOptions?: HttpRequestOptions) => {
+						queries.push({ url, options: httpOptions });
+						return Response.json({
+							is_available: true,
+							balance_infos: [{ currency: "CNY", total_balance: "12.34", granted_balance: "0.00", topped_up_balance: "12.34" }],
+						});
+					},
+				});
+				runtime = built;
+				return built;
+			},
+			{
+				initialize: async (built, delivery) => {
 					settledIntegration = delivery.subagents.mode;
-					await initialize?.(delivery);
+					await built.initialize(delivery);
 				},
-				cleanup: () => {
+				cleanup: built => {
 					releaseFrontend?.();
 					releaseFrontend = undefined;
-					return cleanup?.();
+					built.cleanup();
 				},
-			};
-		},
+			},
+		),
 	});
 	const bound = bind(surface.api);
 	if (bound.bound && runtime !== undefined) releaseFrontend = attachModelCostWidget(surface.api, runtime, uiBoundaryTimerOf(runtime));

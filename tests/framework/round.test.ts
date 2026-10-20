@@ -40,8 +40,12 @@ import type {
 import * as frameworkOmp from "../../adapters/omp";
 import type { CommandDelivery } from "../../framework/interface/command";
 import type { RoundDelivery, RoundEvent } from "../../framework/interface/session";
-import type { CommandImplementations } from "../../framework/interface/command";
-import { type ExtensionDefinition, defineExtension } from "../../framework/interface";
+import {
+	type ExtensionDefinition,
+	type ImplementationEventHandlers,
+	defineExtension,
+	defineImplementation,
+} from "../../framework/interface";
 
 /** The definition under test: one directed command, so the arm path can be driven too. */
 const PROBE: ExtensionDefinition = defineExtension({
@@ -192,23 +196,25 @@ function boundSurface(): NativeSurface {
 		owners.push(delivery.owner.kind === "unresolved" ? "<unresolved>" : delivery.owner.key);
 		hasUI.push(delivery.hasUI);
 	};
-	const events = {
-		round_start: record,
-		round_end: record,
+	const events: ImplementationEventHandlers<{}> = {
+		round_start: (_state, delivery) => record(delivery),
+		round_end: (_state, delivery) => record(delivery),
 	};
 
 	// The arm path: it only asks the delivery's idle query, which is what an extension does with
 	// it when it settles the state it reports at arm.
-	const commands: CommandImplementations = {
-		"round-probe": {
-			run: (_directive, delivery: CommandDelivery) => {
-				answers.push(delivery.canAcceptInput());
-			},
-		},
-	};
-
 	const factory = frameworkOmp.ompAdapter(PROBE, {
-		factory: () => ({ subscriptions: [{ scope: "owner", events }], commands }),
+		implementation: defineImplementation({
+			create: () => ({}),
+			subscriptions: [{ scope: "owner", events }],
+			commands: {
+				"round-probe": {
+					run: (_state, _directive, delivery: CommandDelivery) => {
+						answers.push(delivery.canAcceptInput());
+					},
+				},
+			},
+		}),
 	});
 	if (!factory(api).bound) throw new Error("the round probe definition did not bind");
 

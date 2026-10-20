@@ -408,16 +408,27 @@ describe("shared source imports no harness types (C1)", () => {
 			"framework/interface/details/implementation.ts",
 		];
 		const owned = [
-			"ExtensionDefinition",
-			"ExtensionConfigDeclaration",
-			"ConfigFieldType",
-			"ExtensionAssembly",
-			"ExtensionFactory",
-			"ImplementationContext",
-			"ExtensionImplementation",
-			"InitializationDelivery",
+			"ActionsImplementationHandlers",
+			"AuthoredImplementation",
+			"AuthoredImplementationFactory",
+			"CommandImplementationHandlers",
 			"DeclarableRequiredSemantic",
+			"DirectedImplementationHandlers",
+			"ExtensionAssembly",
+			"ExtensionConfigDeclaration",
+			"ExtensionDefinition",
+			"ExtensionImplementation",
+			"ConfigFieldType",
+			"ImplementationAction",
+			"ImplementationCommands",
+			"ImplementationContext",
+			"ImplementationDeclaration",
+			"ImplementationEventHandlers",
+			"ImplementationResolver",
+			"ImplementationSubscription",
+			"InitializationDelivery",
 			"defineExtension",
+			"defineImplementation",
 		] as const;
 		const declaredEverywhere = (source: string): string[] =>
 			[...source.matchAll(/\bexport\s+(?:type|interface|const|class|function)\s+([A-Za-z_$][\w$]*)/g)]
@@ -465,16 +476,24 @@ describe("shared source imports no harness types (C1)", () => {
 			.flatMap(match => match[1]!.split(",").map(entry => entry.trim().replace(/^type\s+/, "").split(/\s+as\s+/)[0]!.trim()))
 			.filter(name => name.length > 0);
 		expect([...declared, ...reexported].sort()).toEqual([
+			"ActionsImplementationHandlers",
+			"AuthoredImplementation",
+			"CommandImplementationHandlers",
 			"ConfigFieldType",
 			"DeclarableRequiredSemantic",
+			"DirectedImplementationHandlers",
 			"ExtensionAssembly",
 			"ExtensionConfigDeclaration",
 			"ExtensionDefinition",
-			"ExtensionFactory",
-			"ExtensionImplementation",
+			"ImplementationAction",
+			"ImplementationCommands",
 			"ImplementationContext",
+			"ImplementationDeclaration",
+			"ImplementationEventHandlers",
+			"ImplementationSubscription",
 			"InitializationDelivery",
 			"defineExtension",
+			"defineImplementation",
 		].sort());
 
 		const capabilityNames = [

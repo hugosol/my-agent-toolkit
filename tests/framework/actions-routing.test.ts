@@ -10,7 +10,7 @@
 import { describe, expect, test } from "bun:test";
 import type { ActionDelivery } from "../../framework/interface/command";
 import type { CommandAction, CommandImplementations } from "../../framework/interface/command";
-import { type ExtensionDefinition, defineExtension } from "../../framework/interface";
+import { type ActionsImplementationHandlers, type ExtensionDefinition, defineExtension, defineImplementation } from "../../framework/interface";
 import { portDouble } from "./support/harness-port-double";
 
 /** The command under test, with the three actions `/budget` declares. */
@@ -220,6 +220,29 @@ describe("the host chain waits for the action, and an unhandled failure is repor
 });
 
 describe("a declaration and its implementation are one pair (P28)", () => {
+	test.each([undefined, 42])("an invalid authored action (%s) remains missing instead of becoming a no-op", invalid => {
+		const double = portDouble();
+		let cleanups = 0;
+		const authored = defineImplementation<void>({
+			create: () => undefined,
+			commands: {
+				budget: {
+					detail: () => {},
+					holiday: () => {},
+					clear: invalid,
+				} as unknown as ActionsImplementationHandlers<void>,
+			},
+			cleanup: () => { cleanups += 1; },
+		});
+
+		const bound = double.bind(BUDGET, { factory: authored });
+
+		expect(bound.bound).toBe(false);
+		expect(double.registrations).not.toContain("command:budget");
+		expect(double.diagnostics.join("\n")).toContain('missing: "clear"');
+		expect(cleanups).toBe(1);
+	});
+
 	test("an action the declaration lists with no implementation refuses the binding", () => {
 		const double = portDouble();
 		const bound = double.bind(BUDGET, {

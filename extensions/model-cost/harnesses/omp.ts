@@ -19,9 +19,8 @@ import { homedir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { type OmpExtensionApi, ompAdapter } from "../../../adapters/omp";
-import type { ExtensionImplementation } from "../../../framework/interface/details/implementation";
 import { MODEL_COST } from "../definition";
-import { type ModelCostRuntime, createModelCostRuntime } from "../shared-logic/runtime";
+import { type ModelCostRuntime, createModelCostRuntime, modelCostImplementation } from "../shared-logic/runtime";
 import { createBoundaryTimer } from "./boundary-timer";
 import { type WidgetDrawing, attachModelCostWidget } from "./omp/widget";
 
@@ -65,8 +64,8 @@ export const MODEL_COST_HARNESS = "omp";
 /**
  * The process's one business instance, as this assembly built it.
  *
- * The framework's factory runs once per process and hands the same implementation to every later
- * binding, so this is the runtime the widget draws from: the session that built it and every
+ * The authored implementation's `create` runs once per process and hands the same runtime to every
+ * later binding, so this is the runtime the widget draws from: the session that built it and every
  * subagent that reuses it read one accumulation. A binding that rebuilds the instance after a
  * disposal replaces it, and the widget attached around that binding draws the new one.
  */
@@ -88,38 +87,25 @@ const uiBoundaryTimer = createBoundaryTimer(() => {
 });
 
 /**
- * One implementation with this extension's own frontend release composed into its cleanup.
- *
- * The dispose front-end is the framework's: a binding runs the one `cleanup` it declared, exactly
- * once, when the session that initialized the instance ends. Composing the frontend's release into
- * that entry is what keeps the widget and the UI's boundary wait bound to the same lifetime — and
- * what keeps this extension from naming a native shutdown event of its own, which it may not.
- *
- * The implementation's own cleanup still runs, and after the frontend's release: nothing is drawn
- * through an accumulation that is being closed.
- */
-export function releasingFrontendOnCleanup(
-	implementation: ExtensionImplementation,
-	releaseFrontend: () => void,
-): ExtensionImplementation {
-	const cleanup = implementation.cleanup;
-	return {
-		...implementation,
-		cleanup: () => {
-			releaseFrontend();
-			return cleanup?.();
-		},
-	};
-}
-
-/**
  * The process's one frontend release, as the binding's cleanup reaches it.
  *
- * The factory runs before the frontend can be attached — attaching needs the host's own api and the
+ * `create` runs before the frontend can be attached — attaching needs the host's own api and the
  * runtime's read-only results — so the two are joined in this one module-level handle: the cleanup
  * composed above calls whatever `modelCost` attached below.
  */
 let releaseFrontend: (() => void) | undefined;
+
+/**
+ * Releases the frontend this process attached, then the runtime's own resources.
+ *
+ * This is the order the binding's one cleanup runs: nothing is drawn through an accumulation that
+ * is being closed. The caller clears its own handle first so a later cleanup cannot reach a frontend
+ * that already released.
+ */
+export function cleanupModelCostOmp(runtime: ModelCostRuntime, release?: () => void): void {
+	release?.();
+	runtime.cleanup();
+}
 
 /**
  * The extension's binding for one OMP session, created once at module load.
@@ -133,40 +119,50 @@ let releaseFrontend: (() => void) | undefined;
  */
 const bindModelCost = ompAdapter(MODEL_COST, {
 	configBaseDir: EXTENSION_REPOSITORY_ROOT,
-	// The extension's own half: the framework hands the factory the configuration it validated, and
-	// the runtime resolves the storage root from it, supplies the catalog the framework asks for a
+	// The extension's own half: the framework hands `create` the configuration it validated, and the
+	// runtime resolves the storage root from it, supplies the catalog the framework asks for a
 	// request's price, observes every actual session's Turns and saves a session's own consumption
-	// at its Round's end. The factory runs at most once per process, on the first binding.
-	factory: context => {
-		const built = createModelCostRuntime({
-			config: context.config,
-			configDirectory: EXTENSION_CONFIG_DIRECTORY,
-			userHomeDirectory: homedir(),
-			harness: MODEL_COST_HARNESS,
-			// The framework's Session capability: its observation reader is the one place every
-			// session's context reading and activity is collected — each binding's own session and each
-			// subagent this process runs — so this extension reads the common interface and subscribes
-			// to no native context event of its own. Its `recordCommit` is the one statement this
-			// extension makes: on OMP every session of the process is bound here and the owner is served
-			// here, so a confirmed write is recorded in this process's own observation source and
-			// carried to no other process — the session that wrote and the owner that reads share this
-			// process's memory and document.
-			session: context.session,
-			// The harness's own model prices, as the framework mapped them from the host's catalog: the
-			// extension's single price catalog composes them after its maintained data, which is what
-			// makes the allowance channel's own price a real request-time fact on this host.
-			...(context.modelPrices === undefined ? {} : { modelPrices: context.modelPrices }),
-			// The harness's own access to the providers it serves, as the framework mapped it from the
-			// host's registry: the balance query reads the address and the credential of the moment from
-			// it, so a host-side replacement is what the next query uses.
-			...(context.providerAccess === undefined ? {} : { providerAccess: context.providerAccess }),
-		});
-		runtime = built;
-		return releasingFrontendOnCleanup(built.implementation, () => {
-			releaseFrontend?.();
-			releaseFrontend = undefined;
-		});
-	},
+	// at its Round's end. The authored declaration's scopes, event keys, command slots and lifecycle
+	// are static; `create` runs at most once per process, on the first binding.
+	implementation: modelCostImplementation(
+		context => {
+			const built = createModelCostRuntime({
+				config: context.config,
+				configDirectory: EXTENSION_CONFIG_DIRECTORY,
+				userHomeDirectory: homedir(),
+				harness: MODEL_COST_HARNESS,
+				// The framework's Session capability: its observation reader is the one place every
+				// session's context reading and activity is collected — each binding's own session and each
+				// subagent this process runs — so this extension reads the common interface and subscribes
+				// to no native context event of its own. Its `recordCommit` is the one statement this
+				// extension makes: on OMP every session of the process is bound here and the owner is served
+				// here, so a confirmed write is recorded in this process's own observation source and
+				// carried to no other process — the session that wrote and the owner that reads share this
+				// process's memory and document.
+				session: context.session,
+				// The harness's own model prices, as the framework mapped them from the host's catalog: the
+				// extension's single price catalog composes them after its maintained data, which is what
+				// makes the allowance channel's own price a real request-time fact on this host.
+				...(context.modelPrices === undefined ? {} : { modelPrices: context.modelPrices }),
+				// The harness's own access to the providers it serves, as the framework mapped it from the
+				// host's registry: the balance query reads the address and the credential of the moment from
+				// it, so a host-side replacement is what the next query uses.
+				...(context.providerAccess === undefined ? {} : { providerAccess: context.providerAccess }),
+			});
+			runtime = built;
+			return built;
+		},
+		// The dispose front-end is the framework's one authored cleanup: the native frontend's release
+		// runs first, then the runtime's own resources, so nothing is drawn through an accumulation
+		// that is being closed.
+		{
+			cleanup: built => {
+				const release = releaseFrontend;
+				releaseFrontend = undefined;
+				cleanupModelCostOmp(built, release);
+			},
+		},
+	),
 });
 
 export default function modelCost(pi: OmpExtensionApi): void {

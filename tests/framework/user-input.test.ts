@@ -18,8 +18,13 @@
 import { describe, expect, test } from "bun:test";
 import type { OmpCommandContext, OmpExtensionApi, OmpSessionContext } from "../../adapters/omp";
 import * as frameworkOmp from "../../adapters/omp";
-import type { SemanticEventHandlers, UserInputDelivery } from "../../framework/interface/session";
-import { type ExtensionDefinition, defineExtension } from "../../framework/interface";
+import type { UserInputDelivery } from "../../framework/interface/session";
+import {
+	type ExtensionDefinition,
+	type ImplementationEventHandlers,
+	defineExtension,
+	defineImplementation,
+} from "../../framework/interface";
 
 /** The definition under test: a command, so the suite can tell a refused binding from an unbound one. */
 const PROBE: ExtensionDefinition = defineExtension({
@@ -54,7 +59,7 @@ interface NativeSurface {
 
 /** Builds one bound definition over a recording native surface. */
 function boundSurface(
-	options: { readonly events?: SemanticEventHandlers; readonly refusesInput?: boolean } = {},
+	options: { readonly events?: ImplementationEventHandlers<{}>; readonly refusesInput?: boolean } = {},
 ): NativeSurface {
 	const inputHandlers: InputHandler[] = [];
 	const registrations: string[] = [];
@@ -82,15 +87,16 @@ function boundSurface(
 		},
 	};
 
-	const events: SemanticEventHandlers =
+	const events: ImplementationEventHandlers<{}> =
 		options.events ??
 		({
-			user_input: (delivery: UserInputDelivery) => {
+			user_input: (_state, delivery: UserInputDelivery) => {
 				observed.push(delivery);
 			},
-		} satisfies SemanticEventHandlers);
+		} satisfies ImplementationEventHandlers<{}>);
 	const factory = frameworkOmp.ompAdapter(PROBE, {
-		factory: () => ({
+		implementation: defineImplementation({
+			create: () => ({}),
 			subscriptions: [{ scope: "session", events }],
 			commands: { "input-probe": { run: () => undefined } },
 		}),

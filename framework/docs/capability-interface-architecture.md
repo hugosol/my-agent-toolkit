@@ -20,8 +20,8 @@ Prompt and Marker entries own only their declarations (`PromptDeclaration`, `Pro
 `MarkerDeclaration`): the run facts, contribution result, selection rules and the unified area's
 transport stay internal, and the initialization, directed and action deliveries no longer carry a
 marker transport. The Feedback and Provider leaf contracts required by Session also live beside
-it. The root authoring entry (`framework/interface/index.ts`) now owns `defineExtension` and the
-whole definition/implementation contract in its public `details/` files; `SubagentIntegration`,
+it. The root authoring entry (`framework/interface/index.ts`) now owns `defineExtension`,
+`defineImplementation` and the whole definition/implementation contract in its public `details/` files; `SubagentIntegration`,
 `SubagentIntegrationFailure` and `SubagentCapability` live in `framework/interface/subagent.ts`, and
 Command's declarations, implementations and deliveries in `framework/interface/command/` (its
 `details/definition.ts` and `details/implementation.ts`). The actual command and action deliveries are
@@ -261,6 +261,41 @@ A separate top-level adapter abstraction would:
 If the port later proves too wide for a real consumer, the correct move is to split the port by capability at the existing seam, not to add another layer above it. That decision is deliberately open.
 
 ## 6. Capability coverage and evidence
+
+### Inspectable authoring and shared planning (2026-10-20)
+
+The architecture prerequisite is implemented independently of the checker. Assemblies supply
+`implementation: defineImplementation({ create, subscriptions, commands, initialize, cleanup, catalog })`
+(or a shared helper returning that authored value), not a raw `factory`. Event handlers receive
+`(state, delivery)`; lifecycle and command handlers likewise receive the lazily created business
+state. The authored value's `.declaration` exposes the same structure used for materialization,
+without invoking `create`. There is no parallel requirement list. The private type brand remains
+required when an assembly erases the business-state type; the resolved implementation and its
+resolver are internal runtime contracts, not root authoring exports.
+
+[`behaviors/integration-plan.ts`](../behaviors/integration-plan.ts) owns the pure selection rules
+consumed by runtime binding, including the current Turn/Activity/Context dependency on Round
+bookkeeping and initialize-or-cleanup dependency on run initiation. It also exposes port obligations
+and reasons. This is the runtime registration plan, not a completed analyzer of all interface reads,
+provider access or delivery-level obligations. Native adapter mappings and the single `HarnessPort`
+remain unchanged. Creation, reuse, dispatch and disposal retain their existing semantics.
+
+Static source restrictions are deliberately deferred: TypeScript checks the authoring shape, but
+computed keys, spreads and dynamically produced declarations are not rejected by a new source
+checker in this change. See [the refactor and deferred-checker plan](../../.scratch/integration-contract-refactor/spec.md).
+The existing `check:integrations` still performs only subagent declaration matching.
+
+### Agreed dependency-analysis direction (2026-10-20; checker not implemented)
+
+The next diagnostic is intended to cover all framework-mediated extension dependencies, not only the subagent example. It derives the extension's demand and compares it with a target adapter's implemented and wired supply. Direct extension-to-harness integrations, such as native widgets, are outside this inventory. No working reference harness or target discovery entry is a prerequisite: demand can be listed without an adapter, and a target with no implementation has the full required set outstanding.
+
+Analysis starts from extension calls, declarations, subscriptions and reads. It expands framework-owned semantic dependency rules into minimal integration contracts and their `HarnessPort` implementation obligations, then traces the target adapter's implementations and assembly wiring. A direct call graph is insufficient: a read may depend on facts supplied earlier through an observation source, and framework synthesis may require several port operations. Reliably extractable relationships come from code; maintainers explicitly define necessary semantic dependencies that source calls alone cannot express. Conditional paths contribute their possible dependencies rather than depending on a live user configuration.
+
+A minimal integration contract identifies a semantic obligation and its complete interaction protocol, not just a capability group, method signature or generic “event” category. Existing `HarnessPort` remains the common adapter seam; extension consumers continue to use `framework/interface`. A supplied method or generated function body alone does not prove wiring or correct semantics. Report known missing implementations separately from dependencies or wiring the analyzer cannot resolve; unresolved analysis must not silently count as complete.
+
+The agreed first direction is an explicitly invoked offline diagnostic with demand-only and target-comparison output, showing requirement origins, dependency paths and missing implementation locations. This is not a code-generation, editor-plugin, startup-admission or semantic-certification project. Collect all possible dependencies without evaluating runtime configurations or expanding path-sensitive branch combinations. Retain explicit required/optional distinctions: a port member's optional syntax alone does not determine an extension's dependency policy. Report optional absences without failing; missing required integration obligations or unresolved analysis return a nonzero status, with unresolved analysis distinguished from confirmed absence. A successful check requires complete analysis and no required gaps. These are developer diagnostics, not restrictions on extension loading: extension authors decide whether to accept the reported risks. Exact extraction representation and command options still require implementation design. Automatic inventories replace repeated manual calculation where rules suffice; this revisits §6.5's earlier manual-intent-only recommendation without claiming that the existing declarations or checker have already changed. The rest of §6 describes the previous proposal and current declaration-only seed where not superseded here.
+
+Structural completeness remains distinct from semantic correctness. Maintainers define and review semantic promises and accepted native approximations; agent-assisted upgrade review examines whether their assumptions still hold. See [contract-driven agent pre-review](harness-support.md#contract-driven-agent-pre-review). Future semantic evolution and version coexistence are background considerations, not this diagnostic's scope.
 
 ### 6.1 Purpose
 

@@ -4,12 +4,13 @@ Every capability is encapsulated here. State, Session, Prompt, Marker, Feedback,
 Subagent and Command each own their canonical extension-facing declarations, and General's three
 modules have direct entries. An interface is the canonical extension-facing contract, not a re-export
 of an implementation directory. Start with the capability entry the extension needs — for example
-[Session](session/README.md), imported from `framework/interface/session` — and the implementation
-factory hands the extension `context.session`. The selected `adapters/<harness>` assembly entry
-connects the same shared implementation to pi or oh-my-pi.
+[Session](session/README.md), imported from `framework/interface/session` — and the authored
+implementation's `create(context)` hands the extension `context.session`. The selected
+`adapters/<harness>` assembly entry connects the same authored implementation to pi or oh-my-pi.
 
-The root entry is [`index.ts`](index.ts): it owns `defineExtension` and composes the whole
-definition/implementation authoring contract from its public [`details/`](details/) files. It does
+The root entry is [`index.ts`](index.ts): it owns `defineExtension`, re-exports
+`defineImplementation`, and composes the whole definition/implementation authoring contract from its
+public [`details/`](details/) files. It does
 not aggregate the capability entries below.
 
 | Reader | Read | Do not reach through |

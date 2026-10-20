@@ -11,7 +11,7 @@
  * Every observation is one stderr line prefixed with the extension id, because stderr is the
  * channel the dock already captures and the one a headless session's operator reads.
  */
-import { type ExtensionDefinition, defineExtension } from "../../../../framework/interface";
+import { type ExtensionDefinition, defineExtension, defineImplementation } from "../../../../framework/interface";
 import { type OmpExtensionApi, ompAdapter } from "../../../../adapters/omp";
 
 /** The command the dock drives, and the one asynchronous action among its actions. */
@@ -63,31 +63,32 @@ export default function bindingLifecycle(pi: OmpExtensionApi): void {
 	ompAdapter(definition, {
 		// The fixture's own directory: its `config.yaml` sits next to this module.
 		configBaseDir: import.meta.dir,
-		factory: context => {
-			const instance = (instances += 1);
-			evidence(`loaded config=${String(context.config.marker)} instance=${instance}`);
-			return {
-				initialize: async () => {
-					evidence(`initialize started instance=${instance}`);
-					await Bun.sleep(LIFECYCLE_INITIALIZATION_MS);
-					evidence(`initialize settled instance=${instance}`);
-				},
-				cleanup: () => {
-					evidence(`cleanup instance=${instance}`);
-				},
-				commands: {
-					[LIFECYCLE_COMMAND]: {
-						[LIFECYCLE_ASYNC_ACTION]: async () => {
-							evidence(`action started instance=${instance}`);
-							await Bun.sleep(LIFECYCLE_ACTION_MS);
-							evidence(`action finished instance=${instance}`);
-						},
-						[LIFECYCLE_SYNC_ACTION]: () => {
-							evidence(`action reported instance=${instance}`);
-						},
+		implementation: defineImplementation<{ readonly instance: number }>({
+			create: context => {
+				const instance = (instances += 1);
+				evidence(`loaded config=${String(context.config.marker)} instance=${instance}`);
+				return { instance };
+			},
+			initialize: async state => {
+				evidence(`initialize started instance=${state.instance}`);
+				await Bun.sleep(LIFECYCLE_INITIALIZATION_MS);
+				evidence(`initialize settled instance=${state.instance}`);
+			},
+			cleanup: state => {
+				evidence(`cleanup instance=${state.instance}`);
+			},
+			commands: {
+				[LIFECYCLE_COMMAND]: {
+					[LIFECYCLE_ASYNC_ACTION]: async state => {
+						evidence(`action started instance=${state.instance}`);
+						await Bun.sleep(LIFECYCLE_ACTION_MS);
+						evidence(`action finished instance=${state.instance}`);
+					},
+					[LIFECYCLE_SYNC_ACTION]: state => {
+						evidence(`action reported instance=${state.instance}`);
 					},
 				},
-			};
-		},
+			},
+		}),
 	})(pi);
 }

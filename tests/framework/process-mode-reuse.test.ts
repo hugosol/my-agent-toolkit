@@ -28,7 +28,7 @@ import { tmpdir } from "node:os";
 import * as path from "node:path";
 import type { OmpExtensionApi, OmpSessionContext } from "../../adapters/omp";
 import * as frameworkOmp from "../../adapters/omp";
-import type { ExtensionFactory } from "../../framework/interface/details/implementation";
+import type { AuthoredImplementation } from "../../framework/interface/details/implementation";
 import type {
 	SessionContextDelivery,
 	SessionFacts,
@@ -36,7 +36,7 @@ import type {
 } from "../../framework/interface/session";
 import type { OwnerReference } from "../../framework/interface/state";
 import type { ObservedSession } from "../../framework/runtime/port";
-import { type ExtensionDefinition, defineExtension } from "../../framework/interface";
+import { type ExtensionDefinition, defineExtension, defineImplementation } from "../../framework/interface";
 import { createObservationDeliverer, createOwnerAccessPublisher } from "../../framework/modules/local-access";
 import { portDouble } from "./support/harness-port-double";
 import { boundPiSurface } from "./support/pi-surface-double";
@@ -63,7 +63,7 @@ const GIVEN_CONTEXT = { tokens: 12_345, provider: "official", model: "model-alph
  * context reading really arrived (the event a cross-process case awaits instead of a guessed wait).
  */
 function observingProbe(): {
-	readonly factory: ExtensionFactory;
+	readonly factory: AuthoredImplementation<{}>;
 	readonly observations: () => SessionObservationReader;
 	readonly activity: ObservedSession[];
 	readonly context: SessionContextDelivery[];
@@ -82,30 +82,30 @@ function observingProbe(): {
 			if (handed === undefined) throw new Error("the probe factory never ran");
 			return handed;
 		},
-		factory: implementation => {
-			handed = implementation.session.observations;
-			return {
-				subscriptions: [
-					{
-						scope: "session",
-						events: {
-							session_activity: delivery => {
-								const one = delivery as {
-									session: SessionFacts;
-									owner: OwnerReference;
-									activity: ObservedSession["activity"];
-								};
-								activity.push({ session: one.session, owner: one.owner, activity: one.activity });
-							},
-							session_context: delivery => {
-								context.push(delivery as SessionContextDelivery);
-								delivered.resolve();
-							},
+		factory: defineImplementation({
+			create: implementation => {
+				handed = implementation.session.observations;
+				return {};
+			},
+			subscriptions: [
+				{
+					scope: "session",
+					events: {
+						session_activity: (_state, delivery) => {
+							activity.push({
+								session: delivery.session,
+								owner: delivery.owner,
+								activity: delivery.activity,
+							});
+						},
+						session_context: (_state, delivery) => {
+							context.push(delivery);
+							delivered.resolve();
 						},
 					},
-				],
-			};
-		},
+				},
+			],
+		}),
 	};
 }
 
@@ -210,7 +210,7 @@ describe("a same-process run creates no access seat and still delivers the given
 		try {
 			const surface = ompSurface();
 			const probe = observingProbe();
-			const bound = frameworkOmp.ompAdapter(PROBE, { configBaseDir: ws.root, factory: probe.factory })(surface.api);
+			const bound = frameworkOmp.ompAdapter(PROBE, { configBaseDir: ws.root, implementation: probe.factory })(surface.api);
 			expect(bound.bound).toBe(true);
 
 			// The independently given facts: this session's own start, the run it began and the
@@ -308,7 +308,7 @@ describe("both actual adapters map their own facts onto the same common observat
 		// OMP: its own native facts through the real adapter.
 		const ompSurfaceFacts = ompSurface();
 		const ompProbe = observingProbe();
-		const ompBound = frameworkOmp.ompAdapter(PROBE, { factory: ompProbe.factory })(ompSurfaceFacts.api);
+		const ompBound = frameworkOmp.ompAdapter(PROBE, { implementation: ompProbe.factory })(ompSurfaceFacts.api);
 		expect(ompBound.bound).toBe(true);
 		ompSurfaceFacts.sessionStarts(mainView());
 		ompSurfaceFacts.agentStarts(mainView());

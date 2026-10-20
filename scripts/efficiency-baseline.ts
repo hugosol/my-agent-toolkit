@@ -89,10 +89,13 @@ import { portDouble, type PortDouble, type RoundBoundary } from "../tests/framew
 import { controlApi } from "../tests/model-cost/support/control-api";
 import { uiBoundaryTimerOf } from "../tests/model-cost/support/ui-timer";
 import { MODEL_COST } from "../extensions/model-cost/definition";
-import { releasingFrontendOnCleanup } from "../extensions/model-cost/harnesses/omp";
 import { MODEL_COST_WIDGET_KEY, attachModelCostWidget } from "../extensions/model-cost/harnesses/omp/widget";
 import { updateFile } from "../framework/interface/general/files";
-import { createModelCostRuntime, type ModelCostRuntime } from "../extensions/model-cost/shared-logic/runtime";
+import {
+	createModelCostRuntime,
+	modelCostImplementation,
+	type ModelCostRuntime,
+} from "../extensions/model-cost/shared-logic/runtime";
 import type { OmpSessionContext } from "../adapters/omp";
 import type { ConsumptionDocument, SessionRecord, TokenBuckets } from "../extensions/model-cost/shared-logic/foundation/session/consumption-document"
 import type { ModelPricingData } from "../extensions/model-cost/shared-logic/business/pricing/model-data";
@@ -680,29 +683,35 @@ async function bindProcess(options: {
 		config: {
 			reader: () => `storageDir: ${storageRoot}\nbalanceTtlMs: ${BALANCE_TTL_MS}\ncodexQuotaTtlMs: ${CODEX_QUOTA_TTL_MS}\n`,
 		},
-		factory: context => {
-			runtime = createModelCostRuntime({
-				session: context.session,
-				config: { storageDir: storageRoot, balanceTtlMs: BALANCE_TTL_MS, codexQuotaTtlMs: CODEX_QUOTA_TTL_MS },
-				configDirectory: runRoot,
-				userHomeDirectory: runRoot,
-				harness: HARNESS,
-				data: DATA,
-				now: () => clock,
-				providerAccess: {
-					resolve: provider =>
-						Promise.resolve(
-							provider === PRICED_PROVIDER
-								? { baseUrl: options.endpoint.baseUrl, credential: "baseline-probe-credential" }
-								: undefined,
-						),
+		factory: modelCostImplementation(
+			context => {
+				runtime = createModelCostRuntime({
+					session: context.session,
+					config: { storageDir: storageRoot, balanceTtlMs: BALANCE_TTL_MS, codexQuotaTtlMs: CODEX_QUOTA_TTL_MS },
+					configDirectory: runRoot,
+					userHomeDirectory: runRoot,
+					harness: HARNESS,
+					data: DATA,
+					now: () => clock,
+					providerAccess: {
+						resolve: provider =>
+							Promise.resolve(
+								provider === PRICED_PROVIDER
+									? { baseUrl: options.endpoint.baseUrl, credential: "baseline-probe-credential" }
+									: undefined,
+							),
+					},
+				});
+				return runtime;
+			},
+			{
+				cleanup: built => {
+					releaseFrontend?.();
+					releaseFrontend = undefined;
+					built.cleanup();
 				},
-			});
-			return releasingFrontendOnCleanup(runtime.implementation, () => {
-				releaseFrontend?.();
-				releaseFrontend = undefined;
-			});
-		},
+			},
+		),
 	});
 	double.deliverSession(OWNER, { session: options.session, hasUI: true });
 	// The framework's own awaitable position before a model request: the initialization — and the

@@ -18,7 +18,7 @@
  * assembly at all — one process holds it per Owner, whichever extension published for it.
  */
 import { bindExtension } from "../../../framework/behaviors/binding";
-import type { ExtensionFactory, ExtensionImplementation } from "../../../framework/interface/details/implementation";
+import type { ExtensionImplementation, ImplementationResolver } from "../../../framework/interface/details/implementation";
 import type { ConfigSource } from "../../../framework/core/config";
 import { activationField, statePersistence } from "../../../framework/core/definition";
 import type { ExtensionDefinition } from "../../../framework/interface/details/definition";
@@ -198,7 +198,7 @@ export interface PortBindingOptions extends Partial<ExtensionImplementation> {
 	 * common case states only what it runs with, and the factory case can watch the validated
 	 * configuration arrive.
 	 */
-	readonly factory?: ExtensionFactory;
+	readonly factory?: ImplementationResolver;
 	/**
 	 * The configuration source the binding reads a declared configuration through: the
 	 * framework's own file system and YAML parser by default, so a suite injects one only to
