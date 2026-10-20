@@ -1,6 +1,6 @@
 # 能力分层：presentation、业务与 foundation
 
-**状态：架构方向已确认；本次落实 model-cost 职责重构。能力组合推导 adapter 要求的机制明确暂缓。不是 harness 支持声明，未新增 ADR。**
+**读者：extension 开发者。** 本页是 [Extension 开发地图](extension-development-map.md)的 model-cost 分层实例，集中维护该实例的职责与保存协作，不定义公共 adapter 接入规则或 harness 支持状态。静态需求推导与 adapter 接线检查已实现，统一见 [integration check](integration-check.md)；它不改变这里的业务归属。
 
 ## 1. 三层与外部依赖
 
@@ -32,7 +32,7 @@ foundation 不是仓库根目录的 framework，也不是零碎代码收容处�
 | presentation | 字段选择、文本和显示形式、只读结果与重绘通知 | 权威累计、provider 查询、文件写入 |
 | runtime.ts | 创建并连接 module、framework 事件接线与实例初始化/清理 | 新能力注册表或 adapter 需求推导 |
 
-以上是职责分类，不要求一个概念一份文件，也不为目录对称创建转发 module。同一能力同时适合 business 与 foundation 时，业务领域优先；只有确有稳定共享需求的内向支撑才放 foundation。顶层 `adapters/<harness>/` 同样采用业务领域优先、framework 公共领域补充的导航规则，但直接按能力领域组织，不镜像 business/foundation 目录；Turn、Round 归 Session，领域内部按事件映射（events）、信息读取（queries）、效果执行（effects）组织，仅在有实际内容时拆文件，复杂原生协议可保留内部 implementation；extension presentation 不进入公共 adapter 分类。业务可以单向组合其他业务能力；禁止的是循环依赖与重复权威，而不是一切业务间协作。foundation 不 import business；business 不 import presentation；公共 framework 不 import extension；原生访问位置仍遵循 ADR-0002。
+以上是职责分类，不要求一个概念一份文件，也不为目录对称创建转发 module。同一能力同时适合 business 与 foundation 时，业务领域优先；只有确有稳定共享需求的内向支撑才放 foundation。公共 adapter 不镜像 extension 的 business/foundation 目录，extension presentation 也不进入公共 adapter 分类；接入组织原则统一见 [harness 接入指南](harness-integration.md)。业务可以单向组合其他业务能力；禁止的是循环依赖与重复权威，而不是一切业务间协作。foundation 不 import business；business 不 import presentation；公共 framework 不 import extension；原生访问位置仍遵循 ADR-0002。
 
 ## 3. 为什么不是只搬目录
 
@@ -67,7 +67,7 @@ tests/model-cost/
 
 原有业务场景、异常路径和行为断言不丢失；允许迁移入口与合并重复场景，不保留只绑定旧 implementation 的断言。组合测试与真实 harness dock 不因 module 拆分而拆没。测试范围与共享工作树协调遵循 [测试约定](../../docs/agents/testing.md)。
 
-## 6. Adapter 能力清单：保留目标，暂缓机制
+## 6. 与静态接入检查的关系
 
 目标是从业务直接需求与所依赖 framework 能力的前置要求，追溯到 adapter 的接入义务；不是把所有矩阵 cell 求并集交给 adapter。
 
@@ -79,7 +79,7 @@ tests/model-cost/
 
 presentation 的字段和原生绘制不是 definition.ts 要求 framework adapter 提供的业务能力；其输入所需的公共事实应另外追溯。主/子会话、in-process/cross-process、硬需求/可降级需求需要分别考虑，不可跨模式拼凑供给。
 
-本次分层重构没有引入运行时业务注册表。后续接入检查已改为从静态 authoring、interface 使用与实际 adapter 组装推导契约，不再维护重复的 definition requirements 或 adapter inventory。检查与生成的使用方式见[接入契约工具](framework-capabilities.md#source-derived-integration-contracts)；结构检查不证明业务语义正确。
+本次分层重构没有引入运行时业务注册表。后续接入检查已改为从静态 authoring、interface 使用与实际 adapter 组装推导契约，不再维护重复的 definition requirements 或 adapter inventory。检查与生成的使用方式统一见 [integration check](integration-check.md)；结构检查不证明业务语义正确。
 
 ## 7. 术语与决策归属
 

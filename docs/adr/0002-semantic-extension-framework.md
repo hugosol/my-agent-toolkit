@@ -579,7 +579,7 @@ human or agent supplies those exports. Do not generate concrete native implement
 throwing stubs, `declare` values or unsafe rewrites merely to satisfy the types. Type/structural
 completion and genuine native behavior are different responsibilities; function-body correctness
 belongs to review and behavior verification. Generation preserves existing implementations and
-refuses unresolved or unsafe edits. See [the tool guide](../../framework/docs/framework-capabilities.md#source-derived-integration-contracts).
+refuses unresolved or unsafe edits. See [the tool guide](../../framework/docs/integration-check.md).
 
 ## Framework verification as a separate concern
 

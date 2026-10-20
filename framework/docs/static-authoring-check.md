@@ -15,7 +15,7 @@ bun run typecheck
 
 The default source scope is `extensions/`; framework helper implementations and test fixtures are not themselves extension authoring roots. Source references needed to resolve declarations are followed without importing or executing them. A selected-file scan checks that selection, not the entire repository. `--root <directory>` selects another project root, particularly for isolated fixtures; positional files are relative to that root.
 
-Exit codes are **0** for a clean scan, **1** for rule diagnostics, and **2** for invocation or infrastructure failure. Unsupported or unresolved integration structure must not silently count as clean. This development gate does not alter extension runtime loading. `check:integrations` separately derives interface dependencies and compares actual adapter supply; `generate:integrations` creates missing implementation references. Neither result follows merely from an authoring-lint pass.
+Exit codes are **0** for a clean scan, **1** for rule diagnostics, and **2** for invocation or infrastructure failure. Unsupported or unresolved integration structure must not silently count as clean. This development gate does not alter extension runtime loading. `check:integrations` separately derives interface dependencies and compares actual adapter supply; `generate:integrations` creates missing implementation references. Their commands, options, exit codes and precise boundaries are in [static integration check](integration-check.md); neither integration result follows merely from an authoring-lint pass.
 
 `typecheck` runs the repository's TypeScript 7 compiler explicitly, followed by the authoring linter. The linter uses the pinned `typescript-compiler` alias for the TypeScript 5.9 Compiler API, because the installed TypeScript 7 package does not export that API. The explicit compiler path prevents the alias package's `tsc` binary from changing the project's compiler selection.
 
@@ -58,6 +58,7 @@ The checker does not rewrite code. Do not remove required functionality, replace
 
 ## Related contracts
 
+- [Static integration check](integration-check.md)
 - [Integration contract refactor](integration-contract-refactor.md)
 - [Capability interface architecture](capability-interface-architecture.md)
 - [Contract-driven harness upgrade pre-review](harness-support.md#contract-driven-agent-pre-review)

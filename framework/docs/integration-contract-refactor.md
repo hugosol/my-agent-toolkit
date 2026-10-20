@@ -18,7 +18,7 @@ extension 对 interface 的调用、声明、订阅、读取
     → 缺口、依据和无法解析的部分
 ```
 
-本轮先重构架构，使接入结构可检查、依赖规则可复用，而不立即实现上述完整分析器。
+本轮最初先重构架构，使接入结构可检查、依赖规则可复用；完整需求提取、供给比较与生成随后在 §3.7 记录的工作中实现。本节保留当时的阶段背景，当前用法见[静态接入检查](integration-check.md)。
 
 ## 2. 架构边界保持不变
 
@@ -46,7 +46,7 @@ extension 对 interface 的调用、声明、订阅、读取
 
 这是对现有运行时行为的提取，不是对所有依赖关系重新作语义裁决。规划中也记录了可选接入，但不能据此直接推断任意 extension 的业务必需性。
 
-**边界：当前规划不是完整的 interface 依赖分析器。** 对观察读取、Provider 使用、delivery 内部回调等的完整需求提取与追溯，仍属于后续工作。
+**边界（本阶段）：** 规划本身仍只负责运行时注册路径，不承担 interface 全量依赖分析。当时尚未覆盖的观察读取、Provider 使用和 delivery 内部回调，后来由 §3.7 的 demand/supply 分析补齐；见[静态接入检查](integration-check.md)。
 
 ### 3.2 引入统一的实现编写入口
 
@@ -97,7 +97,7 @@ extension 对 interface 的调用、声明、订阅、读取
 - Session、Round、Turn、Context、Input、Run、Command 及 pi Disposal 的原生最终交付构造使用 `defineAdapterDelivery(kind, payload)`。该入口引用原有规范类型，使 delivery 内的效果与查询回调有明确的构造落点；不复制、冻结或改变 payload，也不增加第二次分发。
 - 保留所有既有 domain 目录和原生语义，不按“事件／查询／效果”等交互方式重排目录，不为每个方法创建独立模块。
 
-**检查边界：** TypeScript 约束组装的完整键集合、工厂结果及 delivery 类型。后续供给分析器识别静态组装键、可定位工厂、明确可用性及可达 delivery 构造；无法解析的结构必须报告，不能猜测。工厂和原生业务函数体仍是普通 TypeScript。`check:authoring` 仍只约束 extension authoring，不能据其通过声称 adapter 已通过检查；`check:integrations` 才消费 adapter 的静态结构。交付构造标记和类型符合都不证明原生语义实现正确。
+**检查边界：** TypeScript 约束组装的完整键集合、工厂结果及 delivery 类型。供给分析器识别静态组装键、可定位工厂、明确可用性及可达 delivery 构造；无法解析的结构必须报告，不能猜测。工厂和原生业务函数体仍是普通 TypeScript。`check:authoring` 仍只约束 extension authoring，不能据其通过声称 adapter 已通过检查；`check:integrations` 才消费 adapter 的静态结构。交付构造标记和类型符合都不证明原生语义实现正确。
 
 ### 3.6 生成器的完成度边界
 
@@ -109,22 +109,14 @@ extension 对 interface 的调用、声明、订阅、读取
 
 ### 3.7 源码检查与生成命令
 
-```sh
-bun run check:integrations --extension model-cost --demand-only --json
-bun run check:integrations --extension model-cost --adapter omp --json
-bun run generate:integrations --extension codebase-tools --adapter new-harness --dry-run --json
-bun run generate:integrations --extension codebase-tools --adapter new-harness
-```
+命令、选项、退出码、报告字段、需求推导、供给状态、具体 assembly 输出契约、生成器行为和限制已集中到[静态接入检查](integration-check.md)，这里不再维护第二份操作说明。本节只保留重构达成的工作假设与边界：
 
-`--root` 可选择独立源码根；无需已有目标 discovery entry 或成功运行的参考 harness。检查默认分析所有 extension/adapter 目录组合。adapter 源文件路径解析到其所属的 `adapters/<name>/`，生成目标不得越出该目录树。脚本复用 authoring 静态解析器、共享 framework 规划与显式语义规则，不导入执行扩展或 adapter。能力对象上的动态成员访问、缺少映射的 context/Session 成员及超出函数追溯界限均报告分析未完成；普通业务数据动态索引不因此受限。
+- 检查默认分析所有 extension/adapter 目录组合，不要求已有目标 discovery entry 或成功运行的参考 harness；`--root` 支持独立源码根。extension/adapter 源路径都归到其所属目录，生成目标不得越出 `adapters/` 树。
+- 分析复用 authoring 静态解析器、共享 framework 规划与显式语义规则，不导入或执行 extension/adapter，不读配置，不展开运行时分枝。动态能力成员、未映射的 context/Session 成员和超出追溯界限必须报告分析未完成；普通业务数据动态索引不受限。
+- 需求来自实际结构，不再维护旧的 `subagentRequirements`、assembly `requiredSemantics`、公开的重复 requirement 类型、adapter inventory 或旧声明比较器；扩展作者不需要同步第二份列表。内部行为验证词汇保留，不变成加载政策。
+- 生成器只补真实缺失接线的引用，保留已有实现，不生成实现体、空函数或声明桩，不创建 `missing-implementations` 模块；生成后编译失败是有意状态。检查与生成都不改变运行时加载或版本支持。
 
-报告提供 `port:*`、`delivery:*`、`framework:*` 契约、源位置、依赖路径及必需/可选政策；所选 port 中显式构造的 delivery，其必需字段从规范 `AdapterDeliveryMap` 类型展开，不要求 extension 直接读取后才检查。供给区分 provided、unavailable、conditional、missing 与 unresolved。必需缺口、无法完成的分析或不能保证必需可用性的条件供给返回非零；明确可选的缺失只报告风险。命令错误返回 2，分析缺口返回 1，结构完整返回 0。
-
-生成器只修改可确定的缺失接线，保留已有实现，默认不生成可选缺口，`--include-optional` 可显式包含它们。新 adapter 获得完整 port 组装；已有 adapter 的确定缺失绑定或可定位 delivery 属性引用未提供的实现导出。生成器不创建 `missing-implementations.ts`，因此生成后编译必须失败，直到人类或 agent 提供实际导出。动态/歧义结构、现有错误值或不能安全定位的嵌套修改返回诊断而不冒险覆盖；预检失败不写任何计划文件。重复生成不重复插入引用。
-
-移除旧的 `subagentRequirements`、assembly `requiredSemantics`、公开的重复 requirement 类型、adapter inventory 和旧声明比较器。需求来自实际结构，不再要求扩展作者同步第二份列表。内部行为验证词汇保留，不变成加载政策。
-
-完整参数、状态解释和使用边界见[工具指南](framework-capabilities.md#source-derived-integration-contracts)。
+历史命令与验证结果保留在 §7.2/§7.3；当前用法以[静态接入检查](integration-check.md)为准。
 
 ## 4. 保持的运行时行为
 
@@ -134,9 +126,9 @@ bun run generate:integrations --extension codebase-tools --adapter new-harness
 - 原生 adapter 映射、widget 所有权和前端清理边界保持不变。
 - 不新增启动时兼容性扫描、报告读取、能力协商或拒载机制。
 
-## 5. 检查器工作与后续静态表达门禁
+## 5. 检查器工作的设计目标（已实现）
 
-详细计划见 [refactor spec](../../.scratch/integration-contract-refactor/spec.md)。
+以下条目记录本阶段的设计目标；已实现的当前行为、状态语义和命令见[静态接入检查](integration-check.md)。详细计划见 [refactor spec](../../.scratch/integration-contract-refactor/spec.md)。
 
 1. 提取 extension 对 framework 的全部可能依赖，不执行用户配置，也不展开运行时分支组合。
 2. 结合 framework 明确维护的语义依赖规则，展开最小接入契约及其实现义务。
@@ -146,7 +138,7 @@ bun run generate:integrations --extension codebase-tools --adapter new-harness
 6. 区分明确必需、明确可选与无法判定；不单凭 port 上的 `?` 推断业务政策。
 7. 必需项缺失或分析未完成返回非零；仅明确可选项缺失时报告风险但返回成功。检查结果不改变 extension 加载，风险由开发者衡量。
 
-### 静态表达检查的规则与诊断（后续已实现）
+### 静态表达检查的规则与诊断（已实现）
 
 维护完整的规则说明，包含稳定规则标识、适用范围、原因、允许与不允许的示例、修复建议、可能影响和行为保留约束。这些说明服务于维护者理解和演进规则，不要求扫描结果重复输出全文。
 
@@ -154,7 +146,7 @@ bun run generate:integrations --extension codebase-tools --adapter new-harness
 
 静态表达检查作为开发期门禁：被检查的最终源码必须满足启用的规则，无法解析的接入结构不能静默算作通过。通过仅表示检查范围内满足这些静态表达约束，不证明业务语义、完整接入依赖或行为兼容性；修复不能通过删除必要功能、隐藏结构或压制诊断来冒充完成，相关行为仍需验证。该门禁不改变 extension 的运行时加载行为。
 
-`bun run check:authoring` 现已通过 AST 和符号解析检查这些约束；支持静态常量、导入引用、可解析展开和受限共享包装，不执行 extension 模块。`--json` 提供精简诊断，`--rules` 输出同一份完整规则库。`bun run typecheck` 在原 TypeScript 7 类型检查后运行该门禁。检查失败不会改变运行时加载。使用方式、支持边界及 agent 修复循环见[静态表达检查指南](static-authoring-check.md)。上述静态门禁已交付；完整需求提取、供给比较及生成命令已在后续实现，见 §3.7。
+`bun run check:authoring` 现已通过 AST 和符号解析检查这些约束；支持静态常量、导入引用、可解析展开和受限共享包装，不执行 extension 模块。`--json` 提供精简诊断，`--rules` 输出同一份完整规则库。`bun run typecheck` 在原 TypeScript 7 类型检查后运行该门禁。检查失败不会改变运行时加载。使用方式、支持边界及 agent 修复循环见[静态表达检查指南](static-authoring-check.md)。上述静态门禁、完整需求提取、供给比较及生成命令均已实现；当前用法见[静态接入检查](integration-check.md)。
 
 `bun run check:integrations` 已从旧的子代理声明匹配切换到源码推导；通过只表示受支持的静态分析范围内契约与结构满足，不表示原生逻辑正确。
 
@@ -180,7 +172,7 @@ agent 可以先筛选风险，但不得编造历史理由，也不能把“未�
 | --- | --- |
 | `bun run typecheck` | 退出码 0 |
 | `bun run test` | **1446 通过、0 失败**；159 个文件、8559 次断言，包含真实宿主 dock 场景 |
-| `bun run check:integrations --json` | 退出码 0；现有 5 个入口的子代理声明匹配通过 |
+| `bun run check:integrations --json` | 退出码 0；当时 5 个入口的子代理声明匹配通过（旧比较器结果，后被 §3.7 的源码推导检查替换） |
 | 独立 authoring/规划 smoke | 检查声明并展开 Turn、Round、请求前处理义务时，业务状态创建次数为 **0** |
 | 独立真实 OMP loader/RPC smoke | 配置传入、单实例、初始化等待 **1573 ms**、一次本地 provider 请求、异步动作等待 **252 ms**、一次清理、正常退出 |
 
@@ -202,7 +194,7 @@ agent 可以先筛选风险，但不得编造历史理由，也不能把“未�
 
 两项独立真实宿主 smoke 均使用本地 capture endpoint，不是外部模型服务或视觉 TUI 验收。临时 smoke 与类型负例文件已移除。未新增仅断言包装/转发的永久测试，现有行为套件验证消费方可见行为。
 
-验证限制：原有 `pi-terminal-round-smoke.ts` 默认要求 pi 1.2.0，当前安装为 1.3.0；显式指定 `--expect-pi-version 1.3.0` 后，又在加载前因临时入口生成的 Windows 导入路径 `./E:/...` 无法解析而失败。本轮没有修改该脚本；以上通过的独立 pi smoke 使用仓库内真实临时入口避开此路径问题，不能替代 terminal-round 专项场景的验收。adapter AST 表达门禁与完整供给分析尚未实现。
+验证限制：原有 `pi-terminal-round-smoke.ts` 默认要求 pi 1.2.0，当前安装为 1.3.0；显式指定 `--expect-pi-version 1.3.0` 后，又在加载前因临时入口生成的 Windows 导入路径 `./E:/...` 无法解析而失败。本轮没有修改该脚本；以上通过的独立 pi smoke 使用仓库内真实临时入口避开此路径问题，不能替代 terminal-round 专项场景的验收。以上是 §7.1 记录时点的限制；完整的静态供给分析与具体 assembly 输出契约随后在 §7.2–§7.3 实现，见[静态接入检查](integration-check.md)。这不把当时未执行的行为验证补成通过。
 
 ### 7.2 检查与生成工具最终验证（2026-10-20）
 
@@ -264,6 +256,7 @@ API 调用不被当作 assembly。生成器仍拒绝覆盖条件工厂，不会�
 
 ## 8. 相关记录
 
+- [静态接入检查](integration-check.md) — 当前命令、状态语义、生成边界、限制与历史验证摘要
 - [总体架构及本轮重构边界](capability-interface-architecture.md#inspectable-authoring-and-shared-planning-2026-10-20)
 - [ADR-0002：共享接入规划与可检查 authoring](../../docs/adr/0002-semantic-extension-framework.md#shared-integration-planning-and-inspectable-authoring-2026-10-20)
 - [实施范围、延后事项与验证记录](../../.scratch/integration-contract-refactor/spec.md)

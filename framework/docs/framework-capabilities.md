@@ -101,36 +101,24 @@ use, not manually synchronized requirement arrays. The former subagent-only requ
 inventory lists are removed. The shared framework planner expands subscription, command, prompt,
 marker and lifecycle structure; explicit semantic rules cover indirect observations and other
 framework-mediated uses. Native widgets and general HTTP/files/config modules do not become adapter
-requirements.
+requirements, and business handler bodies are not interpreted.
 
-```sh
-bun run check:integrations --extension model-cost --demand-only
-bun run check:integrations --extension model-cost --adapter pi --json
-bun run check:integrations
-bun run generate:integrations --extension codebase-tools --adapter new-harness --dry-run --json
-bun run generate:integrations --extension codebase-tools --adapter new-harness
-```
+Each contract carries one family (`port:*`, `delivery:*`, `framework:*`), a required/optional policy,
+source origins and a dependency path. The policy comes from source use and framework rules, never from
+a port member's `?`. Demand lists the reachable obligations, not a claim about every runtime path:
+configuration is not read and branches are not evaluated. No working reference harness or target
+discovery entry is a prerequisite, and demand can be listed without an adapter.
 
-No working reference harness or target discovery entry is needed. With no selection, checking scans
-extension/adapter directory pairs; `--extension` and `--adapter` also accept source paths. `--root`
-selects a fixture/project root. Adapter source paths select their owning `adapters/<name>/` directory;
-generation rejects targets outside that tree. Modules, business constructors and handlers are never executed;
-configuration is not read, runtime branch combinations are not explored, and behavior tests are not
-invoked. Static authoring analysis is reused rather than interpreting arbitrary JavaScript.
+Adapter supply is derived from the actual `defineAdapterPort` assembly and reachable canonical
+delivery construction, not a separate declaration catalog. Required delivery payload members come
+from the canonical `AdapterDeliveryMap`, so framework-needed callbacks are checked even when the
+extension never reads them directly. Results distinguish `provided`, `unavailable`, `conditional`,
+`missing` and `unresolved`; unknown analysis never counts as complete. A function body is not examined
+to guess whether native behavior is really implemented.
 
-Each contract includes its requirement policy, source locations and dependency path. Adapter supply
-is derived from the actual `defineAdapterPort` assembly and reachable canonical delivery construction,
-not a separate declaration catalog. For selected ports with explicit canonical payload construction,
-required payload members are derived from `AdapterDeliveryMap`, so framework-needed callbacks are
-checked even when the extension never reads them directly. A function body is not examined to guess
-whether it really implements native behavior. Results distinguish provided, unavailable, conditional,
-missing and unresolved supply. A query that sometimes returns no fact is not the same as a missing query.
-Conditional integration is not a guarantee of required availability. Unknown analysis never counts
-as complete. Dynamic member selection on a tracked capability, an unmapped context/Session member,
-or exhausted function traversal produces an explicit diagnostic. Ordinary dynamic indexing of business
-data is not subject to those capability-structure restrictions. Exit codes are `0` complete (explicit optional absences allowed), `1` required gaps or
-unresolved analysis, and `2` invocation/infrastructure failure. JSON uses `stage: "integration-contracts"`
-and `behaviorTestsRun: false`.
+Commands, option resolution, exit codes, output fields, the precise status/completeness rules and the
+generator boundary live in [static integration check](integration-check.md). This index records only
+the capability model.
 
 #### Assembly-specific factory outputs
 
@@ -150,30 +138,21 @@ Pi preserves the correlation through `piAdapter` and `createPiPort` overloads:
 | General `PiAssembly`, including `string \| undefined` | Optional `subagentIntegration` function | `conditional` |
 
 The checker uses TypeScript's resolved call signature in selected extension sources and recognizes
-only the canonical output witness on factories belonging to the selected adapter. Ordinary native
-API calls are not assembly evidence. Multiple possible assemblies are combined conservatively;
-unsupported output types, missing evidence, or a factory that might return no assembly remain
-`unresolved`, not `provided`. Bare adapter analysis without extension sources retains its generic
-answer. Refinement cannot hide a missing implementation, incompatible binding or delivery payload gap.
+only the canonical output witness on factories belonging to the selected adapter. Ordinary native API
+calls are not assembly evidence. The witness narrows a conditional member; it cannot hide a missing
+implementation, incompatible binding or delivery payload gap. Bare adapter analysis without extension
+sources retains its generic answer. Exact evidence and combination rules are in
+[the integration guide](integration-check.md#assembly-output-contract).
 
 An intentionally unselected integration is not itself a broken adapter. It still fails coverage if
-the extension requires that integration; optional demand remains a reported risk. Provider availability,
-registration acceptance and actual child loading remain separate runtime results. Current model-cost/pi
-and codebase-tools/pi explicitly provide `childEntry`, so their loading supply is `provided`, rather
-than a warning based solely on the generic port factory's optional return type.
-
-Generation analyzes current source again. It selects confirmed missing required contracts by default;
-`--include-optional` also selects known optional absences. It preserves supplied implementations and
-refuses unsafe/ambiguous edits. Preview is read-only. Generated code references missing implementation
-exports in the real assembly; it does not create an implementation module, empty function, throwing
-stub, `declare` or second copy of framework signatures. A new adapter must also satisfy all required
-`HarnessPort` members. Generated code intentionally cannot compile until a human or agent provides
-real implementations with the required exports and types. Repeated generation must not duplicate
-imports or overwrite existing implementation files.
+the extension requires it; optional demand remains a reported risk. Provider availability,
+registration acceptance and actual child loading remain separate runtime results. When a combination
+explicitly passes `childEntry` (as model-cost/pi and codebase-tools/pi do in the recorded checks), its
+loading supply is `provided`, not a warning based only on the generic factory's optional return.
 
 Type and structural completeness do not establish correct native mapping. A no-op can satisfy a type;
-reviewers, agents and behavior verification remain responsible for semantic correctness. Neither
-command installs a harness, promotes support, reads a verification report or changes extension loading.
+reviewers, agents and behavior verification remain responsible for semantic correctness. The commands
+neither install a harness, promote support, read a verification report nor change extension loading.
 See [the refactor and generation boundary](integration-contract-refactor.md) and
 [contract-driven upgrade review](harness-support.md#contract-driven-agent-pre-review).
 

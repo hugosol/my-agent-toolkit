@@ -34,7 +34,7 @@ coverage survive changes to internal imports and wiring.
 
 This refactor does **not** change file schemas, command behavior or save timing.
 The subsequent integration tooling derives framework-mediated demand from actual source and adapter
-assembly instead of a manual `subagentRequirements` list. See [integration checks and generation](../../framework/docs/framework-capabilities.md#source-derived-integration-contracts).
+assembly instead of a manual `subagentRequirements` list. See [integration checks and generation](../../framework/docs/integration-check.md).
 Architecture rationale: [capability layering](../../framework/docs/capability-layering.md).
 
 ### Architecture refactor verification (2026-10-18)
