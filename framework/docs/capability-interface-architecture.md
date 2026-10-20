@@ -280,10 +280,15 @@ and reasons. This is the runtime registration plan, not a completed analyzer of 
 provider access or delivery-level obligations. Native adapter mappings and the single `HarnessPort`
 remain unchanged. Creation, reuse, dispatch and disposal retain their existing semantics.
 
-Static source restrictions are deliberately deferred: TypeScript checks the authoring shape, but
-computed keys, spreads and dynamically produced declarations are not rejected by a new source
-checker in this change. See [the refactor and deferred-checker plan](../../.scratch/integration-contract-refactor/spec.md).
-The existing `check:integrations` still performs only subagent declaration matching.
+Static source restrictions are now enforced by the separate `check:authoring` linter and included
+in the development `typecheck` gate. It resolves canonical authoring symbols and bounded static
+composition without executing extension code, reports compact source diagnostics, and exposes a
+full maintained rule catalog via `--rules`. Statically resolvable computed keys and spreads are
+allowed; dynamic or unresolved integration structure is diagnosed. Business handler bodies remain
+outside the expression rules. See [the expression-check guide](static-authoring-check.md) and
+[the refactor and deferred dependency-checker plan](../../.scratch/integration-contract-refactor/spec.md).
+The existing `check:integrations` still performs only subagent declaration matching; no full
+interface-to-adapter dependency analyzer or runtime loading gate is added.
 
 ### Agreed dependency-analysis direction (2026-10-20; checker not implemented)
 

@@ -16,14 +16,16 @@
     "smoke:model-cost-detail-layout-terminal": "bun scripts/model-cost-detail-layout-terminal-smoke.ts",
     "accept:model-cost-tui": "bun scripts/pi-tui-acceptance.ts",
     "check:integrations": "bun scripts/check-adapter-integrations.ts",
+    "check:authoring": "bun scripts/check-authoring.ts",
     "verify:omp-candidate": "bun scripts/verify-omp-candidate.ts",
     "verify:provider-account": "bun scripts/pi-provider-account-read.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "bun node_modules/typescript/bin/tsc --noEmit && bun run check:authoring"
   },
   "devDependencies": {
     "@types/node": "^26.6.3",
     "bun-types": "^1.4.2",
-    "typescript": "^7.0.2"
+    "typescript": "^7.0.2",
+    "typescript-compiler": "npm:typescript@5.9.3"
   },
   "dependencies": {
     "pi-subagents": "0.78.0",
