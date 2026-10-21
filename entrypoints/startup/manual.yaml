@@ -5,6 +5,11 @@
 # automatic entrypoint (`entrypoints/<host>-auto/<extension>.ts`) assembles the same extension
 # against `auto.yaml`. Loading one mode's entrypoint and not the other is what selects a mode.
 #
+# The host adds extension sources rather than merging them, so the two modes of one extension
+# must not be loaded together in one process: that would bind the extension twice. The choice is
+# per extension — a session may load one extension's manual entrypoint beside another
+# extension's automatic one.
+#
 # The document is read once per process, by the framework, and only the block of the extension
 # actually loaded is read: naming an extension here never loads it, and a block for an extension
 # this process did not load is not validated. A loaded extension's block states its initial
