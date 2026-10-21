@@ -185,8 +185,12 @@ printf 'endpoint: "http://127.0.0.1:18787"\nrequestTimeoutMs: 1000\n' \
   > "$ACCEPT_ROOT/deployment/extensions/connect-bot/config.yaml"
 ```
 
-Launch the automatic entrypoint with the isolated state, and start the recording before the process
-starts:
+The command's `${HERDR_BOT_BINARY:-…}` fallback names the sibling checkout's release build; set
+`HERDR_BOT_BINARY` when the panel binary lives elsewhere. The isolated agent state starts empty, so
+authenticate the chosen model for that state by the host's normal login/API-key step, as the
+[framework isolation rule](../../framework/README.md#human-acceptance-and-cutover) describes — never
+by reading the formal configuration. Launch the automatic entrypoint with that isolated state, and
+start the recording before the process starts:
 
 ```bash
 PI_CODING_AGENT_DIR="$PWD/$ACCEPT_ROOT/agent-state" bun \
