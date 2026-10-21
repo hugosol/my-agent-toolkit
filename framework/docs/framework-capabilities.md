@@ -840,8 +840,11 @@ fork or tree navigation, and not on a subagent, which owns no cell. The rule is:
   entry with the same authority a command delivery carries. The framework neither awaits it nor writes the
   declared value on its behalf, so the value and the marker appear only when the extension's own business
   operation succeeds. connect-bot's automatic entrypoint therefore attempts a panel register without a
-  command, and remains off until the panel answers with a valid receipt; a refusal leaves it off with the
-  extension's existing feedback.
+  command, and remains off until the panel answers with a valid receipt; a refusal or any other answer that
+  is not a valid receipt leaves it off with the extension's existing feedback, schedules none of the
+  extension's own effects and is not retried. The field's declared persistence still decides what a later
+  start restores: connect-bot's `memory` field never reads an old branch payload, and the startup activation
+  itself writes no value — only the extension's receipt-backed activation does.
 
 **What the choice is not.** Loading an extension is not enabling it, and an enabling choice is an *intent*:
 the framework records only the declared `session-entry` value, and it records it as this session's value rather
