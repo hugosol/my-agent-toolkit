@@ -80,6 +80,20 @@ export interface StateSessionChange {
 }
 
 /**
+ * The startup intent one owner session start applied, when it was the process's startup moment.
+ *
+ * It is the *effective* target after a recorded value had its say, not the policy document's raw
+ * choice: a session whose history records `false` reports no enabling target even in automatic
+ * mode, while a session with no history reports whatever the policy stated. An extension whose
+ * activation is an external effect is told this and nothing more — the framework has not made
+ * the effect happen, and its declared value stays where the extension's own path puts it.
+ */
+export interface StartupApplication {
+	/** Whether the effective initial choice is enabling. */
+	readonly enabled: boolean;
+}
+
+/**
  * One store belongs to one adapter factory and is shared by that factory's bindings.
  * Different factories remain independent, even when their extension names are equal.
  * The process-wide Marker area reads these stores but does not own their values: it
@@ -226,9 +240,9 @@ export class StateStore {
 	 * start only — stands in before the declared default. A transfer waits for the next
 	 * start to publish the Marker area.
 	 */
-	reconcile(change: StateSessionChange): void {
+	reconcile(change: StateSessionChange): StartupApplication | undefined {
 		const { owner, event } = change;
-		if (owner.kind !== "owner") return;
+		if (owner.kind !== "owner") return undefined;
 		this.#served.add(owner.key);
 
 		if (event.kind === "session_end") {
@@ -236,7 +250,7 @@ export class StateStore {
 			this.#ownerLives.end(owner.key);
 			this.#withdrawOffer(owner.key);
 			if (event.reason === "disposed") change.publishMarker(owner.key);
-			return;
+			return undefined;
 		}
 
 		this.#ownerLives.begin(owner.key);
@@ -245,11 +259,15 @@ export class StateStore {
 		// in a running process is not. Reading it here consumes it, so no later boundary — a new,
 		// resumed or forked session — applies the entrypoint's choice again.
 		const startup = this.#startupMoment(change.startup);
+		let target: StartupChoice | undefined = startup;
 		if (this.#persistence === "session-entry") {
 			const payload = change.statePayloads[change.statePayloads.length - 1];
 			const history = this.#historyValue(payload);
 			const value = history ?? startup ?? DEFAULT_STATE_VALUE;
 			this.#cells.set(owner.key, new Map([[this.#field, value]]));
+			// What the extension is told is what this start really applied: a recorded value wins
+			// over the policy's default, in both directions, exactly as it wins as the cell's value.
+			target = history ?? startup;
 			// A choice this session had no history for is the session's value, so it is recorded
 			// through the medium an ordinary write records through: the next process restores what
 			// this one started with, exactly as it restores a value a command produced. The declared
@@ -261,6 +279,9 @@ export class StateStore {
 		// readable from another process for as long as it lives and not one moment longer.
 		this.#offerAccess(owner.key);
 		change.publishMarker(owner.key);
+		// No policy selected means this start states no intent at all, not a disabled one: the
+		// extension's business activation is then reached only through its own command.
+		return startup === undefined || target === undefined ? undefined : { enabled: target };
 	}
 
 	/**

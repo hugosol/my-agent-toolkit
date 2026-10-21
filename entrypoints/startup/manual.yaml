@@ -16,3 +16,5 @@
 # starts off and is never enabled.
 codebase-tools:
   enabled: false
+connect-bot:
+  enabled: false

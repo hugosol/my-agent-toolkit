@@ -18,6 +18,8 @@
  *   shared business instance per extension, whatever session or subagent binds next);
  * - `initialize` is called at most once, at the node where provider facts are readable, and the
  *   first model request waits for it to settle;
+ * - `startup` is called at most once, at the process's first owner session start, when the
+ *   selected startup policy's effective target is enabling; nothing waits for it;
  * - `cleanup` is called at most once, when the session that initialized the instance ends.
  *
  * Creation is not an effect: neither `create` nor returning a state may send a remote request or
@@ -33,7 +35,7 @@ import type {
 	SessionCapability,
 	SubscriptionGroup,
 } from "../session";
-import type { OwnerReference } from "../state";
+import type { DeclaredValueSeam, OwnerCapabilityHandle, OwnerReference } from "../state";
 import type { SubagentIntegration } from "../subagent";
 
 /**
@@ -103,6 +105,41 @@ export interface InitializationDelivery {
 	 * such integration to settle answers `none`, which is a normal shape rather than a failure.
 	 */
 	readonly subagents: SubagentIntegration;
+}
+
+/**
+ * The facts one startup activation runs with.
+ *
+ * It is delivered at the process's first owner session start, when the startup policy's
+ * effective choice is enabling, and it is not a command invocation: nothing the operator typed
+ * caused it and no argument exists. What it carries is the same authority a command delivery
+ * carries for one owner — its declared-value seam, the capability an effect may retain after
+ * the delivery, its feedback channel and the UI fact — so an extension whose "enabled" is a
+ * live external effect realizes the policy's intent through the same business operation its own
+ * command uses.
+ *
+ * The framework calls the entry at most once per process and does not wait for it. The target
+ * State is not written by declaring the entry: an extension that must obtain an external result
+ * first keeps the declared value off until that result arrives, exactly as its command path
+ * already does.
+ */
+export interface StartupDelivery {
+	/** The owner this activation serves, as the adapter resolved it. */
+	readonly owner: OwnerReference;
+	/** Whether the session this activation serves has a UI, as the adapter resolved it. */
+	readonly hasUI: boolean;
+	/** The unified extension feedback channel of this activation. */
+	readonly feedback: FeedbackTransport;
+	/** The seam through which the activation reads and writes the extension's declared value. */
+	readonly state: DeclaredValueSeam;
+	/**
+	 * The owner-scoped capability the activation may retain for the effects it starts.
+	 *
+	 * It is the same handle a command delivery hands out for this owner: it keeps writing the
+	 * declared value and publishing feedback after this delivery is over, and it is inert once
+	 * the owner's session ends.
+	 */
+	readonly capability: OwnerCapabilityHandle;
 }
 
 /**
@@ -190,6 +227,18 @@ export interface ImplementationDeclaration<State> {
 	readonly catalog?: (state: State) => CatalogPriceSource;
 	/** The one-time initialization entry, handed the business state and the node's facts. */
 	readonly initialize?: (state: State, delivery: InitializationDelivery) => void | Promise<void>;
+	/**
+	 * The one-time startup activation entry, handed the business state and the startup facts.
+	 *
+	 * The framework calls it at the process's first owner session start, and only when the
+	 * selected startup policy's effective choice is enabling. An extension whose activation is a
+	 * pure State write declares nothing here — the framework's own State rule already applies the
+	 * choice — while one whose activation is an external effect uses this entry to realize the
+	 * same business operation its command runs. The call is not awaited and is not part of the
+	 * initialization the first model request waits for; a throw or rejection is reported once on
+	 * the adapter's diagnostic channel.
+	 */
+	readonly startup?: (state: State, delivery: StartupDelivery) => void | Promise<void>;
 	/** The one-time cleanup entry, handed the business state it invalidates. */
 	readonly cleanup?: (state: State) => void | Promise<void>;
 }
@@ -279,6 +328,16 @@ export interface ExtensionImplementation {
 	 * nothing to initialize.
 	 */
 	readonly initialize?: (delivery: InitializationDelivery) => void | Promise<void>;
+	/**
+	 * The one-time startup activation entry, called when the startup policy's effective choice
+	 * is enabling at the process's first owner session start.
+	 *
+	 * The framework does not wait for it: registering a live external effect is the extension's
+	 * own business, and the first model request proceeds whether that effect is still pending or
+	 * already succeeded. A synchronous throw and a rejected promise are both reported once on the
+	 * adapter's diagnostic channel and change nothing the framework already did.
+	 */
+	readonly startup?: (delivery: StartupDelivery) => void | Promise<void>;
 	/**
 	 * The one-time cleanup entry, called when the session that initialized this implementation ends.
 	 *
@@ -374,12 +433,14 @@ function materializeImplementation<State>(
 	const subscriptions =
 		declaration.subscriptions === undefined ? undefined : materializeSubscriptions(declaration.subscriptions, state);
 	const initialize = declaration.initialize;
+	const startup = declaration.startup;
 	const cleanup = declaration.cleanup;
 	return {
 		...(commands === undefined ? {} : { commands }),
 		...(subscriptions === undefined ? {} : { subscriptions }),
 		...(declaration.catalog === undefined ? {} : { catalog: declaration.catalog(state) }),
 		...(initialize === undefined ? {} : { initialize: delivery => initialize(state, delivery) }),
+		...(startup === undefined ? {} : { startup: delivery => startup(state, delivery) }),
 		...(cleanup === undefined ? {} : { cleanup: () => cleanup(state) }),
 	};
 }

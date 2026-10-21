@@ -21,3 +21,5 @@
 # claim that the effect has already succeeded.
 codebase-tools:
   enabled: true
+connect-bot:
+  enabled: true
