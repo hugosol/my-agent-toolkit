@@ -1,0 +1,144 @@
+{
+  "feature": "extension-startup-modes",
+  "ticket": "04-connect-bot-failure-and-admission.md",
+  "run_id": "8555b8ea-ac2a-4c7d-8684-a9f550d8012f",
+  "parent_session_id": "01a16010-a58b-71a0-bc90-15f1bbbf0542",
+  "parent_session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-21T20-04-26-123Z_01a16010-a58b-71a0-bc90-15f1bbbf0542.jsonl",
+  "workspace": "E:\\Developer\\myhub\\my-agent-toolkit",
+  "tool_call_id": "2a37d9ff-9240-4aa2-9f4f-f09383337e8c",
+  "started_at": "2026-10-21T20:50:44.870Z",
+  "tdd_status": "completed",
+  "retro_status": "completed",
+  "tdd_finished_at": "2026-10-21T21:05:30.637Z",
+  "tdd_result": {
+    "index": 0,
+    "id": "04-connect-bot-failure-and-admissionmd-2a37d9ff-",
+    "agent": "tdd",
+    "agentSource": "user",
+    "task": "Complete assignment thoroughly:\n\n在当前 worktree 实现唯一票据：C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-xwgFa8\\.scratch\\extension-startup-modes\\implementation\\04-connect-bot-failure-and-admission.md。\n集成分支：dev\nspec：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\extension-startup-modes\\spec.md\ncontract：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\extension-startup-modes\\contract.md\n这是本票首次执行。\n遵守 tdd skill，自行负责本票验收并报告实际验证与未完成事项。完成后尽快提交本票实现，交出 worktree，由独立集成子代理接管。不要修改其他票据或工作流报告，不操作集成分支工作区，不自行合入集成分支，不调用 retro、不派发其他票据。不得 reset 丢弃既有工作。",
+    "assignment": "在当前 worktree 实现唯一票据：C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-xwgFa8\\.scratch\\extension-startup-modes\\implementation\\04-connect-bot-failure-and-admission.md。\n集成分支：dev\nspec：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\extension-startup-modes\\spec.md\ncontract：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\extension-startup-modes\\contract.md\n这是本票首次执行。\n遵守 tdd skill，自行负责本票验收并报告实际验证与未完成事项。完成后尽快提交本票实现，交出 worktree，由独立集成子代理接管。不要修改其他票据或工作流报告，不操作集成分支工作区，不自行合入集成分支，不调用 retro、不派发其他票据。不得 reset 丢弃既有工作。",
+    "description": "Implement connect bot failure and admission ticket",
+    "lastIntent": "Confirming clean handoff state",
+    "exitCode": 0,
+    "output": "{\n  \"ticket\": \"04-connect-bot-failure-and-admission\",\n  \"branch\": \"hyper/extension-startup-modes/04-connect-bot-failure-and-admis-1f4796-b21292ab9ce5\",\n  \"commit\": \"75e1da4\",\n  \"worktree\": \"C:/Users/hugos/AppData/Local/Temp/hyper-ticket-xwgFa8\",\n  \"state\": \"implemented, tested, committed, tree clean; ticket Status set to in-progress with evidence recorded\",\n  \"delivered\": [\n    \"Automatic startup activation is the same command activation behind the same gate; a controlled register failure (non-2xx, 2xx non-receipt, missing onlineCount, rejected/timeout) leaves the declared value off, writes no State, schedules no heartbeat, makes one attempt, and reports the existing error text at error severity. /connect-bot and /connect-bot off remain the operator's normal operations.\",\n    \"Subagent, no-UI and unregister-in-flight refusals are unchanged in an automatic binding; no register request or enabling effect.\",\n    \"A session restored at process start takes the first-start policy: manual resume stays off; automatic resume attempts its register. A planted old {enabled:true} connect-bot:state payload is ignored in both modes; only a new valid receipt enables; no connect-bot:state record is written (memory persistence intact).\",\n    \"Production fix: connect-bot's observed OMP surface leaves a missing `on` member as the surface stated it, so the framework's registration path reports 'registration failed' with the label set instead of the assembly throwing a raw TypeError first. Restores the pre-existing failing tests/framework/startup-requirements.test.ts case.\",\n    \"Docs: connect-bot README failure/restore semantics and evidence; framework-capabilities startup-mode failure/memory clarification; ticket verification record with commands, results, fault-injection evidence, limitations and the human-led P19 preparation/command.\"\n  ],\n  \"ownedCriteria\": {\n    \"P19\": \"S1 tests/connect-bot/startup-modes.test.ts 'a failed startup registration keeps the existing close and feedback rules (P19)' (4 shapes) + S2 dock 'a refused automatic registration keeps the real session working and off (P19)' (real model turn, no state/heartbeat, manual connect+off).\",\n    \"P22\": \"S2 dock 'a restored session's old enabled payload is not a connection (P22, P24)': manual and automatic independent-process --resume, planted {enabled:true}, refused register keeps off, only later valid receipt enables, connect-bot:state payload count unchanged (1 planted, 0 written).\",\n    \"P23\": \"S1 'startup and command admission keep the existing refusal rules (P23)': no-UI start+command -> exact stderr twice, no request/widget/timer; subagent start+command -> silence and no request/widget/timer; unregister-in-flight activation -> '正在断开 herdr-bot 面板，请稍后重试', no second register.\",\n    \"P24-connect-bot-partition\": \"S2 dock 'a session with no recorded value resumed at startup takes its mode's choice (P24)': automatic process resumes the manual session file, registers without a command for the restored session id, enables on the receipt, writes no State record; the old-payload case above is the other half. P24 overall also needs ticket 02's codebase-tools partition.\"\n  },\n  \"commands\": [\n    {\n      \"command\": \"bun test tests/connect-bot/startup-modes.test.ts\",\n      \"result\": \"15 pass / 0 fail, 139 assertions\"\n    },\n    {\n      \"command\": \"bun test tests/framework/startup-requirements.test.ts\",\n      \"result\": \"7 pass / 0 fail (was 6/1 failing before the assembly fix)\"\n    },\n    {\n      \"command\": \"bun test tests/framework/implementation-startup.test.ts\",\n      \"result\": \"6 pass / 0 fail\"\n    },\n    {\n      \"command\": \"bun test tests/connect-bot\",\n      \"result\": \"151 pass / 5 fail, all 5 the externally-recorded real-panel failures: herdr-bot rejects test TOML with 'missing field herdr' (framework/docs/harness-support.md:124). Run before the assembly diagnostic fix; focused S1 + framework startup suites rerun green after it.\"\n    },\n    {\n      \"command\": \"bun test tests/harness-dock/connect-bot-startup.test.ts\",\n      \"result\": \"6 pass / 1 fail. The failure is the pre-existing real-panel case (P16/P18, external 'missing field herdr'). First run was 4/3: two failures were a bug in this ticket's new sessionIdOf helper (title-slot first line), fixed; the two cases then passed individually and the final full run is 6/1. Our 3 new cases pass.\"\n    },\n    {\n      \"command\": \"bun test tests/harness-dock/connect-bot-startup.test.ts -t \\\"a refused automatic registration\\\"\",\n      \"result\": \"1 pass / 0 fail\"\n    },\n    {\n      \"command\": \"bun test tests/harness-dock/connect-bot-startup.test.ts -t \\\"old enabled payload|no recorded value resumed\\\"\",\n      \"result\": \"2 pass / 0 fail\"\n    },\n    {\n      \"command\": \"bun run typecheck\",\n      \"result\": \"exit 0 (tsc --noEmit + authoring 58 files, 0 diagnostics)\"\n    },\n    {\n      \"command\": \"bun run check:integrations\",\n      \"result\": \"exit 0 (structural analysis only, as the checker states)\"\n    }\n  ],\n  \"faultInjection\": [\n    \"Temporarily made readRegisterOutcome accept any 2xx: the '2xx answer that is not the registered receipt' S1 case failed. Restored, 15/15 green.\",\n    \"Temporarily made the failure branch write enabled=true: all 4 S1 failure cases failed. Restored, 15/15 green.\"\n  ],\n  \"limitations\": [\n    \"Human-led (not verified): actual OMP terminal display of the P19 failure line and absence of the ◐ connectBot marker. Automated evidence is the adapter notify/setWidget frames + panel requests. Prepared command and expected observation are in the ticket Verification section (stop herdr-bot, start the isolated TUI with only entrypoints/omp-auto/connect-bot.ts).\",\n    \"External: the available herdr-bot release rejects the test TOML ('missing field herdr'), so all real isolated-panel cases in the touched suites fail to start. Pre-recorded in framework/docs/harness-support.md; not evidence against this change. No real-panel interoperability is claimed by this ticket.\",\n    \"The ticket's tests/connect-bot partition record predates the assembly diagnostic fix; no other partition test reaches the no-subscription surface the fix touches, and the focused suites are green after it.\"\n  ],\n  \"handoff\": {\n    \"integrationNote\": \"Independent integration subagent can take the worktree; no merge or integration-branch action was performed by me. The ticket file already carries the verification record and is Status: in-progress (merge should close it). Suggested final checks: bun run typecheck, bun run check:integrations, bun test tests/connect-bot tests/framework/startup-requirements.test.ts, and one dock run of tests/harness-dock/connect-bot-startup.test.ts (expect 6 pass and only the external real-panel failure).\",\n    \"constraintsRespected\": \"No other ticket files, workflow reports, integration branch or integration worktree were touched; no retro or extra ticket dispatch; no reset.\"\n  }\n}",
+    "stderr": "",
+    "truncated": false,
+    "durationMs": 885610,
+    "tokens": 310920,
+    "requests": 167,
+    "contextTokens": 283367,
+    "contextWindow": 1000000,
+    "modelOverride": [
+      "deepseek/deepseek-flash:max"
+    ],
+    "resolvedModel": "deepseek/deepseek-flash:max",
+    "resolvedModelIdentity": "deepseek/deepseek-flash",
+    "resolvedThinkingLevel": "max",
+    "aborted": false,
+    "usage": {
+      "input": 195714,
+      "output": 115206,
+      "cacheRead": 29463808,
+      "cacheWrite": 0,
+      "totalTokens": 29774728,
+      "reasoningTokens": 67492,
+      "cost": {
+        "input": 0.0293571,
+        "output": 0.06912359999999998,
+        "cacheRead": 0.08839142399999997,
+        "cacheWrite": 0,
+        "total": 0.1868721240000001
+      }
+    },
+    "outputPath": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-21T20-04-26-123Z_01a16010-a58b-71a0-bc90-15f1bbbf0542\\04-connect-bot-failure-and-admissionmd-2a37d9ff-.md",
+    "extractedToolData": {
+      "yield": [
+        {
+          "data": {
+            "ticket": "04-connect-bot-failure-and-admission",
+            "branch": "hyper/extension-startup-modes/04-connect-bot-failure-and-admis-1f4796-b21292ab9ce5",
+            "commit": "75e1da4",
+            "worktree": "C:/Users/hugos/AppData/Local/Temp/hyper-ticket-xwgFa8",
+            "state": "implemented, tested, committed, tree clean; ticket Status set to in-progress with evidence recorded",
+            "delivered": [
+              "Automatic startup activation is the same command activation behind the same gate; a controlled register failure (non-2xx, 2xx non-receipt, missing onlineCount, rejected/timeout) leaves the declared value off, writes no State, schedules no heartbeat, makes one attempt, and reports the existing error text at error severity. /connect-bot and /connect-bot off remain the operator's normal operations.",
+              "Subagent, no-UI and unregister-in-flight refusals are unchanged in an automatic binding; no register request or enabling effect.",
+              "A session restored at process start takes the first-start policy: manual resume stays off; automatic resume attempts its register. A planted old {enabled:true} connect-bot:state payload is ignored in both modes; only a new valid receipt enables; no connect-bot:state record is written (memory persistence intact).",
+              "Production fix: connect-bot's observed OMP surface leaves a missing `on` member as the surface stated it, so the framework's registration path reports 'registration failed' with the label set instead of the assembly throwing a raw TypeError first. Restores the pre-existing failing tests/framework/startup-requirements.test.ts case.",
+              "Docs: connect-bot README failure/restore semantics and evidence; framework-capabilities startup-mode failure/memory clarification; ticket verification record with commands, results, fault-injection evidence, limitations and the human-led P19 preparation/command."
+            ],
+            "ownedCriteria": {
+              "P19": "S1 tests/connect-bot/startup-modes.test.ts 'a failed startup registration keeps the existing close and feedback rules (P19)' (4 shapes) + S2 dock 'a refused automatic registration keeps the real session working and off (P19)' (real model turn, no state/heartbeat, manual connect+off).",
+              "P22": "S2 dock 'a restored session's old enabled payload is not a connection (P22, P24)': manual and automatic independent-process --resume, planted {enabled:true}, refused register keeps off, only later valid receipt enables, connect-bot:state payload count unchanged (1 planted, 0 written).",
+              "P23": "S1 'startup and command admission keep the existing refusal rules (P23)': no-UI start+command -> exact stderr twice, no request/widget/timer; subagent start+command -> silence and no request/widget/timer; unregister-in-flight activation -> '正在断开 herdr-bot 面板，请稍后重试', no second register.",
+              "P24-connect-bot-partition": "S2 dock 'a session with no recorded value resumed at startup takes its mode's choice (P24)': automatic process resumes the manual session file, registers without a command for the restored session id, enables on the receipt, writes no State record; the old-payload case above is the other half. P24 overall also needs ticket 02's codebase-tools partition."
+            },
+            "commands": [
+              {
+                "command": "bun test tests/connect-bot/startup-modes.test.ts",
+                "result": "15 pass / 0 fail, 139 assertions"
+              },
+              {
+                "command": "bun test tests/framework/startup-requirements.test.ts",
+                "result": "7 pass / 0 fail (was 6/1 failing before the assembly fix)"
+              },
+              {
+                "command": "bun test tests/framework/implementation-startup.test.ts",
+                "result": "6 pass / 0 fail"
+              },
+              {
+                "command": "bun test tests/connect-bot",
+                "result": "151 pass / 5 fail, all 5 the externally-recorded real-panel failures: herdr-bot rejects test TOML with 'missing field herdr' (framework/docs/harness-support.md:124). Run before the assembly diagnostic fix; focused S1 + framework startup suites rerun green after it."
+              },
+              {
+                "command": "bun test tests/harness-dock/connect-bot-startup.test.ts",
+                "result": "6 pass / 1 fail. The failure is the pre-existing real-panel case (P16/P18, external 'missing field herdr'). First run was 4/3: two failures were a bug in this ticket's new sessionIdOf helper (title-slot first line), fixed; the two cases then passed individually and the final full run is 6/1. Our 3 new cases pass."
+              },
+              {
+                "command": "bun test tests/harness-dock/connect-bot-startup.test.ts -t \"a refused automatic registration\"",
+                "result": "1 pass / 0 fail"
+              },
+              {
+                "command": "bun test tests/harness-dock/connect-bot-startup.test.ts -t \"old enabled payload|no recorded value resumed\"",
+                "result": "2 pass / 0 fail"
+              },
+              {
+                "command": "bun run typecheck",
+                "result": "exit 0 (tsc --noEmit + authoring 58 files, 0 diagnostics)"
+              },
+              {
+                "command": "bun run check:integrations",
+                "result": "exit 0 (structural analysis only, as the checker states)"
+              }
+            ],
+            "faultInjection": [
+              "Temporarily made readRegisterOutcome accept any 2xx: the '2xx answer that is not the registered receipt' S1 case failed. Restored, 15/15 green.",
+              "Temporarily made the failure branch write enabled=true: all 4 S1 failure cases failed. Restored, 15/15 green."
+            ],
+            "limitations": [
+              "Human-led (not verified): actual OMP terminal display of the P19 failure line and absence of the ◐ connectBot marker. Automated evidence is the adapter notify/setWidget frames + panel requests. Prepared command and expected observation are in the ticket Verification section (stop herdr-bot, start the isolated TUI with only entrypoints/omp-auto/connect-bot.ts).",
+              "External: the available herdr-bot release rejects the test TOML ('missing field herdr'), so all real isolated-panel cases in the touched suites fail to start. Pre-recorded in framework/docs/harness-support.md; not evidence against this change. No real-panel interoperability is claimed by this ticket.",
+              "The ticket's tests/connect-bot partition record predates the assembly diagnostic fix; no other partition test reaches the no-subscription surface the fix touches, and the focused suites are green after it."
+            ],
+            "handoff": {
+              "integrationNote": "Independent integration subagent can take the worktree; no merge or integration-branch action was performed by me. The ticket file already carries the verification record and is Status: in-progress (merge should close it). Suggested final checks: bun run typecheck, bun run check:integrations, bun test tests/connect-bot tests/framework/startup-requirements.test.ts, and one dock run of tests/harness-dock/connect-bot-startup.test.ts (expect 6 pass and only the external real-panel failure).",
+              "constraintsRespected": "No other ticket files, workflow reports, integration branch or integration worktree were touched; no retro or extra ticket dispatch; no reset."
+            }
+          },
+          "status": "success"
+        }
+      ]
+    },
+    "outputMeta": {
+      "lineCount": 71,
+      "charCount": 6897
+    }
+  },
+  "agent": "tdd",
+  "agent_id": "04-connect-bot-failure-and-admissionmd-2a37d9ff-",
+  "session_id": "01a1603b-0c39-7101-968e-11a6f56df520",
+  "session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-21T20-04-26-123Z_01a16010-a58b-71a0-bc90-15f1bbbf0542\\04-connect-bot-failure-and-admissionmd-2a37d9ff-.jsonl",
+  "execution_cwd": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-xwgFa8",
+  "retro_document": "E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\extension-startup-modes\\retro\\04-connect-bot-failure-and-admission.md\\8555b8ea-ac2a-4c7d-8684-a9f550d8012f.md",
+  "retro_finished_at": "2026-10-21T21:07:01.699Z"
+}
