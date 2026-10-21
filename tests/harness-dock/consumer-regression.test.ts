@@ -106,7 +106,12 @@ const OBSERVATION_TIMEOUT_MS = 30_000;
  */
 const DEPLOYMENT_ROOT = path.join(REPO_ROOT, ".cache", `consumer-regression-${process.pid}`);
 
-/** The trees the deployed discovery root needs: the framework, the three consumers, the entrypoints. */
+/**
+ * The trees the deployed discovery root needs: the framework, the three consumers, the entrypoints,
+ * and the startup policies the entrypoints select. A mode's policy path is derived from the
+ * extension's own location, so a deployment that copies the discovery root without its policy
+ * documents refuses the codebase-tools binding as a configuration failure.
+ */
 const DEPLOYED_TREES = [
 	"adapters",
 	"framework",
@@ -114,6 +119,7 @@ const DEPLOYED_TREES = [
 	path.join("extensions", "codebase-tools"),
 	path.join("extensions", "model-cost"),
 	path.join("entrypoints", "omp"),
+	path.join("entrypoints", "startup"),
 ];
 
 /**
