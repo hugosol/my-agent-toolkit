@@ -76,3 +76,14 @@ pi --no-extensions -e <repo>/entrypoints/pi-auto/codebase-tools.ts
 - 故障注入：临时移除“仅首次启动应用”标志后，S1 与 S2 的 P26 用例均按预期失败，随后恢复并通过。
 
 未完成/未验证：P8/P9/P18/P19 的终端 marker/反馈实际显示仍为 human-led，未由自动结果替代；pi 手动 smoke 的进程退出检查受上述既有环境问题阻塞，其行为断言部分已通过。
+
+### 集成验收（集成 helper）
+
+- **集成同步**：宿主首次合入的集成提交 `09483946e091a84570bff1a16da39808215726b6`（dev）已合回本分支，本分支 HEAD 先与该提交相同；`git diff --stat dc21eeb 0948394` 为空，`git rev-parse dc21eeb^{tree}` 与 `0948394^{tree}` 均为 `f8e9c512…`，`git ls-files -u` 为 0 条，没有未合并路径或待解决冲突。
+- **本轮修复**：`tests/harness-dock/consumer-regression.test.ts` 的 `DEPLOYED_TREES` 只复制 `entrypoints/omp`，而启动策略路径由 extension 自身位置推导到 `<deployment>/entrypoints/startup/*.yaml`，导致该 dock 部署中 codebase-tools 以配置失败拒绝绑定（`/codebase-tools` 被当普通输入）。提交 `1822f40` 把 `entrypoints/startup` 纳入同一份部署复制；这是本轮唯一源码/测试改动。
+- **修复前后证据**：修复前该文件 0 pass / 3 fail；修复后 `bun test tests/harness-dock/consumer-regression.test.ts` → **3 pass / 0 fail**（61 expect，41.33s）。
+- **类型检查**：`bun run typecheck`（`tsc --noEmit` + `check:authoring`）→ **exit 0**（55 files / 0 diagnostics）。
+- **全局测试（最终）**：`bun run test` → **1541 pass / 0 fail / 9193 expect / 170 files / 515.73s / exit 0**，HEAD `1822f40`。日志：`C:\Users\hugos\AppData\Local\Temp\t01-final-test-2.log`。
+- **环境前置（非仓库改动）**：本 worktree 位于临时目录，基线记录期望的 sibling `oh-my-pi`、`my-omp-toolkit` 与 `herdr-bot` 不在其父目录；本轮在 `C:\Users\hugos\AppData\Local\Temp` 下建立指向 `E:\Developer\myhub\` 对应检出目录的 junction（baseline 记录测试由此 6 pass / 0 fail）。真实面板用例需要与测试配置形状一致的 `herdr-bot`；当前 sibling HEAD `4dc941c` 已要求 `[herdr]` 段，而该测试配置仍写旧形状，故本轮把 `HERDR_BOT_BINARY` 指向从 `herdr-bot` 提交 `30a5bae`（引入 `[herdr]` 之前的父提交）临时构建的 release 二进制；`bun test tests/connect-bot` → **141 pass / 0 fail**（687 expect，77.06s）。这是验收环境选择，不是产品行为或仓库内容。
+- **未由本轮修复的既有测试**：`tests/model-cost/harnesses/pi/pi-disposal-round-close.test.ts` 的 “leaving a session for another one closes no Round” 在单独运行该文件时失败，在 `bun test tests/model-cost`（**524 pass / 0 fail**）和最终全仓运行中通过；把 `22bb937`（本票改动之前的基线）快照到临时目录单独运行同一文件也以相同错误失败，故不是本票合入引入的回归。本轮不改动该文件。
+- **未完成/限制**：实现报告所列 human-led 项（P8/P9/P18/P19 的终端 marker/反馈显示）仍待用户确认；复杂 smoke、真实 pi 交互验收与跨票据整体验收不在本轮范围。本轮未操作集成工作区、未切换分支、未新建 worktree、未 reset 丢弃工作、未调用 retro，也未自行合入集成分支。

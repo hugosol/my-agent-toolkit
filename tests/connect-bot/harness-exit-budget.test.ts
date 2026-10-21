@@ -71,7 +71,7 @@ function materializeDeployment(label: string, endpoint: string, requestTimeoutMs
 		"framework",
 		path.join("extensions", "connect-bot"),
 		// The manual assembly this deployment binds resolves its startup policy from this directory by
-		// the repository layout, so the copied source must carry the policy documents as well.
+		// the repository layout, so the deployment carries it beside the copied extension.
 		path.join("entrypoints", "startup"),
 	]) {
 		cpSync(path.join(REPO_ROOT, source), path.join(root, source), { recursive: true });
