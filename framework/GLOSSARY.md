@@ -140,6 +140,14 @@ _Avoid_: complete total, known zero for unknown contributions
 
 ### Extension controls and ownership
 
+**Extension startup policy（扩展启动策略）**:
+The rule that determines an extension's initial activation choice when an agent starts; subsequent command controls and session-boundary State behavior remain separate. A choice to activate is an intent, not proof that an external effect has succeeded.
+_Avoid_: implementation initialization, permanent activation lock, restored external effect
+
+**Extension startup mode（扩展启动模式）**:
+The choice between manual mode and automatic startup mode, each with its own startup configuration and the same activation rules. Startup mode is distinct from whether an extension is loaded or currently enabled.
+_Avoid_: separate extension implementation, subagent integration mode, current activation State
+
 **Configuration switch（配置式开关）**:
 An activation choice read at initialization whose changes do not take effect during the current run; applying a changed choice requires a restart.
 _Avoid_: harness toggle, mode command
