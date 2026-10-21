@@ -13,6 +13,7 @@ import { tmpdir } from "node:os";
 import * as path from "node:path";
 import { defineExtension } from "../../framework/interface";
 import type { OwnerReference } from "../../framework/interface/state";
+import type { SubagentIntegration } from "../../framework/interface/subagent";
 import { type PortDouble, portDouble } from "./support/harness-port-double";
 
 /** The first owner this process serves, and a later main owner in the same process. */
@@ -41,6 +42,11 @@ function policyOf(choice: boolean, extensionId = "startup-activation"): string {
 
 /** The directories this suite made, removed after each case so no document is read twice by accident. */
 const policyRefs: string[] = [];
+
+/** Lets the promise chains a session delivery and a run initiation started run to their end. */
+async function settleMicrotasks(): Promise<void> {
+	for (let turn = 0; turn < 100; turn += 1) await Promise.resolve();
+}
 
 afterEach(() => {
 	for (const directory of policyRefs.splice(0)) rmSync(directory, { recursive: true, force: true });
@@ -158,5 +164,59 @@ describe("a recorded value outranks the policy's default in both directions (P9,
 
 		expect(activated).toBe(0);
 		expect(double.state.view(OWNER.key).read("enabled")).toBe(false);
+	});
+});
+
+describe("the startup activation adds no wait beside the lifecycle's required ones (P27)", () => {
+	test("the first request waits for the integration and initialization, and never for a pending startup", async () => {
+		const integration = Promise.withResolvers<SubagentIntegration>();
+		const initialization = Promise.withResolvers<void>();
+		const activation = Promise.withResolvers<void>();
+		const order: string[] = [];
+		const double = portDouble({ subagentIntegration: () => integration.promise });
+		double.bind(STARTUP_TEST, {
+			startupPolicy: policyOf(true),
+			startup: () => {
+				order.push("startup");
+				return activation.promise;
+			},
+			initialize: () => {
+				order.push("initialize");
+				return initialization.promise;
+			},
+		});
+
+		// The startup entry runs at the session node, before the initialization chain has settled.
+		double.deliverSession(OWNER);
+		expect(order).toEqual(["startup"]);
+
+		let finished = false;
+		const firstRun = double.initiateRun(OWNER).then(result => {
+			finished = true;
+			return result;
+		});
+		await settleMicrotasks();
+		// The subagent integration is still being settled: the request waits for it, exactly as it
+		// did before startup modes existed.
+		expect(finished).toBe(false);
+
+		integration.resolve({ mode: "none" });
+		await settleMicrotasks();
+		// The integration settled and the implementation's own initialization began: that promise
+		// still gates the request.
+		expect(order).toEqual(["startup", "initialize"]);
+		expect(finished).toBe(false);
+
+		initialization.resolve();
+		const result = await firstRun;
+		expect(finished).toBe(true);
+		// The startup activation is not a completion barrier: the request was issued while the
+		// effect it began was still pending, and the plan is the ordinary one for this State.
+		expect(result.contribution).toBeUndefined();
+		expect(order).toEqual(["startup", "initialize"]);
+
+		activation.resolve();
+		await settleMicrotasks();
+		expect(double.diagnostics).toEqual([]);
 	});
 });

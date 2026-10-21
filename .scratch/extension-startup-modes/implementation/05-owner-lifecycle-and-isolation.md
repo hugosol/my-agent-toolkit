@@ -8,7 +8,7 @@
 
 **Blocked by:** 03: connect-bot 非阻塞自动登记成功路径。
 
-**Status:** ready-for-agent
+**Status:** in-progress
 
 依据：[已批准契约](../contract.md)、[Spec](../spec.md)。本票不依赖 04，迟到有效响应与普通失败／准入路径可分别实现验证。
 

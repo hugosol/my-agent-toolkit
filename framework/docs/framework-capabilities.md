@@ -841,7 +841,11 @@ fork or tree navigation, and not on a subagent, which owns no cell. The rule is:
   declared value on its behalf, so the value and the marker appear only when the extension's own business
   operation succeeds. connect-bot's automatic entrypoint therefore attempts a panel register without a
   command, and remains off until the panel answers with a valid receipt; a refusal leaves it off with the
-  extension's existing feedback.
+  extension's existing feedback. The entry is not a completion barrier: the first model request still waits
+  for the implementation's `initialize` and the harness's settled subagent integration exactly as it did
+  before startup modes existed, and never for the startup effect. What a superseded effect does with a late
+  result is the consumer's own rule — connect-bot's `off` and its owner's end invalidate the attempt, so the
+  receipt cannot write State, start a heartbeat or replace a timer after the boundary.
 
 **What the choice is not.** Loading an extension is not enabling it, and an enabling choice is an *intent*:
 the framework records only the declared `session-entry` value, and it records it as this session's value rather

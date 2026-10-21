@@ -124,11 +124,16 @@ function observeSessionContext(pi: OmpExtensionApi): {
 				}
 			},
 		});
-	const subscribe = (pi.on as unknown as (
+	const on = pi.on as unknown as (
 		event: string,
 		handler: (event: unknown, ctx: ConnectBotSessionContext) => void,
-	) => void).bind(pi);
+	) => void;
 	api.on = ((event: string, handler: (event: unknown, ctx: ConnectBotSessionContext) => void) => {
+		// The binding's registration is where a surface that cannot subscribe has to fail: the
+		// framework reports that failure and refuses the binding. Reaching `on` here, when the
+		// framework asks for a subscription, keeps the assembly from throwing at load time — a
+		// native member this harness lacks is a fact the registration path already handles.
+		const subscribe = on.bind(pi);
 		// Every native delivery this binding observes carries the context of the session it concerns.
 		// Keeping it for the duration of the framework's own handler is what lets a startup activation
 		// read the facts of the start being delivered without naming a native lifecycle event here.
