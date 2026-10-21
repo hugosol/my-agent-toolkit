@@ -66,7 +66,14 @@ const DEPLOYMENT_ROOT = path.join(REPO_ROOT, ".cache", `connect-bot-exit-budget-
 function materializeDeployment(label: string, endpoint: string, requestTimeoutMs: number): string {
 	const root = path.join(DEPLOYMENT_ROOT, label);
 	mkdirSync(root, { recursive: true });
-	for (const source of ["adapters", "framework", path.join("extensions", "connect-bot")]) {
+	for (const source of [
+		"adapters",
+		"framework",
+		path.join("extensions", "connect-bot"),
+		// The manual assembly this deployment binds resolves its startup policy from this directory by
+		// the repository layout, so the copied source must carry the policy documents as well.
+		path.join("entrypoints", "startup"),
+	]) {
 		cpSync(path.join(REPO_ROOT, source), path.join(root, source), { recursive: true });
 	}
 	writeFileSync(
