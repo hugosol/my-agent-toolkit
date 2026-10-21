@@ -35,7 +35,11 @@ import { MODEL_COST_HARNESS } from "../../../../extensions/model-cost/harnesses/
 import { MODEL_COST_WIDGET_KEY, attachModelCostWidget } from "../../../../extensions/model-cost/harnesses/pi/widget";
 import type { ConsumptionDocument, SessionRecord } from "../../../../extensions/model-cost/shared-logic/foundation/session/consumption-document";
 import type { ModelPricingData } from "../../../../extensions/model-cost/shared-logic/business/pricing/model-data";
-import { type ModelCostRuntime, createModelCostRuntime } from "../../../../extensions/model-cost/shared-logic/runtime";
+import {
+	type ModelCostRuntime,
+	createModelCostRuntime,
+	modelCostImplementation,
+} from "../../../../extensions/model-cost/shared-logic/runtime";
 import { PROVIDER_READY_CHANNEL, forgetSessionLivenessRegistry, registerProviderLiveness } from "../../../framework/support/pi-surface-double";
 import { uiBoundaryTimerOf } from "../../support/ui-timer";
 
@@ -270,26 +274,27 @@ function assemblePiSurface(): PiSurface {
 	const bind = piAdapter(MODEL_COST, {
 		configBaseDir: REPOSITORY_ROOT,
 		childEntry: CHILD_ENTRY,
-		factory: context => {
-			const built = createModelCostRuntime({
-				config: { ...context.config, storageDir: STORAGE_ROOT },
-				configDirectory: path.join(REPOSITORY_ROOT, "extensions", MODEL_COST.id),
-				userHomeDirectory: STORAGE_ROOT,
-				harness: MODEL_COST_HARNESS,
-				data: DATA,
-				session: context.session,
-			});
-			runtime = built;
-			const cleanup = built.implementation.cleanup;
-			return {
-				...built.implementation,
-				cleanup: () => {
+		implementation: modelCostImplementation(
+			context => {
+				const built = createModelCostRuntime({
+					config: { ...context.config, storageDir: STORAGE_ROOT },
+					configDirectory: path.join(REPOSITORY_ROOT, "extensions", MODEL_COST.id),
+					userHomeDirectory: STORAGE_ROOT,
+					harness: MODEL_COST_HARNESS,
+					data: DATA,
+					session: context.session,
+				});
+				runtime = built;
+				return built;
+			},
+			{
+				cleanup: built => {
 					releaseFrontend?.();
 					releaseFrontend = undefined;
-					return cleanup?.();
+					built.cleanup();
 				},
-			};
-		},
+			},
+		),
 	});
 	if (!bind(surface.api).bound) throw new Error("the model-cost pi assembly did not bind");
 	releaseFrontend = attachModelCostWidget(surface.api, surface.runtime, uiBoundaryTimerOf(surface.runtime));

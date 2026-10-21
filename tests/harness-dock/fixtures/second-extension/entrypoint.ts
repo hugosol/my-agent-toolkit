@@ -9,7 +9,7 @@
  * file, no timer and no native call of its own.
  */
 import { ompAdapter } from "../../../../adapters/omp";
-import { type ExtensionDefinition, defineExtension } from "../../../../framework/interface";
+import { type ExtensionDefinition, defineExtension, defineImplementation } from "../../../../framework/interface";
 
 /** The extension id whose stderr line the dock reads. */
 export const SECOND_EXTENSION_ID = "second-extension-probe";
@@ -20,8 +20,10 @@ const definition: ExtensionDefinition = defineExtension({
 });
 
 export default ompAdapter(definition, {
-	factory: () => {
-		process.stderr.write(`[${SECOND_EXTENSION_ID}] bound\n`);
-		return {};
-	},
+	implementation: defineImplementation({
+		create: () => {
+			process.stderr.write(`[${SECOND_EXTENSION_ID}] bound\n`);
+			return {};
+		},
+	}),
 });

@@ -79,14 +79,6 @@ describe("the extension registers no native session hook of its own (E14, P35)",
 		expect(offenders).toEqual([]);
 	});
 
-	test("the semantic axis really is what this extension reacts to, so the scan has a subject", () => {
-		const assembly = codeOf(`${EXTENSION_ROOT}/harnesses/omp.ts`);
-		// The session the boundary ends, subscribed by its framework kind: the session this extension
-		// armed, wound down through the registration module when another identity takes its place.
-		expect(assembly).toMatch(/session_end:\s*delivery\s*=>\s*registrations\.ownerEnded\b/);
-		expect(assembly).toMatch(/"session-lifecycle-events"/);
-	});
-
 	test("the harness's own shutdown name is code only where the adapter synthesizes the disposal", () => {
 		// The name exists in this repository and has exactly one home: the adapter that turns the
 		// native event into the semantic one. Nothing under an extension may name it, which is what

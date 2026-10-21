@@ -11,14 +11,17 @@
 import { createAssemblyBinding } from "../../framework/behaviors/assembly";
 import type { ExtensionAssembly } from "../../framework/interface/details/implementation";
 import type { ExtensionDefinition } from "../../framework/interface/details/definition";
+import type { AdapterFactory } from "../../framework/runtime/adapter-authoring";
+import type { HarnessPort } from "../../framework/runtime/port";
 import type { PiExtensionApi, PiExtensionFactory } from "./internal/native";
-import { createPiPort } from "./internal/port";
+import { createPiPort, type PiPortWithSubagents, type PiPortWithoutSubagents } from "./internal/port";
 import { piProviderFacts } from "./domain/provider";
 import { piSessionPositions } from "./domain/session/queries";
 import { piSessionFileAnchors } from "./domain/subagent/queries";
 import { createPiSubagentIntegration } from "./domain/subagent/integration";
 
 export * from "./internal/native";
+export type { PiPortWithSubagents, PiPortWithoutSubagents } from "./internal/port";
 export type { BindingResult } from "../../framework/runtime/port";
 
 /**
@@ -36,15 +39,49 @@ export interface PiAssembly extends ExtensionAssembly {
 	readonly childEntry?: string;
 }
 
-/** Uses the same binding and assembly contract as the OMP adapter. */
-export function piAdapter(definition: ExtensionDefinition, options: PiAssembly = {}): PiExtensionFactory {
+/**
+ * The factory one pi assembly returns, retaining the port that assembly states it constructs.
+ *
+ * `Port` is a compile-time witness of the adapter's own assembly output — the trusted shape the
+ * binding is built from — not proof that a native provider is installed, reachable or correct.
+ */
+export type PiAssemblyFactory<Port extends HarnessPort = HarnessPort> = AdapterFactory<Port, PiExtensionFactory>;
+
+/**
+ * Uses the same binding and assembly contract as the OMP adapter.
+ *
+ * An explicit `childEntry` gives this process's subagent integration something to require, so the
+ * constructed port carries its settle member; the member's presence states that a settle exists,
+ * never that it settles as `subagents`. An omitted or explicitly undefined entry states no such
+ * integration and assembles the port that declares the member absent. An assembly typed as the
+ * general `PiAssembly` — including a `string | undefined` entry decided at run time — retains the
+ * generic optional member, because the adapter cannot know from that type which port will be
+ * constructed. A plain `HarnessPort` reading is the same uncertain contract, never a claim of
+ * absence.
+ *
+ * This witness is the assembly's trusted output contract: it states what this adapter constructs,
+ * not what a third-party provider does when called.
+ */
+export function piAdapter(
+	definition: ExtensionDefinition,
+	options: PiAssembly & { readonly childEntry: string },
+): AdapterFactory<PiPortWithSubagents, PiExtensionFactory>;
+export function piAdapter(
+	definition: ExtensionDefinition,
+	options?: PiAssembly & { readonly childEntry?: undefined },
+): AdapterFactory<PiPortWithoutSubagents, PiExtensionFactory>;
+export function piAdapter(
+	definition: ExtensionDefinition,
+	options?: PiAssembly,
+): AdapterFactory<HarnessPort, PiExtensionFactory>;
+export function piAdapter(definition: ExtensionDefinition, options: PiAssembly = {}): PiAssemblyFactory {
 	// pi can run children here or in a background process. The framework owns the access lifetime
 	// and chooses the direct path for each owner served here; childEntry states cross-process support.
 	const mode = options.childEntry === undefined ? "in-process" : "cross-process";
 	const binding = createAssemblyBinding(definition, options, mode);
 	// pi's own provider facts — the model prices and the provider access the registry states — as one set
 	// for the whole process: every binding of this assembly records the registry of the contexts its
-	// own deliveries come from, and the queries the framework hands an extension's factory answer from
+	// own deliveries come from, and the queries the framework hands an extension's `create` answer from
 	// the newest of them.
 	const providerFacts = piProviderFacts();
 	// The sessions this process's deliveries are read through: pi's own lineage links and the session

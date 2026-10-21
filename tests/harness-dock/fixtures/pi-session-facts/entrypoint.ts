@@ -13,7 +13,7 @@
  * never saw the delivery".
  */
 import { piAdapter } from "../../../../adapters/pi";
-import type { ExtensionDefinition } from "../../../../framework/interface";
+import { type ExtensionDefinition, defineImplementation } from "../../../../framework/interface";
 import type { SessionEventDelivery } from "../../../../framework/interface/session";
 import { PI_SESSION_FACTS_PREFIX } from "./prefix";
 
@@ -54,14 +54,15 @@ function factsLine(event: string, delivery: SessionEventDelivery): void {
 }
 
 export default piAdapter(PROBE, {
-	factory: () => ({
+	implementation: defineImplementation<Record<string, never>>({
+		create: () => ({}),
 		subscriptions: [
 			{
 				scope: "session",
 				events: {
-					session_start: delivery => factsLine("start", delivery as SessionEventDelivery),
-					session_facts: delivery => factsLine("facts", delivery as SessionEventDelivery),
-					session_end: delivery => factsLine("end", delivery as SessionEventDelivery),
+					session_start: (_state, delivery) => factsLine("start", delivery),
+					session_facts: (_state, delivery) => factsLine("facts", delivery),
+					session_end: (_state, delivery) => factsLine("end", delivery),
 				},
 			},
 		],

@@ -35,7 +35,7 @@ import type {
 	DirectedCommandImplementation,
 } from "../interface/command";
 import type {
-	ExtensionFactory,
+	ImplementationResolver,
 	ExtensionImplementation,
 } from "../interface/details/implementation";
 import {
@@ -69,15 +69,8 @@ import { createRoundSynthesis, roundLives } from "./round-events";
 import { createSessionActivityAxis, type SessionActivityAxis } from "./session-activity";
 import { createContextCollection, type ContextCollection } from "./session-context";
 import { dispatchSessionEvent } from "./session-events";
-import {
-	ROUND_EVENT_KINDS,
-	SESSION_ACTIVITY_KINDS,
-	SESSION_CONTEXT_EVENT_KINDS,
-	TURN_EVENT_KINDS,
-	USER_INPUT_EVENT_KINDS,
-	dispatchToGroups,
-	subscribesAny,
-} from "./subscriptions";
+import { dispatchToGroups, subscribesAny } from "./subscriptions";
+import { INTEGRATION_EVENT_AXIS, planIntegration, type IntegrationEventKind } from "./integration-plan";
 import { turnLives } from "./turn-events";
 
 /** The deterministic text of one binding failure, independent of where it is reported. */
@@ -243,7 +236,7 @@ export function bindExtension(
 	port: HarnessPort,
 	state: StateStore,
 	observations: SessionObservations,
-	factory?: ExtensionFactory,
+	factory?: ImplementationResolver,
 	configSource: ConfigSource = {},
 ): BindingResult {
 	const failures: BindingFailure[] = findConfigurationViolations(definition).map(violation => ({
@@ -476,6 +469,15 @@ export function bindExtension(
 	// and installs none of the three hooks below.
 	const groups = implementation.subscriptions ?? [];
 	const implementations = implementation.commands ?? {};
+	const integration = planIntegration({
+		events: (Object.keys(INTEGRATION_EVENT_AXIS) as IntegrationEventKind[])
+			.filter(kind => subscribesAny(groups, [kind])),
+		prompts: (definition.prompts ?? []).length > 0,
+		marker: definition.marker !== undefined,
+		initialize: implementation.initialize !== undefined,
+		cleanup: implementation.cleanup !== undefined,
+		commands: (definition.commands ?? []).map(command => ({ name: command.name, control: command.type })),
+	});
 	// The binding's delivery is live until its cleanup runs. Ending the session the implementation
 	// serves tears it down, and from then on this binding delivers nothing to it: the native hooks
 	// were registered for the life of the session and cannot be unregistered, so the framework
@@ -577,14 +579,7 @@ export function bindExtension(
 		// definition that subscribed to none of them asks the harness for no round deliveries and
 		// registers no such hook. The same bookkeeping is what the Turn hook below reads.
 		const lives = roundLives();
-		if (
-			subscribesAny(groups, [
-				...ROUND_EVENT_KINDS,
-				...TURN_EVENT_KINDS,
-				...SESSION_ACTIVITY_KINDS,
-				...SESSION_CONTEXT_EVENT_KINDS,
-			])
-		) {
+		if (integration.round.required) {
 			// The synthesis is what decides the edges; the framework arranges its end-candidate
 			// re-check on the harness's next task, so a harness that never reports a `nextTask`
 			// capability leaves a candidate unconfirmed rather than being polled for one. The activity
@@ -624,7 +619,7 @@ export function bindExtension(
 		// the adapter collects where, and what a reading means here, are both above this line: the
 		// adapter reads the host's own public context reading, and the framework records it and
 		// delivers it as the change it is.
-		if (subscribesAny(groups, SESSION_CONTEXT_EVENT_KINDS)) {
+		if (integration.context.required) {
 			contextCollection = createContextCollection({
 				definition,
 				observations,
@@ -639,7 +634,7 @@ export function bindExtension(
 		}
 		// The model-cycle hook is subscribed only when a group observes a Turn edge, so a definition
 		// that never looks at a request asks the harness for no model-cycle facts at all.
-		if (subscribesAny(groups, TURN_EVENT_KINDS)) {
+		if (integration.turn.required) {
 			const turns = turnLives(definition, lives, implementation.catalog, groups, port.reportDiagnostic);
 			port.onTurn(facts => {
 				if (!delivering) return;
@@ -649,7 +644,7 @@ export function bindExtension(
 		// The input hook is subscribed only when a group observes it. There is no framework behavior
 		// behind it — a submission crosses no boundary, so nothing the framework owns moves — so the
 		// delivery reaches its subscribers exactly as the adapter resolved it.
-		if (subscribesAny(groups, USER_INPUT_EVENT_KINDS)) {
+		if (integration.input.required) {
 			port.onUserInput(input => {
 				if (!delivering) return;
 				dispatchToGroups(
@@ -667,15 +662,13 @@ export function bindExtension(
 		// must wait for; a definition with none of them installs no handler. The behaviors
 		// themselves write nothing, so a re-entered delivery plans the same contribution and
 		// re-asserts the same area from the same State and branch facts.
-		const contributes = (definition.prompts ?? []).length > 0;
-		const awaitsInitialization = implementation.initialize !== undefined || implementation.cleanup !== undefined;
-		if (contributes || definition.marker !== undefined || awaitsInitialization) {
+		if (integration.runInitiation.required) {
 			port.onRunInitiation(run => {
 				if (!delivering) return undefined;
 				const plan = (): PromptContribution | undefined => {
 					if (!delivering) return undefined;
 					publishMarkerOnRun(definition, run, seat);
-					return contributes ? planContribution(definition, state, run) : undefined;
+					return integration.runInitiation.contribute ? planContribution(definition, state, run) : undefined;
 				};
 				const initialized = initializationPending(implementation);
 				const followed = run.owner.kind === "inherited" && stateInheritance(definition) === "follow"
@@ -728,7 +721,7 @@ export function bindExtension(
 		// subscription is what re-projects the area for what is on screen now. It is created once,
 		// after the registrations, so a binding refused before this point never holds one.
 		const viewed = port.viewedSession;
-		if (definition.marker !== undefined && viewed !== undefined) {
+		if (integration.marker.viewed && viewed !== undefined) {
 			releaseViewed = viewed.subscribe(markers => {
 				if (!delivering) return;
 				const displayed = viewed.read();

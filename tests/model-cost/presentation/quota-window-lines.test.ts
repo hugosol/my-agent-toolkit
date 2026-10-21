@@ -24,7 +24,11 @@ import { MODEL_COST } from "../../../extensions/model-cost/definition";
 import type { DisplayLine } from "../../../extensions/model-cost/shared-logic/presentation/display";
 import { lineText } from "../../../extensions/model-cost/shared-logic/presentation/display";
 import type { ModelPricingData } from "../../../extensions/model-cost/shared-logic/business/pricing/model-data";
-import { type ModelCostRuntime, createModelCostRuntime } from "../../../extensions/model-cost/shared-logic/runtime";
+import {
+	type ModelCostRuntime,
+	createModelCostRuntime,
+	modelCostImplementation,
+} from "../../../extensions/model-cost/shared-logic/runtime";
 import type { ProviderAccess, ProviderAccessFacts } from "../../../framework/interface/provider";
 import type { SessionFacts, TurnOutcome } from "../../../framework/interface/session";
 import type { TurnSignal } from "../../../framework/runtime/port";
@@ -101,7 +105,7 @@ async function bindWindows(options: { readonly answer?: () => Response } = {}): 
 	});
 	const double = portDouble();
 	double.bind(MODEL_COST, {
-		factory: () => runtime.implementation,
+		factory: modelCostImplementation(() => runtime),
 		config: { reader: () => `storageDir: ${root}\nbalanceTtlMs: 30000\ncodexQuotaTtlMs: 15000\n` },
 	});
 	double.deliverSession(OWNER, { session: MAIN });

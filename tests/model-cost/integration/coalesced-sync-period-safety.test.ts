@@ -25,7 +25,11 @@ import * as path from "node:path";
 import { MODEL_COST } from "../../../extensions/model-cost/definition";
 import type { ConsumptionDocument, OwnConsumption, SessionRecord } from "../../../extensions/model-cost/shared-logic/foundation/session/consumption-document";
 import type { ModelPricingData } from "../../../extensions/model-cost/shared-logic/business/pricing/model-data";
-import { type ModelCostRuntime, createModelCostRuntime } from "../../../extensions/model-cost/shared-logic/runtime";
+import {
+	type ModelCostRuntime,
+	createModelCostRuntime,
+	modelCostImplementation,
+} from "../../../extensions/model-cost/shared-logic/runtime";
 import type { SessionFacts, TurnUsage } from "../../../framework/interface/session";
 import type { OwnerReference } from "../../../framework/interface/state";
 import type { ObservedSession, TurnSignal } from "../../../framework/runtime/port";
@@ -221,15 +225,14 @@ async function bind(root: string, baseline: ConsumptionDocument): Promise<Bound>
 	const double = portDouble({ observationsAcrossProcesses: true });
 	const result = double.bind(MODEL_COST, {
 		config: { reader: () => `storageDir: ${root}\nbalanceTtlMs: 30000\ncodexQuotaTtlMs: 15000\n` },
-		factory: context =>
-			(built = createModelCostRuntime({
+		factory: modelCostImplementation(context => (built = createModelCostRuntime({
 				config: { storageDir: root },
 				configDirectory: root,
 				userHomeDirectory: root,
 				harness: HARNESS,
 				data: DATA,
 				session: context.session,
-			})).implementation,
+			}))),
 	});
 	expect(result.bound).toBe(true);
 	double.deliverSession(OWNER, { session: MAIN });

@@ -34,7 +34,11 @@ import { tmpdir } from "node:os";
 import * as path from "node:path";
 import { MODEL_COST } from "../../../../extensions/model-cost/definition";
 import type { ModelPricingData } from "../../../../extensions/model-cost/shared-logic/business/pricing/model-data";
-import { type ModelCostRuntime, createModelCostRuntime } from "../../../../extensions/model-cost/shared-logic/runtime";
+import {
+	type ModelCostRuntime,
+	createModelCostRuntime,
+	modelCostImplementation,
+} from "../../../../extensions/model-cost/shared-logic/runtime";
 import type { ProviderAccess, ProviderAccessFacts } from "../../../../framework/interface/provider";
 import type { SessionFacts, TurnOutcome, TurnUsage } from "../../../../framework/interface/session";
 import type { TurnSignal } from "../../../../framework/runtime/port";
@@ -182,7 +186,7 @@ async function bindBalance(
 	});
 	const double = portDouble();
 	double.bind(MODEL_COST, {
-		factory: () => runtime.implementation,
+		factory: modelCostImplementation(() => runtime),
 		// The declared configuration is read once per extension per process; this reader answers the
 		// declaration so the binding validates without touching the repository's own file. The declared
 		// field is required by the framework, so the reader always states it; the case's own choice of

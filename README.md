@@ -49,12 +49,29 @@ glossary.
 | codeBaseTools | [`extensions/codebase-tools/`](extensions/codebase-tools) | [`extensions/codebase-tools/README.md`](extensions/codebase-tools/README.md) · [`extensions/codebase-tools/GLOSSARY.md`](extensions/codebase-tools/GLOSSARY.md) |
 | modelCost | [`extensions/model-cost/`](extensions/model-cost) | [`extensions/model-cost/README.md`](extensions/model-cost/README.md) · [`extensions/model-cost/GLOSSARY.md`](extensions/model-cost/GLOSSARY.md) |
 
-## Document index
+## Documentation by audience
+
+Start with the repository-wide [documentation map](DOCS-MAP.md) for audience guides, verification topics, extension documentation and architecture references. The [framework documentation map](framework/docs/README.md) provides the detailed framework reading paths. Choose a role first:
+
+| Audience | Start here | What it answers |
+| --- | --- | --- |
+| Extension developer | [Extension development map](framework/docs/extension-development-map.md) | How to find framework interfaces and capabilities; where extension logic belongs, using model-cost as the layering example |
+| Harness integrator | [Harness / adapter integration](framework/docs/harness-integration.md) | How to compare native behavior with framework semantics and implement the adapter |
+| Framework maintainer | [Layering and inspectability principles](framework/docs/capability-interface-architecture.md) | Dependency direction, deep capability interfaces, and keeping framework/adapter authoring statically inspectable |
+
+Two independent verification topics have their own authoritative runbooks:
+
+- [Integration check](framework/docs/integration-check.md): statically scan a developed extension and compare its framework-mediated demand with a target adapter's implementation and wiring. This is not a harness behavior or version test.
+- [Harness version verification](framework/docs/harness-support.md#version-verification): scripts, scope and evidence for an exact harness version's required behavior. Passing checks does not automatically promote support status.
+
+### Reference and evidence index
+
+The table below locates supporting references and evidence; role-specific reading order and document ownership stay in the central map.
 
 | Document | What it is | Read it when |
 | --- | --- | --- |
 | [`framework/docs/extension-development-map.md`](framework/docs/extension-development-map.md) | Long-lived principles for extension layering and finding existing framework capabilities; a Chinese guide, not an API or implementation inventory. | You are adding or changing an extension and deciding where its responsibilities belong. |
-| [`framework/README.md`](framework/README.md) | The framework's layout guide and runbook: `core/` / `behaviors/` / `modules/` and sibling `adapters/`, the framework suite, candidate verification, the human acceptance index, and the supported-version upgrade standard. | You are working on framework code or upgrading the supported harness. |
+| [`framework/README.md`](framework/README.md) | The framework's layout and execution entry, with the framework suite and human acceptance index; version verification links to the central harness-support runbook. | You are working on framework code or upgrading the supported harness. |
 | [`framework/docs/harness-support.md`](framework/docs/harness-support.md) | **Authority** for harness version compatibility: the four-state support record (`verified-supported` / `verified-unlisted` / `unverified` / `unsupported`), its evidence and conditions, the provider-path role evidence, and the long-term upgrade standard and its triggers. | You need to know what is supported, what is not, and how a version becomes supported. |
 | [`framework/docs/harness-baseline.json`](framework/docs/harness-baseline.json) | Data record of the fixed baseline: the revision anchor, the artifact that actually runs, and the dependency lockfiles. Re-checked by `tests/harness-dock/baseline.test.ts`. | You need the machine-checkable correspondence behind the supported row; refresh it after a deliberate dependency or version change. |
 | [`framework/docs/framework-capabilities.md`](framework/docs/framework-capabilities.md) | Index of the framework's public authoring surface: what every `defineExtension` / `ompAdapter` parameter means, each symbol cited to source. | You are writing or reading framework code and need to find an entry point. |

@@ -1,8 +1,8 @@
 /**
- * The actual omp-bot panel one interop run talks to (P23).
+ * The actual herdr-bot panel one interop run talks to (P23).
  *
  * The extension's outbound dependency is the real panel, not a stand-in, so the interop run starts
- * the panel itself: the release build of the sibling omp-bot checkout, on an ephemeral loopback
+ * the panel itself: the release build of the sibling herdr-bot checkout, on an ephemeral loopback
  * port, with a configuration file of its own under a temporary directory. Nothing of the user's
  * panel is touched — this instance is a process of its own whose session table lives and dies in
  * memory — and its `mDNS` publishing stays off so the isolated run announces nothing on the
@@ -15,7 +15,7 @@
  * the state each report moved it to, and the removal the unregister performed — rather than a
  * client-side re-telling of it.
  *
- * The binary is resolved from `OMP_BOT_BINARY` when the environment names one, and otherwise from
+ * The binary is resolved from `HERDR_BOT_BINARY` when the environment names one, and otherwise from
  * the sibling checkout's release build. A machine without it cannot run this panel, and the run
  * fails saying exactly which path is missing and how to build it: a stand-in panel would not be
  * the interop evidence this is here for.
@@ -25,11 +25,11 @@ import { tmpdir } from "node:os";
 import * as path from "node:path";
 import { REPO_ROOT } from "../../harness-dock/baseline";
 
-/** The environment name that overrides where the omp-bot binary is taken from. */
-const OMP_BOT_BINARY_ENV = "OMP_BOT_BINARY";
+/** The environment name that overrides where the herdr-bot binary is taken from. */
+const HERDR_BOT_BINARY_ENV = "HERDR_BOT_BINARY";
 
 /** One frame the panel published on its read side. */
-export interface OmpBotFrame {
+export interface HerdrBotFrame {
 	/** The named event: `snapshot`, `upsert`, `remove` or `shutdown`. */
 	readonly event: string;
 	/** The frame's JSON payload, as the panel wrote it. */
@@ -47,13 +47,13 @@ export interface PanelSessionView {
 }
 
 /** The isolated panel one interop run drives. */
-export interface OmpBotPanel {
+export interface HerdrBotPanel {
 	/** Base URL of this instance, e.g. `http://127.0.0.1:53412`. */
 	readonly endpoint: string;
 	/** Every frame the panel has published since this run subscribed, in order. */
-	readonly frames: readonly OmpBotFrame[];
+	readonly frames: readonly HerdrBotFrame[];
 	/** Waits for a frame matching `match`, and fails with the frames seen so far after `timeoutMs`. */
-	waitFor(match: (frame: OmpBotFrame) => boolean, label: string, timeoutMs?: number): Promise<OmpBotFrame>;
+	waitFor(match: (frame: HerdrBotFrame) => boolean, label: string, timeoutMs?: number): Promise<HerdrBotFrame>;
 	/**
 	 * The panel's current session table, read on a connection of its own.
 	 *
@@ -78,11 +78,11 @@ const FRAME_TIMEOUT_MS = 30_000;
 const LISTEN_LINE = /监听：http:\/\/(?:127\.0\.0\.1|localhost|\[::1\]):(\d+)\//;
 
 /** Where the panel binary is taken from: the environment's own value, or the sibling release build. */
-function ompBotBinary(): string {
-	const named = process.env[OMP_BOT_BINARY_ENV]?.trim();
+function herdrBotBinary(): string {
+	const named = process.env[HERDR_BOT_BINARY_ENV]?.trim();
 	if (named !== undefined && named.length > 0) return named;
-	const name = process.platform === "win32" ? "omp-bot.exe" : "omp-bot";
-	return path.resolve(REPO_ROOT, "..", "omp-bot", "backend", "target", "release", name);
+	const name = process.platform === "win32" ? "herdr-bot.exe" : "herdr-bot";
+	return path.resolve(REPO_ROOT, "..", "herdr-bot", "backend", "target", "release", name);
 }
 
 /** Reads one stream line by line, handing every complete line to `onLine`. */
@@ -105,7 +105,7 @@ async function pumpLines(stream: ReadableStream<Uint8Array>, onLine: (line: stri
 
 /** Writes this run's own panel configuration into `directory`. */
 function writePanelConfig(directory: string): string {
-	const file = path.join(directory, "omp-bot.toml");
+	const file = path.join(directory, "herdr-bot.toml");
 	// The sessions section declares the two windows this run reads: the panel's own delivered
 	// defaults are 10s online / 30s retention, and a client that beats every 10s sits exactly on
 	// the default's edge — the scan would publish an offline view between two beats and the next
@@ -141,7 +141,7 @@ function writePanelConfig(directory: string): string {
 }
 
 /** Parses one server-sent event block into a frame; `undefined` for a keep-alive comment only. */
-function frameOf(block: string): OmpBotFrame | undefined {
+function frameOf(block: string): HerdrBotFrame | undefined {
 	let event: string | undefined;
 	let data: string | undefined;
 	for (const line of block.split("\n")) {
@@ -162,7 +162,7 @@ function frameOf(block: string): OmpBotFrame | undefined {
  */
 async function pumpFrames(
 	body: ReadableStream<Uint8Array>,
-	onFrame: (frame: OmpBotFrame) => boolean | void,
+	onFrame: (frame: HerdrBotFrame) => boolean | void,
 ): Promise<void> {
 	const reader = body.getReader();
 	const decoder = new TextDecoder();
@@ -208,7 +208,7 @@ export function isUpsertData(data: unknown): data is { readonly session: PanelSe
 }
 
 /** The session views the panel published, in the order it published them. */
-export function publishedViews(panel: OmpBotPanel): readonly PanelSessionView[] {
+export function publishedViews(panel: HerdrBotPanel): readonly PanelSessionView[] {
 	return panel.frames
 		.filter(frame => frame.event === "upsert")
 		.map(frame => {
@@ -226,16 +226,16 @@ export function publishedViews(panel: OmpBotPanel): readonly PanelSessionView[] 
  * observed as the panel published it — no frame has to be reconstructed by polling the panel
  * afterwards.
  */
-export async function startOmpBot(): Promise<OmpBotPanel> {
-	const binary = ompBotBinary();
+export async function startHerdrBot(): Promise<HerdrBotPanel> {
+	const binary = herdrBotBinary();
 	if (!existsSync(binary)) {
 		throw new Error(
-			`the interop run needs the actual omp-bot panel, but no binary is at ${binary}; ` +
-				`build it with \`cargo build --release --manifest-path ../omp-bot/backend/Cargo.toml\` ` +
-				`or name an existing one in ${OMP_BOT_BINARY_ENV}`,
+			`the interop run needs the actual herdr-bot panel, but no binary is at ${binary}; ` +
+				`build it with \`cargo build --release --manifest-path ../herdr-bot/backend/Cargo.toml\` ` +
+				`or name an existing one in ${HERDR_BOT_BINARY_ENV}`,
 		);
 	}
-	const directory = mkdtempSync(path.join(tmpdir(), "omp-bot-interop-"));
+	const directory = mkdtempSync(path.join(tmpdir(), "herdr-bot-interop-"));
 	const child = Bun.spawn([binary, "--config", writePanelConfig(directory)], {
 		cwd: directory,
 		stdout: "pipe",
@@ -255,7 +255,7 @@ export async function startOmpBot(): Promise<OmpBotPanel> {
 	}).catch(() => {});
 	void pumpLines(child.stderr, line => output.push(line)).catch(() => {});
 
-	const timer = setTimeout(() => bound.reject(new Error(`omp-bot did not bind within ${START_TIMEOUT_MS}ms`)), START_TIMEOUT_MS);
+	const timer = setTimeout(() => bound.reject(new Error(`herdr-bot did not bind within ${START_TIMEOUT_MS}ms`)), START_TIMEOUT_MS);
 	try {
 		await bound.promise;
 	} catch (error) {
@@ -267,8 +267,8 @@ export async function startOmpBot(): Promise<OmpBotPanel> {
 	}
 
 	const endpoint = `http://127.0.0.1:${port!}`;
-	const frames: OmpBotFrame[] = [];
-	const waiters: Array<{ readonly match: (frame: OmpBotFrame) => boolean; readonly settle: (frame: OmpBotFrame) => void }> = [];
+	const frames: HerdrBotFrame[] = [];
+	const waiters: Array<{ readonly match: (frame: HerdrBotFrame) => boolean; readonly settle: (frame: HerdrBotFrame) => void }> = [];
 	const abort = new AbortController();
 	const subscription = fetch(`${endpoint}/api/sessions/events`, {
 		headers: { accept: "text/event-stream" },
@@ -292,7 +292,7 @@ export async function startOmpBot(): Promise<OmpBotPanel> {
 		waitFor: async (match, label, timeoutMs = FRAME_TIMEOUT_MS) => {
 			const existing = frames.find(match);
 			if (existing !== undefined) return existing;
-			const { promise, resolve, reject } = Promise.withResolvers<OmpBotFrame>();
+			const { promise, resolve, reject } = Promise.withResolvers<HerdrBotFrame>();
 			const waiter = { match, settle: resolve };
 			waiters.push(waiter);
 			const timeout = setTimeout(() => {

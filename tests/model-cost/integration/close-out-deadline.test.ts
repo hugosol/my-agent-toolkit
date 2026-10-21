@@ -23,7 +23,7 @@ import * as path from "node:path";
 import { MODEL_COST } from "../../../extensions/model-cost/definition";
 import type { ConsumptionDocument } from "../../../extensions/model-cost/shared-logic/foundation/session/consumption-document"
 import type { ModelPricingData } from "../../../extensions/model-cost/shared-logic/business/pricing/model-data";
-import { createModelCostRuntime } from "../../../extensions/model-cost/shared-logic/runtime";
+import { createModelCostRuntime, modelCostImplementation } from "../../../extensions/model-cost/shared-logic/runtime";
 import type { SessionFacts, TurnUsage } from "../../../framework/interface/session";
 import type { OwnerReference } from "../../../framework/interface/state";
 import type { TurnSignal } from "../../../framework/runtime/port";
@@ -99,8 +99,7 @@ async function boundSession(file: string): Promise<PortDouble> {
 	const double = portDouble();
 	double.bind(MODEL_COST, {
 		config: { reader: () => `storageDir: ${root}\nbalanceTtlMs: 30000\ncodexQuotaTtlMs: 15000\n` },
-		factory: context =>
-			createModelCostRuntime({
+		factory: modelCostImplementation(context => createModelCostRuntime({
 				config: { storageDir: root },
 				configDirectory: root,
 				userHomeDirectory: root,
@@ -108,7 +107,7 @@ async function boundSession(file: string): Promise<PortDouble> {
 				data: DATA,
 				session: context.session,
 				now: () => T0,
-			}).implementation,
+			})),
 	});
 	double.deliverSession(OWNER, { session: MAIN, event: { kind: "session_start", reason: "initial" } });
 	await double.initiateRun(OWNER);

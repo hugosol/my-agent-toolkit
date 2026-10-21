@@ -36,13 +36,16 @@ import { mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync
 import { tmpdir } from "node:os";
 import * as path from "node:path";
 import { piAdapter } from "../../../../adapters/pi";
-import type { ExtensionImplementation } from "../../../../framework/interface";
 import { MODEL_COST } from "../../../../extensions/model-cost/definition";
-import { MODEL_COST_HARNESS, releasingFrontendsOnCleanup } from "../../../../extensions/model-cost/harnesses/pi";
+import { MODEL_COST_HARNESS, cleanupModelCostPi } from "../../../../extensions/model-cost/harnesses/pi";
 import { attachModelCostWidget } from "../../../../extensions/model-cost/harnesses/pi/widget";
 import type { ConsumptionDocument } from "../../../../extensions/model-cost/shared-logic/foundation/session/consumption-document";
 import type { ModelPricingData } from "../../../../extensions/model-cost/shared-logic/business/pricing/model-data";
-import { type ModelCostRuntime, createModelCostRuntime } from "../../../../extensions/model-cost/shared-logic/runtime";
+import {
+	type ModelCostRuntime,
+	createModelCostRuntime,
+	modelCostImplementation,
+} from "../../../../extensions/model-cost/shared-logic/runtime";
 import { type ControlledPiSurface, type HostSession, controlledPiSurface } from "../../support/pi-host";
 import { uiBoundaryTimerOf } from "../../support/ui-timer";
 
@@ -182,7 +185,7 @@ function fixture(options: { readonly holiday?: boolean; readonly at?: number; re
 	let runtime: ModelCostRuntime | undefined;
 	const bind = piAdapter(MODEL_COST, {
 		configBaseDir: REPOSITORY_ROOT,
-		factory: context => {
+		implementation: modelCostImplementation(context => {
 			runtime ??= createModelCostRuntime({
 				// The framework's own read of the declared configuration is what its shape is validated
 				// against; the root is this file's, so no case writes where the shipped declaration points.
@@ -198,8 +201,8 @@ function fixture(options: { readonly holiday?: boolean; readonly at?: number; re
 					return Promise.reject(new Error("this suite makes no request"));
 				},
 			});
-			return runtime.implementation;
-		},
+			return runtime;
+		}),
 	});
 	const surface = controlledPiSurface();
 	const child = options.child === true ? controlledPiSurface() : undefined;
@@ -445,9 +448,10 @@ describe("the wait belongs to the UI's lifetime, not to a session's (P45)", () =
 	test("the instance's own cleanup releases the frontend first and forgets it", () => {
 		const order: string[] = [];
 		const frontendReleases = new Set<() => void>([() => void order.push("frontend")]);
-		const implementation: ExtensionImplementation = { cleanup: () => void order.push("instance") };
+		// Only the cleanup slot is exercised; the rest of the runtime's surface is not reached.
+		const runtime = { cleanup: () => void order.push("instance") } as unknown as ModelCostRuntime;
 
-		releasingFrontendsOnCleanup(implementation, frontendReleases).cleanup?.();
+		cleanupModelCostPi(runtime, frontendReleases);
 
 		// The dispose front-end is the framework's — its one cleanup, run when the session that
 		// initialized the instance ends — so this is the whole of what reaches this process's frontends:

@@ -33,7 +33,7 @@ import { attachModelCostWidget } from "../../../../extensions/model-cost/harness
 import type { ConsumptionDocument } from "../../../../extensions/model-cost/shared-logic/foundation/session/consumption-document";
 import type { ModelPricingData } from "../../../../extensions/model-cost/shared-logic/business/pricing/model-data";
 import type { ModelCostRuntime } from "../../../../extensions/model-cost/shared-logic/runtime";
-import { createModelCostRuntime } from "../../../../extensions/model-cost/shared-logic/runtime";
+import { createModelCostRuntime, modelCostImplementation } from "../../../../extensions/model-cost/shared-logic/runtime";
 import { piAdapter } from "../../../../adapters/pi";
 import type { SessionFacts } from "../../../../framework/interface/session";
 import type { OwnerReference } from "../../../../framework/interface/state";
@@ -150,7 +150,7 @@ function fixture(): Fixture {
 	let runtime: ModelCostRuntime | undefined;
 	const bind = piAdapter(MODEL_COST, {
 		configBaseDir: REPOSITORY_ROOT,
-		factory: context => {
+		implementation: modelCostImplementation(context => {
 			runtime ??= createModelCostRuntime({
 				// The framework's own read of the declared configuration is what its shape is validated
 				// against; the root is this file's, so no case writes where the shipped declaration points.
@@ -165,8 +165,8 @@ function fixture(): Fixture {
 				// runtime reads them instead of subscribing to any native context event of its own.
 				session: context.session,
 			});
-			return runtime.implementation;
-		},
+			return runtime;
+		}),
 	});
 	const main = controlledPiSurface();
 	const child = controlledPiSurface();

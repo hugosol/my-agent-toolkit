@@ -7,6 +7,7 @@
  * pi's own `null` for an unknown context right after a compaction — is no reading at all rather
  * than a context of nothing, so nothing is reported for it.
  */
+import { defineAdapterDelivery } from "../../../framework/runtime/adapter-authoring";
 import type { HarnessPort } from "../../../framework/runtime/port";
 import type { PiExtensionContext } from "../internal/native";
 import type { PiPortContext } from "../internal/port";
@@ -26,7 +27,7 @@ export function onPiSessionContext(context: PiPortContext): NonNullable<HarnessP
 			const usage = ctx.getContextUsage?.();
 			if (typeof usage?.tokens !== "number") return;
 			const feedback = feedbackTransport(ctx);
-			handler({
+			handler(defineAdapterDelivery("context", {
 				session: context.sessionFactsOf(ctx),
 				owner: context.resolveOwner(context.catalogued(ctx)),
 				reading: {
@@ -36,7 +37,7 @@ export function onPiSessionContext(context: PiPortContext): NonNullable<HarnessP
 				},
 				hasUI: ctx.hasUI,
 				feedback,
-			});
+			}));
 		};
 		// The three native facts a session's own context reading really moves at: the start that
 		// establishes the first one, the finalized message the conversation grows by, and the run

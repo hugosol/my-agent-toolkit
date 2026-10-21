@@ -8,27 +8,35 @@
  * Turn, Round and user-input deliveries are assembled by their own modules; commands and prompts
  * keep their mappings beside them.
  *
+ * The module-level {@link OMP_PORT} is the actual assembly source: every member `HarnessPort`
+ * states is bound here, including the optional members OMP has no fact for, which are recorded as
+ * statically unavailable rather than omitted from the shape. The compiler checks the key set and
+ * each factory's result against `HarnessPort`; today that is a typed convention, not a syntax
+ * restriction — a future source gate can inspect this shape.
+ *
  * It carries no extension semantics: what to register comes from the definition, whether it may be
  * registered is decided by the harness-independent behavior, and what a command does is the
  * framework's control behavior.
  */
+import { defineAdapterPort, unavailablePortMember } from "../../../framework/runtime/adapter-authoring";
 import type { ExtensionDefinition } from "../../../framework/interface/details/definition";
 import type { OwnerReference } from "../../../framework/interface/state";
 import type { HarnessPort } from "../../../framework/runtime/port";
 import { observeSessionContext } from "../domain/context/events";
-import { createContextTracker } from "../domain/context/queries";
+import { createContextTracker, type ContextTracker } from "../domain/context/queries";
 import { registerControl } from "../domain/control";
 import { feedbackTransport } from "../domain/feedback";
 import { markerTransport } from "../domain/marker";
 import type { OmpExtensionApi, OmpSessionContext } from "./native";
 import type { OmpProviderFacts } from "../domain/provider";
 import { observeRunInitiation } from "../domain/prompt";
-import { stateEntryOf } from "../domain/session/effects";
+import { stateEntryOf, type OmpStateEntry } from "../domain/session/effects";
 import {
 	observeRoundEvents,
 	observeSessionEvents,
 	observeTurnEvents,
 	observeUserInputEvents,
+	type SessionEventContext,
 } from "../domain/session/events";
 import { ownerReferenceOf } from "../domain/session/queries";
 import { createViewedSession } from "../domain/session/viewed-session";
@@ -38,6 +46,88 @@ import { subagentIntegrationOf } from "../domain/subagent/queries";
 export interface PortDependencies {
 	readonly providerFacts: OmpProviderFacts;
 }
+
+/**
+ * The per-binding references every {@link OMP_PORT} member is built from.
+ *
+ * One binding owns one tracker, one State entry and one diagnostic channel; the port factories are
+ * lazy and only read them, so a later delivery and a later command see the same references the
+ * first one did.
+ */
+export interface OmpPortContext {
+	readonly pi: OmpExtensionApi;
+	readonly providerFacts: OmpProviderFacts;
+	/** The newest native context this binding's deliveries came from. */
+	readonly context: ContextTracker;
+	/** The one State entry session restoration and commands share. */
+	readonly stateEntry: OmpStateEntry;
+	readonly record: (ctx: OmpSessionContext) => OmpSessionContext;
+	readonly ownerOf: (ctx: OmpSessionContext) => OwnerReference;
+	readonly reportDiagnostic: (message: string) => void;
+	readonly reportMissingFact: (fact: string) => undefined;
+	readonly sessionEvents: SessionEventContext;
+}
+
+/**
+ * The one port this adapter assembles: every member `HarnessPort` states is bound here, and the
+ * two optional members OMP has no fact for are recorded as statically unavailable rather than
+ * conditionally omitted from the shape.
+ *
+ * `OMP_PORT.create` evaluates each factory once per binding, in this order; constructing the
+ * definition itself evaluates none of them. The bindings are the runtime assembly source, not a
+ * second capability inventory.
+ */
+export const OMP_PORT = defineAdapterPort<OmpPortContext>({
+	setLabel: context => label => context.pi.setLabel(label),
+	// The non-model channel this binding reports on. Startup happens before any UI exists, so a
+	// diagnostic goes to stderr: it is user-visible and can never reach model context.
+	reportDiagnostic: context => context.reportDiagnostic,
+	modelPrices: context => context.providerFacts.prices,
+	providerAccess: context => context.providerFacts.access,
+	viewedSession: context => createViewedSession(context.pi, context.context, markerTransport).viewedSession,
+	// This harness integrates subagent observations itself; the Subagent domain answers how that
+	// integration stands, so the port carries no inline capability fact of its own.
+	subagentIntegration: () => subagentIntegrationOf,
+	onSession: context => handler => observeSessionEvents(context.pi, context.sessionEvents, handler),
+	onRound: context => observer => observeRoundEvents(context.pi, context.sessionEvents, observer),
+	onSessionContext: context => handler =>
+		observeSessionContext(context.pi, handler, { record: context.record, owner: context.ownerOf }),
+	nextTask: () => callback => {
+		// The harness's next task: a macrotask that runs after this callback returned and after
+		// everything already queued — the session's own unwinding and any input it drained — has
+		// had its turn. Nothing here waits on a duration or repeats.
+		setTimeout(callback, 0);
+	},
+	onUserInput: context => handler => observeUserInputEvents(context.pi, context.sessionEvents, handler),
+	onTurn: context => handler => observeTurnEvents(context.pi, context.sessionEvents, handler),
+	onRunInitiation: context => handler =>
+		observeRunInitiation(context.pi, handler, {
+			record: context.record,
+			owner: context.ownerOf,
+			markers: markerTransport,
+		}),
+	registerCommand: context => command => {
+		registerControl(context.pi, command, {
+			record: context.record,
+			owner: context.ownerOf,
+			persist: context.stateEntry.persist,
+			feedback: feedbackTransport,
+			markers: markerTransport,
+			reportMissingFact: context.reportMissingFact,
+		});
+	},
+	// Static absences, stated rather than conditionally omitted. OMP states a session's disposal
+	// where the framework's own session facts already reach (its `session_shutdown` event is the
+	// `session_end` this adapter reports), and offers no awaitable exit position of its own, so a
+	// round is left to the facts that binding already publishes. Every session this harness runs
+	// is a binding in this process, so there is no cross-process observation seat to offer either.
+	onDisposal: unavailablePortMember(
+		"this harness reports a disposal as its session-end event and offers no awaitable exit position to close a round from",
+	),
+	sessionObservationAccess: unavailablePortMember(
+		"this entry observes each session in the process that runs it; no cross-process observation seat exists here",
+	),
+});
 
 /** Builds the framework's port onto OMP, bound to one session and the extension's State key. */
 export function createOmpPort(
@@ -89,49 +179,23 @@ export function createOmpPort(
 		return owner;
 	};
 
-	const sessionEvents = {
+	const sessionEvents: SessionEventContext = {
 		record,
 		owner: ownerOf,
 		stateEntry,
 		reportMissingFact,
 		reportBindingDiagnostic,
-	} as const;
-	const { viewedSession } = createViewedSession(pi, context, markerTransport);
-
-	return {
-		setLabel: label => pi.setLabel(label),
-		reportDiagnostic,
-		modelPrices: dependencies.providerFacts.prices,
-		providerAccess: dependencies.providerFacts.access,
-		viewedSession,
-		// This harness integrates subagent observations itself; the Subagent domain answers how that
-		// integration stands, so the port carries no inline capability fact of its own.
-		subagentIntegration: subagentIntegrationOf,
-		onSession: handler => observeSessionEvents(pi, sessionEvents, handler),
-		onRound: observer => observeRoundEvents(pi, sessionEvents, observer),
-		onSessionContext: handler => observeSessionContext(pi, handler, { record, owner: ownerOf }),
-		nextTask: callback => {
-			// The harness's next task: a macrotask that runs after this callback returned and after
-			// everything already queued — the session's own unwinding and any input it drained — has
-			// had its turn. Nothing here waits on a duration or repeats.
-			setTimeout(callback, 0);
-		},
-		onUserInput: handler => observeUserInputEvents(pi, sessionEvents, handler),
-		onTurn: handler => observeTurnEvents(pi, sessionEvents, handler),
-		onRunInitiation: handler => observeRunInitiation(pi, handler, {
-			record,
-			owner: ownerOf,
-			markers: markerTransport,
-		}),
-		registerCommand: command => {
-			registerControl(pi, command, {
-				record,
-				owner: ownerOf,
-				persist: stateEntry.persist,
-				feedback: feedbackTransport,
-				markers: markerTransport,
-				reportMissingFact,
-			});
-		},
 	};
+
+	return OMP_PORT.create({
+		pi,
+		providerFacts: dependencies.providerFacts,
+		context,
+		stateEntry,
+		record,
+		ownerOf,
+		reportDiagnostic,
+		reportMissingFact,
+		sessionEvents,
+	});
 }

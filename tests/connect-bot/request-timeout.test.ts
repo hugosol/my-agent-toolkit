@@ -40,17 +40,17 @@ const sessionOf = (scenario: string) => `budget-${scenario}`;
 /** The one session-event route, as the panel receives it. */
 const EVENTS_PATH = "/api/sessions/events";
 /** Arm success, verbatim, for one online session: what the panel's receipt produces. */
-const CONNECTED = "已接入 omp-bot 面板（当前 1 个在线会话）";
+const CONNECTED = "已接入 herdr-bot 面板（当前 1 个在线会话）";
 /** The `off` that did happen locally while the panel never answered it. */
-const PANEL_SILENT = "omp-bot 面板未响应";
+const PANEL_SILENT = "herdr-bot 面板未响应";
 /** The `off` the panel answered. */
-const DISCONNECTED = "已断开 omp-bot 面板";
+const DISCONNECTED = "已断开 herdr-bot 面板";
 /** The notice a session being left gets when another identity takes its place. */
 const SWITCHED = "会话已切换，已断开面板；重新 /connect-bot 可重连";
 /** Arm failure: the receipt the panel's answer would have carried never arrived in time. */
-const ARM_FAILED = "无法连接 omp-bot，未连接；请确认面板已启动".replace("未连接", "未启用");
+const ARM_FAILED = "无法连接 herdr-bot，未连接；请确认面板已启动".replace("未连接", "未启用");
 /** The first failure of an outage, verbatim from the frozen baseline: what a dropped beat announces. */
-const FIRST_FAILURE = "与 omp-bot 面板连接中断；若持续失败将自动断开";
+const FIRST_FAILURE = "与 herdr-bot 面板连接中断；若持续失败将自动断开";
 
 /** One outbound request the probe made, as the run's own recording of it reported it. */
 interface SentRequest {

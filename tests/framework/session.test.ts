@@ -27,12 +27,15 @@ import type {
 	ObservationScope,
 	SessionEvent,
 	SessionEventDelivery,
-	SessionEventHandlers,
 	SessionStartReason,
 } from "../../framework/interface/session";
 import type { OwnerReference } from "../../framework/interface/state";
-import type { CommandImplementations } from "../../framework/interface/command";
-import { type ExtensionDefinition, defineExtension } from "../../framework/interface";
+import {
+	type ExtensionDefinition,
+	type ImplementationEventHandlers,
+	defineExtension,
+	defineImplementation,
+} from "../../framework/interface";
 
 /** The State entry the framework persists for the codebase-tools definition. */
 const STATE_ENTRY_TYPE = "codebase-tools:state";
@@ -240,19 +243,22 @@ function boundSurface(
 
 	// The assembly's own subscription: what the framework hands a shared-logic session
 	// handler, recorded as the fact under test.
-	const events: SessionEventHandlers = {
-		session_start: (delivery: SessionEventDelivery) => {
+	const events: ImplementationEventHandlers<{}> = {
+		session_start: (_state, delivery: SessionEventDelivery) => {
 			startFacts.push(delivery.session);
 			observed.push(observationOf(delivery));
 		},
-		session_end: (delivery: SessionEventDelivery) => void observed.push(observationOf(delivery)),
-		session_facts: (delivery: SessionEventDelivery) =>
+		session_end: (_state, delivery: SessionEventDelivery) => void observed.push(observationOf(delivery)),
+		session_facts: (_state, delivery: SessionEventDelivery) =>
 			void factsObserved.push({ event: delivery.event, session: delivery.session, owner: delivery.owner }),
 	};
 
 	// The loader binds the extension for the session it is loading: one factory call.
 	const factory = frameworkOmp.ompAdapter(definition, {
-		factory: () => ({ subscriptions: [{ scope: surface.scope ?? "owner", events }] }),
+		implementation: defineImplementation({
+			create: () => ({}),
+			subscriptions: [{ scope: surface.scope ?? "owner", events }],
+		}),
 	});
 	if (!factory(api).bound) throw new Error(`the "${definition.id}" definition did not bind`);
 

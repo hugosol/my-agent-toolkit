@@ -71,22 +71,22 @@ export function selectFeedback(input: FeedbackInput): ExtensionFeedback | undefi
 			// A / B: the receipt also reports how many sessions are online right now — including this
 			// one — while a panel that did not answer as a register leaves this session unarmed.
 			return input.register === undefined
-				? { level: "error", message: "无法连接 omp-bot，未启用；请确认面板已启动" }
-				: { level: "info", message: `已接入 omp-bot 面板（当前 ${input.register.onlineCount} 个在线会话）` };
+				? { level: "error", message: "无法连接 herdr-bot，未启用；请确认面板已启动" }
+				: { level: "info", message: `已接入 herdr-bot 面板（当前 ${input.register.onlineCount} 个在线会话）` };
 
 		case "off":
 			// C / D: any HTTP answer means the panel is reachable and the row is gone — a `404` after
-			// an omp-bot restart included — while a request that never completed is the other word.
+			// a herdr-bot restart included — while a request that never completed is the other word.
 			// An `off` for a session that was not connected happened to nothing, so it says nothing.
 			if (!input.enabledBefore) return undefined;
 			return input.panelAnswered
-				? { level: "info", message: "已断开 omp-bot 面板" }
-				: { level: "error", message: "omp-bot 面板未响应" };
+				? { level: "info", message: "已断开 herdr-bot 面板" }
+				: { level: "error", message: "herdr-bot 面板未响应" };
 
 		case "disconnecting":
 			// K: a new activation arrived while the unregister the operator asked for is still on
 			// the wire. It is not queued; the operator can run the command again once it settles.
-			return { level: "error", message: "正在断开 omp-bot 面板，请稍后重试" };
+			return { level: "error", message: "正在断开 herdr-bot 面板，请稍后重试" };
 
 		case "session-end":
 			// G: another identity took this session's place, so the connection it held is gone and a
@@ -101,10 +101,10 @@ export function selectFeedback(input: FeedbackInput): ExtensionFeedback | undefi
 			// the failure that exhausts the budget announces the end of the connection, and every
 			// failure the segment has already accounted for says nothing at all.
 			if (input.action === "notify-first") {
-				return { level: "error", message: "与 omp-bot 面板连接中断；若持续失败将自动断开" };
+				return { level: "error", message: "与 herdr-bot 面板连接中断；若持续失败将自动断开" };
 			}
 			if (input.action === "notify-disarm") {
-				return { level: "error", message: "与 omp-bot 连接中断，已断开；重新执行 /connect-bot 可重连" };
+				return { level: "error", message: "与 herdr-bot 连接中断，已断开；重新执行 /connect-bot 可重连" };
 			}
 			return undefined;
 
@@ -114,7 +114,7 @@ export function selectFeedback(input: FeedbackInput): ExtensionFeedback | undefi
 			// one word form.
 			return {
 				level: "error",
-				message: `未知参数「${input.argument}」；用法：/connect-bot（接入 omp-bot 面板）或 /connect-bot off（断开）。`,
+				message: `未知参数「${input.argument}」；用法：/connect-bot（接入 herdr-bot 面板）或 /connect-bot off（断开）。`,
 			};
 
 		case "no-ui":

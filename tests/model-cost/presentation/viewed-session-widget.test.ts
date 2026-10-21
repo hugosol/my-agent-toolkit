@@ -30,7 +30,7 @@ import { MODEL_COST_WIDGET_KEY, attachModelCostWidget } from "../../../extension
 import type { ConsumptionDocument } from "../../../extensions/model-cost/shared-logic/foundation/session/consumption-document";
 import type { ModelPricingData } from "../../../extensions/model-cost/shared-logic/business/pricing/model-data";
 import type { ModelCostRuntime } from "../../../extensions/model-cost/shared-logic/runtime";
-import { createModelCostRuntime } from "../../../extensions/model-cost/shared-logic/runtime";
+import { createModelCostRuntime, modelCostImplementation } from "../../../extensions/model-cost/shared-logic/runtime";
 import type { SessionFacts } from "../../../framework/interface/session";
 import type { OwnerReference } from "../../../framework/interface/state";
 import { portDouble } from "../../framework/support/harness-port-double";
@@ -239,7 +239,7 @@ async function boundRuntime(): Promise<ModelCostRuntime> {
 	let runtime: ModelCostRuntime | undefined;
 	double.bind(MODEL_COST, {
 		config: { reader: () => `storageDir: ${root}\nbalanceTtlMs: 30000\ncodexQuotaTtlMs: 15000\n` },
-		factory: context => {
+		factory: modelCostImplementation(context => {
 			runtime = createModelCostRuntime({
 				config: { storageDir: root },
 				configDirectory: root,
@@ -249,8 +249,8 @@ async function boundRuntime(): Promise<ModelCostRuntime> {
 				session: context.session,
 				now: () => CLOCK_AT,
 			});
-			return runtime.implementation;
-		},
+			return runtime;
+		}),
 	});
 	double.deliverSession(OWNER, { session: MAIN });
 	await double.initiateRun(OWNER);

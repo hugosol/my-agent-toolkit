@@ -21,7 +21,7 @@ import type { ImplementationContext, InitializationDelivery } from "../../framew
 import type { SessionEvent, SessionStartReason } from "../../framework/interface/session";
 import type { OwnerReference } from "../../framework/interface/state";
 import type { SubagentIntegration } from "../../framework/interface/subagent";
-import { type ExtensionDefinition, defineExtension } from "../../framework/interface";
+import { type ExtensionDefinition, defineExtension, defineImplementation } from "../../framework/interface";
 import { portDouble } from "./support/harness-port-double";
 
 /** The owner every delivery in this suite acts on unless one is named. */
@@ -571,10 +571,12 @@ describe("one implementation serves every binding of one adapter (P56)", () => {
 			commands: [{ type: "toggle", name: "adapter-memo-toggle", state: "enabled" }],
 		});
 		const adapter: OmpExtensionFactory = frameworkOmp.ompAdapter(definition, {
-			factory: () => {
-				built += 1;
-				return {};
-			},
+			implementation: defineImplementation({
+				create: () => {
+					built += 1;
+					return {};
+				},
+			}),
 		});
 
 		const first = adapter(nativeApi("18.5.0"));
@@ -589,9 +591,14 @@ describe("one implementation serves every binding of one adapter (P56)", () => {
 		const seen: SubagentIntegration[] = [];
 		const adapter = frameworkOmp.ompAdapter(
 			defineExtension({ id: "adapter-subagents", displayName: "adapterSubagents" }),
-			{ factory: () => ({ initialize: delivery => {
-				seen.push(delivery.subagents);
-			} }) },
+			{
+				implementation: defineImplementation({
+					create: () => ({}),
+					initialize: (_state, delivery) => {
+						seen.push(delivery.subagents);
+					},
+				}),
+			},
 		);
 
 		// The real adapter's answer, not a double's: OMP integrates the subagent observations
@@ -610,25 +617,26 @@ describe("one implementation serves every binding of one adapter (P56)", () => {
 		const ran: number[] = [];
 		const cleaned: number[] = [];
 		const adapter = frameworkOmp.ompAdapter(actionsProbe("adapter-fresh"), {
-			factory: () => {
-				const instance = built.length + 1;
-				built.push(instance);
-				return {
-					initialize: () => {
-						initialized.push(instance);
-					},
-					cleanup: () => {
-						cleaned.push(instance);
-					},
-					commands: {
-						"adapter-fresh-run": {
-							report: () => {
-								ran.push(instance);
-							},
+			implementation: defineImplementation<{ readonly instance: number }>({
+				create: () => {
+					const instance = built.length + 1;
+					built.push(instance);
+					return { instance };
+				},
+				initialize: state => {
+					initialized.push(state.instance);
+				},
+				cleanup: state => {
+					cleaned.push(state.instance);
+				},
+				commands: {
+					"adapter-fresh-run": {
+						report: state => {
+							ran.push(state.instance);
 						},
 					},
-				};
-			},
+				},
+			}),
 		});
 
 		// The first binding: one session's load, initialized once and disposed when the process

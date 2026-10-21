@@ -56,7 +56,11 @@ import type { ConsumptionDocument,
 	TokenBuckets, } from "../../../../extensions/model-cost/shared-logic/foundation/session/consumption-document"
 import type { DisplayTarget } from "../../../../extensions/model-cost/shared-logic/presentation/display";
 import type { ModelPricingData } from "../../../../extensions/model-cost/shared-logic/business/pricing/model-data";
-import { type ModelCostRuntime, createModelCostRuntime } from "../../../../extensions/model-cost/shared-logic/runtime";
+import {
+	type ModelCostRuntime,
+	createModelCostRuntime,
+	modelCostImplementation,
+} from "../../../../extensions/model-cost/shared-logic/runtime";
 import { uiBoundaryTimerOf } from "../../support/ui-timer";
 
 const BEIJING_OFFSET_MS = 8 * 60 * 60 * 1000;
@@ -368,31 +372,32 @@ function assemblePiSurface(): PiSurface {
 
 	const bind = piAdapter(MODEL_COST, {
 		configBaseDir: REPOSITORY_ROOT,
-		factory: context => {
-			const built = createModelCostRuntime({
-				config: { ...context.config, storageDir: STORAGE_ROOT },
-				configDirectory: path.join(REPOSITORY_ROOT, "extensions", MODEL_COST.id),
-				userHomeDirectory: STORAGE_ROOT,
-				harness: MODEL_COST_HARNESS,
-				// The one harness fact this hand-built assembly states for itself: the cases below drive
-				// the display and the tree, which the extension offers to an entry whose subagent
-				// observations integrated — the shipped assembly records that answer from the framework's
-				// own initialization delivery (see `harnesses/pi.ts`).
-				subagentIntegrationMode: () => "subagents",
-				data: DATA,
-				session: context.session,
-			});
-			runtime = built;
-			const cleanup = built.implementation.cleanup;
-			return {
-				...built.implementation,
-				cleanup: () => {
+		implementation: modelCostImplementation(
+			context => {
+				const built = createModelCostRuntime({
+					config: { ...context.config, storageDir: STORAGE_ROOT },
+					configDirectory: path.join(REPOSITORY_ROOT, "extensions", MODEL_COST.id),
+					userHomeDirectory: STORAGE_ROOT,
+					harness: MODEL_COST_HARNESS,
+					// The one harness fact this hand-built assembly states for itself: the cases below drive
+					// the display and the tree, which the extension offers to an entry whose subagent
+					// observations integrated — the shipped assembly records that answer from the framework's
+					// own initialization delivery (see `harnesses/pi.ts`).
+					subagentIntegrationMode: () => "subagents",
+					data: DATA,
+					session: context.session,
+				});
+				runtime = built;
+				return built;
+			},
+			{
+				cleanup: built => {
 					releaseFrontend?.();
 					releaseFrontend = undefined;
-					return cleanup?.();
+					built.cleanup();
 				},
-			};
-		},
+			},
+		),
 	});
 	if (!bind(surface.api).bound) throw new Error("the model-cost pi assembly did not bind");
 	releaseFrontend = attachModelCostWidget(surface.api, surface.runtime, uiBoundaryTimerOf(surface.runtime));
@@ -871,13 +876,14 @@ describe("one observed request is accounted exactly once (P8)", () => {
 
 	test("the same Turn delivered again is not a second consumption, and its mark outlives the Round and the period", async () => {
 		const surface = assemblePiSurface();
-		const { view } = surface.runtime;
-		const subscribed = surface.runtime.implementation.subscriptions?.[0]?.events;
+		const runtime = surface.runtime;
+		const view = runtime.view;
+		const subscribed = modelCostImplementation(() => runtime).declaration.subscriptions?.[0]?.events;
 		if (subscribed?.turn_start === undefined || subscribed.turn_end === undefined) {
-			throw new Error("the extension's own Turn subscription is not reachable through its implementation");
+			throw new Error("the extension's own Turn subscription is not reachable through its authored declaration");
 		}
-		const turnStarted = subscribed.turn_start;
-		const turnEnded = subscribed.turn_end;
+		const turnStarted = (delivery: TurnStartDelivery) => subscribed.turn_start?.(runtime, delivery);
+		const turnEnded = (delivery: TurnEndDelivery) => subscribed.turn_end?.(runtime, delivery);
 
 		surface.sessionStarts(MAIN, "startup");
 		await surface.agentStarts(MAIN);
@@ -899,14 +905,14 @@ describe("one observed request is accounted exactly once (P8)", () => {
 		});
 
 		// A Round boundary passes — the Round opens and ends, which publishes the session's own record.
-		subscribed.round_start?.({
+		subscribed.round_start?.(runtime, {
 			event: { kind: "round_start" },
 			owner: OWNER_OF_MAIN,
 			session: MAIN_FACTS,
 			hasUI: true,
 			feedback: settled.feedback,
 		});
-		await subscribed.round_end?.({
+		await subscribed.round_end?.(runtime, {
 			event: { kind: "round_end", ending: "confirmed" },
 			owner: OWNER_OF_MAIN,
 			session: MAIN_FACTS,

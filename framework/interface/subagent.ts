@@ -1,10 +1,10 @@
 /**
  * The Subagent capability's canonical extension-facing declarations.
  *
- * Two things an extension needs are here and nothing else: the settled integration result one
- * initialization receives, and the capability vocabulary an extension's definition declares its
- * integration needs. The harness's execution mode, its coverage inventory and the way it locates
- * the party that loads an entry into the sessions it spawns remain adapter/verification business;
+ * The settled integration result one initialization receives lives here. Integration demand is
+ * derived by offline source analysis rather than a second requirement vocabulary in definitions.
+ * The harness's execution mode and the way it locates the party that loads an entry into the
+ * sessions it spawns remain adapter/verification business;
  * nothing here selects, queries or reports an execution mode.
  *
  * Sharing these semantics across the two supported harnesses does not mean sharing a JavaScript
@@ -52,25 +52,4 @@ export type SubagentIntegration =
 			readonly diagnosis: string;
 	  };
 
-/**
- * Framework semantics an extension needs from its subagent integration.
- *
- * These declarations carry no runtime check, implementation or behavior-test evidence: they state
- * what a supported integration must cover for the extension to participate fully. The independent
- * integration completeness check reads them; normal startup and feature behavior do not.
- */
-export type SubagentCapability =
-	/** The subagent loads the extension logic needed to participate. */
-	| "extension-loading"
-	/** Actual session identity, direct parent and Owner relationships. */
-	| "session-facts"
-	/** Each actual session's own response usage, without duplicate accounting. */
-	| "turn-usage"
-	/** Each actual session's lifecycle, Round edges and awaitable disposal. */
-	| "session-lifecycle"
-	/** Per-session activity, context and startup observations. */
-	| "session-observations"
-	/** Confirmed storage commits can be observed where the Owner is served. */
-	| "storage-commit"
-	/** A declared following field reads its Owner's value. */
-	| "state-follow";
+

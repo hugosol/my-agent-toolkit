@@ -51,11 +51,11 @@ const MARKER_TEXT = "◐ connectBot";
 const ownerKey = (sessionId: string) => `main:${sessionId}`;
 
 /** Arm success, verbatim, for one online session. */
-const CONNECTED = "已接入 omp-bot 面板（当前 1 个在线会话）";
+const CONNECTED = "已接入 herdr-bot 面板（当前 1 个在线会话）";
 /** The first failure of an outage, verbatim from the frozen baseline. */
-const FIRST_FAILURE = "与 omp-bot 面板连接中断；若持续失败将自动断开";
+const FIRST_FAILURE = "与 herdr-bot 面板连接中断；若持续失败将自动断开";
 /** The budget running out, verbatim from the frozen baseline. */
-const AUTO_DISARM = "与 omp-bot 连接中断，已断开；重新执行 /connect-bot 可重连";
+const AUTO_DISARM = "与 herdr-bot 连接中断，已断开；重新执行 /connect-bot 可重连";
 
 /** One outbound request the extension made, as the framework's call received it. */
 interface Request {
@@ -108,7 +108,7 @@ const answers = {
 	gone: async (): Promise<Response> => {
 		throw new Error("the panel never answered");
 	},
-	/** The panel is reachable but has forgotten this session, as after an omp-bot restart. */
+	/** The panel is reachable but has forgotten this session, as after a herdr-bot restart. */
 	unknownSession: async () => panelAnswer(404, { error: "unknown-session" }),
 	/** The panel takes the push. */
 	reachable: async () => panelAnswer(200, { outcome: "accepted" }),

@@ -26,8 +26,11 @@ import {
 } from "../../extensions/model-cost/harnesses/omp/widget";
 import type { ConsumptionDocument } from "../../extensions/model-cost/shared-logic/foundation/session/consumption-document";
 import { MODEL_PRICING_DATA } from "../../extensions/model-cost/shared-logic/business/pricing/model-data";
-import type { ModelCostRuntime } from "../../extensions/model-cost/shared-logic/runtime";
-import { createModelCostRuntime } from "../../extensions/model-cost/shared-logic/runtime";
+import {
+	createModelCostRuntime,
+	modelCostImplementation,
+	type ModelCostRuntime,
+} from "../../extensions/model-cost/shared-logic/runtime";
 import { portDouble } from "../../tests/framework/support/harness-port-double";
 import { controlApi } from "../../tests/model-cost/support/control-api";
 import { uiBoundaryTimerOf } from "../../tests/model-cost/support/ui-timer";
@@ -242,15 +245,17 @@ export async function bindDetailLayout(): Promise<FixtureRun> {
 	let runtime: ModelCostRuntime | undefined;
 	double.bind(MODEL_COST, {
 		config: { reader: () => `storageDir: ${root}\nbalanceTtlMs: 30000\ncodexQuotaTtlMs: 15000\n` },
-		factory: context =>
-			(runtime = createModelCostRuntime({
-				config: { storageDir: root },
-				configDirectory: root,
-				userHomeDirectory: root,
-				harness: HARNESS,
-				session: context.session,
-				data: MODEL_PRICING_DATA,
-			})).implementation,
+		factory: modelCostImplementation(
+			context =>
+				(runtime = createModelCostRuntime({
+					config: { storageDir: root },
+					configDirectory: root,
+					userHomeDirectory: root,
+					harness: HARNESS,
+					session: context.session,
+					data: MODEL_PRICING_DATA,
+				})),
+		),
 	});
 	double.deliverSession(OWNER, { session: MAIN });
 	double.deliverSession(OWNER, { event: { kind: "session_facts" }, session: MAIN });

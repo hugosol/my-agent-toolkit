@@ -17,7 +17,7 @@
  * fixture never saw the delivery".
  */
 import { piAdapter } from "../../../../adapters/pi";
-import type { ExtensionDefinition } from "../../../../framework/interface";
+import { type ExtensionDefinition, defineImplementation } from "../../../../framework/interface";
 import type { SessionObservation } from "../../../../framework/interface/session";
 import { PI_SUBAGENT_OBSERVATION_PREFIX } from "./prefix";
 
@@ -56,43 +56,44 @@ function heldText(held: SessionObservation | undefined): string {
 export function piSubagentObservationProbe(childEntry: string) {
 	return piAdapter(PROBE, {
 		childEntry,
-		factory: context => ({
-		subscriptions: [
-			{
-				scope: "session",
-				events: {
-					session_activity: delivery => {
-						const held = context.session.observations.read(delivery.session.sessionId);
-						note(
-							[
-								"activity",
-								`id=${delivery.session.sessionId}`,
-								`kind=${delivery.session.kind}`,
-								`parent=${stated(delivery.session.parentSessionId)}`,
-								`owner=${ownerText(delivery.owner)}`,
-								`activity=${delivery.activity}`,
-								heldText(held),
-							].join(" "),
-						);
-					},
-					session_context: delivery => {
-						const held = context.session.observations.read(delivery.session.sessionId);
-						note(
-							[
-								"context",
-								`id=${delivery.session.sessionId}`,
-								`kind=${delivery.session.kind}`,
-								`parent=${stated(delivery.session.parentSessionId)}`,
-								`owner=${ownerText(delivery.owner)}`,
-								`tokens=${stated(delivery.reading.tokens)}`,
-								`model=${delivery.reading.provider === undefined ? "none" : `${delivery.reading.provider}/${delivery.reading.model ?? "?"}`}`,
-								heldText(held),
-							].join(" "),
-						);
+		implementation: defineImplementation({
+			create: context => ({ observations: context.session.observations }),
+			subscriptions: [
+				{
+					scope: "session",
+					events: {
+						session_activity: (state, delivery) => {
+							const held = state.observations.read(delivery.session.sessionId);
+							note(
+								[
+									"activity",
+									`id=${delivery.session.sessionId}`,
+									`kind=${delivery.session.kind}`,
+									`parent=${stated(delivery.session.parentSessionId)}`,
+									`owner=${ownerText(delivery.owner)}`,
+									`activity=${delivery.activity}`,
+									heldText(held),
+								].join(" "),
+							);
+						},
+						session_context: (state, delivery) => {
+							const held = state.observations.read(delivery.session.sessionId);
+							note(
+								[
+									"context",
+									`id=${delivery.session.sessionId}`,
+									`kind=${delivery.session.kind}`,
+									`parent=${stated(delivery.session.parentSessionId)}`,
+									`owner=${ownerText(delivery.owner)}`,
+									`tokens=${stated(delivery.reading.tokens)}`,
+									`model=${delivery.reading.provider === undefined ? "none" : `${delivery.reading.provider}/${delivery.reading.model ?? "?"}`}`,
+									heldText(held),
+								].join(" "),
+							);
+						},
 					},
 				},
-			},
-		],
+			],
 		}),
 	});
 }

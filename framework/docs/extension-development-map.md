@@ -2,7 +2,17 @@
 
 这份地图面向新增或修改 extension 的开发者与 agent，回答两个问题：**需要一个功能时先去哪里找；新增代码应由哪一层负责。**
 
-地图只保留长期稳定的职责与判断原则，不维护具体接口、源码清单或实施进度。能力入口查[框架能力索引](framework-capabilities.md)，接口细节读源码；架构理由见 [ADR 0002](../../docs/adr/0002-semantic-extension-framework.md)，术语见 [Glossary Map](../../GLOSSARY-MAP.md)。
+这是 **extension 开发者入口**，集中维护扩展的职责划分与阅读顺序，不维护第二份接口清单或实施进度。其他角色与检查专题从[文档导航](README.md)进入。
+
+## 阅读与开发顺序
+
+1. **找能力**：先读[能力 interface 阅读地图](../interface/README.md)，再按[框架能力索引](framework-capabilities.md)定位需要的声明、交付类型和源码。索引负责导航，canonical interface 的类型、注释与使用约定负责定义契约；不必先通读 framework implementation。
+2. **理解语义**：特别核对身份、观察范围、效果权限、交付顺序、初始化/清理、异步失败与配置要求。Session 从[Session 契约](../interface/session/README.md)进入；框架术语从 [Glossary Map](../../GLOSSARY-MAP.md)定位，不以宿主同名方法代替公共语义。
+3. **组织扩展**：用 `defineExtension` 声明扩展，用 `defineImplementation` 静态表达订阅、命令与生命周期，`create(context)` 构造业务状态；本页说明各层职责，[model-cost 分层实例](capability-layering.md)说明复杂扩展如何拆分。简单扩展不必复制全部目录。
+4. **连接宿主**：`harnesses/` 选择 `adapters/<harness>` 公共入口并连接扩展专属实现，`entrypoints/` 只负责发现。新增公共 adapter 时转到 [harness 接入指南](harness-integration.md)。
+5. **验证**：先遵循[静态 authoring 规则](static-authoring-check.md)，再按 [integration check](integration-check.md)扫描实际 extension 与目标 adapter；最后运行本扩展的行为用例和相应真实 harness 场景。静态接齐不等于语义正确，版本是否满足需求按[版本检查手册](harness-support.md#version-verification)另行验证。
+
+架构理由见 [ADR 0002](../../docs/adr/0002-semantic-extension-framework.md)。
 
 ## 一、先区分业务、公共语义与宿主机制
 
@@ -29,23 +39,30 @@
 
 `shared-logic` 中的“shared”指**同一扩展跨宿主共享**，不意味着所有扩展共用一个业务层。独立扩展拥有自己的业务；framework 不依赖具体扩展。
 
-### Adapter 按共享能力领域导航
+### 公共 adapter 的实现导航
 
-公共接入位于仓库顶层 `adapters/<harness>/`。每个 adapter 根目录只有 `index.ts`、`internal/`、`domain/`：`index.ts` 是公共装配入口，`internal/` 是私有原生支撑与 binding port，`domain/` 集中放置能力领域。`domain/` 内直接按能力领域组织，不按消费它的 extension 分组，也不增加 business/foundation 中间目录。领域归属有歧义时，业务领域优先；只有真正公共的支撑能力才独立共享。按能力含义归类，不按原生对象的数据来源归类。framework 公共领域补充业务词汇：Turn、Round 收入 Session；context 保持自己的职责，provider/catalog 查询集中在 Provider。
-
-领域内部默认按映射方式组织：`events.ts` 把原生观察转成 framework 事件，`queries.ts` 把原生读取转成 framework 数据，`effects.ts` 执行 framework 请求的原生效果。先找领域，再找映射方式；只创建实际需要的文件，简单领域仍用单文件。复杂 Turn、Round 原生协议可留作 Session 内部 implementation，不增加纯转发入口。事件 delivery 的领域构造靠近事件映射，不留给 port 逐项拼装；共享类型、诊断和状态靠近其寿命拥有者，不另建一套支撑能力分类。
-
-这是帮助从 requirement 定位到相关 module 附近的导航约定，不要求一项声明一份文件，也不扩展当前 `subagentRequirements` 范围。具体落点见[能力到实现的导航](framework-capabilities.md#adapter-implementation-navigation)。简单能力优先一个文件，确有协作才增加目录；不要求不同 Harness 文件对称。
-
-完整领域包括 Session、Context、Subagent、Provider、Control、Prompt、Feedback、Marker；每个领域先明确归属，再决定单文件或目录，不能把原生数据来源或第三方接入名称当作主要领域。Subagent 拥有原生父子/祖先关系、接入状态与必要的接入协议；子会话通用的 Session、Turn、Round 事件仍归 Session，不复制第二条事件路径。Feedback 与 Marker 各自拥有原生效果。能力领域全部放在 `domain/` 下；原生类型、文本加载和 binding 端口放在 `internal/`，`index.ts` 负责公共装配入口，均不当作领域；完整路径对照只维护在[能力导航](framework-capabilities.md#adapter-implementation-navigation)。
-
-装配连接各领域 module，公共事实保留单一来源；跨领域通过明确 interface 协作，不重复维护身份、当前读数或寿命规则。已有 seam 上的 adapter 兑现统一契约，公共 implementation 留在 framework；用 deletion test 衡量 depth，追求 locality 与 leverage，不增加 shallow 转发。interface 是 test surface，验证不按新文件逐一镜像。
+Extension 只消费 `adapters/<harness>` 的公共装配入口，不导入其私有 port 或 domain implementation。公共 adapter 的目录组织、领域归属和原生映射步骤集中在 [harness 接入指南](harness-integration.md)；各能力的具体源码位置只维护在[能力到实现的导航](framework-capabilities.md#adapter-implementation-navigation)。不要把公共 adapter 的领域布局照搬为扩展的业务布局。
 
 ### Framework adapter 与 extension 宿主实现不是同一层
 
 Framework adapter 服务于公共契约，extension 的宿主实现服务于这个扩展。不能因为两者都接触原生能力，就把它们合并。
 
 例如，公共事件的原生映射属于 framework adapter；某个扩展如何使用宿主 widget 绘制自己的界面，属于该扩展的宿主实现。业务计算不属于这两者。extension 的 presentation 不在公共 adapter 分类下；framework 的 Marker area、Extension feedback 仍由公共 adapter 映射到原生输出。
+
+### 用 model-cost 判断扩展内部落点
+
+[model-cost README](../../extensions/model-cost/README.md#shared-logic-architecture)是实例入口；[分层实例](capability-layering.md)集中解释其职责、保存协作与测试组织。可以按下面的问题判断新逻辑的归属，而不是按文件大小拆分：
+
+| 新逻辑 | model-cost 的落点 | 为什么 |
+| --- | --- | --- |
+| 声明激活状态、命令和贡献 | [`definition.ts`](../../extensions/model-cost/definition.ts) | 描述扩展，不启动业务或原生资源 |
+| 计价、余额、额度、显示预算、后代数据组合 | [`shared-logic/business/`](../../extensions/model-cost/shared-logic/business/) | 独立业务功能拥有自己的规则；后代组合不创建第二份消费账本 |
+| 会话消费权威、关系、协调存储、共享刷新策略 | [`shared-logic/foundation/`](../../extensions/model-cost/shared-logic/foundation/) | 同一扩展内部稳定的内向支撑；不 import business，不把计价政策下沉 |
+| 字段选择、格式化、只读视图与重绘通知 | [`shared-logic/presentation/`](../../extensions/model-cost/shared-logic/presentation/) | 展示消费业务结果，不在绘制时查询 provider、写文件或累计消费 |
+| 创建 module、订阅和生命周期接线 | [`shared-logic/runtime.ts`](../../extensions/model-cost/shared-logic/runtime.ts) | 连接既有职责，不成为新的业务收容层 |
+| 原生布局、绘制和公共 adapter 装配 | [`harnesses/`](../../extensions/model-cost/harnesses/) | 原生依赖留在扩展的宿主层，不泄漏到 shared logic |
+
+依赖方向是 `presentation → business → foundation → framework/interface`；business 可以单向组合其他 business，禁止循环依赖和重复权威。`runtime.ts` 负责组合这些 module，宿主装配负责注入原生实现。不是每个扩展都需要 foundation；出现真实共享协作再提取，简单扩展保持简单。
 
 ## 三、需要功能时，先沿公共能力查找
 

@@ -53,7 +53,11 @@ import { fileURLToPath } from "node:url";
 import { MODEL_COST } from "../../../../extensions/model-cost/definition";
 import { MODEL_COST_HARNESS } from "../../../../extensions/model-cost/harnesses/pi";
 import { CODEX_USAGE_URL } from "../../../../extensions/model-cost/shared-logic/business/allowance/codex-quota";
-import { type ModelCostRuntime, createModelCostRuntime } from "../../../../extensions/model-cost/shared-logic/runtime";
+import {
+	type ModelCostRuntime,
+	createModelCostRuntime,
+	modelCostImplementation,
+} from "../../../../extensions/model-cost/shared-logic/runtime";
 import { type PiExtensionApi, piAdapter } from "../../../../adapters/pi";
 import type { HttpRequestOptions } from "../../../../framework/interface/general/http";
 import { createHttpModule } from "../../../../framework/modules/http";
@@ -188,7 +192,7 @@ export default function piCodexQuotaProbe(pi: PiExtensionApi): void {
 	const accountRequest = scriptDir === undefined ? unconfiguredRequest : scriptedAccountRequest(scriptDir);
 	piAdapter(MODEL_COST, {
 		configBaseDir: REPOSITORY_ROOT,
-		factory: context => {
+		implementation: modelCostImplementation(context => {
 			const ttlMs = declaredTtlMs();
 			const runtime: ModelCostRuntime = createModelCostRuntime({
 				config: ttlMs === undefined ? context.config : { ...context.config, codexQuotaTtlMs: ttlMs },
@@ -207,7 +211,7 @@ export default function piCodexQuotaProbe(pi: PiExtensionApi): void {
 					`${PI_CODEX_QUOTA_ESTIMATE_LINE}${JSON.stringify(runtime.presentation.estimate() ?? null)}\n`,
 				);
 			});
-			return runtime.implementation;
-		},
+			return runtime;
+		}),
 	})(pi);
 }

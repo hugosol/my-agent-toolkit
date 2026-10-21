@@ -18,6 +18,7 @@
  * never inherits it.
  */
 import type { TurnOutcome } from "../../../../framework/interface/session";
+import { defineAdapterDelivery } from "../../../../framework/runtime/adapter-authoring";
 import type { HarnessPort, RoundObservation, RoundSignal } from "../../../../framework/runtime/port";
 import { feedbackTransport } from "../feedback";
 import type { PiExtensionApi, PiExtensionContext } from "../../internal/native";
@@ -120,12 +121,12 @@ export function observeRounds(
 		// The session this observation is about, read once: the late re-checks ask the session's own
 		// identity which statement belongs to it, and read it from this same context.
 		const frame = context.frame(ctx);
-		observer({
+		observer(defineAdapterDelivery("round", {
 			signal,
 			...frame,
 			quiescent: () => quiescent(ctx, frame.session.sessionId),
 			heldWork: () => heldWork(frame.session.sessionId),
-		});
+		}));
 	};
 
 	context.track(pi.on("agent_start", (_event, ctx) => {

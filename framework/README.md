@@ -5,6 +5,16 @@ supported harnesses (`pi` and `oh-my-pi`). Extensions import this source directl
 [ADR 0002](../docs/adr/0002-semantic-extension-framework.md)); the framework must never depend on an
 individual extension.
 
+## Reading paths
+
+Start with the [documentation map](docs/README.md), organized by audience:
+
+- **Extension developers:** [finding capabilities and organizing extension code](docs/extension-development-map.md), with [model-cost layering](docs/capability-layering.md) as the worked example.
+- **Harness integrators:** [adapter integration and semantic comparison](docs/harness-integration.md).
+- **Framework maintainers:** [layering and inspectability principles](docs/capability-interface-architecture.md).
+
+The two verification runbooks are separate: [integration check](docs/integration-check.md) checks source-derived demand against actual adapter wiring; [harness version verification](docs/harness-support.md#version-verification) checks an exact version through behavior suites and real-host observations. Neither replaces the other. This README owns the layout and human execution entry, not another copy of those runbooks.
+
 ## Layout
 
 | Layer | What lives there |
@@ -36,15 +46,17 @@ index of that public surface; the source it cites is authoritative for behavior,
 The native boundary is enforced by
 [`../tests/framework/import-boundary.test.ts`](../tests/framework/import-boundary.test.ts).
 
-**The assembly the authoring entry leads to.** An extension declares plain data with `defineExtension`, and
-what the framework connects to that declaration is an `ExtensionAssembly`: a factory called once the
-declared configuration validated — handed the validated values, expected to build the extension's business
-instance without sending a remote request or starting a timer — plus the semantics the extension
-additionally depends on and the directory its relative configuration path is resolved against. A harness
-adapter consumes that value unchanged, so an assembly names no harness. What the factory returns carries
-the commands and lifecycle handlers the declarations need and, optionally, the one-time `initialize` the
-first model request waits for and the one `cleanup` the disposal of the session the instance serves runs. See
-[the implementation factory and its lifecycle](docs/framework-capabilities.md#the-implementation-factory-and-its-lifecycle).
+**The assembly the authoring entry leads to.** An extension declares plain data with `defineExtension` and
+its implementation with `defineImplementation`: `create(context)` builds the one business state, while
+the declaration's static subscription groups, command slots, catalog selector and lifecycle entries name
+handlers that receive that state. The authored declaration is inspectable before `create` runs, so the
+framework can select a binding's requirements without executing extension code; it is the only requirement
+inventory — there is no parallel list. An `ExtensionAssembly` supplies that authored implementation plus
+the semantics the extension additionally depends on and the directory its relative configuration path is
+resolved against. A harness adapter consumes the value unchanged, so an assembly names no harness. The
+one-time `initialize` is still what the first model request waits for, and the one `cleanup` is still what
+the disposal of the session the instance serves runs. See
+[the authored implementation and its lifecycle](docs/framework-capabilities.md#the-authored-implementation-and-its-lifecycle).
 
 ## Quick start
 
@@ -160,66 +172,6 @@ decision itself.
 
 ## Upgrading the supported harness
 
-The upgrade standard covers **framework capabilities only** (C1–C15, `tests/framework`).
-Extension capabilities are covered by `tests/codebase-tools` (permanent, on the fixed version)
-plus the human user acceptance at the end of development — they are not part of the long-term
-standard.
+The complete procedure now lives in [Harness version verification](docs/harness-support.md#version-verification): fixed-baseline checks, exact-version candidate verification, extension regressions, real-host scripts, evidence limits and the explicit maintainer promotion step.
 
-Verification of another version happens **on demand**, when a maintainer proposes a candidate.
-Default and CI always run the fixed supported version; never add a candidate run to CI. Steps 1–2
-are mechanical and can be run by a human or an agent; steps 3–4 are human/maintainer actions.
-
-1. **Candidate basic verification (regression alarm).**
-
-   ```bash
-   OMP_TEST_VERSION=18.6.1 bun run verify:omp-candidate
-   ```
-
-   This installs that exact version into its own isolated prefix `.cache/omp-baseline/18.6.1`,
-   runs `bun test tests/framework` against it, and writes a checkable result record to
-   `.cache/omp-baseline/18.6.1/candidate-verification.json` (version, prefix, isolation,
-   suite exit code and pass/fail counts, and the alarm verdict).
-
-   - `--dry-run` prints the resolved version, prefix and command and changes nothing.
-   - `--install-only` materialises the isolated install without running the suite.
-   - With `OMP_TEST_VERSION` unset, the same command verifies the fixed supported version.
-   - Nothing here touches the default global install, the formal configuration or a running
-     agent: all writes stay under `.cache/omp-baseline/`, and every session the suite starts
-     runs from the isolated install under a temporary agent state.
-
-   The result is a **regression alarm**: a green run means the framework suite still passes on
-   that version. It does **not** certify the version and does not change any support claim.
-
-2. **Extension regression (permanent, fixed version).**
-
-   ```bash
-   bun run test:codebase-tools
-   ```
-
-3. **Human TUI spot check — only when the upgrade touches an extension-visible surface.**
-   Marker rendering, the command, contribution order or role, and session resume are
-   extension-visible. When the candidate changes any of them, the maintainer appends one
-   interactive TUI spot check of the deployed extension to the checks above (the acceptance
-   checklist in
-   [H1](../extensions/codebase-tools/README.md#h1--interactive-tui-acceptance-visual) is the same
-   surface). When it does not, the candidate suite alone is the alarm.
-
-4. **Replace the supported version — an explicit maintainer action.**
-   Only after reviewing the candidate result (and the spot check where step 3 applied):
-
-   - update the four-state support record and the upgrade standard in
-     [`docs/harness-support.md`](docs/harness-support.md) with the new combination,
-     evidence and conditions;
-   - refresh [`docs/harness-baseline.json`](docs/harness-baseline.json) (revision
-     anchor, acceptance artifact, lockfiles) so `bun run test:dock` checks the new
-     combination instead of the old one;
-   - restart the harness. A whole-process restart is required: there is no hot reload and
-     the discovery root is never swapped inside a running process.
-
-No framework source declares a supported version, so there is no runtime list to edit: the dock
-selects the version it runs from the record (or from `OMP_TEST_VERSION` for a candidate), and a
-binding neither warns about nor refuses a harness the record does not list. Until the maintainer
-takes that action, the support record stays exactly `18.5.0` and the dock keeps running it — a
-harness outside the record is simply not claimed as supported, which is what
-[independent compatibility verification](docs/harness-support.md#independent-compatibility-verification)
-covers instead of a startup check.
+The long-term upgrade alarm covers framework capabilities, not every extension promise. Candidate runs are on demand, isolated from the default installation, and do not automatically change support status. Support records, upgrade criteria and version evidence are maintained only in [`harness-support.md`](docs/harness-support.md), with the machine-checkable baseline in [`harness-baseline.json`](docs/harness-baseline.json).

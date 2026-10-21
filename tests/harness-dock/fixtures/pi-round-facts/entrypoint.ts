@@ -12,8 +12,11 @@
  * pick them out of a stream it shares with the extension's own diagnostics.
  */
 import { piAdapter } from "../../../../adapters/pi";
-import type { ExtensionDefinition } from "../../../../framework/interface";
-import type { SemanticEventHandlers } from "../../../../framework/interface/session";
+import {
+	type ExtensionDefinition,
+	type ImplementationEventHandlers,
+	defineImplementation,
+} from "../../../../framework/interface";
 import { PI_ROUND_FACTS_PREFIX } from "./prefix";
 
 /** The definition this fixture binds: identity and a label, with every behavior injected below. */
@@ -24,20 +27,23 @@ function note(line: string): void {
 	process.stderr.write(`${PI_ROUND_FACTS_PREFIX} ${line}\n`);
 }
 
-const events: SemanticEventHandlers = {
-	round_start: delivery => note(`round_start ${delivery.session.sessionId}`),
-	round_end: delivery => note(`round_end ${delivery.session.sessionId}`),
+const events: ImplementationEventHandlers<Record<string, never>> = {
+	round_start: (_state, delivery) => note(`round_start ${delivery.session.sessionId}`),
+	round_end: (_state, delivery) => note(`round_end ${delivery.session.sessionId}`),
 	// The Turn edges are recorded beside the Round's because a Round's end is only meaningful relative
 	// to the requests inside it: a close that arrived before a Turn settled would be a different claim
 	// from one that arrived after the last of them.
-	turn_start: delivery =>
+	turn_start: (_state, delivery) =>
 		note(`turn_start ${delivery.turn.provider}/${delivery.turn.model} round=${delivery.turn.roundId ?? "<none>"}`),
-	turn_end: delivery =>
+	turn_end: (_state, delivery) =>
 		note(
 			`turn_end ${delivery.turn.provider}/${delivery.turn.model} outcome=${delivery.end.outcome} usage=${delivery.end.usage === undefined ? "<none>" : "reported"}`,
 		),
 };
 
 export default piAdapter(PROBE, {
-	factory: () => ({ subscriptions: [{ scope: "session", events }] }),
+	implementation: defineImplementation<Record<string, never>>({
+		create: () => ({}),
+		subscriptions: [{ scope: "session", events }],
+	}),
 });

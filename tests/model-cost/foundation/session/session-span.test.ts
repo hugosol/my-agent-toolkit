@@ -38,7 +38,11 @@ import type {
 	SessionRecord,
 } from "../../../../extensions/model-cost/shared-logic/foundation/session/consumption-document";
 import type { ModelPricingData } from "../../../../extensions/model-cost/shared-logic/business/pricing/model-data";
-import { type ModelCostRuntime, createModelCostRuntime } from "../../../../extensions/model-cost/shared-logic/runtime";
+import {
+	type ModelCostRuntime,
+	createModelCostRuntime,
+	modelCostImplementation,
+} from "../../../../extensions/model-cost/shared-logic/runtime";
 import { totalText } from "../../../../extensions/model-cost/shared-logic/presentation/display";
 import type { SessionFacts, TurnOutcome, TurnUsage } from "../../../../framework/interface/session";
 import type { OwnerReference } from "../../../../framework/interface/state";
@@ -201,7 +205,7 @@ async function bindAccounting(root: string, baseline?: unknown): Promise<BoundAc
 	});
 	const double = portDouble();
 	double.bind(MODEL_COST, {
-		factory: () => runtime.implementation,
+		factory: modelCostImplementation(() => runtime),
 		// The declared configuration is read once per extension per process; this reader answers the
 		// declaration so the binding validates without touching the repository's own file.
 		config: { reader: () => `storageDir: ${root}\nbalanceTtlMs: 30000\ncodexQuotaTtlMs: 15000\n` },
@@ -552,7 +556,7 @@ describe("terminal subagent results advance the main span without another main T
 		clock = atBeijing(10, 5);
 		await runtime.subagentResultReceived(MAIN.sessionId);
 		expect(runtime.view.sessionSpan(MAIN.sessionId)?.elapsedMs).toBe(120_000);
-		await runtime.implementation.cleanup?.();
+		runtime.cleanup();
 		clock = atBeijing(11);
 		await runtime.subagentResultReceived(MAIN.sessionId);
 		expect(runtime.view.sessionSpan(MAIN.sessionId)?.endAt).toBe(atBeijing(10, 5));

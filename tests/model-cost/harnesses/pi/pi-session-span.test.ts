@@ -41,7 +41,11 @@ import { type PiAssistantMessage, type PiExtensionApi, type PiExtensionContext, 
 import { MODEL_COST } from "../../../../extensions/model-cost/definition";
 import { MODEL_COST_HARNESS } from "../../../../extensions/model-cost/harnesses/pi";
 import { MODEL_COST_WIDGET_KEY, attachModelCostWidget } from "../../../../extensions/model-cost/harnesses/pi/widget";
-import { type ModelCostRuntime, createModelCostRuntime } from "../../../../extensions/model-cost/shared-logic/runtime";
+import {
+	type ModelCostRuntime,
+	createModelCostRuntime,
+	modelCostImplementation,
+} from "../../../../extensions/model-cost/shared-logic/runtime";
 import type { ConsumptionDocument, SessionRecord } from "../../../../extensions/model-cost/shared-logic/foundation/session/consumption-document";
 import { uiBoundaryTimerOf } from "../../support/ui-timer";
 
@@ -317,30 +321,31 @@ function assemble(): PiSurface {
 	let releaseFrontend: (() => void) | undefined;
 	const bind = piAdapter(MODEL_COST, {
 		configBaseDir: REPOSITORY_ROOT,
-		factory: context => {
-			const built = createModelCostRuntime({
-				config: { ...context.config, storageDir: STORAGE_ROOT },
-				configDirectory: path.join(REPOSITORY_ROOT, "extensions", MODEL_COST.id),
-				userHomeDirectory: STORAGE_ROOT,
-				harness: MODEL_COST_HARNESS,
-				// The one harness fact this hand-built assembly states for itself: the cases below drive
-				// the display and the tree, which the extension offers to an entry whose subagent
-				// observations integrated — the shipped assembly records that answer from the framework's
-				// own initialization delivery (see `harnesses/pi.ts`).
-				subagentIntegrationMode: () => "subagents",
-				session: context.session,
-			});
-			runtime = built;
-			const cleanup = built.implementation.cleanup;
-			return {
-				...built.implementation,
-				cleanup: () => {
+		implementation: modelCostImplementation(
+			context => {
+				const built = createModelCostRuntime({
+					config: { ...context.config, storageDir: STORAGE_ROOT },
+					configDirectory: path.join(REPOSITORY_ROOT, "extensions", MODEL_COST.id),
+					userHomeDirectory: STORAGE_ROOT,
+					harness: MODEL_COST_HARNESS,
+					// The one harness fact this hand-built assembly states for itself: the cases below drive
+					// the display and the tree, which the extension offers to an entry whose subagent
+					// observations integrated — the shipped assembly records that answer from the framework's
+					// own initialization delivery (see `harnesses/pi.ts`).
+					subagentIntegrationMode: () => "subagents",
+					session: context.session,
+				});
+				runtime = built;
+				return built;
+			},
+			{
+				cleanup: built => {
 					releaseFrontend?.();
 					releaseFrontend = undefined;
-					return cleanup?.();
+					built.cleanup();
 				},
-			};
-		},
+			},
+		),
 	});
 	const bound = bind(surface.api);
 	if (bound.bound && runtime !== undefined) releaseFrontend = attachModelCostWidget(surface.api, runtime, uiBoundaryTimerOf(runtime));

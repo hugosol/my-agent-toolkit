@@ -39,7 +39,7 @@ import {
 import type { ConsumptionDocument } from "../../../../extensions/model-cost/shared-logic/foundation/session/consumption-document";
 import type { ModelPricingData } from "../../../../extensions/model-cost/shared-logic/business/pricing/model-data";
 import type { ModelCostRuntime } from "../../../../extensions/model-cost/shared-logic/runtime";
-import { createModelCostRuntime } from "../../../../extensions/model-cost/shared-logic/runtime";
+import { createModelCostRuntime, modelCostImplementation } from "../../../../extensions/model-cost/shared-logic/runtime";
 import type { SessionFacts, TurnUsage } from "../../../../framework/interface/session";
 import type { OwnerReference } from "../../../../framework/interface/state";
 import { type PortDouble, portDouble } from "../../../framework/support/harness-port-double";
@@ -195,7 +195,7 @@ async function fixture(): Promise<Fixture> {
 	let runtime: ModelCostRuntime | undefined;
 	double.bind(MODEL_COST, {
 		config: { reader: () => `storageDir: ${root}\nbalanceTtlMs: 30000\ncodexQuotaTtlMs: 15000\n` },
-		factory: context => {
+		factory: modelCostImplementation(context => {
 			const built = createModelCostRuntime({
 				config: { storageDir: root },
 				configDirectory: root,
@@ -207,8 +207,8 @@ async function fixture(): Promise<Fixture> {
 				...(context.modelPrices === undefined ? {} : { modelPrices: context.modelPrices }),
 			});
 			runtime = built;
-			return built.implementation;
-		},
+			return built;
+		}),
 	});
 	double.deliverSession(OWNER, { session: MAIN });
 	double.deliverSession(OWNER, { event: { kind: "session_facts" }, session: MAIN });

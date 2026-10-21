@@ -10,6 +10,8 @@ Use the smallest relevant scope while iterating; broaden it at ticket completion
 | Ticket completion | The owning test partition (`bun test <test-directory>`), plus affected consumers of changed shared APIs/behavior. For harness-facing changes, include the corresponding real-host dock files. Run `bun run typecheck` for TypeScript changes. | Each acceptance criterion has evidence or an explicit verification limit; focused green is not a claim of full-repository green. |
 | Final integration: assembled changes or independent acceptance | `bun run typecheck` and `bun run test`, plus any smoke/candidate verification explicitly required by the task. | Record the commands, exit statuses, failures, and the source/environment state to which the results apply. |
 
+For framework-mediated adapter completeness, use the [static integration check](../../framework/docs/integration-check.md); it does not run behavior tests. For an exact harness version's functional evidence, choose scripts from [harness version verification](../../framework/docs/harness-support.md#version-verification). These are separate checks, and neither automatically changes support status.
+
 Read `package.json` for existing script names. Use a direct test-directory command when a partition has no named script. Select consumers from the changed contract/callers, not just the directory being edited. If impact remains uncertain, broaden the scope. Documentation-only changes need link/example checks, not a default full test run.
 
 ## Keep runs attributable

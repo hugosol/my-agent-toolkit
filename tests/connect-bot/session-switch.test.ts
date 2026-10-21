@@ -29,7 +29,7 @@ import { type OmpDouble, ompDouble } from "./support/omp-double";
 /** The owner key the framework resolves for one main session. */
 const ownerKey = (sessionId: string) => `main:${sessionId}`;
 /** Arm success, verbatim, for one online session. */
-const CONNECTED = "已接入 omp-bot 面板（当前 1 个在线会话）";
+const CONNECTED = "已接入 herdr-bot 面板（当前 1 个在线会话）";
 /** The notice a session being left gets when another identity takes its place, verbatim. */
 const SWITCHED = "会话已切换，已断开面板；重新 /connect-bot 可重连";
 

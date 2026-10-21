@@ -12,8 +12,13 @@
  * per-session frontend declares.
  */
 import { type OmpExtensionApi, ompAdapter } from "../../../../adapters/omp";
-import { type ExtensionDefinition, defineExtension } from "../../../../framework/interface";
-import type { SessionEventDelivery, SubscriptionGroup } from "../../../../framework/interface/session";
+import {
+	type ExtensionDefinition,
+	type ImplementationEventHandlers,
+	defineExtension,
+	defineImplementation,
+} from "../../../../framework/interface";
+import type { SessionEventDelivery } from "../../../../framework/interface/session";
 
 /** The extension id whose stderr lines the dock reads. */
 export const SESSION_FACTS_ID = "session-facts-probe";
@@ -36,6 +41,13 @@ function factsLine(delivery: SessionEventDelivery): void {
 export default function sessionFactsProbe(pi: OmpExtensionApi): void {
 	// One group over every actual session: a subagent nobody is viewing reports its own facts
 	// exactly as the session on screen does.
-	const events: SubscriptionGroup["events"] = { session_facts: factsLine };
-	ompAdapter(definition, { factory: () => ({ subscriptions: [{ scope: "session", events }] }) })(pi);
+	const events: ImplementationEventHandlers<Record<string, never>> = {
+		session_facts: (_state, delivery) => factsLine(delivery),
+	};
+	ompAdapter(definition, {
+		implementation: defineImplementation<Record<string, never>>({
+			create: () => ({}),
+			subscriptions: [{ scope: "session", events }],
+		}),
+	})(pi);
 }

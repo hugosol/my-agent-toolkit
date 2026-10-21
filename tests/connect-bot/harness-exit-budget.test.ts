@@ -17,7 +17,7 @@
  * can name a budget of its own without touching the file the machine's deployment reads.
  *
  * The dependency that does not answer promptly is `support/response-timing-adapter.ts`: a real HTTP
- * service in front of the actual omp-bot panel, which holds the `unregister` it receives. So the
+ * service in front of the actual herdr-bot panel, which holds the `unregister` it receives. So the
  * register the arm sends really registers a row on a real panel, and the unregister the `off` sends is
  * really on the wire with its answer withheld when the process ends.
  *
@@ -36,7 +36,7 @@ import { type CaptureServer, startCaptureServer } from "../harness-dock/capture-
 import { DOCK_CAPTURE_BASE_URL_ENV, DOCK_MODEL_SELECTOR } from "../harness-dock/fixtures/extension-root/provider";
 import { type RunRoot, createRunRoot } from "../harness-dock/run-root";
 import { ControlledSession } from "../harness-dock/session";
-import { type OmpBotPanel, startOmpBot } from "./support/omp-bot";
+import { type HerdrBotPanel, startHerdrBot } from "./support/herdr-bot";
 import { startResponseTimingAdapter } from "./support/response-timing-adapter";
 
 /** This run's own request budget: long enough that waiting it out would be unmistakable. */
@@ -82,7 +82,7 @@ afterAll(() => {
 
 describe("a long request budget does not extend the harness's own exit (P27)", () => {
 	test("the harness ends on its own lifecycle with a minute-budget unregister still on the wire", async () => {
-		const panel: OmpBotPanel = await startOmpBot();
+		const panel: HerdrBotPanel = await startHerdrBot();
 		const adapter = startResponseTimingAdapter({ target: panel.endpoint, hold: ["unregister"] });
 		const runRoot: RunRoot = createRunRoot("connect-bot-exit-budget");
 		const capture: CaptureServer = startCaptureServer({ dir: runRoot.captureDir });

@@ -36,7 +36,7 @@
  *   consumer is told that round ended too, and both activations and the next turn are unaffected.
  *
  * The panel here is a scripted local endpoint answering the register receipt connect-bot's own wire
- * contract states: this run is about the framework's shared path, not about omp-bot's panel, whose
+ * contract states: this run is about the framework's shared path, not about herdr-bot's panel, whose
  * real path the connect-bot suite drives against the real panel binary. The provider is the dock's
  * own capture endpoint, so every exchange is a real model request this run answers itself.
  */
@@ -84,8 +84,8 @@ const BUDGET_COMMAND = "budget";
  * What connect-bot's own words say about an arm the panel refused, and about one it accepted: the
  * receipt names the sessions the panel reports online, which the run's own panel answers with one.
  */
-const ARM_REFUSED_MESSAGE = "无法连接 omp-bot，未启用；请确认面板已启动";
-const ARM_ACCEPTED_MESSAGE = "已接入 omp-bot 面板（当前 1 个在线会话）";
+const ARM_REFUSED_MESSAGE = "无法连接 herdr-bot，未启用；请确认面板已启动";
+const ARM_ACCEPTED_MESSAGE = "已接入 herdr-bot 面板（当前 1 个在线会话）";
 
 /**
  * How long the run's capture endpoint holds the exchange that gets cancelled: long enough that the

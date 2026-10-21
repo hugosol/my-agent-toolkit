@@ -17,8 +17,11 @@
  * behavior of its own.
  */
 import { piAdapter } from "../../../../adapters/pi";
-import type { ExtensionDefinition } from "../../../../framework/interface";
-import type { SemanticEventHandlers } from "../../../../framework/interface/session";
+import {
+	type ExtensionDefinition,
+	type ImplementationEventHandlers,
+	defineImplementation,
+} from "../../../../framework/interface";
 import { PI_TERMINAL_ROUNDS_CHILD_ENTRY_ENV, PI_TERMINAL_ROUNDS_PREFIX } from "./prefix";
 
 /** The definition this fixture binds: identity and a label, with every behavior injected below. */
@@ -35,15 +38,15 @@ if (childEntry === undefined || childEntry.length === 0) {
 	throw new Error(`${PI_TERMINAL_ROUNDS_CHILD_ENTRY_ENV} is not set: this fixture reads a Round's background work only through the integration scope a child entry opens`);
 }
 
-const events: SemanticEventHandlers = {
-	round_start: delivery => note(`round_start ${delivery.session.sessionId}`),
-	round_end: delivery => note(`round_end ${delivery.session.sessionId}`),
+const events: ImplementationEventHandlers<Record<string, never>> = {
+	round_start: (_state, delivery) => note(`round_start ${delivery.session.sessionId}`),
+	round_end: (_state, delivery) => note(`round_end ${delivery.session.sessionId}`),
 	// The Turn edges are recorded beside the Round's because they are what says which Round each
 	// request was reported to belong to: a Run that continues a Round carries that Round's identity,
 	// and one that opens a new Round carries a different one.
-	turn_start: delivery =>
+	turn_start: (_state, delivery) =>
 		note(`turn_start ${delivery.turn.session.sessionId} round=${delivery.turn.roundId ?? "<none>"}`),
-	turn_end: delivery =>
+	turn_end: (_state, delivery) =>
 		note(
 			`turn_end ${delivery.turn.session.sessionId} outcome=${delivery.end.outcome} usage=${delivery.end.usage === undefined ? "<none>" : "reported"}`,
 		),
@@ -51,5 +54,8 @@ const events: SemanticEventHandlers = {
 
 export default piAdapter(PROBE, {
 	childEntry,
-	factory: () => ({ subscriptions: [{ scope: "session", events }] }),
+	implementation: defineImplementation<Record<string, never>>({
+		create: () => ({}),
+		subscriptions: [{ scope: "session", events }],
+	}),
 });

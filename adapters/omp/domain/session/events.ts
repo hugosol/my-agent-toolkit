@@ -26,6 +26,7 @@
  */
 import type { SessionEvent, SessionStartReason } from "../../../../framework/interface/session";
 import type { OwnerReference } from "../../../../framework/interface/state";
+import { defineAdapterDelivery } from "../../../../framework/runtime/adapter-authoring";
 import type { HarnessPort } from "../../../../framework/runtime/port";
 import { feedbackTransport, noticeTransport } from "../feedback";
 import { markerTransport } from "../marker";
@@ -96,7 +97,7 @@ export function observeSessionEvents(
 	 */
 	const deliver = (event: SessionEvent, owner: OwnerReference, ctx: OmpSessionContext): void => {
 		context.record(ctx);
-		handler({
+		handler(defineAdapterDelivery("session", {
 			event,
 			// One start delivery is the session's own beginning in this process, and it is the one
 			// whose readings are the session's startup facts; every other delivery reports none —
@@ -110,7 +111,7 @@ export function observeSessionEvents(
 			feedback: feedbackTransport(ctx),
 			notices: noticeTransport(ctx),
 			markers: markerTransport(ctx),
-		});
+		}));
 	};
 
 	/**
@@ -250,13 +251,13 @@ export function observeUserInputEvents(
 		pi.on("input", (event, ctx) => {
 			if (event.source === "extension") return;
 			const recorded = context.record(ctx);
-			handler({
+			handler(defineAdapterDelivery("input", {
 				event: { kind: "user_input" },
 				owner: context.owner(recorded),
 				session: sessionFactsOf(pi, ctx),
 				hasUI: ctx.hasUI,
 				feedback: feedbackTransport(ctx),
-			});
+			}));
 		});
 	} catch (error) {
 		const detail = error instanceof Error ? error.message : String(error);

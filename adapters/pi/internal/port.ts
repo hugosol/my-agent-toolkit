@@ -6,9 +6,11 @@
  * user input, commands, prompt planning and public effects each own a complete native
  * responsibility in their own module; no slice reaches into another axis's facts.
  */
+import { defineAdapterPort, unavailablePortMember } from "../../../framework/runtime/adapter-authoring";
 import type { ExtensionDefinition } from "../../../framework/interface/details/definition";
 import type { SessionFacts, SessionStartReason } from "../../../framework/interface/session";
 import type { OwnerReference } from "../../../framework/interface/state";
+import type { SubagentIntegration } from "../../../framework/interface/subagent";
 import type { HarnessPort, SessionDisposal } from "../../../framework/runtime/port";
 import { onPiSessionContext } from "../domain/context";
 import { registerPiCommand } from "../domain/control";
@@ -37,9 +39,32 @@ export interface PiPortInput {
 	readonly keepSubscription: (release: () => void) => void;
 }
 
+/**
+ * The port one pi binding assembles when the assembly states a child entry.
+ *
+ * `subagentIntegration` is required rather than optional because the process's integration object
+ * exists for such an assembly: the member settles that object's one answer, and an absent value is
+ * never one of its outcomes. This is the assembly's own output contract — the shape its binding
+ * constructs — not a statement that a third-party provider is installed or answers correctly.
+ */
+export interface PiPortWithSubagents extends HarnessPort {
+	readonly subagentIntegration: () => SubagentIntegration | Promise<SubagentIntegration>;
+}
+
+/**
+ * The port one pi binding assembles when the assembly states no child entry.
+ *
+ * There is nothing to require in spawned sessions and nothing to settle, so the member is declared
+ * deliberately absent rather than left as the generic optional function. An undefined reading here
+ * means "this assembly has no such integration", never "the framework did not check".
+ */
+export interface PiPortWithoutSubagents extends HarnessPort {
+	readonly subagentIntegration?: undefined;
+}
+
 /** One pi binding's complete port, plus the diagnostics its assembly publishes. */
-export interface PiPort {
-	readonly port: HarnessPort;
+export interface PiPortResult<Port extends HarnessPort = HarnessPort> {
+	readonly port: Port;
 	readonly reportDiagnostic: (message: string) => void;
 }
 
@@ -57,13 +82,15 @@ export interface PiPortState {
 	reportDisposal?: (disposal: SessionDisposal) => void | Promise<void>;
 }
 
-/** Everything the port slices of one binding read from each other. */
+/** Everything one binding's port assembly and its slices read from each other. */
 export interface PiPortContext {
 	readonly pi: PiExtensionApi;
 	readonly state: PiPortState;
 	/** The one native branch entry used by both Session restoration and command writes. */
 	readonly stateEntryType: string;
 	readonly statePersistence: PiStatePersistence;
+	/** The assembly's process-scoped provider readings, bound as the port's price and access members. */
+	readonly providerFacts: PiProviderFacts;
 	readonly integration: PiSubagentIntegration | undefined;
 	/** Sessions this binding has observed end, by identity; deltas read it late. */
 	readonly endedSessions: Set<string>;
@@ -78,43 +105,79 @@ export interface PiPortContext {
 	sessionFactsOf(ctx: PiExtensionContext, reason?: SessionStartReason): SessionFacts;
 }
 
-/** Builds one binding's port from the assembly's process-scoped readings. */
-export function createPiPort(input: PiPortInput): PiPort {
+/**
+ * The one port this adapter assembles: every member `HarnessPort` states is bound here, including
+ * the two optional members pi has no fact for, which are recorded as statically unavailable rather
+ * than omitted from the shape. `PI_PORT.create` evaluates each factory once per binding, in this
+ * order; constructing the definition itself evaluates none of them.
+ *
+ * The compiler checks the key set and each factory's result against `HarnessPort`. This module-level
+ * shape is what a future syntax gate can inspect; today it is a typed convention, not a syntax
+ * restriction.
+ */
+export const PI_PORT = defineAdapterPort<PiPortContext>({
+	// pi.setLabel labels a history ENTRY, not an extension. Keep this label on
+	// diagnostics instead of misusing that unrelated native operation.
+	setLabel: context => value => { context.state.label = value; },
+	reportDiagnostic: context => context.reportDiagnostic,
+	modelPrices: context => context.providerFacts.prices,
+	providerAccess: context => context.providerFacts.access,
+	// The process's one settling of this entry's subagent integration, asked at the owner node:
+	// it is the session this binding serves then, and the answer is that process's own. An assembly
+	// without an integration answers no member at all; the check happens once, when the port is
+	// created, exactly where the conditional spread used to decide it.
+	subagentIntegration: context => {
+		const integration = context.integration;
+		return integration === undefined ? undefined : () => integration.settle(context.state.servingSessionId);
+	},
+	onSession: context => onPiSession(context),
+	nextTask: () => callback => {
+		// The harness's next task: a macrotask that runs after this callback returned and after
+		// everything already queued — pi's own unwinding and any message it drained — has had its
+		// turn. Nothing here waits on a duration or repeats.
+		setTimeout(callback, 0);
+	},
+	onRound: context => onPiRound(context),
+	// The framework's close-out of a session pi is disposing: this adapter reports the fact and
+	// waits for what the framework owes it, and the native shutdown subscription is where it is
+	// reported — before the session axis's own end, which is what stops this binding delivering.
+	onDisposal: context => onPiDisposal(context),
+	onSessionContext: context => onPiSessionContext(context),
+	onTurn: context => onPiTurn(context),
+	onUserInput: context => onPiUserInput(context),
+	onRunInitiation: context => onPiRunInitiation(context),
+	registerCommand: context => registerPiCommand(context),
+	// Static adapter absences, not claims that the native harness cannot offer these features.
+	// The framework's existing observation access and delivery-position fallbacks are unchanged.
+	sessionObservationAccess: unavailablePortMember(
+		"this adapter does not provide a cross-process session-observation outlet",
+	),
+	viewedSession: unavailablePortMember(
+		"this adapter does not provide a displayed-session outlet; delivery-position projection remains in use",
+	),
+});
+
+/**
+ * Builds one binding's port from the assembly's process-scoped readings.
+ *
+ * The overloads state the contract the assembly declared: an integration present produces the
+ * enabled port, an explicitly absent one produces the port that declares the member unavailable,
+ * and an unresolved input (`PiSubagentIntegration | undefined`) keeps the union because neither
+ * outcome is known from the type. This is a trusted output contract, covered by adapter shape tests;
+ * overloads do not independently prove the implementation or third-party provider behavior.
+ */
+export function createPiPort(
+	input: PiPortInput & { readonly integration: PiSubagentIntegration },
+): PiPortResult<PiPortWithSubagents>;
+export function createPiPort(
+	input: PiPortInput & { readonly integration?: undefined },
+): PiPortResult<PiPortWithoutSubagents>;
+export function createPiPort(
+	input: PiPortInput,
+): PiPortResult<PiPortWithSubagents | PiPortWithoutSubagents>;
+export function createPiPort(input: PiPortInput): PiPortResult {
 	const context = createPiPortContext(input);
-	const integration = input.integration;
-	return {
-		reportDiagnostic: context.reportDiagnostic,
-		port: {
-			// pi.setLabel labels a history ENTRY, not an extension. Keep this label on
-			// diagnostics instead of misusing that unrelated native operation.
-			setLabel: value => { context.state.label = value; },
-			reportDiagnostic: context.reportDiagnostic,
-			modelPrices: input.providerFacts.prices,
-			providerAccess: input.providerFacts.access,
-			// The process's one settling of this entry's subagent integration, asked at the owner node:
-			// it is the session this binding serves then, and the answer is that process's own.
-			...(integration === undefined
-				? {}
-				: { subagentIntegration: () => integration.settle(context.state.servingSessionId) }),
-			onSession: onPiSession(context),
-			nextTask: callback => {
-				// The harness's next task: a macrotask that runs after this callback returned and after
-				// everything already queued — pi's own unwinding and any message it drained — has had its
-				// turn. Nothing here waits on a duration or repeats.
-				setTimeout(callback, 0);
-			},
-			onRound: onPiRound(context),
-			// The framework's close-out of a session pi is disposing: this adapter reports the fact and
-			// waits for what the framework owes it, and the native shutdown subscription is where it is
-			// reported — before the session axis's own end, which is what stops this binding delivering.
-			onDisposal: onPiDisposal(context),
-			onSessionContext: onPiSessionContext(context),
-			onTurn: onPiTurn(context),
-			onUserInput: onPiUserInput(context),
-			onRunInitiation: onPiRunInitiation(context),
-			registerCommand: registerPiCommand(context),
-		},
-	};
+	return { reportDiagnostic: context.reportDiagnostic, port: PI_PORT.create(context) };
 }
 
 function createPiPortContext(input: PiPortInput): PiPortContext {
@@ -135,6 +198,7 @@ function createPiPortContext(input: PiPortInput): PiPortContext {
 		state,
 		stateEntryType: piStateEntryType(input.definition),
 		statePersistence: piStatePersistence(input.pi, input.definition),
+		providerFacts: input.providerFacts,
 		integration: input.integration,
 		endedSessions,
 		keepSubscription: input.keepSubscription,

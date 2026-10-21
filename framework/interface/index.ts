@@ -4,11 +4,16 @@
  * An extension declares itself here and builds its implementation in the shape this entry
  * describes. It is the one path for the authoring contract, organised in two groups:
  *
- * - the *definition* — plain data: identity, State, commands, prompts, marker, configuration and
- *   subagent requirements — owned by `details/definition.ts`;
- * - the *implementation* — the factory a harness assembly supplies, the context it receives, what
- *   it builds, the one-time initialization and cleanup, and the generic assembly information —
- *   owned by `details/implementation.ts`.
+ * - the *definition* — plain data: identity, State, commands, prompts, marker and configuration —
+ *   owned by `details/definition.ts`; integration requirements are derived from source use;
+ * - the *implementation* — the authored declaration a harness assembly supplies, the context its
+ *   state is built from, the one-time initialization and cleanup, and the generic assembly
+ *   information — owned by `details/implementation.ts`.
+ *
+ * `defineImplementation` is the one authoring entry for the implementation half: it separates the
+ * business state a `create(context)` builds from the subscription, command and lifecycle slots
+ * whose static keys are inspectable before that state exists. The resolved runtime shape stays
+ * internal to the framework.
  *
  * This entry does not aggregate the capability interfaces: State, Session, Prompt, Marker,
  * Feedback, Provider, Subagent and Command each own their declarations and are imported from
@@ -34,12 +39,19 @@ export type {
 	ExtensionDefinition,
 } from "./details/definition";
 
-// The implementation contract: the factory, its context, what it builds, and its lifecycle.
+// The implementation contract: the authored declaration, its context, and the assembly.
+export { defineImplementation } from "./details/implementation";
 export type {
-	DeclarableRequiredSemantic,
+	ActionsImplementationHandlers,
+	AuthoredImplementation,
+	CommandImplementationHandlers,
+	DirectedImplementationHandlers,
 	ExtensionAssembly,
-	ExtensionFactory,
-	ExtensionImplementation,
+	ImplementationAction,
+	ImplementationCommands,
 	ImplementationContext,
+	ImplementationDeclaration,
+	ImplementationEventHandlers,
+	ImplementationSubscription,
 	InitializationDelivery,
 } from "./details/implementation";

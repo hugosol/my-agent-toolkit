@@ -35,17 +35,17 @@ exports.
 | Entry point | Source | Role |
 | --- | --- | --- |
 | `defineExtension(definition)` | [`framework/interface/index.ts`](../interface/index.ts), defined at [`index.ts#L26`](../interface/index.ts#L26) | Declares an extension. Returns its argument typed; nothing is validated or copied here. |
-| `ExtensionDefinition`, `ExtensionConfigDeclaration`, `ConfigFieldType` | [`framework/interface/details/definition.ts`](../interface/details/definition.ts) | The definition shape and its configuration types. The definition *refers to* the capability declarations rather than owning them: the State axis (`StateDeclaration`, `StatePersistence`, `StateInheritance`) is owned by the [State capability interface](../interface/state/index.ts); `PromptDeclaration`, `PromptStrategy` and `MarkerDeclaration` by the [Prompt](../interface/prompt.ts) and [Marker](../interface/marker.ts) interfaces; `SubagentCapability` by the [Subagent interface](../interface/subagent.ts); and `CommandDeclaration` plus its member types by the [Command interface](../interface/command/index.ts). |
+| `ExtensionDefinition`, `ExtensionConfigDeclaration`, `ConfigFieldType` | [`framework/interface/details/definition.ts`](../interface/details/definition.ts) | The definition shape and its configuration types. The definition *refers to* the capability declarations rather than owning them: the State axis (`StateDeclaration`, `StatePersistence`, `StateInheritance`) is owned by the [State capability interface](../interface/state/index.ts); `PromptDeclaration`, `PromptStrategy` and `MarkerDeclaration` by the [Prompt](../interface/prompt.ts) and [Marker](../interface/marker.ts) interfaces; and `CommandDeclaration` plus its member types by the [Command interface](../interface/command/index.ts). |
 | `PromptDeclaration`, `PromptStrategy` | [`framework/interface/prompt.ts`](../interface/prompt.ts) | The injected-prompt slot and its activation rule. The run facts, contribution selection and contribution result stay internal; see [Injected prompts](#prompts-readonly-promptdeclaration). |
 | `MarkerDeclaration` | [`framework/interface/marker.ts`](../interface/marker.ts) | The extension's status-marker text. The process-wide area, its ordering, projection, publication and transport stay internal; see [Marker area](#marker-markerdeclaration). |
-| `ExtensionAssembly`, `ExtensionFactory`, `ImplementationContext`, `ExtensionImplementation`, `InitializationDelivery`, `DeclarableRequiredSemantic` | [`framework/interface/details/implementation.ts`](../interface/details/implementation.ts) | The assembly surface an extension's implementation is written against: the factory a harness adapter calls once the configuration validated, the context it is handed (the validated configuration, the harness's model prices and provider access handed over under their own names, the Session capability (`context.session.observations` for reads and `context.session.recordCommit` for stating that a session's own write really landed)), what it returns (`commands`, `subscriptions`, `catalog`, the one-time `initialize` and `cleanup`), the facts the initialization runs with (`owner`, `hasUI`, `feedback`, `subagents`) and the two lifecycle semantics an assembly may declare. These authoring contracts are type-only. |
-| `SubagentIntegration`, `SubagentIntegrationFailure`, `SubagentCapability` | [`framework/interface/subagent.ts`](../interface/subagent.ts) | The settled initialization integration result (`subagents`, normal `none`, or `failed` with its part and diagnosis) and the requirement vocabulary an extension's definition declares. The execution mode and adapter coverage inventory stay internal. |
+| `defineImplementation`, `AuthoredImplementation`, `ImplementationDeclaration`, `ImplementationSubscription`, `ImplementationEventHandlers`, `ImplementationCommands`, `ImplementationAction`, `CommandImplementationHandlers`, `DirectedImplementationHandlers`, `ActionsImplementationHandlers`, `ExtensionAssembly`, `ImplementationContext`, `InitializationDelivery` | [`framework/interface/details/implementation.ts`](../interface/details/implementation.ts) | The authoring surface an extension's implementation is written against: `defineImplementation` returns an opaque callable factory whose `.declaration` is the canonical static object — `create(context)` builds the one business state, and subscription groups, command slots, the catalog selector and the one-time `initialize`/`cleanup` name handlers that receive it. The context carries the validated configuration, the harness's model prices and provider access under their own names, and the Session capability (`context.session.observations` for reads and `context.session.recordCommit` for stating that a session's own write really landed). Initialization delivery carries `owner`, `hasUI`, `feedback` and `subagents`; source analysis derives the integration dependencies. The resolved `ExtensionImplementation` shape is internal. |
+| `SubagentIntegration`, `SubagentIntegrationFailure` | [`framework/interface/subagent.ts`](../interface/subagent.ts) | The settled initialization integration result (`subagents`, normal `none`, or `failed` with its part and diagnosis). Integration demand is source-derived; execution mechanisms remain adapter-owned. |
 | `SubscriptionGroup`, `ObservationScope` | [`Session subscriptions`](../interface/session/subscriptions.ts) | The one-time declaration of what a subscription observes: a group carries the scope it covers (`owner` — the owner session's own deliveries; `session` — every actual session the adapter reports, with that session's own identity, direct parent, latest name, the handle of the task it was spawned for, the name and id of the agent it runs and, on the delivery that announces its own start, the model and effective level it began on) and the handlers for the event kinds it subscribes. Both scopes run through the one dispatch, and widening a group to `session` grants no State write and no external-effect authority. |
 | `SessionFacts`, `SessionStartup`, `TurnEvent`, `TurnStartDelivery`, `TurnEndDelivery`, `TurnStartFacts`, `TurnEndFacts`, `TurnUsage`, `TurnOutcome`, `ProviderHttpFacts`, `CatalogPrice`, `CatalogPriceSource`, `ProviderAccess`, `ProviderAccessFacts` | [`Session facts`](../interface/session/details/facts.ts), [`Turn`](../interface/session/details/turn.ts), [`Provider`](../interface/provider/index.ts) | The per-actual-session facts and the Turn axis: a session's identity, direct parent, latest name, the handle of the task it was spawned for (a subagent's own name for its work, which is neither the agent definition it runs nor the id its registry uses), the name and id of the agent it runs, and the optional `SessionStartup` — the model and effective level the session began on, reported on its own start alone and never rewritten; the two Turn edges with the request-time facts fixed at the first and repeated at the second; the reliable-or-unavailable usage, outcome, HTTP facts and the two provider reference ids; and the extension's own catalog the framework queries at each request's start. Native `TurnSignal` / `TurnSignalFacts` remain internal adapter contracts, not Session consumer exports. See [The Turn axis and the two observation scopes](#the-turn-axis-and-the-two-observation-scopes). |
 | `CommandImplementations`, `CommandImplementation`, `CommandAction`, `ActionsCommandImplementation`, `ActionDelivery` | [`Command interface`](../interface/command/index.ts) | What an implementation delivers for one command: a directed implementation under its command name, or an `actions` command's table of named actions. An action may return a promise the host's command chain waits for, and its delivery is the invocation facts alone — the argument, the owner, `hasUI`, the idle query, the running session's `provider` and the feedback channel — with no declared-value seam, retained capability, persistence path or marker transport, because an `actions` command drives no State and owns no area line. |
 | `ompAdapter(definition, options?)` | [`adapters/omp/index.ts`](../../adapters/omp/index.ts) | Assembles a definition for the `omp` harness; returns an `OmpExtensionFactory`. Also re-exports `BindingResult`, which is what that factory returns. |
 | `piAdapter(definition, options?)` | [`adapters/pi/index.ts`](../../adapters/pi/index.ts) | Uses the same `ExtensionAssembly`, `StateStore` and binding behaviors for pi. Maps the session boundaries, the run-cycle facts the Round axis is synthesized from, Turn signals, user input, commands, hidden persisted prompt messages, marker and feedback. Catalog, provider-access and viewed-session outlets are provided only where pi's own surface states them. |
-| `ExtensionAssembly` | [`framework/interface/details/implementation.ts#L192`](../interface/details/implementation.ts#L192) | The harness-independent assembly information, every member optional (`factory`, `requiredSemantics`, `configBaseDir`). Harness version support is deliberately not one of them either: support is an evidence claim recorded in the repository's support record ([`harness-support.md`](harness-support.md)), and no assembly supplies or widens it. |
+| `ExtensionAssembly` | [`framework/interface/details/implementation.ts`](../interface/details/implementation.ts) | The harness-independent assembly information, every member optional (`implementation`, `configBaseDir`). `implementation` is the result of `defineImplementation`, never a raw factory function. Harness version support is deliberately not one of them either: support is an evidence claim recorded in the repository's support record ([`harness-support.md`](harness-support.md)), and no assembly supplies or widens it. |
 | `BindingResult`, `BindingFailure` | [`framework/runtime/port.ts`](../runtime/port.ts) | What a binding concluded, and why it was refused. |
 | `DirectedCommandImplementation`, `CommandDelivery`, `DeclaredValueSeam` | [`command/details/implementation.ts#L81`](../interface/command/details/implementation.ts#L81), [`#L137`](../interface/command/details/implementation.ts#L137), [`State interface`](../interface/state/index.ts) | The implementations an assembly injects for a definition's directed commands, keyed by command name — each with a `run` member and an optional `unrecognized` member for an argument that parsed to no directive — and the delivery and declared-value seam each one writes through. The delivery is explicitly constructed from its approved members (`args`, `canAcceptInput`, `provider`, `owner`, `feedback`, `hasUI`, `state`, `capability`); the adapter's persistence callback and the marker area transport stay internal. The old `CommandActions` combination type was removed after its last consumer check found none. |
 | `RecognizedDirective`, `DirectedDirective` | [`command/details/implementation.ts#L69`](../interface/command/details/implementation.ts#L69), internal [`control.ts`](../behaviors/control.ts) | The directive a directed command's `run` receives, and the internal normalization result that also carries the unrecognized text. `DirectedDirective` is not extension-facing. |
@@ -56,9 +56,9 @@ exports.
 | `AgentActivity`, `SessionActivityEvent`, `SessionActivityObservation`, `SessionActivityDelivery` | [`Session activity`](../interface/session/details/activity.ts) | The activity axis of the semantic lifecycle: one actual session's current agent activity (`working`/`idle`), the one event kind `session_activity`, the observation that states it — the session's own facts, the owner scope it concerns, the reading, `hasUI` and the feedback channel — and the delivery that carries the reading to a handler. It is *derived*: the framework states it from the round transitions its own synthesis dispatches (a Round it holds open is that session working, a Round it confirmed ended is idle), delivering it only where the reading moved, and the same shape is what a reading obtained elsewhere (another process's session, through the framework's local access) arrives in. See [The activity axis](#the-activity-axis). |
 | `SessionContextEvent`, `SessionContextDelivery`, `SessionContextHandler(s)`, `SessionContextReading` | [`Session context`](../interface/session/details/context.ts); internal adapter observation in [`port`](../runtime/port.ts) | The context axis of the semantic lifecycle: one *collected* reading of one session's own context — the tokens its conversation held and the provider/exact model it ran at that instant — reported by an adapter at its own collection points (the session's start, a finalized message, the run's own execution convergence) and delivered to a subscribing group as the change it is. A host that states an unknown count (pi's `null`) reports no collection rather than a reading of zero. |
 | `SessionCommitEvent`, `SessionCommitObservation`, `SessionCommitDelivery`, `SessionCommitHandler(s)` | [`Session commit`](../interface/session/details/commit.ts) | The commit axis of the semantic lifecycle: one actual session's own confirmed write of its extension data, as the process that ran it states it. The observation carries the session's own facts, the owner, the running count of confirmed writes, `hasUI` and the feedback channel — and nothing the storage holds, so a subscriber that adopts it reads the storage itself. It is delivered where the count moved, mints no Round, Turn or accounting fact, and is stated by the extension through `ImplementationContext.session.recordCommit`. |
-| `SessionCapability`, `SessionObservationReader`, `SessionObservation` | [`Session capability`](../interface/session/index.ts), [`current observations`](../interface/session/observation.ts) | The factory supplies `context.session`, never an observation source constructor. `observations.read` and `snapshot` return isolated current readings, including observations collected before attaching. Missing observations are not Idle or zero. `recordCommit` states a confirmed write without saving or carrying business content. Source mutation, ordering and withdrawal stay internal; a lost source withdraws live readings but not a confirmed write. See the [Session capability entry](../interface/session/index.ts). |
+| `SessionCapability`, `SessionObservationReader`, `SessionObservation` | [`Session capability`](../interface/session/index.ts), [`current observations`](../interface/session/observation.ts) | The authored implementation's `create` supplies `context.session`, never an observation source constructor. `observations.read` and `snapshot` return isolated current readings, including observations collected before attaching. Missing observations are not Idle or zero. `recordCommit` states a confirmed write without saving or carrying business content. Source mutation, ordering and withdrawal stay internal; a lost source withdraws live readings but not a confirmed write. See the [Session capability entry](../interface/session/index.ts). |
 | `SessionEventHandlers`, `SessionEventHandler`, `SessionEventDelivery`, `RoundEventHandlers`, `RoundEventHandler`, `SessionActivityEventHandler`, `SessionActivityEventHandlers`, `TurnEventHandlers`, `TurnEventHandler`, `UserInputEventHandler`, `UserInputDelivery`, `SessionContextHandler`, `SessionContextDelivery`, `SessionCommitHandler`, `SessionCommitHandlers` | [`Session events and per-kind contracts`](../interface/session/index.ts) | The per-axis handler aliases, keyed by event, and the delivery each one receives — the session axis's delivery carries the actual session's facts and the owner-scoped capability, while the round, activity, Turn, input, context and commit deliveries carry their own facts and no capability. A handler may return a promise: the framework contains its rejection the way it contains a synchronous throw, and does not wait for it. All of these are public authoring types ([`framework/interface/session`](../interface/session/index.ts)), not adapter exports. |
-| Requirement types (`RequiredSemantic`, `DeclarableRequiredSemantic`, `FRAMEWORK_REQUIRED_SEMANTICS`) | [`DeclarableRequiredSemantic`](../interface/details/implementation.ts); the complete vocabulary in [`framework/core/requirements.ts`](../core/requirements.ts) | The declarable half — `session-lifecycle-events` and `round-lifecycle-events` — is authoring contract metadata. The complete vocabulary and the framework's own `history-preservation` invariant stay internal: history preservation is not an author option or a startup gate. No runtime switch. |
+| Verification vocabulary (`RequiredSemantic`, `FRAMEWORK_REQUIRED_SEMANTICS`) | [`framework/core/requirements.ts`](../core/requirements.ts) | Internal behavior-verification names and the framework's history-preservation invariant. Extension dependency inventories are source-derived, not public assembly requirement arrays. No runtime switch. |
 | `ConfigurationViolation` | [`framework/core/violations.ts`](../core/violations.ts) | The report of one broken configuration rule, carried by a `configuration` binding failure: a `ConfigurationViolationKind` and the deterministic `detail`. |
 | `ExtensionConfigDeclaration`, `ConfigFieldType`, `BOUND_CONFIG_FIELD_TYPES` | [`framework/interface/details/definition.ts`](../interface/details/definition.ts) for the declarations; [`framework/core/definition.ts#L66`](../core/definition.ts#L66) for the internal bound set | The configuration an extension requires of its own `config.yaml`: the file's path, and the keys the file must carry with the type each must match. See [Extension configuration](#extension-configuration-declaration--file). |
 | `getConfig`, `ExtensionConfigError` | [`framework/interface/general/config.ts`](../interface/general/config.ts), implemented at [`framework/core/config.ts`](../core/config.ts) | The framework's general configuration module: the one call shared logic imports directly, which reads the values the definition's own file was validated to carry in this process, and the misuse failure it may recognize. `getConfig` and `ExtensionConfigError` are the entry's runtime exports; the error class is canonical in the adjacent `config-contract.ts`, so the implementation throws the same identity a consumer checks. See [Extension configuration](#extension-configuration-declaration--file). |
@@ -81,8 +81,8 @@ surface: the binding label is used for diagnostics, not pi's unrelated session-e
 ## `defineExtension(definition)`
 
 `definition` is an `ExtensionDefinition` ([`details/definition.ts#L58`](../interface/details/definition.ts#L58)): plain data,
-no builder and no handler. All fields are described below. `state`, `commands`, `prompts`, `marker`, `config`
-and `subagentRequirements` are optional; `id` and `displayName` are required.
+no builder and no handler. All fields are described below. `state`, `commands`, `prompts`, `marker` and
+`config` are optional; `id` and `displayName` are required. Integration demand is derived from source.
 
 ### `id: string`
 
@@ -94,79 +94,73 @@ identity is `${id}:${tag}` ([`interface/prompt.ts`](../interface/prompt.ts)).
 Human-readable name used for the extension's label and the text of its notifications (for example the
 toggle's enabled/disabled notice).
 
-### `subagentRequirements?: readonly SubagentCapability[]`
+### Source-derived integration contracts
 
-The extension author's declaration of the subagent semantics needed for complete integration.
-Omitted or empty means no subagent obligation. It names no execution mode and is never read by normal
-binding, command dispatch or accounting. See the independent checklist below.
+Extension demand comes from actual definitions, canonical static authoring and framework interface
+use, not manually synchronized requirement arrays. The former subagent-only requirement and adapter
+inventory lists are removed. The shared framework planner expands subscription, command, prompt,
+marker and lifecycle structure; explicit semantic rules cover indirect observations and other
+framework-mediated uses. Native widgets and general HTTP/files/config modules do not become adapter
+requirements, and business handler bodies are not interpreted.
 
-### Independent subagent integration checklist
+Each contract carries one family (`port:*`, `delivery:*`, `framework:*`), a required/optional policy,
+source origins and a dependency path. The policy comes from source use and framework rules, never from
+a port member's `?`. Demand lists the reachable obligations, not a claim about every runtime path:
+configuration is not read and branches are not evaluated. No working reference harness or target
+discovery entry is a prerequisite, and demand can be listed without an adapter.
 
-**Stage 1 is declaration matching, not behavior verification.** Run it explicitly:
+Adapter supply is derived from the actual `defineAdapterPort` assembly and reachable canonical
+delivery construction, not a separate declaration catalog. Required delivery payload members come
+from the canonical `AdapterDeliveryMap`, so framework-needed callbacks are checked even when the
+extension never reads them directly. Results distinguish `provided`, `unavailable`, `conditional`,
+`missing` and `unresolved`; unknown analysis never counts as complete. A function body is not examined
+to guess whether native behavior is really implemented.
 
-```sh
-bun run check:integrations
-bun run check:integrations --json
-```
+Commands, option resolution, exit codes, output fields, the precise status/completeness rules and the
+generator boundary live in [static integration check](integration-check.md). This index records only
+the capability model.
 
-The command is resolved from its own repository location, not the working directory. It discovers
-actual `entrypoints/<harness>/<extension>.ts` pairs, loads only definition/inventory modules and compares
-requirements against every execution mode declared by the matching adapter. It does not load the
-discovery entries or native assemblies, read extension configuration, install a harness or run tests.
-Exit codes: `0` matching declarations, `1` missing integration, `2` invalid command arguments.
-The JSON report marks `stage: "integration-completeness"` and `behaviorTestsRun: false`.
+#### Assembly-specific factory outputs
 
-| Capability | Required meaning of the supplied integration |
-| --- | --- |
-| `extension-loading` | The subagent loads the extension logic needed to participate. |
-| `session-facts` | Actual session identity, direct parent and Owner relationships. |
-| `turn-usage` | Each actual session's own response usage without duplicate accounting. |
-| `session-lifecycle` | Per-actual-session lifecycle, Round edges and awaitable disposal. |
-| `session-observations` | Per-session activity, context and startup observations. |
-| `storage-commit` | Confirmed storage commits are observable where the Owner is served. |
-| `state-follow` | A declared following State field reads its Owner's value. |
+A generic adapter factory may legitimately return an optional member according to assembly inputs.
+The checker must not treat that generic optionality as uncertainty for every concrete extension.
+`AdapterFactory<Port, Factory>` in the internal adapter authoring module retains the native factory's
+callable shape and carries a **type-only** `AdapterFactoryOutput<Port>` witness. It adds no runtime
+property, capability inventory, or loading decision. The witness is an adapter output contract,
+trusted subject to adapter verification; it does not prove provider registration or native behavior.
 
-The types are exported from [`framework/interface/subagent.ts`](../interface/subagent.ts). The execution
-mode (`SubagentExecutionMode`), the adapter coverage inventory (`HarnessIntegrationDeclaration`,
-`ExtensionHarnessEntry`) and the checker stay internal: the checker is the separate tooling entry
-[`framework/integration-check.ts`](../integration-check.ts), never a startup hook or runtime export.
+Pi preserves the correlation through `piAdapter` and `createPiPort` overloads:
 
-- **Extension author:** declare `subagentRequirements` in `extensions/<id>/definition.ts`.
-  model-cost requires the first six capabilities above; codebase-tools requires loading, facts and
-  following State. connect-bot declares no subagent requirement.
-- **Harness adapter author:** maintain `HarnessIntegrationDeclaration` in the adapter's
-  `domain/subagent/declaration.ts` ([OMP](../../adapters/omp/domain/subagent/declaration.ts), [pi](../../adapters/pi/domain/subagent/declaration.ts)).
-  `subagents` keys name the supported modes (`in-process`, `cross-process`); each value explicitly lists
-  supplied capabilities. List one or both modes according to the actual implementation, not an
-  extension policy. An empty mapping supplies no subagent integration; an empty capability list still
-  declares its mode and therefore reports each missing requirement.
-- **Catalog maintainer:** register new definition and inventory exports in
-  [`scripts/check-adapter-integrations.ts`](../../scripts/check-adapter-integrations.ts).
-  Newly discovered entries absent from that catalog are reported when their declarations are needed.
-  Extension ids match their discovery filenames; harness ids match their discovery directory names.
+| Assembly input | Declared port output | Conditional member's selected supply |
+| --- | --- | --- |
+| `childEntry: string` | Required `subagentIntegration` function | `provided` |
+| Omitted or explicitly `undefined` `childEntry` | Absent `subagentIntegration` member | `unavailable` (intentionally not selected) |
+| General `PiAssembly`, including `string \| undefined` | Optional `subagentIntegration` function | `conditional` |
 
-Coverage cannot be pooled between modes. If pi declares both modes and only its in-process declaration
-supplies `storage-commit`, the report names `pi / model-cost: cross-process: missing storage-commit`.
-A harness declaring only in-process coverage owes no cross-process implementation. Missing adapter
-coverage is not a startup failure, and a disconnected process is not a declaration gap.
+The checker uses TypeScript's resolved call signature in selected extension sources and recognizes
+only the canonical output witness on factories belonging to the selected adapter. Ordinary native API
+calls are not assembly evidence. The witness narrows a conditional member; it cannot hide a missing
+implementation, incompatible binding or delivery payload gap. Bare adapter analysis without extension
+sources retains its generic answer. Exact evidence and combination rules are in
+[the integration guide](integration-check.md#assembly-output-contract).
 
-**A complete checklist proves only that the declarations match.** The script does not inspect function
-bodies or prove extension-specific assembly wiring (such as pi's required `childEntry`), provider
-presence, delivery correctness or a particular installed harness version. Adapter authors must keep
-coverage declarations truthful; tests/dock scenarios verify their implementations separately. For pi,
-the inventory describes the integrated provider path with a child entry, not the no-provider path.
-Run the existing behavior tests and, when appropriate, `bun run verify:omp-candidate` as a separate
-stage; the completeness command does not invoke them or consume their results.
+An intentionally unselected integration is not itself a broken adapter. It still fails coverage if
+the extension requires it; optional demand remains a reported risk. Provider availability,
+registration acceptance and actual child loading remain separate runtime results. When a combination
+explicitly passes `childEntry` (as model-cost/pi and codebase-tools/pi do in the recorded checks), its
+loading supply is `provided`, not a warning based only on the generic factory's optional return.
 
-No startup check, user-facing mode notice, feature gate, `/budget detail` change, or accounting change
-is introduced. Those runtime policies are outside this checklist's scope. Architecture rationale:
-[ADR 0002](../../docs/adr/0002-semantic-extension-framework.md#two-sided-subagent-integration-checklist-2026-10-17).
+Type and structural completeness do not establish correct native mapping. A no-op can satisfy a type;
+reviewers, agents and behavior verification remain responsible for semantic correctness. The commands
+neither install a harness, promote support, read a verification report nor change extension loading.
+See [the refactor and generation boundary](integration-contract-refactor.md) and
+[contract-driven upgrade review](harness-support.md#contract-driven-agent-pre-review).
 
 ### Adapter implementation navigation
 
-Start with the capability meaning above, then the matching `adapters/<harness>/subagent/declaration.ts`
-for mode-specific supply. The following is a navigation convention, not executable metadata or a
-one-capability/one-file rule. Shared logic consumes framework interfaces, never these native modules.
+Start with the contract reported by the checker, then the matching `adapters/<harness>/internal/port.ts`
+actual assembly and its referenced domain implementation. The following is a navigation convention,
+not a one-capability/one-file rule. Shared logic consumes framework interfaces, never these native modules.
 
 | Existing requirement | Native implementation neighbourhood | Framework-owned implementation |
 | --- | --- | --- |
@@ -196,7 +190,7 @@ need a directory. Extension-specific presentation stays outside these adapters.
 Subagent relations are not Session identity: Session consumes those relations for its own facts and
 Owner mapping. OMP observes child Session/Turn/Round through the same subscriptions as main sessions,
 so it has no separate Subagent `events.ts`; pi additionally reads its provider's announcements and
-replies. Both offline inventories live in `subagent/declaration.ts`, not in the runtime query path.
+replies. Offline supply analysis follows the actual port assembly, not separately maintained inventories.
 The third-party loader under pi `domain/subagent/internal/` is private provider-resolution implementation.
 
 Each adapter root has exactly three entries: `index.ts`, `internal/`, and `domain/`. Only
@@ -270,9 +264,9 @@ share a name, a description and a command surface; what they drive differs:
 and aliases remain deferred. A kind outside the bound set is refused at binding, not silently dropped. (One
 extension, one command name, one declared writer per State field — see `ConfigurationViolation` below.)
 
-**Directed commands pair a declaration with an injected implementation.** The definition names the command
-and its field; the implementation arrives with the assembly's implementation factory
-([`implementation.ts#L115`](../interface/details/implementation.ts#L115)). Binding refuses a directed declaration whose
+**Directed commands pair a declaration with an authored implementation slot.** The definition names the
+command and its field; the implementation arrives as the authored declaration's `commands` entry
+([`implementation.ts`](../interface/details/implementation.ts)). Binding refuses a directed declaration whose
 implementation was not injected — an `initialization` failure, with nothing registered — so a command the user
 can run always has something to run.
 
@@ -437,8 +431,7 @@ depends on and where its configuration lives.
 
 | Parameter | Type | Meaning |
 | --- | --- | --- |
-| `factory?` | `ExtensionFactory` | The extension's own half: called once the definition's configuration validated, handed the validated values (`{ config }`, an empty object for a definition that declares none), and expected to return the implementation the binding connects ([`implementation.ts#L180`](../interface/details/implementation.ts#L180)). It must send no remote request and start no timer, because a refusal can still follow. Omitted when the definition needs nothing injected. |
-| `requiredSemantics?` | `readonly DeclarableRequiredSemantic[]` | The semantics this extension depends on **beyond** the ones every binding already requires: `"session-lifecycle-events"`, `"round-lifecycle-events"`. This is contract metadata: it states what the supported harness scope must be independently verified for, and nothing in the framework reads it at binding. Omitted when the extension depends on nothing beyond the framework's own requirements — the case for an extension that observes no lifecycle event. See [Declared requirements](#declared-requirements-verification-input). |
+| `implementation?` | `AuthoredImplementationFactory` | The result of `defineImplementation`: the canonical authored declaration, materialized once the definition's configuration validated. Its `create` is handed the validated values (`{ config }`, an empty object for a definition that declares none) and must send no remote request or start a timer, because a refusal can still follow. A raw factory function is not assignable; only the branded helper result is. Omitted when the definition needs nothing injected. |
 | `configBaseDir?` | `string` | The directory the definition's relative configuration paths are resolved against, as plain data: the extension repository root, from which the convention `extensions/<definition.id>/config.yaml` is relative. An assembly is the one party that knows it — its own module lives in that repository and the loader discovers the extension by an absolute path while the process runs in an arbitrary project directory — so connect-bot's assembly derives it from `import.meta.url`. Omitted when the definition declares no configuration, and omitted by an assembly that names none: a relative path then resolves against the process's working directory, and an absolute `path` is unaffected either way. See [Extension configuration](#extension-configuration-declaration--file). |
 
 **There is no supported-version option, and no version is compared at all.** Harness version support is an
@@ -449,24 +442,28 @@ support record (or from `OMP_TEST_VERSION` for a candidate). An extension that n
 above assembles with no options at all, which is the canonical form in this repository
 ([`extensions/codebase-tools/harnesses/omp.ts`](../../extensions/codebase-tools/harnesses/omp.ts)).
 
-### The implementation factory and its lifecycle
+### The authored implementation and its lifecycle
 
-`ExtensionImplementation` ([`implementation.ts#L115`](../interface/details/implementation.ts#L115)) is what a factory returns, and it
-is the whole of the extension's half: `commands` (the implementations of the definition's commands, keyed by
-command name), `events` (the semantic lifecycle handlers), and the two lifecycle entries `initialize` and
-`cleanup`. Every member is optional.
+`defineImplementation` ([`implementation.ts`](../interface/details/implementation.ts)) returns the one canonical
+authored object: `create(context)` builds the extension's business state, and the static slots —
+`subscriptions` (scopes and semantic event keys), `commands` (directed `run`/`unrecognized` or an actions
+table), `catalog`, `initialize` and `cleanup` — name handlers that receive that state. Its `.declaration`
+is inspectable without calling the factory or running `create`, so registration and semantic-dependency
+selection can use the same structure a future checker reads. The framework materializes the internal
+`ExtensionImplementation` from that declaration; no second requirement list exists.
 
-**Ordering.** Configuration is read and validated first; the factory is called only then, and the
-declaration/implementation pairs and registration follow. Every refusal that follows the factory
-runs the implementation's one cleanup, so a binding that fails after creation leaves no business instance
-behind ([`binding.ts#L234`](../behaviors/binding.ts#L281)).
+**Ordering.** Configuration is read and validated first; the authored factory is materialized only then,
+and the declaration/implementation pairs and registration follow. Every refusal that follows creation
+runs the one `cleanup` the authored declaration selected, so a binding that fails after creation leaves no
+business instance behind ([`binding.ts`](../behaviors/binding.ts)).
 
-**One implementation per adapter.** The `omp` adapter calls the factory once — the first binding hands it the
-validated configuration, and every later binding (another session's, a subagent's) reuses what it built
-([`omp.ts`](../../adapters/omp/index.ts)) — with one exception: an implementation whose cleanup has already
-run is spent, so the binding that comes after it builds a fresh instance rather than delivering to a closed
-one. An assembly that wants the instance to be the *process's* creates its adapter once, at module load, as
-the entrypoints do; that is what makes an ordinary model, session, tree or view change harmless.
+**One implementation per adapter.** The `omp` adapter materializes the authored declaration once — the
+first binding hands `create` the validated configuration, and every later binding (another session's, a
+subagent's) reuses what it built ([`omp.ts`](../../adapters/omp/index.ts)) — with one exception: an
+implementation whose cleanup has already run is spent, so the binding that comes after it builds a fresh
+instance rather than delivering to a closed one. An assembly that wants the instance to be the *process's*
+creates its adapter once, at module load, as the entrypoints do; that is what makes an ordinary model,
+session, tree or view change harmless.
 
 **Initialization runs once, and the first request waits for it.** The framework calls `initialize` at the
 owner session node — the first session that is its own owner, and therefore the first moment of the process in
@@ -671,24 +668,25 @@ because tool execution is outside the Turn.
   Turn is delivered once: a repeated settle with the same reading is normal
   deduplication, and one with a different reading is reported as a conflict and dropped, because no post-end
   correction exists.
-- **The extension supplies its own catalog.** `ExtensionImplementation.catalog`
-  ([`implementation.ts#L148`](../interface/details/implementation.ts#L148)) is the extension's own `CatalogPriceSource`: the framework
-  queries it once per request, at the request's real start, and treats every value it returns as opaque
-  business data — it never interprets a price, a currency or a bucket key, and an implementation that supplies
-  no catalog has every Turn name the price as unavailable.
-- **The harness's own model prices are a fact the factory receives.** A harness whose model catalog states
+- **The extension supplies its own catalog.** `ImplementationDeclaration.catalog`
+  ([`implementation.ts`](../interface/details/implementation.ts)) selects the extension's own
+  `CatalogPriceSource` from its business state: the framework queries it once per request, at the request's
+  real start, and treats every value it returns as opaque business data — it never interprets a price, a
+  currency or a bucket key, and an implementation that supplies no catalog has every Turn name the price as
+  unavailable.
+- **The harness's own model prices are a fact `create` receives.** A harness whose model catalog states
   what a model costs reports it as `HarnessPort.modelPrices` ([`port.ts`](../runtime/port.ts)),
   the same query shape and never a native model, registry or context; binding hands it to the extension's
-  factory as `ImplementationContext.modelPrices` ([`implementation.ts#L65`](../interface/details/implementation.ts#L65)). The framework
+  `create` as `ImplementationContext.modelPrices` ([`implementation.ts`](../interface/details/implementation.ts)). The framework
   never queries it itself — whether a channel is priced from the extension's own data or from the harness's
   catalog is the extension's business — and an adapter that reports no prices hands over no fact rather than an
   empty one. On `omp` the adapter maps it from the live session context's model catalog, in US dollars per
   million tokens, answering nothing for a pair the catalog does not carry or prices at zero on every bucket.
-- **The harness's own provider access is a per-operation query the factory receives.** A harness whose host
+- **The harness's own provider access is a per-operation query `create` receives.** A harness whose host
   can resolve a provider's credential and address reports it as `HarnessPort.providerAccess`
   ([`port.ts`](../runtime/port.ts)), the small `ProviderAccess` query of
   `{ baseUrl?, credential? }` facts and never a native registry or credential store; binding hands it to the
-  extension's factory as `ImplementationContext.providerAccess`
+  extension's `create` as `ImplementationContext.providerAccess`
   ([`implementation.ts#L74`](../interface/details/implementation.ts#L74)). The framework asks it for nothing and caches nothing: a
   question is answered by the host's state at that moment, so a credential a login or a replacement has since
   made effective is what the next operation uses, and an adapter that resolves no such access hands over no
@@ -1108,10 +1106,11 @@ reported as covered/unverified scope rather than decided at binding.
 
 | Symbol | Source | Shape and meaning |
 | --- | --- | --- |
-| `RequiredSemantic` | [`requirements.ts#L21`](../core/requirements.ts#L21) | Closed union: `"history-preservation"` (existing conversation entries and their history-derived request content are preserved; new material is appended), plus the two declarable lifecycle axes. This complete vocabulary is internal; only `DeclarableRequiredSemantic` is authoring contract. |
-| `FRAMEWORK_REQUIRED_SEMANTICS` | [`requirements.ts#L24`](../core/requirements.ts#L24) | The semantics required of every binding whatever its assembly declares: `["history-preservation"]`. Not declarable — `DeclarableRequiredSemantic` excludes it. |
-| `DeclarableRequiredSemantic` | [`implementation.ts#L36`](../interface/details/implementation.ts#L36) | The members an extension's assembly **may** declare it depends on: `session-lifecycle-events` and `round-lifecycle-events`. It is the type of `ExtensionAssembly.requiredSemantics`; the complete `RequiredSemantic` vocabulary stays internal. |
-| `ExtensionAssembly.requiredSemantics` | [`implementation.ts#L213`](../interface/details/implementation.ts#L213) | An assembly's own statement of what its extension depends on beyond the framework's requirements. It is the input a verification run reports its coverage against; nothing in the framework reads it, and declaring one changes no binding outcome. |
+| `RequiredSemantic` | [`requirements.ts`](../core/requirements.ts) | Internal verification vocabulary for history preservation and the lifecycle axes. It is not a public authoring requirement list. |
+| `FRAMEWORK_REQUIRED_SEMANTICS` | [`requirements.ts`](../core/requirements.ts) | The framework's history-preservation invariant, applicable to every binding. |
+
+The public `requiredSemantics` option and `DeclarableRequiredSemantic` alias are removed. Integration
+contracts are derived from actual source use; behavior-verification reports remain independent.
 
 `history-preservation` is not something an extension can trade away: it is the framework's own invariant —
 new material is appended through the harness's own recording path and no existing conversation entry is

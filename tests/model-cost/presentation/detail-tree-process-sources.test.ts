@@ -27,7 +27,7 @@ import type { ConsumptionDocument } from "../../../extensions/model-cost/shared-
 import { DEEPSEEK_DISPLAY_BUDGET } from "../../../extensions/model-cost/shared-logic/business/context/session-context";
 import type { ModelPricingData } from "../../../extensions/model-cost/shared-logic/business/pricing/model-data";
 import type { ModelCostRuntime } from "../../../extensions/model-cost/shared-logic/runtime";
-import { createModelCostRuntime } from "../../../extensions/model-cost/shared-logic/runtime";
+import { createModelCostRuntime, modelCostImplementation } from "../../../extensions/model-cost/shared-logic/runtime";
 import type { SessionFacts } from "../../../framework/interface/session";
 import type { ObservedSession, SessionObservationAccess } from "../../../framework/runtime/port";
 import { createOwnerAccessPublisher } from "../../../framework/modules/local-access";
@@ -179,15 +179,14 @@ async function bind(): Promise<Bound> {
 	let runtime: ModelCostRuntime | undefined;
 	double.bind(MODEL_COST, {
 		config: { reader: () => `storageDir: ${root}\nbalanceTtlMs: 30000\ncodexQuotaTtlMs: 15000\n` },
-		factory: context =>
-			(runtime = createModelCostRuntime({
+		factory: modelCostImplementation(context => (runtime = createModelCostRuntime({
 				config: { storageDir: root },
 				configDirectory: root,
 				userHomeDirectory: root,
 				harness: HARNESS,
 				data: DATA,
 				session: context.session,
-			})).implementation,
+			}))),
 	});
 	double.deliverSession(SEAT_OWNER, { session: MAIN });
 	double.deliverSession(SEAT_OWNER, { event: { kind: "session_facts" }, session: MAIN });

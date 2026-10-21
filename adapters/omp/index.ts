@@ -65,14 +65,14 @@ export type OmpExtensionFactory = (pi: OmpExtensionApi) => BindingResult;
  * reports its conflicts and contributes nothing, and the harness continues. The harness-independent
  * binding owns observation ownership, the State store and implementation reuse: the store is
  * created once here — at module load, so once per extension per process — and shared by every
- * session binding, which is what lets bindings agree on one current value per owner. The
- * implementation factory is called once here as well: the first binding that gets far enough hands
- * it the validated configuration, and every later binding reuses what it built, so a new session,
- * a subagent or a view change never constructs a second business instance. The one thing that ends
- * that reuse is the instance's own disposal: once its cleanup has run, it is spent, and the next
- * binding builds a fresh instance rather than handing a closed one to an extension that believes
- * it is starting fresh. An assembly that wants the instance to be the process's creates its adapter
- * once, at module load, as `entrypoints/omp` does.
+ * session binding, which is what lets bindings agree on one current value per owner. The authored
+ * implementation is materialized once here as well: the first binding that gets far enough hands
+ * its `create` the validated configuration, and every later binding reuses what it built, so a new
+ * session, a subagent or a view change never constructs a second business instance. The one thing
+ * that ends that reuse is the instance's own disposal: once its cleanup has run, it is spent, and
+ * the next binding builds a fresh instance rather than handing a closed one to an extension that
+ * believes it is starting fresh. An assembly that wants the instance to be the process's creates
+ * its adapter once, at module load, as `entrypoints/omp` does.
  *
  * Every session this harness runs — a subagent's included — is a binding in this process, so the
  * binding uses `in-process` subagent access: an owner's declared values are always read here and no

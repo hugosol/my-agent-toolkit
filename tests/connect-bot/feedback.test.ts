@@ -42,37 +42,37 @@ const ROWS: readonly Row[] = [
 		letter: "A",
 		label: "an arm the panel registered, with the online count it reported",
 		input: { trigger: "arm", register: { onlineCount: 3 } },
-		says: { level: "info", message: "已接入 omp-bot 面板（当前 3 个在线会话）" },
+		says: { level: "info", message: "已接入 herdr-bot 面板（当前 3 个在线会话）" },
 	},
 	{
 		letter: "B",
 		label: "an arm no panel registered: this session is not being monitored",
 		input: { trigger: "arm", register: undefined },
-		says: { level: "error", message: "无法连接 omp-bot，未启用；请确认面板已启动" },
+		says: { level: "error", message: "无法连接 herdr-bot，未启用；请确认面板已启动" },
 	},
 	{
 		letter: "C",
 		label: "an off the panel answered",
 		input: { trigger: "off", enabledBefore: true, panelAnswered: true },
-		says: { level: "info", message: "已断开 omp-bot 面板" },
+		says: { level: "info", message: "已断开 herdr-bot 面板" },
 	},
 	{
 		letter: "D",
 		label: "an off the panel never answered",
 		input: { trigger: "off", enabledBefore: true, panelAnswered: false },
-		says: { level: "error", message: "omp-bot 面板未响应" },
+		says: { level: "error", message: "herdr-bot 面板未响应" },
 	},
 	{
 		letter: "E",
 		label: "the first failure of an outage, announced once",
 		input: { trigger: "push-failure", action: "notify-first" },
-		says: { level: "error", message: "与 omp-bot 面板连接中断；若持续失败将自动断开" },
+		says: { level: "error", message: "与 herdr-bot 面板连接中断；若持续失败将自动断开" },
 	},
 	{
 		letter: "F",
 		label: "the failure that exhausts the budget: the connection ended and needs the command again",
 		input: { trigger: "push-failure", action: "notify-disarm" },
-		says: { level: "error", message: "与 omp-bot 连接中断，已断开；重新执行 /connect-bot 可重连" },
+		says: { level: "error", message: "与 herdr-bot 连接中断，已断开；重新执行 /connect-bot 可重连" },
 	},
 	{
 		letter: "G",
@@ -86,7 +86,7 @@ const ROWS: readonly Row[] = [
 		input: { trigger: "unknown-argument", argument: "offline" },
 		says: {
 			level: "error",
-			message: "未知参数「offline」；用法：/connect-bot（接入 omp-bot 面板）或 /connect-bot off（断开）。",
+			message: "未知参数「offline」；用法：/connect-bot（接入 herdr-bot 面板）或 /connect-bot off（断开）。",
 		},
 	},
 	{
@@ -107,7 +107,7 @@ const ROWS: readonly Row[] = [
 		letter: "K",
 		label: "a new activation while the requested unregister is still in flight",
 		input: { trigger: "disconnecting" },
-		says: { level: "error", message: "正在断开 omp-bot 面板，请稍后重试" },
+		says: { level: "error", message: "正在断开 herdr-bot 面板，请稍后重试" },
 	},
 ];
 

@@ -18,7 +18,7 @@
  * is the framework's dispatch, never a behavior of its own.
  */
 import { type OmpExtensionApi, ompAdapter } from "../../../../adapters/omp";
-import { type ExtensionDefinition, defineExtension } from "../../../../framework/interface";
+import { type ExtensionDefinition, defineExtension, defineImplementation } from "../../../../framework/interface";
 import type { RoundDelivery, SessionActivityDelivery, SessionEventDelivery } from "../../../../framework/interface/session";
 
 /** The extension id whose stderr lines the dock reads. */
@@ -62,16 +62,17 @@ export default function activityFactsProbe(pi: OmpExtensionApi): void {
 	// recorded too, because whether *leaving* a session is that session's own end is a distinction the
 	// reading is placed against.
 	ompAdapter(definition, {
-		factory: () => ({
+		implementation: defineImplementation<Record<string, never>>({
+			create: () => ({}),
 			subscriptions: [
 				{
 					scope: "session",
 					events: {
-						session_start: sessionLine,
-						session_end: sessionLine,
-						round_start: edgeLine,
-						round_end: edgeLine,
-						session_activity: activityLine,
+						session_start: (_state, delivery) => sessionLine(delivery),
+						session_end: (_state, delivery) => sessionLine(delivery),
+						round_start: (_state, delivery) => edgeLine(delivery),
+						round_end: (_state, delivery) => edgeLine(delivery),
+						session_activity: (_state, delivery) => activityLine(delivery),
 					},
 				},
 			],

@@ -12,9 +12,9 @@ import type {
 	SessionEvent,
 	SessionFacts,
 	SessionStartReason,
-	UserInputDelivery,
 } from "../../../../framework/interface/session";
 import type { OwnerReference } from "../../../../framework/interface/state";
+import { defineAdapterDelivery } from "../../../../framework/runtime/adapter-authoring";
 import type { HarnessPort } from "../../../../framework/runtime/port";
 import { feedbackTransport, noticeTransport } from "../feedback";
 import { markerTransport } from "../marker";
@@ -40,7 +40,7 @@ export function onPiSession(context: PiPortContext): NonNullable<HarnessPort["on
 		): void => {
 			context.catalogued(ctx);
 			const feedback = feedbackTransport(ctx);
-			handler({
+			handler(defineAdapterDelivery("session", {
 				event, session, owner,
 				statePayloads: piStatePayloadsOf(ctx, context.stateEntryType),
 				persist: context.statePersistence.persist,
@@ -48,7 +48,7 @@ export function onPiSession(context: PiPortContext): NonNullable<HarnessPort["on
 				feedback,
 				notices: noticeTransport(ctx),
 				markers: markerTransport(ctx),
-			});
+			}));
 		};
 		context.keepSubscription(context.pi.on("session_start", (event, ctx) => {
 			const reason = START_REASON[event.reason];
@@ -105,12 +105,12 @@ export function onPiSession(context: PiPortContext): NonNullable<HarnessPort["on
 			const ended = context.state.activeOwner;
 			if (END_REASON[event.reason] === "disposed" && context.state.reportDisposal !== undefined) {
 				const feedback = feedbackTransport(ctx);
-				await context.state.reportDisposal({
+				await context.state.reportDisposal(defineAdapterDelivery("disposal", {
 					session,
 					owner: context.resolveOwner(context.catalogued(ctx)),
 					hasUI: ctx.hasUI,
 					feedback,
-				});
+				}));
 			}
 			// Only the owner session this binding serves ends here, by its own identity: a sub
 			// session this process ran is not the owner the extension serves, and its end is not
@@ -138,13 +138,13 @@ export function onPiUserInput(context: PiPortContext): NonNullable<HarnessPort["
 		context.keepSubscription(context.pi.on("input", (event, ctx) => {
 			if (event.source === "extension") return;
 			const feedback = feedbackTransport(ctx);
-			const delivery: UserInputDelivery = {
+			const delivery = defineAdapterDelivery("input", {
 				event: { kind: "user_input" },
 				owner: context.resolveOwner(context.catalogued(ctx)),
 				session: context.sessionFactsOf(ctx),
 				hasUI: ctx.hasUI,
 				feedback,
-			};
+			});
 			handler(delivery);
 		}));
 	};

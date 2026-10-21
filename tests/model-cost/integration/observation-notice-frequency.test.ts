@@ -29,13 +29,13 @@ import { attachModelCostWidget } from "../../../extensions/model-cost/harnesses/
 import type { ConsumptionDocument } from "../../../extensions/model-cost/shared-logic/foundation/session/consumption-document";
 import type { ModelPricingData } from "../../../extensions/model-cost/shared-logic/business/pricing/model-data";
 import type { ModelCostRuntime } from "../../../extensions/model-cost/shared-logic/runtime";
-import { createModelCostRuntime } from "../../../extensions/model-cost/shared-logic/runtime";
+import { createModelCostRuntime, modelCostImplementation } from "../../../extensions/model-cost/shared-logic/runtime";
 import type { OmpExtensionApi, OmpSessionContext } from "../../../adapters/omp";
 import * as frameworkOmp from "../../../adapters/omp";
 import { piAdapter } from "../../../adapters/pi";
 import type { SessionContextDelivery, SessionFacts } from "../../../framework/interface/session";
 import type { OwnerReference } from "../../../framework/interface/state";
-import { defineExtension, type ExtensionDefinition } from "../../../framework/interface";
+import { defineExtension, defineImplementation, type ExtensionDefinition } from "../../../framework/interface";
 import { type PortDouble, portDouble } from "../../framework/support/harness-port-double";
 import { boundPiSurface, type PiSurfaceSession } from "../../framework/support/pi-surface-double";
 import { controlledPiSurface, type ControlledPiSurface, type HostSession } from "../support/pi-host";
@@ -295,7 +295,7 @@ async function bindRuntime(options: { readonly withFrontend?: boolean } = {}): P
 	let runtime: ModelCostRuntime | undefined;
 	double.bind(MODEL_COST, {
 		config: { reader: () => `storageDir: ${root}\nbalanceTtlMs: 30000\ncodexQuotaTtlMs: 15000\n` },
-		factory: context => {
+		factory: modelCostImplementation(context => {
 			runtime = createModelCostRuntime({
 				config: { storageDir: root },
 				configDirectory: root,
@@ -305,8 +305,8 @@ async function bindRuntime(options: { readonly withFrontend?: boolean } = {}): P
 				now: () => CLOCK_AT,
 				session: context.session,
 			});
-			return runtime.implementation;
-		},
+			return runtime;
+		}),
 	});
 	double.deliverSession(OWNER, { session: MAIN });
 	double.deliverSession(OWNER, { event: { kind: "session_facts" }, session: MAIN });
@@ -384,13 +384,14 @@ function controlledOmpSurface(): ControlledOmpSurface {
 	} as unknown as OmpExtensionApi;
 
 	const factory = frameworkOmp.ompAdapter(OMP_PROBE, {
-		factory: () => ({
+		implementation: defineImplementation({
+			create: () => ({}),
 			subscriptions: [
 				{
 					scope: "session",
 					events: {
-						session_context: delivery => void published.push(delivery),
-						session_activity: delivery => void activities.push(delivery.activity),
+						session_context: (_state, delivery) => void published.push(delivery),
+						session_activity: (_state, delivery) => void activities.push(delivery.activity),
 						turn_start: () => void turnEdges.push("turn_start"),
 						turn_end: () => void turnEdges.push("turn_end"),
 					},

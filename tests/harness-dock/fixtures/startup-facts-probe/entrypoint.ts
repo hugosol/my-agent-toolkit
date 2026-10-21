@@ -12,7 +12,7 @@
  * its own. Its lines go to stderr, the channel the dock already captures.
  */
 import { type OmpExtensionApi, ompAdapter } from "../../../../adapters/omp";
-import { type ExtensionDefinition, defineExtension } from "../../../../framework/interface";
+import { type ExtensionDefinition, defineExtension, defineImplementation } from "../../../../framework/interface";
 import type { SessionEventDelivery } from "../../../../framework/interface/session";
 
 /** The extension id whose stderr lines the dock reads. */
@@ -37,6 +37,11 @@ function startLine(delivery: SessionEventDelivery): void {
 export default function startupFactsProbe(pi: OmpExtensionApi): void {
 	// One group over every actual session: the delivery a per-session observation view declares.
 	ompAdapter(definition, {
-		factory: () => ({ subscriptions: [{ scope: "session", events: { session_start: startLine } }] }),
+		implementation: defineImplementation<Record<string, never>>({
+			create: () => ({}),
+			subscriptions: [
+				{ scope: "session", events: { session_start: (_state, delivery) => startLine(delivery) } },
+			],
+		}),
 	})(pi);
 }

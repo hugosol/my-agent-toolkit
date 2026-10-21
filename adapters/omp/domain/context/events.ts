@@ -9,8 +9,9 @@
  * The newest-context tracker and the idle read live in `queries.ts`; this module subscribes and
  * assembles the delivery frame from the binding's own references.
  */
-import type { SessionContextObservation } from "../../../../framework/runtime/port";
 import type { OwnerReference } from "../../../../framework/interface/state";
+import { defineAdapterDelivery } from "../../../../framework/runtime/adapter-authoring";
+import type { SessionContextObservation } from "../../../../framework/runtime/port";
 import { feedbackTransport } from "../feedback";
 import type { OmpExtensionApi, OmpSessionContext } from "../../internal/native";
 import { sessionFactsOf } from "../session/queries";
@@ -38,7 +39,7 @@ export function observeSessionContext(
 		const usage = ctx.getContextUsage?.();
 		if (usage?.tokens === undefined) return;
 		const recorded = context.record(ctx);
-		handler({
+		handler(defineAdapterDelivery("context", {
 			session: sessionFactsOf(pi, recorded),
 			owner: context.owner(recorded),
 			hasUI: recorded.hasUI,
@@ -48,7 +49,7 @@ export function observeSessionContext(
 				...(ctx.model?.provider === undefined ? {} : { provider: ctx.model.provider }),
 				...(ctx.model?.id === undefined ? {} : { model: ctx.model.id }),
 			},
-		});
+		}));
 	};
 	// These are the adapter's own collection points; nothing here decides which of them is a
 	// change, so the same reading read twice is reported twice and the framework drops the repeat.

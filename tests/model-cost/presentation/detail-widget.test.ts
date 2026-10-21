@@ -26,7 +26,7 @@ import type { ConsumptionDocument } from "../../../extensions/model-cost/shared-
 import type { ModelPricingData } from "../../../extensions/model-cost/shared-logic/business/pricing/model-data";
 import { type RoundDisplay, roundColumns } from "../../../extensions/model-cost/shared-logic/presentation/display";
 import type { ModelCostRuntime } from "../../../extensions/model-cost/shared-logic/runtime";
-import { createModelCostRuntime } from "../../../extensions/model-cost/shared-logic/runtime";
+import { createModelCostRuntime, modelCostImplementation } from "../../../extensions/model-cost/shared-logic/runtime";
 import type { SessionFacts, TurnUsage } from "../../../framework/interface/session";
 import type { OwnerReference } from "../../../framework/interface/state";
 import { type PortDouble, portDouble } from "../../framework/support/harness-port-double";
@@ -254,7 +254,7 @@ async function bindWidget(options: { readonly viewed?: ViewedFacts; readonly has
 	let runtime: ModelCostRuntime | undefined;
 	double.bind(MODEL_COST, {
 		config: { reader: () => `storageDir: ${root}\nbalanceTtlMs: 30000\ncodexQuotaTtlMs: 15000\n` },
-		factory: context => {
+		factory: modelCostImplementation(context => {
 			runtime = createModelCostRuntime({
 				config: { storageDir: root },
 				configDirectory: root,
@@ -265,8 +265,8 @@ async function bindWidget(options: { readonly viewed?: ViewedFacts; readonly has
 				now: () => clock,
 				...(context.modelPrices === undefined ? {} : { modelPrices: context.modelPrices }),
 			});
-			return runtime.implementation;
-		},
+			return runtime;
+		}),
 	});
 	double.deliverSession(OWNER, { session: MAIN });
 	double.deliverSession(OWNER, { event: { kind: "session_facts" }, session: MAIN });

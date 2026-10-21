@@ -31,7 +31,7 @@
 import { describe, expect, test } from "bun:test";
 import type { OmpExtensionApi, OmpSessionContext } from "../../adapters/omp";
 import * as frameworkOmp from "../../adapters/omp";
-import type { ExtensionFactory } from "../../framework/interface/details/implementation";
+import type { AuthoredImplementation } from "../../framework/interface/details/implementation";
 import type {
 	SessionContextDelivery,
 	SessionContextReading,
@@ -39,7 +39,7 @@ import type {
 	SessionObservationReader,
 } from "../../framework/interface/session";
 import type { OwnerReference } from "../../framework/interface/state";
-import { type ExtensionDefinition, defineExtension } from "../../framework/interface";
+import { type ExtensionDefinition, defineExtension, defineImplementation } from "../../framework/interface";
 import { portDouble } from "./support/harness-port-double";
 import { boundPiSurface } from "./support/pi-surface-double";
 
@@ -60,7 +60,7 @@ const GIVEN: SessionContextReading = { tokens: 12_345, provider: "official", mod
  * framework dispatched to its group, and the observation source the framework handed its factory.
  */
 function contextProbe(): {
-	readonly factory: ExtensionFactory;
+	readonly factory: AuthoredImplementation<{}>;
 	readonly observations: () => SessionObservationReader;
 	readonly deliveries: SessionContextDelivery[];
 } {
@@ -72,12 +72,15 @@ function contextProbe(): {
 			if (handed === undefined) throw new Error("the probe factory never ran");
 			return handed;
 		},
-		factory: context => {
-			handed = context.session.observations;
-			return {
-				subscriptions: [{ scope: "session", events: { session_context: delivery => void deliveries.push(delivery) } }],
-			};
-		},
+		factory: defineImplementation({
+			create: context => {
+				handed = context.session.observations;
+				return {};
+			},
+			subscriptions: [
+				{ scope: "session", events: { session_context: (_state, delivery) => void deliveries.push(delivery) } },
+			],
+		}),
 	};
 }
 
@@ -266,7 +269,7 @@ describe("the same given sequence leaves the same observation on either harness 
 	function ompReading(sessionId: string, context: { readonly tokens?: number }): SessionContextReading | undefined {
 		const surface = ompSurface();
 		const probe = contextProbe();
-		frameworkOmp.ompAdapter(PROBE, { factory: probe.factory })(surface.api);
+		frameworkOmp.ompAdapter(PROBE, { implementation: probe.factory })(surface.api);
 		const session = {
 			sessionId,
 			name: "omp context session",
@@ -312,7 +315,7 @@ describe("the same given sequence leaves the same observation on either harness 
 
 		const omp = ompSurface();
 		const probe = contextProbe();
-		frameworkOmp.ompAdapter(PROBE, { factory: probe.factory })(omp.api);
+		frameworkOmp.ompAdapter(PROBE, { implementation: probe.factory })(omp.api);
 		const ompSession = {
 			sessionId: "session-omp-timing",
 			name: "omp context session",

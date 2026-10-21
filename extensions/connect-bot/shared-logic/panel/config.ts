@@ -11,7 +11,7 @@ import { CONNECT_BOT } from "../../definition";
 
 /** The configuration connect-bot's protocol is driven by. */
 export interface ConnectBotConfig {
-	/** Base URL of the omp-bot panel; the event route is a protocol constant, not config. */
+	/** Base URL of the herdr-bot panel; the event route is a protocol constant, not config. */
 	readonly endpoint: string;
 	/** How long one request waits before it is abandoned, in milliseconds, as declared. */
 	readonly requestTimeoutMs: number;

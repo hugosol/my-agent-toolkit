@@ -47,12 +47,15 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { MODEL_COST } from "../../../../extensions/model-cost/definition";
 import { CODEX_USAGE_URL } from "../../../../extensions/model-cost/shared-logic/business/allowance/codex-quota";
-import { type ModelCostRuntime, createModelCostRuntime } from "../../../../extensions/model-cost/shared-logic/runtime";
+import {
+	type ModelCostRuntime,
+	createModelCostRuntime,
+	modelCostImplementation,
+} from "../../../../extensions/model-cost/shared-logic/runtime";
 import { type OmpExtensionApi, ompAdapter } from "../../../../adapters/omp";
+import type { ImplementationSubscription } from "../../../../framework/interface";
 import type { HttpRequestOptions } from "../../../../framework/interface/general/http";
 import { createHttpModule } from "../../../../framework/modules/http";
-import type { ExtensionImplementation } from "../../../../framework/interface";
-import type { SubscriptionGroup, TurnEndDelivery } from "../../../../framework/interface/session";
 
 /** This repository, which is where the extension's own declared configuration is resolved from. */
 const REPOSITORY_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "..");
@@ -226,11 +229,10 @@ function declaredTtlMs(): number | undefined {
 export default function codexQuotaProbe(pi: OmpExtensionApi): void {
 	// The fixture's own observation group, beside the production subscriptions: it changes no business
 	// and reads only what the framework delivered to this session.
-	const observe: SubscriptionGroup = {
+	const observe: ImplementationSubscription<ModelCostRuntime> = {
 		scope: "session",
 		events: {
-			turn_end: delivery => {
-				const turn = delivery as TurnEndDelivery;
+			turn_end: (_runtime, turn) => {
 				process.stderr.write(
 					`${CODEX_QUOTA_TURN_LINE}${JSON.stringify({
 						turnId: turn.turn.turnId,
@@ -248,29 +250,28 @@ export default function codexQuotaProbe(pi: OmpExtensionApi): void {
 	const accountRequest = scriptDir === undefined ? unconfiguredRequest : scriptedAccountRequest(scriptDir);
 	ompAdapter(MODEL_COST, {
 		configBaseDir: REPOSITORY_ROOT,
-		factory: context => {
-			const ttlMs = declaredTtlMs();
-			const runtime: ModelCostRuntime = createModelCostRuntime({
-				config: ttlMs === undefined ? context.config : { ...context.config, codexQuotaTtlMs: ttlMs },
-				configDirectory: CONFIG_DIRECTORY,
-				userHomeDirectory: homedir(),
-				harness: "omp",
-				session: context.session,
-				httpRequest: accountRequest,
-				...(context.providerAccess === undefined ? {} : { providerAccess: context.providerAccess }),
-			});
-			// The runtime's own change notification is what a frontend redraws on; this frontend draws
-			// the read-only result as one line instead, with the ratio/left segment the same notification
-			// redraws beside it.
-			runtime.view.subscribe(() => {
-				process.stderr.write(`${CODEX_QUOTA_LINE}${JSON.stringify(runtime.presentation.quota())}\n`);
-				process.stderr.write(`${CODEX_QUOTA_ESTIMATE_LINE}${JSON.stringify(runtime.presentation.estimate() ?? null)}\n`);
-			});
-			const implementation: ExtensionImplementation = {
-				...runtime.implementation,
-				subscriptions: [...(runtime.implementation.subscriptions ?? []), observe],
-			};
-			return implementation;
-		},
+		implementation: modelCostImplementation(
+			context => {
+				const ttlMs = declaredTtlMs();
+				const runtime: ModelCostRuntime = createModelCostRuntime({
+					config: ttlMs === undefined ? context.config : { ...context.config, codexQuotaTtlMs: ttlMs },
+					configDirectory: CONFIG_DIRECTORY,
+					userHomeDirectory: homedir(),
+					harness: "omp",
+					session: context.session,
+					httpRequest: accountRequest,
+					...(context.providerAccess === undefined ? {} : { providerAccess: context.providerAccess }),
+				});
+				// The runtime's own change notification is what a frontend redraws on; this frontend draws
+				// the read-only result as one line instead, with the ratio/left segment the same notification
+				// redraws beside it.
+				runtime.view.subscribe(() => {
+					process.stderr.write(`${CODEX_QUOTA_LINE}${JSON.stringify(runtime.presentation.quota())}\n`);
+					process.stderr.write(`${CODEX_QUOTA_ESTIMATE_LINE}${JSON.stringify(runtime.presentation.estimate() ?? null)}\n`);
+				});
+				return runtime;
+			},
+			{ subscriptions: [observe] },
+		),
 	})(pi);
 }

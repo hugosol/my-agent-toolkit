@@ -38,15 +38,16 @@ import type {
 } from "../../../../adapters/pi";
 import { piAdapter } from "../../../../adapters/pi";
 import { MODEL_COST } from "../../../../extensions/model-cost/definition";
-import {
-	MODEL_COST_HARNESS,
-	releasingFrontendsOnCleanup,
-} from "../../../../extensions/model-cost/harnesses/pi";
+import { MODEL_COST_HARNESS } from "../../../../extensions/model-cost/harnesses/pi";
 import { MODEL_COST_WIDGET_KEY, attachModelCostWidget } from "../../../../extensions/model-cost/harnesses/pi/widget";
 import type { BoundaryTimer } from "../../../../extensions/model-cost/harnesses/boundary-timer";
 import type { ConsumptionDocument, SessionRecord } from "../../../../extensions/model-cost/shared-logic/foundation/session/consumption-document"
 import type { ModelPricingData } from "../../../../extensions/model-cost/shared-logic/business/pricing/model-data";
-import { createModelCostRuntime, type ModelCostRuntime } from "../../../../extensions/model-cost/shared-logic/runtime";
+import {
+	createModelCostRuntime,
+	modelCostImplementation,
+	type ModelCostRuntime,
+} from "../../../../extensions/model-cost/shared-logic/runtime";
 import type { ProviderAccess, ProviderAccessFacts } from "../../../../framework/interface/provider";
 import type { HttpRequestOptions } from "../../../../framework/interface/general/http";
 import { drain, until } from "../../../support/pending-query";
@@ -459,31 +460,42 @@ function assemble(options: { readonly root?: string; readonly holdQueries?: bool
 	const bind = piAdapter(MODEL_COST, {
 		configBaseDir: REPOSITORY_ROOT,
 		childEntry: CHILD_ENTRY,
-		factory: context => {
-			const built = createModelCostRuntime({
-				config: { ...context.config, storageDir: root },
-				configDirectory: path.join(REPOSITORY_ROOT, "extensions", MODEL_COST.id),
-				userHomeDirectory: root,
-				harness: MODEL_COST_HARNESS,
-				data: DATA,
-				session: context.session,
-				providerAccess: context.providerAccess ?? access,
-				now: () => clock.now,
-				httpRequest: async (url: string, httpOptions?: HttpRequestOptions) => {
-					queries.push({ url, options: httpOptions });
-					if (options.holdQueries !== true) {
-						return url === ALLOWANCE_URL ? allowanceAnswer(12.5) : balanceAnswer("110.00");
+		implementation: modelCostImplementation(
+			context => {
+				const built = createModelCostRuntime({
+					config: { ...context.config, storageDir: root },
+					configDirectory: path.join(REPOSITORY_ROOT, "extensions", MODEL_COST.id),
+					userHomeDirectory: root,
+					harness: MODEL_COST_HARNESS,
+					data: DATA,
+					session: context.session,
+					providerAccess: context.providerAccess ?? access,
+					now: () => clock.now,
+					httpRequest: async (url: string, httpOptions?: HttpRequestOptions) => {
+						queries.push({ url, options: httpOptions });
+						if (options.holdQueries !== true) {
+							return url === ALLOWANCE_URL ? allowanceAnswer(12.5) : balanceAnswer("110.00");
+						}
+						const { promise, resolve } = Promise.withResolvers<Response>();
+						held.push({ url, answer: resolve });
+						return promise;
+					},
+				});
+				runtime = built;
+				return built;
+			},
+			{
+				// The dispose front-end is the framework's: the frontends this evaluation attaches are
+				// released through the one cleanup the binding runs, exactly as the shipped assembly does.
+				cleanup: built => {
+					for (const release of [...frontendReleases]) {
+						frontendReleases.delete(release);
+						release();
 					}
-					const { promise, resolve } = Promise.withResolvers<Response>();
-					held.push({ url, answer: resolve });
-					return promise;
+					built.cleanup();
 				},
-			});
-			runtime = built;
-			// The dispose front-end is the framework's: the frontends this evaluation attaches are
-			// released through the one cleanup the binding runs, exactly as the shipped assembly does.
-			return releasingFrontendsOnCleanup(built.implementation, frontendReleases);
-		},
+			},
+		),
 	});
 	const bound = bind(api);
 	if (bound.bound && runtime !== undefined) {

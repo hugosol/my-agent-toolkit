@@ -7,6 +7,7 @@
  * The idle fact is answered as nothing when the host reports none at all: an unreported activity
  * state is not idleness, and the framework reports the absence rather than answering for the host.
  */
+import { defineAdapterDelivery } from "../../../framework/runtime/adapter-authoring";
 import type { HarnessPort } from "../../../framework/runtime/port";
 import { feedbackTransport } from "./feedback";
 import { markerTransport } from "./marker";
@@ -19,7 +20,7 @@ export function registerPiCommand(context: PiPortContext): NonNullable<HarnessPo
 			description: command.description,
 			handler: async (args, ctx) => {
 				const feedback = feedbackTransport(ctx);
-				await command.run({
+				await command.run(defineAdapterDelivery("command", {
 					args,
 					owner: context.resolveOwner(ctx),
 					persist: context.statePersistence.persist,
@@ -32,7 +33,7 @@ export function registerPiCommand(context: PiPortContext): NonNullable<HarnessPo
 					provider: ctx.model?.provider,
 					feedback,
 					markers: markerTransport(ctx),
-				});
+				}));
 			},
 		});
 	};

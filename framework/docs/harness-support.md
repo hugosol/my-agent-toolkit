@@ -80,7 +80,7 @@ prove wiring, protocol and failure handling, not real-service delivery.
 | `bun scripts/pi-session-accounting.ts` | one background delegation whose child runs as its own pi process, plus the tree a resumed process draws from the saved document | **incomplete: 12 observations held, 6 required facts missing.** The child process loaded the extension and ran its own request (the endpoint counted it, the child session file names the parent), but no record of that session ever appears in the storage root — so its own amount, its direct parent and its tree row are missing too. The in-process (foreground) form of the same path **is** saved (row above); this cross-process form is recorded here as unverified, never as a pass |
 | `bun run verify:omp-candidate` | the OMP side of the same source: the isolated exact `18.5.0` install and the framework suite on it | exit 0; framework **481 pass / 0 fail**; the result record names the source commit, the clean tree and both lockfile hashes |
 | `bun run verify:provider-account` | the loaded extension's own startup query against the real DeepSeek account — no model request, no paid call | **1 observed, 1 blocked, 0 failed**: the account's own CNY total matched the widget's drawn `💰 Balance:` at the same instant; the Codex scenario is **blocked** because neither credential store holds a usable `openai-codex` credential |
-| `bun run typecheck`; `bun test` | the repository on the assembled tree | typecheck exit 0; **1200 pass / 0 fail** (128 files, 6897 expect() calls), including `tests/harness-dock` against the isolated install and its frozen patch artifacts. A local `core.autocrlf=true` checkout needs the three recorded files at their committed LF bytes and `OMP_BOT_BINARY` set, as the earlier rounds record |
+| `bun run typecheck`; `bun test` | the repository on the assembled tree | typecheck exit 0; **1200 pass / 0 fail** (128 files, 6897 expect() calls), including `tests/harness-dock` against the isolated install and its frozen patch artifacts. A local `core.autocrlf=true` checkout needs the three recorded files at their committed LF bytes and `HERDR_BOT_BINARY` set, as the earlier rounds record |
 
 **Not covered / unverified.** This record claims nothing beyond its rows: other pi versions, POSIX, other
 users, and provider paths other than those named remain unverified, and no row is a pi framework
@@ -133,6 +133,8 @@ Runs execute through the dock in [`tests/harness-dock/`](../../tests/harness-doc
 - The local checkout is a source/revision anchor only: it cannot run a full session because its native addon is not built, and acceptance never builds natives. The install ships prebuilt win32-x64 natives.
 - The harness materialises its session file lazily, so JSONL read-back happens after a turn and a graceful exit (`stop()` closes stdin and waits for exit code 0); a command-only session may leave nothing on disk.
 
+The exact command sequence, candidate record, pi smoke options and evidence rules are collected in the [version verification runbook](#version-verification).
+
 ## Support record (four states)
 
 Every support statement in this document uses one of four states, and each row carries its evidence, its conditions and its upgrade standard. A state is never upgraded by a passing run: a pass is an alarm or an input, and the transition is always a maintainer decision based on the evidence named in the row. The single checkable correspondence behind the `verified-supported` row — the revision anchor, the artifact that actually runs, and the dependency lockfiles — is data in [`harness-baseline.json`](harness-baseline.json), re-checked by `tests/harness-dock/baseline.test.ts`; this document remains the authority for the *status*.
@@ -152,7 +154,7 @@ The `verified-supported` row also fixes *what runs*: the revision anchor is the 
 
 **Trigger — on demand only.** Another version is verified only when a maintainer proposes a candidate. Default and CI always run the fixed supported version (`18.5.0`); a scheduled or CI candidate run is explicitly rejected.
 
-**Basic verification (regression alarm) — P34.** `OMP_TEST_VERSION=<v>` selects a candidate. The dock installs that exact version into its own isolated prefix `.cache/omp-baseline/<v>` and runs the framework suite against it; [`scripts/verify-omp-candidate.ts`](../../scripts/verify-omp-candidate.ts) performs the install, runs the suite and writes a checkable result record to `.cache/omp-baseline/<v>/candidate-verification.json` — a local, gitignored artifact next to that install, evidence for the maintainer's decision and never a committed support claim. The runbook with the exact commands is in the [README](../README.md#upgrading-the-supported-harness).
+**Basic verification (regression alarm) — P34.** `OMP_TEST_VERSION=<v>` selects a candidate. The dock installs that exact version into its own isolated prefix `.cache/omp-baseline/<v>` and runs the framework suite against it; [`scripts/verify-omp-candidate.ts`](../../scripts/verify-omp-candidate.ts) performs the install, runs the suite and writes a checkable result record to `.cache/omp-baseline/<v>/candidate-verification.json` — a local, gitignored artifact next to that install, evidence for the maintainer's decision and never a committed support claim. The exact commands, prerequisites and evidence rules are in the [version verification runbook](#version-verification).
 
 **Extension regression.** `bun test tests/codebase-tools` runs permanently against the fixed supported version; it is not part of the candidate alarm.
 
@@ -161,6 +163,159 @@ The `verified-supported` row also fixes *what runs*: the revision anchor is the 
 **Explicit replacement — never automatic.** Independent report results are maintainer input, not automatic support promotion. A support replacement records the selected harness/package revision, environment, framework/extension source and lockfile plus exercised scope in this record and harness-baseline.json. Baseline metadata remains a verification input, not a new production version gate. Detailed full-extension coverage and a patched Viewed session host version remain acceptance decisions; the old procedure of changing a runtime admission list is superseded by the independent-verification policy.
 
 **Isolation conditions.** Candidate work never touches the default global install, the formal configuration, or a running agent: installation is confined to `.cache/omp-baseline/<version>` (gitignored), every controlled session runs the isolated install under a temporary agent state directory, and the dock strips the resolution offsets (`OMP_PROFILE`, `PI_PROFILE`, `OMPCODE`, `PI_CONFIG_FILES`, `XDG_*`, `PI_CODING_AGENT_DIR`, `OMP_AUTH_BROKER_*`) before starting one.
+
+<a id="version-verification"></a>
+## Version verification runbook
+
+This is the operating manual for the checks behind the support record. It collects the commands that previously lived in the README: sections A–C correspond to the former steps 1–2, section F is step 3 (the TUI spot check) and section G is step 4 (replacing the supported version). It does not change any support state: a green run is evidence for a maintainer decision, never a promotion. Structural adapter completeness is a different check — see [static integration check](integration-check.md). The OMP baseline/candidate runs and the automated extension suite are mechanical and may be run by a human or an agent; the interactive TUI spot check and the support replacement are human/maintainer actions.
+
+### What each check establishes
+
+| Check | Establishes | Does not establish |
+| --- | --- | --- |
+| `verify:omp-candidate` | The framework suite (C1–C15) still passes on one exact installed harness version; a scoped, machine-readable result record. | Extension behavior, native semantic correctness, or support of that version. |
+| `test:dock` / `test:dock:serial` | The selected OMP version's controlled sessions, including real-host dock scenarios and the baseline correspondence. | pi behavior; provider-account truth; visual TUI quality. |
+| Extension suites and smokes | The named extension scenarios on the recorded or explicitly selected host. | Other extensions, other versions, or support promotion. |
+| `verify:provider-account` | What a real provider account answered beside what the host drew, for the named scenario. | A model request, billing correctness, or other providers/accounts. |
+| `pi-tui-acceptance` | A human operator's visual acceptance of the fixed TUI scenario. | Automated certification, other widths/terminals, or a candidate version's support. |
+
+### Prerequisites and isolation
+
+- Run these commands from the repository root. Windows x64, Bun **1.4.2**, and an installed dependency tree (`bun install` once) are required for the repository's own checks. The fixed baseline is `@oh-my-pi/pi-coding-agent@18.5.0`, checkout `@9348320`, recorded in [`harness-baseline.json`](harness-baseline.json).
+- The OMP checks materialise the exact harness under `.cache/omp-baseline/<version>` (gitignored). Every controlled session uses a temporary agent state, session directory, working directory and capture directory; the default global install, formal configuration and any running agent are never touched. The local checkout is a source/revision anchor only — its native addon is not built, so acceptance runs the isolated install with prebuilt win32-x64 natives.
+- The pi smokes need a separately installed pi CLI and use the repository's pinned `pi-subagents` dependency from `package.json`. Pass the CLI with `--pi <path>` or `PI_CLI=<path>` (the bundle `dist/bundle/cli.js`, a `pi`/`pi.cmd` shim, or the binary). For a script/shim CLI, set `PI_NODE` to the Node executable; on Windows the verified combination is Node **22.19.0**. Node 24.18.0 hit a Windows/libuv `UV_HANDLE_CLOSING` assertion in the recorded multi-request probe, with or without extensions; do not suppress that failure.
+- `verify:provider-account` is the only script here that reads a real credential. All other runs use local OpenAI-compatible capture endpoints or run without a provider; those prove wiring/protocol, not real-service delivery.
+
+### A. OMP fixed baseline
+
+```sh
+bun install
+bun run test:dock
+bun run verify:omp-candidate
+bun test tests/harness-dock/baseline.test.ts
+```
+
+- `bun run test:dock` (with `OMP_TEST_VERSION` unset) runs the dock partition (four isolated Bun workers at a time) against the version the baseline record selects. The baseline check re-reads the revision anchor, acceptance artifact, byte-identity hashes and lockfiles.
+- `bun run verify:omp-candidate` with `OMP_TEST_VERSION` unset verifies the recorded supported version: it ensures the isolated exact install, runs `bun test tests/framework`, and writes the result record. Use it when you need the framework alarm on the fixed version without relying on the dock's test selection.
+- `bun run test:dock:serial` is for diagnosis on machines that cannot host four concurrent real sessions, and is run once after a harness version or host-patch change so the shared prefixes are warmed before a parallel run. It is not a per-commit requirement.
+- On a local `core.autocrlf=true` checkout, the dock requires the recorded files at their committed LF bytes and `HERDR_BOT_BINARY` for the patched OMP binary; see the earlier dock conditions in this document.
+
+### B. OMP candidate
+
+```sh
+OMP_TEST_VERSION=18.6.1 bun run verify:omp-candidate
+OMP_TEST_VERSION=18.6.1 bun run verify:omp-candidate --dry-run
+OMP_TEST_VERSION=18.6.1 bun run verify:omp-candidate --install-only
+OMP_TEST_VERSION=18.6.1 bun run test:dock
+```
+
+- The candidate script accepts only `--dry-run`, `--install-only`, `--help`/`-h`. `--dry-run` prints the resolved version, prefix, install spec and suite command without installing or running; `--install-only` materialises the isolated install without running the suite.
+- It installs exactly `OMP_TEST_VERSION` into `.cache/omp-baseline/<version>`, runs only `bun test tests/framework`, and writes `.cache/omp-baseline/<version>/candidate-verification.json`. The record contains the requested/recorded versions, selection source, prefix, installed version, revision anchor, source base commit/dirty state/working-tree digest, lockfile comparison, environment, isolation assertions, install result, framework suite counts, executed/unverified coverage, the alarm verdict and an explicit non-certification statement.
+- Exit codes: `0` for a successful dry run/install-only or a green suite; `1` when the isolated install fails; otherwise the framework suite's own nonzero exit code is propagated (a normal test failure is 1); `2` is used for script-level refusal such as an unknown flag or a prefix outside the isolated base. A green result is a regression alarm for the framework suite only.
+- The candidate never enters [`harness-baseline.json`](harness-baseline.json), never changes the support record, and must not be added to CI. Default and CI run the fixed supported version only. The `test:dock` candidate run exercises the dock scenarios for that version; it does not turn them into an extension certification.
+
+### C. Extension regression on the fixed version
+
+```sh
+bun run test:codebase-tools
+```
+
+- This suite runs permanently against the fixed supported version; it is not part of the candidate alarm. A framework-suite green says nothing about an extension.
+- When a change touches a real-host extension path, run the corresponding dock partition (`bun run test:dock` or the relevant scenario file) in addition to the focused suite. The historical evidence sections above record which dock scenarios covered which extension; do not substitute a list of test names for actually exercised coverage.
+
+### D. pi checks (separate; no generic candidate runner)
+
+There is no `verify:pi-candidate` and no generic pi candidate runner. Each script resolves the installed pi you name and reports the version it observed; it does not install or switch versions, and none of these smokes promotes pi to the OMP supported baseline. Only the scripts that state `--expect-pi-version` accept a candidate expectation, and their default expectation remains **1.2.0**:
+
+```sh
+bun scripts/pi-codebase-tools-smoke.ts --pi <cli> --keep
+bun scripts/pi-model-cost-smoke.ts --pi <cli> --keep
+bun scripts/pi-subagent-smoke.ts --pi <cli> --foreground-only
+bun scripts/pi-subagent-smoke.ts --pi <cli> --background-only --expect-pi-version 1.3.0
+bun scripts/pi-background-round-smoke.ts --pi <cli>
+bun scripts/pi-terminal-round-smoke.ts --pi <cli> --expect-pi-version 1.3.0
+bun scripts/pi-close-out-smoke.ts --pi <cli>
+bun scripts/pi-session-accounting.ts --pi <cli> --expect-pi-version 1.3.0
+```
+
+| Scripts | Version expectation |
+| --- | --- |
+| `pi-codebase-tools-smoke.ts`, `pi-model-cost-smoke.ts`, `pi-background-round-smoke.ts`, `pi-close-out-smoke.ts` | Observe the resolved CLI and have no version-expectation switch — do not invent one. |
+| `pi-subagent-smoke.ts`, `pi-terminal-round-smoke.ts`, `pi-session-accounting.ts` | Observe the resolved CLI and accept `--expect-pi-version <v>`; the default expectation remains 1.2.0. |
+| `pi-tui-acceptance.ts` | A real terminal acceptance, not a candidate runner. It asserts the fixed `EXPECTED_PI_VERSION = "1.2.0"` and has no override; on a 1.3.0 host that single version check fails even when content/layout checks pass. Treat the mismatch as a recorded limitation, not as a pass and not as a reason to edit the expectation. |
+
+All these smokes use isolated agent state, session, home and working directories and a local capture endpoint; they never touch the formal configuration or a real provider account. `--keep` retains run roots for inspection. The recorded 1.3.0 observations (ticket 13, 2026-10-19) used the explicit `--expect-pi-version 1.3.0` on the three scripts that support it and changed no support state.
+
+### E. Provider account reading
+
+```sh
+bun run verify:provider-account
+bun run verify:provider-account --scenario deepseek-balance
+bun run verify:provider-account --model deepseek/deepseek-flash
+bun run verify:provider-account --out .cache/provider-account --keep
+bun run verify:provider-account --prepare
+```
+
+- `verify:provider-account` runs the loaded model-cost extension on the installed pi against a real account and writes a desensitized, timestamped report (default `.cache/provider-account/readings-*.json`). It reads the machine's own credential (or the prepared isolated state) but prints it only as a fingerprint.
+- It makes **no model request**, installs/logs in/switches nothing, and reports a missing credential as `blocked`, with the login step that would supply it. Scenario outcomes are `observed`, `blocked` or `failed`; exit code is `1` only when a scenario ran and failed, and `0` when scenarios are observed or blocked.
+- `--scenario` selects one scenario; `--model <provider>/<model>` states the model pair the scenario's session should run; `--agent-dir` points at the machine's pi store; `--prepared-agent-dir` points at a prepared isolated store; `--out` selects the report directory; `--keep` retains run roots; `--prepare` prints the login steps a missing provider needs, without logging in or installing anything.
+- Limits are recorded in the report: one machine, one account, the pi version the run names, the machine's network path; a balance move is not a request cost; the Codex scenario remains blocked without a usable `openai-codex` credential. The historical DeepSeek reading observed 1 scenario, 1 blocked, 0 failed.
+
+### F. Human TUI spot check
+
+When an upgrade touches an **extension-visible surface** — marker rendering, the command, contribution order or role, session resume — append one human interactive TUI spot check to the candidate checks. For OMP use the codebase-tools H1 acceptance checklist; for pi use `bun scripts/pi-tui-acceptance.ts --interactive` (or capture the fixed widths with `--widths 120,80,60`). A human operator judges content, spacing and narrow-width readability. An agent-observed terminal capture is not maintainer sign-off, and the script's fixed version assertion is not a candidate-version check.
+
+### G. Judging and recording evidence
+
+- A pass is scoped to the exact harness version/revision, source revision, dependency lockfile, environment and executed coverage. Record what was not exercised as `unverified`/`blocked`; never turn a missing credential, skipped UI, shape-only fixture or absent platform into a pass.
+- A candidate record with `regressionAlarm: "green"` means the framework suite passed on that version. It is input to the maintainer's decision, never the decision and never a support claim. A failed suite, an install failure or a refused invocation is a finding to record, not a reason to suppress output.
+- To replace the supported version, as an explicit maintainer action after reviewing the candidate result (and the TUI spot check where it applies):
+  1. Update the four-state support record and the upgrade standard above with the new combination, evidence, conditions and exercised scope.
+  2. Refresh [`harness-baseline.json`](harness-baseline.json) — revision anchor, acceptance artifact and lockfiles — so `bun run test:dock` and `bun test tests/harness-dock/baseline.test.ts` check the new combination.
+  3. Run `bun run test:dock:serial` once to warm the new isolated prefix, then the normal `bun run test:dock`.
+  4. Restart the harness as a whole process. There is no hot reload and no in-process discovery-root swap.
+  No framework source declares a supported version, so there is no runtime list to edit; normal startup reads no support record. Until that action, support remains exactly `18.5.0` and the dock keeps running it. A harness outside the record is simply not claimed as supported; that is what [independent compatibility verification](#independent-compatibility-verification) covers instead of a startup check.
+
+**Current snapshot.** `18.5.0` at `@9348320` + Windows x64 + Bun 1.4.2 is the only `verified-supported` OMP combination. The recorded pi 1.2.0 evidence and the 1.3.0 observations are scoped smoke evidence, not a supported pi row and not an OMP baseline replacement. The unverified items in the support record stay unverified until a maintainer records new evidence.
+
+## Contract-driven agent pre-review
+
+An upgrade review must examine whether the assumptions behind an adapter's semantic mappings still hold, not merely whether native method names and types remain unchanged. An accepted approximation can cease to satisfy a framework contract as native behavior evolves. Agent pre-review filters evidence and risks for a maintainer; it does not certify compatibility, promote support or replace behavior verification.
+
+### Review inputs and mapping rationale
+
+Provide the exact old and candidate harness revisions/artifacts, the current framework and adapter source, relevant dependency/provider revisions, and the framework contracts and decision records. Use the actual source diff and relevant callers, dispatch and teardown paths, not release notes alone. Record unavailable source and unexamined paths as review limitations.
+
+For each relevant minimal integration contract, locate or document:
+
+- the framework's semantic promise and interaction mode, including ordering, await and result-handling obligations;
+- the native facts, events, queries or effects used to satisfy it;
+- accepted differences between the native meaning and the framework meaning, and their applicable conditions;
+- the assumptions that make those differences acceptable within the promised scope;
+- the rationale and alternatives behind significant trade-offs, linking existing decisions rather than duplicating the contract;
+- changes that would invalidate those assumptions, together with existing source or behavioral evidence and its limits.
+
+Do not infer historical approval from an implementation's existence. If rationale or assumptions cannot be recovered, report them as missing and request maintainer judgment; do not invent a justification. Keep shared semantics in the framework contract and harness-specific approximations in their mapping rationale.
+
+### Review checklist
+
+For each affected mapping, ask whether the candidate changes:
+
+- **Trigger and coverage:** when facts are emitted, which native paths emit them, or whether a formerly covered path is omitted.
+- **Ordering, waiting and results:** whether handlers are awaited, what runs before/after them, who applies their results, and whether required resources survive until completion.
+- **Identity and scope:** actual session, parent and Owner attribution, process topology, and observation versus effect authority.
+- **Data meaning:** measurement basis, units, timestamps, completeness, missing/unknown values and distinctions from known zero.
+- **Multiplicity and continuation:** duplicate delivery, retries, queued work, automatic continuation and the assumptions behind deduplication or settled-state decisions.
+- **Lifetime:** registration and release, disposal, binding replacement and resource ownership.
+- **Failure and cancellation:** propagation, final facts and cleanup on success, cancellation, terminal failure and interrupted execution.
+
+Apply these questions to the mapping's recorded assumptions and accepted differences. A change in an upstream caller, event dispatcher or downstream teardown can matter even when the adapter's imported symbol is unchanged. Interaction mode alone does not establish semantic equivalence.
+
+### Required pre-review output
+
+Name the compared revisions, adapter/framework source and reviewed scope. For each finding, provide the affected contract, old/new source locations and concrete change evidence, the assumption or promise potentially invalidated, the impacted adapter path, and a proposed human check or focused behavioral observation. Separate observed source changes from inferred semantic risks and confirmed violations. List unresolved rationale, unavailable evidence and unreviewed paths explicitly.
+
+“No risk found in the reviewed scope” is not a compatibility proof. A maintainer reviews the findings and selects further verification under the existing upgrade process; source inspection, executed behavior and support approval remain separate. This guide introduces no automatic upgrade runner, scheduled review, startup check or multi-version interface mechanism.
 
 ## Shared-source deployment prerequisite
 
@@ -242,7 +397,7 @@ Source observations checked on 2026-10-04 against the local checkouts; these do 
 - **OMP rebinding is not business State copying.** [`bindExtension`](../../../oh-my-pi/packages/coding-agent/src/extensibility/extensions/loader.ts#L439) creates an extension/API binding and runs the prepared factory; [`bindPreparedExtensions`](../../../oh-my-pi/packages/coding-agent/src/extensibility/extensions/loader.ts#L491) creates a new harness for the binding set. OMP's [extension guidance](../../../oh-my-pi/docs/extensions.md#L1048) explicitly says module globals are shared by parent/child bindings, while session-specific state belongs in the factory closure or persisted session entries. This explains how shared activation and independent injection progress can coexist; it does not define arbitrary extension State inheritance.
 - **Use identity, not depth alone.** [`ExtensionAgentIdentity`](../../../oh-my-pi/packages/coding-agent/src/extensibility/extensions/types.ts#L464) provides `kind: "main" | "sub"`, `id`, `name`, `depth`, and optional `parentId`. Its comments explicitly allow subagents at depth zero. Mapping this identity to a State owner still belongs to the framework adapter; a process-global variable does not encode that relationship.
 - **The ordinary pi subagent example has a different process boundary.** The [example's arguments](../../../pi/packages/coding-agent/examples/extensions/subagent/index.ts#L300) include `--mode json -p --no-session`, and it [spawns a separate process](../../../pi/packages/coding-agent/examples/extensions/subagent/index.ts#L346). The example's process cannot inherit the parent's JavaScript module variable merely by importing the same source. This observation concerns that example, not every possible pi subagent implementation.
-- **Do not conflate pi's experimental durable path with ordinary extensions.** The [durable harness](../../../pi/packages/durable/README.md#L3) is explicitly experimental. Its [subagent implementation](../../../pi/packages/coding-agent/src/experimental/durable/subagent.ts#L34) creates a task-owned child conversation through durable interfaces. It is a distinct possible integration path, not evidence that a pi adapter supports inheritance (the first release ships no pi adapter).
+- **Do not conflate pi's experimental durable path with ordinary extensions.** The [durable harness](../../../pi/packages/durable/README.md#L3) is explicitly experimental. Its subagent implementation (historical source location: `pi/packages/coding-agent/src/experimental/durable/subagent.ts:34`; no longer present at that path in the current adjacent checkout) was observed creating a task-owned child conversation through durable interfaces. It is a distinct possible integration path, not evidence that a pi adapter supports inheritance (the first release ships no pi adapter).
 
 ### codebase-tools extension-logic probe
 
@@ -330,23 +485,24 @@ The first release requires strict history preservation: no mutation or reorderin
 
 ### Integration completeness is a separate stage
 
-`bun run check:integrations` (or `bun run check:integrations --json`) compares only the two-sided
-subagent checklist: extension requirements and each adapter's declared per-mode coverage. It reports
-missing declarations, modes or capabilities and exits nonzero for an incomplete checklist. It does
-not install a harness, read a candidate verification report or invoke behavior tests; it establishes
-neither behavioral correctness nor version support. Developers run it independently of the test/dock
-and candidate commands. See the [checklist vocabulary and authoring instructions](framework-capabilities.md#independent-subagent-integration-checklist)
-and the [decision](../../docs/adr/0002-semantic-extension-framework.md#two-sided-subagent-integration-checklist-2026-10-17).
+Static extension↔adapter completeness is documented in [static integration check](integration-check.md):
+`check:integrations` derives demand from source and compares actual adapter bindings and reachable
+delivery construction, while `generate:integrations` only creates missing assembly references to implementations.
+Neither command installs a harness, reads verification reports, executes extension code or establishes
+behavioral correctness/version support. Conversely, the version and behavior checks in this document
+do not establish adapter structural completeness. The former two-sided subagent arrays and manual
+supply catalogs are removed.
 
-Normal startup never invokes this command or consumes its results. User notices, feature availability,
-accounting and extension loading are unchanged. A pi coverage declaration describes its integrated
-subagent path, not a runtime probe for provider presence, successful child loading or connection health.
+Normal startup never invokes those commands or consumes their results. User notices, feature
+availability, accounting and extension loading are unchanged. Conditional pi child integration is a
+structural supply status, not a runtime probe for provider presence, successful child loading or
+connection health.
 
 ### Independent compatibility verification
 
 Confirmed old-to-new ruling: assembly Q10a and Q19 (2026-10-13) — the user required taking the verification stage out into an independently runnable script (or another independently executable form) producing a report, and adding no verification logic beyond business needs at normal startup; Q19 confirmed the resulting organization. Former policy evaluated installed-version membership during execution, warned about unlisted versions, and checked required native Interface shape at binding. The user explicitly replaced this with independently runnable verification and reports so normal startup carries no compatibility verification unrelated to business.
 
-- Development defines the complete contract needed by an extension/harness integration; the adapter and harness-specific implementation must satisfy it before support is advertised. Contract metadata (including requiredSemantics if retained) is verification input, not a runtime switch or fallback route.
+- Development defines the complete contract needed by an extension/harness integration; the adapter and harness-specific implementation must satisfy it before support is advertised. Source-derived contract demand is verification input, not a runtime switch or fallback route.
 - An independent entrypoint checks declared/implemented interfaces and exercises actual framework contract and extension integration/behavior scenarios on the selected harness; checking method existence is insufficient semantic evidence. Reuse the existing candidate script/dock rather than building a parallel verifier.
 - The report names exact harness version/revision, framework and extension source revision, dependency version/lockfile and environment; it records executed scenarios and passed/failed/unverified coverage. A missing credential, skipped UI, shape-only network fixture or absent platform test is unverified, not full passing. A pass is scoped to that combination and coverage, never a guarantee for later source or harness changes.
 - Only complete verification of the declared supported scope, followed by explicit maintainer support declaration, establishes support. A narrow framework alarm alone cannot do this; final verification coverage, host patch revision and cutover belong to the acceptance decision (resolved 2026-10-13): patch the minimal public Viewed-session outlet on the existing supported baseline first, freeze the exact revision/artifact, run the split verification, and keep the support record unchanged until the maintainer declares support.

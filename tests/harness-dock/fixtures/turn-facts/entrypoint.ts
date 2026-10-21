@@ -12,8 +12,13 @@
  * work of its own beyond reporting: no network, no file, no timer.
  */
 import { type OmpExtensionApi, ompAdapter } from "../../../../adapters/omp";
-import { type ExtensionDefinition, defineExtension } from "../../../../framework/interface";
-import type { SubscriptionGroup, TurnEndDelivery, TurnStartDelivery } from "../../../../framework/interface/session";
+import {
+	type ExtensionDefinition,
+	type ImplementationSubscription,
+	defineExtension,
+	defineImplementation,
+} from "../../../../framework/interface";
+import type { TurnEndDelivery, TurnStartDelivery } from "../../../../framework/interface/session";
 import type { CatalogPriceSource } from "../../../../framework/interface/provider";
 
 /** The extension id whose stderr lines the dock reads. */
@@ -75,18 +80,18 @@ function endLine(scope: string, delivery: TurnEndDelivery): void {
 }
 
 export default function turnFactsProbe(pi: OmpExtensionApi): void {
-	const groups: readonly SubscriptionGroup[] = [
+	const groups: readonly ImplementationSubscription<Record<string, never>>[] = [
 		{
 			scope: "owner",
 			events: {
-				turn_start: delivery => startLine("owner", delivery as TurnStartDelivery),
-				turn_end: delivery => endLine("owner", delivery as TurnEndDelivery),
+				turn_start: (_state, delivery) => startLine("owner", delivery),
+				turn_end: (_state, delivery) => endLine("owner", delivery),
 			},
 		},
 		{
 			scope: "session",
 			events: {
-				session_start: delivery =>
+				session_start: (_state, delivery) =>
 					evidence("session", "session_start", {
 						sessionId: delivery.session.sessionId,
 						kind: delivery.session.kind,
@@ -94,10 +99,16 @@ export default function turnFactsProbe(pi: OmpExtensionApi): void {
 						name: delivery.session.name ?? null,
 						ownerKind: delivery.owner.kind,
 					}),
-				turn_start: delivery => startLine("session", delivery as TurnStartDelivery),
-				turn_end: delivery => endLine("session", delivery as TurnEndDelivery),
+				turn_start: (_state, delivery) => startLine("session", delivery),
+				turn_end: (_state, delivery) => endLine("session", delivery),
 			},
 		},
 	];
-	ompAdapter(definition, { factory: () => ({ catalog, subscriptions: groups }) })(pi);
+	ompAdapter(definition, {
+		implementation: defineImplementation<Record<string, never>>({
+			create: () => ({}),
+			catalog: () => catalog,
+			subscriptions: groups,
+		}),
+	})(pi);
 }

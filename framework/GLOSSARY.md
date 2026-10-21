@@ -176,6 +176,10 @@ _Avoid_: a fourth mode, independent switches
 An extension subfeature invoked to perform an operation, rather than to select or alternate a mode. The framework offers it as the `actions` control kind: the definition declares the command and a table of action names with the words its help shows, the framework trims and lowercases the argument and matches it whole — an empty argument prints the help, a match runs that action and waits for its completion, and anything else prints the same help at error severity and runs nothing — and the extension supplies one implementation per declared action.
 _Avoid_: mode transition, toggle, directed directive, abbreviation or default action
 
+**Authored implementation（编写态实现）**:
+An extension's declared subscription scopes, event handlers, command handlers and lifecycle entries, combined with one lazy business-state creator. Its integration structure can be inspected before an instance exists, and that same structure determines the instance's behavior rather than a parallel usage inventory.
+_Avoid_: manually duplicated requirements, already-running business instance, arbitrary runtime handler bag
+
 **Implementation factory（实现工厂）**:
 The function one extension's assembly supplies for the harness adapter to call: it is called once the extension's declared configuration was read and validated, is handed those validated values, and returns the implementation — the command implementations, the semantic lifecycle handlers and, optionally, the one-time initialization and cleanup — that the framework connects to the definition's declarations. Building must have no effect of its own: no remote request and no timer, because the binding can still be refused afterwards.
 _Avoid_: registration or dependency-injection container, per-session constructor, handler bag assembled at authoring time
@@ -271,15 +275,27 @@ Repository-owned test infrastructure that verifies a harness. It materialises an
 _Avoid_: test runtime, test harness, fixture
 
 **Declared requirement（声明要求）**:
-A semantic a binding's behavior rests on — history preservation, the two semantic lifecycle axes — recorded as contract metadata rather than as a runtime switch: the framework's own requirements, and the ones an extension's assembly adds through `ExtensionAssembly.requiredSemantics`. What holds in a given harness scope is established by the independent verification, never decided at binding.
+A semantic obligation on which a binding's behavior rests, distinct from a runtime feature switch. Integration obligations are derived from extension use and framework contracts; whether their behavior holds in a harness scope is established by independent verification, not decided at binding.
 _Avoid_: runtime feature flag, fallback route, startup gate
 
+**Semantic drift（语义漂移）**:
+A change in harness behavior that moves an adapter's mapping away from the framework meaning it was intended to provide, potentially invalidating previously accepted approximations or their assumptions. Unchanged names and type signatures do not establish that the meaning has been preserved.
+_Avoid_: missing method, signature incompatibility alone, proven incompatibility without evidence
+
+**Minimal integration contract（最小接入契约）**:
+An independently identifiable semantic obligation through which a harness participates in a framework capability, including its interaction mode and the conditions under which it is required. A capability can depend on several such contracts; satisfying their inventory does not certify behavior correctness.
+_Avoid_: method signature alone, interaction category alone, behavior certificate
+
+**Framework capability inventory（框架能力清单）**:
+The framework-mediated capabilities an extension depends on or a harness adapter supplies, compared to identify missing common integration functionality. It excludes extension-specific direct harness integrations, such as native widgets, and does not certify behavior correctness.
+_Avoid_: behavior certificate, native harness feature inventory, subagent-only checklist
+
 **Subagent integration checklist（子代理接入清单）**:
-The two-sided declaration of an extension's required subagent capabilities and a harness adapter's supplied capabilities for each subagent execution mode it supports. Execution modes belong to the harness declaration, not to the extension's requirements; declared coverage is not evidence of correct behavior.
+The earlier subagent-only comparison of manually declared extension demand and adapter supply, superseded by the framework capability inventory derived from source. Its historical coverage statements are not evidence of correct behavior.
 _Avoid_: runtime capability negotiation, feature switch, compatibility certificate
 
 **Integration completeness check（接入完整性检查）**:
-An independently invoked comparison of extension requirements with declared harness integration coverage, identifying missing capabilities for each supported execution mode. It neither exercises behavior nor affects extension loading, startup or feature availability; behavior verification is a separate stage.
+An independently invoked comparison of an extension's framework-mediated integration obligations with a target adapter's structural supply, identifying gaps and unresolved analysis. It neither exercises behavior nor affects extension loading, startup or feature availability; behavior verification is separate.
 _Avoid_: behavior test, startup gate, automatic feature downgrade
 
 **Independent compatibility verification（独立兼容性验证）**:

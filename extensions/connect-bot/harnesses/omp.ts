@@ -3,7 +3,7 @@
  *
  * This is the extension's only module that touches the OMP-native surface, and the thin
  * entrypoint at `entrypoints/omp/connect-bot.ts` re-exports nothing but this file's default
- * factory. The native access the extension is allowed lives here and nowhere else — the session
+ * adapter factory. The native access the extension is allowed lives here and nowhere else — the session
  * facts the panel protocol needs (the real session id, the working directory, the model's
  * display name and the session's name, read from OMP's own extension context) and the managed
  * timer the heartbeat is scheduled on (`ctx.setInterval`, cancelled with `ctx.clearTimer`).
@@ -24,6 +24,8 @@
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { type OmpExtensionApi, ompAdapter } from "../../../adapters/omp";
+import { type DirectedCommandImplementation } from "../../../framework/interface/command";
+import { defineImplementation } from "../../../framework/interface";
 import { createConnectBotCommand } from "../shared-logic/command/command";
 import { CONNECT_BOT } from "../definition";
 import type { ManagedTimers } from "../shared-logic/managed-timer";
@@ -165,45 +167,52 @@ function observeSessionContext(pi: OmpExtensionApi): {
  */
 export default function connectBot(pi: OmpExtensionApi): void {
 	const observed = observeSessionContext(pi);
-	// One registration lifecycle per binding: the command path and the session-end path must see
-	// the same attempts, or a boundary could stop effects an in-flight register is about to create.
-	const registrations = new PanelRegistrations();
-	ompAdapter(CONNECT_BOT, {
-		// Where the framework resolves the definition's relative configuration path: the
-		// repository this assembly's own module lives in, so the extension's declared
-		// `extensions/connect-bot/config.yaml` is read wherever the process was started.
-		configBaseDir: EXTENSION_REPOSITORY_ROOT,
-		// This extension's panel state is driven by the round axis: without those edges the value
-		// it reports could never move off what the arm read, so the axis is declared as a
-		// dependency and a harness that cannot deliver it refuses this binding rather than
-		// leaving a session that looks connected and reports a frozen state.
-		//
-		// The session axis is declared for the same reason: a session this extension armed must be
-		// wound down when another identity takes its place, and a harness that delivered no boundary
-		// would leave a heartbeat beating for a session that is no longer current — with no way for
-		// the extension to learn that it should stop.
-		requiredSemantics: ["session-lifecycle-events", "round-lifecycle-events"],
-		// The extension's own half: what the framework connects to the definition's declarations.
-		// The factory is handed the validated configuration and builds nothing here — this assembly's
-		// one business object per binding is the panel registration lifecycle it created above — so
-		// a refused binding leaves no resource of the extension's behind.
-		factory: () => ({
-			subscriptions: [{ scope: "owner", events: {
-				// The session leaving: the one boundary this extension acts on. A start needs no handler —
-				// the session taking over starts unarmed, which is what "not armed" already means.
-				session_end: delivery => registrations.ownerEnded(delivery),
-				round_start: delivery => applyRoundEdge(delivery.owner, "round_start"),
-				round_end: delivery => applyRoundEdge(delivery.owner, "round_end"),
-			} }],
-			commands: {
-				"connect-bot": createConnectBotCommand(
+	const implementation = defineImplementation<{
+		readonly registrations: PanelRegistrations;
+		readonly command: DirectedCommandImplementation;
+	}>({
+		// The extension's own half: the business state is the panel registration lifecycle and the
+		// command implementation built around it. One registration lifecycle per binding, so the
+		// command path and the session-end path see the same attempts — a boundary cannot stop effects
+		// an in-flight register is about to create. Building either has no effect of its own, so a
+		// refused binding leaves no resource of the extension's behind.
+		create: () => {
+			const registrations = new PanelRegistrations();
+			return {
+				registrations,
+				command: createConnectBotCommand(
 					{
 						sessionFacts: () => sessionFactsOf(observed.current()),
 						managedTimers: () => managedTimersOf(observed.current()),
 					},
 					registrations,
 				),
+			};
+		},
+		subscriptions: [
+			{
+				scope: "owner",
+				events: {
+					// The session leaving: the one boundary this extension acts on. A start needs no handler —
+					// the session taking over starts unarmed, which is what "not armed" already means.
+					session_end: (state, delivery) => state.registrations.ownerEnded(delivery),
+					round_start: (_state, delivery) => applyRoundEdge(delivery.owner, "round_start"),
+					round_end: (_state, delivery) => applyRoundEdge(delivery.owner, "round_end"),
+				},
 			},
-		}),
+		],
+		commands: {
+			"connect-bot": {
+				run: (state, directive, delivery) => state.command.run(directive, delivery),
+				unrecognized: (state, argument, delivery) => state.command.unrecognized?.(argument, delivery),
+			},
+		},
+	});
+	ompAdapter(CONNECT_BOT, {
+		// Where the framework resolves the definition's relative configuration path: the
+		// repository this assembly's own module lives in, so the extension's declared
+		// `extensions/connect-bot/config.yaml` is read wherever the process was started.
+		configBaseDir: EXTENSION_REPOSITORY_ROOT,
+		implementation,
 	})(observed.api);
 }

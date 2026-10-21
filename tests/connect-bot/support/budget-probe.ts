@@ -19,7 +19,7 @@
  * double schedule the extension's interval on a {@link ControlledClock} this run advances by exact
  * virtual milliseconds, and reports each request's virtual send time beside its real one. The
  * `interop` scenario is the one run that uses the harness's own interval: it arms against the
- * actual omp-bot panel the suite started and lets two real beats go, so the period this extension
+ * actual herdr-bot panel the suite started and lets two real beats go, so the period this extension
  * asks the harness for is recorded in wall-clock time as well.
  *
  * Usage: `bun budget-probe.ts <configFile> <scenario> [rewrite-to-ms]`
@@ -414,7 +414,7 @@ async function runScenario(): Promise<void> {
 		}
 		case "interop": {
 			const ctx = await arm(sessionId, { cwd: "E:/work/interop", model: "interop-model", sessionName: "interop" });
-			// The actual omp-bot panel the suite started, reached through the framework's own request:
+			// The actual herdr-bot panel the suite started, reached through the framework's own request:
 			// two real beats from the harness's own interval, then one round edge pair, then the
 			// disconnect the panel answers. Nothing awaits the disconnect's own notice — a session that
 			// was never armed publishes none, and this report has to describe whatever really happened

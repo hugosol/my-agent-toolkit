@@ -31,7 +31,7 @@ import {
 	fieldsColumns,
 } from "../../../extensions/model-cost/shared-logic/presentation/display";
 import type { ModelCostRuntime } from "../../../extensions/model-cost/shared-logic/runtime";
-import { createModelCostRuntime } from "../../../extensions/model-cost/shared-logic/runtime";
+import { createModelCostRuntime, modelCostImplementation } from "../../../extensions/model-cost/shared-logic/runtime";
 import type { SessionFacts } from "../../../framework/interface/session";
 import type { OwnerReference } from "../../../framework/interface/state";
 import type { ObservedSession } from "../../../framework/runtime/port";
@@ -151,8 +151,7 @@ async function bind(options: { readonly document?: ConsumptionDocument } = {}): 
 	let runtime: ModelCostRuntime | undefined;
 	double.bind(MODEL_COST, {
 		config: { reader: () => `storageDir: ${root}\nbalanceTtlMs: 30000\ncodexQuotaTtlMs: 15000\n` },
-		factory: context =>
-			(runtime = createModelCostRuntime({
+		factory: modelCostImplementation(context => (runtime = createModelCostRuntime({
 				config: { storageDir: root },
 				configDirectory: root,
 				userHomeDirectory: root,
@@ -161,7 +160,7 @@ async function bind(options: { readonly document?: ConsumptionDocument } = {}): 
 				// The Session capability, as the production assemblies receive it: a reading another
 				// process delivered is adopted into *this* record, and the extension reads it there.
 				session: context.session,
-			})).implementation,
+			}))),
 	});
 	double.deliverSession(OWNER, { session: MAIN });
 	double.deliverSession(OWNER, { event: { kind: "session_facts" }, session: MAIN });
