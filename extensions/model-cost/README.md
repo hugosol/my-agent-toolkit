@@ -152,7 +152,7 @@ account or replace the human readability judgement below.
 
 Verification of the publication and merged-redraw behavior (2026-10-17): `bun test tests/model-cost`
 491 pass / 0 fail, `bun test tests/framework` 555 pass / 0 fail, and the real-host dock partition
-(`OMP_BOT_BINARY`, with `bun.lock` and the host patches normalized to LF) 107 pass / 0 fail. Real
+(`HERDR_BOT_BINARY`, with `bun.lock` and the host patches normalized to LF) 107 pass / 0 fail. Real
 hosts: a pi 1.3.0 background smoke passed 10/10 observations, and a real-terminal pi TUI capture was
 34 ok / 1 failed — the failure is that script's own `pi 1.2.0` version check against this machine's
 1.3.0 install. Counted apart rather than inferred: one response's 40 streamed chunks were 2

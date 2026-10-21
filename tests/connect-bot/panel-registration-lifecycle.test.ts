@@ -3,7 +3,7 @@
  * about it (P24, P25, P26).
  *
  * Three promises about semantics the request-budget migration must not have rewritten, all read
- * from the actual omp-bot panel's own record rather than from the client's account of it:
+ * from the actual herdr-bot panel's own record rather than from the client's account of it:
  *
  * - a server-processed `unregister` still *deletes* the row — the Panel session registration is the
  *   presence of a row in the panel, and the panel's removal is its own published change, with the
@@ -18,7 +18,7 @@
  *   received, processed and applied while its answer is still on its way, and the two facts have to
  *   be recorded separately on the side that owns each of them.
  *
- * The first two are observed against the real panel (`support/omp-bot.ts`), whose read side is the
+ * The first two are observed against the real panel (`support/herdr-bot.ts`), whose read side is the
  * panel's own publishing channel: a `remove` frame exists for the removal path alone, while a row
  * that merely went quiet is republished as an offline `upsert`. The third needs a dependency whose
  * *response timing* is controllable, so the extension talks to `support/response-timing-adapter.ts`
@@ -35,7 +35,7 @@ import * as path from "node:path";
 import { CONNECT_BOT } from "../../extensions/connect-bot/definition";
 import { readConfig } from "../../framework/core/config";
 import { REPO_ROOT } from "../harness-dock/baseline";
-import { isUpsertData, type OmpBotFrame, type OmpBotPanel, startOmpBot } from "./support/omp-bot";
+import { isUpsertData, type HerdrBotFrame, type HerdrBotPanel, startHerdrBot } from "./support/herdr-bot";
 import { createRunRoot, type ProbeReport, runProbe } from "./support/probe-run";
 import {
 	type ResponseTimingAdapter,
@@ -57,7 +57,7 @@ const RELEASE_DELAY_MS = 1_500;
 /**
  * The online window this isolated run declares, and the panel's own scan cadence.
  *
- * The window is stated in the panel configuration `support/omp-bot.ts` writes for the run — the
+ * The window is stated in the panel configuration `support/herdr-bot.ts` writes for the run — the
  * panel's delivered default is 10s, which a 10s beat sits exactly on the edge of — and the cadence
  * is the panel's fixed `EXPIRY_SCAN_INTERVAL`. They are the *server's* numbers, derived from
  * nothing this extension sends, and they are what makes a row that went quiet visible as offline.
@@ -67,11 +67,11 @@ const EXPIRY_SCAN_MS = 5_000;
 /** The session id the probe's `off` scenario registers under, as the probe names it. */
 const OFF_SESSION = "budget-off";
 /** Arm success, verbatim, for the one online session a fresh panel holds. */
-const CONNECTED = "已接入 omp-bot 面板（当前 1 个在线会话）";
+const CONNECTED = "已接入 herdr-bot 面板（当前 1 个在线会话）";
 /** The `off` the panel answered: any answer means the row is gone. */
-const DISCONNECTED = "已断开 omp-bot 面板";
+const DISCONNECTED = "已断开 herdr-bot 面板";
 /** The `off` whose unregister the client's own budget ended before an answer came. */
-const PANEL_SILENT = "omp-bot 面板未响应";
+const PANEL_SILENT = "herdr-bot 面板未响应";
 
 /** The panels, adapters and run directories of the case at hand, all disposed together. */
 const running: Array<{ dispose(): void | Promise<void> }> = [];
@@ -81,8 +81,8 @@ function track<T extends { dispose(): void | Promise<void> }>(value: T): T {
 }
 
 /** The actual panel one case drives: a process of its own, on a port and config of its own. */
-async function panelAt(): Promise<OmpBotPanel> {
-	const panel = await startOmpBot();
+async function panelAt(): Promise<HerdrBotPanel> {
+	const panel = await startHerdrBot();
 	running.push({ dispose: () => panel.stop() });
 	return panel;
 }
@@ -99,12 +99,12 @@ afterEach(async () => {
 });
 
 /** Whether one panel frame is the session view an `upsert` carries, for the session and state named. */
-function upsertOf(frame: OmpBotFrame, sessionId: string, online: boolean): boolean {
+function upsertOf(frame: HerdrBotFrame, sessionId: string, online: boolean): boolean {
 	return frame.event === "upsert" && isUpsertData(frame.data) && frame.data.session.sessionId === sessionId && frame.data.session.online === online;
 }
 
 /** The session id one removal frame names, narrowed before anything is read from it. */
-function removedSession(frame: OmpBotFrame): string | undefined {
+function removedSession(frame: HerdrBotFrame): string | undefined {
 	const data = frame.data;
 	if (data === null || typeof data !== "object" || !("sessionId" in data) || typeof data.sessionId !== "string") {
 		return undefined;

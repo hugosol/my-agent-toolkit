@@ -469,13 +469,13 @@ describe("a relative declaration resolves against the assembly's configuration b
 
 	test("the convention path is the one under that directory, and its values are the file's", () => {
 		const definition = declaringConfig("based-convention", { fields: { endpoint: "non-empty-string" } });
-		const read = recordingRead("endpoint: http://omp-bot.local:8787\n");
+		const read = recordingRead("endpoint: http://herdr-bot.local:8787\n");
 
 		const result = portDouble().bind(definition, { config: { ...read.source, baseDir: repositoryRoot } });
 
 		expect(result.bound).toBe(true);
 		expect(read.files).toEqual([path.resolve(repositoryRoot, "extensions", "based-convention", "config.yaml")]);
-		expect(getConfig(definition)).toEqual({ endpoint: "http://omp-bot.local:8787" });
+		expect(getConfig(definition)).toEqual({ endpoint: "http://herdr-bot.local:8787" });
 	});
 
 	test("a relative config.path override resolves against the same directory", () => {
@@ -483,7 +483,7 @@ describe("a relative declaration resolves against the assembly's configuration b
 			path: "extensions/based-override/nested/panel.yaml",
 			fields: { endpoint: "non-empty-string" },
 		});
-		const read = recordingRead("endpoint: http://omp-bot.local:9999\n");
+		const read = recordingRead("endpoint: http://herdr-bot.local:9999\n");
 
 		const result = portDouble().bind(definition, { config: { ...read.source, baseDir: repositoryRoot } });
 
@@ -496,7 +496,7 @@ describe("a relative declaration resolves against the assembly's configuration b
 	test("an absolute config.path is used as declared, whatever directory is supplied", () => {
 		const declared = path.resolve(path.sep, "etc", "connect-bot", "config.yaml");
 		const definition = declaringConfig("based-absolute", { path: declared, fields: { endpoint: "non-empty-string" } });
-		const read = recordingRead("endpoint: http://omp-bot.local:8787\n");
+		const read = recordingRead("endpoint: http://herdr-bot.local:8787\n");
 
 		const result = portDouble().bind(definition, { config: { ...read.source, baseDir: repositoryRoot } });
 
@@ -526,7 +526,7 @@ describe("a relative declaration resolves against the assembly's configuration b
 
 	test("with no directory supplied the path stays this process's own, as it was before", () => {
 		const definition = declaringConfig("based-fallback", { fields: { endpoint: "non-empty-string" } });
-		const read = recordingRead("endpoint: http://omp-bot.local:8787\n");
+		const read = recordingRead("endpoint: http://herdr-bot.local:8787\n");
 
 		const result = portDouble().bind(definition, { config: read.source });
 
@@ -570,11 +570,11 @@ describe("a declared configuration is read, validated and recorded at binding (P
 		const definition = declaringConfig("bound-config", { fields: { endpoint: "non-empty-string" } });
 		const port = portDouble();
 
-		const result = port.bind(definition, { config: reading("endpoint: http://omp-bot.local:8787\n") });
+		const result = port.bind(definition, { config: reading("endpoint: http://herdr-bot.local:8787\n") });
 
 		expect(result.bound).toBe(true);
 		expect(port.diagnostics).toEqual([]);
-		expect(getConfig(definition)).toEqual({ endpoint: "http://omp-bot.local:8787" });
+		expect(getConfig(definition)).toEqual({ endpoint: "http://herdr-bot.local:8787" });
 	});
 
 	test("the values are exactly the declared keys, each validated by the framework", () => {
@@ -586,7 +586,7 @@ describe("a declared configuration is read, validated and recorded at binding (P
 			config: reading(
 				[
 					"# the panel this extension talks to",
-					"endpoint: http://omp-bot.local:8787",
+					"endpoint: http://herdr-bot.local:8787",
 					"port: 8787",
 					"enabled: true",
 					'label: ""',
@@ -600,7 +600,7 @@ describe("a declared configuration is read, validated and recorded at binding (P
 		// A `string` may be empty where a `non-empty-string` may not, and a key the
 		// declaration does not name reaches neither the values nor the failure.
 		expect(getConfig(definition)).toEqual({
-			endpoint: "http://omp-bot.local:8787",
+			endpoint: "http://herdr-bot.local:8787",
 			port: 8787,
 			enabled: true,
 			label: "",
@@ -610,10 +610,10 @@ describe("a declared configuration is read, validated and recorded at binding (P
 	test("the defaults read a real file as YAML: comments and all", () => {
 		const directory = mkdtempSync(path.join(tmpdir(), "extension-config-"));
 		const file = path.join(directory, "config.yaml");
-		writeFileSync(file, "endpoint: http://omp-bot.local:8787 # the panel\n");
+		writeFileSync(file, "endpoint: http://herdr-bot.local:8787 # the panel\n");
 		try {
 			expect(readConfig(file, { fields: { endpoint: "non-empty-string" } })).toEqual({
-				endpoint: "http://omp-bot.local:8787",
+				endpoint: "http://herdr-bot.local:8787",
 			});
 		} finally {
 			rmSync(directory, { recursive: true, force: true });
@@ -671,7 +671,7 @@ describe("the General configuration entry is the extension-facing seam (P43, P44
 		const id = "real-file-success";
 		const { repository } = realRepository(
 			id,
-			"endpoint: http://omp-bot.local:8787\nrequestTimeoutMs: 2000\n",
+			"endpoint: http://herdr-bot.local:8787\nrequestTimeoutMs: 2000\n",
 		);
 		try {
 			const definition = declaringConfig(id, {
@@ -695,7 +695,7 @@ describe("the General configuration entry is the extension-facing seam (P43, P44
 			// The values are the file's declared keys, validated by the framework, and both paths hand
 			// over the same recorded object — the one cache entry, not a copy per reader or delivery.
 			const values = getConfig(definition);
-			expect(values).toEqual({ endpoint: "http://omp-bot.local:8787", requestTimeoutMs: 2000 });
+			expect(values).toEqual({ endpoint: "http://herdr-bot.local:8787", requestTimeoutMs: 2000 });
 			expect(delivered[0]!.config).toBe(values);
 			expect(getConfig(definition)).toBe(values);
 		} finally {

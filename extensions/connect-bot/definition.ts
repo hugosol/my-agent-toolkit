@@ -32,7 +32,7 @@ export const CONNECT_BOT = defineExtension({
 			type: "directed",
 			name: "connect-bot",
 			state: "enabled",
-			description: "把当前会话接入 omp-bot 面板；/connect-bot off 断开",
+			description: "把当前会话接入 herdr-bot 面板；/connect-bot off 断开",
 		},
 	],
 	marker: { text: "◐ connectBot" },

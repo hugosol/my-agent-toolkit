@@ -29,11 +29,11 @@ const MARKER_TEXT = "◐ connectBot";
 const ownerKey = (sessionId: string) => `main:${sessionId}`;
 
 /** Arm success, verbatim, for the online count the panel reported. */
-const CONNECTED = (onlineCount: number) => `已接入 omp-bot 面板（当前 ${onlineCount} 个在线会话）`;
+const CONNECTED = (onlineCount: number) => `已接入 herdr-bot 面板（当前 ${onlineCount} 个在线会话）`;
 /** A new activation refused while the unregister the operator asked for is still on the wire. */
-const DISCONNECTING = "正在断开 omp-bot 面板，请稍后重试";
+const DISCONNECTING = "正在断开 herdr-bot 面板，请稍后重试";
 /** Off with the panel reachable. */
-const DISCONNECTED = "已断开 omp-bot 面板";
+const DISCONNECTED = "已断开 herdr-bot 面板";
 
 /** One outbound request the extension made, as the framework's call received it. */
 interface Request {

@@ -6,7 +6,7 @@
  * failed or timed-out request is still dropped rather than retried, backed off or compensated for;
  * the background push still ends the connection on the third consecutive failure and still resets
  * on a success; and the command and lifecycle paths still send the panel's own protocol, verified
- * by the actual omp-bot receiving a whole session.
+ * by the actual herdr-bot receiving a whole session.
  *
  * Two kinds of evidence are kept apart, because they answer different questions. The controlled
  * runs (`support/budget-probe.ts`) drive the extension as the loader does in a process of its own
@@ -14,7 +14,7 @@
  * standing on a {@link ControlledClock} the run advances by exact virtual milliseconds, so a beat's
  * *period* is what produces it and a cancelled interval produces nothing; the panel behind them is
  * a real local HTTP service whose own receipt record and answer bodies are read off the wire. The
- * interop run drives the same extension at the actual omp-bot panel, whose own read side is where
+ * interop run drives the same extension at the actual herdr-bot panel, whose own read side is where
  * the registered row, its states and its removal are read back.
  *
  * Nothing here re-states a constant. The cadence is proven by advancing exactly one period and
@@ -33,7 +33,7 @@ import * as path from "node:path";
 import { CONNECT_BOT } from "../../extensions/connect-bot/definition";
 import { readConfig } from "../../framework/core/config";
 import { REPO_ROOT } from "../harness-dock/baseline";
-import { isUpsertData, type OmpBotPanel, publishedViews, startOmpBot } from "./support/omp-bot";
+import { isUpsertData, type HerdrBotPanel, publishedViews, startHerdrBot } from "./support/herdr-bot";
 import { createRunRoot, type ProbeReport, type SentRequest, runProbe } from "./support/probe-run";
 
 /** The request budget the repository's own `config.yaml` ships, as the framework's read of it reports it. */
@@ -59,19 +59,19 @@ const HEARTBEAT_PERIOD_MS = 10_000;
 /** The one session-event route the protocol fixes, as the panel receives it. */
 const EVENTS_PATH = "/api/sessions/events";
 /** Arm success, verbatim, for one online session: what the panel's registered receipt produces. */
-const CONNECTED = "已接入 omp-bot 面板（当前 1 个在线会话）";
+const CONNECTED = "已接入 herdr-bot 面板（当前 1 个在线会话）";
 /** Arm failure: the panel's answer never registered this session. */
-const ARM_FAILED = "无法连接 omp-bot，未启用；请确认面板已启动";
+const ARM_FAILED = "无法连接 herdr-bot，未启用；请确认面板已启动";
 /** The `off` that happened locally while the panel never answered its unregister. */
-const PANEL_SILENT = "omp-bot 面板未响应";
+const PANEL_SILENT = "herdr-bot 面板未响应";
 /** The `off` the panel answered. */
-const DISCONNECTED = "已断开 omp-bot 面板";
+const DISCONNECTED = "已断开 herdr-bot 面板";
 /** The notice a session being left gets when another identity takes its place. */
 const SWITCHED = "会话已切换，已断开面板；重新 /connect-bot 可重连";
 /** The first failure of an outage, verbatim from the frozen baseline. */
-const FIRST_FAILURE = "与 omp-bot 面板连接中断；若持续失败将自动断开";
+const FIRST_FAILURE = "与 herdr-bot 面板连接中断；若持续失败将自动断开";
 /** The budget running out, verbatim from the frozen baseline. */
-const AUTO_DISARM = "与 omp-bot 连接中断，已断开；重新执行 /connect-bot 可重连";
+const AUTO_DISARM = "与 herdr-bot 连接中断，已断开；重新执行 /connect-bot 可重连";
 
 /** One request the local panel received: what it was and when it arrived. */
 interface PanelRequest {
@@ -127,7 +127,7 @@ interface PanelScript {
  * recorded with its own body, and answers scripted per kind — a register that reports one online
  * session, an accepted answer for everything else, and for the beats exactly the sequence the case
  * under test names. A `rejected` beat is the panel's `404 unknown-session`, the answer it gives a
- * session it has forgotten (as after an omp-bot restart), which the extension counts as a failure.
+ * session it has forgotten (as after a herdr-bot restart), which the extension counts as a failure.
  */
 function startPanel(script: PanelScript = {}): Panel {
 	const requests: PanelRequest[] = [];
@@ -197,8 +197,8 @@ function panelFor(script?: PanelScript): Panel {
 	return panel;
 }
 
-async function panelAt(): Promise<OmpBotPanel> {
-	const panel = await startOmpBot();
+async function panelAt(): Promise<HerdrBotPanel> {
+	const panel = await startHerdrBot();
 	running.push({ dispose: () => panel.stop() });
 	return panel;
 }
@@ -382,7 +382,7 @@ describe("the background push still ends the connection on the third consecutive
 	});
 });
 
-describe("the protocol the actual omp-bot panel receives is the frozen one (P23)", () => {
+describe("the protocol the actual herdr-bot panel receives is the frozen one (P23)", () => {
 	test(
 		"a whole session — register, beats, state moves, unregister — is what the real panel records and answers",
 		async () => {

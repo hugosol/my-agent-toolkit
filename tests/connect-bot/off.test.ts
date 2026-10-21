@@ -38,16 +38,16 @@ const ENDPOINT = "http://127.0.0.1:8787";
 const ownerKey = (sessionId: string) => `main:${sessionId}`;
 
 /** Arm success, verbatim, for one online session. */
-const CONNECTED = "已接入 omp-bot 面板（当前 1 个在线会话）";
+const CONNECTED = "已接入 herdr-bot 面板（当前 1 个在线会话）";
 /** Off with the panel reachable — including a non-2xx answer such as `404` after a restart. */
-const DISCONNECTED = "已断开 omp-bot 面板";
+const DISCONNECTED = "已断开 herdr-bot 面板";
 /** Off with the panel unreachable: the local switch is off; the remote row may linger. */
-const UNREACHABLE = "omp-bot 面板未响应";
+const UNREACHABLE = "herdr-bot 面板未响应";
 /** Refusal for a session with no UI at all (`--mode rpc --no-ui`, print/json). */
 const NO_UI_REFUSAL = "当前模式无 UI，不支持接入面板";
 /** The usage error for an unrecognized argument; `offline` is not a form any more. */
 const unknownArgument = (argument: string) =>
-	`未知参数「${argument}」；用法：/connect-bot（接入 omp-bot 面板）或 /connect-bot off（断开）。`;
+	`未知参数「${argument}」；用法：/connect-bot（接入 herdr-bot 面板）或 /connect-bot off（断开）。`;
 
 /** One outbound request the extension made, as the framework's call received it. */
 interface Request {
@@ -209,11 +209,11 @@ describe("`off` drops the local switch first and removes the panel row best-effo
 
 	/**
 	 * Any HTTP answer means the panel is reachable, so the row is gone: a 2xx is the ordinary case
-	 * and a `404` is what a restarted omp-bot answers for a session it has forgotten.
+	 * and a `404` is what a restarted herdr-bot answers for a session it has forgotten.
 	 */
 	const reachable: ReadonlyArray<readonly [string, number]> = [
 		["a 2xx answer", 200],
-		["a 404 after an omp-bot restart", 404],
+		["a 404 after a herdr-bot restart", 404],
 	];
 
 	for (const [label, status] of reachable) {

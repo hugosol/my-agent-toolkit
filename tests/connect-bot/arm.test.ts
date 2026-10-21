@@ -161,7 +161,7 @@ describe("an empty argument arms this session (E2, E17, E18)", () => {
 		});
 
 		// The receipt's online count is what the operator is told, and the area shows the marker.
-		expect(double.notifications).toEqual(["已接入 omp-bot 面板（当前 3 个在线会话）"]);
+		expect(double.notifications).toEqual(["已接入 herdr-bot 面板（当前 3 个在线会话）"]);
 		expect(double.widgets).toEqual([
 			{ key: MARKER_AREA_KEY, lines: [MARKER_TEXT], placement: MARKER_AREA_PLACEMENT },
 		]);
@@ -189,7 +189,7 @@ describe("an empty argument arms this session (E2, E17, E18)", () => {
 
 describe("a panel that does not register this session arms nothing (E4, E17)", () => {
 	/**
-	 * Every way an arm can fail is the same outcome: a `404` after an omp-bot restart, any other
+	 * Every way an arm can fail is the same outcome: a `404` after a herdr-bot restart, any other
 	 * non-2xx, a 2xx answer that is not the registered receipt, and a request that never
 	 * completed (reject or timeout — the call surfaces both as one failure).
 	 */
@@ -211,7 +211,7 @@ describe("a panel that does not register this session arms nothing (E4, E17)", (
 			await announced;
 
 			expect(requests.length).toBe(1);
-			expect(double.notifications).toEqual(["无法连接 omp-bot，未启用；请确认面板已启动"]);
+			expect(double.notifications).toEqual(["无法连接 herdr-bot，未启用；请确认面板已启动"]);
 			// Nothing was armed: no marker, no declared value recorded, no record for the owner.
 			expect(double.widgets).toEqual([]);
 			expect(double.appended).toEqual([]);
@@ -233,7 +233,7 @@ describe("a panel that does not register this session arms nothing (E4, E17)", (
 		await announced;
 
 		expect(requests.length).toBe(1);
-		expect(double.notifications).toEqual(["无法连接 omp-bot，未启用；请确认面板已启动"]);
+		expect(double.notifications).toEqual(["无法连接 herdr-bot，未启用；请确认面板已启动"]);
 		expect(double.widgets).toEqual([]);
 		expect(double.appended).toEqual([]);
 		expect(botSessions.get(ownerKey(sessionId))).toBeUndefined();
@@ -347,8 +347,8 @@ describe("running the command again on an armed session re-registers it (E3, sto
 		// The count is the panel's answer, not something this extension accumulated: re-registering
 		// cannot grow it, so both runs report the same number.
 		expect(double.notifications).toEqual([
-			"已接入 omp-bot 面板（当前 3 个在线会话）",
-			"已接入 omp-bot 面板（当前 3 个在线会话）",
+			"已接入 herdr-bot 面板（当前 3 个在线会话）",
+			"已接入 herdr-bot 面板（当前 3 个在线会话）",
 		]);
 		// No write of the repeat ever takes the marker line out of the area.
 		expect(double.widgets.length).toBeGreaterThanOrEqual(1);
@@ -362,7 +362,7 @@ describe("running the command again on an armed session re-registers it (E3, sto
 
 describe("an arm that fails leaves nothing behind and can be retried (E4, story 64)", () => {
 	/** The arm failure the operator is told, verbatim: the same words for every failed attempt. */
-	const ARM_FAILED = "无法连接 omp-bot，未启用；请确认面板已启动";
+	const ARM_FAILED = "无法连接 herdr-bot，未启用；请确认面板已启动";
 
 	test("a rejected register reports the failure, and no timer or request outlives it", async () => {
 		jest.useFakeTimers();
@@ -457,7 +457,7 @@ describe("an arm that fails leaves nothing behind and can be retried (E4, story 
 		// Still register-only: the refused attempt sends its register and nothing else, and the
 		// operator reads the reconnect attempt's own failure.
 		expect(requests.map(request => envelopeOf(request).kind)).toEqual(["register", "state", "register"]);
-		expect(double.notifications).toEqual(["已接入 omp-bot 面板（当前 4 个在线会话）", ARM_FAILED]);
+		expect(double.notifications).toEqual(["已接入 herdr-bot 面板（当前 4 个在线会话）", ARM_FAILED]);
 		// A failed re-arm leaves the session unarmed, exactly as the first arm's failure would: the
 		// marker line is removed from the area and the record is dropped.
 		expect(double.widgets[double.widgets.length - 1]).toEqual({
@@ -493,7 +493,7 @@ describe("an arm that fails leaves nothing behind and can be retried (E4, story 
 		double.run("connect-bot", "", ctx);
 		await armed;
 
-		expect(double.notifications).toEqual([ARM_FAILED, "已接入 omp-bot 面板（当前 1 个在线会话）"]);
+		expect(double.notifications).toEqual([ARM_FAILED, "已接入 herdr-bot 面板（当前 1 个在线会话）"]);
 		expect(double.widgets).toEqual([
 			{ key: MARKER_AREA_KEY, lines: [MARKER_TEXT], placement: MARKER_AREA_PLACEMENT },
 		]);

@@ -5,7 +5,7 @@
  * The panel's own protocol is a client that sends one request and reads one answer; what a client
  * can conclude from a request that never completed is the whole subject of these promises. To ask
  * that question the dependency has to be real on both sides: this adapter is a genuine HTTP service
- * the extension talks to, and the panel behind it is the actual omp-bot — every forwarded request
+ * the extension talks to, and the panel behind it is the actual herdr-bot — every forwarded request
  * goes over a real socket to the real panel, and the adapter records the panel's own answer status
  * before it decides when (or whether) to hand that answer to the client.
  *

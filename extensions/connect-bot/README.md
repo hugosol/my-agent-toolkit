@@ -1,6 +1,6 @@
 # connect-bot
 
-Joins an agent session to the omp-bot panel; `/connect-bot` registers the current session,
+Joins an agent session to the herdr-bot panel; `/connect-bot` registers the current session,
 `/connect-bot off` disconnects it. The declaration is [`definition.ts`](definition.ts), its
 harness-independent logic is under [`shared-logic/`](shared-logic), and its OMP assembly is
 [`harnesses/omp.ts`](harnesses/omp.ts).
@@ -45,11 +45,14 @@ registration (the panel's row) is a different thing from Panel session online st
 judgement that a row has been heard from recently enough). The panel's two session windows
 (`[sessions] online_timeout_seconds`, delivered default 10s, and `offline_retention_seconds`,
 default 30s) and its fixed 5s scan cadence are server-side numbers derived from nothing this
-extension sends, so adjusting `requestTimeoutMs` requires **no change to omp-bot**
+extension sends, so adjusting `requestTimeoutMs` requires **no change to herdr-bot**
 ([`tests/connect-bot/panel-registration-lifecycle.test.ts`](../../tests/connect-bot/panel-registration-lifecycle.test.ts)).
 Both terms are this context's vocabulary in [GLOSSARY.md](GLOSSARY.md).
 
 ## H3b — cut over connect-bot
+
+> Historical note: this section records the migration before the panel product was renamed. The
+> panel is now `herdr-bot`; the extension id, command and route named below are unchanged.
 
 Precondition: H1 passed and the connect-bot acceptance round has been run and recorded — this
 repository claims neither yet — so the old implementation is still the one in use. That round is
