@@ -44,13 +44,19 @@ What the automatic mode does, and does not do:
 - It applies its choice at the process's **first main session start**, synchronously, so the first model
   request already carries the init prompt; it records the enabling value in the existing session-entry format,
   so a later process — in either mode — restores it.
-- A recorded value always wins. A session whose branch recorded `{enabled: false}` starts off even in
-  automatic mode, and a session that recorded `{enabled: true}` stays on rather than being toggled off.
+- **A session restored at startup is the process's first start.** The record in its branch is the history:
+  `{enabled: true}` and `{enabled: false}` both win over the selected mode's opposite default. Only a branch
+  with no recorded value takes the mode's default, which is why a session that never recorded a value starts
+  on when an independent automatic-startup process resumes it, and why a recorded off value stays off.
+- Because the record belongs to the session rather than to the mode, a session the automatic entrypoint
+  enabled opens enabled under the manual entrypoint too; the restore writes no second record.
 - It is a target, not a command. It never types `/codebase-tools`, and it does not run the toggle's
   notification; the marker line is on the area from the session's own start.
-- It applies once per process. A new, resumed or forked session after startup follows the ordinary session
-  rules, and `/codebase-tools` after startup is the same toggle it always was.
+- It applies once per process. A new, resumed or forked session **after** startup follows the ordinary
+  session rules — no entry default, no record — and `/codebase-tools` after startup is the same toggle it
+  always was. A navigation that keeps the same owner (a same-file resume or reload) is not a boundary at all.
 - Startup does not reset prompt-injection progress, rewrite history, or change subagent `follow` behavior.
+  A restored enabled session continues with the reminder when its branch already carries the init.
 
 The full behavior is specified in
 [extension startup modes and the startup policy](../../framework/docs/framework-capabilities.md#extension-startup-modes-and-the-startup-policy).
@@ -144,6 +150,73 @@ The automated face of every point above is asserted in
 on the real OMP harness and in
 `bun scripts/pi-codebase-tools-smoke.ts --mode auto` on the real pi CLI; the visual check confirms only
 what a rendered terminal shows.
+
+## H1c — startup recovery interactive acceptance (P9, human-led marker display)
+
+The recovery rule is automated at both seams — see the dock suite and both pi smoke modes below —
+but whether the marker *renders* on the restored session's start is a terminal observation. Use a
+throwaway state and session directory; never the formal configuration or a running session.
+
+Prepare one state set for both hosts and keep the state directory out of the formal location:
+
+```bash
+ACCEPT_ROOT=.cache/startup-recovery-accept   # any throwaway directory
+mkdir -p "$ACCEPT_ROOT/agent-state" "$ACCEPT_ROOT/sessions" "$ACCEPT_ROOT/work"
+```
+
+**Scenario A — a recorded true restored under the opposite (manual) default.** Seed an enabled
+session with the automatic entrypoint, exit, then resume it with the manual entrypoint:
+
+```bash
+# 1. seed: automatic entrypoint, type one prompt, confirm the marker appears, then exit
+PI_CODING_AGENT_DIR="$PWD/$ACCEPT_ROOT/agent-state" bun \
+  .cache/omp-baseline/18.5.0/node_modules/@oh-my-pi/pi-coding-agent/src/cli.ts \
+  --no-extensions -e entrypoints/omp-auto/codebase-tools.ts \
+  --session-dir "$PWD/$ACCEPT_ROOT/sessions" --cwd "$PWD/$ACCEPT_ROOT/work" \
+  --model <provider>/<model>
+
+# 2. restore: manual entrypoint, resuming the session file the seed saved
+SESSION_FILE=$(ls -t "$PWD/$ACCEPT_ROOT/sessions"/*.jsonl | head -1)
+PI_CODING_AGENT_DIR="$PWD/$ACCEPT_ROOT/agent-state" bun \
+  .cache/omp-baseline/18.5.0/node_modules/@oh-my-pi/pi-coding-agent/src/cli.ts \
+  --no-extensions -e entrypoints/omp/codebase-tools.ts \
+  --session-dir "$PWD/$ACCEPT_ROOT/sessions" --resume "$SESSION_FILE"
+```
+
+Capture the second terminal right after the resume: the marker `◈ codeBaseTools` must already be
+on the framework's area before you type anything, no `codeBaseTools enabled` notification may
+appear, and the first turn must carry the extension's contribution even though the manual policy
+states `false`. A recording of both launches, or screenshots of the restored area before the first
+turn and after it, is the evidence for the ticket.
+
+**Scenario B — a recorded false restored under the enabling automatic default.** Seed with the
+automatic entrypoint, type `/codebase-tools` (the marker clears), exit, and resume with the
+automatic entrypoint. The restored terminal must show **no** marker at its start and its first turn
+must add no contribution; `/codebase-tools` then announces `codeBaseTools enabled` and the marker
+returns.
+
+**Scenario C — no record at a startup resume uses the automatic default.** Seed with the manual
+entrypoint (a turn with no marker, no state entry), exit, then resume the file with the automatic
+entrypoint. The restored terminal must show the marker from its start and the first turn must carry
+the init prompt.
+
+On pi the same three scenarios use the pi entrypoints and pi's session storage:
+
+```bash
+PI_CODING_AGENT_DIR="$PWD/$ACCEPT_ROOT/agent-state" \
+  pi --no-extensions -e entrypoints/pi-auto/codebase-tools.ts \
+  --session-dir "$PWD/$ACCEPT_ROOT/sessions" --model <provider>/<model>
+PI_CODING_AGENT_DIR="$PWD/$ACCEPT_ROOT/agent-state" \
+  pi --no-extensions -e entrypoints/pi/codebase-tools.ts \
+  --session-dir "$PWD/$ACCEPT_ROOT/sessions" --session "$SESSION_FILE"
+```
+
+The automated face of every step is
+[`tests/codebase-tools/startup-recovery-dock.test.ts`](../../tests/codebase-tools/startup-recovery-dock.test.ts)
+on the real OMP harness, and the recovery phases of
+`bun scripts/pi-codebase-tools-smoke.ts --mode manual` / `--mode auto` on the real pi CLI. Both
+assert the captured request, the session-entry payloads and the adapter's `setWidget` frames; only
+the rendered terminal marker is left to this check.
 
 The recorded green run, for comparison against what you see: on the isolated exact
 `@oh-my-pi/pi-coding-agent@18.5.0` install (win32 x64, Bun 1.4.2, a fresh temporary agent state per

@@ -42,7 +42,11 @@
  *   7. a session resumed in a new process (`--session <file>`) and a session resumed in place
  *      (`switch_session`) each restore the recorded State and the init's progress: the run
  *      contributes without being re-enabled, exactly one init stays on the branch, no State is
- *      written by a run, and history is appended to rather than rewritten.
+ *      written by a run, and history is appended to rather than rewritten;
+ *   8. a session whose branch recorded no State takes the automatic mode's default when an
+ *      independent process resumes it at startup: the automatic line is on from the session's
+ *      start, the first run carries the init, the enabling choice is recorded once, history is
+ *      appended to, and nothing announces an activation.
  *
  * What it asserts in automatic mode:
  *   1. no command is issued: the first run's request already carries the startup-selected
@@ -53,7 +57,12 @@
  *   3. a new session created in place in the same process is not enabled again by the startup
  *      choice and records no startup State, while the command still enables it;
  *   4. a session resumed in a new process restores the recorded true, contributes on its first
- *      run, and writes no second startup record — the target is not applied as a toggle.
+ *      run, and writes no second startup record — the target is not applied as a toggle;
+ *   5. a third process resuming that now-disabled session restores the recorded false: no line at
+ *      its start, no new contribution, no second startup record, and the command enables it;
+ *   6. an independent manual-mode process — whose own default is off — resumes the session the
+ *      automatic start enabled: the line is on from its start, the first run replays the init and
+ *      appends the reminder, no second startup record is written, and the command disables it.
  *
  * The extension's two prompt resources are byte-identical in this revision (reported as a run
  * note, never as a check), so a contribution's text cannot say which slot produced it: the slot a
@@ -374,6 +383,22 @@ function markerAreaFrames(session: PiSession): RpcFrame[] {
 			frame =>
 				frame.type === "extension_ui_request" && frame.method === "setWidget" && frame.widgetKey === MARKER_AREA_KEY,
 		);
+}
+
+/**
+ * The framework's marker area at a session's own start.
+ *
+ * The host publishes widgets on its own task, so a case that reads the line "from the start" awaits
+ * the first area frame rather than reading the frame stream at one instant.
+ */
+async function markerAreaAtStart(session: PiSession): Promise<RpcFrame | undefined> {
+	return session.frameSince(
+		0,
+		frame =>
+			frame.type === "extension_ui_request" && frame.method === "setWidget" && frame.widgetKey === MARKER_AREA_KEY,
+		"the framework's marker area at session start",
+		UI_FRAME_TIMEOUT_MS,
+	);
 }
 
 // ---------------------------------------------------------------------------
@@ -836,6 +861,95 @@ async function phaseResumeAcrossSwitch(cli: PiCli): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
+// Phase 5: a session with no recorded value resumed at startup takes the
+// automatic mode's default (P24, P9)
+// ---------------------------------------------------------------------------
+
+async function phaseStartupRestoreUnderAutomaticPolicy(cli: PiCli): Promise<void> {
+	console.log("\nphase: a session that recorded nothing takes the automatic default when resumed at startup");
+	const run = startRun(cli, "startup-restore-automatic-default");
+	const first = await openSession(run);
+
+	const offTurnText = "codebase-tools startup restore off turn";
+	await first.run(offTurnText);
+	const offRequest = requestAt(run, 0);
+	observe(
+		"the manual session that will be resumed contributes nothing",
+		contributions(offRequest) === 0 && lastMessageText(offRequest) === offTurnText,
+		`the request carried ${contributions(offRequest)} contribution(s): ${describeMessages(offRequest)}`,
+	);
+	const sessionFile = await first.sessionFile();
+	const before = first.journal(sessionFile);
+	observe(
+		"the manual session recorded no State",
+		extensionEntries(before).length === 0,
+		`the journal carries ${extensionEntries(before).map(entry => String(entry.customType)).join(", ") || "no codebase-tools entry"}`,
+	);
+	const firstExit = await first.stop();
+	observe(
+		"the session exits cleanly before the resume",
+		firstExit.exitCode === 0 && !firstExit.timedOut,
+		`the child exited ${String(firstExit.exitCode)}, stderr: ${firstExit.stderr.trim() || "<empty>"}`,
+	);
+
+	// An independent process resumes the file under the automatic entrypoint. The resume is this
+	// process's first owner start, so the automatic default applies — history has no value to win.
+	const requestsBefore = run.capture.requests().length;
+	const resumed = await openSession(run, ["--session", sessionFile], AUTOMATIC_ENTRYPOINT);
+	const area = await markerAreaAtStart(resumed);
+	observe(
+		"the resumed session shows the automatic line from its own start",
+		area !== undefined && areaShows(area),
+		area === undefined
+			? "no marker-area frame was published for the resumed session"
+			: `the startup area frame carried ${JSON.stringify(area.widgetLines)}`,
+	);
+	const resumedTurnText = "codebase-tools startup restore resumed turn";
+	const disposition = await resumed.run(resumedTurnText);
+	observe(
+		"the resumed session runs a turn without a command",
+		disposition === "started",
+		`pi reported disposition ${JSON.stringify(disposition)}`,
+	);
+	const resumedRequest = requestAt(run, requestsBefore);
+	observe(
+		"the first run carries the init the automatic default selected",
+		contributions(resumedRequest) === 1 && isContributionText(lastMessageText(resumedRequest)),
+		`the request carried ${contributions(resumedRequest)} injected message(s): ${describeMessages(resumedRequest)}`,
+	);
+	const after = resumed.journal(sessionFile);
+	observe(
+		"the enabling choice is recorded once, as the session's own State",
+		JSON.stringify(statePayloads(after)) === JSON.stringify([{ enabled: true }]),
+		`the journal's ${STATE_ENTRY_TYPE} payloads were ${JSON.stringify(statePayloads(after))}`,
+	);
+	observe(
+		"the restored init is persisted once",
+		customMessagesOf(after, INIT_IDENTITY).length === 1,
+		`the journal holds ${customMessagesOf(after, INIT_IDENTITY).length} init(s)`,
+	);
+	const resumeRewrite = appendOnlyViolation(before.entries, after.entries);
+	observe(
+		"the resume appended to history rather than rewriting it",
+		resumeRewrite === undefined,
+		resumeRewrite ?? "the earlier entries stand unchanged and in order",
+	);
+	observe(
+		"the resume announced no activation: startup is not a command",
+		resumed
+			.notificationsSince(0)
+			.every(message => message !== ENABLED_NOTICE && message !== DISABLED_NOTICE),
+		`pi announced ${JSON.stringify(resumed.notificationsSince(0))}`,
+	);
+	const exit = await resumed.stop();
+	observe(
+		"the resumed session exits cleanly",
+		exit.exitCode === 0 && !exit.timedOut,
+		`the child exited ${String(exit.exitCode)}, stderr: ${exit.stderr.trim() || "<empty>"}`,
+	);
+}
+
+// ---------------------------------------------------------------------------
 // Automatic mode, phase 1: the first run is enabled without a command, and the
 // command and a later in-place session keep their own decisions
 // ---------------------------------------------------------------------------
@@ -1103,6 +1217,140 @@ async function phaseAutomaticResume(cli: PiCli): Promise<void> {
 		exit.exitCode === 0 && !exit.timedOut,
 		`the child exited ${String(exit.exitCode)}, stderr: ${exit.stderr.trim() || "<empty>"}`,
 	);
+
+	// A third independent process resumes the now-disabled session. The recorded false is its
+	// history, so the enabling mode's default must not turn it on.
+	const disabledRestoreRequests = run.capture.requests().length;
+	const restoredOff = await openSession(run, ["--session", sessionFile], AUTOMATIC_ENTRYPOINT);
+	const restoredOffArea = await markerAreaAtStart(restoredOff);
+	observe(
+		"the recorded false publishes no line at the session's start",
+		restoredOffArea !== undefined && !areaShows(restoredOffArea),
+		restoredOffArea === undefined
+			? "no marker-area frame was published for the resumed session"
+			: `the startup area frame carried ${JSON.stringify(restoredOffArea.widgetLines)}`,
+	);
+	const restoredOffTurnText = "codebase-tools automatic restored off turn";
+	await restoredOff.run(restoredOffTurnText);
+	const restoredOffRequest = requestAt(run, disabledRestoreRequests);
+	observe(
+		"the restored off first run adds no contribution",
+		contributions(restoredOffRequest) === contributions(requestAt(run, disabledRestoreRequests - 1)) &&
+			lastMessageText(restoredOffRequest) === restoredOffTurnText,
+		`the request carried ${contributions(restoredOffRequest)} injected message(s) after the disabled turn's ${contributions(requestAt(run, disabledRestoreRequests - 1))}: ${describeMessages(restoredOffRequest)}`,
+	);
+	observe(
+		"the restart wrote no second startup record",
+		JSON.stringify(statePayloads(restoredOff.journal(sessionFile))) ===
+			JSON.stringify([{ enabled: true }, { enabled: false }]),
+		`the journal's ${STATE_ENTRY_TYPE} payloads were ${JSON.stringify(statePayloads(restoredOff.journal(sessionFile)))}`,
+	);
+	const restoredOffMark = restoredOff.frameMark();
+	await restoredOff.run(`/${COMMAND}`, PI_COMMAND_TIMEOUT_MS);
+	observe(
+		"the restored value is really off: the command enables it",
+		JSON.stringify(restoredOff.notificationsSince(restoredOffMark)) === JSON.stringify([ENABLED_NOTICE]),
+		`the restored session announced ${JSON.stringify(restoredOff.notificationsSince(restoredOffMark))}, expected ${JSON.stringify([ENABLED_NOTICE])}`,
+	);
+	observe(
+		"the command's record follows the restored history",
+		JSON.stringify(statePayloads(restoredOff.journal(sessionFile))) ===
+			JSON.stringify([{ enabled: true }, { enabled: false }, { enabled: true }]),
+		`the journal's ${STATE_ENTRY_TYPE} payloads were ${JSON.stringify(statePayloads(restoredOff.journal(sessionFile)))}`,
+	);
+	const restoredOffExit = await restoredOff.stop();
+	observe(
+		"the restored off session exits cleanly",
+		restoredOffExit.exitCode === 0 && !restoredOffExit.timedOut,
+		`the child exited ${String(restoredOffExit.exitCode)}, stderr: ${restoredOffExit.stderr.trim() || "<empty>"}`,
+	);
+}
+
+// ---------------------------------------------------------------------------
+// Automatic mode, phase 3: the record restores a manual-mode process (P35)
+// ---------------------------------------------------------------------------
+
+async function phaseAutomaticRecordRestoredByManual(cli: PiCli): Promise<void> {
+	console.log("\nphase: the automatic start's record restores a manual-mode process");
+	const run = startRun(cli, "automatic-restored-manual");
+	const automatic = await openSession(run, [], AUTOMATIC_ENTRYPOINT);
+
+	const savedTurnText = "codebase-tools automatic restored manual seed turn";
+	await automatic.run(savedTurnText);
+	const sessionFile = await automatic.sessionFile();
+	const before = automatic.journal(sessionFile);
+	observe(
+		"the automatic process recorded its enabling choice and its init",
+		JSON.stringify(statePayloads(before)) === JSON.stringify([{ enabled: true }]) &&
+			customMessagesOf(before, INIT_IDENTITY).length === 1,
+		`the journal holds State ${JSON.stringify(statePayloads(before))} and ${customMessagesOf(before, INIT_IDENTITY).length} init(s)`,
+	);
+	const automaticExit = await automatic.stop();
+	observe(
+		"the automatic session exits cleanly before the manual restore",
+		automaticExit.exitCode === 0 && !automaticExit.timedOut,
+		`the child exited ${String(automaticExit.exitCode)}, stderr: ${automaticExit.stderr.trim() || "<empty>"}`,
+	);
+
+	// An independent process loads the manual entrypoint — whose own default is off — and resumes
+	// the saved session. The recorded true wins, and the first run continues the enabled period.
+	const requestsBefore = run.capture.requests().length;
+	const manual = await openSession(run, ["--session", sessionFile], MANUAL_ENTRYPOINT);
+	const area = await markerAreaAtStart(manual);
+	observe(
+		"the manual process shows the restored line from its own start",
+		area !== undefined && areaShows(area),
+		area === undefined
+			? "no marker-area frame was published for the resumed session"
+			: `the startup area frame carried ${JSON.stringify(area.widgetLines)}`,
+	);
+	const restoredTurnText = "codebase-tools automatic restored manual turn";
+	await manual.run(restoredTurnText);
+	const restoredRequest = requestAt(run, requestsBefore);
+	observe(
+		"the restored first run replays the init and contributes the reminder",
+		contributions(restoredRequest) === contributions(requestAt(run, requestsBefore - 1)) + 1 &&
+			lastMessageText(restoredRequest) === REMINDER_PROMPT,
+		`the request carried ${contributions(restoredRequest)} injected message(s) after the automatic process's ${contributions(requestAt(run, requestsBefore - 1))}: ${describeMessages(restoredRequest)}`,
+	);
+	const after = manual.journal(sessionFile);
+	observe(
+		"the progress continued instead of re-initialising",
+		customMessagesOf(after, INIT_IDENTITY).length === 1 &&
+			JSON.stringify(contributionIdentities(after)) === JSON.stringify([INIT_IDENTITY, REMINDER_IDENTITY]),
+		`the journal's slot identities were ${JSON.stringify(contributionIdentities(after))}, holding ${customMessagesOf(after, INIT_IDENTITY).length} init(s)`,
+	);
+	observe(
+		"the manual resume wrote no second startup record",
+		JSON.stringify(statePayloads(after)) === JSON.stringify([{ enabled: true }]),
+		`the journal's ${STATE_ENTRY_TYPE} payloads were ${JSON.stringify(statePayloads(after))}`,
+	);
+	const resumeRewrite = appendOnlyViolation(before.entries, after.entries);
+	observe(
+		"the manual resume appended to history rather than rewriting it",
+		resumeRewrite === undefined,
+		resumeRewrite ?? "the earlier entries stand unchanged and in order",
+	);
+
+	const toggleMark = manual.frameMark();
+	await manual.run(`/${COMMAND}`, PI_COMMAND_TIMEOUT_MS);
+	observe(
+		"the restored value is really true: the command disables it",
+		JSON.stringify(manual.notificationsSince(toggleMark)) === JSON.stringify([DISABLED_NOTICE]),
+		`the restored session announced ${JSON.stringify(manual.notificationsSince(toggleMark))}, expected ${JSON.stringify([DISABLED_NOTICE])}`,
+	);
+	observe(
+		"its record follows the automatic record",
+		JSON.stringify(statePayloads(manual.journal(sessionFile))) ===
+			JSON.stringify([{ enabled: true }, { enabled: false }]),
+		`the journal's ${STATE_ENTRY_TYPE} payloads were ${JSON.stringify(statePayloads(manual.journal(sessionFile)))}`,
+	);
+	const manualExit = await manual.stop();
+	observe(
+		"the manual restored session exits cleanly",
+		manualExit.exitCode === 0 && !manualExit.timedOut,
+		`the child exited ${String(manualExit.exitCode)}, stderr: ${manualExit.stderr.trim() || "<empty>"}`,
+	);
 }
 
 // ---------------------------------------------------------------------------
@@ -1200,11 +1448,13 @@ try {
 	if (options.mode === "auto") {
 		await phaseAutomaticStartup(cli);
 		await phaseAutomaticResume(cli);
+		await phaseAutomaticRecordRestoredByManual(cli);
 	} else {
 		await phaseToggleAndContributions(cli);
 		await phaseNewSessionStartsOff(cli);
 		await phaseResumeAcrossRestart(cli);
 		await phaseResumeAcrossSwitch(cli);
+		await phaseStartupRestoreUnderAutomaticPolicy(cli);
 	}
 } catch (error) {
 	failure = error;

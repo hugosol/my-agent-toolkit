@@ -181,6 +181,24 @@ export class ControlledSession {
 		return lines.join("\n");
 	}
 
+	/**
+	 * Wait for the first frame matching, from those already delivered or the next one the harness
+	 * publishes.
+	 *
+	 * A host may publish a frame before a case gets to look — a widget rendered during startup, for
+	 * instance — so an existing match answers immediately rather than waiting for a second one. The
+	 * predicate is the awaited condition; a timeout with the session diagnostics is the failure.
+	 */
+	async awaitFrame(
+		predicate: (frame: RpcFrame) => boolean,
+		description: string,
+		timeoutMs: number = this.#promptTimeoutMs,
+	): Promise<RpcFrame> {
+		const delivered = this.#frames.find(predicate);
+		if (delivered !== undefined) return delivered;
+		return this.#waitForFrame(predicate, description, timeoutMs);
+	}
+
 	/** Send a prompt; slash-command text (e.g. `/codebase-tools`) is a prompt too. */
 	async prompt(message: string, timeoutMs: number = this.#promptTimeoutMs): Promise<PromptOutcome> {
 		const id = `h${++this.#promptCounter}`;
