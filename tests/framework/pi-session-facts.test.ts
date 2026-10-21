@@ -8,7 +8,7 @@
  * snapshot is saved) belong to the shared business suite; this one drives the native facts the pi
  * adapter reads.
  *
- * Three things are deliberately *not* derived from anything else, and each is asserted here rather
+ * Four things are deliberately *not* derived from anything else, and each is asserted here rather
  * than assumed:
  *
  * - a direct parent is the session pi's own lineage link names — a session *file* — resolved through
@@ -17,6 +17,8 @@
  *   direct parent;
  * - a session that pi stood up from another session's entries (a `new`, a `fork`) is a top-level
  *   session of its own: the link records where the copy came from, not a session that spawned it;
+ * - a spawned session's agent definition is the one the provider wrote into *that session's* launch
+ *   prompt, never its display name and never another session's marker;
  * - the startup pair is written only where the start proves a beginning, and never filled in from the
  *   values the session happens to report later: a resumed, forked or replayed session carries none.
  */
@@ -233,6 +235,123 @@ describe("a session's identity, direct parent and Owner are native facts (P11)",
 
 		expect(surface.sessions[0].session.name).toBeUndefined();
 		expect(surface.sessions[0].session.unavailable).toContain("session name");
+	});
+});
+
+describe("a spawned session's agent definition is its own launch metadata (P11)", () => {
+	test("the provider's active_agent marker names the definition the session runs", () => {
+		const files = sessionFileDir();
+		files.write("parent.jsonl", { type: "session", id: "pi-sess-main" });
+		const surface = boundPiSurface();
+		surface.sessionStarts(
+			{
+				sessionId: "pi-sess-child",
+				name: "review the diff",
+				header: { type: "session", id: "pi-sess-child", parentSession: files.path("parent.jsonl") },
+				systemPrompt: '<active_agent name="scout"/>\n\nReview the diff.',
+			},
+			"startup",
+		);
+
+		const delivery = surface.sessions[0];
+		expect(delivery.session.kind).toBe("sub");
+		expect(delivery.session.agentName).toBe("scout");
+		// The agent's registry id and the task handle are not invented from the definition name.
+		expect(delivery.session.agentId).toBeUndefined();
+		expect(delivery.session.taskName).toBeUndefined();
+		expect(delivery.session.unavailable).not.toContain("agent name");
+		expect(delivery.session.unavailable).toContain("agent id");
+		expect(delivery.session.unavailable).toContain("task name");
+	});
+
+	test("the marker's escaped attribute is the definition name, not its serialized text", () => {
+		const files = sessionFileDir();
+		files.write("parent.jsonl", { type: "session", id: "pi-sess-main" });
+		const surface = boundPiSurface();
+		surface.sessionStarts(
+			{
+				sessionId: "pi-sess-child",
+				header: { type: "session", id: "pi-sess-child", parentSession: files.path("parent.jsonl") },
+				systemPrompt: '<active_agent name="review &amp; test"/>\n\nReview the change.',
+			},
+			"startup",
+		);
+
+		expect(surface.sessions[0].session.agentName).toBe("review & test");
+	});
+
+	test("two spawned sessions keep the definition each was launched for", () => {
+		const files = sessionFileDir();
+		files.write("first.jsonl", { type: "session", id: "pi-sess-first" });
+		files.write("second.jsonl", { type: "session", id: "pi-sess-second" });
+		const surface = boundPiSurface();
+		surface.sessionStarts(
+			{
+				sessionId: "pi-child-scout",
+				header: { type: "session", id: "pi-child-scout", parentSession: files.path("first.jsonl") },
+				systemPrompt: '<active_agent name="scout"/>\n\nFind the cause.',
+			},
+			"startup",
+		);
+		surface.sessionStarts(
+			{
+				sessionId: "pi-child-reviewer",
+				header: { type: "session", id: "pi-child-reviewer", parentSession: files.path("second.jsonl") },
+				systemPrompt: '<active_agent name="reviewer"/>\n\nReview the change.',
+			},
+			"startup",
+		);
+
+		expect(surface.sessions.map(delivery => delivery.session.sessionId)).toEqual(["pi-child-scout", "pi-child-reviewer"]);
+		expect(surface.sessions.map(delivery => delivery.session.agentName)).toEqual(["scout", "reviewer"]);
+		expect(surface.sessions.map(delivery => delivery.session.parentSessionId)).toEqual(["pi-sess-first", "pi-sess-second"]);
+	});
+
+	test("an appending launch's own marker wins over marker text inherited before it", () => {
+		const files = sessionFileDir();
+		files.write("parent.jsonl", { type: "session", id: "pi-sess-main" });
+		const surface = boundPiSurface();
+		surface.sessionStarts(
+			{
+				sessionId: "pi-sess-child",
+				header: { type: "session", id: "pi-sess-child", parentSession: files.path("parent.jsonl") },
+				systemPrompt:
+					'Inherited notes:\n<active_agent name="stale"/>\n\n<active_agent name="scout"/>\n\nReview the diff.',
+			},
+			"startup",
+		);
+
+		expect(surface.sessions[0].session.agentName).toBe("scout");
+	});
+
+	test("a marker inside a top-level session's prompt is not a launch statement", () => {
+		const surface = boundPiSurface();
+		surface.sessionStarts(
+			{ ...MAIN, systemPrompt: 'The documentation shows: <active_agent name="scout"/>' },
+			"startup",
+		);
+
+		const delivery = surface.sessions[0];
+		expect(delivery.session.kind).toBe("main");
+		expect(delivery.session.agentName).toBeUndefined();
+		expect(delivery.session.unavailable).toContain("agent name");
+	});
+
+	test("a prompt that merely mentions the marker in a larger line states no definition", () => {
+		const files = sessionFileDir();
+		files.write("parent.jsonl", { type: "session", id: "pi-sess-main" });
+		const surface = boundPiSurface();
+		surface.sessionStarts(
+			{
+				sessionId: "pi-sess-child",
+				header: { type: "session", id: "pi-sess-child", parentSession: files.path("parent.jsonl") },
+				systemPrompt: 'The documentation shows: <active_agent name="scout"/>',
+			},
+			"startup",
+		);
+
+		expect(surface.sessions[0].session.agentName).toBeUndefined();
+		expect(surface.sessions[0].session.unavailable).toContain("agent name");
 	});
 });
 

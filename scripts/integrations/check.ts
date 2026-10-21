@@ -2,7 +2,14 @@ import { existsSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { analyzeDemand } from "./demand";
 import { analyzeSupply } from "./supply";
-import type { DemandResult, IntegrationContract, IntegrationDiagnostic, SupplyResult, ContractSupply } from "./model";
+import type {
+	ContractSupply,
+	DemandResult,
+	IntegrationContract,
+	IntegrationDiagnostic,
+	SessionFactsFieldReport,
+	SupplyResult,
+} from "./model";
 
 export interface CheckOptions {
 	readonly root: string;
@@ -16,6 +23,8 @@ export interface CheckedIntegration {
 	readonly adapter?: string;
 	readonly complete: boolean;
 	readonly contracts: readonly CheckedContract[];
+	/** Separate field-level report, present only when the extension demanded session facts. */
+	readonly sessionFacts?: SessionFactsFieldReport;
 	readonly diagnostics: readonly IntegrationDiagnostic[];
 }
 export interface IntegrationReport {
@@ -41,7 +50,14 @@ export function compareDemand(demand: DemandResult, supply?: SupplyResult): Chec
 	const complete = diagnostics.length === 0 && contracts.every(contract =>
 		contract.supply === undefined || contract.requirement === "optional" || contract.supply.status === "provided",
 	) && contracts.every(contract => contract.supply?.status !== "unresolved");
-	return { extension: demand.extension, ...(supply === undefined ? {} : { adapter: supply.adapter }), complete, contracts, diagnostics };
+	return {
+		extension: demand.extension,
+		...(supply === undefined ? {} : { adapter: supply.adapter }),
+		complete,
+		contracts,
+		...(supply?.sessionFacts === undefined ? {} : { sessionFacts: supply.sessionFacts }),
+		diagnostics,
+	};
 }
 
 export function checkIntegrations(options: CheckOptions): IntegrationReport {
@@ -68,6 +84,18 @@ export function printIntegrationReport(report: IntegrationReport): void {
 			if (contract.supply?.implementation) {
 				const site = contract.supply.implementation;
 				console.log(`    implementation ${site.file}:${site.line}:${site.column}`);
+			}
+		}
+		if (result.sessionFacts !== undefined) {
+			const report = result.sessionFacts;
+			const declaration = report.declaration === undefined
+				? ""
+				: ` ${report.declaration.file}:${report.declaration.line}:${report.declaration.column}`;
+			const reason = report.reason === undefined ? "" : ` — ${report.reason}`;
+			console.log(`    session-facts mapping ${report.mapping.toUpperCase()}${declaration}${reason}`);
+			for (const field of report.fields) {
+				const fieldReason = field.reason === undefined ? "" : ` — ${field.reason}`;
+				console.log(`      ${field.status.toUpperCase()} ${field.field}${fieldReason} (${field.file}:${field.line}:${field.column})`);
 			}
 		}
 		for (const diagnostic of result.diagnostics) console.log(`  ${diagnostic.file}:${diagnostic.line}:${diagnostic.column} [${diagnostic.code}] ${diagnostic.message}\n    ${diagnostic.suggestion}`);

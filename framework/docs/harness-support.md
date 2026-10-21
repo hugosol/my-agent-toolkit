@@ -111,6 +111,14 @@ first `Total:` frame the entry draws before initialization settles. Both scripts
 Evidence, commands, P48 material and the unverified list:
 `.scratch/framework-capability-cutover/evidence/13-pi-real-entry-regression/README.md`.
 
+### SessionFacts 字段映射与 pi 子代理定义名称（2026-10-21）
+
+pi 与 OMP 的 Session facts 均由各自 Session queries 中唯一的 `defineSessionFactsMapping` 构造；字段报告只读取这一声明，详见 [字段报告](integration-check.md#session-facts-field-report)。pi 的 `agentName` 已接入固定 `pi-subagents@0.78.0` 在实际子会话 system prompt 中写入的 `active_agent` 启动标记，经该会话的 `getSystemPrompt()` 读取，不从显示名称、fleet 顺序或任务文字推断。没有标记或读取出口时仍报告 `agent name` 不可用；pi 的 `agentId` 与独立任务句柄仍明确未提供。
+
+本次隔离真实 pi 1.3.0 的 `bun scripts/pi-subagent-smoke.ts --expect-pi-version 1.3.0` 通过 32 项观察：前台 model-cost 详情显示 `[scout]`，后台子会话交付及 owner 观察源均报告 `scout`，并保留真实身份、直接父会话与子会话自己的记账。使用本地响应端点；不证明其他 provider 版本、真实模型服务或其他平台，也不改变支持状态。
+
+同一实现的 `pi-model-cost-smoke.ts` 通过 100 项检查（28 个隔离运行）；`typecheck` 与 58 项 integration checker 测试通过。全仓 `bun run test` 为 1525 通过、5 失败：5 项 connect-bot 测试均因外部 `herdr-bot` 拒绝测试 TOML（缺少 `herdr` 字段）而未能启动，不作为全仓通过记录。pi 与 OMP 的 model-cost 静态检查均为 `complete: true`，字段报告分别显示 pi `agentName: mapped`、`agentId/taskName: unavailable`，以及 OMP 全部 SessionFacts 字段 `mapped`。
+
 ## Harness targets and evidence
 
 | Harness | Package | Source version / checkout | Observed installed harness | Evidence status |

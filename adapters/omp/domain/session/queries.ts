@@ -15,6 +15,7 @@ import type {
 	SessionStartReason,
 	SessionStartup,
 } from "../../../../framework/interface/session";
+import { defineSessionFactsMapping } from "../../../../framework/runtime/adapter-authoring";
 import type { OwnerReference } from "../../../../framework/interface/state";
 import type { OmpExtensionApi, OmpSessionContext } from "../../internal/native";
 import { directParentSessionIdOf, mainAncestorSessionIdOf } from "../subagent/queries";
@@ -132,10 +133,24 @@ export function startReasonOf(event: OmpSessionEvent): SessionStartReason {
 	return reason === undefined ? "new" : START_REASON_BY_NATIVE[reason];
 }
 
+/** One reading of the facts one omp delivery carries, from the decision that delivery already made. */
+interface OmpSessionFactsInput {
+	readonly pi: OmpExtensionApi;
+	readonly ctx: OmpSessionContext;
+	readonly startReason?: SessionStartReason;
+}
+
+/** The harness's agent kind as the framework's session position states it. */
+function kindOf(ctx: OmpSessionContext): "main" | "sub" {
+	return ctx.agent.kind === "main" ? "main" : "sub";
+}
+
 /**
- * The actual session facts one delivery carries: identity, direct parent, latest name, the task's
- * own naming handle, and — on the delivery that announces the session's own start — the model and
- * effective effort it began with.
+ * The actual session facts one omp delivery carries, as one explicit field mapping.
+ *
+ * Every canonical fact is listed here, including the ones this harness answers only sometimes.
+ * The mapping is module-level because it is the adapter's actual construction; a delivery supplies
+ * only its own context and start reason.
  *
  * Identity is the session manager's own session id and the harness's agent kind. The direct parent
  * is the Subagent domain's one-hop relation — the registry entry the spawning id names, then that
@@ -144,17 +159,57 @@ export function startReasonOf(event: OmpSessionEvent): SessionStartReason {
  * session the harness spawned from outside the process are all reported as the fact this host could
  * not obtain, and a top-level session simply has none.
  *
- * The name is display data read live from the harness, so a rename is picked up without changing
- * identity, parent or ownership: on the next delivery that carries this session, and — where the
- * session manager publishes its own name-change notification — on a facts delivery of its own,
- * made when the rename happens rather than at the session's next boundary. A harness that reports
- * no name, and an empty one, are both named as unavailable rather than invented.
- *
- * A spawned session's registry id *is* the naming handle its spawn was allocated: the spawning call's
- * own `name` when it gave one, a generated handle when it named none, and — for a spawn made from
- * inside another subagent — that handle under the spawning agent's id. It is reported as the task's
- * own name as well, because it says which work the session carries out, where the agent's registered
- * name says only what kind of agent runs it.
+ * The name is display data read live from the harness. A spawned session's registry id *is* the
+ * naming handle its spawn was allocated, so it is reported as the task's own name as well; the
+ * agent's registered name is the agent *definition* and stays a separate fact. The startup pair is
+ * read only where the delivery's start proves the session began.
+ */
+export const OMP_SESSION_FACTS_MAPPING = defineSessionFactsMapping<OmpSessionFactsInput>({
+	sessionId: input => input.ctx.sessionManager.getSessionId(),
+	kind: input => kindOf(input.ctx),
+	parentSessionId: (input, unavailable) => {
+		const kind = kindOf(input.ctx);
+		if (kind !== "sub") return undefined;
+		const parentSessionId = directParentSessionIdOf(input.pi, input.ctx.agent.parentId);
+		if (parentSessionId === undefined) unavailable.push("direct parent session");
+		return parentSessionId;
+	},
+	name: (input, unavailable) => {
+		const reported = input.ctx.sessionManager.getSessionName?.();
+		const name = reported === undefined || reported.trim().length === 0 ? undefined : reported;
+		if (name === undefined) unavailable.push("session name");
+		return name;
+	},
+	// Only a spawned session carries a task handle. A main session is loaded rather than spawned, so a
+	// process-level label such as `Main` never stands for a task's name.
+	taskName: input => {
+		if (kindOf(input.ctx) !== "sub") return undefined;
+		const id = input.ctx.agent.id?.trim();
+		return id === undefined || id.length === 0 ? undefined : id;
+	},
+	agentName: (input, unavailable) => {
+		const reported = input.ctx.agent.name?.trim();
+		const agentName = reported === undefined || reported.length === 0 ? undefined : reported;
+		if (agentName === undefined) unavailable.push("agent name");
+		return agentName;
+	},
+	agentId: (input, unavailable) => {
+		const reported = input.ctx.agent.id?.trim();
+		const agentId = reported === undefined || reported.length === 0 ? undefined : reported;
+		if (agentId === undefined) unavailable.push("agent id");
+		return agentId;
+	},
+	startup: (input, unavailable) =>
+		input.startReason !== undefined &&
+		kindOf(input.ctx) === "sub" &&
+		beginsHere(input.ctx, input.startReason)
+			? startupFactsOf(input.pi, input.ctx, unavailable)
+			: undefined,
+	unavailable: () => [],
+});
+
+/**
+ * The actual session facts one delivery carries, built by the module-level mapping above.
  *
  * `startReason` is named by the delivery that announces a session's start and by no other delivery.
  * It decides whether that start proves the session *began* there (see {@link beginsHere}), which is
@@ -163,40 +218,7 @@ export function startReasonOf(event: OmpSessionEvent): SessionStartReason {
  * selector behind that level, and never what a later delivery could read.
  */
 export function sessionFactsOf(pi: OmpExtensionApi, ctx: OmpSessionContext, startReason?: SessionStartReason): SessionFacts {
-	const unavailable: string[] = [];
-	const kind = ctx.agent.kind === "main" ? "main" : "sub";
-	const parentSessionId = kind === "sub" ? directParentSessionIdOf(pi, ctx.agent.parentId) : undefined;
-	if (kind === "sub" && parentSessionId === undefined) unavailable.push("direct parent session");
-	const reportedName = ctx.sessionManager.getSessionName?.();
-	const name = reportedName === undefined || reportedName.trim().length === 0 ? undefined : reportedName;
-	if (name === undefined) unavailable.push("session name");
-	// The agent's own name and its registry id: the first is the agent *definition* the session runs,
-	// the second the identity its registry, messaging and history index use. Neither is the task's
-	// own name, so both are reported as what they are.
-	const reportedAgentName = ctx.agent.name?.trim();
-	const agentName = reportedAgentName === undefined || reportedAgentName.length === 0 ? undefined : reportedAgentName;
-	if (agentName === undefined) unavailable.push("agent name");
-	const reportedAgentId = ctx.agent.id?.trim();
-	const agentId = reportedAgentId === undefined || reportedAgentId.length === 0 ? undefined : reportedAgentId;
-	if (agentId === undefined) unavailable.push("agent id");
-	// Only a spawned session carries a task handle. A main session is loaded rather than spawned, so a
-	// process-level label such as `Main` never stands for a task's name.
-	const taskName = kind === "sub" ? agentId : undefined;
-	const startup =
-		startReason !== undefined && kind === "sub" && beginsHere(ctx, startReason)
-			? startupFactsOf(pi, ctx, unavailable)
-			: undefined;
-	return {
-		sessionId: ctx.sessionManager.getSessionId(),
-		kind,
-		...(parentSessionId === undefined ? {} : { parentSessionId }),
-		...(name === undefined ? {} : { name }),
-		...(taskName === undefined ? {} : { taskName }),
-		...(agentName === undefined ? {} : { agentName }),
-		...(agentId === undefined ? {} : { agentId }),
-		...(startup === undefined ? {} : { startup }),
-		unavailable,
-	};
+	return OMP_SESSION_FACTS_MAPPING({ pi, ctx, startReason });
 }
 
 /**

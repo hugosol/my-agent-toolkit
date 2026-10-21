@@ -146,6 +146,17 @@ bun run generate:integrations --extension codebase-tools --adapter new-harness
 
 当 framework 语义有多条可接受实现路线时（例如 persistence/marker 可由 session 或 command 路径承担），分析会合并这些投影：任一 `provided` 即可；否则按 `conditional` → `unresolved` → `missing` → `unavailable` 的顺序取第一个可用状态。这个合并只表达“结构路线存在”，不证明路线被运行时选中。
 
+<a id="session-facts-field-report"></a>
+### SessionFacts 字段报告
+
+当需求契约包含 `framework:session-facts` 时，供给结果额外携带一份**独立的** `sessionFacts` 字段报告。它只读取所选 adapter 中一个可解析到 canonical `framework/runtime/adapter-authoring.ts` 的 `defineSessionFactsMapping<Input>({...})` 声明，用字段级证据回答“这个 adapter 声明了哪些 session 事实”：
+
+- 字段集合来自 canonical `SessionFacts` 类型（`framework/interface/session/details/facts.ts`），不维护第二份手写字段清单。
+- 映射函数 → `mapped`，即使该函数在运行时可能返回 `undefined`（可选事实仍然是 mapped，不产生条件状态或语义警告）；`unavailable` 键本身也是这样的映射函数，同样报告为 mapped；canonical `unavailableFact(reason)` → `unavailable` 并保留原因；对象里缺少该键 → `missing`；spread、动态属性名、多个 mapping 声明或无法解析为对象字面量的 bindings → `unresolved`。
+- 每个字段都带源码位置；`unavailable` 定位到 `unavailableFact(...)` 调用，`missing` 定位到最近的 mapping 声明。
+- 不扫描映射函数体，不追踪 session-facts 消费方，不执行 adapter，也不判断映射是否符合原生语义；没有逐字段修改建议。
+- 该报告是补充数据：不改变契约 `supply` 状态、可选事实政策、`complete`/退出码，也不进入生成器的缺失契约处理。adapter 没有 canonical mapping 时报告 `mapping: "missing"`，不会静默显示为 mapped；需求不含 `framework:session-facts` 的 extension/fixture 完全不会生成这份报告。
+
 <a id="supply-statuses"></a>
 ## 供给状态与完成判定
 
@@ -184,6 +195,8 @@ complete =
     extension:<id> → ... → <contract-id>
     source <file>:<line>:<column>
     implementation <file>:<line>:<column>
+    session-facts mapping DECLARED|MISSING|UNRESOLVED <file>:<line>:<column>[ — <reason>]
+      MAPPED|UNAVAILABLE|MISSING|UNRESOLVED <field>[ — <reason>] (<file>:<line>:<column>)
   <file>:<line>:<column> [<diagnostic-code>] <message>
     <suggestion>
 Structural integration analysis only; native semantics are not certified and runtime loading is unchanged.
@@ -196,7 +209,7 @@ Structural integration analysis only; native semantics are not certified and run
 `--json` 顶层为：
 
 - `stage: "integration-contracts"`、`behaviorTestsRun: false`、`complete`、`results`；
-- 每个 result：`extension`、可选 `adapter`、`complete`、`contracts`、`diagnostics`；
+- 每个 result：`extension`、可选 `adapter`、`complete`、`contracts`、`diagnostics`，以及可选 `sessionFacts`（仅当需求含 `framework:session-facts`；含 `mapping`、可选 `declaration`/`reason` 和 `fields`，字段条目含 `field`、`status`、可选 `reason` 与源码位置）；
 - 每个 contract：`id`、`kind`（`port`/`delivery`/`framework`）、`member`、可选 `delivery`、`requirement`、`origins`、`path`，以及可选 `supply`（`contractId`、`status`、可选 `reason`/`implementation`）；
 - 每个 diagnostic：`file`、`line`、`column`、`code`、`message`、`suggestion`。
 

@@ -26,6 +26,9 @@ import type {
 	ContractSupply,
 	IntegrationContract,
 	IntegrationDiagnostic,
+	SessionFactsField,
+	SessionFactsFieldReport,
+	SessionFactsFieldStatus,
 	SourceLocation,
 	SupplyOptions,
 	SupplyResult,
@@ -34,6 +37,9 @@ import type {
 
 const ADAPTER_AUTHORING_RELATIVE = "framework/runtime/adapter-authoring.ts";
 const PORT_RELATIVE = "framework/runtime/port.ts";
+const SESSION_FACTS_RELATIVE = "framework/interface/session/details/facts.ts";
+const SESSION_FACTS_MAPPING_HELPER = "defineSessionFactsMapping";
+const UNAVAILABLE_FACT_HELPER = "unavailableFact";
 const MISSING_IMPLEMENTATION_MODULE = "missing-implementations";
 const MAX_REACHABLE_NODES = 50_000;
 
@@ -940,7 +946,11 @@ export function inspectAdapterSource(
 		diagnosticKeys: new Set(),
 	};
 	const adapterFiles = exists ? collectSourceFiles(adapterDir) : [];
-	const canonicalFiles = [path.resolve(root, ADAPTER_AUTHORING_RELATIVE), path.resolve(root, PORT_RELATIVE)].filter(file => existsSync(file));
+	const canonicalFiles = [
+		path.resolve(root, ADAPTER_AUTHORING_RELATIVE),
+		path.resolve(root, PORT_RELATIVE),
+		path.resolve(root, SESSION_FACTS_RELATIVE),
+	].filter(file => existsSync(file));
 	const selectedAssemblyFiles = resolveAssemblyFiles(root, assemblyFiles);
 	const sourceFiles = [...new Set([...adapterFiles, ...canonicalFiles, ...selectedAssemblyFiles])];
 	if (sourceFiles.length === 0) {
@@ -1712,6 +1722,272 @@ function addUnresolvedDiagnostic(
 }
 
 /* -------------------------------------------------------------------------------------------------
+ * Session facts field report
+ *
+ * A `framework:session-facts` consumer needs more than the onSession factory: the adapter's own
+ * declaration of which canonical SessionFacts fields it can resolve. The adapter states that once,
+ * through the canonical defineSessionFactsMapping<Input>({...}) helper. This report reads that one
+ * declaration and the source locations of its field entries. It never scans the mapping functions'
+ * bodies, never follows consumers, and never proposes a fix; an optional field mapped by a function
+ * is mapped even if that function can answer undefined at runtime.
+ * ----------------------------------------------------------------------------------------------- */
+
+interface SessionFactsFieldEvidence {
+	readonly status: Exclude<SessionFactsFieldStatus, "missing">;
+	readonly reason?: string;
+	readonly node: ts.Node;
+}
+
+function isMappingFunctionReference(
+	checker: ts.TypeChecker,
+	expression: ts.Expression,
+	seen: Set<ts.Node> = new Set(),
+): boolean {
+	const target = unwrapExpression(expression);
+	if (seen.has(target)) return false;
+	seen.add(target);
+	if (ts.isArrowFunction(target) || ts.isFunctionExpression(target)) return true;
+	if (ts.isIdentifier(target) || ts.isPropertyAccessExpression(target)) {
+		const symbol = symbolAt(checker, target);
+		for (const declaration of symbol?.declarations ?? []) {
+			if (ts.isFunctionDeclaration(declaration) || ts.isMethodDeclaration(declaration)) return true;
+			if (
+				ts.isVariableDeclaration(declaration) ||
+				ts.isPropertyAssignment(declaration) ||
+				ts.isPropertyDeclaration(declaration)
+			) {
+				const initializer = declaration.initializer;
+				if (initializer !== undefined && isMappingFunctionReference(checker, initializer, seen)) return true;
+			}
+		}
+		const initializer = resolveInitializer(target, checker, new Set());
+		if (initializer !== undefined && initializer !== target && isMappingFunctionReference(checker, initializer, seen)) return true;
+		if (checker.getTypeAtLocation(target).getCallSignatures().length > 0) return true;
+	}
+	return false;
+}
+
+function mappingFieldEvidence(
+	checker: ts.TypeChecker,
+	expression: ts.Expression,
+	authoringPathKey: string,
+): SessionFactsFieldEvidence {
+	const target = unwrapExpression(expression);
+	if (
+		ts.isCallExpression(target) &&
+		isCanonicalReference(checker, target.expression, authoringPathKey, UNAVAILABLE_FACT_HELPER)
+	) {
+		const reason = target.arguments[0] === undefined ? undefined : constantStringOf(target.arguments[0], checker);
+		return { status: "unavailable", reason: reason ?? "No reason was statically resolved.", node: target };
+	}
+	if (isMappingFunctionReference(checker, target)) return { status: "mapped", node: target };
+	return {
+		status: "unresolved",
+		reason: "The entry is not a mapping function or a canonical unavailableFact(reason).",
+		node: target,
+	};
+}
+
+/** The field set comes from the canonical SessionFacts type, never a handwritten capability list. */
+function readCanonicalSessionFactsFields(
+	program: ts.Program,
+	checker: ts.TypeChecker,
+	root: string,
+): readonly string[] | undefined {
+	const sourceFile = findCanonicalSourceFile(program, root, SESSION_FACTS_RELATIVE);
+	if (sourceFile === undefined) return undefined;
+	const declaration = sourceFile.statements.find(
+		(statement): statement is ts.InterfaceDeclaration | ts.TypeAliasDeclaration =>
+			(ts.isInterfaceDeclaration(statement) || ts.isTypeAliasDeclaration(statement)) &&
+			statement.name.text === "SessionFacts",
+	);
+	if (declaration === undefined) return undefined;
+	const symbol = checker.getSymbolAtLocation(declaration.name);
+	if (symbol === undefined) return undefined;
+	const properties = checker.getPropertiesOfType(checker.getDeclaredTypeOfSymbol(symbol));
+	if (properties.length === 0) return undefined;
+	const order = new Map<string, number>();
+	for (const property of properties) {
+		const member = property.declarations?.find(candidate => candidate.getSourceFile() === sourceFile);
+		order.set(property.name, member?.getStart(sourceFile) ?? Number.MAX_SAFE_INTEGER);
+	}
+	return properties
+		.map(property => property.name)
+		.sort((left, right) => (order.get(left) ?? Number.MAX_SAFE_INTEGER) - (order.get(right) ?? Number.MAX_SAFE_INTEGER));
+}
+
+function findSessionFactsMappingCalls(
+	program: ts.Program,
+	checker: ts.TypeChecker,
+	adapterFiles: readonly string[],
+	authoringPathKey: string,
+): ts.CallExpression[] {
+	const adapterKeys = new Set(adapterFiles.map(pathKey));
+	const calls: ts.CallExpression[] = [];
+	for (const sourceFile of program.getSourceFiles()) {
+		if (!adapterKeys.has(pathKey(sourceFile.fileName))) continue;
+		const visit = (node: ts.Node): void => {
+			if (
+				ts.isCallExpression(node) &&
+				isCanonicalReference(checker, node.expression, authoringPathKey, SESSION_FACTS_MAPPING_HELPER)
+			) {
+				calls.push(node);
+			}
+			ts.forEachChild(node, visit);
+		};
+		visit(sourceFile);
+	}
+	calls.sort((left, right) => {
+		const byFile = pathKey(left.getSourceFile().fileName).localeCompare(pathKey(right.getSourceFile().fileName));
+		return byFile === 0 ? left.pos - right.pos : byFile;
+	});
+	return calls;
+}
+
+function allSessionFactsFields(
+	names: readonly string[],
+	status: SessionFactsFieldStatus,
+	location: SourceLocation,
+	reason?: string,
+): SessionFactsField[] {
+	return names.map(field => ({ field, status, ...(reason === undefined ? {} : { reason }), ...location }));
+}
+
+/**
+ * Reads the selected adapter's one canonical session-facts mapping declaration. The report is
+ * separate from contract supply and completion: it never turns a mapped-but-unavailable fact into a
+ * warning and never suggests a modification.
+ */
+export function inspectSessionFactsMapping(inspection: AdapterInspection): SessionFactsFieldReport {
+	const root = inspection.root;
+	const declarationLocation = inspection.definition === undefined ? undefined : locationOf(root, inspection.definition.call);
+	const fallbackLocation: SourceLocation =
+		declarationLocation ?? { file: relativeFile(root, inspection.adapterDir), line: 1, column: 1 };
+	if (inspection.program === undefined || inspection.checker === undefined) {
+		return {
+			mapping: "unresolved",
+			...(declarationLocation === undefined ? {} : { declaration: declarationLocation }),
+			reason: "The adapter analysis program was not available, so the session-facts mapping could not be read.",
+			fields: [],
+		};
+	}
+	const authoringPathKey = pathKey(path.resolve(root, ADAPTER_AUTHORING_RELATIVE));
+	const calls = findSessionFactsMappingCalls(inspection.program, inspection.checker, inspection.files, authoringPathKey);
+	const fields = readCanonicalSessionFactsFields(inspection.program, inspection.checker, root);
+	if (fields === undefined) {
+		if (calls.length === 0) {
+			return {
+				mapping: "missing",
+				...(declarationLocation === undefined ? {} : { declaration: declarationLocation }),
+				reason: "No canonical defineSessionFactsMapping declaration was found in this adapter.",
+				fields: [],
+			};
+		}
+		return {
+			mapping: "unresolved",
+			declaration: locationOf(root, calls[0] as ts.CallExpression),
+			reason: "The canonical SessionFacts type could not be read from framework/interface/session/details/facts.ts.",
+			fields: [],
+		};
+	}
+	if (calls.length === 0) {
+		return {
+			mapping: "missing",
+			...(declarationLocation === undefined ? {} : { declaration: declarationLocation }),
+			reason: "No canonical defineSessionFactsMapping declaration was found in this adapter.",
+			fields: allSessionFactsFields(fields, "missing", fallbackLocation),
+		};
+	}
+	if (calls.length > 1) {
+		const reason = `More than one canonical defineSessionFactsMapping declaration was found (${calls.length}); field coverage is ambiguous.`;
+		return {
+			mapping: "unresolved",
+			declaration: locationOf(root, calls[0] as ts.CallExpression),
+			reason,
+			fields: allSessionFactsFields(fields, "unresolved", locationOf(root, calls[0] as ts.CallExpression), reason),
+		};
+	}
+	const call = calls[0] as ts.CallExpression;
+	const mappingLocation = locationOf(root, call);
+	const argument = call.arguments[0];
+	const bindings = argument === undefined ? undefined : resolveObjectLiteral(argument, inspection.checker);
+	if (bindings === undefined) {
+		const reason = "The defineSessionFactsMapping bindings are not statically resolvable to one object literal.";
+		return { mapping: "unresolved", declaration: mappingLocation, reason, fields: allSessionFactsFields(fields, "unresolved", mappingLocation, reason) };
+	}
+	const entries = new Map<string, ts.ObjectLiteralElementLike[]>();
+	let dynamic = false;
+	for (const property of bindings.properties) {
+		if (ts.isSpreadAssignment(property)) {
+			dynamic = true;
+			continue;
+		}
+		if (!("name" in property)) {
+			dynamic = true;
+			continue;
+		}
+		const name = propertyNameOf(property.name, inspection.checker);
+		if (name === undefined) {
+			dynamic = true;
+			continue;
+		}
+		const held = entries.get(name);
+		if (held === undefined) entries.set(name, [property]);
+		else held.push(property);
+	}
+	const dynamicReason = "The mapping contains a spread or a dynamic property name, so its field coverage cannot be proven.";
+	const checker = inspection.checker;
+	const fieldReports: SessionFactsField[] = fields.map(field => {
+		const matches = entries.get(field) ?? [];
+		if (matches.length === 0) {
+			return dynamic
+				? { field, status: "unresolved", reason: dynamicReason, ...mappingLocation }
+				: { field, status: "missing", ...mappingLocation };
+		}
+		if (matches.length > 1) {
+			return {
+				field,
+				status: "unresolved",
+				reason: "The mapping declares this field more than once.",
+				...locationOf(root, matches[1] as ts.ObjectLiteralElementLike),
+			};
+		}
+		const property = matches[0] as ts.ObjectLiteralElementLike;
+		if (ts.isMethodDeclaration(property)) return { field, status: "mapped", ...locationOf(root, property) };
+		if (ts.isPropertyAssignment(property)) {
+			const evidence = mappingFieldEvidence(checker, property.initializer, authoringPathKey);
+			return {
+				field,
+				status: evidence.status,
+				...(evidence.reason === undefined ? {} : { reason: evidence.reason }),
+				...locationOf(root, evidence.node),
+			};
+		}
+		if (ts.isShorthandPropertyAssignment(property)) {
+			const evidence = mappingFieldEvidence(checker, property.name, authoringPathKey);
+			return {
+				field,
+				status: evidence.status,
+				...(evidence.reason === undefined ? {} : { reason: evidence.reason }),
+				...locationOf(root, evidence.node),
+			};
+		}
+		return {
+			field,
+			status: "unresolved",
+			reason: "The entry is not a statically inspectable mapping declaration.",
+			...locationOf(root, property),
+		};
+	});
+	return {
+		mapping: dynamic ? "unresolved" : "declared",
+		declaration: mappingLocation,
+		...(dynamic ? { reason: dynamicReason } : {}),
+		fields: fieldReports,
+	};
+}
+
+/* -------------------------------------------------------------------------------------------------
  * Public analysis
  * ----------------------------------------------------------------------------------------------- */
 
@@ -1722,6 +1998,9 @@ export function analyzeSupply(options: SupplyOptions): SupplyResult {
 	const diagnostics: IntegrationDiagnostic[] = [...inspection.diagnostics];
 	const diagnosticKeys = new Set(diagnostics.map(item => `${item.code}|${item.file}|${item.line}|${item.column}|${item.message}`));
 	const supplies: ContractSupply[] = [];
+	const sessionFacts = options.contracts.some(contract => contract.id === "framework:session-facts")
+		? inspectSessionFactsMapping(inspection)
+		: undefined;
 	const seen = new Set<string>();
 	for (const contract of options.contracts) {
 		if (seen.has(contract.id)) continue;
@@ -1812,6 +2091,7 @@ export function analyzeSupply(options: SupplyOptions): SupplyResult {
 					contextType: inspection.definition.contextType,
 					contextFile: inspection.definition.contextFile,
 				}),
+		...(sessionFacts === undefined ? {} : { sessionFacts }),
 		supplies,
 		diagnostics,
 	};

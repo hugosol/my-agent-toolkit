@@ -196,6 +196,14 @@ export interface PiUiContext {
 }
 export interface PiExtensionContext {
 	readonly sessionManager: PiSessionManager;
+	/**
+	 * The session's current effective system prompt, when this surface publishes one.
+	 *
+	 * It is how pi's own child launches mark the agent definition a spawned session runs: the
+	 * provider prepends an `active_agent` element naming that definition to the child's prompt.
+	 * A surface that reports none states no definition here rather than being read from a name.
+	 */
+	getSystemPrompt?(): string;
 	readonly model?: PiModel;
 	readonly thinkingLevel?: string;
 	/** The run mode this context belongs to, when this surface publishes it. */
