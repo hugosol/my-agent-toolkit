@@ -62,6 +62,7 @@ import {
 	roundColumns,
 	runtimeText,
 	seasonMark,
+	showsCostField,
 	totalColumns,
 } from "../../shared-logic/presentation/display";
 import type { ProviderBalanceResult } from "../../shared-logic/business/pricing/provider-balance";
@@ -785,13 +786,13 @@ function wrappedPieces(pieces: readonly DisplayPiece[], width: number | undefine
  *
  * The reading order is the one this widget has always drawn: the fixed-budget line first — with the
  * monetary channel's own season mark ahead of it, and only where the host reported a context reading
- * for the bar to compare — then the period's accrued line for the monetary channel and the allowance
- * windows for the Codex one. The Total line follows, carrying the current model's own structure and
- * the main tree's Cost and Ref; the brief's Round row is laid out from the same columns, so the two
- * rows' fields line up vertically. Below that the entry's own form decides the content: the brief draws
- * the target's own most recent Round, and the detail form draws the static agent tree of the main
- * session in its place — never both. The two currencies are written apart and never added together, and
- * a mode without an amount policy contributes no amount of its own.
+ * for the bar to compare — then the DeepSeek account facts whenever the Total writes Cost, and the
+ * allowance windows for the Codex one. The Total line follows, carrying the current model's own
+ * structure and the main tree's Cost and Ref; the brief's Round row is laid out from the same columns,
+ * so the two rows' fields line up vertically. Below that the entry's own form decides the content: the
+ * brief draws the target's own most recent Round, and the detail form draws the static agent tree of
+ * the main session in its place — never both. The two currencies are written apart and never added
+ * together, and a mode without an amount policy contributes no amount of its own.
  *
  * Every line is handed over inside the width this draw has, at a break between the display's own
  * statements: a component is drawn in the terminal's columns, and a line wider than them would be
@@ -801,23 +802,27 @@ export function widgetLayout(reading: WidgetReading): readonly DisplayLine[] | u
 	const { display } = reading;
 	if (display.mode === "hidden") return undefined;
 	const lines: DisplayLine[] = [];
+	// The account row carries the target's own context reading and, whenever the Total writes Cost,
+	// the DeepSeek balance and period accrual too. The season mark belongs to the monetary target;
+	// another channel keeps its own budget bar and adds only the account facts Cost made relevant.
+	const account: DisplayPiece[] = [];
+	const budget = budgetLine(display, reading.period);
 	if (display.mode === "monetary") {
-		// The account row, one line: a target whose host reported no context reading still shows the season
-		// mark and the account facts — only the bar and its effort need a reading to compare.
-		const account: DisplayPiece[] = [];
-		const budget = budgetLine(display, reading.period);
+		// A target whose host reported no context reading still shows the season mark; only the bar
+		// and its effort need a reading to compare.
 		if (budget !== undefined) account.push(...budget);
 		else account.push({ text: seasonMark(reading.period) });
+	} else if (budget !== undefined) {
+		account.push(...budget);
+	}
+	if (showsCostField(display)) {
 		const balance = balanceLine(reading.balance);
 		if (balance !== undefined) account.push(...balance);
 		account.push(...accruedLine(reading.accrued));
-		lines.push(...wrappedPieces(account, reading.width));
-	} else {
-		const budget = budgetLine(display, reading.period);
-		if (budget !== undefined) lines.push(...wrappedPieces(budget, reading.width));
-		if (display.mode === "allowance") {
-			for (const quota of reading.quota) lines.push(...wrappedPieces(quota, reading.width));
-		}
+	}
+	if (account.length > 0) lines.push(...wrappedPieces(account, reading.width));
+	if (display.mode === "allowance") {
+		for (const quota of reading.quota) lines.push(...wrappedPieces(quota, reading.width));
 	}
 	// The Total and the brief's Round are one layout: their columns are padded together so every field
 	// starts at the same column on both rows. A detail form draws no Round, but still lays the Total out
@@ -1048,10 +1053,16 @@ export function attachModelCostWidget(
 		render();
 	});
 
+	const releaseThinkingLevelSelect = pi.on("thinking_level_select", (_event, ctx) => {
+		context = ctx;
+		render();
+	});
+
 	return () => {
 		unwatchConsumption();
 		release();
 		releaseModelSelect();
+		releaseThinkingLevelSelect();
 		leaveTimer?.();
 		leaveTimer = undefined;
 		if (context !== undefined && live(context)) context.ui.setWidget(MODEL_COST_WIDGET_KEY, undefined);

@@ -310,11 +310,11 @@ describe("the widget draws the viewed session's own fields and the whole main tr
 		// The host's view moves to the subagent: the current-model fields are the subagent's own
 		// token-only pair (30/20/0/50, a 40 percent cache hit rate, no ratio and no amount of its own),
 		// while Cost and Ref are the very same main tree the previous target showed. A token-only
-		// channel has no season of its own to mark and no amount of its own to accrue, so the line it
-		// leads with is the bar alone.
+		// channel has no season of its own to mark and no amount of its own to accrue, but the main tree's
+		// Cost keeps the period's accrued fact on this account row.
 		session.publish(VIEWED_SUB);
 		expect(session.lastLines()).toEqual([
-			"[░░░░░░░░░░░░░░░░░░░░   0% (50/450.0K)]  Effort: low",
+			"[░░░░░░░░░░░░░░░░░░░░   0% (50/450.0K)]  Effort: low  \u23F3 Accrued: \u00A50.05 [\u258F]",
 			"Total:  Cache: 40%  Cost: \u00A50.05  Span: \u2014",
 		]);
 	});
@@ -366,14 +366,18 @@ describe("every displayed fact comes from the public outlet, not from the bindin
 		// absent, and the hit rate is the subagent's own 20 of 50. An effort the outlet did not state
 		// is the question mark the spec asks for — never the bound session's and never a configured one.
 		expect(session.lastLines()).toEqual([
-			"[░░░░░░░░░░░░░░░░░░░░   0% (50/450.0K)]  Effort: ?",
+			"[░░░░░░░░░░░░░░░░░░░░   0% (50/450.0K)]  Effort: ?  \u23F3 Accrued: \u00A50.05 [\u258F]",
 			"Total:  Cache: 40%  Cost: \u00A50.05  Span: \u2014",
 		]);
 
-		// And a context the outlet could not measure is not a bar: the line the bar lives on is dropped
-		// rather than filled from another session's reading.
+		// A context the outlet could not measure is not a bar: the line the bar lives on is dropped rather
+		// than filled from another session's reading. The account facts still stand on their own row,
+		// because the main tree's Cost is what makes them relevant.
 		session.publish({ sessionId: "session-sub", provider: "go-provider", model: "model-alpha" });
-		expect(session.lastLines()).toEqual(["Total:  Cache: 40%  Cost: \u00A50.05  Span: \u2014"]);
+		expect(session.lastLines()).toEqual([
+			"\u23F3 Accrued: \u00A50.05 [\u258F]",
+			"Total:  Cache: 40%  Cost: \u00A50.05  Span: \u2014",
+		]);
 	});
 
 	test("a mode this extension does not display draws no widget at all, and still draws the tree for one it does", async () => {
@@ -414,7 +418,7 @@ describe("a switched-away context is dropped rather than kept (S1, S5)", () => {
 		expect(first.unsubscribes()).toBe(1);
 		expect(second.subscribers()).toBe(1);
 		expect(second.lastLines()).toEqual([
-			"[░░░░░░░░░░░░░░░░░░░░   0% (50/450.0K)]  Effort: low",
+			"[░░░░░░░░░░░░░░░░░░░░   0% (50/450.0K)]  Effort: low  \u23F3 Accrued: \u00A50.05 [\u258F]",
 			"Total:  Cache: 40%  Cost: \u00A50.05  Span: \u2014",
 		]);
 

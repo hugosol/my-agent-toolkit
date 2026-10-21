@@ -640,7 +640,9 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 		// The view moves to the subagent, whose own Round then opens and settles one request: what is
 		// drawn is *that* session's brief — its own current-model fields (130 tokens, a 33 percent cache
 		// rate, no amount of its own), its own Round's 30 tokens with no ratio — and the same main tree's
-		// Cost behind it. No tree row appears at all, whatever the entry's preference is.
+		// Cost behind it. Because that Cost exists, the period's accrued fact is drawn on the account row
+		// even though this token-only target has no bar of its own. No tree row appears at all, whatever
+		// the entry's preference is.
 		bound.host.publish({ sessionId: "session-sub", provider: "go-provider", model: "model-alpha", effort: "low" });
 		bound.double.deliverRound(OWNER, {
 			event: { kind: "round_start" },
@@ -667,6 +669,7 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 			{ owner: OWNER },
 		);
 		expect(bound.host.lastLines()).toEqual([
+			"\u23F3 Accrued: \u00A50.05 [\u258F]",
 			"Total:  Cache: 33%  Cost: \u00A50.05  Span: \u2014",
 			"Round:  Cache:  0%",
 		]);

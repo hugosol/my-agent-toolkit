@@ -323,6 +323,8 @@ async function bindVisual(
 		readonly holiday?: boolean;
 		readonly provider?: string;
 		readonly model?: string;
+		readonly documentProvider?: string;
+		readonly documentModel?: string;
 		readonly viewed?: ViewedFacts;
 		readonly drawing?: WidgetDrawing;
 		readonly balanceTotal?: string;
@@ -340,8 +342,12 @@ async function bindVisual(
 			documentWith({
 				costs: options.costs ?? [0.05],
 				...(options.holiday === undefined ? {} : { holiday: options.holiday }),
-				...(options.provider === undefined ? {} : { provider: options.provider }),
-				...(options.model === undefined ? {} : { model: options.model }),
+				...(options.documentProvider === undefined && options.provider === undefined
+					? {}
+					: { provider: options.documentProvider ?? options.provider }),
+				...(options.documentModel === undefined && options.model === undefined
+					? {}
+					: { model: options.documentModel ?? options.model }),
 			}),
 		),
 		"utf8",
@@ -600,7 +606,7 @@ describe("the fixed-budget bar keeps the four bands it always warned in (P67)", 
 	test("the Codex pair is drawn against its own fixed budget (P67)", async () => {
 		const codex = await bindVisual({ provider: CODEX, model: "gpt-6-luna", viewed: codexFacts() });
 		expect(codex.host.draw(200).lines[0]).toBe(
-			`\u00ABdim:[${EMPTY_BAR}   0% (1,000/272.0K)]\u00BB  Effort: \u00ABeffort:high:high\u00BB`,
+			`\u00ABdim:[${EMPTY_BAR}   0% (1,000/272.0K)]\u00BB  Effort: \u00ABeffort:high:high\u00BB  \u23F3 Accrued: \u00A50.05 [\u00ABsuccess:\u258F\u00BB]`,
 		);
 	});
 
@@ -629,13 +635,55 @@ describe("the fixed-budget bar keeps the four bands it always warned in (P67)", 
 		expect(holiday.host.plain()?.[0]?.startsWith("\u{1F3D6}\u{FE0F}")).toBe(true);
 
 		// The token-only pair has no DeepSeek season and the allowance pair has no pricing season: neither
-		// line carries a mark, and the bar and the effort value are still drawn on both.
+		// line carries a mark, and the bar and the effort value are still drawn on both. The fixture's
+		// saved DeepSeek consumption keeps the period's accrued fact on the token-only row.
 		const tokenOnly = await bindVisual({ provider: "go-provider", model: "model-alpha", drawing: "lines" });
-		expect(tokenOnly.host.plain()?.[0]).toBe(`[${EMPTY_BAR}   0% (1,000/450.0K)]  Effort: high`);
+		expect(tokenOnly.host.plain()?.[0]).toBe(
+			`[${EMPTY_BAR}   0% (1,000/450.0K)]  Effort: high  \u23F3 Accrued: \u00A50.05 [\u258F]`,
+		);
 		expect(tokenOnly.host.plain()?.some(line => line.startsWith("\u{1F525}"))).toBe(false);
 
 		const codex = await bindVisual({ provider: CODEX, model: "gpt-6-luna", viewed: codexFacts(), drawing: "lines" });
-		expect(codex.host.plain()?.[0]).toBe(`[${EMPTY_BAR}   0% (1,000/272.0K)]  Effort: high`);
+		expect(codex.host.plain()?.[0]).toBe(
+			`[${EMPTY_BAR}   0% (1,000/272.0K)]  Effort: high  \u23F3 Accrued: \u00A50.05 [\u258F]`,
+		);
+	});
+});
+
+describe("the DeepSeek account facts follow the Total's Cost field (P67)", () => {
+	test("a token-only target whose subagent carries a DeepSeek Cost shows the held balance and accrued period", async () => {
+		// The current session itself spent nothing and runs a token-only model; the only DeepSeek cost in
+		// the main tree belongs to its child. The inclusive Total still writes Cost, so the account facts
+		// follow that descendant's consumption rather than the current target's channel.
+		const bound = await bindVisual({
+			provider: "go-provider",
+			model: "model-alpha",
+			documentProvider: DEEPSEEK,
+			documentModel: "deepseek-flash",
+			costs: [0, 0.05],
+			balanceTotal: "110.00",
+			drawing: "lines",
+		});
+
+		const lines = bound.host.plain() ?? [];
+		expect(lines[0]).toContain("Balance: \u00A5110.00");
+		expect(lines[0]).toContain("Accrued: \u00A50.05");
+		expect(lines.some(line => line.startsWith("Total:  ") && line.includes("Cost: \u00A50.05"))).toBe(true);
+	});
+
+	test("a token-only target whose tree has no Cost keeps both account facts off the account row", async () => {
+		const bound = await bindVisual({
+			provider: "go-provider",
+			model: "model-alpha",
+			costs: [],
+			balanceTotal: "110.00",
+			drawing: "lines",
+		});
+
+		const account = bound.host.plain()?.[0] ?? "";
+		expect(account).toContain("Effort: high");
+		expect(account).not.toContain("Balance:");
+		expect(account).not.toContain("Accrued:");
 	});
 });
 
@@ -660,27 +708,30 @@ describe("the balance keeps its two warnings (P67)", () => {
 	});
 });
 
-describe("the balance is the monetary channel's own line (P8, P67)", () => {
-	test("a held reading is drawn for the official pair and for no other mode of the same CLI", async () => {
+describe("the DeepSeek account facts stay visible beside another current channel (P8, P67)", () => {
+	test("a held reading and the period accrual follow Cost across token-only, allowance and hidden targets", async () => {
 		// One CLI whose process really holds a reading: the endpoint answered the instance's own prefetch
 		// before the first draw, which is what the official pair's account line below states.
 		const bound = await bindVisual({ balanceTotal: "110.00" });
 		expect(bound.host.draw(200).lines[0]).toContain("\u{1F4B0} Balance: \u00ABtext:\u00A5110.00\u00BB");
 
-		// The Go pair is a token-only model: its display is the approved usage, the fixed budget and the
-		// effort, and the reading the process still holds is not drawn — the specification lists the
-		// official balance among what token-only does not have (spec §134).
+		// The Go pair is token-only, but the main tree carries the official pair's saved Cost. The
+		// account facts therefore stay beside the token-only budget instead of disappearing with the
+		// channel that is no longer current.
 		bound.host.publish({ ...mainFacts(), provider: "go-provider", model: "model-alpha" });
 		const tokenOnly = bound.host.draw(200).lines;
-		expect(tokenOnly[0]).toBe(
-			`\u00ABdim:[${EMPTY_BAR}   0% (1,000/450.0K)]\u00BB  Effort: \u00ABeffort:high:high\u00BB`,
-		);
-		expect(tokenOnly.some(line => line.includes("Balance:"))).toBe(false);
+		expect(tokenOnly[0]).toContain("\u00ABdim:[");
+		expect(tokenOnly[0]).toContain("Effort: \u00ABeffort:high:high\u00BB");
+		expect(tokenOnly[0]).toContain("\u{1F4B0} Balance: \u00ABtext:\u00A5110.00\u00BB");
+		expect(tokenOnly[0]).toContain("\u23F3 Accrued: \u00A50.05");
 
-		// The allowance pair reads no DeepSeek balance either: it is the other provider's channel, whose
-		// own reading is the two windows.
+		// The allowance pair keeps its own effort and context budget; the DeepSeek account facts are an
+		// additional row fact made relevant by the Total's Cost, not a replacement for Codex's channel.
 		bound.host.publish(codexFacts());
-		expect(bound.host.draw(200).lines.some(line => line.includes("Balance:"))).toBe(false);
+		const codex = bound.host.draw(200).lines;
+		expect(codex[0]).toContain("(1,000/272.0K)");
+		expect(codex[0]).toContain("\u{1F4B0} Balance: \u00ABtext:\u00A5110.00\u00BB");
+		expect(codex[0]).toContain("\u23F3 Accrued: \u00A50.05");
 
 		// A pair this extension does not display is handed the clear, and the reading behind it stays held.
 		bound.host.publish({ sessionId: "session-main", provider: "unknown-provider", model: "model-x", effort: "high" });
@@ -754,12 +805,14 @@ describe("the accrued bar keeps the old eighth-block shapes and palette (P67)", 
 		expect(coarse.host.plain()?.[0]).toContain(`\u23F3 Accrued: \u00A560.00 [${"\u2588".repeat(50)}]`);
 	});
 
-	test("the accrued bar belongs to the monetary channel alone (P67)", async () => {
+	test("the accrued bar follows the Total's Cost field rather than the current channel (P67)", async () => {
+		// The fixture's main tree carries saved CNY consumption, so both non-monetary current channels
+		// keep the period's accrual beside their own budget and allowance facts.
 		const tokenOnly = await bindVisual({ provider: "go-provider", model: "model-alpha", drawing: "lines" });
-		expect(tokenOnly.host.plain()?.some(line => line.includes("\u23F3 Accrued:"))).toBe(false);
+		expect(tokenOnly.host.plain()?.[0]).toContain("\u23F3 Accrued: \u00A50.05");
 
 		const codex = await bindVisual({ provider: CODEX, model: "gpt-6-luna", viewed: codexFacts(), drawing: "lines" });
-		expect(codex.host.plain()?.some(line => line.includes("\u23F3 Accrued:"))).toBe(false);
+		expect(codex.host.plain()?.[0]).toContain("\u23F3 Accrued: \u00A50.05");
 	});
 });
 
@@ -795,6 +848,9 @@ describe("the allowance windows are drawn as the Codex operator reads them (P65,
 		return bindVisual({
 			provider: CODEX,
 			model: "gpt-6-luna",
+			// These cases are about the window lines themselves: with no saved Cost there is no
+			// additional account row, so line positions and painted pieces stay exclusively the quota's.
+			costs: [],
 			viewed: codexWindowFacts(),
 			codex: true,
 			...(codexAnswer === undefined ? {} : { codexAnswer }),

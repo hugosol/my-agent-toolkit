@@ -1123,13 +1123,26 @@ export function roundColumns(round: RoundDisplay, mode?: ConsumptionMode): Displ
 }
 
 /**
+ * Whether one display's Total writes the Cost field.
+ *
+ * The target's own monetary channel always writes it — a dash stands in until an amount is known —
+ * while every other mode writes it only when the main tree really carries a CNY amount. The account
+ * row follows the same fact: a session that consumed DeepSeek earlier, or whose subagent did, keeps
+ * its balance and the period's accrued consumption visible beside a current allowance or token-only
+ * model instead of hiding them with the channel that is no longer current.
+ */
+export function showsCostField(display: ConsumptionDisplay): boolean {
+	return display.mode === "monetary" || display.tree.costCny !== undefined;
+}
+
+/**
  * The amount fields one display's Total always writes: the target's own channel's amount, plus the
  * other currency whenever the tree really carries one. A field whose value is missing is written as
  * a dash, so the Total keeps the old row's fields even at initialization.
  */
 function displayedAmounts(display: ConsumptionDisplay): readonly AmountField[] {
 	const shown: AmountField[] = [];
-	if (display.mode === "monetary" || display.tree.costCny !== undefined) shown.push("cost");
+	if (showsCostField(display)) shown.push("cost");
 	if (display.mode === "allowance" || display.tree.referenceCostUsd !== undefined) shown.push("ref");
 	return shown;
 }
