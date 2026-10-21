@@ -13,11 +13,15 @@ capabilities listed here**; it does not promote pi to the historical OMP support
 - Exercised artifact: installed `@earendil-works/pi-coding-agent@1.2.0` Node bundle on Windows x64,
   driven with Node **22.19.0** and Bun **1.4.2** as the smoke driver. The reference pi checkout inspected
   was `4a5d37291531ad48b8e536c892557877d219463c`; no pi source or formal configuration was changed.
-- `bun scripts/pi-codebase-tools-smoke.ts` with `PI_NODE` pointing at Node 22.19.0 passed **52 checks
-  across four isolated runs**: real loader/out-of-directory TypeScript and Markdown resources,
-  default-off, toggle feedback and marker frames, hidden tail-appended init/reminder, persisted State,
-  append-only journal and unchanged outgoing message prefix, disabling without history deletion,
-  new-session isolation, process-restart resume and in-process switch/resume.
+- `bun scripts/pi-codebase-tools-smoke.ts` with `PI_NODE` pointing at Node 22.19.0 and an isolated
+  `@earendil-works/pi-coding-agent@1.2.0` bundle passed **63 checks across five isolated runs** in
+  manual mode and **47 checks across three isolated runs** in `--mode auto` (2026-10-22): real
+  loader/out-of-directory TypeScript and Markdown resources, default-off, toggle feedback and marker
+  frames, hidden tail-appended init/reminder, persisted State, append-only journal and unchanged
+  outgoing message prefix, disabling without history deletion, new-session isolation,
+  process-restart resume and in-process switch/resume, startup restore with no recorded value taking
+  the automatic default, a recorded off value surviving a later automatic startup, and the automatic
+  start's record restoring under the manual entrypoint with its injection progress intact.
 - Additional throwaway runtime probes exercised an actual `read` tool continuation: two outbound
   model requests in one run retained one injected prompt each and an unchanged message prefix;
   the second carried the real fixture-file result. Print mode reported activation on stderr with

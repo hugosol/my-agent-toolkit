@@ -193,3 +193,103 @@ describe("the startup choice is applied once, at the process's first start (P26,
 		expect(port.state.view(OWNER.key).read("enabled")).toBe(false);
 	});
 });
+
+/**
+ * The four recorded/policy combinations a restore can be in, each with the outcome it owes.
+ *
+ * The expected value is the recorded one in every case — the policy decides only when there is no
+ * record — and the first run follows that value: an enabled run carries the init slot, an off one
+ * carries nothing. `persisted` is always empty because the session's own record is the history the
+ * policy must not overwrite.
+ */
+const RECORDED_VERSUS_POLICY = [
+	{ recorded: true, policy: true, enabled: true, name: "recorded true under the enabling policy" },
+	{ recorded: true, policy: false, enabled: true, name: "recorded true under the off policy" },
+	{ recorded: false, policy: true, enabled: false, name: "recorded false under the enabling policy" },
+	{ recorded: false, policy: false, enabled: false, name: "recorded false under the off policy" },
+] as const;
+
+describe("a recorded activation wins over the policy in both directions (P9)", () => {
+	for (const recoveryCase of RECORDED_VERSUS_POLICY) {
+		test(`${recoveryCase.name} is restored as recorded, and the first run follows it`, async () => {
+			const port = assemblyWith(
+				policyOf(`${String(recoveryCase.recorded)}-${String(recoveryCase.policy)}.yaml`, recoveryCase.policy),
+			);
+
+			const start = port.deliverSession(OWNER, {
+				...START,
+				statePayloads: [{ enabled: recoveryCase.recorded }],
+			});
+
+			// The current value is the record, whichever default the policy states.
+			expect(port.state.view(OWNER.key).read("enabled")).toBe(recoveryCase.enabled);
+			// The history is the session's own record, so the policy adds nothing to overwrite it.
+			expect(start.persisted).toEqual([]);
+			// The area renders the value this session actually holds.
+			expect(start.markers.flat().includes(MARKER)).toBe(recoveryCase.enabled);
+			// The first request's contribution is the one that value selects.
+			const firstRun = await port.initiateRun(OWNER);
+			expect(firstRun.contribution?.identity).toBe(recoveryCase.enabled ? INIT_IDENTITY : undefined);
+		});
+	}
+});
+
+describe("a recorded false and no record are different histories (P8, P9)", () => {
+	test("the enabling policy records its choice only for the session that has no record", async () => {
+		// No record: the policy is the session's value and is written in the ordinary payload format.
+		const withoutRecord = assemblyWith(policyOf("auto.yaml", true));
+		const fresh = withoutRecord.deliverSession(OWNER, START);
+		expect(withoutRecord.state.view(OWNER.key).read("enabled")).toBe(true);
+		expect(fresh.persisted).toEqual([{ enabled: true }]);
+		expect((await withoutRecord.initiateRun(OWNER)).contribution?.identity).toBe(INIT_IDENTITY);
+
+		// A recorded false is history, not the absence of it: the same policy must not turn it on,
+		// and nothing is written for a value the session already recorded.
+		const withRecord = assemblyWith(policyOf("auto.yaml", true));
+		const recorded = withRecord.deliverSession(NEXT_OWNER, {
+			...START,
+			statePayloads: [{ enabled: false }],
+		});
+		expect(withRecord.state.view(NEXT_OWNER.key).read("enabled")).toBe(false);
+		expect(recorded.persisted).toEqual([]);
+		expect((await withRecord.initiateRun(NEXT_OWNER)).contribution).toBeUndefined();
+	});
+});
+
+describe("only a boolean is recorded history (P9)", () => {
+	test("a payload whose value is a non-boolean is no history, so the policy applies", async () => {
+		const port = assemblyWith(policyOf("auto.yaml", true));
+
+		// The string is not a recorded value, so this session has no history. Reading it as the
+		// string's spelling would wrongly leave the enabling default unapplied.
+		const start = port.deliverSession(OWNER, { ...START, statePayloads: [{ enabled: "false" }] });
+
+		expect(port.state.view(OWNER.key).read("enabled")).toBe(true);
+		expect(start.persisted).toEqual([{ enabled: true }]);
+		expect((await port.initiateRun(OWNER)).contribution?.identity).toBe(INIT_IDENTITY);
+	});
+});
+
+describe("a branch's last recorded value is its history (P9, P35)", () => {
+	test("a later record supersedes an earlier one in either direction", async () => {
+		// The startup record came first and the command's later record is the one that stands.
+		const enabledLast = assemblyWith(policyOf("auto.yaml", true));
+		enabledLast.deliverSession(OWNER, {
+			...START,
+			statePayloads: [{ enabled: false }, { enabled: true }],
+		});
+		expect(enabledLast.state.view(OWNER.key).read("enabled")).toBe(true);
+		expect((await enabledLast.initiateRun(OWNER)).contribution?.identity).toBe(INIT_IDENTITY);
+
+		// An enabling record the operator later turned off restores off, despite the enabling policy.
+		const disabledLast = assemblyWith(policyOf("auto.yaml", true));
+		const start = disabledLast.deliverSession(NEXT_OWNER, {
+			...START,
+			statePayloads: [{ enabled: true }, { enabled: false }],
+		});
+		expect(disabledLast.state.view(NEXT_OWNER.key).read("enabled")).toBe(false);
+		// A restart reads the recorded history; it writes nothing of its own.
+		expect(start.persisted).toEqual([]);
+		expect((await disabledLast.initiateRun(NEXT_OWNER)).contribution).toBeUndefined();
+	});
+});
