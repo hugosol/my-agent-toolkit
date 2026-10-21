@@ -30,8 +30,9 @@ them, so two modes in one process would bind the extension twice.
 `/connect-bot` runs: it enqueues a panel registration. The extension is not "connected" because it
 was loaded, because the intent was stated, or because the register request was enqueued. The
 declared `enabled` value — and therefore the `◐ connectBot` marker — stays off until a valid panel
-receipt arrives. A refusal leaves it off and reports the extension's existing failure text; the
-agent keeps working.
+receipt arrives. A refusal — or any other answer that is not a valid registered receipt, including
+a request that never completes — leaves it off with no marker, no state report and no heartbeat,
+and reports the extension's existing failure text; the agent keeps working.
 
 **The attempt never blocks the agent.** The registration is queued and the startup entry returns
 immediately, exactly as the command path does. The process's first model request is issued whether
@@ -52,15 +53,22 @@ keeps the value and the connection it read at binding.
 **State is not remembered across starts.** connect-bot still declares `memory` persistence and
 `none` inheritance. A previous process's row, an old persisted payload, or a subagent's activity
 never stands in for this process's own register; only a receipt from this session's attempt enables
-it. After startup, `/connect-bot` and `/connect-bot off` keep their ordinary directed-command
-semantics, including repeated invocations and the existing no-UI/subagent refusals.
+it. A process that **starts by resuming** a session is still making its first owner start, so that
+session takes the selected mode's choice: a manual-mode resume stays off, and an automatic-mode
+resume attempts its register then. The old branch payload is never read (memory State is never
+seeded from it) and the startup attempt writes no value of its own — the receipt-backed activation
+is what writes `enabled`. After startup, `/connect-bot` and `/connect-bot off` keep their ordinary
+directed-command semantics, including repeated invocations and the existing no-UI/subagent refusals.
 
 Evidence: [`tests/connect-bot/startup-modes.test.ts`](../../tests/connect-bot/startup-modes.test.ts)
-drives both entrypoints and the controlled latch at the OMP assembly seam;
+drives both entrypoints, the controlled latch, the failure shapes and the admission refusals at the
+OMP assembly seam;
 [`tests/connect-bot/startup-lifecycle.test.ts`](../../tests/connect-bot/startup-lifecycle.test.ts)
 holds the attempt across an `off`, a transfer and a disposal on a controlled clock;
 [`tests/harness-dock/connect-bot-startup.test.ts`](../../tests/harness-dock/connect-bot-startup.test.ts)
-loads the real entrypoint files into the fixed harness and reads the panel's own table;
+loads the real entrypoint files into the fixed harness, reads the panel double's requests and the
+marker frames, and restores sessions across independent processes — including a planted old
+`{enabled:true}` payload and the no-payload control (P19, P22, P24);
 [`tests/harness-dock/connect-bot-lifecycle.test.ts`](../../tests/harness-dock/connect-bot-lifecycle.test.ts)
 runs the races, the post-start navigation and a policy edit beside codebase-tools in real isolated
 sessions.
