@@ -91,3 +91,31 @@ registration-failure report instead of throwing out of the assembly before the l
 |---|---|---|---|
 | P24 | codebase-tools：独立进程启动恢复，有／无有效历史 | 02 | 02 |
 | P24 | connect-bot：独立进程启动恢复，旧载荷不能替代新登记 | 04 | 04 |
+
+## Integration round (2026-10-22)
+
+**Sync.** The host's integration merge `40d5e7e` (parents `2ba8db8` on `dev` and the ticket's
+`75e1da4`) fast-forwarded this branch; the tree and worktree were clean, so no conflict resolution
+was needed.
+
+**Fixes carried for the merged tree.**
+
+| Commit | Change | Why |
+| --- | --- | --- |
+| `d9d1ec9` | `tests/connect-bot/support/herdr-bot.ts` writes `[herdr] workspace_name = 'unused'` | The current sibling herdr-bot release requires the explicit Herdr section; without it every real-panel case failed at startup with `missing field herdr` (the external limitation recorded above). |
+| `8b4c5f1` | `tests/harness-dock/consumer-regression.test.ts` deploys `entrypoints/startup` | The deployed manual entrypoint resolves its startup policy by repository layout, so the copied tree refused its binding without the policy documents. Identical to ticket 01's `1822f40`. |
+| `6fe7a9b` | `tests/connect-bot/harness-exit-budget.test.ts` deploys `entrypoints/startup` | The same layout dependency in its materialized deployment; without it `/connect-bot` was not registered and the first prompt reached the model (`agentInvoked === true`). Focused rerun: 1 pass / 0 fail. |
+
+**Global run (quiet window, default sibling herdr-bot, no `HERDR_BOT_BINARY`).**
+
+| Command | Result |
+| --- | --- |
+| `bun run test` (HEAD `8b4c5f1`, before `6fe7a9b`) | 1581 pass / 1 fail / exit 1; the only failure was the exit-budget case above |
+| `bun test tests/connect-bot/harness-exit-budget.test.ts` after `6fe7a9b` | 1 pass / 0 fail |
+| `bun run test` (tested tree `6fe7a9b`; the commit carrying this record is documentation only) | **1582 pass / 0 fail / exit 0**, 175 files, 9587 expect() calls, 535.07s |
+| `bun run typecheck` | exit 0; `tsc --noEmit` clean, authoring 58 files, 0 diagnostics |
+
+**Limit.** The `[herdr]` section targets the current sibling release. A panel binary built from an
+older commit whose config denies unknown fields (for example the `30a5bae` build used temporarily
+for other ticket branches) rejects it; such a run must point `HERDR_BOT_BINARY` at a build with the
+current schema, or leave it unset to use the sibling release.
