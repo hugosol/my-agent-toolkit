@@ -813,6 +813,13 @@ fork or tree navigation, and not on a subagent, which owns no cell. The rule is:
   default is not recorded, so a session that starts off and is never used writes nothing.
 - The choice is a **target, not a toggle**: an already-enabled session stays enabled, and the startup choice
   never switches a value off.
+- **A session restored as the process starts is that process's first start.** A resume at startup is the
+  first owner start and therefore participates in the rule — its recorded value wins, and a branch with no
+  record takes the mode's choice. A resume, new or fork *after* the process's first session is a later
+  navigation and applies nothing.
+- The record belongs to the session, not to the mode: a session enabled by one mode's entrypoint restores
+  enabled under the other, and restoring it writes no second record. Because the medium is the ordinary one,
+  a restart reads the branch's last payload, so a command's later value is the history a restore sees.
 - It is applied once per process. A session that replaces the first one in the same process starts on its own
   default, and later runs never re-apply the entrypoint's choice.
 
