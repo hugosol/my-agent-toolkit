@@ -1,6 +1,6 @@
 /**
  * connect-bot's two startup modes at the OMP assembly seam (S1; P2, P3, P4, P6, P15, P16,
- * P18, P26, P33, P34).
+ * P18, P19, P23, P26, P33, P34).
  *
  * The extension is driven exactly as the loader drives it: one mode's assembly binds the shared
  * definition against the OMP double, a native session start is delivered as the host delivers it,
@@ -34,6 +34,12 @@ const MARKER_AREA_PLACEMENT = "aboveEditor";
 const MARKER_TEXT = "◐ connectBot";
 /** What the operator is told when the panel did not answer as a register. */
 const ARM_FAILED = "无法连接 herdr-bot，未启用；请确认面板已启动";
+/** What the operator is told when a registered session is connected. */
+const CONNECTED = "已接入 herdr-bot 面板（当前 1 个在线会话）";
+/** What the operator is told when an explicit off removed the row. */
+const DISCONNECTED = "已断开 herdr-bot 面板";
+/** What the operator is told when an activation arrives while the unregister is on the wire. */
+const DISCONNECTING = "正在断开 herdr-bot 面板，请稍后重试";
 /** What a session without a UI is told when an activation is attempted. */
 const NO_UI_REFUSAL = "当前模式无 UI，不支持接入面板";
 /** The endpoint the extension's own `config.yaml` ships; the file is the only source. */
@@ -433,5 +439,222 @@ describe("an illegal startup policy refuses the binding before any business effe
 		expect(double.widgets).toEqual([]);
 		expect(double.timers).toEqual([]);
 		expect(double.appended).toEqual([]);
+	});
+});
+
+/** One controlled way an automatic registration can fail, as the panel seam settles it. */
+interface RegisterFailure {
+	/** What this controlled failure represents, in the scenario's own words. */
+	readonly label: string;
+	/** The answer's status, when the panel answered at all. */
+	readonly status?: number;
+	/** The answer's body, when the panel answered at all. */
+	readonly body?: unknown;
+	/** The rejection, when the request itself failed (an unreachable panel or the wait running out). */
+	readonly rejection?: Error;
+}
+
+/**
+ * The four ways a startup register can fail without a valid receipt: a refusal, a 2xx that is
+ * not the registered receipt, a registered-shaped body missing its count, and a request that
+ * never settles as a response at all.
+ */
+const REGISTER_FAILURES: readonly RegisterFailure[] = [
+	{ label: "a refusal", status: 503, body: { error: "refused" } },
+	{ label: "a 2xx answer that is not the registered receipt", status: 200, body: { outcome: "accepted" } },
+	{ label: "a registered-shaped answer without its online count", status: 200, body: { outcome: "registered" } },
+	{ label: "a request the transport rejects (unreachable panel or the wait running out)", rejection: new Error("The request timed out") },
+];
+
+/**
+ * Records every request and fails the first register with the scenario's answer; every later
+ * register is the operator's own retry, answered with the valid receipt a working panel sends.
+ */
+function failingPanel(failure: RegisterFailure): { readonly requests: Request[]; readonly request: PanelRequest } {
+	const requests: Request[] = [];
+	let registers = 0;
+	return {
+		requests,
+		request: async (url, init = {}) => {
+			requests.push({ url, init });
+			if (envelopeOf({ url, init }).kind !== "register") {
+				return new Response(JSON.stringify({ outcome: "accepted" }), { status: 200 });
+			}
+			registers += 1;
+			if (registers > 1) {
+				return new Response(JSON.stringify({ outcome: "registered", onlineCount: 1 }), { status: 200 });
+			}
+			if (failure.rejection !== undefined) throw failure.rejection;
+			return new Response(JSON.stringify(failure.body), { status: failure.status ?? 200 });
+		},
+	};
+}
+
+/** The kinds of the requests sent so far, in wire order. */
+function sentKinds(requests: readonly Request[]): string[] {
+	return requests.map(sent => envelopeOf(sent).kind);
+}
+
+describe("a failed startup registration keeps the existing close and feedback rules (P19)", () => {
+	for (const [index, failure] of REGISTER_FAILURES.entries()) {
+		/*
+		 * Expected: the started session stays off — no marker line, no state report, no heartbeat —
+		 * and the operator hears the extension's existing failure text once, at error severity. The
+		 * attempt is not retried, and the original command still connects and disconnects as before.
+		 *
+		 * Independent source: the failure texts and the register/state/heartbeat envelope vocabulary
+		 * are the contract's and the shipped extension's (README, feedback table); "a failed arm
+		 * leaves the session unarmed" is the pre-existing rule this ticket must preserve.
+		 *
+		 * The violation this distinguishes: a path that writes enabled before the receipt, schedules
+		 * the heartbeat on the attempt, suppresses the failure text, loosens the receipt test, or
+		 * retries on its own.
+		 */
+		test(`a register that ends in ${failure.label} never enables the session or retries`, async () => {
+			const { requests, request } = failingPanel(failure);
+			const double = bound(connectBotAuto, request);
+			const ctx = contextOf(double, `startup-failure-${index}`, "E:/work/failure", "deepseek");
+			const announced = double.nextNotification();
+
+			double.startSession(ctx);
+			await announced;
+
+			// The one attempt failed and said exactly what a failed command-path arm says.
+			expect(double.notifications).toEqual([ARM_FAILED]);
+			expect(double.notificationLevels).toEqual(["error"]);
+			expect(sentKinds(requests)).toEqual(["register"]);
+			// The startup publication is the area cleared: the declared value never left off.
+			expect(double.widgets[double.widgets.length - 1]).toEqual({
+				key: MARKER_AREA_KEY,
+				lines: undefined,
+				placement: MARKER_AREA_PLACEMENT,
+			});
+			// Nothing was armed, so no heartbeat was scheduled and nothing reports state.
+			expect(double.timers).toEqual([]);
+			// connect-bot's memory State has no persistence medium: neither the attempt nor the
+			// failure writes a connection record.
+			expect(double.appended).toEqual([]);
+
+			// A round after the failure changes nothing: the extension has no record to report from
+			// and the failed attempt is not retried by observation; a retry would have had to be a
+			// scheduled timer, and none was scheduled.
+			double.startRun(ctx);
+			await double.settleRun(ctx);
+			expect(sentKinds(requests)).toEqual(["register"]);
+			expect(double.timers).toEqual([]);
+
+			// The existing manual operation remains the way in: the same command arms this session,
+			// and its success path is the unchanged one.
+			const connected = double.nextNotification();
+			double.run("connect-bot", "", ctx);
+			await connected;
+			// The arm's state report leaves through the owner's outbound queue, so await the push
+			// itself rather than assuming it landed in the same microtask as the notification.
+			expect(await waitFor(() => sentKinds(requests).includes("state"))).toBe(true);
+			expect(sentKinds(requests)).toEqual(["register", "register", "state"]);
+			expect(double.notifications).toEqual([ARM_FAILED, CONNECTED]);
+			expect(double.widgets[double.widgets.length - 1]?.lines).toEqual([MARKER_TEXT]);
+			expect(double.timers).toHaveLength(1);
+
+			// And the existing manual operation still turns it off: unregister, cleared area, stopped beat.
+			const disconnected = double.nextNotification();
+			double.run("connect-bot", "off", ctx);
+			await disconnected;
+			expect(sentKinds(requests)).toEqual(["register", "register", "state", "unregister"]);
+			expect(double.notifications).toEqual([ARM_FAILED, CONNECTED, DISCONNECTED]);
+			expect(double.widgets[double.widgets.length - 1]?.lines).toBeUndefined();
+			expect(double.timers.every(timer => timer.cancelled)).toBe(true);
+			// Even a successful connection is held in memory only: no session-entry payload exists.
+			expect(double.appended).toEqual([]);
+		});
+	}
+});
+
+describe("startup and command admission keep the existing refusal rules (P23)", () => {
+	test("a session without a UI is refused on stderr for both entry points, with no request or effect", () => {
+		const { requests, request } = panel();
+		const double = bound(connectBotAuto, request);
+		const ctx = double.context({ sessionId: "startup-no-ui-admission", cwd: "E:/work/headless", hasUI: false });
+
+		// The startup intent and the operator's command are the two entry points of one activation;
+		// neither may bypass the existing no-UI refusal, and neither says anything on a UI channel.
+		const refusal = withCapturedStderr(() => {
+			double.startSession(ctx);
+			double.run("connect-bot", "", ctx);
+		});
+
+		expect(refusal.diagnostics).toBe(`${NO_UI_REFUSAL}\n${NO_UI_REFUSAL}\n`);
+		expect(requests).toEqual([]);
+		expect(double.notifications).toEqual([]);
+		expect(double.timers).toEqual([]);
+		expect(double.widgets).toEqual([]);
+	});
+
+	test("a subagent's start and command stay silent and register nothing", () => {
+		const { requests, request } = panel();
+		const double = bound(connectBotAuto, request);
+		double.agents.set("startup-admission-parent", {
+			id: "startup-admission-parent",
+			kind: "main",
+			session: { sessionManager: { getSessionId: () => "startup-admission-owned" } },
+		});
+		const ctx = double.context({
+			sessionId: "startup-admission-child",
+			cwd: "E:/work/child",
+			kind: "sub",
+			parentId: "startup-admission-parent",
+		});
+
+		const attempt = withCapturedStderr(() => {
+			double.startSession(ctx);
+			double.run("connect-bot", "", ctx);
+		});
+
+		// The deliberate silence is the existing rule, and the inherited session never registers
+		// as a connection of its own.
+		expect(attempt.diagnostics).toBe("");
+		expect(requests).toEqual([]);
+		expect(double.notifications).toEqual([]);
+		expect(double.timers).toEqual([]);
+		expect(double.widgets).toEqual([]);
+	});
+
+	test("an activation during the unregister in flight is still refused in an automatic binding", async () => {
+		const requests: Request[] = [];
+		const unregister = Promise.withResolvers<Response>();
+		setPanelRequestForTest(async (url, init = {}) => {
+			requests.push({ url, init });
+			const kind = envelopeOf({ url, init }).kind;
+			if (kind === "unregister") return unregister.promise;
+			return new Response(
+				JSON.stringify(kind === "register" ? { outcome: "registered", onlineCount: 1 } : { outcome: "accepted" }),
+				{ status: 200 },
+			);
+		});
+		const double = ompDouble();
+		connectBotAuto(double.api);
+		const ctx = contextOf(double, "startup-disconnecting", "E:/work/window", "deepseek");
+
+		const connected = double.nextNotification();
+		double.startSession(ctx);
+		await connected;
+		expect(await waitFor(() => sentKinds(requests).includes("state"))).toBe(true);
+
+		// The operator's off puts the unregister on the wire; a second activation arriving before it
+		// settles is refused rather than queued, exactly as on the command-only path.
+		double.run("connect-bot", "off", ctx);
+		expect(await waitFor(() => sentKinds(requests).includes("unregister"))).toBe(true);
+		const refused = double.nextNotification();
+		double.run("connect-bot", "", ctx);
+		await refused;
+		expect(double.notifications).toEqual([CONNECTED, DISCONNECTING]);
+		expect(sentKinds(requests)).toEqual(["register", "state", "unregister"]);
+
+		unregister.resolve(new Response(JSON.stringify({ outcome: "accepted" }), { status: 200 }));
+		const disconnected = double.nextNotification();
+		await disconnected;
+		expect(double.notifications).toEqual([CONNECTED, DISCONNECTING, DISCONNECTED]);
+		expect(sentKinds(requests)).toEqual(["register", "state", "unregister"]);
+		expect(double.widgets[double.widgets.length - 1]?.lines).toBeUndefined();
 	});
 });

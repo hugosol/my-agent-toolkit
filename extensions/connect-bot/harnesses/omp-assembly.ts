@@ -94,16 +94,24 @@ function sessionFactsOf(ctx: ConnectBotSessionContext): SessionFacts {
 	};
 }
 
+/** The native subscription signature this assembly observes, when the loader offers one. */
+type SubscribeSession = (
+	event: string,
+	handler: (event: unknown, ctx: ConnectBotSessionContext) => void,
+) => void;
+
 /**
  * The loader's api with its command registration and start subscriptions observed.
  *
  * The observed surface delegates every other member to the loader's own api — OMP binds each of
  * its methods to the harness instance, so nothing is lost by reaching them through it — and it
- * overrides only `registerCommand` and `on`. The native context appears in both places: a command
- * handler receives it, and every native session event receives the context of the session it
- * concerns. The context is remembered for the duration of the call the framework makes (and
- * restored afterwards, so nothing about it outlives the delivery) and the call itself is passed
- * through untouched.
+ * overrides only `registerCommand` and, when the surface offers one, `on`. The native context
+ * appears in both places: a command handler receives it, and every native session event receives
+ * the context of the session it concerns. The context is remembered for the duration of the call
+ * the framework makes (and restored afterwards, so nothing about it outlives the delivery) and
+ * the call itself is passed through untouched. A surface that offers no `on` is left as it
+ * stated itself: the framework's registration path is where that harness fact becomes the
+ * operator's diagnostic, and this assembly adds no earlier throw.
  */
 function observeSessionContext(pi: OmpExtensionApi): {
 	readonly api: OmpExtensionApi;
@@ -124,24 +132,27 @@ function observeSessionContext(pi: OmpExtensionApi): {
 				}
 			},
 		});
-	const subscribe = (pi.on as unknown as (
-		event: string,
-		handler: (event: unknown, ctx: ConnectBotSessionContext) => void,
-	) => void).bind(pi);
-	api.on = ((event: string, handler: (event: unknown, ctx: ConnectBotSessionContext) => void) => {
-		// Every native delivery this binding observes carries the context of the session it concerns.
-		// Keeping it for the duration of the framework's own handler is what lets a startup activation
-		// read the facts of the start being delivered without naming a native lifecycle event here.
-		subscribe(event, (nativeEvent, ctx) => {
-			const previous = current;
-			current = ctx;
-			try {
-				handler(nativeEvent, ctx);
-			} finally {
-				current = previous;
-			}
-		});
-	}) as unknown as OmpExtensionApi["on"];
+	const subscribe = typeof pi.on === "function" ? (pi.on as unknown as SubscribeSession).bind(pi) : undefined;
+	if (subscribe !== undefined) {
+		api.on = ((event: string, handler: (event: unknown, ctx: ConnectBotSessionContext) => void) => {
+			// Every native delivery this binding observes carries the context of the session it concerns.
+			// Keeping it for the duration of the framework's own handler is what lets a startup activation
+			// read the facts of the start being delivered without naming a native lifecycle event here.
+			subscribe(event, (nativeEvent, ctx) => {
+				const previous = current;
+				current = ctx;
+				try {
+					handler(nativeEvent, ctx);
+				} finally {
+					current = previous;
+				}
+			});
+		}) as unknown as OmpExtensionApi["on"];
+	}
+	// A surface that offers no lifecycle subscription at all is a fact the framework reports as its
+	// own registration failure. Leaving the member as the surface stated it lets that report happen
+	// at the framework's failure boundary; throwing here would escape before the label and the
+	// diagnostic the operator is owed.
 	return {
 		api,
 		current: () => {
