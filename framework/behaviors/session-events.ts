@@ -33,6 +33,7 @@ import type { SessionEventDelivery, SubscriptionGroup } from "../interface/sessi
 import type { OwnerCapabilityHandle } from "../interface/state";
 import type { SessionDelivery } from "../runtime/port";
 import type { StateStore } from "../core/state";
+import type { StartupChoice } from "../core/startup";
 import { type MarkerSeat, publishMarkerOnTransition } from "./marker";
 import { stateValueFor } from "./state-scope";
 import { dispatchToGroups } from "./subscriptions";
@@ -59,6 +60,7 @@ export function dispatchSessionEvent(
 	groups: readonly SubscriptionGroup[],
 	seat: MarkerSeat,
 	reportFailure: (message: string) => void,
+	startupChoice?: StartupChoice,
 ): void {
 	// A facts delivery crossed no boundary: the session's own facts are re-stated, so nothing the
 	// framework owns moves — no owner's life begins or ends, no State reconciles, and the marker
@@ -69,6 +71,8 @@ export function dispatchSessionEvent(
 			owner: session.owner,
 			event: session.event,
 			statePayloads: session.statePayloads,
+			persist: values => session.persist(values),
+			...(startupChoice === undefined ? {} : { startup: startupChoice }),
 			publishMarker: ownerKey => publishMarkerOnTransition(definition, ownerKey, session.markers, seat),
 		});
 	}

@@ -762,6 +762,7 @@ describe("the framework offers an owner's access with the owner's life (S1)", ()
 				owner: { kind: "owner", key: target.owner },
 				event: { kind: "session_start", reason: "new" },
 				statePayloads: [{ enabled: true }],
+				persist: () => {},
 				publishMarker: () => {},
 			});
 			// A reader in another process is what the record is for; the open's own wait is what
@@ -778,6 +779,7 @@ describe("the framework offers an owner's access with the owner's life (S1)", ()
 				owner: { kind: "owner", key: target.owner },
 				event: { kind: "session_end", reason: "disposed" },
 				statePayloads: [],
+				persist: () => {},
 				publishMarker: () => {},
 			});
 			await until(() => recordsIn(ws.runtimeDirectory).length === 0, "the offer outlived the owner's life");

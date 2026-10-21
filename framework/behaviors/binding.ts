@@ -58,7 +58,8 @@ import {
 } from "../runtime/port";
 import type { StateStore } from "../core/state";
 import { handOverReading, type SessionObservations } from "../core/observations";
-import { findConfigFailure, getConfig, type ConfigSource } from "../core/config";
+import { ConfigLoadError, findConfigFailure, getConfig, type ConfigSource } from "../core/config";
+import { type StartupChoice, startupChoiceOf } from "../core/startup";
 import { findConfigurationViolations } from "../core/violations";
 import { runCommandActions } from "./actions";
 import { runCommandDirected, runCommandToggle } from "./control";
@@ -238,6 +239,7 @@ export function bindExtension(
 	observations: SessionObservations,
 	factory?: ImplementationResolver,
 	configSource: ConfigSource = {},
+	startupPolicy?: string,
 ): BindingResult {
 	const failures: BindingFailure[] = findConfigurationViolations(definition).map(violation => ({
 		kind: "configuration",
@@ -252,6 +254,21 @@ export function bindExtension(
 		const configDetail = findConfigFailure(definition, configSource);
 		if (configDetail !== undefined) {
 			failures.push({ kind: "configuration", violation: { kind: "config", detail: configDetail } });
+		}
+	}
+
+	// The startup policy the entrypoint selected, on that same loading-time path: the document
+	// states this extension's initial activation choice, and a document that cannot be read or
+	// whose block for this extension is illegal refuses the binding before anything is
+	// registered. An entrypoint that states no policy reaches nothing here, and the extension
+	// then starts on the declared default exactly as it did before startup modes existed.
+	let startupChoice: StartupChoice | undefined;
+	if (failures.length === 0 && startupPolicy !== undefined) {
+		try {
+			startupChoice = startupChoiceOf(definition, startupPolicy, configSource);
+		} catch (error) {
+			if (!(error instanceof ConfigLoadError)) throw error;
+			failures.push({ kind: "configuration", violation: { kind: "config", detail: error.detail } });
 		}
 	}
 
@@ -518,7 +535,7 @@ export function bindExtension(
 			// The framework's own behavior runs before the extension's handler, and a handler
 			// that throws is reported rather than allowed to disturb the framework or another
 			// binding: see `session-events.ts` for the order and the isolation.
-			dispatchSessionEvent(definition, state, session, groups, seat, port.reportDiagnostic);
+			dispatchSessionEvent(definition, state, session, groups, seat, port.reportDiagnostic, startupChoice);
 
 			if (session.event.kind === "session_start" && session.owner.kind === "owner") {
 				// The owner session node: the first moment of this process in which the extension

@@ -144,17 +144,21 @@ _Avoid_: complete total, known zero for unknown contributions
 The rule that determines an extension's initial activation choice when an agent starts; subsequent command controls and session-boundary State behavior remain separate. A choice to activate is an intent, not proof that an external effect has succeeded.
 _Avoid_: implementation initialization, permanent activation lock, restored external effect
 
+**Startup policy document（启动策略文档）**:
+The one YAML document a startup mode's entrypoint selects, stating each extension's initial activation choice as `enabled: <boolean>` under the extension's id. It belongs to the deployment beside the entrypoints, not to an extension's source directory; the framework reads it once per process, validates only the loaded extension's own block, and applies that block's choice at the process's first owner session start. Naming an extension in it never loads that extension.
+_Avoid_: extension configuration, runtime profile, mode selector flag, environment override
+
 **Extension startup mode（扩展启动模式）**:
-The choice between manual mode and automatic startup mode, each with its own startup configuration and the same activation rules. Startup mode is distinct from whether an extension is loaded or currently enabled.
-_Avoid_: separate extension implementation, subagent integration mode, current activation State
+The choice between manual mode and automatic startup mode, each with its own startup policy document and the same activation rules. The mode is selected statically by which entrypoint the host loads — never by a runtime profile parameter or environment override — and is distinct from whether an extension is loaded or currently enabled. Loading one extension's two modes in one process is unsupported because the host adds extension sources rather than merging them.
+_Avoid_: separate extension implementation, subagent integration mode, current activation State, host profile argument
 
 **Configuration switch（配置式开关）**:
-An activation choice read at initialization whose changes do not take effect during the current run; applying a changed choice requires a restart.
-_Avoid_: harness toggle, mode command
+An activation choice read at initialization whose changes do not take effect during the current run; applying a changed choice requires a restart. The startup policy document states such a choice for the startup moment only; it is not the deferred runtime control kind and does not replace command controls during a run.
+_Avoid_: harness toggle, mode command, startup policy document
 
 **Extension configuration（扩展配置）**:
-An extension's own `config.yaml` in its source directory, read and validated by the framework at binding and exposed to the extension's shared logic; a change requires a restart. Its entries are plain configuration values and, in a future release, configuration switches.
-_Avoid_: harness settings, environment override, State, defaults embedded in code
+An extension's own `config.yaml` in its source directory, read and validated by the framework at binding and exposed to the extension's shared logic; a change requires a restart. Its entries are business values — endpoints, request budgets — and are not where a startup mode's initial activation choice lives, which is the separate startup policy document.
+_Avoid_: harness settings, environment override, State, defaults embedded in code, startup policy document
 
 **Shared configuration（共享配置）**:
 The framework's own `framework/config.yaml`, beside the general HTTP module: the named proxy entries a request selects by name (`http.proxies.<name>.enabled` and `http.proxies.<name>.url`), the default wait budget (`http.defaultTimeoutMs`), and an explicitly configured directory for framework-owned runtime artifacts. That directory has no code-level fallback when its configuration value is absent; connection-location metadata is not persisted State. It belongs to the machine, it is read once per process — a change requires a restart — and a request that names a proxy the file cannot resolve fails as a configuration error instead of connecting directly; an entry that exists without `enabled: true` is an explicitly disabled one and connects directly, so its `url` is never read.

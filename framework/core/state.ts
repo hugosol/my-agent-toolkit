@@ -23,6 +23,7 @@ import type {
 	StatePersistence,
 } from "../interface/state";
 import type { StateValues } from "../runtime/port";
+import type { StartupChoice } from "./startup";
 
 /** The State values v1 holds: the declared boolean activation field. */
 export type StateValue = boolean;
@@ -59,6 +60,22 @@ export interface StateSessionChange {
 	readonly owner: OwnerReference;
 	readonly event: SessionEvent;
 	readonly statePayloads: readonly unknown[];
+	/**
+	 * Records the extension's new values in the owner's persistence medium.
+	 *
+	 * It is the same medium a command invocation records through, and it is what lets the startup
+	 * policy's own choice be a real record of this session rather than an in-memory value that
+	 * disappears with the process. Best-effort by contract, exactly as on the command path.
+	 */
+	persist(values: StateValues): void;
+	/**
+	 * The initial activation choice the selected startup policy declares.
+	 *
+	 * It is a fact of the assembly rather than of the delivery: the same choice accompanies every
+	 * owner start, and this store decides which one is the process's startup. Absent when the
+	 * assembly selected no policy, and then nothing about startup changes.
+	 */
+	readonly startup?: StartupChoice;
 	publishMarker(ownerKey: string): void;
 }
 
@@ -78,6 +95,8 @@ export class StateStore {
 	/** Every Owner this store has served: a boundary it reconciled, or a cell it wrote. */
 	readonly #served = new Set<string>();
 	readonly #ownerLives = new OwnerLives();
+	/** Whether this process's first owner session start — the startup moment — is still ahead. */
+	#startupPending = true;
 	/** Who is observing one owner's declared values changing, per owner. */
 	readonly #watchers = new Map<string, Set<(field: string, value: StateValue) => void>>();
 
@@ -202,8 +221,10 @@ export class StateStore {
 	/**
 	 * Cell retirement and capability revocation are one operation before any handler.
 	 * Every start reopens the life, including memory fields that must never be seeded.
-	 * Only the final branch payload supplies a persisted value; invalid payloads use the
-	 * declared default. A transfer waits for the next start to publish the Marker area.
+	 * Only the final branch payload supplies a persisted value; invalid payloads have no
+	 * history to restore, so the startup policy's choice — at the process's first owner
+	 * start only — stands in before the declared default. A transfer waits for the next
+	 * start to publish the Marker area.
 	 */
 	reconcile(change: StateSessionChange): void {
 		const { owner, event } = change;
@@ -219,16 +240,56 @@ export class StateStore {
 		}
 
 		this.#ownerLives.begin(owner.key);
+		// The startup moment is this store's first owner start, whichever session begins it: a
+		// process that resumes a session at startup is starting, and a session that replaces another
+		// in a running process is not. Reading it here consumes it, so no later boundary — a new,
+		// resumed or forked session — applies the entrypoint's choice again.
+		const startup = this.#startupMoment(change.startup);
 		if (this.#persistence === "session-entry") {
 			const payload = change.statePayloads[change.statePayloads.length - 1];
-			const value = this.#restoredValue(payload);
+			const history = this.#historyValue(payload);
+			const value = history ?? startup ?? DEFAULT_STATE_VALUE;
 			this.#cells.set(owner.key, new Map([[this.#field, value]]));
+			// A choice this session had no history for is the session's value, so it is recorded
+			// through the medium an ordinary write records through: the next process restores what
+			// this one started with, exactly as it restores a value a command produced. The declared
+			// default needs no record of its own, which is why only an enabling choice writes here.
+			if (history === undefined && startup === true) this.#recordChoice(change, true);
 		}
 		// The access is offered for exactly this owner's life: it begins where the cell does and is
 		// withdrawn at the boundary that retires the cell, so a session this store serves is
 		// readable from another process for as long as it lives and not one moment longer.
 		this.#offerAccess(owner.key);
 		change.publishMarker(owner.key);
+	}
+
+	/**
+	 * The startup choice this owner start applies, or `undefined` once the process has started.
+	 *
+	 * A startup policy is applied at the first main session the process serves and nowhere else:
+	 * consuming the moment on the first start is what keeps a later session's own default from
+	 * being overwritten by the entrypoint's choice, and a subagent's delivery never reaches here
+	 * because it owns no cell.
+	 */
+	#startupMoment(choice: StartupChoice | undefined): StartupChoice | undefined {
+		if (!this.#startupPending) return undefined;
+		this.#startupPending = false;
+		return choice;
+	}
+
+	/**
+	 * Records the startup choice in the owner's persistence medium, best-effort like every write.
+	 *
+	 * It does not publish the marker or announce the value: this runs while the start reconciles,
+	 * before the owner's access is offered and before the boundary publishes the area, so the one
+	 * publication at the end of reconciliation is the one rendering of the value this start chose.
+	 */
+	#recordChoice(change: StateSessionChange, value: StateValue): void {
+		try {
+			change.persist({ [this.#field]: value });
+		} catch {
+			// Persistence is best-effort; the current value remains authoritative.
+		}
 	}
 
 	/**
@@ -269,12 +330,19 @@ export class StateStore {
 		for (const watcher of [...watchers]) watcher(this.#field, value);
 	}
 
-	#restoredValue(payload: unknown): StateValue {
+	/**
+	 * The value one branch payload records for this field, or `undefined` when it records none.
+	 *
+	 * Only a boolean is a recorded value: an absent payload, a payload that is not a mapping, and a
+	 * member of another type all leave the session with no history, which is what lets a startup
+	 * choice apply and what a restore has always read as the declared default.
+	 */
+	#historyValue(payload: unknown): StateValue | undefined {
 		if (typeof payload !== "object" || payload === null || Array.isArray(payload)) {
-			return DEFAULT_STATE_VALUE;
+			return undefined;
 		}
 		const value = (payload as Record<string, unknown>)[this.#field];
-		return typeof value === "boolean" ? value : DEFAULT_STATE_VALUE;
+		return typeof value === "boolean" ? value : undefined;
 	}
 
 	#write(target: StateWriteTarget, value: StateValue): void {

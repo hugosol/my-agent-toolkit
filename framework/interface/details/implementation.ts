@@ -436,4 +436,17 @@ export interface ExtensionAssembly {
 	 * repository — supplies the one directory that makes a relative declaration resolvable.
 	 */
 	readonly configBaseDir?: string;
+	/**
+	 * The startup policy document this assembly's entrypoint selected, or omitted when the
+	 * assembly states no policy at all.
+	 *
+	 * It is the one thing the two startup modes differ in: a manual entrypoint and an automatic
+	 * one assemble the same definition the same way, and each states the document its mode
+	 * declares. The path is resolved against {@link configBaseDir} exactly as a declared
+	 * configuration path is, so the document the entrypoint selected is the one read however the
+	 * process was started. The framework reads it at binding, applies its choice to the process's
+	 * first owner session start, and never applies it again — see `core/startup` for the
+	 * document's shape and the choice's effect.
+	 */
+	readonly startupPolicy?: string;
 }
