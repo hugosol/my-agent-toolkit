@@ -80,14 +80,24 @@ the owning session's process publishes it, the spawned session's process reads i
 access is not reached the spawned session keeps working on the declared default. The loading itself
 belongs to the pinned provider, not to this assembly. Startup policy is a main-session rule: a spawned
 session is not its own owner, so loading the automatic entrypoint there neither enables it nor registers
-anything else.
+anything else; it follows the owner it was spawned under instead. The same rule in both modes is
+asserted in [`tests/codebase-tools/startup-modes-follow.test.ts`](../../tests/codebase-tools/startup-modes-follow.test.ts),
+where the owner's command is the only thing that changes the value the subagent's runs read.
 
 The repeatable isolated check is `bun scripts/pi-codebase-tools-smoke.ts`; `--pi <CLI path>` or `PI_CLI`
 selects the installed pi, `PI_NODE` selects the Node executable for a script/shim installation, and
-`--mode auto` drives the automatic entrypoint (manual is the default). It uses temporary state, dummy
-credentials and a local capture server, never the formal configuration.
-The exercised combination and runtime limitation are recorded in the framework's
-[pi support evidence](../../framework/docs/harness-support.md#pi-codebase-tools-adapter-evidence).
+`--mode auto` drives the automatic entrypoint (manual is the default). Its follow phase loads the pinned
+`pi-subagents` provider beside the mode entrypoint: the provider spawns a real detached child for one
+delegation under each Owner value, and the check reads that child's own outbound request, session journal
+and provider launch record — the launch record names the mode's own entrypoint, the child carries the
+extension's contribution only while the owner is enabled, and it records no State of its own. The two
+children straddle a command that changes the owner between them, so the phase observes the current value
+rather than a startup default. `--follow-only` runs just that phase; `--keep` keeps the run roots. It
+uses temporary state (including the provider's own temporary root, redirected under the run root), dummy
+credentials and a local capture server, never the formal configuration. Use Node 22.19.0 via `PI_NODE`:
+the longer phase on Node 24.18.0 still hits the Windows/libuv `UV_HANDLE_CLOSING` assertion recorded in
+the framework's [pi support evidence](../../framework/docs/harness-support.md#pi-codebase-tools-adapter-evidence),
+which also states the exercised host version and the remaining limitations.
 
 ## H1 — interactive TUI acceptance (visual)
 
