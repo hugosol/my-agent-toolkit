@@ -226,7 +226,12 @@ export interface AgentTreeStartup {
  */
 export interface AgentTreeRow {
 	readonly kind: AgentTreeRowKind;
-	/** The row's displayed name: a session's latest name, or `provider / model` for a model row. */
+	/**
+	 * The row's displayed name: a descendant session's latest name, prefixed by its agent definition
+	 * as `[task] name` when the host reported one; the root's latest name; or `provider / model` for
+	 * a model row. A missing agent definition leaves the session's name unprefixed rather than
+	 * inventing a type.
+	 */
 	readonly name: string;
 	/** The row's distance from the root: 0 for the root, 1 for its model rows and its children, and so on. */
 	readonly depth: number;
@@ -706,7 +711,12 @@ export function createPresentation(inputs: PresentationInputs): ConsumptionPrese
 		for (const node of tree.descendants) {
 			rows.push({
 				kind: "session",
-				name: node.identity.name,
+				// The agent definition is the kind of agent that runs the session, not the work it carries
+				// out; the row states it as a leading category while the session's own name stays intact.
+				name:
+					node.identity.agentName === undefined
+						? node.identity.name
+						: `[${node.identity.agentName}] ${node.identity.name}`,
 				depth: node.depth,
 				// The descendant's own statistics without the cached share of its conversation input: the
 				// tree compares what each session consumed, so that one column is dropped from this row.

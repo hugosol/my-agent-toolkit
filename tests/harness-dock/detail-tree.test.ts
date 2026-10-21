@@ -605,7 +605,7 @@ describe("the real host's widget: a brief with its own Round, then the static de
 			// pinned to the form and the budget, not to a token count.
 			const childRow = String(detail[3]);
 			const runtimeMark = "  Run: ";
-			const childHead = `\u2514\u2500 ${childRecord.name}  ${MODEL_PROVIDER}/${MODEL_ID}(`;
+			const childHead = `\u2514\u2500 [${SPAWN_AGENT}] ${childRecord.name}  ${MODEL_PROVIDER}/${MODEL_ID}(`;
 			expect(childRow.startsWith(childHead)).toBe(true);
 			const afterHead = childRow.slice(childHead.length);
 			const effort = afterHead.slice(0, afterHead.indexOf(")"));
@@ -739,13 +739,13 @@ describe("a real spawn's own start facts reach its row, the document and the nex
 			expect(childRecord.id).toBe(childStart.sessionId);
 			expect(childRecord.parent).toBe(mainRecord.id);
 
-			// The detail tree the operator asks for names that row by the task handle — never by the agent
-			// definition — and states the one snapshot the session began on, exactly as the host answered it
-			// above.
+			// The detail tree the operator asks for states the agent definition as the row's leading
+			// category, names the row by the task handle after it, and states the one snapshot the
+			// session began on exactly as the host answered it above.
 			await first.session.prompt("/budget detail");
 			const detail =
 				(await linesUntil(first.session, lines => lines.some(line => line.startsWith("\u2514\u2500 ")))) ?? [];
-			const childRow = detail.find(line => line.startsWith(`\u2514\u2500 ${CHILD_TASK_NAME} `));
+			const childRow = detail.find(line => line.startsWith(`\u2514\u2500 [${SPAWN_AGENT}] ${CHILD_TASK_NAME} `));
 			expect(childRow).toBeDefined();
 			expect(childRow).toContain(`${MODEL_PROVIDER}/${MODEL_ID}(${provedLevel})`);
 			// A level this host did not prove is `?`; the configured selector (`auto`, which is what the
@@ -808,7 +808,9 @@ describe("a real spawn's own start facts reach its row, the document and the nex
 				const restoredRow = restored.find(line => line.startsWith(`\u2514\u2500 ${CHILD_TASK_NAME} `));
 				// The restored row states the same handle and the same started-on snapshot the process that
 				// really spawned the session drew: the whole snapshot came back from the document rather than
-				// a truncated display text, and the row asked no provider for anything.
+				// a truncated display text, and the row asked no provider for anything. The agent definition
+				// was a host fact of the first process and is not in the document, so this process draws no
+				// leading category for it.
 				expect(restoredRow).toBeDefined();
 				expect(restoredRow).toContain(`${MODEL_PROVIDER}/${MODEL_ID}(${provedLevel})`);
 				expect(second.capture.requests().length).toBe(requestsBeforeDetail);

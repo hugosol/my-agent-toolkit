@@ -66,6 +66,12 @@ what a real TUI draws are human-only, and nothing in this repository claims eith
 
 ## Timing and detail behavior
 
+- A `/budget detail` descendant row states the agent definition its host reported as a leading
+  category (`[task] 检索定价`, `[scout] 检索价格`). The session's own name follows the category and
+  keeps its existing selection rules; a host that reported no agent definition leaves the row
+  unprefixed rather than showing a guessed type. The type is a host fact and is not written to the
+  consumption document, so a restored row shows its name alone until a host reports the definition
+  again.
 - A descendant's `Run` is accumulated working time from activities whose own Round end was observed,
   not a live stopwatch. An open first activity has no measured duration yet (`—`); a measured zero
   is `0ms`. Distinct actual child sessions remain distinct rows, including a failed foreground

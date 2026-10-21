@@ -117,8 +117,9 @@ export interface ConsumptionView {
 	 */
 	own(sessionId: string): OwnConsumption | undefined;
 	/**
-	 * The identity facts this instance holds for one actual session — its latest display name and its
-	 * direct parent — or `undefined` when it holds neither a host fact nor a record for that session.
+	 * The identity facts this instance holds for one actual session — its latest display name, the
+	 * agent definition it runs when a host stated one, and its direct parent — or `undefined` when it
+	 * holds neither a host fact nor a record for that session.
 	 *
 	 * The name is display data and never an identity: a rename changes what this answers and nothing
 	 * else about the session. What the session's own host stated is what it answers, with the
@@ -237,6 +238,15 @@ export interface SessionIdentity {
 	readonly sessionId: string;
 	/** The latest display name, falling back to the agent's own name then id, then the session id. */
 	readonly name: string;
+	/**
+	 * The name of the agent definition this session runs, as its harness registered it.
+	 *
+	 * It is the agent kind — `task`, `explore`, `scout` — rather than a name for the work, and it is
+	 * carried separately from `name` so a display can state the kind without using it as the name.
+	 * Absent when the host reports none and when no host fact for the session has reached this
+	 * instance; the document's record does not carry it.
+	 */
+	readonly agentName?: string;
 	/** The same harness's direct parent session id, or `null` for a session with none. */
 	readonly parentSessionId: string | null;
 }
@@ -765,6 +775,9 @@ export function createRequestAccounting(inputs: RequestAccountingInputs): Reques
 			// of agent a session is, which is a category rather than a name for the work — stand in, and an
 			// id last: the agent's registry identity, then the session's own id.
 			name: facts?.name ?? facts?.taskName ?? record?.name ?? facts?.agentName ?? facts?.agentId ?? sessionId,
+			// The agent definition is a category, not a name for the work, so it stays a separate fact
+			// even though the same host fact is also the last fallback for a nameless session.
+			...(facts?.agentName === undefined ? {} : { agentName: facts.agentName }),
 			// The two absences differ: a host that reported no parent said so, while one that reported
 			// nothing leaves the fact to be filled from the record rather than read as parentless.
 			parentSessionId: facts?.parent !== undefined ? facts.parent : (record?.parent ?? null),
@@ -791,9 +804,11 @@ export function createRequestAccounting(inputs: RequestAccountingInputs): Reques
 	 *
 	 * A fact this host cannot report never overwrites one it already reported, and never invents one.
 	 * Learning a session's first facts is not a change — the request that carried them announces the
-	 * session's own result anyway — but a display fact that differs from what this instance already
-	 * held is data that changed, so the display is told about it now rather than at the next save: a
-	 * rename rides along with consumption, it does not wait for it.
+	 * session's own result anyway — but a rename or a move to another direct parent changes what the
+	 * row is named or where it hangs, so the display is told about it now rather than at the next
+	 * save: a rename rides along with consumption, it does not wait for it. The agent definition is
+	 * carried with the same facts and read by the next display read; a delivery that only adds it
+	 * does not open a redraw of its own.
 	 */
 	const remember = (session: SessionFacts): void => {
 		const before = identityOf(session.sessionId);

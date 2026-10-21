@@ -519,10 +519,10 @@ describe("the Total's time is the main session's span, beside its subagents' own
 		// The two parallel subagents each state their *own* activity's runtime on their own row — the
 		// 360,000 ms between the two edges of each of their Rounds — beside the main session's span
 		// rather than inside it.
-		expect(rowOf(lines, CHILD_A_HANDLE)).toContain("Run: 6m");
-		expect(rowOf(lines, CHILD_B_HANDLE)).toContain("Run: 6m");
+		expect(rowOf(lines, `[task] ${CHILD_A_HANDLE}`)).toContain("Run: 6m");
+		expect(rowOf(lines, `[scout] ${CHILD_B_HANDLE}`)).toContain("Run: 6m");
 		// The grandchild's row is its own execution's two minutes again, one depth down.
-		expect(rowOf(lines, GRAND_HANDLE)).toContain("Run: 2m");
+		expect(rowOf(lines, `[task] ${GRAND_HANDLE}`)).toContain("Run: 2m");
 	});
 });
 
@@ -615,8 +615,10 @@ describe("every change assembled survives a commit and a new process (P24)", () 
 
 		// Each row's own figures are the ones this run gave it: the first child's own amount, the second
 		// child's reference amount, the grandchild's own two buckets — with every one of their runtimes
-		// restored from the document rather than held in memory. None of them states the cached share of
-		// its own conversation input: a descendant row is read for what that session consumed.
+		// restored from the document rather than held in memory. The agent definition is a host fact
+		// and is not written to the document, so these restored rows carry no category until a host
+		// reports it again. None of them states the cached share of its own conversation input: a
+		// descendant row is read for what that session consumed.
 		const childA = rowOf(lines, CHILD_A_HANDLE);
 		const grand = rowOf(lines, GRAND_HANDLE);
 		const childB = rowOf(lines, CHILD_B_HANDLE);
