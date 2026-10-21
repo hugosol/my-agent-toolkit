@@ -115,10 +115,16 @@ function writePanelConfig(directory: string): string {
 	//
 	// The operations the panel can only ever invoke on request point at this run's own directory:
 	// this interop run never calls them, and they must never name a script the user cares about.
+	//
+	// The panel release requires an explicit Herdr workspace target even though these runs never
+	// create a Bot; the name is never looked up here, but a missing `[herdr]` section fails startup.
 	writeFileSync(
 		file,
 		[
 			`listen_addr = "127.0.0.1:0"`,
+			``,
+			`[herdr]`,
+			`workspace_name = 'unused'`,
 			``,
 			`[sessions]`,
 			`online_timeout_seconds = 30`,
