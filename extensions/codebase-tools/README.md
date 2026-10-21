@@ -37,7 +37,14 @@ omp --no-extensions -e <repository>/entrypoints/omp-auto/codebase-tools.ts --mod
 
 Load one mode's entrypoint for this extension, never both: the host adds extension sources rather than
 merging them, so both modes in one process would bind the extension twice (two State stores, two commands,
-two marker lines).
+two marker lines). There is no duplicate-name detection, automatic merge or misuse warning behind that rule —
+the load source is the only place the choice exists. The choice is per extension: a mixed session names
+each extension's chosen entrypoint file, while a discovery directory contributes only the modes it contains
+(`entrypoints/omp` is manual-only, `entrypoints/omp-auto` is automatic-only). The selected policy document
+is read once at binding, so an edit takes effect with the next process, not the running session.
+
+These instructions cover codebase-tools' existing pi and OMP combinations. They do not add another host
+or change the support record.
 
 What the automatic mode does, and does not do:
 
@@ -130,7 +137,7 @@ the startup-mode frames in
 [`tests/codebase-tools/startup-modes-dock.test.ts`](../../tests/codebase-tools/startup-modes-dock.test.ts),
 the declaration in [`definition.ts`](definition.ts), and the migration's recorded green run below.
 
-## H1b — automatic startup mode interactive acceptance (visual)
+## H1b — automatic startup mode interactive acceptance (P8, human-led marker display)
 
 Same isolated state directory and exact harness install as H1; the only change is the entrypoint:
 
@@ -139,6 +146,10 @@ Same isolated state directory and exact harness install as H1; the only change i
 PI_CODING_AGENT_DIR=<state> bun \
   .cache/omp-baseline/18.5.0/node_modules/@oh-my-pi/pi-coding-agent/src/cli.ts \
   --no-extensions -e entrypoints/omp-auto/codebase-tools.ts --model <provider>/<model>
+
+# pi — the same automatic startup mode through pi's own entrypoint
+PI_CODING_AGENT_DIR=<state> pi \
+  --no-extensions -e <repository>/entrypoints/pi-auto/codebase-tools.ts --model <provider>/<model>
 ```
 
 Accept only when all of these hold in the real TUI:
@@ -159,7 +170,9 @@ The automated face of every point above is asserted in
 [`tests/codebase-tools/startup-modes-dock.test.ts`](../../tests/codebase-tools/startup-modes-dock.test.ts)
 on the real OMP harness and in
 `bun scripts/pi-codebase-tools-smoke.ts --mode auto` on the real pi CLI; the visual check confirms only
-what a rendered terminal shows.
+what a rendered terminal shows. Until the user confirms that rendered observation, the visual part of
+P8 stays **unverified**; the automated results prove the State, contribution and frame behavior, not
+the terminal's drawing.
 
 ## H1c — startup recovery interactive acceptance (P9, human-led marker display)
 

@@ -23,7 +23,21 @@ blocks select the initial choice. The shared assembly's
 [`startup-modes.ts`](harnesses/startup-modes.ts) derives each document's absolute path from its own
 module location, so the mode is not affected by the working directory. Load **one** mode's
 entrypoint for this extension, never both: the host adds extension sources rather than merging
-them, so two modes in one process would bind the extension twice.
+them, so two modes in one process would bind the extension twice. There is no duplicate-name
+detection, automatic merge or misuse warning behind that rule — the load source is the only place
+the choice exists.
+
+**The choice is per extension, and the mode owns only the startup policy.** A session may load
+codebase-tools' automatic entrypoint beside connect-bot's manual one by naming each extension's
+chosen file; a discovery directory contributes only the modes it contains (`entrypoints/omp` is
+manual-only, `entrypoints/omp-auto` is automatic-only). The panel endpoint and request budget are
+not mode-specific: both entrypoints read the same [`config.yaml`](config.yaml) once per process,
+so choosing a startup mode neither duplicates nor changes the business connection parameters, and
+an edit to that file still takes effect only in the next process.
+
+Automatic startup covers connect-bot's existing support combination (OMP). This page does not add
+a pi adapter or another host, and it does not change the support record or deploy anything
+formally.
 
 **Loading is not enabling, and a startup target is not a connection.** The automatic document states
 `enabled: true`, and the framework hands that enabling intent to the same business operation
@@ -118,6 +132,94 @@ default 30s) and its fixed 5s scan cadence are server-side numbers derived from 
 extension sends, so adjusting `requestTimeoutMs` requires **no change to herdr-bot**
 ([`tests/connect-bot/panel-registration-lifecycle.test.ts`](../../tests/connect-bot/panel-registration-lifecycle.test.ts)).
 Both terms are this context's vocabulary in [GLOSSARY.md](GLOSSARY.md).
+
+## H1d — automatic startup interactive acceptance (P18, P19; visual)
+
+The automated face of this round is
+[`tests/harness-dock/connect-bot-startup.test.ts`](../../tests/harness-dock/connect-bot-startup.test.ts):
+a held register keeps the marker off while the independent capture endpoint already received the
+first model request; a refusal renders the existing failure text, sends no state report or
+heartbeat, is not retried, and leaves later turns and the manual command working; the real
+isolated panel's own table shows the startup row, its state report and the command's removal.
+What remains to a person is the rendered terminal: no enabled marker before a valid receipt, the
+marker after it, and the failure feedback with no marker. Prepare a throwaway deployment and an
+isolated panel; do not point any of this at the formal panel, the default agent state or a running
+session.
+
+```bash
+ACCEPT_ROOT=.cache/connect-bot-accept
+mkdir -p "$ACCEPT_ROOT/agent-state" "$ACCEPT_ROOT/sessions" "$ACCEPT_ROOT/work" \
+  "$ACCEPT_ROOT/deployment/extensions" "$ACCEPT_ROOT/panel"
+
+# The deployment copy the entrypoint imports; only its copied config.yaml is changed below.
+cp -r framework adapters entrypoints "$ACCEPT_ROOT/deployment/"
+cp -r extensions/connect-bot "$ACCEPT_ROOT/deployment/extensions/"
+
+# An isolated herdr-bot: its own config on a port no formal panel uses, mDNS off.
+cat > "$ACCEPT_ROOT/panel/herdr-bot.toml" <<'TOML'
+listen_addr = "127.0.0.1:18787"
+
+[herdr]
+workspace_name = 'unused'
+
+[sessions]
+online_timeout_seconds = 30
+offline_retention_seconds = 30
+
+[operations.start]
+script = 'unused.bat'
+working_directory = '.'
+
+[operations.stop]
+script = 'unused.bat'
+working_directory = '.'
+
+[mdns]
+enabled = false
+TOML
+"${HERDR_BOT_BINARY:-../herdr-bot/backend/target/release/herdr-bot.exe}" \
+  --config "$ACCEPT_ROOT/panel/herdr-bot.toml"
+
+# In another terminal, point only the deployment copy at that panel.
+printf 'endpoint: "http://127.0.0.1:18787"\nrequestTimeoutMs: 1000\n' \
+  > "$ACCEPT_ROOT/deployment/extensions/connect-bot/config.yaml"
+```
+
+The command's `${HERDR_BOT_BINARY:-…}` fallback names the sibling checkout's release build; set
+`HERDR_BOT_BINARY` when the panel binary lives elsewhere. The isolated agent state starts empty, so
+authenticate the chosen model for that state by the host's normal login/API-key step, as the
+[framework isolation rule](../../framework/README.md#human-acceptance-and-cutover) describes — never
+by reading the formal configuration. Launch the automatic entrypoint with that isolated state, and
+start the recording before the process starts:
+
+```bash
+PI_CODING_AGENT_DIR="$PWD/$ACCEPT_ROOT/agent-state" bun \
+  .cache/omp-baseline/18.5.0/node_modules/@oh-my-pi/pi-coding-agent/src/cli.ts \
+  --no-extensions -e "$PWD/$ACCEPT_ROOT/deployment/entrypoints/omp-auto/connect-bot.ts" \
+  --session-dir "$PWD/$ACCEPT_ROOT/sessions" --cwd "$PWD/$ACCEPT_ROOT/work" \
+  --model <provider>/<model>
+```
+
+**P18 — the marker follows the receipt.** At the session's start there is no `◐ connectBot` line
+and no enabled notice. The startup register is attempted without a command; once the isolated panel
+answers, the notification `已接入 herdr-bot 面板（当前 1 个在线会话）` appears (the count is the
+panel's own) and the marker line appears with it. A recording from before launch through that
+notice is the evidence; the first request may already have been sent while no marker was shown —
+that is the non-blocking behavior, not a missing startup. The panel's read side
+(`curl -N http://127.0.0.1:18787/api/sessions/events`) shows the same row arriving, so the
+terminal and the panel's own table carry the same order. The pre-receipt interval is asserted
+exactly by the held-register case above; the visual check confirms how those two states render.
+
+**P19 — a failed registration stays off.** Stop the panel, exit the session, and launch the same
+automatic entrypoint again in a fresh process. The terminal shows
+`无法连接 herdr-bot，未启用；请确认面板已启动`, no marker and no enabled notice. Type a prompt: the
+agent still answers. Restart the panel, then run `/connect-bot`; the marker and the connected
+notice appear, showing the failure was not retried on its own and the original command remains the
+operator's retry. Capture the failure terminal and the later command result.
+
+Until the user confirms these rendered observations, the visual part of P18/P19 stays
+**unverified**; the automated results prove the protocol, State latch and order, not how the
+terminal draws them.
 
 ## H3b — cut over connect-bot
 
