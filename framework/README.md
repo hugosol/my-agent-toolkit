@@ -106,7 +106,9 @@ environment variable. The `--no-extensions -e` pair is the explicit-only root de
 The per-extension runbooks that carry H1 and H3 are:
 
 - codebase-tools: [`extensions/codebase-tools/README.md`](../extensions/codebase-tools/README.md#h1--interactive-tui-acceptance-visual)
-- connect-bot: [`extensions/connect-bot/README.md`](../extensions/connect-bot/README.md#h3b--cut-over-connect-bot)
+- connect-bot: [`extensions/connect-bot/README.md`](../extensions/connect-bot/README.md#h1d--automatic-startup-interactive-acceptance-p18-p19-visual)
+  for the automatic startup's marker/failure display, and
+  [`#h3b`](../extensions/connect-bot/README.md#h3b--cut-over-connect-bot) for the cutover round
 
 ### H2 — openai-codex layer-2 real-credential delivery
 

@@ -12,8 +12,13 @@ every capability. The complete
 distinguishes capability mappings from assembly, native types and loader support.
 Extensions import the shared framework source directly; `omp` discovers the thin
 entrypoints under [`entrypoints/omp/`](entrypoints/omp), which in turn use the implementations under
-[`extensions/`](extensions). The architecture decision is
-[ADR 0002](docs/adr/0002-semantic-extension-framework.md).
+[`extensions/`](extensions). Extensions with two startup modes also have per-extension automatic
+entrypoints under [`entrypoints/omp-auto/`](entrypoints/omp-auto) and
+[`entrypoints/pi-auto/`](entrypoints/pi-auto); the entrypoint the host loads is the mode choice, so
+load one mode per extension and never both. [codebase-tools](extensions/codebase-tools/README.md#startup-modes)
+and [connect-bot](extensions/connect-bot/README.md#startup-modes) state the launch commands, each
+mode's initial choice, and the difference between loading, a startup target and actual State. The
+architecture decision is [ADR 0002](docs/adr/0002-semantic-extension-framework.md).
 
 The supported harness is one **exact** version combination, not a range:
 `@oh-my-pi/pi-coding-agent@18.5.0` + Windows x64 + Bun 1.4.2. The record, its evidence and the
