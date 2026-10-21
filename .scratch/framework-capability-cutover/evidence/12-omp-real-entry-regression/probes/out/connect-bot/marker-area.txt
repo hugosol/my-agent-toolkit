@@ -1,9 +1,0 @@
---- render 1 (aboveEditor)
-
---- render 2 (aboveEditor)
-◐ connectBot
---- render 3 (aboveEditor)
-
---- render 4 (aboveEditor)
-◐ connectBot
---- render 5 (aboveEditor)
