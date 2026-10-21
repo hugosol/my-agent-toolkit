@@ -1,6 +1,6 @@
 /**
- * connect-bot's two startup modes at the OMP assembly seam (S1; P2, P3, P4, P15, P16, P18,
- * P19, P23, P26, P33).
+ * connect-bot's two startup modes at the OMP assembly seam (S1; P2, P3, P4, P6, P15, P16,
+ * P18, P19, P23, P26, P33, P34).
  *
  * The extension is driven exactly as the loader drives it: one mode's assembly binds the shared
  * definition against the OMP double, a native session start is delivered as the host delivers it,
@@ -44,6 +44,8 @@ const DISCONNECTING = "正在断开 herdr-bot 面板，请稍后重试";
 const NO_UI_REFUSAL = "当前模式无 UI，不支持接入面板";
 /** The endpoint the extension's own `config.yaml` ships; the file is the only source. */
 const ENDPOINT = "http://127.0.0.1:8787";
+/** The request budget the same file ships, in milliseconds. */
+const SHIPPED_TIMEOUT_MS = 1000;
 
 /** One outbound request the extension made, as the framework's call received it. */
 interface Request {
@@ -101,10 +103,15 @@ const policyDirectories: string[] = [];
 
 /** One startup policy document for connect-bot, in a directory of its own. */
 function policyOf(choice: boolean): string {
+	return policyWithText(`connect-bot:\n  enabled: ${String(choice)}\n`);
+}
+
+/** One policy document written verbatim, for a case that states an illegal shape. */
+function policyWithText(text: string): string {
 	const directory = mkdtempSync(path.join(tmpdir(), "connect-bot-startup-"));
 	policyDirectories.push(directory);
 	const file = path.join(directory, "policy.yaml");
-	writeFileSync(file, `connect-bot:\n  enabled: ${String(choice)}\n`);
+	writeFileSync(file, text);
 	return file;
 }
 
@@ -375,6 +382,63 @@ describe("startup keeps the existing refusal rules (P23)", () => {
 		expect(double.notifications).toEqual([]);
 		expect(double.timers).toEqual([]);
 		expect(double.widgets).toEqual([]);
+	});
+});
+
+describe("both startup modes consume the extension's one business configuration (P6)", () => {
+	test("the automatic and command paths send to the configured endpoint with the configured budget", async () => {
+		// The endpoint and budget are the extension's own `config.yaml`, not the startup policy:
+		// each mode's request is checked at the wire, so the mode cannot be carrying a copy.
+		const automaticPanel = panel();
+		const automatic = bound(connectBotAuto, automaticPanel.request);
+		const automaticCtx = contextOf(automatic, "startup-config-auto", "E:/work/config-auto", "deepseek");
+		const automaticNotice = automatic.nextNotification();
+		automatic.startSession(automaticCtx);
+		await automaticNotice;
+
+		const manualPanel = panel();
+		const manual = bound(connectBotManual, manualPanel.request);
+		const manualCtx = contextOf(manual, "startup-config-manual", "E:/work/config-manual", "deepseek");
+		manual.startSession(manualCtx);
+		// The manual mode starts no request; its command is still the one business path.
+		expect(manualPanel.requests).toEqual([]);
+		const manualNotice = manual.nextNotification();
+		manual.run("connect-bot", "", manualCtx);
+		await manualNotice;
+
+		for (const sent of [automaticPanel.requests[0], manualPanel.requests[0]]) {
+			expect(sent?.url).toBe(`${ENDPOINT}${EVENTS_PATH}`);
+			expect(sent?.init.timeoutMs).toBe(SHIPPED_TIMEOUT_MS);
+		}
+	});
+});
+
+describe("an illegal startup policy refuses the binding before any business effect (P34)", () => {
+	test("a non-boolean enabled is reported on the non-model channel and nothing is registered or sent", () => {
+		const file = policyWithText('connect-bot:\n  enabled: "yes"\n');
+		const { requests, request } = panel();
+		const double = ompDouble();
+		setPanelRequestForTest(request);
+
+		const { diagnostics } = withCapturedStderr(() => connectBotOmp(file)(double.api));
+
+		// The failure names the loaded block, its field and the required type, on stderr where the
+		// startup's diagnostic goes.
+		expect(diagnostics).toContain("connect-bot: configuration error (config)");
+		expect(diagnostics).toContain('"enabled" under "connect-bot"');
+		expect(diagnostics).toContain("requires a boolean");
+
+		// No command, session subscription or startup activation was registered; driving the
+		// session and a round produces no panel request, marker, feedback or heartbeat.
+		expect(double.commandNames()).toEqual([]);
+		const ctx = contextOf(double, "startup-refused", "E:/work/refused", "deepseek");
+		double.startSession(ctx);
+		double.startRun(ctx);
+		expect(requests).toEqual([]);
+		expect(double.notifications).toEqual([]);
+		expect(double.widgets).toEqual([]);
+		expect(double.timers).toEqual([]);
+		expect(double.appended).toEqual([]);
 	});
 });
 
