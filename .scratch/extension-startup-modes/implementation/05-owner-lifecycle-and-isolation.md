@@ -8,7 +8,7 @@
 
 **Blocked by:** 03: connect-bot 非阻塞自动登记成功路径。
 
-**Status:** ready-for-agent
+**Status:** in-progress
 
 依据：[已批准契约](../contract.md)、[Spec](../spec.md)。本票不依赖 04，迟到有效响应与普通失败／准入路径可分别实现验证。
 
@@ -31,3 +31,21 @@
 | P7 | connect-bot：当前运行不强制变化，下次独立启动采用新配置 | 05 | 05 |
 | P25 | codebase-tools：后续 new/resume/fork 与同 Owner 导航 | 02 | 02 |
 | P25 | connect-bot：后续 new/resume/fork 与同 Owner 导航 | 05 | 05 |
+
+### 集成验收（集成 helper）
+
+- **集成同步**：集成提交 `40d5e7ebc90381d33e5afd31bf8d2b0d448572c7`（dev）合回本分支；冲突为
+  `extensions/connect-bot/README.md`、`extensions/connect-bot/harnesses/omp-assembly.ts`、
+  `framework/docs/framework-capabilities.md`。装配冲突取 dev 侧 `typeof pi.on` 守卫（与 03/04
+  集成修复后的文件逐字相同，缺订阅的宿主仍经框架登记失败路径报告）；README 与 framework
+  文档合并双方证据与语义段落。
+- **本轮修复**（仅测试夹具）：`tests/connect-bot/support/herdr-bot.ts` 增加当前 sibling release
+  必需的 `[herdr] workspace_name`；`tests/connect-bot/harness-exit-budget.test.ts` 与
+  `tests/harness-dock/consumer-regression.test.ts` 的部署树补入 `entrypoints/startup`，否则手动
+  装配按仓库布局解析策略文档时拒绝绑定。
+- **验证**：`bun run typecheck` → tsc 无诊断，authoring 58 files / 3 declarations / 0
+  diagnostics；`bun run check:integrations` → 结构性集成分析通过；静默窗口 `bun run test` →
+  **1592 pass / 0 fail / exit 0**，177 files，581.24s（HEAD `9a5faa1`，默认 sibling herdr-bot，
+  真实面板用例包含在内）。
+- **限制**：本票自动验收范围内无未通过用例；P8/P9/P18/P19 的人工可视／终端确认仍按实现报告
+  留给用户。

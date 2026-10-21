@@ -40,7 +40,15 @@ the panel has answered or not. The framework does not add a completion barrier, 
 general background queue for this: an attempt the panel refuses is simply over, and a later
 `/connect-bot` is the operator's retry. An `off` while an attempt is on the wire invalidates it, and
 the end of the owner's session invalidates every attempt that owner still has outstanding, so a
-late receipt cannot enable a session that has moved on.
+late receipt cannot enable a session that has moved on. The existing initialization and subagent
+integration waits are untouched by this: the startup entry is called beside them, not added to
+them.
+
+**The startup attempt belongs to the process's first main session start.** A new, resumed or forked
+session after it — and a navigation that keeps the same owner — follows the ordinary session rules:
+it starts unarmed unless something in this process arms it, and the policy is not applied again. An
+edit to the selected document likewise takes effect only in the next process; the running process
+keeps the value and the connection it read at binding.
 
 **State is not remembered across starts.** connect-bot still declares `memory` persistence and
 `none` inheritance. A previous process's row, an old persisted payload, or a subagent's activity
@@ -54,10 +62,16 @@ directed-command semantics, including repeated invocations and the existing no-U
 
 Evidence: [`tests/connect-bot/startup-modes.test.ts`](../../tests/connect-bot/startup-modes.test.ts)
 drives both entrypoints, the controlled latch, the failure shapes and the admission refusals at the
-OMP assembly seam; [`tests/harness-dock/connect-bot-startup.test.ts`](../../tests/harness-dock/connect-bot-startup.test.ts)
+OMP assembly seam;
+[`tests/connect-bot/startup-lifecycle.test.ts`](../../tests/connect-bot/startup-lifecycle.test.ts)
+holds the attempt across an `off`, a transfer and a disposal on a controlled clock;
+[`tests/harness-dock/connect-bot-startup.test.ts`](../../tests/harness-dock/connect-bot-startup.test.ts)
 loads the real entrypoint files into the fixed harness, reads the panel double's requests and the
 marker frames, and restores sessions across independent processes — including a planted old
-`{enabled:true}` payload and the no-payload control (P19, P22, P24).
+`{enabled:true}` payload and the no-payload control (P19, P22, P24);
+[`tests/harness-dock/connect-bot-lifecycle.test.ts`](../../tests/harness-dock/connect-bot-lifecycle.test.ts)
+runs the races, the post-start navigation and a policy edit beside codebase-tools in real isolated
+sessions.
 
 ## Transport and configuration
 

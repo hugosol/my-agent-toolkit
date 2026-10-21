@@ -25,6 +25,7 @@ import type { ExtensionDefinition } from "../../../framework/interface/details/d
 import type { FollowedAccessReader } from "../../../framework/core/followed-owners";
 import type { FeedbackLevel } from "../../../framework/interface/feedback";
 import type { CatalogPriceSource, ProviderAccess } from "../../../framework/interface/provider";
+import type { SubagentIntegration } from "../../../framework/interface/subagent";
 import type {
 	RoundEvent,
 	SemanticEventHandlers,
@@ -434,6 +435,13 @@ export interface PortDoubleOptions {
 	 * a process boundary, delivered by a process that really runs one.
 	 */
 	readonly observationAccess?: SessionObservationAccess;
+	/**
+	 * The subagent integration this port's harness has to settle, when a suite drives a harness
+	 * whose wiring is still open. Omitted models a harness that states no integration member, so
+	 * the initialization delivery carries `none` and nothing waits for it — the same shape as the
+	 * in-process doubles that have nothing to settle.
+	 */
+	readonly subagentIntegration?: () => SubagentIntegration | Promise<SubagentIntegration>;
 }
 
 export function portDouble(options: PortDoubleOptions = {}): PortDouble {
@@ -574,6 +582,7 @@ export function portDouble(options: PortDoubleOptions = {}): PortDouble {
 		},
 		...(options.modelPrices === undefined ? {} : { modelPrices: options.modelPrices }),
 		...(options.providerAccess === undefined ? {} : { providerAccess: options.providerAccess }),
+		...(options.subagentIntegration === undefined ? {} : { subagentIntegration: options.subagentIntegration }),
 		...(observationAccess === undefined ? {} : { sessionObservationAccess: observationAccess }),
 		reportDiagnostic: message => {
 			diagnostics.push(message);

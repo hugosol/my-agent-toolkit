@@ -844,7 +844,12 @@ fork or tree navigation, and not on a subagent, which owns no cell. The rule is:
   is not a valid receipt leaves it off with the extension's existing feedback, schedules none of the
   extension's own effects and is not retried. The field's declared persistence still decides what a later
   start restores: connect-bot's `memory` field never reads an old branch payload, and the startup activation
-  itself writes no value — only the extension's receipt-backed activation does.
+  itself writes no value — only the extension's receipt-backed activation does. The entry is not a
+  completion barrier: the first model request still waits for the implementation's `initialize` and the
+  harness's settled subagent integration exactly as it did before startup modes existed, and never for the
+  startup effect. What a superseded effect does with a late result is the consumer's own rule — connect-bot's
+  `off` and its owner's end invalidate the attempt, so the receipt cannot write State, start a heartbeat or
+  replace a timer after the boundary.
 
 **What the choice is not.** Loading an extension is not enabling it, and an enabling choice is an *intent*:
 the framework records only the declared `session-entry` value, and it records it as this session's value rather
