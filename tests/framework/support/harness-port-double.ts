@@ -205,6 +205,12 @@ export interface PortBindingOptions extends Partial<ExtensionImplementation> {
 	 * model a file without a file system.
 	 */
 	readonly config?: ConfigSource;
+	/**
+	 * The startup policy document this assembly's entrypoint selected, when a suite drives the
+	 * startup rule. It is handed to the binding exactly as an adapter hands its assembly's option
+	 * over, and the document is read through {@link config}'s seam.
+	 */
+	readonly startupPolicy?: string;
 }
 
 /** The recorded port of one assembly, and the driver a suite observes behavior through. */
@@ -642,7 +648,7 @@ export function portDouble(options: PortDoubleOptions = {}): PortDouble {
 			for (const sink of receivingSinks.values()) sink.lost(source);
 		},
 		bind(definition, options = {}) {
-			const { config, factory, ...implementation } = options;
+			const { config, startupPolicy, factory, ...implementation } = options;
 			return bindExtension(
 				definition,
 				port,
@@ -653,6 +659,7 @@ export function portDouble(options: PortDoubleOptions = {}): PortDouble {
 				// wants to observe the once-per-implementation lifecycle binds once and drives it.
 				factory ?? (() => implementation),
 				config,
+				startupPolicy,
 			);
 		},
 		run(name, options = {}) {

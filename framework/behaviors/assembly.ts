@@ -38,7 +38,7 @@ export function createAssemblyBinding(
 	return {
 		bind: port => bindExtension(definition, port, state, observations, resolveImplementation, {
 			baseDir: options.configBaseDir,
-		}),
+		}, options.startupPolicy),
 		dispose: () => access.dispose(),
 	};
 }

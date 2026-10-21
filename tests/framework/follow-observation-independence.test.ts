@@ -185,6 +185,7 @@ describe("a followed field reads the Owner this process serves, and follows its 
 				owner: OWNER,
 				event: { kind: "session_start", reason: "new" },
 				statePayloads: [{ [FIELD]: true }],
+				persist: () => {},
 				publishMarker: () => {},
 			});
 			expect(localOwnerAccess(target)).toBeDefined();
@@ -256,6 +257,7 @@ describe("a followed field reads the Owner this process serves, and follows its 
 				owner: OWNER,
 				event: { kind: "session_start", reason: "new" },
 				statePayloads: [{ [FIELD]: true }],
+				persist: () => {},
 				publishMarker: () => {},
 			});
 			following.bind(FOLLOW_PROBE, {});
@@ -272,6 +274,7 @@ describe("a followed field reads the Owner this process serves, and follows its 
 				owner: OWNER,
 				event: { kind: "session_end", reason: "disposed" },
 				statePayloads: [],
+				persist: () => {},
 				publishMarker: () => {},
 			});
 			expect(localOwnerAccess(target)).toBeUndefined();
@@ -284,6 +287,7 @@ describe("a followed field reads the Owner this process serves, and follows its 
 				owner: OWNER,
 				event: { kind: "session_start", reason: "resume" },
 				statePayloads: [{ [FIELD]: false }],
+				persist: () => {},
 				publishMarker: () => {},
 			});
 			expect(localOwnerAccess(target)).toBeDefined();

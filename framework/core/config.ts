@@ -220,7 +220,7 @@ function resolveConfigDeclaration(definition: ExtensionDefinition): ResolvedConf
  * assembly supplied, an absolute one is left as it was declared, and with no directory
  * supplied the path is used as it is — this process's own working directory.
  */
-function resolveDeclaredFile(path: string, baseDir: string | undefined): string {
+export function configFilePath(path: string, baseDir: string | undefined): string {
 	if (baseDir === undefined || isAbsolute(path)) return path;
 	return resolve(baseDir, path);
 }
@@ -282,7 +282,7 @@ function readDocument(file: string, source: ConfigSource): unknown | undefined {
 export function readConfig(path: string, options: ConfigReadOptions = {}): Readonly<Record<string, unknown>> {
 	const fields = options.fields ?? {};
 	assertBoundFieldTypes(fields);
-	const file = resolveDeclaredFile(path, options.baseDir);
+	const file = configFilePath(path, options.baseDir);
 
 	const document = readDocument(file, options);
 	if (document === undefined) {
@@ -329,7 +329,7 @@ export function readConfigDocument(
 	path: string,
 	source: ConfigSource = {},
 ): Readonly<Record<string, unknown>> | undefined {
-	const file = resolveDeclaredFile(path, source.baseDir);
+	const file = configFilePath(path, source.baseDir);
 	const document = readDocument(file, source);
 	if (document === undefined) return undefined;
 	if (document === null) return {};

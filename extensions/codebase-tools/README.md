@@ -3,7 +3,57 @@
 Routes the agent's code exploration toward the codebase-memory-mcp graph and LSP, controlled by
 `/codebase-tools`. The declaration is [`definition.ts`](definition.ts), its shared prompts are
 under [`shared-logic/`](shared-logic). Its thin assemblies are [`harnesses/omp.ts`](harnesses/omp.ts) and
-[`harnesses/pi.ts`](harnesses/pi.ts); both consume the same unchanged definition and prompt resources.
+[`harnesses/pi.ts`](harnesses/pi.ts) for manual mode, and [`harnesses/omp-auto.ts`](harnesses/omp-auto.ts)
+and [`harnesses/pi-auto.ts`](harnesses/pi-auto.ts) for automatic startup mode; all four consume the same
+unchanged definition and prompt resources through the shared assembly modules
+([`omp-assembly.ts`](harnesses/omp-assembly.ts), [`pi-assembly.ts`](harnesses/pi-assembly.ts)).
+
+## Startup modes
+
+The extension has two startup modes. The mode is chosen by the entrypoint the host loads — the host's normal
+`-e`/`--extension` parameter and nothing else — and both modes share the definition, the adapter assembly and
+every behavior. The only difference is the startup policy document each entrypoint selects
+([`entrypoints/startup/manual.yaml`](../../entrypoints/startup/manual.yaml) and
+[`entrypoints/startup/auto.yaml`](../../entrypoints/startup/auto.yaml)):
+
+| Mode | pi entrypoint | OMP entrypoint | A session with no history starts |
+| --- | --- | --- | --- |
+| Manual (existing) | `entrypoints/pi/codebase-tools.ts` | `entrypoints/omp/codebase-tools.ts` | off; `/codebase-tools` enables it |
+| Automatic startup | `entrypoints/pi-auto/codebase-tools.ts` | `entrypoints/omp-auto/codebase-tools.ts` | on, before the first model request is planned |
+
+```bash
+# pi — manual mode (the original invocation)
+pi --no-extensions -e <repository>/entrypoints/pi/codebase-tools.ts
+
+# pi — automatic startup mode
+pi --no-extensions -e <repository>/entrypoints/pi-auto/codebase-tools.ts
+
+# OMP — manual mode (the original invocation; the discovery root holds only manual entrypoints)
+omp --no-extensions -e <repository>/entrypoints/omp --model <provider>/<model>
+
+# OMP — automatic startup mode
+omp --no-extensions -e <repository>/entrypoints/omp-auto/codebase-tools.ts --model <provider>/<model>
+```
+
+Load one mode's entrypoint for this extension, never both: the host adds extension sources rather than
+merging them, so both modes in one process would bind the extension twice (two State stores, two commands,
+two marker lines).
+
+What the automatic mode does, and does not do:
+
+- It applies its choice at the process's **first main session start**, synchronously, so the first model
+  request already carries the init prompt; it records the enabling value in the existing session-entry format,
+  so a later process — in either mode — restores it.
+- A recorded value always wins. A session whose branch recorded `{enabled: false}` starts off even in
+  automatic mode, and a session that recorded `{enabled: true}` stays on rather than being toggled off.
+- It is a target, not a command. It never types `/codebase-tools`, and it does not run the toggle's
+  notification; the marker line is on the area from the session's own start.
+- It applies once per process. A new, resumed or forked session after startup follows the ordinary session
+  rules, and `/codebase-tools` after startup is the same toggle it always was.
+- Startup does not reset prompt-injection progress, rewrite history, or change subagent `follow` behavior.
+
+The full behavior is specified in
+[extension startup modes and the startup policy](../../framework/docs/framework-capabilities.md#extension-startup-modes-and-the-startup-policy).
 
 ## pi adapter
 
@@ -20,18 +70,22 @@ stops new contributions and does not remove old messages. Existing history is pr
 of provider cache hits. MCP/LSP tool availability remains the user's pi environment's responsibility.
 
 Subagent integration is the framework's, and this extension's activation reaches its subagents: the
-declaration opts in with `inheritance: "follow"`, and the pi assembly states the entry a subagent
-provider loads into the sessions it spawns (`entrypoints/pi/codebase-tools.ts`), which is what makes a
+declaration opts in with `inheritance: "follow"`, and each mode's pi assembly states the entry a subagent
+provider loads into the sessions it spawns — the mode's own entrypoint
+(`entrypoints/pi/codebase-tools.ts` or `entrypoints/pi-auto/codebase-tools.ts`) — which is what makes a
 spawned session follow the owning session's current activation value instead of reading the declared
 default. Where the session runs in another process, the value is read through the framework's local
 access ([framework capabilities](../../framework/docs/framework-capabilities.md#local-access-adapter-facing)):
 the owning session's process publishes it, the spawned session's process reads it, and while that
 access is not reached the spawned session keeps working on the declared default. The loading itself
-belongs to the pinned provider, not to this assembly.
+belongs to the pinned provider, not to this assembly. Startup policy is a main-session rule: a spawned
+session is not its own owner, so loading the automatic entrypoint there neither enables it nor registers
+anything else.
 
 The repeatable isolated check is `bun scripts/pi-codebase-tools-smoke.ts`; `--pi <CLI path>` or `PI_CLI`
-selects the installed pi and `PI_NODE` selects the Node executable for a script/shim installation.
-It uses temporary state, dummy credentials and a local capture server, never the formal configuration.
+selects the installed pi, `PI_NODE` selects the Node executable for a script/shim installation, and
+`--mode auto` drives the automatic entrypoint (manual is the default). It uses temporary state, dummy
+credentials and a local capture server, never the formal configuration.
 The exercised combination and runtime limitation are recorded in the framework's
 [pi support evidence](../../framework/docs/harness-support.md#pi-codebase-tools-adapter-evidence).
 
@@ -56,7 +110,40 @@ rather than rendered output: notify frames in
 [`tests/codebase-tools/command-toggle.test.ts`](../../tests/codebase-tools/command-toggle.test.ts), the
 marker area (`semantic-extensions`, above the editor, text `◈ codeBaseTools`) in
 [`tests/codebase-tools/marker-lifecycle.test.ts`](../../tests/codebase-tools/marker-lifecycle.test.ts),
+the startup-mode frames in
+[`tests/codebase-tools/startup-modes-dock.test.ts`](../../tests/codebase-tools/startup-modes-dock.test.ts),
 the declaration in [`definition.ts`](definition.ts), and the migration's recorded green run below.
+
+## H1b — automatic startup mode interactive acceptance (visual)
+
+Same isolated state directory and exact harness install as H1; the only change is the entrypoint:
+
+```bash
+# from the repository root; <state> is a throwaway directory, e.g. .cache/tui-accept/agent-state-auto
+PI_CODING_AGENT_DIR=<state> bun \
+  .cache/omp-baseline/18.5.0/node_modules/@oh-my-pi/pi-coding-agent/src/cli.ts \
+  --no-extensions -e entrypoints/omp-auto/codebase-tools.ts --model <provider>/<model>
+```
+
+Accept only when all of these hold in the real TUI:
+
+1. a clean session starts **enabled with no command typed**: the marker `◈ codeBaseTools` is on the
+   framework's area from the session's start, and the first turn's request carries the init prompt;
+2. no `codeBaseTools enabled` notification appears: startup is not a command and announces nothing;
+3. `/codebase-tools` → notification `codeBaseTools disabled` and the marker is cleared; the next turn
+   adds no new contribution;
+4. `/codebase-tools` again → notification `codeBaseTools enabled`, the marker returns, and the next turn
+   contributes again (the reminder, not a second init);
+5. start a new session in the same TUI (`/new`): it starts **off** (no marker, no contribution) until its
+   own `/codebase-tools` — the startup choice applies once per process;
+6. restart the harness with `--resume <the enabled session file>`: the marker is on from the session's
+   start, the first turn contributes, and the session file gains no second startup record.
+
+The automated face of every point above is asserted in
+[`tests/codebase-tools/startup-modes-dock.test.ts`](../../tests/codebase-tools/startup-modes-dock.test.ts)
+on the real OMP harness and in
+`bun scripts/pi-codebase-tools-smoke.ts --mode auto` on the real pi CLI; the visual check confirms only
+what a rendered terminal shows.
 
 The recorded green run, for comparison against what you see: on the isolated exact
 `@oh-my-pi/pi-coding-agent@18.5.0` install (win32 x64, Bun 1.4.2, a fresh temporary agent state per

@@ -45,7 +45,7 @@ exports.
 | `CommandImplementations`, `CommandImplementation`, `CommandAction`, `ActionsCommandImplementation`, `ActionDelivery` | [`Command interface`](../interface/command/index.ts) | What an implementation delivers for one command: a directed implementation under its command name, or an `actions` command's table of named actions. An action may return a promise the host's command chain waits for, and its delivery is the invocation facts alone — the argument, the owner, `hasUI`, the idle query, the running session's `provider` and the feedback channel — with no declared-value seam, retained capability, persistence path or marker transport, because an `actions` command drives no State and owns no area line. |
 | `ompAdapter(definition, options?)` | [`adapters/omp/index.ts`](../../adapters/omp/index.ts) | Assembles a definition for the `omp` harness; returns an `OmpExtensionFactory`. Also re-exports `BindingResult`, which is what that factory returns. |
 | `piAdapter(definition, options?)` | [`adapters/pi/index.ts`](../../adapters/pi/index.ts) | Uses the same `ExtensionAssembly`, `StateStore` and binding behaviors for pi. Maps the session boundaries, the run-cycle facts the Round axis is synthesized from, Turn signals, user input, commands, hidden persisted prompt messages, marker and feedback. Catalog, provider-access and viewed-session outlets are provided only where pi's own surface states them. |
-| `ExtensionAssembly` | [`framework/interface/details/implementation.ts`](../interface/details/implementation.ts) | The harness-independent assembly information, every member optional (`implementation`, `configBaseDir`). `implementation` is the result of `defineImplementation`, never a raw factory function. Harness version support is deliberately not one of them either: support is an evidence claim recorded in the repository's support record ([`harness-support.md`](harness-support.md)), and no assembly supplies or widens it. |
+| `ExtensionAssembly` | [`framework/interface/details/implementation.ts`](../interface/details/implementation.ts) | The harness-independent assembly information, every member optional (`implementation`, `configBaseDir`, `startupPolicy`). `implementation` is the result of `defineImplementation`, never a raw factory function; `startupPolicy` is the policy document the entrypoint's mode selected. Harness version support is deliberately not one of them either: support is an evidence claim recorded in the repository's support record ([`harness-support.md`](harness-support.md)), and no assembly supplies or widens it. |
 | `BindingResult`, `BindingFailure` | [`framework/runtime/port.ts`](../runtime/port.ts) | What a binding concluded, and why it was refused. |
 | `DirectedCommandImplementation`, `CommandDelivery`, `DeclaredValueSeam` | [`command/details/implementation.ts#L81`](../interface/command/details/implementation.ts#L81), [`#L137`](../interface/command/details/implementation.ts#L137), [`State interface`](../interface/state/index.ts) | The implementations an assembly injects for a definition's directed commands, keyed by command name — each with a `run` member and an optional `unrecognized` member for an argument that parsed to no directive — and the delivery and declared-value seam each one writes through. The delivery is explicitly constructed from its approved members (`args`, `canAcceptInput`, `provider`, `owner`, `feedback`, `hasUI`, `state`, `capability`); the adapter's persistence callback and the marker area transport stay internal. The old `CommandActions` combination type was removed after its last consumer check found none. |
 | `RecognizedDirective`, `DirectedDirective` | [`command/details/implementation.ts#L69`](../interface/command/details/implementation.ts#L69), internal [`control.ts`](../behaviors/control.ts) | The directive a directed command's `run` receives, and the internal normalization result that also carries the unrecognized text. `DirectedDirective` is not extension-facing. |
@@ -62,7 +62,8 @@ exports.
 | `ConfigurationViolation` | [`framework/core/violations.ts`](../core/violations.ts) | The report of one broken configuration rule, carried by a `configuration` binding failure: a `ConfigurationViolationKind` and the deterministic `detail`. |
 | `ExtensionConfigDeclaration`, `ConfigFieldType`, `BOUND_CONFIG_FIELD_TYPES` | [`framework/interface/details/definition.ts`](../interface/details/definition.ts) for the declarations; [`framework/core/definition.ts#L66`](../core/definition.ts#L66) for the internal bound set | The configuration an extension requires of its own `config.yaml`: the file's path, and the keys the file must carry with the type each must match. See [Extension configuration](#extension-configuration-declaration--file). |
 | `getConfig`, `ExtensionConfigError` | [`framework/interface/general/config.ts`](../interface/general/config.ts), implemented at [`framework/core/config.ts`](../core/config.ts) | The framework's general configuration module: the one call shared logic imports directly, which reads the values the definition's own file was validated to carry in this process, and the misuse failure it may recognize. `getConfig` and `ExtensionConfigError` are the entry's runtime exports; the error class is canonical in the adjacent `config-contract.ts`, so the implementation throws the same identity a consumer checks. See [Extension configuration](#extension-configuration-declaration--file). |
-| `readConfig`, `ConfigSource`, `ConfigReadOptions`, `ConfigReader`, `ConfigParser`, `ConfigLoadError`, `readConfigDocument`, `isScheduledWait`, `SCHEDULED_WAIT_TEXT`, `describeValue` | [`framework/core/config.ts`](../core/config.ts) | The internal loading implementation: the injectable reader/parser/base-directory seam, the one reading and validating code path, the shared-configuration document reader, the waiting-budget vocabulary and the value-description helper. None of them is extension-facing; a loading-time failure is a `ConfigLoadError` whose `detail` binding turns into a configuration failure. |
+| `readConfig`, `ConfigSource`, `ConfigReadOptions`, `ConfigReader`, `ConfigParser`, `ConfigLoadError`, `readConfigDocument`, `configFilePath`, `isScheduledWait`, `SCHEDULED_WAIT_TEXT`, `describeValue` | [`framework/core/config.ts`](../core/config.ts) | The internal loading implementation: the injectable reader/parser/base-directory seam, the one reading and validating code path, the shared-configuration document reader, the path resolution every read shares, the waiting-budget vocabulary and the value-description helper. None of them is extension-facing; a loading-time failure is a `ConfigLoadError` whose `detail` binding turns into a configuration failure. |
+| `startupChoiceOf`, `StartupChoice` | [`framework/core/startup.ts`](../core/startup.ts) | The startup policy read behind `ExtensionAssembly.startupPolicy`: the one initial activation choice the selected mode document declares for the extension being bound, validated on the same loading-time path as an extension's configuration and cached per file per process. Internal; an assembly states only the document's path. See [Extension startup modes and the startup policy](#extension-startup-modes-and-the-startup-policy). |
 | `request`, `HttpRequestOptions`, `HttpConfigurationError` | [`framework/interface/general/http.ts`](../interface/general/http.ts), implemented at [`framework/modules/http.ts`](../modules/http.ts) | The framework's general HTTP module: the one call shared logic imports directly, what a request declares (method, headers, body, `timeoutMs`, `proxy`), and the configuration failure a request may reject with before anything is sent. It is a value — `request` is one of the entry's runtime exports. See [General HTTP module](#general-http-module). |
 | `updateFile`, `SafeFileUpdateOptions`, `SafeFileUpdateError`, `SafeFileUpdateFailureKind` | [`framework/interface/general/files.ts`](../interface/general/files.ts), implemented at [`framework/modules/files.ts`](../modules/files.ts) | The framework's general safe-file module: the one coordinated read-modify-publish call shared logic imports directly, the absolute target and update function it takes, the wait budget and abort it accepts, and the distinguishable failure a refused coordination rejects with. `updateFile` and `SafeFileUpdateError` are the entry's runtime exports. See [General safe-file module](#general-safe-file-module). |
 | Adapter-facing delivery types (`NoticeTransport`, `MarkerTransport`, `StateValues`, `TurnSignal`, `TurnSignalFacts`); `FeedbackLevel` and `FeedbackTransport` are canonical in the [Feedback interface](../interface/feedback/index.ts), and `OwnerReference` in the [State interface](../interface/state/index.ts) | [`framework/runtime/port.ts`](../runtime/port.ts) | The facts and transports a harness adapter resolves; not authored by an extension. `HarnessPort.onTurn` ([`port.ts`](../runtime/port.ts)) is the hook an adapter reports its mapped model-cycle facts through, and `HarnessPort.onRound` ([`port.ts`](../runtime/port.ts)) the hook it reports its run-cycle facts through for the round axis's own synthesis. |
@@ -433,14 +434,18 @@ depends on and where its configuration lives.
 | --- | --- | --- |
 | `implementation?` | `AuthoredImplementationFactory` | The result of `defineImplementation`: the canonical authored declaration, materialized once the definition's configuration validated. Its `create` is handed the validated values (`{ config }`, an empty object for a definition that declares none) and must send no remote request or start a timer, because a refusal can still follow. A raw factory function is not assignable; only the branded helper result is. Omitted when the definition needs nothing injected. |
 | `configBaseDir?` | `string` | The directory the definition's relative configuration paths are resolved against, as plain data: the extension repository root, from which the convention `extensions/<definition.id>/config.yaml` is relative. An assembly is the one party that knows it — its own module lives in that repository and the loader discovers the extension by an absolute path while the process runs in an arbitrary project directory — so connect-bot's assembly derives it from `import.meta.url`. Omitted when the definition declares no configuration, and omitted by an assembly that names none: a relative path then resolves against the process's working directory, and an absolute `path` is unaffected either way. See [Extension configuration](#extension-configuration-declaration--file). |
+| `startupPolicy?` | `string` | The startup policy document this assembly's entrypoint selected, or omitted when the assembly states no policy at all. It is the only thing the two startup modes differ in: a manual entrypoint and an automatic one assemble the same definition the same way, and each names the document its mode declares. The path is resolved against `configBaseDir` exactly as a declared configuration path is. The framework reads the document at binding and applies its choice at the process's first owner session start only. See [Extension startup modes and the startup policy](#extension-startup-modes-and-the-startup-policy). |
 
 **There is no supported-version option, and no version is compared at all.** Harness version support is an
 evidence claim recorded in [`harness-support.md`](harness-support.md), not an extension's, an assembly's or
-the framework's runtime declaration: an assembly describes only what its extension builds and needs, normal
-startup performs no compatibility check, and the version a run exercises is selected by the dock from the
-support record (or from `OMP_TEST_VERSION` for a candidate). An extension that needs none of the options
-above assembles with no options at all, which is the canonical form in this repository
-([`extensions/codebase-tools/harnesses/omp.ts`](../../extensions/codebase-tools/harnesses/omp.ts)).
+the framework's runtime declaration: an assembly describes only what its extension builds, needs and selects,
+normal startup performs no compatibility check, and the version a run exercises is selected by the dock from the
+support record (or from `OMP_TEST_VERSION` for a candidate). An assembly states only the options its extension
+needs: an extension with no implementation and no configuration states nothing beyond its mode's startup policy
+([`extensions/codebase-tools/harnesses/omp.ts`](../../extensions/codebase-tools/harnesses/omp.ts)), and both of
+that extension's modes share one assembly module
+([`omp-assembly.ts`](../../extensions/codebase-tools/harnesses/omp-assembly.ts)) rather than duplicating a
+harness.
 
 ### The authored implementation and its lifecycle
 
@@ -768,6 +773,70 @@ contract, and the value is delivered as the same recorded object in `context.con
 The file belongs to the machine: there is no environment or command-line override, and a validated configuration
 is read once per extension per process, so a changed value takes effect with the next process rather than with
 the next session.
+
+## Extension startup modes and the startup policy
+
+An extension can be assembled in one of two **startup modes**. The mode is selected by the entrypoint the
+host loads — the host's ordinary `-e`/`--extension` parameter — and nothing at runtime decides it: there is
+no profile argument, environment override or configuration selector. Each mode is its own entrypoint and its
+own assembly, and both consume the same definition, the same adapter assembly and the same startup rule:
+
+| Mode | Entry point (codebase-tools) | Policy document | The extension's initial choice |
+| --- | --- | --- | --- |
+| Manual | `entrypoints/omp/codebase-tools.ts`, `entrypoints/pi/codebase-tools.ts` | [`entrypoints/startup/manual.yaml`](../../entrypoints/startup/manual.yaml) | stated `false`: the extension starts off and waits for its command |
+| Automatic startup | `entrypoints/omp-auto/codebase-tools.ts`, `entrypoints/pi-auto/codebase-tools.ts` | [`entrypoints/startup/auto.yaml`](../../entrypoints/startup/auto.yaml) | stated `true`: the extension enables itself at the agent's first main session start |
+
+**One document per mode, one block per extension.** A policy document is one YAML mapping whose keys are
+extension ids and whose values state that extension's initial activation choice:
+
+```yaml
+codebase-tools:
+  enabled: true
+```
+
+Only the block of the extension being bound is read and validated. A document serves a whole mode, so it may
+name extensions this process did not load; naming one never loads it, and another extension's block is not
+this binding's business. The block of the extension that *is* loaded states `enabled` as a boolean; unknown
+members are ignored, as they are in an extension's own configuration. The document may be missing, not parse,
+or carry an illegal block for this extension — each refuses the binding as one `configuration` failure with a
+`config` violation on the same loading-time path as the extension's own configuration, and the extensions that
+loaded keep running. The framework reads a policy file once per process, so an edited document takes effect
+with the next process.
+
+**What the choice does.** [`startupChoiceOf`](../core/startup.ts) resolves the choice at binding, and
+`StateStore.reconcile` applies it at the **process's first owner session start** — not on a later new, resume,
+fork or tree navigation, and not on a subagent, which owns no cell. The rule is:
+
+- A valid recorded value — `true` or `false` — always wins. History is never overridden by the mode.
+- With no recorded value, the stated choice is the session's value. An enabling choice is recorded through the
+  same `session-entry` medium an ordinary write uses, because it *is* this session's value; the declared
+  default is not recorded, so a session that starts off and is never used writes nothing.
+- The choice is a **target, not a toggle**: an already-enabled session stays enabled, and the startup choice
+  never switches a value off.
+- It is applied once per process. A session that replaces the first one in the same process starts on its own
+  default, and later runs never re-apply the entrypoint's choice.
+
+**What the choice is not.** Loading an extension is not enabling it, and an enabling choice is an *intent*:
+the framework records only the declared `session-entry` value, and it records it as this session's value rather
+than as proof that any external effect succeeded. An extension whose activation is a live external effect
+therefore treats the startup choice as the intent it is; codebase-tools is a pure declarative State consumer
+and needs no business initializer for this, which is why its definition and implementation are unchanged by the
+modes. Startup also does not touch prompt-injection progress, subagent inheritance or the existing command
+behavior: after startup, `/codebase-tools` remains an ordinary toggle, and a subagent still follows its owner's
+current value.
+
+**One mode per extension per process.** The host adds extension sources rather than merging them, so loading
+both of one extension's modes in one process would bind it twice — two State stores, two command
+registrations, two marker lines. Load one mode's entrypoint for an extension and not the other; the
+repository's documentation states this next to the launch commands.
+
+**Where the document lives.** The policy documents live beside the entrypoints they serve
+([`entrypoints/startup/`](../../entrypoints/startup)), not in the extension's source directory: a document is
+a deployment choice over the extensions a mode loads, not one extension's business configuration. The
+extension's assembly derives each document's absolute path from its own module location
+([`startup-modes.ts`](../../extensions/codebase-tools/harnesses/startup-modes.ts)), so the selected document is
+found whatever project directory the process runs in, and it is not affected by another file with the same
+name in the working directory.
 
 ## General HTTP module
 
@@ -1214,7 +1283,7 @@ with the behavior it must preserve, is
 | `dispose()` | Releases every access this store holds and stops following: a disposed store reads the declared default for followed owners and opens nothing again. The cells it serves, their owners' lives and its own offer of them are untouched. |
 | `writer(target)` | The declared-value seam of one delivery (`StateWriteTarget`: `ownerKey`, `persist(values)`, `publishMarker()`), ungated: the value is set first, then recorded best-effort where the field persists (`memory` is never recorded), then the marker area is published. A repeated write of the same value is not deduplicated. |
 | `capability(target)` | The owner-scoped handle (`StateCapabilityTarget` adds `feedback`): `read` is ungated — a handle kept from an earlier life still reads the current value — while `write` and `feedback` work only while its owner's life is open. A handle minted after that life ended is inert from birth; a later start opens a life for newly minted handles and never revives an old one. |
-| `reconcile(change)` | One session boundary (`StateSessionChange`: `owner`, `event`, `statePayloads`, `publishMarker(ownerKey)`): a delivery that is not its own owner is ignored; an end drops the cell then revokes capabilities, publishing only for `disposed`; a start opens the life, seeds a `session-entry` field from the last payload when it declares the field as a boolean (otherwise the declared default) and never seeds `memory`, then publishes. |
+| `reconcile(change)` | One session boundary (`StateSessionChange`: `owner`, `event`, `statePayloads`, `persist(values)`, an optional `startup` choice, `publishMarker(ownerKey)`): a delivery that is not its own owner is ignored; an end drops the cell then revokes capabilities, publishing only for `disposed`; a start opens the life, seeds a `session-entry` field from the last payload when it declares the field as a boolean (otherwise the declared default) and never seeds `memory`, then publishes. At the process's first owner start only, a payload that records no value leaves the startup choice as the value, and an enabling choice is recorded through `persist` — the same medium an ordinary write uses — while a history value always wins. See [Extension startup modes and the startup policy](#extension-startup-modes-and-the-startup-policy). |
 
 ## Maintaining this index
 
