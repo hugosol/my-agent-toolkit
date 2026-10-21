@@ -2,8 +2,57 @@
 
 Joins an agent session to the herdr-bot panel; `/connect-bot` registers the current session,
 `/connect-bot off` disconnects it. The declaration is [`definition.ts`](definition.ts), its
-harness-independent logic is under [`shared-logic/`](shared-logic), and its OMP assembly is
-[`harnesses/omp.ts`](harnesses/omp.ts).
+harness-independent logic is under [`shared-logic/`](shared-logic), and its shared OMP assembly
+is [`harnesses/omp-assembly.ts`](harnesses/omp-assembly.ts) behind one thin entrypoint per
+[startup mode](#startup-modes).
+
+## Startup modes
+
+connect-bot is assembled in one of two **startup modes**. The mode is selected statically by the
+entrypoint the host loads through its ordinary `-e`/`--extension` parameter; no profile argument,
+environment value or command-line switch chooses it.
+
+| Mode | OMP entrypoint | Policy document | What starts |
+| --- | --- | --- | --- |
+| Manual | [`entrypoints/omp/connect-bot.ts`](../../entrypoints/omp/connect-bot.ts) | [`manual.yaml`](../../entrypoints/startup/manual.yaml) | nothing — `/connect-bot` arms the session |
+| Automatic startup | [`entrypoints/omp-auto/connect-bot.ts`](../../entrypoints/omp-auto/connect-bot.ts) | [`auto.yaml`](../../entrypoints/startup/auto.yaml) | the same arm operation, attempted at the process's first main session start |
+
+Both entrypoints re-export one shared OMP assembly
+([`harnesses/omp-assembly.ts`](harnesses/omp-assembly.ts)) and one definition, and the two policy
+blocks select the initial choice. The shared assembly's
+[`startup-modes.ts`](harnesses/startup-modes.ts) derives each document's absolute path from its own
+module location, so the mode is not affected by the working directory. Load **one** mode's
+entrypoint for this extension, never both: the host adds extension sources rather than merging
+them, so two modes in one process would bind the extension twice.
+
+**Loading is not enabling, and a startup target is not a connection.** The automatic document states
+`enabled: true`, and the framework hands that enabling intent to the same business operation
+`/connect-bot` runs: it enqueues a panel registration. The extension is not "connected" because it
+was loaded, because the intent was stated, or because the register request was enqueued. The
+declared `enabled` value — and therefore the `◐ connectBot` marker — stays off until a valid panel
+receipt arrives. A refusal leaves it off and reports the extension's existing failure text; the
+agent keeps working.
+
+**The attempt never blocks the agent.** The registration is queued and the startup entry returns
+immediately, exactly as the command path does. The process's first model request is issued whether
+the panel has answered or not. The framework does not add a completion barrier, a retry, or a
+general background queue for this: an attempt the panel refuses is simply over, and a later
+`/connect-bot` is the operator's retry. An `off` while an attempt is on the wire invalidates it, and
+the end of the owner's session invalidates every attempt that owner still has outstanding, so a
+late receipt cannot enable a session that has moved on.
+
+**State is not remembered across starts.** connect-bot still declares `memory` persistence and
+`none` inheritance. A previous process's row, an old persisted payload, or a subagent's activity
+never stands in for this process's own register; only a receipt from this session's attempt enables
+it. After startup, `/connect-bot` and `/connect-bot off` keep their ordinary directed-command
+semantics, including repeated invocations and the existing no-UI/subagent refusals.
+
+Evidence: [`tests/connect-bot/startup-modes.test.ts`](../../tests/connect-bot/startup-modes.test.ts)
+drives both entrypoints and the controlled latch at the OMP assembly seam;
+[`tests/harness-dock/connect-bot-startup.test.ts`](../../tests/harness-dock/connect-bot-startup.test.ts)
+loads the real entrypoint files into the fixed harness and reads the panel's own table.
+
+## Transport and configuration
 
 The extension's outbound call is the framework's general HTTP interface — `request` from
 [`framework/interface/general/http.ts`](../../framework/interface/general/http.ts) — rather than a transport of its own: each panel

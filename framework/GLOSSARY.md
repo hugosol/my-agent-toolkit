@@ -141,7 +141,7 @@ _Avoid_: complete total, known zero for unknown contributions
 ### Extension controls and ownership
 
 **Extension startup policy（扩展启动策略）**:
-The rule that determines an extension's initial activation choice when an agent starts; subsequent command controls and session-boundary State behavior remain separate. A choice to activate is an intent, not proof that an external effect has succeeded.
+The rule that determines an extension's initial activation choice when an agent starts; subsequent command controls and session-boundary State behavior remain separate. A choice to activate is an intent, not proof that an external effect has succeeded. A pure State consumer receives it through the framework's State rule; a consumer whose activation is a live external effect receives it through its declared startup activation and keeps its declared value off until its own operation succeeds.
 _Avoid_: implementation initialization, permanent activation lock, restored external effect
 
 **Startup policy document（启动策略文档）**:

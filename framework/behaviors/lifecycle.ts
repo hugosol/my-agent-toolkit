@@ -28,7 +28,7 @@
  * This module is harness-independent: it calls the implementation's own entries and the
  * reporting callback it was handed, and names no native API.
  */
-import type { ExtensionImplementation, InitializationDelivery } from "../interface/details/implementation";
+import type { ExtensionImplementation, InitializationDelivery, StartupDelivery } from "../interface/details/implementation";
 import type { SubagentIntegration } from "../interface/subagent";
 
 /** The completion of an implementation that declares no initialization: settled before it starts. */
@@ -78,6 +78,35 @@ export function servingOwnerKeyOf(implementation: ExtensionImplementation): stri
  */
 export function isImplementationDisposed(implementation: ExtensionImplementation): boolean {
 	return lifecycleRecords.get(implementation)?.cleanedUp === true;
+}
+
+/**
+ * Runs one implementation's startup activation, if it declared one.
+ *
+ * The framework has already applied the policy's effective choice to State — for a pure
+ * declarative consumer that is the whole activation — and hands an external-effect consumer this
+ * one delivery so its own business operation can begin. The call is deliberately outside every
+ * wait chain: a register, a fetch or a timer it starts is not a reason to hold the session's first
+ * model request, and the framework never awaits it. A synchronous throw and a rejected promise are
+ * both reported once on the adapter's diagnostic channel.
+ */
+export function startupImplementation(
+	extensionId: string,
+	implementation: ExtensionImplementation,
+	delivery: StartupDelivery,
+	reportFailure: (message: string) => void,
+): void {
+	const startup = implementation.startup;
+	if (startup === undefined) return;
+	try {
+		Promise.resolve(startup(delivery)).catch((error: unknown) => {
+			const detail = error instanceof Error ? error.message : String(error);
+			reportFailure(`${extensionId}: startup activation failed: ${detail}`);
+		});
+	} catch (error) {
+		const detail = error instanceof Error ? error.message : String(error);
+		reportFailure(`${extensionId}: startup activation failed: ${detail}`);
+	}
 }
 
 /**

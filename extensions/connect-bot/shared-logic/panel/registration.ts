@@ -21,6 +21,7 @@
  * and reaches the panel only through the wire client's injected seam.
  */
 import type { FeedbackTransport } from "../../../../framework/interface/feedback";
+import type { CanAcceptInput } from "../../../../framework/interface/command";
 import type { SessionEventDelivery } from "../../../../framework/interface/session";
 import type { OwnerCapabilityHandle } from "../../../../framework/interface/state";
 import type { CommandDelivery } from "../../../../framework/interface/command";
@@ -82,6 +83,16 @@ interface OwnerRegistrations {
 	disconnecting: number;
 }
 
+/** The delivery facts an activation owns, whether a command or the startup policy began it. */
+export interface ActivationDelivery {
+	/** The unified extension feedback channel of the invocation or startup delivery. */
+	readonly feedback: FeedbackTransport;
+	/** The owner-scoped capability the attempt retains for the effects that outlive it. */
+	readonly capability: OwnerCapabilityHandle;
+	/** The idle fact behind the state the successful attempt reports. */
+	readonly canAcceptInput: CanAcceptInput;
+}
+
 /**
  * Per-owner panel registration lifecycle for one binding.
  *
@@ -101,7 +112,7 @@ export class PanelRegistrations {
 	 * operator asked for is already on the wire, and the operator can run the command again once
 	 * it settles.
 	 */
-	activate(delivery: CommandDelivery, ownerKey: string, facts: SessionFacts, timers: ManagedTimers): void {
+	activate(delivery: ActivationDelivery, ownerKey: string, facts: SessionFacts, timers: ManagedTimers): void {
 		const owner = this.#owner(ownerKey);
 		if (owner.disconnecting !== 0) {
 			publishFeedback(delivery.feedback, { trigger: "disconnecting" });

@@ -34,6 +34,7 @@ import type { OwnerCapabilityHandle } from "../interface/state";
 import type { SessionDelivery } from "../runtime/port";
 import type { StateStore } from "../core/state";
 import type { StartupChoice } from "../core/startup";
+import type { StartupApplication } from "../core/state";
 import { type MarkerSeat, publishMarkerOnTransition } from "./marker";
 import { stateValueFor } from "./state-scope";
 import { dispatchToGroups } from "./subscriptions";
@@ -61,13 +62,14 @@ export function dispatchSessionEvent(
 	seat: MarkerSeat,
 	reportFailure: (message: string) => void,
 	startupChoice?: StartupChoice,
-): void {
+): StartupApplication | undefined {
+	let applied: StartupApplication | undefined;
 	// A facts delivery crossed no boundary: the session's own facts are re-stated, so nothing the
 	// framework owns moves — no owner's life begins or ends, no State reconciles, and the marker
 	// area is not published. The groups below are still reached; only the framework's own behavior
 	// is skipped, and only for this one kind.
 	if (session.event.kind !== "session_facts") {
-		state.reconcile({
+		applied = state.reconcile({
 			owner: session.owner,
 			event: session.event,
 			statePayloads: session.statePayloads,
@@ -112,6 +114,8 @@ export function dispatchSessionEvent(
 		},
 		reportFailure,
 	);
+
+	return applied;
 
 	/**
 	 * The capability of one delivery: an owner-scoped handle for the session that is its own owner,

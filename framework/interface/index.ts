@@ -54,4 +54,5 @@ export type {
 	ImplementationEventHandlers,
 	ImplementationSubscription,
 	InitializationDelivery,
+	StartupDelivery,
 } from "./details/implementation";

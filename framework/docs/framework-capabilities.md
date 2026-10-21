@@ -38,7 +38,7 @@ exports.
 | `ExtensionDefinition`, `ExtensionConfigDeclaration`, `ConfigFieldType` | [`framework/interface/details/definition.ts`](../interface/details/definition.ts) | The definition shape and its configuration types. The definition *refers to* the capability declarations rather than owning them: the State axis (`StateDeclaration`, `StatePersistence`, `StateInheritance`) is owned by the [State capability interface](../interface/state/index.ts); `PromptDeclaration`, `PromptStrategy` and `MarkerDeclaration` by the [Prompt](../interface/prompt.ts) and [Marker](../interface/marker.ts) interfaces; and `CommandDeclaration` plus its member types by the [Command interface](../interface/command/index.ts). |
 | `PromptDeclaration`, `PromptStrategy` | [`framework/interface/prompt.ts`](../interface/prompt.ts) | The injected-prompt slot and its activation rule. The run facts, contribution selection and contribution result stay internal; see [Injected prompts](#prompts-readonly-promptdeclaration). |
 | `MarkerDeclaration` | [`framework/interface/marker.ts`](../interface/marker.ts) | The extension's status-marker text. The process-wide area, its ordering, projection, publication and transport stay internal; see [Marker area](#marker-markerdeclaration). |
-| `defineImplementation`, `AuthoredImplementation`, `ImplementationDeclaration`, `ImplementationSubscription`, `ImplementationEventHandlers`, `ImplementationCommands`, `ImplementationAction`, `CommandImplementationHandlers`, `DirectedImplementationHandlers`, `ActionsImplementationHandlers`, `ExtensionAssembly`, `ImplementationContext`, `InitializationDelivery` | [`framework/interface/details/implementation.ts`](../interface/details/implementation.ts) | The authoring surface an extension's implementation is written against: `defineImplementation` returns an opaque callable factory whose `.declaration` is the canonical static object — `create(context)` builds the one business state, and subscription groups, command slots, the catalog selector and the one-time `initialize`/`cleanup` name handlers that receive it. The context carries the validated configuration, the harness's model prices and provider access under their own names, and the Session capability (`context.session.observations` for reads and `context.session.recordCommit` for stating that a session's own write really landed). Initialization delivery carries `owner`, `hasUI`, `feedback` and `subagents`; source analysis derives the integration dependencies. The resolved `ExtensionImplementation` shape is internal. |
+| `defineImplementation`, `AuthoredImplementation`, `ImplementationDeclaration`, `ImplementationSubscription`, `ImplementationEventHandlers`, `ImplementationCommands`, `ImplementationAction`, `CommandImplementationHandlers`, `DirectedImplementationHandlers`, `ActionsImplementationHandlers`, `ExtensionAssembly`, `ImplementationContext`, `InitializationDelivery`, `StartupDelivery` | [`framework/interface/details/implementation.ts`](../interface/details/implementation.ts) | The authoring surface an extension's implementation is written against: `defineImplementation` returns an opaque callable factory whose `.declaration` is the canonical static object — `create(context)` builds the one business state, and subscription groups, command slots, the catalog selector and the one-time `initialize`/`startup`/`cleanup` name handlers that receive it. The context carries the validated configuration, the harness's model prices and provider access under their own names, and the Session capability (`context.session.observations` for reads and `context.session.recordCommit` for stating that a session's own write really landed). Initialization delivery carries `owner`, `hasUI`, `feedback` and `subagents`; startup delivery carries `owner`, `hasUI`, `feedback`, the declared-value `state` seam and the retainable `capability`, and it is called only when the selected startup policy's effective target is enabling. Source analysis derives the integration dependencies. The resolved `ExtensionImplementation` shape is internal. |
 | `SubagentIntegration`, `SubagentIntegrationFailure` | [`framework/interface/subagent.ts`](../interface/subagent.ts) | The settled initialization integration result (`subagents`, normal `none`, or `failed` with its part and diagnosis). Integration demand is source-derived; execution mechanisms remain adapter-owned. |
 | `SubscriptionGroup`, `ObservationScope` | [`Session subscriptions`](../interface/session/subscriptions.ts) | The one-time declaration of what a subscription observes: a group carries the scope it covers (`owner` — the owner session's own deliveries; `session` — every actual session the adapter reports, with that session's own identity, direct parent, latest name, the handle of the task it was spawned for, the name and id of the agent it runs and, on the delivery that announces its own start, the model and effective level it began on) and the handlers for the event kinds it subscribes. Both scopes run through the one dispatch, and widening a group to `session` grants no State write and no external-effect authority. |
 | `SessionFacts`, `SessionStartup`, `TurnEvent`, `TurnStartDelivery`, `TurnEndDelivery`, `TurnStartFacts`, `TurnEndFacts`, `TurnUsage`, `TurnOutcome`, `ProviderHttpFacts`, `CatalogPrice`, `CatalogPriceSource`, `ProviderAccess`, `ProviderAccessFacts` | [`Session facts`](../interface/session/details/facts.ts), [`Turn`](../interface/session/details/turn.ts), [`Provider`](../interface/provider/index.ts) | The per-actual-session facts and the Turn axis: a session's identity, direct parent, latest name, the handle of the task it was spawned for (a subagent's own name for its work, which is neither the agent definition it runs nor the id its registry uses), the name and id of the agent it runs, and the optional `SessionStartup` — the model and effective level the session began on, reported on its own start alone and never rewritten; the two Turn edges with the request-time facts fixed at the first and repeated at the second; the reliable-or-unavailable usage, outcome, HTTP facts and the two provider reference ids; and the extension's own catalog the framework queries at each request's start. Native `TurnSignal` / `TurnSignalFacts` remain internal adapter contracts, not Session consumer exports. See [The Turn axis and the two observation scopes](#the-turn-axis-and-the-two-observation-scopes). |
@@ -452,7 +452,7 @@ harness.
 `defineImplementation` ([`implementation.ts`](../interface/details/implementation.ts)) returns the one canonical
 authored object: `create(context)` builds the extension's business state, and the static slots —
 `subscriptions` (scopes and semantic event keys), `commands` (directed `run`/`unrecognized` or an actions
-table), `catalog`, `initialize` and `cleanup` — name handlers that receive that state. Its `.declaration`
+table), `catalog`, `initialize`, `startup` and `cleanup` — name handlers that receive that state. Its `.declaration`
 is inspectable without calling the factory or running `create`, so registration and semantic-dependency
 selection can use the same structure a future checker reads. The framework materializes the internal
 `ExtensionImplementation` from that declaration; no second requirement list exists.
@@ -478,6 +478,18 @@ contribution planned from the facts as they then stand ([`lifecycle.ts#L66`](../
 A rejection is reported once on the adapter's diagnostic channel and does not fail the request. Later
 requests are not made to wait for work that is already done
 ([`lifecycle.ts#L104`](../behaviors/lifecycle.ts#L128)).
+
+**Startup activation is an intent, and it is not awaited.** An implementation that declares `startup`
+receives one `StartupDelivery` at the process's first owner session start, and only when the selected
+startup policy's effective target is enabling. It is the same authority a command delivery carries for
+that owner — the declared-value seam, the retainable capability, the feedback channel and the UI fact —
+so an extension whose activation is a live external effect realizes the policy through the same business
+operation its `/command` runs. The framework calls it outside initialization and does not wait for it: a
+register that is still on the wire is not a reason to hold the session's first model request, and the
+declared value is not written by declaring the entry. An extension whose activation is a pure State write
+declares nothing here, because the framework's own State rule already applies the choice. A throw or a
+rejection is reported once on the adapter's diagnostic channel and changes nothing the framework already
+did.
 
 **Cleanup runs once, and then the binding delivers nothing.** The session the instance is *serving* ending —
 `session_end` marked `disposed`, naming that owner — stops this binding's delivery and runs `cleanup` exactly
@@ -785,6 +797,8 @@ own assembly, and both consume the same definition, the same adapter assembly an
 | --- | --- | --- | --- |
 | Manual | `entrypoints/omp/codebase-tools.ts`, `entrypoints/pi/codebase-tools.ts` | [`entrypoints/startup/manual.yaml`](../../entrypoints/startup/manual.yaml) | stated `false`: the extension starts off and waits for its command |
 | Automatic startup | `entrypoints/omp-auto/codebase-tools.ts`, `entrypoints/pi-auto/codebase-tools.ts` | [`entrypoints/startup/auto.yaml`](../../entrypoints/startup/auto.yaml) | stated `true`: the extension enables itself at the agent's first main session start |
+| Manual (connect-bot) | `entrypoints/omp/connect-bot.ts` | [`entrypoints/startup/manual.yaml`](../../entrypoints/startup/manual.yaml) | stated `false`: no panel register until `/connect-bot` |
+| Automatic startup (connect-bot) | `entrypoints/omp-auto/connect-bot.ts` | [`entrypoints/startup/auto.yaml`](../../entrypoints/startup/auto.yaml) | stated `true`: the same panel register is attempted at the agent's first main session start, without a command |
 
 **One document per mode, one block per extension.** A policy document is one YAML mapping whose keys are
 extension ids and whose values state that extension's initial activation choice:
@@ -815,15 +829,22 @@ fork or tree navigation, and not on a subagent, which owns no cell. The rule is:
   never switches a value off.
 - It is applied once per process. A session that replaces the first one in the same process starts on its own
   default, and later runs never re-apply the entrypoint's choice.
+- An extension whose activation is a live external effect declares `startup`; the enabling target calls that
+  entry with the same authority a command delivery carries. The framework neither awaits it nor writes the
+  declared value on its behalf, so the value and the marker appear only when the extension's own business
+  operation succeeds. connect-bot's automatic entrypoint therefore attempts a panel register without a
+  command, and remains off until the panel answers with a valid receipt; a refusal leaves it off with the
+  extension's existing feedback.
 
 **What the choice is not.** Loading an extension is not enabling it, and an enabling choice is an *intent*:
 the framework records only the declared `session-entry` value, and it records it as this session's value rather
 than as proof that any external effect succeeded. An extension whose activation is a live external effect
 therefore treats the startup choice as the intent it is; codebase-tools is a pure declarative State consumer
 and needs no business initializer for this, which is why its definition and implementation are unchanged by the
-modes. Startup also does not touch prompt-injection progress, subagent inheritance or the existing command
-behavior: after startup, `/codebase-tools` remains an ordinary toggle, and a subagent still follows its owner's
-current value.
+modes, while connect-bot uses the `startup` entry to run the same panel activation its command runs. Neither
+extension's startup touches prompt-injection progress, subagent inheritance or the existing command behavior:
+after startup, `/codebase-tools` remains an ordinary toggle, `/connect-bot` remains the ordinary arm/disarm
+command, and a subagent still follows its owner's current value and never registers independently.
 
 **One mode per extension per process.** The host adds extension sources rather than merging them, so loading
 both of one extension's modes in one process would bind it twice — two State stores, two command
@@ -834,9 +855,10 @@ repository's documentation states this next to the launch commands.
 ([`entrypoints/startup/`](../../entrypoints/startup)), not in the extension's source directory: a document is
 a deployment choice over the extensions a mode loads, not one extension's business configuration. The
 extension's assembly derives each document's absolute path from its own module location
-([`startup-modes.ts`](../../extensions/codebase-tools/harnesses/startup-modes.ts)), so the selected document is
-found whatever project directory the process runs in, and it is not affected by another file with the same
-name in the working directory.
+([codebase-tools](../../extensions/codebase-tools/harnesses/startup-modes.ts),
+[connect-bot](../../extensions/connect-bot/harnesses/startup-modes.ts)), so the selected document is found
+whatever project directory the process runs in, and it is not affected by another file with the same name in
+the working directory.
 
 ## General HTTP module
 
@@ -1283,7 +1305,7 @@ with the behavior it must preserve, is
 | `dispose()` | Releases every access this store holds and stops following: a disposed store reads the declared default for followed owners and opens nothing again. The cells it serves, their owners' lives and its own offer of them are untouched. |
 | `writer(target)` | The declared-value seam of one delivery (`StateWriteTarget`: `ownerKey`, `persist(values)`, `publishMarker()`), ungated: the value is set first, then recorded best-effort where the field persists (`memory` is never recorded), then the marker area is published. A repeated write of the same value is not deduplicated. |
 | `capability(target)` | The owner-scoped handle (`StateCapabilityTarget` adds `feedback`): `read` is ungated — a handle kept from an earlier life still reads the current value — while `write` and `feedback` work only while its owner's life is open. A handle minted after that life ended is inert from birth; a later start opens a life for newly minted handles and never revives an old one. |
-| `reconcile(change)` | One session boundary (`StateSessionChange`: `owner`, `event`, `statePayloads`, `persist(values)`, an optional `startup` choice, `publishMarker(ownerKey)`): a delivery that is not its own owner is ignored; an end drops the cell then revokes capabilities, publishing only for `disposed`; a start opens the life, seeds a `session-entry` field from the last payload when it declares the field as a boolean (otherwise the declared default) and never seeds `memory`, then publishes. At the process's first owner start only, a payload that records no value leaves the startup choice as the value, and an enabling choice is recorded through `persist` — the same medium an ordinary write uses — while a history value always wins. See [Extension startup modes and the startup policy](#extension-startup-modes-and-the-startup-policy). |
+| `reconcile(change)` | One session boundary (`StateSessionChange`: `owner`, `event`, `statePayloads`, `persist(values)`, an optional `startup` choice, `publishMarker(ownerKey)`): a delivery that is not its own owner is ignored; an end drops the cell then revokes capabilities, publishing only for `disposed`; a start opens the life, seeds a `session-entry` field from the last payload when it declares the field as a boolean (otherwise the declared default) and never seeds `memory`, then publishes. At the process's first owner start only, a payload that records no value leaves the startup choice as the value, and an enabling choice is recorded through `persist` — the same medium an ordinary write uses — while a history value always wins. The call returns that start's effective target (or nothing when the assembly selected no policy), which is what lets the binding hand an extension whose activation is an external effect the same intent its command receives. See [Extension startup modes and the startup policy](#extension-startup-modes-and-the-startup-policy). |
 
 ## Maintaining this index
 
