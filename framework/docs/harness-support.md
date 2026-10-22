@@ -50,6 +50,38 @@ capabilities listed here**; it does not promote pi to the historical OMP support
   Bun's native text imports need no hook. Hot reload and concurrent main-session instances are not
   certified by these runs.
 
+## pi connect-bot entrypoint evidence
+
+Recorded 2026-10-22 for the scoped entrypoint/assembly addition, not a support promotion.
+The manual and automatic entries are `entrypoints/pi/connect-bot.ts` and
+`entrypoints/pi-auto/connect-bot.ts`; both use the existing public Pi adapter and the unchanged
+panel registration business logic. No Pi adapter implementation was changed in this addition.
+
+- `bun run check:integrations --extension connect-bot --adapter pi --json` reported
+  `complete: true` with no diagnostics. Required contracts were structurally provided; the
+  optional viewed-session and cross-process observation outlets remained unavailable. This is
+  structural evidence only, not native semantic certification.
+- A throwaway smoke drove the installed `@earendil-works/pi-coding-agent@1.4.0` Node bundle on
+  Windows with Node 24.18.0 and Bun 1.4.2 through the repository's Pi RPC dock, with temporary agent/session/work directories,
+  a deployment copy whose configuration pointed at an ephemeral local panel double, and the
+  local model capture endpoint. It observed manual default-off, command registration, manual and
+  automatic panel registration, receipt-backed feedback and marker UI frames, native cwd/model
+  facts, working/awaiting-input reports, a heartbeat, explicit off/unregister, and a refused
+  automatic register followed by a successful manual retry. These basic scenarios passed in
+  three isolated processes, each exiting 0 with empty stderr. No formal panel or real provider
+  credentials were used; the throwaway script was removed after observation.
+- **Extended lifecycle verification did not pass.** In the same 1.4.0 runtime, `new_session`
+  unregistered the old connection but issued a fresh automatic register for the new session.
+  This differs from the documented process-first-start-only policy. Closing RPC stdin while the
+  new session was armed exited 0 but produced no final unregister during the ten-second
+  observation window. These observations do not identify the responsible native/adapter layer;
+  they remain explicit runtime gaps outside the requested entrypoint-only scope. Disconnect
+  explicitly with `/connect-bot off` before closing this RPC path. Do not claim full lifecycle
+  parity or TUI exit behavior from these probes.
+- The connect-bot partition plus Pi adapter-output, round-mapping and disposal-round-close files
+  passed 184 tests (938 assertions, 23 files). This is not a full-repository test result or
+  interactive TUI acceptance.
+
 ## pi model-cost migration evidence
 
 Added 2026-10-16 by the model-cost pi migration's final evidence audit (its ticket 25). This section

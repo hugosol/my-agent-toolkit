@@ -2,8 +2,9 @@
 
 Joins an agent session to the herdr-bot panel; `/connect-bot` registers the current session,
 `/connect-bot off` disconnects it. The declaration is [`definition.ts`](definition.ts), its
-harness-independent logic is under [`shared-logic/`](shared-logic), and its shared OMP assembly
-is [`harnesses/omp-assembly.ts`](harnesses/omp-assembly.ts) behind one thin entrypoint per
+harness-independent logic is under [`shared-logic/`](shared-logic). Its OMP assembly is
+[`harnesses/omp-assembly.ts`](harnesses/omp-assembly.ts), and its Pi assembly is
+[`harnesses/pi-assembly.ts`](harnesses/pi-assembly.ts), each behind one thin entrypoint per
 [startup mode](#startup-modes).
 
 ## Startup modes
@@ -12,15 +13,14 @@ connect-bot is assembled in one of two **startup modes**. The mode is selected s
 entrypoint the host loads through its ordinary `-e`/`--extension` parameter; no profile argument,
 environment value or command-line switch chooses it.
 
-| Mode | OMP entrypoint | Policy document | What starts |
-| --- | --- | --- | --- |
-| Manual | [`entrypoints/omp/connect-bot.ts`](../../entrypoints/omp/connect-bot.ts) | [`manual.yaml`](../../entrypoints/startup/manual.yaml) | nothing — `/connect-bot` arms the session |
-| Automatic startup | [`entrypoints/omp-auto/connect-bot.ts`](../../entrypoints/omp-auto/connect-bot.ts) | [`auto.yaml`](../../entrypoints/startup/auto.yaml) | the same arm operation, attempted at the process's first main session start |
+| Mode | OMP entrypoint | Pi entrypoint | Policy document | What starts |
+| --- | --- | --- | --- | --- |
+| Manual | [`entrypoints/omp/connect-bot.ts`](../../entrypoints/omp/connect-bot.ts) | [`entrypoints/pi/connect-bot.ts`](../../entrypoints/pi/connect-bot.ts) | [`manual.yaml`](../../entrypoints/startup/manual.yaml) | nothing — `/connect-bot` arms the session |
+| Automatic startup | [`entrypoints/omp-auto/connect-bot.ts`](../../entrypoints/omp-auto/connect-bot.ts) | [`entrypoints/pi-auto/connect-bot.ts`](../../entrypoints/pi-auto/connect-bot.ts) | [`auto.yaml`](../../entrypoints/startup/auto.yaml) | the same arm operation, attempted at the process's first main session start |
 
-Both entrypoints re-export one shared OMP assembly
-([`harnesses/omp-assembly.ts`](harnesses/omp-assembly.ts)) and one definition, and the two policy
-blocks select the initial choice. The shared assembly's
-[`startup-modes.ts`](harnesses/startup-modes.ts) derives each document's absolute path from its own
+Each harness's two entrypoints re-export its shared assembly and use the same extension
+definition; the two policy blocks select the initial choice. Both assemblies use
+[`startup-modes.ts`](harnesses/startup-modes.ts), which derives each document's absolute path from its own
 module location, so the mode is not affected by the working directory. Load **one** mode's
 entrypoint for this extension, never both: the host adds extension sources rather than merging
 them, so two modes in one process would bind the extension twice. There is no duplicate-name
@@ -35,9 +35,35 @@ not mode-specific: both entrypoints read the same [`config.yaml`](config.yaml) o
 so choosing a startup mode neither duplicates nor changes the business connection parameters, and
 an edit to that file still takes effect only in the next process.
 
-Automatic startup covers connect-bot's existing support combination (OMP). This page does not add
-a pi adapter or another host, and it does not change the support record or deploy anything
-formally.
+Pi loads the same shared business logic through the existing public `piAdapter`. Its assembly
+reads the native session id, working directory, model display name and session name, and supplies
+unref'd Node heartbeat timers because Pi has no context-owned interval API. The shared registration
+lifecycle cancels each timer on off or owner end; binding cleanup also clears remaining timers.
+No subagent integration is requested: connect-bot controls only its own main session. Configuration
+and startup-policy paths resolve from the repository location, not the process working directory.
+
+For explicit Pi loading, select exactly one entry (replace the path with this repository's absolute
+path):
+
+```sh
+pi --no-extensions -e /absolute/path/my-agent-toolkit/entrypoints/pi/connect-bot.ts
+# Or automatic startup:
+pi --no-extensions -e /absolute/path/my-agent-toolkit/entrypoints/pi-auto/connect-bot.ts
+```
+
+Check the structural connection with
+`bun run check:integrations --extension connect-bot --adapter pi --json`.
+Entry availability and a complete static check do not promote a harness support status, prove
+native semantic equivalence, or deploy anything formally. Version evidence belongs to the
+[host support record](../../framework/docs/harness-support.md).
+
+**Pi verification limit:** basic entrypoint/registration scenarios were observed, but full lifecycle
+parity is not established. On the exercised Pi 1.4.0 RPC path, `new_session` triggered a new
+automatic registration rather than preserving the process-first-start-only policy described below;
+closing RPC stdin while armed did not produce an unregister within the observation window.
+These are known runtime gaps, not a complete lifecycle acceptance. Use `/connect-bot off` before
+closing that path. Exact evidence and limitations live in the
+[Pi connect-bot record](../../framework/docs/harness-support.md#pi-connect-bot-entrypoint-evidence).
 
 **Loading is not enabling, and a startup target is not a connection.** The automatic document states
 `enabled: true`, and the framework hands that enabling intent to the same business operation
