@@ -42,7 +42,7 @@ import { reportState } from "../session/state-machine";
  * an empty value.
  */
 function registerData(facts: SessionFacts): Record<string, unknown> {
-	const data: Record<string, unknown> = { cwd: facts.cwd };
+	const data: Record<string, unknown> = { cwd: facts.cwd, agentType: facts.agentType };
 	if (facts.sessionName !== undefined && facts.sessionName.length > 0) data.sessionName = facts.sessionName;
 	if (facts.model !== undefined && facts.model.length > 0) data.model = facts.model;
 	return data;

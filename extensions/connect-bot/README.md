@@ -7,6 +7,17 @@ harness-independent logic is under [`shared-logic/`](shared-logic). Its OMP asse
 [`harnesses/pi-assembly.ts`](harnesses/pi-assembly.ts), each behind one thin entrypoint per
 [startup mode](#startup-modes).
 
+## Session harness type
+
+Every native registration reports `data.agentType`: the Pi assembly sends `pi`, and the OMP
+assembly sends `omp`, for both manual and automatic startup. This fact comes from the native
+assembly, never from a model, session name, or Bot template. It does not change state reporting,
+heartbeat cadence, shutdown monitoring, or retry behavior.
+
+The panel's open registration boundary accepts older extensions without this field and preserves
+future string values. Its current UI recognizes only `pi` and `omp`; missing or unrecognized
+values display `未知` beside the session name rather than being guessed as a known harness.
+
 ## Startup modes
 
 connect-bot is assembled in one of two **startup modes**. The mode is selected statically by the

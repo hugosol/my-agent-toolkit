@@ -26,6 +26,8 @@ import type { OutboxFlusher } from "../panel/outbox";
  * view does — cannot be built from the delivery alone.
  */
 export interface SessionFacts {
+	/** The native harness assembling this extension; never inferred from session metadata. */
+	readonly agentType: "pi" | "omp";
 	/** The real session id the panel keys this session by. */
 	readonly sessionId: string;
 	/** The session's working directory. */

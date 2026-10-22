@@ -235,7 +235,7 @@ describe("the beat is the extension's own 10s cadence, whatever the request budg
 		// the protocol answers it, with each beat carrying the state the session holds.
 		expect(panel.requests.map(request => request.kind)).toEqual(kindsOf(report));
 		expect(envelopesOf(report)).toEqual([
-			{ sessionId: "budget-cadence", kind: "register", data: { cwd: "E:/work/budget" } },
+			{ sessionId: "budget-cadence", kind: "register", data: { cwd: "E:/work/budget", agentType: "omp" } },
 			{ sessionId: "budget-cadence", kind: "state", data: { value: "idle", reason: "register" } },
 			{ sessionId: "budget-cadence", kind: "heartbeat", data: { value: "idle" } },
 			{ sessionId: "budget-cadence", kind: "heartbeat", data: { value: "idle" } },
@@ -411,7 +411,7 @@ describe("the protocol the actual herdr-bot panel receives is the frozen one (P2
 				{
 					sessionId: "budget-interop",
 					kind: "register",
-					data: { cwd: "E:/work/interop", sessionName: "interop", model: "interop-model" },
+					data: { cwd: "E:/work/interop", agentType: "omp", sessionName: "interop", model: "interop-model" },
 				},
 				{ sessionId: "budget-interop", kind: "state", data: { value: "idle", reason: "register" } },
 				{ sessionId: "budget-interop", kind: "heartbeat", data: { value: "idle" } },

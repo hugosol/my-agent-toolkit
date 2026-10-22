@@ -18,6 +18,7 @@ type ConnectBotPiContext = PiExtensionContext & {
 
 function sessionFactsOf(ctx: ConnectBotPiContext): SessionFacts {
 	return {
+		agentType: "pi",
 		sessionId: ctx.sessionManager.getSessionId(),
 		cwd: ctx.cwd,
 		model: ctx.model?.name,
