@@ -65,6 +65,7 @@ import {
 	roundColumns,
 	runtimeText,
 	seasonMark,
+	showsCostField,
 	totalColumns,
 } from "../../shared-logic/presentation/display";
 import type { ProviderBalanceResult } from "../../shared-logic/business/pricing/provider-balance";
@@ -833,45 +834,47 @@ function withinWidthPieces(pieces: readonly DisplayPiece[], width: number | unde
  *
  * The reading order is the one this widget has always drawn: the fixed-budget line first — with the
  * monetary channel's own season mark ahead of it, and only where the host reported a context reading
- * for the bar to compare — then the period's accrued line for the monetary channel and the allowance
- * windows for the Codex one. The Total line follows, carrying the current model's own structure and
- * the main tree's Cost and Ref; the brief's Round row is laid out from the same columns, so the
- * two rows' fields line up vertically. Below that the entry's own form decides the content: the brief
- * draws the viewed session's own most recent Round, and the detail form draws the static agent tree of
- * the main session in its place — never both, which is what "the detail form keeps the Total and
- * replaces the Round row" means for a terminal. The two currencies are written apart and never added
- * together, and a mode without an amount policy contributes no amount of its own.
+ * for the bar to compare — then the DeepSeek account facts whenever the Total writes Cost, and the
+ * allowance windows for the Codex one. The Total line follows, carrying the current model's own
+ * structure and the main tree's Cost and Ref; the brief's Round row is laid out from the same columns,
+ * so the two rows' fields line up vertically. Below that the entry's own form decides the content: the
+ * brief draws the viewed session's own most recent Round, and the detail form draws the static agent
+ * tree of the main session in its place — never both, which is what "the detail form keeps the Total
+ * and replaces the Round row" means for a terminal. The two currencies are written apart and never
+ * added together, and a mode without an amount policy contributes no amount of its own.
  *
  * The monetary channel keeps the superseded widget's one account row: the season mark, the fixed-budget
  * bar and effort, the provider balance and the period's accrued bar are written on a single line, in
- * that order (spec §192 keeps the old layout). The balance remains the official channel's own fact — a
- * token-only model has none (spec §134) and the allowance channel reads its own windows instead — so
- * the row is composed for the monetary mode alone, and a failure the process holds is shown there
- * rather than notified, never replacing the last reading.
+ * that order (spec §192 keeps the old layout). The account facts are not restricted to that current
+ * mode: the Total writes Cost for a monetary target and for any target whose main tree carries a CNY
+ * amount, including one whose own earlier or descendant DeepSeek requests did, and in either case the
+ * held balance and period accrual ride the account row. A failure is shown there rather than notified,
+ * never replacing the last reading.
  */
 export function widgetLayout(reading: WidgetReading): readonly DisplayLine[] | undefined {
 	const { display } = reading;
 	if (display.mode === "hidden") return undefined;
 	const lines: DisplayLine[] = [];
+	// The account row carries the target's own context reading and, whenever the Total writes Cost,
+	// the DeepSeek balance and period accrual too. The season mark belongs to the monetary target;
+	// another channel keeps its own budget bar and adds only the account facts Cost made relevant.
+	const account: DisplayPiece[] = [];
+	const budget = budgetLine(display, reading.period);
 	if (display.mode === "monetary") {
-		// The old account row, one line: a target whose host reported no context reading still shows the
-		// season mark and the account facts — only the bar and its effort need a reading to compare.
-		const account: DisplayPiece[] = [];
-		const budget = budgetLine(display, reading.period);
-		if (budget !== undefined) {
-			account.push(...budget);
-		} else {
-			account.push({ text: seasonMark(reading.period) });
-		}
+		// A target whose host reported no context reading still shows the season mark; only the bar
+		// and its effort need a reading to compare.
+		if (budget !== undefined) account.push(...budget);
+		else account.push({ text: seasonMark(reading.period) });
+	} else if (budget !== undefined) {
+		account.push(...budget);
+	}
+	if (showsCostField(display)) {
 		const balance = balanceLine(reading.balance);
 		if (balance !== undefined) account.push(...balance);
 		account.push(...accruedLine(reading.accrued));
-		lines.push(account);
-	} else {
-		const budget = budgetLine(display, reading.period);
-		if (budget !== undefined) lines.push(budget);
-		if (display.mode === "allowance") lines.push(...reading.quota);
 	}
+	if (account.length > 0) lines.push(account);
+	if (display.mode === "allowance") lines.push(...reading.quota);
 	// The Total and the brief's Round are one layout: their columns are padded together so every
 	// field starts at the same column on both rows. A detail form draws no Round, but still lays the
 	// Total out against the same Round when one exists, so the Total line it keeps above the tree is

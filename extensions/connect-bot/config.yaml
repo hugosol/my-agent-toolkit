@@ -5,12 +5,12 @@
 # code, so a missing or illegal file refuses the extension instead of letting it run on an
 # invented value.
 #
-# Same host, so loopback: the panel listens on 0.0.0.0:8787 and a loopback address answers in
+# Same host, so loopback: the panel listens on 0.0.0.0:18787 and a loopback address answers in
 # milliseconds. The panel's mDNS name (herdr-bot.local) is for browsers and LAN devices; resolving
 # it can take longer than the request budget below on first use (1000ms as shipped), which reads
 # as a failed arm.
 # Point this at another host only when the panel really runs there.
-endpoint: "http://127.0.0.1:8787"
+endpoint: "http://127.0.0.1:18787"
 
 # The wait budget of one request, in milliseconds: every request this extension makes waits at
 # most this long — register, unregister and the background heartbeat/state pushes share it, and

@@ -196,6 +196,14 @@ export interface PiUiContext {
 }
 export interface PiExtensionContext {
 	readonly sessionManager: PiSessionManager;
+	/**
+	 * The session's current effective system prompt, when this surface publishes one.
+	 *
+	 * It is how pi's own child launches mark the agent definition a spawned session runs: the
+	 * provider prepends an `active_agent` element naming that definition to the child's prompt.
+	 * A surface that reports none states no definition here rather than being read from a name.
+	 */
+	getSystemPrompt?(): string;
 	readonly model?: PiModel;
 	readonly thinkingLevel?: string;
 	/** The run mode this context belongs to, when this surface publishes it. */
@@ -248,6 +256,14 @@ export interface PiSessionInfoChangedEvent {
 export interface PiModelSelectEvent {
 	readonly type: "model_select";
 }
+/** The native notification that the effective thinking level changed. */
+export interface PiThinkingLevelSelectEvent {
+	readonly type: "thinking_level_select";
+	/** The level the session now runs at, after pi clamped the selection to its model's levels. */
+	readonly level: string;
+	/** The effective level the session ran at before this selection. */
+	readonly previousLevel: string;
+}
 export type PiSessionEventHandler<E> = (event: E, ctx: PiExtensionContext) => void;
 export interface PiBeforeAgentStartEvent {
 	readonly type: "before_agent_start";
@@ -272,6 +288,7 @@ export interface PiCommandRegistration {
 export interface PiExtensionApi {
 	on(event: "session_start", handler: PiSessionEventHandler<PiSessionStartEvent>): () => void;
 	on(event: "model_select", handler: PiSessionEventHandler<PiModelSelectEvent>): () => void;
+	on(event: "thinking_level_select", handler: PiSessionEventHandler<PiThinkingLevelSelectEvent>): () => void;
 	on(event: "session_shutdown", handler: PiSessionEventHandler<PiSessionShutdownEvent>): () => void;
 	on(event: "before_agent_start", handler: PiRunInitiationHandler): () => void;
 	/**

@@ -88,6 +88,13 @@ export interface PiSurfaceSession {
 	model?: { readonly id?: string; readonly provider?: string };
 	/** The effective thinking level at a session's start. */
 	readonly thinkingLevel?: string;
+	/**
+	 * The session's current effective system prompt, when this surface reports one.
+	 *
+	 * It is where pi-subagents writes the `<active_agent name="..."/>` launch marker for the agent
+	 * definition a spawned session runs. Absent models a surface that publishes no prompt at all.
+	 */
+	readonly systemPrompt?: string;
 	/** The entries pi's own branch holds for this session, as the fact a beginning is read from. */
 	readonly branch?: readonly PiSurfaceEntry[];
 	/** pi's own catalog rows, as `modelRegistry.getAll()` answers them. */
@@ -465,6 +472,8 @@ export function boundPiSurface(
 		if ("pending" in session) context.hasPendingMessages = () => session.pending === true;
 		if (session.model !== undefined) context.model = session.model;
 		if (session.thinkingLevel !== undefined) context.thinkingLevel = session.thinkingLevel;
+		const systemPrompt = session.systemPrompt;
+		if (systemPrompt !== undefined) context.getSystemPrompt = () => systemPrompt;
 		if (session.catalog !== undefined) context.modelRegistry = registryOf(session);
 		if (session.context !== undefined) context.getContextUsage = () => session.context;
 		return context as unknown as PiExtensionContext;

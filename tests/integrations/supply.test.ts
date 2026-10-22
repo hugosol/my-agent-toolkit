@@ -6,6 +6,9 @@ import {
 	FULL_ADAPTER,
 	MISSING_BINDING_ADAPTER,
 	MISSING_DELIVERY_ADAPTER,
+	SESSION_FACTS_ADAPTER,
+	SESSION_FACTS_DYNAMIC_ADAPTER,
+	SESSION_FACTS_MISSING_FIELD_ADAPTER,
 	cleanupContractRoots,
 	createContractRoot,
 	deliveryContract,
@@ -24,6 +27,20 @@ function statusOf(result: SupplyResult, id: string) {
 	const entry = result.supplies.find(item => item.contractId === id);
 	if (entry === undefined) throw new Error(`Missing supply entry for ${id}`);
 	return entry;
+}
+
+function fieldOf(result: SupplyResult, name: string) {
+	const report = result.sessionFacts;
+	if (report === undefined) throw new Error("Missing session facts report");
+	const entry = report.fields.find(item => item.field === name);
+	if (entry === undefined) throw new Error(`Missing session facts field for ${name}`);
+	return entry;
+}
+
+function lineOf(source: string, marker: string): number {
+	const index = source.split("\n").findIndex(line => line.includes(marker));
+	if (index < 0) throw new Error(`Missing fixture marker ${marker}`);
+	return index + 1;
 }
 
 describe("adapter supply analysis", () => {
@@ -138,5 +155,101 @@ describe("adapter supply analysis", () => {
 		expect(statusOf(result, "framework:marker").status).toBe("provided");
 		expect(statusOf(result, "framework:prompt-contribution").status).toBe("provided");
 		expect(statusOf(result, "framework:round-lifecycle-events").status).toBe("provided");
+	});
+});
+
+describe("session facts field report", () => {
+	test("reports mapped functions and canonical unavailable facts with their source locations", () => {
+		const root = createContractRoot();
+		const file = "adapters/facts/internal/port.ts";
+		writeFixture(root, file, SESSION_FACTS_ADAPTER);
+		const result = supplyFor(root, "facts", [frameworkContract("session-facts")]);
+		const report = result.sessionFacts;
+		expect(result.diagnostics).toEqual([]);
+		expect(statusOf(result, "framework:session-facts").status).toBe("provided");
+		expect(report?.mapping).toBe("declared");
+		expect(report?.declaration).toMatchObject({ file, line: lineOf(SESSION_FACTS_ADAPTER, "export const SESSION_FACTS") });
+		expect(report?.fields.map(field => field.field)).toEqual([
+			"sessionId",
+			"kind",
+			"parentSessionId",
+			"name",
+			"taskName",
+			"agentName",
+			"agentId",
+			"startup",
+			"unavailable",
+		]);
+
+		expect(fieldOf(result, "sessionId")).toMatchObject({
+			status: "mapped",
+			file,
+			line: lineOf(SESSION_FACTS_ADAPTER, "sessionId: input => input.sessionId"),
+		});
+		// An optional field mapped by a function remains mapped; its runtime undefined is not a warning.
+		expect(fieldOf(result, "parentSessionId").status).toBe("mapped");
+		expect(fieldOf(result, "parentSessionId").reason).toBeUndefined();
+		expect(fieldOf(result, "startup").status).toBe("mapped");
+		expect(fieldOf(result, "unavailable").status).toBe("mapped");
+
+		expect(fieldOf(result, "agentName")).toMatchObject({
+			status: "unavailable",
+			reason: "pi reports no agent definition",
+			file,
+			line: lineOf(SESSION_FACTS_ADAPTER, "agentName: unavailableFact"),
+		});
+		expect(fieldOf(result, "taskName")).toMatchObject({
+			status: "unavailable",
+			reason: "pi reports no task handle",
+		});
+	});
+
+	test("reports a key the mapping omits as missing at the declaration, never mapped", () => {
+		const root = createContractRoot();
+		const file = "adapters/facts/internal/port.ts";
+		writeFixture(root, file, SESSION_FACTS_MISSING_FIELD_ADAPTER);
+		const result = supplyFor(root, "facts", [frameworkContract("session-facts")]);
+		expect(result.diagnostics).toEqual([]);
+		expect(result.sessionFacts?.mapping).toBe("declared");
+		expect(fieldOf(result, "agentName")).toMatchObject({
+			status: "missing",
+			file,
+			line: lineOf(SESSION_FACTS_MISSING_FIELD_ADAPTER, "export const SESSION_FACTS"),
+		});
+		expect(fieldOf(result, "agentName").reason).toBeUndefined();
+		expect(fieldOf(result, "sessionId").status).toBe("mapped");
+	});
+
+	test("reports dynamic mapping shapes as unresolved instead of guessing field coverage", () => {
+		const root = createContractRoot();
+		const file = "adapters/facts/internal/port.ts";
+		writeFixture(root, file, SESSION_FACTS_DYNAMIC_ADAPTER);
+		const result = supplyFor(root, "facts", [frameworkContract("session-facts")]);
+		expect(result.diagnostics).toEqual([]);
+		expect(result.sessionFacts?.mapping).toBe("unresolved");
+		expect(result.sessionFacts?.reason).toContain("spread");
+		expect(fieldOf(result, "sessionId").status).toBe("mapped");
+		expect(fieldOf(result, "agentName").status).toBe("unavailable");
+		expect(fieldOf(result, "kind")).toMatchObject({ status: "unresolved", file });
+	});
+
+	test("does not inspect a mapping when the contract set does not demand session facts", () => {
+		const root = createContractRoot();
+		writeFixture(root, "adapters/facts/internal/port.ts", SESSION_FACTS_ADAPTER);
+		const result = supplyFor(root, "facts", [portContract("onSession")]);
+		expect(result.diagnostics).toEqual([]);
+		expect(result.sessionFacts).toBeUndefined();
+	});
+
+	test("reports an absent canonical mapping as missing without changing legacy contract supply", () => {
+		const root = createContractRoot();
+		writeFixture(root, "adapters/no-mapping/internal/port.ts", FULL_ADAPTER);
+		const result = supplyFor(root, "no-mapping", [frameworkContract("session-facts")]);
+		expect(result.diagnostics).toEqual([]);
+		expect(statusOf(result, "framework:session-facts").status).toBe("provided");
+		expect(result.sessionFacts?.mapping).toBe("missing");
+		expect(result.sessionFacts?.reason).toContain("defineSessionFactsMapping");
+		expect(result.sessionFacts?.fields.length).toBe(9);
+		expect(result.sessionFacts?.fields.every(field => field.status === "missing")).toBe(true);
 	});
 });

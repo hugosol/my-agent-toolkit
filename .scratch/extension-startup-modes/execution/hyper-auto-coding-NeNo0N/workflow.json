@@ -1,0 +1,1288 @@
+{
+  "branch": "dev",
+  "baseline": "22bb937e5bbd3ed23b25a4b67723dbc4d323ac05",
+  "attempts": [
+    {
+      "ticket": "01-codebase-tools-startup.md",
+      "id": "be146433-a016-4592-9769-b9997ff415bf",
+      "report": "E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\extension-startup-modes\\execution\\hyper-auto-coding-NeNo0N\\implement-4c6d5851-1657-44df-bebf-9b86fc9c980d.md"
+    },
+    {
+      "ticket": "02-codebase-tools-recovery.md",
+      "id": "d30e2d89-a34a-4cc8-83f7-86136489c080",
+      "report": "E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\extension-startup-modes\\execution\\hyper-auto-coding-NeNo0N\\implement-f1a5ec14-cbdd-41f0-b95e-f5cab092a258.md"
+    },
+    {
+      "ticket": "03-connect-bot-startup.md",
+      "id": "a93bbe1d-2fd9-4ee7-9e2a-d62bf7bec555",
+      "report": "E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\extension-startup-modes\\execution\\hyper-auto-coding-NeNo0N\\implement-042ea404-a63f-41b5-bcc5-e39f478985ae.md"
+    },
+    {
+      "ticket": "07-codebase-tools-subagent-follow.md",
+      "id": "4ea17dfe-7d35-4aa2-b55e-bada56e161eb",
+      "report": "E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\extension-startup-modes\\execution\\hyper-auto-coding-NeNo0N\\implement-c1b6243b-fad3-4f97-a8f6-4955eda0b90b.md"
+    },
+    {
+      "ticket": "04-connect-bot-failure-and-admission.md",
+      "id": "2a37d9ff-9240-4aa2-9f4f-f09383337e8c",
+      "report": "E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\extension-startup-modes\\execution\\hyper-auto-coding-NeNo0N\\implement-cba76dbf-5b49-4660-a05f-b18242d1ba76.md"
+    },
+    {
+      "ticket": "05-owner-lifecycle-and-isolation.md",
+      "id": "cec09a8c-0a1d-4e77-aa41-0f83ef82488a",
+      "report": "E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\extension-startup-modes\\execution\\hyper-auto-coding-NeNo0N\\implement-d64383f3-48f4-4e12-a936-57d0e0593860.md"
+    },
+    {
+      "ticket": "06-loading-and-configuration.md",
+      "id": "8b0f2426-5ac5-4224-aa9c-5966a1ba6b93",
+      "report": "E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\extension-startup-modes\\execution\\hyper-auto-coding-NeNo0N\\implement-2b4e179a-641f-4e9a-967e-58787426cca5.md"
+    },
+    {
+      "ticket": "08-usage-and-integration-handoff.md",
+      "id": "3cfb378b-9fb5-4bed-add3-a2d388996061",
+      "report": "E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\extension-startup-modes\\execution\\hyper-auto-coding-NeNo0N\\implement-f622153c-8ed7-4d33-aba0-811bd5aec170.md"
+    }
+  ],
+  "tickets": {
+    "mode": "running",
+    "planned": true,
+    "paused": false,
+    "pausing": false,
+    "checkpoint": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-auto-coding-pause-01a16010-a58b-71a0-bc90-15f1bbbf-d39d81c0e8759026.json",
+    "branch": "dev",
+    "baseline": "22bb937e5bbd3ed23b25a4b67723dbc4d323ac05",
+    "temporaryDir": "E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\extension-startup-modes\\execution\\hyper-auto-coding-NeNo0N",
+    "maxParallelTickets": 4,
+    "active": [],
+    "integrating": [],
+    "ready": [],
+    "tickets": [
+      {
+        "ticket": "01-codebase-tools-startup.md",
+        "blockedBy": [],
+        "status": "integrated",
+        "worktree": {
+          "branch": "hyper/extension-startup-modes/01-codebase-tools-startup-31d6d5-b21292ab9ce5",
+          "cwd": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-SKIWZY"
+        },
+        "mergedHead": "09483946e091a84570bff1a16da39808215726b6",
+        "integrationReport": "E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\extension-startup-modes\\execution\\hyper-auto-coding-NeNo0N\\integrate-c4d516ad-17b3-4e4a-ba4c-ee2df5175b16.md",
+        "integrationAgentId": "integrate-01-codebase-tools-startupmd-019a6913-f",
+        "report": "E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\extension-startup-modes\\execution\\hyper-auto-coding-NeNo0N\\implement-4c6d5851-1657-44df-bebf-9b86fc9c980d.md",
+        "reportSuccessful": true
+      },
+      {
+        "ticket": "02-codebase-tools-recovery.md",
+        "blockedBy": [
+          "01-codebase-tools-startup.md"
+        ],
+        "status": "integrated",
+        "worktree": {
+          "branch": "hyper/extension-startup-modes/02-codebase-tools-recovery-4ac58f-b21292ab9ce5",
+          "cwd": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-aKDntC"
+        },
+        "mergedHead": "7b320a826f62051b8a587d00e35f8b566cef1688",
+        "integrationReport": "E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\extension-startup-modes\\execution\\hyper-auto-coding-NeNo0N\\integrate-959372a4-d0c9-4a5f-8ece-7b0f5485b70a.md",
+        "integrationAgentId": "integrate-02-codebase-tools-recoverymd-b907b385-",
+        "report": "E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\extension-startup-modes\\execution\\hyper-auto-coding-NeNo0N\\implement-f1a5ec14-cbdd-41f0-b95e-f5cab092a258.md",
+        "reportSuccessful": true
+      },
+      {
+        "ticket": "03-connect-bot-startup.md",
+        "blockedBy": [
+          "01-codebase-tools-startup.md"
+        ],
+        "status": "integrated",
+        "worktree": {
+          "branch": "hyper/extension-startup-modes/03-connect-bot-startup-dd5a69-b21292ab9ce5",
+          "cwd": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-BPSgaH"
+        },
+        "mergedHead": "2ba8db8fe74f4184a7f97380294c9dc833abbe7d",
+        "integrationReport": "E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\extension-startup-modes\\execution\\hyper-auto-coding-NeNo0N\\integrate-7fd16134-6a48-4007-a5dc-22ebde121394.md",
+        "integrationAgentId": "integrate-03-connect-bot-startupmd-3eaa6b58-f1a8",
+        "report": "E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\extension-startup-modes\\execution\\hyper-auto-coding-NeNo0N\\implement-042ea404-a63f-41b5-bcc5-e39f478985ae.md",
+        "reportSuccessful": true
+      },
+      {
+        "ticket": "04-connect-bot-failure-and-admission.md",
+        "blockedBy": [
+          "03-connect-bot-startup.md"
+        ],
+        "status": "integrated",
+        "worktree": {
+          "branch": "hyper/extension-startup-modes/04-connect-bot-failure-and-admis-1f4796-b21292ab9ce5",
+          "cwd": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-xwgFa8"
+        },
+        "mergedHead": "40d5e7ebc90381d33e5afd31bf8d2b0d448572c7",
+        "integrationReport": "E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\extension-startup-modes\\execution\\hyper-auto-coding-NeNo0N\\integrate-60560f3d-d1cf-41f2-8d50-0e157cbbad7f.md",
+        "integrationAgentId": "integrate-04-connect-bot-failure-and-admissionmd",
+        "report": "E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\extension-startup-modes\\execution\\hyper-auto-coding-NeNo0N\\implement-cba76dbf-5b49-4660-a05f-b18242d1ba76.md",
+        "reportSuccessful": true
+      },
+      {
+        "ticket": "05-owner-lifecycle-and-isolation.md",
+        "blockedBy": [
+          "03-connect-bot-startup.md"
+        ],
+        "status": "integrated",
+        "worktree": {
+          "branch": "hyper/extension-startup-modes/05-owner-lifecycle-and-isolation-76f5fa-b21292ab9ce5",
+          "cwd": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-ghXj9l"
+        },
+        "mergedHead": "66ae6afa27c7d8dbd2724ade9433172ff9c9b8e0",
+        "integrationReport": "E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\extension-startup-modes\\execution\\hyper-auto-coding-NeNo0N\\integrate-4e8d1649-f40a-4a0b-a31f-5fe110bd6638.md",
+        "integrationAgentId": "integrate-05-owner-lifecycle-and-isolationmd-e5e",
+        "report": "E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\extension-startup-modes\\execution\\hyper-auto-coding-NeNo0N\\implement-d64383f3-48f4-4e12-a936-57d0e0593860.md",
+        "reportSuccessful": true
+      },
+      {
+        "ticket": "06-loading-and-configuration.md",
+        "blockedBy": [
+          "01-codebase-tools-startup.md",
+          "03-connect-bot-startup.md"
+        ],
+        "status": "integrated",
+        "worktree": {
+          "branch": "hyper/extension-startup-modes/06-loading-and-configuration-d78bbc-b21292ab9ce5",
+          "cwd": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-mLt3mH"
+        },
+        "mergedHead": "bc8c6320dc35f727f65a1e92914a5d516e9356a5",
+        "integrationReport": "E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\extension-startup-modes\\execution\\hyper-auto-coding-NeNo0N\\integrate-a3097eaa-c0fa-44c6-b6f4-d4153176904e.md",
+        "integrationAgentId": "integrate-06-loading-and-configurationmd-5b0e59d",
+        "report": "E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\extension-startup-modes\\execution\\hyper-auto-coding-NeNo0N\\implement-2b4e179a-641f-4e9a-967e-58787426cca5.md",
+        "reportSuccessful": true
+      },
+      {
+        "ticket": "07-codebase-tools-subagent-follow.md",
+        "blockedBy": [
+          "01-codebase-tools-startup.md"
+        ],
+        "status": "integrated",
+        "worktree": {
+          "branch": "hyper/extension-startup-modes/07-codebase-tools-subagent-follo-382a98-b21292ab9ce5",
+          "cwd": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-ylv0Qa"
+        },
+        "mergedHead": "f9a940d5796a80b655dcbfb448a0ce8ba7fa8a7d",
+        "integrationReport": "E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\extension-startup-modes\\execution\\hyper-auto-coding-NeNo0N\\integrate-a75c67b2-1ffa-45d9-acd6-ccdd1cd9d91b.md",
+        "integrationAgentId": "integrate-07-codebase-tools-subagent-followmd-44",
+        "report": "E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\extension-startup-modes\\execution\\hyper-auto-coding-NeNo0N\\implement-c1b6243b-fad3-4f97-a8f6-4955eda0b90b.md",
+        "reportSuccessful": true
+      },
+      {
+        "ticket": "08-usage-and-integration-handoff.md",
+        "blockedBy": [
+          "02-codebase-tools-recovery.md",
+          "04-connect-bot-failure-and-admission.md",
+          "05-owner-lifecycle-and-isolation.md",
+          "06-loading-and-configuration.md",
+          "07-codebase-tools-subagent-follow.md"
+        ],
+        "status": "integrated",
+        "worktree": {
+          "branch": "hyper/extension-startup-modes/08-usage-and-integration-handoff-b0da79-b21292ab9ce5",
+          "cwd": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-xg9U7v"
+        },
+        "mergedHead": "a4786116b138d73cc80f1975f2259f909b229579",
+        "integrationReport": "E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\extension-startup-modes\\execution\\hyper-auto-coding-NeNo0N\\integrate-1ff2135e-51b5-4852-a39f-2e4fd97ca3d7.md",
+        "integrationAgentId": "integrate-08-usage-and-integration-handoffmd-94a",
+        "report": "E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\extension-startup-modes\\execution\\hyper-auto-coding-NeNo0N\\implement-f622153c-8ed7-4d33-aba0-811bd5aec170.md",
+        "reportSuccessful": true
+      }
+    ],
+    "finished": false,
+    "lastReport": "E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\extension-startup-modes\\execution\\hyper-auto-coding-NeNo0N\\integrate-1ff2135e-51b5-4852-a39f-2e4fd97ca3d7.md"
+  },
+  "executions": [
+    {
+      "feature": "extension-startup-modes",
+      "ticket": "01-codebase-tools-startup.md",
+      "run_id": "6b9566b6-3cf6-43d7-8687-22553964a817",
+      "parent_session_id": "01a16010-a58b-71a0-bc90-15f1bbbf0542",
+      "parent_session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-21T20-04-26-123Z_01a16010-a58b-71a0-bc90-15f1bbbf0542.jsonl",
+      "workspace": "E:\\Developer\\myhub\\my-agent-toolkit",
+      "tool_call_id": "be146433-a016-4592-9769-b9997ff415bf",
+      "started_at": "2026-10-21T20:11:42.025Z",
+      "tdd_status": "completed",
+      "retro_status": "completed",
+      "tdd_finished_at": "2026-10-21T20:32:12.394Z",
+      "tdd_result": {
+        "index": 0,
+        "id": "01-codebase-tools-startupmd-be146433-a016-4592-9",
+        "agent": "tdd",
+        "agentSource": "user",
+        "task": "Complete assignment thoroughly:\n\n在当前 worktree 实现唯一票据：C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-SKIWZY\\.scratch\\extension-startup-modes\\implementation\\01-codebase-tools-startup.md。\n集成分支：dev\nspec：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\extension-startup-modes\\spec.md\ncontract：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\extension-startup-modes\\contract.md\n这是本票首次执行。\n遵守 tdd skill，自行负责本票验收并报告实际验证与未完成事项。完成后尽快提交本票实现，交出 worktree，由独立集成子代理接管。不要修改其他票据或工作流报告，不操作集成分支工作区，不自行合入集成分支，不调用 retro、不派发其他票据。不得 reset 丢弃既有工作。",
+        "assignment": "在当前 worktree 实现唯一票据：C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-SKIWZY\\.scratch\\extension-startup-modes\\implementation\\01-codebase-tools-startup.md。\n集成分支：dev\nspec：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\extension-startup-modes\\spec.md\ncontract：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\extension-startup-modes\\contract.md\n这是本票首次执行。\n遵守 tdd skill，自行负责本票验收并报告实际验证与未完成事项。完成后尽快提交本票实现，交出 worktree，由独立集成子代理接管。不要修改其他票据或工作流报告，不操作集成分支工作区，不自行合入集成分支，不调用 retro、不派发其他票据。不得 reset 丢弃既有工作。",
+        "description": "Implement codebase tools startup ticket",
+        "lastIntent": "Confirming handoff state",
+        "exitCode": 0,
+        "output": "{\n  \"ticket\": \"01-codebase-tools-startup\",\n  \"status\": \"implementation complete, committed; ticket status in-progress pending integration/human marker check\",\n  \"commit\": \"dc21eeb (branch hyper/extension-startup-modes/01-codebase-tools-startup-31d6d5-b21292ab9ce5; clean worktree)\",\n  \"delivered_behavior\": {\n    \"framework\": \"ExtensionAssembly.startupPolicy selects a YAML startup policy document; framework/core/startup.ts reads only the loaded extension's block (enabled: boolean), refuses a missing/illegal document as a configuration binding failure on the same loading-time path as extension config, and caches per file per process. StateStore.reconcile applies the choice once per process at the first owner session start: a valid history value (true or false) always wins, an enabling choice is recorded through the ordinary session-entry medium, the declared default writes nothing, and the choice is a target, never a toggle. No new runtime/startup runtime; initialize waiting is untouched; codebase-tools needed no business initializer.\",\n    \"entrypoints\": \"Original entrypoints remain manual mode (pure re-exports). New entrypoints/omp-auto/codebase-tools.ts and entrypoints/pi-auto/codebase-tools.ts are pure re-exports of new mode assemblies. Both modes share omp-assembly.ts/pi-assembly.ts (one native mapping, one definition); mode files only name the policy document and (pi) the mode's child entry. Policy documents: entrypoints/startup/manual.yaml (codebase-tools: disabled) and auto.yaml (enabled). No new profile/env parameter.\",\n    \"docs\": \"framework/docs/framework-capabilities.md new section + symbol/option/State rows; framework/README.md; framework/GLOSSARY.md (startup policy document, mode, config-switch boundary); extensions/codebase-tools/README.md modes/commands/semantics + H1b automatic-mode visual acceptance.\"\n  },\n  \"criterion_evidence\": {\n    \"P2 codebase-tools pi/OMP manual entry + original operations\": \"S2: tests/codebase-tools/startup-modes-dock.test.ts manual case loads the manual entrypoint file and runs /codebase-tools on->off (notifications, marker frames, persisted {enabled:true},{enabled:false}); existing codebase-tools dock suites (command-toggle/marker-lifecycle/init-injection/session-boundaries) pass in the 35-test partition. pi: bun scripts/pi-codebase-tools-smoke.ts manual mode, 25 behavior checks pass.\",\n    \"P3 automatic entry enables without a command\": \"S1 automatic test; S2 OMP automatic test (first captured model request carries the init, no notify frame); pi --mode auto smoke first run carries the contribution.\",\n    \"P4 same policy content, independent expectations\": \"S1 swapped documents: manual-named doc stating true starts enabled and records it; auto-named doc stating false stays off and records nothing, each checked against its document's own value. S2 host runs check the shipped defaults independently (manual false, auto true).\",\n    \"P8 no valid history manual false / auto true\": \"S1 manual and automatic default tests (State, persisted payloads, marker renders, contribution); S2 OMP automatic (state entry, marker at start, init on first request) and manual (no contribution, no state entry, empty marker); pi auto smoke (31 checks). Human terminal marker display deliberately left unverified.\",\n    \"P10 explicit target, not toggle\": \"S1 history true + choice true stays enabled, no extra persistence, run contributes; S2 OMP auto resume stays enabled and writes no second record; pi auto resume phase asserts the same and that the next command turns it off.\",\n    \"P11 sync State before first prompt planning\": \"Real first model request captured on OMP and pi auto: request carries the init; the session-entry record precedes the first user message in the journal.\",\n    \"P12 post-startup command toggle\": \"S1 command off after startup; S2 OMP auto command off/on with notifications, marker cleared/restored, state records, contribution changes; pi auto phase 2; resume case turns it off from the restored value.\",\n    \"P26 no reapplication / no override / no extra startup write\": \"S1: command off, then a new owner start with no history records nothing and stays off; repeated session_facts and two runs add nothing. S2: OMP new_session after command off has no startup write and no contribution; pi auto new_session phase. Fault injection (removing the once flag) made both the S1 and S2 P26 tests fail, then restored green.\",\n    \"P33 explicit entry statically selects the policy with normal host params\": \"OMP dock runs use the same host parameters and differ only in the entry file (-e manual entry vs auto entry) and observe the corresponding defaults; pi smoke --mode selects the entrypoint; production reads no profile/env selector.\",\n    \"P36 no new State payload in manual default-off run\": \"S1 no-record test; S2 OMP manual session with only a turn has zero codebase-tools entries; existing clean-session dock test; pi manual phase-1 no-entry assertion.\"\n  },\n  \"verification_run\": {\n    \"bun run typecheck\": \"pass (tsc + check:authoring 55 files / 0 diagnostics)\",\n    \"bun run check:integrations\": \"exit 0 (structural analysis)\",\n    \"bun test tests/codebase-tools\": \"35 pass / 0 fail across 9 files (includes new 7-test S1 and 4-test S2 suites)\",\n    \"bun test tests/framework tests/authoring tests/integrations\": \"726 pass / 0 fail across 63 files\",\n    \"bun test tests/model-cost\": \"524 pass / 0 fail across 51 files (changed adapter/binding consumers)\",\n    \"bun test tests/connect-bot\": \"136 pass / 5 fail; all 5 are real-panel interop cases failing only because the external herdr-bot.exe binary is absent (unrelated to this change)\",\n    \"bun scripts/pi-codebase-tools-smoke.ts --mode auto\": \"pi 1.3.0, 31 checks passed, none failed\",\n    \"bun scripts/pi-codebase-tools-smoke.ts (manual)\": \"25 behavior checks passed; the process-exit check fails with a libuv assertion (UV_HANDLE_CLOSING, exit 9) on pi 1.3.0 + Node 24.18.0 — the same failure was reproduced on an unmodified HEAD worktree, so it is a pre-existing environment/version issue\",\n    \"fault injection\": \"once-per-process flag removed -> S1 and S2 P26 tests failed as intended; restored and green\"\n  },\n  \"unverified_or_limits\": [\n    \"Human-led marker/feedback display (P8/P9 visual) was not observed; isolated commands and a six-step scenario list are prepared in extensions/codebase-tools/README.md H1b and the ticket Comments, and remain unverified until the user confirms.\",\n    \"The pi manual smoke cannot complete its later phases here because the script stops at the pre-existing exit-code assertion; all manual behavior assertions that ran passed, and the OMP real-host manual coverage is complete.\",\n    \"Installed pi is 1.3.0 while the smoke's expectations were written for 1.2.0 (recorded by the script as a run note).\",\n    \"Business-effect startup activation for connect-bot (its own ticket) is intentionally not wired here; this ticket's shared rule records the declared session-entry value only, with no speculative implementation hook.\"\n  ],\n  \"handoff\": \"Worktree committed and clean; no other tickets or workflow reports modified; integration branch was not touched.\"\n}",
+        "stderr": "",
+        "truncated": false,
+        "durationMs": 1230230,
+        "tokens": 367355,
+        "requests": 197,
+        "contextTokens": 342127,
+        "contextWindow": 1000000,
+        "modelOverride": [
+          "deepseek/deepseek-flash:max"
+        ],
+        "resolvedModel": "deepseek/deepseek-flash:max",
+        "resolvedModelIdentity": "deepseek/deepseek-flash",
+        "resolvedThinkingLevel": "max",
+        "aborted": false,
+        "usage": {
+          "input": 209230,
+          "output": 158125,
+          "cacheRead": 39708288,
+          "cacheWrite": 0,
+          "totalTokens": 40075643,
+          "reasoningTokens": 79134,
+          "cost": {
+            "input": 0.03138449999999999,
+            "output": 0.09487500000000001,
+            "cacheRead": 0.11912486399999997,
+            "cacheWrite": 0,
+            "total": 0.24538436399999994
+          }
+        },
+        "outputPath": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-21T20-04-26-123Z_01a16010-a58b-71a0-bc90-15f1bbbf0542\\01-codebase-tools-startupmd-be146433-a016-4592-9.md",
+        "extractedToolData": {
+          "yield": [
+            {
+              "data": {
+                "ticket": "01-codebase-tools-startup",
+                "status": "implementation complete, committed; ticket status in-progress pending integration/human marker check",
+                "commit": "dc21eeb (branch hyper/extension-startup-modes/01-codebase-tools-startup-31d6d5-b21292ab9ce5; clean worktree)",
+                "delivered_behavior": {
+                  "framework": "ExtensionAssembly.startupPolicy selects a YAML startup policy document; framework/core/startup.ts reads only the loaded extension's block (enabled: boolean), refuses a missing/illegal document as a configuration binding failure on the same loading-time path as extension config, and caches per file per process. StateStore.reconcile applies the choice once per process at the first owner session start: a valid history value (true or false) always wins, an enabling choice is recorded through the ordinary session-entry medium, the declared default writes nothing, and the choice is a target, never a toggle. No new runtime/startup runtime; initialize waiting is untouched; codebase-tools needed no business initializer.",
+                  "entrypoints": "Original entrypoints remain manual mode (pure re-exports). New entrypoints/omp-auto/codebase-tools.ts and entrypoints/pi-auto/codebase-tools.ts are pure re-exports of new mode assemblies. Both modes share omp-assembly.ts/pi-assembly.ts (one native mapping, one definition); mode files only name the policy document and (pi) the mode's child entry. Policy documents: entrypoints/startup/manual.yaml (codebase-tools: disabled) and auto.yaml (enabled). No new profile/env parameter.",
+                  "docs": "framework/docs/framework-capabilities.md new section + symbol/option/State rows; framework/README.md; framework/GLOSSARY.md (startup policy document, mode, config-switch boundary); extensions/codebase-tools/README.md modes/commands/semantics + H1b automatic-mode visual acceptance."
+                },
+                "criterion_evidence": {
+                  "P2 codebase-tools pi/OMP manual entry + original operations": "S2: tests/codebase-tools/startup-modes-dock.test.ts manual case loads the manual entrypoint file and runs /codebase-tools on->off (notifications, marker frames, persisted {enabled:true},{enabled:false}); existing codebase-tools dock suites (command-toggle/marker-lifecycle/init-injection/session-boundaries) pass in the 35-test partition. pi: bun scripts/pi-codebase-tools-smoke.ts manual mode, 25 behavior checks pass.",
+                  "P3 automatic entry enables without a command": "S1 automatic test; S2 OMP automatic test (first captured model request carries the init, no notify frame); pi --mode auto smoke first run carries the contribution.",
+                  "P4 same policy content, independent expectations": "S1 swapped documents: manual-named doc stating true starts enabled and records it; auto-named doc stating false stays off and records nothing, each checked against its document's own value. S2 host runs check the shipped defaults independently (manual false, auto true).",
+                  "P8 no valid history manual false / auto true": "S1 manual and automatic default tests (State, persisted payloads, marker renders, contribution); S2 OMP automatic (state entry, marker at start, init on first request) and manual (no contribution, no state entry, empty marker); pi auto smoke (31 checks). Human terminal marker display deliberately left unverified.",
+                  "P10 explicit target, not toggle": "S1 history true + choice true stays enabled, no extra persistence, run contributes; S2 OMP auto resume stays enabled and writes no second record; pi auto resume phase asserts the same and that the next command turns it off.",
+                  "P11 sync State before first prompt planning": "Real first model request captured on OMP and pi auto: request carries the init; the session-entry record precedes the first user message in the journal.",
+                  "P12 post-startup command toggle": "S1 command off after startup; S2 OMP auto command off/on with notifications, marker cleared/restored, state records, contribution changes; pi auto phase 2; resume case turns it off from the restored value.",
+                  "P26 no reapplication / no override / no extra startup write": "S1: command off, then a new owner start with no history records nothing and stays off; repeated session_facts and two runs add nothing. S2: OMP new_session after command off has no startup write and no contribution; pi auto new_session phase. Fault injection (removing the once flag) made both the S1 and S2 P26 tests fail, then restored green.",
+                  "P33 explicit entry statically selects the policy with normal host params": "OMP dock runs use the same host parameters and differ only in the entry file (-e manual entry vs auto entry) and observe the corresponding defaults; pi smoke --mode selects the entrypoint; production reads no profile/env selector.",
+                  "P36 no new State payload in manual default-off run": "S1 no-record test; S2 OMP manual session with only a turn has zero codebase-tools entries; existing clean-session dock test; pi manual phase-1 no-entry assertion."
+                },
+                "verification_run": {
+                  "bun run typecheck": "pass (tsc + check:authoring 55 files / 0 diagnostics)",
+                  "bun run check:integrations": "exit 0 (structural analysis)",
+                  "bun test tests/codebase-tools": "35 pass / 0 fail across 9 files (includes new 7-test S1 and 4-test S2 suites)",
+                  "bun test tests/framework tests/authoring tests/integrations": "726 pass / 0 fail across 63 files",
+                  "bun test tests/model-cost": "524 pass / 0 fail across 51 files (changed adapter/binding consumers)",
+                  "bun test tests/connect-bot": "136 pass / 5 fail; all 5 are real-panel interop cases failing only because the external herdr-bot.exe binary is absent (unrelated to this change)",
+                  "bun scripts/pi-codebase-tools-smoke.ts --mode auto": "pi 1.3.0, 31 checks passed, none failed",
+                  "bun scripts/pi-codebase-tools-smoke.ts (manual)": "25 behavior checks passed; the process-exit check fails with a libuv assertion (UV_HANDLE_CLOSING, exit 9) on pi 1.3.0 + Node 24.18.0 — the same failure was reproduced on an unmodified HEAD worktree, so it is a pre-existing environment/version issue",
+                  "fault injection": "once-per-process flag removed -> S1 and S2 P26 tests failed as intended; restored and green"
+                },
+                "unverified_or_limits": [
+                  "Human-led marker/feedback display (P8/P9 visual) was not observed; isolated commands and a six-step scenario list are prepared in extensions/codebase-tools/README.md H1b and the ticket Comments, and remain unverified until the user confirms.",
+                  "The pi manual smoke cannot complete its later phases here because the script stops at the pre-existing exit-code assertion; all manual behavior assertions that ran passed, and the OMP real-host manual coverage is complete.",
+                  "Installed pi is 1.3.0 while the smoke's expectations were written for 1.2.0 (recorded by the script as a run note).",
+                  "Business-effect startup activation for connect-bot (its own ticket) is intentionally not wired here; this ticket's shared rule records the declared session-entry value only, with no speculative implementation hook."
+                ],
+                "handoff": "Worktree committed and clean; no other tickets or workflow reports modified; integration branch was not touched."
+              },
+              "status": "success"
+            }
+          ]
+        },
+        "outputMeta": {
+          "lineCount": 40,
+          "charCount": 7165
+        }
+      },
+      "agent": "tdd",
+      "agent_id": "01-codebase-tools-startupmd-be146433-a016-4592-9",
+      "session_id": "01a16017-4c77-7212-a62b-43b430527caa",
+      "session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-21T20-04-26-123Z_01a16010-a58b-71a0-bc90-15f1bbbf0542\\01-codebase-tools-startupmd-be146433-a016-4592-9.jsonl",
+      "execution_cwd": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-SKIWZY",
+      "retro_document": "E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\extension-startup-modes\\retro\\01-codebase-tools-startup.md\\6b9566b6-3cf6-43d7-8687-22553964a817.md",
+      "retro_finished_at": "2026-10-21T20:34:14.338Z"
+    },
+    {
+      "feature": "extension-startup-modes",
+      "ticket": "02-codebase-tools-recovery.md",
+      "run_id": "358ec3d2-a62e-4ff9-b42b-28257cd1922c",
+      "parent_session_id": "01a16010-a58b-71a0-bc90-15f1bbbf0542",
+      "parent_session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-21T20-04-26-123Z_01a16010-a58b-71a0-bc90-15f1bbbf0542.jsonl",
+      "workspace": "E:\\Developer\\myhub\\my-agent-toolkit",
+      "tool_call_id": "d30e2d89-a34a-4cc8-83f7-86136489c080",
+      "started_at": "2026-10-21T20:32:26.368Z",
+      "tdd_status": "completed",
+      "retro_status": "completed",
+      "tdd_finished_at": "2026-10-21T20:48:59.089Z",
+      "tdd_result": {
+        "index": 0,
+        "id": "02-codebase-tools-recoverymd-d30e2d89-a34a-4cc8-",
+        "agent": "tdd",
+        "agentSource": "user",
+        "task": "Complete assignment thoroughly:\n\n在当前 worktree 实现唯一票据：C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-aKDntC\\.scratch\\extension-startup-modes\\implementation\\02-codebase-tools-recovery.md。\n集成分支：dev\nspec：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\extension-startup-modes\\spec.md\ncontract：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\extension-startup-modes\\contract.md\n这是本票首次执行。\n遵守 tdd skill，自行负责本票验收并报告实际验证与未完成事项。完成后尽快提交本票实现，交出 worktree，由独立集成子代理接管。不要修改其他票据或工作流报告，不操作集成分支工作区，不自行合入集成分支，不调用 retro、不派发其他票据。不得 reset 丢弃既有工作。",
+        "assignment": "在当前 worktree 实现唯一票据：C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-aKDntC\\.scratch\\extension-startup-modes\\implementation\\02-codebase-tools-recovery.md。\n集成分支：dev\nspec：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\extension-startup-modes\\spec.md\ncontract：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\extension-startup-modes\\contract.md\n这是本票首次执行。\n遵守 tdd skill，自行负责本票验收并报告实际验证与未完成事项。完成后尽快提交本票实现，交出 worktree，由独立集成子代理接管。不要修改其他票据或工作流报告，不操作集成分支工作区，不自行合入集成分支，不调用 retro、不派发其他票据。不得 reset 丢弃既有工作。",
+        "description": "Implement codebase tools recovery ticket",
+        "lastIntent": "Verifying clean worktree and commit",
+        "exitCode": 0,
+        "output": "{\n  \"ticket\": \".scratch/extension-startup-modes/implementation/02-codebase-tools-recovery.md\",\n  \"status\": \"implemented, tested, committed on ticket branch; left in-progress for integration/merge\",\n  \"commit\": \"ddf85d5 on hyper/extension-startup-modes/02-codebase-tools-recovery-4ac58f-b21292ab9ce5 (worktree clean, not merged)\",\n  \"production_changes\": \"none; ticket 01's mechanism already contained the recovery rules. Added evidence suites, a test-support frame waiter, and docs.\",\n  \"delivered\": [\n    \"tests/codebase-tools/startup-modes.test.ts (extended): four recorded/policy combinations with independent expectations, no-record vs recorded-false, non-boolean payloads as no history, branch's last payload as restored history (S1, P9).\",\n    \"tests/codebase-tools/startup-policy-change.test.ts + tests/codebase-tools/support/startup-policy-child.ts: two real child processes over a real policy file; editing the document while the first runs leaves its value/contribution/payloads unchanged, while the next process with no history takes the edited off choice (S1, P7).\",\n    \"tests/codebase-tools/startup-recovery-dock.test.ts: real OMP 18.5.0, five processes-level cases (no-history startup resume takes automatic default; recorded false survives an automatic startup; automatic record restores a manual process; restored injection progress continues with append-only history; new/fork/resume/same-owner navigation apply no entry default) (S2, P9, P13, P24, P25, P35).\",\n    \"scripts/pi-codebase-tools-smoke.ts: manual phase 5 (no-history startup resume under automatic default) and automatic phases (recorded-false restore; automatic-record-to-manual restore); markerAreaAtStart awaits the host's startup widget frame (S2).\",\n    \"Docs: codebase-tools README recovery semantics + H1c P9 human-led preparation (isolated seed/resume commands for OMP and pi, capture instructions, automated counterparts); framework-capabilities startup-resume/cross-mode clarification; harness-support refreshed pi smoke evidence counts and recovery scope.\",\n    \"tests/harness-dock/session.ts: additive ControlledSession.awaitFrame for startup widget frames.\"\n  ],\n  \"criterion_evidence\": {\n    \"P9 codebase-tools\": \"S1 matrix (4 combinations), recorded-false dock/pi restore, cross-mode dock/pi restore; fault injection reversing precedence failed 5 S1 cases plus the dock recorded-false case.\",\n    \"P7 codebase-tools\": \"startup-policy-change.test.ts across two real S1 processes; running value/contribution unchanged, next no-history process takes edited default.\",\n    \"P24\": \"dock tests 'no recorded value resumed at startup' and 'recorded false survives a startup'; both pi smoke modes' new recovery phases.\",\n    \"P25\": \"dock navigation test: new_session, fork, switch_session resume and same-file navigation each observed with 0 new contributions, no payloads and no startup notification.\",\n    \"P35\": \"OMP dock cross-mode restore (automatic record -> manual resume) and pi auto phase; marker line at start, unchanged {enabled:true} payload, first run contributes, command disables.\",\n    \"P13\": \"dock progress test asserts append-only entries, one init, reminder continues, no State written; pi phases likewise.\"\n  },\n  \"verification\": [\n    {\n      \"command\": \"bun run test:codebase-tools\",\n      \"result\": \"48 pass / 0 fail, 11 files, 91s (final tree)\"\n    },\n    {\n      \"command\": \"bun test tests/framework/session-events.test.ts tests/framework/injection.test.ts tests/framework/declared-value-write.test.ts tests/harness-dock/binding-lifecycle.test.ts tests/codebase-tools/startup-recovery-dock.test.ts tests/codebase-tools/startup-modes-dock.test.ts\",\n      \"result\": \"47 pass / 0 fail, 6 files, 29s\"\n    },\n    {\n      \"command\": \"bun run typecheck\",\n      \"result\": \"tsc clean; authoring 55 files, 3 declarations, 0 diagnostics\"\n    },\n    {\n      \"command\": \"PI_NODE=<Node 22.19.0> bun scripts/pi-codebase-tools-smoke.ts --mode manual --pi <isolated pi 1.2.0 bundle>\",\n      \"result\": \"pi 1.2.0, 63 checks passed, none failed, 5 isolated runs\"\n    },\n    {\n      \"command\": \"PI_NODE=<Node 22.19.0> bun scripts/pi-codebase-tools-smoke.ts --mode auto --pi <isolated pi 1.2.0 bundle>\",\n      \"result\": \"pi 1.2.0, 47 checks passed, none failed, 3 isolated runs\"\n    },\n    {\n      \"command\": \"fault injection (temporary, restored; suite green after restore)\",\n      \"result\": \"reversed history/startup precedence -> 5 S1 failures + dock recorded-false failure; unconsumed startup moment -> once-per-process S1 failure + P25 dock failure (new session contributed 1 instead of 0)\"\n    }\n  ],\n  \"remaining_or_unverified\": [\n    \"Human-led: rendered marker in a real OMP/pi terminal (P9). H1c in the codebase-tools README prepares isolated sessions, launch commands, capture instructions and automated results; no screenshot/recording produced from this headless run.\",\n    \"P35 nuance: real hosts write the session file only after a turn, so the seed is a normal enabled turn; the manual restore's first run contributes the reminder (init already in branch). The restore is proven by the startup marker line, the unchanged {enabled:true} payload and the command's disabled notification, but the automated evidence does not capture a cross-mode first-run init.\",\n    \"P7 real-host half is process-level S1 evidence, because the shipped OMP/pi entrypoints select repository policy documents that tests must not edit.\",\n    \"pi runs required Node 22.19.0: Node 24.18.0 reproduces the recorded Windows/libuv UV_HANDLE_CLOSING exit-9 assertion. Installed pi is 1.3.0, so an isolated 1.2.0 bundle was installed under .cache/pi-1.2.0 (gitignored).\",\n    \"Ticket status left in-progress (definition requires merged for closed); no merge, integration branch untouched, no retro/other tickets/workflow reports modified.\"\n  ]\n}",
+        "stderr": "",
+        "truncated": false,
+        "durationMs": 992591,
+        "tokens": 303522,
+        "requests": 156,
+        "contextTokens": 274069,
+        "contextWindow": 1000000,
+        "modelOverride": [
+          "deepseek/deepseek-flash:max"
+        ],
+        "resolvedModel": "deepseek/deepseek-flash:max",
+        "resolvedModelIdentity": "deepseek/deepseek-flash",
+        "resolvedThinkingLevel": "max",
+        "aborted": false,
+        "usage": {
+          "input": 176937,
+          "output": 126585,
+          "cacheRead": 25797760,
+          "cacheWrite": 0,
+          "totalTokens": 26101282,
+          "reasoningTokens": 71843,
+          "cost": {
+            "input": 0.026540549999999996,
+            "output": 0.07595099999999998,
+            "cacheRead": 0.07739327999999998,
+            "cacheWrite": 0,
+            "total": 0.17988483
+          }
+        },
+        "outputPath": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-21T20-04-26-123Z_01a16010-a58b-71a0-bc90-15f1bbbf0542\\02-codebase-tools-recoverymd-d30e2d89-a34a-4cc8-.md",
+        "extractedToolData": {
+          "yield": [
+            {
+              "data": {
+                "ticket": ".scratch/extension-startup-modes/implementation/02-codebase-tools-recovery.md",
+                "status": "implemented, tested, committed on ticket branch; left in-progress for integration/merge",
+                "commit": "ddf85d5 on hyper/extension-startup-modes/02-codebase-tools-recovery-4ac58f-b21292ab9ce5 (worktree clean, not merged)",
+                "production_changes": "none; ticket 01's mechanism already contained the recovery rules. Added evidence suites, a test-support frame waiter, and docs.",
+                "delivered": [
+                  "tests/codebase-tools/startup-modes.test.ts (extended): four recorded/policy combinations with independent expectations, no-record vs recorded-false, non-boolean payloads as no history, branch's last payload as restored history (S1, P9).",
+                  "tests/codebase-tools/startup-policy-change.test.ts + tests/codebase-tools/support/startup-policy-child.ts: two real child processes over a real policy file; editing the document while the first runs leaves its value/contribution/payloads unchanged, while the next process with no history takes the edited off choice (S1, P7).",
+                  "tests/codebase-tools/startup-recovery-dock.test.ts: real OMP 18.5.0, five processes-level cases (no-history startup resume takes automatic default; recorded false survives an automatic startup; automatic record restores a manual process; restored injection progress continues with append-only history; new/fork/resume/same-owner navigation apply no entry default) (S2, P9, P13, P24, P25, P35).",
+                  "scripts/pi-codebase-tools-smoke.ts: manual phase 5 (no-history startup resume under automatic default) and automatic phases (recorded-false restore; automatic-record-to-manual restore); markerAreaAtStart awaits the host's startup widget frame (S2).",
+                  "Docs: codebase-tools README recovery semantics + H1c P9 human-led preparation (isolated seed/resume commands for OMP and pi, capture instructions, automated counterparts); framework-capabilities startup-resume/cross-mode clarification; harness-support refreshed pi smoke evidence counts and recovery scope.",
+                  "tests/harness-dock/session.ts: additive ControlledSession.awaitFrame for startup widget frames."
+                ],
+                "criterion_evidence": {
+                  "P9 codebase-tools": "S1 matrix (4 combinations), recorded-false dock/pi restore, cross-mode dock/pi restore; fault injection reversing precedence failed 5 S1 cases plus the dock recorded-false case.",
+                  "P7 codebase-tools": "startup-policy-change.test.ts across two real S1 processes; running value/contribution unchanged, next no-history process takes edited default.",
+                  "P24": "dock tests 'no recorded value resumed at startup' and 'recorded false survives a startup'; both pi smoke modes' new recovery phases.",
+                  "P25": "dock navigation test: new_session, fork, switch_session resume and same-file navigation each observed with 0 new contributions, no payloads and no startup notification.",
+                  "P35": "OMP dock cross-mode restore (automatic record -> manual resume) and pi auto phase; marker line at start, unchanged {enabled:true} payload, first run contributes, command disables.",
+                  "P13": "dock progress test asserts append-only entries, one init, reminder continues, no State written; pi phases likewise."
+                },
+                "verification": [
+                  {
+                    "command": "bun run test:codebase-tools",
+                    "result": "48 pass / 0 fail, 11 files, 91s (final tree)"
+                  },
+                  {
+                    "command": "bun test tests/framework/session-events.test.ts tests/framework/injection.test.ts tests/framework/declared-value-write.test.ts tests/harness-dock/binding-lifecycle.test.ts tests/codebase-tools/startup-recovery-dock.test.ts tests/codebase-tools/startup-modes-dock.test.ts",
+                    "result": "47 pass / 0 fail, 6 files, 29s"
+                  },
+                  {
+                    "command": "bun run typecheck",
+                    "result": "tsc clean; authoring 55 files, 3 declarations, 0 diagnostics"
+                  },
+                  {
+                    "command": "PI_NODE=<Node 22.19.0> bun scripts/pi-codebase-tools-smoke.ts --mode manual --pi <isolated pi 1.2.0 bundle>",
+                    "result": "pi 1.2.0, 63 checks passed, none failed, 5 isolated runs"
+                  },
+                  {
+                    "command": "PI_NODE=<Node 22.19.0> bun scripts/pi-codebase-tools-smoke.ts --mode auto --pi <isolated pi 1.2.0 bundle>",
+                    "result": "pi 1.2.0, 47 checks passed, none failed, 3 isolated runs"
+                  },
+                  {
+                    "command": "fault injection (temporary, restored; suite green after restore)",
+                    "result": "reversed history/startup precedence -> 5 S1 failures + dock recorded-false failure; unconsumed startup moment -> once-per-process S1 failure + P25 dock failure (new session contributed 1 instead of 0)"
+                  }
+                ],
+                "remaining_or_unverified": [
+                  "Human-led: rendered marker in a real OMP/pi terminal (P9). H1c in the codebase-tools README prepares isolated sessions, launch commands, capture instructions and automated results; no screenshot/recording produced from this headless run.",
+                  "P35 nuance: real hosts write the session file only after a turn, so the seed is a normal enabled turn; the manual restore's first run contributes the reminder (init already in branch). The restore is proven by the startup marker line, the unchanged {enabled:true} payload and the command's disabled notification, but the automated evidence does not capture a cross-mode first-run init.",
+                  "P7 real-host half is process-level S1 evidence, because the shipped OMP/pi entrypoints select repository policy documents that tests must not edit.",
+                  "pi runs required Node 22.19.0: Node 24.18.0 reproduces the recorded Windows/libuv UV_HANDLE_CLOSING exit-9 assertion. Installed pi is 1.3.0, so an isolated 1.2.0 bundle was installed under .cache/pi-1.2.0 (gitignored).",
+                  "Ticket status left in-progress (definition requires merged for closed); no merge, integration branch untouched, no retro/other tickets/workflow reports modified."
+                ]
+              },
+              "status": "success"
+            }
+          ]
+        },
+        "outputMeta": {
+          "lineCount": 55,
+          "charCount": 5820
+        }
+      },
+      "agent": "tdd",
+      "agent_id": "02-codebase-tools-recoverymd-d30e2d89-a34a-4cc8-",
+      "session_id": "01a1602a-4914-7061-8572-11b581c92743",
+      "session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-21T20-04-26-123Z_01a16010-a58b-71a0-bc90-15f1bbbf0542\\02-codebase-tools-recoverymd-d30e2d89-a34a-4cc8-.jsonl",
+      "execution_cwd": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-aKDntC",
+      "retro_document": "E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\extension-startup-modes\\retro\\02-codebase-tools-recovery.md\\358ec3d2-a62e-4ff9-b42b-28257cd1922c.md",
+      "retro_finished_at": "2026-10-21T20:50:40.798Z"
+    },
+    {
+      "feature": "extension-startup-modes",
+      "ticket": "03-connect-bot-startup.md",
+      "run_id": "98550e5b-8f96-42ba-a8fc-58826741fbe8",
+      "parent_session_id": "01a16010-a58b-71a0-bc90-15f1bbbf0542",
+      "parent_session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-21T20-04-26-123Z_01a16010-a58b-71a0-bc90-15f1bbbf0542.jsonl",
+      "workspace": "E:\\Developer\\myhub\\my-agent-toolkit",
+      "tool_call_id": "a93bbe1d-2fd9-4ee7-9e2a-d62bf7bec555",
+      "started_at": "2026-10-21T20:32:26.801Z",
+      "tdd_status": "completed",
+      "retro_status": "completed",
+      "tdd_finished_at": "2026-10-21T20:50:36.402Z",
+      "tdd_result": {
+        "index": 0,
+        "id": "03-connect-bot-startupmd-a93bbe1d-2fd9-4ee7-9e2a",
+        "agent": "tdd",
+        "agentSource": "user",
+        "task": "Complete assignment thoroughly:\n\n在当前 worktree 实现唯一票据：C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-BPSgaH\\.scratch\\extension-startup-modes\\implementation\\03-connect-bot-startup.md。\n集成分支：dev\nspec：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\extension-startup-modes\\spec.md\ncontract：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\extension-startup-modes\\contract.md\n这是本票首次执行。\n遵守 tdd skill，自行负责本票验收并报告实际验证与未完成事项。完成后尽快提交本票实现，交出 worktree，由独立集成子代理接管。不要修改其他票据或工作流报告，不操作集成分支工作区，不自行合入集成分支，不调用 retro、不派发其他票据。不得 reset 丢弃既有工作。",
+        "assignment": "在当前 worktree 实现唯一票据：C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-BPSgaH\\.scratch\\extension-startup-modes\\implementation\\03-connect-bot-startup.md。\n集成分支：dev\nspec：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\extension-startup-modes\\spec.md\ncontract：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\extension-startup-modes\\contract.md\n这是本票首次执行。\n遵守 tdd skill，自行负责本票验收并报告实际验证与未完成事项。完成后尽快提交本票实现，交出 worktree，由独立集成子代理接管。不要修改其他票据或工作流报告，不操作集成分支工作区，不自行合入集成分支，不调用 retro、不派发其他票据。不得 reset 丢弃既有工作。",
+        "description": "Implement connect bot startup ticket",
+        "lastIntent": "Confirming clean worktree",
+        "exitCode": 0,
+        "output": "{\n  \"status\": \"completed_with_environment_limitation\",\n  \"ticket\": \"03-connect-bot 非阻塞自动登记成功路径\",\n  \"branch\": \"hyper/extension-startup-modes/03-connect-bot-startup-dd5a69-b21292ab9ce5\",\n  \"commit\": \"263916c Add connect-bot manual and automatic startup modes\",\n  \"worktree_clean\": true,\n  \"delivered\": [\n    \"新增 entrypoints/omp-auto/connect-bot.ts，保留 entrypoints/omp/connect-bot.ts 为手动入口；两者共用 extensions/connect-bot/harnesses/omp-assembly.ts、同一 definition 与同一登记业务。\",\n    \"framework 新增实现声明 startup 槽与 StartupDelivery；StateStore.reconcile 返回本次首次 owner 启动的有效启动目标，binding 在不等待的情况下把启用意图交给实现；不新增登记完成屏障，也不改变 initialize 等待链。\",\n    \"自动策略在首次主会话启动时复用 PanelRegistrations.activate：无命令触发 register；有效 receipt 前实际 State/marker 保持关闭，成功后写 enabled、发送状态报告、启动 heartbeat；拒绝沿用原反馈，off/owner 结束仍使迟到结果失效。\",\n    \"手动/自动策略文档分别加入 connect-bot enabled:false/true；connect-bot 保持 memory + none，子代理不独立登记，无 UI 拒绝规则不变。\",\n    \"文档更新：connect-bot README 的 Startup modes（加载、启动目标、实际 State、非阻塞登记）、framework capabilities 的 startup 激活槽与两种消费者、framework glossary 的启动策略说明。\"\n  ],\n  \"criterion_evidence\": {\n    \"P2 connect-bot 手动入口\": \"tests/connect-bot/startup-modes.test.ts 手动入口 test + tests/harness-dock/connect-bot-startup.test.ts 手动模式真实 OMP 用例（加载后两轮 prompt、随后 /connect-bot 与 /connect-bot off）均通过。\",\n    \"P3/P33 自动入口无命令触发、静态入口选择\": \"tests/harness-dock/connect-bot-startup.test.ts 自动模式用例：真实 OMP 通过普通 -e 加载 entrypoints/omp-auto/connect-bot.ts，无命令出现 register；同文件手动入口不产生 register。\",\n    \"P4 两入口显式 true/false 独立预期\": \"tests/connect-bot/startup-modes.test.ts 分别使用 shipped manual/auto 入口核对 no-register/register；另有自定义 true/false policy 文档驱动同一 assembly 的独立预期。\",\n    \"P15 手动启动不登记\": \"tests/connect-bot/startup-modes.test.ts 手动模式测试驱动 session start、run 生命周期与 60s 受控时钟，requests/notifications/timers 均为空；dock 手动用例两轮 prompt 后 register 为 0。\",\n    \"P16 命令与自动启用同一协议、成功后 heartbeat/状态/反馈\": \"S1 自动测试核对 register 与 state envelope、marker、timer，并手动触发 timer 断言 heartbeat 报文；dock 自动测试在成功前 register 被挂起、成功后听见成功反馈并出现 marker；真实面板读侧用例因环境面板版本不兼容未能通过（见限制）。\",\n    \"P17 首个模型请求不等待登记\": \"tests/harness-dock/connect-bot-startup.test.ts 第一个用例：register 被有意保持未答，session.prompt 仍 completed，独立 capture endpoint 记录到真实模型请求；通过。\",\n    \"P18 成功前 State 关闭、受控顺序\": \"tests/connect-bot/startup-modes.test.ts latch 用例按未完成→拒绝→有效成功顺序断言 marker/timer/协议效果；未完成和拒绝阶段无 marker/state report，成功后才出现。dock 第一个用例同样先断言无 marker，释放 receipt 后才出现 marker。真实终端 marker 显示仍待用户确认。\",\n    \"P19 失败沿用关闭与反馈\": \"S1 latch 用例与 dock 自动拒绝用例均观察既有关闭文案、marker 关闭，且后续 prompt 仍 completed。\",\n    \"P22 memory 不恢复旧连接\": \"tests/framework/implementation-startup.test.ts 断言 memory 字段忽略旧 enabled:true payload，只有 policy 与本次结果参与。\",\n    \"P23 拒绝条件不绕过\": \"tests/connect-bot/startup-modes.test.ts no-UI 用例捕获既有 stderr 拒绝且无请求/计时器；subagent 用例无请求、无通知、无 marker。\",\n    \"P26 首次自动触发不重复、人工重复不合并\": \"tests/connect-bot/startup-modes.test.ts：首次 start 后切换新主会话/run/tree 导航，register 仍为 1；随后两次 directed /connect-bot 各登记一次，共 3 次。dock 自动用例第二个 prompt 后 register 仍为 1。\"\n  },\n  \"verification\": [\n    {\n      \"command\": \"bun run typecheck\",\n      \"result\": \"pass: tsc --noEmit + check:authoring (58 files, 3 declarations, 0 diagnostics)\"\n    },\n    {\n      \"command\": \"bun test tests/framework/implementation-startup.test.ts tests/codebase-tools\",\n      \"result\": \"41 pass / 0 fail (10 files)\"\n    },\n    {\n      \"command\": \"bun test tests/connect-bot/startup-modes.test.ts tests/framework/implementation-startup.test.ts tests/connect-bot/native-session-boundary.test.ts tests/connect-bot/native-timer-boundary.test.ts\",\n      \"result\": \"21 pass / 0 fail\"\n    },\n    {\n      \"command\": \"bun test tests/connect-bot/*.test.ts (excluding budget-regression, harness-exit-budget, panel-registration-lifecycle)\",\n      \"result\": \"137 pass / 0 fail (16 files)\"\n    },\n    {\n      \"command\": \"bun test tests/connect-bot (all files, HERDR_BOT_BINARY set to E:/Developer/myhub/herdr-bot/backend/target/release/herdr-bot.exe)\",\n      \"result\": \"142 pass / 7 fail: all 7 fail in pre-existing real-panel files because that sibling build requires a new mandatory [herdr] config section (`missing field herdr`), not because of this ticket's behavior. Without the env var, the same 7 fail because the expected sibling path has no binary.\"\n    },\n    {\n      \"command\": \"bun test tests/harness-dock/connect-bot-startup.test.ts\",\n      \"result\": \"3/4 pass: (1) held register + first model request + marker after release, (2) controlled refusal, (3) manual no-register then command arm/disarm. The fourth (actual isolated herdr-bot panel) fails at panel startup with `missing field herdr` from the incompatible sibling build.\"\n    },\n    {\n      \"command\": \"bun test tests/harness-dock/connect-bot-startup.test.ts -t \\\"refused startup receipt\\\"\",\n      \"result\": \"1 pass after fixing the scripted panel's hold-then-refuse ordering\"\n    }\n  ],\n  \"human_led_pending\": [\n    \"P18: 实际 OMP 交互终端中成功前无启用 marker、成功后有 marker 的显示，需用户确认。已准备可控场景的自动证据（tests/harness-dock/connect-bot-startup.test.ts 首个用例：挂起 register → 无 marker、首个模型请求已完成 → 释放有效 receipt → marker 出现）以及 S1 latch 用例；真实终端截图/录制尚未由用户确认。\",\n    \"P19: 实际 OMP 终端的失败反馈与关闭显示留给用户确认；自动侧失败反馈与关闭已由 S1/dock 受控用例证明。\"\n  ],\n  \"limitations\": [\n    \"真实隔离面板未能完成互操作证据：本机唯一可用的 herdr-bot release 构建比基线新，要求配置包含 [herdr] 段；仓库冻结的 panel 测试辅助器生成旧配置，启动即报 `missing field herdr`。未修改共享 panel 测试设施以避免改变基线测试语义。\",\n    \"因此 P16 的“真实隔离面板记录”以及 P18 的真实面板读侧确认仍未取得；P18 的受控顺序、State 关闭、非阻塞首个请求等自动证据已取得。\",\n    \"未运行完整仓库 bun run test；本次按 ticket 范围运行了 typecheck、框架/消费者相关套件及新增 dock 场景。\"\n  ],\n  \"notes\": [\n    \"未修改其他票据文件、未操作集成分支、未合入 dev。\",\n    \"新增 tests/harness-dock/connect-bot-startup.test.ts 的真实面板用例在当前环境为红，原因是上述外部面板版本不兼容；其余三个用例通过。\"\n  ]\n}",
+        "stderr": "",
+        "truncated": false,
+        "durationMs": 1089472,
+        "tokens": 379968,
+        "requests": 227,
+        "contextTokens": 345608,
+        "contextWindow": 1000000,
+        "modelOverride": [
+          "deepseek/deepseek-flash:max"
+        ],
+        "resolvedModel": "deepseek/deepseek-flash:max",
+        "resolvedModelIdentity": "deepseek/deepseek-flash",
+        "resolvedThinkingLevel": "max",
+        "aborted": false,
+        "usage": {
+          "input": 234237,
+          "output": 145731,
+          "cacheRead": 48840192,
+          "cacheWrite": 0,
+          "totalTokens": 49220160,
+          "reasoningTokens": 65763,
+          "cost": {
+            "input": 0.03513555000000003,
+            "output": 0.08743859999999995,
+            "cacheRead": 0.14652057600000007,
+            "cacheWrite": 0,
+            "total": 0.2690947260000001
+          }
+        },
+        "outputPath": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-21T20-04-26-123Z_01a16010-a58b-71a0-bc90-15f1bbbf0542\\03-connect-bot-startupmd-a93bbe1d-2fd9-4ee7-9e2a.md",
+        "extractedToolData": {
+          "yield": [
+            {
+              "data": {
+                "status": "completed_with_environment_limitation",
+                "ticket": "03-connect-bot 非阻塞自动登记成功路径",
+                "branch": "hyper/extension-startup-modes/03-connect-bot-startup-dd5a69-b21292ab9ce5",
+                "commit": "263916c Add connect-bot manual and automatic startup modes",
+                "worktree_clean": true,
+                "delivered": [
+                  "新增 entrypoints/omp-auto/connect-bot.ts，保留 entrypoints/omp/connect-bot.ts 为手动入口；两者共用 extensions/connect-bot/harnesses/omp-assembly.ts、同一 definition 与同一登记业务。",
+                  "framework 新增实现声明 startup 槽与 StartupDelivery；StateStore.reconcile 返回本次首次 owner 启动的有效启动目标，binding 在不等待的情况下把启用意图交给实现；不新增登记完成屏障，也不改变 initialize 等待链。",
+                  "自动策略在首次主会话启动时复用 PanelRegistrations.activate：无命令触发 register；有效 receipt 前实际 State/marker 保持关闭，成功后写 enabled、发送状态报告、启动 heartbeat；拒绝沿用原反馈，off/owner 结束仍使迟到结果失效。",
+                  "手动/自动策略文档分别加入 connect-bot enabled:false/true；connect-bot 保持 memory + none，子代理不独立登记，无 UI 拒绝规则不变。",
+                  "文档更新：connect-bot README 的 Startup modes（加载、启动目标、实际 State、非阻塞登记）、framework capabilities 的 startup 激活槽与两种消费者、framework glossary 的启动策略说明。"
+                ],
+                "criterion_evidence": {
+                  "P2 connect-bot 手动入口": "tests/connect-bot/startup-modes.test.ts 手动入口 test + tests/harness-dock/connect-bot-startup.test.ts 手动模式真实 OMP 用例（加载后两轮 prompt、随后 /connect-bot 与 /connect-bot off）均通过。",
+                  "P3/P33 自动入口无命令触发、静态入口选择": "tests/harness-dock/connect-bot-startup.test.ts 自动模式用例：真实 OMP 通过普通 -e 加载 entrypoints/omp-auto/connect-bot.ts，无命令出现 register；同文件手动入口不产生 register。",
+                  "P4 两入口显式 true/false 独立预期": "tests/connect-bot/startup-modes.test.ts 分别使用 shipped manual/auto 入口核对 no-register/register；另有自定义 true/false policy 文档驱动同一 assembly 的独立预期。",
+                  "P15 手动启动不登记": "tests/connect-bot/startup-modes.test.ts 手动模式测试驱动 session start、run 生命周期与 60s 受控时钟，requests/notifications/timers 均为空；dock 手动用例两轮 prompt 后 register 为 0。",
+                  "P16 命令与自动启用同一协议、成功后 heartbeat/状态/反馈": "S1 自动测试核对 register 与 state envelope、marker、timer，并手动触发 timer 断言 heartbeat 报文；dock 自动测试在成功前 register 被挂起、成功后听见成功反馈并出现 marker；真实面板读侧用例因环境面板版本不兼容未能通过（见限制）。",
+                  "P17 首个模型请求不等待登记": "tests/harness-dock/connect-bot-startup.test.ts 第一个用例：register 被有意保持未答，session.prompt 仍 completed，独立 capture endpoint 记录到真实模型请求；通过。",
+                  "P18 成功前 State 关闭、受控顺序": "tests/connect-bot/startup-modes.test.ts latch 用例按未完成→拒绝→有效成功顺序断言 marker/timer/协议效果；未完成和拒绝阶段无 marker/state report，成功后才出现。dock 第一个用例同样先断言无 marker，释放 receipt 后才出现 marker。真实终端 marker 显示仍待用户确认。",
+                  "P19 失败沿用关闭与反馈": "S1 latch 用例与 dock 自动拒绝用例均观察既有关闭文案、marker 关闭，且后续 prompt 仍 completed。",
+                  "P22 memory 不恢复旧连接": "tests/framework/implementation-startup.test.ts 断言 memory 字段忽略旧 enabled:true payload，只有 policy 与本次结果参与。",
+                  "P23 拒绝条件不绕过": "tests/connect-bot/startup-modes.test.ts no-UI 用例捕获既有 stderr 拒绝且无请求/计时器；subagent 用例无请求、无通知、无 marker。",
+                  "P26 首次自动触发不重复、人工重复不合并": "tests/connect-bot/startup-modes.test.ts：首次 start 后切换新主会话/run/tree 导航，register 仍为 1；随后两次 directed /connect-bot 各登记一次，共 3 次。dock 自动用例第二个 prompt 后 register 仍为 1。"
+                },
+                "verification": [
+                  {
+                    "command": "bun run typecheck",
+                    "result": "pass: tsc --noEmit + check:authoring (58 files, 3 declarations, 0 diagnostics)"
+                  },
+                  {
+                    "command": "bun test tests/framework/implementation-startup.test.ts tests/codebase-tools",
+                    "result": "41 pass / 0 fail (10 files)"
+                  },
+                  {
+                    "command": "bun test tests/connect-bot/startup-modes.test.ts tests/framework/implementation-startup.test.ts tests/connect-bot/native-session-boundary.test.ts tests/connect-bot/native-timer-boundary.test.ts",
+                    "result": "21 pass / 0 fail"
+                  },
+                  {
+                    "command": "bun test tests/connect-bot/*.test.ts (excluding budget-regression, harness-exit-budget, panel-registration-lifecycle)",
+                    "result": "137 pass / 0 fail (16 files)"
+                  },
+                  {
+                    "command": "bun test tests/connect-bot (all files, HERDR_BOT_BINARY set to E:/Developer/myhub/herdr-bot/backend/target/release/herdr-bot.exe)",
+                    "result": "142 pass / 7 fail: all 7 fail in pre-existing real-panel files because that sibling build requires a new mandatory [herdr] config section (`missing field herdr`), not because of this ticket's behavior. Without the env var, the same 7 fail because the expected sibling path has no binary."
+                  },
+                  {
+                    "command": "bun test tests/harness-dock/connect-bot-startup.test.ts",
+                    "result": "3/4 pass: (1) held register + first model request + marker after release, (2) controlled refusal, (3) manual no-register then command arm/disarm. The fourth (actual isolated herdr-bot panel) fails at panel startup with `missing field herdr` from the incompatible sibling build."
+                  },
+                  {
+                    "command": "bun test tests/harness-dock/connect-bot-startup.test.ts -t \"refused startup receipt\"",
+                    "result": "1 pass after fixing the scripted panel's hold-then-refuse ordering"
+                  }
+                ],
+                "human_led_pending": [
+                  "P18: 实际 OMP 交互终端中成功前无启用 marker、成功后有 marker 的显示，需用户确认。已准备可控场景的自动证据（tests/harness-dock/connect-bot-startup.test.ts 首个用例：挂起 register → 无 marker、首个模型请求已完成 → 释放有效 receipt → marker 出现）以及 S1 latch 用例；真实终端截图/录制尚未由用户确认。",
+                  "P19: 实际 OMP 终端的失败反馈与关闭显示留给用户确认；自动侧失败反馈与关闭已由 S1/dock 受控用例证明。"
+                ],
+                "limitations": [
+                  "真实隔离面板未能完成互操作证据：本机唯一可用的 herdr-bot release 构建比基线新，要求配置包含 [herdr] 段；仓库冻结的 panel 测试辅助器生成旧配置，启动即报 `missing field herdr`。未修改共享 panel 测试设施以避免改变基线测试语义。",
+                  "因此 P16 的“真实隔离面板记录”以及 P18 的真实面板读侧确认仍未取得；P18 的受控顺序、State 关闭、非阻塞首个请求等自动证据已取得。",
+                  "未运行完整仓库 bun run test；本次按 ticket 范围运行了 typecheck、框架/消费者相关套件及新增 dock 场景。"
+                ],
+                "notes": [
+                  "未修改其他票据文件、未操作集成分支、未合入 dev。",
+                  "新增 tests/harness-dock/connect-bot-startup.test.ts 的真实面板用例在当前环境为红，原因是上述外部面板版本不兼容；其余三个用例通过。"
+                ]
+              },
+              "status": "success"
+            }
+          ]
+        },
+        "outputMeta": {
+          "lineCount": 70,
+          "charCount": 5535
+        }
+      },
+      "agent": "tdd",
+      "agent_id": "03-connect-bot-startupmd-a93bbe1d-2fd9-4ee7-9e2a",
+      "session_id": "01a1602a-4ac1-72cb-a94b-49524811ccde",
+      "session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-21T20-04-26-123Z_01a16010-a58b-71a0-bc90-15f1bbbf0542\\03-connect-bot-startupmd-a93bbe1d-2fd9-4ee7-9e2a.jsonl",
+      "execution_cwd": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-BPSgaH",
+      "retro_document": "E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\extension-startup-modes\\retro\\03-connect-bot-startup.md\\98550e5b-8f96-42ba-a8fc-58826741fbe8.md",
+      "retro_finished_at": "2026-10-21T20:51:37.419Z"
+    },
+    {
+      "feature": "extension-startup-modes",
+      "ticket": "07-codebase-tools-subagent-follow.md",
+      "run_id": "eace9f81-7e8d-4649-a6a4-fd8b77bacc3e",
+      "parent_session_id": "01a16010-a58b-71a0-bc90-15f1bbbf0542",
+      "parent_session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-21T20-04-26-123Z_01a16010-a58b-71a0-bc90-15f1bbbf0542.jsonl",
+      "workspace": "E:\\Developer\\myhub\\my-agent-toolkit",
+      "tool_call_id": "4ea17dfe-7d35-4aa2-b55e-bada56e161eb",
+      "started_at": "2026-10-21T20:32:27.243Z",
+      "tdd_status": "completed",
+      "retro_status": "completed",
+      "tdd_finished_at": "2026-10-21T20:49:49.037Z",
+      "tdd_result": {
+        "index": 0,
+        "id": "07-codebase-tools-subagent-followmd-4ea17dfe-7d3",
+        "agent": "tdd",
+        "agentSource": "user",
+        "task": "Complete assignment thoroughly:\n\n在当前 worktree 实现唯一票据：C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-ylv0Qa\\.scratch\\extension-startup-modes\\implementation\\07-codebase-tools-subagent-follow.md。\n集成分支：dev\nspec：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\extension-startup-modes\\spec.md\ncontract：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\extension-startup-modes\\contract.md\n这是本票首次执行。\n遵守 tdd skill，自行负责本票验收并报告实际验证与未完成事项。完成后尽快提交本票实现，交出 worktree，由独立集成子代理接管。不要修改其他票据或工作流报告，不操作集成分支工作区，不自行合入集成分支，不调用 retro、不派发其他票据。不得 reset 丢弃既有工作。",
+        "assignment": "在当前 worktree 实现唯一票据：C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-ylv0Qa\\.scratch\\extension-startup-modes\\implementation\\07-codebase-tools-subagent-follow.md。\n集成分支：dev\nspec：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\extension-startup-modes\\spec.md\ncontract：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\extension-startup-modes\\contract.md\n这是本票首次执行。\n遵守 tdd skill，自行负责本票验收并报告实际验证与未完成事项。完成后尽快提交本票实现，交出 worktree，由独立集成子代理接管。不要修改其他票据或工作流报告，不操作集成分支工作区，不自行合入集成分支，不调用 retro、不派发其他票据。不得 reset 丢弃既有工作。",
+        "description": "Implement codebase tools subagent follow ticket",
+        "lastIntent": "Confirming clean worktree",
+        "exitCode": 0,
+        "output": "{\n  \"ticket\": \"07-codebase-tools-subagent-follow (P14)\",\n  \"status\": \"implemented, tested, committed on ticket branch; ticket Status left in-progress pending integration merge\",\n  \"commit\": \"93cc3e4\",\n  \"branch\": \"hyper/extension-startup-modes/07-codebase-tools-subagent-follo-382a98-b21292ab9ce5\",\n  \"delivered\": {\n    \"production_code\": \"none required: ticket 01's startup rule already applies a mode's choice only at the process's first owner start, so a subagent delivery owns no cell, applies no choice and records nothing; this ticket proves and pins that behavior and the childEntry/mode correspondence\",\n    \"new_test\": \"tests/codebase-tools/startup-modes-follow.test.ts\",\n    \"extended_smoke\": \"scripts/pi-codebase-tools-smoke.ts (real pi spawned-child follow phase for both modes, --follow-only, provider temp root isolated under the run root)\",\n    \"docs\": \"extensions/codebase-tools/README.md (childEntry/spawned-session contract, follow phase, Node 22.19.0 requirement); ticket evidence and limits appended\"\n  },\n  \"criteria\": [\n    {\n      \"criterion\": \"both modes keep follow semantics without an independent subagent default/memory\",\n      \"evidence\": \"S1 suite (5 pass): auto enables only the owner; off->on->off live changes in both modes; subagent start persists nothing; child journals in the real smoke contain no codebase-tools:state\"\n    },\n    {\n      \"criterion\": \"controlled owner change through the public assembly interface, both directions, marker delivery included\",\n      \"evidence\": \"S1 suite drives the owner's own toggle command and asserts init -> none -> reminder contributions and marker area renderings; fault injection: followed-read->default failed 2 cases, owner-gate-applied-to-inherited failed 4 cases; mutations restored and implementation diff empty\"\n    },\n    {\n      \"criterion\": \"unreachable owner keeps the existing default read, never independently enabled\",\n      \"evidence\": \"S1 suite with a rejecting follow reader in both modes: contribution absent, area published with no line, nothing recorded\"\n    },\n    {\n      \"criterion\": \"real pi subprocess proves follow; explicit childEntry matches the selected mode\",\n      \"evidence\": \"real pi smoke: provider launch recovery-descriptor names the mode's own entry real path for each detached child (pi entrypoints/pi/codebase-tools.ts, pi-auto entrypoints/pi-auto/codebase-tools.ts); child's own request/journal carry the contribution only while the owner is enabled; detached runner state complete, positive pid, exit 0; child journal has no State\"\n    },\n    {\n      \"criterion\": \"existing subagent access/wait semantics preserved; no admission or production debug surface added; no support expansion\",\n      \"evidence\": \"no production source changed; framework follow/readiness/access suites 92 pass; integration check exit 0 with codebase-tools/omp and /pi COMPLETE; no support record changed\"\n    },\n    {\n      \"criterion\": \"isolated owner/process/temp state; commands, contributions, process results and environmental limits recorded\",\n      \"evidence\": \"ticket Evidence section records run roots, provider temp root redirection, pi 1.3.0/Node 22.19.0/Bun 1.4.2/Windows x64, provider 0.78.0 vs config integration 0.80.0 mismatch, and Node 24.18.0 pre-existing libuv exit failure reproduced on HEAD\"\n    },\n    {\n      \"criterion\": \"affected follow/access cases, owning partition, consumers, type/static checks, childEntry/usage docs\",\n      \"evidence\": \"see verification table below\"\n    },\n    {\n      \"criterion\": \"no unrun item marked passed\",\n      \"evidence\": \"auto-mode OMP in-process built-in delegation was not driven at the real OMP harness (real-host P14 evidence is pi; both modes covered at S1 and the manual OMP delegation passed unchanged); recorded as a coverage limit\"\n    }\n  ],\n  \"verification\": [\n    {\n      \"command\": \"bun test tests/codebase-tools/startup-modes-follow.test.ts\",\n      \"result\": \"5 pass / 0 fail, 48 expect() calls\"\n    },\n    {\n      \"command\": \"bun test tests/codebase-tools (owning partition, incl. real OMP dock suites)\",\n      \"result\": \"40 pass / 0 fail, 10 files, 495 expect() calls, 95.88s\"\n    },\n    {\n      \"command\": \"bun test tests/framework/{owner-follow,owner-follow-processes,follow-observation-independence,followed-owner-readiness,pi-subagent-integration,pi-child-extensions,pi-subagent-provider-path,local-access,local-access-observation}.test.ts\",\n      \"result\": \"92 pass / 0 fail, 9 files, 471 expect() calls, 6.83s\"\n    },\n    {\n      \"command\": \"bun run typecheck\",\n      \"result\": \"tsc clean; authoring 55 files, 3 declarations, 0 diagnostics\"\n    },\n    {\n      \"command\": \"bun run check:integrations\",\n      \"result\": \"exit 0; codebase-tools / omp: COMPLETE, codebase-tools / pi: COMPLETE\"\n    },\n    {\n      \"command\": \"PI_NODE=<nvm v22.19.0>/node.exe bun scripts/pi-codebase-tools-smoke.ts --mode manual\",\n      \"result\": \"67 checks passed, none failed, 5 isolated runs (follow phase off -> on)\"\n    },\n    {\n      \"command\": \"PI_NODE=<nvm v22.19.0>/node.exe bun scripts/pi-codebase-tools-smoke.ts --mode auto\",\n      \"result\": \"46 checks passed, none failed, 3 isolated runs (follow phase on -> off)\"\n    },\n    {\n      \"command\": \"bun scripts/pi-codebase-tools-smoke.ts --mode manual --follow-only / --mode auto --follow-only\",\n      \"result\": \"15/15 checks passed each\"\n    },\n    {\n      \"command\": \"base HEAD smoke copy --mode manual\",\n      \"result\": \"reproduces the pre-existing Node 24.18.0 Windows/libuv UV_HANDLE_CLOSING exit 9 at the first phase's close, confirming it is not introduced by this ticket\"\n    }\n  ],\n  \"unverified_or_limits\": [\n    \"Auto-mode OMP in-process built-in subagent delegation was not driven at the real OMP harness; both modes' follow semantics are covered at the S1 assembly seam, the real OMP partition includes the unchanged manual built-in delegation and auto-mode real-host startup, and no production code changed.\",\n    \"Real-host run uses installed pi 1.3.0 while the smoke's expectations were written for 1.2.0; version mismatch is reported by the script as a note.\",\n    \"This machine's framework/config.yaml points the adapter's provider integration at pi-subagents@0.80.0 while the smoke loads the repo-pinned 0.78.0 extension; the requirement registry and child loading worked, no support claim derived.\",\n    \"Marker rendered appearance remains human-led (unchanged by this ticket).\"\n  ],\n  \"worktree\": \"clean; implementation committed; ready for independent integration agent with integration branch dev\"\n}",
+        "stderr": "",
+        "truncated": false,
+        "durationMs": 1041659,
+        "tokens": 347629,
+        "requests": 165,
+        "contextTokens": 329281,
+        "contextWindow": 1000000,
+        "modelOverride": [
+          "deepseek/deepseek-flash:max"
+        ],
+        "resolvedModel": "deepseek/deepseek-flash:max",
+        "resolvedModelIdentity": "deepseek/deepseek-flash",
+        "resolvedThinkingLevel": "max",
+        "aborted": false,
+        "usage": {
+          "input": 223755,
+          "output": 123874,
+          "cacheRead": 32895872,
+          "cacheWrite": 0,
+          "totalTokens": 33243501,
+          "reasoningTokens": 68579,
+          "cost": {
+            "input": 0.033563250000000024,
+            "output": 0.07432439999999993,
+            "cacheRead": 0.09868761600000002,
+            "cacheWrite": 0,
+            "total": 0.20657526599999987
+          }
+        },
+        "outputPath": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-21T20-04-26-123Z_01a16010-a58b-71a0-bc90-15f1bbbf0542\\07-codebase-tools-subagent-followmd-4ea17dfe-7d3.md",
+        "extractedToolData": {
+          "yield": [
+            {
+              "data": {
+                "ticket": "07-codebase-tools-subagent-follow (P14)",
+                "status": "implemented, tested, committed on ticket branch; ticket Status left in-progress pending integration merge",
+                "commit": "93cc3e4",
+                "branch": "hyper/extension-startup-modes/07-codebase-tools-subagent-follo-382a98-b21292ab9ce5",
+                "delivered": {
+                  "production_code": "none required: ticket 01's startup rule already applies a mode's choice only at the process's first owner start, so a subagent delivery owns no cell, applies no choice and records nothing; this ticket proves and pins that behavior and the childEntry/mode correspondence",
+                  "new_test": "tests/codebase-tools/startup-modes-follow.test.ts",
+                  "extended_smoke": "scripts/pi-codebase-tools-smoke.ts (real pi spawned-child follow phase for both modes, --follow-only, provider temp root isolated under the run root)",
+                  "docs": "extensions/codebase-tools/README.md (childEntry/spawned-session contract, follow phase, Node 22.19.0 requirement); ticket evidence and limits appended"
+                },
+                "criteria": [
+                  {
+                    "criterion": "both modes keep follow semantics without an independent subagent default/memory",
+                    "evidence": "S1 suite (5 pass): auto enables only the owner; off->on->off live changes in both modes; subagent start persists nothing; child journals in the real smoke contain no codebase-tools:state"
+                  },
+                  {
+                    "criterion": "controlled owner change through the public assembly interface, both directions, marker delivery included",
+                    "evidence": "S1 suite drives the owner's own toggle command and asserts init -> none -> reminder contributions and marker area renderings; fault injection: followed-read->default failed 2 cases, owner-gate-applied-to-inherited failed 4 cases; mutations restored and implementation diff empty"
+                  },
+                  {
+                    "criterion": "unreachable owner keeps the existing default read, never independently enabled",
+                    "evidence": "S1 suite with a rejecting follow reader in both modes: contribution absent, area published with no line, nothing recorded"
+                  },
+                  {
+                    "criterion": "real pi subprocess proves follow; explicit childEntry matches the selected mode",
+                    "evidence": "real pi smoke: provider launch recovery-descriptor names the mode's own entry real path for each detached child (pi entrypoints/pi/codebase-tools.ts, pi-auto entrypoints/pi-auto/codebase-tools.ts); child's own request/journal carry the contribution only while the owner is enabled; detached runner state complete, positive pid, exit 0; child journal has no State"
+                  },
+                  {
+                    "criterion": "existing subagent access/wait semantics preserved; no admission or production debug surface added; no support expansion",
+                    "evidence": "no production source changed; framework follow/readiness/access suites 92 pass; integration check exit 0 with codebase-tools/omp and /pi COMPLETE; no support record changed"
+                  },
+                  {
+                    "criterion": "isolated owner/process/temp state; commands, contributions, process results and environmental limits recorded",
+                    "evidence": "ticket Evidence section records run roots, provider temp root redirection, pi 1.3.0/Node 22.19.0/Bun 1.4.2/Windows x64, provider 0.78.0 vs config integration 0.80.0 mismatch, and Node 24.18.0 pre-existing libuv exit failure reproduced on HEAD"
+                  },
+                  {
+                    "criterion": "affected follow/access cases, owning partition, consumers, type/static checks, childEntry/usage docs",
+                    "evidence": "see verification table below"
+                  },
+                  {
+                    "criterion": "no unrun item marked passed",
+                    "evidence": "auto-mode OMP in-process built-in delegation was not driven at the real OMP harness (real-host P14 evidence is pi; both modes covered at S1 and the manual OMP delegation passed unchanged); recorded as a coverage limit"
+                  }
+                ],
+                "verification": [
+                  {
+                    "command": "bun test tests/codebase-tools/startup-modes-follow.test.ts",
+                    "result": "5 pass / 0 fail, 48 expect() calls"
+                  },
+                  {
+                    "command": "bun test tests/codebase-tools (owning partition, incl. real OMP dock suites)",
+                    "result": "40 pass / 0 fail, 10 files, 495 expect() calls, 95.88s"
+                  },
+                  {
+                    "command": "bun test tests/framework/{owner-follow,owner-follow-processes,follow-observation-independence,followed-owner-readiness,pi-subagent-integration,pi-child-extensions,pi-subagent-provider-path,local-access,local-access-observation}.test.ts",
+                    "result": "92 pass / 0 fail, 9 files, 471 expect() calls, 6.83s"
+                  },
+                  {
+                    "command": "bun run typecheck",
+                    "result": "tsc clean; authoring 55 files, 3 declarations, 0 diagnostics"
+                  },
+                  {
+                    "command": "bun run check:integrations",
+                    "result": "exit 0; codebase-tools / omp: COMPLETE, codebase-tools / pi: COMPLETE"
+                  },
+                  {
+                    "command": "PI_NODE=<nvm v22.19.0>/node.exe bun scripts/pi-codebase-tools-smoke.ts --mode manual",
+                    "result": "67 checks passed, none failed, 5 isolated runs (follow phase off -> on)"
+                  },
+                  {
+                    "command": "PI_NODE=<nvm v22.19.0>/node.exe bun scripts/pi-codebase-tools-smoke.ts --mode auto",
+                    "result": "46 checks passed, none failed, 3 isolated runs (follow phase on -> off)"
+                  },
+                  {
+                    "command": "bun scripts/pi-codebase-tools-smoke.ts --mode manual --follow-only / --mode auto --follow-only",
+                    "result": "15/15 checks passed each"
+                  },
+                  {
+                    "command": "base HEAD smoke copy --mode manual",
+                    "result": "reproduces the pre-existing Node 24.18.0 Windows/libuv UV_HANDLE_CLOSING exit 9 at the first phase's close, confirming it is not introduced by this ticket"
+                  }
+                ],
+                "unverified_or_limits": [
+                  "Auto-mode OMP in-process built-in subagent delegation was not driven at the real OMP harness; both modes' follow semantics are covered at the S1 assembly seam, the real OMP partition includes the unchanged manual built-in delegation and auto-mode real-host startup, and no production code changed.",
+                  "Real-host run uses installed pi 1.3.0 while the smoke's expectations were written for 1.2.0; version mismatch is reported by the script as a note.",
+                  "This machine's framework/config.yaml points the adapter's provider integration at pi-subagents@0.80.0 while the smoke loads the repo-pinned 0.78.0 extension; the requirement registry and child loading worked, no support claim derived.",
+                  "Marker rendered appearance remains human-led (unchanged by this ticket)."
+                ],
+                "worktree": "clean; implementation committed; ready for independent integration agent with integration branch dev"
+              },
+              "status": "success"
+            }
+          ]
+        },
+        "outputMeta": {
+          "lineCount": 91,
+          "charCount": 6530
+        }
+      },
+      "agent": "tdd",
+      "agent_id": "07-codebase-tools-subagent-followmd-4ea17dfe-7d3",
+      "session_id": "01a1602a-4c8f-7611-ac2c-7d0af850b4ba",
+      "session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-21T20-04-26-123Z_01a16010-a58b-71a0-bc90-15f1bbbf0542\\07-codebase-tools-subagent-followmd-4ea17dfe-7d3.jsonl",
+      "execution_cwd": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-ylv0Qa",
+      "retro_document": "E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\extension-startup-modes\\retro\\07-codebase-tools-subagent-follow.md\\eace9f81-7e8d-4649-a6a4-fd8b77bacc3e.md",
+      "retro_finished_at": "2026-10-21T20:52:22.817Z"
+    },
+    {
+      "feature": "extension-startup-modes",
+      "ticket": "04-connect-bot-failure-and-admission.md",
+      "run_id": "8555b8ea-ac2a-4c7d-8684-a9f550d8012f",
+      "parent_session_id": "01a16010-a58b-71a0-bc90-15f1bbbf0542",
+      "parent_session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-21T20-04-26-123Z_01a16010-a58b-71a0-bc90-15f1bbbf0542.jsonl",
+      "workspace": "E:\\Developer\\myhub\\my-agent-toolkit",
+      "tool_call_id": "2a37d9ff-9240-4aa2-9f4f-f09383337e8c",
+      "started_at": "2026-10-21T20:50:44.870Z",
+      "tdd_status": "completed",
+      "retro_status": "completed",
+      "tdd_finished_at": "2026-10-21T21:05:30.637Z",
+      "tdd_result": {
+        "index": 0,
+        "id": "04-connect-bot-failure-and-admissionmd-2a37d9ff-",
+        "agent": "tdd",
+        "agentSource": "user",
+        "task": "Complete assignment thoroughly:\n\n在当前 worktree 实现唯一票据：C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-xwgFa8\\.scratch\\extension-startup-modes\\implementation\\04-connect-bot-failure-and-admission.md。\n集成分支：dev\nspec：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\extension-startup-modes\\spec.md\ncontract：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\extension-startup-modes\\contract.md\n这是本票首次执行。\n遵守 tdd skill，自行负责本票验收并报告实际验证与未完成事项。完成后尽快提交本票实现，交出 worktree，由独立集成子代理接管。不要修改其他票据或工作流报告，不操作集成分支工作区，不自行合入集成分支，不调用 retro、不派发其他票据。不得 reset 丢弃既有工作。",
+        "assignment": "在当前 worktree 实现唯一票据：C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-xwgFa8\\.scratch\\extension-startup-modes\\implementation\\04-connect-bot-failure-and-admission.md。\n集成分支：dev\nspec：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\extension-startup-modes\\spec.md\ncontract：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\extension-startup-modes\\contract.md\n这是本票首次执行。\n遵守 tdd skill，自行负责本票验收并报告实际验证与未完成事项。完成后尽快提交本票实现，交出 worktree，由独立集成子代理接管。不要修改其他票据或工作流报告，不操作集成分支工作区，不自行合入集成分支，不调用 retro、不派发其他票据。不得 reset 丢弃既有工作。",
+        "description": "Implement connect bot failure and admission ticket",
+        "lastIntent": "Confirming clean handoff state",
+        "exitCode": 0,
+        "output": "{\n  \"ticket\": \"04-connect-bot-failure-and-admission\",\n  \"branch\": \"hyper/extension-startup-modes/04-connect-bot-failure-and-admis-1f4796-b21292ab9ce5\",\n  \"commit\": \"75e1da4\",\n  \"worktree\": \"C:/Users/hugos/AppData/Local/Temp/hyper-ticket-xwgFa8\",\n  \"state\": \"implemented, tested, committed, tree clean; ticket Status set to in-progress with evidence recorded\",\n  \"delivered\": [\n    \"Automatic startup activation is the same command activation behind the same gate; a controlled register failure (non-2xx, 2xx non-receipt, missing onlineCount, rejected/timeout) leaves the declared value off, writes no State, schedules no heartbeat, makes one attempt, and reports the existing error text at error severity. /connect-bot and /connect-bot off remain the operator's normal operations.\",\n    \"Subagent, no-UI and unregister-in-flight refusals are unchanged in an automatic binding; no register request or enabling effect.\",\n    \"A session restored at process start takes the first-start policy: manual resume stays off; automatic resume attempts its register. A planted old {enabled:true} connect-bot:state payload is ignored in both modes; only a new valid receipt enables; no connect-bot:state record is written (memory persistence intact).\",\n    \"Production fix: connect-bot's observed OMP surface leaves a missing `on` member as the surface stated it, so the framework's registration path reports 'registration failed' with the label set instead of the assembly throwing a raw TypeError first. Restores the pre-existing failing tests/framework/startup-requirements.test.ts case.\",\n    \"Docs: connect-bot README failure/restore semantics and evidence; framework-capabilities startup-mode failure/memory clarification; ticket verification record with commands, results, fault-injection evidence, limitations and the human-led P19 preparation/command.\"\n  ],\n  \"ownedCriteria\": {\n    \"P19\": \"S1 tests/connect-bot/startup-modes.test.ts 'a failed startup registration keeps the existing close and feedback rules (P19)' (4 shapes) + S2 dock 'a refused automatic registration keeps the real session working and off (P19)' (real model turn, no state/heartbeat, manual connect+off).\",\n    \"P22\": \"S2 dock 'a restored session's old enabled payload is not a connection (P22, P24)': manual and automatic independent-process --resume, planted {enabled:true}, refused register keeps off, only later valid receipt enables, connect-bot:state payload count unchanged (1 planted, 0 written).\",\n    \"P23\": \"S1 'startup and command admission keep the existing refusal rules (P23)': no-UI start+command -> exact stderr twice, no request/widget/timer; subagent start+command -> silence and no request/widget/timer; unregister-in-flight activation -> '正在断开 herdr-bot 面板，请稍后重试', no second register.\",\n    \"P24-connect-bot-partition\": \"S2 dock 'a session with no recorded value resumed at startup takes its mode's choice (P24)': automatic process resumes the manual session file, registers without a command for the restored session id, enables on the receipt, writes no State record; the old-payload case above is the other half. P24 overall also needs ticket 02's codebase-tools partition.\"\n  },\n  \"commands\": [\n    {\n      \"command\": \"bun test tests/connect-bot/startup-modes.test.ts\",\n      \"result\": \"15 pass / 0 fail, 139 assertions\"\n    },\n    {\n      \"command\": \"bun test tests/framework/startup-requirements.test.ts\",\n      \"result\": \"7 pass / 0 fail (was 6/1 failing before the assembly fix)\"\n    },\n    {\n      \"command\": \"bun test tests/framework/implementation-startup.test.ts\",\n      \"result\": \"6 pass / 0 fail\"\n    },\n    {\n      \"command\": \"bun test tests/connect-bot\",\n      \"result\": \"151 pass / 5 fail, all 5 the externally-recorded real-panel failures: herdr-bot rejects test TOML with 'missing field herdr' (framework/docs/harness-support.md:124). Run before the assembly diagnostic fix; focused S1 + framework startup suites rerun green after it.\"\n    },\n    {\n      \"command\": \"bun test tests/harness-dock/connect-bot-startup.test.ts\",\n      \"result\": \"6 pass / 1 fail. The failure is the pre-existing real-panel case (P16/P18, external 'missing field herdr'). First run was 4/3: two failures were a bug in this ticket's new sessionIdOf helper (title-slot first line), fixed; the two cases then passed individually and the final full run is 6/1. Our 3 new cases pass.\"\n    },\n    {\n      \"command\": \"bun test tests/harness-dock/connect-bot-startup.test.ts -t \\\"a refused automatic registration\\\"\",\n      \"result\": \"1 pass / 0 fail\"\n    },\n    {\n      \"command\": \"bun test tests/harness-dock/connect-bot-startup.test.ts -t \\\"old enabled payload|no recorded value resumed\\\"\",\n      \"result\": \"2 pass / 0 fail\"\n    },\n    {\n      \"command\": \"bun run typecheck\",\n      \"result\": \"exit 0 (tsc --noEmit + authoring 58 files, 0 diagnostics)\"\n    },\n    {\n      \"command\": \"bun run check:integrations\",\n      \"result\": \"exit 0 (structural analysis only, as the checker states)\"\n    }\n  ],\n  \"faultInjection\": [\n    \"Temporarily made readRegisterOutcome accept any 2xx: the '2xx answer that is not the registered receipt' S1 case failed. Restored, 15/15 green.\",\n    \"Temporarily made the failure branch write enabled=true: all 4 S1 failure cases failed. Restored, 15/15 green.\"\n  ],\n  \"limitations\": [\n    \"Human-led (not verified): actual OMP terminal display of the P19 failure line and absence of the ◐ connectBot marker. Automated evidence is the adapter notify/setWidget frames + panel requests. Prepared command and expected observation are in the ticket Verification section (stop herdr-bot, start the isolated TUI with only entrypoints/omp-auto/connect-bot.ts).\",\n    \"External: the available herdr-bot release rejects the test TOML ('missing field herdr'), so all real isolated-panel cases in the touched suites fail to start. Pre-recorded in framework/docs/harness-support.md; not evidence against this change. No real-panel interoperability is claimed by this ticket.\",\n    \"The ticket's tests/connect-bot partition record predates the assembly diagnostic fix; no other partition test reaches the no-subscription surface the fix touches, and the focused suites are green after it.\"\n  ],\n  \"handoff\": {\n    \"integrationNote\": \"Independent integration subagent can take the worktree; no merge or integration-branch action was performed by me. The ticket file already carries the verification record and is Status: in-progress (merge should close it). Suggested final checks: bun run typecheck, bun run check:integrations, bun test tests/connect-bot tests/framework/startup-requirements.test.ts, and one dock run of tests/harness-dock/connect-bot-startup.test.ts (expect 6 pass and only the external real-panel failure).\",\n    \"constraintsRespected\": \"No other ticket files, workflow reports, integration branch or integration worktree were touched; no retro or extra ticket dispatch; no reset.\"\n  }\n}",
+        "stderr": "",
+        "truncated": false,
+        "durationMs": 885610,
+        "tokens": 310920,
+        "requests": 167,
+        "contextTokens": 283367,
+        "contextWindow": 1000000,
+        "modelOverride": [
+          "deepseek/deepseek-flash:max"
+        ],
+        "resolvedModel": "deepseek/deepseek-flash:max",
+        "resolvedModelIdentity": "deepseek/deepseek-flash",
+        "resolvedThinkingLevel": "max",
+        "aborted": false,
+        "usage": {
+          "input": 195714,
+          "output": 115206,
+          "cacheRead": 29463808,
+          "cacheWrite": 0,
+          "totalTokens": 29774728,
+          "reasoningTokens": 67492,
+          "cost": {
+            "input": 0.0293571,
+            "output": 0.06912359999999998,
+            "cacheRead": 0.08839142399999997,
+            "cacheWrite": 0,
+            "total": 0.1868721240000001
+          }
+        },
+        "outputPath": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-21T20-04-26-123Z_01a16010-a58b-71a0-bc90-15f1bbbf0542\\04-connect-bot-failure-and-admissionmd-2a37d9ff-.md",
+        "extractedToolData": {
+          "yield": [
+            {
+              "data": {
+                "ticket": "04-connect-bot-failure-and-admission",
+                "branch": "hyper/extension-startup-modes/04-connect-bot-failure-and-admis-1f4796-b21292ab9ce5",
+                "commit": "75e1da4",
+                "worktree": "C:/Users/hugos/AppData/Local/Temp/hyper-ticket-xwgFa8",
+                "state": "implemented, tested, committed, tree clean; ticket Status set to in-progress with evidence recorded",
+                "delivered": [
+                  "Automatic startup activation is the same command activation behind the same gate; a controlled register failure (non-2xx, 2xx non-receipt, missing onlineCount, rejected/timeout) leaves the declared value off, writes no State, schedules no heartbeat, makes one attempt, and reports the existing error text at error severity. /connect-bot and /connect-bot off remain the operator's normal operations.",
+                  "Subagent, no-UI and unregister-in-flight refusals are unchanged in an automatic binding; no register request or enabling effect.",
+                  "A session restored at process start takes the first-start policy: manual resume stays off; automatic resume attempts its register. A planted old {enabled:true} connect-bot:state payload is ignored in both modes; only a new valid receipt enables; no connect-bot:state record is written (memory persistence intact).",
+                  "Production fix: connect-bot's observed OMP surface leaves a missing `on` member as the surface stated it, so the framework's registration path reports 'registration failed' with the label set instead of the assembly throwing a raw TypeError first. Restores the pre-existing failing tests/framework/startup-requirements.test.ts case.",
+                  "Docs: connect-bot README failure/restore semantics and evidence; framework-capabilities startup-mode failure/memory clarification; ticket verification record with commands, results, fault-injection evidence, limitations and the human-led P19 preparation/command."
+                ],
+                "ownedCriteria": {
+                  "P19": "S1 tests/connect-bot/startup-modes.test.ts 'a failed startup registration keeps the existing close and feedback rules (P19)' (4 shapes) + S2 dock 'a refused automatic registration keeps the real session working and off (P19)' (real model turn, no state/heartbeat, manual connect+off).",
+                  "P22": "S2 dock 'a restored session's old enabled payload is not a connection (P22, P24)': manual and automatic independent-process --resume, planted {enabled:true}, refused register keeps off, only later valid receipt enables, connect-bot:state payload count unchanged (1 planted, 0 written).",
+                  "P23": "S1 'startup and command admission keep the existing refusal rules (P23)': no-UI start+command -> exact stderr twice, no request/widget/timer; subagent start+command -> silence and no request/widget/timer; unregister-in-flight activation -> '正在断开 herdr-bot 面板，请稍后重试', no second register.",
+                  "P24-connect-bot-partition": "S2 dock 'a session with no recorded value resumed at startup takes its mode's choice (P24)': automatic process resumes the manual session file, registers without a command for the restored session id, enables on the receipt, writes no State record; the old-payload case above is the other half. P24 overall also needs ticket 02's codebase-tools partition."
+                },
+                "commands": [
+                  {
+                    "command": "bun test tests/connect-bot/startup-modes.test.ts",
+                    "result": "15 pass / 0 fail, 139 assertions"
+                  },
+                  {
+                    "command": "bun test tests/framework/startup-requirements.test.ts",
+                    "result": "7 pass / 0 fail (was 6/1 failing before the assembly fix)"
+                  },
+                  {
+                    "command": "bun test tests/framework/implementation-startup.test.ts",
+                    "result": "6 pass / 0 fail"
+                  },
+                  {
+                    "command": "bun test tests/connect-bot",
+                    "result": "151 pass / 5 fail, all 5 the externally-recorded real-panel failures: herdr-bot rejects test TOML with 'missing field herdr' (framework/docs/harness-support.md:124). Run before the assembly diagnostic fix; focused S1 + framework startup suites rerun green after it."
+                  },
+                  {
+                    "command": "bun test tests/harness-dock/connect-bot-startup.test.ts",
+                    "result": "6 pass / 1 fail. The failure is the pre-existing real-panel case (P16/P18, external 'missing field herdr'). First run was 4/3: two failures were a bug in this ticket's new sessionIdOf helper (title-slot first line), fixed; the two cases then passed individually and the final full run is 6/1. Our 3 new cases pass."
+                  },
+                  {
+                    "command": "bun test tests/harness-dock/connect-bot-startup.test.ts -t \"a refused automatic registration\"",
+                    "result": "1 pass / 0 fail"
+                  },
+                  {
+                    "command": "bun test tests/harness-dock/connect-bot-startup.test.ts -t \"old enabled payload|no recorded value resumed\"",
+                    "result": "2 pass / 0 fail"
+                  },
+                  {
+                    "command": "bun run typecheck",
+                    "result": "exit 0 (tsc --noEmit + authoring 58 files, 0 diagnostics)"
+                  },
+                  {
+                    "command": "bun run check:integrations",
+                    "result": "exit 0 (structural analysis only, as the checker states)"
+                  }
+                ],
+                "faultInjection": [
+                  "Temporarily made readRegisterOutcome accept any 2xx: the '2xx answer that is not the registered receipt' S1 case failed. Restored, 15/15 green.",
+                  "Temporarily made the failure branch write enabled=true: all 4 S1 failure cases failed. Restored, 15/15 green."
+                ],
+                "limitations": [
+                  "Human-led (not verified): actual OMP terminal display of the P19 failure line and absence of the ◐ connectBot marker. Automated evidence is the adapter notify/setWidget frames + panel requests. Prepared command and expected observation are in the ticket Verification section (stop herdr-bot, start the isolated TUI with only entrypoints/omp-auto/connect-bot.ts).",
+                  "External: the available herdr-bot release rejects the test TOML ('missing field herdr'), so all real isolated-panel cases in the touched suites fail to start. Pre-recorded in framework/docs/harness-support.md; not evidence against this change. No real-panel interoperability is claimed by this ticket.",
+                  "The ticket's tests/connect-bot partition record predates the assembly diagnostic fix; no other partition test reaches the no-subscription surface the fix touches, and the focused suites are green after it."
+                ],
+                "handoff": {
+                  "integrationNote": "Independent integration subagent can take the worktree; no merge or integration-branch action was performed by me. The ticket file already carries the verification record and is Status: in-progress (merge should close it). Suggested final checks: bun run typecheck, bun run check:integrations, bun test tests/connect-bot tests/framework/startup-requirements.test.ts, and one dock run of tests/harness-dock/connect-bot-startup.test.ts (expect 6 pass and only the external real-panel failure).",
+                  "constraintsRespected": "No other ticket files, workflow reports, integration branch or integration worktree were touched; no retro or extra ticket dispatch; no reset."
+                }
+              },
+              "status": "success"
+            }
+          ]
+        },
+        "outputMeta": {
+          "lineCount": 71,
+          "charCount": 6897
+        }
+      },
+      "agent": "tdd",
+      "agent_id": "04-connect-bot-failure-and-admissionmd-2a37d9ff-",
+      "session_id": "01a1603b-0c39-7101-968e-11a6f56df520",
+      "session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-21T20-04-26-123Z_01a16010-a58b-71a0-bc90-15f1bbbf0542\\04-connect-bot-failure-and-admissionmd-2a37d9ff-.jsonl",
+      "execution_cwd": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-xwgFa8",
+      "retro_document": "E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\extension-startup-modes\\retro\\04-connect-bot-failure-and-admission.md\\8555b8ea-ac2a-4c7d-8684-a9f550d8012f.md",
+      "retro_finished_at": "2026-10-21T21:07:01.699Z"
+    },
+    {
+      "feature": "extension-startup-modes",
+      "ticket": "05-owner-lifecycle-and-isolation.md",
+      "run_id": "620bc6b1-9c68-4dbb-b2e2-d1ace070f758",
+      "parent_session_id": "01a16010-a58b-71a0-bc90-15f1bbbf0542",
+      "parent_session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-21T20-04-26-123Z_01a16010-a58b-71a0-bc90-15f1bbbf0542.jsonl",
+      "workspace": "E:\\Developer\\myhub\\my-agent-toolkit",
+      "tool_call_id": "cec09a8c-0a1d-4e77-aa41-0f83ef82488a",
+      "started_at": "2026-10-21T20:50:45.388Z",
+      "tdd_status": "completed",
+      "retro_status": "completed",
+      "tdd_finished_at": "2026-10-21T21:07:21.121Z",
+      "tdd_result": {
+        "index": 0,
+        "id": "05-owner-lifecycle-and-isolationmd-cec09a8c-0a1d",
+        "agent": "tdd",
+        "agentSource": "user",
+        "task": "Complete assignment thoroughly:\n\n在当前 worktree 实现唯一票据：C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-ghXj9l\\.scratch\\extension-startup-modes\\implementation\\05-owner-lifecycle-and-isolation.md。\n集成分支：dev\nspec：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\extension-startup-modes\\spec.md\ncontract：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\extension-startup-modes\\contract.md\n这是本票首次执行。\n遵守 tdd skill，自行负责本票验收并报告实际验证与未完成事项。完成后尽快提交本票实现，交出 worktree，由独立集成子代理接管。不要修改其他票据或工作流报告，不操作集成分支工作区，不自行合入集成分支，不调用 retro、不派发其他票据。不得 reset 丢弃既有工作。",
+        "assignment": "在当前 worktree 实现唯一票据：C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-ghXj9l\\.scratch\\extension-startup-modes\\implementation\\05-owner-lifecycle-and-isolation.md。\n集成分支：dev\nspec：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\extension-startup-modes\\spec.md\ncontract：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\extension-startup-modes\\contract.md\n这是本票首次执行。\n遵守 tdd skill，自行负责本票验收并报告实际验证与未完成事项。完成后尽快提交本票实现，交出 worktree，由独立集成子代理接管。不要修改其他票据或工作流报告，不操作集成分支工作区，不自行合入集成分支，不调用 retro、不派发其他票据。不得 reset 丢弃既有工作。",
+        "description": "Implement owner lifecycle and isolation ticket",
+        "lastIntent": "Fixing commit message",
+        "exitCode": 0,
+        "output": "{\n  \"ticket\": \"05: Owner 生命周期、迟到结果与消费者隔离\",\n  \"status\": \"implemented, tested, committed on ticket branch; not merged\",\n  \"commit\": \"065348c (branch hyper/extension-startup-modes/05-owner-lifecycle-and-isolation-76f5fa-b21292ab9ce5)\",\n  \"delivered\": [\n    \"S1 (OMP assembly seam) startup-attempt race suite tests/connect-bot/startup-lifecycle.test.ts: off before a held receipt, transfer+return of the old owner, disposal, and an armed owner's pending re-register ended by a transfer; every case uses a ControlledClock and asserts no value/state report/heartbeat/timer survives the late receipt.\",\n    \"S1 post-start navigation suite: new, resume, fork, tree jump and same-file resume register nothing and apply no entrypoint default; an explicit command remains the only way to reconnect.\",\n    \"S2 real-host suite tests/harness-dock/connect-bot-lifecycle.test.ts: combined automatic connect-bot + manual codebase-tools session where the first model request (captured independently) leaves while the register is held; after off plus a late valid receipt the codebase-tools line, State and reminder contribution remain and connect-bot reports no second state; new/fork/resume/same-owner navigation registers nothing and a transfer invalidates a held re-register; editing the deployed auto.yaml changes the next independent process only (explicit false -> no register at all).\",\n    \"Framework P27 test: first request waits for the subagent integration and initialize while a startup activation is pending, and resolves with the activation still pending.\",\n    \"Production fix in extensions/connect-bot/harnesses/omp-assembly.ts: the native subscription is reached when the framework registers it, so a surface lacking `on` is refused through the existing registration-failure report/cleanup path instead of throwing at assembly load (fixes the pre-existing red tests/framework/startup-requirements.test.ts case).\",\n    \"Docs/evidence: connect-bot README startup-lifecycle and evidence links; framework-capabilities startup wait/invalidation paragraph; ticket status set in-progress.\"\n  ],\n  \"criterion_evidence\": {\n    \"off during held register (P20)\": \"startup-lifecycle.test.ts 'an off invalidates...'; S2 combined off-late case\",\n    \"owner end/transfer + late response + old owner return (P21)\": \"startup-lifecycle.test.ts transfer, disposal and re-register cases; S2 navigation case\",\n    \"session switch/disposal/owner distinction unchanged\": \"startup-lifecycle navigation/disposal cases + existing tests/connect-bot/session-switch.test.ts, off.test.ts, registration-lifecycle.test.ts (green)\",\n    \"two-consumer isolation (P32)\": \"tests/harness-dock/connect-bot-lifecycle.test.ts combined case (codebase-tools line/State/reminder survive connect-bot off+late receipt; only connect-bot timer exists and is cancelled)\",\n    \"config edit next process (P7 connect-bot)\": \"S2 policy-change case; supporting in-process case in startup-lifecycle.test.ts\",\n    \"post-start new/resume/fork/same-owner (P25 connect-bot)\": \"S1 navigation case and S2 navigation case\",\n    \"initialize/subagent integration waits unchanged (P27)\": \"tests/framework/implementation-startup.test.ts P27 case; S2 held-register first-request case\",\n    \"cleanup/disposal + controlled-time no post-owner work\": \"startup-lifecycle disposal and re-register cases (ControlledClock); existing lifecycle suites green\",\n    \"S1 race ordering + S2 combination and model request observation\": \"the two new suites; no private State debug port or production queue added\"\n  },\n  \"verification\": [\n    {\n      \"command\": \"bun install --frozen-lockfile\",\n      \"result\": \"success (worktree had no node_modules)\"\n    },\n    {\n      \"command\": \"bun run typecheck\",\n      \"result\": \"pass: tsc --noEmit + authoring check, 58 files, 0 diagnostics (run after the final TS change)\"\n    },\n    {\n      \"command\": \"bun run check:integrations\",\n      \"result\": \"pass: structural integration analysis emitted, no failure\"\n    },\n    {\n      \"command\": \"bun test tests/framework\",\n      \"result\": \"651 pass, 0 fail (56 files)\"\n    },\n    {\n      \"command\": \"bun test tests/connect-bot\",\n      \"result\": \"150 pass, 5 fail; all 5 are the real herdr-bot panel files (panel-registration-lifecycle x3, budget-regression P23, harness-exit-budget), each failing in startHerdrBot with TOML 'missing field herdr' before extension behavior\"\n    },\n    {\n      \"command\": \"bun test <17 connect-bot files excluding the 3 herdr-bot-dependent files>\",\n      \"result\": \"143 pass, 0 fail\"\n    },\n    {\n      \"command\": \"bun test tests/harness-dock/connect-bot-lifecycle.test.ts\",\n      \"result\": \"3 pass, 0 fail\"\n    },\n    {\n      \"command\": \"bun test tests/harness-dock/connect-bot-startup.test.ts\",\n      \"result\": \"6 pass, 1 known external-panel fail (same herdr-bot TOML schema drift)\"\n    },\n    {\n      \"command\": \"bun test tests/codebase-tools\",\n      \"result\": \"48 pass, 0 fail\"\n    },\n    {\n      \"command\": \"targeted fault injections (restored and reran green)\",\n      \"result\": \"removing the attempt-validity check failed 4 lifecycle tests; removing the initialization wait failed the P27 test\"\n    }\n  ],\n  \"limitations\": [\n    \"Real herdr-bot panel interop cannot run in this environment: the sibling release binary rejects tests/connect-bot/support/herdr-bot.ts's config with 'missing field herdr'. This is external panel-schema drift, not a change in this ticket; it leaves the 5 connect-bot partition panel tests and the one connect-bot-startup dock real-panel case failing before any extension code runs. P20/P21/P25/P32 evidence uses controlled scripted panels; P16/P18 real-panel checks remain unverified here.\",\n    \"Full-repository suite was not run; only the framework and codebase-tools partitions, the connect-bot partition, and the two connect-bot dock files were executed.\",\n    \"Human-led visual marker checks (P8/P9/P18/P19) are outside this ticket and were not performed.\"\n  ]\n}",
+        "stderr": "",
+        "truncated": false,
+        "durationMs": 995598,
+        "tokens": 286338,
+        "requests": 150,
+        "contextTokens": 266954,
+        "contextWindow": 1000000,
+        "modelOverride": [
+          "deepseek/deepseek-flash:max"
+        ],
+        "resolvedModel": "deepseek/deepseek-flash:max",
+        "resolvedModelIdentity": "deepseek/deepseek-flash",
+        "resolvedThinkingLevel": "max",
+        "aborted": false,
+        "usage": {
+          "input": 190895,
+          "output": 95443,
+          "cacheRead": 25974912,
+          "cacheWrite": 0,
+          "totalTokens": 26261250,
+          "reasoningTokens": 51835,
+          "cost": {
+            "input": 0.028634249999999993,
+            "output": 0.057265799999999985,
+            "cacheRead": 0.07792473600000001,
+            "cacheWrite": 0,
+            "total": 0.16382478599999997
+          }
+        },
+        "outputPath": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-21T20-04-26-123Z_01a16010-a58b-71a0-bc90-15f1bbbf0542\\05-owner-lifecycle-and-isolationmd-cec09a8c-0a1d.md",
+        "extractedToolData": {
+          "yield": [
+            {
+              "data": {
+                "ticket": "05: Owner 生命周期、迟到结果与消费者隔离",
+                "status": "implemented, tested, committed on ticket branch; not merged",
+                "commit": "065348c (branch hyper/extension-startup-modes/05-owner-lifecycle-and-isolation-76f5fa-b21292ab9ce5)",
+                "delivered": [
+                  "S1 (OMP assembly seam) startup-attempt race suite tests/connect-bot/startup-lifecycle.test.ts: off before a held receipt, transfer+return of the old owner, disposal, and an armed owner's pending re-register ended by a transfer; every case uses a ControlledClock and asserts no value/state report/heartbeat/timer survives the late receipt.",
+                  "S1 post-start navigation suite: new, resume, fork, tree jump and same-file resume register nothing and apply no entrypoint default; an explicit command remains the only way to reconnect.",
+                  "S2 real-host suite tests/harness-dock/connect-bot-lifecycle.test.ts: combined automatic connect-bot + manual codebase-tools session where the first model request (captured independently) leaves while the register is held; after off plus a late valid receipt the codebase-tools line, State and reminder contribution remain and connect-bot reports no second state; new/fork/resume/same-owner navigation registers nothing and a transfer invalidates a held re-register; editing the deployed auto.yaml changes the next independent process only (explicit false -> no register at all).",
+                  "Framework P27 test: first request waits for the subagent integration and initialize while a startup activation is pending, and resolves with the activation still pending.",
+                  "Production fix in extensions/connect-bot/harnesses/omp-assembly.ts: the native subscription is reached when the framework registers it, so a surface lacking `on` is refused through the existing registration-failure report/cleanup path instead of throwing at assembly load (fixes the pre-existing red tests/framework/startup-requirements.test.ts case).",
+                  "Docs/evidence: connect-bot README startup-lifecycle and evidence links; framework-capabilities startup wait/invalidation paragraph; ticket status set in-progress."
+                ],
+                "criterion_evidence": {
+                  "off during held register (P20)": "startup-lifecycle.test.ts 'an off invalidates...'; S2 combined off-late case",
+                  "owner end/transfer + late response + old owner return (P21)": "startup-lifecycle.test.ts transfer, disposal and re-register cases; S2 navigation case",
+                  "session switch/disposal/owner distinction unchanged": "startup-lifecycle navigation/disposal cases + existing tests/connect-bot/session-switch.test.ts, off.test.ts, registration-lifecycle.test.ts (green)",
+                  "two-consumer isolation (P32)": "tests/harness-dock/connect-bot-lifecycle.test.ts combined case (codebase-tools line/State/reminder survive connect-bot off+late receipt; only connect-bot timer exists and is cancelled)",
+                  "config edit next process (P7 connect-bot)": "S2 policy-change case; supporting in-process case in startup-lifecycle.test.ts",
+                  "post-start new/resume/fork/same-owner (P25 connect-bot)": "S1 navigation case and S2 navigation case",
+                  "initialize/subagent integration waits unchanged (P27)": "tests/framework/implementation-startup.test.ts P27 case; S2 held-register first-request case",
+                  "cleanup/disposal + controlled-time no post-owner work": "startup-lifecycle disposal and re-register cases (ControlledClock); existing lifecycle suites green",
+                  "S1 race ordering + S2 combination and model request observation": "the two new suites; no private State debug port or production queue added"
+                },
+                "verification": [
+                  {
+                    "command": "bun install --frozen-lockfile",
+                    "result": "success (worktree had no node_modules)"
+                  },
+                  {
+                    "command": "bun run typecheck",
+                    "result": "pass: tsc --noEmit + authoring check, 58 files, 0 diagnostics (run after the final TS change)"
+                  },
+                  {
+                    "command": "bun run check:integrations",
+                    "result": "pass: structural integration analysis emitted, no failure"
+                  },
+                  {
+                    "command": "bun test tests/framework",
+                    "result": "651 pass, 0 fail (56 files)"
+                  },
+                  {
+                    "command": "bun test tests/connect-bot",
+                    "result": "150 pass, 5 fail; all 5 are the real herdr-bot panel files (panel-registration-lifecycle x3, budget-regression P23, harness-exit-budget), each failing in startHerdrBot with TOML 'missing field herdr' before extension behavior"
+                  },
+                  {
+                    "command": "bun test <17 connect-bot files excluding the 3 herdr-bot-dependent files>",
+                    "result": "143 pass, 0 fail"
+                  },
+                  {
+                    "command": "bun test tests/harness-dock/connect-bot-lifecycle.test.ts",
+                    "result": "3 pass, 0 fail"
+                  },
+                  {
+                    "command": "bun test tests/harness-dock/connect-bot-startup.test.ts",
+                    "result": "6 pass, 1 known external-panel fail (same herdr-bot TOML schema drift)"
+                  },
+                  {
+                    "command": "bun test tests/codebase-tools",
+                    "result": "48 pass, 0 fail"
+                  },
+                  {
+                    "command": "targeted fault injections (restored and reran green)",
+                    "result": "removing the attempt-validity check failed 4 lifecycle tests; removing the initialization wait failed the P27 test"
+                  }
+                ],
+                "limitations": [
+                  "Real herdr-bot panel interop cannot run in this environment: the sibling release binary rejects tests/connect-bot/support/herdr-bot.ts's config with 'missing field herdr'. This is external panel-schema drift, not a change in this ticket; it leaves the 5 connect-bot partition panel tests and the one connect-bot-startup dock real-panel case failing before any extension code runs. P20/P21/P25/P32 evidence uses controlled scripted panels; P16/P18 real-panel checks remain unverified here.",
+                  "Full-repository suite was not run; only the framework and codebase-tools partitions, the connect-bot partition, and the two connect-bot dock files were executed.",
+                  "Human-led visual marker checks (P8/P9/P18/P19) are outside this ticket and were not performed."
+                ]
+              },
+              "status": "success",
+              "type": "result"
+            }
+          ]
+        },
+        "outputMeta": {
+          "lineCount": 71,
+          "charCount": 5936
+        }
+      },
+      "agent": "tdd",
+      "agent_id": "05-owner-lifecycle-and-isolationmd-cec09a8c-0a1d",
+      "session_id": "01a1603b-0e1e-75a9-9e56-2ae01c7f2dff",
+      "session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-21T20-04-26-123Z_01a16010-a58b-71a0-bc90-15f1bbbf0542\\05-owner-lifecycle-and-isolationmd-cec09a8c-0a1d.jsonl",
+      "execution_cwd": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-ghXj9l",
+      "retro_document": "E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\extension-startup-modes\\retro\\05-owner-lifecycle-and-isolation.md\\620bc6b1-9c68-4dbb-b2e2-d1ace070f758.md",
+      "retro_finished_at": "2026-10-21T21:08:26.029Z"
+    },
+    {
+      "feature": "extension-startup-modes",
+      "ticket": "06-loading-and-configuration.md",
+      "run_id": "1baaf3cb-b724-4894-bf30-b15edfbe51cc",
+      "parent_session_id": "01a16010-a58b-71a0-bc90-15f1bbbf0542",
+      "parent_session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-21T20-04-26-123Z_01a16010-a58b-71a0-bc90-15f1bbbf0542.jsonl",
+      "workspace": "E:\\Developer\\myhub\\my-agent-toolkit",
+      "tool_call_id": "8b0f2426-5ac5-4224-aa9c-5966a1ba6b93",
+      "started_at": "2026-10-21T20:50:45.928Z",
+      "tdd_status": "completed",
+      "retro_status": "completed",
+      "tdd_finished_at": "2026-10-21T21:09:15.186Z",
+      "tdd_result": {
+        "index": 0,
+        "id": "06-loading-and-configurationmd-8b0f2426-5ac5-422",
+        "agent": "tdd",
+        "agentSource": "user",
+        "task": "Complete assignment thoroughly:\n\n在当前 worktree 实现唯一票据：C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-mLt3mH\\.scratch\\extension-startup-modes\\implementation\\06-loading-and-configuration.md。\n集成分支：dev\nspec：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\extension-startup-modes\\spec.md\ncontract：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\extension-startup-modes\\contract.md\n这是本票首次执行。\n遵守 tdd skill，自行负责本票验收并报告实际验证与未完成事项。完成后尽快提交本票实现，交出 worktree，由独立集成子代理接管。不要修改其他票据或工作流报告，不操作集成分支工作区，不自行合入集成分支，不调用 retro、不派发其他票据。不得 reset 丢弃既有工作。",
+        "assignment": "在当前 worktree 实现唯一票据：C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-mLt3mH\\.scratch\\extension-startup-modes\\implementation\\06-loading-and-configuration.md。\n集成分支：dev\nspec：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\extension-startup-modes\\spec.md\ncontract：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\extension-startup-modes\\contract.md\n这是本票首次执行。\n遵守 tdd skill，自行负责本票验收并报告实际验证与未完成事项。完成后尽快提交本票实现，交出 worktree，由独立集成子代理接管。不要修改其他票据或工作流报告，不操作集成分支工作区，不自行合入集成分支，不调用 retro、不派发其他票据。不得 reset 丢弃既有工作。",
+        "description": "Implement loading and configuration ticket",
+        "lastIntent": "Verifying commit contents",
+        "exitCode": 0,
+        "output": "{\n  \"summary\": \"票据 06 已在当前 worktree 完成并提交 (fd2a082)。启动配置的拒绝、显式加载、公共装配一致性已由 01/03 的实现支撑；本票补齐缺失的验收证据并更新加载/入口说明，没有新增生产行为。\",\n  \"delivered\": [\n    \"新增 tests/framework/startup-policy-configuration.test.ts：S1 覆盖仅加载块的局部校验（未加载块非法字段不影响、已加载块非法值仍拒绝）、缺失文件/类型错误/不可解析 YAML 的绑定拒绝与可见诊断、拒绝者无 factory/命令/状态副作用、同一文档邻接有效扩展仍可执行原命令、以及 manual/auto 各入口独立配置来源。\",\n    \"扩充 tests/connect-bot/startup-modes.test.ts：P6 观察 manual 与 auto 两条路径实际发出的 URL 和 timeoutMs，均来自同一 extensions/connect-bot/config.yaml；P34 在 OMP assembly 层观察非法 enabled 的 stderr 诊断，且无命令、请求、marker、timer、State 记录。\",\n    \"新增 tests/harness-dock/startup-modes-loading.test.ts：真实 OMP 隔离宿主上覆盖单选（配置含未加载 connect-bot 条目但不加载、不产生面板请求）、两个 auto consumer 组合、auto+manual 混合、两个不同临时工作目录放置不同干扰 auto.yaml/config.yaml 时仍使用入口所选来源，以及不可解析 manual 文档拒绝其绑定同时 auto connect-bot 邻接可用。\",\n    \"更新 entrypoints/startup/manual.yaml 与 entrypoints/omp/connect-bot.ts 注释：明确加载来源是追加语义、同一 extension 两模式不可同时加载、模式选择按 extension 独立。\"\n  ],\n  \"criteria\": {\n    \"P1\": \"真实 OMP 单选/组合：tests/harness-dock/startup-modes-loading.test.ts 的 single / both-auto / mixed 用例；未选 connect-bot 无命令、无面板请求，未加载配置条目未触发加载。\",\n    \"P5\": \"tests/framework/startup-policy-configuration.test.ts 前两用例；未加载块非法字段被忽略、已加载块非法值仍被拒绝；single 真实宿主用例证明配置条目不会加载代码。\",\n    \"P6\": \"tests/connect-bot/startup-modes.test.ts P6 用例：auto 与 command 两条路径均观察到 endpoint + EVENTS_PATH 和 timeoutMs=1000（config.yaml 的受控值），未复制到启动配置。\",\n    \"P28\": \"两个消费者均经 ompAdapter/createAssemblyBinding/bindExtension 驱动；codebase-tools assembly 不传 implementation（无空初始化），connect-bot 保留 defineImplementation 的 command/startup 登记职责。静态证据：tests/framework/import-boundary.test.ts、check:authoring、check:integrations（两个 consumer COMPLETE）；运行证据为上述 S1/S2 用例。\",\n    \"P29\": \"both-auto 与 mixed 真实宿主用例中每个命令只注册/生效一次；文档位置 framework-capabilities 'One mode per extension per process'、两个 README、auto.yaml、manual.yaml、入口注释均声明追加加载与不可同选。\",\n    \"P31\": \"tests/harness-dock/startup-modes-loading.test.ts distractor 用例：同一 auto connect-bot 入口在两个不同 workDir 下运行，选中的面板收到 2 次 register，两个干扰面板均 0 次；distractor auto.yaml 含 enabled:false 或非法 YAML，distractor config.yaml 指向不同 endpoint。\",\n    \"P34\": \"S1 的缺失文件/类型错误/不可解析用例 + connect-bot OMP assembly 诊断用例 + S2 unparseable manual 邻接 auto connect-bot 用例；均断言可见诊断、拒绝绑定、无业务副作用，邻接有效扩展仍能加载并执行命令。\"\n  },\n  \"verification\": [\n    \"bun test tests/framework/startup-policy-configuration.test.ts -> 6 pass / 0 fail, 45 expect()\",\n    \"bun test tests/connect-bot/startup-modes.test.ts -> 10 pass / 0 fail, 64 expect()\",\n    \"bun test tests/framework/startup-policy-configuration.test.ts tests/connect-bot/startup-modes.test.ts -> 16 pass / 0 fail, 109 expect()\",\n    \"bun test tests/harness-dock/startup-modes-loading.test.ts -> 5 pass / 0 fail, 58 expect(), 36.18s (real isolated OMP sessions)\",\n    \"bun test tests/codebase-tools -> 48 pass / 0 fail, 588 expect(), 80.79s\",\n    \"bun test tests/framework -> 655 pass / 1 fail, 3422 expect(), 44.85s; failure is pre-existing startup-requirements.test.ts:247 (TypeError pi.on.bind, P60), reproduces when run alone and imports only unchanged files\",\n    \"bun test tests/connect-bot -> 146 pass / 5 fail, 681 expect(), 118.61s; all 5 failures are real herdr-bot panel environment failures (TOML 'missing field herdr' in budget-regression/panel-registration-lifecycle/harness-exit-budget), unrelated to these changes and reproduced by peer 04\",\n    \"bun node_modules/typescript/bin/tsc --noEmit -> exit 0\",\n    \"bun run check:authoring -> 58 files, 3 declarations, 0 diagnostics\",\n    \"bun run check:integrations -> exit 0; codebase-tools/omp, codebase-tools/pi, connect-bot/omp, model-cost/omp, model-cost/pi COMPLETE (structural only)\",\n    \"bun test tests/authoring tests/integrations -> 82 pass / 0 fail, 566 expect()\",\n    \"git diff --check -> clean; git status clean; commit fd2a082 contains exactly the 5 intended files\"\n  ],\n  \"unresolved\": [\n    \"Pre-existing framework failure: tests/framework/startup-requirements.test.ts 'a native registration failure is reported without a compatibility verdict' throws TypeError pi.on.bind; it fails in isolation on the current base, is outside ticket 06 files, and was reported to peer 04 (failure/admission).\",\n    \"Pre-existing real-panel failures: 5 tests need the installed herdr-bot binary and its config schema ('missing field herdr'); not caused by this ticket. The scripted-panel and isolated-host paths used by this ticket pass.\",\n    \"pi host manual/auto loading was not re-exercised in this run; the real-host observation here is OMP. Existing pi smoke records are historical, not new evidence for this ticket.\"\n  ]\n}",
+        "stderr": "",
+        "truncated": false,
+        "durationMs": 1109095,
+        "tokens": 295005,
+        "requests": 140,
+        "contextTokens": 276270,
+        "contextWindow": 1000000,
+        "modelOverride": [
+          "deepseek/deepseek-flash:max"
+        ],
+        "resolvedModel": "deepseek/deepseek-flash:max",
+        "resolvedModelIdentity": "deepseek/deepseek-flash",
+        "resolvedThinkingLevel": "max",
+        "aborted": false,
+        "usage": {
+          "input": 180302,
+          "output": 114703,
+          "cacheRead": 21354880,
+          "cacheWrite": 0,
+          "totalTokens": 21649885,
+          "reasoningTokens": 74329,
+          "cost": {
+            "input": 0.0270453,
+            "output": 0.0688218,
+            "cacheRead": 0.06406463999999999,
+            "cacheWrite": 0,
+            "total": 0.15993174
+          }
+        },
+        "outputPath": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-21T20-04-26-123Z_01a16010-a58b-71a0-bc90-15f1bbbf0542\\06-loading-and-configurationmd-8b0f2426-5ac5-422.md",
+        "extractedToolData": {
+          "yield": [
+            {
+              "data": {
+                "summary": "票据 06 已在当前 worktree 完成并提交 (fd2a082)。启动配置的拒绝、显式加载、公共装配一致性已由 01/03 的实现支撑；本票补齐缺失的验收证据并更新加载/入口说明，没有新增生产行为。",
+                "delivered": [
+                  "新增 tests/framework/startup-policy-configuration.test.ts：S1 覆盖仅加载块的局部校验（未加载块非法字段不影响、已加载块非法值仍拒绝）、缺失文件/类型错误/不可解析 YAML 的绑定拒绝与可见诊断、拒绝者无 factory/命令/状态副作用、同一文档邻接有效扩展仍可执行原命令、以及 manual/auto 各入口独立配置来源。",
+                  "扩充 tests/connect-bot/startup-modes.test.ts：P6 观察 manual 与 auto 两条路径实际发出的 URL 和 timeoutMs，均来自同一 extensions/connect-bot/config.yaml；P34 在 OMP assembly 层观察非法 enabled 的 stderr 诊断，且无命令、请求、marker、timer、State 记录。",
+                  "新增 tests/harness-dock/startup-modes-loading.test.ts：真实 OMP 隔离宿主上覆盖单选（配置含未加载 connect-bot 条目但不加载、不产生面板请求）、两个 auto consumer 组合、auto+manual 混合、两个不同临时工作目录放置不同干扰 auto.yaml/config.yaml 时仍使用入口所选来源，以及不可解析 manual 文档拒绝其绑定同时 auto connect-bot 邻接可用。",
+                  "更新 entrypoints/startup/manual.yaml 与 entrypoints/omp/connect-bot.ts 注释：明确加载来源是追加语义、同一 extension 两模式不可同时加载、模式选择按 extension 独立。"
+                ],
+                "criteria": {
+                  "P1": "真实 OMP 单选/组合：tests/harness-dock/startup-modes-loading.test.ts 的 single / both-auto / mixed 用例；未选 connect-bot 无命令、无面板请求，未加载配置条目未触发加载。",
+                  "P5": "tests/framework/startup-policy-configuration.test.ts 前两用例；未加载块非法字段被忽略、已加载块非法值仍被拒绝；single 真实宿主用例证明配置条目不会加载代码。",
+                  "P6": "tests/connect-bot/startup-modes.test.ts P6 用例：auto 与 command 两条路径均观察到 endpoint + EVENTS_PATH 和 timeoutMs=1000（config.yaml 的受控值），未复制到启动配置。",
+                  "P28": "两个消费者均经 ompAdapter/createAssemblyBinding/bindExtension 驱动；codebase-tools assembly 不传 implementation（无空初始化），connect-bot 保留 defineImplementation 的 command/startup 登记职责。静态证据：tests/framework/import-boundary.test.ts、check:authoring、check:integrations（两个 consumer COMPLETE）；运行证据为上述 S1/S2 用例。",
+                  "P29": "both-auto 与 mixed 真实宿主用例中每个命令只注册/生效一次；文档位置 framework-capabilities 'One mode per extension per process'、两个 README、auto.yaml、manual.yaml、入口注释均声明追加加载与不可同选。",
+                  "P31": "tests/harness-dock/startup-modes-loading.test.ts distractor 用例：同一 auto connect-bot 入口在两个不同 workDir 下运行，选中的面板收到 2 次 register，两个干扰面板均 0 次；distractor auto.yaml 含 enabled:false 或非法 YAML，distractor config.yaml 指向不同 endpoint。",
+                  "P34": "S1 的缺失文件/类型错误/不可解析用例 + connect-bot OMP assembly 诊断用例 + S2 unparseable manual 邻接 auto connect-bot 用例；均断言可见诊断、拒绝绑定、无业务副作用，邻接有效扩展仍能加载并执行命令。"
+                },
+                "verification": [
+                  "bun test tests/framework/startup-policy-configuration.test.ts -> 6 pass / 0 fail, 45 expect()",
+                  "bun test tests/connect-bot/startup-modes.test.ts -> 10 pass / 0 fail, 64 expect()",
+                  "bun test tests/framework/startup-policy-configuration.test.ts tests/connect-bot/startup-modes.test.ts -> 16 pass / 0 fail, 109 expect()",
+                  "bun test tests/harness-dock/startup-modes-loading.test.ts -> 5 pass / 0 fail, 58 expect(), 36.18s (real isolated OMP sessions)",
+                  "bun test tests/codebase-tools -> 48 pass / 0 fail, 588 expect(), 80.79s",
+                  "bun test tests/framework -> 655 pass / 1 fail, 3422 expect(), 44.85s; failure is pre-existing startup-requirements.test.ts:247 (TypeError pi.on.bind, P60), reproduces when run alone and imports only unchanged files",
+                  "bun test tests/connect-bot -> 146 pass / 5 fail, 681 expect(), 118.61s; all 5 failures are real herdr-bot panel environment failures (TOML 'missing field herdr' in budget-regression/panel-registration-lifecycle/harness-exit-budget), unrelated to these changes and reproduced by peer 04",
+                  "bun node_modules/typescript/bin/tsc --noEmit -> exit 0",
+                  "bun run check:authoring -> 58 files, 3 declarations, 0 diagnostics",
+                  "bun run check:integrations -> exit 0; codebase-tools/omp, codebase-tools/pi, connect-bot/omp, model-cost/omp, model-cost/pi COMPLETE (structural only)",
+                  "bun test tests/authoring tests/integrations -> 82 pass / 0 fail, 566 expect()",
+                  "git diff --check -> clean; git status clean; commit fd2a082 contains exactly the 5 intended files"
+                ],
+                "unresolved": [
+                  "Pre-existing framework failure: tests/framework/startup-requirements.test.ts 'a native registration failure is reported without a compatibility verdict' throws TypeError pi.on.bind; it fails in isolation on the current base, is outside ticket 06 files, and was reported to peer 04 (failure/admission).",
+                  "Pre-existing real-panel failures: 5 tests need the installed herdr-bot binary and its config schema ('missing field herdr'); not caused by this ticket. The scripted-panel and isolated-host paths used by this ticket pass.",
+                  "pi host manual/auto loading was not re-exercised in this run; the real-host observation here is OMP. Existing pi smoke records are historical, not new evidence for this ticket."
+                ]
+              },
+              "status": "success"
+            }
+          ]
+        },
+        "outputMeta": {
+          "lineCount": 37,
+          "charCount": 4533
+        }
+      },
+      "agent": "tdd",
+      "agent_id": "06-loading-and-configurationmd-8b0f2426-5ac5-422",
+      "session_id": "01a1603b-1043-7442-9cd8-9143a9d94102",
+      "session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-21T20-04-26-123Z_01a16010-a58b-71a0-bc90-15f1bbbf0542\\06-loading-and-configurationmd-8b0f2426-5ac5-422.jsonl",
+      "execution_cwd": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-mLt3mH",
+      "retro_document": "E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\extension-startup-modes\\retro\\06-loading-and-configuration.md\\1baaf3cb-b724-4894-bf30-b15edfbe51cc.md",
+      "retro_finished_at": "2026-10-21T21:13:03.550Z"
+    },
+    {
+      "feature": "extension-startup-modes",
+      "ticket": "08-usage-and-integration-handoff.md",
+      "run_id": "73ac7421-9080-4e6d-af53-88217d6e0ace",
+      "parent_session_id": "01a16010-a58b-71a0-bc90-15f1bbbf0542",
+      "parent_session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-21T20-04-26-123Z_01a16010-a58b-71a0-bc90-15f1bbbf0542.jsonl",
+      "workspace": "E:\\Developer\\myhub\\my-agent-toolkit",
+      "tool_call_id": "3cfb378b-9fb5-4bed-add3-a2d388996061",
+      "started_at": "2026-10-21T22:19:04.068Z",
+      "tdd_status": "completed",
+      "retro_status": "completed",
+      "tdd_finished_at": "2026-10-21T22:37:46.239Z",
+      "tdd_result": {
+        "index": 0,
+        "id": "08-usage-and-integration-handoffmd-3cfb378b-9fb5",
+        "agent": "tdd",
+        "agentSource": "user",
+        "task": "Complete assignment thoroughly:\n\n在当前 worktree 实现唯一票据：C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-xg9U7v\\.scratch\\extension-startup-modes\\implementation\\08-usage-and-integration-handoff.md。\n集成分支：dev\nspec：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\extension-startup-modes\\spec.md\ncontract：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\extension-startup-modes\\contract.md\n这是本票首次执行。\n遵守 tdd skill，自行负责本票验收并报告实际验证与未完成事项。完成后尽快提交本票实现，交出 worktree，由独立集成子代理接管。不要修改其他票据或工作流报告，不操作集成分支工作区，不自行合入集成分支，不调用 retro、不派发其他票据。不得 reset 丢弃既有工作。",
+        "assignment": "在当前 worktree 实现唯一票据：C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-xg9U7v\\.scratch\\extension-startup-modes\\implementation\\08-usage-and-integration-handoff.md。\n集成分支：dev\nspec：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\extension-startup-modes\\spec.md\ncontract：E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\extension-startup-modes\\contract.md\n这是本票首次执行。\n遵守 tdd skill，自行负责本票验收并报告实际验证与未完成事项。完成后尽快提交本票实现，交出 worktree，由独立集成子代理接管。不要修改其他票据或工作流报告，不操作集成分支工作区，不自行合入集成分支，不调用 retro、不派发其他票据。不得 reset 丢弃既有工作。",
+        "description": "Implement usage and integration handoff ticket",
+        "lastIntent": "Committing runbook clarification",
+        "exitCode": 0,
+        "output": "{\n  \"ticket\": \".scratch/extension-startup-modes/implementation/08-usage-and-integration-handoff.md\",\n  \"outcome\": \"implemented and automatically verified; four human-led visual checks remain unverified\",\n  \"branch\": \"hyper/extension-startup-modes/08-usage-and-integration-handoff-b0da79-b21292ab9ce5\",\n  \"commits\": [\n    \"585acc0 08: document startup-mode usage and acceptance handoff\",\n    \"dfc8425 08: state the acceptance panel and credential prerequisites\"\n  ],\n  \"worktree\": \"clean; no other ticket files, workflow reports, integration branch, spec, contract or support records modified; no formal host config, user session or formal panel touched\",\n  \"delivered\": [\n    \"Root README: per-extension manual/automatic entrypoint roots, one mode per extension, link to each consumer's usage.\",\n    \"codebase-tools README: additive loading and no duplicate detection/merge; per-extension mixed selection; directory roots contribute only their mode; policy read once per process; existing pi/OMP support scope; pi automatic TUI command for P8.\",\n    \"connect-bot README: one mode per extension and no merge/detection; both modes share the same config.yaml endpoint/budget; existing OMP support scope; loading-vs-enabling, enqueue-vs-receipt and non-blocking semantics already present are now tied to the acceptance runbook.\",\n    \"New connect-bot H1d runbook (P18/P19): isolated deployment copy, isolated herdr-bot panel on a dedicated port, isolated agent state, recording/timing instructions for marker-after-receipt and failure-without-marker, plus the automated test references.\",\n    \"framework/README.md human-acceptance index now links the connect-bot P18/P19 visual runbook.\",\n    \"No fixed-wording, source-text or entry-copy assertions were added.\"\n  ],\n  \"criterion_evidence\": [\n    \"P30 docs distinguish loading, startup target, actual State and non-blocking registration; links checked and published entrypoint selections executed (see verification).\",\n    \"Loading is additive; same-extension double mode is documented as a double bind with no dedup/merge/detection; per-extension mixed selection documented. Evidence: tests/harness-dock/startup-modes-loading.test.ts (single entry, auto+auto combination, manual+auto mix, decoy working dirs) passed.\",\n    \"Effective history wins over mode default including false; first process start vs later navigation; policy edit next process; shared business config. Evidence: tests/codebase-tools/startup-modes.test.ts, startup-policy-change.test.ts, tests/connect-bot/startup-modes.test.ts, startup-lifecycle.test.ts passed in the full suite.\",\n    \"codebase-tools session-entry restore under the opposite mode and connect-bot memory/no-connected-preference documented; P35/P22 evidence passed. Scope notes say no new host support, support-record change or formal deployment.\",\n    \"P8 materials: extensions/codebase-tools/README.md H1 and H1b (OMP and pi commands), automated by startup-modes-dock.test.ts and pi smoke auto.\",\n    \"P9 materials: extensions/codebase-tools/README.md H1c with three restorable isolated scenarios for OMP and pi, automated by startup-recovery-dock.test.ts, startup-modes.test.ts and both pi smoke modes.\",\n    \"P18/P19 materials: extensions/connect-bot/README.md H1d with an isolated real-panel setup and time-ordered scenarios; automated by tests/harness-dock/connect-bot-startup.test.ts (held register, refusal, real isolated panel read side).\",\n    \"Human-led items still unverified: P8 OMP/pi marker rendering, P9 restored-marker rendering, P18 success-before/after marker display, P19 failure feedback and closed display. No screenshots or recordings were captured by the agent; the runbooks specify the terminal evidence the user must record and confirm.\"\n  ],\n  \"verification\": {\n    \"source_state\": \"Code HEAD 66ae6af (dev merge) plus the two documentation commits above; Windows 10.0.26200 x64, Bun 1.4.2, isolated OMP @oh-my-pi/pi-coding-agent@18.5.0, default Node 24.18.0, pi smoke Node 22.19.0, git core.autocrlf=true, sibling checkouts available through Temp symlinks.\",\n    \"commands\": [\n      \"bun install --frozen-lockfile -> exit 0\",\n      \"bun run typecheck -> exit 0; check:authoring 58 files, 3 declarations, 0 diagnostics\",\n      \"bun run check:integrations --json -> exit 0; complete:true, 6/6 extension-adapter combinations complete, 0 diagnostics, behaviorTestsRun:false\",\n      \"bun test tests/framework -> 657 pass / 0 fail across 57 files\",\n      \"bun test tests/codebase-tools tests/connect-bot -> 217 pass / 0 fail across 32 files\",\n      \"bun test tests/harness-dock/baseline.test.ts -> 6 pass / 0 fail (isolated 18.5.0 materialized)\",\n      \"bun test startup-modes-loading + codebase-tools startup-modes-dock + startup-recovery-dock + connect-bot startup + connect-bot lifecycle -> 24 pass / 0 fail across 5 files\",\n      \"PI_NODE=<node22.19> bun scripts/pi-codebase-tools-smoke.ts --mode manual -> exit 0; pi 1.3.0, 78 checks passed, 6 isolated runs\",\n      \"PI_NODE=<node22.19> bun scripts/pi-codebase-tools-smoke.ts --mode auto -> exit 0; pi 1.3.0, 62 checks passed, 4 isolated runs\",\n      \"bun run test -> exit 0; 1610 pass / 0 fail across 180 files, 9882 expect() calls, 584.93s\",\n      \"Repository-local markdown link/anchor check over the 9 startup-related docs -> 486 links checked, 0 failures (source-line anchors and out-of-repo references excluded; explicit HTML anchors accounted for)\"\n    ],\n    \"scope_notes\": [\n      \"Static authoring/integration checks prove declarations and wiring only, not native behavior or support status.\",\n      \"S1 unit suites prove the controlled adapter/State seam; S2 dock suites prove the real OMP loader, captured model requests, the isolated real herdr-bot panel read side and independent-process restore/navigation.\",\n      \"pi smoke proves the real pi CLI plus capture endpoint and spawned-child follow; it does not prove a real third-party provider or rendered TUI.\",\n      \"The scripted capture endpoint answers model requests; it proves request arrival/contribution, not provider quality. No real credential or formal account was used.\",\n      \"The literal interactive `<provider>/<model>` TUI commands were not run by the agent; the same published entrypoint selections were executed through the real isolated loaders. Visual rendering remains the human-led step.\"\n    ]\n  },\n  \"human_led\": {\n    \"unverified\": [\n      \"P8: OMP/pi marker actually rendered in the interactive terminal.\",\n      \"P9: OMP/pi restored-session marker actually rendered.\",\n      \"P18: OMP terminal shows no marker before a valid receipt and the marker after it.\",\n      \"P19: OMP terminal shows the existing failure feedback and stays closed.\"\n    ],\n    \"prepared_material\": [\n      \"extensions/codebase-tools/README.md#h1--interactive-tui-acceptance-visual\",\n      \"extensions/codebase-tools/README.md#h1b--automatic-startup-mode-interactive-acceptance-p8-human-led-marker-display\",\n      \"extensions/codebase-tools/README.md#h1c--startup-recovery-interactive-acceptance-p9-human-led-marker-display\",\n      \"extensions/connect-bot/README.md#h1d--automatic-startup-interactive-acceptance-p18-p19-visual\"\n    ]\n  },\n  \"blockers\": [],\n  \"limitations\": [\n    \"No terminal screenshots/recordings were produced; the four visual judgments remain for the user and are explicitly marked unverified in the docs.\",\n    \"The full-suite result predates the final documentation-only clarification commit dfc8425; source, fixtures, dependencies and environment are unchanged, and the final docs were link-checked after that commit.\",\n    \"A whole-repository link scan still finds pre-existing unrelated links (archived .scratch documents and model-cost glossary anchors); they were not touched by this ticket.\"\n  ]\n}",
+        "stderr": "",
+        "truncated": false,
+        "durationMs": 1122051,
+        "tokens": 197860,
+        "requests": 73,
+        "contextTokens": 191265,
+        "contextWindow": 1000000,
+        "modelOverride": [
+          "deepseek/deepseek-flash:max"
+        ],
+        "resolvedModel": "deepseek/deepseek-flash:max",
+        "resolvedModelIdentity": "deepseek/deepseek-flash",
+        "resolvedThinkingLevel": "max",
+        "aborted": false,
+        "usage": {
+          "input": 133373,
+          "output": 64487,
+          "cacheRead": 8602240,
+          "cacheWrite": 0,
+          "totalTokens": 8800100,
+          "reasoningTokens": 37587,
+          "cost": {
+            "input": 0.020005949999999998,
+            "output": 0.03869219999999999,
+            "cacheRead": 0.02580672,
+            "cacheWrite": 0,
+            "total": 0.08450487000000002
+          }
+        },
+        "outputPath": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-21T20-04-26-123Z_01a16010-a58b-71a0-bc90-15f1bbbf0542\\08-usage-and-integration-handoffmd-3cfb378b-9fb5.md",
+        "extractedToolData": {
+          "yield": [
+            {
+              "data": {
+                "ticket": ".scratch/extension-startup-modes/implementation/08-usage-and-integration-handoff.md",
+                "outcome": "implemented and automatically verified; four human-led visual checks remain unverified",
+                "branch": "hyper/extension-startup-modes/08-usage-and-integration-handoff-b0da79-b21292ab9ce5",
+                "commits": [
+                  "585acc0 08: document startup-mode usage and acceptance handoff",
+                  "dfc8425 08: state the acceptance panel and credential prerequisites"
+                ],
+                "worktree": "clean; no other ticket files, workflow reports, integration branch, spec, contract or support records modified; no formal host config, user session or formal panel touched",
+                "delivered": [
+                  "Root README: per-extension manual/automatic entrypoint roots, one mode per extension, link to each consumer's usage.",
+                  "codebase-tools README: additive loading and no duplicate detection/merge; per-extension mixed selection; directory roots contribute only their mode; policy read once per process; existing pi/OMP support scope; pi automatic TUI command for P8.",
+                  "connect-bot README: one mode per extension and no merge/detection; both modes share the same config.yaml endpoint/budget; existing OMP support scope; loading-vs-enabling, enqueue-vs-receipt and non-blocking semantics already present are now tied to the acceptance runbook.",
+                  "New connect-bot H1d runbook (P18/P19): isolated deployment copy, isolated herdr-bot panel on a dedicated port, isolated agent state, recording/timing instructions for marker-after-receipt and failure-without-marker, plus the automated test references.",
+                  "framework/README.md human-acceptance index now links the connect-bot P18/P19 visual runbook.",
+                  "No fixed-wording, source-text or entry-copy assertions were added."
+                ],
+                "criterion_evidence": [
+                  "P30 docs distinguish loading, startup target, actual State and non-blocking registration; links checked and published entrypoint selections executed (see verification).",
+                  "Loading is additive; same-extension double mode is documented as a double bind with no dedup/merge/detection; per-extension mixed selection documented. Evidence: tests/harness-dock/startup-modes-loading.test.ts (single entry, auto+auto combination, manual+auto mix, decoy working dirs) passed.",
+                  "Effective history wins over mode default including false; first process start vs later navigation; policy edit next process; shared business config. Evidence: tests/codebase-tools/startup-modes.test.ts, startup-policy-change.test.ts, tests/connect-bot/startup-modes.test.ts, startup-lifecycle.test.ts passed in the full suite.",
+                  "codebase-tools session-entry restore under the opposite mode and connect-bot memory/no-connected-preference documented; P35/P22 evidence passed. Scope notes say no new host support, support-record change or formal deployment.",
+                  "P8 materials: extensions/codebase-tools/README.md H1 and H1b (OMP and pi commands), automated by startup-modes-dock.test.ts and pi smoke auto.",
+                  "P9 materials: extensions/codebase-tools/README.md H1c with three restorable isolated scenarios for OMP and pi, automated by startup-recovery-dock.test.ts, startup-modes.test.ts and both pi smoke modes.",
+                  "P18/P19 materials: extensions/connect-bot/README.md H1d with an isolated real-panel setup and time-ordered scenarios; automated by tests/harness-dock/connect-bot-startup.test.ts (held register, refusal, real isolated panel read side).",
+                  "Human-led items still unverified: P8 OMP/pi marker rendering, P9 restored-marker rendering, P18 success-before/after marker display, P19 failure feedback and closed display. No screenshots or recordings were captured by the agent; the runbooks specify the terminal evidence the user must record and confirm."
+                ],
+                "verification": {
+                  "source_state": "Code HEAD 66ae6af (dev merge) plus the two documentation commits above; Windows 10.0.26200 x64, Bun 1.4.2, isolated OMP @oh-my-pi/pi-coding-agent@18.5.0, default Node 24.18.0, pi smoke Node 22.19.0, git core.autocrlf=true, sibling checkouts available through Temp symlinks.",
+                  "commands": [
+                    "bun install --frozen-lockfile -> exit 0",
+                    "bun run typecheck -> exit 0; check:authoring 58 files, 3 declarations, 0 diagnostics",
+                    "bun run check:integrations --json -> exit 0; complete:true, 6/6 extension-adapter combinations complete, 0 diagnostics, behaviorTestsRun:false",
+                    "bun test tests/framework -> 657 pass / 0 fail across 57 files",
+                    "bun test tests/codebase-tools tests/connect-bot -> 217 pass / 0 fail across 32 files",
+                    "bun test tests/harness-dock/baseline.test.ts -> 6 pass / 0 fail (isolated 18.5.0 materialized)",
+                    "bun test startup-modes-loading + codebase-tools startup-modes-dock + startup-recovery-dock + connect-bot startup + connect-bot lifecycle -> 24 pass / 0 fail across 5 files",
+                    "PI_NODE=<node22.19> bun scripts/pi-codebase-tools-smoke.ts --mode manual -> exit 0; pi 1.3.0, 78 checks passed, 6 isolated runs",
+                    "PI_NODE=<node22.19> bun scripts/pi-codebase-tools-smoke.ts --mode auto -> exit 0; pi 1.3.0, 62 checks passed, 4 isolated runs",
+                    "bun run test -> exit 0; 1610 pass / 0 fail across 180 files, 9882 expect() calls, 584.93s",
+                    "Repository-local markdown link/anchor check over the 9 startup-related docs -> 486 links checked, 0 failures (source-line anchors and out-of-repo references excluded; explicit HTML anchors accounted for)"
+                  ],
+                  "scope_notes": [
+                    "Static authoring/integration checks prove declarations and wiring only, not native behavior or support status.",
+                    "S1 unit suites prove the controlled adapter/State seam; S2 dock suites prove the real OMP loader, captured model requests, the isolated real herdr-bot panel read side and independent-process restore/navigation.",
+                    "pi smoke proves the real pi CLI plus capture endpoint and spawned-child follow; it does not prove a real third-party provider or rendered TUI.",
+                    "The scripted capture endpoint answers model requests; it proves request arrival/contribution, not provider quality. No real credential or formal account was used.",
+                    "The literal interactive `<provider>/<model>` TUI commands were not run by the agent; the same published entrypoint selections were executed through the real isolated loaders. Visual rendering remains the human-led step."
+                  ]
+                },
+                "human_led": {
+                  "unverified": [
+                    "P8: OMP/pi marker actually rendered in the interactive terminal.",
+                    "P9: OMP/pi restored-session marker actually rendered.",
+                    "P18: OMP terminal shows no marker before a valid receipt and the marker after it.",
+                    "P19: OMP terminal shows the existing failure feedback and stays closed."
+                  ],
+                  "prepared_material": [
+                    "extensions/codebase-tools/README.md#h1--interactive-tui-acceptance-visual",
+                    "extensions/codebase-tools/README.md#h1b--automatic-startup-mode-interactive-acceptance-p8-human-led-marker-display",
+                    "extensions/codebase-tools/README.md#h1c--startup-recovery-interactive-acceptance-p9-human-led-marker-display",
+                    "extensions/connect-bot/README.md#h1d--automatic-startup-interactive-acceptance-p18-p19-visual"
+                  ]
+                },
+                "blockers": [],
+                "limitations": [
+                  "No terminal screenshots/recordings were produced; the four visual judgments remain for the user and are explicitly marked unverified in the docs.",
+                  "The full-suite result predates the final documentation-only clarification commit dfc8425; source, fixtures, dependencies and environment are unchanged, and the final docs were link-checked after that commit.",
+                  "A whole-repository link scan still finds pre-existing unrelated links (archived .scratch documents and model-cost glossary anchors); they were not touched by this ticket."
+                ]
+              },
+              "status": "success"
+            }
+          ]
+        },
+        "outputMeta": {
+          "lineCount": 71,
+          "charCount": 7751
+        }
+      },
+      "agent": "tdd",
+      "agent_id": "08-usage-and-integration-handoffmd-3cfb378b-9fb5",
+      "session_id": "01a1608b-e81d-7119-a445-1b9ab382fe2e",
+      "session_file": "C:\\Users\\hugos\\.omp\\agent\\sessions\\--E--Developer-myhub-my-agent-toolkit--\\2026-10-21T20-04-26-123Z_01a16010-a58b-71a0-bc90-15f1bbbf0542\\08-usage-and-integration-handoffmd-3cfb378b-9fb5.jsonl",
+      "execution_cwd": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-xg9U7v",
+      "retro_document": "E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\extension-startup-modes\\retro\\08-usage-and-integration-handoff.md\\73ac7421-9080-4e6d-af53-88217d6e0ace.md",
+      "retro_finished_at": "2026-10-21T22:39:22.109Z"
+    }
+  ]
+}

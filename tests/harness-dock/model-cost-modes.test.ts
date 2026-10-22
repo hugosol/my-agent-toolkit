@@ -617,8 +617,8 @@ describe("a monetary model shows the fixed budget and the accounted cost (P10)",
 	}, 300_000);
 });
 
-describe("the balance the CLI holds is the official channel's own line (P8, P67)", () => {
-	test("a held reading survives a real switch to a Go id and back, and only the official pair draws it", async () => {
+describe("the balance the CLI holds stays visible beside a current non-monetary channel (P8, P67)", () => {
+	test("a held reading survives a real switch to a Go id and back, followed by the tree's own Cost", async () => {
 		const run = await startRun("model-cost-modes-balance-switch", { kind: "monetary-and-go" }, CAPTURE_USAGE, {
 			balance: { total: "110.00" },
 		});
@@ -634,9 +634,9 @@ describe("the balance the CLI holds is the official channel's own line (P8, P67)
 			// The same CLI switches to the Go channel's token-only id. Its own model has no amount policy,
 			// so its structure contributes no ratio of its own, while the tree's own amount still keeps the
 			// official channel's contribution — the one response the phase before issued, 2000/2000/0/2000
-			// tokens at the flash tier's off-peak 1/0.02/4 per million, 0.00502 CNY written as ¥0.0050 —
-			// and the balance the process holds is not drawn at all: a token-only display has no official
-			// balance (spec §134).
+			// tokens at the flash tier's off-peak 1/0.02/4 per million, 0.00502 CNY written as ¥0.0050.
+			// Because the Total writes that Cost, the process's balance and the period accrual stay on the
+			// account row beside the token-only budget instead of disappearing with the official channel.
 			await run.session.request({ type: "set_model", provider: GO_PROVIDER, modelId: GO_MODEL });
 			expect((await run.session.prompt("one token-only exchange")).status).toBe("completed");
 			const tokenOnly = (shownLines(run.session) ?? []).join("\n");
@@ -644,10 +644,11 @@ describe("the balance the CLI holds is the official channel's own line (P8, P67)
 			// alignment against the Round beside it, which the display decides rather than this file.
 			expect(tokenOnly).toMatch(/Cost:\s+\u00A50\.0050(?!\d)/);
 			expect(tokenOnly).not.toContain("Cache/In/Out");
-			expect(tokenOnly.split("\n").some(line => line.includes("Balance:"))).toBe(false);
+			expect(tokenOnly).toContain("\u{1F4B0} Balance: \u00A5110.00");
+			expect(tokenOnly).toContain("\u23F3 Accrued: \u00A5");
 
-			// The reading was not re-asked for having been hidden: a Go request is no request of the
-			// balance's own provider, so nothing in this phase consults the balance endpoint at all.
+			// The reading was not re-asked for because the target became non-monetary: a Go request is no
+			// request of the balance's own provider, so nothing in this phase consults its endpoint.
 			expect(run.capture.balanceCalls()).toHaveLength(1);
 
 			// Back on the official pair the reading is drawn again, out of the cache the switch left

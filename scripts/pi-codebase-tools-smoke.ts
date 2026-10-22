@@ -6,18 +6,23 @@
  *   bun scripts/pi-codebase-tools-smoke.ts                  # resolve the installed pi CLI
  *   bun scripts/pi-codebase-tools-smoke.ts --pi <path>      # or PI_CLI=<path>: the package's
  *                                                           # dist/bundle/cli.js, a pi.cmd/pi shim, or the binary
+ *   bun scripts/pi-codebase-tools-smoke.ts --mode auto      # drive the automatic startup entrypoint
+ *   bun scripts/pi-codebase-tools-smoke.ts --follow-only    # only the real spawned-session follow phase
  *   bun scripts/pi-codebase-tools-smoke.ts --keep           # keep every run root for inspection
  *
  * What it drives: the real installed pi as a child process in RPC mode with
- * `--no-extensions -e entrypoints/pi/codebase-tools.ts --no-mcp`, an isolated agent state,
- * session directory and working directory under the OS temp root, and a local
- * OpenAI-compatible capture endpoint (the dock's `capture-server.ts`) declared through the
- * run's own `models.json` with a dummy key. The default agent state, the formal
- * configuration and any running agent are never touched, no real credential is read, and no
- * repository file is written. Every phase gets its own run root, so the phases are
- * independent and the whole smoke is repeatable.
+ * `--no-extensions -e <mode entrypoint> --no-mcp`, an isolated agent state, session directory and
+ * working directory under the OS temp root, and a local OpenAI-compatible capture endpoint (the
+ * dock's `capture-server.ts`) declared through the run's own `models.json` with a dummy key. The
+ * default agent state, the formal configuration and any running agent are never touched, no real
+ * credential is read, and no repository file is written. Every phase gets its own run root, so
+ * the phases are independent and the whole smoke is repeatable.
  *
- * What it asserts (consumer-visible behavior only; no source or wiring inspection):
+ * `--mode manual` (the default) loads `entrypoints/pi/codebase-tools.ts`; `--mode auto` loads
+ * `entrypoints/pi-auto/codebase-tools.ts`. The entrypoint is the whole mode decision: nothing
+ * else about the invocation differs.
+ *
+ * What it asserts in manual mode (consumer-visible behavior only; no source or wiring inspection):
  *   1. a session that never toggles is off: its turn carries no contribution, the journal
  *      records no codebase-tools entry, nothing is announced, and the framework's marker
  *      area was published without the extension's line;
@@ -38,7 +43,36 @@
  *   7. a session resumed in a new process (`--session <file>`) and a session resumed in place
  *      (`switch_session`) each restore the recorded State and the init's progress: the run
  *      contributes without being re-enabled, exactly one init stays on the branch, no State is
- *      written by a run, and history is appended to rather than rewritten.
+ *      written by a run, and history is appended to rather than rewritten;
+ *   8. a session whose branch recorded no State takes the automatic mode's default when an
+ *      independent process resumes it at startup: the automatic line is on from the session's
+ *      start, the first run carries the init, the enabling choice is recorded once, history is
+ *      appended to, and nothing announces an activation.
+ *
+ * What it asserts in automatic mode:
+ *   1. no command is issued: the first run's request already carries the startup-selected
+ *      contribution, the marker line is visible from the session's own start, and the session
+ *      records the startup choice as its initial State;
+ *   2. the original command still disables and enables it after startup, with the original
+ *      notification, marker and persistence effects;
+ *   3. a new session created in place in the same process is not enabled again by the startup
+ *      choice and records no startup State, while the command still enables it;
+ *   4. a session resumed in a new process restores the recorded true, contributes on its first
+ *      run, and writes no second startup record — the target is not applied as a toggle;
+ *   5. a third process resuming that now-disabled session restores the recorded false: no line at
+ *      its start, no new contribution, no second startup record, and the command enables it;
+ *   6. an independent manual-mode process — whose own default is off — resumes the session the
+ *      automatic start enabled: the line is on from its start, the first run replays the init and
+ *      appends the reminder, no second startup record is written, and the command disables it.
+ *
+ * What every mode additionally asserts about a real spawned pi session (the follow phase): the
+ * pinned `pi-subagents` provider loads the mode's own entrypoint into a detached child process
+ * — the provider's retained launch record names that file — and that child's own model request
+ * and session journal carry, or omit, the extension's contribution according to the Owner's
+ * *current* value. In manual mode the Owner is off first and enabled in between the two children;
+ * in automatic mode it is on from startup and disabled in between. The child writes no State of
+ * its own, and the entry that enables a main session does not enable the child: the startup policy
+ * is a main-session rule. The provider's temporary root is redirected under this run's own root.
  *
  * The extension's two prompt resources are byte-identical in this revision (reported as a run
  * note, never as a check), so a contribution's text cannot say which slot produced it: the slot a
@@ -54,19 +88,24 @@
  *     attribution;
  *   - the TUI drawing of the marker area and of the hidden contribution stays human-led. Over
  *     RPC this smoke observes the `setWidget` and `notify` extension-UI frames the real adapter
- *     published — the automated face of both surfaces.
+ *     published — the automated face of both surfaces;
+ *   - on Node 24.18.0 a Windows/libuv `UV_HANDLE_CLOSING` assertion can terminate a longer
+ *     multi-request session on close (exit 9), which is the limitation the framework's pi support
+ *     evidence records. Point `PI_NODE` at Node 22.19.0 for the verified combination; this is a
+ *     host/runtime limitation, never a suppressed failure.
  *
  * The expected prompt texts are read from the extension's own `.md` resources as text; this
  * script never imports the shared prompt module (whose Markdown imports a real Node jiti run
  * cannot resolve, and whose wiring the pi adapter under test owns).
  */
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, realpathSync } from "node:fs";
 import * as path from "node:path";
-import type { CapturedRequest } from "../tests/harness-dock/capture-server";
+import type { CaptureStep, CapturedRequest } from "../tests/harness-dock/capture-server";
 import {
 	type PiCli,
 	PI_COMMAND_TIMEOUT_MS,
 	PI_NODE_EXECUTABLE,
+	PI_PROMPT_TIMEOUT_MS,
 	type PiRpcFrame as RpcFrame,
 	PiSession,
 	type PiRun,
@@ -79,8 +118,26 @@ import type { SessionEntry, SessionLog } from "../tests/harness-dock/session-log
 /** The repository root: this script lives in `scripts/`. */
 const REPO_ROOT = path.resolve(import.meta.dir, "..");
 
-/** The pi assembly the discovery entrypoint re-exports; the only extension this smoke loads. */
-const ENTRYPOINT = path.join(REPO_ROOT, "entrypoints", "pi", "codebase-tools.ts");
+/** The two mode entrypoints: which one this smoke loads is its only mode decision. */
+const MANUAL_ENTRYPOINT = path.join(REPO_ROOT, "entrypoints", "pi", "codebase-tools.ts");
+const AUTOMATIC_ENTRYPOINT = path.join(REPO_ROOT, "entrypoints", "pi-auto", "codebase-tools.ts");
+/**
+ * The pinned subagent provider, as this repository installs it. The follow phase loads it beside
+ * the mode entrypoint; the extension's assembly states the child entry the provider loads.
+ */
+const SUBAGENT_PROVIDER = path.join(REPO_ROOT, "node_modules", "pi-subagents", "index.js");
+
+/** The two Owner states the follow phase drives, each named by the parent prompt it delegates on. */
+const FOLLOW_PROMPTS = {
+	on: "codebase-tools follow: delegate while the owner is enabled",
+	off: "codebase-tools follow: delegate while the owner is disabled",
+} as const;
+
+/** The assignment each delegated child receives: what identifies that child's own requests and journal. */
+const FOLLOW_ASSIGNMENTS = {
+	on: "child-follow-on: report the repository root",
+	off: "child-follow-off: report the repository root",
+} as const;
 /** The prompt resources, read as text and used as the expected content. */
 const PROMPT_DIR = path.join(REPO_ROOT, "extensions", "codebase-tools", "shared-logic", "prompts");
 const INIT_PROMPT = readFileSync(path.join(PROMPT_DIR, "init.md"), "utf8");
@@ -328,19 +385,33 @@ const sessions: PiSession[] = [];
  * That is pi's documented "configure a compatible endpoint" path, and it keeps the loaded extension
  * set exactly the entrypoint under test (no provider fixture extension).
  */
-function startRun(cli: PiCli, label: string): PiRun {
-	const run = startPiRun(cli, label, { provider: PROVIDER, model: MODEL });
+function startRun(
+	cli: PiCli,
+	label: string,
+	respond?: (request: CapturedRequest) => CaptureStep | undefined,
+): PiRun {
+	const run = startPiRun(cli, label, {
+		provider: PROVIDER,
+		model: MODEL,
+		...(respond === undefined ? {} : { endpoint: { respond, replyText: "codebase-tools follow reply" } }),
+	});
 	runs.push(run);
 	return run;
 }
 
-async function openSession(run: PiRun, extraArgs: readonly string[] = []): Promise<PiSession> {
+async function openSession(
+	run: PiRun,
+	extraArgs: readonly string[] = [],
+	entrypoint: string | readonly string[] = MANUAL_ENTRYPOINT,
+	env: Record<string, string> = {},
+): Promise<PiSession> {
 	const session = await PiSession.start({
 		cli: run.cli,
 		runRoot: run.root,
-		entrypoint: ENTRYPOINT,
+		entrypoint,
 		selector: run.selector,
 		extraArgs,
+		env,
 	});
 	sessions.push(session);
 	return session;
@@ -354,6 +425,22 @@ function markerAreaFrames(session: PiSession): RpcFrame[] {
 			frame =>
 				frame.type === "extension_ui_request" && frame.method === "setWidget" && frame.widgetKey === MARKER_AREA_KEY,
 		);
+}
+
+/**
+ * The framework's marker area at a session's own start.
+ *
+ * The host publishes widgets on its own task, so a case that reads the line "from the start" awaits
+ * the first area frame rather than reading the frame stream at one instant.
+ */
+async function markerAreaAtStart(session: PiSession): Promise<RpcFrame | undefined> {
+	return session.frameSince(
+		0,
+		frame =>
+			frame.type === "extension_ui_request" && frame.method === "setWidget" && frame.widgetKey === MARKER_AREA_KEY,
+		"the framework's marker area at session start",
+		UI_FRAME_TIMEOUT_MS,
+	);
 }
 
 // ---------------------------------------------------------------------------
@@ -816,17 +903,839 @@ async function phaseResumeAcrossSwitch(cli: PiCli): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
+// Phase 5: a session with no recorded value resumed at startup takes the
+// automatic mode's default (P24, P9)
+// ---------------------------------------------------------------------------
+
+async function phaseStartupRestoreUnderAutomaticPolicy(cli: PiCli): Promise<void> {
+	console.log("\nphase: a session that recorded nothing takes the automatic default when resumed at startup");
+	const run = startRun(cli, "startup-restore-automatic-default");
+	const first = await openSession(run);
+
+	const offTurnText = "codebase-tools startup restore off turn";
+	await first.run(offTurnText);
+	const offRequest = requestAt(run, 0);
+	observe(
+		"the manual session that will be resumed contributes nothing",
+		contributions(offRequest) === 0 && lastMessageText(offRequest) === offTurnText,
+		`the request carried ${contributions(offRequest)} contribution(s): ${describeMessages(offRequest)}`,
+	);
+	const sessionFile = await first.sessionFile();
+	const before = first.journal(sessionFile);
+	observe(
+		"the manual session recorded no State",
+		extensionEntries(before).length === 0,
+		`the journal carries ${extensionEntries(before).map(entry => String(entry.customType)).join(", ") || "no codebase-tools entry"}`,
+	);
+	const firstExit = await first.stop();
+	observe(
+		"the session exits cleanly before the resume",
+		firstExit.exitCode === 0 && !firstExit.timedOut,
+		`the child exited ${String(firstExit.exitCode)}, stderr: ${firstExit.stderr.trim() || "<empty>"}`,
+	);
+
+	// An independent process resumes the file under the automatic entrypoint. The resume is this
+	// process's first owner start, so the automatic default applies — history has no value to win.
+	const requestsBefore = run.capture.requests().length;
+	const resumed = await openSession(run, ["--session", sessionFile], AUTOMATIC_ENTRYPOINT);
+	const area = await markerAreaAtStart(resumed);
+	observe(
+		"the resumed session shows the automatic line from its own start",
+		area !== undefined && areaShows(area),
+		area === undefined
+			? "no marker-area frame was published for the resumed session"
+			: `the startup area frame carried ${JSON.stringify(area.widgetLines)}`,
+	);
+	const resumedTurnText = "codebase-tools startup restore resumed turn";
+	const disposition = await resumed.run(resumedTurnText);
+	observe(
+		"the resumed session runs a turn without a command",
+		disposition === "started",
+		`pi reported disposition ${JSON.stringify(disposition)}`,
+	);
+	const resumedRequest = requestAt(run, requestsBefore);
+	observe(
+		"the first run carries the init the automatic default selected",
+		contributions(resumedRequest) === 1 && isContributionText(lastMessageText(resumedRequest)),
+		`the request carried ${contributions(resumedRequest)} injected message(s): ${describeMessages(resumedRequest)}`,
+	);
+	const after = resumed.journal(sessionFile);
+	observe(
+		"the enabling choice is recorded once, as the session's own State",
+		JSON.stringify(statePayloads(after)) === JSON.stringify([{ enabled: true }]),
+		`the journal's ${STATE_ENTRY_TYPE} payloads were ${JSON.stringify(statePayloads(after))}`,
+	);
+	observe(
+		"the restored init is persisted once",
+		customMessagesOf(after, INIT_IDENTITY).length === 1,
+		`the journal holds ${customMessagesOf(after, INIT_IDENTITY).length} init(s)`,
+	);
+	const resumeRewrite = appendOnlyViolation(before.entries, after.entries);
+	observe(
+		"the resume appended to history rather than rewriting it",
+		resumeRewrite === undefined,
+		resumeRewrite ?? "the earlier entries stand unchanged and in order",
+	);
+	observe(
+		"the resume announced no activation: startup is not a command",
+		resumed
+			.notificationsSince(0)
+			.every(message => message !== ENABLED_NOTICE && message !== DISABLED_NOTICE),
+		`pi announced ${JSON.stringify(resumed.notificationsSince(0))}`,
+	);
+	const exit = await resumed.stop();
+	observe(
+		"the resumed session exits cleanly",
+		exit.exitCode === 0 && !exit.timedOut,
+		`the child exited ${String(exit.exitCode)}, stderr: ${exit.stderr.trim() || "<empty>"}`,
+	);
+}
+
+// ---------------------------------------------------------------------------
+// Automatic mode, phase 1: the first run is enabled without a command, and the
+// command and a later in-place session keep their own decisions
+// ---------------------------------------------------------------------------
+
+async function phaseAutomaticStartup(cli: PiCli): Promise<void> {
+	console.log("\nphase: the automatic entrypoint enables the first run without a command");
+	const run = startRun(cli, "automatic-startup");
+	const session = await openSession(run, [], AUTOMATIC_ENTRYPOINT);
+
+	// 1. The first turn runs with no command typed at all.
+	const firstTurnText = "codebase-tools automatic first turn";
+	const firstDisposition = await session.run(firstTurnText);
+	observe(
+		"a plain first turn starts a run",
+		firstDisposition === "started",
+		`pi reported disposition ${JSON.stringify(firstDisposition)}`,
+	);
+	const firstRequest = requestAt(run, 0);
+	observe(
+		"the first run's request already carries the startup-selected contribution",
+		contributions(firstRequest) === 1 &&
+			isContributionText(lastMessageText(firstRequest)) &&
+			messageContent(providerMessages(firstRequest)[providerMessages(firstRequest).length - 2]) === firstTurnText,
+		`the request carried ${contributions(firstRequest)} injected message(s), ending with ${JSON.stringify(lastMessageText(firstRequest).slice(0, 60))}: ${describeMessages(firstRequest)}`,
+	);
+	const firstJournal = session.journal(await session.sessionFile());
+	const firstInit = customMessagesOf(firstJournal, INIT_IDENTITY);
+	observe(
+		"the startup choice is recorded once, as the session's own initial State",
+		JSON.stringify(statePayloads(firstJournal)) === JSON.stringify([{ enabled: true }]),
+		`the journal's ${STATE_ENTRY_TYPE} payloads were ${JSON.stringify(statePayloads(firstJournal))}`,
+	);
+	observe(
+		"exactly one hidden init is persisted, as the init slot and nothing else",
+		firstInit.length === 1 &&
+			firstInit[0]?.content === INIT_PROMPT &&
+			firstInit[0]?.display === false &&
+			JSON.stringify(contributionIdentities(firstJournal)) === JSON.stringify([INIT_IDENTITY]),
+		`the journal holds ${firstInit.length} ${INIT_IDENTITY} entry/entries with display ${JSON.stringify(firstInit[0]?.display)} and slot identities ${JSON.stringify(contributionIdentities(firstJournal))}`,
+	);
+	const openedArea: RpcFrame | undefined = markerAreaFrames(session)[0];
+	observe(
+		"the framework's marker area shows the line from the session's own start",
+		openedArea !== undefined && areaShows(openedArea) && openedArea.widgetPlacement === MARKER_PLACEMENT,
+		openedArea === undefined
+			? "no setWidget frame for the framework's marker area was published"
+			: `the first area frame carried ${JSON.stringify(openedArea.widgetLines)} at ${JSON.stringify(openedArea.widgetPlacement)}`,
+	);
+	observe(
+		"no command ran, so nothing announced an activation",
+		session
+			.notificationsSince(0)
+			.every(message => message !== ENABLED_NOTICE && message !== DISABLED_NOTICE),
+		`pi announced ${JSON.stringify(session.notificationsSince(0))}`,
+	);
+
+	// 2. A later enabled run appends the reminder and does not re-inject the init.
+	await session.run("codebase-tools automatic second turn");
+	const secondRequest = requestAt(run, 1);
+	const secondJournal = session.journal(await session.sessionFile());
+	observe(
+		"a later enabled run adds exactly one contribution, the branch's earlier one replayed",
+		contributions(secondRequest) === contributions(firstRequest) + 1 &&
+			JSON.stringify(contributionIdentities(secondJournal)) ===
+				JSON.stringify([INIT_IDENTITY, REMINDER_IDENTITY]),
+		`the request carried ${contributions(secondRequest)} injected message(s) after the first run's ${contributions(firstRequest)}, and the slot identities were ${JSON.stringify(contributionIdentities(secondJournal))}`,
+	);
+
+	// 3. The original command still disables it, with the original effects.
+	const disableMark = session.frameMark();
+	const disable = await session.run(`/${COMMAND}`, PI_COMMAND_TIMEOUT_MS);
+	observe(
+		"the original command still disables it after startup, announcing the value it produced",
+		disable === "handled" &&
+			JSON.stringify(session.notificationsSince(disableMark)) === JSON.stringify([DISABLED_NOTICE]),
+		`the command reported ${JSON.stringify(disable)} and announced ${JSON.stringify(session.notificationsSince(disableMark))}`,
+	);
+	const clearedArea = await session.frameSince(
+		disableMark,
+		frame => !areaShows(frame),
+		"the marker area cleared",
+		UI_FRAME_TIMEOUT_MS,
+	);
+	observe(
+		"disabling clears the framework's marker area",
+		clearedArea !== undefined &&
+			(clearedArea.widgetLines === undefined ||
+				(Array.isArray(clearedArea.widgetLines) && clearedArea.widgetLines.length === 0)),
+		clearedArea === undefined
+			? "no marker-area frame was published after the disabling command"
+			: `the clearing frame carried ${JSON.stringify(clearedArea.widgetLines)}`,
+	);
+	const disabledTurnText = "codebase-tools automatic disabled turn";
+	await session.run(disabledTurnText);
+	const disabledRequest = requestAt(run, 2);
+	observe(
+		"a disabled run adds no contribution of its own",
+		contributions(disabledRequest) === contributions(secondRequest) &&
+			lastMessageText(disabledRequest) === disabledTurnText,
+		`the request carried ${contributions(disabledRequest)} injected message(s) after the enabled period's ${contributions(secondRequest)}, ending with ${JSON.stringify(lastMessageText(disabledRequest).slice(0, 60))}`,
+	);
+	const disabledJournal = session.journal(await session.sessionFile());
+	observe(
+		"the command's own record follows the startup record, and no startup write was repeated",
+		JSON.stringify(statePayloads(disabledJournal)) ===
+			JSON.stringify([{ enabled: true }, { enabled: false }]),
+		`the journal's ${STATE_ENTRY_TYPE} payloads were ${JSON.stringify(statePayloads(disabledJournal))}`,
+	);
+
+	// 4. A new session in the same process starts off: the startup choice belongs to the
+	// process's start and is not applied to a session that replaces it.
+	const previousFile = await session.sessionFile();
+	const created = await session.request({ type: "new_session" }, PI_COMMAND_TIMEOUT_MS);
+	observe(
+		"pi created a new session in place",
+		fieldOf(fieldOf(created, "data"), "cancelled") === false,
+		`pi answered ${JSON.stringify(fieldOf(created, "data"))}`,
+	);
+	const freshFile = await session.sessionFile();
+	observe(
+		"the new session is a different session",
+		freshFile !== previousFile,
+		`pi reported the same file ${previousFile} for the session it replaced`,
+	);
+	const freshTurnText = "codebase-tools automatic fresh turn";
+	await session.run(freshTurnText);
+	const freshRequest = requestAt(run, 3);
+	observe(
+		"the new session in the running process is not enabled again by the startup choice",
+		contributions(freshRequest) === 0 && lastMessageText(freshRequest) === freshTurnText,
+		`the new session's request carried ${contributions(freshRequest)} contribution(s): ${describeMessages(freshRequest)}`,
+	);
+	const freshJournal = session.journal(freshFile);
+	observe(
+		"the new session records no startup State",
+		extensionEntries(freshJournal).length === 0,
+		`the new session's journal carries ${extensionEntries(freshJournal).map(entry => String(entry.customType)).join(", ") || "no codebase-tools entry"}`,
+	);
+	const freshAreaFrames = markerAreaFrames(session);
+	const freshArea: RpcFrame | undefined = freshAreaFrames[freshAreaFrames.length - 1];
+	observe(
+		"the new session's marker area carries no line",
+		freshArea !== undefined && !areaShows(freshArea),
+		freshArea === undefined
+			? "no marker-area frame was published for the new session"
+			: `the newest area frame carried ${JSON.stringify(freshArea.widgetLines)}`,
+	);
+
+	// 5. The command still enables it in the new session.
+	const enableMark = session.frameMark();
+	const enable = await session.run(`/${COMMAND}`, PI_COMMAND_TIMEOUT_MS);
+	observe(
+		"the command enables the new session",
+		enable === "handled" &&
+			JSON.stringify(session.notificationsSince(enableMark)) === JSON.stringify([ENABLED_NOTICE]),
+		`the command reported ${JSON.stringify(enable)} and announced ${JSON.stringify(session.notificationsSince(enableMark))}`,
+	);
+	await session.run("codebase-tools automatic fresh enabled turn");
+	const freshEnabledRequest = requestAt(run, 4);
+	observe(
+		"the enabled new session contributes on its next run",
+		contributions(freshEnabledRequest) === 1,
+		`the request carried ${contributions(freshEnabledRequest)} injected message(s): ${describeMessages(freshEnabledRequest)}`,
+	);
+	observe(
+		"the new session's journal holds only its own command's record",
+		JSON.stringify(statePayloads(session.journal(freshFile))) === JSON.stringify([{ enabled: true }]),
+		`the new session's journal carries ${JSON.stringify(statePayloads(session.journal(freshFile)))}`,
+	);
+
+	const exit = await session.stop();
+	observe(
+		"the session exits cleanly",
+		exit.exitCode === 0 && !exit.timedOut,
+		`the child exited ${String(exit.exitCode)}, stderr: ${exit.stderr.trim() || "<empty>"}`,
+	);
+}
+
+// ---------------------------------------------------------------------------
+// Automatic mode, phase 2: a resume in a new process restores the recorded value
+// ---------------------------------------------------------------------------
+
+async function phaseAutomaticResume(cli: PiCli): Promise<void> {
+	console.log("\nphase: a resumed session keeps the value it recorded, without a second startup write");
+	const run = startRun(cli, "automatic-resume");
+	const first = await openSession(run, [], AUTOMATIC_ENTRYPOINT);
+	await first.run("codebase-tools automatic resume seed turn");
+	const sessionFile = await first.sessionFile();
+	const before = first.journal(sessionFile);
+	observe(
+		"the first process started enabled and recorded that one value",
+		JSON.stringify(statePayloads(before)) === JSON.stringify([{ enabled: true }]) &&
+			customMessagesOf(before, INIT_IDENTITY).length === 1,
+		`the journal holds State ${JSON.stringify(statePayloads(before))} and ${customMessagesOf(before, INIT_IDENTITY).length} init(s)`,
+	);
+	const firstExit = await first.stop();
+	observe(
+		"the session exits cleanly before the resume",
+		firstExit.exitCode === 0 && !firstExit.timedOut,
+		`the child exited ${String(firstExit.exitCode)}, stderr: ${firstExit.stderr.trim() || "<empty>"}`,
+	);
+
+	const requestsBefore = run.capture.requests().length;
+	const resumed = await openSession(run, ["--session", sessionFile], AUTOMATIC_ENTRYPOINT);
+	const resumedAreaFrames = markerAreaFrames(resumed);
+	const resumedArea: RpcFrame | undefined = resumedAreaFrames[0];
+	observe(
+		"the resumed session shows the restored line from its own start",
+		resumedArea !== undefined && areaShows(resumedArea),
+		resumedArea === undefined
+			? "no marker-area frame was published for the resumed session"
+			: `the first area frame carried ${JSON.stringify(resumedArea.widgetLines)}`,
+	);
+	const resumedTurnText = "codebase-tools automatic resumed turn";
+	const resumedDisposition = await resumed.run(resumedTurnText);
+	observe(
+		"the resumed session runs a turn without being re-enabled",
+		resumedDisposition === "started",
+		`pi reported disposition ${JSON.stringify(resumedDisposition)}`,
+	);
+	const resumedRequest = requestAt(run, requestsBefore);
+	const preResumeRequest = requestAt(run, requestsBefore - 1);
+	observe(
+		"the resumed run adds exactly one contribution, the branch's init replayed",
+		contributions(resumedRequest) === contributions(preResumeRequest) + 1,
+		`the resumed request carried ${contributions(resumedRequest)} injected message(s) after the pre-resume run's ${contributions(preResumeRequest)}: ${describeMessages(resumedRequest)}`,
+	);
+	const after = resumed.journal(sessionFile);
+	observe(
+		"the resumed run replayed the init instead of re-initialising, and appended the reminder",
+		customMessagesOf(after, INIT_IDENTITY).length === 1 &&
+			JSON.stringify(contributionIdentities(after)) ===
+				JSON.stringify([INIT_IDENTITY, REMINDER_IDENTITY]),
+		`the journal's slot identities were ${JSON.stringify(contributionIdentities(after))}, holding ${customMessagesOf(after, INIT_IDENTITY).length} init(s)`,
+	);
+	observe(
+		"the resume wrote no second startup record: the recorded true is the history",
+		JSON.stringify(statePayloads(after)) === JSON.stringify([{ enabled: true }]),
+		`the journal's ${STATE_ENTRY_TYPE} payloads were ${JSON.stringify(statePayloads(after))}`,
+	);
+	const resumedRewrite = appendOnlyViolation(before.entries, after.entries);
+	observe(
+		"the resume appended to history rather than rewriting it",
+		resumedRewrite === undefined,
+		resumedRewrite ?? "the earlier entries stand unchanged and in order",
+	);
+
+	const toggleMark = resumed.frameMark();
+	await resumed.run(`/${COMMAND}`, PI_COMMAND_TIMEOUT_MS);
+	observe(
+		"the restored value is the recorded one: the next command turns it off",
+		JSON.stringify(resumed.notificationsSince(toggleMark)) === JSON.stringify([DISABLED_NOTICE]),
+		`the resumed session announced ${JSON.stringify(resumed.notificationsSince(toggleMark))}, expected ${JSON.stringify([DISABLED_NOTICE])}`,
+	);
+	observe(
+		"the resumed session's command appended its own record",
+		JSON.stringify(statePayloads(resumed.journal(sessionFile))) ===
+			JSON.stringify([{ enabled: true }, { enabled: false }]),
+		`the journal's ${STATE_ENTRY_TYPE} payloads were ${JSON.stringify(statePayloads(resumed.journal(sessionFile)))}`,
+	);
+
+	const exit = await resumed.stop();
+	observe(
+		"the resumed session exits cleanly",
+		exit.exitCode === 0 && !exit.timedOut,
+		`the child exited ${String(exit.exitCode)}, stderr: ${exit.stderr.trim() || "<empty>"}`,
+	);
+
+	// A third independent process resumes the now-disabled session. The recorded false is its
+	// history, so the enabling mode's default must not turn it on.
+	const disabledRestoreRequests = run.capture.requests().length;
+	const restoredOff = await openSession(run, ["--session", sessionFile], AUTOMATIC_ENTRYPOINT);
+	const restoredOffArea = await markerAreaAtStart(restoredOff);
+	observe(
+		"the recorded false publishes no line at the session's start",
+		restoredOffArea !== undefined && !areaShows(restoredOffArea),
+		restoredOffArea === undefined
+			? "no marker-area frame was published for the resumed session"
+			: `the startup area frame carried ${JSON.stringify(restoredOffArea.widgetLines)}`,
+	);
+	const restoredOffTurnText = "codebase-tools automatic restored off turn";
+	await restoredOff.run(restoredOffTurnText);
+	const restoredOffRequest = requestAt(run, disabledRestoreRequests);
+	observe(
+		"the restored off first run adds no contribution",
+		contributions(restoredOffRequest) === contributions(requestAt(run, disabledRestoreRequests - 1)) &&
+			lastMessageText(restoredOffRequest) === restoredOffTurnText,
+		`the request carried ${contributions(restoredOffRequest)} injected message(s) after the disabled turn's ${contributions(requestAt(run, disabledRestoreRequests - 1))}: ${describeMessages(restoredOffRequest)}`,
+	);
+	observe(
+		"the restart wrote no second startup record",
+		JSON.stringify(statePayloads(restoredOff.journal(sessionFile))) ===
+			JSON.stringify([{ enabled: true }, { enabled: false }]),
+		`the journal's ${STATE_ENTRY_TYPE} payloads were ${JSON.stringify(statePayloads(restoredOff.journal(sessionFile)))}`,
+	);
+	const restoredOffMark = restoredOff.frameMark();
+	await restoredOff.run(`/${COMMAND}`, PI_COMMAND_TIMEOUT_MS);
+	observe(
+		"the restored value is really off: the command enables it",
+		JSON.stringify(restoredOff.notificationsSince(restoredOffMark)) === JSON.stringify([ENABLED_NOTICE]),
+		`the restored session announced ${JSON.stringify(restoredOff.notificationsSince(restoredOffMark))}, expected ${JSON.stringify([ENABLED_NOTICE])}`,
+	);
+	observe(
+		"the command's record follows the restored history",
+		JSON.stringify(statePayloads(restoredOff.journal(sessionFile))) ===
+			JSON.stringify([{ enabled: true }, { enabled: false }, { enabled: true }]),
+		`the journal's ${STATE_ENTRY_TYPE} payloads were ${JSON.stringify(statePayloads(restoredOff.journal(sessionFile)))}`,
+	);
+	const restoredOffExit = await restoredOff.stop();
+	observe(
+		"the restored off session exits cleanly",
+		restoredOffExit.exitCode === 0 && !restoredOffExit.timedOut,
+		`the child exited ${String(restoredOffExit.exitCode)}, stderr: ${restoredOffExit.stderr.trim() || "<empty>"}`,
+	);
+}
+
+// ---------------------------------------------------------------------------
+// Automatic mode, phase 3: the record restores a manual-mode process (P35)
+// ---------------------------------------------------------------------------
+
+async function phaseAutomaticRecordRestoredByManual(cli: PiCli): Promise<void> {
+	console.log("\nphase: the automatic start's record restores a manual-mode process");
+	const run = startRun(cli, "automatic-restored-manual");
+	const automatic = await openSession(run, [], AUTOMATIC_ENTRYPOINT);
+
+	const savedTurnText = "codebase-tools automatic restored manual seed turn";
+	await automatic.run(savedTurnText);
+	const sessionFile = await automatic.sessionFile();
+	const before = automatic.journal(sessionFile);
+	observe(
+		"the automatic process recorded its enabling choice and its init",
+		JSON.stringify(statePayloads(before)) === JSON.stringify([{ enabled: true }]) &&
+			customMessagesOf(before, INIT_IDENTITY).length === 1,
+		`the journal holds State ${JSON.stringify(statePayloads(before))} and ${customMessagesOf(before, INIT_IDENTITY).length} init(s)`,
+	);
+	const automaticExit = await automatic.stop();
+	observe(
+		"the automatic session exits cleanly before the manual restore",
+		automaticExit.exitCode === 0 && !automaticExit.timedOut,
+		`the child exited ${String(automaticExit.exitCode)}, stderr: ${automaticExit.stderr.trim() || "<empty>"}`,
+	);
+
+	// An independent process loads the manual entrypoint — whose own default is off — and resumes
+	// the saved session. The recorded true wins, and the first run continues the enabled period.
+	const requestsBefore = run.capture.requests().length;
+	const manual = await openSession(run, ["--session", sessionFile], MANUAL_ENTRYPOINT);
+	const area = await markerAreaAtStart(manual);
+	observe(
+		"the manual process shows the restored line from its own start",
+		area !== undefined && areaShows(area),
+		area === undefined
+			? "no marker-area frame was published for the resumed session"
+			: `the startup area frame carried ${JSON.stringify(area.widgetLines)}`,
+	);
+	const restoredTurnText = "codebase-tools automatic restored manual turn";
+	await manual.run(restoredTurnText);
+	const restoredRequest = requestAt(run, requestsBefore);
+	observe(
+		"the restored first run replays the init and contributes the reminder",
+		contributions(restoredRequest) === contributions(requestAt(run, requestsBefore - 1)) + 1 &&
+			lastMessageText(restoredRequest) === REMINDER_PROMPT,
+		`the request carried ${contributions(restoredRequest)} injected message(s) after the automatic process's ${contributions(requestAt(run, requestsBefore - 1))}: ${describeMessages(restoredRequest)}`,
+	);
+	const after = manual.journal(sessionFile);
+	observe(
+		"the progress continued instead of re-initialising",
+		customMessagesOf(after, INIT_IDENTITY).length === 1 &&
+			JSON.stringify(contributionIdentities(after)) === JSON.stringify([INIT_IDENTITY, REMINDER_IDENTITY]),
+		`the journal's slot identities were ${JSON.stringify(contributionIdentities(after))}, holding ${customMessagesOf(after, INIT_IDENTITY).length} init(s)`,
+	);
+	observe(
+		"the manual resume wrote no second startup record",
+		JSON.stringify(statePayloads(after)) === JSON.stringify([{ enabled: true }]),
+		`the journal's ${STATE_ENTRY_TYPE} payloads were ${JSON.stringify(statePayloads(after))}`,
+	);
+	const resumeRewrite = appendOnlyViolation(before.entries, after.entries);
+	observe(
+		"the manual resume appended to history rather than rewriting it",
+		resumeRewrite === undefined,
+		resumeRewrite ?? "the earlier entries stand unchanged and in order",
+	);
+
+	const toggleMark = manual.frameMark();
+	await manual.run(`/${COMMAND}`, PI_COMMAND_TIMEOUT_MS);
+	observe(
+		"the restored value is really true: the command disables it",
+		JSON.stringify(manual.notificationsSince(toggleMark)) === JSON.stringify([DISABLED_NOTICE]),
+		`the restored session announced ${JSON.stringify(manual.notificationsSince(toggleMark))}, expected ${JSON.stringify([DISABLED_NOTICE])}`,
+	);
+	observe(
+		"its record follows the automatic record",
+		JSON.stringify(statePayloads(manual.journal(sessionFile))) ===
+			JSON.stringify([{ enabled: true }, { enabled: false }]),
+		`the journal's ${STATE_ENTRY_TYPE} payloads were ${JSON.stringify(statePayloads(manual.journal(sessionFile)))}`,
+	);
+	const manualExit = await manual.stop();
+	observe(
+		"the manual restored session exits cleanly",
+		manualExit.exitCode === 0 && !manualExit.timedOut,
+		`the child exited ${String(manualExit.exitCode)}, stderr: ${manualExit.stderr.trim() || "<empty>"}`,
+	);
+}
+
+// ---------------------------------------------------------------------------
+// The follow phase: a real spawned pi process reads the Owner's current State
+// ---------------------------------------------------------------------------
+
+/** Every `.jsonl` under one directory tree: a spawned pi session writes beside its parent. */
+function sessionFilesUnder(directory: string): string[] {
+	if (!existsSync(directory)) return [];
+	return readdirSync(directory, { recursive: true })
+		.map(entry => path.join(directory, String(entry)))
+		.filter(file => file.endsWith(".jsonl"));
+}
+
+/** One session file's own header, as pi writes the lineage this adapter reads. */
+function sessionHeaderOf(file: string): { readonly id?: string; readonly parentSession?: string } | undefined {
+	try {
+		const [firstLine] = readFileSync(file, "utf8").split("\n", 1);
+		return JSON.parse(firstLine ?? "") as { readonly id?: string; readonly parentSession?: string };
+	} catch {
+		return undefined;
+	}
+}
+
+/** The user messages one captured request carries, which is how a request is attributed to a session. */
+function userMessageTexts(request: CapturedRequest): string[] {
+	return providerMessages(request).filter(message => messageRole(message) === "user").map(messageContent);
+}
+
+/**
+ * The model one follow run scripts: the first request still carrying each named prompt is answered
+ * with one asynchronous delegation, and every other request — the parent's later turns and both
+ * spawned sessions' own — with text. The set keeps a grown parent context, which still carries an
+ * earlier prompt, from delegating it again.
+ */
+function followResponder(): (request: CapturedRequest) => CaptureStep | undefined {
+	const delegated = new Set<string>();
+	return request => {
+		if (!toolNames(request).includes("subagent")) return undefined;
+		const texts = userMessageTexts(request);
+		for (const state of ["on", "off"] as const) {
+			const prompt = FOLLOW_PROMPTS[state];
+			if (delegated.has(prompt) || !texts.some(text => text.includes(prompt))) continue;
+			delegated.add(prompt);
+			return {
+				toolCall: {
+					name: "subagent",
+					arguments: JSON.stringify({ agent: "scout", task: FOLLOW_ASSIGNMENTS[state], async: true }),
+				},
+			};
+		}
+		return undefined;
+	};
+}
+
+/** The captured request one spawned session itself sent, waited for by the assignment it carries. */
+async function childRequestUntil(
+	run: PiRun,
+	assignment: string,
+	timeoutMs: number,
+): Promise<CapturedRequest | undefined> {
+	const deadline = Date.now() + timeoutMs;
+	for (;;) {
+		const found = run.capture.requests().find(request =>
+			userMessageTexts(request).some(text => text.includes(assignment)),
+		);
+		if (found !== undefined) return found;
+		if (Date.now() > deadline) return undefined;
+		await Bun.sleep(100);
+	}
+}
+
+/** The spawned session's own journal, waited for by its lineage link and the assignment it ran. */
+async function childSessionUntil(
+	run: PiRun,
+	parentFile: string,
+	assignment: string,
+	timeoutMs: number,
+): Promise<string | undefined> {
+	const deadline = Date.now() + timeoutMs;
+	for (;;) {
+		for (const file of sessionFilesUnder(run.root.sessionDir)) {
+			if (path.resolve(file) === path.resolve(parentFile)) continue;
+			const header = sessionHeaderOf(file);
+			if (header?.parentSession === undefined) continue;
+			if (path.resolve(header.parentSession) !== path.resolve(parentFile)) continue;
+			if (readFileSync(file, "utf8").includes(assignment)) return file;
+		}
+		if (Date.now() > deadline) return undefined;
+		await Bun.sleep(100);
+	}
+}
+
+/** The provider's async run directories for this run, under the root the phase redirected for it. */
+function asyncRunDirectories(run: PiRun): string[] {
+	const root = path.join(run.root.path, "pi-subagents", "async-subagent-runs");
+	if (!existsSync(root)) return [];
+	return readdirSync(root, { withFileTypes: true })
+		.filter(entry => entry.isDirectory())
+		.map(entry => path.join(root, entry.name));
+}
+
+/** One spawned process's own status record, once its detached runner reported a terminal state. */
+interface SettledChildRun {
+	readonly directory: string;
+	readonly status: unknown;
+	/** The provider's observation of the process itself: its exit code, once one was observed. */
+	readonly processTerminal: unknown;
+}
+
+/**
+ * The async run whose own child session is `childFile`, waited for until its runner reported a
+ * terminal state *and* the provider observed the process's own exit. The two are separate writes:
+ * a run states its result first, and the process observation lands beside it, so a case that reads
+ * the exit code waits for the observation rather than for the status alone.
+ */
+async function childRunUntilSettled(
+	run: PiRun,
+	childFile: string,
+	timeoutMs: number,
+): Promise<SettledChildRun | undefined> {
+	const deadline = Date.now() + timeoutMs;
+	for (;;) {
+		for (const directory of asyncRunDirectories(run)) {
+			const statusFile = path.join(directory, "status.json");
+			const terminalFile = path.join(directory, "process-terminal.json");
+			if (!existsSync(statusFile) || !existsSync(terminalFile)) continue;
+			let status: unknown;
+			let processTerminal: unknown;
+			try {
+				status = JSON.parse(readFileSync(statusFile, "utf8"));
+				processTerminal = JSON.parse(readFileSync(terminalFile, "utf8"));
+			} catch {
+				// The provider writes these files as its run progresses; an unreadable moment is not an answer.
+				continue;
+			}
+			const sessionFile = fieldOf(status, "sessionFile");
+			if (typeof sessionFile !== "string" || path.resolve(sessionFile) !== path.resolve(childFile)) continue;
+			const state = fieldOf(status, "state");
+			const observed = fieldOf(processTerminal, "state");
+			if ((state === "complete" || state === "failed" || state === "cancelled") && observed === "observed") {
+				return { directory, status, processTerminal };
+			}
+		}
+		if (Date.now() > deadline) return undefined;
+		await Bun.sleep(100);
+	}
+}
+
+/** The child entries one async launch recorded, as the provider's own launch evidence states them. */
+function retainedChildEntries(directory: string): Array<{ readonly id: string; readonly path: string }> {
+	const file = path.join(directory, "recovery-descriptor.json");
+	if (!existsSync(file)) return [];
+	const required = fieldOf(JSON.parse(readFileSync(file, "utf8")), "requiredExtensions");
+	if (!Array.isArray(required)) return [];
+	return required.flatMap(entry => {
+		const id = fieldOf(entry, "id");
+		const entryPath = fieldOf(entry, "path");
+		return typeof id === "string" && typeof entryPath === "string" ? [{ id, path: entryPath }] : [];
+	});
+}
+
+/** One spawned session's own evidence, as the phase reads it. */
+interface FollowedChild {
+	readonly state: "on" | "off";
+	readonly request: CapturedRequest;
+	readonly file: string;
+	readonly log: SessionLog;
+	readonly settled: SettledChildRun;
+}
+
+/** Asks for one delegation under the current Owner value and waits for the child it spawned. */
+async function driveFollowChild(
+	session: PiSession,
+	run: PiRun,
+	parentFile: string,
+	state: "on" | "off",
+): Promise<FollowedChild> {
+	await session.request({ type: "prompt", message: FOLLOW_PROMPTS[state] }, PI_PROMPT_TIMEOUT_MS);
+	const assignment = FOLLOW_ASSIGNMENTS[state];
+	const request = await childRequestUntil(run, assignment, 90_000);
+	if (request === undefined) {
+		throw new SmokeFailure(
+			`the ${state} child's own request reached the endpoint`,
+			`no captured request carried ${JSON.stringify(assignment)}; captured ${run.capture.requests().length} request(s)`,
+		);
+	}
+	const file = await childSessionUntil(run, parentFile, assignment, 30_000);
+	if (file === undefined) {
+		throw new SmokeFailure(
+			`the ${state} child's own session was written`,
+			`no spawned session journal carried ${JSON.stringify(assignment)} under ${run.root.sessionDir}`,
+		);
+	}
+	const settled = await childRunUntilSettled(run, file, 60_000);
+	if (settled === undefined) {
+		throw new SmokeFailure(`the ${state} child's detached process finished`, `no async status named ${file}`);
+	}
+	return { state, request, file, log: session.journal(file), settled };
+}
+
+/**
+ * The Owner's current value in one real spawned pi process (P14).
+ *
+ * The parent loads the mode's entrypoint and the pinned provider; the provider spawns each
+ * delegation in its own detached process, and the child session loads the entry the assembly
+ * states — which the provider's own launch record names. What the child's own model request and
+ * journal carry is the extension's public consumption there: the contribution when the Owner is
+ * enabled, nothing when it is not, and never a State record of its own. The two children straddle
+ * a command that changes the Owner's value, so each child reads the value current when it started
+ * rather than the value the mode selected at the parent's startup.
+ */
+async function phaseSubagentFollow(cli: PiCli, mode: "manual" | "auto"): Promise<void> {
+	console.log(`\nphase: a real spawned pi session follows the owner (${mode} mode)`);
+	const entrypoint = mode === "auto" ? AUTOMATIC_ENTRYPOINT : MANUAL_ENTRYPOINT;
+	if (!existsSync(SUBAGENT_PROVIDER)) {
+		throw new SmokeFailure(
+			"the pinned subagent provider is installed",
+			`${SUBAGENT_PROVIDER} is missing; run \`bun install\``,
+		);
+	}
+	const run = startRun(cli, `subagent-follow-${mode}`, followResponder());
+	const session = await openSession(run, [], [entrypoint, SUBAGENT_PROVIDER], {
+		PI_SUBAGENTS_TEMP_ROOT: path.join(run.root.path, "pi-subagents"),
+	});
+	const parentFile = await session.sessionFile();
+
+	/** Checks what one child's own process really carried, against the Owner value it started under. */
+	const checkChild = (child: FollowedChild): void => {
+		const expected = child.state === "on" ? 1 : 0;
+		const carried = contributions(child.request);
+		observe(
+			`the spawned ${child.state} child's own request ${child.state === "on" ? "carried the contribution" : "carried no contribution"}`,
+			carried === expected,
+			`the request carried ${carried} contribution(s); messages: ${describeMessages(child.request)}`,
+		);
+
+		const slots = contributionIdentities(child.log);
+		observe(
+			`the spawned ${child.state} child's journal holds ${child.state === "on" ? "its own init and no reminder" : "no contribution"}`,
+			child.state === "on"
+				? JSON.stringify(slots) === JSON.stringify([INIT_IDENTITY])
+				: slots.length === 0,
+			`the journal's slot identities were ${JSON.stringify(slots)}`,
+		);
+		const records = statePayloads(child.log);
+		observe(
+			`the spawned ${child.state} child wrote no State of its own`,
+			records.length === 0,
+			`the journal's ${STATE_ENTRY_TYPE} payloads were ${JSON.stringify(records)}`,
+		);
+
+		const header = sessionHeaderOf(child.file);
+		observe(
+			`the spawned ${child.state} child's own file states this parent session as its direct parent`,
+			header?.parentSession !== undefined && path.resolve(header.parentSession) === path.resolve(parentFile),
+			`header: ${JSON.stringify(header)}, parent file: ${JSON.stringify(parentFile)}`,
+		);
+
+		const statusState = fieldOf(child.settled.status, "state");
+		const pid = fieldOf(child.settled.status, "pid");
+		const sessionId = fieldOf(child.settled.status, "sessionId");
+		const instances = fieldOf(child.settled.processTerminal, "instances");
+		const exit = Array.isArray(instances) ? fieldOf(instances[0], "exitCode") : undefined;
+		observe(
+			`the spawned ${child.state} child's detached process reported a completed run at its own pid`,
+			statusState === "complete" &&
+				typeof pid === "number" &&
+				pid > 0 &&
+				pid !== process.pid &&
+				exit === 0 &&
+				typeof sessionId === "string" &&
+				path.resolve(sessionId) === path.resolve(parentFile),
+			`state ${JSON.stringify(statusState)}, pid ${JSON.stringify(pid)}, exit ${JSON.stringify(exit)}, session ${JSON.stringify(sessionId)}, directory ${child.settled.directory}`,
+		);
+
+		const retained = retainedChildEntries(child.settled.directory).filter(entry => entry.id === COMMAND);
+		const expectedEntry = realpathSync(entrypoint);
+		observe(
+			`the launch record names the ${mode} mode's own entry as the ${child.state} child's codebase-tools entry`,
+			retained.length > 0 && retained.every(entry => realpathSync(entry.path) === expectedEntry),
+			`launch required ${JSON.stringify(retained)}; expected ${JSON.stringify(expectedEntry)}`,
+		);
+	};
+
+	// Manual mode starts off and is enabled between the two children; automatic mode starts on and
+	// is disabled between them. Both directions are therefore driven against the real host, and the
+	// child that follows the startup-enabled parent is read before the operator changes anything.
+	const first: "on" | "off" = mode === "auto" ? "on" : "off";
+	const second: "on" | "off" = first === "on" ? "off" : "on";
+	checkChild(await driveFollowChild(session, run, parentFile, first));
+
+	const noticeMark = session.frameMark();
+	await session.run(`/${COMMAND}`);
+	const notice = await session.frameSince(
+		noticeMark,
+		frame =>
+			frame.type === "extension_ui_request" &&
+			frame.method === "notify" &&
+			String(frame.message) === (second === "on" ? ENABLED_NOTICE : DISABLED_NOTICE),
+		`the ${second === "on" ? "enable" : "disable"} notice`,
+		UI_FRAME_TIMEOUT_MS,
+	);
+	observe(
+		`the owner's command changed its value between the two children (${first} -> ${second})`,
+		notice !== undefined,
+		`frames after the command: ${JSON.stringify(session.frames().slice(noticeMark).slice(0, 6))}`,
+	);
+
+	checkChild(await driveFollowChild(session, run, parentFile, second));
+
+	const exit = await session.stop();
+	observe(
+		"the follow session exits cleanly",
+		exit.exitCode === 0 && !exit.timedOut,
+		`the child exited ${String(exit.exitCode)}, stderr: ${exit.stderr.trim() || "<empty>"}`,
+	);
+	observe(
+		`the ${mode} mode parent recorded only its own value change`,
+		JSON.stringify(statePayloads(session.journal(parentFile))) ===
+			JSON.stringify(mode === "auto" ? [{ enabled: true }, { enabled: false }] : [{ enabled: true }]),
+		`the journal's ${STATE_ENTRY_TYPE} payloads were ${JSON.stringify(statePayloads(session.journal(parentFile)))}`,
+	);
+}
+
+// ---------------------------------------------------------------------------
 // Entry point
 // ---------------------------------------------------------------------------
 
 interface Options {
 	readonly pi: string | undefined;
+	/** Which startup mode's entrypoint this run loads; the default is the manual one. */
+	readonly mode: "manual" | "auto";
+	/** Run only the follow phase, which is the one that wants a spawned child and the provider. */
+	readonly followOnly: boolean;
 	readonly keep: boolean;
 	readonly help: boolean;
 }
 
 function parseOptions(argv: readonly string[]): Options {
 	let pi: string | undefined;
+	let mode: "manual" | "auto" = "manual";
+	let followOnly = false;
 	let keep = false;
 	let help = false;
 	for (let index = 0; index < argv.length; index += 1) {
@@ -836,6 +1745,15 @@ function parseOptions(argv: readonly string[]): Options {
 			if (candidate === undefined) throw new Error("--pi requires a path");
 			pi = candidate;
 			index += 1;
+		} else if (argument === "--mode") {
+			const candidate: string | undefined = argv[index + 1];
+			if (candidate !== "manual" && candidate !== "auto") {
+				throw new Error(`--mode requires "manual" or "auto"; got ${JSON.stringify(candidate)}`);
+			}
+			mode = candidate;
+			index += 1;
+		} else if (argument === "--follow-only") {
+			followOnly = true;
 		} else if (argument === "--keep") {
 			keep = true;
 		} else if (argument === "--help" || argument === "-h") {
@@ -844,15 +1762,19 @@ function parseOptions(argv: readonly string[]): Options {
 			throw new Error(`unknown argument ${JSON.stringify(argument)}; see --help`);
 		}
 	}
-	return { pi, keep, help };
+	return { pi, mode, followOnly, keep, help };
 }
 
 const USAGE = [
-	"usage: bun scripts/pi-codebase-tools-smoke.ts [--pi <path|name>] [--keep]",
+	"usage: bun scripts/pi-codebase-tools-smoke.ts [--pi <path|name>] [--mode manual|auto] [--follow-only] [--keep]",
 	"",
 	"  --pi <path|name>  the pi CLI to drive: its dist/bundle/cli.js, its pi.cmd/pi shim, the binary,",
 	"                    or a bare command name looked up on PATH (PI_CLI does the same; without",
 	"                    either, `pi` is looked up and node's own prefix is tried)",
+	"  --mode <mode>     which startup mode's entrypoint to load: `manual` (the default) loads",
+	"                    entrypoints/pi/codebase-tools.ts, `auto` loads entrypoints/pi-auto/codebase-tools.ts",
+	"  --follow-only     run only the follow phase: the pinned provider spawns one child per Owner",
+	"                    state and this run reads each child's own request, journal and launch record",
 	"  --keep            keep every run root (its agent state, sessions, captures) for inspection",
 	"  PI_NODE           Node executable for a script/shim CLI; verified on Windows with Node 22.19.0",
 ].join("\n");
@@ -863,17 +1785,22 @@ if (options.help) {
 	process.exit(0);
 }
 
+/** The entrypoint this run loads: the mode decision, and nothing else about the invocation. */
+const entrypoint = options.mode === "auto" ? AUTOMATIC_ENTRYPOINT : MANUAL_ENTRYPOINT;
+
 let tested = `<unresolved: ${EXPECTED_PI_VERSION} expected>`;
 let failure: unknown;
 
 try {
-	if (!existsSync(ENTRYPOINT)) {
-		throw new Error(`the pi assembly entrypoint does not exist: ${ENTRYPOINT}`);
+	if (!existsSync(entrypoint)) {
+		throw new Error(`the pi assembly entrypoint does not exist: ${entrypoint}`);
 	}
 	const cli = resolvePiCli(options.pi);
 	const version = await piVersion(cli);
 	tested = version;
-	console.log(`pi codebase-tools smoke — pi ${version} via ${cli.path} (${cli.source})`);
+	console.log(
+		`pi codebase-tools smoke (${options.mode} mode) — pi ${version} via ${cli.path} (${cli.source})`,
+	);
 	if (cli.command[0] === PI_NODE_EXECUTABLE && cli.command.length > 1) {
 		const runtime = Bun.spawnSync([PI_NODE_EXECUTABLE, "--version"], { stdout: "pipe", stderr: "pipe" });
 		console.log(`  runtime ${PI_NODE_EXECUTABLE} ${runtime.stdout.toString().trim()}`);
@@ -890,10 +1817,21 @@ try {
 			`  note  this smoke's expectations were written against pi ${EXPECTED_PI_VERSION}; the CLI under test reports ${version}`,
 		);
 	}
-	await phaseToggleAndContributions(cli);
-	await phaseNewSessionStartsOff(cli);
-	await phaseResumeAcrossRestart(cli);
-	await phaseResumeAcrossSwitch(cli);
+	if (options.followOnly) {
+		await phaseSubagentFollow(cli, options.mode);
+	} else if (options.mode === "auto") {
+		await phaseAutomaticStartup(cli);
+		await phaseAutomaticResume(cli);
+		await phaseAutomaticRecordRestoredByManual(cli);
+		await phaseSubagentFollow(cli, options.mode);
+	} else {
+		await phaseToggleAndContributions(cli);
+		await phaseNewSessionStartsOff(cli);
+		await phaseResumeAcrossRestart(cli);
+		await phaseResumeAcrossSwitch(cli);
+		await phaseStartupRestoreUnderAutomaticPolicy(cli);
+		await phaseSubagentFollow(cli, options.mode);
+	}
 } catch (error) {
 	failure = error;
 	for (const session of sessions) {
@@ -911,14 +1849,16 @@ try {
 }
 
 console.log(
-	`\nPI SMOKE SUMMARY: pi ${tested} — ${observations.length} check(s) passed, ${failure === undefined ? "none failed" : "the run stopped on a failure"}`,
+	`\nPI SMOKE SUMMARY: pi ${tested}, ${options.mode} mode — ${observations.length} check(s) passed, ${failure === undefined ? "none failed" : "the run stopped on a failure"}`,
 );
 console.log(`  ${observations.length} consumer-visible check(s) across ${runs.length} isolated run(s)`);
 console.log("  limitations: agent attribution is not expressible on pi (asserted as hidden and framework-identified only);");
 console.log(
 	"               the TUI drawing stays human-led, this smoke observes the setWidget/notify frames the adapter published",
 );
-console.log(`  rerun: bun scripts/pi-codebase-tools-smoke.ts${options.pi === undefined ? "" : ` --pi ${options.pi}`}`);
+console.log(
+	`  rerun: bun scripts/pi-codebase-tools-smoke.ts --mode ${options.mode}${options.followOnly ? " --follow-only" : ""}${options.pi === undefined ? "" : ` --pi ${options.pi}`}`,
+);
 
 if (failure !== undefined) {
 	throw failure;

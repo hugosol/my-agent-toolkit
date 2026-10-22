@@ -16,8 +16,14 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
 import type { PiExtensionApi, PiExtensionContext } from "../../../../adapters/pi";
-import { MODEL_COST_WIDGET_KEY, attachModelCostWidget } from "../../../../extensions/model-cost/harnesses/pi/widget";
+import {
+	MODEL_COST_WIDGET_KEY,
+	type WidgetReading,
+	attachModelCostWidget,
+	widgetLayout,
+} from "../../../../extensions/model-cost/harnesses/pi/widget";
 import type { ModelPricingData } from "../../../../extensions/model-cost/shared-logic/business/pricing/model-data";
+import { type ConsumptionDisplay, lineText } from "../../../../extensions/model-cost/shared-logic/presentation/display";
 import { createModelCostRuntime } from "../../../../extensions/model-cost/shared-logic/runtime";
 import { uiBoundaryTimerOf } from "../../support/ui-timer";
 import { testSessionCapability } from "../../support/session-capability";
@@ -67,14 +73,20 @@ interface ControlledPiHost {
 	readonly drawn: DrawnFrame[];
 	startSession(reading: HostReading | undefined): void;
 	selectModel(provider: string, model: string): void;
+	selectThinking(level: string): void;
+	/** How many handlers this host currently holds for one native event. */
+	handlerCount(event: string): number;
+	/** Releases the frontend attached over this host. */
+	release(): void;
 	/** The lines of the last widget this host was told to show, or nothing when it was cleared. */
 	lastLines(): readonly string[] | undefined;
 }
 
 /** A controlled pi host over one binding: it records the registrations and the widget frames. */
-function controlledPiHost(): ControlledPiHost {
+function controlledPiHost(): Omit<ControlledPiHost, "release"> {
 	const handlers = new Map<string, Array<(event: unknown, ctx: PiExtensionContext) => void>>();
 	const drawn: DrawnFrame[] = [];
+	let currentReading: HostReading | undefined;
 	const api = {
 		on(event: string, handler: (event: unknown, ctx: PiExtensionContext) => void): () => void {
 			const list = handlers.get(event) ?? [];
@@ -89,7 +101,12 @@ function controlledPiHost(): ControlledPiHost {
 		registerCommand(): void {},
 		appendEntry(): void {},
 	} as unknown as PiExtensionApi;
-	const context = (reading: HostReading | undefined, provider = "official", model = "model-alpha"): PiExtensionContext =>
+	const context = (
+		reading: HostReading | undefined,
+		provider = "official",
+		model = "model-alpha",
+		thinkingLevel = "off",
+	): PiExtensionContext =>
 		({
 			sessionManager: {
 				getSessionId: () => "pi-widget-session",
@@ -97,7 +114,7 @@ function controlledPiHost(): ControlledPiHost {
 				getBranch: () => [],
 			},
 			model: { id: model, provider },
-			thinkingLevel: "off",
+			thinkingLevel,
 			hasUI: true,
 			ui: {
 				notify: () => {},
@@ -113,6 +130,7 @@ function controlledPiHost(): ControlledPiHost {
 		api,
 		drawn,
 		startSession: reading => {
+			currentReading = reading;
 			for (const handler of handlers.get("session_start") ?? []) handler({ type: "session_start", reason: "startup" }, context(reading));
 		},
 		selectModel: (provider, model) => {
@@ -120,6 +138,15 @@ function controlledPiHost(): ControlledPiHost {
 				handler({ type: "model_select", source: "set" }, context(undefined, provider, model));
 			}
 		},
+		selectThinking: level => {
+			for (const handler of handlers.get("thinking_level_select") ?? []) {
+				handler(
+					{ type: "thinking_level_select", level, previousLevel: "off" },
+					context(currentReading, "official", "model-alpha", level),
+				);
+			}
+		},
+		handlerCount: event => handlers.get(event)?.length ?? 0,
 		lastLines: () => {
 			const shown = drawn.filter(frame => frame.key === MODEL_COST_WIDGET_KEY);
 			return shown[shown.length - 1]?.lines;
@@ -141,8 +168,8 @@ function attachedFrontend(): ControlledPiHost {
 		now: () => CLOCK_AT,
 	});
 	const host = controlledPiHost();
-	attachModelCostWidget(host.api, runtime, uiBoundaryTimerOf(runtime));
-	return host;
+	const release = attachModelCostWidget(host.api, runtime, uiBoundaryTimerOf(runtime));
+	return { ...host, release };
 }
 
 describe("the pi frontend reads pi's own context fact as the host states it (P18)", () => {
@@ -194,5 +221,70 @@ describe("the pi frontend reads pi's own context fact as the host states it (P18
 		const account = host.lastLines()?.[0] ?? "";
 		expect(account).not.toContain("%");
 		expect(account).toContain("🔥");
+	});
+});
+
+describe("the pi frontend follows pi's effective thinking level (P11)", () => {
+	test("a thinking-level selection redraws the effort without a model request", () => {
+		const host = attachedFrontend();
+		host.startSession({ tokens: 1460, contextWindow: 450_000 });
+		expect(host.lastLines()?.[0]).toContain("Effort: off");
+
+		host.selectThinking("high");
+
+		expect(host.lastLines()?.[0]).toContain("Effort: high");
+	});
+
+	test("the thinking-level subscription is released with the frontend", () => {
+		const host = attachedFrontend();
+		expect(host.handlerCount("thinking_level_select")).toBe(1);
+
+		host.release();
+
+		expect(host.handlerCount("thinking_level_select")).toBe(0);
+	});
+});
+
+describe("the pi frontend carries DeepSeek account facts beside another current channel (P8, P67)", () => {
+	/** One reading whose current target uses `mode` while its main tree carries saved DeepSeek cost. */
+	function readingOf(mode: "token-only" | "allowance", costCny: number | undefined): WidgetReading {
+		const display = {
+			mode,
+			form: "brief",
+			current: { tokens: { input: 0, cacheRead: 0, cacheWrite: 0, output: 0 }, sum: 0 },
+			tree: {
+				tokens: { input: 10, cacheRead: 10, cacheWrite: 0, output: 10 },
+				sum: 30,
+				...(costCny === undefined ? {} : { costCny }),
+			},
+			effort: "high",
+			budget: { tokens: mode === "allowance" ? 272_000 : 450_000, exceeded: false },
+			context: { tokens: 1_000 },
+		} as unknown as ConsumptionDisplay;
+		return {
+			display,
+			balance: { reading: { total: 110, currency: "CNY", obtainedAt: CLOCK_AT } },
+			period: { season: "peak", holiday: false, at: CLOCK_AT },
+			accrued: { totalCny: costCny ?? 0, sessionCostsCny: costCny === undefined ? [] : [costCny] },
+			quota: mode === "allowance" ? [[{ text: "5h a Codex window" }]] : [],
+		};
+	}
+
+	test("a token-only or allowance target whose Total writes Cost draws the held balance and accrual", () => {
+		for (const mode of ["token-only", "allowance"] as const) {
+			const lines = (widgetLayout(readingOf(mode, 0.05)) ?? []).map(lineText);
+			expect(lines[0]).toContain("Effort: high");
+			expect(lines[0]).toContain("\u{1F4B0} Balance: \u00A5110.00");
+			expect(lines[0]).toContain("\u23F3 Accrued: \u00A50.05");
+			expect(lines.some(line => line.startsWith("Total:  "))).toBe(true);
+			if (mode === "allowance") expect(lines.some(line => line.includes("5h a Codex window"))).toBe(true);
+		}
+	});
+
+	test("a target whose Total writes no Cost keeps the DeepSeek account facts off its account row", () => {
+		const lines = (widgetLayout(readingOf("token-only", undefined)) ?? []).map(lineText);
+		expect(lines[0]).toContain("Effort: high");
+		expect(lines[0]).not.toContain("Balance:");
+		expect(lines[0]).not.toContain("Accrued:");
 	});
 });

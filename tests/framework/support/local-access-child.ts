@@ -134,6 +134,7 @@ if (plan.offer !== false) {
 		owner: { kind: "owner", key: plan.owner },
 		event: { kind: "session_start", reason: "new" },
 		statePayloads: [{ enabled: plan.initial }],
+		persist: () => {},
 		publishMarker: () => {},
 	});
 }
@@ -249,6 +250,7 @@ function act(command: ChildCommand): void {
 				owner: { kind: "owner", key: plan.owner },
 				event: { kind: "session_end", reason: "disposed" },
 				statePayloads: [],
+				persist: () => {},
 				publishMarker: () => {},
 			});
 			commands.push("end");

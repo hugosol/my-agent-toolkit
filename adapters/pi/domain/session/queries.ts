@@ -8,13 +8,18 @@
  *
  * Nothing here is guessed from anything else: a parent is the session pi's own lineage link names,
  * its identity is the id that session's own header states, the owner is the nearest top-level
- * session above it, and a name is display data. Depth, process ids, directory names and task
- * handles are none of these facts and are never read as if they were.
+ * session above it, and a name is display data. A spawned session's agent definition is the launch
+ * marker pi-subagents writes into that session's own prompt; depth, process ids, directory names
+ * and task handles are none of these facts and are never read as if they were.
  */
 import { piSpawnedRelationsOf, type PiAnchorReader } from "../subagent/queries";
 import type { ExtensionDefinition } from "../../../../framework/interface/details/definition";
 import type { SessionFacts, SessionStartReason, SessionStartup } from "../../../../framework/interface/session";
 import type { OwnerReference } from "../../../../framework/interface/state";
+import {
+	defineSessionFactsMapping,
+	unavailableFact,
+} from "../../../../framework/runtime/adapter-authoring";
 import type { PiExtensionContext, PiSessionHeader } from "../../internal/native";
 
 /**
@@ -184,44 +189,104 @@ function startupFactsOf(ctx: PiExtensionContext, unavailable: string[]): Session
 	return { ...(model === undefined ? {} : { model }), ...(effort === undefined ? {} : { effort }) };
 }
 
+/** One reading of the facts one pi delivery carries, from the decision that delivery already made. */
+interface PiSessionFactsInput {
+	readonly position: PiSessionPosition;
+	readonly ctx: PiExtensionContext;
+	readonly reason?: SessionStartReason;
+}
+
 /**
- * The actual session facts one delivery carries: identity, direct parent, latest name, and — on
- * the delivery that announces the session's own start — the model and effective effort it began
- * with.
+ * The `active_agent` element pi-subagents prepends to the system prompt of a session it spawns.
  *
- * `position` is the one position this delivery's session sits at, resolved from the decision the
- * delivery itself makes: the facts and the owner of a delivery are two readings of the same
- * decision, so deriving the owner from the session's lineage link while the facts derive it from the
- * start would let the two disagree for the one kind of session whose link is not a spawn.
+ * It is the provider's own launch metadata for the child it is about, written into that child's
+ * prompt before the session starts, so it names the agent definition this actual session runs
+ * without consulting a fleet listing, a session display name or a launch order. The element is
+ * read only on a line of its own: text that merely mentions the marker inside a larger line is not
+ * a launch statement.
+ */
+const ACTIVE_AGENT_NAME = /^[ \t]*<active_agent\s+name="([^"]*)"\s*\/>[ \t]*$/gm;
+
+/**
+ * The agent definition a spawned session's own prompt names, when the prompt carries that marker.
  *
- * Identity is the session manager's own session id and the position resolved above. The name is
- * display data read live from the harness, so a rename is picked up without changing identity,
- * parent or ownership: on the next delivery that carries this session, and on the facts delivery
- * pi's own name-change notification produces, which is made when the rename happens rather than at
- * the session's next boundary. A harness that reports no name, and an empty one, are both named as
- * unavailable rather than invented.
+ * A replacing launch puts the marker at the head of the prompt, where the first marker is the
+ * provider's; an appending launch puts it in the appended section, after whatever the inherited
+ * prompt carried, so the last marker is the provider's. Neither reading consults another session.
+ */
+function activeAgentNameOf(ctx: PiExtensionContext, kind: PiSessionPosition["kind"]): string | undefined {
+	if (kind !== "sub") return undefined;
+	const prompt = ctx.getSystemPrompt?.();
+	if (typeof prompt !== "string") return undefined;
+	const matches = [...prompt.matchAll(ACTIVE_AGENT_NAME)];
+	if (matches.length === 0) return undefined;
+	const match = matches[0].index === 0 ? matches[0] : matches[matches.length - 1];
+	// The provider escapes the name for an XML attribute; the definition name is the decoded value,
+	// not the serialized attribute text.
+	const name = match[1]
+		.replace(/&quot;/g, "\"")
+		.replace(/&lt;/g, "<")
+		.replace(/&gt;/g, ">")
+		.replace(/&amp;/g, "&")
+		.trim();
+	return name.length > 0 ? name : undefined;
+}
+
+/**
+ * The actual session facts one pi delivery carries, as one explicit field mapping.
  *
- * pi states no agent definition, task handle or registry id for a session — what it names a
- * spawned session with is the session's own display name — so those facts are reported as the ones
- * this host does not have rather than borrowed from a name, a directory or a process label.
+ * Every canonical fact is listed here, including the ones pi cannot state: a static absence is
+ * declared beside the fields that are resolved, so the integration contract reads this one object
+ * rather than a second capability list. The mapping is module-level because it is the adapter's
+ * actual construction, not a per-delivery decision.
+ *
+ * `position` is the one position the delivery's session sits at, resolved from the decision the
+ * delivery itself makes: the facts and the owner are two readings of the same decision, so deriving
+ * one from the lineage link while the other derives from the start would let them disagree for the
+ * one kind of session whose link is not a spawn.
+ *
+ * Identity is the session manager's own session id and that position. The name is display data read
+ * live from the harness, so a rename is picked up without changing identity, parent or ownership.
+ * The agent definition is the one the provider wrote into a spawned session's own prompt; pi itself
+ * states no task handle or agent registry id, so those are declared unavailable rather than
+ * borrowed from a name, a directory or a process label.
+ */
+export const PI_SESSION_FACTS_MAPPING = defineSessionFactsMapping<PiSessionFactsInput>({
+	sessionId: input => input.ctx.sessionManager.getSessionId(),
+	kind: input => input.position.kind,
+	parentSessionId: input => input.position.parentSessionId,
+	name: (input, unavailable) => {
+		const reported = input.ctx.sessionManager.getSessionName();
+		const name = reported?.trim() ? reported : undefined;
+		if (name === undefined) unavailable.push("session name");
+		return name;
+	},
+	taskName: unavailableFact("task name"),
+	agentName: (input, unavailable) => {
+		const name = activeAgentNameOf(input.ctx, input.position.kind);
+		if (name === undefined) unavailable.push("agent name");
+		return name;
+	},
+	agentId: unavailableFact("agent id"),
+	startup: (input, unavailable) =>
+		input.reason !== undefined && beginsHere(input.ctx, input.reason)
+			? startupFactsOf(input.ctx, unavailable)
+			: undefined,
+	unavailable: input => input.position.unavailable,
+});
+
+/**
+ * The actual session facts one delivery carries: identity, direct parent, latest name, the agent
+ * definition a spawned session runs, and — on the delivery that announces the session's own start —
+ * the model and effective effort it began with.
+ *
+ * The construction itself is the module-level mapping above; this function only supplies the input
+ * one delivery has already resolved.
  */
 export function piSessionFactsOf(
 	position: PiSessionPosition,
 	ctx: PiExtensionContext,
 	reason?: SessionStartReason,
 ): SessionFacts {
-	const unavailable: string[] = ["agent name", "agent id", ...position.unavailable];
-	const reportedName = ctx.sessionManager.getSessionName();
-	const name = reportedName?.trim() ? reportedName : undefined;
-	if (name === undefined) unavailable.push("session name");
-	const startup =
-		reason !== undefined && beginsHere(ctx, reason) ? startupFactsOf(ctx, unavailable) : undefined;
-	return {
-		sessionId: ctx.sessionManager.getSessionId(),
-		kind: position.kind,
-		...(position.parentSessionId === undefined ? {} : { parentSessionId: position.parentSessionId }),
-		...(name === undefined ? {} : { name }),
-		...(startup === undefined ? {} : { startup }),
-		unavailable,
-	};
+	return PI_SESSION_FACTS_MAPPING({ position, ctx, reason });
 }

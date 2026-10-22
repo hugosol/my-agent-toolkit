@@ -42,7 +42,7 @@ function ownerText(owner: SessionObservation["owner"] | undefined): string {
 
 /** What the process's own observation source holds for one session, as one line states it. */
 function heldText(held: SessionObservation | undefined): string {
-	return `held_activity=${stated(held?.activity)} held_tokens=${stated(held?.context?.tokens)}`;
+	return `held_activity=${stated(held?.activity)} held_tokens=${stated(held?.context?.tokens)} held_agent=${stated(held?.session?.agentName)}`;
 }
 
 /**
@@ -72,6 +72,7 @@ export function piSubagentObservationProbe(childEntry: string) {
 									`parent=${stated(delivery.session.parentSessionId)}`,
 									`owner=${ownerText(delivery.owner)}`,
 									`activity=${delivery.activity}`,
+									`agent=${stated(delivery.session.agentName)}`,
 									heldText(held),
 								].join(" "),
 							);
@@ -85,6 +86,7 @@ export function piSubagentObservationProbe(childEntry: string) {
 									`kind=${delivery.session.kind}`,
 									`parent=${stated(delivery.session.parentSessionId)}`,
 									`owner=${ownerText(delivery.owner)}`,
+									`agent=${stated(delivery.session.agentName)}`,
 									`tokens=${stated(delivery.reading.tokens)}`,
 									`model=${delivery.reading.provider === undefined ? "none" : `${delivery.reading.provider}/${delivery.reading.model ?? "?"}`}`,
 									heldText(held),

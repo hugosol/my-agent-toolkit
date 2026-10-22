@@ -20,10 +20,12 @@
  * this module names no harness and reaches no native API.
  */
 import type {
+	CanAcceptInput,
 	CommandDelivery,
 	DirectedCommandImplementation,
 	RecognizedDirective,
 } from "../../../../framework/interface/command";
+import type { StartupDelivery } from "../../../../framework/interface";
 import { publishFeedback } from "../feedback";
 import { commandGate } from "./guard";
 import type { ManagedTimers } from "../managed-timer";
@@ -51,6 +53,32 @@ export interface ConnectBotHarness {
 }
 
 /**
+ * The native facts one startup activation carries from the session-start delivery.
+ *
+ * They are read while the delivery is still running, because the harness context belongs to that
+ * delivery: the facts and the timer surface are values, and the idle query is bound to the
+ * context it was read from rather than reaching for a newer one when the register receipt lands.
+ */
+export interface ConnectBotActivationSession {
+	readonly sessionFacts: SessionFacts;
+	readonly managedTimers: ManagedTimers;
+	readonly canAcceptInput: CanAcceptInput;
+}
+
+/**
+ * The two entry points of one business activation.
+ *
+ * `command` is the operator-invoked `/connect-bot`; `enable` is the startup policy's enabling
+ * intent. Both reach the same gate and the same registration queue, so the register, the receipt,
+ * the heartbeat and the feedback cannot diverge between the two reasons the connection begins.
+ */
+export interface ConnectBotCommand {
+	readonly command: DirectedCommandImplementation;
+	/** Realizes the startup policy's enabling intent through the command's own activation. */
+	enable(delivery: StartupDelivery, session: ConnectBotActivationSession): void;
+}
+
+/**
  * The implementation the assembly injects for `/connect-bot`.
  *
  * Only the owner's own main session with a UI gets past the gate: a subagent is refused
@@ -71,40 +99,74 @@ export interface ConnectBotHarness {
 export function createConnectBotCommand(
 	harness: ConnectBotHarness,
 	registrations: PanelRegistrations,
-): DirectedCommandImplementation {
-	return {
-		run(directive: RecognizedDirective, delivery: CommandDelivery): void {
-			const gate = commandGate(delivery);
-			if (!gate.allowed) {
-				// Both refusals go through the one table: a session with no UI reads the fixed refusal
-				// on stderr, and a subagent is refused with no words at all.
-				publishFeedback(
-					delivery.feedback,
-					gate.reason === "no-ui" ? { trigger: "no-ui", hasUI: delivery.hasUI } : { trigger: "subagent" },
-				);
-				return;
-			}
+): ConnectBotCommand {
+	/**
+	 * The one gate both entry points run: a subagent is refused silently, and a session without a
+	 * UI is refused with the table's fixed words. The refusals are published here so neither
+	 * caller can choose different wording or forget them.
+	 */
+	const admit = (delivery: { readonly owner: CommandDelivery["owner"]; readonly hasUI: boolean; readonly feedback: CommandDelivery["feedback"] }) => {
+		const gate = commandGate(delivery);
+		if (!gate.allowed) {
+			publishFeedback(
+				delivery.feedback,
+				gate.reason === "no-ui" ? { trigger: "no-ui", hasUI: delivery.hasUI } : { trigger: "subagent" },
+			);
+		}
+		return gate;
+	};
 
-			if (directive.kind === "deactivate") {
-				registrations.deactivate(delivery, gate.ownerKey);
-				return;
-			}
-			// Both harness facts are read here, inside the invocation: the timer surface belongs to
-			// the context this run is driving, and the register attempt schedules the heartbeat on
-			// it. Reading them here also keeps them tied to the command the operator issued, even
-			// when the attempt waits behind another one for the same owner.
-			registrations.activate(delivery, gate.ownerKey, harness.sessionFacts(), harness.managedTimers());
+	/**
+	 * The one activation both entry points run: the registration queue receives the same attempt
+	 * facts, and the harness facts are captured from the delivery being served.
+	 */
+	const enable = (
+		delivery: {
+			readonly owner: CommandDelivery["owner"];
+			readonly hasUI: boolean;
+			readonly feedback: CommandDelivery["feedback"];
+			readonly capability: CommandDelivery["capability"];
 		},
-		unrecognized(argument: string, delivery: CommandDelivery): void {
-			const gate = commandGate(delivery);
-			if (!gate.allowed) {
-				publishFeedback(
-					delivery.feedback,
-					gate.reason === "no-ui" ? { trigger: "no-ui", hasUI: delivery.hasUI } : { trigger: "subagent" },
-				);
-				return;
-			}
-			publishFeedback(delivery.feedback, { trigger: "unknown-argument", argument });
+		session: ConnectBotActivationSession,
+	): void => {
+		const gate = admit(delivery);
+		if (!gate.allowed) return;
+		registrations.activate(
+			{ feedback: delivery.feedback, capability: delivery.capability, canAcceptInput: session.canAcceptInput },
+			gate.ownerKey,
+			session.sessionFacts,
+			session.managedTimers,
+		);
+	};
+
+	return {
+		enable(delivery: StartupDelivery, session: ConnectBotActivationSession): void {
+			enable(delivery, session);
+		},
+		command: {
+			run(directive: RecognizedDirective, delivery: CommandDelivery): void {
+				const gate = admit(delivery);
+				if (!gate.allowed) return;
+
+				if (directive.kind === "deactivate") {
+					registrations.deactivate(delivery, gate.ownerKey);
+					return;
+				}
+				// Both harness facts are read here, inside the invocation: the timer surface belongs to
+				// the context this run is driving, and the register attempt schedules the heartbeat on
+				// it. Reading them here also keeps them tied to the command the operator issued, even
+				// when the attempt waits behind another one for the same owner.
+				enable(delivery, {
+					sessionFacts: harness.sessionFacts(),
+					managedTimers: harness.managedTimers(),
+					canAcceptInput: delivery.canAcceptInput,
+				});
+			},
+			unrecognized(argument: string, delivery: CommandDelivery): void {
+				const gate = admit(delivery);
+				if (!gate.allowed) return;
+				publishFeedback(delivery.feedback, { trigger: "unknown-argument", argument });
+			},
 		},
 	};
 }

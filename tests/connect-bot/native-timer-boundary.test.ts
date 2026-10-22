@@ -49,7 +49,7 @@ const sharedFiles = sourceFiles.filter(file => !file.startsWith(HARNESS_DIRECTOR
 describe("only the OMP assembly reaches the native timer (P39)", () => {
 	test("the extension has both a shared source and an assembly to tell apart", () => {
 		expect(sharedFiles).toContain(`${EXTENSION_ROOT}/shared-logic/panel/heartbeat.ts`);
-		expect(sourceFiles).toContain(`${EXTENSION_ROOT}/harnesses/omp.ts`);
+		expect(sourceFiles).toContain(`${EXTENSION_ROOT}/harnesses/omp-assembly.ts`);
 	});
 
 	test("no shared module names a native timer", () => {
@@ -58,7 +58,7 @@ describe("only the OMP assembly reaches the native timer (P39)", () => {
 	});
 
 	test("the assembly is where the native timer really is reached, so the scan has a subject", () => {
-		const assembly = codeOf(`${EXTENSION_ROOT}/harnesses/omp.ts`);
+		const assembly = codeOf(`${EXTENSION_ROOT}/harnesses/omp-assembly.ts`);
 		expect(assembly).toMatch(/ctx\.setInterval\b/);
 		expect(assembly).toMatch(/ctx\.clearTimer\b/);
 	});

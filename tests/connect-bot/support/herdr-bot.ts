@@ -20,7 +20,7 @@
  * fails saying exactly which path is missing and how to build it: a stand-in panel would not be
  * the interop evidence this is here for.
  */
-import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
 import { REPO_ROOT } from "../../harness-dock/baseline";
@@ -103,8 +103,16 @@ async function pumpLines(stream: ReadableStream<Uint8Array>, onLine: (line: stri
 	}
 }
 
-/** Writes this run's own panel configuration into `directory`. */
+/** Prepares this run's isolated metadata catalog and writes its own panel configuration. */
 function writePanelConfig(directory: string): string {
+	// The panel requires its delivered option catalog at startup. Relative paths resolve from
+	// cwd, so copy only this metadata into the isolated run; never use the user's runtime data.
+	const metadataDirectory = path.join(directory, "meta-data");
+	mkdirSync(metadataDirectory);
+	copyFileSync(
+		path.resolve(REPO_ROOT, "..", "herdr-bot", "meta-data", "bot-options.toml"),
+		path.join(metadataDirectory, "bot-options.toml"),
+	);
 	const file = path.join(directory, "herdr-bot.toml");
 	// The sessions section declares the two windows this run reads: the panel's own delivered
 	// defaults are 10s online / 30s retention, and a client that beats every 10s sits exactly on
@@ -115,10 +123,16 @@ function writePanelConfig(directory: string): string {
 	//
 	// The operations the panel can only ever invoke on request point at this run's own directory:
 	// this interop run never calls them, and they must never name a script the user cares about.
+	//
+	// The panel release requires an explicit Herdr workspace target even though these runs never
+	// create a Bot; the name is never looked up here, but a missing `[herdr]` section fails startup.
 	writeFileSync(
 		file,
 		[
 			`listen_addr = "127.0.0.1:0"`,
+			``,
+			`[herdr]`,
+			`workspace_name = 'unused'`,
 			``,
 			`[sessions]`,
 			`online_timeout_seconds = 30`,

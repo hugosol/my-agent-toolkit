@@ -293,6 +293,17 @@ adapter 的公共入口创建 binding、把 port 交给框架，并导出 native
 
 `defineAdapterDelivery(kind, payload)` 标在 native 事实被翻译成最终协议 payload 的位置，包括内嵌的效果和晚查询。它使用已有的 canonical 类型，不改变 payload 身份、求值时机或回调时序。它给静态分析一个可定位的构造点，不是第二套派发机制。
 
+### SessionFacts 的单点字段映射
+
+每个 adapter 在 Session queries 中定义一个模块级 `defineSessionFactsMapping<Input>({...})`，并由实际的会话事实构造函数调用它。对象必须显式列出 canonical `SessionFacts` 的全部字段；新增字段后，编译器要求每个 adapter 重新考虑其映射。
+
+- 有原生读取的字段使用映射函数；函数本次返回 `undefined` 不改变“已映射”的接线状态。
+- 明确未接入的可选字段使用 `unavailableFact(reason)`；运行时省略该字段，并把原因加入事实的 `unavailable`。
+- `unavailable` 字段的函数保留本次位置解析等动态缺失，其他字段的读取也可向该列表追加原因。
+- 这份对象是实际运行来源，不另写字段能力清单。字段检查只读取此处，不追踪映射函数体；映射正确性由 harness 接入者保证。
+
+字段状态、源码定位与报告边界见 [SessionFacts 字段报告](integration-check.md#session-facts-field-report)。
+
 ### 5.4 extension 侧装配不携带 harness 词汇
 
 `ExtensionAssembly` 只包含 `implementation` 和 `configBaseDir`。adapter 原样消费它；一个 assembly 不声明某个 harness，也不新增 “required semantics” 列表。需求由实际 authoring 与 interface 使用推导，见[静态接入检查](integration-check.md)。

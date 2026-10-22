@@ -226,7 +226,12 @@ export interface AgentTreeStartup {
  */
 export interface AgentTreeRow {
 	readonly kind: AgentTreeRowKind;
-	/** The row's displayed name: a session's latest name, or `provider / model` for a model row. */
+	/**
+	 * The row's displayed name: a descendant session's latest name, prefixed by its agent definition
+	 * as `[task] name` when the host reported one; the root's latest name; or `provider / model` for
+	 * a model row. A missing agent definition leaves the session's name unprefixed rather than
+	 * inventing a type.
+	 */
 	readonly name: string;
 	/** The row's distance from the root: 0 for the root, 1 for its model rows and its children, and so on. */
 	readonly depth: number;
@@ -706,7 +711,12 @@ export function createPresentation(inputs: PresentationInputs): ConsumptionPrese
 		for (const node of tree.descendants) {
 			rows.push({
 				kind: "session",
-				name: node.identity.name,
+				// The agent definition is the kind of agent that runs the session, not the work it carries
+				// out; the row states it as a leading category while the session's own name stays intact.
+				name:
+					node.identity.agentName === undefined
+						? node.identity.name
+						: `[${node.identity.agentName}] ${node.identity.name}`,
 				depth: node.depth,
 				// The descendant's own statistics without the cached share of its conversation input: the
 				// tree compares what each session consumed, so that one column is dropped from this row.
@@ -837,16 +847,21 @@ export function createPresentation(inputs: PresentationInputs): ConsumptionPrese
 							obtainedAt: window.obtainedAt,
 						};
 			const failure = reading.failure?.detail;
-			return (["five-hour", "weekly"] as const).map(kind => {
+			return (["five-hour", "weekly"] as const).flatMap(kind => {
+				// An absent five-hour allowance is not a request failure (some plans report only weekly).
+				// Omit the whole row, but keep genuine query failures visible.
+				if (kind === "five-hour" && reading.fiveHour === undefined && failure === undefined) return [];
 				const window = windowOf(kind === "five-hour" ? reading.fiveHour : reading.weekly, kind);
-				return quotaWindowLine({
-					kind,
-					...(window === undefined ? {} : { window }),
-					...(kind === "weekly" && estimate !== undefined ? { estimate } : {}),
-					...(failure === undefined ? {} : { failure }),
-					now: at,
-					...(width === undefined ? {} : { width }),
-				});
+				return [
+					quotaWindowLine({
+						kind,
+						...(window === undefined ? {} : { window }),
+						...(kind === "weekly" && estimate !== undefined ? { estimate } : {}),
+						...(failure === undefined ? {} : { failure }),
+						now: at,
+						...(width === undefined ? {} : { width }),
+					}),
+				];
 			});
 		},
 		quota: () => {
@@ -1123,13 +1138,26 @@ export function roundColumns(round: RoundDisplay, mode?: ConsumptionMode): Displ
 }
 
 /**
+ * Whether one display's Total writes the Cost field.
+ *
+ * The target's own monetary channel always writes it — a dash stands in until an amount is known —
+ * while every other mode writes it only when the main tree really carries a CNY amount. The account
+ * row follows the same fact: a session that consumed DeepSeek earlier, or whose subagent did, keeps
+ * its balance and the period's accrued consumption visible beside a current allowance or token-only
+ * model instead of hiding them with the channel that is no longer current.
+ */
+export function showsCostField(display: ConsumptionDisplay): boolean {
+	return display.mode === "monetary" || display.tree.costCny !== undefined;
+}
+
+/**
  * The amount fields one display's Total always writes: the target's own channel's amount, plus the
  * other currency whenever the tree really carries one. A field whose value is missing is written as
  * a dash, so the Total keeps the old row's fields even at initialization.
  */
 function displayedAmounts(display: ConsumptionDisplay): readonly AmountField[] {
 	const shown: AmountField[] = [];
-	if (display.mode === "monetary" || display.tree.costCny !== undefined) shown.push("cost");
+	if (showsCostField(display)) shown.push("cost");
 	if (display.mode === "allowance" || display.tree.referenceCostUsd !== undefined) shown.push("ref");
 	return shown;
 }

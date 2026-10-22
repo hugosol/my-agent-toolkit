@@ -31,7 +31,7 @@ import { REPO_ROOT } from "../harness-dock/baseline";
 import { type OmpDouble, ompDouble } from "./support/omp-double";
 
 /** The endpoint the extension's own `config.yaml` ships; the file is the only source. */
-const ENDPOINT = "http://127.0.0.1:8787";
+const ENDPOINT = "http://127.0.0.1:18787";
 /**
  * The wait budget the repository's own `config.yaml` gives every request — a background push
  * included — as the framework's read of that file reports it. Read from the file rather than

@@ -27,7 +27,11 @@
  *   3. **A real delegation loads this extension into the child session it spawns.** The provider's own
  *      launch evidence names this entry among the launch's required and effective extensions, and the
  *      child's own session file states the identity and the parent session file this adapter reads;
- *   4. **A real rename reaches consumers where it happened, and the next commit carries it** — the
+ *   4. **A spawned session's agent definition reaches framework consumers.** The child's own delivery
+ *      and the owner process's observation source both name the `scout` definition the provider
+ *      launched, and both the foreground and background detail widgets draw that definition as the
+ *      child row's type prefix;
+ *   5. **A real rename reaches consumers where it happened, and the next commit carries it** — the
  *      public facts delivery, the name the session then has, and the record the session's next save
  *      publishes.
  *
@@ -694,6 +698,13 @@ async function phaseForegroundDelegation(cli: PiCli): Promise<void> {
 	);
 	observe("budget detail draws the real child session after a multi-extension delegation", detailFrame !== undefined,
 		JSON.stringify(detailFrame?.widgetLines));
+	observe(
+		"budget detail names the agent definition the foreground child runs",
+		detailFrame !== undefined &&
+			Array.isArray(detailFrame.widgetLines) &&
+			detailFrame.widgetLines.some(line => String(line).includes("[scout]")),
+		JSON.stringify(detailFrame?.widgetLines),
+	);
 
 	// The child's session ended inside this process. The parent's own instance is not the child's to
 	// end: the next exchange is accounted and saved into the same document.
@@ -774,9 +785,10 @@ async function phaseBackgroundDelegation(cli: PiCli): Promise<void> {
 	const liveDetail = await session.frameSince(liveDetailMark,
 		frame => frame.type === "extension_ui_request" && frame.method === "setWidget" &&
 			frame.widgetKey === MODEL_COST_WIDGET_KEY && Array.isArray(frame.widgetLines) &&
-			frame.widgetLines.some(line => String(line).includes("subagent-scout-") &&
+			frame.widgetLines.some(line => String(line).includes("[scout]") &&
+				String(line).includes("subagent-scout-") &&
 				String(line).includes("deepseek/deepseek-flash(")),
-		"the background child's startup model in the live detail widget", 2_000);
+		"the background child's agent definition and startup model in the live detail widget", 2_000);
 	const beforeAnySave = readDocument(dock.home.consumptionFile);
 	observe(
 		"the real detail widget shows the background child's startup model before its first consumption commit",
@@ -800,6 +812,13 @@ async function phaseBackgroundDelegation(cli: PiCli): Promise<void> {
 		"the owner's own observation source holds the reading that arrived",
 		observed.some(line => line.startsWith("activity ")) &&
 			observed.every(line => line.startsWith("activity ") === (factOf(line, "held_activity") === factOf(line, "activity"))),
+		`lines: ${JSON.stringify(observed)}`,
+	);
+	observe(
+		"the child's delivery and the owner's observation source both name the agent definition it runs",
+		observed.length > 0 &&
+			observed.every(line => factOf(line, "agent") === "scout") &&
+			observed.every(line => factOf(line, "held_agent") === "scout"),
 		`lines: ${JSON.stringify(observed)}`,
 	);
 	let document: ConsumptionDocument | undefined;

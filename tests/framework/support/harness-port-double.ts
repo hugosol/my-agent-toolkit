@@ -25,6 +25,7 @@ import type { ExtensionDefinition } from "../../../framework/interface/details/d
 import type { FollowedAccessReader } from "../../../framework/core/followed-owners";
 import type { FeedbackLevel } from "../../../framework/interface/feedback";
 import type { CatalogPriceSource, ProviderAccess } from "../../../framework/interface/provider";
+import type { SubagentIntegration } from "../../../framework/interface/subagent";
 import type {
 	RoundEvent,
 	SemanticEventHandlers,
@@ -205,6 +206,12 @@ export interface PortBindingOptions extends Partial<ExtensionImplementation> {
 	 * model a file without a file system.
 	 */
 	readonly config?: ConfigSource;
+	/**
+	 * The startup policy document this assembly's entrypoint selected, when a suite drives the
+	 * startup rule. It is handed to the binding exactly as an adapter hands its assembly's option
+	 * over, and the document is read through {@link config}'s seam.
+	 */
+	readonly startupPolicy?: string;
 }
 
 /** The recorded port of one assembly, and the driver a suite observes behavior through. */
@@ -428,6 +435,13 @@ export interface PortDoubleOptions {
 	 * a process boundary, delivered by a process that really runs one.
 	 */
 	readonly observationAccess?: SessionObservationAccess;
+	/**
+	 * The subagent integration this port's harness has to settle, when a suite drives a harness
+	 * whose wiring is still open. Omitted models a harness that states no integration member, so
+	 * the initialization delivery carries `none` and nothing waits for it — the same shape as the
+	 * in-process doubles that have nothing to settle.
+	 */
+	readonly subagentIntegration?: () => SubagentIntegration | Promise<SubagentIntegration>;
 }
 
 export function portDouble(options: PortDoubleOptions = {}): PortDouble {
@@ -568,6 +582,7 @@ export function portDouble(options: PortDoubleOptions = {}): PortDouble {
 		},
 		...(options.modelPrices === undefined ? {} : { modelPrices: options.modelPrices }),
 		...(options.providerAccess === undefined ? {} : { providerAccess: options.providerAccess }),
+		...(options.subagentIntegration === undefined ? {} : { subagentIntegration: options.subagentIntegration }),
 		...(observationAccess === undefined ? {} : { sessionObservationAccess: observationAccess }),
 		reportDiagnostic: message => {
 			diagnostics.push(message);
@@ -642,7 +657,7 @@ export function portDouble(options: PortDoubleOptions = {}): PortDouble {
 			for (const sink of receivingSinks.values()) sink.lost(source);
 		},
 		bind(definition, options = {}) {
-			const { config, factory, ...implementation } = options;
+			const { config, startupPolicy, factory, ...implementation } = options;
 			return bindExtension(
 				definition,
 				port,
@@ -653,6 +668,7 @@ export function portDouble(options: PortDoubleOptions = {}): PortDouble {
 				// wants to observe the once-per-implementation lifecycle binds once and drives it.
 				factory ?? (() => implementation),
 				config,
+				startupPolicy,
 			);
 		},
 		run(name, options = {}) {

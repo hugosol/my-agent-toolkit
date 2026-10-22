@@ -340,7 +340,7 @@ describe("the detail tree shows the startup snapshot a subagent began on (P27, P
 		// Round does — which is what makes the row exist to draw the startup facts on.
 		bound.double.deliverRound(OWNER, { event: { kind: "round_start" }, session: spawned });
 		bound.host.publish({ sessionId: "session-main", provider: "official", model: "model-alpha" });
-		expect(namedRow(bound.host.lastLines(), "检索定价")).toContain("go-provider/model-alpha(high)");
+		expect(namedRow(bound.host.lastLines(), "[task] 检索定价")).toContain("go-provider/model-alpha(high)");
 
 		// The session then runs on another model at another level — the host says so on a second start of
 		// the same session, which is what a later execution of it would look like. Neither the row nor
@@ -355,7 +355,7 @@ describe("the detail tree shows the startup snapshot a subagent began on (P27, P
 			},
 		});
 		bound.host.publish({ sessionId: "session-main", provider: "official", model: "model-alpha" });
-		expect(namedRow(bound.host.lastLines(), "检索定价")).toContain("go-provider/model-alpha(high)");
+		expect(namedRow(bound.host.lastLines(), "[task] 检索定价")).toContain("go-provider/model-alpha(high)");
 	});
 
 	test("a level the host answered as `off` is stated as itself, never as an unknown", async () => {
@@ -386,7 +386,7 @@ describe("the detail tree shows the startup snapshot a subagent began on (P27, P
 		// The level is a reading the host really made — it answered no thinking — so the snapshot ends with
 		// it rather than with the `?` an unproved part is written as: one row of the group states a level,
 		// and the other, whose beginning nothing proved, still keeps its own `?(?)`.
-		expect(namedRow(bound.host.lastLines(), "关闭思考")).toContain("go-provider/model-alpha(off)");
+		expect(namedRow(bound.host.lastLines(), "[task] 关闭思考")).toContain("go-provider/model-alpha(off)");
 		expect(namedRow(bound.host.lastLines(), "子代理")).toContain("?(?)");
 	});
 
@@ -640,7 +640,9 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 		// The view moves to the subagent, whose own Round then opens and settles one request: what is
 		// drawn is *that* session's brief — its own current-model fields (130 tokens, a 33 percent cache
 		// rate, no amount of its own), its own Round's 30 tokens with no ratio — and the same main tree's
-		// Cost behind it. No tree row appears at all, whatever the entry's preference is.
+		// Cost behind it. Because that Cost exists, the period's accrued fact is drawn on the account row
+		// even though this token-only target has no bar of its own. No tree row appears at all, whatever
+		// the entry's preference is.
 		bound.host.publish({ sessionId: "session-sub", provider: "go-provider", model: "model-alpha", effort: "low" });
 		bound.double.deliverRound(OWNER, {
 			event: { kind: "round_start" },
@@ -667,6 +669,7 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 			{ owner: OWNER },
 		);
 		expect(bound.host.lastLines()).toEqual([
+			"\u23F3 Accrued: \u00A50.05 [\u258F]",
 			"Total:  Cache: 33%  Cost: \u00A50.05  Span: \u2014",
 			"Round:  Cache:  0%",
 		]);
@@ -740,8 +743,9 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 		expect(treeRows(bound.host.lastLines() ?? []).map(row => row.name)).toEqual(["子代理"]);
 		expect(bound.host.lastLines()?.find(line => line.includes("子代理"))).toBe("└─ 子代理  ?(?)  Run: —");
 
-		// A report carrying only the agent's id adds no name, so the name already known still stands: an id
-		// never displaces a name.
+		// A report carrying only the agent's id adds no name or type, so the name already known still
+		// stands: an id never displaces a name, and no category is invented.
+		expect(bound.runtime.view.identity("session-sub")?.agentName).toBeUndefined();
 		bound.double.deliverSession(OWNER, {
 			event: { kind: "session_facts" },
 			session: { sessionId: "session-sub", kind: "sub", agentId: "0-Explore", unavailable: [] },
@@ -751,8 +755,8 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 
 		// The host reports the kind of agent this session runs and the registry identity behind it — for
 		// a spawned session those are the agent definition (`task`, `explore`, `scout`) and the id its
-		// index uses. Neither is a name for the work, so neither displaces the name the session is
-		// already known by.
+		// index uses. The definition prefixes the row as a category; it never displaces the name the
+		// session is already known by, and a registry id stays only a fallback for a name.
 		bound.double.deliverSession(OWNER, {
 			event: { kind: "session_facts" },
 			session: {
@@ -765,11 +769,11 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 			},
 		});
 		bound.host.publish({ sessionId: "session-main", provider: "official", model: "model-alpha" });
-		expect(treeRows(bound.host.lastLines() ?? []).map(row => row.name)).toEqual(["子代理"]);
+		expect(bound.runtime.view.identity("session-sub")?.agentName).toBe("explore");
+		expect(treeRows(bound.host.lastLines() ?? []).map(row => row.name)).toEqual(["[explore] 子代理"]);
 
-		// The host then reports the handle the session's own spawn was allocated: the row is named by it,
-		// because that is the one fact that says which piece of work the row accounts for. The agent
-		// definition reported beside it is a category, and the row is not named by it.
+		// The host then reports the handle the session's own spawn was allocated: that handle names the
+		// work, while the agent definition beside it stays the row's leading category.
 		bound.double.deliverSession(OWNER, {
 			event: { kind: "session_facts" },
 			session: {
@@ -783,13 +787,14 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 			},
 		});
 		bound.host.publish({ sessionId: "session-main", provider: "official", model: "model-alpha" });
-		expect(treeRows(bound.host.lastLines() ?? []).map(row => row.name)).toEqual(["检索定价"]);
+		expect(treeRows(bound.host.lastLines() ?? []).map(row => row.name)).toEqual(["[task] 检索定价"]);
 		expect(bound.host.lastLines()?.find(line => line.includes("检索定价"))).toBe(
-			"└─ 检索定价  ?(?)  Run: —",
+			"└─ [task] 检索定价  ?(?)  Run: —",
 		);
 
-		// The operator names the session explicitly, and that name is what the row shows: the handle is
-		// the fallback for a session the host never named, never an override of the name it reports.
+		// The operator names the session explicitly, and that name is what the row shows after the
+		// category: the handle is the fallback for a session the host never named, never an override of
+		// the name it reports.
 		bound.double.deliverSession(OWNER, {
 			event: { kind: "session_facts" },
 			session: {
@@ -804,11 +809,11 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 			},
 		});
 		bound.host.publish({ sessionId: "session-main", provider: "official", model: "model-alpha" });
-		expect(treeRows(bound.host.lastLines() ?? []).map(row => row.name)).toEqual(["定价核查"]);
+		expect(treeRows(bound.host.lastLines() ?? []).map(row => row.name)).toEqual(["[task] 定价核查"]);
 
 		// A second spawned session whose agent definition is `scout` — not `task` — is named by its own
-		// handle just the same: the rule reads the handle the spawn was given rather than special-casing
-		// one agent definition's name.
+		// handle just the same and carries its own category: the rule reads the facts the spawn supplied
+		// rather than special-casing one agent definition.
 		bound.double.deliverSession(OWNER, {
 			event: { kind: "session_facts" },
 			session: {
@@ -822,7 +827,8 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 			},
 		});
 		// A session the document never named, for which the host reports only a registry identity, falls
-		// back to that identity rather than to its raw session id.
+		// back to that identity rather than to its raw session id. No agent definition was reported, so
+		// the row carries no invented category.
 		bound.double.deliverSession(OWNER, {
 			event: { kind: "session_facts" },
 			session: {
@@ -834,6 +840,10 @@ describe("the detail form draws the static tree where the brief draws Rounds (P2
 			},
 		});
 		bound.host.publish({ sessionId: "session-main", provider: "official", model: "model-alpha" });
-		expect(treeRows(bound.host.lastLines() ?? []).map(row => row.name)).toEqual(["定价核查", "检索价格", "0-Unseen"]);
+		expect(treeRows(bound.host.lastLines() ?? []).map(row => row.name)).toEqual([
+			"[task] 定价核查",
+			"[scout] 检索价格",
+			"0-Unseen",
+		]);
 	});
 });

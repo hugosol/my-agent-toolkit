@@ -1,1 +1,0 @@
-[warning] /budget holiday 仅适用于当前 provider 为 DeepSeek 的入口；本次入口的 provider 「openai」，未执行。

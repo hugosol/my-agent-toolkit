@@ -7,7 +7,7 @@
  * a bounded assembly shape without changing extension loading or claiming semantic verification.
  * Types constrain keys and values; a future source-expression check must enforce syntax restrictions.
  */
-import type { UserInputDelivery } from "../interface/session";
+import type { SessionFacts, UserInputDelivery } from "../interface/session";
 import type {
 	CommandInvocation,
 	HarnessPort,
@@ -97,4 +97,72 @@ export function defineAdapterDelivery<Kind extends keyof AdapterDeliveryMap>(
 	delivery: AdapterDeliveryMap[Kind],
 ): AdapterDeliveryMap[Kind] {
 	return delivery;
+}
+
+/** A deliberately unavailable Session fact: the field is omitted and this reason is reported. */
+export interface UnavailableSessionFact {
+	readonly kind: "unavailable";
+	readonly reason: string;
+}
+
+/** Names one Session fact this adapter cannot obtain, in the vocabulary consumers already read. */
+export function unavailableFact(reason: string): UnavailableSessionFact {
+	return Object.freeze({ kind: "unavailable", reason });
+}
+
+/** The Session facts a delivery must carry: their presence is not a capability to be declared. */
+type RequiredSessionFact = {
+	[Key in keyof SessionFacts]-?: undefined extends SessionFacts[Key] ? never : Key;
+}[keyof SessionFacts];
+
+/**
+ * The facts an adapter's mapping function must answer and can report as absent.
+ *
+ * A mapper receives the list currently being assembled so a reading it could not obtain is named
+ * where it was attempted, beside the value it did not produce. The `unavailable` entry supplies the
+ * readings that are not per-field (a position resolved before the mapping) and is always present.
+ */
+export type SessionFactsBindings<Input> = {
+	readonly [Key in keyof SessionFacts]-?: Key extends "unavailable"
+		? (input: Input) => readonly string[]
+		: Key extends RequiredSessionFact
+			? (input: Input, unavailable: string[]) => SessionFacts[Key]
+			:
+				| ((input: Input, unavailable: string[]) => SessionFacts[Key])
+				| UnavailableSessionFact;
+};
+
+/** One adapter's actual SessionFacts construction, callable wherever its deliveries are framed. */
+export type SessionFactsMapping<Input> = (input: Input) => SessionFacts;
+
+/**
+ * Defines one adapter's actual Session facts construction.
+ *
+ * The object literal lists every canonical `SessionFacts` key, so adding a fact to the framework
+ * contract stops every adapter from compiling until its real source is considered. A field mapped
+ * by a function is resolved from that input; a mapping that answers `undefined` omits the member
+ * because the value itself is absent at runtime. An `unavailableFact` omits it *and* names the
+ * fact, which is how a static absence reaches consumers. The returned callable is what an adapter
+ * delivery actually calls; this is not a second capability inventory.
+ */
+export function defineSessionFactsMapping<Input>(bindings: SessionFactsBindings<Input>): SessionFactsMapping<Input> {
+	const declared = Object.freeze({ ...bindings });
+	const fieldKeys = (Object.keys(declared) as (keyof SessionFacts)[]).filter(
+		(key): key is Exclude<keyof SessionFacts, "unavailable"> => key !== "unavailable",
+	);
+	return (input: Input): SessionFacts => {
+		const unavailable = [...declared.unavailable(input)];
+		const facts: Record<string, unknown> = {};
+		for (const key of fieldKeys) {
+			const entry = declared[key];
+			if (typeof entry !== "function") {
+				unavailable.push(entry.reason);
+				continue;
+			}
+			const value = entry(input, unavailable);
+			if (value !== undefined) facts[key] = value;
+		}
+		facts.unavailable = unavailable;
+		return facts as unknown as SessionFacts;
+	};
 }

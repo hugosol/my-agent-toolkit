@@ -2,8 +2,92 @@
 
 Joins an agent session to the herdr-bot panel; `/connect-bot` registers the current session,
 `/connect-bot off` disconnects it. The declaration is [`definition.ts`](definition.ts), its
-harness-independent logic is under [`shared-logic/`](shared-logic), and its OMP assembly is
-[`harnesses/omp.ts`](harnesses/omp.ts).
+harness-independent logic is under [`shared-logic/`](shared-logic), and its shared OMP assembly
+is [`harnesses/omp-assembly.ts`](harnesses/omp-assembly.ts) behind one thin entrypoint per
+[startup mode](#startup-modes).
+
+## Startup modes
+
+connect-bot is assembled in one of two **startup modes**. The mode is selected statically by the
+entrypoint the host loads through its ordinary `-e`/`--extension` parameter; no profile argument,
+environment value or command-line switch chooses it.
+
+| Mode | OMP entrypoint | Policy document | What starts |
+| --- | --- | --- | --- |
+| Manual | [`entrypoints/omp/connect-bot.ts`](../../entrypoints/omp/connect-bot.ts) | [`manual.yaml`](../../entrypoints/startup/manual.yaml) | nothing — `/connect-bot` arms the session |
+| Automatic startup | [`entrypoints/omp-auto/connect-bot.ts`](../../entrypoints/omp-auto/connect-bot.ts) | [`auto.yaml`](../../entrypoints/startup/auto.yaml) | the same arm operation, attempted at the process's first main session start |
+
+Both entrypoints re-export one shared OMP assembly
+([`harnesses/omp-assembly.ts`](harnesses/omp-assembly.ts)) and one definition, and the two policy
+blocks select the initial choice. The shared assembly's
+[`startup-modes.ts`](harnesses/startup-modes.ts) derives each document's absolute path from its own
+module location, so the mode is not affected by the working directory. Load **one** mode's
+entrypoint for this extension, never both: the host adds extension sources rather than merging
+them, so two modes in one process would bind the extension twice. There is no duplicate-name
+detection, automatic merge or misuse warning behind that rule — the load source is the only place
+the choice exists.
+
+**The choice is per extension, and the mode owns only the startup policy.** A session may load
+codebase-tools' automatic entrypoint beside connect-bot's manual one by naming each extension's
+chosen file; a discovery directory contributes only the modes it contains (`entrypoints/omp` is
+manual-only, `entrypoints/omp-auto` is automatic-only). The panel endpoint and request budget are
+not mode-specific: both entrypoints read the same [`config.yaml`](config.yaml) once per process,
+so choosing a startup mode neither duplicates nor changes the business connection parameters, and
+an edit to that file still takes effect only in the next process.
+
+Automatic startup covers connect-bot's existing support combination (OMP). This page does not add
+a pi adapter or another host, and it does not change the support record or deploy anything
+formally.
+
+**Loading is not enabling, and a startup target is not a connection.** The automatic document states
+`enabled: true`, and the framework hands that enabling intent to the same business operation
+`/connect-bot` runs: it enqueues a panel registration. The extension is not "connected" because it
+was loaded, because the intent was stated, or because the register request was enqueued. The
+declared `enabled` value — and therefore the `◐ connectBot` marker — stays off until a valid panel
+receipt arrives. A refusal — or any other answer that is not a valid registered receipt, including
+a request that never completes — leaves it off with no marker, no state report and no heartbeat,
+and reports the extension's existing failure text; the agent keeps working.
+
+**The attempt never blocks the agent.** The registration is queued and the startup entry returns
+immediately, exactly as the command path does. The process's first model request is issued whether
+the panel has answered or not. The framework does not add a completion barrier, a retry, or a
+general background queue for this: an attempt the panel refuses is simply over, and a later
+`/connect-bot` is the operator's retry. An `off` while an attempt is on the wire invalidates it, and
+the end of the owner's session invalidates every attempt that owner still has outstanding, so a
+late receipt cannot enable a session that has moved on. The existing initialization and subagent
+integration waits are untouched by this: the startup entry is called beside them, not added to
+them.
+
+**The startup attempt belongs to the process's first main session start.** A new, resumed or forked
+session after it — and a navigation that keeps the same owner — follows the ordinary session rules:
+it starts unarmed unless something in this process arms it, and the policy is not applied again. An
+edit to the selected document likewise takes effect only in the next process; the running process
+keeps the value and the connection it read at binding.
+
+**State is not remembered across starts.** connect-bot still declares `memory` persistence and
+`none` inheritance. A previous process's row, an old persisted payload, or a subagent's activity
+never stands in for this process's own register; only a receipt from this session's attempt enables
+it. A process that **starts by resuming** a session is still making its first owner start, so that
+session takes the selected mode's choice: a manual-mode resume stays off, and an automatic-mode
+resume attempts its register then. The old branch payload is never read (memory State is never
+seeded from it) and the startup attempt writes no value of its own — the receipt-backed activation
+is what writes `enabled`. After startup, `/connect-bot` and `/connect-bot off` keep their ordinary
+directed-command semantics, including repeated invocations and the existing no-UI/subagent refusals.
+
+Evidence: [`tests/connect-bot/startup-modes.test.ts`](../../tests/connect-bot/startup-modes.test.ts)
+drives both entrypoints, the controlled latch, the failure shapes and the admission refusals at the
+OMP assembly seam;
+[`tests/connect-bot/startup-lifecycle.test.ts`](../../tests/connect-bot/startup-lifecycle.test.ts)
+holds the attempt across an `off`, a transfer and a disposal on a controlled clock;
+[`tests/harness-dock/connect-bot-startup.test.ts`](../../tests/harness-dock/connect-bot-startup.test.ts)
+loads the real entrypoint files into the fixed harness, reads the panel double's requests and the
+marker frames, and restores sessions across independent processes — including a planted old
+`{enabled:true}` payload and the no-payload control (P19, P22, P24);
+[`tests/harness-dock/connect-bot-lifecycle.test.ts`](../../tests/harness-dock/connect-bot-lifecycle.test.ts)
+runs the races, the post-start navigation and a policy edit beside codebase-tools in real isolated
+sessions.
+
+## Transport and configuration
 
 The extension's outbound call is the framework's general HTTP interface — `request` from
 [`framework/interface/general/http.ts`](../../framework/interface/general/http.ts) — rather than a transport of its own: each panel
@@ -49,6 +133,103 @@ extension sends, so adjusting `requestTimeoutMs` requires **no change to herdr-b
 ([`tests/connect-bot/panel-registration-lifecycle.test.ts`](../../tests/connect-bot/panel-registration-lifecycle.test.ts)).
 Both terms are this context's vocabulary in [GLOSSARY.md](GLOSSARY.md).
 
+## H1d — automatic startup interactive acceptance (P18, P19; visual)
+
+The automated face of this round is
+[`tests/harness-dock/connect-bot-startup.test.ts`](../../tests/harness-dock/connect-bot-startup.test.ts):
+a held register keeps the marker off while the independent capture endpoint already received the
+first model request; a refusal renders the existing failure text, sends no state report or
+heartbeat, is not retried, and leaves later turns and the manual command working; the real
+isolated panel's own table shows the startup row, its state report and the command's removal.
+What remains to a person is the rendered terminal: no enabled marker before a valid receipt, the
+marker after it, and the failure feedback with no marker. Prepare a throwaway deployment and an
+isolated panel; do not point any of this at the formal panel, the default agent state or a running
+session.
+
+The real-panel test helper copies the sibling checkout's `meta-data/bot-options.toml` into each
+run's temporary working directory. Current herdr-bot requires that catalog at startup; relative
+paths resolve from the process working directory, not from `--config`. Only the delivered metadata
+is copied: `.data/` and all runtime state stay isolated. `HERDR_BOT_BINARY` overrides the executable,
+not the catalog source, so it must accept the current sibling checkout's metadata format.
+
+```bash
+ACCEPT_ROOT=.cache/connect-bot-accept
+mkdir -p "$ACCEPT_ROOT/agent-state" "$ACCEPT_ROOT/sessions" "$ACCEPT_ROOT/work" \
+  "$ACCEPT_ROOT/deployment/extensions" "$ACCEPT_ROOT/panel"
+
+# The deployment copy the entrypoint imports; only its copied config.yaml is changed below.
+cp -r framework adapters entrypoints "$ACCEPT_ROOT/deployment/"
+cp -r extensions/connect-bot "$ACCEPT_ROOT/deployment/extensions/"
+
+# An isolated herdr-bot: its own metadata and working directory, mDNS off.
+# Reserve 18788 for this run; the formal panel uses 18787.
+mkdir -p "$ACCEPT_ROOT/panel/meta-data"
+cp ../herdr-bot/meta-data/bot-options.toml "$ACCEPT_ROOT/panel/meta-data/"
+PANEL_BINARY=$(realpath "${HERDR_BOT_BINARY:-../herdr-bot/backend/target/release/herdr-bot.exe}")
+cat > "$ACCEPT_ROOT/panel/herdr-bot.toml" <<'TOML'
+listen_addr = "127.0.0.1:18788"
+
+[herdr]
+workspace_name = 'unused'
+
+[sessions]
+online_timeout_seconds = 30
+offline_retention_seconds = 30
+
+[operations.start]
+script = 'unused.bat'
+working_directory = '.'
+
+[operations.stop]
+script = 'unused.bat'
+working_directory = '.'
+
+[mdns]
+enabled = false
+TOML
+(cd "$ACCEPT_ROOT/panel" && "$PANEL_BINARY" --config herdr-bot.toml)
+
+# In another terminal, point only the deployment copy at that panel.
+printf 'endpoint: "http://127.0.0.1:18788"\nrequestTimeoutMs: 1000\n' \
+  > "$ACCEPT_ROOT/deployment/extensions/connect-bot/config.yaml"
+```
+
+The command's `${HERDR_BOT_BINARY:-…}` fallback names the sibling checkout's release build; set
+`HERDR_BOT_BINARY` when the panel binary lives elsewhere. The isolated agent state starts empty, so
+authenticate the chosen model for that state by the host's normal login/API-key step, as the
+[framework isolation rule](../../framework/README.md#human-acceptance-and-cutover) describes — never
+by reading the formal configuration. Launch the automatic entrypoint with that isolated state, and
+start the recording before the process starts:
+
+```bash
+PI_CODING_AGENT_DIR="$PWD/$ACCEPT_ROOT/agent-state" bun \
+  .cache/omp-baseline/18.5.0/node_modules/@oh-my-pi/pi-coding-agent/src/cli.ts \
+  --no-extensions -e "$PWD/$ACCEPT_ROOT/deployment/entrypoints/omp-auto/connect-bot.ts" \
+  --session-dir "$PWD/$ACCEPT_ROOT/sessions" --cwd "$PWD/$ACCEPT_ROOT/work" \
+  --model <provider>/<model>
+```
+
+**P18 — the marker follows the receipt.** At the session's start there is no `◐ connectBot` line
+and no enabled notice. The startup register is attempted without a command; once the isolated panel
+answers, the notification `已接入 herdr-bot 面板（当前 1 个在线会话）` appears (the count is the
+panel's own) and the marker line appears with it. A recording from before launch through that
+notice is the evidence; the first request may already have been sent while no marker was shown —
+that is the non-blocking behavior, not a missing startup. The panel's read side
+(`curl -N http://127.0.0.1:18787/api/sessions/events`) shows the same row arriving, so the
+terminal and the panel's own table carry the same order. The pre-receipt interval is asserted
+exactly by the held-register case above; the visual check confirms how those two states render.
+
+**P19 — a failed registration stays off.** Stop the panel, exit the session, and launch the same
+automatic entrypoint again in a fresh process. The terminal shows
+`无法连接 herdr-bot，未启用；请确认面板已启动`, no marker and no enabled notice. Type a prompt: the
+agent still answers. Restart the panel, then run `/connect-bot`; the marker and the connected
+notice appear, showing the failure was not retried on its own and the original command remains the
+operator's retry. Capture the failure terminal and the later command result.
+
+Until the user confirms these rendered observations, the visual part of P18/P19 stays
+**unverified**; the automated results prove the protocol, State latch and order, not how the
+terminal draws them.
+
 ## H3b — cut over connect-bot
 
 > Historical note: this section records the migration before the panel product was renamed. The
@@ -89,8 +270,8 @@ the smoke list.
    `my-agent-toolkit/extensions/connect-bot/config.yaml`, and the framework reads and validates that
    file before the extension registers anything: a missing or illegal file refuses the extension instead
    of letting it connect to an invented address. The committed file points at the panel on the same
-   host (`http://127.0.0.1:8787`) instead of the old `config.json`'s `http://omp-bot.local:8787`: the
-   panel listens on `0.0.0.0:8787`, a loopback address answers in milliseconds, and resolving the mDNS
+   host (`http://127.0.0.1:18787`) instead of the old `config.json`'s `http://omp-bot.local:8787`: the
+   panel listens on `0.0.0.0:18787`, a loopback address answers in milliseconds, and resolving the mDNS
    name can take longer than the configured request budget on first use (1000ms as shipped, which reads
    as a failed arm). Copy the old value only when the panel runs on another host; then write the address
    this machine can reach. There is no automatic conversion and no state migration — the new

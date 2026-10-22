@@ -32,6 +32,23 @@ export interface ContractSupply {
 	readonly reason?: string;
 	readonly implementation?: SourceLocation;
 }
+export type SessionFactsFieldStatus = "mapped" | "unavailable" | "missing" | "unresolved";
+/** One canonical SessionFacts field and the bounded evidence found for it in the adapter mapping. */
+export interface SessionFactsField extends SourceLocation {
+	readonly field: string;
+	readonly status: SessionFactsFieldStatus;
+	readonly reason?: string;
+}
+/**
+ * Separate field report for a `framework:session-facts` consumer. It exposes mapping completeness;
+ * it does not change contract supply, generator handling or completion.
+ */
+export interface SessionFactsFieldReport {
+	readonly mapping: "declared" | "missing" | "unresolved";
+	readonly declaration?: SourceLocation;
+	readonly fields: readonly SessionFactsField[];
+	readonly reason?: string;
+}
 export interface SupplyResult {
 	readonly adapter: string;
 	readonly exists: boolean;
@@ -39,6 +56,8 @@ export interface SupplyResult {
 	readonly contextType?: string;
 	readonly contextFile?: string;
 	readonly supplies: readonly ContractSupply[];
+	/** Present only when a `framework:session-facts` contract was demanded. */
+	readonly sessionFacts?: SessionFactsFieldReport;
 	readonly diagnostics: readonly IntegrationDiagnostic[];
 }
 export interface SupplyOptions {
