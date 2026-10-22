@@ -44,10 +44,14 @@ export interface PanelSessionView {
 	readonly state?: string;
 	readonly model?: string;
 	readonly sessionName?: string;
+	readonly agentType?: string;
 }
 
 /** The isolated panel one interop run drives. */
 export interface HerdrBotPanel {
+	/** Isolated storage and process output for real storage fault injection. */
+	readonly historyFile: string;
+	readonly diagnostics: readonly string[];
 	/** Base URL of this instance, e.g. `http://127.0.0.1:53412`. */
 	readonly endpoint: string;
 	/** Every frame the panel has published since this run subscribed, in order. */
@@ -110,7 +114,7 @@ function writePanelConfig(directory: string): string {
 	const metadataDirectory = path.join(directory, "meta-data");
 	mkdirSync(metadataDirectory);
 	copyFileSync(
-		path.resolve(REPO_ROOT, "..", "herdr-bot", "meta-data", "bot-options.toml"),
+		process.env.HERDR_BOT_METADATA ?? path.resolve(REPO_ROOT, "..", "herdr-bot", "meta-data", "bot-options.toml"),
 		path.join(metadataDirectory, "bot-options.toml"),
 	);
 	const file = path.join(directory, "herdr-bot.toml");
@@ -135,6 +139,7 @@ function writePanelConfig(directory: string): string {
 			`workspace_name = 'unused'`,
 			``,
 			`[sessions]`,
+			`history_file = '${path.join(directory, "session-history.json")}'`,
 			`online_timeout_seconds = 30`,
 			`offline_retention_seconds = 30`,
 			``,
@@ -301,6 +306,8 @@ export async function startHerdrBot(): Promise<HerdrBotPanel> {
 		.catch(() => {});
 
 	return {
+		historyFile: path.join(directory, "session-history.json"),
+		diagnostics: output,
 		endpoint,
 		frames,
 		waitFor: async (match, label, timeoutMs = FRAME_TIMEOUT_MS) => {

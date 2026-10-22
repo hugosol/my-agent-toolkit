@@ -93,9 +93,9 @@ export async function pushEvent(
  * is not the registered receipt. A panel that answers `404` therefore reports a failed arm
  * exactly as an unreachable one does.
  */
-export function readRegisterOutcome(outcome: PushOutcome): { readonly onlineCount: number } | undefined {
+export function readRegisterOutcome(outcome: PushOutcome): { readonly onlineCount: number; readonly historySaved?: boolean } | undefined {
 	if (!outcome.ok || outcome.body === null || typeof outcome.body !== "object") return undefined;
-	const { outcome: kind, onlineCount } = outcome.body as { outcome?: unknown; onlineCount?: unknown };
+	const { outcome: kind, onlineCount, historySaved } = outcome.body as { outcome?: unknown; onlineCount?: unknown; historySaved?: unknown };
 	if (kind !== "registered" || typeof onlineCount !== "number") return undefined;
-	return { onlineCount };
+	return { onlineCount, ...(typeof historySaved === "boolean" ? { historySaved } : {}) };
 }
