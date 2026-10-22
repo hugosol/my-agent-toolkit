@@ -9,6 +9,15 @@ business rules are under [`shared-logic/`](shared-logic), the OMP assembly is
 [`GLOSSARY.md`](GLOSSARY.md), and the maintained model/price data is documented in
 [`docs/model-data-maintenance.md`](docs/model-data-maintenance.md).
 
+## Codex allowance display
+
+When a successful account query provides a weekly allowance but no five-hour reading is held,
+only the 7d row is shown: the absent 5h row is omitted without leaving a blank line. Missing 7d
+readings retain their existing `7d limit not reported` display. Genuine query failures remain
+visible, including on an absent 5h row; omission does not mean an unlimited allowance. A previously
+accepted 5h reading is still retained when a later response omits it, following the existing
+independent-window update policy.
+
 ## Shared-logic architecture
 
 The extension has three responsibility groups, composed by `shared-logic/runtime.ts`:

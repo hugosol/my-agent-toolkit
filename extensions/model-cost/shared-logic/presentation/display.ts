@@ -847,16 +847,21 @@ export function createPresentation(inputs: PresentationInputs): ConsumptionPrese
 							obtainedAt: window.obtainedAt,
 						};
 			const failure = reading.failure?.detail;
-			return (["five-hour", "weekly"] as const).map(kind => {
+			return (["five-hour", "weekly"] as const).flatMap(kind => {
+				// An absent five-hour allowance is not a request failure (some plans report only weekly).
+				// Omit the whole row, but keep genuine query failures visible.
+				if (kind === "five-hour" && reading.fiveHour === undefined && failure === undefined) return [];
 				const window = windowOf(kind === "five-hour" ? reading.fiveHour : reading.weekly, kind);
-				return quotaWindowLine({
-					kind,
-					...(window === undefined ? {} : { window }),
-					...(kind === "weekly" && estimate !== undefined ? { estimate } : {}),
-					...(failure === undefined ? {} : { failure }),
-					now: at,
-					...(width === undefined ? {} : { width }),
-				});
+				return [
+					quotaWindowLine({
+						kind,
+						...(window === undefined ? {} : { window }),
+						...(kind === "weekly" && estimate !== undefined ? { estimate } : {}),
+						...(failure === undefined ? {} : { failure }),
+						now: at,
+						...(width === undefined ? {} : { width }),
+					}),
+				];
 			});
 		},
 		quota: () => {

@@ -270,6 +270,19 @@ describe("both windows are drawn with the bar, the pace they have run at, and th
 		expect(text).toEqual(["5h limit not reported \u00B7 unreadable", "7d limit not reported \u00B7 unreadable"]);
 	});
 
+	test("a successful weekly-only report hides the absent five-hour row without a blank line", async () => {
+		const bound = await bindWindows({
+			answer: () => usageAnswer({
+				secondary: { usedPercent: 37, seconds: 604_800, resetAt: WEEKLY_RESET_AT / 1000 },
+			}),
+		});
+		const text = bound.runtime.presentation.quotaLines(200).map(lineText);
+		expect(text).toHaveLength(1);
+		expect(text[0]).toStartWith("7d ");
+		expect(text[0]).toContain("37.0%");
+		expect(text[0]).toContain("resets in 3d 12h");
+	});
+
 	test("a window the report itself left out is unreported while the other one is drawn", async () => {
 		let reply: () => Response = () => usageAnswer({});
 		const bound = await bindWindows({ answer: () => reply() });
