@@ -36,7 +36,7 @@ import { REPO_ROOT } from "../harness-dock/baseline";
 import { ompDouble } from "./support/omp-double";
 
 /** The endpoint the extension's own `config.yaml` ships; the file is the only source. */
-const ENDPOINT = "http://127.0.0.1:8787";
+const ENDPOINT = "http://127.0.0.1:18787";
 /** The request budget the extension's own `config.yaml` ships, in milliseconds. */
 const SHIPPED_TIMEOUT_MS = 1000;
 /** The requirement under test, as the extension declares it. */

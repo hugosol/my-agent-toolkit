@@ -43,7 +43,7 @@ const DISCONNECTING = "正在断开 herdr-bot 面板，请稍后重试";
 /** What a session without a UI is told when an activation is attempted. */
 const NO_UI_REFUSAL = "当前模式无 UI，不支持接入面板";
 /** The endpoint the extension's own `config.yaml` ships; the file is the only source. */
-const ENDPOINT = "http://127.0.0.1:8787";
+const ENDPOINT = "http://127.0.0.1:18787";
 /** The request budget the same file ships, in milliseconds. */
 const SHIPPED_TIMEOUT_MS = 1000;
 

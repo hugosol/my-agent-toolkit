@@ -146,6 +146,12 @@ marker after it, and the failure feedback with no marker. Prepare a throwaway de
 isolated panel; do not point any of this at the formal panel, the default agent state or a running
 session.
 
+The real-panel test helper copies the sibling checkout's `meta-data/bot-options.toml` into each
+run's temporary working directory. Current herdr-bot requires that catalog at startup; relative
+paths resolve from the process working directory, not from `--config`. Only the delivered metadata
+is copied: `.data/` and all runtime state stay isolated. `HERDR_BOT_BINARY` overrides the executable,
+not the catalog source, so it must accept the current sibling checkout's metadata format.
+
 ```bash
 ACCEPT_ROOT=.cache/connect-bot-accept
 mkdir -p "$ACCEPT_ROOT/agent-state" "$ACCEPT_ROOT/sessions" "$ACCEPT_ROOT/work" \
@@ -155,9 +161,13 @@ mkdir -p "$ACCEPT_ROOT/agent-state" "$ACCEPT_ROOT/sessions" "$ACCEPT_ROOT/work" 
 cp -r framework adapters entrypoints "$ACCEPT_ROOT/deployment/"
 cp -r extensions/connect-bot "$ACCEPT_ROOT/deployment/extensions/"
 
-# An isolated herdr-bot: its own config on a port no formal panel uses, mDNS off.
+# An isolated herdr-bot: its own metadata and working directory, mDNS off.
+# Reserve 18788 for this run; the formal panel uses 18787.
+mkdir -p "$ACCEPT_ROOT/panel/meta-data"
+cp ../herdr-bot/meta-data/bot-options.toml "$ACCEPT_ROOT/panel/meta-data/"
+PANEL_BINARY=$(realpath "${HERDR_BOT_BINARY:-../herdr-bot/backend/target/release/herdr-bot.exe}")
 cat > "$ACCEPT_ROOT/panel/herdr-bot.toml" <<'TOML'
-listen_addr = "127.0.0.1:18787"
+listen_addr = "127.0.0.1:18788"
 
 [herdr]
 workspace_name = 'unused'
@@ -177,11 +187,10 @@ working_directory = '.'
 [mdns]
 enabled = false
 TOML
-"${HERDR_BOT_BINARY:-../herdr-bot/backend/target/release/herdr-bot.exe}" \
-  --config "$ACCEPT_ROOT/panel/herdr-bot.toml"
+(cd "$ACCEPT_ROOT/panel" && "$PANEL_BINARY" --config herdr-bot.toml)
 
 # In another terminal, point only the deployment copy at that panel.
-printf 'endpoint: "http://127.0.0.1:18787"\nrequestTimeoutMs: 1000\n' \
+printf 'endpoint: "http://127.0.0.1:18788"\nrequestTimeoutMs: 1000\n' \
   > "$ACCEPT_ROOT/deployment/extensions/connect-bot/config.yaml"
 ```
 
@@ -261,8 +270,8 @@ the smoke list.
    `my-agent-toolkit/extensions/connect-bot/config.yaml`, and the framework reads and validates that
    file before the extension registers anything: a missing or illegal file refuses the extension instead
    of letting it connect to an invented address. The committed file points at the panel on the same
-   host (`http://127.0.0.1:8787`) instead of the old `config.json`'s `http://omp-bot.local:8787`: the
-   panel listens on `0.0.0.0:8787`, a loopback address answers in milliseconds, and resolving the mDNS
+   host (`http://127.0.0.1:18787`) instead of the old `config.json`'s `http://omp-bot.local:8787`: the
+   panel listens on `0.0.0.0:18787`, a loopback address answers in milliseconds, and resolving the mDNS
    name can take longer than the configured request budget on first use (1000ms as shipped, which reads
    as a failed arm). Copy the old value only when the panel runs on another host; then write the address
    this machine can reach. There is no automatic conversion and no state migration — the new

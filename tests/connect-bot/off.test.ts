@@ -33,7 +33,7 @@ const MARKER_AREA_PLACEMENT = "aboveEditor";
 /** The extension's marker text: what the area shows while `enabled`. */
 const MARKER_TEXT = "◐ connectBot";
 /** The endpoint the extension's own `config.yaml` ships; the file is the only source. */
-const ENDPOINT = "http://127.0.0.1:8787";
+const ENDPOINT = "http://127.0.0.1:18787";
 /** The owner key the framework resolves for one main session. */
 const ownerKey = (sessionId: string) => `main:${sessionId}`;
 
