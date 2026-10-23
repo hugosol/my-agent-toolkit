@@ -1,5 +1,3 @@
-// Initialize Node text imports before loading the unchanged shared definition.
-import "../../../adapters/pi/native/core/extensions/text-imports";
 import { piAdapter } from "../../../adapters/pi";
 import type { PiExtensionApi } from "../../../adapters/pi";
 import { CODEBASE_TOOLS } from "../definition";

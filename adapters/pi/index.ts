@@ -9,6 +9,8 @@
  * source-owned mapping under `native/`, `thirdParty/pi-subagents/` or `mixture/`; `port.ts`
  * binds those mappings without interpreting their protocols.
  */
+// Install Pi's Node text loading before a consumer's subsequent shared-definition imports.
+import "./native/core/extensions/text-imports";
 import { createAssemblyBinding } from "../../framework/behaviors/assembly";
 import type { ExtensionAssembly } from "../../framework/interface/details/implementation";
 import type { ExtensionDefinition } from "../../framework/interface/details/definition";

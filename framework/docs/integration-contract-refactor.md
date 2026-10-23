@@ -87,11 +87,11 @@ extension 对 interface 的调用、声明、订阅、读取
 
 ### 3.5 Adapter 侧可检查组装（后续已完成）
 
-新增内部 authoring 辅助 [`framework/runtime/adapter-authoring.ts`](../runtime/adapter-authoring.ts)，没有增加第二套 adapter 接口。共同契约仍是 `HarnessPort`，原生映射仍按各自 `domain/` 分类组织。
+新增内部 authoring 辅助 [`framework/runtime/adapter-authoring.ts`](../runtime/adapter-authoring.ts)，没有增加第二套 adapter 接口。共同契约仍是 `HarnessPort`；映射现按实际来源组织，见[adapter 导航](framework-capabilities.md#adapter-implementation-navigation)，不再使用旧 `domain/` 分类。
 
 - OMP、pi 的顶层 `port.ts` 分别导出 `OMP_PORT`、`PI_PORT`，由 `defineAdapterPort<Context>({...})` 定义实际组装。
 - 组装必须明确列出全部 `HarnessPort` 成员，包括可选项。必需成员只能提供符合契约的工厂；静态不提供的可选项使用 `unavailablePortMember(reason)`，不使用空函数冒充实现。
-- `bindings` 是 `.create(context)` 真正消费的工厂集合，不是平行的人工供给清单。定义创建时不执行工厂；每次 native binding 创建时，按定义顺序调用工厂。原生上下文、tracker、State entry、诊断与订阅的生命周期仍由原来的 adapter/domain 实现管理。
+- `bindings` 是 `.create(context)` 真正消费的工厂集合，不是平行的人工供给清单。定义创建时不执行工厂；每次 native binding 创建时，按定义顺序调用工厂。原生上下文、tracker、State entry、诊断与订阅的生命周期仍由各自 adapter 来源实现及原 binding 拥有者管理，不因来源重组改变。
 - 条件可用性不等于静态不支持：例如 pi 未配置子代理 integration 时，其工厂返回 `undefined`，物化结果不含该可选成员；已提供的查询在某次调用时读不到事实，也不等于缺少查询实现。
 - 不提供的原因描述当前 adapter 接入，不应据此推断 harness 原生功能一定不存在。
 - Session、Round、Turn、Context、Input、Run、Command 及 pi Disposal 的原生最终交付构造使用 `defineAdapterDelivery(kind, payload)`。该入口引用原有规范类型，使 delivery 内的效果与查询回调有明确的构造落点；不复制、冻结或改变 payload，也不增加第二次分发。

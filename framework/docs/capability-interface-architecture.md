@@ -37,7 +37,7 @@ framework 是一份共享源码，被多个 harness 复用。架构要同时成�
 native harness
       │  native API
       ▼
-adapters/<harness>/domain/* + internal/port
+adapters/<harness>/native + thirdParty/mixture（仅有实际职责时）→ port.ts
       │  框架语义事实与效果
       │  (HarnessPort)
       ▼
@@ -83,7 +83,7 @@ interface 是 extension-facing 类型的 canonical 来源，不是内部 module 
 
 ### 2.4 adapter 已经翻译，framework 不再抽象一次
 
-`adapters/<harness>/domain/*` 把 native harness 的事实和效果翻译成 framework 语义事实和效果。等 framework runtime 收到它们时，已经是框架形状：`SessionDelivery`、`RoundObservation`、`TurnSignal`、`ProviderAccess`、`CatalogPriceSource`、`ViewedSessionPort`、`SubagentIntegration` 等。
+`adapters/<harness>/native/` 以及实际需要的 `thirdParty/`、`mixture/` 把各自来源的事实和效果翻译成 framework 语义事实和效果；顶层私有 `port.ts` 只绑定映射，公共 `index.ts` 保留原 assembly 用法。来源方向和完整协议划分见[接入指南](harness-integration.md#4-按实际来源组织-adapter)，实际路径见[adapter 导航](framework-capabilities.md#adapter-implementation-navigation)。等 framework runtime 收到它们时，已经是框架形状：`SessionDelivery`、`RoundObservation`、`TurnSignal`、`ProviderAccess`、`CatalogPriceSource`、`ViewedSessionPort`、`SubagentIntegration` 等。
 
 `HarnessPort` 是 adapter 实现的 framework 定义 port，不是第二层翻译。另加一个 `framework/adapter.ts` 抽象只会把类型搬到另一个路径，不会减少 adapter 工作、增加 extension leverage 或集中复杂度。它过不了 deletion test。
 
