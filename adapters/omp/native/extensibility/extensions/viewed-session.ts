@@ -1,5 +1,7 @@
 /**
- * OMP Viewed session: the facts the host's public outlet publishes about the session it
+ * OMP's optional native Viewed-session variant, supplied by the existing approved host patch
+ * (`extensibility/extensions/types.ts` and `viewed-session.ts`), never a third-party provider.
+ * The facts the host's public outlet publishes about the session it
  * displays, the one native subscription a binding keeps on that outlet, and the framework
  * listeners that subscription feeds.
  *
@@ -7,10 +9,10 @@
  * this module is pointed at it; the marker area's transport is injected per delivery so nothing
  * in this module names a native widget.
  */
-import type { MarkerTransport, ViewedSessionPort } from "../../../../framework/runtime/port";
-import type { ContextTracker } from "../context/queries";
-import type { OmpExtensionApi, OmpSessionContext } from "../../internal/native";
-import { viewedOwnerOf } from "./queries";
+import type { MarkerTransport, ViewedSessionPort } from "../../../../../framework/runtime/port";
+import type { ContextTracker } from "../../../domain/context/queries";
+import type { OmpExtensionApi, OmpSessionContext } from "../../../internal/native";
+import { viewedOwnerOf } from "../../../domain/session/queries";
 
 /**
  * The facts the host's public Viewed session outlet publishes about the session it displays.

@@ -12,7 +12,7 @@
 import type { OwnerReference } from "../../../../framework/interface/state";
 import { defineAdapterDelivery } from "../../../../framework/runtime/adapter-authoring";
 import type { SessionContextObservation } from "../../../../framework/runtime/port";
-import { feedbackTransport } from "../feedback";
+import { feedbackTransport } from "../../native/extensibility/extensions/feedback";
 import type { OmpExtensionApi, OmpSessionContext } from "../../internal/native";
 import { sessionFactsOf } from "../session/queries";
 

@@ -25,8 +25,8 @@ import type { HarnessPort } from "../../../framework/runtime/port";
 import { observeSessionContext } from "../domain/context/events";
 import { createContextTracker, type ContextTracker } from "../domain/context/queries";
 import { registerControl } from "../domain/control";
-import { feedbackTransport } from "../domain/feedback";
-import { markerTransport } from "../domain/marker";
+import { feedbackTransport } from "../native/extensibility/extensions/feedback";
+import { markerTransport } from "../native/extensibility/extensions/marker";
 import type { OmpExtensionApi, OmpSessionContext } from "./native";
 import type { OmpProviderFacts } from "../domain/provider";
 import { observeRunInitiation } from "../domain/prompt";
@@ -39,7 +39,7 @@ import {
 	type SessionEventContext,
 } from "../domain/session/events";
 import { ownerReferenceOf } from "../domain/session/queries";
-import { createViewedSession } from "../domain/session/viewed-session";
+import { createViewedSession } from "../native/extensibility/extensions/viewed-session";
 import { subagentIntegrationOf } from "../domain/subagent/queries";
 
 /** The process-level readers every binding of one assembly answers through. */

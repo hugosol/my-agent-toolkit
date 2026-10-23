@@ -126,7 +126,10 @@ interface NativeDouble {
  * the same displayed target, and one subscription carries its changes. The agent registry is the
  * harness's own graph, which is what resolves a displayed subagent's Owner.
  */
-function nativeDouble(): NativeDouble {
+function nativeDouble(options: {
+	readonly viewedOutlet?: boolean;
+	readonly readViewed?: () => OmpViewedSessionFacts;
+} = {}): NativeDouble {
 	const registrations = new Map<string, { readonly handler: (args: string, ctx: OmpCommandContext) => void }>();
 	const sessionHandlers: Array<{ readonly event: NativeSessionEvent; readonly handler: SessionHandler }> = [];
 	const runHooks: RunInitiationHandler[] = [];
@@ -165,11 +168,13 @@ function nativeDouble(): NativeDouble {
 				widgets.push({ key, lines: content, placement: options?.placement });
 			},
 		},
-		getViewedSession: () => factsOf(viewed),
-		subscribeViewedSessionChanged: listener => {
-			viewers.add(listener);
-			return () => viewers.delete(listener);
-		},
+		...(options.viewedOutlet === false ? {} : {
+			getViewedSession: options.readViewed ?? (() => factsOf(viewed)),
+			subscribeViewedSessionChanged: (listener: (facts: OmpViewedSessionFacts) => void) => {
+				viewers.add(listener);
+				return () => viewers.delete(listener);
+			},
+		}),
 	});
 
 	const api: OmpExtensionApi = {
@@ -262,6 +267,108 @@ function armedOwner(): NativeDouble {
 	expect(lastRender(double)).toEqual(["◈ follow", "◐ none"]);
 	return double;
 }
+
+// Source-aligned migration S1: absent outlet means the delivery's seat, not an unresolved
+// displayed target. A plausible violation is treating the optional method's absence as an
+// invalid target and clearing an enabled Owner. Public widget output distinguishes these.
+describe("OMP native Viewed-session variants preserve their distinct projections (P7, P15)", () => {
+	test("without the outlet, deliveries project their own session and never subscribe", () => {
+		const double = nativeDouble({ viewedOutlet: false });
+		double.bind(FOLLOW);
+		double.bind(NONE);
+		double.deliverSession(MAIN, "session_start");
+		double.toggle(MAIN, "aaa-follow-toggle");
+		double.toggle(MAIN, "zzz-none-toggle");
+		expect(lastRender(double)).toEqual(["◈ follow", "◐ none"]);
+		double.deliverRun(SUB);
+		expect(lastRender(double)).toEqual(["◈ follow"]);
+		double.deliverRun(MAIN);
+		expect(lastRender(double)).toEqual(["◈ follow", "◐ none"]);
+		expect(double.viewers.size).toBe(0);
+	});
+
+	// Registry labels are not session identity. Even a known Main label or a child whose
+	// parent looks hierarchical cannot supply the missing actual target/ancestor identity.
+	test("unavailable identity never borrows the Main label or a hierarchical parent name", () => {
+		const double = armedOwner();
+		double.show({ kind: "main", sessionId: "" });
+		expect(lastRender(double)).toBeUndefined();
+		double.show({ kind: "sub", sessionId: "orphan", parentId: "Main.lookalike" });
+		expect(lastRender(double)).toBeUndefined();
+		double.show(MAIN_VIEWED);
+		expect(lastRender(double)).toEqual(["◈ follow", "◐ none"]);
+	});
+
+	// Keep the real adapter/framework projection path: only the native outlet throws.
+	// Swallowing/retrying that read would hide or duplicate this exact external error.
+	test("an outlet read failure propagates unchanged without retrying or corrupting a later publication (P13)", () => {
+		const failure = new Error("native viewed read failed");
+		let fail = false;
+		let failedReads = 0;
+		const session: Session = { sessionId: "viewed-read-failure", kind: "main" };
+		const double = nativeDouble({
+			readViewed: () => {
+				if (fail) {
+					failedReads += 1;
+					throw failure;
+				}
+				return { agent: { kind: "main", id: "Main" }, sessionId: session.sessionId };
+			},
+		});
+		double.bind(FOLLOW);
+		double.deliverSession(session, "session_start");
+		double.toggle(session, "aaa-follow-toggle");
+		fail = true;
+		let caught: unknown;
+		try {
+			double.show(SUB_VIEWED);
+		} catch (error) {
+			caught = error;
+		}
+		expect(caught).toBe(failure);
+		expect(failedReads).toBe(1);
+		fail = false;
+		double.show(MAIN_VIEWED);
+		expect(lastRender(double)).toEqual(["◈ follow"]);
+	});
+
+	// Snapshot callbacks before unsubscribe to model a native delivery already queued. Merely
+	// checking subscriber counts would miss a late callback still publishing a disposed binding.
+	test("released bindings ignore queued view callbacks while a separate binding keeps projecting (P10, P14)", () => {
+		const disposed = armedOwner();
+		const queued = [...disposed.viewers];
+		const live = nativeDouble();
+		live.bind(FOLLOW);
+		live.show(OTHER_VIEWED);
+		live.deliverSession(OTHER_MAIN, "session_start");
+		live.toggle(OTHER_MAIN, "aaa-follow-toggle");
+		disposed.deliverSession(MAIN, "session_shutdown");
+		expect(disposed.viewers.size).toBe(0);
+		const before = disposed.widgets.length;
+		for (const callback of queued) callback({ agent: { kind: "main", id: "Main" }, sessionId: MAIN_SESSION_ID });
+		expect(disposed.widgets.length).toBe(before);
+		expect(disposed.viewers.size).toBe(0);
+		const liveBefore = live.widgets.length;
+		live.show(OTHER_VIEWED);
+		expect(live.widgets.length).toBeGreaterThan(liveBefore);
+		expect(lastRender(live)).toEqual(["◈ follow"]);
+		live.toggle(OTHER_MAIN, "aaa-follow-toggle");
+		expect(lastRender(live)).toBeUndefined();
+	});
+
+	// Existing defect, explicitly excluded from this structural migration by the scope decision
+	// recorded in ticket07: a late native run records context and watch reopens subscriptions.
+	// Keep the required outcome visible and failing; do not turn the leak into accepted behavior.
+	test("a native run arriving after release must not reopen Viewed-session subscriptions (P14, known existing defect)", () => {
+		const double = armedOwner();
+		double.deliverSession(MAIN, "session_shutdown");
+		expect(double.viewers.size).toBe(0);
+		const before = double.widgets.length;
+		double.deliverRun(MAIN);
+		expect(double.widgets.length).toBe(before);
+		expect(double.viewers.size).toBe(0);
+	});
+});
 
 describe("the area projects the displayed session's own effective State (P27)", () => {
 	test("a displayed subagent shows the Owner's current value where the field follows and the declared default where it does not", () => {

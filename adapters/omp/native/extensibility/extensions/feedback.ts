@@ -8,9 +8,9 @@
  * in the severity the UI shows. Their upper-level responsibilities and lifetimes stay distinct; this
  * module decides neither what to say nor when.
  */
-import type { FeedbackLevel, FeedbackTransport } from "../../../framework/interface/feedback";
-import type { NoticeTransport } from "../../../framework/runtime/port";
-import type { OmpSessionContext } from "../internal/native";
+import type { FeedbackLevel, FeedbackTransport } from "../../../../../framework/interface/feedback";
+import type { NoticeTransport } from "../../../../../framework/runtime/port";
+import type { OmpSessionContext } from "../../../internal/native";
 
 /**
  * Publishes one operator-facing line on the session's own channel: the UI notification

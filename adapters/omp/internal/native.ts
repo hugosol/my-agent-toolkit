@@ -7,7 +7,8 @@
  * the port the assembly builds from them. They live here rather than in the entry because every
  * feature module reads the same facts and none of them may depend on the assembly that wires them.
  */
-import type { OmpViewedSessionFacts } from "../domain/session/viewed-session";
+import type { OmpViewedSessionFacts } from "../native/extensibility/extensions/viewed-session";
+import type { OmpUiContext } from "../native/extensibility/extensions/ui";
 import type { OmpSessionEvent, OmpSessionEventType } from "../domain/session/events";
 
 /**
@@ -38,20 +39,6 @@ export interface OmpSessionEntry {
 	readonly message?: { readonly role?: string };
 }
 
-/**
- * The native UI surface an extension context exposes. Only the used members are named;
- * they are no-ops when the session runs without a UI.
- */
-export interface OmpUiContext {
-	/** Shows a notification to the user. */
-	notify(message: string, type?: "info" | "warning" | "error"): void;
-	/** Sets one widget in the editor area, or clears it when `content` is undefined. */
-	setWidget(
-		key: string,
-		content: readonly string[] | undefined,
-		options?: { readonly placement?: "aboveEditor" | "belowEditor" },
-	): void;
-}
 
 /**
  * The native session facts the adapter reads: which session is current, what its branch

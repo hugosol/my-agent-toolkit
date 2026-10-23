@@ -28,8 +28,8 @@ import type { SessionEvent, SessionStartReason } from "../../../../framework/int
 import type { OwnerReference } from "../../../../framework/interface/state";
 import { defineAdapterDelivery } from "../../../../framework/runtime/adapter-authoring";
 import type { HarnessPort } from "../../../../framework/runtime/port";
-import { feedbackTransport, noticeTransport } from "../feedback";
-import { markerTransport } from "../marker";
+import { feedbackTransport, noticeTransport } from "../../native/extensibility/extensions/feedback";
+import { markerTransport } from "../../native/extensibility/extensions/marker";
 import type { OmpExtensionApi, OmpSessionContext } from "../../internal/native";
 import type { OmpStateEntry } from "./effects";
 import { sessionFactsOf, startReasonOf, statePayloadsOf } from "./queries";

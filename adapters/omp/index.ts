@@ -2,10 +2,10 @@
  * The OMP adapter entry and assembly.
  *
  * This module only assembles: the process-level readers an extension's factory is handed and the
- * harness-independent binding life shared by both adapters. The native mappings live under `domain/` —
- * `internal/port.ts` composes the seam, `domain/context/` and `domain/session/` own their own reads and
- * event mappings, and `domain/provider.ts`, `domain/feedback.ts`, `domain/marker.ts`,
- * `domain/control.ts` and `domain/prompt.ts` own the native facts they translate.
+ * harness-independent binding life shared by both adapters. `internal/port.ts` composes the seam;
+ * `domain/context/` and `domain/session/` own their own reads and
+ * event mappings. `native/extensibility/extensions/` owns extension UI feedback, the marker widget
+ * and the optional native Viewed-session variant; the remaining domain modules own their mappings.
  *
  * It carries no extension semantics: what to register comes from the definition, whether it may be
  * registered is decided by the harness-independent behavior, and what a command does is the
@@ -42,10 +42,10 @@ export type {
 	OmpSdkSurface,
 	OmpSessionContext,
 	OmpSessionEntry,
-	OmpUiContext,
 } from "./internal/native";
+export type { OmpUiContext } from "./native/extensibility/extensions/ui";
 export type { OmpSessionEvent, OmpSessionEventType, OmpSessionReason } from "./domain/session/events";
-export type { OmpViewedSessionFacts } from "./domain/session/viewed-session";
+export type { OmpViewedSessionFacts } from "./native/extensibility/extensions/viewed-session";
 
 /**
  * Re-exported because it is what {@link OmpExtensionFactory} returns.

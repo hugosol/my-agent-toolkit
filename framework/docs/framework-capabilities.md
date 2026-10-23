@@ -187,8 +187,8 @@ registry. Extension-specific presentation stays outside these adapters.
 | Provider | Catalog price queries and current provider address/credential queries, mapped to framework facts | [`domain/provider.ts`](../../adapters/omp/domain/provider.ts) | [`native/core/model-registry.ts`](../../adapters/pi/native/core/model-registry.ts) |
 | Control | Native command registration and invocation mapping | [`domain/control.ts`](../../adapters/omp/domain/control.ts) | [`native/core/extensions/commands.ts`](../../adapters/pi/native/core/extensions/commands.ts) |
 | Prompt | Native run-initiation mapping and injected-message result | [`domain/prompt.ts`](../../adapters/omp/domain/prompt.ts) | [`native/core/extensions/prompt.ts`](../../adapters/pi/native/core/extensions/prompt.ts) |
-| Feedback | Extension feedback and framework notice effects; UI or stderr | [`domain/feedback.ts`](../../adapters/omp/domain/feedback.ts) | [`domain/feedback.ts`](../../adapters/pi/domain/feedback.ts) |
-| Marker | Marker area widget effect; absent on surfaces without UI | [`domain/marker.ts`](../../adapters/omp/domain/marker.ts) | [`domain/marker.ts`](../../adapters/pi/domain/marker.ts) |
+| Feedback | Extension feedback and framework notice effects; UI or stderr | [`native/extensibility/extensions/feedback.ts`](../../adapters/omp/native/extensibility/extensions/feedback.ts) | [`domain/feedback.ts`](../../adapters/pi/domain/feedback.ts) |
+| Marker | Marker area widget effect; absent on surfaces without UI | [`native/extensibility/extensions/marker.ts`](../../adapters/omp/native/extensibility/extensions/marker.ts) | [`domain/marker.ts`](../../adapters/pi/domain/marker.ts) |
 
 Subagent relations are not Session identity: Session consumes those relations for its own facts and
 Owner mapping. OMP observes child Session/Turn/Round through the same subscriptions as main sessions,
@@ -407,8 +407,11 @@ pairing and rename observations. Its active Owner key lives once per binding, wh
 lives once per observation subscription. Owner is the State-owning main session (a main session owns
 itself), not the immediate Parent agent.
 
-[`adapters/omp/domain/session/viewed-session.ts`](../../adapters/omp/domain/session/viewed-session.ts) owns the Viewed session native
-facts, subscription re-pointing and last-listener release. The assembly keeps one latest actual
+[`adapters/omp/native/extensibility/extensions/viewed-session.ts`](../../adapters/omp/native/extensibility/extensions/viewed-session.ts)
+owns the optional native Viewed-session variant's facts, subscription re-pointing and last-listener
+release. Like feedback and markers, its source coordinate is the extension contract, not the TUI
+controller that ultimately renders it. The variant requires the existing approved host patch; it is
+not a third-party provider and the unpatched harness continues to project each delivery's own seat. The assembly keeps one latest actual
 delivery context: both this module and context-free Subagent observations read that same source.
 Viewing grants no State-write authority. `internal/port.ts` connects the native mappings and owns binding-scoped
 diagnostic deduplication; `context/queries.ts` keeps the binding's newest context and reads idle facts,
