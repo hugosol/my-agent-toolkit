@@ -6,7 +6,8 @@
  *
  * This entry is assembly only: the process-scoped readings this host offers are built once, the
  * binding life is the framework's shared assembly helper, and each axis of the port lives in a
- * capability domain under `domain/`; `internal/` holds this entry's binding support.
+ * source-owned mapping under `native/`, `thirdParty/pi-subagents/` or `mixture/`; `port.ts`
+ * binds those mappings without interpreting their protocols.
  */
 import { createAssemblyBinding } from "../../framework/behaviors/assembly";
 import type { ExtensionAssembly } from "../../framework/interface/details/implementation";
@@ -14,14 +15,14 @@ import type { ExtensionDefinition } from "../../framework/interface/details/defi
 import type { AdapterFactory } from "../../framework/runtime/adapter-authoring";
 import type { HarnessPort } from "../../framework/runtime/port";
 import type { PiExtensionApi, PiExtensionFactory } from "./internal/native";
-import { createPiPort, type PiPortWithSubagents, type PiPortWithoutSubagents } from "./internal/port";
+import { createPiPort, type PiPortWithSubagents, type PiPortWithoutSubagents } from "./port";
 import { piProviderFacts } from "./domain/provider";
-import { piSessionPositions } from "./domain/session/queries";
-import { piSessionFileAnchors } from "./domain/subagent/queries";
-import { createPiSubagentIntegration } from "./domain/subagent/integration";
+import { piSessionPositions } from "./native/core/session-manager/positions";
+import { piSessionFileAnchors } from "./native/core/session-manager/ancestry";
+import { createPiSubagentIntegration } from "./thirdParty/pi-subagents/integration";
 
 export * from "./internal/native";
-export type { PiPortWithSubagents, PiPortWithoutSubagents } from "./internal/port";
+export type { PiPortWithSubagents, PiPortWithoutSubagents } from "./port";
 export type { BindingResult } from "../../framework/runtime/port";
 
 /**

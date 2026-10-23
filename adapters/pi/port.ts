@@ -6,28 +6,26 @@
  * user input, commands, prompt planning and public effects each own a complete native
  * responsibility in their own module; no slice reaches into another axis's facts.
  */
-import { defineAdapterPort, unavailablePortMember } from "../../../framework/runtime/adapter-authoring";
-import type { ExtensionDefinition } from "../../../framework/interface/details/definition";
-import type { SessionFacts, SessionStartReason } from "../../../framework/interface/session";
-import type { OwnerReference } from "../../../framework/interface/state";
-import type { SubagentIntegration } from "../../../framework/interface/subagent";
-import type { HarnessPort, SessionDisposal } from "../../../framework/runtime/port";
-import { onPiSessionContext } from "../domain/context";
-import { registerPiCommand } from "../domain/control";
-import type { PiExtensionApi, PiExtensionContext } from "./native";
-import { onPiRunInitiation } from "../domain/prompt";
-import type { PiProviderFacts } from "../domain/provider";
-import { piStatePersistence, type PiStatePersistence } from "../domain/session/effects";
-import { onPiDisposal, onPiSession, onPiUserInput } from "../domain/session/events";
-import {
-	piSessionFactsOf,
-	piStateEntryType,
-	type PiSessionPosition,
-	type PiSessionPositions,
-} from "../domain/session/queries";
-import { onPiRound } from "../domain/session/round";
-import { onPiTurn } from "../domain/session/turn";
-import type { PiSubagentIntegration } from "../domain/subagent/integration";
+import { defineAdapterPort, unavailablePortMember } from "../../framework/runtime/adapter-authoring";
+import type { ExtensionDefinition } from "../../framework/interface/details/definition";
+import type { SessionFacts, SessionStartReason } from "../../framework/interface/session";
+import type { OwnerReference } from "../../framework/interface/state";
+import type { SubagentIntegration } from "../../framework/interface/subagent";
+import type { HarnessPort, SessionDisposal } from "../../framework/runtime/port";
+import { onPiSessionContext } from "./domain/context";
+import { registerPiCommand } from "./domain/control";
+import type { PiExtensionApi, PiExtensionContext } from "./internal/native";
+import { onPiRunInitiation } from "./domain/prompt";
+import type { PiProviderFacts } from "./domain/provider";
+import { piStatePersistence, type PiStatePersistence } from "./domain/session/effects";
+import { onPiDisposal, onPiUserInput } from "./native/core/extensions/session";
+import { onPiSession } from "./mixture/session-lifecycle";
+import { piStateEntryType } from "./domain/session/queries";
+import { piSessionFactsOf } from "./mixture/session-facts";
+import type { PiSessionPosition, PiSessionPositions } from "./native/core/session-manager/positions";
+import { onPiRound } from "./mixture/round";
+import { onPiTurn } from "./native/core/extensions/turn";
+import type { PiSubagentIntegration } from "./thirdParty/pi-subagents/integration";
 
 /** What the assembly supplies to build one binding's port. */
 export interface PiPortInput {
@@ -103,6 +101,7 @@ export interface PiPortContext {
 	resolveOwner(ctx: PiExtensionContext): OwnerReference;
 	positionOf(ctx: PiExtensionContext, reason?: SessionStartReason): PiSessionPosition;
 	sessionFactsOf(ctx: PiExtensionContext, reason?: SessionStartReason): SessionFacts;
+	sessionFactsAt(position: PiSessionPosition, ctx: PiExtensionContext, reason?: SessionStartReason): SessionFacts;
 }
 
 /**
@@ -230,5 +229,6 @@ function createPiPortContext(input: PiPortInput): PiPortContext {
 		resolveOwner: ctx => resolvedOwner(positionOf(ctx).owner),
 		positionOf,
 		sessionFactsOf: (ctx, reason) => piSessionFactsOf(positionOf(ctx, reason), ctx, reason),
+		sessionFactsAt: piSessionFactsOf,
 	};
 }

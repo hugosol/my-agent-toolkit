@@ -10,7 +10,7 @@
 import { defineAdapterDelivery } from "../../../framework/runtime/adapter-authoring";
 import type { HarnessPort } from "../../../framework/runtime/port";
 import type { PiExtensionContext } from "../internal/native";
-import type { PiPortContext } from "../internal/port";
+import type { PiPortContext } from "../port";
 import { feedbackTransport } from "./feedback";
 
 /** The context-reading axis of one binding's port. */

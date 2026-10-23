@@ -1,0 +1,51 @@
+{
+  "baseRevision": "f5c0fed617097aecae74d5a4ed2560958656ab11",
+  "scopeHash": {
+    "algorithm": "SHA256 of sorted UTF-8 relative path then raw source bytes, *.ts in adapters/pi + framework + extensions/model-cost",
+    "value": "1b29d8419d2103c3f1c277b571891265b6a34ecc018387f58df722c4b7cf82dc"
+  },
+  "platform": {
+    "os": "nt",
+    "node": "22.19.0",
+    "bun": "1.4.2",
+    "pi": "1.4.0"
+  },
+  "cli": {
+    "path": "D:\\nvm4w\\nodejs\\node_modules\\@earendil-works\\pi-coding-agent\\dist\\bundle\\cli.js",
+    "sha256": "e79626f2dd6f94aa45d30f3fa63cd84319a6eefcd150b353cfaf274366926774"
+  },
+  "provider": {
+    "version": "0.78.0",
+    "extensionEntry": "C:\\Users\\hugos\\AppData\\Local\\Temp\\pi-lifecycle-04-deployment-n0y5nf2k\\node_modules\\pi-subagents\\index.js",
+    "configurationRoot": "C:/Users/hugos/AppData/Local/Temp/pi-lifecycle-04-deployment-n0y5nf2k/node_modules/pi-subagents",
+    "packageSha256": "51f45f9dc332010927c81f826ef38ae294633acd464832d010b5f96881dabf7c"
+  },
+  "deployment": "C:\\Users\\hugos\\AppData\\Local\\Temp\\pi-lifecycle-04-deployment-n0y5nf2k",
+  "configuration": "Isolated deployment framework/config.yaml points to the same 0.78.0 package explicitly loaded by Pi. Original worktree/user configuration unchanged (its explicit provider is 0.80.0).",
+  "execution": "Local OpenAI-compatible capture, explicit extensions, isolated homes/agent-state/session/storage roots. No paid service or credentials.",
+  "quietWindow": "Four 04 smokes executed sequentially after 03 release. Integration-01 reported an already-running full suite during the blocking batch; possible cross-run load, no failures observed in these four runs.",
+  "foreground": {
+    "root": "C:/Users/hugos/AppData/Local/Temp/omp-dock-foreground-v1TFvn",
+    "parent": "01a169ac-b0c6-7450-9e91-ee039aa37f85",
+    "child": "01a169ac-ba09-700c-af55-f34e122588d8",
+    "runId": "e4aab0e7-80d9-47bd-9dfa-2755304bed88",
+    "agent": "scout",
+    "startup": "deepseek/deepseek-flash:low",
+    "requiredExtensions": [
+      "codebase-tools",
+      "model-cost"
+    ],
+    "launchContractDigest": "792bb9981cdcacce4d4459a494d28dc4ecebe94ebbd74740bfa1a70fce5163b1",
+    "providerAttestation": "rejected: Structured acceptance report not found. Scripted child response proves loading/accounting/observation, not delegate task acceptance or model quality."
+  },
+  "background": {
+    "root": "C:/Users/hugos/AppData/Local/Temp/omp-dock-background-Txsjcu",
+    "parent": "01a169ac-c123-701a-bb4d-fa6249f52708",
+    "child": "01a169ac-d91c-7005-af12-8d15df08def6"
+  },
+  "limits": [
+    "Exact Windows/Node/Pi/provider combination only, no support promotion.",
+    "RPC/headless runs do not verify interactive TUI behavior.",
+    "Other host/provider versions and real model-service behavior unverified."
+  ]
+}

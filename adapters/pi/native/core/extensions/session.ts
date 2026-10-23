@@ -12,15 +12,15 @@ import type {
 	SessionEvent,
 	SessionFacts,
 	SessionStartReason,
-} from "../../../../framework/interface/session";
-import type { OwnerReference } from "../../../../framework/interface/state";
-import { defineAdapterDelivery } from "../../../../framework/runtime/adapter-authoring";
-import type { HarnessPort } from "../../../../framework/runtime/port";
-import { feedbackTransport, noticeTransport } from "../feedback";
-import { markerTransport } from "../marker";
-import type { PiExtensionContext, PiSessionShutdownReason, PiSessionStartReason } from "../../internal/native";
-import type { PiPortContext } from "../../internal/port";
-import { piSessionFactsOf, piStatePayloadsOf } from "./queries";
+} from "../../../../../framework/interface/session";
+import type { OwnerReference } from "../../../../../framework/interface/state";
+import { defineAdapterDelivery } from "../../../../../framework/runtime/adapter-authoring";
+import type { HarnessPort } from "../../../../../framework/runtime/port";
+import { feedbackTransport, noticeTransport } from "../../../domain/feedback";
+import { markerTransport } from "../../../domain/marker";
+import type { PiExtensionContext, PiSessionShutdownReason, PiSessionStartReason } from "../../../internal/native";
+import type { PiPortContext } from "../../../port";
+import { piStatePayloadsOf } from "../../../domain/session/queries";
 
 const START_REASON: Record<PiSessionStartReason, SessionStartReason> = {
 	startup: "initial", reload: "initial", new: "new", resume: "resume", fork: "fork",
@@ -29,8 +29,14 @@ const END_REASON: Record<PiSessionShutdownReason, SessionEndReason> = {
 	quit: "disposed", reload: "disposed", new: "transferred", resume: "transferred", fork: "transferred",
 };
 
-/** The session axis of one binding's port. */
-export function onPiSession(context: PiPortContext): NonNullable<HarnessPort["onSession"]> {
+/** Operations paired with the native session transitions, before their semantic delivery. */
+export interface PiSessionLifecycle {
+	starting(sessionId: string): void;
+	ending(sessionId: string): void;
+}
+
+/** The native session axis; callers pair its transitions with any cross-source operations. */
+export function observePiSession(context: PiPortContext, lifecycle: PiSessionLifecycle): NonNullable<HarnessPort["onSession"]> {
 	return handler => {
 		const deliver = (
 			event: SessionEvent,
@@ -57,15 +63,13 @@ export function onPiSession(context: PiPortContext): NonNullable<HarnessPort["on
 			// than from a second reading of the session's lineage link.
 			const position = context.positionOf(ctx, reason);
 			const owner = context.resolvedOwner(position.owner);
-			const session = piSessionFactsOf(position, ctx, reason);
-			// The session this binding now serves requires this entry in the sessions it spawns,
-			// whether it is a top-level session or one that was itself spawned: a child's own
-			// children are spawned by the provider exactly as the root's are, and each session's
-			// requirement is released when that session's own life ends.
+			const session = context.sessionFactsAt(position, ctx, reason);
+			// Every actual session enters its own lifecycle, including a child whose Owner is
+			// inherited. Pair that entry before delivering its start.
 			if (owner.kind !== "owner") {
 				// A session that is not its own owner has no life of its own to pair: it is
 				// delivered with the owner it resolved and takes no part in the transfer below.
-				context.integration?.requireIn(session.sessionId);
+				lifecycle.starting(session.sessionId);
 				deliver({ kind: "session_start", reason }, owner, ctx, session);
 				return;
 			}
@@ -74,11 +78,11 @@ export function onPiSession(context: PiPortContext): NonNullable<HarnessPort["on
 			if (owner.key === context.state.activeOwner?.key) return;
 
 			const ended = context.state.activeOwner;
-			context.integration?.requireIn(session.sessionId);
+			lifecycle.starting(session.sessionId);
 			context.state.servingSessionId = session.sessionId;
 			context.state.activeOwner = { key: owner.key, session };
 			if (ended !== undefined) {
-				context.integration?.releaseSession(ended.session.sessionId);
+				lifecycle.ending(ended.session.sessionId);
 				deliver({ kind: "session_end", reason: "transferred" }, { kind: "owner", key: ended.key }, ctx, ended.session);
 			}
 			deliver({ kind: "session_start", reason }, owner, ctx, session);
@@ -89,10 +93,8 @@ export function onPiSession(context: PiPortContext): NonNullable<HarnessPort["on
 			// the round axis's late re-checks answer from once pi has spent the context, and it is
 			// a fact about this session rather than about the owner this binding serves.
 			context.endedSessions.add(session.sessionId);
-			// Whatever this binding required for the session that is going away is released with
-			// it, so a later session of this process states its own requirement rather than
-			// inheriting a spent one.
-			context.integration?.releaseSession(session.sessionId);
+			// Pair the session's own end before close-out and before the owner's end delivery.
+			lifecycle.ending(session.sessionId);
 			// A session really going away, reported where the host waits for it: pi awaits this
 			// handler, so what the framework's close-out owes — the round this session left behind,
 			// and the settlement of everything that edge reaches — is done before pi lets the

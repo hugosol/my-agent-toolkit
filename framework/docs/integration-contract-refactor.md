@@ -24,7 +24,7 @@ extension 对 interface 的调用、声明、订阅、读取
 
 - `framework/interface` 仍是 extension 使用的框架接口。
 - `framework/runtime/port.ts` 中的 `HarnessPort` 仍是 framework 定义的共同 adapter 契约。
-- `adapters/omp/internal/port.ts`、`adapters/pi/internal/port.ts` 负责组装各自实现；原生映射仍由 adapter 的 domain 模块承担。
+- `adapters/omp/internal/port.ts`、`adapters/pi/port.ts` 负责组装各自实现；原生映射仍由 adapter 的 domain 模块承担。
 - framework 内部负责语义合成、状态维护和事件交付，不是将 extension 调用简单转发给原生 harness。
 - 不新增按 extension 划分的 port、运行时能力注册表或第二层 adapter 接口。
 - extension 的原生 widget 等直接对接 harness 的定制功能，不纳入后续框架能力清单。
@@ -224,7 +224,7 @@ agent 可以先筛选风险，但不得编造历史理由，也不能把“未�
 **本次增量范围：**
 
 - 8 个生产文件：`framework/runtime/adapter-authoring.ts`、`adapters/pi/index.ts`、
-  `adapters/pi/internal/port.ts`、`scripts/integrations/model.ts`、
+  `adapters/pi/port.ts`、`scripts/integrations/model.ts`、
   新增 `scripts/integrations/assembly.ts`、`scripts/integrations/supply.ts`、
   `scripts/integrations/check.ts`、`scripts/generate-adapter-integrations.ts`。
 - 4 个测试文件：新增 assembly 输出与 pi 输出契约测试，扩展现有 fixture 与 CLI 验收。
