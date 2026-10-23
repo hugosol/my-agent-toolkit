@@ -12,7 +12,7 @@
 import type { SessionFacts, TurnOutcome, TurnUsage } from "../../../../framework/interface/session";
 import { defineAdapterDelivery } from "../../../../framework/runtime/adapter-authoring";
 import type { HarnessPort, TurnSignalFacts } from "../../../../framework/runtime/port";
-import { feedbackTransport } from "../feedback";
+import { feedbackTransport } from "../../native/core/extensions/ui";
 import type { PiAssistantMessage, PiExtensionApi, PiExtensionContext } from "../../native/core/extensions/types";
 import type { PiPortContext } from "../../internal/port";
 

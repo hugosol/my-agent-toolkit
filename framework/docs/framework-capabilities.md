@@ -177,7 +177,11 @@ The map below locates the implementations of each framework responsibility; it d
 both harnesses to share a directory taxonomy. Pi's State protocol belongs to its native session
 manager, while its commands, prompt delivery, context readings and structural API types belong to
 the native extension contract. Catalog prices and current access belong to the native model
-registry. Extension-specific presentation stays outside these adapters.
+registry. Pi Marker area and feedback effects share `native/core/extensions/ui.ts` because the
+consumed contract is `ExtensionUIContext` in Pi's `core/extensions/types.ts`, not the TUI's final
+interactive-mode implementation. Pi still has no Viewed-session outlet: Marker area projection
+uses the delivery's existing actual-session position. Extension-specific presentation stays outside
+these adapters.
 
 | Domain | Mapping responsibility | OMP | pi |
 | --- | --- | --- | --- |
@@ -187,8 +191,8 @@ registry. Extension-specific presentation stays outside these adapters.
 | Provider | Catalog price queries and current provider address/credential queries, mapped to framework facts | [`domain/provider.ts`](../../adapters/omp/domain/provider.ts) | [`native/core/model-registry.ts`](../../adapters/pi/native/core/model-registry.ts) |
 | Control | Native command registration and invocation mapping | [`domain/control.ts`](../../adapters/omp/domain/control.ts) | [`native/core/extensions/commands.ts`](../../adapters/pi/native/core/extensions/commands.ts) |
 | Prompt | Native run-initiation mapping and injected-message result | [`domain/prompt.ts`](../../adapters/omp/domain/prompt.ts) | [`native/core/extensions/prompt.ts`](../../adapters/pi/native/core/extensions/prompt.ts) |
-| Feedback | Extension feedback and framework notice effects; UI or stderr | [`domain/feedback.ts`](../../adapters/omp/domain/feedback.ts) | [`domain/feedback.ts`](../../adapters/pi/domain/feedback.ts) |
-| Marker | Marker area widget effect; absent on surfaces without UI | [`domain/marker.ts`](../../adapters/omp/domain/marker.ts) | [`domain/marker.ts`](../../adapters/pi/domain/marker.ts) |
+| Feedback | Extension feedback and framework notice effects; UI or stderr | [`domain/feedback.ts`](../../adapters/omp/domain/feedback.ts) | [`native/core/extensions/ui.ts`](../../adapters/pi/native/core/extensions/ui.ts) |
+| Marker | Marker area widget effect; absent on surfaces without UI | [`domain/marker.ts`](../../adapters/omp/domain/marker.ts) | [`native/core/extensions/ui.ts`](../../adapters/pi/native/core/extensions/ui.ts) |
 
 Subagent relations are not Session identity: Session consumes those relations for its own facts and
 Owner mapping. OMP observes child Session/Turn/Round through the same subscriptions as main sessions,

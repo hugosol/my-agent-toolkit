@@ -7,7 +7,7 @@
  */
 import { defineAdapterDelivery } from "../../../../../framework/runtime/adapter-authoring";
 import type { HarnessPort } from "../../../../../framework/runtime/port";
-import { markerTransport } from "../../../domain/marker";
+import { markerTransport } from "./ui";
 import type { PiPortContext } from "../../../internal/port";
 
 /** The run-initiation axis of one binding's port. */
