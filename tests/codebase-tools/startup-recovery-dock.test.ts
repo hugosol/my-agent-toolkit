@@ -13,6 +13,7 @@
  * display stays human-led; what is asserted here is the adapter's own `setWidget` publication.
  */
 import { beforeAll, describe, expect, test } from "bun:test";
+import { copyFileSync } from "node:fs";
 import * as path from "node:path";
 import { INIT_PROMPT, REMINDER_PROMPT } from "../../extensions/codebase-tools/shared-logic/prompts";
 import { type IsolatedHarness, REPO_ROOT, ensureIsolatedHarness, readBaselineRecord } from "../harness-dock/baseline";
@@ -188,6 +189,49 @@ function requestAt(run: Run, index: number): CapturedRequest {
 	}
 	return request;
 }
+
+// Frozen by migration ticket01 from OMP 18.5.0 at source 89bd2d72, not written by this test.
+// S2 observes the real loader, native selected branch, persisted history and captured request.
+// Losing the State entry would omit the reminder and make the next command enable, not disable.
+test("pre-source-refactor OMP journal resumes without migration and preserves request/history order (P6, P8, P9)", async () => {
+	const run = createRun("source-refactor-historical-state");
+	const file = path.join(run.runRoot.sessionDir, "historical.jsonl");
+	copyFileSync(path.join(REPO_ROOT, "tests/codebase-tools/fixtures/omp-state-before-source-refactor.jsonl"), file);
+	const before = entriesOf(file);
+	let session: ControlledSession | undefined;
+	try {
+		session = await openSession(run, MANUAL_ENTRYPOINT, ["--session", file]);
+		expect((await session.prompt("post-refactor historical replay")).status).toBe("completed");
+		expect(statePayloadsOf(file)).toEqual([{ enabled: true }]);
+		expect(customMessages(entriesOf(file), INIT_IDENTITY)).toHaveLength(1);
+		expect(customMessages(entriesOf(file), REMINDER_IDENTITY)).toHaveLength(1);
+		const messages = (((requestAt(run, 0).json ?? {}) as CapturedBody).messages ?? []).map(message => messageText(message.content));
+		// The two current resource files have identical text. Journal identities above distinguish
+		// retained init from appended reminder; the request must carry both, in history order.
+		expect(messages.filter(text => text.includes(INIT_PROMPT))).toHaveLength(2);
+		// OMP may wrap user text with native request metadata; the historical words and their
+		// relative message order, not a Pi-shaped undecorated message, are the preserved contract.
+		const oldUser = messages.findIndex(text => text.includes("pre-refactor State compatibility sample"));
+		const oldReply = messages.findIndex(text => text.includes("dock-capture-reply"));
+		const newUser = messages.findIndex(text => text.includes("post-refactor historical replay"));
+		const historicalInit = messages.findIndex(text => text.includes(INIT_PROMPT));
+		const currentReminder = messages.length - 1;
+		expect(oldUser).toBeGreaterThanOrEqual(0);
+		expect(historicalInit).toBeGreaterThan(oldUser);
+		expect(oldReply).toBeGreaterThan(historicalInit);
+		expect(newUser).toBeGreaterThan(oldReply);
+		expect(currentReminder).toBeGreaterThan(newUser);
+		expect(lastMessageText(requestAt(run, 0))).toContain(REMINDER_PROMPT);
+		expect((await session.prompt(`/${COMMAND}`)).status).toBe("completed");
+		expect(notifications(session)).toEqual(["codeBaseTools disabled"]);
+		expect(statePayloadsOf(file)).toEqual([{ enabled: true }, { enabled: false }]);
+		expect((await session.stop()).exitCode).toBe(0);
+		expect(entriesOf(file).slice(0, before.length)).toEqual([...before]);
+	} finally {
+		await stopQuietly(session);
+		disposeRun(run);
+	}
+}, 300_000);
 
 describe("a session with no recorded value resumed at startup takes its own mode's default (P24, P9)", () => {
 	test("a manual session that recorded nothing becomes enabled when an independent process resumes it under the automatic entrypoint", async () => {

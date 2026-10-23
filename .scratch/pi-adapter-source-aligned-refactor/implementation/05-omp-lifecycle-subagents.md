@@ -27,6 +27,12 @@
 
 迭代运行受影响测试及 TypeScript 类型检查；完成时运行拥有分区、受影响消费方、适用真实 OMP dock／smoke 和终止场景。保留消费可见断言，不为搬迁削弱场景。记录命令、退出状态、源／环境和验证限制；替身、真实加载及结构供给分别记录。现存语义缺陷单独报告并请求范围决策，不顺手修复。共享 assembly 修改按 owner 和执行窗口协调，不添加仅由文件冲突导致的逻辑阻塞。
 
+### 第二轮合入冲突处置（2026-10-24）
+
+接管宿主 merge 的 `a7b1c13c547bc5a9a3f86c21d68a0269d0be6a9f`。保留本票完整原生 lifecycle／session-facts／Turn／Round、registry 和 session-entry 类型归属，同时保留集成侧 OMP 原生 State／command／prompt／context／provider、Pi UI 迁移及新增 retained-prompt disposal 场景；导航按两侧实际迁移结果组合，无旧路径转发。
+
+按本轮指令未重启全局验收。运行 `bun run typecheck && bun test tests/framework/injection.test.ts tests/framework/implementation-lifecycle.test.ts tests/framework/session.test.ts tests/framework/turn.test.ts tests/framework/round.test.ts`：首次在共享 panel fixture 的 Node/Bun Web Stream 类型交界报 TS2352，测试尚未执行；保留 `Readable.toWeb` 实际字节流，仅增加有注释的显式 `unknown` 类型桥。再次执行同命令 **exit 0**：authoring 61 files / 4 declarations / 0 diagnostics，定向 **105 pass / 0 fail，292 assertions，5 files**。不更改传输、生命周期语义或需求；等待宿主重新排队合入。
+
 ### 独立冲突处置与全局验收（2026-10-24）
 
 在原开发 worktree／原分支接管宿主已开始的 `921de1d861cc78797e758f7ddc01a3413e19fb54` merge；`framework-capabilities.md` 两块冲突合并保留本票 OMP 原生生命周期／registry 导航和集成侧 Pi 原生 State／context／provider／command／prompt 导航，merge 提交 `6e84c65`。采用 02 的共享验收设施修复 `257d84b`、`ec861fa`（本分支对应 `c736c8e`、`dae0b24`），未修改生命周期语义、测试断言或宿主补丁。

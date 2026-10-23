@@ -34,7 +34,6 @@ export interface OmpSessionEntry {
 	 */
 	readonly message?: { readonly role?: string };
 }
-
 /** The one State entry a binding restores from and writes to. */
 export interface OmpStateEntry {
 	/** The custom entry type session restoration reads and commands append. */

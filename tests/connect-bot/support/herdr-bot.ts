@@ -175,7 +175,9 @@ function panelEvents(endpoint: string, signal: AbortSignal): Promise<ReadableStr
 			reject(new Error(`the panel's read side returned HTTP ${response.statusCode} at ${endpoint}`));
 			return;
 		}
-		resolve(Readable.toWeb(response) as ReadableStream<Uint8Array>);
+		// IncomingMessage emits bytes and toWeb preserves them. Node and Bun declare
+		// different BYOB reader overloads for the same runtime Web Stream contract.
+		resolve(Readable.toWeb(response) as unknown as ReadableStream<Uint8Array>);
 	});
 	request.on("error", reject);
 	return promise;

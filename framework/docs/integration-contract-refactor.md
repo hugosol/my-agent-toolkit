@@ -24,7 +24,7 @@ extension 对 interface 的调用、声明、订阅、读取
 
 - `framework/interface` 仍是 extension 使用的框架接口。
 - `framework/runtime/port.ts` 中的 `HarnessPort` 仍是 framework 定义的共同 adapter 契约。
-- `adapters/omp/internal/port.ts`、`adapters/pi/internal/port.ts` 负责组装各自实现；原生映射仍由 adapter 的 domain 模块承担。
+- `adapters/omp/port.ts`、`adapters/pi/internal/port.ts` 负责组装各自实现；OMP 消费协议映射由 `native/extensibility/extensions/`、`native/session/session-manager.ts` 和 `native/config/model-registry.ts` 持有，port 不解释协议。
 - framework 内部负责语义合成、状态维护和事件交付，不是将 extension 调用简单转发给原生 harness。
 - 不新增按 extension 划分的 port、运行时能力注册表或第二层 adapter 接口。
 - extension 的原生 widget 等直接对接 harness 的定制功能，不纳入后续框架能力清单。
