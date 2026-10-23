@@ -6,8 +6,8 @@
  * native vocabulary — extensions that draw pi's own widgets describe their input with them — so
  * they live beside the mapping rather than inside the assembly entry.
  */
-import type { FeedbackLevel } from "../../../framework/interface/feedback";
-import type { BindingResult } from "../../../framework/runtime/port";
+import type { FeedbackLevel } from "../../../../../framework/interface/feedback";
+import type { BindingResult } from "../../../../../framework/runtime/port";
 
 // Structural native types keep the harness a loader-provided runtime dependency.
 export interface PiSessionEntry {

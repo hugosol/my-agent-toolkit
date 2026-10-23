@@ -12,16 +12,15 @@ import type { SessionFacts, SessionStartReason } from "../../../framework/interf
 import type { OwnerReference } from "../../../framework/interface/state";
 import type { SubagentIntegration } from "../../../framework/interface/subagent";
 import type { HarnessPort, SessionDisposal } from "../../../framework/runtime/port";
-import { onPiSessionContext } from "../domain/context";
-import { registerPiCommand } from "../domain/control";
-import type { PiExtensionApi, PiExtensionContext } from "./native";
-import { onPiRunInitiation } from "../domain/prompt";
-import type { PiProviderFacts } from "../domain/provider";
-import { piStatePersistence, type PiStatePersistence } from "../domain/session/effects";
+import { onPiSessionContext } from "../native/core/extensions/context";
+import { registerPiCommand } from "../native/core/extensions/commands";
+import type { PiExtensionApi, PiExtensionContext } from "../native/core/extensions/types";
+import { onPiRunInitiation } from "../native/core/extensions/prompt";
+import type { PiProviderFacts } from "../native/core/model-registry";
+import { piStateEntryType, piStatePersistence, type PiStatePersistence } from "../native/core/session-manager/state";
 import { onPiDisposal, onPiSession, onPiUserInput } from "../domain/session/events";
 import {
 	piSessionFactsOf,
-	piStateEntryType,
 	type PiSessionPosition,
 	type PiSessionPositions,
 } from "../domain/session/queries";

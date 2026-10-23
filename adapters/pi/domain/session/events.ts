@@ -18,9 +18,10 @@ import { defineAdapterDelivery } from "../../../../framework/runtime/adapter-aut
 import type { HarnessPort } from "../../../../framework/runtime/port";
 import { feedbackTransport, noticeTransport } from "../feedback";
 import { markerTransport } from "../marker";
-import type { PiExtensionContext, PiSessionShutdownReason, PiSessionStartReason } from "../../internal/native";
+import type { PiExtensionContext, PiSessionShutdownReason, PiSessionStartReason } from "../../native/core/extensions/types";
 import type { PiPortContext } from "../../internal/port";
-import { piSessionFactsOf, piStatePayloadsOf } from "./queries";
+import { piSessionFactsOf } from "./queries";
+import { piStatePayloadsOf } from "../../native/core/session-manager/state";
 
 const START_REASON: Record<PiSessionStartReason, SessionStartReason> = {
 	startup: "initial", reload: "initial", new: "new", resume: "resume", fork: "fork",
