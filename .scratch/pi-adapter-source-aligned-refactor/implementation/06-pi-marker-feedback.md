@@ -8,7 +8,7 @@
 
 **Blocked by:** 01: 固化迁移清单与重构前验证基线。
 
-**Status:** in-progress
+**Status:** closed
 
 ## 边界与覆盖
 
@@ -28,7 +28,7 @@
 
 ## Implementation and acceptance evidence
 
-实现及本票可执行验收完成，等待独立集成。`Status` 暂留 `in-progress`：仓库规则要求实现、测试且**合入**后才设为 `closed`；本执行未操作 dev 工作区或自行合入。
+实现及本票可执行验收完成。首次合入已由宿主完成，集成提交 `b38a209d0af48095b0ee7f39a94546677fa99330` 已 merge 回本票开发分支；独立集成接手后全局测试通过，故按仓库规则将 `Status` 设为 `closed`。本票代理未操作 dev 工作区或自行合入；本轮验收记录提交仍由宿主排队合并。
 
 - 原生 UI 映射集中为 `adapters/pi/native/core/extensions/ui.ts`，来源是 Pi `core/extensions/types.ts` 的 ExtensionUIContext，而非最终 TUI 执行位置。保留反馈、框架 warning 与 Marker transport 的原有行为；删除旧 `domain/feedback.ts`、`domain/marker.ts`，迁移全部当前调用者与辅助测试 import，更新 framework-capabilities 直接导航。UI／Widget／Theme／Component 类型已位于 `native/core/extensions/types.ts`，无需再拆分或转发。
 - P7：`tests/framework/pi-marker-feedback.test.ts` 经公开 `piAdapter` assembly 验证固定 widget key `semantic-extensions`、`aboveEditor`、按 extension id 排序、空区 clear、恢复有效 State、同名但不同实际会话、原生身份缺失时不造 Owner、子会话 delivery-position 的 follow/default 投影；覆盖 UI／noUI 三种 severity、通知不写入历史且不生成模型 contribution。原生 parent session 文件的 id 与文件名刻意不同；没有增加 Viewed-session outlet。
@@ -72,3 +72,15 @@ TDD：行为保持型迁移，先为既有行为增加 S1 覆盖并确认通过�
 已知验证边界：真实 smoke 使用 RPC，不是交互 TUI；noUI 的完整 severity／无 widget 分支由 S1 控制宿主事实验证。脚本预期最初写于 Pi 1.2.0，实际此次及基线均为 1.4.0，日志明确记载；不提升支持声明。Node24 的已有 Windows/libuv 退出问题不由本次 Node22 成功覆盖。账户 fixture 不证明真实余额／额度，定时 redraw 与 child 时长等脚本明示限制未扩张为通过。共享同一个 piAdapter factory 的 bindings 共用 framework implementation lifetime，不宣称它们具有独立 loader assembly 的释放语义；已向 Main 明确此区别。
 
 集成提示：04 将 session/turn 移到 `native/core/extensions/`、round 组合移到 `mixture/` 后，应保留本票 ui.ts 的直接 import，删除旧 domain transport 路径，不建立兼容转发；本票基于当前可用 Session／Owner 契约完成，没有依赖其路径先迁移。全仓最终集成验证由独立集成代理负责。
+
+### Independent integration acceptance
+
+接手原开发 worktree／branch 时，`git status --short --branch` 显示工作区干净、没有冲突；`git log -3 --oneline` 确认当前 HEAD 为宿主回合的 `b38a209`，父历史包含本票实现 `2fb5ce9`。本轮未切换分支、新建 worktree、reset、操作集成工作区或调用 retro。
+
+按 Main 队列，在 integrate05 明确释放后串行执行全局测试；测试期间源码与 fixtures 未改：
+
+- 首次 `bun run test`：exit 1，1518 pass / 103 fail，1621 tests / 184 files，350.94s。可见失败包括 OMP 在 ready 前退出，确切错误为 `Cannot find module './embedded-client.generated.txt'`（本地 `.cache/omp-baseline/18.5.0/node_modules/@oh-my-pi/omp-stats/src/server.ts`），以及 history-interop 要求安全壳的断言失败。完整工具输出：`artifact://297`。
+- 恢复本地测试环境而非修改生产代码或测试断言：从官方 `https://registry.npmjs.org/@oh-my-pi/omp-stats/-/omp-stats-18.5.0.tgz` 提取原始 `package/src/embedded-client.generated.txt`，实际长度为 0 bytes；tarball SHA512/base64 为 `z9yfQPotgV67146b0lnp8FmTzgT/zpzKKoETNZid51RWwF8n6H7lDzLPqgVlIfIDwBFY+3qaetD3bbmT6r6u7Q==`。恢复到 baseline 与三个本地 variant（`viewed-session`、`codex-response-boundary`、`viewed-session-codex-response`）的同一 package 路径。这是恢复原包丢失文件，不是伪造 fallback 或修改宿主契约。
+- 第二次 `bun run test` 设置 `HERDR_BOT_BINARY=E:/Developer/myhub/herdr-bot/backend/target/debug/examples/safe_shutdown_shell.exe`、`HERDR_BOT_METADATA=E:/Developer/myhub/herdr-bot/meta-data/bot-options.toml`：exit 0，**1634 pass / 0 fail，10043 expect() calls，184 files，530.65s**（Bun 1.4.2）。完整工具输出：`artifact://300`。验收源码为 `b38a209`；随后只更新本票记录。
+
+本轮无需生产代码、测试或冲突修复；本地 cache 恢复不提交。通过后明确将昂贵检查窗口释放给 integrate07。本轮按 assignment 只执行全局测试，未重跑 typecheck、复杂脚本、独立 smoke 或跨票据最终整体验收；H1 仍保持上述 human-led 未验证状态。
