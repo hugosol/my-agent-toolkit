@@ -1,0 +1,10 @@
+bun install v1.4.2 (744846f84)
+
++ @types/node@26.6.4
++ bun-types@1.4.2
++ typescript@7.0.2
++ typescript-compiler@5.9.3
++ pi-subagents@0.78.0
++ yaml@2.9.1
+
+14 packages installed [1.93s]

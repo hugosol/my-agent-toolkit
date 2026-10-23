@@ -1,0 +1,76 @@
+pi 1.4.0 (D:\nvm4w\nodejs\node_modules\@earendil-works\pi-coding-agent\dist\bundle\cli.js)
+  ok    the harness under test is the fixed version this run states
+  ok    the pinned provider artifact this repository installs is present
+
+phase: no subagent provider loaded
+  ok    the host's own session facts reach a subscribed extension
+  ok    nothing was diagnosed as a failed subagent integration
+  ok    this run created one session and no child session
+  ok    the session's consumption was accounted and saved under its own identity
+  ok    the saved startup pair is the one the host stated at the session's own start
+
+phase: a child entry the provider will not load
+  ok    the refused requirement is diagnosed as a registration failure
+  ok    the main session is unaffected: its own consumption is still saved
+
+phase: a real delegation with codebase-tools and model-cost in the foreground
+  ok    the provider's own launch evidence names both framework extensions as loaded child extensions
+  ok    the launch's own parent session id is the session this extension serves
+  ok    the child session's own file states a direct parent, which is this session's file
+  ok    the parent's own run settles with the child session running in the same process
+  ok    the parent's own Round settled after the delegation, and its accumulation is saved
+  ok    the child session's own work is saved under its own identity, with this session as its direct parent
+  ok    the process asked the provider once: the child session's own evaluation started no second prefetch
+  ok    the child session's own binding drew nothing: the display stays this session's
+  ok    budget detail draws the real child session after a multi-extension delegation
+  ok    budget detail names the agent definition the foreground child runs
+  ok    a child session's own end did not dispose the live instance: the next exchange is still accounted and saved
+  ok    the entry's own disposal leaves no task behind: the process exits instead of being held open
+  ok    nothing writes to the storage root after the entry's own disposal
+  note  the extension reported the host's stale-extension-context fault: false
+
+phase: a real delegation in the background
+  ok    the real detail widget shows the background child's startup model before its first consumption commit
+  ok    the spawned session registered with the owner's process before its first Round ended
+  ok    the identity it registered with is the one the host's own session file states
+  ok    the owner's own observation source holds the reading that arrived
+  ok    the child's delivery and the owner's observation source both name the agent definition it runs
+  ok    the child's own consumption was saved under the child's own identity by its own process
+  ok    the child's own file and the saved record agree on the session that spawned it
+  ok    the saved startup pair is the one the child's own start stated
+  ok    the child's own process started no root-side prefetch of its own
+  ok    the child's context reading reached the owner's process with the model it was read at
+
+32 observations held.
+  - the harness under test is the fixed version this run states
+  - the pinned provider artifact this repository installs is present
+  - the host's own session facts reach a subscribed extension
+  - nothing was diagnosed as a failed subagent integration
+  - this run created one session and no child session
+  - the session's consumption was accounted and saved under its own identity
+  - the saved startup pair is the one the host stated at the session's own start
+  - the refused requirement is diagnosed as a registration failure
+  - the main session is unaffected: its own consumption is still saved
+  - the provider's own launch evidence names both framework extensions as loaded child extensions
+  - the launch's own parent session id is the session this extension serves
+  - the child session's own file states a direct parent, which is this session's file
+  - the parent's own run settles with the child session running in the same process
+  - the parent's own Round settled after the delegation, and its accumulation is saved
+  - the child session's own work is saved under its own identity, with this session as its direct parent
+  - the process asked the provider once: the child session's own evaluation started no second prefetch
+  - the child session's own binding drew nothing: the display stays this session's
+  - budget detail draws the real child session after a multi-extension delegation
+  - budget detail names the agent definition the foreground child runs
+  - a child session's own end did not dispose the live instance: the next exchange is still accounted and saved
+  - the entry's own disposal leaves no task behind: the process exits instead of being held open
+  - nothing writes to the storage root after the entry's own disposal
+  - the real detail widget shows the background child's startup model before its first consumption commit
+  - the spawned session registered with the owner's process before its first Round ended
+  - the identity it registered with is the one the host's own session file states
+  - the owner's own observation source holds the reading that arrived
+  - the child's delivery and the owner's observation source both name the agent definition it runs
+  - the child's own consumption was saved under the child's own identity by its own process
+  - the child's own file and the saved record agree on the session that spawned it
+  - the saved startup pair is the one the child's own start stated
+  - the child's own process started no root-side prefetch of its own
+  - the child's context reading reached the owner's process with the model it was read at

@@ -1,0 +1,47 @@
+bun test v1.4.2 (744846f84)
+
+tests\framework\assembly-cross-entry.test.ts:
+163 | 			expect(settled).toBe(false);
+164 | 			outcome.reject(cancellation);
+165 | 			expect(await pending).toBeUndefined();
+166 | 			expect(trace).toEqual(["cross-cancel:entered", "cross-continue:entered", "cross-continue:committed", "cancelled:reported"]);
+167 | 			expect(first.entries).toEqual([]);
+168 | 			expect(first.notices).toEqual(["cross-entry cancelled"]);
+                               ^
+error: expect(received).toEqual(expected)
+
+  [
+-   "cross-entry cancelled",
++   "/cross-cancel report failed: cross-entry cancelled",
+  ]
+
+- Expected  - 1
++ Received  + 1
+
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-e8AiJR\tests\framework\assembly-cross-entry.test.ts:168:26)
+(fail) pi cross-entry assembly isolation (P10/P13/P14) > awaits a cancelled action and reports it once without delaying an independent binding [3.01ms]
+163 | 			expect(settled).toBe(false);
+164 | 			outcome.reject(cancellation);
+165 | 			expect(await pending).toBeUndefined();
+166 | 			expect(trace).toEqual(["cross-cancel:entered", "cross-continue:entered", "cross-continue:committed", "cancelled:reported"]);
+167 | 			expect(first.entries).toEqual([]);
+168 | 			expect(first.notices).toEqual(["cross-entry cancelled"]);
+                               ^
+error: expect(received).toEqual(expected)
+
+  [
+-   "cross-entry cancelled",
++   "/cross-cancel report failed: cross-entry cancelled",
+  ]
+
+- Expected  - 1
++ Received  + 1
+
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-e8AiJR\tests\framework\assembly-cross-entry.test.ts:168:26)
+(fail) omp cross-entry assembly isolation (P10/P13/P14) > awaits a cancelled action and reports it once without delaying an independent binding [1.27ms]
+
+ 0 pass
+ 4 filtered out
+ 2 fail
+ 18 expect() calls
+Ran 2 tests across 1 file. [56.00ms]

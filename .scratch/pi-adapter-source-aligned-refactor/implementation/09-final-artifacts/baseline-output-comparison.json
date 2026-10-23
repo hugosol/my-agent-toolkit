@@ -1,0 +1,26 @@
+[
+  {
+    "before": "../01-baseline-artifacts/08-pi-codebase-node22.log",
+    "after": "19-pi-codebase-manual.log",
+    "beforeChecks": 78,
+    "afterChecks": 78,
+    "sameOrderedSuccessfulObservations": true,
+    "scope": "comparison of successful observation labels only; not byte-identical UI frames, not a pre/post interactive TUI capture"
+  },
+  {
+    "before": "../01-baseline-artifacts/10-pi-codebase-auto.log",
+    "after": "20-pi-codebase-auto.log",
+    "beforeChecks": 62,
+    "afterChecks": 62,
+    "sameOrderedSuccessfulObservations": true,
+    "scope": "comparison of successful observation labels only; not byte-identical UI frames, not a pre/post interactive TUI capture"
+  },
+  {
+    "before": "../01-baseline-artifacts/11-pi-model-cost.log",
+    "after": "21-pi-model-cost.log",
+    "beforeChecks": 100,
+    "afterChecks": 100,
+    "sameOrderedSuccessfulObservations": true,
+    "scope": "comparison of successful observation labels only; not byte-identical UI frames, not a pre/post interactive TUI capture"
+  }
+]
