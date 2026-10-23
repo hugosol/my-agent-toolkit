@@ -52,6 +52,8 @@ interface NativeDouble {
 	readonly appended: ReadonlyArray<{ readonly customType: string; readonly data: unknown }>;
 	/** Delivers the native startup with an existing selected branch. */
 	start(facts: RunFacts): void;
+	/** Delivers the native terminal disposal while the harness retains its callbacks. */
+	shutdown(facts: RunFacts): void;
 	/** Runs one bound toggle command for a session, as an alternating user would. */
 	toggle(sessionId: string, command?: string): void;
 	/** Delivers one run initiation, as the runner does; returns what the hook committed. */
@@ -82,6 +84,7 @@ function nativeDouble(): NativeDouble {
 	const appended: Array<{ customType: string; data: unknown }> = [];
 	let hook: OmpRunInitiationHandler | undefined;
 	const starts: SessionHandler[] = [];
+	const shutdowns: SessionHandler[] = [];
 
 	const sessionFacts = (sessionId: string, branch: readonly OmpSessionEntry[]): OmpSessionContext => ({
 		// The registry label is deliberately the same for every main session: the owner key
@@ -110,6 +113,7 @@ function nativeDouble(): NativeDouble {
 				hook = handler as OmpRunInitiationHandler;
 			}
 			if (event === "session_start") starts.push(handler as SessionHandler);
+			if (event === "session_shutdown") shutdowns.push(handler as SessionHandler);
 		},
 	};
 
@@ -118,6 +122,9 @@ function nativeDouble(): NativeDouble {
 		appended,
 		start(facts) {
 			for (const handler of starts) handler({ type: "session_start" }, sessionFacts(facts.sessionId, facts.branch));
+		},
+		shutdown(facts) {
+			for (const handler of shutdowns) handler({ type: "session_shutdown" }, sessionFacts(facts.sessionId, facts.branch));
 		},
 		toggle(sessionId, command = COMMAND) {
 			const registration = registrations.get(command);
@@ -168,6 +175,38 @@ test("historical OMP State restores enabled, retains init and records the next t
 	double.toggle("historical-owner");
 	expect(double.appended).toEqual([{ customType: "codebase-tools:state", data: { enabled: false } }]);
 	expect(double.deliverRun({ sessionId: "historical-owner", branch })).toBeUndefined();
+});
+
+// S1: invoke the real native registrations after disposal rather than observing cleanup alone.
+// Framework-local toggles intentionally remain callable (binding.ts); an injected prompt must not.
+// Re-enabling through that retained toggle distinguishes a lifetime gate from merely being off.
+test("native prompt callbacks retained after disposal stop contributions without stopping another extension (P10, P14)", () => {
+	const first = nativeDouble();
+	const second = nativeDouble();
+	bindCodebaseTools(first);
+	bindDefinition(second, defineExtension({ ...CODEBASE_TOOLS, id: "other-prompts" }));
+	const facts = { sessionId: "shared-session", branch: [] };
+	first.start(facts);
+	second.start(facts);
+	first.toggle(facts.sessionId);
+	second.toggle(facts.sessionId);
+	expect(first.deliverRun(facts)?.message?.customType).toBe("codebase-tools:init");
+	expect(second.deliverRun(facts)?.message?.customType).toBe("other-prompts:init");
+	expect(first.appended).toEqual([{ customType: "codebase-tools:state", data: { enabled: true } }]);
+	first.shutdown(facts);
+	first.toggle(facts.sessionId);
+	expect(first.appended).toEqual([
+		{ customType: "codebase-tools:state", data: { enabled: true } },
+		{ customType: "codebase-tools:state", data: { enabled: true } },
+	]);
+	expect(first.deliverRun(facts)).toBeUndefined();
+	expect(second.deliverRun(facts)?.message?.customType).toBe("other-prompts:init");
+	second.toggle(facts.sessionId);
+	expect(second.deliverRun(facts)).toBeUndefined();
+	expect(second.appended).toEqual([
+		{ customType: "other-prompts:state", data: { enabled: true } },
+		{ customType: "other-prompts:state", data: { enabled: false } },
+	]);
 });
 
 describe("first enabled run contributes init (P18, P19, C7)", () => {
