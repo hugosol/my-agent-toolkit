@@ -17,13 +17,10 @@
  * activity begins, so a round ended by cancellation states that cancellation and a later activity
  * never inherits it.
  */
-import type { TurnOutcome } from "../../../../framework/interface/session";
-import { defineAdapterDelivery } from "../../../../framework/runtime/adapter-authoring";
-import type { HarnessPort, RoundObservation, RoundSignal } from "../../../../framework/runtime/port";
-import { feedbackTransport } from "../../native/core/extensions/ui";
-import type { PiExtensionApi, PiExtensionContext } from "../../native/core/extensions/types";
-import type { PiPortContext } from "../../internal/port";
-import type { SessionBackgroundWork } from "../subagent/queries";
+import type { TurnOutcome } from "../../../../../framework/interface/session";
+import { defineAdapterDelivery } from "../../../../../framework/runtime/adapter-authoring";
+import type { RoundObservation, RoundSignal } from "../../../../../framework/runtime/port";
+import type { PiExtensionApi, PiExtensionContext } from "./types";
 import { outcomeOf } from "./turn";
 
 /** Observes pi's run-cycle facts; automatic continuations are reported by pi, never synthesized here. */
@@ -33,16 +30,8 @@ export function observeRounds(
 	context: {
 		readonly frame: (ctx: PiExtensionContext) => Omit<RoundObservation, "signal" | "quiescent" | "heldWork">;
 		readonly reportMissingFact: (fact: string) => undefined;
-		/** Reports a background statement this entry could not read, once, outside model context. */
-		readonly reportUnread: (reason: string) => void;
-		/**
-		 * What this process's subagent provider states about one session's background work.
-		 *
-		 * It is the assembly's own read of that provider rather than anything this mapping derives:
-		 * what it answers is the provider's statement, and the vocabulary above is what it may answer
-		 * with.
-		 */
-		readonly background: (sessionId: string) => SessionBackgroundWork;
+		/** Cross-source rest condition supplied by the composition, read only after native quiescence. */
+		readonly heldWork: (sessionId: string) => boolean | undefined;
 		/**
 		 * Whether this binding has observed that session's own end.
 		 *
@@ -92,26 +81,6 @@ export function observeRounds(
 		return ctx.isIdle() && !ctx.hasPendingMessages();
 	};
 
-	/**
-	 * Whether work beyond the run that settled still holds this session: what the subagent provider
-	 * states, in its own terms.
-	 *
-	 * It is read only for a settle the framework did not read as a cancelled or failed activity, and
-	 * only after pi's own facts already look settled. A session this binding has seen end is held by
-	 * nothing: whatever the provider still runs elsewhere will never continue a session that is over,
-	 * so the statement that decides this read is the session's own end rather than a registration the
-	 * provider keeps beside it. A statement this entry could not read is reported and answered as
-	 * neither: it is not the provider's own "nothing is held", so a round whose end would rest on it is
-	 * not confirmed.
-	 */
-	const heldWork = (sessionId: string): boolean | undefined => {
-		if (context.sessionOver(sessionId)) return false;
-		const background = context.background(sessionId);
-		if (background.state === "holds") return true;
-		if (background.state === "clear") return false;
-		context.reportUnread(background.reason);
-		return undefined;
-	};
 
 	// The adapter's whole job on this axis: map pi's own run-cycle facts to the observations the
 	// framework synthesizes the round axis from. A start is reported even while a round is open, and
@@ -125,7 +94,7 @@ export function observeRounds(
 			signal,
 			...frame,
 			quiescent: () => quiescent(ctx, frame.session.sessionId),
-			heldWork: () => heldWork(frame.session.sessionId),
+			heldWork: () => context.heldWork(frame.session.sessionId),
 		}));
 	};
 
@@ -156,29 +125,3 @@ export function observeRounds(
 	}));
 }
 
-/** The Round axis of one binding's port: the native run-cycle facts, framed for the framework. */
-export function onPiRound(context: PiPortContext): NonNullable<HarnessPort["onRound"]> {
-	return observer => {
-		observeRounds(context.pi, observer, {
-			frame: ctx => {
-				const feedback = feedbackTransport(ctx);
-				return {
-					session: context.sessionFactsOf(context.catalogued(ctx)),
-					owner: context.resolveOwner(ctx),
-					hasUI: ctx.hasUI,
-					feedback,
-				};
-			},
-			reportMissingFact: context.reportMissingFact,
-			reportUnread: context.reportUnread,
-			// This process's subagent provider, as the assembly's own integration reads it: while a
-			// session is waiting on a delegation the provider still holds, the session is not at rest,
-			// and a statement this entry cannot read stays unread rather than being answered as rest.
-			background: sessionId => context.integration?.backgroundActivity(sessionId) ?? { state: "clear" },
-			// The sessions this binding has seen end: their late re-checks read the fact this binding
-			// observed rather than a context pi has spent.
-			sessionOver: sessionId => context.endedSessions.has(sessionId),
-			track: context.keepSubscription,
-		});
-	};
-}

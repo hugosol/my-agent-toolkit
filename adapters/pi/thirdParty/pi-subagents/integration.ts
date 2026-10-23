@@ -10,7 +10,7 @@
  * is told about, and the diagnostics an operator reads.
  *
  * The third party reached here is nicobailon's `pi-subagents` at the version this repository pins.
- * Its loader lives in `internal/provider.ts`, the requirement it accepts and the session-liveness
+ * Its loader lives in `provider.ts`, the requirement it accepts and the session-liveness
  * registry it publishes in `effects.ts`, its versioned bus protocol in `events.ts`, and its
  * session-liveness readings in `queries.ts`; this module coordinates what they answer and the
  * lifetime of what this process holds.
@@ -35,7 +35,7 @@ import {
 	SUPPORTED_PROVIDER_VERSION,
 	type PiProviderAnswer,
 } from "./events";
-import { loadPiSubagentProvider } from "./internal/provider";
+import { loadPiSubagentProvider } from "./provider";
 import { piBackgroundActivity, type SessionBackgroundWork } from "./queries";
 
 /** Whether a loaded module is the provider interface this adapter calls. */

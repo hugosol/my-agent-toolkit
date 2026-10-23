@@ -10,7 +10,7 @@
 import { defineAdapterDelivery } from "../../../../../framework/runtime/adapter-authoring";
 import type { HarnessPort } from "../../../../../framework/runtime/port";
 import { feedbackTransport, markerTransport } from "./ui";
-import type { PiPortContext } from "../../../internal/port";
+import type { PiPortContext } from "../../../port";
 
 /** The command axis of one binding's port. */
 export function registerPiCommand(context: PiPortContext): NonNullable<HarnessPort["registerCommand"]> {

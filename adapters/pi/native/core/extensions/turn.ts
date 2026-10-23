@@ -9,12 +9,12 @@
  * `turn_start`/`turn_end`, whose end fires only after the requested tools have run: tool execution is
  * outside a model cycle, so a Turn ends when its response settled, not when pi's turn did.
  */
-import type { SessionFacts, TurnOutcome, TurnUsage } from "../../../../framework/interface/session";
-import { defineAdapterDelivery } from "../../../../framework/runtime/adapter-authoring";
-import type { HarnessPort, TurnSignalFacts } from "../../../../framework/runtime/port";
-import { feedbackTransport } from "../../native/core/extensions/ui";
-import type { PiAssistantMessage, PiExtensionApi, PiExtensionContext } from "../../native/core/extensions/types";
-import type { PiPortContext } from "../../internal/port";
+import type { SessionFacts, TurnOutcome, TurnUsage } from "../../../../../framework/interface/session";
+import { defineAdapterDelivery } from "../../../../../framework/runtime/adapter-authoring";
+import type { HarnessPort, TurnSignalFacts } from "../../../../../framework/runtime/port";
+import { feedbackTransport } from "./ui";
+import type { PiAssistantMessage, PiExtensionApi, PiExtensionContext } from "./types";
+import type { PiPortContext } from "../../../port";
 
 /** The all-zero reading pi's message carries until a provider reports one. */
 const ZERO_READING: TurnUsage = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, totalTokens: 0 };

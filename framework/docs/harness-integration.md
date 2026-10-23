@@ -168,7 +168,7 @@ native 事实 / 机制：
   agent_end 的时间边界早于该陈述，会截断 Round。
 被否决的替代方案：把 agent_end 映射为结束；或在 adapter 中模拟继续项检测。
 失效触发：pi 改变 agent_settled 的触发条件，或在 settle 之后仍可能排入继续项。
-证据：source review（adapters/pi/domain/session/round.ts）；
+证据：source review（adapters/pi/mixture/round.ts）；
   行为场景见 harness-support 的 pi 证据与 dock；本地捕获不证明真实 provider 路径。
 未覆盖 / 未验证：其他 pi 版本、其他 provider、未执行的真实服务路径仍为 unverified。
 ```
