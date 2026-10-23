@@ -18,7 +18,7 @@ import {
 } from "../../adapters/pi";
 import type { PiSubagentIntegration } from "../../adapters/pi/domain/subagent/integration";
 import { piSessionFileAnchors } from "../../adapters/pi/domain/subagent/queries";
-import { piProviderFacts } from "../../adapters/pi/domain/provider";
+import { piProviderFacts } from "../../adapters/pi/native/core/model-registry";
 import { piSessionPositions } from "../../adapters/pi/domain/session/queries";
 import {
 	createPiPort,

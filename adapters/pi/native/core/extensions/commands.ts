@@ -7,11 +7,11 @@
  * The idle fact is answered as nothing when the host reports none at all: an unreported activity
  * state is not idleness, and the framework reports the absence rather than answering for the host.
  */
-import { defineAdapterDelivery } from "../../../framework/runtime/adapter-authoring";
-import type { HarnessPort } from "../../../framework/runtime/port";
-import { feedbackTransport } from "./feedback";
-import { markerTransport } from "./marker";
-import type { PiPortContext } from "../internal/port";
+import { defineAdapterDelivery } from "../../../../../framework/runtime/adapter-authoring";
+import type { HarnessPort } from "../../../../../framework/runtime/port";
+import { feedbackTransport } from "../../../domain/feedback";
+import { markerTransport } from "../../../domain/marker";
+import type { PiPortContext } from "../../../internal/port";
 
 /** The command axis of one binding's port. */
 export function registerPiCommand(context: PiPortContext): NonNullable<HarnessPort["registerCommand"]> {

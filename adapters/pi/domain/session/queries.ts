@@ -13,14 +13,13 @@
  * and task handles are none of these facts and are never read as if they were.
  */
 import { piSpawnedRelationsOf, type PiAnchorReader } from "../subagent/queries";
-import type { ExtensionDefinition } from "../../../../framework/interface/details/definition";
 import type { SessionFacts, SessionStartReason, SessionStartup } from "../../../../framework/interface/session";
 import type { OwnerReference } from "../../../../framework/interface/state";
 import {
 	defineSessionFactsMapping,
 	unavailableFact,
 } from "../../../../framework/runtime/adapter-authoring";
-import type { PiExtensionContext, PiSessionHeader } from "../../internal/native";
+import type { PiExtensionContext, PiSessionHeader } from "../../native/core/extensions/types";
 
 /**
  * The State cell key of a session that owns its own State.
@@ -30,32 +29,6 @@ import type { PiExtensionContext, PiSessionHeader } from "../../internal/native"
  */
 export function piOwnerKey(sessionId: string): string {
 	return `main:${sessionId}`;
-}
-
-/**
- * The native entry type this extension's State is persisted under.
- *
- * One name serves both sides of the contract: the payloads a session restores from and the entry a
- * command appends. Nothing else states it.
- */
-export function piStateEntryType(definition: ExtensionDefinition): string {
-	return `${definition.id}:state`;
-}
-
-/**
- * The State payloads one session's branch carries, in branch order.
- *
- * The branch is pi's own session material: only entries this extension wrote under its State entry
- * type are State, and each is reported as it was persisted. Which payload is the current value is
- * the framework's reconciliation, not a choice made while reading.
- */
-export function piStatePayloadsOf(
-	ctx: PiExtensionContext,
-	entryType: string,
-): readonly unknown[] {
-	return ctx.sessionManager.getBranch()
-		.filter(entry => entry.type === "custom" && entry.customType === entryType)
-		.map(entry => entry.data);
 }
 
 /** Where one actual session sits among the sessions this harness runs. */

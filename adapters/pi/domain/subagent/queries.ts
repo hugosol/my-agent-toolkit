@@ -8,7 +8,7 @@
  * without a registration for a session, answers nothing rather than a session at rest.
  */
 import { readFileSync } from "node:fs";
-import type { PiSessionAnchor, PiSessionHeader } from "../../internal/native";
+import type { PiSessionAnchor, PiSessionHeader } from "../../native/core/extensions/types";
 import { REGISTRATION_TABLE, SESSION_LIVENESS_REGISTRY_KEY, type LivenessTable } from "./effects";
 
 /** One native session file's identity and parent link, absent when its header cannot be read. */
