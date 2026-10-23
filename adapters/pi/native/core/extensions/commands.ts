@@ -9,8 +9,7 @@
  */
 import { defineAdapterDelivery } from "../../../../../framework/runtime/adapter-authoring";
 import type { HarnessPort } from "../../../../../framework/runtime/port";
-import { feedbackTransport } from "../../../domain/feedback";
-import { markerTransport } from "../../../domain/marker";
+import { feedbackTransport, markerTransport } from "./ui";
 import type { PiPortContext } from "../../../port";
 
 /** The command axis of one binding's port. */

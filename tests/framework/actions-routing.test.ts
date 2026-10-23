@@ -8,6 +8,7 @@
  * out, and which action ran is what the implementation recorded.
  */
 import { describe, expect, test } from "bun:test";
+import { ompAdapter, type OmpCommandContext, type OmpExtensionApi } from "../../adapters/omp";
 import type { ActionDelivery } from "../../framework/interface/command";
 import type { CommandAction, CommandImplementations } from "../../framework/interface/command";
 import { type ActionsImplementationHandlers, type ExtensionDefinition, defineExtension, defineImplementation } from "../../framework/interface";
@@ -64,6 +65,50 @@ function recordingImplementation(
 		});
 	return { budget: { detail: action("detail"), holiday: action("holiday"), clear: action("clear") } };
 }
+
+// S1 uses the public assembly and invokes the exact callback OMP retains, not a private port.
+// Discarding the action's promise would let the host conclude before the explicit gate releases.
+test("OMP command registration preserves awaited success, refusal and rejected-action feedback (P6, P13)", async () => {
+	let run: ((args: string, ctx: OmpCommandContext) => void | Promise<void>) | undefined;
+	const notices: Array<{ level: string; message: string }> = [];
+	const api: OmpExtensionApi = {
+		setLabel() {}, appendEntry() {}, on() {},
+		registerCommand(name, registration) { if (name === "budget") run = registration.handler; },
+	};
+	const ctx: OmpCommandContext = {
+		agent: { kind: "main", id: "Main" },
+		sessionManager: { getSessionId: () => "native-actions", getBranch: () => [] },
+		hasUI: true,
+		ui: { notify: (message, level = "info") => { notices.push({ level, message }); }, setWidget() {} },
+	};
+	const steps: string[] = [];
+	const { promise: gate, resolve: release } = Promise.withResolvers<void>();
+	const { promise: started, resolve: markStarted } = Promise.withResolvers<void>();
+	expect(ompAdapter(BUDGET, { implementation: defineImplementation({
+		create: () => ({}),
+		commands: { budget: {
+			detail: async () => { steps.push("started"); markStarted(); await gate; steps.push("finished"); },
+			holiday: () => {},
+			clear: async () => { throw new Error("the new period was refused"); },
+		} },
+	}) })(api).bound).toBe(true);
+	expect(run).toBeDefined();
+	const pending = run!(" DETAIL ", ctx);
+	expect(pending).toBeInstanceOf(Promise);
+	await started;
+	expect(steps).toEqual(["started"]);
+	release();
+	await pending;
+	expect(steps).toEqual(["started", "finished"]);
+	await run!("det", ctx);
+	expect(notices).toEqual([{ level: "error", message: BUDGET_HELP }]);
+	await run!("clear", ctx);
+	expect(notices).toEqual([
+		{ level: "error", message: BUDGET_HELP },
+		{ level: "error", message: "/budget clear failed: the new period was refused" },
+	]);
+	expect(steps).toEqual(["started", "finished"]);
+});
 
 describe("an action is selected by the whole argument, after trimming and ignoring case (P28)", () => {
 	test("a declared action runs when the argument is exactly its name", async () => {

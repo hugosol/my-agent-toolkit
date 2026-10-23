@@ -11,7 +11,7 @@ import { defineAdapterDelivery } from "../../../../../framework/runtime/adapter-
 import type { HarnessPort } from "../../../../../framework/runtime/port";
 import type { PiExtensionContext } from "./types";
 import type { PiPortContext } from "../../../port";
-import { feedbackTransport } from "../../../domain/feedback";
+import { feedbackTransport } from "./ui";
 
 /** The context-reading axis of one binding's port. */
 export function onPiSessionContext(context: PiPortContext): NonNullable<HarnessPort["onSessionContext"]> {

@@ -13,7 +13,7 @@
 import { describe, expect, test } from "bun:test";
 import type { FeedbackLevel } from "../../framework/interface/feedback";
 import type { PiExtensionContext } from "../../adapters/pi";
-import { feedbackTransport, noticeTransport } from "../../adapters/pi/domain/feedback";
+import { feedbackTransport, noticeTransport } from "../../adapters/pi/native/core/extensions/ui";
 import { type PiSurfaceSession, boundPiSurface } from "./support/pi-surface-double";
 
 /** The session a case starts; `hasUI` defaults to the host's own `true`. */

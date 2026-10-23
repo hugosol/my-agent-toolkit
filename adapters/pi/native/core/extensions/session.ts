@@ -16,8 +16,7 @@ import type {
 import type { OwnerReference } from "../../../../../framework/interface/state";
 import { defineAdapterDelivery } from "../../../../../framework/runtime/adapter-authoring";
 import type { HarnessPort } from "../../../../../framework/runtime/port";
-import { feedbackTransport, noticeTransport } from "../../../domain/feedback";
-import { markerTransport } from "../../../domain/marker";
+import { feedbackTransport, markerTransport, noticeTransport } from "./ui";
 import type { PiExtensionContext, PiSessionShutdownReason, PiSessionStartReason } from "./types";
 import type { PiPortContext } from "../../../port";
 import { piStatePayloadsOf } from "../session-manager/state";

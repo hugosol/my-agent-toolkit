@@ -93,6 +93,16 @@ S1 为实际公开 `piAdapter` assembly 与 extension 消费 interface；S2 为�
 
 五次原始完整日志均保留在 [04-lifecycle-artifacts](./04-lifecycle-artifacts/) 的 `pi04-*.log`；最终通过日志为 `pi04-integration-global-verified.log`。既有实现阶段和此次失败证据不被覆盖。冲突解决、测试设施修正和验收记录仅提交到本开发分支，原 worktree／branch 保留；由主会话恢复宿主队列后决定实际合入，不自行操作 `dev`。
 
+### 后续冲突回合：合并已集成票据源状态 `873feaa4`
+
+主会话通过原 HyperGit 逻辑尝试补合并，dev 侧冲突已 abort，并将 `873feaa4a85fa993f684146aeb771d1d430524db` 反向 merge 到原 04 worktree。此回合仅在本开发分支解决冲突：保留 02／03／05／06／07 已合入职责和验收记录，不操作 dev、不新建 worktree、不 reset、不调用 retro。
+
+- Pi 的 commands／context／prompt／Session／Turn 和 mixture Round 全部采用 06 的 `native/core/extensions/ui.ts`，同时保留 04 顶层私有 port、native lifecycle／thirdParty／mixture 的归属与职责分离。原生 Round 不重新吸收第三方 liveness 解释。
+- 保留 03／05／07 的 OMP native 迁移与 Viewed-session 释放保护；冲突中未回退其实现。合并两端实际来源导航，保留 02 最终验收追加记录；panel stream 的类型适配采用集成侧已存在的跨 Node／Bun 声明解释，未改运行时行为。
+- 按本轮 assignment，未重复首次全仓验收。针对 import／UI cutover 运行 `bun run typecheck`，退出 **0**；运行 `bun test tests/framework tests/model-cost/harnesses/pi`，退出 **0**：**787 pass / 0 fail**，71 files、4254 assertions、45.63s。原始日志为 [pi04-followup-conflict-checks.log](./04-lifecycle-artifacts/pi04-followup-conflict-checks.log)。此前全局 **1634/0** 仅对应上一回合源状态，不冒充本轮完整双端全局结果。
+
+本回合解决后仅提交开发分支并交回主会话，再由同一 HyperGit 合并；本票记录仍不宣称已进入 dev。
+
 ### 集成交接与未验证项
 
-本票无需 State 数据或用户配置迁移，无新增 retry、延长等待或 failure fallback。02／06 跨票 import cutover 和合入由独立集成执行；完整双端结构规则、ADR 与全仓最终验收仍归其各自 owner。真实服务、其他版本／平台、交互 TUI 与未运行组合不在本次实机证据内，不提升支持声明。原 worktree 联合消费方运行的两项不稳定失败保持可见；已有覆盖和实机结果不替代这个限制。
+本票无需 State 数据或用户配置迁移，无新增 retry、延长等待或 failure fallback。02／06 跨票 import cutover 已在上述开发分支冲突回合完成，实际合入仍由宿主执行；完整双端结构规则、ADR 与全仓最终验收仍归其各自 owner。真实服务、其他版本／平台、交互 TUI 与未运行组合不在本次实机证据内，不提升支持声明。原 worktree 联合消费方运行的两项不稳定失败保持可见；已有覆盖和实机结果不替代这个限制。

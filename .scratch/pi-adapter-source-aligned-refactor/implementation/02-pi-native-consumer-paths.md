@@ -82,4 +82,6 @@
 - 第二轮 `bun run test`（上述 safe-shell 环境）：exit 1；1622 pass / 4 fail。日志 `%TEMP%/ticket02-integration-global-tests-diagnostics.log` 保留无 headers 的模型请求协议摘要及结构化 fetch 错误。panel 子进程仍存活且已 bind 到相同端口，首次 Bun fetch SSE 仍报 `ConnectionRefused`；不将此归因于已排除的错误 endpoint 或未验证的代理配置。
 - 对实际协议的修复：在委派 fixture 的隔离配置启用宿主已有 `task.enableEffort`，两次 scripted task 均显式 `effort: "lo"`，避免不属于本场景的自动分类请求。panel 的 SSE subscription／snapshot 使用各自拥有、`agent: false` 的 `node:http` 本地连接，保留相同帧解码、HTTP 错误传播与 abort 清理，不重试、不回退；Bun 内部连接失败机制未获证明，不声称已修复 Bun。
 - 临时 worktree 的真实 panel 前提显式设置为 `HERDR_BOT_BINARY=E:/Developer/myhub/herdr-bot/backend/target/debug/examples/safe_shutdown_shell.exe`、`HERDR_BOT_METADATA=E:/Developer/myhub/herdr-bot/meta-data/bot-options.toml`，不使用生产关机后端，不安装或重建宿主。
+- 最终 `bun run test`：**exit 0；1626 pass / 0 fail，9992 assertions，183 files，529.44s**。测试源为提交 `ec861fa`，上述两个环境变量由 subprocess 显式传入；测试期间 source／fixtures 保持不变。完整日志：`%TEMP%/ticket02-integration-global-tests-ec861fa.log`。原先五个失败均通过，未调低行为断言或屏蔽测试。
+- 修复提交：`257d84b`（安全壳启动与初步隔离），`ec861fa`（实际 effort 协议与独立本地 SSE transport、失败诊断，移除无效角色设置）。最终仅追加此验收记录，不改变已测代码。全局窗口已明确交接给 03；未运行额外 typecheck、复杂脚本、独立 smoke 或跨票整体门禁。宿主按队列合并本开发分支，本会话不直接操作 `dev` 或集成 worktree。
 

@@ -1,6 +1,6 @@
 /** Combines native run settlement/quiescence with pi-subagents held background work. */
 import type { HarnessPort } from "../../../framework/runtime/port";
-import { feedbackTransport } from "../domain/feedback";
+import { feedbackTransport } from "../native/core/extensions/ui";
 import type { PiPortContext } from "../port";
 import { observeRounds } from "../native/core/extensions/round";
 
