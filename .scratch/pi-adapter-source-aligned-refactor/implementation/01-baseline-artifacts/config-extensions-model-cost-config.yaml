@@ -1,0 +1,32 @@
+# model-cost's one storage root: the directory this extension's consumption document, its
+# independent Codex estimate and its archives live in.
+#
+# The file is the machine's single source for the root. The framework reads and validates it
+# before the extension is bound, so the value takes effect at that initialization and a changed
+# value is used by the next process rather than by a running one; there is no code default, no
+# environment override and no hot-reload entry.
+#
+# This field's `~/` is its own: it means the operating system user's `.omp` home directory, so
+# `~/cost-archive` is `<user home>/.omp/cost-archive` and not `<user home>/cost-archive`. Any
+# other relative value is resolved against the directory this file lives in — never against the
+# working directory of the process that started — and an absolute value is used as it is.
+#
+# One root covers all of this extension's data; pointing the field somewhere else selects another
+# store. Nothing migrates, copies or merges what an earlier value left behind, and no directory
+# the field does not name is ever written.
+storageDir: "~/cost-archive"
+
+# The success TTL of the DeepSeek balance reading, in milliseconds: how long a reading the provider
+# really answered is kept before a later settled request of that provider may refresh it. Only a
+# success resets it — a failed query keeps the last reading and the instant it was obtained — and the
+# TTL expiring on its own never queries anything. The specification's own default is 30000, which is
+# what this file states.
+balanceTtlMs: 30000
+
+# The success TTL of the Codex allowance windows, in milliseconds: how long a reading the account API
+# really answered is kept before a later settled Codex request may refresh it. It is the same policy
+# as `balanceTtlMs`, applied through the same query entry the initialization uses: only a success
+# resets it, a failed query keeps the last accepted reading and the instant it was obtained, and the
+# TTL expiring on its own never queries anything. The specification's own default is 15000, which is
+# what this file states.
+codexQuotaTtlMs: 15000

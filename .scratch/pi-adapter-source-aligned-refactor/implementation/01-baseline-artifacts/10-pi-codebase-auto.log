@@ -1,0 +1,84 @@
+pi codebase-tools smoke (auto mode) — pi 1.4.0 via D:\nvm4w\nodejs\node_modules\@earendil-works\pi-coding-agent\dist\bundle\cli.js (the shim D:\nvm4w\nodejs\pi.cmd (run through node: a shell shim cannot be spawned without a shell))
+  runtime D:/Users/hugos/AppData/Local/nvm/v22.19.0/node.exe v22.19.0
+  note  the two prompt resources are byte-identical: a contribution's slot is read from its persisted identity, not from its text
+  note  this smoke's expectations were written against pi 1.2.0; the CLI under test reports 1.4.0
+
+phase: the automatic entrypoint enables the first run without a command
+  ok    a plain first turn starts a run
+  ok    the first run's request already carries the startup-selected contribution
+  ok    the startup choice is recorded once, as the session's own initial State
+  ok    exactly one hidden init is persisted, as the init slot and nothing else
+  ok    the framework's marker area shows the line from the session's own start
+  ok    no command ran, so nothing announced an activation
+  ok    a later enabled run adds exactly one contribution, the branch's earlier one replayed
+  ok    the original command still disables it after startup, announcing the value it produced
+  ok    disabling clears the framework's marker area
+  ok    a disabled run adds no contribution of its own
+  ok    the command's own record follows the startup record, and no startup write was repeated
+  ok    pi created a new session in place
+  ok    the new session is a different session
+  ok    the new session in the running process is not enabled again by the startup choice
+  ok    the new session records no startup State
+  ok    the new session's marker area carries no line
+  ok    the command enables the new session
+  ok    the enabled new session contributes on its next run
+  ok    the new session's journal holds only its own command's record
+  ok    the session exits cleanly
+
+phase: a resumed session keeps the value it recorded, without a second startup write
+  ok    the first process started enabled and recorded that one value
+  ok    the session exits cleanly before the resume
+  ok    the resumed session shows the restored line from its own start
+  ok    the resumed session runs a turn without being re-enabled
+  ok    the resumed run adds exactly one contribution, the branch's init replayed
+  ok    the resumed run replayed the init instead of re-initialising, and appended the reminder
+  ok    the resume wrote no second startup record: the recorded true is the history
+  ok    the resume appended to history rather than rewriting it
+  ok    the restored value is the recorded one: the next command turns it off
+  ok    the resumed session's command appended its own record
+  ok    the resumed session exits cleanly
+  ok    the recorded false publishes no line at the session's start
+  ok    the restored off first run adds no contribution
+  ok    the restart wrote no second startup record
+  ok    the restored value is really off: the command enables it
+  ok    the command's record follows the restored history
+  ok    the restored off session exits cleanly
+
+phase: the automatic start's record restores a manual-mode process
+  ok    the automatic process recorded its enabling choice and its init
+  ok    the automatic session exits cleanly before the manual restore
+  ok    the manual process shows the restored line from its own start
+  ok    the restored first run replays the init and contributes the reminder
+  ok    the progress continued instead of re-initialising
+  ok    the manual resume wrote no second startup record
+  ok    the manual resume appended to history rather than rewriting it
+  ok    the restored value is really true: the command disables it
+  ok    its record follows the automatic record
+  ok    the manual restored session exits cleanly
+
+phase: a real spawned pi session follows the owner (auto mode)
+  ok    the spawned on child's own request carried the contribution
+  ok    the spawned on child's journal holds its own init and no reminder
+  ok    the spawned on child wrote no State of its own
+  ok    the spawned on child's own file states this parent session as its direct parent
+  ok    the spawned on child's detached process reported a completed run at its own pid
+  ok    the launch record names the auto mode's own entry as the on child's codebase-tools entry
+  ok    the owner's command changed its value between the two children (on -> off)
+  ok    the spawned off child's own request carried no contribution
+  ok    the spawned off child's journal holds no contribution
+  ok    the spawned off child wrote no State of its own
+  ok    the spawned off child's own file states this parent session as its direct parent
+  ok    the spawned off child's detached process reported a completed run at its own pid
+  ok    the launch record names the auto mode's own entry as the off child's codebase-tools entry
+  ok    the follow session exits cleanly
+  ok    the auto mode parent recorded only its own value change
+kept for inspection: C:\Users\hugos\AppData\Local\Temp\omp-dock-automatic-startup-rPmsLp
+kept for inspection: C:\Users\hugos\AppData\Local\Temp\omp-dock-automatic-resume-YNLSTV
+kept for inspection: C:\Users\hugos\AppData\Local\Temp\omp-dock-automatic-restored-manual-Z94DbY
+kept for inspection: C:\Users\hugos\AppData\Local\Temp\omp-dock-subagent-follow-auto-fnGHor
+
+PI SMOKE SUMMARY: pi 1.4.0, auto mode — 62 check(s) passed, none failed
+  62 consumer-visible check(s) across 4 isolated run(s)
+  limitations: agent attribution is not expressible on pi (asserted as hidden and framework-identified only);
+               the TUI drawing stays human-led, this smoke observes the setWidget/notify frames the adapter published
+  rerun: bun scripts/pi-codebase-tools-smoke.ts --mode auto

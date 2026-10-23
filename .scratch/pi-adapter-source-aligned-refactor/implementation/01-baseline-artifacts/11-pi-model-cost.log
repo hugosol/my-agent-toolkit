@@ -1,0 +1,164 @@
+pi model-cost smoke — pi 1.4.0 via D:\nvm4w\nodejs\node_modules\@earendil-works\pi-coding-agent\dist\bundle\cli.js (the shim D:\nvm4w\nodejs\pi.cmd (run through node: a shell shim cannot be spawned without a shell))
+  note  this smoke's expectations were written against pi 1.2.0; the CLI under test reports 1.4.0
+
+phase: pi discovers the entrypoint, accounts the session's turns and saves them
+  ok    a plain prompt starts a run on the loaded extension and settles
+  ok    the loaded extension drew its own widget in this session
+  ok    the widget shows the brief form's total row after the turns
+  ok    nothing was reported as a refused binding
+  ok    the extension's own provider query left the process before the first model request
+  ok    the save holds this session alone, under the pi harness bucket
+  ok    the session's own identity is a real one, with no direct parent
+  ok    both exchanges' usage is accounted once each, in the four buckets
+  ok    the amount is the maintained off-peak price of that usage
+  ok    the period the root started on is the one the save carries
+  ok    a new process reads the saved period back before doing any work of its own
+  ok    the new process added its own session's record and left the earlier one as it was
+  ok    the run wrote the extension's files only under the configured storage root
+
+phase: the declared command keeps its effect on this host
+  ok    the empty argument is answered with the declaration's own help
+  ok    the command is answered without starting a run or asking the model
+  ok    the command answers the no-subagent notice instead of switching the display
+  ok    the widget keeps the brief form: nothing redrew it into the detail tree
+  ok    the command changed no persisted consumption
+  ok    an undeclared argument is refused with the help and acts on nothing
+
+phase: the DeepSeek balance query is wired to this host and refreshed by its own provider's requests
+  ok    the extension's own balance query left the process, at the host's resolved address and with the host's current credential
+  ok    the reading the endpoint answered reached the widget this host draws
+  ok    the initialization's prefetch arrived before the first model request, and an exchange inside the reading's success TTL asked nothing again
+  ok    the credential authenticates that one query and reaches no other surface of the run
+  ok    the saved document keeps the schema's own partitions, with no account or credential partition added
+  ok    a settled request of the reading's own provider is what refreshes the expired reading it holds
+  ok    an expired reading queries nothing on its own: no timer and no poll is behind the TTL
+  ok    the next settled request asks again, and the reading stays the endpoint's own amount
+  ok    a refused refresh keeps the reading and its amount, and never becomes a zero or a dropped reading
+  ok    the session still works on this host, with the extension drawing and the model exchange completing
+  ok    a provider this host cannot authenticate is asked nothing: no balance request reached the endpoint
+  ok    and no failure is claimed for it: no balance line, no zero and no operator notice
+  ok    a query that is never answered does not hold the work: the exchange completed and its settled request began the next query
+  ok    a query with no reading is shown as the failure it is, and never as a zero
+  ok    the second exchange's settled request joined the query still out rather than issuing another
+  ok    the answer the joined query was holding is accepted by the same instance, and nothing asked again for it
+  ok    the first process authenticated its query with the credential its own configuration states
+  ok    the process left no credential behind it: the files it did leave carry nothing of the key it used
+  ok    the next process's query is authenticated with the credential its own configuration states
+
+phase: the declared storage root keeps its own interpretation
+  ok    an absolute storageDir is written where it says, and nowhere else
+  ok    a relative storageDir resolves against the configuration, in both working directories
+  ok    the working directories and the user homes hold nothing of the extension's
+  ok    the field's ~/ means the user's .omp home, not the home directory itself
+
+phase: an illegal configuration refuses the extension and leaves the session running
+  ok    the framework reported the refused binding, naming the extension
+  ok    the refused extension drew nothing, queried nothing and wrote nothing
+  ok    the session itself keeps running without the extension
+
+phase: the Codex allowance windows and the ratio estimate they feed
+  ok    the loaded extension asked the account API once while it initialized
+  ok    the account query used the business address, budget and named proxy selection
+  ok    the query authenticated with the credential pi resolved, and the account that credential names
+  ok    the windows are identified by the length each report stated, not by the position that carried them
+  ok    one reported reset is expired and the other invalid, each read at this moment and never rewritten
+  ok    the first paired report published the baseline into its own document before any Turn
+  ok    a settled Codex Turn asked the account API again once the success TTL had passed
+  ok    the answer that carried one window updated that one alone, and the other kept its reading and instant
+  ok    a report that carried one window is no pair, so nothing was measured and nothing was written
+  ok    one report's own pair refined the ratio from the baseline that report followed
+  ok    the refinement stayed out of the document inside the minute that followed the baseline's own write
+  ok    a failed account attempt is a failure beside no window, never a window at zero
+  ok    a failed attempt earned no success TTL, so that Turn asked again despite the run's ten-minute TTL
+  ok    the answer that followed seeded both windows, and its pair qualified nothing against the stored baseline
+  ok    a fresh reading kept the next settled Turn from asking again
+  ok    a new process continued the measurement the document carries instead of re-anchoring on its first report
+  note  the entry's own save had not settled yet; the command is typed again (attempt 2)
+  ok    the period reset archived the saved consumption and opened a non-holiday period
+  ok    the reset left the independent Codex estimate exactly as it was
+
+phase: one Round carries pi's own continuations and saves once at its end
+  ok    the tool continuation is one Round: two requests, opened once and closed once
+  ok    the Round closes after the last Turn settled, not at pi's low-level run end
+  ok    the follow-up request carried the tool's own result
+  ok    the Round's own save carries both of its requests, written once
+  ok    an automatically retried request stays inside its Round: the refused attempt and its retry close one Round
+  ok    the refused attempt is delivered as a Turn without a reliable reading
+  ok    only the answered attempt is accounted, once, in the retried Round's one save
+  ok    pi compacted inside the run, and the Round stayed open across it
+  ok    every Turn that Round delivered is accounted in its one save
+  ok    a message pi took up inside the run continues that Round rather than opening one
+  ok    both submissions of that Round are accounted in its one save
+
+phase: each request is billed from its own start facts, never from the third party's cost
+  ok    the session's own model switch is accepted before the second exchange
+  ok    each model's stored amount is the maintained data's own price of that model's usage
+  ok    the third party's own computed cost is a different number, and not the one that was saved
+
+phase: an unmeasurable request is told about, and each channel keeps its own amount
+  ok    a request whose provider reported no usage is skipped and told about, not counted as free
+  ok    a confirmed zero bucket is stored as the zero it is, beside the reported ones
+  ok    the amount is those buckets at the maintained price, with the zero bucket adding nothing
+  ok    an allowance request's amount is the host's own stated price, kept as a reference in its currency
+  ok    its usage is still counted in the same four buckets
+
+phase: /budget clear and the first holiday archive the whole file and open the next period
+  ok    the entry's own display preference is switched before the period actions
+  ok    the entry's own exchange is saved into the shared file before the reset
+  ok    a second pi process's own exchange is saved into the same file before the reset
+  ok    the operator's own detail form draws the pair the session consumed
+  ok    a new process over the same storage root answers the brief: the preference is not persisted
+  ok    clear archives the whole file it closes: both harnesses, both providers and every session of them
+  ok    the record the other process committed is inside the archive rather than lost to this entry's own view
+  ok    the new period is ordinary, starts at the instant the archive ended and carries the same balance reading
+  ok    the reset left the independent estimate document exactly as it was
+  ok    the boundary balance was one read of the entry's own provider account, made outside any file coordination
+  ok    clear announces the archive it wrote only after the new period is published
+  ok    the first holiday opens a holiday period directly, in the one commit its own archive precedes
+  ok    the archive the first clear wrote is the same document it was
+  ok    a holiday asked of a period that already is one archives nothing, switches nothing and queries nothing
+  ok    the entry's own display preference does not move with the period: it was still the detail form the operator set
+  ok    the new period holds only its own consumption, from the session's own first version
+  ok    a period action on an entry running another provider is refused at once and writes nothing
+  ok    the refused action asked the provider nothing: an entry that is not a DeepSeek one never reaches the account
+kept for inspection: C:\Users\hugos\AppData\Local\Temp\omp-dock-main-session-9f5yqv
+kept for inspection: C:\Users\hugos\AppData\Local\Temp\omp-dock-command-fTRlJ4
+kept for inspection: C:\Users\hugos\AppData\Local\Temp\omp-dock-balance-wiring-kRG1Ge
+kept for inspection: C:\Users\hugos\AppData\Local\Temp\omp-dock-balance-ttl-51nA6P
+kept for inspection: C:\Users\hugos\AppData\Local\Temp\omp-dock-balance-retained-zM7d7Y
+kept for inspection: C:\Users\hugos\AppData\Local\Temp\omp-dock-balance-no-access-o8J7QJ
+kept for inspection: C:\Users\hugos\AppData\Local\Temp\omp-dock-balance-join-RYHcjS
+kept for inspection: C:\Users\hugos\AppData\Local\Temp\omp-dock-balance-replaced-Omfs08
+kept for inspection: C:\Users\hugos\AppData\Local\Temp\omp-dock-storage-absolute-LusHFn
+kept for inspection: C:\Users\hugos\AppData\Local\Temp\omp-dock-storage-relative-one-m4iAvW
+kept for inspection: C:\Users\hugos\AppData\Local\Temp\omp-dock-storage-relative-two-vtcIcV
+kept for inspection: C:\Users\hugos\AppData\Local\Temp\omp-dock-storage-tilde-iuhEky
+kept for inspection: C:\Users\hugos\AppData\Local\Temp\omp-dock-config-refused-ihjjgD
+kept for inspection: C:\Users\hugos\AppData\Local\Temp\omp-dock-codex-first-PzXDpA
+kept for inspection: C:\Users\hugos\AppData\Local\Temp\omp-dock-codex-refused-WCUkDX
+kept for inspection: C:\Users\hugos\AppData\Local\Temp\omp-dock-codex-continued-353fzQ
+kept for inspection: C:\Users\hugos\AppData\Local\Temp\omp-dock-codex-reset-EcqWu4
+kept for inspection: C:\Users\hugos\AppData\Local\Temp\omp-dock-round-tool-Jv8rKx
+kept for inspection: C:\Users\hugos\AppData\Local\Temp\omp-dock-round-retry-Ah63RZ
+kept for inspection: C:\Users\hugos\AppData\Local\Temp\omp-dock-round-compaction-AMFh7l
+kept for inspection: C:\Users\hugos\AppData\Local\Temp\omp-dock-round-queued-YBKc4K
+kept for inspection: C:\Users\hugos\AppData\Local\Temp\omp-dock-request-anchor-nxP82R
+kept for inspection: C:\Users\hugos\AppData\Local\Temp\omp-dock-reading-silent-Kv7ShC
+kept for inspection: C:\Users\hugos\AppData\Local\Temp\omp-dock-reading-partial-wZlkeK
+kept for inspection: C:\Users\hugos\AppData\Local\Temp\omp-dock-reading-allowance-TIVvrj
+kept for inspection: C:\Users\hugos\AppData\Local\Temp\omp-dock-reset-shared-Un9qoW
+kept for inspection: C:\Users\hugos\AppData\Local\Temp\omp-dock-reset-peer-pKrWPr
+kept for inspection: C:\Users\hugos\AppData\Local\Temp\omp-dock-reset-refused-f0Es2c
+kept for inspection: C:\Users\hugos\AppData\Local\Temp\pi-model-cost-codex-home-98GTMo
+kept for inspection: C:\Users\hugos\AppData\Local\Temp\pi-codex-answers-first-lyv0AD
+kept for inspection: C:\Users\hugos\AppData\Local\Temp\pi-codex-answers-refused-5vYw8U
+kept for inspection: C:\Users\hugos\AppData\Local\Temp\pi-codex-answers-continued-75IhEi
+
+PI MODEL-COST SMOKE SUMMARY: pi 1.4.0 — 100 check(s) passed, none failed
+  100 consumer-visible check(s) across 28 isolated run(s)
+  limitations: the TUI's readability stays human-led (this observes the setWidget frames the frontend published);
+               the balance cases drive the shipped success TTL through the host's own clock (a configured 1ms TTL), not a controlled one;
+               the season boundary's timed redraw and the subagent execution duration are not exercised here;
+               the balance and Codex account answers are this script's own documents, never a real account;
+               the busy and unreported-activity period refusals are the in-process suite's (see the phase header)
+  rerun: bun scripts/pi-model-cost-smoke.ts
