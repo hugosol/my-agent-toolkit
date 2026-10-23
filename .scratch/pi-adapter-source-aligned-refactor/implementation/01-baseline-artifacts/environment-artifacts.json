@@ -1,0 +1,80 @@
+{
+  "files": [
+    {
+      "file": "D:/nvm4w/nodejs/node_modules/@earendil-works/pi-coding-agent/package.json",
+      "exists": true,
+      "realPath": "D:\\Users\\hugos\\AppData\\Local\\nvm\\v24.18.0\\node_modules\\@earendil-works\\pi-coding-agent\\package.json",
+      "sha256": "df6883685382d6a914e5797232744c26579fe7db5576ea0e9c859d018ca2d54e"
+    },
+    {
+      "file": "D:/nvm4w/nodejs/node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js",
+      "exists": true,
+      "realPath": "D:\\Users\\hugos\\AppData\\Local\\nvm\\v24.18.0\\node_modules\\@earendil-works\\pi-coding-agent\\dist\\bundle\\cli.js",
+      "sha256": "e79626f2dd6f94aa45d30f3fa63cd84319a6eefcd150b353cfaf274366926774"
+    },
+    {
+      "file": "node_modules/pi-subagents/package.json",
+      "exists": true,
+      "realPath": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-ZqnfFN\\node_modules\\pi-subagents\\package.json",
+      "sha256": "51f45f9dc332010927c81f826ef38ae294633acd464832d010b5f96881dabf7c"
+    },
+    {
+      "file": "node_modules/pi-subagents/src/shared/required-child-extensions.js",
+      "exists": true,
+      "realPath": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-ZqnfFN\\node_modules\\pi-subagents\\src\\shared\\required-child-extensions.js",
+      "sha256": "5273a136abfb3b04605b1eb1d3970954a18bdbac855a48306e7866f2cf4be1c0"
+    },
+    {
+      "file": "node_modules/pi-subagents/src/extension/rpc.js",
+      "exists": true,
+      "realPath": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-ZqnfFN\\node_modules\\pi-subagents\\src\\extension\\rpc.js",
+      "sha256": "c5627d08138f55b493c5755ccd91334a0b273a2ba93b09777994cf2b55537d37"
+    },
+    {
+      "file": "node_modules/pi-subagents/src/integrations/pi-web-session-liveness.js",
+      "exists": true,
+      "realPath": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-ZqnfFN\\node_modules\\pi-subagents\\src\\integrations\\pi-web-session-liveness.js",
+      "sha256": "92b6d52c9b53fdf4b51738d721945d4d758e1640bf4e6d65d6fa78aa83ed059d"
+    },
+    {
+      "file": "C:/Users/hugos/.pi/agent/npm/node_modules/pi-subagents/package.json",
+      "exists": true,
+      "realPath": "C:\\Users\\hugos\\.pi\\agent\\npm\\node_modules\\pi-subagents\\package.json",
+      "sha256": "4120bda39e0c433d5f694134a4f86b89a33a9b3a27130b36bab34d75b15b7989"
+    },
+    {
+      "file": "C:/Users/hugos/.pi/agent/npm/node_modules/pi-subagents/src/shared/required-child-extensions.js",
+      "exists": true,
+      "realPath": "C:\\Users\\hugos\\.pi\\agent\\npm\\node_modules\\pi-subagents\\src\\shared\\required-child-extensions.js",
+      "sha256": "c958d32b0930c9b91fc55be25ec3b826ea996fa3150720cdf2bac7989d5e9682"
+    },
+    {
+      "file": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-bot\\backend\\target\\release\\herdr-bot.exe",
+      "exists": true,
+      "realPath": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\release\\herdr-bot.exe",
+      "sha256": "6b57254dd5a51a78f0b732bcbdef06b0e69e8201387c1be6397afe2abf04820e"
+    },
+    {
+      "file": "E:\\Developer\\myhub\\my-agent-toolkit\\.cache\\omp-baseline\\18.5.0-viewed-session\\viewed-session-host.json",
+      "exists": true,
+      "realPath": "E:\\Developer\\myhub\\my-agent-toolkit\\.cache\\omp-baseline\\18.5.0-viewed-session\\viewed-session-host.json",
+      "sha256": "5b01ad44143e7f3e7cbea4b1a11bfa1763b104617c4aab2b2e1169c811f9fe30"
+    },
+    {
+      "file": "E:\\Developer\\myhub\\my-agent-toolkit\\.cache\\omp-baseline\\18.5.0-codex-response-boundary\\codex-response-host.json",
+      "exists": true,
+      "realPath": "E:\\Developer\\myhub\\my-agent-toolkit\\.cache\\omp-baseline\\18.5.0-codex-response-boundary\\codex-response-host.json",
+      "sha256": "a1212be3c101347bd604aefea05d5372bd8d6e6e2570a4fb34cff3333ba8ca60"
+    },
+    {
+      "file": "E:\\Developer\\myhub\\my-agent-toolkit\\.cache\\omp-baseline\\18.5.0-viewed-session-codex-response\\combined-host.json",
+      "exists": true,
+      "realPath": "E:\\Developer\\myhub\\my-agent-toolkit\\.cache\\omp-baseline\\18.5.0-viewed-session-codex-response\\combined-host.json",
+      "sha256": "88b19e652085f040e6f6fcc00f6c2e607635d953782bf49fd1827734e5196d69"
+    }
+  ],
+  "setupNotes": [
+    "Initial bun --eval attempt used bun.cmd and spawn rejected special characters before starting a child; no behavioral result or process exit exists for that attempt. Retried only this failed setup using bun.exe; run17 records the actual executed command.",
+    "Optional patched hosts were already materialised; cache-links.json records worktree-local junctions to existing frozen artifacts. No patch install/apply command was run."
+  ]
+}

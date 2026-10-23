@@ -1,0 +1,17 @@
+[
+  {
+    "src": "E:\\Developer\\myhub\\my-agent-toolkit\\.cache\\omp-baseline\\18.5.0-viewed-session",
+    "dest": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-ZqnfFN\\.cache\\omp-baseline\\18.5.0-viewed-session",
+    "manifest": "viewed-session-host.json"
+  },
+  {
+    "src": "E:\\Developer\\myhub\\my-agent-toolkit\\.cache\\omp-baseline\\18.5.0-codex-response-boundary",
+    "dest": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-ZqnfFN\\.cache\\omp-baseline\\18.5.0-codex-response-boundary",
+    "manifest": "codex-response-host.json"
+  },
+  {
+    "src": "E:\\Developer\\myhub\\my-agent-toolkit\\.cache\\omp-baseline\\18.5.0-viewed-session-codex-response",
+    "dest": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-ZqnfFN\\.cache\\omp-baseline\\18.5.0-viewed-session-codex-response",
+    "manifest": "combined-host.json"
+  }
+]

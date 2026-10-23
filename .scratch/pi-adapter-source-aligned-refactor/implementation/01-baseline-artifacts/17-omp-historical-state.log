@@ -1,0 +1,20 @@
+{
+  "file": "C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-migration-baseline-state-uhUu3X\\sessions\\2026-10-23T16-24-53-760Z_01a16994-5f00-769b-b172-075792b13163.jsonl",
+  "runRoot": "C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-migration-baseline-state-uhUu3X",
+  "payloads": [
+    {
+      "enabled": true
+    },
+    {
+      "enabled": false
+    }
+  ],
+  "notices": [
+    "codeBaseTools disabled"
+  ],
+  "exit": {
+    "exitCode": 0,
+    "stderr": "",
+    "timedOut": false
+  }
+}

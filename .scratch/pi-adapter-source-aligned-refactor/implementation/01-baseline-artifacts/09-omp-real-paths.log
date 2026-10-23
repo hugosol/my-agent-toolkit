@@ -1,0 +1,26 @@
+bun test v1.4.2 (744846f84)
+
+tests\harness-dock\binding-lifecycle.test.ts:
+(pass) the public binding in a real session (P28, P56) > the host loads it with its validated configuration, waits for its initialization, runs its actions and cleans it up once [3221.00ms]
+(pass) the public binding in a real session (P28, P56) > an ordinary switch keeps the one instance, and the shutdown cleans it once [2952.08ms]
+
+tests\harness-dock\consumer-regression.test.ts:
+(pass) three deployed consumers bound in one real session (P50) > each consumer's own line and own State, and a refused activation that changes nothing of the others [2615.67ms]
+(pass) three deployed consumers bound in one real session (P50) > the shared round axis ends a cancelled exchange for its consumers, and one consumer's State survives it [2758.42ms]
+(pass) three deployed consumers bound in one real session (P50) > an exchange whose provider refuses every attempt ends as a failure, and both consumers' own terms hold [34189.72ms]
+
+tests\harness-dock\session-ownership-tree.test.ts:
+(pass) a real delegating run accounts each actual session's own requests (P12, P13, P24) > three sessions save their own record, with the direct parent the host reported [3600.31ms]
+(pass) a real delegating run accounts each actual session's own requests (P12, P13, P24) > switching the session the host displays leaves every session's own record where it was [3659.08ms]
+(pass) a session renamed while it runs and nobody views it (P24, S5) > the host's own rename reaches a subscriber where it happens, and only the next normal save writes it [3669.85ms]
+
+tests\harness-dock\session-recovery.test.ts:
+(pass) a saved session resumes in the next process (P16, P18) > an independent restart continues its totals, version and period, and reads no history [3841.80ms]
+(pass) a save that did not land is reported and dropped, and the model keeps running (P46) > another writer's record of that session stands, the refused consumption is dropped, and the next process resumes the disk's version [3961.03ms]
+(pass) navigating the session's own tree does not roll back its consumption (P17, P18) > a rewind stands up another session from the copied entries, and coming back continues the first one's record [2899.86ms]
+(pass) a fork is its own session, from zero (P19) > the harness's own fork copies the transcript without consuming, and adds only the fork's own requests [2364.52ms]
+
+ 12 pass
+ 0 fail
+ 215 expect() calls
+Ran 12 tests across 4 files. [69.84s]

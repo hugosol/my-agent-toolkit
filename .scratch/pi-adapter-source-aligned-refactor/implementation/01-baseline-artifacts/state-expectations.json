@@ -1,0 +1,46 @@
+{
+  "sourceCommit": "89bd2d72cd00813d4c219dcf6d33545a54d15363",
+  "capturedBeforeAnyRuntimeRefactor": true,
+  "seams": ["S1 public assembly/extension consumption", "S2 real harness journal, requests and UI frames"],
+  "cases": [
+    {
+      "id": "STATE-PI-RESTART", "owner": "02", "harness": "Pi 1.4.0 / Node 22.19.0",
+      "before": "pi-state-before.jsonl", "after": "pi-state-after.jsonl",
+      "inputStatePayloads": [{"enabled":true}],
+      "expectedRestoredEnabled": true,
+      "expectedNextToggleNotice": "codeBaseTools disabled",
+      "expectedStatePayloadsAfterToggle": [{"enabled":true},{"enabled":false}],
+      "expectedContributionIdentitiesAfterResume": ["codebase-tools:init","codebase-tools:reminder"],
+      "expectedHistory": "Every pre-resume entry remains unchanged and in order; only append new entries.",
+      "actualEvidence": "08-pi-codebase-node22.log: resume across restart phase; original journal and retained complete-line prefix recorded in historical-artifacts.json"
+    },
+    {
+      "id": "STATE-PI-SWITCH", "owner": "02", "harness": "Pi 1.4.0 / Node 22.19.0",
+      "target": "pi-switch-target.jsonl", "other": "pi-switch-other.jsonl",
+      "expectedTargetEnabled": true, "expectedOtherEnabled": false,
+      "expectedTargetContributionIdentities": ["codebase-tools:init","codebase-tools:reminder"],
+      "expectedOtherContributionIdentities": [],
+      "expectedSelection": "switch_session selects target's branch, never the intervening session's default; same-identity navigation does not reseed current State.",
+      "actualEvidence": "08-pi-codebase-node22.log: resume across switch phase; same-identity navigation separately exercised at S1 in framework/session.test.ts on OMP"
+    },
+    {
+      "id": "STATE-OMP-RESTART", "owner": "03", "harness": "OMP 18.5.0 / Bun 1.4.2, unpatched",
+      "before": "omp-state-before.jsonl", "after": "omp-state-after.jsonl", "frames": "omp-state-frames.json",
+      "inputStatePayloads": [{"enabled":true}],
+      "expectedRestoredEnabled": true,
+      "expectedNextToggleNotice": "codeBaseTools disabled",
+      "expectedStatePayloadsAfterToggle": [{"enabled":true},{"enabled":false}],
+      "expectedContributionIdentitiesAfterResume": ["codebase-tools:init","codebase-tools:reminder"],
+      "actualEvidence": "17-omp-historical-state.log and exact reproducible bun --eval command in runs.json; consumer startup-recovery-dock cases also ran in 02-consumers.log"
+    },
+    {
+      "id": "STATE-OMP-BRANCH", "owner": "03", "harness": "OMP controlled native surface at S1",
+      "input": {"sourceBranch":[{"enabled":false}],"targetBranch":[{"enabled":true}]},
+      "expected": "A new-identity branch/fork restores target true. A tree navigation with unchanged identity does not read or reseed from a branch. A following subagent cannot write Owner State.",
+      "actualEvidence": "01-framework.log: session boundary seeding, navigations that keep identity, branch/fork target seeding, owner-follow tests; actual real-host model-cost branch/fork also ran in 09-omp-real-paths.log and 16-dock-serial.log",
+      "limitation": "This is a controlled branch scenario, not a captured OMP branch transcript. Replay the frozen OMP State sample through 03's public-assembly regression after migration."
+    }
+  ],
+  "replayRule": "Work on a copy of the frozen before sample. Load using the real harness --session <copy>, or supply the sample's selected branch through the existing S1 native surface. Do not overwrite the committed historical input or replace it with output written by the migrated implementation. Use the literal expectations above; freshly generated new-write/new-read smoke is supplementary only.",
+  "counterexample": "An implementation that starts off instead of restoring true will enable on the next toggle, produce the wrong notice and append true instead of false. An implementation that selects another session's branch loses the target's init and activation."
+}
