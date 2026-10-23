@@ -142,7 +142,7 @@ function delegationStep(name: string, assignment: string): CaptureStep {
 			name: "task",
 			arguments: JSON.stringify({
 				context: "dock delegation context",
-				tasks: [{ name, agent: SPAWN_AGENT, task: assignment, solutionSpace: "one fixed answer, nothing open" }],
+				tasks: [{ name, agent: SPAWN_AGENT, task: assignment, solutionSpace: "one fixed answer, nothing open", effort: "lo" }],
 			}),
 		},
 	};
@@ -214,16 +214,10 @@ function delegatingStep(request: CapturedRequest): CaptureStep | undefined {
 async function startRun(label: string, extra: readonly string[] = []): Promise<DockRun> {
 	const runRoot = createRunRoot(label);
 	const home = isolateHome(runRoot);
-	// Task labels are auxiliary tiny-model completions, not session Turns. Leave their
-	// candidate roles unassigned so this endpoint observes only the five scripted session
-	// requests, rather than answering assignment-only label prompts with delegation/yield
-	// tool calls and driving the title generator through its fallback candidates.
-	writeAgentSettings(runRoot.agentDir, {
-		"async.enabled": false,
-		"modelRoles.tiny": "",
-		"modelRoles.commit": "",
-		"modelRoles.smol": "",
-	});
+	// Expose the fixed effort scripted by delegationStep. The task agent otherwise uses
+	// automatic effort judging, whose auxiliary requests are outside session Turns and
+	// cannot be answered by this endpoint's delegation/yield conversation protocol.
+	writeAgentSettings(runRoot.agentDir, { "async.enabled": false, "task.enableEffort": true });
 	const capture = startCaptureServer({
 		dir: runRoot.captureDir,
 		replyText: "dock ownership reply",
@@ -403,6 +397,33 @@ async function observedEventually(
 	}
 }
 
+/** Keep protocol evidence in a count failure before the run's temporary captures are removed. */
+function expectRequestCount(capture: CaptureServer, count: number): void {
+	const requests = capture.requests();
+	if (requests.length === count) {
+		expect(requests).toHaveLength(count);
+		return;
+	}
+	const asRecord = (value: unknown): Record<string, unknown> =>
+		value !== null && typeof value === "object" ? (value as Record<string, unknown>) : {};
+	const summary = requests.map(request => {
+		const body = asRecord(request.json);
+		const messages = messagesOf(request);
+		return {
+			index: request.index,
+			model: body.model,
+			stream: body.stream,
+			roles: messages.map(roleOf),
+			opening: openingOf(request).slice(0, 600),
+			lastMessages: messages.slice(-2).map(message => JSON.stringify(message).slice(0, 1200)),
+			tools: Array.isArray(body.tools)
+				? body.tools.map(tool => asRecord(asRecord(tool).function).name)
+				: [],
+		};
+	});
+	expect(requests, `Captured model request protocol (no headers):\n${JSON.stringify(summary, null, 2)}`).toHaveLength(count);
+}
+
 /** One response's record fields for a request count, hand-written from the wire numbers. */
 function usageOfRequests(count: number): Record<string, number> {
 	return {
@@ -423,7 +444,7 @@ describe("a real delegating run accounts each actual session's own requests (P12
 			// The host made five model requests: the main session's delegation, the child's delegation,
 			// the grandchild's answer, the child's answer, and the main session's prose reply. The tool
 			// executions between them are not requests.
-			expect(run.capture.requests()).toHaveLength(5);
+			expectRequestCount(run.capture, 5);
 			// Nothing was skipped: every one of those requests carried a usage reading the host could
 			// establish and a model the extension prices, so no notice was published about any of them.
 			expect(noticesOf(run.session)).toEqual([]);
@@ -550,7 +571,7 @@ describe("a real delegating run accounts each actual session's own requests (P12
 			// Seven model requests in all: five for the delegation, one in the session the view moved to,
 			// one after switching back — and every one of them is accounted under the session it was
 			// issued by.
-			expect(run.capture.requests()).toHaveLength(7);
+			expectRequestCount(run.capture, 7);
 			const counts = sessionsOf(document).map(entry => [entry.id, entry.own[MODEL_PROVIDER]?.[MODEL_ID]?.tokens.input]);
 			expect(counts).toContainEqual([mainId, usageOfRequests(3).input]);
 			expect(counts).toContainEqual([childId, usageOfRequests(2).input]);
@@ -571,7 +592,7 @@ describe("a session renamed while it runs and nobody views it (P24, S5)", () => 
 
 			// The renames cost the model nothing: the same five requests, and no notice at all — a
 			// rename is display data, never a request or a skipped reading.
-			expect(run.capture.requests()).toHaveLength(5);
+			expectRequestCount(run.capture, 5);
 			expect(noticesOf(run.session)).toEqual([]);
 
 			const rounds = await observedEventually(
