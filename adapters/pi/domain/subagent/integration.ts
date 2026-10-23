@@ -27,7 +27,7 @@
  * ordinary shape of a query answered before the provider has a session context.
  */
 import type { SubagentIntegration, SubagentIntegrationFailure } from "../../../../framework/interface/subagent";
-import type { PiExtensionApi } from "../../internal/native";
+import type { PiExtensionApi } from "../../native/core/extensions/types";
 import { publishPiSessionLiveness, requirePiChildExtension, type PiSubagentProvider } from "./effects";
 import {
 	askPiProvider,

@@ -14,8 +14,8 @@
  * facts with their own timing and missing meanings; sharing the file is locality, not a manager, a
  * cache or a unified lookup.
  */
-import type { CatalogPrice, CatalogPriceSource, ProviderAccess } from "../../../framework/interface/provider";
-import type { PiExtensionContext, PiModelRegistry } from "../internal/native";
+import type { CatalogPrice, CatalogPriceSource, ProviderAccess } from "../../../../framework/interface/provider";
+import type { PiExtensionContext, PiModelRegistry } from "./extensions/types";
 
 /**
  * The currency and unit pi states its own model costs in.

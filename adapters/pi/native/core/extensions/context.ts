@@ -7,11 +7,11 @@
  * pi's own `null` for an unknown context right after a compaction — is no reading at all rather
  * than a context of nothing, so nothing is reported for it.
  */
-import { defineAdapterDelivery } from "../../../framework/runtime/adapter-authoring";
-import type { HarnessPort } from "../../../framework/runtime/port";
-import type { PiExtensionContext } from "../internal/native";
-import type { PiPortContext } from "../internal/port";
-import { feedbackTransport } from "./feedback";
+import { defineAdapterDelivery } from "../../../../../framework/runtime/adapter-authoring";
+import type { HarnessPort } from "../../../../../framework/runtime/port";
+import type { PiExtensionContext } from "./types";
+import type { PiPortContext } from "../../../internal/port";
+import { feedbackTransport } from "../../../domain/feedback";
 
 /** The context-reading axis of one binding's port. */
 export function onPiSessionContext(context: PiPortContext): NonNullable<HarnessPort["onSessionContext"]> {

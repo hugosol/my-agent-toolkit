@@ -6,21 +6,22 @@
  *
  * This entry is assembly only: the process-scoped readings this host offers are built once, the
  * binding life is the framework's shared assembly helper, and each axis of the port lives in a
- * capability domain under `domain/`; `internal/` holds this entry's binding support.
+ * source-owned mapping module. Native State, extension API and model-registry mappings live under
+ * `native/core/`; the port remains private assembly wiring.
  */
 import { createAssemblyBinding } from "../../framework/behaviors/assembly";
 import type { ExtensionAssembly } from "../../framework/interface/details/implementation";
 import type { ExtensionDefinition } from "../../framework/interface/details/definition";
 import type { AdapterFactory } from "../../framework/runtime/adapter-authoring";
 import type { HarnessPort } from "../../framework/runtime/port";
-import type { PiExtensionApi, PiExtensionFactory } from "./internal/native";
+import type { PiExtensionApi, PiExtensionFactory } from "./native/core/extensions/types";
 import { createPiPort, type PiPortWithSubagents, type PiPortWithoutSubagents } from "./internal/port";
-import { piProviderFacts } from "./domain/provider";
+import { piProviderFacts } from "./native/core/model-registry";
 import { piSessionPositions } from "./domain/session/queries";
 import { piSessionFileAnchors } from "./domain/subagent/queries";
 import { createPiSubagentIntegration } from "./domain/subagent/integration";
 
-export * from "./internal/native";
+export * from "./native/core/extensions/types";
 export type { PiPortWithSubagents, PiPortWithoutSubagents } from "./internal/port";
 export type { BindingResult } from "../../framework/runtime/port";
 
