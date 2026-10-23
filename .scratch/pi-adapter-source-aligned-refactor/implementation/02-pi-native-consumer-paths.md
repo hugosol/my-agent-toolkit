@@ -78,6 +78,8 @@
 
 - 首轮 `bun run test`：exit 1；1621 pass / 5 fail，9916 assertions，183 files，588.10s。完整日志：`%TEMP%/ticket02-integration-global-tests-921de1d.log`。
 - 失败为真实 herdr-bot 测试启动的安全壳／endpoint 契约（2 项）及真实 OMP 嵌套委派请求数量（3 项）。helper 原默认启动生产后端；现改为默认启动上游已有 `safe_shutdown_shell` example，在发请求前确认安全壳，并等初始 snapshot 就绪、传播订阅失败，未加重试。此前另一个 panel 实例的 `ConnectionRefused` 根因未单独证明，不将其归因于代理或端口配置。
-- OMP task executor 在 session Turn 之外生成 task label，使用 `tiny`／`commit`／`smol` 可选模型角色；委派 fixture 的 assignment prompt 回复协议不服务这些辅助请求。现仅在该套件的隔离配置中显式留空三个角色，保留 capture-all、原始 5/7/5 次数及用量／身份断言，不修改宿主、adapter 或业务配置。
+- 首次将额外六次请求推断为 task label，并将隔离配置的 `tiny`／`commit`／`smol` 留空；其他集成会话及本会话第二轮全局运行均证伪了此修复，现已移除无效配置。第二轮保留的请求协议摘要证明额外请求实际为每个 spawn 的 reasoning effort 自动分类（`solution_space`，回答 `low`／`medium`／`high`／`xhigh`，失败后 `submit_judgment`），而非 session Turn 或 task label。仍保留 capture-all、原始 5/7/5 次数及用量／身份断言，不修改宿主、adapter 或业务配置。
+- 第二轮 `bun run test`（上述 safe-shell 环境）：exit 1；1622 pass / 4 fail。日志 `%TEMP%/ticket02-integration-global-tests-diagnostics.log` 保留无 headers 的模型请求协议摘要及结构化 fetch 错误。panel 子进程仍存活且已 bind 到相同端口，首次 Bun fetch SSE 仍报 `ConnectionRefused`；不将此归因于已排除的错误 endpoint 或未验证的代理配置。
+- 对实际协议的修复：在委派 fixture 的隔离配置启用宿主已有 `task.enableEffort`，两次 scripted task 均显式 `effort: "lo"`，避免不属于本场景的自动分类请求。panel 的 SSE subscription／snapshot 使用各自拥有、`agent: false` 的 `node:http` 本地连接，保留相同帧解码、HTTP 错误传播与 abort 清理，不重试、不回退；Bun 内部连接失败机制未获证明，不声称已修复 Bun。
 - 临时 worktree 的真实 panel 前提显式设置为 `HERDR_BOT_BINARY=E:/Developer/myhub/herdr-bot/backend/target/debug/examples/safe_shutdown_shell.exe`、`HERDR_BOT_METADATA=E:/Developer/myhub/herdr-bot/meta-data/bot-options.toml`，不使用生产关机后端，不安装或重建宿主。
 
