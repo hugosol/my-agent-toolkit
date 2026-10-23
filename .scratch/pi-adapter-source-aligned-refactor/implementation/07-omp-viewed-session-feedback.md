@@ -57,6 +57,12 @@
 
 保留正常失败测试 `a native run arriving after release must not reopen Viewed-session subscriptions (P14, known existing defect)`，独立预期是 0，实际 2，不使用 skip／todo／expected-failure 把缺口计成绿色。建议另行授权在 watch 入口拒绝无 framework listener 的重订阅，并核对首次订阅及重绑顺序。Main 明确决定本票保持结构迁移范围，不纳入现存缺陷修复；因此本票未声明全部 P14 通过、未关闭合并状态。
 
+### 本轮集成修复（2026-10-24）
+
+本轮用户明确要求解决冲突并直接修复全局测试问题，覆盖此前“不修复既有 P14 缺陷”的实施范围决定。合并 `b38a209d0af48095b0ee7f39a94546677fa99330` 的文档冲突时，同时保留 OMP 的 native feedback／marker 路径和 Pi 的 native UI 路径。
+
+`createViewedSession.watch` 现在仅在至少一个 framework listener 存在时创建 native subscription，避免释放后迟到 native run 通过 context tracker 重新订阅。既有公开 assembly 回归测试保留其 `0` subscriber 和无新增 widget 的独立预期，并去掉“known existing defect”说明；未修改错误传播、重试、等待或宿主契约。上方失败记录为修复前历史证据，不是当前结果；本轮全局测试结果在下方补录。
+
 ### S2 真实环境与结果
 
 Windows x64，Bun 1.4.2；实际执行既有 isolated exact `@oh-my-pi/pi-coding-agent@18.5.0`，以及既有 `18.5.0-viewed-session` 冻结补丁安装。只在本 worktree `.cache/omp-baseline/` 建 junction 指向已有 `E:/Developer/myhub/my-agent-toolkit/.cache/omp-baseline/` 的两个目录；没有安装、修改或重新应用宿主补丁。patched materializer 走已有 manifest 的哈希核对／复用分支。正式配置、全局安装及其他 worktree 未修改。

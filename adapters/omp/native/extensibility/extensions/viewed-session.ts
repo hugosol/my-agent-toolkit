@@ -63,12 +63,13 @@ export function createViewedSession(
 	const viewedListeners = new Set<(markers: MarkerTransport) => void>();
 
 	/**
-	 * The subscription is re-pointed when the context moves and left alone when it does not: a
+	 * Only interested framework listeners keep a native subscription alive. While interested,
+	 * the subscription is re-pointed when the context moves and left alone when it does not: a
 	 * context that publishes no such subscription is never watched, and every later delivery from
 	 * it leaves the existing subscription exactly as it stands.
 	 */
 	const watch = (ctx: OmpSessionContext): void => {
-		if (typeof ctx.subscribeViewedSessionChanged !== "function" || watchedContext === ctx) return;
+		if (viewedListeners.size === 0 || typeof ctx.subscribeViewedSessionChanged !== "function" || watchedContext === ctx) return;
 		watchedContext = ctx;
 		unwatchViewed?.();
 		unwatchViewed = ctx.subscribeViewedSessionChanged(() => {

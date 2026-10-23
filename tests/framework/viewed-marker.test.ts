@@ -356,10 +356,9 @@ describe("OMP native Viewed-session variants preserve their distinct projections
 		expect(lastRender(live)).toBeUndefined();
 	});
 
-	// Existing defect, explicitly excluded from this structural migration by the scope decision
-	// recorded in ticket07: a late native run records context and watch reopens subscriptions.
-	// Keep the required outcome visible and failing; do not turn the leak into accepted behavior.
-	test("a native run arriving after release must not reopen Viewed-session subscriptions (P14, known existing defect)", () => {
+	// Native handlers can outlive the binding: recording their late context must not recreate
+	// the host subscription after the last framework listener has left.
+	test("a native run arriving after release must not reopen Viewed-session subscriptions (P14)", () => {
 		const double = armedOwner();
 		double.deliverSession(MAIN, "session_shutdown");
 		expect(double.viewers.size).toBe(0);
