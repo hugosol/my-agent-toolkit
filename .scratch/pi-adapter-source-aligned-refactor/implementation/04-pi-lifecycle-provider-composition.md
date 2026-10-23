@@ -81,6 +81,18 @@ S1 为实际公开 `piAdapter` assembly 与 extension 消费 interface；S2 为�
 
 在 `b659d32` 冲突合并后，采用共享测试修复 `257d84b`（本分支为 `b73a78c`），确保全局测试只启动 `safe_shutdown_shell`，不启动可执行真实关机动作的生产 panel。设置 `HERDR_BOT_BINARY=E:/Developer/myhub/herdr-bot/backend/target/debug/examples/safe_shutdown_shell.exe`、`HERDR_BOT_METADATA=E:/Developer/myhub/herdr-bot/meta-data/bot-options.toml`。收到 07 明确释放窗口后执行 `bun run test`，退出 **1**：**1630 pass / 4 fail**，183 files、9965 assertions、576.58s。完整原始日志保留在 `C:/Users/hugos/AppData/Local/Temp/pi04-integration-global-test.log`。失败为 panel startup 的首次 snapshot 连接拒绝，以及 session-ownership-tree 的三个场景请求数分别为 11／13／11 而非既有 5／7／5；不算通过。02 集成 owner 接管这两个共享测试根因，04 未重复修改其文件。随后采用其修复 `ec861fa`（本分支 `54e5ceb`）：额外六次请求实际来自 auto-effort judge，fixture 显式声明 task effort 并启用相应选项；panel 的 SSE／snapshot 使用独立的 `node:http` 连接，不与进程全局 fetch 池混用。这些是测试输入和外部 panel 观察设施修正，不放宽产品行为断言。02 的通过结果不冒充本 worktree 的最终结果。
 
+### 恢复会话后的最终全局验收
+
+恢复原 worktree 后，分支仍为 `hyper/pi-adapter-source-aligned-refactor/04-pi-lifecycle-provider-composi-852ae8-ad3d0438e083`，HEAD 为 `51768a9`，工作区干净，无未完成 merge／冲突。宿主自动集成编排已丢失；本记录不宣称恢复编排或已将 04 合入 `dev`。
+
+- 恢复读取上次中断 eval 的完整日志，实际全局结果是 **1497 pass / 124 fail**（183 files、8234 assertions、246.23s），主要原因为缓存宿主缺失 `@oh-my-pi/omp-stats/src/embedded-client.generated.txt`，不是通过结果。
+- 从 npm 精确发布包 `@oh-my-pi/omp-stats@18.5.0` 恢复该资产到本 worktree 的四个 baseline／patch cache；先验证 tarball 的 registry SHA-512 integrity `sha512-z9yfQPotgV67146b0lnp8FmTzgT/zpzKKoETNZid51RWwF8n6H7lDzLPqgVlIfIDwBFY+3qaetD3bbmT6r6u7Q==`。发布包中的资产本身为 0 bytes，SHA-256 为 `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`；恢复的是原始发布字节，不是伪造 fallback，也未修改外部宿主协议。
+- 独占窗口下，资产恢复后的 `bun run test` 退出 **1**：**1633 pass / 1 fail**（183 files、10022 assertions、527.67s）。唯一失败是 `model-cost-session-span` background result 的 `drawing=-1`。其等待条件只检查最新 Total 行，可能被前一条结果已经更新的行提前满足，随后尚未收到当前 receipt 的 redraw 就立即断言。测试改为直接等待 receipt 之后、同一 widget 的 span advance frame；仍保留必须晚于 receipt、必须早于下一 main assistant end、两份结果分别推进等原有断言，不延长既有 30s 等待，不修改产品逻辑。
+- 定向诊断命令 `bun test tests/harness-dock/model-cost-session-span.test.ts -t "each background task result"` 退出 **0**。
+- 最终 `bun run test` 退出 **0**：**1634 pass / 0 fail**，183 files、10023 assertions、521.70s。使用与上文相同的安全 panel 环境变量；源代码和 fixture 在执行期间未改。未另跑 typecheck、复杂脚本、独立实机 smoke 或跨票整体验收。
+
+五次原始完整日志均保留在 [04-lifecycle-artifacts](./04-lifecycle-artifacts/) 的 `pi04-*.log`；最终通过日志为 `pi04-integration-global-verified.log`。既有实现阶段和此次失败证据不被覆盖。冲突解决、测试设施修正和验收记录仅提交到本开发分支，原 worktree／branch 保留；由主会话恢复宿主队列后决定实际合入，不自行操作 `dev`。
+
 ### 集成交接与未验证项
 
 本票无需 State 数据或用户配置迁移，无新增 retry、延长等待或 failure fallback。02／06 跨票 import cutover 和合入由独立集成执行；完整双端结构规则、ADR 与全仓最终验收仍归其各自 owner。真实服务、其他版本／平台、交互 TUI 与未运行组合不在本次实机证据内，不提升支持声明。原 worktree 联合消费方运行的两项不稳定失败保持可见；已有覆盖和实机结果不替代这个限制。

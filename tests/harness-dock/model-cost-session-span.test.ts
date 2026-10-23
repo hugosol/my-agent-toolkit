@@ -317,11 +317,17 @@ describe("a real submission establishes and advances the main session's span (P1
 				}
 				const receipt = notices()[count - 1];
 				if (receipt === undefined) throw new Error("the result notification disappeared");
-				const line = await totalLineUntil(run.session, line => secondsOf(line) > seconds);
+				// An earlier result may already have advanced the latest widget while this receipt's
+				// redraw is still in transit. Await the frame this assertion actually observes, not
+				// an unrelated latest Total line that can make the wait finish prematurely.
+				const drawn = await run.session.awaitFrame(frame =>
+					run.session.frames().indexOf(frame) > receipt.index && frame.type === "extension_ui_request" &&
+					frame.method === "setWidget" && frame.widgetKey === MODEL_COST_WIDGET_KEY && Array.isArray(frame.widgetLines) &&
+					frame.widgetLines.some(text => String(text).startsWith("Total:") && secondsOf(String(text)) > seconds),
+					`a widget span advance after background result ${count}`, 30_000);
+				const line = (drawn.widgetLines as string[]).find(text => text.startsWith("Total:"))!;
 				const frames = run.session.frames();
-				const drawing = frames.findIndex((frame, index) => index > receipt.index && frame.type === "extension_ui_request" &&
-					frame.method === "setWidget" && Array.isArray(frame.widgetLines) &&
-					frame.widgetLines.some(text => String(text).startsWith("Total:") && secondsOf(String(text)) > seconds));
+				const drawing = frames.indexOf(drawn);
 				expect(drawing).toBeGreaterThan(receipt.index);
 				const responseEnded = frames.slice(receipt.index + 1, drawing).some(frame => frame.type === "message_end" &&
 					(frame.message as { role?: string } | undefined)?.role === "assistant");
