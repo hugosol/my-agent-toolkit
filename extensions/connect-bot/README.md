@@ -41,9 +41,13 @@ For a checkout elsewhere (including a temporary worktree), set `HERDR_BOT_BINARY
 and `HERDR_BOT_METADATA` to its delivered `meta-data/bot-options.toml`. The helper rejects a missing
 example with build instructions and rejects a non-safe backend before sending any panel requests;
 it never falls back to the production executable, whose power-off action is real. Each instance
-uses its own configuration and storage, binds an ephemeral loopback port, and waits for the panel's
-initial event-stream snapshot before handing its endpoint to a caller. Subscription failures surface
-as fixture failures rather than being silently discarded; no reconnect or retry is added.
+uses its own configuration and storage, binds an ephemeral loopback port, and reads both subscription
+and snapshots over dedicated `node:http` connections to that listener, independent of process-wide
+Bun fetch transport. It waits for the panel's initial event-stream snapshot before handing its
+endpoint to a caller. Subscription failures surface
+as fixture failures rather than being silently discarded; startup failures retain the endpoint,
+child exit status before cleanup, structured cause, and fully drained process output. No reconnect
+or retry is added.
 
 ## Startup modes
 

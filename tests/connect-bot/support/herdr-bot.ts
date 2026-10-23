@@ -21,8 +21,11 @@
  * example fails with build instructions; the production executable is never a fallback.
  */
 import { copyFileSync, existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { get } from "node:http";
 import { tmpdir } from "node:os";
+import { Readable } from "node:stream";
 import * as path from "node:path";
+import { inspect } from "node:util";
 import { REPO_ROOT } from "../../harness-dock/baseline";
 
 /** The environment name that overrides where the herdr-bot binary is taken from. */
@@ -159,6 +162,25 @@ function writePanelConfig(directory: string): string {
 	return file;
 }
 
+/** Reads the actual loopback listener directly, independently of Bun's process-wide fetch transport. */
+function panelEvents(endpoint: string, signal: AbortSignal): Promise<ReadableStream<Uint8Array>> {
+	const { promise, resolve, reject } = Promise.withResolvers<ReadableStream<Uint8Array>>();
+	const request = get(`${endpoint}/api/sessions/events`, {
+		agent: false,
+		headers: { accept: "text/event-stream" },
+		signal,
+	}, response => {
+		if (response.statusCode !== 200) {
+			response.destroy();
+			reject(new Error(`the panel's read side returned HTTP ${response.statusCode} at ${endpoint}`));
+			return;
+		}
+		resolve(Readable.toWeb(response) as ReadableStream<Uint8Array>);
+	});
+	request.on("error", reject);
+	return promise;
+}
+
 /** Parses one server-sent event block into a frame; `undefined` for a keep-alive comment only. */
 function frameOf(block: string): HerdrBotFrame | undefined {
 	let event: string | undefined;
@@ -264,15 +286,20 @@ export async function startHerdrBot(): Promise<HerdrBotPanel> {
 	const output: string[] = [];
 	let port: number | undefined;
 	const bound = Promise.withResolvers<number>();
-	pumpLines(child.stdout, line => {
+	const stdout = pumpLines(child.stdout, line => {
 		output.push(line);
 		const match = LISTEN_LINE.exec(line);
 		if (match !== null && port === undefined) {
 			port = Number(match[1]);
 			bound.resolve(port);
 		}
-	}).catch(() => {});
-	void pumpLines(child.stderr, line => output.push(line)).catch(() => {});
+	}).catch(error => {
+		output.push(`stdout read failed: ${String(error)}`);
+		bound.reject(error);
+	});
+	const stderr = pumpLines(child.stderr, line => output.push(line)).catch(error => {
+		output.push(`stderr read failed: ${String(error)}`);
+	});
 
 	void child.exited.then(code => bound.reject(new Error(`herdr-bot exited before binding (exit ${code})`)));
 	const timer = setTimeout(() => bound.reject(new Error(`herdr-bot did not bind within ${START_TIMEOUT_MS}ms`)), START_TIMEOUT_MS);
@@ -282,10 +309,16 @@ export async function startHerdrBot(): Promise<HerdrBotPanel> {
 			throw new Error(`${binary} is not the safe_shutdown_shell; refusing a backend that can power off the machine`);
 		}
 	} catch (error) {
+		const exitCode = child.exitCode;
 		child.kill();
 		await child.exited;
+		await Promise.all([stdout, stderr]);
 		rmSync(directory, { recursive: true, force: true });
-		throw new Error(`${String(error)}; panel output:\n${output.join("\n")}`);
+		throw new Error(
+			`herdr-bot startup failed (binary ${binary}, child exit before cleanup: ${exitCode}); ` +
+			`${inspect(error, { depth: 4 })}; panel output:\n${output.join("\n")}`,
+			{ cause: error },
+		);
 	} finally {
 		clearTimeout(timer);
 	}
@@ -295,12 +328,9 @@ export async function startHerdrBot(): Promise<HerdrBotPanel> {
 	const waiters: Array<{ readonly match: (frame: HerdrBotFrame) => boolean; readonly settle: (frame: HerdrBotFrame) => void; readonly reject: (error: Error) => void }> = [];
 	let readFailure: Error | undefined;
 	const abort = new AbortController();
-	const subscription = fetch(`${endpoint}/api/sessions/events`, {
-		headers: { accept: "text/event-stream" },
-		signal: abort.signal,
-	})
-		.then(async response => {
-			await pumpFrames(response.body!, frame => {
+	const subscription = panelEvents(endpoint, abort.signal)
+		.then(async body => {
+			await pumpFrames(body, frame => {
 				frames.push(frame);
 				for (const waiter of [...waiters]) {
 					if (!waiter.match(frame)) continue;
@@ -339,14 +369,11 @@ export async function startHerdrBot(): Promise<HerdrBotPanel> {
 			const reading = new AbortController();
 			void (async () => {
 				try {
-					const response = await fetch(`${endpoint}/api/sessions/events`, {
-						headers: { accept: "text/event-stream" },
-						signal: reading.signal,
-					});
+					const body = await panelEvents(endpoint, reading.signal);
 					// The first frame of a connection opened now is the table as it stands now; the
 					// reader stops there and the connection is dropped, so no later change is mistaken
 					// for this read's answer.
-					await pumpFrames(response.body!, frame => {
+					await pumpFrames(body, frame => {
 						if (frame.event !== "snapshot") return false;
 						resolve(snapshotSessions(frame.data));
 						return true;
@@ -365,6 +392,7 @@ export async function startHerdrBot(): Promise<HerdrBotPanel> {
 			await subscription;
 			child.kill();
 			await child.exited;
+			await Promise.all([stdout, stderr]);
 			rmSync(directory, { recursive: true, force: true });
 		},
 	};
@@ -372,7 +400,12 @@ export async function startHerdrBot(): Promise<HerdrBotPanel> {
 		await panel.waitFor(frame => frame.event === "snapshot", "the initial snapshot", START_TIMEOUT_MS);
 		return panel;
 	} catch (error) {
+		const exitCode = child.exitCode;
 		await panel.stop();
-		throw new Error(`${String(error)}; panel output:\n${output.join("\n")}`);
+		throw new Error(
+			`herdr-bot subscription failed (endpoint ${endpoint}, binary ${binary}, child exit before cleanup: ${exitCode}); ` +
+			`${inspect(error, { depth: 4 })}; panel output:\n${output.join("\n")}`,
+			{ cause: error },
+		);
 	}
 }
