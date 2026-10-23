@@ -177,7 +177,11 @@ The map below locates the implementations of each framework responsibility; it d
 both harnesses to share a directory taxonomy. Pi's State protocol belongs to its native session
 manager, while its commands, prompt delivery, context readings and structural API types belong to
 the native extension contract. Catalog prices and current access belong to the native model
-registry. Extension-specific presentation stays outside these adapters.
+registry. Pi Marker area and feedback effects share `native/core/extensions/ui.ts` because the
+consumed contract is `ExtensionUIContext` in Pi's `core/extensions/types.ts`, not the TUI's final
+interactive-mode implementation. Pi still has no Viewed-session outlet: Marker area projection
+uses the delivery's existing actual-session position. Extension-specific presentation stays outside
+these adapters.
 
 | Domain | Mapping responsibility | OMP | pi |
 | --- | --- | --- | --- |
@@ -187,8 +191,8 @@ registry. Extension-specific presentation stays outside these adapters.
 | Provider | Catalog price queries and current provider address/credential queries, mapped to framework facts | [`native/config/model-registry.ts`](../../adapters/omp/native/config/model-registry.ts) | [`native/core/model-registry.ts`](../../adapters/pi/native/core/model-registry.ts) |
 | Control | Native command registration and invocation mapping | [`native/extensibility/extensions/commands.ts`](../../adapters/omp/native/extensibility/extensions/commands.ts) | [`native/core/extensions/commands.ts`](../../adapters/pi/native/core/extensions/commands.ts) |
 | Prompt | Native run-initiation mapping and injected-message result | [`native/extensibility/extensions/prompts.ts`](../../adapters/omp/native/extensibility/extensions/prompts.ts) | [`native/core/extensions/prompt.ts`](../../adapters/pi/native/core/extensions/prompt.ts) |
-| Feedback | Extension feedback and framework notice effects; UI or stderr | [`domain/feedback.ts`](../../adapters/omp/domain/feedback.ts) | [`domain/feedback.ts`](../../adapters/pi/domain/feedback.ts) |
-| Marker | Marker area widget effect; absent on surfaces without UI | [`domain/marker.ts`](../../adapters/omp/domain/marker.ts) | [`domain/marker.ts`](../../adapters/pi/domain/marker.ts) |
+| Feedback | Extension feedback and framework notice effects; UI or stderr | [`domain/feedback.ts`](../../adapters/omp/domain/feedback.ts) | [`native/core/extensions/ui.ts`](../../adapters/pi/native/core/extensions/ui.ts) |
+| Marker | Marker area widget effect; absent on surfaces without UI | [`domain/marker.ts`](../../adapters/omp/domain/marker.ts) | [`native/core/extensions/ui.ts`](../../adapters/pi/native/core/extensions/ui.ts) |
 
 OMP's complete persisted-entry protocol is in [`native/session/session-manager.ts`](../../adapters/omp/native/session/session-manager.ts): extension State naming, oldest-first selected-branch reads and native append stay together with persisted prompt identities. The framework still validates the payloads and decides activation and prompt frequency; moving source files requires no journal or user-configuration migration.
 
