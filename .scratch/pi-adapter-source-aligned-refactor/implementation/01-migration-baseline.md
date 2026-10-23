@@ -6,7 +6,7 @@
 
 **Blocked by:** None (can start immediately).
 
-**Status:** in-progress
+**Status:** closed
 
 ## 契约与范围
 
@@ -27,7 +27,7 @@
 
 ## 执行记录 — 2026-10-24
 
-本票只建立重构前的证据、职责分配及可重复步骤；**不宣称 P1–P17 已由重构兑现**，不修改运行时代码、宿主、业务预期或其他票据。文中的 owner 是后续唯一验收责任，不是新增能力注册表。未读取其他票正文；02–09 的标识仅来自文件名，职责依据实际源码及批准的 [spec](../spec.md)、[contract](../contract.md)。本票实现与验收已完成，`Status: in-progress` 保留到独立集成完成；按 triage 规则，尚未合入不能先标 `closed`。
+本票只建立重构前的证据、职责分配及可重复步骤；**不宣称 P1–P17 已由重构兑现**，不修改运行时代码、宿主、业务预期或其他票据。文中的 owner 是后续唯一验收责任，不是新增能力注册表。未读取其他票正文；02–09 的标识仅来自文件名，职责依据实际源码及批准的 [spec](../spec.md)、[contract](../contract.md)。以下为原实现时点记录；当时保留 `Status: in-progress` 等待独立集成。现已确认首次合入提交可达并完成全局测试，票据关闭；本轮修复及验证范围见末尾独立集成记录。
 
 ### 执行方法与证据入口
 
@@ -179,5 +179,16 @@ I 的关键可选状态也已冻结在 JSON：Pi viewed/sessionObservationAccess
 - 04 内容确实最多，但已有 `PiSubagentIntegration` 的 attach/require/settle/background/release 边界、native anchor reader 与明确 mixture 输入，可以按 PI-SESSION → PI-PROVIDER → PI-ROUND 的纵切执行；本次证据没有证明必须拆 04 或增添前置抽象。若执行中某个承诺无法在 S1/S2 观察，报告具体边界冲突再请求调整，不能自行改成 helper 测试或缩掉 child/失败场景。
 - `internal/native.ts`、`internal/port.ts`、index 与 `domain/session/queries.ts` 有多个 owner 接触：公共 facade/State 协议 02/03 持有，生命周期/launch 协议 04/05 持有，view/UI 06/07 持有；共享文件由 08 的整合窗口收束各职责实际导出，最后清除旧路径。文件冲突是执行窗口协调，**本次未新增 blocking edge**；仅有真正缺实现输入才能新增逻辑依赖。
 - 08 不承担任何遗漏的 runtime responsibility，09 不接管路径内的 P10/P13/P14；09 只负责 COMBO-*、最终全范围实际命令、证据分级与 H1 交接。
-- 本票仅提交这份执行记录与其 frozen artifacts，不触碰其他票或工作流报告、不合并 dev、不 reset。后续独立集成应保留失败表及环境差异，按仓库规则合入后再关闭票据。
+- 本票原实现仅提交这份执行记录与其 frozen artifacts，不触碰其他票或工作流报告、不合并 dev、不 reset。后续独立集成应保留失败表及环境差异，按仓库规则合入后再关闭票据。
+
+### I. 独立集成验收 — 2026-10-24
+
+- 当前开发分支已同步首次集成提交 `f5c0fed617097aecae74d5a4ed2560958656ab11`；其父为 `89bd2d7` 与实现提交 `68030a9`，两项 `git merge-base --is-ancestor … HEAD` 均 exit 0。接管时工作区干净，无待解决冲突；未切换分支、操作集成工作区、创建 worktree、reset 或调用 retro。
+- 首次 `bun run test`：1614 pass / 1 fail；唯一失败为 `history-interop.test.ts:39` 的“安全壳”前提。未删除断言，也未对真实关机后端发送监控请求。使用 fixture 既有 `HERDR_BOT_BINARY` override 指向现成 `E:/Developer/myhub/herdr-bot/backend/target/debug/examples/safe_shutdown_shell.exe`；源码中的 `RecordingPowerOff` 只记录动作，不调用系统关机。不构建、安装或修改外部宿主。该环境修正不覆盖 F 中历史失败。
+- 第二、三轮全局测试均为 1614 pass / 1 fail / 1 error：`subagent-runtime.test.ts` 分别在恢复后保存及单 activity 保存等待中超过原有 5000ms。第二轮期间其他票报告真实 smoke 与本轮重叠；第三轮同类失败仍存在，不能仅归咎于负载。
+- 集成修复仅将该测试 `savedDocument` 的同步 `readFileSync` 热轮询改为 `await readFile`，把真实文件读取交还异步 I/O；没有加入固定 sleep、延长 deadline、修改独立预期或生产行为。修复针对 Windows 原子写入与同步轮询的争用假设；根因归属仍是推断，不将一次通过夸大为竞态已穷尽证明。
+- 修复后 `bun test tests/model-cost/foundation/session/subagent-runtime.test.ts`：10 pass / 0 fail，66 assertions；`bun run typecheck`：exit 0，authoring 61 files / 4 declarations / 0 diagnostics。
+- 最终全局命令（PowerShell）：`$env:HERDR_BOT_BINARY='E:/Developer/myhub/herdr-bot/backend/target/debug/examples/safe_shutdown_shell.exe'; bun run test`。Bun 1.4.2：**1615 pass / 0 fail，9924 assertions，182 files，536.70s，exit 0**。源状态为 `f5c0fed` 加本节所述测试读取修复；验证期间本工作树运行源码及 fixture 未变，随后只更新本票文档及状态。
+- 原始完整日志由本轮宿主临时目录 `C:/Users/hugos/AppData/Local/Temp/hyper-auto-coding-wrg8O7/` 保存：`integrate-01-global-tests.log`、`integrate-01-global-tests-safe-panel.log`、`integrate-01-global-tests-safe-panel-final.log`、`integrate-01-global-tests-async-poll.log`。日志经 PowerShell Tee-Object 捕获，终端错误流格式及中文编码显示可能受宿主影响；结果以 Bun 计数及进程退出状态为准。
+- 本轮按指派未额外运行复杂脚本、独立实机 smoke 或跨票据整体验收；全局脚本本身包含的 dock 测试不等于后续跨票据门禁已经执行。H1、真实账户与支持状态限制仍按原记录保留。首次合入已完成，本轮修复提交由宿主排队再合入，不直接合并 dev。
 
