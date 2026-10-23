@@ -61,15 +61,15 @@ my-agent-toolkit/
 
   adapters/                     # Framework contract mappings, grouped by harness
     pi/
-      index.ts                  # Public assembly entry
-      internal/                 # Native types, loader support and the binding port
-      domain/                   # Capability domains: Session, Context, Subagent, Provider, ...
-        session/                # Session facts and lifecycle, including Turn and Round mappings
+      index.ts                  # Public assembly entry, including native loading support
+      port.ts                   # Private per-binding HarnessPort assembly
+      native/core/              # Pi extension, session-manager and model-registry contracts
+      thirdParty/pi-subagents/  # Provider-owned protocols and lifetime
+      mixture/                  # Necessary native + provider interpretation
     omp/
-      index.ts
-      internal/
-      domain/
-        session/
+      index.ts                  # Public assembly entry
+      port.ts                   # Private per-binding HarnessPort assembly
+      native/                   # OMP extension, session, model-registry and agent-registry contracts
 
   extensions/                   # Independent extension implementations
     codebase-tools/
@@ -149,61 +149,67 @@ The native escape hatch is exactly two locations: `adapters/**` and `extensions/
 
 Widening the escape hatch, adding an equivalent bypass, or moving native access outside these two locations is a non-additive architecture change and requires an explicit decision in this document, not an implementation detail. The connect-bot migration fixed the extension-side allow-list — that extension's only direct native use is its OMP harness assembly, limited to a managed interval timer for the 10-second heartbeat and the real session id, cwd and model read as plain data, with shared logic importing no native types and registering no native hooks — and restated the invariant in exactly the mechanical terms the test above checks: framework shared source (core, behaviors, definition) and extension modules outside `harnesses/` must not name native APIs, and native access lives only under `adapters/**` and `extensions/<id>/harnesses/**`.
 
-### Capability-domain adapter organization (2026-10-19)
+### Source-aligned adapter organization (2026-10-24)
 
-The maintainer approved moving the framework's native mappings to top-level `adapters/`, beside
-`framework/` and `extensions/`. This explicitly replaces the earlier internal adapter placement and
-its native allow-list paths, not its responsibility rule. There are no forwarding modules at the old
-paths. Extension-specific presentation and other non-unified native implementations remain under
-`extensions/<id>/harnesses/`.
+The maintainer approved moving native mappings to top-level `adapters/`, beside `framework/`
+and `extensions/`, then replacing the 2026-10-19 domain-first layout with source ownership.
+The native allow-list and responsibility boundary are unchanged. Extension-specific presentation
+and other non-unified native implementations remain under `extensions/<id>/harnesses/`.
 
-Within each harness, the adapter root has exactly three entries: `index.ts` is the public assembly
-entry, `internal/` is private native/loader and binding-port support, and `domain/` contains the
-capability domains. Organize `domain/` directly by shared capability domain, not by consumer
-extension or by `business`/`foundation` tiers. `domain/` is a navigation grouping, not a runtime
-module or a new interface. Prefer an existing business domain when it and a support domain both
-fit; keep genuinely shared support in one place. Framework-owned concepts supplement business
-vocabulary: Session owns its Turn and Round mappings, context keeps its own domain, and provider
-access and catalog pricing share the Provider domain. A native object's location does not decide
-capability ownership. Framework Marker area and Extension feedback mappings remain adapter
-responsibilities; extension presentation does not.
+Each harness keeps two distinct top-level assembly responsibilities: `index.ts` is the public entry
+used by consumers; `port.ts` is private per-binding `HarnessPort` construction. The generic
+`internal/` and `domain/` groups are removed, without compatibility forwarding. Native types and
+loading support live with the contracts they describe, not in an unowned helper collection. Pi's
+public entry installs its native Node text-resource support before consumers load shared definitions;
+consumers do not import the private loader or source groups.
 
-Within a capability domain, organize native mappings by their direction: `events.ts` converts
-native observations to framework events, `queries.ts` reads native facts into framework values,
-and `effects.ts` performs framework-requested native effects. Create only the mappings the domain
-actually needs: a simple domain stays a single file, and complex Turn or Round protocols may remain
-private implementation files within Session. Do not create forwarding-only entry files or split every
-method into a module. Keep the domain's event construction near its native event mapping rather than
-reassembling it in the harness port. Shared context types, diagnostics and other implementation
-support belong with the code that owns their lifetime, not in a parallel capability taxonomy.
-The complete domain map is Session, Context, Subagent, Provider, Control, Prompt, Feedback and
-Marker. Both harnesses expose their Subagent domain: native parent/ancestor relationships and
-integration-state reads belong there, while Session consumes those relations for its own facts and
-Owner mapping. Ordinary child Session/Turn/Round events remain Session events; OMP does not add a
-second child-event pipeline just to populate a Subagent `events.ts`. pi's provider announcements and
-replies, liveness queries, and child-extension registration effects are organized within Subagent;
-the third-party provider is its internal implementation, not the primary navigation category.
-The offline inventory lives in `domain/subagent/declaration.ts` and is distinct from runtime queries.
-Feedback and Marker are separate effect domains on both harnesses. Native types and loader hooks
-live under each harness's `internal/`; `index.ts` is the public assembly entry and
-`internal/port.ts` is per-binding assembly support, not a capability domain. Capability domains live
-only under `domain/`. The authoritative path map is the adapter navigation in the framework capability index.
-This refines the approved domain-first organization; it does not introduce a generic delivery module,
-change framework interfaces, or unify commands, prompt effects and observation deliveries.
+Mappings are navigated by their actual contract source:
 
-This is a navigation convention, not a one-requirement/one-file mechanism. The definition and harness
-inventory retain the existing subagent capability vocabulary and per-execution-mode coverage. A new
-harness implements what its selected consumers require, not automatically every framework capability;
-this revision adds no general requirement expansion, registration system, runtime negotiation or
-startup gate. Independent verification remains separate from declaration matching.
+- `native/` owns harness contracts. Pi uses `core/extensions/`, `core/session-manager/` and
+  `core/model-registry.ts`; OMP uses its own `extensibility/extensions/`, `session/session-manager.ts`,
+  `config/model-registry.ts` and `registry/agent-registry.ts` coordinates.
+- Pi's `thirdParty/pi-subagents/` owns the provider's complete registration, RPC/version/identity,
+  launch metadata and liveness protocols and their lifetime. A message carried on Pi's native bus
+  remains third-party when pi-subagents owns its protocol. Native session-file ancestry is not that
+  protocol. pi-subagents remains private to this adapter, not a standalone public adapter.
+- Pi's `mixture/` owns only necessary cross-source interpretation: native session transitions paired
+  with provider child requirements, Session facts combining native identity/startup with provider
+  launch metadata, and Round quiescence combining native settlement with provider-held work.
+  Complexity or several native events alone do not justify mixture.
+- OMP uses native registry relationships and integrated child loading, not a counterpart of Pi's
+  provider. Its optional Viewed-session patch is a native host-contract variant, not a third-party
+  integration or a claim that unpatched upstream exposes the outlet. OMP has no empty `thirdParty/`
+  or `mixture/` groups for symmetry.
 
-Each harness entry assembles its domain modules. Cross-domain collaboration uses explicit interfaces
-and a single source for each shared fact, without circular dependencies. The harness-independent
-`behaviors/assembly.ts` owns observation/State creation and implementation reuse after disposal;
-native shutdown and subscription-release ordering remain with the adapter. Apply the deletion test:
-extract only a module whose depth gives leverage and locality, not a shallow forwarding layer.
-The interface is the test surface; preserve consumer behavior and real-loader verification rather
-than mirroring each file with a test.
+Native mappings must not depend on pi-subagents-specific protocols or mixture. Third-party mappings
+may use necessary Pi-native contracts, including the event bus, but not mixture. Mixture consumes
+explicit facts/operations from both sources; neither source depends back on it. Port assembly binds
+already interpreted mappings and does not become another semantic translation stage. The existing
+[import-boundary alarm](../../tests/framework/import-boundary.test.ts) protects these source-group
+edges and public consumer imports without freezing every private file. Its lexical limits still apply.
+
+Source coordinates omit common upstream package prefixes; they are navigation, not a requirement
+to mirror upstream files. Keep complete read/write protocols and multi-event lifecycles together.
+A simple responsibility stays one file; extract only a module whose depth gives leverage and locality,
+not a forwarding layer, empty mirror or one-file-per-hook template. Shared facts retain one owner;
+shared context, diagnostics and resources stay with their existing lifetime owner. Canonical delivery
+construction stays near its mapping, never rebuilt in port assembly. The authoritative current path
+map is the [adapter navigation](../../framework/docs/framework-capabilities.md#adapter-implementation-navigation).
+
+The framework capability vocabulary and semantic ownership are unchanged: Session owns Turn/Round,
+provider access and catalog prices retain their distinct facts, and framework Marker area/Feedback
+remain adapter responsibilities rather than extension presentation. The existing `HarnessPort`,
+public types and binding usage are preserved. Actual explicit `PI_PORT` / `OMP_PORT` construction
+remains the static supply source, not a second hand-maintained capability inventory. A new harness
+implements its selected consumers' requirements, not automatically every framework capability.
+This decision adds no generic provider interface, requirement expansion, registration framework,
+runtime negotiation or startup gate, and certifies no harness version.
+
+The harness-independent `behaviors/assembly.ts` still owns observation/State creation and
+implementation reuse after disposal; native shutdown and subscription-release ordering remain
+with the adapter. Independent verification stays separate from declaration matching. The public
+interface is the behavior test surface; preserve consumer and real-loader evidence rather than
+mirroring each implementation file with a test.
 
 ### Responsibility test for harness differences
 

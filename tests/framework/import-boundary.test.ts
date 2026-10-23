@@ -122,6 +122,45 @@ describe("shared source imports no harness types (C1)", () => {
 		expect(crossings).toEqual([]);
 	});
 
+	// P2 / R1: source boundaries, not a frozen inventory of private files. Type imports count:
+	// native contracts must stay readable without a specific third-party protocol or mixture.
+	// Third-party code may use native transport; only the reverse dependency is forbidden.
+	test("native and third-party mappings do not depend back on cross-source interpretation", () => {
+		const crossings: string[] = [];
+		for (const file of sourceFiles) {
+			const source = /^adapters\/([^/]+)\/(native|thirdParty)\//.exec(file);
+			if (source === null) continue;
+			const [, harness, group] = source;
+			const forbidden = group === "native"
+				? [new RegExp(`^adapters/${harness}/(?:thirdParty|mixture)(?:/|$)`)]
+				: [new RegExp(`^adapters/${harness}/mixture(?:/|$)`)];
+			for (const specifier of specifiersOf(file)) {
+				if (resolvesInto(file, specifier, forbidden)
+					|| (group === "native" && /^pi-subagents(?:\/|$)/.test(specifier))) {
+					crossings.push(`${file} crosses its source boundary through "${specifier}"`);
+				}
+			}
+		}
+		expect(crossings).toEqual([]);
+	});
+
+	// P4 / R1: consumers use the public assembly regardless of where a mapping comes from.
+	// A private loader import would couple an otherwise unchanged binding to source organization.
+	test("extensions reach adapters only through their public assembly entries", () => {
+		const crossings: string[] = [];
+		for (const file of sourceFiles.filter(file => file.startsWith("extensions/"))) {
+			for (const specifier of specifiersOf(file)) {
+				if (!specifier.startsWith(".")) continue;
+				const target = path.posix.normalize(path.posix.join(path.posix.dirname(file), specifier))
+					.replace(/\.(?:[cm]?ts|js)$/, "").replace(/\/index$/, "");
+				if (target.startsWith("adapters/") && !/^adapters\/[^/]+$/.test(target)) {
+					crossings.push(`${file} bypasses the public adapter assembly through "${specifier}"`);
+				}
+			}
+		}
+		expect(crossings).toEqual([]);
+	});
+
 	test("legacy framework entries cannot re-export the Session capability", () => {
 		const crossings: string[] = [];
 		for (const file of sourceFiles.filter(file => file.startsWith("framework/") && !file.startsWith("framework/interface/"))) {

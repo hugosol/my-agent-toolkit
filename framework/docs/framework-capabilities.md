@@ -160,7 +160,8 @@ See [the refactor and generation boundary](integration-contract-refactor.md) and
 ### Adapter implementation navigation
 
 Start with the contract reported by the checker, then the actual port assembly: Pi uses
-[`adapters/pi/port.ts`](../../adapters/pi/port.ts); OMP currently uses its private port assembly.
+[`adapters/pi/port.ts`](../../adapters/pi/port.ts); OMP uses
+[`adapters/omp/port.ts`](../../adapters/omp/port.ts). Both are private and separate from their public `index.ts`.
 Pi lifecycle facts belong to `native/core/extensions/` and `native/core/session-manager/`, the
 pi-subagents protocol to `thirdParty/pi-subagents/`, and their necessary interpretation to `mixture/`.
 For example, native session transitions pair with child-extension requirements in
@@ -207,9 +208,15 @@ so it has no separate Subagent `events.ts`; pi additionally reads its provider's
 replies. Offline supply analysis follows the actual port assembly, not separately maintained inventories.
 The third-party loader at pi `thirdParty/pi-subagents/provider.ts` resolves only the provider's public export.
 
-Pi's public `index.ts` and private `port.ts` are distinct assembly responsibilities. Its native
-lifecycle mappings do not import pi-subagents or mixture; third-party code may consume the Pi
-native transport contract, and mixture alone pairs their facts and operations.
+Both adapters' public `index.ts` and private `port.ts` are distinct assembly responsibilities.
+Pi's public entry installs [`native Node text loading`](../../adapters/pi/native/core/extensions/text-imports.ts)
+before a consumer's subsequent shared-definition imports; consumers never import that private helper.
+Its native lifecycle mappings do not import pi-subagents or mixture; third-party code may consume
+Pi's native transport contract, and mixture alone pairs their facts and operations. OMP needs no
+third-party or mixture group: [`native/registry/agent-registry.ts`](../../adapters/omp/native/registry/agent-registry.ts)
+reads native relationships, while [`native/extensibility/extensions/viewed-session.ts`](../../adapters/omp/native/extensibility/extensions/viewed-session.ts)
+is the optional native host-patch variant, with the absent-outlet fallback intact. This navigation
+neither asserts that unpatched upstream supplies that outlet nor promotes any harness version.
 
 - `index.ts` is the adapter's public assembly entry. It exports `ompAdapter`/`piAdapter`, builds the
   process-scoped readers and creates the shared binding; extension assemblies import this module.
@@ -220,15 +227,15 @@ native transport contract, and mixture alone pairs their facts and operations.
   third-party loader stays in `thirdParty/pi-subagents/`; cross-source interpretation stays in `mixture/`.
   None of these private modules is an extension-facing capability surface.
 
-Only the nine domain rows above are capability domains. A simple domain may be one file; a domain
-with collaborating mappings gets a directory. `index.ts` remains at the adapter root because it is
-the import path extension assemblies use; it is a structural entry, not a missing domain.
-Prefer domain locality over the native object's name. Turn and Round belong under Session. Within a domain, `events.ts` owns event mappings, `queries.ts` owns native reads,
-and `effects.ts` owns native effects when these responsibilities need separate implementation files.
-Session event construction stays in its event mapping rather than being rebuilt in the port; State
-entry writes are a Session effect, not a second State implementation. Keep simple domains as single
-files, retain complex Turn/Round protocols internally, and create no forwarding-only entry files or
-empty three-file templates. The two harnesses need not be structurally identical.
+The eight rows above locate framework responsibilities; they do not prescribe adapter directories.
+The primary navigation axis is the actual contract source, with distinctive upstream coordinates and
+complete protocols rather than a file-for-file mirror. State reads, naming and writes stay together;
+Turn/Round lifecycles are not split by individual native hooks. Event construction stays near its
+mapping rather than being rebuilt in port assembly. Keep simple responsibilities as single files,
+create no forwarding-only entries or empty source groups, and do not force the harnesses into the
+same tree. The [source-organization decision](../../docs/adr/0002-semantic-extension-framework.md#source-aligned-adapter-organization-2026-10-24)
+and [integration guide](harness-integration.md#4-按实际来源组织-adapter) define the dependency rules;
+these source labels add no business vocabulary or public interface.
 
 The shared [`behaviors/assembly.ts`](../behaviors/assembly.ts) creates the observation source and
 State store and reuses an implementation until disposal. Harness entries assemble native modules;
