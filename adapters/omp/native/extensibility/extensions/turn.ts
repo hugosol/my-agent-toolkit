@@ -1,13 +1,13 @@
 /**
  * OMP Turn observations: native subscriptions, response mapping and per-subscription
- * streaming readings. `events.ts` supplies the delivery frame and the binding's diagnostics;
- * `queries.ts` reads the Session/Owner facts. The shared framework owns Turn identity,
+ * streaming readings from the extension runner's provider/message hooks. `lifecycle.ts` supplies
+ * the delivery frame and binding diagnostics; `session-facts.ts` reads the Session/Owner facts. The shared framework owns Turn identity,
  * association and lifecycle semantics.
  */
-import type { SessionFacts, TurnOutcome, TurnUsage } from "../../../../framework/interface/session";
-import { defineAdapterDelivery } from "../../../../framework/runtime/adapter-authoring";
-import type { HarnessPort, TurnSignalFacts } from "../../../../framework/runtime/port";
-import type { OmpAgentMessage, OmpExtensionApi, OmpSessionContext } from "../../internal/native";
+import type { SessionFacts, TurnOutcome, TurnUsage } from "../../../../../framework/interface/session";
+import { defineAdapterDelivery } from "../../../../../framework/runtime/adapter-authoring";
+import type { HarnessPort, TurnSignalFacts } from "../../../../../framework/runtime/port";
+import type { OmpAgentMessage, OmpExtensionApi, OmpSessionContext } from "./types";
 
 /** The all-zero reading a message carries when the provider reported no usage at all. */
 const ZERO_READING: TurnUsage = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, totalTokens: 0 };

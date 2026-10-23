@@ -10,7 +10,7 @@
  */
 import type { FeedbackLevel, FeedbackTransport } from "../../../../../framework/interface/feedback";
 import type { NoticeTransport } from "../../../../../framework/runtime/port";
-import type { OmpSessionContext } from "../../../internal/native";
+import type { OmpSessionContext } from "./types";
 
 /**
  * Publishes one operator-facing line on the session's own channel: the UI notification

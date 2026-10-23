@@ -1,26 +1,26 @@
 /**
- * OMP session reads: identity, ownership, branch facts and startup fact mappings.
+ * OMP extension-context facts (`extensibility/extensions/types.ts`): actual session identity,
+ * Owner and startup readings. No Pi provider protocol participates in these facts.
  *
- * Native registry relations — the direct parent link and the nearest main ancestor — are the
- * Subagent domain's reads (`subagent/queries.ts`). This module owns the session's own identity and
- * the mapping of those relation facts into the framework's owner positions and session facts, so a
- * chain that leaves the process still answers `unresolved` here rather than being guessed.
+ * The direct parent link and nearest main ancestor come from `native/registry/agent-registry.ts`.
+ * This module maps those native relations into framework Owner positions and Session facts: a chain
+ * that leaves the process answers `unresolved`, never a guessed identity. Parent agent is one hop;
+ * Owner may be several hops away.
  *
- * Reads native facts only: `events.ts` owns the native Session subscriptions, transition state and
- * delivery framing, and `effects.ts` owns the one persisted State entry's native append. The
- * newest-context tracker stays in `context/queries.ts`; State semantics stay in the framework.
+ * `lifecycle.ts` owns subscriptions, transitions and delivery framing. Session-entry read/write
+ * naming belongs to `native/session/session-manager.ts`; shared State semantics stay in the framework.
  */
 import type {
 	SessionFacts,
 	SessionStartReason,
 	SessionStartup,
-} from "../../../../framework/interface/session";
-import { defineSessionFactsMapping } from "../../../../framework/runtime/adapter-authoring";
-import type { OwnerReference } from "../../../../framework/interface/state";
-import type { OmpExtensionApi, OmpSessionContext } from "../../internal/native";
-import { directParentSessionIdOf, mainAncestorSessionIdOf } from "../subagent/queries";
-import type { OmpViewedSessionFacts } from "../../native/extensibility/extensions/viewed-session";
-import type { OmpSessionEvent, OmpSessionReason } from "./events";
+} from "../../../../../framework/interface/session";
+import { defineSessionFactsMapping } from "../../../../../framework/runtime/adapter-authoring";
+import type { OwnerReference } from "../../../../../framework/interface/state";
+import type { OmpExtensionApi, OmpSessionContext } from "./types";
+import { directParentSessionIdOf, mainAncestorSessionIdOf } from "../../registry/agent-registry";
+import type { OmpViewedSessionFacts } from "./viewed-session";
+import type { OmpSessionEvent, OmpSessionReason } from "./lifecycle";
 
 /**
  * The State cell key of a session that owns its own State.
@@ -38,8 +38,8 @@ function mainOwnerKey(sessionId: string): string {
  * The owner a session's State belongs to: the nearest ancestor session that is itself a
  * top-level main session (a main session is its own owner).
  *
- * A session that is itself main owns its own cell. Otherwise the ancestor identity is the Subagent
- * domain's registry walk over `ctx.agent.parentId`, and this mapping turns exactly that fact into
+ * A session that is itself main owns its own cell. Otherwise the ancestor identity is the native
+ * registry walk over `ctx.agent.parentId`, and this mapping turns exactly that fact into
  * the owner position — never a nesting depth or a process-level label. A chain that leaves the
  * process (an ancestor the registry does not hold, a link that loops, an owner whose session is
  * gone) resolves to nothing rather than to a guessed owner.
@@ -76,35 +76,6 @@ export function viewedOwnerOf(pi: OmpExtensionApi, facts: OmpViewedSessionFacts)
 	return ownerSessionId === undefined
 		? { kind: "unresolved" }
 		: { kind: "inherited", key: mainOwnerKey(ownerSessionId) };
-}
-
-/**
- * The persisted State payloads on one session's branch, oldest first.
- *
- * The adapter resolves *which* entries carry this extension's State; whether a payload
- * declares a usable value is the framework's rule, so payloads cross the seam unread, in
- * branch order, with the session's current record last. The entry type is the one the write
- * path appends to (`effects.ts`), so the read and the write cannot name different entries.
- */
-export function statePayloadsOf(ctx: OmpSessionContext, stateEntryType: string): readonly unknown[] {
-	return ctx.sessionManager
-		.getBranch()
-		.filter(entry => entry.type === "custom" && entry.customType === stateEntryType)
-		.map(entry => entry.data);
-}
-
-/**
- * The injected-prompt identities one session's branch already persists, oldest first.
- *
- * A persisted contribution is a `custom_message` entry whose custom type is the slot's
- * framework identity. The adapter resolves which identities are present; whether that
- * satisfies a slot is the framework's rule, so identities cross the seam as facts.
- */
-export function contributionIdentitiesOf(ctx: OmpSessionContext): readonly string[] {
-	return ctx.sessionManager
-		.getBranch()
-		.filter(entry => entry.type === "custom_message" && typeof entry.customType === "string")
-		.map(entry => entry.customType as string);
 }
 
 /** The semantic start reason each native transition reason stands for. */
@@ -153,7 +124,7 @@ function kindOf(ctx: OmpSessionContext): "main" | "sub" {
  * only its own context and start reason.
  *
  * Identity is the session manager's own session id and the harness's agent kind. The direct parent
- * is the Subagent domain's one-hop relation — the registry entry the spawning id names, then that
+ * is the native registry's one-hop relation — the registry entry the spawning id names, then that
  * agent's live session — and never a string shape, nesting depth or an agent-name hierarchy: a
  * parent that is parked (its live session gone), a spawning id the registry does not hold, and a
  * session the harness spawned from outside the process are all reported as the fact this host could

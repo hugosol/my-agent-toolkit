@@ -72,6 +72,12 @@
 
 本票开发分支已完成本轮可执行验收，等待宿主排队合入 `dev`；未直接操作集成工作区。按 tracker 的 implemented＋tested＋merged 约定，合入前保留 `in-progress`，宿主合入后可关闭。H1、复杂脚本及跨票据整体验收仍交最后独立门禁，不将它们记为本轮通过。
 
+### 再次回合并冲突处置（2026-10-24）
+
+宿主将 `230e4e5931e858948f91f87067f6491e5479e4cc` merge 回本开发分支后，本轮保留 03／05 的 native lifecycle、context、session-manager、registry 和顶层 private port 迁移，并将 07 的 feedback／marker／viewed-session 依赖接到迁移后的同级 native 模块。`OmpUiContext` 仍仅在 `ui.ts` 声明并从公开入口直接导出；保留 P14 listener demand guard，没有恢复旧 domain／internal 路径。旧 `domain/context/events.ts` 已被合入 `native/extensibility/extensions/context.ts`，因此删除冲突残留，避免双实现。保留 02 的最终验收证据和 incoming panel Web Stream 类型转换修正。
+
+按本轮要求未启动完整验收。必要定向验证：`bun run typecheck` 退出 0，authoring 61 files／4 declarations／0 diagnostics；随后 `bun test tests/framework/viewed-marker.test.ts tests/framework/feedback-harness.test.ts tests/framework/marker.test.ts` 退出 0，28 pass／0 fail／86 assertions，3 files。其后只调整 assembly 归属注释和本票证据。上轮全局结果仍为上轮源状态的证据，不冒称是本轮合并树的全局结果。等待宿主再次排队合入。
+
 ### S2 真实环境与结果
 
 Windows x64，Bun 1.4.2；实际执行既有 isolated exact `@oh-my-pi/pi-coding-agent@18.5.0`，以及既有 `18.5.0-viewed-session` 冻结补丁安装。只在本 worktree `.cache/omp-baseline/` 建 junction 指向已有 `E:/Developer/myhub/my-agent-toolkit/.cache/omp-baseline/` 的两个目录；没有安装、修改或重新应用宿主补丁。patched materializer 走已有 manifest 的哈希核对／复用分支。正式配置、全局安装及其他 worktree 未修改。

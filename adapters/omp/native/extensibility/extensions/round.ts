@@ -11,10 +11,10 @@
  * activity was cancelled or failed, and its late reads say whether the session's own work has
  * unwound and whether anything beyond the run still holds it.
  */
-import type { TurnOutcome } from "../../../../framework/interface/session";
-import { defineAdapterDelivery } from "../../../../framework/runtime/adapter-authoring";
-import type { HarnessPort, RoundObservation, RoundSignal } from "../../../../framework/runtime/port";
-import type { OmpExtensionApi, OmpSessionContext } from "../../internal/native";
+import type { TurnOutcome } from "../../../../../framework/interface/session";
+import { defineAdapterDelivery } from "../../../../../framework/runtime/adapter-authoring";
+import type { HarnessPort, RoundObservation, RoundSignal } from "../../../../../framework/runtime/port";
+import type { OmpExtensionApi, OmpSessionContext } from "./types";
 import { outcomeOf } from "./turn";
 
 /** Observes native run facts; automatic continuations are reported, never synthesized here. */

@@ -10,9 +10,9 @@
  * in this module names a native widget.
  */
 import type { MarkerTransport, ViewedSessionPort } from "../../../../../framework/runtime/port";
-import type { ContextTracker } from "../../../domain/context/queries";
-import type { OmpExtensionApi, OmpSessionContext } from "../../../internal/native";
-import { viewedOwnerOf } from "../../../domain/session/queries";
+import type { ContextTracker } from "./context";
+import type { OmpExtensionApi, OmpSessionContext } from "./types";
+import { viewedOwnerOf } from "./session-facts";
 
 /**
  * The facts the host's public Viewed session outlet publishes about the session it displays.
