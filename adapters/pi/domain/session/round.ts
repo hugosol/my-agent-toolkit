@@ -21,7 +21,7 @@ import type { TurnOutcome } from "../../../../framework/interface/session";
 import { defineAdapterDelivery } from "../../../../framework/runtime/adapter-authoring";
 import type { HarnessPort, RoundObservation, RoundSignal } from "../../../../framework/runtime/port";
 import { feedbackTransport } from "../feedback";
-import type { PiExtensionApi, PiExtensionContext } from "../../internal/native";
+import type { PiExtensionApi, PiExtensionContext } from "../../native/core/extensions/types";
 import type { PiPortContext } from "../../internal/port";
 import type { SessionBackgroundWork } from "../subagent/queries";
 import { outcomeOf } from "./turn";

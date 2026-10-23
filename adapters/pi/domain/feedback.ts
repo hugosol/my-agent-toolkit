@@ -8,7 +8,7 @@
  */
 import type { FeedbackLevel, FeedbackTransport } from "../../../framework/interface/feedback";
 import type { NoticeTransport } from "../../../framework/runtime/port";
-import type { PiExtensionContext } from "../internal/native";
+import type { PiExtensionContext } from "../native/core/extensions/types";
 
 /** One line on the session's UI, or stderr when it has no UI. */
 function publishNotice(ctx: PiExtensionContext, level: FeedbackLevel, message: string): void {

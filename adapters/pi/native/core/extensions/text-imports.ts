@@ -14,7 +14,7 @@ const TEXT_IMPORTS = Symbol.for("my-agent-toolkit.pi.text-imports");
 const registrations = globalThis as typeof globalThis & { [key: symbol]: unknown };
 
 if (!process.versions.bun && registrations[TEXT_IMPORTS] === undefined) {
-	const extensionRoot = new URL("../../../extensions/", import.meta.url).href;
+	const extensionRoot = new URL("../../../../../extensions/", import.meta.url).href;
 	registrations[TEXT_IMPORTS] = nodeModule.registerHooks({
 		load(url, context, nextLoad) {
 			if (
