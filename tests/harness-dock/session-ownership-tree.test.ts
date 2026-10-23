@@ -214,7 +214,16 @@ function delegatingStep(request: CapturedRequest): CaptureStep | undefined {
 async function startRun(label: string, extra: readonly string[] = []): Promise<DockRun> {
 	const runRoot = createRunRoot(label);
 	const home = isolateHome(runRoot);
-	writeAgentSettings(runRoot.agentDir, { "async.enabled": false });
+	// Task labels are auxiliary tiny-model completions, not session Turns. Leave their
+	// candidate roles unassigned so this endpoint observes only the five scripted session
+	// requests, rather than answering assignment-only label prompts with delegation/yield
+	// tool calls and driving the title generator through its fallback candidates.
+	writeAgentSettings(runRoot.agentDir, {
+		"async.enabled": false,
+		"modelRoles.tiny": "",
+		"modelRoles.commit": "",
+		"modelRoles.smol": "",
+	});
 	const capture = startCaptureServer({
 		dir: runRoot.captureDir,
 		replyText: "dock ownership reply",
