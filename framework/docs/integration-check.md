@@ -40,7 +40,7 @@ bun run check:integrations --extension extensions/model-cost/harnesses/omp.ts --
 | 选项 | 含义 |
 | --- | --- |
 | `--extension <id-or-source-path>` | 不指定时分析 `extensions/` 下每个目录。裸名称先按项目根解析，根下不存在时再按 `extensions/<id>` 解析；也可给目录或源文件。文件位于 `extensions/<name>/` 树内时，会分析其所属的整个 extension 目录；否则只分析该文件。 |
-| `--adapter <name-or-source-path>` | 不指定时分析 `adapters/` 下每个目录。裸名称按 `adapters/<name>` 解析；含路径分隔符或绝对路径时按项目根解析，并取其所属的 `adapters/<name>/` 目录。相对路径要包含 `adapters/` 前缀（如 `adapters/omp/internal/port.ts`）；选择必须落在 `adapters/` 树下。 |
+| `--adapter <name-or-source-path>` | 不指定时分析 `adapters/` 下每个目录。裸名称按 `adapters/<name>` 解析；含路径分隔符或绝对路径时按项目根解析，并取其所属的 `adapters/<name>/` 目录。相对路径要包含 `adapters/` 前缀（如 `adapters/omp/port.ts`）；选择必须落在 `adapters/` 树下。 |
 | `--demand-only` | 只做需求侧分析，不读取任何 adapter。**不能与 `--adapter` 同时使用。** |
 | `--json` | 只向 stdout 输出 JSON 报告；解析/调用错误也以 JSON 输出。 |
 | `--root <directory>` | 指定项目根；默认仓库根。 |

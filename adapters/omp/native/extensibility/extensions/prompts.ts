@@ -7,11 +7,11 @@
  * initialization returns a promise, and the harness awaits this hook before issuing the model
  * request, so the promise is handed back rather than settled here.
  */
-import type { OwnerReference } from "../../../framework/interface/state";
-import { defineAdapterDelivery } from "../../../framework/runtime/adapter-authoring";
-import type { HarnessPort, MarkerTransport, PromptContribution } from "../../../framework/runtime/port";
-import { contributionIdentitiesOf } from "./session/queries";
-import type { OmpExtensionApi, OmpRunInitiationResult, OmpSessionContext } from "../internal/native";
+import type { OwnerReference } from "../../../../../framework/interface/state";
+import { defineAdapterDelivery } from "../../../../../framework/runtime/adapter-authoring";
+import type { HarnessPort, MarkerTransport, PromptContribution } from "../../../../../framework/runtime/port";
+import { contributionIdentitiesOf } from "../../session/session-manager";
+import type { OmpExtensionApi, OmpRunInitiationResult, OmpSessionContext } from "./types";
 
 /** The per-delivery references one run initiation resolves before the handler runs. */
 export interface RunInitiationContext {

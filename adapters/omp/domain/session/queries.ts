@@ -17,7 +17,7 @@ import type {
 } from "../../../../framework/interface/session";
 import { defineSessionFactsMapping } from "../../../../framework/runtime/adapter-authoring";
 import type { OwnerReference } from "../../../../framework/interface/state";
-import type { OmpExtensionApi, OmpSessionContext } from "../../internal/native";
+import type { OmpExtensionApi, OmpSessionContext } from "../../native/extensibility/extensions/types";
 import { directParentSessionIdOf, mainAncestorSessionIdOf } from "../subagent/queries";
 import type { OmpViewedSessionFacts } from "./viewed-session";
 import type { OmpSessionEvent, OmpSessionReason } from "./events";
@@ -76,35 +76,6 @@ export function viewedOwnerOf(pi: OmpExtensionApi, facts: OmpViewedSessionFacts)
 	return ownerSessionId === undefined
 		? { kind: "unresolved" }
 		: { kind: "inherited", key: mainOwnerKey(ownerSessionId) };
-}
-
-/**
- * The persisted State payloads on one session's branch, oldest first.
- *
- * The adapter resolves *which* entries carry this extension's State; whether a payload
- * declares a usable value is the framework's rule, so payloads cross the seam unread, in
- * branch order, with the session's current record last. The entry type is the one the write
- * path appends to (`effects.ts`), so the read and the write cannot name different entries.
- */
-export function statePayloadsOf(ctx: OmpSessionContext, stateEntryType: string): readonly unknown[] {
-	return ctx.sessionManager
-		.getBranch()
-		.filter(entry => entry.type === "custom" && entry.customType === stateEntryType)
-		.map(entry => entry.data);
-}
-
-/**
- * The injected-prompt identities one session's branch already persists, oldest first.
- *
- * A persisted contribution is a `custom_message` entry whose custom type is the slot's
- * framework identity. The adapter resolves which identities are present; whether that
- * satisfies a slot is the framework's rule, so identities cross the seam as facts.
- */
-export function contributionIdentitiesOf(ctx: OmpSessionContext): readonly string[] {
-	return ctx.sessionManager
-		.getBranch()
-		.filter(entry => entry.type === "custom_message" && typeof entry.customType === "string")
-		.map(entry => entry.customType as string);
 }
 
 /** The semantic start reason each native transition reason stands for. */

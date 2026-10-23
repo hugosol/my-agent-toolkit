@@ -8,10 +8,17 @@
  * tracker is where a module that must follow deliveries registers — the viewed-session
  * subscription — so no second notion of "newest" can drift.
  *
- * Context observations themselves live in `events.ts`: they are native subscriptions, and their
- * collection points are native facts rather than reads.
+ * Context observations live with that tracker here: their native collection points and the
+ * latest context all belong to the same extension-context contract.
  */
-import type { OmpSessionContext } from "../../internal/native";
+import type { OwnerReference } from "../../../../../framework/interface/state";
+import { defineAdapterDelivery } from "../../../../../framework/runtime/adapter-authoring";
+import type { SessionContextObservation } from "../../../../../framework/runtime/port";
+import { feedbackTransport } from "../../../domain/feedback";
+import type { OmpExtensionApi, OmpSessionContext } from "./types";
+import { sessionFactsOf } from "../../../domain/session/queries";
+
+
 
 /** One binding's newest native context, and the follow-ups every recorded delivery triggers. */
 export interface ContextTracker {
@@ -59,4 +66,46 @@ export function canAcceptInputOf(
 ): boolean | undefined {
 	if (typeof ctx.isIdle !== "function") return reportMissingFact("idle fact (isIdle)");
 	return ctx.isIdle();
+}
+
+/** Subscribes the three native facts a session's own context reading really moves at. */
+export function observeSessionContext(
+	pi: OmpExtensionApi,
+	handler: (observation: SessionContextObservation) => void,
+	context: {
+		readonly record: (ctx: OmpSessionContext) => OmpSessionContext;
+		readonly owner: (ctx: OmpSessionContext) => OwnerReference;
+	},
+): void {
+	/**
+	 * One framed collection per reading the host states.
+	 *
+	 * `record` is called first so the delivery's own facts are the newest, exactly as every other
+	 * observation records its delivery. A count the host did not state is no reading at all — "no
+	 * count" is not a context of nothing — so nothing is reported for it, exactly as the
+	 * framework's own `Unknown` rule requires. The model travels with the reading because the
+	 * figure is displayed against that model's channel budget, and never against the host's own
+	 * context window.
+	 */
+	const collect = (ctx: OmpSessionContext): void => {
+		const usage = ctx.getContextUsage?.();
+		if (usage?.tokens === undefined) return;
+		const recorded = context.record(ctx);
+		handler(defineAdapterDelivery("context", {
+			session: sessionFactsOf(pi, recorded),
+			owner: context.owner(recorded),
+			hasUI: recorded.hasUI,
+			feedback: feedbackTransport(recorded),
+			reading: {
+				tokens: usage.tokens,
+				...(ctx.model?.provider === undefined ? {} : { provider: ctx.model.provider }),
+				...(ctx.model?.id === undefined ? {} : { model: ctx.model.id }),
+			},
+		}));
+	};
+	// These are the adapter's own collection points; nothing here decides which of them is a
+	// change, so the same reading read twice is reported twice and the framework drops the repeat.
+	pi.on("session_start", (_event, ctx) => collect(ctx));
+	pi.on("message_end", (_event, ctx) => collect(ctx));
+	pi.on("agent_end", (_event, ctx) => collect(ctx));
 }

@@ -14,7 +14,7 @@
  * below is the runtime fact, not the offline capability inventory in `declaration.ts`.
  */
 import type { SubagentIntegration } from "../../../../framework/interface/subagent";
-import type { OmpExtensionApi } from "../../internal/native";
+import type { OmpExtensionApi } from "../../native/extensibility/extensions/types";
 
 /**
  * The live session id of the agent that directly spawned one subagent.
