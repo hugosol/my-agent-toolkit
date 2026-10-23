@@ -17,7 +17,7 @@
 - [x] 按实际消费的 OMP 原生 UI／Viewed-session 契约归置完整映射，不跟随最终 TUI 执行位置机械镜像，不为对称建立第三方分组。
 - [x] 经公开 assembly 自动验证 Marker area 输出、会话身份、有效 State 投影、反馈严重级别及有／无 UI 分支，保持输出渠道和模型上下文隔离。
 - [x] 用可控契约输入分别验证 Viewed-session outlet 存在及缺失；覆盖既有查看切换和目标身份不可用的投影规则，不能用名称伪造身份或把 Viewed session 当作 Owner。
-- [ ] 验证本路径适用的多 binding 隔离、既有错误传播、释放后订阅及迟到回调停止，另一有效 binding 的投影继续工作。不新增不存在的重试、等待或回退机制。**部分通过；P14 既有重订阅缺陷见下，未记为通过。**
+- [x] 验证本路径适用的多 binding 隔离、既有错误传播、释放后订阅及迟到回调停止，另一有效 binding 的投影继续工作。不新增不存在的重试、等待或回退机制。**本轮获授权修复 P14 重订阅缺陷，全局测试通过；修复前失败证据保留如下。**
 - [x] 迁移相关调用方和类型，保持共享 Marker area 与资源生命周期，删除本职责旧实现和转发路径并更新直接导航。
 - [x] 执行当前环境适用的真实 OMP 场景；真实运行只声明实际存在的分支。没有补丁环境时明确记录接通缺口，受控双分支检查仍须完成，不把替身当作真实补丁接通证据。
 - [x] 准备环境／版本、重构前后输出、可重复操作步骤、自动检查结果和已知差异，交给 09 汇总 H1；用户确认前实际日常 TUI 体验保持未验证。
@@ -63,6 +63,15 @@
 
 `createViewedSession.watch` 现在仅在至少一个 framework listener 存在时创建 native subscription，避免释放后迟到 native run 通过 context tracker 重新订阅。既有公开 assembly 回归测试保留其 `0` subscriber 和无新增 widget 的独立预期，并去掉“known existing defect”说明；未修改错误传播、重试、等待或宿主契约。上方失败记录为修复前历史证据，不是当前结果；本轮全局测试结果在下方补录。
 
+本轮全局验收命令均为 `bun run test`（未另跑 typecheck、复杂脚本或额外 smoke）：
+
+- 第一轮退出 1，1635 pass／4 fail／10008 assertions，184 files，591.03s；日志 `.cache/ticket07-integration-global.log`。P14 已通过；失败为 panel snapshot 的 Bun fetch ConnectionRefused，以及 delegation 额外 effort judge 请求导致的三个请求计数差异（5→11、7→13、5→11）。
+- 采用同轮已完成的共享 fixture 修复 `257d84b`＋`ec861fa` 的完整文件状态（本分支提交 `aad5f5f`）：panel SSE／snapshot 独立使用 `node:http`，delegation fixture 固定 task effort，保留原请求数预期及失败诊断。同步已有 README 和 02 证据，不修改生产 consumer 行为。
+- 最终退出 **0，1639 pass／0 fail／10065 assertions，184 files，526.81s**；日志 `.cache/ticket07-integration-global-fixed.log`。测试源状态为 `aad5f5f`，包含 merge 解决 `45904bb` 和 P14 修复 `7ee3cc0`。其后只修改本票证据。
+- 两轮使用 `HERDR_BOT_BINARY=E:/Developer/myhub/herdr-bot/backend/target/debug/examples/safe_shutdown_shell.exe`、`HERDR_BOT_METADATA=E:/Developer/myhub/herdr-bot/meta-data/bot-options.toml`，不使用日常 panel。与其他集成代理串行；最终释放给 04。
+
+本票开发分支已完成本轮可执行验收，等待宿主排队合入 `dev`；未直接操作集成工作区。按 tracker 的 implemented＋tested＋merged 约定，合入前保留 `in-progress`，宿主合入后可关闭。H1、复杂脚本及跨票据整体验收仍交最后独立门禁，不将它们记为本轮通过。
+
 ### S2 真实环境与结果
 
 Windows x64，Bun 1.4.2；实际执行既有 isolated exact `@oh-my-pi/pi-coding-agent@18.5.0`，以及既有 `18.5.0-viewed-session` 冻结补丁安装。只在本 worktree `.cache/omp-baseline/` 建 junction 指向已有 `E:/Developer/myhub/my-agent-toolkit/.cache/omp-baseline/` 的两个目录；没有安装、修改或重新应用宿主补丁。patched materializer 走已有 manifest 的哈希核对／复用分支。正式配置、全局安装及其他 worktree 未修改。
@@ -85,4 +94,4 @@ bun test tests/harness-dock/viewed-marker.test.ts tests/harness-dock/viewed-sess
 
 可重复人工操作：使用已经存在的 patched CLI，不执行 materialize/install；按 `host-patches/omp-18.5.0-viewed-session/README.md` 既有人工流程加载两 marker fixtures，执行 `/marker-follow-toggle`、`/marker-none-toggle`，主会话应显示两行；focus 真实 child 只显示 follow，再返回主会话应恢复两行；在主会话关掉 follow 后重新查看 child 应清空。再用既有 `entrypoints/omp/codebase-tools.ts` 执行 `/codebase-tools` 两次，比较信息提示及 Marker 显示／清除，不应新增会话文本。无补丁环境只判断自己的 delivery-seat 行为，不声称支持交互式 Viewed-session focus。
 
-H1 **未验证**：用户仍需在日常 TUI 比较可读性、位置、提示和真实 focus 切换体验；RPC 帧和受控分支不能代替用户确认。已知差异仅新增记录的现存 P14 重订阅缺口，没有有意的输出／交互语义变化。由独立集成代理接管合并与集成验证；本票状态保持 in-progress，不能把代理完成等同于已合入且全部验收通过。
+H1 **未验证**：用户仍需在日常 TUI 比较可读性、位置、提示和真实 focus 切换体验；RPC 帧和受控分支不能代替用户确认。实施阶段的 P14 重订阅缺口已在本轮获授权修复，修复及全局结果见上；其他输出／交互语义未有意改变。开发分支已完成本轮冲突处置与全局验收，等待宿主合入后更新 closed；不能把分支全局绿色等同于 H1 或最后独立整体验收通过。
