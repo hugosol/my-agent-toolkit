@@ -27,6 +27,18 @@
 
 迭代运行受影响测试及 TypeScript 类型检查；完成时运行拥有分区、受影响消费方、适用真实 OMP dock／smoke 和终止场景。保留消费可见断言，不为搬迁削弱场景。记录命令、退出状态、源／环境和验证限制；替身、真实加载及结构供给分别记录。现存语义缺陷单独报告并请求范围决策，不顺手修复。共享 assembly 修改按 owner 和执行窗口协调，不添加仅由文件冲突导致的逻辑阻塞。
 
+### 独立冲突处置与全局验收（2026-10-24）
+
+在原开发 worktree／原分支接管宿主已开始的 `921de1d861cc78797e758f7ddc01a3413e19fb54` merge；`framework-capabilities.md` 两块冲突合并保留本票 OMP 原生生命周期／registry 导航和集成侧 Pi 原生 State／context／provider／command／prompt 导航，merge 提交 `6e84c65`。采用 02 的共享验收设施修复 `257d84b`、`ec861fa`（本分支对应 `c736c8e`、`dae0b24`），未修改生命周期语义、测试断言或宿主补丁。
+
+本轮实际运行：
+
+- 首次 `bun run test`：exit 1，1627 pass / 2 fail，183 files，615.33s。失败为 panel 未使用安全壳和 OMP fork P19 未保存预期消费记录。前者由上述共享测试设施修复及安全壳环境解决；后者加临时失败诊断后定向运行 `bun test tests/harness-dock/session-recovery.test.ts --test-name-pattern "the harness's own fork"`：exit 0，1 pass / 0 fail，2.43s，未触发诊断；随后移除临时诊断。没有得到 fork 失败根因，不声称修复了该间歇现象；后续各轮全局 P19 均通过。
+- 采用共享修复后两次 `bun run test` 分别为 exit 1、1607 pass / 22 fail（488.25s）和 exit 1、1625 pass / 4 fail（513.20s）；失败全部是复制的冻结 cache 丢失 `@oh-my-pi/omp-stats/src/embedded-client.generated.txt` 导致宿主导入失败。依次恢复三个已存在 variant：`18.5.0-viewed-session`、`18.5.0-codex-response-boundary`、`18.5.0-viewed-session-codex-response`。从 npm 官方 `omp-stats-18.5.0.tgz` 验证 SHA512 `z9yfQPotgV67146b0lnp8FmTzgT/zpzKKoETNZid51RWwF8n6H7lDzLPqgVlIfIDwBFY+3qaetD3bbmT6r6u7Q==`，确认原 member `package/src/embedded-client.generated.txt` 就是 0 bytes 后恢复原字节；不是新建 mock、安装补丁或修改宿主行为。
+- 最终 `bun run test`：**exit 0，1629 pass / 0 fail，10005 assertions，183 files，528.15s**，源码 `dae0b24`，运行期间源码未改。日志：`C:/Users/hugos/AppData/Local/Temp/ticket05-complete-final-global.log`；此前失败日志为同目录 `ticket05-final-global.log`、`ticket05-restored-final-global.log`，首次结果保留在本会话工具 artifact。
+
+最终全局通过 Python subprocess 直接执行 `['bun', 'run', 'test']`，环境显式设置 `HERDR_BOT_BINARY=E:/Developer/myhub/herdr-bot/backend/target/debug/examples/safe_shutdown_shell.exe`、`HERDR_BOT_METADATA=E:/Developer/myhub/herdr-bot/meta-data/bot-options.toml`；Bun 1.4.2，win32/x64，既有 OMP 18.5.0 baseline／variant。遵照 Main 队列串行持有窗口，完成后明确释放给 integrate06。本轮按接管指令仅要求全局测试，未另跑 typecheck、复杂脚本、独立 smoke 或跨票整体门禁。保持待宿主排队合入，不直接操作 `dev` 或集成工作区；Status 在实际合入前仍为 in-progress。
+
 ### 本票实施与验收（2026-10-24）
 
 实现提交：`ecdac58`、`d9af7b5`；共享前置为 03 的 `26588da`（本 worktree cherry-pick 为 `721645d`）。最后验收的源码为 `d9af7b5`，验收期间无源码修改。`Status` 按仓库规则暂留 `in-progress`，独立集成并合入后才能置 `closed`；无待实现事项。
