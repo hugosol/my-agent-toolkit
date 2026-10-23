@@ -71,3 +71,15 @@
 - 日志及 `--keep` 的真实运行目录保留在本 worktree／系统 temp 中；日志末尾列出可复查目录。
 - 与 04 已协调：本票只最小修改现存 `internal/port.ts`／index imports；04 迁移到顶层 `port.ts` 时保留本票 native paths。04 新 lifecycle 文件的 `internal/native` import 应指向本票 `native/core/extensions/types.ts`；State query import 指向 `native/core/session-manager/state.ts`。04 的旧 `domain/session/queries.ts` 最终只余本票已替代的 State helpers，应删除而非兼容导出。06 的 UI 文件迁移再更新本票 native command/context/prompt 的 transport imports。来源组合语义不放回 port。
 - 最终独立集成及 `closed` 状态由集成代理负责；全局组织／ADR 文档由 08 收口。
+
+## 同步后独立集成验收（2026-10-24）
+
+宿主已将首次集成提交 `921de1d861cc78797e758f7ddc01a3413e19fb54` 合回本票开发分支；接管时 HEAD 即该提交，工作区干净，`git merge-base --is-ancestor` 返回 0。本轮只运行项目全局测试，复杂脚本、独立 smoke 和跨票整体门禁留给最终验收，不重用先前开发会话。
+
+- 首轮 `bun run test`：exit 1；1621 pass / 5 fail，9916 assertions，183 files，588.10s。完整日志：`%TEMP%/ticket02-integration-global-tests-921de1d.log`。
+- 失败为真实 herdr-bot 测试启动的安全壳／endpoint 契约（2 项）及真实 OMP 嵌套委派请求数量（3 项）。helper 原默认启动生产后端；现改为默认启动上游已有 `safe_shutdown_shell` example，在发请求前确认安全壳，并等初始 snapshot 就绪、传播订阅失败，未加重试。此前另一个 panel 实例的 `ConnectionRefused` 根因未单独证明，不将其归因于代理或端口配置。
+- 首次将额外六次请求推断为 task label，并将隔离配置的 `tiny`／`commit`／`smol` 留空；其他集成会话及本会话第二轮全局运行均证伪了此修复，现已移除无效配置。第二轮保留的请求协议摘要证明额外请求实际为每个 spawn 的 reasoning effort 自动分类（`solution_space`，回答 `low`／`medium`／`high`／`xhigh`，失败后 `submit_judgment`），而非 session Turn 或 task label。仍保留 capture-all、原始 5/7/5 次数及用量／身份断言，不修改宿主、adapter 或业务配置。
+- 第二轮 `bun run test`（上述 safe-shell 环境）：exit 1；1622 pass / 4 fail。日志 `%TEMP%/ticket02-integration-global-tests-diagnostics.log` 保留无 headers 的模型请求协议摘要及结构化 fetch 错误。panel 子进程仍存活且已 bind 到相同端口，首次 Bun fetch SSE 仍报 `ConnectionRefused`；不将此归因于已排除的错误 endpoint 或未验证的代理配置。
+- 对实际协议的修复：在委派 fixture 的隔离配置启用宿主已有 `task.enableEffort`，两次 scripted task 均显式 `effort: "lo"`，避免不属于本场景的自动分类请求。panel 的 SSE subscription／snapshot 使用各自拥有、`agent: false` 的 `node:http` 本地连接，保留相同帧解码、HTTP 错误传播与 abort 清理，不重试、不回退；Bun 内部连接失败机制未获证明，不声称已修复 Bun。
+- 临时 worktree 的真实 panel 前提显式设置为 `HERDR_BOT_BINARY=E:/Developer/myhub/herdr-bot/backend/target/debug/examples/safe_shutdown_shell.exe`、`HERDR_BOT_METADATA=E:/Developer/myhub/herdr-bot/meta-data/bot-options.toml`，不使用生产关机后端，不安装或重建宿主。
+
