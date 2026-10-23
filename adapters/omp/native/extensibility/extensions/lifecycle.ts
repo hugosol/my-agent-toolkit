@@ -27,8 +27,8 @@ import type { SessionEvent, SessionStartReason } from "../../../../../framework/
 import type { OwnerReference } from "../../../../../framework/interface/state";
 import { defineAdapterDelivery } from "../../../../../framework/runtime/adapter-authoring";
 import type { HarnessPort } from "../../../../../framework/runtime/port";
-import { feedbackTransport, noticeTransport } from "../../../domain/feedback";
-import { markerTransport } from "../../../domain/marker";
+import { feedbackTransport, noticeTransport } from "./feedback";
+import { markerTransport } from "./marker";
 import type { OmpExtensionApi, OmpSessionContext } from "./types";
 import { statePayloadsOf, type OmpStateEntry } from "../../session/session-manager";
 import { sessionFactsOf, startReasonOf } from "./session-facts";

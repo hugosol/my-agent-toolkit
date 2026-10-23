@@ -14,7 +14,7 @@
 import type { OwnerReference } from "../../../../../framework/interface/state";
 import { defineAdapterDelivery } from "../../../../../framework/runtime/adapter-authoring";
 import type { SessionContextObservation } from "../../../../../framework/runtime/port";
-import { feedbackTransport } from "../../../domain/feedback";
+import { feedbackTransport } from "./feedback";
 import type { OmpExtensionApi, OmpSessionContext } from "./types";
 import { sessionFactsOf } from "./session-facts";
 

@@ -19,7 +19,7 @@ import { defineSessionFactsMapping } from "../../../../../framework/runtime/adap
 import type { OwnerReference } from "../../../../../framework/interface/state";
 import type { OmpExtensionApi, OmpSessionContext } from "./types";
 import { directParentSessionIdOf, mainAncestorSessionIdOf } from "../../registry/agent-registry";
-import type { OmpViewedSessionFacts } from "../../../domain/session/viewed-session";
+import type { OmpViewedSessionFacts } from "./viewed-session";
 import type { OmpSessionEvent, OmpSessionReason } from "./lifecycle";
 
 /**

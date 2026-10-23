@@ -22,7 +22,7 @@ import type {
 	OmpSessionEventType,
 } from "../../adapters/omp";
 import * as frameworkOmp from "../../adapters/omp";
-import { feedbackTransport, noticeTransport } from "../../adapters/omp/domain/feedback";
+import { feedbackTransport, noticeTransport } from "../../adapters/omp/native/extensibility/extensions/feedback";
 import type { CommandDelivery } from "../../framework/interface/command";
 import { defineExtension, defineImplementation } from "../../framework/interface";
 

@@ -1,5 +1,7 @@
 /**
- * OMP Viewed session: the facts the host's public outlet publishes about the session it
+ * OMP's optional native Viewed-session variant, supplied by the existing approved host patch
+ * (`extensibility/extensions/types.ts` and `viewed-session.ts`), never a third-party provider.
+ * The facts the host's public outlet publishes about the session it
  * displays, the one native subscription a binding keeps on that outlet, and the framework
  * listeners that subscription feeds.
  *
@@ -7,10 +9,10 @@
  * this module is pointed at it; the marker area's transport is injected per delivery so nothing
  * in this module names a native widget.
  */
-import type { MarkerTransport, ViewedSessionPort } from "../../../../framework/runtime/port";
-import type { ContextTracker } from "../../native/extensibility/extensions/context";
-import type { OmpExtensionApi, OmpSessionContext } from "../../native/extensibility/extensions/types";
-import { viewedOwnerOf } from "../../native/extensibility/extensions/session-facts";
+import type { MarkerTransport, ViewedSessionPort } from "../../../../../framework/runtime/port";
+import type { ContextTracker } from "./context";
+import type { OmpExtensionApi, OmpSessionContext } from "./types";
+import { viewedOwnerOf } from "./session-facts";
 
 /**
  * The facts the host's public Viewed session outlet publishes about the session it displays.
@@ -61,12 +63,13 @@ export function createViewedSession(
 	const viewedListeners = new Set<(markers: MarkerTransport) => void>();
 
 	/**
-	 * The subscription is re-pointed when the context moves and left alone when it does not: a
+	 * Only interested framework listeners keep a native subscription alive. While interested,
+	 * the subscription is re-pointed when the context moves and left alone when it does not: a
 	 * context that publishes no such subscription is never watched, and every later delivery from
 	 * it leaves the existing subscription exactly as it stands.
 	 */
 	const watch = (ctx: OmpSessionContext): void => {
-		if (typeof ctx.subscribeViewedSessionChanged !== "function" || watchedContext === ctx) return;
+		if (viewedListeners.size === 0 || typeof ctx.subscribeViewedSessionChanged !== "function" || watchedContext === ctx) return;
 		watchedContext = ctx;
 		unwatchViewed?.();
 		unwatchViewed = ctx.subscribeViewedSessionChanged(() => {

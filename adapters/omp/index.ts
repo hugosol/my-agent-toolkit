@@ -3,10 +3,10 @@
  *
  * This module only assembles: the process-level readers an extension's factory is handed and the
  * harness-independent binding life shared by both adapters. `port.ts` connects the seam;
- * `native/extensibility/extensions/` owns the native extension API, commands, prompt delivery and
- * context readings, `native/session/session-manager.ts` keeps the complete State entry protocol,
- * and `native/config/model-registry.ts` supplies catalog prices and current provider access.
- * Native lifecycle and UI mappings remain independent of these consumer protocols.
+ * `native/extensibility/extensions/` owns the native extension API, lifecycle, commands, prompt
+ * delivery, context readings and UI mappings, including the optional Viewed-session variant.
+ * `native/session/session-manager.ts` keeps the complete State entry protocol, and
+ * `native/config/model-registry.ts` supplies catalog prices and current provider access.
  *
  * It carries no extension semantics: what to register comes from the definition, whether it may be
  * registered is decided by the harness-independent behavior, and what a command does is the
@@ -40,12 +40,12 @@ export type {
 	OmpRunInitiationResult,
 	OmpSdkSurface,
 	OmpSessionContext,
-	OmpUiContext,
 } from "./native/extensibility/extensions/types";
+export type { OmpUiContext } from "./native/extensibility/extensions/ui";
 export type { OmpAgentRef, OmpAgentRegistry } from "./native/registry/agent-registry";
 export type { OmpSessionEntry } from "./native/session/session-manager";
 export type { OmpSessionEvent, OmpSessionEventType, OmpSessionReason } from "./native/extensibility/extensions/lifecycle";
-export type { OmpViewedSessionFacts } from "./domain/session/viewed-session";
+export type { OmpViewedSessionFacts } from "./native/extensibility/extensions/viewed-session";
 
 /**
  * Re-exported because it is what {@link OmpExtensionFactory} returns.

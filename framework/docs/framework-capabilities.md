@@ -191,8 +191,8 @@ these adapters.
 | Provider | Catalog price queries and current provider address/credential queries, mapped to framework facts | [`native/config/model-registry.ts`](../../adapters/omp/native/config/model-registry.ts) | [`native/core/model-registry.ts`](../../adapters/pi/native/core/model-registry.ts) |
 | Control | Native command registration and invocation mapping | [`native/extensibility/extensions/commands.ts`](../../adapters/omp/native/extensibility/extensions/commands.ts) | [`native/core/extensions/commands.ts`](../../adapters/pi/native/core/extensions/commands.ts) |
 | Prompt | Native run-initiation mapping and injected-message result | [`native/extensibility/extensions/prompts.ts`](../../adapters/omp/native/extensibility/extensions/prompts.ts) | [`native/core/extensions/prompt.ts`](../../adapters/pi/native/core/extensions/prompt.ts) |
-| Feedback | Extension feedback and framework notice effects; UI or stderr | [`domain/feedback.ts`](../../adapters/omp/domain/feedback.ts) | [`native/core/extensions/ui.ts`](../../adapters/pi/native/core/extensions/ui.ts) |
-| Marker | Marker area widget effect; absent on surfaces without UI | [`domain/marker.ts`](../../adapters/omp/domain/marker.ts) | [`native/core/extensions/ui.ts`](../../adapters/pi/native/core/extensions/ui.ts) |
+| Feedback | Extension feedback and framework notice effects; UI or stderr | [`native/extensibility/extensions/feedback.ts`](../../adapters/omp/native/extensibility/extensions/feedback.ts) | [`native/core/extensions/ui.ts`](../../adapters/pi/native/core/extensions/ui.ts) |
+| Marker | Marker area widget effect; absent on surfaces without UI | [`native/extensibility/extensions/marker.ts`](../../adapters/omp/native/extensibility/extensions/marker.ts) | [`native/core/extensions/ui.ts`](../../adapters/pi/native/core/extensions/ui.ts) |
 
 OMP's complete persisted-entry protocol is in [`native/session/session-manager.ts`](../../adapters/omp/native/session/session-manager.ts): extension State naming, oldest-first selected-branch reads and native append stay together with persisted prompt identities. The framework still validates the payloads and decides activation and prompt frequency; moving source files requires no journal or user-configuration migration.
 
@@ -415,8 +415,11 @@ be farther away. These identities never merge the sessions' Turn/Round observati
 module also answers the native integrated-subagent mode: OMP loads the extension into actual child
 sessions through its own loader, without a Pi provider registration or required-child-extension RPC.
 
-[`adapters/omp/domain/session/viewed-session.ts`](../../adapters/omp/domain/session/viewed-session.ts) owns the Viewed session native
-facts, subscription re-pointing and last-listener release. The assembly keeps one latest actual
+[`adapters/omp/native/extensibility/extensions/viewed-session.ts`](../../adapters/omp/native/extensibility/extensions/viewed-session.ts)
+owns the optional native Viewed-session variant's facts, subscription re-pointing and last-listener
+release. Like feedback and markers, its source coordinate is the extension contract, not the TUI
+controller that ultimately renders it. The variant requires the existing approved host patch; it is
+not a third-party provider and the unpatched harness continues to project each delivery's own seat. The assembly keeps one latest actual
 delivery context: both this module and context-free Subagent observations read that same source.
 Viewing grants no State-write authority. `port.ts` connects the native mappings and owns binding-scoped
 diagnostic deduplication; `native/extensibility/extensions/context.ts` keeps the binding's newest context,
