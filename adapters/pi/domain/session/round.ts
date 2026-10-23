@@ -20,7 +20,7 @@
 import type { TurnOutcome } from "../../../../framework/interface/session";
 import { defineAdapterDelivery } from "../../../../framework/runtime/adapter-authoring";
 import type { HarnessPort, RoundObservation, RoundSignal } from "../../../../framework/runtime/port";
-import { feedbackTransport } from "../feedback";
+import { feedbackTransport } from "../../native/core/extensions/ui";
 import type { PiExtensionApi, PiExtensionContext } from "../../native/core/extensions/types";
 import type { PiPortContext } from "../../internal/port";
 import type { SessionBackgroundWork } from "../subagent/queries";
