@@ -1,0 +1,66 @@
+$ bun test
+bun test v1.4.2 (744846f84)
+rebind: cross-rebind: initialization failed, extension not bound: registration failed: command registration refused
+cross-rebind: initialization failed, extension not bound: registration failed: command registration refused
+rebind-native: initialization failed, extension not bound: registration failed: loader refused label
+piSurfaceProbe: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions 'pi-surface-probe' is not an importable file: ENOENT: no such file or directory, lstat 'C:\Users\hugos\AppData\Local\Temp\pi-background-rounds-absent-entry.ts'
+piSurfaceProbe: pi-surface-probe: a model response settled with no Turn in flight for its session; no start is fabricated and it is dropped
+piSurfaceProbe: pi-surface-probe: a model response settled with no Turn in flight for its session; no start is fabricated and it is dropped
+piSurfaceProbe: pi-surface-probe: a model response settled with no Turn in flight for its session; no start is fabricated and it is dropped
+piSurfaceProbe: pi-surface-probe: a model response settled with no Turn in flight for its session; no start is fabricated and it is dropped
+piSurfaceProbe: pi-surface-probe: a model response settled with no Turn in flight for its session; no start is fabricated and it is dropped
+piSurfaceProbe: pi-surface-probe: a model response settled with no Turn in flight for its session; no start is fabricated and it is dropped
+piSurfaceProbe: this session reports no identity; the extension stays off for it
+codeBaseTools: codebase-tools: configuration error (config): the startup policy file "C:\Users\hugos\AppData\Local\Temp\pi-native-config-UFyIb0\config.yaml" declares "enabled" under "codebase-tools" as "true", but a startup policy requires a boolean
+codeBaseTools: codebase-tools: configuration error (config): the configuration file "C:\Users\hugos\AppData\Local\Temp\pi-native-config-ypHQZK\config.yaml" is not valid YAML: Flow sequence in block collection must be sufficiently indented and end with a ] at line 3, column 1:
+
+  enabled: [
+
+^
+
+invalid config: pi-native-config-invalid: configuration error (config): the configuration file "C:\Users\hugos\AppData\Local\Temp\pi-native-config-fO5aNp\config.yaml" declares "requestTimeoutMs" as a number, but the extension requires a whole number of milliseconds between 1 and 2147483647
+piSurfaceProbe: this session reports no identity; the extension stays off for it
+piSurfaceProbe: this session reports no identity; the extension stays off for it
+piSurfaceProbe: this session reports no identity; the extension stays off for it
+piSurfaceProbe: pi-surface-probe: a model request started while a Turn was still in flight; the earlier Turn is dropped
+piSurfaceProbe: pi-surface-probe: a model response settled with no Turn in flight for its session; no start is fabricated and it is dropped
+piSurfaceProbe: pi-surface-probe: a model response settled with no Turn in flight for its session; no start is fabricated and it is dropped
+piSurfaceProbe: pi-surface-probe: a model response settled with no Turn in flight for its session; no start is fabricated and it is dropped
+piSurfaceProbe: pi-surface-probe: a model response settled with no Turn in flight for its session; no start is fabricated and it is dropped
+piSurfaceProbe: pi-surface-probe: a model response settled with no Turn in flight for its session; no start is fabricated and it is dropped
+codebase-tools: no owning main session resolved for this session; the extension stays off
+codebase-tools: no owning main session resolved for this session; the extension stays off
+codebase-tools: no owning main session resolved for this session; the extension stays off
+codebase-tools: no owning main session resolved for this session; the extension stays off
+codebase-tools: no owning main session resolved for this session; the extension stays off
+turn-probe: a model request started while a Turn was still in flight; the earlier Turn is dropped
+
+tests\harness-dock\efficiency-effects.test.ts:
+effects recorded: 2345 (storage root: 13, idle window: 0)
+storage root detail: ["mkdir consumption.json.lock.14436-2-mvlhqxga.lock","mkdir cost-archive","readFile codex-usage-estimate.json utf8","readFile consumption.json utf8","realpath cost-archive","rename consumption.json","rename consumption.json.lock","unlink 14436-1-mvlhqxga","unlink consumption.json.14436-3-mvlhqxgc.tmp","writeFile 14436-1-mvlhqxga ","writeFile consumption.json.14436-3-mvlhqxgc.tmp {\"schemaVersion\":1,\"periodId\":\"period-fresh\",\"start\":\"2026-10-23T21:37:42.009Z\",\"holiday\":false,\"harnesses\":{\"omp\":{\"sessions\":[{\"id\":\"01a16ab2-bd7a-7411-9527-323ab0f57a5b\",\"name\":\"main\",\"parent\":null,\"saveVersion\":1,\"own\":{\"deepseek\":{\"deepseek-flash\":{\"tokens\":{\"input\":7,\"cacheRead\":3,\"cacheWrite\":0,\"output\":7},\"costCny\":0.00003506}}},\"span\":{\"start\":1792791462022,\"end\":1792791462091}}]}}}"]
+idle-window ops: []
+net effects: [{"kind":"net","op":"createConnection","targets":["127.0.0.1","4662"],"at":1792791462013,"outcome":"ok"}]
+capture endpoint port: 4662, widget frames: 12, arrivals: ["balance","model"]
+effects recorded: 2739 (idle window: 0)
+arrivals: ["balance","model","model","model"], widget frames: 26, capture port: 4692
+net effects: [{"kind":"net","op":"createConnection","targets":["127.0.0.1","4692"],"at":1792791467980,"outcome":"ok"}]
+modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions id 'model-cost' is duplicated.
+modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions id 'model-cost' is duplicated.
+modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions id 'model-cost' is duplicated.
+modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions id 'model-cost' is duplicated.
+modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions id 'model-cost' is duplicated.
+modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions id 'model-cost' is duplicated.
+modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions id 'model-cost' is duplicated.
+modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions id 'model-cost' is duplicated.
+modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions id 'model-cost' is duplicated.
+modelCost: this harness reports no idle fact (isIdle); the framework answers nothing rather than inventing one
+modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions id 'model-cost' is duplicated.
+modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions id 'model-cost' is duplicated.
+modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions id 'model-cost' is duplicated.
+modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions id 'model-cost' is duplicated.
+modelCost: model-cost: a model response settled with no Turn in flight for its session; no start is fabricated and it is dropped
+
+ 1664 pass
+ 0 fail
+ 10220 expect() calls
+Ran 1664 tests across 185 files. [517.61s]
