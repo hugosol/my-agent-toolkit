@@ -1,7 +1,7 @@
 /**
  * The OMP port: the framework's native seam, bound to one session.
  *
- * This module only connects the adapter's domains: the newest-context tracker every delivery
+ * This module only connects the adapter's native mappings: the newest-context tracker every delivery
  * records itself through, the one State entry the session and command paths share, one owner
  * resolution and its ownerless diagnostic, the Subagent domain's integration answer, the binding's
  * diagnostic channel, and the composition of the hooks the framework registers. Session, Context,
@@ -18,29 +18,29 @@
  * registered is decided by the harness-independent behavior, and what a command does is the
  * framework's control behavior.
  */
-import { defineAdapterPort, unavailablePortMember } from "../../../framework/runtime/adapter-authoring";
-import type { ExtensionDefinition } from "../../../framework/interface/details/definition";
-import type { OwnerReference } from "../../../framework/interface/state";
-import type { HarnessPort } from "../../../framework/runtime/port";
-import { observeSessionContext } from "../domain/context/events";
-import { createContextTracker, type ContextTracker } from "../domain/context/queries";
-import { registerControl } from "../domain/control";
-import { feedbackTransport } from "../domain/feedback";
-import { markerTransport } from "../domain/marker";
-import type { OmpExtensionApi, OmpSessionContext } from "./native";
-import type { OmpProviderFacts } from "../domain/provider";
-import { observeRunInitiation } from "../domain/prompt";
-import { stateEntryOf, type OmpStateEntry } from "../domain/session/effects";
+import { defineAdapterPort, unavailablePortMember } from "../../framework/runtime/adapter-authoring";
+import type { ExtensionDefinition } from "../../framework/interface/details/definition";
+import type { OwnerReference } from "../../framework/interface/state";
+import type { HarnessPort } from "../../framework/runtime/port";
+import { observeSessionContext } from "./native/extensibility/extensions/context";
+import { createContextTracker, type ContextTracker } from "./native/extensibility/extensions/context";
+import { registerControl } from "./native/extensibility/extensions/commands";
+import { feedbackTransport } from "./domain/feedback";
+import { markerTransport } from "./domain/marker";
+import type { OmpExtensionApi, OmpSessionContext } from "./native/extensibility/extensions/types";
+import type { OmpProviderFacts } from "./native/config/model-registry";
+import { observeRunInitiation } from "./native/extensibility/extensions/prompts";
+import { stateEntryOf, type OmpStateEntry } from "./native/session/session-manager";
 import {
 	observeRoundEvents,
 	observeSessionEvents,
 	observeTurnEvents,
 	observeUserInputEvents,
 	type SessionEventContext,
-} from "../domain/session/events";
-import { ownerReferenceOf } from "../domain/session/queries";
-import { createViewedSession } from "../domain/session/viewed-session";
-import { subagentIntegrationOf } from "../domain/subagent/queries";
+} from "./domain/session/events";
+import { ownerReferenceOf } from "./domain/session/queries";
+import { createViewedSession } from "./domain/session/viewed-session";
+import { subagentIntegrationOf } from "./domain/subagent/queries";
 
 /** The process-level readers every binding of one assembly answers through. */
 export interface PortDependencies {

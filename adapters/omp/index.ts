@@ -2,10 +2,11 @@
  * The OMP adapter entry and assembly.
  *
  * This module only assembles: the process-level readers an extension's factory is handed and the
- * harness-independent binding life shared by both adapters. The native mappings live under `domain/` —
- * `internal/port.ts` composes the seam, `domain/context/` and `domain/session/` own their own reads and
- * event mappings, and `domain/provider.ts`, `domain/feedback.ts`, `domain/marker.ts`,
- * `domain/control.ts` and `domain/prompt.ts` own the native facts they translate.
+ * harness-independent binding life shared by both adapters. `port.ts` connects the seam;
+ * `native/extensibility/extensions/` owns the native extension API, commands, prompt delivery and
+ * context readings, `native/session/session-manager.ts` keeps the complete State entry protocol,
+ * and `native/config/model-registry.ts` supplies catalog prices and current provider access.
+ * Native lifecycle and UI mappings remain independent of these consumer protocols.
  *
  * It carries no extension semantics: what to register comes from the definition, whether it may be
  * registered is decided by the harness-independent behavior, and what a command does is the
@@ -15,9 +16,9 @@ import { createAssemblyBinding } from "../../framework/behaviors/assembly";
 import type { ExtensionAssembly } from "../../framework/interface/details/implementation";
 import type { ExtensionDefinition } from "../../framework/interface/details/definition";
 import type { BindingResult } from "../../framework/runtime/port";
-import type { OmpExtensionApi } from "./internal/native";
-import { createOmpPort } from "./internal/port";
-import { createProviderFacts } from "./domain/provider";
+import type { OmpExtensionApi } from "./native/extensibility/extensions/types";
+import { createOmpPort } from "./port";
+import { createProviderFacts } from "./native/config/model-registry";
 
 // Native types remain available through the adapter entry consumed by harness assemblies.
 export type {
@@ -43,7 +44,7 @@ export type {
 	OmpSessionContext,
 	OmpSessionEntry,
 	OmpUiContext,
-} from "./internal/native";
+} from "./native/extensibility/extensions/types";
 export type { OmpSessionEvent, OmpSessionEventType, OmpSessionReason } from "./domain/session/events";
 export type { OmpViewedSessionFacts } from "./domain/session/viewed-session";
 

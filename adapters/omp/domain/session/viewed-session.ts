@@ -8,8 +8,8 @@
  * in this module names a native widget.
  */
 import type { MarkerTransport, ViewedSessionPort } from "../../../../framework/runtime/port";
-import type { ContextTracker } from "../context/queries";
-import type { OmpExtensionApi, OmpSessionContext } from "../../internal/native";
+import type { ContextTracker } from "../../native/extensibility/extensions/context";
+import type { OmpExtensionApi, OmpSessionContext } from "../../native/extensibility/extensions/types";
 import { viewedOwnerOf } from "./queries";
 
 /**

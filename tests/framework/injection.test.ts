@@ -50,6 +50,8 @@ interface NativeDouble {
 	readonly api: OmpExtensionApi;
 	/** Appended entries in call order: a contribution must never produce one. */
 	readonly appended: ReadonlyArray<{ readonly customType: string; readonly data: unknown }>;
+	/** Delivers the native startup with an existing selected branch. */
+	start(facts: RunFacts): void;
 	/** Runs one bound toggle command for a session, as an alternating user would. */
 	toggle(sessionId: string, command?: string): void;
 	/** Delivers one run initiation, as the runner does; returns what the hook committed. */
@@ -79,6 +81,7 @@ function nativeDouble(): NativeDouble {
 	>();
 	const appended: Array<{ customType: string; data: unknown }> = [];
 	let hook: OmpRunInitiationHandler | undefined;
+	const starts: SessionHandler[] = [];
 
 	const sessionFacts = (sessionId: string, branch: readonly OmpSessionEntry[]): OmpSessionContext => ({
 		// The registry label is deliberately the same for every main session: the owner key
@@ -106,12 +109,16 @@ function nativeDouble(): NativeDouble {
 			if (event === "before_agent_start") {
 				hook = handler as OmpRunInitiationHandler;
 			}
+			if (event === "session_start") starts.push(handler as SessionHandler);
 		},
 	};
 
 	return {
 		api,
 		appended,
+		start(facts) {
+			for (const handler of starts) handler({ type: "session_start" }, sessionFacts(facts.sessionId, facts.branch));
+		},
 		toggle(sessionId, command = COMMAND) {
 			const registration = registrations.get(command);
 			if (registration === undefined) throw new Error(`command "${command}" was not registered`);
@@ -144,6 +151,24 @@ function bindCodebaseTools(double: NativeDouble): void {
 function enabledRun(sessionId: string, extra: readonly OmpSessionEntry[] = []): RunFacts {
 	return { sessionId, branch: [enabledState(), ...extra] };
 }
+
+// Source: ticket01's OMP 18.5.0 journal captured at 89bd2d72 before any runtime refactor.
+// A lost State read would suppress the reminder and make the next toggle append true.
+// S1 is the public ompAdapter assembly; the native manager supplies the frozen selected branch.
+test("historical OMP State restores enabled, retains init and records the next toggle as disabled (P6, P8)", () => {
+	const branch = readFileSync(path.join(REPO_ROOT, "tests/codebase-tools/fixtures/omp-state-before-source-refactor.jsonl"), "utf8")
+		.trim().split("\n").map(line => JSON.parse(line) as OmpSessionEntry);
+	const double = nativeDouble();
+	bindCodebaseTools(double);
+	double.start({ sessionId: "historical-owner", branch });
+	expect(double.deliverRun({ sessionId: "historical-owner", branch })).toEqual({
+		message: { customType: "codebase-tools:reminder", content: REMINDER_PROMPT, display: false, attribution: "agent" },
+	});
+	expect(double.appended).toEqual([]);
+	double.toggle("historical-owner");
+	expect(double.appended).toEqual([{ customType: "codebase-tools:state", data: { enabled: false } }]);
+	expect(double.deliverRun({ sessionId: "historical-owner", branch })).toBeUndefined();
+});
 
 describe("first enabled run contributes init (P18, P19, C7)", () => {
 	test("an enabled run whose branch has no slot identity contributes one hidden, agent-attributed init", () => {
