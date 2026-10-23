@@ -73,6 +73,14 @@ S1 为实际公开 `piAdapter` assembly 与 extension 消费 interface；S2 为�
 
 四个实机 smoke 在本代理内顺序运行；03 释放窗口后开始，但阻塞调用中收到 integrate01 仍有全仓测试的通知，故记录可能的跨运行负载，**不宣称严格 quiet-run 保证**。四项实机结果均无失败。最终分区在 05 和 03 明确释放后运行，源与 fixture 全程未改。
 
+### 开发分支冲突接管（2026-10-24）
+
+将集成提交 `921de1d861cc78797e758f7ddc01a3413e19fb54` 回合到本票开发分支时，保留 04 的 native／thirdParty／mixture 生命周期划分，同时采用 02 已迁移的 extension types、commands、context、prompt、model-registry 和完整 State 协议。顶层 `port.ts` 继续只做显式组装；删除已被 `native/core/session-manager/state.ts` 完整取代的旧 `domain/session/queries.ts`，不保留兼容路径。同步迁移新 lifecycle 文件、测试及直接导航的 imports。06 的 UI 迁移尚未在此次回合源状态中，未提前修改其职责。
+
+此次接管按 assignment 仅执行项目全局测试；不运行 typecheck、复杂脚本、实机 smoke 或跨票据整体验收，后者留给最后独立门禁。此前实现证据及原有失败记录保持原样，不能当作此次合并源状态的测试结果。
+
+在 `b659d32` 冲突合并后，采用共享测试修复 `257d84b`（本分支为 `b73a78c`），确保全局测试只启动 `safe_shutdown_shell`，不启动可执行真实关机动作的生产 panel。设置 `HERDR_BOT_BINARY=E:/Developer/myhub/herdr-bot/backend/target/debug/examples/safe_shutdown_shell.exe`、`HERDR_BOT_METADATA=E:/Developer/myhub/herdr-bot/meta-data/bot-options.toml`。收到 07 明确释放窗口后执行 `bun run test`，退出 **1**：**1630 pass / 4 fail**，183 files、9965 assertions、576.58s。完整原始日志保留在 `C:/Users/hugos/AppData/Local/Temp/pi04-integration-global-test.log`。失败为 panel startup 的首次 snapshot 连接拒绝，以及 session-ownership-tree 的三个场景请求数分别为 11／13／11 而非既有 5／7／5；不算通过。02 集成 owner 接管这两个共享测试根因，04 未重复修改其文件。随后采用其修复 `ec861fa`（本分支 `54e5ceb`）：额外六次请求实际来自 auto-effort judge，fixture 显式声明 task effort 并启用相应选项；panel 的 SSE／snapshot 使用独立的 `node:http` 连接，不与进程全局 fetch 池混用。这些是测试输入和外部 panel 观察设施修正，不放宽产品行为断言。02 的通过结果不冒充本 worktree 的最终结果。
+
 ### 集成交接与未验证项
 
 本票无需 State 数据或用户配置迁移，无新增 retry、延长等待或 failure fallback。02／06 跨票 import cutover 和合入由独立集成执行；完整双端结构规则、ADR 与全仓最终验收仍归其各自 owner。真实服务、其他版本／平台、交互 TUI 与未运行组合不在本次实机证据内，不提升支持声明。原 worktree 联合消费方运行的两项不稳定失败保持可见；已有覆盖和实机结果不替代这个限制。

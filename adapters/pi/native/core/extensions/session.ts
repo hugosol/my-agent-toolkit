@@ -3,7 +3,7 @@
  * each, plus the disposal registration pi awaits at a session's own exit.
  *
  * Which session a binding serves, when one owner is transferred to another, and what a session's
- * own end closes stay here; the facts themselves are read by `queries.ts`. A start is the one
+ * own end closes stay here; the facts themselves are read from the native session-manager mappings. A start is the one
  * delivery that decides whether a session was spawned, so the facts and the owner of that delivery
  * are both read from the same position rather than from a second reading of the lineage link.
  */
