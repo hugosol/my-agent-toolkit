@@ -10,34 +10,7 @@
 import type { OmpViewedSessionFacts } from "../../../domain/session/viewed-session";
 import type { OmpSessionEvent, OmpSessionEventType } from "./lifecycle";
 import type { OmpAgentRegistry } from "../../registry/agent-registry";
-
-/**
- * One session entry as the native session manager holds it.
- *
- * Only the persisted shapes the adapter recognizes are named: the State payload
- * (`type: "custom"`), the injected-prompt contribution (`type: "custom_message"`) and the
- * conversation itself (`type: "message"`). Whether a payload declares a usable value is the
- * framework's validation rule, so the adapter hands payloads over unread.
- */
-export interface OmpSessionEntry {
-	readonly type?: string;
-	readonly customType?: string;
-	/** The State record's payload (`type: "custom"`). */
-	readonly data?: unknown;
-	/** A persisted contribution's text and framework-owned presentation. */
-	readonly content?: string;
-	readonly display?: boolean;
-	readonly attribution?: "user" | "agent";
-	/**
-	 * The message a conversation entry carries (`type: "message"`), read for its role alone.
-	 *
-	 * It is the fact that says a session already has a conversation of its own: a session the
-	 * harness reloaded replays its messages onto the branch before it rebinds the extension, while
-	 * a session that is only now beginning has none yet. Nothing here interprets the message
-	 * beyond that — the role is all this adapter reads.
-	 */
-	readonly message?: { readonly role?: string };
-}
+import type { OmpSessionEntry } from "../../session/session-manager";
 
 /**
  * The native UI surface an extension context exposes. Only the used members are named;

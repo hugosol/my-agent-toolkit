@@ -40,10 +40,10 @@ export type {
 	OmpRunInitiationResult,
 	OmpSdkSurface,
 	OmpSessionContext,
-	OmpSessionEntry,
 	OmpUiContext,
 } from "./native/extensibility/extensions/types";
 export type { OmpAgentRef, OmpAgentRegistry } from "./native/registry/agent-registry";
+export type { OmpSessionEntry } from "./native/session/session-manager";
 export type { OmpSessionEvent, OmpSessionEventType, OmpSessionReason } from "./native/extensibility/extensions/lifecycle";
 export type { OmpViewedSessionFacts } from "./domain/session/viewed-session";
 
