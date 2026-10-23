@@ -5,7 +5,7 @@ Joins an agent session to the herdr-bot panel: `/connect-bot` registers the curr
 ## Language
 
 **Panel（面板）**:
-The herdr-bot web surface that owns the session table. The connect-bot extension registers sessions with it; the panel is distinct from the extension and from the OMP harness.
+The herdr-bot web surface that owns the session table. The connect-bot extension registers sessions with it; the panel is distinct from the extension and from the harness.
 _Avoid_: extension, harness, agent session
 
 **Panel session registration（面板会话登记）**:

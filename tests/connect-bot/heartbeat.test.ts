@@ -202,7 +202,7 @@ describe("an armed session beats on its one managed interval with the state it h
 
 		// One beat: the protocol's route, a fixed envelope, and the state this idle session holds.
 		expect(requests.map(envelopeOf)).toEqual([
-			{ sessionId: "beat-1", kind: "register", data: { cwd: "E:/work/beat" } },
+			{ sessionId: "beat-1", kind: "register", data: { cwd: "E:/work/beat", agentType: "omp" } },
 			{ sessionId: "beat-1", kind: "state", data: { value: "idle", reason: "register" } },
 			{ sessionId: "beat-1", kind: "heartbeat", data: { value: "idle" } },
 		]);

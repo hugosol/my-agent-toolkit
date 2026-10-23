@@ -4,7 +4,7 @@
  * This is plain data: the framework supplies the behavior behind each declaration, so this
  * module names no harness and holds no logic. The arm effect, the panel protocol and
  * the session facts live in the extension's shared modules; the native reads that produce
- * those facts live in its OMP assembly.
+ * those facts live in its harness assemblies.
  *
  * `state` declares the whole of connect-bot's framework State: one field, `enabled`, held for
  * the life of the owner's memory rather than recorded on the session branch, and never

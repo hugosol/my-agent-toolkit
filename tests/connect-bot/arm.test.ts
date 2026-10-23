@@ -22,6 +22,9 @@ import { connectBotConfig } from "../../extensions/connect-bot/shared-logic/pane
 import { botSessions } from "../../extensions/connect-bot/shared-logic/session/session";
 import type { HttpRequestOptions } from "../../framework/interface/general/http";
 import connectBot from "../../extensions/connect-bot/harnesses/omp";
+import connectBotPi from "../../extensions/connect-bot/harnesses/pi";
+import type { PiExtensionContext } from "../../adapters/pi";
+import { boundPiSurface } from "../framework/support/pi-surface-double";
 import { type OmpDouble, ompDouble } from "./support/omp-double";
 
 /** The framework's one marker-area widget, as the OMP adapter owns it. */
@@ -131,6 +134,41 @@ afterEach(() => {
 	jest.useRealTimers();
 });
 
+describe("native Pi registration facts", () => {
+	test("reports pi even when the session name and model suggest omp", async () => {
+		const { requests, request } = panel(async () => panelAnswer(200, registered(1)));
+		const surface = boundPiSurface();
+		connectBotPi(surface.api);
+		setPanelRequestForTest(request);
+		const { promise: announced, resolve: announce } = Promise.withResolvers<void>();
+		const ctx = {
+			cwd: "E:/work/pi-native",
+			model: { name: "omp" },
+			hasUI: true,
+			isIdle: () => true,
+			hasPendingMessages: () => false,
+			sessionManager: {
+				getSessionId: () => "pi-native-registration",
+				getSessionName: () => "omp",
+				getBranch: () => [],
+			},
+			ui: { notify: () => announce(), setWidget: () => {} },
+		} as unknown as PiExtensionContext;
+		const command = surface.commands.get("connect-bot")!;
+		try {
+			await command.handler("", ctx);
+			await announced;
+			expect(envelopeOf(requests[0]!)).toEqual({
+				sessionId: "pi-native-registration",
+				kind: "register",
+				data: { cwd: "E:/work/pi-native", agentType: "pi", sessionName: "omp", model: "omp" },
+			});
+		} finally {
+			await command.handler("off", ctx);
+		}
+	});
+});
+
 describe("an empty argument arms this session (E2, E17, E18)", () => {
 	test("registers the main session with the fixed route and envelope, then shows the marker", async () => {
 		const { requests, request } = panel(async () => panelAnswer(200, registered(3)));
@@ -157,7 +195,7 @@ describe("an empty argument arms this session (E2, E17, E18)", () => {
 		expect(JSON.parse(requests[0]?.init.body ?? "")).toEqual({
 			sessionId: "arm-1",
 			kind: "register",
-			data: { cwd: "E:/work/alpha", sessionName: "alpha", model: "deepseek" },
+			data: { cwd: "E:/work/alpha", agentType: "omp", sessionName: "alpha", model: "deepseek" },
 		});
 
 		// The receipt's online count is what the operator is told, and the area shows the marker.
@@ -183,7 +221,7 @@ describe("an empty argument arms this session (E2, E17, E18)", () => {
 
 		const envelope = JSON.parse(requests[0]?.init.body ?? "") as Record<string, unknown>;
 		expect(Object.keys(envelope).sort()).toEqual(["data", "kind", "sessionId"]);
-		expect(envelope.data).toEqual({ cwd: "E:/work/empty" });
+		expect(envelope.data).toEqual({ cwd: "E:/work/empty", agentType: "omp" });
 	});
 });
 
@@ -327,7 +365,7 @@ describe("running the command again on an armed session re-registers it (E3, sto
 			"reregister-1",
 		]);
 		// The repeat sends the same body: it is one re-registration of one session, not a second one.
-		expect(envelopes[2]?.data).toEqual({ cwd: "E:/work/reconnect", model: "deepseek" });
+		expect(envelopes[2]?.data).toEqual({ cwd: "E:/work/reconnect", agentType: "omp", model: "deepseek" });
 
 		// This owner keeps exactly the one record, naming the one session it registered.
 		expect(botSessions.get(ownerKey("reregister-1"))?.sessionId).toBe("reregister-1");

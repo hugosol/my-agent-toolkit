@@ -87,6 +87,7 @@ function managedTimersOf(ctx: ConnectBotSessionContext): ManagedTimers {
 /** The facts one invocation's context reports, as the plain data shared logic consumes. */
 function sessionFactsOf(ctx: ConnectBotSessionContext): SessionFacts {
 	return {
+		agentType: "omp",
 		sessionId: ctx.sessionManager.getSessionId(),
 		cwd: ctx.cwd,
 		model: ctx.model?.name,

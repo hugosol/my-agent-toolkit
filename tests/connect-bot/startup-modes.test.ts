@@ -234,7 +234,7 @@ describe("the automatic entrypoint activates without a command (P3, P16, P33)", 
 		expect(JSON.parse(requests[0]?.init.body ?? "")).toEqual({
 			sessionId: "startup-auto",
 			kind: "register",
-			data: { cwd: "E:/work/auto", model: "deepseek", sessionName: "startup-auto" },
+			data: { cwd: "E:/work/auto", agentType: "omp", model: "deepseek", sessionName: "startup-auto" },
 		});
 
 		// The accepted receipt is what the operator hears, and only then does the area show the line.

@@ -1,12 +1,11 @@
 /**
  * The managed-timer capability connect-bot's periodic effect runs on.
  *
- * A heartbeat is this extension's own effect, but the timer that drives it belongs to the agent
- * harness: OMP hands a session context a `setInterval` that is unref'd and cleared with the
- * session, and only an assembly may reach it (spec §9, §Execution). Shared logic therefore names
- * this capability and never a native timer, exactly as it names no native session fact: the OMP
- * assembly implements it over `ctx.setInterval`/`ctx.clearTimer` and injects it with the rest of
- * the harness surface, so the cadence policy below is exercised without a session.
+ * A heartbeat is this extension's own effect; its assembly owns the native timer integration.
+ * OMP supplies `ctx.setInterval`/`ctx.clearTimer`. Pi has no context-owned timer API, so its
+ * assembly supplies unref'd Node timers and binding cleanup. Shared logic names only this
+ * capability, never a native timer or session context, and cancels each timer when its owner's
+ * registration ends.
  */
 
 /** Cancels one managed timer. Cancelling a timer that is already cancelled is a no-op. */
