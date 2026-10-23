@@ -1,7 +1,7 @@
 /** Combines native session identity/startup with pi-subagents' own launch name. */
 import type { SessionFacts, SessionStartReason } from "../../../framework/interface/session";
 import { defineSessionFactsMapping, unavailableFact } from "../../../framework/runtime/adapter-authoring";
-import type { PiExtensionContext } from "../internal/native";
+import type { PiExtensionContext } from "../native/core/extensions/types";
 import type { PiSessionPosition } from "../native/core/session-manager/positions";
 import { piSessionStartupOf } from "../native/core/session-manager/startup";
 import { activeAgentNameOf } from "../thirdParty/pi-subagents/launch";

@@ -1,5 +1,5 @@
 /** pi-subagents launch metadata, not a native Pi prompt contract. */
-import type { PiExtensionContext } from "../../internal/native";
+import type { PiExtensionContext } from "../../native/core/extensions/types";
 
 /**
  * The `active_agent` element pi-subagents prepends to the system prompt of a session it spawns.

@@ -20,7 +20,7 @@
 import type { TurnOutcome } from "../../../../../framework/interface/session";
 import { defineAdapterDelivery } from "../../../../../framework/runtime/adapter-authoring";
 import type { RoundObservation, RoundSignal } from "../../../../../framework/runtime/port";
-import type { PiExtensionApi, PiExtensionContext } from "../../../internal/native";
+import type { PiExtensionApi, PiExtensionContext } from "./types";
 import { outcomeOf } from "./turn";
 
 /** Observes pi's run-cycle facts; automatic continuations are reported by pi, never synthesized here. */

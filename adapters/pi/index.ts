@@ -14,14 +14,14 @@ import type { ExtensionAssembly } from "../../framework/interface/details/implem
 import type { ExtensionDefinition } from "../../framework/interface/details/definition";
 import type { AdapterFactory } from "../../framework/runtime/adapter-authoring";
 import type { HarnessPort } from "../../framework/runtime/port";
-import type { PiExtensionApi, PiExtensionFactory } from "./internal/native";
+import type { PiExtensionApi, PiExtensionFactory } from "./native/core/extensions/types";
 import { createPiPort, type PiPortWithSubagents, type PiPortWithoutSubagents } from "./port";
-import { piProviderFacts } from "./domain/provider";
+import { piProviderFacts } from "./native/core/model-registry";
 import { piSessionPositions } from "./native/core/session-manager/positions";
 import { piSessionFileAnchors } from "./native/core/session-manager/ancestry";
 import { createPiSubagentIntegration } from "./thirdParty/pi-subagents/integration";
 
-export * from "./internal/native";
+export * from "./native/core/extensions/types";
 export type { PiPortWithSubagents, PiPortWithoutSubagents } from "./port";
 export type { BindingResult } from "../../framework/runtime/port";
 

@@ -1,6 +1,6 @@
 /** Pi session-manager file headers: cached direct parents and ancestry, never provider protocol. */
 import { readFileSync } from "node:fs";
-import type { PiSessionAnchor, PiSessionHeader } from "../../../internal/native";
+import type { PiSessionAnchor, PiSessionHeader } from "../extensions/types";
 
 /** One native session file's identity and parent link, absent when its header cannot be read. */
 export type PiAnchorReader = (sessionFile: string) => PiSessionAnchor | undefined;

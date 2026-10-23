@@ -13,7 +13,7 @@ import type { SessionFacts, TurnOutcome, TurnUsage } from "../../../../../framew
 import { defineAdapterDelivery } from "../../../../../framework/runtime/adapter-authoring";
 import type { HarnessPort, TurnSignalFacts } from "../../../../../framework/runtime/port";
 import { feedbackTransport } from "../../../domain/feedback";
-import type { PiAssistantMessage, PiExtensionApi, PiExtensionContext } from "../../../internal/native";
+import type { PiAssistantMessage, PiExtensionApi, PiExtensionContext } from "./types";
 import type { PiPortContext } from "../../../port";
 
 /** The all-zero reading pi's message carries until a provider reports one. */

@@ -10,7 +10,7 @@
  * an entry loaded first settles before a provider loaded second has begun serving — so both are read
  * here, within one budget, and the same answer is recognized whichever channel carried it.
  */
-import type { PiEventBus } from "../../internal/native";
+import type { PiEventBus } from "../../native/core/extensions/types";
 
 /** The provider's announcement channel: its statement that it is serving a session. */
 const PROVIDER_READY_CHANNEL = "subagents:rpc:v1:ready";

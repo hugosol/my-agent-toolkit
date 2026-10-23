@@ -18,6 +18,7 @@
  */
 import { afterEach, describe, expect, test } from "bun:test";
 import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
 import { MODEL_COST } from "../../../../extensions/model-cost/definition";
@@ -227,7 +228,9 @@ async function savedDocument(
 	const deadline = Date.now() + 5_000;
 	for (;;) {
 		if (existsSync(file)) {
-			const document = JSON.parse(readFileSync(file, "utf8")) as ConsumptionDocument;
+			// Await actual I/O rather than hot-looping synchronous opens while the
+			// Windows atomic writer is trying to publish the next document.
+			const document = JSON.parse(await readFile(file, "utf8")) as ConsumptionDocument;
 			if (accept(document)) return document;
 		}
 		if (Date.now() > deadline) throw new Error(`no consumption document the case expects was published at ${file}`);

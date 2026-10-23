@@ -1,7 +1,7 @@
 /** Pi session-manager identity, native lineage decisions and Owner references. */
 import type { SessionStartReason } from "../../../../../framework/interface/session";
 import type { OwnerReference } from "../../../../../framework/interface/state";
-import type { PiExtensionContext, PiSessionHeader } from "../../../internal/native";
+import type { PiExtensionContext, PiSessionHeader } from "../extensions/types";
 import { piSpawnedRelationsOf, type PiAnchorReader } from "./ancestry";
 
 /**

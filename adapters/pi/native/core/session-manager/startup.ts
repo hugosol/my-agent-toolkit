@@ -1,6 +1,6 @@
 /** Pi session-manager branch evidence and context readings for a session's own beginning. */
 import type { SessionStartReason, SessionStartup } from "../../../../../framework/interface/session";
-import type { PiExtensionContext } from "../../../internal/native";
+import type { PiExtensionContext } from "../extensions/types";
 
 /**
  * Whether one start delivery proves the session it announces *began* there, so that what the
