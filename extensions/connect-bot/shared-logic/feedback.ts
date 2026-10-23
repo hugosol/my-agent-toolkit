@@ -45,7 +45,7 @@ export interface ExtensionFeedback {
  * push, an argument the command surface did not recognize, and whether a refused session has a UI.
  */
 export type FeedbackInput =
-	| { readonly trigger: "arm"; readonly register: { readonly onlineCount: number } | undefined }
+	| { readonly trigger: "arm"; readonly register: { readonly onlineCount: number; readonly historySaved?: boolean } | undefined }
 	| { readonly trigger: "off"; readonly enabledBefore: boolean; readonly panelAnswered: boolean }
 	| { readonly trigger: "disconnecting" }
 	| {
@@ -72,7 +72,9 @@ export function selectFeedback(input: FeedbackInput): ExtensionFeedback | undefi
 			// one — while a panel that did not answer as a register leaves this session unarmed.
 			return input.register === undefined
 				? { level: "error", message: "无法连接 herdr-bot，未启用；请确认面板已启动" }
-				: { level: "info", message: `已接入 herdr-bot 面板（当前 ${input.register.onlineCount} 个在线会话）` };
+				: input.register.historySaved === false
+					? { level: "warning", message: `已接入 herdr-bot 面板（当前 ${input.register.onlineCount} 个在线会话），但历史会话保存失败；上报继续，修复存储后请再次执行 /connect-bot 保存历史` }
+					: { level: "info", message: `已接入 herdr-bot 面板（当前 ${input.register.onlineCount} 个在线会话）` };
 
 		case "off":
 			// C / D: any HTTP answer means the panel is reachable and the row is gone — a `404` after

@@ -423,7 +423,7 @@ describe("the protocol the actual herdr-bot panel receives is the frozen one (P2
 
 			// The panel's receipts, as the real server wrote them.
 			expect(report.sent[0]?.status).toBe(200);
-			expect(report.sent[0]?.answerBody).toEqual({ outcome: "registered", onlineCount: 1 });
+			expect(report.sent[0]?.answerBody).toEqual({ outcome: "registered", onlineCount: 1, historySaved: true });
 			expect(report.sent.slice(1).map(request => request.answerBody)).toEqual(
 				report.sent.slice(1).map(() => ({ outcome: "accepted" })),
 			);
@@ -440,6 +440,7 @@ describe("the protocol the actual herdr-bot panel receives is the frozen one (P2
 			expect(views[0]).toEqual({
 				sessionId: "budget-interop",
 				sessionName: "interop",
+				agentType: "omp",
 				cwd: "E:/work/interop",
 				model: "interop-model",
 				online: true,

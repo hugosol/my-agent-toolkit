@@ -18,6 +18,26 @@ The panel's open registration boundary accepts older extensions without this fie
 future string values. Its current UI recognizes only `pi` and `omp`; missing or unrecognized
 values display `未知` beside the session name rather than being guessed as a known harness.
 
+## History persistence feedback
+
+An accepted registration and persistent history are separate results. A registered receipt with
+`historySaved: false` still arms the session, retains its marker, starts the ordinary state reports
+and heartbeat, and does not spend the connection failure budget. Pi and OMP both show a **warning**
+to the operator saying the connection succeeded but history could not be saved. This uses the normal
+UI/stderr feedback transport, never model context. Receipts from older panels that do not report
+history status keep their existing connection-only meaning; they do not claim history was saved.
+
+There is no autonomous re-register or history retry. After correcting the panel's storage fault,
+explicitly run `/connect-bot` again to attempt saving history. Existing rows retain their first
+successful persistence time; a previously unsaved conversation is collected only on success.
+
+`history-warning.test.ts` observes the actual command, visible warning, marker and controlled
+heartbeat cadence. `history-interop.test.ts` additionally uses real HTTP and isolated panel storage,
+checks both native callers, explicit recovery and completion shutdown monitoring/countdown without
+executing any real shutdown. Run the latter with `HERDR_BOT_BINARY` pointing to herdr-bot's
+`cargo build --example safe_shutdown_shell` output and `HERDR_BOT_METADATA` pointing to its delivered
+`meta-data/bot-options.toml`. The test rejects a non-safe backend before requesting shutdown monitoring.
+
 ## Startup modes
 
 connect-bot is assembled in one of two **startup modes**. The mode is selected statically by the
