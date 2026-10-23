@@ -71,3 +71,13 @@
 - 日志及 `--keep` 的真实运行目录保留在本 worktree／系统 temp 中；日志末尾列出可复查目录。
 - 与 04 已协调：本票只最小修改现存 `internal/port.ts`／index imports；04 迁移到顶层 `port.ts` 时保留本票 native paths。04 新 lifecycle 文件的 `internal/native` import 应指向本票 `native/core/extensions/types.ts`；State query import 指向 `native/core/session-manager/state.ts`。04 的旧 `domain/session/queries.ts` 最终只余本票已替代的 State helpers，应删除而非兼容导出。06 的 UI 文件迁移再更新本票 native command/context/prompt 的 transport imports。来源组合语义不放回 port。
 - 最终独立集成及 `closed` 状态由集成代理负责；全局组织／ADR 文档由 08 收口。
+
+## 同步后独立集成验收（2026-10-24）
+
+宿主已将首次集成提交 `921de1d861cc78797e758f7ddc01a3413e19fb54` 合回本票开发分支；接管时 HEAD 即该提交，工作区干净，`git merge-base --is-ancestor` 返回 0。本轮只运行项目全局测试，复杂脚本、独立 smoke 和跨票整体门禁留给最终验收，不重用先前开发会话。
+
+- 首轮 `bun run test`：exit 1；1621 pass / 5 fail，9916 assertions，183 files，588.10s。完整日志：`%TEMP%/ticket02-integration-global-tests-921de1d.log`。
+- 失败为真实 herdr-bot 测试启动的安全壳／endpoint 契约（2 项）及真实 OMP 嵌套委派请求数量（3 项）。helper 原默认启动生产后端；现改为默认启动上游已有 `safe_shutdown_shell` example，在发请求前确认安全壳，并等初始 snapshot 就绪、传播订阅失败，未加重试。此前另一个 panel 实例的 `ConnectionRefused` 根因未单独证明，不将其归因于代理或端口配置。
+- OMP task executor 在 session Turn 之外生成 task label，使用 `tiny`／`commit`／`smol` 可选模型角色；委派 fixture 的 assignment prompt 回复协议不服务这些辅助请求。现仅在该套件的隔离配置中显式留空三个角色，保留 capture-all、原始 5/7/5 次数及用量／身份断言，不修改宿主、adapter 或业务配置。
+- 临时 worktree 的真实 panel 前提显式设置为 `HERDR_BOT_BINARY=E:/Developer/myhub/herdr-bot/backend/target/debug/examples/safe_shutdown_shell.exe`、`HERDR_BOT_METADATA=E:/Developer/myhub/herdr-bot/meta-data/bot-options.toml`，不使用生产关机后端，不安装或重建宿主。
+
