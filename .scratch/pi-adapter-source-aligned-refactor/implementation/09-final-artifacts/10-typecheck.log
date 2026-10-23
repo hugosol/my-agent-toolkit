@@ -1,0 +1,6 @@
+$ bun node_modules/typescript/bin/tsc --noEmit && bun run check:authoring
+tests/framework/assembly-cross-entry.test.ts(80,25): error TS2550: Property 'at' does not exist on type '(readonly string[] | undefined)[]'. Do you need to change your target library? Try changing the 'lib' compiler option to 'es2022' or later.
+tests/framework/assembly-cross-entry.test.ts(81,26): error TS2550: Property 'at' does not exist on type '(readonly string[] | undefined)[]'. Do you need to change your target library? Try changing the 'lib' compiler option to 'es2022' or later.
+tests/framework/assembly-cross-entry.test.ts(94,26): error TS2550: Property 'at' does not exist on type '(readonly string[] | undefined)[]'. Do you need to change your target library? Try changing the 'lib' compiler option to 'es2022' or later.
+tests/framework/assembly-cross-entry.test.ts(130,28): error TS2550: Property 'at' does not exist on type '(readonly string[] | undefined)[]'. Do you need to change your target library? Try changing the 'lib' compiler option to 'es2022' or later.
+error: script "typecheck" exited with code 1

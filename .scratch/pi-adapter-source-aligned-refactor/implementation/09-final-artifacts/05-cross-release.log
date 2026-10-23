@@ -1,0 +1,10 @@
+bun test v1.4.2 (744846f84)
+
+tests\framework\assembly-cross-entry.test.ts:
+(pass) pi cross-entry assembly isolation (P10/P13/P14) > released binding stops event, directed-command and UI effects while another stays live [3.26ms]
+(pass) omp cross-entry assembly isolation (P10/P13/P14) > released binding stops event, directed-command and UI effects while another stays live [1.40ms]
+
+ 2 pass
+ 0 fail
+ 20 expect() calls
+Ran 2 tests across 1 file. [52.00ms]

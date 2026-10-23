@@ -1,0 +1,14 @@
+bun test v1.4.2 (744846f84)
+
+tests\framework\assembly-cross-entry.test.ts:
+
+# Unhandled error between tests
+-------------------------------
+error: Cannot find package 'yaml' from 'C:\Users\hugos\AppData\Local\Temp\hyper-ticket-e8AiJR\framework\core\config.ts'
+-------------------------------
+
+
+ 0 pass
+ 1 fail
+ 1 error
+Ran 1 test across 1 file. [29.00ms]

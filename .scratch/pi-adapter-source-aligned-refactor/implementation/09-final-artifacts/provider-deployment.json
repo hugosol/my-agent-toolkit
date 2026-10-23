@@ -1,0 +1,14 @@
+{
+  "root": "C:\\Users\\hugos\\AppData\\Local\\Temp\\pi-final-09-deployment-vv3p5r1q",
+  "sourceBase": "6de7c04ab0123ae5ec2f723955136e79c044603b",
+  "copiedSource": "09 source-state.json",
+  "changedFiles": [
+    "framework/config.yaml"
+  ],
+  "sourceConfigSha256": "cfb502738f8c27bb79a3debc8aa86af6ba163fd84e7310c5d563e07476b632cf",
+  "deployedConfigSha256": "86ff86ea2691ef7b0a69a3d713246a63da9abc3cad4d1023912b42e54ef3dddb",
+  "providerPath": "../node_modules/pi-subagents",
+  "loadedAndRegistrationProvider": "0.78.0",
+  "nodeModulesJunction": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-e8AiJR\\node_modules",
+  "formalConfigurationChanged": false
+}

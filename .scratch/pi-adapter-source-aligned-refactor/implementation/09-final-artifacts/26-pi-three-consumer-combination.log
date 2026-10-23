@@ -1,0 +1,27 @@
+ok codebase command handled without model
+ok codeBaseTools enabled
+16 | }});
+17 | writeFileSync(path.join(deployed,"extensions/connect-bot/config.yaml"), `endpoint: http://127.0.0.1:${panel.port}\nrequestTimeoutMs: 1000\n`.replaceAll("\\n", "\n"));
+18 | writeFileSync(path.join(deployed,"extensions/model-cost/config.yaml"), `storageDir: '${path.join(run.root.path,"cost").replaceAll("\\","/")}'\nbalanceTtlMs: 30000\ncodexQuotaTtlMs: 15000\n`.replaceAll("\\n", "\n"));
+19 | let session;
+20 | let checks = 0;
+21 | function check(label, actual, expected) { assert.deepEqual(actual, expected, label); checks++; console.log("ok", label); }
+                                                      ^
+AssertionError: only enabled codebase line
++ actual - expected
+
++ undefined
+- [
+-   '◈ codeBaseTools'
+- ]
+
+ generatedMessage: false,
+     actual: undefined,
+   expected: [ "◈ codeBaseTools" ],
+   operator: "deepStrictEqual",
+       diff: "simple",
+       code: "ERR_ASSERTION"
+
+      at check (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-e8AiJR\[eval]:21:50)
+
+Bun v1.4.2 (Windows x64)
