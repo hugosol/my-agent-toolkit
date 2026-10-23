@@ -30,9 +30,9 @@ import { defineAdapterDelivery } from "../../../../framework/runtime/adapter-aut
 import type { HarnessPort } from "../../../../framework/runtime/port";
 import { feedbackTransport, noticeTransport } from "../feedback";
 import { markerTransport } from "../marker";
-import type { OmpExtensionApi, OmpSessionContext } from "../../internal/native";
-import type { OmpStateEntry } from "./effects";
-import { sessionFactsOf, startReasonOf, statePayloadsOf } from "./queries";
+import type { OmpExtensionApi, OmpSessionContext } from "../../native/extensibility/extensions/types";
+import { statePayloadsOf, type OmpStateEntry } from "../../native/session/session-manager";
+import { sessionFactsOf, startReasonOf } from "./queries";
 import { observeRounds } from "./round";
 import { observeTurns } from "./turn";
 

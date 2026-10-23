@@ -6,12 +6,12 @@
  * synchronously and returns nothing. Persistence writes through this binding's own State entry,
  * and feedback is user-visible only.
  */
-import type { FeedbackTransport } from "../../../framework/interface/feedback";
-import type { OwnerReference } from "../../../framework/interface/state";
-import { defineAdapterDelivery } from "../../../framework/runtime/adapter-authoring";
-import type { BoundCommand, MarkerTransport, StateValues } from "../../../framework/runtime/port";
-import { canAcceptInputOf } from "./context/queries";
-import type { OmpExtensionApi, OmpSessionContext } from "../internal/native";
+import type { FeedbackTransport } from "../../../../../framework/interface/feedback";
+import type { OwnerReference } from "../../../../../framework/interface/state";
+import { defineAdapterDelivery } from "../../../../../framework/runtime/adapter-authoring";
+import type { BoundCommand, MarkerTransport, StateValues } from "../../../../../framework/runtime/port";
+import { canAcceptInputOf } from "./context";
+import type { OmpExtensionApi, OmpSessionContext } from "./types";
 
 /** The per-delivery references one command invocation resolves before the command runs. */
 export interface ControlContext {

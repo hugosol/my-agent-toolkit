@@ -14,7 +14,7 @@
 import type { TurnOutcome } from "../../../../framework/interface/session";
 import { defineAdapterDelivery } from "../../../../framework/runtime/adapter-authoring";
 import type { HarnessPort, RoundObservation, RoundSignal } from "../../../../framework/runtime/port";
-import type { OmpExtensionApi, OmpSessionContext } from "../../internal/native";
+import type { OmpExtensionApi, OmpSessionContext } from "../../native/extensibility/extensions/types";
 import { outcomeOf } from "./turn";
 
 /** Observes native run facts; automatic continuations are reported, never synthesized here. */

@@ -7,7 +7,7 @@
 import type { SessionFacts, TurnOutcome, TurnUsage } from "../../../../framework/interface/session";
 import { defineAdapterDelivery } from "../../../../framework/runtime/adapter-authoring";
 import type { HarnessPort, TurnSignalFacts } from "../../../../framework/runtime/port";
-import type { OmpAgentMessage, OmpExtensionApi, OmpSessionContext } from "../../internal/native";
+import type { OmpAgentMessage, OmpExtensionApi, OmpSessionContext } from "../../native/extensibility/extensions/types";
 
 /** The all-zero reading a message carries when the provider reported no usage at all. */
 const ZERO_READING: TurnUsage = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, totalTokens: 0 };

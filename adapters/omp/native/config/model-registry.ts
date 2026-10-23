@@ -14,8 +14,8 @@
  * separate facts with their own timing and missing meanings; sharing the file is locality, not a
  * manager, a cache or a unified lookup.
  */
-import type { CatalogPrice, CatalogPriceSource, ProviderAccess } from "../../../framework/interface/provider";
-import type { OmpSessionContext } from "../internal/native";
+import type { CatalogPrice, CatalogPriceSource, ProviderAccess } from "../../../../framework/interface/provider";
+import type { OmpSessionContext } from "../extensibility/extensions/types";
 
 /**
  * The currency and unit the harness states its own model costs in.
