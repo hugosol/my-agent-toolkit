@@ -166,9 +166,9 @@ not a one-capability/one-file rule. Shared logic consumes framework interfaces, 
 | Existing requirement | Native implementation neighbourhood | Framework-owned implementation |
 | --- | --- | --- |
 | `extension-loading` | pi [`domain/subagent/effects.ts`](../../adapters/pi/domain/subagent/effects.ts) and the assembly's child entry; OMP uses its native integrated loading path | Declaration matching stays offline; loading a child is not a second extension business implementation. |
-| `session-facts` | OMP [`domain/session/queries.ts`](../../adapters/omp/domain/session/queries.ts), pi [`domain/session/queries.ts`](../../adapters/pi/domain/session/queries.ts) | Owner/State and observation consumers use the common fact vocabulary. |
-| `turn-usage` | [`omp/domain/session/turn.ts`](../../adapters/omp/domain/session/turn.ts), [`pi/domain/session/turn.ts`](../../adapters/pi/domain/session/turn.ts) | [`behaviors/turn-events.ts`](../behaviors/turn-events.ts) owns Turn association and deduplication. |
-| `session-lifecycle` | OMP [`domain/session/events.ts`](../../adapters/omp/domain/session/events.ts), pi [`domain/session/events.ts`](../../adapters/pi/domain/session/events.ts), each harness's `domain/session/round.ts` | [`behaviors/binding.ts`](../behaviors/binding.ts) and [`round-events.ts`](../behaviors/round-events.ts) own delivery and Round transitions. |
+| `session-facts` | OMP [`native/extensibility/extensions/session-facts.ts`](../../adapters/omp/native/extensibility/extensions/session-facts.ts), pi [`domain/session/queries.ts`](../../adapters/pi/domain/session/queries.ts) | Owner/State and observation consumers use the common fact vocabulary. |
+| `turn-usage` | [`omp/native/extensibility/extensions/turn.ts`](../../adapters/omp/native/extensibility/extensions/turn.ts), [`pi/domain/session/turn.ts`](../../adapters/pi/domain/session/turn.ts) | [`behaviors/turn-events.ts`](../behaviors/turn-events.ts) owns Turn association and deduplication. |
+| `session-lifecycle` | OMP [`native/extensibility/extensions/lifecycle.ts`](../../adapters/omp/native/extensibility/extensions/lifecycle.ts) and [`round.ts`](../../adapters/omp/native/extensibility/extensions/round.ts); pi [`domain/session/events.ts`](../../adapters/pi/domain/session/events.ts) and `domain/session/round.ts` | [`behaviors/binding.ts`](../behaviors/binding.ts) and [`round-events.ts`](../behaviors/round-events.ts) own delivery and Round transitions. |
 | `session-observations` | OMP [`native/extensibility/extensions/context.ts`](../../adapters/omp/native/extensibility/extensions/context.ts), pi [`native/core/extensions/context.ts`](../../adapters/pi/native/core/extensions/context.ts), `domain/session/` and necessary native subagent facts | [`core/observations.ts`](../core/observations.ts) and the activity/context behaviors own unified readings. |
 | `storage-commit` | Actual-session facts and the selected native subagent access mode, connected in the harness entry | [`core/subagent-access.ts`](../core/subagent-access.ts) and [`modules/local-access.ts`](../modules/local-access.ts) carry confirmed notices; business storage stays extension-owned. |
 | `state-follow` | Session/Owner facts; pi's child integration when applicable | [`core/state.ts`](../core/state.ts), [`subagent-access.ts`](../core/subagent-access.ts) and [`followed-owners.ts`](../core/followed-owners.ts) own live following. |
@@ -185,9 +185,9 @@ these adapters.
 
 | Domain | Mapping responsibility | OMP | pi |
 | --- | --- | --- | --- |
-| Session | Events, identity/startup/branch queries, native State entry effects; owns Turn and Round | [`domain/session/`](../../adapters/omp/domain/session/) | [`domain/session/`](../../adapters/pi/domain/session/); complete State protocol: [`native/core/session-manager/state.ts`](../../adapters/pi/native/core/session-manager/state.ts) |
+| Session | Session/Turn/Round deliveries, identity/startup facts and native State entries | [`native/extensibility/extensions/`](../../adapters/omp/native/extensibility/extensions/) lifecycle and facts; [`native/session/session-manager.ts`](../../adapters/omp/native/session/session-manager.ts) persisted entries | [`domain/session/`](../../adapters/pi/domain/session/); complete State protocol: [`native/core/session-manager/state.ts`](../../adapters/pi/native/core/session-manager/state.ts) |
 | Context | Context-reading observations; current-context and idle reads where needed | [`native/extensibility/extensions/context.ts`](../../adapters/omp/native/extensibility/extensions/context.ts) | [`native/core/extensions/context.ts`](../../adapters/pi/native/core/extensions/context.ts) |
-| Subagent | Native parent/ancestor relations and integration-state queries; provider protocol events and registration effects where needed | [`domain/subagent/queries.ts`](../../adapters/omp/domain/subagent/queries.ts) | [`domain/subagent/events.ts`](../../adapters/pi/domain/subagent/events.ts), [`domain/subagent/queries.ts`](../../adapters/pi/domain/subagent/queries.ts), [`domain/subagent/effects.ts`](../../adapters/pi/domain/subagent/effects.ts); [`domain/subagent/integration.ts`](../../adapters/pi/domain/subagent/integration.ts) owns their shared lifetime |
+| Subagent | Native parent/ancestor relations and integration-state queries; provider protocol events and registration effects where needed | [`native/registry/agent-registry.ts`](../../adapters/omp/native/registry/agent-registry.ts) | [`domain/subagent/events.ts`](../../adapters/pi/domain/subagent/events.ts), [`domain/subagent/queries.ts`](../../adapters/pi/domain/subagent/queries.ts), [`domain/subagent/effects.ts`](../../adapters/pi/domain/subagent/effects.ts); [`domain/subagent/integration.ts`](../../adapters/pi/domain/subagent/integration.ts) owns their shared lifetime |
 | Provider | Catalog price queries and current provider address/credential queries, mapped to framework facts | [`native/config/model-registry.ts`](../../adapters/omp/native/config/model-registry.ts) | [`native/core/model-registry.ts`](../../adapters/pi/native/core/model-registry.ts) |
 | Control | Native command registration and invocation mapping | [`native/extensibility/extensions/commands.ts`](../../adapters/omp/native/extensibility/extensions/commands.ts) | [`native/core/extensions/commands.ts`](../../adapters/pi/native/core/extensions/commands.ts) |
 | Prompt | Native run-initiation mapping and injected-message result | [`native/extensibility/extensions/prompts.ts`](../../adapters/omp/native/extensibility/extensions/prompts.ts) | [`native/core/extensions/prompt.ts`](../../adapters/pi/native/core/extensions/prompt.ts) |
@@ -399,28 +399,31 @@ Assembles an `ExtensionDefinition` for the `omp` harness
 ([`omp.ts`](../../adapters/omp/index.ts)) — `(api) => BindingResult` — which each thin entrypoint
 re-exports as its default factory and the loader calls once per binding.
 
-Its private OMP observation modules keep native subscriptions together with the implementation
-that interprets their facts: [`adapters/omp/domain/session/turn.ts`](../../adapters/omp/domain/session/turn.ts) owns request/response
-mapping, usage availability and per-subscription streaming-reading deduplication;
-[`adapters/omp/domain/session/round.ts`](../../adapters/omp/domain/session/round.ts) owns activity signals, continuation flags and
-late quiescence reads. The private [`adapters/omp/domain/session/`](../../adapters/omp/domain/session/) module
-keeps Session knowledge local: [`queries.ts`](../../adapters/omp/domain/session/queries.ts) reads Session identity,
-startup facts, persisted State payloads and injected-prompt identities, and maps the parent/ancestor
-identities supplied by [`subagent/queries.ts`](../../adapters/omp/domain/subagent/queries.ts) into direct-parent
-facts and Owner references; native registry traversal is owned by Subagent, not duplicated in Session;
-[`events.ts`](../../adapters/omp/domain/session/events.ts) owns native Session event types, transition
-pairing and rename observations. Its active Owner key lives once per binding, while rename tracking
-lives once per observation subscription. Owner is the State-owning main session (a main session owns
-itself), not the immediate Parent agent.
+OMP's lifecycle mappings follow its own native extension-runner contract, not Pi's third-party
+subagent protocol. Under [`native/extensibility/extensions/`](../../adapters/omp/native/extensibility/extensions/),
+[`turn.ts`](../../adapters/omp/native/extensibility/extensions/turn.ts) maps provider/message hooks,
+usage availability and per-subscription streaming-reading deduplication;
+[`round.ts`](../../adapters/omp/native/extensibility/extensions/round.ts) maps native activity signals,
+continuation flags and late quiescence reads. [`lifecycle.ts`](../../adapters/omp/native/extensibility/extensions/lifecycle.ts)
+keeps the complete native Session transition, rename and input subscriptions together with Turn/Round
+delivery framing. Its active Owner key remains per binding and rename tracking per subscription.
+[`session-facts.ts`](../../adapters/omp/native/extensibility/extensions/session-facts.ts) maps actual
+session identity and startup readings; [`native/registry/agent-registry.ts`](../../adapters/omp/native/registry/agent-registry.ts)
+reads the direct parent and nearest main ancestor from OMP's injected native registry. Parent agent is
+one hop, Session ancestry is the native chain, and Owner is the State-owning main session, which may
+be farther away. These identities never merge the sessions' Turn/Round observations. The registry
+module also answers the native integrated-subagent mode: OMP loads the extension into actual child
+sessions through its own loader, without a Pi provider registration or required-child-extension RPC.
 
 [`adapters/omp/domain/session/viewed-session.ts`](../../adapters/omp/domain/session/viewed-session.ts) owns the Viewed session native
 facts, subscription re-pointing and last-listener release. The assembly keeps one latest actual
 delivery context: both this module and context-free Subagent observations read that same source.
-Viewing grants no State-write authority. `internal/port.ts` connects the native mappings and owns binding-scoped
-diagnostic deduplication; `context/queries.ts` keeps the binding's newest context and reads idle facts,
-while `context/events.ts` subscribes and constructs context observations. `session/effects.ts` appends
-the State entry that `session/queries.ts` reads; the same write is shared with commands. Session event
-construction lives in `session/events.ts`, with complex Turn/Round protocols kept in their own files. The entry `index.ts` assembles the process-level readers and the shared
+Viewing grants no State-write authority. `port.ts` connects the native mappings and owns binding-scoped
+diagnostic deduplication; `native/extensibility/extensions/context.ts` keeps the binding's newest context,
+reads idle facts and constructs context observations at the native collection points.
+`native/session/session-manager.ts` owns the State entry's reads and append, shared with commands.
+Session delivery construction stays in `native/extensibility/extensions/lifecycle.ts`, with complete
+Turn/Round mappings beside it. The entry `index.ts` assembles the process-level readers and the shared
 framework binding life; native types remain available through that adapter entry. State seeding,
 implementation reuse and cleanup, Turn identity and Round transitions retain their framework
 semantics. These modules add no public interface: tests continue to drive native events through

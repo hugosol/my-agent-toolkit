@@ -8,35 +8,9 @@
  * feature module reads the same facts and none of them may depend on the assembly that wires them.
  */
 import type { OmpViewedSessionFacts } from "../../../domain/session/viewed-session";
-import type { OmpSessionEvent, OmpSessionEventType } from "../../../domain/session/events";
-
-/**
- * One session entry as the native session manager holds it.
- *
- * Only the persisted shapes the adapter recognizes are named: the State payload
- * (`type: "custom"`), the injected-prompt contribution (`type: "custom_message"`) and the
- * conversation itself (`type: "message"`). Whether a payload declares a usable value is the
- * framework's validation rule, so the adapter hands payloads over unread.
- */
-export interface OmpSessionEntry {
-	readonly type?: string;
-	readonly customType?: string;
-	/** The State record's payload (`type: "custom"`). */
-	readonly data?: unknown;
-	/** A persisted contribution's text and framework-owned presentation. */
-	readonly content?: string;
-	readonly display?: boolean;
-	readonly attribution?: "user" | "agent";
-	/**
-	 * The message a conversation entry carries (`type: "message"`), read for its role alone.
-	 *
-	 * It is the fact that says a session already has a conversation of its own: a session the
-	 * harness reloaded replays its messages onto the branch before it rebinds the extension, while
-	 * a session that is only now beginning has none yet. Nothing here interprets the message
-	 * beyond that — the role is all this adapter reads.
-	 */
-	readonly message?: { readonly role?: string };
-}
+import type { OmpSessionEvent, OmpSessionEventType } from "./lifecycle";
+import type { OmpAgentRegistry } from "../../registry/agent-registry";
+import type { OmpSessionEntry } from "../../session/session-manager";
 
 /**
  * The native UI surface an extension context exposes. Only the used members are named;
@@ -440,31 +414,6 @@ export type OmpRunInitiationHandler = (
 	event: unknown,
 	ctx: OmpSessionContext,
 ) => OmpRunInitiationResult | undefined | void | Promise<OmpRunInitiationResult | undefined | void>;
-
-/**
- * One agent as the harness's official registry holds it: the identity and the parent link
- * the registry itself publishes, plus the live session a resolvable owner is read from.
- */
-export interface OmpAgentRef {
-	readonly id: string;
-	/** `"main"` for a top-level session, `"sub"` for a spawned one, `"advisor"` for an advisor. */
-	readonly kind?: string;
-	/** Registry id of the spawning agent; absent for a top-level session. */
-	readonly parentId?: string;
-	/** The live session, or null once the agent is parked and only its history remains. */
-	readonly session?: {
-		readonly sessionManager?: {
-			getSessionId(): string;
-			/** The session's own latest display name, when this host publishes one. */
-			getSessionName?(): string | undefined;
-		};
-	} | null;
-}
-
-/** The harness's process-wide agent registry: the official graph of who spawned whom. */
-export interface OmpAgentRegistry {
-	get(id: string): OmpAgentRef | undefined;
-}
 
 /**
  * The injected SDK surface the loader attaches to the extension API (`pi.pi`).

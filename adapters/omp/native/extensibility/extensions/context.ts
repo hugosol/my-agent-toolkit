@@ -16,7 +16,7 @@ import { defineAdapterDelivery } from "../../../../../framework/runtime/adapter-
 import type { SessionContextObservation } from "../../../../../framework/runtime/port";
 import { feedbackTransport } from "../../../domain/feedback";
 import type { OmpExtensionApi, OmpSessionContext } from "./types";
-import { sessionFactsOf } from "../../../domain/session/queries";
+import { sessionFactsOf } from "./session-facts";
 
 
 

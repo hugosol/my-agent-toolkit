@@ -208,7 +208,6 @@ test("native prompt callbacks retained after disposal stop contributions without
 		{ customType: "other-prompts:state", data: { enabled: false } },
 	]);
 });
-
 describe("first enabled run contributes init (P18, P19, C7)", () => {
 	test("an enabled run whose branch has no slot identity contributes one hidden, agent-attributed init", () => {
 		const double = nativeDouble();

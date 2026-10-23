@@ -1,13 +1,12 @@
 /**
- * OMP's session event axis: the native session, Turn, Round and user-input facts, mapped to the
- * framework's deliveries.
+ * OMP's extension-runner lifecycle contract (`extensibility/extensions/runner.ts` and `types.ts`):
+ * native Session, Turn, Round and user-input facts mapped to the framework's deliveries.
  *
- * The native vocabulary is mapped to the framework's semantic events here and nowhere else. Which
- * session this binding serves, when one owner is transferred to another, and what a session's own
- * end closes stay here; the facts themselves are read by `queries.ts` and the one persisted State
- * entry by `effects.ts`. Turn and Round signal mapping remains in their own modules — the delivery
- * frame each signal arrives in is assembled here, so the port only registers what the definition
- * asks for.
+ * The complete multi-event lifecycle stays together: which session this binding serves, when one
+ * owner transfers to another, and what a session's own end closes. `session-facts.ts` reads identity
+ * and startup facts; `native/session/session-manager.ts` owns persisted branch reads and writes.
+ * Turn and Round signal mapping stays beside this module, with delivery framing here rather than
+ * an extra interpretation stage in the port.
  *
  * The native events this module subscribes to:
  *
@@ -24,15 +23,15 @@
  * moved — so it maps to `session_facts`, the one session delivery that is not a boundary and
  * carries the session's facts alone.
  */
-import type { SessionEvent, SessionStartReason } from "../../../../framework/interface/session";
-import type { OwnerReference } from "../../../../framework/interface/state";
-import { defineAdapterDelivery } from "../../../../framework/runtime/adapter-authoring";
-import type { HarnessPort } from "../../../../framework/runtime/port";
-import { feedbackTransport, noticeTransport } from "../feedback";
-import { markerTransport } from "../marker";
-import type { OmpExtensionApi, OmpSessionContext } from "../../native/extensibility/extensions/types";
-import { statePayloadsOf, type OmpStateEntry } from "../../native/session/session-manager";
-import { sessionFactsOf, startReasonOf } from "./queries";
+import type { SessionEvent, SessionStartReason } from "../../../../../framework/interface/session";
+import type { OwnerReference } from "../../../../../framework/interface/state";
+import { defineAdapterDelivery } from "../../../../../framework/runtime/adapter-authoring";
+import type { HarnessPort } from "../../../../../framework/runtime/port";
+import { feedbackTransport, noticeTransport } from "../../../domain/feedback";
+import { markerTransport } from "../../../domain/marker";
+import type { OmpExtensionApi, OmpSessionContext } from "./types";
+import { statePayloadsOf, type OmpStateEntry } from "../../session/session-manager";
+import { sessionFactsOf, startReasonOf } from "./session-facts";
 import { observeRounds } from "./round";
 import { observeTurns } from "./turn";
 

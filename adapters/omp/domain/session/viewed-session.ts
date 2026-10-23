@@ -10,7 +10,7 @@
 import type { MarkerTransport, ViewedSessionPort } from "../../../../framework/runtime/port";
 import type { ContextTracker } from "../../native/extensibility/extensions/context";
 import type { OmpExtensionApi, OmpSessionContext } from "../../native/extensibility/extensions/types";
-import { viewedOwnerOf } from "./queries";
+import { viewedOwnerOf } from "../../native/extensibility/extensions/session-facts";
 
 /**
  * The facts the host's public Viewed session outlet publishes about the session it displays.
