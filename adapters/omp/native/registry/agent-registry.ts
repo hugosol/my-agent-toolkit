@@ -1,20 +1,43 @@
 /**
- * OMP Subagent reads: the harness's own agent-registry relations and the integration state this
- * adapter settles.
+ * OMP's native `registry/agent-registry.ts` contract: the official graph of who spawned whom,
+ * reached through the extension loader's injected SDK surface.
  *
- * The registry is the harness's official graph of who spawned whom, so the ancestor walk and the
- * direct parent link are read here and nowhere else. What those relations *mean* to the framework —
- * the owner cell a session's State belongs to, the unavailable fact a delivery names — is Session's
- * mapping: `session/queries.ts` consumes the identities this module answers with and the framework
- * owners it builds from them.
+ * Direct-parent lookup and the ancestor walk are read here once. The extension-context mapping in
+ * `native/extensibility/extensions/session-facts.ts` turns these identities into Session facts and
+ * Owner positions; registry ids, direct parents and owning main-session ids remain distinct.
  *
- * Only relations are read here. OMP reports a subagent's Session, Turn and Round through the same
- * native subscriptions as any other session, so those deliveries stay with Session; this domain has
- * no separate native event vocabulary to map and therefore no `events.ts`. The integration answer
- * below is the runtime fact, not the offline capability inventory in `declaration.ts`.
+ * OMP loads extensions into its native child sessions and reports their Session, Turn and Round
+ * through the same extension-runner subscriptions as any session. There is no third-party provider
+ * registration, child-extension RPC or separate child event vocabulary to mirror here. The settled
+ * integration query below describes that native path; it is not an offline capability inventory.
  */
 import type { SubagentIntegration } from "../../../../framework/interface/subagent";
-import type { OmpExtensionApi } from "../../native/extensibility/extensions/types";
+import type { OmpExtensionApi } from "../extensibility/extensions/types";
+
+/**
+ * One agent as the harness's official registry holds it: the identity and the parent link
+ * the registry itself publishes, plus the live session a resolvable owner is read from.
+ */
+export interface OmpAgentRef {
+	readonly id: string;
+	/** `"main"` for a top-level session, `"sub"` for a spawned one, `"advisor"` for an advisor. */
+	readonly kind?: string;
+	/** Registry id of the spawning agent; absent for a top-level session. */
+	readonly parentId?: string;
+	/** The live session, or null once the agent is parked and only its history remains. */
+	readonly session?: {
+		readonly sessionManager?: {
+			getSessionId(): string;
+			/** The session's own latest display name, when this host publishes one. */
+			getSessionName?(): string | undefined;
+		};
+	} | null;
+}
+
+/** The harness's process-wide agent registry: the official graph of who spawned whom. */
+export interface OmpAgentRegistry {
+	get(id: string): OmpAgentRef | undefined;
+}
 
 /**
  * The live session id of the agent that directly spawned one subagent.

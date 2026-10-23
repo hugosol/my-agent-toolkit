@@ -3,7 +3,7 @@
  *
  * This module only connects the adapter's native mappings: the newest-context tracker every delivery
  * records itself through, the one State entry the session and command paths share, one owner
- * resolution and its ownerless diagnostic, the Subagent domain's integration answer, the binding's
+ * resolution and its ownerless diagnostic, the native registry integration answer, the binding's
  * diagnostic channel, and the composition of the hooks the framework registers. Session, Context,
  * Turn, Round and user-input deliveries are assembled by their own modules; commands and prompts
  * keep their mappings beside them.
@@ -37,10 +37,10 @@ import {
 	observeTurnEvents,
 	observeUserInputEvents,
 	type SessionEventContext,
-} from "./domain/session/events";
-import { ownerReferenceOf } from "./domain/session/queries";
+} from "./native/extensibility/extensions/lifecycle";
+import { ownerReferenceOf } from "./native/extensibility/extensions/session-facts";
 import { createViewedSession } from "./domain/session/viewed-session";
-import { subagentIntegrationOf } from "./domain/subagent/queries";
+import { subagentIntegrationOf } from "./native/registry/agent-registry";
 
 /** The process-level readers every binding of one assembly answers through. */
 export interface PortDependencies {
@@ -85,7 +85,7 @@ export const OMP_PORT = defineAdapterPort<OmpPortContext>({
 	modelPrices: context => context.providerFacts.prices,
 	providerAccess: context => context.providerFacts.access,
 	viewedSession: context => createViewedSession(context.pi, context.context, markerTransport).viewedSession,
-	// This harness integrates subagent observations itself; the Subagent domain answers how that
+	// This harness integrates subagent observations itself; the native registry mapping answers how that
 	// integration stands, so the port carries no inline capability fact of its own.
 	subagentIntegration: () => subagentIntegrationOf,
 	onSession: context => handler => observeSessionEvents(context.pi, context.sessionEvents, handler),

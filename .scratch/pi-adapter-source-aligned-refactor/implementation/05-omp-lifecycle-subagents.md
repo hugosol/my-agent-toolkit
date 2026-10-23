@@ -8,7 +8,7 @@
 
 **Blocked by:** 01: 固化迁移清单与重构前验证基线。
 
-**Status:** ready-for-agent
+**Status:** in-progress
 
 ## 边界与覆盖
 

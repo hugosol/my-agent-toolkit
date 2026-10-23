@@ -25,8 +25,6 @@ export type {
 	OmpAfterProviderResponseEvent,
 	OmpAgentEndEvent,
 	OmpAgentMessage,
-	OmpAgentRef,
-	OmpAgentRegistry,
 	OmpAgentStartEvent,
 	OmpBeforeProviderRequestEvent,
 	OmpCommandContext,
@@ -45,7 +43,8 @@ export type {
 	OmpSessionEntry,
 	OmpUiContext,
 } from "./native/extensibility/extensions/types";
-export type { OmpSessionEvent, OmpSessionEventType, OmpSessionReason } from "./domain/session/events";
+export type { OmpAgentRef, OmpAgentRegistry } from "./native/registry/agent-registry";
+export type { OmpSessionEvent, OmpSessionEventType, OmpSessionReason } from "./native/extensibility/extensions/lifecycle";
 export type { OmpViewedSessionFacts } from "./domain/session/viewed-session";
 
 /**
