@@ -38,6 +38,15 @@
 - 最终 `bun run typecheck` 再次退出 0，61 files／4 declarations／0 diagnostics；原始长运行、静态供给及最终实机／类型检查输出保存在 [本票 evidence 目录](./03-omp-native-consumer-paths-artifacts/)。
 - 本票代码和自动验收已完成，工作树交给独立集成；尚未合入 `dev`，依仓库规则保持 `in-progress`，不提前标为 merged／closed。没有本票未完成实现。跨路径组合由 09、全局架构收口由 08、H1 日常 TUI 人工判断由原 contract 所有者继续负责；本票不据受控模型事实／unpatched 运行声称真实远端 provider、可选补丁或人工 TUI 支持已验证。
 
+## 独立集成验收（2026-10-24）
+
+- 接管原开发分支，在宿主已启动的 merge 中解决 `framework/docs/framework-capabilities.md` 两处冲突：分别保留本票 OMP 与 02 Pi 的真实原生路径，没有选择单边而丢失另一端迁移。merge 提交 `66ddffa`，合入的集成基线为 `921de1d861cc78797e758f7ddc01a3413e19fb54`。
+- 采用 02 的共享全局测试修复 `257d84b`、`ec861fa`，本分支对应 `d0b5e54`、`ad5e6e4`：真实安全壳、直连 SSE 生命周期，以及明确委派 effort 隔离辅助模型调用；不削弱原行为断言。
+- 源状态 `ad5e6e4` 首轮 `bun run test` 退出 1：1551 pass、68 fail、9130 assertions、183 files、412.27s。失败来自本 worktree 的 OMP 安装缓存缺少发布包内 `@oh-my-pi/omp-stats/src/embedded-client.generated.txt`，包括 deployment 模块导入和真实 OMP 启动；原始日志为 [integration-global-test.log](./03-omp-native-consumer-paths-artifacts/integration-global-test.log)。
+- 从 npm 官方 `@oh-my-pi/omp-stats@18.5.0` tar 恢复缺失的原生 **0 字节**文件。下载 tar 的 SHA512 为 `z9yfQPotgV67146b0lnp8FmTzgT/zpzKKoETNZid51RWwF8n6H7lDzLPqgVlIfIDwBFY+3qaetD3bbmT6r6u7Q==`，与此缓存 `bun.lock` 完全一致；没有生成替代内容、改宿主源码或安装补丁。该修复只恢复忽略的本地依赖缓存。
+- 同一源码、修复安装后 `bun run test` 退出 0：**1632 pass、0 fail、10034 assertions、183 files、528.56s**。使用 `HERDR_BOT_BINARY=E:/Developer/myhub/herdr-bot/backend/target/debug/examples/safe_shutdown_shell.exe` 与 `HERDR_BOT_METADATA=E:/Developer/myhub/herdr-bot/meta-data/bot-options.toml`。最终完整日志为 [integration-global-test-restored-package.log](./03-omp-native-consumer-paths-artifacts/integration-global-test-restored-package.log)。
+- 本轮按接管任务只运行全局测试；未另跑 typecheck、复杂脚本、独立 smoke 或跨票据整体验收。未操作集成工作区、切换分支或直接合入 `dev`；等待宿主排队合并，合并前状态仍保持 `in-progress`。本轮自动检查通过不替代 contract 的最终独立门禁或 H1 人工判断。
+
 ## 验证与交接
 
 迭代运行受影响测试；TypeScript 变更运行类型检查。完成时运行拥有该职责的测试分区、受影响消费方及对应真实 harness dock／smoke。预期来自既有契约、独立字面量或历史样例，不从被测实现计算。保留消费可见断言，删除仅锁定旧布局的测试而非重钉新路径。记录命令、退出状态、源／环境和失败；现存缺陷单独报告，不顺手修复。共享 assembly 编辑需协调，但不新增虚假的 ticket 阻塞。直接文档随本票更新，全局架构收口归 08。
