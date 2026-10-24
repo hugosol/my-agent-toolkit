@@ -14,10 +14,16 @@ For framework-mediated adapter completeness, use the [static integration check](
 
 Read `package.json` for existing script names. Use a direct test-directory command when a partition has no named script. Select consumers from the changed contract/callers, not just the directory being edited. If impact remains uncertain, broaden the scope. Documentation-only changes need link/example checks, not a default full test run.
 
+## Full-repository entrypoint
+
+Use `bun run test` for full-repository regression: the package script owns the repository's test scheduling and isolation policy. Keep `bun test <file-or-directory>` for focused validation; bare `bun test` bypasses the full-suite policy.
+
+For explicitly serial full-repository diagnosis, use `bun run test:serial`. Record why serial execution was needed and label that result as diagnostic rather than a replacement for the canonical full-suite run. Do not add retries or relax deadlines to make a parallel run pass.
+
 ## Keep runs attributable
 
 1. Complete focused runs and any fault injection; restore injected changes before starting final regression.
-2. Run expensive suites sequentially in a shared working tree. Agree on a quiet window with peers for real-host or full-repository runs. Inside one run, `bun run test:dock` uses four isolated Bun workers because every dock file owns its temporary state and capture directories; use `bun run test:dock:serial` to diagnose cross-file interference or when four real sessions exceed the machine's budget. This intra-run parallelism does not relax the quiet-window rule for multiple people or agents. Warm changed harness or patch prefixes with `bun run test:dock:serial` once before parallel runs, and treat repeated timing or cleanup failures under load as a signal to reduce or remove intra-run parallelism rather than as automatic product failures.
+2. Run expensive suites sequentially in a shared working tree. Agree on a quiet window with peers for real-host or full-repository runs. Inside one run, the full-repository and dock scripts use bounded isolated Bun workers. Use the corresponding `test:serial` or `test:dock:serial` script to diagnose cross-file interference or when parallel real sessions exceed the machine's budget. This intra-run parallelism does not relax the quiet-window rule for multiple people or agents. Warm changed harness or patch prefixes with `bun run test:dock:serial` once before parallel runs, and treat repeated timing or cleanup failures under load as a signal to reduce or remove intra-run parallelism rather than as automatic product failures.
 3. Keep tested source and fixtures unchanged until the run finishes. To continue editing, use an isolated snapshot that includes the changes under test. Treat results from a tree changed mid-run as non-final evidence.
 4. Save long-run output to a run-specific log so truncated terminal output does not require another suite run just to recover failures or counts.
 

@@ -135,6 +135,9 @@ export class ControlledSession {
 			...(options.extraArgs ?? []),
 		];
 		const env = buildSessionEnv(process.env, { agentDir, extra: options.env });
+		// Short-lived real-host sessions favour lower memory use over a large GC heap.
+		// BUN_OPTIONS is Bun's supported runtime configuration and preserves the CLI argv contract.
+		env.BUN_OPTIONS = `${env.BUN_OPTIONS ?? ""} --smol`.trim();
 		const child = spawnSession(argv, env, options.runRoot.workDir);
 		const session = new ControlledSession(
 			child,
