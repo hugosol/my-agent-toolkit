@@ -39,7 +39,7 @@
  * stated here, in the extension, not in the transport.
  */
 import type { ProviderAccess } from "../../../../../framework/interface/provider";
-import { type HttpRequestOptions, request } from "../../../../../framework/interface/general/http";
+import { type HttpRequestOptions, type HttpRequestResult, request } from "../../../../../framework/interface/general/http";
 import { createProviderRefresh } from "../../foundation/provider-refresh";
 
 /** The provider whose balance this extension tracks, as this extension's own data names it. */
@@ -168,7 +168,7 @@ export interface ProviderBalanceInputs {
 	 */
 	readonly onChange: () => void;
 	/** The outbound call; the framework's public HTTP module unless a caller substitutes one. */
-	readonly httpRequest?: (url: string, options?: HttpRequestOptions) => Promise<Response>;
+	readonly httpRequest?: (url: string, options?: HttpRequestOptions) => Promise<HttpRequestResult>;
 }
 
 /**
@@ -213,12 +213,17 @@ export function createProviderBalance(inputs: ProviderBalanceInputs): ProviderBa
 				if (trigger !== "startup-prefetch") fail("no-access");
 				return undefined;
 			}
-			const response = await httpRequest(`${baseUrlOf(facts.baseUrl)}${BALANCE_PATH}`, {
+			const result = await httpRequest(`${baseUrlOf(facts.baseUrl)}${BALANCE_PATH}`, {
 				method: "GET",
 				headers: { authorization: `Bearer ${facts.credential}` },
 				timeoutMs: BALANCE_TIMEOUT_MS,
 				proxy: false,
 			});
+			if (!result.ok) {
+				fail("unreachable");
+				return undefined;
+			}
+			const response = result.response;
 			// A non-2xx answer is a real answer, and this query has no reading in it: the module never
 			// interprets a status as a balance, and never retries it.
 			if (!response.ok) {
@@ -236,8 +241,8 @@ export function createProviderBalance(inputs: ProviderBalanceInputs): ProviderBa
 			inputs.onChange();
 			return total;
 		} catch {
-			// A transport failure, a wait that ran out, or a body that could not be read: this query
-			// produced no reading, and the one held — if any — keeps its value and its instant.
+			// Access resolution or business parsing can still fail independently of the HTTP result.
+			// The reading held — if any — keeps its value and its instant.
 			fail("unreachable");
 			return undefined;
 		}

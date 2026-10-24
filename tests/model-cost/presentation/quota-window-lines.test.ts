@@ -32,7 +32,7 @@ import {
 import type { ProviderAccess, ProviderAccessFacts } from "../../../framework/interface/provider";
 import type { SessionFacts, TurnOutcome } from "../../../framework/interface/session";
 import type { TurnSignal } from "../../../framework/runtime/port";
-import type { HttpRequestOptions } from "../../../framework/interface/general/http";
+import type { HttpRequestOptions, HttpRequestResult } from "../../../framework/interface/general/http";
 import { type PortDouble, portDouble } from "../../framework/support/harness-port-double";
 import { testSessionCapability } from "../support/session-capability";
 
@@ -81,7 +81,7 @@ interface BoundWindows {
  * service. The substituted call answers every query from `answer`, so a case stages the answer its
  * report reads before delivering the Turn.
  */
-async function bindWindows(options: { readonly answer?: () => Response } = {}): Promise<BoundWindows> {
+async function bindWindows(options: { readonly answer?: () => HttpRequestResult } = {}): Promise<BoundWindows> {
 	const root = mkdtempSync(path.join(tmpdir(), "model-cost-window-lines-"));
 	roots.push(root);
 	const sent: { readonly url: string; readonly options: HttpRequestOptions | undefined }[] = [];
@@ -133,26 +133,24 @@ interface UsageWindows {
  * expectation is a hand-computed epoch-millisecond instant. A reset a case omits is a document that
  * stated none, which is a window whose reset is unknown rather than a window at zero.
  */
-function usageAnswer(windows: UsageWindows): Response {
+function usageAnswer(windows: UsageWindows): HttpRequestResult {
 	const windowOf = (window: UsageWindow): Record<string, unknown> => ({
 		used_percent: window.usedPercent,
 		limit_window_seconds: window.seconds,
 		...(window.resetAt === undefined ? {} : { reset_at: window.resetAt }),
 	});
-	return new Response(
-		JSON.stringify({
+	return ({ ok: true as const, response: new Response(JSON.stringify({
 			plan_type: "pro",
 			rate_limit: {
 				...(windows.primary === undefined ? {} : { primary_window: windowOf(windows.primary) }),
 				...(windows.secondary === undefined ? {} : { secondary_window: windowOf(windows.secondary) }),
 			},
 		}),
-		{ status: 200, headers: { "content-type": "application/json" } },
-	);
+		{ status: 200, headers: { "content-type": "application/json" } },) });
 }
 
 /** Both windows of one report as the account API answers them: 85 of the five-hour and 75 of the weekly. */
-function bothWindowsAnswer(): Response {
+function bothWindowsAnswer(): HttpRequestResult {
 	return usageAnswer({
 		primary: { usedPercent: 85, seconds: 18_000, resetAt: FIVE_HOUR_RESET_AT / 1000 },
 		secondary: { usedPercent: 75, seconds: 604_800, resetAt: WEEKLY_RESET_AT / 1000 },
@@ -160,7 +158,7 @@ function bothWindowsAnswer(): Response {
 }
 
 /** The five-hour window of one report, with its reset instant in seconds; absent when none is stated. */
-function fiveHourAnswer(usedPercent: number, resetAtSeconds?: number): Response {
+function fiveHourAnswer(usedPercent: number, resetAtSeconds?: number): HttpRequestResult {
 	return usageAnswer({
 		primary: { usedPercent, seconds: 18_000, ...(resetAtSeconds === undefined ? {} : { resetAt: resetAtSeconds }) },
 	});
@@ -221,7 +219,7 @@ afterEach(() => {
 
 describe("both windows are drawn with the bar, the pace they have run at, and their reset (P65, P67)", () => {
 	test("the five-hour window counts its reset in minutes and the weekly one in hours", async () => {
-		let reply: () => Response = () => usageAnswer({});
+		let reply: () => HttpRequestResult = () => usageAnswer({});
 		const bound = await bindWindows({ answer: () => reply() });
 		reply = bothWindowsAnswer;
 		report(bound);
@@ -262,7 +260,7 @@ describe("both windows are drawn with the bar, the pace they have run at, and th
 	});
 
 	test("an unreported window is said to be unreported, with the attempt's own reason beside it", async () => {
-		const bound = await bindWindows({ answer: () => new Response("", { status: 500 }) });
+		const bound = await bindWindows({ answer: () => ({ ok: true as const, response: new Response("", { status: 500 }) }) });
 
 		// The startup attempt answered with no window in it: both lines are the wording for a window
 		// nobody reported, labeled once, and the sanitized reason rides along.
@@ -284,7 +282,7 @@ describe("both windows are drawn with the bar, the pace they have run at, and th
 	});
 
 	test("a window the report itself left out is unreported while the other one is drawn", async () => {
-		let reply: () => Response = () => usageAnswer({});
+		let reply: () => HttpRequestResult = () => usageAnswer({});
 		const bound = await bindWindows({ answer: () => reply() });
 		reply = () => fiveHourAnswer(42, FIVE_HOUR_RESET_AT / 1000);
 		report(bound);
@@ -300,7 +298,7 @@ describe("both windows are drawn with the bar, the pace they have run at, and th
 
 describe("the state a reset instant is in is what the line says (P67)", () => {
 	test("a reset the source never stated reads as unknown", async () => {
-		let reply: () => Response = () => usageAnswer({});
+		let reply: () => HttpRequestResult = () => usageAnswer({});
 		const bound = await bindWindows({ answer: () => reply() });
 		reply = () => fiveHourAnswer(42);
 		report(bound);
@@ -315,7 +313,7 @@ describe("the state a reset instant is in is what the line says (P67)", () => {
 	});
 
 	test("a reset instant already past reads as expired, and one beyond the window as invalid", async () => {
-		let reply: () => Response = () => usageAnswer({});
+		let reply: () => HttpRequestResult = () => usageAnswer({});
 		const expired = await bindWindows({ answer: () => reply() });
 		reply = () => fiveHourAnswer(42, (CLOCK - MINUTE_MS) / 1000);
 		report(expired);
@@ -328,7 +326,7 @@ describe("the state a reset instant is in is what the line says (P67)", () => {
 
 		// One millisecond past the window's own length is no longer a reset of that window: it is
 		// reported as invalid rather than silently accepted as a valid countdown.
-		let nextReply: () => Response = () => usageAnswer({});
+		let nextReply: () => HttpRequestResult = () => usageAnswer({});
 		const invalid = await bindWindows({ answer: () => nextReply() });
 		nextReply = () => fiveHourAnswer(42, (CLOCK + 5 * HOUR_MS + 1) / 1000);
 		report(invalid);
@@ -342,7 +340,7 @@ describe("the state a reset instant is in is what the line says (P67)", () => {
 
 describe("a line that does not fit is drawn in the next form down (P67)", () => {
 	test("the bar goes first, then the absolute instant, and a line too narrow is cut", async () => {
-		let reply: () => Response = () => usageAnswer({});
+		let reply: () => HttpRequestResult = () => usageAnswer({});
 		const bound = await bindWindows({ answer: () => reply() });
 		reply = bothWindowsAnswer;
 		report(bound);

@@ -21,7 +21,7 @@ import {
 	EVENTS_PATH,
 	setPanelRequestForTest,
 } from "../../extensions/connect-bot/shared-logic/panel/client";
-import type { HttpRequestOptions } from "../../framework/interface/general/http";
+import type { HttpRequestOptions, HttpRequestResult } from "../../framework/interface/general/http";
 import { connectBotConfig } from "../../extensions/connect-bot/shared-logic/panel/config";
 import { CONNECT_BOT } from "../../extensions/connect-bot/definition";
 import connectBot from "../../extensions/connect-bot/harnesses/omp";
@@ -40,8 +40,8 @@ interface Request {
 }
 
 /** The panel's answer to one request. */
-const panelAnswer = (status: number, body: unknown): Response =>
-	new Response(JSON.stringify(body), { status });
+const panelAnswer = (status: number, body: unknown): HttpRequestResult =>
+	({ ok: true as const, response: new Response(JSON.stringify(body), { status }) });
 
 /** The registered receipt a reachable panel answers a `register` with. */
 const registered = (onlineCount: number) => ({ outcome: "registered", onlineCount });

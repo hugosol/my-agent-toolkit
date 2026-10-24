@@ -265,7 +265,7 @@ async function bindBoundary(options: { readonly holiday?: boolean; readonly from
 				now: () => clock.now,
 				httpRequest: () => {
 					requests += 1;
-					return Promise.reject(new Error("this suite makes no request"));
+					return Promise.resolve({ ok: false as const, failure: { kind: "transport" as const, error: new Error("this suite makes no request") } });
 				},
 			});
 			return runtime;

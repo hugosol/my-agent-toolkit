@@ -23,7 +23,7 @@ import { botSessions } from "../../extensions/connect-bot/shared-logic/session/s
 import { connectBotOmp } from "../../extensions/connect-bot/harnesses/omp-assembly";
 import { AUTOMATIC_STARTUP_POLICY, MANUAL_STARTUP_POLICY } from "../../extensions/connect-bot/harnesses/startup-modes";
 import type { OmpCommandContext } from "../../adapters/omp";
-import type { HttpRequestOptions } from "../../framework/interface/general/http";
+import type { HttpRequestOptions, HttpRequestResult } from "../../framework/interface/general/http";
 import { ControlledClock } from "./support/controlled-clock";
 import { type OmpDouble, ompDouble } from "./support/omp-double";
 
@@ -77,10 +77,8 @@ function panel(): { readonly requests: Request[]; readonly request: PanelRequest
 		request: async (url, init = {}) => {
 			requests.push({ url, init });
 			const kind = envelopeOf({ url, init }).kind;
-			return new Response(
-				JSON.stringify(kind === "register" ? { outcome: "registered", onlineCount: 1 } : { outcome: "accepted" }),
-				{ status: 200 },
-			);
+			return ({ ok: true as const, response: new Response(JSON.stringify(kind === "register" ? { outcome: "registered", onlineCount: 1 } : { outcome: "accepted" }),
+				{ status: 200 },) });
 		},
 	};
 }
@@ -267,17 +265,17 @@ describe("the automatic entrypoint activates without a command (P3, P16, P33)", 
 describe("the marker follows the receipt, not the attempt (P18, P19)", () => {
 	test("an unanswered register keeps the area off; a refusal stays off; only a valid receipt enables", async () => {
 		const requests: Request[] = [];
-		const first = Promise.withResolvers<Response>();
+		const first = Promise.withResolvers<HttpRequestResult>();
 		let registers = 0;
 		setPanelRequestForTest(async (url, init = {}) => {
 			requests.push({ url, init });
 			const envelope = envelopeOf({ url, init });
 			if (envelope.kind !== "register") {
-				return new Response(JSON.stringify({ outcome: "accepted" }), { status: 200 });
+				return ({ ok: true as const, response: new Response(JSON.stringify({ outcome: "accepted" }), { status: 200 }) });
 			}
 			registers += 1;
 			if (registers === 1) return first.promise;
-			return new Response(JSON.stringify({ outcome: "registered", onlineCount: 1 }), { status: 200 });
+			return ({ ok: true as const, response: new Response(JSON.stringify({ outcome: "registered", onlineCount: 1 }), { status: 200 }) });
 		});
 		const double = ompDouble();
 		connectBotAuto(double.api);
@@ -295,7 +293,7 @@ describe("the marker follows the receipt, not the attempt (P18, P19)", () => {
 		expect(double.notifications).toEqual([]);
 
 		// The panel refuses this attempt. Nothing is enabled, and the operator hears the existing word.
-		first.resolve(new Response(JSON.stringify({ error: "refused" }), { status: 503 }));
+		first.resolve(({ ok: true as const, response: new Response(JSON.stringify({ error: "refused" }), { status: 503 }) }));
 		await failed;
 		expect(double.notifications).toEqual([ARM_FAILED]);
 		expect(double.widgets[double.widgets.length - 1]?.lines).toBeUndefined();
@@ -478,14 +476,14 @@ function failingPanel(failure: RegisterFailure): { readonly requests: Request[];
 		request: async (url, init = {}) => {
 			requests.push({ url, init });
 			if (envelopeOf({ url, init }).kind !== "register") {
-				return new Response(JSON.stringify({ outcome: "accepted" }), { status: 200 });
+				return ({ ok: true as const, response: new Response(JSON.stringify({ outcome: "accepted" }), { status: 200 }) });
 			}
 			registers += 1;
 			if (registers > 1) {
-				return new Response(JSON.stringify({ outcome: "registered", onlineCount: 1 }), { status: 200 });
+				return ({ ok: true as const, response: new Response(JSON.stringify({ outcome: "registered", onlineCount: 1 }), { status: 200 }) });
 			}
-			if (failure.rejection !== undefined) throw failure.rejection;
-			return new Response(JSON.stringify(failure.body), { status: failure.status ?? 200 });
+			if (failure.rejection !== undefined) return { ok: false, failure: { kind: "transport", error: failure.rejection } };
+			return ({ ok: true as const, response: new Response(JSON.stringify(failure.body), { status: failure.status ?? 200 }) });
 		},
 	};
 }
@@ -621,15 +619,13 @@ describe("startup and command admission keep the existing refusal rules (P23)", 
 
 	test("an activation during the unregister in flight is still refused in an automatic binding", async () => {
 		const requests: Request[] = [];
-		const unregister = Promise.withResolvers<Response>();
+		const unregister = Promise.withResolvers<HttpRequestResult>();
 		setPanelRequestForTest(async (url, init = {}) => {
 			requests.push({ url, init });
 			const kind = envelopeOf({ url, init }).kind;
 			if (kind === "unregister") return unregister.promise;
-			return new Response(
-				JSON.stringify(kind === "register" ? { outcome: "registered", onlineCount: 1 } : { outcome: "accepted" }),
-				{ status: 200 },
-			);
+			return ({ ok: true as const, response: new Response(JSON.stringify(kind === "register" ? { outcome: "registered", onlineCount: 1 } : { outcome: "accepted" }),
+				{ status: 200 },) });
 		});
 		const double = ompDouble();
 		connectBotAuto(double.api);
@@ -650,7 +646,7 @@ describe("startup and command admission keep the existing refusal rules (P23)", 
 		expect(double.notifications).toEqual([CONNECTED, DISCONNECTING]);
 		expect(sentKinds(requests)).toEqual(["register", "state", "unregister"]);
 
-		unregister.resolve(new Response(JSON.stringify({ outcome: "accepted" }), { status: 200 }));
+		unregister.resolve(({ ok: true as const, response: new Response(JSON.stringify({ outcome: "accepted" }), { status: 200 }) }));
 		const disconnected = double.nextNotification();
 		await disconnected;
 		expect(double.notifications).toEqual([CONNECTED, DISCONNECTING, DISCONNECTED]);

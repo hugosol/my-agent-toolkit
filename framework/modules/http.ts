@@ -16,10 +16,10 @@
  * - One call, `request(url, options)`. The caller prepares the method (`GET` when omitted), the
  *   headers, the body and the budget; nothing is inferred and nothing is decorated — no
  *   content type is added, nothing is serialized, and no bearer header is managed. The
- *   runtime's own response is returned, a non-2xx answer included, for the caller to
- *   interpret; there is no business result envelope.
- * - Transport failure and a wait that runs out reject; a body that fails to read rejects the
- *   read. None of these is turned into `null`, zero or a success/error result.
+ *   response is returned inside an `ok: true` result, a non-2xx answer included, for the caller
+ *   to interpret. Its body is fully received under the budget before success is returned.
+ * - Configuration, transport and timeout failures return `ok: false` with their original error
+ *   and a failure kind. Each emits one safe diagnostic; no URL, headers or body are logged.
  * - `proxy: false`, and no `proxy` at all, is a direct connection. A string names one entry of
  *   the shared `http.proxies` table. An entry is used only when it says `enabled: true`; any
  *   other entry is an explicitly disabled one, and the request connects directly without
@@ -82,7 +82,16 @@ import {
 	type ConfigParser,
 	type ConfigReader,
 } from "../core/config";
-import { HttpConfigurationError, type HttpRequestOptions } from "../interface/general/http-contract";
+import { reportDiagnostic } from "../core/diagnostics";
+import type { HttpRequestFailure, HttpRequestOptions, HttpRequestResult } from "../interface/general/http-contract";
+
+/** Configuration detail stays in the result, never in the public diagnostic. */
+class HttpConfigurationError extends Error {
+	constructor(detail: string) {
+		super(detail);
+		this.name = "HttpConfigurationError";
+	}
+}
 
 /** One outbound call, as this module makes it. */
 export interface HttpTransportInit {
@@ -119,11 +128,13 @@ export interface HttpModuleSeam {
 	/** How the shared file's text is obtained and parsed; this process's own means by default. */
 	readonly reader?: ConfigReader;
 	readonly parser?: ConfigParser;
+	/** The framework's public diagnostic channel; injectable for isolated observations. */
+	readonly reportDiagnostic?: (message: string) => void;
 }
 
 /** One module instance: the request call and the shared file it reads. */
 export interface HttpModule {
-	request(url: string, options?: HttpRequestOptions): Promise<Response>;
+	request(url: string, options?: HttpRequestOptions): Promise<HttpRequestResult>;
 }
 
 /** The shared configuration file: `framework/config.yaml`, beside this module's own directory. */
@@ -197,7 +208,7 @@ interface Started {
 }
 
 /** Start one request over the endpoint this module settled on. */
-function start(endpoint: Endpoint, init: HttpTransportInit): Started {
+function start(endpoint: Endpoint, init: HttpTransportInit, own: (connection: OpenConnection & NodeJS.EventEmitter) => void): Started {
 	const settled = Promise.withResolvers<http.IncomingMessage>();
 	const headers: Record<string, string> = { ...init.headers };
 	if (headers["host"] === undefined && headers["Host"] === undefined) headers["host"] = endpoint.hostHeader;
@@ -210,6 +221,8 @@ function start(endpoint: Endpoint, init: HttpTransportInit): Started {
 		agent: endpoint.tunnel === undefined ? false : new TunnelAgent(endpoint.tunnel),
 	};
 	const call = endpoint.secure ? https.request(options, settled.resolve) : http.request(options, settled.resolve);
+	own(call);
+	call.on("socket", socket => own(socket));
 	call.on("error", settled.reject);
 	// The whole request goes out at once: the caller prepared one body, and nothing is streamed.
 	call.end(init.body);
@@ -221,7 +234,10 @@ function start(endpoint: Endpoint, init: HttpTransportInit): Started {
  * whichever comes first, so a connection that never answers cannot outlive the budget.
  */
 function raceWithWait<T>(signal: AbortSignal, answer: Promise<T>): Promise<T> {
-	if (signal.aborted) return Promise.reject(signal.reason);
+	if (signal.aborted) {
+		void answer.catch(() => {});
+		return Promise.reject(signal.reason);
+	}
 	const settled = Promise.withResolvers<T>();
 	const waitRanOut = (): void => settled.reject(signal.reason);
 	signal.addEventListener("abort", waitRanOut, { once: true });
@@ -249,7 +265,7 @@ async function openTunnel(
 	target: URL,
 	proxy: URL,
 	signal: AbortSignal,
-	open: OpenConnection[],
+	own: (connection: OpenConnection & NodeJS.EventEmitter) => void,
 ): Promise<Duplex> {
 	const client = proxy.protocol === "https:" ? https : http;
 	// A CONNECT request-target is in authority-form, which always names the port. `URL.host` drops a
@@ -264,13 +280,23 @@ async function openTunnel(
 		headers: { host: authority },
 		agent: false,
 	});
-	open.push(call);
+	own(call);
+	call.on("socket", socket => own(socket));
 	const tunneled = Promise.withResolvers<Duplex>();
-	call.on("connect", (_answer, socket) => tunneled.resolve(socket));
+	call.on("connect", (answer, socket, head) => {
+		own(socket);
+		if (signal.aborted) return;
+		if (answer.statusCode !== 200) {
+			tunneled.reject(new Error("the proxy refused the CONNECT tunnel"));
+			return;
+		}
+		if (head.length > 0) socket.unshift(head);
+		tunneled.resolve(socket);
+	});
 	call.on("error", tunneled.reject);
 	call.end();
 	const tunnel = await raceWithWait(signal, tunneled.promise);
-	open.push(tunnel);
+	if (signal.aborted) throw signal.reason;
 	if (target.protocol !== "https:") return tunnel;
 
 	const secure = openTlsConnection({
@@ -278,7 +304,7 @@ async function openTunnel(
 		// An address that is itself an IP literal is not a server name: SNI states none for it.
 		...(isIP(target.hostname) === 0 ? { servername: target.hostname } : {}),
 	});
-	open.push(secure);
+	own(secure);
 	const handshake = Promise.withResolvers<void>();
 	secure.once("secureConnect", handshake.resolve);
 	secure.once("error", handshake.reject);
@@ -294,7 +320,7 @@ async function endpointFor(
 	target: URL,
 	proxy: string | false,
 	signal: AbortSignal,
-	open: OpenConnection[],
+	own: (connection: OpenConnection & NodeJS.EventEmitter) => void,
 ): Promise<Endpoint> {
 	const direct: Endpoint = {
 		host: target.hostname,
@@ -317,7 +343,7 @@ async function endpointFor(
 	}
 	// An HTTPS target rides the tunnel: the TLS connection to it is already made, so the request
 	// over that connection is the plain one.
-	return { ...direct, secure: false, tunnel: await openTunnel(target, address, signal, open) };
+	return { ...direct, secure: false, tunnel: await openTunnel(target, address, signal, own) };
 }
 
 /**
@@ -325,11 +351,23 @@ async function endpointFor(
  * body as much as the head, so a read that outlives it fails rather than waiting for bytes that
  * are no longer wanted. A body that stops before its end fails the read too.
  */
-function responseOf(message: http.IncomingMessage, signal: AbortSignal, stopWaiting: () => void): Response {
+async function responseOf(message: http.IncomingMessage, signal: AbortSignal, stopWaiting: () => void, headRequest: boolean): Promise<Response> {
 	const headers = new Headers();
 	for (const [name, value] of Object.entries(message.headers)) {
 		if (value === undefined) continue;
 		for (const single of Array.isArray(value) ? value : [value]) headers.append(name, single);
+	}
+	if (headRequest || [204, 205, 304].includes(message.statusCode!)) {
+		const ended = Promise.withResolvers<void>();
+		message.on("end", ended.resolve);
+		message.on("error", ended.reject);
+		message.on("close", () => {
+			if (!message.complete) ended.reject(new Error("the response ended before the whole body arrived"));
+		});
+		message.resume();
+		await raceWithWait(signal, ended.promise);
+		stopWaiting();
+		return new Response(null, { status: message.statusCode!, statusText: message.statusMessage ?? "", headers });
 	}
 	let finished = false;
 	const body = new ReadableStream<Uint8Array>({
@@ -362,7 +400,7 @@ function responseOf(message: http.IncomingMessage, signal: AbortSignal, stopWait
 		},
 	});
 	return new Response(body, {
-		status: message.statusCode ?? 0,
+		status: message.statusCode!,
 		statusText: message.statusMessage ?? "",
 		headers,
 	});
@@ -386,21 +424,43 @@ async function nativeTransport(url: string, init: HttpTransportInit): Promise<Re
 	if (signal.aborted) throw signal.reason;
 
 	/** Every connection this exchange has open, so the wait running out can take all of them down. */
-	const open: OpenConnection[] = [];
-	const waitRanOut = (): void => {
-		for (const connection of open) connection.destroy(signal.reason);
-	};
-	signal.addEventListener("abort", waitRanOut);
-	try {
-		const endpoint = await endpointFor(target, init.proxy, signal, open);
-		const started = start(endpoint, init);
-		open.push(started.call);
-		const message = await raceWithWait(signal, started.head);
-		open.push(message);
-		return responseOf(message, signal, () => signal.removeEventListener("abort", waitRanOut));
-	} catch (error) {
+	const open = new Set<OpenConnection>();
+	const failed = Promise.withResolvers<never>();
+	// Socket errors can arrive after a response head, or after teardown. Always keep a listener.
+	void failed.promise.catch(() => {});
+	let message: http.IncomingMessage | undefined;
+	let stopped = false;
+	const stop = (): void => {
+		if (stopped) return;
+		stopped = true;
 		signal.removeEventListener("abort", waitRanOut);
-		throw error;
+		for (const connection of open) connection.destroy();
+	};
+	const fail = (error: Error): void => {
+		if (stopped) return;
+		const reason = signal.aborted ? signal.reason : error;
+		failed.reject(reason);
+		message?.destroy(reason);
+		stop();
+	};
+	const own = (connection: OpenConnection & NodeJS.EventEmitter): void => {
+		if (open.has(connection)) return;
+		open.add(connection);
+		connection.on("error", fail);
+		if (stopped || signal.aborted) connection.destroy();
+	};
+	const waitRanOut = (): void => fail(signal.reason);
+	signal.addEventListener("abort", waitRanOut, { once: true });
+	try {
+		const endpoint = await Promise.race([endpointFor(target, init.proxy, signal, own), failed.promise]);
+		if (signal.aborted) throw signal.reason;
+		const started = start(endpoint, init, own);
+		message = await raceWithWait(signal, Promise.race([started.head, failed.promise]));
+		own(message);
+		return await responseOf(message, signal, stop, init.method.toUpperCase() === "HEAD");
+	} catch (error) {
+		stop();
+		throw signal.aborted ? signal.reason : error;
 	}
 }
 
@@ -408,7 +468,7 @@ async function nativeTransport(url: string, init: HttpTransportInit): Promise<Re
  * One http module: a `request` call over a chosen platform call and shared file.
  *
  * The module the framework publishes is one instance of this over the process's own file
- * system, YAML parser and `fetch`; a suite builds its own instead, and observes every request
+ * system, YAML parser and native HTTP client; a suite builds its own instead, and observes every request
  * and every configuration failure without touching either.
  */
 export function createHttpModule(seam: HttpModuleSeam = {}): HttpModule {
@@ -529,16 +589,59 @@ export function createHttpModule(seam: HttpModuleSeam = {}): HttpModule {
 		return sharedDefault;
 	}
 
-	async function request(url: string, options: HttpRequestOptions = {}): Promise<Response> {
-		const proxy = resolveProxy(options.proxy);
-		const timeoutMs = resolveTimeout(options.timeoutMs);
-		return transport(url, {
-			method: options.method ?? "GET",
-			...(options.headers === undefined ? {} : { headers: options.headers }),
-			...(options.body === undefined ? {} : { body: options.body }),
-			signal: AbortSignal.timeout(timeoutMs),
-			proxy,
-		});
+	async function request(url: string, options: HttpRequestOptions = {}): Promise<HttpRequestResult> {
+		let signal: AbortSignal | undefined;
+		let response: Response | undefined;
+		try {
+			const proxy = resolveProxy(options.proxy);
+			const timeoutMs = resolveTimeout(options.timeoutMs);
+			signal = AbortSignal.timeout(timeoutMs);
+			response = await raceWithWait(signal, transport(url, {
+				method: options.method ?? "GET",
+				...(options.headers === undefined ? {} : { headers: options.headers }),
+				...(options.body === undefined ? {} : { body: options.body }),
+				signal,
+				proxy,
+			}));
+			let body: Blob | null = null;
+			if (response.body !== null) {
+				const reader = response.body.getReader();
+				const cancel = (): void => { void reader.cancel(signal!.reason).catch(() => {}); };
+				signal.addEventListener("abort", cancel, { once: true });
+				try {
+					const chunks: BlobPart[] = [];
+					while (true) {
+						const chunk = await raceWithWait(signal, reader.read());
+						if (chunk.done) break;
+						chunks.push(chunk.value as BlobPart);
+					}
+					if (signal.aborted) throw signal.reason;
+					body = new Blob(chunks);
+				} finally {
+					signal.removeEventListener("abort", cancel);
+					reader.releaseLock();
+				}
+			}
+			return { ok: true, response: new Response(body, {
+				status: response.status,
+				statusText: response.statusText,
+				headers: response.headers,
+			}) };
+		} catch (cause) {
+			if (response?.body !== null && response?.body !== undefined && !response.body.locked) {
+				void response.body.cancel().catch(() => {});
+			}
+			const reason = signal?.aborted ? signal.reason : cause;
+			const error = reason instanceof Error ? reason : new Error(String(reason));
+			const kind: HttpRequestFailure["kind"] = cause instanceof HttpConfigurationError
+				? "configuration" : signal?.aborted ? "timeout" : "transport";
+			// Neither messages nor addresses are safe: both can contain credentials or payloads.
+			// Only standard error names are emitted; custom names may also contain secret data.
+			const name = ["Error", "TypeError", "RangeError", "TimeoutError", "AbortError", "HttpConfigurationError"].includes(error.name)
+				? error.name : "Error";
+			(seam.reportDiagnostic ?? reportDiagnostic)(`HTTP ${kind} failure (${name})`);
+			return { ok: false, failure: { kind, error } };
+		}
 	}
 
 	return { request };
@@ -555,6 +658,6 @@ const sharedModule = createHttpModule();
  * public surface. See the module comment above for the request's meaning, the proxy selection
  * rules and the wait budget.
  */
-export function request(url: string, options: HttpRequestOptions = {}): Promise<Response> {
+export function request(url: string, options: HttpRequestOptions = {}): Promise<HttpRequestResult> {
 	return sharedModule.request(url, options);
 }

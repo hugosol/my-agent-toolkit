@@ -404,10 +404,10 @@ function assemble(options: { readonly document?: ConsumptionDocument } = {}): Bo
 					subagentIntegrationMode: () => settledIntegration,
 					httpRequest: async (url: string, httpOptions?: HttpRequestOptions) => {
 						queries.push({ url, options: httpOptions });
-						return Response.json({
+						return ({ ok: true as const, response: Response.json({
 							is_available: true,
 							balance_infos: [{ currency: "CNY", total_balance: "12.34", granted_balance: "0.00", topped_up_balance: "12.34" }],
-						});
+						}) });
 					},
 				});
 				runtime = built;

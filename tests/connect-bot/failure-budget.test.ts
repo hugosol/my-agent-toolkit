@@ -25,7 +25,7 @@ import {
 	type PanelRequest,
 	setPanelRequestForTest,
 } from "../../extensions/connect-bot/shared-logic/panel/client";
-import type { HttpRequestOptions } from "../../framework/interface/general/http";
+import type { HttpRequestOptions, HttpRequestResult } from "../../framework/interface/general/http";
 import { CONNECT_BOT } from "../../extensions/connect-bot/definition";
 import { botSessions } from "../../extensions/connect-bot/shared-logic/session/session";
 import connectBot from "../../extensions/connect-bot/harnesses/omp";
@@ -64,8 +64,8 @@ interface Request {
 }
 
 /** The panel's answer to one request. */
-const panelAnswer = (status: number, body: unknown): Response =>
-	new Response(JSON.stringify(body), { status });
+const panelAnswer = (status: number, body: unknown): HttpRequestResult =>
+	({ ok: true as const, response: new Response(JSON.stringify(body), { status }) });
 
 /**
  * The envelope fields a test reads off the wire: the two strings the contract's envelope always
@@ -104,9 +104,9 @@ function envelopeOf(request: Request): WireEnvelope {
  * no longer knows, and the panel takes the push.
  */
 const answers = {
-	/** The panel is gone: the request itself fails (a reject, and the abort at the budget alike). */
-	gone: async (): Promise<Response> => {
-		throw new Error("the panel never answered");
+	/** The panel is gone: HTTP reports a failure result, which the panel client exposes as rejection. */
+	gone: async (): Promise<HttpRequestResult> => {
+		return { ok: false as const, failure: { kind: "transport" as const, error: new Error("the panel never answered") } };
 	},
 	/** The panel is reachable but has forgotten this session, as after a herdr-bot restart. */
 	unknownSession: async () => panelAnswer(404, { error: "unknown-session" }),
@@ -154,7 +154,7 @@ function panel(answer: Answer): Panel {
 				return panelAnswer(200, { outcome: "accepted" });
 			}
 			if (holding) {
-				return new Promise<Response>(resolve => held.push(() => resolve(current())));
+				return new Promise<HttpRequestResult>(resolve => held.push(() => resolve(current())));
 			}
 			return current();
 		},
@@ -257,10 +257,10 @@ describe("the first failure of an outage is announced once (E10, P31)", () => {
 			if (kind === "state") {
 				return Promise.resolve(panelAnswer(200, { outcome: "accepted" }));
 			}
-			return new Promise<Response>((_resolve, reject) => {
+			return new Promise<HttpRequestResult>((resolve) => {
 				// A panel that is gone never answers: the push is abandoned when the wait it declared
 				// runs out, on this file's own fake clock, advanced by exactly that budget below.
-				setTimeout(() => reject(new Error("push budget exceeded")), init.timeoutMs);
+				setTimeout(() => resolve({ ok: false, failure: { kind: "timeout", error: new Error("push budget exceeded") } }), init.timeoutMs);
 			});
 		}, "budget-timeout");
 

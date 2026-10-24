@@ -40,8 +40,8 @@ writes commands against: its declaration group in `details/definition.ts`, and i
 delivery and directive group in `details/implementation.ts`. The actual delivery the framework
 constructs carries only those approved members; the persistence callback, the area transport and the
 internal invocation stay out of it. General's three modules are their own direct entries:
-[general/http.ts](general/http.ts) publishes `request`, `HttpRequestOptions` and
-`HttpConfigurationError`; [general/files.ts](general/files.ts) publishes `updateFile`,
+[general/http.ts](general/http.ts) publishes `request`, `HttpRequestOptions`,
+`HttpRequestResult` and `HttpRequestFailure`; [general/files.ts](general/files.ts) publishes `updateFile`,
 `SafeFileUpdateOptions`, `SafeFileUpdateError` and `SafeFileUpdateFailureKind`; and
 [general/config.ts](general/config.ts) publishes `getConfig` and `ExtensionConfigError`. Their
 implementations stay in `framework/modules/http.ts`, `framework/modules/files.ts` and

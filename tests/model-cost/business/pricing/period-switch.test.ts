@@ -50,7 +50,7 @@ import type { SessionFacts } from "../../../../framework/interface/session";
 import type { OwnerReference } from "../../../../framework/interface/state";
 import type { TurnSignal } from "../../../../framework/runtime/port";
 import { updateFile } from "../../../../framework/interface/general/files";
-import type { HttpRequestOptions } from "../../../../framework/interface/general/http";
+import type { HttpRequestOptions, HttpRequestResult } from "../../../../framework/interface/general/http";
 import { type CommandRun, type PortDouble, portDouble } from "../../../framework/support/harness-port-double";
 
 /** The self-made pricing data: one monetary official provider and the allowance channel. */
@@ -213,14 +213,12 @@ const TIMED_TREE: ConsumptionDocument = {
 };
 
 /** The balance answer a case's provider returns, in the provider's documented shape. */
-function balanceAnswer(total: string): Response {
-	return new Response(
-		JSON.stringify({
+function balanceAnswer(total: string): HttpRequestResult {
+	return ({ ok: true as const, response: new Response(JSON.stringify({
 			is_available: true,
 			balance_infos: [{ currency: "CNY", total_balance: total, granted_balance: "0.00", topped_up_balance: total }],
 		}),
-		{ status: 200, headers: { "content-type": "application/json" } },
-	);
+		{ status: 200, headers: { "content-type": "application/json" } },) });
 }
 
 /** One outbound request this entry made, with the options the query was sent under. */
@@ -256,7 +254,7 @@ async function bind(
 	options: {
 		/** The document to bind over, as the plain JSON a case wrote: it may be one the extension refuses. */
 		readonly document?: unknown;
-		readonly answer?: (attempt: number) => Promise<Response> | Response;
+		readonly answer?: (attempt: number) => Promise<HttpRequestResult> | HttpRequestResult;
 		readonly onQuery?: (query: Query, attempt: number) => void;
 		/** A document this case leaves absent, for a root that holds no activity yet. */
 		readonly noDocument?: boolean;
@@ -713,7 +711,7 @@ describe("the one boundary balance read is made outside the coordination and use
 		const bound = await bind({
 			answer: attempt => {
 				if (attempt === 1) return balanceAnswer("12.50");
-				throw new Error("the provider is unreachable");
+				return { ok: false as const, failure: { kind: "transport" as const, error: new Error("the provider is unreachable") } };
 			},
 		});
 

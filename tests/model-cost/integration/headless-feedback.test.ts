@@ -40,7 +40,7 @@ import type { ProviderAccess, ProviderAccessFacts } from "../../../framework/int
 import type { SessionEvent, SessionFacts, TurnOutcome, TurnUsage } from "../../../framework/interface/session";
 import type { OwnerReference } from "../../../framework/interface/state";
 import type { TurnSignal } from "../../../framework/runtime/port";
-import { HttpConfigurationError, type HttpRequestOptions } from "../../../framework/interface/general/http";
+import { type HttpRequestOptions, type HttpRequestResult } from "../../../framework/interface/general/http";
 import { testSessionCapability } from "../support/session-capability";
 import {
 	type FeedbackNotice,
@@ -101,28 +101,24 @@ const ACCESS: ProviderAccess = {
 };
 
 /** The balance answer the provider returns, in its documented shape, as one JSON response. */
-function balanceAnswer(total: string): Response {
-	return new Response(
-		JSON.stringify({
+function balanceAnswer(total: string): HttpRequestResult {
+	return ({ ok: true as const, response: new Response(JSON.stringify({
 			is_available: true,
 			balance_infos: [{ currency: "CNY", total_balance: total, granted_balance: "0.00", topped_up_balance: total }],
 		}),
-		{ status: 200, headers: { "content-type": "application/json" } },
-	);
+		{ status: 200, headers: { "content-type": "application/json" } },) });
 }
 
 /** One account API answer, in the provider's own document shape, as one JSON response. */
-function usageAnswer(): Response {
-	return new Response(
-		JSON.stringify({
+function usageAnswer(): HttpRequestResult {
+	return ({ ok: true as const, response: new Response(JSON.stringify({
 			plan_type: "pro",
 			rate_limit: {
 				primary_window: { used_percent: 12.5, limit_window_seconds: 18_000, reset_at: 1_700_003_600 },
 				secondary_window: { used_percent: 60, limit_window_seconds: 604_800, reset_at: 1_700_086_400 },
 			},
 		}),
-		{ status: 200, headers: { "content-type": "application/json" } },
-	);
+		{ status: 200, headers: { "content-type": "application/json" } },) });
 }
 
 /** One request the extension made, as the substituted HTTP call recorded it. */
@@ -167,7 +163,7 @@ function noticesOf(bound: Bound): FeedbackNotice[] {
 async function bind(
 	options: {
 		readonly hasUI?: boolean;
-		readonly respond?: (request: SentRequest, index: number) => Response | Promise<Response>;
+		readonly respond?: (request: SentRequest, index: number) => HttpRequestResult | Promise<HttpRequestResult>;
 		readonly access?: (provider: string) => Promise<ProviderAccessFacts | undefined>;
 		readonly baseline?: string;
 		readonly initiate?: boolean;
@@ -255,8 +251,8 @@ function deliverRound(bound: Bound, kind: "round_start" | "round_end"): RoundBou
 }
 
 /** Both provider sources refused, which is the one failure shape every case below starts from. */
-function refusedSources(request: SentRequest): Response | Promise<Response> {
-	return request.url === BALANCE_URL ? new Response("busy", { status: 503 }) : Promise.reject(new Error("refused"));
+function refusedSources(request: SentRequest): HttpRequestResult | Promise<HttpRequestResult> {
+	return request.url === BALANCE_URL ? ({ ok: true as const, response: new Response("busy", { status: 503 }) }) : Promise.resolve({ ok: false as const, failure: { kind: "transport" as const, error: new Error("refused") } });
 }
 
 /** Lets the event loop turn over until nothing already queued is left. */
@@ -374,7 +370,7 @@ describe("a provider query that failed reaches the operator on the channel the s
 		const unsatisfiable = await bind({
 			hasUI: false,
 			respond: request => {
-				if (request.url === CODEX_URL) throw new HttpConfigurationError("proxy 'codex' is not configured");
+				if (request.url === CODEX_URL) return { ok: false as const, failure: { kind: "configuration" as const, error: new Error("proxy 'codex' is not configured") } };
 				return balanceAnswer("110.00");
 			},
 		});
@@ -393,7 +389,7 @@ describe("a provider query that failed reaches the operator on the channel the s
 					? { baseUrl: "https://host.example/v1", credential: SENTINEL }
 					: { credential: "codex-key" },
 			respond: request =>
-				request.url === BALANCE_URL ? new Response("busy", { status: 503 }) : Promise.reject(new Error(SENTINEL)),
+				request.url === BALANCE_URL ? ({ ok: true as const, response: new Response("busy", { status: 503 }) }) : Promise.resolve({ ok: false as const, failure: { kind: "transport" as const, error: new Error(SENTINEL) } }),
 		});
 
 		expect(bound.sent[0]?.options?.headers).toEqual({ authorization: `Bearer ${SENTINEL}` });

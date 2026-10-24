@@ -33,7 +33,7 @@ import { tmpdir } from "node:os";
 import * as path from "node:path";
 import { type PiAssistantMessage, type PiExtensionApi, type PiExtensionContext, piAdapter } from "../../../../adapters/pi";
 import { updateFile } from "../../../../framework/interface/general/files";
-import type { HttpRequestOptions } from "../../../../framework/interface/general/http";
+import type { HttpRequestOptions, HttpRequestResult } from "../../../../framework/interface/general/http";
 import { MODEL_COST } from "../../../../extensions/model-cost/definition";
 import { MODEL_COST_HARNESS } from "../../../../extensions/model-cost/harnesses/pi";
 import { MODEL_COST_WIDGET_KEY, attachModelCostWidget } from "../../../../extensions/model-cost/harnesses/pi/widget";
@@ -197,14 +197,12 @@ interface ArchiveDocument extends ConsumptionDocument {
 }
 
 /** The balance answer a case's provider returns, in the provider's documented shape. */
-function balanceAnswer(total: string): Response {
-	return new Response(
-		JSON.stringify({
+function balanceAnswer(total: string): HttpRequestResult {
+	return ({ ok: true as const, response: new Response(JSON.stringify({
 			is_available: true,
 			balance_infos: [{ currency: "CNY", total_balance: total, granted_balance: "0.00", topped_up_balance: total }],
 		}),
-		{ status: 200, headers: { "content-type": "application/json" } },
-	);
+		{ status: 200, headers: { "content-type": "application/json" } },) });
 }
 
 /** One outbound request this entry made, with the options the query was sent under. */
@@ -423,7 +421,7 @@ function assemble(
 		/** The document to seed before the binding reads it; omitted means the root holds none yet. */
 		readonly document?: ConsumptionDocument;
 		/** What the balance endpoint answers, by attempt; omitted means {@link BOUNDARY_TOTAL}. */
-		readonly answer?: (attempt: number) => Promise<Response> | Response;
+		readonly answer?: (attempt: number) => Promise<HttpRequestResult> | HttpRequestResult;
 		readonly onQuery?: (query: Query, attempt: number) => void;
 	} = {},
 ): Bound {
@@ -963,7 +961,7 @@ describe("a failed archive or a failed publication is reported as the stage it r
 		// before it runs.
 		const bound = assemble({
 			document: TREE,
-			answer: attempt => (attempt === 1 ? balanceAnswer("12.50") : (() => { throw new Error("the provider is unreachable"); })()),
+			answer: attempt => (attempt === 1 ? balanceAnswer("12.50") : (() => { return { ok: false as const, failure: { kind: "transport" as const, error: new Error("the provider is unreachable") } }; })()),
 		});
 		mkdirSync(path.join(bound.root, ARCHIVE_DIRECTORY), { recursive: true });
 		const earlierName = "aaaaaaaa-0000-4000-8000-000000000000.json";

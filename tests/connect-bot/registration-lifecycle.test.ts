@@ -18,7 +18,7 @@ import {
 	type PanelRequest,
 	setPanelRequestForTest,
 } from "../../extensions/connect-bot/shared-logic/panel/client";
-import type { HttpRequestOptions } from "../../framework/interface/general/http";
+import type { HttpRequestOptions, HttpRequestResult } from "../../framework/interface/general/http";
 import { botSessions } from "../../extensions/connect-bot/shared-logic/session/session";
 import connectBot from "../../extensions/connect-bot/harnesses/omp";
 import { type OmpDouble, ompDouble } from "./support/omp-double";
@@ -42,8 +42,8 @@ interface Request {
 }
 
 /** The panel's answer to one request. */
-const panelAnswer = (status: number, body: unknown): Response =>
-	new Response(JSON.stringify(body), { status });
+const panelAnswer = (status: number, body: unknown): HttpRequestResult =>
+	({ ok: true as const, response: new Response(JSON.stringify(body), { status }) });
 
 /** The registered receipt a reachable panel answers a `register` with. */
 const registered = (onlineCount: number) => ({ outcome: "registered", onlineCount });
@@ -78,8 +78,8 @@ async function settleAll(): Promise<void> {
 }
 
 /** A request the test holds on the wire and releases on its own terms. */
-function heldRequest(): { readonly promise: Promise<Response>; readonly release: (response: Response) => void } {
-	const { promise, resolve } = Promise.withResolvers<Response>();
+function heldRequest(): { readonly promise: Promise<HttpRequestResult>; readonly release: (response: HttpRequestResult) => void } {
+	const { promise, resolve } = Promise.withResolvers<HttpRequestResult>();
 	return { promise, release: resolve };
 }
 

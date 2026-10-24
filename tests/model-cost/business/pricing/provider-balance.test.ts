@@ -42,7 +42,7 @@ import {
 import type { ProviderAccess, ProviderAccessFacts } from "../../../../framework/interface/provider";
 import type { SessionFacts, TurnOutcome, TurnUsage } from "../../../../framework/interface/session";
 import type { TurnSignal } from "../../../../framework/runtime/port";
-import type { HttpRequestOptions } from "../../../../framework/interface/general/http";
+import type { HttpRequestOptions, HttpRequestResult } from "../../../../framework/interface/general/http";
 import { type PortDouble, portDouble } from "../../../framework/support/harness-port-double";
 import { testSessionCapability } from "../../support/session-capability";
 import { drain, heldAnswer, settled, until } from "../../../support/pending-query";
@@ -81,14 +81,12 @@ interface SentRequest {
 }
 
 /** The balance answer the provider returns, in its documented shape, as one JSON response. */
-function balanceAnswer(total: string): Response {
-	return new Response(
-		JSON.stringify({
+function balanceAnswer(total: string): HttpRequestResult {
+	return ({ ok: true as const, response: new Response(JSON.stringify({
 			is_available: true,
 			balance_infos: [{ currency: "CNY", total_balance: total, granted_balance: "0.00", topped_up_balance: total }],
 		}),
-		{ status: 200, headers: { "content-type": "application/json" } },
-	);
+		{ status: 200, headers: { "content-type": "application/json" } },) });
 }
 
 /**
@@ -142,7 +140,7 @@ async function bindBalance(
 	options: {
 		readonly ttlMs?: number;
 		readonly access?: (provider: string) => Promise<ProviderAccessFacts | undefined>;
-		readonly respond?: (request: SentRequest, index: number) => Response | Promise<Response>;
+		readonly respond?: (request: SentRequest, index: number) => HttpRequestResult | Promise<HttpRequestResult>;
 		readonly initiate?: boolean;
 	} = {},
 ): Promise<BoundBalance> {
@@ -413,7 +411,7 @@ describe("a failed query keeps the last reading and its instant, with no cooldow
 		let fail = false;
 		const bound = await bindBalance({
 			respond: () => {
-				if (fail) throw new Error("the connection was refused");
+				if (fail) return { ok: false as const, failure: { kind: "transport" as const, error: new Error("the connection was refused") } };
 				return balanceAnswer("110.00");
 			},
 		});
@@ -450,8 +448,8 @@ describe("a failed query keeps the last reading and its instant, with no cooldow
 		const bound = await bindBalance({
 			respond: (_request, index) =>
 				index === 0
-					? new Response("busy", { status: 503 })
-					: new Response(JSON.stringify({ is_available: false, balance_infos: [] }), { status: 200 }),
+					? ({ ok: true as const, response: new Response("busy", { status: 503 }) })
+					: ({ ok: true as const, response: new Response(JSON.stringify({ is_available: false, balance_infos: [] }), { status: 200 }) }),
 		});
 		// The prefetch's own answer carried no reading, and the result says so rather than reporting zero.
 		expect(bound.runtime.presentation.balance()).toEqual({

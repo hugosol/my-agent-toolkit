@@ -10,6 +10,8 @@
  * failure rather than surfacing as a timeout somewhere else.
  */
 
+import type { HttpRequestResult } from "../../framework/interface/general/http";
+
 /** One turn of the event loop: `setImmediate` is a loop turn and not a duration. */
 export function turn(): Promise<void> {
 	const { promise, resolve } = Promise.withResolvers<void>();
@@ -57,12 +59,12 @@ export function settled(promise: Promise<unknown>): () => boolean {
  * whose endpoint never answers at all.
  */
 export interface HeldAnswer {
-	readonly promise: Promise<Response>;
-	readonly answer: (response: Response) => void;
+	readonly promise: Promise<HttpRequestResult>;
+	readonly answer: (response: HttpRequestResult) => void;
 }
 
 /** Hold one query open until this case answers it. */
 export function heldAnswer(): HeldAnswer {
-	const { promise, resolve } = Promise.withResolvers<Response>();
+	const { promise, resolve } = Promise.withResolvers<HttpRequestResult>();
 	return { promise, answer: resolve };
 }

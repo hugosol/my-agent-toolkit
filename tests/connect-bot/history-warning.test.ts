@@ -15,10 +15,10 @@ test("connect warns its operator without disarming or autonomously registering a
     setPanelRequestForTest(async (_url, options) => {
         const kind = JSON.parse(options?.body ?? "{}").kind;
         requests.push(kind);
-        return Response.json(kind === "register" ? {
+        return ({ ok: true as const, response: Response.json(kind === "register" ? {
             outcome:"registered", onlineCount:1, historySaved:false,
             historyWarning:{code:"history-save-failed", message:"History unavailable"}
-        } : {outcome:"accepted"});
+        } : {outcome:"accepted"}) });
     });
     const ctx = double.context({ sessionId:"history-warning-native", cwd:"C:/literal/project", idle:false });
     try {

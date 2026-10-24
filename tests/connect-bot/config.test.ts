@@ -56,7 +56,7 @@ interface Request {
 function recordingPanel(requests: Request[]): PanelRequest {
 	return async (url, init = {}) => {
 		requests.push({ url, init });
-		return new Response(JSON.stringify({ outcome: "registered", onlineCount: 1 }), { status: 200 });
+		return ({ ok: true as const, response: new Response(JSON.stringify({ outcome: "registered", onlineCount: 1 }), { status: 200 }) });
 	};
 }
 

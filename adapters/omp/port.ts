@@ -18,6 +18,7 @@
  * registered is decided by the harness-independent behavior, and what a command does is the
  * framework's control behavior.
  */
+import { reportDiagnostic } from "../../framework/core/diagnostics";
 import { defineAdapterPort, unavailablePortMember } from "../../framework/runtime/adapter-authoring";
 import type { ExtensionDefinition } from "../../framework/interface/details/definition";
 import type { OwnerReference } from "../../framework/interface/state";
@@ -144,9 +145,6 @@ export function createOmpPort(
 
 	// The non-model channel this binding reports on. Startup happens before any UI exists, so a
 	// diagnostic goes to stderr: it is user-visible and can never reach model context.
-	const reportDiagnostic = (message: string): void => {
-		process.stderr.write(`${message}\n`);
-	};
 	const reportBindingDiagnostic = (message: string): void => {
 		reportDiagnostic(`${definition.id}: ${message}`);
 	};

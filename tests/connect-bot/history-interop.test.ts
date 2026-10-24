@@ -3,7 +3,7 @@ import { existsSync, mkdirSync, rmdirSync } from "node:fs";
 import connectBot from "../../extensions/connect-bot/harnesses/omp";
 import connectBotPi from "../../extensions/connect-bot/harnesses/pi";
 import { setPanelRequestForTest } from "../../extensions/connect-bot/shared-logic/panel/client";
-import { request } from "../../framework/interface/general/http";
+import { request, type HttpRequestResult } from "../../framework/interface/general/http";
 import { ompDouble } from "./support/omp-double";
 import { ControlledClock } from "./support/controlled-clock";
 import { startHerdrBot } from "./support/herdr-bot";
@@ -19,11 +19,11 @@ test("actual OMP connect keeps reporting and shutdown semantics across storage f
     const double = ompDouble({timers:{kind:"controlled",clock}});
     connectBot(double.api);
     const kinds: string[] = [];
-    const pending = new Set<Promise<Response>>();
+    const pending = new Set<Promise<HttpRequestResult>>();
     setPanelRequestForTest((url, options) => {
         kinds.push(JSON.parse(options?.body ?? "{}").kind);
         const sending = request(`${panel.endpoint}${new URL(url).pathname}`, options).then(async response => {
-            await response.clone().text();
+            if (response.ok) await response.response.clone().text();
             return response;
         });
         pending.add(sending);

@@ -42,7 +42,7 @@ import {
 import type { ProviderAccess, ProviderAccessFacts } from "../../../../framework/interface/provider";
 import type { SessionFacts, TurnOutcome } from "../../../../framework/interface/session";
 import type { TurnSignal } from "../../../../framework/runtime/port";
-import type { HttpRequestOptions } from "../../../../framework/interface/general/http";
+import type { HttpRequestOptions, HttpRequestResult } from "../../../../framework/interface/general/http";
 import { type PortDouble, portDouble } from "../../../framework/support/harness-port-double";
 import { testSessionCapability } from "../../support/session-capability";
 
@@ -119,22 +119,20 @@ interface ReportedWindow {
 function usageAnswer(windows: {
 	readonly primary?: ReportedWindow;
 	readonly secondary?: ReportedWindow;
-}): Response {
+}): HttpRequestResult {
 	const windowOf = (window: ReportedWindow): Record<string, unknown> => ({
 		used_percent: window.usedPercent,
 		limit_window_seconds: window.seconds,
 		reset_at: window.resetAt,
 	});
-	return new Response(
-		JSON.stringify({
+	return ({ ok: true as const, response: new Response(JSON.stringify({
 			plan_type: "pro",
 			rate_limit: {
 				...(windows.primary === undefined ? {} : { primary_window: windowOf(windows.primary) }),
 				...(windows.secondary === undefined ? {} : { secondary_window: windowOf(windows.secondary) }),
 			},
 		}),
-		{ status: 200, headers: { "content-type": "application/json" } },
-	);
+		{ status: 200, headers: { "content-type": "application/json" } },) });
 }
 
 /** The five-hour window of one report, with its reset instant in seconds: one hour after the clock. */
@@ -153,12 +151,12 @@ function weeklyWindow(usedPercent: number, resetAt: number = RESET_WEEKLY_SECOND
  * startup query and every later refresh: the two triggers differ in when they ask, never in what an
  * answer is shaped like.
  */
-function codexAnswer(fiveHourPercent: number, weeklyPercent: number): Response {
+function codexAnswer(fiveHourPercent: number, weeklyPercent: number): HttpRequestResult {
 	return usageAnswer({ primary: fiveHourWindow(fiveHourPercent), secondary: weeklyWindow(weeklyPercent) });
 }
 
 /** Both windows of one report whose source stated no reset instant at all. */
-function codexAnswerWithoutResets(fiveHourPercent: number, weeklyPercent: number): Response {
+function codexAnswerWithoutResets(fiveHourPercent: number, weeklyPercent: number): HttpRequestResult {
 	return usageAnswer({
 		primary: { usedPercent: fiveHourPercent, seconds: 18_000 },
 		secondary: { usedPercent: weeklyPercent, seconds: 604_800 },
@@ -202,7 +200,7 @@ const roots: string[] = [];
  * drive its own entry directly start from.
  */
 async function bindEstimate(
-	options: { readonly answer?: () => Response; readonly root?: string } = {},
+	options: { readonly answer?: () => HttpRequestResult; readonly root?: string } = {},
 ): Promise<BoundEstimate> {
 	const root = options.root ?? mkdtempSync(path.join(tmpdir(), "model-cost-estimate-"));
 	if (options.root === undefined) roots.push(root);
@@ -392,7 +390,7 @@ describe("a report's own pair is the only thing a sample may come from (P66)", (
 	});
 
 	test("50 five-hour points over 5 weekly points read ratio≈10.0, with left from the displayed week", async () => {
-		let reply: () => Response = () => codexAnswer(10, 2);
+		let reply: () => HttpRequestResult = () => codexAnswer(10, 2);
 		const bound = await bindEstimate({ answer: () => reply() });
 
 		// 10% → 60% is exactly the 50-point five-hour threshold, and the weekly window moved up by 5
@@ -411,7 +409,7 @@ describe("a report's own pair is the only thing a sample may come from (P66)", (
 	});
 
 	test("no interval below the thresholds or at saturation replaces the stored ratio", async () => {
-		let reply: () => Response = () => codexAnswer(0, 0);
+		let reply: () => HttpRequestResult = () => codexAnswer(0, 0);
 		const bound = await bindEstimate({ answer: () => reply() });
 		reply = () => codexAnswer(50, 5);
 		bound.clock.now = CLOCK + 30_000;
@@ -447,7 +445,7 @@ describe("a report's own pair is the only thing a sample may come from (P66)", (
 	});
 
 	test("a report carrying one window pairs nothing and leaves the baseline it did not carry alone", async () => {
-		let reply: () => Response = () => codexAnswer(0, 0);
+		let reply: () => HttpRequestResult = () => codexAnswer(0, 0);
 		const bound = await bindEstimate({ answer: () => reply() });
 		reply = () => codexAnswer(50, 5);
 		bound.clock.now = CLOCK + 30_000;
@@ -486,7 +484,7 @@ describe("a report's own pair is the only thing a sample may come from (P66)", (
 
 describe("a crossed window boundary rebuilds the baseline and never withdraws the ratio (P66)", () => {
 	test("a moved five-hour reset instant rebaselines, and the next sample spans only the new window", async () => {
-		let reply: () => Response = () => codexAnswer(10, 2);
+		let reply: () => HttpRequestResult = () => codexAnswer(10, 2);
 		const bound = await bindEstimate({ answer: () => reply() });
 		reply = () => codexAnswer(60, 7);
 		bound.clock.now = CLOCK + 30_000;
@@ -518,7 +516,7 @@ describe("a crossed window boundary rebuilds the baseline and never withdraws th
 	});
 
 	test("a percentage drop rebuilds the baseline when no reset instant can be compared", async () => {
-		let reply: () => Response = () => codexAnswerWithoutResets(10, 2);
+		let reply: () => HttpRequestResult = () => codexAnswerWithoutResets(10, 2);
 		const bound = await bindEstimate({ answer: () => reply() });
 
 		// A one-point drop is below the fallback's own trigger, and it moves nothing up, so it samples
@@ -553,7 +551,7 @@ describe("a crossed window boundary rebuilds the baseline and never withdraws th
 	});
 
 	test("a baseline aged exactly five hours is never sampled across", async () => {
-		let reply: () => Response = () => codexAnswer(10, 2);
+		let reply: () => HttpRequestResult = () => codexAnswer(10, 2);
 		const bound = await bindEstimate({ answer: () => reply() });
 		reply = () => codexAnswer(60, 7);
 		bound.clock.now = CLOCK + 30_000;
@@ -777,7 +775,7 @@ describe("a restart continues the measurement the document carries (P66)", () =>
 		// The restart's own startup answer reports 40% / 8%, which qualifies nothing against the stored
 		// baseline and is not what it measures from: the stored ratio is shown without relearning, and
 		// `left` follows the weekly percent this display shows — (100 − 8) / 100 × 10 = 9.2.
-		let reply: () => Response = () => codexAnswer(40, 8);
+		let reply: () => HttpRequestResult = () => codexAnswer(40, 8);
 		const restarted = await bindEstimate({ root: first.root, answer: () => reply() });
 		expect(restarted.runtime.presentation.estimate()).toEqual({
 			ratio: 10,

@@ -6,6 +6,7 @@
  * user input, commands, prompt planning and public effects each own a complete native
  * responsibility in their own module; no slice reaches into another axis's facts.
  */
+import { reportDiagnostic as publishDiagnostic } from "../../framework/core/diagnostics";
 import { defineAdapterPort, unavailablePortMember } from "../../framework/runtime/adapter-authoring";
 import type { ExtensionDefinition } from "../../framework/interface/details/definition";
 import type { SessionFacts, SessionStartReason } from "../../framework/interface/session";
@@ -182,7 +183,7 @@ function createPiPortContext(input: PiPortInput): PiPortContext {
 	const state: PiPortContext["state"] = { label: input.definition.displayName, reportedOwnerless: false };
 	const endedSessions = new Set<string>();
 	const reportedMissingFacts = new Set<string>();
-	const reportDiagnostic = (message: string): void => { process.stderr.write(`${state.label}: ${message}\n`); };
+	const reportDiagnostic = (message: string): void => { publishDiagnostic(`${state.label}: ${message}`); };
 	const positionOf: PiPortContext["positionOf"] = (ctx, reason) => input.positions.positionOf(ctx, reason);
 	const resolvedOwner: PiPortContext["resolvedOwner"] = owner => {
 		if (owner.kind === "unresolved" && !state.reportedOwnerless) {

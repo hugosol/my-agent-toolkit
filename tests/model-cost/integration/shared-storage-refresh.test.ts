@@ -32,7 +32,7 @@ import type { ProviderAccess } from "../../../framework/interface/provider";
 import type { SessionFacts, TurnUsage } from "../../../framework/interface/session";
 import type { OwnerReference } from "../../../framework/interface/state";
 import type { TurnSignal } from "../../../framework/runtime/port";
-import type { HttpRequestOptions } from "../../../framework/interface/general/http";
+import type { HttpRequestOptions, HttpRequestResult } from "../../../framework/interface/general/http";
 import { testSessionCapability } from "../support/session-capability";
 import { type PortDouble, type RoundBoundary, portDouble } from "../../framework/support/harness-port-double";
 import { until } from "../../support/pending-query";
@@ -82,14 +82,12 @@ const MODEL = "model-alpha";
 const CONSUMPTION_FILE = "consumption.json";
 
 /** The balance answer the provider returns, in its documented shape, as one JSON response. */
-function balanceAnswer(total: string): Response {
-	return new Response(
-		JSON.stringify({
+function balanceAnswer(total: string): HttpRequestResult {
+	return ({ ok: true as const, response: new Response(JSON.stringify({
 			is_available: true,
 			balance_infos: [{ currency: "CNY", total_balance: total, granted_balance: "0.00", topped_up_balance: total }],
 		}),
-		{ status: 200, headers: { "content-type": "application/json" } },
-	);
+		{ status: 200, headers: { "content-type": "application/json" } },) });
 }
 
 /** The usage one completing request reports, as the framework delivers it. */
@@ -165,7 +163,7 @@ async function bindInstance(
 	baseline?: ConsumptionDocument,
 	options: {
 		readonly providerAccess?: ProviderAccess;
-		readonly httpRequest?: (url: string, requestOptions?: HttpRequestOptions) => Promise<Response>;
+		readonly httpRequest?: (url: string, requestOptions?: HttpRequestOptions) => Promise<HttpRequestResult>;
 		readonly now?: () => number;
 	} = {},
 ): Promise<BoundInstance> {

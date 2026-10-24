@@ -26,7 +26,7 @@ import {
 import { botSessions } from "../../extensions/connect-bot/shared-logic/session/session";
 import { connectBotOmp } from "../../extensions/connect-bot/harnesses/omp-assembly";
 import type { OmpCommandContext } from "../../adapters/omp";
-import type { HttpRequestOptions } from "../../framework/interface/general/http";
+import type { HttpRequestOptions, HttpRequestResult } from "../../framework/interface/general/http";
 import { ControlledClock } from "./support/controlled-clock";
 import { type OmpDouble, ompDouble } from "./support/omp-double";
 
@@ -65,13 +65,13 @@ function envelopeOf(request: Request): WireEnvelope {
 }
 
 /** The registered receipt a reachable panel answers a `register` with. */
-function registeredResponse(onlineCount = 1): Response {
-	return new Response(JSON.stringify({ outcome: "registered", onlineCount }), { status: 200 });
+function registeredHttpRequestResult(onlineCount = 1): HttpRequestResult {
+	return ({ ok: true as const, response: new Response(JSON.stringify({ outcome: "registered", onlineCount }), { status: 200 }) });
 }
 
 /** A request the test holds on the wire and releases on its own terms. */
-function heldRequest(): { readonly promise: Promise<Response>; readonly release: (response: Response) => void } {
-	const { promise, resolve } = Promise.withResolvers<Response>();
+function heldRequest(): { readonly promise: Promise<HttpRequestResult>; readonly release: (response: HttpRequestResult) => void } {
+	const { promise, resolve } = Promise.withResolvers<HttpRequestResult>();
 	return { promise, release: resolve };
 }
 
@@ -82,7 +82,7 @@ function heldRequest(): { readonly promise: Promise<Response>; readonly release:
  * state report and every heartbeat are ordinary accepted pushes.
  */
 function panel(
-	register: (attempt: number) => Response | Promise<Response>,
+	register: (attempt: number) => HttpRequestResult | Promise<HttpRequestResult>,
 ): { readonly requests: Request[]; readonly request: PanelRequest } {
 	const requests: Request[] = [];
 	let registers = 0;
@@ -96,7 +96,7 @@ function panel(
 				registers += 1;
 				return register(registers);
 			}
-			return new Response(JSON.stringify({ outcome: "accepted" }), { status: 200 });
+			return ({ ok: true as const, response: new Response(JSON.stringify({ outcome: "accepted" }), { status: 200 }) });
 		},
 	};
 }
@@ -166,7 +166,7 @@ afterEach(() => {
 describe("an off invalidates the startup attempt still on the wire (P20)", () => {
 	test("a later valid receipt writes no value, reports no state, schedules no timer and leaves no beat", async () => {
 		const held = heldRequest();
-		const { requests, request } = panel(attempt => (attempt === 1 ? held.promise : registeredResponse()));
+		const { requests, request } = panel(attempt => (attempt === 1 ? held.promise : registeredHttpRequestResult()));
 		const clock = new ControlledClock();
 		const double = bound(connectBotAuto, request, { clock });
 		const ctx = contextOf(double, "startup-off-pending");
@@ -178,7 +178,7 @@ describe("an off invalidates the startup attempt still on the wire (P20)", () =>
 		// The operator closes the connection before the panel has answered. Nothing was connected
 		// yet, so `off` is the existing silent no-op — but the attempt is invalidated now.
 		double.run("connect-bot", "off", ctx);
-		held.release(registeredResponse());
+		held.release(registeredHttpRequestResult());
 		await settleAll();
 		await clock.advanceBy(HEARTBEAT_INTERVAL_MS * 6);
 
@@ -203,7 +203,7 @@ describe("an off invalidates the startup attempt still on the wire (P20)", () =>
 describe("an owner's boundary invalidates its pending startup attempt (P21)", () => {
 	test("a transfer, a return of the old owner and the late receipt never revive the old attempt", async () => {
 		const held = heldRequest();
-		const { requests, request } = panel(attempt => (attempt === 1 ? held.promise : registeredResponse()));
+		const { requests, request } = panel(attempt => (attempt === 1 ? held.promise : registeredHttpRequestResult()));
 		const clock = new ControlledClock();
 		const double = bound(connectBotAuto, request, { clock });
 		const oldOwner = contextOf(double, "startup-transfer-old");
@@ -217,7 +217,7 @@ describe("an owner's boundary invalidates its pending startup attempt (P21)", ()
 		// The old owner comes back before the panel has answered: that is a new life, and it does
 		// not make the attempt the boundary already invalidated valid again.
 		double.switchSession(oldOwner, "resume");
-		held.release(registeredResponse());
+		held.release(registeredHttpRequestResult());
 		await settleAll();
 		await clock.advanceBy(HEARTBEAT_INTERVAL_MS * 6);
 
@@ -240,7 +240,7 @@ describe("an owner's boundary invalidates its pending startup attempt (P21)", ()
 describe("a disposal is the owner's end too, and its pending attempt dies with it (P21, P27)", () => {
 	test("the late receipt enables nothing and the disposed binding runs no further command", async () => {
 		const held = heldRequest();
-		const { requests, request } = panel(attempt => (attempt === 1 ? held.promise : registeredResponse()));
+		const { requests, request } = panel(attempt => (attempt === 1 ? held.promise : registeredHttpRequestResult()));
 		const clock = new ControlledClock();
 		const double = bound(connectBotAuto, request, { clock });
 		const ctx = contextOf(double, "startup-disposed");
@@ -250,7 +250,7 @@ describe("a disposal is the owner's end too, and its pending attempt dies with i
 
 		// The process's session is disposed rather than transferred.
 		double.shutdown(ctx);
-		held.release(registeredResponse());
+		held.release(registeredHttpRequestResult());
 		await settleAll();
 		await clock.advanceBy(HEARTBEAT_INTERVAL_MS * 6);
 
@@ -272,7 +272,7 @@ describe("the owner's end stops the effects a re-register was about to keep (P21
 	test("an armed owner's pending re-register cannot restart the heartbeat the boundary cancelled", async () => {
 		const held = heldRequest();
 		const { requests, request } = panel(attempt =>
-			attempt === 1 ? registeredResponse() : attempt === 2 ? held.promise : registeredResponse(),
+			attempt === 1 ? registeredHttpRequestResult() : attempt === 2 ? held.promise : registeredHttpRequestResult(),
 		);
 		const clock = new ControlledClock();
 		const double = bound(connectBotAuto, request, { clock });
@@ -297,7 +297,7 @@ describe("the owner's end stops the effects a re-register was about to keep (P21
 		expect(beat?.cancelled).toBe(true);
 		expect(botSessions.get(ownerKey("startup-rearm-old"))).toBeUndefined();
 
-		held.release(registeredResponse());
+		held.release(registeredHttpRequestResult());
 		await settleAll();
 		await clock.advanceBy(HEARTBEAT_INTERVAL_MS * 6);
 
@@ -316,7 +316,7 @@ describe("the owner's end stops the effects a re-register was about to keep (P21
 
 describe("navigation after the first start never applies the entrypoint's startup again (P25)", () => {
 	test("new, resume, fork, a same-owner navigation and a return to the first session register nothing", async () => {
-		const { requests, request } = panel(() => registeredResponse());
+		const { requests, request } = panel(() => registeredHttpRequestResult());
 		const double = bound(connectBotAuto, request);
 		const first = contextOf(double, "startup-nav-first");
 		const second = contextOf(double, "startup-nav-new");
@@ -362,7 +362,7 @@ describe("navigation after the first start never applies the entrypoint's startu
 describe("the selected policy document is read at binding, not on each observation (P7)", () => {
 	test("editing it mid-process changes neither this State nor a later activation choice", async () => {
 		const policy = policyOf(true);
-		const { requests, request } = panel(() => registeredResponse());
+		const { requests, request } = panel(() => registeredHttpRequestResult());
 		const clock = new ControlledClock();
 		const double = bound(connectBotOmp(policy), request, { clock });
 		const first = contextOf(double, "startup-policy-first");

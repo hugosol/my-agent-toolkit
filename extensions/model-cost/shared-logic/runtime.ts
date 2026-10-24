@@ -72,7 +72,7 @@ import type {
 	UserInputDelivery,
 } from "../../../framework/interface/session";
 import type { SubagentIntegration } from "../../../framework/interface/subagent";
-import type { HttpRequestOptions } from "../../../framework/interface/general/http";
+import type { HttpRequestOptions, HttpRequestResult } from "../../../framework/interface/general/http";
 import { DEFAULT_CODEX_QUOTA_TTL_MS, type CodexQuotaFailure, createCodexQuota } from "./business/allowance/codex-quota";
 import { CodexEstimateStore } from "./business/allowance/codex-estimate-store";
 import {
@@ -188,7 +188,7 @@ export interface ModelCostRuntimeInputs {
 	 * it, so a permanent case can exercise the whole balance query — its address, its credential
 	 * header, its budget and its connection path — without reaching a provider.
 	 */
-	readonly httpRequest?: (url: string, options?: HttpRequestOptions) => Promise<Response>;
+	readonly httpRequest?: (url: string, options?: HttpRequestOptions) => Promise<HttpRequestResult>;
 	/**
 	 * The answer this entry's subagent integration settled as, as the harness assembly states it, or a
 	 * function answering nothing while no such answer exists.
