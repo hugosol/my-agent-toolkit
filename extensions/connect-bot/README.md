@@ -7,6 +7,22 @@ harness-independent logic is under [`shared-logic/`](shared-logic). Its OMP asse
 [`harnesses/pi-assembly.ts`](harnesses/pi-assembly.ts), each behind one thin entrypoint per
 [startup mode](#startup-modes).
 
+## Registration completion failures
+
+Register attempts remain serialized per owner. A failed configuration, state callback or feedback
+continuation is diagnosed once through the framework's non-model stderr diagnostics, independently
+of the feedback transport that may have failed. Diagnostics identify the failed operation without
+printing arbitrary exception payloads. The failed attempt releases its processing slot;
+already queued registrations and later `/connect-bot` commands can still run. This does not retry the
+failed attempt or change invalidation at off/session end.
+
+Unregister remains best-effort for ordinary request failures. Its disconnecting window is cleared
+when preparation or the request settles, including configuration failures; a throwing completion
+notification is diagnosed without preventing a later activation. A late unregister still clears
+only its own window, never a newer owner's stop. Detached transferred-session row releases also
+own unexpected preparation failures through diagnostics; ordinary request failures retain the
+panel-expiry behavior.
+
 ## Session harness type
 
 Every native registration reports `data.agentType`: the Pi assembly sends `pi`, and the OMP

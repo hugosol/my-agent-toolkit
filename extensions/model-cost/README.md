@@ -75,6 +75,13 @@ what a real TUI draws are human-only, and nothing in this repository claims eith
 
 ## Timing and detail behavior
 
+Accounting view notifications isolate each subscriber: a throwing view emits a `[model-cost]`
+diagnostic on stderr and does not prevent the remaining views from receiving the same publication.
+The merged redraw also owns exceptions from its queued microtask callback, reports them on stderr,
+and accepts later redraw requests normally. Diagnostics identify the failed boundary without printing
+the thrown value or view payload. Failures are not retried automatically; immediate observation
+adoption, same-turn merging, publication spending and disposal behavior are unchanged.
+
 - A `/budget detail` descendant row states the agent definition its host reported as a leading
   category (`[task] 检索定价`, `[scout] 检索价格`). The session's own name follows the category and
   keeps its existing selection rules; a host that reported no agent definition leaves the row

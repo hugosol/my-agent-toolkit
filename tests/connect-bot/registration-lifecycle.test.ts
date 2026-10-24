@@ -13,7 +13,7 @@
  * serialized rather than merged, and a new activation is refused — not queued — while an
  * unregister is still in flight.
  */
-import { describe, expect, test } from "bun:test";
+import { describe, expect, spyOn, test } from "bun:test";
 import {
 	type PanelRequest,
 	setPanelRequestForTest,
@@ -177,6 +177,114 @@ describe("valid registrations are serialized, not merged (E7, P28)", () => {
 		expect(double.timers).toHaveLength(1);
 		expect(double.notifications).toEqual([CONNECTED(1), CONNECTED(2)]);
 		expect(botSessions.get(ownerKey("serialized"))?.sessionId).toBe("serialized");
+	});
+});
+
+describe("registration completion failures stay owned", () => {
+	test.each(["feedback", "state"] as const)("a failed %s completion diagnoses once and continues queued and future registrations", async failure => {
+		const first = heldRequest();
+		let registerCount = 0;
+		const double = bound(async (_url, init = {}) => {
+			if (envelopeOf({ url: "", init }).kind !== "register") return panelAnswer(200, {});
+			registerCount += 1;
+			return registerCount === 1 ? first.promise : panelAnswer(200, registered(registerCount));
+		});
+		const ctx = double.context({ sessionId: `completion-${failure}`, cwd: "E:/work/registration" });
+		double.startSession(ctx);
+		const notify = ctx.ui.notify;
+		let fail = true;
+		ctx.ui.notify = (message, level) => {
+			if (failure === "feedback" && fail) {
+				fail = false;
+				throw new Error("injected feedback completion failure");
+			}
+			notify(message, level);
+		};
+		ctx.isIdle = () => {
+			if (failure === "state" && fail) {
+				fail = false;
+				throw new Error("injected state completion failure");
+			}
+			return true;
+		};
+		const diagnostics = spyOn(process.stderr, "write").mockImplementation(() => true);
+		const unhandled: unknown[] = [];
+		const onUnhandled = (error: unknown) => { unhandled.push(error); };
+		process.on("unhandledRejection", onUnhandled);
+		try {
+			double.run("connect-bot", "", ctx);
+			double.run("connect-bot", "", ctx);
+			// The feedback fault also covers the continuation after a failed HTTP request.
+			first.release(failure === "feedback"
+				? { ok: false, failure: { kind: "transport", error: new Error("panel unavailable") } }
+				: panelAnswer(200, registered(1)));
+			await settleAll();
+			expect(registerCount).toBe(2);
+			expect(double.notifications).toEqual([CONNECTED(2)]);
+			expect(diagnostics).toHaveBeenCalledTimes(1);
+			expect(String(diagnostics.mock.calls[0]?.[0])).toMatch(/connect-bot.*registration.*failed/i);
+			expect(String(diagnostics.mock.calls[0]?.[0])).not.toContain(`injected ${failure} completion failure`);
+
+			double.run("connect-bot", "", ctx);
+			await settleAll();
+			const turn = Promise.withResolvers<void>();
+			setImmediate(turn.resolve);
+			await turn.promise;
+			expect(registerCount).toBe(3);
+			expect(double.notifications).toEqual([CONNECTED(2), CONNECTED(3)]);
+			expect(botSessions.get(ownerKey(`completion-${failure}`))?.sessionId).toBe(`completion-${failure}`);
+			expect(diagnostics).toHaveBeenCalledTimes(1);
+			expect(unhandled).toEqual([]);
+		} finally {
+			process.off("unhandledRejection", onUnhandled);
+			diagnostics.mockRestore();
+		}
+	});
+
+	test("an unregister feedback failure diagnoses once, clears disconnecting and permits reactivation", async () => {
+		const unregister = heldRequest();
+		let registerCount = 0;
+		const double = bound(async (_url, init = {}) => {
+			const kind = envelopeOf({ url: "", init }).kind;
+			if (kind === "register") return panelAnswer(200, registered(++registerCount));
+			return kind === "unregister" ? unregister.promise : panelAnswer(200, {});
+		});
+		const ctx = double.context({ sessionId: "off-completion-failure", cwd: "E:/work/registration" });
+		double.startSession(ctx);
+		double.run("connect-bot", "", ctx);
+		await settleAll();
+		const notify = ctx.ui.notify;
+		ctx.ui.notify = (message, level) => {
+			if (message === DISCONNECTED) throw new Error("injected unregister completion failure");
+			notify(message, level);
+		};
+		const diagnostics = spyOn(process.stderr, "write").mockImplementation(() => true);
+		const unhandled: unknown[] = [];
+		const onUnhandled = (error: unknown) => { unhandled.push(error); };
+		process.on("unhandledRejection", onUnhandled);
+		try {
+			double.run("connect-bot", "off", ctx);
+			unregister.release(panelAnswer(200, {}));
+			await settleAll();
+			expect(botSessions.get(ownerKey("off-completion-failure"))).toBeUndefined();
+			expect(diagnostics).toHaveBeenCalledTimes(1);
+			expect(String(diagnostics.mock.calls[0]?.[0])).toMatch(/connect-bot.*unregister.*failed/i);
+			expect(String(diagnostics.mock.calls[0]?.[0])).not.toContain("injected unregister completion failure");
+
+			double.run("connect-bot", "", ctx);
+			await settleAll();
+			const turn = Promise.withResolvers<void>();
+			setImmediate(turn.resolve);
+			await turn.promise;
+			expect(registerCount).toBe(2);
+			expect(double.notifications).toEqual([CONNECTED(1), CONNECTED(2)]);
+			expect(botSessions.get(ownerKey("off-completion-failure"))).toBeDefined();
+			expect(diagnostics).toHaveBeenCalledTimes(1);
+			expect(unhandled).toEqual([]);
+		} finally {
+			process.off("unhandledRejection", onUnhandled);
+			diagnostics.mockRestore();
+		}
 	});
 });
 

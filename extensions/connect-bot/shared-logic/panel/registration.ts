@@ -20,6 +20,7 @@
  * This module is harness-independent — it names no native session event, timer or transport
  * and reaches the panel only through the wire client's injected seam.
  */
+import { reportDiagnostic } from "../../../../framework/interface/general/diagnostics";
 import type { FeedbackTransport } from "../../../../framework/interface/feedback";
 import type { CanAcceptInput } from "../../../../framework/interface/command";
 import type { SessionEventDelivery } from "../../../../framework/interface/session";
@@ -127,7 +128,9 @@ export class PanelRegistrations {
 			capability: delivery.capability,
 			valid: true,
 		});
-		void this.#pump(owner);
+		void this.#pump(owner).catch(() => {
+			reportDiagnostic(`[connect-bot] Registration processing failed`);
+		});
 	}
 
 	/**
@@ -154,8 +157,16 @@ export class PanelRegistrations {
 		const owner = this.#owner(ownerKey);
 		const token = ++owner.disconnecting;
 		const sessionId = record.sessionId;
-		disarmLocally(delivery.capability.state, ownerKey);
-		void this.#unregister(delivery.capability.feedback, owner, sessionId, token);
+		try {
+			disarmLocally(delivery.capability.state, ownerKey);
+		} catch {
+			if (owner.disconnecting === token) owner.disconnecting = 0;
+			reportDiagnostic(`[connect-bot] Unregister preparation failed`);
+			return;
+		}
+		void this.#unregister(delivery.capability.feedback, owner, sessionId, token).catch(() => {
+			reportDiagnostic(`[connect-bot] Unregister completion failed`);
+		});
 	}
 
 	/**
@@ -188,7 +199,9 @@ export class PanelRegistrations {
 		});
 
 		if (delivery.event.reason !== "transferred" || connection === undefined) return;
-		void releaseRow(connection.sessionId);
+		void releaseRow(connection.sessionId).catch(() => {
+			reportDiagnostic(`[connect-bot] Ended session row release failed`);
+		});
 	}
 
 	/** One owner's registrations, created on first use so a never-seen owner has no entry. */
@@ -224,6 +237,10 @@ export class PanelRegistrations {
 				owner.current = attempt;
 				try {
 					await this.#register(attempt);
+				} catch {
+					// Completion includes state and feedback callbacks, not just the HTTP request.
+					// Diagnose outside feedback so a broken transport cannot strand the queue.
+					reportDiagnostic(`[connect-bot] Registration completion failed`);
 				} finally {
 					owner.current = undefined;
 				}
@@ -315,14 +332,16 @@ export class PanelRegistrations {
 		sessionId: string,
 		token: number,
 	): Promise<void> {
-		const envelope: PushEnvelope = { sessionId, kind: "unregister" };
-		const { endpoint, requestTimeoutMs } = connectBotConfig();
 		let panelAnswered = false;
 		try {
-			await pushEvent(endpoint, envelope, requestTimeoutMs);
-			panelAnswered = true;
-		} catch {
-			// Best-effort: the panel's expiry takes a row the request could not remove.
+			const envelope: PushEnvelope = { sessionId, kind: "unregister" };
+			const { endpoint, requestTimeoutMs } = connectBotConfig();
+			try {
+				await pushEvent(endpoint, envelope, requestTimeoutMs);
+				panelAnswered = true;
+			} catch {
+				// Best-effort: the panel's expiry takes a row the request could not remove.
+			}
 		} finally {
 			if (owner.disconnecting === token) owner.disconnecting = 0;
 		}

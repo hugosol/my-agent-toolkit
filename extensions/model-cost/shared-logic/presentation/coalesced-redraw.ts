@@ -22,6 +22,8 @@
  * adopted at once, display requests may be merged" — so a quiescent process owes nothing and arranges
  * nothing, and a turn's readings are drawn once, in that turn's own order.
  */
+import { reportDiagnostic } from "../../../../framework/interface/general/diagnostics";
+
 export interface CoalescedRedraw {
 	/** A reading the display draws moved: the display owes one redraw at the end of this turn. */
 	request(): void;
@@ -54,7 +56,12 @@ export function createCoalescedRedraw(inputs: CoalescedRedrawInputs): CoalescedR
 		owed = false;
 		// A publication reaches every reader with the readings this redraw was owed for. An ask that
 		// arrives while it runs is a later turn's, and arranges its own redraw rather than being lost.
-		inputs.redraw();
+		try {
+			inputs.redraw();
+		} catch {
+			// This microtask owns the callback; never expose arbitrary view/error payloads.
+			reportDiagnostic("[model-cost] Merged redraw failed; later redraw requests remain active.");
+		}
 	};
 
 	const unsubscribe = inputs.published(() => {
