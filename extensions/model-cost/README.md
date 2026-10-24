@@ -82,6 +82,13 @@ and accepts later redraw requests normally. Diagnostics identify the failed boun
 the thrown value or view payload. Failures are not retried automatically; immediate observation
 adoption, same-turn merging, publication spending and disposal behavior are unchanged.
 
+The season-boundary timer is owned by this extension's harness/UI integration, not the public
+framework or Pi core. Its shared `harnesses/boundary-timer.ts` isolates each frontend redraw,
+reports failures through the same non-model diagnostics, and still schedules the next boundary.
+This also protects Pi's raw one-shot carrier without relying on a host-managed exception handler.
+A failure while reading or scheduling the next boundary is contained and diagnosed; a later ordinary
+`sync()` can resume the wait, with no automatic retry loop or change to cleanup ownership.
+
 - A `/budget detail` descendant row states the agent definition its host reported as a leading
   category (`[task] 检索定价`, `[scout] 检索价格`). The session's own name follows the category and
   keeps its existing selection rules; a host that reported no agent definition leaves the row

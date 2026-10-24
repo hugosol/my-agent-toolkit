@@ -39,6 +39,8 @@
  *   being torn down; a session that reported no UI never registers at all, and no timeout is created
  *   for it.
  */
+import { reportDiagnostic } from "../../../framework/interface/general/diagnostics";
+
 export interface BoundaryTimerHost {
 	/** Schedules one callback to run after `delayMs`; answers the handle the host's own cancel takes. */
 	schedule(callback: () => void, delayMs: number): unknown;
@@ -124,8 +126,19 @@ export function createBoundaryTimer(readSchedule: () => BoundarySchedule | undef
 			armed = undefined;
 			// Every live frontend re-reads the target it displays; each draws the current target, so the
 			// boundary redraws the UI as it stands now rather than any context captured when it was armed.
-			for (const one of [...registrations]) one.render();
-			sync();
+			for (const one of [...registrations]) {
+				try {
+					one.render();
+				} catch {
+					reportDiagnostic("[model-cost] Boundary redraw failed; continuing other frontends.");
+				}
+			}
+			// This callback owns the later schedule read too: a raw Pi timeout has no host catch.
+			try {
+				sync();
+			} catch {
+				reportDiagnostic("[model-cost] Boundary rescheduling failed; a later sync can resume.");
+			}
 		}, Math.max(1, boundary - schedule.at));
 		armed = { boundary, host: registration.host, handle, registration };
 	};
