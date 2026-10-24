@@ -3,7 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "bun test",
+    "test": "bun test --parallel=12",
+    "test:serial": "bun test",
     "test:dock": "bun test tests/harness-dock --parallel=4",
     "test:dock:serial": "bun test tests/harness-dock",
     "test:framework": "bun test tests/framework",
