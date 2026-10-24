@@ -357,6 +357,7 @@ describe("one enabled run injects one reminder however many requests it makes (B
 		writeFileSync(readTarget, "dock read target\n");
 		let first: ControlledSession | undefined;
 		let second: ControlledSession | undefined;
+		let continuation: CaptureServer | undefined;
 		try {
 			// The first process only enables the extension and takes its init turn.
 			first = await openSession(run);
@@ -368,7 +369,7 @@ describe("one enabled run injects one reminder however many requests it makes (B
 
 			// The resumed turn answers its first completion with a tool call, so that one
 			// enabled run reaches the provider twice: a run initiation is not a request.
-			const continuation = startCaptureServer({
+			continuation = startCaptureServer({
 				dir: path.join(run.runRoot.path, "captures-continuation"),
 				toolCall: { name: "read", arguments: JSON.stringify({ path: readTarget }), times: 1 },
 			});
@@ -399,7 +400,11 @@ describe("one enabled run injects one reminder however many requests it makes (B
 		} finally {
 			await stopQuietly(second);
 			await stopQuietly(first);
-			disposeRun(run);
+			try {
+				continuation?.stop();
+			} finally {
+				disposeRun(run);
+			}
 		}
 	}, 240_000);
 });

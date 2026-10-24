@@ -102,6 +102,7 @@ interface NativeSurface {
 	readonly observed: Observed[];
 	/** The session-facts deliveries the framework dispatched, in call order. */
 	readonly factsObserved: ObservedFacts[];
+	readonly boundaryFacts: ObservedFacts[];
 	/** The actual session facts each start delivery carried, in call order. */
 	readonly startFacts: SessionEventDelivery["session"][];
 	/** Marker-area content in call order: the lines, or `undefined` for a cleared widget. */
@@ -153,6 +154,7 @@ function boundSurface(
 	const notifications: string[] = [];
 	const observed: Observed[] = [];
 	const factsObserved: ObservedFacts[] = [];
+	const boundaryFacts: ObservedFacts[] = [];
 	const startFacts: SessionEventDelivery["session"][] = [];
 	const widgets: Array<readonly string[] | undefined> = [];
 	/** The name each session manager holds, as the harness's own state holds it. */
@@ -246,9 +248,13 @@ function boundSurface(
 	const events: ImplementationEventHandlers<{}> = {
 		session_start: (_state, delivery: SessionEventDelivery) => {
 			startFacts.push(delivery.session);
+			boundaryFacts.push({ event: delivery.event, session: delivery.session, owner: delivery.owner });
 			observed.push(observationOf(delivery));
 		},
-		session_end: (_state, delivery: SessionEventDelivery) => void observed.push(observationOf(delivery)),
+		session_end: (_state, delivery: SessionEventDelivery) => {
+			observed.push(observationOf(delivery));
+			boundaryFacts.push({ event: delivery.event, session: delivery.session, owner: delivery.owner });
+		},
 		session_facts: (_state, delivery: SessionEventDelivery) =>
 			void factsObserved.push({ event: delivery.event, session: delivery.session, owner: delivery.owner }),
 	};
@@ -268,6 +274,7 @@ function boundSurface(
 		notifications,
 		observed,
 		factsObserved,
+		boundaryFacts,
 		startFacts,
 		widgets,
 		startSession: facts => deliver({ type: "session_start" }, facts),
@@ -379,6 +386,21 @@ describe("the semantic events one native transition produces (F5, P7)", () => {
 		]);
 	});
 
+	test("a transfer carries each actual session's identity and latest name to the subscriber", () => {
+		const surface = boundSurface(CODEBASE_TOOLS);
+		const first: SessionFacts = { sessionId: "A", name: "name-A", statePayloads: [] };
+		surface.startSession(first);
+		surface.renameSession(first, "name-A-renamed");
+		surface.switchSession({ sessionId: "B", name: "name-B", statePayloads: [] }, "new");
+		expect(surface.boundaryFacts.map(({ event, owner, session }) => ({
+			kind: event.kind, owner, id: session.sessionId, name: session.name,
+		}))).toEqual([
+			{ kind: "session_start", owner: { kind: "owner", key: "main:A" }, id: "A", name: "name-A" },
+			{ kind: "session_end", owner: { kind: "owner", key: "main:A" }, id: "A", name: "name-A-renamed" },
+			{ kind: "session_start", owner: { kind: "owner", key: "main:B" }, id: "B", name: "name-B" },
+		]);
+	});
+
 	test("each native transition reason maps onto the framework's own vocabulary", () => {
 		const cases: ReadonlyArray<{
 			readonly native: string;
@@ -424,6 +446,11 @@ describe("the semantic events one native transition produces (F5, P7)", () => {
 			surface.startSession({ sessionId: "session-first", statePayloads: [] });
 			entry.deliver(surface, { sessionId: "session-second", statePayloads: [] });
 
+			expect(surface.boundaryFacts.slice(1).map(({ session, owner }) => ({ id: session.sessionId, owner }))).toEqual([
+				{ id: "session-first", owner: { kind: "owner", key: "main:session-first" } },
+				{ id: "session-second", owner: { kind: "owner", key: "main:session-second" } },
+			]);
+			expect(surface.boundaryFacts[1]!.session.startup).toBeUndefined();
 			expect({ native: entry.native, transitions: surface.observed.slice(1).map(seen => seen.event) }).toEqual({
 				native: entry.native,
 				transitions: [
@@ -432,6 +459,16 @@ describe("the semantic events one native transition produces (F5, P7)", () => {
 				],
 			});
 		}
+	});
+
+	test("same-owner navigation refreshes facts without a boundary and shutdown drops startup readings", () => {
+		const surface = boundSurface(CODEBASE_TOOLS, { nameChange: "absent" });
+		surface.startSession({ sessionId: "A", name: "before", model: { provider: "provider", id: "model" }, statePayloads: [] });
+		surface.switchSession({ sessionId: "A", name: "after", statePayloads: [] }, "resume");
+		expect(surface.boundaryFacts).toHaveLength(1);
+		surface.shutdown({ sessionId: "A", name: "after", statePayloads: [] });
+		expect(surface.boundaryFacts[1]!.session).toMatchObject({ sessionId: "A", name: "after" });
+		expect(surface.boundaryFacts[1]!.session.startup).toBeUndefined();
 	});
 
 	test("the harness's shutdown disposes the owner this binding serves", () => {

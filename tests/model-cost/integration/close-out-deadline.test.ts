@@ -16,19 +16,20 @@
  * and no fake timer can stand in for it. Each case therefore declares a small close-out wait of its own
  * and states what it measured on the real clock rather than waiting out a default.
  */
-import { afterEach, describe, expect, test } from "bun:test";
+import { afterEach, describe, expect, spyOn, test } from "bun:test";
+import * as fs from "node:fs/promises";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
 import { MODEL_COST } from "../../../extensions/model-cost/definition";
 import type { ConsumptionDocument } from "../../../extensions/model-cost/shared-logic/foundation/session/consumption-document"
 import type { ModelPricingData } from "../../../extensions/model-cost/shared-logic/business/pricing/model-data";
-import { createModelCostRuntime, modelCostImplementation } from "../../../extensions/model-cost/shared-logic/runtime";
+import { createModelCostRuntime, modelCostImplementation, type ModelCostRuntime } from "../../../extensions/model-cost/shared-logic/runtime";
 import type { SessionFacts, TurnUsage } from "../../../framework/interface/session";
 import type { OwnerReference } from "../../../framework/interface/state";
 import type { TurnSignal } from "../../../framework/runtime/port";
 import { updateFile } from "../../../framework/interface/general/files";
-import { type PortDouble, portDouble } from "../../framework/support/harness-port-double";
+import { type PortDouble, type RoundBoundary, portDouble } from "../../framework/support/harness-port-double";
 
 /** The self-made pricing data: one monetary provider with one tier, and no allowance channel. */
 const DATA: ModelPricingData = {
@@ -94,12 +95,13 @@ function documentOf(file: string): { readonly document: ConsumptionDocument | un
 }
 
 /** One bound extension over its own storage root, with the session's Round open and consuming. */
-async function boundSession(file: string): Promise<PortDouble> {
+async function boundSession(file: string, observeRuntime: (runtime: ModelCostRuntime) => void = () => {}): Promise<PortDouble> {
 	const root = path.dirname(file);
 	const double = portDouble();
 	double.bind(MODEL_COST, {
 		config: { reader: () => `storageDir: ${root}\nbalanceTtlMs: 30000\ncodexQuotaTtlMs: 15000\n` },
-		factory: modelCostImplementation(context => createModelCostRuntime({
+		factory: modelCostImplementation(context => {
+			const runtime = createModelCostRuntime({
 				config: { storageDir: root },
 				configDirectory: root,
 				userHomeDirectory: root,
@@ -107,7 +109,10 @@ async function boundSession(file: string): Promise<PortDouble> {
 				data: DATA,
 				session: context.session,
 				now: () => T0,
-			})),
+			});
+			observeRuntime(runtime);
+			return runtime;
+		}),
 	});
 	double.deliverSession(OWNER, { session: MAIN, event: { kind: "session_start", reason: "initial" } });
 	await double.initiateRun(OWNER);
@@ -128,6 +133,76 @@ async function boundSession(file: string): Promise<PortDouble> {
 }
 
 describe("a disposed session's commit spends what is left of its close-out (P30, P31)", () => {
+	for (const outcome of ["success", "failure"] as const) {
+		test(`an update already publishing across the deadline reports its actual ${outcome}`, async () => {
+			const file = path.join(isolatedRoot(), CONSUMPTION_FILE);
+			const settled = Promise.withResolvers<void>();
+			const double = await boundSession(file, runtime => {
+				const commit = runtime.storage.commit.bind(runtime.storage);
+				runtime.storage.commit = async (...args) => {
+					try { return await commit(...args); }
+					finally { setImmediate(() => settled.resolve()); }
+				};
+			});
+			const begun = Promise.withResolvers<string>();
+			const release = Promise.withResolvers<void>();
+			const rename = fs.rename;
+			// This is the real update's publication, after lock acquisition, reading and business update.
+			// Forward the actual filesystem call; neither a queued save nor a fabricated commit result
+			// can satisfy this gate. Removing its own staging file supplies a real I/O failure case.
+			const gate = spyOn(fs, "rename").mockImplementation(async (source, target) => {
+				if (String(target) === file) {
+					begun.resolve(String(source));
+					await release.promise;
+				}
+				await rename(source, target);
+			});
+			let disposal: Promise<RoundBoundary> | undefined;
+			try {
+				disposal = double.deliverDisposal(OWNER, { session: MAIN, closeOutWaitMs: CONTROLLED_MS });
+				const staging = await Promise.race([
+					begun.promise,
+					disposal.then(() => { throw new Error("close-out ended before the actual publication gate was reached"); }),
+				]);
+				expect(documentOf(file).hasRecord).toBe(false);
+				expect(double.observations.read(MAIN.sessionId)?.commits).toBeUndefined();
+				// This integration deliberately crosses the platform's real close-out deadline while
+				// its actual filesystem publication is held; fake time cannot drive that mechanism.
+				await Bun.sleep(CONTROLLED_MS + 50);
+				const deadline = await disposal;
+				expect(documentOf(file).hasRecord).toBe(false);
+				expect(double.observations.read(MAIN.sessionId)?.commits).toBeUndefined();
+				expect(deadline.feedback.map(notice => notice.message).join("\n")).not.toMatch(/已保存|保存成功|写入成功/);
+				if (outcome === "failure") rmSync(staging);
+				release.resolve();
+				// The real store's answer and the accounting continuation, not a second disposal,
+				// establish when the final feedback and commit notice can be read.
+				await settled.promise;
+				if (outcome === "success") {
+					const actual = documentOf(file);
+					expect(actual.hasRecord).toBe(true);
+					expect(actual.document?.harnesses[HARNESS]?.sessions[0]?.own).toEqual({
+						official: { "model-alpha": { tokens: { input: 1_000, cacheRead: 0, cacheWrite: 0, output: 1_000 }, costCny: 0.01 } },
+					});
+					expect(double.observations.read(MAIN.sessionId)?.commits).toBe(1);
+					expect(deadline.feedback).toEqual([]);
+				} else {
+					expect(documentOf(file).document).toBeUndefined();
+					expect(double.observations.read(MAIN.sessionId)?.commits).toBeUndefined();
+					expect(deadline.feedback.map(notice => notice.message).join("\n")).toContain("没有写入");
+				}
+			} finally {
+				release.resolve();
+				try {
+					if (disposal !== undefined) {
+						await disposal;
+						await settled.promise;
+					}
+				} finally { gate.mockRestore(); }
+			}
+		});
+	}
+
 	test("a wait the close-out gave up is reported as consumption that was not written, and the document holds none of it", async () => {
 		const root = isolatedRoot();
 		const file = path.join(root, CONSUMPTION_FILE);
@@ -144,6 +219,7 @@ describe("a disposed session's commit spends what is left of its close-out (P30,
 			},
 			{ timeoutMs: 5_000 },
 		);
+		try {
 		await holderInside.promise;
 
 		const double = await boundSession(file);
@@ -181,6 +257,10 @@ describe("a disposed session's commit spends what is left of its close-out (P30,
 		holderRelease.resolve();
 		expect(await holding).toEqual({ held: "the writer that owns the lock" });
 		expect(documentOf(file).document as unknown).toEqual({ held: "the writer that owns the lock" });
+		} finally {
+			holderRelease.resolve();
+			await holding;
+		}
 	});
 
 	test("a close-out whose commit concludes writes the record, and neither a notice nor a deadline statement is published", async () => {
@@ -188,13 +268,9 @@ describe("a disposed session's commit spends what is left of its close-out (P30,
 		const file = path.join(root, CONSUMPTION_FILE);
 		const double = await boundSession(file);
 
-		const startedAt = performance.now();
 		const disposal = await double.deliverDisposal(OWNER, { session: MAIN, closeOutWaitMs: CONTROLLED_MS * 10 });
-		const heldFor = performance.now() - startedAt;
 
-		// The commit landed well inside the wait it was given, so the host was answered with it: nothing
-		// waited for the deadline, and nothing was stated as unconfirmed.
-		expect(heldFor).toBeLessThan(CONTROLLED_MS);
+		// The actual result, not an additional latency promise, establishes that this commit concluded.
 		expect(double.diagnostics).toEqual([]);
 		expect(disposal.feedback).toEqual([]);
 		// The record is the one the session's own usage makes, at the off-peak tier this instant is in:

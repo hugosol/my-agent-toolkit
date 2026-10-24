@@ -187,6 +187,7 @@ describe("fully guarded responses", () => {
 			},
 		});
 		const error = await failureOf(http.request("https://user:secret@example.test/", { timeoutMs: 40 }), "timeout");
+		if (!(reason instanceof Error)) throw new Error("native timeout did not report an Error reason");
 		expect(error).toBe(reason);
 		expect(diagnostics).toEqual(["HTTP timeout failure (TimeoutError)"]);
 	});
@@ -238,19 +239,28 @@ describe("the wait budget", () => {
 		expect(elapsed).toBeLessThan(800);
 	});
 
-	test("with neither declared, the built-in budget is far longer than any declared one", async () => {
-		// The built-in value is 30000ms; a unit test does not wait it out. What this observes is
-		// that no *short* deadline is imposed when nothing declares one: the request that does
-		// declare a budget runs out first, and the built-in one is still waiting at that moment.
-		// The exact built-in is measured against a hanging target in the isolated smoke.
-		const { http, sent } = httpUnderTest({ config: "http:\n  defaultTimeoutMs: 250\n" });
-
-		await http.request("http://127.0.0.1:9/user/balance");
-		await http.request("http://127.0.0.1:9/user/balance", { timeoutMs: 60 });
-
-		await abortedAfter(sent[1]!.init.signal);
+	test("with neither declared, the built-in 30000ms budget aborts the pending request", async () => {
+		// A genuinely empty configuration supplies no shared deadline. Keep the real native
+		// budget: neither a shortened fixture default nor a fake timer can prove this contract.
+		const { http, sent, diagnostics } = httpUnderTest({
+			config: "{}\n",
+			respond: ({ init }) => {
+				const pending = Promise.withResolvers<Response>();
+				init.signal.addEventListener("abort", () => pending.reject(init.signal.reason), { once: true });
+				return pending.promise;
+			},
+		});
+		const started = performance.now();
+		const builtIn = http.request("http://127.0.0.1:9/user/balance");
+		const declared = http.request("http://127.0.0.1:9/user/balance", { timeoutMs: 60 });
+		await failureOf(declared, "timeout");
 		expect(sent[0]!.init.signal.aborted).toBe(false);
-	});
+		const error = await failureOf(builtIn, "timeout");
+		expect(performance.now() - started).toBeGreaterThanOrEqual(29_000);
+		expect(sent[0]!.init.signal.aborted).toBe(true);
+		expect(error).toBe(sent[0]!.init.signal.reason);
+		expect(diagnostics).toEqual(["HTTP timeout failure (TimeoutError)", "HTTP timeout failure (TimeoutError)"]);
+	}, 45_000);
 
 	test("a budget that is not a wait this timer schedules is refused before anything is sent", async () => {
 		for (const timeoutMs of [0, -1, 1.5, Number.NaN, Number.POSITIVE_INFINITY, 2 ** 31]) {

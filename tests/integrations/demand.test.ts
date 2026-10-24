@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import { appendFileSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import { appendFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -412,17 +413,18 @@ export const implementation = defineImplementation({
 		expect(ids.some(id => id.startsWith("delivery:"))).toBe(false);
 	});
 
-	test("does not import or execute extension code", () => {
+	test.each([false, true])("does not import or execute extension code (top-level throw: %s)", throws => {
 		const root = fixtureRoot();
-		const flag = `__demandExecuted_${Math.random().toString(36).slice(2)}`;
+		const sentinel = join(root, "extension-executed.txt");
 		write(root, "extensions/never-run/definition.ts", `import { defineExtension } from "../../framework/interface";
 
 export const NEVER = defineExtension({ id: "never-run", displayName: "Never run" });
 `);
-		write(root, "extensions/never-run/implementation.ts", `import { defineImplementation } from "../../framework/interface/details/implementation";
+		write(root, "extensions/never-run/implementation.ts", `import { appendFileSync } from "node:fs";
+import { defineImplementation } from "../../framework/interface/details/implementation";
 
-throw new Error("the demand analyzer executed the extension module");
-(globalThis as unknown as Record<string, boolean>)["${flag}"] = true;
+appendFileSync(${JSON.stringify(sentinel)}, "module\\n");
+${throws ? 'throw new Error("the demand analyzer executed the extension module");' : ""}
 
 export const implementation = defineImplementation({
 	create: () => {
@@ -439,9 +441,20 @@ export const implementation = defineImplementation({
 });
 `);
 
-		const globals: Record<string, boolean | undefined> = globalThis as unknown as Record<string, boolean | undefined>;
+		// Execute the exact fixture in a separate runtime: the observer must survive both an
+		// ordinary import and an import that throws after its externally visible side effect.
+		const control = spawnSync(process.execPath, [join(root, "extensions/never-run/implementation.ts")], {
+			cwd: root,
+			encoding: "utf8",
+			timeout: 10_000,
+		});
+		expect(control.error).toBeUndefined();
+		expect(control.status).toBe(throws ? 1 : 0);
+		expect(readFileSync(sentinel, "utf8")).toBe("module\n");
+		rmSync(sentinel);
+
 		const result = analyzeDemand({ root, extension: "never-run" });
-		expect(globals[flag]).toBeUndefined();
+		expect(existsSync(sentinel)).toBe(false);
 		expect(result.extension).toBe("never-run");
 		expect(contractIds(result)).toContain("port:onSession");
 	});

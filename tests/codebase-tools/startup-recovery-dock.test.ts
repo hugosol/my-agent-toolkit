@@ -198,23 +198,26 @@ test("pre-source-refactor OMP journal resumes without migration and preserves re
 	const file = path.join(run.runRoot.sessionDir, "historical.jsonl");
 	copyFileSync(path.join(REPO_ROOT, "tests/codebase-tools/fixtures/omp-state-before-source-refactor.jsonl"), file);
 	const before = entriesOf(file);
+	const historicalInitText = customMessages(before, INIT_IDENTITY)[0]?.content;
 	let session: ControlledSession | undefined;
 	try {
+		if (typeof historicalInitText !== "string") throw new Error("the frozen journal has no init message text");
 		session = await openSession(run, MANUAL_ENTRYPOINT, ["--session", file]);
 		expect((await session.prompt("post-refactor historical replay")).status).toBe("completed");
 		expect(statePayloadsOf(file)).toEqual([{ enabled: true }]);
 		expect(customMessages(entriesOf(file), INIT_IDENTITY)).toHaveLength(1);
 		expect(customMessages(entriesOf(file), REMINDER_IDENTITY)).toHaveLength(1);
 		const messages = (((requestAt(run, 0).json ?? {}) as CapturedBody).messages ?? []).map(message => messageText(message.content));
-		// The two current resource files have identical text. Journal identities above distinguish
-		// retained init from appended reminder; the request must carry both, in history order.
-		expect(messages.filter(text => text.includes(INIT_PROMPT))).toHaveLength(2);
+		// The frozen init keeps its own bytes (including historical line endings), independently
+		// of today's resources. Both it and the current reminder must reach the request once,
+		// even when their texts happen to be identical; journal identities distinguish the slots.
+		expect(messages.filter(text => text.includes(historicalInitText) || text.includes(REMINDER_PROMPT))).toHaveLength(2);
 		// OMP may wrap user text with native request metadata; the historical words and their
 		// relative message order, not a Pi-shaped undecorated message, are the preserved contract.
 		const oldUser = messages.findIndex(text => text.includes("pre-refactor State compatibility sample"));
 		const oldReply = messages.findIndex(text => text.includes("dock-capture-reply"));
 		const newUser = messages.findIndex(text => text.includes("post-refactor historical replay"));
-		const historicalInit = messages.findIndex(text => text.includes(INIT_PROMPT));
+		const historicalInit = messages.findIndex(text => text.includes(historicalInitText));
 		const currentReminder = messages.length - 1;
 		expect(oldUser).toBeGreaterThanOrEqual(0);
 		expect(historicalInit).toBeGreaterThan(oldUser);

@@ -15,7 +15,14 @@ import { OUTBOX_LIMIT, Outbox, OutboxFlusher } from "../../extensions/connect-bo
 /** The queue's bound, as the contract fixes it. */
 const LIMIT = 16;
 
-const heartbeat = (): PushEnvelope => ({ sessionId: "s", kind: "heartbeat", data: { value: "working" } });
+type AgentState = "idle" | "working" | "awaiting-input";
+const heartbeat = (value: AgentState = "working"): PushEnvelope => ({ sessionId: "s", kind: "heartbeat", data: { value } });
+
+/** Same-session protocol values may recur; object identity still distinguishes every queued item. */
+function expectSequence(actual: PushEnvelope[], expected: PushEnvelope[]): void {
+	expect(actual).toEqual(expected);
+	for (const [index, envelope] of expected.entries()) expect(actual[index]).toBe(envelope);
+}
 const state = (value: string): PushEnvelope => ({ sessionId: "s", kind: "state", data: { value } });
 
 /** A 2xx answer, as the wire client reports one. */
@@ -97,35 +104,33 @@ describe("the outbox queue (E11)", () => {
 
 	test("is bounded at 16, dropping the oldest heartbeat for the 17th event", () => {
 		const outbox = new Outbox();
-		outbox.push(heartbeat());
-		for (let i = 0; i < LIMIT - 1; i += 1) outbox.push(state(`s${i}`));
-		expect(drain(outbox)).toHaveLength(LIMIT);
+		const oldest = heartbeat("idle");
+		const retained = Array.from({ length: LIMIT - 1 }, () => state("working"));
+		const initial = [oldest, ...retained];
+		for (const envelope of initial) outbox.push(envelope);
+		expectSequence(drain(outbox), initial);
 
-		// A 17th event must not grow the queue: the oldest heartbeat goes instead, and everything
-		// else keeps its place.
+		// The 17th event removes only the oldest heartbeat, retaining the complete FIFO order.
 		const full = new Outbox();
-		full.push(heartbeat());
-		for (let i = 0; i < LIMIT - 1; i += 1) full.push(state(`s${i}`));
-		full.push(state("newest"));
-
-		const sent = drain(full);
-		expect(sent).toHaveLength(LIMIT);
-		expect(sent.some(envelope => envelope.kind === "heartbeat")).toBe(false);
-		expect(sent[0]).toEqual(state("s0"));
-		expect(sent[sent.length - 1]).toEqual(state("newest"));
+		for (const envelope of initial) full.push(envelope);
+		const newest = state("awaiting-input");
+		full.push(newest);
+		expectSequence(drain(full), [...retained, newest]);
 	});
 
 	test("drops an older heartbeat rather than an older non-heartbeat event", () => {
 		const outbox = new Outbox();
-		outbox.push(state("old"));
-		for (let i = 0; i < LIMIT - 1; i += 1) outbox.push(heartbeat());
-		outbox.push(state("newest"));
+		const olderState = state("idle");
+		const oldestHeartbeat = heartbeat("idle");
+		const retained = Array.from({ length: LIMIT - 2 }, (_, index) =>
+			heartbeat(index % 2 === 0 ? "working" : "awaiting-input"));
+		const newest = state("working");
+		for (const envelope of [olderState, oldestHeartbeat, ...retained]) outbox.push(envelope);
+		outbox.push(newest);
 
-		const sent = drain(outbox);
-		expect(sent).toHaveLength(LIMIT);
-		// The oldest state event is still first, and one heartbeat fewer is left behind.
-		expect(sent[0]).toEqual(state("old"));
-		expect(sent.filter(envelope => envelope.kind === "heartbeat")).toHaveLength(LIMIT - 2);
+		// Value and identity observe all 16 survivors: dropping the newest heartbeat, another
+		// equal-valued heartbeat, or the older state cannot masquerade as dropping the oldest beat.
+		expectSequence(drain(outbox), [olderState, ...retained, newest]);
 	});
 
 	test("falls back to the oldest event when the queue holds no heartbeat at all", () => {
@@ -133,13 +138,14 @@ describe("the outbox queue (E11)", () => {
 		// unreachable while the heartbeat is the queue's only periodic source, and it is kept — and
 		// asserted — so a full queue can never grow without bound.
 		const outbox = new Outbox();
-		for (let i = 0; i < LIMIT; i += 1) outbox.push(state(`s${i}`));
-		outbox.push(state("newest"));
+		const oldest = state("idle");
+		const retained = Array.from({ length: LIMIT - 1 }, (_, index) =>
+			state(index % 2 === 0 ? "working" : "awaiting-input"));
+		const newest = state("idle");
+		for (const envelope of [oldest, ...retained]) outbox.push(envelope);
+		outbox.push(newest);
 
-		const sent = drain(outbox);
-		expect(sent).toHaveLength(LIMIT);
-		expect(sent[0]).toEqual(state("s1"));
-		expect(sent[sent.length - 1]).toEqual(state("newest"));
+		expectSequence(drain(outbox), [...retained, newest]);
 	});
 
 	test("drops everything pending on clear() without ending the queue", () => {

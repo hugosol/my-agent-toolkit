@@ -93,18 +93,26 @@ describe("session facts field reporting", () => {
 	});
 
 	test("prints field status and location without a field suggestion", () => {
+		const diagnosticSuggestion = "Keep this legitimate diagnostic suggestion outside the field report.";
 		const result = compareDemand(sessionDemand, {
 			adapter: "target",
 			exists: true,
 			supplies: [{ contractId: "framework:session-facts", status: "provided" }],
 			sessionFacts: fieldReport,
-			diagnostics: [],
+			diagnostics: [{
+				code: "supply/example",
+				file: "adapters/target/diagnostic.ts",
+				line: 1,
+				column: 1,
+				message: "A separate supply diagnostic.",
+				suggestion: diagnosticSuggestion,
+			}],
 		});
 		const lines: string[] = [];
 		const original = console.log;
 		console.log = (...args: unknown[]) => { lines.push(args.join(" ")); };
 		try {
-			printIntegrationReport({ stage: "integration-contracts", behaviorTestsRun: false, complete: true, results: [result] });
+			printIntegrationReport({ stage: "integration-contracts", behaviorTestsRun: false, complete: result.complete, results: [result] });
 		} finally {
 			console.log = original;
 		}
@@ -112,5 +120,19 @@ describe("session facts field reporting", () => {
 		expect(text).toContain("session-facts mapping DECLARED adapters/target/session.ts:4:30");
 		expect(text).toContain("MAPPED sessionId (adapters/target/session.ts:5:2)");
 		expect(text).toContain("UNAVAILABLE agentName — pi reports no agent definition (adapters/target/session.ts:9:12)");
+		expect(text).toContain(diagnosticSuggestion);
+		const fieldStart = lines.findIndex(line => line.includes("session-facts mapping "));
+		const diagnosticStart = lines.findIndex(line => line.includes("[supply/example]"));
+		expect(fieldStart).toBeGreaterThanOrEqual(0);
+		expect(diagnosticStart).toBeGreaterThan(fieldStart);
+		const fieldRegion = lines.slice(fieldStart, diagnosticStart).join("\n");
+		// Only the field region has the no-suggestions contract. A new extra line or an
+		// appended suggestion must fail without banning ordinary diagnostic suggestions.
+		expect(fieldRegion).toBe([
+			"    session-facts mapping DECLARED adapters/target/session.ts:4:30",
+			"      MAPPED sessionId (adapters/target/session.ts:5:2)",
+			"      UNAVAILABLE agentName — pi reports no agent definition (adapters/target/session.ts:9:12)",
+		].join("\n"));
+		expect(fieldRegion).not.toMatch(/suggest(?:ion)?|recommend/i);
 	});
 });

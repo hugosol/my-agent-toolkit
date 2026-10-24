@@ -698,11 +698,19 @@ describe("the balance keeps its two warnings (P67)", () => {
 		expect(error.host.draw(200).lines[0]).toContain("\u{1F4B0} Balance: \u00ABerror:\u00A54.99\u00BB");
 
 		// Exactly ten and exactly five are not yet the next warning: both comparisons are strictly below.
-		const ten = await bindVisual({ balanceTotal: "10.00", drawing: "lines" });
-		expect(ten.host.plain()?.[0]).toContain("\u{1F4B0} Balance: \u00A510.00");
+		const ten = await bindVisual({ balanceTotal: "10.00" });
+		const tenDraw = ten.host.draw(200);
+		expect(tenDraw.lines[0]).toContain("\u{1F4B0} Balance: \u00ABtext:\u00A510.00\u00BB");
+		expect(tenDraw.painted).toContainEqual({ color: "text", text: "\u00A510.00" });
+		const tenPlain = await bindVisual({ balanceTotal: "10.00", drawing: "lines" });
+		expect(tenPlain.host.plain()?.[0]).toContain("\u{1F4B0} Balance: \u00A510.00");
 
-		const five = await bindVisual({ balanceTotal: "5.00", drawing: "lines" });
-		expect(five.host.plain()?.[0]).toContain("\u{1F4B0} Balance: \u00A55.00");
+		const five = await bindVisual({ balanceTotal: "5.00" });
+		const fiveDraw = five.host.draw(200);
+		expect(fiveDraw.lines[0]).toContain("\u{1F4B0} Balance: \u00ABwarning:\u00A55.00\u00BB");
+		expect(fiveDraw.painted).toContainEqual({ color: "warning", text: "\u00A55.00" });
+		const fivePlain = await bindVisual({ balanceTotal: "5.00", drawing: "lines" });
+		expect(fivePlain.host.plain()?.[0]).toContain("\u{1F4B0} Balance: \u00A55.00");
 	});
 });
 

@@ -289,16 +289,25 @@ describe("the CLI's prefetch asks once, and a settled request checks its reading
 		const bound = await bindBalance({ ttlMs: 1_000 });
 		const successAt = CLOCK;
 
-		// Time passes with no settled request at all — the TTL expiring is not a trigger, and there is
-		// no timer behind it: the endpoint is never asked again by the mere passing of its budget.
-		bound.clock.now = successAt + 10_000_000;
+		expect(bound.runtime.presentation.balance().reading?.obtainedAt).toBe(successAt);
+
+		// The same prefetched reading remains fresh one millisecond inside the configured TTL.
+		bound.clock.now = successAt + 999;
+		turnOf(bound.double, bound.clock.now, DEEPSEEK);
+		await drain();
+		expect(bound.sent).toHaveLength(0);
+		expect(bound.runtime.presentation.balance().reading?.obtainedAt).toBe(successAt);
+
+		// Reaching the boundary alone sends nothing: only the next settled request checks expiry.
+		bound.clock.now = successAt + 1_000;
 		await drain();
 		expect(bound.sent).toHaveLength(0);
 
-		// The configured 1000ms, not the default 30000ms, is what this reading's next usage compares to.
+		// Exactly 1000ms after that same success, the configured TTL (not 30000ms) has expired.
 		turnOf(bound.double, bound.clock.now, DEEPSEEK);
 		await drain();
 		expect(bound.sent).toHaveLength(1);
+		expect(bound.runtime.presentation.balance().reading?.obtainedAt).toBe(successAt + 1_000);
 	});
 
 	test("only the request's own provider triggers the check; another provider's usage queries nothing", async () => {

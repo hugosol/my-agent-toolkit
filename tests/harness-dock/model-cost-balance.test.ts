@@ -51,7 +51,7 @@ import {
 } from "./capture-server";
 import { DOCK_CAPTURE_BASE_URL_ENV } from "./fixtures/extension-root/provider";
 import { type RunRoot, createRunRoot } from "./run-root";
-import { ControlledSession, type RpcFrame } from "./session";
+import { ControlledSession, type PromptOutcome, type RpcFrame } from "./session";
 import { settled, turn } from "../support/pending-query";
 
 const record = readBaselineRecord();
@@ -314,8 +314,10 @@ describe("the CLI's startup prefetch really leaves the process, and the first ex
 
 	test("the first model request is not issued until the prefetch's query has been answered", async () => {
 		const run = await startRun("model-cost-balance-gate", { total: "120.00", holdFrom: 1 });
+		let prompt: Promise<PromptOutcome> | undefined;
 		try {
-			const prompt = run.session.prompt("one exchange while the balance query is out");
+			prompt = run.session.prompt("one exchange while the balance query is out");
+			void prompt.catch(() => {});
 			const promptSettled = settled(prompt);
 			await waitFor("the prefetch's balance query to arrive", () => balanceCallsBy(run, 1));
 
@@ -336,7 +338,12 @@ describe("the CLI's startup prefetch really leaves the process, and the first ex
 			expect(run.capture.arrivals()).toEqual(["balance", "model"]);
 			expect(await widgetTextWhere(run.session, text => text.includes("Balance:"))).toContain("Balance: \u00A5120.00");
 		} finally {
-			await disposeRun(run);
+			try {
+				run.capture.releaseBalance();
+				await prompt?.catch(() => {});
+			} finally {
+				await disposeRun(run);
+			}
 		}
 	}, 300_000);
 
@@ -366,6 +373,7 @@ describe("the CLI's startup prefetch really leaves the process, and the first ex
 describe("a balance query that never answers does not hold the work (P40)", () => {
 	test("the next exchange is issued while the query is still out, and the query it meets is the one it joins", async () => {
 		const run = await startRun("model-cost-balance-hang", { total: "0.00", holdFrom: 1 });
+		let second: Promise<PromptOutcome> | undefined;
 		try {
 			// The first exchange: its model request waits for the prefetch, whose 5000ms business budget is
 			// what ends that wait — the endpoint never answers it — so the exchange completes and the
@@ -377,7 +385,8 @@ describe("a balance query that never answers does not hold the work (P40)", () =
 			// No reading was obtained, so that exchange's settled request begins the next query, and it is
 			// still out — the endpoint holds it — while the next exchange runs.
 			await waitFor("the settled request's own balance query to arrive", () => balanceCallsBy(run, 2));
-			const second = run.session.prompt("one exchange while that query is still out");
+			second = run.session.prompt("one exchange while that query is still out");
+			void second.catch(() => {});
 			await waitFor("the second exchange's model request to arrive", () => requestsBy(run, 2));
 
 			// The model request really was issued while the balance query had arrived and been answered
@@ -389,7 +398,16 @@ describe("a balance query that never answers does not hold the work (P40)", () =
 			expect(await widgetTextWhere(run.session, text => text.includes("Balance:"))).toContain(
 				"Balance: unavailable (unreachable)",
 			);
-			expect(run.session.stderr()).toBe("");
+			// The HTTP contract (framework-capabilities.md, General HTTP) requires
+			// one sanitized technical diagnostic per failed operation, including its
+			// failure kind and standard error name. This is not a business notice.
+			const diagnostics = run.session.stderr().trim().split("\n");
+			expect(diagnostics).toHaveLength(1);
+			expect(diagnostics[0]).toMatch(/\btimeout\b/i);
+			expect(diagnostics[0]).toContain("TimeoutError");
+			expect(
+				run.session.frames().filter(frame => frame.type === "extension_ui_request" && frame.method === "notify"),
+			).toEqual([]);
 
 			// Released, the query answers, and the live instance accepts the reading it was holding: the
 			// endpoint's own amount replaces the failure, and no third query was begun for it.
@@ -401,7 +419,12 @@ describe("a balance query that never answers does not hold the work (P40)", () =
 				"Balance: \u00A50.0000",
 			);
 		} finally {
-			await disposeRun(run);
+			try {
+				run.capture.releaseBalance();
+				await second?.catch(() => {});
+			} finally {
+				await disposeRun(run);
+			}
 		}
 	}, 300_000);
 
@@ -420,8 +443,7 @@ describe("a balance query that never answers does not hold the work (P40)", () =
 			expect(exit.timedOut).toBe(false);
 			expect(run.capture.arrivals()).toEqual(["balance", "model", "balance"]);
 		} finally {
-			run.capture.stop();
-			run.runRoot.dispose();
+			await disposeRun(run);
 		}
 	}, 300_000);
 });

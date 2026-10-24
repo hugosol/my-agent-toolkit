@@ -24,6 +24,9 @@ import type {
 	OmpSessionContext,
 } from "../../adapters/omp";
 import * as frameworkOmp from "../../adapters/omp";
+import { observeTurns } from "../../adapters/omp/native/extensibility/extensions/turn";
+import { sessionFactsOf, ownerReferenceOf } from "../../adapters/omp/native/extensibility/extensions/session-facts";
+import { feedbackTransport } from "../../adapters/omp/native/extensibility/extensions/feedback";
 import type { CatalogPriceSource } from "../../framework/interface/provider";
 import type {
 	RoundDelivery,
@@ -395,14 +398,33 @@ describe("the native model-cycle facts map to the framework's Turn facts (P57)",
 
 	test("a streamed reading is reported once per distinct usage, never as the final one", () => {
 		const surface = boundSurface();
+		// Observe the actual native mapper's output as well as the extension's Turn edges: the
+		// shared dispatcher intentionally keeps streaming evidence private until settlement.
+		const mapped: TurnSignal[] = [];
+		observeTurns(surface.api, facts => mapped.push(facts.signal), {
+			frame: ctx => ({ owner: ownerReferenceOf(surface.api, ctx), hasUI: ctx.hasUI, feedback: feedbackTransport(ctx) }),
+			session: ctx => sessionFactsOf(surface.api, ctx),
+			reportMissingFact: () => undefined,
+		});
 		surface.startRequest(MAIN);
 		surface.streamUsage(MAIN, assistantMessage({ usage: { input: 4, output: 0, cacheRead: 0, cacheWrite: 0, totalTokens: 4 } }));
 		surface.streamUsage(MAIN, assistantMessage({ usage: { input: 4, output: 0, cacheRead: 0, cacheWrite: 0, totalTokens: 4 } }));
 		surface.streamUsage(MAIN, assistantMessage({ usage: { input: 4, output: 2, cacheRead: 0, cacheWrite: 0, totalTokens: 6 } }));
 
 		// Two reports for three events: the unchanged repeat is not a fact this adapter reports.
+		expect(mapped.filter(signal => signal.kind !== "request_started")).toEqual([
+			{ kind: "usage_streamed", session: surface.starts[0]!.turn.session,
+				usage: { input: 4, output: 0, cacheRead: 0, cacheWrite: 0, totalTokens: 4 } },
+			{ kind: "usage_streamed", session: surface.starts[0]!.turn.session,
+				usage: { input: 4, output: 2, cacheRead: 0, cacheWrite: 0, totalTokens: 6 } },
+		]);
 		expect(surface.starts).toHaveLength(1);
 		expect(surface.ends).toHaveLength(0);
+		// Streaming readings are evidence, not final usage. The native all-zero default does
+		// not establish a final reading, so settlement must not promote the stream to final usage.
+		surface.messageEnds(MAIN, assistantMessage({ usage: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, totalTokens: 0 } }));
+		expect(surface.ends).toHaveLength(1);
+		expect(surface.ends[0]!.end.usage).toBeUndefined();
 	});
 
 	test("a round edge and a Turn of one session carry that session's own facts", () => {

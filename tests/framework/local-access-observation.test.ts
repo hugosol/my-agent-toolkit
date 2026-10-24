@@ -382,6 +382,13 @@ describe("the location record is where the access is, and nothing else (P26)", (
 			await until(() => recordsIn(ws.runtimeDirectory).length === 1, "the seat published no record");
 			const record = onlyRecord(ws.runtimeDirectory);
 			const before = readFileSync(path.join(ws.runtimeDirectory, recordsIn(ws.runtimeDirectory)[0]!), "utf8");
+			const artifacts = readdirSync(ws.runtimeDirectory, { withFileTypes: true });
+			expect(artifacts.filter(entry => entry.isFile()).map(entry => entry.name)).toEqual([...recordsIn(ws.runtimeDirectory)]);
+			const sockets = artifacts.filter(entry => entry.isSocket());
+			expect(artifacts.length).toBe(1 + sockets.length);
+			expect(sockets.map(entry => path.join(ws.runtimeDirectory, entry.name))).toEqual(
+				process.platform === "win32" ? [] : [record.endpoint],
+			);
 
 			await child.ready();
 			child.send({ t: "deliver", index: 0 });
@@ -394,7 +401,7 @@ describe("the location record is where the access is, and nothing else (P26)", (
 			expect(after).toBe(before);
 			// Nor does a reading leave a file behind: what crossed is not a file this framework reads.
 			expect(recordsIn(ws.runtimeDirectory)).toHaveLength(1);
-			expect(readdirSync(ws.runtimeDirectory)).toHaveLength(1);
+			expect(readdirSync(ws.runtimeDirectory).sort()).toEqual(artifacts.map(entry => entry.name).sort());
 			expect(after).not.toContain("child-of-record");
 			expect(after).not.toContain("4242");
 		} finally {
@@ -675,11 +682,13 @@ describe("one source's end is this side's own reading of it (P6, P7)", () => {
 		// seen the later one's: exactly the late word the order decides the fate of.
 		const late = reading("child-of-order", target.owner, { activity: "working", tokens: 300 });
 		const first = startObservationChild(planFor(ws, "ordered-first", target, [early, late], cwd.directory), { cwd: cwd.directory });
-		const second = startObservationChild(planFor(ws, "ordered-second", target, [later], cwd.directory), { cwd: cwd.directory });
+		let second: RunningObservationChild | undefined;
 		try {
 			// Both connections are admitted here in this order: the first process reaches the seat first,
 			// so the word it sends is the one of the earlier source.
 			await first.ready();
+			expect((await first.report()).reached).toBe(true);
+			second = startObservationChild(planFor(ws, "ordered-second", target, [later], cwd.directory), { cwd: cwd.directory });
 			await second.ready();
 			first.send({ t: "deliver", index: 0 });
 			await until(() => accepted.readings.length === 1, "the earlier process's reading never arrived");
@@ -713,7 +722,7 @@ describe("one source's end is this side's own reading of it (P6, P7)", () => {
 			expect(accepted.sources.slice(2)).toEqual([accepted.sources[2], accepted.sources[0]]);
 		} finally {
 			await ended(first);
-			await ended(second);
+			if (second) await ended(second);
 			publisher.dispose();
 			cwd.dispose();
 			ws.dispose();

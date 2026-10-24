@@ -154,7 +154,7 @@ function surfaceDouble(options: SurfaceOptions = {}): SurfaceDouble {
 				factory = frameworkOmp.ompAdapter(definition);
 				factories.set(definition.id, factory);
 			}
-			return factory(api);
+			return factory(reportedApi);
 		},
 		deliverMain(sessionId, event = "session_start") {
 			for (const registration of sessionHandlers) {

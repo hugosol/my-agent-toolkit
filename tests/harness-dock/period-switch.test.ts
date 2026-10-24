@@ -286,14 +286,15 @@ describe("the real host's period switch archives the period it closes and opens 
 			// Asking for the holiday again is idempotent on the real host too: the same answer, the same
 			// period, the same archives and no further balance query.
 			const repeatedBytes = readFileSync(run.consumptionFile, "utf8");
+			const queriesBeforeRepeat = run.capture.balanceCalls().length;
 			const refused = noticesOf(run.session).length;
 			expect((await run.session.prompt("/budget holiday")).status).toBe("completed");
 			const repeated = noticesOf(run.session).slice(refused);
 			expect(repeated).toHaveLength(1);
 			expect(repeated[0]?.level).toBe("info");
 			expect(readFileSync(run.consumptionFile, "utf8")).toBe(repeatedBytes);
-			expect(archiveNames(run.storageDirectory)).toHaveLength(2);
-			expect(run.capture.balanceCalls().length).toBeGreaterThanOrEqual(3);
+			expect(archiveNames(run.storageDirectory)).toEqual(holidayNames);
+			expect(run.capture.balanceCalls()).toHaveLength(queriesBeforeRepeat);
 		} finally {
 			await disposeRun(run);
 		}

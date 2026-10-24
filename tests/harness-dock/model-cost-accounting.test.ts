@@ -18,10 +18,10 @@
  * accounted at all and produces nothing, whatever the endpoint reported. That contrast is what makes
  * the notice evidence of the real wiring rather than decoration.
  *
- * The amounts themselves are observed at the extension's own seams: the pricing rules and the
- * accumulation — including the document a Round's end publishes — in
- * `tests/model-cost/request-accounting.test.ts`, which drives them with a self-made data set, and
- * the maintained data in the maintenance smoke (`scripts/model-cost-data-smoke.ts`).
+ * The reliable priced request also proves its own persisted usage and positive monetary contribution
+ * after the host closes the session. Exact pricing rules and accumulation are covered separately in
+ * `tests/model-cost/foundation/session/request-accounting.test.ts` with a self-made data set, and the
+ * maintained data in the maintenance smoke (`scripts/model-cost-data-smoke.ts`).
  *
  * The Round *end* this host produces is observed in `tests/harness-dock/round-facts.test.ts`: a real
  * session's settle is an end candidate the framework confirms on the host's own next task, so a run
@@ -31,7 +31,7 @@
  * ticket's evidence note.
  */
 import { beforeAll, describe, expect, test } from "bun:test";
-import { mkdirSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync } from "node:fs";
 import * as path from "node:path";
 import { writeProviderOverride } from "./agent-config";
 import { type IsolatedHarness, REPO_ROOT, ensureIsolatedHarness, readBaselineRecord } from "./baseline";
@@ -194,7 +194,32 @@ describe("a real request reaches the accounting with the host's own facts (P1, P
 		const run = await startRun("model-cost-usage", { selector: "deepseek/deepseek-flash", override: "deepseek" }, CAPTURE_USAGE);
 		try {
 			expect((await run.session.prompt("one priced exchange")).status).toBe("completed");
+			// The RPC prompt answers before the asynchronous Round-end save finishes. Observe its
+			// actual publication before closing stdin: process exit is not a save-completion barrier.
+			const deadline = Date.now() + 15_000;
+			while (!existsSync(run.home.consumptionFile)) {
+				if (Date.now() > deadline) {
+					throw new Error(`no consumption document was published at ${run.home.consumptionFile}; stderr: ${run.session.stderr()}`);
+				}
+				const nextTurn = Promise.withResolvers<void>();
+				setImmediate(nextTurn.resolve);
+				await nextTurn.promise;
+			}
+			expect((await run.session.stop()).exitCode).toBe(0);
 			expect(run.capture.requests()).toHaveLength(1);
+			const document = JSON.parse(readFileSync(run.home.consumptionFile, "utf8")) as {
+				harnesses: Record<string, { sessions: Array<{
+					own: Record<string, Record<string, { tokens: Record<string, number>; costCny?: number }>>;
+				}> }>;
+			};
+			const sessions = Object.values(document.harnesses).flatMap(bucket => bucket.sessions);
+			expect(sessions).toHaveLength(1);
+			const accounted = sessions[0]?.own.deepseek?.["deepseek-flash"];
+			// Wire prompt_tokens includes cache reads: ten total input minus three cached.
+			expect(accounted?.tokens).toEqual({ input: 7, cacheRead: 3, cacheWrite: 0, output: 7 });
+			// Both peak and off-peak maintained prices are positive; this wiring test need not
+			// freeze the wall-clock price or duplicate the maintained-data pricing oracle.
+			expect(accounted?.costCny).toBeGreaterThan(0);
 			// Nothing was skipped and no price was missing, so nothing is reported: the amount the
 			// extension's own data states is applied without an operator notice.
 			expect(noticesOf(run.session)).toEqual([]);

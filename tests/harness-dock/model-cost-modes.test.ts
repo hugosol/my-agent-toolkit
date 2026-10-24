@@ -403,9 +403,12 @@ interface SavedSession {
  * so the write lands a few event-loop turns later. The wait is on the expected content itself rather
  * than on a duration, and the deadline only keeps a save that never happened from hanging the case.
  */
-async function savedSession(file: string, accept: (record: SavedSession) => boolean): Promise<SavedSession> {
-	const deadline = Date.now() + 15_000;
-	const { promise, resolve } = Promise.withResolvers<void>();
+async function savedSession(
+	file: string,
+	accept: (record: SavedSession) => boolean,
+	now: () => number = Date.now,
+): Promise<SavedSession> {
+	const deadline = now() + 15_000;
 	for (;;) {
 		if (existsSync(file)) {
 			const document = JSON.parse(readFileSync(file, "utf8")) as {
@@ -415,9 +418,10 @@ async function savedSession(file: string, accept: (record: SavedSession) => bool
 				if (accept(record)) return record;
 			}
 		}
-		if (Date.now() > deadline) throw new Error(`no session record the case expects was published at ${file}`);
-		setImmediate(resolve);
-		await promise;
+		if (now() > deadline) throw new Error(`no session record the case expects was published at ${file}`);
+		const nextTurn = Promise.withResolvers<void>();
+		setImmediate(nextTurn.resolve);
+		await nextTurn.promise;
 	}
 }
 
@@ -431,6 +435,54 @@ async function savedSession(file: string, accept: (record: SavedSession) => bool
 function comparableBody(run: DockRun): string {
 	return JSON.stringify(capturedBody(run)).split(run.runRoot.path.replace(/\\/g, "/")).join("<run-root>");
 }
+
+describe("saved-session publication polling", () => {
+	test("observes a matching write from a later event-loop turn, not an unrelated record", async () => {
+		const root = createRunRoot("saved-session-later-turn");
+		const file = path.join(root.path, "consumption.json");
+		const wanted: SavedSession = { id: "wanted", name: "later", parent: null, saveVersion: 1, own: {} };
+		writeFileSync(file, JSON.stringify({ harnesses: { omp: { sessions: [{ ...wanted, id: "unrelated" }] } } }));
+		const written = Promise.withResolvers<void>();
+		setImmediate(() => setImmediate(() => {
+			try {
+				writeFileSync(file, JSON.stringify({ harnesses: { omp: { sessions: [wanted] } } }));
+				written.resolve();
+			} catch (error) {
+				written.reject(error);
+			}
+		}));
+		void written.promise.catch(() => {});
+		let clock = 0;
+		try {
+			// A deterministic clock bounds even a broken microtask-only polling loop.
+			expect(await savedSession(file, item => item.id === "wanted", () => (clock += 1_000))).toEqual(wanted);
+		} finally {
+			try {
+				await written.promise;
+			} finally {
+				root.dispose();
+			}
+		}
+	});
+
+	test("retains the full 15000ms deadline and reports a record that never appears", async () => {
+		const root = createRunRoot("saved-session-missing");
+		const file = path.join(root.path, "missing.json");
+		const times = [0, 15_000, 15_001];
+		let reads = 0;
+		try {
+			await expect(savedSession(file, () => true, () => {
+				reads += 1;
+				const time = times.shift();
+				if (time === undefined) throw new Error("polling ignored its publication deadline");
+				return time;
+			})).rejects.toThrow(`no session record the case expects was published at ${file}`);
+			expect(reads).toBe(3);
+		} finally {
+			root.dispose();
+		}
+	});
+});
 
 let patched: IsolatedHarness;
 

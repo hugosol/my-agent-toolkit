@@ -2,9 +2,9 @@
  * Dock fixture: an ordinary extension that consumes the host's public Viewed session outlet and
  * records exactly what it was handed, one JSON line per observation, in the run root.
  *
- * It is deliberately written against *only* the public extension contract — `getViewedSession()`
- * and `subscribeViewedSessionChanged()` on the context a command handler receives — so the same
- * file runs unchanged against the unpatched baseline install, where those members do not exist.
+ * It uses only the public extension contract: `getViewedSession()` and its subscription, plus
+ * `getContextUsage()` as the independent native reading for context comparisons. The same file
+ * runs unchanged against the unpatched baseline install, where the outlet members do not exist.
  * That is the control: the probe reports what it found instead of failing, and a run on the
  * baseline therefore reports an absent outlet rather than the outlet's behavior.
  */
@@ -16,6 +16,7 @@ export const VIEWED_PROBE_EVIDENCE_ENV = "DOCK_VIEWED_EVIDENCE";
 
 /** The public context a command handler receives, as far as the outlet is concerned. */
 interface ViewedProbeContext {
+	getContextUsage?(): { tokens: number; contextWindow: number } | undefined;
 	getViewedSession?(): unknown;
 	subscribeViewedSessionChanged?(listener: (facts: unknown) => void): () => void;
 }
@@ -28,7 +29,7 @@ interface ViewedProbeApi {
 	): void;
 }
 
-const ACTIONS = ["present", "read", "subscribe", "unsubscribe", "deliveries"] as const;
+const ACTIONS = ["present", "read", "context", "subscribe", "unsubscribe", "deliveries"] as const;
 
 export default function viewedSessionProbe(pi: ViewedProbeApi): void {
 	const evidenceFile = process.env[VIEWED_PROBE_EVIDENCE_ENV];
@@ -53,6 +54,10 @@ export default function viewedSessionProbe(pi: ViewedProbeApi): void {
 					return;
 				case "read":
 					record({ kind: "read", facts: ctx.getViewedSession?.() ?? null });
+					return;
+				case "context":
+					// Native own-session reading, independent of the outlet under test.
+					record({ kind: "context", context: ctx.getContextUsage?.() ?? null });
 					return;
 				case "subscribe":
 					unsubscribe = ctx.subscribeViewedSessionChanged?.(facts => {

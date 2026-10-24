@@ -48,8 +48,10 @@ internal invocation stay out of it. General's modules are their own direct entri
 extension-owned background failures: one stderr line outside model context, using the same sink as
 binding and HTTP diagnostics. Messages must omit credentials and sensitive payloads; this channel
 is distinct from operator-facing Feedback and must not call a failing notification callback again.
-The HTTP, file and configuration implementations stay in `framework/modules/http.ts`, `framework/modules/files.ts` and
-`framework/core/config.ts`; the configuration declaration an extension writes remains owned by
+The HTTP, file, configuration and diagnostics implementations stay in `framework/modules/http.ts`,
+`framework/modules/files.ts`, `framework/core/config.ts` and `framework/core/diagnostics.ts` respectively.
+Only each named entry's exact implementation edge is allowed; diagnostics does not open the core tree.
+The configuration declaration an extension writes remains owned by
 the root authoring contract. There is deliberately no `general/index.ts` aggregator, and the root
 authoring entry does not aggregate them. These are exact entries, not permission to import
 arbitrary framework internals: no reader, parser, source, `readConfig`, shared-configuration

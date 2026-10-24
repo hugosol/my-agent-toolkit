@@ -1,9 +1,0 @@
-{
-  "links": 9,
-  "immutableArtifacts": 14,
-  "sourceFilesUnchanged": 524,
-  "runtimeRows": 18,
-  "configCases": 10,
-  "historicalStatePairs": 2,
-  "result": "passed"
-}

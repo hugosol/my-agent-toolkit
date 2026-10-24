@@ -227,6 +227,12 @@ describe("the frozen host renders the displayed session's own marker area (S5, P
 			const afterArming = widgetFrames(run.session).length;
 
 			expect((await run.session.prompt(DELEGATE_PROMPT)).status).toBe("completed");
+			// A completed Owner prompt can also follow a task tool-error. Require the actual
+			// child's opening provider request before claiming anything about its binding.
+			const childRequests = run.capture.requests().filter(request => openingOf(request).includes(CHILD_ASSIGNMENT));
+			expect(childRequests).toHaveLength(1);
+			expect(isOpeningRequest(childRequests[0]!)).toBe(true);
+			expect(openingOf(childRequests[0]!)).not.toContain(DELEGATE_PROMPT);
 			// The Owner's session keeps working while the delegated session's binding is bound: the
 			// rendering at the end of this prompt is the Owner's own, which is the assertion below.
 			expect((await run.session.prompt(OWNER_FOLLOW_UP)).status).toBe("completed");

@@ -11,6 +11,7 @@
  * model request ever leaving the machine (the dock's local capture endpoint answers it).
  */
 import { beforeAll, describe, expect, test } from "bun:test";
+import { existsSync, readFileSync } from "node:fs";
 import * as path from "node:path";
 import { type IsolatedHarness, ensureIsolatedHarness, readBaselineRecord } from "./baseline";
 import { type CaptureServer, startCaptureServer } from "./capture-server";
@@ -30,7 +31,7 @@ import {
 	LIFECYCLE_SYNC_ACTION,
 } from "./fixtures/binding-lifecycle/entrypoint";
 import { type RunRoot, createRunRoot } from "./run-root";
-import { ControlledSession, type RpcFrame } from "./session";
+import { ControlledSession, type PromptOutcome, type RpcFrame } from "./session";
 
 const record = readBaselineRecord();
 const PROVIDER_FIXTURE = path.join(import.meta.dir, "fixtures", "extension-root", "provider.ts");
@@ -124,7 +125,11 @@ function firstUserEntryId(frame: RpcFrame): string {
 	throw new Error("the host's tree held no user message entry to branch at");
 }
 
-async function startRun(label: string, provider: RunProvider = LIFECYCLE_PROVIDER): Promise<DockRun> {
+async function startRun(
+	label: string,
+	provider: RunProvider = LIFECYCLE_PROVIDER,
+	env: Record<string, string> = {},
+): Promise<DockRun> {
 	const runRoot = createRunRoot(label);
 	const capture = startCaptureServer({ dir: runRoot.captureDir });
 	try {
@@ -133,13 +138,16 @@ async function startRun(label: string, provider: RunProvider = LIFECYCLE_PROVIDE
 			runRoot,
 			extensions: [provider.fixture, LIFECYCLE_FIXTURE],
 			model: provider.model,
-			env: { [provider.captureEnv]: capture.baseUrl },
+			env: { [provider.captureEnv]: capture.baseUrl, ...env },
 			promptTimeoutMs: 60_000,
 		});
 		return { session, capture, runRoot };
 	} catch (error) {
-		capture.stop();
-		runRoot.dispose();
+		try {
+			capture.stop();
+		} finally {
+			runRoot.dispose();
+		}
 		throw error;
 	}
 }
@@ -150,23 +158,124 @@ async function disposeRun(run: DockRun): Promise<void> {
 	} catch {
 		// The session already stopped (or never started); the run root still gets cleaned up.
 	}
-	run.capture.stop();
-	run.runRoot.dispose();
+	try {
+		run.capture.stop();
+	} finally {
+		run.runRoot.dispose();
+	}
 }
 
+describe("controlled-session startup ownership", () => {
+	for (const mode of ["live-no-ready", "early-exit", "eof", "ready"]) {
+		test(`${mode} reclaims the child and lets the isolated driver exit naturally`, async () => {
+			const root = createRunRoot(`startup-observer-${mode}`);
+			const pidFile = path.join(root.path, "child.pid");
+			const runner = Bun.spawn([
+				process.execPath, path.join(import.meta.dir, "fixtures", "binding-lifecycle", "startup-runner.ts"), mode, pidFile,
+			], { stdout: "pipe", stderr: "pipe" });
+			const stdout = new Response(runner.stdout).text();
+			const stderr = new Response(runner.stderr).text();
+			const deadline = Promise.withResolvers<never>();
+			const timer = setTimeout(() => deadline.reject(new Error(`isolated ${mode} driver did not exit`)), 10_000);
+			try {
+				expect(await Promise.race([runner.exited, deadline.promise])).toBe(0);
+				expect(await stderr).toBe("");
+				const report = JSON.parse(await stdout) as {
+					alive: boolean; rootRemoved: boolean; disposalFailure: string | null; failure: string | null; diagnostic: string | null; exitCode: number | null;
+				};
+				expect(report.alive).toBe(false);
+				expect(report.disposalFailure).toBeNull();
+				expect(report.rootRemoved).toBe(true);
+				if (mode === "ready") {
+					expect(report.failure).toBeNull();
+					expect(report.exitCode).toBe(0);
+				} else {
+					expect(report.diagnostic).toContain("startup fixture diagnostic");
+					expect(report.diagnostic).toContain(`argv: ${process.execPath}`);
+					expect(report.failure).toContain(
+						mode === "live-no-ready" ? "timed out after 2000ms"
+							: mode === "eof" ? "stdout closed before the ready frame" : "before the ready frame",
+					);
+				}
+			} finally {
+				clearTimeout(timer);
+				try {
+					try { runner.kill(); } catch { /* The isolated driver may already have exited. */ }
+					await runner.exited;
+					if (existsSync(pidFile)) {
+						try { process.kill(Number(readFileSync(pidFile, "utf8"))); } catch { /* Already reaped. */ }
+					}
+					await Promise.allSettled([stdout, stderr]);
+				} finally {
+					root.dispose();
+				}
+			}
+		}, 15_000);
+	}
+});
+
 describe("the public binding in a real session (P28, P56)", () => {
+	for (const failure of ["operation rejection", "assertion exception"]) {
+		test(`${failure} still reclaims the session, capture listener and owned root`, async () => {
+			const run = await startRun(`binding-lifecycle-cleanup-${failure}`);
+			const operation = async () => {
+				try {
+					if (failure === "operation rejection") await Promise.reject(new Error("fixture operation rejected"));
+					expect("fixture assertion").toBe("intentional exception");
+				} finally {
+					await disposeRun(run);
+				}
+			};
+			try {
+				await expect(operation()).rejects.toThrow();
+				expect(run.session.exited()).not.toBeNull();
+				expect(existsSync(run.runRoot.path)).toBe(false);
+				await expect(fetch(run.capture.baseUrl)).rejects.toThrow();
+			} finally {
+				// Also own cleanup if the regression's observation itself fails.
+				await disposeRun(run);
+			}
+		}, 120_000);
+	}
+
 	test("the host loads it with its validated configuration, waits for its initialization, runs its actions and cleans it up once", async () => {
-		const run = await startRun("binding-lifecycle");
+		const entered = Promise.withResolvers<void>();
+		const release = Promise.withResolvers<void>();
+		const gate = Bun.serve({
+			hostname: "127.0.0.1",
+			port: 0,
+			async fetch() {
+				entered.resolve();
+				await release.promise;
+				return new Response("released");
+			},
+		});
+		let run: DockRun | undefined;
+		let pendingTurn: Promise<PromptOutcome> | undefined;
 		try {
-			// The first model request, issued while the extension's initialization is still in
-			// flight: the run cannot answer before the initialization settled, so the round trip
-			// carries the initialization's own duration.
-			const startedAt = performance.now();
-			const turn = await run.session.prompt("hello");
-			const turnMs = performance.now() - startedAt;
+			run = await startRun("binding-lifecycle", LIFECYCLE_PROVIDER, {
+				DOCK_LIFECYCLE_INIT_GATE_URL: gate.url.toString(),
+			});
+			pendingTurn = run.session.prompt("hello");
+			void pendingTurn.catch(() => {});
+			const deadline = Promise.withResolvers<never>();
+			const timer = setTimeout(() => deadline.reject(new Error(run?.session.diagnostics())), 15_000);
+			try {
+				await Promise.race([entered.promise, deadline.promise]);
+			} finally {
+				clearTimeout(timer);
+			}
+			// The original initialization budget is an observation window, not proof by
+			// elapsed prompt time: initialization remains held until we explicitly release it.
+			await Bun.sleep(LIFECYCLE_INITIALIZATION_MS);
+			expect(run.capture.requests()).toHaveLength(0);
+			expect(run.session.stderr()).not.toContain("[binding-lifecycle] initialize settled");
+			release.resolve();
+			const turn = await pendingTurn;
 
 			expect(turn.status).toBe("completed");
-			expect(turnMs).toBeGreaterThanOrEqual(LIFECYCLE_INITIALIZATION_MS);
+			expect(run.session.stderr().match(/\[binding-lifecycle\] initialize started/g) ?? []).toHaveLength(1);
+			expect(run.session.stderr().match(/\[binding-lifecycle\] initialize settled/g) ?? []).toHaveLength(1);
 			// The configuration the factory was handed is the file's own value, and it was read
 			// before the factory ran.
 			expect(run.session.stderr()).toContain(`[binding-lifecycle] loaded config=${LIFECYCLE_CONFIG_VALUE}`);
@@ -197,17 +306,20 @@ describe("the public binding in a real session (P28, P56)", () => {
 			expect(actionMs).toBeGreaterThanOrEqual(LIFECYCLE_ACTION_MS);
 			expect(run.session.stderr()).toContain("[binding-lifecycle] action started");
 			expect(run.session.stderr()).toContain("[binding-lifecycle] action finished");
-		} finally {
 			await run.session.stop({ timeoutMs: 10_000 });
+			// Cleanup assertions are still inside the resource owner's try.
+			const exit = run.session.exited();
+			expect(exit?.exitCode).toBe(0);
+			expect(exit?.stderr.match(/\[binding-lifecycle\] cleanup/g) ?? []).toHaveLength(1);
+		} finally {
+			release.resolve();
+			try {
+				if (run) await disposeRun(run);
+			} finally {
+				gate.stop(true);
+				await pendingTurn?.catch(() => {});
+			}
 		}
-
-		// The harness shut the session down, and the extension's one cleanup ran exactly once.
-		const exit = run.session.exited();
-		expect(exit?.exitCode).toBe(0);
-		expect(exit?.stderr.match(/\[binding-lifecycle\] cleanup/g) ?? []).toHaveLength(1);
-
-		run.capture.stop();
-		run.runRoot.dispose();
 	}, 120_000);
 
 	test("an ordinary switch keeps the one instance, and the shutdown cleans it once", async () => {
@@ -263,16 +375,13 @@ describe("the public binding in a real session (P28, P56)", () => {
 			expect(evidence.match(/\[binding-lifecycle\] initialize started/g) ?? []).toHaveLength(1);
 			// Five invocations, all of the one instance that was built at load.
 			expect(evidence.match(/\[binding-lifecycle\] action reported instance=1/g) ?? []).toHaveLength(5);
-		} finally {
 			await run.session.stop({ timeoutMs: 10_000 });
+			// The process going away is the instance's one disposal, whichever session is being served.
+			const exit = run.session.exited();
+			expect(exit?.exitCode).toBe(0);
+			expect(exit?.stderr.match(/\[binding-lifecycle\] cleanup instance=1/g) ?? []).toHaveLength(1);
+		} finally {
+			await disposeRun(run);
 		}
-
-		// The process going away is the instance's one disposal, whichever session is being served.
-		const exit = run.session.exited();
-		expect(exit?.exitCode).toBe(0);
-		expect(exit?.stderr.match(/\[binding-lifecycle\] cleanup instance=1/g) ?? []).toHaveLength(1);
-
-		run.capture.stop();
-		run.runRoot.dispose();
 	}, 120_000);
 });

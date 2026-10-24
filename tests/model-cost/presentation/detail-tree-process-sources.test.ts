@@ -15,8 +15,7 @@
  * a controlled host — so what is asserted is the detail content an operator would see, and the
  * readings it is drawn from are the ones the delivering processes stated.
  */
-import { afterEach, describe, expect, test } from "bun:test";
-import { randomUUID } from "node:crypto";
+import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
@@ -40,11 +39,7 @@ import {
 import { controlApi } from "../support/control-api";
 import { uiBoundaryTimerOf } from "../support/ui-timer";
 
-/** The repository root: the framework's shared configuration file is read from it. */
-const REPOSITORY_ROOT = path.resolve(import.meta.dir, "..", "..", "..");
 
-/** The framework's own shared configuration, whose `runtimeDir` both ends of the access resolve. */
-const FRAMEWORK_CONFIG = path.join(REPOSITORY_ROOT, "framework", "config.yaml");
 
 /** The self-made pricing data: one monetary tier, which is the channel the readings below are read on. */
 const DATA: ModelPricingData = {
@@ -70,10 +65,15 @@ const CONSUMPTION_FILE = "consumption.json";
  * of the *session* under test is derived from it — a session's identity is the one its own process
  * resolves.
  */
-const SEAT_OWNER = { kind: "owner", key: `main:process-sources-${randomUUID().slice(0, 8)}` } as const;
+const SEAT_OWNER = { kind: "owner" as const, key: "" };
 
 /** The owner every reading that crossed states: the seat this process serves. */
-const SEAT = { kind: "inherited", key: SEAT_OWNER.key } as const;
+const SEAT = { kind: "inherited" as const, key: "" };
+
+beforeEach(() => {
+	SEAT_OWNER.key = `main:model-cost-${crypto.randomUUID()}`;
+	SEAT.key = SEAT_OWNER.key;
+});
 
 /** The session this process serves: the tree's root. */
 const MAIN: SessionFacts = { sessionId: "session-main", kind: "main", name: "主会话", unavailable: [] };
@@ -136,6 +136,8 @@ function readingOf(
 const roots: string[] = [];
 /** Every child process this file started, ended after each case. */
 const children: RunningObservationChild[] = [];
+const intentionallyKilled = new Set<RunningObservationChild>();
+const disposals: Array<() => Promise<void>> = [];
 
 /** Waits until a condition holds, or states that it never did. */
 async function until(condition: () => boolean, message: string, timeoutMs = 20_000): Promise<void> {
@@ -167,7 +169,10 @@ async function bind(): Promise<Bound> {
 	// The serving half, exactly as the pi adapter builds it for a process whose sessions may run
 	// elsewhere: this process offers the seat for the owner its session follows, and every reading a
 	// session in another process delivers for that owner is handed to the binding's own sink.
-	const publisher = createOwnerAccessPublisher({ report: () => {} });
+	const configPath = path.join(root, "framework.yaml");
+	writeFileSync(configPath, "runtimeDir: .runtime\n", "utf8");
+	const publisher = createOwnerAccessPublisher({ configPath, report: () => {} });
+	disposals.push(async () => { await publisher.dispose(); });
 	const access: SessionObservationAccess = {
 		receive: (ownerKey, sink) => publisher.receive({ extension: MODEL_COST.id, owner: ownerKey }, sink),
 		// Nothing this process runs follows an owner served elsewhere: the session under test is the one
@@ -176,6 +181,7 @@ async function bind(): Promise<Bound> {
 	};
 
 	const double = portDouble({ observationAccess: access });
+	disposals.push(async () => { await double.deliverDisposal(SEAT_OWNER, { session: MAIN }); });
 	let runtime: ModelCostRuntime | undefined;
 	double.bind(MODEL_COST, {
 		config: { reader: () => `storageDir: ${root}\nbalanceTtlMs: 30000\ncodexQuotaTtlMs: 15000\n` },
@@ -225,8 +231,8 @@ async function deliverInProcess(readings: readonly ObservedSession[], where: str
 	const plan: ObservationChildPlan = {
 		target: { extension: MODEL_COST.id, owner: SEAT_OWNER.key },
 		readings,
-		resultPath: path.join(where, "child-report.json"),
-		configPath: FRAMEWORK_CONFIG,
+		resultPath: path.join(where, `child-report-${crypto.randomUUID()}.json`),
+		configPath: path.join(where, "framework.yaml"),
 	};
 	const child = startObservationChild(plan, { cwd: where });
 	children.push(child);
@@ -236,8 +242,28 @@ async function deliverInProcess(readings: readonly ObservedSession[], where: str
 }
 
 afterEach(async () => {
-	for (const child of children.splice(0)) await child.finish().catch(() => undefined);
-	while (roots.length > 0) rmSync(roots.pop() as string, { recursive: true, force: true });
+	try {
+		const results = await Promise.allSettled(children.splice(0).map(child =>
+			intentionallyKilled.has(child) ? child.finish().catch(() => undefined) : child.finish(),
+		));
+		intentionallyKilled.clear();
+		const failures = results.filter(result => result.status === "rejected");
+		if (failures.length > 0) throw new Error(`child cleanup failed:\n${failures.map(result =>
+			result.reason instanceof Error ? result.reason.stack ?? result.reason.message : String(result.reason),
+		).join("\n")}`);
+	} finally {
+		try {
+			const errors: unknown[] = [];
+			for (const dispose of disposals.splice(0).reverse()) {
+				try { await dispose(); } catch (error) { errors.push(error); }
+			}
+			if (errors.length > 0) throw new Error(`session/publisher cleanup failed:\n${errors.map(error =>
+				error instanceof Error ? error.stack ?? error.message : String(error),
+			).join("\n")}`);
+		} finally {
+			while (roots.length > 0) rmSync(roots.pop() as string, { recursive: true, force: true });
+		}
+	}
 });
 
 describe("sessions another process runs reach the detail form over the real access (P2, P9)", () => {
@@ -325,6 +351,7 @@ describe("a real process's end withdraws what its readings drew, and nothing els
 		// The process is killed where it stands: it releases nothing and states nothing of its own end, and
 		// what this side reads is the connection ending. The watcher below is the drawn detail itself, so
 		// what the case waits for is the redraw an operator would see.
+		intentionallyKilled.add(child);
 		child.kill();
 		await until(() => {
 			const line = drawnRow(bound);

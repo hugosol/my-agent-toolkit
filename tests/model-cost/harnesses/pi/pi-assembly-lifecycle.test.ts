@@ -283,6 +283,8 @@ afterEach(() => {
 // is still in flight would report a failure this file itself caused.
 afterAll(() => {
 	for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
+	rmSync(SESSION_FILES, { recursive: true, force: true });
+	rmSync(REPOSITORY_ROOT, { recursive: true, force: true });
 });
 
 /**

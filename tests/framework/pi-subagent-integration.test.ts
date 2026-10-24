@@ -26,13 +26,13 @@ import { realpathSync } from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
 import { loadPiSubagentProvider } from "../../adapters/pi/thirdParty/pi-subagents/provider";
-import { describe, expect, test, vi } from "bun:test";
+import { afterEach, describe, expect, test, vi } from "bun:test";
 import { drain } from "../support/pending-query";
 import { defineImplementation, type InitializationDelivery } from "../../framework/interface";
 import { piAdapter, type PiExtensionApi } from "../../adapters/pi";
 import type { SubagentIntegrationFailure } from "../../framework/interface/subagent";
 import { withCapturedStderrAsync } from "./support/captured-stderr";
-import { sessionFileDir } from "./support/pi-session-files";
+import { disposeSessionFiles, sessionFileDir } from "./support/pi-session-files";
 import {
 	PROVIDER_READY_CHANNEL,
 	PROVIDER_REPLY_PREFIX,
@@ -42,6 +42,8 @@ import {
 	boundPiSurface,
 	PI_SURFACE_PROBE,
 } from "./support/pi-surface-double";
+
+afterEach(disposeSessionFiles);
 
 // Read the same public module as production, including an explicitly configured installation.
 const { registerRequiredChildExtensions } = await loadPiSubagentProvider() as {

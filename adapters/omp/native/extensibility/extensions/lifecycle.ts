@@ -23,7 +23,7 @@
  * moved — so it maps to `session_facts`, the one session delivery that is not a boundary and
  * carries the session's facts alone.
  */
-import type { SessionEvent, SessionStartReason } from "../../../../../framework/interface/session";
+import type { SessionEvent, SessionFacts, SessionStartReason } from "../../../../../framework/interface/session";
 import type { OwnerReference } from "../../../../../framework/interface/state";
 import { defineAdapterDelivery } from "../../../../../framework/runtime/adapter-authoring";
 import type { HarnessPort } from "../../../../../framework/runtime/port";
@@ -59,7 +59,7 @@ export interface OmpSessionEvent {
  * They are the same references the port composes for its other axes: the newest-context recorder,
  * the one owner resolution (its ownerless diagnostic included), the one State entry, and this
  * binding's diagnostic channel. They are passed in rather than reached for, so this module decides
- * no binding-wide state of its own beyond the owner it currently serves.
+ * no binding-wide state of its own beyond the owner and actual session facts it currently serves.
  */
 export interface SessionEventContext {
 	/** Records the delivery's context as the newest and hands it back. */
@@ -89,20 +89,36 @@ export function observeSessionEvents(
 ): void {
 	// The owner key this binding currently serves — the session it started and has not ended.
 	let activeOwnerKey: string | undefined;
+	// Keep facts, never an old native context: effects always use the delivery's current context.
+	let activeSession: SessionFacts | undefined;
 
 	/**
 	 * One semantic session delivery: the boundary or facts event, the owner it concerns, and the
 	 * session frame the binding assembles for it.
 	 */
-	const deliver = (event: SessionEvent, owner: OwnerReference, ctx: OmpSessionContext): void => {
+	const deliver = (
+		event: SessionEvent,
+		owner: OwnerReference,
+		ctx: OmpSessionContext,
+		savedSession?: SessionFacts,
+	): void => {
 		context.record(ctx);
+		const session = savedSession ?? sessionFactsOf(pi, ctx, event.kind === "session_start" ? event.reason : undefined);
+		if (event.kind !== "session_end" && owner.kind === "owner" && owner.key === activeOwnerKey) {
+			if (event.kind === "session_start") {
+				const { startup: _startup, ...facts } = session;
+				activeSession = { ...facts, unavailable: facts.unavailable.filter(fact => !fact.startsWith("startup ")) };
+			} else {
+				activeSession = session;
+			}
+		}
 		handler(defineAdapterDelivery("session", {
 			event,
 			// One start delivery is the session's own beginning in this process, and it is the one
 			// whose readings are the session's startup facts; every other delivery reports none —
 			// and a start that proves no beginning (a resume, a fork, a session whose own branch
 			// already carries a conversation) reports none either.
-			session: sessionFactsOf(pi, ctx, event.kind === "session_start" ? event.reason : undefined),
+			session,
 			owner,
 			statePayloads: statePayloadsOf(ctx, context.stateEntry.type),
 			persist: context.stateEntry.persist,
@@ -158,12 +174,16 @@ export function observeSessionEvents(
 			deliver({ kind: "session_start", reason }, owner, ctx);
 			return;
 		}
-		if (owner.key === activeOwnerKey) return;
+		if (owner.key === activeOwnerKey) {
+			activeSession = sessionFactsOf(pi, ctx);
+			return;
+		}
 
 		const endedOwnerKey = activeOwnerKey;
+		const endedSession = activeSession;
 		activeOwnerKey = owner.key;
 		if (endedOwnerKey !== undefined) {
-			deliver({ kind: "session_end", reason: "transferred" }, { kind: "owner", key: endedOwnerKey }, ctx);
+			deliver({ kind: "session_end", reason: "transferred" }, { kind: "owner", key: endedOwnerKey }, ctx, endedSession);
 		}
 		deliver({ kind: "session_start", reason }, owner, ctx);
 	};
@@ -190,8 +210,12 @@ export function observeSessionEvents(
 		// binding serves, whatever the shutting-down session resolves now.
 		const endedOwnerKey = activeOwnerKey;
 		if (endedOwnerKey === undefined) return;
+		const endedSession = ctx.sessionManager.getSessionId() === activeSession?.sessionId
+			? sessionFactsOf(pi, ctx)
+			: activeSession;
 		activeOwnerKey = undefined;
-		deliver({ kind: "session_end", reason: "disposed" }, { kind: "owner", key: endedOwnerKey }, ctx);
+		activeSession = undefined;
+		deliver({ kind: "session_end", reason: "disposed" }, { kind: "owner", key: endedOwnerKey }, ctx, endedSession);
 	});
 }
 

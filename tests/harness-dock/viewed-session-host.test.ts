@@ -66,6 +66,7 @@ interface Facts {
 interface EvidenceEntry {
 	kind: string;
 	facts?: Facts | null;
+	context?: { tokens: number; contextWindow: number } | null;
 	read?: boolean;
 	subscribe?: boolean;
 	subscribed?: boolean;
@@ -212,12 +213,24 @@ describe("the frozen Viewed session host publishes the outlet (S5)", () => {
 				if (chosen === undefined || currentLevel === undefined) {
 					throw new Error(`the host listed no effort level other than ${currentLevel ?? "<none>"}: ${levels.join(", ")}`);
 				}
+				const effortBoundary = readEvidence(evidence).length;
 				await session.request({ type: "set_thinking_level", level: chosen });
+				expect(
+					recordedFacts(readEvidence(evidence).slice(effortBoundary), "delivery").some(facts => facts.effort === chosen),
+				).toBe(true);
 
-				// Same-target model change.
+				// Each cause has its own delivery boundary: an earlier notification cannot prove a later one.
+				const modelBoundary = readEvidence(evidence).length;
 				await session.request({ type: "set_model", provider: PROVIDER, modelId: MODEL_B });
+				expect(
+					recordedFacts(readEvidence(evidence).slice(modelBoundary), "delivery").some(facts => facts.model === MODEL_B),
+				).toBe(true);
 
-				// Same-target context change: one turn adds messages to the session's context.
+				// Same-target context change: compare the actual host reading before and after the turn,
+				// and require a fresh subscription delivery carrying that new reading.
+				await probe(session, "context");
+				const contextBefore = lastEntry(readEvidence(evidence), "context")?.context;
+				const contextBoundary = readEvidence(evidence).length;
 				const turn = await session.prompt("viewed outlet turn");
 				expect(turn.agentInvoked).toBe(true);
 				expect(turn.status).toBe("completed");
@@ -229,7 +242,17 @@ describe("the frozen Viewed session host publishes the outlet (S5)", () => {
 				expect(deliveries.every(facts => facts.agent.id === "Main" && facts.sessionId === before.sessionId)).toBe(true);
 				expect(deliveries.some(facts => facts.effort === chosen)).toBe(true);
 				expect(deliveries.some(facts => facts.model === MODEL_B)).toBe(true);
-				expect(deliveries.some(facts => facts.context?.contextWindow === CONTEXT_WINDOW)).toBe(true);
+				await probe(session, "context");
+				const contextAfter = lastEntry(readEvidence(evidence), "context")?.context;
+				expect(contextBefore?.tokens).toBeNumber();
+				expect(contextAfter?.tokens).toBeNumber();
+				expect(contextAfter?.tokens).not.toBe(contextBefore?.tokens);
+				expect(contextAfter?.contextWindow).toBe(CONTEXT_WINDOW);
+				const contextDeliveries = recordedFacts(readEvidence(evidence).slice(contextBoundary), "delivery");
+				expect(contextDeliveries.some(facts =>
+					facts.context?.tokens === contextAfter?.tokens &&
+					facts.context?.contextWindow === contextAfter?.contextWindow,
+				)).toBe(true);
 
 				await probe(session, "unsubscribe");
 				// The evidence file is append-only, so everything recorded up to and including the

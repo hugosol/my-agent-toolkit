@@ -22,10 +22,11 @@
  * is the module's bounded budget, which is the mechanism under test rather than a test scaffold.
  */
 import { describe, expect, test } from "bun:test";
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { connect } from "node:net";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
+import { pathToFileURL } from "node:url";
 import { StateStore } from "../../framework/core/state";
 import { SubagentAccess } from "../../framework/core/subagent-access";
 import { defineExtension } from "../../framework/interface";
@@ -45,9 +46,6 @@ import { REPO_ROOT } from "../harness-dock/baseline";
 import { type LocalAccessChildResult, startLocalAccessChild } from "./support/local-access-child-runner";
 import { boundPiSurface } from "./support/pi-surface-double";
 
-/** The repository's own runtime directory, as its shipped configuration file states it. */
-const REPO_RUNTIME_DIRECTORY = path.join(REPO_ROOT, "framework", ".runtime");
-
 /** One temporary directory that stands in for the repository: a shared configuration and its runtime dir. */
 interface Workspace {
 	readonly root: string;
@@ -56,7 +54,8 @@ interface Workspace {
 	readonly runtimeDirectory: string;
 	/** Writes the framework's shared configuration file with this text; answers the path it wrote. */
 	configure(text: string): void;
-	dispose(): void;
+	readonly children: Array<() => Promise<unknown>>;
+	dispose(): Promise<void>;
 }
 
 function workspace(configured = 'runtimeDir: ".runtime"\n'): Workspace {
@@ -64,12 +63,17 @@ function workspace(configured = 'runtimeDir: ".runtime"\n'): Workspace {
 	const directory = path.join(root, "framework");
 	mkdirSync(directory, { recursive: true });
 	const configPath = path.join(directory, "config.yaml");
+	const children: Array<() => Promise<unknown>> = [];
 	const ws: Workspace = {
 		root,
 		configPath,
 		runtimeDirectory: path.join(directory, ".runtime"),
 		configure: text => writeFileSync(configPath, text, "utf8"),
-		dispose: () => rmSync(root, { recursive: true, force: true }),
+		children,
+		async dispose() {
+			await Promise.allSettled(children.map(finish => finish()));
+			rmSync(root, { recursive: true, force: true });
+		},
 	};
 	ws.configure(configured);
 	return ws;
@@ -156,13 +160,14 @@ function serveChild(
 		},
 		{ cwd: cwd.directory },
 	);
+	ws.children.push(async () => {
+		try { await child.finish(); } finally { cwd.dispose(); }
+	});
 	return {
 		child,
 		cwd,
 		async finish() {
-			const answer = await child.finish();
-			cwd.dispose();
-			return answer;
+			try { return await child.finish(); } finally { cwd.dispose(); }
 		},
 	};
 }
@@ -212,18 +217,18 @@ function speak(endpoint: string, frames: readonly Record<string, unknown>[]): Pr
 }
 
 describe("the runtime directory is explicit (P42)", () => {
-	test("a relative value resolves against the configuration file's own directory", () => {
+	test("a relative value resolves against the configuration file's own directory", async () => {
 		const ws = workspace();
 		try {
 			// The expectation is the configuration file's own directory plus the declared text,
 			// written out here rather than derived from the reader under test.
 			expect(resolveRuntimeDirectory({ configPath: ws.configPath })).toBe(path.join(ws.root, "framework", ".runtime"));
 		} finally {
-			ws.dispose();
+			await ws.dispose();
 		}
 	});
 
-	test("an absolute value is used as declared", () => {
+	test("an absolute value is used as declared", async () => {
 		const ws = workspace();
 		const target = elsewhere();
 		try {
@@ -231,7 +236,7 @@ describe("the runtime directory is explicit (P42)", () => {
 			ws.configure(`runtimeDir: "${declared}"\n`);
 			expect(resolveRuntimeDirectory({ configPath: ws.configPath })).toBe(declared);
 		} finally {
-			ws.dispose();
+			await ws.dispose();
 			target.dispose();
 		}
 	});
@@ -251,11 +256,11 @@ describe("the runtime directory is explicit (P42)", () => {
 			expect(answer.results.runtimeDirectoryFailure).toBeUndefined();
 			expect(answer.results.diagnostics).toEqual([]);
 		} finally {
-			ws.dispose();
+			await ws.dispose();
 		}
 	});
 
-	test("no file, no value, an empty value and a value that is not a string are all refused", () => {
+	test("no file, no value, an empty value and a value that is not a string are all refused", async () => {
 		const cases: readonly { readonly what: string; readonly text?: string; readonly missingFile?: boolean }[] = [
 			{ what: "no file at all", missingFile: true },
 			{ what: "a file that declares nothing", text: "\n" },
@@ -285,7 +290,7 @@ describe("the runtime directory is explicit (P42)", () => {
 				expect(readdirSync(path.join(ws.root, "framework"))).toEqual(["config.yaml"]);
 				expect(recordsIn(ws.root)).toEqual([]);
 			} finally {
-				ws.dispose();
+				await ws.dispose();
 			}
 		}
 	});
@@ -305,7 +310,7 @@ describe("the runtime directory is explicit (P42)", () => {
 			expect(answer.results.runtimeDirectoryFailure).toContain(ws.configPath);
 			expect(existsSync(ws.runtimeDirectory)).toBe(false);
 		} finally {
-			ws.dispose();
+			await ws.dispose();
 		}
 	});
 
@@ -322,12 +327,12 @@ describe("the runtime directory is explicit (P42)", () => {
 				LocalAccessConfigurationError,
 			);
 		} finally {
-			ws.dispose();
+			await ws.dispose();
 		}
 	});
 
 	test("the repository's own configuration states the directory its runtime files use", () => {
-		expect(resolveRuntimeDirectory()).toBe(REPO_RUNTIME_DIRECTORY);
+		expect(resolveRuntimeDirectory()).toBe(path.join(REPO_ROOT, "framework", ".runtime"));
 		expect(readFileSync(path.join(REPO_ROOT, "framework", "config.yaml"), "utf8")).toContain('runtimeDir: ".runtime"');
 	});
 });
@@ -384,7 +389,7 @@ describe("one process reads an owner's values from another (P56)", () => {
 			expect(answer.results.commands).toEqual(["set:true", "quit"]);
 			expect(answer.stderr).not.toContain(secret);
 		} finally {
-			ws.dispose();
+			await ws.dispose();
 		}
 	});
 
@@ -410,7 +415,7 @@ describe("one process reads an owner's values from another (P56)", () => {
 		} finally {
 			release();
 			publisher.dispose();
-			ws.dispose();
+			await ws.dispose();
 		}
 	});
 
@@ -466,7 +471,7 @@ describe("an access serves its own seat and nothing else (P56)", () => {
 			expect(JSON.stringify(answer.results)).not.toContain(synthetic);
 			expect(JSON.stringify(answer.results)).not.toContain(record.verification);
 		} finally {
-			ws.dispose();
+			await ws.dispose();
 		}
 	});
 
@@ -487,7 +492,7 @@ describe("an access serves its own seat and nothing else (P56)", () => {
 			expect(missing.reason).toBe("no-location");
 			await served.finish();
 		} finally {
-			ws.dispose();
+			await ws.dispose();
 		}
 	});
 
@@ -528,7 +533,7 @@ describe("an access serves its own seat and nothing else (P56)", () => {
 			const answer = await served.finish();
 			expect(answer.results.value).toBe(true);
 		} finally {
-			ws.dispose();
+			await ws.dispose();
 		}
 	});
 
@@ -551,7 +556,7 @@ describe("an access serves its own seat and nothing else (P56)", () => {
 			expect(absent.detail).not.toContain(record.verification);
 			await served.finish();
 		} finally {
-			ws.dispose();
+			await ws.dispose();
 		}
 	});
 
@@ -577,7 +582,7 @@ describe("an access serves its own seat and nothing else (P56)", () => {
 			const answer = await served.finish();
 			expect(answer.results.commands).toEqual(["end", "quit"]);
 		} finally {
-			ws.dispose();
+			await ws.dispose();
 		}
 	});
 
@@ -606,7 +611,7 @@ describe("an access serves its own seat and nothing else (P56)", () => {
 			expect(incomplete.reason).toBe("no-location");
 			await served.finish();
 		} finally {
-			ws.dispose();
+			await ws.dispose();
 		}
 	});
 
@@ -636,7 +641,7 @@ describe("an access serves its own seat and nothing else (P56)", () => {
 			const answer = await served.finish();
 			expect(answer.results.commands).toEqual(["dispose", "quit"]);
 		} finally {
-			ws.dispose();
+			await ws.dispose();
 		}
 	});
 
@@ -661,16 +666,24 @@ describe("an access serves its own seat and nothing else (P56)", () => {
 
 			// The runtime directory's own artifacts hold the secret in exactly one place: the
 			// location record this access published, which is where a reader is meant to find it.
-			const carriers = readdirSync(ws.runtimeDirectory).filter(name =>
-				readFileSync(path.join(ws.runtimeDirectory, name), "utf8").includes(secret),
+			const artifacts = readdirSync(ws.runtimeDirectory, { withFileTypes: true });
+			const files = artifacts.filter(entry => entry.isFile());
+			const sockets = artifacts.filter(entry => entry.isSocket());
+			expect(files.map(entry => entry.name)).toEqual([...recordsIn(ws.runtimeDirectory)]);
+			expect(artifacts.length).toBe(files.length + sockets.length);
+			expect(sockets.map(entry => path.join(ws.runtimeDirectory, entry.name))).toEqual(
+				process.platform === "win32" ? [] : [record.endpoint],
 			);
-			expect(carriers).toHaveLength(1);
+			const carriers = files.filter(entry =>
+				readFileSync(path.join(ws.runtimeDirectory, entry.name), "utf8").includes(secret),
+			);
+			expect(carriers.map(entry => entry.name)).toEqual([...recordsIn(ws.runtimeDirectory)]);
 
 			const answer = await served.finish();
 			expect(answer.stderr).not.toContain(secret);
 			expect(JSON.stringify(answer.results)).not.toContain(secret);
 		} finally {
-			ws.dispose();
+			await ws.dispose();
 		}
 	});
 
@@ -714,9 +727,10 @@ describe("an access serves its own seat and nothing else (P56)", () => {
 			expect(after.readers[1]?.request?.value).toBe(true);
 			releaseSecond();
 		} finally {
-			void (await reader.finish());
-			publisher.dispose();
-			ws.dispose();
+			try { await reader.finish(); } finally {
+				publisher.dispose();
+				await ws.dispose();
+			}
 		}
 	});
 });
@@ -736,13 +750,14 @@ function readingChild(ws: Workspace, reads: readonly AccessTarget[]): ServedChil
 		},
 		{ cwd: cwd.directory },
 	);
+	ws.children.push(async () => {
+		try { await child.finish(); } finally { cwd.dispose(); }
+	});
 	return {
 		child,
 		cwd,
 		async finish() {
-			const answer = await child.finish();
-			cwd.dispose();
-			return answer;
+			try { return await child.finish(); } finally { cwd.dispose(); }
 		},
 	};
 }
@@ -786,7 +801,7 @@ describe("the framework offers an owner's access with the owner's life (S1)", ()
 			expect(localOwnerAccess(target)).toBeUndefined();
 		} finally {
 			publisher.dispose();
-			ws.dispose();
+			await ws.dispose();
 		}
 	});
 
@@ -798,29 +813,61 @@ describe("the framework offers an owner's access with the owner's life (S1)", ()
 		});
 		const plain = defineExtension({ id: "local-access-plain-probe", displayName: "localAccessPlainProbe" });
 		const childEntry = path.join(REPO_ROOT, "entrypoints", "pi", "model-cost.ts");
-		const repositoryConfig = path.join(REPO_ROOT, "framework", "config.yaml");
-		rmSync(REPO_RUNTIME_DIRECTORY, { recursive: true, force: true });
+		const ws = workspace();
+		// This unrelated process's record predates assembly startup, but only in our disposable
+		// deployment. Never seed, inspect or remove records in the real repository runtime.
+		const unrelatedName = `owner-access-${"0".repeat(32)}.json`;
+		const unrelatedPath = path.join(ws.runtimeDirectory, unrelatedName);
+		const unrelatedBytes = JSON.stringify({
+			extension: "unrelated-external-fixture", owner: "main:unrelated-owner", pid: process.pid,
+			endpoint: "unrelated-fixture-endpoint", verification: "1".repeat(64),
+		});
+		mkdirSync(ws.runtimeDirectory, { recursive: true });
+		writeFileSync(unrelatedPath, unrelatedBytes, "utf8");
+		const ownRecords = () => recordsIn(ws.runtimeDirectory).filter(name => name !== unrelatedName);
+		const ownRecord = (): AccessLocation => {
+			const records = ownRecords();
+			expect(records).toHaveLength(1);
+			return JSON.parse(readFileSync(path.join(ws.runtimeDirectory, records[0]!), "utf8")) as AccessLocation;
+		};
 		try {
-			const offering = boundPiSurface({ definition: follow, childEntry });
+			for (const directory of ["adapters", "framework"]) {
+				cpSync(path.join(REPO_ROOT, directory), path.join(ws.root, directory), {
+					recursive: true,
+					filter: source => !source.includes(".runtime"),
+				});
+			}
+			mkdirSync(path.join(ws.root, "node_modules"), { recursive: true });
+			cpSync(path.join(REPO_ROOT, "node_modules", "yaml"), path.join(ws.root, "node_modules", "yaml"), { recursive: true });
+			ws.configure('runtimeDir: ".runtime"\n');
+			// A unique runtime-selected deployment owns this assembly and its configuration.
+			const { piAdapter: adapter } = await import(pathToFileURL(path.join(ws.root, "adapters", "pi", "index.ts")).href);
+			const { localOwnerAccess } = await import(pathToFileURL(path.join(ws.root, "framework", "modules", "local-access.ts")).href);
+			const repositoryConfig = ws.configPath;
+			const offering = boundPiSurface({ adapter, definition: follow, childEntry });
+			ws.children.push(() => offering.sessionShutsDown({ sessionId: "pi-follow-session" }, "quit"));
 			offering.sessionStarts({ sessionId: "pi-follow-session" }, "new");
 			const target: AccessTarget = { extension: follow.id, owner: "main:pi-follow-session" };
 			expect(localOwnerAccess(target)).toBeDefined();
-			await until(() => recordsIn(REPO_RUNTIME_DIRECTORY).length === 1, "the pi offer published no record");
-			const record = onlyRecord(REPO_RUNTIME_DIRECTORY);
+			await until(() => ownRecords().length === 1, "the pi offer published no record");
+			const record = ownRecord();
+			expect(readFileSync(unrelatedPath, "utf8")).toBe(unrelatedBytes);
 			expect(record.owner).toBe(target.owner);
 			expect(record.extension).toBe(follow.id);
-			// The read itself is the same-process one: a session in this process reads the store it
-			// serves, and the record is what a session in another process would use.
+			// The reader belongs to the repository graph, not the isolated assembly's store registry:
+			// it must use the published location and the real carrier to reach the deployed owner.
 			const caller = await openOwnerAccess({ target, configPath: repositoryConfig, waitMs: 10000 });
 			expect(await caller.request("enabled")).toBe(false);
 			caller.dispose();
 
-			offering.sessionShutsDown({ sessionId: "pi-follow-session" }, "quit");
-			await until(() => recordsIn(REPO_RUNTIME_DIRECTORY).length === 0, "the pi offer outlived the session");
+			await offering.sessionShutsDown({ sessionId: "pi-follow-session" }, "quit");
+			await until(() => ownRecords().length === 0, "the pi offer outlived the session");
+			expect(readFileSync(unrelatedPath, "utf8")).toBe(unrelatedBytes);
 
 			// A host that states no child entry runs every session in this process: there is nothing
 			// an outside session could reach, so nothing is offered.
-			const inProcess = boundPiSurface({ definition: follow });
+			const inProcess = boundPiSurface({ adapter, definition: follow });
+			ws.children.push(() => inProcess.sessionShutsDown({ sessionId: "pi-in-process-session" }, "quit"));
 			inProcess.sessionStarts({ sessionId: "pi-in-process-session" }, "new");
 
 			// A field that declares no follow is never read as another session's value, so no value is
@@ -828,12 +875,13 @@ describe("the framework offers an owner's access with the owner's life (S1)", ()
 			// sessions, so the sessions that follow that owner are observed here and deliver to this
 			// process, and the seat they deliver to is served for as long as this process serves the
 			// owner.
-			const spawning = boundPiSurface({ definition: plain, childEntry });
+			const spawning = boundPiSurface({ adapter, definition: plain, childEntry });
+			ws.children.push(() => spawning.sessionShutsDown({ sessionId: "pi-plain-session" }, "quit"));
 			spawning.sessionStarts({ sessionId: "pi-plain-session" }, "new");
 			const observationSeat: AccessTarget = { extension: plain.id, owner: "main:pi-plain-session" };
 			expect(localOwnerAccess(observationSeat)).toBeUndefined();
-			await until(() => recordsIn(REPO_RUNTIME_DIRECTORY).length === 1, "the observation seat published no record");
-			expect(onlyRecord(REPO_RUNTIME_DIRECTORY).owner).toBe(observationSeat.owner);
+			await until(() => ownRecords().length === 1, "the observation seat published no record");
+			expect(ownRecord().owner).toBe(observationSeat.owner);
 			// The seat carries no values at all: a reader that reaches it is answered nothing for the
 			// field, because the owner of a field that follows nothing serves none.
 			const reading = await openOwnerAccess({ target: observationSeat, configPath: repositoryConfig, waitMs: 10000 });
@@ -850,11 +898,16 @@ describe("the framework offers an owner's access with the owner's life (S1)", ()
 				}),
 			);
 			expect(absent.reason).toBe("no-location");
-			spawning.sessionShutsDown({ sessionId: "pi-plain-session" }, "quit");
-			await until(() => recordsIn(REPO_RUNTIME_DIRECTORY).length === 0, "the observation seat outlived the session");
+			await spawning.sessionShutsDown({ sessionId: "pi-plain-session" }, "quit");
+			await until(() => ownRecords().length === 0, "the observation seat outlived the session");
 			expect(localOwnerAccess(observationSeat)).toBeUndefined();
+			expect([...recordsIn(ws.runtimeDirectory)]).toEqual([unrelatedName]);
 		} finally {
-			rmSync(REPO_RUNTIME_DIRECTORY, { recursive: true, force: true });
+			try {
+				// Even an earlier assertion/read failure must shut down only this assembly's seats.
+				await Promise.allSettled(ws.children.splice(0).map(finish => finish()));
+				expect(readFileSync(unrelatedPath, "utf8")).toBe(unrelatedBytes);
+			} finally { await ws.dispose(); }
 		}
 	});
 });

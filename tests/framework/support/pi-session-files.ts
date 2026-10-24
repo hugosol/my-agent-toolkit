@@ -7,7 +7,7 @@
  * pi's session format this adapter reads — and is free to name a file after nothing, which is what
  * proves the id came from the header rather than from the path.
  */
-import { mkdtempSync, writeFileSync } from "node:fs";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
 import type { PiSessionHeader } from "../../../adapters/pi";
@@ -20,8 +20,16 @@ export interface PiSessionFileDir {
 	write(name: string, header: PiSessionHeader): void;
 }
 
+const directories: string[] = [];
+
+/** Called by each consuming suite after a case, once its complete lineage chain is no longer needed. */
+export function disposeSessionFiles(): void {
+	for (const dir of directories.splice(0)) rmSync(dir, { recursive: true, force: true });
+}
+
 export function sessionFileDir(): PiSessionFileDir {
 	const dir = mkdtempSync(path.join(tmpdir(), "pi-session-files-"));
+	directories.push(dir);
 	return {
 		path: name => path.join(dir, name),
 		write: (name, header) => writeFileSync(path.join(dir, name), `${JSON.stringify(header)}\n`),

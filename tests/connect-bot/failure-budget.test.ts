@@ -147,10 +147,9 @@ function panel(answer: Answer): Panel {
 			if (kind === "register") {
 				return panelAnswer(200, { outcome: "registered", onlineCount: 1 });
 			}
-			// The state report the arm path sends right behind its register is answered too: the
-			// connection each test scripts is up when it starts, and what its panel does with the
-			// beats that follow is the outage under test.
-			if (kind === "state") {
+			// Initial arming starts with a drained queue. A held re-registration state push,
+			// however, must take the scripted answer rather than silently clear the outage.
+			if (kind === "state" && !holding) {
 				return panelAnswer(200, { outcome: "accepted" });
 			}
 			if (holding) {
@@ -408,9 +407,9 @@ describe("a push the panel takes resets the segment (E10, P31)", () => {
 		await settleAll();
 		expect(double.notifications).toEqual([CONNECTED, FIRST_FAILURE]);
 
-		// The operator asks again while the panel is back: the register is answered, so this is the
-		// same connection asked again — one timer, one record — and the outage it was in is over.
-		sent.keep(answers.reachable);
+		// Register always succeeds, but hold every following push: a successful state report must
+		// not be allowed to reset health on behalf of the registration under test.
+		sent.hold();
 		const announced = double.nextNotification();
 		double.run("connect-bot", "", double.context({ sessionId: "budget-rearm", cwd: "E:/work/budget" }));
 		await announced;
@@ -418,12 +417,21 @@ describe("a push the panel takes resets the segment (E10, P31)", () => {
 		expect(double.timers).toHaveLength(1);
 		expect(double.timers[0]?.cancelled).toBe(false);
 
-		// The budget starts over with the connection: the next failure is a first failure again, not
-		// the third one of the segment the register cut off.
-		sent.keep(answers.gone);
-		fireTimer(double);
+		await settleAll();
+		expect(kinds(sent)).toEqual(["register", "state", "heartbeat", "heartbeat", "register", "state"]);
+		// The held state now fails, with no intervening successful push. Without registration's
+		// reset this would be failure three and would disconnect instead of starting a new segment.
+		sent.release();
 		await settleAll();
 		expect(double.notifications).toEqual([CONNECTED, FIRST_FAILURE, CONNECTED, FIRST_FAILURE]);
 		expect(botSessions.get(ownerKey("budget-rearm"))).toBeDefined();
+		fireTimer(double);
+		await settleAll();
+		expect(double.notifications).toEqual([CONNECTED, FIRST_FAILURE, CONNECTED, FIRST_FAILURE]);
+		expect(double.timers[0]?.cancelled).toBe(false);
+		fireTimer(double);
+		await settleAll();
+		expect(double.notifications).toEqual([CONNECTED, FIRST_FAILURE, CONNECTED, FIRST_FAILURE, AUTO_DISARM]);
+		expect(botSessions.get(ownerKey("budget-rearm"))).toBeUndefined();
 	});
 });

@@ -71,7 +71,14 @@ export default function bindingLifecycle(pi: OmpExtensionApi): void {
 			},
 			initialize: async state => {
 				evidence(`initialize started instance=${state.instance}`);
-				await Bun.sleep(LIFECYCLE_INITIALIZATION_MS);
+				const gateUrl = process.env.DOCK_LIFECYCLE_INIT_GATE_URL;
+				if (gateUrl) {
+					const response = await fetch(gateUrl);
+					if (!response.ok) throw new Error(`initialization gate returned ${response.status}`);
+					await response.text();
+				} else {
+					await Bun.sleep(LIFECYCLE_INITIALIZATION_MS);
+				}
 				evidence(`initialize settled instance=${state.instance}`);
 			},
 			cleanup: state => {

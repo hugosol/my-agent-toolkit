@@ -1,9 +1,0 @@
-{
-  "checkedAt": "2026-10-23T21:28:07.196701+00:00",
-  "sourceAndFixtureFileCount": 503,
-  "changedSourceOrFixtures": [],
-  "changedRecordedEnvironmentFiles": [],
-  "changedProviderDeploymentFiles": [],
-  "runWindow": "14-final-typecheck through 27-pi-three-consumer-combination; sequential exclusive window after integrate08 released",
-  "scope": "hashes cover source/fixtures/scripts/config/locked inputs and recorded executable/provider/package/patch manifests; not a claim of every machine file"
-}

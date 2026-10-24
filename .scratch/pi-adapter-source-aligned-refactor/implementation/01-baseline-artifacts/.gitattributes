@@ -1,4 +1,0 @@
-# These are captured evidence bytes, including original line endings used by the SHA-256 manifest.
-* -text
-.gitattributes text eol=lf
-.gitignore text eol=lf
