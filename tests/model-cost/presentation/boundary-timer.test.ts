@@ -20,14 +20,14 @@
  * the binding's single cleanup reaches — cancels the timeout the UI is holding, and that neither a
  * redraw nor the boundary itself reaches the network, the consumption document or the accounting.
  */
-import { afterEach, describe, expect, test } from "bun:test";
+import { afterEach, describe, expect, spyOn, test } from "bun:test";
 import { mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
 import type { OmpExtensionApi, OmpSessionContext } from "../../../adapters/omp";
 import { MODEL_COST } from "../../../extensions/model-cost/definition";
 import { cleanupModelCostOmp } from "../../../extensions/model-cost/harnesses/omp";
-import type { BoundaryTimer } from "../../../extensions/model-cost/harnesses/boundary-timer";
+import { createBoundaryTimer, type BoundaryTimer, type BoundaryTimerHost } from "../../../extensions/model-cost/harnesses/boundary-timer";
 import { MODEL_COST_WIDGET_KEY, attachModelCostWidget } from "../../../extensions/model-cost/harnesses/omp/widget";
 import type { ConsumptionDocument } from "../../../extensions/model-cost/shared-logic/foundation/session/consumption-document";
 import type { ModelPricingData } from "../../../extensions/model-cost/shared-logic/business/pricing/model-data";
@@ -265,7 +265,7 @@ async function bindBoundary(options: { readonly holiday?: boolean; readonly from
 				now: () => clock.now,
 				httpRequest: () => {
 					requests += 1;
-					return Promise.reject(new Error("this suite makes no request"));
+					return Promise.resolve({ ok: false as const, failure: { kind: "transport" as const, error: new Error("this suite makes no request") } });
 				},
 			});
 			return runtime;
@@ -525,5 +525,87 @@ describe("the wait belongs to the UI's lifetime, not to a session's (P41)", () =
 		const published = `${JSON.stringify(DOCUMENT(false))}\n`;
 		writeFileSync(path.join(bound.root, CONSUMPTION_FILE), published, "utf8");
 		expect(bound.storage()).not.toEqual(before);
+	});
+});
+
+describe("boundary callback failures stay with the UI timer", () => {
+	test("a failed frontend does not block another frontend or the next boundary", () => {
+		const callbacks: Array<() => void> = [];
+		const host: BoundaryTimerHost = {
+			schedule(callback) { callbacks.push(callback); return callback; },
+			cancel() {},
+		};
+		let at = 0;
+		let next: number | undefined = 10;
+		const healthy: number[] = [];
+		const recovered: number[] = [];
+		const timer = createBoundaryTimer(() => ({ at, nextChangeAt: next }));
+		const diagnostic = spyOn(process.stderr, "write").mockImplementation(() => true);
+		try {
+			timer.attach(() => {
+				if (at === 10) throw new Error("secret-boundary-output");
+				recovered.push(at);
+			}, host, true);
+			timer.attach(() => { healthy.push(at); }, host, false);
+			at = 10;
+			next = 20;
+			callbacks.shift()!();
+			expect(healthy).toEqual([10]);
+			expect(diagnostic).toHaveBeenCalledTimes(1);
+			expect(String(diagnostic.mock.calls[0]?.[0])).toMatch(/model-cost.*boundary.*redraw.*failed/i);
+			expect(String(diagnostic.mock.calls[0]?.[0])).not.toContain("secret-boundary-output");
+
+			at = 20;
+			next = undefined;
+			callbacks.shift()!();
+			expect(healthy).toEqual([10, 20]);
+			expect(recovered).toEqual([20]);
+			expect(callbacks).toHaveLength(0);
+			expect(diagnostic).toHaveBeenCalledTimes(1);
+		} finally {
+			timer.dispose();
+			diagnostic.mockRestore();
+		}
+	});
+
+	test("a failed schedule read after firing is diagnosed and a later sync can resume", () => {
+		const callbacks: Array<() => void> = [];
+		const host: BoundaryTimerHost = {
+			schedule(callback) { callbacks.push(callback); return callback; },
+			cancel() {},
+		};
+		let fail = false;
+		let at = 0;
+		let next: number | undefined = 10;
+		const drawn: number[] = [];
+		const timer = createBoundaryTimer(() => {
+			if (fail) {
+				fail = false;
+				throw new Error("secret-boundary-schedule");
+			}
+			return { at, nextChangeAt: next };
+		});
+		const diagnostic = spyOn(process.stderr, "write").mockImplementation(() => true);
+		try {
+			timer.attach(() => { drawn.push(at); }, host, true);
+			at = 10;
+			next = 20;
+			fail = true;
+			callbacks.shift()!();
+			expect(drawn).toEqual([10]);
+			expect(diagnostic).toHaveBeenCalledTimes(1);
+			expect(String(diagnostic.mock.calls[0]?.[0])).toMatch(/model-cost.*boundary.*schedul.*failed/i);
+			expect(String(diagnostic.mock.calls[0]?.[0])).not.toContain("secret-boundary-schedule");
+			timer.sync();
+			at = 20;
+			next = undefined;
+			callbacks.shift()!();
+			expect(drawn).toEqual([10, 20]);
+			expect(callbacks).toHaveLength(0);
+			expect(diagnostic).toHaveBeenCalledTimes(1);
+		} finally {
+			timer.dispose();
+			diagnostic.mockRestore();
+		}
 	});
 });

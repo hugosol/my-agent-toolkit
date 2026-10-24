@@ -2,7 +2,7 @@
  * The actual herdr-bot panel one interop run talks to (P23).
  *
  * The extension's outbound dependency is the real panel, not a stand-in, so the interop run starts
- * the panel itself: the release build of the sibling herdr-bot checkout, on an ephemeral loopback
+ * the panel itself: the safe_shutdown_shell example of the sibling herdr-bot checkout, on an ephemeral loopback
  * port, with a configuration file of its own under a temporary directory. Nothing of the user's
  * panel is touched — this instance is a process of its own whose session table lives and dies in
  * memory — and its `mDNS` publishing stays off so the isolated run announces nothing on the
@@ -16,13 +16,16 @@
  * client-side re-telling of it.
  *
  * The binary is resolved from `HERDR_BOT_BINARY` when the environment names one, and otherwise from
- * the sibling checkout's release build. A machine without it cannot run this panel, and the run
- * fails saying exactly which path is missing and how to build it: a stand-in panel would not be
- * the interop evidence this is here for.
+ * the sibling checkout's debug example build. This uses the real panel routes and storage with
+ * only the power-off action replaced by the panel's own recording implementation. A missing
+ * example fails with build instructions; the production executable is never a fallback.
  */
 import { copyFileSync, existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { get } from "node:http";
 import { tmpdir } from "node:os";
+import { Readable } from "node:stream";
 import * as path from "node:path";
+import { inspect } from "node:util";
 import { REPO_ROOT } from "../../harness-dock/baseline";
 
 /** The environment name that overrides where the herdr-bot binary is taken from. */
@@ -81,12 +84,12 @@ const FRAME_TIMEOUT_MS = 30_000;
 /** The panel's own startup line carrying the address it bound. */
 const LISTEN_LINE = /监听：http:\/\/(?:127\.0\.0\.1|localhost|\[::1\]):(\d+)\//;
 
-/** Where the panel binary is taken from: the environment's own value, or the sibling release build. */
+/** Where the safe panel binary is taken from: an override, or the sibling debug example build. */
 function herdrBotBinary(): string {
 	const named = process.env[HERDR_BOT_BINARY_ENV]?.trim();
 	if (named !== undefined && named.length > 0) return named;
-	const name = process.platform === "win32" ? "herdr-bot.exe" : "herdr-bot";
-	return path.resolve(REPO_ROOT, "..", "herdr-bot", "backend", "target", "release", name);
+	const name = process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell";
+	return path.resolve(REPO_ROOT, "..", "herdr-bot", "backend", "target", "debug", "examples", name);
 }
 
 /** Reads one stream line by line, handing every complete line to `onLine`. */
@@ -157,6 +160,27 @@ function writePanelConfig(directory: string): string {
 		].join("\n"),
 	);
 	return file;
+}
+
+/** Reads the actual loopback listener directly, independently of Bun's process-wide fetch transport. */
+function panelEvents(endpoint: string, signal: AbortSignal): Promise<ReadableStream<Uint8Array>> {
+	const { promise, resolve, reject } = Promise.withResolvers<ReadableStream<Uint8Array>>();
+	const request = get(`${endpoint}/api/sessions/events`, {
+		agent: false,
+		headers: { accept: "text/event-stream" },
+		signal,
+	}, response => {
+		if (response.statusCode !== 200) {
+			response.destroy();
+			reject(new Error(`the panel's read side returned HTTP ${response.statusCode} at ${endpoint}`));
+			return;
+		}
+		// IncomingMessage emits bytes and toWeb preserves them. Node and Bun declare
+		// different BYOB reader overloads for the same runtime Web Stream contract.
+		resolve(Readable.toWeb(response) as unknown as ReadableStream<Uint8Array>);
+	});
+	request.on("error", reject);
+	return promise;
 }
 
 /** Parses one server-sent event block into a frame; `undefined` for a keep-alive comment only. */
@@ -249,9 +273,9 @@ export async function startHerdrBot(): Promise<HerdrBotPanel> {
 	const binary = herdrBotBinary();
 	if (!existsSync(binary)) {
 		throw new Error(
-			`the interop run needs the actual herdr-bot panel, but no binary is at ${binary}; ` +
-				`build it with \`cargo build --release --manifest-path ../herdr-bot/backend/Cargo.toml\` ` +
-				`or name an existing one in ${HERDR_BOT_BINARY_ENV}`,
+			`the interop run needs herdr-bot's safe_shutdown_shell, but no binary is at ${binary}; ` +
+				`build it with \`cargo build --example safe_shutdown_shell --manifest-path ../herdr-bot/backend/Cargo.toml\` ` +
+				`or name an existing safe example in ${HERDR_BOT_BINARY_ENV} (never the production herdr-bot executable)`,
 		);
 	}
 	const directory = mkdtempSync(path.join(tmpdir(), "herdr-bot-interop-"));
@@ -264,37 +288,51 @@ export async function startHerdrBot(): Promise<HerdrBotPanel> {
 	const output: string[] = [];
 	let port: number | undefined;
 	const bound = Promise.withResolvers<number>();
-	pumpLines(child.stdout, line => {
+	const stdout = pumpLines(child.stdout, line => {
 		output.push(line);
 		const match = LISTEN_LINE.exec(line);
 		if (match !== null && port === undefined) {
 			port = Number(match[1]);
 			bound.resolve(port);
 		}
-	}).catch(() => {});
-	void pumpLines(child.stderr, line => output.push(line)).catch(() => {});
+	}).catch(error => {
+		output.push(`stdout read failed: ${String(error)}`);
+		bound.reject(error);
+	});
+	const stderr = pumpLines(child.stderr, line => output.push(line)).catch(error => {
+		output.push(`stderr read failed: ${String(error)}`);
+	});
 
+	void child.exited.then(code => bound.reject(new Error(`herdr-bot exited before binding (exit ${code})`)));
 	const timer = setTimeout(() => bound.reject(new Error(`herdr-bot did not bind within ${START_TIMEOUT_MS}ms`)), START_TIMEOUT_MS);
 	try {
 		await bound.promise;
+		if (!output.some(line => line.includes("安全壳已启动"))) {
+			throw new Error(`${binary} is not the safe_shutdown_shell; refusing a backend that can power off the machine`);
+		}
 	} catch (error) {
+		const exitCode = child.exitCode;
 		child.kill();
+		await child.exited;
+		await Promise.all([stdout, stderr]);
 		rmSync(directory, { recursive: true, force: true });
-		throw new Error(`${String(error)}; panel output:\n${output.join("\n")}`);
+		throw new Error(
+			`herdr-bot startup failed (binary ${binary}, child exit before cleanup: ${exitCode}); ` +
+			`${inspect(error, { depth: 4 })}; panel output:\n${output.join("\n")}`,
+			{ cause: error },
+		);
 	} finally {
 		clearTimeout(timer);
 	}
 
 	const endpoint = `http://127.0.0.1:${port!}`;
 	const frames: HerdrBotFrame[] = [];
-	const waiters: Array<{ readonly match: (frame: HerdrBotFrame) => boolean; readonly settle: (frame: HerdrBotFrame) => void }> = [];
+	const waiters: Array<{ readonly match: (frame: HerdrBotFrame) => boolean; readonly settle: (frame: HerdrBotFrame) => void; readonly reject: (error: Error) => void }> = [];
+	let readFailure: Error | undefined;
 	const abort = new AbortController();
-	const subscription = fetch(`${endpoint}/api/sessions/events`, {
-		headers: { accept: "text/event-stream" },
-		signal: abort.signal,
-	})
-		.then(async response => {
-			await pumpFrames(response.body!, frame => {
+	const subscription = panelEvents(endpoint, abort.signal)
+		.then(async body => {
+			await pumpFrames(body, frame => {
 				frames.push(frame);
 				for (const waiter of [...waiters]) {
 					if (!waiter.match(frame)) continue;
@@ -302,19 +340,25 @@ export async function startHerdrBot(): Promise<HerdrBotPanel> {
 					waiter.settle(frame);
 				}
 			});
+			if (!abort.signal.aborted) throw new Error("the panel closed its event subscription");
 		})
-		.catch(() => {});
+		.catch(error => {
+			if (abort.signal.aborted) return;
+			readFailure = error instanceof Error ? error : new Error(String(error));
+			for (const waiter of waiters.splice(0)) waiter.reject(readFailure);
+		});
 
-	return {
+	const panel: HerdrBotPanel = {
 		historyFile: path.join(directory, "session-history.json"),
 		diagnostics: output,
 		endpoint,
 		frames,
 		waitFor: async (match, label, timeoutMs = FRAME_TIMEOUT_MS) => {
+			if (readFailure !== undefined) throw readFailure;
 			const existing = frames.find(match);
 			if (existing !== undefined) return existing;
 			const { promise, resolve, reject } = Promise.withResolvers<HerdrBotFrame>();
-			const waiter = { match, settle: resolve };
+			const waiter = { match, settle: resolve, reject };
 			waiters.push(waiter);
 			const timeout = setTimeout(() => {
 				waiters.splice(waiters.indexOf(waiter), 1);
@@ -327,14 +371,11 @@ export async function startHerdrBot(): Promise<HerdrBotPanel> {
 			const reading = new AbortController();
 			void (async () => {
 				try {
-					const response = await fetch(`${endpoint}/api/sessions/events`, {
-						headers: { accept: "text/event-stream" },
-						signal: reading.signal,
-					});
+					const body = await panelEvents(endpoint, reading.signal);
 					// The first frame of a connection opened now is the table as it stands now; the
 					// reader stops there and the connection is dropped, so no later change is mistaken
 					// for this read's answer.
-					await pumpFrames(response.body!, frame => {
+					await pumpFrames(body, frame => {
 						if (frame.event !== "snapshot") return false;
 						resolve(snapshotSessions(frame.data));
 						return true;
@@ -353,7 +394,20 @@ export async function startHerdrBot(): Promise<HerdrBotPanel> {
 			await subscription;
 			child.kill();
 			await child.exited;
+			await Promise.all([stdout, stderr]);
 			rmSync(directory, { recursive: true, force: true });
 		},
 	};
+	try {
+		await panel.waitFor(frame => frame.event === "snapshot", "the initial snapshot", START_TIMEOUT_MS);
+		return panel;
+	} catch (error) {
+		const exitCode = child.exitCode;
+		await panel.stop();
+		throw new Error(
+			`herdr-bot subscription failed (endpoint ${endpoint}, binary ${binary}, child exit before cleanup: ${exitCode}); ` +
+			`${inspect(error, { depth: 4 })}; panel output:\n${output.join("\n")}`,
+			{ cause: error },
+		);
+	}
 }

@@ -49,11 +49,17 @@ import { connect as netConnect, type Socket } from "node:net";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
 import {
-	HttpConfigurationError,
+	type HttpRequestResult,
 	type HttpRequestOptions,
 	request as publishedRequest,
 } from "../framework/interface/general/http";
 import { createHttpModule } from "../framework/modules/http";
+
+/** A smoke success must carry a usable response, never an invented fallback. */
+function successfulResponse(result: HttpRequestResult): Response {
+	if (!result.ok) throw result.failure.error;
+	return result.response;
+}
 
 /**
  * The isolated child's own run: the published `request`, in a process started with the proxy
@@ -67,7 +73,7 @@ async function directProbe(args: readonly string[]): Promise<void> {
 	];
 	const show = async (label: string, url: string, options?: HttpRequestOptions): Promise<void> => {
 		try {
-			const response = await publishedRequest(url, options);
+			const response = successfulResponse(await publishedRequest(url, options));
 			report.push(`${label}: status ${response.status} body ${await response.text()}`);
 		} catch (error) {
 			report.push(`${label}: rejected ${(error as Error).name}`);
@@ -85,6 +91,50 @@ async function directProbe(args: readonly string[]): Promise<void> {
 	// Written and awaited rather than printed, so the parent is handed the whole report even
 	// though this process ends right after saying it.
 	await Bun.write(Bun.stdout, `${report.join("\n")}\n`);
+}
+
+// This child deliberately has no uncaughtException/unhandledRejection handlers: a native stream
+// error escaping the operation must fail the process, not be hidden by the regression harness.
+if (process.argv.includes("--connect-timeout-probe")) {
+	const diagnostics: string[] = [];
+	let accepted = 0;
+	let closed = 0;
+	const stalledProxy = Bun.listen<{ accepted: boolean }>({
+		hostname: "127.0.0.1",
+		port: 0,
+		socket: {
+			open(socket) { socket.data = { accepted: false }; },
+			data(socket, bytes) {
+				if (socket.data.accepted) return; // Deliberately never progress the TLS handshake.
+				if (!bytes.toString().startsWith("CONNECT ")) throw new Error("expected CONNECT");
+				socket.data.accepted = true;
+				accepted++;
+				socket.write("HTTP/1.1 200 Connection Established\r\n\r\n");
+			},
+			close(socket) { if (socket.data.accepted) closed++; },
+		},
+	});
+	const recoveryTarget = Bun.serve({ hostname: "127.0.0.1", port: 0, fetch: () => new Response("recovered") });
+	try {
+		const module = createHttpModule({
+			configPath: "connect-timeout-probe.yaml",
+			reader: () => `http:\n  proxies:\n    stalled:\n      enabled: true\n      url: http://127.0.0.1:${stalledProxy.port}\n`,
+			reportDiagnostic: message => diagnostics.push(message),
+		});
+		const result = await module.request("https://127.0.0.1:443/private", { proxy: "stalled", timeoutMs: 120 });
+		const recovery = await module.request(`http://127.0.0.1:${recoveryTarget.port}/`, { timeoutMs: 1000 });
+		await Bun.sleep(80); // Let late native destroy/error/close events run before the child exits.
+		const recovered = recovery.ok && await recovery.response.text() === "recovered";
+		const passed = !result.ok && result.failure.kind === "timeout" && result.failure.error.name === "TimeoutError"
+			&& diagnostics.length === 1 && diagnostics[0] === "HTTP timeout failure (TimeoutError)"
+			&& accepted === 1 && closed === 1 && recovered;
+		console.log(JSON.stringify({ passed, kind: result.ok ? "success" : result.failure.kind, diagnostics: diagnostics.length, accepted, closed, recovered }));
+		process.exitCode = passed ? 0 : 1;
+	} finally {
+		stalledProxy.stop(true);
+		recoveryTarget.stop(true);
+	}
+	process.exit(process.exitCode ?? 0);
 }
 
 if (process.argv.includes("--direct-probe")) {
@@ -143,6 +193,10 @@ interface Settled {
 async function timed(started: number, work: () => Promise<unknown>): Promise<Settled> {
 	try {
 		const value = await work();
+		if (value !== null && typeof value === "object" && "ok" in value && !(value instanceof Response)) {
+			const result = value as HttpRequestResult;
+			return { elapsedMs: Date.now() - started, outcome: result.ok ? `resolved (status ${result.response.status})` : `failed ${result.failure.kind} ${result.failure.error.name}` };
+		}
 		const status = value instanceof Response ? `status ${value.status}` : "a value";
 		return { elapsedMs: Date.now() - started, outcome: `resolved (${status})` };
 	} catch (error) {
@@ -355,6 +409,9 @@ function startTarget(): { readonly port: number; readonly hits: TargetHit[]; rea
 				sentinel: request.headers.get("x-smoke-sentinel"),
 			});
 			if (url.pathname === "/hang") return Promise.withResolvers<Response>().promise;
+			if (url.pathname.startsWith("/bodyless/")) return new Response(null, {
+				status: Number(url.pathname.split("/")[2]), statusText: "Bodyless", headers: { "x-preserved": "yes" },
+			});
 			if (url.pathname === "/slow-body") {
 				const late = new ReadableStream({
 					start(controller) {
@@ -533,12 +590,26 @@ function clearSightings(): void {
 const lastHit = (): TargetHit | undefined => target.hits[target.hits.length - 1];
 
 {
+	const child = Bun.spawn({
+		cmd: [process.execPath, path.join(import.meta.dir, "http-transport-smoke.ts"), "--connect-timeout-probe"],
+		stdout: "pipe",
+		stderr: "pipe",
+	});
+	const [stdout, stderr, exit] = await Promise.all([new Response(child.stdout).text(), new Response(child.stderr).text(), child.exited]);
+	observe(
+		"a CONNECT tunnel stalled before TLS times out once without an uncaught error and permits recovery",
+		exit === 0 && stdout.includes('"passed":true') && stderr.trim() === "",
+		`child exit ${exit}; ${stdout.trim() || stderr.trim()}`,
+	);
+}
+
+{
 	// 1 — an omitted proxy is a direct connection: the target serves it, nothing else is touched.
 	//     This runs under the ambient proxy environment, which must take nothing.
 	const before = target.hits.length;
 	const trapBefore = trap.sightings.length;
 	clearSightings();
-	const response = await shared.request(`${targetUrl}/ok`);
+	const response = successfulResponse(await shared.request(`${targetUrl}/ok`));
 	const hit = lastHit();
 	observe(
 		"an omitted proxy connects directly",
@@ -556,7 +627,7 @@ const lastHit = (): TargetHit | undefined => target.hits[target.hits.length - 1]
 	const before = target.hits.length;
 	const trapBefore = trap.sightings.length;
 	clearSightings();
-	const response = await shared.request(`${targetUrl}/ok`, { proxy: false });
+	const response = successfulResponse(await shared.request(`${targetUrl}/ok`, { proxy: false }));
 	const hit = lastHit();
 	observe(
 		"proxy: false connects directly",
@@ -574,7 +645,7 @@ const lastHit = (): TargetHit | undefined => target.hits[target.hits.length - 1]
 	//     handed the absolute URL, and the target serves it from that hop.
 	const before = target.hits.length;
 	clearSightings();
-	const response = await shared.request(`${targetUrl}/ok`, { proxy: "loopback" });
+	const response = successfulResponse(await shared.request(`${targetUrl}/ok`, { proxy: "loopback" }));
 	const hit = lastHit();
 	const expectedHop = `http-proxy:${proxy.port}`;
 	observe(
@@ -594,12 +665,12 @@ const lastHit = (): TargetHit | undefined => target.hits[target.hits.length - 1]
 	//     proxy, exactly as prepared: nothing is added, serialized or rewritten on the way.
 	const before = target.hits.length;
 	clearSightings();
-	const response = await shared.request(`${targetUrl}/echo`, {
+	const response = successfulResponse(await shared.request(`${targetUrl}/echo`, {
 		method: "POST",
 		headers: { "content-type": "application/json", "x-smoke-sentinel": "sentinel-value" },
 		body: '{"sessionId":"one"}',
 		proxy: "loopback",
-	});
+	}));
 	const hit = lastHit();
 	const echoed = echoedFields(await response.json());
 	observe(
@@ -621,7 +692,7 @@ if (tlsProxy === undefined) {
 	// 5 — the same entry through the HTTPS proxy: the connection to the proxy is TLS.
 	const before = target.hits.length;
 	clearSightings();
-	const response = await shared.request(`${targetUrl}/ok`, { proxy: "loopback-tls" });
+	const response = successfulResponse(await shared.request(`${targetUrl}/ok`, { proxy: "loopback-tls" }));
 	const hit = lastHit();
 	const expectedHop = `https-proxy:${tlsProxy.port}`;
 	observe(
@@ -643,7 +714,7 @@ if (tlsTarget === undefined) {
 	//     handshake to the target runs over that tunnel. This is the provider path.
 	const expectedAuthority = `127.0.0.1:${tlsTarget.port}`;
 	clearSightings();
-	const response = await shared.request(`${tlsTargetUrl}/ok`, { proxy: "loopback" });
+	const response = successfulResponse(await shared.request(`${tlsTargetUrl}/ok`, { proxy: "loopback" }));
 	const reached = reachedPath(await response.json());
 	observe(
 		"an HTTPS target is reached through the plain proxy's CONNECT tunnel",
@@ -659,7 +730,7 @@ if (tlsTarget === undefined) {
 		// 7 — the same HTTPS target through the HTTPS proxy: TLS to the proxy, CONNECT inside it,
 		//     then TLS to the target over the tunnel.
 		clearSightings();
-		const answer = await shared.request(`${tlsTargetUrl}/ok`, { proxy: "loopback-tls" });
+		const answer = successfulResponse(await shared.request(`${tlsTargetUrl}/ok`, { proxy: "loopback-tls" }));
 		const readBack = reachedPath(await answer.json());
 		observe(
 			"an HTTPS target is reached through the HTTPS proxy's CONNECT tunnel",
@@ -679,7 +750,7 @@ if (tlsTarget === undefined) {
 		const defaultAuthority = "127.0.0.1:443";
 		clearSightings();
 		try {
-			const response = await shared.request("https://127.0.0.1/", { proxy: "loopback", timeoutMs: 2_000 });
+			const response = successfulResponse(await shared.request("https://127.0.0.1/", { proxy: "loopback", timeoutMs: 2_000 }));
 			await response.text();
 		} catch {
 			// Only the request line matters; whether a listener answered on 443 is not this case's claim.
@@ -697,7 +768,7 @@ if (tlsTarget === undefined) {
 	//     still reaches the target, and the trap records nothing.
 	const trapBefore = trap.sightings.length;
 	clearSightings();
-	const direct = await shared.request(`${tlsTargetUrl}/ok`);
+	const direct = successfulResponse(await shared.request(`${tlsTargetUrl}/ok`));
 	const reachedDirectly = reachedPath(await direct.json());
 	observe(
 		"an HTTPS target with no proxy reaches the target under an ambient HTTPS_PROXY",
@@ -713,16 +784,29 @@ if (tlsTarget === undefined) {
 	const settled = await timed(started, () => shared.request(`${targetUrl}/ok`, { proxy: "refused" }));
 	observe(
 		"a refused proxy fails the request and is not re-sent direct",
-		settled.outcome.startsWith("rejected") && target.hits.length === before,
+		settled.outcome.startsWith("failed transport") && target.hits.length === before,
 		`${settled.outcome} after ${settled.elapsedMs}ms; the target recorded ${target.hits.length - before} new request(s)`,
 	);
+}
+
+{
+	for (const status of [204, 205, 304]) {
+		const result = await shared.request(`${targetUrl}/bodyless/${status}`, { timeoutMs: 1000 });
+		observe(`native status ${status} preserves its null body and headers`,
+			result.ok && result.response.status === status
+				&& result.response.body === null && result.response.headers.get("x-preserved") === "yes",
+			result.ok ? `status ${result.response.status}; null body ${result.response.body === null}` : `failed ${result.failure.kind}`);
+	}
+	const head = await shared.request(`${targetUrl}/ok`, { method: "HEAD", timeoutMs: 1000 });
+	observe("a native HEAD response is usable with a null body", head.ok && head.response.status === 200 && head.response.body === null,
+		head.ok ? `status ${head.response.status}; null body ${head.response.body === null}` : `failed ${head.failure.kind}`);
 }
 
 {
 	// 10 — a non-2xx answer is a response, not a failure, and its body reads.
 	const started = Date.now();
 	const settled = await timed(started, async () => {
-		const response = await shared.request(`${targetUrl}/missing`, { proxy: "loopback" });
+		const response = successfulResponse(await shared.request(`${targetUrl}/missing`, { proxy: "loopback" }));
 		return new Response(await response.text(), { status: response.status });
 	});
 	observe(
@@ -759,10 +843,7 @@ if (tlsTarget === undefined) {
 	// 11 — the budget covers the body: the head is answered at once, the body late, and the read
 	//      fails when the budget runs out.
 	const started = Date.now();
-	const settled = await timed(started, async () => {
-		const response = await shared.request(`${targetUrl}/slow-body`, { timeoutMs: 200 });
-		return new Response(await response.text(), { status: response.status });
-	});
+	const settled = await timed(started, () => shared.request(`${targetUrl}/slow-body`, { timeoutMs: 200 }));
 	observe(
 		"the wait budget covers reading the body",
 		settled.outcome.includes("TimeoutError") && settled.elapsedMs >= 150 && settled.elapsedMs < 600,
@@ -775,7 +856,7 @@ if (tlsTarget === undefined) {
 	//      budget and not a body that never came.
 	const started = Date.now();
 	const settled = await timed(started, async () => {
-		const response = await shared.request(`${targetUrl}/slow-body`, { timeoutMs: 1500 });
+		const response = successfulResponse(await shared.request(`${targetUrl}/slow-body`, { timeoutMs: 1500 }));
 		const body = await response.text();
 		return new Response(body, { status: response.status });
 	});
@@ -790,13 +871,10 @@ if (tlsTarget === undefined) {
 	// 13 — a body that stops before its end fails the read, rather than passing an incomplete body
 	//      off as the whole answer.
 	const started = Date.now();
-	const settled = await timed(started, async () => {
-		const response = await shared.request(`http://127.0.0.1:${shortTarget.port}/ok`, { timeoutMs: 5000 });
-		return new Response(await response.text(), { status: response.status });
-	});
+	const settled = await timed(started, () => shared.request(`http://127.0.0.1:${shortTarget.port}/ok`, { timeoutMs: 5000 }));
 	observe(
 		"a body that stops before its end fails the read",
-		settled.outcome.startsWith("rejected"),
+		settled.outcome.startsWith("failed transport"),
 		`${settled.outcome} after ${settled.elapsedMs}ms (the target declared 4096 bytes and sent 17)`,
 	);
 }
@@ -830,7 +908,7 @@ if (tlsTarget === undefined) {
 	const settled = await timed(started, () => unconfigured.request(`${targetUrl}/ok`, { proxy: "loopback" }));
 	observe(
 		"a selection with no shared file is refused, not turned into a direct request",
-		settled.outcome.includes(HttpConfigurationError.name) && target.hits.length === before,
+		settled.outcome.startsWith("failed configuration") && target.hits.length === before,
 		`${settled.outcome} after ${settled.elapsedMs}ms; the target recorded ${target.hits.length - before} new request(s)`,
 	);
 }
@@ -840,7 +918,7 @@ if (tlsTarget === undefined) {
 	//       at its declared url: the target records the direct hit and the proxy sees nothing.
 	const before = target.hits.length;
 	clearSightings();
-	const response = await disabledProxy.request(`${targetUrl}/ok`, { proxy: "loopback" });
+	const response = successfulResponse(await disabledProxy.request(`${targetUrl}/ok`, { proxy: "loopback" }));
 	const hit = lastHit();
 	observe(
 		"a disabled named entry connects directly, with its real proxy untouched",
@@ -860,7 +938,7 @@ if (tlsTarget === undefined) {
 	const settled = await timed(started, () => invalidProxy.request(`${targetUrl}/ok`, { proxy: "loopback" }));
 	observe(
 		"an invalid named entry is refused before anything is sent",
-		settled.outcome.includes(HttpConfigurationError.name) && target.hits.length === before,
+		settled.outcome.startsWith("failed configuration") && target.hits.length === before,
 		`${settled.outcome} after ${settled.elapsedMs}ms; the target recorded ${target.hits.length - before} new request(s)`,
 	);
 }
@@ -872,7 +950,7 @@ if (tlsTarget === undefined) {
 	const settled = await timed(started, () => undeclaredProxy.request(`${targetUrl}/ok`, { proxy: "loopback" }));
 	observe(
 		"an undeclared named entry is refused before anything is sent",
-		settled.outcome.includes(HttpConfigurationError.name) && target.hits.length === before,
+		settled.outcome.startsWith("failed configuration") && target.hits.length === before,
 		`${settled.outcome} after ${settled.elapsedMs}ms; the target recorded ${target.hits.length - before} new request(s)`,
 	);
 }

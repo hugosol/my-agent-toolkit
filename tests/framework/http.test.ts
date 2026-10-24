@@ -22,7 +22,7 @@ import { describe, expect, test } from "bun:test";
 import * as path from "node:path";
 import { tmpdir } from "node:os";
 import type { ConfigReader } from "../../framework/core/config";
-import { HttpConfigurationError } from "../../framework/interface/general/http";
+import type { HttpRequestResult } from "../../framework/interface/general/http";
 import {
 	createHttpModule,
 	type HttpModule,
@@ -58,19 +58,29 @@ function httpUnderTest(
 		readonly reader?: ConfigReader;
 		readonly respond?: TransportAnswer;
 	} = {},
-): { readonly http: HttpModule; readonly sent: Sent[] } {
+): { readonly http: HttpModule; readonly sent: Sent[]; readonly diagnostics: string[] } {
 	const sent: Sent[] = [];
+	const diagnostics: string[] = [];
 	const transport: HttpTransport = async (url, init) => {
 		const call = { url, init };
 		sent.push(call);
 		return options.respond === undefined ? new Response("answered") : options.respond(call);
 	};
 	const seam: HttpModuleSeam = {
+		reportDiagnostic: message => diagnostics.push(message),
 		transport,
 		configPath: options.configPath ?? ABSENT_CONFIG,
 		reader: options.reader ?? (options.config === undefined ? undefined : () => options.config as string),
 	};
-	return { http: createHttpModule(seam), sent };
+	return { http: createHttpModule(seam), sent, diagnostics };
+}
+
+async function failureOf(operation: Promise<HttpRequestResult>, kind: "configuration" | "timeout" | "transport"): Promise<Error> {
+	const result = await operation;
+	expect(result.ok).toBe(false);
+	if (result.ok) throw new Error("expected a failed HTTP operation");
+	expect(result.failure.kind).toBe(kind);
+	return result.failure.error;
 }
 
 /**
@@ -90,13 +100,18 @@ async function abortedAfter(signal: AbortSignal): Promise<number> {
 }
 
 describe("the request call", () => {
-	test("a request with no options is a GET, and the platform's own response is what comes back", async () => {
+	test("a request with no options is a GET and returns a fully received real response", async () => {
 		const answer = new Response("balance", { status: 200 });
 		const { http, sent } = httpUnderTest({ respond: () => answer });
 
-		const response = await http.request("http://127.0.0.1:9/user/balance");
+		const result = await http.request("http://127.0.0.1:9/user/balance");
 
-		expect(response).toBe(answer);
+		expect(result.ok).toBe(true);
+		if (!result.ok) throw result.failure.error;
+		const response = result.response;
+		expect(response).toBeInstanceOf(Response);
+		expect(await response.text()).toBe("balance");
+		expect(answer.bodyUsed).toBe(true);
 		expect(sent).toHaveLength(1);
 		expect(sent[0]!.url).toBe("http://127.0.0.1:9/user/balance");
 		expect(sent[0]!.init.method).toBe("GET");
@@ -124,25 +139,29 @@ describe("the request call", () => {
 		const answer = new Response("no such account", { status: 404 });
 		const { http } = httpUnderTest({ respond: () => answer });
 
-		const response = await http.request("http://127.0.0.1:9/user/balance");
+		const result = await http.request("http://127.0.0.1:9/user/balance");
 
-		expect(response).toBe(answer);
+		expect(result.ok).toBe(true);
+		if (!result.ok) throw result.failure.error;
+		const response = result.response;
+		expect(response).toBeInstanceOf(Response);
 		expect(response.status).toBe(404);
 		expect(await response.text()).toBe("no such account");
 	});
 
-	test("a transport failure rejects with the platform's own failure", async () => {
-		const failure = new TypeError("Unable to connect. Is the computer able to access the url?");
-		const { http } = httpUnderTest({
+	test("a transport failure returns the original error and emits one credential-free diagnostic", async () => {
+		const failure = new TypeError("https://user:secret@example.test/private?token=hidden body-password");
+		const { http, diagnostics } = httpUnderTest({
 			respond: () => {
 				throw failure;
 			},
 		});
 
-		await expect(http.request("http://127.0.0.1:9/user/balance")).rejects.toBe(failure);
+		expect(await failureOf(http.request("http://127.0.0.1:9/user/balance"), "transport")).toBe(failure);
+		expect(diagnostics).toEqual(["HTTP transport failure (TypeError)"]);
 	});
 
-	test("a body that cannot be read rejects the read", async () => {
+	test("a body that cannot be read fails the guarded operation", async () => {
 		const { http } = httpUnderTest({
 			respond: () =>
 				new Response(
@@ -154,9 +173,46 @@ describe("the request call", () => {
 				),
 		});
 
-		const response = await http.request("http://127.0.0.1:9/user/balance");
+		expect((await failureOf(http.request("http://127.0.0.1:9/user/balance"), "transport")).message).toBe("the body broke");
+	});
+});
 
-		await expect(response.text()).rejects.toThrow("the body broke");
+describe("fully guarded responses", () => {
+	test("a delayed body times out before success and logs exactly once", async () => {
+		let reason: unknown;
+		const { http, diagnostics } = httpUnderTest({
+			respond: sent => {
+				sent.init.signal.addEventListener("abort", () => { reason = sent.init.signal.reason; }, { once: true });
+				return new Response(new ReadableStream());
+			},
+		});
+		const error = await failureOf(http.request("https://user:secret@example.test/", { timeoutMs: 40 }), "timeout");
+		if (!(reason instanceof Error)) throw new Error("native timeout did not report an Error reason");
+		expect(error).toBe(reason);
+		expect(diagnostics).toEqual(["HTTP timeout failure (TimeoutError)"]);
+	});
+
+	test("bodyless responses retain status, status text and headers", async () => {
+		for (const status of [204, 205, 304]) {
+			const { http, diagnostics } = httpUnderTest({ respond: () => new Response(null, {
+				status, statusText: "No body", headers: { "x-preserved": "yes" },
+			}) });
+			const result = await http.request("http://127.0.0.1:9/bodyless");
+			if (!result.ok) throw result.failure.error;
+			expect(result.response.status).toBe(status);
+			expect(result.response.statusText).toBe("No body");
+			expect(result.response.headers.get("x-preserved")).toBe("yes");
+			expect(result.response.body).toBeNull();
+			expect(await result.response.text()).toBe("");
+			expect(diagnostics).toEqual([]);
+		}
+	});
+
+	test("configuration failure logs once before any transport is called", async () => {
+		const { http, sent, diagnostics } = httpUnderTest();
+		await failureOf(http.request("https://user:secret@example.test/", { proxy: "private-token" }), "configuration");
+		expect(sent).toEqual([]);
+		expect(diagnostics).toEqual(["HTTP configuration failure (HttpConfigurationError)"]);
 	});
 });
 
@@ -183,27 +239,34 @@ describe("the wait budget", () => {
 		expect(elapsed).toBeLessThan(800);
 	});
 
-	test("with neither declared, the built-in budget is far longer than any declared one", async () => {
-		// The built-in value is 30000ms; a unit test does not wait it out. What this observes is
-		// that no *short* deadline is imposed when nothing declares one: the request that does
-		// declare a budget runs out first, and the built-in one is still waiting at that moment.
-		// The exact built-in is measured against a hanging target in the isolated smoke.
-		const { http, sent } = httpUnderTest({ config: "http:\n  defaultTimeoutMs: 250\n" });
-
-		await http.request("http://127.0.0.1:9/user/balance");
-		await http.request("http://127.0.0.1:9/user/balance", { timeoutMs: 60 });
-
-		await abortedAfter(sent[1]!.init.signal);
+	test("with neither declared, the built-in 30000ms budget aborts the pending request", async () => {
+		// A genuinely empty configuration supplies no shared deadline. Keep the real native
+		// budget: neither a shortened fixture default nor a fake timer can prove this contract.
+		const { http, sent, diagnostics } = httpUnderTest({
+			config: "{}\n",
+			respond: ({ init }) => {
+				const pending = Promise.withResolvers<Response>();
+				init.signal.addEventListener("abort", () => pending.reject(init.signal.reason), { once: true });
+				return pending.promise;
+			},
+		});
+		const started = performance.now();
+		const builtIn = http.request("http://127.0.0.1:9/user/balance");
+		const declared = http.request("http://127.0.0.1:9/user/balance", { timeoutMs: 60 });
+		await failureOf(declared, "timeout");
 		expect(sent[0]!.init.signal.aborted).toBe(false);
-	});
+		const error = await failureOf(builtIn, "timeout");
+		expect(performance.now() - started).toBeGreaterThanOrEqual(29_000);
+		expect(sent[0]!.init.signal.aborted).toBe(true);
+		expect(error).toBe(sent[0]!.init.signal.reason);
+		expect(diagnostics).toEqual(["HTTP timeout failure (TimeoutError)", "HTTP timeout failure (TimeoutError)"]);
+	}, 45_000);
 
 	test("a budget that is not a wait this timer schedules is refused before anything is sent", async () => {
 		for (const timeoutMs of [0, -1, 1.5, Number.NaN, Number.POSITIVE_INFINITY, 2 ** 31]) {
 			const { http, sent } = httpUnderTest();
 
-			await expect(http.request("http://127.0.0.1:9/user/balance", { timeoutMs })).rejects.toBeInstanceOf(
-				HttpConfigurationError,
-			);
+			await failureOf(http.request("http://127.0.0.1:9/user/balance", { timeoutMs }), "configuration");
 			expect(sent, String(timeoutMs)).toHaveLength(0);
 		}
 	});
@@ -212,14 +275,12 @@ describe("the wait budget", () => {
 		for (const declared of ["0", "-5", "1.5", '"5000"']) {
 			const { http, sent } = httpUnderTest({ config: `http:\n  defaultTimeoutMs: ${declared}\n` });
 
-			await expect(http.request("http://127.0.0.1:9/user/balance"), declared).rejects.toBeInstanceOf(
-				HttpConfigurationError,
-			);
+			await failureOf(http.request("http://127.0.0.1:9/user/balance"), "configuration");
 			expect(sent, declared).toHaveLength(0);
 		}
 	});
 
-	test("the wait runs out on the platform's terms, and the request rejects", async () => {
+	test("the wait runs out on the platform's terms, and returns a timeout failure", async () => {
 		const { http } = httpUnderTest({
 			respond: sent => {
 				const answer = Promise.withResolvers<Response>();
@@ -229,7 +290,7 @@ describe("the wait budget", () => {
 		});
 
 		const started = performance.now();
-		await expect(http.request("http://127.0.0.1:9/user/balance", { timeoutMs: 40 })).rejects.toBeDefined();
+		await failureOf(http.request("http://127.0.0.1:9/user/balance", { timeoutMs: 40 }), "timeout");
 		expect(performance.now() - started).toBeGreaterThanOrEqual(15);
 	});
 });
@@ -331,9 +392,7 @@ describe("the proxy path", () => {
 		for (const { name, config } of cases) {
 			const { http, sent } = httpUnderTest(config === undefined ? {} : { config });
 
-			await expect(http.request("https://chatgpt.com/backend-api/usage", { proxy: "codex" }), name).rejects.toBeInstanceOf(
-				HttpConfigurationError,
-			);
+			await failureOf(http.request("https://chatgpt.com/backend-api/usage", { proxy: "codex" }), "configuration");
 			expect(sent, name).toHaveLength(0);
 		}
 	});
@@ -354,9 +413,7 @@ describe("the proxy path", () => {
 					: () => config;
 			const { http, sent } = httpUnderTest({ reader });
 
-			await expect(http.request("http://127.0.0.1:9/user/balance"), name).rejects.toBeInstanceOf(
-				HttpConfigurationError,
-			);
+			await failureOf(http.request("http://127.0.0.1:9/user/balance"), "configuration");
 			expect(sent, name).toHaveLength(0);
 		}
 	});

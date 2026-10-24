@@ -24,6 +24,9 @@ import type {
 	OmpSessionContext,
 } from "../../adapters/omp";
 import * as frameworkOmp from "../../adapters/omp";
+import { observeTurns } from "../../adapters/omp/native/extensibility/extensions/turn";
+import { sessionFactsOf, ownerReferenceOf } from "../../adapters/omp/native/extensibility/extensions/session-facts";
+import { feedbackTransport } from "../../adapters/omp/native/extensibility/extensions/feedback";
 import type { CatalogPriceSource } from "../../framework/interface/provider";
 import type {
 	RoundDelivery,
@@ -92,6 +95,8 @@ interface SessionSurface {
 		readonly baseUrls?: Readonly<Record<string, string>>;
 		/** A provider absent here is a provider the host has no credential for. */
 		readonly credentials?: Readonly<Record<string, string | undefined>>;
+		/** Native credential refresh may reject or be cancelled; the adapter must not hide it. */
+		readonly getApiKeyForProvider?: (provider: string) => Promise<string | undefined>;
 	};
 }
 
@@ -152,7 +157,7 @@ function boundSurface(
 			: {
 					modelRegistry: {
 						getProviderBaseUrl: (provider: string) => surface.registry?.baseUrls?.[provider],
-						getApiKeyForProvider: async (provider: string) => surface.registry?.credentials?.[provider],
+						getApiKeyForProvider: surface.registry.getApiKeyForProvider ?? (async (provider: string) => surface.registry?.credentials?.[provider]),
 					},
 				}),
 		hasUI: true,
@@ -393,14 +398,33 @@ describe("the native model-cycle facts map to the framework's Turn facts (P57)",
 
 	test("a streamed reading is reported once per distinct usage, never as the final one", () => {
 		const surface = boundSurface();
+		// Observe the actual native mapper's output as well as the extension's Turn edges: the
+		// shared dispatcher intentionally keeps streaming evidence private until settlement.
+		const mapped: TurnSignal[] = [];
+		observeTurns(surface.api, facts => mapped.push(facts.signal), {
+			frame: ctx => ({ owner: ownerReferenceOf(surface.api, ctx), hasUI: ctx.hasUI, feedback: feedbackTransport(ctx) }),
+			session: ctx => sessionFactsOf(surface.api, ctx),
+			reportMissingFact: () => undefined,
+		});
 		surface.startRequest(MAIN);
 		surface.streamUsage(MAIN, assistantMessage({ usage: { input: 4, output: 0, cacheRead: 0, cacheWrite: 0, totalTokens: 4 } }));
 		surface.streamUsage(MAIN, assistantMessage({ usage: { input: 4, output: 0, cacheRead: 0, cacheWrite: 0, totalTokens: 4 } }));
 		surface.streamUsage(MAIN, assistantMessage({ usage: { input: 4, output: 2, cacheRead: 0, cacheWrite: 0, totalTokens: 6 } }));
 
 		// Two reports for three events: the unchanged repeat is not a fact this adapter reports.
+		expect(mapped.filter(signal => signal.kind !== "request_started")).toEqual([
+			{ kind: "usage_streamed", session: surface.starts[0]!.turn.session,
+				usage: { input: 4, output: 0, cacheRead: 0, cacheWrite: 0, totalTokens: 4 } },
+			{ kind: "usage_streamed", session: surface.starts[0]!.turn.session,
+				usage: { input: 4, output: 2, cacheRead: 0, cacheWrite: 0, totalTokens: 6 } },
+		]);
 		expect(surface.starts).toHaveLength(1);
 		expect(surface.ends).toHaveLength(0);
+		// Streaming readings are evidence, not final usage. The native all-zero default does
+		// not establish a final reading, so settlement must not promote the stream to final usage.
+		surface.messageEnds(MAIN, assistantMessage({ usage: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, totalTokens: 0 } }));
+		expect(surface.ends).toHaveLength(1);
+		expect(surface.ends[0]!.end.usage).toBeUndefined();
 	});
 
 	test("a round edge and a Turn of one session carry that session's own facts", () => {
@@ -621,6 +645,25 @@ describe("the harness's own provider access reaches the factory as a per-operati
 			credential: "sk-live-one",
 		});
 	});
+
+	// S1: the implementation's plain ProviderAccess query. The native registry is the boundary
+	// double; swallowing/retrying a rejected credential lookup would violate the given outcome.
+	for (const failure of [new Error("native credential refresh failed"), new DOMException("native credential refresh cancelled", "AbortError")]) {
+		test(`native provider ${failure.name} reaches the consumer unchanged without retry (P13)`, async () => {
+			const surface = boundSurface();
+			const requested: string[] = [];
+			surface.startRequest({ ...MAIN, registry: {
+				baseUrls: { deepseek: "https://api.deepseek.com/v1" },
+				getApiKeyForProvider: async provider => { requested.push(provider); throw failure; },
+			} });
+			const access = surface.implementationContext().providerAccess;
+			expect(access).toBeDefined();
+			let received: unknown;
+			try { await access!.resolve("deepseek"); } catch (error) { received = error; }
+			expect(received).toBe(failure);
+			expect(requested).toEqual(["deepseek"]);
+		});
+	}
 
 	test("the keyless sentinel is no credential, and a provider the host cannot answer for is no access", async () => {
 		const surface = boundSurface();

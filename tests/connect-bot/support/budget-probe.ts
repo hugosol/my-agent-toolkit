@@ -34,7 +34,7 @@ import type { ExtensionDefinition } from "../../../framework/interface/details/d
 import { CONNECT_BOT } from "../../../extensions/connect-bot/definition";
 import { connectBotConfig } from "../../../extensions/connect-bot/shared-logic/panel/config";
 import { setPanelRequestForTest } from "../../../extensions/connect-bot/shared-logic/panel/client";
-import { type HttpRequestOptions, request } from "../../../framework/interface/general/http";
+import { type HttpRequestOptions, type HttpRequestResult, request } from "../../../framework/interface/general/http";
 import connectBot from "../../../extensions/connect-bot/harnesses/omp";
 import { botSessions } from "../../../extensions/connect-bot/shared-logic/session/session";
 import type { OmpCommandContext } from "../../../adapters/omp";
@@ -188,7 +188,7 @@ connectBot(double.api);
 // recording wrapper in its place, so every request below is a real HTTPS/HTTP request to the panel
 // this run was given, made by the framework's own client under the extension's own configured
 // budget, with its body and answer recorded beside the times it took.
-setPanelRequestForTest(async (url: string, options: HttpRequestOptions = {}): Promise<Response> => {
+setPanelRequestForTest(async (url: string, options: HttpRequestOptions = {}): Promise<HttpRequestResult> => {
 	const envelope = envelopeOf(options.body ?? "");
 	const entry: SentRequest = {
 		kind: envelope.kind,
@@ -213,7 +213,13 @@ setPanelRequestForTest(async (url: string, options: HttpRequestOptions = {}): Pr
 	inFlight.add(settling.promise);
 	const startedAt = performance.now();
 	try {
-		const response = await request(url, options);
+		const result = await request(url, options);
+		if (!result.ok) {
+			entry.elapsedMs = performance.now() - startedAt;
+			entry.outcome = result.failure.kind === "timeout" ? "timed-out" : "failed";
+			return result;
+		}
+		const response = result.response;
 		entry.elapsedMs = performance.now() - startedAt;
 		entry.outcome = "answered";
 		entry.status = response.status;
@@ -226,11 +232,11 @@ setPanelRequestForTest(async (url: string, options: HttpRequestOptions = {}): Pr
 		} catch {
 			entry.answerBody = undefined;
 		}
-		return new Response(text, { status: response.status, headers: response.headers });
+		return { ok: true, response: new Response(text, { status: response.status, statusText: response.statusText, headers: response.headers }) };
 	} catch (error) {
 		entry.elapsedMs = performance.now() - startedAt;
 		entry.outcome = ranOutOfBudget(error) ? "timed-out" : "failed";
-		throw error;
+		return { ok: false, failure: { kind: "transport", error: error instanceof Error ? error : new Error(String(error)) } };
 	} finally {
 		inFlight.delete(settling.promise);
 		settling.resolve();

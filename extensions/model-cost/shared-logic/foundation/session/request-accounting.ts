@@ -91,6 +91,7 @@
  * survives a snapshot that did not land and travels with the next one that does, and a period switch
  * clears it with everything else measured in the period it is closing.
  */
+import { reportDiagnostic } from "../../../../../framework/interface/general/diagnostics";
 import type { FeedbackTransport } from "../../../../../framework/interface/feedback";
 import type { CatalogPrice } from "../../../../../framework/interface/provider";
 import type {
@@ -1000,9 +1001,16 @@ export function createRequestAccounting(inputs: RequestAccountingInputs): Reques
 		return descendants;
 	};
 
-	/** Tells every subscriber that the results changed, so it can read them again. */
+	/** Tells every subscriber that the results changed, without one broken view blocking the rest. */
 	const announce = (): void => {
-		for (const listener of [...listeners]) listener();
+		for (const listener of [...listeners]) {
+			try {
+				listener();
+			} catch {
+				// A view failure is not an accounting failure; omit arbitrary view/error payloads.
+				reportDiagnostic("[model-cost] Accounting view subscriber failed; continuing notification.");
+			}
+		}
 	};
 
 	/**

@@ -25,12 +25,14 @@
 import { realpathSync } from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
-import { loadPiSubagentProvider } from "../../adapters/pi/domain/subagent/internal/provider";
-import { describe, expect, test } from "bun:test";
-import type { InitializationDelivery } from "../../framework/interface";
+import { loadPiSubagentProvider } from "../../adapters/pi/thirdParty/pi-subagents/provider";
+import { afterEach, describe, expect, test, vi } from "bun:test";
+import { drain } from "../support/pending-query";
+import { defineImplementation, type InitializationDelivery } from "../../framework/interface";
+import { piAdapter, type PiExtensionApi } from "../../adapters/pi";
 import type { SubagentIntegrationFailure } from "../../framework/interface/subagent";
 import { withCapturedStderrAsync } from "./support/captured-stderr";
-import { sessionFileDir } from "./support/pi-session-files";
+import { disposeSessionFiles, sessionFileDir } from "./support/pi-session-files";
 import {
 	PROVIDER_READY_CHANNEL,
 	PROVIDER_REPLY_PREFIX,
@@ -40,6 +42,8 @@ import {
 	boundPiSurface,
 	PI_SURFACE_PROBE,
 } from "./support/pi-surface-double";
+
+afterEach(disposeSessionFiles);
 
 // Read the same public module as production, including an explicitly configured installation.
 const { registerRequiredChildExtensions } = await loadPiSubagentProvider() as {
@@ -167,6 +171,44 @@ async function waitForRequirement(sessionId: string, holds: boolean): Promise<bo
 }
 
 describe("a harness with no subagent provider is the normal no-subagent shape (P3)", () => {
+	test("an assembly without a child entry does not engage a running provider", async () => {
+		const surface = boundPiSurface();
+		const main = session("pi-int-assembly-disabled");
+		surface.bus.publish(PROVIDER_READY_CHANNEL, { ...pingAnswer("another-session"), version: 99 });
+		surface.sessionStarts(main, "startup");
+		expect((await surface.initialized()).subagents).toEqual({ mode: "none" });
+		expect(providerHoldsRequirement(main.sessionId)).toBe(false);
+		expect(surface.bus.emissions.filter(item => item.channel === PROVIDER_REQUEST_CHANNEL)).toEqual([]);
+		await surface.sessionShutsDown(main, "quit");
+	});
+
+	// S1/P13: the published handshake owns one 300 ms budget, not a retry loop or a
+	// fresh budget after an uncorrelated reply. Observe initialization and outbound requests.
+	test("an unanswered handshake waits exactly one budget and never retries", async () => {
+		vi.useFakeTimers();
+		const surface = boundPiSurface({ childEntry: CHILD_ENTRY });
+		const main = session("pi-int-one-handshake-budget");
+		try {
+			surface.sessionStarts(main, "startup");
+			const request = await surface.providerRequest(0);
+			// Another request's reply must neither initialize this entry nor restart its clock.
+			surface.bus.publish(`${PROVIDER_REPLY_PREFIX}unrelated`, {
+				success: true, data: pingAnswer(main.sessionId),
+			});
+			vi.advanceTimersByTime(299);
+			await drain();
+			expect(surface.initializations).toEqual([]);
+			vi.advanceTimersByTime(1);
+			expect((await surface.initialized()).subagents).toEqual({ mode: "none" });
+			vi.advanceTimersByTime(3_000);
+			await drain();
+			expect(surface.bus.emissions.filter(item => item.channel === PROVIDER_REQUEST_CHANNEL).map(item => item.data)).toEqual([request]);
+		} finally {
+			vi.useRealTimers();
+			await surface.sessionShutsDown(main, "quit");
+		}
+	});
+
 	test("no provider running answers with the no-subagent mode, and reports no failure", async () => {
 		const surface = boundPiSurface({ childEntry: CHILD_ENTRY });
 		const main = session("pi-int-none");
@@ -396,6 +438,85 @@ describe("an integration that did not take effect is a failure, not an absence (
 });
 
 describe("what this integration holds is released with the session it belongs to (P3)", () => {
+	// S1/P10/P14: a native registration refusal must not leave a child requirement or poison
+	// a later binding of the same real assembly. The failure is injected at Pi's public on boundary.
+	test("a refused binding leaves no effects and the same assembly can bind again", async () => {
+		const surface = boundPiSurface();
+		const main = session("pi-int-rebind-after-refusal");
+		const initialized = Promise.withResolvers<InitializationDelivery>();
+		const starts: string[] = [];
+		const factory = piAdapter({ ...PI_SURFACE_PROBE, id: "pi-rebind" }, {
+			childEntry: CHILD_ENTRY,
+			implementation: defineImplementation({
+				create: () => ({}),
+				initialize: (_state, delivery) => initialized.resolve(delivery),
+				subscriptions: [{ scope: "session", events: {
+					session_start: (_state, delivery) => { starts.push(delivery.session.sessionId); },
+				} }],
+			}),
+		});
+		let registrations = 0;
+		const refusing: PiExtensionApi = {
+			...surface.api,
+			on: ((event: Parameters<PiExtensionApi["on"]>[0], handler: never) => {
+				if (++registrations === 2) throw new Error("native subscription refused");
+				return surface.api.on(event, handler);
+			}) as PiExtensionApi["on"],
+		};
+		const { value: refused, stderr } = await withCapturedStderrAsync(async () => factory(refusing));
+		expect(refused.bound).toBe(false);
+		expect(stderr).toContain("native subscription refused");
+		surface.sessionStarts(main, "startup");
+		await Promise.resolve();
+		expect(starts).toEqual([]);
+		expect(providerHoldsRequirement(main.sessionId)).toBe(false);
+
+		expect(factory(surface.api).bound).toBe(true);
+		surface.sessionStarts(main, "startup");
+		providerReplies(surface, await surface.providerRequest(0), { success: true, data: pingAnswer(main.sessionId) });
+		expect((await initialized.promise).subagents).toEqual({ mode: "subagents" });
+		expect(starts).toEqual([main.sessionId]);
+		expect(providerHoldsRequirement(main.sessionId)).toBe(true);
+		await surface.sessionShutsDown(main, "quit");
+		expect(providerHoldsRequirement(main.sessionId)).toBe(false);
+	});
+
+	// S1/P10/P14: releasing one entry must stop its consumer deliveries, not just call dispose;
+	// the second real assembly still observes the same native facts and retains its requirement.
+	test("a disposed entry stops deliveries while another binding continues", async () => {
+		const main = session("pi-int-independent-release");
+		const stopped = boundPiSurface({
+			childEntry: CHILD_ENTRY,
+			definition: { ...PI_SURFACE_PROBE, id: "pi-release-stopped" },
+		});
+		const live = boundPiSurface({
+			childEntry: path.join(REPO_ROOT, "entrypoints", "pi", "codebase-tools.ts"),
+			definition: { ...PI_SURFACE_PROBE, id: "pi-release-live" },
+		});
+		for (const surface of [stopped, live]) {
+			surface.bus.publish(PROVIDER_READY_CHANNEL, pingAnswer(main.sessionId));
+			surface.sessionStarts(main, "startup");
+			expect((await surface.initialized()).subagents).toEqual({ mode: "subagents" });
+		}
+		await stopped.sessionShutsDown(main, "quit");
+		const before = { sessions: stopped.sessions.length, starts: stopped.starts.length, rounds: stopped.rounds.length };
+		try {
+			for (const surface of [stopped, live]) {
+				surface.sessionRenames(main, "still observable");
+				surface.runStarts(main);
+				surface.startRequest(main);
+			}
+			expect({ sessions: stopped.sessions.length, starts: stopped.starts.length, rounds: stopped.rounds.length }).toEqual(before);
+			expect(live.sessions.map(delivery => delivery.event.kind)).toEqual(["session_start", "session_facts"]);
+			expect(live.starts.map(delivery => delivery.turn.session.sessionId)).toEqual([main.sessionId]);
+			expect(live.rounds.map(delivery => delivery.event.kind)).toEqual(["round_start"]);
+			expect(providerHoldsRequirement(main.sessionId)).toBe(true);
+		} finally {
+			await live.sessionShutsDown(main, "quit");
+		}
+		expect(providerHoldsRequirement(main.sessionId)).toBe(false);
+	});
+
 	test("the session's own end releases its requirement, and a later session's is its own", async () => {
 		const surface = boundPiSurface({ childEntry: CHILD_ENTRY });
 		const first = session("pi-int-release-first");

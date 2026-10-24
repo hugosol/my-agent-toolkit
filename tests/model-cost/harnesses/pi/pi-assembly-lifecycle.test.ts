@@ -49,7 +49,7 @@ import {
 	type ModelCostRuntime,
 } from "../../../../extensions/model-cost/shared-logic/runtime";
 import type { ProviderAccess, ProviderAccessFacts } from "../../../../framework/interface/provider";
-import type { HttpRequestOptions } from "../../../../framework/interface/general/http";
+import type { HttpRequestOptions, HttpRequestResult } from "../../../../framework/interface/general/http";
 import { drain, until } from "../../../support/pending-query";
 
 /** The repository root every binding resolves the declared configuration against, and its file. */
@@ -187,7 +187,7 @@ interface SentRequest {
 /** One request a case is holding open, and the case's own call that answers it. */
 interface HeldQuery {
 	readonly url: string;
-	answer(response: Response): void;
+	answer(response: HttpRequestResult): void;
 }
 
 /** One widget hand-over the host was given, with the session whose context handed it over. */
@@ -283,6 +283,8 @@ afterEach(() => {
 // is still in flight would report a failure this file itself caused.
 afterAll(() => {
 	for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
+	rmSync(SESSION_FILES, { recursive: true, force: true });
+	rmSync(REPOSITORY_ROOT, { recursive: true, force: true });
 });
 
 /**
@@ -296,22 +298,22 @@ function freshRoot(): string {
 }
 
 /** The host's answer to a balance query, in the provider's documented shape. */
-function balanceAnswer(total: string): Response {
-	return Response.json({
+function balanceAnswer(total: string): HttpRequestResult {
+	return ({ ok: true as const, response: Response.json({
 		is_available: true,
 		balance_infos: [{ currency: "CNY", total_balance: total, granted_balance: "0.00", topped_up_balance: total }],
-	});
+	}) });
 }
 
 /** The host's answer to an allowance-window query, in that provider's documented shape. */
-function allowanceAnswer(usedPercent: number): Response {
-	return Response.json({
+function allowanceAnswer(usedPercent: number): HttpRequestResult {
+	return ({ ok: true as const, response: Response.json({
 		plan_type: "pro",
 		rate_limit: {
 			primary_window: { used_percent: usedPercent, limit_window_seconds: 18_000, reset_at: 1_700_003_600 },
 			secondary_window: { used_percent: 60, limit_window_seconds: 604_800, reset_at: 1_700_086_400 },
 		},
-	});
+	}) });
 }
 
 /** Answer one held request with the answer its own address states. */
@@ -476,7 +478,7 @@ function assemble(options: { readonly root?: string; readonly holdQueries?: bool
 						if (options.holdQueries !== true) {
 							return url === ALLOWANCE_URL ? allowanceAnswer(12.5) : balanceAnswer("110.00");
 						}
-						const { promise, resolve } = Promise.withResolvers<Response>();
+						const { promise, resolve } = Promise.withResolvers<HttpRequestResult>();
 						held.push({ url, answer: resolve });
 						return promise;
 					},

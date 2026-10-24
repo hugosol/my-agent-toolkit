@@ -587,6 +587,90 @@ describe("one implementation serves every binding of one adapter (P56)", () => {
 		expect(built).toBe(1);
 	});
 
+	// S1 / migration P10, P12: refusal by the native loader must leave no deliveries and
+	// spend only that failed instance. A later accepted load must still initialize and act.
+	// The independently fixed trace catches reuse of the cleaned instance or stale callbacks.
+	test("an OMP registration refusal leaves a later binding able to initialize and deliver", async () => {
+		const reached: string[] = [];
+		let built = 0;
+		const adapter = frameworkOmp.ompAdapter(actionsProbe("rebind-native"), {
+			implementation: defineImplementation({
+				create: () => ({ instance: ++built }),
+				initialize: (state, delivery) => {
+					const owner = delivery.owner;
+					reached.push(`${state.instance}:init:${owner.kind === "unresolved" ? "unresolved" : owner.key}`);
+				},
+				cleanup: state => void reached.push(`${state.instance}:cleanup`),
+				subscriptions: [{ scope: "session", events: {
+					session_start: (state, delivery) => void reached.push(`${state.instance}:start:${delivery.session.sessionId}`),
+				} }],
+				commands: { "rebind-native-run": { report: state => void reached.push(`${state.instance}:effect`) } },
+			}),
+		});
+		const refused = loadedSession("18.5.0", "refused-child-load", "rebind-native-run");
+		const result = adapter({ ...refused.api, setLabel: () => { throw new Error("loader refused label"); } });
+		expect(result.bound).toBe(false);
+		if (result.bound) throw new Error("the refusing loader unexpectedly accepted a binding");
+		expect(result.failures).toEqual([{ kind: "initialization", detail: "registration failed: loader refused label" }]);
+		refused.start();
+		await refused.command("report");
+		expect(reached).toEqual(["1:cleanup"]);
+
+		const accepted = loadedSession("18.5.0", "accepted-load", "rebind-native-run");
+		expect(adapter(accepted.api).bound).toBe(true);
+		accepted.start();
+		await accepted.command("report");
+		// The existing contract dispatches session_start before entering initialization at
+		// that owner node; neither the failed load nor its cleaned instance participates.
+		expect(reached).toEqual([
+			"1:cleanup", "2:start:accepted-load", "2:init:main:accepted-load", "2:effect",
+		]);
+		accepted.shutdown();
+	});
+
+	// S1 / migration P10, P14: a disposed native binding must stop both the rename callback
+	// and a host-retained command, while another extension's binding still produces effects.
+	// Keeping both registrations alive distinguishes stopped delivery from merely calling cleanup.
+	test("disposing one OMP binding stops its callbacks and effects without stopping another extension", async () => {
+		const reached: string[] = [];
+		const bind = (id: string, session: LoadedSession): void => {
+			const adapter = frameworkOmp.ompAdapter(actionsProbe(id), {
+				implementation: defineImplementation({
+					create: () => ({}),
+					cleanup: () => void reached.push(`${id}:cleanup`),
+					subscriptions: [{ scope: "session", events: {
+						session_facts: (_state, delivery) => void reached.push(`${id}:name:${delivery.session.name}`),
+					} }],
+					commands: { [`${id}-run`]: { report: () => void reached.push(`${id}:effect`) } },
+				}),
+			});
+			expect(adapter(session.api).bound).toBe(true);
+			session.start();
+		};
+		const first = loadedSession("18.5.0", "disposed-owner", "isolated-first-run");
+		const second = loadedSession("18.5.0", "live-owner", "isolated-second-run");
+		bind("isolated-first", first);
+		bind("isolated-second", second);
+		first.rename("before");
+		second.rename("before");
+		await first.command("report");
+		await second.command("report");
+		expect(reached).toEqual([
+			"isolated-first:name:before", "isolated-second:name:before",
+			"isolated-first:effect", "isolated-second:effect",
+		]);
+
+		first.shutdown();
+		first.rename("after");
+		await first.command("report");
+		second.rename("after");
+		await second.command("report");
+		expect(reached.slice(4)).toEqual([
+			"isolated-first:cleanup", "isolated-second:name:after", "isolated-second:effect",
+		]);
+		second.shutdown();
+	});
+
 	test("the OMP initialization is handed the adapter's settled subagent integration", async () => {
 		const seen: SubagentIntegration[] = [];
 		const adapter = frameworkOmp.ompAdapter(
@@ -683,6 +767,8 @@ interface LoadedSession {
 	start(): void;
 	/** The process going away, as the harness announces it: the binding's one disposal. */
 	shutdown(): void;
+	/** Publishes a native manager rename, including after this binding's disposal. */
+	rename(name: string): void;
 	/** Runs one command of this load's registration, as the operator's invocation reaches it. */
 	command(args: string): void | Promise<void>;
 }
@@ -700,9 +786,19 @@ function loadedSession(version: string, sessionId: string, commandName: string):
 		session_tree: [],
 		session_shutdown: [],
 	};
+	let name = "initial";
+	const nameListeners = new Set<() => void>();
 	const ctx: OmpSessionContext = {
 		agent: { kind: "main", id: "Main" },
-		sessionManager: { getSessionId: () => sessionId, getBranch: () => [] },
+		sessionManager: {
+			getSessionId: () => sessionId,
+			getBranch: () => [],
+			getSessionName: () => name,
+			onSessionNameChanged: listener => {
+				nameListeners.add(listener);
+				return () => void nameListeners.delete(listener);
+			},
+		},
 		hasUI: true,
 		ui: { notify: () => {}, setWidget: () => {} },
 	};
@@ -734,6 +830,10 @@ function loadedSession(version: string, sessionId: string, commandName: string):
 		},
 		shutdown: () => {
 			deliver({ type: "session_shutdown" });
+		},
+		rename: next => {
+			name = next;
+			for (const listener of nameListeners) listener();
 		},
 		command: args => commands.get(commandName)?.(args, ctx),
 	};

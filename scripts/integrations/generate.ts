@@ -282,7 +282,7 @@ function buildSkeleton(
 	const port = inspection.port;
 	if (port === undefined) return { error: "The canonical HarnessPort members could not be read; no skeleton can be generated." };
 	const authoringSpecifier = moduleSpecifier(
-		path.join(inspection.adapterDir, "internal", "port.ts"),
+		path.join(inspection.adapterDir, "port.ts"),
 		path.join(inspection.root, "framework", "runtime", "adapter-authoring"),
 	);
 	const implementationSpecifier = "./missing-implementations";
@@ -705,7 +705,7 @@ export function generateAdapter(options: GenerationOptions): GenerationResult {
 			diagnosticAtAdapter(root, inspection.adapterDir, diagnostics, diagnosticKeys, "generate/skeleton", skeleton.error, "Restore the canonical framework contract and rerun generation.");
 			return { adapter: options.adapter, files: [], generatedContracts: [], diagnostics };
 		}
-		const targetFile = path.join(inspection.adapterDir, "internal", "port.ts");
+		const targetFile = path.join(inspection.adapterDir, "port.ts");
 		if (existsSync(targetFile)) {
 			const current = readFileSync(targetFile, "utf8");
 			if (!current.startsWith(GENERATED_HEADER)) {

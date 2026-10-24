@@ -16,7 +16,7 @@
  * ran before anything else. The provider is the dock's own fixture, so no request leaves the
  * machine.
  */
-import { beforeAll, describe, expect, test } from "bun:test";
+import { afterEach, beforeAll, describe, expect, test } from "bun:test";
 import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
 import { type IsolatedHarness, REPO_ROOT, ensureIsolatedHarness, readBaselineRecord } from "./baseline";
@@ -34,6 +34,17 @@ const MODEL_COST_ENTRYPOINT = path.join(REPO_ROOT, "entrypoints", "omp", "model-
 const CONSUMPTION_FILE = "consumption.json";
 
 let harness: IsolatedHarness;
+const roots: RunRoot[] = [];
+
+afterEach(() => {
+	for (const root of roots.splice(0)) root.dispose();
+});
+
+function freshRunRoot(label: string): RunRoot {
+	const root = createRunRoot(label);
+	roots.push(root);
+	return root;
+}
 
 beforeAll(async () => {
 	harness = await ensureIsolatedHarness(record);
@@ -67,8 +78,7 @@ function isolateHome(runRoot: RunRoot): IsolatedHome {
 }
 
 /** One run: a session whose extension set and user home the case chose. */
-async function startRun(label: string, home: IsolatedHome): Promise<{ session: ControlledSession; capture: CaptureServer; runRoot: RunRoot }> {
-	const runRoot = createRunRoot(label);
+async function startRun(runRoot: RunRoot, home: IsolatedHome): Promise<{ session: ControlledSession; capture: CaptureServer }> {
 	const capture = startCaptureServer({ dir: runRoot.captureDir });
 	try {
 		const session = await ControlledSession.start({
@@ -79,10 +89,9 @@ async function startRun(label: string, home: IsolatedHome): Promise<{ session: C
 			env: { [DOCK_CAPTURE_BASE_URL_ENV]: capture.baseUrl, ...home.env },
 			promptTimeoutMs: 60_000,
 		});
-		return { session, capture, runRoot };
+		return { session, capture };
 	} catch (error) {
 		capture.stop();
-		runRoot.dispose();
 		throw error;
 	}
 }
@@ -102,11 +111,11 @@ function storageNotices(session: ControlledSession): ReadonlyArray<{ readonly le
 
 describe("the consumption store in a real session (P47, P51)", () => {
 	test("an unusable baseline is reported to the operator and the file is left exactly as it was", async () => {
-		const runRoot = createRunRoot("model-cost-unusable");
+		const runRoot = freshRunRoot("model-cost-unusable");
 		const home = isolateHome(runRoot);
 		const broken = '{ "schemaVersion": 1, and then nothing';
 		writeFileSync(home.consumptionFile, broken, "utf8");
-		const run = await startRun("model-cost-unusable", home);
+		const run = await startRun(runRoot, home);
 		try {
 			// The first request is answered only after the extension's initialization settled, so its
 			// completion is what makes the evidence below a read that really happened.
@@ -125,14 +134,16 @@ describe("the consumption store in a real session (P47, P51)", () => {
 			expect(readFileSync(home.consumptionFile, "utf8")).toBe(broken);
 			expect(readdirSync(home.storageDirectory)).toEqual([CONSUMPTION_FILE]);
 		} finally {
-			await run.session.stop({ timeoutMs: 10_000 });
-			run.capture.stop();
-			run.runRoot.dispose();
+			try {
+				await run.session.stop({ timeoutMs: 10_000 });
+			} finally {
+				run.capture.stop();
+			}
 		}
 	}, 120_000);
 
 	test("a readable baseline is not rewritten, and an absent one is not created", async () => {
-		const runRoot = createRunRoot("model-cost-baseline");
+		const runRoot = freshRunRoot("model-cost-baseline");
 		const home = isolateHome(runRoot);
 		const baseline = JSON.stringify({
 			schemaVersion: 1,
@@ -158,7 +169,7 @@ describe("the consumption store in a real session (P47, P51)", () => {
 			},
 		});
 		writeFileSync(home.consumptionFile, baseline, "utf8");
-		const run = await startRun("model-cost-baseline", home);
+		const run = await startRun(runRoot, home);
 		try {
 			expect((await run.session.prompt("hello")).status).toBe("completed");
 			// A baseline the extension can read is read and nothing else: no notice, no rewrite.
@@ -166,18 +177,20 @@ describe("the consumption store in a real session (P47, P51)", () => {
 			expect(readFileSync(home.consumptionFile, "utf8")).toBe(baseline);
 			expect(readdirSync(home.storageDirectory)).toEqual([CONSUMPTION_FILE]);
 		} finally {
-			await run.session.stop({ timeoutMs: 10_000 });
-			run.capture.stop();
-			run.runRoot.dispose();
+			try {
+				await run.session.stop({ timeoutMs: 10_000 });
+			} finally {
+				run.capture.stop();
+			}
 		}
 	}, 120_000);
 
 	test("a root with no document is left without one: an empty start is not a save", async () => {
-		const runRoot = createRunRoot("model-cost-fresh");
+		const runRoot = freshRunRoot("model-cost-fresh");
 		const home = isolateHome(runRoot);
 		rmSync(home.consumptionFile, { force: true });
 		expect(existsSync(home.consumptionFile)).toBe(false);
-		const run = await startRun("model-cost-fresh", home);
+		const run = await startRun(runRoot, home);
 		try {
 			expect((await run.session.prompt("hello")).status).toBe("completed");
 			expect(storageNotices(run.session)).toEqual([]);
@@ -186,9 +199,11 @@ describe("the consumption store in a real session (P47, P51)", () => {
 			expect(existsSync(home.consumptionFile)).toBe(false);
 			expect(readdirSync(home.storageDirectory)).toEqual([]);
 		} finally {
-			await run.session.stop({ timeoutMs: 10_000 });
-			run.capture.stop();
-			run.runRoot.dispose();
+			try {
+				await run.session.stop({ timeoutMs: 10_000 });
+			} finally {
+				run.capture.stop();
+			}
 		}
 	}, 120_000);
 });

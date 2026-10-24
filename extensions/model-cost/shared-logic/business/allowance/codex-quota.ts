@@ -52,7 +52,7 @@
  * a stale held value from being paired with a fresh report.
  */
 import type { ProviderAccess } from "../../../../../framework/interface/provider";
-import { HttpConfigurationError, type HttpRequestOptions, request } from "../../../../../framework/interface/general/http";
+import { type HttpRequestResult, type HttpRequestOptions, request } from "../../../../../framework/interface/general/http";
 import type { CodexEstimateSink } from "./codex-estimate";
 import { createProviderRefresh } from "../../foundation/provider-refresh";
 
@@ -201,7 +201,7 @@ export interface CodexQuotaInputs {
 	 */
 	readonly estimate: CodexEstimateSink;
 	/** The outbound call; the framework's public HTTP module unless a caller substitutes one. */
-	readonly httpRequest?: (url: string, options?: HttpRequestOptions) => Promise<Response>;
+	readonly httpRequest?: (url: string, options?: HttpRequestOptions) => Promise<HttpRequestResult>;
 }
 
 /**
@@ -276,12 +276,17 @@ export function createCodexQuota(inputs: CodexQuotaInputs): CodexQuota {
 				fail("no-access");
 				return;
 			}
-			const response = await httpRequest(CODEX_USAGE_URL, {
+			const result = await httpRequest(CODEX_USAGE_URL, {
 				method: "GET",
 				headers: apiHeaders(facts.credential),
 				timeoutMs: CODEX_USAGE_TIMEOUT_MS,
 				proxy: CODEX_USAGE_PROXY,
 			});
+			if (!result.ok) {
+				fail(result.failure.kind === "configuration" ? "misconfigured" : "unreachable");
+				return;
+			}
+			const response = result.response;
 			// A non-2xx answer is a real answer, and this query has no window in it: the module never
 			// interprets a status as an allowance, and never retries it.
 			if (!response.ok) {
@@ -302,11 +307,9 @@ export function createCodexQuota(inputs: CodexQuotaInputs): CodexQuota {
 			const clearedFailure = failure !== undefined;
 			failure = undefined;
 			if (accepted || clearedFailure) inputs.onChange();
-		} catch (error) {
-			// A selection whose shared configuration cannot be satisfied never left the process, which is
-			// a configuration failure rather than a transport one; everything else — a transport failure,
-			// a wait that ran out, a body that could not be read — is this attempt producing no window.
-			fail(error instanceof HttpConfigurationError ? "misconfigured" : "unreachable");
+		} catch {
+			// Access resolution or business parsing can still fail independently of the HTTP result.
+			fail("unreachable");
 		}
 	};
 

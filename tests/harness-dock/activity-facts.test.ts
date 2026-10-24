@@ -375,17 +375,11 @@ describe("leaving a session is a transfer, not that session's own end (P33; S3)"
 			await Bun.sleep(2_000);
 			const leftLines = probeLines(run.session).filter(line => line.facts.sessionId === left);
 
-			// The session that was left is read on its own lines — its own start, its own Round, its own
-			// reading — and nothing else: no end, no second reading, no round edge beyond the one its own
-			// activity opened. Had the position change ended its Round, a `round_end` and an `idle` would
-			// be here.
-			//
-			// The transfer fact itself is deliberately not asserted here: on this host the switch this
-			// dock drives reports its `session_end` naming a session other than the one that was working
-			// (the host's/RPC's own naming, recorded as an observation), so what this case holds the
-			// framework to is the session that was left — that leaving it states nothing about its
-			// activity and commits nothing of its consumption.
-			expect(labels(leftLines)).toEqual(["session_start", "round_start", "working"]);
+			// The transfer ends the left session's position as current, faithfully naming that
+			// actual session. It is not disposal: it adds neither a second activity reading nor a
+			// Round edge beyond the one its own activity opened. Had the position change ended its
+			// Round, a `round_end` and an `idle` would be here.
+			expect(labels(leftLines)).toEqual(["session_start", "round_start", "working", "session_end:transferred"]);
 			expect(roundEdges(leftLines)).toEqual(["round_start"]);
 			expect(readings(leftLines)).toEqual([`${left}=working`]);
 			// No Round ended, so nothing was measured and nothing was committed: the document holds no
@@ -396,6 +390,14 @@ describe("leaving a session is a transfer, not that session's own end (P33; S3)"
 			// through the one that was left.
 			const entered = probeLines(run.session).filter(line => line.kind === "session_start" && line.facts.sessionId !== left);
 			expect(entered).toHaveLength(1);
+			expect(probeLines(run.session)
+				.filter(line => line.kind === "session_start" || line.kind === "session_end")
+				.map(line => ({ kind: line.kind, sessionId: line.facts.sessionId, reason: line.facts.reason })))
+				.toEqual([
+					{ kind: "session_start", sessionId: left, reason: undefined },
+					{ kind: "session_end", sessionId: left, reason: "transferred" },
+					{ kind: "session_start", sessionId: entered[0]!.facts.sessionId, reason: undefined },
+				]);
 		} finally {
 			await disposeRun(run);
 		}

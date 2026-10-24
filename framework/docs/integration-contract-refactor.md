@@ -24,7 +24,7 @@ extension 对 interface 的调用、声明、订阅、读取
 
 - `framework/interface` 仍是 extension 使用的框架接口。
 - `framework/runtime/port.ts` 中的 `HarnessPort` 仍是 framework 定义的共同 adapter 契约。
-- `adapters/omp/internal/port.ts`、`adapters/pi/internal/port.ts` 负责组装各自实现；原生映射仍由 adapter 的 domain 模块承担。
+- `adapters/omp/port.ts`、`adapters/pi/port.ts` 负责组装各自实现；OMP 消费协议映射由 `native/extensibility/extensions/`、`native/session/session-manager.ts` 和 `native/config/model-registry.ts` 持有，port 不解释协议。
 - framework 内部负责语义合成、状态维护和事件交付，不是将 extension 调用简单转发给原生 harness。
 - 不新增按 extension 划分的 port、运行时能力注册表或第二层 adapter 接口。
 - extension 的原生 widget 等直接对接 harness 的定制功能，不纳入后续框架能力清单。
@@ -87,11 +87,11 @@ extension 对 interface 的调用、声明、订阅、读取
 
 ### 3.5 Adapter 侧可检查组装（后续已完成）
 
-新增内部 authoring 辅助 [`framework/runtime/adapter-authoring.ts`](../runtime/adapter-authoring.ts)，没有增加第二套 adapter 接口。共同契约仍是 `HarnessPort`，原生映射仍按各自 `domain/` 分类组织。
+新增内部 authoring 辅助 [`framework/runtime/adapter-authoring.ts`](../runtime/adapter-authoring.ts)，没有增加第二套 adapter 接口。共同契约仍是 `HarnessPort`；映射现按实际来源组织，见[adapter 导航](framework-capabilities.md#adapter-implementation-navigation)，不再使用旧 `domain/` 分类。
 
-- OMP、pi 的 `internal/port.ts` 分别导出 `OMP_PORT`、`PI_PORT`，由 `defineAdapterPort<Context>({...})` 定义实际组装。
+- OMP、pi 的顶层 `port.ts` 分别导出 `OMP_PORT`、`PI_PORT`，由 `defineAdapterPort<Context>({...})` 定义实际组装。
 - 组装必须明确列出全部 `HarnessPort` 成员，包括可选项。必需成员只能提供符合契约的工厂；静态不提供的可选项使用 `unavailablePortMember(reason)`，不使用空函数冒充实现。
-- `bindings` 是 `.create(context)` 真正消费的工厂集合，不是平行的人工供给清单。定义创建时不执行工厂；每次 native binding 创建时，按定义顺序调用工厂。原生上下文、tracker、State entry、诊断与订阅的生命周期仍由原来的 adapter/domain 实现管理。
+- `bindings` 是 `.create(context)` 真正消费的工厂集合，不是平行的人工供给清单。定义创建时不执行工厂；每次 native binding 创建时，按定义顺序调用工厂。原生上下文、tracker、State entry、诊断与订阅的生命周期仍由各自 adapter 来源实现及原 binding 拥有者管理，不因来源重组改变。
 - 条件可用性不等于静态不支持：例如 pi 未配置子代理 integration 时，其工厂返回 `undefined`，物化结果不含该可选成员；已提供的查询在某次调用时读不到事实，也不等于缺少查询实现。
 - 不提供的原因描述当前 adapter 接入，不应据此推断 harness 原生功能一定不存在。
 - Session、Round、Turn、Context、Input、Run、Command 及 pi Disposal 的原生最终交付构造使用 `defineAdapterDelivery(kind, payload)`。该入口引用原有规范类型，使 delivery 内的效果与查询回调有明确的构造落点；不复制、冻结或改变 payload，也不增加第二次分发。
@@ -224,7 +224,7 @@ agent 可以先筛选风险，但不得编造历史理由，也不能把“未�
 **本次增量范围：**
 
 - 8 个生产文件：`framework/runtime/adapter-authoring.ts`、`adapters/pi/index.ts`、
-  `adapters/pi/internal/port.ts`、`scripts/integrations/model.ts`、
+  `adapters/pi/port.ts`、`scripts/integrations/model.ts`、
   新增 `scripts/integrations/assembly.ts`、`scripts/integrations/supply.ts`、
   `scripts/integrations/check.ts`、`scripts/generate-adapter-integrations.ts`。
 - 4 个测试文件：新增 assembly 输出与 pi 输出契约测试，扩展现有 fixture 与 CLI 验收。

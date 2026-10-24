@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import * as path from "node:path";
-import { requirePiChildExtension, type PiSubagentProvider } from "../../adapters/pi/domain/subagent/effects";
-import { loadPiSubagentProvider } from "../../adapters/pi/domain/subagent/internal/provider";
+import { requirePiChildExtension, type PiSubagentProvider } from "../../adapters/pi/thirdParty/pi-subagents/effects";
+import { loadPiSubagentProvider } from "../../adapters/pi/thirdParty/pi-subagents/provider";
 
 const provider = await loadPiSubagentProvider() as PiSubagentProvider;
 const root = path.resolve(import.meta.dir, "../..");

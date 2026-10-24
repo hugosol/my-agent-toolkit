@@ -352,6 +352,8 @@ export interface PiSurface {
 export function boundPiSurface(
 	options: {
 		readonly catalog?: (context: ImplementationContext) => CatalogPriceSource | undefined;
+		/** A real assembly loaded from an isolated deployment, for shared-configuration cases. */
+		readonly adapter?: typeof piAdapter;
 		/** The child entry this assembly requires in spawned sessions; absent models one that declares none. */
 		readonly childEntry?: string;
 		/**
@@ -502,7 +504,7 @@ export function boundPiSurface(
 		},
 	} as unknown as PiExtensionApi;
 
-	const factory = piAdapter(options.definition ?? PI_SURFACE_PROBE, {
+	const factory = (options.adapter ?? piAdapter)(options.definition ?? PI_SURFACE_PROBE, {
 		...(options.childEntry === undefined ? {} : { childEntry: options.childEntry }),
 		implementation: defineImplementation<{ readonly catalog?: CatalogPriceSource }>({
 			create: context => {

@@ -20,7 +20,7 @@ import {
 } from "../../extensions/connect-bot/shared-logic/panel/client";
 import { connectBotConfig } from "../../extensions/connect-bot/shared-logic/panel/config";
 import { botSessions } from "../../extensions/connect-bot/shared-logic/session/session";
-import type { HttpRequestOptions } from "../../framework/interface/general/http";
+import type { HttpRequestOptions, HttpRequestResult } from "../../framework/interface/general/http";
 import connectBot from "../../extensions/connect-bot/harnesses/omp";
 import connectBotPi from "../../extensions/connect-bot/harnesses/pi";
 import type { PiExtensionContext } from "../../adapters/pi";
@@ -44,8 +44,8 @@ interface Request {
 }
 
 /** The panel's answer to one request. */
-const panelAnswer = (status: number, body: unknown): Response =>
-	new Response(JSON.stringify(body), { status });
+const panelAnswer = (status: number, body: unknown): HttpRequestResult =>
+	({ ok: true as const, response: new Response(JSON.stringify(body), { status }) });
 
 /** The registered receipt a reachable panel answers a `register` with. */
 const registered = (onlineCount: number) => ({ outcome: "registered", onlineCount });
@@ -82,7 +82,7 @@ function envelopeOf(request: Request): WireEnvelope {
 }
 
 /** Records every request and answers with `answer`. */
-function panel(answer: () => Promise<Response>): { readonly requests: Request[]; readonly request: PanelRequest } {
+function panel(answer: () => Promise<HttpRequestResult>): { readonly requests: Request[]; readonly request: PanelRequest } {
 	const requests: Request[] = [];
 	return {
 		requests,
@@ -110,7 +110,7 @@ function bound(request: PanelRequest): OmpDouble {
  * state report the arm path sends behind each of them is part of the connection rather than one of
  * those attempts, so it is answered the way a live panel answers it and consumes no script entry.
  */
-function scriptedPanel(answers: ReadonlyArray<() => Promise<Response>>): {
+function scriptedPanel(answers: ReadonlyArray<() => Promise<HttpRequestResult>>): {
 	readonly requests: Request[];
 	readonly request: PanelRequest;
 } {
@@ -231,7 +231,7 @@ describe("a panel that does not register this session arms nothing (E4, E17)", (
 	 * non-2xx, a 2xx answer that is not the registered receipt, and a request that never
 	 * completed (reject or timeout — the call surfaces both as one failure).
 	 */
-	const unreachable: ReadonlyArray<readonly [string, () => Promise<Response>]> = [
+	const unreachable: ReadonlyArray<readonly [string, () => Promise<HttpRequestResult>]> = [
 		["404 after a restart", async () => panelAnswer(404, { error: "unknown-session" })],
 		["a non-2xx answer", async () => panelAnswer(500, { error: "boom" })],
 		["a 2xx answer that is not the receipt", async () => panelAnswer(200, { outcome: "accepted" })],
@@ -261,7 +261,7 @@ describe("a panel that does not register this session arms nothing (E4, E17)", (
 		const requests: Request[] = [];
 		const double = bound(async (url, init = {}) => {
 			requests.push({ url, init });
-			throw new Error("the panel never answered");
+			return { ok: false as const, failure: { kind: "transport" as const, error: new Error("the panel never answered") } };
 		});
 		const sessionId = "arm-failed-unreachable";
 		const ctx = double.context({ sessionId, cwd: "E:/work/beta" });
@@ -407,7 +407,7 @@ describe("an arm that fails leaves nothing behind and can be retried (E4, story 
 		const attempts: Request[] = [];
 		const double = bound(async (url, init = {}) => {
 			attempts.push({ url, init });
-			throw new Error("the panel never answered");
+			return { ok: false as const, failure: { kind: "transport" as const, error: new Error("the panel never answered") } };
 		});
 		const sessionId = "arm-failed-reject";
 		const ctx = double.context({ sessionId, cwd: "E:/work/beta" });
@@ -436,12 +436,12 @@ describe("an arm that fails leaves nothing behind and can be retried (E4, story 
 		const attempts: Request[] = [];
 		const double = bound(
 			(url, init = {}) =>
-				new Promise<Response>((_resolve, reject) => {
+				new Promise<HttpRequestResult>((resolve) => {
 					attempts.push({ url, init });
 					// A panel that is gone never answers: the call is abandoned when the wait it declared
 					// runs out — the same budget a real one would be imposed under. The clock is this
 					// file's own fake one, advanced by exactly that declared wait below.
-					setTimeout(() => reject(new Error("register budget exceeded")), init.timeoutMs);
+					setTimeout(() => resolve({ ok: false, failure: { kind: "timeout", error: new Error("register budget exceeded") } }), init.timeoutMs);
 				}),
 		);
 		const sessionId = "arm-failed-timeout";

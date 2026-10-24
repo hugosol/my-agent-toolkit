@@ -111,14 +111,19 @@ describe("the hasUI fact is the harness's, carried unchanged (F11)", () => {
 
 	test("a session delivery reports whether the session has a UI, in both harness states", () => {
 		const double = portDouble();
+		const seenHasUI: boolean[] = [];
 		double.bind(feedbackDefinition("directed-session-hasui"), {
 			commands: publishingActions("directed-session-hasui", [], []),
+			subscriptions: [{ scope: "owner", events: {
+				session_start: delivery => { seenHasUI.push(delivery.hasUI); },
+			} }],
 		});
 
 		// The semantic-event delivery carries the same fact a command delivery does, so one
 		// shared gate serves both handler kinds.
 		expect(double.deliverSession(OWNER, { hasUI: true }).hasUI).toBe(true);
 		expect(double.deliverSession(OWNER, { hasUI: false }).hasUI).toBe(false);
+		expect(seenHasUI).toEqual([true, false]);
 	});
 });
 

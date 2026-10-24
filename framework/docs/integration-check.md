@@ -40,7 +40,7 @@ bun run check:integrations --extension extensions/model-cost/harnesses/omp.ts --
 | 选项 | 含义 |
 | --- | --- |
 | `--extension <id-or-source-path>` | 不指定时分析 `extensions/` 下每个目录。裸名称先按项目根解析，根下不存在时再按 `extensions/<id>` 解析；也可给目录或源文件。文件位于 `extensions/<name>/` 树内时，会分析其所属的整个 extension 目录；否则只分析该文件。 |
-| `--adapter <name-or-source-path>` | 不指定时分析 `adapters/` 下每个目录。裸名称按 `adapters/<name>` 解析；含路径分隔符或绝对路径时按项目根解析，并取其所属的 `adapters/<name>/` 目录。相对路径要包含 `adapters/` 前缀（如 `adapters/omp/internal/port.ts`）；选择必须落在 `adapters/` 树下。 |
+| `--adapter <name-or-source-path>` | 不指定时分析 `adapters/` 下每个目录。裸名称按 `adapters/<name>` 解析；含路径分隔符或绝对路径时按项目根解析，并取其所属的 `adapters/<name>/` 目录。相对路径要包含 `adapters/` 前缀（如 `adapters/omp/port.ts`）；选择必须落在 `adapters/` 树下。 |
 | `--demand-only` | 只做需求侧分析，不读取任何 adapter。**不能与 `--adapter` 同时使用。** |
 | `--json` | 只向 stdout 输出 JSON 报告；解析/调用错误也以 JSON 输出。 |
 | `--root <directory>` | 指定项目根；默认仓库根。 |
@@ -257,7 +257,7 @@ pi 的重载把 `childEntry` 与具体输出关联：
 生成器读取同一份 demand/supply 分析，不做第二次独立猜测。
 
 - 预检：需求诊断、供给诊断或任一 `unresolved` 存在时，生成器**不写任何文件**并以 1 退出。它不会用生成结果覆盖无法解析、条件或歧义结构。
-- 目标：新 adapter 可获得完整的 port 组装引用；已有 adapter 的确定缺失绑定或可定位的 delivery 属性会被补上对缺失实现的导入。明确写成 `unavailablePortMember(...)` 的必需成员若需求要求它，也可能被替换为待实现导入；可选缺口默认不处理。
+- 目标：新 adapter 默认在 `adapters/<harness>/port.ts` 生成完整的私有 port 组装引用，并从同目录的 `missing-implementations` 引用真实导出，不再创建 `internal/port.ts`。已有 adapter 的源码仍按实际位置定位，包括嵌套来源目录；其确定缺失绑定或可定位的 delivery 属性会被补上对缺失实现的导入。明确写成 `unavailablePortMember(...)` 的必需成员若需求要求它，也可能被替换为待实现导入；可选缺口默认不处理。
 - 安全性：只修改能定位的现有组装/对象字面量；已有实现、错误值、嵌套只部分存在、动态或歧义结构都拒绝并给出诊断。重复运行不重复插入导入，不覆盖已有实现文件。
 - 生成内容：只引用 `missing-implementations` 模块中的真实导出和规范类型；不创建该模块，不写空函数、抛错函数、`declare` 或第二份框架签名。生成失败不是“运行时拒载”，生成后编译失败是**有意保留的开发状态**。
 - 生成之后：由人或 agent 提供符合类型与组装约束的导出；先 `bun run typecheck` 确认编译，再 `bun run check:integrations` 确认结构。编译通过仍不证明原生语义正确。

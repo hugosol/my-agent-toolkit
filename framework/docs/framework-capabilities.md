@@ -28,7 +28,7 @@ State, Feedback and Provider declarations live in their own interface modules, P
 own their declarations in `framework/interface/prompt.ts` and `framework/interface/marker.ts`, and
 the root authoring entry (`framework/interface/index.ts`) owns `defineExtension` plus the
 definition/implementation contract. Subagent and Command each own their declarations too, and
-Command's runtime deliveries are narrowed to the approved members. General's three modules are
+Command's runtime deliveries are narrowed to the approved members. General's modules are
 direct public entries; internal adapter contracts in this index are explicitly not extension-facing
 exports.
 
@@ -64,8 +64,9 @@ exports.
 | `getConfig`, `ExtensionConfigError` | [`framework/interface/general/config.ts`](../interface/general/config.ts), implemented at [`framework/core/config.ts`](../core/config.ts) | The framework's general configuration module: the one call shared logic imports directly, which reads the values the definition's own file was validated to carry in this process, and the misuse failure it may recognize. `getConfig` and `ExtensionConfigError` are the entry's runtime exports; the error class is canonical in the adjacent `config-contract.ts`, so the implementation throws the same identity a consumer checks. See [Extension configuration](#extension-configuration-declaration--file). |
 | `readConfig`, `ConfigSource`, `ConfigReadOptions`, `ConfigReader`, `ConfigParser`, `ConfigLoadError`, `readConfigDocument`, `configFilePath`, `isScheduledWait`, `SCHEDULED_WAIT_TEXT`, `describeValue` | [`framework/core/config.ts`](../core/config.ts) | The internal loading implementation: the injectable reader/parser/base-directory seam, the one reading and validating code path, the shared-configuration document reader, the path resolution every read shares, the waiting-budget vocabulary and the value-description helper. None of them is extension-facing; a loading-time failure is a `ConfigLoadError` whose `detail` binding turns into a configuration failure. |
 | `startupChoiceOf`, `StartupChoice` | [`framework/core/startup.ts`](../core/startup.ts) | The startup policy read behind `ExtensionAssembly.startupPolicy`: the one initial activation choice the selected mode document declares for the extension being bound, validated on the same loading-time path as an extension's configuration and cached per file per process. Internal; an assembly states only the document's path. See [Extension startup modes and the startup policy](#extension-startup-modes-and-the-startup-policy). |
-| `request`, `HttpRequestOptions`, `HttpConfigurationError` | [`framework/interface/general/http.ts`](../interface/general/http.ts), implemented at [`framework/modules/http.ts`](../modules/http.ts) | The framework's general HTTP module: the one call shared logic imports directly, what a request declares (method, headers, body, `timeoutMs`, `proxy`), and the configuration failure a request may reject with before anything is sent. It is a value — `request` is one of the entry's runtime exports. See [General HTTP module](#general-http-module). |
+| `request`, `HttpRequestOptions`, `HttpRequestResult`, `HttpRequestFailure` | [`framework/interface/general/http.ts`](../interface/general/http.ts), implemented at [`framework/modules/http.ts`](../modules/http.ts) | The framework's general HTTP module: the one call shared logic imports directly, what a request declares (method, headers, body, `timeoutMs`, `proxy`), and the logged failure result a request returns instead of rejecting. It is a value — `request` is one of the entry's runtime exports. See [General HTTP module](#general-http-module). |
 | `updateFile`, `SafeFileUpdateOptions`, `SafeFileUpdateError`, `SafeFileUpdateFailureKind` | [`framework/interface/general/files.ts`](../interface/general/files.ts), implemented at [`framework/modules/files.ts`](../modules/files.ts) | The framework's general safe-file module: the one coordinated read-modify-publish call shared logic imports directly, the absolute target and update function it takes, the wait budget and abort it accepts, and the distinguishable failure a refused coordination rejects with. `updateFile` and `SafeFileUpdateError` are the entry's runtime exports. See [General safe-file module](#general-safe-file-module). |
+| `reportDiagnostic` | [`framework/interface/general/diagnostics.ts`](../interface/general/diagnostics.ts), implemented at [`framework/core/diagnostics.ts`](../core/diagnostics.ts) | Shared non-model stderr diagnostics for extension-owned background failures. Independent of Feedback; callers omit credentials and arbitrary error payloads. |
 | Adapter-facing delivery types (`NoticeTransport`, `MarkerTransport`, `StateValues`, `TurnSignal`, `TurnSignalFacts`); `FeedbackLevel` and `FeedbackTransport` are canonical in the [Feedback interface](../interface/feedback/index.ts), and `OwnerReference` in the [State interface](../interface/state/index.ts) | [`framework/runtime/port.ts`](../runtime/port.ts) | The facts and transports a harness adapter resolves; not authored by an extension. `HarnessPort.onTurn` ([`port.ts`](../runtime/port.ts)) is the hook an adapter reports its mapped model-cycle facts through, and `HarnessPort.onRound` ([`port.ts`](../runtime/port.ts)) the hook it reports its run-cycle facts through for the round axis's own synthesis. |
 
 A real, minimal consumer is the codebase-tools extension: the shared declaration is
@@ -159,62 +160,83 @@ See [the refactor and generation boundary](integration-contract-refactor.md) and
 
 ### Adapter implementation navigation
 
-Start with the contract reported by the checker, then the matching `adapters/<harness>/internal/port.ts`
-actual assembly and its referenced domain implementation. The following is a navigation convention,
-not a one-capability/one-file rule. Shared logic consumes framework interfaces, never these native modules.
+Start with the contract reported by the checker, then the actual port assembly: Pi uses
+[`adapters/pi/port.ts`](../../adapters/pi/port.ts); OMP uses
+[`adapters/omp/port.ts`](../../adapters/omp/port.ts). Both are private and separate from their public `index.ts`.
+Pi lifecycle facts belong to `native/core/extensions/` and `native/core/session-manager/`, the
+pi-subagents protocol to `thirdParty/pi-subagents/`, and their necessary interpretation to `mixture/`.
+For example, native session transitions pair with child-extension requirements in
+[`mixture/session-lifecycle.ts`](../../adapters/pi/mixture/session-lifecycle.ts), while native
+quiescence and provider-held work meet in [`mixture/round.ts`](../../adapters/pi/mixture/round.ts).
+The port only binds these mappings. Shared logic consumes framework interfaces, never these modules.
 
 | Existing requirement | Native implementation neighbourhood | Framework-owned implementation |
 | --- | --- | --- |
-| `extension-loading` | pi [`domain/subagent/effects.ts`](../../adapters/pi/domain/subagent/effects.ts) and the assembly's child entry; OMP uses its native integrated loading path | Declaration matching stays offline; loading a child is not a second extension business implementation. |
-| `session-facts` | OMP [`domain/session/queries.ts`](../../adapters/omp/domain/session/queries.ts), pi [`domain/session/queries.ts`](../../adapters/pi/domain/session/queries.ts) | Owner/State and observation consumers use the common fact vocabulary. |
-| `turn-usage` | [`omp/domain/session/turn.ts`](../../adapters/omp/domain/session/turn.ts), [`pi/domain/session/turn.ts`](../../adapters/pi/domain/session/turn.ts) | [`behaviors/turn-events.ts`](../behaviors/turn-events.ts) owns Turn association and deduplication. |
-| `session-lifecycle` | OMP [`domain/session/events.ts`](../../adapters/omp/domain/session/events.ts), pi [`domain/session/events.ts`](../../adapters/pi/domain/session/events.ts), each harness's `domain/session/round.ts` | [`behaviors/binding.ts`](../behaviors/binding.ts) and [`round-events.ts`](../behaviors/round-events.ts) own delivery and Round transitions. |
-| `session-observations` | OMP [`domain/context/events.ts`](../../adapters/omp/domain/context/events.ts) and [`domain/context/queries.ts`](../../adapters/omp/domain/context/queries.ts), pi [`domain/context.ts`](../../adapters/pi/domain/context.ts), `domain/session/` and necessary native subagent facts | [`core/observations.ts`](../core/observations.ts) and the activity/context behaviors own unified readings. |
+| `extension-loading` | pi [`thirdParty/pi-subagents/effects.ts`](../../adapters/pi/thirdParty/pi-subagents/effects.ts) and the assembly's child entry; OMP uses its native integrated loading path | Declaration matching stays offline; loading a child is not a second extension business implementation. |
+| `session-facts` | OMP [`native/extensibility/extensions/session-facts.ts`](../../adapters/omp/native/extensibility/extensions/session-facts.ts), pi [`mixture/session-facts.ts`](../../adapters/pi/mixture/session-facts.ts) | Owner/State and observation consumers use the common fact vocabulary. |
+| `turn-usage` | [`omp/native/extensibility/extensions/turn.ts`](../../adapters/omp/native/extensibility/extensions/turn.ts), [`pi/native/core/extensions/turn.ts`](../../adapters/pi/native/core/extensions/turn.ts) | [`behaviors/turn-events.ts`](../behaviors/turn-events.ts) owns Turn association and deduplication. |
+| `session-lifecycle` | OMP [`native/extensibility/extensions/lifecycle.ts`](../../adapters/omp/native/extensibility/extensions/lifecycle.ts) and [`round.ts`](../../adapters/omp/native/extensibility/extensions/round.ts); pi [`native session events`](../../adapters/pi/native/core/extensions/session.ts) and [`Round composition`](../../adapters/pi/mixture/round.ts) | [`behaviors/binding.ts`](../behaviors/binding.ts) and [`round-events.ts`](../behaviors/round-events.ts) own delivery and Round transitions. |
+| `session-observations` | OMP [`native/extensibility/extensions/context.ts`](../../adapters/omp/native/extensibility/extensions/context.ts), pi [`native/core/extensions/context.ts`](../../adapters/pi/native/core/extensions/context.ts), native session-manager facts and cross-source composition | [`core/observations.ts`](../core/observations.ts) and the activity/context behaviors own unified readings. |
 | `storage-commit` | Actual-session facts and the selected native subagent access mode, connected in the harness entry | [`core/subagent-access.ts`](../core/subagent-access.ts) and [`modules/local-access.ts`](../modules/local-access.ts) carry confirmed notices; business storage stays extension-owned. |
 | `state-follow` | Session/Owner facts; pi's child integration when applicable | [`core/state.ts`](../core/state.ts), [`subagent-access.ts`](../core/subagent-access.ts) and [`followed-owners.ts`](../core/followed-owners.ts) own live following. |
 
-The complete domain map below applies to both harnesses. A root-level domain file is a simple
-mapping, not an alternative technical taxonomy; only domains with collaborating implementations
-need a directory. Extension-specific presentation stays outside these adapters.
+The map below locates the implementations of each framework responsibility; it does not require
+both harnesses to share a directory taxonomy. Pi's State protocol belongs to its native session
+manager, while its commands, prompt delivery, context readings and structural API types belong to
+the native extension contract. Catalog prices and current access belong to the native model
+registry. Pi Marker area and feedback effects share `native/core/extensions/ui.ts` because the
+consumed contract is `ExtensionUIContext` in Pi's `core/extensions/types.ts`, not the TUI's final
+interactive-mode implementation. Pi still has no Viewed-session outlet: Marker area projection
+uses the delivery's existing actual-session position. Extension-specific presentation stays outside
+these adapters.
 
 | Domain | Mapping responsibility | OMP | pi |
 | --- | --- | --- | --- |
-| Session | Events, identity/startup/branch queries, native State entry effects; owns Turn and Round | [`domain/session/`](../../adapters/omp/domain/session/) | [`domain/session/`](../../adapters/pi/domain/session/) |
-| Context | Context-reading observations; current-context and idle reads where needed | [`domain/context/events.ts`](../../adapters/omp/domain/context/events.ts), [`domain/context/queries.ts`](../../adapters/omp/domain/context/queries.ts) | [`domain/context.ts`](../../adapters/pi/domain/context.ts) |
-| Subagent | Native parent/ancestor relations and integration-state queries; provider protocol events and registration effects where needed | [`domain/subagent/queries.ts`](../../adapters/omp/domain/subagent/queries.ts) | [`domain/subagent/events.ts`](../../adapters/pi/domain/subagent/events.ts), [`domain/subagent/queries.ts`](../../adapters/pi/domain/subagent/queries.ts), [`domain/subagent/effects.ts`](../../adapters/pi/domain/subagent/effects.ts); [`domain/subagent/integration.ts`](../../adapters/pi/domain/subagent/integration.ts) owns their shared lifetime |
-| Provider | Catalog price queries and current provider address/credential queries, mapped to framework facts | [`domain/provider.ts`](../../adapters/omp/domain/provider.ts) | [`domain/provider.ts`](../../adapters/pi/domain/provider.ts) |
-| Control | Native command registration and invocation mapping | [`domain/control.ts`](../../adapters/omp/domain/control.ts) | [`domain/control.ts`](../../adapters/pi/domain/control.ts) |
-| Prompt | Native run-initiation mapping and injected-message result | [`domain/prompt.ts`](../../adapters/omp/domain/prompt.ts) | [`domain/prompt.ts`](../../adapters/pi/domain/prompt.ts) |
-| Feedback | Extension feedback and framework notice effects; UI or stderr | [`domain/feedback.ts`](../../adapters/omp/domain/feedback.ts) | [`domain/feedback.ts`](../../adapters/pi/domain/feedback.ts) |
-| Marker | Marker area widget effect; absent on surfaces without UI | [`domain/marker.ts`](../../adapters/omp/domain/marker.ts) | [`domain/marker.ts`](../../adapters/pi/domain/marker.ts) |
+| Session | Session/Turn/Round deliveries, identity/startup facts and native State entries | [`native/extensibility/extensions/`](../../adapters/omp/native/extensibility/extensions/) lifecycle and facts; [`native/session/session-manager.ts`](../../adapters/omp/native/session/session-manager.ts) persisted entries | [`native session facts`](../../adapters/pi/native/core/session-manager/) and [`mixture`](../../adapters/pi/mixture/); complete State protocol: [`native/core/session-manager/state.ts`](../../adapters/pi/native/core/session-manager/state.ts) |
+| Context | Context-reading observations; current-context and idle reads where needed | [`native/extensibility/extensions/context.ts`](../../adapters/omp/native/extensibility/extensions/context.ts) | [`native/core/extensions/context.ts`](../../adapters/pi/native/core/extensions/context.ts) |
+| Subagent | Native parent/ancestor relations and integration-state queries; provider protocol events and registration effects where needed | [`native/registry/agent-registry.ts`](../../adapters/omp/native/registry/agent-registry.ts) | [`native ancestry`](../../adapters/pi/native/core/session-manager/ancestry.ts); [`thirdParty/pi-subagents/`](../../adapters/pi/thirdParty/pi-subagents/) owns registration, RPC, launch metadata, liveness and their shared lifetime |
+| Provider | Catalog price queries and current provider address/credential queries, mapped to framework facts | [`native/config/model-registry.ts`](../../adapters/omp/native/config/model-registry.ts) | [`native/core/model-registry.ts`](../../adapters/pi/native/core/model-registry.ts) |
+| Control | Native command registration and invocation mapping | [`native/extensibility/extensions/commands.ts`](../../adapters/omp/native/extensibility/extensions/commands.ts) | [`native/core/extensions/commands.ts`](../../adapters/pi/native/core/extensions/commands.ts) |
+| Prompt | Native run-initiation mapping and injected-message result | [`native/extensibility/extensions/prompts.ts`](../../adapters/omp/native/extensibility/extensions/prompts.ts) | [`native/core/extensions/prompt.ts`](../../adapters/pi/native/core/extensions/prompt.ts) |
+| Feedback | Extension feedback and framework notice effects; UI or stderr | [`native/extensibility/extensions/feedback.ts`](../../adapters/omp/native/extensibility/extensions/feedback.ts) | [`native/core/extensions/ui.ts`](../../adapters/pi/native/core/extensions/ui.ts) |
+| Marker | Marker area widget effect; absent on surfaces without UI | [`native/extensibility/extensions/marker.ts`](../../adapters/omp/native/extensibility/extensions/marker.ts) | [`native/core/extensions/ui.ts`](../../adapters/pi/native/core/extensions/ui.ts) |
+
+OMP's complete persisted-entry protocol is in [`native/session/session-manager.ts`](../../adapters/omp/native/session/session-manager.ts): extension State naming, oldest-first selected-branch reads and native append stay together with persisted prompt identities. The framework still validates the payloads and decides activation and prompt frequency; moving source files requires no journal or user-configuration migration.
 
 Subagent relations are not Session identity: Session consumes those relations for its own facts and
 Owner mapping. OMP observes child Session/Turn/Round through the same subscriptions as main sessions,
 so it has no separate Subagent `events.ts`; pi additionally reads its provider's announcements and
 replies. Offline supply analysis follows the actual port assembly, not separately maintained inventories.
-The third-party loader under pi `domain/subagent/internal/` is private provider-resolution implementation.
+The third-party loader at pi `thirdParty/pi-subagents/provider.ts` resolves only the provider's public export.
 
-Each adapter root has exactly three entries: `index.ts`, `internal/`, and `domain/`. Only
-`domain/` holds capability domains; the other two are structural support.
+Both adapters' public `index.ts` and private `port.ts` are distinct assembly responsibilities.
+Pi's public entry installs [`native Node text loading`](../../adapters/pi/native/core/extensions/text-imports.ts)
+before a consumer's subsequent shared-definition imports; consumers never import that private helper.
+Its native lifecycle mappings do not import pi-subagents or mixture; third-party code may consume
+Pi's native transport contract, and mixture alone pairs their facts and operations. OMP needs no
+third-party or mixture group: [`native/registry/agent-registry.ts`](../../adapters/omp/native/registry/agent-registry.ts)
+reads native relationships, while [`native/extensibility/extensions/viewed-session.ts`](../../adapters/omp/native/extensibility/extensions/viewed-session.ts)
+is the optional native host-patch variant, with the absent-outlet fallback intact. This navigation
+neither asserts that unpatched upstream supplies that outlet nor promotes any harness version.
 
 - `index.ts` is the adapter's public assembly entry. It exports `ompAdapter`/`piAdapter`, builds the
   process-scoped readers and creates the shared binding; extension assemblies import this module.
-- `internal/port.ts` is the per-binding implementation of the framework's `HarnessPort`. It connects the
-  domain mappings to the framework hooks and owns binding-scoped cross-cutting state (newest native
-  context, diagnostic deduplication, owner resolution). It carries no capability of its own.
-- `internal/` is private adapter implementation support: host API type declarations, pi's Node text
-  loader, pi's third-party provider loader, and the per-binding `port.ts` composition. It is not a
-  capability surface.
+- Top-level `port.ts` is the private per-binding implementation of the framework's `HarnessPort`.
+  It connects source-owned mappings to framework hooks and owns binding-scoped cross-cutting state
+  (newest native context, diagnostic deduplication, owner resolution), not protocol interpretation.
+- Host API types and native loading support live with the native contract they describe. Pi's
+  third-party loader stays in `thirdParty/pi-subagents/`; cross-source interpretation stays in `mixture/`.
+  None of these private modules is an extension-facing capability surface.
 
-Only the nine domain rows above are capability domains. A simple domain may be one file; a domain
-with collaborating mappings gets a directory. `index.ts` remains at the adapter root because it is
-the import path extension assemblies use; it is a structural entry, not a missing domain.
-Prefer domain locality over the native object's name. Turn and Round belong under Session. Within a domain, `events.ts` owns event mappings, `queries.ts` owns native reads,
-and `effects.ts` owns native effects when these responsibilities need separate implementation files.
-Session event construction stays in its event mapping rather than being rebuilt in the port; State
-entry writes are a Session effect, not a second State implementation. Keep simple domains as single
-files, retain complex Turn/Round protocols internally, and create no forwarding-only entry files or
-empty three-file templates. The two harnesses need not be structurally identical.
+The eight rows above locate framework responsibilities; they do not prescribe adapter directories.
+The primary navigation axis is the actual contract source, with distinctive upstream coordinates and
+complete protocols rather than a file-for-file mirror. State reads, naming and writes stay together;
+Turn/Round lifecycles are not split by individual native hooks. Event construction stays near its
+mapping rather than being rebuilt in port assembly. Keep simple responsibilities as single files,
+create no forwarding-only entries or empty source groups, and do not force the harnesses into the
+same tree. The [source-organization decision](../../docs/adr/0002-semantic-extension-framework.md#source-aligned-adapter-organization-2026-10-24)
+and [integration guide](harness-integration.md#4-按实际来源组织-adapter) define the dependency rules;
+these source labels add no business vocabulary or public interface.
 
 The shared [`behaviors/assembly.ts`](../behaviors/assembly.ts) creates the observation source and
 State store and reuses an implementation until disposal. Harness entries assemble native modules;
@@ -391,28 +413,34 @@ Assembles an `ExtensionDefinition` for the `omp` harness
 ([`omp.ts`](../../adapters/omp/index.ts)) — `(api) => BindingResult` — which each thin entrypoint
 re-exports as its default factory and the loader calls once per binding.
 
-Its private OMP observation modules keep native subscriptions together with the implementation
-that interprets their facts: [`adapters/omp/domain/session/turn.ts`](../../adapters/omp/domain/session/turn.ts) owns request/response
-mapping, usage availability and per-subscription streaming-reading deduplication;
-[`adapters/omp/domain/session/round.ts`](../../adapters/omp/domain/session/round.ts) owns activity signals, continuation flags and
-late quiescence reads. The private [`adapters/omp/domain/session/`](../../adapters/omp/domain/session/) module
-keeps Session knowledge local: [`queries.ts`](../../adapters/omp/domain/session/queries.ts) reads Session identity,
-startup facts, persisted State payloads and injected-prompt identities, and maps the parent/ancestor
-identities supplied by [`subagent/queries.ts`](../../adapters/omp/domain/subagent/queries.ts) into direct-parent
-facts and Owner references; native registry traversal is owned by Subagent, not duplicated in Session;
-[`events.ts`](../../adapters/omp/domain/session/events.ts) owns native Session event types, transition
-pairing and rename observations. Its active Owner key lives once per binding, while rename tracking
-lives once per observation subscription. Owner is the State-owning main session (a main session owns
-itself), not the immediate Parent agent.
+OMP's lifecycle mappings follow its own native extension-runner contract, not Pi's third-party
+subagent protocol. Under [`native/extensibility/extensions/`](../../adapters/omp/native/extensibility/extensions/),
+[`turn.ts`](../../adapters/omp/native/extensibility/extensions/turn.ts) maps provider/message hooks,
+usage availability and per-subscription streaming-reading deduplication;
+[`round.ts`](../../adapters/omp/native/extensibility/extensions/round.ts) maps native activity signals,
+continuation flags and late quiescence reads. [`lifecycle.ts`](../../adapters/omp/native/extensibility/extensions/lifecycle.ts)
+keeps the complete native Session transition, rename and input subscriptions together with Turn/Round
+delivery framing. Its active Owner key remains per binding and rename tracking per subscription.
+[`session-facts.ts`](../../adapters/omp/native/extensibility/extensions/session-facts.ts) maps actual
+session identity and startup readings; [`native/registry/agent-registry.ts`](../../adapters/omp/native/registry/agent-registry.ts)
+reads the direct parent and nearest main ancestor from OMP's injected native registry. Parent agent is
+one hop, Session ancestry is the native chain, and Owner is the State-owning main session, which may
+be farther away. These identities never merge the sessions' Turn/Round observations. The registry
+module also answers the native integrated-subagent mode: OMP loads the extension into actual child
+sessions through its own loader, without a Pi provider registration or required-child-extension RPC.
 
-[`adapters/omp/domain/session/viewed-session.ts`](../../adapters/omp/domain/session/viewed-session.ts) owns the Viewed session native
-facts, subscription re-pointing and last-listener release. The assembly keeps one latest actual
+[`adapters/omp/native/extensibility/extensions/viewed-session.ts`](../../adapters/omp/native/extensibility/extensions/viewed-session.ts)
+owns the optional native Viewed-session variant's facts, subscription re-pointing and last-listener
+release. Like feedback and markers, its source coordinate is the extension contract, not the TUI
+controller that ultimately renders it. The variant requires the existing approved host patch; it is
+not a third-party provider and the unpatched harness continues to project each delivery's own seat. The assembly keeps one latest actual
 delivery context: both this module and context-free Subagent observations read that same source.
-Viewing grants no State-write authority. `internal/port.ts` connects the native mappings and owns binding-scoped
-diagnostic deduplication; `context/queries.ts` keeps the binding's newest context and reads idle facts,
-while `context/events.ts` subscribes and constructs context observations. `session/effects.ts` appends
-the State entry that `session/queries.ts` reads; the same write is shared with commands. Session event
-construction lives in `session/events.ts`, with complex Turn/Round protocols kept in their own files. The entry `index.ts` assembles the process-level readers and the shared
+Viewing grants no State-write authority. `port.ts` connects the native mappings and owns binding-scoped
+diagnostic deduplication; `native/extensibility/extensions/context.ts` keeps the binding's newest context,
+reads idle facts and constructs context observations at the native collection points.
+`native/session/session-manager.ts` owns the State entry's reads and append, shared with commands.
+Session delivery construction stays in `native/extensibility/extensions/lifecycle.ts`, with complete
+Turn/Round mappings beside it. The entry `index.ts` assembles the process-level readers and the shared
 framework binding life; native types remain available through that adapter entry. State seeding,
 implementation reuse and cleanup, Turn identity and Round transitions retain their framework
 semantics. These modules add no public interface: tests continue to drive native events through
@@ -893,13 +921,20 @@ it gets back.
 | `options.timeoutMs?` | `number` | The wait budget in milliseconds. Omitted takes the shared `http.defaultTimeoutMs`, and with that absent — or with no shared file at all — the built-in 30000. A declared budget must be a whole number of milliseconds this harness's timer schedules (`isScheduledWait`): `0` does not turn the wait off, and an illegal value is refused rather than replaced. |
 | `options.proxy?` | `false \| string` | `false`, or omitted, is a direct connection. A string selects the entry of that name in the shared `http.proxies` table; that entry is used only when it says `enabled: true`, and any other entry is an explicitly disabled one that connects directly. |
 
-**What comes back.** The runtime's own `Response`, streamed from the connection rather than
-buffered, so the caller reads `status`, `ok`, `headers` and the body itself. A non-2xx answer —
-a 3xx included — is an ordinary result: the framework turns no status into an error, follows no
-redirect, and defines no business envelope, no JSON helper and no bearer management. A transport
-failure rejects; a wait that runs out rejects with the wait's own timeout failure; a body that
-cannot be read, including one that stops before its end, rejects the read. Nothing is retried and
-nothing is turned into `null` or a zero. The client speaks HTTP/1.1 and asks for no encoding: no
+**What comes back.** `Promise<HttpRequestResult>` resolves to `{ ok: true, response }` or
+`{ ok: false, failure: { kind, error } }`. The failure kind is `configuration`, `timeout` or
+`transport`; the original error is retained for the caller, not thrown. The whole response body
+is buffered within the request's budget before success is returned, so a timeout or incomplete
+body cannot escape later from the network stream. The caller still reads the returned `Response`'s
+`status`, `ok`, `headers` and body, and invalid JSON remains a caller-owned parsing failure.
+A non-2xx answer — a 3xx included — is an ordinary success result carrying that HTTP response:
+the framework turns no status into a transport failure, follows no redirect, and defines no
+business envelope, no JSON helper and no bearer management. Every failed operation emits one
+sanitized diagnostic through the framework's shared non-model diagnostic output (stderr, also
+used by Pi and OMP binding diagnostics). Diagnostics include the failure kind and standard error
+name, never request URLs, headers, payloads or potentially sensitive error messages. CONNECT,
+TLS and response stream errors are owned by the request, not left as uncaught process events.
+Nothing is retried and nothing is turned into `null` or a zero. The client speaks HTTP/1.1 and asks for no encoding: no
 `accept-encoding` is added and nothing is decoded, so the caller's own headers decide what it
 asks for and the bytes that arrive are the bytes it reads.
 
@@ -922,7 +957,7 @@ connects directly and its `url` is never read, so a disabled entry may keep a pl
 file is optional, machine-owned, and read once per process, so an edited value takes effect with the next
 process. A request that names a proxy reads the table it selected and nothing else: no file, no table, no
 such entry, an entry that is not a mapping, and an enabled entry without a usable address are all
-`HttpConfigurationError`s that refuse the request *before anything is sent*; only an entry that exists
+`configuration` failure results that refuse the request *before anything is sent*; only an entry that exists
 and is not `enabled: true` connects directly, and a chosen proxy that fails is never retried direct.
 
 **How the route is realized.** The connection is made by this runtime's own `node:http`/`node:https`
@@ -942,14 +977,16 @@ client it is made over consults no environment of its own. It publishes no cance
 covers waiting for the response *head* and reading its body; business work after the whole body has
 been read is outside it.
 
-**The seam.** `createHttpModule({ transport, configPath, reader, parser })`
+**The seam.** `createHttpModule({ transport, configPath, reader, parser, reportDiagnostic })`
 ([`http.ts`](../modules/http.ts)) builds a module over an injected call and shared file. It is
 the implementation's own seam, not part of the published surface; the
 [interface entry](../interface/general/http.ts) re-exports the module's one published call.
 `tests/framework/http.test.ts` drives it so that no permanent case uses a network, and
 `scripts/http-transport-smoke.ts` proves the real transport
 against loopback servers — a plain target and a TLS target, a plain proxy and an HTTPS proxy (both
-absolute-form and CONNECT), a body that stops before its end, a delayed body under a short budget and
+absolute-form and CONNECT), an isolated stalled CONNECT/TLS handshake that returns a timeout with
+one diagnostic and allows a subsequent request without terminating its process, null-body responses,
+a body that stops before its end, a delayed body under a short budget and
 under a longer one, a refused proxy, a hung target for the built-in budget, and a proxy-environment trap
 that the whole run — including a separate process driving the published `request` — never reaches.
 

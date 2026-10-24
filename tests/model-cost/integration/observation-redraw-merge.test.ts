@@ -21,7 +21,7 @@
  * factory built over a self-made document — no expectation below is computed the way the
  * implementation computes anything.
  */
-import { afterEach, describe, expect, test } from "bun:test";
+import { afterEach, describe, expect, spyOn, test } from "bun:test";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
@@ -29,6 +29,7 @@ import { MODEL_COST } from "../../../extensions/model-cost/definition";
 import { MODEL_COST_WIDGET_KEY, attachModelCostWidget } from "../../../extensions/model-cost/harnesses/omp/widget";
 import type { ConsumptionDocument } from "../../../extensions/model-cost/shared-logic/foundation/session/consumption-document";
 import type { ModelPricingData } from "../../../extensions/model-cost/shared-logic/business/pricing/model-data";
+import { createCoalescedRedraw } from "../../../extensions/model-cost/shared-logic/presentation/coalesced-redraw";
 import type { ModelCostRuntime } from "../../../extensions/model-cost/shared-logic/runtime";
 import { createModelCostRuntime, modelCostImplementation } from "../../../extensions/model-cost/shared-logic/runtime";
 import type { OmpSessionContext } from "../../../adapters/omp";
@@ -224,6 +225,78 @@ function drawnRow(lines: readonly string[] | undefined, name: string): string | 
 
 afterEach(() => {
 	while (roots.length > 0) rmSync(roots.pop() as string, { recursive: true, force: true });
+});
+
+describe("redraw failures stay with the notification that owns them", () => {
+	test("a failing view does not block a healthy view or later observation redraws", async () => {
+		const bound = await bind();
+		const before = bound.frames();
+		let failingCalls = 0;
+		let healthyCalls = 0;
+		const stopFailing = bound.runtime.view.subscribe(() => {
+			failingCalls += 1;
+			if (failingCalls === 1) throw new Error("secret-view-payload");
+		});
+		const stopHealthy = bound.runtime.view.subscribe(() => {
+			healthyCalls += 1;
+		});
+		const diagnostic = spyOn(process.stderr, "write").mockImplementation(() => true);
+		try {
+			bound.double.deliverObserved(
+				readingOf(CHILD_A, { activity: "working", context: { tokens: 10_000, provider: "official", model: "model-alpha" } }),
+			);
+			await turnEnded();
+			expect(failingCalls).toBe(1);
+			expect(healthyCalls).toBe(1);
+			expect(bound.frames()).toBe(before + 1);
+			expect(diagnostic).toHaveBeenCalledTimes(1);
+			expect(String(diagnostic.mock.calls[0]?.[0])).toMatch(/model-cost.*subscriber.*failed/i);
+			expect(String(diagnostic.mock.calls[0]?.[0])).not.toContain("secret-view-payload");
+
+			bound.double.deliverObserved(
+				readingOf(CHILD_A, { activity: "working", context: { tokens: 25_000, provider: "official", model: "model-alpha" } }),
+			);
+			await turnEnded();
+			expect(failingCalls).toBe(2);
+			expect(healthyCalls).toBe(2);
+			expect(bound.frames()).toBe(before + 2);
+			expect(drawnRow(bound.lines(), "子代理A")).toContain("25,000");
+			expect(diagnostic).toHaveBeenCalledTimes(1);
+		} finally {
+			stopFailing();
+			stopHealthy();
+			diagnostic.mockRestore();
+		}
+	});
+
+	test("the microtask owns a throwing redraw and can arrange the next redraw", async () => {
+		let calls = 0;
+		const redraw = createCoalescedRedraw({
+			published: () => () => {},
+			redraw: () => {
+				calls += 1;
+				if (calls === 1) throw new Error("secret-redraw-payload");
+			},
+		});
+		const diagnostic = spyOn(process.stderr, "write").mockImplementation(() => true);
+		try {
+			redraw.request();
+			redraw.request();
+			await turnEnded();
+			expect(calls).toBe(1);
+			expect(diagnostic).toHaveBeenCalledTimes(1);
+			expect(String(diagnostic.mock.calls[0]?.[0])).toMatch(/model-cost.*redraw.*failed/i);
+			expect(String(diagnostic.mock.calls[0]?.[0])).not.toContain("secret-redraw-payload");
+
+			redraw.request();
+			await turnEnded();
+			expect(calls).toBe(2);
+			expect(diagnostic).toHaveBeenCalledTimes(1);
+		} finally {
+			redraw.dispose();
+			diagnostic.mockRestore();
+		}
+	});
 });
 
 describe("a turn's observation readings are drawn together, from their latest values (P15)", () => {

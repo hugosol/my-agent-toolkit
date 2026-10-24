@@ -25,7 +25,7 @@ import {
 	type PanelRequest,
 	setPanelRequestForTest,
 } from "../../extensions/connect-bot/shared-logic/panel/client";
-import type { HttpRequestOptions } from "../../framework/interface/general/http";
+import type { HttpRequestOptions, HttpRequestResult } from "../../framework/interface/general/http";
 import { CONNECT_BOT } from "../../extensions/connect-bot/definition";
 import { botSessions } from "../../extensions/connect-bot/shared-logic/session/session";
 import connectBot from "../../extensions/connect-bot/harnesses/omp";
@@ -64,8 +64,8 @@ interface Request {
 }
 
 /** The panel's answer to one request. */
-const panelAnswer = (status: number, body: unknown): Response =>
-	new Response(JSON.stringify(body), { status });
+const panelAnswer = (status: number, body: unknown): HttpRequestResult =>
+	({ ok: true as const, response: new Response(JSON.stringify(body), { status }) });
 
 /**
  * The envelope fields a test reads off the wire: the two strings the contract's envelope always
@@ -104,9 +104,9 @@ function envelopeOf(request: Request): WireEnvelope {
  * no longer knows, and the panel takes the push.
  */
 const answers = {
-	/** The panel is gone: the request itself fails (a reject, and the abort at the budget alike). */
-	gone: async (): Promise<Response> => {
-		throw new Error("the panel never answered");
+	/** The panel is gone: HTTP reports a failure result, which the panel client exposes as rejection. */
+	gone: async (): Promise<HttpRequestResult> => {
+		return { ok: false as const, failure: { kind: "transport" as const, error: new Error("the panel never answered") } };
 	},
 	/** The panel is reachable but has forgotten this session, as after a herdr-bot restart. */
 	unknownSession: async () => panelAnswer(404, { error: "unknown-session" }),
@@ -147,14 +147,13 @@ function panel(answer: Answer): Panel {
 			if (kind === "register") {
 				return panelAnswer(200, { outcome: "registered", onlineCount: 1 });
 			}
-			// The state report the arm path sends right behind its register is answered too: the
-			// connection each test scripts is up when it starts, and what its panel does with the
-			// beats that follow is the outage under test.
-			if (kind === "state") {
+			// Initial arming starts with a drained queue. A held re-registration state push,
+			// however, must take the scripted answer rather than silently clear the outage.
+			if (kind === "state" && !holding) {
 				return panelAnswer(200, { outcome: "accepted" });
 			}
 			if (holding) {
-				return new Promise<Response>(resolve => held.push(() => resolve(current())));
+				return new Promise<HttpRequestResult>(resolve => held.push(() => resolve(current())));
 			}
 			return current();
 		},
@@ -257,10 +256,10 @@ describe("the first failure of an outage is announced once (E10, P31)", () => {
 			if (kind === "state") {
 				return Promise.resolve(panelAnswer(200, { outcome: "accepted" }));
 			}
-			return new Promise<Response>((_resolve, reject) => {
+			return new Promise<HttpRequestResult>((resolve) => {
 				// A panel that is gone never answers: the push is abandoned when the wait it declared
 				// runs out, on this file's own fake clock, advanced by exactly that budget below.
-				setTimeout(() => reject(new Error("push budget exceeded")), init.timeoutMs);
+				setTimeout(() => resolve({ ok: false, failure: { kind: "timeout", error: new Error("push budget exceeded") } }), init.timeoutMs);
 			});
 		}, "budget-timeout");
 
@@ -408,9 +407,9 @@ describe("a push the panel takes resets the segment (E10, P31)", () => {
 		await settleAll();
 		expect(double.notifications).toEqual([CONNECTED, FIRST_FAILURE]);
 
-		// The operator asks again while the panel is back: the register is answered, so this is the
-		// same connection asked again — one timer, one record — and the outage it was in is over.
-		sent.keep(answers.reachable);
+		// Register always succeeds, but hold every following push: a successful state report must
+		// not be allowed to reset health on behalf of the registration under test.
+		sent.hold();
 		const announced = double.nextNotification();
 		double.run("connect-bot", "", double.context({ sessionId: "budget-rearm", cwd: "E:/work/budget" }));
 		await announced;
@@ -418,12 +417,21 @@ describe("a push the panel takes resets the segment (E10, P31)", () => {
 		expect(double.timers).toHaveLength(1);
 		expect(double.timers[0]?.cancelled).toBe(false);
 
-		// The budget starts over with the connection: the next failure is a first failure again, not
-		// the third one of the segment the register cut off.
-		sent.keep(answers.gone);
-		fireTimer(double);
+		await settleAll();
+		expect(kinds(sent)).toEqual(["register", "state", "heartbeat", "heartbeat", "register", "state"]);
+		// The held state now fails, with no intervening successful push. Without registration's
+		// reset this would be failure three and would disconnect instead of starting a new segment.
+		sent.release();
 		await settleAll();
 		expect(double.notifications).toEqual([CONNECTED, FIRST_FAILURE, CONNECTED, FIRST_FAILURE]);
 		expect(botSessions.get(ownerKey("budget-rearm"))).toBeDefined();
+		fireTimer(double);
+		await settleAll();
+		expect(double.notifications).toEqual([CONNECTED, FIRST_FAILURE, CONNECTED, FIRST_FAILURE]);
+		expect(double.timers[0]?.cancelled).toBe(false);
+		fireTimer(double);
+		await settleAll();
+		expect(double.notifications).toEqual([CONNECTED, FIRST_FAILURE, CONNECTED, FIRST_FAILURE, AUTO_DISARM]);
+		expect(botSessions.get(ownerKey("budget-rearm"))).toBeUndefined();
 	});
 });

@@ -492,24 +492,62 @@ describe("the context drawn is the session's own public reading against its own 
 	});
 
 	test("drawing reads no file and writes none: the storage root keeps its own bytes", async () => {
+		// Bun captures synchronous fs imports at link time: install the existing instrument before
+		// linking this test and the real renderer, not after initialization in this process.
+		if (process.env.MODEL_COST_DRAW_IO_CHILD !== "1") {
+			const preload = path.resolve(import.meta.dir, "../../../../scripts/support/efficiency-baseline-fs-instrument.ts");
+			const child = Bun.spawn([process.execPath, "test", "--preload", preload, import.meta.path,
+				"--test-name-pattern", "drawing reads no file and writes none"], {
+				env: { ...process.env, MODEL_COST_DRAW_IO_CHILD: "1" }, stdout: "pipe", stderr: "pipe",
+			});
+			const output = Promise.all([new Response(child.stdout).text(), new Response(child.stderr).text()]);
+			const timer = setTimeout(() => child.kill(), 20_000);
+			try {
+				const exit = await child.exited;
+				const [stdout, stderr] = await output;
+				expect({ exit, output: stdout + stderr }).toEqual({ exit: 0, output: expect.any(String) });
+			} finally {
+				clearTimeout(timer);
+				child.kill();
+				await child.exited;
+				await output;
+			}
+			return;
+		}
+		const { recordedFsOperations } = await import("../../../../scripts/support/efficiency-baseline-fs-instrument");
+		const operations = recordedFsOperations();
+		expect(operations).toBeDefined();
 		const { runtime, double, storageDirectory } = await fixture();
 		const host = controlledPiSurface();
 		attachModelCostWidget(host.api, runtime, uiBoundaryTimerOf(runtime));
 		host.sessionStarts(MAIN_HOST);
 		await toDetail(double);
-		const before = readFileSync(path.join(storageDirectory, CONSUMPTION_FILE));
+		const file = path.join(storageDirectory, CONSUMPTION_FILE);
+		if (operations === undefined) throw new Error("drawing I/O instrument was not preloaded");
+		const controlStart = operations.length;
+		const before = readFileSync(file);
+		writeFileSync(file, before);
+		const controls = operations.slice(controlStart).filter(operation => operation.path === file);
+		expect(controls.some(operation => operation.op === "readFileSync" && operation.outcome === "ok")).toBe(true);
+		expect(controls.some(operation => operation.op === "writeFileSync" && operation.outcome === "ok")).toBe(true);
 
+		// Only actual renderer calls are in the no-I/O window; initialization and context publication
+		// remain outside it. The positive control above uses the very same linked fs imports.
+		const drawStart = operations.length;
 		drawingOf(host, 80);
 		drawingOf(host, 200);
+		expect(operations.slice(drawStart)).toEqual([]);
 		host.sessionStarts({ ...MAIN_HOST, context: { tokens: null, contextWindow: 450_000 } });
+		const nullStart = operations.length;
 		const unknown = drawingOf(host, 100);
+		expect(operations.slice(nullStart)).toEqual([]);
 
-		expect(readFileSync(path.join(storageDirectory, CONSUMPTION_FILE)).equals(before)).toBe(true);
+		expect(readFileSync(file).equals(before)).toBe(true);
 		// The reading a null token count states is no reading: the bar is not drawn at all, while the
 		// season mark the account row leads with is.
 		expect(unknown[0] as string).toContain("\u{1F525}");
 		expect(unknown[0] as string).not.toContain("%");
-	});
+	}, 30_000);
 });
 
 describe("the displayed target is the session a binding serves (P46)", () => {

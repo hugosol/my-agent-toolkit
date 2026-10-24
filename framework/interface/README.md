@@ -1,7 +1,7 @@
 # Capability interfaces
 
 Every capability is encapsulated here. State, Session, Prompt, Marker, Feedback, Provider,
-Subagent and Command each own their canonical extension-facing declarations, and General's three
+Subagent and Command each own their canonical extension-facing declarations, and General's
 modules have direct entries. An interface is the canonical extension-facing contract, not a re-export
 of an implementation directory. Start with the capability entry the extension needs — for example
 [Session](session/README.md), imported from `framework/interface/session` — and the authored
@@ -39,18 +39,24 @@ alias or forwarding shell.
 writes commands against: its declaration group in `details/definition.ts`, and its implementation,
 delivery and directive group in `details/implementation.ts`. The actual delivery the framework
 constructs carries only those approved members; the persistence callback, the area transport and the
-internal invocation stay out of it. General's three modules are their own direct entries:
-[general/http.ts](general/http.ts) publishes `request`, `HttpRequestOptions` and
-`HttpConfigurationError`; [general/files.ts](general/files.ts) publishes `updateFile`,
+internal invocation stay out of it. General's modules are their own direct entries:
+[general/http.ts](general/http.ts) publishes `request`, `HttpRequestOptions`,
+`HttpRequestResult` and `HttpRequestFailure`; [general/files.ts](general/files.ts) publishes `updateFile`,
 `SafeFileUpdateOptions`, `SafeFileUpdateError` and `SafeFileUpdateFailureKind`; and
-[general/config.ts](general/config.ts) publishes `getConfig` and `ExtensionConfigError`. Their
-implementations stay in `framework/modules/http.ts`, `framework/modules/files.ts` and
-`framework/core/config.ts`; the configuration declaration an extension writes remains owned by
+[general/config.ts](general/config.ts) publishes `getConfig` and `ExtensionConfigError`.
+[general/diagnostics.ts](general/diagnostics.ts) publishes `reportDiagnostic(message)` for
+extension-owned background failures: one stderr line outside model context, using the same sink as
+binding and HTTP diagnostics. Messages must omit credentials and sensitive payloads; this channel
+is distinct from operator-facing Feedback and must not call a failing notification callback again.
+The HTTP, file, configuration and diagnostics implementations stay in `framework/modules/http.ts`,
+`framework/modules/files.ts`, `framework/core/config.ts` and `framework/core/diagnostics.ts` respectively.
+Only each named entry's exact implementation edge is allowed; diagnostics does not open the core tree.
+The configuration declaration an extension writes remains owned by
 the root authoring contract. There is deliberately no `general/index.ts` aggregator, and the root
 authoring entry does not aggregate them. These are exact entries, not permission to import
 arbitrary framework internals: no reader, parser, source, `readConfig`, shared-configuration
 reader or validation helper is published. Authoring, State, Session, Prompt, Marker, Feedback,
-Provider, Subagent, Command and all three general modules have no compatibility exports
+Provider, Subagent, Command and the general modules have no compatibility exports
 anywhere else; the import check protects those seams. The framework/adapter interaction contract is
 one internal port at [`runtime/port.ts`](../runtime/port.ts); it refers to these canonical
 declarations and is never imported by an extension. See the

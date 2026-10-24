@@ -21,7 +21,7 @@ import {
 	EVENTS_PATH,
 	setPanelRequestForTest,
 } from "../../extensions/connect-bot/shared-logic/panel/client";
-import type { HttpRequestOptions } from "../../framework/interface/general/http";
+import type { HttpRequestOptions, HttpRequestResult } from "../../framework/interface/general/http";
 import { connectBotConfig } from "../../extensions/connect-bot/shared-logic/panel/config";
 import { botSessions } from "../../extensions/connect-bot/shared-logic/session/session";
 import connectBot from "../../extensions/connect-bot/harnesses/omp";
@@ -56,8 +56,8 @@ interface Request {
 }
 
 /** The panel's answer to one request. */
-const panelAnswer = (status: number, body: unknown): Response =>
-	new Response(JSON.stringify(body), { status });
+const panelAnswer = (status: number, body: unknown): HttpRequestResult =>
+	({ ok: true as const, response: new Response(JSON.stringify(body), { status }) });
 
 /** The registered receipt a reachable panel answers a `register` with. */
 const registered = (onlineCount: number) => ({ outcome: "registered", onlineCount });
@@ -93,7 +93,7 @@ function envelopeOf(request: Request): WireEnvelope {
 }
 
 /** Records every request and answers it from the panel the test scripted, by the envelope's kind. */
-function panel(answer: (kind: string) => Response | Promise<Response>): {
+function panel(answer: (kind: string) => HttpRequestResult | Promise<HttpRequestResult>): {
 	readonly requests: Request[];
 	readonly request: PanelRequest;
 } {
@@ -143,7 +143,7 @@ function withCapturedStderr<T>(run: () => T): { readonly diagnostics: string; re
  * answers everything else with an ordinary 2xx.
  */
 function armingPanel(
-	background: (kind: string) => Response | Promise<Response> = () => panelAnswer(200, {}),
+	background: (kind: string) => HttpRequestResult | Promise<HttpRequestResult> = () => panelAnswer(200, {}),
 ): {
 	readonly requests: Request[];
 	readonly request: PanelRequest;
@@ -166,7 +166,7 @@ describe("`off` drops the local switch first and removes the panel row best-effo
 		const { requests, request } = armingPanel(
 			() =>
 				// The panel is reachable but slow: the answer is held until the test releases it.
-				new Promise<Response>(resolve => {
+				new Promise<HttpRequestResult>(resolve => {
 					releaseUnregister = () => resolve(panelAnswer(200, {}));
 				}),
 		);
@@ -243,7 +243,7 @@ describe("`off` drops the local switch first and removes the panel row best-effo
 
 	test("a request that never completes reports the panel did not answer, and the session is already off", async () => {
 		const { requests, request } = armingPanel(() => {
-			throw new Error("the panel never answered");
+			return { ok: false as const, failure: { kind: "transport" as const, error: new Error("the panel never answered") } };
 		});
 		const double = bound(request);
 		const sessionId = "off-unreachable";
@@ -276,10 +276,10 @@ describe("`off` drops the local switch first and removes the panel row best-effo
 			const kind = envelopeOf(request).kind;
 			if (kind === "register") return Promise.resolve(panelAnswer(200, registered(1)));
 			if (kind === "state") return Promise.resolve(panelAnswer(200, {}));
-			return new Promise<Response>((_resolve, reject) => {
+			return new Promise<HttpRequestResult>((resolve) => {
 				// A panel that is gone never answers: the unregister is abandoned when the wait it
 				// declared runs out, on this file's own fake clock, advanced by exactly that below.
-				setTimeout(() => reject(new Error("unregister budget exceeded")), init.timeoutMs);
+				setTimeout(() => resolve({ ok: false, failure: { kind: "timeout", error: new Error("unregister budget exceeded") } }), init.timeoutMs);
 			});
 		});
 		const sessionId = "off-timeout";

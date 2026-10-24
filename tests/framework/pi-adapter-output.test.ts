@@ -16,17 +16,17 @@ import {
 	type PiExtensionApi,
 	type PiExtensionFactory,
 } from "../../adapters/pi";
-import type { PiSubagentIntegration } from "../../adapters/pi/domain/subagent/integration";
-import { piSessionFileAnchors } from "../../adapters/pi/domain/subagent/queries";
-import { piProviderFacts } from "../../adapters/pi/domain/provider";
-import { piSessionPositions } from "../../adapters/pi/domain/session/queries";
+import type { PiSubagentIntegration } from "../../adapters/pi/thirdParty/pi-subagents/integration";
+import { piSessionFileAnchors } from "../../adapters/pi/native/core/session-manager/ancestry";
+import { piProviderFacts } from "../../adapters/pi/native/core/model-registry";
+import { piSessionPositions } from "../../adapters/pi/native/core/session-manager/positions";
 import {
 	createPiPort,
 	type PiPortInput,
 	type PiPortResult,
 	type PiPortWithSubagents,
 	type PiPortWithoutSubagents,
-} from "../../adapters/pi/internal/port";
+} from "../../adapters/pi/port";
 import type { ExtensionDefinition } from "../../framework/interface/details/definition";
 import type { AdapterFactory } from "../../framework/runtime/adapter-authoring";
 import type { HarnessPort } from "../../framework/runtime/port";

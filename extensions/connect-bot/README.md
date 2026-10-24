@@ -7,6 +7,22 @@ harness-independent logic is under [`shared-logic/`](shared-logic). Its OMP asse
 [`harnesses/pi-assembly.ts`](harnesses/pi-assembly.ts), each behind one thin entrypoint per
 [startup mode](#startup-modes).
 
+## Registration completion failures
+
+Register attempts remain serialized per owner. A failed configuration, state callback or feedback
+continuation is diagnosed once through the framework's non-model stderr diagnostics, independently
+of the feedback transport that may have failed. Diagnostics identify the failed operation without
+printing arbitrary exception payloads. The failed attempt releases its processing slot;
+already queued registrations and later `/connect-bot` commands can still run. This does not retry the
+failed attempt or change invalidation at off/session end.
+
+Unregister remains best-effort for ordinary request failures. Its disconnecting window is cleared
+when preparation or the request settles, including configuration failures; a throwing completion
+notification is diagnosed without preventing a later activation. A late unregister still clears
+only its own window, never a newer owner's stop. Detached transferred-session row releases also
+own unexpected preparation failures through diagnostics; ordinary request failures retain the
+panel-expiry behavior.
+
 ## Session harness type
 
 Every native registration reports `data.agentType`: the Pi assembly sends `pi`, and the OMP
@@ -34,9 +50,20 @@ successful persistence time; a previously unsaved conversation is collected only
 `history-warning.test.ts` observes the actual command, visible warning, marker and controlled
 heartbeat cadence. `history-interop.test.ts` additionally uses real HTTP and isolated panel storage,
 checks both native callers, explicit recovery and completion shutdown monitoring/countdown without
-executing any real shutdown. Run the latter with `HERDR_BOT_BINARY` pointing to herdr-bot's
-`cargo build --example safe_shutdown_shell` output and `HERDR_BOT_METADATA` pointing to its delivered
-`meta-data/bot-options.toml`. The test rejects a non-safe backend before requesting shutdown monitoring.
+executing any real shutdown. The shared panel helper defaults to the sibling checkout's
+`backend/target/debug/examples/safe_shutdown_shell(.exe)`, built with
+`cargo build --example safe_shutdown_shell --manifest-path ../herdr-bot/backend/Cargo.toml`.
+For a checkout elsewhere (including a temporary worktree), set `HERDR_BOT_BINARY` to that safe example
+and `HERDR_BOT_METADATA` to its delivered `meta-data/bot-options.toml`. The helper rejects a missing
+example with build instructions and rejects a non-safe backend before sending any panel requests;
+it never falls back to the production executable, whose power-off action is real. Each instance
+uses its own configuration and storage, binds an ephemeral loopback port, and reads both subscription
+and snapshots over dedicated `node:http` connections to that listener, independent of process-wide
+Bun fetch transport. It waits for the panel's initial event-stream snapshot before handing its
+endpoint to a caller. Subscription failures surface
+as fixture failures rather than being silently discarded; startup failures retain the endpoint,
+child exit status before cleanup, structured cause, and fully drained process output. No reconnect
+or retry is added.
 
 ## Startup modes
 

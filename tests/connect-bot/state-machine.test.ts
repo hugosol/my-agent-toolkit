@@ -8,11 +8,12 @@
  * directly — what the panel receives is the whole of what a test observes, so the edge synthesis,
  * the owner scope and the state machine are exercised together, at the seam they compose at.
  *
- * What the file deliberately does not claim: an `abort` and a turn interrupted before it produced
- * any assistant message are reproduced in the M-layer acceptance round against a real harness, so
- * this suite drives neither of them. The four shapes it does drive all arrive at this seam as the
- * one settle shape they share — no continuation scheduled, the session quiescent — and the
- * subagent session is the seventh shape, guarded below.
+ * The terminal labels below document consumers of one normalized, quiescent settle; they do not
+ * supply four distinct native terminal stimuli. Native adapter continuation/quiescence mapping
+ * is guarded by `tests/framework/round.test.ts`, while `tests/harness-dock/round-facts.test.ts`
+ * observes an ordinary tool continuation on the real host. Neither establishes the four labeled
+ * host terminal paths individually, nor abort-before-message behavior; this suite claims none of
+ * those host-path proofs. Subagent owner isolation is exercised separately below.
  */
 import { afterEach, describe, expect, jest, test } from "bun:test";
 import type { OmpCommandContext } from "../../adapters/omp";
@@ -21,7 +22,7 @@ import {
 	EVENTS_PATH,
 	setPanelRequestForTest,
 } from "../../extensions/connect-bot/shared-logic/panel/client";
-import type { HttpRequestOptions } from "../../framework/interface/general/http";
+import type { HttpRequestOptions, HttpRequestResult } from "../../framework/interface/general/http";
 import { connectBotConfig } from "../../extensions/connect-bot/shared-logic/panel/config";
 import { CONNECT_BOT } from "../../extensions/connect-bot/definition";
 import connectBot from "../../extensions/connect-bot/harnesses/omp";
@@ -40,8 +41,8 @@ interface Request {
 }
 
 /** The panel's answer to one request. */
-const panelAnswer = (status: number, body: unknown): Response =>
-	new Response(JSON.stringify(body), { status });
+const panelAnswer = (status: number, body: unknown): HttpRequestResult =>
+	({ ok: true as const, response: new Response(JSON.stringify(body), { status }) });
 
 /** The registered receipt a reachable panel answers a `register` with. */
 const registered = (onlineCount: number) => ({ outcome: "registered", onlineCount });
@@ -276,13 +277,11 @@ describe("the round edges move the state (E12, P33, story 74)", () => {
 	});
 });
 
-describe("the terminal shapes that never see an ordinary settle (E12)", () => {
+describe("the normalized quiescent settle used by terminal consumers (E12)", () => {
 	/**
-	 * The four terminal shapes this seam can isolate. Each one reaches the extension as the same
-	 * observable settle — no continuation scheduled, the session quiescent — so the value each
-	 * leaves behind is the same and none of them may strand the card in 工作中. `abort` and a turn
-	 * interrupted before any assistant message are reproduced on a real harness in the M-layer
-	 * acceptance round; a subagent session is the seventh shape and is guarded below.
+	 * Retain each terminal-consumer row for traceability, without claiming its native cause was
+	 * stimulated: every row supplies the same no-continuation, quiescent native settle. The
+	 * observable contract here is that this normalized settle cannot strand the card in 工作中.
 	 */
 	const terminalShapes = [
 		"尾消息仍带 toolCall",
@@ -292,7 +291,7 @@ describe("the terminal shapes that never see an ordinary settle (E12)", () => {
 	];
 
 	for (const [index, label] of terminalShapes.entries()) {
-		test(`${label} lands on 等待用户输入`, async () => {
+		test(`normalized settle for ${label} lands on 等待用户输入 (not native-path evidence)`, async () => {
 			const { double, requests, ctx } = await armed(`state-terminal-${index}`, true);
 			double.startRun(ctx);
 			await double.settleRun(ctx);

@@ -22,9 +22,11 @@
  * - the startup pair is written only where the start proves a beginning, and never filled in from the
  *   values the session happens to report later: a resumed, forked or replayed session carries none.
  */
-import { describe, expect, test } from "bun:test";
-import { sessionFileDir } from "./support/pi-session-files";
+import { afterEach, describe, expect, test } from "bun:test";
+import { disposeSessionFiles, sessionFileDir } from "./support/pi-session-files";
 import { type PiSurfaceSession, boundPiSurface } from "./support/pi-surface-double";
+
+afterEach(disposeSessionFiles);
 
 /**
  * One session as pi's own surface reports it, for the cases below: a top-level session of its own

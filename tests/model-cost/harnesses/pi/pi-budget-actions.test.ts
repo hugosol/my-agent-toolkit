@@ -15,7 +15,7 @@
  * root the runtime's files live in, and the provider transport (both provider queries answer here, so
  * no case reaches a network).
  */
-import { afterEach, describe, expect, test } from "bun:test";
+import { afterAll, afterEach, describe, expect, test } from "bun:test";
 import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
@@ -98,6 +98,7 @@ interface PiSession {
 
 /** The directory holding the pi session files the lineage facts of this suite are read from. */
 const SESSION_FILES = mkdtempSync(path.join(tmpdir(), "pi-budget-sessions-"));
+afterAll(() => rmSync(SESSION_FILES, { recursive: true, force: true }));
 
 /**
  * One pi session file as pi writes it: the header is the first line, and the identity a lineage link
@@ -404,10 +405,10 @@ function assemble(options: { readonly document?: ConsumptionDocument } = {}): Bo
 					subagentIntegrationMode: () => settledIntegration,
 					httpRequest: async (url: string, httpOptions?: HttpRequestOptions) => {
 						queries.push({ url, options: httpOptions });
-						return Response.json({
+						return ({ ok: true as const, response: Response.json({
 							is_available: true,
 							balance_infos: [{ currency: "CNY", total_balance: "12.34", granted_balance: "0.00", topped_up_balance: "12.34" }],
-						});
+						}) });
 					},
 				});
 				runtime = built;

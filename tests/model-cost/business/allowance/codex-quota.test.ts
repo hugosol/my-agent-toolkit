@@ -39,7 +39,7 @@ import {
 import type { ProviderAccess, ProviderAccessFacts } from "../../../../framework/interface/provider";
 import type { SessionFacts, TurnOutcome } from "../../../../framework/interface/session";
 import type { TurnSignal } from "../../../../framework/runtime/port";
-import { HttpConfigurationError, type HttpRequestOptions } from "../../../../framework/interface/general/http";
+import { type HttpRequestOptions, type HttpRequestResult } from "../../../../framework/interface/general/http";
 import { type PortDouble, portDouble } from "../../../framework/support/harness-port-double";
 import { testSessionCapability } from "../../support/session-capability";
 
@@ -115,22 +115,20 @@ interface UsageWindows {
  * expectation is a hand-computed epoch-millisecond instant. A reset the case omits is a document that
  * stated none, which is a window whose reset is unknown rather than a window at zero.
  */
-function usageAnswer(windows: UsageWindows): Response {
+function usageAnswer(windows: UsageWindows): HttpRequestResult {
 	const windowOf = (window: UsageWindow): Record<string, unknown> => ({
 		used_percent: window.usedPercent,
 		limit_window_seconds: window.seconds,
 		...(window.resetAt === undefined ? {} : { reset_at: window.resetAt }),
 	});
-	return new Response(
-		JSON.stringify({
+	return ({ ok: true as const, response: new Response(JSON.stringify({
 			plan_type: "pro",
 			rate_limit: {
 				...(windows.primary === undefined ? {} : { primary_window: windowOf(windows.primary) }),
 				...(windows.secondary === undefined ? {} : { secondary_window: windowOf(windows.secondary) }),
 			},
 		}),
-		{ status: 200, headers: { "content-type": "application/json" } },
-	);
+		{ status: 200, headers: { "content-type": "application/json" } },) });
 }
 
 /** The five-hour and weekly windows one document reports, with each reset stated in seconds. */
@@ -205,7 +203,7 @@ const roots: string[] = [];
  */
 async function bindQuota(options: {
 	readonly access?: (provider: string) => Promise<ProviderAccessFacts | undefined>;
-	readonly respond?: (request: SentRequest, index: number) => Response | Promise<Response>;
+	readonly respond?: (request: SentRequest, index: number) => HttpRequestResult | Promise<HttpRequestResult>;
 	readonly ttlMs?: number;
 } = {}): Promise<BoundQuota> {
 	const root = mkdtempSync(path.join(tmpdir(), "model-cost-codex-"));
@@ -316,7 +314,7 @@ describe("the account API is asked at initialization and on a settled Codex requ
 	});
 
 	test("a settled Codex request refreshes the windows only once the success TTL has passed", async () => {
-		let reply: () => Response = () => usageAnswer(DOCUMENT_WINDOWS);
+		let reply: () => HttpRequestResult = () => usageAnswer(DOCUMENT_WINDOWS);
 		const bound = await bindQuota({ respond: () => reply() });
 		expect(bound.sent).toHaveLength(1);
 
@@ -367,8 +365,8 @@ describe("the account API is asked at initialization and on a settled Codex requ
 	});
 
 	test("a query already out is joined rather than duplicated, and its own instant is what is accepted", async () => {
-		const held = Promise.withResolvers<Response>();
-		let reply: () => Response | Promise<Response> = () => usageAnswer(DOCUMENT_WINDOWS);
+		const held = Promise.withResolvers<HttpRequestResult>();
+		let reply: () => HttpRequestResult | Promise<HttpRequestResult> = () => usageAnswer(DOCUMENT_WINDOWS);
 		const bound = await bindQuota({ respond: () => reply() });
 
 		reply = () => held.promise;
@@ -413,9 +411,9 @@ describe("the account API is asked at initialization and on a settled Codex requ
 	test("a refused proxy selection fails as a configuration failure, without a direct request", async () => {
 		const bound = await bindQuota({
 			respond: () => {
-				throw new HttpConfigurationError(
+				return { ok: false as const, failure: { kind: "configuration" as const, error: new Error(
 					'the request selects the proxy "codex", but the shared configuration file "absent.yaml" does not exist',
-				);
+				) } };
 			},
 		});
 
@@ -427,19 +425,19 @@ describe("the account API is asked at initialization and on a settled Codex requ
 	});
 
 	test("a non-2xx answer and a refused transport are failures, and neither is a window", async () => {
-		const refused = await bindQuota({ respond: () => new Response("{}", { status: 403 }) });
+		const refused = await bindQuota({ respond: () => ({ ok: true as const, response: new Response("{}", { status: 403 }) }) });
 		expect(refused.runtime.presentation.quota()).toEqual({ failure: { at: CLOCK, detail: "unreadable" } });
 
-		const transport = await bindQuota({
-			respond: () => {
-				throw new Error("connect ECONNREFUSED 127.0.0.1:1");
-			},
-		});
-		expect(transport.runtime.presentation.quota()).toEqual({ failure: { at: CLOCK, detail: "unreachable" } });
+		for (const kind of ["transport", "timeout"] as const) {
+			const failed = await bindQuota({
+				respond: () => ({ ok: false, failure: { kind, error: new Error("request failed") } }),
+			});
+			expect(failed.runtime.presentation.quota()).toEqual({ failure: { at: CLOCK, detail: "unreachable" } });
+		}
 	});
 
 	test("a failed attempt earns no TTL, so the next settled request asks again", async () => {
-		const bound = await bindQuota({ respond: () => new Response("{}", { status: 403 }) });
+		const bound = await bindQuota({ respond: () => ({ ok: true as const, response: new Response("{}", { status: 403 }) }) });
 		expect(bound.sent).toHaveLength(1);
 
 		codexTurn(bound.double, CLOCK + 1_000);
@@ -450,7 +448,7 @@ describe("the account API is asked at initialization and on a settled Codex requ
 
 describe("the account answer updates each window on its own", () => {
 	test("a document that carries one window updates that one and leaves the other's value and instant alone", async () => {
-		let reply: () => Response = () => usageAnswer(DOCUMENT_WINDOWS);
+		let reply: () => HttpRequestResult = () => usageAnswer(DOCUMENT_WINDOWS);
 		const bound = await bindQuota({ respond: () => reply() });
 		const seeded = bound.runtime.presentation.quota();
 		expect(seeded.weekly).toEqual({
@@ -478,7 +476,7 @@ describe("the account answer updates each window on its own", () => {
 	});
 
 	test("a document that identifies no window changes nothing and notifies no one, and earns no TTL", async () => {
-		let reply: () => Response = () => usageAnswer({});
+		let reply: () => HttpRequestResult = () => usageAnswer({});
 		const bound = await bindQuota({ respond: () => reply() });
 		const before = bound.notifications();
 		expect(bound.runtime.presentation.quota()).toEqual({});
@@ -502,7 +500,7 @@ describe("the account answer updates each window on its own", () => {
 	});
 
 	test("two candidates of one kind in one document: the closest length wins, and an exact tie keeps the first listed", async () => {
-		let reply: () => Response = () => usageAnswer(DOCUMENT_WINDOWS);
+		let reply: () => HttpRequestResult = () => usageAnswer(DOCUMENT_WINDOWS);
 		const bound = await bindQuota({ respond: () => reply() });
 
 		// 315 and 285 minutes are both exactly ±5% of five hours, so the two are equally close and the
@@ -529,7 +527,7 @@ describe("the account answer updates each window on its own", () => {
 	});
 
 	test("a position whose report carries no usable reading or length is left out rather than completed", async () => {
-		let reply: () => Response = () => usageAnswer(DOCUMENT_WINDOWS);
+		let reply: () => HttpRequestResult = () => usageAnswer(DOCUMENT_WINDOWS);
 		const bound = await bindQuota({ respond: () => reply() });
 		expect(bound.runtime.presentation.quota().fiveHour).toEqual({
 			usedPercent: 12.5,
@@ -543,8 +541,7 @@ describe("the account answer updates each window on its own", () => {
 		// rather than being completed with a zero — while the weekly window the same answer carried is
 		// applied.
 		reply = () =>
-			new Response(
-				JSON.stringify({
+			({ ok: true as const, response: new Response(JSON.stringify({
 					rate_limit: {
 						primary_window: { limit_window_seconds: 18_000, reset_at: (CLOCK + 60_000) / 1000 },
 						secondary_window: {
@@ -554,8 +551,7 @@ describe("the account answer updates each window on its own", () => {
 						},
 					},
 				}),
-				{ status: 200 },
-			);
+				{ status: 200 },) });
 		bound.clock.now = CLOCK + 20_000;
 		codexTurn(bound.double, bound.clock.now);
 		await drain();
@@ -572,12 +568,10 @@ describe("the account answer updates each window on its own", () => {
 		// The other half of the same rule: a position that states a reading but no length states nothing
 		// that identifies it as one of these two windows, so it is left out too.
 		reply = () =>
-			new Response(
-				JSON.stringify({
+			({ ok: true as const, response: new Response(JSON.stringify({
 					rate_limit: { secondary_window: { used_percent: 99, reset_at: (CLOCK + DAY_MS) / 1000 } },
 				}),
-				{ status: 200 },
-			);
+				{ status: 200 },) });
 		bound.clock.now = CLOCK + 40_000;
 		codexTurn(bound.double, bound.clock.now);
 		await drain();
@@ -593,7 +587,7 @@ describe("the account answer updates each window on its own", () => {
 
 describe("a window's reset instant is read as the state it has now", () => {
 	test("unknown, expired and invalid are told apart, and the reported instant is never rewritten", async () => {
-		let reply: () => Response = () => usageAnswer(DOCUMENT_WINDOWS);
+		let reply: () => HttpRequestResult = () => usageAnswer(DOCUMENT_WINDOWS);
 		const bound = await bindQuota({ respond: () => reply() });
 
 		// No reset was stated at all: unknown, and no instant is invented for it.
@@ -654,17 +648,15 @@ describe("a window's reset instant is read as the state it has now", () => {
 	});
 
 	test("a reset that is not an instant is no instant, and a state is never written onto the reading", async () => {
-		let reply: () => Response = () => usageAnswer(DOCUMENT_WINDOWS);
+		let reply: () => HttpRequestResult = () => usageAnswer(DOCUMENT_WINDOWS);
 		const bound = await bindQuota({ respond: () => reply() });
 
 		// A reset the document states as a non-numeric value is no usable instant.
 		reply = () =>
-			new Response(
-				JSON.stringify({
+			({ ok: true as const, response: new Response(JSON.stringify({
 					rate_limit: { primary_window: { used_percent: 13, limit_window_seconds: 18_000, reset_at: "soon" } },
 				}),
-				{ status: 200 },
-			);
+				{ status: 200 },) });
 		bound.clock.now = CLOCK + 20_000;
 		codexTurn(bound.double, bound.clock.now);
 		await drain();

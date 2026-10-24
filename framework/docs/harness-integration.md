@@ -25,7 +25,7 @@
    ↓
 决定：直接映射 / 接受差异 / 声明不可用
    ↓
-按能力领域组织 adapter
+按实际来源组织 adapter
    ↓
 装配 port 与 delivery
    ↓
@@ -168,7 +168,7 @@ native 事实 / 机制：
   agent_end 的时间边界早于该陈述，会截断 Round。
 被否决的替代方案：把 agent_end 映射为结束；或在 adapter 中模拟继续项检测。
 失效触发：pi 改变 agent_settled 的触发条件，或在 settle 之后仍可能排入继续项。
-证据：source review（adapters/pi/domain/session/round.ts）；
+证据：source review（adapters/pi/mixture/round.ts）；
   行为场景见 harness-support 的 pi 证据与 dock；本地捕获不证明真实 provider 路径。
 未覆盖 / 未验证：其他 pi 版本、其他 provider、未执行的真实服务路径仍为 unverified。
 ```
@@ -204,63 +204,63 @@ native 事实 / 机制：
 
 显式缺失描述的是**当前 adapter 的供给**，不是 native harness 的能力上限，也不是版本支持结论。
 
-## 4. 按能力领域组织 adapter
+## 4. 按实际来源组织 adapter
 
-### 4.1 根目录只有三个入口
+### 4.1 公共入口与私有 port 独立
 
 ```text
 adapters/<harness>/
-  index.ts      # 公共装配入口
-  internal/     # 私有 native 类型、loader 支持、binding port 组装
-  domain/       # 八个能力领域
+  index.ts      # 公共装配入口；消费方只 import 此入口
+  port.ts       # 私有 per-binding HarnessPort 装配
+  native/       # 宿主拥有的契约，包含实际使用的可选宿主补丁
+  thirdParty/   # 仅在有职责时存在；Pi 的 pi-subagents 协议
+  mixture/      # 仅在必须组合 native 与第三方事实／操作时存在
 ```
 
-`index.ts` 负责组装与导出，不承载业务规则；`internal/` 不是能力领域；`domain/` 才按能力含义组织。完整领域与当前源码路径只维护在[能力索引的 adapter 导航](framework-capabilities.md#adapter-implementation-navigation)，这里不复制第二份全路径清单。
+这是来源导航，不是每个 harness 的必备目录模板。OMP 只有 native，不为对称创建空来源分组。
+笼统的 `internal/` 已移除；原生类型和加载支持归到描述的契约，Pi 的公共入口安装原生 Node
+文本加载支持，extension 不 import 私有 loader。当前源码坐标的唯一完整导航在
+[能力索引](framework-capabilities.md#adapter-implementation-navigation)；组织决定见
+[ADR-0002](../../docs/adr/0002-semantic-extension-framework.md#source-aligned-adapter-organization-2026-10-24)。
 
-### 4.2 领域归属
+### 4.2 先确定契约来源
 
-领域包括 Session、Context、Subagent、Provider、Control、Prompt、Feedback、Marker。归属按**能力含义**判断：
+判断协议由谁拥有，而非只看数据经过哪里：
 
-- Session 拥有会话身份、事件、Turn、Round，以及它们需要的跨进程观察；Turn/Round 不再另立领域。
-- Context 拥有上下文读取的收集与映射，不复用 Session 的事件投递路径。
-- Subagent 拥有原生父子/祖先关系、接入状态与必要的接入协议；子会话通用的 Session/Turn/Round 事实仍归 Session。
-- Provider 拥有 model catalog、provider 访问与计价查询的 native 映射；不把 provider 协议实现成框架策略。
-- Control、Prompt、Feedback、Marker 各自拥有对应的 native 事实与效果。
+- native：Pi session-manager 的会话文件 ancestry、State branch 读写、extension API 和 model registry；
+  OMP 使用自身 extension、session manager、model registry 和 agent registry 契约。
+- thirdParty：Pi 的 pi-subagents 注册、版本与身份、RPC、启动信息和后台 liveness 协议。
+  它们使用 Pi event bus，并不会因此变成 Pi 原生协议；也不成为独立公共 adapter。
+- mixture：Pi 的原生 session 转移与 child requirement、原生身份/startup 与 provider launch name、
+  原生 settle/quiescence 与 provider-held work 的必要解释。多个 native 事件或复杂度本身不构成 mixture。
+- OMP 的 Viewed-session 可选补丁属于 native variant；不把它称作第三方 provider，也不声称未补丁上游已提供。
 
-有歧义时，业务领域优先；只有真正公共的支撑能力才独立共享。不要按消费它的 extension 分组，不要把原生对象的数据来源或第三方接入名称当作主要领域，也不在 `domain/` 下增加 business/foundation 中间目录。每个领域先明确归属，再决定单文件或目录。
+来源名称只是实现组织，不增加业务术语。Session/Turn/Round、Context、Subagent、Provider、Control、
+Prompt、Feedback、Marker 的框架语义归属不变，不按消费它们的 extension 复制公共映射。
 
-### 4.3 领域内部
+### 4.3 按完整协议和生命周期划分
 
-默认按映射方式放置：
+省略上游公共 package/source 前缀，保留能识别实际契约的坐标，但不机械逐文件镜像。
+例如 UI 映射跟随 extension UI 契约，而非最终绘制它的 interactive-mode 实现。
+State 的命名、branch 恢复和 append 放在一起；完整多事件生命周期不因单个 hook 拆散。
+简单职责可保持单文件；没有职责的来源、空目录、只转发的兼容入口和无用的上游镜像都不创建。
 
-```text
-domain/<capability>/
-  events.ts     # 原生观察 → 框架事件
-  queries.ts    # 原生读取 → 框架数据
-  effects.ts    # 框架请求 → 原生效果
-```
+- 事件 delivery 的 canonical 构造靠近映射，不留给 port 逐项拼装；
+- 共享类型、诊断、状态和释放仍靠近其真实寿命拥有者，迁移目录不改变 binding 资源寿命。
 
-这只在确实需要时拆文件。简单领域保持单文件；复杂 Turn/Round 原生协议可以作为 Session 的内部实现，不必为对称制造转发入口；也不要求不同 harness 的文件结构互相对称。要求是“先找领域，再找映射方式”，不是“每个领域三个文件”。
+### 4.4 来源之间的依赖
 
-另外两条边界：
+native 不依赖 pi-subagents 特定协议或 mixture；thirdParty 可以使用必要 Pi 原生契约，但不依赖
+mixture。mixture 消费两方显式事实／操作，完成解释后才交给 `HarnessPort`；两方不反向依赖它。
+port 只连接这些结果，不再解释跨来源语义；消费方不需要知道能力来源。
 
-- 事件 delivery 的领域构造靠近事件映射，不留给 port 逐项拼装；
-- 共享类型、诊断和状态靠近其寿命拥有者，不另建一套支撑能力分类。
-
-### 4.4 跨领域协作
-
-装配连接各领域，公共事实保留单一来源。跨领域通过明确 interface 协作，不重复维护：
-
-- 身份与当前读数；
-- 观察来源与订阅寿命；
-- Owner 关系与访问权限；
-- 资源释放。
-
-不要把同一事实在多个 domain 各映射一遍；也不要在 port 组装处重新实现领域已经拥有的规则。
+身份、当前读数、观察来源、Owner 关系、访问权限与资源释放都保留单一事实／寿命拥有者，
+不在多个来源重复映射，也不在 port 组装处重新实现来源已经拥有的规则。
+既有 import-boundary 检查保护来源方向与消费方公共入口，结构审查仍须对照实际协议，不能只看目录名。
 
 ### 4.5 装配保持薄
 
-adapter 的公共入口创建 binding、把 port 交给框架，并导出 native loader 调用的 factory。它可以组合领域，但不承载 extension 业务，不解释 extension 的业务数据，也不把完整 native context、registry 或第三方对象泄漏给 extension。
+adapter 的公共入口创建 binding、把 port 交给框架，并导出 native loader 调用的 factory。它连接来源映射，但不解释跨来源协议或承载 extension 业务，不解释 extension 的业务数据，也不把完整 native context、registry 或第三方对象泄漏给 extension。
 
 用 deletion test 检查每个新 module：删除它以后，完整职责的复杂度会散回多个调用者，才有存在的深度；否则只是一个浅转发层。
 

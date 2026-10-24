@@ -350,12 +350,16 @@ async function readCodexAccount(credential: ProviderCredential): Promise<Account
 	const at = Date.now();
 	const stamps = instantsOf(at);
 	try {
-		const response = await request(CODEX_USAGE_URL, {
+		const result = await request(CODEX_USAGE_URL, {
 			method: "GET",
 			headers: { authorization: `Bearer ${credential.secret}` },
 			timeoutMs: ACCOUNT_READ_TIMEOUT_MS,
 			proxy: CODEX_USAGE_PROXY,
 		});
+		if (!result.ok) {
+			return { at: stamps.local, atUtc: stamps.utc, status: null, outcome: `unreachable (${result.failure.error.name})` };
+		}
+		const response = result.response;
 		const body = await response.text();
 		const document = JSON.parse(body || "null") as unknown;
 		return {

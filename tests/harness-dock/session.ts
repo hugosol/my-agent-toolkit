@@ -92,6 +92,8 @@ export class ControlledSession {
 	#commandCounter = 0;
 	#exit: ExitOutcome | null = null;
 	readonly #stderrPump: Promise<void>;
+	readonly #stdoutPump: Promise<void>;
+	readonly #pipeReaders = new Set<ReadableStreamDefaultReader<Uint8Array>>();
 
 	private constructor(
 		child: SessionChild,
@@ -110,13 +112,15 @@ export class ControlledSession {
 		this.#stderrPump = this.#pump(child.stderr, line => {
 			this.#stderrText += `${line}\n`;
 		});
-		void this.#pump(child.stdout, line => this.#acceptFrame(line));
+		this.#stdoutPump = this.#pump(child.stdout, line => this.#acceptFrame(line));
 	}
 
 	static async start(options: SessionOptions): Promise<ControlledSession> {
 		const agentDir = options.runRoot.agentDir;
 		const argv = [
-			"bun",
+			// PATH's bun entry can be a Windows launcher whose child survives it.
+			// Spawn this runtime directly so kill/exited name the harness itself.
+			process.execPath,
 			options.harness.cliPath,
 			"--mode",
 			"rpc",
@@ -140,8 +144,27 @@ export class ControlledSession {
 			options.readyTimeoutMs ?? DEFAULT_READY_TIMEOUT_MS,
 			options.promptTimeoutMs ?? DEFAULT_PROMPT_TIMEOUT_MS,
 		);
-		await session.#awaitReady();
-		return session;
+		try {
+			await session.#awaitReady();
+			return session;
+		} catch (error) {
+			// Until ready succeeds, start owns the child: callers have nothing to stop.
+			// Preserve the readiness failure, not an error from shutting its pipes down.
+			try {
+				child.kill();
+			} catch {
+				// An early-exit child may already have been reaped.
+			}
+			try {
+				child.stdin.end();
+			} catch {
+				// The child may have closed stdin before readiness failed.
+			}
+			await child.exited;
+			await Promise.allSettled([...session.#pipeReaders].map(reader => reader.cancel()));
+			await Promise.allSettled([session.#stdoutPump, session.#stderrPump]);
+			throw error;
+		}
 	}
 
 	frames(): readonly RpcFrame[] {
@@ -302,31 +325,50 @@ export class ControlledSession {
 		const ready = this.#waitForFrame(frame => frame.type === "ready", "ready frame", this.#readyTimeoutMs);
 		void ready.catch(() => {});
 		const exited = this.#child.exited.then(code => ({ kind: "exit" as const, code }));
-		const outcome = await Promise.race([ready.then(frame => ({ kind: "ready" as const, frame })), exited]);
-		if (outcome.kind === "exit") {
-			this.#exit = { exitCode: outcome.code, stderr: this.#stderrText, timedOut: false };
-			throw new DockSessionError(
-				`harness exited with code ${String(outcome.code)} before the ready frame`,
-				this.diagnostics(),
-			);
+		try {
+			const outcome = await Promise.race([
+				ready.then(frame => ({ kind: "ready" as const, frame })),
+				exited,
+				this.#stdoutPump.then(() => ({ kind: "eof" as const })),
+			]);
+			if (outcome.kind === "exit") {
+				this.#exit = { exitCode: outcome.code, stderr: this.#stderrText, timedOut: false };
+				throw new DockSessionError(
+					`harness exited with code ${String(outcome.code)} before the ready frame`,
+					this.diagnostics(),
+				);
+			}
+			if (outcome.kind === "eof") {
+				throw new DockSessionError("harness stdout closed before the ready frame", this.diagnostics());
+			}
+		} finally {
+			// Only the ready waiter exists before start returns. EOF/exit must not leave
+			// its long deadline alive after the startup owner has reclaimed the child.
+			for (const waiter of this.#waiters.splice(0)) clearTimeout(waiter.timer);
 		}
 	}
 
 	async #pump(stream: ReadableStream<Uint8Array>, onLine: (line: string) => void): Promise<void> {
 		const reader = stream.getReader();
+		this.#pipeReaders.add(reader);
 		const decoder = new TextDecoder();
 		let buffer = "";
-		for (;;) {
-			const { done, value } = await reader.read();
-			if (done) break;
-			buffer += decoder.decode(value, { stream: true });
-			let newlineIndex: number;
-			while ((newlineIndex = buffer.indexOf("\n")) >= 0) {
-				const line = buffer.slice(0, newlineIndex);
-				buffer = buffer.slice(newlineIndex + 1);
-				if (line.trim().length > 0) onLine(line);
+		try {
+			for (;;) {
+				const { done, value } = await reader.read();
+				if (done) break;
+				buffer += decoder.decode(value, { stream: true });
+				let newlineIndex: number;
+				while ((newlineIndex = buffer.indexOf("\n")) >= 0) {
+					const line = buffer.slice(0, newlineIndex);
+					buffer = buffer.slice(newlineIndex + 1);
+					if (line.trim().length > 0) onLine(line);
+				}
 			}
+			if (buffer.trim().length > 0) onLine(buffer);
+		} finally {
+			this.#pipeReaders.delete(reader);
+			reader.releaseLock();
 		}
-		if (buffer.trim().length > 0) onLine(buffer);
 	}
 }

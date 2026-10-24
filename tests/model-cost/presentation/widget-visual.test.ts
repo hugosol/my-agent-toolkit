@@ -49,7 +49,7 @@ import type { ProviderAccess, ProviderAccessFacts } from "../../../framework/int
 import type { SessionFacts, TurnOutcome } from "../../../framework/interface/session";
 import type { OwnerReference } from "../../../framework/interface/state";
 import type { TurnSignal } from "../../../framework/runtime/port";
-import type { HttpRequestOptions } from "../../../framework/interface/general/http";
+import type { HttpRequestOptions, HttpRequestResult } from "../../../framework/interface/general/http";
 import { type PortDouble, portDouble } from "../../framework/support/harness-port-double";
 import { testSessionCapability } from "../support/session-capability";
 import { uiBoundaryTimerOf } from "../support/ui-timer";
@@ -289,11 +289,11 @@ function documentWith(input: {
 }
 
 /** The balance the provider returns, in its documented shape, as one JSON response. */
-function balanceAnswer(total: string): Response {
-	return new Response(JSON.stringify({ is_available: true, balance_infos: [{ currency: "CNY", total_balance: total }] }), {
+function balanceAnswer(total: string): HttpRequestResult {
+	return ({ ok: true as const, response: new Response(JSON.stringify({ is_available: true, balance_infos: [{ currency: "CNY", total_balance: total }] }), {
 		status: 200,
 		headers: { "content-type": "application/json" },
-	});
+	}) });
 }
 
 /** One bound instance and everything a case drives and observes it through. */
@@ -329,7 +329,7 @@ async function bindVisual(
 		readonly drawing?: WidgetDrawing;
 		readonly balanceTotal?: string;
 		readonly codex?: boolean;
-		readonly codexAnswer?: () => Response;
+		readonly codexAnswer?: () => HttpRequestResult;
 		readonly hasUI?: boolean;
 		readonly at?: number;
 	} = {},
@@ -432,22 +432,20 @@ interface UsageWindows {
  * expectation is a hand-computed epoch-millisecond instant. A reset a case omits is a document that
  * stated none, which is a window whose reset is unknown rather than a window at zero.
  */
-function usageAnswer(windows: UsageWindows): Response {
+function usageAnswer(windows: UsageWindows): HttpRequestResult {
 	const windowOf = (window: UsageWindow): Record<string, unknown> => ({
 		used_percent: window.usedPercent,
 		limit_window_seconds: window.seconds,
 		...(window.resetAt === undefined ? {} : { reset_at: window.resetAt }),
 	});
-	return new Response(
-		JSON.stringify({
+	return ({ ok: true as const, response: new Response(JSON.stringify({
 			plan_type: "pro",
 			rate_limit: {
 				...(windows.primary === undefined ? {} : { primary_window: windowOf(windows.primary) }),
 				...(windows.secondary === undefined ? {} : { secondary_window: windowOf(windows.secondary) }),
 			},
 		}),
-		{ status: 200, headers: { "content-type": "application/json" } },
-	);
+		{ status: 200, headers: { "content-type": "application/json" } },) });
 }
 
 /**
@@ -700,11 +698,19 @@ describe("the balance keeps its two warnings (P67)", () => {
 		expect(error.host.draw(200).lines[0]).toContain("\u{1F4B0} Balance: \u00ABerror:\u00A54.99\u00BB");
 
 		// Exactly ten and exactly five are not yet the next warning: both comparisons are strictly below.
-		const ten = await bindVisual({ balanceTotal: "10.00", drawing: "lines" });
-		expect(ten.host.plain()?.[0]).toContain("\u{1F4B0} Balance: \u00A510.00");
+		const ten = await bindVisual({ balanceTotal: "10.00" });
+		const tenDraw = ten.host.draw(200);
+		expect(tenDraw.lines[0]).toContain("\u{1F4B0} Balance: \u00ABtext:\u00A510.00\u00BB");
+		expect(tenDraw.painted).toContainEqual({ color: "text", text: "\u00A510.00" });
+		const tenPlain = await bindVisual({ balanceTotal: "10.00", drawing: "lines" });
+		expect(tenPlain.host.plain()?.[0]).toContain("\u{1F4B0} Balance: \u00A510.00");
 
-		const five = await bindVisual({ balanceTotal: "5.00", drawing: "lines" });
-		expect(five.host.plain()?.[0]).toContain("\u{1F4B0} Balance: \u00A55.00");
+		const five = await bindVisual({ balanceTotal: "5.00" });
+		const fiveDraw = five.host.draw(200);
+		expect(fiveDraw.lines[0]).toContain("\u{1F4B0} Balance: \u00ABwarning:\u00A55.00\u00BB");
+		expect(fiveDraw.painted).toContainEqual({ color: "warning", text: "\u00A55.00" });
+		const fivePlain = await bindVisual({ balanceTotal: "5.00", drawing: "lines" });
+		expect(fivePlain.host.plain()?.[0]).toContain("\u{1F4B0} Balance: \u00A55.00");
 	});
 });
 
@@ -844,7 +850,7 @@ describe("the allowance windows are drawn as the Codex operator reads them (P65,
 	 * One Codex host whose account API answers whatever the case stages: every window below arrives
 	 * from the answer a settled report's own query reads, never from a response header.
 	 */
-	function bindCodexWindows(codexAnswer?: () => Response): Promise<BoundVisual> {
+	function bindCodexWindows(codexAnswer?: () => HttpRequestResult): Promise<BoundVisual> {
 		return bindVisual({
 			provider: CODEX,
 			model: "gpt-6-luna",
@@ -860,7 +866,7 @@ describe("the allowance windows are drawn as the Codex operator reads them (P65,
 	test("the pace each window has run at decides its colour, over the two bands beside the plain one", async () => {
 		// Each report states its own reset an hour ahead of the five-hour window, so four of that window's
 		// five hours have run and the points it leads its own clock by are the band it lands in.
-		let reply: () => Response = () => usageAnswer({});
+		let reply: () => HttpRequestResult = () => usageAnswer({});
 		const bound = await bindCodexWindows(() => reply());
 		const bands: readonly (readonly [number, number, string])[] = [
 			// used percent, hours until its reset, the theme token the pace's own band is drawn in.
@@ -892,7 +898,7 @@ describe("the allowance windows are drawn as the Codex operator reads them (P65,
 	});
 
 	test("a window with no usable reset is drawn muted, with the dashes it always showed", async () => {
-		let reply: () => Response = () => usageAnswer({});
+		let reply: () => HttpRequestResult = () => usageAnswer({});
 		const bound = await bindCodexWindows(() => reply());
 		reply = () => usageAnswer({ primary: { usedPercent: 42, seconds: 18_000 } });
 		reportCodex(bound);
@@ -911,7 +917,7 @@ describe("the allowance windows are drawn as the Codex operator reads them (P65,
 	});
 
 	test("the host's width reaches the window line, one form down at a time (P67)", async () => {
-		let reply: () => Response = () => usageAnswer({});
+		let reply: () => HttpRequestResult = () => usageAnswer({});
 		const bound = await bindCodexWindows(() => reply());
 		reply = () =>
 			usageAnswer({ primary: { usedPercent: 85, seconds: 18_000, resetAt: (bound.clock.now + HOUR_MS) / 1000 } });

@@ -470,6 +470,9 @@ export function bindExtension(
 	// From here on the extension has built something, so every remaining refusal runs its one
 	// cleanup before it is reported: a failed binding never leaves a business instance running.
 	const refuse = (failure: BindingFailure): BindingResult => {
+		// Native registrations may already exist when a later registration throws.
+		// Close their delivery gate before cleanup can trigger any retained callback.
+		delivering = false;
 		cleanupImplementation(definition.id, implementation, port.reportDiagnostic);
 		// A refused binding delivers nothing, so the seat it received observations on — if a delivery
 		// reached it before the registration failed — is withdrawn with it.

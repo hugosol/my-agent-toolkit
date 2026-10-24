@@ -200,7 +200,7 @@ interface FixtureContext { readonly feedback: FeedbackTransport; }
 
 export const TEST_PORT = defineAdapterPort<FixtureContext>({
 	setLabel: context => label => {},
-	reportDiagnostic: context => message => {},
+	reportDiagnostic: context => message => context.feedback.notify("error", message),
 	onSession: context => handler => {},
 	onRound: context => observer => {},
 	onSessionContext: context => handler => {},

@@ -34,7 +34,7 @@ import { type ExtensionDefinition, defineExtension } from "../../framework/inter
 import { REPO_ROOT } from "../harness-dock/baseline";
 import { type PortDouble, portDouble } from "./support/harness-port-double";
 import { boundPiSurface } from "./support/pi-surface-double";
-import { sessionFileDir } from "./support/pi-session-files";
+import { disposeSessionFiles, sessionFileDir } from "./support/pi-session-files";
 
 /** The child entry the pi assemblies below state: the module the provider loads into spawned sessions. */
 const CHILD_ENTRY = path.join(REPO_ROOT, "entrypoints", "pi", "codebase-tools.ts");
@@ -89,6 +89,7 @@ beforeEach(() => {
 });
 afterEach(() => {
 	vi.useRealTimers();
+	disposeSessionFiles();
 });
 
 /** One connection an access hands a reader, driven the way the serving half drives it. */

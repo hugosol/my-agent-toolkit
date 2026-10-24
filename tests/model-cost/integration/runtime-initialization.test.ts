@@ -44,7 +44,7 @@ import {
 import type { ProviderAccess, ProviderAccessFacts } from "../../../framework/interface/provider";
 import type { SessionFacts, TurnOutcome, TurnUsage } from "../../../framework/interface/session";
 import type { TurnSignal } from "../../../framework/runtime/port";
-import type { HttpRequestOptions } from "../../../framework/interface/general/http";
+import type { HttpRequestOptions, HttpRequestResult } from "../../../framework/interface/general/http";
 import { testSessionCapability } from "../support/session-capability";
 import { type PortDouble, type SessionBoundary, portDouble } from "../../framework/support/harness-port-double";
 import { type HeldAnswer, drain, heldAnswer, settled, until } from "../../support/pending-query";
@@ -105,36 +105,32 @@ interface SentRequest {
 }
 
 /** The balance answer the provider returns, in its documented shape, as one JSON response. */
-function balanceAnswer(total: string): Response {
-	return new Response(
-		JSON.stringify({
+function balanceAnswer(total: string): HttpRequestResult {
+	return ({ ok: true as const, response: new Response(JSON.stringify({
 			is_available: true,
 			balance_infos: [{ currency: "CNY", total_balance: total, granted_balance: "0.00", topped_up_balance: total }],
 		}),
-		{ status: 200, headers: { "content-type": "application/json" } },
-	);
+		{ status: 200, headers: { "content-type": "application/json" } },) });
 }
 
 /** One account API answer, in the provider's own document shape, as one JSON response. */
 function usageAnswer(windows: {
 	readonly primary?: { readonly usedPercent: number; readonly seconds: number; readonly resetAt: number };
 	readonly secondary?: { readonly usedPercent: number; readonly seconds: number; readonly resetAt: number };
-}): Response {
+}): HttpRequestResult {
 	const windowOf = (window: { usedPercent: number; seconds: number; resetAt: number }): Record<string, unknown> => ({
 		used_percent: window.usedPercent,
 		limit_window_seconds: window.seconds,
 		reset_at: window.resetAt,
 	});
-	return new Response(
-		JSON.stringify({
+	return ({ ok: true as const, response: new Response(JSON.stringify({
 			plan_type: "pro",
 			rate_limit: {
 				...(windows.primary === undefined ? {} : { primary_window: windowOf(windows.primary) }),
 				...(windows.secondary === undefined ? {} : { secondary_window: windowOf(windows.secondary) }),
 			},
 		}),
-		{ status: 200, headers: { "content-type": "application/json" } },
-	);
+		{ status: 200, headers: { "content-type": "application/json" } },) });
 }
 
 /**
@@ -194,7 +190,7 @@ const roots: string[] = [];
 async function bindRuntime(
 	options: {
 		readonly access?: (provider: string) => Promise<ProviderAccessFacts | undefined>;
-		readonly respond?: (request: SentRequest, index: number) => Response | Promise<Response>;
+		readonly respond?: (request: SentRequest, index: number) => HttpRequestResult | Promise<HttpRequestResult>;
 		readonly initiate?: boolean;
 	} = {},
 ): Promise<BoundRuntime> {
@@ -356,7 +352,7 @@ describe("the first request waits for the prefetches to settle, and a failure is
 	test("a refused balance and a refused account query settle the initialization without failing the request", async () => {
 		const bound = await bindRuntime({
 			respond: request =>
-				request.url === BALANCE_URL ? new Response("busy", { status: 503 }) : Promise.reject(new Error("the wait ran out")),
+				request.url === BALANCE_URL ? ({ ok: true as const, response: new Response("busy", { status: 503 }) }) : Promise.resolve({ ok: false as const, failure: { kind: "transport" as const, error: new Error("the wait ran out") } }),
 		});
 
 		// The run initiation the helper awaited settled although both sources failed, and each result
@@ -372,7 +368,7 @@ describe("the first request waits for the prefetches to settle, and a failure is
 		const bound = await bindRuntime({
 			respond: request =>
 				request.url === BALANCE_URL
-					? Promise.reject(new Error("the connection was refused"))
+					? Promise.resolve({ ok: false as const, failure: { kind: "transport" as const, error: new Error("the connection was refused") } })
 					: usageAnswer(DOCUMENT_WINDOWS),
 		});
 
@@ -536,7 +532,7 @@ describe("a credential reaches its own provider's request and nothing else obser
 			// rejects with the sentinel in its own message. Neither failure may state it, and both failures
 			// must still be the visible, sanitized facts they are.
 			respond: request =>
-				request.url === BALANCE_URL ? new Response("busy", { status: 503 }) : Promise.reject(new Error(SENTINEL)),
+				request.url === BALANCE_URL ? ({ ok: true as const, response: new Response("busy", { status: 503 }) }) : Promise.resolve({ ok: false as const, failure: { kind: "transport" as const, error: new Error(SENTINEL) } }),
 		});
 
 		// The credential is used where it belongs: formatted into the balance query's own header, on the

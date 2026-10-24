@@ -21,7 +21,7 @@ import {
 	EVENTS_PATH,
 	setPanelRequestForTest,
 } from "../../extensions/connect-bot/shared-logic/panel/client";
-import type { HttpRequestOptions } from "../../framework/interface/general/http";
+import type { HttpRequestOptions, HttpRequestResult } from "../../framework/interface/general/http";
 import { CONNECT_BOT } from "../../extensions/connect-bot/definition";
 import { readConfig } from "../../framework/core/config";
 import { OUTBOX_LIMIT } from "../../extensions/connect-bot/shared-logic/panel/outbox";
@@ -50,8 +50,8 @@ interface Request {
 }
 
 /** The panel's answer to one request. */
-const panelAnswer = (status: number, body: unknown): Response =>
-	new Response(JSON.stringify(body), { status });
+const panelAnswer = (status: number, body: unknown): HttpRequestResult =>
+	({ ok: true as const, response: new Response(JSON.stringify(body), { status }) });
 
 /** The registered receipt a reachable panel answers a `register` with. */
 const registered = (onlineCount: number) => ({ outcome: "registered", onlineCount });
@@ -98,7 +98,7 @@ interface Panel {
  * its register, and hands each `heartbeat` to `answerHeartbeat` — which is what lets a test hold a
  * background push in flight and see what the queue does behind it.
  */
-function panel(answerHeartbeat: (request: Request) => Promise<Response>): Panel {
+function panel(answerHeartbeat: (request: Request) => Promise<HttpRequestResult>): Panel {
 	const requests: Request[] = [];
 	let inFlight = 0;
 	let peak = 0;
@@ -133,7 +133,7 @@ function stalledPanel(): Panel & { readonly release: () => void } {
 	let reachable = false;
 	const stalled = panel(request => {
 		if (reachable) return Promise.resolve(panelAnswer(200, { outcome: "accepted" }));
-		return new Promise<Response>(resolve => held.push(() => resolve(panelAnswer(200, {}))));
+		return new Promise<HttpRequestResult>(resolve => held.push(() => resolve(panelAnswer(200, {}))));
 	});
 	return {
 		...stalled,
@@ -317,12 +317,12 @@ describe("a queued push waits the configured budget and is never retried (E11, P
 			const kind = envelopeOf({ url, init }).kind;
 			if (kind === "register") return panelAnswer(200, registered(1));
 			if (kind === "state") return panelAnswer(200, { outcome: "accepted" });
-			return new Promise<Response>((_resolve, reject) => {
+			return new Promise<HttpRequestResult>((resolve) => {
 				// A panel that is gone never answers: the push is abandoned when the wait it declared
 				// runs out, on this file's own fake clock, advanced by exactly that budget below.
 				setTimeout(() => {
 					aborted();
-					reject(new Error("push budget exceeded"));
+					resolve({ ok: false, failure: { kind: "timeout", error: new Error("push budget exceeded") } });
 				}, init.timeoutMs);
 			});
 		}, "beat-timeout");

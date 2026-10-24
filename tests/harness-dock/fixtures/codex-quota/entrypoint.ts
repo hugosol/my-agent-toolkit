@@ -54,7 +54,7 @@ import {
 } from "../../../../extensions/model-cost/shared-logic/runtime";
 import { type OmpExtensionApi, ompAdapter } from "../../../../adapters/omp";
 import type { ImplementationSubscription } from "../../../../framework/interface";
-import type { HttpRequestOptions } from "../../../../framework/interface/general/http";
+import type { HttpRequestOptions, HttpRequestResult } from "../../../../framework/interface/general/http";
 import { createHttpModule } from "../../../../framework/modules/http";
 
 /** This repository, which is where the extension's own declared configuration is resolved from. */
@@ -202,7 +202,7 @@ async function awaitRelease(dir: string): Promise<void> {
  * Only the account API's own address is intercepted; every other call keeps the production module's
  * behaviour over the absent shared file, so the balance path is exactly what it is without a script.
  */
-function scriptedAccountRequest(dir: string): (url: string, options?: HttpRequestOptions) => Promise<Response> {
+function scriptedAccountRequest(dir: string): (url: string, options?: HttpRequestOptions) => Promise<HttpRequestResult> {
 	let calls = 0;
 	let last: ScriptedAccountAnswer | undefined;
 	return async (url, options) => {
@@ -213,10 +213,10 @@ function scriptedAccountRequest(dir: string): (url: string, options?: HttpReques
 		if (answer === undefined) throw new Error(`the dock scripted no answer for this run's first account query`);
 		last = answer;
 		if (answer.hold === true) await awaitRelease(dir);
-		return new Response(JSON.stringify(answer.document), {
+		return ({ ok: true as const, response: new Response(JSON.stringify(answer.document), {
 			status: answer.status ?? 200,
 			headers: { "content-type": "application/json" },
-		});
+		}) });
 	};
 }
 

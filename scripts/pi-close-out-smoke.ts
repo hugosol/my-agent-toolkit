@@ -6,6 +6,7 @@
  *   bun scripts/pi-close-out-smoke.ts                  # resolve the installed pi CLI
  *   bun scripts/pi-close-out-smoke.ts --pi <path>      # or PI_CLI=<path>
  *   bun scripts/pi-close-out-smoke.ts --keep           # keep every run root for inspection
+ *   bun scripts/pi-close-out-smoke.ts --expect-pi-version 1.4.0 # explicit candidate observation, not support certification
  *
  * What it drives: the real installed pi as a child process in RPC mode, with an isolated agent state,
  * session directory, working directory and user home under the OS temp root, and a local
@@ -529,7 +530,10 @@ async function main(): Promise<void> {
 	const cli = resolvePiCli(explicit);
 	const version = await piVersion(cli);
 	console.log(`pi ${version} (${cli.path})`);
-	observe("the harness under test is the fixed version this script states", version === EXPECTED_PI_VERSION, `reported ${version}`);
+	const expectedVersion = process.argv.includes("--expect-pi-version")
+		? process.argv[process.argv.indexOf("--expect-pi-version") + 1]
+		: EXPECTED_PI_VERSION;
+	observe("the harness under test is the fixed version this run states", version === expectedVersion, `reported ${version}, expected ${expectedVersion}`);
 
 	try {
 		await phaseOwnerAbsent(cli);

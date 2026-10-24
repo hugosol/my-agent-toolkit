@@ -11,7 +11,7 @@
  * call with a fake of the same interface to observe the production URL, request options and
  * response parsing without touching `globalThis`.
  */
-import { type HttpRequestOptions, request } from "../../../../framework/interface/general/http";
+import { type HttpRequestOptions, type HttpRequestResult, request } from "../../../../framework/interface/general/http";
 
 /** Closed kind enum of the wire contract; each kind carries its own `data` shape. */
 export type PushKind = "register" | "heartbeat" | "state" | "unregister";
@@ -34,7 +34,7 @@ export const EVENTS_PATH = "/api/sessions/events";
  * own response. The extension never writes its own transport, so a suite stands in an
  * implementation of exactly this interface.
  */
-export type PanelRequest = (url: string, options?: HttpRequestOptions) => Promise<Response>;
+export type PanelRequest = (url: string, options?: HttpRequestOptions) => Promise<HttpRequestResult>;
 
 /** The call every panel request goes through: the framework's own, until a suite stands in one. */
 let panelRequest: PanelRequest = request;
@@ -63,14 +63,14 @@ export interface PushOutcome {
  *
  * The direct connection and the wait budget are the request's own declaration: the framework's
  * module connects to the target and imposes the budget on the whole exchange, the body read
- * included — which is why the body is read here, inside this call's budget.
+ * included. The framework returns an already-buffered response for parsing here.
  */
 export async function pushEvent(
 	endpoint: string,
 	envelope: PushEnvelope,
 	timeoutMs: number,
 ): Promise<PushOutcome> {
-	const response = await panelRequest(`${endpoint}${EVENTS_PATH}`, {
+	const result = await panelRequest(`${endpoint}${EVENTS_PATH}`, {
 		method: "POST",
 		headers: { "content-type": "application/json" },
 		body: JSON.stringify(envelope),
@@ -78,6 +78,8 @@ export async function pushEvent(
 		// The panel is reached directly: never through an ambient or configured proxy.
 		proxy: false,
 	});
+	if (!result.ok) throw result.failure.error;
+	const response = result.response;
 	let body: unknown;
 	try {
 		body = JSON.parse(await response.text());

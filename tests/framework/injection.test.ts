@@ -50,6 +50,10 @@ interface NativeDouble {
 	readonly api: OmpExtensionApi;
 	/** Appended entries in call order: a contribution must never produce one. */
 	readonly appended: ReadonlyArray<{ readonly customType: string; readonly data: unknown }>;
+	/** Delivers the native startup with an existing selected branch. */
+	start(facts: RunFacts): void;
+	/** Delivers the native terminal disposal while the harness retains its callbacks. */
+	shutdown(facts: RunFacts): void;
 	/** Runs one bound toggle command for a session, as an alternating user would. */
 	toggle(sessionId: string, command?: string): void;
 	/** Delivers one run initiation, as the runner does; returns what the hook committed. */
@@ -79,6 +83,8 @@ function nativeDouble(): NativeDouble {
 	>();
 	const appended: Array<{ customType: string; data: unknown }> = [];
 	let hook: OmpRunInitiationHandler | undefined;
+	const starts: SessionHandler[] = [];
+	const shutdowns: SessionHandler[] = [];
 
 	const sessionFacts = (sessionId: string, branch: readonly OmpSessionEntry[]): OmpSessionContext => ({
 		// The registry label is deliberately the same for every main session: the owner key
@@ -106,12 +112,20 @@ function nativeDouble(): NativeDouble {
 			if (event === "before_agent_start") {
 				hook = handler as OmpRunInitiationHandler;
 			}
+			if (event === "session_start") starts.push(handler as SessionHandler);
+			if (event === "session_shutdown") shutdowns.push(handler as SessionHandler);
 		},
 	};
 
 	return {
 		api,
 		appended,
+		start(facts) {
+			for (const handler of starts) handler({ type: "session_start" }, sessionFacts(facts.sessionId, facts.branch));
+		},
+		shutdown(facts) {
+			for (const handler of shutdowns) handler({ type: "session_shutdown" }, sessionFacts(facts.sessionId, facts.branch));
+		},
 		toggle(sessionId, command = COMMAND) {
 			const registration = registrations.get(command);
 			if (registration === undefined) throw new Error(`command "${command}" was not registered`);
@@ -145,6 +159,55 @@ function enabledRun(sessionId: string, extra: readonly OmpSessionEntry[] = []): 
 	return { sessionId, branch: [enabledState(), ...extra] };
 }
 
+// Source: ticket01's OMP 18.5.0 journal captured at 89bd2d72 before any runtime refactor.
+// A lost State read would suppress the reminder and make the next toggle append true.
+// S1 is the public ompAdapter assembly; the native manager supplies the frozen selected branch.
+test("historical OMP State restores enabled, retains init and records the next toggle as disabled (P6, P8)", () => {
+	const branch = readFileSync(path.join(REPO_ROOT, "tests/codebase-tools/fixtures/omp-state-before-source-refactor.jsonl"), "utf8")
+		.trim().split("\n").map(line => JSON.parse(line) as OmpSessionEntry);
+	const double = nativeDouble();
+	bindCodebaseTools(double);
+	double.start({ sessionId: "historical-owner", branch });
+	expect(double.deliverRun({ sessionId: "historical-owner", branch })).toEqual({
+		message: { customType: "codebase-tools:reminder", content: REMINDER_PROMPT, display: false, attribution: "agent" },
+	});
+	expect(double.appended).toEqual([]);
+	double.toggle("historical-owner");
+	expect(double.appended).toEqual([{ customType: "codebase-tools:state", data: { enabled: false } }]);
+	expect(double.deliverRun({ sessionId: "historical-owner", branch })).toBeUndefined();
+});
+
+// S1: invoke the real native registrations after disposal rather than observing cleanup alone.
+// Framework-local toggles intentionally remain callable (binding.ts); an injected prompt must not.
+// Re-enabling through that retained toggle distinguishes a lifetime gate from merely being off.
+test("native prompt callbacks retained after disposal stop contributions without stopping another extension (P10, P14)", () => {
+	const first = nativeDouble();
+	const second = nativeDouble();
+	bindCodebaseTools(first);
+	bindDefinition(second, defineExtension({ ...CODEBASE_TOOLS, id: "other-prompts" }));
+	const facts = { sessionId: "shared-session", branch: [] };
+	first.start(facts);
+	second.start(facts);
+	first.toggle(facts.sessionId);
+	second.toggle(facts.sessionId);
+	expect(first.deliverRun(facts)?.message?.customType).toBe("codebase-tools:init");
+	expect(second.deliverRun(facts)?.message?.customType).toBe("other-prompts:init");
+	expect(first.appended).toEqual([{ customType: "codebase-tools:state", data: { enabled: true } }]);
+	first.shutdown(facts);
+	first.toggle(facts.sessionId);
+	expect(first.appended).toEqual([
+		{ customType: "codebase-tools:state", data: { enabled: true } },
+		{ customType: "codebase-tools:state", data: { enabled: true } },
+	]);
+	expect(first.deliverRun(facts)).toBeUndefined();
+	expect(second.deliverRun(facts)?.message?.customType).toBe("other-prompts:init");
+	second.toggle(facts.sessionId);
+	expect(second.deliverRun(facts)).toBeUndefined();
+	expect(second.appended).toEqual([
+		{ customType: "other-prompts:state", data: { enabled: true } },
+		{ customType: "other-prompts:state", data: { enabled: false } },
+	]);
+});
 describe("first enabled run contributes init (P18, P19, C7)", () => {
 	test("an enabled run whose branch has no slot identity contributes one hidden, agent-attributed init", () => {
 		const double = nativeDouble();

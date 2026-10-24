@@ -13,6 +13,7 @@
  * grandchild and a sibling — so a row's own scope, its name and its depth can each be told apart from
  * every other row's. Every expectation below is a hand-computed literal from those records.
  */
+import type { HttpRequestResult } from "../../../framework/interface/general/http";
 import { afterEach, describe, expect, test } from "bun:test";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -162,14 +163,12 @@ interface FactoryRuns {
 }
 
 /** The balance answer a watched case's provider returns, in the provider's documented shape. */
-function balanceAnswer(total: string): Response {
-	return new Response(
-		JSON.stringify({
+function balanceAnswer(total: string): HttpRequestResult {
+	return ({ ok: true as const, response: new Response(JSON.stringify({
 			is_available: true,
 			balance_infos: [{ currency: "CNY", total_balance: total, granted_balance: "0.00", topped_up_balance: total }],
 		}),
-		{ status: 200, headers: { "content-type": "application/json" } },
-	);
+		{ status: 200, headers: { "content-type": "application/json" } },) });
 }
 
 /**

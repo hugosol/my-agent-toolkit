@@ -56,6 +56,12 @@ describe("integration command contract", () => {
 		expect(result.error).toBeUndefined();
 		const report = JSON.parse(result.stdout);
 		expect(report.dryRun).toBe(true);
+		expect(result.status).toBe(0);
+		expect(report.files).toEqual([
+			expect.objectContaining({ file: `adapters/${adapter}/port.ts` }),
+		]);
+		expect(report.files[0].content).toContain('from "../../framework/runtime/adapter-authoring"');
+		expect(report.files[0].content).toContain('from "./missing-implementations"');
 		expect(existsSync(target)).toBe(false);
 		expect(report.generatedContracts).toContain("port:onSession");
 	});

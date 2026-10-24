@@ -31,7 +31,7 @@ function bound(): { readonly double: OmpDouble; readonly attempts: Attempt[] } {
 	const attempts: Attempt[] = [];
 	const request: PanelRequest = async (url, init = {}) => {
 		attempts.push({ url, init });
-		return new Response(JSON.stringify({ outcome: "registered", onlineCount: 1 }), { status: 200 });
+		return ({ ok: true as const, response: new Response(JSON.stringify({ outcome: "registered", onlineCount: 1 }), { status: 200 }) });
 	};
 	const double = ompDouble();
 	connectBot(double.api);

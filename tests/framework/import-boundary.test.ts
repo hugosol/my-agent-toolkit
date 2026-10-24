@@ -122,6 +122,45 @@ describe("shared source imports no harness types (C1)", () => {
 		expect(crossings).toEqual([]);
 	});
 
+	// P2 / R1: source boundaries, not a frozen inventory of private files. Type imports count:
+	// native contracts must stay readable without a specific third-party protocol or mixture.
+	// Third-party code may use native transport; only the reverse dependency is forbidden.
+	test("native and third-party mappings do not depend back on cross-source interpretation", () => {
+		const crossings: string[] = [];
+		for (const file of sourceFiles) {
+			const source = /^adapters\/([^/]+)\/(native|thirdParty)\//.exec(file);
+			if (source === null) continue;
+			const [, harness, group] = source;
+			const forbidden = group === "native"
+				? [new RegExp(`^adapters/${harness}/(?:thirdParty|mixture)(?:/|$)`)]
+				: [new RegExp(`^adapters/${harness}/mixture(?:/|$)`)];
+			for (const specifier of specifiersOf(file)) {
+				if (resolvesInto(file, specifier, forbidden)
+					|| (group === "native" && /^pi-subagents(?:\/|$)/.test(specifier))) {
+					crossings.push(`${file} crosses its source boundary through "${specifier}"`);
+				}
+			}
+		}
+		expect(crossings).toEqual([]);
+	});
+
+	// P4 / R1: consumers use the public assembly regardless of where a mapping comes from.
+	// A private loader import would couple an otherwise unchanged binding to source organization.
+	test("extensions reach adapters only through their public assembly entries", () => {
+		const crossings: string[] = [];
+		for (const file of sourceFiles.filter(file => file.startsWith("extensions/"))) {
+			for (const specifier of specifiersOf(file)) {
+				if (!specifier.startsWith(".")) continue;
+				const target = path.posix.normalize(path.posix.join(path.posix.dirname(file), specifier))
+					.replace(/\.(?:[cm]?ts|js)$/, "").replace(/\/index$/, "");
+				if (target.startsWith("adapters/") && !/^adapters\/[^/]+$/.test(target)) {
+					crossings.push(`${file} bypasses the public adapter assembly through "${specifier}"`);
+				}
+			}
+		}
+		expect(crossings).toEqual([]);
+	});
+
 	test("legacy framework entries cannot re-export the Session capability", () => {
 		const crossings: string[] = [];
 		for (const file of sourceFiles.filter(file => file.startsWith("framework/") && !file.startsWith("framework/interface/"))) {
@@ -420,15 +459,16 @@ describe("shared source imports no harness types (C1)", () => {
 	});
 
 	test("capability interfaces depend on no framework implementation or native mapping", () => {
-		// The approved runtime connections are defineExtension, request, updateFile and getConfig.
-		// The root authoring entry owns defineExtension itself and imports no implementation; the
-		// general HTTP, safe-file and configuration entries re-export their implementation's one
+		// The approved runtime connections are defineExtension, request, updateFile, getConfig and
+		// reportDiagnostic. The root authoring entry owns defineExtension itself and imports no
+		// implementation; the general HTTP, safe-file, configuration and diagnostics entries re-export their implementation's one
 		// published call. Each connection is exact — this file and this specifier — so the exception
 		// cannot widen into a general import of the implementation tree.
 		const runtimeConnections: Readonly<Record<string, readonly string[]>> = {
 			"framework/interface/general/http.ts": ["../../modules/http"],
 			"framework/interface/general/files.ts": ["../../modules/files"],
 			"framework/interface/general/config.ts": ["../../core/config"],
+			"framework/interface/general/diagnostics.ts": ["../../core/diagnostics"],
 		};
 		const crossings: string[] = [];
 		for (const file of sourceFiles.filter(file => file.startsWith("framework/interface/"))) {

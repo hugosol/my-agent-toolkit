@@ -65,8 +65,7 @@ function serving(ws: Workspace, extension: string, owner: string, initial: boole
 	return {
 		child,
 		async stop(): Promise<void> {
-			await child.finish();
-			cwd.dispose();
+			try { await child.finish(); } finally { cwd.dispose(); }
 		},
 	};
 }
@@ -84,8 +83,7 @@ function following(ws: Workspace, extension: string, owner: string): {
 	return {
 		child,
 		async stop(): Promise<void> {
-			await child.finish();
-			cwd.dispose();
+			try { await child.finish(); } finally { cwd.dispose(); }
 		},
 	};
 }
@@ -100,7 +98,9 @@ async function readUntil(
 	const deadline = Date.now() + timeoutMs;
 	let last: FollowedOwnerChildReport | undefined;
 	while (Date.now() < deadline) {
-		last = await child.read();
+		const expired = Promise.withResolvers<never>();
+		const timer = setTimeout(() => expired.reject(new Error(`the follower read exceeded the deadline for ${what}`)), Math.max(1, deadline - Date.now()));
+		try { last = await Promise.race([child.read(), expired.promise]); } finally { clearTimeout(timer); }
 		if (last.active === expected) return last;
 		// The event being waited for belongs to the other process — a record appearing, a change
 		// arriving, an access being reached — so there is no clock to advance for it. The wait is
@@ -151,9 +151,11 @@ describe("a session another process runs reads the Owner's current value (P14, P
 			server.child.send({ t: "set", value: true });
 			await readUntil(follower.child, true, "the Owner's value after it turned back on");
 		} finally {
-			await follower.stop();
-			await server.stop();
-			ws.dispose();
+			try {
+				const cleanup = await Promise.allSettled([follower.stop(), server.stop()]);
+				const failed = cleanup.find(result => result.status === "rejected");
+				if (failed?.status === "rejected") throw failed.reason;
+			} finally { ws.dispose(); }
 		}
 	});
 
@@ -184,9 +186,11 @@ describe("a session another process runs reads the Owner's current value (P14, P
 				await second.stop();
 			}
 		} finally {
-			await follower.stop();
-			await server.stop();
-			ws.dispose();
+			try {
+				const cleanup = await Promise.allSettled([follower.stop(), server.stop()]);
+				const failed = cleanup.find(result => result.status === "rejected");
+				if (failed?.status === "rejected") throw failed.reason;
+			} finally { ws.dispose(); }
 		}
 	});
 
@@ -210,9 +214,11 @@ describe("a session another process runs reads the Owner's current value (P14, P
 			expect(after.active).toBe(false);
 			expect(after.markers).toEqual([]);
 		} finally {
-			await follower.stop();
-			await server.stop();
-			ws.dispose();
+			try {
+				const cleanup = await Promise.allSettled([follower.stop(), server.stop()]);
+				const failed = cleanup.find(result => result.status === "rejected");
+				if (failed?.status === "rejected") throw failed.reason;
+			} finally { ws.dispose(); }
 		}
 	});
 });

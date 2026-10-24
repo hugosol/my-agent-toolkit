@@ -20,7 +20,7 @@ import {
 	type PanelRequest,
 	setPanelRequestForTest,
 } from "../../extensions/connect-bot/shared-logic/panel/client";
-import type { HttpRequestOptions } from "../../framework/interface/general/http";
+import type { HttpRequestOptions, HttpRequestResult } from "../../framework/interface/general/http";
 import { connectBotConfig } from "../../extensions/connect-bot/shared-logic/panel/config";
 import { botSessions } from "../../extensions/connect-bot/shared-logic/session/session";
 import connectBot from "../../extensions/connect-bot/harnesses/omp";
@@ -40,8 +40,8 @@ interface Request {
 }
 
 /** The panel's answer to one request. */
-const panelAnswer = (status: number, body: unknown): Response =>
-	new Response(JSON.stringify(body), { status });
+const panelAnswer = (status: number, body: unknown): HttpRequestResult =>
+	({ ok: true as const, response: new Response(JSON.stringify(body), { status }) });
 
 /** The registered receipt a reachable panel answers a `register` with. */
 const registered = (onlineCount: number) => ({ outcome: "registered", onlineCount });
@@ -80,7 +80,7 @@ function envelopeOf(request: Request): WireEnvelope {
  * reachable panel; what a boundary sends is then the only thing left for `background` to answer.
  */
 function panel(
-	background: (kind: string) => Response | Promise<Response> = () => panelAnswer(200, {}),
+	background: (kind: string) => HttpRequestResult | Promise<HttpRequestResult> = () => panelAnswer(200, {}),
 ): { readonly requests: Request[]; readonly request: PanelRequest } {
 	const requests: Request[] = [];
 	return {
@@ -151,7 +151,7 @@ describe("another identity takes the session's place (E13, P34, P15)", () => {
 				beatCancelled: double.timers[0]?.cancelled,
 			};
 			// The panel is reachable but slow: the answer is held until the test releases it.
-			return new Promise<Response>(resolve => {
+			return new Promise<HttpRequestResult>(resolve => {
 				releaseUnregister = () => resolve(panelAnswer(200, {}));
 			});
 		});
@@ -216,10 +216,10 @@ describe("another identity takes the session's place (E13, P34, P15)", () => {
 			const kind = envelopeOf(request).kind;
 			if (kind === "register") return Promise.resolve(panelAnswer(200, registered(1)));
 			if (kind === "state") return Promise.resolve(panelAnswer(200, {}));
-			return new Promise<Response>((_resolve, reject) => {
+			return new Promise<HttpRequestResult>((resolve) => {
 				// A panel that is gone never answers: the unregister is abandoned when the wait it
 				// declared runs out, on this file's own fake clock, advanced by exactly that below.
-				setTimeout(() => reject(new Error("unregister budget exceeded")), init.timeoutMs);
+				setTimeout(() => resolve({ ok: false, failure: { kind: "timeout", error: new Error("unregister budget exceeded") } }), init.timeoutMs);
 			});
 		});
 		await arm(double, "switch-silent-old");

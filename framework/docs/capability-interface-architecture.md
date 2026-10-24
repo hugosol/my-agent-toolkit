@@ -37,7 +37,7 @@ framework 是一份共享源码，被多个 harness 复用。架构要同时成�
 native harness
       │  native API
       ▼
-adapters/<harness>/domain/* + internal/port
+adapters/<harness>/native + thirdParty/mixture（仅有实际职责时）→ port.ts
       │  框架语义事实与效果
       │  (HarnessPort)
       ▼
@@ -71,7 +71,7 @@ capability 不是 adapter domain 的目录镜像。adapter domain 是按 native 
 
 `framework/interface/` 是唯一面向 extension 的 framework 层。extension 源码只读/import 这一层、选定的 adapter assembly entry，以及自己的文件。
 
-interface 是 extension-facing 类型的 canonical 来源，不是内部 module 的 re-export barrel。运行时值只限于少数必须可调用的入口（`defineExtension`、`defineImplementation`、`request`、`updateFile`、`getConfig`）及其错误类；实现仍在 interface 后面。`general/http.ts`、`general/files.ts`、`general/config.ts` 是三个直接入口，没有聚合的 `general/index.ts`。
+interface 是 extension-facing 类型的 canonical 来源，不是内部 module 的 re-export barrel。运行时值只限于少数必须可调用的入口（`defineExtension`、`defineImplementation`、`request`、`updateFile`、`getConfig`、`reportDiagnostic`）及其错误类；实现仍在 interface 后面。`general/http.ts`、`general/files.ts`、`general/config.ts`、`general/diagnostics.ts` 是四个直接入口，没有聚合的 `general/index.ts`。
 
 ### 2.3 复杂度藏在 interface 后面
 
@@ -83,7 +83,7 @@ interface 是 extension-facing 类型的 canonical 来源，不是内部 module 
 
 ### 2.4 adapter 已经翻译，framework 不再抽象一次
 
-`adapters/<harness>/domain/*` 把 native harness 的事实和效果翻译成 framework 语义事实和效果。等 framework runtime 收到它们时，已经是框架形状：`SessionDelivery`、`RoundObservation`、`TurnSignal`、`ProviderAccess`、`CatalogPriceSource`、`ViewedSessionPort`、`SubagentIntegration` 等。
+`adapters/<harness>/native/` 以及实际需要的 `thirdParty/`、`mixture/` 把各自来源的事实和效果翻译成 framework 语义事实和效果；顶层私有 `port.ts` 只绑定映射，公共 `index.ts` 保留原 assembly 用法。来源方向和完整协议划分见[接入指南](harness-integration.md#4-按实际来源组织-adapter)，实际路径见[adapter 导航](framework-capabilities.md#adapter-implementation-navigation)。等 framework runtime 收到它们时，已经是框架形状：`SessionDelivery`、`RoundObservation`、`TurnSignal`、`ProviderAccess`、`CatalogPriceSource`、`ViewedSessionPort`、`SubagentIntegration` 等。
 
 `HarnessPort` 是 adapter 实现的 framework 定义 port，不是第二层翻译。另加一个 `framework/adapter.ts` 抽象只会把类型搬到另一个路径，不会减少 adapter 工作、增加 extension leverage 或集中复杂度。它过不了 deletion test。
 
@@ -123,9 +123,9 @@ adapter seam 因此保持小而内部：framework runtime 里一个 port module�
 | `extensions/**/harnesses/**` | `framework/interface`、`adapters/<harness>` assembly entry、native escape hatch | 其他 framework 内部、其他 extension 业务 |
 | `adapters/**` | native harness package、`framework/interface` 交付事实、`framework/runtime/port` | extension 业务代码 |
 | `framework/runtime/**`、`framework/core/**`、`framework/behaviors/**`、`framework/modules/**` | `framework/interface`、`framework/runtime`、framework 内部 module | adapter、extension 代码 |
-| `framework/interface/**` | interface 本地文件；`request` / `updateFile` / `getConfig` 的小型 runtime entry | 内部引擎、adapter 代码、extension 代码 |
+| `framework/interface/**` | interface 本地文件；`request` / `updateFile` / `getConfig` / `reportDiagnostic` 的小型 runtime entry | 内部引擎、adapter 代码、extension 代码 |
 
-`framework/interface` 的 runtime re-export 是**有意的例外**：capability 入口是公开的，实现留在 interface 后面。它应当是 thin re-export，不是第二个实现。
+`framework/interface` 的 runtime re-export 是**有意的例外**：capability 入口是公开的，实现留在 interface 后面。它应当是 thin re-export，不是第二个实现。每条例外只允许精确的入口文件与 specifier；例如 `general/diagnostics.ts` → `../../core/diagnostics` 不允许其他入口或整个 core 树越界。
 
 依赖边界测试是这套架构的升级告警。没有它，`framework/interface` 只是约定，extension 代码会继续 import 内部 module。
 
@@ -143,7 +143,7 @@ adapter seam 因此保持小而内部：framework runtime 里一个 port module�
 | **Feedback** | notification level 与 feedback transport | delivery wiring；没有独立 behaviour module | Feedback 领域 |
 | **Provider** | provider access、catalog price、provider HTTP 事实 | factory hand-over 与 adapter 查询映射；没有 framework 策略 | Provider 领域 |
 | **Subagent** | 初始化后稳定的接入结果（`subagents` / `none` / `failed`）与需求词汇 | 执行模式、adapter 覆盖清单、provider 协议与注册 | Subagent 领域 |
-| **General**（导航分组，不是 adapter-backed capability） | `request`、`updateFile`、`getConfig` 及其选项/错误类型 | HTTP transport、协调文件更新、配置文档读取 | 无 |
+| **General**（导航分组，不是 adapter-backed capability） | `request`、`updateFile`、`getConfig`、`reportDiagnostic` 及其选项/错误类型 | HTTP transport、协调文件更新、配置文档读取、非模型诊断输出 | 无 |
 
 根 `index.ts` 与公开 `details/` 是 authoring 层，不是 capability 本身；它们描述 extension 如何声明 capability 并提供 implementation，并组合 capability 声明而不重新发布它们。具体符号和源码位置只查[能力索引](framework-capabilities.md)。
 
