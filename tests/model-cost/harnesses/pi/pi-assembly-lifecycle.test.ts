@@ -561,6 +561,9 @@ async function published(evaluation: Process, condition: () => boolean, what: st
 			completion.reject(error);
 		}
 	};
+	// Fresh cases deliberately leave this root absent until needed; observing publication must not
+	// race the writer's asynchronous directory creation. This creates no consumption document.
+	mkdirSync(evaluation.root, { recursive: true });
 	const watcher = watch(evaluation.root, check);
 	watcher.on("error", completion.reject);
 	const cancel = () => {

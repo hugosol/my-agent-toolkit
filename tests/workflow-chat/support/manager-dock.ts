@@ -24,7 +24,11 @@ export async function managerDock(endpoint: string, budgets: { requestTimeoutMs?
 	const root = createRunRoot("manager-state");
 	const deployment = join(root.path, "deployment");
 	for (const tree of ["framework", "adapters", "extensions/workflow-chat", "entrypoints"]) {
-		cpSync(join(REPO_ROOT, tree), join(deployment, tree), { recursive: true });
+		cpSync(join(REPO_ROOT, tree), join(deployment, tree), {
+			recursive: true,
+			// Live owner-access records (and their atomic staging files) are not deployment inputs.
+			filter: candidate => candidate !== join(REPO_ROOT, "framework", ".runtime"),
+		});
 	}
 	cpSync(join(REPO_ROOT, "node_modules/yaml"), join(deployment, "node_modules/yaml"), { recursive: true });
 	writeFileSync(join(deployment, "extensions/workflow-chat/config.yaml"),

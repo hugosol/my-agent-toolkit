@@ -25,7 +25,8 @@
  * the credential rather than a value read back from the implementation.
  */
 import { afterEach, describe, expect, test } from "bun:test";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync } from "node:fs";
+import { rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
 import { setImmediate as immediate } from "node:timers/promises";
@@ -256,8 +257,12 @@ async function bindQuota(options: {
 	return { runtime, double, sent, resolved, clock, notifications: () => notifications };
 }
 
-afterEach(() => {
-	for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
+afterEach(async () => {
+	// Match the estimate suite: yield to best-effort writes before removing their storage root.
+	// Native bounded retries allow Windows to release a pending write's directory handle.
+	for (const root of roots.splice(0)) {
+		await rm(root, { recursive: true, force: true, maxRetries: 20, retryDelay: 20 });
+	}
 });
 
 describe("the account API is asked at initialization and on a settled Codex request", () => {
