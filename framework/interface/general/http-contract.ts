@@ -8,13 +8,15 @@ export interface HttpRequestOptions {
 	readonly body?: string;
 	/** The whole-exchange budget in milliseconds; shared default, then 30000ms when omitted. */
 	readonly timeoutMs?: number;
+	/** Cancels the entire exchange, including connecting and receiving the response body. */
+	readonly signal?: AbortSignal;
 	/** `false` (or omitted) connects directly; a string names one shared proxy entry. */
 	readonly proxy?: false | string;
 }
 
 /** A failed operation; diagnostic output omits its potentially sensitive error detail. */
 export interface HttpRequestFailure {
-	readonly kind: "configuration" | "timeout" | "transport";
+	readonly kind: "configuration" | "cancelled" | "timeout" | "transport";
 	readonly error: Error;
 }
 
