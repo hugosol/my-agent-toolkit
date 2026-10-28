@@ -401,7 +401,7 @@ async function savedDocument(
 	let found = false;
 	const check = () => {
 		const document = readDocument(file);
-		if (document !== undefined && accept(document)) {
+		if (document !== undefined && accept(document) && !existsSync(`${file}.lock`)) {
 			found = true;
 			published.resolve(document);
 		}
@@ -510,7 +510,7 @@ function clearStorageRoot(): void {
  * next task turns the file work over, which is what an operator asking again a moment later does. The
  * answer a case reads is the one that really landed.
  */
-const realNow = Date.now;
+const realNow = () => Number(process.hrtime.bigint() / 1_000_000n);
 
 async function resetWhenTheEntryAllows(surface: PiSurface, action: "clear" | "holiday", session: PiSession): Promise<void> {
 	const before = surface.notices.length;
