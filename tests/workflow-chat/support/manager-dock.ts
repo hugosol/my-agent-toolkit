@@ -11,12 +11,13 @@ export interface ManagerDock {
 	readonly session: ControlledSession;
 	readonly capture: CaptureServer;
 	nativeId(): Promise<string>;
-	call(params: unknown, raw?: boolean): Promise<any>;
+	call(params: unknown, raw?: boolean, tool?: "run" | "collect"): Promise<any>;
+	collect(params?: unknown): Promise<any>;
 	close(): Promise<void>;
 }
 
 /** Approved S1: actual automatic manager entry, actual OMP Session, controlled model only. */
-export async function managerDock(endpoint: string): Promise<ManagerDock> {
+export async function managerDock(endpoint: string, budgets: { requestTimeoutMs?: number; collectTimeoutMs?: number } = {}): Promise<ManagerDock> {
 	const root = createRunRoot("manager-state");
 	const deployment = join(root.path, "deployment");
 	for (const tree of ["framework", "adapters", "extensions/workflow-chat", "entrypoints"]) {
@@ -24,12 +25,12 @@ export async function managerDock(endpoint: string): Promise<ManagerDock> {
 	}
 	cpSync(join(REPO_ROOT, "node_modules/yaml"), join(deployment, "node_modules/yaml"), { recursive: true });
 	writeFileSync(join(deployment, "extensions/workflow-chat/config.yaml"),
-		`endpoint: ${JSON.stringify(endpoint)}\nrequestTimeoutMs: 2000\ncollectTimeoutMs: 5460000\n`);
-	let next: unknown;
+		`endpoint: ${JSON.stringify(endpoint)}\nrequestTimeoutMs: ${budgets.requestTimeoutMs ?? 2000}\ncollectTimeoutMs: ${budgets.collectTimeoutMs ?? 5460000}\n`);
+	let next: { name: "run" | "collect"; params: unknown } | undefined;
 	const capture = startCaptureServer({ dir: root.captureDir, respond() {
 		if (next === undefined) return undefined;
-		const params = next; next = undefined;
-		return { toolCall: { name: "run", arguments: JSON.stringify(params) } };
+		const selected = next; next = undefined;
+		return { toolCall: { name: selected.name, arguments: JSON.stringify(selected.params) } };
 	} });
 	let session: ControlledSession | undefined;
 	try {
@@ -44,8 +45,9 @@ export async function managerDock(endpoint: string): Promise<ManagerDock> {
 				if (!state.data || typeof state.data !== "object" || !("sessionId" in state.data) || typeof state.data.sessionId !== "string") throw new Error("No native manager Session identity");
 				return state.data.sessionId;
 			},
-			async call(params: unknown, raw = false) {
-				next = params;
+			async collect(this: ManagerDock, params: unknown = {}) { return this.call(params, false, "collect"); },
+			async call(params: unknown, raw = false, tool = "run") {
+				next = { name: tool, params };
 				const turn = await session!.prompt(`执行一次显式管理动作 ${JSON.stringify(params)}；不要自主重试或推进。`);
 				if (turn.status !== "completed") throw new Error(`Manager turn did not complete: ${turn.status}`);
 				const requests = capture.requests();

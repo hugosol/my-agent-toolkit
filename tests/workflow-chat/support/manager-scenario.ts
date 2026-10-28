@@ -4,7 +4,7 @@ import { workflowBackend } from "./backend";
 import { type ManagerDock, managerDock } from "./manager-dock";
 
 /** Preparatory public backend calls deliberately do not depend on the future dispatch tool. */
-export async function managerScenario() {
+export async function managerScenario(budgets: { requestTimeoutMs?: number; collectTimeoutMs?: number } = {}) {
 	const backend = await workflowBackend();
 	const calls: { path: string; body: Record<string, unknown> }[] = [];
 	const proxy = Bun.serve({ hostname: "127.0.0.1", port: 0, async fetch(request) {
@@ -16,7 +16,7 @@ export async function managerScenario() {
 	} });
 	let dock: ManagerDock | undefined;
 	try {
-		dock = await managerDock(`http://127.0.0.1:${proxy.port}`);
+		dock = await managerDock(`http://127.0.0.1:${proxy.port}`, budgets);
 		const managerId = await dock.nativeId();
 		await backend.post("/api/zones", { path: backend.root.path });
 		const tasks: Record<string, string> = {};
