@@ -384,9 +384,19 @@ describe("the host's current facts are what one query is built from (P29)", () =
 describe("one in-flight query serves every trigger, and nothing is re-issued when it completes (P29)", () => {
 	test("triggers arriving while the prefetch is out join it, and the completion re-issues nothing", async () => {
 		const held = heldAnswer();
-		const bound = await bindBalance({ respond: () => held.promise, initiate: false });
+		const issued = Promise.withResolvers<void>();
+		const bound = await bindBalance({
+			respond: () => {
+				issued.resolve();
+				return held.promise;
+			},
+			initiate: false,
+		});
 		const firstRequest = bound.double.initiateRun(OWNER);
-		await until(() => bound.sent.length === 1, "the startup prefetch's query to be issued");
+		// Preparation performs real filesystem I/O before querying. Observe the request itself,
+		// bounded by the test's existing deadline, rather than exhausting event-loop turns first.
+		await issued.promise;
+		expect(bound.sent).toHaveLength(1);
 
 		// Three further usages, each far past where a 30000ms TTL would have expired, all arrive while the
 		// one query is still out: they reuse it rather than issuing anything, and nothing is a reading yet.
