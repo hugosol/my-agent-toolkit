@@ -4,7 +4,7 @@ import { REPO_ROOT } from "../../harness-dock/baseline";
 import { createRunRoot } from "../../harness-dock/run-root";
 
 /** Real herdr-bot routes/storage, controlled external Herdr CLI; never a production process/data. */
-export async function workflowBackend() {
+export async function workflowBackend(collectWaitSeconds = 1) {
 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
 	const binary = join(source, "backend/target/debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
 	const fixture = join(source, "backend/target/debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
@@ -26,7 +26,7 @@ export async function workflowBackend() {
 		"[zones]", `registry_file = ${tomlPath(join(root.path, "zones.json"))}`,
 		"[sessions]", `history_file = ${tomlPath(join(root.path, "session-history.json"))}`,
 		"[scheduler]", ...["map_directory", "bot_directory", "run_directory"].map((key, index) => `${key} = ${tomlPath(join(root.path, ["maps", "bots", "runs"][index]!))}`),
-		`run_instructions = ${tomlPath(join(source, "docs/workflow-runtime.md"))}`, "collect_wait_seconds = 1",
+		`run_instructions = ${tomlPath(join(source, "docs/workflow-runtime.md"))}`, `collect_wait_seconds = ${collectWaitSeconds}`,
 		"[operations.start]", "script = 'unused.bat'", "working_directory = '.'",
 		"[operations.stop]", "script = 'unused.bat'", "working_directory = '.'", "[mdns]", "enabled = false", "",
 	].join("\n"));

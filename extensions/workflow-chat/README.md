@@ -139,7 +139,9 @@ manager 的 `collect` 没有业务参数，调用样例为 `{}`。实际传输�
 - 无关联、歧义、错误角色及其他准入拒绝由后端决定，扩展保留响应，不修补身份或新建连接。
 - 非 2xx 结构化正文不会被压缩成状态码；已发生的保存或其他部分效果不被描述为回滚。
 - 网络/正文读取失败、预算耗尽、取消或非法 JSON 不生成假成功报告，也不自主重试；请求被取消不保证后端未接受。先核实已保存事实，再明确决定后续动作。
-- 每个实际 Session 持有独立请求取消资源，工具 AbortSignal 和该 Session 结束信号传入公共 HTTP。真正断线的跨阶段取消能力由公共 HTTP 实现提供，不能把本地返回取消等同于后端回滚。
+- 每个实际 Session 持有独立请求取消资源，工具 AbortSignal 和该 Session 结束信号传入公共 HTTP；工具中断、切走 Session 及进程正常结束都会终止仍在接收正文的 collect。取消覆盖完整交换，不在收到 HTTP 响应头时解绑；不能把本地返回取消等同于后端回滚。
+- 正常后端到期是成功正文的 `reason: "timeout"`。主动取消为 `error.kind: "cancelled"`，客户端完整预算耗尽为 `"timeout"`，连接/正文断流为 `"transport"`，完整收到但 JSON 非法为 `"parse"`；错误不附加推测快照。HTTP 200 响应头不是成功凭证；不完整分块或 Content-Length 正文均是传输失败，不是假成功或正常到期。
+- 多个终止事件竞争时保留公共 HTTP 已采用的原因，不规定“取消始终胜出”等全局优先级。工具结果含相应错误 message；Session 已被切换时，omp 可能丢弃原 Session 的工具结果，不能为它补造成功/取消快照。重新打开原 Session 后显式收取/查询保存事实。
 - 后端同机来源限制不是认证；sessionId 不是秘密，沿用同机进程可能冒用身份的信任模型，不新增 token 或远程信任承诺。
 
 ## 验证入口与已验证范围
@@ -149,7 +151,8 @@ bun test tests/workflow-chat
 bun test tests/harness-dock/node-report.test.ts
 bun test tests/harness-dock/manager-state-actions.test.ts tests/harness-dock/manager-resume-finish.test.ts
 bun test tests/harness-dock/manager-collect-budget.test.ts tests/harness-dock/manager-collect-pending.test.ts
-bun test tests/framework/http-collect-budget.test.ts
+bun test tests/harness-dock/manager-collect-lifecycle.test.ts
+bun test tests/framework/http-collect-budget.test.ts tests/framework/http-collect-termination.test.ts
 bun test tests/harness-dock/manager-dispatch-recovery.test.ts
 bun test tests/harness-dock/role-prompts.test.ts tests/harness-dock/role-guidance-rehearsal.test.ts
 bun run typecheck
@@ -163,7 +166,21 @@ Prompt 检查直接捕获真实 omp 发给 provider 的文本，并读取其持�
 
 manager dock 通过实际 manager 入口与真实后端执行 A/B→C 小图的 status、交接、失败、暂停、恢复资格和结束，检查首次事实、拒绝与 150ms 窗口内无额外客户端 HTTP/外部 CLI 动作。测试前置派发通过隔离后端公开接口准备，不依赖派发工具。受控 provider/Herdr CLI 不证明真实模型使用两份材料或真正启动节点 OMP；这不是完整真实模型汇合验收，也不保证无限期无动作。
 
-collect dock 同样使用真实 manager 工具与隔离后端：后端期限 1 秒，分别配置普通 60ms/collect 3000ms 和普通 3000ms/collect 200ms，区分正常到期与客户端预算耗尽；公共 HTTP 用实际分段响应覆盖完整请求预算。报告场景通过后端公开接口准备旧/新执行，不依赖 dispatch/retry 工具；核对五种真实 reason、辅助通知失败、反复读取、completed 后收尾报告及旧/新报告交错的适用待办。不据此声称已验证真正宿主中断/Session 结束取消或真实模型决策。
+collect dock 同样使用真实 manager 工具与隔离后端：后端期限 1 秒，分别配置普通 60ms/collect 3000ms 和普通 3000ms/collect 200ms，区分正常到期与客户端预算耗尽；公共 HTTP 用实际分段响应覆盖完整请求预算。报告场景通过后端公开接口准备旧/新执行，不依赖 dispatch/retry 工具；核对五种真实 reason、辅助通知失败、反复读取、completed 后收尾报告及旧/新报告交错的适用待办。此预算/待办场景本身不证明宿主取消或真实模型决策。
+
+取消专用 dock（P19）另用 **30 秒真实后端期限与 30 秒客户端预算**，在后端实际发送 `HTTP/1.1 200 OK`、正文仍为 0 字节后，分别向真实 omp 发出 `abort`、`new_session` 和关闭 stdin 的正常 shutdown。透明 TCP 观察器只转发字节与客户端 FIN，不主动制造 HTTP 响应或先行断开后端；它记录客户端 FIN 和后端自行返回的 FIN。要求两端在 5 秒内结束且没有正文，排除等满期限才释放。随后通过真实宿主恢复原生 Session（shutdown 还会重启宿主），提交真实 node 报告并由新的 collect 得到 `notification` 与该报告标识，排除遗留等待吞掉下一份通知。每次运行输出原生身份、响应头、字节数、双向 FIN 时序、实际终止反馈及报告标识，保留为命令日志即可复核。此观察验证连接和等待响应的释放，不测量后端内部 watch 接收者计数，也不声称取消撤销了已提交业务效果。
+
+2026-10-29 验证样本（Windows x64、Bun 1.4.2、隔离 omp 18.5.0、真实 herdr-bot safe_shutdown_shell；下面毫秒均从该连接建立计，端口/身份每次重建）：
+
+| 真实宿主操作 | 后端响应头 / 客户端 FIN / 后端 FIN | 仍未收到正文 | 后续真实报告 → 新 collect |
+| --- | --- | --- | --- |
+| `abort` | 1 / 3 / 3 ms | 0 字节 | `bc-1fecbf76e0d8` → `notification` |
+| `new_session` 后恢复原 Session | 1 / 4 / 4 ms | 0 字节 | `bc-761020ce1e44` → `notification` |
+| stdin 关闭、正常 shutdown 后重启恢复 | 1 / 5 / 5 ms | 0 字节 | `bc-de7d12662440` → `notification` |
+
+该次 `abort` 的实际错误为 `cancelled / Interrupted by user`，shutdown 为 `cancelled / Session ended`；切换时宿主没有交付旧工具结果。三个场景均收到真实 200、未等到 30 秒期限，且新 collect 的 `pendingReports.A` 对应表中报告、A 仍 running。复核使用上面的 lifecycle dock 命令，不把这组时序当作性能承诺。
+
+P21 分区经真实 manager 工具独立控制正常到期、工具取消、客户端预算、响应前断线、200 后无完整分块正文、Content-Length 截断及非法 JSON；S2 公共 HTTP 另观察取消/断流竞争与已采用期限后的取消，不把测试调度顺序提升为产品优先级。受控故障只证明这些分支的呈现，不证明真实模型决策或任意外部网络条件。
 派发/恢复 dock 通过真实 manager 工具与后端制造同批成功、依赖拒绝、身份阶段失败（外部 CLI 对两个目标返回同一原生身份），保留实际已启动效果；并从真实启动/身份读取失败进入三种 reconciliation，验证 created 只查询原 agent。执行失败场景分别验证 confirmed=false/空依据拒绝、paused 下 recover 原执行与 retry 拒绝，以及新执行成功/提交失败均保留旧输出、旧执行和新效果。HTTP 捕获分区逐 action 拒绝额外身份、不适用字段和模型 Chat 引用。这里的 Herdr CLI 故障/身份均受控，不能据此宣称真实 Herdr/模型已完成恢复演练，也不重复宣称通用部分提交覆盖。
 
 真实后端 dock 需要同级 herdr-bot checkout（或测试环境 `HERDR_BOT_REPO`），并先在该 checkout 构建：

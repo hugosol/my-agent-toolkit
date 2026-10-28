@@ -4,7 +4,7 @@ import { REPO_ROOT, ensureIsolatedHarness } from "../../harness-dock/baseline";
 import { type CaptureServer, startCaptureServer } from "../../harness-dock/capture-server";
 import { DOCK_CAPTURE_BASE_URL_ENV, DOCK_MODEL_SELECTOR } from "../../harness-dock/fixtures/extension-root/provider";
 import { type RunRoot, createRunRoot } from "../../harness-dock/run-root";
-import { ControlledSession } from "../../harness-dock/session";
+import { ControlledSession, type PromptOutcome } from "../../harness-dock/session";
 
 export interface ManagerDock {
 	readonly root: RunRoot;
@@ -13,6 +13,9 @@ export interface ManagerDock {
 	nativeId(): Promise<string>;
 	call(params: unknown, raw?: boolean, tool?: "run" | "collect"): Promise<any>;
 	collect(params?: unknown): Promise<any>;
+	beginCollect(): Promise<PromptOutcome>;
+	lastToolResult(): unknown;
+	reopen(sessionPath: string): Promise<void>;
 	close(): Promise<void>;
 }
 
@@ -35,11 +38,28 @@ export async function managerDock(endpoint: string, budgets: { requestTimeoutMs?
 	let session: ControlledSession | undefined;
 	try {
 		const harness = await ensureIsolatedHarness();
-		session = await ControlledSession.start({ harness, runRoot: root,
+		const options = { harness, runRoot: root,
 			extensions: [join(REPO_ROOT, "tests/harness-dock/fixtures/extension-root/provider.ts"), join(deployment, "entrypoints/omp-auto/manager-chat.ts")],
 			model: DOCK_MODEL_SELECTOR, env: { [DOCK_CAPTURE_BASE_URL_ENV]: capture.baseUrl },
-		});
-		return { root, session, capture,
+		};
+		session = await ControlledSession.start(options);
+		return { root, get session() { return session!; }, capture,
+			beginCollect() {
+				next = { name: "collect", params: {} };
+				return session!.prompt("显式 collect 一次；等待宿主操作，不重试。");
+			},
+			lastToolResult() {
+				const frames = session!.frames().filter(frame => frame.type === "tool_execution_end");
+				const result = frames[frames.length - 1]?.result;
+				if (!result || typeof result !== "object" || !("content" in result) || !Array.isArray(result.content)) throw new Error("No native tool result");
+				const text = result.content.find((item: unknown) => item && typeof item === "object" && "type" in item && item.type === "text");
+				if (!text || typeof text.text !== "string") throw new Error("No native tool text");
+				return JSON.parse(text.text) as unknown;
+			},
+			async reopen(sessionPath) {
+				if (session!.exited()) session = await ControlledSession.start(options);
+				await session!.request({ type: "switch_session", sessionPath });
+			},
 			async nativeId() {
 				const state = await session!.request({ type: "get_state" });
 				if (!state.data || typeof state.data !== "object" || !("sessionId" in state.data) || typeof state.data.sessionId !== "string") throw new Error("No native manager Session identity");
