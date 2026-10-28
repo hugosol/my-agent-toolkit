@@ -195,11 +195,30 @@ interface ExtensionSource {
  * inside the extension.
  */
 export function analyzeDemand(options: AnalysisOptions): DemandResult {
+	const results = analyzeDemands(options);
+	if (results.length === 1) return results[0]!;
+	const first = results[0]!;
+	return {
+		...first,
+		contracts: [],
+		diagnostics: [{
+			code: "demand/definition",
+			file: first.files[0] ?? options.extension,
+			line: 1,
+			column: 1,
+			message: `Multiple independent extension definitions were selected: ${results.map(result => result.extension).join(", ")}.`,
+			suggestion: "Select one definition source file for generation; use check:integrations to check all definitions.",
+		}],
+	};
+}
+
+/** Analyze each independent definition in a selected business directory. */
+export function analyzeDemands(options: AnalysisOptions): readonly DemandResult[] {
 	const root = path.resolve(options.root);
 	const source = resolveExtensionSource(root, options.extension);
 	const diagnostics: IntegrationDiagnostic[] = [];
 	if (source.files.length === 0) {
-		return {
+		return [{
 			extension: source.label,
 			files: [],
 			contracts: [],
@@ -211,14 +230,14 @@ export function analyzeDemand(options: AnalysisOptions): DemandResult {
 				message: `No TypeScript extension sources were found for "${options.extension}".`,
 				suggestion: "Select an extension id, an existing extension directory, or a source file inside it.",
 			}],
-		};
+		}];
 	}
 
 	let analysis: AuthoringSourceAnalysis;
 	try {
 		analysis = analyzeAuthoringSources({ root, files: source.files.map(file => relativePath(root, file)) });
 	} catch (error) {
-		return {
+		return [{
 			extension: source.label,
 			files: source.files.map(file => relativePath(root, file)),
 			contracts: [],
@@ -230,7 +249,7 @@ export function analyzeDemand(options: AnalysisOptions): DemandResult {
 				message: `The extension source program could not be analyzed: ${error instanceof Error ? error.message : String(error)}`,
 				suggestion: "Check the selected source path and its TypeScript imports.",
 			}],
-		};
+		}];
 	}
 
 	for (const diagnostic of analysis.diagnostics) {
@@ -246,6 +265,42 @@ export function analyzeDemand(options: AnalysisOptions): DemandResult {
 
 	const extensionDirectory = source.directory ?? path.dirname(source.files[0]);
 	const definitions = findDefinitions(analysis, extensionDirectory, diagnostics);
+	if (definitions.length <= 1) return [analyzeSelectedDemand(root, source, analysis, definitions, diagnostics)];
+
+	const selections = partitionDefinitionSources(analysis, definitions);
+	const assignedFiles = new Set([...selections.values()].flatMap(files => [...files]));
+	const ownershipDiagnostics: IntegrationDiagnostic[] = analysis.implementations
+		.filter(view => !assignedFiles.has(view.origin.file))
+		.map(view => ({
+			...view.origin,
+			code: "demand/implementation-owner",
+			message: "An authored implementation cannot be attributed to one independent extension definition through local imports.",
+			suggestion: "Import each role's definition and implementation in its own assembly module; shared helpers may be imported by both roles.",
+		}));
+	const requestedFile = relativePath(root, path.resolve(root, options.extension));
+	const selectedDefinitions = definitions.filter(definition => definition.origin.file === requestedFile);
+	return (selectedDefinitions.length === 0 ? definitions : selectedDefinitions).map(definition => {
+		const files = selections.get(definition)!;
+		const selectedAnalysis: AuthoringSourceAnalysis = {
+			...analysis,
+			files: analysis.files.filter(file => files.has(file)),
+			implementations: analysis.implementations.filter(view => files.has(view.origin.file)),
+		};
+		return analyzeSelectedDemand(root, source, selectedAnalysis, [definition], [
+			...diagnostics.filter(item => files.has(item.file)),
+			...ownershipDiagnostics,
+		]);
+	});
+}
+
+function analyzeSelectedDemand(
+	root: string,
+	source: ExtensionSource,
+	analysis: AuthoringSourceAnalysis,
+	definitions: readonly DefinitionScan[],
+	diagnostics: readonly IntegrationDiagnostic[],
+): DemandResult {
+	const extensionDirectory = source.directory ?? path.dirname(source.files[0]!);
 	const definition: DefinitionScan | undefined = definitions[0];
 	const extensionId = definition?.id ?? source.label;
 	const implementation = collectImplementations(analysis);
@@ -283,17 +338,7 @@ export function analyzeDemand(options: AnalysisOptions): DemandResult {
 				suggestion: "Declare the definition id as a string literal resolvable without executing the module.",
 			});
 		}
-		if (definitions.length > 1) {
-			const ids = new Set(definitions.map(item => item.id ?? "<unresolved>"));
-			if (ids.size > 1) {
-				addDiagnostic(collector, {
-					...definition.origin,
-					code: "demand/definition",
-					message: `Multiple extension definitions with different ids were found: ${[...ids].join(", ")}.`,
-					suggestion: "Analyze one extension source path so its demand is not merged with another definition.",
-				});
-			}
-		}
+
 	}
 
 	if (
@@ -403,6 +448,49 @@ export function analyzeDemand(options: AnalysisOptions): DemandResult {
 		contracts,
 		diagnostics: allDiagnostics,
 	};
+}
+
+/**
+ * A role's assembly imports its definition and implementation. Follow local module dependencies
+ * from every source that reaches only that definition; shared dependencies can belong to both.
+ * A barrel importing both roles is not itself evidence for either role's adapter assembly.
+ */
+function partitionDefinitionSources(
+	analysis: AuthoringSourceAnalysis,
+	definitions: readonly DefinitionScan[],
+): Map<DefinitionScan, Set<string>> {
+	const files = new Set(analysis.files);
+	const dependencies = new Map<string, string[]>();
+	for (const source of analysis.program.getSourceFiles()) {
+		const file = relativePath(analysis.root, source.fileName);
+		if (!files.has(file)) continue;
+		const imports: string[] = [];
+		for (const statement of source.statements) {
+			if (!ts.isImportDeclaration(statement) && !ts.isExportDeclaration(statement)) continue;
+			if (statement.moduleSpecifier === undefined) continue;
+			const symbol = analysis.checker.getSymbolAtLocation(statement.moduleSpecifier);
+			for (const declaration of symbol?.declarations ?? []) {
+				const imported = relativePath(analysis.root, declaration.getSourceFile().fileName);
+				if (files.has(imported)) imports.push(imported);
+			}
+		}
+		dependencies.set(file, imports);
+	}
+	const selections = new Map(definitions.map(definition => [definition, new Set<string>()]));
+	for (const file of files) {
+		const reachable = new Set<string>();
+		const visit = (current: string): void => {
+			if (reachable.has(current)) return;
+			reachable.add(current);
+			for (const dependency of dependencies.get(current) ?? []) visit(dependency);
+		};
+		visit(file);
+		const owners = definitions.filter(definition => reachable.has(definition.origin.file));
+		if (owners.length !== 1) continue;
+		const selected = selections.get(owners[0]!)!;
+		for (const dependency of reachable) selected.add(dependency);
+	}
+	return selections;
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -924,8 +1012,10 @@ const DEFERRED_CONTEXT_TYPES: Readonly<Partial<Record<string, true>>> = {
  * by a factory. The type is the provenance; the pass does not guess native behavior.
  */
 function analyzeDeferredFrameworkFunctions(collector: DemandCollector, extensionDirectory: string): void {
+	const selectedFiles = new Set(collector.analysis.files);
 	for (const sourceFile of collector.analysis.program.getSourceFiles()) {
-		if (sourceFile.isDeclarationFile || !isInside(path.resolve(sourceFile.fileName), extensionDirectory)) continue;
+		if (sourceFile.isDeclarationFile || !isInside(path.resolve(sourceFile.fileName), extensionDirectory) ||
+			!selectedFiles.has(relativePath(collector.root, sourceFile.fileName))) continue;
 		walk(sourceFile, node => {
 			if (!isFunctionNode(node)) return;
 			const role = deferredRole(collector, node);

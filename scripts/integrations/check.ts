@@ -1,6 +1,6 @@
 import { existsSync, readdirSync } from "node:fs";
 import path from "node:path";
-import { analyzeDemand } from "./demand";
+import { analyzeDemands } from "./demand";
 import { analyzeSupply } from "./supply";
 import type {
 	ContractSupply,
@@ -67,9 +67,10 @@ export function checkIntegrations(options: CheckOptions): IntegrationReport {
 	if (!options.demandOnly && adapters.length === 0) throw new Error("No adapters found; use --demand-only or select --adapter <name>.");
 	const results: CheckedIntegration[] = [];
 	for (const extension of extensions) {
-		const demand = analyzeDemand({ root: options.root, extension });
-		if (options.demandOnly) results.push(compareDemand(demand));
-		else for (const adapter of adapters) results.push(compareDemand(demand, analyzeSupply({ root: options.root, adapter, contracts: demand.contracts, assemblyFiles: demand.files })));
+		for (const demand of analyzeDemands({ root: options.root, extension })) {
+			if (options.demandOnly) results.push(compareDemand(demand));
+			else for (const adapter of adapters) results.push(compareDemand(demand, analyzeSupply({ root: options.root, adapter, contracts: demand.contracts, assemblyFiles: demand.files })));
+		}
 	}
 	return { stage: "integration-contracts", behaviorTestsRun: false, complete: results.every(result => result.complete), results };
 }
