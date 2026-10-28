@@ -149,7 +149,7 @@ manager 的 `collect` 没有业务参数，调用样例为 `{}`。实际传输�
 
 ## 验证入口与已验证范围
 
-双角色自动装配、真实身份、取消隔离、稳定配置及 P5 非运行依赖审查见 [集成证据](INTEGRATION-EVIDENCE.md)，包含实际环境、复核命令和受控故障的证明边界。
+双角色自动装配、真实身份、取消隔离、稳定配置及 P5 非运行依赖审查见 [集成证据](INTEGRATION-EVIDENCE.md)，包含实际环境、复核命令和受控故障的证明边界。所有指定 coverage 的负责人、最终命令、真实 A/B→C 环境阻塞与唯一 H1 状态见 [最终验收证据](FINAL-ACCEPTANCE.md)；自动检查通过不等于真实运行或 H1 已通过。
 
 ```text
 bun test tests/workflow-chat
