@@ -468,7 +468,7 @@ async function savedDocument(
 	let found = false;
 	const check = () => {
 		const document = readDocument(file);
-		if (document !== undefined && accept(document)) {
+		if (document !== undefined && accept(document) && !existsSync(`${file}.lock`)) {
 			found = true;
 			published.resolve(document);
 		}
