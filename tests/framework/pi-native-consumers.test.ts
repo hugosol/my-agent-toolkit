@@ -159,7 +159,7 @@ describe("Pi native model facts (P9/P13)", () => {
 });
 
 function historicalBranch(file: string): readonly PiSessionEntry[] {
-	const url = new URL(`../../.scratch/pi-adapter-source-aligned-refactor/implementation/01-baseline-artifacts/${file}`, import.meta.url);
+	const url = new URL(`./fixtures/pi-history/${file}`, import.meta.url);
 	return readFileSync(url, "utf8").trim().split(/\r?\n/).map(line => {
 		const value: unknown = JSON.parse(line);
 		if (typeof value !== "object" || value === null || !("type" in value) || typeof value.type !== "string") throw new Error("invalid historical entry");
