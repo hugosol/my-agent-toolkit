@@ -3,3 +3,5 @@
 # those bytes, so keep the diffs exactly as recorded on every platform.
 .gitattributes text eol=lf
 host-patches/**/*.diff text eol=lf
+# Historical native-session captures must retain their original LF bytes.
+tests/framework/fixtures/pi-history/*.jsonl text eol=lf
