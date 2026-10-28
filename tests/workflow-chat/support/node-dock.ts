@@ -19,7 +19,11 @@ export async function nodeDock(endpoint: string, body: string): Promise<NodeDock
 	const root = createRunRoot("node-report");
 	const deployment = join(root.path, "deployment");
 	for (const tree of ["framework", "adapters", "extensions/workflow-chat", "entrypoints"]) {
-		cpSync(join(REPO_ROOT, tree), join(deployment, tree), { recursive: true });
+		cpSync(join(REPO_ROOT, tree), join(deployment, tree), {
+			recursive: true,
+			// Live owner-access records (and their atomic staging files) are not deployment inputs.
+			filter: candidate => candidate !== join(REPO_ROOT, "framework", ".runtime"),
+		});
 	}
 	// The copied source resolves its actual dependencies without depending on the node cwd.
 	cpSync(join(REPO_ROOT, "node_modules/yaml"), join(deployment, "node_modules/yaml"), { recursive: true });

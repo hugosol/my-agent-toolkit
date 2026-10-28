@@ -510,9 +510,14 @@ function clearStorageRoot(): void {
  * next task turns the file work over, which is what an operator asking again a moment later does. The
  * answer a case reads is the one that really landed.
  */
+const realNow = Date.now;
+
 async function resetWhenTheEntryAllows(surface: PiSurface, action: "clear" | "holiday", session: PiSession): Promise<void> {
 	const before = surface.notices.length;
-	for (let attempt = 0; attempt < 40; attempt += 1) {
+	// Disk publication is asynchronous: an immediate-turn count can expire in milliseconds
+	// while the write is still queued under parallel load. Bound failure by real time instead.
+	const deadline = realNow() + 4_000;
+	while (realNow() < deadline) {
 		await surface.command(action, session);
 		if (surface.notices.slice(before).some(notice => notice.level === "info")) return;
 		// The hold the refusal names is the commit still on its way to the file: the case turns the

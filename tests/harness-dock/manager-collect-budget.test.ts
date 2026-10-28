@@ -21,11 +21,12 @@ test("P9/P17 collect outlives the ordinary budget and waits with ready plus runn
 	} finally { await scene.close(); }
 }, 300_000);
 
-// S1/P9: reverse the budgets. Using the ordinary 3000ms budget would incorrectly yield a
-// normal backend timeout. A 200ms collect deadline must instead yield a client error, with
-// no fabricated snapshot and the real backend facts still intact.
+// S1/P9: reverse the budgets. The backend waits 60s and the ordinary budget allows 90s,
+// so using the ordinary budget would incorrectly yield a normal backend timeout. Keep a wide
+// platform-clock separation under parallel load; the real 200ms collect deadline must yield
+// a client error with no fabricated snapshot and the real backend facts still intact.
 test("P9 collect's own shorter budget expires as a client error, not backend timeout", async () => {
-	const scene = await managerScenario({ requestTimeoutMs: 3000, collectTimeoutMs: 200 });
+	const scene = await managerScenario({ requestTimeoutMs: 90_000, collectTimeoutMs: 200 }, 60);
 	try {
 		const dispatched = await scene.dispatch("A");
 		expect(dispatched.results[0].status).toBe("running");

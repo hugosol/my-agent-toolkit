@@ -4,7 +4,7 @@
 
 ## 安装与自动加载
 
-独立交付入口为 [`entrypoints/omp-auto/manager-chat.ts`](../../entrypoints/omp-auto/manager-chat.ts)（ID `manager-chat`）和 [`entrypoints/omp-auto/node-chat.ts`](../../entrypoints/omp-auto/node-chat.ts)（ID `node-chat`）。manager 提供 `run` 与 `collect`，node 提供 `report`；分别用于对应角色 Session，不共享节点身份。当前仅支持 omp，不提供手动启用命令或 pi 入口。部署须保留本仓库的 `framework/`、`adapters/`、`extensions/workflow-chat/`、`entrypoints/startup/auto.yaml` 及 YAML 依赖；只复制入口文件不构成部署。
+独立交付入口为 [`entrypoints/omp-auto/manager-chat.ts`](../../entrypoints/omp-auto/manager-chat.ts)（ID `manager-chat`）和 [`entrypoints/omp-auto/node-chat.ts`](../../entrypoints/omp-auto/node-chat.ts)（ID `node-chat`）。manager 提供 `run` 与 `collect`，node 提供 `report`；分别用于对应角色 Session，不共享节点身份。当前仅支持 omp，不提供手动启用命令或 pi 入口。部署须保留本仓库的 `framework/`、`adapters/`、`extensions/workflow-chat/`、`entrypoints/startup/auto.yaml` 及 YAML 依赖；只复制入口文件不构成部署。`framework/.runtime/` 中的 owner-access 记录及原子写入暂存文件属于运行中的源 Session，不属于部署输入；角色 dock 复制源码时同样排除此目录，避免全局并行测试复制正在被重命名的暂存文件。
 
 herdr-bot 的 manager/node 类型 Task 应分别固定选择对应自动入口，部署者应把后端 Task 选项目录中的角色入口指向其实际绝对路径。独立加载示例（不是在同一角色中混装）：
 
