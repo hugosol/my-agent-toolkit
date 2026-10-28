@@ -4,7 +4,7 @@
 
 ## 安装与自动加载
 
-独立交付入口为 [`entrypoints/omp-auto/manager-chat.ts`](../../entrypoints/omp-auto/manager-chat.ts)（ID `manager-chat`）和 [`entrypoints/omp-auto/node-chat.ts`](../../entrypoints/omp-auto/node-chat.ts)（ID `node-chat`）。manager 提供 `run`，node 提供 `report`；分别用于对应角色 Session，不共享节点身份。当前仅支持 omp，不提供手动启用命令或 pi 入口。部署须保留本仓库的 `framework/`、`adapters/`、`extensions/workflow-chat/`、`entrypoints/startup/auto.yaml` 及 YAML 依赖；只复制入口文件不构成部署。
+独立交付入口为 [`entrypoints/omp-auto/manager-chat.ts`](../../entrypoints/omp-auto/manager-chat.ts)（ID `manager-chat`）和 [`entrypoints/omp-auto/node-chat.ts`](../../entrypoints/omp-auto/node-chat.ts)（ID `node-chat`）。manager 提供 `run` 与 `collect`，node 提供 `report`；分别用于对应角色 Session，不共享节点身份。当前仅支持 omp，不提供手动启用命令或 pi 入口。部署须保留本仓库的 `framework/`、`adapters/`、`extensions/workflow-chat/`、`entrypoints/startup/auto.yaml` 及 YAML 依赖；只复制入口文件不构成部署。
 
 herdr-bot 的 manager/node 类型 Task 应分别固定选择对应自动入口，部署者应把后端 Task 选项目录中的角色入口指向其实际绝对路径。独立加载示例（不是在同一角色中混装）：
 
@@ -62,6 +62,21 @@ manager 的 `run` 工具以 `action` 选择显式动作。传输为 `POST /api/w
 
 人工真实交接须先查看已保存报告、亲自读取真实材料并记录地址、用途、限制和人工处理依据，再明确 complete；不能把 report/停轮/退出当作完成。派发、故障核实和报告等待是各自独立职责，基础动作不会代替它们。失败或不确定结果先查询现场，不自主重试。
 
+## collect 长等待与报告待办
+
+manager 的 `collect` 没有业务参数，调用样例为 `{}`。实际传输是 `POST /api/workflow/manager/collect`，仅自动加入公共 Session 的原生 `sessionId`；模型不得填写 Run、node、执行或接收者。它使用独立的 `collectTimeoutMs` **完整请求预算**（包括等待与正文读取），不复用 `requestTimeoutMs`。后端默认 5400 秒 = 5400000 毫秒，建议客户端 5460000 毫秒，比默认期限多 60000 毫秒；这不是自动同步配置或所有网络等待成功的保证。修改后端期限时，部署者须自行核对客户端预算。
+
+| `reason` | 含义与处理 |
+| --- | --- |
+| `paused` | Run 已暂停，立即返回当前现场；已有报告及交接仍可处理。 |
+| `completed` | Run 已显式结束，立即返回终态现场，不重新打开工作。 |
+| `notification` | 有已保存、尚未经过 collect 检查的报告；辅助通知投递失败也不影响收取，多个通知可合并。 |
+| `no-running` | 没有未检查通知且没有 running node，避免空等；根据现场显式派发、核实失败或 finish。 |
+| `timeout` | 后端配置的等待期限正常到期，不改变 Run/node 状态。客户端预算耗尽是错误，不是这个正常原因。 |
+
+结果保留后端 `snapshot`、`ready`、`blocked`、`canFinish` 和 `pendingReports`，**不包含 `reports` 或报告正文**。仍有 running node 且没有新通知时，即使有 ready node 也可能等待；扩展不强制提前返回、不轮询、不自动重试。
+
+`pendingReports` 是 node → 最新适用报告标识。按标识读取已提供的 `messages.jsonl` 或已有 Run 详情，再核实正文中的材料与限制。collect/读取/辅助通知均不等于交接，不清除未完成待办；只有后端显式 complete 等事实改变适用待办。completed 后原执行仍可报告收尾，但不会重开待办；retry 后旧执行报告仍属旧执行历史，不能以全局最新报告替代新执行依据。旧/新报告交错、待办移除与通知检查均由后端决定，客户端不缓存或重算适用性。
 ## run 批量派发与故障恢复
 
 以下四个动作使用同一个 `run` 工具和当前管理者原生 Session 身份，不接受额外 Run、执行、Chat 引用或目标状态。字面调用示例：
@@ -127,6 +142,8 @@ manager 的 `run` 工具以 `action` 选择显式动作。传输为 `POST /api/w
 bun test tests/workflow-chat
 bun test tests/harness-dock/node-report.test.ts
 bun test tests/harness-dock/manager-state-actions.test.ts tests/harness-dock/manager-resume-finish.test.ts
+bun test tests/harness-dock/manager-collect-budget.test.ts tests/harness-dock/manager-collect-pending.test.ts
+bun test tests/framework/http-collect-budget.test.ts
 bun test tests/harness-dock/manager-dispatch-recovery.test.ts
 bun run typecheck
 ```
@@ -135,6 +152,7 @@ bun run typecheck
 
 manager dock 通过实际 manager 入口与真实后端执行 A/B→C 小图的 status、交接、失败、暂停、恢复资格和结束，检查首次事实、拒绝与 150ms 窗口内无额外客户端 HTTP/外部 CLI 动作。测试前置派发通过隔离后端公开接口准备，不依赖派发工具。受控 provider/Herdr CLI 不证明真实模型使用两份材料或真正启动节点 OMP；这不是完整真实模型汇合验收，也不保证无限期无动作。
 
+collect dock 同样使用真实 manager 工具与隔离后端：后端期限 1 秒，分别配置普通 60ms/collect 3000ms 和普通 3000ms/collect 200ms，区分正常到期与客户端预算耗尽；公共 HTTP 用实际分段响应覆盖完整请求预算。报告场景通过后端公开接口准备旧/新执行，不依赖 dispatch/retry 工具；核对五种真实 reason、辅助通知失败、反复读取、completed 后收尾报告及旧/新报告交错的适用待办。不据此声称已验证真正宿主中断/Session 结束取消或真实模型决策。
 派发/恢复 dock 通过真实 manager 工具与后端制造同批成功、依赖拒绝、身份阶段失败（外部 CLI 对两个目标返回同一原生身份），保留实际已启动效果；并从真实启动/身份读取失败进入三种 reconciliation，验证 created 只查询原 agent。执行失败场景分别验证 confirmed=false/空依据拒绝、paused 下 recover 原执行与 retry 拒绝，以及新执行成功/提交失败均保留旧输出、旧执行和新效果。HTTP 捕获分区逐 action 拒绝额外身份、不适用字段和模型 Chat 引用。这里的 Herdr CLI 故障/身份均受控，不能据此宣称真实 Herdr/模型已完成恢复演练，也不重复宣称通用部分提交覆盖。
 
 真实后端 dock 需要同级 herdr-bot checkout（或测试环境 `HERDR_BOT_REPO`），并先在该 checkout 构建：

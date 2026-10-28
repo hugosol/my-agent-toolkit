@@ -76,5 +76,18 @@ export default function managerChatOmp(api: OmpExtensionApi) {
 			return { content: [{ type: "text", text: JSON.stringify(result.body) }], details: { httpStatus: result.httpStatus, body: result.body }, isError: result.isError };
 		},
 	});
+	native.registerTool({
+		name: "collect", label: "Collect", loadMode: "essential",
+		description: "等待或立即收取后端原因、快照与报告标识待办；不含报告正文，不清除交接待办。",
+		parameters: Type.Object({}, { additionalProperties: true }),
+		async execute(_callId, params, signal, _onUpdate, ctx) {
+			if (!params || typeof params !== "object" || Array.isArray(params) || Object.keys(params).length !== 0) {
+				return { content: [{ type: "text", text: JSON.stringify({ error: { kind: "parameters", message: "collect 不接受业务或身份字段。" } }) }], details: { body: null }, isError: true };
+			}
+			if (!requests) throw new Error("manager-chat 未初始化");
+			const result = await requests.post(ctx.sessionManager.getSessionId(), "/api/workflow/manager/collect", {}, signal, true);
+			return { content: [{ type: "text", text: JSON.stringify(result.body) }], details: { httpStatus: result.httpStatus, body: result.body }, isError: result.isError };
+		},
+	});
 	return binding;
 }

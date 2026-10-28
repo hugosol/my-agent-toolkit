@@ -342,26 +342,29 @@ describe("the deadline over the framework's real coordination (P30, P31)", () =>
 		const updateRelease = Promise.withResolvers<void>();
 		const begun = Promise.withResolvers<number>();
 		const published = Promise.withResolvers<void>();
-		const observer = bindRoundObserver("close-out-begun-probe", async delivery => {
-			await updateFile(target, async () => {
-				// Read inside the coordinated scope: the lock is held and the document has been read, so
-				// this is the instant the update has really begun.
-				begun.resolve(performance.now());
-				await updateRelease.promise;
-				return { version: 2 };
-			}).finally(() => published.resolve());
+		const updating = updateFile(target, async () => {
+			// Read inside the coordinated scope: the lock is held and the document has been read, so
+			// this is the instant the update has really begun.
+			begun.resolve(performance.now());
+			await updateRelease.promise;
+			return { version: 2 };
+		}).finally(() => published.resolve());
+		// Establish the case's already-begun premise before starting the close-out clock.
+		// Filesystem setup is not part of the framework's deadline guarantee.
+		const beganAt = await begun.promise;
+		const observer = bindRoundObserver("close-out-begun-probe", async () => {
+			await updating;
 		});
 		unconfirmedSettle(observer.double);
 
 		const startedAt = performance.now();
 		await observer.double.deliverDisposal(OWNER, { session: SESSION, closeOutWaitMs: CONTROLLED_MS });
 		const heldFor = performance.now() - startedAt;
-		const beganAt = await begun.promise;
 
 		// The update had really begun before the deadline — the ground this case stands on — and the host
 		// was answered at the deadline while that update was still publishing. What is stated about it is
 		// that its outcome is unconfirmed: the framework does not claim it stopped.
-		expect(beganAt - startedAt).toBeLessThan(CONTROLLED_MS);
+		expect(beganAt).toBeLessThanOrEqual(startedAt);
 		expect(heldFor).toBeLessThan(CONTROLLED_MS + 250);
 		expect(observer.double.diagnostics.join("\n")).toContain("unconfirmed");
 		// Nothing of it is on disk yet, because its own business has not concluded — and nothing else has
