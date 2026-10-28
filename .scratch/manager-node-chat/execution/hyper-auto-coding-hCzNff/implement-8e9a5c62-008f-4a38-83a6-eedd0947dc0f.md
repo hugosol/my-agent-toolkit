@@ -1,0 +1,18 @@
+# implement
+
+```json
+{
+  "role": "implement",
+  "agent": "tdd",
+  "agent_id": "12-real-workflow-final-acceptancemd-c34922a7-87c",
+  "head": "dd3dcd03b00858aff922f43f6a0ceb4fd5b58957",
+  "exitCode": 0,
+  "aborted": true,
+  "truncated": false
+}
+```
+
+{
+  "aborted": true,
+  "error": "本票可执行证据已提交并交出 worktree，但不能关闭产品验收。\n\n提交：dd3dcd0（FINAL-ACCEPTANCE.md + README 导航）；经 Main 授权同步 10 的 08888d8 为 21a55c4。仅操作 C:/Users/hugos/AppData/Local/Temp/hyper-ticket-5DCwB4，未操作 dev、其他票据或工作流报告，未自行合入、retro 或派发。\n\n已交付：29 条 promises 全部指定 coverage 的负责人/测试/前序结果索引、独立 A/B→C 字面预期与观察判据、P28 缺失前提及人工干预边界、唯一 H1 的准备材料与未提交状态。未新增重复测试套件或改变产品行为。\n\n实际验证：\n• 实际双声明静态命令及 manager/node 单文件选择三条均退出 0；各角色 complete、无 diagnostics。\n• 最终 bun run typecheck 在 21a55c4 退出 0；authoring 67 files / 6 declarations / 0 diagnostics。\n• bun run smoke:http-transport 初次因子进程 PATH 无 openssl 退出 1；定位已安装真实 OpenSSL、仅修改子进程 PATH 后复验退出 0：29 passed / 0 failed，含 CONNECT/TLS 真实取消关闭。\n• 与 11、10 顺序协调独占窗口后执行 canonical bun run test，受测 21a55c4，源码/tests/fixtures 全程未变：退出 1，1746 pass / 9 fail / 3 errors，219 files，11497 assertions，233.52s。未重跑挑选绿色或放宽 deadline。指定 workflow/integrations/HTTP/15 个角色 dock 的实际日志合计 40 files /147 pass /0 fail，不代表全仓通过。\n• 本票文档链接/锚点：24 项、0 缺失。\n\n未解决的自动门禁：deployment loader 5s timeout；activity-facts/model-cost-balance 两个 5s teardown timeout；pi-period-reset 三例有限 1000 轮文件发布等待失败；pi-runtime-gaps 三例 5s timeout及3条未处理 publication cancellation 错误。已读取精确日志与相关观察实现，未将其武断归因负载或当作前序已修复问题；完整签名交由独立集成继续修复与复验。\n\n真实 P28 阻塞：当前 agent 的 HERDR_ENV 未设置、无 HERDR_SOCKET；安装的 Herdr skill 禁止从外部控制默认用户会话。Main 确认没有已授权隔离上下文。已检查 CLI 版本/帮助、环境、真实后端 Herdr 配置与上游隔离证据；没有启动用户 Chat、借用用户产物、伪造身份或用受控 dock 替代真实链路。需要已授权且明确隔离/路由的 Herdr 上下文及可用真实模型访问；Agent 后续负责全部技术配置、真实运行、记录、修正与复验，用户不承担技术验证。\n\nH1：未提交、未确认。全仓门禁和 P28 补齐前不得提交 H1，更不得声称全部验收通过。\n\n原始证据：C:/Users/hugos/AppData/Local/Temp/workflow-final-acceptance-12-gg1humqj，含 environment.json、commands.json、完整 stdout/stderr、failures.json、coverage-observed.json、102 个 Prompt 请求/Session等文件；manifest 索引124文件，SHA-256 455a7b6e6be1fe53045c188e1e3a8f3b1053934518434b2b50a4b0ea2697613c。长期汇总：extensions/workflow-chat/FINAL-ACCEPTANCE.md。"
+}
