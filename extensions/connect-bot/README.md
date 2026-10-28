@@ -54,7 +54,7 @@ executing any real shutdown. The shared panel helper defaults to the sibling che
 `backend/target/debug/examples/safe_shutdown_shell(.exe)`, built with
 `cargo build --example safe_shutdown_shell --manifest-path ../herdr-bot/backend/Cargo.toml`.
 For a checkout elsewhere (including a temporary worktree), set `HERDR_BOT_BINARY` to that safe example
-and `HERDR_BOT_METADATA` to its delivered `meta-data/bot-options.toml`. The helper rejects a missing
+and `HERDR_BOT_METADATA` to its delivered `meta-data/task-options.toml`. The helper rejects a missing
 example with build instructions and rejects a non-safe backend before sending any panel requests;
 it never falls back to the production executable, whose power-off action is real. Each instance
 uses its own configuration and storage, binds an ephemeral loopback port, and reads both subscription
@@ -230,7 +230,7 @@ marker after it, and the failure feedback with no marker. Prepare a throwaway de
 isolated panel; do not point any of this at the formal panel, the default agent state or a running
 session.
 
-The real-panel test helper copies the sibling checkout's `meta-data/bot-options.toml` into each
+The real-panel test helper copies the sibling checkout's `meta-data/task-options.toml` into each
 run's temporary working directory. Current herdr-bot requires that catalog at startup; relative
 paths resolve from the process working directory, not from `--config`. Only the delivered metadata
 is copied: `.data/` and all runtime state stay isolated. `HERDR_BOT_BINARY` overrides the executable,
@@ -248,7 +248,7 @@ cp -r extensions/connect-bot "$ACCEPT_ROOT/deployment/extensions/"
 # An isolated herdr-bot: its own metadata and working directory, mDNS off.
 # Reserve 18788 for this run; the formal panel uses 18787.
 mkdir -p "$ACCEPT_ROOT/panel/meta-data"
-cp ../herdr-bot/meta-data/bot-options.toml "$ACCEPT_ROOT/panel/meta-data/"
+cp ../herdr-bot/meta-data/task-options.toml "$ACCEPT_ROOT/panel/meta-data/"
 PANEL_BINARY=$(realpath "${HERDR_BOT_BINARY:-../herdr-bot/backend/target/release/herdr-bot.exe}")
 cat > "$ACCEPT_ROOT/panel/herdr-bot.toml" <<'TOML'
 listen_addr = "127.0.0.1:18788"
