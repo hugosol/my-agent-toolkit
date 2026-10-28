@@ -2,7 +2,7 @@
 
 2026-10-29，执行者：ticket 12 Agent。本页是指定 coverage 的证据索引，不是第二套 Promise 状态机，也不改变实现票据的集成/关闭状态。
 
-**当前产品验收不能宣称全部通过：本轮 canonical 全仓回归失败；真实 A/B→C（P28）在启动前被环境前提阻塞；唯一 H1 尚未提交、尚无用户确认。** 已有受控 provider / Herdr dock 不冒充真实模型协作。环境可执行部分的结果与真实运行、人工作用判断分别列出。
+**当前产品验收不能宣称全部通过：下述原开发轮次 canonical 全仓回归失败；同步集成后的全仓回归已通过（见第 2 节补充）；真实 A/B→C（P28）在启动前被环境前提阻塞；唯一 H1 尚未提交、尚无用户确认。** 已有受控 provider / Herdr dock 不冒充真实模型协作。环境可执行部分的结果与真实运行、人工作用判断分别列出。
 
 ## 1. 本轮来源、环境与原始记录
 
@@ -13,6 +13,17 @@
 - 真实后端测试输入：`HERDR_BOT_REPO=E:/Developer/myhub/herdr-bot`，`HERDR_BOT_BINARY=E:/Developer/myhub/herdr-bot/backend/target/debug/examples/safe_shutdown_shell.exe`，`HERDR_BOT_METADATA=E:/Developer/myhub/herdr-bot/meta-data/task-options.toml`。这是测试启动定位，不是角色业务配置。safe_shutdown_shell 与 herdr-fixture 的 SHA-256 分别为 `780c7239c4c6d60245ffd1c0baba765d0d9831ae41d39e2a1ce5f922504ae12e`、`f48171da3fb6a56c0e20cdd994bc5275fa689320b7aeb5dc84feef767df1bb2b`；没有以 checkout 提交推断二进制可重现构建。
 
 ## 2. 实际最终检查
+
+### 同步集成后的全仓回归补充（2026-10-29）
+
+在原开发 worktree / branch 接管时，HEAD 为 `b3f7e879bc8f7ace85b0e35b3587b336d9e9f7e7`，工作区干净，已包含宿主回并的集成提交。此次只承担全仓测试与失败修复，不重做复杂脚本、实机 smoke、P28 或 H1。
+
+- 初次 `bun run test` 退出 1：1758 pass、4 fail，219 files，131.37s；四条失败均为 `tests/model-cost/harnesses/pi/pi-session-span.test.ts` 的 publication 等待超过原 5000ms deadline。原始命令输出：本次执行器 `artifact://490`。
+- 缩小到 `bun test tests/model-cost/harnesses/pi/pi-session-span.test.ts` 退出 0：4 pass、0 fail、33 assertions，117ms；这不能替代并行全仓失败。
+- 修正该套件 `savedDocument`：与现有 `pi-runtime-gaps` 约定一致，持续推进 fake lock-coordination timers，同时观察真实文件发布并等锁释放，而不是只推进一次后停等；保留原始断言和 5000ms deadline，没有修改产品逻辑。
+- 修复后 `bun run test`（canonical `bun test --parallel=12`）退出 0：**1762 pass、0 fail、11610 assertions、219 files，126.75s**。原始命令输出：本次执行器 `artifact://493`（完整输出 `artifact://492`）。此次全仓自动门禁通过；下方保留原开发轮次失败及其证据，不用新结果改写历史。临时 artifact 地址仅作本次执行记录定位，不是长期部署依赖。
+
+以下为原开发轮次记录。
 
 昂贵的真实宿主/全仓运行按 [测试协调规则](../../docs/agents/testing.md) 与 11、10 集成执行者顺序交接窗口；不以裸 `bun test` 绕过 package 入口。
 
