@@ -18,7 +18,7 @@
  *   content type is added, nothing is serialized, and no bearer header is managed. The
  *   response is returned inside an `ok: true` result, a non-2xx answer included, for the caller
  *   to interpret. Its body is fully received under the budget before success is returned.
- * - Configuration, transport and timeout failures return `ok: false` with their original error
+ * - Configuration, caller cancellation, transport and timeout failures return `ok: false` with their original error
  *   and a failure kind. Each emits one safe diagnostic; no URL, headers or body are logged.
  * - `proxy: false`, and no `proxy` at all, is a direct connection. A string names one entry of
  *   the shared `http.proxies` table. An entry is used only when it says `enabled: true`; any
@@ -37,9 +37,10 @@
  * - Nothing here reads or writes the ambient proxy environment, and nothing takes over the
  *   network the harness uses for its own model requests and OAuth updates: the request states
  *   the path it wants (`proxy: false` for a direct connection) and never consults
- *   `HTTP_PROXY`, `HTTPS_PROXY` or a `PI_PROXY_*` name to choose one. There is also no
- *   cancellation channel — the caller declares a budget, the module imposes it, and no
- *   controller is published.
+ *   `HTTP_PROXY`, `HTTPS_PROXY` or a `PI_PROXY_*` name to choose one. The optional caller
+ *   `signal` cancels the entire exchange, including connection setup and response body reads.
+ *   A pre-aborted signal sends nothing. Caller cancellation is `cancelled`, separately from
+ *   the client's `timeout`; the first adopted abort reason is retained, with no priority override.
  * - The connection is made by this runtime's own `node:http`/`node:https` client, whose address
  *   is the one this module settled on and nothing else: a direct connection reaches the target,
  *   and a named proxy is reached at its own address. The process's `fetch` is deliberately not
@@ -102,8 +103,8 @@ export interface HttpTransportInit {
 	/** The caller's body, untouched. */
 	readonly body?: string;
 	/**
-	 * The imposed budget: the deadline for the whole exchange, covering waiting for the response
-	 * as well as reading its body, and not detached once the response head arrives.
+	 * The combined caller cancellation and imposed budget for the whole exchange, covering
+	 * connection setup and reading the body, not detached once the response head arrives.
 	 */
 	readonly signal: AbortSignal;
 	/** The path this request states: a proxy URL, or `false` for a direct connection. */
@@ -590,12 +591,15 @@ export function createHttpModule(seam: HttpModuleSeam = {}): HttpModule {
 	}
 
 	async function request(url: string, options: HttpRequestOptions = {}): Promise<HttpRequestResult> {
-		let signal: AbortSignal | undefined;
+		let signal = options.signal;
+		let timeout: AbortSignal | undefined;
 		let response: Response | undefined;
 		try {
+			signal?.throwIfAborted();
 			const proxy = resolveProxy(options.proxy);
 			const timeoutMs = resolveTimeout(options.timeoutMs);
-			signal = AbortSignal.timeout(timeoutMs);
+			timeout = AbortSignal.timeout(timeoutMs);
+			signal = options.signal === undefined ? timeout : AbortSignal.any([options.signal, timeout]);
 			response = await raceWithWait(signal, transport(url, {
 				method: options.method ?? "GET",
 				...(options.headers === undefined ? {} : { headers: options.headers }),
@@ -631,10 +635,10 @@ export function createHttpModule(seam: HttpModuleSeam = {}): HttpModule {
 			if (response?.body !== null && response?.body !== undefined && !response.body.locked) {
 				void response.body.cancel().catch(() => {});
 			}
-			const reason = signal?.aborted ? signal.reason : cause;
-			const error = reason instanceof Error ? reason : new Error(String(reason));
+			const error = cause instanceof Error ? cause : new Error(String(cause));
+			const aborted = signal?.aborted && cause === signal.reason;
 			const kind: HttpRequestFailure["kind"] = cause instanceof HttpConfigurationError
-				? "configuration" : signal?.aborted ? "timeout" : "transport";
+				? "configuration" : aborted ? (timeout?.aborted && cause === timeout.reason ? "timeout" : "cancelled") : "transport";
 			// Neither messages nor addresses are safe: both can contain credentials or payloads.
 			// Only standard error names are emitted; custom names may also contain secret data.
 			const name = ["Error", "TypeError", "RangeError", "TimeoutError", "AbortError", "HttpConfigurationError"].includes(error.name)

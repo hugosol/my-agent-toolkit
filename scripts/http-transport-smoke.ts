@@ -137,6 +137,63 @@ if (process.argv.includes("--connect-timeout-probe")) {
 	process.exit(process.exitCode ?? 0);
 }
 
+// P20/P25: real CONNECT setup and tunneled TLS cancellation. Configuration is isolated,
+// but the request API, signal composition and native transport remain real throughout.
+if (process.argv.includes("--connect-cancellation-probe")) {
+	const reports: unknown[] = [];
+	for (const stage of ["connect-head", "tunnel-tls"] as const) {
+		const reached = Promise.withResolvers<void>();
+		const disconnected = Promise.withResolvers<void>();
+		let accepted = 0;
+		let closed = 0;
+		const diagnostics: string[] = [];
+		const stalledProxy = Bun.listen<{ connected: boolean }>({
+			hostname: "127.0.0.1", port: 0,
+			socket: {
+				open(socket) { socket.data = { connected: false }; },
+				data(socket, bytes) {
+					if (!socket.data.connected) {
+						if (!bytes.toString().startsWith("CONNECT ")) {
+							reached.reject(new Error("expected CONNECT request"));
+							return;
+						}
+						socket.data.connected = true;
+						accepted++;
+						if (stage === "connect-head") reached.resolve();
+						else socket.write("HTTP/1.1 200 Connection Established\r\n\r\n");
+					} else if (bytes[0] === 22) reached.resolve(); // The actual TLS ClientHello.
+				},
+				close() { closed++; disconnected.resolve(); },
+			},
+		});
+		try {
+			const module = createHttpModule({
+				configPath: "connect-cancellation-probe.yaml",
+				reader: () => `http:\n  proxies:\n    stalled:\n      enabled: true\n      url: http://127.0.0.1:${stalledProxy.port}\n`,
+				reportDiagnostic: message => diagnostics.push(message),
+			});
+			const caller = new AbortController();
+			const reason = new Error(`cancel ${stage}`);
+			const pending = module.request("https://127.0.0.1:443/private", {
+				proxy: "stalled", signal: caller.signal, timeoutMs: 1000,
+			});
+			await reached.promise;
+			caller.abort(reason);
+			const result = await pending;
+			await disconnected.promise;
+			const passed = !result.ok && result.failure.kind === "cancelled" && result.failure.error === reason
+				&& accepted === 1 && closed === 1
+				&& diagnostics.length === 1 && diagnostics[0] === "HTTP cancelled failure (Error)";
+			reports.push({ stage, passed, accepted, closed, kind: result.ok ? "success" : result.failure.kind });
+			if (!passed) process.exitCode = 1;
+		} finally {
+			stalledProxy.stop(true);
+		}
+	}
+	console.log(JSON.stringify(reports));
+	process.exit(process.exitCode ?? 0);
+}
+
 if (process.argv.includes("--direct-probe")) {
 	await directProbe(process.argv.slice(process.argv.indexOf("--direct-probe") + 1));
 	process.exit(0);
@@ -599,6 +656,20 @@ const lastHit = (): TargetHit | undefined => target.hits[target.hits.length - 1]
 	observe(
 		"a CONNECT tunnel stalled before TLS times out once without an uncaught error and permits recovery",
 		exit === 0 && stdout.includes('"passed":true') && stderr.trim() === "",
+		`child exit ${exit}; ${stdout.trim() || stderr.trim()}`,
+	);
+}
+
+{
+	const child = Bun.spawn({
+		cmd: [process.execPath, path.join(import.meta.dir, "http-transport-smoke.ts"), "--connect-cancellation-probe"],
+		stdout: "pipe", stderr: "pipe",
+	});
+	const [stdout, stderr, exit] = await Promise.all([new Response(child.stdout).text(), new Response(child.stderr).text(), child.exited]);
+	observe(
+		"caller cancellation closes CONNECT waiting and tunneled TLS sockets without uncaught errors",
+		exit === 0 && stdout.includes('"stage":"connect-head","passed":true')
+			&& stdout.includes('"stage":"tunnel-tls","passed":true') && stderr.trim() === "",
 		`child exit ${exit}; ${stdout.trim() || stderr.trim()}`,
 	);
 }
