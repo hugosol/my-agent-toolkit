@@ -437,26 +437,38 @@ async function savedDocument(
 ): Promise<ConsumptionDocument> {
 	const completion = Promise.withResolvers<ConsumptionDocument>();
 	void completion.promise.catch(() => {});
+	let settled = false;
 	const check = () => {
 		try {
 			const document = readDocument(file);
-			if (document !== undefined && accept(document)) completion.resolve(document);
+			if (document !== undefined && accept(document) && !existsSync(`${file}.lock`)) {
+				settled = true;
+				completion.resolve(document);
+			}
 		} catch (error) {
+			settled = true;
 			completion.reject(error);
 		}
 	};
 	// Subscribe to the stable parent before checking so atomic replacements cannot be missed.
 	const watcher = watch(path.dirname(file), check);
-	watcher.on("error", completion.reject);
+	watcher.on("error", error => {
+		settled = true;
+		completion.reject(error);
+	});
 	const cancel = () => {
+		settled = true;
 		watcher.close();
 		completion.reject(new Error(`no expected consumption document published at ${file}`));
 	};
 	pendingPublications.add(cancel);
 	try {
-		// Drive pi's fake nextTask queue; disk completion itself is a real filesystem event.
-		await harnessTask();
-		check();
+		// Keep driving fake lock-coordination timers while real disk I/O progresses.
+		// One turn can leave a queued save blocked forever under the parallel suite.
+		while (!settled) {
+			check();
+			if (!settled) await harnessTask();
+		}
 		return await completion.promise;
 	} finally {
 		pendingPublications.delete(cancel);
