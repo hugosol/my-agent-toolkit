@@ -5,13 +5,13 @@ import { type ManagerDock, managerDock } from "./manager-dock";
 import { collectTransport } from "./collect-transport";
 
 /** Preparatory public backend calls deliberately do not depend on the future dispatch tool. */
-export async function managerScenario(budgets: { requestTimeoutMs?: number; collectTimeoutMs?: number } = {}, collectWaitSeconds = 1) {
+export async function managerScenario(budgets: { requestTimeoutMs?: number; collectTimeoutMs?: number } = {}, collectWaitSeconds = 1, selectEndpoint?: (backendEndpoint: string) => string) {
 	const backend = await workflowBackend(collectWaitSeconds);
 	const transport = await collectTransport(backend.endpoint);
 	const calls = transport.calls;
 	let dock: ManagerDock | undefined;
 	try {
-		dock = await managerDock(transport.endpoint, budgets);
+		dock = await managerDock(selectEndpoint ? selectEndpoint(backend.endpoint) : transport.endpoint, budgets);
 		const managerId = await dock.nativeId();
 		await backend.post("/api/zones", { path: backend.root.path });
 		const tasks: Record<string, string> = {};
