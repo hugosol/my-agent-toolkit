@@ -47,13 +47,13 @@ const SHIPPED_BUDGET_MS = readConfig(path.join(REPO_ROOT, "extensions", "connect
 	fields: CONNECT_BOT.config?.fields,
 }).requestTimeoutMs as number;
 /**
- * A budget far shorter than the delay the adapter holds a response for, so the client runs out of it
- * while the panel's answer is still on its way. The contract allows a shorter budget to make the same
- * wait fail sooner; what is under test is what each side recorded, never the number.
+ * Exercise the delivered request budget, including a healthy registration before the held unregister.
+ * Only the unregister answer is delayed: a separate, tighter setup budget could instead time out the
+ * registration and leave no connected session for this case to disconnect.
  */
-const TIGHT_BUDGET_MS = 300;
-/** How long the adapter holds the panel's own answer back: several client budgets long. */
-const RELEASE_DELAY_MS = 1_500;
+const HELD_RESPONSE_BUDGET_MS = SHIPPED_BUDGET_MS;
+/** Hold the unregister answer beyond the shipped budget without changing the test's deadline. */
+const RELEASE_DELAY_MS = SHIPPED_BUDGET_MS + 1_500;
 /**
  * The online window this isolated run declares, and the panel's own scan cadence.
  *
@@ -203,13 +203,13 @@ describe("a client's timeout is not a statement about the panel (P26)", () => {
 		// The panel answers the unregister, and the adapter holds that answer back for several client
 		// budgets — the request is received, processed and applied while its client is still waiting.
 		const adapter = adapterAt({ target: panel.endpoint, releaseDelayMs: { unregister: RELEASE_DELAY_MS } });
-		const root = track(createRunRoot("panel-processed-late", adapter.endpoint, TIGHT_BUDGET_MS));
+		const root = track(createRunRoot("panel-processed-late", adapter.endpoint, HELD_RESPONSE_BUDGET_MS));
 
 		const report = await runProbe(root.configFile, "off");
 
 		// The client's half, recorded where it happened: the request ran out of its budget, so its
 		// outcome is a request that never completed and the operator reads the panel's silence.
-		expect(report.configuration.requestTimeoutMs).toBe(TIGHT_BUDGET_MS);
+		expect(report.configuration.requestTimeoutMs).toBe(HELD_RESPONSE_BUDGET_MS);
 		const unregister = single(report, "unregister");
 		expect(unregister?.outcome).toBe("timed-out");
 		expect(unregister?.status).toBeUndefined();
@@ -232,8 +232,8 @@ describe("a client's timeout is not a statement about the panel (P26)", () => {
 		expect(releasedAt).toBeDefined();
 		// Processed inside the client's own budget — and released after it, which is why the client's
 		// timeout is not a statement that the panel did nothing.
-		expect((panelAnsweredAt ?? Number.POSITIVE_INFINITY) - held.arrivedAt).toBeLessThan(TIGHT_BUDGET_MS);
-		expect((releasedAt ?? 0) - held.arrivedAt).toBeGreaterThan(TIGHT_BUDGET_MS);
+		expect((panelAnsweredAt ?? Number.POSITIVE_INFINITY) - held.arrivedAt).toBeLessThan(HELD_RESPONSE_BUDGET_MS);
+		expect((releasedAt ?? 0) - held.arrivedAt).toBeGreaterThan(HELD_RESPONSE_BUDGET_MS);
 		expect(held.heldMs).toBe(RELEASE_DELAY_MS);
 
 		// The panel's half: the row is gone, which its read side publishes as a removal and which a
