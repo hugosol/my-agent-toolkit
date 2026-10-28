@@ -13,9 +13,15 @@ omp -e /absolute/my-agent-toolkit/entrypoints/omp-auto/manager-chat.ts
 omp -e /absolute/my-agent-toolkit/entrypoints/omp-auto/node-chat.ts
 ```
 
-入口加载后按公共启动策略自动启用；首次启用轮次由公共 Prompt 注入节点工具指引，普通后续轮次不额外重复注入。不要同时加载另一份同 ID 扩展。无需加载或启用 connect-bot，不建立面板登记连接。**加载成功不等于已关联到 Run**：身份必须先由后端的合法派发流程关联；直接启动的任意会话会收到后端无关联拒绝，客户端不绕过该规则。
+入口加载后按公共启动策略自动启用；首次启用轮次由公共 Prompt 注入对应角色的完整工具指引，普通后续轮次不额外重复注入。不要同时加载另一份同 ID 扩展。无需加载或启用 connect-bot，不建立面板登记连接。**加载成功不等于已关联到 Run**：身份必须先由后端的合法派发流程关联；直接启动的任意会话会收到后端无关联拒绝，客户端不绕过该规则。
 
-固定 Task 职能、后端传入的本次工作与扩展工具指引保持分工；扩展不重拼启动输入，不复制 Bot 文档、整张 Map 或 user_input。
+## 首次工具指引与输入边界
+
+三种输入各有唯一职责：`Task.prompt` 固定角色职能；后端本次 input 提供工作、运行说明及状态/历史/报告记录的路径；扩展的公共 Prompt 只说明工具使用。后端仍按原规则把固定文本与本次工作组合为启动输入，扩展不重拼、不替换或另发固定文本，不复制 Bot 文档、整张 Map 或向 node 自动传播 Run 的 `user_input`。模型应按给定路径读取所需材料，而不是等待扩展自动注入内容。
+
+完整指引由 [manager 声明](manager-definition.ts)与 [node 声明](node-definition.ts)持有，不要求部署者再复制到 Task。manager 的首次指引覆盖全部十种 run action、collect 五种 reason 与完整等待预算、报告标识查阅、依赖与终态、派发核实、recover/retry、人工真实交接及部分效果；node 的首次指引覆盖报告时机、可读地址/用法/限制、允许后续收尾、报告不等于完成，以及已保存但通知失败不重报。
+
+两条隐藏、持久化的 Prompt 身份分别为 `manager-chat:tools` 与 `node-chat:tools`，使用公共 `first-enabled-run` 的分支历史规则，不另存“已注入”标记。普通轮次保留历史中的一份指引，不追加副本；切换回来也不重置。公共自动启动策略每进程只消费一次，切到新的未启用 owner 不会再次自动启用；历史分支不带该身份时，由公共规则决定首次贡献，不由角色代码另建状态机。
 
 ## 稳定配置
 
@@ -145,8 +151,13 @@ bun test tests/harness-dock/manager-state-actions.test.ts tests/harness-dock/man
 bun test tests/harness-dock/manager-collect-budget.test.ts tests/harness-dock/manager-collect-pending.test.ts
 bun test tests/framework/http-collect-budget.test.ts
 bun test tests/harness-dock/manager-dispatch-recovery.test.ts
+bun test tests/harness-dock/role-prompts.test.ts tests/harness-dock/role-guidance-rehearsal.test.ts
 bun run typecheck
 ```
+
+Prompt 检查直接捕获真实 omp 发给 provider 的文本，并读取其持久化的隐藏贡献；两角色均核对首次、普通轮次、新 owner 与切回原会话的行为。输入边界检查使用不同标记的真实后端 Task、工作、Bot/Map/user_input，取得实际 CLI 提交正文后原样送入真实 omp，核对工作文本块不变且工具指引是另一条消息。此处 Herdr 是记录型受控 CLI，不证明真实 Herdr 已启动这些会话。
+
+指引故障演练实际执行“已保存但通知失败→collect 并读取材料”“原执行修复→recover”“核实旧副作用后→retry”“人工补齐并读取真实材料→complete”。执行前可将 `WORKFLOW_PROMPT_EVIDENCE_DIR` 设为独立绝对目录：Prompt dock 保留原始请求与 Session JSONL，演练保留 `guidance-rehearsal.json`（实际注入全文、工具结果、HTTP 和外部 CLI 调用）。产物和决策均由验收 Agent/测试控制，不能当成真实模型工作结果；这些是 P26 技术证据，不是 H1 通过，H1 的唯一整体使用判断仍须独立汇总与用户确认。
 
 测试通过真实隔离 omp 18.5.0 加载交付入口；受控 provider 仅发出预先指定的工具调用，不冒充真实模型自主工作。受控 HTTP 分别验证保存失败、已保存但通知失败、诊断失败以及空正文不被客户端拒绝；150ms 有界窗口内观察无额外请求，不证明无限期无动作。
 
