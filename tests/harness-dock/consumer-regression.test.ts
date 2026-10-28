@@ -135,7 +135,14 @@ const DEPLOYED_TREES = [
 function materializeDeployment(label: string, endpoint: string): string {
 	const root = path.join(DEPLOYMENT_ROOT, label);
 	mkdirSync(root, { recursive: true });
-	for (const source of DEPLOYED_TREES) cpSync(path.join(REPO_ROOT, source), path.join(root, source), { recursive: true });
+	for (const source of DEPLOYED_TREES) {
+		cpSync(path.join(REPO_ROOT, source), path.join(root, source), {
+			recursive: true,
+			// Owner-access records belong to live source-tree sessions, not this deployment.
+			// Their staged files can be renamed while another isolated test is running.
+			filter: candidate => candidate !== path.join(REPO_ROOT, "framework", ".runtime"),
+		});
+	}
 	writeFileSync(
 		path.join(root, "extensions", "connect-bot", "config.yaml"),
 		`endpoint: "${endpoint}"\nrequestTimeoutMs: 1000\n`,

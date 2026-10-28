@@ -31,7 +31,8 @@ For coordinated file writes, seeing the expected published document does not mea
 1. Complete focused runs and any fault injection; restore injected changes before starting final regression.
 2. Run expensive suites sequentially in a shared working tree. Agree on a quiet window with peers for real-host or full-repository runs. Inside one run, the full-repository and dock scripts use bounded isolated Bun workers. Use the corresponding `test:serial` or `test:dock:serial` script to diagnose cross-file interference or when parallel real sessions exceed the machine's budget. This intra-run parallelism does not relax the quiet-window rule for multiple people or agents. Warm changed harness or patch prefixes with `bun run test:dock:serial` once before parallel runs, and treat repeated timing or cleanup failures under load as a signal to reduce or remove intra-run parallelism rather than as automatic product failures.
 3. Keep tested source and fixtures unchanged until the run finishes. To continue editing, use an isolated snapshot that includes the changes under test. Treat results from a tree changed mid-run as non-final evidence.
-4. Save long-run output to a run-specific log so truncated terminal output does not require another suite run just to recover failures or counts.
+4. When materializing isolated deployments, copy shipped source and configuration, not live `framework/.runtime` owner-access records; those records belong to source-tree sessions and may be atomically replaced during concurrent tests.
+5. Save long-run output to a run-specific log so truncated terminal output does not require another suite run just to recover failures or counts.
 
 Reuse an earlier result only when the relevant source, fixtures, dependencies, and environment are unchanged; cite its scope and source state. Rerun after relevant changes, an unstable observation, or an explicit acceptance requirement—not just to reproduce a summary table.
 
