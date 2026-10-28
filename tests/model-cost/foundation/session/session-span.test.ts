@@ -250,8 +250,9 @@ async function queuedWorkSettled(): Promise<void> {
  *
  * A Round's end is dispatched the way the framework dispatches a semantic handler — without waiting
  * for the promise it returns — so the save it drives lands a few event-loop turns later. The wait is
- * on the expected content rather than on a duration, and the deadline only keeps a save that never
- * happened from hanging the case.
+ * on the expected content and release of its coordinated-write lock, rather than on a duration.
+ * Publication precedes lock cleanup, so content alone can expose a transient lock in directory
+ * snapshots. The unchanged deadline keeps a save that never completes from hanging the case.
  */
 async function savedDocument(
 	file: string,
@@ -260,7 +261,7 @@ async function savedDocument(
 	const deadline = Date.now() + 5_000;
 	for (;;) {
 		const document = readDocument(file);
-		if (document !== undefined && accept(document)) return document;
+		if (document !== undefined && accept(document) && !existsSync(`${file}.lock`)) return document;
 		if (Date.now() > deadline) {
 			throw new Error(`no consumption document the case expects was published at ${file}`);
 		}
@@ -781,8 +782,8 @@ describe("the time is carried by existing commits and by nothing else (P8, P14)"
 		deliverEdge(double, MAIN, "round_end");
 		await savedDocument(file, candidate => recordOf(candidate, MAIN.sessionId)?.span !== undefined);
 		const saved = readFileSync(file, "utf8");
-		// The document and the store's own coordinated-write lock: nothing else in the root, and no
-		// time-specific file of any kind.
+		// The completed save has released its coordinated-write lock: only the existing consumption
+		// document remains, with no time-specific file of any kind.
 		const storageFiles = readdirSync(root);
 		expect(storageFiles).toContain(CONSUMPTION_FILE);
 		expect(storageFiles.filter(name => !name.startsWith(CONSUMPTION_FILE))).toEqual([]);
