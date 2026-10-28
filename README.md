@@ -55,6 +55,7 @@ glossary.
 | connect-bot | [`extensions/connect-bot/`](extensions/connect-bot) | [`extensions/connect-bot/README.md`](extensions/connect-bot/README.md) · [`extensions/connect-bot/GLOSSARY.md`](extensions/connect-bot/GLOSSARY.md) |
 | codeBaseTools | [`extensions/codebase-tools/`](extensions/codebase-tools) | [`extensions/codebase-tools/README.md`](extensions/codebase-tools/README.md) · [`extensions/codebase-tools/GLOSSARY.md`](extensions/codebase-tools/GLOSSARY.md) |
 | modelCost | [`extensions/model-cost/`](extensions/model-cost) | [`extensions/model-cost/README.md`](extensions/model-cost/README.md) · [`extensions/model-cost/GLOSSARY.md`](extensions/model-cost/GLOSSARY.md) |
+| Workflow Chat / node-chat | [`extensions/workflow-chat/`](extensions/workflow-chat) | [`extensions/workflow-chat/README.md`](extensions/workflow-chat/README.md) · [`extensions/workflow-chat/GLOSSARY.md`](extensions/workflow-chat/GLOSSARY.md) |
 
 ## Documentation by audience
 

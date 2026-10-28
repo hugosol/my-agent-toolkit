@@ -23,3 +23,5 @@ codebase-tools:
   enabled: true
 connect-bot:
   enabled: true
+node-chat:
+  enabled: true
