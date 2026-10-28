@@ -8,6 +8,8 @@ import { MANAGER_CHAT } from "../manager-definition";
 interface ManagerToolApi extends OmpExtensionApi {
 	readonly typebox: { readonly Type: {
 		String(): unknown;
+		Array(items: unknown): unknown;
+		Boolean(): unknown;
 		Literal(value: string): unknown;
 		Union(members: unknown[]): unknown;
 		Object(properties: Readonly<Record<string, unknown>>, options: { additionalProperties: boolean }): unknown;
@@ -47,20 +49,29 @@ export default function managerChatOmp(api: OmpExtensionApi) {
 		// OMP repairs closed schemas by deleting extra keys before execute. Preserve them
 		// here so our strict per-action guard can reject the entire invalid call instead.
 		parameters: Type.Union([
+			...["recover", "retry"].map(action => Type.Object({ action: Type.Literal(action), nodeId: Type.String(), confirmed: Type.Boolean(), reason: Type.String() }, { additionalProperties: true })),
+			Type.Object({ action: Type.Literal("dispatch"), nodes: Type.Array(Type.String()) }, { additionalProperties: true }),
+			Type.Object({ action: Type.Literal("reconcile_dispatch"), nodeId: Type.String(), finding: Type.Union(["uncertain", "not_created", "created"].map(value => Type.Literal(value))), reason: Type.String() }, { additionalProperties: true }),
 			...["status", "pause", "resume", "finish"].map(action => Type.Object({ action: Type.Literal(action) }, { additionalProperties: true })),
 			...["complete", "fail"].map(action => Type.Object({ action: Type.Literal(action), nodeId: Type.String(), reason: Type.String() }, { additionalProperties: true })),
 		]),
 		async execute(_callId, params, signal, _onUpdate, ctx) {
 			const input = params as Record<string, unknown> | null;
-			const nodeAction = input?.action === "complete" || input?.action === "fail";
-			const allowed = nodeAction ? ["action", "nodeId", "reason"] : ["action"];
-			if (!input || typeof input !== "object" || (!nodeAction && input.action !== "status" && input.action !== "pause" && input.action !== "resume" && input.action !== "finish") ||
+			const reconcile = input?.action === "reconcile_dispatch";
+			const confirmation = input?.action === "recover" || input?.action === "retry";
+			const nodeAction = input?.action === "complete" || input?.action === "fail" || reconcile || confirmation;
+			const dispatch = input?.action === "dispatch";
+			const allowed = dispatch ? ["action", "nodes"] : reconcile ? ["action", "nodeId", "finding", "reason"] : confirmation ? ["action", "nodeId", "confirmed", "reason"] : nodeAction ? ["action", "nodeId", "reason"] : ["action"];
+			if (!input || typeof input !== "object" || (!dispatch && !nodeAction && input.action !== "status" && input.action !== "pause" && input.action !== "resume" && input.action !== "finish") ||
 				Object.keys(input).some(key => !allowed.includes(key)) ||
+				(confirmation && typeof input.confirmed !== "boolean") ||
+				(reconcile && input.finding !== "uncertain" && input.finding !== "not_created" && input.finding !== "created") ||
+				(dispatch && (!Array.isArray(input.nodes) || input.nodes.some(node => typeof node !== "string"))) ||
 				(nodeAction && (typeof input.nodeId !== "string" || typeof input.reason !== "string"))) {
 				return { content: [{ type: "text", text: JSON.stringify({ error: { kind: "parameters", message: "run 参数不符合所选 action；不接受身份或不适用字段。" } }) }], details: { body: null }, isError: true };
 			}
 			if (!requests) throw new Error("manager-chat 未初始化");
-			const body = nodeAction ? { nodeId: input.nodeId, reason: input.reason } : {};
+			const body = dispatch ? { nodes: input.nodes } : reconcile ? { nodeId: input.nodeId, finding: input.finding, reason: input.reason } : confirmation ? { nodeId: input.nodeId, confirmed: input.confirmed, reason: input.reason } : nodeAction ? { nodeId: input.nodeId, reason: input.reason } : {};
 			const result = await requests.post(ctx.sessionManager.getSessionId(), `/api/workflow/manager/${input.action}`, body, signal);
 			return { content: [{ type: "text", text: JSON.stringify(result.body) }], details: { httpStatus: result.httpStatus, body: result.body }, isError: result.isError };
 		},
