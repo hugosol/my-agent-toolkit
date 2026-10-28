@@ -25,3 +25,5 @@ connect-bot:
   enabled: true
 node-chat:
   enabled: true
+manager-chat:
+  enabled: true
