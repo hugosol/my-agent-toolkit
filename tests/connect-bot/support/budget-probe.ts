@@ -294,6 +294,9 @@ async function arm(
 	double.run("connect-bot", "", ctx);
 	await announced;
 	await settleAll();
+	if (botSessions.get(`main:${sessionId}`) === undefined) {
+		throw new Error(`budget-probe: scenario requires successful registration: ${JSON.stringify({ notifications: double.notifications, sent })}`);
+	}
 	return ctx;
 }
 
@@ -315,9 +318,6 @@ async function runScenario(): Promise<void> {
 		}
 		case "off": {
 			await arm(sessionId);
-			if (botSessions.get(`main:${sessionId}`) === undefined) {
-				throw new Error(`budget-probe: disconnect requires successful registration: ${JSON.stringify({ notifications: double.notifications, sent })}`);
-			}
 			const announced = double.nextNotification();
 			double.run("connect-bot", "off", double.context({ sessionId, cwd: "E:/work/budget" }));
 			await announced;

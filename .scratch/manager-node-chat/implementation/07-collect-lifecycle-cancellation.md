@@ -45,4 +45,12 @@ bun run typecheck
 
 TDD 敏感度：现有产品连线初次行为验证已通过，未为制造 red 改写承诺。临时移除请求的两个取消信号后，真实 abort 测试于 30031ms 才释放，明确失败于 `<5000ms` 断言；恢复后上述最终 dock 全绿。仅移除 Session 信号的探针仍通过（宿主 shutdown 亦发出工具取消），不声称该探针单独隔离了两个取消来源。首次缺依赖、测试语法及类型设置错误均已修复，不作为行为 red 证据；未留下变异或脚手架。
 
-限制：真实 Session 转移时 OMP 丢弃旧工具反馈，测试不伪造该反馈；shutdown 实际返回 cancelled / Session ended，abort 返回 cancelled / Interrupted by user。通过双向 FIN、未等满期限及后续报告收取观察等待响应释放，不测量后端内部 watch 数量；受控 provider 不证明真实模型决策、后端回滚或无限网络保证。本票无剩余技术验收事项，未运行全仓库总入口，交由独立集成代理执行集成验收。
+限制：真实 Session 转移时 OMP 丢弃旧工具反馈，测试不伪造该反馈；shutdown 实际返回 cancelled / Session ended，abort 返回 cancelled / Interrupted by user。通过双向 FIN、未等满期限及后续报告收取观察等待响应释放，不测量后端内部 watch 数量；受控 provider 不证明真实模型决策、后端回滚或无限网络保证。本票无剩余技术验收事项；原开发阶段未运行全仓库总入口，以下为独立集成阶段补充证据。
+
+## Independent integration evidence
+
+- 已在原开发 worktree 确认同步后的 HEAD 为 `31b60f393a38b273e0c35eabec82b203490bb78e`，该提交包含原实现 `96c8dc9`；接管时工作区干净，无待解决冲突，未切换分支或操作集成 worktree。
+- 首次 `bun run test`：exit 1，1745 pass / 1 fail，212 files；`tests/connect-bot/budget-regression.test.ts:314` 的 Session 切换后续观察仅见 register，未见 state/unregister（`artifact://340`）。该场景将健康注册也限制为 120ms，因而未建立待取消的已连接 Session。
+- 修复：disconnect、Session switch、heartbeat 的 timeout-follow-up 场景采用已发布的 1000ms 请求预算，仅将被观察响应延后至预算之后；注册超时场景仍保留紧预算。公共 probe 的成功注册前置条件显式失败，不再把注册失败当成后续请求行为证据。未增加重试、未放宽测试 deadline、未修改产品行为；同步长期测试说明。
+- 修复后 `bun run test`：exit 0，1746 pass / 0 fail，11362 expect calls，212 files，105.18s；完整输出 `artifact://349`。其中 P19 再次观察到真实 abort、new_session、shutdown 的双向 FIN 与后续 notification 报告收取。
+- 本轮按指定范围仅执行全局测试；复杂脚本、额外 smoke、跨票据整体验收及最终独立门禁仍由宿主安排。不将本分支验收通过等同于宿主已再次合入 dev，状态保持 `in-progress` 供其最终结算。

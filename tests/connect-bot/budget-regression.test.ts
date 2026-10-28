@@ -50,6 +50,8 @@ const LARGER_BUDGET_MS = 2000;
 const TIGHT_BUDGET_MS = 120;
 /** The fixed response delay the failure scenarios' panel answers after, in milliseconds. */
 const PANEL_DELAY_MS = 600;
+/** Healthy setup uses the shipped budget; only the request under test is held beyond it. */
+const HELD_RESPONSE_DELAY_MS = SHIPPED_BUDGET_MS + PANEL_DELAY_MS;
 /**
  * The heartbeat period this suite advances controlled time by — the panel's own three-beat window
  * (30s) over three beats. Advancing exactly this must produce exactly one beat; the extension's
@@ -289,8 +291,8 @@ describe("a failed or timed-out request is never retried, backed off or compensa
 	});
 
 	test("an unregister the panel answers too late is asked once, and nothing follows it", async () => {
-		const panel = panelFor({ delayMs: { unregister: PANEL_DELAY_MS } });
-		const root = track(createRunRoot("off-follow-up", panel.endpoint, TIGHT_BUDGET_MS));
+		const panel = panelFor({ delayMs: { unregister: HELD_RESPONSE_DELAY_MS } });
+		const root = track(createRunRoot("off-follow-up", panel.endpoint, SHIPPED_BUDGET_MS));
 
 		const report = await runProbe(root.configFile, "off-timeout-follow-up");
 
@@ -306,8 +308,8 @@ describe("a failed or timed-out request is never retried, backed off or compensa
 	});
 
 	test("a session boundary's unregister the panel answers too late is asked once, and nothing follows it", async () => {
-		const panel = panelFor({ delayMs: { unregister: PANEL_DELAY_MS } });
-		const root = track(createRunRoot("switch-follow-up", panel.endpoint, TIGHT_BUDGET_MS));
+		const panel = panelFor({ delayMs: { unregister: HELD_RESPONSE_DELAY_MS } });
+		const root = track(createRunRoot("switch-follow-up", panel.endpoint, SHIPPED_BUDGET_MS));
 
 		const report = await runProbe(root.configFile, "switch-timeout-follow-up");
 
@@ -320,8 +322,8 @@ describe("a failed or timed-out request is never retried, backed off or compensa
 	});
 
 	test("a beat the panel answers too late is dropped, and the next beat is a new event one period later", async () => {
-		const panel = panelFor({ delayMs: { heartbeat: PANEL_DELAY_MS } });
-		const root = track(createRunRoot("beat-follow-up", panel.endpoint, TIGHT_BUDGET_MS));
+		const panel = panelFor({ delayMs: { heartbeat: HELD_RESPONSE_DELAY_MS } });
+		const root = track(createRunRoot("beat-follow-up", panel.endpoint, SHIPPED_BUDGET_MS));
 
 		const report = await runProbe(root.configFile, "beat-timeout-follow-up");
 
