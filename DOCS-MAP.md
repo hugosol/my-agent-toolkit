@@ -31,6 +31,7 @@
 | --- | --- | --- |
 | codebase-tools | [README](extensions/codebase-tools/README.md) | [GLOSSARY](extensions/codebase-tools/GLOSSARY.md) |
 | connect-bot | [README](extensions/connect-bot/README.md) | [GLOSSARY](extensions/connect-bot/GLOSSARY.md) |
+| workflow-chat / node-chat | [README](extensions/workflow-chat/README.md) | [GLOSSARY](extensions/workflow-chat/GLOSSARY.md) |
 | model-cost | [README](extensions/model-cost/README.md)；[分层实例](framework/docs/capability-layering.md) | [GLOSSARY](extensions/model-cost/GLOSSARY.md) |
 
 ## 术语、决策与历史资料
