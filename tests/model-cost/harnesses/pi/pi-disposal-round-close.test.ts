@@ -339,11 +339,13 @@ function piRecord(file: string, id: string): SessionRecord | undefined {
 /**
  * Waits until the document holds a record for one session, and answers it.
  *
- * A commit is a coordinated file update: what a Round's end starts lands over the harness's own task
- * turns, which this suite advances by itself rather than waiting on wall time.
+ * A commit is a coordinated file update: fake time drives coordination, but the filesystem still
+ * completes in real time. Keep advancing the harness until publication, within the test's existing
+ * five-second deadline; a fixed number of immediates can run out before a real write completes.
  */
 async function savedRecord(id: string): Promise<SessionRecord> {
-	for (let attempt = 0; attempt < 200; attempt += 1) {
+	const deadline = process.hrtime.bigint() + 4_000_000_000n;
+	while (process.hrtime.bigint() < deadline) {
 		const record = piRecord(CONSUMPTION_FILE_PATH, id);
 		if (record !== undefined) return record;
 		await harnessTask();
