@@ -4,12 +4,13 @@ import { REPO_ROOT, ensureIsolatedHarness } from "../../harness-dock/baseline";
 import { type CaptureServer, startCaptureServer } from "../../harness-dock/capture-server";
 import { DOCK_CAPTURE_BASE_URL_ENV, DOCK_MODEL_SELECTOR } from "../../harness-dock/fixtures/extension-root/provider";
 import { type RunRoot, createRunRoot } from "../../harness-dock/run-root";
-import { ControlledSession } from "../../harness-dock/session";
+import { ControlledSession, type PromptOutcome } from "../../harness-dock/session";
 
 export interface NodeDock {
 	readonly root: RunRoot;
 	readonly session: ControlledSession;
 	readonly capture: CaptureServer;
+	beginReport(body: string): Promise<PromptOutcome>;
 	close(): Promise<void>;
 }
 
@@ -26,7 +27,12 @@ export async function nodeDock(endpoint: string, body: string): Promise<NodeDock
 		`endpoint: ${JSON.stringify(endpoint)}\nrequestTimeoutMs: 2000\ncollectTimeoutMs: 5460000\n`);
 	mkdirSync(join(root.workDir, "extensions/workflow-chat"), { recursive: true });
 	writeFileSync(join(root.workDir, "extensions/workflow-chat/config.yaml"), "endpoint: http://127.0.0.1:1\nrequestTimeoutMs: 1\n");
-	const capture = startCaptureServer({ dir: root.captureDir, toolCall: { name: "report", arguments: JSON.stringify({ body }) } });
+	let nextBody: string | undefined = body;
+	const capture = startCaptureServer({ dir: root.captureDir, respond() {
+		if (nextBody === undefined) return undefined;
+		const selected = nextBody; nextBody = undefined;
+		return { toolCall: { name: "report", arguments: JSON.stringify({ body: selected }) } };
+	} });
 	let session: ControlledSession | undefined;
 	try {
 		const harness = await ensureIsolatedHarness();
@@ -37,6 +43,7 @@ export async function nodeDock(endpoint: string, body: string): Promise<NodeDock
 		});
 		return {
 			root, session, capture,
+			beginReport(body) { nextBody = body; return session!.prompt("显式提交本次交接一次，不自主重报。"); },
 			async close() {
 				try { await session!.stop(); } finally { capture.stop(); root.dispose(); }
 			},
@@ -52,5 +59,7 @@ export async function nodeDock(endpoint: string, body: string): Promise<NodeDock
 export function toolText(dock: NodeDock): string {
 	const requests = dock.capture.requests();
 	const last = requests[requests.length - 1]?.json as { messages?: { role: string; content: unknown }[] } | undefined;
-	return last?.messages?.filter(message => message.role === "tool").map(message => typeof message.content === "string" ? message.content : JSON.stringify(message.content)).join("\n") ?? "";
+	const tools = last?.messages?.filter(message => message.role === "tool") ?? [];
+	const content = tools[tools.length - 1]?.content;
+	return typeof content === "string" ? content : content === undefined ? "" : JSON.stringify(content);
 }

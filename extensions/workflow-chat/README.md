@@ -137,7 +137,8 @@ manager 的 `collect` 没有业务参数，调用样例为 `{}`。实际传输�
 ## 故障、取消与信任边界
 
 - 无关联、歧义、错误角色及其他准入拒绝由后端决定，扩展保留响应，不修补身份或新建连接。
-- 非 2xx 结构化正文不会被压缩成状态码；已发生的保存或其他部分效果不被描述为回滚。
+- 非 2xx 结构化正文不会被压缩成状态码；已发生的保存或其他部分效果不被描述为回滚。HTTP 200 也不是整批成功保证：逐项查看 `results`、`effects`、`historyError` 和 `stateCommitted`。`stateCommitted=true` 且历史追加失败表示当前状态已经提交，不应为补历史重复执行动作。
+- 已接受状态动作、dispatch 或 report 后再断开，客户端通常只能得到不确定结果。先显式 `run status` 或读取 Run 详情核对状态、执行关联、报告 ID 与外部 Chat/材料；不要把取消当成“未执行”，不要立即重做。尤其 report 可能已经保存而通知/诊断失败，重复提交会产生另一份报告。存活 Session 可接收新的显式调用，其请求不沿用上一工具的取消状态；这属于用户决定的新请求，不是自动重试。
 - 网络/正文读取失败、预算耗尽、取消或非法 JSON 不生成假成功报告，也不自主重试；请求被取消不保证后端未接受。先核实已保存事实，再明确决定后续动作。
 - 每个实际 Session 持有独立请求取消资源，工具 AbortSignal 和该 Session 结束信号传入公共 HTTP；工具中断、切走 Session 及进程正常结束都会终止仍在接收正文的 collect。取消覆盖完整交换，不在收到 HTTP 响应头时解绑；不能把本地返回取消等同于后端回滚。
 - 正常后端到期是成功正文的 `reason: "timeout"`。主动取消为 `error.kind: "cancelled"`，客户端完整预算耗尽为 `"timeout"`，连接/正文断流为 `"transport"`，完整收到但 JSON 非法为 `"parse"`；错误不附加推测快照。HTTP 200 响应头不是成功凭证；不完整分块或 Content-Length 正文均是传输失败，不是假成功或正常到期。
@@ -154,6 +155,7 @@ bun test tests/harness-dock/manager-collect-budget.test.ts tests/harness-dock/ma
 bun test tests/harness-dock/manager-collect-lifecycle.test.ts
 bun test tests/framework/http-collect-budget.test.ts tests/framework/http-collect-termination.test.ts
 bun test tests/harness-dock/manager-dispatch-recovery.test.ts
+bun test tests/harness-dock/uncertain-effects.test.ts
 bun test tests/harness-dock/role-prompts.test.ts tests/harness-dock/role-guidance-rehearsal.test.ts
 bun run typecheck
 ```
@@ -182,6 +184,8 @@ collect dock 同样使用真实 manager 工具与隔离后端：后端期限 1 �
 
 P21 分区经真实 manager 工具独立控制正常到期、工具取消、客户端预算、响应前断线、200 后无完整分块正文、Content-Length 截断及非法 JSON；S2 公共 HTTP 另观察取消/断流竞争与已采用期限后的取消，不把测试调度顺序提升为产品优先级。受控故障只证明这些分支的呈现，不证明真实模型决策或任意外部网络条件。
 派发/恢复 dock 通过真实 manager 工具与后端制造同批成功、依赖拒绝、身份阶段失败（外部 CLI 对两个目标返回同一原生身份），保留实际已启动效果；并从真实启动/身份读取失败进入三种 reconciliation，验证 created 只查询原 agent。执行失败场景分别验证 confirmed=false/空依据拒绝、paused 下 recover 原执行与 retry 拒绝，以及新执行成功/提交失败均保留旧输出、旧执行和新效果。HTTP 捕获分区逐 action 拒绝额外身份、不适用字段和模型 Chat 引用。这里的 Herdr CLI 故障/身份均受控，不能据此宣称真实 Herdr/模型已完成恢复演练，也不重复宣称通用部分提交覆盖。
+
+P22–P24 专用检查分开使用独立字面 HTTP 错误样例与真实后端故障。`uncertain-errors.test.ts` 从真实 manager 工具观察 503 正文、200 部分效果、网络断开和非法 JSON；每个结果后保持 250ms 外部请求计数窗口，再由同一 Session 显式 status，区分新调用与自动重试。`uncertain-effects.test.ts` 的边界代理先把请求交给真实后端并完整取得其响应，之后才扣住响应并对真实 omp 工具发出 abort；分别验证 pause 已提交、dispatch 已启动且关联 Chat、report 已保存且通知失败。取消后读取公开 status/Run 详情，并在 250ms 窗口核对 HTTP 与外部 CLI 无新增动作；存活 node Session 的另一份显式报告恰好新增一份报告，辅助失败后也无自主重报。另以损坏的隔离历史文件触发真实 `historyError/stateCommitted`，核对状态、分项目标与外部效果保留；损坏当前记录触发真实 500，核对结构化正文与修复后的显式查询。代理仅控制交付时序，不伪造后端接受、提交或回滚；这些检查不证明无限期无重试，也不证明真实模型决策或生产网络故障。
 
 真实后端 dock 需要同级 herdr-bot checkout（或测试环境 `HERDR_BOT_REPO`），并先在该 checkout 构建：
 
