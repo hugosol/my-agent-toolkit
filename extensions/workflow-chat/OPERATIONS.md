@@ -60,10 +60,22 @@ pi -e D:/service/my-agent-toolkit/entrypoints/pi-auto/node-chat.ts
 
 ## 2. 上线核对与预算
 
-- 在合法关联的管理者 Session 显式 `run {"action":"status"}`，核对 Run 现场和角色；节点在材料可交接时显式 report。模型只传业务参数，真实 `sessionId` 由公共 Session 加入；完整协议以 [run](README.md#run-基础状态动作)、[collect](README.md#collect-长等待与报告待办)、[report](README.md#report-协议与交接) 为准。
+- 在合法关联的管理者 Session 显式 `run {"action":"status"}`，核对 Run 现场和角色；节点遵守本次派发的 report_policy：auto 在材料可交接时显式 report，manual 先在 node Chat 展示摘要、交付地址和限制并询问、停轮，收到用户自然语言确认后再 report；旧派发缺字段按 auto。模型只传业务参数，真实 `sessionId` 由公共 Session 加入；完整协议以 [run](README.md#run-基础状态动作)、[collect](README.md#collect-长等待与报告待办)、[report](README.md#report-协议与交接) 为准。
 - 普通预算覆盖请求至完整正文，不只是连通或响应头。普通预算默认 30000ms；collect 独立默认 5460000ms，覆盖后端默认 5400 秒再留 60 秒余量。不要为了普通 report 调短 collect，也不要把所有普通调用都改为 91 分钟。后端改期时人工核对客户端预算，无自动握手。
 - collect 的正常 `reason: "timeout"` 不是错误，也不修改状态；客户端 `error.kind: "timeout"` 是完整传输预算耗尽。paused/completed/notification/no-running 的处理和待办查阅见 README。collect 不返回报告正文；按 pendingReports 的标识读取 messages.jsonl 或已有 Run 详情，再读材料。
 - 取消、网络/正文失败或非 2xx 不是回滚保证。保留整个错误正文、已发生 effects、逐项结果、historyError/stateCommitted；HTTP 200 也不能概括整批成功。故障分类与 Session 结束语义见 [故障、取消与信任边界](README.md#故障取消与信任边界)。
+
+### report_policy 真实模型冒烟（OMP 与 Pi 分别执行）
+
+使用上节对应宿主的自动入口和合法后端派发，不在任意独立启动的无关联 Session 中伪造身份。升级共享定义后创建新 node Chat；已有 Chat 的持久化指引不热更新。
+
+1. 在 Map 中给一个可独立交付的小任务设置 `report_policy: manual`，由 manager 正常 dispatch。任务示例：在指定绝对目录写一份 UTF-8 文本，正文为 `report-policy-smoke`，交付地址、读取方法和限制。核对实际派发输入有独立 `report_policy: manual` 控制段。
+2. 等任务可交接：node Chat 应先展示摘要、绝对地址和限制、询问是否报告并停轮；从 Run 详情或 `messages.jsonl` 确认尚未新增 report。manager 不得仅凭等待确认就 complete。
+3. 在该 node Chat 输入 `先将正文改为 report-policy-smoke-revised，不要发送报告`。检查实际文件已修改，模型再次展示交接信息、询问并停轮，仍未新增 report。然后输入 `确认，发送这份报告`，核对新增一份 saved report 及对应 execution，manager 读取实际材料后才按既有职责 complete。
+4. 在 node Chat 要求补充或更正交接内容：再次观察询问与停轮；确认前报告数不变，输入 `确认发送补充报告` 后新增独立报告。辅助通知失败时不应仅因该失败重报。
+5. 用新执行分别验证 `report_policy: auto` 与旧派发缺字段的输入：可交接后允许直接 report，再继续无害收尾。分别用 OMP/Pi 重复以上流程；保留实际输入、对话、文件和报告标识，不用受控 provider 的预设调用声称模型遵从了策略。
+
+这些观察验证提示词行为，不代表存在审批接口或后端阻断；report 的业务参数仍只有 body。不要为冒烟新增审批状态或把合法人工真实交接改成必须先有报告。
 
 ## 3. 先查事实，再明确动作
 

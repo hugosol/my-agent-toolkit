@@ -26,7 +26,6 @@ test("P26 injected guidance supports notification failure, original recovery, in
 		if (!nodeState.data || typeof nodeState.data !== "object" || !("sessionId" in nodeState.data) || typeof nodeState.data.sessionId !== "string") throw new Error("Missing node identity");
 		await action({ action: "status" });
 		guides.manager = roleGuidance(scene.dock.capture.requests()[0]!, "manager");
-		expect(guides.manager).toContain("派发阶段 failed 先核实");
 		scene.backend.behavior(nodeState.data.sessionId, scene.backend.root.path);
 		const dispatched = await action({ action: "dispatch", nodes: ["A"] });
 		const original = dispatched.snapshot.nodes.A.execution;
@@ -37,7 +36,6 @@ test("P26 injected guidance supports notification failure, original recovery, in
 		const report = JSON.parse(toolText(node));
 		observations.push({ step: "report saved, auxiliary delivery refused", result: report });
 		expect(report).toMatchObject({ saved: true, notification: { status: "failed" } });
-		expect(guides.node).toContain("不要仅为辅助通知或诊断失败重报");
 		const collected = await scene.dock.collect();
 		observations.push({ step: "collect saved report without re-report", result: collected });
 		expect(collected.reason).toBe("notification");

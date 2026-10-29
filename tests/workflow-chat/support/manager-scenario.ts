@@ -16,7 +16,7 @@ export async function managerScenario(budgets: { requestTimeoutMs?: number; coll
 		await backend.post("/api/zones", { path: backend.root.path });
 		const tasks: Record<string, string> = {};
 		for (const role of ["manager", "node"]) {
-			const result = await backend.post("/api/tasks", { name: `state-${role}`, taskType: role, agent: "omp", chatName: "{chat.id}", model: "gpt-6.1-sol", thinking: "high", skill: "teach", prompt: `FIXED-${role}`, extensions: [] });
+			const result = await backend.post("/api/tasks", { name: `state-${role}`, taskType: role === "node" ? "normal" : "manager", agent: "omp", chatName: "{chat.id}", model: "gpt-6.1-sol", thinking: "high", skill: "teach", prompt: `FIXED-${role}`, extensions: [] });
 			tasks[role] = result.tasks.find((task: { name: string }) => task.name === `state-${role}`).id;
 		}
 		writeFileSync(join(backend.root.path, "bots/worker.json"), JSON.stringify({ id: "worker", name: "worker", when: "", plan_guide: "", node_guide: "", task_id: tasks.node }));
