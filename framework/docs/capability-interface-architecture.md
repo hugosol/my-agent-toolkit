@@ -236,7 +236,7 @@ extension 完全不 import `framework/runtime`。
 
 native 翻译与生命周期仍属于现有 domain module。`defineAdapterDelivery(kind, payload)` 标记最终协议 payload 的构造点，包括内嵌效果和晚查询；它使用已有 canonical 类型，不改变 payload 身份或回调时序。领域分组是语义分组，不按 event/query/effect 的交互模式拆目录。
 
-编译器检查完整装配键集合与契约类型；后续 supply analyzer 检查有界静态装配与 delivery 构造。任意动态结构是 unresolved，handler 行为或语义正确性不被证明。extension-only 的 `check:authoring` 不得被说成 adapter 验证。显式缺失描述当前 adapter 供给，不证明 native harness 不可用。运行时加载、可选 fallback 和独立行为验证不变。实现与执行证据见[重构摘要](integration-contract-refactor.md#35-adapter-侧可检查组装后续已完成)。
+编译器检查完整装配键集合与契约类型；后续 supply analyzer 检查有界静态装配与 delivery 构造。任意动态结构是 unresolved，handler 行为或语义正确性不被证明。extension-only 的 `check:authoring` 不得被说成 adapter 验证。显式缺失描述当前 adapter 供给，不证明 native harness 不可用。运行时加载、可选 fallback 和独立行为验证不变。装配形状与供给分析的长期契约见[静态接入检查](integration-check.md#supply-analysis)。
 
 ## 6. 可检查性
 
@@ -386,18 +386,6 @@ State 的 capability interface 拥有自己的声明（`StateDeclaration`、`Sta
 源码推导接入分析已实现：从 extension 调用、声明、订阅和读取推导 demand，与目标 adapter 的 assembly 和 delivery supply 比较，并区分明确缺失、显式不可用与无法解析。demand 可以在没有目标 adapter 或 discovery entry 时列出；直接 extension-to-harness 集成（例如 native widget）不在 inventory 内。
 
 `HarnessPort` 仍是共同 adapter seam，extension consumer 继续使用 `framework/interface`。需求推导、供给状态、生成器边界和结果限制见[静态接入检查](integration-check.md#demand-analysis)、[供给分析](integration-check.md#supply-analysis)与[供给状态](integration-check.md#supply-statuses)。这是离线诊断，不是运行时门禁；结构完整性不等于语义正确性。
-
-### 8.4 重构阶段
-
-切换按阶段实现，每阶段都保持仓库 typecheck 和当时测试绿色：
-
-1. **interface 成为 canonical：** extension-facing 类型迁入 `framework/interface/`；内部 module 从 interface import；adapter-facing 类型迁入 `framework/runtime/port.ts`；extension import 迁移到 interface 和 adapter assembly entry；import boundary 规则生效；旧 `framework/public.ts` 移除，无 alias/re-export/forwarding shell。
-2. **runtime port：** `runtime/port.ts` 承载框架形状的 adapter 契约；引用 interface canonical 声明，不重述；adapter 从 runtime/port import，extension 不 import。
-3. **Session 读表面积：** 只读；具体 observation source 与 mutation 方法保持内部。按 capability 分组整个 implementation context 被考虑但未采纳；`context.session` 保持 capability object，config/modelPrices/providerAccess 保持扁平命名。
-4. **深 module：** State、Session 先落到 interface 后面；Round、Turn、Activity、Context、observation、access、disposal 保持内部 Session module；Command、Prompt、Marker、Feedback、Provider、General 跟上；composition 连接 capability 与 port，不拥有 capability 规则。
-5. **文档与决策：** `framework/interface/README.md` 承载 capability-to-import map；README、framework-capabilities、extension-development-map 跟随实现；ADR-0002 修正记录接受方向和未采纳候选；旧公共路径与 extension import 例外移除。
-
-完整证据与逐阶段记录见[接入契约重构摘要](integration-contract-refactor.md)。这些记录描述当时的源码和环境，不构成当前工作树的持续保证。
 
 ## 9. 未决方向与未采纳候选
 

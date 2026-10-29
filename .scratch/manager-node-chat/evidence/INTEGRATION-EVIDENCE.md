@@ -19,13 +19,13 @@
 
 | 承诺 | 长期复核用例 | 可观察证据与范围 |
 | --- | --- | --- |
-| P1 | [`role-identity-integration.test.ts`](../../tests/harness-dock/role-identity-integration.test.ts) | 分别加载交付 manager/node 自动入口，没有先发启用命令；实际模型工具集合分别只有角色的 run/collect 或 report，实际持久化身份分别为 `manager-chat:tools` / `node-chat:tools`；三个工具均实际调用。 |
+| P1 | [`role-identity-integration.test.ts`](../../../tests/harness-dock/role-identity-integration.test.ts) | 分别加载交付 manager/node 自动入口，没有先发启用命令；实际模型工具集合分别只有角色的 run/collect 或 report，实际持久化身份分别为 `manager-chat:tools` / `node-chat:tools`；三个工具均实际调用。 |
 | P2 | 同上 | 未加载 connect-bot，真实后端接受实际 manager status/dispatch/collect 与 node report；完整外发路径只有 workflow 路由，没有登记/心跳/上报路由。测试自己打开一次后端 SSE 读快照，核对面板登记 Session 列表为空；该只读连接不是扩展额外建立的上报连接。 |
-| P3 | [`role-session-isolation.test.ts`](../../tests/harness-dock/role-session-isolation.test.ts) | 两个不同原生 ID 的独立实际 OMP Session 同时到达被扣住的 HTTP 正文；通过原生 RPC abort manager，观察其真实 socket 关闭与 cancelled 工具结果；node 仍保持连接并取得完整字面响应。随后两 Session 的显式独立调用均成功，核对每次请求的身份和次数。这里 HTTP 响应受控，不宣称该场景证明真实后端业务效果；真实后端接通另由 P2 证明。 |
-| P6 | identity integration 与 [`role-missing-identity.test.ts`](../../tests/harness-dock/role-missing-identity.test.ts) | RPC 原生 ID、公共 Session witness 的实际 Owner key、实际显示名和 cwd 故意不同；逐请求只发送原生 ID。实际工具 schema 没有模型填写的 Run、execution、接收者或身份归属字段。无关联、节点歧义、管理者歧义和跨角色调用保留真实后端的 HTTP 403、code、message。健康派发会拒绝重复身份，因此歧义只在**隔离测试后端的持久化文件**中注入，后端真实读取/解析/归属判定不被替换；不声称正常派发能产生该损坏状态。 |
+| P3 | [`role-session-isolation.test.ts`](../../../tests/harness-dock/role-session-isolation.test.ts) | 两个不同原生 ID 的独立实际 OMP Session 同时到达被扣住的 HTTP 正文；通过原生 RPC abort manager，观察其真实 socket 关闭与 cancelled 工具结果；node 仍保持连接并取得完整字面响应。随后两 Session 的显式独立调用均成功，核对每次请求的身份和次数。这里 HTTP 响应受控，不宣称该场景证明真实后端业务效果；真实后端接通另由 P2 证明。 |
+| P6 | identity integration 与 [`role-missing-identity.test.ts`](../../../tests/harness-dock/role-missing-identity.test.ts) | RPC 原生 ID、公共 Session witness 的实际 Owner key、实际显示名和 cwd 故意不同；逐请求只发送原生 ID。实际工具 schema 没有模型填写的 Run、execution、接收者或身份归属字段。无关联、节点歧义、管理者歧义和跨角色调用保留真实后端的 HTTP 403、code、message。健康派发会拒绝重复身份，因此歧义只在**隔离测试后端的持久化文件**中注入，后端真实读取/解析/归属判定不被替换；不声称正常派发能产生该损坏状态。 |
 | P6 缺失身份 | missing identity 同上 | 健康 OMP 总有工具上下文身份；专用 fixture 仅将这个外部原生事实变为空字符串，实际加载、原生注册、角色代码、公共 Session 观察与 HTTP 保持真实。保留有效显示名、cwd 和原始 Session 事实；run/collect/report 均返回 `session-unavailable`，trap endpoint 收到零请求。这个故障注入不是自然发生过的宿主丢失身份事件，也不冒充 P1 的独立入口加载证据。 |
-| P7 | [`role-stable-config.test.ts`](../../tests/harness-dock/role-stable-config.test.ts) | 两个不同临时 cwd 和部署内两个 ID 推导目录均放置可解析的错误 endpoint/1ms 预算配置。两角色仍访问明确部署 endpoint，延迟约 90ms 的完整响应成功；扣住正文后普通预算 700ms、collect 1600ms 分别真实断连并返回 timeout，不误用 1ms 或交付默认预算。测量从 endpoint 收到请求到真实 socket close，排除 provider/loader 时间；原生子进程时钟不能由测试假时钟推进。 |
-| P8 | [`role-config-failures.test.ts`](../../tests/harness-dock/role-config-failures.test.ts) | 两角色各自独立覆盖文件缺失、不可解析 YAML、非法业务毫秒预算；实际宿主报告带角色 ID、configuration、真实 workflow-chat 路径及具体原因的错误。即使 cwd 和 ID 默认目录中有有效配置，也无 fallback HTTP、无角色工具注册。测试同时断言明确失败诊断，绝不把未启用或空结果本身当成功。 |
+| P7 | [`role-stable-config.test.ts`](../../../tests/harness-dock/role-stable-config.test.ts) | 两个不同临时 cwd 和部署内两个 ID 推导目录均放置可解析的错误 endpoint/1ms 预算配置。两角色仍访问明确部署 endpoint，延迟约 90ms 的完整响应成功；扣住正文后普通预算 700ms、collect 1600ms 分别真实断连并返回 timeout，不误用 1ms 或交付默认预算。测量从 endpoint 收到请求到真实 socket close，排除 provider/loader 时间；原生子进程时钟不能由测试假时钟推进。 |
+| P8 | [`role-config-failures.test.ts`](../../../tests/harness-dock/role-config-failures.test.ts) | 两角色各自独立覆盖文件缺失、不可解析 YAML、非法业务毫秒预算；实际宿主报告带角色 ID、configuration、真实 workflow-chat 路径及具体原因的错误。即使 cwd 和 ID 默认目录中有有效配置，也无 fallback HTTP、无角色工具注册。测试同时断言明确失败诊断，绝不把未启用或空结果本身当成功。 |
 
 用例输出原生身份、Owner key、cwd、实际请求、后端报告归属、拒绝正文、预算断连测量和配置诊断。端口、临时路径和业务标识每次重新生成，不把某次时序作为性能承诺。
 
@@ -33,10 +33,10 @@
 
 审查依据为共享源码 ADR、公共 Session/HTTP interface 与以下完整角色源码，不以运行成功代替依赖审查。
 
-1. **发现入口薄**：[`manager-chat.ts`](../../entrypoints/omp-auto/manager-chat.ts) 与 [`node-chat.ts`](../../entrypoints/omp-auto/node-chat.ts) 都只有文档注释及到对应角色装配的 default re-export。没有参数校验、请求、Run 协议或状态业务。
-2. **依赖方向**：两个 [`*-definition.ts`](manager-definition.ts) / [`node-definition.ts`](node-definition.ts) 只依赖 framework 声明及 [`common/config.ts`](common/config.ts)；两个 [`harnesses/`](harnesses/) 依赖自身声明、common requests、公开 framework interface、公开 omp adapter 与 Node 路径工具。common/config 只依赖公开配置类型；[`common/requests.ts`](common/requests.ts) 只依赖公开 ImplementationContext 和 [`general/http`](../../framework/interface/general/http.ts)，不反向导入角色。完整 import/re-export 清单已逐项审查，不存在角色互相依赖。
+1. **发现入口薄**：[`manager-chat.ts`](../../../entrypoints/omp-auto/manager-chat.ts) 与 [`node-chat.ts`](../../../entrypoints/omp-auto/node-chat.ts) 都只有文档注释及到对应角色装配的 default re-export。没有参数校验、请求、Run 协议或状态业务。
+2. **依赖方向**：两个 [`*-definition.ts`](../../../extensions/workflow-chat/manager-definition.ts) / [`node-definition.ts`](../../../extensions/workflow-chat/node-definition.ts) 只依赖 framework 声明及 [`common/config.ts`](../../../extensions/workflow-chat/common/config.ts)；两个 [`harnesses/`](../../../extensions/workflow-chat/harnesses) 依赖自身声明、common requests、公开 framework interface、公开 omp adapter 与 Node 路径工具。common/config 只依赖公开配置类型；[`common/requests.ts`](../../../extensions/workflow-chat/common/requests.ts) 只依赖公开 ImplementationContext 和 [`general/http`](../../../framework/interface/general/http.ts)，不反向导入角色。完整 import/re-export 清单已逐项审查，不存在角色互相依赖。
 3. **framework 不认识 Run 协议**：对 `framework/**/*.ts` 与 `adapters/**/*.ts` 检查 `workflow-chat|manager-chat|node-chat|/api/workflow|runId|executionId`，无命中；角色只通过公共 Session observation 读原生身份，公共 HTTP 负责完整传输、预算与取消。业务 action、路由与结果归属保留在角色目录。搜索是补充；同时审查了完整角色依赖及公共 HTTP 出口，未把单次词搜索当成所有架构性质的证明。
-4. **无复制的 connect-bot 私有客户端**：角色没有 connect-bot import。对照其 [`shared-logic/panel/client.ts`](../connect-bot/shared-logic/panel/client.ts)，登记 envelope、register/heartbeat/state/unregister 和 panel receipt 不进入 workflow-chat；两者各自消费同一个公开 HTTP interface，而不是把 panel 客户端复制或暴露为角色客户端。
+4. **无复制的 connect-bot 私有客户端**：角色没有 connect-bot import。对照其 [`shared-logic/panel/client.ts`](../../../extensions/connect-bot/shared-logic/panel/client.ts)，登记 envelope、register/heartbeat/state/unregister 和 panel receipt 不进入 workflow-chat；两者各自消费同一个公开 HTTP interface，而不是把 panel 客户端复制或暴露为角色客户端。
 5. **common 有实际深度，没有空层**：config 持有两 ID 必须共享的明确文件定位与字段契约，两个声明都消费它；requests 持有两角色共用的真实身份检查、完整预算选择、每 Session AbortController 资源、工具取消/结束合并、JSON/非 2xx/不确定结果保真。两个角色在各自 implementation factory 中创建 requests，不共享全局 Session 身份或 controller。没有新增通用工具平台、虚设协议 port、纯转发目录层或后端状态机。
 6. **职责界限**：manager 装配只注册必要原生工具、严格整理对应 action 参数并呈现后端结果；node 只提交 body 和原生身份。无自主重试、状态推导、自动派发或归属猜测。装配以 `import.meta.url` 定位仓库根，明确选择公共自动启动策略；配置机制、Session 生命周期、Prompt 历史和 HTTP 都复用既有 framework，而不是角色另造机制。
 

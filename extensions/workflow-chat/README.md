@@ -2,7 +2,7 @@
 
 节点执行者面向 Map Run 的一次实际执行，只负责工作与报告，不拥有管理者状态操作权。[领域词汇](GLOSSARY.md)区分 Run、执行者和交接完成。管理者与节点是独立 Session、独立声明、独立自动入口，不是一个工具的角色切换参数。
 
-部署者从[长期部署与故障处置](OPERATIONS.md)开始；实际协议与角色语义由本文维护，操作手册不建立另一套协议。隔离配置、恢复/重试、真实材料交接及通知失败的技术证据见[长期演练记录](operations-rehearsal.md)。
+部署者从[长期部署与故障处置](OPERATIONS.md)开始；实际协议与角色语义由本文维护，操作手册不建立另一套协议。隔离配置、恢复/重试、真实材料交接及通知失败的复核步骤见操作手册的隔离配置与处置演练章节。
 
 ## 安装与自动加载
 
@@ -149,7 +149,7 @@ manager 的 `collect` 没有业务参数，调用样例为 `{}`。实际传输�
 
 ## 验证入口与已验证范围
 
-双角色自动装配、真实身份、取消隔离、稳定配置及 P5 非运行依赖审查见 [集成证据](INTEGRATION-EVIDENCE.md)，包含实际环境、复核命令和受控故障的证明边界。所有指定 coverage 的负责人、最终命令、真实 A/B→C 环境阻塞与唯一 H1 状态见 [最终验收证据](FINAL-ACCEPTANCE.md)；自动检查通过不等于真实运行或 H1 已通过。
+以下命令用于复核角色协议与真实宿主边界；每次运行须记录自己的环境、结果与限制。自动检查通过不等于真实模型协作或人工整体验收已通过。
 
 ```text
 bun test tests/workflow-chat
@@ -166,7 +166,7 @@ bun run typecheck
 
 Prompt 检查直接捕获真实 omp 发给 provider 的文本，并读取其持久化的隐藏贡献；两角色均核对首次、普通轮次、新 owner 与切回原会话的行为。输入边界检查使用不同标记的真实后端 Task、工作、Bot/Map/user_input，取得实际 CLI 提交正文后原样送入真实 omp，核对工作文本块不变且工具指引是另一条消息。此处 Herdr 是记录型受控 CLI，不证明真实 Herdr 已启动这些会话。
 
-指引故障演练实际执行“已保存但通知失败→collect 并读取材料”“原执行修复→recover”“核实旧副作用后→retry”“人工补齐并读取真实材料→complete”。执行前可将 `WORKFLOW_PROMPT_EVIDENCE_DIR` 设为独立绝对目录：Prompt dock 保留原始请求与 Session JSONL，演练保留 `guidance-rehearsal.json`（实际注入全文、工具结果、HTTP 和外部 CLI 调用）。产物和决策均由验收 Agent/测试控制，不能当成真实模型工作结果；这些是 P26 技术证据，不是 H1 通过，H1 的唯一整体使用判断仍须独立汇总与用户确认。
+指引故障演练实际执行“已保存但通知失败→collect 并读取材料”“原执行修复→recover”“核实旧副作用后→retry”“人工补齐并读取真实材料→complete”。执行前可将 `WORKFLOW_PROMPT_EVIDENCE_DIR` 设为 `.scratch/manager-node-chat/evidence/` 下本次运行专用目录的绝对路径：Prompt dock 保留原始请求与 Session JSONL，演练保留 `guidance-rehearsal.json`（实际注入全文、工具结果、HTTP 和外部 CLI 调用）。产物和决策均由验收 Agent/测试控制，不能当成真实模型工作结果；这些是 P26 技术证据，不是 H1 通过，H1 的唯一整体使用判断仍须独立汇总与用户确认。
 
 测试通过真实隔离 omp 18.5.0 加载交付入口；受控 provider 仅发出预先指定的工具调用，不冒充真实模型自主工作。受控 HTTP 分别验证保存失败、已保存但通知失败、诊断失败以及空正文不被客户端拒绝；150ms 有界窗口内观察无额外请求，不证明无限期无动作。
 
@@ -175,16 +175,6 @@ manager dock 通过实际 manager 入口与真实后端执行 A/B→C 小图的 
 collect dock 同样使用真实 manager 工具与隔离后端：后端期限 1 秒，分别配置普通 60ms/collect 3000ms 和普通 3000ms/collect 200ms，区分正常到期与客户端预算耗尽；公共 HTTP 用实际分段响应覆盖完整请求预算。报告场景通过后端公开接口准备旧/新执行，不依赖 dispatch/retry 工具；核对五种真实 reason、辅助通知失败、反复读取、completed 后收尾报告及旧/新报告交错的适用待办。此预算/待办场景本身不证明宿主取消或真实模型决策。
 
 取消专用 dock（P19）另用 **30 秒真实后端期限与 30 秒客户端预算**，在后端实际发送 `HTTP/1.1 200 OK`、正文仍为 0 字节后，分别向真实 omp 发出 `abort`、`new_session` 和关闭 stdin 的正常 shutdown。透明 TCP 观察器只转发字节与客户端 FIN，不主动制造 HTTP 响应或先行断开后端；它记录客户端 FIN 和后端自行返回的 FIN。要求两端在 5 秒内结束且没有正文，排除等满期限才释放。随后通过真实宿主恢复原生 Session（shutdown 还会重启宿主），提交真实 node 报告并由新的 collect 得到 `notification` 与该报告标识，排除遗留等待吞掉下一份通知。每次运行输出原生身份、响应头、字节数、双向 FIN 时序、实际终止反馈及报告标识，保留为命令日志即可复核。此观察验证连接和等待响应的释放，不测量后端内部 watch 接收者计数，也不声称取消撤销了已提交业务效果。
-
-2026-10-29 验证样本（Windows x64、Bun 1.4.2、隔离 omp 18.5.0、真实 herdr-bot safe_shutdown_shell；下面毫秒均从该连接建立计，端口/身份每次重建）：
-
-| 真实宿主操作 | 后端响应头 / 客户端 FIN / 后端 FIN | 仍未收到正文 | 后续真实报告 → 新 collect |
-| --- | --- | --- | --- |
-| `abort` | 1 / 3 / 3 ms | 0 字节 | `bc-1fecbf76e0d8` → `notification` |
-| `new_session` 后恢复原 Session | 1 / 4 / 4 ms | 0 字节 | `bc-761020ce1e44` → `notification` |
-| stdin 关闭、正常 shutdown 后重启恢复 | 1 / 5 / 5 ms | 0 字节 | `bc-de7d12662440` → `notification` |
-
-该次 `abort` 的实际错误为 `cancelled / Interrupted by user`，shutdown 为 `cancelled / Session ended`；切换时宿主没有交付旧工具结果。三个场景均收到真实 200、未等到 30 秒期限，且新 collect 的 `pendingReports.A` 对应表中报告、A 仍 running。复核使用上面的 lifecycle dock 命令，不把这组时序当作性能承诺。
 
 P21 分区经真实 manager 工具独立控制正常到期、工具取消、客户端预算、响应前断线、200 后无完整分块正文、Content-Length 截断及非法 JSON；S2 公共 HTTP 另观察取消/断流竞争与已采用期限后的取消，不把测试调度顺序提升为产品优先级。受控故障只证明这些分支的呈现，不证明真实模型决策或任意外部网络条件。
 派发/恢复 dock 通过真实 manager 工具与后端制造同批成功、依赖拒绝、身份阶段失败（外部 CLI 对两个目标返回同一原生身份），保留实际已启动效果；并从真实启动/身份读取失败进入三种 reconciliation，验证 created 只查询原 agent。执行失败场景分别验证 confirmed=false/空依据拒绝、paused 下 recover 原执行与 retry 拒绝，以及新执行成功/提交失败均保留旧输出、旧执行和新效果。HTTP 捕获分区逐 action 拒绝额外身份、不适用字段和模型 Chat 引用。这里的 Herdr CLI 故障/身份均受控，不能据此宣称真实 Herdr/模型已完成恢复演练，也不重复宣称通用部分提交覆盖。

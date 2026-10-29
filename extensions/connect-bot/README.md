@@ -115,13 +115,12 @@ Entry availability and a complete static check do not promote a harness support 
 native semantic equivalence, or deploy anything formally. Version evidence belongs to the
 [host support record](../../framework/docs/harness-support.md).
 
-**Pi verification limit:** basic entrypoint/registration scenarios were observed, but full lifecycle
-parity is not established. On the exercised Pi 1.4.0 RPC path, `new_session` triggered a new
-automatic registration rather than preserving the process-first-start-only policy described below;
-closing RPC stdin while armed did not produce an unregister within the observation window.
-These are known runtime gaps, not a complete lifecycle acceptance. Use `/connect-bot off` before
-closing that path. Exact evidence and limitations live in the
-[Pi connect-bot record](../../framework/docs/harness-support.md#pi-connect-bot-entrypoint-evidence).
+**Pi verification limit:** full lifecycle parity is not established. Pi 1.4.0 RPC has known
+lifecycle gaps: `new_session` can trigger another automatic registration despite the intended
+process-first-start-only policy, and closing RPC stdin must not be relied on to unregister an
+armed session. Use `/connect-bot off` before closing that path. Entrypoint availability is not
+complete lifecycle acceptance; consult the [host support record](../../framework/docs/harness-support.md)
+for version support and verification requirements.
 
 **Loading is not enabling, and a startup target is not a connection.** The automatic document states
 `enabled: true`, and the framework hands that enabling intent to the same business operation
@@ -332,13 +331,12 @@ while the dot stays); terminal states after an aborted or assistant-less turn; a
 `/connect-bot off`; a killed process (the row stays, then passes offline); a panel outage (one
 first-failure notice, auto-disarm about 30s later, no automatic reconnect); the guards (`--no-ui`,
 unknown argument); multi-session isolation; coexistence with codebase-tools; load-source
-exclusivity; and the configuration switch. Its record must name the frozen source baseline
-(`my-omp-toolkit` `master@34d7c40`, extension commit `d3648a0`), the runtime
-(`@oh-my-pi/pi-coding-agent@18.5.0` + `bun --version` + the lockfiles), the panel revision
-(`omp-bot@d50e35c`), the `config.yaml` content, the executor and the date; the automated
-precondition is the recorded release gate — `bun test` 367 pass / 0 fail across 42 files and a clean
-`tsc --noEmit` on those baselines (recorded 2026-10-07). The two shared
-cutover steps (add the discovery root once,
+exclusivity; and the configuration switch. Its record must name the frozen source baseline,
+the runtime (`@oh-my-pi/pi-coding-agent@18.5.0` + `bun --version` + the lockfiles), the panel
+revision, the `config.yaml` content, the executor and the date. Before acceptance, run `bun test`
+and `bun run typecheck` against those exact baselines and save their results with the acceptance
+record under `.scratch/connect-bot/evidence/`; an older passing run is not the current release gate.
+The two shared cutover steps (add the discovery root once,
 restart the harness) are in
 [H3 — permanent cutover and cutover smoke](../../framework/README.md#h3--permanent-cutover-and-cutover-smoke);
 what differs here is the configuration file, the panel rows the old implementation leaves behind, and

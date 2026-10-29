@@ -82,8 +82,8 @@ cargo build --manifest-path backend/Cargo.toml --example safe_shutdown_shell --b
 bun install --frozen-lockfile
 if ($LASTEXITCODE -ne 0) { throw 'Install dependencies in this rehearsal checkout first' }
 $env:HERDR_BOT_REPO = 'D:\source\herdr-bot'
-$env:WORKFLOW_PROMPT_EVIDENCE_DIR = Join-Path $env:TEMP ('workflow-operations-' + [guid]::NewGuid())
-New-Item -ItemType Directory -Path $env:WORKFLOW_PROMPT_EVIDENCE_DIR | Out-Null
+$env:WORKFLOW_PROMPT_EVIDENCE_DIR = Join-Path $PWD ('.scratch/manager-node-chat/evidence/operations-' + [guid]::NewGuid())
+New-Item -ItemType Directory -Force -Path $env:WORKFLOW_PROMPT_EVIDENCE_DIR | Out-Null
 bun test tests/harness-dock/role-guidance-rehearsal.test.ts 2>&1 | Tee-Object (Join-Path $env:WORKFLOW_PROMPT_EVIDENCE_DIR 'rehearsal.log')
 if ($LASTEXITCODE -ne 0) { throw 'Rehearsal failed; inspect the retained evidence' }
 bun test tests/harness-dock/node-report.test.ts tests/harness-dock/manager-collect-budget.test.ts 2>&1 | Tee-Object (Join-Path $env:WORKFLOW_PROMPT_EVIDENCE_DIR 'configuration.log')
@@ -98,7 +98,7 @@ if ($LASTEXITCODE -ne 0) { throw 'Configuration/budget check failed' }
 4. **人工真实交接**：独立重做后人工实际写入并读取材料，在 complete.reason 写入地址、用途、限制及人工依据；观察 completed 且不伪造新报告。这里是 Agent/测试控制的人工处理样本，不是假称真实模型生成的材料。
 5. **证据与复验**：保存命令、退出码、环境、实际步骤和观察，检查 `guidance-rehearsal.json`（实际注入指引、工具结果、HTTP、外部 CLI 调用）。Prompt 专用 dock 的原始请求/Session 保留规则见 [验证入口](README.md#验证入口与已验证范围)。诊断到问题时先修正文档或所属实现，再跑受影响检查；行为改动按 [测试约定](../../docs/agents/testing.md) 跑所属分区/相应 smoke，TypeScript 改动再跑 typecheck。纯文档修改检查本地链接、锚点和示例，不要求用全仓测试代替技术核对。
 
-原始证据可能包含材料地址、Session 信息和请求全文，按本机访问策略保存，不作为公开安全样例。本次已执行的操作、结果及限制见 [长期演练记录](operations-rehearsal.md)。后续部署须运行自己的检查，历史记录不能自动认证新环境。
+原始证据可能包含材料地址、Session 信息和请求全文，按本机访问策略保存，不作为公开安全样例。每次部署须运行自己的检查，历史结果不能自动认证新环境。
 
 ## 6. 证据能证明什么
 

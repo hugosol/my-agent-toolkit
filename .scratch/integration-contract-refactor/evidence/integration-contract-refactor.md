@@ -18,7 +18,7 @@ extension 对 interface 的调用、声明、订阅、读取
     → 缺口、依据和无法解析的部分
 ```
 
-本轮最初先重构架构，使接入结构可检查、依赖规则可复用；完整需求提取、供给比较与生成随后在 §3.7 记录的工作中实现。本节保留当时的阶段背景，当前用法见[静态接入检查](integration-check.md)。
+本轮最初先重构架构，使接入结构可检查、依赖规则可复用；完整需求提取、供给比较与生成随后在 §3.7 记录的工作中实现。本节保留当时的阶段背景，当前用法见[静态接入检查](../../../framework/docs/integration-check.md)。
 
 ## 2. 架构边界保持不变
 
@@ -33,9 +33,9 @@ extension 对 interface 的调用、声明、订阅、读取
 
 ### 3.1 提取 framework 共享接入规划
 
-新增 [`framework/behaviors/integration-plan.ts`](../behaviors/integration-plan.ts)，以普通结构化使用信息为输入，输出运行时处理路径、port 接入义务及其原因。
+新增 [`framework/behaviors/integration-plan.ts`](../../../framework/behaviors/integration-plan.ts)，以普通结构化使用信息为输入，输出运行时处理路径、port 接入义务及其原因。
 
-[`binding.ts`](../behaviors/binding.ts) 已使用这份规划选择相应注册路径，避免未来检查器再独立复制一套条件判断。
+[`binding.ts`](../../../framework/behaviors/binding.ts) 已使用这份规划选择相应注册路径，避免未来检查器再独立复制一套条件判断。
 
 本轮保留的既有关系包括：
 
@@ -46,11 +46,11 @@ extension 对 interface 的调用、声明、订阅、读取
 
 这是对现有运行时行为的提取，不是对所有依赖关系重新作语义裁决。规划中也记录了可选接入，但不能据此直接推断任意 extension 的业务必需性。
 
-**边界（本阶段）：** 规划本身仍只负责运行时注册路径，不承担 interface 全量依赖分析。当时尚未覆盖的观察读取、Provider 使用和 delivery 内部回调，后来由 §3.7 的 demand/supply 分析补齐；见[静态接入检查](integration-check.md)。
+**边界（本阶段）：** 规划本身仍只负责运行时注册路径，不承担 interface 全量依赖分析。当时尚未覆盖的观察读取、Provider 使用和 delivery 内部回调，后来由 §3.7 的 demand/supply 分析补齐；见[静态接入检查](../../../framework/docs/integration-check.md)。
 
 ### 3.2 引入统一的实现编写入口
 
-根 authoring 入口 [`framework/interface`](../interface/index.ts) 新增 `defineImplementation`，其类型与物化逻辑位于 [`details/implementation.ts`](../interface/details/implementation.ts)。
+根 authoring 入口 [`framework/interface`](../../../framework/interface/index.ts) 新增 `defineImplementation`，其类型与物化逻辑位于 [`details/implementation.ts`](../../../framework/interface/details/implementation.ts)。
 
 新的结构将两部分分开：
 
@@ -79,7 +79,7 @@ extension 对 interface 的调用、声明、订阅、读取
 
 ### 3.4 迁移 extension 与其他消费者
 
-- **model-cost**：共享 [`modelCostImplementation`](../../extensions/model-cost/shared-logic/runtime.ts) 组织静态订阅、命令和生命周期入口；业务 runtime 提供相应方法，不再返回动态 implementation map。OMP、pi assembly 继续注入各自的构造信息和原生前端清理逻辑。
+- **model-cost**：共享 [`modelCostImplementation`](../../../extensions/model-cost/shared-logic/runtime.ts) 组织静态订阅、命令和生命周期入口；业务 runtime 提供相应方法，不再返回动态 implementation map。OMP、pi assembly 继续注入各自的构造信息和原生前端清理逻辑。
 - **connect-bot**：使用统一 authoring 入口，保留 owner 范围订阅及定向命令语义。
 - **codebase-tools**：无需业务实现的 assembly 继续省略 implementation。
 - 受影响的 framework 测试、model-cost 测试、真实宿主 fixtures 和辅助脚本均已迁移。
@@ -87,7 +87,7 @@ extension 对 interface 的调用、声明、订阅、读取
 
 ### 3.5 Adapter 侧可检查组装（后续已完成）
 
-新增内部 authoring 辅助 [`framework/runtime/adapter-authoring.ts`](../runtime/adapter-authoring.ts)，没有增加第二套 adapter 接口。共同契约仍是 `HarnessPort`；映射现按实际来源组织，见[adapter 导航](framework-capabilities.md#adapter-implementation-navigation)，不再使用旧 `domain/` 分类。
+新增内部 authoring 辅助 [`framework/runtime/adapter-authoring.ts`](../../../framework/runtime/adapter-authoring.ts)，没有增加第二套 adapter 接口。共同契约仍是 `HarnessPort`；映射现按实际来源组织，见[adapter 导航](../../../framework/docs/framework-capabilities.md#adapter-implementation-navigation)，不再使用旧 `domain/` 分类。
 
 - OMP、pi 的顶层 `port.ts` 分别导出 `OMP_PORT`、`PI_PORT`，由 `defineAdapterPort<Context>({...})` 定义实际组装。
 - 组装必须明确列出全部 `HarnessPort` 成员，包括可选项。必需成员只能提供符合契约的工厂；静态不提供的可选项使用 `unavailablePortMember(reason)`，不使用空函数冒充实现。
@@ -109,14 +109,14 @@ extension 对 interface 的调用、声明、订阅、读取
 
 ### 3.7 源码检查与生成命令
 
-命令、选项、退出码、报告字段、需求推导、供给状态、具体 assembly 输出契约、生成器行为和限制已集中到[静态接入检查](integration-check.md)，这里不再维护第二份操作说明。本节只保留重构达成的工作假设与边界：
+命令、选项、退出码、报告字段、需求推导、供给状态、具体 assembly 输出契约、生成器行为和限制已集中到[静态接入检查](../../../framework/docs/integration-check.md)，这里不再维护第二份操作说明。本节只保留重构达成的工作假设与边界：
 
 - 检查默认分析所有 extension/adapter 目录组合，不要求已有目标 discovery entry 或成功运行的参考 harness；`--root` 支持独立源码根。extension/adapter 源路径都归到其所属目录，生成目标不得越出 `adapters/` 树。
 - 分析复用 authoring 静态解析器、共享 framework 规划与显式语义规则，不导入或执行 extension/adapter，不读配置，不展开运行时分枝。动态能力成员、未映射的 context/Session 成员和超出追溯界限必须报告分析未完成；普通业务数据动态索引不受限。
 - 需求来自实际结构，不再维护旧的 `subagentRequirements`、assembly `requiredSemantics`、公开的重复 requirement 类型、adapter inventory 或旧声明比较器；扩展作者不需要同步第二份列表。内部行为验证词汇保留，不变成加载政策。
 - 生成器只补真实缺失接线的引用，保留已有实现，不生成实现体、空函数或声明桩，不创建 `missing-implementations` 模块；生成后编译失败是有意状态。检查与生成都不改变运行时加载或版本支持。
 
-历史命令与验证结果保留在 §7.2/§7.3；当前用法以[静态接入检查](integration-check.md)为准。
+历史命令与验证结果保留在 §7.2/§7.3；当前用法以[静态接入检查](../../../framework/docs/integration-check.md)为准。
 
 ## 4. 保持的运行时行为
 
@@ -128,7 +128,7 @@ extension 对 interface 的调用、声明、订阅、读取
 
 ## 5. 检查器工作的设计目标（已实现）
 
-以下条目记录本阶段的设计目标；已实现的当前行为、状态语义和命令见[静态接入检查](integration-check.md)。详细计划见 [refactor spec](../../.scratch/integration-contract-refactor/spec.md)。
+以下条目记录本阶段的设计目标；已实现的当前行为、状态语义和命令见[静态接入检查](../../../framework/docs/integration-check.md)。详细计划见 `../spec.md`（原开发计划，当前工作树未保留）。
 
 1. 提取 extension 对 framework 的全部可能依赖，不执行用户配置，也不展开运行时分支组合。
 2. 结合 framework 明确维护的语义依赖规则，展开最小接入契约及其实现义务。
@@ -146,7 +146,7 @@ extension 对 interface 的调用、声明、订阅、读取
 
 静态表达检查作为开发期门禁：被检查的最终源码必须满足启用的规则，无法解析的接入结构不能静默算作通过。通过仅表示检查范围内满足这些静态表达约束，不证明业务语义、完整接入依赖或行为兼容性；修复不能通过删除必要功能、隐藏结构或压制诊断来冒充完成，相关行为仍需验证。该门禁不改变 extension 的运行时加载行为。
 
-`bun run check:authoring` 现已通过 AST 和符号解析检查这些约束；支持静态常量、导入引用、可解析展开和受限共享包装，不执行 extension 模块。`--json` 提供精简诊断，`--rules` 输出同一份完整规则库。`bun run typecheck` 在原 TypeScript 7 类型检查后运行该门禁。检查失败不会改变运行时加载。使用方式、支持边界及 agent 修复循环见[静态表达检查指南](static-authoring-check.md)。上述静态门禁、完整需求提取、供给比较及生成命令均已实现；当前用法见[静态接入检查](integration-check.md)。
+`bun run check:authoring` 现已通过 AST 和符号解析检查这些约束；支持静态常量、导入引用、可解析展开和受限共享包装，不执行 extension 模块。`--json` 提供精简诊断，`--rules` 输出同一份完整规则库。`bun run typecheck` 在原 TypeScript 7 类型检查后运行该门禁。检查失败不会改变运行时加载。使用方式、支持边界及 agent 修复循环见[静态表达检查指南](../../../framework/docs/static-authoring-check.md)。上述静态门禁、完整需求提取、供给比较及生成命令均已实现；当前用法见[静态接入检查](../../../framework/docs/integration-check.md)。
 
 `bun run check:integrations` 已从旧的子代理声明匹配切换到源码推导；通过只表示受支持的静态分析范围内契约与结构满足，不表示原生逻辑正确。
 
@@ -154,7 +154,7 @@ extension 对 interface 的调用、声明、订阅、读取
 
 ## 6. 契约与语义漂移审阅
 
-已补充 [contract-driven agent pre-review](harness-support.md#contract-driven-agent-pre-review)。审阅不仅比较名称和类型，还要求追溯：
+已补充 [contract-driven agent pre-review](../../../framework/docs/harness-support.md#contract-driven-agent-pre-review)。审阅不仅比较名称和类型，还要求追溯：
 
 - framework 的语义承诺与交互模式；
 - 原生映射及已接受的差异；
@@ -194,7 +194,7 @@ agent 可以先筛选风险，但不得编造历史理由，也不能把“未�
 
 两项独立真实宿主 smoke 均使用本地 capture endpoint，不是外部模型服务或视觉 TUI 验收。临时 smoke 与类型负例文件已移除。未新增仅断言包装/转发的永久测试，现有行为套件验证消费方可见行为。
 
-验证限制：原有 `pi-terminal-round-smoke.ts` 默认要求 pi 1.2.0，当前安装为 1.3.0；显式指定 `--expect-pi-version 1.3.0` 后，又在加载前因临时入口生成的 Windows 导入路径 `./E:/...` 无法解析而失败。本轮没有修改该脚本；以上通过的独立 pi smoke 使用仓库内真实临时入口避开此路径问题，不能替代 terminal-round 专项场景的验收。以上是 §7.1 记录时点的限制；完整的静态供给分析与具体 assembly 输出契约随后在 §7.2–§7.3 实现，见[静态接入检查](integration-check.md)。这不把当时未执行的行为验证补成通过。
+验证限制：原有 `pi-terminal-round-smoke.ts` 默认要求 pi 1.2.0，当前安装为 1.3.0；显式指定 `--expect-pi-version 1.3.0` 后，又在加载前因临时入口生成的 Windows 导入路径 `./E:/...` 无法解析而失败。本轮没有修改该脚本；以上通过的独立 pi smoke 使用仓库内真实临时入口避开此路径问题，不能替代 terminal-round 专项场景的验收。以上是 §7.1 记录时点的限制；完整的静态供给分析与具体 assembly 输出契约随后在 §7.2–§7.3 实现，见[静态接入检查](../../../framework/docs/integration-check.md)。这不把当时未执行的行为验证补成通过。
 
 ### 7.2 检查与生成工具最终验证（2026-10-20）
 
@@ -256,8 +256,8 @@ API 调用不被当作 assembly。生成器仍拒绝覆盖条件工厂，不会�
 
 ## 8. 相关记录
 
-- [静态接入检查](integration-check.md) — 当前命令、状态语义、生成边界、限制与历史验证摘要
-- [总体架构及本轮重构边界](capability-interface-architecture.md#inspectable-authoring-and-shared-planning-2026-10-20)
-- [ADR-0002：共享接入规划与可检查 authoring](../../docs/adr/0002-semantic-extension-framework.md#shared-integration-planning-and-inspectable-authoring-2026-10-20)
-- [实施范围、延后事项与验证记录](../../.scratch/integration-contract-refactor/spec.md)
-- [领域术语](../GLOSSARY.md)
+- [静态接入检查](../../../framework/docs/integration-check.md) — 当前命令、状态语义、生成边界、限制与历史验证摘要
+- [总体架构及本轮重构边界](../../../framework/docs/capability-interface-architecture.md#inspectable-authoring-and-shared-planning-2026-10-20)
+- [ADR-0002：共享接入规划与可检查 authoring](../../../docs/adr/0002-semantic-extension-framework.md#shared-integration-planning-and-inspectable-authoring-2026-10-20)
+- 原开发计划 `../spec.md` — 实施范围、延后事项与验证记录（当前工作树未保留）
+- [领域术语](../../../framework/GLOSSARY.md)

@@ -7,7 +7,7 @@
 ## 1. 本轮来源、环境与原始记录
 
 - 本轮起始行为源码、tests、fixtures：`ee956c8957fe272f051a1e3ca8de363aae3421df`，初始 worktree 干净。经 Main 授权，仅在本 worktree 同步 10 的集成修复 `08888d8` 为 `21a55c4`（3 个 Pi 测试/支持文件，4 insertions / 4 deletions）；最终全仓与 typecheck 受测 HEAD 为 `21a55c4`，另有本页和 README 证据链接的文档改动，运行期间均未改变。专属 worktree：`C:/Users/hugos/AppData/Local/Temp/hyper-ticket-5DCwB4`；未操作 dev 工作区或合入 dev。
-- Windows 10.0.26200 x64，Bun 1.4.2；全局 `omp --version` 为 18.13.2，`herdr --version` 为 0.9.5。**全局版本只是只读检查；自动 dock 选择的是基线隔离 omp 18.5.0，不是这份全局 omp。** `OMP_TEST_VERSION` 未设置，支持范围仍以 [Harness support](../../framework/docs/harness-support.md) 为准。
+- Windows 10.0.26200 x64，Bun 1.4.2；全局 `omp --version` 为 18.13.2，`herdr --version` 为 0.9.5。**全局版本只是只读检查；自动 dock 选择的是基线隔离 omp 18.5.0，不是这份全局 omp。** `OMP_TEST_VERSION` 未设置，支持范围仍以 [Harness support](../../../framework/docs/harness-support.md) 为准。
 - `bun install --frozen-lockfile` 在本 worktree 退出 0，安装 14 packages；没有修改锁文件或全局 agent 配置。
 - 原始记录：`C:/Users/hugos/AppData/Local/Temp/workflow-final-acceptance-12-gg1humqj`。`environment.json` 保存来源、环境、配置/锁文件/后端产物 SHA-256；`commands.json` 保存每条命令、UTC 起始、耗时、退出状态及对应 stdout/stderr 日志。Prompt 原始请求与 Session 记录使用该目录下的 `prompts/`。临时记录含本机路径和 Session 信息，应按本机访问策略保管。
 - 真实后端测试输入：`HERDR_BOT_REPO=E:/Developer/myhub/herdr-bot`，`HERDR_BOT_BINARY=E:/Developer/myhub/herdr-bot/backend/target/debug/examples/safe_shutdown_shell.exe`，`HERDR_BOT_METADATA=E:/Developer/myhub/herdr-bot/meta-data/task-options.toml`。这是测试启动定位，不是角色业务配置。safe_shutdown_shell 与 herdr-fixture 的 SHA-256 分别为 `780c7239c4c6d60245ffd1c0baba765d0d9831ae41d39e2a1ce5f922504ae12e`、`f48171da3fb6a56c0e20cdd994bc5275fa689320b7aeb5dc84feef767df1bb2b`；没有以 checkout 提交推断二进制可重现构建。
@@ -25,7 +25,7 @@
 
 以下为原开发轮次记录。
 
-昂贵的真实宿主/全仓运行按 [测试协调规则](../../docs/agents/testing.md) 与 11、10 集成执行者顺序交接窗口；不以裸 `bun test` 绕过 package 入口。
+昂贵的真实宿主/全仓运行按 [测试协调规则](../../../docs/agents/testing.md) 与 11、10 集成执行者顺序交接窗口；不以裸 `bun test` 绕过 package 入口。
 
 | 实际命令 | 结果与证明边界 |
 | --- | --- |
@@ -91,12 +91,12 @@ smoke 使用其自建回环证书，子进程显式关闭证书校验，因此�
 | P26 H1 指引部分 | 12 | 实际注入与演练证据已归集；H1 尚未提交，不能以技术检查代替用户清楚可用判断。 |
 | P27 | 09 | `workflow/role-input-boundaries.test.ts`：真实后端启动正文与 OMP 输入、Task/本次工作/指引不同标记，不复制 Bot/Map 或传播 node 的 user_input。 |
 | P28 真实运行与 H1 运行部分 | 12 | 启动前环境检查见下一节；未执行真实 A/B→C，无工具/产物使用/报告后实际收尾证据；不能通过受控 dock 关闭。H1 未提交。 |
-| P29 技术 | 11 | [操作手册](OPERATIONS.md) 与 [独立部署/故障演练记录](operations-rehearsal.md)：独立部署安装、实际配置、recover/retry/人工交接/通知失败、66 个本地链接/锚点、15 JSON、2 TOML 条目；实操 1+3 pass / 0 fail。 |
+| P29 技术 | 11 | [操作手册](../../../extensions/workflow-chat/OPERATIONS.md) 与 [独立部署/故障演练记录](operations-rehearsal.md)：独立部署安装、实际配置、recover/retry/人工交接/通知失败、66 个本地链接/锚点、15 JSON、2 TOML 条目；实操 1+3 pass / 0 fail。 |
 | P29 H1 说明部分 | 12 | 长期部署说明与演练已归集；H1 尚未提交，技术修正与复验仍由 Agent 负责。 |
 
 10 的技术归集为 11 个新增 S1 用例，全部以公开角色工具观察，具体检查结果和 P5 源码审查见 [装配证据](INTEGRATION-EVIDENCE.md)。01/06 初期的历史 Pi JSONL fixture 和旧 bot-options metadata 缺失在前序集成已分别迁移为 frozen `tests/framework/fixtures/pi-history/` 与现行 `task-options.toml`；不沿用早期失败作为当前结果，也不通过重造样例冒充历史材料。
 
-独立预期来自动作/错误的字面 HTTP 样例、人工推导 A/B→C 小图及实际后端契约；不是由角色被测实现重算。取消和无自主动作仅在各测试声明的时间/连接观察窗口内成立，不扩张为无限期保证。详细机制与观察边界见 [README](README.md#验证入口与已验证范围)。
+独立预期来自动作/错误的字面 HTTP 样例、人工推导 A/B→C 小图及实际后端契约；不是由角色被测实现重算。取消和无自主动作仅在各测试声明的时间/连接观察窗口内成立，不扩张为无限期保证。详细机制与观察边界见 [README](../../../extensions/workflow-chat/README.md#验证入口与已验证范围)。
 
 ## 4. P28：真实协作被什么阻塞
 
@@ -129,6 +129,6 @@ smoke 使用其自建回环证书，子进程显式关闭证书校验，因此�
 
 > 结合实际注入指引、真实 A/B→C 推进及其故障/人工干预、长期部署与故障说明，整体判断这些内容是否清楚、可用；若有不清楚之处，请指出具体场景或文字。
 
-待该轮具备前提时，统一提供 [协议与指引](README.md)、[装配与身份证据](INTEGRATION-EVIDENCE.md)、[操作手册](OPERATIONS.md)、[故障演练](operations-rehearsal.md) 以及真实 P28 工具/材料/干预记录。技术和文档修正、取消与公共消费者兼容、静态检查、证据收集及复验仍归 Agent；用户只作约定的整体主观判断。H1 反馈需保留原意并闭环，不能未经修正或复验直接改写成通过。
+待该轮具备前提时，统一提供 [协议与指引](../../../extensions/workflow-chat/README.md)、[装配与身份证据](INTEGRATION-EVIDENCE.md)、[操作手册](../../../extensions/workflow-chat/OPERATIONS.md)、[故障演练](operations-rehearsal.md) 以及真实 P28 工具/材料/干预记录。技术和文档修正、取消与公共消费者兼容、静态检查、证据收集及复验仍归 Agent；用户只作约定的整体主观判断。H1 反馈需保留原意并闭环，不能未经修正或复验直接改写成通过。
 
 工作流实现/集成完成、可执行自动检查结果、P28 环境阻塞、H1 未确认是四个不同事实；本页和后续交接不得合并成“全部验收通过”。

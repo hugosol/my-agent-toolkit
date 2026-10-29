@@ -1,6 +1,6 @@
 # 长期部署说明：P29 技术审查与隔离演练记录
 
-日期：2026-10-29。此记录用于长期维护及整体使用验收的技术证据汇总，**不代表 H1 已通过**。操作入口是 [OPERATIONS](OPERATIONS.md)，协议权威是 [README](README.md)。不依赖临时 spec、讨论或工作票。
+日期：2026-10-29。此记录用于长期维护及整体使用验收的技术证据汇总，**不代表 H1 已通过**。操作入口是 [OPERATIONS](../../../extensions/workflow-chat/OPERATIONS.md)，协议权威是 [README](../../../extensions/workflow-chat/README.md)。不依赖临时 spec、讨论或工作票。
 
 ## 环境与归属
 
@@ -61,4 +61,4 @@
 
 本次没有 TypeScript 或业务改动，因此未运行 typecheck、全仓分区或与修改无关的取消/派发 smoke。真实宿主加载、HTTP、后端落盘和文件读取均在上述隔离环境实际执行；provider/Herdr、工具选择和材料内容受控，不证明真实模型自主工作、真实 Herdr 启动模型、生产配置、跨平台支持或无限期无重试。node-report 对额外外部 CLI 调用的观察窗口为 150ms，不能据此宣称无限期静默。
 
-所有 P29 技术项已有上面的文档审查或 S1 实操证据；未决的只有不属于本票技术签收的整体 H1 使用判断。版本支持状态仍由 [Harness support](../../framework/docs/harness-support.md) 维护；本记录不自动提升版本、OS 或 pi 支持，也不替代新环境上线检查。
+所有 P29 技术项已有上面的文档审查或 S1 实操证据；未决的只有不属于本票技术签收的整体 H1 使用判断。版本支持状态仍由 [Harness support](../../../framework/docs/harness-support.md) 维护；本记录不自动提升版本、OS 或 pi 支持，也不替代新环境上线检查。

@@ -41,7 +41,7 @@
 | 仓库概览、安装与常用运行命令 | [根 README](README.md) |
 | 不同上下文的领域词汇 | [Glossary Map](GLOSSARY-MAP.md) |
 | 为什么采用当前架构、哪些方案被接受或否决 | [架构决策目录](docs/adr/) |
-| Framework 接入契约的演进与当时的验证结果 | [接入契约重构记录](framework/docs/integration-contract-refactor.md) |
+| Framework 接入契约与静态检查边界 | [能力接口架构](framework/docs/capability-interface-architecture.md)；[静态接入检查](framework/docs/integration-check.md) |
 | Prompt contribution 的研究依据 | [Prompt injection research](framework/docs/research/prompt-injection-research.md) |
 | 尚未解决的 framework 研究与工作项 | [Framework backlog](framework/docs/semantic-extension-framework-backlog.md) |
 | Agent 工作约定与协作流程 | [AGENTS.md](AGENTS.md)；[Agent 文档目录](docs/agents/) |

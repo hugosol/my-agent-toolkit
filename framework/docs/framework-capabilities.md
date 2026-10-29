@@ -155,7 +155,7 @@ loading supply is `provided`, not a warning based only on the generic factory's 
 Type and structural completeness do not establish correct native mapping. A no-op can satisfy a type;
 reviewers, agents and behavior verification remain responsible for semantic correctness. The commands
 neither install a harness, promote support, read a verification report nor change extension loading.
-See [the refactor and generation boundary](integration-contract-refactor.md) and
+See [the integration analysis and generation boundary](integration-check.md) and
 [contract-driven upgrade review](harness-support.md#contract-driven-agent-pre-review).
 
 ### Adapter implementation navigation

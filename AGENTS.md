@@ -2,7 +2,7 @@
 
 ### Issue tracker
 
-Issues and specs live as markdown files under `.scratch/<feature>/` in this repo; decision tickets use the `open`/`claimed`/`resolved` lifecycle. See `docs/agents/issue-tracker.md`.
+Issues, specs, and disposable development records live under `.scratch/<feature>/`; put evidence, acceptance results, rehearsal records, and test-run logs in its `evidence/` directory so they can be removed together after development. Long-lived documentation must be self-contained and must not reference these records. Decision tickets use the `open`/`claimed`/`resolved` lifecycle. See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 
