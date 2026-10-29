@@ -1,0 +1,1474 @@
+{
+  "manifest": "E:\\Developer\\myhub\\herdr-bot\\backend\\Cargo.toml",
+  "outputDir": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF",
+  "configuration": {
+    "binaryJobs": 4,
+    "testThreads": null,
+    "outputDir": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF",
+    "help": false,
+    "rustTestThreads": null,
+    "cargoTargetDir": null
+  },
+  "startedAt": "2026-10-29T05:15:54.414Z",
+  "status": "passed",
+  "cancelled": false,
+  "cancellationReason": null,
+  "stages": {
+    "build": {
+      "name": "build",
+      "cwd": "E:\\Developer\\myhub\\herdr-bot\\backend",
+      "logName": "build",
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "status": "passed",
+      "durationMs": 42650.2311,
+      "log": {
+        "stdout": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\build.stdout.log",
+        "stderr": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\build.stderr.log"
+      },
+      "command": "cargo",
+      "args": [
+        "test",
+        "--manifest-path",
+        "E:\\Developer\\myhub\\herdr-bot\\backend\\Cargo.toml",
+        "--no-run",
+        "--message-format=json"
+      ]
+    },
+    "binaries": {
+      "name": "binaries",
+      "status": "passed",
+      "durationMs": 118382.7871
+    },
+    "doctest": {
+      "name": "doctest",
+      "cwd": "E:\\Developer\\myhub\\herdr-bot\\backend",
+      "logName": "doctest",
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "status": "passed",
+      "durationMs": 539.808400000009,
+      "log": {
+        "stdout": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\doctest.stdout.log",
+        "stderr": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\doctest.stderr.log"
+      },
+      "command": "cargo",
+      "args": [
+        "test",
+        "--manifest-path",
+        "E:\\Developer\\myhub\\herdr-bot\\backend\\Cargo.toml",
+        "--doc"
+      ]
+    }
+  },
+  "targets": [
+    {
+      "id": "[\"path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0\",\"herdr-bot\",\"E:\\\\Developer\\\\myhub\\\\herdr-bot\\\\backend\\\\target\\\\debug\\\\deps\\\\herdr_bot-49954d6f6670c421.exe\"]",
+      "name": "herdr-bot",
+      "package": "path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0",
+      "kind": [
+        "bin"
+      ],
+      "executable": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\herdr_bot-49954d6f6670c421.exe",
+      "cwd": "E:\\Developer\\myhub\\herdr-bot\\backend",
+      "manifest": "E:\\Developer\\myhub\\herdr-bot\\backend\\Cargo.toml",
+      "status": "passed",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 1836.3612000000066,
+      "log": {
+        "stdout": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-001.stdout.log",
+        "stderr": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-001.stderr.log"
+      },
+      "logName": "binary-001",
+      "error": null,
+      "command": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\herdr_bot-49954d6f6670c421.exe",
+      "args": []
+    },
+    {
+      "id": "[\"path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0\",\"herdr-fixture\",\"E:\\\\Developer\\\\myhub\\\\herdr-bot\\\\backend\\\\target\\\\debug\\\\deps\\\\herdr_fixture-06572041fc47358a.exe\"]",
+      "name": "herdr-fixture",
+      "package": "path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0",
+      "kind": [
+        "bin"
+      ],
+      "executable": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\herdr_fixture-06572041fc47358a.exe",
+      "cwd": "E:\\Developer\\myhub\\herdr-bot\\backend",
+      "manifest": "E:\\Developer\\myhub\\herdr-bot\\backend\\Cargo.toml",
+      "status": "passed",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 1250.7806999999957,
+      "log": {
+        "stdout": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-002.stdout.log",
+        "stderr": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-002.stderr.log"
+      },
+      "logName": "binary-002",
+      "error": null,
+      "command": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\herdr_fixture-06572041fc47358a.exe",
+      "args": []
+    },
+    {
+      "id": "[\"path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0\",\"herdr_bot\",\"E:\\\\Developer\\\\myhub\\\\herdr-bot\\\\backend\\\\target\\\\debug\\\\deps\\\\herdr_bot-89c762bc4cebe432.exe\"]",
+      "name": "herdr_bot",
+      "package": "path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0",
+      "kind": [
+        "lib"
+      ],
+      "executable": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\herdr_bot-89c762bc4cebe432.exe",
+      "cwd": "E:\\Developer\\myhub\\herdr-bot\\backend",
+      "manifest": "E:\\Developer\\myhub\\herdr-bot\\backend\\Cargo.toml",
+      "status": "passed",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 624.4149000000034,
+      "log": {
+        "stdout": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-003.stdout.log",
+        "stderr": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-003.stderr.log"
+      },
+      "logName": "binary-003",
+      "error": null,
+      "command": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\herdr_bot-89c762bc4cebe432.exe",
+      "args": []
+    },
+    {
+      "id": "[\"path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0\",\"chat_creation\",\"E:\\\\Developer\\\\myhub\\\\herdr-bot\\\\backend\\\\target\\\\debug\\\\deps\\\\chat_creation-2dba3ea4c2ca627f.exe\"]",
+      "name": "chat_creation",
+      "package": "path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0",
+      "kind": [
+        "test"
+      ],
+      "executable": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\chat_creation-2dba3ea4c2ca627f.exe",
+      "cwd": "E:\\Developer\\myhub\\herdr-bot\\backend",
+      "manifest": "E:\\Developer\\myhub\\herdr-bot\\backend\\Cargo.toml",
+      "status": "passed",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 31494.266000000003,
+      "log": {
+        "stdout": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-004.stdout.log",
+        "stderr": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-004.stderr.log"
+      },
+      "logName": "binary-004",
+      "error": null,
+      "command": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\chat_creation-2dba3ea4c2ca627f.exe",
+      "args": []
+    },
+    {
+      "id": "[\"path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0\",\"chat_creation_detached\",\"E:\\\\Developer\\\\myhub\\\\herdr-bot\\\\backend\\\\target\\\\debug\\\\deps\\\\chat_creation_detached-77fbf60e001d69b6.exe\"]",
+      "name": "chat_creation_detached",
+      "package": "path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0",
+      "kind": [
+        "test"
+      ],
+      "executable": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\chat_creation_detached-77fbf60e001d69b6.exe",
+      "cwd": "E:\\Developer\\myhub\\herdr-bot\\backend",
+      "manifest": "E:\\Developer\\myhub\\herdr-bot\\backend\\Cargo.toml",
+      "status": "passed",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 3603.733800000002,
+      "log": {
+        "stdout": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-005.stdout.log",
+        "stderr": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-005.stderr.log"
+      },
+      "logName": "binary-005",
+      "error": null,
+      "command": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\chat_creation_detached-77fbf60e001d69b6.exe",
+      "args": []
+    },
+    {
+      "id": "[\"path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0\",\"chat_identity\",\"E:\\\\Developer\\\\myhub\\\\herdr-bot\\\\backend\\\\target\\\\debug\\\\deps\\\\chat_identity-004f0a3859e42d20.exe\"]",
+      "name": "chat_identity",
+      "package": "path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0",
+      "kind": [
+        "test"
+      ],
+      "executable": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\chat_identity-004f0a3859e42d20.exe",
+      "cwd": "E:\\Developer\\myhub\\herdr-bot\\backend",
+      "manifest": "E:\\Developer\\myhub\\herdr-bot\\backend\\Cargo.toml",
+      "status": "passed",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 3322.4182999999975,
+      "log": {
+        "stdout": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-006.stdout.log",
+        "stderr": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-006.stderr.log"
+      },
+      "logName": "binary-006",
+      "error": null,
+      "command": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\chat_identity-004f0a3859e42d20.exe",
+      "args": []
+    },
+    {
+      "id": "[\"path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0\",\"chat_resume\",\"E:\\\\Developer\\\\myhub\\\\herdr-bot\\\\backend\\\\target\\\\debug\\\\deps\\\\chat_resume-ba5bfdb66a0146b4.exe\"]",
+      "name": "chat_resume",
+      "package": "path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0",
+      "kind": [
+        "test"
+      ],
+      "executable": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\chat_resume-ba5bfdb66a0146b4.exe",
+      "cwd": "E:\\Developer\\myhub\\herdr-bot\\backend",
+      "manifest": "E:\\Developer\\myhub\\herdr-bot\\backend\\Cargo.toml",
+      "status": "passed",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 2954.342199999999,
+      "log": {
+        "stdout": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-007.stdout.log",
+        "stderr": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-007.stderr.log"
+      },
+      "logName": "binary-007",
+      "error": null,
+      "command": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\chat_resume-ba5bfdb66a0146b4.exe",
+      "args": []
+    },
+    {
+      "id": "[\"path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0\",\"chat_resume_concurrency\",\"E:\\\\Developer\\\\myhub\\\\herdr-bot\\\\backend\\\\target\\\\debug\\\\deps\\\\chat_resume_concurrency-3d75fc8a0e8fcfed.exe\"]",
+      "name": "chat_resume_concurrency",
+      "package": "path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0",
+      "kind": [
+        "test"
+      ],
+      "executable": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\chat_resume_concurrency-3d75fc8a0e8fcfed.exe",
+      "cwd": "E:\\Developer\\myhub\\herdr-bot\\backend",
+      "manifest": "E:\\Developer\\myhub\\herdr-bot\\backend\\Cargo.toml",
+      "status": "passed",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 888.2822999999989,
+      "log": {
+        "stdout": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-008.stdout.log",
+        "stderr": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-008.stderr.log"
+      },
+      "logName": "binary-008",
+      "error": null,
+      "command": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\chat_resume_concurrency-3d75fc8a0e8fcfed.exe",
+      "args": []
+    },
+    {
+      "id": "[\"path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0\",\"chat_resume_environment\",\"E:\\\\Developer\\\\myhub\\\\herdr-bot\\\\backend\\\\target\\\\debug\\\\deps\\\\chat_resume_environment-ba1af1eb72a63523.exe\"]",
+      "name": "chat_resume_environment",
+      "package": "path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0",
+      "kind": [
+        "test"
+      ],
+      "executable": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\chat_resume_environment-ba1af1eb72a63523.exe",
+      "cwd": "E:\\Developer\\myhub\\herdr-bot\\backend",
+      "manifest": "E:\\Developer\\myhub\\herdr-bot\\backend\\Cargo.toml",
+      "status": "passed",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 21308.26090000001,
+      "log": {
+        "stdout": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-009.stdout.log",
+        "stderr": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-009.stderr.log"
+      },
+      "logName": "binary-009",
+      "error": null,
+      "command": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\chat_resume_environment-ba1af1eb72a63523.exe",
+      "args": []
+    },
+    {
+      "id": "[\"path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0\",\"chat_resume_omp\",\"E:\\\\Developer\\\\myhub\\\\herdr-bot\\\\backend\\\\target\\\\debug\\\\deps\\\\chat_resume_omp-d8153fddf4d6039e.exe\"]",
+      "name": "chat_resume_omp",
+      "package": "path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0",
+      "kind": [
+        "test"
+      ],
+      "executable": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\chat_resume_omp-d8153fddf4d6039e.exe",
+      "cwd": "E:\\Developer\\myhub\\herdr-bot\\backend",
+      "manifest": "E:\\Developer\\myhub\\herdr-bot\\backend\\Cargo.toml",
+      "status": "passed",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 10664.116300000002,
+      "log": {
+        "stdout": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-010.stdout.log",
+        "stderr": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-010.stderr.log"
+      },
+      "logName": "binary-010",
+      "error": null,
+      "command": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\chat_resume_omp-d8153fddf4d6039e.exe",
+      "args": []
+    },
+    {
+      "id": "[\"path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0\",\"chat_resume_pi\",\"E:\\\\Developer\\\\myhub\\\\herdr-bot\\\\backend\\\\target\\\\debug\\\\deps\\\\chat_resume_pi-6ade688b132b1799.exe\"]",
+      "name": "chat_resume_pi",
+      "package": "path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0",
+      "kind": [
+        "test"
+      ],
+      "executable": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\chat_resume_pi-6ade688b132b1799.exe",
+      "cwd": "E:\\Developer\\myhub\\herdr-bot\\backend",
+      "manifest": "E:\\Developer\\myhub\\herdr-bot\\backend\\Cargo.toml",
+      "status": "passed",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 1107.8617999999988,
+      "log": {
+        "stdout": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-011.stdout.log",
+        "stderr": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-011.stderr.log"
+      },
+      "logName": "binary-011",
+      "error": null,
+      "command": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\chat_resume_pi-6ade688b132b1799.exe",
+      "args": []
+    },
+    {
+      "id": "[\"path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0\",\"chat_resume_timeout\",\"E:\\\\Developer\\\\myhub\\\\herdr-bot\\\\backend\\\\target\\\\debug\\\\deps\\\\chat_resume_timeout-16c6c922df52ae81.exe\"]",
+      "name": "chat_resume_timeout",
+      "package": "path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0",
+      "kind": [
+        "test"
+      ],
+      "executable": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\chat_resume_timeout-16c6c922df52ae81.exe",
+      "cwd": "E:\\Developer\\myhub\\herdr-bot\\backend",
+      "manifest": "E:\\Developer\\myhub\\herdr-bot\\backend\\Cargo.toml",
+      "status": "passed",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 20780.919599999994,
+      "log": {
+        "stdout": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-012.stdout.log",
+        "stderr": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-012.stderr.log"
+      },
+      "logName": "binary-012",
+      "error": null,
+      "command": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\chat_resume_timeout-16c6c922df52ae81.exe",
+      "args": []
+    },
+    {
+      "id": "[\"path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0\",\"chat_source_boundary\",\"E:\\\\Developer\\\\myhub\\\\herdr-bot\\\\backend\\\\target\\\\debug\\\\deps\\\\chat_source_boundary-53b8bda124f65b58.exe\"]",
+      "name": "chat_source_boundary",
+      "package": "path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0",
+      "kind": [
+        "test"
+      ],
+      "executable": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\chat_source_boundary-53b8bda124f65b58.exe",
+      "cwd": "E:\\Developer\\myhub\\herdr-bot\\backend",
+      "manifest": "E:\\Developer\\myhub\\herdr-bot\\backend\\Cargo.toml",
+      "status": "passed",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 390.6287000000011,
+      "log": {
+        "stdout": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-013.stdout.log",
+        "stderr": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-013.stderr.log"
+      },
+      "logName": "binary-013",
+      "error": null,
+      "command": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\chat_source_boundary-53b8bda124f65b58.exe",
+      "args": []
+    },
+    {
+      "id": "[\"path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0\",\"connect_history_failures\",\"E:\\\\Developer\\\\myhub\\\\herdr-bot\\\\backend\\\\target\\\\debug\\\\deps\\\\connect_history_failures-e749a1b2da068bbb.exe\"]",
+      "name": "connect_history_failures",
+      "package": "path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0",
+      "kind": [
+        "test"
+      ],
+      "executable": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\connect_history_failures-e749a1b2da068bbb.exe",
+      "cwd": "E:\\Developer\\myhub\\herdr-bot\\backend",
+      "manifest": "E:\\Developer\\myhub\\herdr-bot\\backend\\Cargo.toml",
+      "status": "passed",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 289.22320000000036,
+      "log": {
+        "stdout": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-014.stdout.log",
+        "stderr": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-014.stderr.log"
+      },
+      "logName": "binary-014",
+      "error": null,
+      "command": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\connect_history_failures-e749a1b2da068bbb.exe",
+      "args": []
+    },
+    {
+      "id": "[\"path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0\",\"connection_drop\",\"E:\\\\Developer\\\\myhub\\\\herdr-bot\\\\backend\\\\target\\\\debug\\\\deps\\\\connection_drop-2db4ff2de98d2a2b.exe\"]",
+      "name": "connection_drop",
+      "package": "path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0",
+      "kind": [
+        "test"
+      ],
+      "executable": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\connection_drop-2db4ff2de98d2a2b.exe",
+      "cwd": "E:\\Developer\\myhub\\herdr-bot\\backend",
+      "manifest": "E:\\Developer\\myhub\\herdr-bot\\backend\\Cargo.toml",
+      "status": "passed",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 8351.652199999997,
+      "log": {
+        "stdout": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-015.stdout.log",
+        "stderr": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-015.stderr.log"
+      },
+      "logName": "binary-015",
+      "error": null,
+      "command": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\connection_drop-2db4ff2de98d2a2b.exe",
+      "args": []
+    },
+    {
+      "id": "[\"path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0\",\"countdown_independence\",\"E:\\\\Developer\\\\myhub\\\\herdr-bot\\\\backend\\\\target\\\\debug\\\\deps\\\\countdown_independence-36394c582961f831.exe\"]",
+      "name": "countdown_independence",
+      "package": "path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0",
+      "kind": [
+        "test"
+      ],
+      "executable": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\countdown_independence-36394c582961f831.exe",
+      "cwd": "E:\\Developer\\myhub\\herdr-bot\\backend",
+      "manifest": "E:\\Developer\\myhub\\herdr-bot\\backend\\Cargo.toml",
+      "status": "passed",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 5901.645199999999,
+      "log": {
+        "stdout": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-016.stdout.log",
+        "stderr": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-016.stderr.log"
+      },
+      "logName": "binary-016",
+      "error": null,
+      "command": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\countdown_independence-36394c582961f831.exe",
+      "args": []
+    },
+    {
+      "id": "[\"path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0\",\"cross_source_concurrency\",\"E:\\\\Developer\\\\myhub\\\\herdr-bot\\\\backend\\\\target\\\\debug\\\\deps\\\\cross_source_concurrency-52897b8cadb134f2.exe\"]",
+      "name": "cross_source_concurrency",
+      "package": "path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0",
+      "kind": [
+        "test"
+      ],
+      "executable": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\cross_source_concurrency-52897b8cadb134f2.exe",
+      "cwd": "E:\\Developer\\myhub\\herdr-bot\\backend",
+      "manifest": "E:\\Developer\\myhub\\herdr-bot\\backend\\Cargo.toml",
+      "status": "passed",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 891.5148000000045,
+      "log": {
+        "stdout": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-017.stdout.log",
+        "stderr": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-017.stderr.log"
+      },
+      "logName": "binary-017",
+      "error": null,
+      "command": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\cross_source_concurrency-52897b8cadb134f2.exe",
+      "args": []
+    },
+    {
+      "id": "[\"path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0\",\"dynamic_catalog\",\"E:\\\\Developer\\\\myhub\\\\herdr-bot\\\\backend\\\\target\\\\debug\\\\deps\\\\dynamic_catalog-285d1b7ebc298cb5.exe\"]",
+      "name": "dynamic_catalog",
+      "package": "path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0",
+      "kind": [
+        "test"
+      ],
+      "executable": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\dynamic_catalog-285d1b7ebc298cb5.exe",
+      "cwd": "E:\\Developer\\myhub\\herdr-bot\\backend",
+      "manifest": "E:\\Developer\\myhub\\herdr-bot\\backend\\Cargo.toml",
+      "status": "passed",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 556.803700000004,
+      "log": {
+        "stdout": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-018.stdout.log",
+        "stderr": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-018.stderr.log"
+      },
+      "logName": "binary-018",
+      "error": null,
+      "command": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\dynamic_catalog-285d1b7ebc298cb5.exe",
+      "args": []
+    },
+    {
+      "id": "[\"path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0\",\"execution_result\",\"E:\\\\Developer\\\\myhub\\\\herdr-bot\\\\backend\\\\target\\\\debug\\\\deps\\\\execution_result-535d4bc6f7ff60d9.exe\"]",
+      "name": "execution_result",
+      "package": "path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0",
+      "kind": [
+        "test"
+      ],
+      "executable": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\execution_result-535d4bc6f7ff60d9.exe",
+      "cwd": "E:\\Developer\\myhub\\herdr-bot\\backend",
+      "manifest": "E:\\Developer\\myhub\\herdr-bot\\backend\\Cargo.toml",
+      "status": "passed",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 4155.122600000002,
+      "log": {
+        "stdout": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-019.stdout.log",
+        "stderr": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-019.stderr.log"
+      },
+      "logName": "binary-019",
+      "error": null,
+      "command": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\execution_result-535d4bc6f7ff60d9.exe",
+      "args": []
+    },
+    {
+      "id": "[\"path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0\",\"fixed_operations\",\"E:\\\\Developer\\\\myhub\\\\herdr-bot\\\\backend\\\\target\\\\debug\\\\deps\\\\fixed_operations-b9c1f15d7518ac4b.exe\"]",
+      "name": "fixed_operations",
+      "package": "path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0",
+      "kind": [
+        "test"
+      ],
+      "executable": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\fixed_operations-b9c1f15d7518ac4b.exe",
+      "cwd": "E:\\Developer\\myhub\\herdr-bot\\backend",
+      "manifest": "E:\\Developer\\myhub\\herdr-bot\\backend\\Cargo.toml",
+      "status": "passed",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 2480.8338000000076,
+      "log": {
+        "stdout": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-020.stdout.log",
+        "stderr": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-020.stderr.log"
+      },
+      "logName": "binary-020",
+      "error": null,
+      "command": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\fixed_operations-b9c1f15d7518ac4b.exe",
+      "args": []
+    },
+    {
+      "id": "[\"path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0\",\"fixture_behavior\",\"E:\\\\Developer\\\\myhub\\\\herdr-bot\\\\backend\\\\target\\\\debug\\\\deps\\\\fixture_behavior-441805266f1a905f.exe\"]",
+      "name": "fixture_behavior",
+      "package": "path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0",
+      "kind": [
+        "test"
+      ],
+      "executable": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\fixture_behavior-441805266f1a905f.exe",
+      "cwd": "E:\\Developer\\myhub\\herdr-bot\\backend",
+      "manifest": "E:\\Developer\\myhub\\herdr-bot\\backend\\Cargo.toml",
+      "status": "passed",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 6563.9372999999905,
+      "log": {
+        "stdout": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-021.stdout.log",
+        "stderr": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-021.stderr.log"
+      },
+      "logName": "binary-021",
+      "error": null,
+      "command": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\fixture_behavior-441805266f1a905f.exe",
+      "args": []
+    },
+    {
+      "id": "[\"path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0\",\"herdr_config\",\"E:\\\\Developer\\\\myhub\\\\herdr-bot\\\\backend\\\\target\\\\debug\\\\deps\\\\herdr_config-d5775c610092891e.exe\"]",
+      "name": "herdr_config",
+      "package": "path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0",
+      "kind": [
+        "test"
+      ],
+      "executable": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\herdr_config-d5775c610092891e.exe",
+      "cwd": "E:\\Developer\\myhub\\herdr-bot\\backend",
+      "manifest": "E:\\Developer\\myhub\\herdr-bot\\backend\\Cargo.toml",
+      "status": "passed",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 205.2832999999955,
+      "log": {
+        "stdout": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-022.stdout.log",
+        "stderr": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-022.stderr.log"
+      },
+      "logName": "binary-022",
+      "error": null,
+      "command": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\herdr_config-d5775c610092891e.exe",
+      "args": []
+    },
+    {
+      "id": "[\"path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0\",\"history_memo\",\"E:\\\\Developer\\\\myhub\\\\herdr-bot\\\\backend\\\\target\\\\debug\\\\deps\\\\history_memo-65bb721982704da7.exe\"]",
+      "name": "history_memo",
+      "package": "path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0",
+      "kind": [
+        "test"
+      ],
+      "executable": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\history_memo-65bb721982704da7.exe",
+      "cwd": "E:\\Developer\\myhub\\herdr-bot\\backend",
+      "manifest": "E:\\Developer\\myhub\\herdr-bot\\backend\\Cargo.toml",
+      "status": "passed",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 381.95070000000123,
+      "log": {
+        "stdout": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-023.stdout.log",
+        "stderr": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-023.stderr.log"
+      },
+      "logName": "binary-023",
+      "error": null,
+      "command": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\history_memo-65bb721982704da7.exe",
+      "args": []
+    },
+    {
+      "id": "[\"path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0\",\"history_pagination\",\"E:\\\\Developer\\\\myhub\\\\herdr-bot\\\\backend\\\\target\\\\debug\\\\deps\\\\history_pagination-3357cb98390a89e8.exe\"]",
+      "name": "history_pagination",
+      "package": "path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0",
+      "kind": [
+        "test"
+      ],
+      "executable": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\history_pagination-3357cb98390a89e8.exe",
+      "cwd": "E:\\Developer\\myhub\\herdr-bot\\backend",
+      "manifest": "E:\\Developer\\myhub\\herdr-bot\\backend\\Cargo.toml",
+      "status": "passed",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 2608.268000000011,
+      "log": {
+        "stdout": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-024.stdout.log",
+        "stderr": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-024.stderr.log"
+      },
+      "logName": "binary-024",
+      "error": null,
+      "command": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\history_pagination-3357cb98390a89e8.exe",
+      "args": []
+    },
+    {
+      "id": "[\"path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0\",\"history_workspace\",\"E:\\\\Developer\\\\myhub\\\\herdr-bot\\\\backend\\\\target\\\\debug\\\\deps\\\\history_workspace-18450c090fce029b.exe\"]",
+      "name": "history_workspace",
+      "package": "path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0",
+      "kind": [
+        "test"
+      ],
+      "executable": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\history_workspace-18450c090fce029b.exe",
+      "cwd": "E:\\Developer\\myhub\\herdr-bot\\backend",
+      "manifest": "E:\\Developer\\myhub\\herdr-bot\\backend\\Cargo.toml",
+      "status": "passed",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 1018.6360999999888,
+      "log": {
+        "stdout": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-025.stdout.log",
+        "stderr": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-025.stderr.log"
+      },
+      "logName": "binary-025",
+      "error": null,
+      "command": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\history_workspace-18450c090fce029b.exe",
+      "args": []
+    },
+    {
+      "id": "[\"path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0\",\"manual_shutdown_process\",\"E:\\\\Developer\\\\myhub\\\\herdr-bot\\\\backend\\\\target\\\\debug\\\\deps\\\\manual_shutdown_process-ada35331c455ff0a.exe\"]",
+      "name": "manual_shutdown_process",
+      "package": "path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0",
+      "kind": [
+        "test"
+      ],
+      "executable": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\manual_shutdown_process-ada35331c455ff0a.exe",
+      "cwd": "E:\\Developer\\myhub\\herdr-bot\\backend",
+      "manifest": "E:\\Developer\\myhub\\herdr-bot\\backend\\Cargo.toml",
+      "status": "passed",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 1009.2828000000009,
+      "log": {
+        "stdout": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-026.stdout.log",
+        "stderr": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-026.stderr.log"
+      },
+      "logName": "binary-026",
+      "error": null,
+      "command": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\manual_shutdown_process-ada35331c455ff0a.exe",
+      "args": []
+    },
+    {
+      "id": "[\"path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0\",\"mdns_conflict\",\"E:\\\\Developer\\\\myhub\\\\herdr-bot\\\\backend\\\\target\\\\debug\\\\deps\\\\mdns_conflict-53b5176d4b64571d.exe\"]",
+      "name": "mdns_conflict",
+      "package": "path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0",
+      "kind": [
+        "test"
+      ],
+      "executable": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\mdns_conflict-53b5176d4b64571d.exe",
+      "cwd": "E:\\Developer\\myhub\\herdr-bot\\backend",
+      "manifest": "E:\\Developer\\myhub\\herdr-bot\\backend\\Cargo.toml",
+      "status": "passed",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 104.40479999998934,
+      "log": {
+        "stdout": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-027.stdout.log",
+        "stderr": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-027.stderr.log"
+      },
+      "logName": "binary-027",
+      "error": null,
+      "command": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\mdns_conflict-53b5176d4b64571d.exe",
+      "args": []
+    },
+    {
+      "id": "[\"path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0\",\"mdns_failure\",\"E:\\\\Developer\\\\myhub\\\\herdr-bot\\\\backend\\\\target\\\\debug\\\\deps\\\\mdns_failure-8b5180d7fee95a59.exe\"]",
+      "name": "mdns_failure",
+      "package": "path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0",
+      "kind": [
+        "test"
+      ],
+      "executable": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\mdns_failure-8b5180d7fee95a59.exe",
+      "cwd": "E:\\Developer\\myhub\\herdr-bot\\backend",
+      "manifest": "E:\\Developer\\myhub\\herdr-bot\\backend\\Cargo.toml",
+      "status": "passed",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 101.7158000000054,
+      "log": {
+        "stdout": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-028.stdout.log",
+        "stderr": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-028.stderr.log"
+      },
+      "logName": "binary-028",
+      "error": null,
+      "command": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\mdns_failure-8b5180d7fee95a59.exe",
+      "args": []
+    },
+    {
+      "id": "[\"path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0\",\"monitoring\",\"E:\\\\Developer\\\\myhub\\\\herdr-bot\\\\backend\\\\target\\\\debug\\\\deps\\\\monitoring-34fbfa62a56f8c21.exe\"]",
+      "name": "monitoring",
+      "package": "path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0",
+      "kind": [
+        "test"
+      ],
+      "executable": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\monitoring-34fbfa62a56f8c21.exe",
+      "cwd": "E:\\Developer\\myhub\\herdr-bot\\backend",
+      "manifest": "E:\\Developer\\myhub\\herdr-bot\\backend\\Cargo.toml",
+      "status": "passed",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 10334.909100000004,
+      "log": {
+        "stdout": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-029.stdout.log",
+        "stderr": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-029.stderr.log"
+      },
+      "logName": "binary-029",
+      "error": null,
+      "command": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\monitoring-34fbfa62a56f8c21.exe",
+      "args": []
+    },
+    {
+      "id": "[\"path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0\",\"monitoring_recovery\",\"E:\\\\Developer\\\\myhub\\\\herdr-bot\\\\backend\\\\target\\\\debug\\\\deps\\\\monitoring_recovery-09779bbc8bd8244d.exe\"]",
+      "name": "monitoring_recovery",
+      "package": "path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0",
+      "kind": [
+        "test"
+      ],
+      "executable": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\monitoring_recovery-09779bbc8bd8244d.exe",
+      "cwd": "E:\\Developer\\myhub\\herdr-bot\\backend",
+      "manifest": "E:\\Developer\\myhub\\herdr-bot\\backend\\Cargo.toml",
+      "status": "passed",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 3532.2918000000063,
+      "log": {
+        "stdout": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-030.stdout.log",
+        "stderr": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-030.stderr.log"
+      },
+      "logName": "binary-030",
+      "error": null,
+      "command": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\monitoring_recovery-09779bbc8bd8244d.exe",
+      "args": []
+    },
+    {
+      "id": "[\"path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0\",\"mutual_exclusion\",\"E:\\\\Developer\\\\myhub\\\\herdr-bot\\\\backend\\\\target\\\\debug\\\\deps\\\\mutual_exclusion-531fea6e3b28cff2.exe\"]",
+      "name": "mutual_exclusion",
+      "package": "path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0",
+      "kind": [
+        "test"
+      ],
+      "executable": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\mutual_exclusion-531fea6e3b28cff2.exe",
+      "cwd": "E:\\Developer\\myhub\\herdr-bot\\backend",
+      "manifest": "E:\\Developer\\myhub\\herdr-bot\\backend\\Cargo.toml",
+      "status": "passed",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 6406.608000000007,
+      "log": {
+        "stdout": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-031.stdout.log",
+        "stderr": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-031.stderr.log"
+      },
+      "logName": "binary-031",
+      "error": null,
+      "command": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\mutual_exclusion-531fea6e3b28cff2.exe",
+      "args": []
+    },
+    {
+      "id": "[\"path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0\",\"network_policy\",\"E:\\\\Developer\\\\myhub\\\\herdr-bot\\\\backend\\\\target\\\\debug\\\\deps\\\\network_policy-a47e7db77251110c.exe\"]",
+      "name": "network_policy",
+      "package": "path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0",
+      "kind": [
+        "test"
+      ],
+      "executable": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\network_policy-a47e7db77251110c.exe",
+      "cwd": "E:\\Developer\\myhub\\herdr-bot\\backend",
+      "manifest": "E:\\Developer\\myhub\\herdr-bot\\backend\\Cargo.toml",
+      "status": "passed",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 558.542100000006,
+      "log": {
+        "stdout": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-032.stdout.log",
+        "stderr": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-032.stderr.log"
+      },
+      "logName": "binary-032",
+      "error": null,
+      "command": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\network_policy-a47e7db77251110c.exe",
+      "args": []
+    },
+    {
+      "id": "[\"path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0\",\"next_operation_after_finish\",\"E:\\\\Developer\\\\myhub\\\\herdr-bot\\\\backend\\\\target\\\\debug\\\\deps\\\\next_operation_after_finish-38d225c5df05a21c.exe\"]",
+      "name": "next_operation_after_finish",
+      "package": "path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0",
+      "kind": [
+        "test"
+      ],
+      "executable": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\next_operation_after_finish-38d225c5df05a21c.exe",
+      "cwd": "E:\\Developer\\myhub\\herdr-bot\\backend",
+      "manifest": "E:\\Developer\\myhub\\herdr-bot\\backend\\Cargo.toml",
+      "status": "passed",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 8357.289499999999,
+      "log": {
+        "stdout": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-033.stdout.log",
+        "stderr": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-033.stderr.log"
+      },
+      "logName": "binary-033",
+      "error": null,
+      "command": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\next_operation_after_finish-38d225c5df05a21c.exe",
+      "args": []
+    },
+    {
+      "id": "[\"path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0\",\"no_auto_termination\",\"E:\\\\Developer\\\\myhub\\\\herdr-bot\\\\backend\\\\target\\\\debug\\\\deps\\\\no_auto_termination-5c11fe55418e74eb.exe\"]",
+      "name": "no_auto_termination",
+      "package": "path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0",
+      "kind": [
+        "test"
+      ],
+      "executable": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\no_auto_termination-5c11fe55418e74eb.exe",
+      "cwd": "E:\\Developer\\myhub\\herdr-bot\\backend",
+      "manifest": "E:\\Developer\\myhub\\herdr-bot\\backend\\Cargo.toml",
+      "status": "passed",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 81492.36300000001,
+      "log": {
+        "stdout": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-034.stdout.log",
+        "stderr": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-034.stderr.log"
+      },
+      "logName": "binary-034",
+      "error": null,
+      "command": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\no_auto_termination-5c11fe55418e74eb.exe",
+      "args": []
+    },
+    {
+      "id": "[\"path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0\",\"omp_zone_history\",\"E:\\\\Developer\\\\myhub\\\\herdr-bot\\\\backend\\\\target\\\\debug\\\\deps\\\\omp_zone_history-417cf4cfc53b3969.exe\"]",
+      "name": "omp_zone_history",
+      "package": "path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0",
+      "kind": [
+        "test"
+      ],
+      "executable": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\omp_zone_history-417cf4cfc53b3969.exe",
+      "cwd": "E:\\Developer\\myhub\\herdr-bot\\backend",
+      "manifest": "E:\\Developer\\myhub\\herdr-bot\\backend\\Cargo.toml",
+      "status": "passed",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 1736.462200000009,
+      "log": {
+        "stdout": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-035.stdout.log",
+        "stderr": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-035.stderr.log"
+      },
+      "logName": "binary-035",
+      "error": null,
+      "command": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\omp_zone_history-417cf4cfc53b3969.exe",
+      "args": []
+    },
+    {
+      "id": "[\"path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0\",\"pi_zone_history\",\"E:\\\\Developer\\\\myhub\\\\herdr-bot\\\\backend\\\\target\\\\debug\\\\deps\\\\pi_zone_history-c5016d9054bc8942.exe\"]",
+      "name": "pi_zone_history",
+      "package": "path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0",
+      "kind": [
+        "test"
+      ],
+      "executable": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\pi_zone_history-c5016d9054bc8942.exe",
+      "cwd": "E:\\Developer\\myhub\\herdr-bot\\backend",
+      "manifest": "E:\\Developer\\myhub\\herdr-bot\\backend\\Cargo.toml",
+      "status": "passed",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 1896.1689999999944,
+      "log": {
+        "stdout": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-036.stdout.log",
+        "stderr": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-036.stderr.log"
+      },
+      "logName": "binary-036",
+      "error": null,
+      "command": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\pi_zone_history-c5016d9054bc8942.exe",
+      "args": []
+    },
+    {
+      "id": "[\"path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0\",\"recovery\",\"E:\\\\Developer\\\\myhub\\\\herdr-bot\\\\backend\\\\target\\\\debug\\\\deps\\\\recovery-36ebc8f183da8845.exe\"]",
+      "name": "recovery",
+      "package": "path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0",
+      "kind": [
+        "test"
+      ],
+      "executable": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\recovery-36ebc8f183da8845.exe",
+      "cwd": "E:\\Developer\\myhub\\herdr-bot\\backend",
+      "manifest": "E:\\Developer\\myhub\\herdr-bot\\backend\\Cargo.toml",
+      "status": "passed",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 4144.584000000003,
+      "log": {
+        "stdout": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-037.stdout.log",
+        "stderr": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-037.stderr.log"
+      },
+      "logName": "binary-037",
+      "error": null,
+      "command": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\recovery-36ebc8f183da8845.exe",
+      "args": []
+    },
+    {
+      "id": "[\"path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0\",\"runtime_data\",\"E:\\\\Developer\\\\myhub\\\\herdr-bot\\\\backend\\\\target\\\\debug\\\\deps\\\\runtime_data-53ef9b5b82b3a36d.exe\"]",
+      "name": "runtime_data",
+      "package": "path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0",
+      "kind": [
+        "test"
+      ],
+      "executable": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\runtime_data-53ef9b5b82b3a36d.exe",
+      "cwd": "E:\\Developer\\myhub\\herdr-bot\\backend",
+      "manifest": "E:\\Developer\\myhub\\herdr-bot\\backend\\Cargo.toml",
+      "status": "passed",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 593.749800000005,
+      "log": {
+        "stdout": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-038.stdout.log",
+        "stderr": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-038.stderr.log"
+      },
+      "logName": "binary-038",
+      "error": null,
+      "command": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\runtime_data-53ef9b5b82b3a36d.exe",
+      "args": []
+    },
+    {
+      "id": "[\"path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0\",\"session_events\",\"E:\\\\Developer\\\\myhub\\\\herdr-bot\\\\backend\\\\target\\\\debug\\\\deps\\\\session_events-1fd6d5e473992e08.exe\"]",
+      "name": "session_events",
+      "package": "path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0",
+      "kind": [
+        "test"
+      ],
+      "executable": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\session_events-1fd6d5e473992e08.exe",
+      "cwd": "E:\\Developer\\myhub\\herdr-bot\\backend",
+      "manifest": "E:\\Developer\\myhub\\herdr-bot\\backend\\Cargo.toml",
+      "status": "passed",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 307.2808999999979,
+      "log": {
+        "stdout": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-039.stdout.log",
+        "stderr": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-039.stderr.log"
+      },
+      "logName": "binary-039",
+      "error": null,
+      "command": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\session_events-1fd6d5e473992e08.exe",
+      "args": []
+    },
+    {
+      "id": "[\"path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0\",\"session_events_stream\",\"E:\\\\Developer\\\\myhub\\\\herdr-bot\\\\backend\\\\target\\\\debug\\\\deps\\\\session_events_stream-0b7e191a572b4862.exe\"]",
+      "name": "session_events_stream",
+      "package": "path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0",
+      "kind": [
+        "test"
+      ],
+      "executable": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\session_events_stream-0b7e191a572b4862.exe",
+      "cwd": "E:\\Developer\\myhub\\herdr-bot\\backend",
+      "manifest": "E:\\Developer\\myhub\\herdr-bot\\backend\\Cargo.toml",
+      "status": "passed",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 15299.825100000002,
+      "log": {
+        "stdout": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-040.stdout.log",
+        "stderr": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-040.stderr.log"
+      },
+      "logName": "binary-040",
+      "error": null,
+      "command": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\session_events_stream-0b7e191a572b4862.exe",
+      "args": []
+    },
+    {
+      "id": "[\"path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0\",\"session_expiry\",\"E:\\\\Developer\\\\myhub\\\\herdr-bot\\\\backend\\\\target\\\\debug\\\\deps\\\\session_expiry-2b9e7c4ce83cf5dd.exe\"]",
+      "name": "session_expiry",
+      "package": "path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0",
+      "kind": [
+        "test"
+      ],
+      "executable": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\session_expiry-2b9e7c4ce83cf5dd.exe",
+      "cwd": "E:\\Developer\\myhub\\herdr-bot\\backend",
+      "manifest": "E:\\Developer\\myhub\\herdr-bot\\backend\\Cargo.toml",
+      "status": "passed",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 40737.638699999996,
+      "log": {
+        "stdout": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-041.stdout.log",
+        "stderr": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-041.stderr.log"
+      },
+      "logName": "binary-041",
+      "error": null,
+      "command": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\session_expiry-2b9e7c4ce83cf5dd.exe",
+      "args": []
+    },
+    {
+      "id": "[\"path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0\",\"session_history\",\"E:\\\\Developer\\\\myhub\\\\herdr-bot\\\\backend\\\\target\\\\debug\\\\deps\\\\session_history-934bbee1207e7235.exe\"]",
+      "name": "session_history",
+      "package": "path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0",
+      "kind": [
+        "test"
+      ],
+      "executable": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\session_history-934bbee1207e7235.exe",
+      "cwd": "E:\\Developer\\myhub\\herdr-bot\\backend",
+      "manifest": "E:\\Developer\\myhub\\herdr-bot\\backend\\Cargo.toml",
+      "status": "passed",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 292.8567000000039,
+      "log": {
+        "stdout": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-042.stdout.log",
+        "stderr": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-042.stderr.log"
+      },
+      "logName": "binary-042",
+      "error": null,
+      "command": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\session_history-934bbee1207e7235.exe",
+      "args": []
+    },
+    {
+      "id": "[\"path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0\",\"session_report_recovery\",\"E:\\\\Developer\\\\myhub\\\\herdr-bot\\\\backend\\\\target\\\\debug\\\\deps\\\\session_report_recovery-9be6b3e213e28f7a.exe\"]",
+      "name": "session_report_recovery",
+      "package": "path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0",
+      "kind": [
+        "test"
+      ],
+      "executable": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\session_report_recovery-9be6b3e213e28f7a.exe",
+      "cwd": "E:\\Developer\\myhub\\herdr-bot\\backend",
+      "manifest": "E:\\Developer\\myhub\\herdr-bot\\backend\\Cargo.toml",
+      "status": "passed",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 598.7991000000038,
+      "log": {
+        "stdout": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-043.stdout.log",
+        "stderr": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-043.stderr.log"
+      },
+      "logName": "binary-043",
+      "error": null,
+      "command": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\session_report_recovery-9be6b3e213e28f7a.exe",
+      "args": []
+    },
+    {
+      "id": "[\"path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0\",\"session_window_config\",\"E:\\\\Developer\\\\myhub\\\\herdr-bot\\\\backend\\\\target\\\\debug\\\\deps\\\\session_window_config-901ea262aae1bf6d.exe\"]",
+      "name": "session_window_config",
+      "package": "path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0",
+      "kind": [
+        "test"
+      ],
+      "executable": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\session_window_config-901ea262aae1bf6d.exe",
+      "cwd": "E:\\Developer\\myhub\\herdr-bot\\backend",
+      "manifest": "E:\\Developer\\myhub\\herdr-bot\\backend\\Cargo.toml",
+      "status": "passed",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 28447.574299999993,
+      "log": {
+        "stdout": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-044.stdout.log",
+        "stderr": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-044.stderr.log"
+      },
+      "logName": "binary-044",
+      "error": null,
+      "command": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\session_window_config-901ea262aae1bf6d.exe",
+      "args": []
+    },
+    {
+      "id": "[\"path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0\",\"session_write_boundary\",\"E:\\\\Developer\\\\myhub\\\\herdr-bot\\\\backend\\\\target\\\\debug\\\\deps\\\\session_write_boundary-cce208d00e134200.exe\"]",
+      "name": "session_write_boundary",
+      "package": "path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0",
+      "kind": [
+        "test"
+      ],
+      "executable": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\session_write_boundary-cce208d00e134200.exe",
+      "cwd": "E:\\Developer\\myhub\\herdr-bot\\backend",
+      "manifest": "E:\\Developer\\myhub\\herdr-bot\\backend\\Cargo.toml",
+      "status": "passed",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 351.82189999999537,
+      "log": {
+        "stdout": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-045.stdout.log",
+        "stderr": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-045.stderr.log"
+      },
+      "logName": "binary-045",
+      "error": null,
+      "command": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\session_write_boundary-cce208d00e134200.exe",
+      "args": []
+    },
+    {
+      "id": "[\"path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0\",\"shared_observation\",\"E:\\\\Developer\\\\myhub\\\\herdr-bot\\\\backend\\\\target\\\\debug\\\\deps\\\\shared_observation-7cc7156d9da15776.exe\"]",
+      "name": "shared_observation",
+      "package": "path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0",
+      "kind": [
+        "test"
+      ],
+      "executable": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\shared_observation-7cc7156d9da15776.exe",
+      "cwd": "E:\\Developer\\myhub\\herdr-bot\\backend",
+      "manifest": "E:\\Developer\\myhub\\herdr-bot\\backend\\Cargo.toml",
+      "status": "passed",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 650.2571999999927,
+      "log": {
+        "stdout": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-046.stdout.log",
+        "stderr": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-046.stderr.log"
+      },
+      "logName": "binary-046",
+      "error": null,
+      "command": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\shared_observation-7cc7156d9da15776.exe",
+      "args": []
+    },
+    {
+      "id": "[\"path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0\",\"shutdown\",\"E:\\\\Developer\\\\myhub\\\\herdr-bot\\\\backend\\\\target\\\\debug\\\\deps\\\\shutdown-72e89dd3828a519f.exe\"]",
+      "name": "shutdown",
+      "package": "path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0",
+      "kind": [
+        "test"
+      ],
+      "executable": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\shutdown-72e89dd3828a519f.exe",
+      "cwd": "E:\\Developer\\myhub\\herdr-bot\\backend",
+      "manifest": "E:\\Developer\\myhub\\herdr-bot\\backend\\Cargo.toml",
+      "status": "passed",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 4065.0424000000057,
+      "log": {
+        "stdout": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-047.stdout.log",
+        "stderr": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-047.stderr.log"
+      },
+      "logName": "binary-047",
+      "error": null,
+      "command": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\shutdown-72e89dd3828a519f.exe",
+      "args": []
+    },
+    {
+      "id": "[\"path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0\",\"start_operation\",\"E:\\\\Developer\\\\myhub\\\\herdr-bot\\\\backend\\\\target\\\\debug\\\\deps\\\\start_operation-9137102d74198b71.exe\"]",
+      "name": "start_operation",
+      "package": "path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0",
+      "kind": [
+        "test"
+      ],
+      "executable": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\start_operation-9137102d74198b71.exe",
+      "cwd": "E:\\Developer\\myhub\\herdr-bot\\backend",
+      "manifest": "E:\\Developer\\myhub\\herdr-bot\\backend\\Cargo.toml",
+      "status": "passed",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 2343.7377000000124,
+      "log": {
+        "stdout": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-048.stdout.log",
+        "stderr": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-048.stderr.log"
+      },
+      "logName": "binary-048",
+      "error": null,
+      "command": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\start_operation-9137102d74198b71.exe",
+      "args": []
+    },
+    {
+      "id": "[\"path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0\",\"tasks\",\"E:\\\\Developer\\\\myhub\\\\herdr-bot\\\\backend\\\\target\\\\debug\\\\deps\\\\tasks-9092c36a2312aee0.exe\"]",
+      "name": "tasks",
+      "package": "path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0",
+      "kind": [
+        "test"
+      ],
+      "executable": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\tasks-9092c36a2312aee0.exe",
+      "cwd": "E:\\Developer\\myhub\\herdr-bot\\backend",
+      "manifest": "E:\\Developer\\myhub\\herdr-bot\\backend\\Cargo.toml",
+      "status": "passed",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 422.4395999999979,
+      "log": {
+        "stdout": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-049.stdout.log",
+        "stderr": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-049.stderr.log"
+      },
+      "logName": "binary-049",
+      "error": null,
+      "command": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\tasks-9092c36a2312aee0.exe",
+      "args": []
+    },
+    {
+      "id": "[\"path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0\",\"workflow_dispatch\",\"E:\\\\Developer\\\\myhub\\\\herdr-bot\\\\backend\\\\target\\\\debug\\\\deps\\\\workflow_dispatch-8beff9bc956c8b6f.exe\"]",
+      "name": "workflow_dispatch",
+      "package": "path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0",
+      "kind": [
+        "test"
+      ],
+      "executable": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\workflow_dispatch-8beff9bc956c8b6f.exe",
+      "cwd": "E:\\Developer\\myhub\\herdr-bot\\backend",
+      "manifest": "E:\\Developer\\myhub\\herdr-bot\\backend\\Cargo.toml",
+      "status": "passed",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 4014.6601999999984,
+      "log": {
+        "stdout": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-050.stdout.log",
+        "stderr": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-050.stderr.log"
+      },
+      "logName": "binary-050",
+      "error": null,
+      "command": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\workflow_dispatch-8beff9bc956c8b6f.exe",
+      "args": []
+    },
+    {
+      "id": "[\"path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0\",\"workflow_start\",\"E:\\\\Developer\\\\myhub\\\\herdr-bot\\\\backend\\\\target\\\\debug\\\\deps\\\\workflow_start-db4fbd368872da32.exe\"]",
+      "name": "workflow_start",
+      "package": "path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0",
+      "kind": [
+        "test"
+      ],
+      "executable": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\workflow_start-db4fbd368872da32.exe",
+      "cwd": "E:\\Developer\\myhub\\herdr-bot\\backend",
+      "manifest": "E:\\Developer\\myhub\\herdr-bot\\backend\\Cargo.toml",
+      "status": "passed",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 1430.219299999997,
+      "log": {
+        "stdout": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-051.stdout.log",
+        "stderr": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-051.stderr.log"
+      },
+      "logName": "binary-051",
+      "error": null,
+      "command": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\workflow_start-db4fbd368872da32.exe",
+      "args": []
+    },
+    {
+      "id": "[\"path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0\",\"zone_browse\",\"E:\\\\Developer\\\\myhub\\\\herdr-bot\\\\backend\\\\target\\\\debug\\\\deps\\\\zone_browse-d942b87af565ee1d.exe\"]",
+      "name": "zone_browse",
+      "package": "path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0",
+      "kind": [
+        "test"
+      ],
+      "executable": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\zone_browse-d942b87af565ee1d.exe",
+      "cwd": "E:\\Developer\\myhub\\herdr-bot\\backend",
+      "manifest": "E:\\Developer\\myhub\\herdr-bot\\backend\\Cargo.toml",
+      "status": "passed",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 623.3385000000126,
+      "log": {
+        "stdout": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-052.stdout.log",
+        "stderr": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-052.stderr.log"
+      },
+      "logName": "binary-052",
+      "error": null,
+      "command": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\zone_browse-d942b87af565ee1d.exe",
+      "args": []
+    },
+    {
+      "id": "[\"path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0\",\"zone_commit\",\"E:\\\\Developer\\\\myhub\\\\herdr-bot\\\\backend\\\\target\\\\debug\\\\deps\\\\zone_commit-34ab627e5bbfa92a.exe\"]",
+      "name": "zone_commit",
+      "package": "path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0",
+      "kind": [
+        "test"
+      ],
+      "executable": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\zone_commit-34ab627e5bbfa92a.exe",
+      "cwd": "E:\\Developer\\myhub\\herdr-bot\\backend",
+      "manifest": "E:\\Developer\\myhub\\herdr-bot\\backend\\Cargo.toml",
+      "status": "passed",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 8487.258100000006,
+      "log": {
+        "stdout": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-053.stdout.log",
+        "stderr": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-053.stderr.log"
+      },
+      "logName": "binary-053",
+      "error": null,
+      "command": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\zone_commit-34ab627e5bbfa92a.exe",
+      "args": []
+    },
+    {
+      "id": "[\"path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0\",\"zone_create\",\"E:\\\\Developer\\\\myhub\\\\herdr-bot\\\\backend\\\\target\\\\debug\\\\deps\\\\zone_create-ea304446787af85e.exe\"]",
+      "name": "zone_create",
+      "package": "path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0",
+      "kind": [
+        "test"
+      ],
+      "executable": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\zone_create-ea304446787af85e.exe",
+      "cwd": "E:\\Developer\\myhub\\herdr-bot\\backend",
+      "manifest": "E:\\Developer\\myhub\\herdr-bot\\backend\\Cargo.toml",
+      "status": "passed",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 376.52760000000126,
+      "log": {
+        "stdout": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-054.stdout.log",
+        "stderr": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-054.stderr.log"
+      },
+      "logName": "binary-054",
+      "error": null,
+      "command": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\zone_create-ea304446787af85e.exe",
+      "args": []
+    },
+    {
+      "id": "[\"path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0\",\"zone_diff\",\"E:\\\\Developer\\\\myhub\\\\herdr-bot\\\\backend\\\\target\\\\debug\\\\deps\\\\zone_diff-0437c94fde6185b2.exe\"]",
+      "name": "zone_diff",
+      "package": "path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0",
+      "kind": [
+        "test"
+      ],
+      "executable": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\zone_diff-0437c94fde6185b2.exe",
+      "cwd": "E:\\Developer\\myhub\\herdr-bot\\backend",
+      "manifest": "E:\\Developer\\myhub\\herdr-bot\\backend\\Cargo.toml",
+      "status": "passed",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 1254.5010000000038,
+      "log": {
+        "stdout": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-055.stdout.log",
+        "stderr": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-055.stderr.log"
+      },
+      "logName": "binary-055",
+      "error": null,
+      "command": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\zone_diff-0437c94fde6185b2.exe",
+      "args": []
+    },
+    {
+      "id": "[\"path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0\",\"zone_git_status\",\"E:\\\\Developer\\\\myhub\\\\herdr-bot\\\\backend\\\\target\\\\debug\\\\deps\\\\zone_git_status-eac60704838b88ff.exe\"]",
+      "name": "zone_git_status",
+      "package": "path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0",
+      "kind": [
+        "test"
+      ],
+      "executable": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\zone_git_status-eac60704838b88ff.exe",
+      "cwd": "E:\\Developer\\myhub\\herdr-bot\\backend",
+      "manifest": "E:\\Developer\\myhub\\herdr-bot\\backend\\Cargo.toml",
+      "status": "passed",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 2383.7727000000014,
+      "log": {
+        "stdout": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-056.stdout.log",
+        "stderr": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-056.stderr.log"
+      },
+      "logName": "binary-056",
+      "error": null,
+      "command": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\zone_git_status-eac60704838b88ff.exe",
+      "args": []
+    },
+    {
+      "id": "[\"path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0\",\"zone_integration\",\"E:\\\\Developer\\\\myhub\\\\herdr-bot\\\\backend\\\\target\\\\debug\\\\deps\\\\zone_integration-0eb5eee8066d7e61.exe\"]",
+      "name": "zone_integration",
+      "package": "path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0",
+      "kind": [
+        "test"
+      ],
+      "executable": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\zone_integration-0eb5eee8066d7e61.exe",
+      "cwd": "E:\\Developer\\myhub\\herdr-bot\\backend",
+      "manifest": "E:\\Developer\\myhub\\herdr-bot\\backend\\Cargo.toml",
+      "status": "passed",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 4746.463499999998,
+      "log": {
+        "stdout": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-057.stdout.log",
+        "stderr": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-057.stderr.log"
+      },
+      "logName": "binary-057",
+      "error": null,
+      "command": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\zone_integration-0eb5eee8066d7e61.exe",
+      "args": []
+    },
+    {
+      "id": "[\"path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0\",\"zone_reader\",\"E:\\\\Developer\\\\myhub\\\\herdr-bot\\\\backend\\\\target\\\\debug\\\\deps\\\\zone_reader-5663678637fac809.exe\"]",
+      "name": "zone_reader",
+      "package": "path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0",
+      "kind": [
+        "test"
+      ],
+      "executable": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\zone_reader-5663678637fac809.exe",
+      "cwd": "E:\\Developer\\myhub\\herdr-bot\\backend",
+      "manifest": "E:\\Developer\\myhub\\herdr-bot\\backend\\Cargo.toml",
+      "status": "passed",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 306.6368000000075,
+      "log": {
+        "stdout": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-058.stdout.log",
+        "stderr": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-058.stderr.log"
+      },
+      "logName": "binary-058",
+      "error": null,
+      "command": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\zone_reader-5663678637fac809.exe",
+      "args": []
+    },
+    {
+      "id": "[\"path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0\",\"zone_registry\",\"E:\\\\Developer\\\\myhub\\\\herdr-bot\\\\backend\\\\target\\\\debug\\\\deps\\\\zone_registry-9792d43410017bdb.exe\"]",
+      "name": "zone_registry",
+      "package": "path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0",
+      "kind": [
+        "test"
+      ],
+      "executable": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\zone_registry-9792d43410017bdb.exe",
+      "cwd": "E:\\Developer\\myhub\\herdr-bot\\backend",
+      "manifest": "E:\\Developer\\myhub\\herdr-bot\\backend\\Cargo.toml",
+      "status": "passed",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 359.97309999998834,
+      "log": {
+        "stdout": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-059.stdout.log",
+        "stderr": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-059.stderr.log"
+      },
+      "logName": "binary-059",
+      "error": null,
+      "command": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\zone_registry-9792d43410017bdb.exe",
+      "args": []
+    },
+    {
+      "id": "[\"path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0\",\"zone_sync\",\"E:\\\\Developer\\\\myhub\\\\herdr-bot\\\\backend\\\\target\\\\debug\\\\deps\\\\zone_sync-23f20c213fe96702.exe\"]",
+      "name": "zone_sync",
+      "package": "path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0",
+      "kind": [
+        "test"
+      ],
+      "executable": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\zone_sync-23f20c213fe96702.exe",
+      "cwd": "E:\\Developer\\myhub\\herdr-bot\\backend",
+      "manifest": "E:\\Developer\\myhub\\herdr-bot\\backend\\Cargo.toml",
+      "status": "passed",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 12198.542799999996,
+      "log": {
+        "stdout": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-060.stdout.log",
+        "stderr": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-060.stderr.log"
+      },
+      "logName": "binary-060",
+      "error": null,
+      "command": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\zone_sync-23f20c213fe96702.exe",
+      "args": []
+    },
+    {
+      "id": "[\"path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0\",\"zone_watch\",\"E:\\\\Developer\\\\myhub\\\\herdr-bot\\\\backend\\\\target\\\\debug\\\\deps\\\\zone_watch-e286a97e32d75e55.exe\"]",
+      "name": "zone_watch",
+      "package": "path+file:///E:/Developer/myhub/herdr-bot/backend#herdr-bot@0.1.0",
+      "kind": [
+        "test"
+      ],
+      "executable": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\zone_watch-e286a97e32d75e55.exe",
+      "cwd": "E:\\Developer\\myhub\\herdr-bot\\backend",
+      "manifest": "E:\\Developer\\myhub\\herdr-bot\\backend\\Cargo.toml",
+      "status": "passed",
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 6489.541300000012,
+      "log": {
+        "stdout": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-061.stdout.log",
+        "stderr": "C:\\Users\\hugos\\AppData\\Local\\Temp\\herdr-backend-tests-kpegCF\\binary-061.stderr.log"
+      },
+      "logName": "binary-061",
+      "error": null,
+      "command": "E:\\Developer\\myhub\\herdr-bot\\backend\\target\\debug\\deps\\zone_watch-e286a97e32d75e55.exe",
+      "args": []
+    }
+  ],
+  "queued": [],
+  "durationMs": 161575.64979999998,
+  "finishedAt": "2026-10-29T05:18:35.988Z"
+}

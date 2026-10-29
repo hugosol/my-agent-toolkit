@@ -6,13 +6,22 @@
 
 ## 安装与自动加载
 
-独立交付入口为 [`entrypoints/omp-auto/manager-chat.ts`](../../entrypoints/omp-auto/manager-chat.ts)（ID `manager-chat`）和 [`entrypoints/omp-auto/node-chat.ts`](../../entrypoints/omp-auto/node-chat.ts)（ID `node-chat`）。manager 提供 `run` 与 `collect`，node 提供 `report`；分别用于对应角色 Session，不共享节点身份。当前仅支持 omp，不提供手动启用命令或 pi 入口。部署须保留本仓库的 `framework/`、`adapters/`、`extensions/workflow-chat/`、`entrypoints/startup/auto.yaml` 及 YAML 依赖；只复制入口文件不构成部署。`framework/.runtime/` 中的 owner-access 记录及原子写入暂存文件属于运行中的源 Session，不属于部署输入；角色 dock 复制源码时同样排除此目录，避免全局并行测试复制正在被重命名的暂存文件。
+独立交付入口仅提供 auto 模式：
 
-herdr-bot 的 manager/node 类型 Task 应分别固定选择对应自动入口，部署者应把后端 Task 选项目录中的角色入口指向其实际绝对路径。独立加载示例（不是在同一角色中混装）：
+| 宿主 | manager-chat（`run` / `collect`） | node-chat（`report`） |
+| --- | --- | --- |
+| OMP | [`entrypoints/omp-auto/manager-chat.ts`](../../entrypoints/omp-auto/manager-chat.ts) | [`entrypoints/omp-auto/node-chat.ts`](../../entrypoints/omp-auto/node-chat.ts) |
+| Pi | [`entrypoints/pi-auto/manager-chat.ts`](../../entrypoints/pi-auto/manager-chat.ts) | [`entrypoints/pi-auto/node-chat.ts`](../../entrypoints/pi-auto/node-chat.ts) |
+
+角色 ID 分别是 `manager-chat`、`node-chat`，用于独立角色 Session，不共享节点身份，不提供手动启用命令。Pi 本次验证基线为精确 `1.4.0`，不替换 OMP 基线；验证范围与环境见 [Harness support](../../framework/docs/harness-support.md#pi-workflow-chat-verification-baseline)。部署须保留本仓库的 `framework/`、`adapters/`、`extensions/workflow-chat/`、`entrypoints/startup/auto.yaml` 及 YAML 依赖；只复制入口文件不构成部署。`framework/.runtime/` 中的 owner-access 记录及原子写入暂存文件属于运行中的源 Session，不属于部署输入；角色 dock 复制源码时同样排除此目录，避免全局并行测试复制正在被重命名的暂存文件。
+
+herdr-bot 的 manager/node 类型 Task 应按各自宿主固定选择对应自动入口；同一 Run 可由 OMP/Pi Task 自然组合，不另设混合模式。部署者应把后端 Task 选项目录中的角色入口指向其实际绝对路径。独立加载示例（不是在同一角色中混装）：
 
 ```text
 omp -e /absolute/my-agent-toolkit/entrypoints/omp-auto/manager-chat.ts
 omp -e /absolute/my-agent-toolkit/entrypoints/omp-auto/node-chat.ts
+pi -e /absolute/my-agent-toolkit/entrypoints/pi-auto/manager-chat.ts
+pi -e /absolute/my-agent-toolkit/entrypoints/pi-auto/node-chat.ts
 ```
 
 入口加载后按公共启动策略自动启用；首次启用轮次由公共 Prompt 注入对应角色的完整工具指引，普通后续轮次不额外重复注入。不要同时加载另一份同 ID 扩展。无需加载或启用 connect-bot，不建立面板登记连接。**加载成功不等于已关联到 Run**：身份必须先由后端的合法派发流程关联；直接启动的任意会话会收到后端无关联拒绝，客户端不绕过该规则。
@@ -27,23 +36,29 @@ extensions/workflow-chat/
 ├── common/
 │   ├── config.ts
 │   └── requests.ts
+├── harnesses/
+│   ├── pi-tools.ts
+│   └── pi-modules.d.ts
 ├── manager-chat/
 │   ├── definition.ts
 │   ├── shared-logic/
 │   │   └── actions.ts
 │   └── harnesses/
-│       └── omp.ts
+│       ├── omp.ts
+│       └── pi-auto.ts
 └── node-chat/
     ├── definition.ts
     ├── shared-logic/
     │   └── report.ts
     └── harnesses/
-        └── omp.ts
+        ├── omp.ts
+        └── pi-auto.ts
 ```
 
 - `common/` 是两种角色共同复用的实现：`config.ts` 维护共同配置声明，`requests.ts` 通过公共 Session/HTTP 处理真实身份、请求预算、取消与响应解析。它不承载 manager 动作或 node 报告规则，不依赖角色目录或原生 harness SDK。
 - 各角色的 `definition.ts` 持有自身声明与首次工具指引，复用共同配置声明；`shared-logic/` 持有该 extension 跨 harness 的业务逻辑：manager 的动作参数、路由选择与 collect，node 的 report 参数与请求。业务逻辑依赖 `common/` 和公共能力，不依赖 `harnesses/` 或原生 harness SDK，两角色也不互相导入业务逻辑。
-- 各角色的 `harnesses/omp.ts` 只负责原生工具注册、schema、context 转换、result 包装，以及角色声明、业务逻辑和请求资源的装配与生命周期接线；不在原生适配层另写一套业务校验或协议处理。依赖方向是 harness → 本角色声明/业务逻辑 → common/公共能力，common 不反向依赖角色或 harness。
+- 各角色的 `harnesses/omp.ts` 与 `harnesses/pi-auto.ts` 只负责原生工具注册、schema、context 转换、result 包装，以及角色声明、业务逻辑和请求资源的装配与生命周期接线；不在原生适配层另写一套业务校验或协议处理。依赖方向是 harness → 本角色声明/业务逻辑 → common/公共能力，common 不反向依赖角色或 harness。
+- 顶层 `harnesses/` 仅承接 Pi 两角色共同使用的原生工具类型与结果包装；不把 Pi 依赖放入 `common/` 业务请求层。两宿主的角色订阅都限定 `owner`：后端分别启动独立角色主会话，不向普通子代理传播管理权或角色入口。
 - **共享实现，不共享实例**：两角色可导入同一份配置与请求代码，但各自装配独立的请求资源；配置绑定、Session 身份和请求取消资源不跨角色共用。请求生命周期按实际 Session 隔离，不以进程级或角色级单例保存共同状态。
 
 ## 首次工具指引与输入边界
@@ -95,7 +110,7 @@ manager 的 `run` 工具以 `action` 选择显式动作。传输为 `POST /api/w
 
 重复 complete/fail 保留首次事实，重复 pause/resume 不重复转换，重复 finish 返回首次结束事实；终态拒绝变更。工具保留后端 `changed`、拒绝 code/原因、`reports`、`pendingReports`、`historyError`、`stateCommitted` 与已发生效果，不把 HTTP 200 或动作取消解释成全部成功/回滚。
 
-所有动作严格拒绝额外身份或不适用字段（如 status 的 nodeId、complete 的 confirmed）。OMP 18.5.0 会修复 closed schema 并删除未知字段，因此原生 schema 刻意保留未知键供工具逐 action 拒绝，避免非法调用被“修好”后意外执行；这不是业务参数扩展。缺失/非字符串字段由宿主或工具拒绝，空白 reason 的业务拒绝交由后端，不复制状态机。
+所有动作严格拒绝额外身份或不适用字段（如 status 的 nodeId、complete 的 confirmed）。OMP 18.5.0 会修复 closed schema 并删除未知字段，因此原生 schema 刻意保留未知键供工具逐 action 拒绝，避免非法调用被“修好”后意外执行；这不是业务参数扩展。Pi 1.4.0 会在工具执行前转换带类型的参数，因此 Pi schema 对业务值保留原值并说明准确类型，由同一份 shared logic 严格校验；例如字符串 `"false"` 不得变成确认值，数字 body 不得变成字符串。Pi 同样保留额外键以拒绝整次非法调用，而非删除身份字段后执行。缺失/非字符串字段由宿主或工具拒绝，空白 reason 的业务拒绝交由后端，不复制状态机。
 
 人工真实交接须先查看已保存报告、亲自读取真实材料并记录地址、用途、限制和人工处理依据，再明确 complete；不能把 report/停轮/退出当作完成。派发、故障核实和报告等待是各自独立职责，基础动作不会代替它们。失败或不确定结果先查询现场，不自主重试。
 

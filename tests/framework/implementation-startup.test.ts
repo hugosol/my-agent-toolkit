@@ -167,6 +167,50 @@ describe("a recorded value outranks the policy's default in both directions (P9,
 	});
 });
 
+describe("native runtime replacement is not a second process startup", () => {
+	for (const reason of ["new", "resume", "fork"] as const) {
+		test(`a fresh binding first reached by ${reason} consumes startup without applying the policy`, () => {
+			let activated = 0;
+			const double = portDouble();
+			double.bind(HISTORY_TEST, { startupPolicy: policyOf(true, "startup-history"), startup: () => { activated += 1; } });
+			const replacement = double.deliverSession(OWNER, { processStart: false, event: { kind: "session_start", reason } });
+			expect(double.state.view(OWNER.key).read("enabled")).toBe(false);
+			expect(replacement.persisted).toEqual([]);
+			expect(activated).toBe(0);
+			// Even an ensuing start that claims startup cannot revive the consumed moment.
+			double.deliverSession(NEXT_OWNER, { processStart: true });
+			expect(double.state.view(NEXT_OWNER.key).read("enabled")).toBe(false);
+			expect(activated).toBe(0);
+		});
+	}
+
+	for (const enabled of [false, true]) {
+		test(`replacement preserves recorded ${enabled} without applying the policy`, () => {
+			let activated = 0;
+			const double = portDouble();
+			double.bind(HISTORY_TEST, { startupPolicy: policyOf(!enabled, "startup-history"), startup: () => { activated += 1; } });
+			const replacement = double.deliverSession(OWNER, { processStart: false,
+				event: { kind: "session_start", reason: "resume" }, statePayloads: [{ enabled }] });
+			expect(double.state.view(OWNER.key).read("enabled")).toBe(enabled);
+			expect(replacement.persisted).toEqual([]);
+			expect(activated).toBe(0);
+		});
+	}
+
+	for (const processStart of [undefined, true]) {
+		test(`initial process resume applies policy with provenance ${String(processStart)}`, () => {
+			let activated = 0;
+			const double = portDouble();
+			double.bind(HISTORY_TEST, { startupPolicy: policyOf(true, "startup-history"), startup: () => { activated += 1; } });
+			const boundary = double.deliverSession(OWNER, { event: { kind: "session_start", reason: "resume" },
+				...(processStart === undefined ? {} : { processStart }) });
+			expect(double.state.view(OWNER.key).read("enabled")).toBe(true);
+			expect(boundary.persisted).toEqual([{ enabled: true }]);
+			expect(activated).toBe(1);
+		});
+	}
+});
+
 describe("the startup activation adds no wait beside the lifecycle's required ones (P27)", () => {
 	test("the first request waits for the integration and initialization, and never for a pending startup", async () => {
 		const integration = Promise.withResolvers<SubagentIntegration>();

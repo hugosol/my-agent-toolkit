@@ -38,7 +38,7 @@ export default function managerChatOmp(api: OmpExtensionApi) {
 				operations = new ManagerActions(requests);
 				return requests;
 			},
-			subscriptions: [{ scope: "session", events: {
+			subscriptions: [{ scope: "owner", events: {
 				session_start: (state, delivery) => state.start(delivery.session.sessionId),
 				session_end: (state, delivery) => state.end(delivery.session.sessionId),
 			} }],

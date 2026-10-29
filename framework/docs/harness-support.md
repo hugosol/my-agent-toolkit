@@ -15,11 +15,27 @@ The pi codebase-tools adapter is implemented within the mapped scope below; it d
 - Node text loading is installed at the adapter boundary, once per process and limited to this repository's extension Markdown resources. Bun needs no hook. Hot reload and concurrent main-session instances remain uncertified.
 - Subagent following is a separately qualified assembly/provider integration, not a guarantee of this original scoped adapter; see the capability-difference register.
 
+## pi workflow-chat verification baseline
+
+workflow-chat 的 Pi 独立验证基线为精确的 `@earendil-works/pi-coding-agent@1.4.0`；两角色仅提供 `entrypoints/pi-auto/manager-chat.ts` 和 `entrypoints/pi-auto/node-chat.ts`。保留 OMP 18.5.0 基线及其已有证据，不将历史 Pi 1.2/1.3 smoke 结果迁移成 1.4 的兼容证明，也不建立多版本矩阵。
+
+复核环境：Windows x64、Node 22.19.0（通过 `PI_NODE` 指定）、Bun 1.4.4。`tests/workflow-chat/pi-native.test.ts` 通过实际 CLI 版本断言拒绝其他 Pi 版本，使用隔离部署、agent state、Session、cwd 和本地受控 provider/HTTP，不读取真实账号、不使用活动后端。运行方法：
+
+```powershell
+$env:PI_NODE = "D:/Users/hugos/AppData/Local/nvm/v22.19.0/node.exe"
+$env:PI_CLI = "D:/nvm4w/nodejs/pi.cmd"
+bun test tests/workflow-chat/pi-native.test.ts
+```
+
+已执行的独立用例覆盖两角色真实工具调用、原生 Session HTTP 身份、manager 十动作、严格参数与原始错误结果、报告保存/辅助通知分离、首次隐藏持久化指引、普通请求与 collect 的独立完整正文预算，以及工具 abort、活动 collect 中直接切换 Session、切回原身份和活动 collect 正常退出的 TCP 释放。退出要求实际进程退出码 0 且未超时；不在已销毁的 runtime 上等待不存在的 `agent_settled`。框架回归另覆盖新 binding 的进程内替换不重复消费 auto 默认值、已记录 true/false 恢复，以及真正进程启动恢复会话时仍应用默认策略。
+
+本地协议/独立用例不证明真实 Herdr 启动时身份交付、真实模型决策、生产网络或完整 Run 协作；这些整体集成验证由人工执行。此基线不是全局 `verified-supported` 声明，不修改启动准入策略。
+
 ## pi connect-bot entrypoint evidence
 
 The manual and automatic entrypoints are `entrypoints/pi/connect-bot.ts` and `entrypoints/pi-auto/connect-bot.ts`. They use the existing Pi adapter and shared panel-registration logic, without promoting a support state. Optional viewed-session and cross-process observation outlets are not supplied by this entrypoint addition.
 
-Lifecycle limitations remain explicit for pi 1.4.0 on Windows/Node 24.18.0: a new session may issue a fresh automatic registration rather than obeying process-first-start-only activation, and RPC stdin close has not established final unregister. Disconnect explicitly with `/connect-bot off` before closing that path. Do not infer full lifecycle parity, real-provider delivery or interactive TUI exit behavior.
+Historical pi 1.4.0 observations on Windows/Node 24.18.0 included fresh automatic registration after a new session and no established final unregister on RPC stdin close. The shared adapter now distinguishes native runtime reconstruction from process startup; the workflow-chat 1.4.0/Node 22.19.0 checks above verify that a replacement session does not consume auto defaults again. Those checks are not a rerun of connect-bot registration/unregister or Node 24: final unregister remains unverified for that path. Disconnect explicitly with `/connect-bot off` before closing it. Do not infer full lifecycle parity, real-provider delivery or interactive TUI exit behavior.
 
 ## pi model-cost migration evidence
 
@@ -67,7 +83,7 @@ Every support statement in this document uses one of four states, and each row c
 | `verified-supported` | `@oh-my-pi/pi-coding-agent@18.5.0`, checkout `@9348320` + Windows x64 + Bun 1.4.2 | Isolated exact-install extension-path verification and the maintained artifact/lockfile correspondence in `harness-baseline.json`; provider roles retain their separate evidence levels | Exactly this combination; verified provider paths only (`deepseek/deepseek-flash` → `openai-completions`; `openai-codex/gpt-6-luna` → `openai-codex-responses`, shape-only layer 1); every run executes the isolated exact install under a temporary agent state | Framework capabilities only (C1–C15), by isolated candidate verification (see [Upgrade standard and triggering](#upgrade-standard-and-triggering)). No extension capability is part of the long-term standard |
 | `verified-unlisted` | Historical installation observations outside the supported baseline (18.4.6 / 18.6.1) | Installation observation only; no behavior exercised on that version | No new support claim; the former startup warning route is superseded by independent verification | Independently verify the exact source/environment/extension combination; partial candidate alarms alone do not promote support |
 | `unverified` | openai-codex layer-2 real-credential delivery; interactive TUI visual acceptance; real-provider pi delivery and every provider path outside the scoped captures; the [model-cost pi migration](#pi-model-cost-migration-evidence)'s human-only checks and its own recorded uncovered items, including the detached background child's own accounting | Dock prepared but not executed (`scripts/capture-codex-outbound.ts`, layer 2); TUI acceptance not performed; a local capture endpoint proves serialization only, never real-service acceptance; for the model-cost migration the executed real paths, the account reading and the uncovered rows are in [that section](#pi-model-cost-migration-evidence) | Recorded as unverified, never as passing; no inference from a verified path; the ready-to-run steps are in the [README human acceptance runbook](../README.md#human-acceptance-and-cutover) | Not a candidate path: it becomes evidence only when a human supplies the credential or performs the acceptance |
-| `unsupported` | pi capabilities beyond the recorded [codebase-tools](#pi-codebase-tools-adapter-evidence) and [model-cost](#pi-model-cost-migration-evidence) scopes (the historical first release shipped no pi adapter); two main sessions in one process; hot reload or in-process discovery-root swap | The framework suite asserts the supported shape only; the multi-main shape has no test, and a green suite for the supported shape says nothing about it | States that the framework integration is not provided — not that the harness lacks the native feature | Revisit only through an explicit decision, not through a test run |
+| `unsupported` | pi capabilities beyond the recorded [codebase-tools](#pi-codebase-tools-adapter-evidence), [connect-bot](#pi-connect-bot-entrypoint-evidence), [model-cost](#pi-model-cost-migration-evidence) and [workflow-chat](#pi-workflow-chat-verification-baseline) scopes (the historical first release shipped no pi adapter); two main sessions in one process; hot reload or in-process discovery-root swap | The framework suite asserts the supported shape only; the multi-main shape has no test, and a green suite for the supported shape says nothing about it | States that the framework integration is not provided — not that the harness lacks the native feature | Revisit only through an explicit decision, not through a test run |
 
 The `verified-supported` row also fixes *what runs*: the revision anchor is the local checkout `@9348320` (= 18.5.0), and the run/acceptance artifact is the isolated exact install at `.cache/omp-baseline/18.5.0` (replaying decision 03's byte-identity conclusion). That correspondence — `harness.revisionAnchor` ↔ `harness.acceptanceArtifact` ↔ the `sourceCombination`/`oracle` lockfiles — is recorded as data in [`harness-baseline.json`](harness-baseline.json), not restated here. Role evidence per provider path has its own table above and keeps its own states ([provider-path role evidence](#provider-path-role-evidence-recorded-facts-not-a-gate)).
 
