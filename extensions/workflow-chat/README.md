@@ -17,11 +17,40 @@ omp -e /absolute/my-agent-toolkit/entrypoints/omp-auto/node-chat.ts
 
 入口加载后按公共启动策略自动启用；首次启用轮次由公共 Prompt 注入对应角色的完整工具指引，普通后续轮次不额外重复注入。不要同时加载另一份同 ID 扩展。无需加载或启用 connect-bot，不建立面板登记连接。**加载成功不等于已关联到 Run**：身份必须先由后端的合法派发流程关联；直接启动的任意会话会收到后端无关联拒绝，客户端不绕过该规则。
 
+## workflow-chat 源码职责与依赖
+
+以下分层仅约束 workflow-chat，不是 framework 的通用目录规则；本节是这些职责与依赖的唯一说明。自动发现入口、角色 ID、工具名、协议与 `config.yaml` 的定位不因源码重组改变。
+
+```text
+extensions/workflow-chat/
+├── config.yaml
+├── common/
+│   ├── config.ts
+│   └── requests.ts
+├── manager-chat/
+│   ├── definition.ts
+│   ├── shared-logic/
+│   │   └── actions.ts
+│   └── harnesses/
+│       └── omp.ts
+└── node-chat/
+    ├── definition.ts
+    ├── shared-logic/
+    │   └── report.ts
+    └── harnesses/
+        └── omp.ts
+```
+
+- `common/` 是两种角色共同复用的实现：`config.ts` 维护共同配置声明，`requests.ts` 通过公共 Session/HTTP 处理真实身份、请求预算、取消与响应解析。它不承载 manager 动作或 node 报告规则，不依赖角色目录或原生 harness SDK。
+- 各角色的 `definition.ts` 持有自身声明与首次工具指引，复用共同配置声明；`shared-logic/` 持有该 extension 跨 harness 的业务逻辑：manager 的动作参数、路由选择与 collect，node 的 report 参数与请求。业务逻辑依赖 `common/` 和公共能力，不依赖 `harnesses/` 或原生 harness SDK，两角色也不互相导入业务逻辑。
+- 各角色的 `harnesses/omp.ts` 只负责原生工具注册、schema、context 转换、result 包装，以及角色声明、业务逻辑和请求资源的装配与生命周期接线；不在原生适配层另写一套业务校验或协议处理。依赖方向是 harness → 本角色声明/业务逻辑 → common/公共能力，common 不反向依赖角色或 harness。
+- **共享实现，不共享实例**：两角色可导入同一份配置与请求代码，但各自装配独立的请求资源；配置绑定、Session 身份和请求取消资源不跨角色共用。请求生命周期按实际 Session 隔离，不以进程级或角色级单例保存共同状态。
+
 ## 首次工具指引与输入边界
 
 三种输入各有唯一职责：`Task.prompt` 固定角色职能；后端本次 input 提供工作、运行说明及状态/历史/报告记录的路径；扩展的公共 Prompt 只说明工具使用。后端仍按原规则把固定文本与本次工作组合为启动输入，扩展不重拼、不替换或另发固定文本，不复制 Bot 文档、整张 Map 或向 node 自动传播 Run 的 `user_input`。模型应按给定路径读取所需材料，而不是等待扩展自动注入内容。
 
-完整指引由 [manager 声明](manager-definition.ts)与 [node 声明](node-definition.ts)持有，不要求部署者再复制到 Task。manager 的首次指引覆盖全部十种 run action、collect 五种 reason 与完整等待预算、报告标识查阅、依赖与终态、派发核实、recover/retry、人工真实交接及部分效果；node 的首次指引覆盖报告时机、可读地址/用法/限制、允许后续收尾、报告不等于完成，以及已保存但通知失败不重报。
+完整指引由 [manager 声明](manager-chat/definition.ts)与 [node 声明](node-chat/definition.ts)持有，不要求部署者再复制到 Task。manager 的首次指引覆盖全部十种 run action、collect 五种 reason 与完整等待预算、报告标识查阅、依赖与终态、派发核实、recover/retry、人工真实交接及部分效果；node 的首次指引覆盖报告时机、可读地址/用法/限制、允许后续收尾、报告不等于完成，以及已保存但通知失败不重报。
 
 两条隐藏、持久化的 Prompt 身份分别为 `manager-chat:tools` 与 `node-chat:tools`，使用公共 `first-enabled-run` 的分支历史规则，不另存“已注入”标记。普通轮次保留历史中的一份指引，不追加副本；切换回来也不重置。公共自动启动策略每进程只消费一次，切到新的未启用 owner 不会再次自动启用；历史分支不带该身份时，由公共规则决定首次贡献，不由角色代码另建状态机。
 

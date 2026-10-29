@@ -1,5 +1,5 @@
-import { defineExtension } from "../../framework/interface";
-import { WORKFLOW_CONFIG } from "./common/config";
+import { defineExtension } from "../../../framework/interface";
+import { WORKFLOW_CONFIG } from "../common/config";
 
 export const NODE_CHAT = defineExtension({
 	id: "node-chat",

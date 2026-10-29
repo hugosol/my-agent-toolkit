@@ -1,9 +1,10 @@
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { ompAdapter, type OmpExtensionApi, type OmpSessionContext } from "../../../adapters/omp";
-import { defineImplementation } from "../../../framework/interface";
-import { WorkflowRequests } from "../common/requests";
-import { NODE_CHAT } from "../node-definition";
+import { ompAdapter, type OmpExtensionApi, type OmpSessionContext } from "../../../../adapters/omp";
+import { defineImplementation } from "../../../../framework/interface";
+import { WorkflowRequests } from "../../common/requests";
+import { NODE_CHAT } from "../definition";
+import { NodeReports } from "../shared-logic/report";
 
 interface ReportResult {
 	readonly content: { readonly type: "text"; readonly text: string }[];
@@ -23,15 +24,19 @@ interface NodeToolApi extends OmpExtensionApi {
 	}): void;
 }
 
-const repository = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
+const repository = resolve(dirname(fileURLToPath(import.meta.url)), "../../../..");
 
 export default function nodeChatOmp(api: OmpExtensionApi) {
-	let requests: WorkflowRequests | undefined;
+	let operations: NodeReports | undefined;
 	const binding = ompAdapter(NODE_CHAT, {
 		configBaseDir: repository,
 		startupPolicy: "entrypoints/startup/auto.yaml",
 		implementation: defineImplementation({
-			create: context => (requests = new WorkflowRequests(context)),
+			create: context => {
+				const requests = new WorkflowRequests(context);
+				operations = new NodeReports(requests);
+				return requests;
+			},
 			subscriptions: [{ scope: "session", events: {
 				session_start: (state, delivery) => state.start(delivery.session.sessionId),
 				session_end: (state, delivery) => state.end(delivery.session.sessionId),
@@ -46,13 +51,9 @@ export default function nodeChatOmp(api: OmpExtensionApi) {
 		description: "提交节点可交接结果正文；分别返回保存、辅助通知和诊断结果。报告不等于节点完成。",
 		parameters: native.typebox.Type.Object({ body: native.typebox.Type.String() }, { additionalProperties: false }),
 		async execute(_callId, params, signal, _onUpdate, ctx) {
-			if (!params || typeof params !== "object" || !("body" in params) || typeof params.body !== "string" || Object.keys(params).some(key => key !== "body")) {
-				return { content: [{ type: "text", text: "report 只接受字符串 body，不接受身份或归属字段。" }], details: { body: null }, isError: true };
-			}
-			if (!requests) throw new Error("node-chat 未初始化");
-			const result = await requests.post(ctx.sessionManager.getSessionId(), "/api/workflow/node/report", { body: params.body }, signal);
-			const savedFailed = typeof result.body === "object" && result.body !== null && "saved" in result.body && result.body.saved === false;
-			return { content: [{ type: "text", text: JSON.stringify(result.body) }], details: { httpStatus: result.httpStatus, body: result.body }, isError: result.isError || savedFailed };
+			if (!operations) throw new Error("node-chat 未初始化");
+			const result = await operations.report(ctx.sessionManager.getSessionId(), params, signal);
+			return { content: [{ type: "text", text: result.message ?? JSON.stringify(result.body) }], details: { httpStatus: result.httpStatus, body: result.body }, isError: result.isError };
 		},
 	});
 	return binding;

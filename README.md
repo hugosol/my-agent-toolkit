@@ -29,6 +29,10 @@ upgrade rules live in
 
 ## Quick start
 
+Use Bun **1.4.4** for repository checks, as selected by `package.json`. This test runtime
+is separate from the historical supported combination above; see the
+[testing conventions](docs/agents/testing.md#test-runtime).
+
 ```bash
 bun install                 # once
 bun run typecheck

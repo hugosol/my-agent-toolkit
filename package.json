@@ -2,6 +2,7 @@
   "name": "my-agent-toolkit",
   "private": true,
   "type": "module",
+  "packageManager": "bun@1.4.4",
   "scripts": {
     "test": "bun test --parallel=12",
     "test:serial": "bun test",

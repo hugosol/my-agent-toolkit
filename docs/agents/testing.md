@@ -1,5 +1,13 @@
 # Test tiers
 
+## Test runtime
+
+Run repository checks with Bun **1.4.4**, selected by `packageManager` in the root
+`package.json`. The dock checks the executing Bun against that declaration.
+`framework/docs/harness-baseline.json` retains the historical acceptance environment
+(Bun 1.4.2); it is not the current test-runtime selector. Changing the test runtime
+does not promote a new harness/provider support combination.
+
 Use the smallest relevant scope while iterating; broaden it at ticket completion and final integration. Explicit task acceptance requirements take precedence over these defaults. Tests supplement, rather than replace, exercising the changed behavior through its smoke or real-host observation seam.
 
 ## Select a tier
