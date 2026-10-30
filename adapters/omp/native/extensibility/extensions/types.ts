@@ -291,6 +291,10 @@ export interface OmpInputEvent {
 export interface OmpExtensionApi {
 	/** Sets the display label for this extension. */
 	setLabel(label: string): void;
+	registerTool: (tool: {
+		name: string; label: string; description: string; parameters: unknown; loadMode: "essential";
+		execute(callId: string, params: unknown, signal: AbortSignal | undefined, onUpdate: unknown, ctx: OmpSessionContext): Promise<{ readonly content: readonly { readonly type: "text"; readonly text: string }[]; readonly details?: unknown; readonly isError?: boolean }>;
+	}) => void;
 	/** Registers a custom command the user can run as `/<name>`. */
 	registerCommand(
 		name: string,

@@ -29,6 +29,7 @@ function recordingApi(): RecordingApi {
 	return {
 		labels,
 		commands,
+		registerTool() {},
 		setLabel(label: string): void {
 			labels.push(label);
 		},
@@ -276,14 +277,15 @@ describe("initialization and binding failures (P17, N7)", () => {
 	test("a harness that refuses registration leaves the extension unbound and keeps nothing", () => {
 		const refused: string[] = [];
 		const refusingApi: OmpExtensionApi = {
-			setLabel(label: string): void {
+	registerTool() {},
+	setLabel(label: string): void {
 				refused.push(label);
 				throw new Error("harness refused the label");
 			},
 			registerCommand(): void {},
 			appendEntry(): void {},
 			on(): void {},
-		};
+}
 		const factory = frameworkOmp.ompAdapter(CODEBASE_TOOLS);
 
 		const { diagnostics, value: result } = withCapturedStderr(() => factory(refusingApi));
@@ -298,13 +300,14 @@ describe("initialization and binding failures (P17, N7)", () => {
 	test("binding keeps no process-level state: one session's failure does not reach the next", () => {
 		const factory = frameworkOmp.ompAdapter(CODEBASE_TOOLS);
 		const refusingApi: OmpExtensionApi = {
-			setLabel(): void {
+	registerTool() {},
+	setLabel(): void {
 				throw new Error("harness refused the label");
 			},
 			registerCommand(): void {},
 			appendEntry(): void {},
 			on(): void {},
-		};
+}
 
 		const failed = withCapturedStderr(() => factory(refusingApi)).value;
 		const nextApi = recordingApi();

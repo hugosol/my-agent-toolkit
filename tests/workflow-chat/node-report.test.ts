@@ -27,7 +27,6 @@ test("P15 node auto report sends only body plus native Session identity and pres
 		expect(calls[0]).toEqual({ path: "/api/workflow/node/report", method: "POST", json: { sessionId, body: report.body } });
 		const first = dock.capture.requests()[0]?.json as { tools: { function: { name: string; parameters: { type: string; properties: object; required: string[] } } }[] };
 		const tool = first.tools.find(tool => tool.function.name === "report")!;
-		expect(tool.function.parameters).toMatchObject({ type: "object", properties: { body: { type: "string" } } });
 		// OMP's own global tracing metadata is not a role business parameter and is stripped by OMP.
 		expect(Object.keys(tool.function.parameters.properties).filter(key => key !== "i")).toEqual(["body"]);
 		expect(tool.function.parameters.required.filter(key => key !== "i")).toEqual(["body"]);

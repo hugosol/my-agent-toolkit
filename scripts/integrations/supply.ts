@@ -1155,6 +1155,7 @@ const ADAPTER_PORT_MEMBERS: Readonly<Record<string, string>> = {
 	input: "onUserInput",
 	run: "onRunInitiation",
 	command: "registerCommand",
+	tool: "registerTool",
 };
 
 function fileInside(fileName: string, directoryKey: string): boolean {

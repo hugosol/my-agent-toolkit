@@ -485,6 +485,7 @@ export function boundPiSurface(
 	// shared bus — the one member this adapter reads for the subagent provider's versioned interface,
 	// and the process-scoped one this surface publishes itself.
 	const api = {
+		registerTool() {},
 		events: bus,
 		on(event: string, handler: (event: unknown, ctx: PiExtensionContext) => unknown): () => void {
 			const list = handlers.get(event) ?? [];

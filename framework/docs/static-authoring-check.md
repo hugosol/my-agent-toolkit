@@ -27,7 +27,7 @@ Normal findings contain only the rule ID, relative source file, one-based line a
 
 ## Expression boundary
 
-The checker distinguishes integration structure from business implementation. Subscription arrays, observation scopes, event keys, command/action maps and lifecycle slots must be statically recoverable. Business function bodies may contain conditions, loops, async work and ordinary helper calls; this linter does not evaluate their behavior.
+The checker distinguishes integration structure from business implementation. Subscription arrays, observation scopes, event keys, command/action maps, tool arrays with their names and execution handlers, and lifecycle slots must be statically recoverable. Business function bodies may contain conditions, loops, async work and ordinary helper calls; this linter does not evaluate their behavior.
 
 Static literals and resolvable constant/import references can compose declarations. Parentheses, `as const` and `satisfies` do not by themselves make a declaration dynamic. A spread is not inherently forbidden: its operand must be statically recoverable. Shared authoring wrappers must resolve to the canonical framework entry and use supported parameter forwarding and explicit defaults. Arbitrary computation of integration structure is outside the language and must be diagnosed rather than evaluated. Read the catalog for the precise rule and repair guidance associated with a finding.
 

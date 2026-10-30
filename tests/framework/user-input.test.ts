@@ -73,7 +73,8 @@ function boundSurface(
 	});
 
 	const api: OmpExtensionApi = {
-		setLabel(): void {},
+	registerTool() {},
+	setLabel(): void {},
 		registerCommand(name): void {
 			registrations.push(`command:${name}`);
 		},
@@ -85,7 +86,7 @@ function boundSurface(
 			if (options.refusesInput === true) throw new Error("this surface has no input event");
 			inputHandlers.push(handler as InputHandler);
 		},
-	};
+}
 
 	const events: ImplementationEventHandlers<{}> =
 		options.events ??

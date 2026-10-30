@@ -85,7 +85,8 @@ function nativeDouble(options: { readonly hasUI?: boolean } = {}): NativeDouble 
 	});
 
 	const api: OmpExtensionApi = {
-		setLabel(): void {},
+	registerTool() {},
+	setLabel(): void {},
 		registerCommand(name, registration): void {
 			registrations.set(name, registration);
 		},
@@ -95,7 +96,7 @@ function nativeDouble(options: { readonly hasUI?: boolean } = {}): NativeDouble 
 		on(event: string, handler: never): void {
 			if (event === "before_agent_start") runHooks.push(handler as RunInitiationHandler);
 		},
-	};
+}
 
 	return {
 		api,

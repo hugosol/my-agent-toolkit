@@ -98,7 +98,8 @@ function nativeDouble(): NativeDouble {
 	});
 
 	const api: OmpExtensionApi = {
-		// The suite drives State through the command, not through labels.
+	registerTool() {},
+	// The suite drives State through the command, not through labels.
 		setLabel(): void {},
 		registerCommand(name, registration): void {
 			registrations.set(name, registration);
@@ -115,7 +116,7 @@ function nativeDouble(): NativeDouble {
 			if (event === "session_start") starts.push(handler as SessionHandler);
 			if (event === "session_shutdown") shutdowns.push(handler as SessionHandler);
 		},
-	};
+}
 
 	return {
 		api,

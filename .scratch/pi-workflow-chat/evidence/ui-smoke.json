@@ -1,8 +1,0 @@
-{
-  "surface": "herdr-bot TasksPanel rendered in Chromium via isolated Vite 127.0.0.1:5178",
-  "api": "controlled window.fetch responses; no production data operations",
-  "observed": ["Selecting manager after choosing pi retains pi", "manager fixed extension displays manager-chat", "Selecting node after choosing pi retains pi", "node fixed extension displays node-chat"],
-  "screenshots": ["pi-manager.png", "pi-node.png"],
-  "limit": "Independent UI smoke, not real Herdr/model end-to-end acceptance; initial manager capture included a controlled fixture model-catalog warning; subsequent node capture corrected fixture thinking catalog.",
-  "cleanup": "Browser tab closed and Vite service stopped"
-}

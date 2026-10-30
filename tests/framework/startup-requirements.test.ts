@@ -109,7 +109,8 @@ function surfaceDouble(options: SurfaceOptions = {}): SurfaceDouble {
 	});
 
 	const base: OmpExtensionApi = {
-		setLabel(label: string): void {
+	registerTool() {},
+	setLabel(label: string): void {
 			labels.push(label);
 		},
 		registerCommand(name: string): void {
@@ -127,7 +128,7 @@ function surfaceDouble(options: SurfaceOptions = {}): SurfaceDouble {
 				});
 		},
 		pi: { AgentRegistry: undefined },
-	};
+}
 	const withoutSubscription = options.withoutSubscription
 		? ({ ...base, on: undefined } as unknown as OmpExtensionApi)
 		: base;

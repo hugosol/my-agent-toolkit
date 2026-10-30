@@ -8,7 +8,7 @@
 
 1. **找能力**：先读[能力 interface 阅读地图](../interface/README.md)，再按[框架能力索引](framework-capabilities.md)定位需要的声明、交付类型和源码。索引负责导航，canonical interface 的类型、注释与使用约定负责定义契约；不必先通读 framework implementation。
 2. **理解语义**：特别核对身份、观察范围、效果权限、交付顺序、初始化/清理、异步失败与配置要求。Session 从[Session 契约](../interface/session/README.md)进入；框架术语从 [Glossary Map](../../GLOSSARY-MAP.md)定位，不以宿主同名方法代替公共语义。
-3. **组织扩展**：用 `defineExtension` 声明扩展，用 `defineImplementation` 静态表达订阅、命令与生命周期，`create(context)` 构造业务状态；本页说明各层职责，[model-cost 分层实例](capability-layering.md)说明复杂扩展如何拆分。简单扩展不必复制全部目录。
+3. **组织扩展**：用 `defineExtension` 声明扩展，用 `defineImplementation` 静态表达订阅、命令、工具与生命周期，`create(context)` 构造业务状态；本页说明各层职责，[model-cost 分层实例](capability-layering.md)说明复杂扩展如何拆分。简单扩展不必复制全部目录。
 4. **连接宿主**：`harnesses/` 选择 `adapters/<harness>` 公共入口并连接扩展专属实现，`entrypoints/` 只负责发现。新增公共 adapter 时转到 [harness 接入指南](harness-integration.md)。
 5. **验证**：先遵循[静态 authoring 规则](static-authoring-check.md)，再按 [integration check](integration-check.md)扫描实际 extension 与目标 adapter；最后运行本扩展的行为用例和相应真实 harness 场景。静态接齐不等于语义正确，版本是否满足需求按[版本检查手册](harness-support.md#version-verification)另行验证。
 
@@ -28,7 +28,7 @@
 | --- | --- | --- |
 | Extension definition | 与宿主无关的纯声明：扩展身份、控制方式、状态、贡献内容与配置要求 | 这是“声明需要什么”，还是“执行时如何实现”？ |
 | Extension `shared-logic` | 扩展业务及其组合：业务规则、外部业务协议、业务数据模型、缓存与刷新策略、业务持久化、展示计算 | 换一个宿主，这条业务规则是否仍然成立？ |
-| Framework `interface` | 已封装 capability 的 canonical 消费契约及使用约定；State、Session、Prompt、Marker、Feedback、Provider、Subagent、Command 及三个 General 模块均已迁移，Session 是最深的示例 | extension 能否只读这里就正确使用该 capability？ |
+| Framework `interface` | 已封装 capability 的 canonical 消费契约及使用约定；State、Session、Prompt、Marker、Feedback、Provider、Subagent、Command、Tool 及 General 模块均已迁移，Session 是最深的示例 | extension 能否只读这里就正确使用该 capability？ |
 | Framework `runtime` | 单一 framework / adapter 内部 port 与交付契约 | 这是 adapter 必须实现/提供的框架事实，还是扩展可见的能力？ |
 | Framework `core` | 尚属内部的契约与宿主无关的语义 implementation | 这是应藏在 capability seam 后面的规则，还是内部 helper？ |
 | Framework `behaviors` | 基于公共契约实现的可复用行为：绑定、状态控制、贡献、生命周期与派发 | 这是框架应该统一兑现的行为，还是扩展自己的处理逻辑？ |
@@ -38,6 +38,12 @@
 | Discovery entrypoint | 供宿主发现并导出对应扩展装配 | 是否只承担发现入口，而没有业务或装配过程？ |
 
 `shared-logic` 中的“shared”指**同一扩展跨宿主共享**，不意味着所有扩展共用一个业务层。独立扩展拥有自己的业务；framework 不依赖具体扩展。
+
+### 提示词与工具定义的归属
+
+每个扩展在 `shared-logic/prompts/` 集中提示词正文与文本加载入口；`definition.ts` 保留注入身份和频率。首次注入指引使用 `init.md`，不因目录整理改为 system prompt。
+
+`shared-logic/tools/` 集中工具名称、label、工具与参数 description、共同参数结构及其执行接入，通过 `framework/interface/tool` 的契约和 `defineImplementation` 的静态 `tools` 槽注册。具体工具业务仍归扩展；framework 统一绑定和执行寿命，`adapters/<harness>` 负责原生参数映射、注册和实际调用身份，port 只装配这些映射。参数结构使用静态字面量与 const 引用，业务校验不以宿主可能进行修复的参数校验代替。没有提示词或工具的扩展无需创建空目录。
 
 ### 公共 adapter 的实现导航
 

@@ -8,6 +8,7 @@
  * Types constrain keys and values; a future source-expression check must enforce syntax restrictions.
  */
 import type { SessionFacts, UserInputDelivery } from "../interface/session";
+import type { ToolExecutionDelivery } from "../interface/tool";
 import type {
 	CommandInvocation,
 	HarnessPort,
@@ -86,6 +87,7 @@ export interface AdapterDeliveryMap {
 	readonly input: UserInputDelivery;
 	readonly run: RunDelivery;
 	readonly command: CommandInvocation;
+	readonly tool: ToolExecutionDelivery;
 }
 
 /**

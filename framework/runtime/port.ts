@@ -27,7 +27,11 @@ import type {
 } from "../interface/session";
 import type { DeclaredValueSeam, OwnerCapabilityHandle, OwnerReference } from "../interface/state";
 import type { SubagentIntegration } from "../interface/subagent";
+import type { ExtensionImplementation } from "../interface/details/implementation";
 import type { ConfigurationViolation } from "../core/violations";
+
+/** A materialized tool bound to the implementation's one state and lifetime. */
+export type BoundTool = NonNullable<ExtensionImplementation["tools"]>[number];
 
 /** The State values one write path records, by field name. */
 export type StateValues = Readonly<Record<string, boolean>>;
@@ -797,6 +801,8 @@ export interface HarnessPort {
 	subagentIntegration?: () => SubagentIntegration | Promise<SubagentIntegration>;
 	/** Registers one bound command with the harness's command surface. */
 	registerCommand(command: BoundCommand): void;
+	/** Optional for tool-less consumers; a declaration needing it refuses binding when absent. */
+	registerTool?: (tool: BoundTool) => void;
 }
 
 /** Why an extension was not bound. */

@@ -72,9 +72,10 @@ test("OMP command registration preserves awaited success, refusal and rejected-a
 	let run: ((args: string, ctx: OmpCommandContext) => void | Promise<void>) | undefined;
 	const notices: Array<{ level: string; message: string }> = [];
 	const api: OmpExtensionApi = {
-		setLabel() {}, appendEntry() {}, on() {},
+	registerTool() {},
+	setLabel() {}, appendEntry() {}, on() {},
 		registerCommand(name, registration) { if (name === "budget") run = registration.handler; },
-	};
+}
 	const ctx: OmpCommandContext = {
 		agent: { kind: "main", id: "Main" },
 		sessionManager: { getSessionId: () => "native-actions", getBranch: () => [] },

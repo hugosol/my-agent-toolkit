@@ -115,6 +115,18 @@ function contract(result: DemandResult, id: string) {
 }
 
 describe("offline demand analysis", () => {
+	test("derives tool registration from static declarations without evaluating parameter builders", () => {
+		const root = fixtureRoot();
+		write(root, "extensions/demo/definition.ts", `import { defineExtension } from "../../framework/interface";
+export const DEMO = defineExtension({ id: "demo", displayName: "Demo" });`);
+		write(root, "extensions/demo/implementation.ts", `import { defineImplementation } from "../../framework/interface/details/implementation";
+function schema() { throw new Error("must never execute"); }
+const tools = [{ name: "inspect", label: "Inspect", description: "Inspect", parameters: schema(), execute() { return { content: [] }; } }];
+export const implementation = defineImplementation({ create: () => ({}), tools });`);
+		const result = analyzeDemand({ root, extension: "demo" });
+		expect(result.diagnostics).toEqual([]);
+		expect(contract(result, "port:registerTool")?.requirement).toBe("required");
+	});
 	test("reports dynamic capability selection but permits dynamic business-data indexing", () => {
 		const root = fixtureRoot();
 		write(root, "extensions/demo/definition.ts", `import { defineExtension } from "../../framework/interface";

@@ -37,6 +37,7 @@ import type {
 } from "../session";
 import type { DeclaredValueSeam, OwnerCapabilityHandle, OwnerReference } from "../state";
 import type { SubagentIntegration } from "../subagent";
+import type { ToolDeclaration, ToolExecutionDelivery, ToolExecutionResult } from "../tool";
 
 /**
  * What the framework hands an extension's factory.
@@ -216,6 +217,8 @@ export interface ImplementationDeclaration<State> {
 	readonly subscriptions?: readonly ImplementationSubscription<State>[];
 	/** The implementations of the definition's commands, keyed by command name. */
 	readonly commands?: ImplementationCommands<State>;
+	/** Static tool declarations; execution receives this implementation's one business state. */
+	readonly tools?: readonly ToolDeclaration<State>[];
 	/**
 	 * Selects the extension's own model catalog from its business state.
 	 *
@@ -292,6 +295,10 @@ export interface ExtensionImplementation {
 	 * an implementation which never arrived refuses the binding.
 	 */
 	readonly commands?: CommandImplementations;
+	/** Tools materialized over the same state as every other implementation slot. */
+	readonly tools?: readonly (Omit<ToolDeclaration<never>, "execute"> & {
+		readonly execute: (params: unknown, delivery: ToolExecutionDelivery) => ToolExecutionResult | Promise<ToolExecutionResult>;
+	})[];
 	/**
 	 * The implementation's subscriptions, one entry per group it declares.
 	 *
@@ -437,6 +444,10 @@ function materializeImplementation<State>(
 	const cleanup = declaration.cleanup;
 	return {
 		...(commands === undefined ? {} : { commands }),
+		...(declaration.tools === undefined ? {} : { tools: declaration.tools.map(({ execute, ...tool }) => ({
+			...tool,
+			execute: (params: unknown, delivery: ToolExecutionDelivery) => execute(state, params, delivery),
+		})) }),
 		...(subscriptions === undefined ? {} : { subscriptions }),
 		...(declaration.catalog === undefined ? {} : { catalog: declaration.catalog(state) }),
 		...(initialize === undefined ? {} : { initialize: delivery => initialize(state, delivery) }),

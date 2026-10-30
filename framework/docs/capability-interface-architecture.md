@@ -373,6 +373,8 @@ State 的 capability interface 拥有自己的声明（`StateDeclaration`、`Sta
 
 唯一 adapter port 在 `framework/runtime/port.ts`，引用 canonical interface 声明而不重述它们；原 `core/protocol.ts` 已移除。import check 要求 `framework/` 下每个 extension import 都解析到 `framework/interface`，没有剩余例外列表。没有引入新的 disposal event、第二套 dispatch、runtime registry 或第二套 adapter abstraction。
 
+Tool 的 canonical 契约位于 [`framework/interface/tool.ts`](../interface/tool.ts)：扩展通过 `defineImplementation.tools` 声明共同工具，framework 绑定其业务状态与寿命，原生参数映射和注册由顶层 adapter 实现。具体工具与参数文本仍归扩展 `shared-logic/tools/`；提示词正文归 `shared-logic/prompts/`，不改变注入规则。职责与取舍见 [ADR-0002 的工具注册决策](../../docs/adr/0002-semantic-extension-framework.md#framework-owned-tool-registration-2026-10-31)，实际源码位置见[能力索引](framework-capabilities.md#adapter-implementation-navigation)。
+
 ### 8.2 可检查 authoring 与共享规划（2026-10-20）
 
 <a id="inspectable-authoring-and-shared-planning-2026-10-20"></a>

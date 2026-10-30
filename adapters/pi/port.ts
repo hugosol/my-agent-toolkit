@@ -15,6 +15,7 @@ import type { SubagentIntegration } from "../../framework/interface/subagent";
 import type { HarnessPort, SessionDisposal } from "../../framework/runtime/port";
 import { onPiSessionContext } from "./native/core/extensions/context";
 import { registerPiCommand } from "./native/core/extensions/commands";
+import { registerPiTool } from "./native/core/extensions/tools";
 import type { PiExtensionApi, PiExtensionContext } from "./native/core/extensions/types";
 import { onPiRunInitiation } from "./native/core/extensions/prompt";
 import type { PiProviderFacts } from "./native/core/model-registry";
@@ -146,6 +147,7 @@ export const PI_PORT = defineAdapterPort<PiPortContext>({
 	onUserInput: context => onPiUserInput(context),
 	onRunInitiation: context => onPiRunInitiation(context),
 	registerCommand: context => registerPiCommand(context),
+	registerTool: context => registerPiTool(context.pi),
 	// Static adapter absences, not claims that the native harness cannot offer these features.
 	// The framework's existing observation access and delivery-position fallbacks are unchanged.
 	sessionObservationAccess: unavailablePortMember(

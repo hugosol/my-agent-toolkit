@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, test } from "bun:test";
+import { resolve } from "node:path";
 import { analyzeSupply } from "../../scripts/integrations/supply";
 import type { SupplyOptions, SupplyResult } from "../../scripts/integrations/model";
 import {
@@ -44,6 +45,14 @@ function lineOf(source: string, marker: string): number {
 }
 
 describe("adapter supply analysis", () => {
+	for (const adapter of ["pi", "omp"]) {
+		test(`${adapter} provides native tool registration without an assembly-specific witness`, () => {
+			const result = supplyFor(resolve(import.meta.dir, "../.."), adapter, [portContract("registerTool")]);
+			expect(result.diagnostics).toEqual([]);
+			expect(statusOf(result, "port:registerTool").status).toBe("provided");
+		}, 30_000);
+	}
+
 	test("a source-file selection analyzes its owning adapter rather than reporting it missing", () => {
 		const root = createContractRoot();
 		writeFixture(root, "adapters/fixture/internal/port.ts", FULL_ADAPTER);

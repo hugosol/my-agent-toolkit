@@ -73,7 +73,8 @@ type DeliveryKind =
 	| "unobserved"
 	| "command"
 	| "action"
-	| "initialization";
+	| "initialization"
+	| "tool";
 
 /** The semantic delivery family one event kind dispatches through. */
 const DELIVERY_KIND_BY_EVENT: Readonly<Record<IntegrationEventKind, DeliveryKind>> = {
@@ -105,6 +106,7 @@ const DELIVERY_KIND_BY_TYPE: Readonly<Partial<Record<string, DeliveryKind>>> = {
 	CommandDelivery: "command",
 	ActionDelivery: "action",
 	InitializationDelivery: "initialization",
+	ToolExecutionDelivery: "tool",
 };
 
 /** One source-level use of a framework member, before contracts are merged. */
@@ -149,6 +151,7 @@ interface ImplementationScan {
 	readonly unknownEvents: readonly { readonly kind: string; readonly origin: SourceLocation }[];
 	initialize: boolean;
 	cleanup: boolean;
+	tools: boolean;
 }
 
 interface PathBinding {
@@ -372,6 +375,7 @@ function analyzeSelectedDemand(
 		marker: definition?.marker === true,
 		initialize: implementation.initialize,
 		cleanup: implementation.cleanup,
+		tools: implementation.tools,
 		commands: planCommands,
 	};
 	const plan = planIntegration(usage);
@@ -392,6 +396,7 @@ function analyzeSelectedDemand(
 			case "initialize": return implementationSlotOrigins(collector.analysis, implementation, "initialize", baselineOrigin);
 			case "cleanup": return implementationSlotOrigins(collector.analysis, implementation, "cleanup", baselineOrigin);
 			case "commands": return planCommands.length > 0 ? planCommands.map(command => command.origin) : baselineOrigin;
+			case "tools": return implementation.views.flatMap(view => view.tools.map(tool => tool.origin));
 			default: return baselineOrigin;
 		}
 	};
@@ -791,6 +796,7 @@ function collectImplementations(analysis: AuthoringSourceAnalysis): Implementati
 		unknownEvents,
 		initialize: views.some(view => view.initialize !== undefined),
 		cleanup: views.some(view => view.cleanup !== undefined),
+		tools: views.some(view => view.tools.length > 0),
 	};
 }
 
@@ -974,6 +980,12 @@ function analyzeImplementationUsage(
 					],
 				}, 0);
 			}
+		}
+		for (const tool of view.tools) {
+			if (tool.execute === undefined) continue;
+			const bindings: Bindings = new Map();
+			bindParameter(tool.execute, 2, { paths: ["delivery:tool"] }, bindings, collector.analysis);
+			analyzeFunction(collector, tool.execute, bindings, { delivery: "tool", chain: ["implementation", `tool:${tool.name}`] }, 0);
 		}
 		if (view.initialize !== undefined) {
 			const bindings: Bindings = new Map();

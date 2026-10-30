@@ -1,7 +1,7 @@
 # Capability interfaces
 
 Every capability is encapsulated here. State, Session, Prompt, Marker, Feedback, Provider,
-Subagent and Command each own their canonical extension-facing declarations, and General's
+Subagent, Command and Tool each own their canonical extension-facing declarations, and General's
 modules have direct entries. An interface is the canonical extension-facing contract, not a re-export
 of an implementation directory. Start with the capability entry the extension needs — for example
 [Session](session/README.md), imported from `framework/interface/session` — and the authored
@@ -18,6 +18,7 @@ not aggregate the capability entries below.
 | Extension author consuming Session | [Session contract](session/README.md), its types and the root authoring entry | Observation constructors, source mutation, Local access, internal dispatch |
 | Extension author declaring an extension | [Root authoring entry](index.ts) and its [definition](details/definition.ts) / [implementation](details/implementation.ts) details | Internal defaults, bound sets, validation helpers or assembly wiring |
 | Extension author declaring commands | [Command contract](command/index.ts) and its [declaration](command/details/definition.ts) / [implementation](command/details/implementation.ts) details | Invocation construction, argument parsing, help tooling, persistence callback or marker transport |
+| Extension author declaring model-callable tools | [Tool contract](tool.ts), used by the root authoring entry's static `tools` slot | Native registration, parameter-schema translation or native execution context |
 | Extension author declaring subagent needs | [Subagent contract](subagent.ts) | Execution modes, adapter coverage inventories or provider protocols |
 | Adapter author supplying facts | The internal [`runtime/port`](../runtime/port.ts) plus canonical interface facts, and the native harness | Extension business logic |
 | Framework maintainer | Interface plus internal capability modules and composition | No extension-owned policy belongs in the capability |
@@ -61,6 +62,8 @@ anywhere else; the import check protects those seams. The framework/adapter inte
 one internal port at [`runtime/port.ts`](../runtime/port.ts); it refers to these canonical
 declarations and is never imported by an extension. See the
 [overall direction](../docs/capability-interface-architecture.md).
+
+[Tool](tool.ts) owns shared tool metadata, parameter descriptions and shapes, execution delivery and text results. An extension declares `tools` in `defineImplementation`; handlers receive the same business state as its subscriptions, the parameters as `unknown`, and the actual call's session identity and cancellation signal. Parameter declarations describe model input, not a replacement for business validation: the native adapters relax type/extra-key checks where the harness would otherwise repair invalid inputs before the handler sees them. Tool registration is framework-managed; extensions do not import native tool types or register separately for each harness. A binding requiring tools is refused when its adapter cannot register them.
 
 A deep module gives leverage through a small interface, while the implementation keeps rule changes
 local. Session hides its source, Round/Turn processing and cross-process coordination behind this
