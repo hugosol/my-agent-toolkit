@@ -178,7 +178,8 @@ function nativeDouble(options: {
 	});
 
 	const api: OmpExtensionApi = {
-		setLabel(): void {},
+	registerTool() {},
+	setLabel(): void {},
 		registerCommand(name, registration): void {
 			registrations.set(name, registration);
 		},
@@ -192,7 +193,7 @@ function nativeDouble(options: {
 			}
 		},
 		pi: { AgentRegistry: { global: () => registry } },
-	};
+}
 
 	return {
 		api,

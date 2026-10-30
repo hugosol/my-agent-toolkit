@@ -24,11 +24,12 @@ function recordingApi() {
 	const labels: string[] = [];
 	const commands: string[] = [];
 	const api: OmpExtensionApi = {
-		setLabel: label => labels.push(label),
+	registerTool() {},
+	setLabel: label => labels.push(label),
 		registerCommand: name => commands.push(name),
 		appendEntry: () => {},
 		on: () => {},
-	};
+}
 	return { api, labels, commands };
 }
 

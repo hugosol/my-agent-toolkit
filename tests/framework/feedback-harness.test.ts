@@ -62,7 +62,8 @@ function nativeDouble(): NativeDouble {
 	const runHandlers: OmpRunInitiationHandler[] = [];
 
 	const api: OmpExtensionApi = {
-		// This suite observes the channels feedback travels; labels and session hooks are
+	registerTool() {},
+	// This suite observes the channels feedback travels; labels and session hooks are
 		// covered by their own suites.
 		setLabel(): void {},
 		registerCommand(name, registration): void {
@@ -74,7 +75,7 @@ function nativeDouble(): NativeDouble {
 		on(event: string, handler: never): void {
 			if (event === "before_agent_start") runHandlers.push(handler as OmpRunInitiationHandler);
 		},
-	};
+}
 
 	return {
 		api,

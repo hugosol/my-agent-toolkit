@@ -172,7 +172,8 @@ function boundSurface(): NativeSurface {
 	});
 
 	const api: OmpExtensionApi = {
-		// The suite observes the round axis, not labels or entries.
+	registerTool() {},
+	// The suite observes the round axis, not labels or entries.
 		setLabel(): void {},
 		registerCommand(name, registration): void {
 			registrations.set(name, registration);
@@ -187,7 +188,7 @@ function boundSurface(): NativeSurface {
 			listeners.push(handler as (event: unknown, ctx: OmpSessionContext) => void);
 			otherHandlers.set(event, listeners);
 		},
-	};
+}
 
 	// The assembly's own subscription: what the framework hands a shared-logic round handler,
 	// recorded as the fact under test.

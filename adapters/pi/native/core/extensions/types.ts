@@ -328,6 +328,10 @@ export interface PiExtensionApi {
 	 */
 	on(event: "session_info_changed", handler: PiSessionEventHandler<PiSessionInfoChangedEvent>): () => void;
 	registerCommand(name: string, options: PiCommandRegistration): void;
+	registerTool: (tool: {
+		name: string; label: string; description: string; parameters: unknown;
+		execute(callId: string, params: unknown, signal: AbortSignal | undefined, onUpdate: unknown, ctx: PiExtensionContext): Promise<{ readonly content: readonly { readonly type: "text"; readonly text: string }[]; readonly details?: unknown; readonly isError?: boolean }>;
+	}) => void;
 	appendEntry(customType: string, data?: unknown): void;
 	/**
 	 * pi's own shared event bus, when this surface publishes one.

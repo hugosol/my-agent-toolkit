@@ -473,6 +473,28 @@ declaration.subscriptions.length = 0;
 		expectDiagnostic(result, "authoring/mutation", "extensions/alias-mutation/details/implementation.ts", lineOf(source, "declaration.subscriptions.length ="));
 	});
 
+	test("passes authored callable factories to adapters without exposing their captured declarations", () => {
+		const root = fixtureRoot();
+		write(root, "framework/interface/details/implementation.ts", `export function defineImplementation<State>(declaration: unknown): (() => State) & { readonly declaration: unknown } { throw new Error("must never execute"); }`);
+		write(root, "extensions/callable/details/implementation.ts", `import { defineImplementation } from "../../../framework/interface";
+const events = { turn_start: () => {} };
+export const implementation = defineImplementation({ create: () => ({}), subscriptions: [{ scope: "session", events }] });
+declare function adapter(options: { implementation: typeof implementation }): void;
+adapter({ implementation });`);
+		expectClean(checkAuthoring({ root }));
+	});
+
+	test("still rejects an authored callable's explicit declaration escaping to an opaque helper", () => {
+		const root = fixtureRoot();
+		write(root, "framework/interface/details/implementation.ts", `export function defineImplementation<State>(declaration: unknown): (() => State) & { readonly declaration: unknown } { throw new Error("must never execute"); }`);
+		const source = `import { defineImplementation } from "../../../framework/interface";
+export const implementation = defineImplementation({ create: () => ({}) });
+declare function alter(value: unknown): void;
+alter(implementation.declaration);`;
+		write(root, "extensions/callable-escape/details/implementation.ts", source);
+		expectDiagnostic(checkAuthoring({ root }), "authoring/static-structure", "extensions/callable-escape/details/implementation.ts", lineOf(source, "alter(implementation.declaration)"));
+	});
+
 	test("reports declaration structures passed to opaque helpers as unresolved", () => {
 		const root = fixtureRoot();
 		const source = `import { defineImplementation } from "../../../framework/interface";

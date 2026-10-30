@@ -26,6 +26,7 @@ import type { HarnessPort } from "../../framework/runtime/port";
 import { observeSessionContext } from "./native/extensibility/extensions/context";
 import { createContextTracker, type ContextTracker } from "./native/extensibility/extensions/context";
 import { registerControl } from "./native/extensibility/extensions/commands";
+import { registerOmpTool } from "./native/extensibility/extensions/tools";
 import { feedbackTransport } from "./native/extensibility/extensions/feedback";
 import { markerTransport } from "./native/extensibility/extensions/marker";
 import type { OmpExtensionApi, OmpSessionContext } from "./native/extensibility/extensions/types";
@@ -107,6 +108,7 @@ export const OMP_PORT = defineAdapterPort<OmpPortContext>({
 			owner: context.ownerOf,
 			markers: markerTransport,
 		}),
+	registerTool: context => registerOmpTool(context.pi),
 	registerCommand: context => command => {
 		registerControl(context.pi, command, {
 			record: context.record,

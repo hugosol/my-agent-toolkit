@@ -2,7 +2,7 @@
 
 Routes the agent's code exploration toward the codebase-memory-mcp graph and LSP, controlled by
 `/codebase-tools`. The declaration is [`definition.ts`](definition.ts), its shared prompts are
-under [`shared-logic/`](shared-logic). Its thin assemblies are [`harnesses/omp.ts`](harnesses/omp.ts) and
+under [`shared-logic/prompts/`](shared-logic/prompts), including its text-loading entry `index.ts`. Its thin assemblies are [`harnesses/omp.ts`](harnesses/omp.ts) and
 [`harnesses/pi.ts`](harnesses/pi.ts) for manual mode, and [`harnesses/omp-auto.ts`](harnesses/omp-auto.ts)
 and [`harnesses/pi-auto.ts`](harnesses/pi-auto.ts) for automatic startup mode; all four consume the same
 unchanged definition and prompt resources through the shared assembly modules

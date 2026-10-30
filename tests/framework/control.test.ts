@@ -49,7 +49,8 @@ function nativeDouble(options: { readonly failAppend?: boolean } = {}): NativeDo
 	const effects: string[] = [];
 
 	const api: OmpExtensionApi = {
-		setLabel(label: string): void {
+	registerTool() {},
+	setLabel(label: string): void {
 			labels.push(label);
 		},
 		registerCommand(name, registration): void {
@@ -62,7 +63,7 @@ function nativeDouble(options: { readonly failAppend?: boolean } = {}): NativeDo
 		},
 		// Binding subscribes the session behavior here; this suite drives commands only.
 		on(): void {},
-	};
+}
 
 	return {
 		api,

@@ -68,6 +68,10 @@ _Avoid_: permission level, owner key filter, execution scope
 One declared group of semantic lifecycle handlers under one observation scope, delivered through the framework's single dispatch. The scope is declared once for the whole group rather than per event kind or per handler, and an extension that needs both an owner-scoped effect body and a per-actual-session observation view declares two groups over one implementation.
 _Avoid_: handler bag, owner gate, per-event scope, second dispatcher
 
+**Tool definition（工具定义）**:
+The shared description of a model-callable operation: its invocation name, human-readable label, purpose, accepted parameter shapes and parameter guidance. Its business meaning is independent of the harness that exposes it; a description is not proof that an invocation satisfies the business rules.
+_Avoid_: slash command, native registration, injected prompt, execution result
+
 **Tool execution（工具执行）**:
 The agent's execution of a tool-call instruction and production of a tool result, distinct from an LLM request/response Turn. It is work within a Round; its result may become input to a later Turn.
 _Avoid_: turn, model response, separately billed model request

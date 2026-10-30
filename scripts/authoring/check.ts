@@ -200,6 +200,7 @@ export interface AuthoredImplementationView {
 	readonly create?: ts.FunctionLikeDeclaration;
 	readonly subscriptions: readonly AuthoredSubscriptionView[];
 	readonly commands: readonly AuthoredCommandView[];
+	readonly tools: readonly { readonly name: string; readonly execute?: ts.FunctionLikeDeclaration; readonly origin: AuthoringSourceLocation }[];
 	readonly catalog?: ts.FunctionLikeDeclaration;
 	readonly initialize?: ts.FunctionLikeDeclaration;
 	readonly cleanup?: ts.FunctionLikeDeclaration;
@@ -1420,6 +1421,17 @@ function commandViews(property: StaticProperty | undefined, state: CheckState): 
 	return views;
 }
 
+function toolViews(property: StaticProperty | undefined, state: CheckState): AuthoredImplementationView["tools"] {
+	if (property === undefined || property.value.kind !== "array") return [];
+	return property.value.items.flatMap(value => {
+		if (value.kind !== "object") return [];
+		const name = value.properties.get("name")?.value;
+		if (name?.kind !== "literal" || typeof name.value !== "string") return [];
+		const execute = functionFromStatic(value.properties.get("execute")?.value, state);
+		return [{ name: name.value, ...(execute === undefined ? {} : { execute }), origin: sourceLocation(state, value.node) }];
+	});
+}
+
 function implementationView(
 	declaration: Extract<StaticValue, { kind: "object" }>,
 	originNode: ts.Node,
@@ -1434,6 +1446,7 @@ function implementationView(
 		...(create === undefined ? {} : { create }),
 		subscriptions: subscriptionViews(declaration.properties.get("subscriptions"), state),
 		commands: commandViews(declaration.properties.get("commands"), state),
+		tools: toolViews(declaration.properties.get("tools"), state),
 		...(catalog === undefined ? {} : { catalog }),
 		...(initialize === undefined ? {} : { initialize }),
 		...(cleanup === undefined ? {} : { cleanup }),
@@ -1492,6 +1505,29 @@ function validateDeclarationObject(declaration: Extract<StaticValue, { kind: "ob
 		} else {
 			reportIssues(commands.value.issues, state);
 			for (const [name, command] of commands.value.properties) validateCommand(name, command, state);
+		}
+	}
+
+	const tools = declaration.properties.get("tools");
+	if (tools && tools.value.kind !== "absent") {
+		if (tools.value.kind !== "array") {
+			report(state, "authoring/static-structure", tools.valueNode, "`tools` must be a static array of tool declarations.");
+		} else {
+			reportIssues(tools.value.issues, state);
+			for (const tool of tools.value.items) {
+				if (tool.kind !== "object") {
+					report(state, "authoring/static-structure", tool.node, "A tool must be a static declaration object.");
+					continue;
+				}
+				reportIssues(tool.issues, state);
+				const name = tool.properties.get("name")?.value;
+				if (name?.kind !== "literal" || typeof name.value !== "string") {
+					report(state, "authoring/static-structure", tool.node, "A tool name must be a static string.");
+				}
+				const execute = tool.properties.get("execute");
+				if (execute) validateCallable(execute, "Tool `execute`", state);
+				else report(state, "authoring/static-structure", tool.node, "A tool must declare `execute`.");
+			}
 		}
 	}
 
@@ -1632,6 +1668,11 @@ function collectStaticRefs(
 	const expression = ts.isExpression(node) ? unwrap(node) : node;
 
 	if (isAnyFunctionLike(expression)) return;
+	// A callable value is executable behavior, not its captured declaration structure.
+	// In particular, handing an authored factory to an adapter must not recursively
+	// expose the object passed to defineImplementation. Explicit `.declaration`
+	// accesses remain structural and are checked separately by mutationTargetInfo.
+	if (ts.isCallExpression(expression) && state.checker.getTypeAtLocation(expression).getCallSignatures().length > 0) return;
 
 	if (ts.isIdentifier(expression)) {
 		if (expression.text === "undefined") return;
@@ -1645,6 +1686,9 @@ function collectStaticRefs(
 		const target = resolveAliasedSymbol(raw, state);
 		if (!target) return;
 		refs.add(target);
+		// Keep the value reference itself: wrapper detection needs callable parameters
+		// such as `create`. Only its captured initializer is outside structural data.
+		if (state.checker.getTypeAtLocation(expression).getCallSignatures().length > 0) return;
 		if (seen.has(target)) return;
 		seen.add(target);
 		const declaration = target.valueDeclaration;

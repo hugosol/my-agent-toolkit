@@ -165,7 +165,8 @@ function boundSurface(
 	});
 
 	const api: OmpExtensionApi = {
-		setLabel(label): void {
+	registerTool() {},
+	setLabel(label): void {
 			registrations.push(`label:${label}`);
 		},
 		registerCommand(): void {},
@@ -194,7 +195,7 @@ function boundSurface(
 				}),
 			},
 		},
-	};
+}
 
 	const factory = frameworkOmp.ompAdapter(PROBE, {
 		implementation: defineImplementation<{ readonly catalog?: CatalogPriceSource }>({

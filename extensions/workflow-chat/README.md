@@ -35,37 +35,45 @@ extensions/workflow-chat/
 ├── config.yaml
 ├── common/
 │   ├── config.ts
-│   └── requests.ts
-├── harnesses/
-│   ├── pi-tools.ts
-│   └── pi-modules.d.ts
+│   ├── requests.ts
+│   └── tool-result.ts
 ├── manager-chat/
 │   ├── definition.ts
 │   ├── shared-logic/
-│   │   └── actions.ts
+│   │   ├── actions.ts
+│   │   ├── implementation.ts
+│   │   ├── tools/index.ts
+│   │   └── prompts/
+│   │       ├── index.ts
+│   │       └── init.md
 │   └── harnesses/
 │       ├── omp.ts
 │       └── pi-auto.ts
 └── node-chat/
     ├── definition.ts
     ├── shared-logic/
-    │   └── report.ts
+    │   ├── report.ts
+    │   ├── implementation.ts
+    │   ├── tools/index.ts
+    │   └── prompts/
+    │       ├── index.ts
+    │       └── init.md
     └── harnesses/
         ├── omp.ts
         └── pi-auto.ts
 ```
 
 - `common/` 是两种角色共同复用的实现：`config.ts` 维护共同配置声明，`requests.ts` 通过公共 Session/HTTP 处理真实身份、请求预算、取消与响应解析。它不承载 manager 动作或 node 报告规则，不依赖角色目录或原生 harness SDK。
-- 各角色的 `definition.ts` 持有自身声明与首次工具指引，复用共同配置声明；`shared-logic/` 持有该 extension 跨 harness 的业务逻辑：manager 的动作参数、路由选择与 collect，node 的 report 参数与请求。业务逻辑依赖 `common/` 和公共能力，不依赖 `harnesses/` 或原生 harness SDK，两角色也不互相导入业务逻辑。
-- 各角色的 `harnesses/omp.ts` 与 `harnesses/pi-auto.ts` 只负责原生工具注册、schema、context 转换、result 包装，以及角色声明、业务逻辑和请求资源的装配与生命周期接线；不在原生适配层另写一套业务校验或协议处理。依赖方向是 harness → 本角色声明/业务逻辑 → common/公共能力，common 不反向依赖角色或 harness。
-- 顶层 `harnesses/` 仅承接 Pi 两角色共同使用的原生工具类型与结果包装；不把 Pi 依赖放入 `common/` 业务请求层。两宿主的角色订阅都限定 `owner`：后端分别启动独立角色主会话，不向普通子代理传播管理权或角色入口。
+- 各角色的 `definition.ts` 持有自身声明与注入策略，复用共同配置声明；首次指引正文与加载入口归 `shared-logic/prompts/`。`shared-logic/tools/` 集中工具名、label、工具和参数 description、共同参数结构及执行接入，消费 [Tool interface](../../framework/interface/tool.ts)，不维护两份宿主参数定义。
+- `shared-logic/implementation.ts` 通过公共 `defineImplementation` 的静态 `tools` 槽声明工具，与会话订阅共用业务状态和清理生命周期。manager 的动作参数、路由选择与 collect，node 的 report 参数与请求仍由各自业务 module 处理；`common/tool-result.ts` 只负责共享业务结果到公共工具结果的映射。业务依赖 `common/` 和 framework interface，不依赖原生 harness SDK。
+- 各角色的 `harnesses/omp.ts` 与 `harnesses/pi-auto.ts` 仅选择公共 adapter、共享声明与实现、配置根和启动策略。原生工具注册、参数映射及实际执行身份归顶层 `adapters/`；扩展不再提供原生注册或 TypeBox 声明。两宿主的角色订阅都限定 `owner`：后端分别启动独立角色主会话，不向普通子代理传播管理权或角色入口。
 - **共享实现，不共享实例**：两角色可导入同一份配置与请求代码，但各自装配独立的请求资源；配置绑定、Session 身份和请求取消资源不跨角色共用。请求生命周期按实际 Session 隔离，不以进程级或角色级单例保存共同状态。
 
 ## 首次工具指引与输入边界
 
 三种输入各有唯一职责：`Task.prompt` 固定角色职能；后端本次 input 提供工作、运行说明及状态/历史/报告记录的路径；扩展的公共 Prompt 只说明工具使用。后端仍按原规则把固定文本与本次工作组合为启动输入，扩展不重拼、不替换或另发固定文本，不复制 Bot 文档、整张 Map 或向 node 自动传播 Run 的 `user_input`。模型应按给定路径读取所需材料，而不是等待扩展自动注入内容。
 
-完整指引由 [manager 声明](manager-chat/definition.ts)与 [node 声明](node-chat/definition.ts)持有，不要求部署者再复制到 Task。manager 的首次指引覆盖全部十种 run action、collect 五种 reason 与完整等待预算、报告标识查阅、依赖与终态、派发核实、recover/retry、人工真实交接及部分效果；node 的首次指引覆盖报告时机、可读地址/用法/限制、允许后续收尾、报告不等于完成，以及已保存但通知失败不重报。
+完整指引由 [manager init.md](manager-chat/shared-logic/prompts/init.md)与 [node init.md](node-chat/shared-logic/prompts/init.md)持有，由各自声明引用，不要求部署者再复制到 Task。manager 的首次指引覆盖全部十种 run action、collect 五种 reason 与完整等待预算、报告标识查阅、依赖与终态、派发核实、recover/retry、人工真实交接及部分效果；node 的首次指引覆盖报告时机、可读地址/用法/限制、允许后续收尾、报告不等于完成，以及已保存但通知失败不重报。
 
 两条隐藏、持久化的 Prompt 身份分别为 `manager-chat:tools` 与 `node-chat:tools`，使用公共 `first-enabled-run` 的分支历史规则，不另存“已注入”标记。普通轮次保留历史中的一份指引，不追加副本；切换回来也不重置。公共自动启动策略每进程只消费一次，切到新的未启用 owner 不会再次自动启用；历史分支不带该身份时，由公共规则决定首次贡献，不由角色代码另建状态机。
 

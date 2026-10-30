@@ -207,7 +207,8 @@ function gateSurface(): GateSurface {
 	});
 
 	const api: OmpExtensionApi = {
-		setLabel(): void {},
+	registerTool() {},
+	setLabel(): void {},
 		registerCommand(): void {},
 		appendEntry(): void {},
 		on(event: string, handler: never): void {
@@ -234,7 +235,7 @@ function gateSurface(): GateSurface {
 				}),
 			},
 		},
-	};
+}
 
 	const factory = ompAdapter(CODEBASE_TOOLS, {
 		implementation: defineImplementation({

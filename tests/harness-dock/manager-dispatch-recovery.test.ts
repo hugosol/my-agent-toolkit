@@ -48,7 +48,7 @@ test("P14 recover requires human confirmation and resumes original execution whi
 		expect((await scene.detail()).run).toEqual(failed);
 		expect(await scene.dock.call({ ...input, confirmed: true, reason: "  " })).toMatchObject({ code: "recovery-confirmation-required" });
 		const count = scene.calls.length;
-		for (const extra of [{ sessionId: "forged" }, { runId: "forged" }, { executionId: "forged" }, { chat: { sessionId: "forged" } }, { finding: "created" }, { nodes: ["B"] }]) {
+		for (const extra of [{ confirmed: "false" }, { sessionId: "forged" }, { runId: "forged" }, { executionId: "forged" }, { chat: { sessionId: "forged" } }, { finding: "created" }, { nodes: ["B"] }]) {
 			expect(await scene.dock.call({ ...input, confirmed: true, ...extra }, true)).toMatch(/Validation failed|parameters|不接受/);
 		}
 		expect(scene.calls).toHaveLength(count);
@@ -81,7 +81,7 @@ test("P12 P14 retry requires confirmation and running Run and retains new and ol
 		expect((await scene.detail()).run).toEqual(failed);
 		expect(await scene.dock.call({ ...input, confirmed: true, reason: "  " })).toMatchObject({ code: "retry-confirmation-required" });
 		const count = scene.calls.length;
-		for (const extra of [{ sessionId: "forged" }, { runId: "forged" }, { executionId: "forged" }, { chat: { sessionId: "forged" } }, { finding: "created" }, { nodes: ["B"] }]) {
+		for (const extra of [{ confirmed: "false" }, { sessionId: "forged" }, { runId: "forged" }, { executionId: "forged" }, { chat: { sessionId: "forged" } }, { finding: "created" }, { nodes: ["B"] }]) {
 			expect(await scene.dock.call({ ...input, confirmed: true, ...extra }, true)).toMatch(/Validation failed|parameters|不接受/);
 		}
 		expect(scene.calls).toHaveLength(count);

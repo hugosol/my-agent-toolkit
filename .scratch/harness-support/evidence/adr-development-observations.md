@@ -1,5 +1,0 @@
-# ADR development observations
-
-Evidence limits: only isolated probes ran (ratio arithmetic, and a focus-controller probe against the installed host with a fixture session/UI, which is neither the public outlet nor a baseline certification); no production widget, public interface, real-model or remote-balance acceptance exists, and the stored support baseline is unchanged. This does not widen the native escape hatch or change State Owner, and does not certify an implemented public focus interface or a newer harness baseline.
-
-Evidence limits: the confirmation is interview provenance plus a local smoke of the old body-timeout behavior; neither certifies the new module, the proxy protocols, the real provider queries or the connect-bot transport regression. The implemented module slice is recorded under [Model-cost assembly revision](../../../docs/adr/0002-semantic-extension-framework.md#model-cost-assembly-revision).

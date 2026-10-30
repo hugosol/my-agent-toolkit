@@ -222,7 +222,8 @@ function boundSurface(
 	};
 
 	const api: OmpExtensionApi = {
-		// The suite drives State through commands and session events, not through labels.
+	registerTool() {},
+	// The suite drives State through commands and session events, not through labels.
 		setLabel(): void {},
 		registerCommand(name, registration): void {
 			registrations.set(name, registration);
@@ -241,7 +242,7 @@ function boundSurface(
 		// The session's own effective level, as the harness's api reports it; absent models a
 		// surface that publishes no level getter at all.
 		...(surface.effort === undefined ? {} : { getThinkingLevel: () => surface.effort as string }),
-	};
+}
 
 	// The assembly's own subscription: what the framework hands a shared-logic session
 	// handler, recorded as the fact under test.

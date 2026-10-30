@@ -200,7 +200,8 @@ function nativeDouble(): NativeDouble {
 			>();
 
 			const api: OmpExtensionApi = {
-				setLabel(): void {},
+	registerTool() {},
+	setLabel(): void {},
 				registerCommand(name, registration): void {
 					registrations.set(name, registration);
 				},
@@ -215,7 +216,7 @@ function nativeDouble(): NativeDouble {
 				},
 				// The native escape hatch: the official agent registry the adapter walks.
 				pi: { AgentRegistry: { global: () => ({ get: refOf }) } },
-			};
+}
 
 			let factory = factories.get(definition.id);
 			if (factory === undefined) {

@@ -219,7 +219,8 @@ export function ompDouble(options: OmpDoubleOptions = {}): OmpDouble {
 	const messageHandlers: Array<(event: unknown, ctx: OmpSessionContext) => void> = [];
 
 	const api: OmpExtensionApi = {
-		setLabel(label: string): void {
+	registerTool() {},
+	setLabel(label: string): void {
 			labels.push(label);
 		},
 		registerCommand(name, registration): void {
@@ -254,7 +255,7 @@ export function ompDouble(options: OmpDoubleOptions = {}): OmpDouble {
 				global: () => ({ get: (id: string) => agents.get(id) }),
 			},
 		},
-	};
+}
 
 	return {
 		api,

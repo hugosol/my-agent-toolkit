@@ -400,6 +400,7 @@ export interface PortDouble {
  * which is the member being absent rather than an empty query.
  */
 export interface PortDoubleOptions {
+	readonly registerTool?: HarnessPort["registerTool"];
 	readonly modelPrices?: CatalogPriceSource;
 	/**
 	 * The provider access one double's harness reports, when a suite drives an extension that queries
@@ -577,6 +578,7 @@ export function portDouble(options: PortDoubleOptions = {}): PortDouble {
 	});
 
 	const port: HarnessPort = {
+		...(options.registerTool === undefined ? {} : { registerTool: options.registerTool }),
 		setLabel: label => {
 			labels.push(label);
 			registrations.push(`label:${label}`);

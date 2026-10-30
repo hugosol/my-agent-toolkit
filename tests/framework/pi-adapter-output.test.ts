@@ -39,10 +39,11 @@ type Assert<T extends true> = T;
 /** The process-scoped readings one binding supplies; the integration is the case's own. */
 function portInputBase(): Omit<PiPortInput, "integration"> {
 	const pi: PiExtensionApi = {
-		on: () => () => {},
+	registerTool() {},
+	on: () => () => {},
 		registerCommand: () => {},
 		appendEntry: () => {},
-	};
+}
 	return {
 		pi,
 		definition: DEFINITION,

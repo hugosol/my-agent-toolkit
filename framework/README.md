@@ -50,7 +50,7 @@ The native boundary is enforced by
 
 **The assembly the authoring entry leads to.** An extension declares plain data with `defineExtension` and
 its implementation with `defineImplementation`: `create(context)` builds the one business state, while
-the declaration's static subscription groups, command slots, catalog selector and lifecycle entries name
+the declaration's static subscription groups, command slots, tools, catalog selector and lifecycle entries name
 handlers that receive that state. The authored declaration is inspectable before `create` runs, so the
 framework can select a binding's requirements without executing extension code; it is the only requirement
 inventory — there is no parallel list. An `ExtensionAssembly` supplies that authored implementation plus

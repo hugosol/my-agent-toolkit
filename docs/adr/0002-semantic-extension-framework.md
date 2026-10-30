@@ -75,8 +75,8 @@ my-agent-toolkit/
     codebase-tools/
       definition.ts             # The declaration shared by every harness assembly
       shared-logic/             # Harness-independent shared logic (everything outside harnesses/)
-        prompts.ts
         prompts/
+          index.ts
           init.md
           reminder.md
       harnesses/
@@ -228,6 +228,16 @@ The framework owns State and other capabilities it defines; it does not automati
 ### Viewed-session presentation scope (additive planning; model-cost migration)
 
 The model-cost migration applies the responsibility test above to extension-owned harness-specific widget fronts, shared business/presentation backends, and framework-owned viewed-session facts and effective-State marker projection. The confirmed split places the widget backend — field selection, money/token formatting, tree composition — in the extension's shared logic as read-only views with change subscriptions, restricts the harness-specific front to native components, layout, theme and width with no network, timer, file or authoritative-value work, and has the framework deliver the viewed session's identity/name, provider/model, effective effort and context facts plus change notifications, projecting that session's effective State into the one Marker area. Viewing never grants write or Owner authority and never changes accounting, inheritance or external effects; switching to a child session shows only that session's effort, context, effective marker and own-model totals while the tree totals stay main-session-scoped. The remaining native question is the host's public read/subscribe outlet for the viewed session; private-field and UI-text inference are excluded, so a patched host revision that exposes that outlet stays an implementation prerequisite rather than a claimed capability. The viewed-session outlet remains a public host prerequisite, not a native escape hatch: this decision does not change State Owner or certify a production widget, public focus interface, real provider/account acceptance or a newer supported baseline.
+
+## Framework-owned tool registration (2026-10-31)
+
+The maintainer approved moving model-callable tool registration into the framework rather than merely sharing strings between extension harness assemblies. The canonical Tool interface owns harness-independent metadata, parameter descriptions/shapes, execution delivery and text results. Extensions author tools through the existing static `defineImplementation` declaration; framework binding uses the same declaration for registration and requirements, and tool handlers share the implementation's business state and disposal lifetime. A required registration capability missing from an adapter refuses binding instead of silently omitting tools.
+
+Concrete tool names, descriptions, schemas and business execution remain extension-owned under each extension's `shared-logic/tools/`; the framework must not name workflow tools or import their protocols. Pi and OMP native parameter mappings and registration belong in their source-owned adapter modules. Port assembly connects those mappings, not another translation stage. Role harness assemblies select the adapter, shared implementation and configuration without duplicating native registrations. This adds a framework capability; it does not widen the native escape hatch or move extension business rules into the framework.
+
+The two harnesses can repair parameter types or delete fields before execution. Native schema mappings therefore preserve the invalid scalar/array values and extra keys needed by the existing strict business guards, rather than treating a native successful validation as business acceptance. The common parameter definition remains truthful about expected input; execution receives `unknown` and the business handler validates before effects. This does not promise access to unprocessed model wire bytes or override every harness normalization. Real-host invalid-input and identity checks remain necessary.
+
+Injected prompt bodies and text loading move into each extension's `shared-logic/prompts/`; first-use role guidance is named `init.md`. Definition-owned injection identities and frequency stay unchanged, with hidden persisted contributions rather than system-prompt replacement. Only populated directories are created. No forwarding aliases, duplicate native tool declarations or standalone registration framework are retained.
 
 ## Scope map
 

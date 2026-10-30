@@ -80,10 +80,12 @@ export interface IntegrationUsage {
 	readonly cleanup?: boolean;
 	/** The definition's commands, in declaration order. */
 	readonly commands?: readonly IntegrationCommand[];
+	/** Whether the implementation declares tools. */
+	readonly tools?: boolean;
 }
 
 /** A declaration kind that can select framework behavior. */
-export type IntegrationDeclarationKind = "prompts" | "marker" | "initialize" | "cleanup" | "commands";
+export type IntegrationDeclarationKind = "prompts" | "marker" | "initialize" | "cleanup" | "commands" | "tools";
 
 /**
  * Why one plan point exists.
@@ -329,6 +331,9 @@ export function planIntegration(usage: IntegrationUsage): IntegrationPlan {
 			requirement: "required",
 			reasons: [{ kind: "declaration", declaration: "commands" }],
 		});
+	}
+	if (usage.tools) {
+		port.push({ member: "registerTool", requirement: "required", reasons: [{ kind: "declaration", declaration: "tools" }] });
 	}
 	if (markerPlan.viewed) {
 		port.push({

@@ -483,6 +483,10 @@ export function bindExtension(
 
 	const detail = findInitializationFailure(definition, implementation.commands ?? {});
 	if (detail !== undefined) return refuse({ kind: "initialization", detail });
+	const tools = implementation.tools ?? [];
+	if (tools.length > 0 && port.registerTool === undefined) {
+		return refuse({ kind: "initialization", detail: "adapter does not provide tool registration" });
+	}
 
 	// The groups this binding's implementation declared: the whole subscription surface, each group
 	// carrying the one scope it observes under. A definition that declared none subscribes nothing
@@ -497,6 +501,7 @@ export function bindExtension(
 		initialize: implementation.initialize !== undefined,
 		cleanup: implementation.cleanup !== undefined,
 		commands: (definition.commands ?? []).map(command => ({ name: command.name, control: command.type })),
+		tools: tools.length > 0,
 	});
 	// The binding's delivery is live until its cleanup runs. Ending the session the implementation
 	// serves tears it down, and from then on this binding delivers nothing to it: the native hooks
@@ -722,6 +727,12 @@ export function bindExtension(
 			});
 		}
 		registerMarker(definition, state);
+		for (const tool of tools) {
+			port.registerTool?.({ ...tool, execute: (params, delivery) => {
+				if (!delivering) throw new Error("Tool implementation is disposed");
+				return tool.execute(params, delivery);
+			} });
+		}
 		for (const command of definition.commands ?? []) {
 			switch (command.type) {
 				case "toggle":
