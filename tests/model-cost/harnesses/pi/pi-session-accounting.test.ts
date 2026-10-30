@@ -30,7 +30,7 @@
  * rather than recomputed from the implementation.
  */
 import { afterAll, afterEach, beforeEach, describe, expect, test, vi } from "bun:test";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, watch, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
 import {
@@ -455,19 +455,47 @@ function readDocument(file: string): ConsumptionDocument | undefined {
 	}
 }
 
-/** Waits until the document holds what a case expects of it, and answers with the document. */
+/** Release filesystem observers even when the test's unchanged deadline expires. */
+const pendingPublications = new Set<() => void>();
+
+/** Observe actual atomic publication rather than budgeting event-loop turns for real disk I/O. */
 async function savedDocument(
 	file: string,
 	accept: (document: ConsumptionDocument) => boolean,
 ): Promise<ConsumptionDocument> {
-	for (let attempt = 0; attempt < 1_000; attempt += 1) {
+	const published = Promise.withResolvers<ConsumptionDocument>();
+	void published.promise.catch(() => {});
+	let found = false;
+	const check = () => {
 		const document = readDocument(file);
-		if (document !== undefined && accept(document)) return document;
-		await harnessTask();
+		if (document !== undefined && accept(document) && !existsSync(`${file}.lock`)) {
+			found = true;
+			published.resolve(document);
+		}
+	};
+	const watcher = watch(path.dirname(file), check);
+	watcher.on("error", error => {
+		found = true;
+		published.reject(error);
+	});
+	const cancel = () => {
+		found = true;
+		watcher.close();
+		published.reject(new Error(`no consumption document the case expects was published at ${file}`));
+	};
+	pendingPublications.add(cancel);
+	check();
+	try {
+		// Fake time advances lock coordination; the real filesystem announces publication.
+		while (!found) {
+			check();
+			if (!found) await harnessTask();
+		}
+		return await published.promise;
+	} finally {
+		pendingPublications.delete(cancel);
+		watcher.close();
 	}
-	throw new Error(
-		`no consumption document the case expects was published at ${file}; it holds ${JSON.stringify(readDocument(file))}`,
-	);
 }
 
 /** Waits until the frontend has drawn a widget a case expects, and answers with its lines. */
@@ -617,6 +645,8 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+	for (const cancel of pendingPublications) cancel();
+	pendingPublications.clear();
 	vi.useRealTimers();
 	// Each case states the storage root's content itself, so nothing a case wrote reaches the next one.
 	for (const entry of ["consumption.json", "codex-estimate.json", "cost-archive"]) {

@@ -27,7 +27,7 @@
  * specification's own literal or this file's own arithmetic on the usage it delivers.
  */
 import { afterAll, afterEach, describe, expect, test } from "bun:test";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, watch, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
 import type {
@@ -273,8 +273,11 @@ interface Process {
 const roots: string[] = [];
 /** Every evaluation this file bound, closed after each case. */
 const processes: Process[] = [];
+const pendingPublications = new Set<() => void>();
 
 afterEach(() => {
+	for (const cancel of pendingPublications) cancel();
+	pendingPublications.clear();
 	for (const evaluation of processes.splice(0)) evaluation.close();
 });
 
@@ -547,6 +550,37 @@ function bytesOf(evaluation: Process): string | undefined {
 	return existsSync(evaluation.consumption) ? readFileSync(evaluation.consumption, "utf8") : undefined;
 }
 
+/** Disk progress is not bounded by a count of immediate turns; the test owns the deadline. */
+async function published(evaluation: Process, condition: () => boolean, what: string): Promise<void> {
+	const completion = Promise.withResolvers<void>();
+	void completion.promise.catch(() => {});
+	const check = () => {
+		try {
+			if (condition()) completion.resolve();
+		} catch (error) {
+			completion.reject(error);
+		}
+	};
+	// Fresh cases deliberately leave this root absent until needed; observing publication must not
+	// race the writer's asynchronous directory creation. This creates no consumption document.
+	mkdirSync(evaluation.root, { recursive: true });
+	const watcher = watch(evaluation.root, check);
+	watcher.on("error", completion.reject);
+	const cancel = () => {
+		watcher.close();
+		completion.reject(new Error(`never happened: ${what}`));
+	};
+	pendingPublications.add(cancel);
+	try {
+		// Subscribe before checking so an atomic rename cannot fall into a missed-event gap.
+		check();
+		await completion.promise;
+	} finally {
+		pendingPublications.delete(cancel);
+		watcher.close();
+	}
+}
+
 /** One document as a case seeds it: one period, and the records it states. */
 function seededDocument(records: readonly SessionRecord[]): ConsumptionDocument {
 	return {
@@ -666,7 +700,7 @@ describe("a spawned session's own evaluation prepares the accounting and starts 
 		childEvaluation.surface.runStarts(CHILD);
 		childEvaluation.surface.turnSettles(CHILD);
 		childEvaluation.surface.runSettles(CHILD);
-		await until(
+		await published(childEvaluation,
 			() => recordOf(documentOf(childEvaluation), CHILD.sessionId)?.saveVersion === 1,
 			"the child's own record was published",
 		);
@@ -709,7 +743,7 @@ describe("one evaluation's sessions share the one instance and the one preparati
 
 		evaluation.surface.sessionStarts(CHILD, "startup");
 		await exchange(evaluation, CHILD);
-		await until(
+		await published(evaluation,
 			() => recordOf(documentOf(evaluation), CHILD.sessionId) !== undefined,
 			"the child's own record was published by the shared instance",
 		);
@@ -732,7 +766,7 @@ describe("the owner's disposal releases every registration, and the spent instan
 		evaluation.surface.sessionStarts(MAIN, "startup");
 		await evaluation.surface.agentStarts(MAIN);
 		await exchange(evaluation, MAIN);
-		await until(() => bytesOf(evaluation) !== undefined, "the first exchange was saved");
+		await published(evaluation, () => bytesOf(evaluation) !== undefined, "the first exchange was saved");
 		expect(evaluation.surface.timer.taken).toBe(1);
 
 		// The session the instance serves ends: the framework runs the one cleanup, which is what
@@ -765,7 +799,7 @@ describe("the owner's disposal releases every registration, and the spent instan
 		evaluation.surface.sessionStarts(CHILD, "startup");
 		evaluation.surface.sessionEnds(CHILD, "quit");
 		await exchange(evaluation, CHILD);
-		await until(
+		await published(evaluation,
 			() => recordOf(documentOf(evaluation), CHILD.sessionId) !== undefined,
 			"the child's own consumption was saved",
 		);
@@ -774,7 +808,7 @@ describe("the owner's disposal releases every registration, and the spent instan
 		// An idle edge — a Round that ended with the session at rest — is not a disposal either: the
 		// owner's own next exchange is still accounted, saved and drawn.
 		await exchange(evaluation, MAIN);
-		await until(
+		await published(evaluation,
 			() => recordOf(documentOf(evaluation), MAIN.sessionId)?.own[PROVIDER]?.[MODEL] !== undefined,
 			"the owner's own exchange was still saved",
 		);
@@ -797,7 +831,7 @@ describe("a session's own end closes the Round its context can no longer be read
 		childEvaluation.surface.runSettles(CHILD);
 		childEvaluation.surface.sessionEnds(CHILD, "quit");
 		childEvaluation.surface.spend();
-		await until(
+		await published(childEvaluation,
 			() => recordOf(documentOf(childEvaluation), CHILD.sessionId) !== undefined,
 			"the child's own consumption was saved for the session its host ended",
 		);
@@ -822,7 +856,7 @@ describe("the display reads no spent context (P49, and the in-process delegation
 		evaluation.surface.turnSettles(MAIN);
 		await until(() => evaluation.surface.held.length >= 1, "the refresh left the process");
 		evaluation.surface.runSettles(MAIN);
-		await until(() => bytesOf(evaluation) !== undefined, "the exchange was accounted and saved");
+		await published(evaluation, () => bytesOf(evaluation) !== undefined, "the exchange was accounted and saved");
 		const framesBefore = evaluation.surface.frames.length;
 
 		// The host replaces this process's session — the in-process child session of a delegation is

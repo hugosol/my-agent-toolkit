@@ -36,7 +36,7 @@
 
 推荐顺序：分层原则 → [目录与运行入口](../README.md) → 受影响的 interface / runtime / implementation → [静态 authoring 规则](static-authoring-check.md)与 [integration check](integration-check.md) → [测试约定](../../docs/agents/testing.md)。
 
-架构理由与变更决策保存在 [ADR 0002](../../docs/adr/0002-semantic-extension-framework.md)；[接入契约重构记录](integration-contract-refactor.md)保留演进与历史验证，不作为当前命令手册。
+架构理由与变更决策保存在 [ADR 0002](../../docs/adr/0002-semantic-extension-framework.md)；当前接入契约与工具边界见[静态接入检查](integration-check.md)。
 
 ## 两个检查专题：分别证明什么
 

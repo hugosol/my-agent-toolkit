@@ -279,6 +279,10 @@ adapter 的公共入口创建 binding、把 port 交给框架，并导出 native
 
 两者都使用 `createAssemblyBinding`，各自创建一个 port，返回 native loader 调用的 factory。这个 factory 的每次调用服务一个 binding；框架负责 observation ownership、State store、implementation 复用与生命周期。adapter 不复制这些行为。
 
+### 原生 runtime 重建不等于进程启动
+
+宿主可能在同一进程的 Session 切换中销毁并重建 extension runtime。新的 binding 不应因此再次消费 auto 启动默认值。内部 `SessionDelivery.processStart` 由 adapter 在知道原生事实时提供：Pi 的 native `startup` 为 `true`，`new`／`resume`／`fork`／`reload` 为 `false`；持有跨 Session binding 的 adapter 可省略，保留首次 owner start 的规则。该事实只控制是否应用启动策略，不屏蔽已保存 State 的恢复，也不等同于工具注册或工具可用性。首次 CLI 启动并恢复原会话仍是进程启动，不可仅凭公共 `resume` 名称阻止其启动默认值。
+
 ### 5.2 port 是模块级、完整、惰性的
 
 用 `defineAdapterPort<Context>` 定义模块级 `OMP_PORT` / `PI_PORT`。它有三个性质：

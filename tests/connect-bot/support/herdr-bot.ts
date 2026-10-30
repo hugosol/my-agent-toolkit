@@ -117,8 +117,8 @@ function writePanelConfig(directory: string): string {
 	const metadataDirectory = path.join(directory, "meta-data");
 	mkdirSync(metadataDirectory);
 	copyFileSync(
-		process.env.HERDR_BOT_METADATA ?? path.resolve(REPO_ROOT, "..", "herdr-bot", "meta-data", "bot-options.toml"),
-		path.join(metadataDirectory, "bot-options.toml"),
+		process.env.HERDR_BOT_METADATA ?? path.resolve(REPO_ROOT, "..", "herdr-bot", "meta-data", "task-options.toml"),
+		path.join(metadataDirectory, "task-options.toml"),
 	);
 	const file = path.join(directory, "herdr-bot.toml");
 	// The sessions section declares the two windows this run reads: the panel's own delivered

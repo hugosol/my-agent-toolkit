@@ -58,6 +58,12 @@ export interface SessionDelivery {
 	/** The semantic event: which way the session axis moved, and why. */
 	readonly event: SessionEvent;
 	/**
+	 * Whether this start is the host process's startup, when the adapter knows it.
+	 * False prevents a replacement runtime's fresh binding from reapplying startup policy.
+	 * Omitted preserves the first-owner-start rule for adapters with a persistent binding.
+	 */
+	readonly processStart?: boolean;
+	/**
 	 * The actual session this event concerns: its identity, its direct parent and its latest name.
 	 *
 	 * This is the fact a per-session subscription observes, and it is *not* the owner above: a

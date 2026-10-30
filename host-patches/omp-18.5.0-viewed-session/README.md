@@ -138,10 +138,6 @@ Reproduce:
 bun test tests/harness-dock/viewed-session.test.ts tests/harness-dock/viewed-session-host.test.ts
 ```
 
-Fault injection (used once while developing the tests, not part of the suite): disabling the
-fact-change watch in a scratch copy of the artifact's module dropped the delivered changes from 1 to
-0 and restoring it brought the delivery back, so the runs above fail when the outlet stops working.
-
 **What is not established here.** These runs exercise RPC (headless) hosts. The interactive focus
 path — the TUI attaching the transcript to a subagent, and an invalidation detaching it — is wired
 and covered by the module-level test but has not been run in this environment, so it is `unverified`

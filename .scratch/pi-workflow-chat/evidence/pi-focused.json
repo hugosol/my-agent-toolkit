@@ -1,0 +1,9 @@
+{
+  "command": "PI_NODE=D:/Users/hugos/AppData/Local/nvm/v22.19.0/node.exe PI_CLI=D:/nvm4w/nodejs/pi.cmd bun test tests/framework/implementation-startup.test.ts tests/workflow-chat/pi-native.test.ts",
+  "result": {"passed":18,"failed":0,"expectCalls":158,"durationSeconds":7.45},
+  "typecheck": "bun run typecheck: passed; 72 authoring files, 8 declarations, 0 diagnostics",
+  "runtime": "Real Pi 1.4.0 CLI on Node 22.19.0; controlled local provider/HTTP; isolated source deployment, state, session and cwd",
+  "exercised": ["manager run ten actions and collect", "node report and saved/notification separation", "strict raw parameters before HTTP", "native session identity", "first Prompt persistence", "complete-body independent budgets", "tool abort with cancelled result and peer socket close", "busy collect direct new_session with peer socket close", "replacement runtime does not apply auto defaults", "return to original session identity", "active collect EOF shutdown exits 0 without timeout and peer socket closes"],
+  "diagnosis": "Real startup-policy bug fixed through native processStart fact; final smoke timeout was an invalid await for agent_settled after runtime exit, not lack of cancellation. Temporary diagnostics removed.",
+  "notClaimed": ["Real Herdr starts actual Pi role sessions", "real model autonomous workflow", "human integrated acceptance", "Node 24 certification", "global supported-baseline promotion"]
+}

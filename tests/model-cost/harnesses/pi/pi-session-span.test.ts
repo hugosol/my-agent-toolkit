@@ -34,7 +34,7 @@
  * document and the new period's span starts at the first input observed in it.
  */
 import { afterAll, afterEach, beforeEach, describe, expect, test, vi } from "bun:test";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, watch, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
 import { type PiAssistantMessage, type PiExtensionApi, type PiExtensionContext, piAdapter } from "../../../../adapters/pi";
@@ -428,26 +428,52 @@ function readDocument(file: string): ConsumptionDocument | undefined {
 	}
 }
 
-/**
- * Waits until the document holds what a case expects of it, and answers with the document.
- *
- * A Round's end is dispatched the way the framework dispatches a semantic handler — without waiting
- * for the promise it returns — so the save it drives lands a few event-loop turns later. The wait is
- * on the expected content rather than on a duration, and the attempt count only keeps a save that
- * never happened from hanging the case.
- */
+const pendingPublications = new Set<() => void>();
+
+/** Await actual disk publication; immediate-turn counts do not bound asynchronous filesystem work. */
 async function savedDocument(
 	file: string,
 	accept: (document: ConsumptionDocument) => boolean,
 ): Promise<ConsumptionDocument> {
-	for (let attempt = 0; attempt < 1_000; attempt += 1) {
-		const document = readDocument(file);
-		if (document !== undefined && accept(document)) return document;
-		await harnessTask();
+	const completion = Promise.withResolvers<ConsumptionDocument>();
+	void completion.promise.catch(() => {});
+	let settled = false;
+	const check = () => {
+		try {
+			const document = readDocument(file);
+			if (document !== undefined && accept(document) && !existsSync(`${file}.lock`)) {
+				settled = true;
+				completion.resolve(document);
+			}
+		} catch (error) {
+			settled = true;
+			completion.reject(error);
+		}
+	};
+	// Subscribe to the stable parent before checking so atomic replacements cannot be missed.
+	const watcher = watch(path.dirname(file), check);
+	watcher.on("error", error => {
+		settled = true;
+		completion.reject(error);
+	});
+	const cancel = () => {
+		settled = true;
+		watcher.close();
+		completion.reject(new Error(`no expected consumption document published at ${file}`));
+	};
+	pendingPublications.add(cancel);
+	try {
+		// Keep driving fake lock-coordination timers while real disk I/O progresses.
+		// One turn can leave a queued save blocked forever under the parallel suite.
+		while (!settled) {
+			check();
+			if (!settled) await harnessTask();
+		}
+		return await completion.promise;
+	} finally {
+		pendingPublications.delete(cancel);
+		watcher.close();
 	}
-	throw new Error(
-		`no consumption document the case expects was published at ${file}; it holds ${JSON.stringify(readDocument(file))} (raw ${JSON.stringify(existsSync(file) ? readFileSync(file, "utf8") : undefined)})`,
-	);
 }
 
 /** One session's record in a document, or `undefined` when the document holds none for that id. */
@@ -471,6 +497,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+	for (const cancel of [...pendingPublications]) cancel();
 	vi.useRealTimers();
 });
 

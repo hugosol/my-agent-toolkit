@@ -33,13 +33,18 @@ bun run check:integrations --extension model-cost --demand-only
 # 指定 extension 与 adapter，输出 JSON
 bun run check:integrations --extension model-cost --adapter omp --json
 
-# 也可以用目录或源文件选择；文件会归到其所属的 extension/adapter
+# 也可以用目录或源文件选择；普通文件会归到其所属的 extension/adapter
 bun run check:integrations --extension extensions/model-cost/harnesses/omp.ts --adapter adapters/omp/index.ts
+
+# 多声明业务目录示例：检查全部独立角色，或只检查一个声明模块
+# role-pair 是示例目录名；替换为实际业务目录及声明文件
+bun run check:integrations --extension extensions/role-pair --adapter omp --json
+bun run check:integrations --extension extensions/role-pair/manager-definition.ts --adapter omp --json
 ```
 
 | 选项 | 含义 |
 | --- | --- |
-| `--extension <id-or-source-path>` | 不指定时分析 `extensions/` 下每个目录。裸名称先按项目根解析，根下不存在时再按 `extensions/<id>` 解析；也可给目录或源文件。文件位于 `extensions/<name>/` 树内时，会分析其所属的整个 extension 目录；否则只分析该文件。 |
+| `--extension <id-or-source-path>` | 不指定时分析 `extensions/` 下每个目录及其中每个独立声明。裸名称先按项目根解析，根下不存在时再按 `extensions/<id>` 解析；不按声明 ID 跨目录搜索。目录选择检查其中全部声明；源文件先归到其所属 extension 目录，若该文件包含 canonical definition，则在多声明目录中只选该文件的声明及其角色源码/装配，否则检查所属目录的全部声明。树外独立源文件只分析该文件。 |
 | `--adapter <name-or-source-path>` | 不指定时分析 `adapters/` 下每个目录。裸名称按 `adapters/<name>` 解析；含路径分隔符或绝对路径时按项目根解析，并取其所属的 `adapters/<name>/` 目录。相对路径要包含 `adapters/` 前缀（如 `adapters/omp/port.ts`）；选择必须落在 `adapters/` 树下。 |
 | `--demand-only` | 只做需求侧分析，不读取任何 adapter。**不能与 `--adapter` 同时使用。** |
 | `--json` | 只向 stdout 输出 JSON 报告；解析/调用错误也以 JSON 输出。 |
@@ -98,6 +103,20 @@ bun run generate:integrations --extension codebase-tools --adapter new-harness
 - provider 查询等“可能没有事实”的能力是契约中的可选事实，不等同于 extension 的业务必需项。
 - 不需要已成功接线的参考 harness，也不需要目标 discovery entry；`--demand-only` 甚至不需要 adapter。
 
+### 同业务目录内的独立声明
+
+一个业务目录可包含多个独立 `defineExtension` ID。命令按声明输出各自的需求、供给和诊断；JSON 的 `results` 为每个声明/adapter 组合保留独立项，文本标题使用真实声明 ID。不会把两个 ID 合并，也不会只检查首个声明。任一角色不完整，整体 `complete` 为 `false`、退出 **1**，另一个角色的结果仍保留。例如，只有 node 的必需 `onTurn` 不可用时，输出包含：
+
+```text
+manager-chat / fixture: COMPLETE
+node-chat / fixture: INCOMPLETE
+  UNAVAILABLE port:onTurn (required) — fixture lacks onTurn
+```
+
+多声明时，源码归属通过本地静态 `import` / `export ... from` 依赖确定：每个角色的独立装配模块关联自己的声明和 authored implementation，可继续导入两者共用的 helper。分析只将能单独到达该声明的模块及其依赖纳入该角色，另一个角色的实现和 adapter assembly witness 不会被复用。汇总导入两个角色的 barrel 本身不是任一角色的装配证据。不依赖文件名猜角色；找不到任何单角色依赖关系的 authored implementation 会产生 `demand/implementation-owner`，而非遗漏需求后宣称通过。请保留独立角色装配，或用可静态解析的模块导入关系明确归属。
+
+单声明目录沿用原来的全目录分析。生成命令一次只处理一个声明；多声明目录需用具体声明源文件选择，目录歧义退出 **1**，不写文件。无论单声明还是双声明，静态 `provided` **都不是运行兼容认证**；实际角色加载、工具、Prompt、Session 生命周期与 HTTP 行为仍需独立运行验证。
+
 每个契约属于一个家族：
 
 | 家族 | 含义 | 例子 |
@@ -120,6 +139,7 @@ bun run generate:integrations --extension codebase-tools --adapter new-harness
 | --- | --- |
 | `demand/source` | 选中的源中没有 TypeScript 文件，或源程序无法建立。 |
 | `demand/authoring` / `demand/definition` | 找不到 canonical definition/implementation，或 definition id、多个 definition 无法确定。 |
+| `demand/implementation-owner` | 多声明源码中的 authored implementation 无法通过独立角色装配的本地导入关系归属；不能跳过该实现或猜测所属 ID。 |
 | `demand/analysis-bound` | framework 使用追踪超过支持深度，需求分析不完整。 |
 | `demand/dynamic-capability-member` | 在受跟踪的 framework 能力对象上使用动态成员名，无法解析契约。普通业务数据的动态索引不受此限制。 |
 | `demand/unmapped-capability-member` | 使用了分析器没有依赖规则的 context/Session 成员。 |
@@ -275,29 +295,10 @@ pi 的重载把 `childEntry` 与具体输出关联：
 - **不认证版本。** 版本成员关系、候选回归、真实宿主 smoke 和 TUI 验收在 [版本检查运行手册](harness-support.md#version-verification)；适配器结构完整也不代表某个 harness 版本受支持。
 - **不保证未来源码。** 报告只对应被执行时的源码、选中的 extension/adapter 与静态分析范围。源码或 harness 改变后必须重新运行；历史记录不能当作当前结论。
 
-<a id="verification-record"></a>
-## 历史验证记录（2026-10-20）
-
-以下记录来自 [接入契约架构重构汇总](integration-contract-refactor.md) 的 §7.2/§7.3 及该轮工具测试，保留当时的结论与限制；它们不是当前源码的持续保证，也不改变任何 harness 支持状态。
-
-| 记录 | 结果 | 限制 |
-| --- | --- | --- |
-| 检查器/生成器最终源码的 `bun run check:integrations --json`（§7.2） | 6 个组合无解析诊断；3 个 OMP 组合及 connect-bot/pi 结构通过；codebase-tools/pi 与 model-cost/pi 的必需 `framework:extension-loading` 为 `conditional`，按政策退出 1 | 发生在具体 assembly 输出凭据（§7.3）之前，不代表后续仍为 conditional |
-| 加入具体 assembly 输出契约后（§7.3） | 同一 6 个组合全部结构通过、退出 0；model-cost/pi 与 codebase-tools/pi 的加载供给为 `provided`，证据定位到各自 assembly 调用 | 仅结构分析；不证明 provider 注册、子代理加载或原生语义 |
-| model-cost/pi 生成预览（§7.3） | 退出 0、0 个文件、0 条诊断 | 预览未写源码；只说明当时无确定缺失接线 |
-| 新 adapter 的 CLI/TypeScript 7 smoke | 检查先报告缺口；生成实际 port 引用后因缺 `missing-implementations` 模块产生 TS2307；提供符合契约的导出后编译与检查均退出 0；再次生成不写文件 | 只证明“缺失导出 → 类型/结构完成”的转换，不证明 native 行为 |
-| 隐式 delivery 义务 smoke | extension 只订阅 Round、无直接 feedback 读取；检查仍发现所选 port 的规范 payload 缺字段；生成、TS2307、补齐导出、编译与检查 0 | 同上 |
-| 分析边界 smoke | 动态能力成员定位诊断并退出 1；adapter 源路径正确归到已有 adapter；越出 `adapters/` 树的生成请求被拒绝且不写文件 | 证明诊断边界，不证明所有动态形式都被覆盖 |
-| `bun test tests/integrations tests/framework/pi-adapter-output.test.ts` | 52 通过、0 失败，7 个文件、325 次断言 | 该源码状态的定向测试，不是全仓保证 |
-| §7.3 固定源码 `bun run test` | 1508 通过、0 失败，167 个文件、8975 次断言 | 历史全套记录；后续源码变更后需重新运行 |
-
-同一轮的生成器测试还覆盖了“工厂本身可能返回 `undefined`”的失败前/修复后回归，避免把空 assembly 分支误报为 `provided`。生成器不会因为某个可选接入未被选择而擅自启用它。
-
 <a id="related-records"></a>
 ## 相关记录
 
-- [接入契约架构重构汇总](integration-contract-refactor.md) — 设计背景、代码变更和完整的历史验证表。
-- [静态 authoring 表达式检查](static-authoring-check.md) — extension 作者表达式的规则、修复循环和验证记录。
+- [静态 authoring 表达式检查](static-authoring-check.md) — extension 作者表达式的规则与修复循环。
 - [框架能力索引的 adapter 导航](framework-capabilities.md#adapter-implementation-navigation) — 从契约定位 adapter 模块的约定。
 - [版本检查运行手册](harness-support.md#version-verification) — OMP baseline/candidate、pi smoke、provider/TUI 限制和证据判定。
 - [能力接口架构](capability-interface-architecture.md) — 三层证据与运行时边界的背景。

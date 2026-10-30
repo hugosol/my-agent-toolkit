@@ -20,7 +20,7 @@
  * than recomputed from the implementation.
  */
 import { afterAll, afterEach, beforeEach, describe, expect, test, vi } from "bun:test";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, watch, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
 import {
@@ -336,21 +336,39 @@ function piRecord(file: string, id: string): SessionRecord | undefined {
 	return readDocument(file)?.harnesses[MODEL_COST_HARNESS]?.sessions.find(record => record.id === id);
 }
 
-/**
- * Waits until the document holds a record for one session, and answers it.
- *
- * A commit is a coordinated file update: what a Round's end starts lands over the harness's own task
- * turns, which this suite advances by itself rather than waiting on wall time.
- */
+/** Pending filesystem observations are released even when the test's own deadline expires. */
+const pendingPublications = new Set<() => void>();
+
+/** Waits for actual atomic publication, not a fixed number of event-loop turns before disk I/O. */
 async function savedRecord(id: string): Promise<SessionRecord> {
-	for (let attempt = 0; attempt < 200; attempt += 1) {
+	const published = Promise.withResolvers<SessionRecord>();
+	void published.promise.catch(() => {});
+	let found = false;
+	const check = () => {
 		const record = piRecord(CONSUMPTION_FILE_PATH, id);
-		if (record !== undefined) return record;
-		await harnessTask();
+		if (record !== undefined) {
+			found = true;
+			published.resolve(record);
+		}
+	};
+	const watcher = watch(STORAGE_ROOT, check);
+	watcher.on("error", published.reject);
+	const cancel = () => {
+		watcher.close();
+		published.reject(new Error(`no record for ${id} was published at ${CONSUMPTION_FILE_PATH}`));
+	};
+	pendingPublications.add(cancel);
+	// Read after subscribing so publication cannot fall between the check and subscription.
+	check();
+	try {
+		// Fake time still drives file-lock coordination; real filesystem completion is observed
+		// independently and remains bounded by the test's unchanged five-second deadline.
+		for (let attempt = 0; attempt < 200 && !found; attempt += 1) await harnessTask();
+		return await published.promise;
+	} finally {
+		pendingPublications.delete(cancel);
+		watcher.close();
 	}
-	throw new Error(
-		`no record for ${id} was published at ${CONSUMPTION_FILE_PATH}; it holds ${JSON.stringify(readDocument(CONSUMPTION_FILE_PATH))}`,
-	);
 }
 
 beforeEach(() => {
@@ -359,6 +377,8 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+	for (const cancel of pendingPublications) cancel();
+	pendingPublications.clear();
 	vi.useRealTimers();
 	// Each case states the storage root's content itself, so nothing a case wrote reaches the next one.
 	for (const entry of [CONSUMPTION_FILE, "codex-estimate.json", "cost-archive"]) {

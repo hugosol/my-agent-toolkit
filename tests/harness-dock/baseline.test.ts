@@ -4,6 +4,7 @@
  * and the dependency lockfiles of this repository and of the behavior oracle.
  */
 import { beforeAll, describe, expect, test } from "bun:test";
+import { readFileSync } from "node:fs";
 import {
 	type IsolatedHarness,
 	checkoutCarries,
@@ -18,6 +19,8 @@ import {
 } from "./baseline";
 
 const record = readBaselineRecord();
+const manifest: { packageManager: string } = JSON.parse(readFileSync(new URL("../../package.json", import.meta.url), "utf8"));
+const testRuntime = manifest.packageManager;
 const REFRESH_HINT =
 	"refresh framework/docs/harness-baseline.json (sourceCombination/oracle lockfile sha256) after a deliberate dependency change";
 
@@ -113,7 +116,8 @@ describeFixedRecord("baseline record", () => {
 	test("records the accepted environment as conditions, not as pending work", () => {
 		expect(process.platform as string).toBe(record.environment.platform);
 		expect(process.arch as string).toBe(record.environment.arch);
-		expect(Bun.version).toBe(record.environment.bun);
+		// The frozen record describes its historical run; package.json selects today's test runtime.
+		expect(`bun@${Bun.version}`).toBe(testRuntime);
 		expect(record.environment.nativesBuilt).toBe(false);
 		expect(record.environment.checkoutRunsFullSession).toBe(false);
 		expect(record.environment.conditions.length).toBeGreaterThan(0);

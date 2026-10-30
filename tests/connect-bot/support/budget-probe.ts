@@ -294,6 +294,9 @@ async function arm(
 	double.run("connect-bot", "", ctx);
 	await announced;
 	await settleAll();
+	if (botSessions.get(`main:${sessionId}`) === undefined) {
+		throw new Error(`budget-probe: scenario requires successful registration: ${JSON.stringify({ notifications: double.notifications, sent })}`);
+	}
 	return ctx;
 }
 

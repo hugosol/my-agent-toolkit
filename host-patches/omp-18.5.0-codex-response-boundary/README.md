@@ -134,11 +134,6 @@ Reproduce:
 bun test tests/harness-dock/codex-response-artifact.test.ts tests/harness-dock/model-cost-codex-quota.test.ts
 ```
 
-Fault injection (used once while developing, not part of the suite): running the smoke's first case
-against the **unpatched baseline** install made it fail on `hasHttpFacts` (expected `true`, received
-`false`), and the same expectation passes on the frozen artifact — so the assertion is sensitive to
-the patch and not to the host version.
-
 **What is not established here.** A real Codex account's allowance is never observed: the header
 values are the capture endpoint's scripted literals, the credential is the isolated run's fixture
 token, and the account API is left unconfigured on purpose. The WebSocket transport is out of scope

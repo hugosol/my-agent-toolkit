@@ -74,7 +74,10 @@ export function dispatchSessionEvent(
 			event: session.event,
 			statePayloads: session.statePayloads,
 			persist: values => session.persist(values),
-			...(startupChoice === undefined ? {} : { startup: startupChoice }),
+			// A host can recreate the binding during an in-process session switch. Still
+			// consume the store's first-owner moment, but do not treat that replacement as
+			// process startup. Persisted branch values are restored independently below.
+			...(startupChoice === undefined || session.processStart === false ? {} : { startup: startupChoice }),
 			publishMarker: ownerKey => publishMarkerOnTransition(definition, ownerKey, session.markers, seat),
 		});
 	}

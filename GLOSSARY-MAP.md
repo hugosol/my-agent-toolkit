@@ -8,6 +8,8 @@
 
 - [model-cost](./extensions/model-cost/GLOSSARY.md): distinguishes response accounting, Turn usage, Round totals, Session totals, the accounting reset with its consumption archive and boundary balance reading, the storage root/baseline the consumption document lives in, the entry's display preference with its agent tree, season boundary wait and accrued bar, the host's widget drawing form, and the legacy widget's Turn statistic.
 
+- [workflow-chat](./extensions/workflow-chat/GLOSSARY.md): manager-chat and node-chat serve the manager and node-executor roles of a Map Run; Run and handoff completion are distinct from a framework Round or Chat exit.
+
 ## Relationships
 
 - **Framework → extensions**: each extension's shared logic crosses the framework's small public interfaces (`defineExtension`, `ompAdapter`) and reads, but does not own, the framework's State and contribution vocabulary.

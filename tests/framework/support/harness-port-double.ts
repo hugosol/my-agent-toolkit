@@ -285,6 +285,7 @@ export interface PortDouble {
 		owner: OwnerReference,
 		options?: {
 			readonly event?: SessionEvent;
+			readonly processStart?: boolean;
 			readonly statePayloads?: readonly unknown[];
 			readonly hasUI?: boolean;
 			/** The actual session the delivery is about; omitted models a top-level `port-double` session. */
@@ -690,6 +691,7 @@ export function portDouble(options: PortDoubleOptions = {}): PortDouble {
 			for (const handler of sessionHandlers) {
 				handler({
 					event: options.event ?? { kind: "session_start", reason: "initial" },
+					...(options.processStart === undefined ? {} : { processStart: options.processStart }),
 					session: options.session ?? DEFAULT_SESSION,
 					owner,
 					statePayloads: options.statePayloads ?? [],

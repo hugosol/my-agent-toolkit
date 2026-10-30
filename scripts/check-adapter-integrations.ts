@@ -9,7 +9,8 @@ try {
 	const options = parseIntegrationArguments(args, resolve(dirname(fileURLToPath(import.meta.url)), ".."));
 	if (options.help) {
 		console.log("Usage: bun run check:integrations [--extension <id-or-source-path>] [--adapter <name-or-source-path>] [--demand-only] [--root <directory>] [--json]");
-		console.log("Default: analyze all extension/adapter pairs without discovery entries. --demand-only lists requirements without an adapter.");
+		console.log("Default: analyze every independent extension definition/adapter pair without discovery entries. A definition source path selects that declaration; a directory selects all declarations.");
+		console.log("--demand-only lists requirements without an adapter. Static completeness does not certify runtime compatibility.");
 		console.log("Exit: 0 complete (optional absences permitted), 1 required gaps or unresolved analysis, 2 invocation/infrastructure failure.");
 	} else {
 		const report = checkIntegrations(options);

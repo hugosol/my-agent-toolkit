@@ -42,11 +42,13 @@ export function observePiSession(context: PiPortContext, lifecycle: PiSessionLif
 			owner: OwnerReference,
 			ctx: PiExtensionContext,
 			session: SessionFacts,
+			processStart?: boolean,
 		): void => {
 			context.catalogued(ctx);
 			const feedback = feedbackTransport(ctx);
 			handler(defineAdapterDelivery("session", {
 				event, session, owner,
+				...(processStart === undefined ? {} : { processStart }),
 				statePayloads: piStatePayloadsOf(ctx, context.stateEntryType),
 				persist: context.statePersistence.persist,
 				hasUI: ctx.hasUI,
@@ -69,7 +71,7 @@ export function observePiSession(context: PiPortContext, lifecycle: PiSessionLif
 				// A session that is not its own owner has no life of its own to pair: it is
 				// delivered with the owner it resolved and takes no part in the transfer below.
 				lifecycle.starting(session.sessionId);
-				deliver({ kind: "session_start", reason }, owner, ctx, session);
+				deliver({ kind: "session_start", reason }, owner, ctx, session, event.reason === "startup");
 				return;
 			}
 			// A native start that leaves the owner this binding already serves alone is not a
@@ -84,7 +86,7 @@ export function observePiSession(context: PiPortContext, lifecycle: PiSessionLif
 				lifecycle.ending(ended.session.sessionId);
 				deliver({ kind: "session_end", reason: "transferred" }, { kind: "owner", key: ended.key }, ctx, ended.session);
 			}
-			deliver({ kind: "session_start", reason }, owner, ctx, session);
+			deliver({ kind: "session_start", reason }, owner, ctx, session, event.reason === "startup");
 		}));
 		context.keepSubscription(context.pi.on("session_shutdown", async (event, ctx) => {
 			const session = context.sessionFactsOf(ctx);

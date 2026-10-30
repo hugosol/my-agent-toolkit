@@ -24,8 +24,14 @@ const SCANNED_ROOTS = ["adapters", "framework", "extensions", "entrypoints"] as 
 /** Packages the harness loader resolves for an extension: naming one — by import or by declaration — is an escape hatch. */
 const HARNESS_PACKAGE = /^@(?:oh-my-pi|earendil-works)\//;
 
-/** Where the native surface may be touched: the OMP adapter and extension harness assemblies. */
-const ESCAPE_HATCH = [/^adapters\//, /^extensions\/[^/]+\/harnesses\//];
+/** Extension harness assemblies, including workflow-chat's two independently owned roles. */
+const EXTENSION_HARNESSES = [
+	/^extensions\/[^/]+\/harnesses\//,
+	/^extensions\/workflow-chat\/(?:manager-chat|node-chat)\/harnesses\//,
+];
+
+/** Where the native surface may be touched: adapters and extension harness assemblies. */
+const ESCAPE_HATCH = [/^adapters\//, ...EXTENSION_HARNESSES];
 
 /**
  * Every way this repository writes a module specifier: an import, a re-export, a dynamic
@@ -557,7 +563,7 @@ describe("shared source imports no harness types (C1)", () => {
 
 			const [specifier] = specifiersOf(entrypoint);
 			expect(specifier).toBeDefined();
-			expect(resolvesInto(entrypoint, specifier ?? "", [/^extensions\/[^/]+\/harnesses\//])).toBe(true);
+			expect(resolvesInto(entrypoint, specifier ?? "", EXTENSION_HARNESSES)).toBe(true);
 		}
 	});
 });

@@ -29,6 +29,10 @@ upgrade rules live in
 
 ## Quick start
 
+Use Bun **1.4.4** for repository checks, as selected by `package.json`. This test runtime
+is separate from the historical supported combination above; see the
+[testing conventions](docs/agents/testing.md#test-runtime).
+
 ```bash
 bun install                 # once
 bun run typecheck
@@ -55,6 +59,7 @@ glossary.
 | connect-bot | [`extensions/connect-bot/`](extensions/connect-bot) | [`extensions/connect-bot/README.md`](extensions/connect-bot/README.md) · [`extensions/connect-bot/GLOSSARY.md`](extensions/connect-bot/GLOSSARY.md) |
 | codeBaseTools | [`extensions/codebase-tools/`](extensions/codebase-tools) | [`extensions/codebase-tools/README.md`](extensions/codebase-tools/README.md) · [`extensions/codebase-tools/GLOSSARY.md`](extensions/codebase-tools/GLOSSARY.md) |
 | modelCost | [`extensions/model-cost/`](extensions/model-cost) | [`extensions/model-cost/README.md`](extensions/model-cost/README.md) · [`extensions/model-cost/GLOSSARY.md`](extensions/model-cost/GLOSSARY.md) |
+| Workflow Chat / node-chat | [`extensions/workflow-chat/`](extensions/workflow-chat) | [`extensions/workflow-chat/README.md`](extensions/workflow-chat/README.md) · [`extensions/workflow-chat/GLOSSARY.md`](extensions/workflow-chat/GLOSSARY.md) |
 
 ## Documentation by audience
 
@@ -95,12 +100,15 @@ The table below locates supporting references and evidence; role-specific readin
 | [`scripts/capture-codex-outbound.ts`](scripts/capture-codex-outbound.ts) | Prepared layer-2 capture of a real `openai-codex` round trip; needs a human-supplied credential. | You are recording the real-credential role evidence. |
 | [`scripts/pi-provider-account-read.ts`](scripts/pi-provider-account-read.ts) | The real account-side reading for the pi migration: runs the loaded extension on the real host against a real provider account and publishes a desensitized, timestamped reading beside what the host drew. Reads the machine's own credential, prints it only as a fingerprint, makes no model request, and reports a missing credential as a blocker. | You are recording or replaying the account-side acceptance evidence (P53). |
 
-The durable documentation is self-contained: migration decisions, constraints and recorded
-evidence are stated in the per-extension READMEs, framework documents and ADRs rather than
-delegated to working tickets or external archives. The extension READMEs also preserve the
-prepared human-acceptance expectations and their verification limits; context terminology is
-indexed by [`GLOSSARY-MAP.md`](GLOSSARY-MAP.md). Archiving a planning record does not establish
-that its implementation, human acceptance or production cutover has completed.
+The durable documentation is self-contained: migration decisions, constraints, support status,
+test guidance and acceptance requirements live in the per-extension READMEs, framework documents
+and ADRs rather than depending on working tickets or external archives. One-off development
+evidence, acceptance observations and test execution records belong under the corresponding
+feature's `.scratch/<feature>/evidence/` directory; these disposable records are not prerequisites
+for understanding or operating the project. The extension READMEs preserve prepared
+human-acceptance expectations and verification limits; context terminology is indexed by
+[`GLOSSARY-MAP.md`](GLOSSARY-MAP.md). Archiving a planning record does not establish that its
+implementation, human acceptance or production cutover has completed.
 
 ## Human acceptance and cutover
 
