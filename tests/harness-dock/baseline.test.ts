@@ -5,6 +5,7 @@
  */
 import { beforeAll, describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
+import path from "node:path";
 import {
 	type IsolatedHarness,
 	checkoutCarries,
@@ -35,6 +36,15 @@ let harness: IsolatedHarness;
 beforeAll(async () => {
 	harness = await ensureIsolatedHarness(record);
 }, 300_000);
+
+test("baseline dependency paths support a relocated record root without changing absolute paths", () => {
+	const worktree = path.resolve("isolated-worktree");
+	const original = path.resolve("original-parent", "original-checkout");
+	const absolute = path.resolve("external-anchor");
+	expect(resolveRecordPath("../oracle", worktree, {})).toBe(path.resolve(worktree, "../oracle"));
+	expect(resolveRecordPath("../oracle", worktree, { OMP_BASELINE_RECORD_ROOT: original })).toBe(path.resolve(original, "../oracle"));
+	expect(resolveRecordPath(absolute, worktree, { OMP_BASELINE_RECORD_ROOT: original })).toBe(absolute);
+});
 
 describeFixedRecord("baseline record", () => {
 	test("the isolated install provides exactly the recorded supported version", () => {
