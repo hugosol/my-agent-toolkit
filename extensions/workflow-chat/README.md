@@ -73,6 +73,23 @@ extensions/workflow-chat/
 
 三种输入各有唯一职责：`Task.prompt` 固定角色职能；后端本次 input 提供本次 `userInput`、node 业务 input、已解析的命名输入地址、运行说明及状态/历史/报告记录的路径；扩展的公共 Prompt 只说明工具使用。后端把固定文本与本次工作组合为启动输入，扩展不重拼、不替换或另发固定文本，不复制 Bot 文档、整张 Map、上游完整聊天或业务文件正文。node 按已给定命名地址消费文件，不自行筛选报告猜路径；缺失输出由业务 node 报告阻塞。
 
+### plan_workflow 的真实业务验收
+
+在参与的 herdr-bot worktree 先按其测试指引构建独立 `CARGO_TARGET_DIR` 后端及静态资源，并准备显式隔离依赖根和已授权真实模型。运行：
+
+```powershell
+$env:HERDR_BOT_REPO = $HERDR_BOT_WT
+python (Join-Path $HERDR_BOT_WT 'scripts/test-workflow-file-handoff.py') `
+  --backend (Join-Path $env:CARGO_TARGET_DIR 'debug/herdr-bot.exe') `
+  --toolkit $TOOLKIT_WT --scenario plan-workflow --paths-file $ISOLATED_PATHS
+```
+
+入口加载参与 worktree 的实际迁移 Map、规划／转换 Task、Bot 与本仓实际角色入口，保留隔离部署的所有路径、宿主和模型映射。只读 Skill 依赖是显式 `pi_agent/skills` 下的 `grill-with-docs`、`grilling` 和 `domain-modeling`，不复制用户会话／auth。若使用公开 `completion` 真实文本传输，按 herdr-bot 测试指引的 `CompletionTransport` 示例启动，仅把场景改为 `plan-workflow`；传输不预设工具调用或模拟结果，实际 Pi 执行工具并维护原生历史。结果只适用于实际被测宿主／模型传输，不自动扩展到 OMP。
+
+规划业务的用户确认不归角色工具推断：实际 outline Chat 先收需求，再接收修订，用户明确确认九章节当前方案后，还须单独确认 manual 报告发送。`report` 登记 `outputs.outline` 并声明真实 `can_complete`，不能替代任何确认；manager 读取报告后显式完成与派发，generate_map 读取初始化命名地址而非报告搜索。主成功链路预置真实合法汇总／核对能力；另一独立缺口场景必须保留真实能力阻塞，不创建 Task/Bot 或派发能力创建者。新业务管理者配置未提供时不挪用自举配置、不预检，也不自动发起生成 Map。
+
+证据由 `business-requirements.json` 的启动前独立业务要求和 `evidence.json` 的 P27/P28 映射组织，包含原生用户确认输入、全部工具／HTTP、真实文件与服务读回、报告／执行／完成引用以及所有干预和失败。缺依赖、确认未发生、未真正保存／读回或不合法推进均非零；普通角色／dock 回归不能代替真实业务验收。两仓检查、隔离配置与清理要求沿用各自测试指引。
+
 完整指引由 [manager init.md](manager-chat/shared-logic/prompts/init.md)与 [node init.md](node-chat/shared-logic/prompts/init.md)持有，由各自声明引用，不要求部署者再复制到 Task。manager 的首次指引覆盖全部十种 run action、collect 五种 reason 与完整等待预算、报告标识查阅、依赖与终态、派发核实、recover/retry、当前执行最新报告完成门禁、拒绝后 collect 等待及部分效果；node 的首次指引覆盖报告策略、如实声明 can_complete、简短编排报告、命名 outputs、允许后续收尾、报告不等于完成，以及已保存但通知失败不重报。
 
 两条隐藏、持久化的 Prompt 身份分别为 `manager-chat:tools` 与 `node-chat:tools`，使用公共 `first-enabled-run` 的分支历史规则，不另存“已注入”标记。普通轮次保留历史中的一份指引，不追加副本；切换回来也不重置。公共自动启动策略每进程只消费一次，切到新的未启用 owner 不会再次自动启用；历史分支不带该身份时，由公共规则决定首次贡献，不由角色代码另建状态机。
