@@ -77,6 +77,37 @@ pi -e D:/service/my-agent-toolkit/entrypoints/pi-auto/node-chat.ts
 
 这些观察验证提示词行为，不代表 report_policy 是审批接口。report 使用 body、必填 boolean can_complete 和可选 outputs；不要新增审批状态，can_complete 不代替真实用户确认。配套升级 toolkit 与后端后，新请求旧形状明确拒绝；历史报告可读但缺声明不能首次完成。人工补齐也须当前执行最新 true 报告，不存在无报告人工完成旁路。
 
+### 文件交接跨仓自动验收
+
+配套 herdr-bot checkout 提供 `scripts/test-workflow-file-handoff.py --scenario roles`。从该 checkout 根运行，显式指定参与的后端构建产物、**本 toolkit worktree** 与专用隔离依赖根：
+
+```powershell
+$env:HERDR_BOT_REPO = $HERDR_BOT_WT
+$env:CARGO_TARGET_DIR = Join-Path $HERDR_BOT_WT 'backend/target'
+# 全仓 connect-bot/panel 回归有独立的既有定位参数，也必须关联同一后端源码。
+$env:HERDR_BOT_BINARY = Join-Path $env:CARGO_TARGET_DIR 'debug/examples/safe_shutdown_shell.exe'
+$env:HERDR_BOT_METADATA = Join-Path $HERDR_BOT_WT 'meta-data/task-options.toml'
+# 临时 worktree 的 frozen-baseline 外部依赖仍需显式关联其原始记录根。
+$env:OMP_BASELINE_RECORD_ROOT = 'D:/original-toolkit'
+python scripts/test-workflow-file-handoff.py `
+  --backend (Join-Path $env:CARGO_TARGET_DIR 'debug/herdr-bot.exe') `
+  --toolkit $TOOLKIT_WT --scenario roles --paths-file 'D:/isolated-acceptance/isolated-paths.toml'
+```
+
+命令中的脚本位于 herdr-bot，不在 toolkit 内复制第二份 runner。完整依赖根/真实模型配置格式由该 checkout 的 `docs/agents/testing.md`“文件交接真实角色自动验收”维护。需要真实 Herdr、官方 Pi 状态扩展、实际 Pi 包、已安装锁定依赖的两个源码根、独立 Cargo target，以及**显式授权的专用真实模型配置与密钥环境变量**。不读取用户全局配置/Session，不用 bridge token 代替业务模型。缺依赖或模型访问失败时非零退出、保留错误，不跳过或声称通过。
+
+此命令先运行本仓 `tests/harness-dock/node-report-contract.test.ts`（实际 OMP/Pi 宿主、受控 provider/外部 Herdr、真实后端）。覆盖 report 可发现与可调用、严格 true/false、缺声明、错类型、旧形状/多余字段拒绝且无报告保存、命名 outputs 与省略 outputs、公共原生 Session 的落盘归属。它验证参数不被宿主强转/删字段放行，**不证明真实模型职责遵从**。可单独从 toolkit 根运行：
+
+```powershell
+bun test tests/harness-dock/node-report-contract.test.ts
+```
+
+后端先构建 `safe_shutdown_shell` example、`herdr-fixture` 与 `herdr-bot`；不可让 `HERDR_BOT_REPO` 意外回落到默认同级旧仓。普通相关检查仍需 `bun test tests/workflow-chat`、受影响角色/collect/取消 dock、`bun run typecheck`、`bun run test`；不要用裸 `bun test` 代替 package script。按[测试运行协调](../../docs/agents/testing.md)安排重型检查窗口。
+
+随后 runner 用真实 Herdr 发起原生 manager/node，真实模型自行调用实际工具，观察旧执行替换、当前 false→门禁拒绝→collect 保留待办真等待→新 true 唤醒→manager 显式 complete/dispatch；下游初始化只拿独立背景、业务 input、当前登记地址及缺失逻辑输入，不复制旧地址/报告正文/原生聊天/成果正文。外部业务程序实际产出独立文件；报告简短说明结论、阻塞及部分效果，manager 不默认读成果正文验收。实际 Session/Run/node/execution、完整对话与工具/HTTP 次序、进程清理和只读记录副本均关联证据，不能从最终 completed 倒推过程。
+
+当前真实模型入口只覆盖 **Windows + Pi + OpenAI-compatible chat-completions**；OMP 只有本命令内对应参数 dock 的证据，不将 Pi 结果外推为 OMP 真实模型通过。每阶段默认有界 300 秒，无 runner 业务重试；未取得实际运行证据的承诺必须保持未验证。入口支持显式实际依赖路径，不修改正式部署、不启用 LAN/mDNS、不触碰真实关机或用户服务。长期说明不依赖临时票据/证据链接。
+
 ## 3. 先查事实，再明确动作
 
 所有恢复都从 `status`、已有 Run 详情、原 Chat 与真实材料开始，记录所见事实；以下是选择规则，不是自动执行脚本。
