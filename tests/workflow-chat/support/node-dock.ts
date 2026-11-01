@@ -10,12 +10,12 @@ export interface NodeDock {
 	readonly root: RunRoot;
 	readonly session: ControlledSession;
 	readonly capture: CaptureServer;
-	beginReport(body: string): Promise<PromptOutcome>;
+	beginReport(params: { body: string; can_complete: boolean; outputs?: Record<string, string> }): Promise<PromptOutcome>;
 	close(): Promise<void>;
 }
 
 /** S1: the delivered auto entrypoint in the real, isolated OMP loader, not a registration double. */
-export async function nodeDock(endpoint: string, body: string): Promise<NodeDock> {
+export async function nodeDock(endpoint: string, params: { body: string; can_complete: boolean; outputs?: Record<string, string> }): Promise<NodeDock> {
 	const root = createRunRoot("node-report");
 	const deployment = join(root.path, "deployment");
 	for (const tree of ["framework", "adapters", "extensions/workflow-chat", "entrypoints"]) {
@@ -31,11 +31,11 @@ export async function nodeDock(endpoint: string, body: string): Promise<NodeDock
 		`endpoint: ${JSON.stringify(endpoint)}\nrequestTimeoutMs: 2000\ncollectTimeoutMs: 5460000\n`);
 	mkdirSync(join(root.workDir, "extensions/workflow-chat"), { recursive: true });
 	writeFileSync(join(root.workDir, "extensions/workflow-chat/config.yaml"), "endpoint: http://127.0.0.1:1\nrequestTimeoutMs: 1\n");
-	let nextBody: string | undefined = body;
+	let nextReport: typeof params | undefined = params;
 	const capture = startCaptureServer({ dir: root.captureDir, respond() {
-		if (nextBody === undefined) return undefined;
-		const selected = nextBody; nextBody = undefined;
-		return { toolCall: { name: "report", arguments: JSON.stringify({ body: selected }) } };
+		if (nextReport === undefined) return undefined;
+		const selected = nextReport; nextReport = undefined;
+		return { toolCall: { name: "report", arguments: JSON.stringify(selected) } };
 	} });
 	let session: ControlledSession | undefined;
 	try {
@@ -47,7 +47,7 @@ export async function nodeDock(endpoint: string, body: string): Promise<NodeDock
 		});
 		return {
 			root, session, capture,
-			beginReport(body) { nextBody = body; return session!.prompt("显式提交本次交接一次，不自主重报。"); },
+			beginReport(params) { nextReport = params; return session!.prompt("显式提交本次交接一次，不自主重报。"); },
 			async close() {
 				try { await session!.stop(); } finally { capture.stop(); root.dispose(); }
 			},

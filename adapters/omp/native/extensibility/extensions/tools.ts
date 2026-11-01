@@ -7,8 +7,11 @@ import type { OmpExtensionApi } from "./types";
 export function ompToolParameters(schema: ToolParameterSchema): unknown {
 	const description = schema.description === undefined ? {} : { description: schema.description };
 	if ("anyOf" in schema) return { ...description, anyOf: schema.anyOf.map(ompToolParameters) };
+	// The singleton type union has the same JSON Schema meaning, but avoids OMP's
+	// optional-null repair. Invalid explicit values must reach the business guard.
+	if (schema.type === "object" && schema.additionalProperties === true && Object.keys(schema.properties).length === 0) return description;
 	if (schema.type === "object") return {
-		...description, type: "object",
+		...description, type: ["object"],
 		properties: Object.fromEntries(Object.entries(schema.properties).map(([key, value]) => [key, ompToolParameters(value)])),
 		...(schema.required === undefined ? {} : { required: [...schema.required] }),
 		additionalProperties: true,

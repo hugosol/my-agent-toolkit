@@ -7,11 +7,11 @@ test("P15 report does not invent an empty-string or result-address rejection", a
 	const requests: unknown[] = [];
 	const response = { saved: true, report: { id: "empty-body-accepted", body: "" }, notification: { status: "submitted" }, diagnostic: { status: "written" } };
 	const server = Bun.serve({ port: 0, hostname: "127.0.0.1", async fetch(request) { requests.push(await request.json()); return Response.json(response); } });
-	const dock = await nodeDock(`http://127.0.0.1:${server.port}`, "");
+	const dock = await nodeDock(`http://127.0.0.1:${server.port}`, { body: "", can_complete: true });
 	try {
 		expect((await dock.session.prompt("提交空正文协议样例一次；这是协议测试，不表示高质量交接。")).status).toBe("completed");
 		expect(requests).toHaveLength(1);
-		expect(requests[0]).toMatchObject({ body: "" });
+		expect(requests[0]).toMatchObject({ body: "", canComplete: true });
 		expect(JSON.parse(toolText(dock))).toEqual(response);
 	} finally { await dock.close(); server.stop(true); }
 }, 300_000);

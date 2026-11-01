@@ -7,7 +7,7 @@ test("P16 saving failure remains unsaved with notification not attempted and no 
 	let requests = 0;
 	const failure = { code: "report-save-failed", saved: false, error: "messages.jsonl: access denied", notification: { status: "not-attempted" } };
 	const server = Bun.serve({ port: 0, hostname: "127.0.0.1", fetch() { requests++; return Response.json(failure, { status: 500 }); } });
-	const dock = await nodeDock(`http://127.0.0.1:${server.port}`, "交接在 E:/result；禁止生产使用。");
+	const dock = await nodeDock(`http://127.0.0.1:${server.port}`, { body: "交接在 E:/result；禁止生产使用。", can_complete: false });
 	try {
 		expect((await dock.session.prompt("提交交接正文一次")).status).toBe("completed");
 		expect(JSON.parse(toolText(dock))).toEqual(failure);

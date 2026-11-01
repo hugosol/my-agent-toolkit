@@ -16,7 +16,7 @@ for (const role of ["manager", "node"] as const) {
 				const actualId = await nativeIdentity(dock);
 				await dock.session.request({ type: "set_session_name", name: "tempting-display-name-not-an-id" });
 				expect(actualId).not.toBe(dock.root.workDir);
-				for (const [tool, params] of role === "manager" ? [["run", { action: "status" }], ["collect", {}]] as const : [["report", { body: "no-identity-must-not-send" }]] as const) {
+				for (const [tool, params] of role === "manager" ? [["run", { action: "status" }], ["collect", {}]] as const : [["report", { body: "no-identity-must-not-send", can_complete: false }]] as const) {
 					expect(await roleCall(dock, tool, params)).toMatchObject({ isError: true, body: { error: { kind: "session-unavailable", message: "公共 Session 未提供活动原生身份；未发送请求。" } } });
 				}
 				expect(calls).toEqual([]);

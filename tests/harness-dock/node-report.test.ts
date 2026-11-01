@@ -11,7 +11,7 @@ import { nodeDock, toolText } from "../workflow-chat/support/node-dock";
 test("P15/P16 actual node report is backend-attributed, saved and retrievable despite real notification refusal, without completing node", async () => {
 	const backend = await workflowBackend();
 	const body = "独立正文：E:/acceptance/material-node-37.txt；UTF-8，只读样本，不适用于生产。";
-	const dock = await nodeDock(backend.endpoint, body);
+	const dock = await nodeDock(backend.endpoint, { body, can_complete: true, outputs: { sample: "E:/acceptance/material-node-37.txt" } });
 	try {
 		const state = await dock.session.request({ type: "get_state" });
 		if (!state.data || typeof state.data !== "object" || !("sessionId" in state.data) || typeof state.data.sessionId !== "string") throw new Error("No native Session identity");
@@ -40,7 +40,7 @@ test("P15/P16 actual node report is backend-attributed, saved and retrievable de
 		expect(result.saved).toBe(true);
 		expect(result.notification.status).toBe("failed");
 		expect(result.diagnostic.status).toBe("written");
-		expect(result.report).toMatchObject({ type: "report", runId: started.id, nodeId: "A", executionId: execution.id, source: execution.chat, target: started.run.manager, body });
+		expect(result.report).toMatchObject({ type: "report", runId: started.id, nodeId: "A", executionId: execution.id, source: execution.chat, target: started.run.manager, body, canComplete: true, outputs: { sample: "E:/acceptance/material-node-37.txt" } });
 		expect(result.report.id).toBeString();
 		expect(result.report.at).toBeNumber();
 		const detail = await fetch(`${backend.endpoint}/api/workflow/runs/${started.id}`).then(response => response.json());

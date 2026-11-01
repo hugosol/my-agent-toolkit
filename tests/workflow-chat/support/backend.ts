@@ -6,8 +6,10 @@ import { createRunRoot } from "../../harness-dock/run-root";
 /** Real herdr-bot routes/storage, controlled external Herdr CLI; never a production process/data. */
 export async function workflowBackend(collectWaitSeconds = 1) {
 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
-	const binary = join(source, "backend/target/debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
-	const fixture = join(source, "backend/target/debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
 	const root = createRunRoot("workflow-backend");
 	const cli = join(root.path, basename(fixture));

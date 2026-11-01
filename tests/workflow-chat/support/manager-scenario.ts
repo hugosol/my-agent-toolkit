@@ -32,6 +32,10 @@ export async function managerScenario(budgets: { requestTimeoutMs?: number; coll
 				backend.behavior(`node-native-${nodeId}`, backend.root.path);
 				return backend.post("/api/workflow/manager/dispatch", { sessionId: managerId, nodes: [nodeId] });
 			},
+			async report(sessionId: string, body: string, can_complete: boolean) {
+				backend.behavior(sessionId, backend.root.path, true);
+				return backend.post("/api/workflow/node/report", { sessionId, body, canComplete: can_complete });
+			},
 			async detail() { return fetch(`${backend.endpoint}/api/workflow/runs/${started.id}`).then(response => response.json()); },
 			async close() { try { await dock!.close(); } finally { await transport.close(); await backend.close(); } },
 		};

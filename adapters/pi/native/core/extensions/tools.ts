@@ -7,6 +7,8 @@ import type { PiExtensionApi } from "./types";
 export function piToolParameters(schema: ToolParameterSchema): unknown {
 	const description = schema.description === undefined ? {} : { description: schema.description };
 	if ("anyOf" in schema) return { ...description, anyOf: schema.anyOf.map(piToolParameters) };
+	// Keep open mappings as raw as scalars; native coercion must not repair null to {}.
+	if (schema.type === "object" && schema.additionalProperties === true && Object.keys(schema.properties).length === 0) return description;
 	if (schema.type === "object") return {
 		...description, type: "object",
 		properties: Object.fromEntries(Object.entries(schema.properties).map(([key, value]) => [key, piToolParameters(value)])),

@@ -17,14 +17,14 @@ test("node shared logic rejects extra and identity fields before sending a repor
 			{ executionId: "forged-execution" }, { nodeId: "other-node" },
 			{ recipient: "forged-recipient" }, { unexpected: true },
 		]) {
-			const result = await roles.node.report(roles.sessionId, { body: saved.report.body, ...extra });
+			const result = await roles.node.report(roles.sessionId, { body: saved.report.body, can_complete: false, ...extra });
 			expect(result.isError).toBe(true);
 		}
 		for (const input of [null, {}, { body: 123 }, { body: ["not a string"] }]) {
 			expect((await roles.node.report(roles.sessionId, input)).isError).toBe(true);
 		}
 		expect(requests).toBe(0);
-		expect(await roles.node.report(roles.sessionId, { body: saved.report.body })).toMatchObject({ body: saved, httpStatus: 200, isError: false });
+		expect(await roles.node.report(roles.sessionId, { body: saved.report.body, can_complete: false })).toMatchObject({ body: saved, httpStatus: 200, isError: false });
 		expect(requests).toBe(1);
 	} finally { roles.close(); server.stop(true); }
 });
@@ -66,7 +66,7 @@ for (const scenario of [
 		} });
 		const roles = businessRoles(`http://127.0.0.1:${server.port}`);
 		try {
-			const result = await roles.node.report(roles.sessionId, { body: "E:/handoff.txt；只读，尚未验收。" });
+			const result = await roles.node.report(roles.sessionId, { body: "E:/handoff.txt；只读，尚未验收。", can_complete: false });
 			expect(result).toMatchObject({ body: scenario.body, httpStatus: scenario.status, isError: scenario.isError });
 			expect(result.message).toBeUndefined();
 			expect(requests).toBe(1);
