@@ -22,6 +22,8 @@ test("P10/P11/P13 explicit complete preserves first handoff and only unlocks sat
 		const pending = await scene.dock.call({ action: "complete", nodeId: "C", reason: "不应跳过待执行工作" });
 		expect(pending).toMatchObject({ code: "node-not-completable", changed: false });
 		await scene.dispatch("A"); await scene.dispatch("B");
+		await scene.report("node-native-A", "alpha 可交接；原 Chat 仍收尾。", true);
+		await scene.report("node-native-B", "beta 可交接。", true);
 		const calls = readFileSync(join(scene.backend.root.path, "calls.jsonl"), "utf8");
 		expect(await scene.dock.call({ action: "complete", nodeId: "A", reason: "   " })).toMatchObject({ code: "completion-reason-required", changed: false });
 		const reason = "A 已核实 E:/artifacts/alpha.txt；UTF-8，仅测试；原 Chat 仍在收尾。";
@@ -53,6 +55,7 @@ test("P10/P11/P13 pause leaves existing execution alive and rejects new dispatch
 	const scene = await managerScenario();
 	try {
 		const running = await scene.dispatch("A");
+		await scene.report("node-native-A", "暂停前已可交接，后续暂停不撤回声明。", true);
 		const before = readFileSync(join(scene.backend.root.path, "calls.jsonl"), "utf8");
 		const paused = await scene.dock.call({ action: "pause" });
 		expect(paused).toMatchObject({ changed: true, snapshot: { status: "paused", nodes: { A: running.snapshot.nodes.A, B: { status: "pending" } } }, ready: [], canFinish: false });
@@ -90,11 +93,14 @@ test("P10/P11/P13 fail preserves original execution and first reason without ext
 		await Bun.sleep(150);
 		expect(readFileSync(join(scene.backend.root.path, "calls.jsonl"), "utf8")).toBe(before);
 		expect((await scene.detail()).run).toEqual(failed.snapshot);
-		const handoff = await scene.dock.call({ action: "complete", nodeId: "A", reason: "人工补齐 E:/alpha.txt，已核实可交接；无自动报告。" });
+		expect(await scene.dock.call({ action: "complete", nodeId: "A", reason: "人工补齐也不能绕过节点声明。" })).toMatchObject({ changed: false, snapshot: { nodes: { A: { status: "failed" } } } });
+		const report = await scene.report("node-native-A", "人工补齐后本执行已可交接；限制：非生产样本。", true);
+		const afterReport = readFileSync(join(scene.backend.root.path, "calls.jsonl"), "utf8");
+		const handoff = await scene.dock.call({ action: "complete", nodeId: "A", reason: "根据本执行最新 true 报告显式交接。" });
 		expect(handoff.snapshot.nodes.A.status).toBe("completed");
-		expect(handoff.reports).toEqual([]);
+		expect(handoff.reports).toEqual([report.report]);
 		expect(handoff.snapshot.nodes.A.execution).toEqual(execution);
-		expect(scene.calls.map(call => call.path)).toEqual(["fail", "fail", "fail", "complete"].map(action => `/api/workflow/manager/${action}`));
-		expect(readFileSync(join(scene.backend.root.path, "calls.jsonl"), "utf8")).toBe(before);
+		expect(scene.calls.map(call => call.path)).toEqual(["fail", "fail", "fail", "complete", "complete"].map(action => `/api/workflow/manager/${action}`));
+		expect(readFileSync(join(scene.backend.root.path, "calls.jsonl"), "utf8")).toBe(afterReport);
 	} finally { await scene.close(); }
 }, 300_000);

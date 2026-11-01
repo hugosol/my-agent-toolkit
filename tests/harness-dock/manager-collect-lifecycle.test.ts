@@ -40,7 +40,7 @@ for (const termination of ["abort", "new_session", "shutdown"] as const) {
 				expect(await scene.dock.nativeId()).toBe(scene.managerId);
 			}
 			scene.backend.behavior("node-native-A", scene.backend.root.path, true);
-			const report = await scene.backend.post("/api/workflow/node/report", { sessionId: "node-native-A", body: "P19 material remains available after lifecycle cancellation" });
+			const report = await scene.backend.post("/api/workflow/node/report", { sessionId: "node-native-A", body: "P19 material remains available after lifecycle cancellation", canComplete: false });
 			expect(report.saved).toBe(true);
 			const next = await scene.dock.collect();
 			expect(next.reason).toBe("notification");

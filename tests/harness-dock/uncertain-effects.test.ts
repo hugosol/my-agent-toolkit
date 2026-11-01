@@ -50,7 +50,7 @@ test("P22 P23 P24 saved report remains queryable after disconnect and explicit n
 	const transport = await effectsTransport();
 	const scene = await managerScenario(); transport.connect(scene.backend.endpoint);
 	const body = "P22 first material: E:/evidence/accepted.txt; read-only, not production";
-	const node = await nodeDock(transport.endpoint, body);
+	const node = await nodeDock(transport.endpoint, { body, can_complete: false });
 	try {
 		const state = await node.session.request({ type: "get_state" });
 		if (!state.data || typeof state.data !== "object" || !("sessionId" in state.data) || typeof state.data.sessionId !== "string") throw new Error("No native node identity");
@@ -78,7 +78,7 @@ test("P22 P23 P24 saved report remains queryable after disconnect and explicit n
 		expect(detail.reports[0]).toMatchObject({ body, source: { sessionId: nativeId } });
 		expect(detail.run.nodes.A.status).toBe("running");
 		const secondBody = "P24 distinct explicit follow-up material, not an automatic retry";
-		expect((await node.beginReport(secondBody)).status).toBe("completed");
+		expect((await node.beginReport({ body: secondBody, can_complete: true })).status).toBe("completed");
 		const second = JSON.parse(toolText(node));
 		expect(second).toMatchObject({ saved: true, report: { body: secondBody, source: { sessionId: nativeId } }, notification: { status: "failed" }, diagnostic: { status: "written" } });
 		const afterExplicit = readFileSync(join(scene.backend.root.path, "calls.jsonl"), "utf8");

@@ -5,7 +5,7 @@ import { workflowBackend } from "./support/backend";
 import { promptDock, providerMessages, roleGuidance } from "./support/prompt-dock";
 
 // Approved S1 / P27. Source: unchanged backend Task.prompt + per-run input composition.
-// Violation: extension repeats/replaces fixed instructions or copies Bot/Map/user_input
+// Violation: extension repeats/replaces fixed instructions or copies Bot/Map facts
 // into a role guide. Observe actual backend CLI submissions and actual OMP provider input.
 // Herdr delivery is controlled: relay the exact captured submission into real OMP,
 // rather than claiming this proves real Herdr launched it or a real model used the input.
@@ -50,7 +50,7 @@ test("P27 actual role input preserves backend fixed/work sections and adds only 
 			expect(guide).not.toContain("CURRENT-WORK-27");
 			expect(guide).not.toContain("RUN-USER-INPUT-27");
 			for (const forbidden of ["BOT-DOCUMENT-27", "BOT-PLAN-27", "BOT-NODE-27", "FULL-MAP-DOCUMENT-27", "MAP-TITLE-27"]) expect(request.raw).not.toContain(forbidden);
-			if (role === "node") expect(request.raw).not.toContain("RUN-USER-INPUT-27");
+			expect(request.raw).toContain("RUN-USER-INPUT-27");
 		}
 	} finally { await node.close(); await manager.close(); await backend.close(); }
 }, 300_000);

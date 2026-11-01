@@ -4,7 +4,7 @@ import { nodeDock, toolText } from "./support/node-dock";
 // Approved seam S1. P15's independent body/attribution literals come from the backend contract.
 // Violation: exposing identity fields or substituting cwd/Owner for native identity, or rewriting
 // the returned report. Observe both the real OMP model tool schema and its actual HTTP exchange.
-test("P15 node auto report sends only body plus native Session identity and preserves backend attribution", async () => {
+test("P15 node auto report sends explicit handoff parameters plus native Session identity and preserves backend attribution", async () => {
 	const calls: { path: string; method: string; json: unknown }[] = [];
 	const report = {
 		id: "report-backend-73", type: "report", at: 1790000000731, runId: "run-19", nodeId: "A",
@@ -16,7 +16,7 @@ test("P15 node auto report sends only body plus native Session identity and pres
 		calls.push({ path: new URL(request.url).pathname, method: request.method, json: await request.json() });
 		return Response.json(response);
 	} });
-	const dock = await nodeDock(`http://127.0.0.1:${server.port}`, report.body);
+	const dock = await nodeDock(`http://127.0.0.1:${server.port}`, { body: report.body, can_complete: true });
 	try {
 		expect((await dock.session.prompt("提交已可交接的 alpha 结果；固定职能与本次工作并非身份。")).status).toBe("completed");
 		expect(calls).toHaveLength(1);
@@ -24,12 +24,12 @@ test("P15 node auto report sends only body plus native Session identity and pres
 		if (!state.data || typeof state.data !== "object" || !("sessionId" in state.data) || typeof state.data.sessionId !== "string") throw new Error("OMP did not report native identity");
 		const sessionId = state.data.sessionId;
 		expect(sessionId.length).toBeGreaterThan(0);
-		expect(calls[0]).toEqual({ path: "/api/workflow/node/report", method: "POST", json: { sessionId, body: report.body } });
+		expect(calls[0]).toEqual({ path: "/api/workflow/node/report", method: "POST", json: { sessionId, body: report.body, canComplete: true } });
 		const first = dock.capture.requests()[0]?.json as { tools: { function: { name: string; parameters: { type: string; properties: object; required: string[] } } }[] };
 		const tool = first.tools.find(tool => tool.function.name === "report")!;
 		// OMP's own global tracing metadata is not a role business parameter and is stripped by OMP.
-		expect(Object.keys(tool.function.parameters.properties).filter(key => key !== "i")).toEqual(["body"]);
-		expect(tool.function.parameters.required.filter(key => key !== "i")).toEqual(["body"]);
+		expect(Object.keys(tool.function.parameters.properties).filter(key => key !== "i")).toEqual(["body", "can_complete", "outputs"]);
+		expect(tool.function.parameters.required.filter(key => key !== "i")).toEqual(["body", "can_complete"]);
 		expect(first.tools.some(tool => ["run", "collect"].includes(tool.function.name))).toBe(false);
 		expect(JSON.parse(toolText(dock))).toMatchObject({ ...response });
 	} finally { await dock.close(); server.stop(true); }
