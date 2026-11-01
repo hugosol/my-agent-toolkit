@@ -106,7 +106,7 @@ bun test tests/harness-dock/node-report-contract.test.ts
 
 随后 runner 用真实 Herdr 发起原生 manager/node，真实模型自行调用实际工具，观察旧执行替换、当前 false→门禁拒绝→collect 保留待办真等待→新 true 唤醒→manager 显式 complete/dispatch；下游初始化只拿独立背景、业务 input、当前登记地址及缺失逻辑输入，不复制旧地址/报告正文/原生聊天/成果正文。外部业务程序实际产出独立文件；报告简短说明结论、阻塞及部分效果，manager 不默认读成果正文验收。实际 Session/Run/node/execution、完整对话与工具/HTTP 次序、进程清理和只读记录副本均关联证据，不能从最终 completed 倒推过程。
 
-当前真实模型入口只覆盖 **Windows + Pi + OpenAI-compatible chat-completions**；OMP 只有本命令内对应参数 dock 的证据，不将 Pi 结果外推为 OMP 真实模型通过。每阶段默认有界 300 秒，无 runner 业务重试；未取得实际运行证据的承诺必须保持未验证。入口支持显式实际依赖路径，不修改正式部署、不启用 LAN/mDNS、不触碰真实关机或用户服务。长期说明不依赖临时票据/证据链接。
+当前真实模型入口覆盖 **Windows + Pi**，通过 chat-completions 传输连接模型。除直接授权的兼容服务外，配套 herdr-bot 的 `scripts/workflow_completion_transport.py` 允许测试宿主公开真实 `completion`：逐请求发送完整真实原生历史及工具定义，由真实模型自行选择响应/动作，薄传输仅映射响应格式，Pi 仍执行实际 toolkit 工具并保存原生历史。配置与宿主调用示例见配套 `docs/agents/testing.md` 同一章节；不读取私有 auth、不脚本化工具序列、不预置业务答案、不修改产品 adapter。须联合保留原始 completion 请求/输出/映射与原生/HTTP 证据，且不将这种结果称为模型原生 OpenAI provider wire 合规性。OMP 只有本命令内对应参数 dock 的证据，不将 Pi 结果外推为 OMP 真实模型通过。每阶段默认有界 300 秒，无 runner 业务重试；未取得实际运行证据的承诺必须保持未验证。入口支持显式实际依赖路径，不修改正式部署、不启用 LAN/mDNS、不触碰真实关机或用户服务。长期说明不依赖临时票据/证据链接。
 
 ## 3. 先查事实，再明确动作
 
