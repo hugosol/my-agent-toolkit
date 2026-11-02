@@ -17,25 +17,30 @@ test("report forwards explicit handoff declarations and rejects malformed model 
 	const dock = await promptDock("node", { config: `endpoint: http://127.0.0.1:${server.port}\nrequestTimeoutMs: 2000\ncollectTimeoutMs: 5460000\n` });
 	try {
 		const sessionId = await nativeIdentity(dock);
-		const params = { body: "部分生效；等待用户修复权限，不能交接。", can_complete: false, outputs: { draft: "E:/external/draft.txt" } };
+		const params = { body: "部分生效；等待用户修复权限，不能交接。", can_complete: false, outputs: [{ id: "draft", path: "E:/external/draft.txt" }] };
 		expect((await beginRoleCall(dock, "report", params)).status).toBe("completed");
 		const firstFrames = dock.session.frames().filter(frame => frame.type === "tool_execution_end");
 		const first = firstFrames[firstFrames.length - 1]!;
 		expect(first.isError).not.toBe(true);
 		expect(lastRoleResult(dock).body).toEqual(saved);
-		expect(calls).toEqual([{ body: params.body, canComplete: false, outputs: { draft: "E:/external/draft.txt" }, sessionId }]);
+		expect(calls).toEqual([{ body: params.body, canComplete: false, outputs: [{ id: "draft", path: "E:/external/draft.txt" }], sessionId }]);
 		for (const invalid of [
 			{ body: "missing declaration" }, { body: "wrong boolean", can_complete: "false" },
 			{ body: "wrong boolean", can_complete: null }, { body: "wrong boolean", can_complete: 0 },
 			{ body: 123, can_complete: true }, { body: ["not text"], can_complete: true },
 			{ body: "bad outputs", can_complete: false, outputs: null },
-			{ body: "bad outputs", can_complete: false, outputs: [] },
+			{ body: "legacy outputs", can_complete: false, outputs: { draft: "E:/result.txt" } },
+			{ body: "duplicate outputs", can_complete: false, outputs: [{ id: "draft", path: "E:/a.txt" }, { id: "draft", path: "E:/b.txt" }] },
+			{ body: "bad entry", can_complete: false, outputs: [null] },
+			{ body: "empty id", can_complete: false, outputs: [{ id: "", path: "E:/a.txt" }] },
+			{ body: "extra output field", can_complete: false, outputs: [{ id: "draft", path: "E:/a.txt", extra: true }] },
 			{ body: "bad outputs", can_complete: false, outputs: "E:/result.txt" },
 			{ body: "bad outputs", can_complete: false, outputs: "null" },
 			{ body: "bad outputs", can_complete: false, outputs: "" },
 			{ body: "bad path type", can_complete: false, outputs: { draft: 17 } },
 			{ ...params, sessionId: "forged" }, { ...params, sessionId: null }, { ...params, runId: "forged" },
 			{ ...params, executionId: "forged" }, { ...params, nodeId: "forged" },
+			{ ...params, from: {} }, { ...params, to: {} },
 		]) {
 			dock.select("report", invalid);
 			expect((await dock.session.prompt("Execute selected malformed report exactly once.")).status).toBe("completed");

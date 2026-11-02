@@ -13,7 +13,7 @@ import { roleGuidance } from "../workflow-chat/support/prompt-dock";
 test("P26 injected guidance supports notification failure, original recovery, independent retry and real manual handoff rehearsal", async () => {
 	const scene = await managerScenario();
 	const artifact = join(scene.backend.root.path, "handoff-26.txt");
-	const node = await nodeDock(scene.backend.endpoint, { body: "结果可交接；仅验收样本，尚有无害收尾。", can_complete: true, outputs: { handoff: artifact } });
+	const node = await nodeDock(scene.backend.endpoint, { body: "结果可交接；仅验收样本，尚有无害收尾。", can_complete: true, outputs: [{ id: "handoff", path: artifact }] });
 	const observations: { step: string; result: unknown }[] = [];
 	const guides: Record<string, string> = {};
 	const action = async (params: unknown) => {
@@ -42,7 +42,7 @@ test("P26 injected guidance supports notification failure, original recovery, in
 		expect(collected.pendingReports.A).toBe(report.report.id);
 		const detail = await scene.detail();
 		expect(detail.reports).toHaveLength(1);
-		expect(detail.reports[0].outputs).toEqual({ handoff: artifact });
+		expect(detail.reports[0].outputs).toEqual([{ id: "handoff", path: artifact }]);
 		expect(detail.reports[0].body).not.toContain("交接材料 26：");
 		expect(detail.run.nodes.A.status).toBe("running");
 		expect(readFileSync(artifact, "utf8")).toBe("交接材料 26：UTF-8；只读样本；非生产证据。\n");
@@ -69,7 +69,7 @@ test("P26 injected guidance supports notification failure, original recovery, in
 		expect(material).toBe("人工补齐材料 26：UTF-8；只读引用；仍未经过生产验证。\n");
 		expect(await action({ action: "complete", nodeId: "A", reason: "不能借用旧执行报告或人工判断绕过门禁" })).toMatchObject({ changed: false, snapshot: { nodes: { A: { status: "running" } } } });
 		scene.backend.behavior(freshState.data.sessionId, scene.backend.root.path, true);
-		expect((await node.beginReport({ body: "部分结果已生成，仍需补齐交接说明。", can_complete: false, outputs: { handoff: artifact } })).status).toBe("completed");
+		expect((await node.beginReport({ body: "部分结果已生成，仍需补齐交接说明。", can_complete: false, outputs: [{ id: "handoff", path: artifact }] })).status).toBe("completed");
 		const blockedReport = JSON.parse(toolText(node));
 		expect(blockedReport).toMatchObject({ saved: true, report: { canComplete: false, executionId: retried.snapshot.nodes.A.execution.id } });
 		expect((await scene.dock.collect()).reason).toBe("notification");

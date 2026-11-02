@@ -124,7 +124,7 @@ for (const role of ["manager", "node"] as const) {
 		const run = await dock(role);
 		try {
 			const name = role === "manager" ? "run" : "report";
-			const valid = role === "manager" ? { action: "status" } : { body: "  original report\n", can_complete: false, outputs: { draft: "E:/external/pi-draft.txt" } };
+			const valid = role === "manager" ? { action: "status" } : { body: "  original report\n", can_complete: false, outputs: [{ id: "draft", path: "E:/external/pi-draft.txt" }] };
 			const body = role === "manager" ? { snapshot: { status: "running" }, untouched: [1, null] }
 				: { saved: true, notification: { ok: false, error: "notification unavailable" }, diagnostic: { ok: false } };
 			run.answer(body);
@@ -136,7 +136,7 @@ for (const role of ["manager", "node"] as const) {
 			const state = await run.session.request({ type: "get_state" });
 			if (!state.data || typeof state.data !== "object" || !("sessionId" in state.data)) throw new Error("Pi get_state did not publish sessionId");
 			expect(run.calls[0]!.body.sessionId).toBe(state.data.sessionId);
-			if (role === "node") expect(run.calls[0]!.body).toEqual({ body: "  original report\n", canComplete: false, outputs: { draft: "E:/external/pi-draft.txt" }, sessionId: state.data.sessionId });
+			if (role === "node") expect(run.calls[0]!.body).toEqual({ body: "  original report\n", canComplete: false, outputs: [{ id: "draft", path: "E:/external/pi-draft.txt" }], sessionId: state.data.sessionId });
 			const visible = run.capture.requests()[0]!.json as { tools: { function: { name: string } }[] };
 			expect(visible.tools.map(tool => tool.function.name)).toContain(name);
 			if (role === "manager") expect(visible.tools.map(tool => tool.function.name)).toContain("collect");
@@ -147,14 +147,14 @@ for (const role of ["manager", "node"] as const) {
 			expect(history).toContain(prompt);
 			for (const params of [{ ...valid, sessionId: "forged" }, role === "manager" ? { action: "status", reason: "inapplicable" } : { body: 123, can_complete: true },
 				...(role === "manager" ? [{ action: "retry", nodeId: "n", confirmed: "false", reason: "r" }, { action: "dispatch", nodes: [123] }] : [{ body: "old shape" }, { body: "wrong boolean", can_complete: "false" },
-					{ ...valid, outputs: null }, { ...valid, outputs: [] }, { ...valid, outputs: "E:/path.txt" }, { ...valid, outputs: { draft: 123 } }])]) {
+					{ ...valid, outputs: null }, { ...valid, outputs: [{ id: "draft", path: "E:/a.txt" }, { id: "draft", path: "E:/b.txt" }] }, { ...valid, outputs: "E:/path.txt" }, { ...valid, outputs: { draft: 123 } }])]) {
 				const invalid = await run.call(name, params);
 				expect(invalid.isError).toBe(true);
 				expect(run.calls).toHaveLength(1);
 			}
 			if (role === "node") {
-				expect((await run.call(name, { body: "", can_complete: true })).isError).toBe(false);
-				expect(run.calls[1]!.body).toEqual({ body: "", canComplete: true, sessionId: state.data.sessionId });
+				expect((await run.call(name, { body: "", can_complete: true, outputs: [] })).isError).toBe(false);
+				expect(run.calls[1]!.body).toEqual({ body: "", canComplete: true, outputs: [], sessionId: state.data.sessionId });
 				run.answer({ saved: false, error: { kind: "save", message: "disk failed" } });
 				expect((await run.call(name, valid)).isError).toBe(true);
 			} else {

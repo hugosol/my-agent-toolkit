@@ -21,7 +21,7 @@ export async function managerScenario(budgets: { requestTimeoutMs?: number; coll
 		}
 		writeFileSync(join(backend.root.path, "bots/worker.json"), JSON.stringify({ id: "worker", name: "worker", when: "", plan_guide: "", node_guide: "", task_id: tasks.node }));
 		writeFileSync(join(backend.root.path, "maps/fan-in.json"), JSON.stringify({ title: "A B into C", description: "independent small graph", nodes: {
-			A: { title: "A", bot_id: "worker", input: "alpha", zone: backend.root.path, blocked_by: [] },
+			A: { title: "A", bot_id: "worker", input: "alpha", zone: backend.root.path, blocked_by: [], output_rule: [{ id: "handoff" }] },
 			B: { title: "B", bot_id: "worker", input: "beta", zone: backend.root.path, blocked_by: [] },
 			C: { title: "C", bot_id: "worker", input: "combine", zone: backend.root.path, blocked_by: ["A", "B"] },
 		} }));

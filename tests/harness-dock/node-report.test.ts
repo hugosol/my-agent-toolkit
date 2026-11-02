@@ -11,7 +11,7 @@ import { nodeDock, toolText } from "../workflow-chat/support/node-dock";
 test("P15/P16 actual node report is backend-attributed, saved and retrievable despite real notification refusal, without completing node", async () => {
 	const backend = await workflowBackend();
 	const body = "独立正文：E:/acceptance/material-node-37.txt；UTF-8，只读样本，不适用于生产。";
-	const dock = await nodeDock(backend.endpoint, { body, can_complete: true, outputs: { sample: "E:/acceptance/material-node-37.txt" } });
+	const dock = await nodeDock(backend.endpoint, { body, can_complete: true, outputs: [{ id: "sample", path: "E:/acceptance/material-node-37.txt" }] });
 	try {
 		const state = await dock.session.request({ type: "get_state" });
 		if (!state.data || typeof state.data !== "object" || !("sessionId" in state.data) || typeof state.data.sessionId !== "string") throw new Error("No native Session identity");
@@ -25,7 +25,7 @@ test("P15/P16 actual node report is backend-attributed, saved and retrievable de
 			tasks[role] = task.id;
 		}
 		writeFileSync(join(backend.root.path, "bots/worker.json"), JSON.stringify({ id: "worker", name: "worker", when: "not injected", plan_guide: "not injected", node_guide: "not injected", task_id: tasks.node }));
-		writeFileSync(join(backend.root.path, "maps/work.json"), JSON.stringify({ title: "Node report interop", description: "not injected", nodes: { A: { title: "A", bot_id: "worker", input: "node input", zone: dock.root.workDir, blocked_by: [] } } }));
+		writeFileSync(join(backend.root.path, "maps/work.json"), JSON.stringify({ title: "Node report interop", description: "not injected", nodes: { A: { title: "A", bot_id: "worker", input: "node input", zone: dock.root.workDir, blocked_by: [], output_rule: [{ id: "sample" }] } } }));
 		const managerId = "interop-manager-not-an-owner-key";
 		backend.behavior(managerId, backend.root.path);
 		const started = await backend.post("/api/scheduler/maps/work.json/runs", { managerTaskId: tasks.manager, zone: backend.root.path, userInput: "Independent backend report acceptance" });
@@ -40,7 +40,7 @@ test("P15/P16 actual node report is backend-attributed, saved and retrievable de
 		expect(result.saved).toBe(true);
 		expect(result.notification.status).toBe("failed");
 		expect(result.diagnostic.status).toBe("written");
-		expect(result.report).toMatchObject({ type: "report", runId: started.id, nodeId: "A", executionId: execution.id, source: execution.chat, target: started.run.manager, body, canComplete: true, outputs: { sample: "E:/acceptance/material-node-37.txt" } });
+		expect(result.report).toMatchObject({ type: "report", runId: started.id, nodeId: "A", executionId: execution.id, from: execution.chat, to: started.run.manager, body, canComplete: true, outputs: [{ id: "sample", path: "E:/acceptance/material-node-37.txt" }] });
 		expect(result.report.id).toBeString();
 		expect(result.report.at).toBeNumber();
 		const detail = await fetch(`${backend.endpoint}/api/workflow/runs/${started.id}`).then(response => response.json());

@@ -10,12 +10,12 @@ export interface NodeDock {
 	readonly root: RunRoot;
 	readonly session: ControlledSession;
 	readonly capture: CaptureServer;
-	beginReport(params: { body: string; can_complete: boolean; outputs?: Record<string, string> }): Promise<PromptOutcome>;
+	beginReport(params: { body: string; can_complete: boolean; outputs?: { id: string; path: string }[] }): Promise<PromptOutcome>;
 	close(): Promise<void>;
 }
 
 /** S1: the delivered auto entrypoint in the real, isolated OMP loader, not a registration double. */
-export async function nodeDock(endpoint: string, params: { body: string; can_complete: boolean; outputs?: Record<string, string> }): Promise<NodeDock> {
+export async function nodeDock(endpoint: string, params: { body: string; can_complete: boolean; outputs?: { id: string; path: string }[] }): Promise<NodeDock> {
 	const root = createRunRoot("node-report");
 	const deployment = join(root.path, "deployment");
 	for (const tree of ["framework", "adapters", "extensions/workflow-chat", "entrypoints"]) {

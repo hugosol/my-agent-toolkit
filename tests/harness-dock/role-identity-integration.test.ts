@@ -85,7 +85,7 @@ test("P1/P2/P6 independent automatic roles use native identity and preserve real
 		expect(dispatch.body.results[0].status).toBe("running");
 		backend.behavior(nodeId, node.root.workDir, true);
 		const report = await call(node, "report", { body: "E:/acceptance/native-alpha.txt; UTF-8; independent handoff", can_complete: true });
-		expect(report.body).toMatchObject({ saved: true, report: { runId: started.id, nodeId: "A", source: { sessionId: nodeId }, target: { sessionId: managerId } } });
+		expect(report.body).toMatchObject({ saved: true, report: { runId: started.id, nodeId: "A", from: { sessionId: nodeId }, to: { sessionId: managerId } } });
 		const collected = await call(manager, "collect", {});
 		expect(collected.body).toMatchObject({ reason: "notification", pendingReports: { A: report.body.report.id } });
 		// Healthy dispatch refuses duplicate native IDs. Seed ambiguity ONLY in this

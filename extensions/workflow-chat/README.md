@@ -86,7 +86,7 @@ python (Join-Path $HERDR_BOT_WT 'scripts/test-workflow-file-handoff.py') `
 
 入口加载参与 worktree 的实际迁移 Map、规划／转换 Task、Bot 与本仓实际角色入口，保留隔离部署的所有路径、宿主和模型映射。只读 Skill 依赖是显式 `pi_agent/skills` 下的 `grill-with-docs`、`grilling` 和 `domain-modeling`，不复制用户会话／auth。若使用公开 `completion` 真实文本传输，按 herdr-bot 测试指引的 `CompletionTransport` 示例启动，仅把场景改为 `plan-workflow`；传输不预设工具调用或模拟结果，实际 Pi 执行工具并维护原生历史。结果只适用于实际被测宿主／模型传输，不自动扩展到 OMP。
 
-规划业务的用户确认不归角色工具推断：实际 outline Chat 先收需求，再接收修订，用户明确确认九章节当前方案后，还须单独确认 manual 报告发送。`report` 登记 `outputs.outline` 并声明真实 `can_complete`，不能替代任何确认；manager 读取报告后显式完成与派发，generate_map 读取初始化命名地址而非报告搜索。主成功链路预置真实合法汇总／核对能力；另一独立缺口场景必须保留真实能力阻塞，不创建 Task/Bot 或派发能力创建者。新业务管理者配置未提供时不挪用自举配置、不预检，也不自动发起生成 Map。
+规划业务的用户确认不归角色工具推断：实际 outline Chat 先收需求，再接收修订，用户明确确认九章节当前方案后，还须单独确认 manual 报告发送。`report` 登记 `outputs` 中 `id=outline` 的条目 并声明真实 `can_complete`，不能替代任何确认；manager 读取报告后显式完成与派发，generate_map 读取初始化命名地址而非报告搜索。主成功链路预置真实合法汇总／核对能力；另一独立缺口场景必须保留真实能力阻塞，不创建 Task/Bot 或派发能力创建者。新业务管理者配置未提供时不挪用自举配置、不预检，也不自动发起生成 Map。
 
 证据由 `business-requirements.json` 的启动前独立业务要求和 `evidence.json` 的 P27/P28 映射组织，包含原生用户确认输入、全部工具／HTTP、真实文件与服务读回、报告／执行／完成引用以及所有干预和失败。缺依赖、确认未发生、未真正保存／读回或不合法推进均非零；普通角色／dock 回归不能代替真实业务验收。两仓检查、隔离配置与清理要求沿用各自测试指引。
 
@@ -180,21 +180,27 @@ manager 的 `collect` 没有业务参数，调用样例为 `{}`。实际传输�
 
 处置顺序先查看 status、原 Chat 与产物：派发不确定先 reconcile_dispatch，不用 retry 的确认跳过核实；执行失败而原 Chat 可继续用 recover；必须独立重做才 retry；人工处理后仍须当前执行最新 true 报告才允许 complete，reason 记录编排依据和限制，不伪造报告。四种动作都不撤销旧副作用，不自动重试或启动下游。HTTP 200、网络错误或取消都不等于所有目标未执行，先查事实再做下一次显式决定。
 
+## 文件规则与派发快照
+
+Map node 的 `input` 工作文本保持原样；文件交接使用 `input_rule` 数组（`{id,type:"file",path}` 或 `{id,type:"node",node_id,output_id}`）与 `output_rule: [{id}]`，无交接时缺省为空。每个数组内 ID 唯一，输出 ID 为节点局部标识而非文件名；引用须指向已声明 node 和 output_id。输入引用不隐含 `blocked_by` 依赖。派发冻结规则至 execution 的 `inputRule`/`outputRule`，内部规则字段仍为 snake_case；真正解析的文件另存 `inputs: [{id,path}]`。Map 后续修改不会改变冻结执行。新派发的三个字段均为数组（无交接时为 `[]`）；迁移历史中无法证明原声明或实际解析结果时，`inputRule`、`outputRule`、`inputs` 为 `null`，不能从部分报告反推完整声明。未知冻结输出声明的历史 execution 新报告会被后端以 `output-rule-unknown` 拒绝，不按当前 Map 猜测。必需上游输出尚未登记时派发报错，不猜地址、不启动工作。
+
 ## report 协议与交接
 
-模型业务参数是字符串 `body`、必填严格 boolean `can_complete` 和可选 `outputs`（输出名 → 文件绝对地址字符串）：
+模型业务参数是字符串 `body`、必填严格 boolean `can_complete` 和可选 `outputs`（`{id,path}` 数组，id 为本次执行冻结 `output_rule` 中的局部输出 ID，不是文件名）：
 
 ```json
-{"body":"摘要已生成，可供下游使用；限制：未经过生产验证。","can_complete":true,"outputs":{"summary":"E:/artifacts/summary.txt"}}
-{"body":"草稿已生成；源数据不全，需要用户补齐后继续。","can_complete":false,"outputs":{"draft":"D:/external/draft.txt"}}
+{"body":"摘要已生成，可供下游使用；限制：未经过生产验证。","can_complete":true,"outputs":[{"id":"summary","path":"E:/artifacts/summary.txt"}]}
+{"body":"草稿已生成；源数据不全，需要用户补齐后继续。","can_complete":false,"outputs":[{"id":"draft","path":"D:/external/draft.txt"}]}
 {"body":"无文件工作已可交接。","can_complete":true}
 ```
 
-详细成果由业务工具或程序生成并留在文件中；body 只保留结论、阻塞、失败、部分效果、限制及必要干预，不要求重复完整成果、输出地址或框架已知身份。省略 outputs 或未提及某名字保留本 execution 已登记输出，重试的新 execution 不继承。登记不生成、复制、移动、发布或验收文件，不校验文件存在、可读、格式、数量或完整性；地址可位于任意 zone 外，但必须是绝对路径。无文件成果也可声明 true。
+详细成果由业务工具或程序生成并留在文件中；body 只保留结论、阻塞、失败、部分效果、限制及必要干预，不要求重复完整成果、输出地址或框架已知身份。省略 outputs 或未提及某 ID 保留本 execution 已登记输出；同 ID 更新地址，新增 ID 按登记顺序追加，重试的新 execution 不继承。重复 ID 或冻结声明外的 ID 整份拒绝，不部分保存。声明输出允许尚未登记，不新增报告或完成门禁。登记不生成、复制、移动、发布或验收文件，不校验文件存在、可读、格式、数量或完整性；地址可位于任意 zone 外，但必须是绝对路径且不含 NUL。无文件成果也可声明 true。
 
 使用公共 Session 观测取得原生 sessionId，传输为 `POST /api/workflow/node/report` 的 JSON `{sessionId, body, canComplete, outputs?}`；模型字段 `can_complete` 映射为既有 HTTP camelCase `canComplete`，后端报告记录和结果也使用 `canComplete`。不让模型填写 Run、node、执行、来源或接收者，不用 Owner key、名称或 cwd 猜身份。OMP 自身可能在模型工具 schema 中加入全局追踪字段 `i`；这是宿主元数据，不是角色业务字段，OMP 在执行前移除它。
 
-后端唯一决定并生成报告 `id`、毫秒时间 `at`、`type=report`、`runId`、`nodeId`、`executionId`、`source`、`target`，扩展原样返回，不在本地改写归属。新请求缺 can_complete、字符串 "false"、错误 body/outputs 类型或额外身份字段均拒绝，不做类型转换、补 true 或删字段后执行。body 保留既有字符串限制，包括空字符串合法；后端校验绝对路径与调用归属。历史报告缺新增字段仍可读取，但不能据此放行新请求或首次完成。部署须配套更新 toolkit 与 herdr-bot；没有旧形状新请求兼容放行。
+后端唯一决定并生成报告 `id`、毫秒时间 `at`、`type=report`、`runId`、`nodeId`、`executionId`、`from`、`to`，扩展原样返回，不在本地改写归属。新请求缺 can_complete、字符串 "false"、错误 body/outputs 类型或额外身份字段均拒绝，不做类型转换、补 true 或删字段后执行。body 保留既有字符串限制，包括空字符串合法；后端校验绝对路径与调用归属。历史报告缺新增字段仍可读取，但不能据此放行新请求或首次完成。部署须配套更新 toolkit 与 herdr-bot；没有旧形状新请求兼容放行。
+
+每份报告的 `outputs` 保存本次提交的实际 `{id,path}` 数组，省略时为 `[]`，不是全执行累计快照；后端按同一 execution 的报告顺序推导当前累计输出，不在 execution 中另存 `outputs`。
 
 结果保留 `saved`、`report`、`notification`、`diagnostic`、`guidance`：
 

@@ -8,8 +8,8 @@ test("P15 node auto report sends explicit handoff parameters plus native Session
 	const calls: { path: string; method: string; json: unknown }[] = [];
 	const report = {
 		id: "report-backend-73", type: "report", at: 1790000000731, runId: "run-19", nodeId: "A",
-		executionId: "execution-41", source: { sessionId: "backend-source", tabId: 82 },
-		target: { sessionId: "manager-native", tabId: 83 }, body: "E:/artifacts/alpha.txt；UTF-8；只读草稿，不可用于生产。",
+		executionId: "execution-41", from: { sessionId: "backend-source", tabId: 82 },
+		to: { sessionId: "manager-native", tabId: 83 }, body: "E:/artifacts/alpha.txt；UTF-8；只读草稿，不可用于生产。",
 	};
 	const response = { saved: true, report, notification: { status: "submitted", reason: "input-submission-confirmed" }, diagnostic: { status: "written" }, guidance: "报告不等于节点完成" };
 	const server = Bun.serve({ port: 0, hostname: "127.0.0.1", async fetch(request) {

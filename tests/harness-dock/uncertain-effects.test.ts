@@ -62,7 +62,7 @@ test("P22 P23 P24 saved report remains queryable after disconnect and explicit n
 		const pending = node.session.prompt("提交一次本次报告，等待工具完成，不自主重报。");
 		const accepted = await gate.accepted.promise;
 		expect(accepted.status).toBe(200);
-		expect(accepted.body).toMatchObject({ saved: true, report: { body, source: { sessionId: nativeId } }, notification: { status: "failed" }, diagnostic: { status: "written" } });
+		expect(accepted.body).toMatchObject({ saved: true, report: { body, from: { sessionId: nativeId } }, notification: { status: "failed" }, diagnostic: { status: "written" } });
 		const external = readFileSync(join(scene.backend.root.path, "calls.jsonl"), "utf8");
 		expect((await node.session.request({ type: "abort" })).success).toBe(true);
 		await pending; await gate.closed.promise;
@@ -75,12 +75,12 @@ test("P22 P23 P24 saved report remains queryable after disconnect and explicit n
 		gate.release.resolve();
 		const detail = await scene.detail();
 		expect(detail.reports).toHaveLength(1);
-		expect(detail.reports[0]).toMatchObject({ body, source: { sessionId: nativeId } });
+		expect(detail.reports[0]).toMatchObject({ body, from: { sessionId: nativeId } });
 		expect(detail.run.nodes.A.status).toBe("running");
 		const secondBody = "P24 distinct explicit follow-up material, not an automatic retry";
 		expect((await node.beginReport({ body: secondBody, can_complete: true })).status).toBe("completed");
 		const second = JSON.parse(toolText(node));
-		expect(second).toMatchObject({ saved: true, report: { body: secondBody, source: { sessionId: nativeId } }, notification: { status: "failed" }, diagnostic: { status: "written" } });
+		expect(second).toMatchObject({ saved: true, report: { body: secondBody, from: { sessionId: nativeId } }, notification: { status: "failed" }, diagnostic: { status: "written" } });
 		const afterExplicit = readFileSync(join(scene.backend.root.path, "calls.jsonl"), "utf8");
 		await Bun.sleep(250);
 		expect(transport.calls).toHaveLength(2);

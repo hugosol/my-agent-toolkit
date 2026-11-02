@@ -15,7 +15,7 @@ test("node shared logic rejects extra and identity fields before sending a repor
 		for (const extra of [
 			{ sessionId: "forged-session" }, { runId: "forged-run" },
 			{ executionId: "forged-execution" }, { nodeId: "other-node" },
-			{ recipient: "forged-recipient" }, { unexpected: true },
+			{ recipient: "forged-recipient" }, { unexpected: true }, { from: {} }, { to: {} },
 		]) {
 			const result = await roles.node.report(roles.sessionId, { body: saved.report.body, can_complete: false, ...extra });
 			expect(result.isError).toBe(true);
@@ -26,6 +26,31 @@ test("node shared logic rejects extra and identity fields before sending a repor
 		expect(requests).toBe(0);
 		expect(await roles.node.report(roles.sessionId, { body: saved.report.body, can_complete: false })).toMatchObject({ body: saved, httpStatus: 200, isError: false });
 		expect(requests).toBe(1);
+	} finally { roles.close(); server.stop(true); }
+});
+
+test("node shared logic validates output IDs atomically and preserves ordered actual paths", async () => {
+	const calls: unknown[] = [];
+	const server = Bun.serve({ hostname: "127.0.0.1", port: 0, async fetch(request) {
+		calls.push(await request.json());
+		return Response.json({ saved: true });
+	} });
+	const roles = businessRoles(`http://127.0.0.1:${server.port}`);
+	try {
+		for (const outputs of [
+			{ draft: "E:/draft.txt" }, null, "E:/draft.txt", [null],
+			[{ id: "draft" }], [{ id: "", path: "E:/draft.txt" }],
+			[{ id: "draft", path: 123 }], [{ id: "draft", path: "E:/draft.txt", extra: true }],
+			[{ id: "draft", path: "E:/a.txt" }, { id: "draft", path: "E:/b.txt" }],
+		]) {
+			expect((await roles.node.report(roles.sessionId, { body: "unchanged", can_complete: false, outputs })).isError).toBe(true);
+		}
+		expect(calls).toEqual([]);
+		const outputs = [{ id: "second", path: "E:/actual-b.txt" }, { id: "first", path: "E:/actual-a.txt" }];
+		expect((await roles.node.report(roles.sessionId, { body: "  unchanged\n", can_complete: false, outputs })).isError).toBe(false);
+		expect(calls).toEqual([{ sessionId: roles.sessionId, body: "  unchanged\n", canComplete: false, outputs }]);
+		expect((await roles.node.report(roles.sessionId, { body: "", can_complete: true, outputs: [] })).isError).toBe(false);
+		expect(calls[1]).toEqual({ sessionId: roles.sessionId, body: "", canComplete: true, outputs: [] });
 	} finally { roles.close(); server.stop(true); }
 });
 
