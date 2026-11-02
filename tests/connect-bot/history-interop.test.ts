@@ -37,7 +37,7 @@ test("actual OMP connect keeps reporting and shutdown semantics across storage f
     try {
         // Never request shutdown monitoring against a real power-off backend.
         expect(panel.diagnostics.join("\n")).toContain("安全壳");
-        mkdirSync(`${panel.historyFile}.tmp`);
+        mkdirSync(panel.historyFile);
         let announced = double.nextNotification();
         double.run("connect-bot","",ctx);
         await announced;
@@ -47,7 +47,7 @@ test("actual OMP connect keeps reporting and shutdown semantics across storage f
         expect(double.widgets[double.widgets.length - 1]?.lines?.join(" ")).toContain("connectBot");
         expect(await panel.snapshot()).toContainEqual(expect.objectContaining({sessionId:"actual-connect-history-id",online:true,state:"working"}));
         expect(await fetch(`${panel.endpoint}/api/shutdown/monitor`, {method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({sessionId:"actual-connect-history-id",selected:true})}).then(r=>r.status)).toBe(200);
-        rmdirSync(`${panel.historyFile}.tmp`);
+        rmdirSync(panel.historyFile);
         for(let beat=0;beat<6;beat++) { await clock.advanceBy(10_000); await settle(); }
         expect(kinds).toEqual(["register","state",...Array(6).fill("heartbeat")]);
         expect(existsSync(panel.historyFile)).toBe(false);
@@ -113,7 +113,7 @@ test("actual Pi connect shows accepted-but-history-failed to its UI", async () =
     } as unknown as PiExtensionContext;
     const command = surface.commands.get("connect-bot")!;
     try {
-        mkdirSync(`${panel.historyFile}.tmp`);
+        mkdirSync(panel.historyFile);
         await command.handler("",ctx);
         await notified.promise;
         expect(notices).toContainEqual({message:expect.stringMatching(/已接入.*历史.*失败/),level:"warning"});

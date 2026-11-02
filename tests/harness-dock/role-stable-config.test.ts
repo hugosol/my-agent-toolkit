@@ -49,11 +49,11 @@ test("P7 both automatic roles select deployment endpoint and budgets despite two
 		expect(manager.root.workDir).not.toBe(node.root.workDir);
 		const managerId = await nativeIdentity(manager); const nodeId = await nativeIdentity(node);
 		expect((await roleCall(manager, "run", { action: "status" })).body).toEqual(reply);
-		expect((await roleCall(node, "report", { body: "P7 explicit config" })).body).toEqual(reply);
+		expect((await roleCall(node, "report", { body: "P7 explicit config", can_complete: false })).body).toEqual(reply);
 		holding = true;
 		for (const [dock, tool, params, minimumMs, maximumMs] of [
 			[manager, "run", { action: "status" }, 350, 3000],
-			[node, "report", { body: "P7 ordinary budget" }, 350, 3000],
+			[node, "report", { body: "P7 ordinary budget", can_complete: false }, 350, 3000],
 			[manager, "collect", {}, 1000, 4000],
 		] as const) {
 			expect(await roleCall(dock, tool, params)).toMatchObject({ isError: true, body: { error: { kind: "timeout" } } });
@@ -66,9 +66,9 @@ test("P7 both automatic roles select deployment endpoint and budgets despite two
 		expect(fallbackCalls).toEqual([]);
 		expect(calls.map(call => ({ path: call.path, body: call.body }))).toEqual([
 			{ path: "/api/workflow/manager/status", body: { sessionId: managerId } },
-			{ path: "/api/workflow/node/report", body: { sessionId: nodeId, body: "P7 explicit config" } },
+			{ path: "/api/workflow/node/report", body: { sessionId: nodeId, body: "P7 explicit config", canComplete: false } },
 			{ path: "/api/workflow/manager/status", body: { sessionId: managerId } },
-			{ path: "/api/workflow/node/report", body: { sessionId: nodeId, body: "P7 ordinary budget" } },
+			{ path: "/api/workflow/node/report", body: { sessionId: nodeId, body: "P7 ordinary budget", canComplete: false } },
 			{ path: "/api/workflow/manager/collect", body: { sessionId: managerId } },
 		]);
 		console.log(JSON.stringify({ promise: "P7", cwd: [manager.root.workDir, node.root.workDir], selectedBudgets: { requestTimeoutMs: 700, collectTimeoutMs: 1600 }, fallbackRequests: fallbackCalls.length, calls }));

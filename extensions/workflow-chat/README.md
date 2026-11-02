@@ -71,9 +71,26 @@ extensions/workflow-chat/
 
 ## 首次工具指引与输入边界
 
-三种输入各有唯一职责：`Task.prompt` 固定角色职能；后端本次 input 提供工作、运行说明及状态/历史/报告记录的路径；扩展的公共 Prompt 只说明工具使用。后端仍按原规则把固定文本与本次工作组合为启动输入，扩展不重拼、不替换或另发固定文本，不复制 Bot 文档、整张 Map 或向 node 自动传播 Run 的 `user_input`。模型应按给定路径读取所需材料，而不是等待扩展自动注入内容。
+三种输入各有唯一职责：`Task.prompt` 固定角色职能；后端本次 input 提供本次 `userInput`、node 业务 input、已解析的命名输入地址、运行说明及状态/历史/报告记录的路径；扩展的公共 Prompt 只说明工具使用。后端把固定文本与本次工作组合为启动输入，扩展不重拼、不替换或另发固定文本，不复制 Bot 文档、整张 Map、上游完整聊天或业务文件正文。node 按已给定命名地址消费文件，不自行筛选报告猜路径；缺失输出由业务 node 报告阻塞。
 
-完整指引由 [manager init.md](manager-chat/shared-logic/prompts/init.md)与 [node init.md](node-chat/shared-logic/prompts/init.md)持有，由各自声明引用，不要求部署者再复制到 Task。manager 的首次指引覆盖全部十种 run action、collect 五种 reason 与完整等待预算、报告标识查阅、依赖与终态、派发核实、recover/retry、人工真实交接及部分效果；node 的首次指引覆盖报告时机、可读地址/用法/限制、允许后续收尾、报告不等于完成，以及已保存但通知失败不重报。
+### plan_workflow 的真实业务验收
+
+在参与的 herdr-bot worktree 先按其测试指引构建独立 `CARGO_TARGET_DIR` 后端及静态资源，并准备显式隔离依赖根和已授权真实模型。运行：
+
+```powershell
+$env:HERDR_BOT_REPO = $HERDR_BOT_WT
+python (Join-Path $HERDR_BOT_WT 'scripts/test-workflow-file-handoff.py') `
+  --backend (Join-Path $env:CARGO_TARGET_DIR 'debug/herdr-bot.exe') `
+  --toolkit $TOOLKIT_WT --scenario plan-workflow --paths-file $ISOLATED_PATHS
+```
+
+入口加载参与 worktree 的实际迁移 Map、规划／转换 Task、Bot 与本仓实际角色入口，保留隔离部署的所有路径、宿主和模型映射。只读 Skill 依赖是显式 `pi_agent/skills` 下的 `grill-with-docs`、`grilling` 和 `domain-modeling`，不复制用户会话／auth。若使用公开 `completion` 真实文本传输，按 herdr-bot 测试指引的 `CompletionTransport` 示例启动，仅把场景改为 `plan-workflow`；传输不预设工具调用或模拟结果，实际 Pi 执行工具并维护原生历史。结果只适用于实际被测宿主／模型传输，不自动扩展到 OMP。
+
+规划业务的用户确认不归角色工具推断：实际 outline Chat 先收需求，再接收修订，用户明确确认九章节当前方案后，还须单独确认 manual 报告发送。`report` 登记 `outputs` 中 `id=outline` 的条目 并声明真实 `can_complete`，不能替代任何确认；manager 读取报告后显式完成与派发，generate_map 读取初始化命名地址而非报告搜索。主成功链路预置真实合法汇总／核对能力；另一独立缺口场景必须保留真实能力阻塞，不创建 Task/Bot 或派发能力创建者。新业务管理者配置未提供时不挪用自举配置、不预检，也不自动发起生成 Map。
+
+证据由 `business-requirements.json` 的启动前独立业务要求和 `evidence.json` 的 P27/P28 映射组织，包含原生用户确认输入、全部工具／HTTP、真实文件与服务读回、报告／执行／完成引用以及所有干预和失败。缺依赖、确认未发生、未真正保存／读回或不合法推进均非零；普通角色／dock 回归不能代替真实业务验收。两仓检查、隔离配置与清理要求沿用各自测试指引。
+
+完整指引由 [manager init.md](manager-chat/shared-logic/prompts/init.md)与 [node init.md](node-chat/shared-logic/prompts/init.md)持有，由各自声明引用，不要求部署者再复制到 Task。manager 的首次指引覆盖全部十种 run action、collect 五种 reason 与完整等待预算、报告标识查阅、依赖与终态、派发核实、recover/retry、当前执行最新报告完成门禁、拒绝后 collect 等待及部分效果；node 的首次指引覆盖报告策略、如实声明 can_complete、简短编排报告、命名 outputs、允许后续收尾、报告不等于完成，以及已保存但通知失败不重报。
 
 两条隐藏、持久化的 Prompt 身份分别为 `manager-chat:tools` 与 `node-chat:tools`，使用公共 `first-enabled-run` 的分支历史规则，不另存“已注入”标记。普通轮次保留历史中的一份指引，不追加副本；切换回来也不重置。公共自动启动策略每进程只消费一次，切到新的未启用 owner 不会再次自动启用；历史分支不带该身份时，由公共规则决定首次贡献，不由角色代码另建状态机。
 
@@ -100,7 +117,7 @@ manager 的 `run` 工具以 `action` 选择显式动作。传输为 `POST /api/w
 
 ```json
 {"action":"status"}
-{"action":"complete","nodeId":"A","reason":"已读取 E:/artifacts/alpha.txt；UTF-8，可只读引用；原 Chat 仍收尾"}
+{"action":"complete","nodeId":"A","reason":"按当前执行最新 true 报告显式交接；原 Chat 仍无害收尾"}
 {"action":"fail","nodeId":"B","reason":"已核实缺少源文件；保留原 Chat 与部分产物"}
 {"action":"pause"}
 {"action":"resume"}
@@ -110,7 +127,7 @@ manager 的 `run` 工具以 `action` 选择显式动作。传输为 `POST /api/w
 | 动作 | 后端事实与边界 |
 | --- | --- |
 | status | 原样返回 `snapshot`、`ready`、`blocked`、`canFinish`；不是客户端缓存或第二套派发状态。A/B→C 中 C 必须等 A 与 B 都 completed，ready 不是已执行。 |
-| complete | running node 或人工确认可交接的执行阶段 failed 才可完成；`reason` 非空且原文保留。pending/派发 failed 不得跳过工作。解除依赖，不制造报告、不传材料、不启动下游、不终止原 Chat；可继续无害收尾。 |
+| complete | 首次完成要求当前 execution 最新报告的 `can_complete` 严格为 true，并继续满足 running 或执行阶段 failed 等既有状态规则；`reason` 非空且原文保留。无报告、历史缺字段、最新 false 或旧执行 true 均不能绕过门禁，人工补齐也不例外。解除依赖，不制造报告、不传材料、不启动下游、不终止原 Chat。 |
 | fail | 仅将 running node 记为执行失败，保留原执行与首次原因。不暂停 Run、不重试、不终止实际 Chat。 |
 | pause | 只禁止新执行，已有工作、report、核实和 complete 仍可继续；不等已有 Chat 退出。 |
 | resume | 只恢复派发资格，不是普通 Chat Resume，不自动派发、重试或补发输入。 |
@@ -118,9 +135,9 @@ manager 的 `run` 工具以 `action` 选择显式动作。传输为 `POST /api/w
 
 重复 complete/fail 保留首次事实，重复 pause/resume 不重复转换，重复 finish 返回首次结束事实；终态拒绝变更。工具保留后端 `changed`、拒绝 code/原因、`reports`、`pendingReports`、`historyError`、`stateCommitted` 与已发生效果，不把 HTTP 200 或动作取消解释成全部成功/回滚。
 
-所有动作严格拒绝额外身份或不适用字段（如 status 的 nodeId、complete 的 confirmed）。OMP 18.5.0 会修复 closed schema 并删除未知字段，因此原生 schema 刻意保留未知键供工具逐 action 拒绝，避免非法调用被“修好”后意外执行；这不是业务参数扩展。Pi 1.4.0 会在工具执行前转换带类型的参数，因此 Pi schema 对业务值保留原值并说明准确类型，由同一份 shared logic 严格校验；例如字符串 `"false"` 不得变成确认值，数字 body 不得变成字符串。Pi 同样保留额外键以拒绝整次非法调用，而非删除身份字段后执行。缺失/非字符串字段由宿主或工具拒绝，空白 reason 的业务拒绝交由后端，不复制状态机。
+OMP 使用等价的 singleton object type union 避免宿主把显式可选 null 删成省略；开放命名映射与标量保留原值，校验仍由 shared logic 负责。所有动作严格拒绝额外身份或不适用字段（如 status 的 nodeId、complete 的 confirmed）。OMP 18.5.0 会修复 closed schema 并删除未知字段，因此原生 schema 刻意保留未知键供工具逐 action 拒绝，避免非法调用被“修好”后意外执行；这不是业务参数扩展。Pi 1.4.0 会在工具执行前转换带类型的参数，因此 Pi schema 对业务值保留原值并说明准确类型，由同一份 shared logic 严格校验；例如字符串 `"false"` 不得变成确认值，数字 body 不得变成字符串。Pi 同样保留额外键以拒绝整次非法调用，而非删除身份字段后执行。缺失/非字符串字段由宿主或工具拒绝，空白 reason 的业务拒绝交由后端，不复制状态机。
 
-人工真实交接须先查看已保存报告、亲自读取真实材料并记录地址、用途、限制和人工处理依据，再明确 complete；不能把 report/停轮/退出当作完成。派发、故障核实和报告等待是各自独立职责，基础动作不会代替它们。失败或不确定结果先查询现场，不自主重试。
+管理者阅读报告中的结论、阻塞、部分效果、限制和必要干预进行编排，不默认读取成果正文做业务验收；合并、转换和必要验收由 Map 安排的 node 承担。当前执行最新 true 只允许、不强迫管理者显式 complete；人工补齐也不能绕过门禁。complete 拒绝后保留拒绝与相关最新报告信息，使用既有 collect 等待新报告，不反复对同一报告 complete；不能把 report/停轮/退出当作完成。派发、故障核实和报告等待是各自独立职责，基础动作不会代替它们。失败或不确定结果先查询现场，不自主重试。
 
 ## collect 长等待与报告待办
 
@@ -136,7 +153,7 @@ manager 的 `collect` 没有业务参数，调用样例为 `{}`。实际传输�
 
 结果保留后端 `snapshot`、`ready`、`blocked`、`canFinish` 和 `pendingReports`，**不包含 `reports` 或报告正文**。仍有 running node 且没有新通知时，即使有 ready node 也可能等待；扩展不强制提前返回、不轮询、不自动重试。
 
-`pendingReports` 是 node → 最新适用报告标识。按标识读取已提供的 `messages.jsonl` 或已有 Run 详情，再核实正文中的材料与限制。collect/读取/辅助通知均不等于交接，不清除未完成待办；只有后端显式 complete 等事实改变适用待办。completed 后原执行仍可报告收尾，但不会重开待办；retry 后旧执行报告仍属旧执行历史，不能以全局最新报告替代新执行依据。旧/新报告交错、待办移除与通知检查均由后端决定，客户端不缓存或重算适用性。
+`pendingReports` 是 node → 最新适用报告标识。按标识读取已提供的 `messages.jsonl` 或已有 Run 详情，阅读报告结论、阻塞、部分效果和限制作编排判断，不默认打开输出正文验收。collect/读取/辅助通知均不等于交接，不清除未完成待办；只有后端显式 complete 等事实改变适用待办。completed 后原执行仍可报告收尾，但不会重开待办；retry 后旧执行报告仍属旧执行历史，不能以全局最新报告替代新执行依据。旧/新报告交错、待办移除与通知检查均由后端决定，客户端不缓存或重算适用性。pendingReports 保留同一报告并非新通知，门禁拒绝不制造通知；已有通知检查后有 running 节点时 collect 继续等待新报告或正常到期。
 ## run 批量派发与故障恢复
 
 以下四个动作使用同一个 `run` 工具和当前管理者原生 Session 身份，不接受额外 Run、执行、Chat 引用或目标状态。字面调用示例：
@@ -161,19 +178,29 @@ manager 的 `collect` 没有业务参数，调用样例为 `{}`。实际传输�
 | recover | 仅执行阶段 failed，人工修复并确认原 Chat 可继续；paused 也可用。保留原执行 ID、Task、zone、Chat，只恢复跟踪，不启动/Resume 进程、不补发输入、不撤销失败历史。 |
 | retry | 仅 running Run 的执行阶段 failed；paused 返回 `run-paused`，先明确 resume（它本身不派发）。人工检查旧 Chat 与部分产物后，另起新执行、新 Chat；保留旧执行历史和副作用。结果是单项 `result`，仍需核对新启动失败阶段、已发生效果与可得关联，不能因失败声称没有新 Chat。 |
 
-处置顺序先查看 status、原 Chat 与产物：派发不确定先 reconcile_dispatch，不用 retry 的确认跳过核实；执行失败而原 Chat 可继续用 recover；必须独立重做才 retry；人工处理后已可交接则用 complete 并写清材料/限制，不制造报告。四种动作都不撤销旧副作用，不自动重试或启动下游。HTTP 200、网络错误或取消都不等于所有目标未执行，先查事实再做下一次显式决定。
+处置顺序先查看 status、原 Chat 与产物：派发不确定先 reconcile_dispatch，不用 retry 的确认跳过核实；执行失败而原 Chat 可继续用 recover；必须独立重做才 retry；人工处理后仍须当前执行最新 true 报告才允许 complete，reason 记录编排依据和限制，不伪造报告。四种动作都不撤销旧副作用，不自动重试或启动下游。HTTP 200、网络错误或取消都不等于所有目标未执行，先查事实再做下一次显式决定。
+
+## 文件规则与派发快照
+
+Map node 的 `input` 工作文本保持原样；文件交接使用 `input_rule` 数组（`{id,type:"file",path}` 或 `{id,type:"node",node_id,output_id}`）与 `output_rule: [{id}]`，无交接时缺省为空。每个数组内 ID 唯一，输出 ID 为节点局部标识而非文件名；引用须指向已声明 node 和 output_id。输入引用不隐含 `blocked_by` 依赖。派发冻结规则至 execution 的 `inputRule`/`outputRule`，内部规则字段仍为 snake_case；真正解析的文件另存 `inputs: [{id,path}]`。Map 后续修改不会改变冻结执行。新派发的三个字段均为数组（无交接时为 `[]`）；迁移历史中无法证明原声明或实际解析结果时，`inputRule`、`outputRule`、`inputs` 为 `null`，不能从部分报告反推完整声明。未知冻结输出声明的历史 execution 新报告会被后端以 `output-rule-unknown` 拒绝，不按当前 Map 猜测。必需上游输出尚未登记时派发报错，不猜地址、不启动工作。
 
 ## report 协议与交接
 
-模型业务参数**只有**字符串 `body`：
+模型业务参数是字符串 `body`、必填严格 boolean `can_complete` 和可选 `outputs`（`{id,path}` 数组，id 为本次执行冻结 `output_rule` 中的局部输出 ID，不是文件名）：
 
 ```json
-{"body":"结果：E:/artifacts/summary.txt；UTF-8。用法：只读引用；限制：未经过生产验证。"}
+{"body":"摘要已生成，可供下游使用；限制：未经过生产验证。","can_complete":true,"outputs":[{"id":"summary","path":"E:/artifacts/summary.txt"}]}
+{"body":"草稿已生成；源数据不全，需要用户补齐后继续。","can_complete":false,"outputs":[{"id":"draft","path":"D:/external/draft.txt"}]}
+{"body":"无文件工作已可交接。","can_complete":true}
 ```
 
-使用公共 Session 观测取得原生 sessionId，传输为 `POST /api/workflow/node/report` 的 JSON `{sessionId, body}`。不让模型填写 Run、node、执行、来源或接收者，不用 Owner key、名称或 cwd 猜身份。OMP 自身可能在模型工具 schema 中加入全局追踪字段 `i`；这是宿主元数据，不是角色业务字段，OMP 在执行前移除它。
+详细成果由业务工具或程序生成并留在文件中；body 只保留结论、阻塞、失败、部分效果、限制及必要干预，不要求重复完整成果、输出地址或框架已知身份。省略 outputs 或未提及某 ID 保留本 execution 已登记输出；同 ID 更新地址，新增 ID 按登记顺序追加，重试的新 execution 不继承。重复 ID 或冻结声明外的 ID 整份拒绝，不部分保存。声明输出允许尚未登记，不新增报告或完成门禁。登记不生成、复制、移动、发布或验收文件，不校验文件存在、可读、格式、数量或完整性；地址可位于任意 zone 外，但必须是绝对路径且不含 NUL。无文件成果也可声明 true。
 
-后端唯一决定并生成报告 `id`、毫秒时间 `at`、`type=report`、`runId`、`nodeId`、`executionId`、`source`、`target`，扩展原样返回，不在本地改写归属。正文应有实际可读地址、用法和限制；这是交接责任，不是额外地址校验。实际后端只要求 body 为字符串，扩展不发明空字符串拒绝。
+使用公共 Session 观测取得原生 sessionId，传输为 `POST /api/workflow/node/report` 的 JSON `{sessionId, body, canComplete, outputs?}`；模型字段 `can_complete` 映射为既有 HTTP camelCase `canComplete`，后端报告记录和结果也使用 `canComplete`。不让模型填写 Run、node、执行、来源或接收者，不用 Owner key、名称或 cwd 猜身份。OMP 自身可能在模型工具 schema 中加入全局追踪字段 `i`；这是宿主元数据，不是角色业务字段，OMP 在执行前移除它。
+
+后端唯一决定并生成报告 `id`、毫秒时间 `at`、`type=report`、`runId`、`nodeId`、`executionId`、`from`、`to`，扩展原样返回，不在本地改写归属。新请求缺 can_complete、字符串 "false"、错误 body/outputs 类型或额外身份字段均拒绝，不做类型转换、补 true 或删字段后执行。body 保留既有字符串限制，包括空字符串合法；后端校验绝对路径与调用归属。历史报告缺新增字段仍可读取，但不能据此放行新请求或首次完成。部署须配套更新 toolkit 与 herdr-bot；没有旧形状新请求兼容放行。
+
+每份报告的 `outputs` 保存本次提交的实际 `{id,path}` 数组，省略时为 `[]`，不是全执行累计快照；后端按同一 execution 的报告顺序推导当前累计输出，不在 execution 中另存 `outputs`。
 
 结果保留 `saved`、`report`、`notification`、`diagnostic`、`guidance`：
 
@@ -186,9 +213,9 @@ manager 的 `collect` 没有业务参数，调用样例为 `{}`。实际传输�
 
 工具文本为后端 JSON；HTTP 状态及原始解析结果也保留于工具 details。辅助通知或诊断失败不会把已保存报告标成工具提交失败。每次显式 report 都可能追加独立报告，不是客户端幂等更新；有新结果或需更正正文时才明确再次提交。
 
-节点遵守本次派发输入控制段的 `report_policy: auto|manual`；旧派发未提供时按 `auto`。`auto` 在结果可交接时报告；`manual` 每次先在 node Chat 展示结果摘要、交付绝对地址和限制，询问用户是否发送 report，然后停轮等待。用户在该 node Chat 用自然语言确认后才发送；要求修改则先改，再展示、询问并停轮等确认；补充结果或更正正文也同样确认。报告后可以继续不影响结果的收尾。这是 OMP 与 Pi 共用角色定义的提示词约束，不增加 report 参数、审批状态、按钮或后端门禁；不向已有 Chat 热更新已注入指引。
+节点遵守本次派发输入控制段的 `report_policy: auto|manual`；旧派发未提供时按 `auto`。`auto` 在结果可交接或需要报告阻塞时显式 report，并如实声明 can_complete；`manual` 每次先在 node Chat 展示结果摘要、交付绝对地址和限制，询问用户是否发送 report，然后停轮等待。用户在该 node Chat 用自然语言确认后才发送；要求修改则先改，再展示、询问并停轮等确认；补充结果或更正正文也同样确认。报告后可以继续不影响结果的收尾。这是 OMP 与 Pi 共用角色定义的提示词约束，report_policy 本身不增加审批状态、按钮或审批门禁，can_complete 也不代替真实用户确认；不向已有 Chat 热更新已注入指引。
 
-**report、停轮、退出都不等于 node completed。** 管理者须读取材料、核实真实交接并显式 complete；节点等待用户确认本身不能作为 complete 依据，不由管理者替节点绕过确认发送报告。原本合法的人工真实交接仍按既有规则处理，包括人工补齐执行失败结果后核实 complete，不制造报告。暂停新派发不撤回既有工作。旧执行的补充报告只保留其原执行事实，不替代新执行结果。
+**report、停轮、退出都不等于 node completed。** 管理者须阅读报告作编排判断并显式 complete，不默认验收输出正文；true 不自动完成或派发下游。节点等待用户确认本身不能作为 complete 依据，不由管理者替节点绕过确认发送报告。人工补齐执行失败结果后也须当前执行最新 true 报告，不保留无报告人工完成旁路。暂停新派发不撤回既有工作。旧执行的补充报告只保留其原执行事实，不替代新执行结果。
 
 ## 故障、取消与信任边界
 
@@ -220,7 +247,7 @@ bun run typecheck
 
 Prompt 检查直接捕获真实 omp 发给 provider 的文本，并读取其持久化的隐藏贡献；两角色均核对首次、普通轮次、新 owner 与切回原会话的行为。输入边界检查使用不同标记的真实后端 Task、工作、Bot/Map/user_input，取得实际 CLI 提交正文后原样送入真实 omp，核对工作文本块不变且工具指引是另一条消息。此处 Herdr 是记录型受控 CLI，不证明真实 Herdr 已启动这些会话。
 
-指引故障演练实际执行“已保存但通知失败→collect 并读取材料”“原执行修复→recover”“核实旧副作用后→retry”“人工补齐并读取真实材料→complete”。执行前可将 `WORKFLOW_PROMPT_EVIDENCE_DIR` 设为 `.scratch/manager-node-chat/evidence/` 下本次运行专用目录的绝对路径：Prompt dock 保留原始请求与 Session JSONL，演练保留 `guidance-rehearsal.json`（实际注入全文、工具结果、HTTP 和外部 CLI 调用）。产物和决策均由验收 Agent/测试控制，不能当成真实模型工作结果；这些是 P26 技术证据，不是 H1 通过，H1 的唯一整体使用判断仍须独立汇总与用户确认。
+指引故障演练实际执行“已保存但通知失败→collect 并读取报告”“原执行修复→recover”“核实旧副作用后→retry”“人工补齐→新执行 false 报告拒绝完成→collect 等待→最新 true 报告→显式 complete”。执行前可将 `WORKFLOW_PROMPT_EVIDENCE_DIR` 设为 `.scratch/manager-node-chat/evidence/` 下本次运行专用目录的绝对路径：Prompt dock 保留原始请求与 Session JSONL，演练保留 `guidance-rehearsal.json`（实际注入全文、工具结果、HTTP 和外部 CLI 调用）。产物和决策均由验收 Agent/测试控制，不能当成真实模型工作结果；这些是 P26 技术证据，不是 H1 通过，H1 的唯一整体使用判断仍须独立汇总与用户确认。
 
 测试通过真实隔离 omp 18.5.0 加载交付入口；受控 provider 仅发出预先指定的工具调用，不冒充真实模型自主工作。受控 HTTP 分别验证保存失败、已保存但通知失败、诊断失败以及空正文不被客户端拒绝；150ms 有界窗口内观察无额外请求，不证明无限期无动作。
 
@@ -240,5 +267,7 @@ P22–P24 专用检查分开使用独立字面 HTTP 错误样例与真实后端�
 ```text
 cargo build --manifest-path backend/Cargo.toml --example safe_shutdown_shell --bin herdr-fixture
 ```
+
+`HERDR_BOT_REPO` 必须指向本次配套后端 worktree；不要选择另一份旧 checkout。并行维护多个源码副本时，可设置绝对 `CARGO_TARGET_DIR` 后构建，dock 同样从该目录读取 debug fixtures，避免使用别的 worktree 产物。
 
 此 dock 只启动安全壳、隔离数据和记录型 Herdr CLI，实际运行 node 工具、公共 Session/HTTP、后端路由、身份关联与报告落盘；通过公开详情确认报告仍可读取、待办保留且 node 仍 running。通知失败来自真实后端调用被明确拒绝的外部 CLI。它不验证真实 Herdr 启动模型、真实模型选择材料/报告质量、manager 完整链路、跨阶段取消或 A/B→C 汇合；这些不得从该 dock 的成功推断。诊断失败受控响应只证明呈现分支，不证明真实 stderr 故障注入。

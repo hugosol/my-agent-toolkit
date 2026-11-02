@@ -51,7 +51,7 @@ test("P1/P2/P6 independent automatic roles use native identity and preserve real
 			expect(id).not.toBe(reading.owner.key);
 		}
 		const unassociatedManager = await call(manager, "run", { action: "status" });
-		const unassociatedNode = await call(node, "report", { body: "not associated yet" });
+		const unassociatedNode = await call(node, "report", { body: "not associated yet", can_complete: false });
 		expect(unassociatedManager).toMatchObject({ isError: true, details: { httpStatus: 403 }, body: { code: "manager-unassociated", message: "当前原生身份没有唯一的管理者归属。" } });
 		expect(unassociatedNode).toMatchObject({ isError: true, details: { httpStatus: 403 }, body: { code: "node-unassociated", message: "当前原生身份没有唯一的当前节点执行归属。" } });
 		for (const [dock, role, owned, absent] of [[manager, "manager", ["run", "collect"], ["report"]], [node, "node", ["report"], ["run", "collect"]]] as const) {
@@ -84,8 +84,8 @@ test("P1/P2/P6 independent automatic roles use native identity and preserve real
 		const dispatch = await call(manager, "run", { action: "dispatch", nodes: ["A"] });
 		expect(dispatch.body.results[0].status).toBe("running");
 		backend.behavior(nodeId, node.root.workDir, true);
-		const report = await call(node, "report", { body: "E:/acceptance/native-alpha.txt; UTF-8; independent handoff" });
-		expect(report.body).toMatchObject({ saved: true, report: { runId: started.id, nodeId: "A", source: { sessionId: nodeId }, target: { sessionId: managerId } } });
+		const report = await call(node, "report", { body: "E:/acceptance/native-alpha.txt; UTF-8; independent handoff", can_complete: true });
+		expect(report.body).toMatchObject({ saved: true, report: { runId: started.id, nodeId: "A", from: { sessionId: nodeId }, to: { sessionId: managerId } } });
 		const collected = await call(manager, "collect", {});
 		expect(collected.body).toMatchObject({ reason: "notification", pendingReports: { A: report.body.report.id } });
 		// Healthy dispatch refuses duplicate native IDs. Seed ambiguity ONLY in this
@@ -97,14 +97,14 @@ test("P1/P2/P6 independent automatic roles use native identity and preserve real
 		duplicateNode.nodes.B = structuredClone(duplicateNode.nodes.A);
 		duplicateNode.nodes.B.execution.id = "independent-ambiguous-execution";
 		writeFileSync(runPath, JSON.stringify(duplicateNode));
-		const nodeAmbiguous = await call(node, "report", { body: "ambiguous identity must not be guessed" });
+		const nodeAmbiguous = await call(node, "report", { body: "ambiguous identity must not be guessed", can_complete: false });
 		expect(nodeAmbiguous).toMatchObject({ isError: true, details: { httpStatus: 403 }, body: { code: "node-ambiguous", message: "原生身份关联不唯一。" } });
 		writeFileSync(runPath, originalRun);
 		// Real cross-role associations, not a counterfeit model-supplied identity:
 		// create another manager Run with the native identity of the node-only Session.
 		backend.behavior(nodeId, node.root.workDir);
 		const conflicting = await backend.post("/api/scheduler/maps/identity.json/runs", { managerTaskId: tasks.manager, zone: backend.root.path, userInput: "Conflicting role association" });
-		const crossRole = await call(node, "report", { body: "must not overwrite manager attribution" });
+		const crossRole = await call(node, "report", { body: "must not overwrite manager attribution", can_complete: false });
 		expect(crossRole).toMatchObject({ isError: true, details: { httpStatus: 403 }, body: { code: "node-role-invalid", message: "管理者身份不能提交节点报告。" } });
 		const secondPath = join(backend.root.path, "runs", conflicting.id, "run.json");
 		const second = JSON.parse(readFileSync(secondPath, "utf8"));
@@ -115,7 +115,7 @@ test("P1/P2/P6 independent automatic roles use native identity and preserve real
 		for (const request of transport.calls) {
 			const id = request.path.includes("/manager/") ? managerId : nodeId;
 			expect(request.body.sessionId).toBe(id);
-			expect(Object.keys(request.body).sort()).toEqual(request.path.endsWith("/report") ? ["body", "sessionId"] : request.path.endsWith("/dispatch") ? ["nodes", "sessionId"] : ["sessionId"]);
+			expect(Object.keys(request.body).sort()).toEqual(request.path.endsWith("/report") ? ["body", "canComplete", "sessionId"] : request.path.endsWith("/dispatch") ? ["nodes", "sessionId"] : ["sessionId"]);
 		}
 		// P2 constrains external connections: observe ALL role HTTP paths, including any
 		// accidental connect-bot registration, heartbeat, or websocket upgrade attempt.

@@ -127,8 +127,13 @@ export const BASELINE_RECORD_PATH = path.join(REPO_ROOT, "framework", "docs", "h
  * Resolve a path recorded in the baseline. Cross-repository paths are recorded
  * relative to this repository (sibling checkouts) but may be absolute.
  */
-export function resolveRecordPath(recordedPath: string, repoRoot: string = REPO_ROOT): string {
-	return path.isAbsolute(recordedPath) ? recordedPath : path.resolve(repoRoot, recordedPath);
+export function resolveRecordPath(
+	recordedPath: string,
+	repoRoot: string = REPO_ROOT,
+	env: Record<string, string | undefined> = process.env,
+): string {
+	const recordRoot = env.OMP_BASELINE_RECORD_ROOT?.trim() || repoRoot;
+	return path.isAbsolute(recordedPath) ? recordedPath : path.resolve(recordRoot, recordedPath);
 }
 
 function readJson(file: string): unknown {

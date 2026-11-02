@@ -21,7 +21,7 @@ export async function managerScenario(budgets: { requestTimeoutMs?: number; coll
 		}
 		writeFileSync(join(backend.root.path, "bots/worker.json"), JSON.stringify({ id: "worker", name: "worker", when: "", plan_guide: "", node_guide: "", task_id: tasks.node }));
 		writeFileSync(join(backend.root.path, "maps/fan-in.json"), JSON.stringify({ title: "A B into C", description: "independent small graph", nodes: {
-			A: { title: "A", bot_id: "worker", input: "alpha", zone: backend.root.path, blocked_by: [] },
+			A: { title: "A", bot_id: "worker", input: "alpha", zone: backend.root.path, blocked_by: [], output_rule: [{ id: "handoff" }] },
 			B: { title: "B", bot_id: "worker", input: "beta", zone: backend.root.path, blocked_by: [] },
 			C: { title: "C", bot_id: "worker", input: "combine", zone: backend.root.path, blocked_by: ["A", "B"] },
 		} }));
@@ -31,6 +31,10 @@ export async function managerScenario(budgets: { requestTimeoutMs?: number; coll
 			async dispatch(nodeId: string) {
 				backend.behavior(`node-native-${nodeId}`, backend.root.path);
 				return backend.post("/api/workflow/manager/dispatch", { sessionId: managerId, nodes: [nodeId] });
+			},
+			async report(sessionId: string, body: string, can_complete: boolean) {
+				backend.behavior(sessionId, backend.root.path, true);
+				return backend.post("/api/workflow/node/report", { sessionId, body, canComplete: can_complete });
 			},
 			async detail() { return fetch(`${backend.endpoint}/api/workflow/runs/${started.id}`).then(response => response.json()); },
 			async close() { try { await dock!.close(); } finally { await transport.close(); await backend.close(); } },

@@ -7,7 +7,7 @@ test("P16 saved report with failed auxiliary notification stays saved and is not
 	let requests = 0;
 	const saved = { saved: true, report: { id: "report-saved-91", at: 1790000000123, executionId: "exec-29", body: "E:/handoff.txt；只读，尚未验收。" }, notification: { status: "failed", reason: "Herdr target unavailable" }, diagnostic: { status: "written" }, guidance: "报告已保存，不要仅因通知失败重新 report；由管理者显式确认交接。" };
 	const server = Bun.serve({ port: 0, hostname: "127.0.0.1", fetch() { requests++; return Response.json(saved); } });
-	const dock = await nodeDock(`http://127.0.0.1:${server.port}`, saved.report.body);
+	const dock = await nodeDock(`http://127.0.0.1:${server.port}`, { body: saved.report.body, can_complete: true });
 	try {
 		expect((await dock.session.prompt("提交一次已可交接结果")).status).toBe("completed");
 		expect(JSON.parse(toolText(dock))).toEqual(saved);

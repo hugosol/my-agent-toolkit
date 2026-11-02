@@ -11,7 +11,10 @@ for (const termination of ["abort", "new_session", "shutdown"] as const) {
 		try {
 			expect((await scene.dispatch("A")).results[0].status).toBe("running");
 			const received = scene.transport.nextCollect();
-			const pending = scene.dock.beginCollect();
+			const pending = scene.dock.beginCollect().then(
+				outcome => ({ outcome, error: undefined }),
+				error => ({ outcome: undefined, error }),
+			);
 			const connection = await received;
 			expect(connection.head).toContain("200 OK");
 			expect(connection.bodyBytes).toBe(0);
@@ -21,9 +24,10 @@ for (const termination of ["abort", "new_session", "shutdown"] as const) {
 				const exited = await scene.dock.session.stop();
 				expect(exited.timedOut).toBe(false);
 				expect(exited.exitCode).toBe(0);
+				expect((await pending).error).toMatchObject({ message: expect.stringContaining("harness stopped before the awaited frame") });
 			} else {
 				expect((await scene.dock.session.request({ type: termination })).success).toBe(true);
-				await pending;
+				expect((await pending).error).toBeUndefined();
 			}
 			await connection.clientClosed;
 			// Half-close is forwarded, not a fabricated backend answer. Observe the backend's
@@ -40,7 +44,7 @@ for (const termination of ["abort", "new_session", "shutdown"] as const) {
 				expect(await scene.dock.nativeId()).toBe(scene.managerId);
 			}
 			scene.backend.behavior("node-native-A", scene.backend.root.path, true);
-			const report = await scene.backend.post("/api/workflow/node/report", { sessionId: "node-native-A", body: "P19 material remains available after lifecycle cancellation" });
+			const report = await scene.backend.post("/api/workflow/node/report", { sessionId: "node-native-A", body: "P19 material remains available after lifecycle cancellation", canComplete: false });
 			expect(report.saved).toBe(true);
 			const next = await scene.dock.collect();
 			expect(next.reason).toBe("notification");

@@ -7,13 +7,13 @@ import { roleGuidance } from "../workflow-chat/support/prompt-dock";
 
 // S1/P26 technical rehearsal, not H1 or real-model task-quality acceptance.
 // Independent decision rubric: saved notification failure -> read, never re-report;
-// repaired original -> recover, fresh work -> confirmed retry; real manual materials -> complete.
+// repaired original -> recover, fresh work -> confirmed retry; latest true report -> explicit complete.
 // The Agent-authored choices below use the actual injected guides and exercise real tools/backend.
 // Controlled provider/Herdr and test-authored materials are explicitly not model-produced work.
 test("P26 injected guidance supports notification failure, original recovery, independent retry and real manual handoff rehearsal", async () => {
 	const scene = await managerScenario();
 	const artifact = join(scene.backend.root.path, "handoff-26.txt");
-	const node = await nodeDock(scene.backend.endpoint, `结果：${artifact}；UTF-8，只读引用；限制：验收样本，尚有无害收尾。`);
+	const node = await nodeDock(scene.backend.endpoint, { body: "结果可交接；仅验收样本，尚有无害收尾。", can_complete: true, outputs: [{ id: "handoff", path: artifact }] });
 	const observations: { step: string; result: unknown }[] = [];
 	const guides: Record<string, string> = {};
 	const action = async (params: unknown) => {
@@ -42,7 +42,8 @@ test("P26 injected guidance supports notification failure, original recovery, in
 		expect(collected.pendingReports.A).toBe(report.report.id);
 		const detail = await scene.detail();
 		expect(detail.reports).toHaveLength(1);
-		expect(detail.reports[0].body).toContain(artifact);
+		expect(detail.reports[0].outputs).toEqual([{ id: "handoff", path: artifact }]);
+		expect(detail.reports[0].body).not.toContain("交接材料 26：");
 		expect(detail.run.nodes.A.status).toBe("running");
 		expect(readFileSync(artifact, "utf8")).toBe("交接材料 26：UTF-8；只读样本；非生产证据。\n");
 		await action({ action: "fail", nodeId: "A", reason: "人工核实原 Chat 收尾遇到缺少输入，保留已保存材料" });
@@ -54,18 +55,33 @@ test("P26 injected guidance supports notification failure, original recovery, in
 		await action({ action: "pause" });
 		expect(await action({ action: "retry", nodeId: "A", confirmed: true, reason: "已核实但当前暂停" })).toMatchObject({ code: "run-paused" });
 		await action({ action: "resume" });
-		scene.backend.behavior("rehearsal-fresh-execution-26", scene.backend.root.path);
+		expect((await node.session.request({ type: "new_session" })).success).toBe(true);
+		const freshState = await node.session.request({ type: "get_state" });
+		if (!freshState.data || typeof freshState.data !== "object" || !("sessionId" in freshState.data) || typeof freshState.data.sessionId !== "string") throw new Error("Missing fresh native identity");
+		scene.backend.behavior(freshState.data.sessionId, scene.backend.root.path);
 		const retried = await action({ action: "retry", nodeId: "A", confirmed: true, reason: "人工检查原 Chat 和部分产物，确认另起新执行，旧副作用保留" });
 		expect(retried.snapshot.nodes.A.execution.id).not.toBe(original.id);
 		expect(retried.snapshot.nodes.A.previousExecutions[0].execution).toEqual(original);
-		// Human/Agent handling creates and actually reads the material, rather than
-		// declaring an empty completion or pretending the old report belongs to retry.
+		// External business handling creates the material. A true from the old execution
+		// cannot authorize this retry; exercise refusal, existing wait and a new explicit report.
 		writeFileSync(artifact, "人工补齐材料 26：UTF-8；只读引用；仍未经过生产验证。\n");
 		const material = readFileSync(artifact, "utf8");
 		expect(material).toBe("人工补齐材料 26：UTF-8；只读引用；仍未经过生产验证。\n");
-		const handoff = await action({ action: "complete", nodeId: "A", reason: `人工已读取并核实 ${artifact}；UTF-8，只读引用，未经过生产验证；人工补齐新执行材料，不伪造新报告` });
+		expect(await action({ action: "complete", nodeId: "A", reason: "不能借用旧执行报告或人工判断绕过门禁" })).toMatchObject({ changed: false, snapshot: { nodes: { A: { status: "running" } } } });
+		scene.backend.behavior(freshState.data.sessionId, scene.backend.root.path, true);
+		expect((await node.beginReport({ body: "部分结果已生成，仍需补齐交接说明。", can_complete: false, outputs: [{ id: "handoff", path: artifact }] })).status).toBe("completed");
+		const blockedReport = JSON.parse(toolText(node));
+		expect(blockedReport).toMatchObject({ saved: true, report: { canComplete: false, executionId: retried.snapshot.nodes.A.execution.id } });
+		expect((await scene.dock.collect()).reason).toBe("notification");
+		expect(await action({ action: "complete", nodeId: "A", reason: "最新 false 报告不得完成" })).toMatchObject({ changed: false, snapshot: { nodes: { A: { status: "running" } } } });
+		const waiting = await scene.dock.collect();
+		expect(waiting.reason).toBe("timeout");
+		expect(waiting.pendingReports).toEqual({ A: blockedReport.report.id });
+		expect((await node.beginReport({ body: "交接说明已补齐；只读引用，非生产验证。", can_complete: true })).status).toBe("completed");
+		expect((await scene.dock.collect()).reason).toBe("notification");
+		const handoff = await action({ action: "complete", nodeId: "A", reason: "按当前执行最新 true 报告显式交接；未默认读取输出正文验收" });
 		expect(handoff.snapshot.nodes.A.status).toBe("completed");
-		expect((await scene.detail()).reports).toHaveLength(1);
+		expect((await scene.detail()).reports).toHaveLength(3);
 		expect(readFileSync(artifact, "utf8")).toBe(material);
 	} finally {
 		const evidence = process.env.WORKFLOW_PROMPT_EVIDENCE_DIR;

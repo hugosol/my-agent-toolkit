@@ -3,5 +3,7 @@ node_modules/
 .codebase-memory/
 .cache/
 framework/.runtime/
+# Disposable workflow acceptance evidence is retained locally, not shipped.
+/.scratch/workflow-file-handoff/evidence/
 *.log
 .idea/

@@ -53,6 +53,7 @@ export interface ExitOutcome {
 interface FrameWaiter {
 	readonly predicate: (frame: RpcFrame) => boolean;
 	readonly settle: (frame: RpcFrame) => void;
+	readonly cancel: (error: Error) => void;
 	readonly timer: ReturnType<typeof setTimeout>;
 }
 
@@ -283,6 +284,9 @@ export class ControlledSession {
 		const finalCode = exitCode === "timeout" ? await this.#child.exited : exitCode;
 		await Promise.race([this.#stderrPump, Bun.sleep(1_000)]);
 		this.#exit = { exitCode: finalCode, stderr: this.#stderrText, timedOut: exitCode === "timeout" };
+		for (const waiter of this.#waiters.splice(0)) {
+			waiter.cancel(new DockSessionError("harness stopped before the awaited frame", this.diagnostics()));
+		}
 		return this.#exit;
 	}
 
@@ -298,6 +302,10 @@ export class ControlledSession {
 				settle: frame => {
 					clearTimeout(waiter.timer);
 					resolve(frame);
+				},
+				cancel: error => {
+					clearTimeout(waiter.timer);
+					reject(error);
 				},
 				timer: setTimeout(() => {
 					const index = this.#waiters.indexOf(waiter);

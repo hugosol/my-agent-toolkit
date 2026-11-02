@@ -55,11 +55,11 @@ test("P3 overlapping native role Sessions cancel independently and both accept s
 		const nodeId = await nativeIdentity(node);
 		expect(managerId).not.toBe(nodeId);
 		const managerPending = beginRoleCall(manager, "collect", {});
-		const nodePending = beginRoleCall(node, "report", { body: "independent concurrent handoff" });
+		const nodePending = beginRoleCall(node, "report", { body: "independent concurrent handoff", can_complete: false });
 		await Promise.all([managerReceived.promise, nodeReceived.promise]);
 		expect(calls).toEqual(expect.arrayContaining([
 			{ path: "/api/workflow/manager/collect", body: { sessionId: managerId } },
-			{ path: "/api/workflow/node/report", body: { sessionId: nodeId, body: "independent concurrent handoff" } },
+			{ path: "/api/workflow/node/report", body: { sessionId: nodeId, body: "independent concurrent handoff", canComplete: false } },
 		]));
 		expect((await manager.session.request({ type: "abort" })).success).toBe(true);
 		await managerPending;
@@ -71,10 +71,10 @@ test("P3 overlapping native role Sessions cancel independently and both accept s
 		expect(lastRoleResult(node).body).toEqual(nodeReply);
 		holding = false;
 		expect((await roleCall(manager, "run", { action: "status" })).body).toEqual(managerReply);
-		expect((await roleCall(node, "report", { body: "subsequent independent handoff" })).body).toEqual(nodeReply);
+		expect((await roleCall(node, "report", { body: "subsequent independent handoff", can_complete: true })).body).toEqual(nodeReply);
 		expect(calls.slice(2)).toEqual([
 			{ path: "/api/workflow/manager/status", body: { sessionId: managerId } },
-			{ path: "/api/workflow/node/report", body: { sessionId: nodeId, body: "subsequent independent handoff" } },
+			{ path: "/api/workflow/node/report", body: { sessionId: nodeId, body: "subsequent independent handoff", canComplete: true } },
 		]);
 		console.log(JSON.stringify({ promise: "P3", native: { manager: managerId, node: nodeId }, actualOverlap: true, cancelledConnectionClosed: true, otherResult: nodeReply, requests: calls, scope: "real OMP; controlled HTTP literals" }));
 	} finally { for (const close of cleanup) await close(); }
