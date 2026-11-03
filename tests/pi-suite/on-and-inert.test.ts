@@ -48,7 +48,7 @@ for (const mode of ["on", "only"] as const) {
 				writeFileSync(path.join(run.root.agentDir, "settings.json"), JSON.stringify({ codemode: { mode } }));
 				session = await PiSession.start({ cli: run.cli, runRoot: run.root, selector: run.selector,
 					entrypoint: ["builtin:codemode", ...(includeSuite ? [entrypoint] : [])],
-					extraArgs: ["--tools", "+codemode"] });
+					extraArgs: ["--tools", "+codemode", "--", "--pi-suite-config=literal-message-not-config.json"] });
 				await session.run("Observe native tools.");
 				const request = run.capture.requests()[0]?.json;
 				if (!request || typeof request !== "object") throw new Error(`No model request: ${session.diagnostics()}`);

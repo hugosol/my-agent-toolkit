@@ -52,7 +52,7 @@ configuration and any running agent are untouched. `bun run test` runs the whole
 [`pi-suite`](extensions/pi-suite/README.md) is the Pi-only fixed extension for launch-owned
 Suite MCP additions and explicit codemode `on`/`only`. Its public entry is
 [`entrypoints/pi/pi-suite.ts`](entrypoints/pi/pi-suite.ts); the runbook defines the
-factory-time `PI_SUITE_CONFIG` channel and native builtin loading obligations. Without
+factory-time `--pi-suite-config` public flag channel and native builtin loading obligations. Without
 that channel it leaves native behavior unchanged. This integration does not redirect native
 agent state or replace Pi's MCP manager.
 
