@@ -24,7 +24,7 @@ test("P27 actual role input preserves backend fixed/work sections and adds only 
 		await backend.post("/api/zones", { id: "test/node", path: node.root.workDir });
 		const tasks: Record<string, string> = {};
 		for (const role of ["manager", "node"]) {
-			const result = await backend.post("/api/tasks", { name: `input-${role}`, taskType: role === "node" ? "normal" : "manager", agent: "omp", chatName: "{chat.id}", model: "default", thinking: "default", skill: null, prompt: `TASK-FIXED-${role}-27\n固定职能原文`, extensions: [] });
+			const result = await backend.post("/api/tasks", { name: `input-${role}`, taskType: role === "node" ? "normal" : "manager", agent: "omp", chatName: "{chat.id}", model: "default", thinking: "default", skill: null, prompt: `TASK-FIXED-${role}-27\n固定职能原文` });
 			tasks[role] = result.tasks.find((task: { name: string }) => task.name === `input-${role}`).id;
 		}
 		writeFileSync(join(backend.root.path, "bots/input-worker.json"), JSON.stringify({ id: "input-worker", name: "worker", when: "BOT-DOCUMENT-27", plan_guide: "BOT-PLAN-27", node_guide: "BOT-NODE-27", task_id: tasks.node }));

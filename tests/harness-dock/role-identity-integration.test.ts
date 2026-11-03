@@ -68,7 +68,7 @@ test("P1/P2/P6 independent automatic roles use native identity and preserve real
 		await backend.post("/api/zones", { id: "test/node", path: node.root.workDir });
 		const tasks: Record<string, string> = {};
 		for (const role of ["manager", "node"]) {
-			const result = await backend.post("/api/tasks", { name: `identity-${role}`, taskType: role === "node" ? "normal" : "manager", agent: "omp", chatName: "{chat.id}", model: "default", thinking: "default", skill: null, prompt: `FIXED-${role}`, extensions: [] });
+			const result = await backend.post("/api/tasks", { name: `identity-${role}`, taskType: role === "node" ? "normal" : "manager", agent: "omp", chatName: "{chat.id}", model: "default", thinking: "default", skill: null, prompt: `FIXED-${role}` });
 			tasks[role] = result.tasks.find((task: { name: string }) => task.name === `identity-${role}`).id;
 		}
 		writeFileSync(join(backend.root.path, "bots/identity-worker.json"), JSON.stringify({ id: "identity-worker", name: "worker", when: "", plan_guide: "", node_guide: "", task_id: tasks.node }));

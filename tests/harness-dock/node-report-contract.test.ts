@@ -23,7 +23,7 @@ for (const host of ["omp", "pi"] as const) test(`${host}: P7/P8/P26 report rejec
 		const tasks: Record<string, string> = {};
 		for (const role of ["manager", "node"]) {
 			const created = await backend.post("/api/tasks", { name: role, taskType: role === "manager" ? "manager" : "normal",
-				agent: role === "manager" ? "omp" : host, chatName: "{chat.id}", model: "gpt-6.1-sol", thinking: "high", skill: "teach", prompt: "Contract dock", extensions: [] });
+				agent: role === "manager" ? "omp" : host, chatName: "{chat.id}", model: "gpt-6.1-sol", thinking: "high", skill: "teach", prompt: "Contract dock" });
 			tasks[role] = created.tasks.find((task: { name: string }) => task.name === role).id;
 		}
 		writeFileSync(join(backend.root.path, "bots/worker.json"), JSON.stringify({ id: "worker", name: "worker", when: "", plan_guide: "", node_guide: "", task_id: tasks.node }));

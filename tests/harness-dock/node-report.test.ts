@@ -20,7 +20,7 @@ test("P15/P16 actual node report is backend-attributed, saved and retrievable de
 		await backend.post("/api/zones", { id: "test/node", path: dock.root.workDir });
 		const tasks: Record<string, string> = {};
 		for (const role of ["manager", "node"]) {
-			const result = await backend.post("/api/tasks", { name: `dock-${role}`, taskType: role === "node" ? "normal" : "manager", agent: "omp", chatName: "{chat.id}", model: "gpt-6.1-sol", thinking: "high", skill: "teach", prompt: `FIXED-${role}`, extensions: [] });
+			const result = await backend.post("/api/tasks", { name: `dock-${role}`, taskType: role === "node" ? "normal" : "manager", agent: "omp", chatName: "{chat.id}", model: "gpt-6.1-sol", thinking: "high", skill: "teach", prompt: `FIXED-${role}` });
 			const task = result.tasks.find((task: { name: string }) => task.name === `dock-${role}`);
 			if (!task) throw new Error(`Missing created ${role} Task`);
 			tasks[role] = task.id;
