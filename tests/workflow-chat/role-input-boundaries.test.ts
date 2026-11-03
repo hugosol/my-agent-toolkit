@@ -20,16 +20,17 @@ test("P27 actual role input preserves backend fixed/work sections and adds only 
 		if (!nodeState.data || typeof nodeState.data !== "object" || !("sessionId" in nodeState.data) || typeof nodeState.data.sessionId !== "string") throw new Error("Missing native node identity");
 		const managerId = managerState.data.sessionId;
 		const nodeId = nodeState.data.sessionId;
-		for (const directory of [backend.root.path, node.root.workDir]) await backend.post("/api/zones", { path: directory });
+		await backend.post("/api/zones", { id: "test/manager", path: backend.root.path });
+		await backend.post("/api/zones", { id: "test/node", path: node.root.workDir });
 		const tasks: Record<string, string> = {};
 		for (const role of ["manager", "node"]) {
 			const result = await backend.post("/api/tasks", { name: `input-${role}`, taskType: role === "node" ? "normal" : "manager", agent: "omp", chatName: "{chat.id}", model: "default", thinking: "default", skill: null, prompt: `TASK-FIXED-${role}-27\n固定职能原文`, extensions: [] });
 			tasks[role] = result.tasks.find((task: { name: string }) => task.name === `input-${role}`).id;
 		}
 		writeFileSync(join(backend.root.path, "bots/input-worker.json"), JSON.stringify({ id: "input-worker", name: "worker", when: "BOT-DOCUMENT-27", plan_guide: "BOT-PLAN-27", node_guide: "BOT-NODE-27", task_id: tasks.node }));
-		writeFileSync(join(backend.root.path, "maps/input-map.json"), JSON.stringify({ title: "MAP-TITLE-27", description: "FULL-MAP-DOCUMENT-27", nodes: { A: { title: "A handoff", bot_id: "input-worker", input: "NODE-CURRENT-WORK-27\n保持工作内容", zone: node.root.workDir, blocked_by: [] } } }));
+		writeFileSync(join(backend.root.path, "maps/input-map.json"), JSON.stringify({ title: "MAP-TITLE-27", description: "FULL-MAP-DOCUMENT-27", nodes: { A: { title: "A handoff", bot_id: "input-worker", input: "NODE-CURRENT-WORK-27\n保持工作内容", zone: "test/node", blocked_by: [] } } }));
 		backend.behavior(managerId, backend.root.path);
-		await backend.post("/api/scheduler/maps/input-map.json/runs", { managerTaskId: tasks.manager, zone: backend.root.path, userInput: "RUN-USER-INPUT-27" });
+		await backend.post("/api/scheduler/maps/input-map.json/runs", { managerTaskId: tasks.manager, zone: "test/manager", userInput: "RUN-USER-INPUT-27" });
 		backend.behavior(nodeId, node.root.workDir);
 		await backend.post("/api/workflow/manager/dispatch", { sessionId: managerId, nodes: ["A"] });
 		const calls = readFileSync(join(backend.root.path, "calls.jsonl"), "utf8").trim().split("\n").map(line => JSON.parse(line));

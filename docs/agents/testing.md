@@ -38,6 +38,11 @@ The frozen harness baseline records sibling anchor and behavior-oracle checkouts
 
 Shutdown dock checks must own and await any pending prompt outcome. Stopping a dock session cancels its outstanding frame waiters; do not leave an unobserved prompt to time out during a later test.
 
+Real-backend workflow fixtures register zones with explicit stable IDs (`{ id, path }`).
+Map nodes and Run requests refer to those IDs, not filesystem paths; controlled Herdr
+cwd/identity observations continue to use the actual owned directories. Keep manager
+and node IDs distinct when their directories differ.
+
 For real-backend persistence failure checks, block the destination record path in the test-owned storage (for example, with a directory), then remove the blocker before explicit recovery. Do not depend on a fixed `.tmp` filename: the paired backend may select unique temporary files for atomic publication.
 
 ## Store disposable results

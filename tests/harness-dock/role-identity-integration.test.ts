@@ -64,7 +64,8 @@ test("P1/P2/P6 independent automatic roles use native identity and preserve real
 			expect(customMessages(dock.session.sessionLog().entries, `${role}-chat:tools`)).toHaveLength(1);
 			expect(customMessages(dock.session.sessionLog().entries, `${role === "manager" ? "node" : "manager"}-chat:tools`)).toHaveLength(0);
 		}
-		for (const directory of [backend.root.path, node.root.workDir]) await backend.post("/api/zones", { path: directory });
+		await backend.post("/api/zones", { id: "test/manager", path: backend.root.path });
+		await backend.post("/api/zones", { id: "test/node", path: node.root.workDir });
 		const tasks: Record<string, string> = {};
 		for (const role of ["manager", "node"]) {
 			const result = await backend.post("/api/tasks", { name: `identity-${role}`, taskType: role === "node" ? "normal" : "manager", agent: "omp", chatName: "{chat.id}", model: "default", thinking: "default", skill: null, prompt: `FIXED-${role}`, extensions: [] });
@@ -72,11 +73,11 @@ test("P1/P2/P6 independent automatic roles use native identity and preserve real
 		}
 		writeFileSync(join(backend.root.path, "bots/identity-worker.json"), JSON.stringify({ id: "identity-worker", name: "worker", when: "", plan_guide: "", node_guide: "", task_id: tasks.node }));
 		writeFileSync(join(backend.root.path, "maps/identity.json"), JSON.stringify({ title: "Native role identity", description: "independent backend acceptance", nodes: {
-			A: { title: "A", bot_id: "identity-worker", input: "alpha", zone: node.root.workDir, blocked_by: [] },
-			B: { title: "B", bot_id: "identity-worker", input: "beta", zone: node.root.workDir, blocked_by: [] },
+			A: { title: "A", bot_id: "identity-worker", input: "alpha", zone: "test/node", blocked_by: [] },
+			B: { title: "B", bot_id: "identity-worker", input: "beta", zone: "test/node", blocked_by: [] },
 		} }));
 		backend.behavior(managerId, backend.root.path);
-		const started = await backend.post("/api/scheduler/maps/identity.json/runs", { managerTaskId: tasks.manager, zone: backend.root.path, userInput: "Native identity acceptance" });
+		const started = await backend.post("/api/scheduler/maps/identity.json/runs", { managerTaskId: tasks.manager, zone: "test/manager", userInput: "Native identity acceptance" });
 		const status = await call(manager, "run", { action: "status" });
 		expect(status.details.httpStatus).toBe(200);
 		expect(status.body.snapshot.id).toBe(started.id);
@@ -103,7 +104,7 @@ test("P1/P2/P6 independent automatic roles use native identity and preserve real
 		// Real cross-role associations, not a counterfeit model-supplied identity:
 		// create another manager Run with the native identity of the node-only Session.
 		backend.behavior(nodeId, node.root.workDir);
-		const conflicting = await backend.post("/api/scheduler/maps/identity.json/runs", { managerTaskId: tasks.manager, zone: backend.root.path, userInput: "Conflicting role association" });
+		const conflicting = await backend.post("/api/scheduler/maps/identity.json/runs", { managerTaskId: tasks.manager, zone: "test/manager", userInput: "Conflicting role association" });
 		const crossRole = await call(node, "report", { body: "must not overwrite manager attribution", can_complete: false });
 		expect(crossRole).toMatchObject({ isError: true, details: { httpStatus: 403 }, body: { code: "node-role-invalid", message: "管理者身份不能提交节点报告。" } });
 		const secondPath = join(backend.root.path, "runs", conflicting.id, "run.json");
