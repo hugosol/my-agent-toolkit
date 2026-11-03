@@ -325,6 +325,8 @@ export interface PiSessionOptions {
 	readonly entrypoint: string | readonly string[];
 	/** The `provider/model` selector the session runs. */
 	readonly selector: string;
+	/** Preserve the native builtin MCP extension for scenarios that exercise it. Default: disabled. */
+	readonly nativeMcp?: boolean;
 	readonly extraArgs?: readonly string[];
 	/** Extra environment values, applied over the controlled set. */
 	readonly env?: Record<string, string | undefined>;
@@ -394,7 +396,7 @@ export class PiSession {
 			"rpc",
 			"--no-extensions",
 			...entrypointArguments,
-			"--no-mcp",
+			...(options.nativeMcp ? [] : ["--no-mcp"]),
 			"--model",
 			options.selector,
 			"--session-dir",
@@ -429,6 +431,8 @@ export class PiSession {
 		if (booted === "answered") return session;
 		const diagnostics = session.diagnostics();
 		child.kill();
+		await child.exited;
+		await session.#stderrPump;
 		throw new PiSessionError(
 			typeof booted === "number"
 				? `pi exited with code ${booted} before it answered the first command`

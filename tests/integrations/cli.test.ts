@@ -10,6 +10,15 @@ function run(script: string, ...args: string[]) {
 }
 
 describe("integration command contract", () => {
+	test("default scan reports native-only pi-suite separately from framework adapter completeness", () => {
+		const result = run("check-adapter-integrations.ts", "--json");
+		expect(result.error).toBeUndefined();
+		expect(result.status).toBe(0);
+		const report = JSON.parse(result.stdout);
+		expect(report.behaviorTestsRun).toBe(false);
+		expect(report.nativeExtensions).toEqual([{ extension: "pi-suite", harness: "pi", entrypoint: "entrypoints/pi/pi-suite.ts", regression: "bun test tests/pi-suite" }]);
+		expect(report.results.some((item: { extension: string }) => item.extension === "pi-suite")).toBe(false);
+	}, 90_000);
 	test("lists model-cost demand without a target entry or executing configuration", () => {
 		const result = run("check-adapter-integrations.ts", "--extension", "model-cost", "--demand-only", "--json");
 		expect(result.error).toBeUndefined();

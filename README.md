@@ -47,6 +47,15 @@ version into the gitignored `.cache/omp-baseline/18.5.0` on first run and reuse 
 Every run uses a temporary agent state directory, so the default global install, the formal
 configuration and any running agent are untouched. `bun run test` runs the whole test tree.
 
+## Fixed Pi Suite integration
+
+[`pi-suite`](extensions/pi-suite/README.md) is the Pi-only fixed extension for launch-owned
+Suite MCP additions and explicit codemode `on`/`only`. Its public entry is
+[`entrypoints/pi/pi-suite.ts`](entrypoints/pi/pi-suite.ts); the runbook defines the
+factory-time `PI_SUITE_CONFIG` channel and native builtin loading obligations. Without
+that channel it leaves native behavior unchanged. This integration does not redirect native
+agent state or replace Pi's MCP manager.
+
 ## Contexts
 
 This repository is a multi-context project: the framework and each extension own their own domain
