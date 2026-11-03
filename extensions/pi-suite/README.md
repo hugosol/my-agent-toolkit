@@ -8,8 +8,13 @@ bundle or install another copy of the harness.
 
 ## Factory-time configuration channel
 
-The launcher sets **`PI_SUITE_CONFIG` to an absolute UTF-8 JSON file path** before starting Pi.
-The factory reads the file on each factory invocation, not at module import or session_start.
+The launcher passes **`--pi-suite-config /absolute/path/suite.json`** as a public string flag.
+The factory registers that flag and reads the UTF-8 JSON file on each factory invocation,
+not at module import or session_start. Pi 1.5 binds parsed extension flag values only after
+factories load; this entry seeds its registered default from the public launch argv and
+then reads `getFlag`, so native MCP registration still occurs during factory loading.
+The former environment-variable channel is not consumed: an existing Herdr pane does not
+inherit the backend process environment.
 The document must already be completely published and readable, and remain available for
 native reload. Relative paths and malformed/missing configuration fail extension loading;
 they are not interpreted as an empty Suite. A selected Suite always states its mode explicitly:
@@ -34,14 +39,14 @@ Use absolute command/cwd/resource paths in resolved native configurations: the d
 location does not rebase native MCP fields. An empty object adds no servers and does not
 turn off the user's or trusted project's native MCP sources.
 
-If no Suite is selected, **remove the environment variable** (do not point at an empty or old
-file). The factory then returns without registering servers, tools, events, commands or changing
+If no Suite is selected, **omit the flag** (do not point at an empty or old
+file). Apart from registering its inert flag, the factory returns without registering servers, tools, events, commands or changing
 active tools. Native codemode and MCP configuration remain authoritative.
 
 The launcher owns publication, lifecycle and removal of its config file. This channel carries
 only Suite MCP declarations and mode; it is not an agent directory. Never change the native
 agent directory for a Suite, copy authentication/model/history files, or write the resolved MCP
-list into a project `mcp.json`. Child launches must explicitly retain or remove the variable
+list into a project `mcp.json`. Child launches must explicitly retain or omit the flag
 according to their selected Suite; it must not accidentally leak into an unrelated launch.
 
 ## Native loading and codemode ownership
@@ -58,9 +63,9 @@ callable through codemode. Do not load two codemode instances. The launcher's ex
 list is responsible for avoiding the builtin instance, not a runtime monkey patch. For example:
 
 ```sh
-# PI_SUITE_CONFIG=/absolute/path/suite.json is set in the child environment.
+# The config flag reaches factories even in an existing Herdr pane.
 pi --no-extensions -e builtin:mcp -e builtin:tool-search \
-  -e /absolute/toolkit/entrypoints/pi/pi-suite.ts
+  -e /absolute/toolkit/entrypoints/pi/pi-suite.ts --pi-suite-config /absolute/path/suite.json
 ```
 
 Preserve the deployment's other fixed and selected extension entries explicitly in that list.
@@ -71,7 +76,7 @@ Without a Suite, retain native codemode (and its native activation policy) along
 fixed entry:
 
 ```sh
-# PI_SUITE_CONFIG is absent.
+# --pi-suite-config is absent.
 pi --no-extensions -e builtin:mcp -e builtin:codemode -e builtin:tool-search \
   -e /absolute/toolkit/entrypoints/pi/pi-suite.ts
 ```

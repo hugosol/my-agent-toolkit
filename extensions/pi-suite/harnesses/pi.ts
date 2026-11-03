@@ -4,6 +4,8 @@ import { createCodemodeExtension } from "@earendil-works/pi-coding-agent";
 
 /** Only the public native surface this Pi-specific extension consumes. */
 export interface PiSuiteApi {
+	registerFlag(name: string, options: { description: string; type: "string"; default?: string }): void;
+	getFlag(name: string): string | boolean | undefined;
 	registerMcpServer(name: string, config: Record<string, unknown>): void;
 	getActiveTools(): string[];
 	setActiveTools(names: string[]): void;
@@ -12,9 +14,20 @@ export interface PiSuiteApi {
 
 /** A launch-owned document, read during factory invocation (before session_start). */
 export default async function piSuite(pi: PiSuiteApi): Promise<void> {
-	const configPath = process.env.PI_SUITE_CONFIG;
+	// Pi 1.5 binds parsed extension flags after factories have loaded. Seed this
+	// public flag from the launch argv so native MCP registration still happens
+	// in the factory; Pi retains validation and subsequent reload flag values.
+	let launchPath: string | undefined;
+	for (let index = 2; index < process.argv.length; index++) {
+		const arg = process.argv[index];
+		if (arg === "--") break;
+		if (arg === "--pi-suite-config") launchPath = process.argv[++index] ?? "";
+		else if (arg.startsWith("--pi-suite-config=")) launchPath = arg.slice("--pi-suite-config=".length);
+	}
+	pi.registerFlag("pi-suite-config", { description: "Absolute path to the launch-owned Suite configuration", type: "string", default: launchPath });
+	const configPath = pi.getFlag("pi-suite-config");
 	if (configPath === undefined) return;
-	if (!isAbsolute(configPath)) throw new Error("PI_SUITE_CONFIG must be an absolute file path");
+	if (typeof configPath !== "string" || !isAbsolute(configPath)) throw new Error("--pi-suite-config must be an absolute file path");
 	const raw: unknown = JSON.parse(readFileSync(configPath, "utf8"));
 	if (!raw || typeof raw !== "object" || Array.isArray(raw)) throw new Error("Invalid Pi Suite configuration");
 	const config = raw as Record<string, unknown>;

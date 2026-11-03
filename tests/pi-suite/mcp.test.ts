@@ -51,7 +51,7 @@ for (const selection of ["none", "empty", "append"] as const) {
 			} : {} }));
 			session = await PiSession.start({ cli: run.cli, runRoot: run.root, selector: run.selector, nativeMcp: true,
 				entrypoint: ["builtin:mcp", ...(selection === "none" ? ["builtin:codemode"] : []), entrypoint],
-				extraArgs: ["--tools", "+codemode"], env: { PI_SUITE_CONFIG: selection === "none" ? undefined : config } });
+				extraArgs: ["--tools", "+codemode", ...(selection === "none" ? [] : ["--pi-suite-config", config])] });
 			await session.run("Read fixture files via codemode.");
 			expect(initialized.sort()).toEqual(names);
 			expect(calls.sort()).toEqual(names);
