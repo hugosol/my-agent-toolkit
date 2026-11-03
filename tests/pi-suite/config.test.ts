@@ -7,7 +7,7 @@ import { ScenarioFailure } from "./support";
 // Factory-time errors must reject the real CLI load, not silently behave like no Suite.
 // The production validation already exists; verify its behavior at the approved startup seam.
 for (const fixture of [
-	{ label: "relative path", config: "relative.json", expected: "PI_SUITE_CONFIG must be an absolute file path" },
+	{ label: "relative path", config: "relative.json", expected: "--pi-suite-config must be an absolute file path" },
 	{ label: "missing file", config: undefined, expected: "ENOENT" },
 	{ label: "implicit mode", document: { version: 1, mcpServers: {} }, expected: "codemode: on|only" },
 	{ label: "invalid native MCP", document: { version: 1, codemode: "on", mcpServers: { bad: { command: 17 } } }, expected: "Invalid MCP server" },
@@ -23,7 +23,7 @@ for (const fixture of [
 			let rejection: unknown;
 			try {
 				session = await PiSession.start({ cli: run.cli, runRoot: run.root, selector: run.selector,
-					entrypoint: path.resolve(import.meta.dir, "../../entrypoints/pi/pi-suite.ts"), env: { PI_SUITE_CONFIG: config } });
+					entrypoint: path.resolve(import.meta.dir, "../../entrypoints/pi/pi-suite.ts"), extraArgs: ["--pi-suite-config", config] });
 			} catch (error) { rejection = error; }
 			expect(String(rejection)).toContain(fixture.expected);
 			expect(run.capture.requests()).toEqual([]);

@@ -25,7 +25,8 @@ function toolOutput(request: unknown): string {
 // model request. Source: ticket's explicit only mode + native file-tool requirement.
 // Violation: leaving the original `on` mode or deactivating the backing read tool would
 // either expose read directly, or prevent the second request from carrying the literal file.
-test("Suite only overrides native on and reads a real file through codemode", async () => {
+for (const form of ["separate", "equals", "last-wins"] as const) {
+test(`Suite only via ${form} argv overrides native on and reads a real file through codemode`, async () => {
 	const installed = resolvePiCli();
 	// Exercise the installed CLI bundle, not a source checkout. Bun avoids the Windows Node
 	// libuv crash on EOF after QuickJS worker use (the Node failure remains reported separately).
@@ -42,7 +43,9 @@ test("Suite only overrides native on and reads a real file through codemode", as
 		const config = path.join(run.root.path, "suite config.json");
 		writeFileSync(config, JSON.stringify({ version: 1, codemode: "only", mcpServers: {} }));
 		session = await PiSession.start({ cli: run.cli, runRoot: run.root, selector: run.selector,
-			entrypoint, env: { PI_SUITE_CONFIG: config } });
+			entrypoint, extraArgs: form === "separate" ? ["--pi-suite-config", config]
+				: form === "equals" ? [`--pi-suite-config=${config}`]
+				: ["--pi-suite-config", "discarded-relative.json", `--pi-suite-config=${config}`] });
 		await session.run("Read sentinel.txt using codemode.");
 		const requests = run.capture.requests().map(request => request.json);
 		expect(toolNames(requests[0])).toEqual(["codemode"]);
@@ -56,3 +59,4 @@ test("Suite only overrides native on and reads a real file through codemode", as
 	run.root.dispose();
 	if (failure || cleanup.length) throw new ScenarioFailure([...(failure ? [failure] : []), ...cleanup]);
 }, 120_000);
+}
