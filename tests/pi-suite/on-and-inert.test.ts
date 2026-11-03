@@ -19,7 +19,7 @@ test("Suite on overrides native only and activates codemode alongside native too
 		const config = path.join(run.root.path, "suite.json");
 		writeFileSync(config, JSON.stringify({ version: 1, codemode: "on", mcpServers: {} }));
 		session = await PiSession.start({ cli: run.cli, runRoot: run.root, selector: run.selector, entrypoint,
-			env: { PI_SUITE_CONFIG: config } });
+			extraArgs: ["--pi-suite-config", config] });
 		await session.run("Observe tools.");
 		const request = run.capture.requests()[0]?.json;
 		if (!request || typeof request !== "object" || !("tools" in request) || !Array.isArray(request.tools)) throw new Error("No model tools");
@@ -48,7 +48,7 @@ for (const mode of ["on", "only"] as const) {
 				writeFileSync(path.join(run.root.agentDir, "settings.json"), JSON.stringify({ codemode: { mode } }));
 				session = await PiSession.start({ cli: run.cli, runRoot: run.root, selector: run.selector,
 					entrypoint: ["builtin:codemode", ...(includeSuite ? [entrypoint] : [])],
-					extraArgs: ["--tools", "+codemode"], env: { PI_SUITE_CONFIG: undefined } });
+					extraArgs: ["--tools", "+codemode"] });
 				await session.run("Observe native tools.");
 				const request = run.capture.requests()[0]?.json;
 				if (!request || typeof request !== "object") throw new Error(`No model request: ${session.diagnostics()}`);
