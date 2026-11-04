@@ -1,8 +1,0 @@
-{
-  "worktree": "E:\\Developer\\myhub\\my-agent-toolkit-regression-20261104-215435",
-  "cacheConditions": "Reused prepared worktree and harness cache; default shared Bun user cache",
-  "sameTestIdentities": true,
-  "testedFileMatchesMain": true,
-  "testProcessRemnants": [],
-  "change": "Only model-cost Pi integration test budget set to 10000ms; assertions, subprocess timeout, production timeouts and global scheduling unchanged"
-}
