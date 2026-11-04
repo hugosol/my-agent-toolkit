@@ -6,7 +6,6 @@
  *   bun scripts/pi-session-accounting.ts                 # resolve the installed pi CLI
  *   bun scripts/pi-session-accounting.ts --pi <path>     # or PI_CLI=<path>
  *   bun scripts/pi-session-accounting.ts --keep          # keep every run root for inspection
- *   bun scripts/pi-session-accounting.ts --expect-pi-version 1.3.0 # explicit candidate host observation
  *
  * What it drives: the real installed pi as a child process in RPC mode, with an isolated agent state,
  * session directory, working directory and user home under the OS temp root, and a local
@@ -40,12 +39,13 @@
  * replaces the parent's extension context in-process, which ticket 05 recorded as a frontend fault),
  * nested delegation, cancellation and a crash mid-Round. The deterministic suites hold those paths.
  */
+import { beginPiAcceptance } from "./support/pi-acceptance";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
 import type { CapturedRequest } from "../tests/harness-dock/capture-server";
 import { PI_MODEL_COST_CONFIG_ROOT_ENV } from "../tests/harness-dock/fixtures/pi-model-cost/env";
-import { type PiCli, type PiRun, PiSession, piVersion, resolvePiCli, startPiRun } from "../tests/harness-dock/pi-session";
+import { type PiCli, type PiRun, PiSession, resolvePiCli, startPiRun } from "../tests/harness-dock/pi-session";
 
 /** The repository root: this script lives in `scripts/`. */
 const REPO_ROOT = path.resolve(import.meta.dir, "..");
@@ -55,9 +55,6 @@ const CONFIG_ENTRYPOINT = path.join(REPO_ROOT, "tests", "harness-dock", "fixture
 
 /** The pinned provider's own extension entry, as the artifact in this repository installs it. */
 const PROVIDER_ENTRY = path.join(REPO_ROOT, "node_modules", "pi-subagents", "index.js");
-
-/** The version this script's expectations were written against. */
-const EXPECTED_PI_VERSION = "1.2.0";
 
 /** The provider and model the run declares, and the harness key its records live under. */
 const PROVIDER = "deepseek";
@@ -669,30 +666,41 @@ async function main(): Promise<void> {
 	const keep = process.argv.includes("--keep");
 	const explicit = process.argv.includes("--pi") ? process.argv[process.argv.indexOf("--pi") + 1] : undefined;
 	const cli = resolvePiCli(explicit);
-	const version = await piVersion(cli);
-	console.log(`pi ${version} (${cli.path})`);
-	const expectedVersion = process.argv.includes("--expect-pi-version")
-		? process.argv[process.argv.indexOf("--expect-pi-version") + 1]
-		: EXPECTED_PI_VERSION;
-	observe("the harness under test is the fixed version this run states", version === expectedVersion, `reported ${version}, expected ${expectedVersion}`);
-	observe("the pinned provider artifact this repository installs is present", existsSync(PROVIDER_ENTRY), PROVIDER_ENTRY);
-
+	const acceptance = await beginPiAcceptance("session-accounting", cli);
+	const version = acceptance.version;
 	try {
-		const delegation = await phaseDelegation(cli);
-		await phaseResumedTree(delegation.dock, delegation.rootFile, delegation.rootId, delegation.childName);
-	} finally {
-		for (const session of sessions) await session.stop({ timeoutMs: 15_000 });
-		for (const dock of runs) {
-			dock.run.capture.stop();
-			if (!keep) rmSync(dock.run.root.path, { recursive: true, force: true });
+		console.log(`pi ${version} (${cli.path})`);
+		observe("the pinned provider artifact this repository installs is present", existsSync(PROVIDER_ENTRY), PROVIDER_ENTRY);
+	
+		try {
+			const delegation = await phaseDelegation(cli);
+			await phaseResumedTree(delegation.dock, delegation.rootFile, delegation.rootId, delegation.childName);
+		} finally {
+			for (const session of sessions) await session.stop({ timeoutMs: 15_000 });
+			for (const dock of runs) {
+				dock.run.capture.stop();
+				if (!keep) rmSync(dock.run.root.path, { recursive: true, force: true });
+			}
 		}
+		console.log(`\n${observations.length} observations held, ${failures.length} required facts missing.`);
+		for (const observation of observations) console.log(`  ok    ${observation.name}`);
+		for (const failure of failures) console.log(`  FAIL  ${failure.name}\n        ${failure.detail}`);
+		// A missing required fact is this run's own result: the record above is what the host really did,
+		// and a non-zero status is how a caller sees that the contract's facts are not all produced yet.
+		if (failures.length > 0) process.exitCode = 1;
+		await acceptance.finish({
+			status: failures.length === 0 ? "passed" : "failed",
+			checks: observations.map(observation => observation.name),
+			complete: true,
+			detail: failures.length > 0 ? failures.map(failure => `${failure.name}: ${failure.detail}`).join("\n") : undefined,
+		});
+	} catch (error) {
+		await acceptance.finish({
+			status: "failed", checks: observations.map(observation => observation.name), complete: false,
+			detail: error instanceof Error ? error.stack ?? error.message : String(error),
+		});
+		throw error;
 	}
-	console.log(`\n${observations.length} observations held, ${failures.length} required facts missing.`);
-	for (const observation of observations) console.log(`  ok    ${observation.name}`);
-	for (const failure of failures) console.log(`  FAIL  ${failure.name}\n        ${failure.detail}`);
-	// A missing required fact is this run's own result: the record above is what the host really did,
-	// and a non-zero status is how a caller sees that the contract's facts are not all produced yet.
-	if (failures.length > 0) process.exitCode = 1;
 }
 
 await main();

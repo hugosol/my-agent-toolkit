@@ -6,7 +6,6 @@
  *   bun scripts/pi-close-out-smoke.ts                  # resolve the installed pi CLI
  *   bun scripts/pi-close-out-smoke.ts --pi <path>      # or PI_CLI=<path>
  *   bun scripts/pi-close-out-smoke.ts --keep           # keep every run root for inspection
- *   bun scripts/pi-close-out-smoke.ts --expect-pi-version 1.4.0 # explicit candidate observation, not support certification
  *
  * What it drives: the real installed pi as a child process in RPC mode, with an isolated agent state,
  * session directory, working directory and user home under the OS temp root, and a local
@@ -35,6 +34,7 @@
  * which drive real `updateFile` coordination over a real lock and a real document. POSIX and other pi
  * versions are not exercised here either.
  */
+import { beginPiAcceptance } from "./support/pi-acceptance";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
@@ -45,7 +45,6 @@ import {
 	type PiRun,
 	type PiRunOptions,
 	PiSession,
-	piVersion,
 	resolvePiCli,
 	startPiRun,
 } from "../tests/harness-dock/pi-session";
@@ -63,9 +62,6 @@ const CONFIG_ENTRYPOINT = path.join(
 	"pi-model-cost",
 	"entrypoint.ts",
 );
-
-/** The version this script's expectations were written against, as the host baseline records it. */
-const EXPECTED_PI_VERSION = "1.3.0";
 
 /** The provider and model the run declares, and the harness key its records live under. */
 const PROVIDER = "deepseek";
@@ -528,27 +524,38 @@ async function main(): Promise<void> {
 	const keep = process.argv.includes("--keep");
 	const explicit = process.argv.includes("--pi") ? process.argv[process.argv.indexOf("--pi") + 1] : undefined;
 	const cli = resolvePiCli(explicit);
-	const version = await piVersion(cli);
-	console.log(`pi ${version} (${cli.path})`);
-	const expectedVersion = process.argv.includes("--expect-pi-version")
-		? process.argv[process.argv.indexOf("--expect-pi-version") + 1]
-		: EXPECTED_PI_VERSION;
-	observe("the harness under test is the fixed version this run states", version === expectedVersion, `reported ${version}, expected ${expectedVersion}`);
-
+	const acceptance = await beginPiAcceptance("close-out", cli);
+	const version = acceptance.version;
 	try {
-		await phaseOwnerAbsent(cli);
-		await phaseLockedDisposal(cli);
-	} finally {
-		for (const session of sessions) await session.stop({ timeoutMs: 15_000 });
-		for (const dock of runs) {
-			dock.run.capture.stop();
-			if (!keep) rmSync(dock.run.root.path, { recursive: true, force: true });
+		console.log(`pi ${version} (${cli.path})`);
+	
+		try {
+			await phaseOwnerAbsent(cli);
+			await phaseLockedDisposal(cli);
+		} finally {
+			for (const session of sessions) await session.stop({ timeoutMs: 15_000 });
+			for (const dock of runs) {
+				dock.run.capture.stop();
+				if (!keep) rmSync(dock.run.root.path, { recursive: true, force: true });
+			}
 		}
+		console.log(`\n${observations.length} observations held, ${failures.length} required facts missing.`);
+		for (const observation of observations) console.log(`  - ${observation.name}`);
+		for (const failure of failures) console.log(`  FAIL  ${failure.name}: ${failure.detail}`);
+		if (failures.length > 0) process.exitCode = 1;
+		await acceptance.finish({
+			status: failures.length === 0 ? "passed" : "failed",
+			checks: observations.map(observation => observation.name),
+			complete: true,
+			detail: failures.length > 0 ? failures.map(failure => `${failure.name}: ${failure.detail}`).join("\n") : undefined,
+		});
+	} catch (error) {
+		await acceptance.finish({
+			status: "failed", checks: observations.map(observation => observation.name), complete: false,
+			detail: error instanceof Error ? error.stack ?? error.message : String(error),
+		});
+		throw error;
 	}
-	console.log(`\n${observations.length} observations held, ${failures.length} required facts missing.`);
-	for (const observation of observations) console.log(`  - ${observation.name}`);
-	for (const failure of failures) console.log(`  FAIL  ${failure.name}: ${failure.detail}`);
-	if (failures.length > 0) process.exitCode = 1;
 }
 
 await main();

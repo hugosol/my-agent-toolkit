@@ -121,6 +121,7 @@
  * arithmetic, exactly as the OMP dock's accounting suite states them; nothing here is computed by
  * calling the extension's own pricing code.
  */
+import { beginPiAcceptance, type PiAcceptanceRun } from "./support/pi-acceptance";
 import {
 	type Dirent,
 	existsSync,
@@ -140,7 +141,6 @@ import {
 	type PiModelDeclaration,
 	type PiRun,
 	type PiStoredCredential,
-	piVersion,
 	resolvePiCli,
 	startPiRun,
 	writePiCredentials,
@@ -175,9 +175,6 @@ const ENTRYPOINT = path.join(REPO_ROOT, "entrypoints", "pi", "model-cost.ts");
  * no-subagent shape whose command answers instead of switching.
  */
 const PROVIDER_ENTRY = path.join(REPO_ROOT, "node_modules", "pi-subagents", "index.js");
-
-/** The version this smoke's expectations were written against. */
-const EXPECTED_PI_VERSION = "1.2.0";
 
 /** The provider and model the runs declare: the official pair the maintained data prices in CNY. */
 const PROVIDER = "deepseek";
@@ -2733,20 +2730,17 @@ if (options.help) {
 	process.exit(0);
 }
 
-let tested = `<unresolved: ${EXPECTED_PI_VERSION} expected>`;
+let tested = "<unresolved>";
 let failure: unknown;
+let acceptance: PiAcceptanceRun | undefined;
 
 try {
-	if (!existsSync(ENTRYPOINT)) throw new Error(`the pi assembly entrypoint does not exist: ${ENTRYPOINT}`);
 	const cli = resolvePiCli(options.pi);
-	const version = await piVersion(cli);
+	acceptance = await beginPiAcceptance("model-cost", cli);
+	if (!existsSync(ENTRYPOINT)) throw new Error(`the pi assembly entrypoint does not exist: ${ENTRYPOINT}`);
+	const version = acceptance.version;
 	tested = version;
 	console.log(`pi model-cost smoke — pi ${version} via ${cli.path} (${cli.source})`);
-	if (version !== EXPECTED_PI_VERSION) {
-		console.log(
-			`  note  this smoke's expectations were written against pi ${EXPECTED_PI_VERSION}; the CLI under test reports ${version}`,
-		);
-	}
 	await phaseMainSession(cli);
 	await phaseCommand(cli);
 	await phaseBalance(cli);
@@ -2764,17 +2758,38 @@ try {
 	}
 } finally {
 	for (const session of sessions) {
-		await session.stop({ timeoutMs: 5_000 }).catch(() => undefined);
+		try {
+			await session.stop({ timeoutMs: 5_000 });
+		} catch (error) {
+			failure ??= error;
+		}
 	}
 	for (const dock of runs) {
-		dock.run.capture.stop();
-		if (failure !== undefined || options.keep) console.error(`kept for inspection: ${dock.run.root.path}`);
-		else rmSync(dock.run.root.path, { recursive: true, force: true });
+		try {
+			dock.run.capture.stop();
+			if (failure !== undefined || options.keep) console.error(`kept for inspection: ${dock.run.root.path}`);
+			else rmSync(dock.run.root.path, { recursive: true, force: true });
+		} catch (error) {
+			failure ??= error;
+		}
 	}
 	for (const root of temporaryRoots) {
-		if (failure !== undefined || options.keep) console.error(`kept for inspection: ${root}`);
-		else rmSync(root, { recursive: true, force: true });
+		try {
+			if (failure !== undefined || options.keep) console.error(`kept for inspection: ${root}`);
+			else rmSync(root, { recursive: true, force: true });
+		} catch (error) {
+			failure ??= error;
+		}
 	}
+}
+
+if (acceptance !== undefined) {
+	await acceptance.finish({
+		status: failure === undefined ? "passed" : "failed",
+		checks: observations.map(observation => observation.name),
+		complete: true,
+		detail: failure === undefined ? undefined : failure instanceof Error ? failure.stack ?? failure.message : String(failure),
+	});
 }
 
 console.log(

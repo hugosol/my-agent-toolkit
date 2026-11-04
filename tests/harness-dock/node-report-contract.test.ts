@@ -18,21 +18,22 @@ for (const host of ["omp", "pi"] as const) test(`${host}: P7/P8/P26 report rejec
 		const state = await dock.state();
 		const nativeId = (state.data as { sessionId?: string } | undefined)?.sessionId;
 		if (!nativeId) throw new Error(`No native ${host} Session identity`);
-		for (const path of [backend.root.path, dock.root.workDir]) await backend.post("/api/zones", { path });
+		await backend.post("/api/zones", { id: "test/manager", path: backend.root.path });
+		await backend.post("/api/zones", { id: "test/node", path: dock.root.workDir });
 		const tasks: Record<string, string> = {};
 		for (const role of ["manager", "node"]) {
 			const created = await backend.post("/api/tasks", { name: role, taskType: role === "manager" ? "manager" : "normal",
-				agent: role === "manager" ? "omp" : host, chatName: "{chat.id}", model: "gpt-6.1-sol", thinking: "high", skill: "teach", prompt: "Contract dock", extensions: [] });
+				agent: role === "manager" ? "omp" : host, chatName: "{chat.id}", model: "gpt-6.1-sol", thinking: "high", skill: "teach", prompt: "Contract dock" });
 			tasks[role] = created.tasks.find((task: { name: string }) => task.name === role).id;
 		}
 		writeFileSync(join(backend.root.path, "bots/worker.json"), JSON.stringify({ id: "worker", name: "worker", when: "", plan_guide: "", node_guide: "", task_id: tasks.node }));
 		writeFileSync(join(backend.root.path, "maps/contract.json"), JSON.stringify({ title: "Report contract", description: "", nodes: {
-			A: { title: "A", bot_id: "worker", input: "Contract", zone: dock.root.workDir, blocked_by: [], output_rule: [{ id: "handoff" }] },
+			A: { title: "A", bot_id: "worker", input: "Contract", zone: "test/node", blocked_by: [], output_rule: [{ id: "handoff" }] },
 		} }));
 		// External Herdr is controlled in S1; only the node's Session comes from the real host.
 		const manager = "contract-dock-manager";
 		backend.behavior(manager, backend.root.path);
-		const started = await backend.post("/api/scheduler/maps/contract.json/runs", { managerTaskId: tasks.manager, zone: backend.root.path, userInput: "Contract dock" });
+		const started = await backend.post("/api/scheduler/maps/contract.json/runs", { managerTaskId: tasks.manager, zone: "test/manager", userInput: "Contract dock" });
 		writeFileSync(join(backend.root.path, "behavior.json"), JSON.stringify({ native_session: { source: `herdr:${host}`, agent: host, kind: "id", value: nativeId }, native_cwd: dock.root.workDir }));
 		const dispatched = await backend.post("/api/workflow/manager/dispatch", { sessionId: manager, nodes: ["A"] });
 		const execution = dispatched.snapshot.nodes.A.execution;

@@ -1,0 +1,255 @@
+{
+  "schemaVersion": 1,
+  "scopes": {
+    "workflow-chat": {
+      "schemaVersion": 1,
+      "scope": "workflow-chat",
+      "startedAt": "2026-11-03T19:29:14.943Z",
+      "cli": {
+        "command": [
+          "D:/Users/hugos/AppData/Local/nvm/v22.19.0/node.exe",
+          "D:\\nvm4w\\nodejs\\node_modules\\@earendil-works\\pi-coding-agent\\dist\\bundle\\cli.js"
+        ],
+        "path": "D:\\nvm4w\\nodejs\\node_modules\\@earendil-works\\pi-coding-agent\\dist\\bundle\\cli.js",
+        "source": "the shim D:\\nvm4w\\nodejs\\pi.cmd (run through node: a shell shim cannot be spawned without a shell)"
+      },
+      "source": {
+        "repoRoot": "E:\\Developer\\myhub\\my-agent-toolkit",
+        "head": "95fdf3826b85704e0629938b2b37b4ce7e92f295",
+        "status": [
+          " M framework/GLOSSARY.md",
+          " M framework/docs/harness-support.md",
+          " M scripts/pi-background-round-smoke.ts",
+          " M scripts/pi-close-out-smoke.ts",
+          " M scripts/pi-codebase-tools-smoke.ts",
+          " M scripts/pi-model-cost-smoke.ts",
+          " M scripts/pi-provider-account-read.ts",
+          " M scripts/pi-session-accounting.ts",
+          " M scripts/pi-subagent-smoke.ts",
+          " M scripts/pi-terminal-round-smoke.ts",
+          " M scripts/pi-tui-acceptance.ts",
+          " M tests/workflow-chat/pi-native.test.ts",
+          "?? scripts/support/pi-acceptance.ts",
+          "?? tests/pi-suite/pi-acceptance.test.ts"
+        ],
+        "diffSha256": "da757a5780763cc0916eccb66bdb79651e106f330d1da6f0497df88abb64b5d8",
+        "untrackedFiles": [
+          {
+            "path": "scripts/support/pi-acceptance.ts",
+            "sha256": "6620df76432649077ed38edcfd66df7d9c6d9b027d22afe1beff3160d64cbfd9"
+          },
+          {
+            "path": "tests/pi-suite/pi-acceptance.test.ts",
+            "sha256": "5628bf3b60b0d6d1a7f9954dac3b6993d7662600ce83a4873f31f2ac37cb60f3"
+          }
+        ],
+        "sha256": "66d8dced64c25876215af122caf109b0c839a83db64ddfd6e12b26d19ec15fc5"
+      },
+      "lockfiles": [
+        {
+          "path": "bun.lock",
+          "bytes": 11550,
+          "sha256": "28ce4c0d7b7d1d45a44e335a6647b0959c333875af42ca87ba63c87bcf4c2168"
+        }
+      ],
+      "runtime": {
+        "driver": {
+          "executable": "D:\\Users\\hugos\\AppData\\Local\\nvm\\v24.18.0\\node_modules\\bun\\bin\\bun.exe",
+          "node": "26.3.0",
+          "bun": "1.4.4"
+        },
+        "cli": {
+          "execPath": "D:\\Users\\hugos\\AppData\\Local\\nvm\\v22.19.0\\node.exe",
+          "node": "22.19.0",
+          "bun": null
+        },
+        "artifact": {
+          "path": "D:\\nvm4w\\nodejs\\node_modules\\@earendil-works\\pi-coding-agent\\dist\\bundle\\cli.js",
+          "bytes": 160,
+          "sha256": "e79626f2dd6f94aa45d30f3fa63cd84319a6eefcd150b353cfaf274366926774"
+        },
+        "platform": "win32",
+        "arch": "x64"
+      },
+      "version": "1.5.0",
+      "status": "passed",
+      "checks": [
+        "Pi manager: native tools, first Prompt identity, strict parameters and original results",
+        "Pi node: native tools, first Prompt identity, strict parameters and original results",
+        "Pi collect owns a complete-body budget independent of ordinary requests",
+        "Pi tool AbortSignal releases transport, switch preserves auto startup, and shutdown releases active collect"
+      ],
+      "complete": true,
+      "finishedAt": "2026-11-03T19:29:26.884Z",
+      "finishedSource": {
+        "repoRoot": "E:\\Developer\\myhub\\my-agent-toolkit",
+        "head": "95fdf3826b85704e0629938b2b37b4ce7e92f295",
+        "status": [
+          " M framework/GLOSSARY.md",
+          " M framework/docs/harness-support.md",
+          " M scripts/pi-background-round-smoke.ts",
+          " M scripts/pi-close-out-smoke.ts",
+          " M scripts/pi-codebase-tools-smoke.ts",
+          " M scripts/pi-model-cost-smoke.ts",
+          " M scripts/pi-provider-account-read.ts",
+          " M scripts/pi-session-accounting.ts",
+          " M scripts/pi-subagent-smoke.ts",
+          " M scripts/pi-terminal-round-smoke.ts",
+          " M scripts/pi-tui-acceptance.ts",
+          " M tests/workflow-chat/pi-native.test.ts",
+          "?? scripts/support/pi-acceptance.ts",
+          "?? tests/pi-suite/pi-acceptance.test.ts"
+        ],
+        "diffSha256": "da757a5780763cc0916eccb66bdb79651e106f330d1da6f0497df88abb64b5d8",
+        "untrackedFiles": [
+          {
+            "path": "scripts/support/pi-acceptance.ts",
+            "sha256": "6620df76432649077ed38edcfd66df7d9c6d9b027d22afe1beff3160d64cbfd9"
+          },
+          {
+            "path": "tests/pi-suite/pi-acceptance.test.ts",
+            "sha256": "5628bf3b60b0d6d1a7f9954dac3b6993d7662600ce83a4873f31f2ac37cb60f3"
+          }
+        ],
+        "sha256": "66d8dced64c25876215af122caf109b0c839a83db64ddfd6e12b26d19ec15fc5"
+      },
+      "finishedLockfiles": [
+        {
+          "path": "bun.lock",
+          "bytes": 11550,
+          "sha256": "28ce4c0d7b7d1d45a44e335a6647b0959c333875af42ca87ba63c87bcf4c2168"
+        }
+      ],
+      "acceptedAt": "2026-11-03T19:29:26.884Z"
+    },
+    "close-out": {
+      "schemaVersion": 1,
+      "scope": "close-out",
+      "startedAt": "2026-11-03T19:40:57.597Z",
+      "cli": {
+        "command": [
+          "D:/Users/hugos/AppData/Local/nvm/v22.19.0/node.exe",
+          "D:\\nvm4w\\nodejs\\node_modules\\@earendil-works\\pi-coding-agent\\dist\\bundle\\cli.js"
+        ],
+        "path": "D:\\nvm4w\\nodejs\\node_modules\\@earendil-works\\pi-coding-agent\\dist\\bundle\\cli.js",
+        "source": "the shim D:\\nvm4w\\nodejs\\pi.cmd (run through node: a shell shim cannot be spawned without a shell)"
+      },
+      "source": {
+        "repoRoot": "E:\\Developer\\myhub\\my-agent-toolkit",
+        "head": "95fdf3826b85704e0629938b2b37b4ce7e92f295",
+        "status": [
+          " M docs/agents/testing.md",
+          " M framework/GLOSSARY.md",
+          " M framework/docs/harness-support.md",
+          " M scripts/pi-background-round-smoke.ts",
+          " M scripts/pi-close-out-smoke.ts",
+          " M scripts/pi-codebase-tools-smoke.ts",
+          " M scripts/pi-model-cost-smoke.ts",
+          " M scripts/pi-provider-account-read.ts",
+          " M scripts/pi-session-accounting.ts",
+          " M scripts/pi-subagent-smoke.ts",
+          " M scripts/pi-terminal-round-smoke.ts",
+          " M scripts/pi-tui-acceptance.ts",
+          " M tests/workflow-chat/pi-native.test.ts",
+          "?? scripts/support/pi-acceptance.ts",
+          "?? tests/pi-suite/pi-acceptance.test.ts"
+        ],
+        "diffSha256": "b87b1cacc8c82a246f629f3d6742be2dd065f0ce32be29a1aa91d2ae2dc1e4d7",
+        "untrackedFiles": [
+          {
+            "path": "scripts/support/pi-acceptance.ts",
+            "sha256": "6620df76432649077ed38edcfd66df7d9c6d9b027d22afe1beff3160d64cbfd9"
+          },
+          {
+            "path": "tests/pi-suite/pi-acceptance.test.ts",
+            "sha256": "5628bf3b60b0d6d1a7f9954dac3b6993d7662600ce83a4873f31f2ac37cb60f3"
+          }
+        ],
+        "sha256": "ac73a86c0fa1fefb62a8b22b424f8da818a1f544e758c21d6c84070ba9ffb7ca"
+      },
+      "lockfiles": [
+        {
+          "path": "bun.lock",
+          "bytes": 11550,
+          "sha256": "28ce4c0d7b7d1d45a44e335a6647b0959c333875af42ca87ba63c87bcf4c2168"
+        }
+      ],
+      "runtime": {
+        "driver": {
+          "executable": "D:\\Users\\hugos\\AppData\\Local\\nvm\\v24.18.0\\node_modules\\bun\\bin\\bun.exe",
+          "node": "26.3.0",
+          "bun": "1.4.4"
+        },
+        "cli": {
+          "execPath": "D:\\Users\\hugos\\AppData\\Local\\nvm\\v22.19.0\\node.exe",
+          "node": "22.19.0",
+          "bun": null
+        },
+        "artifact": {
+          "path": "D:\\nvm4w\\nodejs\\node_modules\\@earendil-works\\pi-coding-agent\\dist\\bundle\\cli.js",
+          "bytes": 160,
+          "sha256": "e79626f2dd6f94aa45d30f3fa63cd84319a6eefcd150b353cfaf274366926774"
+        },
+        "platform": "win32",
+        "arch": "x64"
+      },
+      "version": "1.5.0",
+      "status": "passed",
+      "checks": [
+        "pi really runs the session this run stated, spawned from a session nothing serves",
+        "its own process accounted its own request and committed it to the shared document",
+        "closing that process was answered by the framework, not by the owner nothing serves",
+        "nothing was reported as unwritten or unconfirmed for a session whose work had already been committed",
+        "the Round was still open when the session was stopped, with consumption accounted and uncommitted",
+        "the disposal was answered at the framework's own close-out deadline, and the process really left",
+        "the operator was told the consumption was not written, and that the close-out's own wait ended it",
+        "no notice claims that consumption was saved",
+        "the document holds nothing of that session",
+        "the lock was never released for the holder, and its own published document is what the file holds"
+      ],
+      "complete": true,
+      "finishedAt": "2026-11-03T19:41:14.523Z",
+      "finishedSource": {
+        "repoRoot": "E:\\Developer\\myhub\\my-agent-toolkit",
+        "head": "95fdf3826b85704e0629938b2b37b4ce7e92f295",
+        "status": [
+          " M docs/agents/testing.md",
+          " M framework/GLOSSARY.md",
+          " M framework/docs/harness-support.md",
+          " M scripts/pi-background-round-smoke.ts",
+          " M scripts/pi-close-out-smoke.ts",
+          " M scripts/pi-codebase-tools-smoke.ts",
+          " M scripts/pi-model-cost-smoke.ts",
+          " M scripts/pi-provider-account-read.ts",
+          " M scripts/pi-session-accounting.ts",
+          " M scripts/pi-subagent-smoke.ts",
+          " M scripts/pi-terminal-round-smoke.ts",
+          " M scripts/pi-tui-acceptance.ts",
+          " M tests/workflow-chat/pi-native.test.ts",
+          "?? scripts/support/pi-acceptance.ts",
+          "?? tests/pi-suite/pi-acceptance.test.ts"
+        ],
+        "diffSha256": "b87b1cacc8c82a246f629f3d6742be2dd065f0ce32be29a1aa91d2ae2dc1e4d7",
+        "untrackedFiles": [
+          {
+            "path": "scripts/support/pi-acceptance.ts",
+            "sha256": "6620df76432649077ed38edcfd66df7d9c6d9b027d22afe1beff3160d64cbfd9"
+          },
+          {
+            "path": "tests/pi-suite/pi-acceptance.test.ts",
+            "sha256": "5628bf3b60b0d6d1a7f9954dac3b6993d7662600ce83a4873f31f2ac37cb60f3"
+          }
+        ],
+        "sha256": "ac73a86c0fa1fefb62a8b22b424f8da818a1f544e758c21d6c84070ba9ffb7ca"
+      },
+      "finishedLockfiles": [
+        {
+          "path": "bun.lock",
+          "bytes": 11550,
+          "sha256": "28ce4c0d7b7d1d45a44e335a6647b0959c333875af42ca87ba63c87bcf4c2168"
+        }
+      ],
+      "acceptedAt": "2026-11-03T19:41:14.523Z"
+    }
+  }
+}

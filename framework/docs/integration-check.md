@@ -16,6 +16,8 @@
 
 检查不改变 extension 的运行时加载，也不新增启动门禁、能力协商或报告读取。`--json` 报告固定带有 `behaviorTestsRun: false`，因为该命令从不执行行为测试。
 
+原生专用的 [pi-suite](../../extensions/pi-suite/README.md) 不消费 framework adapter 契约，不能伪造空的 framework definition 来取得 COMPLETE。默认扫描将它单列为 `NATIVE ONLY`，JSON 的 `nativeExtensions` 记录其公开入口及独立真实宿主回归命令；不把它加入 framework `results`，也不宣称原生行为已通过。该分类清单位于 `scripts/integrations/check.ts`，只有相应公开入口存在时生效；未分类但缺少 canonical 声明的目录仍报错。显式 `--extension pi-suite` 返回调用错误并指向 `bun test tests/pi-suite`。
+
 <a id="command-and-exit-codes"></a>
 ## 命令、选项与退出码
 

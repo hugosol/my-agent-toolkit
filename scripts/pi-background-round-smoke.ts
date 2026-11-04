@@ -37,13 +37,14 @@
  * adds no deadline of its own — is what the S1 partition covers. Foreground delegation, nested
  * delegation and cancellation remain unverified here for the reasons ticket 05's record states.
  */
+import { beginPiAcceptance } from "./support/pi-acceptance";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
 import type { CapturedRequest } from "../tests/harness-dock/capture-server";
 import { PI_MODEL_COST_CONFIG_ROOT_ENV } from "../tests/harness-dock/fixtures/pi-model-cost/env";
 import { PI_BACKGROUND_ROUNDS_CHILD_ENTRY_ENV, PI_BACKGROUND_ROUNDS_PREFIX } from "../tests/harness-dock/fixtures/pi-background-rounds/prefix";
-import { type PiCli, type PiRun, PiSession, piVersion, resolvePiCli, startPiRun } from "../tests/harness-dock/pi-session";
+import { type PiCli, type PiRun, PiSession, resolvePiCli, startPiRun } from "../tests/harness-dock/pi-session";
 
 /** The repository root: this script lives in `scripts/`. */
 const REPO_ROOT = path.resolve(import.meta.dir, "..");
@@ -646,24 +647,38 @@ async function main(): Promise<void> {
 	const keep = process.argv.includes("--keep");
 	const explicit = process.argv.includes("--pi") ? process.argv[process.argv.indexOf("--pi") + 1] : undefined;
 	const cli = resolvePiCli(explicit);
-	const version = await piVersion(cli);
-	console.log(`pi ${version} (${cli.path})`);
-	observe("the pinned provider artifact this repository installs is present", existsSync(PROVIDER_ENTRY), PROVIDER_ENTRY);
-
+	const acceptance = await beginPiAcceptance("background-round", cli);
+	const version = acceptance.version;
 	try {
-		await phaseWaitingRound(cli);
-	} finally {
-		for (const session of sessions) await session.stop({ timeoutMs: 20_000 });
-		for (const dock of runs) {
-			dock.run.capture.stop();
-			if (!keep) {
-				dock.run.root.dispose();
-				rmSync(dock.configRoot, { recursive: true, force: true });
+		console.log(`pi ${version} (${cli.path})`);
+		observe("the pinned provider artifact this repository installs is present", existsSync(PROVIDER_ENTRY), PROVIDER_ENTRY);
+	
+		try {
+			await phaseWaitingRound(cli);
+		} finally {
+			for (const session of sessions) await session.stop({ timeoutMs: 20_000 });
+			for (const dock of runs) {
+				dock.run.capture.stop();
+				if (!keep) {
+					dock.run.root.dispose();
+					rmSync(dock.configRoot, { recursive: true, force: true });
+				}
 			}
 		}
+		console.log(`\n${observations.length} observations held.`);
+		for (const observation of observations) console.log(`  - ${observation.name}`);
+		await acceptance.finish({
+			status: "passed",
+			checks: observations.map(observation => observation.name),
+			complete: true,
+		});
+	} catch (error) {
+		await acceptance.finish({
+			status: "failed", checks: observations.map(observation => observation.name), complete: false,
+			detail: error instanceof Error ? error.stack ?? error.message : String(error),
+		});
+		throw error;
 	}
-	console.log(`\n${observations.length} observations held.`);
-	for (const observation of observations) console.log(`  - ${observation.name}`);
 }
 
 await main();

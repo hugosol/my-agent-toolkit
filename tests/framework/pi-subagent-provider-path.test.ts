@@ -105,7 +105,7 @@ async function deployedAdapter(config: string): Promise<typeof piAdapter> {
 	}
 	// Only YAML is installed here: no accidental pi-subagents dependency can mask true absence.
 	mkdirSync(join(root, "node_modules"), { recursive: true });
-	cpSync(join(repository, "node_modules/yaml"), join(root, "node_modules/yaml"), { recursive: true });
+	cpSync(join(repository, "node_modules/yaml"), join(root, "node_modules/yaml"), { recursive: true, dereference: true });
 	writeFileSync(join(root, "framework/config.yaml"), `runtimeDir: .runtime\n${config}\n`);
 	const loaded = await import(pathToFileURL(join(root, "adapters/pi/index.ts")).href);
 	return loaded.piAdapter;

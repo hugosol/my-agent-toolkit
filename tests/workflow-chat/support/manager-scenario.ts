@@ -13,20 +13,20 @@ export async function managerScenario(budgets: { requestTimeoutMs?: number; coll
 	try {
 		dock = await managerDock(selectEndpoint ? selectEndpoint(backend.endpoint) : transport.endpoint, budgets);
 		const managerId = await dock.nativeId();
-		await backend.post("/api/zones", { path: backend.root.path });
+		await backend.post("/api/zones", { id: "test/manager", path: backend.root.path });
 		const tasks: Record<string, string> = {};
 		for (const role of ["manager", "node"]) {
-			const result = await backend.post("/api/tasks", { name: `state-${role}`, taskType: role === "node" ? "normal" : "manager", agent: "omp", chatName: "{chat.id}", model: "gpt-6.1-sol", thinking: "high", skill: "teach", prompt: `FIXED-${role}`, extensions: [] });
+			const result = await backend.post("/api/tasks", { name: `state-${role}`, taskType: role === "node" ? "normal" : "manager", agent: "omp", chatName: "{chat.id}", model: "gpt-6.1-sol", thinking: "high", skill: "teach", prompt: `FIXED-${role}` });
 			tasks[role] = result.tasks.find((task: { name: string }) => task.name === `state-${role}`).id;
 		}
 		writeFileSync(join(backend.root.path, "bots/worker.json"), JSON.stringify({ id: "worker", name: "worker", when: "", plan_guide: "", node_guide: "", task_id: tasks.node }));
 		writeFileSync(join(backend.root.path, "maps/fan-in.json"), JSON.stringify({ title: "A B into C", description: "independent small graph", nodes: {
-			A: { title: "A", bot_id: "worker", input: "alpha", zone: backend.root.path, blocked_by: [], output_rule: [{ id: "handoff" }] },
-			B: { title: "B", bot_id: "worker", input: "beta", zone: backend.root.path, blocked_by: [] },
-			C: { title: "C", bot_id: "worker", input: "combine", zone: backend.root.path, blocked_by: ["A", "B"] },
+			A: { title: "A", bot_id: "worker", input: "alpha", zone: "test/manager", blocked_by: [], output_rule: [{ id: "handoff" }] },
+			B: { title: "B", bot_id: "worker", input: "beta", zone: "test/manager", blocked_by: [] },
+			C: { title: "C", bot_id: "worker", input: "combine", zone: "test/manager", blocked_by: ["A", "B"] },
 		} }));
 		backend.behavior(managerId, backend.root.path);
-		const started = await backend.post("/api/scheduler/maps/fan-in.json/runs", { managerTaskId: tasks.manager, zone: backend.root.path, userInput: "Independent A B C handoff acceptance" });
+		const started = await backend.post("/api/scheduler/maps/fan-in.json/runs", { managerTaskId: tasks.manager, zone: "test/manager", userInput: "Independent A B C handoff acceptance" });
 		return { backend, dock, transport, calls, managerId, runId: started.id,
 			async dispatch(nodeId: string) {
 				backend.behavior(`node-native-${nodeId}`, backend.root.path);

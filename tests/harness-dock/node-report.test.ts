@@ -16,19 +16,20 @@ test("P15/P16 actual node report is backend-attributed, saved and retrievable de
 		const state = await dock.session.request({ type: "get_state" });
 		if (!state.data || typeof state.data !== "object" || !("sessionId" in state.data) || typeof state.data.sessionId !== "string") throw new Error("No native Session identity");
 		const nativeId = state.data.sessionId;
-		for (const directory of [backend.root.path, dock.root.workDir]) await backend.post("/api/zones", { path: directory });
+		await backend.post("/api/zones", { id: "test/manager", path: backend.root.path });
+		await backend.post("/api/zones", { id: "test/node", path: dock.root.workDir });
 		const tasks: Record<string, string> = {};
 		for (const role of ["manager", "node"]) {
-			const result = await backend.post("/api/tasks", { name: `dock-${role}`, taskType: role === "node" ? "normal" : "manager", agent: "omp", chatName: "{chat.id}", model: "gpt-6.1-sol", thinking: "high", skill: "teach", prompt: `FIXED-${role}`, extensions: [] });
+			const result = await backend.post("/api/tasks", { name: `dock-${role}`, taskType: role === "node" ? "normal" : "manager", agent: "omp", chatName: "{chat.id}", model: "gpt-6.1-sol", thinking: "high", skill: "teach", prompt: `FIXED-${role}` });
 			const task = result.tasks.find((task: { name: string }) => task.name === `dock-${role}`);
 			if (!task) throw new Error(`Missing created ${role} Task`);
 			tasks[role] = task.id;
 		}
 		writeFileSync(join(backend.root.path, "bots/worker.json"), JSON.stringify({ id: "worker", name: "worker", when: "not injected", plan_guide: "not injected", node_guide: "not injected", task_id: tasks.node }));
-		writeFileSync(join(backend.root.path, "maps/work.json"), JSON.stringify({ title: "Node report interop", description: "not injected", nodes: { A: { title: "A", bot_id: "worker", input: "node input", zone: dock.root.workDir, blocked_by: [], output_rule: [{ id: "sample" }] } } }));
+		writeFileSync(join(backend.root.path, "maps/work.json"), JSON.stringify({ title: "Node report interop", description: "not injected", nodes: { A: { title: "A", bot_id: "worker", input: "node input", zone: "test/node", blocked_by: [], output_rule: [{ id: "sample" }] } } }));
 		const managerId = "interop-manager-not-an-owner-key";
 		backend.behavior(managerId, backend.root.path);
-		const started = await backend.post("/api/scheduler/maps/work.json/runs", { managerTaskId: tasks.manager, zone: backend.root.path, userInput: "Independent backend report acceptance" });
+		const started = await backend.post("/api/scheduler/maps/work.json/runs", { managerTaskId: tasks.manager, zone: "test/manager", userInput: "Independent backend report acceptance" });
 		backend.behavior(nativeId, dock.root.workDir);
 		const dispatched = await backend.post("/api/workflow/manager/dispatch", { sessionId: managerId, nodes: ["A"] });
 		expect(dispatched.results[0].status).toBe("running");

@@ -26,7 +26,7 @@ export async function nodeDock(endpoint: string, params: { body: string; can_com
 		});
 	}
 	// The copied source resolves its actual dependencies without depending on the node cwd.
-	cpSync(join(REPO_ROOT, "node_modules/yaml"), join(deployment, "node_modules/yaml"), { recursive: true });
+	cpSync(join(REPO_ROOT, "node_modules/yaml"), join(deployment, "node_modules/yaml"), { recursive: true, dereference: true });
 	writeFileSync(join(deployment, "extensions/workflow-chat/config.yaml"),
 		`endpoint: ${JSON.stringify(endpoint)}\nrequestTimeoutMs: 2000\ncollectTimeoutMs: 5460000\n`);
 	mkdirSync(join(root.workDir, "extensions/workflow-chat"), { recursive: true });

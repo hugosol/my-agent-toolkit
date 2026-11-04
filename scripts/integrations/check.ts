@@ -27,11 +27,18 @@ export interface CheckedIntegration {
 	readonly sessionFacts?: SessionFactsFieldReport;
 	readonly diagnostics: readonly IntegrationDiagnostic[];
 }
+/** Native-only integrations do not consume framework adapter contracts. Keep their own
+ * public entry and real-host regression visible rather than inventing framework demand. */
+const NATIVE_EXTENSIONS = [{
+	extension: "pi-suite", harness: "pi", entrypoint: "entrypoints/pi/pi-suite.ts", regression: "bun test tests/pi-suite",
+}] as const;
+
 export interface IntegrationReport {
 	readonly stage: "integration-contracts";
 	readonly behaviorTestsRun: false;
 	readonly complete: boolean;
 	readonly results: readonly CheckedIntegration[];
+	readonly nativeExtensions?: readonly (typeof NATIVE_EXTENSIONS[number])[];
 }
 
 export function discoverNames(root: string, directory: "extensions" | "adapters"): string[] {
@@ -61,7 +68,13 @@ export function compareDemand(demand: DemandResult, supply?: SupplyResult): Chec
 }
 
 export function checkIntegrations(options: CheckOptions): IntegrationReport {
-	const extensions = options.extension === undefined ? discoverNames(options.root, "extensions") : [options.extension];
+	const discovered = options.extension === undefined ? discoverNames(options.root, "extensions") : [options.extension];
+	const nativeExtensions = NATIVE_EXTENSIONS.filter(native => discovered.includes(native.extension)
+		&& existsSync(path.resolve(options.root, native.entrypoint)));
+	const extensions = discovered.filter(extension => !nativeExtensions.some(native => native.extension === extension));
+	if (options.extension !== undefined && nativeExtensions.length > 0) {
+		throw new Error("pi-suite is a native Pi integration, not framework-mediated. Run bun test tests/pi-suite for its public-host regression.");
+	}
 	if (extensions.length === 0) throw new Error("No extension sources found; select --extension <id-or-source-path>.");
 	const adapters = options.demandOnly ? [] : options.adapter === undefined ? discoverNames(options.root, "adapters") : [options.adapter];
 	if (!options.demandOnly && adapters.length === 0) throw new Error("No adapters found; use --demand-only or select --adapter <name>.");
@@ -72,7 +85,9 @@ export function checkIntegrations(options: CheckOptions): IntegrationReport {
 			else for (const adapter of adapters) results.push(compareDemand(demand, analyzeSupply({ root: options.root, adapter, contracts: demand.contracts, assemblyFiles: demand.files })));
 		}
 	}
-	return { stage: "integration-contracts", behaviorTestsRun: false, complete: results.every(result => result.complete), results };
+	return { stage: "integration-contracts", behaviorTestsRun: false, complete: results.every(result => result.complete), results,
+		...(nativeExtensions.length > 0 ? { nativeExtensions } : {}),
+	};
 }
 
 export function printIntegrationReport(report: IntegrationReport): void {
@@ -100,6 +115,9 @@ export function printIntegrationReport(report: IntegrationReport): void {
 			}
 		}
 		for (const diagnostic of result.diagnostics) console.log(`  ${diagnostic.file}:${diagnostic.line}:${diagnostic.column} [${diagnostic.code}] ${diagnostic.message}\n    ${diagnostic.suggestion}`);
+	}
+	for (const native of report.nativeExtensions ?? []) {
+		console.log(`${native.extension} / ${native.harness}: NATIVE ONLY (outside framework adapter analysis); entry ${native.entrypoint}; regression: ${native.regression}`);
 	}
 	console.log("Structural integration analysis only; native semantics are not certified and runtime loading is unchanged.");
 }

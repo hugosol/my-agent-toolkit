@@ -30,7 +30,7 @@ export async function managerDock(endpoint: string, budgets: { requestTimeoutMs?
 			filter: candidate => candidate !== join(REPO_ROOT, "framework", ".runtime"),
 		});
 	}
-	cpSync(join(REPO_ROOT, "node_modules/yaml"), join(deployment, "node_modules/yaml"), { recursive: true });
+	cpSync(join(REPO_ROOT, "node_modules/yaml"), join(deployment, "node_modules/yaml"), { recursive: true, dereference: true });
 	writeFileSync(join(deployment, "extensions/workflow-chat/config.yaml"),
 		`endpoint: ${JSON.stringify(endpoint)}\nrequestTimeoutMs: ${budgets.requestTimeoutMs ?? 2000}\ncollectTimeoutMs: ${budgets.collectTimeoutMs ?? 5460000}\n`);
 	let next: { name: "run" | "collect"; params: unknown } | undefined;

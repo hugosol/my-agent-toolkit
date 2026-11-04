@@ -98,6 +98,7 @@
  * script never imports the shared prompt module (whose Markdown imports a real Node jiti run
  * cannot resolve, and whose wiring the pi adapter under test owns).
  */
+import { beginPiAcceptance, type PiAcceptanceRun } from "./support/pi-acceptance";
 import { existsSync, readdirSync, readFileSync, realpathSync } from "node:fs";
 import * as path from "node:path";
 import type { CaptureStep, CapturedRequest } from "../tests/harness-dock/capture-server";
@@ -109,7 +110,6 @@ import {
 	type PiRpcFrame as RpcFrame,
 	PiSession,
 	type PiRun,
-	piVersion,
 	resolvePiCli,
 	startPiRun,
 } from "../tests/harness-dock/pi-session";
@@ -159,9 +159,6 @@ const DISABLED_NOTICE = "codeBaseTools disabled";
 /** The capture endpoint's declared provider: a dummy key, a local base URL, no real credential. */
 const PROVIDER = "pi-smoke-gateway";
 const MODEL = "pi-smoke-model";
-
-/** The version this smoke's expectations were written against. */
-const EXPECTED_PI_VERSION = "1.2.0";
 
 /** How long a just-issued command's UI frame may take to arrive before it counts as absent. */
 const UI_FRAME_TIMEOUT_MS = 5_000;
@@ -1788,15 +1785,17 @@ if (options.help) {
 /** The entrypoint this run loads: the mode decision, and nothing else about the invocation. */
 const entrypoint = options.mode === "auto" ? AUTOMATIC_ENTRYPOINT : MANUAL_ENTRYPOINT;
 
-let tested = `<unresolved: ${EXPECTED_PI_VERSION} expected>`;
+let tested = "<unresolved>";
 let failure: unknown;
+let acceptance: PiAcceptanceRun | undefined;
 
 try {
+	const cli = resolvePiCli(options.pi);
+	acceptance = await beginPiAcceptance(`codebase-tools-${options.mode}`, cli);
 	if (!existsSync(entrypoint)) {
 		throw new Error(`the pi assembly entrypoint does not exist: ${entrypoint}`);
 	}
-	const cli = resolvePiCli(options.pi);
-	const version = await piVersion(cli);
+	const version = acceptance.version;
 	tested = version;
 	console.log(
 		`pi codebase-tools smoke (${options.mode} mode) — pi ${version} via ${cli.path} (${cli.source})`,
@@ -1812,11 +1811,6 @@ try {
 			? "  note  the two prompt resources are byte-identical: a contribution's slot is read from its persisted identity, not from its text"
 			: "  note  the two prompt resources differ; a contribution's slot is still read from its persisted identity",
 	);
-	if (version !== EXPECTED_PI_VERSION) {
-		console.log(
-			`  note  this smoke's expectations were written against pi ${EXPECTED_PI_VERSION}; the CLI under test reports ${version}`,
-		);
-	}
 	if (options.followOnly) {
 		await phaseSubagentFollow(cli, options.mode);
 	} else if (options.mode === "auto") {
@@ -1839,13 +1833,30 @@ try {
 	}
 } finally {
 	for (const session of sessions) {
-		await session.stop({ timeoutMs: 5_000 }).catch(() => undefined);
+		try {
+			await session.stop({ timeoutMs: 5_000 });
+		} catch (error) {
+			failure ??= error;
+		}
 	}
 	for (const run of runs) {
-		run.capture.stop();
-		if (failure !== undefined || options.keep) console.error(`kept for inspection: ${run.root.path}`);
-		else run.root.dispose();
+		try {
+			run.capture.stop();
+			if (failure !== undefined || options.keep) console.error(`kept for inspection: ${run.root.path}`);
+			else run.root.dispose();
+		} catch (error) {
+			failure ??= error;
+		}
 	}
+}
+
+if (acceptance !== undefined) {
+	await acceptance.finish({
+		status: failure === undefined ? "passed" : "failed",
+		checks: observations.map(observation => observation.name),
+		complete: !options.followOnly,
+		detail: failure === undefined ? undefined : failure instanceof Error ? failure.stack ?? failure.message : String(failure),
+	});
 }
 
 console.log(
