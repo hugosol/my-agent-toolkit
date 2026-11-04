@@ -1,0 +1,20 @@
+{
+  "feature": "local-pi-version-acceptance",
+  "environment": {"pi": "1.5.0", "piNode": "22.19.0", "bun": "1.4.4", "platform": "win32-x64"},
+  "checks": [
+    {"command": "bun test tests/pi-suite/pi-acceptance.test.ts", "exitCode": 0, "passed": 10, "failed": 0},
+    {"command": "PI_NODE=<Node 22.19.0> bun test tests/workflow-chat/pi-native.test.ts --test-name-pattern 'Pi collect owns'", "exitCode": 0, "passed": 1, "filtered": 3, "recordEffect": "No successful scope created; execution evidence is blocked and complete=false."},
+    {"command": "bun run typecheck", "exitCode": 0, "authoringDiagnostics": 0, "note": "Initial ES library incompatibilities were fixed before this passing run."},
+    {"command": "PI_NODE=<Node 22.19.0> bun test tests/pi-suite tests/workflow-chat", "exitCode": 0, "passed": 48, "failed": 0, "files": 22},
+    {"command": "Real installed Pi against a temporary gate-smoke record with version 2.0.0", "exitCode": 0, "result": "Actual 1.5.0 refused with both versions and CLI path; temporary data removed; official record untouched."},
+    {"command": "PI_NODE=<Node 22.19.0> bun run test", "exitCode": 1, "passed": 1808, "failed": 7, "files": 229, "durationSeconds": 608.32, "log": "full-suite.log", "note": "All four workflow-chat native checks and all ten new version-policy tests passed. Subsequent edits only clarified documentation."},
+    {"command": "PI_NODE=<Node 22.19.0> bun scripts/pi-close-out-smoke.ts", "exitCode": 0, "observations": 10, "missingRequiredFacts": 0, "recordEffect": "close-out passed on Pi 1.5.0"},
+    {"command": "Nine modified Pi script entrypoints with removed --expect-pi-version option", "result": "All nine exited 1 and explicitly rejected the removed option; individual logs retained in this directory."}
+  ],
+  "fullSuiteFailures": [
+    {"file": "tests/connect-bot/harness-exit-budget.test.ts", "count": 1, "error": "ENOENT copying framework/.runtime/owner-access-*.json in materializeDeployment before OMP host startup", "disposition": "Not changed: outside Pi-version scope."},
+    {"area": "OMP model-cost modes dock", "count": 6, "error": "90000ms waiting for ready frame on .cache/omp-baseline/18.5.0-viewed-session", "disposition": "Not changed: outside Pi-version scope; not classified as Pi version rejection."}
+  ],
+  "acceptance": {"workflow-chat": "1.5.0", "close-out": "1.5.0"},
+  "limits": ["No claim that every migrated smoke scope has passed on Pi 1.5.0.", "Human TUI acceptance and real-provider account reading were not performed.", "No global Pi support promotion, OMP baseline change, behavior timeout relaxation or unrelated failure fix."]
+}

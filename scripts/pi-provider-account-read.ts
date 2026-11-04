@@ -65,7 +65,8 @@ import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync,
 import { homedir } from "node:os";
 import * as path from "node:path";
 import { request } from "../framework/interface/general/http";
-import { type PiCli, PiSession, piVersion, resolvePiCli } from "../tests/harness-dock/pi-session";
+import { type PiCli, PiSession, resolvePiCli } from "../tests/harness-dock/pi-session";
+import { beginPiAcceptance, rejectLegacyPiVersionArgument } from "./support/pi-acceptance";
 import { createRunRoot } from "../tests/harness-dock/run-root";
 import {
 	type AllowanceAgreement,
@@ -691,13 +692,16 @@ function prepare(options: Options, cli: PiCli): void {
 }
 
 async function main(): Promise<void> {
+	rejectLegacyPiVersionArgument();
 	const options = parseOptions(process.argv.slice(2));
 	const cli = resolvePiCli();
 	if (options.prepare) {
 		prepare(options, cli);
 		return;
 	}
-	const version = await piVersion(cli);
+	const acceptance = await beginPiAcceptance("provider-account", cli);
+	try {
+	const version = acceptance.version;
 	const catalogDirectory = catalogDirectoryOf(options);
 	const catalog = catalogDirectory === undefined ? undefined : readJson(path.join(catalogDirectory, CATALOG_FILE));
 	const settings = readJson(path.join(options.agentDir, SETTINGS_FILE));
@@ -765,11 +769,21 @@ async function main(): Promise<void> {
 		`\nACCOUNT READ SUMMARY: ${observed} observed, ${blocked} blocked, ${failed} failed — report: ${written}` +
 			(failed > 0 ? "\nA scenario that ran did not agree with the account's own answer; see the report." : ""),
 	);
+	await acceptance.finish({
+		status: failed > 0 ? "failed" : blocked > 0 ? "blocked" : "passed",
+		checks: scenarios.filter(scenario => scenario.status === "observed").map(scenario => scenario.id),
+		complete: SCENARIOS.every(expected => scenarios.some(actual => actual.id === expected.id && actual.status === "observed")),
+		detail: `${observed} observed, ${blocked} blocked, ${failed} failed`,
+	});
 	process.exitCode = failed > 0 ? 1 : 0;
 	// Bun keeps one handle for about twenty seconds after a spawned harness child has exited. That is
 	// teardown time this script does not owe and no part of its evidence depends on it: the report is
 	// written synchronously above, so the process ends here rather than waiting the handle out.
 	process.exit(process.exitCode);
+	} catch (error) {
+		await acceptance.finish({ status: "failed", checks: [], complete: false, detail: redactSecrets(String(error), resolvedSecrets) });
+		throw error;
+	}
 }
 
 await main();

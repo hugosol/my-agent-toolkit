@@ -8,7 +8,6 @@
  *   bun scripts/pi-subagent-smoke.ts --keep             # keep every run root for inspection
  *   bun scripts/pi-subagent-smoke.ts --foreground-only  # multi-extension child-loading regression
  *   bun scripts/pi-subagent-smoke.ts --background-only  # detached child observation
- *   bun scripts/pi-subagent-smoke.ts --expect-pi-version 1.3.0 # explicit candidate host observation
  *
  * What it drives: the real installed pi as a child process in RPC mode, with an isolated agent state,
  * session directory, working directory and user home under the OS temp root, and a local
@@ -40,6 +39,7 @@
  * foreground delegation does not reach this script's later checks — see the evidence record for the
  * stale-context fault this run reproduces, which is the reason.
  */
+import { beginPiAcceptance } from "./support/pi-acceptance";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
@@ -48,7 +48,7 @@ import type { CapturedRequest } from "../tests/harness-dock/capture-server";
 import { PI_MODEL_COST_CONFIG_ROOT_ENV } from "../tests/harness-dock/fixtures/pi-model-cost/env";
 import { PI_SESSION_FACTS_PREFIX } from "../tests/harness-dock/fixtures/pi-session-facts/prefix";
 import { PI_SUBAGENT_OBSERVATION_PREFIX } from "../tests/harness-dock/fixtures/pi-subagent-observation/prefix";
-import { type PiCli, type PiRun, PiSession, piVersion, resolvePiCli, startPiRun } from "../tests/harness-dock/pi-session";
+import { type PiCli, type PiRun, PiSession, resolvePiCli, startPiRun } from "../tests/harness-dock/pi-session";
 
 /** The repository root: this script lives in `scripts/`. */
 const REPO_ROOT = path.resolve(import.meta.dir, "..");
@@ -100,9 +100,6 @@ function writeObservationProbeEntry(configRoot: string): string {
 	);
 	return file;
 }
-
-/** The version this smoke's expectations were written against. */
-const EXPECTED_PI_VERSION = "1.2.0";
 
 /** The provider and model the runs declare. */
 const PROVIDER = "deepseek";
@@ -875,30 +872,40 @@ async function main(): Promise<void> {
 	const keep = process.argv.includes("--keep");
 	const explicit = process.argv.includes("--pi") ? process.argv[process.argv.indexOf("--pi") + 1] : undefined;
 	const cli = resolvePiCli(explicit);
-	const version = await piVersion(cli);
-	console.log(`pi ${version} (${cli.path})`);
-	const expectedVersion = process.argv.includes("--expect-pi-version")
-		? process.argv[process.argv.indexOf("--expect-pi-version") + 1]
-		: EXPECTED_PI_VERSION;
-	observe("the harness under test is the fixed version this run states", version === expectedVersion, `reported ${version}, expected ${expectedVersion}`);
-	observe("the pinned provider artifact this repository installs is present", existsSync(PROVIDER_ENTRY), PROVIDER_ENTRY);
-
+	const acceptance = await beginPiAcceptance("subagent", cli);
+	const version = acceptance.version;
 	try {
-		if (!process.argv.includes("--foreground-only") && !process.argv.includes("--background-only")) {
-			await phaseNoProvider(cli);
-			await phaseRefusedEntry(cli);
+		console.log(`pi ${version} (${cli.path})`);
+		observe("the pinned provider artifact this repository installs is present", existsSync(PROVIDER_ENTRY), PROVIDER_ENTRY);
+	
+		try {
+			if (!process.argv.includes("--foreground-only") && !process.argv.includes("--background-only")) {
+				await phaseNoProvider(cli);
+				await phaseRefusedEntry(cli);
+			}
+			if (!process.argv.includes("--background-only")) await phaseForegroundDelegation(cli);
+			if (!process.argv.includes("--foreground-only")) await phaseBackgroundDelegation(cli);
+		} finally {
+			for (const session of sessions) await session.stop({ timeoutMs: 15_000 });
+			for (const dock of runs) {
+				dock.run.capture.stop();
+				if (!keep) rmSync(dock.run.root.path, { recursive: true, force: true });
+			}
 		}
-		if (!process.argv.includes("--background-only")) await phaseForegroundDelegation(cli);
-		if (!process.argv.includes("--foreground-only")) await phaseBackgroundDelegation(cli);
-	} finally {
-		for (const session of sessions) await session.stop({ timeoutMs: 15_000 });
-		for (const dock of runs) {
-			dock.run.capture.stop();
-			if (!keep) rmSync(dock.run.root.path, { recursive: true, force: true });
-		}
+		console.log(`\n${observations.length} observations held.`);
+		for (const observation of observations) console.log(`  - ${observation.name}`);
+		await acceptance.finish({
+			status: "passed",
+			checks: observations.map(observation => observation.name),
+			complete: !process.argv.includes("--foreground-only") && !process.argv.includes("--background-only"),
+		});
+	} catch (error) {
+		await acceptance.finish({
+			status: "failed", checks: observations.map(observation => observation.name), complete: false,
+			detail: error instanceof Error ? error.stack ?? error.message : String(error),
+		});
+		throw error;
 	}
-	console.log(`\n${observations.length} observations held.`);
-	for (const observation of observations) console.log(`  - ${observation.name}`);
 }
 
 await main();

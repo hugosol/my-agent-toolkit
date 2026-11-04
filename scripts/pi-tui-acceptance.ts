@@ -47,6 +47,8 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
 import { resolvePiCli } from "../tests/harness-dock/pi-session";
+import { createInterface } from "node:readline/promises";
+import { beginPiAcceptance, rejectLegacyPiVersionArgument } from "./support/pi-acceptance";
 import {
 	ACCRUED,
 	BALANCE_TOTAL,
@@ -62,9 +64,6 @@ import {
 	prepareAcceptanceRun,
 	rowsWith,
 } from "./support/tui-acceptance-fixture";
-
-/** The pi version this acceptance's expectations were written against. */
-const EXPECTED_PI_VERSION = "1.2.0";
 
 /** The widths a capture run draws in unless a run names its own: a normal terminal and a narrow one. */
 const DEFAULT_WIDTHS = "120,60";
@@ -299,9 +298,8 @@ function checkTotalIsOneLine(observations: Observations, frames: readonly Captur
 }
 
 /** Every check one capture run's frames are held to, as the report states them. */
-function checkRun(run: CapturedRun, version: string, widths: readonly number[]): readonly Observation[] {
+function checkRun(run: CapturedRun, widths: readonly number[]): readonly Observation[] {
 	const observations = new Observations();
-	observations.held("the run drove the pi version this acceptance states", version === EXPECTED_PI_VERSION, `pi reported ${version}, expected ${EXPECTED_PI_VERSION}`);
 	observations.held("the pinned provider artifact this repository installs is present", existsSync(PROVIDER_ENTRY), PROVIDER_ENTRY);
 	observations.held(
 		"every width was captured in both forms",
@@ -418,6 +416,8 @@ function reportObservations(observations: readonly Observation[]): boolean {
 /** The operator's own real TUI: the run's isolated root, the entry loaded, and the terminal handed over. */
 async function interactiveShell(argv: readonly string[]): Promise<void> {
 	const cli = resolvePiCli(optionValue(argv, "pi", process.env.PI_CLI ?? ""));
+	const acceptance = await beginPiAcceptance("tui-human", cli);
+	try {
 	const run = await prepareAcceptanceRun({ cli, label: "tui-acceptance-interactive" });
 	console.log(`# the real pi terminal UI, fixed scenario, isolated run root: ${run.root.path}`);
 	console.log(`# pi ${run.version} from ${run.cli.path}`);
@@ -430,9 +430,23 @@ async function interactiveShell(argv: readonly string[]): Promise<void> {
 	run.capture.stop();
 	console.log(`\n# the run exited with ${exitCode}; its isolated root is kept for inspection: ${run.root.path}`);
 	console.log("# the storage root still holds the seeded scenario; remove the root yourself, this script does not.");
+	let confirmed = false;
+	if (exitCode === 0 && process.stdin.isTTY && process.stdout.isTTY) {
+		const prompt = createInterface({ input: process.stdin, output: process.stdout });
+		try {
+			confirmed = (await prompt.question("Confirm you inspected brief/detail content, spacing and narrow-width readability and all passed? Type yes: ")).trim().toLowerCase() === "yes";
+		} finally { prompt.close(); }
+	}
+	await acceptance.finish({ status: exitCode !== 0 ? "failed" : confirmed ? "passed" : "blocked", complete: confirmed, checks: confirmed ? ["Human inspection: brief/detail content, spacing and narrow-width readability"] : [], detail: confirmed ? undefined : "Human acceptance was not confirmed or the host exited unsuccessfully." });
+	process.exitCode = exitCode !== 0 ? exitCode : confirmed ? 0 : 1;
+	} catch (error) {
+		await acceptance.finish({ status: "failed", complete: false, checks: [], detail: String(error) });
+		throw error;
+	}
 }
 
 const argv = process.argv.slice(2);
+rejectLegacyPiVersionArgument(argv);
 if (argv.includes("--interactive")) {
 	await interactiveShell(argv);
 } else {
@@ -442,10 +456,15 @@ if (argv.includes("--interactive")) {
 	const providerEntry = optionValue(argv, "provider", PROVIDER_ENTRY);
 	const quietMs = Number(optionValue(argv, "quiet-ms", "1200"));
 	const out = path.resolve(optionValue(argv, "out", DEFAULT_OUT));
+	const acceptance = await beginPiAcceptance("tui-capture", cli);
+	try {
 	const run = await prepareAcceptanceRun({ cli, label: "tui-acceptance", providerEntry });
+	let passed = false;
+	let checks: string[] = [];
 	try {
 		const captured = await captureAcceptanceRun(run, { widths, rows, quietMs });
-		const observations = checkRun(captured, run.version, widths);
+		const observations = checkRun(captured, widths);
+		checks = observations.map(observation => observation.name);
 		const browser = screenshotBrowser();
 		const written = writeArtifacts(out, captured, browser);
 		const summary = {
@@ -480,7 +499,13 @@ if (argv.includes("--interactive")) {
 		console.log(`\n# human acceptance (P52) — look at the real terminal yourself: bun scripts/pi-tui-acceptance.ts --interactive`);
 		console.log("# the person judges the format, spacing, narrow-width behaviour and readability; this run does not.");
 		process.exitCode = failed ? 1 : 0;
+		passed = !failed;
 	} finally {
 		run.dispose();
+	}
+	await acceptance.finish({ status: passed ? "passed" : "failed", checks, complete: true, detail: "Automated capture only; not human TUI acceptance." });
+	} catch (error) {
+		await acceptance.finish({ status: "failed", checks: [], complete: false, detail: String(error) });
+		throw error;
 	}
 }

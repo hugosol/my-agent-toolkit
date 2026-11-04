@@ -17,9 +17,9 @@ The pi codebase-tools adapter is implemented within the mapped scope below; it d
 
 ## pi workflow-chat verification baseline
 
-workflow-chat 的 Pi 独立验证基线为精确的 `@earendil-works/pi-coding-agent@1.4.0`；两角色仅提供 `entrypoints/pi-auto/manager-chat.ts` 和 `entrypoints/pi-auto/node-chat.ts`。保留 OMP 18.5.0 基线及其已有证据，不将历史 Pi 1.2/1.3 smoke 结果迁移成 1.4 的兼容证明，也不建立多版本矩阵。
+workflow-chat 的历史 Pi 独立验证基线为 `@earendil-works/pi-coding-agent@1.4.0`；两角色仅提供 `entrypoints/pi-auto/manager-chat.ts` 和 `entrypoints/pi-auto/node-chat.ts`。保留 OMP 18.5.0 基线及其已有证据，不将历史 Pi 1.2/1.3 smoke 结果迁移成 1.4 的兼容证明，也不建立多版本矩阵。
 
-复核环境：Windows x64、Node 22.19.0（通过 `PI_NODE` 指定）、Bun 1.4.4。`tests/workflow-chat/pi-native.test.ts` 通过实际 CLI 版本断言拒绝其他 Pi 版本，使用隔离部署、agent state、Session、cwd 和本地受控 provider/HTTP，不读取真实账号、不使用活动后端。运行方法：
+历史复核环境：Windows x64、Node 22.19.0（通过 `PI_NODE` 指定）、Bun 1.4.4。当前 `tests/workflow-chat/pi-native.test.ts` 使用本地选中的 Pi，按 [Pi 验收记录](pi-acceptance.json) 的 `workflow-chat` 范围拒绝低于最高通过版本的安装；不再精确要求 1.4.0。只有全部已注册用例通过才更新该范围，按名称过滤的部分运行不提升记录。测试使用隔离部署、agent state、Session、cwd 和本地受控 provider/HTTP，不读取真实账号、不使用活动后端。运行方法：
 
 ```powershell
 $env:PI_NODE = "D:/Users/hugos/AppData/Local/nvm/v22.19.0/node.exe"
@@ -164,26 +164,51 @@ bun run test:codebase-tools
 
 ### D. pi checks (separate; no generic candidate runner)
 
-There is no `verify:pi-candidate` and no generic pi candidate runner. Each script resolves the installed pi you name and reports the version it observed; it does not install or switch versions, and none of these smokes promotes pi to the OMP supported baseline. Only the scripts that state `--expect-pi-version` accept a candidate expectation, and their default expectation remains **1.2.0**:
+#### Local-version acceptance policy
+
+Pi entrypoints share `scripts/support/pi-acceptance.ts`. The version-controlled [Pi acceptance record](pi-acceptance.json) holds self-contained successful results by scope; missing scopes have no recorded success. Historical prose is not silently imported as a success for current source or checks.
+
+- Select the locally installed Pi through the existing explicit CLI path / `PI_CLI` selection, otherwise through existing local resolution. Do not install, upgrade, downgrade, query the latest published release, or scan all local installations for the highest version. Read the selected executable's actual version and report its path.
+- Apply one shared version policy to all Pi acceptance entrypoints. Compare semantic versions against the **highest accepted Pi version for the selected acceptance scope**. If the installed version is lower, explicitly refuse acceptance before behavior checks, reporting both versions and the selected CLI path. An equal or higher version may proceed; an absent record permits an initial run. Failure to determine the actual version is not a passing check.
+- Version ordering follows **Semantic Versioning 2.0.0**: compare major, minor and patch as integers, in that order (`2.0.0 > 1.5.0`, `1.10.0 > 1.9.0`, `1.5.10 > 1.5.9`). For equal core numbers, a release is higher than any prerelease; prerelease dot-separated identifiers compare numerically when both are numeric, numeric identifiers precede nonnumeric identifiers, and nonnumeric identifiers compare lexically in ASCII order. After equal identifiers, the longer prerelease sequence is higher (`rc.10 > rc.2`, `alpha.1 > alpha`). Build metadata after `+` does not affect ordering, but the complete observed version is retained. Invalid versions (including `v1.5.0`, `1.5`, or leading-zero numeric identifiers) are refused, not guessed. For example, a local 1.5.0 is refused against a recorded 2.0.0 floor, not the reverse.
+- Historical exact-version defaults are removed. The removed `--expect-pi-version` option is rejected with local-selection guidance rather than silently ignored. Keep CLI-path selection; the common lower-bound check replaces exact-version expectations.
+- Maintain one version-controlled, machine-readable acceptance record with separate entries by scope. Only complete successful acceptance establishes an initial entry, raises its version, or refreshes the evidence for an equal version. Record the precise Pi version, time, source state, exercised checks and Node/Bun/platform environment. A partial run cannot promote a whole scope; success in one scope cannot promote another.
+- Keep failed, blocked and partial attempts as run-specific evidence under `.scratch/<feature>/evidence/`; they do not overwrite a successful record. The durable record must be self-contained, without depending on disposable evidence paths. A historical success does not certify changed source or checks, and must not mask a current regression failure.
+- Automated acceptance updates only its automated scopes. Human TUI acceptance still requires human confirmation; successful capture alone is not acceptance. Existing historical evidence and Pi history fixtures remain historical, not rewritten to the newly tested version.
+- This policy gates acceptance only, never normal extension startup. It does not promote global support, change the OMP baseline, relax behavior assertions/timeouts, or fix unrelated SUITE failures.
+
+#### Commands and acceptance scopes
+
+Each entrypoint resolves the installed Pi, applies the shared scope-specific version floor and records its result. No entrypoint installs or switches versions, and none promotes Pi to the OMP supported baseline:
 
 ```sh
 bun scripts/pi-codebase-tools-smoke.ts --pi <cli> --keep
 bun scripts/pi-model-cost-smoke.ts --pi <cli> --keep
 bun scripts/pi-subagent-smoke.ts --pi <cli> --foreground-only
-bun scripts/pi-subagent-smoke.ts --pi <cli> --background-only --expect-pi-version 1.3.0
+bun scripts/pi-subagent-smoke.ts --pi <cli> --background-only
+bun scripts/pi-subagent-smoke.ts --pi <cli>
 bun scripts/pi-background-round-smoke.ts --pi <cli>
-bun scripts/pi-terminal-round-smoke.ts --pi <cli> --expect-pi-version 1.3.0
+bun scripts/pi-terminal-round-smoke.ts --pi <cli>
 bun scripts/pi-close-out-smoke.ts --pi <cli>
-bun scripts/pi-session-accounting.ts --pi <cli> --expect-pi-version 1.3.0
+bun scripts/pi-session-accounting.ts --pi <cli>
 ```
 
-| Scripts | Version expectation |
+| Entrypoint | Persistent scope / completeness |
 | --- | --- |
-| `pi-codebase-tools-smoke.ts`, `pi-model-cost-smoke.ts`, `pi-background-round-smoke.ts`, `pi-close-out-smoke.ts` | Observe the resolved CLI and have no version-expectation switch — do not invent one. |
-| `pi-subagent-smoke.ts`, `pi-terminal-round-smoke.ts`, `pi-session-accounting.ts` | Observe the resolved CLI and accept `--expect-pi-version <v>`; the default expectation remains 1.2.0. |
-| `pi-tui-acceptance.ts` | A real terminal acceptance, not a candidate runner. It asserts the fixed `EXPECTED_PI_VERSION = "1.2.0"` and has no override; on a 1.3.0 host that single version check fails even when content/layout checks pass. Treat the mismatch as a recorded limitation, not as a pass and not as a reason to edit the expectation. |
+| `pi-codebase-tools-smoke.ts` | `codebase-tools-manual` / `codebase-tools-auto`; `--follow-only` is partial and cannot promote either full scope. |
+| `pi-model-cost-smoke.ts` | `model-cost` |
+| `pi-subagent-smoke.ts` | `subagent`; `--foreground-only` / `--background-only` are partial. |
+| `pi-background-round-smoke.ts` | `background-round` |
+| `pi-terminal-round-smoke.ts` | `terminal-round` |
+| `pi-close-out-smoke.ts` | `close-out` |
+| `pi-session-accounting.ts` | `session-accounting` |
+| `tests/workflow-chat/pi-native.test.ts` | `workflow-chat`; every registered native check must pass. |
+| `pi-tui-acceptance.ts` | `tui-capture` for automated checks; `--interactive` uses separate `tui-human`, promoted only after successful host exit and explicit human confirmation of brief/detail content, spacing and narrow-width readability. |
+| `pi-provider-account-read.ts` | `provider-account`; all declared scenarios must be observed, not blocked or failed. Scenario selection alone cannot promote the whole scope; `--prepare` is not acceptance. |
 
-All these smokes use isolated agent state, session, home and working directories and a local capture endpoint; they never touch the formal configuration or a real provider account. `--keep` retains run roots for inspection. For a candidate, use an explicit `--expect-pi-version` only on scripts that support it; this changes no support state.
+The local smokes use isolated agent state, session, home and working directories and a local capture endpoint; they never touch formal configuration or a real provider account. `--keep` retains run roots for inspection. Provider-account reading is the separate real-credential path described below.
+
+Run-specific JSON evidence is written under `.scratch/pi-version-acceptance/evidence/`. The persistent record includes the actual CLI path and artifact hash, interpreter and driver versions, platform, source HEAD and working-tree digest, lockfile hashes, executed checks and timestamps. Only complete passed scopes on unchanged source publish; same-version success refreshes its evidence. A lock and atomic replacement merge concurrent scope results and prevent a stale lower-version run from overwriting a newer pass. Metadata subprocesses have a four-second deadline and publication lock waits are bounded; neither changes behavior-test deadlines. A failed/interrupted run is never promoted. If a killed writer leaves `pi-acceptance.json.lock`, verify no acceptance writer is active before removing that stale lock and rerunning.
 
 ### E. Provider account reading
 
@@ -202,7 +227,7 @@ bun run verify:provider-account --prepare
 
 ### F. Human TUI spot check
 
-When an upgrade touches an **extension-visible surface** — marker rendering, the command, contribution order or role, session resume — append one human interactive TUI spot check to the candidate checks. For OMP use the codebase-tools H1 acceptance checklist; for pi use `bun scripts/pi-tui-acceptance.ts --interactive` (or capture the fixed widths with `--widths 120,80,60`). A human operator judges content, spacing and narrow-width readability. An agent-observed terminal capture is not maintainer sign-off, and the script's fixed version assertion is not a candidate-version check.
+When an upgrade touches an **extension-visible surface** — marker rendering, the command, contribution order or role, session resume — append one human interactive TUI spot check to the candidate checks. For OMP use the codebase-tools H1 acceptance checklist; for pi use `bun scripts/pi-tui-acceptance.ts --interactive` (or capture the fixed widths with `--widths 120,80,60`). A human operator judges content, spacing and narrow-width readability. An agent-observed terminal capture is not maintainer sign-off. After the interactive host exits successfully, the operator must explicitly answer `yes` to the inspection checklist to publish `tui-human`; non-interactive input, refusal or unsuccessful exit cannot publish human acceptance.
 
 ### G. Judging and recording evidence
 

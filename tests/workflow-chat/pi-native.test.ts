@@ -1,4 +1,5 @@
-import { expect, test } from "bun:test";
+import { afterAll, beforeAll, expect, test } from "bun:test";
+import { beginPiAcceptance, type PiAcceptanceRun } from "../../scripts/support/pi-acceptance";
 import { cpSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { createServer } from "node:http";
@@ -6,12 +7,41 @@ import type { Socket } from "node:net";
 import { REPO_ROOT } from "../harness-dock/baseline";
 import { startCaptureServer } from "../harness-dock/capture-server";
 import { createRunRoot } from "../harness-dock/run-root";
-import { PiSession, piVersion, resolvePiCli, writePiModels } from "../harness-dock/pi-session";
+import { type PiCli, PiSession, resolvePiCli, writePiModels } from "../harness-dock/pi-session";
 
-/** Real Pi 1.4 RPC, isolated deployment/state, controlled HTTP and model protocol. */
+let cli: PiCli;
+let acceptance: PiAcceptanceRun | undefined;
+const registeredChecks = new Set<string>();
+const passedChecks = new Set<string>();
+let failed = false;
+beforeAll(async () => {
+	cli = resolvePiCli();
+	acceptance = await beginPiAcceptance("workflow-chat", cli);
+}, 20_000);
+afterAll(async () => {
+	if (!acceptance) return;
+	const complete = passedChecks.size === registeredChecks.size;
+	await acceptance.finish({
+		status: failed ? "failed" : complete ? "passed" : "blocked",
+		checks: [...passedChecks], complete,
+		detail: complete ? undefined : "Not all registered native checks passed (failed, filtered or interrupted run).",
+	});
+}, 20_000);
+function acceptanceTest(name: string, body: () => Promise<void>, timeout: number): void {
+	registeredChecks.add(name);
+	test(name, async () => {
+		try {
+			await body();
+			passedChecks.add(name);
+		} catch (error) {
+			failed = true;
+			throw error;
+		}
+	}, timeout);
+}
+
+/** Real installed Pi RPC, isolated deployment/state, controlled HTTP and model protocol. */
 async function dock(role: "manager" | "node") {
-	const cli = resolvePiCli();
-	expect(await piVersion(cli)).toBe("1.4.0");
 	const root = createRunRoot(`workflow-pi-${role}`);
 	const deployment = join(root.path, "deployment");
 	for (const tree of ["framework", "adapters", "extensions/workflow-chat", "entrypoints"]) {
@@ -120,7 +150,7 @@ async function dock(role: "manager" | "node") {
 }
 
 for (const role of ["manager", "node"] as const) {
-	test(`Pi 1.4 ${role}: native tools, first Prompt identity, strict parameters and original results`, async () => {
+	acceptanceTest(`Pi ${role}: native tools, first Prompt identity, strict parameters and original results`, async () => {
 		const run = await dock(role);
 		try {
 			const name = role === "manager" ? "run" : "report";
@@ -181,7 +211,7 @@ for (const role of ["manager", "node"] as const) {
 	}, 180_000);
 }
 
-test("Pi 1.4 collect owns a complete-body budget independent of ordinary requests", async () => {
+acceptanceTest("Pi collect owns a complete-body budget independent of ordinary requests", async () => {
 	const run = await dock("manager");
 	try {
 		run.answer({ retained: "complete body" });
@@ -194,7 +224,7 @@ test("Pi 1.4 collect owns a complete-body budget independent of ordinary request
 	} finally { await run.close(); }
 }, 60_000);
 
-test("Pi 1.4 tool AbortSignal releases transport, switch preserves auto startup, and shutdown releases active collect", async () => {
+acceptanceTest("Pi tool AbortSignal releases transport, switch preserves auto startup, and shutdown releases active collect", async () => {
 	const run = await dock("manager");
 	try {
 		const gate = run.holdBody();
