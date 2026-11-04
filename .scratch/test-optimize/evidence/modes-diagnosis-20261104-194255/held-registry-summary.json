@@ -1,0 +1,24 @@
+{
+  "exit": 0,
+  "wallSeconds": 74.06154359999982,
+  "command": [
+    "bun",
+    "test",
+    "./tests/harness-dock/model-cost-modes.test.ts",
+    "--test-name-pattern=an unlisted pair",
+    "--reporter=junit",
+    "--reporter-outfile=E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\test-optimize\\evidence\\modes-diagnosis-20261104-194255\\held-registry.xml"
+  ],
+  "registryEvents": [
+    {
+      "path": "/yaml",
+      "at": 1793792825.9380577,
+      "kind": "received"
+    },
+    {
+      "path": "/yaml",
+      "at": 1793792862.289727,
+      "kind": "received"
+    }
+  ]
+}

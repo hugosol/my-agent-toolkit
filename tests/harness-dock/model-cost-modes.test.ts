@@ -34,7 +34,7 @@ const record = readBaselineRecord();
 const PROVIDER_FIXTURE = path.join(import.meta.dir, "fixtures", "extension-root", "provider.ts");
 
 /**
- * A run-root copy of the extension's source with no shared framework configuration.
+ * A run-root copy of the extension's source and installed YAML dependency, with no shared framework configuration.
  *
  * The production entrypoint resolves `framework/config.yaml` from its own module location, and this
  * suite's own `apiKey: "dock-key"` is a resolvable credential, so a machine that has enabled the
@@ -49,6 +49,7 @@ function materializeModelCostSource(runRoot: RunRoot): string {
 	for (const relative of ["adapters", "framework", "extensions/model-cost", "entrypoints/omp"]) {
 		cpSync(path.join(REPO_ROOT, relative), path.join(source, relative), { recursive: true });
 	}
+	cpSync(path.join(REPO_ROOT, "node_modules", "yaml"), path.join(source, "node_modules", "yaml"), { recursive: true, dereference: true });
 	rmSync(path.join(source, "framework", "config.yaml"), { force: true });
 	return path.join(source, "entrypoints", "omp", "model-cost.ts");
 }

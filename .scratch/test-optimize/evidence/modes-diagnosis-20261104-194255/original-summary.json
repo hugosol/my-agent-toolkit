@@ -1,0 +1,41 @@
+[
+  {
+    "run": 1,
+    "exit": 0,
+    "wallSeconds": 4.001905000000079,
+    "command": [
+      "bun",
+      "test",
+      "./tests/harness-dock/model-cost-modes.test.ts",
+      "--test-name-pattern=an unlisted pair",
+      "--reporter=junit",
+      "--reporter-outfile=E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\test-optimize\\evidence\\modes-diagnosis-20261104-194255\\original-1.xml"
+    ]
+  },
+  {
+    "run": 2,
+    "exit": 0,
+    "wallSeconds": 4.64961570000014,
+    "command": [
+      "bun",
+      "test",
+      "./tests/harness-dock/model-cost-modes.test.ts",
+      "--test-name-pattern=an unlisted pair",
+      "--reporter=junit",
+      "--reporter-outfile=E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\test-optimize\\evidence\\modes-diagnosis-20261104-194255\\original-2.xml"
+    ]
+  },
+  {
+    "run": 3,
+    "exit": 0,
+    "wallSeconds": 3.868163099999947,
+    "command": [
+      "bun",
+      "test",
+      "./tests/harness-dock/model-cost-modes.test.ts",
+      "--test-name-pattern=an unlisted pair",
+      "--reporter=junit",
+      "--reporter-outfile=E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\test-optimize\\evidence\\modes-diagnosis-20261104-194255\\original-3.xml"
+    ]
+  }
+]

@@ -40,7 +40,7 @@ describe("integration command contract", () => {
 		expect(report.results[0].diagnostics).toEqual([]);
 		expect(report.complete).toBe(true);
 		expect(result.status).toBe(0);
-	});
+	}, 10_000);
 
 	test("missing adapter is a located dependency gap, not an invocation failure", () => {
 		const result = run("check-adapter-integrations.ts", "--extension", "codebase-tools", "--adapter", "integration-cli-absent-harness", "--json");

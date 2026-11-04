@@ -1,0 +1,15 @@
+{
+  "phase": "focus-integration",
+  "command": [
+    "bun",
+    "test",
+    "./tests/integrations/cli.test.ts",
+    "--reporter=junit",
+    "--reporter-outfile=E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\test-optimize\\evidence\\worktree-20261104-184849\\focus-integration.xml",
+    "--timings=E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\test-optimize\\evidence\\worktree-20261104-184849\\focus-integration-timings.json",
+    "--update-timings"
+  ],
+  "wallSeconds": 11.9334183,
+  "exit": 0,
+  "finishedAt": "2026-11-04T11:36:06.492Z"
+}

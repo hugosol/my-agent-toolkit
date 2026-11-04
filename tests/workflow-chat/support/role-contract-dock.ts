@@ -42,7 +42,7 @@ export async function roleContractDock(host: "omp" | "pi", endpoint: string): Pr
 			cpSync(join(REPO_ROOT, tree), join(deployment, tree), { recursive: true,
 				filter: candidate => candidate !== join(REPO_ROOT, "framework/.runtime") });
 		}
-		cpSync(join(REPO_ROOT, "node_modules/yaml"), join(deployment, "node_modules/yaml"), { recursive: true });
+		cpSync(join(REPO_ROOT, "node_modules/yaml"), join(deployment, "node_modules/yaml"), { recursive: true, dereference: true });
 		writeFileSync(join(deployment, "extensions/workflow-chat/config.yaml"),
 			`endpoint: ${endpoint}\nrequestTimeoutMs: 30000\ncollectTimeoutMs: 5460000\n`);
 		session = await PiSession.start({ cli: run.cli, runRoot: run.root,

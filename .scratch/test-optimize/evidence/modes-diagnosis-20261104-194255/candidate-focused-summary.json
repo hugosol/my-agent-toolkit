@@ -1,0 +1,14 @@
+{
+  "label": "candidate-focused",
+  "exit": 0,
+  "wallSeconds": 2.1718141000001197,
+  "command": [
+    "bun",
+    "test",
+    "./tests/harness-dock/model-cost-modes.test.ts",
+    "--test-name-pattern=an unlisted pair",
+    "--reporter=junit",
+    "--reporter-outfile=E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\test-optimize\\evidence\\modes-diagnosis-20261104-194255\\candidate-focused.xml"
+  ],
+  "registryEvents": []
+}

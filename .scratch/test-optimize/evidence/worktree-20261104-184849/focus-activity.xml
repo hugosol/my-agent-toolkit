@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="bun test" tests="3" assertions="25" failures="0" skipped="0" time="8.3069235">
+  <testsuite name="tests\harness-dock\activity-facts.test.ts" file="tests\harness-dock\activity-facts.test.ts" tests="3" assertions="25" failures="0" skipped="0" time="8.3026655" hostname="">
+    <testsuite name="a real session&apos;s activity is the reading its own Round transitions leave it in (P10; S3)" file="tests\harness-dock\activity-facts.test.ts" line="267" tests="2" assertions="16" failures="0" skipped="0" time="4.313" hostname="">
+      <testcase name="one prompt whose run continues through a tool reads as working once and idle once" classname="a real session&apos;s activity is the reading its own Round transitions leave it in (P10; S3)" time="2.233744" file="tests\harness-dock\activity-facts.test.ts" line="268" assertions="10" />
+      <testcase name="a second prompt in the same session opens its own Round and reads its own pair" classname="a real session&apos;s activity is the reading its own Round transitions leave it in (P10; S3)" time="2.080177" file="tests\harness-dock\activity-facts.test.ts" line="316" assertions="6" />
+    </testsuite>
+    <testsuite name="leaving a session is a transfer, not that session&apos;s own end (P33; S3)" file="tests\harness-dock\activity-facts.test.ts" line="346" tests="1" assertions="9" failures="0" skipped="0" time="3.957" hostname="">
+      <testcase name="a switch while the session is working states no reading of its own and commits nothing" classname="leaving a session is a transfer, not that session&apos;s own end (P33; S3)" time="3.957499" file="tests\harness-dock\activity-facts.test.ts" line="347" assertions="9" />
+    </testsuite>
+  </testsuite>
+</testsuites>

@@ -1,0 +1,65 @@
+[
+  {
+    "partition": "framework-definition",
+    "run": 1,
+    "command": [
+      "bun",
+      "test",
+      "./tests/framework/definition.test.ts",
+      "--reporter=junit",
+      "--reporter-outfile=.scratch/test-optimize/evidence/framework-definition/run-1.xml"
+    ],
+    "wallSeconds": 0.07826050000039686,
+    "exit": 0,
+    "junit": {
+      "name": "bun test",
+      "tests": "13",
+      "assertions": "53",
+      "failures": "0",
+      "skipped": "0",
+      "time": "0.0594264"
+    }
+  },
+  {
+    "partition": "framework-definition",
+    "run": 2,
+    "command": [
+      "bun",
+      "test",
+      "./tests/framework/definition.test.ts",
+      "--reporter=junit",
+      "--reporter-outfile=.scratch/test-optimize/evidence/framework-definition/run-2.xml"
+    ],
+    "wallSeconds": 0.05150449999973716,
+    "exit": 0,
+    "junit": {
+      "name": "bun test",
+      "tests": "13",
+      "assertions": "53",
+      "failures": "0",
+      "skipped": "0",
+      "time": "0.0351251"
+    }
+  },
+  {
+    "partition": "framework-definition",
+    "run": 3,
+    "command": [
+      "bun",
+      "test",
+      "./tests/framework/definition.test.ts",
+      "--reporter=junit",
+      "--reporter-outfile=.scratch/test-optimize/evidence/framework-definition/run-3.xml"
+    ],
+    "wallSeconds": 0.053176299999904586,
+    "exit": 0,
+    "junit": {
+      "name": "bun test",
+      "tests": "13",
+      "assertions": "53",
+      "failures": "0",
+      "skipped": "0",
+      "time": "0.0351121"
+    }
+  }
+]

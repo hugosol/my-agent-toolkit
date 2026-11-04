@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="bun test" tests="4" assertions="47" failures="0" skipped="0" time="9.5984206">
+  <testsuite name="tests\harness-dock\uncertain-effects.test.ts" file="tests\harness-dock\uncertain-effects.test.ts" tests="4" assertions="47" failures="0" skipped="0" time="9.594354" hostname="">
+    <testcase name="P22 P24 accepted state and dispatch survive caller cancellation without automatic redo" classname="" time="2.411037" file="tests\harness-dock\uncertain-effects.test.ts" line="12" assertions="18" />
+    <testcase name="P22 P23 P24 saved report remains queryable after disconnect and explicit new report remains usable" classname="" time="3.658087" file="tests\harness-dock\uncertain-effects.test.ts" line="49" assertions="15" />
+    <testcase name="P23 real history failure preserves committed state and target-level external effects" classname="" time="1.896338" file="tests\harness-dock\uncertain-effects.test.ts" line="96" assertions="8" />
+    <testcase name="P23 real non-success body remains visible and a repaired backend accepts explicit new calls" classname="" time="1.615136" file="tests\harness-dock\uncertain-effects.test.ts" line="117" assertions="6" />
+  </testsuite>
+</testsuites>

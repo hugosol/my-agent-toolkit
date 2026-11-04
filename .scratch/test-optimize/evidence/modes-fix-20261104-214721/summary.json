@@ -1,0 +1,113 @@
+[
+  {
+    "phase": "blocked-registry-1",
+    "command": [
+      "bun",
+      "test",
+      "./tests/harness-dock/model-cost-modes.test.ts",
+      "--reporter=junit",
+      "--reporter-outfile=E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\test-optimize\\evidence\\modes-fix-20261104-214721\\blocked-registry-1.xml"
+    ],
+    "wallSeconds": 14.485116200001357,
+    "exit": 0,
+    "registryEvents": [
+      {
+        "path": "/observer-control",
+        "time": 1793800042.0969465
+      }
+    ],
+    "junit": {
+      "name": "bun test",
+      "tests": "8",
+      "assertions": "71",
+      "failures": "0",
+      "skipped": "0",
+      "time": "14.4703367"
+    }
+  },
+  {
+    "phase": "blocked-registry-2",
+    "command": [
+      "bun",
+      "test",
+      "./tests/harness-dock/model-cost-modes.test.ts",
+      "--reporter=junit",
+      "--reporter-outfile=E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\test-optimize\\evidence\\modes-fix-20261104-214721\\blocked-registry-2.xml"
+    ],
+    "wallSeconds": 14.831845299999259,
+    "exit": 0,
+    "registryEvents": [
+      {
+        "path": "/observer-control",
+        "time": 1793800056.780991
+      }
+    ],
+    "junit": {
+      "name": "bun test",
+      "tests": "8",
+      "assertions": "71",
+      "failures": "0",
+      "skipped": "0",
+      "time": "14.8165071"
+    }
+  },
+  {
+    "phase": "typecheck",
+    "command": [
+      "bun",
+      "run",
+      "typecheck"
+    ],
+    "wallSeconds": 1.361318500001289,
+    "exit": 0
+  },
+  {
+    "phase": "full-suite",
+    "command": [
+      "bun",
+      "run",
+      "test",
+      "--reporter=junit",
+      "--reporter-outfile=E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\test-optimize\\evidence\\modes-fix-20261104-214721\\full-suite.xml",
+      "--timings=E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\test-optimize\\evidence\\modes-fix-20261104-214721\\full-suite-timings.json",
+      "--update-timings"
+    ],
+    "wallSeconds": 118.29037749999952,
+    "exit": 1,
+    "junit": {
+      "name": "bun test",
+      "tests": "1815",
+      "assertions": "12096",
+      "failures": "1",
+      "skipped": "0",
+      "time": "118.2429328"
+    },
+    "failures": [
+      [
+        "tests\\harness-dock\\uncertain-effects.test.ts",
+        "P22 P23 P24 saved report remains queryable after disconnect and explicit new report remains usable",
+        "ENOENT: no such file or directory, lstat 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\framework\\docs\\pi-acceptance.json.lock'"
+      ]
+    ]
+  },
+  {
+    "phase": "unrelated-failure-focused",
+    "command": [
+      "bun",
+      "test",
+      "./tests/harness-dock/uncertain-effects.test.ts",
+      "--reporter=junit",
+      "--reporter-outfile=E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\test-optimize\\evidence\\modes-fix-20261104-214721\\unrelated-failure-focused.xml"
+    ],
+    "wallSeconds": 9.612410899999304,
+    "exit": 0,
+    "junit": {
+      "name": "bun test",
+      "tests": "4",
+      "assertions": "47",
+      "failures": "0",
+      "skipped": "0",
+      "time": "9.5984206"
+    }
+  }
+]

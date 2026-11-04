@@ -48,7 +48,7 @@ async function dock(role: "manager" | "node") {
 		cpSync(join(REPO_ROOT, tree), join(deployment, tree), { recursive: true,
 			filter: candidate => candidate !== join(REPO_ROOT, "framework/.runtime") });
 	}
-	cpSync(join(REPO_ROOT, "node_modules/yaml"), join(deployment, "node_modules/yaml"), { recursive: true });
+	cpSync(join(REPO_ROOT, "node_modules/yaml"), join(deployment, "node_modules/yaml"), { recursive: true, dereference: true });
 	const calls: { path: string; body: Record<string, unknown> }[] = [];
 	let answer: unknown = { ok: true };
 	let status = 200;

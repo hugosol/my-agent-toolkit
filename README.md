@@ -34,13 +34,26 @@ is separate from the historical supported combination above; see the
 [testing conventions](docs/agents/testing.md#test-runtime).
 
 ```bash
-bun install                 # once
+bun install --frozen-lockfile # once per checkout/worktree
 bun run typecheck
 bun run test:framework      # framework capabilities C1–C15 (the upgrade alarm)
 bun run test:codebase-tools # extension behavior (permanent)
 bun run test:dock        # the dock and the fixed baseline record, four isolated files at a time
 bun run test:dock:serial # the same dock serially, for diagnosing shared state or constrained machines
 ```
+
+[`bunfig.toml`](bunfig.toml) enables Bun's isolated linker and
+[global virtual store](https://bun.com/docs/pm/global-store). Each checkout keeps its own
+`node_modules` link tree; eligible packages with the same resolved dependency graph share
+entries under the user's Bun cache. Run the install command above in each new worktree;
+do not link its entire `node_modules` to another checkout. Packages that cannot safely be
+shared remain project-local.
+
+No machine-specific cache path is committed. To choose one, set `BUN_INSTALL_CACHE_DIR`
+consistently for the participating worktrees. Treat shared package contents as read-only:
+`bun pm cache rm` also removes the global store and breaks its consumers until each runs
+`bun install` again. Standalone temporary deployments must still explicitly provide their
+runtime dependencies; this setting does not make packages discoverable from arbitrary paths.
 
 The suites that drive a real session materialise the isolated exact install of the supported
 version into the gitignored `.cache/omp-baseline/18.5.0` on first run and reuse it afterwards.

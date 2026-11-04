@@ -1,0 +1,422 @@
+[
+  {
+    "file": "tests\\connect-bot\\harness-exit-budget.test.ts",
+    "name": "the harness ends on its own lifecycle with a minute-budget unregister still on the wire",
+    "time": "0.077356",
+    "message": "ENOENT: no such file or directory, lstat 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\framework\\.runtime\\owner-access-76d7546d8d0beb2afd08d40cc4467365.json.33148.3fa29b03.staged'",
+    "detail": "Error: ENOENT: no such file or directory, lstat 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\framework\\.runtime\\owner-access-76d7546d8d0beb2afd08d40cc4467365.json.33148.3fa29b03.staged'\n      at getStatsSync (internal:fs/cp-sync:136:151)\n      at checkPathsSync (internal:fs/cp-sync:98:43)\n      at copyDir (internal:fs/cp-sync:297:122)\n      at mkDirAndCopy (internal:fs/cp-sync:293:34)\n      at copyDir (internal:fs/cp-sync:299:15)\n      at mkDirAndCopy (internal:fs/cp-sync:293:34)\n      at materializeDeployment (tests/connect-bot/harness-exit-budget.test.ts:77:3)\n      at tests/connect-bot/harness-exit-budget.test.ts:98:23\n"
+  },
+  {
+    "file": "tests\\framework\\local-access.test.ts",
+    "name": "the pi assembly offers an owner's values only for a follow field, and its observation seat wherever it spawns",
+    "time": "0.137777",
+    "message": "EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\framework-local-access-6TMlbi\\node_modules\\yaml'",
+    "detail": "Error: EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\framework-local-access-6TMlbi\\node_modules\\yaml'\n      at tests/framework/local-access.test.ts:841:4\n"
+  },
+  {
+    "file": "tests\\framework\\pi-subagent-provider-path.test.ts",
+    "name": "public assembly preserves relative configured public export",
+    "time": "0.139408",
+    "message": "EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\pi-provider-path-qGUhsX\\node_modules\\yaml'",
+    "detail": "Error: EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\pi-provider-path-qGUhsX\\node_modules\\yaml'\n      at deployedAdapter (tests/framework/pi-subagent-provider-path.test.ts:108:2)\n      at tests/framework/pi-subagent-provider-path.test.ts:121:25\n"
+  },
+  {
+    "file": "tests\\framework\\pi-subagent-provider-path.test.ts",
+    "name": "public assembly preserves absent optional artifact",
+    "time": "0.144408",
+    "message": "EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\pi-provider-path-pOUAzm\\node_modules\\yaml'",
+    "detail": "Error: EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\pi-provider-path-pOUAzm\\node_modules\\yaml'\n      at deployedAdapter (tests/framework/pi-subagent-provider-path.test.ts:108:2)\n      at tests/framework/pi-subagent-provider-path.test.ts:121:25\n"
+  },
+  {
+    "file": "tests\\framework\\pi-subagent-provider-path.test.ts",
+    "name": "public assembly preserves invalid explicit shape",
+    "time": "0.138002",
+    "message": "EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\pi-provider-path-dE0Sfd\\node_modules\\yaml'",
+    "detail": "Error: EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\pi-provider-path-dE0Sfd\\node_modules\\yaml'\n      at deployedAdapter (tests/framework/pi-subagent-provider-path.test.ts:108:2)\n      at tests/framework/pi-subagent-provider-path.test.ts:121:25\n"
+  },
+  {
+    "file": "tests\\framework\\pi-subagent-provider-path.test.ts",
+    "name": "public assembly preserves missing explicit package",
+    "time": "0.132527",
+    "message": "EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\pi-provider-path-WTF0Vd\\node_modules\\yaml'",
+    "detail": "Error: EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\pi-provider-path-WTF0Vd\\node_modules\\yaml'\n      at deployedAdapter (tests/framework/pi-subagent-provider-path.test.ts:108:2)\n      at tests/framework/pi-subagent-provider-path.test.ts:121:25\n"
+  },
+  {
+    "file": "tests\\harness-dock\\manager-collect-budget.test.ts",
+    "name": "P9/P17 collect outlives the ordinary budget and waits with ready plus running nodes",
+    "time": "0.189968",
+    "message": "EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-manager-state-A2da5x\\deployment\\node_modules\\yaml'",
+    "detail": "Error: EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-manager-state-A2da5x\\deployment\\node_modules\\yaml'\n      at managerDock (tests/workflow-chat/support/manager-dock.ts:33:2)\n      at managerScenario (tests/workflow-chat/support/manager-scenario.ts:14:16)\n      at tests/harness-dock/manager-collect-budget.test.ts:8:22\n"
+  },
+  {
+    "file": "tests\\harness-dock\\manager-collect-budget.test.ts",
+    "name": "P9 collect's own shorter budget expires as a client error, not backend timeout",
+    "time": "0.171543",
+    "message": "EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-manager-state-EKAod9\\deployment\\node_modules\\yaml'",
+    "detail": "Error: EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-manager-state-EKAod9\\deployment\\node_modules\\yaml'\n      at managerDock (tests/workflow-chat/support/manager-dock.ts:33:2)\n      at managerScenario (tests/workflow-chat/support/manager-scenario.ts:14:16)\n      at tests/harness-dock/manager-collect-budget.test.ts:29:22\n"
+  },
+  {
+    "file": "tests\\harness-dock\\manager-collect-lifecycle.test.ts",
+    "name": "P19 real OMP abort releases collect after the real backend response head",
+    "time": "0.180488",
+    "message": "EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-manager-state-WSOiZc\\deployment\\node_modules\\yaml'",
+    "detail": "Error: EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-manager-state-WSOiZc\\deployment\\node_modules\\yaml'\n      at managerDock (tests/workflow-chat/support/manager-dock.ts:33:2)\n      at managerScenario (tests/workflow-chat/support/manager-scenario.ts:14:16)\n      at tests/harness-dock/manager-collect-lifecycle.test.ts:10:23\n"
+  },
+  {
+    "file": "tests\\harness-dock\\manager-collect-lifecycle.test.ts",
+    "name": "P19 real OMP new_session releases collect after the real backend response head",
+    "time": "0.176847",
+    "message": "EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-manager-state-qjlYgG\\deployment\\node_modules\\yaml'",
+    "detail": "Error: EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-manager-state-qjlYgG\\deployment\\node_modules\\yaml'\n      at managerDock (tests/workflow-chat/support/manager-dock.ts:33:2)\n      at managerScenario (tests/workflow-chat/support/manager-scenario.ts:14:16)\n      at tests/harness-dock/manager-collect-lifecycle.test.ts:10:23\n"
+  },
+  {
+    "file": "tests\\harness-dock\\manager-collect-lifecycle.test.ts",
+    "name": "P19 real OMP shutdown releases collect after the real backend response head",
+    "time": "0.226508",
+    "message": "EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-manager-state-eZnQnG\\deployment\\node_modules\\yaml'",
+    "detail": "Error: EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-manager-state-eZnQnG\\deployment\\node_modules\\yaml'\n      at managerDock (tests/workflow-chat/support/manager-dock.ts:33:2)\n      at managerScenario (tests/workflow-chat/support/manager-scenario.ts:14:16)\n      at tests/harness-dock/manager-collect-lifecycle.test.ts:10:23\n"
+  },
+  {
+    "file": "tests\\harness-dock\\manager-collect-pending.test.ts",
+    "name": "P17/P18 collect keeps real handoff pending across reads, completion and interleaved execution reports",
+    "time": "0.173011",
+    "message": "EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-manager-state-5F7vck\\deployment\\node_modules\\yaml'",
+    "detail": "Error: EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-manager-state-5F7vck\\deployment\\node_modules\\yaml'\n      at managerDock (tests/workflow-chat/support/manager-dock.ts:33:2)\n      at managerScenario (tests/workflow-chat/support/manager-scenario.ts:14:16)\n      at tests/harness-dock/manager-collect-pending.test.ts:9:22\n"
+  },
+  {
+    "file": "tests\\harness-dock\\manager-dispatch-recovery.test.ts",
+    "name": "P12 dispatch preserves success rejection and started-but-failed target in one batch",
+    "time": "0.227931",
+    "message": "EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-manager-state-bFYbAA\\deployment\\node_modules\\yaml'",
+    "detail": "Error: EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-manager-state-bFYbAA\\deployment\\node_modules\\yaml'\n      at symlinkSync (unknown:1:1)\n      at managerDock (tests/workflow-chat/support/manager-dock.ts:33:2)\n      at managerScenario (tests/workflow-chat/support/manager-scenario.ts:14:16)\n      at tests/harness-dock/manager-dispatch-recovery.test.ts:10:22\n      at processTicksAndRejections (native:7:39)\n"
+  },
+  {
+    "file": "tests\\harness-dock\\manager-dispatch-recovery.test.ts",
+    "name": "P14 recover requires human confirmation and resumes original execution while paused",
+    "time": "0.176312",
+    "message": "EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-manager-state-bFWzPI\\deployment\\node_modules\\yaml'",
+    "detail": "Error: EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-manager-state-bFWzPI\\deployment\\node_modules\\yaml'\n      at managerDock (tests/workflow-chat/support/manager-dock.ts:33:2)\n      at managerScenario (tests/workflow-chat/support/manager-scenario.ts:14:16)\n      at tests/harness-dock/manager-dispatch-recovery.test.ts:35:22\n"
+  },
+  {
+    "file": "tests\\harness-dock\\manager-dispatch-recovery.test.ts",
+    "name": "P12 P14 retry requires confirmation and running Run and retains new and old execution effects",
+    "time": "0.173838",
+    "message": "EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-manager-state-J4gJd6\\deployment\\node_modules\\yaml'",
+    "detail": "Error: EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-manager-state-J4gJd6\\deployment\\node_modules\\yaml'\n      at managerDock (tests/workflow-chat/support/manager-dock.ts:33:2)\n      at managerScenario (tests/workflow-chat/support/manager-scenario.ts:14:16)\n      at tests/harness-dock/manager-dispatch-recovery.test.ts:69:22\n"
+  },
+  {
+    "file": "tests\\harness-dock\\manager-dispatch-recovery.test.ts",
+    "name": "P14 reconciliation preserves uncertain then absence and verifies created original Chat",
+    "time": "0.181984",
+    "message": "EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-manager-state-S8HFFm\\deployment\\node_modules\\yaml'",
+    "detail": "Error: EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-manager-state-S8HFFm\\deployment\\node_modules\\yaml'\n      at managerDock (tests/workflow-chat/support/manager-dock.ts:33:2)\n      at managerScenario (tests/workflow-chat/support/manager-scenario.ts:14:16)\n      at tests/harness-dock/manager-dispatch-recovery.test.ts:118:22\n"
+  },
+  {
+    "file": "tests\\harness-dock\\manager-resume-finish.test.ts",
+    "name": "P10/P11/P13 resume restores eligibility without dispatch, retry or termination",
+    "time": "0.181396",
+    "message": "EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-manager-state-kjBVNl\\deployment\\node_modules\\yaml'",
+    "detail": "Error: EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-manager-state-kjBVNl\\deployment\\node_modules\\yaml'\n      at managerDock (tests/workflow-chat/support/manager-dock.ts:33:2)\n      at managerScenario (tests/workflow-chat/support/manager-scenario.ts:14:16)\n      at tests/harness-dock/manager-resume-finish.test.ts:9:22\n"
+  },
+  {
+    "file": "tests\\harness-dock\\manager-resume-finish.test.ts",
+    "name": "P10/P11/P13 finish obeys all-node completion and retains terminal facts",
+    "time": "0.165446",
+    "message": "EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-manager-state-dzpY5B\\deployment\\node_modules\\yaml'",
+    "detail": "Error: EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-manager-state-dzpY5B\\deployment\\node_modules\\yaml'\n      at managerDock (tests/workflow-chat/support/manager-dock.ts:33:2)\n      at managerScenario (tests/workflow-chat/support/manager-scenario.ts:14:16)\n      at tests/harness-dock/manager-resume-finish.test.ts:28:22\n"
+  },
+  {
+    "file": "tests\\harness-dock\\manager-state-actions.test.ts",
+    "name": "P10/P11/P13 explicit complete preserves first handoff and only unlocks satisfied dependencies",
+    "time": "0.189165",
+    "message": "EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-manager-state-z0kwQE\\deployment\\node_modules\\yaml'",
+    "detail": "Error: EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-manager-state-z0kwQE\\deployment\\node_modules\\yaml'\n      at symlinkSync (unknown:1:1)\n      at managerDock (tests/workflow-chat/support/manager-dock.ts:33:2)\n      at managerScenario (tests/workflow-chat/support/manager-scenario.ts:14:16)\n      at tests/harness-dock/manager-state-actions.test.ts:10:22\n      at processTicksAndRejections (native:7:39)\n"
+  },
+  {
+    "file": "tests\\harness-dock\\manager-state-actions.test.ts",
+    "name": "P10/P11/P13 pause leaves existing execution alive and rejects new dispatch",
+    "time": "0.163033",
+    "message": "EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-manager-state-eHHa4n\\deployment\\node_modules\\yaml'",
+    "detail": "Error: EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-manager-state-eHHa4n\\deployment\\node_modules\\yaml'\n      at managerDock (tests/workflow-chat/support/manager-dock.ts:33:2)\n      at managerScenario (tests/workflow-chat/support/manager-scenario.ts:14:16)\n      at tests/harness-dock/manager-state-actions.test.ts:55:22\n"
+  },
+  {
+    "file": "tests\\harness-dock\\manager-state-actions.test.ts",
+    "name": "P10/P11/P13 fail preserves original execution and first reason without extra host actions",
+    "time": "0.388662",
+    "message": "EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-manager-state-6tjHz9\\deployment\\node_modules\\yaml'",
+    "detail": "Error: EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-manager-state-6tjHz9\\deployment\\node_modules\\yaml'\n      at managerDock (tests/workflow-chat/support/manager-dock.ts:33:2)\n      at managerScenario (tests/workflow-chat/support/manager-scenario.ts:14:16)\n      at tests/harness-dock/manager-state-actions.test.ts:80:22\n"
+  },
+  {
+    "file": "tests\\harness-dock\\node-report-contract.test.ts",
+    "name": "omp: P7/P8/P26 report rejects malformed and legacy calls without persistence and preserves native identity",
+    "time": "0.169299",
+    "message": "EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-node-s7e9g2\\deployment\\node_modules\\yaml'",
+    "detail": "Error: EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-node-s7e9g2\\deployment\\node_modules\\yaml'\n      at promptDock (tests/workflow-chat/support/prompt-dock.ts:37:2)\n      at roleContractDock (tests/workflow-chat/support/role-contract-dock.ts:20:22)\n      at tests/harness-dock/node-report-contract.test.ts:17:16\n"
+  },
+  {
+    "file": "tests\\harness-dock\\node-report-contract.test.ts",
+    "name": "pi: P7/P8/P26 report rejects malformed and legacy calls without persistence and preserves native identity",
+    "time": "0.255368",
+    "message": "EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-pi-report-contract-jhLpUJ\\deployment\\node_modules\\yaml'",
+    "detail": "Error: EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-pi-report-contract-jhLpUJ\\deployment\\node_modules\\yaml'\n      at roleContractDock (tests/workflow-chat/support/role-contract-dock.ts:45:3)\n      at tests/harness-dock/node-report-contract.test.ts:17:16\n"
+  },
+  {
+    "file": "tests\\harness-dock\\node-report.test.ts",
+    "name": "P15/P16 actual node report is backend-attributed, saved and retrievable despite real notification refusal, without completing node",
+    "time": "0.163261",
+    "message": "EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-node-report-SIKhw9\\deployment\\node_modules\\yaml'",
+    "detail": "Error: EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-node-report-SIKhw9\\deployment\\node_modules\\yaml'\n      at nodeDock (tests/workflow-chat/support/node-dock.ts:29:2)\n      at tests/harness-dock/node-report.test.ts:14:21\n"
+  },
+  {
+    "file": "tests\\harness-dock\\role-config-failures.test.ts",
+    "name": "P8 manager missing configuration fails recognizably without a fallback request",
+    "time": "0.120956",
+    "message": "EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-manager-sZux5D\\deployment\\node_modules\\yaml'",
+    "detail": "Error: EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-manager-sZux5D\\deployment\\node_modules\\yaml'\n      at promptDock (tests/workflow-chat/support/prompt-dock.ts:37:2)\n      at tests/harness-dock/role-config-failures.test.ts:19:24\n"
+  },
+  {
+    "file": "tests\\harness-dock\\role-config-failures.test.ts",
+    "name": "P8 manager yaml configuration fails recognizably without a fallback request",
+    "time": "0.109136",
+    "message": "EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-manager-xSxj24\\deployment\\node_modules\\yaml'",
+    "detail": "Error: EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-manager-xSxj24\\deployment\\node_modules\\yaml'\n      at promptDock (tests/workflow-chat/support/prompt-dock.ts:37:2)\n      at tests/harness-dock/role-config-failures.test.ts:19:24\n"
+  },
+  {
+    "file": "tests\\harness-dock\\role-config-failures.test.ts",
+    "name": "P8 manager business configuration fails recognizably without a fallback request",
+    "time": "0.14571",
+    "message": "EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-manager-7fNDwg\\deployment\\node_modules\\yaml'",
+    "detail": "Error: EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-manager-7fNDwg\\deployment\\node_modules\\yaml'\n      at promptDock (tests/workflow-chat/support/prompt-dock.ts:37:2)\n      at tests/harness-dock/role-config-failures.test.ts:19:24\n"
+  },
+  {
+    "file": "tests\\harness-dock\\role-config-failures.test.ts",
+    "name": "P8 node missing configuration fails recognizably without a fallback request",
+    "time": "0.144707",
+    "message": "EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-node-rF6Kyz\\deployment\\node_modules\\yaml'",
+    "detail": "Error: EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-node-rF6Kyz\\deployment\\node_modules\\yaml'\n      at promptDock (tests/workflow-chat/support/prompt-dock.ts:37:2)\n      at tests/harness-dock/role-config-failures.test.ts:19:24\n"
+  },
+  {
+    "file": "tests\\harness-dock\\role-config-failures.test.ts",
+    "name": "P8 node yaml configuration fails recognizably without a fallback request",
+    "time": "0.147295",
+    "message": "EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-node-nOrgll\\deployment\\node_modules\\yaml'",
+    "detail": "Error: EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-node-nOrgll\\deployment\\node_modules\\yaml'\n      at promptDock (tests/workflow-chat/support/prompt-dock.ts:37:2)\n      at tests/harness-dock/role-config-failures.test.ts:19:24\n"
+  },
+  {
+    "file": "tests\\harness-dock\\role-config-failures.test.ts",
+    "name": "P8 node business configuration fails recognizably without a fallback request",
+    "time": "0.135096",
+    "message": "EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-node-u4qobv\\deployment\\node_modules\\yaml'",
+    "detail": "Error: EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-node-u4qobv\\deployment\\node_modules\\yaml'\n      at promptDock (tests/workflow-chat/support/prompt-dock.ts:37:2)\n      at tests/harness-dock/role-config-failures.test.ts:19:24\n"
+  },
+  {
+    "file": "tests\\harness-dock\\role-guidance-rehearsal.test.ts",
+    "name": "P26 injected guidance supports notification failure, original recovery, independent retry and real manual handoff rehearsal",
+    "time": "0.165667",
+    "message": "EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-manager-state-Hcy5OK\\deployment\\node_modules\\yaml'",
+    "detail": "Error: EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-manager-state-Hcy5OK\\deployment\\node_modules\\yaml'\n      at managerDock (tests/workflow-chat/support/manager-dock.ts:33:2)\n      at managerScenario (tests/workflow-chat/support/manager-scenario.ts:14:16)\n      at tests/harness-dock/role-guidance-rehearsal.test.ts:14:22\n"
+  },
+  {
+    "file": "tests\\harness-dock\\role-identity-integration.test.ts",
+    "name": "P1/P2/P6 independent automatic roles use native identity and preserve real backend association decisions",
+    "time": "0.176613",
+    "message": "EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-manager-MlA6XQ\\deployment\\node_modules\\yaml'",
+    "detail": "Error: EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-manager-MlA6XQ\\deployment\\node_modules\\yaml'\n      at promptDock (tests/workflow-chat/support/prompt-dock.ts:37:2)\n      at tests/harness-dock/role-identity-integration.test.ts:20:24\n"
+  },
+  {
+    "file": "tests\\harness-dock\\role-missing-identity.test.ts",
+    "name": "P6 manager refuses missing native tool identity without guessing name, Owner or cwd",
+    "time": "0.160419",
+    "message": "EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-manager-8gBDFA\\deployment\\node_modules\\yaml'",
+    "detail": "Error: EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-manager-8gBDFA\\deployment\\node_modules\\yaml'\n      at promptDock (tests/workflow-chat/support/prompt-dock.ts:37:2)\n      at tests/harness-dock/role-missing-identity.test.ts:14:23\n"
+  },
+  {
+    "file": "tests\\harness-dock\\role-missing-identity.test.ts",
+    "name": "P6 node refuses missing native tool identity without guessing name, Owner or cwd",
+    "time": "0.208497",
+    "message": "EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-node-asX32I\\deployment\\node_modules\\yaml'",
+    "detail": "Error: EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-node-asX32I\\deployment\\node_modules\\yaml'\n      at promptDock (tests/workflow-chat/support/prompt-dock.ts:37:2)\n      at tests/harness-dock/role-missing-identity.test.ts:14:23\n"
+  },
+  {
+    "file": "tests\\harness-dock\\role-prompts.test.ts",
+    "name": "P26 manager Prompt identity is persisted once and ordinary rounds and switches do not reset it",
+    "time": "0.149149",
+    "message": "EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-manager-IxoOHs\\deployment\\node_modules\\yaml'",
+    "detail": "Error: EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-manager-IxoOHs\\deployment\\node_modules\\yaml'\n      at promptDock (tests/workflow-chat/support/prompt-dock.ts:37:2)\n      at tests/harness-dock/role-prompts.test.ts:10:22\n"
+  },
+  {
+    "file": "tests\\harness-dock\\role-prompts.test.ts",
+    "name": "P26 node Prompt identity is persisted once and ordinary rounds and switches do not reset it",
+    "time": "0.139837",
+    "message": "EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-node-DAsQvB\\deployment\\node_modules\\yaml'",
+    "detail": "Error: EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-node-DAsQvB\\deployment\\node_modules\\yaml'\n      at promptDock (tests/workflow-chat/support/prompt-dock.ts:37:2)\n      at tests/harness-dock/role-prompts.test.ts:10:22\n"
+  },
+  {
+    "file": "tests\\harness-dock\\role-session-isolation.test.ts",
+    "name": "P3 overlapping native role Sessions cancel independently and both accept subsequent explicit requests",
+    "time": "0.193658",
+    "message": "EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-manager-ydBeSm\\deployment\\node_modules\\yaml'",
+    "detail": "Error: EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-manager-ydBeSm\\deployment\\node_modules\\yaml'\n      at promptDock (tests/workflow-chat/support/prompt-dock.ts:37:2)\n      at tests/harness-dock/role-session-isolation.test.ts:52:25\n"
+  },
+  {
+    "file": "tests\\harness-dock\\role-stable-config.test.ts",
+    "name": "P7 both automatic roles select deployment endpoint and budgets despite two misleading cwd trees",
+    "time": "0.192889",
+    "message": "EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-manager-0NnFBv\\deployment\\node_modules\\yaml'",
+    "detail": "Error: EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-manager-0NnFBv\\deployment\\node_modules\\yaml'\n      at promptDock (tests/workflow-chat/support/prompt-dock.ts:37:2)\n      at tests/harness-dock/role-stable-config.test.ts:47:25\n"
+  },
+  {
+    "file": "tests\\harness-dock\\uncertain-effects.test.ts",
+    "name": "P22 P24 accepted state and dispatch survive caller cancellation without automatic redo",
+    "time": "0.161676",
+    "message": "EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-manager-state-GuhQi7\\deployment\\node_modules\\yaml'",
+    "detail": "Error: EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-manager-state-GuhQi7\\deployment\\node_modules\\yaml'\n      at managerDock (tests/workflow-chat/support/manager-dock.ts:33:2)\n      at managerScenario (tests/workflow-chat/support/manager-scenario.ts:14:16)\n      at tests/harness-dock/uncertain-effects.test.ts:14:22\n"
+  },
+  {
+    "file": "tests\\harness-dock\\uncertain-effects.test.ts",
+    "name": "P22 P23 P24 saved report remains queryable after disconnect and explicit new report remains usable",
+    "time": "0.172157",
+    "message": "EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-manager-state-j2wbrr\\deployment\\node_modules\\yaml'",
+    "detail": "Error: EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-manager-state-j2wbrr\\deployment\\node_modules\\yaml'\n      at managerDock (tests/workflow-chat/support/manager-dock.ts:33:2)\n      at managerScenario (tests/workflow-chat/support/manager-scenario.ts:14:16)\n      at tests/harness-dock/uncertain-effects.test.ts:51:22\n"
+  },
+  {
+    "file": "tests\\harness-dock\\uncertain-effects.test.ts",
+    "name": "P23 real history failure preserves committed state and target-level external effects",
+    "time": "0.163969",
+    "message": "EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-manager-state-tthIih\\deployment\\node_modules\\yaml'",
+    "detail": "Error: EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-manager-state-tthIih\\deployment\\node_modules\\yaml'\n      at managerDock (tests/workflow-chat/support/manager-dock.ts:33:2)\n      at managerScenario (tests/workflow-chat/support/manager-scenario.ts:14:16)\n      at tests/harness-dock/uncertain-effects.test.ts:97:22\n"
+  },
+  {
+    "file": "tests\\harness-dock\\uncertain-effects.test.ts",
+    "name": "P23 real non-success body remains visible and a repaired backend accepts explicit new calls",
+    "time": "0.162675",
+    "message": "EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-manager-state-6IPKU1\\deployment\\node_modules\\yaml'",
+    "detail": "Error: EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-manager-state-6IPKU1\\deployment\\node_modules\\yaml'\n      at managerDock (tests/workflow-chat/support/manager-dock.ts:33:2)\n      at managerScenario (tests/workflow-chat/support/manager-scenario.ts:14:16)\n      at tests/harness-dock/uncertain-effects.test.ts:118:22\n"
+  },
+  {
+    "file": "tests\\workflow-chat\\manager-collect-termination.test.ts",
+    "name": "P21 collect distinguishes backend expiry, cancellation, budget, broken streams and JSON failure",
+    "time": "0.192357",
+    "message": "EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-manager-state-PIzM3J\\deployment\\node_modules\\yaml'",
+    "detail": "Error: EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-manager-state-PIzM3J\\deployment\\node_modules\\yaml'\n      at managerDock (tests/workflow-chat/support/manager-dock.ts:33:2)\n      at tests/workflow-chat/manager-collect-termination.test.ts:37:21\n"
+  },
+  {
+    "file": "tests\\workflow-chat\\manager-collect.test.ts",
+    "name": "P17 collect preserves five literal reasons, snapshots and body-free pending summaries",
+    "time": "0.364087",
+    "message": "EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-manager-state-rw6nmM\\deployment\\node_modules\\yaml'",
+    "detail": "Error: EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-manager-state-rw6nmM\\deployment\\node_modules\\yaml'\n      at managerDock (tests/workflow-chat/support/manager-dock.ts:33:2)\n      at tests/workflow-chat/manager-collect.test.ts:19:21\n"
+  },
+  {
+    "file": "tests\\workflow-chat\\manager-dispatch-parameters.test.ts",
+    "name": "P10 dispatch sends literal nodes and rejects identity and inapplicable fields",
+    "time": "0.363659",
+    "message": "EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-manager-state-FwZrna\\deployment\\node_modules\\yaml'",
+    "detail": "Error: EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-manager-state-FwZrna\\deployment\\node_modules\\yaml'\n      at managerDock (tests/workflow-chat/support/manager-dock.ts:33:2)\n      at tests/workflow-chat/manager-dispatch-parameters.test.ts:14:21\n"
+  },
+  {
+    "file": "tests\\workflow-chat\\manager-parameters.test.ts",
+    "name": "P10 basic actions send only applicable literal fields and reject identity or inapplicable parameters",
+    "time": "0.214245",
+    "message": "EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-manager-state-ktFkte\\deployment\\node_modules\\yaml'",
+    "detail": "Error: EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-manager-state-ktFkte\\deployment\\node_modules\\yaml'\n      at managerDock (tests/workflow-chat/support/manager-dock.ts:33:2)\n      at tests/workflow-chat/manager-parameters.test.ts:14:21\n"
+  },
+  {
+    "file": "tests\\workflow-chat\\manager-recovery-parameters.test.ts",
+    "name": "P10 reconcile_dispatch forwards three findings and rejects model Chat references",
+    "time": "0.212602",
+    "message": "EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-manager-state-wMsmHu\\deployment\\node_modules\\yaml'",
+    "detail": "Error: EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-manager-state-wMsmHu\\deployment\\node_modules\\yaml'\n      at managerDock (tests/workflow-chat/support/manager-dock.ts:33:2)\n      at tests/workflow-chat/manager-recovery-parameters.test.ts:13:21\n"
+  },
+  {
+    "file": "tests\\workflow-chat\\manager-status.test.ts",
+    "name": "P10/P11 manager auto status uses its native identity and preserves backend facts",
+    "time": "0.180785",
+    "message": "EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-manager-state-Vw8gv7\\deployment\\node_modules\\yaml'",
+    "detail": "Error: EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-manager-state-Vw8gv7\\deployment\\node_modules\\yaml'\n      at managerDock (tests/workflow-chat/support/manager-dock.ts:33:2)\n      at tests/workflow-chat/manager-status.test.ts:13:21\n"
+  },
+  {
+    "file": "tests\\workflow-chat\\node-report.test.ts",
+    "name": "P15 node auto report sends explicit handoff parameters plus native Session identity and preserves backend attribution",
+    "time": "0.374356",
+    "message": "EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-node-report-YAFEAJ\\deployment\\node_modules\\yaml'",
+    "detail": "Error: EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-node-report-YAFEAJ\\deployment\\node_modules\\yaml'\n      at nodeDock (tests/workflow-chat/support/node-dock.ts:29:2)\n      at tests/workflow-chat/node-report.test.ts:19:21\n"
+  },
+  {
+    "file": "tests\\workflow-chat\\pi-native.test.ts",
+    "name": "Pi manager: native tools, first Prompt identity, strict parameters and original results",
+    "time": "0.14155",
+    "message": "EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-workflow-pi-manager-txMbtL\\deployment\\node_modules\\yaml'",
+    "detail": "Error: EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-workflow-pi-manager-txMbtL\\deployment\\node_modules\\yaml'\n      at dock (tests/workflow-chat/pi-native.test.ts:51:2)\n      at tests/workflow-chat/pi-native.test.ts:154:21\n      at tests/workflow-chat/pi-native.test.ts:34:10\n"
+  },
+  {
+    "file": "tests\\workflow-chat\\pi-native.test.ts",
+    "name": "Pi node: native tools, first Prompt identity, strict parameters and original results",
+    "time": "0.144374",
+    "message": "EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-workflow-pi-node-QJFUyv\\deployment\\node_modules\\yaml'",
+    "detail": "Error: EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-workflow-pi-node-QJFUyv\\deployment\\node_modules\\yaml'\n      at dock (tests/workflow-chat/pi-native.test.ts:51:2)\n      at tests/workflow-chat/pi-native.test.ts:154:21\n      at tests/workflow-chat/pi-native.test.ts:34:10\n"
+  },
+  {
+    "file": "tests\\workflow-chat\\pi-native.test.ts",
+    "name": "Pi collect owns a complete-body budget independent of ordinary requests",
+    "time": "0.136957",
+    "message": "EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-workflow-pi-manager-be9yAA\\deployment\\node_modules\\yaml'",
+    "detail": "Error: EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-workflow-pi-manager-be9yAA\\deployment\\node_modules\\yaml'\n      at dock (tests/workflow-chat/pi-native.test.ts:51:2)\n      at tests/workflow-chat/pi-native.test.ts:215:20\n      at tests/workflow-chat/pi-native.test.ts:34:10\n"
+  },
+  {
+    "file": "tests\\workflow-chat\\pi-native.test.ts",
+    "name": "Pi tool AbortSignal releases transport, switch preserves auto startup, and shutdown releases active collect",
+    "time": "0.140139",
+    "message": "EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-workflow-pi-manager-4AVsik\\deployment\\node_modules\\yaml'",
+    "detail": "Error: EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-workflow-pi-manager-4AVsik\\deployment\\node_modules\\yaml'\n      at dock (tests/workflow-chat/pi-native.test.ts:51:2)\n      at tests/workflow-chat/pi-native.test.ts:228:20\n      at tests/workflow-chat/pi-native.test.ts:34:10\n"
+  },
+  {
+    "file": "tests\\workflow-chat\\report-body.test.ts",
+    "name": "P15 report does not invent an empty-string or result-address rejection",
+    "time": "0.165939",
+    "message": "EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-node-report-DFJ6h8\\deployment\\node_modules\\yaml'",
+    "detail": "Error: EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-node-report-DFJ6h8\\deployment\\node_modules\\yaml'\n      at nodeDock (tests/workflow-chat/support/node-dock.ts:29:2)\n      at tests/workflow-chat/report-body.test.ts:10:21\n"
+  },
+  {
+    "file": "tests\\workflow-chat\\report-diagnostic-failure.test.ts",
+    "name": "P16 failed diagnostic preserves saved report and submitted notification without resubmission",
+    "time": "0.141165",
+    "message": "EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-node-report-OdamIm\\deployment\\node_modules\\yaml'",
+    "detail": "Error: EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-node-report-OdamIm\\deployment\\node_modules\\yaml'\n      at nodeDock (tests/workflow-chat/support/node-dock.ts:29:2)\n      at tests/workflow-chat/report-diagnostic-failure.test.ts:10:21\n"
+  },
+  {
+    "file": "tests\\workflow-chat\\report-notification-failure.test.ts",
+    "name": "P16 saved report with failed auxiliary notification stays saved and is not automatically resubmitted",
+    "time": "0.145246",
+    "message": "EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-node-report-h7LEU7\\deployment\\node_modules\\yaml'",
+    "detail": "Error: EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-node-report-h7LEU7\\deployment\\node_modules\\yaml'\n      at nodeDock (tests/workflow-chat/support/node-dock.ts:29:2)\n      at tests/workflow-chat/report-notification-failure.test.ts:10:21\n"
+  },
+  {
+    "file": "tests\\workflow-chat\\report-parameters.test.ts",
+    "name": "report forwards explicit handoff declarations and rejects malformed model parameters without HTTP",
+    "time": "0.147163",
+    "message": "EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-node-pZItIo\\deployment\\node_modules\\yaml'",
+    "detail": "Error: EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-node-pZItIo\\deployment\\node_modules\\yaml'\n      at promptDock (tests/workflow-chat/support/prompt-dock.ts:37:2)\n      at tests/workflow-chat/report-parameters.test.ts:17:21\n"
+  },
+  {
+    "file": "tests\\workflow-chat\\report-save-failure.test.ts",
+    "name": "P16 saving failure remains unsaved with notification not attempted and no automatic resubmission",
+    "time": "0.142331",
+    "message": "EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-node-report-aHTQgE\\deployment\\node_modules\\yaml'",
+    "detail": "Error: EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-node-report-aHTQgE\\deployment\\node_modules\\yaml'\n      at nodeDock (tests/workflow-chat/support/node-dock.ts:29:2)\n      at tests/workflow-chat/report-save-failure.test.ts:10:21\n"
+  },
+  {
+    "file": "tests\\workflow-chat\\role-input-boundaries.test.ts",
+    "name": "P27 actual role input preserves backend fixed/work sections and adds only separate tool guidance",
+    "time": "0.166821",
+    "message": "EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-manager-HbdCoo\\deployment\\node_modules\\yaml'",
+    "detail": "Error: EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-manager-HbdCoo\\deployment\\node_modules\\yaml'\n      at promptDock (tests/workflow-chat/support/prompt-dock.ts:37:2)\n      at tests/workflow-chat/role-input-boundaries.test.ts:14:24\n"
+  },
+  {
+    "file": "tests\\workflow-chat\\uncertain-errors.test.ts",
+    "name": "P23 P24 caller retains structured errors and partial effects without retrying failures",
+    "time": "0.163234",
+    "message": "EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-manager-state-qZwdp0\\deployment\\node_modules\\yaml'",
+    "detail": "Error: EPERM: operation not permitted, symlink 'E:\\Developer\\myhub\\my-agent-toolkit-test-bench-20261104-184849\\node_modules\\.bun\\yaml@2.9.1\\node_modules\\yaml' -> 'C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-manager-state-qZwdp0\\deployment\\node_modules\\yaml'\n      at managerDock (tests/workflow-chat/support/manager-dock.ts:33:2)\n      at tests/workflow-chat/uncertain-errors.test.ts:31:21\n"
+  }
+]

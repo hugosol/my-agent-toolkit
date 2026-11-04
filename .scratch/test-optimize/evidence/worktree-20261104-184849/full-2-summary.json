@@ -1,0 +1,15 @@
+{
+  "phase": "full-2",
+  "command": [
+    "bun",
+    "run",
+    "test",
+    "--reporter=junit",
+    "--reporter-outfile=E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\test-optimize\\evidence\\worktree-20261104-184849\\full-2.xml",
+    "--timings=E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\test-optimize\\evidence\\worktree-20261104-184849\\full-2-timings.json",
+    "--update-timings"
+  ],
+  "wallSeconds": 618.1610077,
+  "exit": 1,
+  "finishedAt": "2026-11-04T11:28:14.059Z"
+}

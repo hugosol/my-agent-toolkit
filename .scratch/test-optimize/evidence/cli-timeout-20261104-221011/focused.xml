@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="bun test" tests="6" assertions="32" failures="0" skipped="0" time="9.5643936">
+  <testsuite name="tests\integrations\cli.test.ts" file="tests\integrations\cli.test.ts" tests="6" assertions="32" failures="0" skipped="0" time="9.5604522" hostname="">
+    <testsuite name="integration command contract" file="tests\integrations\cli.test.ts" line="12" tests="6" assertions="32" failures="0" skipped="0" time="9.549" hostname="">
+      <testcase name="default scan reports native-only pi-suite separately from framework adapter completeness" classname="integration command contract" time="4.552616" file="tests\integrations\cli.test.ts" line="13" assertions="5" />
+      <testcase name="lists model-cost demand without a target entry or executing configuration" classname="integration command contract" time="1.407715" file="tests\integrations\cli.test.ts" line="22" assertions="7" />
+      <testcase name="model-cost pi uses its selected assembly output rather than the generic optional factory" classname="integration command contract" time="1.852547" file="tests\integrations\cli.test.ts" line="35" assertions="5" />
+      <testcase name="missing adapter is a located dependency gap, not an invocation failure" classname="integration command contract" time="0.762375" file="tests\integrations\cli.test.ts" line="45" assertions="4" />
+      <testcase name="generation requires explicit source and target selection" classname="integration command contract" time="0.117681" file="tests\integrations\cli.test.ts" line="54" assertions="2" />
+      <testcase name="generation preview never creates the target adapter" classname="integration command contract" time="0.859072" file="tests\integrations\cli.test.ts" line="60" assertions="9" />
+    </testsuite>
+  </testsuite>
+</testsuites>

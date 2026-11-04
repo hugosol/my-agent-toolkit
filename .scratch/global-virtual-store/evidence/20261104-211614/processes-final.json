@@ -1,0 +1,98 @@
+[
+    {
+        "ProcessId":  10756,
+        "ParentProcessId":  12960,
+        "Name":  "node.exe",
+        "CommandLine":  "\"C:\\Program Files\\Adobe\\Adobe Creative Cloud Experience\\libs\\node.exe\" \"C:\\Program Files\\Adobe\\Adobe Creative Cloud Experience\\js\\main.js\""
+    },
+    {
+        "ProcessId":  26092,
+        "ParentProcessId":  26560,
+        "Name":  "bun.exe",
+        "CommandLine":  "D:\\Users\\hugos\\AppData\\Local\\nvm\\v24.18.0\\node_modules\\bun\\bin\\bun.exe C:\\Users\\hugos\\AppData\\Roaming\\herdr\\plugins\\github-installations\\devswha.ovis-aa47ee43150f\\33048-0\\checkout\\server\\managed.ts"
+    },
+    {
+        "ProcessId":  26380,
+        "ParentProcessId":  26092,
+        "Name":  "bun.exe",
+        "CommandLine":  "D:\\Users\\hugos\\AppData\\Local\\nvm\\v24.18.0\\node_modules\\bun\\bin\\bun.exe C:\\Users\\hugos\\.config\\ovis\\updates\\13f8ae1c427a8982\\release-5IJo3o\\server\\supervisor.ts"
+    },
+    {
+        "ProcessId":  26480,
+        "ParentProcessId":  26380,
+        "Name":  "bun.exe",
+        "CommandLine":  "D:\\Users\\hugos\\AppData\\Local\\nvm\\v24.18.0\\node_modules\\bun\\bin\\bun.exe server/index.ts"
+    },
+    {
+        "ProcessId":  25428,
+        "ParentProcessId":  11828,
+        "Name":  "bun.exe",
+        "CommandLine":  "\"D:\\nvm4w\\nodejs\\node_modules\\bun\\bin\\bun.exe\" D:\\nvm4w\\nodejs/node_modules/@oh-my-pi/pi-coding-agent/dist/cli.js"
+    },
+    {
+        "ProcessId":  14720,
+        "ParentProcessId":  27320,
+        "Name":  "bun.exe",
+        "CommandLine":  "\"D:\\nvm4w\\nodejs\\node_modules\\bun\\bin\\bun.exe\" D:\\nvm4w\\nodejs/node_modules/@oh-my-pi/pi-coding-agent/dist/cli.js"
+    },
+    {
+        "ProcessId":  17716,
+        "ParentProcessId":  14720,
+        "Name":  "bun.exe",
+        "CommandLine":  "D:\\Users\\hugos\\AppData\\Local\\nvm\\v24.18.0\\node_modules\\bun\\bin\\bun.exe D:\\Users\\hugos\\AppData\\Local\\nvm\\v24.18.0\\node_modules\\@oh-my-pi\\pi-coding-agent\\dist\\cli.js __omp_worker_daemon_broker"
+    },
+    {
+        "ProcessId":  20384,
+        "ParentProcessId":  14720,
+        "Name":  "bun.exe",
+        "CommandLine":  "D:\\Users\\hugos\\AppData\\Local\\nvm\\v24.18.0\\node_modules\\bun\\bin\\bun.exe D:\\Users\\hugos\\AppData\\Local\\nvm\\v24.18.0\\node_modules\\@oh-my-pi\\pi-coding-agent\\dist\\cli.js __omp_worker_daemon_broker"
+    },
+    {
+        "ProcessId":  26396,
+        "ParentProcessId":  25428,
+        "Name":  "bun.exe",
+        "CommandLine":  "D:\\Users\\hugos\\AppData\\Local\\nvm\\v24.18.0\\node_modules\\bun\\bin\\bun.exe D:\\Users\\hugos\\AppData\\Local\\nvm\\v24.18.0\\node_modules\\@oh-my-pi\\pi-coding-agent\\dist\\cli.js __omp_worker_daemon_broker"
+    },
+    {
+        "ProcessId":  7756,
+        "ParentProcessId":  4128,
+        "Name":  "bun.exe",
+        "CommandLine":  "\"D:\\nvm4w\\nodejs\\node_modules\\bun\\bin\\bun.exe\" D:\\nvm4w\\nodejs/node_modules/@oh-my-pi/pi-coding-agent/dist/cli.js"
+    },
+    {
+        "ProcessId":  14020,
+        "ParentProcessId":  7756,
+        "Name":  "bun.exe",
+        "CommandLine":  "D:\\Users\\hugos\\AppData\\Local\\nvm\\v24.18.0\\node_modules\\bun\\bin\\bun.exe D:\\Users\\hugos\\AppData\\Local\\nvm\\v24.18.0\\node_modules\\@oh-my-pi\\pi-coding-agent\\dist\\cli.js __omp_worker_daemon_broker"
+    },
+    {
+        "ProcessId":  3140,
+        "ParentProcessId":  20384,
+        "Name":  "bun.exe",
+        "CommandLine":  "D:\\Users\\hugos\\AppData\\Local\\nvm\\v24.18.0\\node_modules\\bun\\bin\\bun.exe D:\\Users\\hugos\\AppData\\Local\\nvm\\v24.18.0\\node_modules\\@oh-my-pi\\pi-coding-agent\\dist\\cli.js __omp_worker_lsp_mux"
+    },
+    {
+        "ProcessId":  2552,
+        "ParentProcessId":  2192,
+        "Name":  "node.exe",
+        "CommandLine":  "node \"E:\\Developer\\myhub\\my-agent-toolkit\\node_modules\\typescript\\bin\\tsc\" --lsp --stdio"
+    },
+    {
+        "ProcessId":  6572,
+        "ParentProcessId":  31088,
+        "Name":  "bun.exe",
+        "CommandLine":  "D:\\Users\\hugos\\AppData\\Local\\nvm\\v24.18.0\\node_modules\\bun\\bin\\bun.exe D:\\Users\\hugos\\AppData\\Local\\nvm\\v24.18.0\\node_modules\\@oh-my-pi\\pi-coding-agent\\dist\\cli.js __omp_worker_daemon_broker"
+    },
+    {
+        "ProcessId":  36212,
+        "ParentProcessId":  2772,
+        "Name":  "bun.exe",
+        "CommandLine":  "\"D:\\nvm4w\\nodejs\\node_modules\\bun\\bin\\bun.exe\" D:\\nvm4w\\nodejs/node_modules/@oh-my-pi/pi-coding-agent/dist/cli.js"
+    },
+    {
+        "ProcessId":  29004,
+        "ParentProcessId":  36212,
+        "Name":  "bun.exe",
+        "CommandLine":  "D:\\Users\\hugos\\AppData\\Local\\nvm\\v24.18.0\\node_modules\\bun\\bin\\bun.exe D:\\Users\\hugos\\AppData\\Local\\nvm\\v24.18.0\\node_modules\\@oh-my-pi\\pi-coding-agent\\dist\\cli.js __omp_worker_js_eval_process"
+    }
+]

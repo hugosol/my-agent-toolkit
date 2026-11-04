@@ -1,0 +1,104 @@
+[
+    {
+        "ProcessId":  10756,
+        "ParentProcessId":  12960,
+        "Name":  "node.exe",
+        "CommandLine":  "\"C:\\Program Files\\Adobe\\Adobe Creative Cloud Experience\\libs\\node.exe\" \"C:\\Program Files\\Adobe\\Adobe Creative Cloud Experience\\js\\main.js\""
+    },
+    {
+        "ProcessId":  24140,
+        "ParentProcessId":  19648,
+        "Name":  "herdr.exe",
+        "CommandLine":  "\"C:\\Users\\hugos\\.herdr\\packages\\standalone\\releases\\0.9.5-x86_64-pc-windows-msvc\\herdr.exe\""
+    },
+    {
+        "ProcessId":  23088,
+        "ParentProcessId":  24140,
+        "Name":  "herdr.exe",
+        "CommandLine":  "\"C:\\Users\\hugos\\.herdr\\packages\\standalone\\releases\\0.9.5-x86_64-pc-windows-msvc\\herdr.exe\" server"
+    },
+    {
+        "ProcessId":  26092,
+        "ParentProcessId":  26560,
+        "Name":  "bun.exe",
+        "CommandLine":  "D:\\Users\\hugos\\AppData\\Local\\nvm\\v24.18.0\\node_modules\\bun\\bin\\bun.exe C:\\Users\\hugos\\AppData\\Roaming\\herdr\\plugins\\github-installations\\devswha.ovis-aa47ee43150f\\33048-0\\checkout\\server\\managed.ts"
+    },
+    {
+        "ProcessId":  26380,
+        "ParentProcessId":  26092,
+        "Name":  "bun.exe",
+        "CommandLine":  "D:\\Users\\hugos\\AppData\\Local\\nvm\\v24.18.0\\node_modules\\bun\\bin\\bun.exe C:\\Users\\hugos\\.config\\ovis\\updates\\13f8ae1c427a8982\\release-5IJo3o\\server\\supervisor.ts"
+    },
+    {
+        "ProcessId":  26480,
+        "ParentProcessId":  26380,
+        "Name":  "bun.exe",
+        "CommandLine":  "D:\\Users\\hugos\\AppData\\Local\\nvm\\v24.18.0\\node_modules\\bun\\bin\\bun.exe server/index.ts"
+    },
+    {
+        "ProcessId":  4276,
+        "ParentProcessId":  1864,
+        "Name":  "cargo.exe",
+        "CommandLine":  "\"C:\\Users\\hugos\\.cargo\\bin\\cargo.exe\" run --release --manifest-path backend/Cargo.toml --bin herdr-bot"
+    },
+    {
+        "ProcessId":  28248,
+        "ParentProcessId":  4276,
+        "Name":  "cargo.exe",
+        "CommandLine":  "\"C:\\Users\\hugos\\.rustup\\toolchains\\stable-x86_64-pc-windows-msvc\\bin\\cargo.exe\" run --release --manifest-path backend/Cargo.toml --bin herdr-bot"
+    },
+    {
+        "ProcessId":  2856,
+        "ParentProcessId":  28248,
+        "Name":  "herdr-bot.exe",
+        "CommandLine":  "\"backend\\target\\release\\herdr-bot.exe\""
+    },
+    {
+        "ProcessId":  25428,
+        "ParentProcessId":  11828,
+        "Name":  "bun.exe",
+        "CommandLine":  "\"D:\\nvm4w\\nodejs\\node_modules\\bun\\bin\\bun.exe\" D:\\nvm4w\\nodejs/node_modules/@oh-my-pi/pi-coding-agent/dist/cli.js"
+    },
+    {
+        "ProcessId":  14720,
+        "ParentProcessId":  27320,
+        "Name":  "bun.exe",
+        "CommandLine":  "\"D:\\nvm4w\\nodejs\\node_modules\\bun\\bin\\bun.exe\" D:\\nvm4w\\nodejs/node_modules/@oh-my-pi/pi-coding-agent/dist/cli.js"
+    },
+    {
+        "ProcessId":  17716,
+        "ParentProcessId":  14720,
+        "Name":  "bun.exe",
+        "CommandLine":  "D:\\Users\\hugos\\AppData\\Local\\nvm\\v24.18.0\\node_modules\\bun\\bin\\bun.exe D:\\Users\\hugos\\AppData\\Local\\nvm\\v24.18.0\\node_modules\\@oh-my-pi\\pi-coding-agent\\dist\\cli.js __omp_worker_daemon_broker"
+    },
+    {
+        "ProcessId":  10012,
+        "ParentProcessId":  17716,
+        "Name":  "bun.exe",
+        "CommandLine":  "D:\\Users\\hugos\\AppData\\Local\\nvm\\v24.18.0\\node_modules\\bun\\bin\\bun.exe D:\\Users\\hugos\\AppData\\Local\\nvm\\v24.18.0\\node_modules\\@oh-my-pi\\pi-coding-agent\\dist\\cli.js __omp_worker_text_predict"
+    },
+    {
+        "ProcessId":  20384,
+        "ParentProcessId":  14720,
+        "Name":  "bun.exe",
+        "CommandLine":  "D:\\Users\\hugos\\AppData\\Local\\nvm\\v24.18.0\\node_modules\\bun\\bin\\bun.exe D:\\Users\\hugos\\AppData\\Local\\nvm\\v24.18.0\\node_modules\\@oh-my-pi\\pi-coding-agent\\dist\\cli.js __omp_worker_daemon_broker"
+    },
+    {
+        "ProcessId":  26396,
+        "ParentProcessId":  25428,
+        "Name":  "bun.exe",
+        "CommandLine":  "D:\\Users\\hugos\\AppData\\Local\\nvm\\v24.18.0\\node_modules\\bun\\bin\\bun.exe D:\\Users\\hugos\\AppData\\Local\\nvm\\v24.18.0\\node_modules\\@oh-my-pi\\pi-coding-agent\\dist\\cli.js __omp_worker_daemon_broker"
+    },
+    {
+        "ProcessId":  7756,
+        "ParentProcessId":  4128,
+        "Name":  "bun.exe",
+        "CommandLine":  "\"D:\\nvm4w\\nodejs\\node_modules\\bun\\bin\\bun.exe\" D:\\nvm4w\\nodejs/node_modules/@oh-my-pi/pi-coding-agent/dist/cli.js"
+    },
+    {
+        "ProcessId":  14020,
+        "ParentProcessId":  7756,
+        "Name":  "bun.exe",
+        "CommandLine":  "D:\\Users\\hugos\\AppData\\Local\\nvm\\v24.18.0\\node_modules\\bun\\bin\\bun.exe D:\\Users\\hugos\\AppData\\Local\\nvm\\v24.18.0\\node_modules\\@oh-my-pi\\pi-coding-agent\\dist\\cli.js __omp_worker_daemon_broker"
+    }
+]

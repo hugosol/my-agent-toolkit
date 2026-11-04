@@ -1,0 +1,32 @@
+[
+  {
+    "package": "yaml",
+    "main": "C:\\Users\\hugos\\.bun\\install\\cache\\links\\yaml@2.9.1-7bda248e74259b8d\\node_modules\\yaml",
+    "worktree": "C:\\Users\\hugos\\.bun\\install\\cache\\links\\yaml@2.9.1-7bda248e74259b8d\\node_modules\\yaml",
+    "sameRealpath": true
+  },
+  {
+    "package": "typescript",
+    "main": "C:\\Users\\hugos\\.bun\\install\\cache\\links\\typescript@7.0.2-f983c0f44b24b81c\\node_modules\\typescript",
+    "worktree": "C:\\Users\\hugos\\.bun\\install\\cache\\links\\typescript@7.0.2-f983c0f44b24b81c\\node_modules\\typescript",
+    "sameRealpath": true
+  },
+  {
+    "package": "typescript-compiler",
+    "main": "C:\\Users\\hugos\\.bun\\install\\cache\\links\\typescript@5.9.3-735774759c75d582\\node_modules\\typescript",
+    "worktree": "C:\\Users\\hugos\\.bun\\install\\cache\\links\\typescript@5.9.3-735774759c75d582\\node_modules\\typescript",
+    "sameRealpath": true
+  },
+  {
+    "package": "bun-types",
+    "main": "C:\\Users\\hugos\\.bun\\install\\cache\\links\\bun-types@1.4.2-380b6a25488de050\\node_modules\\bun-types",
+    "worktree": "C:\\Users\\hugos\\.bun\\install\\cache\\links\\bun-types@1.4.2-380b6a25488de050\\node_modules\\bun-types",
+    "sameRealpath": true
+  },
+  {
+    "package": "pi-subagents",
+    "main": "C:\\Users\\hugos\\.bun\\install\\cache\\links\\pi-subagents@0.78.0-4b257bda50e79a5d\\node_modules\\pi-subagents",
+    "worktree": "C:\\Users\\hugos\\.bun\\install\\cache\\links\\pi-subagents@0.78.0-4b257bda50e79a5d\\node_modules\\pi-subagents",
+    "sameRealpath": true
+  }
+]

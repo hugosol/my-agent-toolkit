@@ -34,7 +34,7 @@ export async function promptDock(role: "manager" | "node", options: {
 			filter: candidate => candidate !== join(REPO_ROOT, "framework", ".runtime"),
 		});
 	}
-	cpSync(join(REPO_ROOT, "node_modules/yaml"), join(deployment, "node_modules/yaml"), { recursive: true });
+	cpSync(join(REPO_ROOT, "node_modules/yaml"), join(deployment, "node_modules/yaml"), { recursive: true, dereference: true });
 	const configPath = join(deployment, "extensions/workflow-chat/config.yaml");
 	if (options.config === null) rmSync(configPath);
 	else if (options.config !== undefined) writeFileSync(configPath, options.config);

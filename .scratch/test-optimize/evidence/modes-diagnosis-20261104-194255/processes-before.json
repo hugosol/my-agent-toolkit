@@ -1,0 +1,152 @@
+[
+    {
+        "ProcessId":  10756,
+        "ParentProcessId":  12960,
+        "Name":  "node.exe",
+        "CommandLine":  "\"C:\\Program Files\\Adobe\\Adobe Creative Cloud Experience\\libs\\node.exe\" \"C:\\Program Files\\Adobe\\Adobe Creative Cloud Experience\\js\\main.js\""
+    },
+    {
+        "ProcessId":  26092,
+        "ParentProcessId":  26560,
+        "Name":  "bun.exe",
+        "CommandLine":  "D:\\Users\\hugos\\AppData\\Local\\nvm\\v24.18.0\\node_modules\\bun\\bin\\bun.exe C:\\Users\\hugos\\AppData\\Roaming\\herdr\\plugins\\github-installations\\devswha.ovis-aa47ee43150f\\33048-0\\checkout\\server\\managed.ts"
+    },
+    {
+        "ProcessId":  26380,
+        "ParentProcessId":  26092,
+        "Name":  "bun.exe",
+        "CommandLine":  "D:\\Users\\hugos\\AppData\\Local\\nvm\\v24.18.0\\node_modules\\bun\\bin\\bun.exe C:\\Users\\hugos\\.config\\ovis\\updates\\13f8ae1c427a8982\\release-5IJo3o\\server\\supervisor.ts"
+    },
+    {
+        "ProcessId":  26480,
+        "ParentProcessId":  26380,
+        "Name":  "bun.exe",
+        "CommandLine":  "D:\\Users\\hugos\\AppData\\Local\\nvm\\v24.18.0\\node_modules\\bun\\bin\\bun.exe server/index.ts"
+    },
+    {
+        "ProcessId":  25428,
+        "ParentProcessId":  11828,
+        "Name":  "bun.exe",
+        "CommandLine":  "\"D:\\nvm4w\\nodejs\\node_modules\\bun\\bin\\bun.exe\" D:\\nvm4w\\nodejs/node_modules/@oh-my-pi/pi-coding-agent/dist/cli.js"
+    },
+    {
+        "ProcessId":  14720,
+        "ParentProcessId":  27320,
+        "Name":  "bun.exe",
+        "CommandLine":  "\"D:\\nvm4w\\nodejs\\node_modules\\bun\\bin\\bun.exe\" D:\\nvm4w\\nodejs/node_modules/@oh-my-pi/pi-coding-agent/dist/cli.js"
+    },
+    {
+        "ProcessId":  17716,
+        "ParentProcessId":  14720,
+        "Name":  "bun.exe",
+        "CommandLine":  "D:\\Users\\hugos\\AppData\\Local\\nvm\\v24.18.0\\node_modules\\bun\\bin\\bun.exe D:\\Users\\hugos\\AppData\\Local\\nvm\\v24.18.0\\node_modules\\@oh-my-pi\\pi-coding-agent\\dist\\cli.js __omp_worker_daemon_broker"
+    },
+    {
+        "ProcessId":  20384,
+        "ParentProcessId":  14720,
+        "Name":  "bun.exe",
+        "CommandLine":  "D:\\Users\\hugos\\AppData\\Local\\nvm\\v24.18.0\\node_modules\\bun\\bin\\bun.exe D:\\Users\\hugos\\AppData\\Local\\nvm\\v24.18.0\\node_modules\\@oh-my-pi\\pi-coding-agent\\dist\\cli.js __omp_worker_daemon_broker"
+    },
+    {
+        "ProcessId":  26396,
+        "ParentProcessId":  25428,
+        "Name":  "bun.exe",
+        "CommandLine":  "D:\\Users\\hugos\\AppData\\Local\\nvm\\v24.18.0\\node_modules\\bun\\bin\\bun.exe D:\\Users\\hugos\\AppData\\Local\\nvm\\v24.18.0\\node_modules\\@oh-my-pi\\pi-coding-agent\\dist\\cli.js __omp_worker_daemon_broker"
+    },
+    {
+        "ProcessId":  7756,
+        "ParentProcessId":  4128,
+        "Name":  "bun.exe",
+        "CommandLine":  "\"D:\\nvm4w\\nodejs\\node_modules\\bun\\bin\\bun.exe\" D:\\nvm4w\\nodejs/node_modules/@oh-my-pi/pi-coding-agent/dist/cli.js"
+    },
+    {
+        "ProcessId":  14020,
+        "ParentProcessId":  7756,
+        "Name":  "bun.exe",
+        "CommandLine":  "D:\\Users\\hugos\\AppData\\Local\\nvm\\v24.18.0\\node_modules\\bun\\bin\\bun.exe D:\\Users\\hugos\\AppData\\Local\\nvm\\v24.18.0\\node_modules\\@oh-my-pi\\pi-coding-agent\\dist\\cli.js __omp_worker_daemon_broker"
+    },
+    {
+        "ProcessId":  3140,
+        "ParentProcessId":  20384,
+        "Name":  "bun.exe",
+        "CommandLine":  "D:\\Users\\hugos\\AppData\\Local\\nvm\\v24.18.0\\node_modules\\bun\\bin\\bun.exe D:\\Users\\hugos\\AppData\\Local\\nvm\\v24.18.0\\node_modules\\@oh-my-pi\\pi-coding-agent\\dist\\cli.js __omp_worker_lsp_mux"
+    },
+    {
+        "ProcessId":  2552,
+        "ParentProcessId":  2192,
+        "Name":  "node.exe",
+        "CommandLine":  "node \"E:\\Developer\\myhub\\my-agent-toolkit\\node_modules\\typescript\\bin\\tsc\" --lsp --stdio"
+    },
+    {
+        "ProcessId":  31088,
+        "ParentProcessId":  31844,
+        "Name":  "bun.exe",
+        "CommandLine":  "\"D:\\nvm4w\\nodejs\\node_modules\\bun\\bin\\bun.exe\" D:\\nvm4w\\nodejs/node_modules/@oh-my-pi/pi-coding-agent/dist/cli.js"
+    },
+    {
+        "ProcessId":  6572,
+        "ParentProcessId":  31088,
+        "Name":  "bun.exe",
+        "CommandLine":  "D:\\Users\\hugos\\AppData\\Local\\nvm\\v24.18.0\\node_modules\\bun\\bin\\bun.exe D:\\Users\\hugos\\AppData\\Local\\nvm\\v24.18.0\\node_modules\\@oh-my-pi\\pi-coding-agent\\dist\\cli.js __omp_worker_daemon_broker"
+    },
+    {
+        "ProcessId":  33576,
+        "ParentProcessId":  6572,
+        "Name":  "bun.exe",
+        "CommandLine":  "D:\\Users\\hugos\\AppData\\Local\\nvm\\v24.18.0\\node_modules\\bun\\bin\\bun.exe D:\\Users\\hugos\\AppData\\Local\\nvm\\v24.18.0\\node_modules\\@oh-my-pi\\pi-coding-agent\\dist\\cli.js __omp_worker_lsp_mux"
+    },
+    {
+        "ProcessId":  8184,
+        "ParentProcessId":  26144,
+        "Name":  "node.exe",
+        "CommandLine":  "\"node\"   \"E:\\Developer\\myhub\\my-console\\node_modules\\.bin\\\\..\\typescript-language-server\\lib\\cli.mjs\" --stdio"
+    },
+    {
+        "ProcessId":  2440,
+        "ParentProcessId":  8184,
+        "Name":  "node.exe",
+        "CommandLine":  "D:\\nvm4w\\nodejs\\node.exe E:\\Developer\\myhub\\my-console\\node_modules\\typescript\\lib\\tsserver.js --serverMode partialSemantic --useInferredProjectPerProjectRoot --disableAutomaticTypingAcquisition --cancellationPipeName C:\\Users\\hugos\\AppData\\Local\\Temp\\bcd083eedb6b6731bb2b86eb449c5d26\\tscancellation* --locale en --validateDefaultNpmLocation --useNodeIpc"
+    },
+    {
+        "ProcessId":  31956,
+        "ParentProcessId":  8184,
+        "Name":  "node.exe",
+        "CommandLine":  "D:\\nvm4w\\nodejs\\node.exe E:\\Developer\\myhub\\my-console\\node_modules\\typescript\\lib\\tsserver.js --useInferredProjectPerProjectRoot --cancellationPipeName C:\\Users\\hugos\\AppData\\Local\\Temp\\1d639539e5fa3a0e1cb7ddede639a004\\tscancellation* --locale en --validateDefaultNpmLocation --useNodeIpc"
+    },
+    {
+        "ProcessId":  31296,
+        "ParentProcessId":  31956,
+        "Name":  "node.exe",
+        "CommandLine":  "D:\\nvm4w\\nodejs\\node.exe E:/Developer/myhub/my-console/node_modules/typescript/lib/typingsInstaller.js --globalTypingsCacheLocation C:/Users/hugos/AppData/Local/Microsoft/TypeScript/6.0 --typesMapLocation E:/Developer/myhub/my-console/node_modules/typescript/lib/typesMap.json --validateDefaultNpmLocation"
+    },
+    {
+        "ProcessId":  26928,
+        "ParentProcessId":  31088,
+        "Name":  "bun.exe",
+        "CommandLine":  "D:\\Users\\hugos\\AppData\\Local\\nvm\\v24.18.0\\node_modules\\bun\\bin\\bun.exe D:\\Users\\hugos\\AppData\\Local\\nvm\\v24.18.0\\node_modules\\@oh-my-pi\\pi-coding-agent\\dist\\cli.js __omp_worker_js_eval_process"
+    },
+    {
+        "ProcessId":  36212,
+        "ParentProcessId":  2772,
+        "Name":  "bun.exe",
+        "CommandLine":  "\"D:\\nvm4w\\nodejs\\node_modules\\bun\\bin\\bun.exe\" D:\\nvm4w\\nodejs/node_modules/@oh-my-pi/pi-coding-agent/dist/cli.js"
+    },
+    {
+        "ProcessId":  13976,
+        "ParentProcessId":  17716,
+        "Name":  "bun.exe",
+        "CommandLine":  "D:\\Users\\hugos\\AppData\\Local\\nvm\\v24.18.0\\node_modules\\bun\\bin\\bun.exe D:\\Users\\hugos\\AppData\\Local\\nvm\\v24.18.0\\node_modules\\@oh-my-pi\\pi-coding-agent\\dist\\cli.js __omp_worker_text_predict"
+    },
+    {
+        "ProcessId":  29004,
+        "ParentProcessId":  36212,
+        "Name":  "bun.exe",
+        "CommandLine":  "D:\\Users\\hugos\\AppData\\Local\\nvm\\v24.18.0\\node_modules\\bun\\bin\\bun.exe D:\\Users\\hugos\\AppData\\Local\\nvm\\v24.18.0\\node_modules\\@oh-my-pi\\pi-coding-agent\\dist\\cli.js __omp_worker_js_eval_process"
+    },
+    {
+        "ProcessId":  17988,
+        "ParentProcessId":  29004,
+        "Name":  "node.exe",
+        "CommandLine":  "D:/nvm4w/nodejs/node.exe --input-type=module -e \"import { startServer } from \u0027./frontend/browser-tests/support.ts\u0027; const s = await startServer(); console.log(\u0027TASK_REVIEW_URL=\u0027+s.baseURL); process.on(\u0027SIGINT\u0027,async()=\u003e{await s.cleanup();process.exit()}); setInterval(()=\u003e{},60000)\""
+    }
+]

@@ -838,7 +838,7 @@ describe("the framework offers an owner's access with the owner's life (S1)", ()
 				});
 			}
 			mkdirSync(path.join(ws.root, "node_modules"), { recursive: true });
-			cpSync(path.join(REPO_ROOT, "node_modules", "yaml"), path.join(ws.root, "node_modules", "yaml"), { recursive: true });
+			cpSync(path.join(REPO_ROOT, "node_modules", "yaml"), path.join(ws.root, "node_modules", "yaml"), { recursive: true, dereference: true });
 			ws.configure('runtimeDir: ".runtime"\n');
 			// A unique runtime-selected deployment owns this assembly and its configuration.
 			const { piAdapter: adapter } = await import(pathToFileURL(path.join(ws.root, "adapters", "pi", "index.ts")).href);

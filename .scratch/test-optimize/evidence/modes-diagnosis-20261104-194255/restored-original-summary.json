@@ -1,0 +1,19 @@
+{
+  "exit": 1,
+  "wallSeconds": 90.40632530000039,
+  "command": [
+    "bun",
+    "test",
+    "./tests/harness-dock/model-cost-modes.test.ts",
+    "--test-name-pattern=an unlisted pair",
+    "--reporter=junit",
+    "--reporter-outfile=E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\test-optimize\\evidence\\modes-diagnosis-20261104-194255\\restored-original.xml"
+  ],
+  "registryEvents": [
+    {
+      "path": "/yaml",
+      "at": 1793793201.6614826,
+      "kind": "headers-sent-body-incomplete"
+    }
+  ]
+}

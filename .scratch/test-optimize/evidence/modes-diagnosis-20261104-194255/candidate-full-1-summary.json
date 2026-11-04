@@ -1,0 +1,13 @@
+{
+  "label": "candidate-full-1",
+  "exit": 0,
+  "wallSeconds": 16.73011189999943,
+  "command": [
+    "bun",
+    "test",
+    "./tests/harness-dock/model-cost-modes.test.ts",
+    "--reporter=junit",
+    "--reporter-outfile=E:\\Developer\\myhub\\my-agent-toolkit\\.scratch\\test-optimize\\evidence\\modes-diagnosis-20261104-194255\\candidate-full-1.xml"
+  ],
+  "registryEvents": []
+}
