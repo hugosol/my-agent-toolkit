@@ -65,6 +65,8 @@ pi -e D:/service/my-agent-toolkit/entrypoints/pi-auto/node-chat.ts
 - collect 的正常 `reason: "timeout"` 不是错误，也不修改状态；客户端 `error.kind: "timeout"` 是完整传输预算耗尽。paused/completed/notification/no-running 的处理和待办查阅见 README。collect 不返回报告正文；按 pendingReports 的标识读取 messages.jsonl 或已有 Run 详情，阅读报告结论、阻塞、部分效果及必要干预；不默认读取输出正文验收。
 - 取消、网络/正文失败或非 2xx 不是回滚保证。保留整个错误正文、已发生 effects、逐项结果、historyError/stateCommitted；HTTP 200 也不能概括整批成功。故障分类与 Session 结束语义见 [故障、取消与信任边界](README.md#故障取消与信任边界)。
 
+原生身份同时出现在 manager 与 node 记录中并不自动授权双角色。配套后端要求唯一合法的父 execution／子 Run 关联；无关联身份碰撞仍返回 HTTP 403、`node-role-invalid`（“管理者身份没有唯一合法的父执行关联。”）。旧版“一律禁止 manager 提交节点报告”的诊断不再描述合法嵌套场景；升级后的集成检查应保留精确的状态码、错误码和关联拒绝语义，而不是放宽断言或允许任意同名身份。
+
 ### 双角色原生 dock：机制验证
 
 先按仓库 [测试规范](../../docs/agents/testing.md) 选择 Bun 1.4.4，并准备已安装 OMP/Pi 与冻结基线依赖。隔离 worktree 显式设置 `OMP_BASELINE_RECORD_ROOT` 指向原始 toolkit 根；`PI_CLI` 可选择已安装 Pi，不安装新宿主或更改全局 PATH 绕过缺依赖。然后在本 toolkit worktree 根执行：
@@ -85,6 +87,8 @@ bun run test
 本轮实际执行环境为 Windows x64、Bun 1.4.4、冻结 OMP 18.5.0 和已安装 Pi 1.5.0（Node 24.18.0）。上述 owning partition 实跑 25/25 通过；三份原有角色 dock 加同载、collect／恢复相关检查合计 24/24 通过，TypeScript／authoring 检查通过。但 canonical `bun run test` 为 1810 通过、9 失败、2 errors，**不是全仓通过**：其中同载 Pi 在恢复后三工具均已返回、最终 `agent_settled` 已观察到，随后 EOF 退出时出现原生 `UV_HANDLE_CLOSING` 断言并以 9 退出；另有全局超时、并发存储及传输检查失败。单独通过不抵消此失败，未通过修改宿主、重试、跳过或放宽断言掩盖；恢复路线使用 Pi 正常 `--session <file>`，不把 fresh-process 后 `switch_session` 路线的既有异常算作通过。此状态不提升整体宿主支持结论，也不满足全部验收关闭条件。
 
 在释放其他重型检查后的 quiet window，保持相同源码和断言再运行 canonical：1785 通过、34 失败；同载 Pi 仍在恢复后三工具完成后的 EOF 出现相同 `UV_HANDLE_CLOSING`／exit 9，因此不能仅归因于同时运行其他仓库检查。其余 33 项在读取配套后端 metadata 时以 `ENOENT` 失败：先前可用的临时后端 worktree 在等待期间已不再存在，该次运行不提供这些后端行为的复验结论。需要稳定保留的配套源码、metadata、安全壳及 fixture 后才能复验；禁止把临时路径存在过、二进制仍存在或受控 HTTP 通过当作真实后端已通过。交接前将运行材料完整保存到 worktree 外的自有证据目录；自动生成的 Pi acceptance 记录须另行保留原始材料，再恢复非本票发布的共享记录，不能因测试生成物使工作树保持脏状态。
+
+后续集成复验使用保留的配套 herdr-bot worktree 源码与 metadata，并在其独立 `CARGO_TARGET_DIR` 执行 `cargo build --manifest-path backend/Cargo.toml --example safe_shutdown_shell --bin herdr-fixture` 成功后，再显式绑定三个 `HERDR_BOT_*` 路径。owning partition 25/25、受影响的真实后端身份／collect／恢复 dock 14/14、typecheck／authoring 均通过。首次配套 canonical 的唯一失败是旧检查仍期待“一律禁止 manager 报告”的文字；按上文唯一合法关联语义更新精确诊断，保留 HTTP 403 与 `node-role-invalid`。修正后的 canonical 为 1818 通过、1 失败（1819 项、230 文件）：仅 Pi 双角色恢复后的最终 EOF 再次出现 `UV_HANDLE_CLOSING`／exit 9。OMP 同载、全部后端检查及其他 Pi 检查通过，不抵消该原生生命周期失败；本次不能关闭全部验收，也不把早先单次同载通过认作已修复。未修改宿主／全局运行时、跳过检查、放宽退出断言或重试取绿。需要先解决受支持宿主／运行时的异常退出，再对冻结源码执行完整入口；不能用应用层延时或忽略退出码代替。
 
 ### report_policy 真实模型冒烟（OMP 与 Pi 分别执行）
 
