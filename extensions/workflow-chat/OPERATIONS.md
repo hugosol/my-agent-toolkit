@@ -7,7 +7,7 @@
 1. 选择一个固定的 toolkit 提交和锁文件，部署完整源码 checkout，在其根目录运行 `bun install --frozen-lockfile`。保留 `framework/`、`adapters/`、`extensions/workflow-chat/`、`entrypoints/`、`package.json`、`bun.lock` 和已安装依赖；入口不是可独立复制的脚本。不要复制其他进程的 `framework/.runtime` 或原生 Session 数据到新部署。toolkit 与后端必须配套升级至 input_rule/output_rule、outputs 数组与报告 from/to 契约；旧 Map、Run 与报告须先执行后端的一次性迁移并保留历史与状态，普通读写不兼容旧格式，不提供旧形状新请求放行；升级前保留旧提交和部署配置，在隔离数据上复验；不要在活动 Run 中途切换定义、Task 或源码。
 2. 按 Task 选择可运行的 OMP 或 Pi 安装，并使用对应宿主的 auto 角色入口。Pi 独立验证基线为精确 1.4.0；具体环境与验证边界以 [Harness support](../../framework/docs/harness-support.md#pi-workflow-chat-verification-baseline) 为准。OMP 仍使用既有 [harness-baseline.json](../../framework/docs/harness-baseline.json)，历史 OMP 演练不能外推为 Pi 整体集成通过。
 3. 在部署 checkout 的 [config.yaml](config.yaml) 配置 endpoint 和两个预算，见 [稳定配置](README.md#稳定配置)。endpoint 指向实际 herdr-bot 服务，不能指向另一个 Run 的测试服务。配置装配按入口所在仓库定位，不按节点 cwd 查找；修改后重启对应 Session 进程。不要以环境变量或复制 cwd 配置代替它。
-4. 在 herdr-bot 部署中找到 `[tasks].metadata_file` 实际使用的 Task 选项目录。将 manager/node 的固定扩展条目分别指向本次部署的绝对入口；不要改成 selectable，也不要让一种角色混载两份角色入口。以下为 TOML 片段，替换示例根路径后写入**实际目录**，不是新增 toolkit 配置：
+4. 在 herdr-bot 部署中找到 `[tasks].metadata_file` 实际使用的 Task 选项目录。将 manager/node 的固定扩展条目分别指向本次部署的绝对入口；不要改成 selectable，不要重复加载同一 ID。普通 Task 保持单角色；后端合法创建的嵌套 manager 在同一原生 Session 同载下面两种对应宿主的角色入口，而非启动两个单角色进程。以下为 TOML 片段，替换示例根路径后写入**实际目录**，不是新增 toolkit 配置：
 
    ```toml
    [[extensions]]
@@ -64,6 +64,27 @@ pi -e D:/service/my-agent-toolkit/entrypoints/pi-auto/node-chat.ts
 - 普通预算覆盖请求至完整正文，不只是连通或响应头。普通预算默认 30000ms；collect 独立默认 5460000ms，覆盖后端默认 5400 秒再留 60 秒余量。不要为了普通 report 调短 collect，也不要把所有普通调用都改为 91 分钟。后端改期时人工核对客户端预算，无自动握手。
 - collect 的正常 `reason: "timeout"` 不是错误，也不修改状态；客户端 `error.kind: "timeout"` 是完整传输预算耗尽。paused/completed/notification/no-running 的处理和待办查阅见 README。collect 不返回报告正文；按 pendingReports 的标识读取 messages.jsonl 或已有 Run 详情，阅读报告结论、阻塞、部分效果及必要干预；不默认读取输出正文验收。
 - 取消、网络/正文失败或非 2xx 不是回滚保证。保留整个错误正文、已发生 effects、逐项结果、historyError/stateCommitted；HTTP 200 也不能概括整批成功。故障分类与 Session 结束语义见 [故障、取消与信任边界](README.md#故障取消与信任边界)。
+
+### 双角色原生 dock：机制验证
+
+先按仓库 [测试规范](../../docs/agents/testing.md) 选择 Bun 1.4.4，并准备已安装 OMP/Pi 与冻结基线依赖。隔离 worktree 显式设置 `OMP_BASELINE_RECORD_ROOT` 指向原始 toolkit 根；`PI_CLI` 可选择已安装 Pi，不安装新宿主或更改全局 PATH 绕过缺依赖。然后在本 toolkit worktree 根执行：
+
+```powershell
+$env:WORKFLOW_DUAL_EVIDENCE_DIR = Join-Path (Get-Location) '.scratch/workflow-nesting/evidence/native-dual-role'
+bun test tests/harness-dock/role-dual-load.test.ts
+bun test tests/workflow-chat
+bun test tests/harness-dock/role-identity-integration.test.ts tests/harness-dock/role-prompts.test.ts tests/harness-dock/role-session-isolation.test.ts
+bun run typecheck
+bun run test
+```
+
+`role-dual-load.test.ts` 在**每个宿主的一次原生 Session** 同载两个正常 auto 入口，检查三工具实际 HTTP、同一原生身份、各自持久化指引且不重复、越权字段拒绝、失败阶段原样保留、内部 finish 后 report、collect 取消与 session_end 释放，以及新进程恢复原 Session 后三工具可用。原始 provider 请求和原生 JSONL 保存为 `captures/`、`sessions/`，`host.json` 保留各进程的原生 frames、stderr 和 HTTP 请求。测试清理自己拥有的宿主、连接与临时目录，不触碰用户 Session；未设置证据目录时不保留运行材料。
+
+此入口的 provider 和 HTTP 均受控，只证明同载、原生身份与资源机制，不能证明真实后端的父子授权／定位、真实 finish 后报告授权、恢复接管资格、真实模型理解内外策略或整体 P20/P22/P25/P32/P34 完成。真实后端／真实模型检查仍由跨仓验收单独运行。宿主缺失、异常退出或资源未释放均保留失败，不跳过或宣称成功；全仓检查还需要配套后端安全壳、fixture、显式 `HERDR_BOT_REPO`／`HERDR_BOT_METADATA`／`HERDR_BOT_BINARY`，不能拿受控 HTTP 代替。
+
+本轮实际执行环境为 Windows x64、Bun 1.4.4、冻结 OMP 18.5.0 和已安装 Pi 1.5.0（Node 24.18.0）。上述 owning partition 实跑 25/25 通过；三份原有角色 dock 加同载、collect／恢复相关检查合计 24/24 通过，TypeScript／authoring 检查通过。但 canonical `bun run test` 为 1810 通过、9 失败、2 errors，**不是全仓通过**：其中同载 Pi 在恢复后三工具均已返回、最终 `agent_settled` 已观察到，随后 EOF 退出时出现原生 `UV_HANDLE_CLOSING` 断言并以 9 退出；另有全局超时、并发存储及传输检查失败。单独通过不抵消此失败，未通过修改宿主、重试、跳过或放宽断言掩盖；恢复路线使用 Pi 正常 `--session <file>`，不把 fresh-process 后 `switch_session` 路线的既有异常算作通过。此状态不提升整体宿主支持结论，也不满足全部验收关闭条件。
+
+在释放其他重型检查后的 quiet window，保持相同源码和断言再运行 canonical：1785 通过、34 失败；同载 Pi 仍在恢复后三工具完成后的 EOF 出现相同 `UV_HANDLE_CLOSING`／exit 9，因此不能仅归因于同时运行其他仓库检查。其余 33 项在读取配套后端 metadata 时以 `ENOENT` 失败：先前可用的临时后端 worktree 在等待期间已不再存在，该次运行不提供这些后端行为的复验结论。需要稳定保留的配套源码、metadata、安全壳及 fixture 后才能复验；禁止把临时路径存在过、二进制仍存在或受控 HTTP 通过当作真实后端已通过。交接前将运行材料完整保存到 worktree 外的自有证据目录；自动生成的 Pi acceptance 记录须另行保留原始材料，再恢复非本票发布的共享记录，不能因测试生成物使工作树保持脏状态。
 
 ### report_policy 真实模型冒烟（OMP 与 Pi 分别执行）
 

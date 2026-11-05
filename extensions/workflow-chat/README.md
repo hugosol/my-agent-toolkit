@@ -1,6 +1,6 @@
 # Workflow Chat：manager-chat 与 node-chat
 
-节点执行者面向 Map Run 的一次实际执行，只负责工作与报告，不拥有管理者状态操作权。[领域词汇](GLOSSARY.md)区分 Run、执行者和交接完成。管理者与节点是独立 Session、独立声明、独立自动入口，不是一个工具的角色切换参数。
+节点执行者面向 Map Run 的一次实际执行，只负责工作与报告，不因加载工具获得管理者状态操作权。[领域词汇](GLOSSARY.md)区分 Run、执行者和交接完成。两种角色保留独立声明、实例与自动入口，不是一个工具的角色切换参数。普通 manager-only／node-only Session 仍只加载自身入口；合法嵌套管理者在同一原生 Session 同载两入口，以管理内部 Run 并向外层父 execution 报告。
 
 部署者从[长期部署与故障处置](OPERATIONS.md)开始；实际协议与角色语义由本文维护，操作手册不建立另一套协议。隔离配置、恢复/重试、真实材料交接及通知失败的复核步骤见操作手册的隔离配置与处置演练章节。
 
@@ -13,9 +13,9 @@
 | OMP | [`entrypoints/omp-auto/manager-chat.ts`](../../entrypoints/omp-auto/manager-chat.ts) | [`entrypoints/omp-auto/node-chat.ts`](../../entrypoints/omp-auto/node-chat.ts) |
 | Pi | [`entrypoints/pi-auto/manager-chat.ts`](../../entrypoints/pi-auto/manager-chat.ts) | [`entrypoints/pi-auto/node-chat.ts`](../../entrypoints/pi-auto/node-chat.ts) |
 
-角色 ID 分别是 `manager-chat`、`node-chat`，用于独立角色 Session，不共享节点身份，不提供手动启用命令。Pi 本次验证基线为精确 `1.4.0`，不替换 OMP 基线；验证范围与环境见 [Harness support](../../framework/docs/harness-support.md#pi-workflow-chat-verification-baseline)。部署须保留本仓库的 `framework/`、`adapters/`、`extensions/workflow-chat/`、`entrypoints/startup/auto.yaml` 及 YAML 依赖；只复制入口文件不构成部署。`framework/.runtime/` 中的 owner-access 记录及原子写入暂存文件属于运行中的源 Session，不属于部署输入；角色 dock 复制源码时同样排除此目录，避免全局并行测试复制正在被重命名的暂存文件。
+角色 ID 分别是 `manager-chat`、`node-chat`，实例和首次指引身份各自独立，不提供手动启用命令。同载时两角色读取同一公共原生 Session 身份，后端依据明确父子关联分别授权，不由模型自报身份或选择 Run。Pi 本次验证基线为精确 `1.4.0`，不替换 OMP 基线；验证范围与环境见 [Harness support](../../framework/docs/harness-support.md#pi-workflow-chat-verification-baseline)。部署须保留本仓库的 `framework/`、`adapters/`、`extensions/workflow-chat/`、`entrypoints/startup/auto.yaml` 及 YAML 依赖；只复制入口文件不构成部署。`framework/.runtime/` 中的 owner-access 记录及原子写入暂存文件属于运行中的源 Session，不属于部署输入；角色 dock 复制源码时同样排除此目录，避免全局并行测试复制正在被重命名的暂存文件。
 
-herdr-bot 的 manager/node 类型 Task 应按各自宿主固定选择对应自动入口；同一 Run 可由 OMP/Pi Task 自然组合，不另设混合模式。部署者应把后端 Task 选项目录中的角色入口指向其实际绝对路径。独立加载示例（不是在同一角色中混装）：
+herdr-bot 的 manager/node 类型 Task 应按各自宿主固定选择对应自动入口；同一 Run 可由 OMP/Pi Task 自然组合，不另设混合模式。部署者应把后端 Task 选项目录中的角色入口指向其实际绝对路径。普通单角色的独立加载示例：
 
 ```text
 omp -e /absolute/my-agent-toolkit/entrypoints/omp-auto/manager-chat.ts
@@ -25,6 +25,21 @@ pi -e /absolute/my-agent-toolkit/entrypoints/pi-auto/node-chat.ts
 ```
 
 入口加载后按公共启动策略自动启用；首次启用轮次由公共 Prompt 注入对应角色的完整工具指引，普通后续轮次不额外重复注入。不要同时加载另一份同 ID 扩展。无需加载或启用 connect-bot，不建立面板登记连接。**加载成功不等于已关联到 Run**：身份必须先由后端的合法派发流程关联；直接启动的任意会话会收到后端无关联拒绝，客户端不绕过该规则。
+
+### 同一原生 Session 的双角色
+
+合法嵌套 manager 同时使用对应宿主的两个正常入口（不是新 wrapper 或角色参数）：
+
+```text
+omp -e /absolute/my-agent-toolkit/entrypoints/omp-auto/manager-chat.ts -e /absolute/my-agent-toolkit/entrypoints/omp-auto/node-chat.ts
+pi -e /absolute/my-agent-toolkit/entrypoints/pi-auto/manager-chat.ts -e /absolute/my-agent-toolkit/entrypoints/pi-auto/node-chat.ts
+```
+
+`run`／`collect` 定位内部 Run，`report` 定位外层对应父 execution。所有调用只提供各工具现有的业务参数；公共原生 Session observation 提供同一真实身份，后端以明确关联决定授权和层级。工具存在不证明关联合法，不能添加 session、Run、execution、from/to 或接收者字段绕过拒绝。普通单角色继续只加载自己的入口。
+
+两独立实例各有 `manager-chat:tools`／`node-chat:tools` 首次指引身份，均追加到原生历史，不覆盖对方；普通轮次与恢复原 Session 不重复注入。内部 `finish` 不是 `session_end`：不关闭 Chat、不自动生成外报或完成父节点，随后仍可独立 report。外层 `report_policy=manual` 只约束本 Session 的外报，每次仍须在当前 Chat 展示、询问、停轮并等用户自然语言确认；内部 auto 报告、内部 finish 或业务确认均不替代外报发送确认，也不改变内部节点自己的策略。
+
+可复现的同载机制检查、原始材料保存方式及证据边界见 [运行手册的双角色原生 dock](OPERATIONS.md#双角色原生-dock机制验证)。这不是后端授权、真实模型遵从或完整嵌套承诺已通过的声明。
 
 ## workflow-chat 源码职责与依赖
 
@@ -66,7 +81,7 @@ extensions/workflow-chat/
 - `common/` 是两种角色共同复用的实现：`config.ts` 维护共同配置声明，`requests.ts` 通过公共 Session/HTTP 处理真实身份、请求预算、取消与响应解析。它不承载 manager 动作或 node 报告规则，不依赖角色目录或原生 harness SDK。
 - 各角色的 `definition.ts` 持有自身声明与注入策略，复用共同配置声明；首次指引正文与加载入口归 `shared-logic/prompts/`。`shared-logic/tools/` 集中工具名、label、工具和参数 description、共同参数结构及执行接入，消费 [Tool interface](../../framework/interface/tool.ts)，不维护两份宿主参数定义。
 - `shared-logic/implementation.ts` 通过公共 `defineImplementation` 的静态 `tools` 槽声明工具，与会话订阅共用业务状态和清理生命周期。manager 的动作参数、路由选择与 collect，node 的 report 参数与请求仍由各自业务 module 处理；`common/tool-result.ts` 只负责共享业务结果到公共工具结果的映射。业务依赖 `common/` 和 framework interface，不依赖原生 harness SDK。
-- 各角色的 `harnesses/omp.ts` 与 `harnesses/pi-auto.ts` 仅选择公共 adapter、共享声明与实现、配置根和启动策略。原生工具注册、参数映射及实际执行身份归顶层 `adapters/`；扩展不再提供原生注册或 TypeBox 声明。两宿主的角色订阅都限定 `owner`：后端分别启动独立角色主会话，不向普通子代理传播管理权或角色入口。
+- 各角色的 `harnesses/omp.ts` 与 `harnesses/pi-auto.ts` 仅选择公共 adapter、共享声明与实现、配置根和启动策略。原生工具注册、参数映射及实际执行身份归顶层 `adapters/`；扩展不再提供原生注册或 TypeBox 声明。两宿主的角色订阅都限定 `owner`：普通角色各用自身主会话，嵌套 manager 主会话合法同载两实例，不向普通子代理传播管理权或角色入口。
 - **共享实现，不共享实例**：两角色可导入同一份配置与请求代码，但各自装配独立的请求资源；配置绑定、Session 身份和请求取消资源不跨角色共用。请求生命周期按实际 Session 隔离，不以进程级或角色级单例保存共同状态。
 
 ## 首次工具指引与输入边界
