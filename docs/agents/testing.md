@@ -26,6 +26,8 @@ Read `package.json` for existing script names. Use a direct test-directory comma
 
 Use `bun run test` for full-repository regression: the package script owns the repository's test scheduling and isolation policy. It runs the complete discovered suite with at most four parallel files, matching the real-host dock worker bound; this limits simultaneous native processes without changing test deadlines or excluding cases. Keep `bun test <file-or-directory>` for focused validation; bare `bun test` bypasses the full-suite policy.
 
+The canonical full-suite script bounds execution to four workers. This changes scheduling only: keep every case, assertion, and deadline, and retain earlier failed runs rather than treating a later pass as a retry of a business decision.
+
 For explicitly serial full-repository diagnosis, use `bun run test:serial`. Record why serial execution was needed and label that result as diagnostic rather than a replacement for the canonical full-suite run. Do not add retries or relax deadlines to make a parallel run pass.
 
 ## Baseline dependencies in isolated worktrees
@@ -34,17 +36,7 @@ The frozen harness baseline records sibling anchor and behavior-oracle checkouts
 
 ## Pi acceptance versions
 
-Pi RPC dock runs support `PI_NODE=<absolute path to an installed node.exe>`; this selects
-only the Node executable for the declared Pi CLI, not a different Pi package or a global
-PATH change. Select a version satisfying that installed package's `engines.node`, and
-record both identities with the result. In particular, Windows Node 23+ has a reported
-native exit race ([nodejs/node#56645](https://github.com/nodejs/node/issues/56645)) with
-`UV_HANDLE_CLOSING` in `src\\win\\async.c`. If that signature occurs, retain the failing
-exit and check an explicitly selected, already installed supported runtime; do not ignore
-the exit code, retry the model, change the shutdown assertions, or call a serial diagnostic
-a canonical full-suite pass. A result under another runtime does not establish that the
-original runtime's shutdown is fixed. `PI_NODE` is a dock setting; it does not select the
-runtime of a separately launched Herdr business Chat.
+For a script/shim CLI, `PI_NODE` selects an already installed Node executable and `PI_CLI` selects the already installed Pi CLI. These public overrides do not change global PATH or install a runtime; select a Node version satisfying that package's `engines.node` and record both paths and versions. Windows Node 23+ has a reported native exit race ([nodejs/node#56645](https://github.com/nodejs/node/issues/56645)) with `UV_HANDLE_CLOSING` in `src\\win\\async.c`; Node 22.19.0 is an explicitly exercised alternative for the Pi lifecycle checks when Node 24.18.0 exits with that assertion. Retain the failing exit and check an explicitly selected, already installed supported runtime. Do not suppress the exit, retry the model, change assertions/deadlines, or call a serial diagnostic a canonical full-suite pass. Another runtime's pass does not fix the original runtime or promote overall support. `PI_NODE` is a dock setting; it does not select the runtime of a separately launched Herdr business Chat. Keep disposable TEMP/TMP storage invocation-owned; a different volume may be selected explicitly when the system volume cannot sustain isolated native stores.
 
 Pi native acceptance and smoke entrypoints use the locally selected CLI (`--pi` where offered, `PI_CLI`, otherwise existing local resolution), not a historical exact-version default. The shared policy rejects versions below the highest passed version for that scope in `framework/docs/pi-acceptance.json`; ordering is strict SemVer, not string ordering. Complete passed scopes update their version and source/environment evidence automatically. Filtered native tests, partial smoke modes, failed or blocked runs do not promote a complete scope. Keep source unchanged during acceptance: a changed source digest refuses publication. See [Pi acceptance scopes and commands](../../framework/docs/harness-support.md#commands-and-acceptance-scopes). These checks do not install a version, change normal startup, or alter OMP's fixed baseline. Historical captures remain fixtures, not a requirement to install their original Pi version.
 
