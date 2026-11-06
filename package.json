@@ -4,7 +4,7 @@
   "type": "module",
   "packageManager": "bun@1.4.4",
   "scripts": {
-    "test": "bun test --parallel=12",
+    "test": "bun test --parallel=4",
     "test:serial": "bun test",
     "test:dock": "bun test tests/harness-dock --parallel=4",
     "test:dock:serial": "bun test tests/harness-dock",
