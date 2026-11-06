@@ -328,6 +328,8 @@ describe("the automatic entrypoint activates on the real host without a command 
 			panel.release();
 			expect(await waitFor(() => notices(session!).includes(CONNECTED))).toBe(true);
 			expect(await waitFor(() => lastAreaLines(session!)?.[0] === MARKER_TEXT)).toBe(true);
+			// The native marker and the panel's HTTP receipt are independent observations.
+			expect(await waitFor(() => panel.kinds("state").length > 0)).toBe(true);
 			expect(panel.kinds("state")).toHaveLength(1);
 
 			// A later request in the same process is served without another automatic register.
