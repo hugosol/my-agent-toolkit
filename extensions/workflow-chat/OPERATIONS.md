@@ -69,7 +69,7 @@ pi -e D:/service/my-agent-toolkit/entrypoints/pi-auto/node-chat.ts
 
 ### 双角色原生 dock：机制验证
 
-先按仓库 [测试规范](../../docs/agents/testing.md) 选择 Bun 1.4.4，并准备已安装 OMP/Pi 与冻结基线依赖。隔离 worktree 显式设置 `OMP_BASELINE_RECORD_ROOT` 指向原始 toolkit 根；`PI_CLI` 可选择已安装 Pi，不安装新宿主或更改全局 PATH 绕过缺依赖。然后在本 toolkit worktree 根执行：
+先按仓库 [测试规范](../../docs/agents/testing.md) 选择 Bun 1.4.4，并准备已安装 OMP/Pi 与冻结基线依赖。隔离 worktree 显式设置 `OMP_BASELINE_RECORD_ROOT` 指向原始 toolkit 根；`PI_CLI` 可选择已安装 Pi，不安装新宿主或更改全局 PATH 绕过缺依赖。需要选择非 PATH 上的已有 Node 时，使用公共 `PI_NODE` 指向满足该 Pi 包 `engines.node` 的绝对可执行文件路径，同时显式设置 `PI_CLI`。这只选择原生 dock 的运行时，不选择真实 Herdr Chat 的运行时；后者仍需从专项保存的 OS 进程和安装入口核对。记录实际 Node／Pi 身份，保留原运行时的失败，不把另一运行时通过解释为修复原生退出故障，也不通过跳过或放宽退出断言取绿。然后在本 toolkit worktree 根执行：
 
 ```powershell
 $env:WORKFLOW_DUAL_EVIDENCE_DIR = Join-Path (Get-Location) '.scratch/workflow-nesting/evidence/native-dual-role'
