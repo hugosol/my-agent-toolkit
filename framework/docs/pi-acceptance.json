@@ -4,7 +4,7 @@
     "workflow-chat": {
       "schemaVersion": 1,
       "scope": "workflow-chat",
-      "startedAt": "2026-11-06T05:22:51.640Z",
+      "startedAt": "2026-11-06T10:32:29.361Z",
       "cli": {
         "command": [
           "D:/Users/hugos/AppData/Local/nvm/v22.19.0/node.exe",
@@ -14,12 +14,15 @@
         "source": "node script"
       },
       "source": {
-        "repoRoot": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-IL3Tgb",
-        "head": "8c29c015d9f39af43acba9439724dc86c30e42fb",
-        "status": [],
-        "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "repoRoot": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-p3cYpy",
+        "head": "29f39c714d603daf7bdd363fd2842ed6818449a0",
+        "status": [
+          " M docs/agents/testing.md",
+          " M tests/harness-dock/connect-bot-lifecycle.test.ts"
+        ],
+        "diffSha256": "dc6217f41a3b08f9e721bb8c172d885cb9dde42a9e0a31dd169cad1228955668",
         "untrackedFiles": [],
-        "sha256": "d58959760bb7734753f5143fe7fb432c386e3aff78097bf5a946935d0ac47115"
+        "sha256": "5506987aedc403576723ba0dcf4f37622d29603e43fd691b48dd60e173b2ecd9"
       },
       "lockfiles": [
         {
@@ -56,14 +59,17 @@
         "Pi tool AbortSignal releases transport, switch preserves auto startup, and shutdown releases active collect"
       ],
       "complete": true,
-      "finishedAt": "2026-11-06T05:23:00.511Z",
+      "finishedAt": "2026-11-06T10:32:37.507Z",
       "finishedSource": {
-        "repoRoot": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-IL3Tgb",
-        "head": "8c29c015d9f39af43acba9439724dc86c30e42fb",
-        "status": [],
-        "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "repoRoot": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-p3cYpy",
+        "head": "29f39c714d603daf7bdd363fd2842ed6818449a0",
+        "status": [
+          " M docs/agents/testing.md",
+          " M tests/harness-dock/connect-bot-lifecycle.test.ts"
+        ],
+        "diffSha256": "dc6217f41a3b08f9e721bb8c172d885cb9dde42a9e0a31dd169cad1228955668",
         "untrackedFiles": [],
-        "sha256": "d58959760bb7734753f5143fe7fb432c386e3aff78097bf5a946935d0ac47115"
+        "sha256": "5506987aedc403576723ba0dcf4f37622d29603e43fd691b48dd60e173b2ecd9"
       },
       "finishedLockfiles": [
         {
@@ -72,7 +78,7 @@
           "sha256": "28ce4c0d7b7d1d45a44e335a6647b0959c333875af42ca87ba63c87bcf4c2168"
         }
       ],
-      "acceptedAt": "2026-11-06T05:23:00.511Z"
+      "acceptedAt": "2026-11-06T10:32:37.507Z"
     },
     "close-out": {
       "schemaVersion": 1,
