@@ -4,46 +4,29 @@
     "workflow-chat": {
       "schemaVersion": 1,
       "scope": "workflow-chat",
-      "startedAt": "2026-11-03T19:29:14.943Z",
+      "startedAt": "2026-11-05T22:49:55.502Z",
       "cli": {
         "command": [
-          "D:/Users/hugos/AppData/Local/nvm/v22.19.0/node.exe",
+          "node",
           "D:\\nvm4w\\nodejs\\node_modules\\@earendil-works\\pi-coding-agent\\dist\\bundle\\cli.js"
         ],
         "path": "D:\\nvm4w\\nodejs\\node_modules\\@earendil-works\\pi-coding-agent\\dist\\bundle\\cli.js",
         "source": "the shim D:\\nvm4w\\nodejs\\pi.cmd (run through node: a shell shim cannot be spawned without a shell)"
       },
       "source": {
-        "repoRoot": "E:\\Developer\\myhub\\my-agent-toolkit",
-        "head": "95fdf3826b85704e0629938b2b37b4ce7e92f295",
+        "repoRoot": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-fwqzVi",
+        "head": "bf0be75942ef260563ed520abbcc4b61cfc89efa",
         "status": [
-          " M framework/GLOSSARY.md",
-          " M framework/docs/harness-support.md",
-          " M scripts/pi-background-round-smoke.ts",
-          " M scripts/pi-close-out-smoke.ts",
-          " M scripts/pi-codebase-tools-smoke.ts",
-          " M scripts/pi-model-cost-smoke.ts",
-          " M scripts/pi-provider-account-read.ts",
-          " M scripts/pi-session-accounting.ts",
-          " M scripts/pi-subagent-smoke.ts",
-          " M scripts/pi-terminal-round-smoke.ts",
-          " M scripts/pi-tui-acceptance.ts",
-          " M tests/workflow-chat/pi-native.test.ts",
-          "?? scripts/support/pi-acceptance.ts",
-          "?? tests/pi-suite/pi-acceptance.test.ts"
+          "?? .scratch/workflow-nesting/evidence/ticket23/commands.jsonl"
         ],
-        "diffSha256": "da757a5780763cc0916eccb66bdb79651e106f330d1da6f0497df88abb64b5d8",
+        "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
         "untrackedFiles": [
           {
-            "path": "scripts/support/pi-acceptance.ts",
-            "sha256": "6620df76432649077ed38edcfd66df7d9c6d9b027d22afe1beff3160d64cbfd9"
-          },
-          {
-            "path": "tests/pi-suite/pi-acceptance.test.ts",
-            "sha256": "5628bf3b60b0d6d1a7f9954dac3b6993d7662600ce83a4873f31f2ac37cb60f3"
+            "path": ".scratch/workflow-nesting/evidence/ticket23/commands.jsonl",
+            "sha256": "ab69e1b58bbbb9edfa24ba5e76ae28dcc367dbc91f847ada264c9619f234d7b9"
           }
         ],
-        "sha256": "66d8dced64c25876215af122caf109b0c839a83db64ddfd6e12b26d19ec15fc5"
+        "sha256": "c7b8c58f8d720ecfbc2d9a5f09eef803e88f9317860e2276f5dea3b3dc0465b5"
       },
       "lockfiles": [
         {
@@ -59,8 +42,8 @@
           "bun": "1.4.4"
         },
         "cli": {
-          "execPath": "D:\\Users\\hugos\\AppData\\Local\\nvm\\v22.19.0\\node.exe",
-          "node": "22.19.0",
+          "execPath": "D:\\nvm4w\\nodejs\\node.exe",
+          "node": "24.18.0",
           "bun": null
         },
         "artifact": {
@@ -80,38 +63,21 @@
         "Pi tool AbortSignal releases transport, switch preserves auto startup, and shutdown releases active collect"
       ],
       "complete": true,
-      "finishedAt": "2026-11-03T19:29:26.884Z",
+      "finishedAt": "2026-11-05T22:50:06.066Z",
       "finishedSource": {
-        "repoRoot": "E:\\Developer\\myhub\\my-agent-toolkit",
-        "head": "95fdf3826b85704e0629938b2b37b4ce7e92f295",
+        "repoRoot": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-fwqzVi",
+        "head": "bf0be75942ef260563ed520abbcc4b61cfc89efa",
         "status": [
-          " M framework/GLOSSARY.md",
-          " M framework/docs/harness-support.md",
-          " M scripts/pi-background-round-smoke.ts",
-          " M scripts/pi-close-out-smoke.ts",
-          " M scripts/pi-codebase-tools-smoke.ts",
-          " M scripts/pi-model-cost-smoke.ts",
-          " M scripts/pi-provider-account-read.ts",
-          " M scripts/pi-session-accounting.ts",
-          " M scripts/pi-subagent-smoke.ts",
-          " M scripts/pi-terminal-round-smoke.ts",
-          " M scripts/pi-tui-acceptance.ts",
-          " M tests/workflow-chat/pi-native.test.ts",
-          "?? scripts/support/pi-acceptance.ts",
-          "?? tests/pi-suite/pi-acceptance.test.ts"
+          "?? .scratch/workflow-nesting/evidence/ticket23/commands.jsonl"
         ],
-        "diffSha256": "da757a5780763cc0916eccb66bdb79651e106f330d1da6f0497df88abb64b5d8",
+        "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
         "untrackedFiles": [
           {
-            "path": "scripts/support/pi-acceptance.ts",
-            "sha256": "6620df76432649077ed38edcfd66df7d9c6d9b027d22afe1beff3160d64cbfd9"
-          },
-          {
-            "path": "tests/pi-suite/pi-acceptance.test.ts",
-            "sha256": "5628bf3b60b0d6d1a7f9954dac3b6993d7662600ce83a4873f31f2ac37cb60f3"
+            "path": ".scratch/workflow-nesting/evidence/ticket23/commands.jsonl",
+            "sha256": "ab69e1b58bbbb9edfa24ba5e76ae28dcc367dbc91f847ada264c9619f234d7b9"
           }
         ],
-        "sha256": "66d8dced64c25876215af122caf109b0c839a83db64ddfd6e12b26d19ec15fc5"
+        "sha256": "c7b8c58f8d720ecfbc2d9a5f09eef803e88f9317860e2276f5dea3b3dc0465b5"
       },
       "finishedLockfiles": [
         {
@@ -120,7 +86,7 @@
           "sha256": "28ce4c0d7b7d1d45a44e335a6647b0959c333875af42ca87ba63c87bcf4c2168"
         }
       ],
-      "acceptedAt": "2026-11-03T19:29:26.884Z"
+      "acceptedAt": "2026-11-05T22:50:06.066Z"
     },
     "close-out": {
       "schemaVersion": 1,
