@@ -232,6 +232,8 @@ interface PiSurface {
 	readonly api: PiExtensionApi;
 	/** The provider queries this process's instance sent, in call order. */
 	readonly queries: SentRequest[];
+	/** Resolves when both initialization queries actually reach the host. */
+	readonly queryPair: Promise<void>;
 	/** The requests a case is holding back, which it answers itself. */
 	readonly held: HeldQuery[];
 	/** Every widget hand-over the host was given, in call order. */
@@ -339,6 +341,7 @@ function assemble(options: { readonly root?: string; readonly holdQueries?: bool
 	const root = options.root ?? freshRoot();
 	const handlers = new Map<string, Array<(event: unknown, ctx: PiExtensionContext) => unknown>>();
 	const queries: SentRequest[] = [];
+	const queryPair = Promise.withResolvers<void>();
 	const held: HeldQuery[] = [];
 	const frames: Frame[] = [];
 	const notices: Array<{ level: string; message: string }> = [];
@@ -433,6 +436,7 @@ function assemble(options: { readonly root?: string; readonly holdQueries?: bool
 	const surface: PiSurface = {
 		api,
 		queries,
+		queryPair: queryPair.promise,
 		held,
 		frames,
 		notices,
@@ -478,6 +482,7 @@ function assemble(options: { readonly root?: string; readonly holdQueries?: bool
 					now: () => clock.now,
 					httpRequest: async (url: string, httpOptions?: HttpRequestOptions) => {
 						queries.push({ url, options: httpOptions });
+						if (queries.length === 2) queryPair.resolve();
 						if (options.holdQueries !== true) {
 							return url === ALLOWANCE_URL ? allowanceAnswer(12.5) : balanceAnswer("110.00");
 						}
@@ -644,7 +649,7 @@ describe("the owner session's preparation is awaited once, and its two sources a
 		);
 		evaluation.surface.sessionStarts(MAIN, "startup");
 		const firstRequest = evaluation.surface.agentStarts(MAIN);
-		await until(() => evaluation.surface.queries.length === 2, "both provider queries left the process");
+		await evaluation.surface.queryPair;
 		// Asked in parallel: both requests are out, and neither of them was answered by this host yet.
 		expect(evaluation.surface.queries.map(sent => sent.url).sort()).toEqual([ALLOWANCE_URL, BALANCE_URL].sort());
 		let settledFirstRequest = false;
@@ -666,7 +671,7 @@ describe("the owner session's preparation is awaited once, and its two sources a
 		evaluation.surface.sessionStarts(MAIN, "startup");
 		const first = evaluation.surface.agentStarts(MAIN);
 		const second = evaluation.surface.agentStarts(MAIN);
-		await until(() => evaluation.surface.queries.length === 2, "the one prefetch pair left the process");
+		await evaluation.surface.queryPair;
 		let settledInstead = 0;
 		void first.then(() => {
 			settledInstead += 1;
@@ -846,7 +851,7 @@ describe("the display reads no spent context (P49, and the in-process delegation
 		const evaluation = assemble({ holdQueries: true });
 		evaluation.surface.sessionStarts(MAIN, "startup");
 		const initiation = evaluation.surface.agentStarts(MAIN);
-		await until(() => evaluation.surface.queries.length === 2, "the prefetch pair left the process");
+		await evaluation.surface.queryPair;
 		answerHeld(evaluation);
 		await initiation;
 		evaluation.surface.runStarts(MAIN);
