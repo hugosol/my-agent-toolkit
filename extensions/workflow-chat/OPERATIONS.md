@@ -69,7 +69,7 @@ pi -e D:/service/my-agent-toolkit/entrypoints/pi-auto/node-chat.ts
 
 ### 双角色原生 dock：机制验证
 
-先按仓库 [测试规范](../../docs/agents/testing.md) 选择 Bun 1.4.4，并准备已安装 OMP/Pi 与冻结基线依赖。隔离 worktree 显式设置 `OMP_BASELINE_RECORD_ROOT` 指向原始 toolkit 根；`PI_CLI` 可选择已安装 Pi，不安装新宿主或更改全局 PATH 绕过缺依赖。然后在本 toolkit worktree 根执行：
+先按仓库 [测试规范](../../docs/agents/testing.md) 选择 Bun 1.4.4，并准备已安装 OMP/Pi 与冻结基线依赖。隔离 worktree 显式设置 `OMP_BASELINE_RECORD_ROOT` 指向原始 toolkit 根；`PI_CLI` 可选择已安装 Pi，不安装新宿主或更改全局 PATH 绕过缺依赖。需要选择非 PATH 上的已有 Node 时，使用公共 `PI_NODE` 指向满足该 Pi 包 `engines.node` 的绝对可执行文件路径，同时显式设置 `PI_CLI`。这只选择原生 dock 的运行时，不选择真实 Herdr Chat 的运行时；后者仍需从专项保存的 OS 进程和安装入口核对。记录实际 Node／Pi 身份，保留原运行时的失败，不把另一运行时通过解释为修复原生退出故障，也不通过跳过或放宽退出断言取绿。然后在本 toolkit worktree 根执行：
 
 ```powershell
 $env:WORKFLOW_DUAL_EVIDENCE_DIR = Join-Path (Get-Location) '.scratch/workflow-nesting/evidence/native-dual-role'
@@ -84,11 +84,31 @@ bun run test
 
 此入口的 provider 和 HTTP 均受控，只证明同载、原生身份与资源机制，不能证明真实后端的父子授权／定位、真实 finish 后报告授权、恢复接管资格、真实模型理解内外策略或整体 P20/P22/P25/P32/P34 完成。真实后端／真实模型检查仍由跨仓验收单独运行。宿主缺失、异常退出或资源未释放均保留失败，不跳过或宣称成功；全仓检查还需要配套后端安全壳、fixture、显式 `HERDR_BOT_REPO`／`HERDR_BOT_METADATA`／`HERDR_BOT_BINARY`，不能拿受控 HTTP 代替。
 
+`bun run test` 的 canonical 入口限制为四个并行 worker，与原生 dock 的并行上限一致，避免更多原生进程争用使既有预算失真；测试集合、断言和期限保持不变。每轮仍须遵守独占重型检查窗口，不能把串行诊断入口替代 canonical 结果。
+
 本轮实际执行环境为 Windows x64、Bun 1.4.4、冻结 OMP 18.5.0 和已安装 Pi 1.5.0（Node 24.18.0）。上述 owning partition 实跑 25/25 通过；三份原有角色 dock 加同载、collect／恢复相关检查合计 24/24 通过，TypeScript／authoring 检查通过。但 canonical `bun run test` 为 1810 通过、9 失败、2 errors，**不是全仓通过**：其中同载 Pi 在恢复后三工具均已返回、最终 `agent_settled` 已观察到，随后 EOF 退出时出现原生 `UV_HANDLE_CLOSING` 断言并以 9 退出；另有全局超时、并发存储及传输检查失败。单独通过不抵消此失败，未通过修改宿主、重试、跳过或放宽断言掩盖；恢复路线使用 Pi 正常 `--session <file>`，不把 fresh-process 后 `switch_session` 路线的既有异常算作通过。此状态不提升整体宿主支持结论，也不满足全部验收关闭条件。
 
 在释放其他重型检查后的 quiet window，保持相同源码和断言再运行 canonical：1785 通过、34 失败；同载 Pi 仍在恢复后三工具完成后的 EOF 出现相同 `UV_HANDLE_CLOSING`／exit 9，因此不能仅归因于同时运行其他仓库检查。其余 33 项在读取配套后端 metadata 时以 `ENOENT` 失败：先前可用的临时后端 worktree 在等待期间已不再存在，该次运行不提供这些后端行为的复验结论。需要稳定保留的配套源码、metadata、安全壳及 fixture 后才能复验；禁止把临时路径存在过、二进制仍存在或受控 HTTP 通过当作真实后端已通过。交接前将运行材料完整保存到 worktree 外的自有证据目录；自动生成的 Pi acceptance 记录须另行保留原始材料，再恢复非本票发布的共享记录，不能因测试生成物使工作树保持脏状态。
 
 后续集成复验使用保留的配套 herdr-bot worktree 源码与 metadata，并在其独立 `CARGO_TARGET_DIR` 执行 `cargo build --manifest-path backend/Cargo.toml --example safe_shutdown_shell --bin herdr-fixture` 成功后，再显式绑定三个 `HERDR_BOT_*` 路径。owning partition 25/25、受影响的真实后端身份／collect／恢复 dock 14/14、typecheck／authoring 均通过。首次配套 canonical 的唯一失败是旧检查仍期待“一律禁止 manager 报告”的文字；按上文唯一合法关联语义更新精确诊断，保留 HTTP 403 与 `node-role-invalid`。修正后的 canonical 为 1818 通过、1 失败（1819 项、230 文件）：仅 Pi 双角色恢复后的最终 EOF 再次出现 `UV_HANDLE_CLOSING`／exit 9。OMP 同载、全部后端检查及其他 Pi 检查通过，不抵消该原生生命周期失败；本次不能关闭全部验收，也不把早先单次同载通过认作已修复。未修改宿主／全局运行时、跳过检查、放宽退出断言或重试取绿。需要先解决受支持宿主／运行时的异常退出，再对冻结源码执行完整入口；不能用应用层延时或忽略退出码代替。
+
+后续显式选择已有 Node 22.19.0（`PI_NODE`）及已安装 Pi 1.5.0（`PI_CLI`），在独占窗口使用独占 TEMP／TMP 和同一配套后端安全壳复验：双角色 dock 4/4、完整 serial dock 179/179、四 worker canonical 1819/1819 均通过。期间发现隔离冻结前缀缺少已发布资源和原生 addon；只恢复相同 18.5.0 包的缺失文件，保留已有冻结 patch，并让既有 patch／来源检查独立核对，没有修改宿主源逻辑。此前缺资源及一次 auto connect-bot 注册观察失败的日志仍保留，不能据最终通过解释其原因。此结果属于上述显式运行时／隔离条件，不证明 Node 24.18.0 的退出故障已修复，也不将受控 dock 提升为真实模型或整体宿主支持证据；Herdr 真实角色链路另以实际 OS 进程身份及专项结果为准。
+
+### 嵌套双角色真实后端／模型验收
+
+配套 herdr-bot 的长期入口为 `scripts/accept-workflow-nesting-roles.py`，完整参数和运行约束在该仓 `docs/agents/testing.md` 的“嵌套 manager 双角色真实验收”。从 herdr-bot worktree 根指定本 toolkit worktree：
+
+```powershell
+python scripts/accept-workflow-nesting-roles.py `
+  --backend "$env:CARGO_TARGET_DIR/debug/herdr-bot.exe" `
+  --toolkit $TOOLKIT_WT --hosts omp,pi `
+  --paths-file $ISOLATED_PATHS --model-config $AUTHORIZED_MODEL `
+  --evidence-dir $NEW_EXCLUSIVE_EVIDENCE
+```
+
+两宿主各执行两套 manager／zone／原始业务字面样例、重复 Map 调用和保留旧 execution；真实原生 Session 自动注入身份，模型使用正常 run／collect／report，后端实际决定子 Run／父 execution 授权。逐阶段观察 unfinished 拒绝、显式 finish、继续报告、manual 独立发送确认、父层最新报告验收与 complete、真实 Tab 精确关闭和内部保留；受控 dock 不能替代这些证据。`--hosts declared` 另执行入口中固定业务夹具的混合宿主声明，保留 parent／child／worker 各自 OMP/Pi，不表示生产业务已验收，也不代替双宿主完整矩阵。
+
+依赖、实际模型和隔离／清理任一不可用均非零，不重试业务决策、跳过宿主或读取用户认证。保留的独占证据包含两仓源码／锁文件身份、安装入口／OS 进程、模型／工具／HTTP、原始用户批准、原生历史与文件字节；实际执行结果才决定是否通过。本节仅说明可复跑入口，不宣称当前环境的验收结果；普通 `bun test tests/workflow-chat`、同载 dock、typecheck 和 canonical 全仓检查仍须分别运行并报告。
 
 ### report_policy 真实模型冒烟（OMP 与 Pi 分别执行）
 
