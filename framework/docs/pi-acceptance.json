@@ -4,25 +4,25 @@
     "workflow-chat": {
       "schemaVersion": 1,
       "scope": "workflow-chat",
-      "startedAt": "2026-11-06T06:04:25.382Z",
+      "startedAt": "2026-11-06T10:32:29.361Z",
       "cli": {
         "command": [
-          "D:\\Users\\hugos\\AppData\\Local\\nvm\\v22.19.0\\node.exe",
-          "D:\\Users\\hugos\\AppData\\Local\\nvm\\v24.18.0\\node_modules\\@earendil-works\\pi-coding-agent\\dist\\bundle\\cli.js"
+          "D:/Users/hugos/AppData/Local/nvm/v22.19.0/node.exe",
+          "D:/Users/hugos/AppData/Local/nvm/v24.18.0/node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js"
         ],
-        "path": "D:\\Users\\hugos\\AppData\\Local\\nvm\\v24.18.0\\node_modules\\@earendil-works\\pi-coding-agent\\dist\\bundle\\cli.js",
+        "path": "D:/Users/hugos/AppData/Local/nvm/v24.18.0/node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js",
         "source": "node script"
       },
       "source": {
-        "repoRoot": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-Wg3bNA",
-        "head": "b29cbe30932af917477aa37f2c8ac47252111bdb",
+        "repoRoot": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-p3cYpy",
+        "head": "29f39c714d603daf7bdd363fd2842ed6818449a0",
         "status": [
           " M docs/agents/testing.md",
-          " M tests/harness-dock/connect-bot-startup.test.ts"
+          " M tests/harness-dock/connect-bot-lifecycle.test.ts"
         ],
-        "diffSha256": "13cd05799eb956b91d4f49129e86d7048b0e62ff4e85903018dd1ae8fef36ca2",
+        "diffSha256": "dc6217f41a3b08f9e721bb8c172d885cb9dde42a9e0a31dd169cad1228955668",
         "untrackedFiles": [],
-        "sha256": "da5a33ef8c7ae0bacdcebeb613de0032b2ff98c3754a6edd8996ce99c79286e5"
+        "sha256": "5506987aedc403576723ba0dcf4f37622d29603e43fd691b48dd60e173b2ecd9"
       },
       "lockfiles": [
         {
@@ -59,17 +59,17 @@
         "Pi tool AbortSignal releases transport, switch preserves auto startup, and shutdown releases active collect"
       ],
       "complete": true,
-      "finishedAt": "2026-11-06T06:04:33.540Z",
+      "finishedAt": "2026-11-06T10:32:37.507Z",
       "finishedSource": {
-        "repoRoot": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-Wg3bNA",
-        "head": "b29cbe30932af917477aa37f2c8ac47252111bdb",
+        "repoRoot": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-p3cYpy",
+        "head": "29f39c714d603daf7bdd363fd2842ed6818449a0",
         "status": [
           " M docs/agents/testing.md",
-          " M tests/harness-dock/connect-bot-startup.test.ts"
+          " M tests/harness-dock/connect-bot-lifecycle.test.ts"
         ],
-        "diffSha256": "13cd05799eb956b91d4f49129e86d7048b0e62ff4e85903018dd1ae8fef36ca2",
+        "diffSha256": "dc6217f41a3b08f9e721bb8c172d885cb9dde42a9e0a31dd169cad1228955668",
         "untrackedFiles": [],
-        "sha256": "da5a33ef8c7ae0bacdcebeb613de0032b2ff98c3754a6edd8996ce99c79286e5"
+        "sha256": "5506987aedc403576723ba0dcf4f37622d29603e43fd691b48dd60e173b2ecd9"
       },
       "finishedLockfiles": [
         {
@@ -78,7 +78,7 @@
           "sha256": "28ce4c0d7b7d1d45a44e335a6647b0959c333875af42ca87ba63c87bcf4c2168"
         }
       ],
-      "acceptedAt": "2026-11-06T06:04:33.540Z"
+      "acceptedAt": "2026-11-06T10:32:37.507Z"
     },
     "close-out": {
       "schemaVersion": 1,
