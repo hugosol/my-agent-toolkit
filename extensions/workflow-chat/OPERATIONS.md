@@ -92,6 +92,8 @@ bun run test
 
 后续集成复验使用保留的配套 herdr-bot worktree 源码与 metadata，并在其独立 `CARGO_TARGET_DIR` 执行 `cargo build --manifest-path backend/Cargo.toml --example safe_shutdown_shell --bin herdr-fixture` 成功后，再显式绑定三个 `HERDR_BOT_*` 路径。owning partition 25/25、受影响的真实后端身份／collect／恢复 dock 14/14、typecheck／authoring 均通过。首次配套 canonical 的唯一失败是旧检查仍期待“一律禁止 manager 报告”的文字；按上文唯一合法关联语义更新精确诊断，保留 HTTP 403 与 `node-role-invalid`。修正后的 canonical 为 1818 通过、1 失败（1819 项、230 文件）：仅 Pi 双角色恢复后的最终 EOF 再次出现 `UV_HANDLE_CLOSING`／exit 9。OMP 同载、全部后端检查及其他 Pi 检查通过，不抵消该原生生命周期失败；本次不能关闭全部验收，也不把早先单次同载通过认作已修复。未修改宿主／全局运行时、跳过检查、放宽退出断言或重试取绿。需要先解决受支持宿主／运行时的异常退出，再对冻结源码执行完整入口；不能用应用层延时或忽略退出码代替。
 
+后续显式选择已有 Node 22.19.0（`PI_NODE`）及已安装 Pi 1.5.0（`PI_CLI`），在独占窗口使用独占 TEMP／TMP 和同一配套后端安全壳复验：双角色 dock 4/4、完整 serial dock 179/179、四 worker canonical 1819/1819 均通过。期间发现隔离冻结前缀缺少已发布资源和原生 addon；只恢复相同 18.5.0 包的缺失文件，保留已有冻结 patch，并让既有 patch／来源检查独立核对，没有修改宿主源逻辑。此前缺资源及一次 auto connect-bot 注册观察失败的日志仍保留，不能据最终通过解释其原因。此结果属于上述显式运行时／隔离条件，不证明 Node 24.18.0 的退出故障已修复，也不将受控 dock 提升为真实模型或整体宿主支持证据；Herdr 真实角色链路另以实际 OS 进程身份及专项结果为准。
+
 ### 嵌套双角色真实后端／模型验收
 
 配套 herdr-bot 的长期入口为 `scripts/accept-workflow-nesting-roles.py`，完整参数和运行约束在该仓 `docs/agents/testing.md` 的“嵌套 manager 双角色真实验收”。从 herdr-bot worktree 根指定本 toolkit worktree：
