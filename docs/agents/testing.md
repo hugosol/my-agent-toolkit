@@ -26,6 +26,8 @@ Read `package.json` for existing script names. Use a direct test-directory comma
 
 Use `bun run test` for full-repository regression: the package script owns the repository's test scheduling and isolation policy. Keep `bun test <file-or-directory>` for focused validation; bare `bun test` bypasses the full-suite policy.
 
+The canonical full-suite script bounds execution to four workers. This changes scheduling only: keep every case, assertion, and deadline, and retain earlier failed runs rather than treating a later pass as a retry of a business decision.
+
 For explicitly serial full-repository diagnosis, use `bun run test:serial`. Record why serial execution was needed and label that result as diagnostic rather than a replacement for the canonical full-suite run. Do not add retries or relax deadlines to make a parallel run pass.
 
 ## Baseline dependencies in isolated worktrees
@@ -33,6 +35,8 @@ For explicitly serial full-repository diagnosis, use `bun run test:serial`. Reco
 The frozen harness baseline records sibling anchor and behavior-oracle checkouts. When a temporary worktree does not share those siblings, set `OMP_BASELINE_RECORD_ROOT` to the original toolkit repository root so the recorded cross-repository paths resolve beside it. This changes only dependency path resolution: the toolkit source, installed harness, own lockfile, deployments and test data still come from the worktree. Absolute recorded paths remain unchanged, and all recorded revision, byte-identity and dependency-lock checks still run. Do not repin the baseline or skip these checks to accommodate a worktree layout.
 
 ## Pi acceptance versions
+
+For a script/shim CLI, `PI_NODE` selects an already installed Node executable and `PI_CLI` selects the already installed Pi CLI. These public overrides do not change global PATH or install a runtime; record both paths and versions with the result. On Windows, Node 22.19.0 is an explicitly exercised alternative for the Pi lifecycle checks when Node 24.18.0 exits with the upstream `UV_HANDLE_CLOSING` assertion. Do not suppress that exit, change assertions/deadlines, or extrapolate one runtime's pass to another runtime or an overall support promotion. Keep disposable TEMP/TMP storage invocation-owned; a different volume may be selected explicitly when the system volume cannot sustain isolated native stores.
 
 Pi native acceptance and smoke entrypoints use the locally selected CLI (`--pi` where offered, `PI_CLI`, otherwise existing local resolution), not a historical exact-version default. The shared policy rejects versions below the highest passed version for that scope in `framework/docs/pi-acceptance.json`; ordering is strict SemVer, not string ordering. Complete passed scopes update their version and source/environment evidence automatically. Filtered native tests, partial smoke modes, failed or blocked runs do not promote a complete scope. Keep source unchanged during acceptance: a changed source digest refuses publication. See [Pi acceptance scopes and commands](../../framework/docs/harness-support.md#commands-and-acceptance-scopes). These checks do not install a version, change normal startup, or alter OMP's fixed baseline. Historical captures remain fixtures, not a requirement to install their original Pi version.
 
