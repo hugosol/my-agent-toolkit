@@ -7,9 +7,10 @@ import { PiSession, type PiSessionOptions, resolvePiCli, startPiRun } from "../.
 import { promptDock } from "./prompt-dock";
 
 /** Approved native dock seam: normal auto entries, real adapters/HTTP, scripted provider.
- * The HTTP peer supplies outcomes, not authorization or workflow state transitions.
+ * By default the HTTP peer supplies controlled outcomes; an explicit endpoint uses
+ * the paired backend's actual authorization and workflow state transitions.
  */
-export async function dualRoleDock(host: "omp" | "pi") {
+export async function dualRoleDock(host: "omp" | "pi", endpoint?: string) {
 	const calls: { path: string; body: Record<string, unknown> }[] = [];
 	let answer: unknown = { ok: true };
 	let status = 200;
@@ -34,7 +35,7 @@ export async function dualRoleDock(host: "omp" | "pi") {
 	await listening.promise;
 	const address = backend.address();
 	if (!address || typeof address === "string") throw new Error("Missing dual-role fixture port");
-	const config = `endpoint: http://127.0.0.1:${address.port}\nrequestTimeoutMs: 3000\ncollectTimeoutMs: 30000\n`;
+	const config = `endpoint: ${endpoint ?? `http://127.0.0.1:${address.port}`}\nrequestTimeoutMs: 3000\ncollectTimeoutMs: 30000\n`;
 	async function closeBackend() {
 		for (const socket of sockets) socket.destroy();
 		const closed = Promise.withResolvers<void>();

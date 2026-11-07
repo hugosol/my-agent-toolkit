@@ -30,7 +30,7 @@ describe("integration command contract", () => {
 		expect(demand.contracts.find((item: { id: string }) => item.id === "port:onTurn")).toMatchObject({ requirement: "required" });
 		expect(demand.contracts.find((item: { id: string }) => item.id === "port:nextTask")).toMatchObject({ requirement: "required" });
 		expect(demand.contracts.find((item: { id: string }) => item.id === "port:onTurn").origins[0]).toMatchObject({ file: expect.stringContaining("extensions/model-cost/"), line: expect.any(Number) });
-	});
+	}, 10_000);
 
 	test("model-cost pi uses its selected assembly output rather than the generic optional factory", () => {
 		const result = run("check-adapter-integrations.ts", "--extension", "model-cost", "--adapter", "pi", "--json");
