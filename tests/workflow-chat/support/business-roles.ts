@@ -13,9 +13,9 @@ export function businessRoles(endpoint: string) {
 	const binding = port.bind(defineExtension({
 		id: `workflow-business-${++fixtureId}`,
 		displayName: "Workflow business behavior",
-		config: { fields: { endpoint: "non-empty-string", requestTimeoutMs: "milliseconds", collectTimeoutMs: "milliseconds" } },
+		config: { fields: { endpoint: "non-empty-string", requestTimeoutMs: "milliseconds", collectTimeoutMs: "milliseconds", reportConfirmationTimeoutMs: "milliseconds" } },
 	}), {
-		config: { reader: () => `endpoint: ${JSON.stringify(endpoint)}\nrequestTimeoutMs: 2000\ncollectTimeoutMs: 3000\n` },
+		config: { reader: () => `endpoint: ${JSON.stringify(endpoint)}\nrequestTimeoutMs: 2000\nreportConfirmationTimeoutMs: 20000\ncollectTimeoutMs: 3000\n` },
 		factory: context => {
 			requests = new WorkflowRequests(context);
 			return {};

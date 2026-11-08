@@ -60,7 +60,7 @@ pi -e D:/service/my-agent-toolkit/entrypoints/pi-auto/node-chat.ts
 
 ## 2. 上线核对与预算
 
-- 在合法关联的管理者 Session 显式 `run {"action":"status"}`，核对 Run 现场和角色；节点遵守本次派发的 report_policy：auto 在材料可交接或需报告阻塞时显式 report，如实填写 can_complete，manual 先在 node Chat 展示摘要、交付地址和限制并询问、停轮，收到用户自然语言确认后再 report；旧派发缺字段按 auto。模型只传业务参数，真实 `sessionId` 由公共 Session 加入；完整协议以 [run](README.md#run-基础状态动作)、[collect](README.md#collect-长等待与报告待办)、[report](README.md#report-协议与交接) 为准。
+- 在合法关联的管理者 Session 显式 `run {"action":"status"}`，核对 Run 现场和角色；节点遵守本次派发的 report_policy：auto 在材料可交接或需报告阻塞时显式 report，如实填写 can_complete，manual 调用 report 后由工具展示完整待发送内容并取得用户明确发送批准，拒绝、取消、超时或无法交互不发送；旧派发缺字段按 auto。模型只传业务参数，真实 `sessionId` 由公共 Session 加入；完整协议以 [run](README.md#run-基础状态动作)、[collect](README.md#collect-长等待与报告待办)、[report](README.md#report-协议与交接) 为准。
 - 普通预算覆盖请求至完整正文，不只是连通或响应头。普通预算默认 30000ms；collect 独立默认 5460000ms，覆盖后端默认 5400 秒再留 60 秒余量。不要为了普通 report 调短 collect，也不要把所有普通调用都改为 91 分钟。后端改期时人工核对客户端预算，无自动握手。
 - collect 的正常 `reason: "timeout"` 不是错误，也不修改状态；客户端 `error.kind: "timeout"` 是完整传输预算耗尽。paused/completed/notification/no-running 的处理和待办查阅见 README。collect 不返回报告正文；按 pendingReports 的标识读取 messages.jsonl 或已有 Run 详情，阅读报告结论、阻塞、部分效果及必要干预；不默认读取输出正文验收。
 - 取消、网络/正文失败或非 2xx 不是回滚保证。保留整个错误正文、已发生 effects、逐项结果、historyError/stateCommitted；HTTP 200 也不能概括整批成功。故障分类与 Session 结束语义见 [故障、取消与信任边界](README.md#故障取消与信任边界)。
@@ -115,12 +115,13 @@ python scripts/accept-workflow-nesting-roles.py `
 使用上节对应宿主的自动入口和合法后端派发，不在任意独立启动的无关联 Session 中伪造身份。升级共享定义后创建新 node Chat；已有 Chat 的持久化指引不热更新。
 
 1. 在 Map 中给一个可独立交付的小任务设置 `report_policy: manual`，由 manager 正常 dispatch。任务示例：在指定绝对目录写一份 UTF-8 文本，正文为 `report-policy-smoke`，交付地址、读取方法和限制。核对实际派发输入有独立 `report_policy: manual` 控制段。
-2. 等任务可交接：node Chat 应先展示摘要、绝对地址和限制、询问是否报告并停轮；从 Run 详情或 `messages.jsonl` 确认尚未新增 report。manager 不得仅凭等待确认就 complete。
-3. 在该 node Chat 输入 `先将正文改为 report-policy-smoke-revised，不要发送报告`。检查实际文件已修改，模型再次展示交接信息、询问并停轮，仍未新增 report。然后输入 `确认，发送这份报告`，核对新增一份 saved report 及对应 execution，核对严格 boolean can_complete 和命名 outputs（如有）；manager 阅读报告作编排判断，最新 true 仅允许而不强迫其显式 complete，不默认读取成果正文。
-4. 在 node Chat 要求补充或更正交接内容：再次观察询问与停轮；确认前报告数不变，输入 `确认发送补充报告` 后新增独立报告。辅助通知失败时不应仅因该失败重报。
-5. 用新执行分别验证 `report_policy: auto` 与旧派发缺字段的输入：可交接后允许直接 report，再继续无害收尾。分别用 OMP/Pi 重复以上流程；保留实际输入、对话、文件和报告标识，不用受控 provider 的预设调用声称模型遵从了策略。
+2. 等模型调用 report：原生确认界面应显示本次完整 body、can_complete 和 outputs；批准前不得出现 `/api/workflow/node/report` 请求或新增报告（只读 context 查询允许）。manager 不得仅凭等待确认就 complete。
+3. 分别选择“否”、关闭/取消、等待配置的确认超时，核对无报告请求、工具返回未发送、无自动补发。超时后迟到选择不能补发；无 UI 模式也不能发送 manual 报告。默认 20 秒，可在 toolkit 的 `reportConfirmationTimeoutMs` 中修改后重启；使用独立于 HTTP 的预算。
+4. 明确要求修改正文为 `report-policy-smoke-revised` 后重新调用 report，确认界面须展示修改后的实际内容，旧批准不可复用。在界面明确选择“是”后，核对恰一份报告及其 body、canComplete、outputs 与展示内容一致。自然语言业务批准不是发送批准。
+5. 补充、更正或再次发送均须新确认；已保存但辅助通知失败不应重报。报告请求发出后发生网络错误须保留保存状态不明，不能宣称未发送。
+6. 用新执行验证 `auto` 不弹窗直接报告；历史执行缺策略由后端读作 auto。修改当前 Map 不改变已派发执行的冻结策略；嵌套双角色外报读取父 execution 的策略，不读取内部 Run 的策略。
 
-这些观察验证提示词行为，不代表 report_policy 是审批接口。report 使用 body、必填 boolean can_complete 和可选 outputs；不要新增审批状态，can_complete 不代替真实用户确认。配套升级 toolkit 与后端后，新请求旧形状明确拒绝；历史报告可读但缺声明不能首次完成。人工补齐也须当前执行最新 true 报告，不存在无报告人工完成旁路。
+OMP/Pi 分别验证实际交互，保留界面、用户选择、实际 HTTP 与报告标识。受控模型只能证明工具门禁机制，不证明真实模型业务职责遵从。RPC 必须有实现确认请求/响应的客户端；无响应按超时处理。toolkit 与 herdr-bot 须配套升级，后端提供只读 `/api/workflow/node/context`；查询失败不默认 auto。门禁仅约束 report 工具，不增加后端审批状态或直接 HTTP 防绕过保证。can_complete 不代替发送批准；人工补齐仍须当前执行最新 true 报告，不存在无报告人工完成旁路。
 
 ### 文件交接跨仓自动验收
 

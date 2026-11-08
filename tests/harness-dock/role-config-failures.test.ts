@@ -13,8 +13,8 @@ for (const role of ["manager", "node"] as const) {
 				calls.push(request.url); return Response.json({ forbiddenFallback: true });
 			} });
 			const endpoint = `http://127.0.0.1:${fallback.port}`;
-			const valid = `endpoint: ${endpoint}\nrequestTimeoutMs: 3000\ncollectTimeoutMs: 6000\n`;
-			const config = failure === "missing" ? null : failure === "yaml" ? "endpoint: [unterminated\n" : `endpoint: ${endpoint}\nrequestTimeoutMs: 0\ncollectTimeoutMs: 6000\n`;
+			const valid = `endpoint: ${endpoint}\nrequestTimeoutMs: 3000\nreportConfirmationTimeoutMs: 20000\ncollectTimeoutMs: 6000\n`;
+			const config = failure === "missing" ? null : failure === "yaml" ? "endpoint: [unterminated\n" : `endpoint: ${endpoint}\nrequestTimeoutMs: 0\nreportConfirmationTimeoutMs: 20000\ncollectTimeoutMs: 6000\n`;
 			try {
 				const dock = await promptDock(role, { config, misleadingConfig: valid });
 				try {

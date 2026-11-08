@@ -16,7 +16,7 @@ test("P1/P2/P6 independent automatic roles use native identity and preserve real
 	try {
 	const transport = await collectTransport(backend.endpoint);
 	cleanup.unshift(() => transport.close());
-	const config = `endpoint: ${transport.endpoint}\nrequestTimeoutMs: 3000\ncollectTimeoutMs: 6000\n`;
+	const config = `endpoint: ${transport.endpoint}\nrequestTimeoutMs: 3000\nreportConfirmationTimeoutMs: 20000\ncollectTimeoutMs: 6000\n`;
 	const manager = await promptDock("manager", { config, observeIdentity: true });
 	cleanup.unshift(() => manager.close());
 	const node = await promptDock("node", { config, observeIdentity: true });
@@ -123,8 +123,8 @@ test("P1/P2/P6 independent automatic roles use native identity and preserve real
 		// P2 constrains external connections: observe ALL role HTTP paths, including any
 		// accidental connect-bot registration, heartbeat, or websocket upgrade attempt.
 		expect(transport.calls.map(call => call.path)).toEqual([
-			"/api/workflow/manager/status", "/api/workflow/node/report", "/api/workflow/manager/status", "/api/workflow/manager/dispatch",
-			"/api/workflow/node/report", "/api/workflow/manager/collect", "/api/workflow/node/report", "/api/workflow/node/report", "/api/workflow/manager/status",
+			"/api/workflow/manager/status", "/api/workflow/node/context", "/api/workflow/manager/status", "/api/workflow/manager/dispatch",
+			"/api/workflow/node/context", "/api/workflow/node/report", "/api/workflow/manager/collect", "/api/workflow/node/context", "/api/workflow/node/context", "/api/workflow/manager/status",
 		]);
 		// One explicitly test-owned SSE reader checks the actual panel registry.
 		// Neither role registered a connect-bot reporting Session as a side effect.

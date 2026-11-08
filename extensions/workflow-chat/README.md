@@ -37,7 +37,7 @@ pi -e /absolute/my-agent-toolkit/entrypoints/pi-auto/manager-chat.ts -e /absolut
 
 `run`／`collect` 定位内部 Run，`report` 定位外层对应父 execution。所有调用只提供各工具现有的业务参数；公共原生 Session observation 提供同一真实身份，后端以明确关联决定授权和层级。工具存在不证明关联合法，不能添加 session、Run、execution、from/to 或接收者字段绕过拒绝。普通单角色继续只加载自己的入口。
 
-两独立实例各有 `manager-chat:tools`／`node-chat:tools` 首次指引身份，均追加到原生历史，不覆盖对方；普通轮次与恢复原 Session 不重复注入。内部 `finish` 不是 `session_end`：不关闭 Chat、不自动生成外报或完成父节点，随后仍可独立 report。外层 `report_policy=manual` 只约束本 Session 的外报，每次仍须在当前 Chat 展示、询问、停轮并等用户自然语言确认；内部 auto 报告、内部 finish 或业务确认均不替代外报发送确认，也不改变内部节点自己的策略。
+两独立实例各有 `manager-chat:tools`／`node-chat:tools` 首次指引身份，均追加到原生历史，不覆盖对方；普通轮次与恢复原 Session 不重复注入。内部 `finish` 不是 `session_end`：不关闭 Chat、不自动生成外报或完成父节点，随后仍可独立 report。外层 `report_policy=manual` 只约束本 Session 的外报，每次仍须由 report 工具在当前 Chat 展示待发送内容并取得用户明确发送批准；内部 auto 报告、内部 finish 或业务确认均不替代外报发送确认，也不改变内部节点自己的策略。
 
 可复现的同载机制检查、原始材料保存方式及证据边界见 [运行手册的双角色原生 dock](OPERATIONS.md#双角色原生-dock机制验证)。这不是后端授权、真实模型遵从或完整嵌套承诺已通过的声明。
 
@@ -116,11 +116,13 @@ python (Join-Path $HERDR_BOT_WT 'scripts/test-workflow-file-handoff.py') `
 ```yaml
 endpoint: http://127.0.0.1:18787
 requestTimeoutMs: 30000
+reportConfirmationTimeoutMs: 20000
 collectTimeoutMs: 5460000
 ```
 
 - `endpoint` 为 herdr-bot 基地址；按实际部署修改后重启 Session。
 - `requestTimeoutMs` 是 report 等普通请求的完整传输预算，包含响应正文。
+- `reportConfirmationTimeoutMs` 是 manual 报告的用户确认等待预算，默认部署值 20000 毫秒；统一配置，不是模型参数。升级时须在部署配置中加入此字段，修改后重启 Session。
 - `collectTimeoutMs` 是管理者长等待的独立预算，节点 report 不使用它。后端默认 5400 秒，建议客户端 5460000 毫秒（91 分钟）；没有自动同步握手，预算较长也不保证所有网络请求成功。
 - 文件缺失、非法 YAML、缺少或错误类型的字段会由公共配置机制明确拒绝绑定；不静默换用 cwd 配置或其他 endpoint。正整数毫秒范围是 1..2147483647。
 
@@ -228,7 +230,16 @@ Map node 的 `input` 工作文本保持原样；文件交接使用 `input_rule` 
 
 工具文本为后端 JSON；HTTP 状态及原始解析结果也保留于工具 details。辅助通知或诊断失败不会把已保存报告标成工具提交失败。每次显式 report 都可能追加独立报告，不是客户端幂等更新；有新结果或需更正正文时才明确再次提交。
 
-节点遵守本次派发输入控制段的 `report_policy: auto|manual`；旧派发未提供时按 `auto`。`auto` 在结果可交接或需要报告阻塞时显式 report，并如实声明 can_complete；`manual` 每次先在 node Chat 展示结果摘要、交付绝对地址和限制，询问用户是否发送 report，然后停轮等待。用户在该 node Chat 用自然语言确认后才发送；要求修改则先改，再展示、询问并停轮等确认；补充结果或更正正文也同样确认。报告后可以继续不影响结果的收尾。这是 OMP 与 Pi 共用角色定义的提示词约束，report_policy 本身不增加审批状态、按钮或审批门禁，can_complete 也不代替真实用户确认；不向已有 Chat 热更新已注入指引。
+`report` 在校验参数后，先以公共原生 Session 请求只读 `POST /api/workflow/node/context`，从后端取得对应执行冻结的 `reportPolicy`；当前或保留的旧执行、嵌套双角色均沿用后端报告身份解析。后端历史记录缺策略时默认 `auto`；查询失败、响应缺策略或策略未知则不发送，不从提示词、当前 Map 或模型参数推断。部署须同步升级提供该接口的 herdr-bot。
+
+- `auto`：直接提交报告，不打开确认界面。
+- `manual`：调用工具后，在当前宿主原生确认界面展示本次完整 `body`、`can_complete` 和 `outputs`。只有用户明确选择“是”才发送；自然语言同意、业务批准、内部 finish 和可交接声明都不构成发送批准。
+- 批准仅适用于本次展示的内容和本次调用；待发送内容在等待前固定，补充、更正或再次调用均重新确认，不复用批准。
+- 拒绝、关闭、取消、超时、会话结束、无交互能力或交互异常均返回 `sent=false`、`saved=false`，不触发报告请求；迟到批准无效。不自动重试、补发或反复询问，模型应结束本轮等待用户重新要求发送。不增加跨调用锁定机制。
+- 确认等待使用 toolkit 配置 `reportConfirmationTimeoutMs`，随部署提供的值为 20000 毫秒。与 HTTP 预算独立，模型不能修改；从调用原生确认界面开始计时。RPC 客户端须实际实现宿主确认请求/响应；没有响应即超时拒绝，无 UI 的模式不发送 manual 报告。
+- 一旦报告请求已发出，取消或传输错误仍可能意味着后端已保存，沿用下述不确定结果处理，不能报告为“未发送”。
+
+该门禁保证 `report` 工具自身未经批准不发送，不增加后端批准凭证，也不防止其他工具直接调用 HTTP。报告后可继续无害收尾；已有 Chat 的持久化指引不热更新，应在升级后创建新 Chat。
 
 **report、停轮、退出都不等于 node completed。** 管理者须阅读报告作编排判断并显式 complete，不默认验收输出正文；true 不自动完成或派发下游。节点等待用户确认本身不能作为 complete 依据，不由管理者替节点绕过确认发送报告。人工补齐执行失败结果后也须当前执行最新 true 报告，不保留无报告人工完成旁路。暂停新派发不撤回既有工作。旧执行的补充报告只保留其原执行事实，不替代新执行结果。
 

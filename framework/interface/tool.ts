@@ -15,6 +15,14 @@ export interface ToolExecutionDelivery {
 	readonly sessionId: string;
 	readonly callId: string;
 	readonly signal?: AbortSignal;
+	/** Native user approval only; absent UI, cancellation, errors and timeout all refuse. */
+	readonly confirm?: (request: {
+		readonly title: string;
+		readonly message: string;
+		readonly timeoutMs: number;
+		/** Additional business lifetime cancellation, alongside this tool call's signal. */
+		readonly signal?: AbortSignal;
+	}) => Promise<boolean>;
 }
 
 /** A business result that each adapter maps into its native result. */

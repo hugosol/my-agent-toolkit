@@ -17,7 +17,7 @@ export interface RoleContractDock {
 /** S1 only: real host/tool validation and HTTP persistence; scripted model, not role obedience. */
 export async function roleContractDock(host: "omp" | "pi", endpoint: string): Promise<RoleContractDock> {
 	if (host === "omp") {
-		const dock = await promptDock("node", { config: `endpoint: ${endpoint}\nrequestTimeoutMs: 30000\ncollectTimeoutMs: 5460000\n` });
+		const dock = await promptDock("node", { config: `endpoint: ${endpoint}\nrequestTimeoutMs: 30000\nreportConfirmationTimeoutMs: 20000\ncollectTimeoutMs: 5460000\n` });
 		return {
 			root: dock.root, capture: dock.capture,
 			state: () => dock.session.request({ type: "get_state" }),
@@ -44,7 +44,7 @@ export async function roleContractDock(host: "omp" | "pi", endpoint: string): Pr
 		}
 		cpSync(join(REPO_ROOT, "node_modules/yaml"), join(deployment, "node_modules/yaml"), { recursive: true, dereference: true });
 		writeFileSync(join(deployment, "extensions/workflow-chat/config.yaml"),
-			`endpoint: ${endpoint}\nrequestTimeoutMs: 30000\ncollectTimeoutMs: 5460000\n`);
+			`endpoint: ${endpoint}\nrequestTimeoutMs: 30000\nreportConfirmationTimeoutMs: 20000\ncollectTimeoutMs: 5460000\n`);
 		session = await PiSession.start({ cli: run.cli, runRoot: run.root,
 			entrypoint: join(deployment, "entrypoints/pi-auto/node-chat.ts"), selector: run.selector });
 		return {

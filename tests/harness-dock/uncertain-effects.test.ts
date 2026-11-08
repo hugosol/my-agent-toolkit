@@ -70,7 +70,7 @@ test("P22 P23 P24 saved report remains queryable after disconnect and explicit n
 		const end = frames[frames.length - 1];
 		expect(end?.result).toMatchObject({ details: { body: { error: { kind: "cancelled" }, guidance: expect.stringContaining("不表示回滚或未生效") } } });
 		await Bun.sleep(250);
-		expect(transport.calls).toHaveLength(1);
+		expect(transport.calls.map(call => call.path)).toEqual(["/api/workflow/node/context", "/api/workflow/node/report"]);
 		expect(readFileSync(join(scene.backend.root.path, "calls.jsonl"), "utf8")).toBe(external);
 		gate.release.resolve();
 		const detail = await scene.detail();
@@ -83,7 +83,7 @@ test("P22 P23 P24 saved report remains queryable after disconnect and explicit n
 		expect(second).toMatchObject({ saved: true, report: { body: secondBody, from: { sessionId: nativeId } }, notification: { status: "failed" }, diagnostic: { status: "written" } });
 		const afterExplicit = readFileSync(join(scene.backend.root.path, "calls.jsonl"), "utf8");
 		await Bun.sleep(250);
-		expect(transport.calls).toHaveLength(2);
+		expect(transport.calls.map(call => call.path)).toEqual(["/api/workflow/node/context", "/api/workflow/node/report", "/api/workflow/node/context", "/api/workflow/node/report"]);
 		expect(readFileSync(join(scene.backend.root.path, "calls.jsonl"), "utf8")).toBe(afterExplicit);
 		expect((await scene.detail()).reports).toHaveLength(2);
 		console.log(JSON.stringify({ promise: "P22/P23/P24", nativeId, accepted, explicitReport: second, observationMs: 250, requestCount: transport.calls.length }));

@@ -12,7 +12,7 @@
 
 内部节点全部 completed 后仍须显式 `run action=finish`；内部 finish 不自动生成外报，不完成父节点，也不是原生 `session_end`、退出或关闭 Chat。同一 Session 在 finish 后仍可调用 `report`，父管理者阅读外报后另行显式 complete。内部尚未 finish 时不得向外声明 `can_complete=true`；如实报告进展或阻塞仍可用 false，不伪造内部完成。
 
-外层派发的 `report_policy` 只约束本 Session 向外的 `report`，不改变内部节点各自的报告策略。外层 `manual` 时，即使内部节点按 auto 报告、内部 Run 已 finish，也必须先在当前 Chat 展示外报摘要、交付地址和限制，询问并结束本轮，收到用户自然语言确认后才发送；内部业务确认、内部 finish 和 can_complete 都不能代替外报发送确认。内部编排照常显式 run/collect，不因外层 manual 被禁止。
+外层派发的 `report_policy` 只约束本 Session 向外的 `report`，不改变内部节点各自的报告策略。外层 `manual` 时，即使内部节点按 auto 报告、内部 Run 已 finish，也必须由 report 工具展示待发送内容并取得用户明确发送批准；自然语言同意不能替代工具内确认；内部业务确认、内部 finish 和 can_complete 都不能代替外报发送确认。内部编排照常显式 run/collect，不因外层 manual 被禁止。
 
 # 管理循环
 

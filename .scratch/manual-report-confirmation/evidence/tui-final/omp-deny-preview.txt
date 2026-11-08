@@ -1,0 +1,54 @@
+
+                                                      ████████████
+                                                         ██  ██       ▄▀▀▄ █▀▄▀▄ █▀▀▄
+                                                         ██  ██       ▀▄▄▀ █ █ █ █▄▄▀
+                                                         ▒▒  ██                  █
+                                                             ██       v18.5.0
+
+                                     Tip: Type `/` at the start of your prompt to browse every command
+
+
+ Call report exactly once for the prepared result.
+
+
+
+ ⣷ Report
+  └─ body="MANUAL-REPORT-omp-deny\nComplete report preview. Limit: smoke fixture only.", can_complete=false, outputs=[1 items]
+
+
+  ⎋ Working…                                                                                                        Auxiliary smoke response
+╭─ 发送报告？（仅批准本次报告发送） (20s) ─────────────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                          │
+│ 以下为本次待发送报告的完整内容；业务批准不等于发送批准。                                                                                 │
+│                                                                                                                                          │
+│ body:                                                                                                                                    │
+│ MANUAL-REPORT-omp-deny                                                                                                                   │
+│ Complete report preview. Limit: smoke fixture only.                                                                                      │
+│                                                                                                                                          │
+│ can_complete: false                                                                                                                      │
+│                                                                                                                                          │
+│ outputs:                                                                                                                                 │
+│ [                                                                                                                                        │
+│   {                                                                                                                                      │
+│     "id": "draft",                                                                                                                       │
+│     "path": "E:/smoke/full-output.txt"                                                                                                   │
+│   }                                                                                                                                      │
+│ ]                                                                                                                                        │
+│                                                                                                                                          │
+│ 只有明确选择“是”才会发送。                                                                                                               │
+│                                                                                                                                          │
+│  ❯ Yes                                                                                                                                   │
+│    No                                                                                                                                    │
+│                                                                                                                                          │
+│ ↑/↓ navigate  ⏎ select  ⎋ cancel                                                                                                         │
+│                                                                                                                                          │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+
+
+
+
+
+
+
+

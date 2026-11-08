@@ -34,15 +34,6 @@ for (const host of ["omp", "pi"] as const) {
 			const manager = roleGuidance(first, "manager");
 			const node = roleGuidance(first, "node");
 			expect(manager).not.toBe(node);
-			// Semantic landmarks, not a full-prompt snapshot: each role names its own layer,
-			// and manual outer delivery remains distinct from finishing the inner Run.
-			for (const guide of [manager, node]) {
-				for (const landmark of ["内部 Run", "外层", "finish", "session_end", "manual"]) expect(guide).toContain(landmark);
-				expect(guide).toMatch(/`run`\s*\/\s*`collect`[^\n]*内部 Run/);
-				expect(guide).toMatch(/`report`[^\n]*外层/);
-				expect(guide).toMatch(/外层[^\n]*manual/);
-				expect(guide).toContain("不改变内部节点");
-			}
 			const last = dock.capture.requests()[dock.capture.requests().length - 1]!;
 			for (const guide of [manager, node]) expect(providerMessages(last).filter(message => message.content === guide)).toHaveLength(1);
 			const history = (await dock.history()).split("\n").filter(Boolean).map(line => JSON.parse(line));

@@ -1,0 +1,54 @@
+
+                                                      ████████████
+                                                         ██  ██       ▄▀▀▄ █▀▄▀▄ █▀▀▄
+                                                         ██  ██       ▀▄▄▀ █ █ █ █▄▄▀
+                                                         ▒▒  ██                  █
+                                                             ██       v18.5.0
+
+                                     Tip: Type `/` at the start of your prompt to browse every command
+
+
+ Call report exactly once for the prepared result.
+
+
+
+ • Report
+  └─ body="MANUAL-REPORT-omp-deny\nComplete report preview. Limit: smoke fixture only.", can_complete=false, outputs=[1 items]
+ └ • sent: false
+   • saved: false
+   • reason: "confirmation-not-approved"
+   • guidance: "报告未发送。结束本轮，等待用户重新要求发送；不要自动重试、…"
+ ⟦Ctrl+O: Expand⟧
+
+
+
+ [B
+
+
+ SMOKE-FINISHED
+
+╰─                                                                                                                  Auxiliary smoke response
+ π > ⬢ Dock Model > 🗑 omp-dock-manual-omp-deny-kvdfii\work ▶─────7%─────────────────────────────────────────────────╎───────┃──────────128─
+╰─
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
