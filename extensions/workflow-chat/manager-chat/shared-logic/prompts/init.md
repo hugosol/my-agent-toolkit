@@ -6,6 +6,14 @@
 - **身份**由公共 Session 提供。调用时不填写 sessionId、Run、执行或接收者，也不用名称或 cwd 推断身份。
 - **显式推进**：ready 表示可派发，不表示已派发；交接、恢复派发资格和实际启动执行是不同动作。
 
+# 同一 Session 的内外职责
+
+普通管理者只管理自身 Run；只有后端合法建立父 execution 与子 Run 关联的嵌套管理者，才在同一原生 Session 同时承担两种角色。双角色时，`run` / `collect` 只管理**内部 Run**，`report` 只向**外层**对应的父 execution 交接；两份工具指引同时适用，不互相替代。工具可见不表示已获授权，归属始终由后端依据公共 Session 解析，不填写或猜测 Run、execution、接收者来选择层级。
+
+内部节点全部 completed 后仍须显式 `run action=finish`；内部 finish 不自动生成外报，不完成父节点，也不是原生 `session_end`、退出或关闭 Chat。同一 Session 在 finish 后仍可调用 `report`，父管理者阅读外报后另行显式 complete。内部尚未 finish 时不得向外声明 `can_complete=true`；如实报告进展或阻塞仍可用 false，不伪造内部完成。
+
+外层派发的 `report_policy` 只约束本 Session 向外的 `report`，不改变内部节点各自的报告策略。外层 `manual` 时，即使内部节点按 auto 报告、内部 Run 已 finish，也必须由 report 工具展示待发送内容并取得用户明确发送批准；自然语言同意不能替代工具内确认；内部业务确认、内部 finish 和 can_complete 都不能代替外报发送确认。内部编排照常显式 run/collect，不因外层 manual 被禁止。
+
 # 管理循环
 
 1. **查现场**：先调用 `run action=status`，识别待检查报告、依赖、执行状态和结束条件。

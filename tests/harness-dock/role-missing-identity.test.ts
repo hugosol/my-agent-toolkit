@@ -11,7 +11,7 @@ for (const role of ["manager", "node"] as const) {
 		const calls: unknown[] = [];
 		const endpoint = Bun.serve({ port: 0, hostname: "127.0.0.1", async fetch(request) { calls.push(await request.json()); return Response.json({ unexpectedFallback: true }); } });
 		try {
-			const dock = await promptDock(role, { missingNativeIdentity: true, config: `endpoint: http://127.0.0.1:${endpoint.port}\nrequestTimeoutMs: 3000\ncollectTimeoutMs: 6000\n` });
+			const dock = await promptDock(role, { missingNativeIdentity: true, config: `endpoint: http://127.0.0.1:${endpoint.port}\nrequestTimeoutMs: 3000\nreportConfirmationTimeoutMs: 20000\ncollectTimeoutMs: 6000\n` });
 			try {
 				const actualId = await nativeIdentity(dock);
 				await dock.session.request({ type: "set_session_name", name: "tempting-display-name-not-an-id" });

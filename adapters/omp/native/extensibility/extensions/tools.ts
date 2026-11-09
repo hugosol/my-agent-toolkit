@@ -1,6 +1,7 @@
 import type { ToolParameterSchema } from "../../../../../framework/interface/tool";
 import type { BoundTool } from "../../../../../framework/runtime/port";
 import { defineAdapterDelivery } from "../../../../../framework/runtime/adapter-authoring";
+import { toolConfirmation } from "../../../../../framework/runtime/tool-confirmation";
 import type { OmpExtensionApi } from "./types";
 
 /** OMP repairs scalar types and closed objects. Business guards must see invalid values and extra keys. */
@@ -25,7 +26,10 @@ export function registerOmpTool(api: OmpExtensionApi): (tool: BoundTool) => void
 		name: tool.name, label: tool.label, description: tool.description, loadMode: "essential",
 		parameters: ompToolParameters(tool.parameters),
 		async execute(callId, params, signal, _onUpdate, ctx) {
-			const result = await tool.execute(params, defineAdapterDelivery("tool", { callId, sessionId: ctx.sessionManager.getSessionId(), ...(signal === undefined ? {} : { signal }) }));
+			const result = await tool.execute(params, defineAdapterDelivery("tool", {
+				callId, sessionId: ctx.sessionManager.getSessionId(), ...(signal === undefined ? {} : { signal }),
+				confirm: toolConfirmation(ctx.hasUI && typeof ctx.ui.confirm === "function" ? ctx.ui.confirm.bind(ctx.ui) : undefined, signal),
+			}));
 			return result;
 		},
 	});

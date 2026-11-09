@@ -28,6 +28,14 @@ export class WorkflowRequests {
 		this.#sessions.clear();
 	}
 
+	get reportConfirmationTimeoutMs(): number { return Number(this.#context.config.reportConfirmationTimeoutMs); }
+
+	/** Keep a pending interaction tied to the same actual Session as its HTTP request. */
+	interactionSignal(sessionId: string, signal?: AbortSignal): AbortSignal {
+		const lifetime = this.#sessions.get(sessionId)?.signal ?? AbortSignal.abort(new Error("Session unavailable"));
+		return signal ? AbortSignal.any([signal, lifetime]) : lifetime;
+	}
+
 	async post(selectedSessionId: string, route: string, params: Readonly<Record<string, unknown>>, signal?: AbortSignal, collect = false): Promise<WorkflowResponse> {
 		// Native context selects an observation; the public Session reading supplies the wire identity.
 		const observation = this.#context.session.observations.read(selectedSessionId);

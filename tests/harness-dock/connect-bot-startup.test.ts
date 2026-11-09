@@ -328,7 +328,7 @@ describe("the automatic entrypoint activates on the real host without a command 
 			panel.release();
 			expect(await waitFor(() => notices(session!).includes(CONNECTED))).toBe(true);
 			expect(await waitFor(() => lastAreaLines(session!)?.[0] === MARKER_TEXT)).toBe(true);
-			expect(panel.kinds("state")).toHaveLength(1);
+			expect(await waitFor(() => panel.kinds("state").length === 1)).toBe(true);
 
 			// A later request in the same process is served without another automatic register.
 			const second = await session!.prompt("a following turn");

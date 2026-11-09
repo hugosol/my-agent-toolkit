@@ -16,7 +16,7 @@ test("P1/P2/P6 independent automatic roles use native identity and preserve real
 	try {
 	const transport = await collectTransport(backend.endpoint);
 	cleanup.unshift(() => transport.close());
-	const config = `endpoint: ${transport.endpoint}\nrequestTimeoutMs: 3000\ncollectTimeoutMs: 6000\n`;
+	const config = `endpoint: ${transport.endpoint}\nrequestTimeoutMs: 3000\nreportConfirmationTimeoutMs: 20000\ncollectTimeoutMs: 6000\n`;
 	const manager = await promptDock("manager", { config, observeIdentity: true });
 	cleanup.unshift(() => manager.close());
 	const node = await promptDock("node", { config, observeIdentity: true });
@@ -102,11 +102,13 @@ test("P1/P2/P6 independent automatic roles use native identity and preserve real
 		expect(nodeAmbiguous).toMatchObject({ isError: true, details: { httpStatus: 403 }, body: { code: "node-ambiguous", message: "原生身份关联不唯一。" } });
 		writeFileSync(runPath, originalRun);
 		// Real cross-role associations, not a counterfeit model-supplied identity:
-		// create another manager Run with the native identity of the node-only Session.
+		// create an unrelated manager Run with the node-only Session's identity.
+		// Dual-role authorization requires a persisted parent/execution link; sharing
+		// a native identity alone must still fail with the paired backend's exact refusal.
 		backend.behavior(nodeId, node.root.workDir);
 		const conflicting = await backend.post("/api/scheduler/maps/identity.json/runs", { managerTaskId: tasks.manager, zone: "test/manager", userInput: "Conflicting role association" });
 		const crossRole = await call(node, "report", { body: "must not overwrite manager attribution", can_complete: false });
-		expect(crossRole).toMatchObject({ isError: true, details: { httpStatus: 403 }, body: { code: "node-role-invalid", message: "管理者身份不能提交节点报告。" } });
+		expect(crossRole).toMatchObject({ isError: true, details: { httpStatus: 403 }, body: { code: "node-role-invalid", message: "管理者身份没有唯一合法的父执行关联。" } });
 		const secondPath = join(backend.root.path, "runs", conflicting.id, "run.json");
 		const second = JSON.parse(readFileSync(secondPath, "utf8"));
 		second.manager.sessionId = managerId;
@@ -121,8 +123,8 @@ test("P1/P2/P6 independent automatic roles use native identity and preserve real
 		// P2 constrains external connections: observe ALL role HTTP paths, including any
 		// accidental connect-bot registration, heartbeat, or websocket upgrade attempt.
 		expect(transport.calls.map(call => call.path)).toEqual([
-			"/api/workflow/manager/status", "/api/workflow/node/report", "/api/workflow/manager/status", "/api/workflow/manager/dispatch",
-			"/api/workflow/node/report", "/api/workflow/manager/collect", "/api/workflow/node/report", "/api/workflow/node/report", "/api/workflow/manager/status",
+			"/api/workflow/manager/status", "/api/workflow/node/context", "/api/workflow/manager/status", "/api/workflow/manager/dispatch",
+			"/api/workflow/node/context", "/api/workflow/node/report", "/api/workflow/manager/collect", "/api/workflow/node/context", "/api/workflow/node/context", "/api/workflow/manager/status",
 		]);
 		// One explicitly test-owned SSE reader checks the actual panel registry.
 		// Neither role registered a connect-bot reporting Session as a side effect.

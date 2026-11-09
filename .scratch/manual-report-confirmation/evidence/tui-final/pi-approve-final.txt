@@ -1,0 +1,55 @@
+
+ ▀▀█  v1.5.0
+ █▀ █ escape interrupt · ctrl+c/ctrl+d clear/exit · / commands · ! bash · ctrl+o more
+ Press ctrl+o to show full startup help and loaded resources.
+
+ Pi can explain its own features and look up its docs. Ask it how to use or extend Pi.
+
+[Extensions]
+  node-chat.ts
+
+
+ Call report exactly once for the prepared result.
+
+
+
+ report body="MANUAL-REPORT-pi-approve\nComplete report preview. Limit: smoke fixture only." can_complete...
+ {"saved":true,"report":{"id":"smoke-report"}}
+
+
+ SMOKE-FINISHED
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+C:\Users\hugos\AppData\Local\Temp\omp-dock-manual-pi-approve-Ls0x6e\work
+1.7%/128k (auto)                                                                                                               local-fixture

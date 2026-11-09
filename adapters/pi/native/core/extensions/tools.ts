@@ -1,6 +1,7 @@
 import type { ToolParameterSchema } from "../../../../../framework/interface/tool";
 import type { BoundTool } from "../../../../../framework/runtime/port";
 import { defineAdapterDelivery } from "../../../../../framework/runtime/adapter-authoring";
+import { toolConfirmation } from "../../../../../framework/runtime/tool-confirmation";
 import type { PiExtensionApi } from "./types";
 
 /** Pi coerces typed scalar/array values. Leave those raw for the shared business guards. */
@@ -25,7 +26,10 @@ export function registerPiTool(pi: PiExtensionApi): (tool: BoundTool) => void {
 		name: tool.name, label: tool.label, description: tool.description,
 		parameters: piToolParameters(tool.parameters),
 		async execute(callId, params, signal, _onUpdate, ctx) {
-			const result = await tool.execute(params, defineAdapterDelivery("tool", { callId, sessionId: ctx.sessionManager.getSessionId(), ...(signal === undefined ? {} : { signal }) }));
+			const result = await tool.execute(params, defineAdapterDelivery("tool", {
+				callId, sessionId: ctx.sessionManager.getSessionId(), ...(signal === undefined ? {} : { signal }),
+				confirm: toolConfirmation(ctx.hasUI && typeof ctx.ui.confirm === "function" ? ctx.ui.confirm.bind(ctx.ui) : undefined, signal),
+			}));
 			return result;
 		},
 	});

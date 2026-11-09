@@ -13,6 +13,7 @@ test("P15 node auto report sends explicit handoff parameters plus native Session
 	};
 	const response = { saved: true, report, notification: { status: "submitted", reason: "input-submission-confirmed" }, diagnostic: { status: "written" }, guidance: "报告不等于节点完成" };
 	const server = Bun.serve({ port: 0, hostname: "127.0.0.1", async fetch(request) {
+		if (new URL(request.url).pathname === "/api/workflow/node/context") return Response.json({ reportPolicy: "auto" });
 		calls.push({ path: new URL(request.url).pathname, method: request.method, json: await request.json() });
 		return Response.json(response);
 	} });

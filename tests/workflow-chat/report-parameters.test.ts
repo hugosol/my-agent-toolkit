@@ -11,10 +11,11 @@ test("report forwards explicit handoff declarations and rejects malformed model 
 	const calls: unknown[] = [];
 	const saved = { saved: true, notification: { status: "not-attempted" } };
 	const server = Bun.serve({ hostname: "127.0.0.1", port: 0, async fetch(request) {
+		if (new URL(request.url).pathname === "/api/workflow/node/context") return Response.json({ reportPolicy: "auto" });
 		calls.push(await request.json());
 		return Response.json(saved);
 	} });
-	const dock = await promptDock("node", { config: `endpoint: http://127.0.0.1:${server.port}\nrequestTimeoutMs: 2000\ncollectTimeoutMs: 5460000\n` });
+	const dock = await promptDock("node", { config: `endpoint: http://127.0.0.1:${server.port}\nrequestTimeoutMs: 2000\nreportConfirmationTimeoutMs: 20000\ncollectTimeoutMs: 5460000\n` });
 	try {
 		const sessionId = await nativeIdentity(dock);
 		const params = { body: "部分生效；等待用户修复权限，不能交接。", can_complete: false, outputs: [{ id: "draft", path: "E:/external/draft.txt" }] };

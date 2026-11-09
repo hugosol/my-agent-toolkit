@@ -25,6 +25,6 @@ export const NODE_TOOLS: readonly ToolDeclaration<NodeToolState>[] = [{
 		required: ["body", "can_complete"], additionalProperties: false,
 	},
 	async execute(state, params, delivery) {
-		return workflowToolResult(await state.operations.report(delivery.sessionId, params, delivery.signal));
+		return workflowToolResult(await state.operations.report(delivery.sessionId, params, delivery.signal, delivery.confirm));
 	},
 }];

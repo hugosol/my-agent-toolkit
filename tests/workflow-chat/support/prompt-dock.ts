@@ -11,11 +11,12 @@ export interface RoleDock {
 	readonly session: ControlledSession;
 	readonly capture: CaptureServer;
 	select(name: string, params: unknown): void;
+	reopen(sessionPath: string): Promise<void>;
 	close(): Promise<void>;
 }
 
 /** S1: shipped automatic role entry, real OMP Prompt/history, controlled provider only. */
-export async function promptDock(role: "manager" | "node", options: {
+export async function promptDock(role: "manager" | "node" | "dual", options: {
 	/** undefined preserves shipped configuration; null exercises a missing deployment file. */
 	config?: string | null;
 	/** Place valid but wrong files in cwd and ID-derived directories before loading. */
@@ -54,7 +55,8 @@ export async function promptDock(role: "manager" | "node", options: {
 		cpSync(join(REPO_ROOT, fixture), join(deployment, fixture), { recursive: true });
 		entry = join(deployment, fixture, "entrypoint.ts");
 	}
-	const extensions = [join(REPO_ROOT, "tests/harness-dock/fixtures/extension-root/provider.ts"), entry];
+	const extensions = [join(REPO_ROOT, "tests/harness-dock/fixtures/extension-root/provider.ts"),
+		...(role === "dual" ? ["manager", "node"].map(name => join(deployment, `entrypoints/omp-auto/${name}-chat.ts`)) : [entry])];
 	if (options.observeIdentity) {
 		const fixture = "tests/harness-dock/fixtures/workflow-identity";
 		cpSync(join(REPO_ROOT, fixture), join(deployment, fixture), { recursive: true });
@@ -67,12 +69,16 @@ export async function promptDock(role: "manager" | "node", options: {
 	} });
 	let session: ControlledSession | undefined;
 	try {
-		session = await ControlledSession.start({ harness: await ensureIsolatedHarness(), runRoot: root,
-			extensions,
-			model: DOCK_MODEL_SELECTOR, env: { [DOCK_CAPTURE_BASE_URL_ENV]: capture.baseUrl, WORKFLOW_DOCK_ROLE: role },
-		});
-		return { root, session, capture,
+		const options = { harness: await ensureIsolatedHarness(), runRoot: root, extensions,
+			model: DOCK_MODEL_SELECTOR, env: { [DOCK_CAPTURE_BASE_URL_ENV]: capture.baseUrl, WORKFLOW_DOCK_ROLE: role } };
+		session = await ControlledSession.start(options);
+		return { root, get session() { return session!; }, capture,
 			select(name: string, params: unknown) { next = { name, arguments: JSON.stringify(params) }; },
+			async reopen(sessionPath: string) {
+				if (session!.exited()) session = await ControlledSession.start(options);
+				const restored = await session!.request({ type: "switch_session", sessionPath });
+				if (restored.success !== true) throw new Error(`OMP role restore failed: ${JSON.stringify(restored)}`);
+			},
 			async close() {
 				try { await session!.stop(); } finally {
 					// Opt-in artifacts are actual model requests and persisted sessions, never model-quality evidence.

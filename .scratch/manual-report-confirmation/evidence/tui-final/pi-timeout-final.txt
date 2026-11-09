@@ -1,0 +1,55 @@
+
+ ▀▀█  v1.5.0
+ █▀ █ escape interrupt · ctrl+c/ctrl+d clear/exit · / commands · ! bash · ctrl+o more
+ Press ctrl+o to show full startup help and loaded resources.
+
+ Pi can explain its own features and look up its docs. Ask it how to use or extend Pi.
+
+[Extensions]
+  node-chat.ts
+
+
+ Call report exactly once for the prepared result.
+
+
+
+ report body="MANUAL-REPORT-pi-timeout\nComplete report preview. Limit: smoke fixture only." can_complete...
+ {"sent":false,"saved":false,"reason":"confirmation-not-approved","guidance":"报告未发送。结束本轮，等待用户重新要求发送；不要自动重试、补
+ 发、反复询问或绕过 report。"}
+
+
+ SMOKE-FINISHED
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+C:\Users\hugos\AppData\Local\Temp\omp-dock-manual-pi-timeout-SJNFVK\work
+1.8%/128k (auto)                                                                                                               local-fixture

@@ -32,7 +32,7 @@ export async function managerDock(endpoint: string, budgets: { requestTimeoutMs?
 	}
 	cpSync(join(REPO_ROOT, "node_modules/yaml"), join(deployment, "node_modules/yaml"), { recursive: true, dereference: true });
 	writeFileSync(join(deployment, "extensions/workflow-chat/config.yaml"),
-		`endpoint: ${JSON.stringify(endpoint)}\nrequestTimeoutMs: ${budgets.requestTimeoutMs ?? 2000}\ncollectTimeoutMs: ${budgets.collectTimeoutMs ?? 5460000}\n`);
+		`endpoint: ${JSON.stringify(endpoint)}\nrequestTimeoutMs: ${budgets.requestTimeoutMs ?? 2000}\nreportConfirmationTimeoutMs: 20000\ncollectTimeoutMs: ${budgets.collectTimeoutMs ?? 5460000}\n`);
 	let next: { name: "run" | "collect"; params: unknown } | undefined;
 	const capture = startCaptureServer({ dir: root.captureDir, respond() {
 		if (next === undefined) return undefined;

@@ -1,0 +1,23 @@
+[
+  {
+    "host": "omp",
+    "decision": "deny",
+    "passed": false,
+    "error": "Error: observation timeout",
+    "sent": []
+  },
+  {
+    "host": "omp",
+    "decision": "approve",
+    "passed": false,
+    "error": "Error: observation timeout",
+    "sent": []
+  },
+  {
+    "host": "omp",
+    "decision": "timeout",
+    "passed": false,
+    "error": "Error: observation timeout",
+    "sent": []
+  }
+]

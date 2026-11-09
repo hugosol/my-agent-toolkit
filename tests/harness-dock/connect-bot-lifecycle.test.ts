@@ -64,6 +64,7 @@ const DEPLOYMENT_ROOT = path.join(REPO_ROOT, ".cache", `connect-bot-lifecycle-${
 interface PanelEvent {
 	readonly sessionId: string;
 	readonly kind: string;
+	readonly data?: { readonly reason?: string };
 }
 
 /**
@@ -89,8 +90,8 @@ class PanelDouble {
 				const body = await request.text();
 				let event: PanelEvent | undefined;
 				try {
-					const envelope = JSON.parse(body) as { sessionId?: unknown; kind?: unknown };
-					event = { sessionId: String(envelope.sessionId), kind: String(envelope.kind) };
+					const envelope = JSON.parse(body) as { sessionId?: unknown; kind?: unknown; data?: PanelEvent["data"] };
+					event = { sessionId: String(envelope.sessionId), kind: String(envelope.kind), data: envelope.data };
 					panel.#events.push(event);
 				} catch {
 					// A push this endpoint cannot read is still a request it received.
@@ -340,7 +341,7 @@ describe("connect-bot's pending startup attempt does not disturb another consume
 			run.panel.releaseHeld();
 			expect(await noticeReaches(session, CONNECTED)).toBe(true);
 			expect(await areaReaches(session, [CODEBASE_TOOLS_LINE, CONNECT_BOT_LINE])).toBe(true);
-			expect(await waitFor(() => run.panel.kinds("state").length === 1)).toBe(true);
+			expect(await waitFor(() => run.panel.kinds("state").some(event => event.data?.reason === "register"))).toBe(true);
 
 			// A re-register is on the wire when the operator closes connect-bot. Its later valid
 			// receipt must not re-enable the connection.
@@ -350,13 +351,16 @@ describe("connect-bot's pending startup attempt does not disturb another consume
 			expect((await session.prompt("/connect-bot off")).status).toBe("completed");
 			expect(await waitFor(() => run.panel.kinds("unregister").length === 1)).toBe(true);
 			expect(await noticeReaches(session, DISCONNECTED)).toBe(true);
+			const statesBeforeLateReceipt = run.panel.kinds("state");
 			run.panel.releaseHeld();
 
 			const after = await session.prompt("a turn after the late receipt");
 			expect(after.status).toBe("completed");
 			expect(lastAreaLines(session)).toEqual([CODEBASE_TOOLS_LINE]);
-			// The late receipt reported no second state: the attempt died with the off.
-			expect(run.panel.kinds("state")).toHaveLength(1);
+			// Only the original receipt may arm the connection. Legitimate round edges can
+			// report before off, but neither the late receipt nor this later turn may do so.
+			expect(run.panel.kinds("state").filter(event => event.data?.reason === "register")).toHaveLength(1);
+			expect(run.panel.kinds("state")).toEqual(statesBeforeLateReceipt);
 			// codebase-tools' own contribution continues: the next request carries the reminder
 			// beside the init the branch already holds.
 			expect(injectedMessages(requestAt(run, 1))).toBe(2);

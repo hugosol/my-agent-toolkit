@@ -1,0 +1,43 @@
+[
+  {
+    "name": "backend-full",
+    "code": 0,
+    "command": [
+      "node",
+      "scripts/test-backend.mjs",
+      "--output-dir",
+      "D:\\developer\\myhub\\herdr-bot\\.scratch\\manual-report-confirmation\\evidence\\backend-full"
+    ],
+    "cwd": "D:\\developer\\myhub\\herdr-bot"
+  },
+  {
+    "name": "typecheck",
+    "code": 0,
+    "command": [
+      "D:\\nvm\\v22.23.1\\node_modules\\bun\\bin\\bun.exe",
+      "run",
+      "typecheck"
+    ],
+    "cwd": "D:\\developer\\myhub\\my-agent-toolkit"
+  },
+  {
+    "name": "integrations",
+    "code": 0,
+    "command": [
+      "D:\\nvm\\v22.23.1\\node_modules\\bun\\bin\\bun.exe",
+      "run",
+      "check:integrations"
+    ],
+    "cwd": "D:\\developer\\myhub\\my-agent-toolkit"
+  },
+  {
+    "name": "toolkit-full",
+    "code": 1,
+    "command": [
+      "D:\\nvm\\v22.23.1\\node_modules\\bun\\bin\\bun.exe",
+      "run",
+      "test"
+    ],
+    "cwd": "D:\\developer\\myhub\\my-agent-toolkit"
+  }
+]

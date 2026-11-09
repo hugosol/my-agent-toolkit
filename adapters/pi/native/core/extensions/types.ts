@@ -190,6 +190,7 @@ export interface PiWidgetComponent {
  */
 export type PiWidgetComponentFactory = (tui: unknown, theme: PiWidgetTheme) => PiWidgetComponent;
 export interface PiUiContext {
+	confirm?(title: string, message: string, options?: { readonly signal?: AbortSignal; readonly timeout?: number }): Promise<boolean>;
 	notify(message: string, type?: FeedbackLevel): void;
 	setWidget(key: string, content: readonly string[] | undefined, options?: PiWidgetOptions): void;
 	setWidget(key: string, content: PiWidgetComponentFactory | undefined, options?: PiWidgetOptions): void;

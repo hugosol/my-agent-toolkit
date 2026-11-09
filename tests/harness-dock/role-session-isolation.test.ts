@@ -20,6 +20,10 @@ test("P3 overlapping native role Sessions cancel independently and both accept s
 	const managerReply = { acceptance: "independent-manager-response" };
 	const nodeReply = { saved: true, report: { id: "independent-report-3" }, notification: { status: "submitted" } };
 	const server = createServer(async (request, response) => {
+		if (request.url === "/api/workflow/node/context") {
+			request.resume(); response.writeHead(200, { "content-type": "application/json" });
+			response.end(JSON.stringify({ reportPolicy: "auto" })); return;
+		}
 		const chunks: Buffer[] = [];
 		for await (const chunk of request) chunks.push(Buffer.from(chunk));
 		const path = request.url!;
@@ -48,7 +52,7 @@ test("P3 overlapping native role Sessions cancel independently and both accept s
 		await closed.promise;
 	}];
 	try {
-		const config = `endpoint: http://127.0.0.1:${address.port}\nrequestTimeoutMs: 10000\ncollectTimeoutMs: 10000\n`;
+		const config = `endpoint: http://127.0.0.1:${address.port}\nrequestTimeoutMs: 10000\nreportConfirmationTimeoutMs: 20000\ncollectTimeoutMs: 10000\n`;
 		const manager = await promptDock("manager", { config }); cleanup.unshift(() => manager.close());
 		const node = await promptDock("node", { config }); cleanup.unshift(() => node.close());
 		const managerId = await nativeIdentity(manager);

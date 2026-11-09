@@ -4,46 +4,320 @@
     "workflow-chat": {
       "schemaVersion": 1,
       "scope": "workflow-chat",
-      "startedAt": "2026-11-03T19:29:14.943Z",
+      "startedAt": "2026-11-07T16:06:07.826Z",
       "cli": {
         "command": [
-          "D:/Users/hugos/AppData/Local/nvm/v22.19.0/node.exe",
-          "D:\\nvm4w\\nodejs\\node_modules\\@earendil-works\\pi-coding-agent\\dist\\bundle\\cli.js"
+          "D:/Program Files/nodejs/node.exe",
+          "C:/Users/hugos/.pi/agent/install/releases/1.5.0/node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js"
         ],
-        "path": "D:\\nvm4w\\nodejs\\node_modules\\@earendil-works\\pi-coding-agent\\dist\\bundle\\cli.js",
-        "source": "the shim D:\\nvm4w\\nodejs\\pi.cmd (run through node: a shell shim cannot be spawned without a shell)"
+        "path": "C:/Users/hugos/.pi/agent/install/releases/1.5.0/node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js",
+        "source": "node script"
       },
       "source": {
-        "repoRoot": "E:\\Developer\\myhub\\my-agent-toolkit",
-        "head": "95fdf3826b85704e0629938b2b37b4ce7e92f295",
+        "repoRoot": "D:\\developer\\myhub\\my-agent-toolkit",
+        "head": "54dab4e18b4a88cc38a850d036fd4b47af52dc3d",
         "status": [
-          " M framework/GLOSSARY.md",
-          " M framework/docs/harness-support.md",
-          " M scripts/pi-background-round-smoke.ts",
-          " M scripts/pi-close-out-smoke.ts",
-          " M scripts/pi-codebase-tools-smoke.ts",
-          " M scripts/pi-model-cost-smoke.ts",
-          " M scripts/pi-provider-account-read.ts",
-          " M scripts/pi-session-accounting.ts",
-          " M scripts/pi-subagent-smoke.ts",
-          " M scripts/pi-terminal-round-smoke.ts",
-          " M scripts/pi-tui-acceptance.ts",
+          " M adapters/omp/native/extensibility/extensions/tools.ts",
+          " M adapters/omp/native/extensibility/extensions/ui.ts",
+          " M adapters/pi/native/core/extensions/tools.ts",
+          " M adapters/pi/native/core/extensions/types.ts",
+          " M extensions/workflow-chat/GLOSSARY.md",
+          " M extensions/workflow-chat/OPERATIONS.md",
+          " M extensions/workflow-chat/README.md",
+          " M extensions/workflow-chat/common/config.ts",
+          " M extensions/workflow-chat/common/requests.ts",
+          " M extensions/workflow-chat/config.yaml",
+          " M extensions/workflow-chat/manager-chat/shared-logic/prompts/init.md",
+          " M extensions/workflow-chat/node-chat/shared-logic/prompts/init.md",
+          " M extensions/workflow-chat/node-chat/shared-logic/report.ts",
+          " M extensions/workflow-chat/node-chat/shared-logic/tools/index.ts",
+          " M framework/docs/framework-capabilities.md",
+          " M framework/interface/tool.ts",
+          " M tests/harness-dock/role-config-failures.test.ts",
+          " M tests/harness-dock/role-dual-load.test.ts",
+          " M tests/harness-dock/role-identity-integration.test.ts",
+          " M tests/harness-dock/role-missing-identity.test.ts",
+          " M tests/harness-dock/role-session-isolation.test.ts",
+          " M tests/harness-dock/role-stable-config.test.ts",
+          " M tests/harness-dock/uncertain-effects.test.ts",
+          " M tests/workflow-chat/node-report.test.ts",
+          " M tests/workflow-chat/node-shared-logic.test.ts",
           " M tests/workflow-chat/pi-native.test.ts",
-          "?? scripts/support/pi-acceptance.ts",
-          "?? tests/pi-suite/pi-acceptance.test.ts"
+          " M tests/workflow-chat/report-body.test.ts",
+          " M tests/workflow-chat/report-diagnostic-failure.test.ts",
+          " M tests/workflow-chat/report-notification-failure.test.ts",
+          " M tests/workflow-chat/report-parameters.test.ts",
+          " M tests/workflow-chat/report-save-failure.test.ts",
+          " M tests/workflow-chat/support/business-roles.ts",
+          " M tests/workflow-chat/support/dual-role-dock.ts",
+          " M tests/workflow-chat/support/manager-dock.ts",
+          " M tests/workflow-chat/support/node-dock.ts",
+          " M tests/workflow-chat/support/role-contract-dock.ts",
+          "?? .scratch/manual-report-confirmation/design.md",
+          "?? .scratch/manual-report-confirmation/evidence/backend-focused.md",
+          "?? .scratch/manual-report-confirmation/evidence/focused.md",
+          "?? .scratch/manual-report-confirmation/evidence/identity-repro.md",
+          "?? .scratch/manual-report-confirmation/evidence/integration-corrected/summary.json",
+          "?? .scratch/manual-report-confirmation/evidence/integration-first-result.md",
+          "?? .scratch/manual-report-confirmation/evidence/integration/summary.json",
+          "?? .scratch/manual-report-confirmation/evidence/tui-configured/omp-deny-final.txt",
+          "?? .scratch/manual-report-confirmation/evidence/tui-configured/omp-deny-recording.ansi",
+          "?? .scratch/manual-report-confirmation/evidence/tui-configured/summary.json",
+          "?? .scratch/manual-report-confirmation/evidence/tui-final/omp-approve-final.txt",
+          "?? .scratch/manual-report-confirmation/evidence/tui-final/omp-approve-preview.txt",
+          "?? .scratch/manual-report-confirmation/evidence/tui-final/omp-approve-recording.ansi",
+          "?? .scratch/manual-report-confirmation/evidence/tui-final/omp-approve-requests.json",
+          "?? .scratch/manual-report-confirmation/evidence/tui-final/omp-deny-final.txt",
+          "?? .scratch/manual-report-confirmation/evidence/tui-final/omp-deny-preview.txt",
+          "?? .scratch/manual-report-confirmation/evidence/tui-final/omp-deny-recording.ansi",
+          "?? .scratch/manual-report-confirmation/evidence/tui-final/omp-deny-requests.json",
+          "?? .scratch/manual-report-confirmation/evidence/tui-final/omp-timeout-final.txt",
+          "?? .scratch/manual-report-confirmation/evidence/tui-final/omp-timeout-preview.txt",
+          "?? .scratch/manual-report-confirmation/evidence/tui-final/omp-timeout-recording.ansi",
+          "?? .scratch/manual-report-confirmation/evidence/tui-final/omp-timeout-requests.json",
+          "?? .scratch/manual-report-confirmation/evidence/tui-final/pi-approve-final.txt",
+          "?? .scratch/manual-report-confirmation/evidence/tui-final/pi-approve-preview.txt",
+          "?? .scratch/manual-report-confirmation/evidence/tui-final/pi-approve-recording.ansi",
+          "?? .scratch/manual-report-confirmation/evidence/tui-final/pi-approve-requests.json",
+          "?? .scratch/manual-report-confirmation/evidence/tui-final/pi-deny-final.txt",
+          "?? .scratch/manual-report-confirmation/evidence/tui-final/pi-deny-preview.txt",
+          "?? .scratch/manual-report-confirmation/evidence/tui-final/pi-deny-recording.ansi",
+          "?? .scratch/manual-report-confirmation/evidence/tui-final/pi-deny-requests.json",
+          "?? .scratch/manual-report-confirmation/evidence/tui-final/pi-timeout-final.txt",
+          "?? .scratch/manual-report-confirmation/evidence/tui-final/pi-timeout-preview.txt",
+          "?? .scratch/manual-report-confirmation/evidence/tui-final/pi-timeout-recording.ansi",
+          "?? .scratch/manual-report-confirmation/evidence/tui-final/pi-timeout-requests.json",
+          "?? .scratch/manual-report-confirmation/evidence/tui-final/summary.json",
+          "?? .scratch/manual-report-confirmation/evidence/tui-result.md",
+          "?? .scratch/manual-report-confirmation/evidence/tui-tool-request/omp-deny-final.txt",
+          "?? .scratch/manual-report-confirmation/evidence/tui-tool-request/omp-deny-preview.txt",
+          "?? .scratch/manual-report-confirmation/evidence/tui-tool-request/omp-deny-recording.ansi",
+          "?? .scratch/manual-report-confirmation/evidence/tui-tool-request/omp-deny-requests.json",
+          "?? .scratch/manual-report-confirmation/evidence/tui-tool-request/summary.json",
+          "?? .scratch/manual-report-confirmation/evidence/tui/omp-approve-final.txt",
+          "?? .scratch/manual-report-confirmation/evidence/tui/omp-approve-recording.ansi",
+          "?? .scratch/manual-report-confirmation/evidence/tui/omp-deny-final.txt",
+          "?? .scratch/manual-report-confirmation/evidence/tui/omp-deny-recording.ansi",
+          "?? .scratch/manual-report-confirmation/evidence/tui/omp-timeout-final.txt",
+          "?? .scratch/manual-report-confirmation/evidence/tui/omp-timeout-recording.ansi",
+          "?? .scratch/manual-report-confirmation/evidence/tui/summary.json",
+          "?? .scratch/manual-report-confirmation/run-checks.ts",
+          "?? framework/runtime/tool-confirmation.ts",
+          "?? tests/framework/tool-confirmation-adapters.test.ts",
+          "?? tests/workflow-chat/manual-report-confirmation.test.ts"
         ],
-        "diffSha256": "da757a5780763cc0916eccb66bdb79651e106f330d1da6f0497df88abb64b5d8",
+        "diffSha256": "a712cd9277ef84fb60691387bb00f1328bcc9fc3ce65aa30886502f92f1bb46a",
         "untrackedFiles": [
           {
-            "path": "scripts/support/pi-acceptance.ts",
-            "sha256": "6620df76432649077ed38edcfd66df7d9c6d9b027d22afe1beff3160d64cbfd9"
+            "path": ".scratch/manual-report-confirmation/design.md",
+            "sha256": "c2513c3b68c5d60f7368ee52512dc6812b2432b413f61f95f28a69082a6bf966"
           },
           {
-            "path": "tests/pi-suite/pi-acceptance.test.ts",
-            "sha256": "5628bf3b60b0d6d1a7f9954dac3b6993d7662600ce83a4873f31f2ac37cb60f3"
+            "path": ".scratch/manual-report-confirmation/evidence/backend-focused.md",
+            "sha256": "333622a8ca4dbfb90b78193c8b419f006d6b1aa5bc8c2ccc1ba64cf9a2965baa"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/focused.md",
+            "sha256": "0dcbc7f56a0bdc5b75ab917a9fb559ae412aaa1677f570a52e4136aaa2881b6c"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/identity-repro.md",
+            "sha256": "2da9658d39bdb2ac688020b8190e270fdb5c2d1b4f3b654e3615732f9acdc537"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/integration-corrected/summary.json",
+            "sha256": "1684ef55f492db0a80adbd485cbd7e3e5d9784539221504e0541781fdce1b60e"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/integration-first-result.md",
+            "sha256": "3be5bf5b34401cd337bccaf8a8ec55ac4a88944d866ac4e146623fb6ab5dc06e"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/integration/summary.json",
+            "sha256": "6be073f9162704bddb6c6ab57335e4491750d8b347fd505e367a1fbbdfb81d93"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui-configured/omp-deny-final.txt",
+            "sha256": "2f751ea4ee37a25615f02c977a63f0c5930cab7b19661029acd14c4c61255143"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui-configured/omp-deny-recording.ansi",
+            "sha256": "5ab8d5cb4d0968e9352fd2a7f8e3d8f4bdac0801f6d1d5e33f858a37403a6280"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui-configured/summary.json",
+            "sha256": "c91306495431059d0d8c718d0335aecde8195547b1c4fe7359bd7297ea0aad3e"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui-final/omp-approve-final.txt",
+            "sha256": "a9e54de604a49178c208798de2dd1ba2d0ae18834cf498b5000232ddfc840b0d"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui-final/omp-approve-preview.txt",
+            "sha256": "6809af85588355034830cbb75845c0d66eed44f1349389b55876133b18f0e607"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui-final/omp-approve-recording.ansi",
+            "sha256": "674bdaa05d8537ffb1bf30b8f6a99ef8cb9c8f4588bfe68ca7d73bf02b2c2b3c"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui-final/omp-approve-requests.json",
+            "sha256": "6c09f435da3ae1a09a89ed497757164c227f7ca914bfc179bcdf20ee393cd3c9"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui-final/omp-deny-final.txt",
+            "sha256": "0152bcb31916ea0f588d4f19f56dac466bb40b84b90302fe61d6441ce2bffb38"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui-final/omp-deny-preview.txt",
+            "sha256": "ad65e616366475dee643ce3f9ca83536b9817f4256d74d554797549bc050bfba"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui-final/omp-deny-recording.ansi",
+            "sha256": "4a5197202a0b3b4db7956bf7a81c1633394495588a932a4a9f15368e94444fbd"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui-final/omp-deny-requests.json",
+            "sha256": "d86e611e6a4552852a0392e4c8c0d88918c01e185ebeec743ab8c496e183f418"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui-final/omp-timeout-final.txt",
+            "sha256": "fb749575034634e239ba436f243c4e5abc7a75e2357337b71ed3b9f328715170"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui-final/omp-timeout-preview.txt",
+            "sha256": "f0c5eb0b62a8d9f9989d4225caadf1fc98cad5d1f5bfa9252c0dd64d88d25fac"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui-final/omp-timeout-recording.ansi",
+            "sha256": "c282d761109b4cb92e3f8dc95b3ff8086f65a2a539734a43c6dad32f2e3ce775"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui-final/omp-timeout-requests.json",
+            "sha256": "5c00755c68ea39bee93d5ed7dff686f5ffbdb49f4ae02e1a5bf3944fb2d3450e"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui-final/pi-approve-final.txt",
+            "sha256": "69369eee89893a5decc91e3d0aec795afbc10fe06562175aeb81cf583d79f5ae"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui-final/pi-approve-preview.txt",
+            "sha256": "8c8222f2154939b484caa4c952453d313ddf1c49abe471e3843beb4a7e098d39"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui-final/pi-approve-recording.ansi",
+            "sha256": "b321e67df3243d67d2ffec56210fcafe9ee91b2fe003299ba81b219bb31b2767"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui-final/pi-approve-requests.json",
+            "sha256": "cf4148d8693a28fbe084210c5948f61d79ced3332daf7d9d3f196b7e36b54839"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui-final/pi-deny-final.txt",
+            "sha256": "6c083e38a111184b744465cab33dba0728ac2bf031dda8f701adc016198c4b57"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui-final/pi-deny-preview.txt",
+            "sha256": "fc6fc3292235e337a0f5cedd2f1b2d6350c050a9aad13b4f770e976b3e6db5e5"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui-final/pi-deny-recording.ansi",
+            "sha256": "602eb9c90dbbb1e0b2a31227af955186f515e26332048e75f845a67d70d75646"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui-final/pi-deny-requests.json",
+            "sha256": "d634d160bdd8ab75ad7a443daf951f4570401ff4864355abfb61e4923cae797e"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui-final/pi-timeout-final.txt",
+            "sha256": "426439ed4f1d0018ea26fcde3c526489534271a5e125774fc89c6ab5222f0ee6"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui-final/pi-timeout-preview.txt",
+            "sha256": "b379b11dc5f7bbef5df3b2fc8a152644754922230216937e1965a43858badf55"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui-final/pi-timeout-recording.ansi",
+            "sha256": "c03d8b9e16bf22b1cb4a19c63acfdfbcc24a37bfc52d12b21634d2208263839f"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui-final/pi-timeout-requests.json",
+            "sha256": "d6a349749750cd7525d8c1472ad59a106233804f8a9f88d35d58b1cfe093f694"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui-final/summary.json",
+            "sha256": "470d81cb7f1e05bd0b9b39bd4913a72709d5b17e423e2fe6309dcb756e4cd104"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui-result.md",
+            "sha256": "99708de0e1acbf99c44f1f40acc337204222cabfa44c0f78121a6173819ba7d7"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui-tool-request/omp-deny-final.txt",
+            "sha256": "1f8bc1e828a13001019a9ae3638d4e2fc5f57fbab916d7a44b1208091c115355"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui-tool-request/omp-deny-preview.txt",
+            "sha256": "70a4a9d285a0b402b496e2f4e0e5f9473e3e72cb8c9db3da57e9fa1e20599dd3"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui-tool-request/omp-deny-recording.ansi",
+            "sha256": "6a5f8bbcf923dfc11ed5c6db594de80f9e05401f66630e4205842ffe9eb46c70"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui-tool-request/omp-deny-requests.json",
+            "sha256": "037bb12013a239563af31735b3b7f7789ef2843bfb3aa5cbb1ce481e092f0c82"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui-tool-request/summary.json",
+            "sha256": "5c82689399b4f331a11a4148b858c4bb52213b0908271c48123a8eef0e710560"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui/omp-approve-final.txt",
+            "sha256": "7c0b2312321c4e827a4c6e5a4de554274587d44b9d6aec1bd3627aaeb601684c"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui/omp-approve-recording.ansi",
+            "sha256": "a0edfd32030475a4a7c1c383e828764bc83ce35b59819f7614bc21b448ec57b8"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui/omp-deny-final.txt",
+            "sha256": "fa0c0c15087605e65066eb376c97abac67f46657b9989b600e9e0d0c08ef8b21"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui/omp-deny-recording.ansi",
+            "sha256": "8bf77242abac827426ea8a1712098abc4c5f87b61de95a0eacd4c88cf6f9e633"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui/omp-timeout-final.txt",
+            "sha256": "d38ef853a60832410a96b4664b241575f8e28e896f9a9e974dbeb496f8c91c91"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui/omp-timeout-recording.ansi",
+            "sha256": "7f74abaef3905541c35ed7480c3d05ba1de2f755acf53ed7a918a194a66e43e0"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui/summary.json",
+            "sha256": "4bea715b9ed0da827a9168b82158f36edd4a8b1612d5221dada128ad9421d59f"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/run-checks.ts",
+            "sha256": "1488fd61ab726fa4e4074ec937ea30b0204f69d21a7f729f252c6ae646d445bd"
+          },
+          {
+            "path": "framework/runtime/tool-confirmation.ts",
+            "sha256": "4d56b2d6ba49a70e85bfef4613c5ccb31f8f452503e7748f8469bced1b1f6ecd"
+          },
+          {
+            "path": "tests/framework/tool-confirmation-adapters.test.ts",
+            "sha256": "bd637dab4814188a83e88e47d2a5b082271d6fe3731a3ec93273093ff20b0735"
+          },
+          {
+            "path": "tests/workflow-chat/manual-report-confirmation.test.ts",
+            "sha256": "43f0508268a323e1c8195edae58990faa45bc97d0c929f66ba6df83e2557b9a3"
           }
         ],
-        "sha256": "66d8dced64c25876215af122caf109b0c839a83db64ddfd6e12b26d19ec15fc5"
+        "sha256": "4e484a92608edcd8750527a90b29f352131f09ca1e63880db9be3cdb161c1803"
       },
       "lockfiles": [
         {
@@ -54,17 +328,17 @@
       ],
       "runtime": {
         "driver": {
-          "executable": "D:\\Users\\hugos\\AppData\\Local\\nvm\\v24.18.0\\node_modules\\bun\\bin\\bun.exe",
+          "executable": "D:\\nvm\\v22.23.1\\node_modules\\bun\\bin\\bun.exe",
           "node": "26.3.0",
           "bun": "1.4.4"
         },
         "cli": {
-          "execPath": "D:\\Users\\hugos\\AppData\\Local\\nvm\\v22.19.0\\node.exe",
-          "node": "22.19.0",
+          "execPath": "D:\\Program Files\\nodejs\\node.exe",
+          "node": "22.23.1",
           "bun": null
         },
         "artifact": {
-          "path": "D:\\nvm4w\\nodejs\\node_modules\\@earendil-works\\pi-coding-agent\\dist\\bundle\\cli.js",
+          "path": "C:/Users/hugos/.pi/agent/install/releases/1.5.0/node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js",
           "bytes": 160,
           "sha256": "e79626f2dd6f94aa45d30f3fa63cd84319a6eefcd150b353cfaf274366926774"
         },
@@ -80,38 +354,312 @@
         "Pi tool AbortSignal releases transport, switch preserves auto startup, and shutdown releases active collect"
       ],
       "complete": true,
-      "finishedAt": "2026-11-03T19:29:26.884Z",
+      "finishedAt": "2026-11-07T16:06:40.517Z",
       "finishedSource": {
-        "repoRoot": "E:\\Developer\\myhub\\my-agent-toolkit",
-        "head": "95fdf3826b85704e0629938b2b37b4ce7e92f295",
+        "repoRoot": "D:\\developer\\myhub\\my-agent-toolkit",
+        "head": "54dab4e18b4a88cc38a850d036fd4b47af52dc3d",
         "status": [
-          " M framework/GLOSSARY.md",
-          " M framework/docs/harness-support.md",
-          " M scripts/pi-background-round-smoke.ts",
-          " M scripts/pi-close-out-smoke.ts",
-          " M scripts/pi-codebase-tools-smoke.ts",
-          " M scripts/pi-model-cost-smoke.ts",
-          " M scripts/pi-provider-account-read.ts",
-          " M scripts/pi-session-accounting.ts",
-          " M scripts/pi-subagent-smoke.ts",
-          " M scripts/pi-terminal-round-smoke.ts",
-          " M scripts/pi-tui-acceptance.ts",
+          " M adapters/omp/native/extensibility/extensions/tools.ts",
+          " M adapters/omp/native/extensibility/extensions/ui.ts",
+          " M adapters/pi/native/core/extensions/tools.ts",
+          " M adapters/pi/native/core/extensions/types.ts",
+          " M extensions/workflow-chat/GLOSSARY.md",
+          " M extensions/workflow-chat/OPERATIONS.md",
+          " M extensions/workflow-chat/README.md",
+          " M extensions/workflow-chat/common/config.ts",
+          " M extensions/workflow-chat/common/requests.ts",
+          " M extensions/workflow-chat/config.yaml",
+          " M extensions/workflow-chat/manager-chat/shared-logic/prompts/init.md",
+          " M extensions/workflow-chat/node-chat/shared-logic/prompts/init.md",
+          " M extensions/workflow-chat/node-chat/shared-logic/report.ts",
+          " M extensions/workflow-chat/node-chat/shared-logic/tools/index.ts",
+          " M framework/docs/framework-capabilities.md",
+          " M framework/interface/tool.ts",
+          " M tests/harness-dock/role-config-failures.test.ts",
+          " M tests/harness-dock/role-dual-load.test.ts",
+          " M tests/harness-dock/role-identity-integration.test.ts",
+          " M tests/harness-dock/role-missing-identity.test.ts",
+          " M tests/harness-dock/role-session-isolation.test.ts",
+          " M tests/harness-dock/role-stable-config.test.ts",
+          " M tests/harness-dock/uncertain-effects.test.ts",
+          " M tests/workflow-chat/node-report.test.ts",
+          " M tests/workflow-chat/node-shared-logic.test.ts",
           " M tests/workflow-chat/pi-native.test.ts",
-          "?? scripts/support/pi-acceptance.ts",
-          "?? tests/pi-suite/pi-acceptance.test.ts"
+          " M tests/workflow-chat/report-body.test.ts",
+          " M tests/workflow-chat/report-diagnostic-failure.test.ts",
+          " M tests/workflow-chat/report-notification-failure.test.ts",
+          " M tests/workflow-chat/report-parameters.test.ts",
+          " M tests/workflow-chat/report-save-failure.test.ts",
+          " M tests/workflow-chat/support/business-roles.ts",
+          " M tests/workflow-chat/support/dual-role-dock.ts",
+          " M tests/workflow-chat/support/manager-dock.ts",
+          " M tests/workflow-chat/support/node-dock.ts",
+          " M tests/workflow-chat/support/role-contract-dock.ts",
+          "?? .scratch/manual-report-confirmation/design.md",
+          "?? .scratch/manual-report-confirmation/evidence/backend-focused.md",
+          "?? .scratch/manual-report-confirmation/evidence/focused.md",
+          "?? .scratch/manual-report-confirmation/evidence/identity-repro.md",
+          "?? .scratch/manual-report-confirmation/evidence/integration-corrected/summary.json",
+          "?? .scratch/manual-report-confirmation/evidence/integration-first-result.md",
+          "?? .scratch/manual-report-confirmation/evidence/integration/summary.json",
+          "?? .scratch/manual-report-confirmation/evidence/tui-configured/omp-deny-final.txt",
+          "?? .scratch/manual-report-confirmation/evidence/tui-configured/omp-deny-recording.ansi",
+          "?? .scratch/manual-report-confirmation/evidence/tui-configured/summary.json",
+          "?? .scratch/manual-report-confirmation/evidence/tui-final/omp-approve-final.txt",
+          "?? .scratch/manual-report-confirmation/evidence/tui-final/omp-approve-preview.txt",
+          "?? .scratch/manual-report-confirmation/evidence/tui-final/omp-approve-recording.ansi",
+          "?? .scratch/manual-report-confirmation/evidence/tui-final/omp-approve-requests.json",
+          "?? .scratch/manual-report-confirmation/evidence/tui-final/omp-deny-final.txt",
+          "?? .scratch/manual-report-confirmation/evidence/tui-final/omp-deny-preview.txt",
+          "?? .scratch/manual-report-confirmation/evidence/tui-final/omp-deny-recording.ansi",
+          "?? .scratch/manual-report-confirmation/evidence/tui-final/omp-deny-requests.json",
+          "?? .scratch/manual-report-confirmation/evidence/tui-final/omp-timeout-final.txt",
+          "?? .scratch/manual-report-confirmation/evidence/tui-final/omp-timeout-preview.txt",
+          "?? .scratch/manual-report-confirmation/evidence/tui-final/omp-timeout-recording.ansi",
+          "?? .scratch/manual-report-confirmation/evidence/tui-final/omp-timeout-requests.json",
+          "?? .scratch/manual-report-confirmation/evidence/tui-final/pi-approve-final.txt",
+          "?? .scratch/manual-report-confirmation/evidence/tui-final/pi-approve-preview.txt",
+          "?? .scratch/manual-report-confirmation/evidence/tui-final/pi-approve-recording.ansi",
+          "?? .scratch/manual-report-confirmation/evidence/tui-final/pi-approve-requests.json",
+          "?? .scratch/manual-report-confirmation/evidence/tui-final/pi-deny-final.txt",
+          "?? .scratch/manual-report-confirmation/evidence/tui-final/pi-deny-preview.txt",
+          "?? .scratch/manual-report-confirmation/evidence/tui-final/pi-deny-recording.ansi",
+          "?? .scratch/manual-report-confirmation/evidence/tui-final/pi-deny-requests.json",
+          "?? .scratch/manual-report-confirmation/evidence/tui-final/pi-timeout-final.txt",
+          "?? .scratch/manual-report-confirmation/evidence/tui-final/pi-timeout-preview.txt",
+          "?? .scratch/manual-report-confirmation/evidence/tui-final/pi-timeout-recording.ansi",
+          "?? .scratch/manual-report-confirmation/evidence/tui-final/pi-timeout-requests.json",
+          "?? .scratch/manual-report-confirmation/evidence/tui-final/summary.json",
+          "?? .scratch/manual-report-confirmation/evidence/tui-result.md",
+          "?? .scratch/manual-report-confirmation/evidence/tui-tool-request/omp-deny-final.txt",
+          "?? .scratch/manual-report-confirmation/evidence/tui-tool-request/omp-deny-preview.txt",
+          "?? .scratch/manual-report-confirmation/evidence/tui-tool-request/omp-deny-recording.ansi",
+          "?? .scratch/manual-report-confirmation/evidence/tui-tool-request/omp-deny-requests.json",
+          "?? .scratch/manual-report-confirmation/evidence/tui-tool-request/summary.json",
+          "?? .scratch/manual-report-confirmation/evidence/tui/omp-approve-final.txt",
+          "?? .scratch/manual-report-confirmation/evidence/tui/omp-approve-recording.ansi",
+          "?? .scratch/manual-report-confirmation/evidence/tui/omp-deny-final.txt",
+          "?? .scratch/manual-report-confirmation/evidence/tui/omp-deny-recording.ansi",
+          "?? .scratch/manual-report-confirmation/evidence/tui/omp-timeout-final.txt",
+          "?? .scratch/manual-report-confirmation/evidence/tui/omp-timeout-recording.ansi",
+          "?? .scratch/manual-report-confirmation/evidence/tui/summary.json",
+          "?? .scratch/manual-report-confirmation/run-checks.ts",
+          "?? framework/runtime/tool-confirmation.ts",
+          "?? tests/framework/tool-confirmation-adapters.test.ts",
+          "?? tests/workflow-chat/manual-report-confirmation.test.ts"
         ],
-        "diffSha256": "da757a5780763cc0916eccb66bdb79651e106f330d1da6f0497df88abb64b5d8",
+        "diffSha256": "a712cd9277ef84fb60691387bb00f1328bcc9fc3ce65aa30886502f92f1bb46a",
         "untrackedFiles": [
           {
-            "path": "scripts/support/pi-acceptance.ts",
-            "sha256": "6620df76432649077ed38edcfd66df7d9c6d9b027d22afe1beff3160d64cbfd9"
+            "path": ".scratch/manual-report-confirmation/design.md",
+            "sha256": "c2513c3b68c5d60f7368ee52512dc6812b2432b413f61f95f28a69082a6bf966"
           },
           {
-            "path": "tests/pi-suite/pi-acceptance.test.ts",
-            "sha256": "5628bf3b60b0d6d1a7f9954dac3b6993d7662600ce83a4873f31f2ac37cb60f3"
+            "path": ".scratch/manual-report-confirmation/evidence/backend-focused.md",
+            "sha256": "333622a8ca4dbfb90b78193c8b419f006d6b1aa5bc8c2ccc1ba64cf9a2965baa"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/focused.md",
+            "sha256": "0dcbc7f56a0bdc5b75ab917a9fb559ae412aaa1677f570a52e4136aaa2881b6c"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/identity-repro.md",
+            "sha256": "2da9658d39bdb2ac688020b8190e270fdb5c2d1b4f3b654e3615732f9acdc537"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/integration-corrected/summary.json",
+            "sha256": "1684ef55f492db0a80adbd485cbd7e3e5d9784539221504e0541781fdce1b60e"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/integration-first-result.md",
+            "sha256": "3be5bf5b34401cd337bccaf8a8ec55ac4a88944d866ac4e146623fb6ab5dc06e"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/integration/summary.json",
+            "sha256": "6be073f9162704bddb6c6ab57335e4491750d8b347fd505e367a1fbbdfb81d93"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui-configured/omp-deny-final.txt",
+            "sha256": "2f751ea4ee37a25615f02c977a63f0c5930cab7b19661029acd14c4c61255143"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui-configured/omp-deny-recording.ansi",
+            "sha256": "5ab8d5cb4d0968e9352fd2a7f8e3d8f4bdac0801f6d1d5e33f858a37403a6280"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui-configured/summary.json",
+            "sha256": "c91306495431059d0d8c718d0335aecde8195547b1c4fe7359bd7297ea0aad3e"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui-final/omp-approve-final.txt",
+            "sha256": "a9e54de604a49178c208798de2dd1ba2d0ae18834cf498b5000232ddfc840b0d"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui-final/omp-approve-preview.txt",
+            "sha256": "6809af85588355034830cbb75845c0d66eed44f1349389b55876133b18f0e607"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui-final/omp-approve-recording.ansi",
+            "sha256": "674bdaa05d8537ffb1bf30b8f6a99ef8cb9c8f4588bfe68ca7d73bf02b2c2b3c"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui-final/omp-approve-requests.json",
+            "sha256": "6c09f435da3ae1a09a89ed497757164c227f7ca914bfc179bcdf20ee393cd3c9"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui-final/omp-deny-final.txt",
+            "sha256": "0152bcb31916ea0f588d4f19f56dac466bb40b84b90302fe61d6441ce2bffb38"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui-final/omp-deny-preview.txt",
+            "sha256": "ad65e616366475dee643ce3f9ca83536b9817f4256d74d554797549bc050bfba"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui-final/omp-deny-recording.ansi",
+            "sha256": "4a5197202a0b3b4db7956bf7a81c1633394495588a932a4a9f15368e94444fbd"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui-final/omp-deny-requests.json",
+            "sha256": "d86e611e6a4552852a0392e4c8c0d88918c01e185ebeec743ab8c496e183f418"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui-final/omp-timeout-final.txt",
+            "sha256": "fb749575034634e239ba436f243c4e5abc7a75e2357337b71ed3b9f328715170"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui-final/omp-timeout-preview.txt",
+            "sha256": "f0c5eb0b62a8d9f9989d4225caadf1fc98cad5d1f5bfa9252c0dd64d88d25fac"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui-final/omp-timeout-recording.ansi",
+            "sha256": "c282d761109b4cb92e3f8dc95b3ff8086f65a2a539734a43c6dad32f2e3ce775"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui-final/omp-timeout-requests.json",
+            "sha256": "5c00755c68ea39bee93d5ed7dff686f5ffbdb49f4ae02e1a5bf3944fb2d3450e"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui-final/pi-approve-final.txt",
+            "sha256": "69369eee89893a5decc91e3d0aec795afbc10fe06562175aeb81cf583d79f5ae"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui-final/pi-approve-preview.txt",
+            "sha256": "8c8222f2154939b484caa4c952453d313ddf1c49abe471e3843beb4a7e098d39"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui-final/pi-approve-recording.ansi",
+            "sha256": "b321e67df3243d67d2ffec56210fcafe9ee91b2fe003299ba81b219bb31b2767"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui-final/pi-approve-requests.json",
+            "sha256": "cf4148d8693a28fbe084210c5948f61d79ced3332daf7d9d3f196b7e36b54839"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui-final/pi-deny-final.txt",
+            "sha256": "6c083e38a111184b744465cab33dba0728ac2bf031dda8f701adc016198c4b57"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui-final/pi-deny-preview.txt",
+            "sha256": "fc6fc3292235e337a0f5cedd2f1b2d6350c050a9aad13b4f770e976b3e6db5e5"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui-final/pi-deny-recording.ansi",
+            "sha256": "602eb9c90dbbb1e0b2a31227af955186f515e26332048e75f845a67d70d75646"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui-final/pi-deny-requests.json",
+            "sha256": "d634d160bdd8ab75ad7a443daf951f4570401ff4864355abfb61e4923cae797e"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui-final/pi-timeout-final.txt",
+            "sha256": "426439ed4f1d0018ea26fcde3c526489534271a5e125774fc89c6ab5222f0ee6"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui-final/pi-timeout-preview.txt",
+            "sha256": "b379b11dc5f7bbef5df3b2fc8a152644754922230216937e1965a43858badf55"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui-final/pi-timeout-recording.ansi",
+            "sha256": "c03d8b9e16bf22b1cb4a19c63acfdfbcc24a37bfc52d12b21634d2208263839f"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui-final/pi-timeout-requests.json",
+            "sha256": "d6a349749750cd7525d8c1472ad59a106233804f8a9f88d35d58b1cfe093f694"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui-final/summary.json",
+            "sha256": "470d81cb7f1e05bd0b9b39bd4913a72709d5b17e423e2fe6309dcb756e4cd104"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui-result.md",
+            "sha256": "99708de0e1acbf99c44f1f40acc337204222cabfa44c0f78121a6173819ba7d7"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui-tool-request/omp-deny-final.txt",
+            "sha256": "1f8bc1e828a13001019a9ae3638d4e2fc5f57fbab916d7a44b1208091c115355"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui-tool-request/omp-deny-preview.txt",
+            "sha256": "70a4a9d285a0b402b496e2f4e0e5f9473e3e72cb8c9db3da57e9fa1e20599dd3"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui-tool-request/omp-deny-recording.ansi",
+            "sha256": "6a5f8bbcf923dfc11ed5c6db594de80f9e05401f66630e4205842ffe9eb46c70"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui-tool-request/omp-deny-requests.json",
+            "sha256": "037bb12013a239563af31735b3b7f7789ef2843bfb3aa5cbb1ce481e092f0c82"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui-tool-request/summary.json",
+            "sha256": "5c82689399b4f331a11a4148b858c4bb52213b0908271c48123a8eef0e710560"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui/omp-approve-final.txt",
+            "sha256": "7c0b2312321c4e827a4c6e5a4de554274587d44b9d6aec1bd3627aaeb601684c"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui/omp-approve-recording.ansi",
+            "sha256": "a0edfd32030475a4a7c1c383e828764bc83ce35b59819f7614bc21b448ec57b8"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui/omp-deny-final.txt",
+            "sha256": "fa0c0c15087605e65066eb376c97abac67f46657b9989b600e9e0d0c08ef8b21"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui/omp-deny-recording.ansi",
+            "sha256": "8bf77242abac827426ea8a1712098abc4c5f87b61de95a0eacd4c88cf6f9e633"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui/omp-timeout-final.txt",
+            "sha256": "d38ef853a60832410a96b4664b241575f8e28e896f9a9e974dbeb496f8c91c91"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui/omp-timeout-recording.ansi",
+            "sha256": "7f74abaef3905541c35ed7480c3d05ba1de2f755acf53ed7a918a194a66e43e0"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/evidence/tui/summary.json",
+            "sha256": "4bea715b9ed0da827a9168b82158f36edd4a8b1612d5221dada128ad9421d59f"
+          },
+          {
+            "path": ".scratch/manual-report-confirmation/run-checks.ts",
+            "sha256": "1488fd61ab726fa4e4074ec937ea30b0204f69d21a7f729f252c6ae646d445bd"
+          },
+          {
+            "path": "framework/runtime/tool-confirmation.ts",
+            "sha256": "4d56b2d6ba49a70e85bfef4613c5ccb31f8f452503e7748f8469bced1b1f6ecd"
+          },
+          {
+            "path": "tests/framework/tool-confirmation-adapters.test.ts",
+            "sha256": "bd637dab4814188a83e88e47d2a5b082271d6fe3731a3ec93273093ff20b0735"
+          },
+          {
+            "path": "tests/workflow-chat/manual-report-confirmation.test.ts",
+            "sha256": "43f0508268a323e1c8195edae58990faa45bc97d0c929f66ba6df83e2557b9a3"
           }
         ],
-        "sha256": "66d8dced64c25876215af122caf109b0c839a83db64ddfd6e12b26d19ec15fc5"
+        "sha256": "4e484a92608edcd8750527a90b29f352131f09ca1e63880db9be3cdb161c1803"
       },
       "finishedLockfiles": [
         {
@@ -120,7 +668,7 @@
           "sha256": "28ce4c0d7b7d1d45a44e335a6647b0959c333875af42ca87ba63c87bcf4c2168"
         }
       ],
-      "acceptedAt": "2026-11-03T19:29:26.884Z"
+      "acceptedAt": "2026-11-07T16:06:40.517Z"
     },
     "close-out": {
       "schemaVersion": 1,

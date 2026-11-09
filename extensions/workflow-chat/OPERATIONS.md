@@ -7,7 +7,7 @@
 1. 选择一个固定的 toolkit 提交和锁文件，部署完整源码 checkout，在其根目录运行 `bun install --frozen-lockfile`。保留 `framework/`、`adapters/`、`extensions/workflow-chat/`、`entrypoints/`、`package.json`、`bun.lock` 和已安装依赖；入口不是可独立复制的脚本。不要复制其他进程的 `framework/.runtime` 或原生 Session 数据到新部署。toolkit 与后端必须配套升级至 input_rule/output_rule、outputs 数组与报告 from/to 契约；旧 Map、Run 与报告须先执行后端的一次性迁移并保留历史与状态，普通读写不兼容旧格式，不提供旧形状新请求放行；升级前保留旧提交和部署配置，在隔离数据上复验；不要在活动 Run 中途切换定义、Task 或源码。
 2. 按 Task 选择可运行的 OMP 或 Pi 安装，并使用对应宿主的 auto 角色入口。Pi 独立验证基线为精确 1.4.0；具体环境与验证边界以 [Harness support](../../framework/docs/harness-support.md#pi-workflow-chat-verification-baseline) 为准。OMP 仍使用既有 [harness-baseline.json](../../framework/docs/harness-baseline.json)，历史 OMP 演练不能外推为 Pi 整体集成通过。
 3. 在部署 checkout 的 [config.yaml](config.yaml) 配置 endpoint 和两个预算，见 [稳定配置](README.md#稳定配置)。endpoint 指向实际 herdr-bot 服务，不能指向另一个 Run 的测试服务。配置装配按入口所在仓库定位，不按节点 cwd 查找；修改后重启对应 Session 进程。不要以环境变量或复制 cwd 配置代替它。
-4. 在 herdr-bot 部署中找到 `[tasks].metadata_file` 实际使用的 Task 选项目录。将 manager/node 的固定扩展条目分别指向本次部署的绝对入口；不要改成 selectable，也不要让一种角色混载两份角色入口。以下为 TOML 片段，替换示例根路径后写入**实际目录**，不是新增 toolkit 配置：
+4. 在 herdr-bot 部署中找到 `[tasks].metadata_file` 实际使用的 Task 选项目录。将 manager/node 的固定扩展条目分别指向本次部署的绝对入口；不要改成 selectable，不要重复加载同一 ID。普通 Task 保持单角色；后端合法创建的嵌套 manager 在同一原生 Session 同载下面两种对应宿主的角色入口，而非启动两个单角色进程。以下为 TOML 片段，替换示例根路径后写入**实际目录**，不是新增 toolkit 配置：
 
    ```toml
    [[extensions]]
@@ -60,22 +60,68 @@ pi -e D:/service/my-agent-toolkit/entrypoints/pi-auto/node-chat.ts
 
 ## 2. 上线核对与预算
 
-- 在合法关联的管理者 Session 显式 `run {"action":"status"}`，核对 Run 现场和角色；节点遵守本次派发的 report_policy：auto 在材料可交接或需报告阻塞时显式 report，如实填写 can_complete，manual 先在 node Chat 展示摘要、交付地址和限制并询问、停轮，收到用户自然语言确认后再 report；旧派发缺字段按 auto。模型只传业务参数，真实 `sessionId` 由公共 Session 加入；完整协议以 [run](README.md#run-基础状态动作)、[collect](README.md#collect-长等待与报告待办)、[report](README.md#report-协议与交接) 为准。
+- 在合法关联的管理者 Session 显式 `run {"action":"status"}`，核对 Run 现场和角色；节点遵守本次派发的 report_policy：auto 在材料可交接或需报告阻塞时显式 report，如实填写 can_complete，manual 调用 report 后由工具展示完整待发送内容并取得用户明确发送批准，拒绝、取消、超时或无法交互不发送；旧派发缺字段按 auto。模型只传业务参数，真实 `sessionId` 由公共 Session 加入；完整协议以 [run](README.md#run-基础状态动作)、[collect](README.md#collect-长等待与报告待办)、[report](README.md#report-协议与交接) 为准。
 - 普通预算覆盖请求至完整正文，不只是连通或响应头。普通预算默认 30000ms；collect 独立默认 5460000ms，覆盖后端默认 5400 秒再留 60 秒余量。不要为了普通 report 调短 collect，也不要把所有普通调用都改为 91 分钟。后端改期时人工核对客户端预算，无自动握手。
 - collect 的正常 `reason: "timeout"` 不是错误，也不修改状态；客户端 `error.kind: "timeout"` 是完整传输预算耗尽。paused/completed/notification/no-running 的处理和待办查阅见 README。collect 不返回报告正文；按 pendingReports 的标识读取 messages.jsonl 或已有 Run 详情，阅读报告结论、阻塞、部分效果及必要干预；不默认读取输出正文验收。
 - 取消、网络/正文失败或非 2xx 不是回滚保证。保留整个错误正文、已发生 effects、逐项结果、historyError/stateCommitted；HTTP 200 也不能概括整批成功。故障分类与 Session 结束语义见 [故障、取消与信任边界](README.md#故障取消与信任边界)。
+
+原生身份同时出现在 manager 与 node 记录中并不自动授权双角色。配套后端要求唯一合法的父 execution／子 Run 关联；无关联身份碰撞仍返回 HTTP 403、`node-role-invalid`（“管理者身份没有唯一合法的父执行关联。”）。旧版“一律禁止 manager 提交节点报告”的诊断不再描述合法嵌套场景；升级后的集成检查应保留精确的状态码、错误码和关联拒绝语义，而不是放宽断言或允许任意同名身份。
+
+### 双角色原生 dock：机制验证
+
+先按仓库 [测试规范](../../docs/agents/testing.md) 选择 Bun 1.4.4，并准备已安装 OMP/Pi 与冻结基线依赖。隔离 worktree 显式设置 `OMP_BASELINE_RECORD_ROOT` 指向原始 toolkit 根；`PI_CLI` 可选择已安装 Pi，不安装新宿主或更改全局 PATH 绕过缺依赖。需要选择非 PATH 上的已有 Node 时，使用公共 `PI_NODE` 指向满足该 Pi 包 `engines.node` 的绝对可执行文件路径，同时显式设置 `PI_CLI`。这只选择原生 dock 的运行时，不选择真实 Herdr Chat 的运行时；后者仍需从专项保存的 OS 进程和安装入口核对。记录实际 Node／Pi 身份，保留原运行时的失败，不把另一运行时通过解释为修复原生退出故障，也不通过跳过或放宽退出断言取绿。然后在本 toolkit worktree 根执行：
+
+```powershell
+$env:WORKFLOW_DUAL_EVIDENCE_DIR = Join-Path (Get-Location) '.scratch/workflow-nesting/evidence/native-dual-role'
+bun test tests/harness-dock/role-dual-load.test.ts
+bun test tests/workflow-chat
+bun test tests/harness-dock/role-identity-integration.test.ts tests/harness-dock/role-prompts.test.ts tests/harness-dock/role-session-isolation.test.ts
+bun run typecheck
+bun run test
+```
+
+`role-dual-load.test.ts` 在**每个宿主的一次原生 Session** 同载两个正常 auto 入口，检查三工具实际 HTTP、同一原生身份、各自持久化指引且不重复、越权字段拒绝、失败阶段原样保留、内部 finish 后 report、collect 取消与 session_end 释放，以及新进程恢复原 Session 后三工具可用。原始 provider 请求和原生 JSONL 保存为 `captures/`、`sessions/`，`host.json` 保留各进程的原生 frames、stderr 和 HTTP 请求。测试清理自己拥有的宿主、连接与临时目录，不触碰用户 Session；未设置证据目录时不保留运行材料。
+
+此入口的 provider 和 HTTP 均受控，只证明同载、原生身份与资源机制，不能证明真实后端的父子授权／定位、真实 finish 后报告授权、恢复接管资格、真实模型理解内外策略或整体 P20/P22/P25/P32/P34 完成。真实后端／真实模型检查仍由跨仓验收单独运行。宿主缺失、异常退出或资源未释放均保留失败，不跳过或宣称成功；全仓检查还需要配套后端安全壳、fixture、显式 `HERDR_BOT_REPO`／`HERDR_BOT_METADATA`／`HERDR_BOT_BINARY`，不能拿受控 HTTP 代替。
+
+`bun run test` 的 canonical 入口限制为四个并行 worker，与原生 dock 的并行上限一致，避免更多原生进程争用使既有预算失真；测试集合、断言和期限保持不变。每轮仍须遵守独占重型检查窗口，不能把串行诊断入口替代 canonical 结果。
+
+本轮实际执行环境为 Windows x64、Bun 1.4.4、冻结 OMP 18.5.0 和已安装 Pi 1.5.0（Node 24.18.0）。上述 owning partition 实跑 25/25 通过；三份原有角色 dock 加同载、collect／恢复相关检查合计 24/24 通过，TypeScript／authoring 检查通过。但 canonical `bun run test` 为 1810 通过、9 失败、2 errors，**不是全仓通过**：其中同载 Pi 在恢复后三工具均已返回、最终 `agent_settled` 已观察到，随后 EOF 退出时出现原生 `UV_HANDLE_CLOSING` 断言并以 9 退出；另有全局超时、并发存储及传输检查失败。单独通过不抵消此失败，未通过修改宿主、重试、跳过或放宽断言掩盖；恢复路线使用 Pi 正常 `--session <file>`，不把 fresh-process 后 `switch_session` 路线的既有异常算作通过。此状态不提升整体宿主支持结论，也不满足全部验收关闭条件。
+
+在释放其他重型检查后的 quiet window，保持相同源码和断言再运行 canonical：1785 通过、34 失败；同载 Pi 仍在恢复后三工具完成后的 EOF 出现相同 `UV_HANDLE_CLOSING`／exit 9，因此不能仅归因于同时运行其他仓库检查。其余 33 项在读取配套后端 metadata 时以 `ENOENT` 失败：先前可用的临时后端 worktree 在等待期间已不再存在，该次运行不提供这些后端行为的复验结论。需要稳定保留的配套源码、metadata、安全壳及 fixture 后才能复验；禁止把临时路径存在过、二进制仍存在或受控 HTTP 通过当作真实后端已通过。交接前将运行材料完整保存到 worktree 外的自有证据目录；自动生成的 Pi acceptance 记录须另行保留原始材料，再恢复非本票发布的共享记录，不能因测试生成物使工作树保持脏状态。
+
+后续集成复验使用保留的配套 herdr-bot worktree 源码与 metadata，并在其独立 `CARGO_TARGET_DIR` 执行 `cargo build --manifest-path backend/Cargo.toml --example safe_shutdown_shell --bin herdr-fixture` 成功后，再显式绑定三个 `HERDR_BOT_*` 路径。owning partition 25/25、受影响的真实后端身份／collect／恢复 dock 14/14、typecheck／authoring 均通过。首次配套 canonical 的唯一失败是旧检查仍期待“一律禁止 manager 报告”的文字；按上文唯一合法关联语义更新精确诊断，保留 HTTP 403 与 `node-role-invalid`。修正后的 canonical 为 1818 通过、1 失败（1819 项、230 文件）：仅 Pi 双角色恢复后的最终 EOF 再次出现 `UV_HANDLE_CLOSING`／exit 9。OMP 同载、全部后端检查及其他 Pi 检查通过，不抵消该原生生命周期失败；本次不能关闭全部验收，也不把早先单次同载通过认作已修复。未修改宿主／全局运行时、跳过检查、放宽退出断言或重试取绿。需要先解决受支持宿主／运行时的异常退出，再对冻结源码执行完整入口；不能用应用层延时或忽略退出码代替。
+
+后续显式选择已有 Node 22.19.0（`PI_NODE`）及已安装 Pi 1.5.0（`PI_CLI`），在独占窗口使用独占 TEMP／TMP 和同一配套后端安全壳复验：双角色 dock 4/4、完整 serial dock 179/179、四 worker canonical 1819/1819 均通过。期间发现隔离冻结前缀缺少已发布资源和原生 addon；只恢复相同 18.5.0 包的缺失文件，保留已有冻结 patch，并让既有 patch／来源检查独立核对，没有修改宿主源逻辑。此前缺资源及一次 auto connect-bot 注册观察失败的日志仍保留，不能据最终通过解释其原因。此结果属于上述显式运行时／隔离条件，不证明 Node 24.18.0 的退出故障已修复，也不将受控 dock 提升为真实模型或整体宿主支持证据；Herdr 真实角色链路另以实际 OS 进程身份及专项结果为准。
+
+### 嵌套双角色真实后端／模型验收
+
+配套 herdr-bot 的长期入口为 `scripts/accept-workflow-nesting-roles.py`，完整参数和运行约束在该仓 `docs/agents/testing.md` 的“嵌套 manager 双角色真实验收”。从 herdr-bot worktree 根指定本 toolkit worktree：
+
+```powershell
+python scripts/accept-workflow-nesting-roles.py `
+  --backend "$env:CARGO_TARGET_DIR/debug/herdr-bot.exe" `
+  --toolkit $TOOLKIT_WT --hosts omp,pi `
+  --paths-file $ISOLATED_PATHS --model-config $AUTHORIZED_MODEL `
+  --evidence-dir $NEW_EXCLUSIVE_EVIDENCE
+```
+
+两宿主各执行两套 manager／zone／原始业务字面样例、重复 Map 调用和保留旧 execution；真实原生 Session 自动注入身份，模型使用正常 run／collect／report，后端实际决定子 Run／父 execution 授权。逐阶段观察 unfinished 拒绝、显式 finish、继续报告、manual 独立发送确认、父层最新报告验收与 complete、真实 Tab 精确关闭和内部保留；受控 dock 不能替代这些证据。`--hosts declared` 另执行入口中固定业务夹具的混合宿主声明，保留 parent／child／worker 各自 OMP/Pi，不表示生产业务已验收，也不代替双宿主完整矩阵。
+
+依赖、实际模型和隔离／清理任一不可用均非零，不重试业务决策、跳过宿主或读取用户认证。保留的独占证据包含两仓源码／锁文件身份、安装入口／OS 进程、模型／工具／HTTP、原始用户批准、原生历史与文件字节；实际执行结果才决定是否通过。本节仅说明可复跑入口，不宣称当前环境的验收结果；普通 `bun test tests/workflow-chat`、同载 dock、typecheck 和 canonical 全仓检查仍须分别运行并报告。
 
 ### report_policy 真实模型冒烟（OMP 与 Pi 分别执行）
 
 使用上节对应宿主的自动入口和合法后端派发，不在任意独立启动的无关联 Session 中伪造身份。升级共享定义后创建新 node Chat；已有 Chat 的持久化指引不热更新。
 
 1. 在 Map 中给一个可独立交付的小任务设置 `report_policy: manual`，由 manager 正常 dispatch。任务示例：在指定绝对目录写一份 UTF-8 文本，正文为 `report-policy-smoke`，交付地址、读取方法和限制。核对实际派发输入有独立 `report_policy: manual` 控制段。
-2. 等任务可交接：node Chat 应先展示摘要、绝对地址和限制、询问是否报告并停轮；从 Run 详情或 `messages.jsonl` 确认尚未新增 report。manager 不得仅凭等待确认就 complete。
-3. 在该 node Chat 输入 `先将正文改为 report-policy-smoke-revised，不要发送报告`。检查实际文件已修改，模型再次展示交接信息、询问并停轮，仍未新增 report。然后输入 `确认，发送这份报告`，核对新增一份 saved report 及对应 execution，核对严格 boolean can_complete 和命名 outputs（如有）；manager 阅读报告作编排判断，最新 true 仅允许而不强迫其显式 complete，不默认读取成果正文。
-4. 在 node Chat 要求补充或更正交接内容：再次观察询问与停轮；确认前报告数不变，输入 `确认发送补充报告` 后新增独立报告。辅助通知失败时不应仅因该失败重报。
-5. 用新执行分别验证 `report_policy: auto` 与旧派发缺字段的输入：可交接后允许直接 report，再继续无害收尾。分别用 OMP/Pi 重复以上流程；保留实际输入、对话、文件和报告标识，不用受控 provider 的预设调用声称模型遵从了策略。
+2. 等模型调用 report：原生确认界面应显示本次完整 body、can_complete 和 outputs；批准前不得出现 `/api/workflow/node/report` 请求或新增报告（只读 context 查询允许）。manager 不得仅凭等待确认就 complete。
+3. 分别选择“否”、关闭/取消、等待配置的确认超时，核对无报告请求、工具返回未发送、无自动补发。超时后迟到选择不能补发；无 UI 模式也不能发送 manual 报告。默认 20 秒，可在 toolkit 的 `reportConfirmationTimeoutMs` 中修改后重启；使用独立于 HTTP 的预算。
+4. 明确要求修改正文为 `report-policy-smoke-revised` 后重新调用 report，确认界面须展示修改后的实际内容，旧批准不可复用。在界面明确选择“是”后，核对恰一份报告及其 body、canComplete、outputs 与展示内容一致。自然语言业务批准不是发送批准。
+5. 补充、更正或再次发送均须新确认；已保存但辅助通知失败不应重报。报告请求发出后发生网络错误须保留保存状态不明，不能宣称未发送。
+6. 用新执行验证 `auto` 不弹窗直接报告；历史执行缺策略由后端读作 auto。修改当前 Map 不改变已派发执行的冻结策略；嵌套双角色外报读取父 execution 的策略，不读取内部 Run 的策略。
 
-这些观察验证提示词行为，不代表 report_policy 是审批接口。report 使用 body、必填 boolean can_complete 和可选 outputs；不要新增审批状态，can_complete 不代替真实用户确认。配套升级 toolkit 与后端后，新请求旧形状明确拒绝；历史报告可读但缺声明不能首次完成。人工补齐也须当前执行最新 true 报告，不存在无报告人工完成旁路。
+OMP/Pi 分别验证实际交互，保留界面、用户选择、实际 HTTP 与报告标识。受控模型只能证明工具门禁机制，不证明真实模型业务职责遵从。RPC 必须有实现确认请求/响应的客户端；无响应按超时处理。toolkit 与 herdr-bot 须配套升级，后端提供只读 `/api/workflow/node/context`；查询失败不默认 auto。门禁仅约束 report 工具，不增加后端审批状态或直接 HTTP 防绕过保证。can_complete 不代替发送批准；人工补齐仍须当前执行最新 true 报告，不存在无报告人工完成旁路。
 
 ### 文件交接跨仓自动验收
 

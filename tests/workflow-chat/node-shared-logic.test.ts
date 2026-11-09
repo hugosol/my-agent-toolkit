@@ -6,7 +6,8 @@ import { businessRoles } from "./support/business-roles";
 test("node shared logic rejects extra and identity fields before sending a report", async () => {
 	let requests = 0;
 	const saved = { saved: true, report: { id: "report-valid", body: "E:/handoff.txt；只读，尚未验收。" }, notification: { status: "not-attempted" } };
-	const server = Bun.serve({ hostname: "127.0.0.1", port: 0, fetch() {
+	const server = Bun.serve({ hostname: "127.0.0.1", port: 0, fetch(request) {
+		if (new URL(request.url).pathname === "/api/workflow/node/context") return Response.json({ reportPolicy: "auto" });
 		requests++;
 		return Response.json(saved);
 	} });
@@ -32,6 +33,7 @@ test("node shared logic rejects extra and identity fields before sending a repor
 test("node shared logic validates output IDs atomically and preserves ordered actual paths", async () => {
 	const calls: unknown[] = [];
 	const server = Bun.serve({ hostname: "127.0.0.1", port: 0, async fetch(request) {
+		if (new URL(request.url).pathname === "/api/workflow/node/context") return Response.json({ reportPolicy: "auto" });
 		calls.push(await request.json());
 		return Response.json({ saved: true });
 	} });
@@ -85,7 +87,8 @@ for (const scenario of [
 ]) {
 	test(`node shared logic ${scenario.name}`, async () => {
 		let requests = 0;
-		const server = Bun.serve({ hostname: "127.0.0.1", port: 0, fetch() {
+		const server = Bun.serve({ hostname: "127.0.0.1", port: 0, fetch(request) {
+		if (new URL(request.url).pathname === "/api/workflow/node/context") return Response.json({ reportPolicy: "auto" });
 			requests++;
 			return Response.json(scenario.body, { status: scenario.status });
 		} });
