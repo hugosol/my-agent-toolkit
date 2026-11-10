@@ -1,9 +1,0 @@
-[
-  {
-    "host": "omp",
-    "decision": "deny",
-    "passed": false,
-    "error": "Error: observation timeout",
-    "sent": []
-  }
-]

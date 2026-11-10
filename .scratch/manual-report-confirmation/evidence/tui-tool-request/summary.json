@@ -1,9 +1,0 @@
-[
-  {
-    "host": "omp",
-    "decision": "deny",
-    "passed": true,
-    "sent": [],
-    "preview": "omp-deny-preview.txt"
-  }
-]
