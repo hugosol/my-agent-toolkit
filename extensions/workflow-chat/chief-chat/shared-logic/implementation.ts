@@ -29,8 +29,8 @@ export function createChiefImplementation() {
 			const id = match[1]!;
 			const refused = (message: string) => ({ process: false as const, text: message });
 			if (!requests) return refused("chief 报告接收不可用；未处理，不自动重试。请在当前 chief 明确要求查看原报告。");
-			// Both installed native input hooks have a 30s handler budget. End this
-			// admission within 20s (or the smaller configured HTTP budget), so a
+			// Installed OMP has a 30s input-handler budget (Pi awaits directly). End
+			// shared admission within 20s (or the smaller configured HTTP budget), so a
 			// timeout cannot fall through to unacknowledged model processing.
 			const result = await requests.post(sessionId, `/api/chief/reports/${encodeURIComponent(id)}/receive`, {}, AbortSignal.timeout(20_000));
 			if (result.isError) return refused(`chief 报告未取得可靠接收授权，不处理、不自动重试；外部已提交效果不因此撤销。${JSON.stringify(result.body)}`);
@@ -39,6 +39,10 @@ export function createChiefImplementation() {
 				|| !("process" in body) || typeof body.process !== "boolean"
 				|| !("receipt" in body) || !body.receipt || typeof body.receipt !== "object"
 				|| !("reportId" in body.receipt) || body.receipt.reportId !== id
+				|| !("sessionId" in body.receipt) || typeof body.receipt.sessionId !== "string" || !body.receipt.sessionId.trim()
+				|| !("claimId" in body.receipt) || typeof body.receipt.claimId !== "string" || !body.receipt.claimId.trim()
+				|| !("at" in body.receipt) || typeof body.receipt.at !== "number" || !Number.isFinite(body.receipt.at)
+				|| (body.process && body.receipt.sessionId !== sessionId)
 				|| !("report" in body) || !isChiefReport(body.report) || body.report.id !== id) {
 				return refused("chief 报告接收响应无有效持久确认；结果不确定，不处理、不重试。用户可在当前 chief 明确要求查看原报告。");
 			}

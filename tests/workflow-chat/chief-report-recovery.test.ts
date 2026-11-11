@@ -56,9 +56,61 @@ test("resend rejects changed content and sends nothing without renewed approval"
 		}
 		expect(methods).toEqual([]);
 		for (const confirm of [undefined, async () => false, async () => { throw new Error("Native UI unavailable"); }]) {
-			expect(await CHIEF_RESEND_REPORT_TOOL.execute({ requests: s.requests }, { id: report.id }, { sessionId: s.sessionId, callId: "not-approved", confirm })).toMatchObject({ details: { body: { saved: false, sent: false } } });
+			expect(await CHIEF_RESEND_REPORT_TOOL.execute({ requests: s.requests }, { id: report.id }, { sessionId: s.sessionId, callId: "not-approved", confirm })).toMatchObject({ details: { body: { saved: true, sent: false } } });
 		}
 		expect(methods).toEqual(["GET", "GET", "GET"]);
+	} finally { s.close(); }
+});
+
+// The original GET establishes a saved immutable report. Unlike a new submit,
+// refusing a resend must not report saved=false (which would erase that fact).
+test("refusing a resend retains the already saved original report", async () => {
+	const s = scene(async () => Response.json(report));
+	try {
+		expect(await CHIEF_RESEND_REPORT_TOOL.execute({ requests: s.requests }, { id: report.id }, { sessionId: s.sessionId, callId: "refused-original", confirm: async () => false })).toMatchObject({ details: { body: { saved: true, report, sent: false } } });
+	} finally { s.close(); }
+});
+
+test("ending the sender Session invalidates a pending resend approval", async () => {
+	const methods: string[] = [];
+	const shown = Promise.withResolvers<void>();
+	const approval = Promise.withResolvers<boolean>();
+	const s = scene(async request => { methods.push(request.method); return Response.json(report); });
+	try {
+		const pending = CHIEF_RESEND_REPORT_TOOL.execute({ requests: s.requests }, { id: report.id }, { sessionId: s.sessionId, callId: "ending", confirm: async () => { shown.resolve(); return approval.promise; } });
+		await shown.promise;
+		s.requests.end(s.sessionId); approval.resolve(true);
+		expect(await pending).toMatchObject({ details: { body: { sent: false, saved: true } } });
+		expect(methods).toEqual(["GET"]);
+	} finally { approval.resolve(false); s.close(); }
+});
+
+test("ending a Session after resend submission never claims the external effect was undone", async () => {
+	const arrived = Promise.withResolvers<void>();
+	const release = Promise.withResolvers<void>();
+	let submitted = 0;
+	const s = scene(async request => {
+		if (request.method === "GET") return Response.json(report);
+		await request.json(); submitted++; arrived.resolve(); await release.promise;
+		return Response.json({ saved: true, report, received: false, notification: { status: "submitted" } });
+	});
+	try {
+		const pending = CHIEF_RESEND_REPORT_TOOL.execute({ requests: s.requests }, { id: report.id }, { sessionId: s.sessionId, callId: "submitted", confirm: async () => true });
+		await arrived.promise; s.requests.end(s.sessionId);
+		expect(await pending).toMatchObject({ isError: true, details: { body: { guidance: expect.stringContaining("不表示回滚或未生效") } } });
+		expect(submitted).toBe(1);
+	} finally { release.resolve(); s.close(); }
+});
+
+test("resend preserves the backend refusal for an unassociated sender after approval", async () => {
+	const calls: string[] = [];
+	const s = scene(async request => {
+		calls.push(`${request.method} ${new URL(request.url).pathname}`);
+		return request.method === "GET" ? Response.json(report) : Response.json({ code: "chief-report-unassociated", message: "Only the original delegated Chat can resend" }, { status: 403 });
+	});
+	try {
+		expect(await CHIEF_RESEND_REPORT_TOOL.execute({ requests: s.requests }, { id: report.id }, { sessionId: s.sessionId, callId: "unassociated", confirm: async () => true })).toMatchObject({ isError: true, details: { httpStatus: 403, body: { code: "chief-report-unassociated" } } });
+		expect(calls).toEqual(["GET /api/chief/reports/original%2Freport-18", "POST /api/chief/reports/original%2Freport-18/resend"]);
 	} finally { s.close(); }
 });
 

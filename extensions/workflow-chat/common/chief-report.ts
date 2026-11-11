@@ -88,9 +88,16 @@ export const CHIEF_RESEND_REPORT_TOOL: ToolDeclaration<ReportState> = {
 		if (!isChiefReport(report) || report.id !== params.id) {
 			return workflowToolResult({ isError: true, body: { code: "invalid-report", message: "无法核实原报告 ID 与完整内容；未重发。" } });
 		}
-		return workflowToolResult(workflowReportResult(await state.requests.postConfirmed(delivery.sessionId, `${route}/resend`, {}, {
+		const result = await state.requests.postConfirmed(delivery.sessionId, `${route}/resend`, {}, {
 			title: "重发原 chief 报告？（重新批准本次重发）",
 			message: `仅重发以下原 ID 和原内容，不新建或修改报告。已接收时只反馈接收事实，不再次处理；接收不是呈现、已读或验收。\n\n原报告：\n${JSON.stringify(report, null, 2)}`,
-		}, delivery.signal, delivery.confirm)));
+		}, delivery.signal, delivery.confirm);
+		if (result.notSent) {
+			const detail = result.body && typeof result.body === "object" ? result.body : {};
+			return workflowToolResult({ ...result, body: { ...detail, saved: true, report, sent: false,
+				guidance: "原报告仍已保存；本次重发未发送。结束本轮，等待用户重新要求；不自动重试或反复确认，不撤销既有外部效果。",
+			} });
+		}
+		return workflowToolResult(workflowReportResult(result));
 	},
 };

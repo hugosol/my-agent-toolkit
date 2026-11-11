@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { chiefDock } from "../workflow-chat/support/chief-dock";
+import { chiefDock, type ChiefDock } from "../workflow-chat/support/chief-dock";
 
 // Approved S3: actual native input/Session/provider path. Controlled backend only
 // grants its durable receive after a hold; a model request before that violates
@@ -11,17 +11,19 @@ for (const host of ["omp", "pi"] as const) test(`${host} receives before model p
 	const calls: { path: string; body: unknown }[] = [];
 	const arrived = Promise.withResolvers<void>();
 	const release = Promise.withResolvers<void>();
+	let malformed = false;
 	const peer = Bun.serve({ hostname: "127.0.0.1", port: 0, async fetch(request) {
 		calls.push({ path: new URL(request.url).pathname, body: await request.json() });
 		arrived.resolve(); await release.promise;
 		const body = calls[0]!.body;
 		if (!body || typeof body !== "object" || !("sessionId" in body) || typeof body.sessionId !== "string") throw new Error("Missing real native session identity");
-		return Response.json({ received: true, process: calls.length === 1,
-			receipt: { reportId: report.id, sessionId: body.sessionId, claimId: "claim-18", at: 1700000000010 }, report });
+		return Response.json({ received: true, process: malformed || calls.length === 1,
+			receipt: malformed ? { reportId: report.id } : { reportId: report.id, sessionId: body.sessionId, claimId: "claim-18", at: 1700000000010 }, report });
 	} });
-	const dock = await chiefDock(host, peer.url.origin);
+	let dock: ChiefDock | undefined;
 	let pending: Promise<void> | undefined;
 	try {
+		dock = await chiefDock(host, peer.url.origin);
 		pending = dock.input(`Chief report\nReport: ${report.id}\n\n${JSON.stringify(report)}`);
 		// A child native process cannot share Bun fake time; this bounds an event
 		// wait, not an observation sleep or a product retry policy.
@@ -37,5 +39,10 @@ for (const host of ["omp", "pi"] as const) test(`${host} receives before model p
 		await dock.input(`Chief report\nReport: ${report.id}\n\n${JSON.stringify(report)}`);
 		expect(calls).toHaveLength(2);
 		expect(dock.capture.requests()).toHaveLength(1);
-	} finally { release.resolve(); try { await pending; } finally { try { await dock.close(); } finally { peer.stop(true); } } }
+		malformed = true;
+		await dock.input(`Chief report\nReport: ${report.id}\n\n${JSON.stringify(report)}`);
+		expect(calls).toHaveLength(3);
+		expect(dock.capture.requests()).toHaveLength(1);
+	} catch (error) { console.error(`${host} native reception failure before cleanup`, error); throw error; }
+	finally { release.resolve(); try { await pending; } finally { try { await dock?.close(); } finally { peer.stop(true); } } }
 }, 180_000);
