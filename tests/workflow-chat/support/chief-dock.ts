@@ -15,7 +15,7 @@ export interface ChiefLookupResult {
 
 export interface ChiefDock {
 	readonly capture: CaptureServer;
-	call(params: unknown): Promise<ChiefLookupResult>;
+	call(params: unknown, tool?: "chief_definitions" | "chief_read_report"): Promise<ChiefLookupResult>;
 	history(): Promise<string>;
 	close(): Promise<void>;
 }
@@ -53,8 +53,8 @@ export async function chiefDock(host: "omp" | "pi", endpoint: string): Promise<C
 		}
 		const running = session;
 		return { capture,
-			async call(params: unknown) {
-				next = { name: "chief_definitions", arguments: JSON.stringify(params) };
+			async call(params: unknown, tool = "chief_definitions") {
+				next = { name: tool, arguments: JSON.stringify(params) };
 				const mark = running.frames().length;
 				if (running instanceof PiSession) await running.run("Perform the selected definition lookup once.");
 				else {

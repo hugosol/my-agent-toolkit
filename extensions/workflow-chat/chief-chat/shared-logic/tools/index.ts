@@ -31,4 +31,18 @@ export const CHIEF_TOOLS: readonly ToolDeclaration<ChiefToolState>[] = [{
 		}
 		return workflowToolResult(await state.requests.get(delivery.sessionId, route, delivery.signal));
 	},
+}, {
+	name: "chief_read_report", label: "Read chief report",
+	description: "按原报告 ID 只读完整结果，供没有原派发上下文的新 chief 如实呈现。读取不声明可靠接收、呈现完成、已读或业务验收，不重发或启动业务。",
+	parameters: { type: "object", properties: {
+		id: { type: "string", description: "已保存的原报告 ID；不得填写接收者、Session 或归属。" },
+	}, required: ["id"], additionalProperties: false },
+	async execute(state, params, delivery) {
+		if (!params || typeof params !== "object" || Array.isArray(params)
+			|| Object.keys(params).some(key => key !== "id") || !("id" in params)
+			|| typeof params.id !== "string" || !params.id.trim()) {
+			return workflowToolResult({ isError: true, body: { code: "invalid-parameters", message: "只接受非空字符串 id。" } });
+		}
+		return workflowToolResult(await state.requests.get(delivery.sessionId, `/api/chief/reports/${encodeURIComponent(params.id)}`, delivery.signal));
+	},
 }];

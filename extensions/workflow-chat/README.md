@@ -15,7 +15,7 @@ pi -e /absolute/my-agent-toolkit/entrypoints/pi-auto/chief-chat.ts
 
 与其他角色一样部署本仓库的 framework、adapters、workflow-chat、entrypoints 和 YAML 依赖；使用下文同一个稳定 `config.yaml`，不读取当前业务 cwd 的配置。共享声明／实现位于 `chief-chat/`，宿主文件仅选择公共 adapter、配置根和自动启动策略。首次指引以 `chief-chat:tools` 写入原生历史；它说明先澄清、优先按 Bot.when 寻找能力、不亲自执行业务。指引被消费不等于真实模型遵从职责。
 
-当前唯一工具 `chief_definitions` 只读取已交付的 herdr-bot 公开定义接口，原样返回后端 JSON 和 HTTP 状态，不缓存或伪造命中：
+`chief_definitions` 只读取已交付的 herdr-bot 公开定义接口，原样返回后端 JSON 和 HTTP 状态，不缓存或伪造命中：
 
 | 输入 | 既有读取接口 |
 | --- | --- |
@@ -26,7 +26,19 @@ pi -e /absolute/my-agent-toolkit/entrypoints/pi-auto/chief-chat.ts
 
 `id` 只用于 Task 或 Map 详情，Map 使用定义文件名；工具不接受路径、endpoint、身份或额外字段，不向 GET 添加 Session 请求体。只读调用仍绑定活动原生 Session 的取消生命周期与 `requestTimeoutMs`。读取失败保留真实错误，不返回空列表冒充成功、不自动重试。
 
-本入口不注册派发、能力创建或 chief 报告占位工具，也不能通过 run/report 冒充其他角色。缺少已交付的原生派发能力时明确说明不能启动并等待用户，不建议直接 HTTP 绕过确认。加载本入口不建立后端当前 chief 身份，herdr-bot 固定角色装配、发起／恢复与有效身份需要跨仓联调。`bun test tests/harness-dock/chief-role.test.ts` 的受控 provider 只证明两宿主原生加载、指引消费和真实后端定义读回，不认领真实模型职责或完整发起／恢复验收。
+`chief_read_report {"id":"原报告ID"}` 通过 `GET /api/chief/reports/{id}` 读取完整原报告；只接受非空 id，不接收 Session 或归属参数，不虚构接收确认。新 chief 可仅凭报告的 background、execution、result、summary、deliverables、pendingDecisions 呈现成功、失败、受阻或能力创建结果；未知明确说未知，呈现后询问是否满足要求并等待，不发起下一执行确认、不启动业务。已给出完整报告时不必再读。
+
+本入口不注册派发、能力创建或 chief 报告发送占位工具，也不能通过 run/report 冒充其他角色。缺少已交付的原生派发能力时明确说明不能启动并等待用户，不建议直接 HTTP 绕过确认。加载本入口不建立后端当前 chief 身份，herdr-bot 固定角色装配、发起／恢复与有效身份需要跨仓联调。`bun test tests/harness-dock/chief-role.test.ts` 的受控 provider 只证明两宿主原生加载、指引消费和真实后端定义读回，不认领真实模型职责或完整发起／恢复验收。
+
+## chief 报告发送
+
+独立执行者通过固定 `entrypoints/omp-auto/chief-report.ts` 或 `entrypoints/pi-auto/chief-report.ts` 加载 `chief_report`；直接 Map manager 在原 manager-chat 中加载同一个 common 静态工具与 Session 绑定原生确认。chief-report 不冒充 node 角色，不与 manager-chat 同载；内部 node-chat 不加载 chief 工具，合法 nested manager 仍同载 manager+node。后端固定扩展登记须在实际 chief 委派的独立 Chat 启动及恢复时装配对应宿主 chief-report 入口，不因加载入口新建委派或重播业务输入；普通独立 Task 不因此获得委派关联。跨仓装配验收独立于本仓原生工具协议。工具仅向 `POST /api/chief/reports` 提交 `{sessionId,body}`，Session 取实际原生身份，后端以真实委派关联授权；工具可见、相同 Task 或模型不授予资格。不提供接收者／归属参数，内部节点仍用原 `report` 向自己的 manager 报告，嵌套 finish/can_complete 门禁不变。
+
+body 必须完整包含非空 `background`、`execution`、`summary`，`result: "success"|"failure"|"blocked"`，以及 `deliverables: string[]`、`pendingDecisions: string[]`（无项明确 `[]`）。每次原生对话框展示包含实际 Session 的完整 HTTP JSON，只有该次明确批准才发送；聊天同意、业务完成或节点 auto 策略不替代。拒绝、关闭、取消、超时及无确认能力均不发送，不自动重试。
+
+分别解释 `saved`、原 `report`、`notification` 与不确定事实：保存不等于通知；`submitted` 仅为 Herdr 接受输入，不是可靠接收、呈现、已读或验收。`failed`／`not-attempted` 不撤销保存，`uncertain` 及传输／解析错误不证明未发生或回滚。工具不为通知失败重提业务报告，也不提供假接收、自动补投或原 ID 人工重发兼容路径。
+
+受控协议回归：`bun test tests/harness-dock/native-chief-report.test.ts tests/harness-dock/chief-read-report.test.ts`，两宿主使用真实原生加载、Session、工具与确认，只替换 provider 和 HTTP 对端；它不证明真实模型职责或后端持久接收。已有节点兼容检查仍由 `native-report-confirmation.test.ts`、`node-report-contract.test.ts`、`nested-role-completion.test.ts` 维护。
 
 ## 安装与自动加载
 
@@ -74,10 +86,12 @@ extensions/workflow-chat/
 ├── config.yaml
 ├── common/
 │   ├── config.ts
+│   ├── chief-report.ts
 │   ├── requests.ts
 │   ├── report-result.ts
 │   └── tool-result.ts
-├── chief-chat/                   # 同样的 definition/shared-logic/harnesses 分层，只读能力查询
+├── chief-chat/                   # 同样的 definition/shared-logic/harnesses 分层，能力与报告只读查询
+├── chief-report/                 # 独立执行者报告能力，不赋予 node 身份
 ├── manager-chat/
 │   ├── definition.ts
 │   ├── shared-logic/

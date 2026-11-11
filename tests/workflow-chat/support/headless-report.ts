@@ -6,13 +6,14 @@ import { resolvePiCli, startPiRun } from "../../harness-dock/pi-session";
 import { promptDock } from "./prompt-dock";
 
 /** Real no-UI host modes, not a replacement confirmation implementation. */
-export async function headlessReport(host: "omp" | "pi", endpoint: string): Promise<unknown> {
-	const params = { body: "No UI cannot authorize this report", can_complete: false };
+export async function headlessReport(host: "omp" | "pi", endpoint: string,
+	tool = "report", params: unknown = { body: "No UI cannot authorize this report", can_complete: false },
+	role: "node" | "chief-report" = "node"): Promise<unknown> {
 	if (host === "omp") {
-		const dock = await promptDock("node", { headless: true, isolatedHome: true,
+		const dock = await promptDock(role, { headless: true, isolatedHome: true,
 			config: `endpoint: ${endpoint}\nrequestTimeoutMs: 2000\nreportConfirmationTimeoutMs: 2000\ncollectTimeoutMs: 3000\n` });
 		try {
-			dock.select("report", params);
+			dock.select(tool, params);
 			await dock.session.prompt("Call report once, do not retry.");
 			return dock.session.frames().filter(frame => frame.type === "tool_execution_end").slice(-1)[0]?.result;
 		} finally {
@@ -29,7 +30,7 @@ export async function headlessReport(host: "omp" | "pi", endpoint: string): Prom
 		endpoint: { respond() {
 			if (!selected) return undefined;
 			selected = false;
-			return { toolCall: { name: "report", arguments: JSON.stringify(params) } };
+			return { toolCall: { name: tool, arguments: JSON.stringify(params) } };
 		} },
 	});
 	try {
@@ -43,7 +44,7 @@ export async function headlessReport(host: "omp" | "pi", endpoint: string): Prom
 			`endpoint: ${endpoint}\nrequestTimeoutMs: 2000\nreportConfirmationTimeoutMs: 2000\ncollectTimeoutMs: 3000\n`);
 		// Pi's documented print/JSON mode has hasUI=false; RPC deliberately has real dialog UI.
 		const child = Bun.spawn([...run.cli.command, "--mode", "json", "--print", "--no-extensions", "--no-mcp",
-			"-e", join(deployment, "entrypoints/pi-auto/node-chat.ts"), "--model", run.selector,
+			"-e", join(deployment, `entrypoints/pi-auto/${role === "chief-report" ? role : "node-chat"}.ts`), "--model", run.selector,
 			"--session-dir", run.root.sessionDir, "Call report once, do not retry."], {
 			cwd: run.root.workDir, stdin: "ignore", stdout: "pipe", stderr: "pipe", timeout: 90000,
 			env: buildSessionEnv(process.env, { agentDir: run.root.agentDir, extra: {
