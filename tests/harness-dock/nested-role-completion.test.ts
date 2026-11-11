@@ -78,7 +78,7 @@ for (const host of ["omp", "pi"] as const) test(`${host} native dual roles keep 
 		expect(prepared.body).toMatchObject({ snapshot: { id: childId, inputsReady: true } });
 		expect(prepared.body.changed === true || prepared.body.stateCommitted === true).toBe(true);
 		expect(prepared.body.error).toBeUndefined();
-		expect(prepared.body.historyError).toBeUndefined();
+		expect(prepared.body.historyError).toBeNull();
 		identify("internal-worker", dock.root.workDir);
 		const internal = await call("run", { action: "dispatch", nodes: ["inside"] });
 		expect(internal.body.snapshot.id).toBe(childId);
