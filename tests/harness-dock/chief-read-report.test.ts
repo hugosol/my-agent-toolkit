@@ -6,11 +6,11 @@ import { chiefDock } from "../workflow-chat/support/chief-dock";
 // Violation: truncated node-body or guessed success replacing a failed/blocked result.
 for (const host of ["omp", "pi"] as const) {
 	test(`${host} new chief reads success failure blocked and capability results unchanged`, async () => {
-		const calls: { method: string; path: string }[] = [];
+		const calls: { method: string; path: string; body: unknown }[] = [];
 		let report: unknown;
-		const peer = Bun.serve({ hostname: "127.0.0.1", port: 0, fetch(request) {
-			calls.push({ method: request.method, path: new URL(request.url).pathname });
-			return Response.json(report);
+		const peer = Bun.serve({ hostname: "127.0.0.1", port: 0, async fetch(request) {
+			calls.push({ method: request.method, path: new URL(request.url).pathname, body: await request.json() });
+			return Response.json({ report, received: true, receipt: { reportId: "original/report-15" }, process: false });
 		} });
 		const dock = await chiefDock(host, peer.url.origin);
 		try {
@@ -23,9 +23,9 @@ for (const host of ["omp", "pi"] as const) {
 				report = { id: "original/report-15", from: "actual-executor", delegationId: "stable-delegation", at: 1700000000000,
 					body: { background: "Invoice capability request", execution, result, summary,
 						deliverables: ["E:/owned/draft.md"], pendingDecisions: ["Review the limitations"] } };
-				expect(await dock.call({ id: "original/report-15" }, "chief_read_report")).toMatchObject({ isError: false, details: { body: report } });
+				expect(await dock.call({ id: "original/report-15" }, "chief_read_report")).toMatchObject({ isError: false, details: { body: { report, received: true, process: false } } });
 			}
-			expect(calls).toEqual(Array.from({ length: 4 }, () => ({ method: "GET", path: "/api/chief/reports/original%2Freport-15" })));
+			expect(calls).toEqual(Array.from({ length: 4 }, () => ({ method: "POST", path: "/api/chief/reports/original%2Freport-15/view", body: { sessionId: expect.any(String) } })));
 			const history = await dock.history();
 			expect(history).toContain("chief-chat:tools");
 			expect(history).toContain("询问是否满足要求");
