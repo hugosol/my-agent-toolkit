@@ -59,6 +59,7 @@ for (const host of ["omp", "pi"] as const) test(`${host} native dual roles keep 
 		const identify = (sessionId: string, cwd: string) => writeFileSync(join(backend.root.path, "behavior.json"), JSON.stringify({ native_session: { source: `herdr:${host}`, agent: host, kind: "id", value: sessionId }, native_cwd: cwd }));
 		identify("outer-manager", backend.root.path);
 		const outer = await backend.post("/api/scheduler/maps/outer.json/runs", { managerTaskId: tasks.manager, zone: "test/outer", userInput: "Nested native mechanism" });
+		await backend.post("/api/workflow/manager/prepare_inputs", { sessionId: "outer-manager", fileInputs: [], confirmed: true, reason: "已审阅外层文本输入，无文件要求" });
 		identify(nativeId, dock.root.workDir);
 		const dispatched = await backend.post("/api/workflow/manager/dispatch", { sessionId: "outer-manager", nodes: ["call"] });
 		const execution = dispatched.snapshot.nodes.call.execution;
@@ -72,6 +73,12 @@ for (const host of ["omp", "pi"] as const) test(`${host} native dual roles keep 
 		expect((await detail(outer.id)).reports).toEqual([]);
 		await call("report", { body: "Progress only", can_complete: false });
 		expect(await parentAction(409)).toMatchObject({ code: "report-not-completable" });
+		expect(status.body.snapshot.inputsReady).toBe(false);
+		const prepared = await call("run", { action: "prepare_inputs", fileInputs: [], confirmed: true, reason: "已审阅内部文本输入，无文件要求" });
+		expect(prepared.body).toMatchObject({ snapshot: { id: childId, inputsReady: true } });
+		expect(prepared.body.changed === true || prepared.body.stateCommitted === true).toBe(true);
+		expect(prepared.body.error).toBeUndefined();
+		expect(prepared.body.historyError).toBeUndefined();
 		identify("internal-worker", dock.root.workDir);
 		const internal = await call("run", { action: "dispatch", nodes: ["inside"] });
 		expect(internal.body.snapshot.id).toBe(childId);

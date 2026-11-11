@@ -30,6 +30,7 @@ test("P15/P16 actual node report is backend-attributed, saved and retrievable de
 		const managerId = "interop-manager-not-an-owner-key";
 		backend.behavior(managerId, backend.root.path);
 		const started = await backend.post("/api/scheduler/maps/work.json/runs", { managerTaskId: tasks.manager, zone: "test/manager", userInput: "Independent backend report acceptance" });
+		await backend.post("/api/workflow/manager/prepare_inputs", { sessionId: managerId, fileInputs: [], confirmed: true, reason: "已审阅本场景文本输入，无文件要求" });
 		backend.behavior(nativeId, dock.root.workDir);
 		const dispatched = await backend.post("/api/workflow/manager/dispatch", { sessionId: managerId, nodes: ["A"] });
 		expect(dispatched.results[0].status).toBe("running");

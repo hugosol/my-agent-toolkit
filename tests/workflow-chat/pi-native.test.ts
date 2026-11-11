@@ -180,7 +180,12 @@ for (const role of ["manager", "node"] as const) {
 			expect(history).toContain('"role":"toolResult"');
 			expect(history).toContain(prompt);
 			for (const params of [{ ...valid, sessionId: "forged" }, role === "manager" ? { action: "status", reason: "inapplicable" } : { body: 123, can_complete: true },
-				...(role === "manager" ? [{ action: "retry", nodeId: "n", confirmed: "false", reason: "r" }, { action: "dispatch", nodes: [123] }] : [{ body: "old shape" }, { body: "wrong boolean", can_complete: "false" },
+				...(role === "manager" ? [{ action: "retry", nodeId: "n", confirmed: "false", reason: "r" }, { action: "dispatch", nodes: [123] },
+					{ action: "prepare_inputs", fileInputs: [], confirmed: "false", reason: "r" },
+					{ action: "prepare_inputs", fileInputs: [], confirmed: false },
+					{ action: "prepare_inputs", fileInputs: [{ id: "source", path: 123 }], confirmed: false, reason: "r" },
+					{ action: "prepare_inputs", fileInputs: [{ id: "source", path: "E:/source.txt", extra: true }], confirmed: true, reason: "r" },
+					{ action: "prepare_inputs", fileInputs: [], confirmed: true, reason: "r", sessionId: "forged" }] : [{ body: "old shape" }, { body: "wrong boolean", can_complete: "false" },
 					{ ...valid, outputs: null }, { ...valid, outputs: [{ id: "draft", path: "E:/a.txt" }, { id: "draft", path: "E:/b.txt" }] }, { ...valid, outputs: "E:/path.txt" }, { ...valid, outputs: { draft: 123 } }])]) {
 				const invalid = await run.call(name, params);
 				expect(invalid.isError).toBe(true);
@@ -192,6 +197,16 @@ for (const role of ["manager", "node"] as const) {
 				run.answer({ saved: false, error: { kind: "save", message: "disk failed" } });
 				expect((await run.call(name, valid)).isError).toBe(true);
 			} else {
+				for (const preparation of [
+					{ fileInputs: [{ id: "source", path: "E:/source.txt" }], confirmed: false, reason: "仍需补充范围" },
+					{ fileInputs: [], confirmed: true, reason: "已审阅文本，无文件要求" },
+				]) {
+					const original = { stateCommitted: true, snapshot: { inputsReady: preparation.confirmed }, historyError: "retained history warning" };
+					run.answer(original);
+					const prepared = await run.call("run", { action: "prepare_inputs", ...preparation });
+					expect(prepared.result.details).toEqual({ httpStatus: 200, body: original });
+					expect(run.calls[run.calls.length - 1]).toMatchObject({ path: "/api/workflow/manager/prepare_inputs", body: { sessionId: state.data.sessionId, ...preparation } });
+				}
 				for (const params of [{ action: "pause" }, { action: "resume" }, { action: "finish" },
 					{ action: "dispatch", nodes: ["n"] }, { action: "complete", nodeId: "n", reason: "done" },
 					{ action: "fail", nodeId: "n", reason: "failed" }, { action: "recover", nodeId: "n", confirmed: true, reason: "verified" },

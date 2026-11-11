@@ -34,6 +34,7 @@ for (const host of ["omp", "pi"] as const) test(`${host}: P7/P8/P26 report rejec
 		const manager = "contract-dock-manager";
 		backend.behavior(manager, backend.root.path);
 		const started = await backend.post("/api/scheduler/maps/contract.json/runs", { managerTaskId: tasks.manager, zone: "test/manager", userInput: "Contract dock" });
+		await backend.post("/api/workflow/manager/prepare_inputs", { sessionId: manager, fileInputs: [], confirmed: true, reason: "已审阅本场景文本输入，无文件要求" });
 		writeFileSync(join(backend.root.path, "behavior.json"), JSON.stringify({ native_session: { source: `herdr:${host}`, agent: host, kind: "id", value: nativeId }, native_cwd: dock.root.workDir }));
 		const dispatched = await backend.post("/api/workflow/manager/dispatch", { sessionId: manager, nodes: ["A"] });
 		const execution = dispatched.snapshot.nodes.A.execution;

@@ -8,20 +8,23 @@ export class ManagerActions {
 
 	async run(sessionId: string, params: unknown, signal?: AbortSignal): Promise<ActionResult> {
 		const input = params as Record<string, unknown> | null;
+		const prepare = input?.action === "prepare_inputs";
 		const reconcile = input?.action === "reconcile_dispatch";
 		const confirmation = input?.action === "recover" || input?.action === "retry";
 		const nodeAction = input?.action === "complete" || input?.action === "fail" || reconcile || confirmation;
 		const dispatch = input?.action === "dispatch";
-		const allowed = dispatch ? ["action", "nodes"] : reconcile ? ["action", "nodeId", "finding", "reason"] : confirmation ? ["action", "nodeId", "confirmed", "reason"] : nodeAction ? ["action", "nodeId", "reason"] : ["action"];
-		if (!input || typeof input !== "object" || (!dispatch && !nodeAction && input.action !== "status" && input.action !== "pause" && input.action !== "resume" && input.action !== "finish") ||
+		const allowed = prepare ? ["action", "fileInputs", "confirmed", "reason"] : dispatch ? ["action", "nodes"] : reconcile ? ["action", "nodeId", "finding", "reason"] : confirmation ? ["action", "nodeId", "confirmed", "reason"] : nodeAction ? ["action", "nodeId", "reason"] : ["action"];
+		if (!input || typeof input !== "object" || Array.isArray(input) || (!prepare && !dispatch && !nodeAction && input.action !== "status" && input.action !== "pause" && input.action !== "resume" && input.action !== "finish") ||
 			Object.keys(input).some(key => !allowed.includes(key)) ||
+			(prepare && (typeof input.confirmed !== "boolean" || typeof input.reason !== "string" || !Array.isArray(input.fileInputs) || input.fileInputs.some(file =>
+				!file || typeof file !== "object" || Array.isArray(file) || Object.keys(file).some(key => key !== "id" && key !== "path") || typeof file.id !== "string" || typeof file.path !== "string"))) ||
 			(confirmation && typeof input.confirmed !== "boolean") ||
 			(reconcile && input.finding !== "uncertain" && input.finding !== "not_created" && input.finding !== "created") ||
 			(dispatch && (!Array.isArray(input.nodes) || input.nodes.some(node => typeof node !== "string"))) ||
 			(nodeAction && (typeof input.nodeId !== "string" || typeof input.reason !== "string"))) {
 			return { body: null, message: JSON.stringify({ error: { kind: "parameters", message: "run 参数不符合所选 action；不接受身份或不适用字段。" } }), isError: true };
 		}
-		const body = dispatch ? { nodes: input.nodes } : reconcile ? { nodeId: input.nodeId, finding: input.finding, reason: input.reason } : confirmation ? { nodeId: input.nodeId, confirmed: input.confirmed, reason: input.reason } : nodeAction ? { nodeId: input.nodeId, reason: input.reason } : {};
+		const body = prepare ? { fileInputs: input.fileInputs, confirmed: input.confirmed, reason: input.reason } : dispatch ? { nodes: input.nodes } : reconcile ? { nodeId: input.nodeId, finding: input.finding, reason: input.reason } : confirmation ? { nodeId: input.nodeId, confirmed: input.confirmed, reason: input.reason } : nodeAction ? { nodeId: input.nodeId, reason: input.reason } : {};
 		return this.requests.post(sessionId, "/api/workflow/manager/" + input.action, body, signal);
 	}
 

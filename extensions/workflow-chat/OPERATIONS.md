@@ -160,6 +160,7 @@ bun test tests/harness-dock/node-report-contract.test.ts
 
 | 现场 | 维护操作与核对 |
 | --- | --- |
+| inputsReady=false 或历史缺字段 | 读取 Map input_requirements 的非文件总体要求与各项 input_files[].description，核对 ID/required，审阅已有文本/输入文件，只问缺项；经授权写入命名文件。prepare_inputs 完整替换 fileInputs，false 保存待补齐绑定，true 记录非空语义审阅依据并要求全部必需文件可读；检查错误/historyError、changed 或 stateCommitted 及就绪快照后才 dispatch/retry；普通成功不要求出现 stateCommitted。无文件和嵌套 Run 同样准备，不增加输出验收或执行后编辑锁。 |
 | 无关联、错误角色、歧义或入口缺失 | 对照固定 Task 类型、绝对路径、后端派发现场及原生 Session 关联。保留后端拒绝，不用名称/cwd/Owner key 猜身份，不补建连接。 |
 | 派发失败且可能已创建 Chat | 检查 failure.stage、effects 和原 agent；显式 reconcile_dispatch，按人工核实选择 uncertain/not_created/created。不能用 retry 跳过核实，不能将错误当成所有目标都未执行。 |
 | 执行 failed，已修复且原 Chat 可继续 | 显式 recover 并提供 confirmed=true 与真实依据；核对执行 ID/Task/zone/Chat 不变。它只恢复跟踪，不启动、Resume 或补发输入。paused 下也可 recover。 |

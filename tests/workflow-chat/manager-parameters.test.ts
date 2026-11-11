@@ -16,6 +16,8 @@ test("P10 basic actions send only applicable literal fields and reject identity 
 		const sessionId = await dock.nativeId();
 		const examples = [
 			{ input: { action: "status" }, wire: { sessionId } },
+			{ input: { action: "prepare_inputs", fileInputs: [{ id: "source", path: "E:/source.txt" }], confirmed: false, reason: "待补齐范围" }, wire: { sessionId, fileInputs: [{ id: "source", path: "E:/source.txt" }], confirmed: false, reason: "待补齐范围" } },
+			{ input: { action: "prepare_inputs", fileInputs: [], confirmed: true, reason: "已审阅全部文本输入，无文件要求" }, wire: { sessionId, fileInputs: [], confirmed: true, reason: "已审阅全部文本输入，无文件要求" } },
 			{ input: { action: "complete", nodeId: "A", reason: "E:/alpha.txt 已可交接" }, wire: { sessionId, nodeId: "A", reason: "E:/alpha.txt 已可交接" } },
 			{ input: { action: "fail", nodeId: "B", reason: "已核实缺少源文件" }, wire: { sessionId, nodeId: "B", reason: "已核实缺少源文件" } },
 			{ input: { action: "pause" }, wire: { sessionId } },
@@ -26,7 +28,7 @@ test("P10 basic actions send only applicable literal fields and reject identity 
 			expect(await dock.call(input)).toEqual(response);
 			expect(calls[calls.length - 1]).toEqual({ path: `/api/workflow/manager/${input.action}`, body: wire });
 			const before = calls.length;
-			for (const extra of [{ sessionId: "forged-native" }, { runId: "forged-run" }, { executionId: "forged-execution" }, { confirmed: true }, { nodes: ["C"] }, { body: "not applicable" }]) {
+			for (const extra of [{ sessionId: "forged-native" }, { runId: "forged-run" }, { executionId: "forged-execution" }, ...(input.action === "prepare_inputs" ? [] : [{ confirmed: true }]), { nodes: ["C"] }, { body: "not applicable" }]) {
 				const text = await dock.call({ ...input, ...extra }, true);
 				expect(calls).toHaveLength(before);
 				expect({ input, extra, text }).toMatchObject({ text: expect.stringMatching(/Validation failed|parameters|不接受/) });
@@ -36,9 +38,14 @@ test("P10 basic actions send only applicable literal fields and reject identity 
 				expect(calls).toHaveLength(before);
 			}
 		}
-		for (const input of [{ action: "complete", nodeId: "A" }, { action: "fail", reason: "missing target" }]) {
+		for (const input of [{ action: "complete", nodeId: "A" }, { action: "fail", reason: "missing target" },
+			{ action: "prepare_inputs", fileInputs: [], reason: "missing confirmation" },
+			{ action: "prepare_inputs", fileInputs: [], confirmed: "false", reason: "wrong boolean" },
+			{ action: "prepare_inputs", fileInputs: [{ id: "source", path: "E:/source.txt", extra: true }], confirmed: true, reason: "nested extra" },
+			{ action: "prepare_inputs", fileInputs: [{ id: "source", path: 123 }], confirmed: false, reason: "wrong path type" },
+		]) {
 			expect(await dock.call(input, true)).toMatch(/Validation failed|parameters|不接受/);
 		}
-		expect(calls).toHaveLength(6);
+		expect(calls).toHaveLength(examples.length);
 	} finally { await dock.close(); server.stop(true); }
 }, 300_000);

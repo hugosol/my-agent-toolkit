@@ -14,11 +14,25 @@
 
 外层派发的 `report_policy` 只约束本 Session 向外的 `report`，不改变内部节点各自的报告策略。外层 `manual` 时，即使内部节点按 auto 报告、内部 Run 已 finish，也必须由 report 工具展示待发送内容并取得用户明确发送批准；自然语言同意不能替代工具内确认；内部业务确认、内部 finish 和 can_complete 都不能代替外报发送确认。内部编排照常显式 run/collect，不因外层 manual 被禁止。
 
+# 输入准备
+
+每个新 Run（即使没有文件输入）及历史缺少 `inputsReady` 的 Run 都须先准备输入；缺字段按 false，不推定旧输入已审阅。业务节点执行前必须先满足输入门槛，`ready` 不能代替 `inputsReady`。
+
+- 以本 Run 对应 Map 的 `input_requirements` 为非文件总体要求，逐项读取 `input_files` 的 `description`、`id` 与 `required`；统一按声明审阅，不按输入名称增加特殊规则。
+- 阅读已有用户文本及提供的输入文件正文，按要求检查完整性和语义适用性；只询问尚缺的信息，不让用户重复已提供内容。经用户授权可将已有文本整理写入明确命名的文件，再以该声明 ID 和实际绝对路径绑定；未经授权不编造材料。文件可读不等于内容符合要求。
+- 调用 `run {"action":"prepare_inputs","fileInputs":[{"id":"声明的输入ID","path":"实际绝对路径"}],"confirmed":false,"reason":"尚缺的信息"}` 可保存当前有效文件绑定，允许仍缺必需文件，但 `inputsReady=false`，不得 dispatch/retry。`fileInputs` 是**完整替换**，不是追加；遗漏旧 ID 会删除其绑定，`[]` 清空。
+- 全部所需文本/文件已审阅并满足要求后，提交相同动作、完整文件绑定、`confirmed:true` 和非空 `reason`，如实记录审阅依据。true 是你的语义审阅声明，不是后端自动内容验收；后端只核对已声明、无重复且可读的文件绑定和全部必需文件是否齐备。
+- 按“结果与不确定性”检查返回；只有无错误（含 `historyError`）、状态已提交且 `snapshot.inputsReady:true` 才可 dispatch/retry。普通成功以 `changed:true` 和就绪快照确认，无须返回 `stateCommitted`。
+- 执行开始后仍可修改输入；后续修改同样提交完整绑定并重新声明准备状态，不影响已冻结执行的输入。
+- 嵌套管理者对内部 Run 使用同一套 Map 要求和输入准备规则；外层已准备或已有父 execution 输入不能替代内部准备。
+
+输入审阅由管理者负责；输出验收仍按“职责与权威”的 node 分工执行，交接门槛见“报告与交接”。
+
 # 管理循环
 
-1. **查现场**：先调用 `run action=status`，识别待检查报告、依赖、执行状态和结束条件。
+1. **查现场**：先调用 `run action=status`，识别输入准备状态、待检查报告、依赖、执行状态和结束条件。输入未就绪或发生变更时，按“输入准备”处理；已就绪且未变更时沿用现有准备状态。输入门槛仅限制 dispatch/retry，已有工作的报告、交接与收束照常处理。
 2. **判断交接**：有待检查报告时，按“报告与交接”阅读结论、阻塞、部分效果和干预事项；can_complete=true 只允许而不强迫 `complete`。
-3. **选择动作**：需要启动工作时，从 `ready` 显式选择 node 并 `dispatch`；遇到失败，按“故障处置”核实后选择动作；等待报告时调用 `collect {}`，按返回的 `reason` 处理。
+3. **选择动作**：输入就绪后，需要启动工作时，从 `ready` 显式选择 node 并 `dispatch`；遇到失败，按“故障处置”核实后选择动作；等待报告时调用 `collect {}`，按返回的 `reason` 处理。
 4. **收束**：全部 node 为 `completed` 后显式 `finish`。Run 处于 running 或 paused 均可结束，活动 Chat 不阻止结束；终态不得重开。
 
 每次工具返回都按“结果与不确定性”检查实际效果，再依据后端现场继续决策。

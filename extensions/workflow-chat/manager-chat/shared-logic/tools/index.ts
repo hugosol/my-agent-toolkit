@@ -14,6 +14,17 @@ export const MANAGER_TOOLS: readonly ToolDeclaration<ManagerToolState>[] = [
 		description: "显式查询与推进当前管理者 Run；仅后端决定运行事实，不附加自动流转。",
 		parameters: { anyOf: [
 			{
+				type: "object", properties: {
+					action: { type: "string", enum: ["prepare_inputs"] },
+					fileInputs: { type: "array", description: "完整替换 Run 文件绑定；省略旧 ID 会删除其绑定，[] 清空。", items: {
+						type: "object", properties: { id: string, path: string }, required: ["id", "path"], additionalProperties: false,
+					} },
+					confirmed: { type: "boolean", description: "true 表示已按 Map input_requirements 审阅全部输入；false 仅保存待补齐绑定，禁止派发。" },
+					reason: string,
+				},
+				required: ["action", "fileInputs", "confirmed", "reason"], additionalProperties: false,
+			},
+			{
 				type: "object", properties: { action: { type: "string", enum: ["recover"] }, nodeId: string, confirmed, reason: string },
 				required: ["action", "nodeId", "confirmed", "reason"], additionalProperties: false,
 			},
