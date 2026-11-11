@@ -4,7 +4,7 @@
     "workflow-chat": {
       "schemaVersion": 1,
       "scope": "workflow-chat",
-      "startedAt": "2026-11-11T18:09:21.039Z",
+      "startedAt": "2026-11-11T19:59:11.596Z",
       "cli": {
         "command": [
           "D:/Users/hugos/AppData/Local/nvm/v22.19.0/node.exe",
@@ -14,43 +14,12 @@
         "source": "node script"
       },
       "source": {
-        "repoRoot": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-68GN0k",
-        "head": "6d61283b59eff1cfb64e6efd5ea7f73558086985",
-        "status": [
-          " M extensions/workflow-chat/README.md",
-          " M extensions/workflow-chat/chief-chat/shared-logic/prompts/init.md",
-          " M extensions/workflow-chat/chief-chat/shared-logic/tools/index.ts",
-          " M extensions/workflow-chat/config.yaml",
-          " M tests/harness-dock/native-report-confirmation.test.ts",
-          " M tests/harness-dock/node-report-contract.test.ts",
-          " D tests/workflow-chat/support/headless-report.ts",
-          " M tests/workflow-chat/support/prompt-dock.ts",
-          " M tests/workflow-chat/support/role-contract-dock.ts",
-          "?? extensions/workflow-chat/chief-chat/shared-logic/delegation.ts",
-          "?? tests/harness-dock/chief-delegation.test.ts",
-          "?? tests/workflow-chat/chief-delegation.test.ts",
-          "?? tests/workflow-chat/support/headless-tool.ts"
-        ],
-        "diffSha256": "e5db60041ab365773dc8dd6f8c4e05ce0530c6916725af88c1eedbb084d1674c",
-        "untrackedFiles": [
-          {
-            "path": "extensions/workflow-chat/chief-chat/shared-logic/delegation.ts",
-            "sha256": "ba7b339cd1048a2e2a946ccf815cefd92fd6865d35ac3ee618c4bfa7fb0eb336"
-          },
-          {
-            "path": "tests/harness-dock/chief-delegation.test.ts",
-            "sha256": "cf7ec43e020841d0717ebb2005e89eedb94806abc2b01af6b2137ec6acb6e6b8"
-          },
-          {
-            "path": "tests/workflow-chat/chief-delegation.test.ts",
-            "sha256": "3f94d066f8b2acdd28734f98e0df8be850740aa3f7062dddc9ba40a236f3d19d"
-          },
-          {
-            "path": "tests/workflow-chat/support/headless-tool.ts",
-            "sha256": "d20e6210c44b165e889e85101a1a191cede63e5aa444d65c504c8984610dfd67"
-          }
-        ],
-        "sha256": "53cb199f798f0306fd50a79cac03c189d6a1fa4989b6c278bca33153f1c21d0d"
+        "repoRoot": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-2c0yO5",
+        "head": "81133bee2085822e0fb431d73193d356bdd685a7",
+        "status": [],
+        "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "untrackedFiles": [],
+        "sha256": "673c06e7646aedc41f7c08e8085e4771b7f2674f0129e171c0ab93b1f3b13cc3"
       },
       "lockfiles": [
         {
@@ -87,45 +56,14 @@
         "Pi tool AbortSignal releases transport, switch preserves auto startup, and shutdown releases active collect"
       ],
       "complete": true,
-      "finishedAt": "2026-11-11T18:09:30.138Z",
+      "finishedAt": "2026-11-11T19:59:19.931Z",
       "finishedSource": {
-        "repoRoot": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-68GN0k",
-        "head": "6d61283b59eff1cfb64e6efd5ea7f73558086985",
-        "status": [
-          " M extensions/workflow-chat/README.md",
-          " M extensions/workflow-chat/chief-chat/shared-logic/prompts/init.md",
-          " M extensions/workflow-chat/chief-chat/shared-logic/tools/index.ts",
-          " M extensions/workflow-chat/config.yaml",
-          " M tests/harness-dock/native-report-confirmation.test.ts",
-          " M tests/harness-dock/node-report-contract.test.ts",
-          " D tests/workflow-chat/support/headless-report.ts",
-          " M tests/workflow-chat/support/prompt-dock.ts",
-          " M tests/workflow-chat/support/role-contract-dock.ts",
-          "?? extensions/workflow-chat/chief-chat/shared-logic/delegation.ts",
-          "?? tests/harness-dock/chief-delegation.test.ts",
-          "?? tests/workflow-chat/chief-delegation.test.ts",
-          "?? tests/workflow-chat/support/headless-tool.ts"
-        ],
-        "diffSha256": "e5db60041ab365773dc8dd6f8c4e05ce0530c6916725af88c1eedbb084d1674c",
-        "untrackedFiles": [
-          {
-            "path": "extensions/workflow-chat/chief-chat/shared-logic/delegation.ts",
-            "sha256": "ba7b339cd1048a2e2a946ccf815cefd92fd6865d35ac3ee618c4bfa7fb0eb336"
-          },
-          {
-            "path": "tests/harness-dock/chief-delegation.test.ts",
-            "sha256": "cf7ec43e020841d0717ebb2005e89eedb94806abc2b01af6b2137ec6acb6e6b8"
-          },
-          {
-            "path": "tests/workflow-chat/chief-delegation.test.ts",
-            "sha256": "3f94d066f8b2acdd28734f98e0df8be850740aa3f7062dddc9ba40a236f3d19d"
-          },
-          {
-            "path": "tests/workflow-chat/support/headless-tool.ts",
-            "sha256": "d20e6210c44b165e889e85101a1a191cede63e5aa444d65c504c8984610dfd67"
-          }
-        ],
-        "sha256": "53cb199f798f0306fd50a79cac03c189d6a1fa4989b6c278bca33153f1c21d0d"
+        "repoRoot": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-2c0yO5",
+        "head": "81133bee2085822e0fb431d73193d356bdd685a7",
+        "status": [],
+        "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "untrackedFiles": [],
+        "sha256": "673c06e7646aedc41f7c08e8085e4771b7f2674f0129e171c0ab93b1f3b13cc3"
       },
       "finishedLockfiles": [
         {
@@ -134,7 +72,7 @@
           "sha256": "28ce4c0d7b7d1d45a44e335a6647b0959c333875af42ca87ba63c87bcf4c2168"
         }
       ],
-      "acceptedAt": "2026-11-11T18:09:30.138Z"
+      "acceptedAt": "2026-11-11T19:59:19.931Z"
     },
     "close-out": {
       "schemaVersion": 1,
