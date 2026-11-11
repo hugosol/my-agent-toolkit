@@ -1,4 +1,4 @@
-import { cpSync, writeFileSync } from "node:fs";
+import { cpSync, mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { REPO_ROOT } from "../../harness-dock/baseline";
 import { buildSessionEnv } from "../../harness-dock/env";
@@ -55,6 +55,8 @@ export async function headlessTool(host: "omp" | "pi", endpoint: string, role: "
 		try {
 			const [stdout, stderr, exit] = await Promise.all([new Response(child.stdout).text(), new Response(child.stderr).text(), child.exited]);
 			console.log(JSON.stringify({ host, headlessExit: exit, stderr }));
+			writeFileSync(join(run.root.captureDir, "headless-native.json"), JSON.stringify({ stdout, stderr, exit,
+				scope: "Real installed no-UI host; controlled protocol provider, not real-model behavior" }));
 			if (exit !== 0) throw new Error(`Headless Pi exited ${exit}: ${stderr}\n${stdout}`);
 			const frames: unknown[] = stdout.trim().split(/\r?\n/).map(line => JSON.parse(line));
 			const end = frames.reverse().find(frame => frame && typeof frame === "object" && "type" in frame && frame.type === "tool_execution_end");
@@ -64,5 +66,15 @@ export async function headlessTool(host: "omp" | "pi", endpoint: string, role: "
 			if (child.exitCode === null) child.kill();
 			await child.exited;
 		}
-	} finally { run.capture.stop(); run.root.dispose(); }
+	} finally {
+		try {
+			const evidence = process.env.WORKFLOW_PROMPT_EVIDENCE_DIR;
+			if (evidence) {
+				const destination = join(evidence, `headless-${role}-pi-${run.root.path.split(/[\\/]/).pop()}`);
+				mkdirSync(destination, { recursive: true });
+				cpSync(run.root.captureDir, join(destination, "captures"), { recursive: true });
+				cpSync(run.root.sessionDir, join(destination, "sessions"), { recursive: true });
+			}
+		} finally { run.capture.stop(); run.root.dispose(); }
+	}
 }

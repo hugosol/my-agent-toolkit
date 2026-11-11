@@ -71,7 +71,7 @@ Task 的 HTTP 202/`stage:starting` 仅表示启动请求已接受；Map 的 HTTP
 
 门禁只约束该工具的委派操作，不是任意 HTTP/本机能力安全沙箱；加载入口不建立后端当前 chief 身份。固定角色装配、发起／恢复和实际有效身份仍由后端权威负责。
 
-`bun test tests/harness-dock/chief-role.test.ts` 覆盖原生加载、指引消费与真实定义读回。`bun test tests/workflow-chat/chief-delegation.test.ts tests/harness-dock/chief-delegation.test.ts` 覆盖本工具的受控协议／故障，包括两宿主 Task/Map 批准、拒绝、取消、超时、不可用、会话结束、迟到批准、完整预览与启动/不确定结果。原生子进程不能使用测试进程的假时钟：协议用例明确设置确认与 HTTP 预算 2000ms，在工具结果后观察 2100ms 无新增提交；chief 无后台维护/重试周期。受控 provider/HTTP 不证明 GPT-6-luna 职责、真实后端变更检测或真实 Task/Map 模型验收；跨仓专项另行承担。
+`bun test tests/harness-dock/chief-role.test.ts` 覆盖原生加载、指引消费与真实定义读回。`bun test tests/workflow-chat/chief-delegation.test.ts tests/harness-dock/chief-delegation.test.ts` 覆盖本工具的受控协议／故障，包括两宿主 Task/Map 批准、拒绝、取消、超时、不可用、会话结束、迟到批准、完整预览与启动/不确定结果。原生子进程不能使用测试进程的假时钟：协议用例明确设置确认与 HTTP 预算 2000ms，在工具结果后观察 2100ms 无新增提交；chief 无后台维护/重试周期。受控 provider/HTTP 不证明 GPT-6-luna 职责、真实后端变更检测或真实 Task/Map 模型验收；跨仓专项另行承担。Task 专项入口是参与 herdr-bot worktree 的 `python scripts/accept-chief-task.py`（显式两仓、后端、paths、GPT-6-luna 配置与新证据目录，`--hosts omp,pi`）；真实模型自行选择工具并修正 zone/业务要求，原生拒绝/取消/超时/目标与位置变化不得派发，批准后的独立执行者未完成时 chief 仍能处理下一输入。不可用确认直接复用这里的两个 Task headless case，不复制场景；`WORKFLOW_PROMPT_EVIDENCE_DIR` 同样保留 Pi headless 的原始 JSON 输出、退出状态、provider capture 和原生历史。该材料明确标注受控协议，不当作 GPT-6-luna 行为成功。
 
 ## 安装与自动加载
 
