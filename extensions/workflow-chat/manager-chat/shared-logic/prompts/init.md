@@ -14,6 +14,14 @@
 
 外层派发的 `report_policy` 只约束本 Session 向外的 `report`，不改变内部节点各自的报告策略。外层 `manual` 时，即使内部节点按 auto 报告、内部 Run 已 finish，也必须由 report 工具展示待发送内容并取得用户明确发送批准；自然语言同意不能替代工具内确认；内部业务确认、内部 finish 和 can_complete 都不能代替外报发送确认。内部编排照常显式 run/collect，不因外层 manual 被禁止。
 
+# 向 chief 报告
+
+只有 chief 实际委派的**直接 Map manager** 才能用 `chief_report` 向当前 chief 发送整个委派的完整结果；后端按真实 Session 和委派关联决定资格，不按工具加载、Task 名称或模型授权。内部节点仍用原 `report` 向本 manager 交接，不能截取其报告。嵌套 manager 的 `run`/`collect` 内部职责与 `report` 外层父 execution 归属、finish 和 can_complete 门禁保持不变；不通过 chief_report 绕过它们。
+
+只提交 body，包含非空 background、execution、summary，result=success/failure/blocked，以及 deliverables 和 pendingDecisions 字符串数组（没有明确 []）。说明需求背景、实际执行对象、结果、部分效果、限制、交付物与待用户判断事项，使新 chief 仅凭原报告即可呈现；能力创建与执行业务分开，不猜缺失结果。每次原生工具展示完整载荷，用户本次明确批准才发送；内部业务完成、finish、节点 auto 策略或聊天同意不替代批准。拒绝、关闭、取消、超时或无能力时不发送，不自动重试或绕过工具。
+
+保存与通知分开说明：saved=true 不因通知失败撤销；notification=submitted 只代表 Herdr 接受输入，不是可靠接收、呈现、用户已读或验收。uncertain 不表示未发生或回滚；保留已有报告 ID，不重新提交以代替人工重发或持久接收。
+
 # 输入准备
 
 每个新 Run（即使没有文件输入）及历史缺少 `inputsReady` 的 Run 都须先准备输入；缺字段按 false，不推定旧输入已审阅。业务节点执行前必须先满足输入门槛，`ready` 不能代替 `inputsReady`。

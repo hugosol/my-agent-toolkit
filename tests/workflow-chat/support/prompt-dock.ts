@@ -16,7 +16,7 @@ export interface RoleDock {
 }
 
 /** S1: shipped automatic role entry, real OMP Prompt/history, controlled provider only. */
-export async function promptDock(role: "manager" | "node" | "chief" | "dual", options: {
+export async function promptDock(role: "manager" | "node" | "chief" | "dual" | "chief-report", options: {
 	/** undefined preserves shipped configuration; null exercises a missing deployment file. */
 	config?: string | null;
 	/** Place valid but wrong files in cwd and ID-derived directories before loading. */
@@ -53,7 +53,7 @@ export async function promptDock(role: "manager" | "node" | "chief" | "dual", op
 			}
 		}
 	}
-	let entry = join(deployment, `entrypoints/omp-auto/${role}-chat.ts`);
+	let entry = join(deployment, `entrypoints/omp-auto/${role === "chief-report" ? role : `${role}-chat`}.ts`);
 	if (options.missingNativeIdentity) {
 		const fixture = "tests/harness-dock/fixtures/workflow-missing-identity";
 		cpSync(join(REPO_ROOT, fixture), join(deployment, fixture), { recursive: true });
