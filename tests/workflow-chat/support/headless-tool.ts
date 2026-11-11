@@ -6,8 +6,8 @@ import { resolvePiCli, startPiRun } from "../../harness-dock/pi-session";
 import { promptDock } from "./prompt-dock";
 
 /** Real no-UI host modes, not a replacement confirmation implementation. */
-export async function headlessTool(host: "omp" | "pi", endpoint: string, role: "node" | "chief", params: unknown): Promise<unknown> {
-	const name = role === "chief" ? "chief_delegate" : "report";
+export async function headlessTool(host: "omp" | "pi", endpoint: string, role: "node" | "chief" | "chief-report", params: unknown): Promise<unknown> {
+	const name = role === "chief" ? "chief_delegate" : role === "chief-report" ? "chief_report" : "report";
 	if (host === "omp") {
 		const dock = await promptDock(role, { headless: true, isolatedHome: true,
 			config: `endpoint: ${endpoint}\nrequestTimeoutMs: 2000\nreportConfirmationTimeoutMs: 2000\ncollectTimeoutMs: 3000\n` });
@@ -43,7 +43,7 @@ export async function headlessTool(host: "omp" | "pi", endpoint: string, role: "
 			`endpoint: ${endpoint}\nrequestTimeoutMs: 2000\nreportConfirmationTimeoutMs: 2000\ncollectTimeoutMs: 3000\n`);
 		// Pi's documented print/JSON mode has hasUI=false; RPC deliberately has real dialog UI.
 		const child = Bun.spawn([...run.cli.command, "--mode", "json", "--print", "--no-extensions", "--no-mcp",
-			"-e", join(deployment, `entrypoints/pi-auto/${role}-chat.ts`), "--model", run.selector,
+			"-e", join(deployment, `entrypoints/pi-auto/${role === "chief-report" ? role : `${role}-chat`}.ts`), "--model", run.selector,
 			"--session-dir", run.root.sessionDir, "Call report once, do not retry."], {
 			cwd: run.root.workDir, stdin: "ignore", stdout: "pipe", stderr: "pipe", timeout: 90000,
 			env: buildSessionEnv(process.env, { agentDir: run.root.agentDir, extra: {

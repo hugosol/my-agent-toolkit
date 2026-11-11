@@ -20,8 +20,9 @@ export interface RoleContractDock {
 }
 
 /** S1 only: real host/tool validation and HTTP persistence; scripted model, not role obedience. */
-export async function roleContractDock(host: "omp" | "pi", endpoint: string, confirmationTimeoutMs = 20000, role: "node" | "chief" = "node", requestTimeoutMs = 30000): Promise<RoleContractDock> {
-	const toolName = role === "chief" ? "chief_delegate" : "report";
+export async function roleContractDock(host: "omp" | "pi", endpoint: string, confirmationTimeoutMs = 20000,
+	role: "node" | "chief" | "manager" | "dual" | "chief-report" = "node", requestTimeoutMs = 30000,
+	toolName = role === "chief" ? "chief_delegate" : role === "chief-report" || role === "manager" ? "chief_report" : "report"): Promise<RoleContractDock> {
 	if (host === "omp") {
 		const dock = await promptDock(role, { isolatedHome: true, config: `endpoint: ${endpoint}\nrequestTimeoutMs: ${requestTimeoutMs}\nreportConfirmationTimeoutMs: ${confirmationTimeoutMs}\ncollectTimeoutMs: 5460000\n` });
 		let mark = 0;
@@ -64,7 +65,7 @@ export async function roleContractDock(host: "omp" | "pi", endpoint: string, con
 		writeFileSync(join(deployment, "extensions/workflow-chat/config.yaml"),
 			`endpoint: ${endpoint}\nrequestTimeoutMs: ${requestTimeoutMs}\nreportConfirmationTimeoutMs: ${confirmationTimeoutMs}\ncollectTimeoutMs: 5460000\n`);
 		session = await PiSession.start({ cli: run.cli, runRoot: run.root,
-			entrypoint: join(deployment, `entrypoints/pi-auto/${role}-chat.ts`), selector: run.selector,
+			entrypoint: (role === "dual" ? ["manager", "node"] : [role]).map(name => join(deployment, `entrypoints/pi-auto/${name === "chief-report" ? name : `${name}-chat`}.ts`)), selector: run.selector,
 			env: { HOME: run.root.path, USERPROFILE: run.root.path, APPDATA: run.root.path, LOCALAPPDATA: run.root.path,
 				XDG_CONFIG_HOME: run.root.path, XDG_DATA_HOME: run.root.path, XDG_STATE_HOME: run.root.path, XDG_CACHE_HOME: run.root.path } });
 		let mark = 0;

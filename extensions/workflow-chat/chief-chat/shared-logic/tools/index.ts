@@ -33,6 +33,20 @@ export const CHIEF_TOOLS: readonly ToolDeclaration<ChiefToolState>[] = [{
 		return workflowToolResult(await state.requests.get(delivery.sessionId, route, delivery.signal));
 	},
 }, {
+	name: "chief_read_report", label: "Read chief report",
+	description: "按原报告 ID 只读完整结果，供没有原派发上下文的新 chief 如实呈现。读取不声明可靠接收、呈现完成、已读或业务验收，不重发或启动业务。",
+	parameters: { type: "object", properties: {
+		id: { type: "string", description: "已保存的原报告 ID；不得填写接收者、Session 或归属。" },
+	}, required: ["id"], additionalProperties: false },
+	async execute(state, params, delivery) {
+		if (!params || typeof params !== "object" || Array.isArray(params)
+			|| Object.keys(params).some(key => key !== "id") || !("id" in params)
+			|| typeof params.id !== "string" || !params.id.trim()) {
+			return workflowToolResult({ isError: true, body: { code: "invalid-parameters", message: "只接受非空字符串 id。" } });
+		}
+		return workflowToolResult(await state.requests.get(delivery.sessionId, `/api/chief/reports/${encodeURIComponent(params.id)}`, delivery.signal));
+	},
+}, {
 	name: "chief_delegate", label: "Chief delegate",
 	description: "按 Bot 委派独立 Task Chat 或真实 Map Run。先解析完整目标/位置/输入供用户原生确认，仅批准本次预览后启动；不等待业务完成，不自动重试。聊天同意不是批准。",
 	parameters: { type: "object", properties: {
