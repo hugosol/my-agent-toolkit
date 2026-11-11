@@ -4,37 +4,89 @@
     "workflow-chat": {
       "schemaVersion": 1,
       "scope": "workflow-chat",
-      "startedAt": "2026-11-11T08:09:02.595Z",
+      "startedAt": "2026-11-11T16:11:56.547Z",
       "cli": {
         "command": [
-          "node",
-          "D:\\nvm4w\\nodejs\\node_modules\\@earendil-works\\pi-coding-agent\\dist\\bundle\\cli.js"
+          "D:/Users/hugos/AppData/Local/nvm/v22.19.0/node.exe",
+          "D:/nvm4w/nodejs/node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js"
         ],
-        "path": "D:\\nvm4w\\nodejs\\node_modules\\@earendil-works\\pi-coding-agent\\dist\\bundle\\cli.js",
-        "source": "the shim D:\\nvm4w\\nodejs\\pi.cmd (run through node: a shell shim cannot be spawned without a shell)"
+        "path": "D:/nvm4w/nodejs/node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js",
+        "source": "node script"
       },
       "source": {
-        "repoRoot": "E:\\Developer\\myhub\\my-agent-toolkit",
-        "head": "a9a823771e3c70351b433360f36a9a9ecd9d72b3",
+        "repoRoot": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-WHRv9S",
+        "head": "f6bc79b4627dac2279a1083c087020e89c69eac3",
         "status": [
-          " M extensions/workflow-chat/OPERATIONS.md",
           " M extensions/workflow-chat/README.md",
-          " M extensions/workflow-chat/manager-chat/shared-logic/actions.ts",
-          " M extensions/workflow-chat/manager-chat/shared-logic/prompts/init.md",
-          " M extensions/workflow-chat/manager-chat/shared-logic/tools/index.ts",
-          " M tests/harness-dock/nested-role-completion.test.ts",
-          " M tests/harness-dock/node-report-contract.test.ts",
-          " M tests/harness-dock/node-report.test.ts",
-          " M tests/harness-dock/role-identity-integration.test.ts",
-          " M tests/workflow-chat/manager-parameters.test.ts",
-          " M tests/workflow-chat/manager-shared-logic.test.ts",
-          " M tests/workflow-chat/pi-native.test.ts",
-          " M tests/workflow-chat/role-input-boundaries.test.ts",
-          " M tests/workflow-chat/support/manager-scenario.ts"
+          " M extensions/workflow-chat/common/requests.ts",
+          " M extensions/workflow-chat/node-chat/shared-logic/report.ts",
+          " M tests/harness-dock/pi-session.ts",
+          " M tests/harness-dock/role-stable-config.test.ts",
+          " M tests/harness-dock/session.ts",
+          " M tests/workflow-chat/manual-report-confirmation.test.ts",
+          " M tests/workflow-chat/node-shared-logic.test.ts",
+          " M tests/workflow-chat/support/prompt-dock.ts",
+          " M tests/workflow-chat/support/role-contract-dock.ts",
+          "?? .scratch/chief-bot/evidence/02-native-confirmation/artifact-identity.json",
+          "?? .scratch/chief-bot/evidence/02-native-confirmation/config-consumer-green.json",
+          "?? .scratch/chief-bot/evidence/02-native-confirmation/dock.json",
+          "?? .scratch/chief-bot/evidence/02-native-confirmation/native-focused-1.json",
+          "?? .scratch/chief-bot/evidence/02-native-confirmation/pre-native.json",
+          "?? .scratch/chief-bot/evidence/02-native-confirmation/typecheck-final.json",
+          "?? .scratch/chief-bot/evidence/02-native-confirmation/typecheck.json",
+          "?? .scratch/chief-bot/evidence/02-native-confirmation/workflow-consumers.json",
+          "?? extensions/workflow-chat/common/report-result.ts",
+          "?? tests/harness-dock/native-report-confirmation.test.ts",
+          "?? tests/workflow-chat/support/headless-report.ts"
         ],
-        "diffSha256": "c730afb00467e86e874806c267fc5e823259dc5f81b68b86c3a878632dce8e1f",
-        "untrackedFiles": [],
-        "sha256": "7d12217bcef23ef4b45a8dcd057056e9c9ba2e8f9afcffc1eb5e25dfb6c96b9a"
+        "diffSha256": "4b6af0324a6ca8f6cb7e4db354052ee3342dc5a7fb46c78bf22931b00abd6107",
+        "untrackedFiles": [
+          {
+            "path": ".scratch/chief-bot/evidence/02-native-confirmation/artifact-identity.json",
+            "sha256": "6e82ade538270edd1be2055c381dca81ce9cce7bcee56ea6d2e43a86cab8d4f5"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/02-native-confirmation/config-consumer-green.json",
+            "sha256": "80f7b892510c82d5baf1e86be276da1993a0cc60dbb7e5d2f29bbeac72839d12"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/02-native-confirmation/dock.json",
+            "sha256": "53838381fcd8f325140ff7bd91d728c0cb55b241e31383d4f9b16302e3c93442"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/02-native-confirmation/native-focused-1.json",
+            "sha256": "9be39ca83ca9724b155e333fe9bcbf7bc3b3a74d10fb1716d029ec5d9c2aefac"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/02-native-confirmation/pre-native.json",
+            "sha256": "bd0d384cf290cef0f9027d3c407fb3c76ea8638b40f16f57fc1617e0af53dda8"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/02-native-confirmation/typecheck-final.json",
+            "sha256": "ad483fde98bad5c9f4c615118388629a966f42e6d10edb366a1906d6a8498a42"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/02-native-confirmation/typecheck.json",
+            "sha256": "4d52b6fa597144cdf22767804cda3598196970809605a12975ea7b0536b49983"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/02-native-confirmation/workflow-consumers.json",
+            "sha256": "a3909f0e3b901860a4c1a1104153f822c2d8577d482ee03bee40014cdaa8edcd"
+          },
+          {
+            "path": "extensions/workflow-chat/common/report-result.ts",
+            "sha256": "8015fa0412b39c7e1ab39820d74802a511619a8c73b48c793c24302c21c6b569"
+          },
+          {
+            "path": "tests/harness-dock/native-report-confirmation.test.ts",
+            "sha256": "0e44214d083c21ebd2ae5a2fe9b67b4667dfe45b99db387f33849afbec88c7d4"
+          },
+          {
+            "path": "tests/workflow-chat/support/headless-report.ts",
+            "sha256": "6a138c4ae7b415a4fbe76b4e6fb7d9a1e0c7b0e928669c536f298319f7cdc86c"
+          }
+        ],
+        "sha256": "b91ef4b859f51197c75b7a275a6a506f66fad2a4d845e349cd9b25119967fec7"
       },
       "lockfiles": [
         {
@@ -50,12 +102,12 @@
           "bun": "1.4.4"
         },
         "cli": {
-          "execPath": "D:\\nvm4w\\nodejs\\node.exe",
-          "node": "24.18.0",
+          "execPath": "D:\\Users\\hugos\\AppData\\Local\\nvm\\v22.19.0\\node.exe",
+          "node": "22.19.0",
           "bun": null
         },
         "artifact": {
-          "path": "D:\\nvm4w\\nodejs\\node_modules\\@earendil-works\\pi-coding-agent\\dist\\bundle\\cli.js",
+          "path": "D:/nvm4w/nodejs/node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js",
           "bytes": 160,
           "sha256": "e79626f2dd6f94aa45d30f3fa63cd84319a6eefcd150b353cfaf274366926774"
         },
@@ -71,29 +123,81 @@
         "Pi tool AbortSignal releases transport, switch preserves auto startup, and shutdown releases active collect"
       ],
       "complete": true,
-      "finishedAt": "2026-11-11T08:09:10.962Z",
+      "finishedAt": "2026-11-11T16:12:06.075Z",
       "finishedSource": {
-        "repoRoot": "E:\\Developer\\myhub\\my-agent-toolkit",
-        "head": "a9a823771e3c70351b433360f36a9a9ecd9d72b3",
+        "repoRoot": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-WHRv9S",
+        "head": "f6bc79b4627dac2279a1083c087020e89c69eac3",
         "status": [
-          " M extensions/workflow-chat/OPERATIONS.md",
           " M extensions/workflow-chat/README.md",
-          " M extensions/workflow-chat/manager-chat/shared-logic/actions.ts",
-          " M extensions/workflow-chat/manager-chat/shared-logic/prompts/init.md",
-          " M extensions/workflow-chat/manager-chat/shared-logic/tools/index.ts",
-          " M tests/harness-dock/nested-role-completion.test.ts",
-          " M tests/harness-dock/node-report-contract.test.ts",
-          " M tests/harness-dock/node-report.test.ts",
-          " M tests/harness-dock/role-identity-integration.test.ts",
-          " M tests/workflow-chat/manager-parameters.test.ts",
-          " M tests/workflow-chat/manager-shared-logic.test.ts",
-          " M tests/workflow-chat/pi-native.test.ts",
-          " M tests/workflow-chat/role-input-boundaries.test.ts",
-          " M tests/workflow-chat/support/manager-scenario.ts"
+          " M extensions/workflow-chat/common/requests.ts",
+          " M extensions/workflow-chat/node-chat/shared-logic/report.ts",
+          " M tests/harness-dock/pi-session.ts",
+          " M tests/harness-dock/role-stable-config.test.ts",
+          " M tests/harness-dock/session.ts",
+          " M tests/workflow-chat/manual-report-confirmation.test.ts",
+          " M tests/workflow-chat/node-shared-logic.test.ts",
+          " M tests/workflow-chat/support/prompt-dock.ts",
+          " M tests/workflow-chat/support/role-contract-dock.ts",
+          "?? .scratch/chief-bot/evidence/02-native-confirmation/artifact-identity.json",
+          "?? .scratch/chief-bot/evidence/02-native-confirmation/config-consumer-green.json",
+          "?? .scratch/chief-bot/evidence/02-native-confirmation/dock.json",
+          "?? .scratch/chief-bot/evidence/02-native-confirmation/native-focused-1.json",
+          "?? .scratch/chief-bot/evidence/02-native-confirmation/pre-native.json",
+          "?? .scratch/chief-bot/evidence/02-native-confirmation/typecheck-final.json",
+          "?? .scratch/chief-bot/evidence/02-native-confirmation/typecheck.json",
+          "?? .scratch/chief-bot/evidence/02-native-confirmation/workflow-consumers.json",
+          "?? extensions/workflow-chat/common/report-result.ts",
+          "?? tests/harness-dock/native-report-confirmation.test.ts",
+          "?? tests/workflow-chat/support/headless-report.ts"
         ],
-        "diffSha256": "c730afb00467e86e874806c267fc5e823259dc5f81b68b86c3a878632dce8e1f",
-        "untrackedFiles": [],
-        "sha256": "7d12217bcef23ef4b45a8dcd057056e9c9ba2e8f9afcffc1eb5e25dfb6c96b9a"
+        "diffSha256": "4b6af0324a6ca8f6cb7e4db354052ee3342dc5a7fb46c78bf22931b00abd6107",
+        "untrackedFiles": [
+          {
+            "path": ".scratch/chief-bot/evidence/02-native-confirmation/artifact-identity.json",
+            "sha256": "6e82ade538270edd1be2055c381dca81ce9cce7bcee56ea6d2e43a86cab8d4f5"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/02-native-confirmation/config-consumer-green.json",
+            "sha256": "80f7b892510c82d5baf1e86be276da1993a0cc60dbb7e5d2f29bbeac72839d12"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/02-native-confirmation/dock.json",
+            "sha256": "53838381fcd8f325140ff7bd91d728c0cb55b241e31383d4f9b16302e3c93442"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/02-native-confirmation/native-focused-1.json",
+            "sha256": "9be39ca83ca9724b155e333fe9bcbf7bc3b3a74d10fb1716d029ec5d9c2aefac"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/02-native-confirmation/pre-native.json",
+            "sha256": "bd0d384cf290cef0f9027d3c407fb3c76ea8638b40f16f57fc1617e0af53dda8"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/02-native-confirmation/typecheck-final.json",
+            "sha256": "ad483fde98bad5c9f4c615118388629a966f42e6d10edb366a1906d6a8498a42"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/02-native-confirmation/typecheck.json",
+            "sha256": "4d52b6fa597144cdf22767804cda3598196970809605a12975ea7b0536b49983"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/02-native-confirmation/workflow-consumers.json",
+            "sha256": "a3909f0e3b901860a4c1a1104153f822c2d8577d482ee03bee40014cdaa8edcd"
+          },
+          {
+            "path": "extensions/workflow-chat/common/report-result.ts",
+            "sha256": "8015fa0412b39c7e1ab39820d74802a511619a8c73b48c793c24302c21c6b569"
+          },
+          {
+            "path": "tests/harness-dock/native-report-confirmation.test.ts",
+            "sha256": "0e44214d083c21ebd2ae5a2fe9b67b4667dfe45b99db387f33849afbec88c7d4"
+          },
+          {
+            "path": "tests/workflow-chat/support/headless-report.ts",
+            "sha256": "6a138c4ae7b415a4fbe76b4e6fb7d9a1e0c7b0e928669c536f298319f7cdc86c"
+          }
+        ],
+        "sha256": "b91ef4b859f51197c75b7a275a6a506f66fad2a4d845e349cd9b25119967fec7"
       },
       "finishedLockfiles": [
         {
@@ -102,7 +206,7 @@
           "sha256": "28ce4c0d7b7d1d45a44e335a6647b0959c333875af42ca87ba63c87bcf4c2168"
         }
       ],
-      "acceptedAt": "2026-11-11T08:09:10.962Z"
+      "acceptedAt": "2026-11-11T16:12:06.075Z"
     },
     "close-out": {
       "schemaVersion": 1,

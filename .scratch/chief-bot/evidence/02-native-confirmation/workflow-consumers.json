@@ -1,0 +1,5 @@
+{
+  "command": "bun test tests/workflow-chat",
+  "environment": "OMP_BASELINE_RECORD_ROOT='E:/Developer/myhub/my-agent-toolkit' HERDR_BOT_REPO='E:/Developer/myhub/herdr-bot' PI_NODE='D:/Users/hugos/AppData/Local/nvm/v22.19.0/node.exe' PI_CLI='D:/nvm4w/nodejs/node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js' HERDR_BOT_BINARY='E:/Developer/myhub/herdr-bot/backend/target/debug/examples/safe_shutdown_shell.exe' HERDR_BOT_METADATA='E:/Developer/myhub/herdr-bot/meta-data/task-options.toml'",
+  "exit": 1
+}
