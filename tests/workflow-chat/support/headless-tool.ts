@@ -32,6 +32,7 @@ export async function headlessTool(host: "omp" | "pi", endpoint: string, role: "
 			return { toolCall: { name, arguments: JSON.stringify(params) } };
 		} },
 	});
+	let failure: unknown;
 	try {
 		const deployment = join(run.root.path, "deployment");
 		for (const tree of ["framework", "adapters", "extensions/workflow-chat", "entrypoints"]) {
@@ -66,7 +67,11 @@ export async function headlessTool(host: "omp" | "pi", endpoint: string, role: "
 			if (child.exitCode === null) child.kill();
 			await child.exited;
 		}
+	} catch (error) {
+		failure = error;
+		throw error;
 	} finally {
+		const cleanupErrors: unknown[] = [];
 		try {
 			const evidence = process.env.WORKFLOW_PROMPT_EVIDENCE_DIR;
 			if (evidence) {
@@ -75,6 +80,15 @@ export async function headlessTool(host: "omp" | "pi", endpoint: string, role: "
 				cpSync(run.root.captureDir, join(destination, "captures"), { recursive: true });
 				cpSync(run.root.sessionDir, join(destination, "sessions"), { recursive: true });
 			}
-		} finally { run.capture.stop(); run.root.dispose(); }
+		} catch (error) { cleanupErrors.push(error); }
+		try { run.capture.stop(); } catch (error) { cleanupErrors.push(error); }
+		// Retain the owned raw files if evidence export itself failed.
+		if (!cleanupErrors.length) {
+			try { run.root.dispose(); } catch (error) { cleanupErrors.push(error); }
+		}
+		if (cleanupErrors.length) {
+			const errors = failure === undefined ? cleanupErrors : [failure, ...cleanupErrors];
+			throw new Error(`Headless cleanup/evidence retention failed; owned raw root: ${run.root.path}\n${errors.map(error => error instanceof Error ? error.stack : String(error)).join("\n")}`);
+		}
 	}
 }
