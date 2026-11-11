@@ -16,7 +16,7 @@ export interface RoleDock {
 }
 
 /** S1: shipped automatic role entry, real OMP Prompt/history, controlled provider only. */
-export async function promptDock(role: "manager" | "node" | "dual" | "chief-report", options: {
+export async function promptDock(role: "manager" | "node" | "chief" | "dual" | "chief-report", options: {
 	/** undefined preserves shipped configuration; null exercises a missing deployment file. */
 	config?: string | null;
 	/** Place valid but wrong files in cwd and ID-derived directories before loading. */

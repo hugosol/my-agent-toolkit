@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 import { createServer } from "node:http";
 import type { Socket } from "node:net";
 import { roleContractDock, type RoleContractDock } from "../workflow-chat/support/role-contract-dock";
-import { headlessReport } from "../workflow-chat/support/headless-report";
+import { headlessTool } from "../workflow-chat/support/headless-tool";
 
 // Approved S3: real installed hosts, role entries, Session, confirmation and HTTP.
 // Controlled provider/HTTP peer prove protocol only, not GPT-6-luna role behavior.
@@ -23,10 +23,10 @@ for (const host of ["omp", "pi"] as const) {
 		let dock: RoleContractDock | undefined;
 		let pending: Promise<void> | undefined;
 		try {
-			expect(await headlessReport(host, peer.url.origin, "chief_report", { body }, "chief-report")).toMatchObject({ details: { body: { sent: false, saved: false } } });
-			dock = await roleContractDock(host, peer.url.origin, 500, "chief-report", "chief_report");
+			expect(await headlessTool(host, peer.url.origin, "chief-report", { body })).toMatchObject({ details: { body: { sent: false, saved: false } } });
+			dock = await roleContractDock(host, peer.url.origin, 500, "chief-report");
 			for (const decision of ["denied", "dismissed", "cancelled", "timeout", "session-end"] as const) {
-				pending = dock.report({ body });
+				pending = dock.call({ body });
 				const dialog = await dock.confirmation();
 				if (decision === "denied") dock.answerConfirmation(String(dialog.id), false);
 				else if (decision === "dismissed") dock.answerConfirmation(String(dialog.id));
@@ -48,7 +48,7 @@ for (const host of ["omp", "pi"] as const) {
 	test(`${host} chief report rejects forged attribution and incomplete reports and preserves backend refusal`, async () => {
 		const sent: unknown[] = [];
 		const peer = Bun.serve({ hostname: "127.0.0.1", port: 0, async fetch(request) { sent.push(await request.json()); return Response.json({ code: "chief-report-unassociated" }, { status: 403 }); } });
-		const dock = await roleContractDock(host, peer.url.origin, 2000, "chief-report", "chief_report");
+		const dock = await roleContractDock(host, peer.url.origin, 2000, "chief-report");
 		let pending: Promise<void> | undefined;
 		try {
 			for (const invalid of [
@@ -58,13 +58,13 @@ for (const host of ["omp", "pi"] as const) {
 				{ body: { ...body, deliverables: null } }, { body: { ...body, deliverables: [123] } },
 				{ body: { ...body, pendingDecisions: "none" } }, { body: { ...body, from: "forged" } },
 			]) {
-				await dock.report(invalid);
+				await dock.call(invalid);
 				expect(dock.lastResult()).toMatchObject({ content: expect.arrayContaining([
 					expect.objectContaining({ text: expect.stringMatching(/invalid-parameters|Validation failed/) }),
 				]) });
 				expect(sent).toEqual([]);
 			}
-			pending = dock.report({ body });
+			pending = dock.call({ body });
 			const dialog = await dock.confirmation(); dock.answerConfirmation(String(dialog.id), true);
 			await pending; pending = undefined;
 			expect(dock.lastResult()).toMatchObject({ isError: true, details: { httpStatus: 403, body: { code: "chief-report-unassociated" } } });
@@ -89,7 +89,7 @@ for (const host of ["omp", "pi"] as const) {
 		peer.listen(0, "127.0.0.1", listening.resolve); await listening.promise;
 		const address = peer.address();
 		if (!address || typeof address === "string") throw new Error("Missing owned HTTP port");
-		const dock = await roleContractDock(host, `http://127.0.0.1:${address.port}`, 500, "chief-report", "chief_report").catch(async error => {
+		const dock = await roleContractDock(host, `http://127.0.0.1:${address.port}`, 500, "chief-report").catch(async error => {
 			for (const socket of sockets) socket.destroy();
 			const closed = Promise.withResolvers<void>();
 			peer.close(failure => failure ? closed.reject(failure) : closed.resolve());
@@ -98,7 +98,7 @@ for (const host of ["omp", "pi"] as const) {
 		});
 		let pending: Promise<void> | undefined;
 		try {
-			pending = dock.report({ body }); const dialog = await dock.confirmation();
+			pending = dock.call({ body }); const dialog = await dock.confirmation();
 			dock.answerConfirmation(String(dialog.id), true); await pending; pending = undefined;
 			expect(dock.lastResult()).toMatchObject({ isError: true, details: { body: { guidance: expect.stringContaining("不表示回滚或未生效") } } });
 			// Child-process clock: observe the whole configured 500ms approval budget.
@@ -126,10 +126,10 @@ for (const host of ["omp", "pi"] as const) {
 		let status = 200;
 		let count = 0;
 		const peer = Bun.serve({ hostname: "127.0.0.1", port: 0, fetch() { count++; return malformed ? new Response("{broken") : Response.json(answer, { status }); } });
-		const dock = await roleContractDock(host, peer.url.origin, 500, "chief-report", "chief_report");
+		const dock = await roleContractDock(host, peer.url.origin, 500, "chief-report");
 		let pending: Promise<void> | undefined;
 		async function approved() {
-			pending = dock.report({ body });
+			pending = dock.call({ body });
 			const dialog = await dock.confirmation(); dock.answerConfirmation(String(dialog.id), true);
 			await pending; pending = undefined;
 		}
@@ -168,13 +168,13 @@ for (const host of ["omp", "pi"] as const) {
 		let pending: Promise<void> | undefined;
 		try {
 			for (const role of ["chief-report", "manager", "dual"] as const) {
-				dock = await roleContractDock(host, peer.url.origin, 2000, role, "chief_report");
+				dock = await roleContractDock(host, peer.url.origin, 2000, role, 30000, "chief_report");
 				const state = await dock.state();
 				const data = state.data;
 				if (!data || typeof data !== "object" || !("sessionId" in data) || typeof data.sessionId !== "string") throw new Error("Native Session identity missing");
 				const sessionId = data.sessionId;
 				const before = sent.length;
-				pending = dock.report({ body });
+				pending = dock.call({ body });
 				const dialog = await dock.confirmation();
 				expect(dialog.message).toContain(JSON.stringify({ body, sessionId }, null, 2));
 				expect(sent).toHaveLength(before);

@@ -1,6 +1,7 @@
 import type { ToolDeclaration } from "../../../../../framework/interface/tool";
 import type { WorkflowRequests } from "../../../common/requests";
 import { workflowToolResult } from "../../../common/tool-result";
+import { delegate } from "../delegation";
 
 type ChiefToolState = { readonly requests: WorkflowRequests };
 
@@ -45,4 +46,17 @@ export const CHIEF_TOOLS: readonly ToolDeclaration<ChiefToolState>[] = [{
 		}
 		return workflowToolResult(await state.requests.get(delivery.sessionId, `/api/chief/reports/${encodeURIComponent(params.id)}`, delivery.signal));
 	},
+}, {
+	name: "chief_delegate", label: "Chief delegate",
+	description: "按 Bot 委派独立 Task Chat 或真实 Map Run。先解析完整目标/位置/输入供用户原生确认，仅批准本次预览后启动；不等待业务完成，不自动重试。聊天同意不是批准。",
+	parameters: { type: "object", properties: {
+		botId: { type: "string", description: "已核对 when 与执行目标的 Bot ID，不是 Task ID。" },
+		zoneId: { type: "string", description: "显式登记的稳定 zone ID：Task 执行目录或 Map manager 目录；不覆盖 Map 内部节点 zone。" },
+		input: { type: "string", description: "本次完整业务要求，吸收用户最新修正，不是固定 Task 职能。" },
+		materials: { type: "array", description: "本次必要材料；无材料传 []。Map 的 id 对应 input_files。路径相对于显式材料 zone。", items: { type: "object", properties: {
+			id: { type: "string", description: "唯一材料 ID。" }, zoneId: { type: "string", description: "材料所属登记 zone ID。" }, path: { type: "string", description: "该 zone 中的文件路径。" },
+		}, required: ["id", "zoneId", "path"], additionalProperties: false } },
+		managerTaskId: { type: "string", description: "Map 型 Bot 必填：明确选择 manager 类型 Task；Task 型 Bot 禁止此参数。" },
+	}, required: ["botId", "zoneId", "input", "materials"], additionalProperties: false },
+	execute: (state, params, delivery) => delegate(state.requests, params, delivery),
 }];

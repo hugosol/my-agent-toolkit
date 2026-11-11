@@ -4,7 +4,7 @@
 
 部署者从[长期部署与故障处置](OPERATIONS.md)开始；实际协议与角色语义由本文维护，操作手册不建立另一套协议。隔离配置、恢复/重试、真实材料交接及通知失败的复核步骤见操作手册的隔离配置与处置演练章节。
 
-## chief-chat 固定入口与只读能力
+## chief-chat 固定入口与委派能力
 
 chief 是跨需求的澄清与能力选择角色，不是 Run manager 或业务执行者。两个固定 auto 入口独立于 Suite：
 
@@ -15,7 +15,7 @@ pi -e /absolute/my-agent-toolkit/entrypoints/pi-auto/chief-chat.ts
 
 与其他角色一样部署本仓库的 framework、adapters、workflow-chat、entrypoints 和 YAML 依赖；使用下文同一个稳定 `config.yaml`，不读取当前业务 cwd 的配置。共享声明／实现位于 `chief-chat/`，宿主文件仅选择公共 adapter、配置根和自动启动策略。首次指引以 `chief-chat:tools` 写入原生历史；它说明先澄清、优先按 Bot.when 寻找能力、不亲自执行业务。指引被消费不等于真实模型遵从职责。
 
-`chief_definitions` 只读取已交付的 herdr-bot 公开定义接口，原样返回后端 JSON 和 HTTP 状态，不缓存或伪造命中：
+只读工具 `chief_definitions` 只读取已交付的 herdr-bot 公开定义接口，原样返回后端 JSON 和 HTTP 状态，不缓存或伪造命中：
 
 | 输入 | 既有读取接口 |
 | --- | --- |
@@ -28,7 +28,7 @@ pi -e /absolute/my-agent-toolkit/entrypoints/pi-auto/chief-chat.ts
 
 `chief_read_report {"id":"原报告ID"}` 通过 `GET /api/chief/reports/{id}` 读取完整原报告；只接受非空 id，不接收 Session 或归属参数，不虚构接收确认。新 chief 可仅凭报告的 background、execution、result、summary、deliverables、pendingDecisions 呈现成功、失败、受阻或能力创建结果；未知明确说未知，呈现后询问是否满足要求并等待，不发起下一执行确认、不启动业务。已给出完整报告时不必再读。
 
-本入口不注册派发、能力创建或 chief 报告发送占位工具，也不能通过 run/report 冒充其他角色。缺少已交付的原生派发能力时明确说明不能启动并等待用户，不建议直接 HTTP 绕过确认。加载本入口不建立后端当前 chief 身份，herdr-bot 固定角色装配、发起／恢复与有效身份需要跨仓联调。`bun test tests/harness-dock/chief-role.test.ts` 的受控 provider 只证明两宿主原生加载、指引消费和真实后端定义读回，不认领真实模型职责或完整发起／恢复验收。
+本入口不注册能力定义写入或 chief 报告发送占位工具，也不能通过 run/report 冒充其他角色；委派使用下述 chief_delegate 原生确认，不建议直接 HTTP 绕过确认。加载本入口不建立后端当前 chief 身份，herdr-bot 固定角色装配、发起／恢复与有效身份需要跨仓联调。`bun test tests/harness-dock/chief-role.test.ts` 的受控 provider 只证明两宿主原生加载、指引消费和真实后端定义读回，不认领真实模型职责或完整发起／恢复验收。
 
 ## chief 报告发送
 
@@ -39,6 +39,27 @@ body 必须完整包含非空 `background`、`execution`、`summary`，`result: 
 分别解释 `saved`、原 `report`、`notification` 与不确定事实：保存不等于通知；`submitted` 仅为 Herdr 接受输入，不是可靠接收、呈现、已读或验收。`failed`／`not-attempted` 不撤销保存，`uncertain` 及传输／解析错误不证明未发生或回滚。工具不为通知失败重提业务报告，也不提供假接收、自动补投或原 ID 人工重发兼容路径。
 
 受控协议回归：`bun test tests/harness-dock/native-chief-report.test.ts tests/harness-dock/chief-read-report.test.ts`，两宿主使用真实原生加载、Session、工具与确认，只替换 provider 和 HTTP 对端；它不证明真实模型职责或后端持久接收。已有节点兼容检查仍由 `native-report-confirmation.test.ts`、`node-report-contract.test.ts`、`nested-role-completion.test.ts` 维护。
+
+### 原生确认式委派
+
+`chief_delegate` 同时支持 Task 型与 Map 型 Bot，不注册占位工具或通过 run/report 冒充其他角色。模型仅提供业务参数：
+
+```json
+{"botId":"draft-summary","zoneId":"work/worker","input":"只总结用户已修订的草稿","materials":[{"id":"draft","zoneId":"work/source","path":"draft.txt"}]}
+{"botId":"review-flow","zoneId":"work/manager","managerTaskId":"review-manager","input":"执行已确认的复核流程","materials":[]}
+```
+
+`botId` 是 Bot ID，`zoneId` 是已登记的稳定 ID；Map 时它只指定 manager 目录，内部节点仍使用自己的 zone。`materials` 必须显式给出（无材料为 `[]`），每项严格为 `{id,zoneId,path}`；材料路径在其登记 zone 内解析，Map 的 ID 对应 `input_files`。Map 必须明确提供 manager 类型 `managerTaskId`，Task 禁止该字段；用途与必需材料由后端权威检查。工具拒绝身份、previewId、批准 boolean、endpoint 和其他额外字段，不能用模型参数伪造用户批准。
+
+工具以公共活动原生 Session 发 `POST /api/chief/delegations/preview`，加入真实 `sessionId`；后端返回 `{previewId,facts}`。工具核对 facts.request 与冻结的本次请求一致，完整展示后端解析的 Bot、Task、Map/manager、zoneBindings、材料与实际输入，以及即将提交的 `{previewId,sessionId}` JSON。完整事实不从模型摘要重构。仅当前原生批准才发 `POST /api/chief/delegations`，提交单次预览 ID，不允许批准后再指定替代业务参数。后端消费预览并重核当前 chief 资格、定义、目标、zone 和材料语义；变更返回 `delegation-preview-stale`，不自动重新预览或把旧批准转授新工作。用户重新要求后，重新核对受影响参数并取得新确认。
+
+批准等待复用共同 `reportConfirmationTimeoutMs`（部署默认 20000ms），独立于 `requestTimeoutMs`；每次调用都重新确认。聊天同意、业务批准、能力创建批准均不替代本次原生批准。拒绝、关闭、取消、超时、无 UI、交互异常或 Session 结束不提交；迟到批准无效。预览请求不启动 Chat/Run；不提交的预览不得人工直接发 HTTP 复用。
+
+Task 的 HTTP 202/`stage:starting` 仅表示启动请求已接受；Map 的 HTTP 201 仅表示 Run 启动结果，都不是业务完成。工具不等待执行者、不自动轮询或重试。启动失败保留后端完整 HTTP、Run/Chat、阶段与部分效果；提交后传输/解析错误保持结果不确定，不能解释为未发生或回滚。新调用需要用户的新决定与原生确认。能力缺口只能委派已存在的完整创建能力 Bot，创建结果不自动授权新业务；不提供裸定义写入或 chief 报告/接收占位工具。
+
+门禁只约束该工具的委派操作，不是任意 HTTP/本机能力安全沙箱；加载入口不建立后端当前 chief 身份。固定角色装配、发起／恢复和实际有效身份仍由后端权威负责。
+
+`bun test tests/harness-dock/chief-role.test.ts` 覆盖原生加载、指引消费与真实定义读回。`bun test tests/workflow-chat/chief-delegation.test.ts tests/harness-dock/chief-delegation.test.ts` 覆盖本工具的受控协议／故障，包括两宿主 Task/Map 批准、拒绝、取消、超时、不可用、会话结束、迟到批准、完整预览与启动/不确定结果。原生子进程不能使用测试进程的假时钟：协议用例明确设置确认与 HTTP 预算 2000ms，在工具结果后观察 2100ms 无新增提交；chief 无后台维护/重试周期。受控 provider/HTTP 不证明 GPT-6-luna 职责、真实后端变更检测或真实 Task/Map 模型验收；跨仓专项另行承担。
 
 ## 安装与自动加载
 
@@ -90,7 +111,7 @@ extensions/workflow-chat/
 │   ├── requests.ts
 │   ├── report-result.ts
 │   └── tool-result.ts
-├── chief-chat/                   # 同样的 definition/shared-logic/harnesses 分层，能力与报告只读查询
+├── chief-chat/                   # 同样的 definition/shared-logic/harnesses 分层，能力与报告查询、确认式委派
 ├── chief-report/                 # 独立执行者报告能力，不赋予 node 身份
 ├── manager-chat/
 │   ├── definition.ts
@@ -162,7 +183,7 @@ collectTimeoutMs: 5460000
 
 - `endpoint` 为 herdr-bot 基地址；按实际部署修改后重启 Session。
 - `requestTimeoutMs` 是 report 等普通请求的完整传输预算，包含响应正文。
-- `reportConfirmationTimeoutMs` 是 manual 报告的用户确认等待预算，默认部署值 20000 毫秒；统一配置，不是模型参数。升级时须在部署配置中加入此字段，修改后重启 Session。
+- `reportConfirmationTimeoutMs` 是 manual 报告与 chief 委派的用户确认等待预算，默认部署值 20000 毫秒；统一配置，不是模型参数。升级时须在部署配置中加入此字段，修改后重启 Session。
 - `collectTimeoutMs` 是管理者长等待的独立预算，节点 report 不使用它。后端默认 5400 秒，建议客户端 5460000 毫秒（91 分钟）；没有自动同步握手，预算较长也不保证所有网络请求成功。
 - 文件缺失、非法 YAML、缺少或错误类型的字段会由公共配置机制明确拒绝绑定；不静默换用 cwd 配置或其他 endpoint。正整数毫秒范围是 1..2147483647。
 

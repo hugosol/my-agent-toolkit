@@ -15,15 +15,16 @@ export interface RoleContractDock {
 	endSession(): Promise<void>;
 	lastResult(): unknown;
 	state(): Promise<Readonly<Record<string, unknown>>>;
-	report(params: unknown): Promise<void>;
+	call(params: unknown): Promise<void>;
 	close(): Promise<void>;
 }
 
 /** S1 only: real host/tool validation and HTTP persistence; scripted model, not role obedience. */
 export async function roleContractDock(host: "omp" | "pi", endpoint: string, confirmationTimeoutMs = 20000,
-	role: "node" | "manager" | "dual" | "chief-report" = "node", tool = "report"): Promise<RoleContractDock> {
+	role: "node" | "chief" | "manager" | "dual" | "chief-report" = "node", requestTimeoutMs = 30000,
+	toolName = role === "chief" ? "chief_delegate" : role === "chief-report" || role === "manager" ? "chief_report" : "report"): Promise<RoleContractDock> {
 	if (host === "omp") {
-		const dock = await promptDock(role, { isolatedHome: true, config: `endpoint: ${endpoint}\nrequestTimeoutMs: 30000\nreportConfirmationTimeoutMs: ${confirmationTimeoutMs}\ncollectTimeoutMs: 5460000\n` });
+		const dock = await promptDock(role, { isolatedHome: true, config: `endpoint: ${endpoint}\nrequestTimeoutMs: ${requestTimeoutMs}\nreportConfirmationTimeoutMs: ${confirmationTimeoutMs}\ncollectTimeoutMs: 5460000\n` });
 		let mark = 0;
 		return {
 			root: dock.root, capture: dock.capture,
@@ -33,7 +34,7 @@ export async function roleContractDock(host: "omp" | "pi", endpoint: string, con
 			async endSession() { await dock.session.request({ type: "new_session" }); },
 			lastResult: () => dock.session.frames().filter(frame => frame.type === "tool_execution_end").slice(-1)[0]?.result,
 			state: () => dock.session.request({ type: "get_state" }),
-			async report(params: unknown) { mark = dock.session.frames().length; dock.select(tool, params); await dock.session.prompt("Call the selected report once."); },
+			async call(params: unknown) { mark = dock.session.frames().length; dock.select(toolName, params); await dock.session.prompt("Call the selected report once."); },
 			async close() {
 				try {
 					const exit = await dock.session.stop();
@@ -50,7 +51,7 @@ export async function roleContractDock(host: "omp" | "pi", endpoint: string, con
 		endpoint: { respond() {
 			if (!selected) return undefined;
 			selected = false;
-			return { toolCall: { name: tool, arguments: JSON.stringify(next) } };
+			return { toolCall: { name: toolName, arguments: JSON.stringify(next) } };
 		} },
 	});
 	let session: PiSession | undefined;
@@ -62,7 +63,7 @@ export async function roleContractDock(host: "omp" | "pi", endpoint: string, con
 		}
 		cpSync(join(REPO_ROOT, "node_modules/yaml"), join(deployment, "node_modules/yaml"), { recursive: true, dereference: true });
 		writeFileSync(join(deployment, "extensions/workflow-chat/config.yaml"),
-			`endpoint: ${endpoint}\nrequestTimeoutMs: 30000\nreportConfirmationTimeoutMs: ${confirmationTimeoutMs}\ncollectTimeoutMs: 5460000\n`);
+			`endpoint: ${endpoint}\nrequestTimeoutMs: ${requestTimeoutMs}\nreportConfirmationTimeoutMs: ${confirmationTimeoutMs}\ncollectTimeoutMs: 5460000\n`);
 		session = await PiSession.start({ cli: run.cli, runRoot: run.root,
 			entrypoint: (role === "dual" ? ["manager", "node"] : [role]).map(name => join(deployment, `entrypoints/pi-auto/${name === "chief-report" ? name : `${name}-chat`}.ts`)), selector: run.selector,
 			env: { HOME: run.root.path, USERPROFILE: run.root.path, APPDATA: run.root.path, LOCALAPPDATA: run.root.path,
@@ -80,7 +81,7 @@ export async function roleContractDock(host: "omp" | "pi", endpoint: string, con
 			async endSession() { await session!.request({ type: "new_session" }); },
 			lastResult: () => session!.frames().filter(frame => frame.type === "tool_execution_end").slice(-1)[0]?.result,
 			state: () => session!.request({ type: "get_state" }),
-			async report(params: unknown) { mark = session!.frames().length; next = params; selected = true; await session!.run("Call the selected report once."); },
+			async call(params: unknown) { mark = session!.frames().length; next = params; selected = true; await session!.run("Call the selected report once."); },
 			async close() {
 				try {
 					const exit = await session!.stop();
@@ -90,11 +91,11 @@ export async function roleContractDock(host: "omp" | "pi", endpoint: string, con
 					try {
 						const evidence = process.env.WORKFLOW_PROMPT_EVIDENCE_DIR;
 						if (evidence) {
-							const destination = join(evidence, `pi-${role}-${run.root.path.split(/[\\/]/).pop()}`);
+							const destination = join(evidence, `${role}-pi-${run.root.path.split(/[\\/]/).pop()}`);
 							mkdirSync(destination, { recursive: true });
 							cpSync(run.root.captureDir, join(destination, "captures"), { recursive: true });
 							cpSync(run.root.sessionDir, join(destination, "sessions"), { recursive: true });
-							writeFileSync(join(destination, "stderr.txt"), session!.stderr());
+							writeFileSync(join(destination, "native.json"), JSON.stringify({ frames: session!.frames(), stderr: session!.stderr(), scope: "Real native protocol; controlled provider, not model behavior" }));
 						}
 					} finally { run.capture.stop(); run.root.dispose(); }
 				}
