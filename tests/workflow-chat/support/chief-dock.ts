@@ -85,7 +85,8 @@ export async function chiefDock(host: "omp" | "pi", endpoint: string): Promise<C
 			async close() {
 				try {
 					const outcome = await running.stop();
-					if (running instanceof PiSession && outcome && (outcome.timedOut || outcome.exitCode !== 0)) throw new Error(`Chief Pi cleanup failed: ${JSON.stringify(outcome)}`);
+					console.log(JSON.stringify({ host, chiefNativeExit: outcome }));
+					if (outcome && (outcome.timedOut || outcome.exitCode !== 0)) throw new Error(`Chief ${host} cleanup failed: ${JSON.stringify(outcome)}`);
 				} finally {
 					try {
 						const evidence = process.env.WORKFLOW_PROMPT_EVIDENCE_DIR;

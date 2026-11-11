@@ -17,7 +17,7 @@ for (const host of ["omp", "pi"] as const) {
 		let dock: RoleContractDock | undefined;
 		let pending: Promise<void> | undefined;
 		try {
-			expect(await headlessTool(host, peer.url.origin, "chief-report", { id: report.id }, "chief_resend_report")).toMatchObject({ details: { body: { sent: false, saved: false } } });
+			expect(await headlessTool(host, peer.url.origin, "chief-report", { id: report.id }, "chief_resend_report")).toMatchObject({ details: { body: { sent: false, saved: true, report } } });
 			dock = await roleContractDock(host, peer.url.origin, 500, "chief-report", 500, "chief_resend_report");
 			for (const decision of ["denied", "dismissed", "cancelled", "timeout", "session-end"] as const) {
 				pending = dock.call({ id: report.id });
@@ -28,13 +28,15 @@ for (const host of ["omp", "pi"] as const) {
 				else if (decision === "cancelled") await dock.cancel();
 				else if (decision === "session-end") await dock.endSession();
 				await pending; pending = undefined;
+				if (decision !== "cancelled" && decision !== "session-end") expect(dock.lastResult()).toMatchObject({ details: { body: { saved: true, report, sent: false } } });
 				dock.answerConfirmation(String(dialog.id), true);
 				// Real child clocks cannot use Bun fake timers: one complete configured
 				// 500ms HTTP/approval budget +100ms; chief-report has no maintenance loop.
 				await Bun.sleep(600);
 				expect(calls.filter(call => call.method === "POST")).toEqual([]);
 			}
-		} finally { try { if (pending) { await dock?.cancel(); await pending; } } finally { try { await dock?.close(); } finally { peer.stop(true); } } }
+		} catch (error) { console.error(`${host} native resend failure before cleanup`, error); throw error; }
+		finally { try { if (pending) { await dock?.cancel(); await pending; } } finally { try { await dock?.close(); } finally { peer.stop(true); } } }
 	}, 300_000);
 
 	for (const role of ["chief-report", "manager"] as const) test(`${host} ${role} resend preserves original ID and reports already received without claiming presentation`, async () => {
@@ -43,9 +45,10 @@ for (const host of ["omp", "pi"] as const) {
 			calls.push({ method: request.method, path: new URL(request.url).pathname, ...(request.method === "POST" ? { body: await request.json() } : {}) });
 			return Response.json(request.method === "GET" ? report : { saved: true, report, received: true, receipt: { reportId: report.id }, notification: { status: "not-attempted", reason: "报告已可靠接收，不表示已呈现、已读或验收" } });
 		} });
-		const dock = await roleContractDock(host, peer.url.origin, 2000, role, 2000, "chief_resend_report");
+		let dock: RoleContractDock | undefined;
 		let pending: Promise<void> | undefined;
 		try {
+			dock = await roleContractDock(host, peer.url.origin, 2000, role, 2000, "chief_resend_report");
 			for (let attempt = 0; attempt < 2; attempt++) {
 				pending = dock.call({ id: report.id });
 				const dialog = await dock.confirmation();
@@ -58,6 +61,7 @@ for (const host of ["omp", "pi"] as const) {
 				{ method: "GET", path: "/api/chief/reports/immutable%2Fresend-18" },
 				{ method: "POST", path: "/api/chief/reports/immutable%2Fresend-18/resend", body: { sessionId: expect.any(String) } },
 			]).flat());
-		} finally { try { if (pending) { await dock.cancel(); await pending; } } finally { try { await dock.close(); } finally { peer.stop(true); } } }
+		} catch (error) { console.error(`${host} native resend failure before cleanup`, error); throw error; }
+		finally { try { if (pending) { await dock?.cancel(); await pending; } } finally { try { await dock?.close(); } finally { peer.stop(true); } } }
 	}, 300_000);
 }
