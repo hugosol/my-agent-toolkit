@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 import { createServer } from "node:http";
 import type { Socket } from "node:net";
 import { roleContractDock } from "../workflow-chat/support/role-contract-dock";
-import { headlessReport } from "../workflow-chat/support/headless-report";
+import { headlessTool } from "../workflow-chat/support/headless-tool";
 
 // S3 enabling regression, not P10/P20 model acceptance: the installed host chooses the UI
 // mechanics; only a controlled provider tool instruction and explicit native user answer are supplied.
@@ -15,7 +15,7 @@ for (const host of ["omp", "pi"] as const) {
 			sent++; return Response.json({ saved: true });
 		} });
 		try {
-			const result = await headlessReport(host, server.url.origin);
+			const result = await headlessTool(host, server.url.origin, "node", { body: "No UI cannot authorize this report", can_complete: false });
 			expect(result).toMatchObject({ details: { body: { sent: false, saved: false } } });
 			expect(sent).toBe(0);
 			console.log(JSON.stringify({ host, condition: "native-no-ui", result, sent }));
@@ -35,7 +35,7 @@ for (const host of ["omp", "pi"] as const) {
 			const data = state.data;
 			if (!data || typeof data !== "object" || !("sessionId" in data) || typeof data.sessionId !== "string") throw new Error("Native host did not supply Session identity");
 			const sessionId = data.sessionId;
-			pending = dock.report({ body: "Complete approved report\nLast line", can_complete: false, outputs: [{ id: "draft", path: "E:/owned/draft.txt" }] });
+			pending = dock.call({ body: "Complete approved report\nLast line", can_complete: false, outputs: [{ id: "draft", path: "E:/owned/draft.txt" }] });
 			const dialog = await dock.confirmation();
 			expect(dialog.message).toContain(JSON.stringify({ body: "Complete approved report\nLast line", canComplete: false, outputs: [{ id: "draft", path: "E:/owned/draft.txt" }], sessionId }, null, 2));
 			expect(sent).toEqual([]);
@@ -65,7 +65,7 @@ for (const host of ["omp", "pi"] as const) {
 		let pending: Promise<void> | undefined;
 		try {
 			for (const condition of ["denied", "dismissed", "cancelled", "timeout-and-late-approval", "session-ended"] as const) {
-				pending = dock.report({ body: `Must not send: ${condition}`, can_complete: false });
+				pending = dock.call({ body: `Must not send: ${condition}`, can_complete: false });
 				const dialog = await dock.confirmation();
 				if (condition === "denied") dock.answerConfirmation(String(dialog.id), false);
 				else if (condition === "dismissed") dock.answerConfirmation(String(dialog.id));
@@ -112,7 +112,7 @@ for (const host of ["omp", "pi"] as const) {
 			for (const failure of ["cancel", "lost-response", "invalid-json", "invalid-receipt"] as const) {
 				condition = failure; accepted = Promise.withResolvers<void>();
 				const before = requests;
-				pending = dock.report({ body: "Backend may have saved this report", can_complete: false });
+				pending = dock.call({ body: "Backend may have saved this report", can_complete: false });
 				const dialog = await dock.confirmation();
 				dock.answerConfirmation(String(dialog.id), true);
 				await accepted.promise;
