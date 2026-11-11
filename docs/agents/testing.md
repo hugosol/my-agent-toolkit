@@ -48,6 +48,11 @@ The shipped `framework/config.yaml` selects `../node_modules/pi-subagents`, reso
 
 Shutdown dock checks must own and await any pending prompt outcome. Stopping a dock session cancels its outstanding frame waiters; do not leave an unobserved prompt to time out during a later test.
 
+Real-backend workflow assertions preserve the backend's wire representation: a successful
+input-preparation response uses `historyError: null`, not an omitted field. Role-input
+boundary checks observe separation of fixed/work input and extension guidance; they do
+not require obsolete wording from an earlier guide revision.
+
 Real-backend workflow fixtures register zones with explicit stable IDs (`{ id, path }`).
 Map nodes and Run requests refer to those IDs, not filesystem paths; controlled Herdr
 cwd/identity observations continue to use the actual owned directories. Keep manager

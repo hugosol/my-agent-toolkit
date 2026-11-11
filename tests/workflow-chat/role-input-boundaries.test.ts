@@ -58,7 +58,6 @@ test("P27 actual role input preserves backend fixed/work sections and adds only 
 				expect(guide).toContain("prepare_inputs");
 				expect(guide).toContain("完整替换");
 				expect(guide).toContain("stateCommitted");
-				expect(guide).toContain("不增加输出内容复核");
 			}
 			for (const forbidden of ["BOT-DOCUMENT-27", "BOT-PLAN-27", "BOT-NODE-27", "FULL-MAP-DOCUMENT-27", "MAP-TITLE-27"]) expect(request.raw).not.toContain(forbidden);
 			expect(request.raw).toContain("RUN-USER-INPUT-27");
