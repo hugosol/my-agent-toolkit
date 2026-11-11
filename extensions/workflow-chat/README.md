@@ -26,6 +26,18 @@ pi -e /absolute/my-agent-toolkit/entrypoints/pi-auto/chief-chat.ts
 
 `id` 只用于 Task 或 Map 详情，Map 使用定义文件名；工具不接受路径、endpoint、身份或额外字段，不向 GET 添加 Session 请求体。只读调用仍绑定活动原生 Session 的取消生命周期与 `requestTimeoutMs`。读取失败保留真实错误，不返回空列表冒充成功、不自动重试。
 
+### 澄清、复用与能力缺口
+
+首次指引把需求判断与工具启动分开：
+
+- 已知匹配先按 Bot.when 说明复用理由，再读取实际 Task／Map 与登记 zone，核对用途、输入要求和材料。目录命中（包括唯一候选）不是有效目标或补齐未知输入的依据；后端读取失败也不是无匹配。
+- 含糊需求先澄清目标、范围、业务输入、材料和执行位置；明确采用用户最新修正，不借 chief 的 cwd 或唯一候选暗补。Map 另外明确 manager Task 与 manager zone，不覆盖内部节点位置。
+- 确认无匹配后，单执行者能力缺口寻找既有完整创建 Task 能力 Bot，多步骤流程缺口寻找既有完整创建 Map 能力 Bot；选择依据是创建能力的 when 和实际定义，不是名称，也不要求创建者自身必须是 Task／Map 中某一种执行类型。找不到有效创建能力就说明受阻，等待明确指示，不发明同名工具、不保存裸 Task 冒充完整流程。
+- 用户仅否决复用时等待，不自行换候选或进入创建。明确要求创建 Task／创建 Map 才按该授权核对相应创建能力；明确放弃则停止本次需求。缺少必要信息先澄清，缺原生批准不启动。
+- 创建委派的 input 只请求创建能力，不夹带创建后执行原始业务的指令。创建流程已有阶段审批仍分别生效；创建授权不代替它们或新业务的批准。
+- 委派启动回执不是最终交付；最终结果返回后如实呈现、询问是否满足要求，然后等待。成功、失败、受阻及能力创建结果都不触发自动检索下一方案、下一次执行确认或新业务。
+
+这些是交付给两个宿主的模型职责指引，不是自然语言授权解析器或本机安全沙箱。`tests/harness-dock/chief-role.test.ts` 在真实原生 provider 请求中检查指引消费；受控 provider 只证明指引到达，GPT-6-luna 的实际澄清／选择／等待由跨仓真实模型验收独占，不能从指引文字断言推导为已通过。
 `chief_read_report {"id":"原报告ID"}` 仅在用户明确要求查看时，通过 `POST /api/chief/reports/{id}/view` 以活动原生 Session 读取完整原报告及持久接收事实；后端实时检查当前 chief，失权返回真实拒绝。只接受非空 id，不接收 Session 或归属参数，不新建接收授权（`process:false`），不重派业务。新 chief 可仅凭报告的 background、execution、result、summary、deliverables、pendingDecisions 呈现成功、失败、受阻或能力创建结果；未知明确说未知，呈现后询问是否满足要求并等待，不发起下一执行确认、不启动业务。已给出完整报告时不必再读。
 
 本入口不注册能力定义写入或 chief 报告发送占位工具，也不能通过 run/report 冒充其他角色；委派使用下述 chief_delegate 原生确认，不建议直接 HTTP 绕过确认。加载本入口不建立后端当前 chief 身份，herdr-bot 固定角色装配、发起／恢复与有效身份需要跨仓联调。`bun test tests/harness-dock/chief-role.test.ts` 的受控 provider 只证明两宿主原生加载、指引消费和真实后端定义读回，不认领真实模型职责或完整发起／恢复验收。

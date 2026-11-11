@@ -29,6 +29,31 @@ for (const host of ["omp", "pi"] as const) {
 		for (const absent of ["run", "collect", "report", "chief_dispatch", "chief_report"]) expect(names).not.toContain(absent);
 		// Injection/history proves native consumption only, never responsibility adherence.
 		expect(await dock.history()).toContain("chief-chat:tools");
+		// Ticket 11, approved S3 consumer: the injected routing contract must
+		// distinguish an ambiguous request from an executable match. A sole
+		// candidate must not silently supply unknown inputs or the chief's zone.
+		// This checks delivered guidance, not real-model responsibility (12/13).
+		const messages = JSON.stringify(dock.capture.requests()[0]!.json);
+		expect(messages).toContain("即使只有一个候选");
+		expect(messages).toContain("未知输入先澄清");
+		// AC2 oracle: a single-executor gap needs complete Task creation,
+		// a multi-step gap complete Map creation. Violation: generic creation
+		// guidance reaches the model but never distinguishes the two routes.
+		expect(messages).toContain("单执行者能力缺口选择完整创建 Task 能力 Bot");
+		expect(messages).toContain("多步骤流程缺口选择完整创建 Map 能力 Bot");
+		// AC3: explicit abandonment must stop this request, not be treated as
+		// a veto that permits an alternative. Observe the delivered distinction.
+		expect(messages).toContain("仅否决复用");
+		expect(messages).toContain("明确要求创建 Task");
+		expect(messages).toContain("明确要求创建 Map");
+		expect(messages).toContain("明确放弃时停止本次需求");
+		// AC4: a creation request must not grant later-stage or business
+		// execution authority. Violation: guidance asks the creator to also
+		// execute the original work, or searches for a next plan on return.
+		expect(messages).toContain("不夹带创建后执行原始业务的指令");
+		expect(messages).toContain("创建流程既有的每阶段审批继续生效");
+		expect(messages).toContain("不自动检索后续方案");
+		expect(messages).toContain("不发起下一次执行确认");
 	} finally { try { await dock?.close(); } finally { await backend.close(); } }
 	}, 180_000);
 
