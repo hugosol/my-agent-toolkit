@@ -1,8 +1,32 @@
-# Workflow Chat：manager-chat 与 node-chat
+# Workflow Chat：chief-chat、manager-chat 与 node-chat
 
 节点执行者面向 Map Run 的一次实际执行，只负责工作与报告，不因加载工具获得管理者状态操作权。[领域词汇](GLOSSARY.md)区分 Run、执行者和交接完成。两种角色保留独立声明、实例与自动入口，不是一个工具的角色切换参数。普通 manager-only／node-only Session 仍只加载自身入口；合法嵌套管理者在同一原生 Session 同载两入口，以管理内部 Run 并向外层父 execution 报告。
 
 部署者从[长期部署与故障处置](OPERATIONS.md)开始；实际协议与角色语义由本文维护，操作手册不建立另一套协议。隔离配置、恢复/重试、真实材料交接及通知失败的复核步骤见操作手册的隔离配置与处置演练章节。
+
+## chief-chat 固定入口与只读能力
+
+chief 是跨需求的澄清与能力选择角色，不是 Run manager 或业务执行者。两个固定 auto 入口独立于 Suite：
+
+```text
+omp -e /absolute/my-agent-toolkit/entrypoints/omp-auto/chief-chat.ts
+pi -e /absolute/my-agent-toolkit/entrypoints/pi-auto/chief-chat.ts
+```
+
+与其他角色一样部署本仓库的 framework、adapters、workflow-chat、entrypoints 和 YAML 依赖；使用下文同一个稳定 `config.yaml`，不读取当前业务 cwd 的配置。共享声明／实现位于 `chief-chat/`，宿主文件仅选择公共 adapter、配置根和自动启动策略。首次指引以 `chief-chat:tools` 写入原生历史；它说明先澄清、优先按 Bot.when 寻找能力、不亲自执行业务。指引被消费不等于真实模型遵从职责。
+
+当前唯一工具 `chief_definitions` 只读取已交付的 herdr-bot 公开定义接口，原样返回后端 JSON 和 HTTP 状态，不缓存或伪造命中：
+
+| 输入 | 既有读取接口 |
+| --- | --- |
+| `{"kind":"bots"}` | `GET /api/scheduler/bots`（包含 when 与执行目标，仍需检查定义问题） |
+| `{"kind":"tasks"}` / `{"kind":"tasks","id":"task-id"}` | `GET /api/tasks` / `GET /api/tasks/{id}` |
+| `{"kind":"maps"}` / `{"kind":"maps","id":"flow.json"}` | `GET /api/scheduler/maps` / `GET /api/scheduler/maps/{name}` |
+| `{"kind":"zones"}` | `GET /api/zones` |
+
+`id` 只用于 Task 或 Map 详情，Map 使用定义文件名；工具不接受路径、endpoint、身份或额外字段，不向 GET 添加 Session 请求体。只读调用仍绑定活动原生 Session 的取消生命周期与 `requestTimeoutMs`。读取失败保留真实错误，不返回空列表冒充成功、不自动重试。
+
+本入口不注册派发、能力创建或 chief 报告占位工具，也不能通过 run/report 冒充其他角色。缺少已交付的原生派发能力时明确说明不能启动并等待用户，不建议直接 HTTP 绕过确认。加载本入口不建立后端当前 chief 身份，herdr-bot 固定角色装配、发起／恢复与有效身份需要跨仓联调。`bun test tests/harness-dock/chief-role.test.ts` 的受控 provider 只证明两宿主原生加载、指引消费和真实后端定义读回，不认领真实模型职责或完整发起／恢复验收。
 
 ## 安装与自动加载
 
@@ -52,6 +76,7 @@ extensions/workflow-chat/
 │   ├── config.ts
 │   ├── requests.ts
 │   └── tool-result.ts
+├── chief-chat/                   # 同样的 definition/shared-logic/harnesses 分层，只读能力查询
 ├── manager-chat/
 │   ├── definition.ts
 │   ├── shared-logic/
@@ -78,11 +103,11 @@ extensions/workflow-chat/
         └── pi-auto.ts
 ```
 
-- `common/` 是两种角色共同复用的实现：`config.ts` 维护共同配置声明，`requests.ts` 通过公共 Session/HTTP 处理真实身份、请求预算、取消与响应解析。它不承载 manager 动作或 node 报告规则，不依赖角色目录或原生 harness SDK。
+- `common/` 是三种角色共同复用的实现：`config.ts` 维护共同配置声明，`requests.ts` 通过公共 Session/HTTP 处理真实身份、请求预算、取消与响应解析。它不承载 manager 动作或 node 报告规则，不依赖角色目录或原生 harness SDK。
 - 各角色的 `definition.ts` 持有自身声明与注入策略，复用共同配置声明；首次指引正文与加载入口归 `shared-logic/prompts/`。`shared-logic/tools/` 集中工具名、label、工具和参数 description、共同参数结构及执行接入，消费 [Tool interface](../../framework/interface/tool.ts)，不维护两份宿主参数定义。
 - `shared-logic/implementation.ts` 通过公共 `defineImplementation` 的静态 `tools` 槽声明工具，与会话订阅共用业务状态和清理生命周期。manager 的动作参数、路由选择与 collect，node 的 report 参数与请求仍由各自业务 module 处理；`common/tool-result.ts` 只负责共享业务结果到公共工具结果的映射。业务依赖 `common/` 和 framework interface，不依赖原生 harness SDK。
 - 各角色的 `harnesses/omp.ts` 与 `harnesses/pi-auto.ts` 仅选择公共 adapter、共享声明与实现、配置根和启动策略。原生工具注册、参数映射及实际执行身份归顶层 `adapters/`；扩展不再提供原生注册或 TypeBox 声明。两宿主的角色订阅都限定 `owner`：普通角色各用自身主会话，嵌套 manager 主会话合法同载两实例，不向普通子代理传播管理权或角色入口。
-- **共享实现，不共享实例**：两角色可导入同一份配置与请求代码，但各自装配独立的请求资源；配置绑定、Session 身份和请求取消资源不跨角色共用。请求生命周期按实际 Session 隔离，不以进程级或角色级单例保存共同状态。
+- **共享实现，不共享实例**：各角色可导入同一份配置与请求代码，但各自装配独立的请求资源；配置绑定、Session 身份和请求取消资源不跨角色共用。请求生命周期按实际 Session 隔离，不以进程级或角色级单例保存共同状态。
 
 ## 首次工具指引与输入边界
 

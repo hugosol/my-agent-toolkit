@@ -36,7 +36,15 @@ export class WorkflowRequests {
 		return signal ? AbortSignal.any([signal, lifetime]) : lifetime;
 	}
 
-	async post(selectedSessionId: string, route: string, params: Readonly<Record<string, unknown>>, signal?: AbortSignal, collect = false): Promise<WorkflowResponse> {
+	get(selectedSessionId: string, route: string, signal?: AbortSignal): Promise<WorkflowResponse> {
+		return this.#request(selectedSessionId, route, "GET", undefined, signal);
+	}
+
+	post(selectedSessionId: string, route: string, params: Readonly<Record<string, unknown>>, signal?: AbortSignal, collect = false): Promise<WorkflowResponse> {
+		return this.#request(selectedSessionId, route, "POST", params, signal, collect);
+	}
+
+	async #request(selectedSessionId: string, route: string, method: "GET" | "POST", params?: Readonly<Record<string, unknown>>, signal?: AbortSignal, collect = false): Promise<WorkflowResponse> {
 		// Native context selects an observation; the public Session reading supplies the wire identity.
 		const observation = this.#context.session.observations.read(selectedSessionId);
 		const lifetime = this.#sessions.get(selectedSessionId);
@@ -45,8 +53,8 @@ export class WorkflowRequests {
 		}
 		const config = this.#context.config;
 		const options = {
-			method: "POST", headers: { "content-type": "application/json" },
-			body: JSON.stringify({ ...params, sessionId: observation.session.sessionId }),
+			method, headers: method === "POST" ? { "content-type": "application/json" } : undefined,
+			body: method === "POST" ? JSON.stringify({ ...params, sessionId: observation.session.sessionId }) : undefined,
 			timeoutMs: Number(collect ? config.collectTimeoutMs : config.requestTimeoutMs),
 			signal: signal ? AbortSignal.any([signal, lifetime.signal]) : lifetime.signal,
 		};

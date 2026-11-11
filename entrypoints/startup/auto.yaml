@@ -27,3 +27,5 @@ node-chat:
   enabled: true
 manager-chat:
   enabled: true
+chief-chat:
+  enabled: true
