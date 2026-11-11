@@ -75,6 +75,7 @@ extensions/workflow-chat/
 ├── common/
 │   ├── config.ts
 │   ├── requests.ts
+│   ├── report-result.ts
 │   └── tool-result.ts
 ├── chief-chat/                   # 同样的 definition/shared-logic/harnesses 分层，只读能力查询
 ├── manager-chat/
@@ -103,7 +104,7 @@ extensions/workflow-chat/
         └── pi-auto.ts
 ```
 
-- `common/` 是三种角色共同复用的实现：`config.ts` 维护共同配置声明，`requests.ts` 通过公共 Session/HTTP 处理真实身份、请求预算、取消与响应解析。它不承载 manager 动作或 node 报告规则，不依赖角色目录或原生 harness SDK。
+- `common/` 是角色共同复用的实现：`config.ts` 维护共同配置声明，`requests.ts` 通过公共 Session/HTTP 处理真实身份、请求预算、取消与响应解析。`get(sessionId, route, signal)` 使用同一活动 Session 的取消与结果解释，但不发送 JSON 请求体或内容类型。其 `postConfirmed(sessionId, route, params, {title,message}, signal, confirm)` 固定包含原生身份的完整 JSON 载荷，展示后只发送这份载荷；`confirm` 必须来自公共工具 delivery，不能用业务 boolean 或聊天同意替代。拒绝的本地 `notSent` 标记与 HTTP 结果分开，批准期间 Session 结束则不发送。`report-result.ts` 的 `workflowReportResult` 共同解释保存/通知结果：明确 `saved=false` 为错误，已保存而通知失败不撤销保存，非法回执保持不确定。common 不承载 manager 动作或 node 的参数/报告策略规则，不依赖角色目录、私有 framework 或原生 harness SDK。
 - 各角色的 `definition.ts` 持有自身声明与注入策略，复用共同配置声明；首次指引正文与加载入口归 `shared-logic/prompts/`。`shared-logic/tools/` 集中工具名、label、工具和参数 description、共同参数结构及执行接入，消费 [Tool interface](../../framework/interface/tool.ts)，不维护两份宿主参数定义。
 - `shared-logic/implementation.ts` 通过公共 `defineImplementation` 的静态 `tools` 槽声明工具，与会话订阅共用业务状态和清理生命周期。manager 的动作参数、路由选择与 collect，node 的 report 参数与请求仍由各自业务 module 处理；`common/tool-result.ts` 只负责共享业务结果到公共工具结果的映射。业务依赖 `common/` 和 framework interface，不依赖原生 harness SDK。
 - 各角色的 `harnesses/omp.ts` 与 `harnesses/pi-auto.ts` 仅选择公共 adapter、共享声明与实现、配置根和启动策略。原生工具注册、参数映射及实际执行身份归顶层 `adapters/`；扩展不再提供原生注册或 TypeBox 声明。两宿主的角色订阅都限定 `owner`：普通角色各用自身主会话，嵌套 manager 主会话合法同载两实例，不向普通子代理传播管理权或角色入口。
@@ -272,7 +273,7 @@ Map node 的 `input` 工作文本保持原样；文件交接使用 `input_rule` 
 
 - `auto`：直接提交报告，不打开确认界面。
 - `manual`：调用工具后，在当前宿主原生确认界面展示本次完整 `body`、`can_complete` 和 `outputs`。只有用户明确选择“是”才发送；自然语言同意、业务批准、内部 finish 和可交接声明都不构成发送批准。
-- 批准仅适用于本次展示的内容和本次调用；待发送内容在等待前固定，补充、更正或再次调用均重新确认，不复用批准。
+- 批准仅适用于本次展示的内容和本次调用；待发送内容在等待前固定，完整 HTTP JSON 预览包含实际 `sessionId`、`body`、`canComplete` 与显式提供的 `outputs`（省略仍保持省略）。批准不重新读取身份或调用参数；补充、更正或再次调用均重新确认，不复用批准。
 - 拒绝、关闭、取消、超时、会话结束、无交互能力或交互异常均返回 `sent=false`、`saved=false`，不触发报告请求；迟到批准无效。不自动重试、补发或反复询问，模型应结束本轮等待用户重新要求发送。不增加跨调用锁定机制。
 - 确认等待使用 toolkit 配置 `reportConfirmationTimeoutMs`，随部署提供的值为 20000 毫秒。与 HTTP 预算独立，模型不能修改；从调用原生确认界面开始计时。RPC 客户端须实际实现宿主确认请求/响应；没有响应即超时拒绝，无 UI 的模式不发送 manual 报告。
 - 一旦报告请求已发出，取消或传输错误仍可能意味着后端已保存，沿用下述不确定结果处理，不能报告为“未发送”。
@@ -286,7 +287,7 @@ Map node 的 `input` 工作文本保持原样；文件交接使用 `input_rule` 
 - 无关联、歧义、错误角色及其他准入拒绝由后端决定，扩展保留响应，不修补身份或新建连接。
 - 非 2xx 结构化正文不会被压缩成状态码；已发生的保存或其他部分效果不被描述为回滚。HTTP 200 也不是整批成功保证：逐项查看 `results`、`effects`、`historyError` 和 `stateCommitted`。`stateCommitted=true` 且历史追加失败表示当前状态已经提交，不应为补历史重复执行动作。
 - 已接受状态动作、dispatch 或 report 后再断开，客户端通常只能得到不确定结果。先显式 `run status` 或读取 Run 详情核对状态、执行关联、报告 ID 与外部 Chat/材料；不要把取消当成“未执行”，不要立即重做。尤其 report 可能已经保存而通知/诊断失败，重复提交会产生另一份报告。存活 Session 可接收新的显式调用，其请求不沿用上一工具的取消状态；这属于用户决定的新请求，不是自动重试。
-- 网络/正文读取失败、预算耗尽、取消或非法 JSON 不生成假成功报告，也不自主重试；请求被取消不保证后端未接受。先核实已保存事实，再明确决定后续动作。
+- 网络/正文读取失败、预算耗尽、取消或非法 JSON 不生成假成功报告，也不自主重试；HTTP 200 的报告回执若不是带 boolean `saved` 的对象，同样保持结果不确定并保留原始响应。来自 HTTP 的 `sent=false` 不能伪造本地“未发请求”的证据。请求被取消不保证后端未接受。先核实已保存事实，再明确决定后续动作。
 - 每个实际 Session 持有独立请求取消资源，工具 AbortSignal 和该 Session 结束信号传入公共 HTTP；工具中断、切走 Session 及进程正常结束都会终止仍在接收正文的 collect。取消覆盖完整交换，不在收到 HTTP 响应头时解绑；不能把本地返回取消等同于后端回滚。
 - 正常后端到期是成功正文的 `reason: "timeout"`。主动取消为 `error.kind: "cancelled"`，客户端完整预算耗尽为 `"timeout"`，连接/正文断流为 `"transport"`，完整收到但 JSON 非法为 `"parse"`；错误不附加推测快照。HTTP 200 响应头不是成功凭证；不完整分块或 Content-Length 正文均是传输失败，不是假成功或正常到期。
 - 多个终止事件竞争时保留公共 HTTP 已采用的原因，不规定“取消始终胜出”等全局优先级。工具结果含相应错误 message；Session 已被切换时，omp 可能丢弃原 Session 的工具结果，不能为它补造成功/取消快照。重新打开原 Session 后显式收取/查询保存事实。
@@ -299,6 +300,8 @@ Map node 的 `input` 工作文本保持原样；文件交接使用 `input_rule` 
 ```text
 bun test tests/workflow-chat
 bun test tests/harness-dock/node-report.test.ts
+bun test tests/harness-dock/native-report-confirmation.test.ts
+bun test tests/framework/tool-confirmation-adapters.test.ts
 bun test tests/harness-dock/manager-state-actions.test.ts tests/harness-dock/manager-resume-finish.test.ts
 bun test tests/harness-dock/manager-collect-budget.test.ts tests/harness-dock/manager-collect-pending.test.ts
 bun test tests/harness-dock/manager-collect-lifecycle.test.ts
@@ -312,6 +315,8 @@ bun run typecheck
 Prompt 检查直接捕获真实 omp 发给 provider 的文本，并读取其持久化的隐藏贡献；两角色均核对首次、普通轮次、新 owner 与切回原会话的行为。输入边界检查使用不同标记的真实后端 Task、工作、Bot/Map/user_input，取得实际 CLI 提交正文后原样送入真实 omp，核对工作文本块不变且工具指引是另一条消息。此处 Herdr 是记录型受控 CLI，不证明真实 Herdr 已启动这些会话。
 
 指引故障演练实际执行“已保存但通知失败→collect 并读取报告”“原执行修复→recover”“核实旧副作用后→retry”“人工补齐→新执行 false 报告拒绝完成→collect 等待→最新 true 报告→显式 complete”。执行前可将 `WORKFLOW_PROMPT_EVIDENCE_DIR` 设为 `.scratch/manager-node-chat/evidence/` 下本次运行专用目录的绝对路径：Prompt dock 保留原始请求与 Session JSONL，演练保留 `guidance-rehearsal.json`（实际注入全文、工具结果、HTTP 和外部 CLI 调用）。产物和决策均由验收 Agent/测试控制，不能当成真实模型工作结果；这些是 P26 技术证据，不是 H1 通过，H1 的唯一整体使用判断仍须独立汇总与用户确认。
+
+`native-report-confirmation.test.ts` 在 OMP/Pi 的实际自动入口验证完整 wire 预览、原生批准/拒绝、取消、超时后的迟到批准、Session 结束，以及原生无 UI 模式（OMP `--no-ui`；Pi JSON print）。HTTP 已接收后的取消、响应丢失、非法 JSON/回执保持不确定。确认预算为隔离配置 2000ms，每次结果后的无重试观察为 2100ms，跨过该确认预算；Session/进程由 driver 关闭并等待退出，不证明无限期或真实模型自主行为。`tool-confirmation-adapters.test.ts` 补充两宿主的 UI 异常、非 boolean 答案及阻塞事件循环后迟到批准的机制验证。所有资源使用测试独占 HOME/APPDATA/XDG、Session 和动态回环端口；受控 provider 不使用真实模型或用户凭据。
 
 测试通过真实隔离 omp 18.5.0 加载交付入口；受控 provider 仅发出预先指定的工具调用，不冒充真实模型自主工作。受控 HTTP 分别验证保存失败、已保存但通知失败、诊断失败以及空正文不被客户端拒绝；150ms 有界窗口内观察无额外请求，不证明无限期无动作。
 

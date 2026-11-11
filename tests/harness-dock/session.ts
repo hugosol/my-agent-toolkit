@@ -269,6 +269,11 @@ export class ControlledSession {
 		return frame;
 	}
 
+	/** Answer a host-owned UI interaction; unlike commands, UI responses have no acknowledgement. */
+	respondToUI(id: string, confirmed?: boolean): void {
+		this.#send({ type: "extension_ui_response", id, ...(confirmed === undefined ? { cancelled: true } : { confirmed }) });
+	}
+
 	/** Close stdin and wait for a graceful exit; kill only if the harness hangs. */
 	async stop(options?: { timeoutMs?: number }): Promise<ExitOutcome> {
 		if (this.#exit) return this.#exit;

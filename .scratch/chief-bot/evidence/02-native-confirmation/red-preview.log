@@ -1,0 +1,22 @@
+bun test v1.4.4 (38afee6c8)
+
+tests\workflow-chat\manual-report-confirmation.test.ts:
+37 | 		expect(scene.contexts).toEqual([{ sessionId: scene.roles.sessionId }]);
+38 | 		expect(scene.sent).toEqual([]);
+39 | 		expect(preview.message).toContain("Original report\nSecond line");
+40 | 		expect(preview.message).toContain("can_complete: false");
+41 | 		// Complete wire identity and camelCase payload must be visible, not just a prose summary.
+42 | 		expect(preview.message).toContain(JSON.stringify({ body: "Original report\nSecond line", canComplete: false, outputs: [{ id: "draft", path: "E:/original.txt" }], sessionId: "business-native-session" }, null, 2));
+                               ^
+error: expect(received).toContain(expected)
+
+Expected to contain: "{\n  \"body\": \"Original report\\nSecond line\",\n  \"canComplete\": false,\n  \"outputs\": [\n    {\n      \"id\": \"draft\",\n      \"path\": \"E:/original.txt\"\n    }\n  ],\n  \"sessionId\": \"business-native-session\"\n}"
+Received: "以下为本次待发送报告的完整内容；业务批准不等于发送批准。\n\nbody:\nOriginal report\nSecond line\n\ncan_complete: false\n\noutputs:\n[\n  {\n    \"id\": \"draft\",\n    \"path\": \"E:/original.txt\"\n  }\n]\n\n只有明确选择“是”才会发送。"
+
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-WHRv9S\tests\workflow-chat\manual-report-confirmation.test.ts:42:27)
+(fail) approval authorizes only the displayed payload and each subsequent report asks again [18.26ms]
+
+ 9 pass
+ 1 fail
+ 23 expect() calls
+Ran 10 tests across 1 file. [121.00ms]

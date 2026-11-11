@@ -559,6 +559,11 @@ export class PiSession {
 		}
 	}
 
+	/** Answer a host-owned UI interaction; unlike commands, UI responses have no acknowledgement. */
+	respondToUI(id: string, confirmed?: boolean): void {
+		this.#send({ type: "extension_ui_response", id, ...(confirmed === undefined ? { cancelled: true } : { confirmed }) });
+	}
+
 	/** Close stdin and wait for an orderly exit; kill only when the child hangs. */
 	async stop(options?: { readonly timeoutMs?: number }): Promise<PiExitOutcome> {
 		if (this.#exit) return this.#exit;

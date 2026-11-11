@@ -1,0 +1,9 @@
+bun test v1.4.4 (38afee6c8)
+
+tests\harness-dock\role-stable-config.test.ts:
+{"promise":"P7","cwd":["C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-manager-4XwBs8\\work","C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-node-FqJfKq\\work"],"selectedBudgets":{"requestTimeoutMs":700,"collectTimeoutMs":1600},"fallbackRequests":0,"calls":[{"path":"/api/workflow/manager/status","body":{"sessionId":"01a1cb60-aefb-76c0-a85b-2ac254bd795f"},"elapsedMs":92.05049999999983},{"path":"/api/workflow/node/report","body":{"body":"P7 explicit config","canComplete":false,"sessionId":"01a1cb60-b486-75e9-86c2-7ef63e7fa7d1"},"elapsedMs":90.68679999999995},{"path":"/api/workflow/manager/status","body":{"sessionId":"01a1cb60-aefb-76c0-a85b-2ac254bd795f"},"elapsedMs":700.3903},{"path":"/api/workflow/node/report","body":{"body":"P7 ordinary budget","canComplete":false,"sessionId":"01a1cb60-b486-75e9-86c2-7ef63e7fa7d1"},"elapsedMs":700.5971},{"path":"/api/workflow/manager/collect","body":{"sessionId":"01a1cb60-aefb-76c0-a85b-2ac254bd795f"},"elapsedMs":1599.4570999999996}]}
+
+ 1 pass
+ 0 fail
+ 22 expect() calls
+Ran 1 test across 1 file. [6.79s]

@@ -1,0 +1,27 @@
+{
+  "ticket": "02-shared-native-confirmation",
+  "implementationCommit": "342685e",
+  "state": "Implementation committed; owned behavior verified. Not a claim of full-repository green or integration completion.",
+  "criteria": [
+    {"criterion":"Full actual manual-report payload preview; no report before approval; send only approved payload","evidence":["tests/workflow-chat/manual-report-confirmation.test.ts","tests/harness-dock/native-report-confirmation.test.ts"],"result":"Passed: caller mutation cannot change the approved content; installed OMP/Pi native previews contain complete actual wire identity and payload."},
+    {"criterion":"Both hosts refuse denial/dismissal/cancellation/timeout/late approval/Session end/unavailable confirmation without send or retry","evidence":["native-focused-1.log","tests/framework/tool-confirmation-adapters.test.ts"],"result":"Passed: installed OMP 18.5.0 and Pi 1.5.2 RPC plus actual no-UI modes; native child exits all 0, no cleanup timeout. Confirmation budget 2000ms; post-result no-retry observation 2100ms. Native UI exceptions, nonboolean answers and blocked event-loop late approval covered by existing registered-tool adapter tests."},
+    {"criterion":"After HTTP send, cancellation/lost/illegal response stays uncertain rather than not-sent/rolled-back","evidence":["native-focused-1.log","tests/workflow-chat/node-shared-logic.test.ts"],"result":"Passed: actual endpoint request arrival precedes cancellation; exactly one report request for each failure during observation. Invalid JSON and invalid saved receipts retained as errors; HTTP sent=false cannot supply local notSent evidence. Saved-but-not-notified remains saved."},
+    {"criterion":"Common business logic and public framework interfaces; thin host assembly","evidence":["integrations.log","pre-native.json","extensions/workflow-chat/common/requests.ts","extensions/workflow-chat/common/report-result.ts"],"result":"Passed static integration/import-boundary checks and both real native consumers. No production adapter, private framework import or backend persistence authority added."}
+  ],
+  "finalCommands": [
+    {"command":"bun run typecheck","exit":0,"evidence":"typecheck-final.log"},
+    {"command":"bun run check:integrations","exit":0,"evidence":"integrations.log"},
+    {"command":"bun test tests/harness-dock/native-report-confirmation.test.ts","exit":0,"counts":"8 passed, 0 failed, 62 assertions","evidence":"native-focused-1.log"},
+    {"command":"bun test tests/workflow-chat","exit":1,"counts":"40 passed, 1 failed","evidence":"workflow-consumers.log"},
+    {"command":"bun test tests/harness-dock","exit":1,"counts":"186 passed, 3 failed; 189 cases","evidence":"dock.log","note":"One dependent configuration fixture used an illegal success receipt; corrected to explicit saved=true without changing endpoint/budget expectations. Its focused recheck and canonical full run then pass."},
+    {"command":"bun test tests/harness-dock/role-stable-config.test.ts","exit":0,"counts":"1 passed, 0 failed, 22 assertions","evidence":"config-consumer-green.log"},
+    {"command":"bun run test","exit":1,"counts":"1858 passed, 3 failed; 1861 cases, 234 files","evidence":"full.log"}
+  ],
+  "remainingRegressionFailures": [
+    {"file":"tests/workflow-chat/role-input-boundaries.test.ts:61","failure":"Manager guidance does not contain expected literal 不增加输出内容复核. Reproduced within consumer partition and canonical full run, not separately rerun."},
+    {"file":"tests/harness-dock/nested-role-completion.test.ts:81","hosts":["omp","pi"],"failure":"historyError is null; assertion requires undefined. Same two signatures observed in required dock and canonical full run."}
+  ],
+  "scopeLimits": "No GPT-6-luna or other real model invocation was made. Controlled provider responses establish native protocol/failure behavior only; P10 Task/Map and P20/P22/P36/P37 final acceptance remains with the ticket-named owners. No other ticket/workflow reports or integration worktree were modified. No retry, fallback model or real shutdown was introduced.",
+  "quietWindow": "Native and full runs completed sequentially; slot explicitly released to integrate-06-native-chief-rolemd-43cdb472-a1e3-4.",
+  "integration": "See artifact-identity.json: semantic merge must retain ticket06 GET and ticket02 postConfirmed frozen wire/session payload plus local-only notSent marker. Main directed independent integration to own this merge."
+}

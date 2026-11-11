@@ -1,0 +1,64 @@
+bun test v1.4.4 (38afee6c8)
+
+tests\workflow-chat\node-shared-logic.test.ts:
+67 | 			return Response.json(receipt);
+68 | 		} });
+69 | 		const roles = businessRoles(`http://127.0.0.1:${server.port}`);
+70 | 		try {
+71 | 			const result = await roles.node.report(roles.sessionId, { body: "May already be saved", can_complete: false });
+72 | 			expect(result.isError).toBe(true);
+                               ^
+error: expect(received).toBe(expected)
+
+Expected: true
+Received: false
+
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-WHRv9S\tests\workflow-chat\node-shared-logic.test.ts:72:27)
+(fail) node report preserves uncertainty for malformed receipt null [4.05ms]
+67 | 			return Response.json(receipt);
+68 | 		} });
+69 | 		const roles = businessRoles(`http://127.0.0.1:${server.port}`);
+70 | 		try {
+71 | 			const result = await roles.node.report(roles.sessionId, { body: "May already be saved", can_complete: false });
+72 | 			expect(result.isError).toBe(true);
+                               ^
+error: expect(received).toBe(expected)
+
+Expected: true
+Received: false
+
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-WHRv9S\tests\workflow-chat\node-shared-logic.test.ts:72:27)
+(fail) node report preserves uncertainty for malformed receipt [] [3.52ms]
+67 | 			return Response.json(receipt);
+68 | 		} });
+69 | 		const roles = businessRoles(`http://127.0.0.1:${server.port}`);
+70 | 		try {
+71 | 			const result = await roles.node.report(roles.sessionId, { body: "May already be saved", can_complete: false });
+72 | 			expect(result.isError).toBe(true);
+                               ^
+error: expect(received).toBe(expected)
+
+Expected: true
+Received: false
+
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-WHRv9S\tests\workflow-chat\node-shared-logic.test.ts:72:27)
+(fail) node report preserves uncertainty for malformed receipt {} [4.12ms]
+67 | 			return Response.json(receipt);
+68 | 		} });
+69 | 		const roles = businessRoles(`http://127.0.0.1:${server.port}`);
+70 | 		try {
+71 | 			const result = await roles.node.report(roles.sessionId, { body: "May already be saved", can_complete: false });
+72 | 			expect(result.isError).toBe(true);
+                               ^
+error: expect(received).toBe(expected)
+
+Expected: true
+Received: false
+
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-WHRv9S\tests\workflow-chat\node-shared-logic.test.ts:72:27)
+(fail) node report preserves uncertainty for malformed receipt {"saved":"true"} [4.12ms]
+
+ 6 pass
+ 4 fail
+ 45 expect() calls
+Ran 10 tests across 1 file. [116.00ms]
