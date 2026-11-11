@@ -4,7 +4,7 @@
     "workflow-chat": {
       "schemaVersion": 1,
       "scope": "workflow-chat",
-      "startedAt": "2026-11-11T08:09:02.595Z",
+      "startedAt": "2026-11-11T15:55:00.388Z",
       "cli": {
         "command": [
           "node",
@@ -14,27 +14,673 @@
         "source": "the shim D:\\nvm4w\\nodejs\\pi.cmd (run through node: a shell shim cannot be spawned without a shell)"
       },
       "source": {
-        "repoRoot": "E:\\Developer\\myhub\\my-agent-toolkit",
-        "head": "a9a823771e3c70351b433360f36a9a9ecd9d72b3",
+        "repoRoot": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-XUNtZp",
+        "head": "f6bc79b4627dac2279a1083c087020e89c69eac3",
         "status": [
-          " M extensions/workflow-chat/OPERATIONS.md",
+          " M entrypoints/startup/auto.yaml",
           " M extensions/workflow-chat/README.md",
-          " M extensions/workflow-chat/manager-chat/shared-logic/actions.ts",
-          " M extensions/workflow-chat/manager-chat/shared-logic/prompts/init.md",
-          " M extensions/workflow-chat/manager-chat/shared-logic/tools/index.ts",
-          " M tests/harness-dock/nested-role-completion.test.ts",
-          " M tests/harness-dock/node-report-contract.test.ts",
-          " M tests/harness-dock/node-report.test.ts",
-          " M tests/harness-dock/role-identity-integration.test.ts",
-          " M tests/workflow-chat/manager-parameters.test.ts",
-          " M tests/workflow-chat/manager-shared-logic.test.ts",
-          " M tests/workflow-chat/pi-native.test.ts",
-          " M tests/workflow-chat/role-input-boundaries.test.ts",
-          " M tests/workflow-chat/support/manager-scenario.ts"
+          " M extensions/workflow-chat/common/config.ts",
+          " M extensions/workflow-chat/common/requests.ts",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-20NevY/captures/request-001-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-20NevY/captures/request-002-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-20NevY/scope.txt",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-20NevY/sessions/2026-11-11T15-37-18-509Z_01a1cb41-a1ad-7359-b484-66e4d7ed5d56.jsonl",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-20NevY/stderr.txt",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-7uL5H6/captures/request-001-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-7uL5H6/captures/request-002-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-7uL5H6/captures/request-003-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-7uL5H6/captures/request-004-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-7uL5H6/captures/request-005-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-7uL5H6/captures/request-006-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-7uL5H6/captures/request-007-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-7uL5H6/captures/request-008-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-7uL5H6/captures/request-009-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-7uL5H6/captures/request-010-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-7uL5H6/scope.txt",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-7uL5H6/sessions/2026-11-11T15-41-37-063Z_01a1cb45-93a7-7421-aff2-d3a3fc020b69.jsonl",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-7uL5H6/stderr.txt",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-FS6Dni/captures/request-001-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-FS6Dni/captures/request-002-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-FS6Dni/scope.txt",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-FS6Dni/sessions/2026-11-11T15-39-33-520Z_01a1cb43-b110-7663-8602-17ab9011d783.jsonl",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-FS6Dni/stderr.txt",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Gbdm42/captures/request-001-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Gbdm42/captures/request-002-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Gbdm42/captures/request-003-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Gbdm42/captures/request-004-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Gbdm42/captures/request-005-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Gbdm42/captures/request-006-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Gbdm42/captures/request-007-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Gbdm42/captures/request-008-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Gbdm42/captures/request-009-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Gbdm42/captures/request-010-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Gbdm42/scope.txt",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Gbdm42/sessions/2026-11-11T15-41-04-008Z_01a1cb45-1288-7248-9f55-14af460c818b.jsonl",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Gbdm42/stderr.txt",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Oujj2M/captures/request-001-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Oujj2M/captures/request-002-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Oujj2M/scope.txt",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Oujj2M/sessions/2026-11-11T15-38-31-579Z_01a1cb42-bf1b-71f5-9c07-2bf3739975b3.jsonl",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Oujj2M/stderr.txt",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Vfyaqj/captures/request-001-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Vfyaqj/captures/request-002-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Vfyaqj/scope.txt",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Vfyaqj/sessions/2026-11-11T15-39-19-997Z_01a1cb43-7c3d-737d-a08c-347426756636.jsonl",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Vfyaqj/stderr.txt",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-aacXY1/captures/request-001-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-aacXY1/captures/request-002-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-aacXY1/scope.txt",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-aacXY1/sessions/2026-11-11T15-41-00-455Z_01a1cb45-04a7-7736-b54d-bfbb9525a1c8.jsonl",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-aacXY1/stderr.txt",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-av42Sg/captures/request-001-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-av42Sg/captures/request-002-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-av42Sg/captures/request-003-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-av42Sg/captures/request-004-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-av42Sg/captures/request-005-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-av42Sg/captures/request-006-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-av42Sg/scope.txt",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-av42Sg/sessions/2026-11-11T15-41-43-549Z_01a1cb45-acfd-7488-9f5f-1c9f43813038.jsonl",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-av42Sg/stderr.txt",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-e5t1md/captures/request-001-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-e5t1md/captures/request-002-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-e5t1md/scope.txt",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-e5t1md/sessions/2026-11-11T15-41-33-029Z_01a1cb45-83e5-75ad-9e1a-03fd11fc13d2.jsonl",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-e5t1md/stderr.txt",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-gaEhEU/captures/request-001-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-gaEhEU/captures/request-002-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-gaEhEU/scope.txt",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-gaEhEU/sessions/2026-11-11T15-40-25-556Z_01a1cb44-7c54-7796-9808-28468fa2d7a2.jsonl",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-gaEhEU/stderr.txt",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-LPdt4h/captures/request-001-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-LPdt4h/captures/request-002-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-LPdt4h/captures/request-003-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-LPdt4h/captures/request-004-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-LPdt4h/captures/request-005-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-LPdt4h/captures/request-006-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-LPdt4h/captures/request-007-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-LPdt4h/captures/request-008-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-LPdt4h/captures/request-009-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-LPdt4h/captures/request-010-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-LPdt4h/scope.txt",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-LPdt4h/sessions/2026-11-11T15-41-07-674Z_01a1cb45-20da-73bc-8eba-a01a1deff016.jsonl",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-LPdt4h/stderr.txt",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-PdEXRD/captures/request-001-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-PdEXRD/captures/request-002-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-PdEXRD/captures/request-003-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-PdEXRD/captures/request-004-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-PdEXRD/captures/request-005-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-PdEXRD/captures/request-006-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-PdEXRD/captures/request-007-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-PdEXRD/captures/request-008-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-PdEXRD/captures/request-009-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-PdEXRD/captures/request-010-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-PdEXRD/scope.txt",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-PdEXRD/sessions/2026-11-11T15-41-55-286Z_01a1cb45-dad4-75e0-8498-afea1244c00b.jsonl",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-PdEXRD/stderr.txt",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-WqgA6Y/captures/request-001-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-WqgA6Y/captures/request-002-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-WqgA6Y/scope.txt",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-WqgA6Y/sessions/2026-11-11T15-39-58-511Z_01a1cb44-12af-761e-84da-fd00d1346733.jsonl",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-WqgA6Y/stderr.txt",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-YnGSuv/captures/request-001-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-YnGSuv/captures/request-002-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-YnGSuv/scope.txt",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-YnGSuv/sessions/2026-11-11T15-41-06-167Z_01a1cb45-1af6-77eb-b439-23f1d2b69e49.jsonl",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-YnGSuv/stderr.txt",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-lP42F0/captures/request-001-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-lP42F0/captures/request-002-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-lP42F0/captures/request-003-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-lP42F0/captures/request-004-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-lP42F0/captures/request-005-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-lP42F0/captures/request-006-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-lP42F0/scope.txt",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-lP42F0/sessions/2026-11-11T15-42-00-977Z_01a1cb45-f110-77fa-916d-bdb308633e87.jsonl",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-lP42F0/stderr.txt",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-xblRP6/captures/request-001-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-xblRP6/captures/request-002-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-xblRP6/scope.txt",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-xblRP6/sessions/2026-11-11T15-41-50-309Z_01a1cb45-c764-7237-837c-5c476f248880.jsonl",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-xblRP6/stderr.txt",
+          "?? entrypoints/omp-auto/chief-chat.ts",
+          "?? entrypoints/pi-auto/chief-chat.ts",
+          "?? extensions/workflow-chat/chief-chat/definition.ts",
+          "?? extensions/workflow-chat/chief-chat/harnesses/omp.ts",
+          "?? extensions/workflow-chat/chief-chat/harnesses/pi-auto.ts",
+          "?? extensions/workflow-chat/chief-chat/shared-logic/implementation.ts",
+          "?? extensions/workflow-chat/chief-chat/shared-logic/prompts/index.ts",
+          "?? extensions/workflow-chat/chief-chat/shared-logic/prompts/init.md",
+          "?? extensions/workflow-chat/chief-chat/shared-logic/tools/index.ts",
+          "?? tests/harness-dock/chief-role.test.ts",
+          "?? tests/workflow-chat/support/chief-dock.ts"
         ],
-        "diffSha256": "c730afb00467e86e874806c267fc5e823259dc5f81b68b86c3a878632dce8e1f",
-        "untrackedFiles": [],
-        "sha256": "7d12217bcef23ef4b45a8dcd057056e9c9ba2e8f9afcffc1eb5e25dfb6c96b9a"
+        "diffSha256": "846f70bea74e0cc5769cd13e46fe97361a785cea81ac77fba63a2a4fe30f87a0",
+        "untrackedFiles": [
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-20NevY/captures/request-001-_v1_chat_completions.json",
+            "sha256": "3792cfa1167e76422a1a80369279c1f839309a26b3c0221046b5cf67cb446a67"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-20NevY/captures/request-002-_v1_chat_completions.json",
+            "sha256": "91fc400b4ea4ffa34da10317dc3981849e989bb561624aa3020157a6881918a3"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-20NevY/scope.txt",
+            "sha256": "64c005057336755cda0851aff50b6c829c6f0b739fa7c1bd709f8234fe2b3a3a"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-20NevY/sessions/2026-11-11T15-37-18-509Z_01a1cb41-a1ad-7359-b484-66e4d7ed5d56.jsonl",
+            "sha256": "2daecdf15f1cd776524e992f1e6278aa2be16a3740a4c56f91dfc8222f70888d"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-20NevY/stderr.txt",
+            "sha256": "24c6bdfcd71325154fdb87aba34467653606419613560ea38a41cfb3a5a7ccdf"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-7uL5H6/captures/request-001-_v1_chat_completions.json",
+            "sha256": "82f92e084851c178e8e2983199e98ea6e4f6251c5e15a83ac5c80cac6d4c6a2b"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-7uL5H6/captures/request-002-_v1_chat_completions.json",
+            "sha256": "544aca52b72f0c524c19acf7d16f7335e13c7d65422f371edf52f854a8f65b10"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-7uL5H6/captures/request-003-_v1_chat_completions.json",
+            "sha256": "996927294471ee02d9d52b2567beb964bb21691908ccaa7dc0efd273b3859303"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-7uL5H6/captures/request-004-_v1_chat_completions.json",
+            "sha256": "62ca97e98e64fd27ba7b7da0e38f13604b668ea03d5a38483eb67148621e27b4"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-7uL5H6/captures/request-005-_v1_chat_completions.json",
+            "sha256": "19df89c84b19d8737911b5e7c7930cab050b154a9435a8e0c33b16864dce27eb"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-7uL5H6/captures/request-006-_v1_chat_completions.json",
+            "sha256": "67142d8dc857578a00fd7de444e467f825d544e49971768a2aad46a9ac92e811"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-7uL5H6/captures/request-007-_v1_chat_completions.json",
+            "sha256": "d200eae634439ec8e196ea9440acbe53afe6419eddbde485d1cb75d3cb17696a"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-7uL5H6/captures/request-008-_v1_chat_completions.json",
+            "sha256": "b883f478fb120502dfd0e40d2b94719a93ad8aea472fe7ec884716e5e1dba60b"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-7uL5H6/captures/request-009-_v1_chat_completions.json",
+            "sha256": "1538fd0c28d71d9b0cd34ed0550e878e6344fc56af8c22c176cdc7bfdf3dbaff"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-7uL5H6/captures/request-010-_v1_chat_completions.json",
+            "sha256": "ef3c4fc172363f44216670d56e13c02ab66eb4b4cb2c3a263040202af26bb90f"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-7uL5H6/scope.txt",
+            "sha256": "64c005057336755cda0851aff50b6c829c6f0b739fa7c1bd709f8234fe2b3a3a"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-7uL5H6/sessions/2026-11-11T15-41-37-063Z_01a1cb45-93a7-7421-aff2-d3a3fc020b69.jsonl",
+            "sha256": "f1a0deb7bfe350417fbcdf9244c15c6c9693bf81cf2a258cccbdf3336de514a5"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-7uL5H6/stderr.txt",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-FS6Dni/captures/request-001-_v1_chat_completions.json",
+            "sha256": "ef258cef1b8ea5afbb2874bab7b9ce758030a07e8cbd0f952a2f17545bc467d3"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-FS6Dni/captures/request-002-_v1_chat_completions.json",
+            "sha256": "44fe46ba97f0dadc9458742a29e2a4bcd24f858c0ae2f2005a8ca052504b8e6e"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-FS6Dni/scope.txt",
+            "sha256": "64c005057336755cda0851aff50b6c829c6f0b739fa7c1bd709f8234fe2b3a3a"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-FS6Dni/sessions/2026-11-11T15-39-33-520Z_01a1cb43-b110-7663-8602-17ab9011d783.jsonl",
+            "sha256": "79ec6c2c88956b5ac04b863e8363e4ea8c5f9b2e69e190aff5a378f61facc6b4"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-FS6Dni/stderr.txt",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Gbdm42/captures/request-001-_v1_chat_completions.json",
+            "sha256": "9cdc0c0153741c047d05786c5c7b5736d2f1bebc1ac427f9c04bd0680d8aea8f"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Gbdm42/captures/request-002-_v1_chat_completions.json",
+            "sha256": "1e405c4d13947e2d9336c7ac5ad664c4d6692a02496f11ebf1e6950d7064e807"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Gbdm42/captures/request-003-_v1_chat_completions.json",
+            "sha256": "a327c0dee11f0c9076c61c3d21aae0136c2763a4cbce6b223a7bea7d08037296"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Gbdm42/captures/request-004-_v1_chat_completions.json",
+            "sha256": "9ca2e505a8b862cd1ffdbb911c269c54a92265690cc11ae012808bc57f3261c4"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Gbdm42/captures/request-005-_v1_chat_completions.json",
+            "sha256": "5413a65a876b4b0ac4378f9a584968e128d7344a4672bcec643e692634afa48c"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Gbdm42/captures/request-006-_v1_chat_completions.json",
+            "sha256": "d379991897e0d3524fdd863ef3b3d450ff23d997e59fe8f82946bf6e403f3d63"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Gbdm42/captures/request-007-_v1_chat_completions.json",
+            "sha256": "ac1c95db868576d9cd597ed5d22c901b0ed46e88e856811ca4ca11d22198dbd7"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Gbdm42/captures/request-008-_v1_chat_completions.json",
+            "sha256": "efad36796f56d1ea4f7687e0a74926902ab4a8a5f8fb63650516abe42c7756e2"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Gbdm42/captures/request-009-_v1_chat_completions.json",
+            "sha256": "87471114992956354ef61db74b1510981340c22466881f74b8948dbbf70a2495"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Gbdm42/captures/request-010-_v1_chat_completions.json",
+            "sha256": "e5c8d2e15c807207c9aa44af6fb2d8b26bd5267cff607b624a880d64a6ee49aa"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Gbdm42/scope.txt",
+            "sha256": "64c005057336755cda0851aff50b6c829c6f0b739fa7c1bd709f8234fe2b3a3a"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Gbdm42/sessions/2026-11-11T15-41-04-008Z_01a1cb45-1288-7248-9f55-14af460c818b.jsonl",
+            "sha256": "bccbb18427e519cb11d98910e71b62d51f331c98e1ea2c852e3f7c81d39d593d"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Gbdm42/stderr.txt",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Oujj2M/captures/request-001-_v1_chat_completions.json",
+            "sha256": "f478ccf0e62de9a0f8a82c7886c984a22e7daa88754b24b1d259b28bb8904201"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Oujj2M/captures/request-002-_v1_chat_completions.json",
+            "sha256": "652b3053e29e72f0bfebdbf4b5ddfca153754e1ab1b41ad973847be438a9039a"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Oujj2M/scope.txt",
+            "sha256": "64c005057336755cda0851aff50b6c829c6f0b739fa7c1bd709f8234fe2b3a3a"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Oujj2M/sessions/2026-11-11T15-38-31-579Z_01a1cb42-bf1b-71f5-9c07-2bf3739975b3.jsonl",
+            "sha256": "42caadaa3f98d89767bda69040ce6be22ab45a729d85448e28774cea28eaf017"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Oujj2M/stderr.txt",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Vfyaqj/captures/request-001-_v1_chat_completions.json",
+            "sha256": "189bc4224b2df514cd98dd4d05557f896609ee71e8eeff8099fe038aa1358ca5"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Vfyaqj/captures/request-002-_v1_chat_completions.json",
+            "sha256": "ef94cc8a17659f02a67be4ae622278d91f00c89821496a35451dcf339b43f537"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Vfyaqj/scope.txt",
+            "sha256": "64c005057336755cda0851aff50b6c829c6f0b739fa7c1bd709f8234fe2b3a3a"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Vfyaqj/sessions/2026-11-11T15-39-19-997Z_01a1cb43-7c3d-737d-a08c-347426756636.jsonl",
+            "sha256": "32f9a21afdfc7bda498d6c699508d2b6a165c2a2809fb45fbbd54ea0f24097b0"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Vfyaqj/stderr.txt",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-aacXY1/captures/request-001-_v1_chat_completions.json",
+            "sha256": "f354a1e9c68d00ad7d4f2757f753c9fe680bb245047c7a16627c3620789371ac"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-aacXY1/captures/request-002-_v1_chat_completions.json",
+            "sha256": "4a625a6ea6df1e80f429599326fbb188b26f755aebc2553b372588b5b362fa72"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-aacXY1/scope.txt",
+            "sha256": "64c005057336755cda0851aff50b6c829c6f0b739fa7c1bd709f8234fe2b3a3a"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-aacXY1/sessions/2026-11-11T15-41-00-455Z_01a1cb45-04a7-7736-b54d-bfbb9525a1c8.jsonl",
+            "sha256": "aa429fc5a40e972903adfc16d73aa027726ea44579bc31df5f24eeb0879b8834"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-aacXY1/stderr.txt",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-av42Sg/captures/request-001-_v1_chat_completions.json",
+            "sha256": "3a05bc80b14c17d6cfef8fa692366ed0fb5bfc3bc6745e7aed9d8add44635e9d"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-av42Sg/captures/request-002-_v1_chat_completions.json",
+            "sha256": "ce606c0f6d2e86191ec54c4c0cdc484b63a3f012079ec1fbb582fe487a1094c5"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-av42Sg/captures/request-003-_v1_chat_completions.json",
+            "sha256": "5b883efc7af239cb833a1fb8c89295851e093f6dd9457a701d0ac8dc429660d9"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-av42Sg/captures/request-004-_v1_chat_completions.json",
+            "sha256": "39a1cd70f99e7c6e57353c3ee6d1feef3d5694925d443cca5e6853226a79d0d8"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-av42Sg/captures/request-005-_v1_chat_completions.json",
+            "sha256": "3d7ff373422f3a830b86c3ccad45512343090dea64b1a6de550f1fd414156a59"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-av42Sg/captures/request-006-_v1_chat_completions.json",
+            "sha256": "bd726c763784f1c524d8ae8c647125481aa982f9c26be98d9fdb02a6237cd986"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-av42Sg/scope.txt",
+            "sha256": "64c005057336755cda0851aff50b6c829c6f0b739fa7c1bd709f8234fe2b3a3a"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-av42Sg/sessions/2026-11-11T15-41-43-549Z_01a1cb45-acfd-7488-9f5f-1c9f43813038.jsonl",
+            "sha256": "db49ef3ae981a446611faf50fd89e1a633cc9e7e585a1e84484d5de3080b316d"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-av42Sg/stderr.txt",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-e5t1md/captures/request-001-_v1_chat_completions.json",
+            "sha256": "3e4f57be4a6689e0abb69b2ed37af96b37649c838b89975ec41804c22ac35d34"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-e5t1md/captures/request-002-_v1_chat_completions.json",
+            "sha256": "97f4a34374651f7cef718c8d82f8429f6ee5d92281e06037ad6373e8f235f056"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-e5t1md/scope.txt",
+            "sha256": "64c005057336755cda0851aff50b6c829c6f0b739fa7c1bd709f8234fe2b3a3a"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-e5t1md/sessions/2026-11-11T15-41-33-029Z_01a1cb45-83e5-75ad-9e1a-03fd11fc13d2.jsonl",
+            "sha256": "52d204cb8e1c006fe522dd9ab0803a4a0fef0674a6f5bc49ddf9c2de3e015853"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-e5t1md/stderr.txt",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-gaEhEU/captures/request-001-_v1_chat_completions.json",
+            "sha256": "c5bc17c528946decd0bdf0e8b0aa6e1c616bd127aa5b94795cad73cce86daaa7"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-gaEhEU/captures/request-002-_v1_chat_completions.json",
+            "sha256": "fa75e2a88c59f0610aa0a36382139033964222d264295158179ef75167cec6ad"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-gaEhEU/scope.txt",
+            "sha256": "64c005057336755cda0851aff50b6c829c6f0b739fa7c1bd709f8234fe2b3a3a"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-gaEhEU/sessions/2026-11-11T15-40-25-556Z_01a1cb44-7c54-7796-9808-28468fa2d7a2.jsonl",
+            "sha256": "a59cc822250577fc23437b61842c77c6d96506cd66229f72a52fc779a32002e3"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-gaEhEU/stderr.txt",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-LPdt4h/captures/request-001-_v1_chat_completions.json",
+            "sha256": "f75f7643a76cf7d15909fee5e65cde28280dea545b1a25541a3e374ff04163b2"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-LPdt4h/captures/request-002-_v1_chat_completions.json",
+            "sha256": "11649262051392384e82aca41fb6c2bc1e2595d2004196bc87c9318936dc061c"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-LPdt4h/captures/request-003-_v1_chat_completions.json",
+            "sha256": "c0e89ec6a03cbfa6bdc6a79ef80cddf4d023c4b78ebce2ec6530605440d44952"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-LPdt4h/captures/request-004-_v1_chat_completions.json",
+            "sha256": "5a11a7f54095e08413bd417365ec7b93289178372ef452e81107ed65fd0a38cf"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-LPdt4h/captures/request-005-_v1_chat_completions.json",
+            "sha256": "c4d3e0891585fd82990cdd60c30437261bb5ab99377175e6d9c4ff83e3c894f7"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-LPdt4h/captures/request-006-_v1_chat_completions.json",
+            "sha256": "6d9b0946b3800c68a563638cca54a404ec14ec9b040ab77c6c0b1bc2d9649c17"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-LPdt4h/captures/request-007-_v1_chat_completions.json",
+            "sha256": "f50375167a7e0f1aaf5bac1db95931c98b50b638497fbbba559fb4608f3a1371"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-LPdt4h/captures/request-008-_v1_chat_completions.json",
+            "sha256": "48d5156bd272de909819792551e8dbc5f4bf76cda268401816090eb2647fef7d"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-LPdt4h/captures/request-009-_v1_chat_completions.json",
+            "sha256": "bd1608a4993fae8044730f27719850b21204377dc2a068662623cc4d5eccb1ba"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-LPdt4h/captures/request-010-_v1_chat_completions.json",
+            "sha256": "ad9a35e38a667e03f235d8aba1c43ecff7287b92494aca7ace8adb46bc97de46"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-LPdt4h/scope.txt",
+            "sha256": "2b8acaffad90a31168626ad33bd5021e233d88e052ccb0765b20bf0dae03e228"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-LPdt4h/sessions/2026-11-11T15-41-07-674Z_01a1cb45-20da-73bc-8eba-a01a1deff016.jsonl",
+            "sha256": "114b7267ba8fbd9ce00f1a143b0a89f9cf7d7a61984a1ed5871979834befe934"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-LPdt4h/stderr.txt",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-PdEXRD/captures/request-001-_v1_chat_completions.json",
+            "sha256": "5e488ec5f535bd694340c8714d943321c37497bce513e3a318de951e3d84299c"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-PdEXRD/captures/request-002-_v1_chat_completions.json",
+            "sha256": "12d1edfe27768b00d89abf013370f7bc6eae9f66b275820c669e6fcc1b0cd9f5"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-PdEXRD/captures/request-003-_v1_chat_completions.json",
+            "sha256": "10fc3dec14c9d3bc49bc70621b9580caf4770f274deb8ff28c90551eeba911e3"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-PdEXRD/captures/request-004-_v1_chat_completions.json",
+            "sha256": "c211c15ebbfb6a4e2b519aa616ccda1ae7e289edcba028845cfc1cc3d223755c"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-PdEXRD/captures/request-005-_v1_chat_completions.json",
+            "sha256": "722514a083112780cb96f8b640c76b11a96143dec539bc74b4903b291918c233"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-PdEXRD/captures/request-006-_v1_chat_completions.json",
+            "sha256": "c934a13c36009b9c5e2d9069b72878d4567c68452710d44cfa7c559547f412ba"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-PdEXRD/captures/request-007-_v1_chat_completions.json",
+            "sha256": "3541b084559e256453bac30a0b7215f589131253152a51d31ba5d30a771321ba"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-PdEXRD/captures/request-008-_v1_chat_completions.json",
+            "sha256": "fc50a510cdcac67749873c28a42c1312ccb338ad7aea5932830b0ff757fecc89"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-PdEXRD/captures/request-009-_v1_chat_completions.json",
+            "sha256": "c1593697b80b1777adae086d8871864c5f286b68e4bc8d49e3f54f0b25d5f489"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-PdEXRD/captures/request-010-_v1_chat_completions.json",
+            "sha256": "c2c216d53faa50c4a0888ae62bd995e63cb6b9da3f1d9775cb7fbb71913cfae0"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-PdEXRD/scope.txt",
+            "sha256": "2b8acaffad90a31168626ad33bd5021e233d88e052ccb0765b20bf0dae03e228"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-PdEXRD/sessions/2026-11-11T15-41-55-286Z_01a1cb45-dad4-75e0-8498-afea1244c00b.jsonl",
+            "sha256": "8d7abca1d64e980165f452018cddcbfad179294d2a9cd31fcd9e6054194c81ff"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-PdEXRD/stderr.txt",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-WqgA6Y/captures/request-001-_v1_chat_completions.json",
+            "sha256": "1e06a1da66b7807464d7ea8fc71d523fdae79036abf7c3257293f9d66948ba10"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-WqgA6Y/captures/request-002-_v1_chat_completions.json",
+            "sha256": "0f7200cb3ec5dbec5f88b2514cabf79da1d3bf770e5f49d701f87797d2763ae9"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-WqgA6Y/scope.txt",
+            "sha256": "2b8acaffad90a31168626ad33bd5021e233d88e052ccb0765b20bf0dae03e228"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-WqgA6Y/sessions/2026-11-11T15-39-58-511Z_01a1cb44-12af-761e-84da-fd00d1346733.jsonl",
+            "sha256": "f98561c78b3d4bd9327a737a975c37af518a74821cff928916bfc909faf31a27"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-WqgA6Y/stderr.txt",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-YnGSuv/captures/request-001-_v1_chat_completions.json",
+            "sha256": "4ec4ff1d08b13433ec5ada9c6462a7632708c054be04f570dd7efa70d1e75dab"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-YnGSuv/captures/request-002-_v1_chat_completions.json",
+            "sha256": "bd2281e3946bb029d4ab1163f90b54ac362ca5b00486076253f1918c6b6cf103"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-YnGSuv/scope.txt",
+            "sha256": "2b8acaffad90a31168626ad33bd5021e233d88e052ccb0765b20bf0dae03e228"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-YnGSuv/sessions/2026-11-11T15-41-06-167Z_01a1cb45-1af6-77eb-b439-23f1d2b69e49.jsonl",
+            "sha256": "04c0308b15e9aa6d4e0db8d838739c91a09a3acc7f3162ff3414a41d43140468"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-YnGSuv/stderr.txt",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-lP42F0/captures/request-001-_v1_chat_completions.json",
+            "sha256": "a2b3c4283b1a477cb57785adc0e9af1ce6caf00ddf8c5b3c3b008ef121e967ec"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-lP42F0/captures/request-002-_v1_chat_completions.json",
+            "sha256": "072bcf5afaf4c38c58dfdda2a9e12e70876fd6d47711e8194e6033501f42c574"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-lP42F0/captures/request-003-_v1_chat_completions.json",
+            "sha256": "5d3ab1c86be0b5f3127205b13dfec388f182b139cf7ad97390f9a66cabd9c8f4"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-lP42F0/captures/request-004-_v1_chat_completions.json",
+            "sha256": "ff4559ab05a88581441584fc267a0034f9295c0aec13bbfb2bc795c35594c9f6"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-lP42F0/captures/request-005-_v1_chat_completions.json",
+            "sha256": "b1945a0c338d4ef45cb1d78171e0d885fbe5251792f31afe1cd33346e815149c"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-lP42F0/captures/request-006-_v1_chat_completions.json",
+            "sha256": "73a164524fa552e3cead96b07b8de45607ba261c8c0cd9c2e2631dee5557bf48"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-lP42F0/scope.txt",
+            "sha256": "2b8acaffad90a31168626ad33bd5021e233d88e052ccb0765b20bf0dae03e228"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-lP42F0/sessions/2026-11-11T15-42-00-977Z_01a1cb45-f110-77fa-916d-bdb308633e87.jsonl",
+            "sha256": "a14af821eaf76ccfb14fad461bdc44be5aa0ab5e9fdf442428299090159f8004"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-lP42F0/stderr.txt",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-xblRP6/captures/request-001-_v1_chat_completions.json",
+            "sha256": "b08a96ffa54433ef7df992cf50438f3b2a8faaa630e414bd9a0f5807b6149223"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-xblRP6/captures/request-002-_v1_chat_completions.json",
+            "sha256": "a29beaa18b19769f474a7e77ccd4e65c18965947a94b5d2caa1bc352d5f463f9"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-xblRP6/scope.txt",
+            "sha256": "2b8acaffad90a31168626ad33bd5021e233d88e052ccb0765b20bf0dae03e228"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-xblRP6/sessions/2026-11-11T15-41-50-309Z_01a1cb45-c764-7237-837c-5c476f248880.jsonl",
+            "sha256": "6af017ae887aa3bdab7db272409a4203c621de9df1519530d17af5ffa6362846"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-xblRP6/stderr.txt",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "path": "entrypoints/omp-auto/chief-chat.ts",
+            "sha256": "3e7df76a495f674a84f61f7483ebf6ca316b463b89c087a0f8af682f2621dc0b"
+          },
+          {
+            "path": "entrypoints/pi-auto/chief-chat.ts",
+            "sha256": "d43f6a14eac88bda2663420e04f8ba0747de6486b7653477359533e37112e7ab"
+          },
+          {
+            "path": "extensions/workflow-chat/chief-chat/definition.ts",
+            "sha256": "b08b3e442fb64ac131376cafc4b0061cd44d86f1d5143d095e22aece4a0db016"
+          },
+          {
+            "path": "extensions/workflow-chat/chief-chat/harnesses/omp.ts",
+            "sha256": "73e6c13d27878ffac66cb3a20e66d1a57505761003710fb6d0230e914a1bf8e4"
+          },
+          {
+            "path": "extensions/workflow-chat/chief-chat/harnesses/pi-auto.ts",
+            "sha256": "a767001831f72a252b10e592f6b6420410db283d0ce5e97cc9d88d4a722c1140"
+          },
+          {
+            "path": "extensions/workflow-chat/chief-chat/shared-logic/implementation.ts",
+            "sha256": "3176b64fc2b5b6da68e29865879230e0979d34cae9dd83a609096abba5e4b2d6"
+          },
+          {
+            "path": "extensions/workflow-chat/chief-chat/shared-logic/prompts/index.ts",
+            "sha256": "9568a8f6e0f29b4354976db84a13b00d20fd88a35f6ef70731c368fa93f51834"
+          },
+          {
+            "path": "extensions/workflow-chat/chief-chat/shared-logic/prompts/init.md",
+            "sha256": "584480a87a4ef935b97b964a1d136519342ac96daa118bfe958322286aec1777"
+          },
+          {
+            "path": "extensions/workflow-chat/chief-chat/shared-logic/tools/index.ts",
+            "sha256": "5fbe3c33323eea2286be5d0df973c95157975b6e9186e6df3763e892b1829bea"
+          },
+          {
+            "path": "tests/harness-dock/chief-role.test.ts",
+            "sha256": "79affcd79eeccbd7dbad009ab15849c951eee6fbef54c1e19cc215021b320d5f"
+          },
+          {
+            "path": "tests/workflow-chat/support/chief-dock.ts",
+            "sha256": "0e64d3c4df17f6d43059e198f541c00791a916b15855c59face91239a45634d6"
+          }
+        ],
+        "sha256": "f034a6292470144cad197faf00542bb5469f7621646cac5271c405e4e646c256"
       },
       "lockfiles": [
         {
@@ -71,29 +717,675 @@
         "Pi tool AbortSignal releases transport, switch preserves auto startup, and shutdown releases active collect"
       ],
       "complete": true,
-      "finishedAt": "2026-11-11T08:09:10.962Z",
+      "finishedAt": "2026-11-11T15:55:11.805Z",
       "finishedSource": {
-        "repoRoot": "E:\\Developer\\myhub\\my-agent-toolkit",
-        "head": "a9a823771e3c70351b433360f36a9a9ecd9d72b3",
+        "repoRoot": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-XUNtZp",
+        "head": "f6bc79b4627dac2279a1083c087020e89c69eac3",
         "status": [
-          " M extensions/workflow-chat/OPERATIONS.md",
+          " M entrypoints/startup/auto.yaml",
           " M extensions/workflow-chat/README.md",
-          " M extensions/workflow-chat/manager-chat/shared-logic/actions.ts",
-          " M extensions/workflow-chat/manager-chat/shared-logic/prompts/init.md",
-          " M extensions/workflow-chat/manager-chat/shared-logic/tools/index.ts",
-          " M tests/harness-dock/nested-role-completion.test.ts",
-          " M tests/harness-dock/node-report-contract.test.ts",
-          " M tests/harness-dock/node-report.test.ts",
-          " M tests/harness-dock/role-identity-integration.test.ts",
-          " M tests/workflow-chat/manager-parameters.test.ts",
-          " M tests/workflow-chat/manager-shared-logic.test.ts",
-          " M tests/workflow-chat/pi-native.test.ts",
-          " M tests/workflow-chat/role-input-boundaries.test.ts",
-          " M tests/workflow-chat/support/manager-scenario.ts"
+          " M extensions/workflow-chat/common/config.ts",
+          " M extensions/workflow-chat/common/requests.ts",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-20NevY/captures/request-001-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-20NevY/captures/request-002-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-20NevY/scope.txt",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-20NevY/sessions/2026-11-11T15-37-18-509Z_01a1cb41-a1ad-7359-b484-66e4d7ed5d56.jsonl",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-20NevY/stderr.txt",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-7uL5H6/captures/request-001-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-7uL5H6/captures/request-002-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-7uL5H6/captures/request-003-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-7uL5H6/captures/request-004-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-7uL5H6/captures/request-005-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-7uL5H6/captures/request-006-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-7uL5H6/captures/request-007-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-7uL5H6/captures/request-008-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-7uL5H6/captures/request-009-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-7uL5H6/captures/request-010-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-7uL5H6/scope.txt",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-7uL5H6/sessions/2026-11-11T15-41-37-063Z_01a1cb45-93a7-7421-aff2-d3a3fc020b69.jsonl",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-7uL5H6/stderr.txt",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-FS6Dni/captures/request-001-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-FS6Dni/captures/request-002-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-FS6Dni/scope.txt",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-FS6Dni/sessions/2026-11-11T15-39-33-520Z_01a1cb43-b110-7663-8602-17ab9011d783.jsonl",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-FS6Dni/stderr.txt",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Gbdm42/captures/request-001-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Gbdm42/captures/request-002-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Gbdm42/captures/request-003-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Gbdm42/captures/request-004-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Gbdm42/captures/request-005-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Gbdm42/captures/request-006-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Gbdm42/captures/request-007-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Gbdm42/captures/request-008-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Gbdm42/captures/request-009-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Gbdm42/captures/request-010-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Gbdm42/scope.txt",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Gbdm42/sessions/2026-11-11T15-41-04-008Z_01a1cb45-1288-7248-9f55-14af460c818b.jsonl",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Gbdm42/stderr.txt",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Oujj2M/captures/request-001-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Oujj2M/captures/request-002-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Oujj2M/scope.txt",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Oujj2M/sessions/2026-11-11T15-38-31-579Z_01a1cb42-bf1b-71f5-9c07-2bf3739975b3.jsonl",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Oujj2M/stderr.txt",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Vfyaqj/captures/request-001-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Vfyaqj/captures/request-002-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Vfyaqj/scope.txt",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Vfyaqj/sessions/2026-11-11T15-39-19-997Z_01a1cb43-7c3d-737d-a08c-347426756636.jsonl",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Vfyaqj/stderr.txt",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-aacXY1/captures/request-001-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-aacXY1/captures/request-002-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-aacXY1/scope.txt",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-aacXY1/sessions/2026-11-11T15-41-00-455Z_01a1cb45-04a7-7736-b54d-bfbb9525a1c8.jsonl",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-aacXY1/stderr.txt",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-av42Sg/captures/request-001-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-av42Sg/captures/request-002-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-av42Sg/captures/request-003-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-av42Sg/captures/request-004-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-av42Sg/captures/request-005-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-av42Sg/captures/request-006-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-av42Sg/scope.txt",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-av42Sg/sessions/2026-11-11T15-41-43-549Z_01a1cb45-acfd-7488-9f5f-1c9f43813038.jsonl",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-av42Sg/stderr.txt",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-e5t1md/captures/request-001-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-e5t1md/captures/request-002-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-e5t1md/scope.txt",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-e5t1md/sessions/2026-11-11T15-41-33-029Z_01a1cb45-83e5-75ad-9e1a-03fd11fc13d2.jsonl",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-e5t1md/stderr.txt",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-gaEhEU/captures/request-001-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-gaEhEU/captures/request-002-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-gaEhEU/scope.txt",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-gaEhEU/sessions/2026-11-11T15-40-25-556Z_01a1cb44-7c54-7796-9808-28468fa2d7a2.jsonl",
+          "?? .scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-gaEhEU/stderr.txt",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-LPdt4h/captures/request-001-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-LPdt4h/captures/request-002-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-LPdt4h/captures/request-003-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-LPdt4h/captures/request-004-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-LPdt4h/captures/request-005-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-LPdt4h/captures/request-006-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-LPdt4h/captures/request-007-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-LPdt4h/captures/request-008-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-LPdt4h/captures/request-009-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-LPdt4h/captures/request-010-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-LPdt4h/scope.txt",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-LPdt4h/sessions/2026-11-11T15-41-07-674Z_01a1cb45-20da-73bc-8eba-a01a1deff016.jsonl",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-LPdt4h/stderr.txt",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-PdEXRD/captures/request-001-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-PdEXRD/captures/request-002-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-PdEXRD/captures/request-003-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-PdEXRD/captures/request-004-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-PdEXRD/captures/request-005-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-PdEXRD/captures/request-006-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-PdEXRD/captures/request-007-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-PdEXRD/captures/request-008-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-PdEXRD/captures/request-009-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-PdEXRD/captures/request-010-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-PdEXRD/scope.txt",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-PdEXRD/sessions/2026-11-11T15-41-55-286Z_01a1cb45-dad4-75e0-8498-afea1244c00b.jsonl",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-PdEXRD/stderr.txt",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-WqgA6Y/captures/request-001-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-WqgA6Y/captures/request-002-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-WqgA6Y/scope.txt",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-WqgA6Y/sessions/2026-11-11T15-39-58-511Z_01a1cb44-12af-761e-84da-fd00d1346733.jsonl",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-WqgA6Y/stderr.txt",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-YnGSuv/captures/request-001-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-YnGSuv/captures/request-002-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-YnGSuv/scope.txt",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-YnGSuv/sessions/2026-11-11T15-41-06-167Z_01a1cb45-1af6-77eb-b439-23f1d2b69e49.jsonl",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-YnGSuv/stderr.txt",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-lP42F0/captures/request-001-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-lP42F0/captures/request-002-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-lP42F0/captures/request-003-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-lP42F0/captures/request-004-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-lP42F0/captures/request-005-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-lP42F0/captures/request-006-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-lP42F0/scope.txt",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-lP42F0/sessions/2026-11-11T15-42-00-977Z_01a1cb45-f110-77fa-916d-bdb308633e87.jsonl",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-lP42F0/stderr.txt",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-xblRP6/captures/request-001-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-xblRP6/captures/request-002-_v1_chat_completions.json",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-xblRP6/scope.txt",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-xblRP6/sessions/2026-11-11T15-41-50-309Z_01a1cb45-c764-7237-837c-5c476f248880.jsonl",
+          "?? .scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-xblRP6/stderr.txt",
+          "?? entrypoints/omp-auto/chief-chat.ts",
+          "?? entrypoints/pi-auto/chief-chat.ts",
+          "?? extensions/workflow-chat/chief-chat/definition.ts",
+          "?? extensions/workflow-chat/chief-chat/harnesses/omp.ts",
+          "?? extensions/workflow-chat/chief-chat/harnesses/pi-auto.ts",
+          "?? extensions/workflow-chat/chief-chat/shared-logic/implementation.ts",
+          "?? extensions/workflow-chat/chief-chat/shared-logic/prompts/index.ts",
+          "?? extensions/workflow-chat/chief-chat/shared-logic/prompts/init.md",
+          "?? extensions/workflow-chat/chief-chat/shared-logic/tools/index.ts",
+          "?? tests/harness-dock/chief-role.test.ts",
+          "?? tests/workflow-chat/support/chief-dock.ts"
         ],
-        "diffSha256": "c730afb00467e86e874806c267fc5e823259dc5f81b68b86c3a878632dce8e1f",
-        "untrackedFiles": [],
-        "sha256": "7d12217bcef23ef4b45a8dcd057056e9c9ba2e8f9afcffc1eb5e25dfb6c96b9a"
+        "diffSha256": "846f70bea74e0cc5769cd13e46fe97361a785cea81ac77fba63a2a4fe30f87a0",
+        "untrackedFiles": [
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-20NevY/captures/request-001-_v1_chat_completions.json",
+            "sha256": "3792cfa1167e76422a1a80369279c1f839309a26b3c0221046b5cf67cb446a67"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-20NevY/captures/request-002-_v1_chat_completions.json",
+            "sha256": "91fc400b4ea4ffa34da10317dc3981849e989bb561624aa3020157a6881918a3"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-20NevY/scope.txt",
+            "sha256": "64c005057336755cda0851aff50b6c829c6f0b739fa7c1bd709f8234fe2b3a3a"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-20NevY/sessions/2026-11-11T15-37-18-509Z_01a1cb41-a1ad-7359-b484-66e4d7ed5d56.jsonl",
+            "sha256": "2daecdf15f1cd776524e992f1e6278aa2be16a3740a4c56f91dfc8222f70888d"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-20NevY/stderr.txt",
+            "sha256": "24c6bdfcd71325154fdb87aba34467653606419613560ea38a41cfb3a5a7ccdf"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-7uL5H6/captures/request-001-_v1_chat_completions.json",
+            "sha256": "82f92e084851c178e8e2983199e98ea6e4f6251c5e15a83ac5c80cac6d4c6a2b"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-7uL5H6/captures/request-002-_v1_chat_completions.json",
+            "sha256": "544aca52b72f0c524c19acf7d16f7335e13c7d65422f371edf52f854a8f65b10"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-7uL5H6/captures/request-003-_v1_chat_completions.json",
+            "sha256": "996927294471ee02d9d52b2567beb964bb21691908ccaa7dc0efd273b3859303"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-7uL5H6/captures/request-004-_v1_chat_completions.json",
+            "sha256": "62ca97e98e64fd27ba7b7da0e38f13604b668ea03d5a38483eb67148621e27b4"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-7uL5H6/captures/request-005-_v1_chat_completions.json",
+            "sha256": "19df89c84b19d8737911b5e7c7930cab050b154a9435a8e0c33b16864dce27eb"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-7uL5H6/captures/request-006-_v1_chat_completions.json",
+            "sha256": "67142d8dc857578a00fd7de444e467f825d544e49971768a2aad46a9ac92e811"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-7uL5H6/captures/request-007-_v1_chat_completions.json",
+            "sha256": "d200eae634439ec8e196ea9440acbe53afe6419eddbde485d1cb75d3cb17696a"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-7uL5H6/captures/request-008-_v1_chat_completions.json",
+            "sha256": "b883f478fb120502dfd0e40d2b94719a93ad8aea472fe7ec884716e5e1dba60b"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-7uL5H6/captures/request-009-_v1_chat_completions.json",
+            "sha256": "1538fd0c28d71d9b0cd34ed0550e878e6344fc56af8c22c176cdc7bfdf3dbaff"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-7uL5H6/captures/request-010-_v1_chat_completions.json",
+            "sha256": "ef3c4fc172363f44216670d56e13c02ab66eb4b4cb2c3a263040202af26bb90f"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-7uL5H6/scope.txt",
+            "sha256": "64c005057336755cda0851aff50b6c829c6f0b739fa7c1bd709f8234fe2b3a3a"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-7uL5H6/sessions/2026-11-11T15-41-37-063Z_01a1cb45-93a7-7421-aff2-d3a3fc020b69.jsonl",
+            "sha256": "f1a0deb7bfe350417fbcdf9244c15c6c9693bf81cf2a258cccbdf3336de514a5"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-7uL5H6/stderr.txt",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-FS6Dni/captures/request-001-_v1_chat_completions.json",
+            "sha256": "ef258cef1b8ea5afbb2874bab7b9ce758030a07e8cbd0f952a2f17545bc467d3"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-FS6Dni/captures/request-002-_v1_chat_completions.json",
+            "sha256": "44fe46ba97f0dadc9458742a29e2a4bcd24f858c0ae2f2005a8ca052504b8e6e"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-FS6Dni/scope.txt",
+            "sha256": "64c005057336755cda0851aff50b6c829c6f0b739fa7c1bd709f8234fe2b3a3a"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-FS6Dni/sessions/2026-11-11T15-39-33-520Z_01a1cb43-b110-7663-8602-17ab9011d783.jsonl",
+            "sha256": "79ec6c2c88956b5ac04b863e8363e4ea8c5f9b2e69e190aff5a378f61facc6b4"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-FS6Dni/stderr.txt",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Gbdm42/captures/request-001-_v1_chat_completions.json",
+            "sha256": "9cdc0c0153741c047d05786c5c7b5736d2f1bebc1ac427f9c04bd0680d8aea8f"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Gbdm42/captures/request-002-_v1_chat_completions.json",
+            "sha256": "1e405c4d13947e2d9336c7ac5ad664c4d6692a02496f11ebf1e6950d7064e807"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Gbdm42/captures/request-003-_v1_chat_completions.json",
+            "sha256": "a327c0dee11f0c9076c61c3d21aae0136c2763a4cbce6b223a7bea7d08037296"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Gbdm42/captures/request-004-_v1_chat_completions.json",
+            "sha256": "9ca2e505a8b862cd1ffdbb911c269c54a92265690cc11ae012808bc57f3261c4"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Gbdm42/captures/request-005-_v1_chat_completions.json",
+            "sha256": "5413a65a876b4b0ac4378f9a584968e128d7344a4672bcec643e692634afa48c"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Gbdm42/captures/request-006-_v1_chat_completions.json",
+            "sha256": "d379991897e0d3524fdd863ef3b3d450ff23d997e59fe8f82946bf6e403f3d63"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Gbdm42/captures/request-007-_v1_chat_completions.json",
+            "sha256": "ac1c95db868576d9cd597ed5d22c901b0ed46e88e856811ca4ca11d22198dbd7"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Gbdm42/captures/request-008-_v1_chat_completions.json",
+            "sha256": "efad36796f56d1ea4f7687e0a74926902ab4a8a5f8fb63650516abe42c7756e2"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Gbdm42/captures/request-009-_v1_chat_completions.json",
+            "sha256": "87471114992956354ef61db74b1510981340c22466881f74b8948dbbf70a2495"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Gbdm42/captures/request-010-_v1_chat_completions.json",
+            "sha256": "e5c8d2e15c807207c9aa44af6fb2d8b26bd5267cff607b624a880d64a6ee49aa"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Gbdm42/scope.txt",
+            "sha256": "64c005057336755cda0851aff50b6c829c6f0b739fa7c1bd709f8234fe2b3a3a"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Gbdm42/sessions/2026-11-11T15-41-04-008Z_01a1cb45-1288-7248-9f55-14af460c818b.jsonl",
+            "sha256": "bccbb18427e519cb11d98910e71b62d51f331c98e1ea2c852e3f7c81d39d593d"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Gbdm42/stderr.txt",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Oujj2M/captures/request-001-_v1_chat_completions.json",
+            "sha256": "f478ccf0e62de9a0f8a82c7886c984a22e7daa88754b24b1d259b28bb8904201"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Oujj2M/captures/request-002-_v1_chat_completions.json",
+            "sha256": "652b3053e29e72f0bfebdbf4b5ddfca153754e1ab1b41ad973847be438a9039a"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Oujj2M/scope.txt",
+            "sha256": "64c005057336755cda0851aff50b6c829c6f0b739fa7c1bd709f8234fe2b3a3a"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Oujj2M/sessions/2026-11-11T15-38-31-579Z_01a1cb42-bf1b-71f5-9c07-2bf3739975b3.jsonl",
+            "sha256": "42caadaa3f98d89767bda69040ce6be22ab45a729d85448e28774cea28eaf017"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Oujj2M/stderr.txt",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Vfyaqj/captures/request-001-_v1_chat_completions.json",
+            "sha256": "189bc4224b2df514cd98dd4d05557f896609ee71e8eeff8099fe038aa1358ca5"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Vfyaqj/captures/request-002-_v1_chat_completions.json",
+            "sha256": "ef94cc8a17659f02a67be4ae622278d91f00c89821496a35451dcf339b43f537"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Vfyaqj/scope.txt",
+            "sha256": "64c005057336755cda0851aff50b6c829c6f0b739fa7c1bd709f8234fe2b3a3a"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Vfyaqj/sessions/2026-11-11T15-39-19-997Z_01a1cb43-7c3d-737d-a08c-347426756636.jsonl",
+            "sha256": "32f9a21afdfc7bda498d6c699508d2b6a165c2a2809fb45fbbd54ea0f24097b0"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-Vfyaqj/stderr.txt",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-aacXY1/captures/request-001-_v1_chat_completions.json",
+            "sha256": "f354a1e9c68d00ad7d4f2757f753c9fe680bb245047c7a16627c3620789371ac"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-aacXY1/captures/request-002-_v1_chat_completions.json",
+            "sha256": "4a625a6ea6df1e80f429599326fbb188b26f755aebc2553b372588b5b362fa72"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-aacXY1/scope.txt",
+            "sha256": "64c005057336755cda0851aff50b6c829c6f0b739fa7c1bd709f8234fe2b3a3a"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-aacXY1/sessions/2026-11-11T15-41-00-455Z_01a1cb45-04a7-7736-b54d-bfbb9525a1c8.jsonl",
+            "sha256": "aa429fc5a40e972903adfc16d73aa027726ea44579bc31df5f24eeb0879b8834"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-aacXY1/stderr.txt",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-av42Sg/captures/request-001-_v1_chat_completions.json",
+            "sha256": "3a05bc80b14c17d6cfef8fa692366ed0fb5bfc3bc6745e7aed9d8add44635e9d"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-av42Sg/captures/request-002-_v1_chat_completions.json",
+            "sha256": "ce606c0f6d2e86191ec54c4c0cdc484b63a3f012079ec1fbb582fe487a1094c5"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-av42Sg/captures/request-003-_v1_chat_completions.json",
+            "sha256": "5b883efc7af239cb833a1fb8c89295851e093f6dd9457a701d0ac8dc429660d9"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-av42Sg/captures/request-004-_v1_chat_completions.json",
+            "sha256": "39a1cd70f99e7c6e57353c3ee6d1feef3d5694925d443cca5e6853226a79d0d8"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-av42Sg/captures/request-005-_v1_chat_completions.json",
+            "sha256": "3d7ff373422f3a830b86c3ccad45512343090dea64b1a6de550f1fd414156a59"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-av42Sg/captures/request-006-_v1_chat_completions.json",
+            "sha256": "bd726c763784f1c524d8ae8c647125481aa982f9c26be98d9fdb02a6237cd986"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-av42Sg/scope.txt",
+            "sha256": "64c005057336755cda0851aff50b6c829c6f0b739fa7c1bd709f8234fe2b3a3a"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-av42Sg/sessions/2026-11-11T15-41-43-549Z_01a1cb45-acfd-7488-9f5f-1c9f43813038.jsonl",
+            "sha256": "db49ef3ae981a446611faf50fd89e1a633cc9e7e585a1e84484d5de3080b316d"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-av42Sg/stderr.txt",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-e5t1md/captures/request-001-_v1_chat_completions.json",
+            "sha256": "3e4f57be4a6689e0abb69b2ed37af96b37649c838b89975ec41804c22ac35d34"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-e5t1md/captures/request-002-_v1_chat_completions.json",
+            "sha256": "97f4a34374651f7cef718c8d82f8429f6ee5d92281e06037ad6373e8f235f056"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-e5t1md/scope.txt",
+            "sha256": "64c005057336755cda0851aff50b6c829c6f0b739fa7c1bd709f8234fe2b3a3a"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-e5t1md/sessions/2026-11-11T15-41-33-029Z_01a1cb45-83e5-75ad-9e1a-03fd11fc13d2.jsonl",
+            "sha256": "52d204cb8e1c006fe522dd9ab0803a4a0fef0674a6f5bc49ddf9c2de3e015853"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-e5t1md/stderr.txt",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-gaEhEU/captures/request-001-_v1_chat_completions.json",
+            "sha256": "c5bc17c528946decd0bdf0e8b0aa6e1c616bd127aa5b94795cad73cce86daaa7"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-gaEhEU/captures/request-002-_v1_chat_completions.json",
+            "sha256": "fa75e2a88c59f0610aa0a36382139033964222d264295158179ef75167cec6ad"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-gaEhEU/scope.txt",
+            "sha256": "64c005057336755cda0851aff50b6c829c6f0b739fa7c1bd709f8234fe2b3a3a"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-gaEhEU/sessions/2026-11-11T15-40-25-556Z_01a1cb44-7c54-7796-9808-28468fa2d7a2.jsonl",
+            "sha256": "a59cc822250577fc23437b61842c77c6d96506cd66229f72a52fc779a32002e3"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-omp-omp-dock-chief-omp-gaEhEU/stderr.txt",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-LPdt4h/captures/request-001-_v1_chat_completions.json",
+            "sha256": "f75f7643a76cf7d15909fee5e65cde28280dea545b1a25541a3e374ff04163b2"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-LPdt4h/captures/request-002-_v1_chat_completions.json",
+            "sha256": "11649262051392384e82aca41fb6c2bc1e2595d2004196bc87c9318936dc061c"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-LPdt4h/captures/request-003-_v1_chat_completions.json",
+            "sha256": "c0e89ec6a03cbfa6bdc6a79ef80cddf4d023c4b78ebce2ec6530605440d44952"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-LPdt4h/captures/request-004-_v1_chat_completions.json",
+            "sha256": "5a11a7f54095e08413bd417365ec7b93289178372ef452e81107ed65fd0a38cf"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-LPdt4h/captures/request-005-_v1_chat_completions.json",
+            "sha256": "c4d3e0891585fd82990cdd60c30437261bb5ab99377175e6d9c4ff83e3c894f7"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-LPdt4h/captures/request-006-_v1_chat_completions.json",
+            "sha256": "6d9b0946b3800c68a563638cca54a404ec14ec9b040ab77c6c0b1bc2d9649c17"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-LPdt4h/captures/request-007-_v1_chat_completions.json",
+            "sha256": "f50375167a7e0f1aaf5bac1db95931c98b50b638497fbbba559fb4608f3a1371"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-LPdt4h/captures/request-008-_v1_chat_completions.json",
+            "sha256": "48d5156bd272de909819792551e8dbc5f4bf76cda268401816090eb2647fef7d"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-LPdt4h/captures/request-009-_v1_chat_completions.json",
+            "sha256": "bd1608a4993fae8044730f27719850b21204377dc2a068662623cc4d5eccb1ba"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-LPdt4h/captures/request-010-_v1_chat_completions.json",
+            "sha256": "ad9a35e38a667e03f235d8aba1c43ecff7287b92494aca7ace8adb46bc97de46"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-LPdt4h/scope.txt",
+            "sha256": "2b8acaffad90a31168626ad33bd5021e233d88e052ccb0765b20bf0dae03e228"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-LPdt4h/sessions/2026-11-11T15-41-07-674Z_01a1cb45-20da-73bc-8eba-a01a1deff016.jsonl",
+            "sha256": "114b7267ba8fbd9ce00f1a143b0a89f9cf7d7a61984a1ed5871979834befe934"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-LPdt4h/stderr.txt",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-PdEXRD/captures/request-001-_v1_chat_completions.json",
+            "sha256": "5e488ec5f535bd694340c8714d943321c37497bce513e3a318de951e3d84299c"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-PdEXRD/captures/request-002-_v1_chat_completions.json",
+            "sha256": "12d1edfe27768b00d89abf013370f7bc6eae9f66b275820c669e6fcc1b0cd9f5"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-PdEXRD/captures/request-003-_v1_chat_completions.json",
+            "sha256": "10fc3dec14c9d3bc49bc70621b9580caf4770f274deb8ff28c90551eeba911e3"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-PdEXRD/captures/request-004-_v1_chat_completions.json",
+            "sha256": "c211c15ebbfb6a4e2b519aa616ccda1ae7e289edcba028845cfc1cc3d223755c"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-PdEXRD/captures/request-005-_v1_chat_completions.json",
+            "sha256": "722514a083112780cb96f8b640c76b11a96143dec539bc74b4903b291918c233"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-PdEXRD/captures/request-006-_v1_chat_completions.json",
+            "sha256": "c934a13c36009b9c5e2d9069b72878d4567c68452710d44cfa7c559547f412ba"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-PdEXRD/captures/request-007-_v1_chat_completions.json",
+            "sha256": "3541b084559e256453bac30a0b7215f589131253152a51d31ba5d30a771321ba"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-PdEXRD/captures/request-008-_v1_chat_completions.json",
+            "sha256": "fc50a510cdcac67749873c28a42c1312ccb338ad7aea5932830b0ff757fecc89"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-PdEXRD/captures/request-009-_v1_chat_completions.json",
+            "sha256": "c1593697b80b1777adae086d8871864c5f286b68e4bc8d49e3f54f0b25d5f489"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-PdEXRD/captures/request-010-_v1_chat_completions.json",
+            "sha256": "c2c216d53faa50c4a0888ae62bd995e63cb6b9da3f1d9775cb7fbb71913cfae0"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-PdEXRD/scope.txt",
+            "sha256": "2b8acaffad90a31168626ad33bd5021e233d88e052ccb0765b20bf0dae03e228"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-PdEXRD/sessions/2026-11-11T15-41-55-286Z_01a1cb45-dad4-75e0-8498-afea1244c00b.jsonl",
+            "sha256": "8d7abca1d64e980165f452018cddcbfad179294d2a9cd31fcd9e6054194c81ff"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-PdEXRD/stderr.txt",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-WqgA6Y/captures/request-001-_v1_chat_completions.json",
+            "sha256": "1e06a1da66b7807464d7ea8fc71d523fdae79036abf7c3257293f9d66948ba10"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-WqgA6Y/captures/request-002-_v1_chat_completions.json",
+            "sha256": "0f7200cb3ec5dbec5f88b2514cabf79da1d3bf770e5f49d701f87797d2763ae9"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-WqgA6Y/scope.txt",
+            "sha256": "2b8acaffad90a31168626ad33bd5021e233d88e052ccb0765b20bf0dae03e228"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-WqgA6Y/sessions/2026-11-11T15-39-58-511Z_01a1cb44-12af-761e-84da-fd00d1346733.jsonl",
+            "sha256": "f98561c78b3d4bd9327a737a975c37af518a74821cff928916bfc909faf31a27"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-WqgA6Y/stderr.txt",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-YnGSuv/captures/request-001-_v1_chat_completions.json",
+            "sha256": "4ec4ff1d08b13433ec5ada9c6462a7632708c054be04f570dd7efa70d1e75dab"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-YnGSuv/captures/request-002-_v1_chat_completions.json",
+            "sha256": "bd2281e3946bb029d4ab1163f90b54ac362ca5b00486076253f1918c6b6cf103"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-YnGSuv/scope.txt",
+            "sha256": "2b8acaffad90a31168626ad33bd5021e233d88e052ccb0765b20bf0dae03e228"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-YnGSuv/sessions/2026-11-11T15-41-06-167Z_01a1cb45-1af6-77eb-b439-23f1d2b69e49.jsonl",
+            "sha256": "04c0308b15e9aa6d4e0db8d838739c91a09a3acc7f3162ff3414a41d43140468"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-YnGSuv/stderr.txt",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-lP42F0/captures/request-001-_v1_chat_completions.json",
+            "sha256": "a2b3c4283b1a477cb57785adc0e9af1ce6caf00ddf8c5b3c3b008ef121e967ec"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-lP42F0/captures/request-002-_v1_chat_completions.json",
+            "sha256": "072bcf5afaf4c38c58dfdda2a9e12e70876fd6d47711e8194e6033501f42c574"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-lP42F0/captures/request-003-_v1_chat_completions.json",
+            "sha256": "5d3ab1c86be0b5f3127205b13dfec388f182b139cf7ad97390f9a66cabd9c8f4"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-lP42F0/captures/request-004-_v1_chat_completions.json",
+            "sha256": "ff4559ab05a88581441584fc267a0034f9295c0aec13bbfb2bc795c35594c9f6"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-lP42F0/captures/request-005-_v1_chat_completions.json",
+            "sha256": "b1945a0c338d4ef45cb1d78171e0d885fbe5251792f31afe1cd33346e815149c"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-lP42F0/captures/request-006-_v1_chat_completions.json",
+            "sha256": "73a164524fa552e3cead96b07b8de45607ba261c8c0cd9c2e2631dee5557bf48"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-lP42F0/scope.txt",
+            "sha256": "2b8acaffad90a31168626ad33bd5021e233d88e052ccb0765b20bf0dae03e228"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-lP42F0/sessions/2026-11-11T15-42-00-977Z_01a1cb45-f110-77fa-916d-bdb308633e87.jsonl",
+            "sha256": "a14af821eaf76ccfb14fad461bdc44be5aa0ab5e9fdf442428299090159f8004"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-lP42F0/stderr.txt",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-xblRP6/captures/request-001-_v1_chat_completions.json",
+            "sha256": "b08a96ffa54433ef7df992cf50438f3b2a8faaa630e414bd9a0f5807b6149223"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-xblRP6/captures/request-002-_v1_chat_completions.json",
+            "sha256": "a29beaa18b19769f474a7e77ccd4e65c18965947a94b5d2caa1bc352d5f463f9"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-xblRP6/scope.txt",
+            "sha256": "2b8acaffad90a31168626ad33bd5021e233d88e052ccb0765b20bf0dae03e228"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-xblRP6/sessions/2026-11-11T15-41-50-309Z_01a1cb45-c764-7237-837c-5c476f248880.jsonl",
+            "sha256": "6af017ae887aa3bdab7db272409a4203c621de9df1519530d17af5ffa6362846"
+          },
+          {
+            "path": ".scratch/chief-bot/evidence/native/chief-pi-omp-dock-chief-pi-xblRP6/stderr.txt",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "path": "entrypoints/omp-auto/chief-chat.ts",
+            "sha256": "3e7df76a495f674a84f61f7483ebf6ca316b463b89c087a0f8af682f2621dc0b"
+          },
+          {
+            "path": "entrypoints/pi-auto/chief-chat.ts",
+            "sha256": "d43f6a14eac88bda2663420e04f8ba0747de6486b7653477359533e37112e7ab"
+          },
+          {
+            "path": "extensions/workflow-chat/chief-chat/definition.ts",
+            "sha256": "b08b3e442fb64ac131376cafc4b0061cd44d86f1d5143d095e22aece4a0db016"
+          },
+          {
+            "path": "extensions/workflow-chat/chief-chat/harnesses/omp.ts",
+            "sha256": "73e6c13d27878ffac66cb3a20e66d1a57505761003710fb6d0230e914a1bf8e4"
+          },
+          {
+            "path": "extensions/workflow-chat/chief-chat/harnesses/pi-auto.ts",
+            "sha256": "a767001831f72a252b10e592f6b6420410db283d0ce5e97cc9d88d4a722c1140"
+          },
+          {
+            "path": "extensions/workflow-chat/chief-chat/shared-logic/implementation.ts",
+            "sha256": "3176b64fc2b5b6da68e29865879230e0979d34cae9dd83a609096abba5e4b2d6"
+          },
+          {
+            "path": "extensions/workflow-chat/chief-chat/shared-logic/prompts/index.ts",
+            "sha256": "9568a8f6e0f29b4354976db84a13b00d20fd88a35f6ef70731c368fa93f51834"
+          },
+          {
+            "path": "extensions/workflow-chat/chief-chat/shared-logic/prompts/init.md",
+            "sha256": "584480a87a4ef935b97b964a1d136519342ac96daa118bfe958322286aec1777"
+          },
+          {
+            "path": "extensions/workflow-chat/chief-chat/shared-logic/tools/index.ts",
+            "sha256": "5fbe3c33323eea2286be5d0df973c95157975b6e9186e6df3763e892b1829bea"
+          },
+          {
+            "path": "tests/harness-dock/chief-role.test.ts",
+            "sha256": "79affcd79eeccbd7dbad009ab15849c951eee6fbef54c1e19cc215021b320d5f"
+          },
+          {
+            "path": "tests/workflow-chat/support/chief-dock.ts",
+            "sha256": "0e64d3c4df17f6d43059e198f541c00791a916b15855c59face91239a45634d6"
+          }
+        ],
+        "sha256": "f034a6292470144cad197faf00542bb5469f7621646cac5271c405e4e646c256"
       },
       "finishedLockfiles": [
         {
@@ -102,7 +1394,7 @@
           "sha256": "28ce4c0d7b7d1d45a44e335a6647b0959c333875af42ca87ba63c87bcf4c2168"
         }
       ],
-      "acceptedAt": "2026-11-11T08:09:10.962Z"
+      "acceptedAt": "2026-11-11T15:55:11.805Z"
     },
     "close-out": {
       "schemaVersion": 1,
