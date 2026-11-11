@@ -56,6 +56,28 @@ test("node shared logic validates output IDs atomically and preserves ordered ac
 	} finally { roles.close(); server.stop(true); }
 });
 
+// The public report consumer must reject a syntactically valid but unusable receipt.
+// A 200 response is not proof of saved=false, rollback, or success (ticket criterion 3).
+for (const receipt of [null, [], {}, { saved: "true" }, { sent: false }]) {
+	test(`node report preserves uncertainty for malformed receipt ${JSON.stringify(receipt)}`, async () => {
+		let sent = 0;
+		const server = Bun.serve({ hostname: "127.0.0.1", port: 0, fetch(request) {
+			if (new URL(request.url).pathname.endsWith("/context")) return Response.json({ reportPolicy: "auto" });
+			sent++;
+			return Response.json(receipt);
+		} });
+		const roles = businessRoles(`http://127.0.0.1:${server.port}`);
+		try {
+			const result = await roles.node.report(roles.sessionId, { body: "May already be saved", can_complete: false });
+			expect(result.isError).toBe(true);
+			expect(result.body).toMatchObject({ error: { kind: "protocol", response: receipt }, guidance: expect.stringContaining("不确定") });
+			expect(result.body).not.toHaveProperty("saved", false);
+			expect(result.body).not.toHaveProperty("sent", false);
+			expect(sent).toBe(1);
+		} finally { roles.close(); server.stop(true); }
+	});
+}
+
 // Independent stage results from the report protocol distinguish the actual failure
 // condition from the plausible bug "HTTP 200 always succeeds" or "notification failure
 // means the report was not saved". No internal collaborator supplies that classification.

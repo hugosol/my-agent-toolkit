@@ -1,0 +1,132 @@
+{
+  "cwd": "C:/Users/hugos/AppData/Local/Temp/hyper-ticket-WHRv9S",
+  "branch": "hyper/chief-bot/02-shared-native-confirmation-05fa85-72787c9f5da7",
+  "sourceCommit": "a5aa770",
+  "mergeCommit": "576a660",
+  "runtime": "bun 1.4.4",
+  "commands": [
+    {
+      "command": "bun run typecheck",
+      "exit": 0
+    },
+    {
+      "command": "bun run check:integrations",
+      "exit": 0
+    },
+    {
+      "command": "bun test tests/workflow-chat/manual-report-confirmation.test.ts tests/workflow-chat/node-shared-logic.test.ts",
+      "exit": 0,
+      "pass": 21,
+      "fail": 0
+    },
+    {
+      "command": "bun test tests/harness-dock/native-report-confirmation.test.ts",
+      "exit": 0,
+      "started": "2026-11-11T16:29:15.689Z",
+      "finished": "2026-11-11T16:30:31.297Z",
+      "summary": "\"type\":\"text\",\"text\":\"{\\\"error\\\":{\\\"kind\\\":\\\"parse\\\",\\\"message\\\":\\\"后端响应不是完整合法 JSON。\\\",\\\"body\\\":\\\"{\\\\\\\"saved\\\\\\\":\\\"},\\\"guidance\\\":\\\"无法确定动作结果；不表示回滚，不自动重试。\\\"}\"}],\"details\":{\"httpStatus\":200,\"body\":{\"error\":{\"kind\":\"parse\",\"message\":\"后端响应不是完整合法 JSON。\",\"body\":\"{\\\"saved\\\":\"},\"guidance\":{}}},\"isError\":true},\"requests\":1,\"confirmationMs\":2000,\"observationMs\":2100}\n{\"host\":\"pi\",\"condition\":\"invalid-receipt\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\\"error\\\":{\\\"kind\\\":\\\"protocol\\\",\\\"message\\\":\\\"后端报告响应缺少 boolean saved，无法核实保存结果。\\\",\\\"response\\\":{\\\"sent\\\":false}},\\\"guidance\\\":\\\"报告结果不确定；后端可能已保存，不表示未发送、未发生或已回滚。不要自动重试，请核实已保存事实。\\\"}\"}],\"details\":{\"httpStatus\":200,\"body\":{\"error\":{\"kind\":\"protocol\",\"message\":\"后端报告响应缺少 boolean saved，无法核实保存结果。\",\"response\":{\"sent\":false}},\"guidance\":{}}},\"isError\":true},\"requests\":1,\"confirmationMs\":2000,\"observationMs\":2100}\n{\"host\":\"pi\",\"nativeExit\":{\"exitCode\":0,\"stderr\":\"HTTP cancelled failure (AbortError)\\nHTTP transport failure (Error)\\n\",\"timedOut\":false}}\n\n\ntests\\harness-dock\\native-report-confirmation.test.ts:\n(pass) omp actual headless mode cannot authorize a manual report [2114.27ms]\n(pass) omp native manual report sends only the full approved payload [4384.17ms]\n(pass) omp native denial cancellation timeout late approval and Session end never send [15075.98ms]\n(pass) omp native report retains uncertainty after send without retry [12138.03ms]\n(pass) pi actual headless mode cannot authorize a manual report [4318.78ms]\n(pass) pi native manual report sends only the full approved payload [7303.79ms]\n(pass) pi native denial cancellation timeout late approval and Session end never send [18082.91ms]\n(pass) pi native report retains uncertainty after send without retry [12101.78ms]\n\n 8 pass\n 0 fail\n 62 expect() calls\nRan 8 tests across 1 file. [75.55s]\n"
+    },
+    {
+      "command": "bun run test",
+      "exit": 1,
+      "started": "2026-11-11T16:31:44.611Z",
+      "finished": "2026-11-11T16:38:16.857Z",
+      "summary": "ationMs\":2000,\"observationMs\":2100}\n{\"host\":\"pi\",\"condition\":\"invalid-receipt\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\\"error\\\":{\\\"kind\\\":\\\"protocol\\\",\\\"message\\\":\\\"后端报告响应缺少 boolean saved，无法核实保存结果。\\\",\\\"response\\\":{\\\"sent\\\":false}},\\\"guidance\\\":\\\"报告结果不确定；后端可能已保存，不表示未发送、未发生或已回滚。不要自动重试，请核实已保存事实。\\\"}\"}],\"details\":{\"httpStatus\":200,\"body\":{\"error\":{\"kind\":\"protocol\",\"message\":\"后端报告响应缺少 boolean saved，无法核实保存结果。\",\"response\":{\"sent\":false}},\"guidance\":{}}},\"isError\":true},\"requests\":1,\"confirmationMs\":2000,\"observationMs\":2100}\n{\"host\":\"pi\",\"nativeExit\":{\"exitCode\":0,\"stderr\":\"HTTP cancelled failure (AbortError)\\nHTTP transport failure (Error)\\n\",\"timedOut\":false}}\n(pass) pi native report retains uncertainty after send without retry [11223.49ms]\n\n5 tests failed:\n(fail) a session boundary's unregister waits the same budget (P18) > a switched session asks once, waits the shipped budget, and is silent about the outcome [2707.93ms]\n(fail) a background push waits the same budget, not one of its own (P19) > the shipped budget abandons a beat the panel answers after 1200ms, and the beat is not retried [3372.21ms]\n(fail) load-source mutual exclusion (N8) > the explicit-only root reaches only this repository's connect-bot implementation [6481.96ms]\n  ^ this test timed out after 5000ms.\n(fail) load-source mutual exclusion (N8) > with both sources in the discovery range both connect-bot implementations are bound [5478.25ms]\n  ^ this test timed out after 5000ms.\n(fail) the consumption store in a real session (P47, P51) > a root with no document is left without one: an empty start is not a save [23040.88ms]\n  ^ a beforeEach/afterEach hook timed out for this test.\n\n 1862 pass\n 5 fail\n 12581 expect() calls\nRan 1867 tests across 235 files. [392.12s]\nerror: script \"test\" exited with code 1\n"
+    },
+    {
+      "command": "bun run test:serial",
+      "exit": 0,
+      "started": "2026-11-11T16:38:52.299Z",
+      "finished": "2026-11-11T16:54:31.551Z",
+      "summary": "n in flight for its session; no start is fabricated and it is dropped\n(pass) a process that reads the document back gets the saved Session and no invented Round (P23) > the restored session reads the saved accumulation, and a settle that arrives before any start fabricates nothing [9.56ms]\n\ntests\\model-cost\\harnesses\\pi\\pi-widget-reading.test.ts:\n(pass) the pi frontend reads pi's own context fact as the host states it (P18) > model selection clears a hidden model's widget and restores it without another request [0.71ms]\n(pass) the pi frontend reads pi's own context fact as the host states it (P18) > a null token reading is unknown, so no bar is drawn and the widget still draws [0.35ms]\n(pass) the pi frontend reads pi's own context fact as the host states it (P18) > a reported reading is drawn as the display's own percentage and figures [0.34ms]\n(pass) the pi frontend reads pi's own context fact as the host states it (P18) > a host that publishes no context reading at all draws the same lines as an unknown one [0.30ms]\n(pass) the pi frontend follows pi's effective thinking level (P11) > a thinking-level selection redraws the effort without a model request [0.37ms]\n(pass) the pi frontend follows pi's effective thinking level (P11) > the thinking-level subscription is released with the frontend [0.25ms]\n(pass) the pi frontend carries DeepSeek account facts beside another current channel (P8, P67) > a token-only or allowance target whose Total writes Cost draws the held balance and accrual [0.19ms]\n(pass) the pi frontend carries DeepSeek account facts beside another current channel (P8, P67) > a target whose Total writes no Cost keeps the DeepSeek account facts off its account row [0.03ms]\n\n 1867 pass\n 0 fail\n 12596 expect() calls\nRan 1867 tests across 235 files. [939.04s]\n"
+    },
+    {
+      "command": "bun run test",
+      "exit": 0,
+      "started": "2026-11-11T16:54:47.019Z",
+      "finished": "2026-11-11T16:58:37.799Z",
+      "summary": "自动重试，请核实已保存事实。\\\"}\"}],\"details\":{\"body\":{\"error\":{\"kind\":\"cancelled\",\"message\":\"This operation was aborted\"},\"guidance\":{}}},\"isError\":true},\"requests\":1,\"confirmationMs\":2000,\"observationMs\":2100}\n{\"host\":\"pi\",\"condition\":\"lost-response\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\\"error\\\":{\\\"kind\\\":\\\"transport\\\",\\\"message\\\":\\\"socket hang up\\\"},\\\"guidance\\\":\\\"请求未获得确定结果；后端可能已接受，不表示回滚或未生效。不要自动重试，请核实已保存事实。\\\"}\"}],\"details\":{\"body\":{\"error\":{\"kind\":\"transport\",\"message\":\"socket hang up\"},\"guidance\":{}}},\"isError\":true},\"requests\":1,\"confirmationMs\":2000,\"observationMs\":2100}\n{\"host\":\"pi\",\"condition\":\"invalid-json\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\\"error\\\":{\\\"kind\\\":\\\"parse\\\",\\\"message\\\":\\\"后端响应不是完整合法 JSON。\\\",\\\"body\\\":\\\"{\\\\\\\"saved\\\\\\\":\\\"},\\\"guidance\\\":\\\"无法确定动作结果；不表示回滚，不自动重试。\\\"}\"}],\"details\":{\"httpStatus\":200,\"body\":{\"error\":{\"kind\":\"parse\",\"message\":\"后端响应不是完整合法 JSON。\",\"body\":\"{\\\"saved\\\":\"},\"guidance\":{}}},\"isError\":true},\"requests\":1,\"confirmationMs\":2000,\"observationMs\":2100}\n{\"host\":\"pi\",\"condition\":\"invalid-receipt\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\\"error\\\":{\\\"kind\\\":\\\"protocol\\\",\\\"message\\\":\\\"后端报告响应缺少 boolean saved，无法核实保存结果。\\\",\\\"response\\\":{\\\"sent\\\":false}},\\\"guidance\\\":\\\"报告结果不确定；后端可能已保存，不表示未发送、未发生或已回滚。不要自动重试，请核实已保存事实。\\\"}\"}],\"details\":{\"httpStatus\":200,\"body\":{\"error\":{\"kind\":\"protocol\",\"message\":\"后端报告响应缺少 boolean saved，无法核实保存结果。\",\"response\":{\"sent\":false}},\"guidance\":{}}},\"isError\":true},\"requests\":1,\"confirmationMs\":2000,\"observationMs\":2100}\n{\"host\":\"pi\",\"nativeExit\":{\"exitCode\":0,\"stderr\":\"HTTP cancelled failure (AbortError)\\nHTTP transport failure (Error)\\n\",\"timedOut\":false}}\n(pass) pi native report retains uncertainty after send without retry [9742.72ms]\n\n 1867 pass\n 0 fail\n 12596 expect() calls\nRan 1867 tests across 235 files. [230.72s]\n"
+    },
+    {
+      "command": "bun test tests/harness-dock",
+      "exit": 0,
+      "started": "2026-11-11T16:58:40.858Z",
+      "finished": "2026-11-11T17:06:57.928Z",
+      "summary": "adable as a live identity change [1195.18ms]\n(pass) the frozen Viewed session host publishes the outlet (S5) > the unpatched baseline install reports no outlet to the same extension (control) [1122.18ms]\n\ntests\\harness-dock\\viewed-session-total.test.ts:\n(pass) the widget's Effort is the host's actual level, re-read when it changes (P11) > a real level is displayed, and a same-target change is read again without another request [2108.01ms]\n(pass) a model with no settable effort is displayed as a question mark (P11) > the widget says ? rather than borrowing a configured or default level [2064.34ms]\n\ntests\\harness-dock\\viewed-session.test.ts:\n(pass) the frozen Viewed session host artifact > the record pins the base revision this repository records as supported, not a newer one [0.17ms]\n(pass) the frozen Viewed session host artifact > every patched file's base hash agrees with the baseline record's own revision anchor [0.10ms]\n(pass) the frozen Viewed session host artifact > the materialised host carries exactly the frozen post-patch bytes [1.34ms]\n(pass) the frozen Viewed session host artifact > the unpatched baseline install carries no outlet: the patch is what publishes it [0.22ms]\n(pass) the viewed session contract, as the frozen artifact implements it > a fact the host cannot obtain is named unavailable instead of guessed [0.12ms]\n(pass) the viewed session contract, as the frozen artifact implements it > a target switch, a same-target fact change and an invalidation each notify; unsubscribe stops it [0.31ms]\n(pass) the viewed session contract, as the frozen artifact implements it > a source over one live session reads its facts and follows its own model, effort and context events [0.10ms]\n\n 195 pass\n 0 fail\n 2438 expect() calls\nRan 195 tests across 52 files. [497.02s]\n"
+    }
+  ],
+  "evidenceKind": "Controlled-provider native mechanics and real backend regression; no live model acceptance claimed",
+  "pairedBackend": {
+    "source": "E:/Developer/myhub/herdr-bot",
+    "revision": "6356385cf5cca75a248018c2ec4e6136ed02ae29",
+    "export": "git archive (backend docs meta-data/task-options.toml)",
+    "build": "cargo build --locked --manifest-path .scratch/chief-bot/paired-backend/backend/Cargo.toml --target-dir C:/Users/hugos/AppData/Local/Temp/hyper-ticket-WHRv9S/.scratch/chief-bot/paired-target --example safe_shutdown_shell --bin herdr-fixture",
+    "buildExit": 0,
+    "environment": {
+      "OMP_BASELINE_RECORD_ROOT": "E:/Developer/myhub/my-agent-toolkit",
+      "PI_NODE": "D:/Users/hugos/AppData/Local/nvm/v22.19.0/node.exe",
+      "PI_CLI": "D:/nvm4w/nodejs/node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js",
+      "HERDR_BOT_REPO": "C:/Users/hugos/AppData/Local/Temp/hyper-ticket-WHRv9S/.scratch/chief-bot/paired-backend",
+      "CARGO_TARGET_DIR": "C:/Users/hugos/AppData/Local/Temp/hyper-ticket-WHRv9S/.scratch/chief-bot/paired-target",
+      "HERDR_BOT_BINARY": "C:/Users/hugos/AppData/Local/Temp/hyper-ticket-WHRv9S/.scratch/chief-bot/paired-target/debug/examples/safe_shutdown_shell.exe",
+      "HERDR_BOT_METADATA": "C:/Users/hugos/AppData/Local/Temp/hyper-ticket-WHRv9S/.scratch/chief-bot/paired-backend/meta-data/task-options.toml"
+    }
+  },
+  "diagnosticReason": "Canonical parallel run had deadline misses in registration elapsed-time assertions, deployment 5s cases and native store setup 20s; run documented serial diagnostic without changing deadlines/assertions/retries.",
+  "identities": {
+    "bun": "1.4.4",
+    "node": "v22.19.0",
+    "pi": "1.5.2",
+    "omp": "18.5.0",
+    "sha256": {
+      "bun.lock": "28ce4c0d7b7d1d45a44e335a6647b0959c333875af42ca87ba63c87bcf4c2168",
+      "extensions/workflow-chat/common/requests.ts": "858f0965f04a862b0012350c2f03dbe5a6527931779de05a21a59de4644dce78",
+      ".scratch/chief-bot/paired-target/debug/examples/safe_shutdown_shell.exe": "748035e9e16cf693c843d7ec319791eb383dc6eb8e09042da84b7c1c94f3fee3",
+      ".scratch/chief-bot/paired-target/debug/herdr-fixture.exe": "ce91713a45b8eb8a22e4cf195db56ea7e51ccf855f6c5ad33ddfcda9b21d2b0e"
+    }
+  },
+  "criteria": [
+    {
+      "criterion": "完整预览、批准前不发送、仅发送批准冻结载荷",
+      "result": "passed",
+      "evidence": [
+        "focused.log",
+        "native-confirmation.log",
+        "dock.log"
+      ]
+    },
+    {
+      "criterion": "OMP/Pi拒绝、取消、超时、迟到批准、Session结束及无确认UI不发送、不重试",
+      "result": "passed",
+      "confirmationMs": 2000,
+      "postResultObservationMs": 2100,
+      "evidence": [
+        "native-confirmation.log",
+        "dock.log"
+      ]
+    },
+    {
+      "criterion": "HTTP发出后的取消、丢失响应、非法JSON/回执保持不确定",
+      "result": "passed",
+      "evidence": [
+        "focused.log",
+        "native-confirmation.log",
+        "dock.log"
+      ]
+    },
+    {
+      "criterion": "共同业务留common、公共framework接口及薄宿主装配",
+      "result": "passed",
+      "evidence": [
+        "bun run check:integrations exit 0",
+        "full-after-serial-diagnostic.log"
+      ]
+    }
+  ],
+  "firstCanonicalFailure": {
+    "retained": "full.log",
+    "failures": 5,
+    "cause": "Timing/deadline misses under parallel scheduling; no production change or deadline relaxation. Serial diagnostic and subsequent canonical run passed on unchanged source."
+  },
+  "cleanup": "Owned paired backend export and compiled target removed after final successful runs; all raw failure and success logs retained."
+}

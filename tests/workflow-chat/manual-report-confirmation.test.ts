@@ -38,6 +38,8 @@ test("approval authorizes only the displayed payload and each subsequent report 
 		expect(scene.sent).toEqual([]);
 		expect(preview.message).toContain("Original report\nSecond line");
 		expect(preview.message).toContain("can_complete: false");
+		// Complete wire identity and camelCase payload must be visible, not just a prose summary.
+		expect(preview.message).toContain(JSON.stringify({ body: "Original report\nSecond line", canComplete: false, outputs: [{ id: "draft", path: "E:/original.txt" }], sessionId: "business-native-session" }, null, 2));
 		expect(preview.message).toContain("E:/original.txt");
 		params.body = "Changed after preview";
 		params.can_complete = true;

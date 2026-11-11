@@ -1,10 +1,13 @@
 import type { ImplementationContext } from "../../../framework/interface";
+import type { ToolExecutionDelivery } from "../../../framework/interface/tool";
 import { request } from "../../../framework/interface/general/http";
 
 export interface WorkflowResponse {
 	readonly httpStatus?: number;
 	readonly body: unknown;
 	readonly isError: boolean;
+	/** Local evidence only; never inferred from an HTTP response body. */
+	readonly notSent?: true;
 }
 
 /** Business-neutral request resources, held per actual Session, never per Owner or role globally. */
@@ -36,29 +39,60 @@ export class WorkflowRequests {
 		return signal ? AbortSignal.any([signal, lifetime]) : lifetime;
 	}
 
-	get(selectedSessionId: string, route: string, signal?: AbortSignal): Promise<WorkflowResponse> {
-		return this.#request(selectedSessionId, route, "GET", undefined, signal);
-	}
-
-	post(selectedSessionId: string, route: string, params: Readonly<Record<string, unknown>>, signal?: AbortSignal, collect = false): Promise<WorkflowResponse> {
-		return this.#request(selectedSessionId, route, "POST", params, signal, collect);
-	}
-
-	async #request(selectedSessionId: string, route: string, method: "GET" | "POST", params?: Readonly<Record<string, unknown>>, signal?: AbortSignal, collect = false): Promise<WorkflowResponse> {
-		// Native context selects an observation; the public Session reading supplies the wire identity.
-		const observation = this.#context.session.observations.read(selectedSessionId);
-		const lifetime = this.#sessions.get(selectedSessionId);
-		if (!observation?.session?.sessionId || !lifetime) {
-			return { isError: true, body: { error: { kind: "session-unavailable", message: "公共 Session 未提供活动原生身份；未发送请求。" } } };
-		}
-		const config = this.#context.config;
-		const options = {
-			method, headers: method === "POST" ? { "content-type": "application/json" } : undefined,
-			body: method === "POST" ? JSON.stringify({ ...params, sessionId: observation.session.sessionId }) : undefined,
-			timeoutMs: Number(collect ? config.collectTimeoutMs : config.requestTimeoutMs),
+	/** Freeze identity and payload together; no observation or caller mutation can change an approval. */
+	#prepare(sessionId: string, params: Readonly<Record<string, unknown>>, signal?: AbortSignal) {
+		const observation = this.#context.session.observations.read(sessionId);
+		const lifetime = this.#sessions.get(sessionId);
+		if (!observation?.session?.sessionId || !lifetime) return undefined;
+		return {
+			body: JSON.stringify({ ...params, sessionId: observation.session.sessionId }),
 			signal: signal ? AbortSignal.any([signal, lifetime.signal]) : lifetime.signal,
 		};
-		const result = await request(`${String(config.endpoint).replace(/\/$/, "")}${route}`, options);
+	}
+
+	/** Full wire preview and one native approval, tied to the same active Session as the send. */
+	async postConfirmed(sessionId: string, route: string, params: Readonly<Record<string, unknown>>, preview: {
+		readonly title: string;
+		readonly message: string;
+	}, signal?: AbortSignal, confirm?: ToolExecutionDelivery["confirm"]): Promise<WorkflowResponse> {
+		const prepared = this.#prepare(sessionId, params, signal);
+		const notSent = (reason: string): WorkflowResponse => ({ isError: false, notSent: true, body: {
+			sent: false, reason,
+			guidance: "请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。",
+		} });
+		if (!prepared || prepared.signal.aborted || !confirm) return notSent("confirmation-unavailable");
+		let approved = false;
+		try {
+			approved = await confirm({
+				...preview,
+				message: `${preview.message}\n\n完整 HTTP JSON 载荷：\n${JSON.stringify(JSON.parse(prepared.body), null, 2)}\n\n只有明确选择“是”才会发送。`,
+				timeoutMs: this.reportConfirmationTimeoutMs,
+				signal: prepared.signal,
+			}) === true;
+		} catch { /* Failed or unavailable native interaction never grants approval. */ }
+		if (!approved || prepared.signal.aborted) return notSent("confirmation-not-approved");
+		return this.#request(route, prepared, "POST");
+	}
+
+	async post(selectedSessionId: string, route: string, params: Readonly<Record<string, unknown>>, signal?: AbortSignal, collect = false): Promise<WorkflowResponse> {
+		const prepared = this.#prepare(selectedSessionId, params, signal);
+		if (!prepared) return { isError: true, body: { error: { kind: "session-unavailable", message: "公共 Session 未提供活动原生身份；未发送请求。" } } };
+		return this.#request(route, prepared, "POST", collect);
+	}
+
+	async get(sessionId: string, route: string, signal?: AbortSignal): Promise<WorkflowResponse> {
+		const prepared = this.#prepare(sessionId, {}, signal);
+		if (!prepared) return { isError: true, body: { error: { kind: "session-unavailable", message: "公共 Session 未提供活动原生身份；未发送请求。" } } };
+		return this.#request(route, { signal: prepared.signal }, "GET");
+	}
+
+	async #request(route: string, prepared: { readonly body?: string; readonly signal: AbortSignal }, method: "GET" | "POST", collect = false): Promise<WorkflowResponse> {
+		const config = this.#context.config;
+		const result = await request(`${String(config.endpoint).replace(/\/$/, "")}${route}`, {
+			...prepared,
+			method, headers: method === "POST" ? { "content-type": "application/json" } : undefined,
+			timeoutMs: Number(collect ? config.collectTimeoutMs : config.requestTimeoutMs),
+		});
 		if (!result.ok) {
 			return { isError: true, body: {
 				error: { kind: result.failure.kind, message: result.failure.error.message },

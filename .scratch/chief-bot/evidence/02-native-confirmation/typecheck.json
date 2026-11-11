@@ -1,0 +1,5 @@
+{
+  "command": "bun run typecheck",
+  "environment": "OMP_BASELINE_RECORD_ROOT='E:/Developer/myhub/my-agent-toolkit' HERDR_BOT_REPO='E:/Developer/myhub/herdr-bot' PI_NODE='D:/Users/hugos/AppData/Local/nvm/v22.19.0/node.exe' PI_CLI='D:/nvm4w/nodejs/node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js'",
+  "exit": 0
+}

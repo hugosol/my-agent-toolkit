@@ -20,6 +20,8 @@ test("P7 both automatic roles select deployment endpoint and budgets despite two
 	const timers = new Set<ReturnType<typeof setTimeout>>();
 	let holding = false;
 	const reply = { independent: "explicit-deployment-endpoint" };
+	// Successful report responses carry an explicit save fact, unlike manager status.
+	const reportReply = { independent: "explicit-deployment-endpoint", saved: true };
 	const server = createServer(async (request, response) => {
 		if (request.url === "/api/workflow/node/context") {
 			request.resume(); response.writeHead(200, { "content-type": "application/json" });
@@ -33,7 +35,7 @@ test("P7 both automatic roles select deployment endpoint and budgets despite two
 		response.once("close", () => { call.elapsedMs = performance.now() - started; closed.resolve(); });
 		response.writeHead(200, { "content-type": "application/json" }); response.flushHeaders();
 		if (holding) return;
-		const timer = setTimeout(() => { timers.delete(timer); response.end(JSON.stringify(reply)); }, 90);
+		const timer = setTimeout(() => { timers.delete(timer); response.end(JSON.stringify(request.url === "/api/workflow/node/report" ? reportReply : reply)); }, 90);
 		timers.add(timer);
 	});
 	server.on("connection", socket => { sockets.add(socket); socket.once("close", () => sockets.delete(socket)); });
@@ -53,7 +55,7 @@ test("P7 both automatic roles select deployment endpoint and budgets despite two
 		expect(manager.root.workDir).not.toBe(node.root.workDir);
 		const managerId = await nativeIdentity(manager); const nodeId = await nativeIdentity(node);
 		expect((await roleCall(manager, "run", { action: "status" })).body).toEqual(reply);
-		expect((await roleCall(node, "report", { body: "P7 explicit config", can_complete: false })).body).toEqual(reply);
+		expect((await roleCall(node, "report", { body: "P7 explicit config", can_complete: false })).body).toEqual(reportReply);
 		holding = true;
 		for (const [dock, tool, params, minimumMs, maximumMs] of [
 			[manager, "run", { action: "status" }, 350, 3000],
