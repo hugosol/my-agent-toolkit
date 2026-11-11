@@ -6,6 +6,7 @@ framework/.runtime/
 # Disposable workflow acceptance evidence is retained locally, not shipped.
 /.scratch/workflow-file-handoff/evidence/
 /.scratch/workflow-nesting/evidence/
+/.scratch/chief-bot/evidence/
 /.scratch/pi-version-acceptance/
 /.scratch/pi-suite/evidence/
 *.log

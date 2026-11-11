@@ -71,20 +71,26 @@ export class WorkflowRequests {
 			}) === true;
 		} catch { /* Failed or unavailable native interaction never grants approval. */ }
 		if (!approved || prepared.signal.aborted) return notSent("confirmation-not-approved");
-		return this.#post(route, prepared);
+		return this.#request(route, prepared, "POST");
 	}
 
 	async post(selectedSessionId: string, route: string, params: Readonly<Record<string, unknown>>, signal?: AbortSignal, collect = false): Promise<WorkflowResponse> {
 		const prepared = this.#prepare(selectedSessionId, params, signal);
 		if (!prepared) return { isError: true, body: { error: { kind: "session-unavailable", message: "公共 Session 未提供活动原生身份；未发送请求。" } } };
-		return this.#post(route, prepared, collect);
+		return this.#request(route, prepared, "POST", collect);
 	}
 
-	async #post(route: string, prepared: { readonly body: string; readonly signal: AbortSignal }, collect = false): Promise<WorkflowResponse> {
+	async get(sessionId: string, route: string, signal?: AbortSignal): Promise<WorkflowResponse> {
+		const prepared = this.#prepare(sessionId, {}, signal);
+		if (!prepared) return { isError: true, body: { error: { kind: "session-unavailable", message: "公共 Session 未提供活动原生身份；未发送请求。" } } };
+		return this.#request(route, { signal: prepared.signal }, "GET");
+	}
+
+	async #request(route: string, prepared: { readonly body?: string; readonly signal: AbortSignal }, method: "GET" | "POST", collect = false): Promise<WorkflowResponse> {
 		const config = this.#context.config;
 		const result = await request(`${String(config.endpoint).replace(/\/$/, "")}${route}`, {
 			...prepared,
-			method: "POST", headers: { "content-type": "application/json" },
+			method, headers: method === "POST" ? { "content-type": "application/json" } : undefined,
 			timeoutMs: Number(collect ? config.collectTimeoutMs : config.requestTimeoutMs),
 		});
 		if (!result.ok) {
