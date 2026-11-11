@@ -51,18 +51,18 @@ for (const host of ["omp", "pi"] as const) test(`${host}: P7/P8/P26 report rejec
 			{ body: "forged author", can_complete: true, from: { sessionId: "forged" } },
 			{ body: "forged destination", can_complete: true, to: { sessionId: "forged" } },
 		]) {
-			await dock.report(params);
+			await dock.call(params);
 			const actual = await detail();
 			observations.push({ params, actual });
 			expect(actual.reports).toEqual([]);
 			expect(actual.run.nodes.A.status).toBe("running");
 		}
 		const handoff = join(dock.root.workDir, "independent-handoff.txt");
-		await dock.report({ body: "Partial effect; input still missing", can_complete: false, outputs: [{ id: "handoff", path: handoff }] });
+		await dock.call({ body: "Partial effect; input still missing", can_complete: false, outputs: [{ id: "handoff", path: handoff }] });
 		const blocked = await detail();
 		expect(blocked.reports).toHaveLength(1);
 		expect(blocked.reports[0]).toMatchObject({ from: { sessionId: nativeId }, runId: started.id, nodeId: "A", executionId: execution.id, canComplete: false, body: "Partial effect; input still missing", outputs: [{ id: "handoff", path: handoff }] });
-		await dock.report({ body: "Ready; harmless cleanup remains", can_complete: true });
+		await dock.call({ body: "Ready; harmless cleanup remains", can_complete: true });
 		const ready = await detail();
 		expect(ready.reports).toHaveLength(2);
 		expect(ready.reports[1]).toMatchObject({ from: { sessionId: nativeId }, runId: started.id, nodeId: "A", executionId: execution.id, canComplete: true, body: "Ready; harmless cleanup remains" });
