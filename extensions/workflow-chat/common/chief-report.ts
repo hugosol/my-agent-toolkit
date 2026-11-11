@@ -5,6 +5,32 @@ import { workflowToolResult } from "./tool-result";
 
 type ReportState = { readonly requests: WorkflowRequests };
 
+export interface ChiefReport {
+	readonly id: string;
+	readonly from: string;
+	readonly delegationId: string;
+	readonly at: number;
+	readonly body: {
+		readonly background: string; readonly execution: string; readonly result: "success" | "failure" | "blocked";
+		readonly summary: string; readonly deliverables: string[]; readonly pendingDecisions: string[];
+	};
+}
+
+export function isChiefReport(value: unknown): value is ChiefReport {
+	if (!value || typeof value !== "object" || !("id" in value) || typeof value.id !== "string" || !value.id.trim()
+		|| !("from" in value) || typeof value.from !== "string" || !value.from.trim()
+		|| !("delegationId" in value) || typeof value.delegationId !== "string" || !value.delegationId.trim()
+		|| !("at" in value) || typeof value.at !== "number" || !Number.isFinite(value.at)
+		|| !("body" in value) || !value.body || typeof value.body !== "object") return false;
+	const body = value.body;
+	return "background" in body && typeof body.background === "string" && !!body.background.trim()
+		&& "execution" in body && typeof body.execution === "string" && !!body.execution.trim()
+		&& "summary" in body && typeof body.summary === "string" && !!body.summary.trim()
+		&& "result" in body && typeof body.result === "string" && ["success", "failure", "blocked"].includes(body.result)
+		&& "deliverables" in body && Array.isArray(body.deliverables) && body.deliverables.every(item => typeof item === "string")
+		&& "pendingDecisions" in body && Array.isArray(body.pendingDecisions) && body.pendingDecisions.every(item => typeof item === "string");
+}
+
 /** Shared by standalone chief-report and manager-chat, never by internal node-chat.
  * Visibility grants no eligibility: the backend resolves actual delegation provenance.
  */
@@ -43,4 +69,28 @@ export const CHIEF_REPORT_TOOL: ToolDeclaration<ReportState> = {
 			}
 			return workflowToolResult(result);
 		},
+};
+
+/** Explicit recovery only: a resend never accepts a replacement body or creates an ID. */
+export const CHIEF_RESEND_REPORT_TOOL: ToolDeclaration<ReportState> = {
+	name: "chief_resend_report", label: "Resend original chief report",
+	description: "仅在用户在原发送方 Chat 明确要求重发时使用。读取并完整预览原 ID/原内容，再次原生批准后才重发；不创建报告，不修改内容，不自动重试。改内容用 chief_report 新确认和新身份。",
+	parameters: { type: "object", properties: { id: { type: "string", description: "已保存原报告 ID。禁止 body、身份、收件人或批准字段。" } }, required: ["id"], additionalProperties: false },
+	async execute(state, params, delivery) {
+		if (!params || typeof params !== "object" || Array.isArray(params) || Object.keys(params).some(key => key !== "id")
+			|| !("id" in params) || typeof params.id !== "string" || !params.id.trim()) {
+			return workflowToolResult({ isError: true, body: { code: "invalid-parameters", message: "只接受非空原报告 id；改内容必须新建报告并重新确认。" } });
+		}
+		const route = `/api/chief/reports/${encodeURIComponent(params.id)}`;
+		const original = await state.requests.get(delivery.sessionId, route, delivery.signal);
+		if (original.isError) return workflowToolResult(original);
+		const report = original.body;
+		if (!isChiefReport(report) || report.id !== params.id) {
+			return workflowToolResult({ isError: true, body: { code: "invalid-report", message: "无法核实原报告 ID 与完整内容；未重发。" } });
+		}
+		return workflowToolResult(workflowReportResult(await state.requests.postConfirmed(delivery.sessionId, `${route}/resend`, {}, {
+			title: "重发原 chief 报告？（重新批准本次重发）",
+			message: `仅重发以下原 ID 和原内容，不新建或修改报告。已接收时只反馈接收事实，不再次处理；接收不是呈现、已读或验收。\n\n原报告：\n${JSON.stringify(report, null, 2)}`,
+		}, delivery.signal, delivery.confirm)));
+	},
 };

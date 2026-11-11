@@ -2,7 +2,7 @@ import { defineImplementation } from "../../../../framework/interface";
 import { WorkflowRequests } from "../../common/requests";
 import { ManagerActions } from "./actions";
 import { MANAGER_TOOLS } from "./tools";
-import { CHIEF_REPORT_TOOL } from "../../common/chief-report";
+import { CHIEF_REPORT_TOOL, CHIEF_RESEND_REPORT_TOOL } from "../../common/chief-report";
 
 interface ManagerState {
 	readonly requests: WorkflowRequests;
@@ -18,6 +18,6 @@ export const MANAGER_IMPLEMENTATION = defineImplementation<ManagerState>({
 		session_start: (state, delivery) => state.requests.start(delivery.session.sessionId),
 		session_end: (state, delivery) => state.requests.end(delivery.session.sessionId),
 	} }],
-	tools: [...MANAGER_TOOLS, CHIEF_REPORT_TOOL],
+	tools: [...MANAGER_TOOLS, CHIEF_REPORT_TOOL, CHIEF_RESEND_REPORT_TOOL],
 	cleanup: state => state.requests.close(),
 });
