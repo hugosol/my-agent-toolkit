@@ -64,10 +64,24 @@ test("resend rejects changed content and sends nothing without renewed approval"
 
 // The original GET establishes a saved immutable report. Unlike a new submit,
 // refusing a resend must not report saved=false (which would erase that fact).
-test("refusing a resend retains the already saved original report", async () => {
-	const s = scene(async () => Response.json(report));
+test("refusing a resend retains the original without locking a later freshly confirmed request", async () => {
+	const methods: string[] = [];
+	const s = scene(async request => {
+		methods.push(request.method);
+		return Response.json(request.method === "GET" ? report : { saved: true, report, notification: { status: "submitted" } });
+	});
 	try {
 		expect(await CHIEF_RESEND_REPORT_TOOL.execute({ requests: s.requests }, { id: report.id }, { sessionId: s.sessionId, callId: "refused-original", confirm: async () => false })).toMatchObject({ details: { body: { saved: true, report, sent: false } } });
+		expect(methods).toEqual(["GET"]);
+		let confirmed = 0;
+		expect(await CHIEF_RESEND_REPORT_TOOL.execute({ requests: s.requests }, { id: report.id }, { sessionId: s.sessionId, callId: "new-user-request", confirm: async preview => {
+			confirmed++;
+			expect(preview.message).toContain(JSON.stringify(report, null, 2));
+			expect(methods).toEqual(["GET", "GET"]);
+			return true;
+		} })).toMatchObject({ details: { body: { saved: true, report, notification: { status: "submitted" } } } });
+		expect(confirmed).toBe(1);
+		expect(methods).toEqual(["GET", "GET", "POST"]);
 	} finally { s.close(); }
 });
 

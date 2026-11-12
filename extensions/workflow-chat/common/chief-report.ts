@@ -74,7 +74,7 @@ export const CHIEF_REPORT_TOOL: ToolDeclaration<ReportState> = {
 /** Explicit recovery only: a resend never accepts a replacement body or creates an ID. */
 export const CHIEF_RESEND_REPORT_TOOL: ToolDeclaration<ReportState> = {
 	name: "chief_resend_report", label: "Resend original chief report",
-	description: "仅在用户在原发送方 Chat 明确要求重发时使用。读取并完整预览原 ID/原内容，再次原生批准后才重发；不创建报告，不修改内容，不自动重试。改内容用 chief_report 新确认和新身份。",
+	description: "仅在用户在原发送方 Chat 明确要求重发时使用。前次拒绝不锁定后续用户决定；用户下一条消息重新明确要求时，应在该新轮调用本工具取得全新原生确认，而非仅口头拒绝或承诺。读取并完整预览原 ID/原内容，再次原生批准后才重发；不创建报告，不修改内容，不自动重试。改内容用 chief_report 新确认和新身份。",
 	parameters: { type: "object", properties: { id: { type: "string", description: "已保存原报告 ID。禁止 body、身份、收件人或批准字段。" } }, required: ["id"], additionalProperties: false },
 	async execute(state, params, delivery) {
 		if (!params || typeof params !== "object" || Array.isArray(params) || Object.keys(params).some(key => key !== "id")
@@ -95,7 +95,7 @@ export const CHIEF_RESEND_REPORT_TOOL: ToolDeclaration<ReportState> = {
 		if (result.notSent) {
 			const detail = result.body && typeof result.body === "object" ? result.body : {};
 			return workflowToolResult({ ...result, body: { ...detail, saved: true, report, sent: false,
-				guidance: "原报告仍已保存；本次重发未发送。结束本轮，等待用户重新要求；不自动重试或反复确认，不撤销既有外部效果。",
+				guidance: "原报告仍已保存；本次重发未发送。结束当前这一轮，不自动重试或反复确认，不撤销既有外部效果。拒绝只约束这次调用；用户下一条消息明确重新要求重发时，这是新的用户决定，应在新轮调用 chief_resend_report 取得全新原生确认，不能沿用旧批准，也不能把前次拒绝当作永久禁止。",
 			} });
 		}
 		return workflowToolResult(workflowReportResult(result));
