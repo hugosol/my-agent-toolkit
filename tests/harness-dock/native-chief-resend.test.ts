@@ -17,7 +17,7 @@ for (const host of ["omp", "pi"] as const) {
 		let dock: RoleContractDock | undefined;
 		let pending: Promise<void> | undefined;
 		try {
-			expect(await headlessTool(host, peer.url.origin, "chief-report", { id: report.id }, "chief_resend_report")).toMatchObject({ details: { body: { sent: false, saved: true, report } } });
+			expect(await headlessTool(host, peer.url.origin, "chief-report", { id: report.id }, { toolName: "chief_resend_report" })).toMatchObject({ details: { body: { sent: false, saved: true, report } } });
 			dock = await roleContractDock(host, peer.url.origin, 500, "chief-report", 500, "chief_resend_report");
 			for (const decision of ["denied", "dismissed", "cancelled", "timeout", "session-end"] as const) {
 				pending = dock.call({ id: report.id });

@@ -75,7 +75,9 @@ body 必须完整包含非空 `background`、`execution`、`summary`，`result: 
 {"botId":"review-flow","zoneId":"work/manager","managerTaskId":"review-manager","input":"执行已确认的复核流程","materials":[]}
 ```
 
-`botId` 是 Bot ID，`zoneId` 是已登记的稳定 ID；Map 时它只指定 manager 目录，内部节点仍使用自己的 zone。`materials` 必须显式给出（无材料为 `[]`），每项严格为 `{id,zoneId,path}`；材料路径在其登记 zone 内解析，Map 的 ID 对应 `input_files`。Map 必须明确提供 manager 类型 `managerTaskId`，Task 禁止该字段；用途与必需材料由后端权威检查。工具拒绝身份、previewId、批准 boolean、endpoint 和其他额外字段，不能用模型参数伪造用户批准。
+`chief_definitions(kind="zones")` 返回的 `creation.available` 仅描述新建 zone 是否可用，不是创建 Task／Map／Bot 能力的开关；已有登记 zone 仍可用于委派，创建能力按 Bot.when 与实际定义核对。
+
+`botId` 逐字使用目录中 Bot 的 `id`，不从名称或 Map 文件名拼接；查询 Map 定义时逐字使用 `map_file`（保留 `.json`），派发前先成功读取实际 Task／Map 执行定义。`zoneId` 是已登记的稳定 ID；Map 时它只指定 manager 目录，内部节点仍使用自己的 zone。`materials` 必须显式给出（无材料为 `[]`），每项严格为 `{id,zoneId,path}`；材料路径在其登记 zone 内解析，Map 的 ID 对应 `input_files`。Map 必须明确提供 manager 类型 `managerTaskId`，Task 禁止该字段；用途与必需材料由后端权威检查。工具拒绝身份、previewId、批准 boolean、endpoint 和其他额外字段，不能用模型参数伪造用户批准。
 
 工具以公共活动原生 Session 发 `POST /api/chief/delegations/preview`，加入真实 `sessionId`；后端返回 `{previewId,facts}`。工具核对 facts.request 与冻结的本次请求一致，完整展示后端解析的 Bot、Task、Map/manager、zoneBindings、材料与实际输入，以及即将提交的 `{previewId,sessionId}` JSON。完整事实不从模型摘要重构。仅当前原生批准才发 `POST /api/chief/delegations`，提交单次预览 ID，不允许批准后再指定替代业务参数。后端消费预览并重核当前 chief 资格、定义、目标、zone 和材料语义；变更返回 `delegation-preview-stale`，不自动重新预览或把旧批准转授新工作。用户重新要求后，重新核对受影响参数并取得新确认。
 
